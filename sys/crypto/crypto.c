@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.33 2002/03/04 21:23:39 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.34 2002/04/23 19:13:04 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -11,7 +11,7 @@
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all source code copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
@@ -36,6 +36,9 @@ int crypto_pool_initialized = 0;
 
 struct cryptop *crp_req_queue = NULL;
 struct cryptop **crp_req_queue_tail = NULL;
+
+struct cryptkop *krp_req_queue = NULL;
+struct cryptkop **krp_req_queue_tail = NULL;
 
 /*
  * Create a new session.
@@ -224,6 +227,38 @@ crypto_get_driverid(u_int8_t flags)
  * supported by the driver.
  */
 int
+crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
+    int (*kprocess)(struct cryptkop *))
+{
+	int s;
+
+	if (driverid >= crypto_drivers_num || kalg < 0 ||
+	    kalg > CRK_ALGORITHM_MAX || crypto_drivers == NULL)
+		return EINVAL;
+
+	s = splimp();
+
+	/*
+	 * XXX Do some performance testing to determine placing.
+	 * XXX We probably need an auxiliary data structure that describes
+	 * XXX relative performances.
+	 */
+
+	crypto_drivers[driverid].cc_kalg[kalg] =
+	    flags | CRYPTO_ALG_FLAG_SUPPORTED;
+
+	if (crypto_drivers[driverid].cc_kprocess == NULL)
+		crypto_drivers[driverid].cc_kprocess = kprocess;
+
+	splx(s);
+	return 0;
+}
+
+/*
+ * Register a crypto driver. It should be called once for each algorithm
+ * supported by the driver.
+ */
+int
 crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
     u_int32_t flags,
     int (*newses)(u_int32_t *, struct cryptoini *),
@@ -243,7 +278,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	 * XXX relative performances.
 	 */
 
-	crypto_drivers[driverid].cc_alg[alg] = 
+	crypto_drivers[driverid].cc_alg[alg] =
 	    flags | CRYPTO_ALG_FLAG_SUPPORTED;
 
 	crypto_drivers[driverid].cc_max_op_len[alg] = maxoplen;
@@ -323,6 +358,63 @@ crypto_dispatch(struct cryptop *crp)
 	return 0;
 }
 
+int
+crypto_kdispatch(struct cryptkop *krp)
+{
+	int s = splimp();
+
+	if (krp_req_queue == NULL) {
+		krp_req_queue = krp;
+		krp_req_queue_tail = &(krp->krp_next);
+		splx(s);
+		wakeup((caddr_t) &crp_req_queue);	/* shared wait channel */
+	} else {
+		*krp_req_queue_tail = krp;
+		krp_req_queue_tail = &(krp->krp_next);
+		splx(s);
+	}
+	return 0;
+}
+
+/*
+ * Dispatch an assymetric crypto request to the appropriate crypto devices.
+ */
+int
+crypto_kinvoke(struct cryptkop *krp)
+{
+	extern int cryptodevallowsoft;
+	u_int32_t hid;
+	int error;
+
+	/* Sanity checks. */
+	if (krp == NULL || krp->krp_callback == NULL)
+		return (EINVAL);
+
+	for (hid = 0; hid < crypto_drivers_num; hid++) {
+		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
+		    cryptodevallowsoft == 0)
+			continue;
+		if (crypto_drivers[hid].cc_kprocess == NULL)
+			continue;
+		if ((crypto_drivers[hid].cc_kalg[krp->krp_op] &
+		    CRYPTO_ALG_FLAG_SUPPORTED) == 0)
+			continue;
+		break;
+	}
+	if (hid == crypto_drivers_num) {
+		krp->krp_status = ENODEV;
+		crypto_kdone(krp);
+		return (0);
+	}
+	krp->krp_hid = hid;
+	error = crypto_drivers[hid].cc_kprocess(krp);
+	if (error) {
+		krp->krp_status = error;
+		crypto_kdone(krp);
+	}
+	return (0);
+}
+
 /*
  * Dispatch a crypto request to the appropriate crypto devices.
  */
@@ -332,6 +424,7 @@ crypto_invoke(struct cryptop *crp)
 	struct cryptodesc *crd;
 	u_int64_t nid;
 	u_int32_t hid;
+	int error;
 
 	/* Sanity checks. */
 	if (crp == NULL || crp->crp_callback == NULL)
@@ -373,7 +466,11 @@ crypto_invoke(struct cryptop *crp)
 		return 0;
 	}
 
-	crypto_drivers[hid].cc_process(crp);
+	error = crypto_drivers[hid].cc_process(crp);
+	if (error) {
+		crp->crp_etype = error;
+		crypto_done(crp);
+	}
 	return 0;
 }
 
@@ -449,20 +546,29 @@ void
 crypto_thread(void)
 {
 	struct cryptop *crp;
+	struct cryptkop *krp;
 	int s;
 
 	s = splimp();
 
 	for (;;) {
 		crp = crp_req_queue;
-		if (crp == NULL) {
+		krp = krp_req_queue;
+		if (crp == NULL && krp == NULL) {
 			(void) tsleep(&crp_req_queue, PLOCK, "crypto_wait", 0);
 			continue;
 		}
 
-		/* Remove from the queue. */
-		crp_req_queue = crp->crp_next;
-		crypto_invoke(crp);
+		if (crp) {
+			/* Remove from the queue. */
+			crp_req_queue = crp->crp_next;
+			crypto_invoke(crp);
+		}
+		if (krp) {
+			/* Remove from the queue. */
+			krp_req_queue = krp->krp_next;
+			crypto_kinvoke(krp);
+		}
 	}
 }
 
@@ -473,4 +579,13 @@ void
 crypto_done(struct cryptop *crp)
 {
 	crp->crp_callback(crp);
+}
+
+/*
+ * Invoke the callback on behalf of the driver.
+ */
+void
+crypto_kdone(struct cryptkop *krp)
+{
+	krp->krp_callback(krp);
 }
