@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.13 2002/04/22 07:22:09 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.14 2002/08/05 14:15:41 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -14,6 +14,7 @@
 01/04	Jakob Grimm born, 1785
 01/04	Wilhelm Beer born, 1797, first astronomer to map Mars
 01/05	DeWitt B. Brace born, 1859, inventor of spectrophotometer
+01/06	Millard Fillmore's birthday (let's party!)
 01/11	Alexander Hamilton born in Nevis, British West Indies, 1755/57?
 01/12	John Hancock born, 1737
 01/12	"Long" John Baldry is born in London, 1941
@@ -39,6 +40,7 @@
 01/25	Virginia Woolf born, 1882
 01/25	W. Somerset Maugham born, 1874
 01/27	Samuel Gompers born, 1850
+01/29	Andre the Giant died, 1993
 01/30	Franklin Delano Roosevelt born in Hyde Park, New York, 1882
 01/31	Jackie Robinson born, 1919
 02/03	Gertrude Stein born, 1874
@@ -79,6 +81,7 @@
 03/02	Dr. Seuss born, 1904
 03/04	Casimir Pulaski born, 1747
 03/04	Gogol dies, 1852
+03/05	Joseph Stalin dies in Moscow, 1953
 03/05	John Belushi dies in Los Angeles, 1982
 03/06	Michelangelo Buonarroti born in Caprese, Italy, 1475
 03/07	Aristotle died, 322BC
@@ -105,6 +108,7 @@
 03/30	Francisco Jose de Goya born, 1746
 03/30	Sean O'Casey born, 1880
 03/30	Vincent Van Gogh born, 1853
+03/30	Adolph Hitler comitted suicide, 1945
 03/31	Rene Descartes born, 1596, mathematician & philosopher
 03/31	Nikolay Vasilyevich Gogol born, 1809
 04/03	Washington Irving born, 1783
@@ -121,10 +125,13 @@
 		discovered Saturn's rings
 04/15	Leonardo da Vinci born, 1452
 04/16	Charles (Charlie) Chaplin (Sir) born in London, 1889
+04/19	Andre Rene the Giant (Roussinoff) born in Grunoble, France, 1946
+04/20	Adolph Hitler born, 1889
 04/22	Kant born, 1724
 04/22	Lenin born, the best friend of all the children, 1870
 04/23	Shakespeare born, 1564
 04/28	James Monroe born, 1758
+04/28	Mussolini executed, 1945
 04/29	Jules Henri Poincare born, 1854, founder of topology
 04/29	William Randolph Hearst born in San Francisco, 1863
 04/30	Karl Friedrich Gauss born, 1777, mathematician & astronomer
@@ -201,6 +208,7 @@
 09/08	Peter Sellers born in Southsea, England, 1925
 09/09	Chinese Communist Party Chairman Mao Tse-Tung dies at age 82, 1976
 09/12	Jesse Owens born, 1913
+09/12	Stanislaw Lem born in Lwow, Poland, 1921
 09/13	Walter Reed born, 1851
 09/15	Agatha Christie born in Torquay, England, 1890
 09/16	Allen Funt born in Brooklyn, NY, 1914
@@ -238,6 +246,7 @@
 10/27	James Cook is born, 1728
 10/31	Chiang Kai-Shek born, 1887
 10/31	Dale Evans born, 1912 
+11/01	Joseph Stalin's burrial, 1961
 11/02	Daniel Boone born near Reading, PA, 1734
 11/04	King William III of Orange born, 1650
 11/05	Roy Rogers born, 1912
@@ -250,6 +259,7 @@
 11/18	Imogene Coca born, 1908
 11/18	William S. Gilbert born, 1836
 11/20	Robert Fitzgerald Kennedy born, 1925
+11/25	Chaucer's death (according to tradition), 1400
 11/26	Charles Schulz born in Minneapolis, 1922
 11/26	Norbert Weiner born, 1894
 11/29	John Mayall is born in Cheshire, England, 1933
@@ -262,6 +272,7 @@
 12/06	Samich Laus brewing
 12/08	Horace (Quintus Horatius Flaccus) born in Venosa (Italy), 65BC
 12/08	James (Grover) Thurber born in Columbus, Ohio, 1894
+12/09	Joseph Vissarionnovich Djugashvili (Stalin) born, 1879
 12/10	Emily Dickinson born, 1830
 12/12	E.G. Robinson born, 1893
 12/14	George Washington dies, 1799

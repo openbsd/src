@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.14 2002/08/04 05:48:25 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.15 2002/08/05 14:15:41 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -15,7 +15,6 @@
 01/05	-50 degrees F, Strawberry UT, 1913
 01/05	The FCC hears the first demonstration of FM radio, 1940
 01/05	Twelfth night
-01/06	Millard Fillmore's birthday (let's party!)
 01/08	Battle of New Orleans
 01/09	Plough Monday
 01/10	First meeting of United Nations General Assembly in London, 1946
@@ -39,7 +38,6 @@
 01/28	Space Shuttle Challenger (51-L) explodes 74 seconds after liftoff
 	killing Scobee, Smith, McNair, Resnick, Jarvis, Onizuka and McAuliffe,
 	1986
-01/29	Anre the Giant died, 1993
 01/30	Mohandas Gandhi assassinated in New Delhi by Hindu fanatic, 1948
 01/30	Tet Offensive, 1968
 01/31	"Ham" the chimpanzee soars into space aboard Mercury-Redstone 2, 1961
@@ -114,7 +112,6 @@
 04/18	San Francisco earthquake, 1906
 04/19	Landing of the "33" in Uruguay
 04/19	Warsaw Ghetto uprising, 1943
-04/19	Andre the Giant (Rousinoff) born in Grunoble, France, 1946
 04/20	Supreme Court unanimously rules in favor of busing, 1971
 04/21	Lyrid meteor shower
 04/23	Hank Aaron hits his first home run, 1954
@@ -288,7 +285,6 @@
 09/09	California becomes the 31st state, 1850
 09/09	United Colonies is renamed the United States, 1776
 09/10	Mountain Meadows Massacre.  Mormons kill Gentile wagon train, 1857
-09/12	Stanislav Lem born in Lwow, Poland, 1921
 09/12	German paratroopers rescue Mussolini from captivity in Rome, 1943
 09/12	Germany annexes Sudentenland, 1938
 09/13	136.4 F at el Azizia, Libya, 1922
