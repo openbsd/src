@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.1 2004/09/14 22:43:09 espie Exp $
+# $OpenBSD: Error.pm,v 1.2 2004/10/04 12:12:30 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 
 package OpenBSD::Error;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(System VSystem Copy);
+our @EXPORT=qw(System VSystem Copy Fatal Warn);
 
 sub System
 {
@@ -56,6 +56,16 @@ sub Copy
 		print "copy(", join(',', @_),") failed: $!\n";
 	}
 	return $r;
+}
+
+sub Fatal
+{
+	die @_;
+}
+
+sub Warn
+{
+	print STDERR @_;
 }
 
 1;
