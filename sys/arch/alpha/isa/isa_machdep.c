@@ -43,7 +43,7 @@
 
 #include "vga_isa.h"
 #if NVGA_ISA
-#include <alpha/isa/vga_isavar.h>
+#include <dev/isa/vga_isavar.h>
 #endif
 
 struct {

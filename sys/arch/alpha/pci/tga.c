@@ -1,4 +1,4 @@
-/*	$OpenBSD: tga.c,v 1.10 1997/07/31 13:40:02 kstailey Exp $	*/
+/*	$OpenBSD: tga.c,v 1.11 1997/11/06 12:27:04 niklas Exp $	*/
 /*	$NetBSD: tga.c,v 1.13 1996/12/05 01:39:37 cgd Exp $	*/
 
 /*
@@ -48,8 +48,8 @@
 #include <alpha/pci/bt485reg.h>
 
 #include <dev/rcons/raster.h>
-#include <alpha/wscons/wscons_raster.h>
-#include <alpha/wscons/wsconsvar.h>
+#include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsconsvar.h>
 #include <machine/fbio.h>
 
 #include <machine/autoconf.h>

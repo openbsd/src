@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.11 1997/07/31 13:40:04 kstailey Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.12 1997/11/06 12:26:59 niklas Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -35,10 +35,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <alpha/wscons/wsconsvar.h>
-#include <alpha/wscons/wscons_emul.h>
-#include <alpha/wscons/kbd.h>
-#include <alpha/wscons/ascii.h>
+#include <dev/wscons/wsconsvar.h>
+#include <dev/wscons/wscons_emul.h>
+#include <dev/wscons/kbd.h>
+#include <dev/wscons/ascii.h>
 
 static __inline int wscons_emul_input_normal
     __P((struct wscons_emul_data *, char));

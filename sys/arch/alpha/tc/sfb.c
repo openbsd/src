@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.8 1997/07/31 13:40:03 kstailey Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.9 1997/11/06 12:27:06 niklas Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -48,8 +48,8 @@
 #endif
 
 #include <dev/rcons/raster.h>
-#include <alpha/wscons/wscons_raster.h>
-#include <alpha/wscons/wsconsvar.h>
+#include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsconsvar.h>
 #include <machine/fbio.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfbvar.h,v 1.3 1996/10/30 22:41:03 niklas Exp $	*/
+/*	$OpenBSD: cfbvar.h,v 1.4 1997/11/06 12:27:05 niklas Exp $	*/
 /*	$NetBSD: cfbvar.h,v 1.1 1996/05/01 23:25:04 cgd Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
 
 #include <machine/cfbreg.h>
 #include <dev/rcons/raster.h>
-#include <alpha/wscons/wsconsvar.h>
-#include <alpha/wscons/wscons_raster.h>
+#include <dev/wscons/wsconsvar.h>
+#include <dev/wscons/wscons_raster.h>
 
 struct cfb_devconfig;
 struct fbcmap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.5 1997/01/24 19:57:28 niklas Exp $	*/
+/*	$OpenBSD: pms.c,v 1.6 1997/11/06 12:27:03 niklas Exp $	*/
 /*	$NetBSD: pms.c,v 1.7 1996/12/05 01:39:31 cgd Exp $	*/
 
 /*-
@@ -48,8 +48,8 @@
 
 #include <machine/intr.h>
 #include <dev/isa/isavar.h>
-#include <alpha/wscons/wsconsvar.h>
-#include <alpha/wscons/ms.h>
+#include <dev/wscons/wsconsvar.h>
+#include <dev/wscons/ms.h>
 #include <alpha/isa/pcppivar.h>
 
 #define	PMS_DATA	0x0	/* offset for data port, read-write */

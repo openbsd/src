@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.4 1997/01/24 19:58:25 niklas Exp $ */
+/*	$OpenBSD: kbd.c,v 1.5 1997/11/06 12:26:57 niklas Exp $ */
 /*	$NetBSD: kbd.c,v 1.3 1996/11/13 21:13:39 cgd Exp $ */
 
 /*
@@ -68,9 +68,9 @@
 #include <machine/vuid_event.h>
 #include <machine/kbio.h>			/* XXX FOR KIOCSDIRECT */
 #include <machine/wsconsio.h>			/* XXX for bell ioctls */
-#include <alpha/wscons/event_var.h>
-#include <alpha/wscons/wsconsvar.h>
-#include <alpha/wscons/kbd.h>
+#include <dev/wscons/event_var.h>
+#include <dev/wscons/wsconsvar.h>
+#include <dev/wscons/kbd.h>
 
 void	kbd_repeat __P((void *));
 

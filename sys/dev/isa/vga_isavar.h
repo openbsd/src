@@ -1,3 +1,4 @@
+/*	$OpenBSD: vga_isavar.h,v 1.2 1997/11/06 12:26:55 niklas Exp $	*/
 /*	$NetBSD: vga_isavar.h,v 1.2 1996/11/23 06:06:45 cgd Exp $	*/
 
 /*

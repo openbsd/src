@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.3 1996/10/30 22:41:36 niklas Exp $ */
+/*	$OpenBSD: event.c,v 1.4 1997/11/06 12:26:57 niklas Exp $ */
 /*	$NetBSD: event.c,v 1.3 1996/09/15 17:15:26 cgd Exp $ */
 
 /*
@@ -61,7 +61,7 @@
 #endif
 
 #include <machine/vuid_event.h>
-#include <alpha/wscons/event_var.h>
+#include <dev/wscons/event_var.h>
 
 /*
  * Initialize a firm_event queue.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbd.c,v 1.11 1997/07/08 11:19:41 niklas Exp $	*/
+/*	$OpenBSD: pckbd.c,v 1.12 1997/11/06 12:27:02 niklas Exp $	*/
 /*	$NetBSD: pckbd.c,v 1.14 1996/12/05 01:39:30 cgd Exp $	*/
 
 /*-
@@ -64,8 +64,8 @@
 #include <machine/wsconsio.h>
 #include <alpha/isa/pcppivar.h>
 
-#include <alpha/wscons/wsconsvar.h>
-#include <alpha/wscons/kbd.h>
+#include <dev/wscons/wsconsvar.h>
+#include <dev/wscons/kbd.h>
 #include "wscons.h"
 
 #undef KBDATAP
