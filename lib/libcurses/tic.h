@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.2 1998/10/31 06:30:31 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.3 1999/01/24 20:06:45 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -100,7 +100,7 @@ extern "C" {
 #define PRIVATE_INFO	"%s/.terminfo"	/* plug getenv("HOME") into %s */
 
 #ifdef TRACE
-#define DEBUG(n, a)	if (_nc_tracing & (1 << (n - 1))) _tracef a 
+#define DEBUG(n, a)	if (_nc_tracing & (1 << (n - 1))) _tracef a
 #else
 #define DEBUG(n, a)	/*nothing*/
 #endif
@@ -168,6 +168,7 @@ extern const struct alias _nc_capalias_table[];
 extern const struct alias _nc_infoalias_table[];
 
 extern const struct name_table_entry	*_nc_get_table(bool);
+extern const struct name_table_entry	* const *_nc_get_hash_table(bool);
 
 #define NOTFOUND	((struct name_table_entry *) 0)
 

@@ -1,3 +1,5 @@
+.\" $OpenBSD: term.7,v 1.2 1999/01/24 20:06:45 millert Exp $
+.\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
 .\"                                                                          *
@@ -26,8 +28,8 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: term.7,v 1.10 1998/12/26 01:58:56 tom Exp $
-.\" $OpenBSD: term.7,v 1.1 1999/01/18 19:09:15 millert Exp $
+.\" $From: term.7,v 1.11 1999/01/24 02:35:14 Todd.Miller Exp $
+.\" $OpenBSD: term.7,v 1.2 1999/01/24 20:06:45 millert Exp $
 .TH TERM 7
 .ds n 5
 .ds d /usr/share/terminfo
@@ -65,7 +67,7 @@ custom entry incorporating options (such as visual bell or reverse-video)
 which you wish to override the system default type for your line.
 .PP
 Terminal type descriptions are stored as files of capability data underneath
-\*d.  To browse a list of all terminal names recognized by the system, do 
+\*d.  To browse a list of all terminal names recognized by the system, do
 
 	toe | more
 
@@ -79,7 +81,7 @@ follows:
 where \fIentry-name\fR is the name of the type you wish to examine (and the
 name of its capability file the subdirectory of \*d named for its first
 letter).  This command dumps a capability file in the text format described by
-\fBterminfo\fR(\*n).  
+\fBterminfo\fR(\*n).
 .PP
 The first line of a \fBterminfo\fR(\*n) description gives the names by which
 terminfo knows a terminal, separated by `|' (pipe-bar) characters with the last
@@ -170,7 +172,7 @@ Use visible bell (flash) rather than beep.
 -w
 Wide; terminal is in 132 column mode.
 .PP
-Conventionally, if your terminal type is a variant intended to specify a 
+Conventionally, if your terminal type is a variant intended to specify a
 line height, that suffix should go first.  So, for a hypothetical FuBarCo
 model 2317 terminal in 30-line mode with reverse video, best form would be
 \fBfubar-30-rv\fR (rather than, say, `fubar-rv-30').
