@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.19 2004/12/08 02:47:30 jsg Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.20 2005/04/01 08:25:39 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -138,6 +138,7 @@ USB_MATCH(uftdi)
 	if (uaa->vendor == USB_VENDOR_FTDI &&
 	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
+	     uaa->product == USB_PRODUCT_FTDI_SERIAL_2232C ||
 	     uaa->product == USB_PRODUCT_FTDI_SEMC_DSS20 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK202_24 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK204_24 ||
@@ -213,6 +214,7 @@ USB_ATTACH(uftdi)
 
 		case USB_PRODUCT_FTDI_SEMC_DSS20:
 		case USB_PRODUCT_FTDI_SERIAL_8U232AM:
+		case USB_PRODUCT_FTDI_SERIAL_2232C:
 		case USB_PRODUCT_FTDI_LCD_LK202_24:
 		case USB_PRODUCT_FTDI_LCD_LK204_24:
 		case USB_PRODUCT_FTDI_LCD_MX200:

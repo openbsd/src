@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.147 2005/03/25 18:09:15 mickey Exp $
+$OpenBSD: usbdevs,v 1.148 2005/04/01 08:25:39 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -880,9 +880,10 @@ product FALCOM TWIST		0x0001	Falcom Twist USB
 product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
-product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
+product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial
+product FDTI SERIAL_2232C	0x6010	2232C Serial
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
-product FTDI SERIAL_8U100AX	0x8372	Serial converter
+product FTDI SERIAL_8U100AX	0x8372	Serial
 product	FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24	0xfa03	Matrix Orbital LK202-24 LCD
 product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
