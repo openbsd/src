@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.9 2004/10/27 21:19:01 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.10 2004/10/27 21:19:43 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -80,6 +80,7 @@ int ipw_match(struct device *, void *, void *);
 void ipw_attach(struct device *, struct device *, void *);
 int ipw_detach(struct device *, int);
 int ipw_media_change(struct ifnet *);
+void ipw_media_status(struct ifnet *, struct ifmediareq *);
 int ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
@@ -252,7 +253,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ipw_newstate;
-	ieee80211_media_init(ifp, ipw_media_change, ieee80211_media_status);
+	ieee80211_media_init(ifp, ipw_media_change, ipw_media_status);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
@@ -305,6 +306,59 @@ ipw_media_change(struct ifnet *ifp)
 		ipw_init(ifp);
 
 	return 0;
+}
+
+void
+ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+{
+	struct ipw_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+#define N(a)	(sizeof (a) / sizeof (a[0]))
+	static const struct {
+		u_int32_t	val;
+		int		rate;
+	} rates[] = {
+		{ IPW_RATE_DS1,   2 },
+		{ IPW_RATE_DS2,   4 },
+		{ IPW_RATE_DS5,  11 },
+		{ IPW_RATE_DS11, 22 },
+	};
+	u_int32_t val;
+	int rate, i;
+
+	imr->ifm_status = IFM_AVALID;
+	imr->ifm_active = IFM_IEEE80211;
+	if (ic->ic_state == IEEE80211_S_RUN)
+		imr->ifm_status |= IFM_ACTIVE;
+
+	/* read current transmission rate from adapter */
+	val = ipw_read_table1(sc, IPW_INFO_CURRENT_TX_RATE);
+	val &= 0xf;
+
+	/* convert rate to 802.11 rate */
+	for (i = 0; i < N(rates) && rates[i].val != val; i++);
+	rate = (i < N(rates)) ? rates[i].rate : 0;
+
+	imr->ifm_active |= IFM_IEEE80211_11B;
+	imr->ifm_active |= ieee80211_rate2media(ic, rate, IEEE80211_MODE_11B);
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		break;
+
+	case IEEE80211_M_IBSS:
+		imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		break;
+
+	case IEEE80211_M_MONITOR:
+		imr->ifm_active |= IFM_IEEE80211_MONITOR;
+		break;
+
+	case IEEE80211_M_AHDEMO:
+	case IEEE80211_M_HOSTAP:
+		/* should not get there */
+		break;
+	}
+#undef N
 }
 
 int

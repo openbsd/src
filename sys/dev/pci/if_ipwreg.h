@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.3 2004/10/27 21:16:45 damien Exp $ */
+/*      $Id: if_ipwreg.h,v 1.4 2004/10/27 21:19:43 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -105,6 +105,12 @@
 #define IPW_INFO_ADAPTER_MAC	8
 #define IPW_INFO_CURRENT_SSID	48
 #define IPW_INFO_CURRENT_BSSID	112
+
+/* supported rates */
+#define IPW_RATE_DS1	1
+#define IPW_RATE_DS2	2
+#define IPW_RATE_DS5	4
+#define IPW_RATE_DS11	8
 
 /* firmware binary image header */
 struct ipw_fw_hdr {
