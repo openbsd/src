@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-egp.c,v 1.3 1996/06/10 07:47:33 deraadt Exp $	*/
-/*	$NetBSD: print-egp.c,v 1.2 1995/03/06 19:11:09 mycroft Exp $	*/
+/*	$OpenBSD: print-egp.c,v 1.4 1996/07/13 11:01:20 mickey Exp $	*/
 
 /*
- * Copyright (c) 1991, 1992, 1993, 1994
+ * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -16,14 +15,14 @@
  * specific prior written permission.
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * Initial contribution from Jeff Honig (jch@MITCHELL.CIT.CORNELL.EDU).
  */
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-egp.c,v 1.14 94/06/20 19:44:38 leres Exp (LBL)";
+    "@(#) Header: print-egp.c,v 1.19 96/06/23 02:11:45 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -92,7 +91,7 @@ struct egp_packet {
 #define  egp_reason  egp_handg.egpu_reason
 	union {
 		u_short  egpu_poll;
-		u_int32 egpu_sourcenet;
+		u_int32_t egpu_sourcenet;
 	} egp_pands;
 #define  egp_poll  egp_pands.egpu_poll
 #define  egp_sourcenet  egp_pands.egpu_sourcenet
@@ -143,8 +142,8 @@ egpnrprint(register const struct egp_packet *egp, register int length)
 {
 	register const u_char *cp, *ep;
 #define TCHECK(n) if (cp > ep - n) goto trunc
-	register u_int32 addr;
-	register u_int32 net;
+	u_int32_t addr;
+	register u_int32_t net;
 	register int netlen;
 	int gateways, distances, networks;
 	int t_gateways;
@@ -188,7 +187,7 @@ egpnrprint(register const struct egp_packet *egp, register int length)
 		distances = *cp++;
 		printf(" %s %s ",
 		       gateways < egp->egp_intgw ? "int" : "ext",
-		       intoa(addr));
+		       ipaddr_string(&addr));
 
 		comma = "";
 		putchar('(');
@@ -200,16 +199,16 @@ egpnrprint(register const struct egp_packet *egp, register int length)
 			while (--networks >= 0) {
 				/* Pickup network number */
 				TCHECK(1);
-				addr = (u_int32)*cp++ << 24;
+				addr = (u_int32_t)*cp++ << 24;
 				if (IN_CLASSB(addr)) {
 					TCHECK(1);
-					addr |= (u_int32)*cp++ << 16;
+					addr |= (u_int32_t)*cp++ << 16;
 				} else if (!IN_CLASSA(addr)) {
 					TCHECK(2);
-					addr |= (u_int32)*cp++ << 16;
-					addr |= (u_int32)*cp++ << 8;
+					addr |= (u_int32_t)*cp++ << 16;
+					addr |= (u_int32_t)*cp++ << 8;
 				}
-				printf(" %s", intoa(addr));
+				printf(" %s", ipaddr_string(&addr));
 			}
 		}
 		putchar(')');
@@ -318,7 +317,7 @@ egp_print(register const u_char *bp, register int length,
 			printf(" state:%s", egp_status_updown[status]);
 		else
 			printf(" [status %d]", status);
-		printf(" net:%s", intoa(egp->egp_sourcenet));
+		printf(" net:%s", ipaddr_string(&egp->egp_sourcenet));
 		break;
 
 	case EGPT_UPDATE:
@@ -332,7 +331,7 @@ egp_print(register const u_char *bp, register int length,
 		else
 			printf(" [status %d]", status);
 		printf(" %s int %d ext %d",
-		       intoa(egp->egp_sourcenet),
+		       ipaddr_string(&egp->egp_sourcenet),
 		       egp->egp_intgw,
 		       egp->egp_extgw);
 		if (vflag)

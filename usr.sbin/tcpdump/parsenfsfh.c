@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: parsenfsfh.c,v 1.3 1996/06/10 07:47:28 deraadt Exp $	*/
-/*	$NetBSD: parsenfsfh.c,v 1.3 1996/05/20 00:41:07 fvdl Exp $	*/
+/*	$OpenBSD: parsenfsfh.c,v 1.4 1996/07/13 11:01:14 mickey Exp $	*/
 
 #ifndef lint
-static char *RCSid = "Header: parsenfsfh.c,v 1.5 94/01/13 19:06:41 leres Exp";
+static char *RCSid = "Header: parsenfsfh.c,v 1.9 95/10/19 20:27:44 leres Exp";
 #endif
 
 /*
@@ -17,20 +16,13 @@ static char *RCSid = "Header: parsenfsfh.c,v 1.5 94/01/13 19:06:41 leres Exp";
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include <stdio.h>
 #include <ctype.h>
+#include <memory.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "interface.h"
 #include "nfsfh.h"
-
-/*
- * Make sure that we use 32-bit integers when necessary.  The "x"
- * suffix is to avoid possible identifier conflicts.
- */
-
-typedef int int32x;
-typedef unsigned int u_int32x;
 
 /*
  * This routine attempts to parse a file handle (in network byte order),
@@ -57,7 +49,7 @@ typedef unsigned int u_int32x;
 
 #ifdef	ultrix
 /* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
-#define	XFF(x)	((unsigned long)(x))
+#define	XFF(x)	((u_int32_t)(x))
 #else
 #define	XFF(x)	(x)
 #endif
@@ -84,9 +76,8 @@ typedef unsigned int u_int32x;
 static int is_UCX(unsigned char *);
 
 void
-Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
+Parse_fh(fh, fsidp, inop, osnamep, fsnamep, ourself)
 register caddr_t *fh;
-int len;
 my_fsid *fsidp;
 ino_t *inop;
 char **osnamep;		/* if non-NULL, return OS name here */
@@ -94,7 +85,7 @@ char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
 int ourself;		/* true if file handle was generated on this host */
 {
 	register unsigned char *fhp = (unsigned char *)fh;
-	u_int32x temp;
+	u_int32_t temp;
 	int fhtype = FHT_UNKNOWN;
 
 	if (ourself) {
@@ -321,14 +312,14 @@ int ourself;		/* true if file handle was generated on this host */
 	    /* No numeric file system ID, so hash on the device-name */
 	    if (sizeof(*fsidp) >= 14) {
 		if (sizeof(*fsidp) > 14)
-		    bzero((char *)fsidp, sizeof(*fsidp));
-		bcopy(fh, (char *)fsidp, 14);	/* just use the whole thing */
+		    memset((char *)fsidp, 0, sizeof(*fsidp));
+		memcpy((char *)fsidp, fh, 14);	/* just use the whole thing */
 	    }
 	    else {
-		u_long tempa[4];	/* at least 16 bytes, maybe more */
+		u_int32_t tempa[4];	/* at least 16 bytes, maybe more */
 
-		bzero((char *)tempa, sizeof(tempa));
-		bcopy(fh, (char *)tempa, 14);	/* ensure alignment */
+		memset((char *)tempa, 0, sizeof(tempa));
+		memcpy((char *)tempa, fh, 14);	/* ensure alignment */
 		fsidp->fsid_dev.Minor = tempa[0] + (tempa[1]<<1);
 		fsidp->fsid_dev.Major = tempa[2] + (tempa[3]<<1);
 		fsidp->fsid_code = 0;
@@ -375,8 +366,9 @@ int ourself;		/* true if file handle was generated on this host */
 	    {
 		/* XXX debugging */
 		int i;
-		for (i=0; i<32;i++) fprintf(stderr, "%x.", fhp[i]);
-		fprintf(stderr, "\n");
+		for (i = 0; i < 32; i++)
+			(void)fprintf(stderr, "%x.", fhp[i]);
+		(void)fprintf(stderr, "\n");
 	    }
 #endif
 	    /* XXX for now, give "bogus" values to aid debugging */

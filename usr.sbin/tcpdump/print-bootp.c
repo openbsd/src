@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-bootp.c,v 1.3 1996/06/10 07:47:31 deraadt Exp $	*/
-/*	$NetBSD: print-bootp.c,v 1.2 1995/03/06 19:11:05 mycroft Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.4 1996/07/13 11:01:16 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1993, 1994
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +24,7 @@
  */
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-bootp.c,v 1.30 94/06/14 20:17:37 leres Exp (LBL)";
+    "@(#) Header: print-bootp.c,v 1.38 96/06/23 02:11:45 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -33,6 +32,10 @@ static char rcsid[] =
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -40,6 +43,7 @@ static char rcsid[] =
 
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -65,7 +69,7 @@ bootp_print(register const u_char *cp, int length,
 #define TCHECK(var, l) if ((u_char *)&(var) > ep - l) goto trunc
 
 	bp = (struct bootp *)cp;
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	TCHECK(bp->bp_op, sizeof(bp->bp_op));
@@ -101,7 +105,7 @@ bootp_print(register const u_char *cp, int length,
 	if (bp->bp_hops)
 		printf(" hops:%d", bp->bp_hops);
 	if (bp->bp_xid)
-		printf(" xid:0x%x", ntohl(bp->bp_xid));
+		printf(" xid:0x%x", (u_int32_t)ntohl(bp->bp_xid));
 	if (bp->bp_secs)
 		printf(" secs:%d", ntohs(bp->bp_secs));
 
@@ -138,7 +142,7 @@ bootp_print(register const u_char *cp, int length,
 			e = (const char *)EDST(eh);
 		else
 			e = 0;
-		if (e == 0 || bcmp((char *)bp->bp_chaddr, e, 6) != 0)
+		if (e == 0 || memcmp((char *)bp->bp_chaddr, e, 6) != 0)
 			printf(" ether %s", etheraddr_string(bp->bp_chaddr));
 	}
 
@@ -162,16 +166,16 @@ bootp_print(register const u_char *cp, int length,
 	/* Decode the vendor buffer */
 	TCHECK(bp->bp_vend[0], sizeof(bp->bp_vend));
 	length -= sizeof(*bp) - sizeof(bp->bp_vend);
-	if (bcmp((char *)bp->bp_vend, (char *)vm_rfc1048,
-		 sizeof(u_int32)) == 0)
+	if (memcmp((char *)bp->bp_vend, (char *)vm_rfc1048,
+		 sizeof(u_int32_t)) == 0)
 		rfc1048_print(bp->bp_vend, length);
-	else if (bcmp((char *)bp->bp_vend, (char *)vm_cmu,
-		      sizeof(u_int32)) == 0)
+	else if (memcmp((char *)bp->bp_vend, (char *)vm_cmu,
+		      sizeof(u_int32_t)) == 0)
 		cmu_print(bp->bp_vend, length);
 	else {
-		u_int32 ul;
+		u_int32_t ul;
 
-		bcopy((char *)bp->bp_vend, (char *)&ul, sizeof(ul));
+		memcpy((char *)&ul, (char *)bp->bp_vend, sizeof(ul));
 		if (ul != 0)
 			printf("vend-#0x%x", ul);
 	}
@@ -183,7 +187,7 @@ trunc:
 }
 
 /* The first character specifies the format to print */
-static struct token tag2str[] = {
+static struct tok tag2str[] = {
 /* RFC1048 tags */
 	{ TAG_PAD,		" PAD" },
 	{ TAG_SUBNET_MASK,	"iSM" },	/* subnet mask (RFC950) */
@@ -218,7 +222,7 @@ rfc1048_print(register const u_char *bp, register int length)
 	register const char *cp;
 	register char c;
 	int first;
-	u_int32 ul;
+	u_int32_t ul;
 	u_short us;
 
 	printf(" vend-rfc1048");
@@ -227,7 +231,7 @@ rfc1048_print(register const u_char *bp, register int length)
 	ep = bp + length;
 
 	/* Step over magic cookie */
-	bp += sizeof(int32);
+	bp += sizeof(int32_t);
 
 	/* Loop while we there is a tag left in the buffer */
 	while (bp + 1 < ep) {
@@ -278,11 +282,11 @@ rfc1048_print(register const u_char *bp, register int length)
 			while (size >= sizeof(ul)) {
 				if (!first)
 					putchar(',');
-				bcopy((char *)bp, (char *)&ul, sizeof(ul));
+				memcpy((char *)&ul, (char *)bp, sizeof(ul));
 				if (c == 'i')
 					printf("%s", ipaddr_string(&ul));
 				else
-					printf("%lu", ul);
+					printf("%u", ul);
 				bp += sizeof(ul);
 				size -= sizeof(ul);
 				first = 0;
@@ -294,7 +298,7 @@ rfc1048_print(register const u_char *bp, register int length)
 			while (size >= sizeof(us)) {
 				if (!first)
 					putchar(',');
-				bcopy((char *)bp, (char *)&us, sizeof(us));
+				memcpy((char *)&us, (char *)bp, sizeof(us));
 				printf("%d", us);
 				bp += sizeof(us);
 				size -= sizeof(us);

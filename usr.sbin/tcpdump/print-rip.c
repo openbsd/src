@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-rip.c,v 1.3 1996/06/10 07:47:46 deraadt Exp $	*/
-/*	$NetBSD: print-rip.c,v 1.4 1995/06/20 23:38:49 christos Exp $	*/
+/*	$OpenBSD: print-rip.c,v 1.4 1996/07/13 11:01:29 mickey Exp $	*/
 
 /*
- * Copyright (c) 1989, 1990, 1991, 1993, 1994
+ * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +23,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-rip.c,v 1.20 94/06/14 20:18:47 leres Exp (LBL)";
+    "@(#) Header: print-rip.c,v 1.30 96/06/24 22:12:54 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -39,52 +38,81 @@ static char rcsid[] =
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#include <protocols/routed.h>
-
-#include <errno.h>
 #include <stdio.h>
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"			/* must come after interface.h */
+
+struct rip {
+	u_char rip_cmd;			/* request/response */
+	u_char rip_vers;		/* protocol version # */
+	u_short rip_zero2;		/* unused */
+};
+#define	RIPCMD_REQUEST		1	/* want info */
+#define	RIPCMD_RESPONSE		2	/* responding to request */
+#define	RIPCMD_TRACEON		3	/* turn tracing on */
+#define	RIPCMD_TRACEOFF		4	/* turn it off */
+#define	RIPCMD_POLL		5	/* want info from everybody */
+#define	RIPCMD_POLLENTRY	6	/* poll for entry */
+
+struct rip_netinfo {
+	u_short rip_family;
+	u_short rip_tag;
+	u_int32_t rip_dest;
+	u_int32_t rip_dest_mask;
+	u_int32_t rip_router;
+	u_int32_t rip_metric;		/* cost of route */
+};
 
 static void
-rip_entry_print(register const struct netinfo *ni)
+rip_entry_print(register int vers, register const struct rip_netinfo *ni)
 {
-	if (ntohs(ni->rip_family) != AF_INET) {
-		register int i;
+	register u_char *cp, *ep;
 
-		printf(" [family %d:", ntohs(ni->rip_family));
-		printf(" %04x", ni->rip_dst);
+	if (EXTRACT_SHORT(&ni->rip_family) != AF_INET) {
+
+		printf(" [family %d:", EXTRACT_SHORT(&ni->rip_family));
+		cp = (u_char *)&ni->rip_tag;
+		ep = (u_char *)&ni->rip_metric + sizeof(ni->rip_metric);
+		for (; cp < ep; cp += 2)
+			printf(" %04x", EXTRACT_SHORT(cp));
 		printf("]");
+	} else if (vers < 2) {
+		/* RFC 1058 */
+		printf(" %s", ipaddr_string(&ni->rip_dest));
 	} else {
-		struct sockaddr_in sin;
-		sin.sin_addr.s_addr = ni->rip_dst;
-		printf(" %s", ipaddr_string(&sin.sin_addr));
+		/* RFC 1723 */
+		printf(" {%s", ipaddr_string(&ni->rip_dest));
+		if (ni->rip_dest_mask)
+			printf("/%s", ipaddr_string(&ni->rip_dest_mask));
+		if (ni->rip_router)
+			printf("->%s", ipaddr_string(&ni->rip_router));
 		if (ni->rip_tag)
-			printf(" [port %d]", ni->rip_tag);
+			printf(" tag %04x", EXTRACT_SHORT(&ni->rip_tag));
+		printf("}");
 	}
-	printf("(%d)", ntohl(ni->rip_metric));
+	printf("(%d)", EXTRACT_LONG(&ni->rip_metric));
 }
 
 void
 rip_print(const u_char *dat, int length)
 {
-	register const struct rip *rp = (struct rip *)dat;
-	register const struct netinfo *ni;
-	register int amt = snapend - dat;
-	register int i = min(length, amt) -
-			 (sizeof(struct rip) - sizeof(struct netinfo));
-	int j;
-	int trunc;
+	register const struct rip *rp;
+	register const struct rip_netinfo *ni;
+	register int i, j, trunc;
 
+	i = min(length, snapend - dat) - (sizeof(*rp) - sizeof(*ni));
 	if (i < 0)
 		return;
 
+	rp = (struct rip *)dat;
 	switch (rp->rip_cmd) {
 
 	case RIPCMD_REQUEST:
 		printf(" rip-req %d", length);
 		break;
+
 	case RIPCMD_RESPONSE:
 		j = length / sizeof(*ni);
 		if (j * sizeof(*ni) != length - 4)
@@ -92,27 +120,43 @@ rip_print(const u_char *dat, int length)
 		else
 			printf(" rip-resp %d:", j);
 		trunc = ((i / sizeof(*ni)) * sizeof(*ni) != i);
-		for (ni = rp->rip_nets; (i -= sizeof(*ni)) >= 0; ++ni)
-			rip_entry_print(ni);
+		ni = (struct rip_netinfo *)(rp + 1);
+		for (; (i -= sizeof(*ni)) >= 0; ++ni)
+			rip_entry_print(rp->rip_vers, ni);
 		if (trunc)
 			printf("[|rip]");
 		break;
+
 	case RIPCMD_TRACEON:
-		printf(" rip-traceon %d: \"%s\"", length, rp->rip_tracefile);
+		printf(" rip-traceon %d: ", length);
+		(void)fn_print((const u_char *)(rp + 1), snapend);
+		putchar('\n');
 		break;
+
 	case RIPCMD_TRACEOFF:
 		printf(" rip-traceoff %d", length);
 		break;
+
 	case RIPCMD_POLL:
 		printf(" rip-poll %d", length);
 		break;
+
 	case RIPCMD_POLLENTRY:
 		printf(" rip-pollentry %d", length);
 		break;
+
 	default:
-		printf(" rip-%d ?? %d", rp->rip_cmd, length);
+		printf(" rip-#%d %d", rp->rip_cmd, length);
 		break;
 	}
-	if (rp->rip_vers != RIP_VERSION_1)
+	switch (rp->rip_vers) {
+
+	case 1:
+	case 2:
+		break;
+
+	default:
 		printf(" [vers %d]", rp->rip_vers);
+		break;
+        }
 }

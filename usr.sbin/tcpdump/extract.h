@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: extract.h,v 1.3 1996/06/10 07:47:16 deraadt Exp $	*/
-/*	$NetBSD: extract.h,v 1.2 1995/03/06 19:10:08 mycroft Exp $	*/
+/*	$OpenBSD: extract.h,v 1.4 1996/07/13 11:01:09 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,32 +20,20 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: extract.h,v 1.7 94/06/14 20:11:45 leres Exp (LBL)
+ * @(#) Header: extract.h,v 1.12 96/06/20 18:48:42 leres Exp (LBL)
  */
 
-#ifdef TCPDUMP_ALIGN
-#if BYTEORDER == LITTLE_ENDIAN
+#ifdef LBL_ALIGN
 #define EXTRACT_SHORT(p)\
 	((u_short)\
-		((u_short)*((u_char *)p+1)<<8|\
-		 (u_short)*((u_char *)p+0)<<0))
+		((u_short)*((u_char *)(p)+0)<<8|\
+		 (u_short)*((u_char *)(p)+1)<<0))
 #define EXTRACT_LONG(p)\
-		((u_int32)*((u_char *)p+3)<<24|\
-		 (u_int32)*((u_char *)p+2)<<16|\
-		 (u_int32)*((u_char *)p+1)<<8|\
-		 (u_int32)*((u_char *)p+0)<<0)
+		((u_int32_t)*((u_char *)(p)+0)<<24|\
+		 (u_int32_t)*((u_char *)(p)+1)<<16|\
+		 (u_int32_t)*((u_char *)(p)+2)<<8|\
+		 (u_int32_t)*((u_char *)(p)+3)<<0)
 #else
-#define EXTRACT_SHORT(p)\
-	((u_short)\
-		((u_short)*((u_char *)p+0)<<8|\
-		 (u_short)*((u_char *)p+1)<<0))
-#define EXTRACT_LONG(p)\
-		((u_int32)*((u_char *)p+0)<<24|\
-		 (u_int32)*((u_char *)p+1)<<16|\
-		 (u_int32)*((u_char *)p+2)<<8|\
-		 (u_int32)*((u_char *)p+3)<<0)
-#endif
-#else
-#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(u_int32 *)p))
+#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)(p)))
+#define EXTRACT_LONG(p)		(ntohl(*(u_int32_t *)(p)))
 #endif

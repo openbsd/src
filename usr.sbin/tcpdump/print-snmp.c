@@ -1,9 +1,8 @@
-/**//*	$OpenBSD: print-snmp.c,v 1.3 1996/06/10 07:47:48 deraadt Exp $	*/
-/*	$NetBSD: print-snmp.c,v 1.3 1995/03/06 19:11:30 mycroft Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.4 1996/07/13 11:01:30 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1993, 1994
- *    John Robert LoVerso.  All rights reserved.
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that the above copyright notice and this paragraph are
@@ -13,7 +12,7 @@
  * by John Robert LoVerso.
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * This implementation has been influenced by the CMU SNMP release,
  * by Steve Waldbusser.  However, this shares no code with that system.
@@ -134,7 +133,7 @@ char *ErrorStatus[] = {
 };
 #define DECODE_ErrorStatus(e) \
 	( e >= 0 && e <= sizeof(ErrorStatus)/sizeof(ErrorStatus[0]) \
-	? ErrorStatus[e] : (sprintf(errbuf, "err=%d", e), errbuf))
+	? ErrorStatus[e] : (sprintf(errbuf, "err=%u", e), errbuf))
 
 /*
  * generic-trap values in the SNMP Trap-PDU
@@ -254,11 +253,11 @@ struct obj_abrev {
  * temporary internal representation while decoding an ASN.1 data stream.
  */
 struct be {
-	u_long asnlen;
+	u_int32_t asnlen;
 	union {
 		caddr_t raw;
-		long integer;
-		u_long uns;
+		int32_t integer;
+		u_int32_t uns;
 		const u_char *str;
 	} data;
 	u_char form, class, id;		/* tag info */
@@ -416,7 +415,7 @@ asn1_parse(register const u_char *p, int len, struct be *elem)
 				break;
 
 			case INTEGER: {
-				register long data;
+				register int32_t data;
 				elem->type = BE_INT;
 				data = 0;
 
@@ -457,7 +456,7 @@ asn1_parse(register const u_char *p, int len, struct be *elem)
 			case COUNTER:
 			case GAUGE:
 			case TIMETICKS: {
-				register u_long data;
+				register u_int32_t data;
 				elem->type = BE_UNS;
 				data = 0;
 				for (i = elem->asnlen; i-- > 0; p++)
@@ -529,7 +528,7 @@ static void
 asn1_print(struct be *elem)
 {
 	u_char *p = (u_char *)elem->data.raw;
-	u_long asnlen = elem->asnlen;
+	u_int32_t asnlen = elem->asnlen;
 	int i;
 
 	switch (elem->type) {
@@ -548,7 +547,8 @@ asn1_print(struct be *elem)
 		if (!nflag && asnlen > 2) {
 			struct obj_abrev *a = &obj_abrev_list[0];
 			for (; a->node; a++) {
-				if (!bcmp(a->oid, (char *)p, strlen(a->oid))) {
+				if (!memcmp(a->oid, (char *)p,
+				    strlen(a->oid))) {
 					objp = a->node->child;
 					i -= strlen(a->oid);
 					p += strlen(a->oid);
@@ -582,11 +582,11 @@ asn1_print(struct be *elem)
 	}
 
 	case BE_INT:
-		printf("%ld", elem->data.integer);
+		printf("%d", elem->data.integer);
 		break;
 
 	case BE_UNS:
-		printf("%ld", elem->data.uns);
+		printf("%d", elem->data.uns);
 		break;
 
 	case BE_STR: {
@@ -606,7 +606,7 @@ asn1_print(struct be *elem)
 	}
 
 	case BE_SEQ:
-		printf("Seq(%d)", elem->asnlen);
+		printf("Seq(%u)", elem->asnlen);
 		break;
 
 	case BE_INETADDR: {
@@ -623,7 +623,7 @@ asn1_print(struct be *elem)
 	}
 
 	case BE_PDU:
-		printf("%s(%d)",
+		printf("%s(%u)",
 			Class[CONTEXT].Id[elem->id], elem->asnlen);
 		break;
 

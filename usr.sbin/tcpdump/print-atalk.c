@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-atalk.c,v 1.3 1996/06/10 07:47:30 deraadt Exp $	*/
-/*	$NetBSD: print-atalk.c,v 1.3 1995/03/06 19:11:04 mycroft Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.4 1996/07/13 11:01:15 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +24,7 @@
  */
 #ifndef lint
 static  char rcsid[] =
-	"@(#)Header: print-atalk.c,v 1.36 94/06/20 19:44:34 leres Exp (LBL)";
+	"@(#)Header: print-atalk.c,v 1.40 95/10/07 22:13:43 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -33,6 +32,10 @@ static  char rcsid[] =
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -46,9 +49,7 @@ static  char rcsid[] =
 #include <netinet/tcpip.h>
 
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
-#endif
 #include <string.h>
 
 #include "interface.h"
@@ -57,7 +58,7 @@ static  char rcsid[] =
 #include "extract.h"			/* must come after interface.h */
 #include "appletalk.h"
 
-static struct token type2str[] = {
+static struct tok type2str[] = {
 	{ ddpRTMP,		"rtmp" },
 	{ ddpRTMPrequest,	"rtmpReq" },
 	{ ddpECHO,		"echo" },
@@ -211,7 +212,7 @@ static void
 atp_print(register const struct atATP *ap, int length)
 {
 	char c;
-	u_int32 data;
+	u_int32_t data;
 
 	if ((const u_char *)(ap + 1) > snapend) {
 		/* Just bail if we don't have the whole chunk. */
@@ -519,7 +520,7 @@ ataddr_string(u_short atnet, u_char athost)
 			     tp->nxt; tp = tp->nxt)
 				;
 			tp->addr = i3;
-			tp->nxt = (struct hnamemem *)calloc(1, sizeof(*tp));
+			tp->nxt = newhnamemem();
 			tp->name = savestr(nambuf);
 		}
 		fclose(fp);
@@ -534,26 +535,25 @@ ataddr_string(u_short atnet, u_char athost)
 	for (tp2 = &hnametable[i & (HASHNAMESIZE-1)]; tp2->nxt; tp2 = tp2->nxt)
 		if (tp2->addr == i) {
 			tp->addr = (atnet << 8) | athost;
-			tp->nxt = (struct hnamemem *)calloc(1, sizeof(*tp));
+			tp->nxt = newhnamemem();
 			(void)sprintf(nambuf, "%s.%d", tp2->name, athost);
 			tp->name = savestr(nambuf);
 			return (tp->name);
 		}
 
 	tp->addr = (atnet << 8) | athost;
-	tp->nxt = (struct hnamemem *)calloc(1, sizeof(*tp));
+	tp->nxt = newhnamemem();
 	if (athost != 255)
 		(void)sprintf(nambuf, "%d.%d.%d",
 		    atnet >> 8, atnet & 0xff, athost);
 	else
 		(void)sprintf(nambuf, "%d.%d", atnet >> 8, atnet & 0xff);
-	i = strlen(nambuf) + 1;
-	tp->name = strcpy(malloc((u_int) i), nambuf);
+	tp->name = savestr(nambuf);
 
 	return (tp->name);
 }
 
-static struct token skt2str[] = {
+static struct tok skt2str[] = {
 	{ rtmpSkt,	"rtmp" },	/* routing table maintenance */
 	{ nbpSkt,	"nis" },	/* name info socket */
 	{ echoSkt,	"echo" },	/* AppleTalk echo protocol */

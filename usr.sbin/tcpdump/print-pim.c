@@ -1,7 +1,7 @@
-/*	$OpenBSD: print-null.c,v 1.4 1996/07/13 11:01:27 mickey Exp $	*/
+/*	$OpenBSD: print-pim.c,v 1.1 1996/07/13 11:01:28 mickey Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993, 1994, 1995, 1996
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,25 +23,17 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#)Header: print-null.c,v 1.18 96/06/03 02:53:51 leres Exp (LBL)";
+    "@(#) Header: print-pim.c,v 1.4 95/10/07 22:13:12 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-
-#if __STDC__
-struct mbuf;
-struct rtentry;
-#endif
-#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
@@ -49,69 +41,64 @@ struct rtentry;
 #include <netinet/tcpip.h>
 
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "interface.h"
 #include "addrtoname.h"
-#include "pcap.h"
 
-#define	NULL_HDRLEN 4
-
-static void
-null_print(const u_char *p, const struct ip *ip, int length)
-{
-	u_int family;
-
-	memcpy((char *)&family, (char *)p, sizeof(family));
-
-	if (nflag) {
-		/* XXX just dump the header */
-		return;
-	}
-	switch (family) {
-
-	case AF_INET:
-		printf("ip: ");
-		break;
-
-	case AF_NS:
-		printf("ns: ");
-		break;
-
-	default:
-		printf("AF %d: ", family);
-		break;
-	}
-}
 
 void
-null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+pim_print(register const u_char *bp, register int len)
 {
-	int length = h->len;
-	int caplen = h->caplen;
-	const struct ip *ip;
+    register const u_char *ep;
+    register u_char type;
 
-	ts_print(&h->ts);
+    ep = (const u_char *)snapend;
+    if (bp >= ep)
+	return;
 
-	/*
-	 * Some printers want to get back at the link level addresses,
-	 * and/or check that they're not walking off the end of the packet.
-	 * Rather than pass them all the way down, we set these globals.
-	 */
-	packetp = p;
-	snapend = p + caplen;
+    type = bp[1];
 
-	length -= NULL_HDRLEN;
+    switch (type) {
+    case 0:
+	(void)printf(" Query");
+	break;
 
-	ip = (struct ip *)(p + NULL_HDRLEN);
+    case 1:
+	(void)printf(" Register");
+	break;
 
-	if (eflag)
-		null_print(p, ip, length);
+    case 2:
+	(void)printf(" Register-Stop");
+	break;
 
-	ip_print((const u_char *)ip, length);
+    case 3:
+	(void)printf(" Join/Prune");
+	break;
 
-	if (xflag)
-		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
-	putchar('\n');
+    case 4:
+	(void)printf(" RP-reachable");
+	break;
+
+    case 5:
+	(void)printf(" Assert");
+	break;
+
+    case 6:
+	(void)printf(" Graft");
+	break;
+
+    case 7:
+	(void)printf(" Graft-ACK");
+	break;
+
+    case 8:
+	(void)printf(" Mode");
+	break;
+
+    default:
+	(void)printf(" [type %d]", type);
+	break;
+    }
 }
-

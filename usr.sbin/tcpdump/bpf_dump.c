@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: bpf_dump.c,v 1.3 1996/06/10 07:47:14 deraadt Exp $	*/
-/*	$NetBSD: bpf_dump.c,v 1.2 1995/03/06 19:09:55 mycroft Exp $	*/
+/*	$OpenBSD: bpf_dump.c,v 1.4 1996/07/13 11:01:08 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +22,7 @@
  */
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: bpf_dump.c,v 1.6 94/06/06 14:31:21 leres Exp (LBL)";
+    "@(#) Header: bpf_dump.c,v 1.8 95/10/19 20:28:00 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -47,7 +46,7 @@ bpf_dump(struct bpf_program *p, int option)
 	if (option > 2) {
 		printf("%d\n", n);
 		for (i = 0; i < n; ++insn, ++i) {
-			printf("%lu %lu %lu %lu\n", insn->code,
+			printf("%u %u %u %u\n", insn->code,
 			       insn->jt, insn->jf, insn->k);
 		}
 		return ;

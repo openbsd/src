@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-decnet.c,v 1.3 1996/06/10 07:47:32 deraadt Exp $	*/
-/*	$NetBSD: print-decnet.c,v 1.2 1995/03/06 19:11:07 mycroft Exp $	*/
+/*	$OpenBSD: print-decnet.c,v 1.4 1996/07/13 11:01:17 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,23 +23,27 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-decnet.c,v 1.15 94/06/20 19:44:38 leres Exp (LBL)";
+    "@(#) Header: print-decnet.c,v 1.19 95/10/07 22:15:12 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
-#ifdef	DECNETLIB
+
+#ifdef	HAVE_LIBDNET
 #include <netdnet/dnetdb.h>
 #endif
 
 #include <ctype.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
-#endif
+#include <string.h>
 #include <unistd.h>
 
 #include "decnet.h"
@@ -60,7 +63,7 @@ static void print_reason(int);
 static void pdata(u_char *, int);
 #endif
 
-#ifdef	DECNETLIB
+#ifdef	HAVE_LIBDNET
 extern char *dnet_htoa(struct dn_naddr *);
 #endif
 
@@ -86,7 +89,7 @@ decnet_print(register const u_char *ap, register int length,
 
 	rhlen = min(length, caplen);
 	rhlen = min(rhlen, sizeof(*rhp));
-	bcopy(&(ap[sizeof(short)]), rhp, rhlen);
+	memcpy((char *)rhp, (char *)&(ap[sizeof(short)]), rhlen);
 
 	mflags = EXTRACT_8BITS(rhp->rh_short.sh_flags);
 
@@ -100,7 +103,7 @@ decnet_print(register const u_char *ap, register int length,
 	    caplen -= padlen;
 	    rhlen = min(length, caplen);
 	    rhlen = min(rhlen, sizeof(*rhp));
-	    bcopy(&(ap[sizeof(short)]), rhp, rhlen);
+	    memcpy((char *)rhp, (char *)&(ap[sizeof(short)]), rhlen);
 	    mflags = EXTRACT_8BITS(rhp->rh_short.sh_flags);
 	}
 
@@ -211,7 +214,8 @@ print_decnet_ctlmsg(register const union routehdr *rhp, int length)
 	    vers = EXTRACT_8BITS(cmp->cm_rhello.rh_vers);
 	    eco = EXTRACT_8BITS(cmp->cm_rhello.rh_eco);
 	    ueco = EXTRACT_8BITS(cmp->cm_rhello.rh_ueco);
-	    bcopy(&(cmp->cm_rhello.rh_src), &srcea, sizeof(srcea));
+	    memcpy((char *)&srcea, (char *)&(cmp->cm_rhello.rh_src),
+		sizeof(srcea));
 	    src = EXTRACT_16BITS(srcea.dne_remote.dne_nodeaddr);
 	    info = EXTRACT_8BITS(cmp->cm_rhello.rh_info);
 	    blksize = EXTRACT_16BITS(cmp->cm_rhello.rh_blksize);
@@ -230,12 +234,14 @@ print_decnet_ctlmsg(register const union routehdr *rhp, int length)
 	    vers = EXTRACT_8BITS(cmp->cm_ehello.eh_vers);
 	    eco = EXTRACT_8BITS(cmp->cm_ehello.eh_eco);
 	    ueco = EXTRACT_8BITS(cmp->cm_ehello.eh_ueco);
-	    bcopy(&(cmp->cm_ehello.eh_src), &srcea, sizeof(srcea));
+	    memcpy((char *)&srcea, (char *)&(cmp->cm_ehello.eh_src),
+		sizeof(srcea));
 	    src = EXTRACT_16BITS(srcea.dne_remote.dne_nodeaddr);
 	    info = EXTRACT_8BITS(cmp->cm_ehello.eh_info);
 	    blksize = EXTRACT_16BITS(cmp->cm_ehello.eh_blksize);
 	    /*seed*/
-	    bcopy(&(cmp->cm_ehello.eh_router), &rtea, sizeof(rtea));
+	    memcpy((char *)&rtea, (char *)&(cmp->cm_ehello.eh_router),
+		sizeof(rtea));
 	    dst = EXTRACT_16BITS(rtea.dne_remote.dne_nodeaddr);
 	    hello = EXTRACT_16BITS(cmp->cm_ehello.eh_hello);
 	    other = EXTRACT_8BITS(cmp->cm_ehello.eh_data);
@@ -690,7 +696,7 @@ print_nsp(const u_char *nspp, int nsplen)
 	}
 }
 
-struct token reason2str[] = {
+static struct tok reason2str[] = {
 	{ UC_OBJREJECT,		"object rejected connect" },
 	{ UC_RESOURCES,		"insufficient resources" },
 	{ UC_NOSUCHNODE,	"unrecognized node name" },
@@ -730,6 +736,8 @@ dnnum_string(u_short dnaddr)
 	int node = dnaddr & NODEMASK;
 
 	str = (char *)malloc(sizeof("00.0000"));
+	if (str == NULL)
+		error("dnnum_string: malloc");
 	sprintf(str, "%d.%d", area, node);
 	return(str);
 }
@@ -737,11 +745,11 @@ dnnum_string(u_short dnaddr)
 char *
 dnname_string(u_short dnaddr)
 {
-#ifdef	DECNETLIB
+#ifdef	HAVE_LIBDNET
 	struct dn_naddr dna;
 
 	dna.a_len = sizeof(short);
-	bcopy((char *)&dnaddr, dna.a_addr, sizeof(short));
+	memcpy((char *)dna.a_addr, (char *)&dnaddr, sizeof(short));
 	return (savestr(dnet_htoa(&dna)));
 #else
 	return(dnnum_string(dnaddr));	/* punt */

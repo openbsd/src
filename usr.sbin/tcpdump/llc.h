@@ -1,5 +1,4 @@
-/**//*	$OpenBSD: llc.h,v 1.3 1996/06/10 07:47:20 deraadt Exp $	*/
-/*	$NetBSD: llc.h,v 1.2 1995/03/06 19:10:20 mycroft Exp $	*/
+/*	$OpenBSD: llc.h,v 1.4 1996/07/13 11:01:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994

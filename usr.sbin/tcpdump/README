@@ -1,9 +1,8 @@
-$OpenBSD: README,v 1.3 1996/06/10 07:47:09 deraadt Exp $
-$NetBSD: README,v 1.4 1996/05/20 00:41:01 fvdl Exp $
-@(#) Header: README,v 1.39 94/06/20 20:15:16 leres Exp (LBL)
+$OpenBSD: README,v 1.4 1996/07/13 11:01:06 mickey Exp $
+@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/README,v 1.4 1996/07/13 11:01:06 mickey Exp $ (LBL)
 
-TCPDUMP 3.0.4
-Lawrence Berkeley Laboratory
+TCPDUMP 3.2
+Lawrence Berkeley National Laboratory
 Network Research Group
 tcpdump@ee.lbl.gov
 ftp://ftp.ee.lbl.gov/tcpdump-*.tar.Z
@@ -12,31 +11,20 @@ This directory contains source code for tcpdump, a tool for network
 monitoring and data acquisition.  The original distribution is
 available via anonymous ftp to ftp.ee.lbl.gov, in tcpdump-*.tar.Z.
 
-Tcpdump now uses libcap, a system-independent interface for
-user-level packet capture.  Before building tcpdump, you must
-first retrieve and build libpcap, also from LBL, in:
+Tcpdump now uses libcap, a system-independent interface for user-level
+packet capture.  Before building tcpdump, you must first retrieve and
+build libpcap, also from LBL, in:
 
-    ftp://ftp.ee.lbl.gov/libpcap-*.tar.Z.
+	ftp://ftp.ee.lbl.gov/libpcap-*.tar.Z.
 
 Once libpcap is built (either install it or make sure it's in
 ../libpcap), you can build tcpdump using the procedure in the INSTALL
 file.
 
-Tcpdump and libpcap have been built and tested under SGI Irix 4.x & 5.2,
-SunOS 4.x, Solaris 2.3, BSD/386 v1.1, DEC/OSF v1.3 v2.0, and Ultrix 4.x.
-SunOS 3.5, 4.3BSD Reno/Tahoe and 4.4BSD are supported as well, but we
-currently do not have the resources to carry out testing in these
-environments (we suspect you'll run into problems building the most
-recent version under these systems -- please send us the patches if
-you fix any porting problems).
-
-Tcpdump has reportedly been ported to Mach 3.0 and Linux, but we have
-not received patches to integrate back into the master source tree.
-
 The program is loosely based on SMI's "etherfind" although none
 of the etherfind code remains.  It was originally written by Van
 Jacobson as part of an ongoing research project to investigate and
-improve tcp and internet gateway performance.  The parts of the 
+improve tcp and internet gateway performance.  The parts of the
 program originally taken from Sun's etherfind were later re-written
 by Steven McCanne of LBL.  To insure that there would be no vestige
 of proprietary code in tcpdump, Steve wrote these pieces from the
@@ -53,12 +41,13 @@ protocols in his book ``TCP/IP Illustrated, Volume 1''.
 If you want to learn more about tcpdump and how to interpret
 it's output, pick up this book.
 
-Problems, bugs, questions, desirable enhancements, etc., should be
-sent to the email address "tcpdump@ee.lbl.gov".  
+Problems, bugs, questions, desirable enhancements, source code
+contributions, etc., should be sent to the email address
+"tcpdump@ee.lbl.gov".
 
- - Steve McCanne (mccanne@ee.lbl.gov)
-   Craig Leres (leres@ee.lbl.gov)
-   Van Jacobson (van@ee.lbl.gov)
+ - Steve McCanne
+   Craig Leres
+   Van Jacobson
 -------------------------------------
 This directory also contains some short awk programs intended as
 examples of ways to reduce tcpdump data when you're tracking
@@ -70,10 +59,10 @@ send-ack.awk
 	the other only acks, all address information is left off and
 	we just note if the packet is a "send" or an "ack".
 
-	There is one output line per line of the original trace. 
+	There is one output line per line of the original trace.
 	Field 1 is the packet time in decimal seconds, relative
 	to the start of the conversation.  Field 2 is delta-time
-	from last packet.  Field 3 is packet type/direction. 
+	from last packet.  Field 3 is packet type/direction.
 	"Send" means data going from sender to receiver, "ack"
 	means an ack going from the receiver to the sender.  A
 	preceding "*" indicates that the data is a retransmission.
@@ -88,7 +77,7 @@ send-ack.awk
 	delta-time from the first send of the packet to the
 	current send (on duplicate packets only).  Duplicate
 	sends or acks have a number in square brackets showing
-	the number of duplicates so far. 
+	the number of duplicates so far.
 
 	Here is a short sample from near the start of an ftp:
 		3.00    0.20   send . 512
@@ -99,11 +88,11 @@ send-ack.awk
 		3.82    0.02 *  ack . 1536  (0.62) [2]
 	Three seconds into the conversation, bytes 512 through 1023
 	were sent.  200ms later they were acked.  Shortly thereafter
-	bytes 1024-1535 were sent and again acked after 200ms. 
+	bytes 1024-1535 were sent and again acked after 200ms.
 	Then, for no apparent reason, 0-511 is retransmitted, 3.8
 	seconds after its initial send (the round trip time for this
 	ftp was 1sec, +-500ms).  Since the receiver is expecting
-	1536, 1536 is re-acked when 0 arrives. 
+	1536, 1536 is re-acked when 0 arrives.
 
 packetdat.awk
 	Computes chunk summary data for an ftp (or similar
@@ -125,7 +114,7 @@ packetdat.awk
 	   4 - time of last send
 	   5 - time of first ack
 	   6 - time of last ack
-	   7 - number of times chunk was sent 
+	   7 - number of times chunk was sent
 	   8 - number of times chunk was acked
 	(all times are in decimal seconds, relative to the start
 	of the conversation.)
@@ -169,7 +158,7 @@ atime.awk
 The problem I was looking at was the bulk-data-transfer
 throughput of medium delay network paths (1-6 sec.  round trip
 time) under typical DARPA Internet conditions.  The trace of the
-ftp transfer of a large file was used as the raw data source. 
+ftp transfer of a large file was used as the raw data source.
 The method was:
 
   - On a local host (but not the Sun running tcpdump), connect to

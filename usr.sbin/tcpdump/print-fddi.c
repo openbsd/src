@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-fddi.c,v 1.3 1996/06/10 07:47:35 deraadt Exp $	*/
-/*	$NetBSD: print-fddi.c,v 1.2 1995/03/06 19:11:12 mycroft Exp $	*/
+/*	$OpenBSD: print-fddi.c,v 1.4 1996/07/13 11:01:22 mickey Exp $	*/
 
 /*
- * Copyright (c) 1991, 1992, 1993, 1994
+ * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,16 +23,20 @@
 
 #ifndef lint
 static  char rcsid[] =
-	"@(#)Header: print-fddi.c,v 1.21 94/06/10 17:01:29 mccanne Exp (LBL)";
+	"@(#)Header: print-fddi.c,v 1.30 96/06/03 03:05:50 leres Exp (LBL)";
 #endif
 
-#ifdef FDDI
+#ifdef HAVE_FDDI
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -42,19 +45,17 @@ static  char rcsid[] =
 #include <netinet/ip.h>
 
 #include <ctype.h>
-#include <errno.h>
 #include <netdb.h>
 #include <pcap.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
 #include "ethertype.h"
 
 #include "fddi.h"
-
-int	fddipad = FDDIPAD;	/* for proper alignment of header */
 
 /*
  * Some FDDI interfaces use bit-swapped addresses.
@@ -219,8 +220,8 @@ extract_fddi_addrs(const struct fddi_header *fddip, char *fsrc, char *fdst)
 			fsrc[i] = fddi_bit_swap[fddip->fddi_shost[i]];
 	}
 	else {
-		bcopy(fddip->fddi_dhost, fdst, 6);
-		bcopy(fddip->fddi_shost, fsrc, 6);
+		memcpy(fdst, (char *)fddip->fddi_dhost, 6);
+		memcpy(fsrc, (char *)fddip->fddi_shost, 6);
 	}
 }
 
@@ -345,7 +346,8 @@ out:
 
 #include "interface.h"
 void
-fddi_if_print(u_char *pcap, struct pcap_pkthdr *h, register u_char *p)
+fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
+	      register const u_char *p)
 {
 
 	error("not configured for fddi");

@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-ospf.c,v 1.3 1996/06/10 07:47:44 deraadt Exp $	*/
-/*	$NetBSD: print-ospf.c,v 1.3 1995/03/06 19:11:25 mycroft Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.4 1996/07/13 11:01:27 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +25,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-ospf.c,v 1.12 94/06/14 20:18:46 leres Exp (LBL)";
+    "@(#) Header: print-ospf.c,v 1.18 96/06/15 13:19:49 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -38,7 +37,6 @@ static char rcsid[] =
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 
-#include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
 
@@ -47,12 +45,8 @@ static char rcsid[] =
 
 #include "ospf.h"
 
-#ifndef	__GNUC__
-#define	inline
-#endif
-
 struct bits {
-    u_int32 bit;
+    u_int32_t bit;
     const char *str;
 };
 
@@ -81,26 +75,25 @@ static const char *ospf_types[OSPF_TYPE_MAX] = {
 };
 
 static inline void
-ospf_print_seqage(register u_int32 seq, register time_t us)
+ospf_print_seqage(register u_int32_t seq, register time_t us)
 {
     register time_t sec = us % 60;
     register time_t mins = (us / 60) % 60;
     register time_t hour = us/3600;
 
-    printf(" S %X age ",
-	   seq);
+    printf(" S %X age ", seq);
     if (hour) {
-	printf("%d:%02d:%02d",
-	       hour,
-	       mins,
-	       sec);
+	printf("%u:%02u:%02u",
+	       (u_int32_t)hour,
+	       (u_int32_t)mins,
+	       (u_int32_t)sec);
     } else if (mins) {
-	printf("%d:%02d",
-	       mins,
-	       sec);
+	printf("%u:%02u",
+	       (u_int32_t)mins,
+	       (u_int32_t)sec);
     } else {
-	printf("%d",
-	       sec);
+	printf("%u",
+	       (u_int32_t)sec);
     }
 }
 
@@ -146,14 +139,12 @@ ospf_print_lshdr(register const struct lsa_hdr *lshp, const caddr_t end)
     printf(" {");						/* } (ctags) */
 
     if (!lshp->ls_type || lshp->ls_type >= LS_TYPE_MAX) {
-	printf(" ??LS type %d?? }",				/* { (ctags) */
-	       lshp->ls_type);
+	printf(" ??LS type %d?? }", lshp->ls_type);		/* { (ctags) */
 	return 1;
     }
 
     ospf_print_bits(ospf_option_bits, lshp->ls_options);
-    ospf_print_seqage(ntohl(lshp->ls_seq),
-			  ntohs(lshp->ls_age));
+    ospf_print_seqage(ntohl(lshp->ls_seq), ntohs(lshp->ls_age));
 
     LS_PRINT(lshp, lshp->ls_type);
 
@@ -174,7 +165,7 @@ ospf_print_lsa(register const struct lsa *lsap, const caddr_t end)
     const struct in_addr *ap;
     const struct aslametric *almp;
     const struct mcla *mcp;
-    const u_int32 *lp;
+    const u_int32_t *lp;
     int j, k;
 
     if (ospf_print_lshdr(&lsap->ls_hdr, end)) {
@@ -235,7 +226,7 @@ ospf_print_lsa(register const struct lsa *lsap, const caddr_t end)
 	    tosp = (struct tos_metric *) ((sizeof rlp->link_tos0metric) + (caddr_t) rlp);
 	    for (k = 0; k < rlp->link_toscount; k++, tosp++) {
 		printf(" tos %d metric %d",
-		       ntohs(tosp->tos_type),
+		       tosp->tos_type,
 		       ntohs(tosp->tos_metric));
 	    }
 	    printf(" }");					/* { (ctags) */
@@ -264,7 +255,7 @@ ospf_print_lsa(register const struct lsa *lsap, const caddr_t end)
 	for (lp = lsap->lsa_un.un_sla.sla_tosmetric;
 	     (caddr_t) (lp + 1) <= ls_end;
 	     lp++) {
-	    u_int32 ul = ntohl(*lp);
+	    u_int32_t ul = ntohl(*lp);
 
 	    printf(" tos %d metric %d",
 		   (ul & SLA_MASK_TOS) >> SLA_SHIFT_TOS,
@@ -279,7 +270,7 @@ ospf_print_lsa(register const struct lsa *lsap, const caddr_t end)
 	for (almp = lsap->lsa_un.un_asla.asla_metric;
 	     (caddr_t) (almp + 1) <= ls_end;
 	     almp++) {
-	    u_int32 ul = ntohl(almp->asla_tosmetric);
+	    u_int32_t ul = ntohl(almp->asla_tosmetric);
 
 	    printf(" type %d tos %d metric %d",
 		   (ul & ASLA_FLAG_EXTERNAL) ? 2 : 1,
@@ -313,8 +304,8 @@ ospf_print_lsa(register const struct lsa *lsap, const caddr_t end)
 		break;
 
 	    default:
-		printf(" ??VertexType %d??",
-		       ntohl(mcp->mcla_vtype));
+		printf(" ??VertexType %u??",
+		       (u_int32_t)ntohl(mcp->mcla_vtype));
 		break;
 	    }
 	}
@@ -445,11 +436,11 @@ ospf_print(register const u_char *bp, register int length,
 	    }
 	    if (vflag) {
 		ospf_print_bits(ospf_option_bits, op->ospf_hello.hello_options);
-		printf(" mask %s int %d pri %d dead %d",
+		printf(" mask %s int %d pri %d dead %u",
 		       ipaddr_string(&op->ospf_hello.hello_mask),
 		       ntohs(op->ospf_hello.hello_helloint),
 		       op->ospf_hello.hello_priority,
-		       ntohl(op->ospf_hello.hello_deadint));
+		       (u_int32_t)ntohl(op->ospf_hello.hello_deadint));
 	    }
 
 	    if ((caddr_t) (&op->ospf_hello.hello_dr + 1) > end) {
@@ -503,8 +494,7 @@ ospf_print(register const u_char *bp, register int length,
 		       sep);
 		sep = '/';
 	    }
-	    printf(" S %X",
-		   ntohl(op->ospf_db.db_seq));
+	    printf(" S %X", (u_int32_t)ntohl(op->ospf_db.db_seq));
 
 	    if (vflag) {
 		/* Print all the LS adv's */
@@ -520,16 +510,15 @@ ospf_print(register const u_char *bp, register int length,
 	case OSPF_TYPE_LSR:
 	    if (vflag) {
 		for (lsrp = op->ospf_lsr; (caddr_t) (lsrp+1) <= end; lsrp++) {
-		    int32 type;
+		    int32_t type;
 
 		    if ((caddr_t) (lsrp + 1) > end) {
 			break;
 		    }
 
 		    printf(" {");				/* } (ctags) */
-		    if (!(type = lsrp->ls_type) || type >= LS_TYPE_MAX) {
-			printf(" ??LinkStateType %d }",		/* { (ctags) */
-			       type);
+		    if (!(type = ntohl(lsrp->ls_type)) || type >= LS_TYPE_MAX) {
+			printf(" ??LinkStateType %d }", type);	/* { (ctags) */
 			printf(" }");				/* { (ctags) */
 			break;
 		    }

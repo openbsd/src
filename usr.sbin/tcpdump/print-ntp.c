@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-ntp.c,v 1.3 1996/06/10 07:47:43 deraadt Exp $	*/
-/*	$NetBSD: print-ntp.c,v 1.2 1995/03/06 19:11:22 mycroft Exp $	*/
+/*	$OpenBSD: print-ntp.c,v 1.4 1996/07/13 11:01:26 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +27,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-ntp.c,v 1.14 94/06/14 20:18:46 leres Exp (LBL)";
+    "@(#) Header: print-ntp.c,v 1.20 96/06/23 02:11:46 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -36,6 +35,10 @@ static char rcsid[] =
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -72,7 +75,7 @@ ntp_print(register const u_char *cp, int length)
 	if (length != sizeof(struct ntpdata))
 		(void)printf(" [len=%d]", length);
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	TCHECK(bp->status, sizeof(bp->status));
@@ -159,6 +162,9 @@ ntp_print(register const u_char *cp, int length)
 	switch (bp->stratum) {
 
 	case UNSPECIFIED:
+		printf("(unspec)");
+		break;
+
 	case PRIM_REF:
 		strncpy(rclock, (char *)&(bp->refid), 4);
 		rclock[4] = '\0';
@@ -222,9 +228,9 @@ p_sfix(register const struct s_fixedpt *sfp)
 static void
 p_ntp_time(register const struct l_fixedpt *lfp)
 {
-	register int32 i;
-	register u_int32 uf;
-	register u_int32 f;
+	register int32_t i;
+	register u_int32_t uf;
+	register u_int32_t f;
 	register float ff;
 
 	i = ntohl(lfp->int_part);
@@ -234,7 +240,7 @@ p_ntp_time(register const struct l_fixedpt *lfp)
 		ff += FMAXINT;
 	ff = ff / FMAXINT;	/* shift radix point by 32 bits */
 	f = ff * 1000000000.0;	/* treat fraction as parts per billion */
-	printf("%lu.%09d", i, f);
+	printf("%u.%09d", i, f);
 }
 
 /* Prints time difference between *lfp and *olfp */
@@ -242,10 +248,10 @@ static void
 p_ntp_delta(register const struct l_fixedpt *olfp,
 	    register const struct l_fixedpt *lfp)
 {
-	register int32 i;
-	register u_int32 uf;
-	register u_int32 ouf;
-	register u_int32 f;
+	register int32_t i;
+	register u_int32_t uf;
+	register u_int32_t ouf;
+	register u_int32_t f;
 	register float ff;
 	int signbit;
 

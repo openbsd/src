@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: decnet.h,v 1.3 1996/06/10 07:47:15 deraadt Exp $	*/
-/*	$NetBSD: decnet.h,v 1.2 1995/03/06 19:09:58 mycroft Exp $	*/
+/*	$OpenBSD: decnet.h,v 1.4 1996/07/13 11:01:08 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1994
+ * Copyright (c) 1992, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: decnet.h,v 1.3 94/06/14 20:11:44 leres Exp (LBL)
+ * @(#) Header: decnet.h,v 1.5 96/06/23 02:11:44 leres Exp (LBL)
  */
 
 typedef unsigned char byte[1];		/* single byte field */
@@ -109,7 +108,7 @@ union routehdr
  */
 #define RMF_CTLMASK	017		/* mask for message type */
 #define RMF_CTLMSG	01		/* control message indicator */
-#define RMF_INIT	01		/* initialisation message */
+#define RMF_INIT	01		/* initialization message */
 #define RMF_VER		03		/* verification message */
 #define RMF_TEST	05		/* hello and test message */
 #define RMF_L1ROUT	07		/* level 1 routing message */
@@ -145,7 +144,7 @@ union routehdr
 /*
  * Define control message formats.
  */
-struct initmsgIII			/* phase III initialisation message */
+struct initmsgIII			/* phase III initialization message */
   {
     byte	inIII_flags;		/* route flags */
     word	inIII_src;		/* source node address */
@@ -157,7 +156,7 @@ struct initmsgIII			/* phase III initialisation message */
     byte	inIII_rsvd;		/* reserved image field */
   };
 
-struct initmsg				/* initialisation message */
+struct initmsg				/* initialization message */
   {
     byte	in_flags;		/* route flags */
     word	in_src;			/* source node address */
@@ -232,7 +231,7 @@ struct ehellomsg			/* endnode hello message */
 
 union controlmsg
   {
-    struct initmsg	cm_init;	/* initialisation message */
+    struct initmsg	cm_init;	/* initialization message */
     struct verifmsg	cm_ver;		/* verification message */
     struct testmsg	cm_test;	/* hello and test message */
     struct l1rout	cm_l1rou;	/* level 1 routing message */
@@ -340,9 +339,9 @@ union controlmsg
 #define UC_OBJREJECT 0			/* object rejected connect */
 #define UC_USERDISCONNECT 0		/* user disconnect */
 #define UC_RESOURCES 1			/* insufficient resources (local or remote) */
-#define UC_NOSUCHNODE 2			/* unrecognised node name */
+#define UC_NOSUCHNODE 2			/* unrecognized node name */
 #define UC_REMOTESHUT 3			/* remote node shutting down */
-#define UC_NOSUCHOBJ 4			/* unrecognised object */
+#define UC_NOSUCHOBJ 4			/* unrecognized object */
 #define UC_INVOBJFORMAT 5		/* invalid object name format */
 #define UC_OBJTOOBUSY 6			/* object too busy */
 #define UC_NETWORKABORT 8		/* network abort */
@@ -457,10 +456,10 @@ struct dcmsg				/* disconnect confirm message */
 
 /*
  * Like the macros in extract.h, except that since DECNET is a little-endian
- * protocol, the BYTEORDER sense is reversed.
+ * protocol, the BYTE_ORDER sense is reversed.
  */
 #define	EXTRACT_8BITS(p)	(*(p))
-#if BYTEORDER == BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 #define EXTRACT_16BITS(p)\
 	((u_short)\
 		(*((u_char *)p+1)<<8|\

@@ -1,5 +1,4 @@
-/**//*	$OpenBSD: ethertype.h,v 1.3 1996/06/10 07:47:15 deraadt Exp $	*/
-/*	$NetBSD: ethertype.h,v 1.2 1995/03/06 19:10:06 mycroft Exp $	*/
+/*	$OpenBSD: ethertype.h,v 1.4 1996/07/13 11:01:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994

@@ -1,7 +1,7 @@
-/*	$OpenBSD: print-ether.c,v 1.4 1996/07/13 11:01:21 mickey Exp $	*/
+/*	$OpenBSD: print-atm.c,v 1.1 1996/07/13 11:01:15 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-ether.c,v 1.39 96/06/03 03:05:27 leres Exp (LBL)";
+    "@(#) Header: print-atm.c,v 1.4 95/10/07 22:13:49 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -51,54 +51,44 @@ struct rtentry;
 
 #include "interface.h"
 #include "addrtoname.h"
-#include "ethertype.h"
-
-const u_char *packetp;
-const u_char *snapend;
-
-static inline void
-ether_print(register const u_char *bp, int length)
-{
-	register const struct ether_header *ep;
-
-	ep = (const struct ether_header *)bp;
-	if (qflag)
-		(void)printf("%s %s %d: ",
-			     etheraddr_string(ESRC(ep)),
-			     etheraddr_string(EDST(ep)),
-			     length);
-	else
-		(void)printf("%s %s %s %d: ",
-			     etheraddr_string(ESRC(ep)),
-			     etheraddr_string(EDST(ep)),
-			     etherproto_string(ep->ether_type),
-			     length);
-}
 
 /*
  * This is the top level routine of the printer.  'p' is the points
- * to the ether header of the packet, 'tvp' is the timestamp,
+ * to the LLC/SNAP header of the packet, 'tvp' is the timestamp,
  * 'length' is the length of the packet off the wire, and 'caplen'
  * is the number of bytes actually captured.
  */
 void
-ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	int caplen = h->caplen;
 	int length = h->len;
-	struct ether_header *ep;
-	u_short ether_type;
-	extern u_short extracted_ethertype;
+	u_short ethertype;
 
 	ts_print(&h->ts);
 
-	if (caplen < sizeof(struct ether_header)) {
-		printf("[|ether]");
+	if (caplen < 8) {
+		printf("[|atm]");
 		goto out;
 	}
-
+	if (p[0] != 0xaa || p[1] != 0xaa || p[2] != 0x03) {
+		/*XXX assume 802.6 MAC header from fore driver */
+		if (eflag)
+			printf("%04x%04x %04x%04x ",
+			       p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3],
+			       p[4] << 24 | p[5] << 16 | p[6] << 8 | p[7],
+			       p[8] << 24 | p[9] << 16 | p[10] << 8 | p[11],
+			       p[12] << 24 | p[13] << 16 | p[14] << 8 | p[15]);
+		p += 20;
+		length -= 20;
+		caplen -= 20;
+	}
+	ethertype = p[6] << 8 | p[7];
 	if (eflag)
-		ether_print(p, length);
+		printf("%02x %02x %02x %02x-%02x-%02x %04x: ",
+		       p[0], p[1], p[2], /* dsap/ssap/ctrl */
+		       p[3], p[4], p[5], /* manufacturer's code */
+		       ethertype);
 
 	/*
 	 * Some printers want to get back at the ethernet addresses,
@@ -108,34 +98,48 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	packetp = p;
 	snapend = p + caplen;
 
-	length -= sizeof(struct ether_header);
-	caplen -= sizeof(struct ether_header);
-	ep = (struct ether_header *)p;
-	p += sizeof(struct ether_header);
+	length -= 8;
+	caplen -= 8;
+	p += 8;
 
-	ether_type = ntohs(ep->ether_type);
+	switch (ethertype) {
 
-	/*
-	 * Is it (gag) an 802.3 encapsulation?
-	 */
-	extracted_ethertype = 0;
-	if (ether_type < ETHERMTU) {
-		/* Try to print the LLC-layer header & higher layers */
-		if (llc_print(p, length, caplen, ESRC(ep), EDST(ep)) == 0) {
-			/* ether_type not known, print raw packet */
-			if (!eflag)
-				ether_print((u_char *)ep, length);
-			if (extracted_ethertype) {
-				printf("(LLC %s) ",
-			       etherproto_string(htons(extracted_ethertype)));
-			}
-			if (!xflag && !qflag)
-				default_print(p, caplen);
-		}
-	} else if (ether_encap_print(ether_type, p, length, caplen) == 0) {
+	case ETHERTYPE_IP:
+		ip_print(p, length);
+		break;
+
+		/*XXX this probably isn't right */
+	case ETHERTYPE_ARP:
+	case ETHERTYPE_REVARP:
+		arp_print(p, length, caplen);
+		break;
+#ifdef notyet
+	case ETHERTYPE_DN:
+		decnet_print(p, length, caplen);
+		break;
+
+	case ETHERTYPE_ATALK:
+		if (vflag)
+			fputs("et1 ", stdout);
+		atalk_print(p, length);
+		break;
+
+	case ETHERTYPE_AARP:
+		aarp_print(p, length);
+		break;
+
+	case ETHERTYPE_LAT:
+	case ETHERTYPE_MOPRC:
+	case ETHERTYPE_MOPDL:
+		/* default_print for now */
+#endif
+	default:
 		/* ether_type not known, print raw packet */
 		if (!eflag)
-			ether_print((u_char *)ep, length + sizeof(*ep));
+			printf("%02x %02x %02x %02x-%02x-%02x %04x: ",
+			       p[0], p[1], p[2], /* dsap/ssap/ctrl */
+			       p[3], p[4], p[5], /* manufacturer's code */
+			       ethertype);
 		if (!xflag && !qflag)
 			default_print(p, caplen);
 	}
@@ -144,55 +148,3 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
  out:
 	putchar('\n');
 }
-
-/*
- * Prints the packet encapsulated in an Ethernet data segment
- * (or an equivalent encapsulation), given the Ethernet type code.
- *
- * Returns non-zero if it can do so, zero if the ethertype is unknown.
- *
- * Stuffs the ether type into a global for the benefit of lower layers
- * that might want to know what it is.
- */
-
-u_short	extracted_ethertype;
-
-int
-ether_encap_print(u_short ethertype, const u_char *p, int length, int caplen)
-{
-	extracted_ethertype = ethertype;
-
-	switch (ethertype) {
-
-	case ETHERTYPE_IP:
-		ip_print(p, length);
-		return (1);
-
-	case ETHERTYPE_ARP:
-	case ETHERTYPE_REVARP:
-		arp_print(p, length, caplen);
-		return (1);
-
-	case ETHERTYPE_DN:
-		decnet_print(p, length, caplen);
-		return (1);
-
-	case ETHERTYPE_ATALK:
-		if (vflag)
-			fputs("et1 ", stdout);
-		atalk_print(p, length);
-		return (1);
-
-	case ETHERTYPE_AARP:
-		aarp_print(p, length);
-		return (1);
-
-	case ETHERTYPE_LAT:
-	case ETHERTYPE_MOPRC:
-	case ETHERTYPE_MOPDL:
-		/* default_print for now */
-	default:
-		return (0);
-	}
-}
-

@@ -1,9 +1,6 @@
-.\"	$OpenBSD: tcpdump.8,v 1.3 1996/06/10 07:47:56 deraadt Exp $
-.\"	$NetBSD: tcpdump.8,v 1.3 1995/03/06 19:11:46 mycroft Exp $
+.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.4 1996/07/13 11:01:34 mickey Exp $ (LBL)
 .\"
-.\" @(#) Header: tcpdump.1,v 1.45 94/06/20 18:54:27 leres Exp (LBL)
-.\"
-.\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994
+.\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
 .\" All rights reserved.
 .\"
@@ -23,7 +20,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH TCPDUMP 1  "20 Jun 1994"
+.TH TCPDUMP 1  "22 June 1996"
 .SH NAME
 tcpdump \- dump traffic on a network
 .SH SYNOPSIS
@@ -54,34 +51,61 @@ tcpdump \- dump traffic on a network
 .br
 .ti +8
 [
+.B \-T
+.I type
+]
+[
 .B \-w
 .I file
 ]
+[
 .I expression
+]
 .br
 .ad
 .SH DESCRIPTION
 .LP
 \fITcpdump\fP prints out the headers of packets on a network interface
 that match the boolean \fIexpression\fP.
-.B Under SunOS:
-You must be root to invoke \fItcpdump\fP or it must be installed
-setuid to root.
+.B Under SunOS with nit or bpf:
+To run
+.I tcpdump
+you must have read access to
+.I /dev/net
+or 
+.IR /dev/bpf* .
+.B Under Solaris with dlpi:
+You must have read access to the network pseudo device, e.g.
+.IR /dev/le .
+.B Under HP-UX with dlpi:
+You must be root or it must be installed setuid to root.
+.B Under IRIX with snoop:
+You must be root or it must be installed setuid to root.
 .B Under Ultrix:
-Any user can invoke \fItcpdump\fP once the super-user has enabled
+Once the super-user has enabled
 promiscuous-mode operation using
-.IR pfconfig (8).
+.IR pfconfig (8),
+any user may run
+.BR tcpdump .
 .B Under BSD:
-Access is controlled by the permissions on
-.I /dev/bpf0,
-etc.
+You must have read access to
+.IR /dev/bpf* .
 .SH OPTIONS
 .TP
 .B \-c
 Exit after receiving \fIcount\fP packets.
 .TP
 .B \-d
-Dump the compiled packet-matching code to standard output and stop.
+Dump the compiled packet-matching code in a human readable form to
+standard output and stop.
+.TP
+.B \-dd
+Dump packet-matching code as a
+.B C
+program fragment.
+.TP
+.B \-ddd
+Dump packet-matching code as a decimal numbers (preceded with a count).
 .TP
 .B \-e
 Print the link-level header on each dump line.
@@ -124,8 +148,8 @@ if you suspect a bug in the optimizer.
 .B \-p
 \fIDon't\fP put the interface
 into promiscuous mode.  Note that the interface might be in promiscuous
-for some other reason; hence, `-p' cannot be used as an abbreviation for
-`ether host {localhost} or broadcast'.
+mode for some other reason; hence, `-p' cannot be used as an abbreviation for
+`ether host {local-hw-addr} or ether broadcast'.
 .TP
 .B \-q
 Quick (quiet?) output.  Print less protocol information so output
@@ -137,7 +161,7 @@ Standard input is used if \fIfile\fR is ``-''.
 .TP
 .B \-s
 Snarf \fIsnaplen\fP bytes of data from each packet rather than the
-default of 68 (with NIT, the minimum is actually 96).
+default of 68 (with SunOS's NIT, the minimum is actually 96).
 68 bytes is adequate for IP, ICMP, TCP
 and UDP but may truncate protocol information from name server and NFS
 packets (see below).  Packets truncated because of a limited snapshot
@@ -148,6 +172,16 @@ the amount of time it takes to process packets and, effectively,
 decreases the amount of packet buffering.  This may cause packets to be
 lost.  You should limit \fIsnaplen\fP to the smallest number that will
 capture the protocol information you're interested in.
+.TP
+.B \-T
+Force packets selected by "\fIexpression\fP" to be interpreted the
+specified \fItype\fR. Currently known types are
+\fBrpc\fR (Remote Procedure Call),
+\fBrtp\fR (Real-Time Applications protocol),
+\fBrtcp\fR (Real-Time Applications control protocol),
+\fBvat\fR (Visual Audio Tool),
+and
+\fBwb\fR (distributed White Board).
 .TP
 .B \-S
 Print absolute, rather than relative, TCP sequence numbers.
@@ -200,7 +234,7 @@ qualifier,
 .B host
 is assumed.
 .IP \fIdir\fP
-qualifiers specify a particular tranfer direction to and/or from
+qualifiers specify a particular transfer direction to and/or from
 .I id.
 Possible directions are
 .BR src ,
@@ -213,6 +247,11 @@ E.g., `src foo', `dst net 128.3', `src or dst port ftp-data'.  If
 there is no dir qualifier,
 .B "src or dst"
 is assumed.
+For `null' link layers (i.e. point to point protocols such as slip) the
+.B inbound
+and
+.B outbound
+qualifiers can be used to specify a desired direction.
 .IP \fIproto\fP
 qualifiers restrict the match to a particular protocol.  Possible
 protos are:
@@ -306,7 +345,8 @@ expression is
 which can be used with either names or numbers for \fIhost / ehost\fP.)
 .IP "\fBdst net \fInet\fR"
 True if the IP destination address of the packet has a network
-number of \fInet\fP, which may be either an address or a name.
+number of \fInet\fP. \fINet\fP may be either a name from /etc/networks
+or a network number (see \fInetworks(4)\fP for details).
 .IP "\fBsrc net \fInet\fR"
 True if the IP source address of the packet has a network
 number of \fInet\fP.
@@ -336,7 +376,7 @@ Any of the above port expressions can be prepended with the keywords,
 \fBtcp src port \fIport\fR
 .fi
 .in -.5i
-which matches only tcp packets.
+which matches only tcp packets whose source port is \fIport\fP.
 .IP "\fBless \fIlength\fR"
 True if the packet has a length less than or equal to \fIlength\fP.
 This is equivalent to:
@@ -383,7 +423,7 @@ and must be escaped via backslash (\\).
 [In the case of FDDI (e.g., `\fBfddi protocol arp\fR'), the
 protocol identification comes from the 802.2 Logical Link Control
 (LLC) header, which is usually layered on top of the FDDI header.
-\fItcpdump\fP assumes, when filtering on the protocol identifier,
+\fITcpdump\fP assumes, when filtering on the protocol identifier,
 that all FDDI packets include an LLC header, and that the LLC header
 is in so-called SNAP format.]
 .IP "\fBdecnet src \fIhost\fR"
@@ -680,7 +720,7 @@ CSAM RTSG 0806  64: arp reply csam is-at CSAM\fP
 .fi
 .RE
 For the first packet this says the ethernet source address is RTSG, the
-destination is the broadcast address, the type field
+destination is the ethernet broadcast address, the type field
 contained hex 0806 (type ETHER_ARP) and the total length was 64 bytes.
 .HD
 TCP Packets
@@ -860,7 +900,7 @@ RA, \fInot\fP set) and `|' (truncated message, TC, set).  If the
 is printed.
 .LP
 Note that name server requests and responses tend to be large and the
-default \fIsnaplen\fP of 96 bytes may not capture enough of the packet
+default \fIsnaplen\fP of 68 bytes may not capture enough of the packet
 to print.  Use the \fB\-s\fP flag to increase the snaplen if you
 need to seriously investigate name server traffic.  `\fB\-s 128\fP'
 has worked well for me.
@@ -937,7 +977,7 @@ NFS traffic.
 NFS reply packets do not explicitly identify the RPC operation.  Instead,
 \fItcpdump\fP keeps track of ``recent'' requests, and matches them to the
 replies using the transaction ID.  If a reply does not closely follow the
-corresponding request, it might not be parseble.
+corresponding request, it might not be parsable.
 .HD
 KIP Appletalk (DDP in UDP)
 .LP
@@ -1110,25 +1150,20 @@ is the current clock time in the form
 \fIhh:mm:ss.frac\fP
 .fi
 .RE
-and is as accurate as the kernel's clock (e.g., \(+-10ms on a Sun-3).
+and is as accurate as the kernel's clock.
 The timestamp reflects the time the kernel first saw the packet.  No attempt
 is made to account for the time lag between when the
 ethernet interface removed the packet from the wire and when the kernel
-serviced the `new packet' interrupt (of course,
-with Sun's lousy clock resolution this time lag is negligible.)
+serviced the `new packet' interrupt.
 .SH "SEE ALSO"
-traffic(1C), nit(4P), bpf(4)
+traffic(1C), nit(4P), bpf(4), pcap(3)
 .SH AUTHORS
-Van Jacobson (van@helios.ee.lbl.gov),
-Craig Leres (leres@helios.ee.lbl.gov) and
-Steven McCanne (mccanne@helios.ee.lbl.gov), all of
+Van Jacobson (van@ee.lbl.gov),
+Craig Leres (leres@ee.lbl.gov) and
+Steven McCanne (mccanne@ee.lbl.gov), all of the
 Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
 .SH BUGS
-The clock resolution on most Suns is pathetic (20ms).
-If you want to use the timestamp to generate some of the important
-performance distributions (like packet interarrival time) it's best
-to watch something that generates packets slowly (like an Arpanet
-gateway or a MicroVax running VMS).
+Please send bug reports to tcpdump@ee.lbl.gov or libpcap@ee.lbl.gov.
 .LP
 NIT doesn't let you watch your own outbound traffic, BPF will.
 We recommend that you use the latter.

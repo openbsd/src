@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-llc.c,v 1.3 1996/06/10 07:47:41 deraadt Exp $	*/
-/*	$NetBSD: print-llc.c,v 1.2 1995/03/06 19:11:19 mycroft Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.4 1996/07/13 11:01:25 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +28,7 @@
 
 #ifndef lint
 static  char rcsid[] =
-	"@(#)Header: print-llc.c,v 1.13 94/06/14 20:18:45 leres Exp";
+	"@(#)Header: print-llc.c,v 1.17 95/09/26 02:03:40 leres Exp";
 #endif
 
 #include <sys/param.h>
@@ -39,10 +38,10 @@ static  char rcsid[] =
 #include <netinet/in.h>
 
 #include <ctype.h>
-#include <errno.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -50,7 +49,7 @@ static  char rcsid[] =
 
 #include "llc.h"
 
-static struct token cmd2str[] = {
+static struct tok cmd2str[] = {
 	{ LLC_UI,	"ui" },
 	{ LLC_TEST,	"test" },
 	{ LLC_XID,	"xid" },
@@ -80,7 +79,7 @@ llc_print(const u_char *p, int length, int caplen,
 	}
 
 	/* Watch out for possible alignment problems */
-	bcopy((char *)p, (char *)&llc, min(caplen, sizeof(llc)));
+	memcpy((char *)&llc, (char *)p, min(caplen, sizeof(llc)));
 
 	if (llc.ssap == LLCSAP_GLOBAL && llc.dsap == LLCSAP_GLOBAL) {
 		ipx_print(p, length);

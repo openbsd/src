@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-ipx.c,v 1.3 1996/06/10 07:47:39 deraadt Exp $	*/
-/*	$NetBSD: print-ipx.c,v 1.2 1995/03/06 19:11:16 mycroft Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.4 1996/07/13 11:01:24 mickey Exp $	*/
 
 /*
- * Copyright (c) 1994
+ * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,10 +27,11 @@
  */
 #ifndef lint
 static  char rcsid[] =
-    "@(#)Header: print-ipx.c,v 1.6 94/06/20 19:44:38 leres Exp";
+    "@(#)Header: print-ipx.c,v 1.10 96/05/16 12:46:02 leres Exp";
 #endif
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -56,7 +56,7 @@ static  char rcsid[] =
 #include "extract.h"
 
 
-static const char *ipxaddr_string(u_int32 net, const u_char *node);
+static const char *ipxaddr_string(u_int32_t net, const u_char *node);
 void ipx_decode(const struct ipxHdr *ipx, const u_char *datap, int length);
 void ipx_sap_print(const u_short *ipx, int length);
 void ipx_rip_print(const u_short *ipx, int length);
@@ -93,11 +93,11 @@ ipx_print(const u_char *p, int length)
 }
 
 static const char *
-ipxaddr_string(u_int32 net, const u_char *node)
+ipxaddr_string(u_int32_t net, const u_char *node)
 {
     static char line[256];
 
-    sprintf(line, "%lu.%02x:%02x:%02x:%02x:%02x:%02x",
+    sprintf(line, "%u.%02x:%02x:%02x:%02x:%02x:%02x",
 	    net, node[0], node[1], node[2], node[3], node[4], node[5]);
 
     return line;
@@ -106,7 +106,10 @@ ipxaddr_string(u_int32 net, const u_char *node)
 void
 ipx_decode(const struct ipxHdr *ipx, const u_char *datap, int length)
 {
-    switch (EXTRACT_SHORT(&ipx->dstSkt)) {
+    register u_short dstSkt;
+
+    dstSkt = EXTRACT_SHORT(&ipx->dstSkt);
+    switch (dstSkt) {
       case IPX_SKT_NCP:
 	(void)printf(" ipx-ncp %d", length);
 	break;
@@ -123,7 +126,7 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, int length)
 	(void)printf(" ipx-diags %d", length);
 	break;
       default:
-	(void)printf(" ipx-#%x %d", ipx->dstSkt, length);
+	(void)printf(" ipx-#%x %d", dstSkt, length);
 	break;
     }
 }
@@ -195,13 +198,13 @@ ipx_rip_print(const u_short *ipx, int length)
       case 1:
 	(void)printf("ipx-rip-req");
 	if (length > 0)
-	    (void)printf(" %lu/%d.%d", EXTRACT_LONG(&ipx[0]),
+	    (void)printf(" %u/%d.%d", EXTRACT_LONG(&ipx[0]),
 			 EXTRACT_SHORT(&ipx[2]), EXTRACT_SHORT(&ipx[3]));
 	break;
       case 2:
 	(void)printf("ipx-rip-resp");
 	for (i = 0; i < 50 && length > 0; i++) {
-	    (void)printf(" %lu/%d.%d", EXTRACT_LONG(&ipx[0]),
+	    (void)printf(" %u/%d.%d", EXTRACT_LONG(&ipx[0]),
 			 EXTRACT_SHORT(&ipx[2]), EXTRACT_SHORT(&ipx[3]));
 
 	    ipx += 4;

@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-udp.c,v 1.3 1996/06/10 07:47:52 deraadt Exp $	*/
-/*	$NetBSD: print-udp.c,v 1.4 1996/05/20 00:41:16 fvdl Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.4 1996/07/13 11:01:32 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +23,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-udp.c,v 1.37 94/06/10 17:01:42 mccanne Exp (LBL)";
+    "@(#) Header: print-udp.c,v 1.51 96/06/23 02:26:12 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -43,22 +42,64 @@ static char rcsid[] =
 #include <arpa/nameser.h>
 #include <arpa/tftp.h>
 
-#ifdef SOLARIS
-#include <tiuser.h>
-#endif
 #include <rpc/rpc.h>
 
-#include <errno.h>
 #include <stdio.h>
 
 #include "interface.h"
 #include "addrtoname.h"
 #include "appletalk.h"
 
-#include "nfs.h"
+#include "nfsv2.h"
 #include "bootp.h"
 
-extern int packettype;
+struct rtcphdr {
+	u_short rh_flags;	/* T:2 P:1 CNT:5 PT:8 */
+	u_short rh_len;		/* length of message (in bytes) */
+	u_int rh_ssrc;		/* synchronization src id */
+};
+
+typedef struct {
+	u_int upper;		/* more significant 32 bits */
+	u_int lower;		/* less significant 32 bits */
+} ntp64;
+
+/*
+ * Sender report.
+ */
+struct rtcp_sr {
+	ntp64 sr_ntp;		/* 64-bit ntp timestamp */
+	u_int sr_ts;		/* reference media timestamp */
+	u_int sr_np;		/* no. packets sent */
+	u_int sr_nb;		/* no. bytes sent */
+};
+
+/*
+ * Receiver report.
+ * Time stamps are middle 32-bits of ntp timestamp.
+ */
+struct rtcp_rr {
+	u_int rr_srcid;	/* sender being reported */
+	u_int rr_nr;		/* no. packets received */
+	u_int rr_np;		/* no. packets predicted */
+	u_int rr_dv;		/* jitter (delay variance) */
+	u_int rr_lsr;		/* orig. ts from last rr from this src  */
+	u_int rr_dlsr;		/* time from recpt of last rr to xmit time */
+};
+
+/*XXX*/
+#define RTCP_PT_SR	0
+#define RTCP_PT_RR	1
+#define RTCP_PT_SDES	2
+#define 	RTCP_SDES_CNAME	1
+#define 	RTCP_SDES_NAME	2
+#define 	RTCP_SDES_EMAIL	3
+#define 	RTCP_SDES_PHONE	4
+#define 	RTCP_SDES_LOC	5
+#define 	RTCP_SDES_TOOL	6
+#define 	RTCP_SDES_TXT	7
+#define RTCP_PT_BYE	3
+#define RTCP_PT_APP	4
 
 static void
 vat_print(const void *hdr, int len, register const struct udphdr *up)
@@ -67,15 +108,15 @@ vat_print(const void *hdr, int len, register const struct udphdr *up)
 	u_int ts = *(u_short *)hdr;
 	if ((ts & 0xf060) != 0) {
 		/* probably vt */
-		(void)printf(" udp/vt %d %d / %d",
-			     ntohs(up->uh_ulen) - sizeof(*up),
+		(void)printf(" udp/vt %u %d / %d",
+			     (u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up)),
 			     ts & 0x3ff, ts >> 10);
 	} else {
 		/* probably vat */
-		u_int i0 = ((u_int *)hdr)[0];
-		u_int i1 = ((u_int *)hdr)[1];
-		printf(" udp/vat %d c%d %u%s",
-			ntohs(up->uh_ulen) - sizeof(*up) - 8,
+		u_int i0 = ntohl(((u_int *)hdr)[0]);
+		u_int i1 = ntohl(((u_int *)hdr)[1]);
+		printf(" udp/vat %u c%d %u%s",
+			(u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up) - 8),
 			i0 & 0xffff,
 			i1, i0 & 0x800000? "*" : "");
 		/* audio format */
@@ -89,22 +130,40 @@ vat_print(const void *hdr, int len, register const struct udphdr *up)
 static void
 rtp_print(const void *hdr, int len, register const struct udphdr *up)
 {
-	/* rtp v1 video */
+	/* rtp v1 or v2 */
 	u_int *ip = (u_int *)hdr;
-	u_int i0 = ((u_int *)hdr)[0];
-	u_int i1 = ((u_int *)hdr)[1];
-	u_int hasopt = i0 & 0x800000;
-	u_int contype = (i0 >> 16) & 0x3f;
-	printf(" udp/rtp %d c%d %s%s %d",
-		ntohs(up->uh_ulen) - sizeof(*up) - 8,
+	u_int hasopt, contype, hasmarker;
+	u_int i0 = ntohl(((u_int *)hdr)[0]);
+	u_int i1 = ntohl(((u_int *)hdr)[1]);
+	int dlen = ntohs(up->uh_ulen) - sizeof(*up) - 8;
+	const char* ptype;
+	ip += 2;
+	len >>= 2;
+	len -= 2;
+	if ((i0 >> 30) == 1) {
+		/* rtp v1 */
+		hasopt = i0 & 0x800000;
+		contype = (i0 >> 16) & 0x3f;
+		hasmarker = i0 & 0x400000;
+		ptype = "rtpv1";
+	} else { /*XXX*/
+		/* rtp v2 */
+		hasopt = i0 & 0x20000000;
+		contype = (i0 >> 16) & 0x7f;
+		hasmarker = i0 & 0x800000;
+		dlen -= 4;
+		ptype = "rtp";
+		ip += 1;
+		len -= 1;
+	}
+	printf(" udp/%s %d c%d %s%s %d",
+		ptype,
+		dlen,
 		contype,
 		hasopt? "+" : "",
-		i0 & 0x400000? "*" : "",
+		hasmarker? "*" : "",
 		i0 & 0xffff);
-	if (contype == 31) {
-		ip += 2;
-		len >>= 2;
-		len -= 2;
+	if (vflag) {
 		if (hasopt) {
 			u_int i2, optlen;
 			do {
@@ -117,19 +176,84 @@ rtp_print(const void *hdr, int len, register const struct udphdr *up)
 				ip += optlen;
 			} while ((int)i2 >= 0);
 		}
-		printf(" 0x%04x", ip[0] >> 16);
-	}
-	if (vflag)
+		if (contype == 0x1f)
+			printf(" 0x%04x", ip[0] >> 16);
 		printf(" %u", i1);
+	}
+}
+
+static const u_char*
+rtcp_print(const u_char *hdr)
+{
+	/* rtp v2 control (rtcp) */
+	struct rtcp_rr* rr = 0;
+	struct rtcp_sr* sr;
+	struct rtcphdr* rh = (struct rtcphdr*)hdr;
+	int len = (ntohs(rh->rh_len) + 1) * 4;
+	u_short flags = ntohs(rh->rh_flags);
+	int cnt = (flags >> 8) & 0x1f;
+	double ts, dts, jitter;
+	if (vflag)
+		printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+	switch (flags & 0xff) {
+	case RTCP_PT_SR:
+		sr = (struct rtcp_sr*)(rh + 1);
+		printf(" sr");
+		if (len != cnt * sizeof(*rr) + sizeof(*sr) + sizeof(*rh))
+			printf(" [%d]", len);
+		ts = (double)((u_int32_t)ntohl(sr->sr_ts)) / 65536.;
+		printf(" @%.2f %up %ub", ts, (u_int32_t)ntohl(sr->sr_np),
+		       (u_int32_t)ntohl(sr->sr_nb));
+		rr = (struct rtcp_rr*)(sr + 1);
+		break;
+	case RTCP_PT_RR:
+		printf(" rr");
+		if (len != cnt * sizeof(*rr) + sizeof(*rh))
+			printf(" [%d]", len);
+		rr = (struct rtcp_rr*)(rh + 1);
+		break;
+	case RTCP_PT_SDES:
+		printf(" sdes %d", len);
+		cnt = 0;
+		break;
+	case RTCP_PT_BYE:
+		printf(" bye %d", len);
+		cnt = 0;
+		break;
+	default:
+		printf(" type-0x%x %d", flags & 0xff, len);
+		cnt = 0;
+		break;
+	}
+	if (cnt > 1)
+		printf(" c%d", cnt);
+	while (--cnt >= 0) {
+		if ((u_char*)(rr + 1) > snapend) {
+			printf(" [|rtcp]");
+			return (snapend);
+		}
+		if (vflag)
+			printf(" %u", (u_int32_t)ntohl(rr->rr_srcid));
+		ts = (double)((u_int32_t)ntohl(rr->rr_lsr)) / 65536.;
+		dts = (double)((u_int32_t)ntohl(rr->rr_dlsr)) / 65536.;
+		jitter = (double)((u_int32_t)ntohl(rr->rr_dv)) / 65536.;
+		printf(" %ur %ue %.2fj @%.2f+%.2f",
+		    (u_int32_t)ntohl(rr->rr_nr),
+		    (u_int32_t)ntohl(rr->rr_np),
+		    jitter, ts, dts);
+	}
+	return (hdr + len);
 }
 
 /* XXX probably should use getservbyname() and cache answers */
 #define TFTP_PORT 69		/*XXX*/
+#define KERBEROS_PORT 88	/*XXX*/
 #define SUNRPC_PORT 111		/*XXX*/
 #define SNMP_PORT 161		/*XXX*/
 #define NTP_PORT 123		/*XXX*/
 #define SNMPTRAP_PORT 162	/*XXX*/
 #define RIP_PORT 520		/*XXX*/
+#define KERBEROS_SEC_PORT 750	/*XXX*/
 
 void
 udp_print(register const u_char *bp, int length, register const u_char *bp2)
@@ -160,7 +284,8 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 		enum msg_type direction;
 
 		switch (packettype) {
-		case 1:
+
+		case PT_VAT:
 			(void)printf("%s.%s > %s.%s:",
 				ipaddr_string(&ip->ip_src),
 				udpport_string(sport),
@@ -168,7 +293,8 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 				udpport_string(dport));
 			vat_print((void *)(up + 1), length, up);
 			break;
-		case 2:
+
+		case PT_WB:
 			(void)printf("%s.%s > %s.%s:",
 				ipaddr_string(&ip->ip_src),
 				udpport_string(sport),
@@ -176,7 +302,8 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 				udpport_string(dport));
 			wb_print((void *)(up + 1), length);
 			break;
-		case 3:
+
+		case PT_RPC:
 			rp = (struct rpc_msg *)(up + 1);
 			direction = (enum msg_type)ntohl(rp->rm_direction);
 			if (direction == CALL)
@@ -186,13 +313,24 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 				nfsreply_print((u_char *)rp, length,
 				    (u_char *)ip);			/*XXX*/
 			break;
-		case 4:
+
+		case PT_RTP:
 			(void)printf("%s.%s > %s.%s:",
 				ipaddr_string(&ip->ip_src),
 				udpport_string(sport),
 				ipaddr_string(&ip->ip_dst),
 				udpport_string(dport));
 			rtp_print((void *)(up + 1), length, up);
+			break;
+
+		case PT_RTCP:
+			(void)printf("%s.%s > %s.%s:",
+				ipaddr_string(&ip->ip_src),
+				udpport_string(sport),
+				ipaddr_string(&ip->ip_dst),
+				udpport_string(dport));
+			while (cp < snapend)
+				cp = rtcp_print(cp);
 			break;
 		}
 		return;
@@ -239,12 +377,14 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 		else if (ISPORT(IPPORT_BOOTPC) || ISPORT(IPPORT_BOOTPS))
 			bootp_print((const u_char *)(up + 1), length,
 			    sport, dport);
-		else if (dport == RIP_PORT)
+		else if (ISPORT(RIP_PORT))
 			rip_print((const u_char *)(up + 1), length);
 		else if (ISPORT(SNMP_PORT) || ISPORT(SNMPTRAP_PORT))
 			snmp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(NTP_PORT))
 			ntp_print((const u_char *)(up + 1), length);
+		else if (ISPORT(KERBEROS_PORT) || ISPORT(KERBEROS_SEC_PORT))
+			krb_print((const void *)(up + 1), length);
 		else if (dport == 3456)
 			vat_print((const void *)(up + 1), length, up);
 		/*
@@ -253,8 +393,9 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 		else if (dport == 4567)
 			wb_print((const void *)(up + 1), length);
 		else
-			(void)printf(" udp %d", ulen - sizeof(*up));
+			(void)printf(" udp %u",
+			    (u_int32_t)(ulen - sizeof(*up)));
 #undef ISPORT
 	} else
-		(void)printf(" udp %d", ulen - sizeof(*up));
+		(void)printf(" udp %u", (u_int32_t)(ulen - sizeof(*up)));
 }

@@ -1,5 +1,4 @@
-/**//*	$OpenBSD: ipx.h,v 1.3 1996/06/10 07:47:19 deraadt Exp $	*/
-/*	$NetBSD: ipx.h,v 1.2 1995/03/06 19:10:19 mycroft Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.4 1996/07/13 11:01:10 mickey Exp $	*/
 
 /*
  * IPX protocol formats 

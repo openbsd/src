@@ -1,12 +1,106 @@
-$OpenBSD: CHANGES,v 1.3 1996/06/10 07:47:07 deraadt Exp $
-$NetBSD: CHANGES,v 1.3 1996/05/20 00:41:00 fvdl Exp $
-@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/CHANGES,v 1.3 1996/06/10 07:47:07 deraadt Exp $ (LBL)
+$OpenBSD: CHANGES,v 1.4 1996/07/13 11:01:05 mickey Exp $
+@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/CHANGES,v 1.4 1996/07/13 11:01:05 mickey Exp $ (LBL)
 
-v3.0.4 Fri Feb 16 13:35:21 PST 1996
+v3.2 Sun Jun 23 02:28:10 PDT 1996
 
-- New release purely to raise the version number to adjust for the
-  mistake the linux contingency made. There are other changes between
-  this and v3.0.2.
+- Print new icmp unreachable codes as suggested by Martin Fredriksson
+  (martin@msp.se). Also print code value when unknown for icmp redirect
+  and time exceeded.
+
+- Fix an alignment endian bug in getname(). Thanks to John Hawkinson.
+
+- Define "new" domain record types if not found in arpa/nameserv.h.
+  Resulted from a suggestion from John Hawkinson (jhawk@mit.edu). Also
+  fixed an endian bug when printing mx record and added some new record
+  types.
+
+- Added RIP V2 support. Thanks to Jeffrey Honig (jch@bsdi.com)
+
+- Added T/TCP options printing. As suggested by Richard Stevens
+  (rstevens@noao.edu)
+
+- Use autoconf to detect architectures that can't handle misaligned
+  accesses.
+
+v3.1 Thu Jun 13 20:59:32 PDT 1996
+
+- Changed u_int32/int32 to u_int32_t/int32_t to be consistent with bsd
+  and bind (as suggested by Charles Hannum).
+
+- Port to GNU autoconf.
+
+- Add support for printing DVMRP and PIM traffic thanks to
+  Havard Eidnes (Havard.Eidnes@runit.sintef.no).
+
+- Fix AppleTalk, IPX and DECnet byte order problems due to wrong endian
+  define being referenced. Reported by Terry Kennedy.
+
+- Minor fixes to the man page thanks to Mark Andrews.
+
+- Endian fixes to RTP and vat packet dumpers, thanks to Bruce Mah
+  (bmah@cs.berkeley.edu).
+
+- Added support for new dns types, thanks to Rainer Orth.
+
+- Fixed tftp_print() to print the block number for ACKs.
+
+- Document -dd and -ddd. Resulted from a bug report from Charlie Slater
+  (cslater@imatek.com).
+
+- Check return status from malloc/calloc/etc.
+
+- Check return status from pcap_loop() so we can print an error and
+  exit with a bad status if there were problems.
+
+- Bail if ip option length is <= 0. Resulted from a bug report from
+  Darren Reed (darrenr@vitruvius.arbld.unimelb.edu.au).
+
+- Print out a little more information for sun rpc packets.
+
+- Add suport for Kerberos 4 thanks to John Hawkinson (jhawk@mit.edu).
+
+- Fixed the Fix EXTRACT_SHORT() and EXTRACT_LONG() macros (which were
+  wrong on little endian machines).
+
+- Fixed alignment bug in ipx_decode(). Thanks to Matt Crawford
+  (crawdad@fnal.gov).
+
+- Fix ntp_print() to not print garbage when the stratum is
+  "unspecified." Thanks to Deus Ex Machina (root@belle.bork.com).
+
+- Rewrote tcp options printer code to check for truncation. Added
+  selective acknowledgment case.
+
+- Fixed an endian bug in the ospf printer. Thanks to Jeffrey C Honig
+  (jch@bsdi.com)
+
+- Fix rip printer to handle 4.4 BSD sockaddr struct which only uses one
+  octet for the sa_family member. Thanks to Yoshitaka Tokugawa
+  (toku@dit.co.jp)
+
+- Don't checksum ip header if we don't have all of it. Thanks to John
+  Hawkinson (jhawk@mit.edu).
+ 
+- Print out hostnames if possible in egp printer. Thanks to Jeffrey
+  Honig (jhc@bsdi.com)
+
+
+v3.1a1 Wed May  3 19:21:11 PDT 1995
+
+- Include time.h when SVR4 is defined to avoid problems under Solaris
+  2.3.
+
+- Fix etheraddr_string() in the ETHER_SERVICE to return the saved
+  strings, not the local buffer. Thanks to Stefan Petri
+  (petri@ibr.cs.tu-bs.de).
+
+- Detect when pcap raises the snaplen (e.g. with snit). Print a warning
+  that the selected value was not used. Thanks to Pascal Hennequin
+  (Pascal.Hennequin@hugo.int-evry.fr).
+
+- Add a truncated packet test to print-nfs.c. Thanks to Pascal Hennequin.
+
+- BYTEORDER -> BYTE_ORDER Thanks to Terry Kennedy (terry@spcvxa.spc.edu).
 
 v3.0.3 Sun Oct  1 18:35:00 GMT 1995
 
@@ -39,6 +133,9 @@ v3.0.1 Wed Aug 31 22:42:26 PDT 1994
 - Fix problems with gcc2 vs. malloc() and read() prototypes under SunOS 4.
 
 v3.0 Mon Jun 20 19:23:27 PDT 1994
+
+- Added support for printing tcp option timestamps thanks to
+  Mark Andrews (mandrews@alias.com).
 
 - Reorganize protocol dumpers to take const pointers to packets so they
   never change the contents (i.e., they used to do endian conversions
@@ -111,7 +208,7 @@ v2.2 Fri May 22 17:19:41 PDT 1992
 - Many improvements to filter code optimizer.
 
 - Added 'multicast' keyword and extended the 'broadcast' keyword can now be
-  so that protocol qualitfications are allowed. For example, "ip broadcast"
+  so that protocol qualifications are allowed. For example, "ip broadcast"
   and "ether multicast" are valid filters.
 
 - Added support for monitoring the loopback interface (i.e. 'tcpdump -i lo').

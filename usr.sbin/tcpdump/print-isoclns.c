@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-isoclns.c,v 1.3 1996/06/10 07:47:40 deraadt Exp $	*/
-/*	$NetBSD: print-isoclns.c,v 1.2 1995/03/06 19:11:17 mycroft Exp $	*/
+/*	$OpenBSD: print-isoclns.c,v 1.4 1996/07/13 11:01:24 mickey Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,13 +27,17 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-isoclns.c,v 1.9 94/06/14 20:18:44 leres Exp (LBL)";
+    "@(#) Header: print-isoclns.c,v 1.11 95/10/19 20:27:45 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -288,7 +291,7 @@ osi_cksum(register const u_char *p, register int len,
 	  const u_char *toff, u_char *cksum, u_char *off)
 {
 	int x, y, f = (len - ((toff - p) + 1));
-	long c0 = 0, c1 = 0;
+	int32_t c0 = 0, c1 = 0;
 
 	if ((cksum[0] = off[0]) == 0 && (cksum[1] = off[1]) == 0)
 		return 0;

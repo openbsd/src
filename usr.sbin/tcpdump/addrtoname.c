@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: addrtoname.c,v 1.3 1996/06/10 07:47:10 deraadt Exp $	*/
-/*	$NetBSD: addrtoname.c,v 1.4 1995/04/24 13:27:39 cgd Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.4 1996/07/13 11:01:06 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,13 +25,17 @@
  */
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: addrtoname.c,v 1.37 94/06/16 00:42:28 mccanne Exp (LBL)";
+    "@(#) Header: addrtoname.c,v 1.48 96/06/19 00:50:15 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -47,20 +50,15 @@ static char rcsid[] =
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef __STDC__
 #include <stdlib.h>
-#endif
 #include <unistd.h>
 
 #include "interface.h"
 #include "addrtoname.h"
 #include "llc.h"
 
-static SIGRET nohostname(int);
-#ifdef ETHER_SERVICE
-struct ether_addr;
-extern int ether_ntohost(char *, struct ether_addr *);
-#endif
+/* Forwards */
+static RETSIGTYPE nohostname(int);
 
 /*
  * hash tables for whatever-to-name translations
@@ -69,7 +67,7 @@ extern int ether_ntohost(char *, struct ether_addr *);
 #define HASHNAMESIZE 4096
 
 struct hnamemem {
-	u_int32 addr;
+	u_int32_t addr;
 	char *name;
 	struct hnamemem *nxt;
 };
@@ -94,7 +92,7 @@ struct enamemem enametable[HASHNAMESIZE];
 struct enamemem nsaptable[HASHNAMESIZE];
 
 struct protoidmem {
-	u_long p_oui;
+	u_int32_t p_oui;
 	u_short p_proto;
 	char *p_name;
 	struct protoidmem *p_nxt;
@@ -106,7 +104,7 @@ struct protoidmem protoidtable[HASHNAMESIZE];
  * A faster replacement for inet_ntoa().
  */
 char *
-intoa(u_int32 addr)
+intoa(u_int32_t addr)
 {
 	register char *cp;
 	register u_int byte;
@@ -135,9 +133,9 @@ intoa(u_int32 addr)
 	return cp + 1;
 }
 
-static u_int32 f_netmask;
-static u_int32 f_localnet;
-static u_int32 netmask;
+static u_int32_t f_netmask;
+static u_int32_t f_localnet;
+static u_int32_t netmask;
 
 /*
  * "getname" is written in this atrocious way to make sure we don't
@@ -147,7 +145,7 @@ static u_int32 netmask;
 
 jmp_buf getname_env;
 
-static SIGRET
+static RETSIGTYPE
 nohostname(int signo)
 {
 	longjmp(getname_env, 1);
@@ -161,12 +159,11 @@ char *
 getname(const u_char *ap)
 {
 	register struct hostent *hp;
-	register char *cp;
-	u_int32 addr;
+	u_int32_t addr;
 	static struct hnamemem *p;		/* static for longjmp() */
 
 #ifndef TCPDUMP_ALIGN
-	addr = *(const u_int32 *)ap;
+	addr = *(const u_int32_t *)ap;
 #else
 	/*
 	 * Deal with alignment.
@@ -174,30 +171,30 @@ getname(const u_char *ap)
 	switch ((long)ap & 3) {
 
 	case 0:
-		addr = *(u_int32 *)ap;
+		addr = *(u_int32_t *)ap;
 		break;
 
 	case 2:
 #if BYTE_ORDER == LITTLE_ENDIAN
-		addr = ((u_int32)*(u_short *)(ap + 2) << 16) |
-			(u_int32)*(u_short *)ap;
+		addr = ((u_int32_t)*(u_short *)(ap + 2) << 16) |
+			(u_int32_t)*(u_short *)ap;
 #else
-		addr = ((u_int32)*(u_short *)ap << 16) |
-			(u_int32)*(u_short *)(ap + 2);
+		addr = ((u_int32_t)*(u_short *)ap << 16) |
+			(u_int32_t)*(u_short *)(ap + 2);
 #endif
 		break;
 
 	default:
 #if BYTE_ORDER == LITTLE_ENDIAN
-		addr = ((u_int32)ap[0] << 24) |
-			((u_int32)ap[1] << 16) |
-			((u_int32)ap[2] << 8) |
-			(u_int32)ap[3];
+		addr = ((u_int32_t)ap[3] << 24) |
+			((u_int32_t)ap[2] << 16) |
+			((u_int32_t)ap[1] << 8) |
+			(u_int32_t)ap[0];
 #else
-		addr = ((u_int32)ap[3] << 24) |
-			((u_int32)ap[2] << 16) |
-			((u_int32)ap[1] << 8) |
-			(u_int32)ap[0];
+		addr = ((u_int32_t)ap[0] << 24) |
+			((u_int32_t)ap[1] << 16) |
+			((u_int32_t)ap[2] << 8) |
+			(u_int32_t)ap[3];
 #endif
 		break;
 	}
@@ -208,7 +205,7 @@ getname(const u_char *ap)
 			return (p->name);
 	}
 	p->addr = addr;
-	p->nxt = (struct hnamemem *)calloc(1, sizeof (*p));
+	p->nxt = newhnamemem();
 
 	/*
 	 * Only print names when:
@@ -234,21 +231,20 @@ getname(const u_char *ap)
 					/* Remove domain qualifications */
 					dotp = strchr(p->name, '.');
 					if (dotp)
-						*dotp = 0;
+						*dotp = '\0';
 				}
 				return (p->name);
 			}
 		}
 	}
-	cp = intoa(addr);
-	p->name = savestr(cp);
+	p->name = savestr(intoa(addr));
 	return (p->name);
 }
 
 static char hex[] = "0123456789abcdef";
 
 
-/* Find the hash node that corresponds the ether address 'ep'. */
+/* Find the hash node that corresponds the ether address 'ep' */
 
 static inline struct enamemem *
 lookup_emem(const u_char *ep)
@@ -272,11 +268,13 @@ lookup_emem(const u_char *ep)
 	tp->e_addr1 = j;
 	tp->e_addr2 = k;
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
+	if (tp->e_nxt == NULL)
+		error("lookup_emem: calloc");
 
 	return tp;
 }
 
-/* Find the hash node that corresponds the NSAP 'nsap'. */
+/* Find the hash node that corresponds the NSAP 'nsap' */
 
 static inline struct enamemem *
 lookup_nsap(register const u_char *nsap)
@@ -300,7 +298,7 @@ lookup_nsap(register const u_char *nsap)
 		    tp->e_addr1 == j &&
 		    tp->e_addr2 == k &&
 		    tp->e_nsap[0] == nlen &&
-		    bcmp((char *)&(nsap[1]),
+		    memcmp((char *)&(nsap[1]),
 			(char *)&(tp->e_nsap[1]), nlen) == 0)
 			return tp;
 		else
@@ -308,9 +306,13 @@ lookup_nsap(register const u_char *nsap)
 	tp->e_addr0 = i;
 	tp->e_addr1 = j;
 	tp->e_addr2 = k;
-	tp->e_nsap = (u_char *) calloc(1, nlen + 1);
-	bcopy(nsap, tp->e_nsap, nlen + 1);
+	tp->e_nsap = (u_char *)malloc(nlen + 1);
+	if (tp->e_nsap == NULL)
+		error("lookup_nsap: malloc");
+	memcpy(tp->e_nsap, nsap, nlen + 1);
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
+	if (tp->e_nxt == NULL)
+		error("lookup_nsap: calloc");
 
 	return tp;
 }
@@ -337,6 +339,8 @@ lookup_protoid(const u_char *pi)
 	tp->p_oui = i;
 	tp->p_proto = j;
 	tp->p_nxt = (struct protoidmem *)calloc(1, sizeof(*tp));
+	if (tp->p_nxt == NULL)
+		error("lookup_protoid: calloc");
 
 	return tp;
 }
@@ -347,11 +351,12 @@ etheraddr_string(register const u_char *ep)
 	register u_int i, j;
 	register char *cp;
 	register struct enamemem *tp;
+	char buf[sizeof("00:00:00:00:00:00")];
 
 	tp = lookup_emem(ep);
 	if (tp->e_name)
 		return (tp->e_name);
-#ifdef ETHER_SERVICE
+#ifdef HAVE_ETHER_NTOHOST
 	if (!nflag) {
 		char buf[128];
 		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
@@ -360,8 +365,7 @@ etheraddr_string(register const u_char *ep)
 		}
 	}
 #endif
-	tp->e_name = cp = (char *)malloc(sizeof("00:00:00:00:00:00"));
-
+	cp = buf;
 	if ((j = *ep >> 4) != 0)
 		*cp++ = hex[j];
 	*cp++ = hex[*ep++ & 0xf];
@@ -372,6 +376,7 @@ etheraddr_string(register const u_char *ep)
 		*cp++ = hex[*ep++ & 0xf];
 	}
 	*cp = '\0';
+	tp->e_name = savestr(buf);
 	return (tp->e_name);
 }
 
@@ -380,22 +385,24 @@ etherproto_string(u_short port)
 {
 	register char *cp;
 	register struct hnamemem *tp;
-	register u_long i = port;
+	register u_int32_t i = port;
+	char buf[sizeof("0000")];
 
 	for (tp = &eprototable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
 		if (tp->addr == i)
 			return (tp->name);
 
-	tp->name = cp = (char *)malloc(sizeof("0000"));
 	tp->addr = i;
-	tp->nxt = (struct hnamemem *)calloc(1, sizeof (*tp));
+	tp->nxt = newhnamemem();
 
+	cp = buf;
 	NTOHS(port);
 	*cp++ = hex[port >> 12 & 0xf];
 	*cp++ = hex[port >> 8 & 0xf];
 	*cp++ = hex[port >> 4 & 0xf];
 	*cp++ = hex[port & 0xf];
 	*cp++ = '\0';
+	tp->name = savestr(buf);
 	return (tp->name);
 }
 
@@ -405,13 +412,13 @@ protoid_string(register const u_char *pi)
 	register u_int i, j;
 	register char *cp;
 	register struct protoidmem *tp;
+	char buf[sizeof("00:00:00:00:00")];
 
 	tp = lookup_protoid(pi);
 	if (tp->p_name)
 		return tp->p_name;
 
-	tp->p_name = cp = (char *)malloc(sizeof("00:00:00:00:00"));
-
+	cp = buf;
 	if ((j = *pi >> 4) != 0)
 		*cp++ = hex[j];
 	*cp++ = hex[*pi++ & 0xf];
@@ -422,6 +429,7 @@ protoid_string(register const u_char *pi)
 		*cp++ = hex[*pi++ & 0xf];
 	}
 	*cp = '\0';
+	tp->p_name = savestr(buf);
 	return (tp->p_name);
 }
 
@@ -430,21 +438,23 @@ llcsap_string(u_char sap)
 {
 	register char *cp;
 	register struct hnamemem *tp;
-	register u_long i = sap;
+	register u_int32_t i = sap;
+	char buf[sizeof("sap 00")];
 
 	for (tp = &llcsaptable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
 		if (tp->addr == i)
 			return (tp->name);
 
-	tp->name = cp = (char *)malloc(sizeof("sap 00"));
 	tp->addr = i;
-	tp->nxt = (struct hnamemem *)calloc(1, sizeof (*tp));
+	tp->nxt = newhnamemem();
 
+	cp = buf;
 	(void)strcpy(cp, "sap ");
 	cp += strlen(cp);
 	*cp++ = hex[sap >> 4 & 0xf];
 	*cp++ = hex[sap & 0xf];
 	*cp++ = '\0';
+	tp->name = savestr(buf);
 	return (tp->name);
 }
 
@@ -460,6 +470,8 @@ isonsap_string(const u_char *nsap)
 		return tp->e_name;
 
 	tp->e_name = cp = (char *)malloc(nlen * 2 + 2);
+	if (cp == NULL)
+		error("isonsap_string: malloc");
 
 	nsap++;
 	*cp++ = '/';
@@ -475,17 +487,18 @@ char *
 tcpport_string(u_short port)
 {
 	register struct hnamemem *tp;
-	register u_long i = port;
+	register u_int32_t i = port;
+	char buf[sizeof("00000")];
 
 	for (tp = &tporttable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
 		if (tp->addr == i)
 			return (tp->name);
 
-	tp->name = (char *)malloc(sizeof("00000"));
 	tp->addr = i;
-	tp->nxt = (struct hnamemem *)calloc(1, sizeof (*tp));
+	tp->nxt = newhnamemem();
 
-	(void)sprintf(tp->name, "%d", i);
+	(void)sprintf(buf, "%u", i);
+	tp->name = savestr(buf);
 	return (tp->name);
 }
 
@@ -493,18 +506,18 @@ char *
 udpport_string(register u_short port)
 {
 	register struct hnamemem *tp;
-	register u_long i = port;
+	register u_int32_t i = port;
+	char buf[sizeof("00000")];
 
 	for (tp = &uporttable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
 		if (tp->addr == i)
 			return (tp->name);
 
-	tp->name = (char *)malloc(sizeof("00000"));
 	tp->addr = i;
-	tp->nxt = (struct hnamemem *)calloc(1, sizeof(*tp));
+	tp->nxt = newhnamemem();
 
-	(void)sprintf(tp->name, "%d", i);
-
+	(void)sprintf(buf, "%u", i);
+	tp->name = savestr(buf);
 	return (tp->name);
 }
 
@@ -514,6 +527,7 @@ init_servarray(void)
 	struct servent *sv;
 	register struct hnamemem *table;
 	register int i;
+	char buf[sizeof("0000000000")];
 
 	while ((sv = getservent()) != NULL) {
 		int port = ntohs(sv->s_port);
@@ -528,14 +542,12 @@ init_servarray(void)
 		while (table->name)
 			table = table->nxt;
 		if (nflag) {
-			char buf[32];
-
 			(void)sprintf(buf, "%d", port);
 			table->name = savestr(buf);
 		} else
 			table->name = savestr(sv->s_name);
 		table->addr = port;
-		table->nxt = (struct hnamemem *)calloc(1, sizeof(*table));
+		table->nxt = newhnamemem();
 	}
 	endservent();
 }
@@ -559,7 +571,7 @@ init_eprotoarray(void)
 			table = table->nxt;
 		table->name = eproto_db[i].s;
 		table->addr = ntohs(eproto_db[i].p);
-		table->nxt = (struct hnamemem *)calloc(1, sizeof(*table));
+		table->nxt = newhnamemem();
 	}
 }
 
@@ -579,7 +591,8 @@ init_protoidarray(void)
 	protoid[2] = 0;
 	for (i = 0; eproto_db[i].s; i++) {
 		u_short etype = htons(eproto_db[i].p);
-		bcopy((char *)&etype, (char *)&protoid[3], 2);
+
+		memcpy((char *)&protoid[3], (char *)&etype, 2);
 		tp = lookup_protoid(protoid);
 		tp->p_name = savestr(eproto_db[i].s);
 	}
@@ -612,7 +625,9 @@ init_etherarray(void)
 {
 	register struct etherlist *el;
 	register struct enamemem *tp;
-#ifndef ETHER_SERVICE
+#ifdef HAVE_ETHER_NTOHOST
+	char name[256];
+#else
 	register struct pcap_etherent *ep;
 	register FILE *fp;
 
@@ -629,24 +644,23 @@ init_etherarray(void)
 
 	/* Hardwire some ethernet names */
 	for (el = etherlist; el->name != NULL; ++el) {
-#ifdef ETHER_SERVICE
-                /* Use yp/nis version of name if available */
-		char wrk[256];
-                if (ether_ntohost(wrk, (struct ether_addr *)el->addr) == 0) {
-			tp = lookup_emem(el->addr);
-                        tp->e_name = savestr(wrk);
-		}
-#else
-		/* install if not already present */
 		tp = lookup_emem(el->addr);
-		if (tp->e_name == NULL)
-			tp->e_name = el->name;
-#endif
+		/* Don't override existing name */
+		if (tp->e_name != NULL)
+			continue;
 
+#ifdef HAVE_ETHER_NTOHOST
+                /* Use yp/nis version of name if available */
+                if (ether_ntohost(name, (struct ether_addr *)el->addr) == 0) {
+                        tp->e_name = savestr(name);
+			continue;
+		}
+#endif
+		tp->e_name = el->name;
 	}
 }
 
-static struct token llcsap_db[] = {
+static struct tok llcsap_db[] = {
 	{ LLCSAP_NULL,		"null" },
 	{ LLCSAP_8021B_I,	"802.1b-gsap" },
 	{ LLCSAP_8021B_G,	"802.1b-isap" },
@@ -673,7 +687,7 @@ init_llcsaparray(void)
 			table = table->nxt;
 		table->name = llcsap_db[i].s;
 		table->addr = llcsap_db[i].v;
-		table->nxt = (struct hnamemem *)calloc(1, sizeof(*table));
+		table->nxt = newhnamemem();
 	}
 }
 
@@ -684,7 +698,7 @@ init_llcsaparray(void)
  * of the local network.  mask is its subnet mask.
  */
 void
-init_addrtoname(int fflag, u_int32 localnet, u_int32 mask)
+init_addrtoname(int fflag, u_int32_t localnet, u_int32_t mask)
 {
 	netmask = mask;
 	if (fflag) {
@@ -715,11 +729,30 @@ dnaddr_string(u_short dnaddr)
 			return (tp->name);
 
 	tp->addr = dnaddr;
-	tp->nxt = (struct hnamemem *)calloc(1, sizeof(*tp));
+	tp->nxt = newhnamemem();
 	if (nflag)
 		tp->name = dnnum_string(dnaddr);
 	else
 		tp->name = dnname_string(dnaddr);
 
 	return(tp->name);
+}
+
+/* Return a zero'ed hnamemem struct and cuts down on calloc() overhead */
+struct hnamemem *
+newhnamemem()
+{
+	register struct hnamemem *p;
+	static struct hnamemem *ptr = NULL;
+	static u_int num = 0;
+
+	if (num  <= 0) {
+		num = 64;
+		ptr = (struct hnamemem *)calloc(num, sizeof (*ptr));
+		if (ptr == NULL)
+			error("newhnamemem: calloc");
+	}
+	--num;
+	p = ptr++;
+	return (p);
 }

@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: interface.h,v 1.3 1996/06/10 07:47:18 deraadt Exp $	*/
-/*	$NetBSD: interface.h,v 1.2 1995/03/06 19:10:18 mycroft Exp $	*/
+/*	$OpenBSD: interface.h,v 1.4 1996/07/13 11:01:10 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,27 +20,17 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: interface.h,v 1.66 94/06/14 20:21:37 leres Exp (LBL)
+ * @(#) Header: interface.h,v 1.90 96/06/23 02:44:19 leres Exp (LBL)
  */
 
-#ifdef __GNUC__
-#define inline __inline
-#ifndef __dead
-#define __dead volatile
-#endif
-#else
-#define inline
-#define __dead
+#ifndef tcpdump_interface_h
+#define tcpdump_interface_h
+
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
 #endif
 
-#include "os.h"			/* operating system stuff */
-#include "md.h"			/* machine dependent stuff */
-
-#ifndef SIGRET
-#define SIGRET void		/* default */
-#endif
-
-struct token {
+struct tok {
 	int v;			/* value */
 	char *s;		/* string */
 };
@@ -56,40 +45,48 @@ extern int tflag;		/* print packet arrival time */
 extern int vflag;		/* verbose */
 extern int xflag;		/* print packet in hex */
 
+extern int packettype;		/* as specified by -T */
+#define PT_VAT		1	/* Visual Audio Tool */
+#define PT_WB		2	/* distributed White Board */
+#define PT_RPC		3	/* Remote Procedure Call */
+#define PT_RTP		4	/* Real-Time Applications protocol */
+#define PT_RTCP		5	/* Real-Time Applications control protocol */
+
 extern char *program_name;	/* used to generate self-identifying messages */
+
+extern int32_t thiszone;	/* seconds offset from gmt to local time */
 
 extern int snaplen;
 /* global pointers to beginning and end of current packet (during printing) */
 extern const u_char *packetp;
 extern const u_char *snapend;
 
-extern int fddipad;	/* alignment offset for FDDI headers, in bytes */
+extern int pcap_fddipad;	/* alignment offset for FDDI headers,in bytes */
 
-/* Eliminate some bogus warnings. */
+#ifdef __STDC__
 struct timeval;
-
-typedef void (*printfunc)(u_char *, struct timeval *, int, int);
+#endif
 
 extern void ts_print(const struct timeval *);
-extern int clock_sigfigs(void);
-int gmt2local(void);
+extern int32_t gmt2local(void);
 
 extern int fn_print(const u_char *, const u_char *);
 extern int fn_printn(const u_char *, u_int, const u_char *);
-extern const char *tok2str(const struct token *, const char *, int);
+extern const char *tok2str(const struct tok *, const char *, int);
 extern char *dnaddr_string(u_short);
 extern char *savestr(const char *);
 
-extern int initdevice(char *, int, int *);
 extern void wrapup(int);
 
-extern __dead void error(char *, ...);
-extern void warning(char *, ...);
+#if __STDC__
+extern __dead void error(const char *, ...)
+    __attribute__((volatile, format (printf, 1, 2)));
+extern void warning(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+#endif
 
 extern char *read_infile(char *);
 extern char *copy_argv(char **);
 
-extern void usage(void);
 extern char *isonsap_string(const u_char *);
 extern char *llcsap_string(u_char);
 extern char *protoid_string(const u_char *);
@@ -98,8 +95,11 @@ extern char *dnnum_string(u_short);
 
 /* The printer routines. */
 
+#ifdef __STDC__
 struct pcap_pkthdr;
+#endif
 
+extern void atm_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
 			   const u_char *);
 extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char*);
@@ -135,6 +135,9 @@ extern void snmp_print(const u_char *, int);
 extern void sunrpcrequest_print(const u_char *, int, const u_char *);
 extern void tftp_print(const u_char *, int);
 extern void wb_print(const void *, int);
+extern void dvmrp_print(const u_char *, int);
+extern void pim_print(const u_char *, int);
+extern void krb_print(const u_char *, int);
 
 #define min(a,b) ((a)>(b)?(b):(a))
 #define max(a,b) ((b)>(a)?(b):(a))
@@ -150,4 +153,48 @@ extern void wb_print(const void *, int);
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN 4321
 #define LITTLE_ENDIAN 1234
+#endif
+
+#ifdef ETHER_HEADER_HAS_EA
+#define ESRC(ep) ((ep)->ether_shost.ether_addr_octet)
+#define EDST(ep) ((ep)->ether_dhost.ether_addr_octet)
+#else
+#define ESRC(ep) ((ep)->ether_shost)
+#define EDST(ep) ((ep)->ether_dhost)
+#endif
+
+#ifdef ETHER_ARP_HAS_X
+#define SHA(ap) ((ap)->arp_xsha)
+#define THA(ap) ((ap)->arp_xtha)
+#define SPA(ap) ((ap)->arp_xspa)
+#define TPA(ap) ((ap)->arp_xtpa)
+#else
+#ifdef ETHER_ARP_HAS_EA
+#define SHA(ap) ((ap)->arp_sha.ether_addr_octet)
+#define THA(ap) ((ap)->arp_tha.ether_addr_octet)
+#else
+#define SHA(ap) ((ap)->arp_sha)
+#define THA(ap) ((ap)->arp_tha)
+#endif
+#define SPA(ap) ((ap)->arp_spa)
+#define TPA(ap) ((ap)->arp_tpa)
+#endif
+
+#ifndef NTOHL
+#define NTOHL(x)	(x) = ntohl(x)
+#define NTOHS(x)	(x) = ntohs(x)
+#define HTONL(x)	(x) = htonl(x)
+#define HTONS(x)	(x) = htons(x)
+#endif
+
+/* some systems don't define these */
+#ifndef ETHERTYPE_REVARP
+#define ETHERTYPE_REVARP	0x8035
+#endif
+
+#ifndef REVARP_REQUEST
+#define REVARP_REQUEST		3
+#define REVARP_REPLY		4
+#endif
+
 #endif

@@ -1,4 +1,5 @@
-/*	$OpenBSD: print-skip.c,v 1.1 1996/03/04 15:59:35 mickey Exp $	*/
+/*	$OpenBSD: print-skip.c,v 1.2 1996/07/13 11:01:29 mickey Exp $	*/
+
 /*
  * Copyright (c) 1995 Sun Microsystems, Inc.
  * All rights reserved.

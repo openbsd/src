@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: appletalk.h,v 1.3 1996/06/10 07:47:12 deraadt Exp $	*/
-/*	$NetBSD: appletalk.h,v 1.2 1995/03/06 19:09:51 mycroft Exp $	*/
+/*	$OpenBSD: appletalk.h,v 1.4 1996/07/13 11:01:07 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +22,7 @@
  *
  * AppleTalk protocol formats (courtesy Bill Croft of Stanford/SUMEX).
  *
- * @(#) Header: appletalk.h,v 1.10 94/06/14 20:11:44 leres Exp (LBL)
+ * @(#) Header: appletalk.h,v 1.12 96/06/03 02:54:24 leres Exp (LBL)
  */
 
 struct LAP {
@@ -79,7 +78,7 @@ struct atATP {
 	u_char	control;
 	u_char	bitmap;
 	u_short	transID;
-	int32	userData;
+	int32_t userData;
 };
 
 #define	atpReqCode	0x40

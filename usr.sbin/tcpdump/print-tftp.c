@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-tftp.c,v 1.3 1996/06/10 07:47:51 deraadt Exp $	*/
-/*	$NetBSD: print-tftp.c,v 1.2 1995/03/06 19:11:35 mycroft Exp $	*/
+/*	$OpenBSD: print-tftp.c,v 1.4 1996/07/13 11:01:32 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1993, 1994
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +25,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-tftp.c,v 1.20 94/06/14 20:18:49 leres Exp (LBL)";
+    "@(#) Header: print-tftp.c,v 1.23 96/06/23 02:11:47 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -45,7 +44,7 @@ static char rcsid[] =
 #include "addrtoname.h"
 
 /* op code to string mapping */
-static struct token op2str[] = {
+static struct tok op2str[] = {
 	{ RRQ,		"RRQ" },	/* read request */
 	{ WRQ,		"WRQ" },	/* write request */
 	{ DATA,		"DATA" },	/* data packet */
@@ -55,7 +54,7 @@ static struct token op2str[] = {
 };
 
 /* error code to string mapping */
-static struct token err2str[] = {
+static struct tok err2str[] = {
 	{ EUNDEF,	"EUNDEF" },	/* not defined */
 	{ ENOTFOUND,	"ENOTFOUND" },	/* file not found */
 	{ EACCESS,	"EACCESS" },	/* access violation */
@@ -81,7 +80,7 @@ tftp_print(register const u_char *bp, int length)
 	static char tstr[] = " [|tftp]";
 
 	tp = (const struct tftphdr *)bp;
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	/* Print length */
@@ -116,12 +115,10 @@ tftp_print(register const u_char *bp, int length)
 		}
 		break;
 
+	case ACK:
 	case DATA:
 		TCHECK(tp->th_block, sizeof(tp->th_block));
 		printf(" block %d", ntohs(tp->th_block));
-		break;
-
-	case ACK:
 		break;
 
 	case ERROR:

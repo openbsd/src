@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: print-ppp.c,v 1.3 1996/06/10 07:47:45 deraadt Exp $	*/
-/*	$NetBSD: print-ppp.c,v 1.3 1995/03/06 19:11:27 mycroft Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.4 1996/07/13 11:01:28 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1993, 1994
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +23,7 @@
 
 #ifndef lint
 static  char rcsid[] =
-	"@(#)Header: print-ppp.c,v 1.18 94/06/10 17:01:37 mccanne Exp (LBL)";
+	"@(#)Header: print-ppp.c,v 1.21 96/06/03 02:54:07 leres Exp (LBL)";
 #endif
 
 #ifdef PPP
@@ -34,6 +33,10 @@ static  char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -41,7 +44,6 @@ static  char rcsid[] =
 #include <netinet/ip.h>
 
 #include <ctype.h>
-#include <errno.h>
 #include <netdb.h>
 #include <pcap.h>
 #include <signal.h>

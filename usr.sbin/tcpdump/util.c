@@ -1,8 +1,7 @@
-/**//*	$OpenBSD: util.c,v 1.3 1996/06/10 07:47:59 deraadt Exp $	*/
-/*	$NetBSD: util.c,v 1.5 1996/05/20 00:41:19 fvdl Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1996/07/13 11:01:35 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1993, 1994
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,21 +23,17 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: util.c,v 1.28+ 94/06/12 14:30:31 leres Exp (LBL)";
+    "@(#) Header: util.c,v 1.48 96/06/23 02:26:42 leres Exp (LBL)";
 #endif
 
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
-#ifdef SVR4
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
-#ifdef __STDC__
-#include <stdlib.h>
 #endif
 #include <stdio.h>
 #if __STDC__
@@ -46,7 +41,11 @@ static char rcsid[] =
 #else
 #include <varargs.h>
 #endif
+#include <stdlib.h>
 #include <string.h>
+#ifdef TIME_WITH_SYS_TIME
+#include <time.h>
+#endif
 #include <unistd.h>
 
 #include "interface.h"
@@ -127,16 +126,16 @@ void
 ts_print(register const struct timeval *tvp)
 {
 	register int s;
-	extern int32 thiszone;
 
 	if (tflag > 0) {
 		/* Default */
 		s = (tvp->tv_sec + thiszone) % 86400;
-		(void)printf("%02d:%02d:%02d.%06d ",
-		    s / 3600, (s % 3600) / 60, s % 60, tvp->tv_usec);
+		(void)printf("%02d:%02d:%02d.%06u ",
+		    s / 3600, (s % 3600) / 60, s % 60, (u_int32_t)tvp->tv_usec);
 	} else if (tflag < 0) {
 		/* Unix timeval style */
-		(void)printf("%d.%06d ", tvp->tv_sec, tvp->tv_usec);
+		(void)printf("%u.%06u ",
+		    (u_int32_t)tvp->tv_sec, (u_int32_t)tvp->tv_usec);
 	}
 }
 
@@ -144,7 +143,7 @@ ts_print(register const struct timeval *tvp)
  * Convert a token value to a string; use "fmt" if not found.
  */
 const char *
-tok2str(register const struct token *lp, register const char *fmt,
+tok2str(register const struct tok *lp, register const char *fmt,
 	register int v)
 {
 	static char buf[128];
@@ -160,61 +159,14 @@ tok2str(register const struct token *lp, register const char *fmt,
 	return (buf);
 }
 
-/* A replacement for strdup() that cuts down on malloc() overhead */
-char *
-savestr(register const char *str)
-{
-	register u_int size;
-	register char *p;
-	static char *strptr = NULL;
-	static u_int strsize = 0;
-
-	size = strlen(str) + 1;
-	if (size > strsize) {
-		strsize = 1024;
-		if (strsize < size)
-			strsize = size;
-		strptr = (char *)malloc(strsize);
-		if (strptr == NULL)
-			error("savestr: malloc");
-	}
-	(void)strcpy(strptr, str);
-	p = strptr;
-	strptr += size;
-	strsize -= size;
-	return (p);
-}
-
-#ifdef NOVFPRINTF
-/*
- * Stock 4.3 doesn't have vfprintf.
- * This routine is due to Chris Torek.
- */
-vfprintf(f, fmt, args)
-	FILE *f;
-	char *fmt;
-	va_list args;
-{
-	int ret;
-
-	if ((f->_flag & _IOWRT) == 0) {
-		if (f->_flag & _IORW)
-			f->_flag |= _IOWRT;
-		else
-			return EOF;
-	}
-	ret = _doprnt(fmt, args, f);
-	return ferror(f) ? EOF : ret;
-}
-#endif
 
 /* VARARGS */
 __dead void
-#if __STDC__ || defined(SOLARIS)
-error(char *fmt, ...)
+#if __STDC__
+error(const char *fmt, ...)
 #else
 error(fmt, va_alist)
-	char *fmt;
+	const char *fmt;
 	va_dcl
 #endif
 {
@@ -239,11 +191,11 @@ error(fmt, va_alist)
 
 /* VARARGS */
 void
-#if __STDC__ || defined(SOLARIS)
-warning(char *fmt, ...)
+#if __STDC__
+warning(const char *fmt, ...)
 #else
 warning(fmt, va_alist)
-	char *fmt;
+	const char *fmt;
 	va_dcl
 #endif
 {
@@ -283,6 +235,8 @@ copy_argv(register char **argv)
 		len += strlen(*p++) + 1;
 
 	buf = (char *)malloc(len);
+	if (buf == NULL)
+		error("copy_argv: malloc");
 
 	p = argv;
 	dst = buf;
@@ -296,6 +250,32 @@ copy_argv(register char **argv)
 	return buf;
 }
 
+/* A replacement for strdup() that cuts down on malloc() overhead */
+char *
+savestr(register const char *str)
+{
+	register u_int size;
+	register char *p;
+	static char *strptr = NULL;
+	static u_int strsize = 0;
+
+	size = strlen(str) + 1;
+	if (size > strsize) {
+		strsize = 1024;
+		if (strsize < size)
+			strsize = size;
+		strptr = (char *)malloc(strsize);
+		if (strptr == NULL)
+			error("savestr: malloc");
+	}
+	(void)strcpy(strptr, str);
+	p = strptr;
+	strptr += size;
+	strsize -= size;
+	return (p);
+}
+
+
 char *
 read_infile(char *fname)
 {
@@ -308,37 +288,55 @@ read_infile(char *fname)
 		error("can't open '%s'", fname);
 
 	if (fstat(fd, &buf) < 0)
-		error("can't state '%s'", fname);
+		error("can't stat '%s'", fname);
 
-	p = (char *)malloc((u_int)buf.st_size);
+	p = malloc((u_int)buf.st_size + 1);
+	if (p == NULL)
+		error("read_infile: malloc");
 	if (read(fd, p, (int)buf.st_size) != buf.st_size)
 		error("problem reading '%s'", fname);
+
+	p[(int)buf.st_size] = '\0';
 
 	return p;
 }
 
-int
+int32_t
 gmt2local()
 {
-#ifndef SVR4
+	register int t;
+#if !defined(HAVE_ALTZONE) && !defined(HAVE_TIMEZONE)
 	struct timeval tv;
 	struct timezone tz;
 	register struct tm *tm;
-	register int t;
+#endif
 
+	t = 0;
+#if !defined(HAVE_ALTZONE) && !defined(HAVE_TIMEZONE)
 	if (gettimeofday(&tv, &tz) < 0)
 		error("gettimeofday");
 	tm = localtime((time_t *)&tv.tv_sec);
-#ifndef SUNOS3
+#ifdef HAVE_TM_GMTOFF
 	t = tm->tm_gmtoff;
 #else
 	t = tz.tz_minuteswest * -60;
+	/* XXX Some systems need this, some auto offset tz_minuteswest... */
 	if (tm->tm_isdst)
-		t += 3600;
+		t += 60 * 60;
 #endif
-	return (t);
-#else
+#endif
+
+#ifdef HAVE_TIMEZONE
 	tzset();
-	return (-altzone);
+	t = -timezone;
+	if (daylight)
+		t += 60 * 60;
 #endif
+
+#ifdef HAVE_ALTZONE
+	tzset();
+	t = -altzone;
+#endif
+
+	return (t);
 }
