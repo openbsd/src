@@ -1230,7 +1230,6 @@
 ./usr/mdec
 ./usr/obj
 ./usr/sbin
-./usr/sbin/ab
 ./usr/sbin/ac
 ./usr/sbin/accton
 ./usr/sbin/activadm
