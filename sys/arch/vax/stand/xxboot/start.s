@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.s,v 1.1 2000/04/27 02:26:27 bjc Exp $ */
+/*	$OpenBSD: start.s,v 1.2 2000/10/04 04:57:29 bjc Exp $ */
 /*	$NetBSD: start.s,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -132,7 +132,6 @@ bootinfo:	.long 0x0	# another 3 bytes if within byte-offset
 	.align 2
 cont_750:
         movl    r0,r10
-        movl    r5, ap	# ap not used here
         clrl    r5
         clrl    r4
         movl    $_start,sp
@@ -148,11 +147,11 @@ cont_750:
 	movl	r11, r5
 	brw	start_all
 
+	.org 0x200
 
 start_uvax:
 	mtpr	$0, $PR_MAPEN	# Turn off MM, please.
 	movl    $_start, sp
-	movl	48(r11), ap
 	brb	start_all
 
 /*
@@ -160,7 +159,7 @@ start_uvax:
  * to RELOC and loads boot.
  */
 start_all:
-	pushr	$0xfff			# save all regs, used later.
+	pushr	$0x1fff			# save all regs, used later.
 
 	subl3	$_start, $_edata, r0	# get size of text+data (w/o bss)
 	moval	_start, r1		# get actual base-address of code
@@ -168,11 +167,11 @@ start_all:
 	movl	$_start, r3		# get relocated base-address of code
 	movc5	r0, (r1), $0, r2, (r3)	# copy code to new location
 	
-	movl	$relocated, -(sp)	# return-address on top of stack 
+	jsb 1f
+1:	movl	$relocated, (sp)	# return-address on top of stack 
 	rsb	 			# can be replaced with new address
 relocated:				# now relocation is done !!!
 	movl	sp, _bootregs
-	movl	ap, _boothowto
 	calls	$0, _Xmain		# call Xmain (gcc workaround)which is 
 	halt				# not intended to return ...
 
