@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.8 1997/02/05 15:48:27 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.9 1997/06/06 11:22:18 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -579,6 +579,17 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_KEEPINITTIME:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcptv_keep_init));
+
+	case TCPCTL_KEEPIDLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_keepidle));
+
+	case TCPCTL_KEEPINTVL:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_keepintvl));
+
+	case TCPCTL_SLOWHZ:
+		return (sysctl_rdint(oldp, oldlenp, newp, PR_SLOWHZ));
 
 	default:
 		return (ENOPROTOOPT);

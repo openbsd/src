@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.5 1996/09/20 22:53:13 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.6 1997/06/06 11:22:18 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -230,15 +230,21 @@ struct	tcpstat {
 /*
  * Names for TCP sysctl objects.
  */
-			/* enable/disable RFC1323 timestamps/scaling */
-#define	TCPCTL_RFC1323		1
-#define	TCPCTL_KEEPINITTIME	2
-#define	TCPCTL_MAXID		3
+			
+#define	TCPCTL_RFC1323		1 /* enable/disable RFC1323 timestamps/scaling */
+#define	TCPCTL_KEEPINITTIME	2 /* TCPT_KEEP value */
+#define TCPCTL_KEEPIDLE		3 /* allow tcp_keepidle to be changed */
+#define TCPCTL_KEEPINTVL	4 /* allow tcp_keepintvl to be changed */
+#define TCPCTL_SLOWHZ		5 /* return kernel idea of PR_SLOWHZ */ 
+#define	TCPCTL_MAXID		6
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "rfc1323",	CTLTYPE_INT }, \
 	{ "keepinittime",	CTLTYPE_INT }, \
+	{ "keepidle",	CTLTYPE_INT }, \
+	{ "keepintvl",	CTLTYPE_INT }, \
+	{ "slowhz",	CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
