@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.35 2003/11/03 05:40:09 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.36 2003/11/06 08:53:58 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.35 2003/11/03 05:40:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.36 2003/11/06 08:53:58 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -640,7 +640,10 @@ next:
 	 */
 	fsinit(utime);
 	sblock.fs_time = utime;
+	/* don't write magic until we are done */
+	sblock.fs_magic = 0;
 	wtfs((int)SBOFF / sectorsize, sbsize, (char *)&sblock);
+	sblock.fs_magic = FS_MAGIC;
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize)
 		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
 			sblock.fs_cssize - i < sblock.fs_bsize ?
@@ -652,6 +655,8 @@ next:
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++)
 		wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)),
 		    sbsize, (char *)&sblock);
+	/* done, can write with magic now */
+	wtfs((int)SBOFF / sectorsize, sbsize, (char *)&sblock);
 	/*
 	 * Update information about this partion in pack
 	 * label, to that it may be updated on disk.
