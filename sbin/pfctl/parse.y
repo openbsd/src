@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2002/06/07 18:26:55 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.74 2002/06/07 19:33:03 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -111,6 +111,10 @@ struct peer {
 int	rule_consistent(struct pf_rule *);
 int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
+void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
+void	expand_label_port(const char *, char *, u_int8_t, struct node_port *);
+void	expand_label(char *, u_int8_t, struct node_host *, struct node_port *,
+    struct node_host *, struct node_port *);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
     struct node_host *, struct node_port *, struct node_host *,
     struct node_port *, struct node_uid *, struct node_gid *,
@@ -1594,6 +1598,98 @@ struct keywords {
 	} while (0)
 
 void
+expand_label_addr(const char *name, char *label, u_int8_t af,
+    struct node_host *host)
+{
+	char tmp[PF_RULE_LABEL_SIZE];
+	char *p;
+
+	while ((p = strstr(label, name)) != NULL) {
+		tmp[0] = 0;
+
+		strlcat(tmp, label, p-label+1);
+
+		if (host->not)
+			strlcat(tmp, "! ", PF_RULE_LABEL_SIZE);
+		if (host->addr.addr_dyn != NULL) {
+			strlcat(tmp, "(", PF_RULE_LABEL_SIZE);
+			strlcat(tmp, host->addr.addr.pfa.ifname,
+			    PF_RULE_LABEL_SIZE);
+			strlcat(tmp, ")", PF_RULE_LABEL_SIZE);
+		} else if (!af || (PF_AZERO(&host->addr.addr, af) &&
+		    PF_AZERO(&host->mask, af)))
+			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
+		else {
+			char a[48];
+			int bits;
+
+			if (inet_ntop(af, &host->addr.addr, a, 
+			    sizeof(a)) == NULL)
+				strlcat(a, "?", sizeof(a));
+			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
+			bits = unmask(&host->mask, af);
+			a[0] = 0;
+			if ((af == AF_INET && bits < 32) || 
+			    (af == AF_INET6 && bits < 128)) 
+				snprintf(a, sizeof(a), "/%u", bits);
+			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
+		}
+		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
+		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+	}
+}
+
+void
+expand_label_port(const char *name, char *label, u_int8_t af,
+    struct node_port *port)
+{
+	char tmp[PF_RULE_LABEL_SIZE];
+	char *p;
+	char a1[6], a2[6], op[13];
+
+	while ((p = strstr(label, name)) != NULL) {
+		tmp[0] = 0; 
+
+		strlcat(tmp, label, p-label+1);
+
+		snprintf(a1, sizeof(a1), "%u", ntohs(port->port[0]));
+		snprintf(a2, sizeof(a2), "%u", ntohs(port->port[1]));
+		if (!port->op)
+		    op[0] = 0;
+		else if (port->op == PF_OP_IRG)
+		    snprintf(op, sizeof(op), "%s><%s", a1, a2);
+		else if (port->op == PF_OP_XRG)
+		    snprintf(op, sizeof(op), "%s<>%s", a1, a2);
+		else if (port->op == PF_OP_EQ)
+		    snprintf(op, sizeof(op), "%s", a1);
+		else if (port->op == PF_OP_NE)
+		    snprintf(op, sizeof(op), "!=%s", a1);
+		else if (port->op == PF_OP_LT)
+		    snprintf(op, sizeof(op), "<%s", a1);
+		else if (port->op == PF_OP_LE)
+		    snprintf(op, sizeof(op), "<=%s", a1);
+		else if (port->op == PF_OP_GT)
+		    snprintf(op, sizeof(op), ">%s", a1);
+		else if (port->op == PF_OP_GE)
+		    snprintf(op, sizeof(op), ">=%s", a1);
+		strlcat(tmp, op, PF_RULE_LABEL_SIZE);
+		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
+		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+	}
+}
+
+void
+expand_label(char *label, u_int8_t af,
+    struct node_host *src_host, struct node_port *src_port,
+    struct node_host *dst_host, struct node_port *dst_port)
+{
+	expand_label_addr("$srcaddr", label, af, src_host);
+	expand_label_addr("$dstaddr", label, af, dst_host);
+	expand_label_port("$srcport", label, af, src_port);
+	expand_label_port("$dstport", label, af, dst_port);
+}
+
+void
 expand_rule(struct pf_rule *r,
     struct node_if *interfaces, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
@@ -1603,6 +1699,9 @@ expand_rule(struct pf_rule *r,
 {
 	int af = r->af, nomatch = 0, added = 0;
 	char ifname[IF_NAMESIZE];
+	char label[PF_RULE_LABEL_SIZE];
+
+	strlcpy(label, r->label, sizeof(label));
 
 	CHECK_ROOT(struct node_if, interfaces);
 	CHECK_ROOT(struct node_proto, protos);
@@ -1647,6 +1746,10 @@ expand_rule(struct pf_rule *r,
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
 		else
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+			
+		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
+		expand_label(r->label, r->af, src_host, src_port, 
+		    dst_host, dst_port);
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
 		r->src.mask = src_host->mask;
