@@ -1,0 +1,97 @@
+.\"
+.\" Copyright (c) 1996 Jonathan Stone.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$NetBSD: sii.4,v 1.2 1997/10/13 11:23:58 lukem Exp $
+.\"	$OpenBSD: sii.4,v 1.1 1998/03/09 15:35:52 millert Exp $
+.\"
+.Dd August 6, 1996
+.Dt SII 4 pmax
+.Os NetBSD 1.2
+.Sh NAME
+.Nm sii
+.Nd
+SII scsi adaptor
+.Sh SYNOPSIS
+.Cd "sii0 at mainbus"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the
+.Tn DEC
+SII scsi adaptor ASIC used in
+the DECstation 2100, 3100, and 5100,  and in the VAXstation 3100.
+.Pp
+The
+.Nm
+is a medium-performance implementation of the SCSI-I common set
+supporting synchronous and asynchronous SCSI devices.  The SII cabling
+is unusual:  the bulkhead connector is very similar to a standard
+submicro wide SCSI-II connector, but has the other gender.
+The
+.Nm
+chip only supports DMA to or from a fixed window in memory.
+The driver use this area as a bounce buffer,  copying data to and
+from the  DMA region.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr rz 4 ,
+.Xr tz 4 ,
+.Xr sd 4 ,
+.Xr st 4 ,
+.Xr cd 4 ,
+.Xr ch 4 .
+.Sh HISTORY
+The
+.Nm
+driver
+first appeared in
+.Bx 4.4 .
+.Sh BUGS
+The
+.Nm
+driver only supports the
+.Nm oldscsibus
+higher-level layer, and the
+.Nm rz
+and
+.Nm tz
+devices, which first appeared in 
+.Bx 4.4 /pmax.
+It should be  re-written to support the
+.Nm scsibus
+machine-independent higher-level SCSI layer and the
+.Nm sd ,
+.Nm st ,
+and
+.Nm cd
+drivers. This is
+.Ud .
+
+
+

@@ -1,0 +1,104 @@
+.\"
+.\" Copyright (c) 1996, 1997 Jonathan Stone.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$NetBSD: ioasic.4,v 1.4 1997/10/31 02:26:09 jonathan Exp $
+.\"	$OpenBSD: ioasic.4,v 1.1 1998/03/09 15:35:51 millert Exp $
+.\"
+.Dd August 6, 1996
+.Dt IOASIC 4 pmax
+.Os NetBSD 1.2
+.Sh NAME
+.Nm ioasic
+.Nd
+baseboard IO control ASIC for DEC TurboChannel systems
+.Sh SYNOPSIS
+.Cd "ioasic0 at tc?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the DEC proprietary IOCTL asic found on
+all DEC TurboChannel machines with MIPS (DECstation 5000 series,
+excluding the 5000/200) and Alpha (3000-series) processors.  On these
+machines (including the 5000/200), all baseboard devices should be
+configured as children of the
+.Nm "" .
+The
+.Nm
+provides hardware DMA channels and interrupt support for
+several baseboard devices, including one
+.Nm asc
+scsi device with a scatter/gather DMA channel, an mc146818-compatible
+.Nm mcclock,
+one or two
+.Nm scc
+two-port serial devices, and a am9770 LANCE
+.Nm le
+Ethernet interface.
+.Pp
+The
+.Nm
+is also used for those 
+floppy-disc drive and audio/ISDN hardware
+on the Personal DECstation and audio-equipted TC Alphas, where the 
+.Nm
+hardware provides a
+a
+scatter-gather DMA channel between he 16-bit device and the 32-bit
+.Nm tc
+DMA address space.
+.Pp
+Support for scatter-gather DMA eliminates the need for additional copying.
+A baseboard
+.Nm asc
+SCSI adaptor attached to an
+.Nm ioasic 
+will give slightly better performance than its
+.Nm tc
+counterpart.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr mcclock 4 ,
+.Xr asc 4 ,
+.Xr le 4 ,
+.Xr scc 4 ,
+.Xr tc 4 .
+.Sh HISTORY
+The
+.Nm
+driver
+first appeared in
+.Nx 1.1 ,
+derived from DECstation boot-time configuration code in
+.Bx 4.4  .
+.Sh BUGS
+The DECstation 5000/200 does not actually have an
+.Nm ioasic
+chip, but for consistency it must be configured as if it
+did.
+

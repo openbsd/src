@@ -1,0 +1,112 @@
+.\"
+.\" Copyright (c) 1996, 1997 Jonathan Stone.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$NetBSD: le.4,v 1.2 1997/10/31 02:53:46 jonathan Exp $
+.\"	$OpenBSD: le.4,v 1.1 1998/03/09 15:35:51 millert Exp $
+.\"
+.Dd August 6, 1996
+.Dt LE 4 pmax
+.Os NetBSD 1.2
+.Sh NAME
+.Nm le
+.Nd
+DECstation AMD 7990 LANCE ethernet interface
+.Sh SYNOPSIS
+.Cd "le? at mainbus	with le_pmax"		(3100 baseboard)
+.Cd "le*? at tc	with le_tc"		(5000/200 baseboard)
+.Cd "le? at ioasic  with le_ioasic"	(ioasic baseboard)
+.Cd "le* at tc?	with le_tc"		(TC option cards)
+.Sh DESCRIPTION
+The
+.Nm
+driver provides access to a 10Mb/s Ethernet via the
+.Tn AMD
+7990
+.Tn LANCE
+Ethernet chip.  All
+.Tn LANCE
+interfaces on
+.Tn DECstations  
+are supported, as are interfaces on
+.Tn "Alpha AXP"
+machines with a
+.Tn TurboChannel
+bus.
+.Pp
+The
+.Nm 
+driver employs the Address Resolution Protocol described in
+.Xr arp 4
+to map between Internet and Ethernet addresses on the local
+network.  Selective reception of multicast Ethernet frames is provided
+by a 64-bit mask; multicast destination addresses are hashed to a
+bit entry using the Ethernet CRC function.
+.Pp
+No support is provided for switching between media ports.  The
+DECstation 3100 provides both AUI and BNC  (thinwire or 10base2) connectors.
+Port selection is via a manual switch and is not software configurable.
+The
+.Tn DECstation
+model 5000/200
+.Tn PMAD-AA
+baseboard device provides only a BNC connector.
+The
+.Nm ioasic
+baseboard devices and  the 
+.Tn PMAD-AA
+.Tn TurboChannel
+option card provide only an AUI port.
+.Pp
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr inet 4 ,
+.Xr tc 4 ,
+.Xr ioasic 4 ,
+.Xr arp 4 .
+.Sh BUGS
+On all front-ends, performance is impaired by hardware which forces
+forces a software copy of packets to and from DMA buffers.  The
+.Nm ioasic
+machines  and the DECstation 3100 must 
+copying packet to and from non-contiguous DMA buffers.
+The 
+DECstation 5000/200  and the
+.Tn PMAD-AA 
+must copy to and from an onboard SRAM DMA
+buffer.  The CPU overhead is noticeable, but all machines can sustain
+10Mbit media speed.
+.Sh HISTORY
+This
+.Nm
+driver is derived from a
+.NM
+driver that first appeared in
+.Bx 4.4 .
+Support for  multiple bus attachments first appeared in
+.Nx 1.2 .

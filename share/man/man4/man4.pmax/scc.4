@@ -1,0 +1,108 @@
+.\"
+.\" Copyright (c) 1996 Jonathan Stone.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$NetBSD: scc.4,v 1.3 1997/11/03 11:19:21 jonathan Exp $
+.\"	$OpenBSD: scc.4,v 1.1 1998/03/09 15:35:52 millert Exp $
+.\"
+.Dd August 6, 1996
+.Dt SCC 4 pmax
+.Os NetBSD 1.2
+.Sh NAME
+.Nm scc
+.Nd
+Zilog serial communications interface
+.Sh SYNOPSIS
+.Cd "scc0 at ioasic?"
+.Cd "scc1 at ioasic?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Zilog 8530 Serial Communications
+Controller (SCC) via the IOCTL asic on DECstation 5000 models
+in the /100, /20, and /240 series.   Each scc device has two serial
+ports. The model 20 provides one scc device.  Other models provide two,
+but one port of each device is dedicated to mouse and keyboard input,
+respectively.
+.Pp
+Input and output for each line may set to one of following baud rates;
+50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
+19200, 38400, or 57600.
+Speeds up to 230400 are supported by the chip and the motherboard,
+but speeds  higher than 57600 do not work reliably without an external
+clock signal.
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/ttya
+.It Pa /dev/ttyb
+.It Pa /dev/ttyc
+.It Pa /dev/ttyd
+.El
+.Pp
+The mapping from units to serial-hardware  outlets is idiosyncratic.
+the even ports are wired serial connectors and the odd-numbered ports
+are reserved for mouse and keyboard.
+On machines with one port like
+.Tn "Personal DECstations" ,
+the single device is
+.Pa ttya .
+On the 
+.Tn "5000/1xx" 
+and
+.Tn "5000/2xx" ,
+the first serial port (default serial console) is
+.Pa ttyc
+and the second port is 
+.Pa ttya .
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Bx 4.4 .
+.Sh BUGS
+The IOCTL asic provides internal DMA channels that can be programmed
+to transfer  up to 4096 bytes of data into, or out, of an SCC without
+further software intervention.  This feature of the ioctl asic is not
+yet supported.
+.Pp
+
+The mapping from device-special files (major and minor number) to chip
+and port is arguably backwards.
+.Tn Ultrix
+tries to hide the hardware  mapping, but
+.Nx
+does not.  Users wanting to use
+.Tn "Ultrix"
+compatible tty names 
+.Pa /dev/tty0
+and
+.Pa /dev/tty1
+for the
+.Nm
+comm-port lines should make links or device-special files which match
+their hardware setup.
