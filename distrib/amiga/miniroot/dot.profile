@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.1 1997/05/03 22:27:10 niklas Exp $
+#	$OpenBSD: dot.profile,v 1.2 1997/05/13 16:02:44 niklas Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -34,13 +34,30 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 
-TERM=vt220
-export TERM
-
 umask 022
+
+# XXX
+# the TERM/EDITOR stuff is really well enough parameterized to be moved
+# into install.sub where it could use the routines there and be invoked
+# from the various (semi) MI install and upgrade scripts
+
+# terminals believed to be in termcap, default TERM
+TERMS="sun vt* pcvt* pc3 dumb"
+TERM=vt220
+
+# editors believed to be in $EDITBIN, smart and dumb defaults
+EDITORS="vi ed"
+EDITOR=vi
+DUMB=ed
+EDITBIN=/bin
+EDITUBIN=/usr/bin
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
+
+	# mount kernfs and re-mount the boot media (perhaps r/w)
+	mount_kernfs /kern /kern
+	mount_ffs -o update /kern/rootdev /
 
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
@@ -48,41 +65,56 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# get the terminal type
 	_forceloop=""
-	while [ "X${_forceloop}" = X"" ]; do
+	while [ "X$_forceloop" = X"" ]; do
+		echo "Supported terminals are: $TERMS"
 		eval `tset -s -m ":?$TERM"`
-		if [ "X${TERM}" != X"unknown" ]; then
+		if [ "X$TERM" != X"unknown" ]; then
 			_forceloop="done"
 		fi
 	done
 	export TERM
 
 	# get the editor preference
-	EDITOR=vi
-	_forceloop=""
-	while [ "X${_forceloop}" = X"" ]; do
-		echo -n "text editor - vi or ed? [$EDITOR] "
-		read _forceloop
-		case "$_forceloop" in
-			vi|"")
-				EDITOR=vi
-				_forceloop=$EDITOR
-				;;
-
-			ed)
-				EDITOR=ed
-				;;
-
-			*)
-				echo "sorry, no $_forceloop available"
+	if [ "X$TERM" = "Xdumb" -o "X$TERM" = "Xunknown" ]; then
+		echo -n "$TERM can't handle $EDITOR"
+		EDITOR="$DUMB"
+		echo ", using $EDITOR as text editor!"
+	elif [ "X$EDITOR" = "X$EDITORS" ]; then
+		echo "Only one editor available, you get to use $EDITOR!"
+	else
+		_forceloop=""
+		while [ "X$_forceloop" = X"" ]; do
+			echo "Supported editors are: $EDITORS"
+			echo -n "text editor? [$EDITOR] "
+			read _choice
+			if [ "X$_choice" = "X" ]; then
+				_choice="$EDITOR"
+				_forceloop="$_choice"
+			else
+				for _editor in $EDITORS; do
+					if [ "X$_choice" = "X$_editor" ]; then
+						_forceloop="$_choice"
+						break
+					fi
+				done
+			fi
+			if [ "X$_forceloop" != "X" -a \
+					! \( -x $EDITBIN/$_choice -o \
+						-x $EDITUBIN/$_choice \) ]; then
 				_forceloop=""
-				;;
-		esac
-	done
+			fi
+			if [ "X$_forceloop" = "X" ]; then
+				echo "Sorry, $_choice isn't available."
+				_forceloop=""
+			fi
+		done
+		EDITOR="$_choice"
+	fi
 	export EDITOR
 
 	# Installing or upgrading?
 	_forceloop=""
-	while [ "X${_forceloop}" = X"" ]; do
+	while [ "X$_forceloop" = X"" ]; do
 		echo -n '(I)nstall or (U)pgrade? '
 		read _forceloop
 		case "$_forceloop" in
