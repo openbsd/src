@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.7 1998/11/19 08:04:12 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.8 1998/11/19 08:22:39 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -167,10 +167,13 @@ with the following modules with only one CPU:
 60 Mhz SuperSPARC I with 1MB SuperCACHE
 .It SM71
 75 Mhz SuperSPARC II with 1MB SuperCACHE
+.It SM81
+85 Mhz SuperSPARC II with 1MB SuperCACHE
 .El
 .Pp
 .Ox
-does not yet support multiprocessor systems.
+does not yet support multiprocessor systems and does not support
+ROSS HyperSPARC Mbus modules.
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.  Devices are indicated by their functional interface.
@@ -209,7 +212,7 @@ FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet SBus controller
 Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
 floppy disk drive controller
 .It hme
-SBus HME Ethernet controllers (SunSwift and Sun QuadFastEthernet)
+SBus HME Ethernet controllers (SunSwift)
 .It ie
 Intel 82586 Ethernet controller (Sun 4/100)
 .It isp
@@ -228,6 +231,8 @@ Sun Open boot PROM (what became IEEE 1275) configuration driver
 Quad 10BaseT SBus Ethernet controller
 .It qec
 Supported as a carrier for the
+.It qfe
+SBus QuadFastEthernet controllers
 .Nm be
 or
 .Nm qe
@@ -249,7 +254,7 @@ Zilog 8530 serial controller
 .Pp
 The following devices are not supported, due to unavailability of
 either documentation or sample hardware:
-.Bl -tag -width speaker
+.Bl -tag -width hypersparc
 .It audiocs
 CS4231 based audio found in some sun4c and sun4m models
 .It bpp
@@ -260,6 +265,12 @@ Dual Basic Rate Interface (BRI) ISDN (SPARC LX & SPARCstation 10)
 sun4m audio that is dependent on the dbri
 .It power
 sun4m power management is recognized but unused
+.It fas
+SBus wide ESP scsi controller
+.It antares
+SBus Antares serial board
+.It hypersparc
+ROSS Mbus HyperSPARC modules
 .El
 .Sh HISTORY
 The
