@@ -1,11 +1,11 @@
 ./sbin/ldconfig
 ./usr/bin/ldd
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.4
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/collect2
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/cpp0
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/include
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.4/2.95.3/specs
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.5
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.5/2.95.3
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.5/2.95.3/collect2
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.5/2.95.3/cpp0
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.5/2.95.3/include
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.5/2.95.3/specs
 ./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/5.8.2
 ./usr/libdata/perl5/m88k-openbsd/5.8.2/.packlist
