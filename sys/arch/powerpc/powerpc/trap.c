@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2000/06/08 22:25:22 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2000/07/08 19:43:39 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -335,8 +335,6 @@ syscall_bad:
 	default:
 	
 brain_damage:
-		printf("trap type %x at %x lr %x\n",
-			type, frame->srr0, frame->lr);
 /*
 mpc_print_pci_stat();
 */
@@ -345,7 +343,8 @@ mpc_print_pci_stat();
 		/* set up registers */
 		db_save_regs(frame);
 #endif
-		panic("trap");
+		panic ("trap type %x at %x lr %x\n",
+			type, frame->srr0, frame->lr);
 
 
 	case EXC_PGM|EXC_USER:
@@ -398,7 +397,7 @@ for (i = 0; i < errnum; i++) {
 		db_save_regs(frame);
 		db_trap(T_BREAKPOINT);
 #else
-		panic("trap");
+		panic("trap EXC_PGM");
 #endif
 		break;
 
