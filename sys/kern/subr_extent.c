@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.5 1998/10/01 18:00:04 fgsch Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.6 1999/01/11 01:28:10 niklas Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ extent_find(name)
 	return(NULL);
 }
 
-
+#ifdef DDB
 /*
  * Print out all extents registered.  This is used in
  * DDB show extents
@@ -137,6 +137,7 @@ extent_print_all(void)
 		extent_print(ep);
 	}
 }
+#endif
 
 /*
  * Allocate and initialize an extent map.
@@ -908,10 +909,12 @@ extent_free(ex, start, size, flags)
 		}
 	}
 
+#ifdef DIAGNOSTIC
 	/* Region not found, or request otherwise invalid. */
 	extent_print(ex);
 	printf("extent_free: start 0x%lx, end 0x%lx\n", start, end);
 	panic("extent_free: region not found");
+#endif
 
  done:
 	if (ex->ex_flags & EXF_WANTED) {
@@ -1015,6 +1018,7 @@ extent_free_region_descriptor(ex, rp)
 #define db_printf printf
 #endif
 
+#if defined(DIAGNOSTIC) || defined(DDB)
 void
 extent_print(ex)
 	struct extent *ex;
@@ -1031,3 +1035,4 @@ extent_print(ex)
 	    rp = rp->er_link.le_next)
 		db_printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
 }
+#endif
