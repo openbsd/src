@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.83 2004/06/20 17:44:06 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.84 2004/06/21 16:01:56 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -64,6 +64,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+#include "virtual.h"
 
 #ifdef __GNUC__
 #define INLINE __inline
@@ -1855,21 +1856,27 @@ message_dump_raw(char *header, struct message *msg, int class)
 static void
 message_packet_log(struct message *msg)
 {
-#ifdef USE_DEBUG
+#if defined (USE_DEBUG)
 	struct sockaddr *src, *dst;
+	struct transport *t = msg->transport;
 
 	/* Don't log retransmissions. Redundant for incoming packets... */
 	if (msg->xmits > 0)
 		return;
 
+#if defined (USE_NAT_TRAVERSAL)
+	if (msg->exchange && msg->exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE)
+		t = ((struct virtual_transport *)msg->transport)->encap;
+#endif
+
 	/* Figure out direction. */
 	if (msg->exchange &&
 	    msg->exchange->initiator ^ (msg->exchange->step % 2)) {
-		msg->transport->vtbl->get_src(msg->transport, &src);
-		msg->transport->vtbl->get_dst(msg->transport, &dst);
+		t->vtbl->get_src(t, &src);
+		t->vtbl->get_dst(t, &dst);
 	} else {
-		msg->transport->vtbl->get_src(msg->transport, &dst);
-		msg->transport->vtbl->get_dst(msg->transport, &src);
+		t->vtbl->get_src(t, &dst);
+		t->vtbl->get_dst(t, &src);
 	}
 
 	log_packet_iov(src, dst, msg->iov, msg->iovlen);

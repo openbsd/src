@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.45 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: log.c,v 1.46 2004/06/21 16:01:56 ho Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -498,8 +498,9 @@ log_packet_iov(struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 	struct isakmp_hdr *isakmphdr;
 	struct packhdr  hdr;
 	struct udphdr   udp;
-	int             off, datalen, hdrlen, i;
 	struct timeval  tv;
+	int             off, datalen, hdrlen, i, add_espmarker = 0;
+	const u_int32_t	espmarker = 0;
 
 	for (i = 0, datalen = 0; i < iovcnt; i++)
 		datalen += iov[i].iov_len;
@@ -524,6 +525,13 @@ log_packet_iov(struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 	udp.uh_sport = sockaddr_port(src);
 	udp.uh_dport = sockaddr_port(dst);
 	datalen += sizeof udp;
+#if defined (USE_NAT_TRAVERSAL)
+	if (ntohs(udp.uh_sport) == 4500 ||
+	    ntohs(udp.uh_dport) == 4500) { /* XXX Quick and dirty */
+		add_espmarker = 1;
+		datalen += sizeof espmarker;
+	}
+#endif
 	udp.uh_ulen = htons(datalen);
 
 	/* ip */
@@ -588,6 +596,8 @@ setup_ip4:
 	/* Write to pcap file.  */
 	fwrite(&hdr, hdrlen, 1, packet_log);	/* pcap + IP */
 	fwrite(&udp, sizeof(struct udphdr), 1, packet_log);	/* UDP */
+	if (add_espmarker)
+		fwrite(&espmarker, sizeof espmarker, 1, packet_log);
 	fwrite(packet_buf, datalen, 1, packet_log);	/* IKE-data */
 	fflush(packet_log);
 }
