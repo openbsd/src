@@ -164,7 +164,7 @@ apply_complete()
 	return;
 	}
 
-    i = fscanf(fp, "%s %d %c", class, &dn, junk);
+    i = fscanf(fp, "%20s %d %c", class, &dn, junk);
     fclose(fp);
     if (i != 2)
 	{
