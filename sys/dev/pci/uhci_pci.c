@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhci_pci.c,v 1.13 2002/03/14 01:27:00 millert Exp $	*/
-/*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.14 2003/07/08 13:19:08 nate Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ int	uhci_pci_detach(device_ptr_t, int);
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -73,9 +74,7 @@ struct cfattach uhci_pci_ca = {
 };
 
 int
-uhci_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+uhci_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -88,24 +87,30 @@ uhci_pci_match(parent, match, aux)
 }
 
 void
-uhci_pci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr, legsup;
+	pcireg_t csr;
+	const char *vendor;
+	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	usbd_status r;
 
+#if defined(__NetBSD__)
+	char devinfo[256];
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
+#endif
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
-		printf(": can't map i/o space\n");
+		    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
+		printf("%s: can't map i/o space\n", devname);
 		return;
 	}
 
@@ -113,21 +118,35 @@ uhci_pci_attach(parent, self, aux)
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 
 	sc->sc_pc = pc;
+	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	/* Verify that the PIRQD enable bit is set, some BIOS's don't do that*/
-	legsup = pci_conf_read(pc, pa->pa_tag, PCI_LEGSUP);
-	if (!(legsup & PCI_LEGSUP_USBPIRQDEN)) {
-		legsup = PCI_LEGSUP_USBPIRQDEN;
-		pci_conf_write(pc, pa->pa_tag, PCI_LEGSUP, legsup);
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pa, &ih)) {
+		printf("%s: couldn't map interrupt\n", devname);
+		return;
 	}
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
+				       devname);
+	if (sc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt", devname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf(": interrupting at %s\n", intrstr);
 
-	switch(pci_conf_read(pc, pa->pa_tag, PCI_USBREV) & PCI_USBREV_MASK) {
+	/* Set LEGSUP register to its default value. */
+	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
+
+	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
 		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
 		break;
@@ -148,38 +167,29 @@ uhci_pci_attach(parent, self, aux)
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
-	    sc->sc.sc_bus.bdev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf(": %s\n", intrstr);
-
+	/* Figure out vendor for root hub descriptor. */
+	vendor = pci_findvendor(pa->pa_id);
+	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
+	if (vendor)
+		strncpy(sc->sc.sc_vendor, vendor,
+			sizeof(sc->sc.sc_vendor) - 1);
+	else
+		snprintf(sc->sc.sc_vendor, sizeof sc->sc.sc_vendor,
+			"vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+	
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf(": init failed, error=%d\n", r);
+		printf("%s: init failed, error=%d\n", devname, r);
 		return;
 	}
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-	    usbctlprint);
+				       usbctlprint);
 }
 
 int
-uhci_pci_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+uhci_pci_detach(device_ptr_t self, int flags)
 {
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	int rv;
@@ -195,5 +205,6 @@ uhci_pci_detach(self, flags)
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+
 	return (0);
 }

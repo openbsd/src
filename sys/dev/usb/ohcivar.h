@@ -1,5 +1,5 @@
-/*	$OpenBSD: ohcivar.h,v 1.17 2002/05/07 18:29:18 nate Exp $ */
-/*	$NetBSD: ohcivar.h,v 1.28 2001/09/28 23:57:21 augustss Exp $	*/
+/*	$OpenBSD: ohcivar.h,v 1.18 2003/07/08 13:19:09 nate Exp $ */
+/*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -107,6 +107,10 @@ typedef struct ohci_softc {
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 
+#ifdef USB_USE_SOFTINTR
+	char sc_softwake;
+#endif /* USB_USE_SOFTINTR */
+
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
 	ohci_soft_itd_t *sc_freeitds;
@@ -138,13 +142,14 @@ typedef struct ohci_softc {
 	char sc_dying;
 } ohci_softc_t;
 
-void	ohci_reset(ohci_softc_t *);
+struct ohci_xfer {
+	struct usbd_xfer xfer;
+	struct usb_task	abort_task;
+};
+
 usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach(ohci_softc_t *, int);
 int		ohci_activate(device_ptr_t, enum devact);
 #endif
-Static void		ohci_rhsc_enable(void *sc);
-
-#define MS_TO_TICKS(ms) ((ms) * hz / 1000)

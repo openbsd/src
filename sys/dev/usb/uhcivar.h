@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhcivar.h,v 1.14 2002/07/25 02:18:10 nate Exp $ */
-/*	$NetBSD: uhcivar.h,v 1.32 2000/08/13 16:18:09 augustss Exp $	*/
+/*	$OpenBSD: uhcivar.h,v 1.15 2003/07/08 13:19:09 nate Exp $ */
+/*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ typedef struct uhci_intr_info {
 struct uhci_xfer {
 	struct usbd_xfer xfer;
 	uhci_intr_info_t iinfo;
+	struct usb_task	abort_task;
 	int curframe;
 };
 
@@ -161,6 +162,10 @@ typedef struct uhci_softc {
 	u_int8_t sc_saved_sof;
 	u_int16_t sc_saved_frnum;
 
+#ifdef USB_USE_SOFTINTR
+	char sc_softwake;
+#endif /* USB_USE_SOFTINTR */
+
 	char sc_isreset;
 	char sc_suspend;
 	char sc_dying;
@@ -172,7 +177,7 @@ typedef struct uhci_softc {
 	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
 	usb_callout_t sc_poll_handle;
 
-	char sc_vendor[16];		/* vendor string for root hub */
+	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	void *sc_powerhook;		/* cookie from power hook */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.c,v 1.13 2002/07/25 02:18:11 nate Exp $ */
-/*	$NetBSD: usb_mem.c,v 1.22 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$OpenBSD: usb_mem.c,v 1.14 2003/07/08 13:19:09 nate Exp $ */
+/*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,10 +65,16 @@
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
-int usbdebug;
+extern int usbdebug;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#endif
+
+#if defined(__NetBSD__)
+MALLOC_DEFINE(M_USB, "USB", "USB misc. memory");
+MALLOC_DEFINE(M_USBDEV, "USB device", "USB device driver");
+MALLOC_DEFINE(M_USBHC, "USB HC", "USB host controller");
 #endif
 
 #define USB_MEM_SMALL 64
@@ -270,7 +276,7 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 		usb_block_freemem(p->block);
 		return;
 	}
-	f = KERNADDR(p);
+	f = KERNADDR(p, 0);
 	f->block = p->block;
 	f->offs = p->offs;
 	s = splusb();

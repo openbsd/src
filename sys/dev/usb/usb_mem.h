@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.h,v 1.9 2002/07/25 02:18:11 nate Exp $ */
-/*	$NetBSD: usb_mem.h,v 1.15 2000/06/28 16:39:27 mrg Exp $	*/
+/*	$OpenBSD: usb_mem.h,v 1.10 2003/07/08 13:19:09 nate Exp $ */
+/*	$NetBSD: usb_mem.h,v 1.20 2003/05/03 18:11:42 wiz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -52,8 +52,9 @@ typedef struct usb_dma_block {
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
-#define DMAADDR(dma) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs)
-#define KERNADDR(dma) ((void *)((dma)->block->kaddr + (dma)->offs))
+#define DMAADDR(dma, o) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs + (o))
+#define KERNADDR(dma, o) \
+	((void *)((char *)((dma)->block->kaddr + (dma)->offs) + (o)))
 
 usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
@@ -61,7 +62,7 @@ void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 #elif defined(__FreeBSD__)
 
 /*
- * FreeBSD does not have special functions for dma memory, so let's keep it
+ * FreeBSD does not have special functions for DMA memory, so let's keep it
  * simple for now.
  */
 
@@ -78,10 +79,10 @@ void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 #define		usb_freemem(t,p)	(free(*(p), M_USB))
 
 #ifdef __alpha__
-#define DMAADDR(dma)	(alpha_XXX_dmamap((vm_offset_t) *(dma)))
+#define DMAADDR(dma, o)	(alpha_XXX_dmamap((vm_offset_t) *(dma) + (o)))
 #else
-#define DMAADDR(dma)	(vtophys(*(dma)))
+#define DMAADDR(dma, o)	(vtophys(*(dma) + (o)))
 #endif
-#define KERNADDR(dma)	((void *) *(dma))
-#endif
+#define KERNADDR(dma, o)	((void *) ((char *)*(dma) + (o)))
+#endif /* __FreeBSD__ */
 
