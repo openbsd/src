@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.4 2000/02/25 10:28:25 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.14 2000/02/25 06:15:57 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.5 2000/04/11 12:02:30 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.16 2000/03/22 17:33:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #ifndef	lint
-static char _rcsid[] = "$KAME: route6d.c,v 1.14 2000/02/25 06:15:57 itojun Exp $";
+static char _rcsid[] = "$KAME: route6d.c,v 1.16 2000/03/22 17:33:43 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -793,6 +793,10 @@ tobeadv(rrt, ifcp)
 
 	/* Special care for static routes */
 	if (rrt->rrt_flags & RTF_STATIC) {
+		/* XXX don't advertise reject/blackhole routes */
+		if (rrt->rrt_flags & (RTF_REJECT | RTF_BLACKHOLE))
+			return 0;
+
 		if (Sflag)	/* Yes, advertise it anyway */
 			return 1;
 		if (sflag && rrt->rrt_index != ifcp->ifc_index)
@@ -2192,8 +2196,10 @@ rt_entry(rtm, again)
 	s = rtm->rtm_index;
 	if (s < nindex2ifc && index2ifc[s])
 		ifname = index2ifc[s]->ifc_name;
-	else
-		fatal("Unknown interface %d", s);
+	else {
+		trace(1, " not configured\n");
+		return;
+	}
 	trace(1, " if %s sock %d\n", ifname, s);
 	rrt->rrt_index = s;
 
