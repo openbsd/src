@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.105 2003/01/15 01:36:10 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.106 2003/01/16 01:17:23 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -792,6 +792,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
+	pcireg_t maptype;
 
 	cp->compat = 0;
 
@@ -824,16 +825,27 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		}
 	}
 	cp->ih = sc->sc_pci_ih;
+
+	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
+	    PCIIDE_REG_CMD_BASE(wdc_cp->channel));
+	WDCDEBUG_PRINT(("%s: cmd regs mapping: %s\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname,
+	    (maptype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory")), DEBUG_PROBE);
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->channel),
-	    PCI_MAPREG_TYPE_IO, 0,
+	    maptype, 0,
 	    &wdc_cp->cmd_iot, &wdc_cp->cmd_ioh, NULL, cmdsizep, 0) != 0) {
 		printf("%s: couldn't map %s cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return 0;
 	}
 
+	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
+	    PCIIDE_REG_CTL_BASE(wdc_cp->channel));
+	WDCDEBUG_PRINT(("%s: ctl regs mapping: %s\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname,
+	    (maptype == PCI_MAPREG_TYPE_IO ? "I/O": "memory")), DEBUG_PROBE);
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
-	    PCI_MAPREG_TYPE_IO, 0,
+	    maptype, 0,
 	    &wdc_cp->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep, 0) != 0) {
 		printf("%s: couldn't map %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
