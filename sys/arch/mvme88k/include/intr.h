@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2003/10/11 22:08:57 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2004/01/08 14:29:45 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -83,6 +83,7 @@ extern int intrcnt[M88K_NIRQ];
 #ifdef _KERNEL
 #ifndef _LOCORE
 unsigned setipl(unsigned level);
+unsigned raiseipl(unsigned level);
 int spl0(void);
 
 /* needs major cleanup - XXX nivas */
@@ -107,11 +108,6 @@ void splassert_check(int, const char *);
 
 #endif /* _LOCORE */
 
-#if 0
-spl0 is a function by itself. I really am serious about the clean up
-above...
-#define spl0()		spln(0)
-#endif /* 0 */
 #define spl1()		setipl(1)
 #define spl2()		setipl(2)
 #define spl3()		setipl(3)
@@ -124,13 +120,13 @@ above...
 #define spllowersoftclock()	setipl(IPL_SOFTCLOCK)
 #define splsoftclock()		setipl(IPL_SOFTCLOCK)
 #define splsoftnet()		setipl(IPL_SOFTNET)
-#define splbio()		setipl(IPL_BIO)
-#define splnet()		setipl(IPL_NET)
-#define spltty()		setipl(IPL_TTY)
-#define splclock()		setipl(IPL_CLOCK)
-#define splstatclock()		setipl(IPL_STATCLOCK)
-#define splimp()		setipl(IPL_IMP)
-#define splvm()			setipl(IPL_VM)
+#define splbio()		raiseipl(IPL_BIO)
+#define splnet()		raiseipl(IPL_NET)
+#define spltty()		raiseipl(IPL_TTY)
+#define splclock()		raiseipl(IPL_CLOCK)
+#define splstatclock()		raiseipl(IPL_STATCLOCK)
+#define splimp()		raiseipl(IPL_IMP)
+#define splvm()			raiseipl(IPL_VM)
 #define splhigh()		setipl(IPL_HIGH)
 
 #define splx(x)		((x) ? setipl((x)) : spl0())

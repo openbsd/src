@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.38 2004/01/05 20:07:03 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.39 2004/01/08 14:29:46 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -473,11 +473,9 @@ setipl(unsigned level)
 	unsigned curspl;
 	m88k_psr_type psr; /* processor status register */
 
-#ifdef DIAGNOSTIC
-	if (level > 7) {
 #ifdef DEBUG
+	if (level > 7) {
 		printf("setipl: invoked with invalid level %x\n", level);
-#endif
 		level &= 0x07;	/* and pray it will work */
 	}
 #endif
@@ -496,6 +494,49 @@ setipl(unsigned level)
 	case BRD_197:
 		curspl = *md.intr_mask & 0x07;
 		*md.intr_mask = level;
+		break;
+#endif /* defined(MVME187) || defined(MVME197) */
+	}
+
+	flush_pipeline();
+
+	/* The flush pipeline is required to make sure the above write gets
+	 * through the data pipe and to the hardware; otherwise, the next
+	 * bunch of instructions could execute at the wrong spl protection
+	 */
+	set_psr(psr);
+	return curspl;
+}
+
+unsigned
+raiseipl(unsigned level)
+{
+	unsigned curspl;
+	m88k_psr_type psr; /* processor status register */
+
+#ifdef DEBUG
+	if (level > 7) {
+		printf("raiseipl: invoked with invalid level %x\n", level);
+		level &= 0x07;	/* and pray it will work */
+	}
+#endif
+
+	psr = disable_interrupts_return_psr();
+	switch (brdtyp) {
+#ifdef MVME188
+	case BRD_188:
+		curspl = m188_curspl[cpu_number()];
+		if (curspl < level)
+			setlevel(level);
+		break;
+#endif /* MVME188 */
+#if defined(MVME187) || defined(MVME197)
+	case BRD_187:
+	case BRD_8120:
+	case BRD_197:
+		curspl = *md.intr_mask & 0x07;
+		if (curspl < level)
+			*md.intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
