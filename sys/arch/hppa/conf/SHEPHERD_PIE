@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.18 2002/10/15 16:05:33 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.19 2002/10/31 00:19:02 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -71,6 +71,7 @@ option		FPEMUL
 option		USELEDS		# blink 'em
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter (LSI PN???)
+lasi0	at mainbus0 offset 0xfd00000 irq 28	# LASI on J210
 lasi1	at mainbus0 offset 0x500000 irq 27	# GIO card
 asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
 #wax*	at mainbus0 irq 24	# Wax may host EISA as well
