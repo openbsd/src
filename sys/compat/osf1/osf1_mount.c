@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_mount.c,v 1.3 1996/08/23 11:48:48 niklas Exp $	*/
+/*	$OpenBSD: osf1_mount.c,v 1.4 1996/10/30 16:37:20 niklas Exp $	*/
 /*	$NetBSD: osf1_mount.c,v 1.6 1996/02/17 23:08:36 jtk Exp $	*/
 
 /*
@@ -155,6 +155,12 @@ struct osf1_nfs_args {
 	OSF1_NFSMNT_TIMEO|OSF1_NFSMNT_RETRANS|OSF1_NFSMNT_HOSTNAME|	\
 	OSF1_NFSMNT_INT|OSF1_NFSMNT_NOCONN)
 
+void bsd2osf_statfs __P((struct statfs *, struct osf1_statfs *));
+int osf1_mount_mfs __P((struct proc *, struct osf1_sys_mount_args *,
+    struct sys_mount_args *));
+int osf1_mount_nfs __P((struct proc *, struct osf1_sys_mount_args *,
+   struct sys_mount_args *));
+
 void
 bsd2osf_statfs(bsfs, osfs)
 	struct statfs *bsfs;
@@ -207,12 +213,12 @@ osf1_sys_statfs(p, v, retval)
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if (error = VFS_STATFS(mp, sp, p))
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	bsd2osf_statfs(sp, &osfs);
@@ -237,11 +243,11 @@ osf1_sys_fstatfs(p, v, retval)
 	struct osf1_statfs osfs;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if (error = VFS_STATFS(mp, sp, p))
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	bsd2osf_statfs(sp, &osfs);
@@ -288,8 +294,8 @@ osf1_sys_getfsstat(p, v, retval)
 				continue;
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 			bsd2osf_statfs(sp, &osfs);
-			if (error = copyout(&osfs, osf_sfsp,
-			    sizeof (struct osf1_statfs)))
+			if ((error = copyout(&osfs, osf_sfsp,
+			    sizeof (struct osf1_statfs))) != 0)
 				return (error);
 			osf_sfsp += sizeof (struct osf1_statfs);
 		}
@@ -353,12 +359,12 @@ osf1_sys_mount(p, v, retval)
 		break;
 
 	case OSF1_MOUNT_NFS:				/* XXX */
-		if (error = osf1_mount_nfs(p, uap, &a))
+		if ((error = osf1_mount_nfs(p, uap, &a)) != 0)
 			return error;
 		break;
 
 	case OSF1_MOUNT_MFS:				/* XXX */
-		if (error = osf1_mount_mfs(p, uap, &a))
+		if ((error = osf1_mount_mfs(p, uap, &a)) != 0)
 			return error;
 		break;
 
@@ -398,7 +404,8 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 	caddr_t cp;
 	int error;
 
-	if (error = copyin(SCARG(osf_argp, data), &osf_ma, sizeof osf_ma))
+	error = copyin(SCARG(osf_argp, data), &osf_ma, sizeof osf_ma);
+	if (error)
 		return error;
 
 	bzero(&bsd_ma, sizeof bsd_ma);
@@ -409,12 +416,12 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 
 	cp = STACKGAPBASE;
 	SCARG(bsd_argp, data) = cp;
-	if (error = copyout(&bsd_ma, cp, sizeof bsd_ma))
+	if ((error = copyout(&bsd_ma, cp, sizeof bsd_ma)) != 0)
 		return error;
 	cp += ALIGN(sizeof bsd_ma);
 
 	SCARG(bsd_argp, type) = cp;
-	if (error = copyout(MOUNT_MFS, cp, strlen(MOUNT_MFS) + 1))
+	if ((error = copyout(MOUNT_MFS, cp, strlen(MOUNT_MFS) + 1)) != 0)
 		return error;
 
 	return 0;
@@ -432,7 +439,8 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 	caddr_t cp;
 	int error;
 
-	if (error = copyin(SCARG(osf_argp, data), &osf_na, sizeof osf_na))
+	error = copyin(SCARG(osf_argp, data), &osf_na, sizeof osf_na);
+	if (error)
 		return error;
 
 	bzero(&bsd_na, sizeof bsd_na);
@@ -472,12 +480,12 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 
 	cp = STACKGAPBASE;
 	SCARG(bsd_argp, data) = cp;
-	if (error = copyout(&bsd_na, cp, sizeof bsd_na))
+	if ((error = copyout(&bsd_na, cp, sizeof bsd_na)) != 0)
 		return error;
 	cp += ALIGN(sizeof bsd_na);
 
 	SCARG(bsd_argp, type) = cp;
-	if (error = copyout(MOUNT_NFS, cp, strlen(MOUNT_NFS) + 1))
+	if ((error = copyout(MOUNT_NFS, cp, strlen(MOUNT_NFS) + 1)) != 0)
 		return error;
 
 	return 0;
