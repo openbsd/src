@@ -10,9 +10,9 @@ CFLAGS	+= -DAFS_BSD_ENV -DFD_SPEED_HACK -I${AFSSRC}/lwp
 
 beforedepend: lwp.c lwp.h
 
-lwp.h:
+lwp.h:	${AFSSRC}/lwp/lwp_asm.h
 	ln -s ${AFSSRC}/lwp/lwp_asm.h lwp.h
-lwp.c:	lwp.h
+lwp.c:	lwp.h ${AFSSRC}/lwp/lwp_asm.c
 	ln -s ${AFSSRC}/lwp/lwp_asm.c lwp.c
 
 process.S:
