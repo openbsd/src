@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.34 1999/12/08 12:57:06 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.35 2000/05/03 19:50:41 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.34 1999/12/08 12:57:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.35 2000/05/03 19:50:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,6 +145,23 @@ hookup(host, port)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
 	error = getaddrinfo(host, port, &hints, &res0);
+	if (error == EAI_SERVICE) {
+		/*
+		 * If the services file is corrupt/missing, fall back
+		 * on our hard-coded defines.
+		 */
+		char pbuf[NI_MAXSERV];
+
+		pbuf[0] = '\0';
+		if (strcmp(port, "ftp") == 0)
+			snprintf(pbuf, sizeof(pbuf), "%d", FTP_PORT);
+		else if (strcmp(port, "ftpgate") == 0)
+			snprintf(pbuf, sizeof(pbuf), "%d", GATE_PORT);
+		else if (strcmp(port, "http") == 0)
+			snprintf(pbuf, sizeof(pbuf), "%d", HTTP_PORT);
+		if (pbuf[0])
+			error = getaddrinfo(host, pbuf, &hints, &res0);
+	}
 	if (error) {
 		warn(gai_strerror(error));
 		code = -1;
