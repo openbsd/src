@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile.inc,v 1.19 1999/06/23 22:17:32 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 1999/06/23 22:47:17 cmetz Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
 
 CFLAGS+=-DRESOLVSORT
 
-SRCS+=	__siocgifconf.c base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c \
-	gethostnamadr.c getnameinfo.c getnetbyaddr.c getnetbyname.c \
-	getnetent.c getnetnamadr.c getproto.c getprotoent.c getprotoname.c \
+SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
+	getnameinfo.c getnetbyaddr.c getnetbyname.c getnetent.c \
+	getnetnamadr.c getproto.c getprotoent.c getprotoname.c \
 	getservbyname.c getservbyport.c getservent.c herror.c \
 	if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
 	inet_lnaof.c inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
