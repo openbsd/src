@@ -2866,3 +2866,4 @@
 ./usr/include/dev/ic/i82596reg.h
 ./usr/include/dev/ic/i82596var.h
 ./usr/include/dev/usb/usbcdc.h
+./usr/include/dev/ic/ac97.h

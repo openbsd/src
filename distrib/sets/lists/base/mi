@@ -831,6 +831,7 @@
 ./usr/local/man/cat7
 ./usr/local/man/cat8
 ./usr/local/man/cat9
+./usr/local/man/cat9/i386
 ./usr/local/man/man1
 ./usr/local/man/man2
 ./usr/local/man/man3
@@ -2624,3 +2625,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./sbin/atactl
