@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.7 1999/12/09 18:18:24 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.8 1999/12/16 16:27:12 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -59,14 +59,18 @@ typedef struct Buffer {
     char    *outPtr;	/* Place to read from */
 } *Buffer;
 
-/* Buf_AddChar adds a single char to a buffer. */
-#define	Buf_AddChar(bp, byte) \
-	(void) (--(bp)->left == 0 ? Buf_OvAddChar(bp, byte), 1 : \
-		(*(bp)->inPtr++ = (byte), *(bp)->inPtr = 0), 1)
+/* Internal support for Buf_AddChar.  */
+void BufOverflow __P((Buffer));
+
+/* Buf_AddChar -- Add a single char to a buffer. */
+#define	Buf_AddChar(bp, byte) 			\
+do {			      			\
+	if (--(bp)->left == 0)			\
+	    BufOverflow(bp);			\
+	*(bp)->inPtr++ = (byte);		\
+} while (0)					
 
 #define BUF_ERROR 256
-
-void Buf_OvAddChar __P((Buffer, char));
 
 /* Buf_AddChars -- Add a number of chars to the buffer.  */
 void Buf_AddChars __P((Buffer, size_t, const char *));
@@ -79,7 +83,7 @@ void Buf_AddChars __P((Buffer, size_t, const char *));
 
 
 char *Buf_GetAll __P((Buffer, size_t *));
-void Buf_Discard __P((Buffer, size_t));
+void Buf_Reset __P((Buffer));
 int Buf_Size __P((Buffer));
 Buffer Buf_Init __P((size_t));
 void Buf_Destroy __P((Buffer, Boolean));

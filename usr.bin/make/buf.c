@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.8 1999/12/06 22:24:31 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.9 1999/12/16 16:27:12 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.8 1999/12/06 22:24:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.9 1999/12/16 16:27:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,49 +94,32 @@ static char rcsid[] = "$OpenBSD: buf.c,v 1.8 1999/12/06 22:24:31 espie Exp $";
  *	Makes sure there's room for an extra NULL char at the end of the
  *	buffer in case it holds a string.
  */
-#define BufExpand(bp,nb) 						\
- 	if (bp->left < (nb)+1) {					\
-	    char  *newBuf; 						\
-	    size_t   newSize = (bp)->size; 				\
-									\
-	    do { 							\
-		newSize *= 2 ; 						\
-		(bp)->left = newSize - ((bp)->inPtr - (bp)->buffer); 	\
-	    } while ((bp)->left < (nb)+1+BUF_MARGIN);			\
-	    newBuf = erealloc((bp)->buffer, newSize); 		\
-	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); 	\
-	    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer); 	\
-	    (bp)->buffer = newBuf; 					\
-	    (bp)->size = newSize; 					\
-	}
+#define BufExpand(bp,nb) 					\
+do {								\
+    char  *newBuf; 						\
+    size_t   newSize = (bp)->size; 				\
+								\
+    do { 							\
+	newSize *= 2 ; 						\
+	(bp)->left = newSize - ((bp)->inPtr - (bp)->buffer); 	\
+    } while ((bp)->left < (nb)+1+BUF_MARGIN);			\
+    newBuf = erealloc((bp)->buffer, newSize); 		\
+    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); 	\
+    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer); 	\
+    (bp)->buffer = newBuf; 					\
+    (bp)->size = newSize; 					\
+} while (0)
 
 #define BUF_DEF_SIZE	256 	/* Default buffer size */
 #define BUF_MARGIN	256	/* Make sure we are comfortable */
 
-/*-
- *-----------------------------------------------------------------------
- * Buf_OvAddChar --
- *	Add a single char to the buffer.  
- *
- * Side Effects:
- *	The buffer may be expanded.
- *
- *-----------------------------------------------------------------------
- */
+/* Buf_AddChar hard case: buffer must be expanded to accommodate 
+ * one more char.  */
 void
-Buf_OvAddChar(bp, byte)
-    Buffer 	bp;
-    char	byte;
+BufOverflow(bp)
+    Buffer bp;
 {
     BufExpand(bp, 1);
-
-    *bp->inPtr++ = byte;
-    bp->left--;
-
-    /*
-     * Null-terminate
-     */
-    *bp->inPtr = 0;
 }
 
 /*-
@@ -156,16 +139,12 @@ Buf_AddChars(bp, numBytes, bytesPtr)
     const char 	*bytesPtr;
 {
 
-    BufExpand(bp, numBytes);
+    if (bp->left < numBytes+1)
+	BufExpand(bp, numBytes);
 
     memcpy(bp->inPtr, bytesPtr, numBytes);
     bp->inPtr += numBytes;
     bp->left -= numBytes;
-
-    /*
-     * Null-terminate
-     */
-    *bp->inPtr = 0;
 }
 
 /*-
@@ -188,13 +167,14 @@ Buf_GetAll(bp, numBytesPtr)
 	*numBytesPtr = bp->inPtr - bp->outPtr;
     }
 
+    *bp->inPtr = 0;
     return (bp->outPtr);
 }
 
 /*-
  *-----------------------------------------------------------------------
- * Buf_Discard --
- *	Throw away chars in a buffer.
+ * Buf_Reset -
+ *	Throw away all chars in a buffer.
  *
  * Side Effects:
  *	The chars are discarded.
@@ -202,18 +182,12 @@ Buf_GetAll(bp, numBytesPtr)
  *-----------------------------------------------------------------------
  */
 void
-Buf_Discard(bp, numBytes)
+Buf_Reset(bp)
     Buffer 	bp;
-    size_t	numBytes;
 {
 
-    if (bp->inPtr - bp->outPtr <= numBytes) {
-	bp->inPtr = bp->outPtr = bp->buffer;
-	bp->left = bp->size;
-	*bp->inPtr = 0;
-    } else {
-	bp->outPtr += numBytes;
-    }
+    bp->inPtr = bp->outPtr = bp->buffer;
+    bp->left = bp->size;
 }
 
 /*-
@@ -228,7 +202,7 @@ Buf_Discard(bp, numBytes)
  *-----------------------------------------------------------------------
  */
 int
-Buf_Size (buf)
+Buf_Size(buf)
     Buffer  buf;
 {
     return (buf->inPtr - buf->outPtr);
@@ -263,7 +237,6 @@ Buf_Init(size)
     bp->left = bp->size = size;
     bp->buffer = emalloc(size);
     bp->inPtr = bp->outPtr = bp->buffer;
-    *bp->inPtr = 0;
 
     return (bp);
 }
