@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.21 1997/10/22 23:34:39 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.22 1997/10/24 22:22:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -54,6 +54,7 @@ extern u_int cnvmem, extmem; /* XXX global pass memprobe()->machdep_start() */
 
 /* diskprobe.c */
 extern bios_diskinfo_t bios_diskinfo[];
+extern u_int32_t bios_cksumlen;
 
 /* memprobe.c */
 extern bios_memmap_t *memory_map;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.5 1997/10/24 01:38:51 weingart Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.6 1997/10/24 22:22:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,12 +41,14 @@
 #include "biosdev.h"
 #include "libsa.h"
 
+#define MAX_CKSUMLEN 32		/* Max amount of diskblocks used in cksum */
 
 /* Local Prototypes */
-static void disksum __P((bios_diskinfo_t*));
+static int disksum __P((int));
 
 /* These get passed to kernel */
 bios_diskinfo_t bios_diskinfo[16];
+u_int32_t bios_cksumlen;
 
 /* Probe for all BIOS disks */
 void
@@ -62,7 +64,12 @@ diskprobe()
 	for(drive = 0; drive < 4; drive++) {
 		rv = bios_getinfo(drive, &bios_diskinfo[i]);
 
-		if(rv) break;
+		if(rv) {
+#ifdef BIOS_DEBUG
+			printf(" <!fd%u>", drive);
+#endif
+			break;
+		}
 
 		printf(" fd%u", drive);
 
@@ -75,7 +82,12 @@ diskprobe()
 	for(drive = 0x80; drive < 0x88; drive++) {
 		rv = bios_getinfo(drive, &bios_diskinfo[i]);
 
-		if(rv) break;
+		if(rv) {
+#ifdef BIOS_DEBUG
+			printf(" <!hd%u>", drive);
+#endif
+			break;
+		}
 
 		unit = drive - 0x80;
 		printf(" hd%u%s", unit, (bios_diskinfo[i].bios_edd > 0?"+":""));
@@ -86,15 +98,26 @@ diskprobe()
 			type = 0;	/* XXX let it be IDE */
 		} else {
 			/* Best guess */
-			if (label.d_type == DTYPE_SCSI)
+			switch (label.d_type) {
+			case DTYPE_SCSI:
 				type = 4;
-			else
+				bios_diskinfo[i].flags |= BDI_GOODLABEL;
+				break;
+
+			case DTYPE_ESDI:
+			case DTYPE_ST506:
 				type = 0;
+				bios_diskinfo[i].flags |= BDI_GOODLABEL;
+				break;
+
+			default:
+				bios_diskinfo[i].flags |= BDI_BADLABEL;
+				type = 0;	/* XXX Suggest IDE */
+			}
 		}
 
 		/* Fill out best we can */
 		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(type, 0, 0, unit, 0);
-		disksum(&bios_diskinfo[i]);
 		i++;
 	}
 
@@ -102,6 +125,12 @@ diskprobe()
 	bios_diskinfo[i].bios_number = -1;
 	addbootarg(BOOTARG_DISKINFO,
 		   (i + 1) * sizeof(bios_diskinfo[0]), bios_diskinfo);
+
+	/* Checksumming of hard disks */
+	for (i = 0; disksum(i) && i < MAX_CKSUMLEN; i++)
+		;
+	bios_cksumlen = i + 1;
+	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
 
 	printf("\n");
 }
@@ -120,63 +149,45 @@ bios_dklookup(dev)
 	return(NULL);
 }
 
-/* Find given sum in diskinfo array */
-static bios_diskinfo_t *
-find_sum(sum)
-	u_int32_t sum;
-{
-	int i;
-
-	for(i = 0; bios_diskinfo[i].bios_number != -1; i++)
-		if(bios_diskinfo[i].checksum == sum)
-			return(&bios_diskinfo[i]);
-
-	return(NULL);
-}
-
-/* Checksum given drive until different
+/*
+ * Checksum one more block on all harddrives
  *
  * Use the adler32() function from libz,
  * as it is quick, small, and available.
  */
-static void
-disksum(bdi)
-	bios_diskinfo_t *bdi;
+static int
+disksum(blk)
+	int blk;
 {
-	u_int32_t sum;
-	int len, st;
+	bios_diskinfo_t *bdi, *bd;
+	int st, reprobe = 0;
 	int hpc, spt, dev;
 	char *buf;
+	int cyl, head, sect;
 
 	buf = alloca(DEV_BSIZE);
-	dev = bdi->bios_number;
-	hpc = bdi->bios_heads;
-	spt = bdi->bios_sectors;
+	for (bdi = bios_diskinfo; bdi->bios_number != -1; bdi++) {
+		/* Skip this disk if it is not a HD or has had an I/O error */
+		if (!(bdi->bios_number & 0x80) || bdi->flags & BDI_INVALID)
+			continue;
 
-	/* Adler32 checksum */
-	sum = adler32(0, NULL, 0);
-	for(len = 0; len < 32; len++){
-		int cyl, head, sect;
-		bios_diskinfo_t *bd;
+		dev = bdi->bios_number;
+		hpc = bdi->bios_heads;
+		spt = bdi->bios_sectors;
 
-		btochs(len, cyl, head, sect, hpc, spt);
-
+		/* Adler32 checksum */
+		btochs(blk, cyl, head, sect, hpc, spt);
 		st = biosd_io(F_READ, dev, cyl, head, sect, 1, buf);
-		if(st) break;
+		if (st) {
+			bdi->flags |= BDI_INVALID;
+			continue;
+		}
+		bdi->checksum = adler32(bdi->checksum, buf, DEV_BSIZE);
 
-		sum = adler32(sum, buf, DEV_BSIZE);
-
-		/* Do a minimum of 8 sectors */
-		if((len >= 8) && ((bd = find_sum(sum)) == NULL))
-			break;
+		for (bd = bios_diskinfo; bd != bdi; bd++)
+			if (bdi->checksum == bd->checksum)
+				reprobe = 1;
 	}
 
-	if(st) {
-		bdi->checksum = 0;
-		bdi->checklen = 0;
-	} else {
-		bdi->checksum = sum;
-		bdi->checklen = len;
-	}
+	return (reprobe);
 }
-
