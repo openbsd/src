@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.8 1999/02/06 03:22:31 brian Exp $
+ *	$Id: bundle.c,v 1.9 1999/02/25 12:06:51 brian Exp $
  */
 
 #include <sys/param.h>
@@ -526,8 +526,8 @@ bundle_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
         else if (bundle->autoload.timer.state != TIMER_RUNNING ||
                  bundle->autoload.comingup)
           bundle_StartAutoLoadTimer(bundle, 0);
-      } else if (bundle->autoload.timer.state != TIMER_RUNNING ||
-                 !bundle->autoload.comingup)
+      } else if (queued && (bundle->autoload.timer.state != TIMER_RUNNING ||
+                            !bundle->autoload.comingup))
         bundle_StartAutoLoadTimer(bundle, 1);
     }
 
