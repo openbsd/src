@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2001/09/21 04:49:22 jason Exp $
+#	$OpenBSD: install.md,v 1.3 2001/09/21 20:09:14 jason Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -105,7 +105,7 @@ md_installboot() {
 	fi
 		
 	echo Installing boot block...
-	installboot -v ${_prefix}/bootblk ${_rawdev}
+	${_prefix}/installboot -v ${_prefix}/bootblk ${_rawdev}
 	sync; sync; sync
 
 	if [ -e /mnt/usr/mdec/ofwboot ]; then
