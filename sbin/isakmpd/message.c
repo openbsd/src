@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.40 2001/04/12 15:48:37 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.41 2001/04/14 01:25:34 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -185,7 +185,6 @@ message_free (struct message *msg)
 {
   int i;
   struct payload *payload, *next;
-  struct post_send *node;
 
   LOG_DBG ((LOG_MESSAGE, 20, "message_free: freeing %p", msg));
   if (!msg)
@@ -207,7 +206,7 @@ message_free (struct message *msg)
 	next = TAILQ_NEXT (payload, link);
 	free (payload);
       }
-  while ((node = TAILQ_FIRST (&msg->post_send)) != 0)
+  while (TAILQ_FIRST (&msg->post_send) != 0)
     TAILQ_REMOVE (&msg->post_send, TAILQ_FIRST (&msg->post_send), link);
 
   /* If we are on the send queue, remove us from there.  */
