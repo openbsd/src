@@ -16,7 +16,7 @@ validity of the host key.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.9 1999/11/15 20:53:24 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.10 1999/11/18 14:00:48 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -259,7 +259,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 
       /* check the real bits  */
       if (bits != BN_num_bits(n))
-        error("Warning: error in %s, line %d: keysize mismatch: "
+        error("Warning: error in %s, line %ld: keysize mismatch: "
               "actual size %d vs. announced %d.",
               file, linenum, BN_num_bits(n), bits);
 

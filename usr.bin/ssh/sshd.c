@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.57 1999/11/17 09:51:21 markus Exp $");
+RCSID("$Id: sshd.c,v 1.58 1999/11/18 14:00:49 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1209,7 +1209,7 @@ do_authloop(struct passwd *pw)
 
         if (bits != BN_num_bits(client_host_key_n))
           error("Warning: keysize mismatch for client_host_key: "
-	        "actual %d, announced %s", BN_num_bits(client_host_key_n), bits);
+	        "actual %d, announced %d", BN_num_bits(client_host_key_n), bits);
 	packet_integrity_check(plen, (4 + ulen) + 4 + elen + nlen, type);
   
 	authenticated = auth_rhosts_rsa(pw, client_user,
