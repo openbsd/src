@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.6 1997/08/26 12:04:35 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.7 1997/08/26 17:19:06 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -120,7 +120,20 @@ isvalid(char *option, int type, int mode)
 void
 usage()
 {
-	fprintf( stderr, "usage: ipsecadm [new|old] [esp|ah] <options...>\n\n" );
+     fprintf( stderr, "usage: ipsecadm [command] <modifier...>\n"
+	      "\tCommands: new esp, old esp, new ah, old ah, group, delspi\n"
+	      "\tPossible modifiers:\n"
+	      "\t\t-enc <alg>\t encryption algorithm\n"
+	      "\t\t-auth <alg>\t authentication algorithm\n"
+	      "\t\t-src <ip>\t source address to be used\n"
+	      "\t\t-dst <ip>\t destination address to be used\n"
+	      "\t\t-spi <val>\t SPI to be used\n"
+	      "\t\t-key <val>\t key material to be used\n"
+	      "\t\t-iv <val>\t iv to be used\n"
+	      "\t\t-proto <val>\t security protocol\n"
+	      "\t\t-chain\t\t SPI chain delete\n"
+	      "\talso: dst2, spi2, proto2\n"
+	  );
 }
 
 int

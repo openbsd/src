@@ -1,0 +1,183 @@
+.\" $OpenBSD: ipsecadm.1,v 1.1 1997/08/26 17:19:06 provos Exp $
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd August 26, 1997
+.Dt IPSECADM 1
+.Os
+.Sh NAME
+.Nm ipsecadm
+.Nd interface to setup IPSec
+.Sh SYNOPSIS
+.Nm ipsecadm
+.Op command
+.Ar modifiers ...
+.Sh DESCRIPTION
+The
+.Nm ipsecadm
+utility allows to setup securtiy associations in the kernel
+to be used with 
+.Xr ipsec 4 .
+It can be used to specifiy the encryption and authentication
+alogrithmns and key material for the network layer security
+provided by IPSec.
+The possible commands are:
+.Pp
+.Bl -tag -width new_esp
+.It new esp
+Setup a SPI which uses the new esp transforms.
+Encryption and authentication algorithmns can be applied. 
+This is the default mode.
+Allowed
+modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl enc ,
+.Fl auth ,
+.Fl iv 
+and
+.Fl key .
+.It old esp
+Setup a SPI which uses the old esp transforms. Only
+encryption algorithmns can be applied. Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl enc ,
+.Fl iv 
+and
+.Fl key .
+.It new ah
+Setup a SPI which uses the new ah transforms. Authentication
+will be done with HMAC using the specified hash algorithm. Allowed modifiers
+are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl auth ,
+and
+.Fl key .
+.It old ah
+Setup a SPI which uses the old ah transforms. Simple keyed
+hashes will be used for authentication. Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl auth ,
+and
+.Fl key .
+.It delspi
+The specified SA will be deleted. A SA consists of the
+destination address, SPI and security protocol. Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto .
+and
+.Fl chain .
+.It group
+Group two SA's together. Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto ,
+.Fl dst2 ,
+.Fl spi2 ,
+and
+.Fl proto2 .
+.El
+.Pp
+The modifiers have the following meanings: 
+.Bl -tag -width proto2 -offset indent
+.It src
+The source IP address for the SPI.
+.It dst
+The destination IP address for the SPI.
+.It spi
+The unique Security Parameter Index (SPI).
+.It enc
+The encryption algorithm to be used with the SPI. Possible values
+are:
+.Nm des
+and
+.Nm 3des
+for both old and new esp.
+.It auth
+The authentication algorithm to be used with the SPI. Possible values
+are:
+.Nm md5
+and
+.Nm sha1
+for both old and new ah and also new esp.
+.It key
+The secret symmetric key used for encryption and authentication. The size
+for 
+.Nm des
+and
+.Nm 3des
+is fixed to 8 and 24 respectivly. If you also use authentication in new
+esp mode the key has to be longer.
+.It iv
+The initialization vector used for encryption. In old esp mode you need
+to specify it as either four or eight byte long value, in new esp mode
+a derived iv will be used when none is specified.
+.It proto
+The security protocol needed by
+.Nm delspi
+or
+.Nm group
+to uniquely specifiy the SA. 
+The default value is 50 which means
+.Nm IPPROTO_ESP .
+.It chain
+Delete the whole SPI chain, otherwise delete only the SPI given.
+.It dst2
+The second IP destination address used by
+.Nm group .
+.It spi2
+The second SPI used by
+.Nm group .
+.It proto2
+The second security protocol used by
+.Nm group .
+.El
+.Sh EXAMPLE
+Setup a SPI which uses new esp with 3des encryption and HMAC-SHA1
+authentication:
+.Pp
+ipsecadm -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
+-key 6380638063806380638063806380638063806380638063806380638063806380
+.Pp
+Setup a SPI for authentication with old ah only:
+.Pp
+ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 
+-key 12341234deadbeef
+.Sh SEE ALSO
+.Xr ipsec 4 ,
+.Xr photurisd 1 .
