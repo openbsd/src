@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.19 1996/09/26 21:07:16 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.20 1996/10/05 00:08:39 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
 
 /*
@@ -2778,8 +2778,10 @@ ed_shared_writemem(sc, from, card, len)
 			card += 2;
 			len -= 2;
 		}
-		if (len == 1)
-			bus_mem_write_2(bc, memh, card, (u_int16_t)*from);
+		if (len == 1) {
+			word = *from;
+			bus_mem_write_2(bc, memh, card, word);
+		}
 	} else {
 		while (len--)
 			bus_mem_write_1(bc, memh, card++, *from++);

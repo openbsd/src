@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.11 1996/10/04 15:07:41 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.12 1996/10/05 00:08:41 niklas Exp $	*/
 
 /*
  *	Derived from sys/dev/isa/if_ed.c:
@@ -2788,8 +2788,10 @@ ed_shared_writemem(sc, from, card, len)
 			card += 2;
 			len -= 2;
 		}
-		if (len == 1)
-			bus_mem_write_2(bc, memh, card, (u_int16_t)*from);
+		if (len == 1) {
+			word = *from;
+			bus_mem_write_2(bc, memh, card, word);
+		}
 	} else {
 		while (len--)
 			bus_mem_write_1(bc, memh, card++, *from++);
