@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2004/06/17 00:37:24 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2004/06/20 19:33:07 aaron Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -456,6 +456,7 @@ cpu_hatch(void *v)
 	lapic_tpr = 0;
 	enable_intr();
 	printf("%s: CPU at apid %ld running\n", ci->ci_dev.dv_xname, ci->ci_cpuid);
+	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
 
