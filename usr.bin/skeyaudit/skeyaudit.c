@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.14 2002/05/29 15:32:10 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.15 2003/03/14 04:29:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -135,7 +135,7 @@ notify(struct passwd *pw, int seq, int interactive)
 
 	/* Only set this once */
 	if (hostname[0] == '\0' && gethostname(hostname, sizeof(hostname)) == -1)
-		strcpy(hostname, "unknown");
+		strlcpy(hostname, "unknown", sizeof(hostname));
 
 	if (interactive)
 		out = stdout;
