@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.17 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.18 2002/02/21 16:16:26 millert Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ static	char *rmtpeer;
 
 static	int okname(char *);
 static	int rmtcall(char *, char *);
-static	void rmtconnaborted(/* int, int */);
+static	void rmtconnaborted(int);
 static	int rmtgetb(void);
 static	void rmtgetconn(void);
 static	void rmtgets(char *, int);
@@ -109,7 +109,8 @@ rmthost(host)
 }
 
 static void
-rmtconnaborted()
+rmtconnaborted(signo)
+	int signo;
 {
 	/* XXX signal race */
 	errx(X_ABORT, "Lost connection to remote host.");
@@ -223,7 +224,7 @@ rmtread(buf, count)
 	for (i = 0; i < n; i += cc) {
 		cc = read(rmtape, buf+i, n - i);
 		if (cc <= 0) {
-			rmtconnaborted();
+			rmtconnaborted(0);
 		}
 	}
 	return (n);
@@ -312,7 +313,7 @@ rmtcall(cmd, buf)
 {
 
 	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
-		rmtconnaborted();
+		rmtconnaborted(0);
 	return (rmtreply(cmd));
 }
 
@@ -340,7 +341,7 @@ rmtreply(cmd)
 
 		msg("Protocol to remote tape server botched (code \"%s\").\n",
 		    code);
-		rmtconnaborted();
+		rmtconnaborted(0);
 	}
 	return (atoi(code + 1));
 }
@@ -351,7 +352,7 @@ rmtgetb()
 	char c;
 
 	if (read(rmtape, &c, 1) != 1)
-		rmtconnaborted();
+		rmtconnaborted(0);
 	return (c);
 }
 
@@ -375,5 +376,5 @@ rmtgets(line, len)
 	*cp = '\0';
 	msg("Protocol to remote tape server botched.\n");
 	msg("(rmtgets got \"%s\").\n", line);
-	rmtconnaborted();
+	rmtconnaborted(0);
 }

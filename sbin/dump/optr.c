@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.21 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.22 2002/02/21 16:16:26 millert Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.21 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.22 2002/02/21 16:16:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: optr.c,v 1.21 2002/02/19 19:39:38 millert Exp $
 #include "dump.h"
 #include "pathnames.h"
 
-void	alarmcatch(/* int, int */);
+void	alarmcatch(int);
 int	datesort(const void *, const void *);
 
 /*
@@ -93,7 +93,7 @@ query(question)
 		quit("fopen on %s fails: %s\n", _PATH_TTY, strerror(errno));
 	attnmessage = question;
 	timeout = 0;
-	alarmcatch();
+	alarmcatch(0);
 	back = -1;
 	errcount = 0;
 	do {
@@ -138,7 +138,8 @@ char lastmsg[BUFSIZ];
  * XXX not safe
  */
 void
-alarmcatch()
+alarmcatch(signo)
+	int signo;
 {
 	int save_errno = errno;
 
