@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.16 2000/01/04 16:03:00 itojun Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.17 2000/06/26 22:48:14 art Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1248,16 +1248,17 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
  */
 void
 nfs_timer(arg)
-	void *arg;	/* never used */
+	void *arg;
 {
-	register struct nfsreq *rep;
-	register struct mbuf *m;
-	register struct socket *so;
-	register struct nfsmount *nmp;
-	register int timeo;
+	struct timeout *to = (struct timeout *)arg;
+	struct nfsreq *rep;
+	struct mbuf *m;
+	struct socket *so;
+	struct nfsmount *nmp;
+	int timeo;
 	int s, error;
 #ifdef NFSSERVER
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 	static long lasttime = 0;
 	u_quad_t cur_usec;
 #endif
@@ -1371,7 +1372,7 @@ nfs_timer(arg)
 	}
 #endif /* NFSSERVER */
 	splx(s);
-	timeout(nfs_timer, (void *)0, nfs_ticks);
+	timeout_add(to, nfs_ticks);
 }
 
 /*

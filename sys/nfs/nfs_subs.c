@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.28 2000/02/07 04:57:17 assar Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.29 2000/06/26 22:48:15 art Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1080,6 +1080,8 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 void
 nfs_init()
 {
+	static struct timeout nfs_timer_to;
+
 #if !defined(alpha) && defined(DIAGNOSTIC)
 	/*
 	 * Check to see if major data structures haven't bloated.
@@ -1140,7 +1142,9 @@ nfs_init()
 	 * Initialize reply list and start timer
 	 */
 	TAILQ_INIT(&nfs_reqq);
-	nfs_timer(NULL);
+
+	timeout_set(&nfs_timer_to, nfs_timer, &nfs_timer_to);
+	nfs_timer(&nfs_timer_to);
 }
 
 #ifdef NFSCLIENT
