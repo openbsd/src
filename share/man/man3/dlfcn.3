@@ -89,7 +89,7 @@ a handle refering to the resident copy is returned.
 unlinks and removes the object referred to by
 .Fa handle
 from the process address space. If multiple calls to
-.fn dlopen
+.Fn dlopen
 have been done on this object
 .Po or the object was one loaded at startup time
 .Pc
@@ -100,7 +100,7 @@ looks for a definition of
 .Fa symbol
 in the shared object designated by
 .Fa handle .
-The symbols address is returned. If the symbol cannot be resolved,
+The symbol's address is returned. If the symbol cannot be resolved,
 .Dv NULL
 is returned.
 .Pp
