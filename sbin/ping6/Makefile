@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1999/12/11 08:43:19 itojun Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/12/30 16:19:32 itojun Exp $
 
 PROG=	ping6
 MAN=	ping6.8
@@ -12,6 +12,6 @@ BINMODE=4555
 CPPFLAGS+=-DNRL_GETADDRINFO
 
 # kame scopeid hack
-#CPPFLAGS+=-DKAME_SCOPEID
+CPPFLAGS+=-DKAME_SCOPEID
 
 .include <bsd.prog.mk>
