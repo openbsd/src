@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 1996/07/28 09:00:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 1996/07/31 12:29:16 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -42,6 +42,10 @@ distribution: distrib-dirs
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys
+	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
+	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
+	    chgrp ${BINOWN} ${DESTDIR}/etc/fbtab && \
+	    chmod 644 ${DESTDIR}/etc/fbtab
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc

@@ -1,0 +1,4 @@
+#	$OpenBSD: fbtab.head,v 1.1 1996/07/31 12:29:17 deraadt Exp $
+# login(1) reads this file to determine which devices should be owned to
+# the new user. Format is:
+# login-tty	perm	device:[device]:...
