@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.4 1996/04/18 19:21:40 niklas Exp $	*/
+/*	$OpenBSD: pio.h,v 1.5 1997/11/10 23:40:45 niklas Exp $	*/
 /*	$NetBSD: pio.h,v 1.13 1996/03/08 20:15:23 cgd Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ __outb(int port, u_int8_t data)
 }
 
 static __inline void
-outsb(int port, void *addr, int cnt)
+outsb(int port, const void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsb"		:
 								:
@@ -178,7 +178,7 @@ __outw(int port, u_int16_t data)
 }
 
 static __inline void
-outsw(int port, void *addr, int cnt)
+outsw(int port, const void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsw"		:
 								:
@@ -202,7 +202,7 @@ __outl(int port, u_int32_t data)
 }
 
 static __inline void
-outsl(int port, void *addr, int cnt)
+outsl(int port, const void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsl"		:
 								:
