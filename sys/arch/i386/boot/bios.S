@@ -213,19 +213,14 @@ ok3:
       popl    %ebp
       ret
 #endif
-/*
+
 #ifndef SERIAL
+/*
 # BIOS call "INT 10H Function 0Eh" to write character to console
 #	Call with	%ah = 0x0e
 #			%al = character
 #			%bh = page
 #			%bl = foreground color
-#else
-# BIOS call "INT 14H Function 01h" to write character to console
-#	Call with	%ah = 0x01
-#			%al = character
-#			%dx = port number
-#endif
 */
 ENTRY(putc)
 	pushl	%ebp
@@ -240,16 +235,10 @@ ENTRY(putc)
 
 	movb	%cl, %al
 
-#ifndef SERIAL
 	movb	$0x0e, %ah
 	data32
 	movl	$0x0001, %ebx
 	int	$0x10		# display a byte
-#else
-	movb	$0x01, %ah
-	xorl	%edx, %edx
-	int	$0x14		# display a byte
-#endif
 
 	data32
 	call	_C_LABEL(real_to_prot)
@@ -262,18 +251,10 @@ ENTRY(putc)
 
 
 /*
-#ifndef SERIAL
 # BIOS call "INT 16H Function 00H" to read character from the keyboard
 #	Call with	%ah = 0x00
 #	Return:		%ah = keyboard scan code
 #			%al = ASCII character
-#else
-# BIOS call "INT 14H Function 02H" to read character from the serial port
-#	Call with	%ah = 0x02
-#			%dx = port number
-#	Return:		%ah = line status
-#			%al = ASCII character
-#endif
 */
 ENTRY(getc)
 	pushl	%ebp
@@ -284,14 +265,8 @@ ENTRY(getc)
 
 	call	_C_LABEL(prot_to_real)
 
-#ifndef SERIAL
 	movb	$0x00, %ah
 	int	$0x16
-#else
-	movb	$0x02, %ah
-	xorl	%edx, %edx
-	int	$0x14
-#endif
 
 	movb	%al, %bl	# real_to_prot uses %eax
 
@@ -309,7 +284,6 @@ ENTRY(getc)
 
 
 /*
-#ifndef SERIAL
 # BIOS call "INT 16H Function 01H" to check whether a character is pending
 #	Call with	%ah = 0x01
 #	Return:	
@@ -319,13 +293,6 @@ ENTRY(getc)
 #			ZF  = clear
 #		else
 #			ZF  = set
-#else
-# BIOS call "INT 14H Function 03H" to check whether a character is pending
-#	Call with	%ah = 0x03
-#			%dx = port number
-#	Return:		%ah = line status
-#			%al = modem status
-#endif
 */
 ENTRY(ischar)
 	pushl	%ebp
@@ -336,16 +303,9 @@ ENTRY(ischar)
 
 	call	_C_LABEL(prot_to_real)
 
-#ifndef SERIAL
 	movb	$0x01, %ah
 	int	$0x16
 	setnz	%ah
-#else
-	movb	$0x03, %ah
-	xorl	%edx, %edx
-	int	$0x14
-	andb	$0x1f, %ah
-#endif
 
 	movb	%ah, %bl	# real_to_prot uses %eax
 
@@ -360,6 +320,8 @@ ENTRY(ischar)
 	popl	%ebx
 	popl	%ebp
 	ret
+
+#endif /* #ifndef SERIAL */
 
 /*
 #

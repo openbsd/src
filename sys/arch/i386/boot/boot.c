@@ -82,7 +82,10 @@ boot(drive)
 {
 	int loadflags, currname = 0;
 	char *t;
-		
+
+#ifdef SERIAL
+	init_serial();
+#endif
 	printf("\n"
 	       ">> OpenBSD BOOT: %d/%d k [%s]\n"
 	       "use ? for file list, or carriage return for defaults\n"

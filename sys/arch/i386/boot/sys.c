@@ -152,7 +152,7 @@ loop:
 		}
 		dp = (struct dirent *)(iodest + off);
 		if (dp->d_reclen < 8) {
-			printf("dir corrupt (geometry mismatch?)\n");
+			printf("dir corrupt (geom. mismatch?)\n");
 			return 0;
 		}
 		loc += dp->d_reclen;

@@ -41,10 +41,11 @@ CFLAGS=	-O6 -D_KERNEL -DI386_CPU -DI486_CPU -DI586_CPU
 CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 
 # Uncomment this to make the boot block talk to a serial port.
-#CPPFLAGS+=-DSERIAL
+#CPPFLAGS+=-DSERIAL -DCOMCONSOLE=0x3F8 -DCONSPEED=9600
 
 # start.o should be first
-OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o
+OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o \
+	serial.o
 
 boot:	${OBJS}
 	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS}
