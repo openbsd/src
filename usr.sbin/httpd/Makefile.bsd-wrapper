@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.38 2002/12/25 23:13:25 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.39 2003/02/10 21:28:26 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -98,30 +98,30 @@ INSTALL_MODULES=
 # modules that come with Apache.
 
 .if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "i386" || \
-${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "powerpc" || \
-${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 CONFIG_ARGS+=  ${DSO_MODULE_ARGS}
 INSTALL_MODULES= \
-src/modules/experimental/mod_mmap_static.so \
-src/modules/experimental/mod_auth_digest.so \
-src/modules/extra/mod_define.so \
-src/modules/proxy/libproxy.so \
-src/modules/standard/mod_vhost_alias.so \
-src/modules/standard/mod_log_agent.so \
-src/modules/standard/mod_info.so \
-src/modules/standard/mod_log_referer.so \
-src/modules/standard/mod_mime_magic.so \
-src/modules/standard/mod_speling.so \
-src/modules/standard/mod_rewrite.so \
-src/modules/standard/mod_auth_dbm.so \
-src/modules/standard/mod_auth_anon.so \
-src/modules/standard/mod_auth_db.so \
-src/modules/standard/mod_digest.so \
-src/modules/standard/mod_cern_meta.so \
-src/modules/standard/mod_usertrack.so \
-src/modules/standard/mod_unique_id.so \
-src/modules/standard/mod_expires.so \
-src/modules/standard/mod_headers.so
+	src/modules/experimental/mod_mmap_static.so \
+	src/modules/experimental/mod_auth_digest.so \
+	src/modules/extra/mod_define.so \
+	src/modules/proxy/libproxy.so \
+	src/modules/standard/mod_vhost_alias.so \
+	src/modules/standard/mod_log_agent.so \
+	src/modules/standard/mod_info.so \
+	src/modules/standard/mod_log_referer.so \
+	src/modules/standard/mod_mime_magic.so \
+	src/modules/standard/mod_speling.so \
+	src/modules/standard/mod_rewrite.so \
+	src/modules/standard/mod_auth_dbm.so \
+	src/modules/standard/mod_auth_anon.so \
+	src/modules/standard/mod_auth_db.so \
+	src/modules/standard/mod_digest.so \
+	src/modules/standard/mod_cern_meta.so \
+	src/modules/standard/mod_usertrack.so \
+	src/modules/standard/mod_unique_id.so \
+	src/modules/standard/mod_expires.so \
+	src/modules/standard/mod_headers.so
 .endif
 
 PERLPATH=	/usr/bin/perl
