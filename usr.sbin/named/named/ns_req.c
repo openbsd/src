@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.3 1997/05/07 22:43:29 millert Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.4 1998/03/31 00:16:30 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_req.c,v 8.27 1996/10/08 04:51:03 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.3 1997/05/07 22:43:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.4 1998/03/31 00:16:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1015,7 +1015,7 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 	switch (type) {
 	case T_A:
 #ifndef INVQ
-		if (!fake_iquery)
+		if (!fake_iquery || dlen != INT32SZ)
 			return (Refuse);
 #endif
 #ifdef INVQ
@@ -1029,7 +1029,10 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 	dprintf(1, (ddt, "req: IQuery class %d type %d\n", class, type));
 
 	fname = (char *)msg + HFIXEDSZ;
-	bcopy(fname, anbuf, alen = (char *)*cpp - fname);
+	alen = (char *)*cpp - fname;
+	if ((size_t)alen > sizeof anbuf)
+		return (Refuse);
+	bcopy(fname, anbuf, alen);
 	data = anbuf + alen - dlen;
 	*cpp = (u_char *)fname;
 	*buflenp -= HFIXEDSZ;
