@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: fpos.c,v 1.35 2001/06/06 00:25:48 ca Exp $")
+SM_RCSID("@(#)$Sendmail: fpos.c,v 1.37 2001/09/11 04:04:48 gshapiro Exp $")
 #include <errno.h>
 #include <setjmp.h>
 #include <sys/time.h>

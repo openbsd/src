@@ -13,12 +13,12 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: util.c,v 8.347 2001/09/04 22:43:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: util.c,v 8.352 2001/09/26 14:56:58 ca Exp $")
 
 #include <sysexits.h>
 #include <sm/xtrap.h>
 
-/*
+/*
 **  ADDQUOTES -- Adds quotes & quote bits to a string.
 **
 **	Runs through a string and adds backslashes and quote bits.
@@ -67,7 +67,7 @@ addquotes(s, rpool)
 	*q = '\0';
 	return r;
 }
-/*
+/*
 **  RFC822_STRING -- Checks string for proper RFC822 string quoting.
 **
 **	Runs through a string and verifies RFC822 special characters
@@ -125,7 +125,7 @@ rfc822_string(s)
 	/* unbalanced '"' or '(' */
 	return !quoted && commentlev == 0;
 }
-/*
+/*
 **  SHORTEN_RFC822_STRING -- Truncate and rebalance an RFC822 string
 **
 **	Arbitrarily shorten (in place) an RFC822 string and rebalance
@@ -233,7 +233,7 @@ increment:
 	}
 	return modified;
 }
-/*
+/*
 **  FIND_CHARACTER -- find an unquoted character in an RFC822 string
 **
 **	Find an unquoted, non-commented character in an RFC822
@@ -302,8 +302,34 @@ find_character(string, character)
 	/* Return pointer to the character */
 	return string;
 }
+
+/*
+**  CHECK_BODYTYPE -- check bodytype parameter
+**
+**	Parameters:
+**		bodytype -- bodytype parameter
+**
+**	Returns:
+**		BODYTYPE_* according to parameter
+**		
+*/
+
+int
+check_bodytype(bodytype)
+	char *bodytype;
+{
+	/* check body type for legality */
+	if (bodytype == NULL)
+		return BODYTYPE_NONE;
+	if (sm_strcasecmp(bodytype, "7BIT") == 0)
+		return BODYTYPE_7BIT;
+	if (sm_strcasecmp(bodytype, "8BITMIME") == 0)
+		return BODYTYPE_8BITMIME;
+	return BODYTYPE_ILLEGAL;
+}
+
 #if _FFR_BESTMX_BETTER_TRUNCATION || _FFR_DNSMAP_MULTI
-/*
+/*
 **  TRUNCATE_AT_DELIM -- truncate string at a delimiter and append "..."
 **
 **	Parameters:
@@ -346,7 +372,7 @@ truncate_at_delim(str, len, delim)
 		str[0] = '\0';
 }
 #endif /* _FFR_BESTMX_BETTER_TRUNCATION || _FFR_DNSMAP_MULTI */
-/*
+/*
 **  XALLOC -- Allocate memory, raise an exception on error
 **
 **	Parameters:
@@ -389,7 +415,7 @@ xalloc(sz)
 	}
 	return p;
 }
-/*
+/*
 **  COPYPLIST -- copy list of pointers.
 **
 **	This routine is the equivalent of strdup for lists of
@@ -432,7 +458,7 @@ copyplist(list, copycont, rpool)
 
 	return newvp;
 }
-/*
+/*
 **  COPYQUEUE -- copy address queue.
 **
 **	This routine is the equivalent of strdup for address queues;
@@ -471,7 +497,7 @@ copyqueue(addr, rpool)
 
 	return ret;
 }
-/*
+/*
 **  LOG_SENDMAIL_PID -- record sendmail pid and command line.
 **
 **	Parameters:
@@ -524,7 +550,7 @@ log_sendmail_pid(e)
 	if (LogLevel > 9)
 		sm_syslog(LOG_INFO, NOQID, "started as: %s", CommandLineArgs);
 }
-/*
+/*
 **  SET_DELIVERY_MODE -- set and record the delivery mode
 **
 **	Parameters:
@@ -550,7 +576,7 @@ set_delivery_mode(mode, e)
 	buf[1] = '\0';
 	macdefine(&e->e_macro, A_TEMP, macid("{deliveryMode}"), buf);
 }
-/*
+/*
 **  SET_OP_MODE -- set and record the op mode
 **
 **	Parameters:
@@ -576,7 +602,7 @@ set_op_mode(mode)
 	buf[1] = '\0';
 	macdefine(&BlankEnvelope.e_macro, A_TEMP, MID_OPMODE, buf);
 }
-/*
+/*
 **  PRINTAV -- print argument vector.
 **
 **	Parameters:
@@ -603,7 +629,7 @@ printav(av)
 	}
 	(void) sm_io_putc(smioout, SM_TIME_DEFAULT, '\n');
 }
-/*
+/*
 **  XPUTS -- put string doing control escapes.
 **
 **	Parameters:
@@ -780,7 +806,7 @@ xputs(s)
 				     TermEscape.te_rv_off);
 	(void) sm_io_flush(smioout, SM_TIME_DEFAULT);
 }
-/*
+/*
 **  MAKELOWER -- Translate a line into lower case
 **
 **	Parameters:
@@ -806,7 +832,7 @@ makelower(p)
 		if (isascii(c) && isupper(c))
 			*p = tolower(c);
 }
-/*
+/*
 **  FIXCRLF -- fix <CR><LF> in line.
 **
 **	Looks for the <CR><LF> combination and turns it into the
@@ -841,7 +867,7 @@ fixcrlf(line, stripnl)
 		*p++ = '\n';
 	*p = '\0';
 }
-/*
+/*
 **  PUTLINE -- put a line like fputs obeying SMTP conventions
 **
 **	This routine always guarantees outputing a newline (or CRLF,
@@ -865,7 +891,7 @@ putline(l, mci)
 {
 	putxline(l, strlen(l), mci, PXLF_MAPFROM);
 }
-/*
+/*
 **  PUTXLINE -- putline with flags bits.
 **
 **	This routine always guarantees outputing a newline (or CRLF,
@@ -1103,7 +1129,7 @@ putxline(l, len, mci, pxflags)
 		DataProgress = true;
 	} while (l < end);
 }
-/*
+/*
 **  XUNLINK -- unlink a file, doing logging as appropriate.
 **
 **	Parameters:
@@ -1133,7 +1159,7 @@ xunlink(f)
 		SYNC_DIR(f, false);
 	return i;
 }
-/*
+/*
 **  SFGETS -- "safe" fgets -- times out and ignores random interrupts.
 **
 **	Parameters:
@@ -1241,7 +1267,7 @@ sfgets(buf, siz, fp, timeout, during)
 	}
 	return buf;
 }
-/*
+/*
 **  FGETFOLDED -- like fgets, but knows about folded lines.
 **
 **	Parameters:
@@ -1330,7 +1356,7 @@ fgetfolded(buf, n, f)
 	*p = '\0';
 	return bp;
 }
-/*
+/*
 **  CURTIME -- return current time.
 **
 **	Parameters:
@@ -1348,7 +1374,7 @@ curtime()
 	(void) time(&t);
 	return t;
 }
-/*
+/*
 **  ATOBOOL -- convert a string representation to boolean.
 **
 **	Defaults to false
@@ -1369,7 +1395,7 @@ atobool(s)
 		return true;
 	return false;
 }
-/*
+/*
 **  ATOOCT -- convert a string representation to octal.
 **
 **	Parameters:
@@ -1390,7 +1416,7 @@ atooct(s)
 		i = (i << 3) | (*s++ - '0');
 	return i;
 }
-/*
+/*
 **  BITINTERSECT -- tell if two bitmaps intersect
 **
 **	Parameters:
@@ -1415,7 +1441,7 @@ bitintersect(a, b)
 	}
 	return false;
 }
-/*
+/*
 **  BITZEROP -- tell if a bitmap is all zero
 **
 **	Parameters:
@@ -1439,7 +1465,7 @@ bitzerop(map)
 	}
 	return true;
 }
-/*
+/*
 **  STRCONTAINEDIN -- tell if one string is contained in another
 **
 **	Parameters:
@@ -1474,7 +1500,7 @@ strcontainedin(a, b)
 	}
 	return false;
 }
-/*
+/*
 **  CHECKFD012 -- check low numbered file descriptors
 **
 **	File descriptors 0, 1, and 2 should be open at all times.
@@ -1498,7 +1524,7 @@ checkfd012(where)
 		fill_fd(i, where);
 #endif /* XDEBUG */
 }
-/*
+/*
 **  CHECKFDOPEN -- make sure file descriptor is open -- for extended debugging
 **
 **	Parameters:
@@ -1524,7 +1550,7 @@ checkfdopen(fd, where)
 	}
 #endif /* XDEBUG */
 }
-/*
+/*
 **  CHECKFDS -- check for new or missing file descriptors
 **
 **	Parameters:
@@ -1584,7 +1610,7 @@ checkfds(where)
 	}
 	errno = save_errno;
 }
-/*
+/*
 **  PRINTOPENFDS -- print the open file descriptors (for debugging)
 **
 **	Parameters:
@@ -1609,7 +1635,7 @@ printopenfds(logit)
 	for (fd = 0; fd < DtableSize; fd++)
 		dumpfd(fd, false, logit);
 }
-/*
+/*
 **  DUMPFD -- dump a file descriptor
 **
 **	Parameters:
@@ -1798,7 +1824,7 @@ printit:
 	else
 		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "%s\n", buf);
 }
-/*
+/*
 **  SHORTEN_HOSTNAME -- strip local domain information off of hostname.
 **
 **	Parameters:
@@ -1845,7 +1871,7 @@ shorten_hostname(host)
 	}
 	return NULL;
 }
-/*
+/*
 **  PROG_OPEN -- open a program for reading
 **
 **	Parameters:
@@ -2024,7 +2050,7 @@ prog_open(argv, pfd, e)
 	_exit(EX_CONFIG);
 	return -1;	/* avoid compiler warning on IRIX */
 }
-/*
+/*
 **  GET_COLUMN -- look up a Column in a line buffer
 **
 **	Parameters:
@@ -2097,7 +2123,7 @@ get_column(line, col, delim, buf, buflen)
 	(void) sm_strlcpy(buf, begin, i + 1);
 	return buf;
 }
-/*
+/*
 **  CLEANSTRCPY -- copy string keeping out bogus characters
 **
 **	Parameters:
@@ -2134,7 +2160,7 @@ cleanstrcpy(t, f, l)
 	}
 	*t = '\0';
 }
-/*
+/*
 **  DENLSTRING -- convert newlines in a string to spaces
 **
 **	Parameters:
@@ -2190,7 +2216,7 @@ denlstring(s, strict, logattacks)
 
 	return bp;
 }
-/*
+/*
 **  STR2PRT -- convert "unprintable" characters in a string to \oct
 **
 **	Parameters:
@@ -2276,7 +2302,7 @@ str2prt(s)
 	buf[len - 1] = '\0';
 	return buf;
 }
-/*
+/*
 **  PATH_IS_DIR -- check to see if file exists and is a directory.
 **
 **	There are some additional checks for security violations in
@@ -2325,7 +2351,7 @@ path_is_dir(pathname, createflag)
 	}
 	return true;
 }
-/*
+/*
 **  PROC_LIST_ADD -- add process id to list of our children
 **
 **	Parameters:
@@ -2422,7 +2448,7 @@ proc_list_add(pid, task, type, count, other)
 		CurChildren++;
 	}
 }
-/*
+/*
 **  PROC_LIST_SET -- set pid task in process list
 **
 **	Parameters:
@@ -2449,7 +2475,7 @@ proc_list_set(pid, task)
 		}
 	}
 }
-/*
+/*
 **  PROC_LIST_DROP -- drop pid from process list
 **
 **	Parameters:
@@ -2496,7 +2522,7 @@ proc_list_drop(pid, count, other)
 
 	return type;
 }
-/*
+/*
 **  PROC_LIST_CLEAR -- clear the process list
 **
 **	Parameters:
@@ -2519,7 +2545,7 @@ proc_list_clear()
 		ProcListVec[i].proc_pid = NO_PID;
 	CurChildren = 0;
 }
-/*
+/*
 **  PROC_LIST_PROBE -- probe processes in the list to see if they still exist
 **
 **	Parameters:
@@ -2557,7 +2583,7 @@ proc_list_probe()
 		CurChildren = 0;
 }
 
-/*
+/*
 **  PROC_LIST_DISPLAY -- display the process list
 **
 **	Parameters:

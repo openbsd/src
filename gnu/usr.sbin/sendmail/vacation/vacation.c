@@ -20,7 +20,7 @@ SM_IDSTR(copyright,
 	The Regents of the University of California.  All rights reserved.\n\
      Copyright (c) 1983 Eric P. Allman.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: vacation.c,v 8.127 2001/09/08 01:21:15 gshapiro Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: vacation.c,v 8.130 2001/09/18 21:45:35 gshapiro Exp $")
 
 
 #include <ctype.h>
@@ -994,7 +994,8 @@ sendmessage(myname, msgfn, emptysender)
 	}
 	/* check return status of the following calls? XXX */
 	(void) close(pvect[0]);
-	if ((sfp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *)pvect[1],
+	if ((sfp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
+			      (void *) &(pvect[1]),
 			      SM_IO_WRONLY, NULL)) != NULL)
 	{
 		(void) sm_io_fprintf(sfp, SM_TIME_DEFAULT, "To: %s\n", From);

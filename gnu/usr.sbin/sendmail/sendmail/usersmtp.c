@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.418 2001/09/04 22:43:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.423 2001/09/24 14:16:54 ca Exp $")
 
 #include <sysexits.h>
 
@@ -47,7 +47,7 @@ extern void	sm_sasl_free __P((void *));
 static char	SmtpMsgBuffer[MAXLINE];		/* buffer for commands */
 static char	SmtpReplyBuffer[MAXLINE];	/* buffer for replies */
 static bool	SmtpNeedIntro;		/* need "while talking" in transcript */
-/*
+/*
 **  SMTPINIT -- initialize SMTP.
 **
 **	Opens the connection and sends the initial protocol.
@@ -269,7 +269,7 @@ tryhelo:
 	smtpquit(m, mci, e);
 	return;
 }
-/*
+/*
 **  ESMTP_CHECK -- check to see if this implementation likes ESMTP protocol
 **
 **	Parameters:
@@ -310,7 +310,7 @@ esmtp_check(line, firstline, m, mci, e)
 /* specify prototype so compiler can check calls */
 static char *str_union __P((char *, char *, SM_RPOOL_T *));
 
-/*
+/*
 **  STR_UNION -- create the union of two lists
 **
 **	Parameters:
@@ -380,7 +380,7 @@ str_union(s1, s2, rpool)
 }
 #endif /* SASL */
 
-/*
+/*
 **  HELO_OPTIONS -- process the options on a HELO line.
 **
 **	Parameters:
@@ -527,7 +527,7 @@ static sasl_callback_t callbacks[] =
 	{	SASL_CB_LIST_END,	NULL,		NULL	}
 };
 
-/*
+/*
 **  INIT_SASL_CLIENT -- initialize client side of Cyrus-SASL
 **
 **	Parameters:
@@ -578,7 +578,7 @@ stop_sasl_client()
 	sasl_clt_init = false;
 	sasl_done();
 }
-/*
+/*
 **  GETSASLDATA -- process the challenges from the SASL protocol
 **
 **	This gets the relevant sasl response data out of the reply
@@ -654,7 +654,7 @@ getsasldata(line, firstline, m, mci, e)
 	mci->mci_sasl_string_len = len;
 	return;
 }
-/*
+/*
 **  READAUTH -- read auth values from a file
 **
 **	Parameters:
@@ -723,7 +723,7 @@ readauth(filename, safe, sai, rpool)
 			f = NULL;
 		else
 			f = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
-				       (void *) fd, SM_IO_RDONLY, NULL);
+				       (void *) &fd, SM_IO_RDONLY, NULL);
 	}
 	else
 #endif /* !_FFR_ALLOW_SASLINFO */
@@ -875,11 +875,12 @@ getauth(mci, e, sai)
 		}
 		l = strlen(pvp[i + 1]);
 
-		/* remove closing quote */
-		if (l > 3 && pvp[i + 1][l - 1] == '"')
-			pvp[i + 1][l - 1] = '\0';
-		else
+		/* check syntax */
+		if (l <= 3 || pvp[i + 1][l - 1] != '"')
 			goto fail;
+
+		/* remove closing quote */
+		pvp[i + 1][l - 1] = '\0';
 
 		/* remove "TD and " */
 		l -= 4;
@@ -952,7 +953,7 @@ getauth(mci, e, sai)
 		(*sai)[i] = NULL;	/* just clear; rpool */
 	return ret;
 }
-/*
+/*
 **  GETSIMPLE -- callback to get userid or authid
 **
 **	Parameters:
@@ -1086,7 +1087,7 @@ getsimple(context, id, result, len)
 	}
 	return SASL_OK;
 }
-/*
+/*
 **  GETSECRET -- callback to get password
 **
 **	Parameters:
@@ -1124,7 +1125,7 @@ getsecret(conn, context, id, psecret)
 	(*psecret)->len = (unsigned long) len;
 	return SASL_OK;
 }
-/*
+/*
 **  SAFESASLFILE -- callback for sasl: is file safe?
 **
 **	Parameters:
@@ -1161,12 +1162,12 @@ safesaslfile(context, file)
 	if (file == NULL || *file == '\0')
 		return SASL_OK;
 	sff = SFF_SAFEDIRPATH|SFF_NOWLINK|SFF_NOWWFILES|SFF_ROOTOK;
+#if SASL <= 10515
 	if ((p = strrchr(file, '/')) == NULL)
 		p = file;
 	else
 		++p;
 
-#if SASL <= 10515
 	/* everything beside libs and .conf files must not be readable */
 	len = strlen(p);
 	if ((len <= 3 || strncmp(p, "lib", 3) != 0) &&
@@ -1253,7 +1254,7 @@ saslgetrealm(context, id, availrealms, result)
 	*result = r;
 	return SASL_OK;
 }
-/*
+/*
 **  ITEMINLIST -- does item appear in list?
 **
 **	Check whether item appears in list (which must be separated by a
@@ -1297,7 +1298,7 @@ iteminlist(item, list, delim)
 	}
 	return NULL;
 }
-/*
+/*
 **  REMOVEMECH -- remove item [rem] from list [list]
 **
 **	Parameters:
@@ -1361,7 +1362,7 @@ removemech(rem, list, rpool)
 		ret[(needle - list) - 1] = '\0';
 	return ret;
 }
-/*
+/*
 **  ATTEMPTAUTH -- try to AUTHenticate using one mechanism
 **
 **	Parameters:
@@ -1573,7 +1574,7 @@ attemptauth(m, mci, e, sai)
 	}
 	/* NOTREACHED */
 }
-/*
+/*
 **  SMTPAUTH -- try to AUTHenticate
 **
 **	This will try mechanisms in the order the sasl library decided until:
@@ -1694,7 +1695,7 @@ smtpauth(m, mci, e)
 }
 #endif /* SASL */
 
-/*
+/*
 **  SMTPMAILFROM -- send MAIL command
 **
 **	Parameters:
@@ -1946,7 +1947,7 @@ smtpmailfrom(m, mci, e)
 	smtpquit(m, mci, e);
 	return EX_PROTOCOL;
 }
-/*
+/*
 **  SMTPRCPT -- designate recipient.
 **
 **	Parameters:
@@ -2080,7 +2081,7 @@ smtprcpt(to, m, mci, e, ctladdr, xstart)
 
 	return smtprcptstat(to, m, mci, e);
 }
-/*
+/*
 **  SMTPRCPTSTAT -- get recipient status
 **
 **	This is only called during SMTP pipelining
@@ -2167,7 +2168,7 @@ smtprcptstat(to, m, mci, e)
 		    SmtpReplyBuffer);
 	return EX_PROTOCOL;
 }
-/*
+/*
 **  SMTPDATA -- send the data and clean up the transaction.
 **
 **	Parameters:
@@ -2477,7 +2478,7 @@ datatimeout()
 	}
 	errno = save_errno;
 }
-/*
+/*
 **  SMTPGETSTAT -- get status code from DATA in LMTP
 **
 **	Parameters:
@@ -2536,7 +2537,7 @@ smtpgetstat(m, mci, e)
 	}
 	return status;
 }
-/*
+/*
 **  SMTPQUIT -- close the SMTP connection.
 **
 **	Parameters:
@@ -2619,7 +2620,7 @@ smtpquit(m, mci, e)
 	CurHostName = oldcurhost;
 	return;
 }
-/*
+/*
 **  SMTPRSET -- send a RSET (reset) command
 **
 **	Parameters:
@@ -2672,7 +2673,7 @@ smtprset(m, mci, e)
 	}
 	smtpquit(m, mci, e);
 }
-/*
+/*
 **  SMTPPROBE -- check the connection state
 **
 **	Parameters:
@@ -2706,7 +2707,7 @@ smtpprobe(mci)
 		smtpquit(m, mci, e);
 	return r;
 }
-/*
+/*
 **  REPLY -- read arpanet reply
 **
 **	Parameters:
@@ -2912,7 +2913,7 @@ reply(m, mci, e, timeout, pfunc, enhstat)
 
 	return r;
 }
-/*
+/*
 **  SMTPMESSAGE -- send message to server
 **
 **	Parameters:

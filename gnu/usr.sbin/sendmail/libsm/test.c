@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_IDSTR(Id, "@(#)$Sendmail: test.c,v 1.12 2001/03/05 03:22:41 ca Exp $")
+SM_IDSTR(Id, "@(#)$Sendmail: test.c,v 1.14 2001/09/11 04:04:49 gshapiro Exp $")
 
 /*
 **  Abstractions for writing libsm test programs.

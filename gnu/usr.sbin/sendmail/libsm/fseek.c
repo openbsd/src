@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: fseek.c,v 1.42 2001/08/27 18:54:14 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: fseek.c,v 1.45 2001/09/11 04:04:48 gshapiro Exp $")
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -31,7 +31,7 @@ SM_RCSID("@(#)$Sendmail: fseek.c,v 1.42 2001/08/27 18:54:14 gshapiro Exp $")
 
 static jmp_buf SeekTimeOut;
 
-/*
+/*
 **  SEEKALRM -- handler when timeout activated for sm_io_seek()
 **
 **  Returns flow of control to where setjmp(SeekTimeOut) was set.

@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: xtrap.c,v 1.3 2000/12/08 08:03:09 rodney Exp $")
+SM_RCSID("@(#)$Sendmail: xtrap.c,v 1.5 2001/09/11 04:04:49 gshapiro Exp $")
 
 #include <sm/xtrap.h>
 

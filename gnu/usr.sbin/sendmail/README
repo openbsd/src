@@ -176,15 +176,13 @@ Important RFCs for electronic mail are:
 	RFC974	MX routing
 	RFC976	UUCP mail format
 	RFC1123	Host requirements (modifies 821, 822, and 974)
-	RFC1413	Identification server
-	RFC1869	SMTP Service Extensions (ESMTP spec)
-	RFC1652	SMTP Service Extension for 8bit-MIMEtransport
-	RFC1870	SMTP Service Extension for Message Size Declaration
-	RFC2045	Multipurpose Internet Mail Extensions (MIME) Part One:
-		Format of Internet Message Bodies
 	RFC1344	Implications of MIME for Internet Mail Gateways
+	RFC1413	Identification server
 	RFC1428	Transition of Internet Mail from Just-Send-8 to
 		8-bit SMTP/MIME
+	RFC1652	SMTP Service Extension for 8bit-MIMEtransport
+	RFC1869	SMTP Service Extensions (ESMTP spec)
+	RFC1870	SMTP Service Extension for Message Size Declaration
 	RFC1891	SMTP Service Extension for Delivery Status Notifications
 	RFC1892	Multipart/Report Content Type for the Reporting of
 		Mail System Administrative Messages
@@ -194,9 +192,15 @@ Important RFCs for electronic mail are:
 	RFC1985	SMTP Service Extension for Remote Message Queue Starting
 	RFC2033 Local Mail Transfer Protocol (LMTP)
 	RFC2034 SMTP Service Extension for Returning Enhanced Error Codes
+	RFC2045	Multipurpose Internet Mail Extensions (MIME) Part One:
+		Format of Internet Message Bodies
 	RFC2476 Message Submission
 	RFC2487 SMTP Service Extension for Secure SMTP over TLS
 	RFC2554 SMTP Service Extension for Authentication
+	RFC2821 Simple Mail Transfer Protocol
+	RFC2822 Internet Message Format
+	RFC2852 Deliver By SMTP Service Extension
+	RFC2920 SMTP Service Extension for Command Pipelining
 
 Other standards that may be of interest (but which are less directly
 relevant to sendmail) are:
@@ -396,4 +400,4 @@ sendmail	Source for the sendmail program itself.
 test		Some test scripts (currently only for compilation aids).
 vacation	Source for the vacation program.  NOT PART OF SENDMAIL!
 
-$Revision: 1.6 $, Last updated $Date: 2001/09/11 19:02:47 $
+$Revision: 1.7 $, Last updated $Date: 2001/10/01 17:18:28 $

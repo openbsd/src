@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: savemail.c,v 8.287 2001/09/04 22:43:05 ca Exp $")
+SM_RCSID("@(#)$Sendmail: savemail.c,v 8.291 2001/09/11 04:05:16 gshapiro Exp $")
 
 static void	errbody __P((MCI *, ENVELOPE *, char *));
 static bool	pruneroute __P((char *));
@@ -32,7 +32,7 @@ static bool	pruneroute __P((char *));
 **			message; otherwise just send the header.
 **
 **	Returns:
-**		true if the df file should be preserved by dropenvelope()
+**		true if the data file should be preserved by dropenvelope()
 **
 **	Side Effects:
 **		Saves the letter, by writing or mailing it back to the
@@ -205,7 +205,8 @@ savemail(e, sendbody)
 			}
 			else
 			{
-				syserr("Cannot open %s", queuename(e, 'x'));
+				syserr("Cannot open %s",
+				       queuename(e, XSCRPT_LETTER));
 				(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
 						     "Transcript of session is unavailable.\r\n");
 			}
@@ -475,7 +476,7 @@ savemail(e, sendbody)
 	}
 	return savedf;
 }
-/*
+/*
 **  RETURNTOSENDER -- return a message to the sender with an error.
 **
 **	Parameters:
@@ -738,7 +739,7 @@ returntosender(msg, returnq, flags, e)
 	}
 	return -1;
 }
-/*
+/*
 **  ERRBODY -- output the body of an error message.
 **
 **	Typically this is a copy of the transcript plus a copy of the
@@ -1353,7 +1354,7 @@ errbody(mci, e, separator)
 	if (errno != 0)
 		syserr("errbody: I/O error");
 }
-/*
+/*
 **  SMTPTODSN -- convert SMTP to DSN status code
 **
 **	Parameters:
@@ -1423,7 +1424,7 @@ smtptodsn(smtpstat)
 		return "4.0.0";
 	return "5.0.0";
 }
-/*
+/*
 **  XTEXTIFY -- take regular text and turn it into DSN-style xtext
 **
 **	Parameters:
@@ -1497,7 +1498,7 @@ xtextify(t, taboo)
 	*p = '\0';
 	return bp;
 }
-/*
+/*
 **  XUNTEXTIFY -- take xtext and turn it into plain text
 **
 **	Parameters:
@@ -1577,7 +1578,7 @@ xuntextify(t)
 	*p = '\0';
 	return bp;
 }
-/*
+/*
 **  XTEXTOK -- check if a string is legal xtext
 **
 **	Xtext is used in Delivery Status Notifications.  The spec was
@@ -1614,7 +1615,7 @@ xtextok(s)
 	}
 	return true;
 }
-/*
+/*
 **  PRUNEROUTE -- prune an RFC-822 source route
 **
 **	Trims down a source route to the last internet-registered hop.

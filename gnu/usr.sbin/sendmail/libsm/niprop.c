@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: niprop.c,v 1.6 2001/09/04 22:41:27 ca Exp $")
+SM_RCSID("@(#)$Sendmail: niprop.c,v 1.8 2001/09/11 04:04:48 gshapiro Exp $")
 
 #if NETINFO
 #include <ctype.h>

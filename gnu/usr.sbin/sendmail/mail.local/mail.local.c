@@ -18,7 +18,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: mail.local.c,v 8.232 2001/09/08 01:21:04 gshapiro Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: mail.local.c,v 8.234 2001/09/11 04:04:59 gshapiro Exp $")
 
 #include <stdlib.h>
 #include <sm/errstring.h>

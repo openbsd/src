@@ -9,14 +9,14 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: sm_gethost.c,v 8.23 2001/07/21 00:05:06 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: sm_gethost.c,v 8.26 2001/09/11 04:04:45 gshapiro Exp $")
 
 #include <sendmail.h>
 #if NETINET || NETINET6
 # include <arpa/inet.h>
 #endif /* NETINET || NETINET6 */
 
-/*
+/*
 **  MI_GETHOSTBY{NAME,ADDR} -- compatibility routines for gethostbyXXX
 **
 **	Some operating systems have wierd problems with the gethostbyXXX

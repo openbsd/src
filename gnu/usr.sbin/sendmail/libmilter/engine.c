@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: engine.c,v 8.94 2001/08/14 12:49:45 ca Exp $")
+SM_RCSID("@(#)$Sendmail: engine.c,v 8.97 2001/09/11 04:04:44 gshapiro Exp $")
 
 #include "libmilter.h"
 
@@ -173,7 +173,7 @@ static cmdfct cmds[] =
 #define _SMFIS_NOREPLY	23
 #define _SMFIS_FAIL	(-1)
 
-/*
+/*
 **  MI_ENGINE -- receive commands and process them
 **
 **	Parameters:
@@ -359,7 +359,7 @@ mi_engine(ctx)
 	mi_clr_macros(ctx, 0);
 	return ret;
 }
-/*
+/*
 **  SENDREPLY -- send a reply to the MTA
 **
 **	Parameters:
@@ -462,7 +462,7 @@ mi_clr_macros(ctx, m)
 		}
 	}
 }
-/*
+/*
 **  ST_OPTIONNEG -- negotiate options
 **
 **	Parameters:
@@ -543,7 +543,7 @@ st_optionneg(g)
 
 	return _SMFIS_OPTIONS;
 }
-/*
+/*
 **  ST_CONNECTINFO -- receive connection information
 **
 **	Parameters:
@@ -660,7 +660,7 @@ st_connectinfo(g)
 	return (*fi_connect)(g->a_ctx, g->a_buf,
 			     family != SMFIA_UNKNOWN ? &sockaddr : NULL);
 }
-/*
+/*
 **  ST_EOH -- end of headers
 **
 **	Parameters:
@@ -683,7 +683,7 @@ st_eoh(g)
 		return (*fi_eoh)(g->a_ctx);
 	return SMFIS_CONTINUE;
 }
-/*
+/*
 **  ST_HELO -- helo/ehlo command
 **
 **	Parameters:
@@ -706,7 +706,7 @@ st_helo(g)
 		return (*fi_helo)(g->a_ctx, g->a_buf);
 	return SMFIS_CONTINUE;
 }
-/*
+/*
 **  ST_HEADER -- header line
 **
 **	Parameters:
@@ -751,7 +751,7 @@ st_header(g)
 	free(argv);						\
 	return r;
 
-/*
+/*
 **  ST_SENDER -- MAIL FROM command
 **
 **	Parameters:
@@ -767,7 +767,7 @@ st_sender(g)
 {
 	ARGV_FCT(fi_envfrom, xxfi_envfrom, CI_MAIL)
 }
-/*
+/*
 **  ST_RCPT -- RCPT TO command
 **
 **	Parameters:
@@ -783,7 +783,7 @@ st_rcpt(g)
 {
 	ARGV_FCT(fi_envrcpt, xxfi_envrcpt, CI_RCPT)
 }
-/*
+/*
 **  ST_MACROS -- deal with macros received from the MTA
 **
 **	Parameters:
@@ -833,7 +833,7 @@ st_macros(g)
 	g->a_ctx->ctx_mac_buf[i] = g->a_buf;
 	return _SMFIS_KEEP;
 }
-/*
+/*
 **  ST_QUIT -- quit command
 **
 **	Parameters:
@@ -849,7 +849,7 @@ st_quit(g)
 {
 	return _SMFIS_NOREPLY;
 }
-/*
+/*
 **  ST_BODYCHUNK -- deal with a piece of the mail body
 **
 **	Parameters:
@@ -873,7 +873,7 @@ st_bodychunk(g)
 				  g->a_len);
 	return SMFIS_CONTINUE;
 }
-/*
+/*
 **  ST_BODYEND -- deal with the last piece of the mail body
 **
 **	Parameters:
@@ -920,7 +920,7 @@ st_bodyend(g)
 		return (*fi_eom)(g->a_ctx);
 	return r;
 }
-/*
+/*
 **  ST_ABORTFCT -- deal with aborts
 **
 **	Parameters:
@@ -943,7 +943,7 @@ st_abortfct(g)
 		(void) (*fi_abort)(g->a_ctx);
 	return _SMFIS_NOREPLY;
 }
-/*
+/*
 **  TRANS_OK -- is the state transition ok?
 **
 **	Parameters:
@@ -988,7 +988,7 @@ trans_ok(old, new)
 	} while (s <= ST_LAST);
 	return false;
 }
-/*
+/*
 **  FIX_STM -- add "skip" bits to the state transition table
 **
 **	Parameters:
@@ -1025,7 +1025,7 @@ fix_stm(ctx)
 	if (bitset(SMFIP_NOBODY, fl))
 		next_states[ST_BODY] |= NX_SKIP;
 }
-/*
+/*
 **  DEC_ARGV -- split a buffer into a list of strings, NULL terminated
 **
 **	Parameters:
@@ -1069,7 +1069,7 @@ dec_argv(buf, len)
 	s[elem] = NULL;
 	return s;
 }
-/*
+/*
 **  DEC_ARG2 -- split a buffer into two strings
 **
 **	Parameters:
@@ -1098,7 +1098,7 @@ dec_arg2(buf, len, s1, s2)
 	*s2 = buf + i + 1;
 	return MI_SUCCESS;
 }
-/*
+/*
 **  SENDOK -- is it ok for the filter to send stuff to the MTA?
 **
 **	Parameters:

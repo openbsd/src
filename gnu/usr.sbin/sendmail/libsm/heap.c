@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: heap.c,v 1.47 2001/09/04 22:41:27 ca Exp $")
+SM_RCSID("@(#)$Sendmail: heap.c,v 1.50 2001/09/11 04:04:48 gshapiro Exp $")
 
 /*
 **  debugging memory allocation package
@@ -179,7 +179,7 @@ sm_realloc_x(ptr, size)
 		sm_exc_raise_x(&SmHeapOutOfMemory);
 	return newptr;
 }
-/*
+/*
 **  SM_FREE -- wrapper around free()
 **
 **	Parameters:
@@ -507,7 +507,7 @@ sm_heap_register(ptr, size, tag, num, group)
 	SmHeapTable[i] = hi;
 	return true;
 }
-/*
+/*
 **  SM_REALLOC -- wrapper for realloc(), debugging version.
 **
 **	Parameters:

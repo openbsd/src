@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: conf.h,v 1.76 2001/08/31 23:03:11 gshapiro Exp $
+ *	$Sendmail: conf.h,v 1.78 2001/09/23 03:13:09 ca Exp $
  */
 
 /*
@@ -27,7 +27,7 @@
 # include <sm/config.h>
 # include <sm/varargs.h>
 
-/*
+/*
 **  General "standard C" defines.
 **
 **	These may be undone later, to cope with systems that claim to
@@ -59,7 +59,7 @@
 
 #define LOG		1	/* enable logging -- don't turn off */
 
-/**********************************************************************
+/**********************************************************************
 **  Operating system configuration.
 **
 **	Unless you are porting to a new OS, you shouldn't have to
@@ -80,6 +80,7 @@
 #  define HASINITGROUPS	1	/* has initgroups(3) call */
 #  define HASFCHMOD	1	/* has fchmod(2) syscall */
 #  define USESETEUID	1	/* has usable seteuid(2) call */
+#  define HASSETRESGID	1	/* use setresgid(2) to set saved gid */
 #  define BOGUS_O_EXCL	1	/* exclusive open follows symlinks */
 #  define seteuid(e)	setresuid(-1, e, -1)
 #  define IP_SRCROUTE	1	/* can check IP source routing */
@@ -373,6 +374,7 @@ typedef int		pid_t;
 #   endif /* SOLARIS >= 20300 || (SOLARIS < 10000 && SOLARIS >= 203) */
 #   if SOLARIS >= 20500 || (SOLARIS < 10000 && SOLARIS >= 205)
 #    define HASSETREUID	1		/* setreuid works as of 2.5 */
+#    define HASSETREGID	1	/* use setregid(2) to set saved gid */
 #    if SOLARIS < 207 || (SOLARIS > 10000 && SOLARIS < 20700)
 #     ifndef LA_TYPE
 #      define LA_TYPE	LA_KSTAT	/* use kstat(3k) -- may work in < 2.5 */
@@ -882,6 +884,7 @@ typedef int		pid_t;
 #   define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 #   define HASSETLOGIN	1	/* has setlogin(2) */
 #   define HASSETREUID	0	/* OpenBSD has broken setreuid(2) emulation */
+#   define HASSETEGID	1	/* use setegid(2) to set saved gid */
 #   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 #   if OpenBSD >= 200006
 #    define HASSRANDOMDEV	1	/* has srandomdev(3) */
@@ -1281,6 +1284,7 @@ extern void		*malloc();
 #   define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #  endif /* !defined(KERNEL_VERSION) */
 #  define BSD		1	/* include BSD defines */
+#  define HASSETREGID	1	/* use setregid(2) to set saved gid */
 #  ifndef REQUIRES_DIR_FSYNC
 #   define REQUIRES_DIR_FSYNC	1	/* requires fsync() on directory */
 #  endif /* REQUIRES_DIR_FSYNC */
@@ -2114,7 +2118,7 @@ typedef struct msgb		mblk_t;
 /**********************************************************************
 **  End of Per-Operating System defines
 **********************************************************************/
-/**********************************************************************
+/**********************************************************************
 **  More general defines
 **********************************************************************/
 
@@ -2214,7 +2218,7 @@ typedef struct msgb		mblk_t;
 #   define USESETEUID	1	/* has usable seteuid(2) call */
 #  endif /* _POSIX_VERSION >= 199500 && !defined(USESETEUID) */
 # endif /* _POSIX_VERSION */
-/*
+/*
 **  Tweaking for systems that (for example) claim to be BSD or POSIX
 **  but don't have all the standard BSD or POSIX routines (boo hiss).
 */
@@ -2353,7 +2357,7 @@ typedef struct msgb		mblk_t;
 # ifndef QUAD_T
 #  define QUAD_T	unsigned long
 # endif /* ! QUAD_T */
-/**********************************************************************
+/**********************************************************************
 **  Remaining definitions should never have to be changed.  They are
 **  primarily to provide back compatibility for older systems -- for
 **  example, it includes some POSIX compatibility definitions

@@ -10,13 +10,13 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: msp.m4,v 1.27 2001/08/16 16:31:29 ca Exp $')
+VERSIONID(`$Sendmail: msp.m4,v 1.28 2001/09/22 21:46:42 ca Exp $')
 divert(-1)
 define(`ALIAS_FILE', `')
 define(`confDELIVERY_MODE', `i')
 define(`confUSE_MSP', `True')
 define(`confFORWARD_PATH', `')
-define(`confPRIVACY_FLAGS', `goaway,noetrn')
+define(`confPRIVACY_FLAGS', `goaway,noetrn,restrictqrun')
 define(`confDONT_PROBE_INTERFACES', `True')
 dnl ---------------------------------------------
 dnl run as this user (even if called by root)

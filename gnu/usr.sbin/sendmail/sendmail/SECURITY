@@ -5,7 +5,7 @@
 # forth in the LICENSE file which can be found at the top level of
 # the sendmail distribution.
 #
-#	$Sendmail: SECURITY,v 1.46 2001/09/08 01:21:09 gshapiro Exp $
+#	$Sendmail: SECURITY,v 1.47 2001/09/23 02:29:05 ca Exp $
 #
 
 This file gives some hints how to configure and run sendmail for
@@ -64,12 +64,14 @@ drwx------	root   wheel	... /var/spool/mqueue
 That is, the owner of sendmail is root, the group is smmsp, and
 the binary is set-group-ID.  The client mail queue is owned by
 smmsp with group smmsp and is group writable.  The client mail
-queue directory must be writable by smmsp, in submit.cf the option
-UseMSP must be set, and QueueFileMode must be set to 0660.  submit.cf
-is available in cf/cf/, which has been built from cf/cf/submit.mc.
-The file can be used as-is, if you want to add more options,
-use cf/cf/submit.mc as starting point and read cf/README:
-MESSAGE SUBMISSION PROGRAM carefully.
+queue directory must be writable by smmsp, but it must not be
+accessible for others. That is, do not use world read or execute
+permissions.  In submit.cf the option UseMSP must be set, and
+QueueFileMode must be set to 0660.  submit.cf is available in
+cf/cf/, which has been built from cf/cf/submit.mc.  The file can
+be used as-is, if you want to add more options, use cf/cf/submit.mc
+as starting point and read cf/README:  MESSAGE SUBMISSION PROGRAM
+carefully.
 
 The .cf file is chosen based on the operation mode.  For -bm (default),
 -bs, and -t it is submit.cf (if it exists) for all others it is

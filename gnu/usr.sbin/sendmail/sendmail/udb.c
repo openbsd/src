@@ -14,9 +14,9 @@
 #include <sendmail.h>
 
 #if USERDB
-SM_RCSID("@(#)$Sendmail: udb.c,v 8.150 2001/09/04 22:54:42 ca Exp $ (with USERDB)")
+SM_RCSID("@(#)$Sendmail: udb.c,v 8.153 2001/09/11 04:05:17 gshapiro Exp $ (with USERDB)")
 #else /* USERDB */
-SM_RCSID("@(#)$Sendmail: udb.c,v 8.150 2001/09/04 22:54:42 ca Exp $ (without USERDB)")
+SM_RCSID("@(#)$Sendmail: udb.c,v 8.153 2001/09/11 04:05:17 gshapiro Exp $ (without USERDB)")
 #endif /* USERDB */
 
 #if USERDB
@@ -549,7 +549,7 @@ udbexpand(a, sendq, aliaslevel, e)
 	}
 	return EX_OK;
 }
-/*
+/*
 **  UDBSENDER -- return canonical external name of sender, given local name
 **
 **	Parameters:
@@ -572,7 +572,7 @@ udbsender(sender, rpool)
 {
 	return udbmatch(sender, "mailname", rpool);
 }
-/*
+/*
 **  UDBMATCH -- match user in field, return result of lookup.
 **
 **	Parameters:
@@ -817,7 +817,7 @@ udbmatch(user, field, rpool)
 	/* still nothing....  too bad */
 	return NULL;
 }
-/*
+/*
 **  UDB_MAP_LOOKUP -- look up arbitrary entry in user database map
 **
 **	Parameters:
@@ -875,7 +875,7 @@ udb_map_lookup(map, name, av, statp)
 	SM_END_TRY
 	return result;
 }
-/*
+/*
 **  _UDBX_INIT -- parse the UDB specification, opening any valid entries.
 **
 **	Parameters:
@@ -1191,7 +1191,7 @@ _udb_parsespec(udbspec, opt, maxopts)
 	}
 	return optnum;
 }
-/*
+/*
 **  _UDBX_CLOSE -- close all file based UDB entries.
 **
 **	Parameters:

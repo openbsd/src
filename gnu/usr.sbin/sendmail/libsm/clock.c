@@ -12,7 +12,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: clock.c,v 1.30 2001/08/31 20:44:28 ca Exp $")
+SM_RCSID("@(#)$Sendmail: clock.c,v 1.33 2001/09/11 04:04:47 gshapiro Exp $")
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -169,7 +169,7 @@ sm_sigsafe_seteventm(intvl, func, arg)
 		(void) sm_releasesignal(SIGALRM);
 	return ev;
 }
-/*
+/*
 **  SM_CLREVENT -- remove an event from the event queue.
 **
 **	Parameters:
@@ -234,7 +234,7 @@ sm_clrevent(ev)
 # endif /* SM_CONF_SETITIMER */
 	}
 }
-/*
+/*
 **  SM_CLEAR_EVENTS -- remove all events from the event queue.
 **
 **	Parameters:
@@ -282,7 +282,7 @@ sm_clear_events()
 	if (wasblocked == 0)
 		(void) sm_releasesignal(SIGALRM);
 }
-/*
+/*
 **  SM_TICK -- take a clock tick
 **
 **	Called by the alarm clock.  This routine runs events as needed.
@@ -458,7 +458,7 @@ sm_tick(sig)
 	errno = save_errno;
 	return SIGFUNC_RETURN;
 }
-/*
+/*
 **  SLEEP -- a version of sleep that works with this stuff
 **
 **	Because Unix sleep uses the alarm facility, I must reimplement

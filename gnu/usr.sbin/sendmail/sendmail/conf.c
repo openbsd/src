@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: conf.c,v 8.907 2001/09/04 22:43:02 ca Exp $")
+SM_RCSID("@(#)$Sendmail: conf.c,v 8.914 2001/09/23 03:05:34 ca Exp $")
 
 #include <sendmail/pathnames.h>
 
@@ -216,7 +216,7 @@ struct dbsval DontBlameSendmailValues[] =
 */
 
 int	DtableSize =	50;		/* max open files; reset in 4.2bsd */
-/*
+/*
 **  SETDEFAULTS -- set default values
 **
 **	Some of these must be initialized using direct code since they
@@ -257,6 +257,9 @@ setdefaults(e)
 	WkClassFact = 1800L;			/* option z */
 	WkTimeFact = 90000L;			/* option Z */
 	QueueFactor = WkRecipFact * 20;		/* option q */
+#if _FFR_QUARANTINE
+	QueueMode = QM_NORMAL;		/* what queue items to act upon */
+#endif /* _FFR_QUARANTINE */
 	FileMode = (RealUid != geteuid()) ? 0644 : 0600;
 						/* option F */
 	QueueFileMode = (RealUid != geteuid()) ? 0644 : 0600;
@@ -388,7 +391,7 @@ setdefuser()
 		sm_dprintf("setdefuser: DefUid=%d, DefUser=%s\n",
 			   (int) DefUid, DefUser);
 }
-/*
+/*
 **  SETUPQUEUES -- initialize default queues
 **
 **	The mqueue QUEUE structure gets filled in after readcf() but
@@ -405,7 +408,7 @@ setupqueues()
 	(void) sm_strlcpy(buf, "mqueue, P=/var/spool/mqueue", sizeof buf);
 	makequeue(buf, false);
 }
-/*
+/*
 **  SETUPMAILERS -- initialize default mailers
 */
 
@@ -427,7 +430,7 @@ setupmailers()
 	makemailer(buf);
 	initerrmailers();
 }
-/*
+/*
 **  SETUPMAPS -- set up map classes
 */
 
@@ -618,7 +621,7 @@ setupmaps()
 }
 
 #undef MAPDEF
-/*
+/*
 **  INITHOSTMAPS -- initial host-dependent maps
 **
 **	This should act as an interface to any local service switch
@@ -821,7 +824,7 @@ inithostmaps()
 	}
 #endif /* 0 */
 }
-/*
+/*
 **  SWITCH_MAP_FIND -- find the list of types associated with a map
 **
 **	This is the system-dependent interface to the service switch.
@@ -1100,7 +1103,7 @@ switch_map_find(service, maptype, mapreturn)
 	return -1;
 #endif /* !defined(_USE_SUN_NSSWITCH_) */
 }
-/*
+/*
 **  USERNAME -- return the user id of the logged in user.
 **
 **	Parameters:
@@ -1157,7 +1160,7 @@ username()
 	}
 	return myname;
 }
-/*
+/*
 **  TTYPATH -- Get the path of the user's tty
 **
 **	Returns the pathname of the user's tty.  Returns NULL if
@@ -1211,7 +1214,7 @@ ttypath()
 	/* looks good */
 	return pathn;
 }
-/*
+/*
 **  CHECKCOMPAT -- check for From and To person compatible.
 **
 **	This routine can be supplied on a per-installation basis
@@ -1264,7 +1267,7 @@ checkcompat(to, e)
 #endif /* EXAMPLE_CODE */
 	return EX_OK;
 }
-/*
+/*
 **  INIT_MD -- do machine dependent initializations
 **
 **	Systems that have global modes that should be set should do
@@ -1327,7 +1330,7 @@ init_md(argc, argv)
 	VendorCode = VENDOR_BERKELEY;
 #endif /* VENDOR_DEFAULT */
 }
-/*
+/*
 **  INIT_VENDOR_MACROS -- vendor-dependent macro initializations
 **
 **	Called once, on startup.
@@ -1347,7 +1350,7 @@ init_vendor_macros(e)
 	register ENVELOPE *e;
 {
 }
-/*
+/*
 **  GETLA -- get the current load average
 **
 **	This code stolen from la.c.
@@ -2054,7 +2057,7 @@ int getloadavg( call_data )
 	return 0;
 }
 #endif /* apollo */
-/*
+/*
 **  SM_GETLA -- get the current load average
 **
 **	Parameters:
@@ -2077,7 +2080,7 @@ sm_getla()
 	(void) sm_snprintf(labuf, sizeof labuf, "%d", CurrentLA);
 	macdefine(&GlobalMacros, A_TEMP, macid("{load_avg}"), labuf);
 }
-/*
+/*
 **  SHOULDQUEUE -- should this message be queued or sent?
 **
 **	Compares the message cost to the load average to decide.
@@ -2128,7 +2131,7 @@ shouldqueue(pri, ct)
 		sm_dprintf("%s (by calculation)\n", rval ? "true" : "false");
 	return rval;
 }
-/*
+/*
 **  REFUSECONNECTIONS -- decide if connections should be refused
 **
 **	Parameters:
@@ -2233,7 +2236,7 @@ refuseconnections(name, e, d, active)
 	}
 	return false;
 }
-/*
+/*
 **  SETPROCTITLE -- set process title for ps
 **
 **	Parameters:
@@ -2465,7 +2468,7 @@ setproctitle(fmt, va_alist)
 }
 
 #endif /* SPT_TYPE != SPT_BUILTIN */
-/*
+/*
 **  SM_SETPROCTITLE -- set process task and set process title for ps
 **
 **	Possibly set process status and call setproctitle() to
@@ -2514,7 +2517,7 @@ sm_setproctitle(status, e, fmt, va_alist)
 	else
 		setproctitle("%s", buf);
 }
-/*
+/*
 **  WAITFOR -- wait for a particular process id.
 **
 **	Parameters:
@@ -2564,7 +2567,7 @@ waitfor(pid)
 	return st;
 # endif /* WAITUNION */
 }
-/*
+/*
 **  SM_WAIT -- wait
 **
 **	Parameters:
@@ -2603,7 +2606,7 @@ sm_wait(status)
 # endif /* WAITUNION */
 	return i;
 }
-/*
+/*
 **  REAPCHILD -- pick up the body of my child, lest it become a zombie
 **
 **	Parameters:
@@ -2626,7 +2629,8 @@ SIGFUNC_DECL
 reapchild(sig)
 	int sig;
 {
-	int m = 0, pld, wgrp;
+	int m = 0;
+	int pld, wgrp;
 	int save_errno = errno;
 	int st;
 	pid_t pid;
@@ -2685,7 +2689,7 @@ reapchild(sig)
 	errno = save_errno;
 	return SIGFUNC_RETURN;
 }
-/*
+/*
 **  GETDTABLESIZE -- return number of file descriptors
 **
 **	Only on non-BSD systems
@@ -2724,7 +2728,7 @@ getdtsize()
 #  endif /* _SC_OPEN_MAX */
 # endif /* HASGETDTABLESIZE */
 }
-/*
+/*
 **  UNAME -- get the UUCP name of this system.
 */
 
@@ -2793,7 +2797,7 @@ uname(name)
 	return -1;
 }
 #endif /* !HASUNAME */
-/*
+/*
 **  INITGROUPS -- initialize groups
 **
 **	Stub implementation for System V style systems
@@ -2809,7 +2813,7 @@ initgroups(name, basegid)
 }
 
 #endif /* !HASINITGROUPS */
-/*
+/*
 **  SETGROUPS -- set group list
 **
 **	Stub implementation for systems that don't have group lists
@@ -2826,7 +2830,7 @@ setgroups(ngroups, grouplist)
 }
 
 #endif /* ! NGROUPS_MAX */
-/*
+/*
 **  SETSID -- set session id (for non-POSIX systems)
 */
 
@@ -2853,7 +2857,7 @@ setsid __P ((void))
 }
 
 #endif /* !HASSETSID */
-/*
+/*
 **  FSYNC -- dummy fsync
 */
 
@@ -2871,7 +2875,7 @@ fsync(fd)
 }
 
 #endif /* NEEDFSYNC */
-/*
+/*
 **  DGUX_INET_ADDR -- inet_addr for DG/UX
 **
 **	Data General DG/UX version of inet_addr returns a struct in_addr
@@ -2894,7 +2898,7 @@ dgux_inet_addr(host)
 }
 
 #endif /* DGUX_5_4_2 */
-/*
+/*
 **  GETOPT -- for old systems or systems with bogus implementations
 */
 
@@ -2985,7 +2989,7 @@ getopt(nargc,nargv,ostr)
 }
 
 #endif /* !SM_CONF_GETOPT */
-/*
+/*
 **  USERSHELLOK -- tell if a user's shell is ok for unrestricted use
 **
 **	Parameters:
@@ -3161,7 +3165,7 @@ usershellok(user, shell)
 	return false;
 # endif /* HASGETUSERSHELL */
 }
-/*
+/*
 **  FREEDISKSPACE -- see how much free space is on the queue filesystem
 **
 **	Only implemented if you have statfs.
@@ -3268,7 +3272,7 @@ freediskspace(dir, bsize)
 # endif /* SFS_TYPE != SFS_NONE */
 	return -1;
 }
-/*
+/*
 **  ENOUGHDISKSPACE -- is there enough free space on the queue file systems?
 **
 **	Parameters:
@@ -3309,7 +3313,7 @@ enoughdiskspace(msize, e)
 	}
 	return true;
 }
-/*
+/*
 **  TRANSIENTERROR -- tell if an error code indicates a transient failure
 **
 **	This looks at an errno value and tells if this is likely to
@@ -3414,7 +3418,7 @@ transienterror(err)
 	/* nope, must be permanent */
 	return false;
 }
-/*
+/*
 **  LOCKFILE -- lock a file using flock or (shudder) fcntl locking
 **
 **	Parameters:
@@ -3542,7 +3546,7 @@ lockfile(fd, filename, ext, type)
 	errno = save_errno;
 	return false;
 }
-/*
+/*
 **  CHOWNSAFE -- tell if chown is "safe" (executable only by root)
 **
 **	Unfortunately, given that we can't predict other systems on which
@@ -3629,7 +3633,7 @@ chownsafe(fd, safedir)
 	return bitnset(DBS_ASSUMESAFECHOWN, DontBlameSendmail);
 # endif /* (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && ... */
 }
-/*
+/*
 **  RESETLIMITS -- reset system controlled resource limits
 **
 **	This is to avoid denial-of-service attacks
@@ -3672,7 +3676,7 @@ resetlimits()
 #endif /* HASSETRLIMIT */
 	errno = 0;
 }
-/*
+/*
 **  SETVENDOR -- process vendor code from V configuration line
 **
 **	Parameters:
@@ -3719,7 +3723,7 @@ setvendor(vendor)
 
 	return false;
 }
-/*
+/*
 **  GETVENDOR -- return vendor name based on vendor code
 **
 **	Parameters:
@@ -3765,7 +3769,7 @@ getvendor(vendorcode)
 		return "Unknown";
 	}
 }
-/*
+/*
 **  VENDOR_PRE_DEFAULTS, VENDOR_POST_DEFAULTS -- set vendor-specific defaults
 **
 **	Vendor_pre_defaults is called before reading the configuration
@@ -3820,7 +3824,7 @@ vendor_post_defaults(e)
 	sun_post_defaults(e);
 #endif /* defined(SUN_EXTENSIONS) && defined(SUN_DEFAULT_VALUES) */
 }
-/*
+/*
 **  VENDOR_DAEMON_SETUP -- special vendor setup needed for daemon mode
 */
 
@@ -3839,7 +3843,7 @@ vendor_daemon_setup(e)
 	}
 #endif /* SECUREWARE */
 }
-/*
+/*
 **  VENDOR_SET_UID -- do setup for setting a user id
 **
 **	This is called when we are still root.
@@ -3868,7 +3872,7 @@ vendor_set_uid(uid)
 	(void) setup_secure(uid);
 #endif /* SECUREWARE */
 }
-/*
+/*
 **  VALIDATE_CONNECTION -- check connection for rationality
 **
 **	If the connection is rejected, this routine should log an
@@ -3954,7 +3958,7 @@ validate_connection(sap, hostname, e)
 	return NULL;
 }
 
-/*
+/*
 **  STRTOL -- convert string to long integer
 **
 **	For systems that don't have it in the C library.
@@ -4057,7 +4061,7 @@ strtol(nptr, endptr, base)
 }
 
 #endif /* NEEDSTRTOL */
-/*
+/*
 **  STRSTR -- find first substring in string
 **
 **	Parameters:
@@ -4094,7 +4098,7 @@ strstr(big, little)
 }
 
 #endif /* NEEDSTRSTR */
-/*
+/*
 **  SM_GETHOSTBY{NAME,ADDR} -- compatibility routines for gethostbyXXX
 **
 **	Some operating systems have wierd problems with the gethostbyXXX
@@ -4359,7 +4363,7 @@ sm_gethostbyaddr(addr, len, type)
 #endif /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) */
 	return hp;
 }
-/*
+/*
 **  SM_GETPW{NAM,UID} -- wrapper for getpwnam and getpwuid
 */
 
@@ -4388,7 +4392,7 @@ sm_getpwuid(uid)
 	return getpwuid(uid);
 #endif /* defined(_AIX4) && 0 */
 }
-/*
+/*
 **  SECUREWARE_SETUP_SECURE -- Convex SecureWare setup
 **
 **	Set up the trusted computing environment for C2 level security
@@ -4454,7 +4458,7 @@ secureware_setup_secure(uid)
 	}
 }
 #endif /* SECUREWARE */
-/*
+/*
 **  ADD_HOSTNAMES -- Add a hostname to class 'w' based on IP address
 **
 **	Add hostnames to class 'w' based on the IP address read from
@@ -4568,7 +4572,7 @@ add_hostnames(sa)
 #endif /* NETINET6 */
 	return 0;
 }
-/*
+/*
 **  LOAD_IF_NAMES -- load interface-specific names into $=w
 **
 **	Parameters:
@@ -4991,7 +4995,7 @@ load_if_names()
 #  endif /* defined(SIOCGIFCONF) && !SIOCGIFCONF_IS_BROKEN */
 # endif /* NETINET6 && defined(SIOCGLIFCONF) */
 }
-/*
+/*
 **  ISLOOPBACK -- is socket address in the loopback net?
 **
 **	Parameters:
@@ -5018,7 +5022,7 @@ isloopback(sa)
 #endif /* NETINET6 */
 	return false;
 }
-/*
+/*
 **  GET_NUM_PROCS_ONLINE -- return the number of processors currently online
 **
 **	Parameters:
@@ -5061,7 +5065,7 @@ get_num_procs_online()
 		nproc = 1;
 	return nproc;
 }
-/*
+/*
 **  SEED_RANDOM -- seed the random number generator
 **
 **	Parameters:
@@ -5091,7 +5095,7 @@ seed_random()
 # endif /* HASRANDOM */
 #endif /* HASSRANDOMDEV */
 }
-/*
+/*
 **  SM_SYSLOG -- syslog wrapper to keep messages under SYSLOG_BUFSIZE
 **
 **	Parameters:
@@ -5256,7 +5260,7 @@ sm_syslog(level, id, fmt, va_alist)
 		buf = NULL;
 	errno = save_errno;
 }
-/*
+/*
 **  HARD_SYSLOG -- call syslog repeatedly until it works
 **
 **	Needed on HP-UX, which apparently doesn't guarantee that
@@ -5300,7 +5304,7 @@ hard_syslog(pri, msg, va_alist)
 # undef CAST
 #endif /* defined(__hpux) && !defined(HPUX11) */
 #if NEEDLOCAL_HOSTNAME_LENGTH
-/*
+/*
 **  LOCAL_HOSTNAME_LENGTH
 **
 **	This is required to get sendmail to compile against BIND 4.9.x
@@ -5331,7 +5335,7 @@ local_hostname_length(hostname)
 }
 #endif /* NEEDLOCAL_HOSTNAME_LENGTH */
 
-/*
+/*
 **  Compile-Time options
 */
 
@@ -5514,9 +5518,18 @@ char	*OsCompileOptions[] =
 #if HASRANDOM
 	"HASRANDOM",
 #endif /* HASRANDOM */
+#if HASSETEGID
+	"HASSETEGID",
+#endif /* HASSETEGID */
 #if HASSETLOGIN
 	"HASSETLOGIN",
 #endif /* HASSETLOGIN */
+#if HASSETREGID
+	"HASSETREGID",
+#endif /* HASSETREGID */
+#if HASSETRESGID
+	"HASSETRESGID",
+#endif /* HASSETRESGID */
 #if HASSETREUID
 	"HASSETREUID",
 #endif /* HASSETREUID */
@@ -5720,6 +5733,9 @@ char	*FFRCompileOptions[] =
 #if _FFR_NO_PIPE
 	"_FFR_NO_PIPE",
 #endif /* _FFR_NO_PIPE */
+#if _FFR_QUARANTINE
+	"_FFR_QUARANTINE",
+#endif /* _FFR_QUARANTINE */
 #if _FFR_QUEUEDELAY
 	"_FFR_QUEUEDELAY",
 #endif /* _FFR_QUEUEDELAY */

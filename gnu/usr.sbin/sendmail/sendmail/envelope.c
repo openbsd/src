@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: envelope.c,v 8.264 2001/08/31 23:03:13 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: envelope.c,v 8.274 2001/09/17 20:39:57 gshapiro Exp $")
 
 /*
 **  NEWENVELOPE -- fill in a new envelope
@@ -64,7 +64,24 @@ newenvelope(e, parent, rpool)
 	assign_queueid(e);
 	e->e_ctime = curtime();
 	if (parent != NULL)
+	{
 		e->e_msgpriority = parent->e_msgsize;
+#if _FFR_QUARANTINE
+		if (parent->e_holdmsg == NULL)
+		{
+			e->e_holdmsg = NULL;
+			macdefine(&e->e_macro, A_PERM,
+				  macid("{holdmsg}"), "");
+		}
+		else
+		{
+			e->e_holdmsg = sm_rpool_strdup_x(rpool,
+							 parent->e_holdmsg);
+			macdefine(&e->e_macro, A_PERM,
+				  macid("{holdmsg}"), e->e_holdmsg);
+		}
+#endif /* _FFR_QUARANTINE */
+	}
 	e->e_puthdr = putheader;
 	e->e_putbody = putbody;
 	if (CurEnv->e_xfp != NULL)
@@ -86,7 +103,7 @@ newenvelope(e, parent, rpool)
 #define IS_IMM_RET(x)	(((x) & (MSG_T_O_NOW|MSG_NOT_BY)) != 0)
 #define IS_MSG_WARN(x)	(((x) & 0xf0) != 0)	/* return a warning */
 
-/*
+/*
 **  DROPENVELOPE -- deallocate an envelope.
 **
 **	Parameters:
@@ -449,13 +466,13 @@ simpledrop:
 	{
 		if (tTd(50, 1))
 		{
-			sm_dprintf("\n===== Dropping [dq]f%s... queueit=%d, e_flags=",
+			sm_dprintf("\n===== Dropping queue files for %s... queueit=%d, e_flags=",
 				e->e_id, queueit);
 			printenvflags(e);
 		}
 		if (!savedf)
-			(void) xunlink(queuename(e, 'd'));
-		if (xunlink(queuename(e, 'q')) == 0)
+			(void) xunlink(queuename(e, DATAFL_LETTER));
+		if (xunlink(queuename(e, ANYQFL_LETTER)) == 0)
 		{
 			/* add to available space in filesystem */
 			updfs(e, true, !savedf);
@@ -528,7 +545,7 @@ simpledrop:
 	e->e_id = NULL;
 	e->e_flags &= ~EF_HAS_DF;
 }
-/*
+/*
 **  CLEARENVELOPE -- clear an envelope without unlocking
 **
 **	This is normally used by a child process to get a clean
@@ -585,6 +602,12 @@ clearenvelope(e, fullclear, rpool)
 
 	*e = BlankEnvelope;
 	e->e_message = NULL;
+#if _FFR_QUARANTINE
+	e->e_qfletter = '\0';
+	e->e_holdmsg = NULL;
+	macdefine(&e->e_macro, A_PERM,
+		  macid("{holdmsg}"), "");
+#endif /* _FFR_QUARANTINE */
 
 	/*
 	**  Copy the macro table.
@@ -621,7 +644,7 @@ clearenvelope(e, fullclear, rpool)
 		nhp = &(*nhp)->h_link;
 	}
 }
-/*
+/*
 **  INITSYS -- initialize instantiation of system
 **
 **	In Daemon mode, this is done in the child.
@@ -657,6 +680,9 @@ initsys(e)
 
 	openxscript(e);
 	e->e_ctime = curtime();
+#if _FFR_QUARANTINE
+	e->e_qfletter = '\0';
+#endif /* _FFR_QUARANTINE */
 #if _FFR_QUEUEDELAY
 	e->e_queuealg = QueueAlg;
 	e->e_queuedelay = QueueInitDelay;
@@ -706,7 +732,7 @@ initsys(e)
 	}
 #endif /* TTYNAME */
 }
-/*
+/*
 **  SETTIME -- set the current time.
 **
 **	Parameters:
@@ -743,7 +769,7 @@ settime(e)
 	if (macvalue('a', e) == NULL)
 		macdefine(&e->e_macro, A_PERM, 'a', macvalue('b', e));
 }
-/*
+/*
 **  OPENXSCRIPT -- Open transcript file
 **
 **	Creates a transcript file for possible eventual mailing or
@@ -777,7 +803,7 @@ openxscript(e)
 		syserr("openxscript: job not locked");
 #endif /* 0 */
 
-	p = queuename(e, 'x');
+	p = queuename(e, XSCRPT_LETTER);
 	e->e_xfp = bfopen(p, FileMode, XscriptFileBufferSize,
 			  SFF_NOTEXCL|SFF_OPENASROOT);
 
@@ -797,7 +823,7 @@ openxscript(e)
 		       false);
 	}
 }
-/*
+/*
 **  CLOSEXSCRIPT -- close the transcript file.
 **
 **	Parameters:
@@ -823,7 +849,7 @@ closexscript(e)
 	(void) sm_io_close(e->e_xfp, SM_TIME_DEFAULT);
 	e->e_xfp = NULL;
 }
-/*
+/*
 **  SETSENDER -- set the person who this message is from
 **
 **	Under certain circumstances allow the user to say who
@@ -1107,7 +1133,7 @@ setsender(from, e, delimptr, delimchar, internal)
 		}
 	}
 }
-/*
+/*
 **  PRINTENVFLAGS -- print envelope flags for debugging
 **
 **	Parameters:

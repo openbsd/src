@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: sfsasl.c,v 8.84 2001/09/03 22:35:38 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: sfsasl.c,v 8.86 2001/09/11 04:05:16 gshapiro Exp $")
 #include <stdlib.h>
 #include <sendmail.h>
 #include <errno.h>

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: alias.c,v 8.203 2001/09/04 22:43:02 ca Exp $")
+SM_RCSID("@(#)$Sendmail: alias.c,v 8.206 2001/09/11 04:05:11 gshapiro Exp $")
 
 # define SEPARATOR ':'
 # define ALIAS_SPEC_SEPARATORS	" ,/:"
@@ -23,7 +23,7 @@ static int	NAliasFileMaps;	/* the number of entries in AliasFileMap */
 
 static char	*aliaslookup __P((char *, int *));
 
-/*
+/*
 **  ALIAS -- Compute aliases.
 **
 **	Scans the alias file for an alias for the given address.
@@ -183,7 +183,7 @@ alias(a, sendq, aliaslevel, e)
 	e->e_flags |= EF_SENDRECEIPT;
 	a->q_flags |= QDELIVERED|QEXPANDED;
 }
-/*
+/*
 **  ALIASLOOKUP -- look up a name in the alias file.
 **
 **	Parameters:
@@ -224,7 +224,7 @@ aliaslookup(name, pstat)
 
 	return (*map->map_class->map_lookup)(map, name, NULL, pstat);
 }
-/*
+/*
 **  SETALIAS -- set up an alias map
 **
 **	Called when reading configuration file.
@@ -346,7 +346,7 @@ setalias(spec)
 		}
 	}
 }
-/*
+/*
 **  ALIASWAIT -- wait for distinguished @:@ token to appear.
 **
 **	This can decide to reopen or rebuild the alias file
@@ -448,7 +448,7 @@ aliaswait(map, ext, isopen)
 	map->map_mflags &= ~MF_ALIASWAIT;
 	return isopen;
 }
-/*
+/*
 **  REBUILDALIASES -- rebuild the alias database.
 **
 **	Parameters:
@@ -582,7 +582,7 @@ rebuildaliases(map, automatic)
 # endif /* SIGTSTP */
 	return success;
 }
-/*
+/*
 **  READALIASES -- read and process the alias file.
 **
 **	This routine implements the part of initaliases that occurs
@@ -833,7 +833,7 @@ readaliases(map, af, announcestats, logstats)
 			"%s: %ld aliases, longest %ld bytes, %ld bytes total",
 			map->map_file, naliases, longest, bytes);
 }
-/*
+/*
 **  FORWARD -- Try to forward mail
 **
 **	This is similar but not identical to aliasing.

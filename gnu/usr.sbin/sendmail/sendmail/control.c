@@ -10,7 +10,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: control.c,v 8.110 2001/08/27 16:59:13 ca Exp $")
+SM_RCSID("@(#)$Sendmail: control.c,v 8.115 2001/09/21 22:20:40 ca Exp $")
 
 /* values for cmd_code */
 #define CMDERROR	0	/* bad command */
@@ -46,7 +46,7 @@ static struct cmd	CmdTab[] =
 
 int ControlSocket = -1;
 
-/*
+/*
 **  OPENCONTROLSOCKET -- create/open the daemon control named socket
 **
 **	Creates and opens a named socket for external control over
@@ -150,7 +150,7 @@ opencontrolsocket()
 # endif /* NETUNIX */
 	return 0;
 }
-/*
+/*
 **  CLOSECONTROLSOCKET -- close the daemon control named socket
 **
 **	Close a named socket.
@@ -198,7 +198,7 @@ closecontrolsocket(fullclose)
 # endif /* NETUNIX */
 	return;
 }
-/*
+/*
 **  CLRCONTROL -- reset the control connection
 **
 **	Parameters:
@@ -220,7 +220,7 @@ clrcontrol()
 	ControlSocket = -1;
 # endif /* NETUNIX */
 }
-/*
+/*
 **  CONTROL_COMMAND -- read and process command from named socket
 **
 **	Read and process the command from the opened socket.
@@ -283,8 +283,8 @@ control_command(sock, e)
 				 TimeOuts.to_control);
 	}
 
-	s = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) sock, SM_IO_RDWR,
-		       NULL);
+	s = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) &sock,
+		       SM_IO_RDWR, NULL);
 	if (s == NULL)
 	{
 		int save_errno = errno;

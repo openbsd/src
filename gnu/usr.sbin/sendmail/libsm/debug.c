@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: debug.c,v 1.25 2001/09/04 22:41:27 ca Exp $")
+SM_RCSID("@(#)$Sendmail: debug.c,v 1.28 2001/09/25 19:57:05 gshapiro Exp $")
 
 /*
 **  libsm debugging and tracing
@@ -97,6 +97,8 @@ sm_dprintf(fmt, va_alist)
 {
 	SM_VA_LOCAL_DECL
 
+	if (SmDebugOutput == NULL)
+		return;
 	SM_VA_START(ap, fmt);
 	sm_io_vfprintf(SmDebugOutput, SmDebugOutput->f_timeout, fmt, ap);
 	SM_VA_END(ap);

@@ -15,10 +15,10 @@
 #include <sm/io.h>
 #include <sm/errstring.h>
 
-SM_RCSID("@(#)$Sendmail: safefile.c,v 8.114 2001/09/08 01:21:03 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: safefile.c,v 8.118 2001/09/18 21:45:27 gshapiro Exp $")
 
 
-/*
+/*
 **  SAFEFILE -- return 0 if a file exists and is safe for a user.
 **
 **	Parameters:
@@ -365,7 +365,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		sm_dprintf("\tEACCES\n");
 	return EACCES;
 }
-/*
+/*
 **  SAFEDIRPATH -- check to make sure a path to a directory is safe
 **
 **	Safe means not writable and owned by the right folks.
@@ -654,7 +654,7 @@ safedirpath(fn, uid, gid, user, flags, level, offset)
 			ret == 0 ? "OK" : sm_errstring(ret));
 	return ret;
 }
-/*
+/*
 **  SAFEOPEN -- do a file open with extra checking
 **
 **	Parameters:
@@ -737,7 +737,7 @@ safeopen(fn, omode, cmode, sff)
 	}
 	return fd;
 }
-/*
+/*
 **  SAFEFOPEN -- do a file open with extra checking
 **
 **	Parameters:
@@ -798,7 +798,8 @@ safefopen(fn, omode, cmode, sff)
 		errno = save_errno;
 		return NULL;
 	}
-	fp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) fd, fmode, NULL);
+	fp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
+			(void *) &fd, fmode, NULL);
 	if (fp != NULL)
 		return fp;
 
@@ -812,7 +813,7 @@ safefopen(fn, omode, cmode, sff)
 	errno = save_errno;
 	return NULL;
 }
-/*
+/*
 **  FILECHANGED -- check to see if file changed after being opened
 **
 **	Parameters:
@@ -879,7 +880,7 @@ filechanged(fn, fd, stb)
 
 	return false;
 }
-/*
+/*
 **  DFOPEN -- determined file open
 **
 **	This routine has the semantics of open, except that it will

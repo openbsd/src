@@ -8,7 +8,7 @@
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: smdb.c,v 8.49 2001/09/04 22:43:45 ca Exp $")
+SM_RCSID("@(#)$Sendmail: smdb.c,v 8.52 2001/09/11 04:04:52 gshapiro Exp $")
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -18,7 +18,7 @@ SM_RCSID("@(#)$Sendmail: smdb.c,v 8.49 2001/09/04 22:43:45 ca Exp $")
 #include <sendmail/sendmail.h>
 #include <libsmdb/smdb.h>
 
-/*
+/*
 ** SMDB_MALLOC_DATABASE -- Allocates a database structure.
 **
 **	Parameters:
@@ -43,7 +43,7 @@ smdb_malloc_database()
 }
 
 
-/*
+/*
 ** SMDB_FREE_DATABASE -- Unallocates a database structure.
 **
 **	Parameters:
@@ -60,7 +60,7 @@ smdb_free_database(database)
 	if (database != NULL)
 		free(database);
 }
-/*
+/*
 **  SMDB_LOCKFILE -- lock a file using flock or (shudder) fcntl locking
 **
 **	Parameters:
@@ -155,7 +155,7 @@ smdb_lockfile(fd, type)
 	errno = save_errno;
 	return false;
 }
-/*
+/*
 ** SMDB_OPEN_DATABASE -- Opens a database.
 **
 **	This opens a database. If type is SMDB_DEFAULT it tries to
@@ -246,7 +246,7 @@ smdb_open_database(database, db_name, mode, mode_mask, sff, type, user_info,
 
 	return SMDBE_UNKNOWN_DB_TYPE;
 }
-/*
+/*
 ** SMDB_ADD_EXTENSION -- Adds an extension to a file name.
 **
 **	Just adds a . followed by a string to a db_name if there
@@ -293,7 +293,7 @@ smdb_add_extension(full_name, max_full_name_len, db_name, extension)
 
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_LOCK_FILE -- Locks the database file.
 **
 **	Locks the actual database file.
@@ -331,7 +331,7 @@ smdb_lock_file(lock_fd, db_name, mode, sff, extension)
 
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_UNLOCK_FILE -- Unlocks a file
 **
 **	Unlocks a file.
@@ -355,7 +355,7 @@ smdb_unlock_file(lock_fd)
 
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_LOCK_MAP -- Locks a database.
 **
 **	Parameters:
@@ -382,7 +382,7 @@ smdb_lock_map(database, type)
 		return SMDBE_LOCK_NOT_GRANTED;
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_UNLOCK_MAP -- Unlocks a database
 **
 **	Parameters:
@@ -405,7 +405,7 @@ smdb_unlock_map(database)
 		return SMDBE_LOCK_NOT_HELD;
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_SETUP_FILE -- Gets db file ready for use.
 **
 **	Makes sure permissions on file are safe and creates it if it
@@ -449,7 +449,7 @@ smdb_setup_file(db_name, extension, mode_mask, sff, user_info, stat_info)
 
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_FILECHANGED -- Checks to see if a file changed.
 **
 **	Compares the passed in stat_info with a current stat on
@@ -481,7 +481,7 @@ smdb_filechanged(db_name, extension, db_fd, stat_info)
 		return result;
 	return filechanged(db_file_name, db_fd, stat_info);
 }
-/*
+/*
 ** SMDB_PRINT_AVAILABLE_TYPES -- Prints the names of the available types.
 **
 **	Parameters:
@@ -502,7 +502,7 @@ smdb_print_available_types()
 	printf("btree\n");
 #endif /* NEWDB */
 }
-/*
+/*
 ** SMDB_DB_DEFINITION -- Given a database type, return database definition
 **
 **	Reads though a structure making an association with the database

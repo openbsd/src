@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: daemon.c,v 8.588 2001/09/05 15:08:00 ca Exp $")
+SM_RCSID("@(#)$Sendmail: daemon.c,v 8.595 2001/09/25 05:03:54 gshapiro Exp $")
 
 #if defined(SOCK_STREAM) || defined(__GNU_LIBRARY__)
 # define USE_SOCK_STREAM	1
@@ -121,7 +121,7 @@ static int	NDaemons = 0;			/* actual number of daemons */
 
 static time_t	NextDiskSpaceCheck = 0;
 
-/*
+/*
 **  GETREQUESTS -- open mail IPC port and get requests.
 **
 **	Parameters:
@@ -759,14 +759,15 @@ getrequests(e)
 
 			if ((inchannel = sm_io_open(SmFtStdiofd,
 						    SM_TIME_DEFAULT,
-						    (void *) t,
-						    SM_IO_RDONLY, NULL)) == NULL
-			    || (t = dup(t)) < 0 ||
+						    (void *) &t,
+						    SM_IO_RDONLY,
+						    NULL)) == NULL ||
+			    (t = dup(t)) < 0 ||
 			    (outchannel = sm_io_open(SmFtStdiofd,
 						     SM_TIME_DEFAULT,
-						     (void *) t,
-						     SM_IO_WRONLY, NULL))
-			    == NULL)
+						     (void *) &t,
+						     SM_IO_WRONLY,
+						     NULL)) == NULL)
 			{
 				syserr("cannot open SMTP server channel, fd=%d",
 					t);
@@ -972,7 +973,7 @@ getrequests_checkdiskspace(e)
 	NextDiskSpaceCheck = now + 60;
 }
 
-/*
+/*
 **  OPENDAEMONSOCKET -- open SMTP socket
 **
 **	Deals with setting all appropriate options.
@@ -1166,7 +1167,7 @@ opendaemonsocket(d, firsttime)
 	/* NOTREACHED */
 	return -1;  /* avoid compiler warning on IRIX */
 }
-/*
+/*
 **  SETUPDAEMON -- setup socket for daemon
 **
 **	Parameters:
@@ -1258,7 +1259,7 @@ setupdaemon(daemonaddr)
 	}
 	return port;
 }
-/*
+/*
 **  CLRDAEMON -- reset the daemon connection
 **
 **	Parameters:
@@ -1284,7 +1285,7 @@ clrdaemon()
 	}
 }
 
-/*
+/*
 **  GETMODIFIERS -- get modifier flags
 **
 **	Parameters:
@@ -1308,12 +1309,21 @@ getmodifiers(v, modifiers)
 
 	/* maximum length of flags: upper case Option -> "OO " */
 	l = 3 * strlen(v) + 3;
+
+	/* is someone joking? */
+	if (l < 0 || l > 256)
+	{
+		if (LogLevel > 2)
+			sm_syslog(LOG_ERR, NOQID,
+				  "getmodifiers too long, ignored");
+		return NULL;
+	}
 	flags = xalloc(l);
 	f = flags;
 	clrbitmap(modifiers);
 	for (h = v; *h != '\0'; h++)
 	{
-		if (!(isascii(*h) && isspace(*h)))
+		if (isascii(*h) && !isspace(*h) && isprint(*h))
 		{
 			setbitn(*h, modifiers);
 			if (flags != f)
@@ -1327,7 +1337,7 @@ getmodifiers(v, modifiers)
 	return f;
 }
 
-/*
+/*
 **  CHKDAEMONMODIFIERS -- check whether all daemons have set a flag.
 **
 **	Parameters:
@@ -1349,7 +1359,7 @@ chkdaemonmodifiers(flag)
 	return true;
 }
 
-/*
+/*
 **  SETSOCKADDROPTIONS -- set options for SOCKADDR (daemon or client)
 **
 **	Parameters:
@@ -1665,7 +1675,7 @@ setsockaddroptions(p, d)
 		}
 	}
 }
-/*
+/*
 **  SETDAEMONOPTIONS -- set options for running the MTA daemon
 **
 **	Parameters:
@@ -1720,7 +1730,7 @@ setdaemonoptions(p)
 	++NDaemons;
 	return true;
 }
-/*
+/*
 **  INITDAEMON -- initialize daemon if not yet done.
 **
 **	Parameters:
@@ -1744,7 +1754,7 @@ initdaemon()
 		NDaemons = 1;
 	}
 }
-/*
+/*
 **  SETCLIENTOPTIONS -- set options for running the client
 **
 **	Parameters:
@@ -1780,7 +1790,7 @@ setclientoptions(p)
 		ClientSettings[family].d_name = newstr(num);
 	}
 }
-/*
+/*
 **  ADDR_FAMILY -- determine address family from address
 **
 **	Parameters:
@@ -1832,7 +1842,7 @@ addr_family(addr)
 	return AF_UNSPEC;
 }
 
-/*
+/*
 **  CHKCLIENTMODIFIERS -- check whether all clients have set a flag.
 **
 **	Parameters:
@@ -1864,7 +1874,7 @@ chkclientmodifiers(flag)
 
 #if MILTER
 # if _FFR_MILTER_PERDAEMON
-/*
+/*
 **  SETUP_DAEMON_FILTERS -- Parse per-socket filters
 **
 **	Parameters:
@@ -1897,7 +1907,7 @@ setup_daemon_milters()
 }
 # endif /* _FFR_MILTER_PERDAEMON */
 #endif /* MILTER */
-/*
+/*
 **  MAKECONNECTION -- make a connection to an SMTP socket on a machine.
 **
 **	Parameters:
@@ -1930,7 +1940,7 @@ makeconnection(host, port, mci, e, enough)
 	time_t enough;
 {
 	register volatile int addrno = 0;
-	register volatile int s;
+	volatile int s;
 	register struct hostent *volatile hp = (struct hostent *) NULL;
 	SOCKADDR addr;
 	SOCKADDR clt_addr;
@@ -2167,13 +2177,33 @@ gothostent:
 		{
 #if NAMED_BIND
 			/* check for name server timeouts */
-			if (errno == ETIMEDOUT || h_errno == TRY_AGAIN ||
-			    (errno == ECONNREFUSED && UseNameServer))
+# if NETINET6
+			if (WorkAroundBrokenAAAA && family == AF_INET6 &&
+			    errno == ETIMEDOUT)
 			{
-				save_errno = errno;
-				mci_setstat(mci, EX_TEMPFAIL, "4.4.3", NULL);
-				errno = save_errno;
-				return EX_TEMPFAIL;
+				/*
+				**  An attempt with family AF_INET may
+				**  succeed By skipping the next section
+				**  of code, we will try AF_INET before
+				**  failing.
+				*/
+
+				if (tTd(16, 10))
+					sm_dprintf("makeconnection: WorkAroundBrokenAAAA: Trying AF_INET lookup (AF_INET6 failed)\n");
+			}
+			else
+# endif /* NETINET6 */
+			{
+				if (errno == ETIMEDOUT ||
+				    h_errno == TRY_AGAIN ||
+				    (errno == ECONNREFUSED && UseNameServer))
+				{
+					save_errno = errno;
+					mci_setstat(mci, EX_TEMPFAIL,
+						    "4.4.3", NULL);
+					errno = save_errno;
+					return EX_TEMPFAIL;
+				}
 			}
 #endif /* NAMED_BIND */
 #if NETINET6
@@ -2325,7 +2355,7 @@ gothostent:
 		if (tTd(16, 1))
 			sm_dprintf("makeconnection (%s [%s].%d (%d))\n",
 				   host, anynet_ntoa(&addr), ntohs(port),
-				   addr.sa.sa_family);
+				   (int) addr.sa.sa_family);
 
 		/* save for logging */
 		CurHostAddr = addr;
@@ -2583,10 +2613,12 @@ nextaddr:
 
 	/* connection ok, put it into canonical form */
 	mci->mci_out = NULL;
-	if ((mci->mci_out = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) s,
+	if ((mci->mci_out = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
+				       (void *) &s,
 				       SM_IO_WRONLY, NULL)) == NULL ||
 	    (s = dup(s)) < 0 ||
-	    (mci->mci_in = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) s,
+	    (mci->mci_in = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
+				      (void *) &s,
 				      SM_IO_RDONLY, NULL)) == NULL)
 	{
 		save_errno = errno;
@@ -2672,7 +2704,7 @@ connecttimeout()
 	errno = ETIMEDOUT;
 	longjmp(CtxConnectTimeout, 1);
 }
-/*
+/*
 **  MAKECONNECTION_DS -- make a connection to a domain socket.
 **
 **	Parameters:
@@ -2753,11 +2785,11 @@ makeconnection_ds(mux_path, mci)
 	/* connection ok, put it into canonical form */
 	mci->mci_out = NULL;
 	if ((mci->mci_out = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
-				       (void *) sock, SM_IO_WRONLY, NULL))
+				       (void *) &sock, SM_IO_WRONLY, NULL))
 					== NULL
 	    || (sock = dup(sock)) < 0 ||
 	    (mci->mci_in = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
-				      (void *) sock, SM_IO_RDONLY, NULL))
+				      (void *) &sock, SM_IO_RDONLY, NULL))
 					== NULL)
 	{
 		save_errno = errno;
@@ -2776,7 +2808,7 @@ makeconnection_ds(mux_path, mci)
 	return EX_OK;
 }
 #endif /* NETUNIX */
-/*
+/*
 **  SHUTDOWN_DAEMON -- Performs a clean shutdown of the daemon
 **
 **	Parameters:
@@ -2812,7 +2844,7 @@ shutdown_daemon()
 
 	finis(false, EX_OK);
 }
-/*
+/*
 **  RESTART_DAEMON -- Performs a clean restart of the daemon
 **
 **	Parameters:
@@ -2938,7 +2970,7 @@ restart_daemon()
 	finis(false, EX_OSFILE);
 	/* NOTREACHED */
 }
-/*
+/*
 **  MYHOSTNAME -- return the name of this host.
 **
 **	Parameters:
@@ -3041,7 +3073,7 @@ myhostname(hostbuf, size)
 	}
 	return hp;
 }
-/*
+/*
 **  ADDRCMP -- compare two host addresses
 **
 **	Parameters:
@@ -3090,7 +3122,7 @@ addrcmp(hp, ha, sa)
 	}
 	return -1;
 }
-/*
+/*
 **  GETAUTHINFO -- get the real host name associated with a file descriptor
 **
 **	Uses RFC1413 protocol to try to get info from the other end.
@@ -3612,7 +3644,7 @@ postipsr:
 		sm_dprintf("getauthinfo: %s\n", hbuf);
 	return hbuf;
 }
-/*
+/*
 **  HOST_MAP_LOOKUP -- turn a hostname into canonical form
 **
 **	Parameters:
@@ -3861,7 +3893,7 @@ host_map_lookup(map, name, av, statp)
 	s->s_namecanon.nc_stat = *statp;
 	return NULL;
 }
-/*
+/*
 **  HOST_MAP_INIT -- initialize host class structures
 **
 **	Parameters:
@@ -3943,7 +3975,7 @@ host_map_init(map, args)
 		map->map_tapp = newstr(map->map_tapp);
 	return true;
 }
-
+
 #if NETINET6
 /*
 **  ANYNET_NTOP -- convert an IPv6 network address to printable form.
@@ -3992,7 +4024,7 @@ anynet_ntop(s6a, dst, dst_len)
 	return ap;
 }
 
-/*
+/*
 **  ANYNET_PTON -- convert printed form to network address.
 **
 **	Wrapper for inet_pton() which handles IPv6: labels.
@@ -4019,7 +4051,7 @@ anynet_pton(family, src, dst)
 	return inet_pton(family, src, dst);
 }
 #endif /* NETINET6 */
-/*
+/*
 **  ANYNET_NTOA -- convert a network address to printable form.
 **
 **	Parameters:
@@ -4100,7 +4132,7 @@ anynet_ntoa(sap)
 	*--bp = '\0';
 	return buf;
 }
-/*
+/*
 **  HOSTNAMEBYANYADDR -- return name of host based on address
 **
 **	Parameters:

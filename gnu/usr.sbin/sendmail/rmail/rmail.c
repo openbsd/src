@@ -18,7 +18,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: rmail.c,v 8.58 2001/09/04 22:44:31 ca Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: rmail.c,v 8.61 2001/09/18 21:45:29 gshapiro Exp $")
 
 /*
  * RMAIL -- UUCP mail server.
@@ -369,7 +369,7 @@ main(argc, argv)
 		/* NOTREACHED */
 	}
 
-	if ((fp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *)pdes[1],
+	if ((fp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) &(pdes[1]),
 			     SM_IO_WRONLY, NULL)) == NULL)
 		err(EX_OSERR, "sm_io_open failed");
 	(void) close(pdes[0]);

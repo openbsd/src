@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: op.me,v 8.569 2001/09/08 01:20:50 gshapiro Exp $
+.\"	$Sendmail: op.me,v 8.575 2001/09/28 22:03:15 ca Exp $
 .\"
 .\" eqn op.me | pic | troff -me
 .\"
@@ -88,7 +88,7 @@ Sendmail, Inc.
 .de Ve
 Version \\$2
 ..
-.Ve $Revision: 1.9 $
+.Ve $Revision: 1.10 $
 .rm Ve
 .sp
 For Sendmail Version 8.12
@@ -128,10 +128,9 @@ RFC821 (Simple Mail Transport Protocol),
 RFC822 (Internet Mail Headers Format),
 RFC974 (MX routing),
 RFC1123 (Internet Host Requirements),
-RFC2045 (MIME),
-RFC1869 (SMTP Service Extensions),
+RFC1413 (Identification server),
 RFC1652 (SMTP 8BITMIME Extension),
-RFC1854 (SMTP Service Extension for Command Pipelining),
+RFC1869 (SMTP Service Extensions),
 RFC1870 (SMTP SIZE Extension),
 RFC1891 (SMTP Delivery Status Notifications),
 RFC1892 (Multipart/Report),
@@ -140,6 +139,7 @@ RFC1894 (Delivery Status Notifications),
 RFC1985 (SMTP Service Extension for Remote Message Queue Starting),
 RFC2033 (Local Message Transmission Protocol),
 RFC2034 (SMTP Service Extension for Returning Enhanced Error Codes),
+RFC2045 (MIME),
 RFC2476 (Message Submission),
 RFC2487 (SMTP Service Extension for Secure SMTP over TLS),
 RFC2554 (SMTP Service Extension for Authentication),
@@ -147,7 +147,7 @@ RFC2821 (Simple Mail Transfer Protocol),
 RFC2822 (Internet Message Format),
 RFC2852 (Deliver By SMTP Service Extension),
 and
-RFC2920 (SMTP Service Extension for Command Pipelining),
+RFC2920 (SMTP Service Extension for Command Pipelining).
 However, since
 .i sendmail
 is designed to work in a wider world,
@@ -748,9 +748,9 @@ This directory should be mode 700
 and owned by root.
 .pp
 The actual path of this directory
-is defined in the
-.b Q
-keyword of the
+is defined by the
+.b QueueDirectory
+option of the
 .i sendmail.cf
 file.
 To use multiple queues,
@@ -790,6 +790,20 @@ Notice: do not use the same key for
 .i sendmail
 invocations with different queue directories
 or different queue group declarations.
+.sh 3 "/var/spool/clientmqueue"
+.pp
+The directory
+.i /var/spool/clientmqueue
+should be created to hold the mail queue.
+This directory should be mode 770
+and owned by user smmsp, group smmsp.
+.pp
+The actual path of this directory
+is defined by the
+.b QueueDirectory
+option of the
+.i submit.cf
+file.
 .sh 3 "/var/spool/mqueue/.hoststat"
 .pp
 This is a typical value for the
@@ -4710,8 +4724,9 @@ command.
 Defined in the SMTP server only after a RCPT command.
 .ip ${server_addr}
 The address of the server of the current outgoing SMTP connection.
+For LMTP delivery the macro is set to the name of the mailer.
 .ip ${server_name}
-The name of the server of the current outgoing SMTP connection.
+The name of the server of the current outgoing SMTP or LMTP connection.
 .ip ${tls_version}
 The TLS/SSL version used for the connection, e.g., TLSv1, SSLv3, SSLv2;
 defined after STARTTLS has been used.
@@ -10529,7 +10544,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version $Revision: 1.9 $
+.\"Version $Revision: 1.10 $
 .\".ce 0
 .bp 3
 .ce

@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: stdio.c,v 1.49 2001/08/28 16:06:59 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: stdio.c,v 1.52 2001/09/18 21:45:23 gshapiro Exp $")
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -388,7 +388,7 @@ sm_stdfdopen(fp, info, flags, rpool)
 	int flags;
 	const void *rpool;
 {
-	int oflags, tmp, fdflags, fd = (int) info;
+	int oflags, tmp, fdflags, fd = *((int *) info);
 
 	switch (flags)
 	{

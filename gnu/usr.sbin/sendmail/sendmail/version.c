@@ -13,6 +13,6 @@
 
 #include <sm/gen.h>
 
-SM_RCSID("@(#)$Sendmail: version.c,v 8.79 2001/09/07 20:59:16 ca Exp $")
+SM_RCSID("@(#)$Sendmail: version.c,v 8.83 2001/09/29 01:47:38 ca Exp $")
 
-char	Version[] = "8.12.0";
+char	Version[] = "8.12.1";

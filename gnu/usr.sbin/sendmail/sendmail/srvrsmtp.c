@@ -16,7 +16,7 @@
 # include <libmilter/mfdef.h>
 #endif /* MILTER */
 
-SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.778 2001/09/04 22:43:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.795 2001/09/25 19:57:10 gshapiro Exp $")
 
 #if SASL || STARTTLS
 # include <sys/time.h>
@@ -206,6 +206,9 @@ typedef struct
 	bool	sm_milterize;
 	bool	sm_milterlist;	/* any filters in the list? */
 #endif /* MILTER */
+#if _FFR_QUARANTINE
+	char	*sm_holdmsg;	/* carry quarantining across messages */
+#endif /* _FFR_QUARANTINE */
 } SMTP_T;
 
 static void	smtp_data __P((SMTP_T *, ENVELOPE *));
@@ -622,8 +625,10 @@ smtp(nullserver, d_flags, e)
 	    !bitset(EF_DISCARD, e->e_flags))
 	{
 		char state;
+		char *response;
 
-		(void) milter_connect(peerhostname, RealHostAddr, e, &state);
+		response = milter_connect(peerhostname, RealHostAddr,
+					  e, &state);
 		switch (state)
 		{
 		  case SMFIR_REPLYCODE:	/* REPLYCODE shouldn't happen */
@@ -638,6 +643,8 @@ smtp(nullserver, d_flags, e)
 			smtp.sm_milterize = false;
 			break;
 		}
+		if (response != NULL)
+			sm_free(response); /* XXX */
 	}
 #endif /* MILTER */
 
@@ -693,6 +700,14 @@ smtp(nullserver, d_flags, e)
 
 	protocol = NULL;
 	sendinghost = macvalue('s', e);
+
+#if _FFR_QUARANTINE
+	/* If quarantining by a connect/ehlo action, save between messages */
+	if (e->e_holdmsg == NULL)
+		smtp.sm_holdmsg = NULL;
+	else
+		smtp.sm_holdmsg = newstr(e->e_holdmsg);
+#endif /* _FFR_QUARANTINE */
 
 	/* sendinghost's storage must outlive the current envelope */
 	if (sendinghost != NULL)
@@ -931,8 +946,9 @@ smtp(nullserver, d_flags, e)
 				/* NULL pointer ok since it's our function */
 				if (LogLevel > 8)
 					sm_syslog(LOG_INFO, NOQID,
-						  "AUTH=server, relay=%.100s, authid=%.32s, mech=%.16s, bits=%d",
-						  CurSmtpClient, user,
+						  "AUTH=server, relay=%.100s, authid=%.128s, mech=%.16s, bits=%d",
+						  CurSmtpClient,
+						  shortenstring(user, 128),
 						  auth_type, *ssf);
 			}
 			else if (result == SASL_CONTINUE)
@@ -1577,7 +1593,27 @@ smtp(nullserver, d_flags, e)
 			}
 
 			if (gothello)
+			{
 				CLEAR_STATE(cmdbuf);
+
+#if _FFR_QUARANTINE
+				/* restore connection quarantining */
+				if (smtp.sm_holdmsg == NULL)
+				{
+					e->e_holdmsg = NULL;
+					macdefine(&e->e_macro, A_PERM,
+						  macid("{holdmsg}"), "");
+				}
+				else
+				{
+					e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+									 smtp.sm_holdmsg);
+					macdefine(&e->e_macro, A_PERM,
+						  macid("{holdmsg}"),
+						  e->e_holdmsg);
+				}
+#endif /* _FFR_QUARANTINE */
+			}
 
 #if MILTER
 			if (smtp.sm_milterlist && smtp.sm_milterize &&
@@ -1590,7 +1626,7 @@ smtp(nullserver, d_flags, e)
 				switch (state)
 				{
 				  case SMFIR_REPLYCODE:
-					nullserver = response;
+					nullserver = newstr(response);
 					smtp.sm_milterize = false;
 					break;
 
@@ -1604,6 +1640,19 @@ smtp(nullserver, d_flags, e)
 					smtp.sm_milterize = false;
 					break;
 				}
+				if (response != NULL)
+					sm_free(response);
+
+#if _FFR_QUARANTINE
+				/*
+				**  If quarantining by a connect/ehlo action,
+				**  save between messages
+				*/
+
+				if (smtp.sm_holdmsg == NULL &&
+				    e->e_holdmsg != NULL)
+					smtp.sm_holdmsg = newstr(e->e_holdmsg);
+#endif /* _FFR_QUARANTINE */
 			}
 #endif /* MILTER */
 			gothello = true;
@@ -1870,13 +1919,18 @@ smtp(nullserver, d_flags, e)
 			/* do config file checking of the sender */
 			macdefine(&e->e_macro, A_PERM,
 				macid("{addr_type}"), "e s");
+#if _FFR_MAIL_MACRO
+			/* make the "real" sender address available */
+			macdefine(&e->e_macro, A_TEMP, macid("{mail_from}"),
+				  e->e_from.q_paddr);
+#endif /* _FFR_MAIL_MACRO */
 			if (rscheck("check_mail", addr,
 				    NULL, e, true, true, 3, NULL,
 				    e->e_id) != EX_OK ||
 			    Errors > 0)
 				sm_exc_raisenew_x(&EtypeQuickAbort, 1);
 			macdefine(&e->e_macro, A_PERM,
-				macid("{addr_type}"), NULL);
+				  macid("{addr_type}"), NULL);
 
 			if (MaxMessageSize > 0 &&
 			    (e->e_msgsize > MaxMessageSize ||
@@ -2186,6 +2240,22 @@ smtp(nullserver, d_flags, e)
 			else
 				message("250 2.0.0 Reset state");
 			CLEAR_STATE(cmdbuf);
+#if _FFR_QUARANTINE
+			/* restore connection quarantining */
+			if (smtp.sm_holdmsg == NULL)
+			{
+				e->e_holdmsg = NULL;
+				macdefine(&e->e_macro, A_PERM,
+					  macid("{holdmsg}"), "");
+			}
+			else
+			{
+				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+								 smtp.sm_holdmsg);
+				macdefine(&e->e_macro, A_PERM,
+					  macid("{holdmsg}"), e->e_holdmsg);
+			}
+#endif /* _FFR_QUARANTINE */
 			break;
 
 		  case CMDVRFY:		/* vrfy -- verify address */
@@ -2301,7 +2371,11 @@ smtp(nullserver, d_flags, e)
 
 		  case CMDETRN:		/* etrn -- force queue flush */
 			DELAY_CONN("ETRN");
-			if (!bitset(SRV_OFFER_ETRN, features) || UseMSP)
+
+			/* Don't leak queue information via debug flags */
+			if (!bitset(SRV_OFFER_ETRN, features) || UseMSP ||
+			    (RealUid != 0 && RealUid != TrustedUid &&
+			     OpMode == MD_SMTP))
 			{
 				/* different message for MSA ? */
 				message("502 5.7.0 Sorry, we do not allow this operation");
@@ -2557,7 +2631,7 @@ doquit:
 	    SM_END_TRY
 	}
 }
-/*
+/*
 **  SMTP_DATA -- implement the SMTP DATA command.
 **
 **	Parameters:
@@ -2710,7 +2784,12 @@ smtp_data(smtp, e)
 
 	aborting = Errors > 0;
 	if (!aborting)
-		aborting = !split_by_recipient(e);
+	{
+#if _FFR_QUARANTINE
+		if (QueueMode == QM_HELD || e->e_holdmsg == NULL)
+#endif /* _FFR_QUARANTINE */
+			aborting = !split_by_recipient(e);
+	}
 
 	if (aborting)
 	{
@@ -2775,6 +2854,14 @@ smtp_data(smtp, e)
 			/* make sure it is in the queue */
 			queueup(ee, false, true);
 		}
+#if _FFR_QUARANTINE
+		else if (QueueMode != QM_HELD &&
+			 ee->e_holdmsg != NULL)
+		{
+			/* make sure it is in the queue */
+			queueup(ee, false, true);
+		}
+#endif /* _FFR_QUARANTINE */
 		else
 		{
 			/* send to all recipients */
@@ -2801,6 +2888,14 @@ smtp_data(smtp, e)
 				ee->e_sendmode = SM_QUEUE;
 				continue;
 			}
+#if _FFR_QUARANTINE
+			else if (QueueMode != QM_HELD &&
+				 ee->e_holdmsg != NULL)
+			{
+				ee->e_sendmode = SM_QUEUE;
+				continue;
+			}
+#endif /* _FFR_QUARANTINE */
 			anything_to_send = true;
 
 			/* close all the queue files */
@@ -2845,6 +2940,15 @@ smtp_data(smtp, e)
 	{
 		for (ee = e; ee != NULL; ee = ee->e_sibling)
 		{
+#if _FFR_QUARANTINE
+			if (!doublequeue &&
+			    QueueMode != QM_HELD &&
+			    ee->e_holdmsg != NULL)
+			{
+				dropenvelope(ee, true, false);
+				continue;
+			}
+#endif /* _FFR_QUARANTINE */
 			if (WILL_BE_QUEUED(ee->e_sendmode))
 				dropenvelope(ee, true, false);
 		}
@@ -2861,8 +2965,23 @@ smtp_data(smtp, e)
 	CurEnv = e;
 	newenvelope(e, e, sm_rpool_new_x(NULL));
 	e->e_flags = BlankEnvelope.e_flags;
+
+#if _FFR_QUARANTINE
+	/* restore connection quarantining */
+	if (smtp->sm_holdmsg == NULL)
+	{
+		e->e_holdmsg = NULL;
+		macdefine(&e->e_macro, A_PERM, macid("{holdmsg}"), "");
+	}
+	else
+	{
+		e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool, smtp->sm_holdmsg);
+		macdefine(&e->e_macro, A_PERM,
+			  macid("{holdmsg}"), e->e_holdmsg);
+	}
+#endif /* _FFR_QUARANTINE */
 }
-/*
+/*
 **  LOGUNDELRCPTS -- log undelivered (or all) recipients.
 **
 **	Parameters:
@@ -2904,7 +3023,7 @@ logundelrcpts(e, msg, level, all)
 	}
 	e->e_to = NULL;
 }
-/*
+/*
 **  CHECKSMTPATTACK -- check for denial-of-service attack by repetition
 **
 **	Parameters:
@@ -2959,7 +3078,7 @@ checksmtpattack(pcounter, maxcount, waitnow, cname, e)
 	}
 	return (time_t) 0;
 }
-/*
+/*
 **  SETUP_SMTPD_IO -- setup I/O fd correctly for the SMTP server
 **
 **	Parameters:
@@ -3035,7 +3154,7 @@ setup_smtpd_io()
 		(void) fcntl(inchfd, F_SETFL, inmode);
 	}
 }
-/*
+/*
 **  SKIPWORD -- skip a fixed word.
 **
 **	Parameters:
@@ -3086,7 +3205,7 @@ skipword(p, w)
 
 	return p;
 }
-/*
+/*
 **  MAIL_ESMTP_ARGS -- process ESMTP arguments from MAIL line
 **
 **	Parameters:
@@ -3353,7 +3472,7 @@ mail_esmtp_args(kp, vp, e)
 		/* NOTREACHED */
 	}
 }
-/*
+/*
 **  RCPT_ESMTP_ARGS -- process ESMTP arguments from RCPT line
 **
 **	Parameters:
@@ -3442,7 +3561,7 @@ rcpt_esmtp_args(a, kp, vp, e)
 		/* NOTREACHED */
 	}
 }
-/*
+/*
 **  PRINTVRFYADDR -- print an entry in the verify queue
 **
 **	Parameters:
@@ -3502,7 +3621,7 @@ printvrfyaddr(a, last, vrfy)
 }
 
 #if SASL
-/*
+/*
 **  SASLMECHS -- get list of possible AUTH mechanisms
 **
 **	Parameters:
@@ -3544,7 +3663,7 @@ saslmechs(conn, mechlist)
 		*mechlist = NULL;	/* be paranoid... */
 	return num;
 }
-/*
+/*
 **  PROXY_POLICY -- define proxy policy for AUTH
 **
 **	Parameters:
@@ -3574,7 +3693,7 @@ proxy_policy(context, auth_identity, requested_user, user, errstr)
 #endif /* SASL */
 
 #if STARTTLS
-/*
+/*
 **  INITSRVTLS -- initialize server side TLS
 **
 **	Parameters:
@@ -3601,7 +3720,7 @@ initsrvtls(tls_ok)
 	return tls_ok_srv;
 }
 #endif /* STARTTLS */
-/*
+/*
 **  SRVFEATURES -- get features for SMTP server
 **
 **	Parameters:
@@ -3698,7 +3817,7 @@ srvfeatures(e, clientname, features)
 	return features;
 }
 
-/*
+/*
 **  HELP -- implement the HELP command.
 **
 **	Parameters:

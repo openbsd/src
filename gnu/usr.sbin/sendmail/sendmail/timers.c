@@ -11,7 +11,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: timers.c,v 8.22 2001/05/10 01:16:11 ca Exp $")
+SM_RCSID("@(#)$Sendmail: timers.c,v 8.24 2001/09/11 04:05:17 gshapiro Exp $")
 
 #if _FFR_TIMERS
 # include <sys/types.h>

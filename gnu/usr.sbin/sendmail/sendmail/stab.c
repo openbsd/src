@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: stab.c,v 8.80 2001/09/04 22:43:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: stab.c,v 8.84 2001/09/11 04:05:17 gshapiro Exp $")
 
 /*
 **  STAB -- manage the symbol table
@@ -212,7 +212,7 @@ stab(name, type, op)
 
 	return s;
 }
-/*
+/*
 **  STABAPPLY -- apply function to all stab entries
 **
 **	Parameters:
@@ -243,7 +243,7 @@ stabapply(func, arg)
 		}
 	}
 }
-/*
+/*
 **  QUEUEUP_MACROS -- queueup the macros in a class
 **
 **	Write the macros listed in the specified class into the
@@ -251,7 +251,7 @@ stabapply(func, arg)
 **
 **	Parameters:
 **		class -- class ID.
-**		qfp -- file pointer to the qf file.
+**		qfp -- file pointer to the queue file.
 **		e -- the envelope.
 **
 **	Returns:
@@ -292,7 +292,7 @@ queueup_macros(class, qfp, e)
 		}
 	}
 }
-/*
+/*
 **  COPY_CLASS -- copy class members from one class to another
 **
 **	Parameters:
@@ -324,7 +324,7 @@ copy_class(src, dst)
 	}
 }
 
-/*
+/*
 **  RMEXPSTAB -- remove expired entries from SymTab.
 **
 **	These entries need to be removed in long-running processes,

@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)$Sendmail: ungetc.c,v 1.26 2001/03/05 02:18:16 ca Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: ungetc.c,v 1.28 2001/09/11 04:04:49 gshapiro Exp $")
 
 #include <stdlib.h>
 #include <string.h>

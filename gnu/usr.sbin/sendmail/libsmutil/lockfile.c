@@ -13,10 +13,10 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: lockfile.c,v 8.16 2001/01/24 00:34:54 ca Exp $")
+SM_RCSID("@(#)$Sendmail: lockfile.c,v 8.19 2001/09/11 04:04:55 gshapiro Exp $")
 
 
-/*
+/*
 **  LOCKFILE -- lock a file using flock or (shudder) fcntl locking
 **
 **	Parameters:

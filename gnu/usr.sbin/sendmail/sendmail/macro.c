@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: macro.c,v 8.83 2001/09/04 22:43:03 ca Exp $")
+SM_RCSID("@(#)$Sendmail: macro.c,v 8.86 2001/09/11 04:05:14 gshapiro Exp $")
 
 #if MAXMACROID != (BITMAPBITS - 1)
 	ERROR Read the comment in conf.h
@@ -94,7 +94,7 @@ initmacros(e)
 	MACBINDING("opMode", MID_OPMODE);
 	/*XXX should probably add equivalents for all short macros here XXX*/
 }
-/*
+/*
 **  EXPAND -- macro expand a string using $x escapes.
 **
 **	Parameters:
@@ -383,7 +383,7 @@ macset(mac, i, value)
 	mac->mac_table[i] = value;
 }
 
-/*
+/*
 **  MACVALUE -- return uninterpreted value of a macro.
 **
 **	Does fancy path searching.
@@ -425,7 +425,7 @@ macvalue(n, e)
 	}
 	return GlobalMacros.mac_table[n];
 }
-/*
+/*
 **  MACNAME -- return the name of a macro given its internal id
 **
 **	Parameter:
@@ -457,7 +457,7 @@ macname(n)
 	mbuf[1] = '\0';
 	return mbuf;
 }
-/*
+/*
 **  MACID_PARSE -- return id of macro identified by its name
 **
 **	Parameters:
@@ -570,7 +570,7 @@ macid_parse(p, ep)
 		sm_dprintf("0x%x\n", mid);
 	return mid;
 }
-/*
+/*
 **  WORDINCLASS -- tell if a word is in a specific class
 **
 **	Parameters:

@@ -10,7 +10,7 @@
 
 #if SASL
 # include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: sasl.c,v 8.8 2001/09/04 22:43:05 ca Exp $")
+SM_RCSID("@(#)$Sendmail: sasl.c,v 8.11 2001/09/11 04:05:16 gshapiro Exp $")
 # include <stdlib.h>
 # include <sendmail.h>
 # include <errno.h>
@@ -140,7 +140,7 @@ sm_sasl_init()
 	sasl_set_alloc(sm_sasl_malloc, sm_sasl_calloc,
 		       sm_sasl_realloc, sm_sasl_free);
 }
-/*
+/*
 **  INTERSECT -- create the intersection between two lists
 **
 **	Parameters:

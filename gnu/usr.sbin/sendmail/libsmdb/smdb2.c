@@ -8,7 +8,7 @@
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: smdb2.c,v 8.65 2001/05/10 01:23:58 ca Exp $")
+SM_RCSID("@(#)$Sendmail: smdb2.c,v 8.69 2001/09/12 21:19:12 gshapiro Exp $")
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -29,7 +29,7 @@ struct smdb_db2_database
 };
 typedef struct smdb_db2_database SMDB_DB2_DATABASE;
 
-/*
+/*
 **  SMDB_TYPE_TO_DB2_TYPE -- Translates smdb database type to db2 type.
 **
 **	Parameters:
@@ -56,7 +56,7 @@ smdb_type_to_db2_type(type)
 
 	return DB_UNKNOWN;
 }
-/*
+/*
 **  DB2_ERROR_TO_SMDB -- Translates db2 errors to smdbe errors
 **
 **	Parameters:
@@ -139,7 +139,7 @@ db2_error_to_smdb(error)
 	}
 	return result;
 }
-/*
+/*
 **  SMDB_PUT_FLAGS_TO_DB2_FLAGS -- Translates smdb put flags to db2 put flags.
 **
 **	Parameters:
@@ -166,7 +166,7 @@ smdb_put_flags_to_db2_flags(flags)
 
 	return return_flags;
 }
-/*
+/*
 **  SMDB_CURSOR_GET_FLAGS_TO_DB2 -- Translates smdb cursor get flags to db2
 **	getflags.
 **
@@ -225,16 +225,18 @@ int
 smdb2_close(database)
 	SMDB_DATABASE *database;
 {
+	int result;
 	SMDB_DB2_DATABASE *db2 = (SMDB_DB2_DATABASE *) database->smdb_impl;
 	DB *db = ((SMDB_DB2_DATABASE *) database->smdb_impl)->smdb2_db;
 
+	result = db2_error_to_smdb(db->close(db, 0));
 	if (db2->smdb2_lock_fd != -1)
 		close(db2->smdb2_lock_fd);
 
 	free(db2);
 	database->smdb_impl = NULL;
 
-	return db2_error_to_smdb(db->close(db, 0));
+	return result;
 }
 
 int
@@ -530,7 +532,7 @@ smdb_db_open_internal(db_name, db_type, db_flags, db_params, db)
 	return db2_error_to_smdb(result);
 }
 # endif /* DB_VERSION_MAJOR > 2 */
-/*
+/*
 **  SMDB_DB_OPEN -- Opens a db database.
 **
 **	Parameters:

@@ -19,7 +19,7 @@
 #ifdef _DEFINE
 # define EXTERN
 # define INIT(x)	= x
-SM_IDSTR(MilterlId, "@(#)$Sendmail: libmilter.h,v 8.26 2001/07/20 02:48:37 gshapiro Exp $")
+SM_IDSTR(MilterlId, "@(#)$Sendmail: libmilter.h,v 8.28 2001/09/11 04:04:45 gshapiro Exp $")
 #else /* _DEFINE */
 # define EXTERN extern
 # define INIT(x)

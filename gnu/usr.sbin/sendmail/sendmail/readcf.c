@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: readcf.c,v 8.582 2001/09/04 22:43:05 ca Exp $")
+SM_RCSID("@(#)$Sendmail: readcf.c,v 8.587 2001/09/22 20:48:35 ca Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -645,7 +645,7 @@ readcf(cfname, safe, e)
 		}
 	}
 }
-/*
+/*
 **  TRANSLATE_DOLLARS -- convert $x into internal form
 **
 **	Actually does all appropriate pre-processing of a config line
@@ -726,7 +726,7 @@ translate_dollars(bp)
 	while (--p > bp && isascii(*p) && isspace(*p))
 		*p = '\0';
 }
-/*
+/*
 **  TOOMANY -- signal too many of some option
 **
 **	Parameters:
@@ -747,7 +747,7 @@ toomany(id, maxcnt)
 {
 	syserr("too many %c lines, %d max", id, maxcnt);
 }
-/*
+/*
 **  FILECLASS -- read members of a class from a file
 **
 **	Parameters:
@@ -964,7 +964,7 @@ fileclass(class, filename, fmt, safe, optional)
 			f = NULL;
 		else
 			f = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
-				       (void *) fd, SM_IO_RDONLY, NULL);
+				       (void *) &fd, SM_IO_RDONLY, NULL);
 	}
 	else
 	{
@@ -1017,7 +1017,7 @@ fileclass(class, filename, fmt, safe, optional)
 	if (pid > 0)
 		(void) waitfor(pid);
 }
-/*
+/*
 **  MAKEMAILER -- define a new mailer.
 **
 **	Parameters:
@@ -1475,7 +1475,7 @@ makemailer(line)
 	Mailer[i] = s->s_mailer = m;
 	m->m_mno = i;
 }
-/*
+/*
 **  MUNCHSTRING -- translate a string into internal form.
 **
 **	Parameters:
@@ -1547,7 +1547,7 @@ munchstring(p, delimptr, delim)
 	*q++ = '\0';
 	return buf;
 }
-/*
+/*
 **  EXTRQUOTSTR -- extract a (quoted) string.
 **
 **	This routine deals with quoted (") strings and escaped
@@ -1607,7 +1607,7 @@ extrquotstr(p, delimptr, delimbuf, st)
 		*st = !(quotemode || backslash);
 	return buf;
 }
-/*
+/*
 **  MAKEARGV -- break up a string into words
 **
 **	Parameters:
@@ -1648,7 +1648,7 @@ makeargv(p)
 
 	return avp;
 }
-/*
+/*
 **  PRINTRULES -- print rewrite rules (for debugging)
 **
 **	Parameters:
@@ -1685,7 +1685,7 @@ printrules()
 		}
 	}
 }
-/*
+/*
 **  PRINTMAILER -- print mailer structure (for debugging)
 **
 **	Parameters:
@@ -1762,7 +1762,7 @@ printmailer(m)
 	}
 	(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "\n");
 }
-/*
+/*
 **  SETOPTION -- set global processing option
 **
 **	Parameters:
@@ -2154,6 +2154,11 @@ setoption(opt, val, safe, sticky, e)
 		{
 			if (o->o_code == opt)
 				break;
+		}
+		if (o->o_name == NULL)
+		{
+			syserr("readcf: unknown option name 0x%x", opt & 0xff);
+			return;
 		}
 		subopt = NULL;
 	}
@@ -3484,7 +3489,7 @@ setoption(opt, val, safe, sticky, e)
 	if (sticky && !bitset(OI_SUBOPT, o->o_flags))
 		setbitn(opt, StickyOpt);
 }
-/*
+/*
 **  SETCLASS -- set a string into a class
 **
 **	Parameters:
@@ -3528,7 +3533,7 @@ setclass(class, str)
 		setbitn(bitidx(class), s->s_class);
 	}
 }
-/*
+/*
 **  MAKEMAPENTRY -- create a map entry
 **
 **	Parameters:
@@ -3608,7 +3613,7 @@ makemapentry(line)
 	}
 	return &s->s_map;
 }
-/*
+/*
 **  STRTORWSET -- convert string to rewriting set number
 **
 **	Parameters:
@@ -3736,7 +3741,7 @@ strtorwset(p, endp, stabmode)
 	}
 	return ruleset;
 }
-/*
+/*
 **  SETTIMEOUT -- set an individual timeout
 **
 **	Parameters:
@@ -4057,7 +4062,7 @@ settimeout(name, val, sticky)
 			setbitn(to->to_code + i, StickyTimeoutOpt);
 	}
 }
-/*
+/*
 **  INITTIMEOUTS -- parse and set timeout values
 **
 **	Parameters:

@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: sm_os_openunix.h,v 1.1 2001/08/22 17:22:34 ca Exp $
+ *	$Sendmail: sm_os_openunix.h,v 1.2 2001/09/11 23:04:15 ca Exp $
  */
 
 #define SM_OS_NAME	"openunix"
@@ -16,6 +16,9 @@
 
 /* long long seems to work */
 #define SM_CONF_LONGLONG	1
+
+/* don't use flock() in mail.local.c */
+#define LDA_USE_LOCKF   1
 
 #ifndef SM_CONF_SHM
 # define SM_CONF_SHM	1

@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: smfi.c,v 8.42 2001/08/27 18:09:16 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: smfi.c,v 8.46 2001/09/11 04:04:45 gshapiro Exp $")
 
 #include "libmilter.h"
 
@@ -107,7 +107,7 @@ smfi_chgheader(ctx, headerf, hdridx, headerv)
 	free(buf);
 	return r;
 }
-/*
+/*
 **  SMFI_ADDRCPT -- send an additional recipient to the MTA
 **
 **	Parameters:
@@ -135,7 +135,7 @@ smfi_addrcpt(ctx, rcpt)
 	len = strlen(rcpt) + 1;
 	return mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_ADDRCPT, rcpt, len);
 }
-/*
+/*
 **  SMFI_DELRCPT -- send a recipient to be removed to the MTA
 **
 **	Parameters:
@@ -163,7 +163,7 @@ smfi_delrcpt(ctx, rcpt)
 	len = strlen(rcpt) + 1;
 	return mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_DELRCPT, rcpt, len);
 }
-/*
+/*
 **  SMFI_REPLACEBODY -- send a body chunk to the MTA
 **
 **	Parameters:
@@ -206,7 +206,46 @@ smfi_replacebody(ctx, bodyp, bodylen)
 	}
 	return MI_SUCCESS;
 }
-/*
+#if _FFR_QUARANTINE
+/*
+**  SMFI_QUARANTINE -- quarantine an envelope
+**
+**	Parameters:
+**		ctx -- Opaque context structure
+**		reason -- why?
+**
+**	Returns:
+**		MI_SUCCESS/MI_FAILURE
+*/
+
+int
+smfi_quarantine(ctx, reason)
+	SMFICTX *ctx;
+	char *reason;
+{
+	size_t len;
+	int r;
+	char *buf;
+	struct timeval timeout;
+
+	if (reason == NULL || *reason == '\0')
+		return MI_FAILURE;
+	if (!mi_sendok(ctx, SMFIF_QUARANTINE))
+		return MI_FAILURE;
+	timeout.tv_sec = ctx->ctx_timeout;
+	timeout.tv_usec = 0;
+	len = strlen(reason);
+	buf = malloc(len);
+	if (buf == NULL)
+		return MI_FAILURE;
+	(void) memcpy(buf, reason, len + 1);
+	r = mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_QUARANTINE, buf, len);
+	free(buf);
+	return r;
+}
+#endif /* _FFR_QUARANTINE */
+
+/*
 **  MYISENHSC -- check whether a string contains an enhanced status code
 **
 **	Parameters:
@@ -245,7 +284,7 @@ myisenhsc(s, delim)
 		return 0;
 	return l + h;
 }
-/*
+/*
 **  SMFI_SETREPLY -- set the reply code for the next reply to the MTA
 **
 **	Parameters:
@@ -305,7 +344,7 @@ smfi_setreply(ctx, rcode, xcode, message)
 	ctx->ctx_reply = buf;
 	return MI_SUCCESS;
 }
-/*
+/*
 **  SMFI_SETPRIV -- set private data
 **
 **	Parameters:
@@ -326,7 +365,7 @@ smfi_setpriv(ctx, privatedata)
 	ctx->ctx_privdata = privatedata;
 	return MI_SUCCESS;
 }
-/*
+/*
 **  SMFI_GETPRIV -- get private data
 **
 **	Parameters:
@@ -344,7 +383,7 @@ smfi_getpriv(ctx)
 		return NULL;
 	return ctx->ctx_privdata;
 }
-/*
+/*
 **  SMFI_GETSYMVAL -- get the value of a macro
 **
 **	See explanation in mfapi.h about layout of the structures.

@@ -463,7 +463,9 @@ the default value.  Example:
 
 	MODIFY_MAILER_FLAGS(`LOCAL', `+e')
 
-will add the flag `e' to LOCAL_MAILER_FLAGS.
+will add the flag `e' to LOCAL_MAILER_FLAGS.  Notice: there are
+several smtp mailers all of which are manipulated individually.
+See the section MAILERS for the available mailer names.
 WARNING: The FEATUREs local_lmtp and local_procmail set LOCAL_MAILER_FLAGS
 unconditionally, i.e., without respecting any definitions in an
 OSTYPE setting.
@@ -1265,7 +1267,7 @@ msp		Defines config file for Message Submission Program.
 		all e-mails to.  If `MSA' is specified as second argument
 		then port 587 is used to contact the server.  Example:
 
-			FEATURE(`msp, `', `MSA')
+			FEATURE(`msp', `', `MSA')
 
 		Some more hints about possible changes can be found below
 		in the section MESSAGE SUBMISSION PROGRAM.
@@ -2661,7 +2663,34 @@ Darth+20Mail+20+28Cert+29/Email=darth+2Bcert@endmail.org
 
 (line breaks have been inserted for readability).
 
-Of course it is also possible to write a simple rulesets that allows
+Examples:
+
+To allow relaying for everyone who can present a cert signed by
+
+/C=US/ST=California/O=endmail.org/OU=private/CN=
+Darth+20Mail+20+28Cert+29/Email=darth+2Bcert@endmail.org
+
+simply use:
+
+CERTIssuer:/C=US/ST=California/O=endmail.org/OU=private/CN=
+Darth+20Mail+20+28Cert+29/Email=darth+2Bcert@endmail.org	RELAY
+
+To allow relaying only for a subset of machines that have a cert signed by
+
+/C=US/ST=California/O=endmail.org/OU=private/CN=
+Darth+20Mail+20+28Cert+29/Email=darth+2Bcert@endmail.org
+
+use:
+
+CERTIssuer:/C=US/ST=California/O=endmail.org/OU=private/CN=
+Darth+20Mail+20+28Cert+29/Email=darth+2Bcert@endmail.org	SUBJECT
+CERTSubject:/C=US/ST=California/O=endmail.org/OU=private/CN=
+DeathStar/Email=deathstar@endmail.org		RELAY
+
+Note: line breaks have been inserted after "CN=" for readability,
+each tagged entry must be one (long) line in the access map.
+
+Of course it is also possible to write a simple ruleset that allows
 relaying for everyone who can present a cert that can be verified, e.g.,
 
 LOCAL_RULESETS
@@ -3947,12 +3976,16 @@ include:
 Some things are not intended to work with the MSP.  These include
 features that influence the delivery process (e.g., mailertable,
 aliases), or those that are only important for a SMTP server (e.g.,
-virtusertable, DaemonPortOptions).  Other things don't work well
-with the MSP and require tweaking or workarounds.  For example, to
-allow for client authentication it is not just sufficient to provide
-a client certificate and the corresponding key, but it is also
-necessary to make the key group (smmsp) readable and tell sendmail
-not to complain about that, i.e.,
+virtusertable, DaemonPortOptions, multiple queues).  Moreover,
+relaxing certain restrictions (RestrictQueueRun, permissions on
+queue directory) or adding features (e.g., enabling prog/file mailer)
+can cause security problems.
+
+Other things don't work well with the MSP and require tweaking or
+workarounds.  For example, to allow for client authentication it
+is not just sufficient to provide a client certificate and the
+corresponding key, but it is also necessary to make the key group
+(smmsp) readable and tell sendmail not to complain about that, i.e.,
 
 	define(`confDONT_BLAME_SENDMAIL', `GroupReadableKeyFile')
 
@@ -4176,4 +4209,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-$Revision: 1.9 $, Last updated $Date: 2001/09/11 19:02:48 $
+$Revision: 1.10 $, Last updated $Date: 2001/10/01 17:18:28 $

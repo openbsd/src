@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: signal.c,v 8.24 2001/01/24 00:27:35 ca Exp $")
+SM_RCSID("@(#)$Sendmail: signal.c,v 8.27 2001/09/11 04:04:45 gshapiro Exp $")
 
 #include "libmilter.h"
 
@@ -21,7 +21,7 @@ static smutex_t M_Mutex;
 
 static int MilterStop = MILTER_CONT;
 
-/*
+/*
 **  MI_STOP -- return value of MilterStop
 **
 **	Parameters:
@@ -36,7 +36,7 @@ mi_stop()
 {
 	return MilterStop;
 }
-/*
+/*
 **  MI_STOP_MILTERS -- set value of MilterStop
 **
 **	Parameters:
@@ -58,7 +58,7 @@ mi_stop_milters(v)
 	mi_closener();
 	(void) smutex_unlock(&M_Mutex);
 }
-/*
+/*
 **  MI_CLEAN_SIGNALS -- clean up signal handler thread
 **
 **	Parameters:
@@ -73,7 +73,7 @@ mi_clean_signals()
 {
 	(void) smutex_destroy(&M_Mutex);
 }
-/*
+/*
 **  MI_SIGNAL_THREAD -- thread to deal with signals
 **
 **	Parameters:
@@ -136,7 +136,7 @@ mi_signal_thread(name)
 		}
 	}
 }
-/*
+/*
 **  MI_SPAWN_SIGNAL_THREAD -- spawn thread to handle signals
 **
 **	Parameters:
@@ -174,7 +174,7 @@ mi_spawn_signal_thread(name)
 	}
 	return MI_SUCCESS;
 }
-/*
+/*
 **  MI_CONTROL_STARTUP -- startup for thread to handle signals
 **
 **	Parameters:

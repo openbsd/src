@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: strl.c,v 1.25 2001/08/27 13:08:22 ca Exp $")
+SM_RCSID("@(#)$Sendmail: strl.c,v 1.28 2001/09/11 04:04:49 gshapiro Exp $")
 #include <sm/config.h>
 #include <sm/string.h>
 
@@ -115,7 +115,7 @@ sm_strlcat(dst, src, size)
 	else
 		return j + strlen(src + i);
 }
-/*
+/*
 **  SM_STRLCAT2 -- append two strings to dst obeying length and
 **		'\0' terminate it
 **
@@ -181,7 +181,7 @@ sm_strlcat2(dst, src1, src2, len)
 		return j + strlen(src2 + i);
 }
 
-/*
+/*
 **  SM_STRLCPYN -- concatenate n strings and assign the result to dst
 **		while obeying length and '\0' terminate it
 **

@@ -8,7 +8,7 @@
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: smdb1.c,v 8.51 2001/05/10 01:23:58 ca Exp $")
+SM_RCSID("@(#)$Sendmail: smdb1.c,v 8.55 2001/09/12 21:19:12 gshapiro Exp $")
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@ struct smdb_db1_cursor
 };
 typedef struct smdb_db1_cursor SMDB_DB1_CURSOR;
 
-/*
+/*
 **  SMDB_TYPE_TO_DB1_TYPE -- Translates smdb database type to db1 type.
 **
 **	Parameters:
@@ -63,7 +63,7 @@ smdb_type_to_db1_type(type)
 	/* Should never get here thanks to test in smdb_db_open() */
 	return DB_HASH;
 }
-/*
+/*
 **  SMDB_PUT_FLAGS_TO_DB1_FLAGS -- Translates smdb put flags to db1 put flags.
 **
 **	Parameters:
@@ -90,7 +90,7 @@ smdb_put_flags_to_db1_flags(flags)
 
 	return return_flags;
 }
-/*
+/*
 **  SMDB_CURSOR_GET_FLAGS_TO_SMDB1
 **
 **	Parameters:
@@ -151,16 +151,18 @@ int
 smdb1_close(database)
 	SMDB_DATABASE *database;
 {
+	int result;
 	SMDB_DB1_DATABASE *db1 = (SMDB_DB1_DATABASE *) database->smdb_impl;
 	DB *db = ((SMDB_DB1_DATABASE *) database->smdb_impl)->smdb1_db;
 
+	result = db->close(db);
 	if (db1->smdb1_lock_fd != -1)
 		(void) close(db1->smdb1_lock_fd);
 
 	free(db1);
 	database->smdb_impl = NULL;
 
-	return db->close(db);
+	return result;
 }
 
 int
@@ -395,7 +397,7 @@ smdb1_cursor(database, cursor, flags)
 
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_DB_OPEN -- Opens a db1 database.
 **
 **	Parameters:

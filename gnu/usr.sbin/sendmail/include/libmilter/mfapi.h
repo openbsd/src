@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: mfapi.h,v 8.28 2001/07/19 21:20:29 gshapiro Exp $
+ *	$Sendmail: mfapi.h,v 8.32 2001/09/13 20:38:40 ca Exp $
  */
 
 /*
@@ -50,15 +50,24 @@ typedef struct smfiDesc	*smfiDesc_ptr;
 
 typedef int	sfsistat;
 
-/*
-**  structure describing one milter
-*/
-
 #if defined(__linux__) && defined(__GNUC__) && defined(__cplusplus) && __GNUC_MINOR__ >= 8
 # define SM__P(X)	__PMT(X)
 #else /* __linux__ && __GNUC__ && __cplusplus && _GNUC_MINOR__ >= 8 */
 # define SM__P(X)	__P(X)
 #endif /* __linux__ && __GNUC__ && __cplusplus && _GNUC_MINOR__ >= 8 */
+
+/* Some platforms don't define __P -- do it for them here: */
+#ifndef __P
+# ifdef __STDC__
+#  define __P(X) X
+# else /* __STDC__ */
+#  define __P(X) ()
+# endif /* __STDC__ */
+#endif /* __P */
+
+/*
+**  structure describing one milter
+*/
 
 struct smfiDesc
 {
@@ -118,6 +127,9 @@ LIBMILTER_API int smfi_stop __P((void));
 #define SMFIF_ADDRCPT	0x00000004L	/* filter may add recipients */
 #define SMFIF_DELRCPT	0x00000008L	/* filter may delete recipients */
 #define SMFIF_CHGHDRS	0x00000010L	/* filter may change/delete headers */
+#if _FFR_QUARANTINE
+# define SMFIF_QUARANTINE 0x00000020L	/* filter may quarantine envelope */
+#endif /* _FFR_QUARANTINE */
 
 /*
 **  Continue processing message/connection.
@@ -376,6 +388,16 @@ LIBMILTER_API int smfi_replacebody __P((SMFICTX *, unsigned char *, int));
 **  xxfi_abort is called. This can be used to reset state.
 */
 
+#if _FFR_QUARANTINE
+/*
+**  Quarantine an envelope
+**
+**	SMFICTX *ctx; Opaque context structure
+**	char *reason: explanation
+*/
+
+LIBMILTER_API int smfi_quarantine __P((SMFICTX *ctx, char *reason));
+#endif /* _FFR_QUARANTINE */
 
 /*
 **  Connection-private data (specific to an SMTP connection) can be

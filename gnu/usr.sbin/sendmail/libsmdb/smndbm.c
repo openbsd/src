@@ -8,7 +8,7 @@
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: smndbm.c,v 8.47 2001/05/10 01:23:58 ca Exp $")
+SM_RCSID("@(#)$Sendmail: smndbm.c,v 8.50 2001/09/11 04:04:53 gshapiro Exp $")
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -37,7 +37,7 @@ struct smdb_dbm_cursor_struct
 };
 typedef struct smdb_dbm_cursor_struct SMDB_DBM_CURSOR;
 
-/*
+/*
 **  SMDB_PUT_FLAGS_TO_NDBM_FLAGS -- Translates smdb put flags to ndbm put flags.
 **
 **	Parameters:
@@ -455,7 +455,7 @@ smdbm_cursor(database, cursor, flags)
 
 	return SMDBE_OK;
 }
-/*
+/*
 **  SMDB_NDBM_OPEN -- Opens a ndbm database.
 **
 **	Parameters:

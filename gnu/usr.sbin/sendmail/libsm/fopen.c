@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: fopen.c,v 1.55 2001/08/27 18:38:17 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: fopen.c,v 1.58 2001/09/11 04:04:48 gshapiro Exp $")
 #include <errno.h>
 #include <setjmp.h>
 #include <sys/time.h>
@@ -54,7 +54,7 @@ openalrm(sig)
 {
 	longjmp(OpenTimeOut, 1);
 }
-/*
+/*
 **  REOPENALRM -- handler when timeout activated for sm_io_reopen()
 **
 **  Returns flow of control to where setjmp(ReopenTimeOut) was set.
@@ -160,7 +160,7 @@ sm_io_open(type, timeout, info, flags, rpool)
 
 	return fp;
 }
-/*
+/*
 **  SM_IO_DUP -- duplicate a file pointer
 **
 **	Parameters:
@@ -196,7 +196,7 @@ sm_io_dup(fp)
 	fp->f_dup_cnt++;
 	return fp;
 }
-/*
+/*
 **  SM_IO_REOPEN -- open a new file using the old file pointer
 **
 **	Parameters:
@@ -312,7 +312,7 @@ sm_io_reopen(type, timeout, info, flags, rpool, fp)
 
 	return fp2;
 }
-/*
+/*
 **  SM_IO_AUTOFLUSH -- link another file to this for auto-flushing
 **
 **	When a read occurs on fp, fp2 will be flushed iff there is no
@@ -341,7 +341,7 @@ sm_io_autoflush(fp, fp2)
 	fp->f_flushfp = fp2;
 	return savefp;
 }
-/*
+/*
 **  SM_IO_AUTOMODE -- link another file to this for auto-moding
 **
 **	When the mode (blocking or non-blocking) changes for fp1 then

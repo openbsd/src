@@ -1,10 +1,77 @@
 			SENDMAIL RELEASE NOTES
-      $Sendmail: RELEASE_NOTES,v 8.1127 2001/09/08 01:30:01 ca Exp $
+      $Sendmail: RELEASE_NOTES,v 8.1155 2001/09/30 01:07:23 ca Exp $
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.12.1/8.12.1	2001/10/01
+	SECURITY: Check whether dropping group privileges actually succeeded
+		to avoid possible compromises of the mail system by
+		supplying bogus data.  Add configuration options for
+		different set*gid() calls to reset saved gid.  Problem
+		found by Michal Zalewski.
+	PRIVACY: Prevent information leakage when sendmail has extra
+		privileges by disabling debugging (command line -d flag)
+		during queue runs and disabling ETRN when sendmail -bs is
+		used.  Suggested by Michal Zalewski.
+	Avoid memory corruption problems resulting from bogus .cf files.
+		Problem found by Michal Zalewski.
+	Set the ${server_addr} macro to name of mailer when doing LMTP
+		delivery.  LMTP systems may offer SMTP Authentication or
+		STARTTLS causing sendmail to use this macro in rulesets.
+	If debugging is turned on (-d0.10) print not just the default
+		values for configuration file and pid file but also the
+		selected values.  Problem noted by Brad Chapman.
+	Continue dealing with broken nameservers by ignoring SERVFAIL
+		errors returned on T_AAAA (IPv6) lookups at delivery time
+		if ResolverOptions=WorkAroundBrokenAAAA is set.  Previously
+		this only applied to hostname canonification.  Problem
+		noted by Bill Fenner of AT&T Research.
+	Ignore comments in NIS host records when trying to find the
+		canonical name for a host.
+	When sendmail has extra privileges, limit mail submission command
+		line flags (i.e., -G, -h, -F, etc.)  to mail submission
+		operating modes (i.e., -bm, -bs, -bv, etc.).  Idea based on
+		suggestion from Michal Zalewski.
+	Portability:
+		AIX: Use `oslevel` if available to determine OS version.
+			`uname` does not given complete information.
+			Problem noted by Keith Neufeld of the Cessna
+			Aircraft Company.
+		OpenUNIX: Use lockf() for LDA delivery (affects mail.local).
+			Problem noticed by Boyd Lynn Gerber of ZENEX.
+		Avoid compiler warnings by not using pointers to pass
+			integers.  Problem noted by Todd C. Miller of
+			Courtesan Consulting.
+	CONFIG: Add restrictqrun to PrivacyOptions for the MSP to minimize
+		problems with potential misconfigurations.
+	CONFIG: Fix comment showing default value of MaxHopCount.  Problem
+		noted by Greg Robinson of the Defence Science and
+		Technology Organisation of Australia.
+	CONFIG: dnsbl: If an argument specifies an error message in case
+		of temporary lookup failures for DNS based blacklists
+		then use it.
+	LIBMILTER: Install mfdef.h, required by mfapi.h.  Problem noted by
+		Richard A. Nelson of Debian.
+	LIBMILTER: Add __P definition for OS that lack it.  Problem noted
+		by Chris Adams from HiWAAY Informations Services.
+	LIBSMDB: Fix a lock race condition that affects makemap, praliases,
+		and vacation.
+	MAKEMAP: Avoid going beyond the end of an input line if it does
+		not contain a value for a key.  Based on patch from
+		Mark Bixby from Hewlett-Packard.
+	New Files:
+		test/Build
+		test/Makefile
+		test/Makefile.m4
+		test/README
+		test/t_dropgid.c
+		test/t_setgid.c
+	Deleted Files:
+		include/sm/stdio.h
+		include/sm/sysstat.h
 
 8.12.0/8.12.0	2001/09/08
 	*NOTICE*: The default installation of sendmail does not use
@@ -51,7 +118,7 @@ summary of the changes in that release.
 		file: client or mta).  See sendmail/SECURITY.
 	The SMTP server no longer forks on each MAIL command.  The ONEX
 		command has been removed.
-	Implement SMTP PIPELINING per RFC 1854.  It can be turned off
+	Implement SMTP PIPELINING per RFC 2920.  It can be turned off
 		at compile time or per host (ruleset).
 	New option MailboxDatabase specifies the type of mailbox database
 		used to look up local mail recipients; the default value

@@ -6,12 +6,11 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: varargs.h,v 1.6 2001/04/23 17:58:27 ca Exp $
+ *	$Sendmail: varargs.h,v 1.7 2001/09/13 16:45:40 ca Exp $
  */
 
 /*
 **  libsm variable argument lists
-**  See libsm/varargs.html for documentation.
 */
 
 #ifndef SM_VARARGS_H

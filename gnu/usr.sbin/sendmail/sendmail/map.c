@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: map.c,v 8.601 2001/09/04 22:43:03 ca Exp $")
+SM_RCSID("@(#)$Sendmail: map.c,v 8.606 2001/09/25 18:32:36 gshapiro Exp $")
 
 #if LDAPMAP
 # include <sm/ldap.h>
@@ -129,7 +129,7 @@ static bool	text_getcanonname __P((char *, int, int *));
 # define LOCK_ON_OPEN	0	/* no such luck -- bend over backwards */
 #endif /* O_EXLOCK && HASFLOCK && !BOGUS_O_EXCL */
 
-/*
+/*
 **  MAP_PARSEARGS -- parse config line arguments for database lookup
 **
 **	This is a generic version of the map_parse method.
@@ -293,7 +293,7 @@ map_parseargs(map, ap)
 	}
 	return true;
 }
-/*
+/*
 **  MAP_REWRITE -- rewrite a database key, interpolating %n indications.
 **
 **	It also adds the map_app string.  It can be used as a utility
@@ -421,7 +421,7 @@ map_rewrite(map, s, slen, av)
 		sm_dprintf("map_rewrite => %s\n", buf);
 	return buf;
 }
-/*
+/*
 **  INITMAPS -- rebuild alias maps
 **
 **	Parameters:
@@ -442,7 +442,7 @@ initmaps()
 	checkfd012("exiting initmaps");
 #endif /* XDEBUG */
 }
-/*
+/*
 **  MAP_INIT -- rebuild a map
 **
 **	Parameters:
@@ -498,7 +498,7 @@ map_init(s, unused)
 	(void) rebuildaliases(map, false);
 	return;
 }
-/*
+/*
 **  OPENMAP -- open a map
 **
 **	Parameters:
@@ -584,7 +584,7 @@ openmap(map)
 
 	return bitset(MF_OPEN, map->map_mflags);
 }
-/*
+/*
 **  CLOSEMAPS -- close all open maps opened by the current pid.
 **
 **	Parameters:
@@ -600,7 +600,7 @@ closemaps(bogus)
 {
 	stabapply(map_close, bogus);
 }
-/*
+/*
 **  MAP_CLOSE -- close a map opened by the current pid.
 **
 **	Parameters:
@@ -657,7 +657,7 @@ map_close(s, bogus)
 	}
 	map->map_mflags &= ~(MF_OPEN|MF_WRITABLE|MF_OPENBOGUS|MF_CLOSING);
 }
-/*
+/*
 **  GETCANONNAME -- look up name using service switch
 **
 **	Parameters:
@@ -798,7 +798,7 @@ getcanonname(host, hbsize, trymx, pttl)
 
 	return false;
 }
-/*
+/*
 **  EXTRACT_CANONNAME -- extract canonical name from /etc/hosts entry
 **
 **	Parameters:
@@ -870,7 +870,7 @@ extract_canonname(name, dot, line, cbuf, cbuflen)
 	return found;
 }
 
-/*
+/*
 **  DNS modules
 */
 
@@ -928,15 +928,21 @@ dns_map_open(map, mode)
 #   endif /* _FFR_DNSMAP_MULTILIMIT */
 #  endif /* _FFR_DNSMAP_MULTI */
 
+struct dns_map
+{
+	int dns_m_type;
+};
+
 bool
 dns_map_parseargs(map,args)
 	MAP *map;
 	char *args;
 {
 	register char *p = args;
-	int dns_m_type;
+	struct dns_map *map_p;
 
-	dns_m_type = -1;
+	map_p = (struct dns_map *) xalloc(sizeof *map_p);
+	map_p->dns_m_type = -1;
 	map->map_mflags |= MF_TRY0NULL|MF_TRY1NULL;
 
 	for (;;)
@@ -1049,10 +1055,10 @@ dns_map_parseargs(map,args)
 				h = strchr(p, ' ');
 				if (h != NULL)
 					*h = '\0';
-				dns_m_type = dns_string_to_type(p);
+				map_p->dns_m_type = dns_string_to_type(p);
 				if (h != NULL)
 					*h = ' ';
-				if (dns_m_type < 0)
+				if (map_p->dns_m_type < 0)
 					syserr("dns map %s: wrong type %s",
 						map->map_mname, p);
 			}
@@ -1087,7 +1093,7 @@ dns_map_parseargs(map,args)
 		if (*p != '\0')
 			*p++ = '\0';
 	}
-	if (dns_m_type < 0)
+	if (map_p->dns_m_type < 0)
 		syserr("dns map %s: missing -R type", map->map_mname);
 	if (map->map_app != NULL)
 		map->map_app = newstr(map->map_app);
@@ -1100,7 +1106,7 @@ dns_map_parseargs(map,args)
 	**  so it doesn't really matter.
 	*/
 
-	map->map_db1 = (ARBPTR_T) dns_m_type;
+	map->map_db1 = (ARBPTR_T) map_p;
 	return true;
 }
 
@@ -1130,9 +1136,9 @@ dns_map_lookup(map, name, av, statp)
 	int resnum = 0;
 #   endif /* _FFR_DNSMAP_MULTILIMIT */
 #  endif /* _FFR_DNSMAP_MULTI */
-	int dns_m_type = (int) map->map_db1;
 	char *vp = NULL, *result = NULL;
 	size_t vsize;
+	struct dns_map *map_p;
 	RESOURCE_RECORD_T *rr = NULL;
 	DNS_REPLY_T *r = NULL;
 #  if NETINET6
@@ -1143,6 +1149,7 @@ dns_map_lookup(map, name, av, statp)
 		sm_dprintf("dns_map_lookup(%s, %s)\n",
 			   map->map_mname, name);
 
+	map_p = (struct dns_map *)(map->map_db1);
 #  if _FFR_DNSMAP_BASE
 	if (map->map_file != NULL && *map->map_file != '\0')
 	{
@@ -1157,15 +1164,15 @@ dns_map_lookup(map, name, av, statp)
 			return NULL;
 		}
 		(void) sm_strlcpyn(appdomain, len, 3, name, ".", map->map_file);
-		r = dns_lookup_int(appdomain, C_IN, dns_m_type,
+		r = dns_lookup_int(appdomain, C_IN, map_p->dns_m_type,
 				   map->map_timeout, map->map_retry);
 		sm_free(appdomain);
 	}
 	else
 #  endif /* _FFR_DNSMAP_BASE */
 	{
-		r = dns_lookup_int(name, C_IN, dns_m_type, map->map_timeout,
-				   map->map_retry);
+		r = dns_lookup_int(name, C_IN, map_p->dns_m_type,
+				   map->map_timeout, map->map_retry);
 	}
 
 	if (r == NULL)
@@ -1229,7 +1236,7 @@ dns_map_lookup(map, name, av, statp)
 #  endif /* NETINET6 */
 		}
 
-		if (dns_m_type != rr->rr_type)
+		if (map_p->dns_m_type != rr->rr_type)
 		{
 			if (tTd(38, 40))
 				sm_dprintf("\tskipping type %s (%d) value %s\n",
@@ -1330,7 +1337,7 @@ dns_map_lookup(map, name, av, statp)
 # endif /* DNSMAP */
 #endif /* NAMED_BIND */
 
-/*
+/*
 **  NDBM modules
 */
 
@@ -1822,7 +1829,7 @@ ndbm_map_close(map)
 }
 
 #endif /* NDBM */
-/*
+/*
 **  NEWDB (Hash and BTree) Modules
 */
 
@@ -2531,7 +2538,7 @@ db_map_close(map)
 			map->map_mname, map->map_file, map->map_mflags);
 }
 #endif /* NEWDB */
-/*
+/*
 **  NIS Modules
 */
 
@@ -2764,6 +2771,9 @@ nis_getcanonname(name, hbsize, statp)
 	sm_free(vp);
 	if (tTd(38, 44))
 		sm_dprintf("got record `%s'\n", host_record);
+	vp = strpbrk(host_record, "#\n");
+	if (vp != NULL)
+		*vp = '\0';
 	if (!extract_canonname(nbuf, NULL, host_record, cbuf, sizeof cbuf))
 	{
 		/* this should not happen, but.... */
@@ -2780,7 +2790,7 @@ nis_getcanonname(name, hbsize, statp)
 }
 
 #endif /* NIS */
-/*
+/*
 **  NISPLUS Modules
 **
 **	This code donated by Sun Microsystems.
@@ -3211,7 +3221,7 @@ nisplus_default_domain()
 }
 
 #endif /* NISPLUS */
-/*
+/*
 **  LDAP Modules
 */
 
@@ -3962,7 +3972,7 @@ ldapmap_findconn(lmap)
 	SM_END_TRY
 	return s;
 }
-/*
+/*
 **  LDAPMAP_PARSEARGS -- parse ldap map definition args.
 */
 
@@ -4557,7 +4567,7 @@ ldapmap_parseargs(map, args)
 	return true;
 }
 
-/*
+/*
 **  LDAPMAP_SET_DEFAULTS -- Read default map spec from LDAPDefaults in .cf
 **
 **	Parameters:
@@ -4620,7 +4630,7 @@ ldapmap_set_defaults(spec)
 	}
 }
 #endif /* LDAPMAP */
-/*
+/*
 **  PH map
 */
 
@@ -4856,7 +4866,7 @@ ph_map_recv_debug(text)
 		sm_dprintf("ph_map_recv_debug: <== %s\n", text);
 }
 
-/*
+/*
 **  PH_MAP_OPEN -- sub for opening PH map
 */
 bool
@@ -5032,7 +5042,7 @@ ph_map_lookup(map, key, args, pstat)
 	return NULL;
 }
 #endif /* PH_MAP */
-/*
+/*
 **  syslog map
 */
 
@@ -5170,7 +5180,7 @@ syslog_map_lookup(map, string, args, statp)
 	return "";
 }
 
-/*
+/*
 **  HESIOD Modules
 */
 
@@ -5335,7 +5345,7 @@ hes_map_close(map)
 }
 
 #endif /* HESIOD */
-/*
+/*
 **  NeXT NETINFO Modules
 */
 
@@ -5461,7 +5471,7 @@ ni_getcanonname(name, hbsize, statp)
 	return false;
 }
 #endif /* NETINFO */
-/*
+/*
 **  TEXT (unindexed text file) Modules
 **
 **	This code donated by Sun Microsystems.
@@ -5712,7 +5722,7 @@ text_getcanonname(name, hbsize, statp)
 	*statp = EX_OK;
 	return true;
 }
-/*
+/*
 **  STAB (Symbol Table) Modules
 */
 
@@ -5804,7 +5814,7 @@ stab_map_open(map, mode)
 
 	return true;
 }
-/*
+/*
 **  Implicit Modules
 **
 **	Tries several types.  For back compatibility of aliases.
@@ -5941,7 +5951,7 @@ impl_map_close(map)
 	}
 #endif /* NDBM */
 }
-/*
+/*
 **  User map class.
 **
 **	Provides access to the system password file.
@@ -6063,7 +6073,7 @@ user_map_lookup(map, key, av, statp)
 		return map_rewrite(map, rwval, strlen(rwval), av);
 	}
 }
-/*
+/*
 **  Program map type.
 **
 **	This provides access to arbitrary programs.  It should be used
@@ -6187,7 +6197,7 @@ prog_map_lookup(map, name, av, statp)
 	}
 	return rval;
 }
-/*
+/*
 **  Sequenced map type.
 **
 **	Tries each map in order until something matches, much like
@@ -6434,7 +6444,7 @@ seq_map_store(map, key, val)
 	syserr("seq_map_store(%s, %s, %s): no writable map",
 		map->map_mname, key, val);
 }
-/*
+/*
 **  NULL stubs
 */
 
@@ -6497,7 +6507,7 @@ MAPCLASS	BogusMapClass =
 	NULL,			bogus_map_lookup,	null_map_store,
 	null_map_open,		null_map_close,
 };
-/*
+/*
 **  MACRO modules
 */
 
@@ -6530,7 +6540,7 @@ macro_map_lookup(map, name, av, statp)
 	*statp = EX_OK;
 	return "";
 }
-/*
+/*
 **  REGEX modules
 */
 
@@ -6907,7 +6917,7 @@ regex_map_lookup(map, name, av, statp)
 	return regex_map_rewrite(map, "", (size_t)0, av);
 }
 #endif /* MAP_REGEX */
-/*
+/*
 **  NSD modules
 */
 #if MAP_NSD

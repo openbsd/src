@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: mci.c,v 8.196 2001/09/04 22:43:04 ca Exp $")
+SM_RCSID("@(#)$Sendmail: mci.c,v 8.200 2001/09/21 20:01:42 ca Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -61,7 +61,7 @@ static int	mci_read_persistent __P((SM_FILE_T *, MCI *));
 
 static MCI	**MciCache;		/* the open connection cache */
 
-/*
+/*
 **  MCI_CACHE -- enter a connection structure into the open connection cache
 **
 **	This may cause something else to be flushed.
@@ -114,7 +114,7 @@ mci_cache(mci)
 	*mcislot = mci;
 	mci->mci_flags |= MCIF_CACHED;
 }
-/*
+/*
 **  MCI_SCAN -- scan the cache, flush junk, and return best slot
 **
 **	Parameters:
@@ -177,7 +177,7 @@ mci_scan(savemci)
 	}
 	return bestmci;
 }
-/*
+/*
 **  MCI_UNCACHE -- remove a connection from a slot.
 **
 **	May close a connection.
@@ -262,7 +262,7 @@ mci_uncache(mcislot, doquit)
 		mci->mci_rpool = NULL;
 	}
 }
-/*
+/*
 **  MCI_FLUSH -- flush the entire cache
 **
 **	Parameters:
@@ -290,7 +290,7 @@ mci_flush(doquit, allbut)
 			mci_uncache(&MciCache[i], doquit);
 	}
 }
-/*
+/*
 **  MCI_GET -- get information about a particular host
 **
 **	Parameters:
@@ -398,7 +398,7 @@ mci_get(host, m)
 
 	return mci;
 }
-/*
+/*
 **  MCI_NEW -- allocate new MCI structure
 **
 **	Parameters:
@@ -423,7 +423,7 @@ mci_new(rpool)
 	mci->mci_macro.mac_rpool = mci->mci_rpool;
 	return mci;
 }
-/*
+/*
 **  MCI_MATCH -- check connection cache for a particular host
 **
 **	Parameters:
@@ -451,7 +451,7 @@ mci_match(host, m)
 	mci = &s->s_mci;
 	return mci->mci_state == MCIS_OPEN;
 }
-/*
+/*
 **  MCI_SETSTAT -- set status codes in MCI structure.
 **
 **	Parameters:
@@ -483,7 +483,7 @@ mci_setstat(mci, xstat, dstat, rstat)
 	if (rstat != NULL)
 		mci->mci_rstatus = sm_strdup_x(rstat);
 }
-/*
+/*
 **  MCI_DUMP -- dump the contents of an MCI structure.
 **
 **	Parameters:
@@ -590,7 +590,7 @@ printit:
 	else
 		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "%s\n", buf);
 }
-/*
+/*
 **  MCI_DUMP_ALL -- print the entire MCI cache
 **
 **	Parameters:
@@ -613,7 +613,7 @@ mci_dump_all(logit)
 	for (i = 0; i < MaxMciCache; i++)
 		mci_dump(MciCache[i], logit);
 }
-/*
+/*
 **  MCI_LOCK_HOST -- Lock host while sending.
 **
 **	If we are contacting a host, we'll need to
@@ -704,7 +704,7 @@ cleanup:
 	errno = save_errno;
 	return retVal;
 }
-/*
+/*
 **  MCI_UNLOCK_HOST -- unlock host
 **
 **	Clean up the lock on a host, close the file, let
@@ -753,7 +753,7 @@ mci_unlock_host(mci)
 
 	errno = save_errno;
 }
-/*
+/*
 **  MCI_LOAD_PERSISTENT -- load persistent host info
 **
 **	Load information about host that is kept
@@ -830,7 +830,7 @@ cleanup:
 	errno = save_errno;
 	return locked;
 }
-/*
+/*
 **  MCI_READ_PERSISTENT -- read persistent host status file
 **
 **	Parameters:
@@ -932,7 +932,7 @@ mci_read_persistent(fp, mci)
 		return -1;
 	return 0;
 }
-/*
+/*
 **  MCI_STORE_PERSISTENT -- Store persistent MCI information
 **
 **	Store information about host that is kept
@@ -1002,7 +1002,7 @@ mci_store_persistent(mci)
 	errno = save_errno;
 	return;
 }
-/*
+/*
 **  MCI_TRAVERSE_PERSISTENT -- walk persistent status tree
 **
 **	Recursively find all the mci host files in `pathname'.  Default to
@@ -1174,7 +1174,7 @@ mci_traverse_persistent(action, pathname)
 
 	return ret;
 }
-/*
+/*
 **  MCI_PRINT_PERSISTENT -- print persistent info
 **
 **	Dump the persistent information in the file 'pathname'
@@ -1234,7 +1234,7 @@ mci_print_persistent(pathname, hostname)
 	}
 
 	locked = !lockfile(sm_io_getinfo(fp, SM_IO_WHAT_FD, NULL), pathname,
-			   "", LOCK_EX|LOCK_NB);
+			   "", LOCK_SH|LOCK_NB);
 	(void) sm_io_close(fp, SM_TIME_DEFAULT);
 	FileName = NULL;
 
@@ -1274,7 +1274,7 @@ mci_print_persistent(pathname, hostname)
 
 	return 0;
 }
-/*
+/*
 **  MCI_PURGE_PERSISTENT -- Remove a persistence status file.
 **
 **	Parameters:
@@ -1340,7 +1340,7 @@ mci_purge_persistent(pathname, hostname)
 
 	return 0;
 }
-/*
+/*
 **  MCI_GENERATE_PERSISTENT_PATH -- generate path from hostname
 **
 **	Given `host', convert from a.b.c to $QueueDir/.hoststat/c./b./a,

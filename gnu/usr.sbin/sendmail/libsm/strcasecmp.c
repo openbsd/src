@@ -12,13 +12,13 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: strcasecmp.c,v 1.12 2001/08/27 22:09:15 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: strcasecmp.c,v 1.15 2001/09/11 04:04:49 gshapiro Exp $")
 
 #include <sm/config.h>
 #include <sm/string.h>
 #include <string.h>
 
-/*
+/*
 **  SM_STRCASECMP -- 8-bit clean version of strcasecmp
 **
 **	Thank you, vendors, for making this all necessary.

@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: syslogio.c,v 1.27 2001/03/04 17:55:32 ca Exp $")
+SM_RCSID("@(#)$Sendmail: syslogio.c,v 1.29 2001/09/11 04:04:49 gshapiro Exp $")
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>

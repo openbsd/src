@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: parseaddr.c,v 8.340 2001/09/04 22:43:04 ca Exp $")
+SM_RCSID("@(#)$Sendmail: parseaddr.c,v 8.344 2001/09/20 23:08:06 gshapiro Exp $")
 
 static void	allocaddr __P((ADDRESS *, int, char *, ENVELOPE *));
 static int	callsubr __P((char**, int, ENVELOPE *));
@@ -219,7 +219,7 @@ parseaddr(addr, a, flags, delim, delimptr, e, isrcpt)
 
 	return a;
 }
-/*
+/*
 **  INVALIDADDR -- check for address containing characters used for macros
 **
 **	Parameters:
@@ -279,7 +279,7 @@ delim:
 		*delimptr = savedelim;	/* restore old character at delimptr */
 	return result;
 }
-/*
+/*
 **  HASCTRLCHAR -- check for address containing meta-characters
 **
 **  Checks that the address contains no meta-characters, and contains
@@ -350,7 +350,7 @@ hasctrlchar(addr, isrcpt)
 	}
 	return result;
 }
-/*
+/*
 **  ALLOCADDR -- do local allocations of address on demand.
 **
 **	Also lowercases the host name if requested.
@@ -397,7 +397,7 @@ allocaddr(a, flags, paddr, e)
 		a->q_paddr = sm_rpool_strdup_x(e->e_rpool, a->q_user);
 	a->q_qgrp = NOAQGRP;
 }
-/*
+/*
 **  PRESCAN -- Prescan name and make it canonical
 **
 **	Scans a name and turns it into a set of tokens.  This process
@@ -852,7 +852,7 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
 	}
 	return av;
 }
-/*
+/*
 **  REWRITE -- apply rewrite rules to token vector.
 **
 **	This routine is an ordered production system.  Each rewrite
@@ -1524,7 +1524,7 @@ rewrite(pvp, ruleset, reclevel, e, maxatom)
 	}
 	return rstat;
 }
-/*
+/*
 **  CALLSUBR -- call subroutines in rewrite vector
 **
 **	Parameters:
@@ -1635,7 +1635,7 @@ callsubr(pvp, reclevel, e)
 	}
 	return rstat;
 }
-/*
+/*
 **  MAP_LOOKUP -- do lookup in map
 **
 **	Parameters:
@@ -1740,7 +1740,7 @@ map_lookup(smap, key, argvect, pstat, e)
 	}
 	return replac;
 }
-/*
+/*
 **  INITERRMAILERS -- initialize error and discard mailers
 **
 **	Parameters:
@@ -1776,7 +1776,7 @@ initerrmailers()
 		errormailer.m_argv = errorargv;
 	}
 }
-/*
+/*
 **  BUILDADDR -- build address from token vector.
 **
 **	Parameters:
@@ -2030,7 +2030,7 @@ badaddr:
 	}
 	return a;
 }
-/*
+/*
 **  CATADDR -- concatenate pieces of addresses (putting in <LWSP> subs)
 **
 **	Parameters:
@@ -2094,7 +2094,7 @@ cataddr(pvp, evp, buf, sz, spacesub)
 	}
 	*p = '\0';
 }
-/*
+/*
 **  SAMEADDR -- Determine if two addresses are the same
 **
 **	This is not just a straight comparison -- if the mailer doesn't
@@ -2153,7 +2153,7 @@ sameaddr(a, b)
 
 	return true;
 }
-/*
+/*
 **  PRINTADDR -- print address (for debugging)
 **
 **	Parameters:
@@ -2357,7 +2357,7 @@ printaddr(a, follow)
 		a = a->q_next;
 	}
 }
-/*
+/*
 **  EMPTYADDR -- return true if this address is empty (``<>'')
 **
 **	Parameters:
@@ -2376,7 +2376,7 @@ emptyaddr(a)
 	return a->q_paddr == NULL || strcmp(a->q_paddr, "<>") == 0 ||
 	       a->q_user == NULL || strcmp(a->q_user, "<>") == 0;
 }
-/*
+/*
 **  REMOTENAME -- return the name relative to the current mailer
 **
 **	Parameters:
@@ -2549,7 +2549,7 @@ remotename(name, m, flags, pstat, e)
 		sm_dprintf("remotename => `%s'\n", buf);
 	return buf;
 }
-/*
+/*
 **  MAPLOCALUSER -- run local username through ruleset 5 for final redirection
 **
 **	Parameters:
@@ -2653,7 +2653,7 @@ maplocaluser(a, sendq, aliaslevel, e)
 	allocaddr(a1, RF_COPYALL, sm_rpool_strdup_x(e->e_rpool, a->q_paddr), e);
 	(void) recipient(a1, sendq, aliaslevel, e);
 }
-/*
+/*
 **  DEQUOTE_INIT -- initialize dequote map
 **
 **	Parameters:
@@ -2704,7 +2704,7 @@ dequote_init(map, args)
 
 	return true;
 }
-/*
+/*
 **  DEQUOTE_MAP -- unquote an address
 **
 **	Parameters:
@@ -2802,7 +2802,7 @@ dequote_map(map, name, av, statp)
 	*q++ = '\0';
 	return map_rewrite(map, name, strlen(name), NULL);
 }
-/*
+/*
 **  RSCHECK -- check string(s) for validity using rewriting sets
 **
 **	Parameters:
@@ -2842,6 +2842,10 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 	auto ADDRESS a1;
 	bool saveQuickAbort = QuickAbort;
 	bool saveSuprErrs = SuprErrs;
+#if _FFR_QUARANTINE
+	bool quarantine = false;
+	char ubuf[BUFSIZ * 2];
+#endif /* _FFR_QUARANTINE */
 	char buf0[MAXLINE];
 	char pvpbuf[PSBUFSIZE];
 	extern char MsgBuf[];
@@ -2911,6 +2915,28 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 			e->e_flags |= EF_DISCARD;
 			discard = true;
 		}
+#if _FFR_QUARANTINE
+		else if (strcmp(pvp[1], "error") == 0 &&
+			 pvp[2] != NULL && (pvp[2][0] & 0377) == CANONHOST &&
+			 pvp[3] != NULL && strcmp(pvp[3], "quarantine") == 0)
+		{
+			if (pvp[4] == NULL ||
+			    (pvp[4][0] & 0377) != CANONUSER ||
+			    pvp[5] == NULL)
+				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+								 rwset);
+			else
+			{
+				cataddr(&(pvp[5]), NULL, ubuf,
+					sizeof ubuf, ' ');
+				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+								 ubuf);
+			}
+			macdefine(&e->e_macro, A_PERM,
+				  macid("{holdmsg}"), e->e_holdmsg);
+			quarantine = true;
+		}
+#endif /* _FFR_QUARANTINE */
 		else
 		{
 			int savelogusrerrs = LogUsrErrs;
@@ -2961,6 +2987,12 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 				sm_syslog(LOG_NOTICE, logid,
 					  "ruleset=%s, arg1=%s%s, discard",
 					  rwset, p1, lbuf);
+#if _FFR_QUARANTINE
+			else if (quarantine)
+				sm_syslog(LOG_NOTICE, logid,
+					  "ruleset=%s, arg1=%s%s, quarantine=%s",
+					  rwset, p1, lbuf, ubuf);
+#endif /* _FFR_QUARANTINE */
 			else
 				sm_syslog(LOG_NOTICE, logid,
 					  "ruleset=%s, arg1=%s%s, reject=%s",
@@ -2983,7 +3015,7 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 		sm_exc_raisenew_x(&EtypeQuickAbort, 2);
 	return rstat;
 }
-/*
+/*
 **  RSCAP -- call rewriting set to return capabilities
 **
 **	Parameters:

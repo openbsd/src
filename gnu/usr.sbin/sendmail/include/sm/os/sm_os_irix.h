@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: sm_os_irix.h,v 1.5 2001/03/18 18:07:25 ca Exp $
+ *	$Sendmail: sm_os_irix.h,v 1.6 2001/09/30 16:35:29 ca Exp $
  */
 
 /*
@@ -53,3 +53,8 @@
 #ifndef SM_CONF_TEST_LLONG
 # define SM_CONF_TEST_LLONG	0
 #endif /* !SM_CONF_TEST_LLONG */
+
+/* can't set real gid */
+#ifndef SM_CONF_CANT_SETRGID
+# define SM_CONF_CANT_SETRGID	1
+#endif /* SM_CONF_CANT_SETRGID */

@@ -13,9 +13,9 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: snprintf.c,v 8.41 2001/08/28 23:07:01 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: snprintf.c,v 8.44 2001/09/11 04:04:56 gshapiro Exp $")
 
-/*
+/*
 **  SHORTENSTRING -- return short version of a string
 **
 **	If the string is already short, just return it.  If it is too

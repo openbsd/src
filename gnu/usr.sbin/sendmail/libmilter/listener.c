@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: listener.c,v 8.72 2001/06/28 20:59:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: listener.c,v 8.75 2001/09/11 04:04:45 gshapiro Exp $")
 
 /*
 **  listener.c -- threaded network listener
@@ -25,7 +25,7 @@ SM_RCSID("@(#)$Sendmail: listener.c,v 8.72 2001/06/28 20:59:06 ca Exp $")
 
 static smutex_t L_Mutex;
 
-/*
+/*
 **  MI_MILTEROPEN -- setup socket to listen on
 **
 **	Parameters:
@@ -431,7 +431,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 	*family = addr.sa.sa_family;
 	return sock;
 }
-/*
+/*
 **  MI_THREAD_HANDLE_WRAPPER -- small wrapper to handle session
 **
 **	Parameters:
@@ -450,7 +450,7 @@ mi_thread_handle_wrapper(arg)
 
 static socket_t listenfd = INVALID_SOCKET;
 
-/*
+/*
 **  MI_CLOSENER -- close listen socket
 **
 **	NOTE: It is assumed that this function is called from a
@@ -509,7 +509,7 @@ mi_closener()
 	(void) smutex_unlock(&L_Mutex);
 }
 
-/*
+/*
 **  MI_LISTENER -- Generic listener harness
 **
 **	Open up listen port

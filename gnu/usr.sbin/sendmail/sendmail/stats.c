@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: stats.c,v 8.47 2001/08/24 17:01:47 ca Exp $")
+SM_RCSID("@(#)$Sendmail: stats.c,v 8.50 2001/09/11 04:05:17 gshapiro Exp $")
 
 #include <sendmail/mailstats.h>
 
@@ -24,7 +24,7 @@ static bool	GotStats = false;	/* set when we have stats to merge */
 /* See http://physics.nist.gov/cuu/Units/binary.html */
 #define ONE_K		1000		/* one thousand (twenty-four?) */
 #define KBYTES(x)	(((x) + (ONE_K - 1)) / ONE_K)
-/*
+/*
 **  MARKSTATS -- mark statistics
 **
 **	Parameters:
@@ -76,7 +76,7 @@ markstats(e, to, reject)
 
 	GotStats = true;
 }
-/*
+/*
 **  CLEARSTATS -- clear statistics structure
 **
 **	Parameters:
@@ -96,7 +96,7 @@ clearstats()
 	memset(&Stat, '\0', sizeof Stat);
 	GotStats = false;
 }
-/*
+/*
 **  POSTSTATS -- post statistics in the statistics file
 **
 **	Parameters:

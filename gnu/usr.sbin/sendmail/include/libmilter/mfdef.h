@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: mfdef.h,v 8.7 2001/07/19 21:20:29 gshapiro Exp $
+ *	$Sendmail: mfdef.h,v 8.11 2001/09/12 18:02:19 gshapiro Exp $
  */
 
 /*
@@ -22,8 +22,13 @@
 # define MILTER_OPTLEN	(MILTER_LEN_BYTES * 3) /* length of options */
 # define MILTER_CHUNK_SIZE	65535	/* body chunk size */
 
+/* These apply to SMFIF_* flags */
 #define SMFI_V1_ACTS	0x0000000FL	/* The actions of V1 filter */
-#define SMFI_V2_ACTS	0x0000001FL	/* The actions of V2 filter */
+#if _FFR_QUARANTINE
+# define SMFI_V2_ACTS	0x0000003FL	/* The actions of V2 filter */
+#else /* _FFR_QUARANTINE */
+# define SMFI_V2_ACTS	0x0000001FL	/* The actions of V2 filter */
+#endif /* _FFR_QUARANTINE */
 #define SMFI_CURR_ACTS	SMFI_V2_ACTS	/* The current version */
 
 /* address families */
@@ -59,6 +64,9 @@
 # define SMFIR_TEMPFAIL		't'	/* tempfail */
 # define SMFIR_ADDHEADER	'h'	/* add header */
 # define SMFIR_REPLYCODE	'y'	/* reply code etc */
+# if _FFR_QUARANTINE
+#  define SMFIR_QUARANTINE	'q'	/* quarantine */
+# endif /* _FFR_QUARANTINE */
 
 /* What the MTA can send/filter wants in protocol */
 # define SMFIP_NOCONNECT 0x00000001L	/* MTA should not send connect info */

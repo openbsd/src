@@ -10,7 +10,7 @@
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)$Sendmail: strto.c,v 1.14 2001/08/27 22:27:14 gshapiro Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: strto.c,v 1.16 2001/09/11 04:04:49 gshapiro Exp $")
 
 #include <sys/types.h>
 #include <stdlib.h>

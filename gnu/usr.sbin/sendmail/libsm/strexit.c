@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: strexit.c,v 1.3 2001/01/15 18:39:11 ca Exp $")
+SM_RCSID("@(#)$Sendmail: strexit.c,v 1.5 2001/09/11 04:04:49 gshapiro Exp $")
 #include <sm/string.h>
 #include <sm/sysexits.h>
 

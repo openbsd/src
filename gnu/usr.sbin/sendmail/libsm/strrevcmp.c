@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: strrevcmp.c,v 1.2 2001/08/27 22:21:51 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: strrevcmp.c,v 1.5 2001/09/11 04:04:49 gshapiro Exp $")
 
 #include <sm/config.h>
 #include <sm/string.h>
@@ -60,7 +60,7 @@ sm_strrevcasecmp(s1, s2)
 				charmap[(unsigned char) s2[i2]]);
 	}
 }
-/*
+/*
 **  SM_STRREVCMP -- compare two strings starting at the end
 **
 **	Parameters:

@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <string.h>
 
-SM_RCSID("@(#)$Sendmail: mime.c,v 8.121 2001/09/04 22:43:04 ca Exp $")
+SM_RCSID("@(#)$Sendmail: mime.c,v 8.125 2001/09/11 04:05:15 gshapiro Exp $")
 
 /*
 **  MIME support.
@@ -56,7 +56,7 @@ static char	*MimeBoundaryNames[] =
 
 static bool	MapNLtoCRLF;
 
-/*
+/*
 **  MIME8TO7 -- output 8 bit body in 7 bit format
 **
 **	The header has already been output -- this has to do the
@@ -399,7 +399,8 @@ mime8to7(mci, header, e, boundaries, flags)
 		/* remember where we were */
 		offset = sm_io_tell(e->e_dfp, SM_TIME_DEFAULT);
 		if (offset == -1)
-			syserr("mime8to7: cannot sm_io_tell on df%s", e->e_id);
+			syserr("mime8to7: cannot sm_io_tell on %cf%s",
+			       DATAFL_LETTER, e->e_id);
 
 		/* do a scan of this body type to count character types */
 		while (sm_io_fgets(e->e_dfp, SM_TIME_DEFAULT, buf, sizeof buf)
@@ -429,7 +430,8 @@ mime8to7(mci, header, e, boundaries, flags)
 		/* return to the original offset for processing */
 		/* XXX use relative seeks to handle >31 bit file sizes? */
 		if (sm_io_seek(e->e_dfp, SM_TIME_DEFAULT, offset, SEEK_SET) < 0)
-			syserr("mime8to7: cannot sm_io_fseek on df%s", e->e_id);
+			syserr("mime8to7: cannot sm_io_fseek on %cf%s",
+			       DATAFL_LETTER, e->e_id);
 		else
 			sm_io_clearerr(e->e_dfp);
 	}
@@ -665,7 +667,7 @@ mime8to7(mci, header, e, boundaries, flags)
 		sm_dprintf("\t\t\tmime8to7=>%s (basic)\n", MimeBoundaryNames[bt]);
 	return bt;
 }
-/*
+/*
 **  MIME_GETCHAR -- get a character for MIME processing
 **
 **	Treats boundaries as SM_IO_EOF.
@@ -774,7 +776,7 @@ mime_getchar(fp, boundaries, btp)
 	bp = buf;
 	return *bp++;
 }
-/*
+/*
 **  MIME_GETCHAR_CRLF -- do mime_getchar, but translate NL => CRLF
 **
 **	Parameters:
@@ -809,7 +811,7 @@ mime_getchar_crlf(fp, boundaries, btp)
 	}
 	return c;
 }
-/*
+/*
 **  MIMEBOUNDARY -- determine if this line is a MIME boundary & its type
 **
 **	Parameters:
@@ -865,7 +867,7 @@ mimeboundary(line, boundaries)
 		sm_dprintf("%s\n", MimeBoundaryNames[type]);
 	return type;
 }
-/*
+/*
 **  DEFCHARSET -- return default character set for message
 **
 **	The first choice for character set is for the mailer
@@ -892,7 +894,7 @@ defcharset(e)
 		return DefaultCharSet;
 	return "unknown-8bit";
 }
-/*
+/*
 **  ISBOUNDARY -- is a given string a currently valid boundary?
 **
 **	Parameters:
@@ -920,7 +922,7 @@ isboundary(line, boundaries)
 	return -1;
 }
 #endif /* MIME8TO7 */
-
+
 #if MIME7TO8
 static int	mime_fromqp __P((unsigned char *, unsigned char **, int, int));
 
@@ -1124,7 +1126,7 @@ mime7to8(mci, header, e)
 	if (tTd(43, 3))
 		sm_dprintf("\t\t\tmime7to8 => %s to 8bit done\n", cte);
 }
-/*
+/*
 **  The following is based on Borenstein's "codes.c" module, with simplifying
 **  changes as we do not deal with multipart, and to do the translation in-core,
 **  with an attempt to prevent overrun of output buffers.

@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: arpadate.c,v 8.28 2001/02/14 14:45:47 ca Exp $")
+SM_RCSID("@(#)$Sendmail: arpadate.c,v 8.30 2001/09/11 04:05:12 gshapiro Exp $")
 
 /*
 **  ARPADATE -- Create date in ARPANET format

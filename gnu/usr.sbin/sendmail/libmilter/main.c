@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: main.c,v 8.49 2001/04/21 01:18:16 ca Exp $")
+SM_RCSID("@(#)$Sendmail: main.c,v 8.52 2001/09/11 04:04:45 gshapiro Exp $")
 
 #define _DEFINE	1
 #include "libmilter.h"
@@ -68,7 +68,7 @@ smfi_register(smfilter)
 	return MI_SUCCESS;
 }
 
-/*
+/*
 **  SMFI_STOP -- stop milter
 **
 **	Parameters:

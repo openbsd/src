@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: recipient.c,v 8.322 2001/09/04 22:43:05 ca Exp $")
+SM_RCSID("@(#)$Sendmail: recipient.c,v 8.325 2001/09/11 04:05:16 gshapiro Exp $")
 
 static void	includetimeout __P((void));
 static ADDRESS	*self_reference __P((ADDRESS *));
@@ -307,7 +307,7 @@ sendtolist(list, ctladdr, sendq, aliaslevel, e)
 	return naddrs;
 }
 #if MILTER
-/*
+/*
 **  REMOVEFROMLIST -- Remove addresses from a send list.
 **
 **	The parameter is a comma-separated list of recipients to remove.
@@ -419,7 +419,7 @@ removefromlist(list, sendq, e)
 	return naddrs;
 }
 #endif /* MILTER */
-/*
+/*
 **  RECIPIENT -- Designate a message recipient
 **
 **	Saves the named person for future mailing.
@@ -1103,7 +1103,7 @@ recipient(new, sendq, aliaslevel, e)
 	macdefine(&e->e_macro, A_TEMP, macid("{nrcpts}"), buf0);
 	return new;
 }
-/*
+/*
 **  FINDUSER -- find the password entry for a user.
 **
 **	This looks a lot like getpwnam, except that it may want to
@@ -1241,7 +1241,7 @@ finduser(name, fuzzyp, user)
 	return EX_NOUSER;
 #endif /* MATCHGECOS */
 }
-/*
+/*
 **  WRITABLE -- predicate returning if the file is writable.
 **
 **	This routine must duplicate the algorithm in sys/fio.c.
@@ -1333,7 +1333,7 @@ writable(filename, ctladdr, flags)
 	errno = safefile(filename, euid, egid, user, flags, S_IWRITE, NULL);
 	return errno == 0;
 }
-/*
+/*
 **  INCLUDE -- handle :include: specification.
 **
 **	Parameters:
@@ -1874,7 +1874,7 @@ includetimeout()
 	errno = ETIMEDOUT;
 	longjmp(CtxIncludeTimeout, 1);
 }
-/*
+/*
 **  SENDTOARGV -- send to an argument vector.
 **
 **	Parameters:
@@ -1899,7 +1899,7 @@ sendtoargv(argv, e)
 	while ((p = *argv++) != NULL)
 		(void) sendtolist(p, NULLADDR, &e->e_sendqueue, 0, e);
 }
-/*
+/*
 **  GETCTLADDR -- get controlling address from an address header.
 **
 **	If none, get one corresponding to the effective userid.
@@ -1919,7 +1919,7 @@ getctladdr(a)
 		a = a->q_alias;
 	return a;
 }
-/*
+/*
 **  SELF_REFERENCE -- check to see if an address references itself
 **
 **	The check is done through a chain of aliases.  If it is part of

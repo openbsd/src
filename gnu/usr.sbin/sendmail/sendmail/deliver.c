@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sys/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.899 2001/09/08 01:21:09 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.907 2001/09/18 21:45:33 gshapiro Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -354,6 +354,17 @@ sendall(e, mode)
 				q->q_state = QS_QUEUEUP;
 				expensive = true;
 			}
+#if _FFR_QUARANTINE
+			else if (QueueMode != QM_HELD &&
+				 e->e_holdmsg != NULL)
+			{
+				if (tTd(13, 30))
+					sm_dprintf("    ... quarantine: %s\n",
+						   e->e_holdmsg);
+				q->q_state = QS_QUEUEUP;
+				expensive = true;
+			}
+#endif /* _FFR_QUARANTINE */
 			else
 			{
 				if (tTd(13, 30))
@@ -435,7 +446,7 @@ sendall(e, mode)
 			}
 
 			if (mode != SM_VERIFY && bitset(EF_HAS_DF, e->e_flags))
-				dup_queue_file(e, ee, 'd');
+				dup_queue_file(e, ee, DATAFL_LETTER);
 
 			/*
 			**  Give the split envelope access to the parent
@@ -903,7 +914,7 @@ sendenvelope(e, mode)
 }
 
 #if REQUIRES_DIR_FSYNC
-/*
+/*
 **  SYNC_DIR -- fsync a directory based on a filename
 **
 **	Parameters:
@@ -954,13 +965,13 @@ sync_dir(filename, panic)
 	}
 }
 #endif /* REQUIRES_DIR_FSYNC */
-/*
+/*
 **  DUP_QUEUE_FILE -- duplicate a queue file into a split queue
 **
 **	Parameters:
 **		e -- the existing envelope
 **		ee -- the new envelope
-**		type -- the queue file type (e.g., 'd')
+**		type -- the queue file type (e.g., DATAFL_LETTER)
 **
 **	Returns:
 **		none
@@ -1005,7 +1016,7 @@ dup_queue_file(e, ee, type)
 	}
 	SYNC_DIR(f2buf, true);
 }
-/*
+/*
 **  DOFORK -- do a fork, retrying a couple of times on failure.
 **
 **	This MUST be a macro, since after a vfork we are running
@@ -1046,7 +1057,7 @@ dup_queue_file(e, ee, type)
 			(void) sleep((unsigned) NFORKTRIES - i);\
 	}\
 }
-/*
+/*
 **  DOFORK -- simple fork interface to DOFORK.
 **
 **	Parameters:
@@ -1070,7 +1081,7 @@ dofork()
 	return pid;
 }
 
-/*
+/*
 **  COLONCMP -- compare host-signatures up to first ':' or EOS
 **
 **	This takes two strings which happen to be host-signatures and
@@ -1135,7 +1146,7 @@ coloncmp(a, b)
 
 	return ret;
 }
-/*
+/*
 **  DELIVER -- Deliver a message to a list of addresses.
 **
 **	This routine delivers to everyone on the same host as the
@@ -1215,9 +1226,9 @@ deliver(e, firstto)
 	register char *p;
 	register MAILER *m;		/* mailer for this recipient */
 	ADDRESS *volatile ctladdr;
-# if HASSETUSERCONTEXT
+#if HASSETUSERCONTEXT
 	ADDRESS *volatile contextaddr = NULL;
-# endif /* HASSETUSERCONTEXT */
+#endif /* HASSETUSERCONTEXT */
 	register MCI *volatile mci;
 	register ADDRESS *SM_NONVOLATILE to = firstto;
 	volatile bool clever = false;	/* running user smtp to this mailer */
@@ -2628,7 +2639,7 @@ tryhost:
 		mci->mci_pid = pid;
 		(void) close(mpvect[0]);
 		mci->mci_out = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
-					  (void *) mpvect[1], SM_IO_WRONLY,
+					  (void *) &(mpvect[1]), SM_IO_WRONLY,
 					  NULL);
 		if (mci->mci_out == NULL)
 		{
@@ -2643,7 +2654,7 @@ tryhost:
 
 		(void) close(rpvect[1]);
 		mci->mci_in = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
-					 (void *) rpvect[0], SM_IO_RDONLY,
+					 (void *) &(rpvect[0]), SM_IO_RDONLY,
 					 NULL);
 		if (mci->mci_in == NULL)
 		{
@@ -2696,22 +2707,41 @@ tryhost:
 					dotpos = -1;
 			}
 		}
-		else
+		else if (mci->mci_mailer != NULL)
 		{
-			srvname = "";
+			srvname = mci->mci_mailer->m_name;
 			dotpos = -1;
 		}
+		else
+		{
+			srvname = "local";
+			dotpos = -1;
+		}
+
+		/* don't set {server_name} to NULL or "": see getauth() */
 		macdefine(&mci->mci_macro, A_TEMP, macid("{server_name}"),
 			  srvname);
 
 		/* CurHostAddr is set by makeconnection() and mci_get() */
 		if (CurHostAddr.sa.sa_family != 0)
+		{
 			macdefine(&mci->mci_macro, A_TEMP,
 				  macid("{server_addr}"),
 				  anynet_ntoa(&CurHostAddr));
-		else
+		}
+		else if (mci->mci_mailer != NULL)
+		{
+			/* mailer name is unique, use it as address */
 			macdefine(&mci->mci_macro, A_PERM,
-				  macid("{server_addr}"), NULL);
+				  macid("{server_addr}"),
+				  mci->mci_mailer->m_name);
+		}
+		else
+		{
+			/* don't set it to NULL or "": see getauth() */
+			macdefine(&mci->mci_macro, A_PERM,
+				  macid("{server_addr}"), "0");
+		}
 
 		/* undo change of srvname (mci->mci_host) */
 		if (dotpos >= 0)
@@ -3394,7 +3424,7 @@ cleanup: ;
 	return rcode;
 }
 
-/*
+/*
 **  MARKFAILURE -- mark a failure on a specific address.
 **
 **	Parameters:
@@ -3522,7 +3552,7 @@ markfailure(e, q, mci, rcode, ovr)
 	    mci != NULL && !bitset(M_LOCALMAILER, mci->mci_flags))
 		q->q_statmta = sm_rpool_strdup_x(e->e_rpool, CurHostName);
 }
-/*
+/*
 **  ENDMAILER -- Wait for mailer to terminate.
 **
 **	We should never get fatal errors (e.g., segmentation
@@ -3666,7 +3696,7 @@ endmailer(mci, e, pv)
 	ExitStat = EX_TEMPFAIL;
 	return EX_TEMPFAIL;
 }
-/*
+/*
 **  GIVERESPONSE -- Interpret an error response from a mailer
 **
 **	Parameters:
@@ -3907,7 +3937,7 @@ giveresponse(status, dsn, m, mci, ctladdr, xstart, e, to)
 	errno = 0;
 	SM_SET_H_ERRNO(0);
 }
-/*
+/*
 **  LOGDELIVERY -- log the delivery in the system log
 **
 **	Care is taken to avoid logging lines that are too long, because
@@ -4155,7 +4185,7 @@ logdelivery(m, mci, dsn, status, ctladdr, xstart, e)
 	sm_syslog(LOG_INFO, e->e_id, "stat=%s", shortenstring(status, 63));
 #endif /* (SYSLOG_BUFSIZE) >= 256 */
 }
-/*
+/*
 **  PUTFROMLINE -- output a UNIX-style from line (or whatever)
 **
 **	This can be made an arbitrary message separator by changing $l
@@ -4229,7 +4259,7 @@ putfromline(mci, e)
 	expand(template, buf, sizeof buf, e);
 	putxline(buf, strlen(buf), mci, PXLF_HEADER);
 }
-/*
+/*
 **  PUTBODY -- put the body of a message.
 **
 **	Parameters:
@@ -4268,7 +4298,7 @@ putbody(mci, e, separator)
 
 	if (e->e_dfp == NULL && bitset(EF_HAS_DF, e->e_flags))
 	{
-		char *df = queuename(e, 'd');
+		char *df = queuename(e, DATAFL_LETTER);
 
 		e->e_dfp = sm_io_open(SmFtStdio, SM_TIME_DEFAULT, df,
 				      SM_IO_RDONLY, NULL);
@@ -4307,7 +4337,7 @@ putbody(mci, e, separator)
 		}
 	}
 
-	/* paranoia: the df file should always be in a rewound state */
+	/* paranoia: the data file should always be in a rewound state */
 	(void) bfrewind(e->e_dfp);
 
 #if MIME8TO7
@@ -4723,8 +4753,9 @@ putch:
 
 	if (sm_io_error(e->e_dfp))
 	{
-		syserr("putbody: %s/df%s: read error",
-		       qid_printqueue(e->e_dfqgrp, e->e_dfqdir), e->e_id);
+		syserr("putbody: %s/%cf%s: read error",
+		       qid_printqueue(e->e_dfqgrp, e->e_dfqdir),
+		       DATAFL_LETTER, e->e_id);
 		ExitStat = EX_IOERR;
 	}
 
@@ -4757,7 +4788,7 @@ endofmessage:
 
 	errno = 0;
 }
-/*
+/*
 **  MAILFILE -- Send a message to a file.
 **
 **	If the file has the set-user-ID/set-group-ID bits set, but NO
@@ -4969,10 +5000,10 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 				sm_dprintf("mailfile: ignoring set-user-ID/set-group-ID bits\n");
 		}
 
-		/* we have to open the dfile BEFORE setuid() */
+		/* we have to open the data file BEFORE setuid() */
 		if (e->e_dfp == NULL && bitset(EF_HAS_DF, e->e_flags))
 		{
-			char *df = queuename(e, 'd');
+			char *df = queuename(e, DATAFL_LETTER);
 
 			e->e_dfp = sm_io_open(SmFtStdio, SM_TIME_DEFAULT, df,
 					      SM_IO_RDONLY, NULL);
@@ -5326,7 +5357,7 @@ mailfiletimeout()
 	errno = ETIMEDOUT;
 	longjmp(CtxMailfileTimeout, 1);
 }
-/*
+/*
 **  HOSTSIGNATURE -- return the "signature" for a host.
 **
 **	The signature describes how we are going to send this -- it
@@ -5569,7 +5600,7 @@ hostsignature(m, host)
 		sm_dprintf("hostsignature(%s) = %s\n", host, s->s_hostsig.hs_sig);
 	return s->s_hostsig.hs_sig;
 }
-/*
+/*
 **  PARSE_HOSTSIGNATURE -- parse the "signature" and return MX host array.
 **
 **	The signature describes how we are going to send this -- it
@@ -5687,7 +5718,7 @@ parse_hostsignature(sig, mxhosts, mailer)
 static SSL_CTX	*clt_ctx = NULL;
 static bool	tls_ok_clt = true;
 
-/*
+/*
 **  SETCLTTLS -- client side TLS: allow/disallow.
 **
 **	Parameters:
@@ -5707,7 +5738,7 @@ setclttls(tls_ok)
 	tls_ok_clt = tls_ok;
 	return;
 }
-/*
+/*
 **  INITCLTTLS -- initialize client side TLS
 **
 **	Parameters:
@@ -5736,7 +5767,7 @@ initclttls(tls_ok)
 	return tls_ok_clt;
 }
 
-/*
+/*
 **  STARTTLS -- try to start secure connection (client side)
 **
 **	Parameters:
@@ -5900,7 +5931,7 @@ ssl_retry:
 	clt_ssl = NULL;
 	return EX_SOFTWARE;
 }
-/*
+/*
 **  ENDTLSCLT -- shutdown secure connection (client side)
 **
 **	Parameters:
@@ -5924,7 +5955,7 @@ endtlsclt(mci)
 }
 # endif /* STARTTLS */
 # if STARTTLS || SASL
-/*
+/*
 **  ISCLTFLGSET -- check whether client flag is set.
 **
 **	Parameters:

@@ -20,7 +20,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: makemap.c,v 8.170 2001/08/28 23:07:04 gshapiro Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: makemap.c,v 8.173 2001/09/26 22:18:21 ca Exp $")
 
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ uid_t	TrustedUid = 0;
 BITMAP256 DontBlameSendmail;
 
 #define BUFSIZE		1024
-#define ISSEP(c) ((sep == '\0' && isascii(c) && isspace(c)) || (c) == sep)
+#define ISSEP(c) (sep == '\0' ? isascii(c) && isspace(c) : (c) == sep)
 
 static void
 usage(progname)
@@ -428,7 +428,7 @@ main(argc, argv)
 
 			if (*p != '\0')
 				*p++ = '\0';
-			while (ISSEP(*p))
+			while (*p != '\0' && ISSEP(*p))
 				p++;
 			if (!allowempty && *p == '\0')
 			{
@@ -510,6 +510,7 @@ main(argc, argv)
 	smdb_free_database(database);
 
 	exit(exitstat);
+
 	/* NOTREACHED */
 	return exitstat;
 }

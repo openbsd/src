@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: comm.c,v 8.43 2001/07/20 20:33:07 ca Exp $")
+SM_RCSID("@(#)$Sendmail: comm.c,v 8.46 2001/09/11 04:04:44 gshapiro Exp $")
 
 #include "libmilter.h"
 #include <sm/errstring.h>
@@ -189,7 +189,7 @@ mi_rd_cmd(sd, timeout, cmd, rlen, name)
 	*cmd = SMFIC_UNKNERR;
 	return NULL;
 }
-/*
+/*
 **  MI_WR_CMD -- write a cmd to sd
 **
 **	Parameters:

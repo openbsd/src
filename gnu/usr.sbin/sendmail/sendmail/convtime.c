@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: convtime.c,v 8.36 2001/02/13 22:32:08 ca Exp $")
+SM_RCSID("@(#)$Sendmail: convtime.c,v 8.39 2001/09/11 04:05:13 gshapiro Exp $")
 
 /*
 **  CONVTIME -- convert time
@@ -98,7 +98,7 @@ convtime(p, units)
 
 	return pos ? r : -r;
 }
-/*
+/*
 **  PINTVL -- produce printable version of a time interval
 **
 **	Parameters:

@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: bitops.h,v 1.1 2001/01/29 07:38:16 gshapiro Exp $
+ *	$Sendmail: bitops.h,v 1.2 2001/09/22 22:05:42 ca Exp $
  */
 
 #ifndef	SM_BITOPS_H
@@ -26,10 +26,13 @@
 # define BITMAPBITS	256	/* number of bits in a bit map */
 # define BYTEBITS	8	/* number of bits in a byte */
 # define BITMAPBYTES	(BITMAPBITS / BYTEBITS)	/* number of bytes in bit map */
+# define BITMAPMAX	((BITMAPBYTES / sizeof (int)) - 1)
 
 /* internal macros */
-# define _BITWORD(bit)	((bit) / (BYTEBITS * sizeof (int)))
-# define _BITBIT(bit)	((unsigned int)1 << ((bit) % (BYTEBITS * sizeof (int))))
+
+/* make sure this index never leaves the allowed range: 0 to BITMAPMAX */
+# define _BITWORD(bit)	(((unsigned char)(bit) / (BYTEBITS * sizeof (int))) & BITMAPMAX)
+# define _BITBIT(bit)	((unsigned int)1 << ((unsigned char)(bit) % (BYTEBITS * sizeof (int))))
 
 typedef unsigned int	BITMAP256[BITMAPBYTES / sizeof (int)];
 

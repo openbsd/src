@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.620 2001/08/20 00:55:08 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.624 2001/09/28 21:52:59 ca Exp $')
 
 # level CF_LEVEL config file format
 V`'CF_LEVEL/ifdef(`VENDOR_NAME', `VENDOR_NAME', `Berkeley')
@@ -291,7 +291,7 @@ _OPTION(TempFileMode, `confTEMP_FILE_MODE', `0600')
 _OPTION(MatchGECOS, `confMATCH_GECOS', `False')
 
 # maximum hop count
-_OPTION(MaxHopCount, `confMAX_HOP', `17')
+_OPTION(MaxHopCount, `confMAX_HOP', `25')
 
 # location of help file
 O HelpFile=ifdef(`HELP_FILE', HELP_FILE, `MAIL_SETTINGS_DIR`'helpfile')
@@ -2184,7 +2184,9 @@ R<$*> $+		$@ NOSPAMHATER		everyone else: stop
 dnl',`dnl')
 dnl run further checks: check_mail
 dnl should we "clean up" $&f?
-R$*			$: $1 $| $>checkmail <$&f>
+ifdef(`_FFR_MAIL_MACRO',
+`R$*			$: $1 $| $>checkmail $&{mail_from}',
+`R$*			$: $1 $| $>checkmail <$&f>')
 R$* $| $#$*		$#$2
 dnl run further checks: check_relay
 R$*			$: $1 $| $>checkrelay $&{client_name} $| $&{client_addr}
@@ -2416,7 +2418,7 @@ R$* $| $#$*		$#$2
 R$* $| $*		$: $1', `dnl')
 R$*		$: $>D <$&{client_name}> <?> <! SRV_FEAT_TAG> <>
 R<?>$*		$: $>A <$&{client_addr}> <?> <! SRV_FEAT_TAG> <>
-R<?>$*		$: <$(access SRV_FEAT_TAG: $: ? $)>
+R<?>$*		$: <$(access SRV_FEAT_TAG`'_TAG_DELIM_ $: ? $)>
 R<?>$*		$@ OK
 ifdef(`_ATMPF_', `dnl tempfail?
 R<$* _ATMPF_>$*	$#temp', `dnl')
@@ -2433,7 +2435,7 @@ R$* $| $#$*		$#$2
 R$* $| $*		$: $1', `dnl')
 R$*		$: $>D <$&{server_name}> <?> <! TLS_TRY_TAG> <>
 R<?>$*		$: $>A <$&{server_addr}> <?> <! TLS_TRY_TAG> <>
-R<?>$*		$: <$(access TLS_TRY_TAG: $: ? $)>
+R<?>$*		$: <$(access TLS_TRY_TAG`'_TAG_DELIM_ $: ? $)>
 R<?>$*		$@ OK
 ifdef(`_ATMPF_', `dnl tempfail?
 R<$* _ATMPF_>$*	$#error $@ 4.3.0 $: "451 Temporary system failure. Please try again later."', `dnl')
@@ -2697,13 +2699,13 @@ R<?> $*			$@ NO		not authenticated
 ifdef(`_CERT_REGEX_ISSUER_', `dnl
 R$*			$: $(CERTIssuer $&{cert_issuer} $)',
 `R$*			$: $&{cert_issuer}')
-R$+			$: $(access CERTISSUER:$1 $)
+R$+			$: $(access CERTISSUER`'_TAG_DELIM_`'$1 $)
 dnl use $# to stop further checks (delay_check)
 RRELAY			$# RELAY
 ifdef(`_CERT_REGEX_SUBJECT_', `dnl
 RSUBJECT		$: <@> $(CERTSubject $&{cert_subject} $)',
 `RSUBJECT		$: <@> $&{cert_subject}')
-R<@> $+			$: <@> $(access CERTSUBJECT:$1 $)
+R<@> $+			$: <@> $(access CERTSUBJECT`'_TAG_DELIM_`'$1 $)
 R<@> RELAY		$# RELAY
 R$*			$: NO', `dnl')
 
@@ -2732,7 +2734,7 @@ dnl', `dnl
 ifdef(`_ACCESS_TABLE_', `dnl
 R$*		$: $1 $| $>D <$&{server_name}> <?> <! AuthInfo> <>
 R$* $| <?>$*	$: $1 $| $>A <$&{server_addr}> <?> <! AuthInfo> <>
-R$* $| <?>$*	$: $1 $| <$(access AuthInfo: $: ? $)> <>
+R$* $| <?>$*	$: $1 $| <$(access AuthInfo`'_TAG_DELIM_ $: ? $)> <>
 R$* $| <?>$*	$@ no				no authinfo available
 R$* $| <$*> <>	$# $2
 dnl', `dnl')')

@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: handler.c,v 8.24 2000/12/29 19:45:55 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: handler.c,v 8.26 2001/09/11 04:04:45 gshapiro Exp $")
 
 #include "libmilter.h"
 

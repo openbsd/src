@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: collect.c,v 8.228 2001/09/04 22:43:02 ca Exp $")
+SM_RCSID("@(#)$Sendmail: collect.c,v 8.232 2001/09/11 04:05:12 gshapiro Exp $")
 
 static void	collecttimeout __P((time_t));
 static void	dferror __P((SM_FILE_T *volatile, char *, ENVELOPE *));
@@ -209,7 +209,7 @@ collect_dfopen(e)
 	if (!setnewqueue(e))
 		return NULL;
 
-	dfname = queuename(e, 'd');
+	dfname = queuename(e, DATAFL_LETTER);
 	if (bitset(S_IWGRP, QueueFileMode))
 		oldumask = umask(002);
 	df = bfopen(dfname, QueueFileMode, DataFileBufferSize,
@@ -237,7 +237,7 @@ collect_dfopen(e)
 	return df;
 }
 
-/*
+/*
 **  COLLECT -- read & parse message header & make temp file.
 **
 **	Creates a temporary file name and copies the standard
@@ -705,7 +705,7 @@ readerr:
 			struct stat st;
 			int dfd;
 
-			dfile = queuename(e, 'd');
+			dfile = queuename(e, DATAFL_LETTER);
 			if (stat(dfile, &st) < 0)
 				st.st_size = -1;
 			errno = EEXIST;
@@ -828,7 +828,7 @@ readerr:
 
 	if (SuperSafe == SAFE_REALLY && !bitset(EF_FATALERRS, e->e_flags))
 	{
-		char *dfname = queuename(e, 'd');
+		char *dfname = queuename(e, DATAFL_LETTER);
 		if ((e->e_dfp = sm_io_open(SmFtStdio, SM_TIME_DEFAULT, dfname,
 					   SM_IO_RDONLY, NULL)) == NULL)
 		{
@@ -875,7 +875,7 @@ collecttimeout(timeout)
 	}
 	errno = save_errno;
 }
-/*
+/*
 **  DFERROR -- signal error on writing the data file.
 **
 **	Called by collect().  Collect() always terminates the process
@@ -904,7 +904,7 @@ dferror(df, msg, e)
 {
 	char *dfname;
 
-	dfname = queuename(e, 'd');
+	dfname = queuename(e, DATAFL_LETTER);
 	setstat(EX_IOERR);
 	if (errno == ENOSPC)
 	{
@@ -967,7 +967,7 @@ dferror(df, msg, e)
 			  "dferror: sm_io_reopen(\"/dev/null\") failed: %s",
 			  sm_errstring(errno));
 }
-/*
+/*
 **  EATFROM -- chew up a UNIX style from line and process
 **
 **	This does indeed make some assumptions about the format
