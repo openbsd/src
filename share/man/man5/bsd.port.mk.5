@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.152 2004/11/17 10:51:37 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.153 2004/11/17 11:01:55 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -46,6 +46,19 @@ Conversion methods are outlined here.
 This is not quite complete; a few variables and targets are not yet documented.
 Mostly because undocumented stuff has fuzzy semantics, and it hasn't been
 decided yet how to define it.
+.Pp
+This documentation covers the current targets, variables and paths used by
+.Nm bsd.port.mk ,
+followed by sections on obsolete constructs that a porter may need 
+when converting from other ports systems.
+There is a separate section covering the frame framework, a section
+explaining flavors and multi-packages, and a section covering 
+the generation of packing-lists.
+.Pp
+Selected common user activity such as the building of every package in 
+the system is covered by
+.Xr ports 7
+instead.
 .Sh TARGETS
 .Bl -tag -width do-configure
 .It Ar {build,run,all}-dir-depends
@@ -2227,9 +2240,12 @@ situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
 .Sh SEE ALSO
 .Xr ftp 1 ,
+.Xr pkg_create 1 ,
 .Xr pkg_add 1 ,
 .Xr library-specs 7 ,
+.Xr mirroring-ports 7 ,
 .Xr packages-specs 7
+.Xr ports 7 .
 .Sh HISTORY
 The ports mechanism originally came from
 .Fx .
