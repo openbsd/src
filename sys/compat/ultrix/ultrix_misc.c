@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.7 1996/04/21 22:18:48 deraadt Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.8 1996/08/10 12:09:24 deraadt Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>

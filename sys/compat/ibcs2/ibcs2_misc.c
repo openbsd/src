@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.6 1996/08/02 20:20:27 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.7 1996/08/10 12:09:22 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.15 1996/05/03 17:05:25 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>

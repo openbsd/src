@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.5 1996/05/22 12:01:48 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.6 1996/08/10 12:09:23 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
