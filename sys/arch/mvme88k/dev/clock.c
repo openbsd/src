@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.35 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.36 2004/08/02 14:36:07 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -450,7 +450,7 @@ m188_statintr(void *eframe)
 	write_cio(CIO_CT1LSB, newint & 0xff);
 
 	/* Start CTC #1 running */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);
+	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
 
 	CIO_UNLOCK;
 	return (1);
@@ -462,7 +462,7 @@ m188_initstatclock(void)
 	int statint, minint;
 
 #ifdef CLOCK_DEBUG
-	printf("VME188 clock init\n");
+	printf("VME188 statclock init\n");
 #endif
 	simple_lock_init(&cio_lock);
 	if (stathz == 0)
