@@ -13,6 +13,8 @@ LINK	raminst			bin/ed
 LINK	raminst			bin/expr
 LINK	raminst			bin/ln
 LINK	raminst			bin/ls
+LINK	raminst			bin/kill
+LINK	raminst			bin/hostname
 LINK	raminst			bin/mkdir
 LINK	raminst			bin/mv
 LINK	raminst			bin/pwd
@@ -21,6 +23,7 @@ LINK	raminst			bin/rm
 LINK	raminst			bin/sh
 LINK	bin/sh			bin/-sh
 LINK	raminst			bin/stty
+LINK	raminst			bin/sleep
 LINK	raminst			bin/sync
 LINK	raminst			bin/test
 LINK	raminst			bin/[
@@ -34,27 +37,26 @@ LINK	raminst			sbin/mknod
 LINK	raminst			sbin/mount
 LINK	raminst			sbin/mount_cd9660
 LINK	raminst			sbin/mount_ffs
+LINK	raminst			sbin/mount_kernfs
 LINK	raminst			sbin/mount_nfs
 LINK	raminst			sbin/mount_mfs
 LINK	raminst			sbin/newfs
 LINK	raminst			sbin/reboot
 LINK	raminst			sbin/route
-LINK	raminst			sbin/shutdown
 LINK	raminst			sbin/slattach
 LINK	raminst			sbin/umount
 LINK	raminst			usr/bin/chgrp
+LINK	raminst			usr/bin/cut
 LINK	raminst			usr/bin/ftp
-LINK	raminst			usr/bin/gunzip
-LINK	raminst			usr/bin/gzcat
+LINK	raminst			usr/bin/egrep
+LINK	raminst			usr/bin/grep
 LINK	raminst			usr/bin/gzip
 LINK	raminst			usr/bin/more
-LINK	raminst			usr/bin/printf
 LINK	raminst			usr/bin/sed
-LINK	raminst			usr/bin/strings
+LINK	raminst			usr/bin/sort
 LINK	raminst			usr/bin/pax
 LINK	raminst			usr/bin/tip
 LINK	raminst			usr/sbin/chown
-LINK	raminst			usr/sbin/chroot
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
