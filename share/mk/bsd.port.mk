@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.53 1998/11/27 10:51:54 form Exp $
+#	$OpenBSD: bsd.port.mk,v 1.54 1998/12/16 19:59:48 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -231,6 +231,9 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #                 ${PORTSDIR}) if you want to fetch all distfiles,
 #                 even for packages not built due to limitation by
 #                 absent X or Motif or ONLY_FOR_ARCHS...
+# NO_WARNINGS	- Set this to YES to disable warnings regarding variables
+#				  to define to control the build.  Automatically set
+#				  from the "mirror-distfiles" target.
 # ALL_TARGET	- The target to pass to make in the package when building.
 #				  (default: "all")
 # INSTALL_TARGET- The target to pass to make in the package when installing.
@@ -1210,7 +1213,7 @@ do-fetch:
 # re-distributed freely
 mirror-distfiles:
 .if (${MIRROR_DISTFILE} == "yes")
-	@make fetch __ARCH_OK=yes NO_IGNORE=yes
+	@make fetch __ARCH_OK=yes NO_IGNORE=yes NO_WARNINGS=yes
 .endif
 
 # Extract
