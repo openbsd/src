@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.14 2002/11/12 20:10:18 marc Exp $
+#	$OpenBSD: Makefile,v 1.15 2002/11/16 05:01:26 marc Exp $
 
 #
 # The pthread library is formed from the FreeBSD uthread sources of 
-# libc_r, and exploits weak symbols in libc.
+# libc_r, and exploits weak symbols in libc.   It is installed as
+# libnpthread (new pthread) so it will not be picked up in addition to
+# libc_r by misbehaving ports.
 #
 
 LIBC_RSRCDIR=	${.CURDIR}/../libc_r
@@ -10,7 +12,7 @@ LIBCSRCDIR=	${.CURDIR}/../libc
 
 .PATH:		${LIBC_RSRCDIR}
 
-LIB=		pthread
+LIB=		npthread
 LINTFLAGS=	-z
 CFLAGS+=	-DPTHREAD_KERNEL -D_POSIX_THREADS -D_THREAD_SAFE -Wall
 CFLAGS+=	-I${LIBC_RSRCDIR}/uthread
