@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.29 2003/05/08 02:16:37 nate Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.30 2003/05/08 04:20:05 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -371,11 +371,8 @@ sk_miibus_writereg(struct device *dev, int phy, int reg, int val)
 void
 sk_miibus_statchg(struct device *dev)
 {
-	struct sk_if_softc *sc_if;
-	struct mii_data *mii;
-
-	sc_if = (struct sk_if_softc *)dev;
-	mii = &sc_if->sk_mii;
+	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct mii_data *mii = &sc_if->sk_mii;
 
 	/*
 	 * If this is a GMII PHY, manually set the XMAC's
@@ -422,15 +419,13 @@ sk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
 void
 sk_setmulti(struct sk_if_softc *sc_if)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc_if->arpcom.ac_if;
 	u_int32_t hashes[2] = { 0, 0 };
 	int h, i;
 	struct arpcom *ac = &sc_if->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int8_t dummy[] = { 0, 0, 0, 0, 0 ,0 };
-
-	ifp = &sc_if->arpcom.ac_if;
 
 	/* First, zot all the existing filters. */
 	for (i = 1; i < XM_RXFILT_MAX; i++)
@@ -482,12 +477,9 @@ allmulti:
 int
 sk_init_rx_ring(struct sk_if_softc *sc_if)
 {
-	struct sk_chain_data	*cd;
-	struct sk_ring_data	*rd;
+	struct sk_chain_data	*cd = &sc_if->sk_cdata;
+	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i;
-
-	cd = &sc_if->sk_cdata;
-	rd = sc_if->sk_rdata;
 
 	bzero((char *)rd->sk_rx_ring,
 	    sizeof(struct sk_rx_desc) * SK_RX_RING_CNT);
@@ -1146,7 +1138,6 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	struct mbuf		*m;
 	u_int32_t		frag, cur, cnt = 0;
 
-	m = m_head;
 	cur = frag = *txidx;
 
 	/*
