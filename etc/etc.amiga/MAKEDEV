@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.16 1996/10/17 18:55:26 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.17 1996/11/26 05:22:31 kstailey Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -88,7 +88,7 @@
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	ipf	IP filter
-#	ss*	SCSI scanner
+#	ss*	SCSI scanners
 #	uk*	unknown SCSI
 #	*random	random data source
 
@@ -477,9 +477,13 @@ ss*)
 	unit=`expr $i : 'ss\(.*\)'`
 	rm -f ss$unit
 	mknod ss$unit c 25 $unit
-	chmod 600 ss$unit
-	chown root.wheel ss$unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
+#	backwards compatibility with older PINTs
+	rm -f scan$unit
+	ln -s ss$unit scan$unit
 	;;
+
 
 random|srandom|urandom|prandom|arandom)
 	rm -f random urandom srandom prandom arandom
