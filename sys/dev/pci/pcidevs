@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.421 2001/07/27 17:00:15 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.422 2001/07/27 17:02:35 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -872,7 +872,7 @@ product BLUESTEEL 5501		0x0000	5501
 product BLUESTEEL 5601		0x5601	5601
 
 /* Broadcom */
-product BROADCOM BCM5700	0x1644	BCM5700 Gigabit MAC
+product BROADCOM BCM5700	0x1644	BCM5700
 product BROADCOM 5805		0x5805	5805
 product BROADCOM 5820		0x5820	5820
 
@@ -1332,7 +1332,7 @@ product LAVA OCTOPUS950_1	0x0181	Quad Serial
 product LEADTEK S3_805		0x0000	S3 805
 
 /* Level 1 (Intel) */
-product LEVEL1 LXT1001		0x0001	LXT1001 Gigabit MAC
+product LEVEL1 LXT1001		0x0001	LXT1001
 
 /* Lite-On Communications */
 product LITEON	PNIC		0x0002	PNIC
