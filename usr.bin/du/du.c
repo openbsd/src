@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.7 2001/02/23 19:14:21 pjanzen Exp $	*/
+/*	$OpenBSD: du.c,v 1.8 2001/05/02 23:26:53 pjanzen Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.7 2001/02/23 19:14:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.8 2001/05/02 23:26:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,6 @@ main(argc, argv)
 			hflag = 1;
 			break;
 		case 'k':
-			blocksize = 1024;
 			kflag = 1;
 			break;
 		case 's':
@@ -164,7 +163,11 @@ main(argc, argv)
 		argv[1] = NULL;
 	}
 
-	if (!kflag || hflag)
+	if (hflag)
+		blocksize = 512;
+	else if (kflag)
+		blocksize = 1024;
+	else
 		(void)getbsize(&notused, &blocksize);
 	blocksize /= 512;
 

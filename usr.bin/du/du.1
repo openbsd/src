@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.15 2001/05/01 17:58:02 aaron Exp $
+.\"	$OpenBSD: du.1,v 1.16 2001/05/02 23:26:52 pjanzen Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -132,7 +132,9 @@ execution.
 .It Ev BLOCKSIZE
 Block counts will be displayed in units of this size block, unless the
 .Fl k
-option is also specified.
+or
+.Fl h
+option is specified.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,
