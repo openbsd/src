@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 1997/05/14 21:39:10 millert Exp $
+#	$OpenBSD: install.md,v 1.4 1997/05/18 13:15:09 niklas Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,7 +42,22 @@
 #
 
 # Machine-dependent install sets
-MDSETS=
+MDSETS="kernel"
+MSGBUF=/kern/msgbuf
+HOSTNAME=/kern/hostname
+
+# an alias for hostname(1)
+hostname() {
+	if [ -x /bin/hostname ]; then
+		/bin/hostname $1
+	else
+		if [ -z "$1" ]; then
+			cat $HOSTNAME
+		else
+			echo $1 > $HOSTNAME
+		fi
+	fi
+}
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -64,17 +79,20 @@ md_machine_arch() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | egrep "^[sw]d[0-9] " | cut -d" " -f1 | sort -u
+	sed -n -e '/^[sw]d[0-9] /{s/ .*//;p;}' < $MSGBUF
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	dmesg | grep "^a?cd[0-9] " | cut -d" " -f1 | sort -u
+	sed -n -e '/^a\{0,1\}cd[0-9] /{s/ .*//;p;}' < $MSGBUF
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	dmesg | egrep "(^[al]e[0-9] |^(isa)?ed[0-9] |^qn[0-9] |^bah[0-9] |^es[0-9] )" | cut -d" " -f1 | sort -u
+	sed -n -e '/^[al]e[0-9] /{s/ .*//;p;}' -e '/^qn[0-9] /{s/ .*//;p;}' \
+	    -e '/^\(isa\)\{0,1\}ed[0-9] /{s/ .*//;p;}' \
+	    -e '/^bah[0-9] /{s/ .*//;p;}' -e '/^es[0-9] /{s/ .*//;p;}' \
+	    < $MSGBUF
 }
 
 md_get_partition_range() {
@@ -87,9 +105,11 @@ md_installboot() {
 }
 
 md_native_fstype() {
+	echo "ados"
 }
 
 md_native_fsopts() {
+	echo "ro"
 }
 
 md_checkfordisklabel() {
@@ -131,9 +151,7 @@ md_prep_disklabel()
 }
 
 md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /bsd /mnt/bsd
-	echo "done."
+	# We use a "kernel" set instead
 }
 
 md_welcome_banner() {
