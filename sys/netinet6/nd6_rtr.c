@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.25 2003/05/14 14:24:44 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.26 2003/05/15 15:00:43 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -430,9 +430,11 @@ nd6_rtmsg(cmd, rt)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	info.rti_info[RTAX_IFP] =
-	    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
-	info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+	if (rt->rt_ifp) {
+		info.rti_info[RTAX_IFP] =
+		    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
+		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+	}
 
 	rt_missmsg(cmd, &info, rt->rt_flags, 0);
 }
