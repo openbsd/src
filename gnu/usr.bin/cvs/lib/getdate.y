@@ -949,7 +949,7 @@ get_date(p, now)
 	    return -1;
     }
     else {
-	Start = now->time;
+	Start = nowtime;
 	if (!yyHaveRel)
 	    Start -= ((tm->tm_hour * 60L + tm->tm_min) * 60L) + tm->tm_sec;
     }
