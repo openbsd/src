@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1998/10/18 20:02:36 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1999/02/03 23:36:45 millert Exp $
 
 #
 # less config
@@ -17,7 +17,7 @@ CLEANFILES=	config.cache config.log $(MAN)
 # Wrapped flags
 #
 WCC=		CC="${CC}"
-WCFLAGS=	CFLAGS="${CFLAGS}"
+WCFLAGS=	CFLAGS="${CFLAGS} ${COPTS}"
 WLDFLAGS=	LDFLAGS="${LDSTATIC}"
 
 all: config.status gnu_build
