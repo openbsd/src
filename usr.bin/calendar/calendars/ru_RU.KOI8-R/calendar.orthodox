@@ -1,11 +1,13 @@
 /*
  * Православные праздники
  *
- * $OpenBSD: calendar.orthodox,v 1.1 2001/09/04 20:44:35 mickey Exp $
+ * $OpenBSD: calendar.orthodox,v 1.2 2001/09/26 20:40:15 mickey Exp $
  */
 
 #ifndef _ru_RU_KOI8_R_orthodox_
 #define _ru_RU_KOI8_R_orthodox_
+
+LANG=ru_RU.KOI8-R
 
 09/21	Рождество Пресвятой Богородицы
 09/28	Воздвижение Креста Господня

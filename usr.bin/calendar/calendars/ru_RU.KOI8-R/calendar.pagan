@@ -1,11 +1,14 @@
 /*
  * Языческие праздники
  *
- * $OpenBSD: calendar.pagan,v 1.1 2001/09/04 20:44:35 mickey Exp $
+ * $OpenBSD: calendar.pagan,v 1.2 2001/09/26 20:40:15 mickey Exp $
  */
 
 #ifndef _ru_RU_KOI8_R_pagan_
 #define _ru_RU_KOI8_R_pagan_
+
+LANG=ru_RU.KOI8-R
+BODUN=Конечно
 
 12/21*	Зимнее солнцестояние
 12/25	Коляда (сдвинутое зимнее солнцестояние)
