@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.23 2003/07/22 17:18:49 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.24 2003/07/22 20:17:06 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.23 2003/07/22 17:18:49 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.24 2003/07/22 20:17:06 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -36,6 +36,7 @@ static const char rcsid[] = "$OpenBSD: patch.c,v 1.23 2003/07/22 17:18:49 otto E
 
 #include <assert.h>
 #include <ctype.h>
+#include <getopt.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -60,8 +61,7 @@ static void	spew_output(void);
 static void	dump_line(LINENUM);
 static bool	patch_match(LINENUM, LINENUM, LINENUM);
 static bool	similar(char *, char *, int);
-static int	optcmp(const void *, const void *);
-static char	decode_long_option(char *);
+static __dead void usage(void);
 
 /* TRUE if -E was specified on command line.  */
 static int	remove_empty_files = FALSE;
@@ -359,222 +359,159 @@ reinitialize_almost_everything(void)
 	skip_rest_of_patch = FALSE;
 
 	get_some_switches();
-
-	if (filec >= 2)
-		fatal("you may not change to a different patch file\n");
 }
 
-static char *
-nextarg(void)
-{
-	if (!--Argc)
-		fatal("missing argument after `%s'\n", *Argv);
-	return *++Argv;
-}
-
-/* Module for handling of long options.  */
-
-struct option {
-	char	*long_opt;
-	char	short_opt;
-};
-
-static int
-optcmp(const void *v1, const void *v2)
-{
-	const struct option *a = v1, *b = v2;
-
-	return strcmp(a->long_opt, b->long_opt);
-}
-
-/* Decode Long options beginning with "--" to their short equivalents.  */
-
-static char
-decode_long_option(char *opt)
-{
-	/*
-	 * This table must be sorted on the first field.  We also decode
-	 * unimplemented options as those will be handled later anyway.
-	 */
-	static struct option options[] = {
-		{"batch", 't'},
-		{"check", 'C'},
-		{"context", 'c'},
-		{"debug", 'x'},
-		{"directory", 'd'},
-		{"ed", 'e'},
-		{"force", 'f'},
-		{"forward", 'N'},
-		{"fuzz", 'F'},
-		{"ifdef", 'D'},
-		{"ignore-whitespace", 'l'},
-		{"normal", 'n'},
-		{"output", 'o'},
-		{"prefix", 'B'},
-		{"quiet", 's'},
-		{"reject-file", 'r'},
-		{"remove-empty-files", 'E'},
-		{"reverse", 'R'},
-		{"silent", 's'},
-		{"skip", 'S'},
-		{"strip", 'p'},
-		{"suffix", 'b'},
-		{"unified", 'u'},
-		{"version", 'v'},
-		{"version-control", 'V'},
-	};
-	struct option   key, *found;
-
-	key.long_opt = opt;
-	found = (struct option *) bsearch(&key, options,
-	    sizeof(options) / sizeof(options[0]),
-	    sizeof(options[0]), optcmp);
-	return found ? found->short_opt : '\0';
-}
-
-/* Process switches and filenames up to next '+' or end of list. */
+/* Process switches and filenames. */
 
 static void
 get_some_switches(void)
 {
-	char	*s;
+	const char *options = "b:B:cCd:D:eEfF:lnNo:p::r:RstuvV:x:";
+	static struct option longopts[] = {
+		{"batch",		no_argument,		0,	't'},
+		{"check",		no_argument,		0,	'C'},
+		{"context",		no_argument,		0,	'c'},
+		{"debug",		required_argument,	0,	'x'},
+		{"directory",		required_argument,	0,	'd'},
+		{"ed",			no_argument,		0,	'e'},
+		{"force",		no_argument,		0,	'f'},
+		{"forward",		no_argument,		0,	'N'},
+		{"fuzz",		required_argument,	0,	'F'},
+		{"ifdef",		required_argument,	0,	'D'},
+		{"ignore-whitespace",	no_argument,		0,	'l'},
+		{"normal",		no_argument,		0,	'n'},
+		{"output",		required_argument,	0,	'o'},
+		{"prefix",		required_argument,	0,	'B'},
+		{"quiet",		no_argument,		0,	's'},
+		{"reject-file",		required_argument,	0,	'r'},
+		{"remove-empty-files",	no_argument,		0,	'E'},
+		{"reverse",		no_argument,		0,	'R'},
+		{"silent",		no_argument,		0,	's'},
+		{"strip",		optional_argument,	0,	'p'},
+		{"suffix",		required_argument,	0,	'b'},
+		{"unified",		no_argument,		0,	'u'},
+		{"version",		no_argument,		0,	'v'},
+		{"version-control",	required_argument,	0,	'V'},
+		{NULL,			0,			0,	0}
+	};
+	int ch;
 
 	rejname[0] = '\0';
 	Argc_last = Argc;
 	Argv_last = Argv;
 	if (!Argc)
 		return;
-	for (Argc--, Argv++; Argc; Argc--, Argv++) {
-		s = Argv[0];
-		if (strEQ(s, "+")) {
-			return;	/* + will be skipped by for loop */
-		}
-		if (*s != '-' || !s[1]) {
-			if (filec == MAXFILEC)
-				fatal("too many file arguments\n");
-			filearg[filec++] = savestr(s);
-		} else {
-			char	opt;
-
-			if (*(s + 1) == '-') {
-				opt = decode_long_option(s + 2);
-				s += strlen(s) - 1;
-			} else
-				opt = *++s;
-			switch (opt) {
-			case 'b':
-				simple_backup_suffix = savestr(nextarg());
-				break;
-			case 'B':
-				origprae = savestr(nextarg());
-				break;
-			case 'c':
-				diff_type = CONTEXT_DIFF;
-				break;
-			case 'C':
-				check_only = TRUE;
-				break;
-			case 'd':
-				if (!*++s)
-					s = nextarg();
-				if (chdir(s) < 0)
-					pfatal("can't cd to %s", s);
-				break;
-			case 'D':
-				do_defines = TRUE;
-				if (!*++s)
-					s = nextarg();
-				if (!isalpha(*s) && '_' != *s)
-					fatal("argument to -D is not an identifier\n");
-				snprintf(if_defined, sizeof if_defined,
-				    "#ifdef %s\n", s);
-				snprintf(not_defined, sizeof not_defined,
-				    "#ifndef %s\n", s);
-				snprintf(end_defined, sizeof end_defined,
-				    "#endif /* %s */\n", s);
-				break;
-			case 'e':
-				diff_type = ED_DIFF;
-				break;
-			case 'E':
-				remove_empty_files = TRUE;
-				break;
-			case 'f':
-				force = TRUE;
-				break;
-			case 'F':
-				if (!*++s)
-					s = nextarg();
-				else if (*s == '=')
-					s++;
-				maxfuzz = atoi(s);
-				break;
-			case 'l':
-				canonicalize = TRUE;
-				break;
-			case 'n':
-				diff_type = NORMAL_DIFF;
-				break;
-			case 'N':
-				noreverse = TRUE;
-				break;
-			case 'o':
-				outname = savestr(nextarg());
-				break;
-			case 'p':
-				if (!*++s)
-					s = nextarg();
-				else if (*s == '=')
-					s++;
-				strippath = atoi(s);
-				break;
-			case 'r':
-				if (strlcpy(rejname, nextarg(),
-				    sizeof(rejname)) >= sizeof(rejname))
-					fatal("argument for -r is too long\n");
-				break;
-			case 'R':
-				reverse = TRUE;
-				reverse_flag_specified = TRUE;
-				break;
-			case 's':
-				verbose = FALSE;
-				break;
-			case 'S':
-				skip_rest_of_patch = TRUE;
-				break;
-			case 't':
-				batch = TRUE;
-				break;
-			case 'u':
-				diff_type = UNI_DIFF;
-				break;
-			case 'v':
-				version();
-				break;
-			case 'V':
-				backup_type = get_version(nextarg());
-				break;
+	optreset = optind = 1;
+	while ((ch = getopt_long(Argc, Argv, options, longopts, NULL)) != -1) {
+		switch (ch) {
+		case 'b':
+			simple_backup_suffix = savestr(optarg);
+			break;
+		case 'B':
+			origprae = savestr(optarg);
+			break;
+		case 'c':
+			diff_type = CONTEXT_DIFF;
+			break;
+		case 'C':
+			check_only = TRUE;
+			break;
+		case 'd':
+			if (chdir(optarg) < 0)
+				pfatal("can't cd to %s", optarg);
+			break;
+		case 'D':
+			do_defines = TRUE;
+			if (!isalpha(*optarg) && *optarg != '_')
+				fatal("argument to -D is not an identifier\n");
+			snprintf(if_defined, sizeof if_defined,
+			    "#ifdef %s\n", optarg);
+			snprintf(not_defined, sizeof not_defined,
+			    "#ifndef %s\n", optarg);
+			snprintf(end_defined, sizeof end_defined,
+			    "#endif /* %s */\n", optarg);
+			break;
+		case 'e':
+			diff_type = ED_DIFF;
+			break;
+		case 'E':
+			remove_empty_files = TRUE;
+			break;
+		case 'f':
+			force = TRUE;
+			break;
+		case 'F':
+			maxfuzz = atoi(optarg);
+			break;
+		case 'l':
+			canonicalize = TRUE;
+			break;
+		case 'n':
+			diff_type = NORMAL_DIFF;
+			break;
+		case 'N':
+			noreverse = TRUE;
+			break;
+		case 'o':
+			outname = savestr(optarg);
+			break;
+		case 'p':
+			strippath = optarg ? atoi(optarg) : 0;
+			break;
+		case 'r':
+			if (strlcpy(rejname, optarg,
+			    sizeof(rejname)) >= sizeof(rejname))
+				fatal("argument for -r is too long\n");
+			break;
+		case 'R':
+			reverse = TRUE;
+			reverse_flag_specified = TRUE;
+			break;
+		case 's':
+			verbose = FALSE;
+			break;
+		case 't':
+			batch = TRUE;
+			break;
+		case 'u':
+			diff_type = UNI_DIFF;
+			break;
+		case 'v':
+			version();
+			break;
+		case 'V':
+			backup_type = get_version(optarg);
+			break;
 #ifdef DEBUGGING
-			case 'x':
-				if (!*++s)
-					s = nextarg();
-				debug = atoi(s);
-				break;
+		case 'x':
+			debug = atoi(optarg);
+			break;
 #endif
-			default:
-				fprintf(stderr, "patch: unrecognized option `%s'\n",
-				    Argv[0]);
-				fprintf(stderr, "\
-Usage: patch [options] [origfile [patchfile]] [+ [options] [origfile]]...\n\
-Options:\n\
-       [-cCeEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
-       [-D symbol] [-Fmax-fuzz] [-o out-file] [-p[strip-count]]\n\
-       [-r rej-name] [-V {numbered,existing,simple}]\n");
-				my_exit(1);
-			}
+		default:
+			usage();
+			break;
 		}
 	}
+	Argc -= optind;
+	Argv += optind;
+
+	while (Argc > 0) {
+		if (filec == MAXFILEC)
+			fatal("too many file arguments\n");
+		filearg[filec++] = savestr(*Argv++);
+		Argc--;
+	}
+}
+
+static __dead void
+usage(void)
+{
+	fprintf(stderr,
+"usage: patch [-cCeEflnNRstuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n"
+"             [-D symbol] [-Fmax-fuzz] [-o out-file] [-p[strip-count]]\n"
+"             [-r rej-name] [-V {numbered,existing,simple}]\n"
+"             [origfile [patchfile]]\n");
+	my_exit(1);
 }
 
 /*

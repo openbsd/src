@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.7 2003/07/18 02:00:09 deraadt Exp $	-*- nroff -*-
+.\"	$OpenBSD: patch.1,v 1.8 2003/07/22 20:17:06 millert Exp $	-*- nroff -*-
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@
 patch - apply a diff file to an original
 .SH SYNOPSIS
 .B patch
-[options] [origfile [patchfile]] [+ [options] [origfile]]...
+[options] [origfile [patchfile]]
 .sp
 but usually just
 .sp
@@ -216,11 +216,6 @@ to patch must be determined for each diff listing,
 and that the garbage before each diff listing will
 be examined for interesting things such as filenames and revision level, as
 mentioned previously.
-You can give switches (and another original file name) for the second and
-subsequent patches by separating the corresponding argument lists
-by a \*(L'+\*(R'.
-(The argument list for a second or subsequent patch may not specify a new
-patch file, however.)
 .PP
 .I Patch
 recognizes the following switches:
@@ -393,17 +388,6 @@ the heuristic.)
 makes
 .I patch
 do its work silently, unless an error occurs.
-.TP 5
-.B \-S or \-\-skip
-causes
-.I patch
-to ignore this patch from the patch file, but continue on looking
-for the next patch in the file.
-Thus
-.sp
-	patch -S + -S + <patchfile
-.sp
-will ignore the first and second of three patches.
 .TP 5
 .B \-u or \-\-unified
 forces
