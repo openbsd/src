@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.511 2002/05/22 15:30:36 mickey Exp $
+	$OpenBSD: pcidevs,v 1.512 2002/05/23 19:20:29 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1958,7 +1958,7 @@ product SUNDANCE ST201		0x0201	ST201
 product SUNDANCE ST2021		0x2021	ST2021 Gigabit Ethernet
 
 /* Sunix */
-product SUNIX 4065A		0x4065	4065A
+product SUNIX 4065A		0x7168	4065A
 
 /* Surecom products */
 product SURECOM NE34		0x0e34	Surecom NE-34
