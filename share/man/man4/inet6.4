@@ -1,5 +1,5 @@
-.\"	$OpenBSD: inet6.4,v 1.17 2000/09/17 00:53:35 aaron Exp $
-.\"	$KAME: inet6.4,v 1.15 2000/06/15 14:21:50 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.18 2000/11/24 10:25:12 itojun Exp $
+.\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -74,7 +74,7 @@ as a discriminated union.
 .Pp
 Sockets bound to the
 .Nm
-family utilize the following addressing structure,
+family utilize the following addressing structure:
 .Bd -literal -offset indent
 struct sockaddr_in6 {
 	u_int8_t	sin6_len;
@@ -95,19 +95,6 @@ which is equal to IPv6 address
 to effect
 .Dq wildcard
 matching on incoming messages.
-The address in a
-.Xr connect 2
-or
-.Xr sendto 2
-call may be given as
-.Dq Dv ::
-to mean
-.Dq this host .
-.Dq Dv ::
-can be obtained by setting
-.Dv sin6_addr
-field into 0, or by using the address contained in variable
-.Dv in6addr_any .
 .Pp
 IPv6 specification defines scoped address,
 like link-local or site-local address.
@@ -375,8 +362,8 @@ If you need to accept both IPv4 and IPv6 traffic, listen to two sockets.
 .%A Atsushi Onoe
 .%T "An Extension of Format for IPv6 Scoped Addresses"
 .%R internet draft
-.%D March 2000
-.%N draft-ietf-ipngwg-scopedaddr-format-01.txt
+.%D June 2000
+.%N draft-ietf-ipngwg-scopedaddr-format-02.txt
 .%O work in progress material
 .Re
 .Sh HISTORY
