@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.26 1997/10/27 14:42:02 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.27 1997/10/27 15:47:48 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -64,9 +64,7 @@
 
 #include "bios.h"
 #if NBIOS > 0
-#include <machine/biosvar.h>
 extern void dkcsumattach __P((void));		/* XXX should be elsewhere */
-extern bios_diskinfo_t *bios_diskinfo;		/* XXX should be elsewhere */
 int i386_mountroot __P((void));
 #endif
 
@@ -390,8 +388,7 @@ int
 i386_mountroot()
 {
 	/* Establish BIOS to BSD disk mappings.  */
-	if (bios_diskinfo)
-		dkcsumattach();
+	dkcsumattach();
 	return (dk_mountroot());
 }
 #endif
