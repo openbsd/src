@@ -7,7 +7,7 @@ S= ${.CURDIR}/../../../${R}
 
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(kernlibdir)
 .BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+	-@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
 .endif
 
 RELOC_SUN4=	0x240000
