@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.25 2003/04/17 12:09:48 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.26 2003/05/19 08:18:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -51,6 +51,7 @@ static const char *const kernels[] = {
 
 extern	const char version[];
 struct cmd_state cmd;
+int bootprompt = 1;
 
 void
 boot(bootdev)
@@ -72,13 +73,17 @@ boot(bootdev)
 	cmd.timeout = 5;
 
 	st = read_conf();
+	if (!bootprompt)
+		sprintf(cmd.path, "%s:%s", cmd.bootdev, cmd.image);
 
 	while (1) {
-		if (st <= 0) /* no boot.conf, or no boot cmd in there */
+		/* no boot.conf, or no boot cmd in there */
+		if (bootprompt && st <= 0)
 			do {
 				printf("boot> ");
 			} while(!getcmd());
 		st = 0;
+		bootprompt = 1;	/* allow reselect should we fail */
 
 		printf("booting %s: ", cmd.path);
 		marks[MARK_START] = (u_long)cmd.addr;
