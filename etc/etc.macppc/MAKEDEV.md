@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.12 2004/01/12 22:18:24 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.13 2004/01/13 13:38:21 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -41,7 +41,6 @@ _DEV(wskbd, 68)
 _DEV(wsmouse, 69)
 _DEV(wsmux, 70)
 _TITLE(term)
-_DEV(ttyE)
 _DEV(com, 7)
 _TITLE(pty)
 _DEV(tty, 4)
@@ -81,13 +80,6 @@ _std(1, 2, 43, 3, 6)
 	M reload	c 2 20 640 kmem
 	;;
 
-ttyE*)
-	type=E
-	case $type in
-	E)	major=25; minor=$unit ;;
-	esac
-	M tty$type$unit c $major $minor 660
-	;;
 dnl
 dnl *** macppc specific targets
 dnl
@@ -111,6 +103,5 @@ target(ramd, wd, 0, 1, 2, 3, 4)dnl
 target(ramd, st, 0, 1)dnl
 target(ramd, cd, 0, 1)dnl)dnl
 target(ramd, rd, 0)dnl
-target(ramd, ttyE, 0)dnl
 target(ramd, tty0, 0, 1)dnl
 target(ramd, pty, 0)dnl
