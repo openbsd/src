@@ -1,3 +1,4 @@
+/*	$OpenBSD: rz.c,v 1.10 1998/05/07 05:31:50 millert Exp $	*/
 /*	$NetBSD: rz.c,v 1.23 1997/02/04 05:24:55 thorpej Exp $	*/
 
 /*
@@ -861,7 +862,6 @@ rzopen(dev, flags, mode, p)
 {
 	register int unit = rzunit(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
-	register struct disklabel *lp;
 	register int i;
 	int part;
 	int mask;
@@ -869,53 +869,25 @@ rzopen(dev, flags, mode, p)
 	if (unit >= NRZ || !(sc->sc_flags & RZF_ALIVE))
 		return (ENXIO);
 
-	/* make sure disk is ready */
+	/* Make sure the disk is ready */
 	if (sc->sc_flags & RZF_REMOVEABLE) {
 		if (!rzready(sc))
 			return (ENXIO);
 	}
 
-	/* try to read disk label and partition table information */
+	/* Try to read disk label and partition table information */
 	part = rzpart(dev);
+	mask = 1 << part;
 	if (!(sc->sc_flags & RZF_HAVELABEL))
 		rzgetinfo(dev);
 
-	lp = sc->sc_label;
-	if (lp->d_npartitions < RAW_PART)
-		lp->d_npartitions = RAW_PART;
-	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
-		printf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
-			unit, "abcdefg"[part],  unit, part);
-		printf("# partions %d, size of %d = %d\n",
-		       lp->d_npartitions, part,
-		       lp->d_partitions[part].p_size);
+	/* Check that the partition exists. */
+	if (part != RAW_PART &&
+	    (part >= sc->sc_label->d_npartitions ||
+	     sc->sc_label->d_partitions[part].p_fstype == FS_UNUSED))
 		return (ENXIO);
-	}
 
-	/*
-	 * Warn if a partition is opened that overlaps another
-	 * already open, unless either is the `raw' partition
-	 * (whole disk).
-	 */
-	mask = 1 << part;
-	if ((sc->sc_openpart & mask) == 0 && part != RAWPART) {
-		register struct partition *pp;
-		u_long start, end;
-
-		pp = &lp->d_partitions[part];
-		start = pp->p_offset;
-		end = pp->p_offset + pp->p_size;
-		for (pp = lp->d_partitions, i = 0;
-		     i < lp->d_npartitions; pp++, i++) {
-			if (pp->p_offset + pp->p_size <= start ||
-			    pp->p_offset >= end || i == RAWPART)
-				continue;
-			if (sc->sc_openpart & (1 << i))
-				log(LOG_WARNING,
-				    "rz%d%c: overlaps open partition (%c)\n",
-				    unit, part + 'a', i + 'a');
-		}
-	}
+	/* Ensure only one open at a time. */
 	switch (mode) {
 	case S_IFCHR:
 		sc->sc_copenpart |= mask;
