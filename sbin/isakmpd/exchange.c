@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.73 2002/11/15 14:58:38 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.74 2002/11/21 12:09:20 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1498,7 +1498,7 @@ exchange_finalize (struct message *msg)
    */
   while (TAILQ_FIRST (&exchange->sa_list))
     {
-      struct sa *sa = TAILQ_FIRST (&exchange->sa_list);
+      sa = TAILQ_FIRST (&exchange->sa_list);
 
       if (exchange->id_i && exchange->id_r)
 	{

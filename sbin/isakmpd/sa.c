@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.64 2002/09/08 12:38:04 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.65 2002/11/21 12:09:20 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -471,7 +471,7 @@ sa_dump (int cls, int level, char *header, struct sa *sa)
  * Display the SA's two SPI values.
  */
 static void
-report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int index)
+report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 {
 #define SBUFSZ (2 * 32 + 9)
   char s[SBUFSZ];
@@ -497,7 +497,7 @@ report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int index)
   if (j)
     {
       s[j] = '\0';
-      fprintf (fd, "SPI %d: %s\n", index, s);
+      fprintf (fd, "SPI %d: %s\n", spi, s);
     }
 }
 

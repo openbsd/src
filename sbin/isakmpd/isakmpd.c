@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.45 2002/07/05 13:58:50 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.46 2002/11/21 12:09:20 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -224,14 +224,14 @@ sighup (int sig)
 static void
 report (void)
 {
-  FILE *report, *old;
+  FILE *rfp, *old;
   mode_t old_umask;
 
   old_umask = umask (S_IRWXG | S_IRWXO);
-  report = fopen (report_file, "w");
+  rfp = fopen (report_file, "w");
   umask (old_umask);
 
-  if (!report)
+  if (!rfp)
     {
       log_error ("fopen (\"%s\", \"w\") failed", report_file);
       return;
@@ -239,10 +239,10 @@ report (void)
 
   /* Divert the log channel to the report file during the report.  */
   old = log_current ();
-  log_to (report);
+  log_to (rfp);
   ui_report ("r");
   log_to (old);
-  fclose (report);
+  fclose (rfp);
 
   sigusr1ed = 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.11 2002/11/21 09:40:34 ho Exp $	*/
+/*	$OpenBSD: hash.c,v 1.12 2002/11/21 12:09:20 ho Exp $	*/
 /*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
@@ -139,9 +139,9 @@ hmac_init (struct hash *hash, unsigned char *okey, unsigned int len)
  */
 
 void
-hmac_final (unsigned char *digest, struct hash *hash)
+hmac_final (unsigned char *dgst, struct hash *hash)
 {
-  hash->Final (digest, hash->ctx);
-  hash->Update (hash->ctx2, digest, hash->hashsize);
-  hash->Final (digest, hash->ctx2);
+  hash->Final (dgst, hash->ctx);
+  hash->Update (hash->ctx2, dgst, hash->hashsize);
+  hash->Final (dgst, hash->ctx2);
 }

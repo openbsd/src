@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.71 2002/09/11 09:50:43 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.72 2002/11/21 12:09:20 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -903,7 +903,7 @@ static int
 ipsec_initiator (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
-  int (**script) (struct message *msg) = 0;
+  int (**script) (struct message *) = 0;
 
   /* Check that the SA is coherent with the IKE rules.  */
   if (exchange->type != ISAKMP_EXCH_TRANSACTION
@@ -1042,7 +1042,7 @@ static int
 ipsec_responder (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
-  int (**script) (struct message *msg) = 0;
+  int (**script) (struct message *) = 0;
   struct payload *p;
   u_int16_t type;
 
