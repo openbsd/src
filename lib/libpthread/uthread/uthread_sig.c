@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_sig.c,v 1.5 1999/05/26 00:18:26 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -29,7 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_sig.c,v 1.4 1999/01/06 05:29:27 d Exp $
  */
 #include <signal.h>
 #include <fcntl.h>
@@ -38,6 +38,19 @@
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
+
+/*
+ * State change macro for signal handler:
+ */
+#define PTHREAD_SIG_NEW_STATE(thrd, newstate) {				\
+	if ((_thread_run->sched_defer_count == 0) &&			\
+	    (_thread_kern_in_sched == 0)) {				\
+		PTHREAD_NEW_STATE(thrd, newstate);			\
+	} else {							\
+		_waitingq_check_reqd = 1;				\
+		PTHREAD_SET_STATE(thrd, newstate);			\
+	}								\
+}
 
 /* Static variables: */
 static int		volatile yield_on_unlock_thread	= 0;
@@ -109,7 +122,7 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 		_thread_dump_info();
 
 	/* Check if an interval timer signal: */
-	else if (sig == SIGVTALRM) {
+	else if (sig == _SCHED_SIGNAL) {
 		/* Check if the scheduler interrupt has come at an
 		 * unfortunate time which one of the threads is
 		 * modifying the thread list:
@@ -121,6 +134,14 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 			 * thread list:
 			 */
 			yield_on_unlock_thread = 1;
+
+		/*
+		 * Check if the scheduler interrupt has come when
+		 * the currently running thread has deferred thread
+		 * scheduling.
+		 */
+		else if (_thread_run->sched_defer_count)
+			_thread_run->yield_on_sched_undefer = 1;
 
 		/*
 		 * Check if the kernel has not been interrupted while
@@ -178,18 +199,17 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 		}
 
 		/*
-		 * Enter a loop to process each thread in the linked
+		 * Enter a loop to process each thread in the waiting
 		 * list that is sigwait-ing on a signal.  Since POSIX
 		 * doesn't specify which thread will get the signal
 		 * if there are multiple waiters, we'll give it to the
 		 * first one we find.
 		 */
-		for (pthread = _thread_link_list; pthread != NULL;
-		    pthread = pthread->nxt) {
+		TAILQ_FOREACH(pthread, &_waitingq, pqe) {
 			if ((pthread->state == PS_SIGWAIT) &&
 			    sigismember(pthread->data.sigwait, sig)) {
 				/* Change the state of the thread to run: */
-				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+				PTHREAD_SIG_NEW_STATE(pthread,PS_RUNNING);
 
 				/* Return the signal number: */
 				pthread->signo = sig;
@@ -209,11 +229,18 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 			 * list: 
 			 */
 			for (pthread = _thread_link_list; pthread != NULL;
-			     pthread = pthread->nxt)
-				_thread_signal(pthread,sig);
+			     pthread = pthread->nxt) {
+				pthread_t pthread_saved = _thread_run;
 
-		/* Dispatch pending signals to the running thread: */
-		_dispatch_signals();
+				_thread_run = pthread;
+				_thread_signal(pthread,sig);
+				/*
+				 * Dispatch pending signals to the
+				 * running thread:
+				 */
+				_dispatch_signals();
+				_thread_run = pthread_saved;
+			}
 	}
 
 	/* Returns nothing. */
@@ -265,7 +292,7 @@ _thread_signal(pthread_t pthread, int sig)
 			pthread->interrupted = 1;
 
 		/* Change the state of the thread to run: */
-		PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+		PTHREAD_SIG_NEW_STATE(pthread,PS_RUNNING);
 
 		/* Return the signal number: */
 		pthread->signo = sig;
@@ -285,7 +312,7 @@ _thread_signal(pthread_t pthread, int sig)
 			pthread->interrupted = 1;
 
 			/* Change the state of the thread to run: */
-			PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+			PTHREAD_SIG_NEW_STATE(pthread,PS_RUNNING);
 
 			/* Return the signal number: */
 			pthread->signo = sig;
@@ -300,7 +327,7 @@ _thread_signal(pthread_t pthread, int sig)
 		if (!sigismember(&pthread->sigmask, sig) &&
 		    _thread_sigact[sig - 1].sa_handler != SIG_DFL) {
 			/* Change the state of the thread to run: */
-			PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+			PTHREAD_SIG_NEW_STATE(pthread,PS_RUNNING);
 
 			/* Return the signal number: */
 			pthread->signo = sig;

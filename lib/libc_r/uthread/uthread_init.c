@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_init.c,v 1.9 1999/05/26 00:18:24 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_init.c,v 1.8 1999/01/17 23:57:27 d Exp $
  */
 
 #include <errno.h>
@@ -54,6 +54,7 @@
 static struct pthread	  kern_thread;
 struct pthread * volatile _thread_kern_threadp = &kern_thread;
 struct pthread * volatile _thread_run = &kern_thread;
+struct pthread * volatile _last_user_thread = &kern_thread;
 struct pthread * volatile _thread_single = NULL;
 struct pthread * volatile _thread_link_list = NULL;
 int             	  _thread_kern_pipe[2] = { -1, -1 };
@@ -63,7 +64,9 @@ struct timeval  	  kern_inc_prio_time = { 0, 0 };
 struct pthread * volatile _thread_dead = NULL;
 struct pthread *	  _thread_initial = NULL;
 struct pthread_attr 	  pthread_attr_default = {
-	SCHED_RR,			/* schedparam_policy */
+	SCHED_RR,			/* sched_policy */
+	0,				/* sched_inherit */
+	TIMESLICE_USEC,			/* sched_interval */
 	PTHREAD_DEFAULT_PRIORITY,	/* prio */
 	PTHREAD_CREATE_RUNNING,		/* suspend */
 	PTHREAD_CREATE_JOINABLE,	/* flags */
@@ -73,7 +76,9 @@ struct pthread_attr 	  pthread_attr_default = {
 	PTHREAD_STACK_DEFAULT		/* stacksize_attr */
 };
 struct pthread_mutex_attr pthread_mutexattr_default = {
-	MUTEX_TYPE_FAST,		/* m_type */
+	PTHREAD_MUTEX_DEFAULT,		/* m_type */
+	PTHREAD_PRIO_NONE,		/* m_protocol */
+	0,				/* m_ceiling */
 	0				/* m_flags */
 };
 struct pthread_cond_attr pthread_condattr_default = {
@@ -86,6 +91,12 @@ int    			  _thread_dtablesize = NOFILE_MAX;
 pthread_mutex_t		  _gc_mutex = NULL;
 pthread_cond_t		  _gc_cond = NULL;
 struct  sigaction 	  _thread_sigact[NSIG];
+
+const int dtablecount = 4096/sizeof(struct fd_table_entry);
+pq_queue_t		  _readyq;
+_waitingq_t		  _waitingq;
+volatile int		  _waitingq_check_reqd = 0;
+pthread_switch_routine_t  _sched_switch_hook = NULL;
 
 /* Automatic init module. */
 extern int _thread_autoinit_dummy_decl;
@@ -189,7 +200,13 @@ _thread_init(void)
 	/* Make the write pipe non-blocking: */
 	else if (_thread_sys_fcntl(_thread_kern_pipe[1], F_SETFL, flags | O_NONBLOCK) == -1) {
 		/* Abort this application: */
-		PANIC("Cannot make kernel write pipe non-blocking");
+		PANIC("Cannot get kernel write pipe flags");
+	}
+	/* Initialize the ready queue: */
+	else if (_pq_init(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_MAX_PRIORITY) 
+!= 0) {
+		/* Abort this application: */
+		PANIC("Cannot allocate priority ready queue.");
 	}
 	/* Allocate memory for the thread structure of the initial thread: */
 	else if ((_thread_initial = (pthread_t) malloc(sizeof(struct pthread))) == NULL) {
@@ -202,13 +219,32 @@ _thread_init(void)
 		/* Zero the global kernel thread structure: */
 		memset(_thread_kern_threadp, 0, sizeof(struct pthread));
 		_thread_kern_threadp->magic = PTHREAD_MAGIC;
+
+		/* Set the kernel's name for the debugger: */
 		pthread_set_name_np(_thread_kern_threadp, "kern");
+
+		/* The kernel thread is a library thread: */
+		_thread_kern_threadp->flags = PTHREAD_FLAGS_PRIVATE;
+
+		/* Initialize the waiting queue: */
+		TAILQ_INIT(&_waitingq);
+
+		/* Initialize the scheduling switch hook routine: */
+		_sched_switch_hook = NULL;
 
 		/* Zero the initial thread: */
 		memset(_thread_initial, 0, sizeof(struct pthread));
 
+		/*
+		 * Write a magic value to the thread structure
+		 * to help identify valid ones:
+		 */
+		_thread_initial->magic = PTHREAD_MAGIC;
+
 		/* Default the priority of the initial thread: */
-		_thread_initial->pthread_priority = PTHREAD_DEFAULT_PRIORITY;
+		_thread_initial->base_priority = PTHREAD_DEFAULT_PRIORITY;
+		_thread_initial->active_priority = PTHREAD_DEFAULT_PRIORITY;
+		_thread_initial->inherited_priority = 0;
 
 		/* Initialise the state of the initial thread: */
 		_thread_initial->state = PS_RUNNING;
@@ -216,7 +252,13 @@ _thread_init(void)
 		/* Initialise the queue: */
 		_thread_queue_init(&(_thread_initial->join_queue));
 
+		/* Initialize the owned mutex queue and count: */
+		TAILQ_INIT(&(_thread_initial->mutexq));
+		_thread_initial->priority_mutex_count = 0;
+
 		/* Initialise the rest of the fields: */
+		_thread_initial->sched_defer_count = 0;
+		_thread_initial->yield_on_sched_undefer = 0;
 		_thread_initial->specific_data = NULL;
 		_thread_initial->cleanup = NULL;
 		_thread_initial->queue = NULL;
@@ -226,7 +268,6 @@ _thread_init(void)
 		_thread_initial->error = 0;
 		_thread_initial->cancelstate = PTHREAD_CANCEL_ENABLE;
 		_thread_initial->canceltype = PTHREAD_CANCEL_DEFERRED;
-		_thread_initial->magic = PTHREAD_MAGIC;
 		pthread_set_name_np(_thread_initial, "init");
 		_SPINUNLOCK(&_thread_initial->lock);
 		_thread_link_list = _thread_initial;
@@ -259,9 +300,9 @@ _thread_init(void)
 		 * signals that the user-thread kernel needs. Actually
 		 * SIGINFO isn't really needed, but it is nice to have.
 		 */
-		if (_thread_sys_sigaction(SIGVTALRM, &act, NULL) != 0 ||
-		    _thread_sys_sigaction(SIGINFO  , &act, NULL) != 0 ||
-		    _thread_sys_sigaction(SIGCHLD  , &act, NULL) != 0) {
+		if (_thread_sys_sigaction(_SCHED_SIGNAL, &act, NULL) != 0 ||
+		    _thread_sys_sigaction(SIGINFO,       &act, NULL) != 0 ||
+		    _thread_sys_sigaction(SIGCHLD,       &act, NULL) != 0) {
 			/*
 			 * Abort this process if signal initialisation fails: 
 			 */
@@ -308,6 +349,8 @@ _thread_init(void)
 	if (pthread_mutex_init(&_gc_mutex,NULL) != 0 ||
 	    pthread_cond_init(&_gc_cond,NULL) != 0)
 		PANIC("Failed to initialise garbage collector mutex or condvar");
+
+	gettimeofday(&kern_inc_prio_time, NULL);
 
 	/* Pull in automatic thread unit. */
 	_thread_autoinit_dummy_decl = 1;

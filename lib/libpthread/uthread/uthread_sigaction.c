@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_sigaction.c,v 1.3 1999/01/06 05:29:27 d Exp $
+ * $OpenBSD: uthread_sigaction.c,v 1.4 1999/05/26 00:18:26 d Exp $
  */
 #include <signal.h>
 #include <errno.h>
@@ -72,7 +72,7 @@ sigaction(int sig, const struct sigaction * act, struct sigaction * oact)
 		 * Check if the kernel needs to be advised of a change
 		 * in signal action:
 		 */
-		if (act != NULL && sig != SIGVTALRM && sig != SIGCHLD &&
+		if (act != NULL && sig != _SCHED_SIGNAL && sig != SIGCHLD &&
 		    sig != SIGINFO) {
 			/* Initialise the global signal action structure: */
 			gact.sa_mask = act->sa_mask;

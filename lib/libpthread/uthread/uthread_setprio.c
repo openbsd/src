@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_setprio.c,v 1.4 1999/05/26 00:18:25 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,60 +30,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_setprio.c,v 1.3 1999/01/17 23:57:16 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
-#include <sched.h>
 #include "pthread_private.h"
 
 int
 pthread_setprio(pthread_t pthread, int prio)
 {
-	int ret;
+	int ret, policy;
+	struct sched_param param;
 
-	/* Check if the priority is invalid: */
-	if (prio < PTHREAD_MIN_PRIORITY || prio > PTHREAD_MAX_PRIORITY)
-		/* Return an invalid argument error: */
-		ret = EINVAL;
-
-	/* Find the thread in the list of active threads: */
-	else if ((ret = _find_thread(pthread)) == 0)
-		/* Set the thread priority: */
-		pthread->pthread_priority = prio;
+	if ((ret = pthread_getschedparam(pthread, &policy, &param)) == 0) {
+		param.sched_priority = prio;
+		ret = pthread_setschedparam(pthread, policy, &param);
+	}
 
 	/* Return the error status: */
 	return (ret);
-}
-
-int
-pthread_getschedparam(thread, policy, param)
-	pthread_t thread;
-	int *policy;
-	struct sched_param *param;
-{
-	int ret = 0;
-	
-	if ((ret = _find_thread(thread)) == 0) {
-		if (policy)
-			*policy = SCHED_RR;
-		if (param) 
-			param->sched_priority = thread->pthread_priority;
-	}
-	return (ret);
-}
-
-int
-pthread_setschedparam(thread, policy, param)
-	pthread_t thread;
-	int policy;
-	const struct sched_param *param;
-{
-
-	if (policy == SCHED_RR)
-		return pthread_setprio(thread, param->sched_priority);
-	else
-		return (EINVAL);
 }
 #endif

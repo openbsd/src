@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_exit.c,v 1.7 1999/01/06 05:29:23 d Exp $
+ * $OpenBSD: uthread_exit.c,v 1.8 1999/05/26 00:18:23 d Exp $
  */
 #include <errno.h>
 #include <unistd.h>
@@ -52,7 +52,7 @@ void _exit(int status)
 	itimer.it_interval.tv_usec = 0;
 	itimer.it_value.tv_sec     = 0;
 	itimer.it_value.tv_usec    = 0;
-	setitimer(ITIMER_VIRTUAL, &itimer, NULL);
+	setitimer(_ITIMER_SCHED_TIMER, &itimer, NULL);
 
 	/* Close the pthread kernel pipe: */
 	_thread_sys_close(_thread_kern_pipe[0]);
@@ -126,8 +126,8 @@ _thread_exit(const char *fname, int lineno, const char *string)
 	/* Write a dump of the current thread status: */
 	_thread_dump_info();
 
-	/* Force this process to exit: */
-	_exit(1);
+	/* Try to dump a core file: */
+	abort();
 }
 
 void
@@ -160,11 +160,24 @@ pthread_exit(void *status)
 		/* Run the thread-specific data destructors: */
 		_thread_cleanupspecific();
 	}
+
+	/*
+	 * Guard against preemption by a scheduling signal.  A change of
+	 * thread state modifies the waiting and priority queues.
+	 */
+	_thread_kern_sched_defer();
+
 	/* Check if there are any threads joined to this one: */
 	while ((pthread = _thread_queue_deq(&(_thread_run->join_queue))) != NULL) {
 		/* Wake the joined thread and let it detach this thread: */
 		PTHREAD_NEW_STATE(pthread,PS_RUNNING);
 	}
+
+	/*
+	 * Reenable preemption and yield if a scheduling signal
+	 * occurred while in the critical region.
+	 */
+	_thread_kern_sched_undefer();
 
 	/*
 	 * Lock the garbage collector mutex to ensure that the garbage
@@ -184,12 +197,18 @@ pthread_exit(void *status)
 	if (pthread_cond_signal(&_gc_cond) != 0)
 		PANIC("Cannot signal gc cond");
 
+	/*
+	 * Mark the thread as dead so it will not return if it
+	 * gets context switched out when the mutex is unlocked.
+	 */
+	PTHREAD_SET_STATE(_thread_run, PS_DEAD);
+
 	/* Unlock the garbage collector mutex: */
 	if (pthread_mutex_unlock(&_gc_mutex) != 0)
 		PANIC("Cannot lock gc mutex");
 
-	/* This thread will never be re-scheduled. */
-	_thread_kern_sched_state(PS_DEAD, __FILE__, __LINE__);
+	/* This this thread will never be re-scheduled. */
+	_thread_kern_sched(NULL);
 
 	/* This point should not be reached. */
 	PANIC("Dead thread has resumed");

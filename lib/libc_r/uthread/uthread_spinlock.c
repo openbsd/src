@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: uthread_spinlock.c,v 1.4 1998/06/09 23:13:10 jb Exp $
- * $OpenBSD: uthread_spinlock.c,v 1.4 1999/01/10 23:13:24 d Exp $
+ * $FreeBSD: uthread_spinlock.c,v 1.5 1999/03/23 05:07:56 jb Exp $
+ * $OpenBSD: uthread_spinlock.c,v 1.5 1999/05/26 00:18:26 d Exp $
  *
  */
 
@@ -57,12 +57,9 @@ _spinlock(spinlock_t *lck)
 	 * it before we do.
 	 */
 	while(_atomic_lock(&lck->access_lock)) {
-		/* Give up the time slice: */
-		sched_yield();
-
-		/* Check if already locked by the running thread: */
-		if (lck->lock_owner == _thread_run)
-			return;
+		/* Block the thread until the lock. */
+		_thread_run->data.spinlock = lck;
+		_thread_kern_sched_state(PS_SPINBLOCK, __FILE__, __LINE__);
 	}
 
 	/* The running thread now owns the lock: */
@@ -82,24 +79,25 @@ _spinlock(spinlock_t *lck)
 void
 _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 {
+	int cnt = 0;
+
 	/*
 	 * Try to grab the lock and loop if another thread grabs
 	 * it before we do.
 	 */
 	while(_atomic_lock(&lck->access_lock)) {
-		/* Give up the time slice: */
-		sched_yield();
-
-		/* Check if already locked by the running thread: */
-		if (lck->lock_owner == _thread_run) {
+		cnt++;
+		if (cnt > 100) {
 			char str[256];
-			snprintf(str, sizeof(str), "%s - Warning: Thread %p attempted to lock %p from %s (%d) which it had already locked in %s (%d)\n", __progname, _thread_run, lck, fname, lineno, lck->fname, lck->lineno);
+			snprintf(str, sizeof(str), "%s - Warning: Thread %p attempted to lock %p from %s (%d) was left locked from %s (%d)\n", __progname, _thread_run, lck, fname, lineno, lck->fname, lck->lineno);
 			_thread_sys_write(2,str,strlen(str));
-
-			/* Create a thread dump to help debug this problem: */
-			_thread_dump_info();
-			return;
+			sleep(1);
+			cnt = 0;
 		}
+
+		/* Block the thread until the lock. */
+		_thread_run->data.spinlock = lck;
+		_thread_kern_sched_state(PS_SPINBLOCK, fname, lineno);
 	}
 
 	/* The running thread now owns the lock: */

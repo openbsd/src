@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.6 1999/01/18 00:00:32 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.6 1999/01/18 00:00:32 d Exp $
+#	$Id: Makefile.inc,v 1.7 1999/05/26 00:18:21 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1999/05/26 00:18:21 d Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -12,11 +12,19 @@ SRCS+= \
 	uthread_attr_destroy.c \
 	uthread_attr_init.c \
 	uthread_attr_getdetachstate.c \
+	uthread_attr_getinheritsched.c \
+	uthread_attr_getschedparam.c \
+	uthread_attr_getschedpolicy.c \
+	uthread_attr_getscope.c \
+	uthread_attr_setstackaddr.c \
 	uthread_attr_getstackaddr.c \
 	uthread_attr_getstacksize.c \
-	uthread_attr_priosched.c \
 	uthread_attr_setcreatesuspend_np.c \
 	uthread_attr_setdetachstate.c \
+	uthread_attr_setinheritsched.c \
+	uthread_attr_setschedparam.c \
+	uthread_attr_setschedpolicy.c \
+	uthread_attr_setscope.c \
 	uthread_attr_setstackaddr.c \
 	uthread_attr_setstacksize.c \
 	uthread_autoinit.c \
@@ -53,6 +61,7 @@ SRCS+= \
 	uthread_getdirentries.c \
 	uthread_getpeername.c \
 	uthread_getprio.c \
+	uthread_getschedparam.c \
 	uthread_getsockname.c \
 	uthread_getsockopt.c \
 	uthread_info.c \
@@ -67,11 +76,14 @@ SRCS+= \
 	uthread_msync.c \
 	uthread_multi_np.c \
 	uthread_mutex.c \
+	uthread_mutex_prioceiling.c \
+	uthread_mutex_protocol.c \
 	uthread_mutexattr_destroy.c \
 	uthread_nanosleep.c \
 	uthread_once.c \
 	uthread_open.c \
 	uthread_pipe.c \
+	uthread_priority_queue.c \
 	uthread_poll.c \
 	uthread_queue.c \
 	uthread_read.c \
@@ -87,6 +99,7 @@ SRCS+= \
 	uthread_sendto.c \
 	uthread_seterrno.c \
 	uthread_setprio.c \
+	uthread_setschedparam.c \
 	uthread_setsockopt.c \
 	uthread_shutdown.c \
 	uthread_sig.c \
@@ -94,6 +107,7 @@ SRCS+= \
 	uthread_sigaltstack.c \
 	uthread_sigblock.c \
 	uthread_sigmask.c \
+	uthread_sigpending.c \
 	uthread_sigprocmask.c \
 	uthread_sigsetmask.c \
 	uthread_sigsuspend.c \
@@ -104,6 +118,7 @@ SRCS+= \
 	uthread_spec.c \
 	uthread_spinlock.c \
 	uthread_suspend_np.c \
+	uthread_switch_np.c \
 	uthread_vfork.c \
 	uthread_wait4.c \
 	uthread_write.c \

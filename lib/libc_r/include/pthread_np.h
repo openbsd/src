@@ -1,3 +1,4 @@
+/*	$OpenBSD: pthread_np.h,v 1.2 1999/05/26 00:17:41 d Exp $	*/
 /*
  * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -29,10 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread_np.h,v 1.1 1998/09/05 07:40:47 d Exp $
  */
 #ifndef _PTHREAD_NP_H_
 #define _PTHREAD_NP_H_
+
+/*
+ * Non-POSIX type definitions:
+ */
+typedef void	(*pthread_switch_routine_t) __P((pthread_t, pthread_t));
 
 /*
  * Non-POSIX thread function prototype definitions:
@@ -46,6 +51,8 @@ int pthread_suspend_np __P((pthread_t));
 int pthread_mutexattr_getkind_np __P((pthread_mutexattr_t attr));
 int pthread_mutexattr_setkind_np __P((pthread_mutexattr_t *attr, int kind));
 void pthread_set_name_np __P((pthread_t, char *));
+int pthread_switch_add_np (pthread_switch_routine_t routine);
+int pthread_switch_delete_np (pthread_switch_routine_t routine);
 __END_DECLS
 
 #endif

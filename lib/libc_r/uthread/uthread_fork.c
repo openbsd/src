@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_fork.c,v 1.4 1999/01/17 23:46:26 d Exp $
+ * $OpenBSD: uthread_fork.c,v 1.5 1999/05/26 00:18:23 d Exp $
  */
 #include <errno.h>
 #include <string.h>
@@ -43,7 +43,7 @@
 pid_t
 fork(void)
 {
-	int             flags;
+	int             i, flags;
 	pid_t           ret;
 	pthread_t	pthread;
 	pthread_t	pthread_next;
@@ -95,6 +95,11 @@ fork(void)
 		else if (_thread_sys_fcntl(_thread_kern_pipe[1], F_SETFL, flags | O_NONBLOCK) == -1) {
 			/* Abort this application: */
 			abort();
+		/* Initialize the ready queue: */
+		} else if (_pq_init(&_readyq, PTHREAD_MIN_PRIORITY,
+		     PTHREAD_MAX_PRIORITY) != 0) {
+			/* Abort this application: */
+			PANIC("Cannot allocate priority ready queue.");
 		} else {
 			/* Point to the first thread in the list: */
 			pthread = _thread_link_list;
@@ -126,6 +131,34 @@ fork(void)
 				/* Point to the next thread: */
 				pthread = pthread_next;
 			}
+
+			/* Re-init the waiting queues. */
+			TAILQ_INIT(&_waitingq);
+
+			/* Initialize the scheduling switch hook routine: */
+			_sched_switch_hook = NULL;
+
+			/* Clear out any locks in the file descriptor table: */
+			for (i = 0; i < _thread_dtablesize; i++) {
+				if (_thread_fd_table[i] != NULL) {
+					/* Initialise the file locks: */
+					_SPINUNLOCK(&_thread_fd_table[i]->lock);
+					_thread_fd_table[i]->r_owner = NULL;
+					_thread_fd_table[i]->w_owner = NULL;
+					_thread_fd_table[i]->r_fname = NULL;
+					_thread_fd_table[i]->w_fname = NULL;
+					_thread_fd_table[i]->r_lineno = 0;;
+					_thread_fd_table[i]->w_lineno = 0;;
+					_thread_fd_table[i]->r_lockcount = 0;;
+					_thread_fd_table[i]->w_lockcount = 0;;
+
+					/* Initialise the read/write queues: */
+					_thread_queue_init(&_thread_fd_table[i]->r_queue);
+					_thread_queue_init(&_thread_fd_table[i]->w_queue);
+				}
+			}
+
+			/* Initialise the atfork handler: */
 			_thread_atfork(PTHREAD_ATFORK_CHILD);
 		}
 	}

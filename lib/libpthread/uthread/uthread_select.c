@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_select.c,v 1.2 1999/01/06 05:29:26 d Exp $
+ * $OpenBSD: uthread_select.c,v 1.3 1999/05/26 00:18:25 d Exp $
  */
 #include <unistd.h>
 #include <errno.h>
@@ -48,6 +48,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	struct timespec ts;
 	struct timeval  zero_timeout = {0, 0};
 	int             i, ret = 0, got_all_locks = 1;
+	int		f_wait = 1;
 	struct pthread_select_data data;
 
 	if (numfds > _thread_dtablesize) {
@@ -60,6 +61,8 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 
 		/* Set the wake up time: */
 		_thread_kern_set_timeout(&ts);
+		if (ts.tv_sec == 0 && ts.tv_nsec == 0)
+			f_wait = 0;
 	} else {
 		/* Wait for ever: */
 		_thread_kern_set_timeout(NULL);
@@ -111,7 +114,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 		if (exceptfds != NULL) {
 			memcpy(&data.exceptfds, exceptfds, sizeof(data.exceptfds));
 		}
-		if ((ret = _thread_sys_select(data.nfds, &data.readfds, &data.writefds, &data.exceptfds, &zero_timeout)) == 0) {
+		if ((ret = _thread_sys_select(data.nfds, &data.readfds, &data.writefds, &data.exceptfds, &zero_timeout)) == 0 && f_wait) {
 			data.nfds = numfds;
 			FD_ZERO(&data.readfds);
 			FD_ZERO(&data.writefds);

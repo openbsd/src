@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_kill.c,v 1.6 1999/05/26 00:18:24 d Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -29,7 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_kill.c,v 1.5 1999/01/06 05:29:24 d Exp $
  */
 #include <errno.h>
 #include <signal.h>
@@ -53,6 +53,13 @@ pthread_kill(pthread_t pthread, int sig)
 
 	/* Find the thread in the list of active threads: */
 	else if ((ret = _find_thread(pthread)) == 0) {
+		/*
+		 * Guard against preemption by a scheduling signal.
+		 * A change of thread state modifies the waiting
+		 * and priority queues.
+		 */
+		_thread_kern_sched_defer();
+
 		switch (pthread->state) {
 		case PS_SIGSUSPEND:
 			/*
@@ -109,6 +116,12 @@ pthread_kill(pthread_t pthread, int sig)
 			sigaddset(&pthread->sigpend,sig);
 			break;
 		}
+
+		/*
+		 * Reenable preemption and yield if a scheduling signal
+		 * occurred while in the critical region.
+		 */
+		_thread_kern_sched_undefer();
 	}
 
 	/* Return the completion status: */

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_suspend_np.c,v 1.2 1999/01/06 05:29:29 d Exp $
+ * $OpenBSD: uthread_suspend_np.c,v 1.3 1999/05/26 00:18:26 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -52,8 +52,21 @@ pthread_suspend_np(pthread_t thread)
 			thread->interrupted = 1;
 		}
 
+		/*
+		 * Guard against preemption by a scheduling signal.
+		 * A change of thread state modifies the waiting
+		 * and priority queues.
+		 */
+		_thread_kern_sched_defer();
+
 		/* Suspend the thread. */
 		PTHREAD_NEW_STATE(thread,PS_SUSPENDED);
+
+		/*
+		 * Reenable preemption and yield if a scheduling signal
+		 * occurred while in the critical region.
+		 */
+		_thread_kern_sched_undefer();
 	}
 	return(ret);
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uthread_getprio.c,v 1.3 1999/05/26 00:18:24 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -20,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,7 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_getprio.c,v 1.2 1999/01/06 05:29:24 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -39,12 +39,11 @@
 int
 pthread_getprio(pthread_t pthread)
 {
-	int ret;
+	int policy, ret;
+	struct sched_param param;
 
-	/* Find the thread in the list of active threads: */
-	if ((ret = _find_thread(pthread)) == 0)
-		/* Get the thread priority: */
-		ret = pthread->pthread_priority;
+	if ((ret = pthread_getschedparam(pthread, &policy, &param)) == 0)
+		ret = param.sched_priority;
 	else {
 		/* Invalid thread: */
 		errno = ret;

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_sigwait.c,v 1.4 1999/01/17 23:57:27 d Exp $
+ * $OpenBSD: uthread_sigwait.c,v 1.5 1999/05/26 00:18:26 d Exp $
  */
 #include <signal.h>
 #include <errno.h>
@@ -58,7 +58,7 @@ sigwait(const sigset_t * set, int *sig)
 	 */
 	sigdelset(&act.sa_mask, SIGKILL);
 	sigdelset(&act.sa_mask, SIGSTOP);
-	sigdelset(&act.sa_mask, SIGVTALRM);
+	sigdelset(&act.sa_mask, _SCHED_SIGNAL);
 	sigdelset(&act.sa_mask, SIGCHLD);
 	sigdelset(&act.sa_mask, SIGINFO);
 

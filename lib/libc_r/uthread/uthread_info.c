@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_info.c,v 1.7 1999/02/01 08:23:46 d Exp $
+ * $OpenBSD: uthread_info.c,v 1.8 1999/05/26 00:18:24 d Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
@@ -64,9 +64,11 @@ static const struct s_thread_info thread_info[] = {
 	{PS_WAIT_WAIT	, "wait_wait"},
 	{PS_SIGSUSPEND	, "sigsuspend"},
 	{PS_SIGWAIT	, "sigwait"},
+	{PS_SPINBLOCK	, "spinblock"},
 	{PS_JOIN	, "join"},
 	{PS_SUSPENDED	, "suspended"},
 	{PS_DEAD	, "dead"},
+	{PS_DEADLOCK	, "deadlock"},
 	{PS_STATE_MAX	, "xxx"}
 };
 
@@ -151,7 +153,7 @@ _thread_dump_info(void)
 		    (void *)pthread,
 		    (pthread == _thread_run)     ? '*' : ' ',
 		    state,
-		    pthread->pthread_priority,
+		    pthread->base_priority,
 		    (pthread->flags & PTHREAD_EXITING)		  ? 'E' :
 		    (pthread->flags & PTHREAD_CANCELLING)	  ? 'C' :
 		    (pthread->flags & PTHREAD_AT_CANCEL_POINT)	  ? 'c' : ' ',
@@ -207,7 +209,7 @@ _thread_dump_info(void)
 				snprintf(s, sizeof(s), 
 				    "%s owner %p\n",
 				    info_lead,
-				    (*pthread->data.mutex)->m_owner);
+				    NULL /* (*pthread->data.mutex)->m_owner*/);
 				_thread_sys_write(fd, s, strlen(s));
 			}
 			break;

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_execve.c,v 1.3 1999/01/06 05:29:23 d Exp $
+ * $OpenBSD: uthread_execve.c,v 1.4 1999/05/26 00:18:23 d Exp $
  */
 #include <errno.h>
 #include <fcntl.h>
@@ -53,7 +53,7 @@ execve(const char *name, char *const * argv, char *const * envp)
 	itimer.it_interval.tv_usec = 0;
 	itimer.it_value.tv_sec     = 0;
 	itimer.it_value.tv_usec    = 0;
-	setitimer(ITIMER_VIRTUAL, &itimer, NULL);
+	setitimer(_ITIMER_SCHED_TIMER, &itimer, NULL);
 
 	/* Close the pthread kernel pipe: */
 	_thread_sys_close(_thread_kern_pipe[0]);

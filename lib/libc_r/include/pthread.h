@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.6 1999/03/10 10:00:47 d Exp $
+ * $OpenBSD: pthread.h,v 1.7 1999/05/26 00:17:41 d Exp $
  *
  */
 #ifndef _PTHREAD_H_
@@ -65,9 +65,9 @@
 
 #define _POSIX_THREAD_ATTR_STACKADDR
 #define _POSIX_THREAD_ATTR_STACKSIZE
-/* #define _POSIX_THREAD_PRIORITY_SCHEDULING */
-/* #define _POSIX_THREAD_PRIO_INHERIT   */
-/* #define _POSIX_THREAD_PRIO_PROTECT   */
+#define _POSIX_THREAD_PRIORITY_SCHEDULING
+#define _POSIX_THREAD_PRIO_INHERIT
+#define _POSIX_THREAD_PRIO_PROTECT
 /* #define _POSIX_THREAD_PROCESS_SHARED */
 #define _POSIX_THREAD_SAFE_FUNCTIONS
 
@@ -164,19 +164,37 @@ struct pthread_once {
 /*
  * Static initialization values. 
  */
-#define PTHREAD_MUTEX_INITIALIZER	((pthread_mutex_t) NULL)
-#define PTHREAD_COND_INITIALIZER	((pthread_cond_t) NULL)
-#define PTHREAD_RWLOCK_INITIALIZER	((pthread_rwlock_t) NULL)
+#define PTHREAD_MUTEX_INITIALIZER	NULL
+#define PTHREAD_COND_INITIALIZER	NULL
+#define PTHREAD_RWLOCK_INITIALIZER	NULL
 
+#define PTHREAD_PRIO_NONE	0
+#ifdef _POSIX_THREAD_PRIO_PROTECT
+#define PTHREAD_PRIO_INHERIT	1
+#define PTHREAD_PRIO_PROTECT	2
+#endif
+
+/*
+ * Mutex types (Single UNIX Specification, Version 2, 1997).
+ *
+ * Note that a mutex attribute with one of the following types:
+ *
+ *	PTHREAD_MUTEX_NORMAL
+ *	PTHREAD_MUTEX_RECURSIVE
+ *      MUTEX_TYPE_FAST (deprecated)
+ *	MUTEX_TYPE_COUNTING_FAST (deprecated)
+ *
+ * will deviate from POSIX specified semantics.
+ */
 enum pthread_mutextype {
-	PTHREAD_MUTEX_DEFAULT		= 1,
-	PTHREAD_MUTEX_RECURSIVE		= 2,
-	PTHREAD_MUTEX_NORMAL		= 3,
-	PTHREAD_MUTEX_ERRORCHECK	= 4,
+	PTHREAD_MUTEX_ERRORCHECK	= 1,	/* Default POSIX mutex */
+	PTHREAD_MUTEX_RECURSIVE		= 2,	/* Recursive mutex */
+	PTHREAD_MUTEX_NORMAL		= 3,	/* No error checking */
 	MUTEX_TYPE_MAX
 };
 
-#define MUTEX_TYPE_FAST			PTHREAD_MUTEX_DEFAULT
+#define PTHREAD_MUTEX_DEFAULT		PTHREAD_MUTEX_ERRORCHECK
+#define MUTEX_TYPE_FAST			PTHREAD_MUTEX_NORMAL
 #define MUTEX_TYPE_COUNTING_FAST	PTHREAD_MUTEX_RECURSIVE
 
 /*
@@ -185,20 +203,10 @@ enum pthread_mutextype {
 __BEGIN_DECLS
 int		pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 int		pthread_attr_destroy __P((pthread_attr_t *));
-int		pthread_attr_getinheritsched __P((const pthread_attr_t *, int *));
-int		pthread_attr_getschedparam __P((const pthread_attr_t *,
-			struct sched_param *));
-int		pthread_attr_getschedpolicy __P((const pthread_attr_t *, int *));
-int		pthread_attr_getscope __P((const pthread_attr_t *, int *));
 int		pthread_attr_getstacksize __P((pthread_attr_t *, size_t *));
 int		pthread_attr_getstackaddr __P((pthread_attr_t *, void **));
 int		pthread_attr_getdetachstate __P((pthread_attr_t *, int *));
 int		pthread_attr_init __P((pthread_attr_t *));
-int		pthread_attr_setinheritsched __P((pthread_attr_t *, int));
-int		pthread_attr_setschedparam __P((pthread_attr_t *,
-			const struct sched_param *));
-int		pthread_attr_setschedpolicy __P((pthread_attr_t *, int));
-int		pthread_attr_setscope __P((pthread_attr_t *, int));
 int		pthread_attr_setstacksize __P((pthread_attr_t *, size_t));
 int		pthread_attr_setstackaddr __P((pthread_attr_t *, void *));
 int		pthread_attr_setdetachstate __P((pthread_attr_t *, int));
@@ -208,10 +216,14 @@ void		pthread_cleanup_push __P((void (*routine) (void *),
 			void *routine_arg));
 int		pthread_condattr_destroy __P((pthread_condattr_t *attr));
 int		pthread_condattr_init __P((pthread_condattr_t *attr));
+
+#if defined(_POSIX_THREAD_PROCESS_SHARED)
 int		pthread_condattr_getpshared __P((const pthread_condattr_t *attr,
 			int *pshared));
 int		pthread_condattr_setpshared __P((pthread_condattr_t *attr,
 			int pshared));
+#endif
+
 int		pthread_cond_broadcast __P((pthread_cond_t *));
 int		pthread_cond_destroy __P((pthread_cond_t *));
 int		pthread_cond_init __P((pthread_cond_t *,
@@ -231,27 +243,13 @@ int		pthread_key_create __P((pthread_key_t *,
 			void (*routine) (void *)));
 int		pthread_key_delete __P((pthread_key_t));
 int		pthread_kill __P((struct pthread *, int));
-int		pthread_mutexattr_destroy __P((pthread_mutexattr_t *));
-int		pthread_mutexattr_getprioceiling __P((pthread_mutexattr_t *,
-			int *prioceiling));
-int		pthread_mutexattr_getprotocol __P((pthread_mutexattr_t *,
-			int *protocol));
-int		pthread_mutexattr_getpshared __P((pthread_mutexattr_t *,
-			int *pshared));
 int		pthread_mutexattr_init __P((pthread_mutexattr_t *));
-int		pthread_mutexattr_setprioceiling __P((pthread_mutexattr_t *,
-			int prioceiling));
-int		pthread_mutexattr_setprotocol __P((pthread_mutexattr_t *,
-			int protocol));
-int		pthread_mutexattr_setpshared __P((pthread_mutexattr_t *,
-			int pshared));
+int		pthread_mutexattr_destroy __P((pthread_mutexattr_t *));
 int		pthread_mutexattr_settype __P((pthread_mutexattr_t *, int));
 int		pthread_mutex_destroy __P((pthread_mutex_t *));
-int		pthread_mutex_getprioceiling __P((pthread_mutex_t *));
 int		pthread_mutex_init __P((pthread_mutex_t *,
 			const pthread_mutexattr_t *));
 int		pthread_mutex_lock __P((pthread_mutex_t *));
-int		pthread_mutex_setprioceiling __P((pthread_mutex_t *));
 int		pthread_mutex_trylock __P((pthread_mutex_t *));
 int		pthread_mutex_unlock __P((pthread_mutex_t *));
 int		pthread_once __P((pthread_once_t *,
@@ -281,10 +279,48 @@ void		pthread_testcancel __P((void));
 int		pthread_getprio __P((pthread_t));
 int		pthread_setprio __P((pthread_t, int));
 void		pthread_yield __P((void));
-int		pthread_setschedparam __P((pthread_t pthread, int policy,
-			const struct sched_param * param));
+
+#if defined(_POSIX_THREAD_PROCESS_SHARED)
+int		pthread_mutexattr_getpshared __P((pthread_mutexattr_t *,
+			int *pshared));
+int		pthread_mutexattr_setpshared __P((pthread_mutexattr_t *,
+			int pshared));
+#endif
+
+#if defined(_POSIX_THREAD_PRIO_PROTECT)
+int		pthread_mutexattr_getprioceiling __P((pthread_mutexattr_t *,
+			int *prioceiling));
+int		pthread_mutexattr_setprioceiling __P((pthread_mutexattr_t *,
+			int prioceiling));
+int		pthread_mutex_getprioceiling __P((pthread_mutex_t *, int *));
+int		pthread_mutex_setprioceiling __P((pthread_mutex_t *, int,
+			int *));
+#endif
+
+#if defined(_POSIX_THREAD_PRIO_PROTECT) || defined (_POSIX_THREAD_PRIO_INHERIT)
+int		pthread_mutexattr_getprotocol __P((pthread_mutexattr_t *,
+			int *protocol));
+int		pthread_mutexattr_setprotocol __P((pthread_mutexattr_t *,
+			int protocol));
+#endif
+
+#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
+int		pthread_attr_getinheritsched __P((const pthread_attr_t *, int *));
+int		pthread_attr_getschedparam __P((const pthread_attr_t *,
+			struct sched_param *));
+int		pthread_attr_getschedpolicy __P((const pthread_attr_t *, int *));
+int		pthread_attr_getscope __P((const pthread_attr_t *, int *));
+int		pthread_attr_setinheritsched __P((pthread_attr_t *, int));
+int		pthread_attr_setschedparam __P((pthread_attr_t *,
+			const struct sched_param *));
+int		pthread_attr_setschedpolicy __P((pthread_attr_t *, int));
+int		pthread_attr_setscope __P((pthread_attr_t *, int));
 int		pthread_getschedparam __P((pthread_t pthread, int *policy,
 			struct sched_param * param));
+int		pthread_setschedparam __P((pthread_t pthread, int policy,
+			const struct sched_param * param));
+#endif
+
 int		pthread_attr_setfloatstate __P((pthread_attr_t *, int));
 int		pthread_attr_getfloatstate __P((pthread_attr_t *, int *));
 int		pthread_attr_setcleanup __P((pthread_attr_t *,
