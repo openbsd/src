@@ -1,3 +1,4 @@
+/*	$OpenBSD: pr_tbl.c,v 1.2 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: pr_tbl.c,v 1.3 1995/03/23 08:35:52 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_tbl.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pr_tbl.c,v 1.3 1995/03/23 08:35:52 cgd Exp $";
+static char rcsid[] = "$OpenBSD: pr_tbl.c,v 1.2 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +58,7 @@ static char rcsid[] = "$NetBSD: pr_tbl.c,v 1.3 1995/03/23 08:35:52 cgd Exp $";
 
 #include "primes.h"
 
-ubig prime[] = {
+const ubig prime[] = {
 2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,
 107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,
 211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,
@@ -549,4 +550,4 @@ ubig prime[] = {
 };
 
 /* pr_limit - largest prime in the prime table */
-unsigned long *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];
+const unsigned long *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];

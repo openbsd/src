@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.11 1999/08/17 09:13:12 millert Exp $	*/
+/*	$OpenBSD: wump.c,v 1.12 1999/09/25 15:52:21 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.11 1999/08/17 09:13:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.12 1999/09/25 15:52:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$OpenBSD: wump.c,v 1.11 1999/08/17 09:13:12 millert Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include "pathnames.h"
 
@@ -272,7 +273,7 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 void
 display_room_stats()
 {
-	register int i;
+	int i;
 
 	/*
 	 * Routine will explain what's going on with the current room, as well
@@ -555,9 +556,8 @@ into room %d!\n", arrow_location, next, cave[arrow_location].tunnel[link]);
 void
 cave_init()
 {
-	register int i, j, k, link;
-	int delta, int_compare();
-	time_t time();
+	int i, j, k, link;
+	int delta;
 
 	/*
 	 * This does most of the interesting work in this program actually!
@@ -644,7 +644,7 @@ try_again:		link = (random() % room_num) + 1;
 void
 clear_things_in_cave()
 {
-	register int i;
+	int i;
 
 	/*
 	 * remove bats and pits from the current cave in preparation for us
@@ -657,7 +657,7 @@ clear_things_in_cave()
 void
 initialize_things_in_cave()
 {
-	register int i, loc;
+	int i, loc;
 
 	/* place some bats, pits, the wumpus, and the player. */
 	for (i = 0; i < bat_num; ++i) {
@@ -730,7 +730,7 @@ getans(prompt)
 int
 bats_nearby()
 { 
-	register int i;
+	int i;
 
 	/* check for bats in the immediate vicinity */
 	for (i = 0; i < link_num; ++i)
@@ -742,7 +742,7 @@ bats_nearby()
 int
 pit_nearby()
 { 
-	register int i;
+	int i;
 
 	/* check for pits in the immediate vicinity */
 	for (i = 0; i < link_num; ++i)
@@ -754,7 +754,7 @@ pit_nearby()
 int
 wump_nearby()
 {
-	register int i, j;
+	int i, j;
 
 	/* check for a wumpus within TWO caves of where we are */
 	for (i = 0; i < link_num; ++i) {

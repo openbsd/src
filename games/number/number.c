@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.6 1998/03/25 08:45:25 pjanzen Exp $	*/
+/*	$OpenBSD: number.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)number.c	8.2 (Berkeley) 3/31/94";
+static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: number.c,v 1.6 1998/03/25 08:45:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: number.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,19 +59,19 @@ static char rcsid[] = "$OpenBSD: number.c,v 1.6 1998/03/25 08:45:25 pjanzen Exp 
 #define	MAXNUM		65		/* Biggest number we handle. */
 #define	LINELEN		256
 
-static char	*name1[] = {
+static const char	*const name1[] = {
 	"",		"one",		"two",		"three",
 	"four",		"five",		"six",		"seven",
 	"eight",	"nine",		"ten",		"eleven",
 	"twelve",	"thirteen",	"fourteen",	"fifteen",
 	"sixteen",	"seventeen",	"eighteen",	"nineteen",
 },
-		*name2[] = {
+		*const name2[] = {
 	"",		"ten",		"twenty",	"thirty",
 	"forty",	"fifty",	"sixty",	"seventy",
 	"eighty",	"ninety",
 },
-		*name3[] = {
+		*const name3[] = {
 	"hundred",	"thousand",	"million",	"billion",
 	"trillion",	"quadrillion",	"quintillion",	"sextillion",
 	"septillion",	"octillion",	"nonillion",	"decillion",
@@ -83,10 +83,10 @@ static char	*name1[] = {
 
 void	convert __P((char *));
 void	convertexp __P((char *));
-int	number __P((char *, int));
+int	number __P((const char *, int));
 void	pfract __P((int));
 void	toobig __P((void));
-int	unit __P((int, char *));
+int	unit __P((int, const char *));
 void	usage __P((void));
 
 int lflag;
@@ -225,7 +225,7 @@ convertexp(line)
 	char tmp[2];
 	int  i, j;
 
-	(void)strncpy(locline,line,LINELEN);
+	(void)strlcpy(locline,line,LINELEN);
 	part3 = locline;
 	part2 = strsep(&part3, "eE");	/* part3 is the exponent */
 	part4 = part3;
@@ -262,10 +262,10 @@ convertexp(line)
 
 int
 unit(len, p)
-	register int len;
-	register char *p;
+	int len;
+	const char *p;
 {
-	register int off, rval;
+	int off, rval;
 
 	rval = 0;
 	if (len > 3) {
@@ -298,10 +298,10 @@ unit(len, p)
 
 int
 number(p, len)
-	register char *p;
+	const char *p;
 	int len;
 {
-	register int val, rval;
+	int val, rval;
 
 	rval = 0;
 	switch (len) {
@@ -340,7 +340,7 @@ void
 pfract(len)
 	int len;
 {
-	static char *pref[] = { "", "ten-", "hundred-" };
+	static const char *const pref[] = { "", "ten-", "hundred-" };
 
 	switch(len) {
 	case 1:

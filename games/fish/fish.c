@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.5 1999/06/10 22:58:24 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.5 1999/06/10 22:58:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ static char rcsid[] = "$OpenBSD: fish.c,v 1.5 1999/06/10 22:58:24 pjanzen Exp $"
 #define	COMPUTER	0
 #define	OTHER(a)	(1 - (a))
 
-char *cards[] = {
+const char *const cards[] = {
 	"A", "2", "3", "4", "5", "6", "7",
 	"8", "9", "10", "J", "Q", "K", NULL,
 };
@@ -81,10 +81,10 @@ int promode;
 int asked[RANKS], comphand[RANKS], deck[RANKS];
 int userasked[RANKS], userhand[RANKS];
 
-void	chkwinner __P((int, int *));
+void	chkwinner __P((int, const int *));
 int	compmove __P((void));
-int	countbooks __P((int *));
-int	countcards __P((int *));
+int	countbooks __P((const int *));
+int	countcards __P((const int *));
 int	drawcard __P((int, int *));
 int	getans __P((const char *));
 int	gofish __P((int, int, int *));
@@ -92,7 +92,7 @@ void	goodmove __P((int, int, int *, int *));
 void	init __P((void));
 void	instructions __P((void));
 int	nrandom __P((int));
-void	printhand __P((int *));
+void	printhand __P((const int *));
 void	printplayer __P((int));
 int	promove __P((void));
 void	usage __P((void));
@@ -117,8 +117,7 @@ main(argc, argv)
 		case '?':
 		case 'h':
 		default:
-			(void)fprintf(stderr, "usage: fish [-p]\n");
-			exit(1);
+			usage();
 		}
 
 	srandom(time((time_t *)NULL));
@@ -158,8 +157,8 @@ istart:		for (;;) {
 int
 usermove()
 {
-	register int n;
-	register char **p;
+	int n;
+	const char *const *p;
 	char buf[256];
 
 	(void)printf("\nYour hand is:");
@@ -231,7 +230,7 @@ compmove()
 int
 promove()
 {
-	register int i, max;
+	int i, max;
 
 	for (i = 0; i < RANKS; ++i)
 		if (userasked[i] &&
@@ -333,9 +332,10 @@ goodmove(player, move, hand, opphand)
 
 void
 chkwinner(player, hand)
-	int player, *hand;
+	int player;
+	const int *hand;
 {
-	register int cb, i, ub;
+	int cb, i, ub;
 
 	for (i = 0; i < RANKS; ++i)
 		if (hand[i] > 0 && hand[i] < CARDS)
@@ -376,9 +376,9 @@ printplayer(player)
 
 void
 printhand(hand)
-	int *hand;
+	const int *hand;
 {
-	register int book, i, j;
+	int book, i, j;
 
 	for (book = i = 0; i < RANKS; i++)
 		if (hand[i] < CARDS)
@@ -397,9 +397,9 @@ printhand(hand)
 
 int
 countcards(hand)
-	int *hand;
+	const int *hand;
 {
-	register int i, count;
+	int i, count;
 
 	for (count = i = 0; i < RANKS; i++)
 		count += *hand++;
@@ -408,7 +408,7 @@ countcards(hand)
 
 int
 countbooks(hand)
-	int *hand;
+	const int *hand;
 {
 	int i, count;
 
@@ -426,7 +426,7 @@ countbooks(hand)
 void
 init()
 {
-	register int i, rank;
+	int i, rank;
 
 	for (i = 0; i < RANKS; ++i)
 		deck[i] = CARDS;

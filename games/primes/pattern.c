@@ -1,3 +1,4 @@
+/*	$OpenBSD: pattern.c,v 1.3 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: pattern.c,v 1.3 1995/03/23 08:35:47 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pattern.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pattern.c,v 1.3 1995/03/23 08:35:47 cgd Exp $";
+static char rcsid[] = "$OpenBSD: pattern.c,v 1.3 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +57,7 @@ static char rcsid[] = "$NetBSD: pattern.c,v 1.3 1995/03/23 08:35:47 cgd Exp $";
  * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
  */
 
-char pattern[] = {
+const char pattern[] = {
 1,0,0,0,0,0,0,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,1,0,0,1,1,0,0,1,0,1,1,0,0,
 1,0,1,0,0,1,0,0,0,1,0,1,1,0,1,1,0,1,0,0,0,0,0,0,1,0,1,0,0,1,1,0,0,0,0,1,1,0,0,
 1,0,0,1,0,1,0,0,1,0,0,1,1,0,0,0,0,1,1,0,1,1,0,0,0,0,0,1,0,0,0,0,0,1,0,1,1,0,1,
@@ -443,4 +444,4 @@ char pattern[] = {
 0,0,1,1,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0,0,1,0,0,1,0,1,
 0,0,1,1,0,1,0,0,1,1,0,0,1,0,0,1,0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0,0,0,0,0,0,0,1
 };
-int pattern_size = (sizeof(pattern)/sizeof(pattern[0]));
+const int pattern_size = (sizeof(pattern)/sizeof(pattern[0]));

@@ -1,3 +1,4 @@
+/*	$OpenBSD: primes.h,v 1.2 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: primes.h,v 1.4 1995/03/23 08:35:58 cgd Exp $	*/
 
 /*

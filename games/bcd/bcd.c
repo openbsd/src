@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.5 1998/08/19 07:40:15 pjanzen Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.6 1999/09/25 15:52:09 pjanzen Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: bcd.c,v 1.5 1998/08/19 07:40:15 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bcd.c,v 1.6 1999/09/25 15:52:09 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,9 +160,9 @@ void
 printcard(str)
 	char *str;
 {
-	static char rowchars[] = "   123456789";
-	register int	i, row;
-	register char	*p;
+	static const char rowchars[] = "   123456789";
+	int	i, row;
+	char	*p;
 
 	/* ruthlessly remove newlines and truncate at 48 characters. */
 	if ((p = strchr(str, '\n')))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.3 1998/09/22 04:08:24 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
 
 /*
@@ -38,16 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.3 1998/09/22 04:08:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include <time.h>
 #include "mille.h"
-
-# ifdef	attron
-#	include	<term.h>
-#	define	_tty	cur_term->Nttyb
-# endif	attron
 
 /*
  * @(#)save.c	1.2 (Berkeley) 3/28/83
@@ -72,10 +68,9 @@ save()
 
 	sp = NULL;
 	tp = &tme;
-	if (Fromfile && getyn(SAMEFILEPROMPT)) {
-		strncpy(buf, Fromfile, sizeof(buf));
-		buf[sizeof(buf) - 1] = '\0';
-	} else {
+	if (Fromfile && getyn(SAMEFILEPROMPT))
+		strlcpy(buf, Fromfile, sizeof(buf));
+	else {
 over:
 		prompt(FILEPROMPT);
 		leaveok(Board, FALSE);
@@ -147,7 +142,7 @@ over:
  */
 bool
 rest_f(file)
-	char	*file;
+	const char	*file;
 {
 	char	*sp;
 	int	inf;

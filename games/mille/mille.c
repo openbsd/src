@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.6 1998/09/22 04:08:23 pjanzen Exp $	*/
+/*	$OpenBSD: mille.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -44,15 +44,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: mille.c,v 1.6 1998/09/22 04:08:23 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mille.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 # include	"mille.h"
 # include	<signal.h>
-# ifdef attron
-#	include	<term.h>
-# endif	attron
 
 /*
  * @(#)mille.c	1.3 (Berkeley) 5/10/83

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.c,v 1.3 1998/09/22 04:08:25 pjanzen Exp $	*/
+/*	$OpenBSD: types.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)types.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: types.c,v 1.3 1998/09/22 04:08:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: types.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,5 +80,6 @@ safety(card)
 	  case C_END_LIMIT:
 		return C_RIGHT_WAY;
 	}
+	errx(1, "safety() failed; please submit bug report.");
 	/* NOTREACHED */
 }

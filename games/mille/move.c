@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.4 1998/09/22 04:08:24 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.5 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.4 1998/09/22 04:08:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.5 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,21 +49,12 @@ static char rcsid[] = "$OpenBSD: move.c,v 1.4 1998/09/22 04:08:24 pjanzen Exp $"
 #include <termios.h>
 #include	"mille.h"
 
-# ifdef	attron
-#	include	<term.h>
-#	define	_tty	cur_term->Nttyb
-# endif	attron
-
 /*
  * @(#)move.c	1.2 (Berkeley) 3/28/83
  */
 
 #undef	CTRL
 #define	CTRL(c)		(c - 'A' + 1)
-
-char	*Movenames[] = {
-		"M_DISCARD", "M_DRAW", "M_PLAY", "M_ORDER"
-	};
 
 void
 domove()
@@ -488,7 +479,7 @@ ret:
  */
 int
 haspicked(pp)
-	PLAY	*pp;
+	const PLAY	*pp;
 {
 	int	card;
 
@@ -536,7 +527,7 @@ void
 prompt(promptno)
 	int	promptno;
 {
-	static char	*names[] = {
+	static const char	*const names[] = {
 				">>:Move:",
 				"Really?",
 				"Another hand?",

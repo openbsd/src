@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.2 1998/09/22 04:08:22 pjanzen Exp $	*/
+/*	$OpenBSD: extern.c,v 1.3 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: extern.c,v 1.4 1995/03/24 05:01:36 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: extern.c,v 1.2 1998/09/22 04:08:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: extern.c,v 1.3 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,10 @@ bool	Debug,			/* set if debugging code on		*/
 	Order,			/* set if hand should be sorted		*/
 	Saved;			/* set if game just saved		*/
 
-char	*C_fmt = "%-18.18s",	/* format for printing cards		*/
-	*Fromfile = NULL,	/* startup file for game		*/
-	Initstr[100],		/* initial string for error field	*/
-	*_cn[NUM_CARDS] = {	/* Card name buffer			*/
+char	Initstr[100],		/* initial string for error field	*/
+	*C_fmt = "%-18.18s";	/* format for printing cards	*/
+const char	*Fromfile = NULL,	/* startup file for game		*/
+	*const _cn[NUM_CARDS] = {	/* Card name buffer		*/
 		"",
 		"25",
 		"50",
@@ -80,7 +80,7 @@ char	*C_fmt = "%-18.18s",	/* format for printing cards		*/
 		"Driving Ace",
 		"Right of Way"
 	},
-	**C_name = &_cn[1];	/* Card names				*/
+	*const *C_name = &_cn[1];	/* Card names			*/
 
 int	Card_no,		/* Card number for current move		*/
 	End,			/* End value for current hand		*/
@@ -89,8 +89,9 @@ int	Card_no,		/* Card number for current move		*/
 	Play,			/* Current player			*/
 	Numgos,			/* Number of Go cards used by computer	*/
 	Window = W_SMALL,	/* Current window wanted		*/
-	Numseen[NUM_CARDS],	/* Number of cards seen in current hand	*/
-	Value[NUM_MILES] = {	/* Value of mileage cards		*/
+	Numseen[NUM_CARDS];	/* Number of cards seen in current hand	*/
+
+const int	Value[NUM_MILES] = {	/* Value of mileage cards	*/
 		25, 50, 75, 100, 200
 	},
 	Numcards[NUM_CARDS] = {	/* Number of cards in deck		*/
@@ -114,8 +115,8 @@ int	Card_no,		/* Card number for current move		*/
 		1,	/* C_DRIVE_SAFE */
 		1,	/* C_RIGHT_WAY */
 		0	/* C_INIT */
-	},
-	Numneed[NUM_CARDS] = {	/* number of cards needed per hand	*/
+	};
+int	Numneed[NUM_CARDS] = {	/* number of cards needed per hand	*/
 		0,	/* C_25 */
 		0,	/* C_50 */
 		0,	/* C_75 */
@@ -138,14 +139,14 @@ int	Card_no,		/* Card number for current move		*/
 		0	/* C_INIT */
 	};
 
-CARD	Discard,		/* Top of discard pile			*/
-	Sh_discard,		/* Last discard card shown		*/
-	*Topcard,		/* Pointer to next card to be picked	*/
-	Opposite[NUM_CARDS] = {	/* Opposites of each card		*/
+const CARD	Opposite[NUM_CARDS] = {	/* Opposites of each card	*/
 		C_25, C_50, C_75, C_100, C_200, C_GAS, C_SPARE,
 		C_REPAIRS, C_GO, C_END_LIMIT, C_EMPTY, C_FLAT, C_CRASH,
 		C_STOP, C_LIMIT, C_EMPTY, C_FLAT, C_CRASH, C_STOP, C_INIT
-	},
+	};
+CARD	Discard,		/* Top of discard pile			*/
+	Sh_discard,		/* Last discard card shown		*/
+	*Topcard,		/* Pointer to next card to be picked	*/
 	Deck[DECK_SZ] = {	/* Current deck				*/
 		C_25, C_25, C_25, C_25, C_25, C_25, C_25, C_25, C_25, C_25,
 		C_50, C_50, C_50, C_50, C_50, C_50, C_50, C_50, C_50, C_50,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 1998/09/22 04:08:24 pjanzen Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: print.c,v 1.4 1995/03/24 05:02:02 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.3 1998/09/22 04:08:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ prboard()
 		show_card(14, temp, pp->battle, &pp->sh_battle);
 		show_card(16, temp, pp->speed, &pp->sh_speed);
 		for (i = C_25; i <= C_200; i++) {
-			char	*name;
+			const char	*name;
 			int	end;
 
 			if (pp->nummiles[i] == pp->sh_nummiles[i])

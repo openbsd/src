@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.3 1998/09/22 04:08:23 pjanzen Exp $	*/
+/*	$OpenBSD: mille.h,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -161,11 +161,6 @@
 # ifdef	SYSV
 # define	srandom(x)	srand(x)
 # define	random()	rand()
-
-# ifndef	attron
-#	define	erasechar()	_tty.c_cc[VERASE]
-#	define	killchar()	_tty.c_cc[VKILL]
-# endif
 # endif		/* SYSV */
 
 typedef struct {
@@ -213,13 +208,15 @@ typedef struct {
 
 extern bool	Debug, Finished, Next, On_exit, Order, Saved;
 
-extern char	*C_fmt, **C_name, *Fromfile, Initstr[];
+extern char	Initstr[], *C_fmt;
+extern const char	*const *C_name, *Fromfile;
 
-extern int	Card_no, End, Handstart, Movetype, Numcards[], Numgos,
-		Numneed[], Numseen[NUM_CARDS], Play, Value[], Window;
+extern int	Card_no, End, Handstart, Movetype, Numgos,
+		Numneed[], Numseen[NUM_CARDS], Play, Window;
+extern const int	Numcards[], Value[];
 
-extern CARD	Deck[DECK_SZ], Discard, Opposite[NUM_CARDS], Sh_discard,
-		*Topcard;
+extern CARD	Deck[DECK_SZ], Discard, Sh_discard, *Topcard;
+extern const CARD	Opposite[NUM_CARDS];
 
 extern FILE	*outf;
 
@@ -233,7 +230,7 @@ extern WINDOW	*Board, *Miles, *Score;
 
 void	account __P((CARD));
 void	calcmove __P((void));
-int	canplay __P((PLAY *, PLAY *, CARD));
+int	canplay __P((const PLAY *, const PLAY *, CARD));
 int	check_ext __P((bool));
 void	check_go __P((void));
 void	check_more __P((void));
@@ -244,19 +241,19 @@ void	finalscore __P((PLAY *));
 CARD	getcard __P((void));
 void	getmove __P((void));
 int	getyn __P((int));
-int	haspicked __P((PLAY *));
+int	haspicked __P((const PLAY *));
 void	init __P((void));
 int	isrepair __P((CARD));
 int	main __P((int, char **));
 void	newboard __P((void));
 void	newscore __P((void));
-int	onecard __P((PLAY *));
+int	onecard __P((const PLAY *));
 int	playcard __P((PLAY *));
 void	prboard __P((void));
 void	prompt __P((int));
-void	prscore __P((int));
+void	prscore __P((bool));
 int	readch __P((void));
-bool	rest_f __P((char *));
+bool	rest_f __P((const char *));
 int	roll __P((int, int));
 void	rub __P((int));
 int	safety __P((CARD));

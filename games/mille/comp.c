@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp.c,v 1.2 1998/09/22 04:08:21 pjanzen Exp $	*/
+/*	$OpenBSD: comp.c,v 1.3 1999/09/25 15:52:19 pjanzen Exp $	*/
 /*	$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: comp.c,v 1.2 1998/09/22 04:08:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: comp.c,v 1.3 1999/09/25 15:52:19 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -408,7 +408,7 @@ play_it:
  */
 int
 onecard(pp)
-	PLAY	*pp;
+	const PLAY	*pp;
 {
 	CARD	bat, spd, card;
 
@@ -441,7 +441,7 @@ onecard(pp)
 
 int
 canplay(pp, op, card)
-	PLAY	*pp, *op;
+	const PLAY	*pp, *op;
 	CARD	card;
 {
 	switch (card) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.5 1998/08/19 07:40:52 pjanzen Exp $	*/
+/*	$OpenBSD: primes.c,v 1.6 1999/09/25 15:52:20 pjanzen Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -45,9 +45,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)primes.c	8.4 (Berkeley) 3/21/94";
+static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.5 1998/08/19 07:40:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.6 1999/09/25 15:52:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,16 +98,16 @@ char table[TABSIZE];	 /* Eratosthenes sieve of odd numbers */
  * We are able to sieve 2^32-1 because this byte table yields all primes 
  * up to 65537 and 65537^2 > 2^32-1.
  */
-extern ubig prime[];
-extern ubig *pr_limit;		/* largest prime in the prime array */
+extern const ubig prime[];
+extern const ubig *pr_limit;		/* largest prime in the prime array */
 
 /*
  * To avoid excessive sieves for small factors, we use the table below to 
  * setup our sieve blocks.  Each element represents a odd number starting 
  * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
  */
-extern char pattern[];
-extern int pattern_size;	/* length of pattern array */
+extern const char pattern[];
+extern const int pattern_size;	/* length of pattern array */
 
 void	primes __P((ubig, ubig));
 ubig	read_num_buf __P((void));
@@ -229,11 +229,11 @@ primes(start, stop)
 	ubig start;	/* where to start generating */
 	ubig stop;	/* don't generate at or above this value */
 {
-	register char *q;		/* sieve spot */
-	register ubig factor;		/* index and factor */
-	register char *tab_lim;		/* the limit to sieve on the table */
-	register ubig *p;		/* prime table pointer */
-	register ubig fact_lim;		/* highest prime for current block */
+	char *q;		/* sieve spot */
+	ubig factor;		/* index and factor */
+	char *tab_lim;		/* the limit to sieve on the table */
+	const ubig *p;		/* prime table pointer */
+	ubig fact_lim;		/* highest prime for current block */
 
 	/*
 	 * A number of systems can not convert double values into unsigned
