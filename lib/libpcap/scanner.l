@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.10 2000/06/29 06:56:13 dugsong Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.11 2001/07/06 23:52:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,13 +24,14 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.10 2000/06/29 06:56:13 dugsong Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.11 2001/07/06 23:52:24 millert Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 
 #include <ctype.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "pcap-int.h"
