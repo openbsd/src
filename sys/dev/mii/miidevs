@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.16 2001/04/11 04:41:42 jason Exp $
+$OpenBSD: miidevs,v 1.17 2001/04/11 05:45:58 deraadt Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -99,6 +99,9 @@ model xxALTIMA AC101		0x0021 AC101 10/100 media interface
 model BROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
 model BROADCOM BCM5201		0x0021 BCM5201 10/100 media interface
 model xxBROADCOM BCM5400	0x0004 BCM5400 1000baseTX PHY
+model BROADCOM BCM5400		0x0004 BCM5400 1000baseTX PHY
+model BROADCOM BCM5401		0x0005 BCM5401 1000baseTX PHY
+model BROADCOM BCM5411		0x0007 BCM5411 1000baseTX PHY
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
