@@ -1,4 +1,4 @@
-/*	$OpenBSD: simm13.c,v 1.3 2003/08/19 05:49:22 jason Exp $	*/
+/*	$OpenBSD: simm13.c,v 1.4 2003/08/19 19:17:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -62,10 +62,20 @@ gen_simm(u_int32_t *p, int imm)
 int64_t
 a_popc_imm(void *v, int i)
 {
-	int (*func)(void) = v;
+	int64_t (*func)(void) = v, r;
 
+	if (mprotect(v, 2 * sizeof(union instr), PROT_READ|PROT_WRITE) == -1)
+		err(1, "mprotect");
 	gen_simm(v, i);
-	return ((*func)());
+
+	if (mprotect(v, 2 * sizeof(union instr), PROT_EXEC) == -1)
+		err(1, "mprotect");
+	r = (*func)();
+
+	if (mprotect(v, 2 * sizeof(union instr), PROT_NONE) == -1)
+		err(1, "mprotect");
+
+	return (r);
 }
 
 int64_t
@@ -86,8 +96,7 @@ main()
 	int i, a, c;
 	int r = 0;
 
-	v = mmap(NULL, 2 * sizeof(union instr), PROT_WRITE|PROT_EXEC|PROT_READ,
-	    MAP_ANON, -1, 0);
+	v = mmap(NULL, 2 * sizeof(union instr), PROT_NONE, MAP_ANON, -1, 0);
 	if (v == MAP_FAILED)
 		err(1, "mmap");
 
