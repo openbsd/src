@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.32 2002/11/21 22:13:20 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.33 2003/03/28 16:58:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.32 2002/11/21 22:13:20 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.33 2003/03/28 16:58:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,8 @@ main(argc, argv)
 	if (**argv != '/')
 		errx(1, "%s must be specified as an absolute path", *argv);
 
-	pname = strdup(changedir(*argv, basedir));
+	if ((pname = strdup(changedir(*argv, basedir))) == NULL)
+		err(1, NULL);
 	/* Open the original password file */
 	if (!(fp = fopen(pname, "r")))
 		error(pname);
