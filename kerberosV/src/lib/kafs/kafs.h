@@ -175,12 +175,10 @@ krb5_error_code krb5_realm_of_cell __P((const char *cell, char **realm));
 
 #endif
 
-#if 0
-#define _PATH_VICE		"/usr/vice/etc/"
+#define _PATH_VICE		"/etc/afs/"
 #define _PATH_THISCELL 		_PATH_VICE "ThisCell"
 #define _PATH_CELLSERVDB 	_PATH_VICE "CellServDB"
 #define _PATH_THESECELLS	_PATH_VICE "TheseCells"
-#endif
 
 #define _PATH_ARLA_VICE		"/etc/afs/"
 #define _PATH_ARLA_THISCELL	_PATH_ARLA_VICE "ThisCell"
