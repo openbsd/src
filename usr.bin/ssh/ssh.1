@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.80 2001/01/29 12:36:10 djm Exp $
+.\" $OpenBSD: ssh.1,v 1.81 2001/02/03 10:19:50 markus Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -914,8 +914,9 @@ RSA authentication will only be
 attempted if the identity file exists, or an authentication agent is
 running.
 Note that this option applies to protocol version 1 only.
-.It Cm SkeyAuthentication
-Specifies whether to use
+.It Cm ChallengeResponseAuthentication
+Specifies whether to use challenge response authentication.
+Currently there is only support for
 .Xr skey 1
 authentication.
 The argument to this keyword must be
