@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.5 2001/10/05 17:45:10 nate Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.6 2002/04/08 20:55:29 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/mii/brgphyreg.h,v 1.3 2001/09/25 16:41:56 wpaul Exp $
+ * $FreeBSD: brgphyreg.h,v 1.4 2001/09/27 17:32:49 wpaul Exp $
  */
 
 #ifndef _DEV_MII_BRGPHYREG_H_

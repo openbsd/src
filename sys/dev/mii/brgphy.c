@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.9 2002/04/02 17:24:24 drahn Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.10 2002/04/08 20:55:29 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/mii/brgphy.c,v 1.5 2001/09/18 00:31:19 wpaul Exp $
+ * $FreeBSD: brgphy.c,v 1.8 2002/03/22 06:38:52 wpaul Exp $
  */
 
 /*
@@ -82,10 +82,10 @@ int brgphy_probe(parent, match, aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxBROADCOM &&
 	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5400 ||
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5421S ||
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5400 ||
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5401 ||
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5411))
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5401 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5411 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5421S ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701))
 		return(10);
 
 	return(0);
@@ -110,6 +110,8 @@ brgphy_attach(parent, self, aux)
 		model = MII_STR_BROADCOM_BCM5411;
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5421S)
 		model = MII_STR_xxBROADCOM_BCM5421S;
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701)
+		model = MII_STR_xxBROADCOM_BCM5701;
 
 	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
