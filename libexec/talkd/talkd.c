@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.12 2002/06/21 02:28:32 millert Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.13 2002/07/03 16:59:05 vincent Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.12 2002/06/21 02:28:32 millert Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.13 2002/07/03 16:59:05 vincent Exp $";
 #endif /* not lint */
 
 /*
@@ -79,8 +79,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	if (getuid()) {
-		fprintf(stderr, "%s: getuid: not super-user", argv[0]);
+	if (getuid() != 0) {
+		fprintf(stderr, "%s: getuid: not super-user\n", argv[0]);
 		exit(1);
 	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
