@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2002/11/26 04:40:34 nate Exp $
+dnl	$OpenBSD: hardware,v 1.30 2002/12/13 09:20:23 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -77,19 +77,20 @@ Supported hardware:
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
 
-    AlphaStation 500 and 600
-	  Supported devices:
-		Built-in serial and parallel ports.
-		Built-in DEC21040 ethernet.
-		Built-in ISP SCSI.
-		PCI graphics card (TGA or VGA compatible).
-		Most PCI devices (see below).
-		Some ISA and EISA devices (see below).
-	  Unsupported devices:
-		Floppy drive.
-		Built-in audio.
-		ISA and EISA devices that require DMA operation.
-
+dnl uncomment when support is back on track
+dnl    AlphaStation 500 and 600
+dnl	  Supported devices:
+dnl		Built-in serial and parallel ports.
+dnl		Built-in DEC21040 ethernet.
+dnl		Built-in ISP SCSI.
+dnl		PCI graphics card (TGA or VGA compatible).
+dnl		Most PCI devices (see below).
+dnl		Some ISA and EISA devices (see below).
+dnl	  Unsupported devices:
+dnl		Floppy drive.
+dnl		Built-in audio.
+dnl		ISA and EISA devices that require DMA operation.
+dnl
     AlphaStation 200, 250, 255 and 400
 	  Supported devices:
 		Built-in serial and parallel ports.
@@ -145,8 +146,12 @@ Supported hardware:
     At this time none of the following systems are supported:
 	API UP2000, UP2000+ (mostly because we don't have any to test on)
 	DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
-	AlphaServer systems, other than models 400 and 500, which seem to
+dnl update when AS400/500 support is back
+dnl	AlphaServer systems, other than models 400 and 500, which seem to
+dnl	  be disguised AlphaStation machines
+	AlphaServer systems, other than model 400, which seem to
 	  be disguised AlphaStation machines
+	AlphaStation 500 and 600
 	Alpha XL systems
 	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus based)
 	EB64+ based systems

@@ -4,7 +4,8 @@ OpenBSDfloppy
 				This floppy image will boot on the following
 				MACHINE models:
 				- AlphaStation 200, 250, 255, 400
-				- AlphaStation 500, 600
+dnl uncomment when it works again
+dnl				- AlphaStation 500, 600
 				- AlphaServer 800, 1000, 1000A
 				- AXPpci33 based machines, including
 				  ``Noname'', UDB, Multia
