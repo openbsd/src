@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.91 2004/09/23 22:55:06 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.92 2004/11/09 23:20:18 pedro Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.91 2004/09/23 22:55:06 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.92 2004/11/09 23:20:18 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -1118,8 +1118,7 @@ dopool_sysctl(void)
 	mib[2] = KERN_POOL_NPOOLS;
 	size = sizeof(npools);
 	if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
-		printf("Can't figure out number of pools in kernel: %s\n",
-			strerror(errno));
+		warn("can't figure out number of pools in kernel");
 		return;
 	}
 
@@ -1134,15 +1133,14 @@ dopool_sysctl(void)
 		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
 			if (errno == ENOENT)
 				continue;
-			printf("error getting pool: %s\n", strerror(errno));
+			warn("error getting pool");
 			return;
 		}
 		npools--;
 		mib[2] = KERN_POOL_NAME;
 		size = sizeof(name);
 		if (sysctl(mib, 4, &name, &size, NULL, 0) < 0) {
-			printf("error getting pool name: %s\n",
-				strerror(errno));
+			warn("error getting pool name");
 			return;
 		}
 		print_pool(&pool, name);
