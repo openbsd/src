@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.6 1998/01/24 18:21:40 mickey Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.7 1999/02/04 16:05:02 deraadt Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ struct	udpstat {
 	u_long	udps_ipackets;		/* total input packets */
 	u_long	udps_hdrops;		/* packet shorter than header */
 	u_long	udps_badsum;		/* checksum error */
+	u_long	udps_nosum;		/* no checksum */
 	u_long	udps_badlen;		/* data length larger than packet */
 	u_long	udps_noport;		/* no socket on port */
 	u_long	udps_noportbcast;	/* of above, arrived as broadcast */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.21 1999/01/15 12:01:07 niklas Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.22 1999/02/04 16:05:02 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -237,13 +237,13 @@ udp_input(m, va_alist)
 	savesum = uh->uh_sum;
 #ifdef INET6
 	if (ipv6) {
-	  /*
-	   * In IPv6, the UDP checksum is ALWAYS used.
-	   */
-	  if ((uh->uh_sum = in6_cksum(m, IPPROTO_UDP, len, iphlen))) {
-	    udpstat.udps_badsum++;
-	    goto bad;
-	  }
+		/*
+		 * In IPv6, the UDP checksum is ALWAYS used.
+		 */
+		if ((uh->uh_sum = in6_cksum(m, IPPROTO_UDP, len, iphlen))) {
+			udpstat.udps_badsum++;
+			goto bad;
+		}
 	} else
 #endif /* INET6 */
 	if (uh->uh_sum) {
@@ -255,7 +255,8 @@ udp_input(m, va_alist)
 			m_freem(m);
 			return;
 		}
-	}
+	} else
+		udpstat.udps_nosum++;
 
 	switch (srcsa.sa.sa_family) {
 	  case AF_INET:

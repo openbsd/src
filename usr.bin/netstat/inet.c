@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.26 1998/11/30 03:57:15 provos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.27 1999/02/04 16:05:03 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.26 1998/11/30 03:57:15 provos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.27 1999/02/04 16:05:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,7 @@ udp_stats(off, name)
 	p(udps_hdrops, "\t%lu with incomplete header\n");
 	p(udps_badlen, "\t%lu with bad data length field\n");
 	p(udps_badsum, "\t%lu with bad checksum\n");
+	p(udps_nosum, "\t%lu with no checksum\n");
 	p(udps_noport, "\t%lu dropped due to no socket\n");
 	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
 	p(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
