@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.92 2001/05/29 01:03:01 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.93 2001/05/29 01:12:27 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -292,6 +292,10 @@ struct tdb				/* tunnel descriptor block */
     u_int64_t         tdb_soft_first_use; /* Soft warning */
     u_int64_t         tdb_exp_first_use;  /* Expire if tdb_first_use +
 					   * tdb_exp_first_use <= curtime */
+
+    u_int64_t         tdb_last_used;    /* When was this SA last used */
+    u_int64_t         tdb_last_marked;  /* Last SKIPCRYPTO status change */
+
     u_int64_t         tdb_cryptoid;     /* Crypto session ID */
 
     u_int32_t	      tdb_spi;    	/* SPI */
