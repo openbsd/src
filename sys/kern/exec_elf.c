@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.10 1996/06/10 03:39:06 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.11 1996/06/15 07:30:05 etheisen Exp $	*/
 /*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
@@ -185,40 +185,32 @@ elf_copyargs(pack, arginfo, stack, argp)
 /*
  * elf_check_header():
  *
- * Check header for validity; return 0 of ok ENOEXEC if error
- *
- * XXX machine type needs to be moved to <machine/param.h> so
- * just one comparison can be done. Unfortunately, there is both
- * em_486 and em_386, so this would not work on the i386.
+ * Check header for validity; return 0 for ok, ENOEXEC if error
  */
 int
-elf_check_header(eh, type)
-	Elf32_Ehdr *eh;
+elf_check_header(ehdr, type)
+	Elf32_Ehdr *ehdr;
 	int type;
 {
+        /*
+	 * We need to check magic, class size, endianess,
+	 * and version before we look at the rest of the
+	 * Elf32_Ehdr structure.  These few elements are
+	 * represented in a machine independant fashion.
+	 */
+	if (!IS_ELF(*ehdr) ||
+	    ehdr->e_ident[EI_CLASS] != ELF_TARG_CLASS ||
+	    ehdr->e_ident[EI_DATA] != ELF_TARG_DATA ||
+	    ehdr->e_ident[EI_VERSION] != ELF_TARG_VER)
+                return ENOEXEC;
+        
+        /* Now check the machine dependant header */
+	if (ehdr->e_machine != ELF_TARG_MACH ||
+	    ehdr->e_version != ELF_TARG_VER)
+                return ENOEXEC;
 
-	if (!IS_ELF(eh[0]))
-		return ENOEXEC;
-
-	switch (eh->e_machine) {
-	/* XXX */
-#ifdef i386
-	case EM_386:
-	case EM_486:
-#endif
-#ifdef sparc
-	case EM_SPARC:
-#endif
-#ifdef mips
-	case EM_MIPS:
-#endif
-		break;
-
-	default:
-		return ENOEXEC;
-	}
-
-	if (eh->e_type != type)
+        /* Check the type */
+	if (ehdr->e_type != type)
 		return ENOEXEC;
 
 	return 0;
