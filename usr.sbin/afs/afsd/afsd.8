@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afsd.8,v 1.8 2000/03/19 17:56:59 aaron Exp $
+.\"	$OpenBSD: afsd.8,v 1.9 2000/03/29 21:43:05 deraadt Exp $
 .\"
 .Dd September 5, 1998
 .Dt AFSD 8
@@ -139,7 +139,11 @@ file system.
 When enough memory is available this could be a mfs to
 drastically improve performance.
 .Sh SEE ALSO
-.Xr mount_xfs 8
+.Xr afsd 8 ,
+.Xr mount_xfs 8 ,
+.Xr vos 8 ,
+.Xr fs 1 ,
+.Xr pts 1
 .Sh BUGS
 This code is still in the experimental stage and some bugs are present.
 If
