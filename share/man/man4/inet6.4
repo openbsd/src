@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.10 2000/04/17 05:00:49 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.11 2000/05/28 18:27:15 deraadt Exp $
 .\"	$KAME: inet6.4,v 1.9 2000/04/14 09:30:11 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -149,7 +149,7 @@ you can specify outgoing interface by extra command line option
 to disambiguate scoped addresses.
 .Pp
 Scoped addresses are handled specially in the kernel.
-In the kenrel structures like routing tables or interface structure,
+In the kernel structures like routing tables or interface structure,
 scoped addresses will have its interface index embedded into the address.
 Therefore,
 the address on some of the kernel structure is not the same as that on the wire.
