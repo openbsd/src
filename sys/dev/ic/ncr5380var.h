@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380var.h,v 1.6 2001/08/08 21:15:42 miod Exp $	*/
+/*	$OpenBSD: ncr5380var.h,v 1.7 2001/09/20 23:30:29 miod Exp $	*/
 /*	$NetBSD: ncr5380var.h,v 1.6 1996/05/10 18:04:06 gwr Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ struct sci_req {
 #define	SR_OVERDUE			4	/* Timeout while not current */
 #define	SR_ERROR			8	/* Error occurred */
 	int		sr_status;		/* Status code from last cmd */
+
+	struct timeout	sr_timeout;
 };
 #define	SCI_OPENINGS	16		/* How many commands we can enqueue. */
 
@@ -166,8 +168,6 @@ struct ncr5380_softc {
 	u_char	*sc_omp;		/* Outgoing message pointer */
 	u_char	sc_imess[NCR_MAX_MSG_LEN];
 	u_char	*sc_imp;		/* Incoming message pointer */
-
-	struct timeout sc_timeout;
 };
 
 void	ncr5380_init __P((struct ncr5380_softc *));

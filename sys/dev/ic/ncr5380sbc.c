@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.11 2001/08/08 21:15:42 miod Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.12 2001/09/20 23:30:29 miod Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -356,13 +356,17 @@ ncr5380_init(sc)
 	struct ncr5380_softc *sc;
 {
 	int i, j;
+	struct sci_req *sr;
 
 #ifdef	NCR5380_DEBUG
 	ncr5380_debug_sc = sc;
 #endif
 
-	for (i = 0; i < SCI_OPENINGS; i++)
-		sc->sc_ring[i].sr_xs = NULL;
+	for (i = 0; i < SCI_OPENINGS; i++) {
+		sr = &sc->sc_ring[i];
+		sr->sr_xs = NULL;
+		timeout_set(&sr->sr_timeout, ncr5380_cmd_timeout, sr);
+	}
 	for (i = 0; i < 8; i++)
 		for (j = 0; j < 8; j++)
 			sc->sc_matrix[i][j] = NULL;
@@ -802,7 +806,7 @@ finish:
 	/* Clear our pointers to the request. */
 	sc->sc_current = NULL;
 	sc->sc_matrix[sr->sr_target][sr->sr_lun] = NULL;
-	timeout_del(&sc->sc_timeout);
+	timeout_del(&sr->sr_timeout);
 
 	/* Make the request free. */
 	sr->sr_xs = NULL;
@@ -1041,8 +1045,7 @@ next_job:
 	if ((sr->sr_flags & SR_IMMED) == 0) {
 		i = (xs->timeout * hz) / 1000;
 		NCR_TRACE("sched: set timeout=%d\n", i);
-		timeout_set(&sc->sc_timeout, ncr5380_cmd_timeout, sr);
-		timeout_add(&sc->sc_timeout, i);
+		timeout_add(&sr->sr_timeout, i);
 	}
 
 have_nexus:
