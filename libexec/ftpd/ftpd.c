@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.135 2002/08/20 18:18:55 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.136 2002/08/29 22:52:00 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.135 2002/08/20 18:18:55 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.136 2002/08/29 22:52:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1778,7 +1778,7 @@ statcmd()
 	char hbuf[MAXHOSTNAMELEN];
 	int ispassive;
 
-	lreply(211, "%s FTP server status:", hostname, version);
+	lreply(211, "%s FTP server status:", hostname);
 	printf("     %s\r\n", version);
 	getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
