@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uucplock.c,v 1.1 1997/11/09 00:29:15 bri Exp $
+ * $Id: uucplock.c,v 1.2 1997/11/09 04:05:33 bri Exp $
  *
  */
 
@@ -187,7 +187,13 @@ put_pid(fd, pid)
 	int len;
 
 	len = sprintf (buf, "%10d\n", pid);
-	return write (fd, buf, len) == len && ftruncate(fd, len);
+
+	if (write (fd, buf, len) == len) {
+		/* We don't mind too much if ftruncate() fails - see get_pid */
+		ftruncate(fd, len);
+		return 1;
+	}
+	return 0;
 }
 
 static pid_t
