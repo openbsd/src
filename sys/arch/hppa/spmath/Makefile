@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2000/01/11 21:26:24 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/01/11 21:32:57 mickey Exp $
 
 LIB=	spmath
 NOPIC=
-
-CPPFLAGS+=-I../..
 
 SRCS=	dfadd.c dfcmp.c dfdiv.c dfmpy.c dfrem.c dfsqrt.c dfsub.c divsfm.c \
 	divsfr.c divsim.c divsir.c divu.S divufr.c divuir.c fcnvff.c fcnvfx.c \
@@ -26,7 +24,6 @@ ${LIB}.o:: ${OBJS}
 	@rm -f ${LIB}.o
 	@${LD} -r -o ${LIB}.o `${LORDER} ${OBJS} | tsort`
 
-POBJS+=	${OBJS:.o=.po} mcount.po
 ${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f ${LIB}.po
