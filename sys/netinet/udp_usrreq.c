@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.96 2003/12/21 14:57:19 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.97 2004/01/07 09:56:13 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -881,7 +881,7 @@ udp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (ip) {
 		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&udbtable, sa, uhp->uh_dport, ip->ip_src,
+		(void) in_pcbnotify(&udbtable, sa, uhp->uh_dport, ip->ip_src,
 		    uhp->uh_sport, errno, notify);
 	} else
 		in_pcbnotifyall(&udbtable, sa, errno, notify);
