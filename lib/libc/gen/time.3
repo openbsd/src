@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time.3,v 1.6 1999/06/04 01:30:11 aaron Exp $
+.\"	$OpenBSD: time.3,v 1.7 1999/07/31 03:55:49 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,9 +63,7 @@ Upon successful completion,
 .Fn time
 returns the value of time.
 Otherwise a value of
-.Po
-.Fa time_t No - 1
-.Pc
+.Po Fa time_t Pc Ns -1
 is returned and the global variable
 .Va errno
 is set to indicate the error.
