@@ -8,10 +8,9 @@
 #		-Initial cut for pthreads.
 #
 
-CDEBUGFLAGS = -g -O2 -Werror
 INCLUDES= -I/usr/include/pthread
-CFLAGS = $(CDEBUGFLAGS) $(INCLUDES) -DSRCDIR="\"${.CURDIR}\""
-LIBS = -static -lm -lgcc -L${.CURDIR}/../obj.${MACHINE}/ -lpthread
+CFLAGS = -O2 -g -Werror $(INCLUDES) -DSRCDIR="\"${.CURDIR}\""
+LDFLAGS = -static -lm -lgcc -L../obj.${MACHINE}/ -lpthread
 
 # This list used to include test_select, but that test doesn't terminate.
 TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \
@@ -23,7 +22,16 @@ TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \
 BENCHMARKS = p_bench_read p_bench_mutex p_bench_yield \
 	p_bench_getpid p_bench_pthread_create
 
+OBJS= ${TESTS:=.o}
+BOBJS= ${BENCHMARKS:=.o}
+
 all : $(TESTS) $(BENCHMARKS)
+
+${TESTS}: ${OBJS}
+	${CC} ${CFLAGS} -o ${.TARGET} ${.TARGET:=.o} ${LDFLAGS}
+
+${BENCHMARKS}: ${BOBJS}
+	${CC} ${CFLAGS} -o ${.TARGET} ${.TARGET:=.o} ${LDFLAGS}
 
 check : $(TESTS)
 	set -e ; \
@@ -31,11 +39,6 @@ check : $(TESTS)
 	  echo Running test $$i ... ; \
 	  ./$$i ; \
 	done
-
-# More flags
-ADDITIONALFLAGS = -DPTHREAD_INITIAL_PORT
-################################################################################
-#
 
 clean: 
 	rm -f *.o $(TESTS) $(BENCHMARKS) a.out core maketmp makeout
@@ -45,114 +48,77 @@ depend:
 	(for i in $(CSRC);do $(CPP) -M $$i;done) >> maketmp
 	cp maketmp Makefile
 
-install:
-
-realclean: clean
-	rm -f Makefile
-
-.c.o:
-	$(CC) $(CFLAGS) -c $<
-
-Makefile: Makefile.in
-	(cd .. ; sh config.status)
-
-test_create : test_create.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_create test_create.o $(LIBS)
-
-test_pthread_join : test_pthread_join.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_pthread_join test_pthread_join.o $(LIBS)
-
-test_switch : test_switch.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_switch test_switch.o $(LIBS)
-
-test_sleep : test_sleep.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_sleep test_sleep.o $(LIBS)
-
-test_readdir : test_readdir.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_readdir test_readdir.o $(LIBS)
-
-test_fork : test_fork.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_fork test_fork.o $(LIBS)
-
-test_execve : test_execve.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_execve test_execve.o $(LIBS)
-
-test_preemption : test_preemption.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_preemption test_preemption.o $(LIBS)
-
-test_preemption_float : test_preemption_float.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_preemption_float test_preemption_float.o $(LIBS)
-
-test_stdio_1 : test_stdio_1.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_stdio_1 test_stdio_1.o $(LIBS)
-
-test_sock_1 : test_sock_1.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_sock_1 test_sock_1.o $(LIBS)
-
-test_sock_2 : test_sock_2a test_sock_2.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_sock_2 test_sock_2.o $(LIBS)
-
-test_sock_2a : test_sock_2a.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_sock_2a test_sock_2a.o $(LIBS)
-
-test_pthread_mutex : test_pthread_mutex.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_pthread_mutex test_pthread_mutex.o $(LIBS)
-
-test_pthread_cond_timedwait : test_pthread_cond_timedwait.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_pthread_cond_timedwait test_pthread_cond_timedwait.o $(LIBS)
-
-test_netdb : test_netdb.o ../libpthread.a
-	$(CC) $(CFLAGS) -o test_netdb test_netdb.o $(LIBS)
-
-test_select : test_select.o ../obj/libpthread.a
-	$(CC) $(CFLAGS) -o test_select test_select.o $(LIBS)
-
-test_pw : test_pw.o ../obj/libpthread.a
-	$(CC) $(CFLAGS) -o test_pw test_pw.o $(LIBS)
-
-test_cwd : test_cwd.o ../obj/libpthread.a
-	$(CC) $(CFLAGS) -o test_cwd test_cwd.o $(LIBS)
-
-p_bench_read : p_bench_read.o ../libpthread.a
-	$(CC) $(CFLAGS) -o p_bench_read p_bench_read.o $(LIBS)
-
-p_bench_semaphore : p_bench_semaphore.o ../libpthread.a
-	$(CC) $(CFLAGS) -o p_bench_semaphore p_bench_semaphore.o $(LIBS)
-
-p_bench_mutex : p_bench_mutex.o ../libpthread.a
-	$(CC) $(CFLAGS) -o p_bench_mutex p_bench_mutex.o $(LIBS)
-
-p_bench_yield : p_bench_yield.o ../libpthread.a
-	$(CC) $(CFLAGS) -o p_bench_yield p_bench_yield.o $(LIBS)
-
-p_bench_getpid : p_bench_getpid.o ../libpthread.a
-	$(CC) $(CFLAGS) -o p_bench_getpid p_bench_getpid.o $(LIBS)
-
-p_bench_pthread_create : p_bench_pthread_create.o ../libpthread.a
-	$(CC) $(CFLAGS) -o p_bench_pthread_create p_bench_pthread_create.o $(LIBS)
-
-test_create.o : test_create.c
-test_pthread_join.o : test_pthread_join.c
-test_switch.o : test_switch.c
-test_sleep.o : test_sleep.c
-test_readdir.o : test_readdir.c
-test_fork.o : test_fork.c
-test_execve.o : test_execve.c
-test_preemption.o : test_preemption.c
-test_preemption_float.o : test_preemption_float.c
-test_sock_1.o : test_sock_1.c
-test_sock_2.o : test_sock_2.c
-test_sock_3.o : test_sock_3.c
-test_stdio_1.o : test_stdio_1.c
-test_pthread_mutex.o : test_pthread_mutex.c
-test_pthread_cond_timedwait.o : test_pthread_cond_timedwait.c
-p_bench_read.o : p_bench_read.c
-p_bench_semaphore.o : p_bench_semaphore.c
-p_bench_mutex.o : p_bench_mutex.c
-p_bench_yield.o : p_bench_yield.c
-p_bench_getpid.o : p_bench_getpid.c
-p_bench_pthread_create.o : p_bench_pthread_create.c
-
-################################################################################
-### Do not remove the following line. It is for depend #########################
-### Dependencies:
+#test_create : test_create.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_create test_create.o $(LIBS)
+#
+#test_pthread_join : test_pthread_join.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_pthread_join test_pthread_join.o $(LIBS)
+#
+#test_switch : test_switch.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_switch test_switch.o $(LIBS)
+#
+#test_sleep : test_sleep.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_sleep test_sleep.o $(LIBS)
+#
+#test_readdir : test_readdir.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_readdir test_readdir.o $(LIBS)
+#
+#test_fork : test_fork.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_fork test_fork.o $(LIBS)
+#
+#test_execve : test_execve.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_execve test_execve.o $(LIBS)
+#
+#test_preemption : test_preemption.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_preemption test_preemption.o $(LIBS)
+#
+#test_preemption_float : test_preemption_float.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_preemption_float test_preemption_float.o $(LIBS)
+#
+#test_stdio_1 : test_stdio_1.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_stdio_1 test_stdio_1.o $(LIBS)
+#
+#test_sock_1 : test_sock_1.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_sock_1 test_sock_1.o $(LIBS)
+#
+#test_sock_2 : test_sock_2a test_sock_2.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_sock_2 test_sock_2.o $(LIBS)
+#
+#test_sock_2a : test_sock_2a.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_sock_2a test_sock_2a.o $(LIBS)
+#
+#test_pthread_mutex : test_pthread_mutex.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_pthread_mutex test_pthread_mutex.o $(LIBS)
+#
+#test_pthread_cond_timedwait : test_pthread_cond_timedwait.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_pthread_cond_timedwait test_pthread_cond_timedwait.o $(LIBS)
+#
+#test_netdb : test_netdb.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o test_netdb test_netdb.o $(LIBS)
+#
+#test_select : test_select.o ../obj/libpthread.a
+#	$(CC) $(CFLAGS) -o test_select test_select.o $(LIBS)
+#
+#test_pw : test_pw.o ../obj/libpthread.a
+#	$(CC) $(CFLAGS) -o test_pw test_pw.o $(LIBS)
+#
+#test_cwd : test_cwd.o ../obj/libpthread.a
+#	$(CC) $(CFLAGS) -o test_cwd test_cwd.o $(LIBS)
+#
+#p_bench_read : p_bench_read.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o p_bench_read p_bench_read.o $(LIBS)
+#
+#p_bench_semaphore : p_bench_semaphore.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o p_bench_semaphore p_bench_semaphore.o $(LIBS)
+#
+#p_bench_mutex : p_bench_mutex.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o p_bench_mutex p_bench_mutex.o $(LIBS)
+#
+#p_bench_yield : p_bench_yield.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o p_bench_yield p_bench_yield.o $(LIBS)
+#
+#p_bench_getpid : p_bench_getpid.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o p_bench_getpid p_bench_getpid.o $(LIBS)
+#
+#p_bench_pthread_create : p_bench_pthread_create.o ../libpthread.a
+#	$(CC) $(CFLAGS) -o p_bench_pthread_create p_bench_pthread_create.o $(LIBS)

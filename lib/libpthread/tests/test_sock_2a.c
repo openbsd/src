@@ -31,33 +31,33 @@ void * sock_connect(void* arg)
 	a_sout.sin_addr.s_addr = htonl(0x7f000001); /* loopback */
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Error: sock_connect:socket()\n");
+		perror("Error: sock_connect:socket()");
 		exit(1);
 	}
 
 	printf("This should be message #2\n");
 	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
-		printf("Error: sock_connect:connect()\n");
+		perror("Error: sock_connect:connect()");
 		exit(1);
 	}
 	close(fd); 
 		
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Error: sock_connect:socket()\n");
+		perror("Error: sock_connect:socket()");
 		exit(1);
 	}
 
 	printf("This should be message #3\n");
 
 	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
-		printf("Error: sock_connect:connect()\n");
+		perror("Error: sock_connect:connect()");
 		exit(1);
 	}
 
 	/* Ensure sock_read runs again */
 
 	if ((tmp = read(fd, buf, 1024)) <= 0) {
-		printf("Error: sock_connect:read() == %d\n", tmp);
+		printf("Error: sock_connect:read() == %d %s\n", tmp, strerror(errno));
 		exit(1);
 	}
 	write(fd, MESSAGE6, sizeof(MESSAGE6));
@@ -76,7 +76,7 @@ main(int argc, char **argv)
 		setbuf(stderr, NULL);
 
 		if (pthread_create(&thread, NULL, sock_connect, (void *)0xdeadbeaf)) {
-			printf("Error: main:pthread_create(sock_connect)\n");
+			perror("Error: main:pthread_create(sock_connect)");
 			exit(1);
 		}
  		pthread_exit(NULL);

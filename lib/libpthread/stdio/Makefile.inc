@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.2 1998/07/21 16:28:45 peter Exp $
+#	$Id: Makefile.inc,v 1.3 1998/07/22 11:33:37 peter Exp $
 
 .PATH: ${.CURDIR}/stdio
 
@@ -7,7 +7,7 @@
 
 SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetline.c fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c \
-	fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c \
+	fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c \
 	fseek.c fsetpos.c ftell.c funopen.c fvwrite.c fwalk.c fwrite.c \
 	getc.c getchar.c gets.c getw.c makebuf.c perror.c putc.c \
 	putchar.c puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c \

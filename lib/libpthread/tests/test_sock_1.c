@@ -131,7 +131,7 @@ void * sock_accept(void* arg)
 	a_sin_size = sizeof(a_sin);
 	printf("This should be message #1\n");
 	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		printf("Error: sock_accept:accept()\n");
+		perror("Error: sock_accept:accept()");
 		exit(1);
 	}
 	

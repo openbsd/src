@@ -41,7 +41,7 @@ void * sock_accept(void* arg)
 	a_sout.sin_addr.s_addr = INADDR_ANY;
 
 	if ((a_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Error: sock_accept:socket()\n");
+		perror("Error: sock_accept:socket()");
 		exit(1);
 	}
 
@@ -50,19 +50,19 @@ void * sock_accept(void* arg)
 			a_sout.sin_port = htons((++port));
 			continue;
 		}
-		printf("Error: sock_accept:bind()\n");
+		perror("Error: sock_accept:bind()");
 		exit(1);
 	}
 
 	if (listen(a_fd, 2)) {
-		printf("Error: sock_accept:listen()\n");
+		perror("Error: sock_accept:listen()");
 		exit(1);
 	}
 		
 	a_sin_size = sizeof(a_sin);
 	printf("This should be message #1\n");
 	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		printf("Error: sock_accept:accept()\n");
+		perror("Error: sock_accept:accept()");
 		exit(1);
 	}
 	close(fd); 
@@ -72,18 +72,18 @@ void * sock_accept(void* arg)
 	memset(&a_sin, 0, sizeof(a_sin));
 	printf("This should be message #4\n");
 	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		printf("Error: sock_accept:accept()\n");
+		perror("Error: sock_accept:accept()");
 		exit(1);
 	}
 
 	/* Setup a write thread */
 	if (pthread_create(&thread, NULL, sock_write, &fd)) {
-		printf("Error: sock_accept:pthread_create(sock_write)\n");
+		perror("Error: sock_accept:pthread_create(sock_write)");
 		exit(1);
 	}
 	if ((tmp = read(fd, buf, 1024)) <= 0) {
 		tmp = read(fd, buf, 1024);
-		printf("Error: sock_accept:read() == %d\n", tmp);
+		printf("Error: sock_accept:read() == %d %s\n", tmp, strerror(errno));
 		exit(1);
 	}
 	printf("%s\n", buf);
@@ -97,7 +97,7 @@ main()
 
 	switch(fork()) {
 	case -1:
-		printf("Error: main:fork()\n");
+		perror("Error: main:fork()");
 		break;
 	case 0:
 		execl("test_sock_2a", "test_sock_2a", "fork okay", NULL);
@@ -109,7 +109,7 @@ main()
 	setbuf(stderr, NULL);
 
 	if (pthread_create(&thread, NULL, sock_accept, (void *)0xdeadbeaf)) {
-		printf("Error: main:pthread_create(sock_accept)\n");
+		perror("Error: main:pthread_create(sock_accept)");
 		exit(1);
 	}
 	pthread_exit(NULL);
