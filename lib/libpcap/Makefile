@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.8 1997/04/27 20:56:13 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 1998/02/26 13:49:51 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
 MAN=	pcap.3
 
-CFLAGS+=-I. -I${.CURDIR} -Dyylval=pcap_yylval -DHAVE_STRERROR
+CFLAGS+=-I. -I${.CURDIR} -Dyylval=pcap_yylval -DHAVE_STRERROR -DHAVE_ETHER_HOSTTON
 
 HDRS=	pcap.h pcap-namedb.h
 SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
