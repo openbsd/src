@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.69 2004/01/07 03:37:57 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.70 2004/01/07 04:13:02 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -387,12 +387,12 @@ struct kinfo_proc2 {
 	u_int64_t p_tracep;		/* PTR: Trace to vnode or file */
 	int32_t	p_traceflag;		/* INT: Kernel trace points. */
 
-	int32_t	p_holdcnt;              /* INT: If non-zero, don't swap. */
+	int32_t p_holdcnt;		/* INT: If non-zero, don't swap. */
 
 	int32_t p_siglist;		/* INT: Signals arrived but not delivered. */
-	int32_t p_sigmask;		/* INT: Current signal mask. */
-	int32_t p_sigignore;		/* INT: Signals being ignored. */
-	int32_t p_sigcatch;		/* INT: Signals being caught by user. */
+	u_int32_t p_sigmask;		/* SIGSET_T: Current signal mask. */
+	u_int32_t p_sigignore;		/* SIGSET_T: Signals being ignored. */
+	u_int32_t p_sigcatch;		/* SIGSET_T: Signals being caught by user. */
 
 	int8_t	p_stat;			/* CHAR: S* process status (from LWP). */
 	u_int8_t p_priority;		/* U_CHAR: Process priority. */
@@ -441,7 +441,7 @@ struct kinfo_proc2 {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
-	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
+	u_int64_t p_realflag;		/* INT: P_* flags (not including LWPs). */
 	u_int32_t p_svuid;		/* UID_T: saved user id */
 	u_int32_t p_svgid;		/* GID_T: saved group id */
 	char    p_emul[KI_EMULNAMELEN];	/* syscall emulation name */
