@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.19 2004/01/07 10:36:45 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.20 2004/01/07 11:58:21 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,7 @@ Batch mode is useful when running
 .Nm ex
 scripts.
 Prompts, informative messages and other user oriented messages are turned off,
-and no startup files or environmental variables are read.
+and no startup files or environment variables are read.
 This is the POSIX 1003.2 interface for the historic
 .Dq -
 argument.
@@ -2084,7 +2084,7 @@ The number of columns on the screen.
 This value overrides any system or terminal specific values.
 If the
 .Ev COLUMNS
-environmental variable is not set when
+environment variable is not set when
 .Nm ex Ns / Ns Nm vi
 runs, or the
 .Cm columns
@@ -2112,7 +2112,7 @@ The number of rows on the screen.
 This value overrides any system or terminal specific values.
 If the
 .Ev LINES
-environmental variable is not set when
+environment variable is not set when
 .Nm ex Ns / Ns Nm vi
 runs, or the
 .Cm lines
@@ -2133,7 +2133,7 @@ The default is the type
 .Dq unknown .
 If the
 .Ev TERM
-environmental variable is not set when
+environment variable is not set when
 .Nm ex Ns / Ns Nm vi
 runs, or the
 .Cm term
