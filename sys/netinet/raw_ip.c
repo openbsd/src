@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.35 2004/12/08 16:37:11 henning Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.36 2005/01/14 14:51:28 mcbride Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -294,6 +294,10 @@ rip_ctloutput(op, so, level, optname, m)
 	case MRT_DEL_MFC:
 	case MRT_VERSION:
 	case MRT_ASSERT:
+	case MRT_API_SUPPORT:
+	case MRT_API_CONFIG:
+	case MRT_ADD_BW_UPCALL:
+	case MRT_DEL_BW_UPCALL:
 #ifdef MROUTING
 		switch (op) {
 		case PRCO_SETOPT:
