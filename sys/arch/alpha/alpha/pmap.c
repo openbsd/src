@@ -1,5 +1,5 @@
-/* $OpenBSD: pmap.c,v 1.14 2001/06/08 08:08:35 art Exp $ */
-/* $NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $ */
+/* $OpenBSD: pmap.c,v 1.15 2001/06/23 19:36:44 art Exp $ */
+/* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -127,8 +127,6 @@
  * Bugs/misfeatures:
  *
  *	- Some things could be optimized.
- *
- *	- pmap_growkernel() should be implemented.
  */
 
 /*
@@ -269,6 +267,8 @@ TAILQ_HEAD(, pmap) pmap_all_pmaps;
  * The pools from which pmap structures and sub-structures are allocated.
  */
 struct pool pmap_pmap_pool;
+struct pool pmap_l1pt_pool;
+struct pool_cache pmap_l1pt_cache;
 struct pool pmap_asn_pool;
 struct pool pmap_asngen_pool;
 struct pool pmap_pv_pool;
@@ -376,6 +376,9 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	* pmap_all_pmaps_slock - This lock protects the global list of
  *	  all pmaps.  Note that a pm_slock must never be held while this
  *	  lock is held.
+ *
+ *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
+ *	  and the virtual_end variable.
  *
  *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
  *	  and the virtual_end variable.
@@ -511,6 +514,11 @@ void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *, long,
 	    pt_entry_t **);
 void	pmap_l2pt_delref(pmap_t, pt_entry_t *, pt_entry_t *, long);
 void	pmap_l1pt_delref(pmap_t, pt_entry_t *, long);
+
+void	*pmap_l1pt_alloc(unsigned long, int, int);
+void	pmap_l1pt_free(void *, unsigned long, int);
+
+int	pmap_l1pt_ctor(void *, void *, int);
 
 /*
  * PV table management functions.
@@ -913,6 +921,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/* Initialize the pmap_growkernel_slock. */
 	simple_lock_init(&pmap_growkernel_slock);
 
+	/* Initialize the pmap_growkernel_slock. */
+	simple_lock_init(&pmap_growkernel_slock);
+
 	/*
 	 * Set up level three page table (lev3map)
 	 */
@@ -941,6 +952,10 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	pmap_ncpuids = ncpuids;
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
+	    0, pmap_l1pt_alloc, pmap_l1pt_free, M_VMPMAP);
+	pool_cache_init(&pmap_l1pt_cache, &pmap_l1pt_pool, pmap_l1pt_ctor,
+	    NULL, NULL);
 	pool_init(&pmap_asn_pool, pmap_ncpuids * sizeof(u_int), 0, 0, 0,
 	    "pmasnpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
@@ -3276,9 +3291,15 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	struct pv_head *pvh;
 	paddr_t pa;
 
+	/*
+	 * Don't ask for a zero'd page in the L1PT case -- we will
+	 * properly initialize it in the constructor.
+	 */
+
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg != NULL) {
-		uvm_pagezero(pg);
+		if (usage != PGU_L1PT)
+			uvm_pagezero(pg);
 		pa = VM_PAGE_TO_PHYS(pg);
 
 		pvh = pa_to_pvh(pa);
@@ -3507,9 +3528,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 int
 pmap_lev1map_create(pmap_t pmap, long cpu_id)
 {
-	paddr_t ptpa;
-	pt_entry_t pte;
-	int i;
+	pt_entry_t *l1pt;
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
@@ -3519,32 +3538,17 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
 #endif
 
-	/*
-	 * Allocate a page for the level 1 table.
-	 */
-	if (pmap_physpage_alloc(PGU_L1PT, &ptpa) == FALSE) {
-		/*
-		 * Yow!  No free pages!  Try to steal a PT page from
-		 * another pmap!
-		 */
-		if (pmap_ptpage_steal(pmap, PGU_L1PT, &ptpa) == FALSE)
-			return (KERN_RESOURCE_SHORTAGE);
+	simple_lock(&pmap_growkernel_slock);
+
+	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
+	if (l1pt == NULL) {
+		simple_unlock(&pmap_growkernel_slock);
+		return (KERN_RESOURCE_SHORTAGE);
 	}
-	pmap->pm_lev1map = (pt_entry_t *) ALPHA_PHYS_TO_K0SEG(ptpa);
 
-	/*
-	 * Initialize the new level 1 table by copying the
-	 * kernel mappings into it.
-	 */
-	for (i = l1pte_index(VM_MIN_KERNEL_ADDRESS);
-	     i <= l1pte_index(VM_MAX_KERNEL_ADDRESS); i++)
-		pmap->pm_lev1map[i] = kernel_lev1map[i];
+	pmap->pm_lev1map = l1pt;
 
-	/*
-	 * Now, map the new virtual page table.  NOTE: NO ASM!
-	 */
-	pte = ((ptpa >> PGSHIFT) << PG_SHIFT) | PG_V | PG_KRE | PG_KWE;
-	pmap->pm_lev1map[l1pte_index(VPTBASE)] = pte;
+	simple_unlock(&pmap_growkernel_slock);
 
 	/*
 	 * The page table base has changed; if the pmap was active,
@@ -3567,14 +3571,12 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 void
 pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 {
-	paddr_t ptpa;
+	pt_entry_t *l1pt = pmap->pm_lev1map;
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
 		panic("pmap_lev1map_destroy: got kernel pmap");
 #endif
-
-	ptpa = ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap->pm_lev1map);
 
 	/*
 	 * Go back to referencing the global kernel_lev1map.
@@ -3606,7 +3608,79 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	/*
 	 * Free the old level 1 page table page.
 	 */
-	pmap_physpage_free(ptpa);
+	pool_cache_put(&pmap_l1pt_cache, l1pt);
+}
+
+/*
+ * pmap_l1pt_ctor:
+ *
+ *	Pool cache constructor for L1 PT pages.
+ */
+int
+pmap_l1pt_ctor(void *arg, void *object, int flags)
+{
+	pt_entry_t *l1pt = object, pte;
+	int i;
+
+	/*
+	 * Initialize the new level 1 table by zeroing the
+	 * user portion and copying the kernel mappings into
+	 * the kernel portion.
+	 */
+	for (i = 0; i < l1pte_index(VM_MIN_KERNEL_ADDRESS); i++)
+		l1pt[i] = 0;
+
+	for (i = l1pte_index(VM_MIN_KERNEL_ADDRESS);
+	     i <= l1pte_index(VM_MAX_KERNEL_ADDRESS); i++)
+		l1pt[i] = kernel_lev1map[i];
+
+	/*
+	 * Now, map the new virtual page table.  NOTE: NO ASM!
+	 */
+	pte = ((ALPHA_K0SEG_TO_PHYS((vaddr_t) l1pt) >> PGSHIFT) << PG_SHIFT) |
+	    PG_V | PG_KRE | PG_KWE;
+	l1pt[l1pte_index(VPTBASE)] = pte;
+
+	return (0);
+}
+
+/*
+ * pmap_l1pt_alloc:
+ *
+ *	Page alloctor for L1 PT pages.
+ */
+void *
+pmap_l1pt_alloc(unsigned long sz, int flags, int mtype)
+{
+	paddr_t ptpa;
+
+	/*
+	 * Attempt to allocate a free page.
+	 */
+	if (pmap_physpage_alloc(PGU_L1PT, &ptpa) == FALSE) {
+#if 0
+		/*
+		 * Yow!  No free pages!  Try to steal a PT page from
+		 * another pmap!
+		 */
+		if (pmap_ptpage_steal(pmap, PGU_L1PT, &ptpa) == FALSE)
+#endif
+			return (NULL);
+	}
+
+	return ((void *) ALPHA_PHYS_TO_K0SEG(ptpa));
+}
+
+/*
+ * pmap_l1pt_free:
+ *
+ *	Page freer for L1 PT pages.
+ */
+void
+pmap_l1pt_free(void *v, unsigned long sz, int mtype)
+{
+
+	pmap_physpage_free(ALPHA_K0SEG_TO_PHYS((vaddr_t) v));
 }
 
 /*
@@ -4132,9 +4206,9 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
  *	Process pending TLB shootdown operations for this processor.
  */
 void
-pmap_do_tlb_shootdown(void)
+pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpu_id = cpu_number();
+	u_long cpu_id = ci->ci_cpuid;
 	u_long cpu_mask = (1UL << cpu_id);
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
 	struct pmap_tlb_shootdown_job *pj;
