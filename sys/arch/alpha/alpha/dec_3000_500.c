@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_500.c,v 1.7 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: dec_3000_500.c,v 1.8 2000/11/08 21:48:43 art Exp $ */
 /* $NetBSD: dec_3000_500.c,v 1.29 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -194,7 +194,6 @@ dec_3000_500_device_register(dev, aux)
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
 	struct cfdriver *cd = cf->cf_driver;
-	extern struct device *booted_device;
 
 	if (found)
 		return;

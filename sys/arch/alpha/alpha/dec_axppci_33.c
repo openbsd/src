@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_axppci_33.c,v 1.10 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: dec_axppci_33.c,v 1.11 2000/11/08 21:48:44 art Exp $ */
 /* $NetBSD: dec_axppci_33.c,v 1.44 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -211,7 +211,6 @@ dec_axppci_33_device_register(dev, aux)
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
 	struct cfdriver *cd = cf->cf_driver;
-	extern struct device *booted_device;
 
 	if (found)
 		return;
