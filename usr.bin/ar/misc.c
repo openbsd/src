@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1996/06/26 05:31:21 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1997/09/11 11:24:54 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/26 03:27:55 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1996/06/26 05:31:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/09/11 11:24:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ files(argv)
 	for (list = argv; *list; ++list)
 		if (compare(*list)) {
 			p = *list;
-			for (; list[0] = list[1]; ++list)
+			for (; (list[0] = list[1]); ++list)
 				continue;
 			return (p);
 		}

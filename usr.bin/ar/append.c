@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.2 1996/06/26 05:31:16 deraadt Exp $	*/
+/*	$OpenBSD: append.c,v 1.3 1997/09/11 11:24:54 deraadt Exp $	*/
 /*	$NetBSD: append.c,v 1.5 1995/03/26 03:27:37 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: append.c,v 1.2 1996/06/26 05:31:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: append.c,v 1.3 1997/09/11 11:24:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ append(argv)
 
 	/* Read from disk, write to an archive; pad on write. */
 	SETCF(0, 0, afd, archive, WPAD);
-	for (eval = 0; file = *argv++;) {
+	for (eval = 0; (file = *argv++);) {
 		if ((fd = open(file, O_RDONLY)) < 0) {
 			warn("%s", file);
 			eval = 1;

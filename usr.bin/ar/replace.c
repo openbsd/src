@@ -1,4 +1,4 @@
-/*	$OpenBSD: replace.c,v 1.3 1997/06/17 20:47:09 kstailey Exp $	*/
+/*	$OpenBSD: replace.c,v 1.4 1997/09/11 11:24:55 deraadt Exp $	*/
 /*	$NetBSD: replace.c,v 1.6 1995/03/26 03:28:01 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)replace.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: replace.c,v 1.3 1997/06/17 20:47:09 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: replace.c,v 1.4 1997/09/11 11:24:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ useold:			SETCF(afd, archive, curfd, tname, RPAD|WPAD);
         }
 
 	/* Append any left-over arguments to the end of the after file. */
-append:	while (file = *argv++) {
+append:	while ((file = *argv++)) {
 		if (options & AR_V)
 			(void)printf("a - %s\n", file);
 		if ((sfd = open(file, O_RDONLY)) < 0) {
