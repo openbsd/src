@@ -1,12 +1,10 @@
-#	$OpenBSD: GENERIC,v 1.84 2001/08/09 14:32:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.85 2001/09/17 17:04:27 art Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
 
 #option		INSECURE	# default to secure
 
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
 option		NTP		# hooks supporting the Network Time Protocol
 
 option		DDB		# in-kernel debugger
