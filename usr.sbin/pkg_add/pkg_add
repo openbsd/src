@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.46 2004/08/06 14:33:02 espie Exp $
+# $OpenBSD: pkg_add,v 1.47 2004/08/07 17:27:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub ensure_ldconfig
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
 	print "running ldconfig -m ", join(' ', keys %$OpenBSD::PackingElement::Lib::todo), "\n"
 	    if  $verbose;
-	system($OpenBSD::PackingElement::Lib::ldconfig, "-m", 
+	system(@OpenBSD::PackingElement::Lib::ldconfig, "-m", 
 	    keys %$OpenBSD::PackingElement::Lib::todo);
 	undef $OpenBSD::PackingElement::Lib::todo;
 }

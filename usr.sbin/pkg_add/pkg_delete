@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.36 2004/08/06 14:33:02 espie Exp $
+# $OpenBSD: pkg_delete,v 1.37 2004/08/07 17:27:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub ensure_ldconfig
 	my $verbose = shift;
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
 	print "running ldconfig -R\n" if $verbose;
-	system($OpenBSD::PackingElement::Lib::ldconfig, "-R");
+	system(@OpenBSD::PackingElement::Lib::ldconfig, "-R");
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
 

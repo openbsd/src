@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.19 2004/08/06 10:23:45 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.20 2004/08/07 17:27:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -355,7 +355,7 @@ sub keyword() { "lib" }
 
 our $todo;
 my $path;
-our $ldconfig = '/sbin/ldconfig';
+our @ldconfig = ('/sbin/ldconfig');
 
 sub add_ldconfig_dirs()
 {
@@ -372,7 +372,10 @@ sub mark_ldconfig_directory
 	my ($self, $destdir) = @_;
 	if (!defined $path) {
 		$path={};
-		open my $fh, "-|", $ldconfig, "-r";
+		if ($destdir ne '') {
+			unshift @ldconfig, 'chroot', $destdir;
+		}
+		open my $fh, "-|", @ldconfig, "-r";
 		if (defined $fh) {
 			local $_;
 			while (<$fh>) {
