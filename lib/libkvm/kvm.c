@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.29 2002/02/19 19:39:37 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.30 2002/03/05 00:15:08 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.29 2002/02/19 19:39:37 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.30 2002/03/05 00:15:08 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -237,7 +237,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 				 "%s: not physical memory device", mf);
 			goto failed;
 		}
-		if ((kd->vmfd = open(_PATH_KMEM, flag)) < 0) {
+		if ((kd->vmfd = open(_PATH_KMEM, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
@@ -255,9 +255,9 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * fall back to _PATH_UNIX.
 		 */
 		if (kvm_dbopen(kd, uf ? uf : _PATH_UNIX) == -1 &&
-		    ((uf && (kd->nlfd = open(uf, O_RDONLY)) == -1) || (!uf &&
-		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY)) == -1 &&
-		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY)) == -1))) {
+		    ((uf && (kd->nlfd = open(uf, O_RDONLY, 0)) == -1) || (!uf &&
+		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY, 0)) == -1 &&
+		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY, 0)) == -1))) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -269,9 +269,9 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * If no file is specified, try opening _PATH_KSYMS and
 		 * fall back to _PATH_UNIX.
 		 */
-		if ((uf && (kd->nlfd = open(uf, O_RDONLY)) == -1) || (!uf &&
-		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY)) == -1 &&
-		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY)) == -1)) {
+		if ((uf && (kd->nlfd = open(uf, O_RDONLY, 0)) == -1) || (!uf &&
+		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY, 0)) == -1 &&
+		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY, 0)) == -1)) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
