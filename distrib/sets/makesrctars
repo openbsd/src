@@ -1,0 +1,71 @@
+#! /bin/sh
+
+RELEASE=11
+SPLITSIZE=240640
+
+GZIP=--best
+export GZIP
+
+if [ -z "$SRCDIR" ]; then
+	echo SRCDIR must be set
+	exit 1
+fi
+
+if [ -z "$DESTDIR" ]; then
+	echo DESTDIR must be set
+	exit 1
+fi
+
+if [ -d ${DESTDIR} ]; then
+	echo "DESTDIR exists."
+	exit 1
+fi
+
+cd $SRCDIR
+
+mkdir ${DESTDIR}
+
+mkdir ${DESTDIR}/src${RELEASE}
+find . \
+    \! \( \( -path ./gnu -o -path ./share -o -path ./domestic \) -prune \) \
+    \! \( -path ./sys -prune \) \
+    \! \( -path ./usr.sbin/config -prune \) \
+    \! \( -path ./usr.sbin/config.old -prune \) \
+    \! \( -path ./usr.sbin/dbsym -prune \) \
+    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
+	sort | pax -wv -d -s'|^./|./usr/src/|' | gzip | \
+	split -b ${SPLITSIZE} - ${DESTDIR}/src${RELEASE}/src${RELEASE}.
+(cd ${DESTDIR}/src${RELEASE}; cksum src${RELEASE}.* > CKSUM)
+chmod 444 ${DESTDIR}/src${RELEASE}/*
+
+mkdir ${DESTDIR}/gsrc${RELEASE}
+find gnu \
+    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
+	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
+	split -b ${SPLITSIZE} - ${DESTDIR}/gsrc${RELEASE}/gsrc${RELEASE}.
+(cd ${DESTDIR}/gsrc${RELEASE}; cksum gsrc${RELEASE}.* > CKSUM)
+chmod 444 ${DESTDIR}/gsrc${RELEASE}/*
+
+mkdir ${DESTDIR}/ksrc${RELEASE}
+find sys usr.sbin/config usr.sbin/config.old usr.sbin/dbsym \
+    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
+	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
+	split -b ${SPLITSIZE} - ${DESTDIR}/ksrc${RELEASE}/ksrc${RELEASE}.
+(cd ${DESTDIR}/ksrc${RELEASE}; cksum ksrc${RELEASE}.* > CKSUM)
+chmod 444 ${DESTDIR}/ksrc${RELEASE}/*
+
+mkdir ${DESTDIR}/ssrc${RELEASE}
+find share \
+    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
+	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
+	split -b ${SPLITSIZE} - ${DESTDIR}/ssrc${RELEASE}/ssrc${RELEASE}.
+(cd ${DESTDIR}/ssrc${RELEASE}; cksum ssrc${RELEASE}.* > CKSUM)
+chmod 444 ${DESTDIR}/ssrc${RELEASE}/*
+
+mkdir ${DESTDIR}/dsrc${RELEASE}
+find domestic \
+    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
+	sort | pax -wv -d -s'|^|./usr/src/|' | gzip | \
+	split -b ${SPLITSIZE} - ${DESTDIR}/dsrc${RELEASE}/dsrc${RELEASE}.
+(cd ${DESTDIR}/dsrc${RELEASE}; cksum dsrc${RELEASE}.* > CKSUM)
+chmod 444 ${DESTDIR}/dsrc${RELEASE}/*
