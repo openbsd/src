@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.2 1996/03/03 12:11:57 niklas Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.3 2001/06/20 23:23:14 gluk Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
  * the inode structure. Locks are sorted by the starting byte of the lock for
  * efficiency.
  */
+TAILQ_HEAD(locklist, lockf);
+
 struct lockf {
 	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
 	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
@@ -53,14 +55,14 @@ struct lockf {
 	caddr_t	lf_id;		 /* The id of the resource holding the lock */
 	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
 	struct	lockf *lf_next;	 /* A pointer to the next lock on this inode */
-	struct	lockf *lf_block; /* The list of blocked locks */
+	struct	locklist lf_blkhd;	/* The list of blocked locks */
+	TAILQ_ENTRY(lockf) lf_block; /* A request waiting for a lock */
 };
 
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
 __BEGIN_DECLS
-void	 lf_addblock __P((struct lockf *, struct lockf *));
 int	 lf_advlock __P((struct lockf **,
 	    off_t, caddr_t, int, struct flock *, int));
 int	 lf_clearlock __P((struct lockf *));
