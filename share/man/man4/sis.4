@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sis.4,v 1.19 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: sis.4,v 1.20 2005/02/01 20:00:49 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm sis
-.Nd "SiS 900, SiS 7016, and NS DP83815 Fast Ethernet driver"
+.Nd "SiS 900, SiS 7016, NS DP83815, and NS DP83816 Fast Ethernet driver"
 .Sh SYNOPSIS
 .Cd "sis* at pci?"
 .Sh DESCRIPTION
@@ -46,8 +46,11 @@ The
 driver provides support for PCI Ethernet adapters and embedded
 controllers based on the Silicon Integrated Systems SiS 900
 and SiS 7016 Fast Ethernet controller chips, as well as support
-for adapters based on the National Semiconductor DP83815 (MacPhyter)
-PCI Ethernet controller chip, including the Netgear FA311 and FA312.
+for adapters based on National Semiconductor DP83815 (MacPHYTER)
+and DP83816 (MacPHYTER-II) PCI Ethernet controller chips,
+including the Netgear FA311 and FA312,
+and the embedded controllers on Soekris net4xxx single-board computers
+and lan16x1 multi-port PCI Ethernet adapters.
 .Pp
 The SiS 900 is a 100Mbps Ethernet MAC and MII-compliant transceiver
 in a single package.
@@ -57,9 +60,10 @@ requiring instead an external transceiver to be attached to its MII interface.
 The SiS 900 and SiS 7016 both have a 128-bit multicast hash filter
 and a single perfect filter entry for the station address.
 .Pp
-The NS DP83815 is also a 100Mbps Ethernet MAC with integrated PHY.
-The NatSemi chip and the SiS 900 share many of the same features and
-a fairly similar programming interface, hence both chips are supported
+The NS DP83815 and DP83816 are also 100Mbps Ethernet MACs
+with integrated PHY.
+The NatSemi chips and the SiS chips share many of the same features and
+a fairly similar programming interface, and hence are supported
 by the same driver.
 .Pp
 The
@@ -152,7 +156,7 @@ the card should be configured correctly.
 .%O http://www.sis.com.tw
 .Re
 .Rs
-.%T NatSemi DP83815 datasheet
+.%T NatSemi DP83815 and DP83816 datasheets
 .%O http://www.national.com
 .Re
 .Sh HISTORY
