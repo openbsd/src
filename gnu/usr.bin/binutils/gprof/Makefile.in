@@ -175,6 +175,10 @@ aclocal.m4 configure configure.in gconfig.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 TAR = tar
 GZIP_ENV = --best
 SOURCES = $(gprof_SOURCES)
@@ -609,7 +613,7 @@ all-recursive-am: gconfig.h
 install-exec-am: install-binPROGRAMS
 install-exec: install-exec-recursive
 
-install-data-am: install-man
+install-data-am: $(INSTALL_MAN)
 install-data: install-data-recursive
 
 install-am: all-am

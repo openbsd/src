@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.40 2000/09/19 06:03:46 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.41 2000/09/21 15:15:57 espie Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa
 
@@ -74,7 +74,7 @@ config.status: do-config
 
 # Need to pass SUBDIRS because of install-info
 install: maninstall
-	SUBDIRS='${SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' INSTALL_MAN= \
+	SUBDIRS='${SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' \
 	    INSTALL_X11_MODULES="${INSTALL_X11_MODULES}" \
 	    INSTALL_MAN= \
 	    scriptdir=${PREFIX}/libdata \

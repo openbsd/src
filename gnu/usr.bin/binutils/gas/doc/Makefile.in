@@ -163,6 +163,10 @@ DIST_COMMON =  Makefile.am Makefile.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 TAR = tar
 GZIP_ENV = --best
 all: all-redirect
@@ -365,7 +369,7 @@ install-info: install-info-am
 install-exec-am:
 install-exec: install-exec-am
 
-install-data-am: install-man
+install-data-am: $(INSTALL_MAN)
 install-data: install-data-am
 
 install-am: all-am

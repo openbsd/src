@@ -414,6 +414,10 @@ GZIP_ENV = --best
 SOURCES = $(nlmconv_SOURCES) $(srconv_SOURCES) $(sysdump_SOURCES) $(coffdump_SOURCES) $(dlltool_SOURCES) $(windres_SOURCES) $(dllwrap_SOURCES) $(size_SOURCES) $(objdump_SOURCES) $(ar_SOURCES) $(strings_SOURCES) $(ranlib_SOURCES) $(objcopy_SOURCES) $(addr2line_SOURCES) $(readelf_SOURCES) $(nm_new_SOURCES) $(strip_new_SOURCES) $(cxxfilt_SOURCES)
 OBJECTS = $(nlmconv_OBJECTS) $(srconv_OBJECTS) $(sysdump_OBJECTS) $(coffdump_OBJECTS) $(dlltool_OBJECTS) $(windres_OBJECTS) $(dllwrap_OBJECTS) $(size_OBJECTS) $(objdump_OBJECTS) $(ar_OBJECTS) $(strings_OBJECTS) $(ranlib_OBJECTS) $(objcopy_OBJECTS) $(addr2line_OBJECTS) $(readelf_OBJECTS) $(nm_new_OBJECTS) $(strip_new_OBJECTS) $(cxxfilt_OBJECTS)
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 all: all-redirect
 .SUFFIXES:
 .SUFFIXES: .S .c .dvi .info .l .lo .o .ps .s .texi .texinfo .txi .y
@@ -956,7 +960,7 @@ all-recursive-am: config.h
 install-exec-am: install-binPROGRAMS install-exec-local
 install-exec: install-exec-recursive
 
-install-data-am: install-man
+install-data-am: $(INSTALL_MAN)
 install-data: install-data-recursive
 
 install-am: all-am
