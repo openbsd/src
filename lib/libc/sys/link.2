@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.2,v 1.13 2000/10/18 05:12:10 aaron Exp $
+.\"	$OpenBSD: link.2,v 1.14 2001/08/23 12:21:19 aaron Exp $
 .\"	$NetBSD: link.2,v 1.7 1995/02/27 12:34:01 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -124,6 +124,10 @@ user ID is not superuser,
 or the file system containing the file does not permit the use of
 .Fn link
 on a directory.
+.It Bq Er EPERM
+The file named by
+.Fa name1
+is flagged immutable or append-only.
 .It Bq Er EXDEV
 The link named by
 .Fa name2
