@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.242 2004/03/30 16:59:25 otto Exp $
+#	$OpenBSD: rc,v 1.243 2004/04/26 02:00:57 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -52,7 +52,10 @@ if [ $1x = shutdownx ]; then
 			if=${hn#/etc/hostname.}
 			test "$if" = "carp[0-9]*" && continue
 
-			ifconfig $if down
+			ifconfig $if > /dev/null 2>&1
+			if [ "$?" != "0" ]; then
+				ifconfig $if down
+			fi
 		done
 	else
 		echo single user: not running /etc/rc.shutdown
