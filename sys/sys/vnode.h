@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.11 1997/11/06 05:59:12 csapuntz Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.12 1997/11/24 22:42:34 niklas Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -225,14 +225,18 @@ extern struct simplelock vnode_free_list_slock;
 #define	VREF(vp)	vref(vp)
 
 void	holdrele __P((struct vnode *));
-void	vattr_null __P((struct vattr *));
 void	vhold __P((struct vnode *));
 void	vref __P((struct vnode *));
 #else
 #define	HOLDRELE(vp)	holdrele(vp); 	/* decrease buf or page ref */
 #define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
 
-static __inline holdrele(vp)
+static __inline void holdrele __P((struct vnode *));
+static __inline void vhold __P((struct vnode *));
+static __inline void vref __P((struct vnode *));
+
+static __inline void
+holdrele(vp)
 	struct vnode *vp;
 {
 	simple_lock(&vp->v_interlock);
@@ -246,8 +250,10 @@ static __inline holdrele(vp)
  	}
 	simple_unlock(&vp->v_interlock);
 }
+
 #define	VHOLD(vp)	vhold(vp)		/* increase buf or page ref */
-static __inline vhold(vp)
+static __inline void
+vhold(vp)
 	struct vnode *vp;
 {
 	simple_lock(&vp->v_interlock);
@@ -261,8 +267,10 @@ static __inline vhold(vp)
 	vp->v_holdcnt++;
 	simple_unlock(&vp->v_interlock);
 }
+
 #define	VREF(vp)	vref(vp)		/* increase reference */
-static __inline vref(vp)
+static __inline void
+vref(vp)
 	struct vnode *vp;
 {
 	simple_lock(&vp->v_interlock);
@@ -477,7 +485,6 @@ void    sched_sync __P((struct proc *));
 struct vnode *
 	checkalias __P((struct vnode *vp, dev_t nvp_rdev, struct mount *mp));
 void 	vput __P((struct vnode *vp));
-void 	vref __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));

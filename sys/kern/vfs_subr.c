@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.15 1997/11/07 23:01:37 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.16 1997/11/24 22:42:38 niklas Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -114,39 +114,9 @@ static struct synclist *syncer_workitem_pending;
 
 int vfs_lock __P((struct mount *));
 void vfs_unlock __P((struct mount *));
-struct mount *getvfs __P((fsid_t *));
-long makefstype __P((char *));
-void vattr_null __P((struct vattr *));
-int getnewvnode __P((enum vtagtype, struct mount *, int (**)(void *),
-		     struct vnode **));
 void insmntque __P((struct vnode *, struct mount *));
-int vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *, int,
-		   int));
-void vflushbuf __P((struct vnode *, int));
-void brelvp __P((struct buf *));
-int bdevvp __P((dev_t, struct vnode **));
-int cdevvp __P((dev_t, struct vnode **));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
-struct vnode *checkalias __P((struct vnode *, dev_t, struct mount *));
-void vref __P((struct vnode *));
-void vput __P((struct vnode *));
-void vrele __P((struct vnode *));
 int vunref __P((struct vnode *));
-void vhold __P((struct vnode *));
-void holdrele __P((struct vnode *));
-int vflush __P((struct mount *, struct vnode *, int));
-void vgoneall __P((struct vnode *));
-void vgone __P((struct vnode *));
-void vgonel __P((struct vnode *, struct proc *));
-int vcount __P((struct vnode *));
-void vprint __P((char *, struct vnode *));
-int vfs_mountedon __P((struct vnode *));
-int vfs_export __P((struct mount *, struct netexport *, struct export_args *));
-struct netcred *vfs_export_lookup __P((struct mount *, struct netexport *,
-				       struct mbuf *));
-int vaccess __P((mode_t, uid_t, gid_t, mode_t, struct ucred *));
-void vfs_unmountall __P((void));
-void vfs_shutdown __P((void));
 
 int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
@@ -1157,6 +1127,7 @@ vop_noislocked(v)
 	return (lockstatus(vp->v_vnlock));
 }
 
+#ifdef DIAGNOSTIC
 /*
  * Vnode reference.
  */
@@ -1170,7 +1141,7 @@ vref(vp)
 	vp->v_usecount++;
 	simple_unlock(&vp->v_interlock);
 }
-
+#endif /* DIAGNOSTIC */
 
 int
 vunref(vp)
