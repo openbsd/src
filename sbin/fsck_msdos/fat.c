@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.1 1996/05/14 17:39:34 ws Exp $	*/
+/*	$NetBSD: fat.c,v 1.1.4.1 1996/05/31 18:41:50 jtc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fat.c,v 1.1 1996/05/14 17:39:34 ws Exp $";
+static char rcsid[] = "$NetBSD: fat.c,v 1.1.4.1 1996/05/31 18:41:50 jtc Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -478,35 +478,28 @@ writefat(fs, boot, fat)
  * Check a complete in-memory FAT for lost cluster chains
  */
 int
-checklost(dosfs, boot, fat, rootDir)
+checklost(dosfs, boot, fat)
 	int dosfs;
 	struct bootblock *boot;
 	struct fatEntry *fat;
-	struct dosDirEntry *rootDir;
 {
 	cl_t head;
-	struct dosDirEntry *lfdir;
 	int mod = FSOK;
 	
-	for (lfdir = rootDir->child; lfdir; lfdir = lfdir->next) {
-		if (!strcmp(lfdir->name, LOSTDIR))
-			break;
-	}
 	for (head = CLUST_FIRST; head < boot->NumClusters; head++) {
 		/* find next untraveled chain */		
 		if (fat[head].head != head
 		    || fat[head].next == CLUST_FREE
 		    || (fat[head].next >= CLUST_RSRVD
-			&& fat[head].next < CLUST_EOFS))
+			&& fat[head].next < CLUST_EOFS)
+		    || (fat[head].flags & FAT_USED))
 			continue;
 
-		if (fat[head].dirp == NULL) {
-			pwarn("Lost cluster chain at cluster 0x%04x\n%d Cluster(s) lost\n", 
-			      head, fat[head].length);
-			mod |= reconnect(dosfs, boot, fat, head, lfdir);
-			if (mod&FSFATAL)
-				break;
-		}
+		pwarn("Lost cluster chain at cluster 0x%04x\n%d Cluster(s) lost\n", 
+		      head, fat[head].length);
+		mod |= reconnect(dosfs, boot, fat, head);
+		if (mod & FSFATAL)
+			break;
 	}
 	finishlf();
 	

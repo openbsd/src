@@ -1,3 +1,5 @@
+/*	$NetBSD: ext.h,v 1.1.4.1 1996/05/31 18:41:45 jtc Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
@@ -35,17 +37,6 @@
 
 #include <sys/types.h>
 
-#if sun
-#define	__P(a)	a
-
-typedef char		int8_t;
-typedef unsigned char	u_int8_t;
-typedef short		int16_t;
-typedef unsigned short	u_int16_t;
-typedef long		int32_t;
-typedef unsigned long	u_int32_t;
-#endif
-
 #include "dosfs.h"
 
 #define	LOSTDIR	"LOST.DIR"
@@ -59,6 +50,8 @@ extern int preen;	/* we are preening */
 extern int rdonly;	/* device is opened read only (supersedes above) */
 
 extern char *fname;	/* filesystem currently checked */
+
+extern struct dosDirEntry *rootDir;
 
 /* 
  * function declarations
@@ -117,12 +110,7 @@ int writefat __P((int, struct bootblock *, struct fatEntry *));
  */
 int resetDosDirSection __P((struct bootblock *));
 void finishDosDirSection __P((void));
-int readDosDirSection __P((int, struct bootblock *, struct fatEntry *, struct dosDirEntry *));
-
-/*
- * A stack of directories which should be examined later
- */
-extern struct dirTodoNode *pendingDirectories;
+int handleDirTree __P((int, struct bootblock *, struct fatEntry *));
 
 /*
  * Cross-check routines run after everything is completely in memory
@@ -130,11 +118,11 @@ extern struct dirTodoNode *pendingDirectories;
 /*
  * Check for lost cluster chains
  */
-int checklost __P((int, struct bootblock *, struct fatEntry *, struct dosDirEntry *));
+int checklost __P((int, struct bootblock *, struct fatEntry *));
 /*
  * Try to reconnect a lost cluster chain
  */
-int reconnect __P((int, struct bootblock *, struct fatEntry *, cl_t, struct dosDirEntry *));
+int reconnect __P((int, struct bootblock *, struct fatEntry *, cl_t));
 void finishlf __P((void));
 	
 /*

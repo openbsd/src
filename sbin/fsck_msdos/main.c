@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 1996/05/14 17:39:36 ws Exp $	*/
+/*	$NetBSD: main.c,v 1.1.4.1 1996/05/31 18:41:54 jtc Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.1 1996/05/14 17:39:36 ws Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.1.4.1 1996/05/31 18:41:54 jtc Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -179,22 +179,6 @@ pwarn(fmt, va_alist)
 	va_end(ap);
 }
 
-#if sun
-char *
-strerror(n)
-	int n;
-{
-	extern int sys_nerr;
-	extern char *sys_errlist[];
-	static char alt[80];
-	
-	if (n < sys_nerr)
-		return sys_errlist[n];
-	sprintf(alt, "Unknown error %d", n);
-	return alt;
-}
-#endif
-
 void
 perror(s)
 	const char *s;
@@ -231,11 +215,7 @@ ask(def, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-#if sun
-	vsprintf(prompt, fmt, ap);
-#else
 	vsnprintf(prompt, sizeof(prompt), fmt, ap);
-#endif
 	if (alwaysyes || rdonly) {
 		printf("%s? %s\n", prompt, rdonly ? "no" : "yes");
 		return !rdonly;
