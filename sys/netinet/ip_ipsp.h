@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.94 2001/05/30 10:55:06 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.95 2001/05/30 11:14:42 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -232,6 +232,13 @@ struct ipsec_policy
 #define IPSP_CRED_KEYNOTE       1
 #define IPSP_CRED_X509          2
 
+/* Identity types */
+#define IPSP_IDENTITY_NONE       0
+#define IPSP_IDENTITY_PREFIX     1
+#define IPSP_IDENTITY_FQDN       2
+#define IPSP_IDENTITY_MBOX       3
+#define IPSP_IDENTITY_CONNECTION 4
+
 /*
  * For encapsulation routes are possible not only for the destination
  * address but also for the protocol, source and destination ports
@@ -337,6 +344,7 @@ struct tdb				/* tunnel descriptor block */
     struct ipsec_ref *tdb_srcid;        /* Source ID for this SA */
     struct ipsec_ref *tdb_dstid;        /* Destination ID for this SA */
     struct ipsec_ref *tdb_local_auth;   /* Local authentication material */
+    struct ipsec_ref *tdb_remote_auth; /* Remote authentication material */
 
     TAILQ_HEAD(tdb_inp_head_in, inpcb) tdb_inp_in;
     TAILQ_HEAD(tdb_inp_head_out, inpcb) tdb_inp_out;
