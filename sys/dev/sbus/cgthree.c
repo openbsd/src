@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.37 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.38 2005/03/01 21:23:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -211,12 +211,14 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	int console, i;
+	int node, console, i;
+	const char *nam;
 
+	node = sa->sa_node;
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sa->sa_node, 0);
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, 0);
 
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
@@ -241,7 +243,12 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 		goto fail_vid;
 	}
 
-	console = cgthree_is_console(sa->sa_node);
+	nam = getpropstring(node, "model");
+	if (*nam == '\0')
+		nam = sa->sa_name;
+	printf(": %s", nam);
+
+	console = cgthree_is_console(node);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
@@ -257,7 +264,7 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_vid_regs);
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
-	printf("\n");
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	/*
 	 * If the framebuffer width is under 1024x768, which is the case for

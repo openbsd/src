@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.46 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.47 2005/03/01 21:23:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -117,9 +117,11 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	int console, i;
+	int node, console, i;
 	u_int32_t fhc, rev;
+	const char *nam;
 
+	node = sa->sa_node;
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
@@ -128,7 +130,7 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
-	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sa->sa_node, 0);
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, 0);
 
 	/*
 	 * Map just BT, FHC, FBC, THC, and video RAM.
@@ -183,10 +185,15 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* if prom didn't initialize us, do it the hard way */
-	if (OF_getproplen(sa->sa_node, "width") != sizeof(u_int32_t))
+	if (OF_getproplen(node, "width") != sizeof(u_int32_t))
 		cgsix_hardreset(sc);
 
-	console = cgsix_is_console(sa->sa_node);
+	nam = getpropstring(node, "model");
+	if (*nam == '\0')
+		nam = sa->sa_name;
+	printf(": %s", nam);
+
+	console = cgsix_is_console(node);
 
 	fhc = FHC_READ(sc);
 	rev = (fhc & FHC_REV_MASK) >> FHC_REV_SHIFT;
@@ -228,7 +235,8 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 		cgsix_ras_init(sc);
 	}
 
-	printf("\n");
+	printf(", %dx%d, rev %d\n", sc->sc_sunfb.sf_width,
+	    sc->sc_sunfb.sf_height, rev);
 
 	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 

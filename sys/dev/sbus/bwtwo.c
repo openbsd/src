@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.12 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.13 2005/03/01 21:23:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -157,12 +157,14 @@ bwtwoattach(parent, self, aux)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	int console;
+	int node, console;
+	const char *nam;
 
+	node = sa->sa_node;
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	fb_setsize(&sc->sc_sunfb, 1, 1152, 900, sa->sa_node, 0);
+	fb_setsize(&sc->sc_sunfb, 1, 1152, 900, node, 0);
 
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
@@ -187,13 +189,18 @@ bwtwoattach(parent, self, aux)
 		goto fail_vid;
 	}
 
-	console = bwtwo_is_console(sa->sa_node);
+	nam = getpropstring(node, "model");
+	if (*nam == '\0')
+		nam = sa->sa_name;
+	printf(": %s", nam);
+
+	console = bwtwo_is_console(node);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	bwtwo_burner(sc, 1, 0);
 
-	printf("\n");
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
