@@ -27,10 +27,13 @@ part of the BIND 9 distribution from ISC. For more
 information on the DNS, see RFCs 1033, 1034, and 1035.
 .PP
 When invoked without arguments, \fBnamed\fR will
+fork into two processes for privilege separation. 
 \fBchroot()\fR to \fI/var/named\fR,
 read the default configuration file
 \fI/var/named/etc/named.conf\fR, read any initial
-data, and listen for queries.
+data, and listen for queries. The privileged process
+will communicate with the child and bind to privileged
+ports on its behalf. See CAVEATS section below.
 .SH "OPTIONS"
 .TP
 \fB-c \fIconfig-file\fB\fR
@@ -154,3 +157,11 @@ The default process-id file.
 .SH "AUTHOR"
 .PP
 Internet Software Consortium
+.SH "CAVEATS"
+\fBnamed\fR runs privilege separated for binding
+the privileged ports after an interface or address
+change. The privileged process will only allow
+\fBnamed\fR to bind to default ports. Make sure
+you use unprivileged (>1024) ports if you change
+any of the default ports in \fBnamed's\fR
+configuration or on the command-line.
