@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.26 1995/07/04 07:23:58 mycroft Exp $	*/
+/*	$NetBSD: wt.c,v 1.28 1996/01/12 00:54:23 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -71,7 +71,7 @@
 /*
  * Uncomment this to enable internal device tracing.
  */
-#define DEBUG(x)		/* printf x */
+#define WTDBPRINT(x)		/* printf x */
 
 #define WTPRI			(PZERO+10)	/* sleep priority */
 
@@ -624,9 +624,9 @@ wtintr(arg)
 	u_char x;
 
 	x = inb(sc->STATPORT);			/* get status */
-	DEBUG(("wtintr() status=0x%x -- ", x));
+	WTDBPRINT(("wtintr() status=0x%x -- ", x));
 	if ((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP)) {
-		DEBUG(("busy\n"));
+		WTDBPRINT(("busy\n"));
 		return 0;			/* device is busy */
 	}
 
@@ -634,7 +634,7 @@ wtintr(arg)
 	 * Check if rewind finished.
 	 */
 	if (sc->flags & TPREW) {
-		DEBUG(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
+		WTDBPRINT(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
 		    "rewind busy?\n" : "rewind finished\n"));
 		sc->flags &= ~TPREW;		/* rewind finished */
 		wtsense(sc, 1, TP_WRP);
@@ -646,7 +646,7 @@ wtintr(arg)
 	 * Check if writing/reading of file mark finished.
 	 */
 	if (sc->flags & (TPRMARK | TPWMARK)) {
-		DEBUG(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
+		WTDBPRINT(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
 		    "marker r/w busy?\n" : "marker r/w finished\n"));
 		if ((x & sc->NOEXCEP) == 0)	/* operation failed */
 			wtsense(sc, 1, (sc->flags & TPRMARK) ? TP_WRP : 0);
@@ -659,7 +659,7 @@ wtintr(arg)
 	 * Do we started any i/o?  If no, just return.
 	 */
 	if ((sc->flags & TPACTIVE) == 0) {
-		DEBUG(("unexpected interrupt\n"));
+		WTDBPRINT(("unexpected interrupt\n"));
 		return 0;
 	}
 	sc->flags &= ~TPACTIVE;
@@ -681,7 +681,7 @@ wtintr(arg)
 	 * On exception, check for end of file and end of volume.
 	 */
 	if ((x & sc->NOEXCEP) == 0) {
-		DEBUG(("i/o exception\n"));
+		WTDBPRINT(("i/o exception\n"));
 		wtsense(sc, 1, (sc->dmaflags & B_READ) ? TP_WRP : 0);
 		if (sc->error & (TP_EOM | TP_FIL))
 			sc->flags |= TPVOL;	/* end of file */
@@ -695,14 +695,14 @@ wtintr(arg)
 		/* Continue I/O. */
 		sc->dmavaddr += sc->bsize;
 		wtdma(sc);
-		DEBUG(("continue i/o, %d\n", sc->dmacount));
+		WTDBPRINT(("continue i/o, %d\n", sc->dmacount));
 		return 1;
 	}
 	if (sc->dmacount > sc->dmatotal)	/* short last block */
 		sc->dmacount = sc->dmatotal;
 	/* Wake up user level. */
 	wakeup((caddr_t)sc);
-	DEBUG(("i/o finished, %d\n", sc->dmacount));
+	WTDBPRINT(("i/o finished, %d\n", sc->dmacount));
 	return 1;
 }
 
@@ -809,7 +809,7 @@ wtcmd(sc, cmd)
 	u_char x;
 	int s;
 
-	DEBUG(("wtcmd() cmd=0x%x\n", cmd));
+	WTDBPRINT(("wtcmd() cmd=0x%x\n", cmd));
 	s = splbio();
 	x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
 	if ((x & sc->NOEXCEP) == 0) {			/* error */
@@ -836,7 +836,7 @@ wtwait(sc, catch, msg)
 {
 	int error;
 
-	DEBUG(("wtwait() `%s'\n", msg));
+	WTDBPRINT(("wtwait() `%s'\n", msg));
 	while (sc->flags & (TPACTIVE | TPREW | TPRMARK | TPWMARK))
 		if (error = tsleep((caddr_t)sc, WTPRI | catch, msg, 0))
 			return error;
@@ -875,7 +875,7 @@ wtstart(sc, flag, vaddr, len)
 {
 	u_char x;
 
-	DEBUG(("wtstart()\n"));
+	WTDBPRINT(("wtstart()\n"));
 	x = wtpoll(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
 	if ((x & sc->NOEXCEP) == 0) {
 		sc->flags |= TPEXCEP;	/* error */
@@ -927,7 +927,7 @@ wttimer(arg)
 	/* If i/o going, simulate interrupt. */
 	s = splbio();
 	if ((inb(sc->STATPORT) & (sc->BUSY | sc->NOEXCEP)) != (sc->BUSY | sc->NOEXCEP)) {
-		DEBUG(("wttimer() -- "));
+		WTDBPRINT(("wttimer() -- "));
 		wtintr(sc);
 	}
 	splx(s);
@@ -979,7 +979,7 @@ wtsense(sc, verbose, ignore)
 	char *msg = 0;
 	int error;
 
-	DEBUG(("wtsense() ignore=0x%x\n", ignore));
+	WTDBPRINT(("wtsense() ignore=0x%x\n", ignore));
 	sc->flags &= ~(TPRO | TPWO);
 	if (!wtstatus(sc))
 		return 0;
