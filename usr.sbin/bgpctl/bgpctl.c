@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.42 2004/02/26 16:19:58 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.43 2004/03/02 19:32:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -133,11 +133,20 @@ main(int argc, char *argv[])
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
 		break;
 	case SHOW_RIB:
-		if (res->as.type == AS_NONE)
-			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB, 0, NULL, 0);
-		else
+		if (res->as.type != AS_NONE)
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_AS, 0,
 			    &res->as, sizeof(res->as));
+		else if (res->addr.af) {
+			struct ctl_show_rib_prefix	msg;
+
+			bzero(&msg, sizeof(msg));
+			memcpy(&msg.prefix, &res->addr, sizeof(res->addr));
+			msg.prefixlen = res->prefixlen;
+			msg.flags = res->flags;
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_PREFIX, 0,
+			    &msg, sizeof(msg));
+		} else
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB, 0, NULL, 0);
 		show_rib_summary_head();
 		break;
 	case RELOAD:

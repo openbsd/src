@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2004/02/26 16:19:58 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.4 2004/03/02 19:32:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -31,7 +32,8 @@ enum token_type {
 	ADDRESS,
 	FLAG,
 	ASNUM,
-	ASTYPE
+	ASTYPE,
+	PREFIX
 };
 
 struct token {
@@ -51,6 +53,7 @@ static const struct token t_fib[];
 static const struct token t_neighbor[];
 static const struct token t_neighbor_modifiers[];
 static const struct token t_show_as[];
+static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
 
 static const struct token t_main[] = {
@@ -85,10 +88,12 @@ static const struct token t_show_fib[] = {
 
 static const struct token t_show_rib[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
+	{ PREFIX,	"",		NONE,		t_show_prefix},
 	{ ASTYPE,	"as",		AS_ALL,		t_show_as},
 	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_as},
 	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	NULL},
+	{ KEYWORD,	"summary",	SHOW_SUMMARY,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -127,6 +132,13 @@ static const struct token t_show_as[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
+static const struct token t_show_prefix[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ FLAG,		"all",		F_LONGER,	NULL},
+	{ FLAG,		"longer-prefixes", F_LONGER,	NULL},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
 static const struct token t_show_ip[] = {
 	{ KEYWORD,	"bgp",		SHOW_RIB,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
@@ -137,6 +149,8 @@ static struct parse_result	res;
 const struct token	*match_token(const char *, const struct token []);
 void			 show_valid_args(const struct token []);
 int			 parse_addr(const char *, struct bgpd_addr *);
+int			 parse_prefix(const char *, struct bgpd_addr *,
+			     u_int8_t *);
 int			 parse_asnum(const char *, u_int16_t *);
 
 struct parse_result *
@@ -223,6 +237,14 @@ match_token(const char *word, const struct token table[])
 					res.action = t->value;
 			}
 			break;
+		case PREFIX:
+			if (parse_prefix(word, &res.addr, &res.prefixlen)) {
+				match++;
+				t = &table[i];
+				if (t->value)
+					res.action = t->value;
+			}
+			break;
 		case ASTYPE:
 			if (word != NULL && strncmp(word, table[i].keyword,
 			    strlen(word)) == 0) {
@@ -271,6 +293,9 @@ show_valid_args(const struct token table[])
 		case ADDRESS:
 			fprintf(stderr, "  <address>\n");
 			break;
+		case PREFIX:
+			fprintf(stderr, "  <address>[/<len>]\n");
+			break;
 		case ASNUM:
 			fprintf(stderr, "  <asnum>\n");
 			break;
@@ -295,6 +320,34 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 		addr->af = AF_INET;
 		addr->v4 = ina;
 		return (1);
+	}
+
+	return (0);
+}
+
+int
+parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
+{
+	struct in_addr	 ina;
+	int		 bits = 32;
+
+	if (word == NULL)
+		return (0);
+
+	bzero(addr, sizeof(struct bgpd_addr));
+	bzero(&ina, sizeof(ina));
+
+	if (strrchr(word, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, word,
+		    &ina, sizeof(ina))) == -1)
+			return (0);
+		addr->af = AF_INET;
+		addr->v4.s_addr = ina.s_addr & htonl(0xffffffff << (32 - bits));
+		*prefixlen = bits;
+		return (1);
+	} else {
+		*prefixlen = 32;
+		return (parse_addr(word, addr));
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2004/02/26 16:19:58 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.3 2004/03/02 19:32:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@ struct parse_result {
 	enum actions		action;
 	int			flags;
 	struct bgpd_addr	addr;
+	u_int8_t		prefixlen;
 	struct as_filter	as;
 };
 
