@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.12 1999/02/24 23:35:20 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.13 1999/02/25 01:08:40 kjell Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -166,7 +166,7 @@ flag and make sure it is configured properly on both sides to
 provide the required security services (typically, encryption and
 authentication).
 .Ss Configuring Firewall Rules
-.Xr ipf 1
+.Xr ipf 8
 needs to be configured such that all packets from the outside are blocked
 by default. Only successfully IPSec-processed packets (from the 
 .Nm enc0 
@@ -327,7 +327,7 @@ In situations where the gateway IP is outside the desired netrange, such
 as with private networks (RFC 1597), manual keying must be used.
 This should be fixed in the next release.
 .Sh SEE ALSO
-.Xr ipf 1 ,
+.Xr ipf 8 ,
 .Xr ipsecadm 8 ,
 .Xr ipsec 4 ,
 .Xr options 4 ,
