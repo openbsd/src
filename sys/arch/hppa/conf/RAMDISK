@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.31 2004/04/23 05:51:39 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.32 2004/04/30 20:30:30 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -209,3 +209,4 @@ pseudo-device	loop	1	# network loopback
 pseudo-device	bpfilter 1	# packet filter
 pseudo-device	pty	16	# pseudo-terminals
 pseudo-device	ksyms	1	# kernel symbols device
+pseudo-device	ccd	4	# concatenated disk devices
