@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.8 1999/04/19 19:55:56 niklas Exp $
-$EOM: TO-DO,v 1.33 1999/04/17 15:48:23 niklas Exp $
+$OpenBSD: TO-DO,v 1.9 1999/04/27 21:13:28 niklas Exp $
+$EOM: TO-DO,v 1.34 1999/04/27 09:39:06 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -47,13 +47,13 @@ the program is far from ready in any area.
 
 * SIGHUP handler with reparsing of config file. [done]
 
-* RSA signature authentication <Niels> [done]
+* RSA signature authentication. <Niels> [done]
 
-* DSS signature authentication
+* DSS signature authentication.
 
-* RSA encryption authentication
+* RSA encryption authentication.
 
-* New group mode
+* New group mode.
 
 * DELETE payload handling, and generation from ui.
 
@@ -91,12 +91,13 @@ the program is far from ready in any area.
 * If an exchange is on-going when a rekey event happens, drop the request.
   [done]
 
-* INITIAL CONTACT notification sending when appropriate.
+* INITIAL CONTACT notification sending when appropriate. [done]
 
-* INITIAL CONTACT notification handling.
+* INITIAL CONTACT notification handling. [done]
 
 * IPsec SAs could also do with timers protecting its lifetime, if say,
   someone changed the lifetime of the IPsec SA in stack under us.
+  [done for KLIPS]
 
 * Handle notifications showing the peer did not want to continue this exchange.
 

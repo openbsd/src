@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.8 1999/04/05 21:03:12 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.40 1999/04/02 01:08:54 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.9 1999/04/27 21:13:28 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.41 1999/04/27 09:39:07 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -51,7 +51,10 @@ gmp_util.c	Utilities to ease interfaceing to GMP.
 hash.c		Generic hash handling.
 if.c		Network interface details.
 ike_auth.c	IKE authentication method abstraction.
+ike_aggressive.c
+		IKE's main mode exchange logic.
 ike_main_mode.c	IKE's main mode exchange logic.
+ike_phase_1.c	Common parts IKE's main & aggressive modes' exchange logic.
 ike_quick_mode.c
 		IKE's quick mode logic.
 init.c		Initialization of all modules (might be autogenned in the 
