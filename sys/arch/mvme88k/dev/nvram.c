@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.6 2000/04/11 02:44:29 pjanzen Exp $ */
+/*	$OpenBSD: nvram.c,v 1.7 2001/01/04 04:01:59 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -31,6 +31,11 @@
  * SUCH DAMAGE.
  */
 
+/* 
+ * 8/22/2000 BH Cleaned up year 2000 problems with calendar hardware.
+ * This code will break again in 2068 or so - come dance on my grave.
+ */
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -48,85 +53,85 @@
 #include <mvme88k/dev/pcctworeg.h>
 
 struct nvramsoftc {
-	struct device		sc_dev;
+	struct device           sc_dev;
 	void *      sc_paddr;
 	void *      sc_vaddr;
 	int         sc_len;
 	void *      sc_regs;
 };
 
-void	nvramattach	__P((struct device *, struct device *, void *));
-int	nvrammatch __P((struct device *, void *, void *));
+void    nvramattach     __P((struct device *, struct device *, void *));
+int     nvrammatch __P((struct device *, void *, void *));
 
 struct cfattach nvram_ca = { 
-        sizeof(struct nvramsoftc), nvrammatch, nvramattach
+	sizeof(struct nvramsoftc), nvrammatch, nvramattach
 }; 
- 
+
 struct cfdriver nvram_cd = {
-        NULL, "nvram", DV_DULL, 0
+	NULL, "nvram", DV_DULL, 0
 };
 
 int
 nvrammatch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+struct device *parent;
+void *vcf, *args;
 {
 	int ret;
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	struct bugrtc rtc;
-   ca->ca_vaddr = ca->ca_paddr;  /* map 1:1 */
+	ca->ca_vaddr = ca->ca_paddr;   /* map 1:1 */
 /*X*/	if (ca->ca_vaddr == (void *)-1)
 /*X*/		return (1);
 
 #if 0
 	bugrtcrd(&rtc);
 	ret = badvaddr(IIOV(ca->ca_vaddr), 1);
-	if (ret != 0)  
-	    ret = badvaddr(IIOV(ca->ca_vaddr), 2);
-	if (ret != 0) 
-	    ret = badvaddr(IIOV(ca->ca_vaddr), 4);
-	
-	if (ret != 0){
-	    printf("==> nvram: address 0x%x failed check\n", ca->ca_vaddr);
-	    return(0);
+	if (ret != 0)
+		ret = badvaddr(IIOV(ca->ca_vaddr), 2);
+	if (ret != 0)
+		ret = badvaddr(IIOV(ca->ca_vaddr), 4);
+
+	if (ret != 0) {
+		printf("==> nvram: address 0x%x failed check\n", ca->ca_vaddr);
+		return (0);
 	} else
-	    return(1);
+		return (1);
 #else
 	bugrtcrd(&rtc);
-	return(1);
+	return (1);
 #endif
 }
 
 void
 nvramattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+struct device *parent, *self;
+void *args;
 {
 	struct confargs *ca = args;
-	struct nvramsoftc	*sc = (struct nvramsoftc *)self;
+	struct nvramsoftc       *sc = (struct nvramsoftc *)self;
 
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = ca->ca_vaddr;
 
 	if (cputyp == CPU_188) {
-      sc->sc_len = MK48T02_SIZE;
-   } else {
-      sc->sc_len = MK48T08_SIZE;
-   }
+		sc->sc_len = MK48T02_SIZE;
+	} else {
+		sc->sc_len = MK48T08_SIZE;
+	}
 
 /*X*/	if (sc->sc_vaddr == (void *)-1)
 /*X*/		sc->sc_vaddr = mapiodev((void *)sc->sc_paddr,
-/*X*/		    max(sc->sc_len, NBPG));
+/*X*/		max(sc->sc_len, NBPG));
 /*X*/	if (sc->sc_vaddr == NULL)
 /*X*/		panic("failed to map!");
 
 	if (cputyp != CPU_188) {
-      sc->sc_regs = (void *)(sc->sc_vaddr + sc->sc_len -
-          sizeof(struct clockreg));
-   } else {
-      sc->sc_regs = (void *)(sc->sc_vaddr + M188_NVRAM_TOD_OFF);
-   }
+		sc->sc_regs = (void *)(sc->sc_vaddr + sc->sc_len -
+				       sizeof(struct clockreg));
+	} else {
+		sc->sc_regs = (void *)(sc->sc_vaddr + M188_NVRAM_TOD_OFF);
+	}
 
 	printf(": MK48T0%d len %d\n", sc->sc_len / 1024, sc->sc_len);
 }
@@ -143,7 +148,7 @@ nvramattach(parent, self, args)
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+register struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;
@@ -179,11 +184,11 @@ microtime(tvp)
  * Will Unix still be here then??
  */
 const short dayyr[12] =
-    { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
 static u_long
 chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
+register int sec, min, hour, day, mon, year;
 {
 	register int days, yr;
 
@@ -195,38 +200,52 @@ chiptotime(sec, min, hour, day, mon, year)
 	year = FROMBCD(year) + YEAR0;
 
 	/* simple sanity checks */
-	if (year < 70 || year > 164 || mon < 1 || mon > 12 || day < 1 || day > 31)
+	if (year>164 || mon<1 || mon>12 || day<1 || day>31)
 		return (0);
+	yr = 70;
 	days = 0;
-	for (yr = 70; yr < year; yr++)
+
+	if (year < 70) {		/* 2000 <= year */
+		for (; yr < 100; yr++)	/* deal with first 30 years */
+			days += LEAPYEAR(yr) ? 366 : 365;
+		yr = 0;
+	}
+
+	for (; yr < year; yr++)		/* deal with years left */
 		days += LEAPYEAR(yr) ? 366 : 365;
+
 	days += dayyr[mon - 1] + day - 1;
+
 	if (LEAPYEAR(yr) && mon > 2)
 		days++;
+
 	/* now have days since Jan 1, 1970; the rest is easy... */
 	return (days * SECDAY + hour * 3600 + min * 60 + sec);
 }
 
 struct chiptime {
-	int	sec;
-	int	min;
-	int	hour;
-	int	wday;
-	int	day;
-	int	mon;
-	int	year;
+	int     sec;
+	int     min;
+	int     hour;
+	int     wday;
+	int     day;
+	int     mon;
+	int     year;
 };
 
 timetochip(c)
-	register struct chiptime *c;
+register struct chiptime *c;
 {
 	register int t, t2, t3, now = time.tv_sec;
 
-	/* compute the year */
+	/* January 1 1970 was a Thursday (4 in unix wdays) */
+	/* compute the days since the epoch */
 	t2 = now / SECDAY;
-	t3 = (t2 + 2) % 7;	/* day of week */
+
+	t3 = (t2 + 4) % 7;	/* day of week */
 	c->wday = TOBCD(t3 + 1);
 
+	/* compute the year */
 	t = 69;
 	while (t2 >= 0) {	/* whittle off years */
 		t3 = t2;
@@ -238,7 +257,7 @@ timetochip(c)
 	/* t3 = month + day; separate */
 	t = LEAPYEAR(t);
 	for (t2 = 1; t2 < 12; t2++)
-		if (t3 < dayyr[t2] + (t && t2 > 1))
+		if (t3 < (dayyr[t2] + ((t && (t2 > 1)) ? 1:0)))
 			break;
 
 	/* t2 is month */
@@ -259,7 +278,7 @@ timetochip(c)
 	c->hour = TOBCD(c->hour);
 	c->day = TOBCD(c->day);
 	c->mon = TOBCD(c->mon);
-	c->year = TOBCD(c->year - YEAR0);
+	c->year = TOBCD((c->year - YEAR0) % 100);
 }
 
 /*
@@ -268,7 +287,7 @@ timetochip(c)
 
 void 
 inittodr(base)
-	time_t base;
+time_t base;
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	int sec, min, hour, day, mon, year;
@@ -286,31 +305,31 @@ inittodr(base)
 		badbase = 1;
 	}
 	if (cputyp != CPU_188) {
-      register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
-   	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-   	sec = cl->cl_sec;
-   	min = cl->cl_min;
-   	hour = cl->cl_hour;
-   	day = cl->cl_mday;
-   	mon = cl->cl_month;
-   	year = cl->cl_year;
-   	cl->cl_csr &= ~CLK_READ;	/* time wears on */
-   } else { /* CPU_188 */
-      register struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
-   	cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-   	sec = cl->cl_sec & 0xff;
-   	min = cl->cl_min & 0xff;
-   	hour = cl->cl_hour & 0xff;
-   	day = cl->cl_mday & 0xff;
-   	mon = cl->cl_month & 0xff;
-   	year = cl->cl_year & 0xff;
-   	cl->cl_csr &= ~CLK_READ;	/* time wears on */
-   }
+		register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
+		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
+		sec = cl->cl_sec;
+		min = cl->cl_min;
+		hour = cl->cl_hour;
+		day = cl->cl_mday;
+		mon = cl->cl_month;
+		year = cl->cl_year;
+		cl->cl_csr &= ~CLK_READ;	/* time wears on... */
+	} else { /* CPU_188 */
+		register struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
+		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
+		sec = cl->cl_sec & 0xff;
+		min = cl->cl_min & 0xff;
+		hour = cl->cl_hour & 0xff;
+		day = cl->cl_mday & 0xff;
+		mon = cl->cl_month & 0xff;
+		year = cl->cl_year & 0xff;
+		cl->cl_csr &= ~CLK_READ;	/* time wears on... */
+	}
 	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
 		printf("WARNING: bad date in nvram\n");
-      printf("day = %d, mon = %d, year = %d, hour = %d, min = %d, sec = %d",
-             FROMBCD(day), FROMBCD(mon), FROMBCD(year) + YEAR0,
-             FROMBCD(hour), FROMBCD(min), FROMBCD(sec));
+		printf("day = %d, mon = %d, year = %d, hour = %d, min = %d, sec = %d",
+		       FROMBCD(day), FROMBCD(mon), FROMBCD(year) + YEAR0,
+		       FROMBCD(hour), FROMBCD(min), FROMBCD(sec));
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
@@ -326,7 +345,7 @@ inittodr(base)
 		if (waszero || deltat < 2 * SECDAY)
 			return;
 		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+		       time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
@@ -340,45 +359,45 @@ inittodr(base)
 void resettodr()
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
-   struct chiptime c;
-   if (cputyp != CPU_188) {
-      register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
-   
-   	if (!time.tv_sec || cl == NULL)
-   		return;
-   	timetochip(&c);
-   	cl->cl_csr |= CLK_WRITE;	/* enable write */
-   	cl->cl_sec = c.sec;
-   	cl->cl_min = c.min;
-   	cl->cl_hour = c.hour;
-   	cl->cl_wday = c.wday;
-   	cl->cl_mday = c.day;
-   	cl->cl_month = c.mon;
-   	cl->cl_year = c.year;
-   	cl->cl_csr &= ~CLK_WRITE;	/* load them up */
-   } else { /* CPU_188 */
-      register struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
-   
-   	if (!time.tv_sec || cl == NULL)
-   		return;
-   	timetochip(&c);
-   	cl->cl_csr |= CLK_WRITE;	/* enable write */
-   	cl->cl_sec = c.sec;
-   	cl->cl_min = c.min;
-   	cl->cl_hour = c.hour;
-   	cl->cl_wday = c.wday;
-   	cl->cl_mday = c.day;
-   	cl->cl_month = c.mon;
-   	cl->cl_year = c.year;
-   	cl->cl_csr &= ~CLK_WRITE;	/* load them up */
-   }
+	struct chiptime c;
+	if (cputyp != CPU_188) {
+		register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
+
+		if (!time.tv_sec || cl == NULL)
+			return;
+		timetochip(&c);
+		cl->cl_csr |= CLK_WRITE;	/* enable write */
+		cl->cl_sec = c.sec;
+		cl->cl_min = c.min;
+		cl->cl_hour = c.hour;
+		cl->cl_wday = c.wday;
+		cl->cl_mday = c.day;
+		cl->cl_month = c.mon;
+		cl->cl_year = c.year;
+		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
+	} else { /* CPU_188 */
+		register struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
+
+		if (!time.tv_sec || cl == NULL)
+			return;
+		timetochip(&c);
+		cl->cl_csr |= CLK_WRITE;	/* enable write */
+		cl->cl_sec = c.sec;
+		cl->cl_min = c.min;
+		cl->cl_hour = c.hour;
+		cl->cl_wday = c.wday;
+		cl->cl_mday = c.day;
+		cl->cl_month = c.mon;
+		cl->cl_year = c.year;
+		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
+	}
 }
 
 /*ARGSUSED*/
 int
 nvramopen(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+dev_t dev;
+int flag, mode;
 {
 	if (minor(dev) >= nvram_cd.cd_ndevs ||
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
@@ -389,8 +408,8 @@ nvramopen(dev, flag, mode)
 /*ARGSUSED*/
 int
 nvramclose(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+dev_t dev;
+int flag, mode;
 {
 	return (0);
 }
@@ -398,15 +417,15 @@ nvramclose(dev, flag, mode)
 /*ARGSUSED*/
 int
 nvramioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
-	caddr_t data;
-	int     cmd, flag;
-	struct proc *p;
+dev_t   dev;
+caddr_t data;
+int     cmd, flag;
+struct proc *p;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
 	int error = 0;
-	
+
 	switch (cmd) {
 	case MIOCGSIZ:
 		*(int *)data = sc->sc_len;
@@ -421,9 +440,9 @@ nvramioctl(dev, cmd, data, flag, p)
 /*ARGSUSED*/
 int
 nvramread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+dev_t dev;
+struct uio *uio;
+int flags;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
@@ -434,9 +453,9 @@ nvramread(dev, uio, flags)
 /*ARGSUSED*/
 int
 nvramwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+dev_t dev;
+struct uio *uio;
+int flags;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
@@ -451,8 +470,8 @@ nvramwrite(dev, uio, flags)
  */
 int
 nvrammmap(dev, off, prot)
-	dev_t dev;
-	int off, prot;
+dev_t dev;
+int off, prot;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
