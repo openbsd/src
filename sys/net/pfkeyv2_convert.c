@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.18 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.19 2004/06/21 20:44:54 itojun Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -98,7 +98,11 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <net/route.h>
+#include <net/if.h>
 #include <netinet/ip_ipsp.h>
+#ifdef INET6
+#include <netinet6/in6_var.h>
+#endif
 #include <net/pfkeyv2.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
@@ -437,10 +441,6 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 	    (src->sa.sa_family != dstmask->sa.sa_family))
 		return;
 
-	/* Generic netmask handling, works for IPv4 and IPv6. */
-	rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
-	rt_maskedcopy(&dst->sa, &dst->sa, &dstmask->sa);
-
 	/*
 	 * We set these as an indication that tdb_filter/tdb_filtermask are
 	 * in fact initialized.
@@ -452,6 +452,10 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 	{
 #ifdef INET
 	case AF_INET:
+		/* netmask handling */
+		rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
+		rt_maskedcopy(&dst->sa, &dst->sa, &dstmask->sa);
+
 		flow->sen_type = SENT_IP4;
 		flow->sen_direction = ftype->sadb_protocol_direction;
 		flow->sen_ip_src = src->sin.sin_addr;
@@ -473,6 +477,15 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 
 #ifdef INET6
 	case AF_INET6:
+		in6_embedscope(&src->sin6.sin6_addr, &src->sin6,
+		    NULL, NULL);
+		in6_embedscope(&dst->sin6.sin6_addr, &dst->sin6,
+		    NULL, NULL);
+
+		/* netmask handling */
+		rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
+		rt_maskedcopy(&dst->sa, &dst->sa, &dstmask->sa);
+
 		flow->sen_type = SENT_IP6;
 		flow->sen_ip6_direction = ftype->sadb_protocol_direction;
 		flow->sen_ip6_src = src->sin6.sin6_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.30 2003/12/10 07:22:43 itojun Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.31 2004/06/21 20:44:54 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -542,8 +542,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ip6o->ip6_vfc |= IPV6_VERSION;
 		ip6o->ip6_plen = htons(m->m_pkthdr.len);
 		ip6o->ip6_hlim = ip_defttl;
-		ip6o->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
-		ip6o->ip6_src = tdb->tdb_src.sin6.sin6_addr;
+		in6_embedscope(&ip6o->ip6_src, &tdb->tdb_src.sin6, NULL, NULL);
+		in6_embedscope(&ip6o->ip6_dst, &tdb->tdb_dst.sin6, NULL, NULL);
 
 #ifdef INET
 		if (tp == IPVERSION) {
