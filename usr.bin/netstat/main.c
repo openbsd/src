@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2002/05/27 01:50:36 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2002/06/07 21:58:38 itojun Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.31 2002/05/27 01:50:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.32 2002/06/07 21:58:38 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,8 @@ struct nlist nl[] = {
 	{ "_mclpool" },
 #define N_IPCOMPSTAT	53
 	{ "_ipcompstat" },
+#define N_RIP6STAT	54
+	{ "_rip6stat" },
 	{ ""},
 };
 
@@ -224,6 +226,8 @@ struct protox ip6protox[] = {
 	  icmp6_stats,	"icmp6" },
 	{ -1,		N_PIM6STAT,	1,	0,
 	  pim6_stats,	"pim6" },
+	{ -1,		N_RIP6STAT,	1,	0,
+	  rip6_stats,	"rip6" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };

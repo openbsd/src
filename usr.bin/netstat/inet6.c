@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.20 2002/05/27 01:50:36 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.21 2002/06/07 21:58:38 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.20 2002/05/27 01:50:36 deraadt Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.21 2002/06/07 21:58:38 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -63,6 +63,7 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/pim6_var.h>
+#include <netinet6/raw_ip6.h>
 
 #include <arpa/inet.h>
 #if 0
@@ -992,6 +993,43 @@ pim6_stats(off, name)
 	p(pim6s_rcv_registers, "\t%llu register%s received\n");
 	p(pim6s_rcv_badregisters, "\t%llu bad register%s received\n");
 	p(pim6s_snd_registers, "\t%llu register%s sent\n");
+#undef p
+}
+
+/*
+ * Dump raw ip6 statistics structure.
+ */
+void
+rip6_stats(off, name)
+	u_long off;
+	char *name;
+{
+	struct rip6stat rip6stat;
+	u_quad_t delivered;
+
+	if (off == 0)
+		return;
+	kread(off, (char *)&rip6stat, sizeof(rip6stat));
+	printf("%s:\n", name);
+
+#define	p(f, m) if (rip6stat.f || sflag <= 1) \
+    printf(m, (unsigned long long)rip6stat.f, plural(rip6stat.f))
+	p(rip6s_ipackets, "\t%llu message%s received\n");
+	p(rip6s_isum, "\t%llu checksum calcuration%s on inbound\n");
+	p(rip6s_badsum, "\t%llu message%s with bad checksum\n");
+	p(rip6s_nosock, "\t%llu message%s dropped due to no socket\n");
+	p(rip6s_nosockmcast,
+	    "\t%llu multicast message%s dropped due to no socket\n");
+	p(rip6s_fullsock,
+	    "\t%llu message%s dropped due to full socket buffers\n");
+	delivered = rip6stat.rip6s_ipackets -
+		    rip6stat.rip6s_badsum -
+		    rip6stat.rip6s_nosock -
+		    rip6stat.rip6s_nosockmcast -
+		    rip6stat.rip6s_fullsock;
+	if (delivered || sflag <= 1)
+		printf("\t%llu delivered\n", (unsigned long long)delivered);
+	p(rip6s_opackets, "\t%llu datagram%s output\n");
 #undef p
 }
 

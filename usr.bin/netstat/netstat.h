@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.21 2002/02/17 19:42:31 millert Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.22 2002/06/07 21:58:38 itojun Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ void	ip6_ifstats(char *);
 void	icmp6_stats(u_long, char *);
 void	icmp6_ifstats(char *);
 void	pim6_stats(u_long, char *);
+void	rip6_stats(u_long, char *);
 void	mroute6pr(u_long, u_long, u_long);
 void	mrt6_stats(u_long, u_long);
 char	*routename6(struct sockaddr_in6 *);
