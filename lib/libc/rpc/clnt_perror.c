@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.8 1997/02/10 00:51:39 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.9 1998/11/22 07:40:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -71,14 +71,17 @@ clnt_sperror(rpch, s)
 	char *err;
 	char *str = _buf();
 	char *strstart = str;
+	int ret;
 
 	if (str == 0)
 		return (0);
 	CLNT_GETERR(rpch, &e);
 
-	(void) snprintf(str, CLNT_PERROR_BUFLEN, "%s: %s", s,
-		clnt_sperrno(e.re_status));
-	str += strlen(str);
+	ret = snprintf(str, CLNT_PERROR_BUFLEN, "%s: %s", s,
+	    clnt_sperrno(e.re_status));
+	str += ret;
+	if (str > strstart + CLNT_PERROR_BUFLEN)
+		goto truncated;
 
 	switch (e.re_status) {
 	case RPC_SUCCESS:
@@ -98,47 +101,52 @@ clnt_sperror(rpch, s)
 
 	case RPC_CANTSEND:
 	case RPC_CANTRECV:
-		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; errno = %s\n", strerror(e.re_errno));
+		ret = snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
+		    "; errno = %s\n", strerror(e.re_errno));
 		break;
 
 	case RPC_VERSMISMATCH:
-		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; low version = %u, high version = %u\n",
-			e.re_vers.low, e.re_vers.high);
+		ret = snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
+		    "; low version = %u, high version = %u\n",
+		    e.re_vers.low, e.re_vers.high);
 		break;
 
 	case RPC_AUTHERROR:
 		err = auth_errmsg(e.re_why);
-		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; why = ");
-		str += strlen(str);
+		ret = snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
+		    "; why = ");
+		str += ret;
+		if (str > strstart + CLNT_PERROR_BUFLEN)
+			goto truncated;
 		if (err != NULL) {
-			(void) snprintf(str, CLNT_PERROR_BUFLEN -
-				(str - strstart), "%s\n", err);
+			ret = snprintf(str, CLNT_PERROR_BUFLEN -
+			    (str - strstart), "%s\n", err);
 		} else {
-			(void) snprintf(str, CLNT_PERROR_BUFLEN -
-				(str - strstart),
-				"(unknown authentication error - %d)\n",
-				(int) e.re_why);
+			ret = snprintf(str, CLNT_PERROR_BUFLEN -
+			    (str - strstart),
+			    "(unknown authentication error - %d)\n",
+			    (int) e.re_why);
 		}
 		break;
 
 	case RPC_PROGVERSMISMATCH:
-		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; low version = %u, high version = %u\n",
-			e.re_vers.low, e.re_vers.high);
+		ret = snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
+		    "; low version = %u, high version = %u\n",
+		    e.re_vers.low, e.re_vers.high);
 		break;
 
 	default:	/* unknown */
-		(void) snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
-			"; s1 = %u, s2 = %u\n",
-			e.re_lb.s1, e.re_lb.s2);
+		ret = snprintf(str, CLNT_PERROR_BUFLEN - (str - strstart),
+		    "; s1 = %u, s2 = %u\n", e.re_lb.s1, e.re_lb.s2);
 		break;
 	}
 	strstart[CLNT_PERROR_BUFLEN-2] = '\n';
 	strstart[CLNT_PERROR_BUFLEN-1] = '\0';
-	return (strstart) ;
+	return (strstart);
+
+truncated:
+	snprintf(strstart + CLNT_PERROR_BUFLEN - 5, 5, "...\n");
+	return (strstart);
 }
 
 void
