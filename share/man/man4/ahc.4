@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.22 2002/11/08 08:08:46 mpech Exp $
+.\"	$OpenBSD: ahc.4,v 1.23 2003/03/14 10:07:35 jmc Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -211,7 +211,7 @@ maximum of 255 SCBs.
 Very few Adaptec controller have external SRAM.
 .Pp
 If external SRAM is not available, SCBs are a limited resource and
-using them in a straight forward manner would only allow us to
+using them in a straightforward manner would only allow us to
 keep as many transactions as there are SCBs outstanding at a time.
 This would not allow enough concurrency to fully utilize the SCSI
 bus and its devices.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.4,v 1.12 2001/06/23 14:42:12 deraadt Exp $
+.\"	$OpenBSD: arp.4,v 1.13 2003/03/14 10:07:35 jmc Exp $
 .\"	$NetBSD: arp.4,v 1.2 1995/03/01 11:50:56 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
@@ -41,7 +41,7 @@
 .Nm arp
 .Nd Address Resolution Protocol
 .Sh SYNOPSIS
-.Em "pseudo-device ether"
+.Cd "pseudo-device ether"
 .Sh DESCRIPTION
 The Address Resolution Protocol (ARP) is used to dynamically
 map between Internet host addresses and Ethernet addresses.
@@ -104,26 +104,28 @@ This is no longer supported.
 ARP watches passively for hosts impersonating the local host (i.e., a host
 which responds to an ARP mapping request for the local host's address).
 .Sh DIAGNOSTICS
-.Em "duplicate IP address %x!! sent from ethernet address: %x:%x:%x:%x:%x:%x."
+.Bl -diag
+.It "duplicate IP address %x!! sent from ethernet address: %x:%x:%x:%x:%x:%x."
 ARP has discovered another host on the local network which responds to
 mapping requests for its own Internet address with a different Ethernet
 address, generally indicating that two hosts are attempting to use the
 same Internet address.
 .Pp
-.Em "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x on %x."
+.It "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x on %x."
 An existing route has been overwritten with a new Ethernet address, for
 example when the other host has changed Ethernet cards.
 If the route
 previously was static/non-expiring, the new route will expire normally.
 .Pp
-.Em "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x on %x."
+.It "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x on %x."
 As above, but the existing route had been manually setup as permanent.
 The routing information is not modified.
 .Pp
-.Em "arp: attempt to overwrite entry for %x!! on %x by %x:%x:%x:%x:%x:%x on %x."
+.It "arp: attempt to overwrite entry for %x!! on %x by %x:%x:%x:%x:%x:%x on %x."
 ARP has noticed an attempt to overwrite a host's routing entry on one
 interface with a routing entry for a different interface.
 The routing information is not modified.
+.El
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr route 4 ,

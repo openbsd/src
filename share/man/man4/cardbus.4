@@ -1,4 +1,4 @@
-.\" $OpenBSD: cardbus.4,v 1.14 2002/06/08 00:11:17 aaron Exp $
+.\" $OpenBSD: cardbus.4,v 1.15 2003/03/14 10:07:35 jmc Exp $
 .\" $NetBSD: cardbus.4,v 1.4 2000/02/02 19:57:17 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,13 +53,13 @@ provides machine-independent bus support and drivers for CardBus devices.
 .Pp
 The flags are used with cardslot definition.
 The lowest order (rightmost)
-bit of defines the PC Card attach sequence at
+bit of flags defines the PC Card attach sequence at
 boot-time.
 When the bit is set, a PC Card in the slot is probed and
 attached immediately.
-However, the PC Card is probed after kernel thread wakes up.
+However, the PC Card is probed after the kernel thread wakes up.
 If a PC Card is used as a boot device (e.g., CF
-card or network card), you should set this bit to 1.
+card or network card), this bit should be set to 1.
 .Sh SUPPORTED DEVICES
 .Ox
 includes the following machine-independent CardBus

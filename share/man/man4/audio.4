@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.28 2002/12/13 16:36:52 naddy Exp $
+.\"	$OpenBSD: audio.4,v 1.29 2003/03/14 10:07:35 jmc Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,8 +75,8 @@ operations as
 .Pa /dev/sound ,
 but no other operations.
 In contrast to
-.Pa /dev/sound
-which has the exclusive open property
+.Pa /dev/sound ,
+which has the exclusive open property,
 .Pa /dev/audioctl
 can be opened at any time and can be used to manipulate the audio device
 while it is in use.
@@ -115,7 +115,7 @@ If a full-duplex capable audio device is opened for both reading and writing
 it will start in half-duplex play mode; full-duplex mode has to be set
 explicitly.
 On either type of device, if the playback mode is paused then silence is
-played instead of the provided samples, and if recording is paused then
+played instead of the provided samples and, if recording is paused, then
 the process blocks in
 .Xr read 2
 until recording is unpaused.
@@ -163,7 +163,7 @@ Only encodings that are not emulated (i.e., where
 is not set) work properly for a mapped device.
 .Pp
 The audio device, like most devices, can be used in
-.Va select,
+.Va select ,
 can be set in non-blocking mode and can be set to send a
 .Dv SIGIO
 when I/O is possible.
@@ -244,8 +244,8 @@ independently.
 .It Dv AUDIO_GETIOFFS (audio_offset_t)
 .It Dv AUDIO_GETOOFFS (audio_offset_t)
 This command fetches the current offset in the input(output) buffer where
-the hardware is putting(getting) data.
-It mostly useful when the device
+the hardware is putting (getting) data.
+It is mostly useful when the device
 buffer is available in user space via the
 .Xr mmap 2
 call.
@@ -312,7 +312,7 @@ The default for
 .Va hiwat
 is the maximum value and for
 .Va lowat
-75 % of
+75% of
 .Va hiwat .
 .Pp
 .Va blocksize
@@ -328,7 +328,7 @@ Normally the
 is calculated to correspond to 50ms of sound and it is recalculated
 when the encoding parameter changes, but if the
 .Va blocksize
-is set explicitly this value becomes sticky, i.e., it is remains
+is set explicitly this value becomes sticky, i.e., it remains
 even when the encoding is changed.
 The stickiness can be cleared by reopening the device or setting the
 .Va blocksize
