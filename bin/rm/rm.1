@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.19 2002/09/18 07:33:47 deraadt Exp $
+.\"	$OpenBSD: rm.1,v 1.20 2003/01/11 11:03:53 hugh Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -89,6 +89,7 @@ then
 and then
 .Li 0xff
 again, before they are deleted.
+Files with multiple links will not be overwritten.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
 The
