@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.28 2001/06/25 09:35:52 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.29 2001/06/25 09:46:20 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -106,14 +106,17 @@ int		 tree_remove(struct pf_tree_node **, struct pf_tree_key *);
 struct pf_state	*find_state(struct pf_tree_node *, struct pf_tree_key *);
 void		 insert_state(struct pf_state *);
 void		 purge_expired_states(void);
+
 void		 print_ip(struct ifnet *, struct ip *);
 void		 print_host(u_int32_t, u_int16_t);
 void		 print_state(int, struct pf_state *);
 void		 print_flags(u_int8_t);
+
 void		 pfattach(int);
 int		 pfopen(dev_t, int, int, struct proc *);
 int		 pfclose(dev_t, int, int, struct proc *);
 int		 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
+
 u_int16_t	 fix(u_int16_t, u_int16_t, u_int16_t);
 void		 change_ap(u_int32_t *, u_int16_t *, u_int16_t *, u_int16_t *,
 		    u_int32_t, u_int16_t);
@@ -797,17 +800,17 @@ change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 {
 	u_int32_t oia = *ia, ooa = *oa, opc = *pc, oh2c = *h2c;
 	u_int16_t oip = *ip;
-	// change inner protocol port, fix inner protocol checksum
+	/* Change inner protocol port, fix inner protocol checksum. */
 	*ip = np;
 	*pc = fix(*pc, oip, *ip);
 	*ic = fix(*ic, oip, *ip);
 	*ic = fix(*ic, opc, *pc);
-	// change inner ip address, fix inner ip checksum and icmp checksum
+	/* Change inner ip address, fix inner ip checksum and icmp checksum. */
 	*ia = na;
 	*h2c = fix(fix(*h2c, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
 	*ic = fix(fix(*ic, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
 	*ic = fix(*ic, oh2c, *h2c);
-	// change outer ip address, fix outer ip checksum
+	/* Change outer ip address, fix outer ip checksum. */
 	*oa = na;
 	*hc = fix(fix(*hc, ooa / 65536, *oa / 65536), ooa % 65536, *oa % 65536);
 }
@@ -1086,7 +1089,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 				s->gwy.port	= s->lan.port;
 			}
 		}
-		s->src.seqlo	= ntohl(th->th_seq) + len; // ???
+		s->src.seqlo	= ntohl(th->th_seq) + len; /* ??? */
 		s->src.seqhi	= s->src.seqlo + 1;
 		s->src.state	= 1;
 		s->dst.seqlo	= 0;
