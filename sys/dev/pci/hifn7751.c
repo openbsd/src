@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.24 2000/04/04 20:16:33 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.25 2000/04/05 16:34:07 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1265,7 +1265,22 @@ hifn_newsession(sidp, cri)
 	if (sc == NULL)
 		return (EINVAL);
 
-	for (c = cri, i = 0; c != NULL; c = c->cri_next) {
+	if (sc->sc_sessions == NULL) {
+		sc->sc_sessions = (u_int8_t *)malloc(sc->sc_maxses,
+		    M_DEVBUF, M_NOWAIT);
+		if (sc->sc_sessions == NULL)
+			return (ENOMEM);
+		bzero(sc->sc_sessions, sc->sc_maxses);
+	}
+
+	for (i = 0; i < sc->sc_maxses; i++) {
+		if (sc->sc_sessions[i] == 0)
+			break;
+	}
+	if (i == sc->sc_maxses)
+		return (ENOMEM);
+
+	for (c = cri; c != NULL; c = c->cri_next) {
 		if (c->cri_alg == CRYPTO_MD5_HMAC96 ||
 		    c->cri_alg == CRYPTO_SHA1_HMAC96) {
 			if (mac)
@@ -1281,11 +1296,12 @@ hifn_newsession(sidp, cri)
 		else
 			return (EINVAL);
 	}
-
 	if (mac == 0 && cry == 0)
 		return (EINVAL);
 
-	*sidp = HIFN_SID(sc->sc_dv.dv_unit, 1);
+	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
+	sc->sc_sessions[i] = 1;
+
 	return (0);
 }
 
@@ -1298,6 +1314,19 @@ int
 hifn_freesession(sid)
 	u_int32_t sid;
 {
+	struct hifn_softc *sc;
+	int card, session;
+
+	card = HIFN_CARD(sid);
+	if (card >= hifn_cd.cd_ndevs || hifn_cd.cd_devs[card] == NULL)
+		return (EINVAL);
+
+	sc = hifn_cd.cd_devs[card];
+	session = HIFN_SESSION(sid);
+	if (session >= sc->sc_maxses || sc->sc_sessions == NULL)
+		return (EINVAL);
+
+	sc->sc_sessions[session] = 0;
 	return (0);
 }
 
@@ -1357,15 +1386,22 @@ hifn_process(crp)
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) {
 			maccrd = crd1;
 			enccrd = NULL;
-			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC |
-				HIFN_MAC_NEW_KEY;
+			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC;
+			if (sc->sc_sessions[session] == 1) {
+				cmd->flags |= HIFN_MAC_NEW_KEY;
+				sc->sc_sessions[session] = 2;
+			}
 		}
 		else if (crd1->crd_alg == CRYPTO_DES_CBC ||
 			 crd1->crd_alg == CRYPTO_3DES_CBC) {
 			if (crd1->crd_flags & CRD_F_ENCRYPT)
-				cmd->flags |= HIFN_ENCODE | HIFN_CRYPT_NEW_KEY;
+				cmd->flags |= HIFN_ENCODE;
 			else
-				cmd->flags |= HIFN_DECODE | HIFN_CRYPT_NEW_KEY;
+				cmd->flags |= HIFN_DECODE;
+			if (sc->sc_sessions[session] == 1) {
+				cmd->flags |= HIFN_CRYPT_NEW_KEY;
+				sc->sc_sessions[session] = 2;
+			}
 			maccrd = NULL;
 			enccrd = crd1;
 		}
@@ -1380,8 +1416,7 @@ hifn_process(crp)
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 			crd2->crd_alg == CRYPTO_3DES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
-			cmd->flags |= HIFN_DECODE | HIFN_MAC_TRUNC |
-			    HIFN_MAC_NEW_KEY | HIFN_CRYPT_NEW_KEY;
+			cmd->flags |= HIFN_DECODE | HIFN_MAC_TRUNC;
 			maccrd = crd1;
 			enccrd = crd2;
 		}
@@ -1390,8 +1425,7 @@ hifn_process(crp)
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC96 ||
 			crd2->crd_alg == CRYPTO_SHA1_HMAC96) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
-			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC |
-			    HIFN_MAC_NEW_KEY | HIFN_CRYPT_NEW_KEY;
+			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC;
 			enccrd = crd1;
 			maccrd = crd2;
 		}
@@ -1401,6 +1435,11 @@ hifn_process(crp)
 			 */
 			err = EINVAL;
 			goto errout;
+		}
+
+		if (sc->sc_sessions[session] == 1) {
+			cmd->flags |= HIFN_MAC_NEW_KEY | HIFN_CRYPT_NEW_KEY;
+			sc->sc_sessions[session] = 2;
 		}
 	}
 
@@ -1439,6 +1478,7 @@ hifn_process(crp)
 
 	cmd->dest_ready_callback = hifn_callback;
 	cmd->private_data = (u_long)crp;
+	cmd->session_num = session;
 
 	if (hifn_crypto(sc, cmd) == 0)
 		return (0);
