@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.26 2004/03/28 18:14:20 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.27 2004/04/05 00:21:39 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -42,6 +42,8 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/bpf.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_seq.h>
 
 #ifdef	INET
 #include <netinet/in.h>
@@ -241,7 +243,7 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_state_bus *bus;
 	struct in_addr src;
 	struct mbuf *mp;
-	int iplen, action, error, i, s, count, offp;
+	int iplen, action, error, i, s, count, offp, sfail, stale = 0;
 
 	pfsyncstats.pfsyncs_ipackets++;
 
@@ -397,12 +399,58 @@ pfsync_input(struct mbuf *m, ...)
 					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
+			sfail = 0;
+			if (st->proto == IPPROTO_TCP) {
+				/*
+				 * The state should never go backwards except
+				 * for syn-proxy states.  Neither should the
+				 * sequence window slide backwards.
+				 */
+				if (st->src.state > sp->src.state &&
+				    (st->src.state < PF_TCPS_PROXY_SRC ||
+				    sp->src.state >= PF_TCPS_PROXY_SRC))
+					sfail = 1;
+				else if (st->dst.state > sp->dst.state)
+					sfail = 2;
+				else if (SEQ_GT(st->src.seqlo,
+				    ntohl(sp->src.seqlo)))
+					sfail = 3;
+				else if (st->dst.state >= TCPS_SYN_SENT &&
+				    SEQ_GT(st->dst.seqlo, ntohl(sp->dst.seqlo)))
+					sfail = 4;
+			} else {
+				/*
+				 * Non-TCP protocol state machine always go
+				 * forwards
+				 */
+				if (st->src.state > sp->src.state)
+					sfail = 5;
+				else if ( st->dst.state > sp->dst.state)
+					sfail = 6;
+			}
+			if (sfail) {
+				if (pf_status.debug >= PF_DEBUG_MISC)
+					printf("pfsync: ignoring stale update "
+					    "(%d) id: %016llx "
+					    "creatorid: %08x\n", sfail,
+					    betoh64(st->id),
+					    ntohl(st->creatorid));
+				pfsyncstats.pfsyncs_badstate++;
+
+				/* we have a better state, send it out */
+				if (sc->sc_mbuf != NULL && !stale)
+					pfsync_sendout(sc);
+				stale++;
+				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				continue;
+			}
 			pf_state_peer_ntoh(&sp->src, &st->src);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
 			st->expire = ntohl(sp->expire) + time.tv_sec;
 			st->timeout = sp->timeout;
-
 		}
+		if (stale && sc->sc_mbuf != NULL)
+			pfsync_sendout(sc);
 		splx(s);
 		break;
 	/*
@@ -473,12 +521,60 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
+			sfail = 0;
+			if (st->proto == IPPROTO_TCP) {
+				/*
+				 * The state should never go backwards except
+				 * for syn-proxy states.  Neither should the
+				 * sequence window slide backwards.
+				 */
+				if (st->src.state > up->src.state &&
+				    (st->src.state < PF_TCPS_PROXY_SRC ||
+				    up->src.state >= PF_TCPS_PROXY_SRC))
+					sfail = 1;
+				else if (st->dst.state > up->dst.state)
+					sfail = 2;
+				else if (SEQ_GT(st->src.seqlo,
+				    ntohl(up->src.seqlo)))
+					sfail = 3;
+				else if (st->dst.state >= TCPS_SYN_SENT &&
+				    SEQ_GT(st->dst.seqlo, ntohl(up->dst.seqlo)))
+					sfail = 4;
+			} else {
+				/*
+				 * Non-TCP protocol state machine always go
+				 * forwards
+				 */
+				if (st->src.state > up->src.state)
+					sfail = 5;
+				else if (st->dst.state > up->dst.state)
+					sfail = 6;
+			}
+			if (sfail) {
+				if (pf_status.debug >= PF_DEBUG_MISC)
+					printf("pfsync: ignoring stale update "
+					    "(%d) id: %016llx "
+					    "creatorid: %08x\n", sfail,
+					    betoh64(st->id),
+					    ntohl(st->creatorid));
+				pfsyncstats.pfsyncs_badstate++;
+
+				/* we have a better state, send it out */
+				if ((!stale || update_requested) &&
+				    sc->sc_mbuf != NULL) {
+					pfsync_sendout(sc);
+					update_requested = 0;
+				}
+				stale++;
+				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				continue;
+			}
 			pf_state_peer_ntoh(&up->src, &st->src);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
 			st->expire = ntohl(up->expire) + time.tv_sec;
 			st->timeout = up->timeout;
 		}
-		if (update_requested)
+		if ((update_requested || stale) && sc->sc_mbuf)
 			pfsync_sendout(sc);
 		splx(s);
 		break;
@@ -524,7 +620,6 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		/* XXX send existing. pfsync_pack_state should handle this. */
 		if (sc->sc_mbuf != NULL)
 			pfsync_sendout(sc);
 		for (i = 0,
