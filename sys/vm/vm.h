@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.8 1999/06/01 08:23:51 art Exp $	*/
+/*	$OpenBSD: vm.h,v 1.9 2000/03/13 16:08:28 art Exp $	*/
 /*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 #ifndef VM_H
 #define VM_H
 
-/* XXX remove this later when the simple locks are not here! */
-
 typedef int vm_inherit_t;		/* XXX: inheritance codes */
 
 union vm_map_object;
@@ -52,11 +50,12 @@ typedef struct vm_map_entry *vm_map_entry_t;
 struct vm_map;
 typedef struct vm_map *vm_map_t;
 
-struct vm_object;
-typedef struct vm_object *vm_object_t;
-
 struct vm_page;
 typedef struct vm_page  *vm_page_t;
+
+#if !defined(UVM)
+struct vm_object;
+typedef struct vm_object *vm_object_t;
 
 struct pager_struct;
 typedef struct pager_struct *vm_pager_t;
@@ -64,7 +63,6 @@ typedef struct pager_struct *vm_pager_t;
 /*
  *	MACH VM locking type mappings to kernel types
  */
-#if !defined(UVM)
 typedef struct simplelock	simple_lock_data_t;
 typedef struct simplelock	*simple_lock_t;
 typedef struct lock		lock_data_t;
@@ -104,7 +102,7 @@ struct vmspace {
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 };
 
-#ifdef  pmap_resident_count
+#ifdef pmap_resident_count
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 #else
 #define vm_resident_count(vm) ((vm)->vm_rssize)
