@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.21 2005/01/14 22:39:23 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.22 2005/01/23 16:53:36 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -58,7 +58,7 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
-#sgc0		at mainbus0	# SGC bus on some 4xx models
+sgc0		at mainbus0	# SGC bus on some 4xx models
 
 # Human Interface Loop devices
 hil0		at intio?	# HIL controller
@@ -100,8 +100,8 @@ topcat*		at dio?
 wsdisplay*	at topcat?
 
 # SGC framebuffers
-#sti*		at sgc?
-#wsdisplay*	at sti?
+sti*		at sgc?
+wsdisplay*	at sti?
 
 dca0		at dio? scode 9	flags 1	# DCA serial interfaces
 dca*		at dio?

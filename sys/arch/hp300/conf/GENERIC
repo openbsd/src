@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2005/01/18 19:13:23 miod Exp $
+#	$OpenBSD: GENERIC,v 1.36 2005/01/23 16:53:36 miod Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -47,7 +47,7 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
-#sgc0		at mainbus0	# SGC bus on some 4xx models
+sgc0		at mainbus0	# SGC bus on some 4xx models
 
 # Human Interface Loop devices
 hil0		at intio?	# HIL controller
@@ -89,8 +89,8 @@ topcat*		at dio?
 wsdisplay*	at topcat?
 
 # SGC framebuffers
-#sti*		at sgc?
-#wsdisplay*	at sti?
+sti*		at sgc?
+wsdisplay*	at sti?
 
 dca0		at dio? scode 9 flags 1	# DCA serial interfaces
 dca*		at dio?
