@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.15 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.16 2000/04/17 23:50:45 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.15 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.16 2000/04/17 23:50:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,11 @@ static Token	  condPushBack=None;	/* Single push-back token used in
 
 #define	MAXIF		30	  /* greatest depth of #if'ing */
 
-static Boolean	  condStack[MAXIF]; 	/* Stack of conditionals's values */
+static struct {
+	Boolean 	value;
+	unsigned long 	lineno;
+	const char 	*filename;
+} condStack[MAXIF]; 			/* Stack of conditionals */
 static int  	  condTop = MAXIF;  	/* Top-most conditional */
 static int  	  skipIfLevel=0;    	/* Depth of skipped conditionals */
 static Boolean	  skipLine = FALSE; 	/* Whether the parse module is skipping
@@ -1128,7 +1132,7 @@ Cond_Eval (line)
 		Parse_Error (level, "if-less else");
 		return (COND_INVALID);
 	    } else if (skipIfLevel == 0) {
-		value = !condStack[condTop];
+		value = !condStack[condTop].value;
 	    } else {
 		return (COND_SKIP);
 	    }
@@ -1201,7 +1205,7 @@ Cond_Eval (line)
     }
     if (!isElse) {
 	condTop -= 1;
-    } else if ((skipIfLevel != 0) || condStack[condTop]) {
+    } else if ((skipIfLevel != 0) || condStack[condTop].value) {
 	/*
 	 * If this is an else-type conditional, it should only take effect
 	 * if its corresponding if was evaluated and FALSE. If its if was
@@ -1221,7 +1225,9 @@ Cond_Eval (line)
 	Parse_Error (PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
 	return (COND_INVALID);
     } else {
-	condStack[condTop] = value;
+	condStack[condTop].value = value;
+	condStack[condTop].lineno = Parse_Getlineno();
+	condStack[condTop].filename = Parse_Getfilename();
 	skipLine = !value;
 	return (value ? COND_PARSE : COND_SKIP);
     }
@@ -1243,9 +1249,15 @@ Cond_Eval (line)
 void
 Cond_End()
 {
+    int i;
+
     if (condTop != MAXIF) {
 	Parse_Error(PARSE_FATAL, "%d open conditional%s", MAXIF-condTop,
 		    MAXIF-condTop == 1 ? "" : "s");
+	for (i = MAXIF-1; i >= condTop; i--) {
+	    fprintf(stderr, "\t at line %lu of %s\n", condStack[i].lineno,
+		condStack[i].filename);
+	}
     }
     condTop = MAXIF;
 }
