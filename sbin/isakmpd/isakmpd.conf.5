@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.6 1998/12/21 01:02:25 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.9 1998/12/21 00:30:02 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.7 1999/02/26 03:45:09 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.11 1999/02/25 11:09:39 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -66,6 +66,224 @@ Comments can be put anywhere in the file by using a hash mark
 .Pq Sq \&# .
 Then the comment goes on to the end of the line.
 .Pp
+Often the right-hand side values consist of other section names.
+This results in a tree structure.
+Some values are treated as a list of several scalar values, such lists always
+use comma as the separator.  Some values are formated like this: X,Y:Z, which
+is an offer/accept syntax, where X is a value we offer and Y:Z is a range of
+accepted values, inclusive.
+.Pp
+.Ss Roots
+.Bl -hang -width 12n
+.It Em General
+Generic global configuration parameters
+.Bl -tag -width 12n
+.It Em Retransmits
+How many times should a message be retransmitted before giving up.
+.It Em Exchange-max-time
+How many seconds should an exchange maximally take to setup
+before we give up.
+.It Em Listen-on
+A list of IP-addresses OK to listen on.  This list is used as
+a filter for the set of addresses the interfaces configured
+provides.  This means that we won't see if an address given
+here does not exist on this host, thus no error is given for
+that case.
+.El
+.It Em Phase 1
+ISAKMP SA negotiation parameter root
+.Bl -tag -width 12n
+.It Em <IP-address>
+A name of the ISAKMP peer at the given IP-address.  This name
+is used as the section name for further information to be
+found.  Look at <ISAKMP-peer> below.
+.El
+.It Em Phase 2
+IPsec SA negotiation parameter root
+.Bl -tag -width 12n
+.It Em Connections
+A list of directed IPSec "connection" names.  This name
+is used as the section name for further information to be
+found.  Look at <IPSec-connection> below.
+.El
+.El
+.Ss Referred-to sections
+.Bl -hang -width 12n
+.It Em <ISAKMP-peer>
+Parameters for negotiation with an ISAKMP peer
+.Bl -tag -width 12n
+.It Em Phase
+The constant
+.Li 1 ,
+as ISAKMP-peers and IPSec-connections
+really are handled by the same code inside isakmpd.
+.It Em Transport
+The name of the transport protocol, normally
+.Li udp .
+.It Em Address
+The IP-address of the peer.
+.It Em Port
+In case of UDP, the UDP port number to send to.  This is optional, the
+default value is 500 which is the IANA-registered number for ISAKMP.
+.It Em Configuration
+The name of the ISAKMP-configuration section to use.  Look at
+<ISAKMP-configuration> below.
+.It Em Authentication
+Authentication data for this specific peer.  In the case of
+preshared key, this is the key value itself.
+.El
+.It Em <ISAKMP-configuration>
+.Bl -tag -width 12n
+.It Em DOI
+The domain of interpretation as given by the RFCs.  Normally
+.Li IPSEC .
+.It Em EXCHANGE_TYPE
+The exchange type as given by the RFCs.  For main mode this is
+.Li ID_PROT .
+.It Em Transforms
+A list of proposed transforms to use for protecting the
+ISAKMP traffic.  These are actually names for sections
+further describing the transforms.  Look at <ISAKMP-transform>
+below.
+.El
+.It Em <ISAKMP-transform>
+.Bl -tag -width 12n
+.It Em ENCRYPTION_ALGORITHM
+The encryption algorithm as the RFCs name it.
+.It Em KEY_LENGTH
+For encryption algorithms with variable key length, this is
+where the offered/accepted keylengths are described.  The
+value is of the offer-accept kind described above.
+.It Em HASH_ALGORITHM
+The hash algorithm as the RFCs name it.
+.It Em AUTHENTICATION_METHOD
+The authentication method as the RFCs name it.
+.It Em GROUP_DESCRIPTION
+The group used for Diffie-Hellman exponentiations.  The
+name are symbolic, like
+.Li MODP_768 , MODP_1024 , EC_155
+and
+.Li EC_185 .
+.It Em Life
+A list of lifetime descriptions.  Each element is in itself
+a name of the section that defines the lifetime.  Look at
+<Lifetime> below.
+.El
+.It Em <Lifetime>
+.Bl -tag -width 12n
+.It Em LIFE_TYPE
+.Li SECONDS
+or
+.Li BYTES
+depending on the type of the duration.
+.It Em LIFE_DURATION
+An offer/accept kind of value, see above.
+.El
+.It Em <IPSec-connection>
+.Bl -tag -width 12n
+.It Em Phase
+The constant
+.Li 2 ,
+as ISAKMP-peers and IPSec-connections
+really are handled by the same code inside isakmpd.
+.It Em ISAKMP-peer
+The name of the ISAKMP-peer which to talk to in order to
+set up this connection.  The value is the name of an
+<ISAKMP-peer> section.  See above.
+.It Em Configuration
+The name of the IPSec-configuration section to use.  Look at
+<IPSec-configuration> below.
+.It Em Local-ID
+If existent, the name of the section that describes the
+optional local client ID that we should present to our peer.
+Look at <IPSec-ID> below.
+.It Em Remote-ID
+If existent, the name of the section that describes the
+optional remote client ID that we should present to our peer.
+Look at <IPSec-ID> below.
+.El
+.It Em <IPSec-configuration>
+.Bl -tag -width 12n
+.It Em DOI
+The domain of interpretation as given by the RFCs.  Normally
+.Li IPSEC .
+.It Em EXCHANGE_TYPE
+The exchange type as given by the RFCs.  For quick mode this is
+.Li QUICK_MODE .
+.It Em Suites
+A list of protection suites (bundles of protocols) useable for
+protecting the IP traffic.  Each of the list elements is a
+name of	an <IPSec-suite> section.  See below.
+.El
+.It Em <IPSec-suite>
+.Bl -tag -width 12n
+.It Em Protocols
+A list of the protocols included in this protection suite.
+Each of the list elements is a name of an <IPSec-protocol>
+section.  See below.
+.El
+.It Em <IPSec-protocol>
+.Bl -tag -width 12n
+.It Em PROTOCOL_ID
+The protocol as given by the RFCs.  Acceptable values today
+are
+.Li IPSEC_AH
+and
+.Li IPSEC_ESP .
+.It Em Transforms
+A list of transforms useable for implementing the protocol.
+Each of the list elements is a name of an <IPSec-transform>
+section.  See below.
+.It Em ReplayWindow
+The size of the window used for replay protection.  Normally this is should
+not be touched, unless you do local IPSec setups, i.e. both the sender and
+receiver are on the same box.  Then replay protection has to be turned off
+which is done by setting this parameter to -1.  Look at the
+.Nm ESP
+and
+.Nm AH
+RFCs for a better description.
+.El
+.It Em <IPSec-transform>
+.Bl -tag -width 12n
+.It Em TRANSFORM_ID
+The transform ID as given by the RFCs.
+.It Em ENCAPSULATION_MODE
+The encapsulation mode as given by the RFCs.  This means
+TRANSPORT or TUNNEL.
+.It Em AUTHENTICATION_ALGORITHM
+The optional authentication algorithm in the case of this
+being an ESP transform.
+.It Em GROUP_DESCRIPTION
+An optional (provides PFS if present) Diffie-Hellman group
+description.  The values are the same as GROUP_DESCRIPTION's
+in <ISAKMP-transform> sections shown above.
+.It Em Life
+List of lifetimes, each element is a <Lifetime> section name.
+.El
+.It Em <IPSec-ID>
+.Bl -tag -width 12n
+.It Em ID-type
+The ID type as given by the RFCs.  For IPSec this is currently
+.Li IPV4_ADDR
+or
+.Li IPV4_ADDR_SUBNET .
+.It Em Address
+If the ID-type is
+.Li IPV4_ADDR ,
+this tag should exist and be an IP-address.
+.It Em Network
+If the ID-type is
+.Li IPV4_ADDR_SUBNET
+this tag should exist and
+be a network address.
+.It Em Netmask
+If the ID-type is
+.Li IPV4_ADDR_SUBNET
+this tag should exist and
+be a network subnet mask.
+.El
+.El
 .Sh EXAMPLE
 An example of a configuration file:
 .Pp
@@ -75,14 +293,19 @@ An example of a configuration file:
 [General]
 Retransmits=		3
 Exchange-max-time=	120
+Listen-on=		10.1.0.2
 
-# XXX This double mapping seems rather stupid, but...
+# Incoming phase 1 negotiations are multiplexed on the source IP address
 [Phase 1]
-10.1.0.1=		ISAKMP-peer-1
-10.1.0.2=		ISAKMP-peer-2
-Default=		Default-ISAKMP-peer
+10.1.0.1=		ISAKMP-peer-west
 
-[ISAKMP-peer-1]
+# These connections are walked over after config file parsing and told
+# to the application layer so that it will inform us when traffic wants to
+# pass over them.  This means we can do on-demand keying.
+[Phase 2]
+Connections=		IPsec-east-west
+
+[ISAKMP-peer-west]
 Phase=			1
 Transport=		udp
 # XXX Not yet implemented
@@ -91,136 +314,32 @@ Address=		10.1.0.1
 # Default values for "Port" commented out
 #Port=			isakmp
 #Port=			500
-Configuration=		Default-incoming-main-mode
-Authentication=		mekmitasdigoat
-
-[Very-strong-test]
-Phase=			1
-Transport=		udp
-Address=		10.1.0.1
-Configuration=		Very-strong-main-mode
-Authentication=		mekmitasdigoat
-
-[Strong-test]
-Phase=			1
-Transport=		udp
-Address=		10.1.0.1
-Configuration=		Strong-main-mode
-Authentication=		mekmitasdigoat
-
-[Default-test]
-Phase=			1
-Transport=		udp
-Address=		10.1.0.1
 Configuration=		Default-main-mode
 Authentication=		mekmitasdigoat
 
-[Weak-test]
-Phase=			1
-Transport=		udp
-Address=		10.1.0.1
-Configuration=		Weak-main-mode
-Authentication=		mekmitasdigoat
-
-[ISAKMP-peer-2]
-Phase=			1
-Transport=		udp
-# XXX Not yet implemented
-#Local-address=		10.1.0.1
-Address=		10.1.0.2
-# Default values for "Port" commented out
-#Port=			isakmp
-#Port=			500
-Configuration=		Default-incoming-main-mode
-Authentication=		mekmitasdigoat
-
-[ISAKMP-orust.di.eom.crt.se]
-Phase=			1
-Transport=		udp
-# XXX Not yet implemented
-#Local-address=		194.198.196.150
-Address=		193.12.107.84
-# Default values for "Port" commented out
-#Port=			isakmp
-#Port=			500
-Configuration=		Strong-main-mode
-Authentication=		mekmitasdigoat
-
-[Default-ISAKMP-peer]
-Phase=			1
-# XXX Not yet implemented
-#Local-address=		10.1.0.2
-Configuration=		Default-incoming-main-mode
-Authentication=		mekmitasdigoat
-
-[IPsec-2-1]
+[IPsec-east-west]
 Phase=			2
-ISAKMP-peer=		ISAKMP-peer-1
+ISAKMP-peer=		ISAKMP-peer-west
 Configuration=		Default-quick-mode
-Local-ID=		Net-2
-Remote-ID=		Net-1
+Local-ID=		Net-east
+Remote-ID=		Net-west
 
-[IPsec-1-2]
-Phase=			2
-ISAKMP-peer=		ISAKMP-peer-2
-Configuration=		Default-quick-mode
-Local-ID=		Net-1
-Remote-ID=		Net-2
-
-[IPsec-moby-1]
-Phase=			2
-ISAKMP-peer=		ISAKMP-peer-1
-Configuration=		Default-quick-mode
-Local-ID=		moby.appli.se
-Remote-ID=		Net-1
-
-[IPsec-moby-2]
-Phase=			2
-ISAKMP-peer=		ISAKMP-orust.di.eom.crt.se
-Configuration=		Default-quick-mode
-Local-ID=		moby.appli.se
-Remote-ID=		Net-2
-
-[Net-1]
+[Net-west]
 ID-type=		IPV4_ADDR_SUBNET
 Network=		192.168.1.0
 Netmask=		255.255.255.0
 
-[Net-2]
+[Net-east]
 ID-type=		IPV4_ADDR_SUBNET
 Network=		192.168.2.0
 Netmask=		255.255.255.0
 
-[moby.appli.se]
-ID-type=		IPV4_ADDR
-Address=		194.198.196.216
-
 # Main mode descriptions
-
-[Default-incoming-main-mode]
-DOI=			IPSEC
-EXCHANGE_TYPE=		ID_PROT
-Transforms=		BLF-SHA-EC185,BLF-MD5-EC155,3DES-SHA,DES-MD5
-
-[Very-strong-main-mode]
-DOI=			IPSEC
-EXCHANGE_TYPE=		ID_PROT
-Transforms=		BLF-SHA-EC185
-
-[Strong-main-mode]
-DOI=			IPSEC
-EXCHANGE_TYPE=		ID_PROT
-Transforms=		BLF-MD5-EC155
 
 [Default-main-mode]
 DOI=			IPSEC
 EXCHANGE_TYPE=		ID_PROT
 Transforms=		3DES-SHA
-
-[Weak-main-mode]
-DOI=			IPSEC
-EXCHANGE_TYPE=		ID_PROT
-Transforms=		DES-MD5
 
 # Main mode transforms
 ######################
@@ -483,4 +602,5 @@ PUBKEY=			/etc/isakmpd_key.pub
 .Ed
 .Pp
 .Sh SEE ALSO
-.Xr isakmpd 8 .
+.Xr isakmpd 8 ,
+.Xr ipsec 4 .
