@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.8 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: ams.c,v 1.9 2004/11/28 15:43:43 matthieu Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -490,17 +490,18 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 				buttons |= button_bit;
 			else
 				buttons &= ~button_bit;
-		/* Extended Protocol (up to 6 more buttons) */
-		for (mask = 0x80; i < max_byte;
-		    i += (mask == 0x80), button_bit <<= 1) {
-			/* 0 when button down */
-			if (!(event->bytes[i] & mask))
-				buttons |= button_bit;
-			else
-				buttons &= ~button_bit;
-			mask = ((mask >> 4) & 0xf)
-				| ((mask & 0xf) << 4);
-		}
+		if (sc->sc_class == MSCLASS_MOUSE) 
+			/* Extended Protocol (up to 6 more buttons) */
+			for (mask = 0x80; i < max_byte;
+			     i += (mask == 0x80), button_bit <<= 1) {
+				/* 0 when button down */
+				if (!(event->bytes[i] & mask))
+					buttons |= button_bit;
+				else
+					buttons &= ~button_bit;
+				mask = ((mask >> 4) & 0xf)
+					| ((mask & 0xf) << 4);
+			}
 		break;
 	}
 	new_event.u.m.buttons = sc->sc_mb | buttons;
