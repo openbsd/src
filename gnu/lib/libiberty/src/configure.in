@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script
 
 AC_PREREQ(2.13)
-AC_INIT(pexecute.c)
+AC_INIT(xmalloc.c)
 
 # This works around the fact that libtool configuration may change LD
 # for this particular configuration, but some shells, instead of
@@ -142,7 +142,7 @@ AC_SUBST_FILE(host_makefile_frag)
 # It's OK to check for header files.  Although the compiler may not be
 # able to link anything, it had better be able to at least compile
 # something.
-AC_CHECK_HEADERS(sys/file.h sys/param.h limits.h stdlib.h malloc.h string.h unistd.h strings.h sys/time.h time.h sys/resource.h sys/stat.h sys/mman.h fcntl.h alloca.h sys/pstat.h sys/sysmp.h sys/sysinfo.h machine/hal_sysinfo.h sys/table.h sys/sysctl.h sys/systemcfg.h)
+AC_CHECK_HEADERS(sys/file.h sys/param.h limits.h stdlib.h string.h unistd.h strings.h sys/time.h time.h sys/resource.h sys/stat.h sys/mman.h fcntl.h alloca.h sys/pstat.h sys/sysmp.h sys/sysinfo.h machine/hal_sysinfo.h sys/table.h sys/sysctl.h sys/systemcfg.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 
@@ -177,6 +177,7 @@ funcs="$funcs memchr"
 funcs="$funcs memcmp"
 funcs="$funcs memcpy"
 funcs="$funcs memmove"
+funcs="$funcs mempcpy"
 funcs="$funcs memset"
 funcs="$funcs mkstemps"
 funcs="$funcs putenv"
@@ -184,7 +185,10 @@ funcs="$funcs random"
 funcs="$funcs rename"
 funcs="$funcs rindex"
 funcs="$funcs setenv"
+funcs="$funcs snprintf"
 funcs="$funcs sigsetmask"
+funcs="$funcs stpcpy"
+funcs="$funcs stpncpy"
 funcs="$funcs strcasecmp"
 funcs="$funcs strchr"
 funcs="$funcs strdup"
@@ -198,30 +202,34 @@ funcs="$funcs tmpnam"
 funcs="$funcs vasprintf"
 funcs="$funcs vfprintf"
 funcs="$funcs vprintf"
+funcs="$funcs vsnprintf"
 funcs="$funcs vsprintf"
 funcs="$funcs waitpid"
 
 # Also in the old function.def file: alloca, vfork, getopt.
 
-vars="sys_errlist sys_nerr sys_siglist"
+vars="sys_errlist sys_nerr sys_siglist _system_configuration"
 
 checkfuncs="getrusage on_exit psignal strerror strsignal sysconf times sbrk gettimeofday"
-checkfuncs="$checkfuncs pstat_getstatic pstat_getdynamic sysmp getsysinfo table sysctl"
+checkfuncs="$checkfuncs realpath canonicalize_file_name pstat_getstatic pstat_getdynamic sysmp"
+checkfuncs="$checkfuncs getsysinfo table sysctl"
 
 # These are neither executed nor required, but they help keep
 # autoheader happy without adding a bunch of text to acconfig.h.
 if test "x" = "y"; then
   AC_CHECK_FUNCS(asprintf atexit basename bcmp bcopy bsearch bzero calloc clock)
   AC_CHECK_FUNCS(getcwd getpagesize index insque mkstemps memchr memcmp memcpy)
-  AC_CHECK_FUNCS(memmove memset putenv random rename rindex sigsetmask)
-  AC_CHECK_FUNCS(strcasecmp setenv strchr strdup strncasecmp strrchr strstr)
+  AC_CHECK_FUNCS(memmove mempcpy memset putenv random rename rindex sigsetmask)
+  AC_CHECK_FUNCS(strcasecmp setenv stpcpy stpncpy strchr strdup strncasecmp strrchr strstr)
   AC_CHECK_FUNCS(strtod strtol strtoul tmpnam vasprintf vfprintf vprintf)
   AC_CHECK_FUNCS(vsprintf waitpid getrusage on_exit psignal strerror strsignal)
-  AC_CHECK_FUNCS(sysconf times sbrk gettimeofday ffs)
+  AC_CHECK_FUNCS(sysconf times sbrk gettimeofday ffs snprintf vsnprintf)
   AC_CHECK_FUNCS(pstat_getstatic pstat_getdynamic sysmp getsysinfo table sysctl)
+  AC_CHECK_FUNCS(realpath canonicalize_file_name)
   AC_DEFINE(HAVE_SYS_ERRLIST, 1, [Define if you have the sys_errlist variable.])
   AC_DEFINE(HAVE_SYS_NERR,    1, [Define if you have the sys_nerr variable.])
   AC_DEFINE(HAVE_SYS_SIGLIST, 1, [Define if you have the sys_siglist variable.])
+  AC_DEFINE(HAVE__SYSTEM_CONFIGURATION, 1, [Define if you have the _system_configuration variable.])
 fi
 
 # For each of these functions, if the host does not provide the
@@ -424,19 +432,19 @@ if test -z "${setobjs}"; then
       AC_MSG_RESULT(no)
     fi
   done
-
-  # special check for _system_configuration because AIX <4.3.2 do not
-  # contain the `physmem' member.
-  AC_MSG_CHECKING([for external symbol _system_configuration])
-  AC_TRY_COMPILE([#include <sys/systemcfg.h>],
-                 [double x = _system_configuration.physmem;],
-    [AC_MSG_RESULT([yes])
-    AC_DEFINE(HAVE__SYSTEM_CONFIGURATION, 1,
-              [Define if you have the _system_configuration variable.])],
-    [AC_MSG_RESULT([no])])
-
   AC_CHECK_FUNCS($checkfuncs)
+  libiberty_NEED_DECLARATION(canonicalize_file_name)
 fi
+
+# Figure out which version of pexecute to use.
+case "${host}" in
+     *-*-mingw* | *-*-winnt*)	pexecute=pex-win32.o  ;;
+     *-*-msdosdjgpp*)		pexecute=pex-djgpp.o  ;;
+     *-*-msdos*)		pexecute=pex-msdos.o  ;;
+     *-*-os2-emx*)		pexecute=pex-os2.o    ;;
+     *)				pexecute=pex-unix.o   ;;
+esac
+AC_SUBST(pexecute)
 
 libiberty_AC_FUNC_STRNCMP
 

@@ -1,61 +1,55 @@
-2003-10-16  Release Manager
+2003-04-22  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
-	* GCC 3.3.2 Released.
+	* vsnprintf.c (vsnprintf): Don't pad string with extra nulls.
+	(main): Test that we don't write too much data.
 
-2003-08-04  Release Manager
+2003-04-16  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
-	* GCC 3.3.1 Released.
+	* configure.in (funcs, AC_CHECK_FUNCS): Add snprintf and
+	vsnprintf.
+	* snprintf.c, vsnprintf.c: New files.
+	* Makefile.in (CFILES): Add snprintf.c and vsnprintf.c.
+	(CONFIGURED_OFILES): Add snprintf.o and vsnprintf.o.
+	Regenerate dependencies.
 
-2003-08-04  Release Manager
+	* functions.texi, configure, config.in: Regenerated.
 
-	* GCC 3.3.1 Released.
+2003-04-15  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
-2003-06-19  Dara Hazeghi  <dhazeghi@yahoo.com>
+	* mempcpy.c, stpcpy.c, stpncpy.c: New files.
+	* configure.in (funcs, AC_CHECK_FUNCS): Add mempcpy, stpcpy
+	and stpncpy.
+	* Makefile.in (CFILES): Add mempcpy.c, stpcpy.c and stpncpy.c.
+	(CONFIGURED_OFILES): Add mempcpy.o, stpcpy.o and stpncpy.o.
+	Regenerate dependencies.
 
-	* configure.in: Add check for malloc.h needed by
-	m68k for function free().
-	* configure: Regenerated.
-	* config.in: Add HAVE_MALLOC_H.
-	* hashtab.c: include malloc.h were available for
-	free().
+	* functions.texi, configure, config.in: Regenerated.
 
-2003-06-09  Albert Chin-A-Young  <china@thewrittenword.com>
-	
-	PR bootstrap/10974
-	* physmem.c: Update comment.
-	* configure.in: Modify test for _system_configuration for older
-	AIX systems.
+2003-04-15  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
-	* config.in, configure: Regenerated.
-	
-2003-06-05  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
-
-	PR other/10810
-	* test-demangle.c (getline): Fix fence-post error.
-
-2003-05-23  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
-
-	Backport from mainline:
-	2003-04-15  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
-	
+	* argv.c: Fix comments.
+	* calloc.c: Don't unnecessarily include "libiberty.h".
+	(bzero): Add prototype.
+	* floatformat.c: Include "ansidecl.h", rely on ANSI_PROTOTYPES.
+	* getcwd.c (getcwd): Use standard definition to avoid conflicts
+	with system headers.
+	* hashtab.c (htab_traverse): Delete unused variables.
+	* rename.c: Include "ansidecl.h".
+	(rename): Use standard definition to avoid conflicts with system
+	headers.
+	* strsignal.c: Rely on ANSI_PROTOTYPES.
+	* strstr.c: Check GNUC >= 2, not GNUC == 2.
+	* vfprintf.c: Include "ansidecl.h", rely on ANSI_PROTOTYPES.
+	* vprintf.c: Include "ansidecl.h" earlier, rely on
+	ANSI_PROTOTYPES.
 	* vsprintf.c: Include "ansidecl.h" earlier, rely on
 	ANSI_PROTOTYPES and possibly include <stdarg.h>.
+	
+	* Makefile.in: Regenerate dependencies.
 
-2003-05-14  Carlo Wood  <carlo@alinoe.com>
+2003-04-15  DJ Delorie  <dj@redhat.com>
 
-	* cp-demangle.c: Fix typo in "char_traints" string-literal.
-
-2003-05-13  Release Manager
-
-	* GCC 3.3 Released.
-
-2003-05-13  Release Manager
-
-	* GCC 3.3 Released.
-
-2003-05-13  Release Manager
-
-	* GCC 3.3 Released.
+	* maint-tool (deps): Scan for headers in $srcdir also.
 
 2003-04-15  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
@@ -65,6 +59,29 @@
 	* getopt.c (exchange, _getopt_initialize): Use mempcpy not
 	__mempcpy.
 	* regex.c (regerror): Likewise.
+
+2003-04-14  Roger Sayle  <roger@eyesopen.com>
+
+	* argv.c: Use ANSI_PROTOTYPES instead of __STDC__.
+	* memchr.c: Likewise.
+	* strcasecmp.c: Likewise.
+	* strncasecmp.c: Likewise.
+	* strncmp.c: Likewise.
+	* xatexit.c: Likewise.
+	* xmalloc.c: Likewise.
+
+	* copysign.c: Use traditional function declaration instead of DEFUN.
+	* sigsetmask.c: Likewise.
+
+	* memcmp.c: Both of the above, ANSI_PROTOTYPES and DEFUN.
+	* memset.c: Likewise.
+
+	* memcpy.c: ANSI_PROTOTYPES, DEFUN and prototype bcopy.
+	* memmove.c: Likewise.
+
+2003-04-14  Roger Sayle  <roger@eyesopen.com>
+
+	* strdup.c (strdup): Tweak implementation to use memcpy.
 
 2003-04-14  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
@@ -76,6 +93,25 @@
 	* Makefile.in (MULTIOSDIR): New macro.  Use $(CC) $(LIBCFLAGS)
 	instead of $$CC alone.
 	(install_to_tooldir): Use it.
+
+2003-17-03  Jan Hubicka  <jh@suse.cz>
+
+	* hashtab.c (htab_traverse_noresize): Break out from ...
+	* hashtab.c (htab_traverse): ... here.
+
+2003-12-03  Jan Hubicka  <jh@suse.cz>
+
+	* hashtab.c (htab_expand): Fix warning.
+
+	* hashtab.c (htab_expand): Compute the size of hashtable based
+	on the number of elements actually used.
+	(htab_traverse):  Call htab_expand when table is too empty.
+
+2003-03-11  Carlo Wood  <carlo@gnu.org>
+
+	* cplus-dem.c (demangle_integral_value): Correction to reflect
+	patch of 2002-01-10 in order to also make negative multi-digits
+	without leading underscore work.
 
 2003-03-03  Mark Mitchell  <mark@codesourcery.com>
 
@@ -135,7 +171,7 @@
 	* physmem.c (physmem_total, physmem_available): De-ANSI-fy.
 	* configure.in (AC_CHECK_FUNCS): Add pstat_getstatic and
 	pstat_getdynamic.
-
+	
 2003-02-20  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
 	* Makefile.in (CFILES): Add physmem.c.
@@ -146,11 +182,47 @@
 
 	* config.in, configure: Regenerated.
 
+2003-02-20  Daniel Jacobowitz  <drow@mvista.com>
+
+	* Makefile.in (CFILES): Add lrealpath.c.
+	(REQUIRED_OFILES): Add lrealpath.o.
+	(lrealpath.o): Add rule.
+	* aclocal.m4 (libiberty_NEED_DECLARATION): Add.
+	* configure.in: Add realpath and canonicalize_file_name to
+	checkfuncs and AC_CHECK_FUNCS.  Use libiberty_NEED_DECLARATION
+	for canonicalize_file_name.
+	* lrealpath.c: New file.
+	* make-relative-prefix.c: Update documentation.
+	(make_relative_prefix): Simplify.  Use lbasename and lrealpath.
+	* config.in: Regenerated.
+	* configure: Regenerated.
+	* functions.texi: Regenerated.
+
+2003-02-20  jmc  <jmc@prioris.mini.pw.edu.pl>
+
+	* cplus_dem.c: Fix typo: intializes -> initializes.
+
 2003-02-20  Alexandre Oliva  <aoliva@redhat.com>
 
 	* configure.in: Propagate ORIGINAL_LD_FOR_MULTILIBS to
 	config.status.
 	* configure: Rebuilt.
+
+2003-02-13  Daniel Jacobowitz  <drow@mvista.com>
+
+	Fix PR c++/7612.
+	* cplus-dem.c (demangle_signature): Call string_delete.
+	Remove extra string_init.
+	(demangle_arm_hp_template): Call string_delete instead of
+	string_clear.  Add missing string_delete call.
+	(demangle_qualified): Add missing string_delete call.
+	(do_type): Remove unused variable btype.  Add missing string_delete
+	call.  Call string_delete instead of string_clear.
+	(demangle_fund_type): Move variable btype inside of the switch
+	statement.  Add missing string_delete call.
+	(do_arg): Call string_delete instead of string_clear.  Remove extra
+	string_init.
+	(demangle_nested_args): Free work->previous_argument.
 
 2003-02-12  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
@@ -161,7 +233,7 @@
 
 	* libiberty.texi: Update to GFDL 1.2.
 
-2003-02-02  Christian Cornelssen  <ccorn@cs.tu-berlin.de>
+2003-01-30  Christian Cornelssen  <ccorn@cs.tu-berlin.de>
 
 	* Makefile.in (libiberty_topdir): New subst.
 	(mkinstalldirs): Redefine in terms of the above.
@@ -181,15 +253,50 @@
 	* Makefile.in (install_to_tooldir): Instead of $(MULTISUBDIR), use
 	/`$$CC -print-multi-os-directory`.
 
-2003-01-26  Christian Cornelssen  <ccorn@cs.tu-berlin.de>
+2003-01-26  Daniel Jacobowitz  <drow@mvista.com>
 
-	* Makefile.in (FLAGS_TO_PASS): Also pass DESTDIR.
-	(install_to_libdir, install_to_tooldir): Add a mkinstalldirs
-	command.
+	* hashtab.c (htab_create_alloc_ex): New function.
+	(hatab_set_functions_ex): New function.
+	(htab_delete, htab_expand): Support alternate allocation functions.
+
+2003-01-24  Christopher Faylor  <cgf@redhat.com>
+
+	* configure.in: Remove special pex-cygwin consideration.
+	* configure: Regenerate.
+	* pex-cygwin.c: Remove.
+	* Makefile.in: Remove pex-cygwin.[co] lines.
+
+2003-01-24  Zack Weinberg  <zack@codesourcery.com>
+
+	* Makefile.in (CFILES): Add pex-*.c.
+	(REQUIRED_OFILES): Change pexecute.o to @pexecute@
+	(CONFIGURED_OFILES): Add pex-*.o.
+	(TEXIFILES): Add pexecute.txh.
+	(pexecute.o): Delete rule.
+	(pex-cygwin.o, pex-djgpp.o, pex-mpw.o, pex-msdos.o, pex-os2.o,
+	pex-unix.o, pex-win32.o): New rules.
+	* configure.in: Change AC_INIT argument to xmalloc.c.
+	Compute appropriate pexecute implementation and substitute it
+	as @pexecute@.
+
+	* pexecute.c: Split up into...
+	* pex-cygwin.c, pex-djgpp.c, pex-mpw.c, pex-msdos.c, pex-os2.c,
+	pex-unix.c, pex-win32.c, pex-common.h, pexecute.txh: ... these
+	new files.
+
+	* functions.texi: Regenerate.
+	* configure: Regenerate.
 
 2003-01-20  Josef Zlomek  <zlomekj@suse.cz>
 
 	* hashtab.c (htab_expand): Fix allocation of new entries.
+
+2003-01-09  Christian Cornelssen  <ccorn@cs.tu-berlin.de>
+
+	* Makefile.in (FLAGS_TO_PASS): Also pass DESTDIR.
+
+	* Makefile.in (install_to_libdir, install_to_tooldir): Add a
+	mkinstalldirs command.
 
 2002-12-04  Danny Smith  <dannysmith@users.sourceforge.net>
 
