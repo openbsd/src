@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.18 2000/09/07 20:27:55 deraadt Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.19 2000/09/17 15:38:58 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -67,6 +67,9 @@ void
 ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
     Buffer *client_kexinit, Buffer *server_kexinit)
 {
+#ifdef DEBUG_KEXDH
+	int i;
+#endif
 	int plen, dlen;
 	unsigned int klen, kout;
 	char *signature = NULL;
@@ -90,11 +93,11 @@ ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
 
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "\np= ");
-	bignum_print(dh->p);
+	BN_print_fp(stderr, dh->p);
 	fprintf(stderr, "\ng= ");
-	bignum_print(dh->g);
+	BN_print_fp(stderr, dh->g);
 	fprintf(stderr, "\npub= ");
-	bignum_print(dh->pub_key);
+	BN_print_fp(stderr, dh->pub_key);
 	fprintf(stderr, "\n");
 	DHparams_print_fp(stderr, dh);
 #endif
@@ -122,7 +125,7 @@ ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
 
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "\ndh_server_pub= ");
-	bignum_print(dh_server_pub);
+	BN_print_fp(stderr, dh_server_pub);
 	fprintf(stderr, "\n");
 	debug("bits %d", BN_num_bits(dh_server_pub));
 #endif
