@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.20 2000/03/08 08:43:16 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.48 2000/03/07 21:37:52 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.21 2000/04/07 22:04:58 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.49 2000/03/14 19:42:32 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -38,7 +38,9 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#ifndef linux
 #include <sys/sockio.h>
+#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
