@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.s,v 1.1 1997/07/06 07:46:30 downsj Exp $	*/
+/*	$OpenBSD: sigcode.s,v 1.2 2001/12/06 23:24:59 miod Exp $	*/
 /*	$NetBSD: sigcode.s,v 1.2 1997/04/25 02:22:03 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ GLOBAL(sigcode)
 GLOBAL(sigcodetrap)
 	trap	#1		| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)	| save errno		(4 bytes)
-	moveq	#1,d0		| syscall == exit	(2 bytes)
+	moveq	#SYS_exit,d0	| syscall == exit	(2 bytes)
 	trap	#0		| exit(errno)		(2 bytes)
 	.align	2
 GLOBAL(esigcode)
