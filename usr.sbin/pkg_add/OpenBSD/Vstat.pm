@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.7 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.8 2004/11/11 15:35:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -28,52 +28,33 @@ package OpenBSD::Vstat;
 use File::Basename;
 use Symbol;
 
-my $dirinfo = {};
+my $devinfo = {};
+my $devinfo2 = {};
 my $virtual = {};
 my $virtual_dir = {};
-my $mnts = [];
-my $blocksize = 512;
+my $giveup;
 
-sub create_mntpoint($)
+sub create_device($)
 {
-	my $mntpoint = shift;
-	my $dev = (stat $mntpoint)[0];
-	# check that stat worked
-	return undef unless defined $dev;
-	my $n = $dirinfo->{"$dev"};
+	my $dev = shift;
+	my $n = $devinfo->{$dev};
 	if (!defined $n) {
-		$n = { mnt => $mntpoint, dev => $dev, used => 0 };
+		$n = { dev => $dev, used => 0 };
 		bless $n, "OpenBSD::Vstat::MountPoint";
-		$dirinfo->{"$dev"} = $n;
-		$dirinfo->{"$mntpoint"} = $n;
-		push(@$mnts, $n);
+		$devinfo->{$dev} = $n;
 	}
 	return $n;
 }
 
-sub init_dirinfo()
+sub init_devices()
 {
     delete $ENV{'BLOCKSIZE'};
-    open(my $cmd2, "/bin/df|") or print STDERR "Can't run df\n";
-    while (<$cmd2>) {
-	    chomp;
-	    if (m/^Filesystem\s+(\d+)\-blocks/) {
-		    $blocksize = $1;
-	    } elsif (m/^.*?\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+(\/.*?)$/) {
-	    	my ($mntpoint, $avail) = ($2, $1);
-		my $i = create_mntpoint($mntpoint);
-		next unless defined $i;
-		$i->{avail} = $avail;
-	    }
-    }
-
-    close($cmd2) or print STDERR "Error running df: $!\n";
     open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
     while (<$cmd1>) {
 	    chomp;
-	    if (m/^.*?\s+on\s+(\/.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
-		my ($mntpoint, $opts) = ($1, $2);
-		my $i = create_mntpoint($mntpoint);
+	    if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
+		my ($dev, $opts) = ($1, $2);
+		my $i = create_device($dev);
 		next unless defined $i;
 		next unless defined $opts;
 		for my $o (split /,\s*/, $opts) {
@@ -90,48 +71,55 @@ sub init_dirinfo()
 	    }
     }
     close($cmd1) or print STDERR "Error running mount: $!\n";
+    $giveup = { used => 0 };
+    bless $giveup, "OpenBSD::Vstat::Failsafe";
 }
 
-init_dirinfo();
-
-sub _dirstat($);
-
-sub _dirstat($)
+sub ask_df($)
 {
-	my $dname = shift;
-	my $dev = (stat $dname)[0];
+	my $fname = shift;
+	my $info = $giveup;;
 
-	if (!defined $dev) {
-		if (!defined $dirinfo->{"$dname"}) {
-			return $dirinfo->{"$dname"} = _dirstat(dirname($dname));
-		} else {
-			return $dirinfo->{"$dname"};
-		}
-	} else {
-		if (!defined $dirinfo->{"$dev"}) {
-			return $dirinfo->{"$dev"} = _dirstat(dirname($dname));
-		} else {
-			return $dirinfo->{"$dev"};
+	open(my $cmd2, "-|", "/bin/df", $fname) or print STDERR "Can't run df\n";
+	my $blocksize = 512;
+	while (<$cmd2>) {
+		chomp;
+		if (m/^Filesystem\s+(\d+)\-blocks/) {
+			$blocksize = $1;
+		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+\/.*?$/) {
+			my ($dev, $avail) = ($1, $2);
+			$info = $devinfo->{$dev};
+			if (!defined $info) {
+				$info = create_device($dev);
+			}
+			$info->{avail} = $avail;
+			$info->{blocksize} = $blocksize;
 		}
 	}
+
+	close($cmd2) or print STDERR "Error running df: $!\n";
+	return $info;
 }
+
+init_devices();
+
+sub filestat($);
 
 sub filestat($)
 {
 	my $fname = shift;
 	my $dev = (stat $fname)[0];
 
+	if (!defined $dev && $fname ne '/') {
+		return filestat(dirname($fname));
+	}
 	if (!defined $dev) {
-		if (!defined $dirinfo->{"$fname"}) {
-			return _dirstat(dirname($fname));
-		} else {
-			return $dirinfo->{"$fname"};
-		}
+		return $giveup;
 	} else {
-		if (!defined $dirinfo->{"$dev"}) {
-			return _dirstat(dirname($fname));
+		if (!defined $devinfo2->{$dev}) {
+			return $devinfo2->{$dev} = ask_df($fname);
 		} else {
-			return $dirinfo->{"$dev"};
+			return $devinfo2->{$dev};
 		}
 	}
 }
@@ -197,9 +185,9 @@ sub remove($$)
 
 sub tally()
 {
-	for my $mntpoint (@$mnts) {
-		if ($mntpoint->{used} != 0) {
-			print $mntpoint->{mnt}, ": ", $mntpoint->{used}, " bytes\n";
+	while (my ($device, $data) = each %$devinfo) {
+		if ($data->{used} != 0) {
+			print $device, ": ", $data->{used}, " bytes\n";
 		}
 	}
 }
@@ -209,7 +197,13 @@ sub avail
 {
 	my $self = $_[0];
 
-	return $self->{avail} - $self->{used}/$blocksize;
+	return $self->{avail} - $self->{used}/$self->{blocksize};
+}
+
+package OpenBSD::Vstat::Failsafe;
+sub avail
+{
+	return 1;
 }
 
 1;
