@@ -1068,7 +1068,7 @@ ctag_sfile(sp, tfp, tqp, tname)
 	 */
 	if (fstat(fd, &sb) != 0 ||
 	    (map = mmap(NULL, (size_t)sb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_PRIVATE, fd, (off_t)0)) == (caddr_t)-1) {
+	    MAP_FILE | MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED) {
 		tfp->errnum = errno;
 		(void)close(fd);
 		return (1);
