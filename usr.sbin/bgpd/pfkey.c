@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.18 2004/04/27 17:56:57 markus Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.19 2004/04/27 18:35:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -155,6 +155,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa.sadb_sa_replay = 0;
 		sa.sadb_sa_spi = spi;
 		sa.sadb_sa_state = SADB_SASTATE_MATURE;
+		break;
 	case SADB_X_ADDFLOW:
 	case SADB_X_DELFLOW:
 		bzero(&sa_flowtype, sizeof(sa_flowtype));
@@ -306,6 +307,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		iov[iov_cnt].iov_len = sizeof(sa_spirange);
 		smsg.sadb_msg_len += sa_spirange.sadb_spirange_len;
 		iov_cnt++;
+		break;
 	case SADB_X_ADDFLOW:
 		/* sa_peer always points to the remote machine */
 		iov[iov_cnt].iov_base = &sa_peer;
