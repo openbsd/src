@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2002/03/30 20:17:48 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.19 2002/03/31 15:42:14 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -169,4 +169,4 @@ ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
 
-#pseudo-device        wsmux	2	# mouse & keyboard multiplexor
+pseudo-device        wsmux	2	# mouse & keyboard multiplexor
