@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 1999/09/09 21:27:36 espie Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2000/07/16 07:41:12 espie Exp $
 
 #
 # A ramdisk kernel
@@ -24,6 +24,8 @@ option		FPSP		# MC68040 floating point support
 option		"M68030"	# support for 030
 option		"M68020"	# support for 020/851
 option		FPU_EMULATE	# FPU emulation
+
+option		UVM		# use the UVM virtual memory system
 
 #
 # File systems
