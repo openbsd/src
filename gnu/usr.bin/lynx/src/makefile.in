@@ -182,16 +182,6 @@ UCdomap$(_O): UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb$x chrtrans/makeuctb.c 
 chrtrans/makeuctb$x:
 	cd chrtrans; make makeuctb$x
 
-.if ${MACHINE_ARCH} == "hppa"
-LYMainLoop.o: ${srcdir}/LYMainLoop.c
-@RULE_CC@
-	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
-
-HTML.o: ${srcdir}/HTML.c
-@RULE_CC@
-	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
-.endif
-
 UCAux$(_O) : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
 LYCookie$(_O): $(top_srcdir)/userdefs.h
 
