@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.20 1998/01/02 05:32:51 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.21 1998/02/08 22:37:01 tholo Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -17,6 +17,8 @@
 ;	UNIMPL	unimplemented, not included in system
 ;	NODEF	included, but don't define the syscall number
 ;	NOARGS	included, but don't define the syscall args structure
+;	INDIR	included, but don't define the syscall args structure,
+;		and allow it to be "really" varargs.
 ;
 ; The compat options are defined in the syscalls.conf file, and the
 ; compat option name is prefixed to the syscall name.  Other than
@@ -45,86 +47,99 @@
 ; redistributions should be placed in the reserved range at the end
 ; of the current calls.
 
-0	STD		{ int sys_nosys(void); } syscall
-1	STD		{ int sys_exit(int rval); }
+0	INDIR		{ int sys_syscall(int number, ...); }
+1	STD		{ void sys_exit(int rval); }
 2	STD		{ int sys_fork(void); }
-3	STD		{ int sys_read(int fd, char *buf, u_int nbyte); }
-4	STD		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int sys_open(char *path, int flags, int mode); }
+3	STD		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
+4	STD		{ ssize_t sys_write(int fd, const void *buf, \
+			    size_t nbyte); }
+5	STD		{ int sys_open(const char *path, \
+			    int flags, ... mode_t mode); }
 6	STD		{ int sys_close(int fd); }
 7	STD		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	COMPAT_43	{ int sys_creat(char *path, int mode); } ocreat
-9	STD		{ int sys_link(char *path, char *link); }
-10	STD		{ int sys_unlink(char *path); }
+8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
+9	STD		{ int sys_link(const char *path, const char *link); }
+10	STD		{ int sys_unlink(const char *path); }
 11	OBSOL		execv
-12	STD		{ int sys_chdir(char *path); }
+12	STD		{ int sys_chdir(const char *path); }
 13	STD		{ int sys_fchdir(int fd); }
-14	STD		{ int sys_mknod(char *path, int mode, int dev); }
-15	STD		{ int sys_chmod(char *path, int mode); }
-16	STD		{ int sys_chown(char *path, int uid, int gid); }
+14	STD		{ int sys_mknod(const char *path, mode_t mode, \
+			    dev_t dev); }
+15	STD		{ int sys_chmod(const char *path, mode_t mode); }
+16	STD		{ int sys_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
 17	STD		{ int sys_obreak(char *nsize); } break
 18	STD		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
 19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
 20	STD		{ pid_t sys_getpid(void); }
-21	STD		{ int sys_mount(char *type, char *path, int flags, \
-			    caddr_t data); }
-22	STD		{ int sys_unmount(char *path, int flags); }
+21	STD		{ int sys_mount(const char *type, const char *path, \
+			    int flags, void *data); }
+22	STD		{ int sys_unmount(const char *path, int flags); }
 23	STD		{ int sys_setuid(uid_t uid); }
 24	STD		{ uid_t sys_getuid(void); }
 25	STD		{ uid_t sys_geteuid(void); }
 26	STD		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
-27	STD		{ int sys_recvmsg(int s, struct msghdr *msg, \
+27	STD		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
-28	STD		{ int sys_sendmsg(int s, caddr_t msg, int flags); }
-29	STD		{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t from, int *fromlenaddr); }
-30	STD		{ int sys_accept(int s, caddr_t name, int *anamelen); }
-31	STD		{ int sys_getpeername(int fdes, caddr_t asa, \
+28	STD		{ ssize_t sys_sendmsg(int s, \
+			    const struct msghdr *msg, int flags); }
+29	STD		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
+			    int flags, struct sockaddr *from, \
+			    int *fromlenaddr); }
+30	STD		{ int sys_accept(int s, struct sockaddr *name, \
+			    int *anamelen); }
+31	STD		{ int sys_getpeername(int fdes, struct sockaddr *asa, \
 			    int *alen); }
-32	STD		{ int sys_getsockname(int fdes, caddr_t asa, \
+32	STD		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    int *alen); }
-33	STD		{ int sys_access(char *path, int flags); }
-34	STD		{ int sys_chflags(char *path, int flags); }
-35	STD		{ int sys_fchflags(int fd, int flags); }
-36	STD		{ int sys_sync(void); }
+33	STD		{ int sys_access(const char *path, int flags); }
+34	STD		{ int sys_chflags(const char *path, u_long flags); }
+35	STD		{ int sys_fchflags(int fd, u_long flags); }
+36	STD		{ void sys_sync(void); }
 37	STD		{ int sys_kill(int pid, int signum); }
-38	COMPAT_43	{ int sys_stat(char *path, struct ostat *ub); } ostat
+38	COMPAT_43	{ int sys_stat(const char *path, struct ostat *ub); } \
+			    ostat
 39	STD		{ pid_t sys_getppid(void); }
-40	COMPAT_43	{ int sys_lstat(char *path, struct ostat *ub); } olstat
-41	STD		{ int sys_dup(u_int fd); }
+40	COMPAT_43	{ int sys_lstat(char *path, \
+			    struct ostat *ub); } olstat
+41	STD		{ int sys_dup(int fd); }
 42	STD		{ int sys_pipe(void); }
 43	STD		{ gid_t sys_getegid(void); }
-44	STD		{ int sys_profil(char *samples, size_t size, \
+44	STD		{ int sys_profil(caddr_t samples, size_t size, \
 			    u_long offset, u_int scale); }
 #ifdef KTRACE
-45	STD		{ int sys_ktrace(char *fname, int ops, int facs, \
-			    int pid); }
+45	STD		{ int sys_ktrace(const char *fname, int ops, \
+			    int facs, pid_t pid); }
 #else
 45	UNIMPL		ktrace
 #endif
-46	STD		{ int sys_sigaction(int signum, struct sigaction \
-			    *nsa, struct sigaction *osa); }
+46	STD		{ int sys_sigaction(int signum, \
+			    const struct sigaction *nsa, \
+			    struct sigaction *osa); }
 47	STD		{ gid_t sys_getgid(void); }
 48	STD		{ int sys_sigprocmask(int how, sigset_t mask); }
 49	STD		{ int sys_getlogin(char *namebuf, u_int namelen); }
-50	STD		{ int sys_setlogin(char *namebuf); }
-51	STD		{ int sys_acct(char *path); }
+50	STD		{ int sys_setlogin(const char *namebuf); }
+51	STD		{ int sys_acct(const char *path); }
 52	STD		{ int sys_sigpending(void); }
-53	STD		{ int sys_sigaltstack(struct sigaltstack *nss, \
+53	STD		{ int sys_sigaltstack(const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
-54	STD		{ int sys_ioctl(int fd, u_long com, caddr_t data); }
+54	STD		{ int sys_ioctl(int fd, \
+			    u_long com, ... void *data); }
 55	STD		{ int sys_reboot(int opt); }
-56	STD		{ int sys_revoke(char *path); }
-57	STD		{ int sys_symlink(char *path, char *link); }
-58	STD		{ int sys_readlink(char *path, char *buf, int count); }
-59	STD		{ int sys_execve(char *path, char **argp, \
-			    char **envp); }
-60	STD		{ int sys_umask(int newmask); }
-61	STD		{ int sys_chroot(char *path); }
+56	STD		{ int sys_revoke(const char *path); }
+57	STD		{ int sys_symlink(const char *path, \
+			    const char *link); }
+58	STD		{ int sys_readlink(const char *path, char *buf, \
+			    int count); }
+59	STD		{ int sys_execve(const char *path, \
+			    char * const *argp, char * const *envp); }
+60	STD		{ mode_t sys_umask(mode_t newmask); }
+61	STD		{ int sys_chroot(const char *path); }
 62	COMPAT_43	{ int sys_fstat(int fd, struct ostat *sb); } ofstat
 63	COMPAT_43	{ int sys_getkerninfo(int op, char *where, int *size, \
 			    int arg); } ogetkerninfo
@@ -147,31 +162,35 @@
 77	OBSOL		vlimit
 78	STD		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
-79	STD		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
-80	STD		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
+79	STD		{ int sys_getgroups(int gidsetsize, \
+			    gid_t *gidset); }
+80	STD		{ int sys_setgroups(int gidsetsize, \
+			    const gid_t *gidset); }
 81	STD		{ int sys_getpgrp(void); }
-82	STD		{ int sys_setpgid(int pid, int pgid); }
-83	STD		{ int sys_setitimer(u_int which, \
-			    struct itimerval *itv, struct itimerval *oitv); }
+82	STD		{ int sys_setpgid(pid_t pid, int pgid); }
+83	STD		{ int sys_setitimer(int which, \
+			    const struct itimerval *itv, \
+			    struct itimerval *oitv); }
 84	COMPAT_43	{ int sys_wait(void); } owait
-85	STD		{ int sys_swapon(char *name); }
-86	STD		{ int sys_getitimer(u_int which, \
+85	STD		{ int sys_swapon(const char *name); }
+86	STD		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
 87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); } \
 			    ogethostname
 88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); } \
 			    osethostname
 89	COMPAT_43	{ int sys_getdtablesize(void); } ogetdtablesize
-90	STD		{ int sys_dup2(u_int from, u_int to); }
+90	STD		{ int sys_dup2(int from, int to); }
 91	UNIMPL		getdopt
-92	STD		{ int sys_fcntl(int fd, int cmd, void *arg); }
-93	STD		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
+92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
+93	STD		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
 96	STD		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int sys_socket(int domain, int type, int protocol); }
-98	STD		{ int sys_connect(int s, caddr_t name, int namelen); }
+98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
+			    int namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
 100	STD		{ int sys_getpriority(int which, int who); }
@@ -180,9 +199,10 @@
 102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \
 			    int flags); } orecv
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
-104	STD		{ int sys_bind(int s, caddr_t name, int namelen); }
+104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
+			    int namelen); }
 105	STD		{ int sys_setsockopt(int s, int level, int name, \
-			    caddr_t val, int valsize); }
+			    const void *val, int valsize); }
 106	STD		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int sys_sigvec(int signum, struct sigvec *nsv, \
@@ -205,50 +225,52 @@
 			    struct timezone *tzp); }
 117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
-			    caddr_t val, int *avalsize); }
+			    void *val, int *avalsize); }
 119	OBSOL		resuba
-120	STD		{ int sys_readv(int fd, struct iovec *iovp, \
-			    u_int iovcnt); }
-121	STD		{ int sys_writev(int fd, struct iovec *iovp, \
-			    u_int iovcnt); }
-122	STD		{ int sys_settimeofday(struct timeval *tv, \
-			    struct timezone *tzp); }
-123	STD		{ int sys_fchown(int fd, int uid, int gid); }
-124	STD		{ int sys_fchmod(int fd, int mode); }
+120	STD		{ ssize_t sys_readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+121	STD		{ ssize_t sys_writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+122	STD		{ int sys_settimeofday(const struct timeval *tv, \
+			    const struct timezone *tzp); }
+123	STD		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
+124	STD		{ int sys_fchmod(int fd, mode_t mode); }
 125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
 			    int flags, caddr_t from, int *fromlenaddr); } \
 			    orecvfrom
 126	COMPAT_43	{ int sys_setreuid(int ruid, int euid); } osetreuid
 127	COMPAT_43	{ int sys_setregid(int rgid, int egid); } osetregid
-128	STD		{ int sys_rename(char *from, char *to); }
-129	COMPAT_43	{ int sys_truncate(char *path, long length); } \
+128	STD		{ int sys_rename(const char *from, const char *to); }
+129	COMPAT_43	{ int sys_truncate(const char *path, long length); } \
 			    otruncate
 130	COMPAT_43	{ int sys_ftruncate(int fd, long length); } oftruncate
 131	STD		{ int sys_flock(int fd, int how); }
-132	STD		{ int sys_mkfifo(char *path, int mode); }
-133	STD		{ int sys_sendto(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t to, int tolen); }
+132	STD		{ int sys_mkfifo(const char *path, mode_t mode); }
+133	STD		{ ssize_t sys_sendto(int s, const void *buf, \
+			    size_t len, int flags, const struct sockaddr *to, \
+			    int tolen); }
 134	STD		{ int sys_shutdown(int s, int how); }
 135	STD		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	STD		{ int sys_mkdir(char *path, int mode); }
-137	STD		{ int sys_rmdir(char *path); }
-138	STD		{ int sys_utimes(char *path, struct timeval *tptr); }
+136	STD		{ int sys_mkdir(const char *path, mode_t mode); }
+137	STD		{ int sys_rmdir(const char *path); }
+138	STD		{ int sys_utimes(const char *path, \
+			    const struct timeval *tptr); }
 139	OBSOL		4.2 sigreturn
-140	STD		{ int sys_adjtime(struct timeval *delta, \
+140	STD		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	COMPAT_43	{ int sys_getpeername(int fdes, caddr_t asa, \
 			    int *alen); } ogetpeername
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
 143	COMPAT_43	{ int sys_sethostid(int32_t hostid); } osethostid
-144	COMPAT_43	{ int sys_getrlimit(u_int which, \
+144	COMPAT_43	{ int sys_getrlimit(int which, \
 			    struct ogetrlimit *rlp); } ogetrlimit
-145	COMPAT_43	{ int sys_setrlimit(u_int which, \
+145	COMPAT_43	{ int sys_setrlimit(int which, \
 			    struct ogetrlimit *rlp); } osetrlimit
 146	COMPAT_43	{ int sys_killpg(int pgid, int signum); } okillpg
 147	STD		{ int sys_setsid(void); }
-148	STD		{ int sys_quotactl(char *path, int cmd, int uid, \
-			    caddr_t arg); }
+148	STD		{ int sys_quotactl(const char *path, int cmd, \
+			    int uid, char *arg); }
 149	COMPAT_43	{ int sys_quota(void); } oquota
 150	COMPAT_43	{ int sys_getsockname(int fdec, caddr_t asa, \
 			    int *alen); } ogetsockname
@@ -262,18 +284,19 @@
 153	UNIMPL
 154	UNIMPL
 #if defined(NFSCLIENT) || defined(NFSSERVER)
-155	STD		{ int sys_nfssvc(int flag, caddr_t argp); }
+155	STD		{ int sys_nfssvc(int flag, void *argp); }
 #else
 155	UNIMPL
 #endif
 156	COMPAT_43	{ int sys_getdirentries(int fd, char *buf, \
-			    u_int count, long *basep); } ogetdirentries
-157	STD		{ int sys_statfs(char *path, struct statfs *buf); }
+			    int count, long *basep); } ogetdirentries
+157	STD		{ int sys_statfs(const char *path, \
+			    struct statfs *buf); }
 158	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
 160	UNIMPL
 #if defined(NFSCLIENT) || defined(NFSSERVER)
-161	STD		{ int sys_getfh(char *fname, fhandle_t *fhp); }
+161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
 #else
 161	UNIMPL		getfh
 #endif
@@ -302,8 +325,8 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if defined(SYSVSHM) && !defined(alpha)
-171	COMPAT_10	{ int sys_shmsys(int which, int a2, int a3, \
-			    int a4); } oshmsys
+171	COMPAT_10	{ int sys_shmsys(int which, int a2, int a3, int a4); } \
+			    oshmsys
 #else
 171	UNIMPL		1.0 shmsys
 #endif
@@ -311,7 +334,7 @@
 173	UNIMPL
 174	UNIMPL
 #ifdef NTP
-175	STD		{ int sys_ntp_gettime(struct timex *tp); }
+175	STD		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
 176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
 175	UNIMPL		ntp_gettime
@@ -339,23 +362,24 @@
 186	UNIMPL
 187	UNIMPL
 #endif
-188	STD		{ int sys_stat(char *path, struct stat *ub); }
+188	STD		{ int sys_stat(const char *path, struct stat *ub); }
 189	STD		{ int sys_fstat(int fd, struct stat *sb); }
-190	STD		{ int sys_lstat(char *path, struct stat *ub); }
-191	STD		{ int sys_pathconf(char *path, int name); }
-192	STD		{ int sys_fpathconf(int fd, int name); }
+190	STD		{ int sys_lstat(const char *path, struct stat *ub); }
+191	STD		{ long sys_pathconf(const char *path, int name); }
+192	STD		{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL
-194	STD		{ int sys_getrlimit(u_int which, struct rlimit *rlp); }
-195	STD		{ int sys_setrlimit(u_int which, struct rlimit *rlp); }
+194	STD		{ int sys_getrlimit(int which, \
+			    struct rlimit *rlp); }
+195	STD		{ int sys_setrlimit(int which, \
+			    const struct rlimit *rlp); }
 196	STD		{ int sys_getdirentries(int fd, char *buf, \
-			    u_int count, long *basep); }
-197	STD		{ void *sys_mmap(void *addr, size_t len, \
-			    int prot, int flags, int fd, long pad, \
-			    off_t pos); }
-198	STD		{ int sys_nosys(void); } __syscall
+			    int count, long *basep); }
+197	STD		{ void *sys_mmap(void *addr, size_t len, int prot, \
+			    int flags, int fd, long pad, off_t pos); }
+198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
 199	STD		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
-200	STD		{ int sys_truncate(char *path, int pad, \
+200	STD		{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	STD		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	STD		{ int sys___sysctl(int *name, u_int namelen, \
@@ -363,8 +387,9 @@
 			    size_t newlen); }
 203	STD		{ int sys_mlock(void *addr, size_t len); }
 204	STD		{ int sys_munlock(void *addr, size_t len); }
-205	STD		{ int sys_undelete(char *path); }
-206	STD		{ int sys_futimes(int fd, struct timeval *tptr); }
+205	STD		{ int sys_undelete(const char *path); }
+206	STD		{ int sys_futimes(int fd, \
+			    const struct timeval *tptr); }
 207	STD		{ int sys_getpgid(pid_t pid); }
 208	UNIMPL
 209	UNIMPL
@@ -423,7 +448,8 @@
 227	UNIMPL		msgrcv
 #endif
 #ifdef SYSVSHM
-228	STD		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
+228	STD		{ void *sys_shmat(int shmid, void *shmaddr, \
+			    int shmflg); }
 229	STD		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
 230	STD		{ int sys_shmdt(void *shmaddr); }
@@ -435,18 +461,18 @@
 231	UNIMPL		shmget
 #endif
 232	STD		{ int sys_clock_gettime(clockid_t clock_id, \
-				struct timespec *tp); }
+			    struct timespec *tp); }
 233	STD		{ int sys_clock_settime(clockid_t clock_id, \
-				const struct timespec *tp); }
+			    const struct timespec *tp); }
 234	STD		{ int sys_clock_getres(clockid_t clock_id, \
-				struct timespec *tp); }
+			    struct timespec *tp); }
 235	UNIMPL		timer_create
 236	UNIMPL		timer_delete
 237	UNIMPL		timer_settime
 238	UNIMPL		timer_gettime
 239	UNIMPL		timer_getoverrun
 240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+			    struct timespec *rmtp); }
 241	UNIMPL
 242	UNIMPL
 243	UNIMPL
@@ -462,6 +488,6 @@
 252	STD		{ int sys_poll(struct pollfd *fds, \
 			    unsigned long nfds, int timeout); }
 253	STD		{ int sys_issetugid(void); }
-254	STD		{ int sys_lchown(char *path, int uid, int gid); }
+254	STD		{ int sys_lchown(const char *path, uid_t uid, gid_t gid); }
 255	STD		{ int sys_getsid(pid_t pid); }
 256	STD		{ int sys_msync(void *addr, size_t len, int flags); }
