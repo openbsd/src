@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.19 2001/01/16 15:31:52 art Exp $
+#	$OpenBSD: Makefile.alpha,v 1.20 2001/05/11 09:46:02 art Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -105,18 +105,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-.if defined(DESTDIR)
-	${CC} -o $@ -nostdlib -L${DESTDIR}/usr/lib ${DESTDIR}/usr/lib/crtbegin.o ${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crt0.o genassym.o -lgcc -lc -lgcc
-.else
-	${CC} -o $@ genassym.o
-.endif
-
-genassym.o: ${ALPHA}/alpha/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${ALPHA}/alpha/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${ALPHA}/alpha/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -135,7 +127,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -160,8 +152,6 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} cpuconf.c param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${ALPHA}/alpha/genassym.c
 
 
 # depend on root or device configuration
@@ -171,7 +161,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
