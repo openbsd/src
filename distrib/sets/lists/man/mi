@@ -1119,6 +1119,7 @@
 ./usr/share/man/cat4/pnp.0
 ./usr/share/man/cat4/powerpc
 ./usr/share/man/cat4/powerpc/com.0
+./usr/share/man/cat4/powerpc/intro.0
 ./usr/share/man/cat4/prandom.0
 ./usr/share/man/cat4/pty.0
 ./usr/share/man/cat4/puc.0
