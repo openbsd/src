@@ -830,6 +830,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aacreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aacvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ac97.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ad1843reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ad1848reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/adv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/advlib.ph

@@ -149,6 +149,7 @@
 ./usr/include/dev/ic/aacreg.h
 ./usr/include/dev/ic/aacvar.h
 ./usr/include/dev/ic/ac97.h
+./usr/include/dev/ic/ad1843reg.h
 ./usr/include/dev/ic/ad1848reg.h
 ./usr/include/dev/ic/adv.h
 ./usr/include/dev/ic/advlib.h

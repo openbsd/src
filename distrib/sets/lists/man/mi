@@ -1269,6 +1269,7 @@
 ./usr/share/man/cat4/ioprbs.0
 ./usr/share/man/cat4/iopsp.0
 ./usr/share/man/cat4/ip.0
+./usr/share/man/cat4/ip6.0
 ./usr/share/man/cat4/ipcomp.0
 ./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/ipw.0
