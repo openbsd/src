@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.34 2001/03/09 23:06:57 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.35 2001/04/17 19:55:19 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -588,7 +588,9 @@ tags:
 
 distribution:
 	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-	   ${.CURDIR}/openssl.cnf ${DESTDIR}/etc/ssl/openssl.cnf
+	   ${.CURDIR}/openssl.cnf ${DESTDIR}/etc/ssl/openssl.cnf && \
+	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+	   ${.CURDIR}/x509v3.cnf ${DESTDIR}/etc/ssl/x509v3.cnf
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
