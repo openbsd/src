@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2003/01/13 20:12:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2003/08/09 21:19:59 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -695,7 +695,9 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	unsigned nss, fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
+#ifdef DDB
         int s; /* IPL */
+#endif
 	int result = 0;  /* Assume Success */
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (exip) */
@@ -711,7 +713,11 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 	if ((p = curproc) == NULL)
 		p = &proc0;
 #if 1
-	if (type != T_INT && type != T_ASTFLT && type != T_KDB_ENTRY ) {
+	if (type != T_INT && type != T_ASTFLT
+#ifdef DDB
+	    && type != T_KDB_ENTRY
+#endif
+	   ) {
 		printf("m88110_trap: %d %s\n", type, frame->vector < trap_types ? trap_type[frame->vector] : "unknown");
 	}
 #endif
@@ -744,7 +750,7 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		DEBUG_MSG("IMMU miss: Hardware Table Searches should be enabled!\n");
 		panictrap(frame->vector, frame);
 		/*NOTREACHED*/
-   #if defined(DDB)
+#ifdef DDB
 	case T_KDB_TRACE:
 		s = splhigh();
 		db_enable_interrupt();
@@ -1220,7 +1226,9 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 	} args;
 	int rval[2];
 	u_quad_t sticks;
+#ifdef DIAGNOSTIC
 	extern struct pcb *curpcb;
+#endif
 
 	uvmexp.syscalls++;
 
@@ -1384,7 +1392,9 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 	} args;
 	int rval[2];
 	u_quad_t sticks;
+#ifdef DIAGNOSTIC
 	extern struct pcb *curpcb;
+#endif
 
 	uvmexp.syscalls++;
 
