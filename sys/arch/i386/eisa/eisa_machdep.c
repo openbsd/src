@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.6 2003/05/04 08:01:08 deraadt Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.7 2004/06/09 20:13:10 deraadt Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.6 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ eisa_intr_map(ec, irq, ihp)
 	if (irq >= ICU_LEN) {
 		printf("eisa_intr_map: bad IRQ %d\n", irq);
 		*ihp = -1;
-		return 1;
+		return (1);
 	}
 	if (irq == 2) {
 		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
@@ -145,7 +145,7 @@ eisa_intr_map(ec, irq, ihp)
 	}
 
 	*ihp = irq;
-	return 0;
+	return (0);
 }
 
 const char *
@@ -153,7 +153,7 @@ eisa_intr_string(ec, ih)
 	eisa_chipset_tag_t ec;
 	eisa_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[8];		/* 4 + 2 + NUL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
@@ -175,7 +175,7 @@ eisa_intr_establish(ec, ih, type, level, func, arg, what)
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("eisa_intr_establish: bogus handle 0x%x", ih);
 
-	return isa_intr_establish(NULL, ih, type, level, func, arg, what);
+	return (isa_intr_establish(NULL, ih, type, level, func, arg, what));
 }
 
 void
@@ -184,5 +184,5 @@ eisa_intr_disestablish(ec, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(NULL, cookie);
+	return (isa_intr_disestablish(NULL, cookie));
 }
