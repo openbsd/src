@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.584 2003/01/12 18:54:07 henning Exp 
+ *		OpenBSD: pcidevs,v 1.585 2003/01/14 23:51:27 avsm Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1109,6 +1109,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_ML,
 	    "Rage 128 Mobility ML",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R300,
+	    "Radeon 9500/9700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R300_S,
+	    "Radeon 9500/9700 - Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PD,

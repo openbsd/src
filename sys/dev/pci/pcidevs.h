@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.584 2003/01/12 18:54:07 henning Exp 
+ *		OpenBSD: pcidevs,v 1.585 2003/01/14 23:51:27 avsm Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -922,6 +922,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_M6LZ	0x4c5a		/* Radeon Mobility M6 LZ */
 #define	PCI_PRODUCT_ATI_RAGE128_MF	0x4d46		/* Rage 128 Mobility MF */
 #define	PCI_PRODUCT_ATI_RAGE128_ML	0x4d4c		/* Rage 128 Mobility ML */
+#define	PCI_PRODUCT_ATI_R300	0x4e44		/* Radeon 9500/9700 */
+#define	PCI_PRODUCT_ATI_R300_S	0x4e64		/* Radeon 9500/9700 - Secondary */
 #define	PCI_PRODUCT_ATI_RAGE128_PD	0x5044		/* Rage 128 Pro PD */
 #define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury */
 #define	PCI_PRODUCT_ATI_RAGE128_PK	0x5052		/* Rage 128 PK */
