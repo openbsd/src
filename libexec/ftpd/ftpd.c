@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.146 2003/09/30 06:13:08 jmc Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.147 2003/10/01 08:06:31 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.146 2003/09/30 06:13:08 jmc Exp $";
+    "$OpenBSD: ftpd.c,v 1.147 2003/10/01 08:06:31 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ static const char rcsid[] =
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
+#include <poll.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
@@ -161,7 +162,7 @@ int	mode;
 int	doutmp = 0;		/* update utmp file */
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
-int	family = AF_INET;
+int	family = AF_UNSPEC;
 volatile sig_atomic_t transflag;
 off_t	file_size;
 off_t	byte_count;
@@ -385,8 +386,9 @@ main(int argc, char *argv[])
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 
 	if (daemon_mode) {
-		int ctl_sock, fd;
-		struct servent *sv;
+		int *fds, n, error, i, fd;
+		struct pollfd *pfds;
+		struct addrinfo hints, *res, *res0;
 
 		/*
 		 * Detach from parent.
@@ -397,47 +399,69 @@ main(int argc, char *argv[])
 		}
 		sa.sa_handler = reapchild;
 		(void) sigaction(SIGCHLD, &sa, NULL);
-		/*
-		 * Get port number for ftp/tcp.
-		 */
-		sv = getservbyname("ftp", "tcp");
-		if (sv == NULL) {
-			syslog(LOG_ERR, "getservbyname for ftp failed");
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = family;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		hints.ai_flags = AI_PASSIVE;
+		error = getaddrinfo(NULL, "ftp", &hints, &res0);
+		if (error) {
+			syslog(LOG_ERR, "%s", gai_strerror(error));
 			exit(1);
 		}
+
+		n = 0;
+		for (res = res0; res; res = res->ai_next)
+			n++;
+
+		fds = malloc(n * sizeof(int));
+		pfds = malloc(n * sizeof(struct pollfd));
+		if (!fds || !pfds) {
+			syslog(LOG_ERR, "%s", strerror(errno));
+			exit(1);
+		}
+
 		/*
-		 * Open a socket, bind it to the FTP port, and start
+		 * Open sockets, bind it to the FTP port, and start
 		 * listening.
 		 */
-		ctl_sock = socket(family, SOCK_STREAM, 0);
-		if (ctl_sock < 0) {
-			syslog(LOG_ERR, "control socket: %m");
+		n = 0;
+		for (res = res0; res; res = res->ai_next) {
+			fds[n] = socket(res->ai_family, res->ai_socktype,
+			    res->ai_protocol);
+			if (fds[n] < 0)
+				continue;
+
+			if (setsockopt(fds[n], SOL_SOCKET, SO_REUSEADDR,
+			    (char *)&on, sizeof(on)) < 0) {
+				close(fds[n]);
+				fds[n] = -1;
+				continue;
+			}
+
+			if (bind(fds[n], res->ai_addr, res->ai_addrlen) < 0) {
+				close(fds[n]);
+				fds[n] = -1;
+				continue;
+			}
+			if (listen(fds[n], 32) < 0) {
+				close(fds[n]);
+				fds[n] = -1;
+				continue;
+			}
+
+			pfds[n].fd = fds[n];
+			pfds[n].events = POLLIN;
+			n++;
+		}
+		freeaddrinfo(res0);
+
+		if (n == 0) {
+			syslog(LOG_ERR, "could not open control socket");
 			exit(1);
 		}
-		if (setsockopt(ctl_sock, SOL_SOCKET, SO_REUSEADDR,
-		    (char *)&on, sizeof(on)) < 0)
-			syslog(LOG_ERR, "control setsockopt: %m");
-		memset(&server_addr, 0, sizeof(server_addr));
-		server_addr.su_sin.sin_family = family;
-		switch (family) {
-		case AF_INET:
-			server_addr.su_len = sizeof(struct sockaddr_in);
-			server_addr.su_sin.sin_port = sv->s_port;
-			break;
-		case AF_INET6:
-			server_addr.su_len = sizeof(struct sockaddr_in6);
-			server_addr.su_sin6.sin6_port = sv->s_port;
-			break;
-		}
-		if (bind(ctl_sock, (struct sockaddr *)&server_addr,
-			 server_addr.su_len)) {
-			syslog(LOG_ERR, "control bind: %m");
-			exit(1);
-		}
-		if (listen(ctl_sock, 32) < 0) {
-			syslog(LOG_ERR, "control listen: %m");
-			exit(1);
-		}
+
 		/* Stash pid in pidfile */
 		if (pidfile(NULL))
 			syslog(LOG_ERR, "can't open pidfile: %m");
@@ -446,19 +470,29 @@ main(int argc, char *argv[])
 		 * children to handle them.
 		 */
 		while (1) {
-			addrlen = sizeof(his_addr);
-			fd = accept(ctl_sock, (struct sockaddr *)&his_addr,
-				    &addrlen);
-			if (fork() == 0) {
-				/* child */
-				(void) dup2(fd, 0);
-				(void) dup2(fd, 1);
-				close(ctl_sock);
-				break;
+			if (poll(pfds, n, INFTIM) < 0) {
+				if (errno == EINTR)
+					continue;
+				err(1, "poll");
 			}
-			close(fd);
+			for (i = 0; i < n; i++)
+				if (pfds[i].revents & POLLIN) {
+					addrlen = sizeof(his_addr);
+					fd = accept(pfds[i].fd,
+					    (struct sockaddr *)&his_addr,
+					    &addrlen);
+					if (fork() == 0)
+						goto child;
+					close(fd);
+				}
 		}
 
+	child:
+		/* child */
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		for (i = 0; i < n; i++)
+			close(fds[i]);
 #if defined(TCPWRAPPERS)
 		/* ..in the child. */
 		if (!check_host((struct sockaddr *)&his_addr))
