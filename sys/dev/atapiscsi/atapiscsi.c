@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.41 2001/04/17 18:26:22 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.42 2001/05/27 18:45:29 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -70,13 +70,15 @@
 #include <scsi/scsiconf.h>
 
 /* drive states stored in ata_drive_datas */
-#define IDENTIFY        0
-#define IDENTIFY_WAIT   1
-#define PIOMODE		2
-#define PIOMODE_WAIT	3
-#define DMAMODE		4
-#define DMAMODE_WAIT	5
-#define READY		6
+enum atapi_drive_states {
+	ATAPI_RESET_BASE_STATE = 0,
+	ATAPI_DEVICE_RESET_WAIT_STATE = 1,
+	ATAPI_PIOMODE_STATE = 2,
+	ATAPI_PIOMODE_WAIT_STATE = 3,
+	ATAPI_DMAMODE_STATE = 4,
+	ATAPI_DMAMODE_WAIT_STATE = 5,
+	ATAPI_READY_STATE = 6
+};
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -88,7 +90,7 @@
 #define DEBUG_ERRORS 0x80   /* Debug error handling code */
 
 #if defined(WDCDEBUG)
-int wdcdebug_atapi_mask = 0;
+int wdcdebug_atapi_mask = 0x0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args
@@ -104,7 +106,6 @@ int wdcdebug_atapi_mask = 0;
 /* When polling, let the exponential backoff max out at 1 second's interval. */
 #define ATAPI_POLL_MAXTIC (hz)
 
-void  wdc_atapi_minphys __P((struct buf *bp));
 void  wdc_atapi_start __P((struct channel_softc *,struct wdc_xfer *));
 
 void  wdc_atapi_timer_handler __P((void *));
@@ -135,7 +136,6 @@ void  wdc_atapi_reset __P((struct channel_softc *, struct wdc_xfer *,
 	int, struct atapi_return_args *));
 void  wdc_atapi_reset_2 __P((struct channel_softc *, struct wdc_xfer *,
 	int, struct atapi_return_args *));
-int   wdc_atapi_send_cmd __P((struct scsi_xfer *sc_xfer));
 
 void  wdc_atapi_tape_done __P((struct channel_softc *, struct wdc_xfer *,
 	int, struct atapi_return_args *));
@@ -164,12 +164,17 @@ struct atapiscsi_softc {
 #define ATAPI_DIAG_POLARITY   0x02
 };
 
+void  wdc_atapi_minphys __P((struct buf *bp));
+int   wdc_atapi_ioctl __P((struct scsi_link *, u_long, caddr_t, int));
+int   wdc_atapi_send_cmd __P((struct scsi_xfer *sc_xfer));
+
 static struct scsi_adapter atapiscsi_switch = 
 {
 	wdc_atapi_send_cmd,
 	wdc_atapi_minphys,
 	NULL,
 	NULL,
+	wdc_atapi_ioctl
 };
 
 static struct scsi_device atapiscsi_dev = 
@@ -262,6 +267,8 @@ atapiscsi_attach(parent, self, aux)
 			    id->atap_config, id->atap_capabilities1),
 			    DEBUG_PROBE);
 
+			drvp->drive_flags |= DRIVE_DEVICE_RESET;
+
 			/* Tape drives do funny DSC stuff */
 			if (ATAPI_CFG_TYPE(id->atap_config) == 
 			    ATAPI_CFG_TYPE_SEQUENTIAL)
@@ -331,14 +338,6 @@ wdc_atapibus_attach(chp)
 	aa_link.aa_bus_private = chp;
 
 	(void)config_found(&wdc->sc_dev, (void *)&aa_link, atapi_print);
-}
-
-void
-wdc_atapi_minphys (struct buf *bp)
-{
-	if(bp->b_bcount > MAX_SIZE)
-		bp->b_bcount = MAX_SIZE;
-	minphys(bp);
 }
 
 int
@@ -505,6 +504,32 @@ wdc_atapi_send_cmd(sc_xfer)
 	ret = (sc_xfer->flags & ITSDONE) ? COMPLETE : SUCCESSFULLY_QUEUED;
 	splx(s);
 	return (ret);
+}
+
+void
+wdc_atapi_minphys (struct buf *bp)
+{
+	if(bp->b_bcount > MAX_SIZE)
+		bp->b_bcount = MAX_SIZE;
+	minphys(bp);
+}
+
+int
+wdc_atapi_ioctl (sc_link, cmd, addr, flag)
+	struct   scsi_link *sc_link;
+	u_long   cmd;
+	caddr_t  addr;
+	int      flag;
+{
+	struct atapiscsi_softc *as = sc_link->adapter_softc;
+	int drive = sc_link->target;
+	struct channel_softc *chp = as->chp;
+	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
+
+	if (drive > 1)
+		return ENOTTY;
+
+	return (wdc_ioctl(drvp, cmd, addr, flag));
 }
 
 
@@ -829,19 +854,12 @@ wdc_atapi_real_start_2(chp, xfer, timeout, ret)
 	} else {
 		wdc_atapi_update_status(chp);
 		
-		if (chp->ch_status & WDCS_BSY)
+		if (chp->ch_status & (WDCS_BSY | WDCS_DRQ))
 			return;
 	}
     
 	/* Do control operations specially. */
-	if (drvp->state < READY) {
-		if (drvp->state != IDENTIFY) {
-			printf("%s:%d:%d: bad state %d in wdc_atapi_start\n",
-			    chp->wdc->sc_dev.dv_xname, chp->channel,
-			    xfer->drive, drvp->state);
-			panic("wdc_atapi_start: bad state");
-		}
-
+	if (drvp->state < ATAPI_READY_STATE) {
 		xfer->next = wdc_atapi_ctrl;
 		return;
 	}
@@ -1143,11 +1161,7 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 			 * request sense failed ! it's not suppossed
  			 * to be possible
 			 */
-
-			sc_xfer->error = XS_RESET;
-			xfer->next = wdc_atapi_reset;
-			return;
-
+			sc_xfer->error = XS_SHORTSENSE;
 		} else if (xfer->c_bcount < sizeof(sc_xfer->sense)) {
 				/* use the sense we just read */
 			sc_xfer->error = XS_SENSE;
@@ -1309,9 +1323,15 @@ timeout:
 	    xfer->c_bcount, xfer->c_skip);
 	
 	if (xfer->c_flags & C_DMA) {
+		ireason = CHP_READ_REG(chp, wdr_ireason);
+
 		chp->wdc->dma_status =
 		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, 
 			chp->channel, xfer->drive);
+		
+		WDCDEBUG_PRINT(("Drive status: %02x %02x %02x\n", 
+		    chp->ch_status, chp->ch_error, ireason),
+		    DEBUG_ERRORS);
 		
 		drvp->n_dmaerrs++;
 	}
@@ -1320,6 +1340,8 @@ timeout:
 	xfer->next = wdc_atapi_reset;
 	return;
 }
+
+
 
 void
 wdc_atapi_ctrl(chp, xfer, timeout, ret)
@@ -1332,89 +1354,89 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
 
-	switch (drvp->state) {
-	case IDENTIFY:
-	case IDENTIFY_WAIT:
-		errstring = "IDENTIFY";
-		break;
-		
-	case PIOMODE:
-		errstring = "Post IDENTIFY";
-		break;
-
-	case PIOMODE_WAIT:
-		errstring = "PIOMODE";
-		break;
-	case DMAMODE_WAIT:
-		errstring = "dmamode";
-		break;
-	default:
-		errstring = "unknown state";
-		break;
-	}
-
-	if (timeout) {
-		if (drvp->state != IDENTIFY)
-			goto timeout;
-		else {
-#ifdef DIAGNOSTIC
-			printf ("wdc_atapi_ctrl: timeout before IDENTIFY."
-			    "Should not happen\n");
-#endif
-			sc_xfer->error = XS_DRIVER_STUFFUP;
-			xfer->next = wdc_atapi_done;
-			return;
-		}
-	}
-
 	wdc_atapi_update_status(chp);
 
-	if (chp->ch_status & WDCS_BSY)
+	if ((chp->ch_flags & (WDCS_BSY | WDCS_DRQ)) && !timeout)
 		return;
 
 	if (!wdc_atapi_drive_selected(chp, xfer->drive))
 	{
 		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
 		delay (1);
-
-		return;
 	}
 
+	if (timeout) {
+		int trigger_timeout = 1;
 
-	ret->claim_irq = -1;
+		switch (drvp->state) {
+		case ATAPI_DEVICE_RESET_WAIT_STATE:
+			errstring = "Device Reset Wait";
+			drvp->drive_flags &= ~DRIVE_DEVICE_RESET;
+			break;
+
+		case ATAPI_PIOMODE_WAIT_STATE:
+			errstring = "PIOMODE";
+			if (chp->ch_flags & (WDCS_BSY | WDCS_DRQ))
+				drvp->drive_flags &= ~DRIVE_MODE;
+			else
+				trigger_timeout = 0;
+			break;
+		case ATAPI_DMAMODE_WAIT_STATE:
+			errstring = "dmamode";
+			if (chp->ch_flags & (WDCS_BSY | WDCS_DRQ))
+				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+			else 
+				trigger_timeout = 0;
+			break;
+
+		default:
+			errstring = "unknown state";
+			break;
+		}
+
+		if (trigger_timeout)
+			goto timeout;
+	}
 
 	WDCDEBUG_PRINT(("wdc_atapi_ctrl %s:%d:%d state %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive, drvp->state),
 	    DEBUG_INTR | DEBUG_FUNCS);
 
+	ret->claim_irq = -1;
+
 	switch (drvp->state) {
-		/* You need to send an ATAPI drive an ATAPI-specific
-		   command to revive it after a hard reset. Identify
-		   is about the most innocuous thing you can do
-		   that's guaranteed to be there */
-	case IDENTIFY:
-		wdccommandshort(chp, drvp->drive, ATAPI_IDENTIFY_DEVICE);
-		drvp->state = IDENTIFY_WAIT;
-		ret->timeout = ATAPI_CTRL_WAIT;
-		ret->expect_irq = 1;
-		break;
-	
-	case IDENTIFY_WAIT:
-		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
-			chp->wdc->irqack(chp);
-		/* We don't really care if this operation failed.
-		   It's just there to wake the drive from its stupor. */
-		if (!(chp->ch_status & WDCS_ERR)) {
-			wdcbit_bucket(chp, 512);
-	
-			ret->timeout = 100;
-			drvp->state = PIOMODE;
+		/* My ATAPI slave device likes to assert DASP-/PDIAG- until 
+		   it is DEVICE RESET. This causes the LED to stay on.
+
+		   There is a trade-off here. This drive will cause any
+		   play-back or seeks happening to be interrupted.
+
+		   Note that the bus reset that triggered this state
+		   (which may have been caused by the other drive on
+		   the chain) need not interrupt this playback. It happens
+		   to on my Smart & Friendly CD burner.
+
+		   - csapuntz@
+		*/
+	case ATAPI_RESET_BASE_STATE:
+		if ((drvp->drive_flags & DRIVE_DEVICE_RESET) == 0) {
+			drvp->state = ATAPI_PIOMODE_STATE;
 			break;
 		}
 
-		drvp->state = PIOMODE;
+		wdccommandshort(chp, drvp->drive, ATAPI_DEVICE_RESET);
+		drvp->state = ATAPI_DEVICE_RESET_WAIT_STATE;
+		ret->delay = 500;
+		ret->timeout = ATAPI_RESET_WAIT;
+		break;
 
-	case PIOMODE:
+	case ATAPI_DEVICE_RESET_WAIT_STATE:
+		drvp->state = ATAPI_PIOMODE_STATE;
+		ret->delay = 500;
+		ret->timeout = ATAPI_RESET_WAIT;
+		break;
+
+	case ATAPI_PIOMODE_STATE:
 piomode:
 		/* Don't try to set mode if controller can't be adjusted */
 		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
@@ -1424,11 +1446,11 @@ piomode:
 			goto ready;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
-		drvp->state = PIOMODE_WAIT;
+		drvp->state = ATAPI_PIOMODE_WAIT_STATE;
 		ret->timeout = ATAPI_CTRL_WAIT;
 		ret->expect_irq = 1;
 		break;
-	case PIOMODE_WAIT:
+	case ATAPI_PIOMODE_WAIT_STATE:
 		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR) {
@@ -1439,21 +1461,13 @@ piomode:
 			/* 
 			 * All ATAPI drives are supposed to support
 			 * PIO mode 3 or greater. 
-			 *
-			 * If the drive fails the set PIO mode command,
-			 * assume it just doesn't support the set PIO mode
-			 * command.
-			 *
-			 * Ideally, we would program the channel controller
-			 * to run at PIO mode 3. However, the channel
-			 * controller is only running faster than PIO mode 3
-			 * if the drive said it supported that. 
 			 */
 			drvp->PIO_mode = 3;
+			chp->wdc->set_modes(chp);
 		}
 	/* fall through */
 
-	case DMAMODE:
+	case ATAPI_DMAMODE_STATE:
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
@@ -1463,22 +1477,22 @@ piomode:
 		} else {
 			goto ready;
 		}
-		drvp->state = DMAMODE_WAIT;
+		drvp->state = ATAPI_DMAMODE_WAIT_STATE;
 
 		ret->timeout = ATAPI_CTRL_WAIT;
 		ret->expect_irq = 1;
 		break;
 
-	case DMAMODE_WAIT:
+	case ATAPI_DMAMODE_WAIT_STATE:
 		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR)
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 	/* fall through */
 
-	case READY:
+	case ATAPI_READY_STATE:
 	ready:
-		drvp->state = READY;
+		drvp->state = ATAPI_READY_STATE;
 		xfer->next = wdc_atapi_real_start;
 		break;
 	}
@@ -1542,6 +1556,8 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 		drvp->n_dmaerrs = 0;
 		if (doing_dma)
 			wdc_downgrade_mode(drvp);
+	} else {
+		drvp->n_resets = 0;
 	}
 
 	if (!(xfer->c_flags & C_POLL)) {
@@ -1565,13 +1581,14 @@ wdc_atapi_reset(chp, xfer, timeout, ret)
 
 	WDCDEBUG_PRINT(("wdc_atapi_reset\n"), DEBUG_XFERS);
 	wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
-	drvp->state = 0;
+	drvp->state = ATAPI_PIOMODE_STATE;
 
+	drvp->n_resets++;
 	/* Some ATAPI devices need extra time to find their
 	   brains after a reset
 	 */
 	xfer->next = wdc_atapi_reset_2;
-	ret->delay = 10;
+	ret->delay = 150;
 	ret->timeout = ATAPI_RESET_WAIT;
 	return;
 }
@@ -1606,4 +1623,5 @@ wdc_atapi_reset_2(chp, xfer, timeout, ret)
 	xfer->next = wdc_atapi_done;
 	return;
 }
+
 
