@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.16 2004/05/21 02:11:33 jolan Exp $	*/
+/*	$OpenBSD: cat.c,v 1.17 2005/04/05 01:18:53 jaredy Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: cat.c,v 1.16 2004/05/21 02:11:33 jolan Exp $";
+static char rcsid[] = "$OpenBSD: cat.c,v 1.17 2005/04/05 01:18:53 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ raw_cat(int rfd)
 	wfd = fileno(stdout);
 	if (buf == NULL) {
 		if (fstat(wfd, &sbuf))
-			err(1, "%s", filename);
+			err(1, "stdout");
 		bsize = MAX(sbuf.st_blksize, BUFSIZ);
 		if ((buf = malloc(bsize)) == NULL)
 			err(1, "malloc");
