@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.52 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.53 1999/12/14 22:20:28 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2354,7 +2354,7 @@ tcp_sack_option(tp, th, cp, optlen)
 			if (SEQ_LT(sack.start, tp->snd_una))
 				continue;
 		}
-		if (SEQ_GEQ(sack.end, tp->snd_max))
+		if (SEQ_GT(sack.end, tp->snd_max))
 			continue;
 		if (tp->snd_holes == 0) { /* first hole */
 			tp->snd_holes = (struct sackhole *)
