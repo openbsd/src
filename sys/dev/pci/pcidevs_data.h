@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.772 2004/09/30 19:24:05 grange Exp 
+ *	OpenBSD: pcidevs,v 1.773 2004/10/01 07:18:40 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2669,6 +2669,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
 	    "82557B 10/100 NIC",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_PLUTO,
+	    "Pluto MIO",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_ZX1_IOC,
+	    "zx1 IOC",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_MERCURY,
+	    "Mercury Ropes-PCI",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_QUICKSILVER,
+	    "QuickSilver Ropes-PCI",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,

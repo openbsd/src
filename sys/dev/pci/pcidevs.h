@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.772 2004/09/30 19:24:05 grange Exp 
+ *	OpenBSD: pcidevs,v 1.773 2004/10/01 07:18:40 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1108,6 +1108,10 @@
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
 #define	PCI_PRODUCT_HP_SMARTIRQ	0x10ed		/* NetServer SmartIRQ */
 #define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
+#define	PCI_PRODUCT_HP_PLUTO	0x1229		/* Pluto MIO */
+#define	PCI_PRODUCT_HP_ZX1_IOC	0x122a		/* zx1 IOC */
+#define	PCI_PRODUCT_HP_MERCURY	0x122e		/* Mercury Ropes-PCI */
+#define	PCI_PRODUCT_HP_QUICKSILVER	0x12b4		/* QuickSilver Ropes-PCI */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
