@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.8 2003/05/12 09:00:31 tdeval Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.9 2003/10/15 23:00:56 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -49,6 +49,8 @@
 void macobio_attach(struct device *, struct device *, void *);
 int macobio_match(struct device *, void *, void *);
 int macobio_print(void *, const char *);
+void macobio_modem_power(int enable);
+
 void *undef_mac_establish(void * lcv, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg, char *name);
 void mac_intr_disestab(void *lcp, void *arg);
@@ -70,10 +72,7 @@ struct cfattach macobio_ca = {
 };
 
 int
-macobio_match(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+macobio_match(struct device *parent, void *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -100,9 +99,7 @@ u_int32_t *heathrow_FCR = NULL;
  * Attach all the sub-devices we can find
  */
 void
-macobio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+macobio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct macobio_softc *sc = (struct macobio_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -138,7 +135,7 @@ macobio_attach(parent, self, aux)
 		{
 			/* always ??? */
 			heathrow_FCR = mapiodev(reg[2] + HEATHROW_FCR_OFFSET,
-				4);
+			    4);
 		}
 		break;
 	case PCI_PRODUCT_APPLE_KEYLARGO:
@@ -148,10 +145,8 @@ macobio_attach(parent, self, aux)
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
 		if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg))
-			== (sizeof (reg[0]) * 5))
-		{
+		    == (sizeof (reg[0]) * 5))
 			 sc->obiomem = mapiodev(reg[2], 0x100);
-		}
 
 		break;
 	default:
@@ -218,9 +213,7 @@ macobio_attach(parent, self, aux)
 }
 
 int
-macobio_print(aux, macobio)
-	void *aux;
-	const char *macobio;
+macobio_print(void *aux, const char *macobio)
 {
 #ifdef MACOBIOVERBOSE
 	struct confargs *ca = aux;
@@ -238,23 +231,15 @@ macobio_print(aux, macobio)
 }
 
 void *
-undef_mac_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
-	void * lcv;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
-	char *name;
+undef_mac_establish(void * lcv, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, char *name)
 {
 	printf("mac_intr_establish called, not yet inited\n");
 	return 0;
 }
 
 void
-mac_intr_disestab(lcp, arg)
-	void *lcp;
-	void *arg;
+mac_intr_disestab(void *lcp, void *arg)
 {
 	printf("mac_intr_disestablish called, not yet inited\n");
 }
@@ -263,27 +248,18 @@ intr_establish_t *mac_intr_establish_func = undef_mac_establish;
 intr_disestablish_t *mac_intr_disestablish_func = mac_intr_disestab;
 
 void *
-mac_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
-	void * lcv;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
-	char *name;
+mac_intr_establish(void * lcv, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, char *name)
 {
 	return (*mac_intr_establish_func)(lcv, irq, type, level, ih_fun,
-		ih_arg, name);
+	    ih_arg, name);
 }
 void
-mac_intr_disestablish(lcp, arg)
-	void *lcp;
-	void *arg;
+mac_intr_disestablish(void *lcp, void *arg)
 {
 	(*mac_intr_disestablish_func)(lcp, arg);
 }
 
-void macobio_modem_power(int enable);
 void
 macobio_modem_power(int enable)
 {

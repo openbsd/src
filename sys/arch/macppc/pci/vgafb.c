@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.20 2002/11/09 22:51:46 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.21 2003/10/15 23:00:57 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -105,10 +105,9 @@ int	vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
  * and attachment.
  */
 int
-vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosize)
-	bus_space_tag_t iot, memt;
-	u_int32_t iobase, membase, mmiobase;
-	size_t iosize, memsize, mmiosize;
+vgafb_common_probe(bus_space_tag_t iot, bus_space_tag_t memt, u_int32_t iobase,
+    size_t iosize, u_int32_t membase, size_t memsize, u_int32_t mmiobase,
+    size_t mmiosize)
 {
 	bus_space_handle_t ioh_b, ioh_c, ioh_d, memh, mmioh;
 	int gotio_b, gotio_c, gotio_d, gotmem, gotmmio, rv;
@@ -150,11 +149,9 @@ bad:
 }
 
 void
-vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mmiosize)
-	bus_space_tag_t iot, memt;
-	struct vgafb_config *vc;
-	u_int32_t iobase, membase, mmiobase;
-	size_t iosize, memsize, mmiosize;
+vgafb_common_setup(bus_space_tag_t iot, bus_space_tag_t  memt,
+    struct vgafb_config *vc, u_int32_t iobase, size_t iosize,
+    u_int32_t  membase, size_t memsize, u_int32_t mmiobase, size_t mmiosize)
 {
         vc->vc_iot = iot;
         vc->vc_memt = memt;
@@ -168,10 +165,10 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
            if (bus_space_map(vc->vc_iot, iobase+0x3d0, 0x10, 0, &vc->vc_ioh_d))
 		panic("vgafb_common_setup: couldn't map io d");
 	}
-	if (mmiosize != 0) {
-           if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0, &vc->vc_mmioh))
-		panic("vgafb_common_setup: couldn't map mmio");
-	}
+	if (mmiosize != 0)
+	       if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0,
+		   &vc->vc_mmioh))
+			panic("vgafb_common_setup: couldn't map mmio");
 
 	/* memsize should only be visible region for console */
 	memsize = cons_height * cons_linebytes;
@@ -210,10 +207,8 @@ vgafb_restore_default_colors(struct vgafb_config *vc)
 }
 
 void
-vgafb_wsdisplay_attach(parent, vc, console)
-	struct device *parent;
-	struct vgafb_config *vc;
-	int console;
+vgafb_wsdisplay_attach(struct device *parent, struct vgafb_config *vc,
+    int console)
 {
 	struct wsemuldisplaydev_attach_args aa;
 
@@ -234,12 +229,7 @@ vgafb_wsdisplay_attach(parent, vc, console)
 }
 
 int
-vgafb_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct vgafb_config *vc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -274,9 +264,8 @@ vgafb_ioctl(v, cmd, data, flag, p)
 		 * the correct palette.
 		 */
 
-		if (cons_depth == 8) { 
+		if (cons_depth == 8)
 			vgafb_restore_default_colors(vc);
-		}
 
 		/* now that we have done our work, let the wscons
 		 * layer handle this ioctl
@@ -341,10 +330,7 @@ vgafb_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-vgafb_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+vgafb_mmap(void *v, off_t offset, int prot)
 {
 	struct vgafb_config *vc = v;
 	bus_space_handle_t h;
@@ -396,8 +382,7 @@ vgafb_mmap(v, offset, prot)
 
 
 void
-vgafb_cnprobe(cp)
-	struct consdev *cp;
+vgafb_cnprobe(struct consdev *cp)
 {
 	if (cons_displaytype != 1) {
 		cp->cn_pri = CN_DEAD;
@@ -408,10 +393,8 @@ vgafb_cnprobe(cp)
 }
 
 void
-vgafb_cnattach(iot, memt, pc, bus, device, function)
-	void *pc;
-	bus_space_tag_t iot, memt;
-	int bus, device, function;
+vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t  memt, void *pc, int bus,
+    int  device, int function)
 {
         long defattr;
 
@@ -443,10 +426,8 @@ struct {
 } vgafb_color[256];
 
 void
-vgafb_setcolor(vc, index, r, g, b) 
-	struct vgafb_config *vc;
-	unsigned int index;
-	u_int8_t r, g, b;
+vgafb_setcolor(struct vgafb_config *vc, unsigned int index, u_int8_t r,
+    u_int8_t g, u_int8_t b)
 {
 	vc->vc_cmap_red[index] = r;
 	vc->vc_cmap_green[index] = g;
@@ -460,9 +441,7 @@ vgafb_setcolor(vc, index, r, g, b)
 }
 
 int
-vgafb_getcmap(vc, cm)
-	struct vgafb_config *vc;
-	struct wsdisplay_cmap *cm;
+vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -485,9 +464,7 @@ vgafb_getcmap(vc, cm)
 }
 
 int
-vgafb_putcmap(vc, cm)
-	struct vgafb_config *vc;
-	struct wsdisplay_cmap *cm;
+vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -521,9 +498,7 @@ vgafb_putcmap(vc, cm)
 }
 
 void
-vgafb_burn(v, on, flags)
-	void *v;
-	u_int on, flags;
+vgafb_burn(void *v, u_int on, u_int flags)
 {
 	struct vgafb_config *vc = v;
 
