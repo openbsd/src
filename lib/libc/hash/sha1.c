@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.14 2004/04/26 19:38:12 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.15 2004/04/27 15:54:56 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,7 +15,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.14 2004/04/26 19:38:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: sha1.c,v 1.15 2004/04/27 15:54:56 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
@@ -118,12 +118,12 @@ SHA1Init(SHA1_CTX *context)
 {
 
     /* SHA1 initialization constants */
+    context->count = 0;
     context->state[0] = 0x67452301;
     context->state[1] = 0xEFCDAB89;
     context->state[2] = 0x98BADCFE;
     context->state[3] = 0x10325476;
     context->state[4] = 0xC3D2E1F0;
-    context->count[0] = context->count[1] = 0;
 }
 
 
@@ -135,10 +135,8 @@ SHA1Update(SHA1_CTX *context, const u_char *data, u_int len)
 {
     u_int i, j;
 
-    j = context->count[0];
-    if ((context->count[0] += len << 3) < j)
-	context->count[1] += (len>>29)+1;
-    j = (j >> 3) & 63;
+    j = (u_int32_t)((context->count >> 3) & 63);
+    context->count += (len << 3);
     if ((j + len) > 63) {
 	(void)memcpy(&context->buffer[j], data, (i = 64-j));
 	SHA1Transform(context->state, context->buffer);
@@ -162,11 +160,11 @@ SHA1Final(u_char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
     u_char finalcount[8];
 
     for (i = 0; i < 8; i++) {
-	finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]
-	 >> ((3-(i & 3)) * 8) ) & 255);	 /* Endian independent */
+	finalcount[i] = (u_char)((context->count >>
+	    ((7 - (i & 7)) * 8)) & 255);	 /* Endian independent */
     }
     SHA1Update(context, (u_char *)"\200", 1);
-    while ((context->count[0] & 504) != 448)
+    while ((context->count & 504) != 448)
 	SHA1Update(context, (u_char *)"\0", 1);
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
