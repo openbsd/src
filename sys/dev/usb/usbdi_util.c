@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
+/*	$OpenBSD: usbdi_util.c,v 1.3 1999/08/27 09:00:30 fgsch Exp $	*/
 /*	$NetBSD: usbdi_util.c,v 1.16 1999/08/07 23:14:17 augustss Exp $	*/
 
 /*
@@ -501,21 +501,20 @@ usbd_bulk_transfer_cb(reqh, priv, status)
 }
 
 usbd_status
-usbd_bulk_transfer(reqh, pipe, flags, buf, size, lbl)
+usbd_bulk_transfer(reqh, pipe, flags, timeout, buf, size, lbl)
 	usbd_request_handle reqh;
 	usbd_pipe_handle pipe;
 	u_int16_t flags;
+	u_int32_t timeout;
 	void *buf;
 	u_int32_t *size;
 	char *lbl;
 {
-	usbd_private_handle priv;
-	void *buffer;
 	usbd_status r;
 	int s, error;
 
 	r = usbd_setup_request(reqh, pipe, 0, buf, *size,
-			       flags, USBD_NO_TIMEOUT, usbd_bulk_transfer_cb);
+			       flags, timeout, usbd_bulk_transfer_cb);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
@@ -532,7 +531,7 @@ usbd_bulk_transfer(reqh, pipe, flags, buf, size, lbl)
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);
 	}
-	usbd_get_request_status(reqh, &priv, &buffer, size, &r);
+	usbd_get_request_status(reqh, 0, 0, size, &r);
 	DPRINTFN(1,("usbd_bulk_transfer: transferred %d\n", *size));
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("usbd_bulk_transfer: error=%d\n", r));

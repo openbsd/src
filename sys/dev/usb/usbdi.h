@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.3 1999/08/27 09:00:30 fgsch Exp $	*/
 /*	$NetBSD: usbdi.h,v 1.20 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ typedef struct usbd_request	*usbd_request_handle;
 typedef void			*usbd_private_handle;
 
 typedef enum { 
-	USBD_NORMAL_COMPLETION = 0,
+	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
 	USBD_IN_PROGRESS,
 	/* errors */
 	USBD_PENDING_REQUESTS,
@@ -68,6 +68,8 @@ typedef enum {
 	USBD_INTERRUPTED,
 
 	USBD_XXX,
+
+	USBD_ERROR_MAX,		/* must be last */
 } usbd_status;
 
 typedef int usbd_lock_token;
@@ -81,7 +83,8 @@ typedef void (*usbd_callback) __P((usbd_request_handle, usbd_private_handle,
 /* Request flags */
 #define USBD_XFER_OUT		0x01
 #define USBD_XFER_IN		0x02
-#define USBD_SHORT_XFER_OK	0x04
+#define USBD_SHORT_XFER_OK	0x04	/* allow short reads */
+#define USBD_SYNCHRONOUS	0x08	/* wait for completion */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -103,7 +106,7 @@ usbd_status usbd_setup_default_request
 	     usbd_private_handle priv, u_int32_t timeout,
 	     usb_device_request_t *req,  void *buffer,
 	     u_int32_t length, u_int16_t flags, usbd_callback));
-usbd_status usbd_get_request_status
+void usbd_get_request_status
 	__P((usbd_request_handle reqh, usbd_private_handle *priv,
 	     void **buffer, u_int32_t *count, usbd_status *status));
 usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
@@ -160,6 +163,8 @@ usb_endpoint_descriptor_t *usbd_find_edesc
 
 void usbd_dopoll __P((usbd_interface_handle));
 void usbd_set_polling __P((usbd_interface_handle iface, int on));
+
+char *usbd_errstr __P((usbd_status err));
 
 /* NetBSD attachment information */
 

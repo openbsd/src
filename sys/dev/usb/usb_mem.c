@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.3 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$OpenBSD: usb_mem.c,v 1.4 1999/08/27 09:00:29 fgsch Exp $	*/
 /*	$NetBSD: usb_mem.c,v 1.9 1999/08/16 20:19:55 augustss Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
-extern int usbdebug;
+int usbdebug;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -83,12 +83,14 @@ struct usb_frag_dma {
 
 usbd_status	usb_block_allocmem 
 	__P((bus_dma_tag_t, size_t, size_t, usb_dma_block_t **));
+#if 0
 void		usb_block_real_freemem  __P((usb_dma_block_t *));
+#endif
 void		usb_block_freemem  __P((usb_dma_block_t *));
 
-LIST_HEAD(, usb_block_dma) usb_blk_freelist = 
+LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
-/* XXX should have different free list for different tags */
+/* XXX should have different free list for different tags (for speed) */
 LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
@@ -107,8 +109,8 @@ usb_block_allocmem(tag, size, align, dmap)
 
 #ifdef DIAGNOSTIC
 	if (!curproc) {
-		printf("usb_block_allocmem: in interrupt context, size=%u\n",
-		       size);
+		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
+		    (unsigned long) size);
 	}
 #endif
 
@@ -173,6 +175,7 @@ free:
 	return (USBD_NOMEM);
 }
 
+#if 0
 void
 usb_block_real_freemem(p)
         usb_dma_block_t *p;
@@ -189,6 +192,7 @@ usb_block_real_freemem(p)
 	bus_dmamem_free(p->tag, p->segs, p->nsegs);
 	free(p, M_USB);
 }
+#endif
 
 /*
  * Do not free the memory unconditionally since we might be called

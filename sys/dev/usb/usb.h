@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.2 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$OpenBSD: usb.h,v 1.3 1999/08/27 09:00:29 fgsch Exp $	*/
 /*	$NetBSD: usb.h,v 1.27 1999/08/18 07:55:19 augustss Exp $	*/
 
 /*
@@ -45,9 +45,7 @@
 #include <sys/types.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
-#endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>
 #endif /* _KERNEL */
@@ -223,6 +221,7 @@ typedef struct {
 #define UE_ADDR		0x0f
 #define UE_GET_ADDR(a)	((a) & UE_ADDR)
 #define UE_GET_IN(a)	(((a) >> 7) & 1)
+#define UE_GET_DIR(a)	((a) & 0x80)
 	uByte		bmAttributes;
 #define UE_XFERTYPE	0x03
 #define  UE_CONTROL	0x00
@@ -356,8 +355,10 @@ typedef struct {
 #define  USUBCLASS_UFI		4
 #define  USUBCLASS_SFF8070I	5
 #define  USUBCLASS_SCSI		6
-#define  UPROTO_MASS_CBI_C	0
-#define  UPROTO_MASS_CBI_NC	1
+#define  UPROTO_MASS_CBI_I	0
+#define  UPROTO_MASS_CBI	1
+#define  UPROTO_MASS_BULK	80
+#define  UPROTO_MASS_BULK2	2
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
@@ -509,6 +510,7 @@ struct usb_device_stats {
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
+#define USB_SET_TIMEOUT		_IOW ('U', 114, int)
 
 /* Modem device */
 #define USB_GET_CM_OVER_DATA	_IOR ('U', 130, int)

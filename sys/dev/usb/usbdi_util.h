@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.1 1999/08/13 05:28:05 fgsch Exp $	*/
+/*	$OpenBSD: usbdi_util.h,v 1.2 1999/08/27 09:00:30 fgsch Exp $	*/
 /*	$NetBSD: usbdi_util.h,v 1.14 1999/08/07 23:14:17 augustss Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ usbd_status usbd_set_config_index
 
 usbd_status usbd_bulk_transfer
 	__P((usbd_request_handle reqh, usbd_pipe_handle pipe, u_int16_t flags,
-	     void *buf, u_int32_t *size, char *lbl));
+	     u_int32_t timeout, void *buf, u_int32_t *size, char *lbl));
 
 void usb_detach_wait __P((bdevice *));
 void usb_detach_wakeup __P((bdevice *));

@@ -24,3 +24,7 @@ memory allocator from an interrupt context.
 Move memory allocation and copying to HC independent code.
 
 Use a TD chain in ohci.c to allow transfers > 8K.
+
+Document device driver API.
+
+Document HC driver API.

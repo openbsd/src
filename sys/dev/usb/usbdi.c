@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.c,v 1.3 1999/08/19 08:18:39 fgsch Exp $	*/
-/*	$NetBSD: usbdi.c,v 1.30 1999/08/17 20:59:04 augustss Exp $	*/
+/*	$OpenBSD: usbdi.c,v 1.4 1999/08/27 09:00:30 fgsch Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.32 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,11 +71,9 @@ extern int usbdebug;
 #endif
 
 static usbd_status usbd_ar_pipe  __P((usbd_pipe_handle pipe));
-static void usbd_transfer_cb __P((usbd_request_handle reqh));
-static void usbd_sync_transfer_cb __P((usbd_request_handle reqh));
-static usbd_status usbd_do_transfer __P((usbd_request_handle reqh));
 void usbd_do_request_async_cb 
 	__P((usbd_request_handle, usbd_private_handle, usbd_status));
+void usbd_start_next __P((usbd_pipe_handle pipe));
 
 static SIMPLEQ_HEAD(, usbd_request) usbd_free_requests;
 
@@ -229,27 +227,46 @@ usbd_close_pipe(pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status 
+usbd_status
 usbd_transfer(reqh)
 	usbd_request_handle reqh;
 {
-	reqh->xfercb = usbd_transfer_cb;
-	return (usbd_do_transfer(reqh));
-}
-
-static usbd_status
-usbd_do_transfer(reqh)
-	usbd_request_handle reqh;
-{
 	usbd_pipe_handle pipe = reqh->pipe;
+	usbd_status r;
+	int s;
 
-	DPRINTFN(5,("usbd_do_transfer: reqh=%p\n", reqh));
+	DPRINTFN(5,("usbd_transfer: reqh=%p, flags=%d, pipe=%p, running=%d\n",
+		    reqh, reqh->flags, pipe, pipe->running));
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
 		usbd_dump_queue(pipe);
 #endif
 	reqh->done = 0;
-	return (pipe->methods->transfer(reqh));
+
+	r = pipe->methods->transfer(reqh);
+	if (!(reqh->flags & USBD_SYNCHRONOUS))
+		return r;
+
+	/* Sync transfer, wait for completion. */
+	if (r != USBD_IN_PROGRESS)
+		return (r);
+	s = splusb();
+	if (!reqh->done) {
+		if (reqh->pipe->device->bus->use_polling)
+			panic("usbd_transfer: not done\n");
+		tsleep(reqh, PRIBIO, "usbsyn", 0);
+	}
+	splx(s);
+	return (reqh->status);
+}
+
+/* Like usbd_transfer(), but waits for completion. */
+usbd_status
+usbd_sync_transfer(reqh)
+	usbd_request_handle reqh;
+{
+	reqh->flags |= USBD_SYNCHRONOUS;
+	return (usbd_transfer(reqh));
 }
 
 usbd_request_handle 
@@ -300,7 +317,6 @@ usbd_setup_request(reqh, pipe, priv, buffer, length, flags, timeout, callback)
 	reqh->timeout = timeout;
 	reqh->status = USBD_NOT_STARTED;
 	reqh->callback = callback;
-	reqh->retries = 1;
 	reqh->isreq = 0;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -330,12 +346,11 @@ usbd_setup_default_request(reqh, dev, priv, timeout, req, buffer,
 	reqh->status = USBD_NOT_STARTED;
 	reqh->callback = callback;
 	reqh->request = *req;
-	reqh->retries = 1;
 	reqh->isreq = 1;
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status 
+void
 usbd_get_request_status(reqh, priv, buffer, count, status)
 	usbd_request_handle reqh;
 	usbd_private_handle *priv;
@@ -343,11 +358,14 @@ usbd_get_request_status(reqh, priv, buffer, count, status)
 	u_int32_t *count;
 	usbd_status *status;
 {
-	*priv = reqh->priv;
-	*buffer = reqh->buffer;
-	*count = reqh->actlen;
-	*status = reqh->status;
-	return (USBD_NORMAL_COMPLETION);
+	if (priv)
+		*priv = reqh->priv;
+	if (buffer)
+		*buffer = reqh->buffer;
+	if (count)
+		*count = reqh->actlen;
+	if (status)
+		*status = reqh->status;
 }
 
 usb_config_descriptor_t *
@@ -601,23 +619,37 @@ usbd_init()
 	}
 }
 
-static void
-usbd_transfer_cb(reqh)
+void
+usb_transfer_complete(reqh)
 	usbd_request_handle reqh;
 {
 	usbd_pipe_handle pipe = reqh->pipe;
+	int polling;
 
-	DPRINTFN(10, ("usbd_transfer_cb: reqh=%p\n", reqh));
-	/* Count completed transfers. */
+	DPRINTFN(5, ("usb_transfer_complete: pipe=%p reqh=%p actlen=%d\n",
+		     pipe, reqh, reqh->actlen));
+
 #ifdef DIAGNOSTIC
-	if (!pipe)
+	if (!pipe) {
 		printf("usbd_transfer_cb: pipe==0, reqh=%p\n", reqh);
-	else
+		return;
+	}
 #endif
+	polling = reqh->pipe->device->bus->use_polling;
+	/* XXXX */
+	if (polling)
+		pipe->running = 0;
+
+	if (reqh->pipe->methods->done)
+		reqh->pipe->methods->done(reqh);
+
+	/* Remove request from queue. */
+	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
+
+	/* Count completed transfers. */
 	++pipe->device->bus->stats.requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
-	/* XXX check retry count */
 	reqh->done = 1;
 	if (reqh->status == USBD_NORMAL_COMPLETION &&
 	    reqh->actlen < reqh->length &&
@@ -626,40 +658,66 @@ usbd_transfer_cb(reqh)
 			      reqh->actlen, reqh->length));
 		reqh->status = USBD_SHORT_XFER;
 	}
+
 	if (reqh->callback)
 		reqh->callback(reqh, reqh->priv, reqh->status);
-}
 
-static void
-usbd_sync_transfer_cb(reqh)
-	usbd_request_handle reqh;
-{
-	DPRINTFN(10, ("usbd_sync_transfer_cb: reqh=%p\n", reqh));
-	usbd_transfer_cb(reqh);
-	if (!reqh->pipe->device->bus->use_polling)
+	if ((reqh->flags & USBD_SYNCHRONOUS) && !polling)
 		wakeup(reqh);
+
+	if (!pipe->repeat && 
+	    reqh->status != USBD_CANCELLED && reqh->status != USBD_TIMEOUT)
+		usbd_start_next(pipe);
 }
 
-/* Like usbd_transfer(), but waits for completion. */
 usbd_status
-usbd_sync_transfer(reqh)
+usb_insert_transfer(reqh)
 	usbd_request_handle reqh;
 {
-	usbd_status r;
-	int s;
+	usbd_pipe_handle pipe = reqh->pipe;
 
-	reqh->xfercb = usbd_sync_transfer_cb;
-	r = usbd_do_transfer(reqh);
-	if (r != USBD_IN_PROGRESS)
-		return (r);
-	s = splusb();
-	if (!reqh->done) {
-		if (reqh->pipe->device->bus->use_polling)
-			panic("usbd_sync_transfer: not done\n");
-		tsleep(reqh, PRIBIO, "usbsyn", 0);
+	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d\n", pipe,
+		    pipe->running));
+	SIMPLEQ_INSERT_TAIL(&pipe->queue, reqh, next);
+	if (pipe->running)
+		return (USBD_IN_PROGRESS);
+	pipe->running = 1;
+	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+usbd_start_next(pipe)
+	usbd_pipe_handle pipe;
+{
+	usbd_request_handle reqh;
+	usbd_status r;
+
+	DPRINTFN(10, ("usbd_start_next: pipe=%p\n", pipe));
+	
+#ifdef DIAGNOSTIC
+	if (!pipe) {
+		printf("usbd_start_next: pipe == 0\n");
+		return;
 	}
-	splx(s);
-	return (reqh->status);
+	if (!pipe->methods || !pipe->methods->start) {
+		printf("usbd_start_next:  no start method\n");
+		return;
+	}
+#endif
+
+	/* Get next request in queue. */
+	reqh = SIMPLEQ_FIRST(&pipe->queue);
+	DPRINTFN(5, ("usbd_start_next: pipe=%p start reqh=%p\n", pipe, reqh));
+	if (!reqh)
+		pipe->running = 0;
+	else {
+		r = pipe->methods->start(reqh);
+		if (r != USBD_IN_PROGRESS) {
+			printf("usbd_start_next: error=%d\n", r);
+			pipe->running = 0;
+			/* XXX do what? */
+		}
+	}
 }
 
 usbd_status

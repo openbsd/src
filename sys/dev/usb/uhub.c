@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhub.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
-/*	$NetBSD: uhub.c,v 1.18 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$OpenBSD: uhub.c,v 1.3 1999/08/27 09:00:29 fgsch Exp $	*/
+/*	$NetBSD: uhub.c,v 1.23 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int	usbdebug;
-extern char 	*usbd_error_strs[];
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -127,8 +126,8 @@ USB_ATTACH(uhub)
 
 	r = usbd_set_config_index(dev, 0, 1);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: configuration failed, error=%d(%s)\n",
-			 USBDEVNAME(sc->sc_dev), r, usbd_error_strs[r]));
+		DPRINTF(("%s: configuration failed, error=%s\n",
+			 USBDEVNAME(sc->sc_dev), usbd_errstr(r)));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -152,8 +151,8 @@ USB_ATTACH(uhub)
 		r = usbd_do_request(dev, &req, &hubdesc);
 	}
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: getting hub descriptor failed, error=%d(%s)\n",
-			 USBDEVNAME(sc->sc_dev), r, usbd_error_strs[r]));
+		DPRINTF(("%s: getting hub descriptor failed, error=%s\n",
+			 USBDEVNAME(sc->sc_dev), usbd_errstr(r)));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -328,8 +327,8 @@ uhub_explore(dev)
 		r = usbd_get_port_status(dev, port, &up->status);
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("uhub_explore: get port status failed, "
-				 "error=%d(%s)\n",
-				 r, usbd_error_strs[r]));
+				 "error=%s\n",
+				 usbd_errstr(r)));
 			continue;
 		}
 		status = UGETW(up->status.wPortStatus);
@@ -403,7 +402,7 @@ uhub_explore(dev)
 		/* XXX retry a few times? */
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
-				     "error=%d(%s)\n", r, usbd_error_strs[r]));
+				     "error=%s\n", usbd_errstr(r)));
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
 /* XXX
@@ -492,6 +491,14 @@ uhub_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		break;
+	}
 	return (0);
 }
 

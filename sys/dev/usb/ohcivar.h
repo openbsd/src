@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.3 1999/08/19 08:18:38 fgsch Exp $	*/
+/*	$OpenBSD: ohcivar.h,v 1.4 1999/08/27 09:00:28 fgsch Exp $	*/
 /*	$NetBSD: ohcivar.h,v 1.6 1999/08/14 14:49:31 augustss Exp $	*/
 
 /*
@@ -39,26 +39,27 @@
  */
 
 typedef struct ohci_soft_ed {
-	ohci_ed_t *ed;
+	ohci_ed_t ed;
 	struct ohci_soft_ed *next;
 	ohci_physaddr_t physaddr;
 } ohci_soft_ed_t;
-#define OHCI_ED_CHUNK 256
+#define OHCI_SED_SIZE ((sizeof (struct ohci_soft_ed) + OHCI_ED_ALIGN - 1) / OHCI_ED_ALIGN * OHCI_ED_ALIGN)
+#define OHCI_SED_CHUNK 128
 
 typedef struct ohci_soft_td {
-	ohci_td_t *td;
+	ohci_td_t td;
 	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
 	LIST_ENTRY(ohci_soft_td) hnext;
-	/*ohci_soft_ed_t *sed;*/
 	usbd_request_handle reqh;
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
 #define OHCI_SET_LEN	0x0002
 } ohci_soft_td_t;
-#define OHCI_TD_CHUNK 256
+#define OHCI_STD_SIZE ((sizeof (struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
+#define OHCI_STD_CHUNK 128
 
 #define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.2 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.3 1999/08/27 09:00:30 fgsch Exp $	*/
 /*	$NetBSD: usbdivar.h,v 1.24 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
@@ -46,14 +46,13 @@ struct usbd_endpoint {
 	int			refcnt;
 };
 
-typedef void (*usbd_xfercb)__P((usbd_request_handle req));
-
 struct usbd_methods {
 	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
 	usbd_status	      (*start)__P((usbd_request_handle reqh));
 	void		      (*abort)__P((usbd_request_handle reqh));
 	void		      (*close)__P((usbd_pipe_handle pipe));
 	void		      (*cleartoggle)__P((usbd_pipe_handle pipe));
+	void		      (*done)__P((usbd_request_handle reqh));
 	usbd_status	      (*isobuf)__P((usbd_pipe_handle pipe,
 					    u_int32_t bufsize,u_int32_t nbuf));
 };
@@ -152,12 +151,10 @@ struct usbd_request {
 	u_int32_t		timeout;
 	usbd_status		status;
 	usbd_callback		callback;
-	usbd_xfercb		xfercb;
-	u_int32_t		retries;
 	char			done;
 
 	usb_device_request_t	request;
-	u_int8_t		isreq;
+	char			isreq;
 
 	SIMPLEQ_ENTRY(usbd_request) next;
 
@@ -187,11 +184,12 @@ usbd_status	usbd_new_device __P((bdevice *parent,
 void		usbd_remove_device __P((usbd_device_handle,
 					struct usbd_port *));
 int		usbd_printBCD __P((char *cp, int bcd));
-usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
-void		usb_start_next __P((usbd_pipe_handle pipe));
 usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev, 
 					  int i, int a));
 void		usb_free_device __P((usbd_device_handle));
+
+usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
+void		usb_transfer_complete __P((usbd_request_handle reqh));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));

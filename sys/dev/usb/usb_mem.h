@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.h,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: usb_mem.h,v 1.2 1999/08/27 09:00:30 fgsch Exp $	*/
 /*	$NetBSD: usb_mem.h,v 1.4 1999/01/09 12:16:54 augustss Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-typedef struct usb_block_dma {
+typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
         caddr_t kaddr;
@@ -48,11 +48,11 @@ typedef struct usb_block_dma {
         size_t size;
         size_t align;
 	int fullblock;
-	LIST_ENTRY(usb_block_dma) next;
+	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
 typedef struct {
-	usb_dma_block_t *block;
+	struct usb_dma_block *block;
 	u_int offs;
 } usb_dma_t;
 
