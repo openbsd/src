@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 1998/09/17 15:31:16 deraadt Exp $
+#	$OpenBSD: list,v 1.18 1998/09/17 20:14:14 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -80,7 +80,7 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # dhcp things
-COPY	${DESTDIR}/etc/dhclient.conf	etc/dhclient.conf
+COPY	${CURDIR}/../../../miniroot/dhclient.conf etc/dhclient.conf
 COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
 
 # and the common installation tools
