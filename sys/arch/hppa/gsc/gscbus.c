@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.7 1999/08/16 02:48:39 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.8 1999/08/16 04:05:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -253,10 +253,12 @@ gsc_intr(v)
 			s = splx(iv->pri);
 			ret = (iv->handler)(iv->arg);
 			splx(s);
+#ifdef DEBUG
 			if (!ret)
 				printf ("%s: can't handle interrupt\n",
 					iv->evcnt.ev_name);
-			ret++;
+#endif
+			ret = 1;
 		} else
 			printf("%s: stray interrupt %d\n",
 			       sc->sc_dev.dv_xname, i);

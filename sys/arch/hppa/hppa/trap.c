@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 1999/08/16 03:22:58 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 1999/08/16 04:05:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -540,26 +540,16 @@ cpu_intr(frame)
 
 				iv->evcnt.ev_count++;
 				s = splx(iv->pri);
+				/* no arg means pass the frame */
 				r = (iv->handler)(iv->arg? iv->arg:frame);
 				splx(s);
-
-				/* no arg means pass the frame */
+#ifdef DEBUG
 				if (!r)
-#ifdef INTRDEBUG1
-					panic ("%s: can't handle interrupt",
-					       iv->evcnt.ev_name);
-#else
 					printf ("%s: can't handle interrupt\n",
 						iv->evcnt.ev_name);
 #endif
-				splx(s);
-			} else {
-#ifdef INTRDEBUG
-				panic  ("cpu_intr: stray interrupt %d", bit);
-#else
+			} else
 				printf ("cpu_intr: stray interrupt %d\n", bit);
-#endif
-			}
 		}
 	} while (eirr);
 }
