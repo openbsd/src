@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: canohost.c,v 1.10 2000/01/04 00:07:58 markus Exp $");
+RCSID("$Id: canohost.c,v 1.11 2000/01/04 13:41:32 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -70,6 +70,7 @@ get_remote_hostname(int socket)
 		 */
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = from.ss_family;
+		hints.ai_socktype = SOCK_STREAM;
 		if (getaddrinfo(name, NULL, &hints, &aitop) != 0) {
 			log("reverse mapping checking getaddrinfo for %.700s failed - POSSIBLE BREAKIN ATTEMPT!", name);
 			strlcpy(name, ntop, sizeof name);
