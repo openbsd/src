@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.11 2004/02/19 13:54:58 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.12 2004/02/19 23:07:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -377,6 +377,18 @@ attr_copy(struct attr_flags *t, struct attr_flags *s)
 		attr_optadd(t, os->flags, os->type, os->data, os->len);
 }
 
+void
+attr_free(struct attr_flags *a)
+{
+	/*
+	 * free the aspath and all optional path attributes
+	 * but not the attr_flags struct.
+	 */
+	aspath_destroy(a->aspath);
+	a->aspath = NULL;
+	attr_optfree(a);
+}
+
 int
 attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
     void *data, u_int16_t data_len)
@@ -534,19 +546,22 @@ aspath_create(void *data, u_int16_t len)
 	memcpy(aspath->data, data, len);
 
 	aspath->hdr.as_cnt = aspath_count(aspath);
+	aspath->hdr.prepend = 0;
 
 	return aspath;
 }
 
 int
 aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
-    int prepend)
+    int ebgp)
 {
 	u_char		*b = p;
-	int		 tot_len, as_len, size, wpos = 0;
+	int		 tot_len, as_len, prepend, size, wpos = 0;
 	u_int16_t	 tmp;
 	u_int8_t	 type, attr_flag = ATTR_WELL_KNOWN;
 
+	prepend = aspath->hdr.prepend + (ebgp ? 1 : 0);
+	
 	if (prepend > 255)
 		/* lunatic prepends need to be blocked in the parser */
 		return (-1);

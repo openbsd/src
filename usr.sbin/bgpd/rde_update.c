@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.5 2004/02/18 23:25:17 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.6 2004/02/19 23:07:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -201,6 +201,7 @@ up_generate_updates(struct rde_peer *peer,
 {
 	struct update_attr		*a;
 	struct update_prefix		*p;
+	struct attr_flags		 attrs;
 
 	ENSURE(peer->state == PEER_UP);
 	/*
@@ -246,6 +247,17 @@ up_generate_updates(struct rde_peer *peer,
 			break;
 		}
 
+		/* copy attributes for output filter */
+		attr_copy(&attrs, &old->aspath->flags);
+
+		if (rde_filter(peer, &attrs, &old->prefix->prefix,
+		    old->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
+			attr_free(&attrs);
+			return;
+		}
+
+		attr_free(&attrs);
+
 		/* withdraw prefix */
 		p = calloc(1, sizeof(struct update_prefix));
 		if (p == NULL)
@@ -290,6 +302,15 @@ up_generate_updates(struct rde_peer *peer,
 			break;
 		}
 
+		/* copy attributes for output filter */
+		attr_copy(&attrs, &new->aspath->flags);
+
+		if (rde_filter(peer, &attrs, &new->prefix->prefix,
+		    new->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
+			attr_free(&attrs);
+			return;
+		}
+
 		/* generate update */
 		p = calloc(1, sizeof(struct update_prefix));
 		if (p == NULL)
@@ -299,7 +320,7 @@ up_generate_updates(struct rde_peer *peer,
 		if (a == NULL)
 			fatal("up_queue_update");
 
-		if (up_generate_attr(peer, a, &new->aspath->flags,
+		if (up_generate_attr(peer, a, &attrs,
 		    new->aspath->nexthop) == -1)
 			log_warnx("generation of bgp path attributes failed");
 
@@ -307,9 +328,12 @@ up_generate_updates(struct rde_peer *peer,
 		 * use aspath_hash as attr_hash, this may be unoptimal
 		 * but currently I don't care.
 		 */
-		a->attr_hash = aspath_hash(new->aspath->flags.aspath);
+		a->attr_hash = aspath_hash(attrs.aspath);
 		p->prefix = new->prefix->prefix;
 		p->prefixlen = new->prefix->prefixlen;
+
+		/* no longer needed */
+		attr_free(&attrs);
 
 		if (up_add(peer, p, a) == -1)
 			log_warnx("queuing update failed.");
@@ -336,7 +360,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 
 	/* aspath */
 	if ((r = aspath_write(up_attr_buf + wlen, len, a->aspath,
-	    rde_local_as(), peer->conf.ebgp == 0 ? 0 : 1)) == -1)
+	    rde_local_as(), peer->conf.ebgp)) == -1)
 		return (-1);
 	wlen += r; len -= r;
 

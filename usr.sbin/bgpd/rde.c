@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.82 2004/02/19 13:54:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.83 2004/02/19 23:07:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -377,6 +377,7 @@ rde_update_dispatch(struct imsg *imsg)
 		return (-1);
 	}
 
+	/* withdraw prefix */
 	while (withdrawn_len > 0) {
 		if ((pos = rde_update_get_prefix(p, withdrawn_len, &prefix,
 		    &prefixlen)) == -1) {
@@ -398,6 +399,12 @@ rde_update_dispatch(struct imsg *imsg)
 
 		p += pos;
 		withdrawn_len -= pos;
+
+		/* input filter */
+		if (rde_filter(peer, NULL, &prefix, prefixlen,
+		    DIR_IN) == ACTION_DENY)
+			continue;
+
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
 		prefix_remove(peer, &prefix, prefixlen);
 	}
@@ -415,6 +422,7 @@ rde_update_dispatch(struct imsg *imsg)
 	if (attrpath_len == 0) /* 0 = no NLRI information in this message */
 		return (0);
 
+	/* parse path attributes */
 	attr_init(&attrs);
 	while (attrpath_len > 0) {
 		if ((pos = attr_parse(p, attrpath_len, &attrs,
@@ -422,19 +430,18 @@ rde_update_dispatch(struct imsg *imsg)
 			emsg = attr_error(p, attrpath_len, &attrs,
 			    &subtype, &size);
 			rde_update_err(peer, ERR_UPDATE, subtype, emsg, size);
-			aspath_destroy(attrs.aspath);
-			attr_optfree(&attrs);
+			attr_free(&attrs);
 			return (-1);
 		}
 		p += pos;
 		attrpath_len -= pos;
 	}
 
+	/* check for missing but necessary attributes */
 	if ((subtype = attr_missing(&attrs, peer->conf.ebgp)) != 0) {
 		rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
 		    &subtype, sizeof(u_int8_t));
-		aspath_destroy(attrs.aspath);
-		attr_optfree(&attrs);
+		attr_free(&attrs);
 		return (-1);
 	}
 
@@ -449,13 +456,13 @@ rde_update_dispatch(struct imsg *imsg)
 		return (0);
 	}
 	
+	/* parse nlri prefix */
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
-			aspath_destroy(attrs.aspath);
-			attr_optfree(&attrs);
+			attr_free(&attrs);
 			return (-1);
 		}
 		if (prefixlen > 32) {
@@ -468,22 +475,32 @@ rde_update_dispatch(struct imsg *imsg)
 
 		p += pos;
 		nlri_len -= pos;
-		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
+		
+		/* input filter */
+		/*
+		 * XXX we need to copy attrs befor calling the filter
+		 * but that stinks, because we copy it again in path_update.
+		 */
+		if (rde_filter(peer, &attrs, &prefix, prefixlen,
+		    DIR_IN) == ACTION_DENY)
+			continue;
+
+		/* max prefix checker */
 		if (peer->conf.max_prefix &&
 		    peer->prefix_cnt >= peer->conf.max_prefix) {
 			log_peer_warnx(&peer->conf, "prefix limit reached");
 			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
 			    NULL, 0);
-			aspath_destroy(attrs.aspath);
-			attr_optfree(&attrs);
+			attr_free(&attrs);
 			return (-1);
 		}
+
+		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
 		path_update(peer, &attrs, &prefix, prefixlen);
 	}
 
 	/* need to free allocated attribute memory that is no longer used */
-	aspath_destroy(attrs.aspath);
-	attr_optfree(&attrs);
+	attr_free(&attrs);
 
 	return (0);
 }

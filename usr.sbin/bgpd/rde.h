@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.28 2004/02/18 23:18:16 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.29 2004/02/19 23:07:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -82,9 +82,8 @@ struct rde_peer {
 struct aspath_hdr {
 	u_int16_t			len;	/* total length of aspath
 						   in octets */
-	u_int16_t			as_cnt;	/* total number of AS's */
-	/* probably we should switch these to int or something similar */
-	/* char	*str; string representation of aspath for regex search. */
+	u_int16_t			as_cnt;	/* number of AS's in data */
+	u_int16_t			prepend;
 };
 
 struct aspath {
@@ -220,6 +219,7 @@ u_char		*attr_error(u_char *, u_int16_t, struct attr_flags *,
 u_int8_t	 attr_missing(struct attr_flags *, int);
 int		 attr_compare(struct attr_flags *, struct attr_flags *);
 void		 attr_copy(struct attr_flags *, struct attr_flags *);
+void		 attr_free(struct attr_flags *);
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
 int		 attr_optadd(struct attr_flags *, u_int8_t, u_int8_t,
@@ -291,5 +291,9 @@ void		 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
 void		 pt_dump(void (*)(struct pt_entry *, void *), void *);
 
+/* rde_filter.c */
+enum filter_actions rde_filter(struct rde_peer *, struct attr_flags *,
+    struct bgpd_addr *, u_int8_t, enum directions);
+void		 rde_apply_set(struct attr_flags *, struct filter_set *);
 
 #endif /* __RDE_H__ */
