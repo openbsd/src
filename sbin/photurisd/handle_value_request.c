@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.3 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.4 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ static char rcsid[] = "$Id: handle_value_request.c,v 1.3 2000/12/11 02:16:50 pro
 #include "exchange.h"
 #include "secrets.h"
 #include "server.h"
-#include "errlog.h"
+#include "log.h"
 
 int
 handle_value_request(u_char *packet, int size,
@@ -87,7 +87,7 @@ handle_value_request(u_char *packet, int size,
 	     return -1;	/* packet too small  */
 
 	if (packet_check(packet, size, &vr_msg) == -1) {
-	     log_error(0, "bad packet structure in handle_value_request()");
+	     log_print("bad packet structure in handle_value_request()");
 	     return -1;
 	}
 
@@ -231,7 +231,7 @@ handle_value_request(u_char *packet, int size,
 	     st->texchangesize = parts[0].size;
 	     st->texchange = calloc(st->texchangesize, sizeof(u_int8_t));
 	     if (st->texchange == NULL) {
-		  log_error(1, "calloc() in handle_value_request()");
+		  log_error("calloc() in handle_value_request()");
 		  return -1;
 	     }
 	     bcopy(parts[0].where, st->texchange, st->texchangesize);

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: scheme.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: scheme.c,v 1.3 2000/12/11 21:21:18 provos Exp $";
 #endif
 
 #define _SCHEME_C_
@@ -47,7 +47,7 @@ static char rcsid[] = "$Id: scheme.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #include "attributes.h"
 #include "buffer.h"
 #include "scheme.h"
-#include "errlog.h"
+#include "log.h"
 
 u_int8_t *
 scheme_get_gen(u_int8_t *scheme)
@@ -75,7 +75,7 @@ scheme_get_gen(u_int8_t *scheme)
 	       header = 2;
 	  return scheme+2+header;
      default: 
-          log_error(0, "Unknown scheme in scheme_get_gen()"); 
+          log_print("Unknown scheme in scheme_get_gen()"); 
           return NULL; 
      }
 }
@@ -111,7 +111,7 @@ scheme_get_mod(u_int8_t *scheme)
 	       return scheme+2;
 	  break;
      default:
-	  log_error(0, "Unknown scheme in scheme_get_mod()");
+	  log_print("Unknown scheme in scheme_get_mod()");
 	  return NULL;
      }
 }
@@ -143,7 +143,7 @@ scheme_get_ref(u_int8_t *scheme)
      case DH_G_VAR_3DES_SHA1: 
           return DH_G_VAR_MD5;
      default: 
-          log_error(0, "Unknown scheme in scheme_get_ref()"); 
+          log_print("Unknown scheme in scheme_get_ref()"); 
           return 0; 
      } 
 }

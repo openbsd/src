@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: compute_secrets.c,v 1.2 2000/12/11 02:16:50 provos Exp $"; 
+static char rcsid[] = "$Id: compute_secrets.c,v 1.3 2000/12/11 21:21:17 provos Exp $"; 
 #endif 
 
 #define _SECRETS_C_
@@ -59,7 +59,7 @@ static char rcsid[] = "$Id: compute_secrets.c,v 1.2 2000/12/11 02:16:50 provos E
 #include "spi.h"
 #include "exchange.h"
 #include "scheme.h"
-#include "errlog.h"
+#include "log.h"
 
 int privacykey(struct stateob *st, struct idxform *hash, u_int8_t *key, 
 	       u_int8_t *packet, u_int16_t bytes, u_int16_t *order, int owner);
@@ -74,7 +74,7 @@ compute_shared_secret(struct stateob *st,
      BN_CTX *ctx;
 
      if ((mod = mod_find_modgen(st->modulus, st->generator)) == NULL) {
-	  log_error(0, "Can't find exchange information in cache in compute_shared_secret()");
+	  log_print("Can't find exchange information in cache in compute_shared_secret()");
 	  return (-1);
      }
 
@@ -105,7 +105,7 @@ compute_shared_secret(struct stateob *st,
      *sharedsize -= header;
 
      if ((*shared = calloc(*sharedsize,sizeof(u_int8_t))) == NULL) {
-          log_error(0, "Not enough memory for shared secret in compute_shared_secret()");
+          log_print("Not enough memory for shared secret in compute_shared_secret()");
           return (-1);
      }
      bcopy(buffer + header, *shared, *sharedsize);
@@ -138,14 +138,14 @@ make_session_keys(struct stateob *st, struct spiob *spi)
 	  if (p[i] != AT_AH_ATTRIB && p[i] != AT_ESP_ATTRIB) {
 	       bits = get_session_key_length(p+i);
 	       if (bits == -1) {
-		    log_error(0, "Invalid attribute choice for SPI in make_session_keys()");
+		    log_print("Invalid attribute choice for SPI in make_session_keys()");
 		    return -1;
 	       }
 	       count += bits & 7 ? (bits >> 3) + 1 : bits >> 3;
 	  }
      }
      if ((*secret = calloc(count, sizeof(u_int8_t))) == NULL) {
-	  log_error(1, "calloc() in make_session_keys()");
+	  log_error("calloc() in make_session_keys()");
 	  return -1;
      }
      *secretsize = count;
@@ -192,7 +192,7 @@ get_session_key_length(u_int8_t *attribute)
      attrib_t *ob;
 
      if ((ob = getattrib(*attribute)) == NULL) {
-	  log_error(0, "Unknown attribute %d in get_session_key_length()", 
+	  log_print("Unknown attribute %d in get_session_key_length()", 
 		    *attribute);
 	  return -1;
      }
@@ -234,7 +234,7 @@ compute_session_key(struct stateob *st, u_int8_t *key,
 	  hash = get_hash(HASH_SHA1);
 	  break;
      default:
-	  log_error(0, "Unkown scheme %d in compute_session_key()",
+	  log_print("Unkown scheme %d in compute_session_key()",
 		    ntohs(*((u_int16_t *)st->scheme)));
 	  return -1;
      }	  
@@ -331,7 +331,7 @@ init_privacy_key(struct stateob *st, int owner)
 	  hash = get_hash(HASH_SHA1);
 	  break;
      default:  
-          log_error(0, "Unknown exchange scheme in init_privacy_key()");
+          log_print("Unknown exchange scheme in init_privacy_key()");
           return -1;  
      }  
 
@@ -342,7 +342,7 @@ init_privacy_key(struct stateob *st, int owner)
 	  free(*ctx);
 
      if ((*ctx = calloc(hash->ctxsize, sizeof(char))) == NULL) {
-	  log_error(1, "calloc() in init_privacy_key()");
+	  log_error("calloc() in init_privacy_key()");
 	  return -1;
      }
      hash->Init(*ctx);
@@ -381,7 +381,7 @@ compute_privacy_key(struct stateob *st, u_int8_t *key, u_int8_t *packet,
 	  hash = get_hash(HASH_SHA1);
 	  break;
      default:  
-          log_error(0, "Unknown exchange scheme in compute_privacy_key()");
+          log_print("Unknown exchange scheme in compute_privacy_key()");
           return -1;  
      }  
 

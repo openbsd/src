@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_cookie_response.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: handle_cookie_response.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$Id: handle_cookie_response.c,v 1.2 2000/12/11 02:16:50 p
 #include "scheme.h"
 #include "packet.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 #include "config.h"
 
 int
@@ -82,7 +82,7 @@ handle_cookie_response(u_char *packet, int size,
 
 	if (strcmp(address, st->address)) {
 	     /* XXX - is this a sane thing to do ? */
-	     log_error(0, "Response from multihomed host, address %s will "
+	     log_print("Response from multihomed host, address %s will "
 		       "be changed to %s.", st->address, address);
 	     strncpy(st->address, address, 15);
 	     st->address[15] = '\0';
@@ -98,7 +98,7 @@ handle_cookie_response(u_char *packet, int size,
 	}
 
 	if (i != size - COOKIE_RESPONSE_MIN) {
-	     log_error(0, "schemes corrupt in handle_cookie_response()");
+	     log_print("schemes corrupt in handle_cookie_response()");
 	     return (-1);    /* Size didn't match UDP size */
 	}
 

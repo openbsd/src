@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_request.c,v 1.2 2000/12/11 20:32:15 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_request.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -51,7 +51,7 @@ static char rcsid[] = "$Id: handle_identity_request.c,v 1.2 2000/12/11 20:32:15 
 #include "spi.h"
 #include "secrets.h"
 #include "scheme.h"
-#include "errlog.h"
+#include "log.h"
 #include "schedule.h"
 #include "attributes.h"
 #include "md5.h"
@@ -108,7 +108,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	/* Decrypt message */
 	tmp = size - IDENTITY_MESSAGE_MIN;
 	if (packet_decrypt(st, IDENTITY_MESSAGE_CHOICE(header), &tmp) == -1) {
-	     log_error(0, "packet_decrypt() in handle_identity_request()");
+	     log_print("packet_decrypt() in handle_identity_request()");
 	     goto verification_failed;
 	}
 
@@ -118,7 +118,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 #endif
 	/* Verify message structure */
 	if (packet_check((u_int8_t *)header, size - packet[size-1], &id_msg) == -1) {
-	     log_error(0, "bad packet structure in handle_identity_request()");
+	     log_print("bad packet structure in handle_identity_request()");
 	     return -1;
 	}
 
@@ -154,13 +154,13 @@ handle_identity_request(u_char *packet, int size, char *address,
 
 	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
 			    attributes, attribsize)) {
-	     log_error(0, "attributes are not a subset in handle_identity_request()");
+	     log_print("attributes are not a subset in handle_identity_request()");
 	     return 0;
 	}
 
 	i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header));
 	if (!i || i != parts[2].size || i > sizeof(signature)) {
-	     log_error(0, "verification size mismatch in handle_identity_request()");
+	     log_print("verification size mismatch in handle_identity_request()");
 	     goto verification_failed;
 	}
 
@@ -169,7 +169,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	/* Fill the state object, but only if we have not dont so before */
 	if (st->uSPIidentver == NULL) {
 	     if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
-		  log_error(1, "calloc() in handle_identity_request()"); 
+		  log_error("calloc() in handle_identity_request()"); 
 		  goto verification_failed;
 	     }
 	     bcopy(signature, st->uSPIidentver, i);
@@ -179,7 +179,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	p = IDENTITY_MESSAGE_CHOICE(header);
 	if (st->uSPIidentchoice == NULL) {
 	     if((st->uSPIidentchoice = calloc(p[1]+2, sizeof(u_int8_t))) == NULL) {
-		  log_error(1, "calloc() in handle_identity_request()");
+		  log_error("calloc() in handle_identity_request()");
 		  goto verification_failed;
 	     }
 	     bcopy(p, st->uSPIidentchoice, p[1]+2);
@@ -189,7 +189,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	p += p[1] + 2;
 	if (st->uSPIident == NULL) {
 	     if((st->uSPIident = calloc(varpre2octets(p), sizeof(u_int8_t))) == NULL) {
-		  log_error(1,"calloc() in handle_identity_request()"); 
+		  log_error("calloc() in handle_identity_request()"); 
 		  goto verification_failed;
 	     }
 	     bcopy(p, st->uSPIident, varpre2octets(p));
@@ -197,7 +197,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	
 	if (st->uSPIattrib == NULL) {
 	     if((st->uSPIattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
-		  log_error(1, "calloc() in handle_identity_request()");
+		  log_error("calloc() in handle_identity_request()");
 		  return -1;
 	     }
 	     bcopy(attributes, st->uSPIattrib, attribsize);
@@ -206,7 +206,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	
 	if (st->oSPIident == NULL && 
 	    get_secrets(st, (ID_REMOTE|ID_LOCAL)) == -1) {
-	     log_error(0, "get_secrets() in in handle_identity_request()");
+	     log_print("get_secrets() in in handle_identity_request()");
 	     goto verification_failed;
 	}
 	
@@ -234,7 +234,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     st->uSPIsecret = NULL; st->uSPIsecretsize = 0;
 	     
 	verification_failed:
-	     log_error(0, "verification failed in handle_identity_request()");
+	     log_print("verification failed in handle_identity_request()");
 	     packet_size = PACKET_BUFFER_SIZE;
 	     photuris_error_message(st, packet_buffer, &packet_size,
 				    header->icookie, header->rcookie,
@@ -246,7 +246,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	/* Create SPI + choice of attributes */
 	if(make_spi(st, local_address, st->oSPI, &(st->olifetime), 
 		    &(st->oSPIattrib), &(st->oSPIattribsize)) == -1) {
-	     log_error(0, "make_spi() in handle_identity_request()");
+	     log_print("make_spi() in handle_identity_request()");
 	     return -1;
 	}
 	
@@ -269,11 +269,11 @@ handle_identity_request(u_char *packet, int size, char *address,
 	if (st->oSPI[0] || st->oSPI[1] || st->oSPI[2] || st->oSPI[3]) {
              /* Insert Owner SPI */ 
              if ((spi = spi_new(st->address, st->oSPI)) == NULL) { 
-                  log_error(0, "spi_new() in handle_identity_request()"); 
+                  log_print("spi_new() in handle_identity_request()"); 
                   return -1; 
              } 
 	     if ((spi->local_address = strdup(local_address)) == NULL) {
-		  log_error(0, "strdup() in handle_identity_request()");
+		  log_print("strdup() in handle_identity_request()");
 		  return -1;
 	     }
              bcopy(st->icookie, spi->icookie, COOKIE_SIZE); 
@@ -281,7 +281,7 @@ handle_identity_request(u_char *packet, int size, char *address,
              spi->attribsize = st->oSPIattribsize; 
              spi->attributes = calloc(spi->attribsize, sizeof(u_int8_t)); 
              if (spi->attributes == NULL) { 
-                  log_error(1, "calloc() in handle_identity_request()"); 
+                  log_error("calloc() in handle_identity_request()"); 
                   spi_value_reset(spi); 
                   return -1; 
              } 
@@ -303,11 +303,11 @@ handle_identity_request(u_char *packet, int size, char *address,
 	if (st->uSPI[0] || st->uSPI[1] || st->uSPI[2] || st->uSPI[3]) {
 	     /* Insert User SPI */
 	     if ((spi = spi_new(st->address, st->uSPI)) == NULL) {
-		  log_error(0, "spi_new() in handle_identity_request()");
+		  log_print("spi_new() in handle_identity_request()");
 		  return -1;
 	     }
 	     if ((spi->local_address = strdup(local_address)) == NULL) {
-		  log_error(1, "strdup() in handle_identity_request()");
+		  log_error("strdup() in handle_identity_request()");
 		  return -1;
 	     }
 	     spi->flags |= st->flags & IPSEC_NOTIFY ? SPI_NOTIFY : 0;
@@ -315,7 +315,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     spi->attribsize = st->uSPIattribsize;
 	     spi->attributes = calloc(spi->attribsize, sizeof(u_int8_t));
 	     if (spi->attributes == NULL) {
-		  log_error(1, "calloc() in handle_identity_request()");
+		  log_error("calloc() in handle_identity_request()");
 		  spi_value_reset(spi);
 		  return -1;
 	     }

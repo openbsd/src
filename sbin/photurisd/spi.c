@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.3 2000/12/11 20:32:15 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.4 2000/12/11 21:21:18 provos Exp $";
 #endif
 
 #define _SPI_C_
@@ -52,7 +52,7 @@ static char rcsid[] = "$Id: spi.c,v 1.3 2000/12/11 20:32:15 provos Exp $";
 #include "buffer.h"
 #include "spi.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 #ifdef IPSEC
 #include "kernel.h"
 #endif
@@ -77,7 +77,7 @@ make_spi(struct stateob *st, char *local_address,
 
      if(*attributes == NULL) {           /* We are in need of attributes */
 	  if (select_attrib(st, attributes, attribsize) == -1) {
-	       log_error(0, "select_attrib() in make_spi()");
+	       log_print("select_attrib() in make_spi()");
 	       return -1;
 	  }
      }

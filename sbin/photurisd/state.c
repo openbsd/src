@@ -44,7 +44,7 @@
 #include "photuris.h"
 #include "state.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 
 static struct stateob *stateob = NULL;
 
@@ -96,7 +96,7 @@ state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len)
 	       free(st->verification);
 
 	  if ((st->verification = calloc(len, sizeof(u_int8_t))) == NULL) {
-	       log_error(1, "calloc() in state_save_verification()");
+	       log_error("calloc() in state_save_verification()");
 	       return -1;
 	  }
      }

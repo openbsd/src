@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_message_reject.c,v 1.1 1998/11/14 23:37:24 deraadt Exp $";
+static char rcsid[] = "$Id: handle_message_reject.c,v 1.2 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -48,7 +48,7 @@ static char rcsid[] = "$Id: handle_message_reject.c,v 1.1 1998/11/14 23:37:24 de
 #include "buffer.h"
 #include "packet.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 
 int
 handle_message_reject(u_char *packet, int size, char *address)
@@ -63,12 +63,12 @@ handle_message_reject(u_char *packet, int size, char *address)
 
 	if ((st = state_find_cookies(address, header->icookie, 
 				     header->rcookie)) == NULL) {
-	     log_error(0, "No state for MESSAGE_REJECT message from %s", 
+	     log_print("No state for MESSAGE_REJECT message from %s", 
 		       address);
 	     return -1;
 	}
 	
-	log_error(0, "Received MESSAGE_REJECT from %s on message type %d "
+	log_print("Received MESSAGE_REJECT from %s on message type %d "
 		  "offending offset %d", address, header->badtype,
 		  header->offset); 
 	return 0;

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_response.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: handle_value_response.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdlib.h>
@@ -52,7 +52,7 @@ static char rcsid[] = "$Id: handle_value_response.c,v 1.2 2000/12/11 02:16:50 pr
 #include "exchange.h"
 #include "secrets.h"
 #include "spi.h"
-#include "errlog.h"
+#include "log.h"
 #ifdef DEBUG
 #include "config.h"
 #endif
@@ -79,7 +79,7 @@ handle_value_response(u_char *packet, int size, char *address,
 	     return -1;	/* packet too small  */
 
 	if (packet_check(packet, size, &vr_msg) == -1) {
-	     log_error(0, "bad packet structure in handle_value_response()");
+	     log_print("bad packet structure in handle_value_response()");
 	     return -1;
 	}
 
@@ -126,7 +126,7 @@ handle_value_response(u_char *packet, int size, char *address,
 	st->texchangesize = parts[0].size;
 	st->texchange = calloc(st->texchangesize, sizeof(u_int8_t));
 	if (st->texchange == NULL) {
-	     log_error(1, "calloc() in handle_value_response()");
+	     log_error("calloc() in handle_value_response()");
 	     return -1;
 	}
 	bcopy(parts[0].where, st->texchange, st->texchangesize);
@@ -144,7 +144,7 @@ handle_value_response(u_char *packet, int size, char *address,
 	/* Create SPI + choice of attributes */
 	if (make_spi(st, local_address, st->oSPI, &(st->olifetime),
 		     &(st->oSPIattrib), &(st->oSPIattribsize)) == -1) {
-	     log_error(0, "make_spi() in handle_value_response()");
+	     log_print("make_spi() in handle_value_response()");
 	     return -1;
 	}
 	

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: exchange.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: exchange.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #define _EXCHANGE_C_
@@ -55,7 +55,7 @@ static char rcsid[] = "$Id: exchange.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #include "cookie.h"
 #include "schedule.h"
 #include "scheme.h"
-#include "errlog.h"
+#include "log.h"
 
 /*
  * Get the number of bits from a variable precision number
@@ -212,7 +212,7 @@ exchange_make_values(struct stateob *st, BIGNUM *modulus, BIGNUM *generator)
 	  if((p = mod_new_modgen(modulus,generator)) == NULL) {
 	       BN_clear_free(generator);
 	       BN_clear_free(modulus);
-	       log_error(1, "Not enough memory in exchange_make_values()");
+	       log_error("Not enough memory in exchange_make_values()");
 	       return (-1);
 	  }
 	  mod_insert(p);
@@ -231,7 +231,7 @@ exchange_make_values(struct stateob *st, BIGNUM *modulus, BIGNUM *generator)
 	       if (!BN_cmp(p->generator, tmp->generator)) {
 		    p->exchangevalue = calloc(tmp->exchangesize,sizeof(u_int8_t));
 		    if (p->exchangevalue == NULL) {
-			 log_error(1, "calloc() in exchange_make_values()");
+			 log_error("calloc() in exchange_make_values()");
 			 return (-1);
 		    }
 		    bcopy(tmp->exchangevalue, p->exchangevalue, 
@@ -294,7 +294,7 @@ exchange_make_values(struct stateob *st, BIGNUM *modulus, BIGNUM *generator)
 
 	       p->exchangevalue = calloc(p->exchangesize, sizeof(u_int8_t));
 	       if (p->exchangevalue == NULL) {
-		    log_error(1, "calloc() in exchange_make_value()");
+		    log_error("calloc() in exchange_make_value()");
 		    BN_clear_free(tmp);
 		    return (-1);
 	       }
@@ -309,7 +309,7 @@ exchange_make_values(struct stateob *st, BIGNUM *modulus, BIGNUM *generator)
 
      st->exchangevalue = calloc(p->exchangesize, sizeof(u_int8_t));
      if (st->exchangevalue == NULL) {
-	  log_error(1, "calloc() in exchange_make_values()");
+	  log_error("calloc() in exchange_make_values()");
 	  return (-1);
      }
      bcopy(p->exchangevalue, st->exchangevalue, p->exchangesize);
@@ -341,7 +341,7 @@ exchange_set_generator(BIGNUM *generator, u_int8_t *scheme, u_int8_t *gen)
              BN_set_word(generator,5); 
 	     break;
 	default:
-	     log_error(0, "Unsupported exchange scheme %d",
+	     log_print("Unsupported exchange scheme %d",
 		       *((u_int16_t *)scheme)); 
 	     return (-1);
 	}

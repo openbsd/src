@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_bad_cookie.c,v 1.1 1998/11/14 23:37:23 deraadt Exp $";
+static char rcsid[] = "$Id: handle_bad_cookie.c,v 1.2 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ static char rcsid[] = "$Id: handle_bad_cookie.c,v 1.1 1998/11/14 23:37:23 deraad
 #include "buffer.h"
 #include "packet.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 #include "server.h"
 #include "packet.h"
 #include "api.h"
@@ -68,7 +68,7 @@ handle_bad_cookie(u_char *packet, int size, char *address)
 
 	if ((st = state_find_cookies(address, header->icookie, 
 				     header->rcookie)) == NULL) {
-	     log_error(0, "No state for BAD_COOKIE message from %s", 
+	     log_print("No state for BAD_COOKIE message from %s", 
 		       address);
 	     return -1;
 	}
@@ -77,7 +77,7 @@ handle_bad_cookie(u_char *packet, int size, char *address)
 	     (st->phase == VALUE_REQUEST || st->phase == IDENTITY_REQUEST)) ||
 	     (st->phase != VALUE_REQUEST && st->phase != IDENTITY_REQUEST &&
 	      st->phase != SPI_NEEDED && st->phase != SPI_UPDATE)) {
-	     log_error(0, "Ignored BAD_COOKIE message from %s", address); 
+	     log_print("Ignored BAD_COOKIE message from %s", address); 
 	     
 	     return 0;                 /* Nothing needs to be done */
 	}
@@ -85,7 +85,7 @@ handle_bad_cookie(u_char *packet, int size, char *address)
 	if (st->phase == SPI_UPDATE) {
 	     st->lifetime = time(NULL);
 
-	     log_error(0, "Expired exchange on BAD_COOKIE from %s",
+	     log_print("Expired exchange on BAD_COOKIE from %s",
 		       address);
 	     return 0;
 	}
@@ -95,7 +95,7 @@ handle_bad_cookie(u_char *packet, int size, char *address)
 
         /* Set up a new state object */
         if ((newst = state_new()) == NULL) {
-             log_error(1, "state_new() in handle_bad_cookie()");
+             log_error("state_new() in handle_bad_cookie()");
              return -1;
         }
 
@@ -106,7 +106,7 @@ handle_bad_cookie(u_char *packet, int size, char *address)
 	state_value_reset(st);
 
 	if (start_exchange(global_socket, newst, address, global_port) == -1) {
-	     log_error(0, "start_exchange() in handle_bad_cookie()");
+	     log_print("start_exchange() in handle_bad_cookie()");
 	     state_value_reset(st);
 	     return -1;
 	}

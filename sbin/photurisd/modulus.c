@@ -43,7 +43,7 @@
 #include <ssl/bn.h>
 #include "config.h"
 #include "modulus.h"
-#include "errlog.h"
+#include "log.h"
 
 static struct moduli_cache *modob = NULL;
 
@@ -119,7 +119,7 @@ mod_check_prime(int iter, int tm)
 #endif 
 	       flag = BN_is_prime(p->modulus, iter, NULL, ctx, NULL);
 	       if (!flag)
-		    log_error(0, "found a non prime in mod_check_prime()");
+		    log_print("found a non prime in mod_check_prime()");
 
 	       tmp = mod_find_modulus(p->modulus);
 	       while (tmp != NULL) {

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.5 2000/12/11 20:32:15 provos Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.6 2000/12/11 21:21:18 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -55,7 +55,7 @@ static char rcsid[] = "$Id: photurisd.c,v 1.5 2000/12/11 20:32:15 provos Exp $";
 #include "spi.h"
 #include "packet.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 #ifdef IPSEC
 #include "attributes.h"
 #include "kernel.h"
@@ -88,15 +88,15 @@ init_vars(void)
      attrib_file = NULL;
 
      if ((config_file = calloc(1, sizeof(PHOTURIS_CONFIG))) == NULL)
-	  crit_error(1, "no memory in init_vars()" );
+	  log_fatal("no memory in init_vars()" );
      strcpy(config_file, PHOTURIS_CONFIG);
 
      if ((secret_file = calloc(1, sizeof(PHOTURIS_SECRET))) == NULL)
-	  crit_error(1, "no memory in init_vars()" );
+	  log_fatal("no memory in init_vars()" );
      strcpy(secret_file, PHOTURIS_SECRET);
 
      if ((attrib_file = calloc(1, sizeof(PHOTURIS_ATTRIB))) == NULL)
-	  crit_error(1, "no memory in init_vars()");
+	  log_fatal("no memory in init_vars()");
      strcpy(attrib_file, PHOTURIS_ATTRIB);
 
      reset_secret();
@@ -115,16 +115,32 @@ main(int argc, char **argv)
 {
      int ch;
      int primes = 0, ignore = 0;
+     int cls, level;
      char *dir = PHOTURIS_DIR;
 
      daemon_mode = 0;
      global_port = 0;
 
-     while ((ch = getopt(argc, argv, "cid:p:")) != -1)
+     log_init();
+
+     while ((ch = getopt(argc, argv, "D:cid:p:")) != -1)
 	  switch((char)ch) {
 	  case 'c':
 	       primes = 1;
 	       break;
+#ifdef USE_DEBUG
+	  case 'D':
+		  if (sscanf(optarg, "%d=%d", &cls, &level) != 2) {
+			  if (sscanf(optarg, "A=%d", &level) == 1) {
+				  for (cls = 0; cls < LOG_ENDCLASS; cls++)
+					  log_debug_cmd(cls, level);
+			  } else
+				  log_print("parse_args: -D argument unparseable: %s", optarg);
+		  }
+		  else
+			  log_debug_cmd(cls, level);
+      break;
+#endif /* USE_DEBUG */
 	  case 'i':
 	       ignore = 1;
 	       break;
@@ -140,7 +156,7 @@ main(int argc, char **argv)
 	  }
 
      if (chdir(dir) == -1)
-	  crit_error(1, "chdir(\"%s\") in main()", dir);
+	  log_fatal("chdir(\"%s\") in main()", dir);
 	  
 
      argc -= optind;

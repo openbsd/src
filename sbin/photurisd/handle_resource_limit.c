@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_resource_limit.c,v 1.1 1998/11/14 23:37:24 deraadt Exp $";
+static char rcsid[] = "$Id: handle_resource_limit.c,v 1.2 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -48,7 +48,7 @@ static char rcsid[] = "$Id: handle_resource_limit.c,v 1.1 1998/11/14 23:37:24 de
 #include "buffer.h"
 #include "packet.h"
 #include "schedule.h"
-#include "errlog.h"
+#include "log.h"
 
 int
 handle_resource_limit(u_char *packet, int size, char *address)
@@ -64,7 +64,7 @@ handle_resource_limit(u_char *packet, int size, char *address)
 	counter = packet[ERROR_MESSAGE_PACKET_SIZE];
 
 	if ((st = state_find_cookies(NULL, header->icookie, NULL)) == NULL) {
-	     log_error(0, "No state for RESOURCE_LIMIT message from %s", 
+	     log_print("No state for RESOURCE_LIMIT message from %s", 
 		       address);
 	     return -1;
 	}
@@ -100,7 +100,7 @@ handle_resource_limit(u_char *packet, int size, char *address)
 	     /* XXX - we have to wait for expiring of another SPI */
 	     break;
 	default:
-	     log_error(0, "Wrong phase for RESOURCE_LIMIT from %s",  
+	     log_print("Wrong phase for RESOURCE_LIMIT from %s",  
 		       address); 
 	     return 0;
 	}

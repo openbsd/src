@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: packet.c,v 1.1 1998/11/14 23:37:25 deraadt Exp $";
+static char rcsid[] = "$Id: packet.c,v 1.2 2000/12/11 21:21:18 provos Exp $";
 #endif
 
 #define _PACKET_C_
@@ -50,7 +50,7 @@ static char rcsid[] = "$Id: packet.c,v 1.1 1998/11/14 23:37:25 deraadt Exp $";
 #include "state.h"
 #include "photuris.h"
 #include "packets.h"
-#include "errlog.h"
+#include "log.h"
 #include "buffer.h"
 #include "config.h"
 #include "scheme.h"
@@ -73,7 +73,7 @@ int handle_packet(int sock, char *address)
 	i = sizeof(struct sockaddr_in);
 	if ((size = recvfrom(sock, recv_buffer, RECV_BUFFER_SIZE, 0,
 			     (struct sockaddr *) &sin, &i)) == -1)
-	     crit_error(1, "recvfrom() in handle_packet()");
+	     log_fatal("recvfrom() in handle_packet()");
 
 	header = (struct cookie_request *)recv_buffer;
 #ifdef DEBUG
@@ -91,7 +91,7 @@ int handle_packet(int sock, char *address)
 				       ntohs(sin.sin_port),
 				       global_schemes, global_schemesize) 
 		 == -1) {
-		  log_error(0, "handle_cookie_request() in handle_packet()");
+		  log_print("handle_cookie_request() in handle_packet()");
 		  return -1;
 	     }
 	     break;
@@ -99,7 +99,7 @@ int handle_packet(int sock, char *address)
 	     if (handle_cookie_response(recv_buffer, size,
 					inet_ntoa(sin.sin_addr),
 					ntohs(sin.sin_port)) == -1) {
-		  log_error(0, "handle_cookie_response() in handle_packet()"); 
+		  log_print("handle_cookie_response() in handle_packet()"); 
                   return -1; 
              } 
 	     break;
@@ -109,7 +109,7 @@ int handle_packet(int sock, char *address)
 				       ntohs(sin.sin_port),
 				       global_schemes, global_schemesize)
 		 == -1) {
-		  log_error(0, "handle_value_request() in handle_packet()"); 
+		  log_print("handle_value_request() in handle_packet()"); 
                   return -1; 
              } 
              break;
@@ -117,7 +117,7 @@ int handle_packet(int sock, char *address)
 	     if (handle_value_response(recv_buffer, size, 
 				       inet_ntoa(sin.sin_addr),
 				       address) == -1) { 
-                  log_error(0, "handle_value_response() in handle_packet()");  
+                  log_print("handle_value_response() in handle_packet()");  
                   return -1;  
              }  
              break;
@@ -125,7 +125,7 @@ int handle_packet(int sock, char *address)
 	     if (handle_identity_request(recv_buffer, size,  
 					 inet_ntoa(sin.sin_addr),
 					 address) == -1) {  
-                  log_error(0, "handle_identity_request() in handle_packet()");   
+                  log_print("handle_identity_request() in handle_packet()");   
                   return -1;   
              }   
              break;
@@ -133,7 +133,7 @@ int handle_packet(int sock, char *address)
              if (handle_identity_response(recv_buffer, size,   
 					  inet_ntoa(sin.sin_addr), 
 					  address) == -1) {   
-                  log_error(0, "handle_identity_response() in handle_packet()");
+                  log_print("handle_identity_response() in handle_packet()");
                   return -1;    
              }    
              break; 
@@ -141,7 +141,7 @@ int handle_packet(int sock, char *address)
 	     if (handle_spi_update(recv_buffer, size,
 				   inet_ntoa(sin.sin_addr),
 				   address) == -1) {
-                  log_error(0, "handle_spi_update() in handle_packet()");
+                  log_print("handle_spi_update() in handle_packet()");
                   return -1;    
              }    
              break;
@@ -149,40 +149,40 @@ int handle_packet(int sock, char *address)
 	     if (handle_spi_needed(recv_buffer, size,
 				   inet_ntoa(sin.sin_addr),
 				   address) == -1) {
-                  log_error(0, "handle_spi_needed() in handle_packet()");
+                  log_print("handle_spi_needed() in handle_packet()");
                   return -1;    
              }    
              break;
 	case BAD_COOKIE:
 	     if (handle_bad_cookie(recv_buffer, size,
 				   inet_ntoa(sin.sin_addr)) == -1) {
-		  log_error(0, "handle_bad_cookie() in handle_packet()");
+		  log_print("handle_bad_cookie() in handle_packet()");
 		  return -1;
 	     }
 	     break;
 	case RESOURCE_LIMIT:
              if (handle_resource_limit(recv_buffer, size, 
 				       inet_ntoa(sin.sin_addr)) == -1) { 
-                  log_error(0, "handle_resource_limit() in handle_packet()"); 
+                  log_print("handle_resource_limit() in handle_packet()"); 
                   return -1; 
              } 
 	     break;
 	case VERIFICATION_FAILURE:
              if (handle_verification_failure(recv_buffer, size,  
 					     inet_ntoa(sin.sin_addr)) == -1) {  
-                  log_error(0, "handle_verification_failure() in handle_packet()");
+                  log_print("handle_verification_failure() in handle_packet()");
                   return -1;  
              }  
              break; 
 	case MESSAGE_REJECT:
 	     if (handle_message_reject(recv_buffer, size,   
 				       inet_ntoa(sin.sin_addr)) == -1) {
-                  log_error(0, "handle_message_reject() in handle_packet()");
+                  log_print("handle_message_reject() in handle_packet()");
                   return -1;
              }
 	     break;
 	default:
-	     log_error(0, "Unknown packet type %d in handle_packet()", 
+	     log_print("Unknown packet type %d in handle_packet()", 
 		       header->type);
 	     return 0;
 	}
@@ -204,7 +204,7 @@ send_packet(void)
      if (sendto(global_socket, packet_buffer, packet_size, 0,  
 		(struct sockaddr *) &sin, sizeof(sin)) != packet_size) { 
 	  /* XXX Code to notify kernel of failure */ 
-	  log_error(1, "sendto() in handle_packet()"); 
+	  log_error("sendto() in handle_packet()"); 
 	  return; 
      } 
 }

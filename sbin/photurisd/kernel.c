@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.9 2000/12/11 20:32:15 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.10 2000/12/11 21:21:18 provos Exp $";
 #endif
 
 #include <time.h>
@@ -84,18 +84,10 @@ static char rcsid[] = "$Id: kernel.c,v 1.9 2000/12/11 20:32:15 provos Exp $";
 #include "buffer.h"
 #include "spi.h"
 #include "kernel.h"
-#include "errlog.h"
+#include "log.h"
 #include "server.h"
 #ifdef DEBUG
 #include "config.h"
-#endif
-
-#ifdef DEBUG
-time_t now;
-
-#define kernel_debug(x) {time(&now); printf("%.24s ", ctime(&now)); printf x;}
-#else
-#define kernel_debug(x)
 #endif
 
 #define SPITOINT(x) (((x)[0]<<24) + ((x)[1]<<16) + ((x)[2]<<8) + (x)[3])
@@ -209,15 +201,15 @@ int
 init_kernel(void)
 {
      if ((sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
-	  crit_error(1, "socket(PF_KEY) for IPSec keyengine in init_kernel()");
+	  log_fatal("socket(PF_KEY) for IPSec keyengine in init_kernel()");
      if ((regsd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
-	  crit_error(1, "socket() for PFKEY register in init_kernel()");
+	  log_fatal("socket() for PFKEY register in init_kernel()");
 
      pfkey_seq = 0;
      pfkey_pid = getpid();
 
      if (kernel_register(regsd) == -1)
-	  crit_error(0, "PFKEY socket registration failed in init_kernel()");
+	  log_fatal("PFKEY socket registration failed in init_kernel()");
      
      return (1);
 }
@@ -241,13 +233,13 @@ kernel_set_socket_policy(int sd)
      level = IPSEC_LEVEL_BYPASS;   /* Did I mention I'm privileged? */
      if (setsockopt(sd, IPPROTO_IP, IP_AUTH_LEVEL, (char *)&level,
 		    sizeof (int)) == -1)
-	  crit_error(1, "setsockopt: can not bypass ipsec authentication policy");
+	  log_fatal("setsockopt: can not bypass ipsec authentication policy");
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
 			(char *)&level, sizeof (int)) == -1)
-	  crit_error(1, "setsockopt: can not bypass ipsec esp transport policy");
+	  log_fatal("setsockopt: can not bypass ipsec esp transport policy");
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
 		    (char *)&level, sizeof (int)) == -1)
-	  crit_error(1, "setsockopt: can not bypass ipsec esp network policy");
+	  log_fatal("setsockopt: can not bypass ipsec esp network policy");
 }
 
 int
@@ -288,7 +280,7 @@ kernel_xf_read(int sd, char *buffer, int blen, int seq)
 	  }
 	  len = sres->sadb_msg_len * 8;
 	  if (len >= BUFFER_SIZE) {
-	       log_error(0, "PFKEYV2 message len %d too big in kernel_xf_read()", len);
+	       log_print("PFKEYV2 message len %d too big in kernel_xf_read()", len);
 	       return (0);
 	  }
 	  if (read(sd, sres, len) != len) {
@@ -300,7 +292,7 @@ kernel_xf_read(int sd, char *buffer, int blen, int seq)
 		      ));
 	      
      if (sres->sadb_msg_errno) {
-	  log_error(0, "kernel_xf_read: PFKEYV2 result: %s",
+	  log_print("kernel_xf_read: PFKEYV2 result: %s",
 		    strerror(sres->sadb_msg_errno));
 	  return (0);
      }
@@ -321,7 +313,7 @@ kernel_register(int sd)
      struct iovec iov[1];
      int cnt = 0;
 
-     kernel_debug(("kernel_register: fd %d\n", sd));
+     LOG_DBG((LOG_KERNEL, 20, "kernel_register: fd %d", sd));
 
      bzero(&smsg, sizeof(smsg));
 
@@ -337,7 +329,7 @@ kernel_register(int sd)
      smsg.sadb_msg_satype = SADB_SATYPE_ESP;
      if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
 			smsg.sadb_msg_len*8)) {
-	  log_error(1, "kernel_xf_set() in kernel_reserve_single_spi()");
+	  log_error("kernel_xf_set() in kernel_reserve_single_spi()");
 	  return (-1);
      }
 
@@ -346,7 +338,7 @@ kernel_register(int sd)
      smsg.sadb_msg_seq = pfkey_seq++;
      if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
 			smsg.sadb_msg_len*8)) {
-	  log_error(1, "kernel_xf_set() in kernel_reserve_single_spi()");
+	  log_error("kernel_xf_set() in kernel_reserve_single_spi()");
 	  return (-1);
      }
 
@@ -358,7 +350,7 @@ kernel_register(int sd)
      sres = (struct sadb_msg *)buffer;
      ssup = (struct sadb_supported *)(sres + 1);
      if (ssup->sadb_supported_exttype != SADB_EXT_SUPPORTED) {
-	  log_error(0, "SADB_REGISTER did not return a SADB_EXT_SUPORTED "
+	  log_print("SADB_REGISTER did not return a SADB_EXT_SUPORTED "
 		    "struct: %d in kernel_register()",
 		    ssup->sadb_supported_exttype);
 	  return (-1);
@@ -367,7 +359,7 @@ kernel_register(int sd)
      len = ssup->sadb_supported_len * 8 - sizeof(*ssup);
      if (len != (ssup->sadb_supported_nauth + ssup->sadb_supported_nencrypt) *
 	 sizeof(struct sadb_alg)) {
-	  log_error(0, "SADB_SUPPORTED length mismatch in kernel_register()");
+	  log_print("SADB_SUPPORTED length mismatch in kernel_register()");
 	  return (-1);
      }
 
@@ -386,7 +378,7 @@ kernel_reserve_spi(char *src, char *dst, int options)
      u_int32_t spi;
      int proto;
 
-     kernel_debug(("kernel_reserve_spi: %s\n", src));
+     LOG_DBG((LOG_KERNEL, 40, "kernel_reserve_spi: %s", src));
 
      if ((options & (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) != 
 	 (IPSEC_OPT_ENC|IPSEC_OPT_AUTH)) {
@@ -424,7 +416,8 @@ kernel_reserve_single_spi(char *srcaddress, char *dstaddress, u_int32_t spi,
      struct iovec iov[6];
      int cnt = 0;
 
-     kernel_debug(("kernel_reserve_single_spi: %s, %08x\n", srcaddress, spi));
+     LOG_DBG((LOG_KERNEL, 40, "kernel_reserve_single_spi: %s, %08x",
+	      srcaddress, spi));
 
      bzero(&src, sizeof(union sockaddr_union));
      bzero(&dst, sizeof(union sockaddr_union));
@@ -490,14 +483,14 @@ kernel_reserve_single_spi(char *srcaddress, char *dstaddress, u_int32_t spi,
      /* get back SADB_EXT_SA */
 
      if (!KERNEL_XF_SET(smsg.sadb_msg_len*8)) {
-	  log_error(1, "kernel_xf_set() in kernel_reserve_single_spi()");
+	  log_error("kernel_xf_set() in kernel_reserve_single_spi()");
 	  return (0);
      }
 
      sres = (struct sadb_msg *)buffer;
      ssa = (struct sadb_sa *)(sres + 1);
      if (ssa->sadb_sa_exttype != SADB_EXT_SA) {
-	  log_error(0, "SADB_GETSPI did not return a SADB_EXT_SA struct: %d",
+	  log_print("SADB_GETSPI did not return a SADB_EXT_SA struct: %d",
 		    ssa->sadb_sa_exttype);
 	  return (0);
      }
@@ -522,7 +515,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      time_t now = time(NULL);
 
      if (xf == NULL || !(xf->flags & XF_AUTH)) {
-	  log_error(0, "%d is not an auth transform in kernel_ah()", ob->id);
+	  log_print("%d is not an auth transform in kernel_ah()", ob->id);
 	  return (-1);
      }
 
@@ -608,10 +601,10 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      iov[cnt].iov_base = secrets;
      len += iov[cnt++].iov_len = ((ob->klen + 7) / 8) * 8;
 
-     kernel_debug(("kernel_ah: %08x\n", ntohl(sr.sadb_sa_spi)));
+     LOG_DBG((LOG_KERNEL, 35, "kernel_ah: %08x", ntohl(sr.sadb_sa_spi)));
 
      if (!KERNEL_XF_SET(len)) {
-	  log_error(1, "kernel_xf_set() in kernel_ah()");
+	  log_error("kernel_xf_set() in kernel_ah()");
 	  return (-1);
      }
      return ob->klen;
@@ -638,7 +631,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 
      if (ob->type & AT_AUTH) {
 	  if (ob2 == NULL || ob2->type != AT_ENC) {
-	       log_error(0, "No encryption after auth given in kernel_esp()");
+	       log_print("No encryption after auth given in kernel_esp()");
 	       return (-1);
 	  }
 	  attenc = ob2;
@@ -653,13 +646,13 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 	       sec2 = secrets + ob->klen;
 	  }
      } else {
-	  log_error(0, "No encryption transform given in kernel_esp()");
+	  log_print("No encryption transform given in kernel_esp()");
 	  return (-1);
      }
 
      xf_enc = kernel_get_transform(attenc->id);
      if ((xf_enc->flags & ESP_OLD) && attauth != NULL) {
-	  log_error(0, "Old ESP does not support AH in kernel_esp()");
+	  log_print("Old ESP does not support AH in kernel_esp()");
 	  return (-1);
      }
 
@@ -765,10 +758,10 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 	  iov[cnt++].iov_len = ((attauth->klen + 7) / 8) * 8;
      }
 
-     kernel_debug(("kernel_esp: %08x\n", ntohl(sr.sadb_sa_spi)));
+     LOG_DBG((LOG_KERNEL, 35, "kernel_esp: %08x", ntohl(sr.sadb_sa_spi)));
 
      if (!KERNEL_XF_SET(sa.sadb_msg_len * 8)) {
-	  log_error(1, "kernel_xf_set() in kernel_esp()");
+	  log_error("kernel_xf_set() in kernel_esp()");
 	  return (-1);
      }
      
@@ -840,10 +833,10 @@ kernel_delete_spi(char *address, u_int32_t spi, int proto)
      iov[cnt++].iov_len = sizeof(sr); 
     
 
-     kernel_debug(("kernel_delete_spi: %08x\n", spi));
+     LOG_DBG((LOG_KERNEL, 30, "kernel_delete_spi: %08x", spi));
 
      if (!KERNEL_XF_SET(sa.sadb_msg_len * 8)) {
-	  log_error(1, "kernel_xf_set() in kernel_delete_spi()");
+	  log_error("kernel_xf_set() in kernel_delete_spi()");
 	  return (-1);
      }
 
@@ -882,7 +875,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 
 	  while (count < espsize && (atesp == NULL || atah == NULL)) {
 	       if ((attprop = getattrib(esp[count])) == NULL) {
-		    log_error(0, "Unknown attribute %d for ESP in kernel_insert_spi()",
+		    log_print("Unknown attribute %d for ESP in kernel_insert_spi()",
 			      esp[count]);
 		    return (-1);
 	       }
@@ -894,7 +887,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       count += esp[count+1]+2;
 	  }
 	  if (atesp == NULL) {
-	       log_error(0, "No encryption attribute in ESP section for SA(%08x, %s->%s) in kernel_insert()", SPITOINT(SPI->SPI), SPI->local_address, SPI->address);
+	       log_print("No encryption attribute in ESP section for SA(%08x, %s->%s) in kernel_insert()", SPITOINT(SPI->SPI), SPI->local_address, SPI->address);
 	       return (-1);
 	  }
 
@@ -910,7 +903,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 
 	  while (count < ahsize) {
 	       if ((attprop = getattrib(ah[count])) == NULL) {
-		    log_error(0, "Unknown attribute %d for AH in kernel_insert_spi()",
+		    log_print("Unknown attribute %d for AH in kernel_insert_spi()",
 			      ah[count]);
 		    return (-1);
 	       }
@@ -930,7 +923,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	  }
 
 	  if (atah == NULL) {
-	       log_error(0, "No authentication attribute in AH section for SA(%08x, %s->%s) in kernel_insert()", SPITOINT(SPI->SPI), SPI->local_address, SPI->address);
+	       log_print("No authentication attribute in AH section for SA(%08x, %s->%s) in kernel_insert()", SPITOINT(SPI->SPI), SPI->local_address, SPI->address);
 	       return (-1);
 	  }
 
@@ -987,12 +980,12 @@ kernel_unlink_spi(struct spiob *ospi)
      
      if (esp != NULL) {
 	  if (kernel_delete_spi(p, SPITOINT(ospi->SPI), IPPROTO_ESP) == -1)
-	       log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
+	       log_print("kernel_delete_spi() in kernel_unlink_spi()");
      }
 	  
      if (ah != NULL) {
 	  if (kernel_delete_spi(p, SPITOINT(ospi->SPI), IPPROTO_AH) == -1)
-	       log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
+	       log_print("kernel_delete_spi() in kernel_unlink_spi()");
      }
 
      return (1);
@@ -1011,18 +1004,15 @@ kernel_handle_notify(int sd)
      if (!kernel_xf_read(regsd, buffer, BUFFER_SIZE, 0))
 	  return;
 
-#ifdef DEBUG
-     kernel_debug(("Got PFKEYV2 message: type %d\n", sres->sadb_msg_type));
-#endif
+     LOG_DBG((LOG_KERNEL, 60, "Got PFKEYV2 message: type %d",
+	      sres->sadb_msg_type));
 
      switch (sres->sadb_msg_type) {
      case SADB_EXPIRE:
-	  log_error(0, "PFKEYV2 SA Expiration - not yet supported.\n");
+	  log_print("PFKEYV2 SA Expiration - not yet supported.");
 	  return;
      case SADB_ACQUIRE:
-#ifdef DEBUG
-	  kernel_debug(("Got Notify SA Request (SADB_ACQUIRE)\n"));
-#endif
+	  LOG_DBG((LOG_KERNEL, 60, "Got Notify SA Request (SADB_ACQUIRE)"));
 	  kernel_request_sa(sres);
 	  break;
      default:
@@ -1053,7 +1043,7 @@ kernel_request_sa(void *em /*struct encap_msghdr *em*/)
      if (st == NULL) {
 	  /#* No established exchange found, start a new one *#/
 	  if ((st = state_new()) == NULL) {
-	       log_error(0, "state_new() failed in kernel_request_sa() for remote ip %s",
+	       log_print("state_new() failed in kernel_request_sa() for remote ip %s",
 			 address);
 	       return (-1);
 	  }
@@ -1077,7 +1067,7 @@ kernel_request_sa(void *em /*struct encap_msghdr *em*/)
 	       st->flags |= IPSEC_OPT_AUTH;
 	  /#* XXX - handling of tunnel requests missing *#/
 	  if (start_exchange(global_socket, st, st->address, st->port) == -1) {
-	       log_error(0, "start_exchange() in kernel_request_sa() - informing kernel of failure");
+	       log_print("start_exchange() in kernel_request_sa() - informing kernel of failure");
 	       /#* Inform kernel of our failure *#/
 	       kernel_notify_result(st, NULL, 0);
 	       state_value_reset(st);
@@ -1126,5 +1116,5 @@ kernel_notify_result(struct stateob *st, struct spiob *spi, int proto)
      }
 
      if (!kernel_xf_set(&em))
-     log_error(1, "kernel_xf_set() in kernel_notify_result()"); */
+     log_error("kernel_xf_set() in kernel_notify_result()"); */
 }

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_needed.c,v 1.1 1998/11/14 23:37:24 deraadt Exp $";
+static char rcsid[] = "$Id: handle_spi_needed.c,v 1.2 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ static char rcsid[] = "$Id: handle_spi_needed.c,v 1.1 1998/11/14 23:37:24 deraad
 #include "secrets.h"
 #include "schedule.h"
 #include "scheme.h"
-#include "errlog.h"
+#include "log.h"
 #include "spi.h"
 #ifdef IPSEC
 #include "kernel.h"
@@ -100,19 +100,19 @@ handle_spi_needed(u_char *packet, int size, char *address,
 	/* Decrypt message */
 	tmp = size - SPI_NEEDED_MIN;
 	if (packet_decrypt(st, SPI_NEEDED_VERIFICATION(header), &tmp) == -1) {
-	     log_error(0, "packet_decrypt() in handle_spi_needed()");
+	     log_print("packet_decrypt() in handle_spi_needed()");
 	     goto verification_failed;
 	}
 
 	/* Verify message structure*/
 	if (packet_check((u_int8_t *)header, size - packet[size-1], &spi_msg) == -1) {
-	     log_error(0, "bad packet structure in handle_spi_update()");
+	     log_print("bad packet structure in handle_spi_update()");
 	     return -1;
 	}
 
 	i = get_validity_verification_size(st);
 	if (!i || i != parts[0].size || i > sizeof(signature)) {
-	     log_error(0, "verification size mismatch in handle_spi_needed()");
+	     log_print("verification size mismatch in handle_spi_needed()");
 	     goto verification_failed;
 	}
 	bcopy(parts[0].where, signature, i);
@@ -122,13 +122,13 @@ handle_spi_needed(u_char *packet, int size, char *address,
 
 	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
 			    attributes, attribsize)) {
-	     log_error(0, "attributes are not a subset in handle_spi_needed()");
+	     log_print("attributes are not a subset in handle_spi_needed()");
 	     return 0;
 	}
 
 	if (!verify_validity_verification(st, signature, packet, size)) {
 	verification_failed:
-	     log_error(0, "verification failed in handle_spi_needed()");
+	     log_print("verification failed in handle_spi_needed()");
 	     packet_size = PACKET_BUFFER_SIZE;
 	     photuris_error_message(st, packet_buffer, &packet_size,
 				    header->icookie, header->rcookie,
@@ -141,7 +141,7 @@ handle_spi_needed(u_char *packet, int size, char *address,
 	     free(st->uSPIoattrib);
 
 	if((st->uSPIoattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
-	     log_error(1, "calloc() in handle_spi_needed()");
+	     log_error("calloc() in handle_spi_needed()");
 	     return -1;
 	}
 	bcopy(attributes, st->uSPIoattrib, attribsize);
@@ -159,18 +159,18 @@ handle_spi_needed(u_char *packet, int size, char *address,
 
 	packet_size = PACKET_BUFFER_SIZE; 
 	if (photuris_spi_update(st, packet_buffer, &packet_size) == -1) {
-	     log_error(0, "photuris_spi_update() in handle_spi_needed()");
+	     log_print("photuris_spi_update() in handle_spi_needed()");
 	     return -1;
 	}
 	send_packet(); 
 
 	/* Insert Owner SPI */
 	if ((spi = spi_new(st->address, st->oSPI)) == NULL) {
-	     log_error(0, "spi_new() in handle_spi_needed()");
+	     log_print("spi_new() in handle_spi_needed()");
 	     return -1;
 	}
 	if ((spi->local_address = strdup(local_address)) == NULL) {
-	     log_error(1, "strdup() in handle_spi_needed()");
+	     log_error("strdup() in handle_spi_needed()");
 	     return -1;
 	}
 	bcopy(st->icookie, spi->icookie, COOKIE_SIZE);
@@ -178,7 +178,7 @@ handle_spi_needed(u_char *packet, int size, char *address,
 	spi->attribsize = st->oSPIattribsize;
 	spi->attributes = calloc(spi->attribsize, sizeof(u_int8_t));
 	if (spi->attributes == NULL) {
-	     log_error(1, "calloc() in handle_spi_needed()");
+	     log_error("calloc() in handle_spi_needed()");
 	     spi_value_reset(spi);
 	     return -1;
 	}

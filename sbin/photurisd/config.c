@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.3 2000/12/11 20:32:14 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.4 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -64,7 +64,7 @@ static char rcsid[] = "$Id: config.c,v 1.3 2000/12/11 20:32:14 provos Exp $";
 #include "identity.h"
 #include "spi.h"
 #include "server.h"
-#include "errlog.h"
+#include "log.h"
 #include "buffer.h"
 #include "scheme.h"
 #include "api.h"
@@ -87,11 +87,11 @@ open_config_file(char *file)
 	  p = config_file;
 
      if (p == NULL) 
-          crit_error(0, "no file in open_config_file()"); 
+          log_fatal("no file in open_config_file()"); 
  
      config_fp = fopen(p, "r"); 
      if (config_fp == (FILE *) NULL) 
-          crit_error(1, "can't open file %s in open_config_file()", p); 
+          log_fatal("can't open file %s in open_config_file()", p); 
 }
 
 static void
@@ -240,17 +240,17 @@ init_attributes(void)
 
 		    if ((p2 = strsep(&p4, ",")) == NULL ||
 			(p3 = strsep(&p4, ",")) == NULL) {
-			 log_error(0, "Mal formated attribute definition for %s in init_attributess()", name);
+			 log_print("Mal formated attribute definition for %s in init_attributess()", name);
 			 continue;
 		    }
 
 		    if ((tmpatt.id = atoi(p2)) <= 0) {
-			 log_error(0, "Bad id %s for %s in init_attributes()", p2, name);
+			 log_print("Bad id %s for %s in init_attributes()", p2, name);
 			 continue;
 		    }
 
 		    if ((tmpatt.klen = atoi(p4)) < 0) {
-			 log_error(0, "Bad key length %s for %s in init_attributes()", p4, name);
+			 log_print("Bad key length %s for %s in init_attributes()", p4, name);
 			 continue;
 		    }
 
@@ -261,20 +261,20 @@ init_attributes(void)
 			 p3[i--] = 0;
 
 		    if ((tmpatt.type = parse_type(p3)) == -1) {
-			 log_error(0, "Unkown attribute type %s for %s in init_attributes()", p3, name);
+			 log_print("Unkown attribute type %s for %s in init_attributes()", p3, name);
 			 continue;
 		    }
 
 #ifdef IPSEC
 		    if ((tmpatt.type & ~AT_ID) &&
 			kernel_known_transform(tmpatt.id) == -1) {
-			 log_error(0, "Attribute %s not supported by kernel in init_attributes()", name);
+			 log_print("Attribute %s not supported by kernel in init_attributes()", name);
 			 continue;
 		    }
 #endif
 		    
 		    if ((ob = calloc(1, sizeof(attrib_t))) == NULL)
-			 crit_error(1, "calloc() in init_attributes()");
+			 log_fatal("calloc() in init_attributes()");
 
 		    *ob = tmpatt;
 		    putattrib(ob);
@@ -286,13 +286,13 @@ init_attributes(void)
 	       }
 
 	       if (cfgattrib == NULL) {
-		    log_error(0, "Unknown attribute %s in init_attributes()", 
+		    log_print("Unknown attribute %s in init_attributes()", 
 			      p);
 		    continue;
 	       }
 
 	       if (ob == NULL && (ob = attrib_new()) == NULL) 
-                    crit_error(1, "attribute_new() in init_attributes()");
+                    log_fatal("attribute_new() in init_attributes()");
 	       else 
 		    def_flag = 1;
 
@@ -305,7 +305,7 @@ init_attributes(void)
 	       if (newbuf == NULL) {
 		    if (ob->attributes != NULL)
 			 free (ob->attributes);
-		    crit_error(1, "realloc() in init_attributes()");
+		    log_fatal("realloc() in init_attributes()");
 	       }
 	       ob->attributes = newbuf;
 	       
@@ -326,13 +326,13 @@ init_attributes(void)
 
 	       /* Get a new attribute object */
 	       if ((ob = attrib_new()) == NULL)
-		    crit_error(1, "attribute_new() in init_attributes()");
+		    log_fatal("attribute_new() in init_attributes()");
 
 	       ob->netmask = inet_addr(p2);
 	       in.s_addr = inet_addr(p) & ob->netmask;
 	       if ((ob->address = calloc(strlen(inet_ntoa(in))+1, 
 					 sizeof(char))) == NULL)
-		    crit_error(1, "calloc() in init_attributes()");
+		    log_fatal("calloc() in init_attributes()");
 	       strcpy(ob->address, inet_ntoa(in));
 	  }
      }
@@ -341,7 +341,7 @@ init_attributes(void)
      close_config_file();
 
      if (!def_flag)
-	  crit_error(0, "No default attribute list in init_attributes()");
+	  log_fatal("No default attribute list in init_attributes()");
 
      cfgx_clear();
      return 1;
@@ -388,14 +388,14 @@ init_schemes(void)
                BN_set_word(generator, 2); 
                *(u_int16_t *)buffer = htons(DH_G_2_3DES_SHA1);
 	  } else {
-	       log_error(0, "Unknown scheme %s in init_schemes()", p2);
+	       log_print("Unknown scheme %s in init_schemes()", p2);
 	       continue;
 	  }
 
 	  /* Base schemes need a modulus */
 	  if ((scheme_bits = strtol(p, NULL, 10)) == 0 && 
 	       ntohs(*(u_int16_t *)buffer) == scheme_get_ref(buffer) ) {
-	       log_error(0, "No bits in scheme %s in init_schemes()", p2);
+	       log_print("No bits in scheme %s in init_schemes()", p2);
 	       continue;
 	  }
 	       
@@ -409,7 +409,7 @@ init_schemes(void)
 		    tmp = mod_find_generator_next(tmp, generator);
 	       }
 	       if (tmp == NULL) {
-		    log_error(0, "Could not find %d bit modulus in init_schemes()",
+		    log_print("Could not find %d bit modulus in init_schemes()",
 			      scheme_bits);
 		    continue;
 	       }
@@ -426,7 +426,7 @@ init_schemes(void)
 	  if (newbuf == NULL) {
 	       if (global_schemes != NULL)
 		    free (global_schemes);
-	       crit_error(1, "out of memory in init_schems()");
+	       log_fatal("out of memory in init_schems()");
 	  }
 	  global_schemes = newbuf;
 
@@ -443,14 +443,14 @@ init_schemes(void)
      close_config_file();
 
      if (!gen_flag) {
-	  log_error(0, "DH_G_2_MD5 not in config file, inserting it");
+	  log_print("DH_G_2_MD5 not in config file, inserting it");
 	  BN_set_word(generator, 2); 
 	  if ((tmp = mod_find_generator(generator)) == NULL) 
-	       crit_error(0, "no modulus for generator 2 in init_schemes()");
+	       log_fatal("no modulus for generator 2 in init_schemes()");
 
 	  size = BUFFER_SIZE - 2; 
 	  if (BN_bn2varpre(tmp->modulus, buffer+2, &size) == -1) 
-	       crit_error(0, "BN_bn2varpre() in init_schemes()");
+	       log_fatal("BN_bn2varpre() in init_schemes()");
                 
 	  *(u_int16_t *)buffer = htons(DH_G_2_MD5);
      }
@@ -500,7 +500,7 @@ init_moduli(int primes)
 	       continue;
 
 	  if ((tmp = mod_new_modgen(m, g)) == NULL)
-	       crit_error(0, "no memory in init_moduli()");
+	       log_fatal("no memory in init_moduli()");
 
 	  mod_insert(tmp);
 
@@ -552,12 +552,12 @@ init_times(void)
 	  else if (!strcmp(p, CONFIG_SPI_LIFETIME))
 	       value = &spi_lifetime;
 	  else {
-	       log_error(0, "unkown options %s in init_times()", p);
+	       log_print("unkown options %s in init_times()", p);
 	       continue;
 	  }
 
 	  if ((i = atoi(p2)) < 1) {
-	       log_error(0, "value %d too small in init_times()", i);
+	       log_print("value %d too small in init_times()", i);
 	       continue;
 	  }
 
@@ -568,11 +568,11 @@ init_times(void)
 
      /* Now some hard coded checks */
      if (exchange_timeout < max_retries*retrans_timeout)
-	  crit_error(0, "Exchange Timeout < Retransmission * Retrans. Timeout");
+	  log_fatal("Exchange Timeout < Retransmission * Retrans. Timeout");
      if (exchange_lifetime < 2*exchange_timeout)
-	  crit_error(0, "Exchange Lifetime < 2 * Exchange Timeout");
+	  log_fatal("Exchange Lifetime < 2 * Exchange Timeout");
      if (spi_lifetime < 3*exchange_timeout)
-	  crit_error(0, "SPI Lifetime < 3 * Exchange Timeout");
+	  log_fatal("SPI Lifetime < 3 * Exchange Timeout");
 
      return 0;
 }
@@ -585,17 +585,17 @@ startup_parse(struct stateob *st, char *p2)
 
      while((p=strsep(&p2, " ")) != NULL && strlen(p)) {
 	  if ((p3 = strchr(p, '=')) == NULL) {
-	       log_error(0, "missing = in %s in startup_parse()", p);
+	       log_print("missing = in %s in startup_parse()", p);
 	       continue;
 	  }
 	  if (strlen(++p3) == 0) {
-	       log_error(0, "option missing after %s in startup_parse()", p);
+	       log_print("option missing after %s in startup_parse()", p);
 	       continue;
 	  }
 	  if (!strncmp(p, OPT_DST, strlen(OPT_DST))) {
 	       hp = NULL;
 	       if (inet_addr(p3) == -1 && (hp = gethostbyname(p3)) == NULL) {
-		    log_error(1, "invalid destination address: %s", p3);
+		    log_error("invalid destination address: %s", p3);
 		    continue;
 	       }
 	       if (hp == NULL) 
@@ -608,27 +608,27 @@ startup_parse(struct stateob *st, char *p2)
 	       st->address[15] = '\0';
 	  } else if (!strncmp(p, OPT_PORT, strlen(OPT_PORT))) {
 	       if ((st->port = atoi(p3)) == 0) {
-		    log_error(0, "invalid port number: %s", p3);
+		    log_print("invalid port number: %s", p3);
 		    continue;
 	       }
 	  } else if (!strncmp(p, CONFIG_EX_LIFETIME, strlen(CONFIG_EX_LIFETIME))) {
 	       if ((st->exchange_lifetime = atol(p3)) == 0) {
-		    log_error(0, "invalid exchange lifetime: %s", p3);
+		    log_print("invalid exchange lifetime: %s", p3);
 		    continue;
 	       }
 	  } else if (!strncmp(p, CONFIG_SPI_LIFETIME, strlen(CONFIG_SPI_LIFETIME))) {
 	       if ((st->spi_lifetime = atol(p3)) == 0) {
-		    log_error(0, "invalid spi lifetime: %s", p3);
+		    log_print("invalid spi lifetime: %s", p3);
 		    continue;
 	       }
 	  } else if (!strncmp(p, OPT_USER, strlen(OPT_USER))) {
 	       struct passwd *pwd;
 	       if ((st->user = strdup(p3)) == NULL) {
-		    log_error(1, "strdup() in startup_parse()");
+		    log_error("strdup() in startup_parse()");
 		    continue;
 	       }
 	       if ((pwd = getpwnam(st->user)) == NULL) {
-		    log_error(1, "getpwnam() in startup_parse()");
+		    log_error("getpwnam() in startup_parse()");
 		    free(st->user);
 	            st->user = NULL;
 		    continue;
@@ -640,7 +640,7 @@ startup_parse(struct stateob *st, char *p2)
 		    else if(!strcmp(p, OPT_AUTH))
 			 st->flags |= IPSEC_OPT_AUTH;
 		    else {
-			 log_error(0, "Unkown options %s in startup_parse()", p);
+			 log_print("Unkown options %s in startup_parse()", p);
 			 continue;
 		    }
 	       }
@@ -652,7 +652,7 @@ void
 startup_end(struct stateob *st)
 {
      if (!strlen(st->address)) {
-	  log_error(0, "no destination given in startup_end()");
+	  log_print("no destination given in startup_end()");
 	  state_value_reset(st);
 	  free(st);
 	  return;
@@ -676,7 +676,7 @@ startup_end(struct stateob *st)
 #endif
      if (start_exchange(global_socket, st, 
 			st->address, st->port) == -1) {
-	  log_error(0, "start_exchange in startup_end()");
+	  log_print("start_exchange in startup_end()");
 	  state_value_reset(st);
 	  free(st);
      } else 
@@ -711,7 +711,7 @@ init_startup(void)
 	       continue;
 
 	  if (st == NULL && ((st = state_new()) == NULL))
-		    crit_error(0, "state_new() in init_startup()");
+		    log_fatal("state_new() in init_startup()");
 
 	  startup_parse(st, p2);
 
@@ -725,7 +725,7 @@ init_startup(void)
 void
 reconfig(int sig)
 {
-     log_error(0, "Reconfiguring on SIGHUP");
+     log_print("Reconfiguring on SIGHUP");
 
      clearattrib();		/* Clear attribute id hash */
      attrib_cleanup();		/* Clear list of offered attributes */
@@ -795,13 +795,13 @@ pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
      }
 
      if (schemep == NULL) {
-	  log_error(0, "Found no scheme in pick_scheme()");
+	  log_print("Found no scheme in pick_scheme()");
 	  return -1;
      }
 
      if (actsize <= 2) {
 	  if (ntohs(*(u_int16_t *)schemep) == scheme_get_ref(schemep)) {
-	       log_error(0, "Base scheme has no modulus in pick_scheme()");
+	       log_print("Base scheme has no modulus in pick_scheme()");
 	       return -1;
 	  }
 	  *(u_int16_t *)scheme_ref = htons(scheme_get_ref(schemep));
@@ -839,7 +839,7 @@ pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
      }
 
      if ((*scheme = calloc(asize, sizeof(u_int8_t))) == NULL) {
-	  log_error(1, "No memory in pick_scheme()");
+	  log_error("No memory in pick_scheme()");
 	  return -1;
      }
 
@@ -868,7 +868,7 @@ pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
      int mode = 0, i, n, count, first;
      
      if ((ob = attrib_find(st->address)) == NULL) {
-	  log_error(0, "attrib_find() in pick_attrib()");
+	  log_print("attrib_find() in pick_attrib()");
 	  return -1;
      }
 
@@ -896,13 +896,13 @@ pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
 	  }
      }
      if (count == 0) {
-          log_error(0, "no attributes in attribute list for %s in pick_attrib()",
+          log_print("no attributes in attribute list for %s in pick_attrib()",
 		    st->address);
 	  return -1;
      }
 
      if ((*attrib = calloc(count, sizeof(u_int8_t))) == NULL) {
-	  log_error(1, "calloc() in in pick_attrib()"); 
+	  log_error("calloc() in in pick_attrib()"); 
           return -1; 
      }
      bcopy(buffer, *attrib, count);
@@ -926,7 +926,7 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
      attrib_t *attprop;
      
      if ((ob = attrib_find(NULL)) == NULL) { 
-	  log_error(0, "attrib_find() for default in select_attrib() in "
+	  log_print("attrib_find() for default in select_attrib() in "
 		    "exchange to %s", st->address); 
 	  return -1; 
      } 
@@ -1107,12 +1107,12 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
      }
 
      if (count == 0) {
-	  log_error(0, "Offered and wanted list of attributes did not have a common subset in select_attrib()");
+	  log_print("Offered and wanted list of attributes did not have a common subset in select_attrib()");
 	  return -1;
      }
 
      if ((*attributes=calloc(count,sizeof(u_int8_t))) == NULL) {
-	  log_error(1, "Out of memory for SPI attributes (%d)", count);
+	  log_error("Out of memory for SPI attributes (%d)", count);
 	  return -1;
      }
      *attribsize = count;

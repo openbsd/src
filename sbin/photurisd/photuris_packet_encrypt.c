@@ -33,7 +33,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photuris_packet_encrypt.c,v 1.1 1998/11/14 23:37:26 deraadt Exp $";
+static char rcsid[] = "$Id: photuris_packet_encrypt.c,v 1.2 2000/12/11 21:21:18 provos Exp $";
 #endif 
 
 #define _ENCRYPT_C_
@@ -52,7 +52,7 @@ static char rcsid[] = "$Id: photuris_packet_encrypt.c,v 1.1 1998/11/14 23:37:26 
 #include "attributes.h"
 #include "encrypt.h"
 #include "secrets.h"
-#include "errlog.h"
+#include "log.h"
 #ifdef DEBUG
 #include "config.h"
 #endif
@@ -119,7 +119,7 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 #endif
 	  pkey = calloc(payloadlen,sizeof(u_int8_t));
 	  if(pkey == NULL) {
-	       log_error(1, "Not enough memory for privacy secret");
+	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
 	  if(compute_privacy_key(st, pkey, 
@@ -145,7 +145,7 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 #endif
 	  pkey = calloc(payloadlen + 8, sizeof(u_int8_t));
 	  if(pkey == NULL) {
-	       log_error(1, "Not enough memory for privacy secret");
+	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
 	  /* XOR Mask */
@@ -187,7 +187,7 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 #endif
 	  pkey = calloc(payloadlen+24, sizeof(u_int8_t));
 	  if(pkey == NULL) {
-	       log_error(1, "Not enough memory for owner privacy secret");
+	       log_error("Not enough memory for owner privacy secret");
 	       return -1;
 	  }
 	  /* XOR Mask */
@@ -231,7 +231,7 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 			   key1, key2, key3, &keys[3], DES_ENCRYPT);
 	  break;
      default:   
-          log_error(0, "Unknown exchange scheme: %d\n",    
+          log_print("Unknown exchange scheme: %d\n",    
                     *((u_int16_t *)st->scheme));   
           return -1;   
      }
@@ -262,7 +262,7 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 #endif
 	  pkey = calloc(*payloadlen, sizeof(u_int8_t));
 	  if(pkey == NULL) {
-	       log_error(1, "Not enough memory for privacy secret");
+	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
 	  if(compute_privacy_key(st, pkey, 
@@ -287,7 +287,7 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 #endif
 	  pkey = calloc(*payloadlen+8, sizeof(u_int8_t));
 	  if(pkey == NULL) {
-	       log_error(1, "Not enough memory for privacy secret");
+	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
 	  /* XOR Mask */
@@ -328,7 +328,7 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 #endif
 	  pkey  = calloc(*payloadlen + 24, sizeof(u_int8_t));
 	  if(pkey == NULL) {
-	       log_error(1, "Not enough memory for privacy secret");
+	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
 	  /* XOR Mask */
@@ -371,7 +371,7 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	  packet_mask(payload, *payloadlen, pkey);
 	  break;
      default:   
-          log_error(0,"Unknown exchange scheme: %d\n",    
+          log_error("Unknown exchange scheme: %d\n",    
                     *((u_int16_t *)st->scheme));   
           return -1;   
      }

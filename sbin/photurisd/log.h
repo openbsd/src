@@ -1,8 +1,8 @@
+/*	$OpenBSD: log.h,v 1.1 2000/12/11 21:21:18 provos Exp $	*/
+/*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
+
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
- * All rights reserved.
- *
- * This code is originally from Angelos D. Keromytis, kermit@forthnet.gr
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
+ *	This product includes software developed by Ericsson Radio Systems.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,22 +30,57 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ERRLOG_H_
-#define _ERRLOG_H_
+/*
+ * This code was written under funding by Ericsson Radio Systems.
+ */
 
-#undef EXTERN
-#ifdef _ERRLOG_C_
-#define EXTERN
-#else
-#define EXTERN extern
-#endif
+#ifndef _LOG_H_
+#define _LOG_H_
 
-#ifdef __STDC__
-EXTERN void crit_error __P((int, char *, ...));
-EXTERN void log_error __P((int, char *, ...));
-#else
-EXTERN void crit_error();
-EXTERN void log_error();
-#endif
+#include <sys/types.h>
+#include <stdio.h>
 
-#endif /* _ERRLOG_H_ */
+/*
+ * We cannot do the log strings dynamically sizeable as out of memory is one
+ * of the situations we need to report about.
+ */
+#define LOG_SIZE	200
+
+enum log_classes {
+  LOG_MISC, LOG_TRANSPORT, LOG_CRYPTO, LOG_TIMER, LOG_SA, LOG_KERNEL, 
+  LOG_ENDCLASS
+};
+#define LOG_CLASSES_TEXT \
+  { "Misc", "Trpt", "Cryp", "Timr", "SA  ", "Kern" }
+
+/*
+ * "Class" LOG_REPORT will always be logged to the current log channel,
+ * regardless of level.
+ */
+#define LOG_PRINT  -1
+#define LOG_REPORT -2
+
+#ifdef USE_DEBUG
+
+#define LOG_DBG(x)	log_debug x
+#define LOG_DBG_BUF(x)	log_debug_buf x
+
+extern void log_debug (int, int, const char *, ...);
+extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
+extern void log_debug_cmd (int, int);
+
+#else /* USE_DEBUG */
+
+#define LOG_DBG(x)
+#define LOG_DBG_BUF(x)
+
+#endif /* USE_DEBUG */
+
+extern FILE *log_current (void);
+extern void log_error (const char *, ...);
+extern void log_fatal (const char *, ...);
+extern void log_print (const char *, ...);
+extern void log_to (FILE *);
+extern void log_init (void);
+
+#endif /* _LOG_H_ */

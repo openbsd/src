@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: identity.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: identity.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -61,7 +61,7 @@ static char rcsid[] = "$Id: identity.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #include "identity.h"
 #include "buffer.h"
 #include "scheme.h"
-#include "errlog.h"
+#include "log.h"
 
 #ifdef NEED_STRSEP
 #include "strsep.h"
@@ -107,17 +107,17 @@ init_identities(char *name, struct identity *root)
 	  ob = &idob;
 
      if (lstat(file, &sb) == -1) {
-	  log_error(1, "lstat() on %s in init_identities()", file);
+	  log_error("lstat() on %s in init_identities()", file);
 	  return -1;
      }
      if (((sb.st_mode & S_IFMT) & ~S_IFREG)) {
-	  log_error(0, "no regular file %s in init_identities()", file);
+	  log_print("no regular file %s in init_identities()", file);
 	  return -1;
      }
      fp = fopen(file, "r");
      if (fp == (FILE *) NULL)
      {
-	  log_error(1, "no hash secrets file %s", file);
+	  log_error("no hash secrets file %s", file);
 	  return -1;
      }
 
@@ -148,12 +148,12 @@ init_identities(char *name, struct identity *root)
 	       type = ID_LOOKUP;
 	       p += strlen(IDENT_LOOKUP);
 	  } else {
-	       log_error(0, "Unkown tag %s in %s", p, file);
+	       log_print("Unkown tag %s in %s", p, file);
 	       continue;
 	  }
 		
 	  if ((tmp = identity_new()) == NULL) {
-	       log_error(0, "identity_new() in init_identities()");
+	       log_print("identity_new() in init_identities()");
 	       continue;
 	  }
 
@@ -176,7 +176,7 @@ init_identities(char *name, struct identity *root)
 	       if (type == ID_REMOTE) {
 		    /* Search for duplicates */
 		    if (identity_find(idob, tmp->tag, ID_REMOTE) != NULL) {
-			 log_error(0, "Duplicate id \"%s\" found in %s",
+			 log_print("Duplicate id \"%s\" found in %s",
 				   tmp->tag, name != NULL ? name : "root");
 			 identity_value_reset(tmp);
 			 continue;
@@ -208,7 +208,7 @@ init_identities(char *name, struct identity *root)
 	       break;
 	  case ID_LOOKUP:
 	       if (name != NULL) {
-		    log_error(0, "lookup in user file %s in init_identities()",
+		    log_print("lookup in user file %s in init_identities()",
 			      name);
 		    continue;
 	       }
@@ -218,7 +218,7 @@ init_identities(char *name, struct identity *root)
 		    p2[strlen(p2)-1] = 0;
 
 	       if ((pwd = getpwnam(p2)) == NULL) {
-		    log_error(1, "getpwnam() in init_identities()");
+		    log_error("getpwnam() in init_identities()");
 		    identity_value_reset(tmp);
 		    continue;
 	       } else {
@@ -230,7 +230,7 @@ init_identities(char *name, struct identity *root)
 		    tmp->pairid = strdup(p2);
 
 		    if (dir == NULL) {
-			 log_error(1, "calloc() in init_identities()");
+			 log_error("calloc() in init_identities()");
 			 identity_value_reset(tmp);
 			 continue;
 		    }
@@ -351,13 +351,13 @@ get_secrets(struct stateob *st, int mode)
      }
 	  
      if(strlen(remote_secret) == 0 && (mode & ID_REMOTE)) {
-	  log_error(0, "Can't find remote secret for %s in get_secrets()",
+	  log_print("Can't find remote secret for %s in get_secrets()",
 		st->uSPIident+2);
 	  return -1;
      }
 
      if (strlen(local_ident) == 0 && (mode & (ID_LOCAL|ID_LOCALPAIR)) ) {
-	  log_error(0, "Can't find local identity in get_secrets()");
+	  log_print("Can't find local identity in get_secrets()");
 	  return -1;
      }
 
@@ -412,7 +412,7 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
      }
 
      if(attribsize == 0) {
-	  log_error(0, "No identity choice found in offered attributes "
+	  log_print("No identity choice found in offered attributes "
 		    "in choose_identity()");
 	  return -1;
      }
@@ -461,7 +461,7 @@ get_identity_verification_size(struct stateob *st, u_int8_t *choice)
      struct idxform *hash;
 
      if ((hash = get_hash_id(*choice)) == NULL) {
-	  log_error(0, "Unknown identity choice: %d\n", *choice);
+	  log_print("Unknown identity choice: %d\n", *choice);
 	  return 0;
      }
 
@@ -487,7 +487,7 @@ struct idxform *get_hash(enum hashes hashtype)
      for (i=0; i<sizeof(idxform)/sizeof(idxform[0]); i++)
 	  if (hashtype == idxform[i].type)
 	       return &idxform[i];
-     log_error(0, "Unkown hash type: %d in get_hash()", hashtype);
+     log_print("Unkown hash type: %d in get_hash()", hashtype);
      return NULL;
 }
 
@@ -499,7 +499,7 @@ create_verification_key(struct stateob *st, u_int8_t *buffer, u_int16_t *size,
      int id = owner ? *(st->oSPIidentchoice) : *(st->uSPIidentchoice);
 
      if ((hash = get_hash_id(id)) == NULL) {
-	  log_error(0, "Unkown identity choice %d in create_verification_key", id);
+	  log_print("Unkown identity choice %d in create_verification_key", id);
           return -1; 
      }
 
@@ -527,7 +527,7 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
      struct idxform *hash;
 
      if ((hash = get_hash_id(*(st->oSPIidentchoice))) == NULL) {
-	  log_error(0, "Unkown identity choice %d in create_verification_key",
+	  log_print("Unkown identity choice %d in create_verification_key",
 		    *(st->oSPIidentchoice));
           return 0; 
      }
@@ -544,7 +544,7 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
 
 	  st->oSPIidentver = calloc(hash_size+2,sizeof(u_int8_t));
 	  if(st->oSPIidentver == NULL) {
-	       log_error(1, "Not enough memory in create_identity_verification()", 0);
+	       log_error("Not enough memory in create_identity_verification()", 0);
 	       return 0;
 	  }
 
@@ -563,7 +563,7 @@ verify_identity_verification(struct stateob *st, u_int8_t *buffer,
      struct idxform *hash;
 
      if ((hash = get_hash_id(*(st->uSPIidentchoice))) == NULL) {
-	  log_error(0, "Unkown identity choice %d in create_verification_key",
+	  log_print("Unkown identity choice %d in create_verification_key",
 		    *(st->uSPIidentchoice));
           return 0; 
      }
