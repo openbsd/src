@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 1997/01/13 23:32:16 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.13 1997/01/15 07:06:12 mickey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -55,6 +55,7 @@ option		INET		# IP + ICMP + TCP + UDP
 #option		NS		# XNS
 #option		NSIP		# XNS tunneling over IP
 #option		IPX		# IPX+SPX
+#option		IPXIP		# IPX tunneling over IP
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
