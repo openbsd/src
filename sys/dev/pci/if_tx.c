@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_tx.c,v 1.12 2001/02/20 19:39:43 mickey Exp $	*/
-/* $FreeBSD: src/sys/pci/if_tx.c,v 1.40 2000/07/13 22:54:34 archie Exp $ */
+/*	$OpenBSD: if_tx.c,v 1.13 2001/02/23 22:59:09 jason Exp $	*/
+/* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
  * Copyright (c) 1997 Semen Ustimenko (semen@iclub.nsu.ru)
@@ -35,8 +35,6 @@
  *
  * todo:
  *	Implement FULL IFF_MULTICAST support.
- *	Refactor out Free/Open compat cruft
- *	Modularize, Modularize, and Modularize some more
  *	
  */
 
@@ -78,6 +76,9 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/miidevs.h>
+
+#include <dev/mii/lxtphyreg.h>
 
 #include "miibus_if.h"
 
@@ -119,6 +120,8 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/miidevs.h>
+#include <dev/mii/lxtphyreg.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -133,19 +136,11 @@ MODULE_DEPEND(tx, miibus, 1, 1, 1);
 
 #if defined(__FreeBSD__)
 #define EPIC_INTR_RET_TYPE void
-#else /* __OpenBSD__ */
-#define EPIC_INTR_RET_TYPE int
-#endif
-
-#if defined(__FreeBSD__)
 #define EPIC_MIIBUS_WRITEREG_RET_TYPE int
-#else /* __OpenBSD__ */
-#define EPIC_MIIBUS_WRITEREG_RET_TYPE void
-#endif
-
-#if defined(__FreeBSD__)
 #define EPIC_STATIC static
 #else /* __OpenBSD__ */
+#define EPIC_INTR_RET_TYPE int
+#define EPIC_MIIBUS_WRITEREG_RET_TYPE void
 #define EPIC_STATIC
 #endif
 
@@ -155,7 +150,6 @@ EPIC_STATIC int epic_common_attach __P((epic_softc_t *));
 EPIC_STATIC void epic_ifstart __P((struct ifnet *));
 EPIC_STATIC void epic_ifwatchdog __P((struct ifnet *));
 EPIC_STATIC int epic_init __P((epic_softc_t *));
-EPIC_STATIC void epic_reset __P((epic_softc_t *));
 EPIC_STATIC void epic_stop __P((epic_softc_t *));
 EPIC_STATIC void epic_rx_done __P((epic_softc_t *));
 EPIC_STATIC void epic_tx_done __P((epic_softc_t *));
@@ -177,12 +171,14 @@ EPIC_STATIC int epic_read_phy_reg __P((epic_softc_t *, int, int));
 EPIC_STATIC void epic_write_phy_reg __P((epic_softc_t *, int, int, int));
 
 EPIC_STATIC int epic_miibus_readreg __P((struct device*, int, int));
-EPIC_STATIC void epic_miibus_statchg __P((struct device *));
-
 EPIC_STATIC EPIC_MIIBUS_WRITEREG_RET_TYPE epic_miibus_writereg __P((struct device*, int, int, int));
+EPIC_STATIC void epic_miibus_statchg __P((struct device *));
+EPIC_STATIC void epic_miibus_mediainit __P((struct device *));
+
 
 EPIC_STATIC int epic_ifmedia_upd __P((struct ifnet *));
 EPIC_STATIC void epic_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
+EPIC_STATIC void epic_tick __P((void *));
 
 /* -------------------------------------------------------------------------
    OS-specific part
@@ -191,9 +187,9 @@ EPIC_STATIC void epic_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 #if defined(__OpenBSD__)
 /* -----------------------------OpenBSD------------------------------------- */
 
-EPIC_STATIC int epic_openbsd_probe __P((struct device *,void *,void *));
-EPIC_STATIC void epic_openbsd_attach __P((struct device *, struct device *, void *));
-EPIC_STATIC void epic_openbsd_shutdown __P((void *));
+int epic_openbsd_probe __P((struct device *,void *,void *));
+void epic_openbsd_attach __P((struct device *, struct device *, void *));
+void epic_openbsd_shutdown __P((void *));
 
 struct cfattach tx_ca = {
 	sizeof(epic_softc_t), epic_openbsd_probe, epic_openbsd_attach 
@@ -203,7 +199,7 @@ struct cfdriver tx_cd = {
 };
 
 /* Synopsis: Check if device id corresponds with SMC83C170 id. */
-EPIC_STATIC int 
+int 
 epic_openbsd_probe(
     struct device *parent,
     void *match,
@@ -219,7 +215,7 @@ epic_openbsd_probe(
 	return 0;
 }
 
-EPIC_STATIC void
+void
 epic_openbsd_attach(
     struct device *parent,
     struct device *self,
@@ -231,66 +227,50 @@ epic_openbsd_attach(
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp;
-	bus_addr_t iobase;
 	bus_size_t iosize; 
 	u_int32_t command;
 
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE;
-
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-#ifdef EPIC_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
+	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
+		printf(": neither i/o nor mem enabled\n");
 		return;
 	}
-	if( pci_io_find(pc, pa->pa_tag, PCI_BASEIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-	if( bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sc_sh)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->sc_st = pa->pa_iot;
-#else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
-	if( pci_mem_find(pc, pa->pa_tag, PCI_BASEMEM, &iobase, &iosize, NULL)) {
-		printf(": can't find mem space\n");
-		return;
-	}
-	if( bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->sc_st = pa->pa_memt;
-#endif
 
-	/*
-	 * Set up if
-	 */
+	if (command & PCI_COMMAND_MEM_ENABLE) {
+		if (pci_mapreg_map(pa, PCI_BASEMEM, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->sc_st, &sc->sc_sh, NULL, &iosize)) {
+			printf(": can't map mem space\n");
+			return;
+		}
+	} else {
+		if (pci_mapreg_map(pa, PCI_BASEIO, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->sc_st, &sc->sc_sh, NULL, &iosize)) {
+			printf(": can't map i/o space\n");
+			return;
+		}
+	}
+
 	ifp = &sc->sc_if;
-	bcopy(sc->dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	bcopy(sc->dev.dv_xname, ifp->if_xname,IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = epic_ifioctl;
 	ifp->if_start = epic_ifstart;
 	ifp->if_watchdog = epic_ifwatchdog;
 
-	/*
-	 * Do common attach procedure
-	 */
+	/* Fetch card id */
+	sc->cardvend = pci_conf_read(pc, pa->pa_tag, PCI_SUBVEND_0);
+	sc->cardid = pci_conf_read(pc, pa->pa_tag, PCI_SUBDEV_0);
+
+	/* Do common attach procedure */
 	if( epic_common_attach(sc) ) return;
 
-	/*
-	 * Map interrupt 
-	 */
+	/* Map interrupt */
 	if( pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": can't map interrupt\n");
@@ -306,34 +286,25 @@ epic_openbsd_attach(
 		printf("\n");
 		return;
 	} 
-	printf(": %s",intrstr);
 
 	/* Display some info */
-	printf(" address %s\n",ether_sprintf(sc->sc_macaddr));
+	printf(": %s address %s\n", intrstr, ether_sprintf(sc->sc_macaddr));
 
-	/*
-	 * ifmedia setup
-	 */
-	ifmedia_init(&sc->miibus.mii_media, 0, epic_ifmedia_upd, epic_ifmedia_sts);
-
-	/*
-	 * mii setup
-	 */
+	/* Init ifmedia interface */
+	ifmedia_init(&sc->miibus.mii_media, 0,
+		epic_ifmedia_upd, epic_ifmedia_sts);
 	sc->miibus.mii_ifp = ifp;
 	sc->miibus.mii_readreg = epic_miibus_readreg;
 	sc->miibus.mii_writereg = epic_miibus_writereg;
 	sc->miibus.mii_statchg = epic_miibus_statchg;
-
-	mii_attach(self, &sc->miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
-
+	mii_phy_probe(self, &sc->miibus, 0xffffffff);
 	if (LIST_FIRST(&sc->miibus.mii_phys) == NULL) {
 		ifmedia_add(&sc->miibus.mii_media, IFM_ETHER|IFM_NONE,0,NULL);
 		ifmedia_set(&sc->miibus.mii_media, IFM_ETHER|IFM_NONE);
-        } else {
+        } else
 		ifmedia_set(&sc->miibus.mii_media, IFM_ETHER|IFM_AUTO);
-	}
 
+	timeout_set(&sc->sc_tmo, epic_tick, sc);
 
 	/* Attach os interface and bpf */
 	if_attach(ifp);
@@ -343,10 +314,8 @@ epic_openbsd_attach(
 	shutdownhook_establish(epic_openbsd_shutdown, sc);
 }
 
-/*
- * Simply call epic_stop()
- */
-EPIC_STATIC void
+/* Simple call epic_stop() */
+void
 epic_openbsd_shutdown(
     void *sc)
 {
@@ -356,14 +325,13 @@ epic_openbsd_shutdown(
 #else /* __FreeBSD__ */
 /* -----------------------------FreeBSD------------------------------------- */
 
-EPIC_STATIC int epic_freebsd_probe __P((struct device*));
-EPIC_STATIC int epic_freebsd_attach __P((struct device*));
-EPIC_STATIC void epic_freebsd_shutdown __P((struct device*));
-EPIC_STATIC int epic_freebsd_detach __P((struct device*));
-EPIC_STATIC struct epic_type *epic_devtype __P((struct device*));
-EPIC_STATIC void epic_miibus_mediainit __P((struct device*));
+static int epic_freebsd_probe __P((device_t));
+static int epic_freebsd_attach __P((device_t));
+static void epic_freebsd_shutdown __P((device_t));
+static int epic_freebsd_detach __P((device_t));
+static struct epic_type *epic_devtype __P((device_t));
 
-EPIC_STATIC device_method_t epic_methods[] = {
+static device_method_t epic_methods[] = {
 	/* Device interface */   
 	DEVMETHOD(device_probe,		epic_freebsd_probe),
 	DEVMETHOD(device_attach,	epic_freebsd_attach),
@@ -383,26 +351,26 @@ EPIC_STATIC device_method_t epic_methods[] = {
 	{ 0, 0 }
 };
 
-EPIC_STATIC driver_t epic_driver = {
+static driver_t epic_driver = {
         "tx",
         epic_methods,
         sizeof(epic_softc_t)
 };
 
-EPIC_STATIC devclass_t epic_devclass;
+static devclass_t epic_devclass;
 
 DRIVER_MODULE(if_tx, pci, epic_driver, epic_devclass, 0, 0);
 DRIVER_MODULE(miibus, tx, miibus_driver, miibus_devclass, 0, 0);
 
-EPIC_STATIC struct epic_type epic_devs[] = {
+static struct epic_type epic_devs[] = {
 	{ SMC_VENDORID, SMC_DEVICEID_83C170,
 		"SMC EtherPower II 10/100" },   
 	{ 0, 0, NULL }
 };
 
-EPIC_STATIC int
+static int
 epic_freebsd_probe(dev)
-	struct device* dev;
+	device_t dev;
 {
 	struct epic_type *t;
 
@@ -416,9 +384,9 @@ epic_freebsd_probe(dev)
 	return(ENXIO);
 }
 
-EPIC_STATIC struct epic_type *
+static struct epic_type *
 epic_devtype(dev)
-	struct device* dev;
+	device_t dev;
 {
 	struct epic_type *t;
 
@@ -446,9 +414,9 @@ epic_devtype(dev)
  * Do FreeBSD-specific attach routine, like map registers, alloc softc
  * structure and etc.
  */
-EPIC_STATIC int
+static int
 epic_freebsd_attach(dev)
-	struct device* dev;
+	device_t dev;
 {
 	struct ifnet *ifp;
 	epic_softc_t *sc;
@@ -536,6 +504,13 @@ epic_freebsd_attach(dev)
 		goto fail;
 	}
 
+	/* Bring the chip out of low-power mode and reset it. */
+	CSR_WRITE_4( sc, GENCTL, GENCTL_SOFT_RESET );
+	DELAY(500);
+
+	/* Workaround for Application Note 7-15 */
+	for (i=0; i<16; i++) CSR_WRITE_4(sc, TEST1, TEST1_CLOCK_TEST);
+
 	/*
 	 * Do ifmedia setup.
 	 */
@@ -559,6 +534,11 @@ epic_freebsd_attach(dev)
 		goto fail;
 	}
 
+	/* Fetch card id */
+	sc->cardvend = pci_read_config(sc->dev, PCIR_SUBVEND_0, 2);
+	sc->cardid = pci_read_config(sc->dev, PCIR_SUBDEV_0, 2);
+	printf("vend/id(%x/%x) ", sc->cardvend, sc->cardid);
+
 	/* Display ethernet address ,... */
 	device_printf(dev, "address %6D,", sc->sc_macaddr, ":");
 
@@ -572,7 +552,7 @@ epic_freebsd_attach(dev)
 		if( ' ' == (u_int8_t)tmp ) break;
 		printf("%c",(u_int8_t)tmp);
 	}
-	printf ("\n");
+	printf("\n");
 
 	/* Attach to OS's managers */
 	ether_ifattach(ifp, ETHER_BPF_SUPPORTED);
@@ -587,9 +567,9 @@ fail:
 /*
  * Detach driver and free resources
  */
-EPIC_STATIC int
+static int
 epic_freebsd_detach(dev)
-	struct device* dev;
+	device_t dev;
 {
 	struct ifnet *ifp;
 	epic_softc_t *sc;
@@ -622,35 +602,12 @@ epic_freebsd_detach(dev)
 #undef	EPIC_RID
 
 /*
- *
- */
-EPIC_STATIC void epic_miibus_mediainit(dev)
-	struct device* dev;
-{
-        epic_softc_t *sc;
-        struct mii_data *mii;
-	struct ifmedia *ifm;
-	int media;
-	
-	sc = epic_dev_ptr(dev);
-	mii = epic_mii_ptr(sc);
-	ifm = &mii->mii_media;
-
-	if(CSR_READ_4(sc, MIICFG) & MIICFG_PHY_PRESENT) {
-		media = IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0, mii->mii_instance);
-		printf(EPIC_FORMAT ": serial PHY detected (10Base2/BNC)\n",EPIC_ARGS(sc));
-		ifmedia_add(ifm, media, 0, NULL);
-	}
-
-	return;
-}
-/*
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
 EPIC_STATIC void
 epic_freebsd_shutdown(dev)
-	struct device* dev;
+	device_t dev;
 {
 	epic_softc_t *sc;
 
@@ -663,12 +620,11 @@ epic_freebsd_shutdown(dev)
 #endif /* __OpenBSD__ */
 
 /* ------------------------------------------------------------------------
-   OS-independent part
+   OS-independing part
    ------------------------------------------------------------------------ */
 
 /*
  * This is if_ioctl handler. 
- * This is a mess
  */
 EPIC_STATIC int
 epic_ifioctl(ifp, command, data)
@@ -677,9 +633,9 @@ epic_ifioctl(ifp, command, data)
 	caddr_t data;
 {
 	epic_softc_t *sc = ifp->if_softc;
-	int x, error = 0;
 	struct mii_data	*mii;
 	struct ifreq *ifr = (struct ifreq *) data;
+	int x, error = 0;
 
 	x = splimp();
 
@@ -784,7 +740,7 @@ epic_ifioctl(ifp, command, data)
 
 /*
  * OS-independed part of attach process. allocate memory for descriptors
- * and frag lists, wake up chip, and read MAC address.
+ * and frag lists, wake up chip, read MAC address and PHY identyfier.
  * Return -1 on failure.
  */
 EPIC_STATIC int
@@ -794,9 +750,6 @@ epic_common_attach(sc)
 	int i;
 	caddr_t pool;
 
-	/*
-	 * Allocate memory for io buffers
-	 */
 	i = sizeof(struct epic_frag_list)*TX_RING_SIZE +
 	    sizeof(struct epic_rx_desc)*RX_RING_SIZE + 
 	    sizeof(struct epic_tx_desc)*TX_RING_SIZE + PAGE_SIZE;
@@ -808,45 +761,45 @@ epic_common_attach(sc)
 	}
 	bzero(sc->pool, i);
 
-	/*
-	 * Align pool on PAGE_SIZE
-	 */
+	/* Align pool on PAGE_SIZE */
 	pool = (caddr_t)sc->pool;
 	pool = (caddr_t)((u_int32_t)(pool + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 
-	/*
-	 * Distribute memory 
-	 */
+	/* Distribute memory */
 	sc->tx_flist = (void *)pool;
 	pool += sizeof(struct epic_frag_list)*TX_RING_SIZE;
 	sc->rx_desc = (void *)pool;
 	pool += sizeof(struct epic_rx_desc)*RX_RING_SIZE;
 	sc->tx_desc = (void *)pool;
 
-	/*
-	 * reset the chip
-	 */
-	epic_reset( sc );
+	/* Bring the chip out of low-power mode. */
+	CSR_WRITE_4( sc, GENCTL, GENCTL_SOFT_RESET);
+	DELAY(500);
 
-	/*
-	 * Read mac address from EEPROM
-	 */
+	/* Workaround for Application Note 7-15 */
+	for (i=0; i<16; i++) CSR_WRITE_4(sc, TEST1, TEST1_CLOCK_TEST);
+
+	/* Read mac address from EEPROM */
 	for (i = 0; i < ETHER_ADDR_LEN / sizeof(u_int16_t); i++)
 		((u_int16_t *)sc->sc_macaddr)[i] = epic_read_eeprom(sc,i);
 
-	/*
-	 * Set defaults
-	 */
+	/* Set defaults */
 	sc->tx_threshold = TRANSMIT_THRESHOLD;
 	sc->txcon = TXCON_DEFAULT;
+	sc->miicfg = MIICFG_SMI_ENABLE;
+	sc->phyid = EPIC_UNKN_PHY;
+	sc->serinst = -1;
+
+	if (sc->cardvend != SMC_VENDORID) 
+		printf(EPIC_FORMAT ": unknown card vendor 0x%04x\n", EPIC_ARGS(sc), sc->cardvend);
 
 	return 0;
 }
 
 /*
  * This is if_start handler. It takes mbufs from if_snd queue
- * and quque them for transmit, one by one, until TX ring become full
- * or quque become empty.
+ * and queue them for transmit, one by one, until TX ring become full
+ * or queue become empty.
  */
 EPIC_STATIC void
 epic_ifstart(ifp)
@@ -1047,7 +1000,6 @@ epic_tx_done(sc)
 
 /*
  * Interrupt function
- * This is a mess
  */
 EPIC_STATIC EPIC_INTR_RET_TYPE
 epic_intr(arg)
@@ -1188,41 +1140,126 @@ epic_ifmedia_upd(ifp)
 	epic_softc_t *sc;
 	struct mii_data *mii;
 	struct ifmedia *ifm;
+	struct mii_softc *miisc;
+	int cfg, media;
 
 	sc = ifp->if_softc;
 
 	mii = epic_mii_ptr(sc);
 
 	ifm = &mii->mii_media;
+	media = ifm->ifm_cur->ifm_media;
 
 	/* Do not do anything if interface is not up */
 	if(!(ifp->if_flags & IFF_UP))
 		return (0);
 
-	if((IFM_INST(ifm->ifm_cur->ifm_media) == mii->mii_instance) &&
-	   (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_10_2)) {
-		/* Call this, to isolate (and powerdown ?) all PHYs */
-		mii_mediachg(mii);
+	/*
+	 * Lookup current selected PHY
+	 */
+	if (IFM_INST(media) == sc->serinst) {
+		sc->phyid = EPIC_SERIAL;
+		sc->physc = NULL;
+	} else {
+		/* If we're not selecting serial interface, select MII mode */
+		sc->miicfg &= ~MIICFG_SERIAL_ENABLE;
+		CSR_WRITE_4(sc, MIICFG, sc->miicfg);
 
-		/* Select BNC */
-		CSR_WRITE_4(sc, MIICFG, MIICFG_SERIAL_ENABLE |
-					MIICFG_694_ENABLE | MIICFG_SMI_ENABLE);
+		dprintf((EPIC_FORMAT ": MII selected\n", EPIC_ARGS(sc)));
 
-		/* Update txcon register */
-		epic_miibus_statchg(&sc->dev);
+		/* Default to unknown PHY */
+		sc->phyid = EPIC_UNKN_PHY;
 
-		return (0);
-	} else if(IFM_INST(ifm->ifm_cur->ifm_media) < mii->mii_instance) {
-		/* Select MII */
-		CSR_WRITE_4(sc, MIICFG, MIICFG_SMI_ENABLE);
+		/* Lookup selected PHY */
+		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
+		     miisc = LIST_NEXT(miisc, mii_list)) {
+			if (IFM_INST(media) == miisc->mii_inst) {
+				sc->physc = miisc;
+				break;
+			}
+		}
 
-		/* Give it to miibus... */
-		mii_mediachg(mii);
+		/* Identify selected PHY */
+		if (sc->physc) {
+			int id1, id2, model, oui;
 
-		return (0);
+			id1 = PHY_READ(sc->physc, MII_PHYIDR1);
+			id2 = PHY_READ(sc->physc, MII_PHYIDR2);
+
+			oui = MII_OUI(id1, id2);
+			model = MII_MODEL(id2);
+			switch (oui) {
+			case MII_OUI_QUALSEMI:
+				if (model == MII_MODEL_QUALSEMI_QS6612)
+					sc->phyid = EPIC_QS6612_PHY;
+				break;
+			case MII_OUI_xxALTIMA:
+				if (model == MII_MODEL_xxALTIMA_AC101)
+					sc->phyid = EPIC_AC101_PHY;
+				break;
+			case MII_OUI_xxLEVEL1:
+				if (model == MII_MODEL_xxLEVEL1_LXT970)
+					sc->phyid = EPIC_LXT970_PHY;
+				break;
+			}
+		}
 	}
 
-	return(EINVAL);
+	/*
+	 * Do PHY specific card setup
+	 */
+
+	/* Call this, to isolate all not selected PHYs and
+	 * set up selected
+	 */
+	mii_mediachg(mii);
+
+	/* Do our own setup */
+	switch (sc->phyid) {
+	case EPIC_QS6612_PHY:
+		break;
+	case EPIC_AC101_PHY:
+		/* We have to powerup fiber tranceivers */
+		if (IFM_SUBTYPE(media) == IFM_100_FX)
+			sc->miicfg |= MIICFG_694_ENABLE;
+		else
+			sc->miicfg &= ~MIICFG_694_ENABLE;
+		CSR_WRITE_4(sc, MIICFG, sc->miicfg);
+	
+		break;
+	case EPIC_LXT970_PHY:
+		/* We have to powerup fiber tranceivers */
+		cfg = PHY_READ(sc->physc, MII_LXTPHY_CONFIG);
+		if (IFM_SUBTYPE(media) == IFM_100_FX)
+			cfg |= CONFIG_LEDC1 | CONFIG_LEDC0;
+		else
+			cfg &= ~(CONFIG_LEDC1 | CONFIG_LEDC0);
+		PHY_WRITE(sc->physc, MII_LXTPHY_CONFIG, cfg);
+
+		break;
+	case EPIC_SERIAL:
+		/* Select serial PHY, (10base2/BNC usually) */
+		sc->miicfg |= MIICFG_694_ENABLE | MIICFG_SERIAL_ENABLE;
+		CSR_WRITE_4(sc, MIICFG, sc->miicfg);
+
+		/* There is no driver to fill this */
+		mii->mii_media_active = media;
+		mii->mii_media_status = 0;
+
+		/* We need to call this manualy as i wasn't called
+		 * in mii_mediachg()
+		 */
+		epic_miibus_statchg(&sc->dev);
+
+		dprintf((EPIC_FORMAT ": SERIAL selected\n", EPIC_ARGS(sc)));
+
+		break;
+	default:
+		printf(EPIC_FORMAT ": ERROR! Unknown PHY selected\n", EPIC_ARGS(sc));
+		return (EINVAL);
+	}
+
+	return(0);
 }
 
 /*
@@ -1241,6 +1278,7 @@ epic_ifmedia_sts(ifp, ifmr)
 	mii = epic_mii_ptr(sc);
 	ifm = &mii->mii_media;
 
+	/* Nothing should be selected if interface is down */
 	if(!(ifp->if_flags & IFF_UP)) {
 		ifmr->ifm_active = IFM_NONE;
 		ifmr->ifm_status = 0;
@@ -1248,18 +1286,13 @@ epic_ifmedia_sts(ifp, ifmr)
 		return;
 	}
 
-	if((IFM_INST(ifm->ifm_cur->ifm_media) == mii->mii_instance) &&
-	   (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_10_2)) {
-		ifmr->ifm_active = ifm->ifm_cur->ifm_media;
-		ifmr->ifm_status = 0;
-	} else if(IFM_INST(ifm->ifm_cur->ifm_media) < mii->mii_instance) {
+	/* Call underlying pollstat, if not serial PHY */
+	if (sc->phyid != EPIC_SERIAL)
 		mii_pollstat(mii);
-		ifmr->ifm_active = mii->mii_media_active;
-		ifmr->ifm_status = mii->mii_media_status;
-	} else {
-		ifmr->ifm_active = IFM_NONE;
-		ifmr->ifm_status = 0;
-	}
+
+	/* Simply copy media info */
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 
 	return;
 }
@@ -1273,20 +1306,34 @@ epic_miibus_statchg(dev)
 {
 	epic_softc_t *sc;
 	struct mii_data *mii;
+	int media;
 
 	sc = epic_dev_ptr(dev);
 	mii = epic_mii_ptr(sc);
+	media = mii->mii_media_active;
 
 	sc->txcon &= ~(TXCON_LOOPBACK_MODE | TXCON_FULL_DUPLEX);
 
-	/*
-	 * If we are in full-duplex mode or loopback operation,
+	/* If we are in full-duplex mode or loopback operation,
 	 * we need to decouple receiver and transmitter.
 	 */
-	if (mii->mii_media_active & (IFM_FDX | IFM_LOOP))
+	if (IFM_OPTIONS(media) & (IFM_FDX | IFM_LOOP))
  		sc->txcon |= TXCON_FULL_DUPLEX;
 
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX)
+	/* On some cards we need manualy set fullduplex led */
+	if (sc->cardid == SMC9432FTX ||
+	    sc->cardid == SMC9432FTX_SC) {
+		if (IFM_OPTIONS(media) & IFM_FDX) 
+			sc->miicfg |= MIICFG_694_ENABLE;
+		else
+			sc->miicfg &= ~MIICFG_694_ENABLE;
+
+		CSR_WRITE_4(sc, MIICFG, sc->miicfg);
+	}
+
+	/* Update baudrate */
+	if (IFM_SUBTYPE(media) == IFM_100_TX ||
+	    IFM_SUBTYPE(media) == IFM_100_FX)
 		sc->sc_if.if_baudrate = 100000000;
 	else
 		sc->sc_if.if_baudrate = 10000000;
@@ -1296,7 +1343,6 @@ epic_miibus_statchg(dev)
 	return;
 }
 
-#if defined(__FreeBSD__)
 EPIC_STATIC void epic_miibus_mediainit(dev)
 	struct device* dev;
 {
@@ -1304,20 +1350,29 @@ EPIC_STATIC void epic_miibus_mediainit(dev)
         struct mii_data *mii;
 	struct ifmedia *ifm;
 	int media;
-	
+
 	sc = epic_dev_ptr(dev);
 	mii = epic_mii_ptr(sc);
 	ifm = &mii->mii_media;
 
+	/* Add Serial Media Interface if present, this applies to
+	 * SMC9432BTX serie
+	 */
 	if(CSR_READ_4(sc, MIICFG) & MIICFG_PHY_PRESENT) {
-		media = IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0, mii->mii_instance);
-		printf(EPIC_FORMAT ": serial PHY detected (10Base2/BNC)\n",EPIC_ARGS(sc));
+		/* Store its instance */
+		sc->serinst = mii->mii_instance++;
+
+		/* Add as 10base2/BNC media */
+		media = IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0, sc->serinst);
 		ifmedia_add(ifm, media, 0, NULL);
+
+		/* Report to user */
+		printf(EPIC_FORMAT ": serial PHY detected (10Base2/BNC)\n",EPIC_ARGS(sc));
 	}
 
 	return;
 }
-#endif
+
 
 /*
  * Reset chip, allocate rings, and update media.
@@ -1328,7 +1383,7 @@ epic_init(sc)
 {       
 	struct ifnet *ifp = &sc->sc_if;
 	struct mii_data *mii;
-	int s;
+	int s,i;
  
 	s = splimp();
 
@@ -1337,7 +1392,7 @@ epic_init(sc)
 		splx(s);
 		return 0;
 	}
-#ifdef __reset
+
 	/* Soft reset the chip (we have to power up card before) */
 	CSR_WRITE_4( sc, GENCTL, 0 );
 	CSR_WRITE_4( sc, GENCTL, GENCTL_SOFT_RESET );
@@ -1353,8 +1408,6 @@ epic_init(sc)
 
 	/* Workaround for Application Note 7-15 */
 	for (i=0; i<16; i++) CSR_WRITE_4(sc, TEST1, TEST1_CLOCK_TEST);
-#endif
-	epic_reset( sc );
 
 	/* Initialize rings */
 	if( epic_init_rings( sc ) ) {
@@ -1383,9 +1436,12 @@ epic_init(sc)
 
 	/* Enable interrupts by setting the interrupt mask. */
 	CSR_WRITE_4( sc, INTMASK,
-		INTSTAT_RCC | INTSTAT_RQE | INTSTAT_OVW | INTSTAT_RXE |
-		INTSTAT_TXC | INTSTAT_TCC | INTSTAT_TQE | INTSTAT_TXU |
+		INTSTAT_RCC  | /* INTSTAT_RQE | INTSTAT_OVW | INTSTAT_RXE | */
+		/* INTSTAT_TXC | */ INTSTAT_TCC | INTSTAT_TQE | INTSTAT_TXU |
 		INTSTAT_FATAL);
+
+	/* Acknowledge all pending interrupts */
+	CSR_WRITE_4(sc, INTSTAT, CSR_READ_4(sc, INTSTAT));
 
 	/* Enable interrupts,  set for PCI read multiple and etc */
 	CSR_WRITE_4( sc, GENCTL,
@@ -1406,8 +1462,7 @@ epic_init(sc)
 	mii = epic_mii_ptr(sc);
         if (mii->mii_instance) {
 		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		     miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 
@@ -1416,33 +1471,11 @@ epic_init(sc)
 
 	splx(s);
 
+	timeout_add(&sc->sc_tmo, hz);
+
 	return 0;
 }
 
-/*
- * Reset the epic chip
- */
-EPIC_STATIC void epic_reset(sc)
-	epic_softc_t *sc;
-{
-	int	i;
-
-	/* Soft reset the chip (we have to power up card before) */
-	CSR_WRITE_4( sc, GENCTL, 0 );
-	CSR_WRITE_4( sc, GENCTL, GENCTL_SOFT_RESET );
-
-	/*
-	 * Reset takes 15 pci ticks which depends on PCI bus speed.
-	 * Assuming it >= 33000000 hz, we have wait at least 495e-6 sec.
-	 */
-	DELAY(500);
-
-	/* Wake up */
-	CSR_WRITE_4( sc, GENCTL, 0 );
-
-	/* Workaround for Application Note 7-15 */
-	for (i=0; i<16; i++) CSR_WRITE_4(sc, TEST1, TEST1_CLOCK_TEST);
-}
 /*
  * Synopsis: calculate and set Rx mode. Chip must be in idle state to
  * access RXCON.
@@ -1618,6 +1651,8 @@ epic_stop(sc)
 	epic_softc_t *sc;
 {
 	int s;
+
+	timeout_del(&sc->sc_tmo);
 
 	s = splimp();
 
@@ -1889,4 +1924,16 @@ epic_miibus_writereg(dev, phy, reg, data)
 #if !defined(__OpenBSD__)
 	return (0);
 #endif
+}
+
+EPIC_STATIC void
+epic_tick(vsc)
+	void *vsc;
+{
+	epic_softc_t *sc = vsc;
+	struct mii_data *mii;
+
+	mii = epic_mii_ptr(sc);
+	if (sc->phyid != EPIC_SERIAL)
+		mii_tick(mii);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_txvar.h,v 1.8 2000/10/17 15:47:12 jason Exp $	*/
-/* $FreeBSD: src/sys/pci/if_txvar.h,v 1.7 2000/06/21 19:19:49 semenu Exp $ */
+/*	$OpenBSD: if_txvar.h,v 1.9 2001/02/23 22:59:09 jason Exp $	*/
+/* $FreeBSD: src/sys/pci/if_txvar.h,v 1.8 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
  * Copyright (c) 1997 Semen Ustimenko
@@ -257,18 +257,33 @@ struct epic_tx_buffer {
  * epic_rx_desc, epic_tx_desc, epic_frag_list - must be aligned on dword
  */
 
-/*
- * Driver status structure
- * There are macros to handle the access of Free|Open specific fields.
- */
+/* PHY, known by tx driver */
+#define	EPIC_UNKN_PHY		0x0000
+#define	EPIC_QS6612_PHY		0x0001
+#define	EPIC_AC101_PHY		0x0002
+#define	EPIC_LXT970_PHY		0x0003
+#define	EPIC_SERIAL		0x0004
 
+#define	SMC9432DMT		0xA010
+#define	SMC9432TX		0xA011
+#define	SMC9032TXM		0xA012
+#define	SMC9032TX		0xA013
+#define	SMC9432TXPWR		0xA014
+#define	SMC9432BTX		0xA015
+#define	SMC9432FTX		0xA016
+#define	SMC9432FTX_SC		0xA017
+#define	SMC9432TX_XG_ADHOC	0xA020
+#define	SMC9434TX_XG_ADHOC	0xA021
+#define	SMC9432FTX_ADHOC	0xA022
+#define	SMC9432BTX1		0xA024
+
+/* Driver status structure */
 typedef struct {
 #if defined(__OpenBSD__)
 	struct device		dev;
-
 	struct arpcom		arpcom;
-
 	mii_data_t		miibus;
+	struct timeout		sc_tmo;
 #else /* __FreeBSD__ */
 	struct resource		*res;
 	struct resource		*irq;
@@ -294,11 +309,16 @@ typedef struct {
 	u_int32_t		flags;
 	u_int32_t		tx_threshold;
 	u_int32_t		txcon;
-	u_int32_t		phyid;
+	u_int32_t		miicfg;
 	u_int32_t		cur_tx;
 	u_int32_t		cur_rx;
 	u_int32_t		dirty_tx;
 	u_int32_t		pending_txs;
+	u_int16_t		cardvend;
+	u_int16_t		cardid;
+	struct mii_softc 	*physc;
+	u_int32_t		phyid;
+	int			serinst;
 	void 			*pool;
 } epic_softc_t;
 
