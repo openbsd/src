@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.21 2002/03/02 23:00:30 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.22 2002/03/04 21:24:11 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -12,7 +12,7 @@
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all source code copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
@@ -84,30 +84,16 @@
 #define CRYPTO_SHA1_KPDK	10
 #define CRYPTO_RIJNDAEL128_CBC	11 /* 128 bit blocksize */
 #define CRYPTO_AES_CBC		11 /* 128 bit blocksize -- the same as above */
-#define CRYPTO_ARC4		19
-#define CRYPTO_MD5		20
-#define CRYPTO_SHA1		21
-
-/* Begin public key additions */
-#define CRYPTO_DH_SEND		12 /* Compute public value */
-#define CRYPTO_DH_RECEIVE	13 /* Compute DH shared secret */
-#define CRYPTO_RSA_ENCRYPT	14 /* RSA public key encryption */
-#define CRYPTO_RSA_DECRYPT	15 /* RSA public key decryption */
-#define CRYPTO_DSA_SIGN		16 /* DSA sign */
-#define CRYPTO_DSA_VERIFY	17 /* DSA verify */
-
-/* Compression */
-#define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
-
-#define CRYPTO_ALGORITHM_MAX	21 /* Keep updated - see below */
+#define CRYPTO_ARC4		12
+#define CRYPTO_MD5		13
+#define CRYPTO_SHA1		14
+#define CRYPTO_DEFLATE_COMP	15 /* Deflate compression algorithm */
+#define CRYPTO_ALGORITHM_MAX	15 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x00000001 /* Algorithm is supported */
 #define	CRYPTO_ALG_FLAG_RNG_ENABLE	0x00000002 /* Has HW RNG for DH/DSA */
 #define	CRYPTO_ALG_FLAG_DSA_SHA		0x00000004 /* Can do SHA on msg */
-
-#define	SYMMETRIC		0
-#define	PUBLIC_KEY		1
 
 /* Standard initialization structure beginning */
 struct cryptoini {
@@ -186,12 +172,11 @@ struct cryptop {
 struct cryptocap {
 	u_int32_t	cc_sessions;
 
-	/* 
+	/*
 	 * Largest possible operator length (in bits) for each type of
-	 * encryption algorithm - especially important for public key
-	 * operations.
+	 * encryption algorithm.
 	 */
-	u_int16_t	cc_max_op_len[CRYPTO_ALGORITHM_MAX + 1]; 
+	u_int16_t	cc_max_op_len[CRYPTO_ALGORITHM_MAX + 1];
 
 	u_int8_t	cc_alg[CRYPTO_ALGORITHM_MAX + 1];
 
@@ -204,6 +189,9 @@ struct cryptocap {
 	int		(*cc_freesession) (u_int64_t);
 };
 
+/*
+ * ioctl parameter to request creation of a session.
+ */
 struct session_op {
 	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
 	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
@@ -213,12 +201,17 @@ struct session_op {
 	int		mackeylen;	/* mac key */
 	caddr_t		mackey;
 
-  	u_int32_t	ses;		/* returns: session # */ 
+	u_int32_t	ses;		/* returns: session # */
 };
 
+/*
+ * ioctl parameter to request a crypt/decrypt operation against a session.
+ */
 struct crypt_op {
 	u_int32_t	ses;
-	u_int16_t	op;
+	u_int16_t	op;		/* ie. COP_ENCRYPT */
+#define COP_ENCRYPT	1
+#define COP_DECRYPT	2
 	u_int16_t	flags;		/* always 0 */
 
 	u_int		len;
@@ -237,28 +230,29 @@ struct crparam {
 
 #define CRK_MAXPARAM	8
 struct crypt_kop {
-	u_int		crk_op;		/* ie. CRK_RSA_MOD_EXP or other */
-	u_int		crk_iparams;	/* # of input parameters */
-	u_int		crk_oparams;	/* # of output parameters */
-	u_int		crk_status;
+	u_int		crk_op;		/* ie. CRK_MOD_EXP or other */
+	u_int		crk_status;	/* return status */
+	u_short		crk_iparams;	/* # of input parameters */
+	u_short		crk_oparams;	/* # of output parameters */
+	u_int		crk_pad1;
 	struct crparam	crk_param[CRK_MAXPARAM];
 };
-#define CRK_RSA_MOD_EXP		0
-#define CRK_MOD_EXP		1
-#define CRK_RSA_MOD_EXP_CRT	2
-#define CRK_DSA_SIGN		3
-#define CRK_DSA_VERIFY		4
-#define CRK_DH_COMPUTE_KEY	5
+#define CRK_MOD_EXP		0
+#define CRK_MOD_EXP_CRT		1
+#define CRK_DSA_SIGN		2
+#define CRK_DSA_VERIFY		3
+#define CRK_DH_COMPUTE_KEY	4
 
+/*
+ * done against open of /dev/crypto, to get a cloned descriptor.
+ * Please use F_SETFD against the cloned descriptor.
+ */
 #define	CRIOGET		_IOWR('c', 100, u_int32_t)
 
+/* the following are done against the cloned descriptor */
 #define	CIOCGSESSION	_IOWR('c', 101, struct session_op)
 #define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
-
 #define CIOCCRYPT	_IOWR('c', 103, struct crypt_op)
-#define COP_ENCRYPT	1
-#define COP_DECRYPT	2
-
 #define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
 
 #define CIOCSYMFEAT	_IOR('c', 105, u_int32_t)
@@ -267,11 +261,10 @@ struct crypt_kop {
 #define CRSFEAT_DH	0x00000004	/* supports all basic DH ops */
 
 #ifdef _KERNEL
-int	crypto_check_alg(struct cryptoini *);
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);
 int	crypto_dispatch(struct cryptop *);
-int	crypto_register(u_int32_t, int, u_int16_t, u_int32_t, 
+int	crypto_register(u_int32_t, int, u_int16_t, u_int32_t,
 	    int (*)(u_int32_t *, struct cryptoini *), int (*)(u_int64_t),
 	    int (*)(struct cryptop *));
 int	crypto_unregister(u_int32_t, int);
@@ -279,7 +272,6 @@ int32_t	crypto_get_driverid(u_int8_t);
 void	crypto_thread(void);
 int	crypto_invoke(struct cryptop *);
 void	crypto_done(struct cryptop *);
-int	crypto_check_alg(struct cryptoini *);
 
 void	cuio_copydata __P((struct uio *, int, int, caddr_t));
 void	cuio_copyback __P((struct uio *, int, int, caddr_t));
