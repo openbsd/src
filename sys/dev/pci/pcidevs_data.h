@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.126 1999/03/05 16:55:02 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.127 1999/03/09 03:54:00 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1291,6 +1291,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ensoniq",
 	    "AudioPCI",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro II",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
