@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.45 2004/12/30 21:28:47 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.46 2005/01/14 19:11:56 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <hp300/hp300/leds.h>
 #endif
 #include <hp300/dev/dioreg.h>
+#include <hp300/dev/grfreg.h>
 
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
 #define CLKADDR(ar)	movl	_C_LABEL(CLKbase),ar
@@ -329,20 +330,32 @@ Lstart1:
 	clrl	d3
 
 	/*
-	 * Don't probe the DIO-I space. Since cards may claim memory outside
-	 * their range (frame buffers, for example), assume the whole 0-31
+	 * Don't probe the DIO-I space, simply assume the whole 0-31
 	 * select code range is taken, i.e. 32 boards.
 	 */
 	addl	#(DIO_DEVSIZE * 32), d3
 
 	/*
+	 * Check the ``internal'' frame buffer address. If there is one,
+	 * assume an extra 2MB of frame buffer memory at 0x200000.
+	 */
+	movl	#GRFIADDR, a0
+	ASRELOC(phys_badaddr, a3)
+	jbsr	a3@
+	tstl	d0			| success?
+	jne	dioiicheck		| no, skip
+	movl	#0x200000, d1		| yes, add the 200000-400000 range
+	addl	d1, d3
+
+	/*
 	 * Probe for DIO-II devices, select codes 132 to 255.
 	 */
+dioiicheck:
 	RELOC(machineid,a0)
 	cmpl	#HP_320,a0@
 	jeq	eiodone			| HP 320 has nothing more
 
-	movl	#132, d2		| our select code...
+	movl	#DIOII_SCBASE, d2	| our select code...
 	movl	#DIOII_BASE, a0		| and first address
 dioloop:
 	ASRELOC(phys_badaddr, a3)
@@ -361,6 +374,7 @@ eiodone:
 	moveq	#PGSHIFT, d2
 	lsrl	d2, d3			| convert from bytes to pages
 	RELOC(eiomapsize,a2)
+	addql	#1, d3			| add an extra page for device probes
 	movl	d3,a2@
 
 	/*

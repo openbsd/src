@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2005/01/10 21:23:52 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.97 2005/01/14 19:11:56 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
-#include <hp300/dev/dioreg.h>
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>
 #include <hp300/dev/hilvar.h>
@@ -146,10 +145,8 @@ extern struct emul emul_sunos;
 /*
  * Some storage space must be allocated statically because of the
  * early console initialization.
- * We know that console initialization will not try to map more than
- * DIOII_DEVSIZE bytes. Play safe and allow for twice this size.
  */
-char	extiospace[EXTENT_FIXED_STORAGE_SIZE(2 * DIOII_DEVSIZE / PAGE_SIZE)];
+char	extiospace[EXTENT_FIXED_STORAGE_SIZE(16)];
 extern int eiomapsize;
 
 /* prototypes for local functions */
