@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.24 2002/05/23 13:40:50 art Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.25 2003/07/24 22:00:24 mickey Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -50,8 +50,6 @@
 
 #include <miscfs/specfs/specdev.h>
 #include <adosfs/adosfs.h>
-
-extern struct vnodeops adosfs_vnodeops;
 
 int	adosfs_advlock(void *);
 int	adosfs_open(void *);
