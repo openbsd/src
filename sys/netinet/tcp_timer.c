@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.12 1999/04/21 21:38:58 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.13 1999/07/02 20:39:08 cmetz Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -349,11 +349,15 @@ tcp_timers(tp, timer)
 			 * The keepalive packet must have nonzero length
 			 * to get a 4.2 host to respond.
 			 */
-			tcp_respond(tp, tp->t_template, (struct mbuf *)NULL,
-			    tp->rcv_nxt - 1, tp->snd_una - 1, 0);
+			tcp_respond(tp,
+				mtod(tp->t_template, caddr_t),
+				(struct mbuf *)NULL,
+				tp->rcv_nxt - 1, tp->snd_una - 1, 0);
 #else
-			tcp_respond(tp, tp->t_template, (struct mbuf *)NULL,
-			    tp->rcv_nxt, tp->snd_una - 1, 0);
+			tcp_respond(tp,
+				mtod(tp->t_template, caddr_t),
+				(struct mbuf *)NULL,
+				tp->rcv_nxt, tp->snd_una - 1, 0);
 #endif
 			tp->t_timer[TCPT_KEEP] = tcp_keepintvl;
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.14 1999/02/17 00:14:26 deraadt Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.15 1999/07/02 20:39:08 cmetz Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -81,6 +81,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/domain.h>
 #endif /* INET6 */
 
+#if defined(INET) && defined(INET6)
+#define defined(INET) && defined(INET6) 1
+#endif /* defined(INET) && defined(INET6) */
+
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
 int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
@@ -154,55 +158,99 @@ tcp_init()
  * for the TCP header.  Also, we made the former tcpiphdr header pointer 
  * into just an IP overlay pointer, with casting as appropriate for v6. rja
  */
-struct tcpiphdr *
+struct mbuf *
 tcp_template(tp)
 	struct tcpcb *tp;
 {
 	register struct inpcb *inp = tp->t_inpcb;
 	register struct mbuf *m;
-	register struct tcpiphdr *n;
 	register struct tcphdr *th;
-#ifdef INET6
-	register struct tcpipv6hdr *ti6;
-	register struct ipv6 *ipv6;
-#endif /* INET6 */
 
-	if ((n = tp->t_template) == 0) {
+	if ((m = tp->t_template) == 0) {
 		m = m_get(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
 			return (0);
+
+#ifdef defined(INET) && defined(INET6)
+		switch (tp->pf) {
+#else /* defined(INET) && defined(INET6) */
+		switch (0) {
+#endif /* defined(INET) && defined(INET6) */
+		case 0:
+#ifdef INET
+		case AF_INET:
+			m->m_len = sizeof(struct ip);
+			break;
+#endif /* INET */
 #ifdef INET6
-		if (tp->pf == PF_INET6) 
-			m->m_len = sizeof (struct tcphdr) + sizeof(struct ipv6);
-		else 
+		case AF_INET6:
+			m->m_len = sizeof(struct ipv6);
+			break;
 #endif /* INET6 */
-			m->m_len = sizeof (struct tcpiphdr);
-		n = mtod(m, struct tcpiphdr *);
+		}
+		m->m_len += sizeof (struct tcphdr);
+
+		/*
+		 * The link header, network header, TCP header, and TCP options
+		 * all must fit in this mbuf. For now, assume the worst case of
+		 * TCP options size. Eventually, compute this from tp flags.
+		 */ 
+		if (m->m_len + MAX_TCPOPTLEN + max_linkhdr >= MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
+				return (0);
+			}
+		}
 	}
+
+#ifdef defined(INET) && defined(INET6)
+	switch(tp->pf) {
+#else /* defined(INET) && defined(INET6) */
+	switch(0) {
+#endif /* defined(INET) && defined(INET6) */
+	case 0:
+#ifdef INET
+	case AF_INET:
+		{
+			struct ipovly *ipovly;
+
+			ipovly = mtod(m, struct ipovly *);
+
+			bzero(ipovly->ih_x1, sizeof ipovly->ih_x1);
+			ipovly->ih_pr = IPPROTO_TCP;
+			ipovly->ih_len = htons(sizeof (struct tcpiphdr) -
+				sizeof (struct ip));
+			ipovly->ih_src = inp->inp_laddr;
+			ipovly->ih_dst = inp->inp_faddr;
+
+			th = (struct tcphdr *)(mtod(m, caddr_t) +
+				sizeof(struct ip));
+		}
+		break;
+#endif /* INET */
 #ifdef INET6
-	if (tp->pf == PF_INET6) {
+	case AF_INET6:
+		{
+			struct ipv6 *ipv6;
 
-		ti6 = (struct tcpipv6hdr *)n;
-		ipv6 = (struct ipv6 *)n;
-		th = &ti6->ti6_t;
+			ipv6 = mtod(m, struct ipv6 *);
 
-		ipv6->ipv6_src = inp->inp_laddr6;
-		ipv6->ipv6_dst = inp->inp_faddr6;
-		ipv6->ipv6_versfl = htonl(0x60000000) |
-		    (inp->inp_ipv6.ipv6_versfl & htonl(0x0fffffff));  
-						  
-		ipv6->ipv6_nexthdr = IPPROTO_TCP;
-		ipv6->ipv6_length = htons(sizeof(struct tcphdr)); /*XXX*/
-		ipv6->ipv6_hoplimit = inp->inp_ipv6.ipv6_hoplimit;
-	} else
+			ipv6->ipv6_src = inp->inp_laddr6;
+			ipv6->ipv6_dst = inp->inp_faddr6;
+			ipv6->ipv6_versfl = htonl(0x60000000) |
+				(inp->inp_ipv6.ipv6_versfl &
+				htonl(0x0fffffff));  
+
+			ipv6->ipv6_nexthdr = IPPROTO_TCP;
+			ipv6->ipv6_length = htons(sizeof(struct tcphdr));
+			ipv6->ipv6_hoplimit = inp->inp_ipv6.ipv6_hoplimit;
+
+			th = (struct tcphdr *)(mtod(m, caddr_t) +
+				sizeof(struct ipv6));
+		}
+		break;
 #endif /* INET6 */
-	{
-		th = &n->ti_t;
-		bzero(n->ti_x1, sizeof n->ti_x1);
-		n->ti_pr = IPPROTO_TCP;
-		n->ti_len = htons(sizeof (struct tcpiphdr) - sizeof (struct ip));
-		n->ti_src = inp->inp_laddr;
-		n->ti_dst = inp->inp_faddr;
 	}
 
 	th->th_sport = inp->inp_lport;
@@ -215,7 +263,7 @@ tcp_template(tp)
 	th->th_win = 0;
 	th->th_sum = 0;
 	th->th_urp = 0;
-	return (n);
+	return (m);
 }
 
 /*
@@ -235,9 +283,9 @@ tcp_template(tp)
 /* This function looks hairy, because it was so IPv4-dependent. */
 #endif /* INET6 */
 void
-tcp_respond(tp, ti, m, ack, seq, flags)
+tcp_respond(tp, template, m, ack, seq, flags)
 	struct tcpcb *tp;
-	register struct tcpiphdr *ti;
+	caddr_t template;
 	register struct mbuf *m;
 	tcp_seq ack, seq;
 	int flags;
@@ -246,6 +294,7 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	int win = 0;
 	struct route *ro = 0;
 	register struct tcphdr *th;
+	register struct tcpiphdr *ti = (struct tcpiphdr *)template;
 #ifdef INET6
 	int is_ipv6 = 0;   /* true iff IPv6 */
 #endif /* INET6 */
@@ -600,7 +649,7 @@ tcp_close(tp)
 	}
 #endif
 	if (tp->t_template)
-		(void) m_free(dtom(tp->t_template));
+		(void) m_free(tp->t_template);
 	free(tp, M_PCB);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);

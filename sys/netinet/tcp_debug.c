@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.4 1999/01/11 02:01:35 deraadt Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.5 1999/07/02 20:39:07 cmetz Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -92,10 +92,10 @@ int	tcpconsdebug = 0;
  * Tcp debug routines
  */
 void
-tcp_trace(act, ostate, tp, ti, req, len)
+tcp_trace(act, ostate, tp, headers, req, len)
 	short act, ostate;
 	struct tcpcb *tp;
-	struct tcpiphdr *ti;
+	caddr_t headers;
 	int req;
 	int len;
 {
@@ -104,6 +104,7 @@ tcp_trace(act, ostate, tp, ti, req, len)
 	int flags;
 #endif
 	struct tcp_debug *td = &tcp_debug[tcp_debx++];
+	struct tcpiphdr *ti = (struct tcpiphdr *)headers;
 #ifdef INET6
 	struct tcphdr *th;
 	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)ti;
