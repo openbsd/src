@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.159 2004/04/28 00:38:39 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.160 2004/04/28 06:45:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -422,6 +422,8 @@ init_peer(struct peer *p)
 {
 	p->sock = p->wbuf.sock = -1;
 	p->capa.announce = p->conf.capabilities;
+	p->capa.ann_mp = 1;
+	p->capa.ann_refresh = 1;
 
 	change_state(p, STATE_IDLE, EVNT_NONE);
 	p->IdleHoldTimer = time(NULL);	/* start ASAP */
@@ -973,14 +975,17 @@ session_open(struct peer *p)
 	struct capa_mp		 capa_mp_v4;
 
 	if (p->capa.announce) {
-		/* multiprotocol extensions, RFC 2858 */
-		bzero(&capa_mp_v4, sizeof(capa_mp_v4));
-		capa_mp_v4.afi = AFI_IPv4;
-		capa_mp_v4.safi = SAFI_UNICAST;
-		op_len += 6;	/* 1 code + 1 len + 4 data */
-
-		/* route refresh, RFC 2918 */
-		op_len += 2;	/* 1 code + 1 len, no data */
+		if (p->capa.ann_mp) {
+			/* multiprotocol extensions, RFC 2858 */
+			bzero(&capa_mp_v4, sizeof(capa_mp_v4));
+			capa_mp_v4.afi = AFI_IPv4;
+			capa_mp_v4.safi = SAFI_UNICAST;
+			op_len += 6;	/* 1 code + 1 len + 4 data */
+		}
+		if (p->capa.ann_refresh) {
+			/* route refresh, RFC 2918 */
+			op_len += 2;	/* 1 code + 1 len, no data */
+		}
 
 		if (op_len > 0)
 			optparamlen = sizeof(op_type) + sizeof(op_len) + op_len;
@@ -1018,20 +1023,28 @@ session_open(struct peer *p)
 		errs += buf_add(buf, &op_type, sizeof(op_type));
 		errs += buf_add(buf, &op_len, sizeof(op_len));
 
-		/* multiprotocol extensions, RFC 2858 */
-		capa_code = CAPA_MP;
-		capa_len = 4;
-		errs += buf_add(buf, &capa_code, sizeof(capa_code));
-		errs += buf_add(buf, &capa_len, sizeof(capa_len));
-		errs += buf_add(buf, &capa_mp_v4.afi, sizeof(capa_mp_v4.afi));
-		errs += buf_add(buf, &capa_mp_v4.pad, sizeof(capa_mp_v4.pad));
-		errs += buf_add(buf, &capa_mp_v4.safi, sizeof(capa_mp_v4.safi));
 
-		/* route refresh, RFC 2918 */
-		capa_code = CAPA_REFRESH;
-		capa_len = 0;
-		errs += buf_add(buf, &capa_code, sizeof(capa_code));
-		errs += buf_add(buf, &capa_len, sizeof(capa_len));
+		if (p->capa.ann_mp) {
+			/* multiprotocol extensions, RFC 2858 */
+			capa_code = CAPA_MP;
+			capa_len = 4;
+			errs += buf_add(buf, &capa_code, sizeof(capa_code));
+			errs += buf_add(buf, &capa_len, sizeof(capa_len));
+			errs += buf_add(buf, &capa_mp_v4.afi,
+			    sizeof(capa_mp_v4.afi));
+			errs += buf_add(buf, &capa_mp_v4.pad,
+			    sizeof(capa_mp_v4.pad));
+			errs += buf_add(buf, &capa_mp_v4.safi,
+			    sizeof(capa_mp_v4.safi));
+		}
+
+		if (p->capa.ann_refresh) {
+			/* route refresh, RFC 2918 */
+			capa_code = CAPA_REFRESH;
+			capa_len = 0;
+			errs += buf_add(buf, &capa_code, sizeof(capa_code));
+			errs += buf_add(buf, &capa_len, sizeof(capa_len));
+		}
 	}
 
 	if (errs == 0) {
@@ -1676,6 +1689,8 @@ parse_notification(struct peer *peer)
 	u_int8_t	 errcode;
 	u_int8_t	 subcode;
 	u_int16_t	 datalen;
+	u_int8_t	 capa_code;
+	u_int8_t	 capa_len;
 
 	/* just log */
 	p = peer->rbuf->rptr;
@@ -1695,9 +1710,50 @@ parse_notification(struct peer *peer)
 	p += sizeof(subcode);
 	datalen -= sizeof(subcode);
 
-	/* read & parse data section if needed */
-
 	log_notification(peer, errcode, subcode, p, datalen);
+
+	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
+		if (datalen == 0)	/* zebra likes to send those.. humbug */
+			peer->capa.announce = 0;
+
+		while (datalen > 0) {
+			if (datalen < 2) {
+				log_peer_warnx(&peer->conf,
+				    "parse_notification: "
+				    "expect len >= 2, len is %u", datalen);
+				return (-1);
+			}
+			memcpy(&capa_code, p, sizeof(capa_code));
+			p += sizeof(capa_code);
+			datalen -= sizeof(capa_code);
+			memcpy(&capa_len, p, sizeof(capa_len));
+			p += sizeof(capa_len);
+			datalen -= sizeof(capa_len);
+			if (datalen < capa_len) {
+				log_peer_warnx(&peer->conf,
+				    "parse_notification: capa_len %u exceeds"
+				    "remaining msg length", capa_len);
+				return (-1);
+			}
+			p += capa_len;
+			datalen -= capa_len;
+			switch (capa_code) {
+			case CAPA_MP:
+				peer->capa.ann_mp = 0;
+				log_peer_warnx(&peer->conf,
+				    "disabling multiprotocol capability");
+				break;
+			case CAPA_REFRESH:
+				peer->capa.ann_refresh = 0;
+				log_peer_warnx(&peer->conf,
+				    "disabling route refresh capability");
+				break;
+			default:	/* should not happen... */
+				peer->capa.announce = 0;
+				break;
+			}
+		}
+	}
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
 		peer->capa.announce = 0;
