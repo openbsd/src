@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.26 2004/01/07 16:22:18 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.27 2004/01/12 07:46:16 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -40,7 +40,7 @@
 
 #ifndef	_LOCORE
 
-#include <machine/pcb.h>	/* m88100_saved_state */
+#include <machine/pcb.h>
 #include <machine/trap.h>
 
 #include <uvm/uvm_param.h>
@@ -49,9 +49,10 @@
  * The low two bits of sxip, snip, sfip have valid bits
  * in them that need to masked to get the correct addresses
  */
-#define PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	((regs->sxip & 2) ?  regs->sxip & ~3 : \
-	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
+#define PC_REGS(regs) \
+	cputyp == CPU_88110 ? ((regs)->exip & ~3) : \
+	  (((regs)->sxip & 2) ? (regs)->sxip & ~3 : \
+	    ((regs)->snip & 2 ? (regs)->snip & ~3 : (regs)->sfip & ~3))
 
 /* inst_return(ins) - is the instruction a function call return.
  * Not mutually exclusive with inst_branch. Should be a jmp r1. */
@@ -85,7 +86,7 @@
 
 typedef	vaddr_t		db_addr_t;
 typedef	long		db_expr_t;
-typedef	struct m88100_saved_state db_regs_t;
+typedef	struct reg	db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 

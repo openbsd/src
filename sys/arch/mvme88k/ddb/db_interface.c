@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.37 2004/01/09 11:03:36 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.38 2004/01/12 07:46:14 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -59,7 +59,7 @@ extern int frame_is_sane(db_regs_t *);
 extern void cnpollc(int);
 void kdbprinttrap(int, int);
 
-void m88k_db_trap(int, struct m88100_saved_state *);
+void m88k_db_trap(int, struct trapframe *);
 int ddb_nmi_trap(int, db_regs_t *);
 void ddb_error_trap(char *, db_regs_t *);
 void db_putc(int);
@@ -178,7 +178,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct m88100_saved_state *s = (struct m88100_saved_state *)addr;
+	struct trapframe *s = (struct trapframe *)addr;
 	char *name;
 	db_expr_t offset;
 	int suppress1 = 0, suppress2 = 0;
@@ -227,7 +227,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		}
 	}
 
-#define R(i) s->r[i]
+#define R(i) s->tf_r[i]
 #define IPMASK(x) ((x) &  ~(3))
 	db_printf("R00-05: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
 		  R(0), R(1), R(2), R(3), R(4), R(5));
@@ -242,17 +242,17 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_printf("R30-31: 0x%08x  0x%08x\n", R(30), R(31));
 
 	db_printf("%cxip: 0x%08x ",
-	    cputyp == CPU_88110 ? 'e' : 's', s->sxip & ~3);
-	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sxip),
+	    cputyp == CPU_88110 ? 'e' : 's', s->tf_sxip & ~3);
+	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sxip),
 	    &name, &offset);
 	if (name != NULL && (unsigned)offset <= db_maxoff)
 		db_printf("%s+0x%08x", name, (unsigned)offset);
 	db_printf("\n");
 
-	if (s->snip != s->sxip + 4) {
+	if (s->tf_snip != s->tf_sxip + 4) {
 		db_printf("%cnip: 0x%08x ",
-		    cputyp == CPU_88110 ? 'e' : 's', s->snip);
-		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->snip),
+		    cputyp == CPU_88110 ? 'e' : 's', s->tf_snip);
+		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_snip),
 		    &name, &offset);
 		if (name != NULL && (unsigned)offset <= db_maxoff)
 			db_printf("%s+0x%08x", name, (unsigned)offset);
@@ -260,9 +260,9 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	}
 
 	if (cputyp != CPU_88110) {
-		if (s->sfip != s->snip + 4) {
-			db_printf("sfip: 0x%08x ", s->sfip);
-			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sfip),
+		if (s->tf_sfip != s->tf_snip + 4) {
+			db_printf("sfip: 0x%08x ", s->tf_sfip);
+			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sfip),
 			    &name, &offset);
 			if (name != NULL && (unsigned)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (unsigned)offset);
@@ -270,17 +270,17 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		}
 	} else {
 		db_printf("fpsr: 0x%08x fpcr: 0x%08x fpecr: 0x%08x\n",
-			  s->fpsr, s->fpcr, s->fpecr);
+			  s->tf_fpsr, s->tf_fpcr, s->tf_fpecr);
 		db_printf("dsap 0x%08x duap 0x%08x dsr 0x%08x dlar 0x%08x dpar 0x%08x\n",
-			  s->dsap, s->duap, s->dsr, s->dlar, s->dpar);
+			  s->tf_dsap, s->tf_duap, s->tf_dsr, s->tf_dlar, s->tf_dpar);
 		db_printf("isap 0x%08x iuap 0x%08x isr 0x%08x ilar 0x%08x ipar 0x%08x\n",
-			  s->isap, s->iuap, s->isr, s->ilar, s->ipar);
+			  s->tf_isap, s->tf_iuap, s->tf_isr, s->tf_ilar, s->tf_ipar);
 	}
 
 	db_printf("epsr: 0x%08x                current process: %p\n",
-		  s->epsr, curproc);
+		  s->tf_epsr, curproc);
 	db_printf("vector: 0x%02x                    interrupt mask: 0x%08x\n",
-		  s->vector, s->mask);
+		  s->tf_vector, s->tf_mask);
 
 	/*
 	 * If the vector indicates trap, instead of an exception or
@@ -289,64 +289,64 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	 * Interrupt and exceptions are vectored at 0-10 and 114-127.
 	 */
 
-	if (!(s->vector <= 10 || (114 <= s->vector && s->vector <= 127))) {
+	if (!(s->tf_vector <= 10 || (114 <= s->tf_vector && s->tf_vector <= 127))) {
 		db_printf("\n");
 		return;
 	}
 
 #ifdef M88100
 	if (cputyp != CPU_88110) {
-		if (s->vector == /*data*/3 || s->dmt0 & DMT_VALID) {
+		if (s->tf_vector == /*data*/3 || s->tf_dmt0 & DMT_VALID) {
 			db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
-			    s->dmt0, s->dmd0, s->dma0);
-			db_find_xtrn_sym_and_offset((db_addr_t)s->dma0, &name, &offset);
+			    s->tf_dmt0, s->tf_dmd0, s->tf_dma0);
+			db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma0, &name, &offset);
 			if (name != NULL && (unsigned)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (unsigned)offset);
 			db_printf("\n          ");
 
-			suppress1 = m88k_dmx_print(s->dmt0, s->dmd0, s->dma0, 0);
+			suppress1 = m88k_dmx_print(s->tf_dmt0, s->tf_dmd0, s->tf_dma0, 0);
 			db_printf("\n");
 
-			if ((s->dmt1 & DMT_VALID) && (!suppress1)) {
+			if ((s->tf_dmt1 & DMT_VALID) && (!suppress1)) {
 				db_printf("dmt,d,a1: 0x%08x  0x%08x  0x%08x ",
-				    s->dmt1, s->dmd1, s->dma1);
-				db_find_xtrn_sym_and_offset((db_addr_t)s->dma1,
+				    s->tf_dmt1, s->tf_dmd1, s->tf_dma1);
+				db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma1,
 				    &name, &offset);
 				if (name != NULL &&
 				    (unsigned)offset <= db_maxoff)
 					db_printf("%s+0x%08x", name, (unsigned)offset);
 				db_printf("\n          ");
-				suppress2 = m88k_dmx_print(s->dmt1, s->dmd1, s->dma1, 1);
+				suppress2 = m88k_dmx_print(s->tf_dmt1, s->tf_dmd1, s->tf_dma1, 1);
 				db_printf("\n");
 
-				if ((s->dmt2 & DMT_VALID) && (!suppress2)) {
+				if ((s->tf_dmt2 & DMT_VALID) && (!suppress2)) {
 					db_printf("dmt,d,a2: 0x%08x  0x%08x  0x%08x ",
-						  s->dmt2, s->dmd2, s->dma2);
-					db_find_xtrn_sym_and_offset((db_addr_t)s->dma2,
+						  s->tf_dmt2, s->tf_dmd2, s->tf_dma2);
+					db_find_xtrn_sym_and_offset((db_addr_t)s->tf_dma2,
 								    &name, &offset);
 					if (name != 0 && (unsigned)offset <= db_maxoff)
 						db_printf("%s+0x%08x", name, (unsigned)offset);
 					db_printf("\n          ");
-					m88k_dmx_print(s->dmt2, s->dmd2, s->dma2, 2);
+					m88k_dmx_print(s->tf_dmt2, s->tf_dmd2, s->tf_dma2, 2);
 					db_printf("\n");
 				}
 			}
 
 			db_printf("fault code %d dpfsr %x\n",
-			    (s->dpfsr >> 16) & 0x07, s->dpfsr);
+			    (s->tf_dpfsr >> 16) & 0x07, s->tf_dpfsr);
 		}
 	}
 #endif	/* M88100 */
 
-	if (s->fpecr & 255) { /* floating point error occurred */
+	if (s->tf_fpecr & 255) { /* floating point error occurred */
 		db_printf("fpecr: 0x%08x fpsr: 0x%08x fpcr: 0x%08x\n",
-			  s->fpecr, s->fpsr, s->fpcr);
+			  s->tf_fpecr, s->tf_fpsr, s->tf_fpcr);
 #ifdef M88100
 		if (cputyp != CPU_88110) {
 			db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",
-				  s->fphs1, s->fpls1, s->fphs2, s->fpls2);
+				  s->tf_fphs1, s->tf_fpls1, s->tf_fphs2, s->tf_fpls2);
 			db_printf("fcr5-8: 0x%08x  0x%08x  0x%08x  0x%08x\n",
-				  s->fppt, s->fprh, s->fprl, s->fpit);
+				  s->tf_fppt, s->tf_fprh, s->tf_fprl, s->tf_fpit);
 		}
 #endif
 	}
@@ -380,7 +380,7 @@ m88k_db_pause(ticks)
 void
 m88k_db_trap(type, regs)
 	int type;
-	struct m88100_saved_state *regs;
+	struct trapframe *regs;
 {
 #if 0
 	int i;
@@ -408,7 +408,7 @@ m88k_db_trap(type, regs)
 		}
 	}
 
-	ddb_regs = *regs;
+	ddb_regs = *((struct reg *)regs);
 
 	db_active++;
 	cnpollc(TRUE);
@@ -416,7 +416,7 @@ m88k_db_trap(type, regs)
 	cnpollc(FALSE);
 	db_active--;
 
-	*regs = ddb_regs;
+	*((struct reg *)regs) = ddb_regs;
 
 #if 0
 	(void) spl7();
@@ -456,7 +456,7 @@ ddb_nmi_trap(level, eframe)
 {
 	if (db_noisy)
 		db_printf("kernel: nmi interrupt\n");
-	m88k_db_trap(T_KDB_ENTRY, eframe);
+	m88k_db_trap(T_KDB_ENTRY, (struct trapframe *)eframe);
 
 	return 0;
 }
@@ -474,7 +474,7 @@ ddb_break_trap(type, eframe)
 	int type;
 	db_regs_t *eframe;
 {
-	m88k_db_trap(type, eframe);
+	m88k_db_trap(type, (struct trapframe *)eframe);
 
 	if (type == T_KDB_BREAK) {
 		/*
@@ -497,7 +497,7 @@ ddb_entry_trap(level, eframe)
 	int level;
 	db_regs_t *eframe;
 {
-	m88k_db_trap(T_KDB_ENTRY, eframe);
+	m88k_db_trap(T_KDB_ENTRY, (struct trapframe *)eframe);
 
 	return 0;
 }
@@ -508,16 +508,16 @@ ddb_entry_trap(level, eframe)
  */
 /* error trap - unreturnable */
 void
-ddb_error_trap(error, eframe)
+ddb_error_trap(error, regs)
 	char *error;
-	db_regs_t *eframe;
+	db_regs_t *regs;
 {
 	db_printf("KERNEL:  terminal error [%s]\n", error);
 	db_printf("KERNEL:  Exiting debugger will cause abort to rom\n");
-	db_printf("at 0x%x ", eframe->sxip & ~3);
-	db_printf("dmt0 0x%x dma0 0x%x", eframe->dmt0, eframe->dma0);
+	db_printf("at 0x%x ", regs->sxip & ~3);
+	db_printf("dmt0 0x%x dma0 0x%x", regs->dmt0, regs->dma0);
 	m88k_db_pause(1000000);
-	m88k_db_trap(T_KDB_BREAK, eframe);
+	m88k_db_trap(T_KDB_BREAK, (struct trapframe *)regs);
 }
 
 /*
@@ -584,14 +584,11 @@ m88k_db_where(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct m88100_saved_state *s;
 	char *name;
 	db_expr_t offset;
 	db_addr_t l;
 
-	s = DDB_REGS;
-
-	l = PC_REGS(s); /* clear low bits */
+	l = PC_REGS(DDB_REGS); /* clear low bits */
 
 	db_find_xtrn_sym_and_offset(l, &name, &offset);
 	if (name && (unsigned)offset <= db_maxoff)

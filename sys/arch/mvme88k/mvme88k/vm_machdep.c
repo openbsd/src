@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.58 2004/01/08 14:35:33 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.59 2004/01/12 07:46:17 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -111,7 +111,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	bcopy(&p1->p_addr->u_pcb, &p2->p_addr->u_pcb, sizeof(struct pcb));
 	p2->p_addr->u_pcb.kernel_state.pcb_ipl = IPL_NONE;	/* XXX */
-	p2->p_md.md_tf = USER_REGS(p2);
+	p2->p_md.md_tf = (struct trapframe *)USER_REGS(p2);
 
 	/*XXX these may not be necessary nivas */
 	save_u_area(p2, (vaddr_t)p2->p_addr);

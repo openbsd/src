@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.127 2004/01/05 20:07:03 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.128 2004/01/12 07:46:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -130,9 +130,9 @@ void identifycpu(void);
 void save_u_area(struct proc *, vaddr_t);
 void load_u_area(struct proc *);
 void dumpconf(void);
-void m187_ext_int(u_int v, struct m88100_saved_state *eframe);
-void m188_ext_int(u_int v, struct m88100_saved_state *eframe);
-void m197_ext_int(u_int v, struct m88100_saved_state *eframe);
+void m187_ext_int(u_int v, struct trapframe *eframe);
+void m188_ext_int(u_int v, struct trapframe *eframe);
+void m197_ext_int(u_int v, struct trapframe *eframe);
 
 unsigned char *volatile ivec[] = {
 	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
@@ -760,7 +760,7 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	struct trapframe *tf = USER_REGS(p);
+	struct trapframe *tf = (struct trapframe *)USER_REGS(p);
 
 	/*
 	 * The syscall will ``return'' to snip; set it.
@@ -796,17 +796,17 @@ setregs(p, pack, stack, retval)
 		 * user mode, serialize mem, interrupts enabled,
 		 * graphics unit, fp enabled
 		 */
-		tf->epsr = PSR_SRM | PSR_SFD;
+		tf->tf_epsr = PSR_SRM | PSR_SFD;
 		/*
 		 * XXX disable OoO for now...
 		 */
-		tf->epsr |= PSR_SER;
+		tf->tf_epsr |= PSR_SER;
 	} else {
 		/*
 		 * user mode, interrupts enabled,
 		 * no graphics unit, fp enabled
 		 */
-		tf->epsr = PSR_SFD | PSR_SFD2;
+		tf->tf_epsr = PSR_SFD | PSR_SFD2;
 	}
 
 	/*
@@ -817,16 +817,16 @@ setregs(p, pack, stack, retval)
 	 * fetched.  mc88110 - just set exip to pack->ep_entry.
 	 */
 	if (cputyp == CPU_88110) {
-		tf->exip = pack->ep_entry & ~3;
+		tf->tf_exip = pack->ep_entry & ~3;
 #ifdef DEBUG
-		printf("exec @ 0x%x\n", tf->exip);
+		printf("exec @ 0x%x\n", tf->tf_exip);
 #endif
 	} else {
-		tf->snip = pack->ep_entry & ~3;
-		tf->sfip = (pack->ep_entry & ~3) | FIP_V;
+		tf->tf_snip = pack->ep_entry & ~3;
+		tf->tf_sfip = (pack->ep_entry & ~3) | FIP_V;
 	}
-	tf->r[2] = stack;
-	tf->r[31] = stack;
+	tf->tf_r[2] = stack;
+	tf->tf_r[31] = stack;
 	retval[1] = 0;
 }
 
@@ -892,7 +892,7 @@ sendsig(catcher, sig, mask, code, type, val)
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		fp = (struct sigframe *)(tf->r[31] - fsize);
+		fp = (struct sigframe *)(tf->tf_r[31] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (unsigned)fp);
 
@@ -920,7 +920,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Copy the whole user context into signal context that we
 	 * are building.
 	 */
-	bcopy((caddr_t)tf->r, (caddr_t)sf.sf_sc.sc_regs,
+	bcopy((caddr_t)tf->tf_r, (caddr_t)sf.sf_sc.sc_regs,
 	      sizeof(sf.sf_sc.sc_regs));
 
 	/*
@@ -930,53 +930,53 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		sf.sf_sc.sc_xip = tf->sxip;
-		sf.sf_sc.sc_nip = tf->snip;
-		sf.sf_sc.sc_fip = tf->sfip;
+		sf.sf_sc.sc_xip = tf->tf_sxip;
+		sf.sf_sc.sc_nip = tf->tf_snip;
+		sf.sf_sc.sc_fip = tf->tf_sfip;
 	} else {
 		/* mc88110 */
-		sf.sf_sc.sc_xip = tf->exip;
-		sf.sf_sc.sc_nip = tf->enip;
+		sf.sf_sc.sc_xip = tf->tf_exip;
+		sf.sf_sc.sc_nip = tf->tf_enip;
 		sf.sf_sc.sc_fip = 0;
 	}
-	sf.sf_sc.sc_ps = tf->epsr;
-	sf.sf_sc.sc_sp  = tf->r[31];
-	sf.sf_sc.sc_fpsr = tf->fpsr;
-	sf.sf_sc.sc_fpcr = tf->fpcr;
+	sf.sf_sc.sc_ps = tf->tf_epsr;
+	sf.sf_sc.sc_sp  = tf->tf_r[31];
+	sf.sf_sc.sc_fpsr = tf->tf_fpsr;
+	sf.sf_sc.sc_fpcr = tf->tf_fpcr;
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		sf.sf_sc.sc_ssbr = tf->ssbr;
-		sf.sf_sc.sc_dmt0 = tf->dmt0;
-		sf.sf_sc.sc_dmd0 = tf->dmd0;
-		sf.sf_sc.sc_dma0 = tf->dma0;
-		sf.sf_sc.sc_dmt1 = tf->dmt1;
-		sf.sf_sc.sc_dmd1 = tf->dmd1;
-		sf.sf_sc.sc_dma1 = tf->dma1;
-		sf.sf_sc.sc_dmt2 = tf->dmt2;
-		sf.sf_sc.sc_dmd2 = tf->dmd2;
-		sf.sf_sc.sc_dma2 = tf->dma2;
+		sf.sf_sc.sc_ssbr = tf->tf_ssbr;
+		sf.sf_sc.sc_dmt0 = tf->tf_dmt0;
+		sf.sf_sc.sc_dmd0 = tf->tf_dmd0;
+		sf.sf_sc.sc_dma0 = tf->tf_dma0;
+		sf.sf_sc.sc_dmt1 = tf->tf_dmt1;
+		sf.sf_sc.sc_dmd1 = tf->tf_dmd1;
+		sf.sf_sc.sc_dma1 = tf->tf_dma1;
+		sf.sf_sc.sc_dmt2 = tf->tf_dmt2;
+		sf.sf_sc.sc_dmd2 = tf->tf_dmd2;
+		sf.sf_sc.sc_dma2 = tf->tf_dma2;
 	} else {
 		/* mc88110 */
-		sf.sf_sc.sc_dsr  = tf->dsr;
-		sf.sf_sc.sc_dlar = tf->dlar;
-		sf.sf_sc.sc_dpar = tf->dpar;
-		sf.sf_sc.sc_isr  = tf->isr;
-		sf.sf_sc.sc_ilar = tf->ilar;
-		sf.sf_sc.sc_ipar = tf->ipar;
-		sf.sf_sc.sc_isap = tf->isap;
-		sf.sf_sc.sc_dsap = tf->dsap;
-		sf.sf_sc.sc_iuap = tf->iuap;
-		sf.sf_sc.sc_duap = tf->duap;
+		sf.sf_sc.sc_dsr  = tf->tf_dsr;
+		sf.sf_sc.sc_dlar = tf->tf_dlar;
+		sf.sf_sc.sc_dpar = tf->tf_dpar;
+		sf.sf_sc.sc_isr  = tf->tf_isr;
+		sf.sf_sc.sc_ilar = tf->tf_ilar;
+		sf.sf_sc.sc_ipar = tf->tf_ipar;
+		sf.sf_sc.sc_isap = tf->tf_isap;
+		sf.sf_sc.sc_dsap = tf->tf_dsap;
+		sf.sf_sc.sc_iuap = tf->tf_iuap;
+		sf.sf_sc.sc_duap = tf->tf_duap;
 	}
-	sf.sf_sc.sc_fpecr = tf->fpecr;
-	sf.sf_sc.sc_fphs1 = tf->fphs1;
-	sf.sf_sc.sc_fpls1 = tf->fpls1;
-	sf.sf_sc.sc_fphs2 = tf->fphs2;
-	sf.sf_sc.sc_fpls2 = tf->fpls2;
-	sf.sf_sc.sc_fppt = tf->fppt;
-	sf.sf_sc.sc_fprh = tf->fprh;
-	sf.sf_sc.sc_fprl = tf->fprl;
-	sf.sf_sc.sc_fpit = tf->fpit;
+	sf.sf_sc.sc_fpecr = tf->tf_fpecr;
+	sf.sf_sc.sc_fphs1 = tf->tf_fphs1;
+	sf.sf_sc.sc_fpls1 = tf->tf_fpls1;
+	sf.sf_sc.sc_fphs2 = tf->tf_fphs2;
+	sf.sf_sc.sc_fpls2 = tf->tf_fpls2;
+	sf.sf_sc.sc_fppt = tf->tf_fppt;
+	sf.sf_sc.sc_fprh = tf->tf_fprh;
+	sf.sf_sc.sc_fprl = tf->tf_fprl;
+	sf.sf_sc.sc_fpit = tf->tf_fpit;
 
 	if (copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf)) {
 		/*
@@ -998,14 +998,14 @@ sendsig(catcher, sig, mask, code, type, val)
 	addr = p->p_sigcode;
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		tf->snip = (addr & ~3) | NIP_V;
-		tf->sfip = (tf->snip + 4) | FIP_V;
+		tf->tf_snip = (addr & ~3) | NIP_V;
+		tf->tf_sfip = (tf->tf_snip + 4) | FIP_V;
 	} else {
 		/* mc88110 */
-		tf->exip = (addr & ~3);
-		tf->enip = (tf->exip + 4);
+		tf->tf_exip = (addr & ~3);
+		tf->tf_enip = (tf->tf_exip + 4);
 	}
-	tf->r[31] = (unsigned)fp;
+	tf->tf_r[31] = (unsigned)fp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
@@ -1055,56 +1055,56 @@ sys_sigreturn(p, v, retval)
 	 *	 bcopy(sc_reg to tf, sizeof sigcontext - 2 words)
 	 * XXX nivas
 	 */
-	bcopy((caddr_t)scp->sc_regs, (caddr_t)tf->r, sizeof(scp->sc_regs));
+	bcopy((caddr_t)scp->sc_regs, (caddr_t)tf->tf_r, sizeof(scp->sc_regs));
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		tf->sxip = scp->sc_xip;
-		tf->snip = scp->sc_nip;
-		tf->sfip = scp->sc_fip;
+		tf->tf_sxip = scp->sc_xip;
+		tf->tf_snip = scp->sc_nip;
+		tf->tf_sfip = scp->sc_fip;
 	} else {
 		/* mc88110 */
-		tf->exip = scp->sc_xip;
-		tf->enip = scp->sc_nip;
-		tf->sfip = 0;
+		tf->tf_exip = scp->sc_xip;
+		tf->tf_enip = scp->sc_nip;
+		tf->tf_sfip = 0;
 	}
-	tf->epsr = scp->sc_ps;
-	tf->r[31] = scp->sc_sp;
-	tf->fpsr = scp->sc_fpsr;
-	tf->fpcr = scp->sc_fpcr;
+	tf->tf_epsr = scp->sc_ps;
+	tf->tf_r[31] = scp->sc_sp;
+	tf->tf_fpsr = scp->sc_fpsr;
+	tf->tf_fpcr = scp->sc_fpcr;
 	if (cputyp != CPU_88110) {
 		/* mc88100 */
-		tf->ssbr = scp->sc_ssbr;
-		tf->dmt0 = scp->sc_dmt0;
-		tf->dmd0 = scp->sc_dmd0;
-		tf->dma0 = scp->sc_dma0;
-		tf->dmt1 = scp->sc_dmt1;
-		tf->dmd1 = scp->sc_dmd1;
-		tf->dma1 = scp->sc_dma1;
-		tf->dmt2 = scp->sc_dmt2;
-		tf->dmd2 = scp->sc_dmd2;
-		tf->dma2 = scp->sc_dma2;
+		tf->tf_ssbr = scp->sc_ssbr;
+		tf->tf_dmt0 = scp->sc_dmt0;
+		tf->tf_dmd0 = scp->sc_dmd0;
+		tf->tf_dma0 = scp->sc_dma0;
+		tf->tf_dmt1 = scp->sc_dmt1;
+		tf->tf_dmd1 = scp->sc_dmd1;
+		tf->tf_dma1 = scp->sc_dma1;
+		tf->tf_dmt2 = scp->sc_dmt2;
+		tf->tf_dmd2 = scp->sc_dmd2;
+		tf->tf_dma2 = scp->sc_dma2;
 	} else {
 		/* mc88110 */
-		tf->dsr  = scp->sc_dsr;
-		tf->dlar = scp->sc_dlar;
-		tf->dpar = scp->sc_dpar;
-		tf->isr  = scp->sc_isr;
-		tf->ilar = scp->sc_ilar;
-		tf->ipar = scp->sc_ipar;
-		tf->isap = scp->sc_isap;
-		tf->dsap = scp->sc_dsap;
-		tf->iuap = scp->sc_iuap;
-		tf->duap = scp->sc_duap;
+		tf->tf_dsr  = scp->sc_dsr;
+		tf->tf_dlar = scp->sc_dlar;
+		tf->tf_dpar = scp->sc_dpar;
+		tf->tf_isr  = scp->sc_isr;
+		tf->tf_ilar = scp->sc_ilar;
+		tf->tf_ipar = scp->sc_ipar;
+		tf->tf_isap = scp->sc_isap;
+		tf->tf_dsap = scp->sc_dsap;
+		tf->tf_iuap = scp->sc_iuap;
+		tf->tf_duap = scp->sc_duap;
 	}
-	tf->fpecr = scp->sc_fpecr;
-	tf->fphs1 = scp->sc_fphs1;
-	tf->fpls1 = scp->sc_fpls1;
-	tf->fphs2 = scp->sc_fphs2;
-	tf->fpls2 = scp->sc_fpls2;
-	tf->fppt = scp->sc_fppt;
-	tf->fprh = scp->sc_fprh;
-	tf->fprl = scp->sc_fprl;
-	tf->fpit = scp->sc_fpit;
+	tf->tf_fpecr = scp->sc_fpecr;
+	tf->tf_fphs1 = scp->sc_fphs1;
+	tf->tf_fpls1 = scp->sc_fpls1;
+	tf->tf_fphs2 = scp->sc_fphs2;
+	tf->tf_fpls2 = scp->sc_fpls2;
+	tf->tf_fppt = scp->sc_fppt;
+	tf->tf_fprh = scp->sc_fprh;
+	tf->tf_fprl = scp->sc_fprl;
+	tf->tf_fpit = scp->sc_fpit;
 
 	/*
 	 * Restore the user supplied information
@@ -1566,7 +1566,7 @@ unsigned obio_vec[32] = {
 #define VME_BERR_MASK		0x100 		/* timeout during VME IACK cycle */
 
 void
-m188_ext_int(u_int v, struct m88100_saved_state *eframe)
+m188_ext_int(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
 	unsigned int cur_mask;
@@ -1577,7 +1577,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
 	old_spl = m188_curspl[cpu];
-	eframe->mask = old_spl;
+	eframe->tf_mask = old_spl;
 
 	if (cur_mask == 0) {
 		/*
@@ -1716,14 +1716,14 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 	disable_interrupt();
 out:
-	if (eframe->dmt0 & DMT_VALID)
+	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
 
 	/*
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl(eframe->mask);
+	setipl(eframe->tf_mask);
 }
 
 #endif /* MVME188 */
@@ -1739,7 +1739,7 @@ out:
 
 #ifdef MVME187
 void
-m187_ext_int(u_int v, struct m88100_saved_state *eframe)
+m187_ext_int(u_int v, struct trapframe *eframe)
 {
 	int mask, level;
 	struct intrhand *intr;
@@ -1831,7 +1831,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * returning to assembler
 	 */
 	disable_interrupt();
-	if (eframe->dmt0 & DMT_VALID)
+	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
 
 	/*
@@ -1844,7 +1844,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 #ifdef MVME197
 void
-m197_ext_int(u_int v, struct m88100_saved_state *eframe)
+m197_ext_int(u_int v, struct trapframe *eframe)
 {
 	int mask, level, src;
 	struct intrhand *intr;
@@ -2207,7 +2207,7 @@ void
 nmihand(void *framep)
 {
 #if 0
-	struct m88100_saved_state *frame = framep;
+	struct trapframe *frame = framep;
 #endif
 
 #if DDB
@@ -2221,7 +2221,7 @@ nmihand(void *framep)
 void
 regdump(struct trapframe *f)
 {
-#define R(i) f->r[i]
+#define R(i) f->tf_r[i]
 	printf("R00-05: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
 	       R(0),R(1),R(2),R(3),R(4),R(5));
 	printf("R06-11: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
@@ -2234,40 +2234,47 @@ regdump(struct trapframe *f)
 	       R(24),R(25),R(26),R(27),R(28),R(29));
 	printf("R30-31: 0x%08x  0x%08x\n",R(30),R(31));
 	if (cputyp == CPU_88110) {
-		printf("exip %x enip %x\n", f->exip, f->enip);
+		printf("exip %x enip %x\n", f->tf_exip, f->tf_enip);
 	} else {
-		printf("sxip %x snip %x sfip %x\n", f->sxip, f->snip, f->sfip);
+		printf("sxip %x snip %x sfip %x\n",
+		    f->tf_sxip, f->tf_snip, f->tf_sfip);
 	}
 #ifdef M88100
-	if (f->vector == 0x3 && cputyp != CPU_88110) {
+	if (f->tf_vector == 0x3 && cputyp != CPU_88110) {
 		/* print dmt stuff for data access fault */
-		printf("dmt0 %x dmd0 %x dma0 %x\n", f->dmt0, f->dmd0, f->dma0);
-		printf("dmt1 %x dmd1 %x dma1 %x\n", f->dmt1, f->dmd1, f->dma1);
-		printf("dmt2 %x dmd2 %x dma2 %x\n", f->dmt2, f->dmd2, f->dma2);
-		printf("fault type %d\n", (f->dpfsr >> 16) & 0x7);
+		printf("dmt0 %x dmd0 %x dma0 %x\n",
+		    f->tf_dmt0, f->tf_dmd0, f->tf_dma0);
+		printf("dmt1 %x dmd1 %x dma1 %x\n",
+		    f->tf_dmt1, f->tf_dmd1, f->tf_dma1);
+		printf("dmt2 %x dmd2 %x dma2 %x\n",
+		    f->tf_dmt2, f->tf_dmd2, f->tf_dma2);
+		printf("fault type %d\n", (f->tf_dpfsr >> 16) & 0x7);
 		dae_print((unsigned *)f);
 	}
 	if (longformat && cputyp != CPU_88110) {
 		printf("fpsr %x fpcr %x epsr %x ssbr %x\n",
-		       f->fpsr, f->fpcr, f->epsr, f->ssbr);
+		    f->tf_fpsr, f->tf_fpcr, f->tf_epsr, f->tf_ssbr);
 		printf("fpecr %x fphs1 %x fpls1 %x fphs2 %x fpls2 %x\n",
-		       f->fpecr, f->fphs1, f->fpls1, f->fphs2, f->fpls2);
+		    f->tf_fpecr, f->tf_fphs1, f->tf_fpls1,
+		    f->tf_fphs2, f->tf_fpls2);
 		printf("fppt %x fprh %x fprl %x fpit %x\n",
-		       f->fppt, f->fprh, f->fprl, f->fpit);
+		    f->tf_fppt, f->tf_fprh, f->tf_fprl, f->tf_fpit);
 		printf("vector %d mask %x mode %x scratch1 %x cpu %x\n",
-		       f->vector, f->mask, f->mode, f->scratch1, f->cpu);
+		    f->tf_vector, f->tf_mask, f->tf_mode,
+		    f->tf_scratch1, f->tf_cpu);
 	}
 #endif
 #ifdef M88110
 	if (longformat && cputyp == CPU_88110) {
 		printf("fpsr %x fpcr %x fpecr %x epsr %x\n",
-		       f->fpsr, f->fpcr, f->fpecr, f->epsr);
+		    f->tf_fpsr, f->tf_fpcr, f->tf_fpecr, f->tf_epsr);
 		printf("dsap %x duap %x dsr %x dlar %x dpar %x\n",
-		       f->dsap, f->duap, f->dsr, f->dlar, f->dpar);
+		    f->tf_dsap, f->tf_duap, f->tf_dsr, f->tf_dlar, f->tf_dpar);
 		printf("isap %x iuap %x isr %x ilar %x ipar %x\n",
-		       f->isap, f->iuap, f->isr, f->ilar, f->ipar);
+		    f->tf_isap, f->tf_iuap, f->tf_isr, f->tf_ilar, f->tf_ipar);
 		printf("vector %d mask %x mode %x scratch1 %x cpu %x\n",
-		       f->vector, f->mask, f->mode, f->scratch1, f->cpu);
+		    f->tf_vector, f->tf_mask, f->tf_mode,
+		    f->tf_scratch1, f->tf_cpu);
 	}
 #endif
 #ifdef MVME188
@@ -2276,7 +2283,7 @@ regdump(struct trapframe *f)
 
 		istr = *(int *volatile)IST_REG;
 		cur_mask = GET_MASK(0, istr);
-		printf("emask = 0x%b\n", f->mask, IST_STRING);
+		printf("emask = 0x%b\n", f->tf_mask, IST_STRING);
 		printf("istr  = 0x%b\n", istr, IST_STRING);
 		printf("cmask = 0x%b\n", cur_mask, IST_STRING);
 	}

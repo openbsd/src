@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2003/11/08 16:43:02 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2004/01/12 07:46:17 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.9 2003/11/08 16:43:02 miod Exp $
+#	$Id: genassym.cf,v 1.10 2004/01/12 07:46:17 miod Exp $
 #
 
 include <sys/param.h>
@@ -67,56 +67,56 @@ member	PCB_USER_STATE		user_state
 export	SYS_exit
 export	SYS_sigreturn
 
-# m88100_saved_state element indexes
-define	EF_R0		offsetof(struct m88100_saved_state, r[0]) / sizeof(int)
-define	EF_FPSR		offsetof(struct m88100_saved_state, fpsr) / sizeof(int)
-define	EF_FPCR		offsetof(struct m88100_saved_state, fpcr) / sizeof(int)
-define	EF_EPSR		offsetof(struct m88100_saved_state, epsr) / sizeof(int)
-define	EF_SXIP		offsetof(struct m88100_saved_state, sxip) / sizeof(int)
-define	EF_SFIP		offsetof(struct m88100_saved_state, sfip) / sizeof(int)
-define	EF_SNIP		offsetof(struct m88100_saved_state, snip) / sizeof(int)
-define	EF_SSBR		offsetof(struct m88100_saved_state, ssbr) / sizeof(int)
-define	EF_DMT0		offsetof(struct m88100_saved_state, dmt0) / sizeof(int)
-define	EF_DMD0		offsetof(struct m88100_saved_state, dmd0) / sizeof(int)
-define	EF_DMA0		offsetof(struct m88100_saved_state, dma0) / sizeof(int)
-define	EF_DMT1		offsetof(struct m88100_saved_state, dmt1) / sizeof(int)
-define	EF_DMD1		offsetof(struct m88100_saved_state, dmd1) / sizeof(int)
-define	EF_DMA1		offsetof(struct m88100_saved_state, dma1) / sizeof(int)
-define	EF_DMT2		offsetof(struct m88100_saved_state, dmt2) / sizeof(int)
-define	EF_DMD2		offsetof(struct m88100_saved_state, dmd2) / sizeof(int)
-define	EF_DMA2		offsetof(struct m88100_saved_state, dma2) / sizeof(int)
-define	EF_FPECR	offsetof(struct m88100_saved_state, fpecr) / sizeof(int)
-define	EF_FPHS1	offsetof(struct m88100_saved_state, fphs1) / sizeof(int)
-define	EF_FPLS1	offsetof(struct m88100_saved_state, fpls1) / sizeof(int)
-define	EF_FPHS2	offsetof(struct m88100_saved_state, fphs2) / sizeof(int)
-define	EF_FPLS2	offsetof(struct m88100_saved_state, fpls2) / sizeof(int)
-define	EF_FPPT		offsetof(struct m88100_saved_state, fppt) / sizeof(int)
-define	EF_FPRH		offsetof(struct m88100_saved_state, fprh) / sizeof(int)
-define	EF_FPRL		offsetof(struct m88100_saved_state, fprl) / sizeof(int)
-define	EF_FPIT		offsetof(struct m88100_saved_state, fpit) / sizeof(int)
-define	EF_VECTOR	offsetof(struct m88100_saved_state, vector) / sizeof(int)
-define	EF_MASK		offsetof(struct m88100_saved_state, mask) / sizeof(int)
-define	EF_MODE		offsetof(struct m88100_saved_state, mode) / sizeof(int)
-define	EF_RET		offsetof(struct m88100_saved_state, scratch1) / sizeof(int)
-define	EF_IPFSR	offsetof(struct m88100_saved_state, ipfsr) / sizeof(int)
-define	EF_DPFSR	offsetof(struct m88100_saved_state, dpfsr) / sizeof(int)
-define	EF_CPU		offsetof(struct m88100_saved_state, cpu) / sizeof(int)
+# trapframe element indexes
+define	EF_R0		offsetof(struct trapframe, tf_r[0]) / sizeof(int)
+define	EF_FPSR		offsetof(struct trapframe, tf_fpsr) / sizeof(int)
+define	EF_FPCR		offsetof(struct trapframe, tf_fpcr) / sizeof(int)
+define	EF_EPSR		offsetof(struct trapframe, tf_epsr) / sizeof(int)
+define	EF_SXIP		offsetof(struct trapframe, tf_sxip) / sizeof(int)
+define	EF_SFIP		offsetof(struct trapframe, tf_sfip) / sizeof(int)
+define	EF_SNIP		offsetof(struct trapframe, tf_snip) / sizeof(int)
+define	EF_SSBR		offsetof(struct trapframe, tf_ssbr) / sizeof(int)
+define	EF_DMT0		offsetof(struct trapframe, tf_dmt0) / sizeof(int)
+define	EF_DMD0		offsetof(struct trapframe, tf_dmd0) / sizeof(int)
+define	EF_DMA0		offsetof(struct trapframe, tf_dma0) / sizeof(int)
+define	EF_DMT1		offsetof(struct trapframe, tf_dmt1) / sizeof(int)
+define	EF_DMD1		offsetof(struct trapframe, tf_dmd1) / sizeof(int)
+define	EF_DMA1		offsetof(struct trapframe, tf_dma1) / sizeof(int)
+define	EF_DMT2		offsetof(struct trapframe, tf_dmt2) / sizeof(int)
+define	EF_DMD2		offsetof(struct trapframe, tf_dmd2) / sizeof(int)
+define	EF_DMA2		offsetof(struct trapframe, tf_dma2) / sizeof(int)
+define	EF_FPECR	offsetof(struct trapframe, tf_fpecr) / sizeof(int)
+define	EF_FPHS1	offsetof(struct trapframe, tf_fphs1) / sizeof(int)
+define	EF_FPLS1	offsetof(struct trapframe, tf_fpls1) / sizeof(int)
+define	EF_FPHS2	offsetof(struct trapframe, tf_fphs2) / sizeof(int)
+define	EF_FPLS2	offsetof(struct trapframe, tf_fpls2) / sizeof(int)
+define	EF_FPPT		offsetof(struct trapframe, tf_fppt) / sizeof(int)
+define	EF_FPRH		offsetof(struct trapframe, tf_fprh) / sizeof(int)
+define	EF_FPRL		offsetof(struct trapframe, tf_fprl) / sizeof(int)
+define	EF_FPIT		offsetof(struct trapframe, tf_fpit) / sizeof(int)
+define	EF_VECTOR	offsetof(struct trapframe, tf_vector) / sizeof(int)
+define	EF_MASK		offsetof(struct trapframe, tf_mask) / sizeof(int)
+define	EF_MODE		offsetof(struct trapframe, tf_mode) / sizeof(int)
+define	EF_RET		offsetof(struct trapframe, tf_scratch1) / sizeof(int)
+define	EF_IPFSR	offsetof(struct trapframe, tf_ipfsr) / sizeof(int)
+define	EF_DPFSR	offsetof(struct trapframe, tf_dpfsr) / sizeof(int)
+define	EF_CPU		offsetof(struct trapframe, tf_cpu) / sizeof(int)
 
-# m88110 m88100_saved_state element indexes
-define	EF_EXIP		offsetof(struct m88100_saved_state, exip) / sizeof(int)
-define	EF_ENIP		offsetof(struct m88100_saved_state, enip) / sizeof(int)
-define	EF_DSR		offsetof(struct m88100_saved_state, dsr) / sizeof(int)
-define	EF_DLAR		offsetof(struct m88100_saved_state, dlar) / sizeof(int)
-define	EF_DPAR		offsetof(struct m88100_saved_state, dpar) / sizeof(int)
-define	EF_ISR		offsetof(struct m88100_saved_state, isr) / sizeof(int)
-define	EF_ILAR		offsetof(struct m88100_saved_state, ilar) / sizeof(int)
-define	EF_IPAR		offsetof(struct m88100_saved_state, ipar) / sizeof(int)
-define	EF_ISAP		offsetof(struct m88100_saved_state, isap) / sizeof(int)
-define	EF_DSAP		offsetof(struct m88100_saved_state, dsap) / sizeof(int)
-define	EF_IUAP		offsetof(struct m88100_saved_state, iuap) / sizeof(int)
-define	EF_DUAP		offsetof(struct m88100_saved_state, duap) / sizeof(int)
+# m88110 trapframe element indexes
+define	EF_EXIP		offsetof(struct trapframe, tf_exip) / sizeof(int)
+define	EF_ENIP		offsetof(struct trapframe, tf_enip) / sizeof(int)
+define	EF_DSR		offsetof(struct trapframe, tf_dsr) / sizeof(int)
+define	EF_DLAR		offsetof(struct trapframe, tf_dlar) / sizeof(int)
+define	EF_DPAR		offsetof(struct trapframe, tf_dpar) / sizeof(int)
+define	EF_ISR		offsetof(struct trapframe, tf_isr) / sizeof(int)
+define	EF_ILAR		offsetof(struct trapframe, tf_ilar) / sizeof(int)
+define	EF_IPAR		offsetof(struct trapframe, tf_ipar) / sizeof(int)
+define	EF_ISAP		offsetof(struct trapframe, tf_isap) / sizeof(int)
+define	EF_DSAP		offsetof(struct trapframe, tf_dsap) / sizeof(int)
+define	EF_IUAP		offsetof(struct trapframe, tf_iuap) / sizeof(int)
+define	EF_DUAP		offsetof(struct trapframe, tf_duap) / sizeof(int)
 
-define	SIZEOF_EF	sizeof(struct m88100_saved_state)
+define	SIZEOF_EF	sizeof(struct trapframe)
 
 # more (machine-dependent) pcb fields
 struct	m88100_pcb

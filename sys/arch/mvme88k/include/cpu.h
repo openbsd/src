@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2003/11/09 00:32:00 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.24 2004/01/12 07:46:16 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -77,9 +77,9 @@ struct clockframe {
 	struct trapframe tf;
 };
 
-#define	CLKF_USERMODE(framep)	((((struct trapframe *)(framep))->epsr & PSR_MODE) == 0)
-#define	CLKF_PC(framep)		(((struct trapframe *)(framep))->sxip & XIP_ADDR)
-#define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->r[31] >= UADDR)
+#define	CLKF_USERMODE(framep)	((((struct trapframe *)(framep))->tf_epsr & PSR_MODE) == 0)
+#define	CLKF_PC(framep)		(((struct trapframe *)(framep))->tf_sxip & XIP_ADDR)
+#define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->tf_r[31] >= UADDR)
 
 /*
  * Get interrupt glue.
@@ -183,7 +183,7 @@ struct md_p {
 	void (*statclock_init_func)(void);  /* statistics clock init function */
 	void (*delayclock_init_func)(void); /* delay clock init function */
 	void (*delay_func)(void);           /* delay clock function */
-	void (*interrupt_func)(u_int, struct m88100_saved_state *);       /* interrupt func */
+	void (*interrupt_func)(u_int, struct trapframe *);       /* interrupt func */
 	u_char *volatile intr_mask;
 	u_char *volatile intr_ipl;
 	u_char *volatile intr_src;

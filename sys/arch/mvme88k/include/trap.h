@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.21 2004/01/11 23:52:45 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.22 2004/01/12 07:46:17 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -67,13 +67,12 @@
 
 #ifndef _LOCORE
 
-void m88100_trap(unsigned, struct m88100_saved_state *);
-void m88100_syscall(register_t, struct m88100_saved_state *);
+void m88100_trap(unsigned, struct trapframe *);
+void m88100_syscall(register_t, struct trapframe *);
 
-void m88110_trap(unsigned, struct m88100_saved_state *);
-void m88110_syscall(register_t, struct m88100_saved_state *);
+void m88110_trap(unsigned, struct trapframe *);
+void m88110_syscall(register_t, struct trapframe *);
 
 #endif /* _LOCORE */
 
 #endif /* __MACHINE_TRAP_H__ */
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.11 2003/11/08 16:43:00 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.12 2004/01/12 07:46:16 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -42,16 +42,9 @@
  * in the saved_state area - this is passed as the exception frame.
  * On a context switch, only registers that need to be saved by the
  * C calling convention and few other regs (pc, psr etc) are saved
- * in the kernel_state part of the PCB. Typically, trap fames are
- * save on the stack (by low level handlers or by hardware) but,
+ * in the kernel_state part of the PCB. Typically, trap frames are
+ * saved on the stack (by low level handlers or by hardware) but,
  * we just decided to do it in the PCB.
- */
-
-/*
- * This must always be an even number of words long so that our stack
- * will always be properly aligned (88k need 8 byte alignment). Also,
- * place r14 on double word boundary so that we can use st.d while
- * saving the regs.
  */
 
 struct m88100_pcb {
@@ -80,21 +73,71 @@ struct m88100_pcb {
 	unsigned pcb_fcr63;
 };
 
-#define m88100_saved_state reg
-#define trapframe m88100_saved_state
+struct trapframe {
+	union {
+		struct reg	r;
+	} F_r;
+};
+
+#define	tf_r		F_r.r.r
+#define	tf_sp		F_r.r.r[31]
+#define	tf_epsr		F_r.r.epsr
+#define	tf_fpsr		F_r.r.fpsr
+#define	tf_fpcr		F_r.r.fpcr
+#define	tf_sxip		F_r.r.sxip
+#define	tf_snip		F_r.r.snip
+#define	tf_sfip		F_r.r.sfip
+#define	tf_exip		F_r.r.sxip
+#define	tf_enip		F_r.r.snip
+#define	tf_ssbr		F_r.r.ssbr
+#define	tf_dmt0		F_r.r.dmt0
+#define	tf_dmd0		F_r.r.dmd0
+#define	tf_dma0		F_r.r.dma0
+#define	tf_dmt1		F_r.r.dmt1
+#define	tf_dmd1		F_r.r.dmd1
+#define	tf_dma1		F_r.r.dma1
+#define	tf_dmt2		F_r.r.dmt2
+#define	tf_dmd2		F_r.r.dmd2
+#define	tf_dma2		F_r.r.dma2
+#define	tf_duap		F_r.r.ssbr
+#define	tf_dsr		F_r.r.dmt0
+#define	tf_dlar		F_r.r.dmd0
+#define	tf_dpar		F_r.r.dma0
+#define	tf_isr		F_r.r.dmt1
+#define	tf_ilar		F_r.r.dmd1
+#define	tf_ipar		F_r.r.dma1
+#define	tf_isap		F_r.r.dmt2
+#define	tf_dsap		F_r.r.dmd2
+#define	tf_iuap		F_r.r.dma2
+#define	tf_fpecr	F_r.r.fpecr
+#define	tf_fphs1	F_r.r.fphs1
+#define	tf_fpls1	F_r.r.fpls1
+#define	tf_fphs2	F_r.r.fphs2
+#define	tf_fpls2	F_r.r.fpls2
+#define	tf_fppt		F_r.r.fppt
+#define	tf_fprh		F_r.r.fprh
+#define	tf_fprl		F_r.r.fprl
+#define	tf_fpit		F_r.r.fpit
+#define	tf_scratch1	F_r.r.scratch1
+#define	tf_vector	F_r.r.vector
+#define	tf_mask		F_r.r.mask
+#define	tf_mode		F_r.r.mode
+#define	tf_ipfsr	F_r.r.ipfsr
+#define	tf_dpfsr	F_r.r.dpfsr
+#define	tf_cpu		F_r.r.cpu
 
 struct pcb
 {
-	struct m88100_pcb		kernel_state;
-	struct m88100_saved_state	user_state;
-	int				pcb_onfault;
+	struct m88100_pcb	kernel_state;
+	struct trapframe	user_state;
+	int			pcb_onfault;
 };
 
 /*
  *	Location of saved user registers for the proc.
  */
 #define	USER_REGS(p) \
-	(((struct m88100_saved_state *)  (&((p)->p_addr->u_pcb.user_state))))
+	(((struct reg *)(&((p)->p_addr->u_pcb.user_state))))
 /*
  * The pcb is augmented with machine-dependent additional data for
  * core dumps.  Note that the trapframe here is a copy of the one

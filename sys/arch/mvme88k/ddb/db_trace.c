@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.23 2004/01/07 17:52:30 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.24 2004/01/12 07:46:14 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1007,7 +1007,7 @@ db_stack_trace_print(db_expr_t addr,
 	enum {
 		Default, Stack, Frame
 	} style = Default;
-	db_regs_t frame; /* a m88100_saved_state */
+	db_regs_t frame;
 	db_regs_t *regs;
 	union {
 		db_regs_t *frame;

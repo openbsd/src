@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.19 2003/10/05 20:27:46 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.20 2004/01/12 07:46:16 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -60,11 +60,11 @@ void dosoftint(void);
 void MY_info(struct trapframe *f, caddr_t p, int flags, char *s);
 void MY_info_done(struct trapframe *f, int flags);
 void mvme_bootstrap(void);
-void m187_ext_int(u_int v, struct m88100_saved_state *eframe);
+void m187_ext_int(u_int v, struct trapframe *eframe);
 void m188_reset(void);
-void m188_ext_int(u_int v, struct m88100_saved_state *eframe);
+void m188_ext_int(u_int v, struct trapframe *eframe);
 unsigned int safe_level(unsigned mask, unsigned curlevel);
-void m197_ext_int(u_int v, struct m88100_saved_state *eframe);
+void m197_ext_int(u_int v, struct trapframe *eframe);
 
 /* eh.S */
 
