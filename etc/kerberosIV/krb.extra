@@ -1,4 +1,4 @@
-# $OpenBSD: krb.extra,v 1.2 2002/06/09 06:15:15 todd Exp $
+# $OpenBSD: krb.extra,v 1.3 2003/01/06 11:33:25 miod Exp $
 #
 # This file holds some configuration options that are not normally used.
 # Please see krb.extra(5) for more information about this file - only
@@ -13,7 +13,7 @@
 
 # kdc_timesync makes KerberosIV store the time difference between the client
 # and the KDC. This makes it possible to use KerberosIV if for some reason you
-# cannot syncronize the clocks. Default is no.
+# cannot synchronize the clocks. Default is no.
 #kdc_timesync=yes
 
 # To get KerberosIV tickets via a http proxy, use krb4_proxy to specify what

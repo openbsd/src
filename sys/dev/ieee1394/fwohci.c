@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.9 2002/12/30 11:12:12 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.10 2003/01/06 11:33:28 miod Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*
@@ -1335,7 +1335,7 @@ fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
 }
 
 /*
- * Asyncronous/Isochronous Transmit/Receive Context.
+ * Asynchronous/Isochronous Transmit/Receive Context.
  */
 int
 fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
@@ -2143,7 +2143,7 @@ fwohci_block_handler_set(struct fwohci_softc *sc, int tcode,
 }
 
 /*
- * Asyncronous Receive Requests input frontend.
+ * Asynchronous Receive Requests input frontend.
  */
 void
 fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)

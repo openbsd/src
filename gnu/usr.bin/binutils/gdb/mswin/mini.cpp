@@ -130,7 +130,7 @@ BOOL CMiniMDIChildWnd::OnNcCreate(LPCREATESTRUCT lpcs)
  
 	if (GetStyle() & MFS_SYNCACTIVE) 
 	{ 
-		// syncronize activation state with top level parent 
+		// synchronize activation state with top level parent 
 		CWnd* pParentWnd = GetTopLevelParent(); 
 		ASSERT(pParentWnd != NULL); 
 		CWnd* pActiveWnd = GetForegroundWindow(); 

@@ -4714,7 +4714,7 @@ Perl_regprop(pTHX_ SV *sv, regnode *o)
     else if (k == ANYOF) {
 	int i, rangestart = -1;
 	U8 flags = ANYOF_FLAGS(o);
-	const char * const anyofs[] = {	/* Should be syncronized with
+	const char * const anyofs[] = {	/* Should be synchronized with
 					 * ANYOF_ #xdefines in regcomp.h */
 	    "\\w",
 	    "\\W",
