@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.48 2001/08/06 20:48:26 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.49 2001/08/11 01:57:25 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -743,9 +743,6 @@ allocsys(v)
 	    v = (caddr_t)(((name) = (type *)v) + (num))
 
 	valloc(timeouts, struct timeout, ntimeout);
-#if 0
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
-#endif 
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
