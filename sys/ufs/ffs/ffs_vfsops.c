@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.12 1997/11/06 05:59:20 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.13 1997/11/11 15:28:44 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -197,7 +197,8 @@ ffs_mount(mp, path, data, ndp, p)
 				VOP_UNLOCK(devvp, 0, p);
 			}
 			fs->fs_ronly = 0;
-			fs->fs_clean <<= 1;
+			if (fs->fs_clean & FS_ISCLEAN)
+			  fs->fs_clean = FS_WASCLEAN;
 			fs->fs_fmod = 1;
 			(void) ffs_sbupdate(ump, MNT_WAIT);
 		}
@@ -542,7 +543,9 @@ ffs_mountfs(devvp, mp, p)
 			free(base, M_UFSMNT);
 			goto out;
 		}
-		fs->fs_clean = 0;
+		if (fs->fs_clean & FS_ISCLEAN)
+		  fs->fs_clean = FS_WASCLEAN;
+
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	return (0);
