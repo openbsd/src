@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2003/02/14 20:17:45 jason Exp $
+#	$OpenBSD: Makefile,v 1.12 2003/08/11 06:35:45 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 .PATH:	${.CURDIR}/../common
@@ -15,7 +15,7 @@ CFLAGS=	-O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
 	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS} \
 	-DSPARC_BOOT_AOUT -DSPARC_BOOT_ELF
 
-CLEANFILES+=${PROG}.aout ${PROG}.elf
+CLEANFILES+=${PROG}.aout ${PROG}.elf elfclean
 LIBS=${LIBSA} ${LIBKERN} ${LIBZ}
 
 elfclean: clean-elf.c
