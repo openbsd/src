@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.11 2002/02/13 22:36:58 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.12 2002/02/13 22:50:40 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -105,7 +105,10 @@ findbuffer(fname)
 	/* new buffer name */
 	for (count = 1; bfind(bname, FALSE) != NULL; count++)
 		;
-	snprintf(bname, sizeof bname, "%s<%d>", basename(fname), count);
+	if (count == 1)
+		snprintf(bname, sizeof bname, "%s", basename(fname));
+	else
+		snprintf(bname, sizeof bname, "%s<%d>", basename(fname), count);
 
 	return bfind(bname, TRUE);
 }
