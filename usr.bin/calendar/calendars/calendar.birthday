@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.2 1996/12/05 06:04:44 millert Exp $
+ * $OpenBSD: calendar.birthday,v 1.3 1997/04/02 04:46:54 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -101,6 +101,7 @@
 03/30	Vincent Van Gogh born, 1853
 03/31	Descartes born, 1596
 03/31	Rene Descartes born, 1596, mathematician & philosopher
+04/01	Nikolay Vasilyevich Gogol born, 1827
 04/03	Washington Irving born, 1783
 04/05	Thomas Hobbes born, 1588, philosopher
 04/08	Buddha born, 563 BC
