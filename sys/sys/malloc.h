@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.44 2001/05/20 00:09:57 angelos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.45 2001/07/26 13:59:23 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -157,8 +157,8 @@
 #define M_VMSWAP	92	/* VM swap structures */
 
 #define	M_RAIDFRAME	97	/* Raidframe data */
-#define M_UVMAMAP	98	/* UVM amap and realted */
-#define M_UVMAOBJ	99	/* UVM aobj and realted */
+#define M_UVMAMAP	98	/* UVM amap and related */
+#define M_UVMAOBJ	99	/* UVM aobj and related */
 #define M_POOL		100	/* Pool memory */
 #define	M_USB		101	/* USB general */
 #define	M_USBDEV	102	/* USB device driver */
