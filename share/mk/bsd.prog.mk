@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.38 2003/08/29 00:04:41 jolan Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.39 2004/06/03 20:51:07 miod Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -63,8 +63,9 @@ LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
-.if ${MACHINE_ARCH} == "i386"
-LIBARCH?=	${DESTDIR}/usr/lib/libi386.a
+.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \
+     ${MACHINE_ARCH} == "i386")
+LIBARCH?=	${DESTDIR}/usr/lib/lib${MACHINE_ARCH}.a
 .else
 LIBARCH?=
 .endif
