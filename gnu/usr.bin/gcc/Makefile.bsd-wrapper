@@ -1,0 +1,39 @@
+#	$Id: Makefile.bsd-wrapper,v 1.1 1995/12/21 01:16:07 niklas Exp $
+
+MAN=	cccp.1 gcc.1 cp/g++.1
+MLINKS=	gcc.1 cc.1
+
+all:	config.status
+	${MAKE} BISON=yacc
+
+.FORCE:	.IGNORE
+
+config: .FORCE
+	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
+		--prefix=/usr
+
+config.status:
+	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
+		--prefix=/usr
+
+install:	maninstall
+	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
+		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
+		install
+	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>

@@ -189,8 +189,8 @@ RTL_H = $(srcdir)/../rtl.h $(srcdir)/../rtl.def \
 TREE_H = $(srcdir)/../tree.h $(srcdir)/../real.h $(srcdir)/../tree.def \
 	$(srcdir)/../machmode.h $(srcdir)/../machmode.def
 CXX_TREE_H = $(TREE_H) cp-tree.h tree.def
-PARSE_H = $(srcdir)/parse.h
-PARSE_C = $(srcdir)/parse.c
+PARSE_H = parse.h
+PARSE_C = parse.c
 
 parse.o : $(PARSE_C) $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h lex.h
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(BIG_SWITCHFLAG) \
@@ -200,8 +200,8 @@ CONFLICTS = expect 5 shift/reduce conflicts and 38 reduce/reduce conflicts.
 $(PARSE_H) : $(PARSE_C)
 $(PARSE_C) : $(srcdir)/parse.y
 	@echo $(CONFLICTS)
-	cd $(srcdir); $(BISON) $(BISONFLAGS) -d -o parse.c parse.y
-	cd $(srcdir); grep '^#define[ 	]*YYEMPTY' parse.c >>parse.h
+	$(BISON) $(BISONFLAGS) -d -o parse.c $(srcdir)/parse.y
+	grep '^#define[ 	]*YYEMPTY' parse.c >>parse.h
 #$(PARSE_C) $(PARSE_H) : stamp-parse ; @true
 #stamp-parse: $(srcdir)/parse.y
 #	@echo $(CONFLICTS)
@@ -212,13 +212,14 @@ $(PARSE_C) : $(srcdir)/parse.y
 #	cp $(PARSE_C) y.tab.c
 #	touch stamp-parse
 
-# hash.h really depends on $(srcdir)/gxx.gperf.
-# But this would screw things for people that don't have gperf,
-# if gxx.gpref got touched, say.
-# Thus you have to remove hash.h to force it to be re-made.
-$(srcdir)/hash.h:
-	gperf -p -j1 -g -o -t -N is_reserved_word '-k1,4,7,$$' \
-		$(srcdir)/gxx.gperf >$(srcdir)/hash.h
+# XXX OpenBSD
+## hash.h really depends on $(srcdir)/gxx.gperf.
+## But this would screw things for people that don't have gperf,
+## if gxx.gpref got touched, say.
+## Thus you have to remove hash.h to force it to be re-made.
+#$(srcdir)/hash.h:
+#	gperf -p -j1 -g -o -t -N is_reserved_word '-k1,4,7,$$' \
+#		$(srcdir)/gxx.gperf >$(srcdir)/hash.h
 
 spew.o : spew.c $(CONFIG_H) $(CXX_TREE_H) \
   $(PARSE_H) $(srcdir)/../flags.h lex.h

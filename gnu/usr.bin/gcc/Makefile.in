@@ -118,6 +118,10 @@ USER_H = $(srcdir)/ginclude/stdarg.h $(srcdir)/ginclude/stddef.h \
 # want to set this empty.
 INSTALL_ASSERT_H = install-assert-h
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 # The GCC to use for compiling libgcc2.a, enquire, and libgcc1-test.
 # Usually the one we just built.
 # Don't use this as a dependency--use $(GCC_PASSES) or $(GCC_PARTS).
@@ -1049,27 +1053,28 @@ stamp-crtS:	crtstuff.c $(GCC_PASSES) $(CONFIG_H) gbl-ctors.h
 
 # C language specific files.
 
-c-parse.o : $(srcdir)/c-parse.c $(CONFIG_H) $(TREE_H) c-lex.h \
-    $(srcdir)/c-parse.h c-tree.h input.h flags.h
-	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c $(srcdir)/c-parse.c
-$(srcdir)/c-parse.h: $(srcdir)/c-parse.c
-$(srcdir)/c-parse.c: $(srcdir)/c-parse.y
-	cd $(srcdir); $(BISON) $(BISONFLAGS) -d c-parse.y -o c-parse.c
-$(srcdir)/c-parse.y: c-parse.in
+c-parse.o : c-parse.c $(CONFIG_H) $(TREE_H) c-lex.h \
+    c-parse.h c-tree.h input.h flags.h
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c c-parse.c
+c-parse.h: c-parse.c
+c-parse.c: c-parse.y
+	$(BISON) $(BISONFLAGS) -d c-parse.y -o c-parse.c
+c-parse.y: c-parse.in
 	sed -e "/^ifobjc$$/,/^end ifobjc$$/d" \
 	  -e "/^ifc$$/d" -e "/^end ifc$$/d" \
 	  $(srcdir)/c-parse.in >tmp-c-parse.y
-	$(srcdir)/move-if-change tmp-c-parse.y $(srcdir)/c-parse.y
+	$(srcdir)/move-if-change tmp-c-parse.y c-parse.y
 
-$(srcdir)/c-gperf.h: c-parse.gperf
-	gperf -p -j1 -i 1 -g -o -t -G -N is_reserved_word -k1,3,$$ \
-	   $(srcdir)/c-parse.gperf >tmp-gperf.h
-	 $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
+# XXX OpenBSD
+#$(srcdir)/c-gperf.h: c-parse.gperf
+#	gperf -p -j1 -i 1 -g -o -t -G -N is_reserved_word -k1,3,$$ \
+#	   $(srcdir)/c-parse.gperf >tmp-gperf.h
+#	 $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
 
 c-decl.o : c-decl.c $(CONFIG_H) $(TREE_H) c-tree.h c-lex.h flags.h output.h
 c-typeck.o : c-typeck.c $(CONFIG_H) $(TREE_H) c-tree.h flags.h output.h
 c-lang.o : c-lang.c $(CONFIG_H) $(TREE_H)
-c-lex.o : c-lex.c $(CONFIG_H) $(TREE_H) c-lex.h c-tree.h $(srcdir)/c-parse.h \
+c-lex.o : c-lex.c $(CONFIG_H) $(TREE_H) c-lex.h c-tree.h c-parse.h \
     input.h flags.h $(srcdir)/c-gperf.h c-pragma.h
 c-aux-info.o : c-aux-info.c  $(CONFIG_H) $(TREE_H) c-tree.h flags.h
 c-convert.o : c-convert.c $(CONFIG_H) $(TREE_H) flags.h
@@ -1112,19 +1117,19 @@ stamp-under: $(GCC_PASSES)
 
 # Objective C language specific files.
 
-objc-parse.o : $(srcdir)/objc-parse.c $(CONFIG_H) $(TREE_H) c-lex.h \
+objc-parse.o : objc-parse.c $(CONFIG_H) $(TREE_H) c-lex.h \
    c-tree.h input.h flags.h objc-act.h
-	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c $(srcdir)/objc-parse.c
-$(srcdir)/objc-parse.c : $(srcdir)/objc-parse.y
-	cd $(srcdir); $(BISON) $(BISONFLAGS) objc-parse.y -o objc-parse.c
-$(srcdir)/objc-parse.y: $(srcdir)/c-parse.in
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c objc-parse.c
+objc-parse.c : objc-parse.y
+	$(BISON) $(BISONFLAGS) objc-parse.y -o objc-parse.c
+objc-parse.y: c-parse.in
 	sed -e "/^ifc$$/,/^end ifc$$/d" \
 	  -e "/^ifobjc$$/d" -e "/^end ifobjc$$/d" \
 	  $(srcdir)/c-parse.in >tmp-objc-prs.y
-	$(srcdir)/move-if-change tmp-objc-prs.y $(srcdir)/objc-parse.y
+	$(srcdir)/move-if-change tmp-objc-prs.y objc-parse.y
 
 objc-act.o : objc-act.c $(CONFIG_H) $(TREE_H) $(RTL_H) c-tree.h c-lex.h \
-   flags.h objc-act.h input.h function.h $(srcdir)/c-parse.h
+   flags.h objc-act.h input.h function.h c-parse.h
 
 # A file used by all variants of C.
 
@@ -1550,13 +1555,13 @@ bi-opname: bi-opname.o $(BI_OBJ) $(HOST_LIBDEPS)
 	$(HOST_CC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -o $@ \
 	 bi-opname.o $(BI_OBJ) $(HOST_LIBS)
 
-$(srcdir)/bi-parser.h: $(srcdir)/bi-parser.c
-$(srcdir)/bi-parser.c: $(srcdir)/bi-parser.y
-	cd $(srcdir); $(BISON) $(BISONFLAGS) -d bi-parser.y -o bi-parser.c
+bi-parser.h: bi-parser.c
+bi-parser.c: $(srcdir)/bi-parser.y
+	$(BISON) $(BISONFLAGS) -d $(srcdir)/bi-parser.y -o bi-parser.c
 
-bi-parser.o: $(srcdir)/bi-parser.c bi-defs.h $(build_xm_file)
+bi-parser.o: bi-parser.c bi-defs.h $(build_xm_file)
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
-	   $(srcdir)/bi-parser.c
+	   bi-parser.c
 bi-lexer.o: bi-lexer.c $(srcdir)/bi-parser.h $(build_xm_file)
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
 	   $(srcdir)/bi-lexer.c
@@ -1611,10 +1616,10 @@ cpp: $(CCCP)
 cccp: cccp.o cexp.o version.o $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ cccp.o cexp.o \
 	  version.o $(LIBS)
-cexp.o: $(srcdir)/cexp.c $(CONFIG_H)
-	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c $(srcdir)/cexp.c
-$(srcdir)/cexp.c: $(srcdir)/cexp.y
-	cd $(srcdir); $(BISON) -o cexp.c cexp.y
+cexp.o: cexp.c $(CONFIG_H)
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c cexp.c
+cexp.c: $(srcdir)/cexp.y
+	$(BISON) -o cexp.c $(srcdir)/cexp.y
 
 cccp.o: cccp.c $(CONFIG_H) pcp.h version.c config.status
 # The reason we use $(libdir)/g++-include rather than using libsubdir
@@ -1865,29 +1870,32 @@ stmp-fixproto: fixhdr.ready fixproto stmp-headers
 # Remake the info files.
 
 doc: info
-info: $(srcdir)/cpp.info $(srcdir)/gcc.info lang.info
+info: cpp.info gcc.info lang.info
 
-$(srcdir)/cpp.info: cpp.texi
-	cd $(srcdir); $(MAKEINFO) cpp.texi
+cpp.info: cpp.texi
+	$(MAKEINFO) $(srcdir)/cpp.texi -o cpp.info
 
-$(srcdir)/gcc.info: gcc.texi extend.texi install.texi invoke.texi \
+gcc.info: gcc.texi extend.texi install.texi invoke.texi \
 		md.texi rtl.texi tm.texi 
-	cd $(srcdir); $(MAKEINFO) gcc.texi
+	$(MAKEINFO) -I$(srcdir) $(srcdir)/gcc.texi -o gcc.info
 
-dvi: $(srcdir)/gcc.dvi $(srcdir)/cpp.dvi lang.dvi
+dvi: gcc.dvi cpp.dvi lang.dvi
 
-# This works with GNU Make's default rule.
-$(srcdir)/gcc.dvi: gcc.texi extend.texi install.texi invoke.texi \
-		md.texi rtl.texi tm.texi 
-	$(TEXI2DVI) $<
+# XXX OpenBSD
+## This works with GNU Make's default rule.
+#$(srcdir)/gcc.dvi: gcc.texi extend.texi install.texi invoke.texi \
+#		md.texi rtl.texi tm.texi 
+#	$(TEXI2DVI) $<
 
-# This works with GNU Make's default rule.
-$(srcdir)/cpp.dvi: cpp.texi
-	$(TEXI2DVI) $<
+# XXX OpenBSD
+## This works with GNU Make's default rule.
+#$(srcdir)/cpp.dvi: cpp.texi
+#	$(TEXI2DVI) $<
 
-$(srcdir)/INSTALL: install1.texi install.texi
-	$(MAKEINFO) -D INSTALLONLY --no-header --no-split \
-	  `echo $(srcdir)/install1.texi | sed 's,^\./,,'`
+# XXX OpenBSD
+#$(srcdir)/INSTALL: install1.texi install.texi
+#	$(MAKEINFO) -D INSTALLONLY --no-header --no-split \
+#	  `echo $(srcdir)/install1.texi | sed 's,^\./,,'`
 
 # Deletion of files made during compilation.
 # There are four levels of this:
@@ -2022,7 +2030,7 @@ install: $(INSTALL_TARGET) ; @true
 # Install the driver last so that the window when things are
 # broken is small.
 install-normal: install-common $(INSTALL_HEADERS) $(INSTALL_LIBGCC) \
-    install-libobjc install-man install-info lang.install-normal install-driver
+    install-libobjc $(INSTALL_MAN) install-info lang.install-normal install-driver
 
 # Do nothing while making gcc with a cross-compiler. The person who
 # makes gcc for the target machine has to know how to put a complete
@@ -2119,17 +2127,19 @@ install-driver: xgcc
 	else \
 	  rm -f $(bindir)/$(GCC_INSTALL_NAME)$(exeext); \
 	  $(INSTALL_PROGRAM) xgcc$(exeext) $(bindir)/$(GCC_INSTALL_NAME)$(exeext); \
-	  rm -f $(bindir)/$(target)-gcc-1$(exeext); \
-	  ln $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target)-gcc-1$(exeext) \
-	    > /dev/null 2>&1 \
-	    || cp $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target)-gcc-1$(exeext); \
-	  mv $(bindir)/$(target)-gcc-1$(exeext) $(bindir)/$(target)-gcc$(exeext); \
+	  if [ X$(NO_TARGET_GCC) = X ]; then \
+	    rm -f $(bindir)/$(target)-gcc-1$(exeext); \
+	    ln $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target)-gcc-1$(exeext) \
+	      > /dev/null 2>&1 \
+	      || cp $(bindir)/$(GCC_INSTALL_NAME)$(exeext) $(bindir)/$(target)-gcc-1$(exeext); \
+	    mv $(bindir)/$(target)-gcc-1$(exeext) $(bindir)/$(target)-gcc$(exeext); \
+	  fi; \
 	fi
 
 # Install the info files.
 install-info: doc install-dir lang.install-info
 	-rm -f $(infodir)/cpp.info* $(infodir)/gcc.info*
-	cd $(srcdir); for f in cpp.info* gcc.info*; \
+	for f in cpp.info* gcc.info*; \
 	do $(INSTALL_DATA) $$f $(infodir)/$$f; done
 	-chmod a-x $(infodir)/cpp.info* $(infodir)/gcc.info*
 

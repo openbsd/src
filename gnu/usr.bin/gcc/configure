@@ -948,6 +948,15 @@ for machine in $canon_build $canon_host $canon_target; do
 		tmake_file=t-libc-ok
 		xmake_file=x-netbsd
 		;;
+	i[345]86-*-openbsd*)
+		cpu_type=i386
+		tm_file=i386/openbsd.h
+		xm_file=i386/xm-openbsd.h
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		tmake_file=t-libc-ok
+		xmake_file=x-openbsd
+		;;
 	i[345]86-*-coff*)
 		cpu_type=i386
 		tm_file=i386/i386-coff.h
