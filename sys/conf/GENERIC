@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.101 2004/02/10 01:30:13 millert Exp $
+#	$OpenBSD: GENERIC,v 1.102 2004/02/10 21:20:17 millert Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -92,7 +92,7 @@ pseudo-device	gre	1	# GRE encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
 pseudo-device	carp	2	# CARP protocol support
 
-pseudo-device	pty	64	# initial number of pseudo-terminals
+pseudo-device	pty	16	# initial number of pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline
 pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	4	# concatenated disk devices
