@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 1998/08/30 07:31:32 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 1999/02/23 04:10:12 marc Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@ struct cpu_cpuid_feature {
 extern int cpu;
 extern int cpu_class;
 extern int cpu_feature;
+extern int cpu_apmwarn;
 extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
@@ -247,7 +248,8 @@ void	setconf __P((void));
 #define CPU_CPUVENDOR		6	/* cpuid vendor string */
 #define CPU_CPUID		7	/* cpuid */
 #define CPU_CPUFEATURE		8	/* cpuid features */
-#define	CPU_MAXID		9	/* number of valid machdep ids */
+#define CPU_APMWARN		9	/* APM battery warning percentage */
+#define	CPU_MAXID		10	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -259,6 +261,7 @@ void	setconf __P((void));
 	{ "cpuvendor", CTLTYPE_STRING }, \
 	{ "cpuid", CTLTYPE_INT }, \
 	{ "cpufeature", CTLTYPE_INT }, \
+	{ "apmwarn", CTLTYPE_INT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

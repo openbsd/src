@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.24 1999/01/06 01:31:20 kstailey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.25 1999/02/23 04:10:12 marc Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -75,6 +75,11 @@
 
 int apmprobe __P((struct device *, void *, void *));
 void apmattach __P((struct device *, struct device *, void *));
+
+/* battery percentage at where we get verbose in our warnings.  This
+   value can be changed using sysctl(8), value machdep.apmwarn.
+   Setting it to zero kills all warnings */
+int cpu_apmwarn = 10;
 
 #define APM_NEVENTS 16
 
@@ -396,6 +401,8 @@ apm_event_handle(sc, regs)
 		DPRINTF(("power status change\n"));
 		error = apm_get_powstat(nregs);
 		if (error == 0 &&
+		    BATT_LIFE(&nregs) != APM_BATT_LIFE_UNKNOWN &&
+		    BATT_LIFE(&nregs) < cpu_apmwarn &&
 		    (sc->sc_flags & SCFLAG_PRINT) != SCFLAG_NOPRINT &&
 		    ((sc->sc_flags & SCFLAG_PRINT) != SCFLAG_PCTPRINT ||
 		     sc->batt_life != BATT_LIFE(&nregs)))
