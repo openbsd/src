@@ -2,14 +2,16 @@ divert(-1)
 #
 # Sendmail 8 configuration file for courtesan.com.
 # This machine gets a lot of mail so we use a queue-only config and:
-#	sendmail_flags="-L sm-mta -bd -q1s"
+#	sendmail_flags="-L sm-mta -bd"
+# There is a separate sendmail for queue control started as:
+#	/usr/sbin/sendmail -L sm-queue -qp
 # The queue group limits and confMIN_QUEUE_AGE keep things sane
 # and prevent a sendmail DoS when thousands of messages (bounces)
 # come in at once.
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.11 2003/08/11 19:26:29 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.12 2003/08/13 23:43:56 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
