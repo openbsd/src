@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.8 2003/09/29 04:10:29 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.9 2003/09/29 10:05:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -86,16 +86,16 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 
 	sc->sc_devid = PCI_PRODUCT(pa->pa_id);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_MASTER_ENABLE;
 	if (sc->sc_devid == PCI_PRODUCT_MYSON_MTD800 &&
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, MTD_PCI_LOIO) & 0x300) {
 		pa->pa_flags &= ~PCI_FLAGS_IO_ENABLED;
 		command &= ~PCI_COMMAND_IO_ENABLE;
 	}
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	if (command & PCI_COMMAND_MEM_ENABLE) {
 		if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc_bust, &sc->sc_bush, NULL, &iosize, 0)) {
