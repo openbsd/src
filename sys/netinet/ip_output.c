@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.65 2000/03/17 10:25:22 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.66 2000/03/30 04:53:36 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -645,8 +645,10 @@ sendit:
 		}
 
 		/* We don't need this anymore */
-		if (re->re_rt)
+		if (re->re_rt) {
 			RTFREE(re->re_rt);
+			re->re_rt = NULL;
+		}
 
 		/* Massage the IP header for use by the IPsec code */
 		ip->ip_len = htons((u_short) ip->ip_len);
