@@ -1,4 +1,4 @@
-/* $OpenBSD: username.c,v 1.9 2003/06/12 23:09:30 deraadt Exp $	 */
+/* $OpenBSD: username.c,v 1.10 2003/06/13 21:52:25 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -76,16 +76,6 @@ static int      get_user(uid_t);
 /* We depend on that for hash_table and YOUR compiler had BETTER do it! */
 struct hash_el  hash_table[Table_size];
 
-void
-init_hash(void)
-{
-	/*
-	 *  There used to be some steps we had to take to initialize things.
-	 *  We don't need to do that anymore, but we will leave this stub in
-	 *  just in case future changes require initialization steps.
-	 */
-}
-
 char *
 username(uid_t uid)
 {
@@ -108,7 +98,6 @@ userid(char *username)
 	 * Eventually we want this to enter everything in the hash table, but
 	 * for now we just do it simply and remember just the result.
 	 */
-
 	if ((pwd = getpwnam(username)) == NULL)
 		return (-1);
 

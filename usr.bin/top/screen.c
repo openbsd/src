@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.10 2003/06/12 23:09:30 deraadt Exp $	 */
+/* $OpenBSD: screen.c,v 1.11 2003/06/13 21:52:25 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -51,7 +51,7 @@
 #include "screen.h"
 #include "boolean.h"
 
-extern char    *myname;
+extern char    *__progname;
 
 int             overstrike;
 int             screen_length;
@@ -109,10 +109,10 @@ init_termcap(int interactive)
 	/* now get the termcap entry */
 	if ((status = tgetent(NULL, term_name)) != 1) {
 		if (status == -1)
-			fprintf(stderr, "%s: can't open termcap file\n", myname);
+			fprintf(stderr, "%s: can't open termcap file\n", __progname);
 		else
 			fprintf(stderr, "%s: no termcap entry for a `%s' terminal\n",
-			    myname, term_name);
+			    __progname, term_name);
 
 		/* pretend it's dumb and proceed */
 		smart_terminal = No;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.30 2003/06/12 23:09:29 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.31 2003/06/13 21:52:24 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -25,21 +25,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * top - a top users display for Unix
- *
- * SYNOPSIS:  For an OpenBSD system
- *
- * DESCRIPTION:
- * This is the machine-dependent module for OpenBSD
- * Tested on:
- *	i386
- *
- * TERMCAP: -ltermlib
- *
- * CFLAGS: -DHAVE_GETOPT -DORDER
  *
  * AUTHOR:  Thorsten Lockert <tholo@sigmasoft.com>
  *          Adapted from BSD4.4 by Christos Zoulas <christos@ee.cornell.edu>
@@ -51,9 +36,6 @@
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
-
-#define DOSWAP
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,18 +50,16 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-
-#ifdef DOSWAP
 #include <sys/swap.h>
 #include <err.h>
-#endif
-
-static int      swapmode(int *, int *);
 
 #include "top.h"
 #include "display.h"
 #include "machine.h"
 #include "utils.h"
+#include "loadavg.h"
+
+static int      swapmode(int *, int *);
 
 /* get_process_info passes back a handle.  This is what it looks like: */
 
@@ -87,9 +67,6 @@ struct handle {
 	struct kinfo_proc **next_proc;	/* points to next valid proc pointer */
 	int             remaining;	/* number of pointers remaining */
 };
-
-/* declarations for load_avg */
-#include "loadavg.h"
 
 #define PP(pp, field) ((pp)->kp_proc . field)
 #define EP(pp, field) ((pp)->kp_eproc . field)
@@ -102,7 +79,8 @@ struct handle {
  *  These definitions control the format of the per-process area
  */
 static char     header[] =
-"  PID X        PRI NICE  SIZE   RES STATE WAIT     TIME    CPU COMMAND";
+	"  PID X        PRI NICE  SIZE   RES STATE WAIT     TIME    CPU COMMAND";
+
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
@@ -144,16 +122,14 @@ char *cpustatenames[] = {
 int memory_stats[8];
 char *memorynames[] = {
 	"Real: ", "K/", "K act/tot  ", "Free: ", "K  ",
-#ifdef DOSWAP
 	"Swap: ", "K/", "K used/tot",
-#endif
 	NULL
 };
 
-#ifdef ORDER
 /* these are names given to allowed sorting orders -- first is default */
-char           *ordernames[] = {"cpu", "size", "res", "time", "pri", NULL};
-#endif
+char	*ordernames[] = {
+	"cpu", "size", "res", "time", "pri", NULL
+};
 
 /* these are for keeping track of the proc array */
 static int      nproc;
@@ -216,9 +192,7 @@ machine_init(struct statics *statics)
 	statics->procstate_names = procstatenames;
 	statics->cpustate_names = cpustatenames;
 	statics->memory_names = memorynames;
-#ifdef ORDER
 	statics->order_names = ordernames;
-#endif
 	return (0);
 }
 
@@ -234,8 +208,7 @@ format_header(char *uname_field)
 }
 
 void
-get_system_info(si)
-	struct system_info *si;
+get_system_info(struct system_info *si)
 {
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
 	static int vmtotal_mib[] = {CTL_VM, VM_METER};
@@ -276,12 +249,11 @@ get_system_info(si)
 	memory_stats[3] = -1;
 	memory_stats[4] = pagetok(vmtotal.t_free);
 	memory_stats[5] = -1;
-#ifdef DOSWAP
+
 	if (!swapmode(&memory_stats[6], &memory_stats[7])) {
 		memory_stats[6] = 0;
 		memory_stats[7] = 0;
 	}
-#endif
 
 	/* set arrays and strings */
 	si->cpustates = cpu_states;
@@ -295,11 +267,14 @@ struct kinfo_proc *
 getprocs(int op, int arg, int *cnt)
 {
 	size_t size = sizeof(int);
-	int mib[4] = {CTL_KERN, KERN_PROC, op, arg};
+	int mib[4] = {CTL_KERN, KERN_PROC, 0, 0};
 	int smib[2] = {CTL_KERN, KERN_NPROCS};
 	static int maxslp_mib[] = {CTL_VM, VM_MAXSLP};
 	static struct kinfo_proc *procbase;
 	int st;
+
+	mib[2] = op;
+	mib[3] = arg;
 
 	size = sizeof(maxslp);
 	if (sysctl(maxslp_mib, 2, &maxslp, &size, NULL, 0) < 0) {
@@ -358,7 +333,6 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	show_idle = sel->idle;
 	show_system = sel->system;
 	show_uid = sel->uid != -1;
-	show_command = sel->command != NULL;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -470,7 +444,6 @@ static unsigned char sorted_state[] =
 	3,			/* stop			 */
 	1			/* zombie		 */
 };
-#ifdef ORDER
 
 /*
  *  proc_compares - comparison functions for "qsort"
@@ -619,7 +592,7 @@ compare_prio(const void *v1, const void *v2)
 	return (result);
 }
 
-int (*proc_compares[]) () = {
+int (*proc_compares[])(const void *, const void *) = {
 	compare_cpu,
 	compare_size,
 	compare_res,
@@ -627,62 +600,6 @@ int (*proc_compares[]) () = {
 	compare_prio,
 	NULL
 };
-
-#else
-
-/*
- * proc_compare - comparison function for "qsort"
- * Compares the resource consumption of two processes using five
- * distinct keys.  The keys (in descending order of importance) are:
- * percent cpu, cpu ticks, state, resident set size, total virtual
- * memory usage.  The process states are ordered as follows (from least
- * to most important):  zombie, sleep, stop, start, run.  The array
- * declaration below maps a process state index into a number that
- * reflects this ordering.
- */
-int
-proc_compare(const void *v1, const void *v2)
-{
-	struct proc **pp1 = (struct proc **) v1;
-	struct proc **pp2 = (struct proc **) v2;
-	struct kinfo_proc *p1, *p2;
-	pctcpu lresult;
-	int result;
-
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
-
-	/* compare percent cpu (pctcpu) */
-	if ((lresult = PP(p2, p_pctcpu) - PP(p1, p_pctcpu)) == 0) {
-		/* use CPU usage to break the tie */
-		if ((result = PP(p2, p_rtime).tv_sec - PP(p1, p_rtime).tv_sec) == 0) {
-			/* use process state to break the tie */
-			if ((result = sorted_state[(unsigned char) PP(p2, p_stat)] -
-			sorted_state[(unsigned char) PP(p1, p_stat)]) == 0) {
-				/* use priority to break the tie */
-				if ((result = PP(p2, p_priority) -
-				     PP(p1, p_priority)) == 0) {
-					/*
-					 * use resident set size (rssize) to
-					 * break the tie
-					 */
-					if ((result = VP(p2, vm_rssize) -
-					     VP(p1, vm_rssize)) == 0) {
-						/*
-						 * use total memory to break
-						 * the tie
-						 */
-						result = PROCSIZE(p2) - PROCSIZE(p1);
-					}
-				}
-			}
-		}
-	} else
-		result = lresult < 0 ? -1 : 1;
-	return (result);
-}
-#endif
 
 /*
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
@@ -709,7 +626,6 @@ proc_owner(pid_t pid)
 	return (-1);
 }
 
-#ifdef DOSWAP
 /*
  * swapmode is rewritten by Tobias Weingartner <weingart@openbsd.org>
  * to be based on the new swapctl(2) system call.
@@ -745,4 +661,3 @@ swapmode(int *used, int *total)
 	free(swdev);
 	return 1;
 }
-#endif
