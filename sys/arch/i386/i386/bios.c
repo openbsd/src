@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.16 1997/10/25 07:01:36 niklas Exp $	*/
+/*	$OpenBSD: bios.c,v 1.17 1997/10/25 08:45:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -330,8 +330,7 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return EOPNOTSUPP;
 		if ((pdi = bios_getdiskinfo(name[1])) == NULL)
 			return ENXIO;
-		return sysctl_rdstruct(oldp, oldlenp, newp,
-		    pdi, sizeof(*bios_diskinfo));
+		return sysctl_rdstruct(oldp, oldlenp, newp, pdi, sizeof(*pdi));
 	case BIOS_CNVMEM:
 		return sysctl_rdint(oldp, oldlenp, newp, cnvmem);
 	case BIOS_EXTMEM:
