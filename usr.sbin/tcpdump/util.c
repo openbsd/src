@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2000/10/03 14:31:59 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2000/10/31 16:06:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.9 2000/10/03 14:31:59 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.10 2000/10/31 16:06:49 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -153,7 +153,7 @@ tok2str(register const struct tok *lp, register const char *fmt,
 	}
 	if (fmt == NULL)
 		fmt = "#%d";
-	(void)sprintf(buf, fmt, v);
+	(void)snprintf(buf, sizeof(buf), fmt, v);
 	return (buf);
 }
 
