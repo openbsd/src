@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.4 1997/04/19 17:19:51 pefo Exp $	*/
+/*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.4 1997/04/19 17:19:51 pefo Exp $
+ *      $Id: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $
  */
 
 /*
@@ -63,14 +63,16 @@
 #include <arc/pica/pica.h>
 #include <arc/dev/dma.h>
 
-
 extern vm_map_t phys_map;
 
 #define dma_pte_to_pa(x)	(((x) - first_dma_pte) * R4030_DMA_PAGE_SIZE)
 
+void	picaDmaReset __P((dma_softc_t *));
+int	picaDmaEnd __P((dma_softc_t *));
+void	picaDmaNull __P((dma_softc_t *));
+
 dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
 dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
-
 
 /*
  *  Initialize the dma mapping register area and pool.
