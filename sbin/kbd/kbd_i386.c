@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_i386.c,v 1.7 1998/05/29 00:42:53 mickey Exp $	*/
+/*	$OpenBSD: kbd_i386.c,v 1.8 1998/07/06 13:42:26 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -34,7 +34,9 @@
 
 #include <sys/types.h>
 #include <machine/pccons.h>
+#ifdef HAVEPCVT
 #include <machine/pcvt_ioctl.h>
+#endif
 #include <paths.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -76,9 +78,13 @@ extern char *__progname;
 int
 ispcvt()
 {
+#ifdef HAVEPCVT
 	struct pcvtid pcvtid;
 		
 	return ioctl(0, VGAPCVTID, &pcvtid);
+#else
+	return(-1);
+#endif
 }
 
 void
