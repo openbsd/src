@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2003/04/23 21:46:04 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/05/03 00:08:58 mickey Exp $
 
 .if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc" || \
     ${MACHINE} == "alpha" || ${MACHINE} == "macppc" || \
@@ -8,13 +8,16 @@
 PROG=	noexec
 CFLAGS+=-Wall -Werror
 LDSTATIC= ${STATIC}
-REGRESS_TARGETS=	nxtext-mprotect \
-		nxdata	nxdata-mprotect \
-		nxbss	nxbss-mprotect \
-		nxheap	nxheap-mprotect \
-		nxmmap	nxmmap-mprotect \
-		nxstack	nxstack-mprotect
+REGRESS_TARGETS=	nxtext-mmap	nxtext-mprotect \
+		nxdata	nxdata-mmap	nxdata-mprotect \
+		nxbss	nxbss-mmap	nxbss-mprotect \
+		nxheap	nxheap-mmap	nxheap-mprotect \
+		nxmmap			nxmmap-mprotect \
+		nxstack	nxstack-mmap	nxstack-mprotect
 .PHONY: ${REGRESS_TARGETS}
+
+nxtext-mmap: ${PROG}
+	@./${PROG} -T -m
 
 nxtext-mprotect: ${PROG}
 	@./${PROG} -T -p
@@ -25,8 +28,14 @@ nxdata: ${PROG}
 nxdata-mprotect: ${PROG}
 	@./${PROG} -D -p
 
+nxdata-mmap: ${PROG}
+	@./${PROG} -D -m
+
 nxbss: ${PROG}
 	@./${PROG} -B
+
+nxbss-mmap: ${PROG}
+	@./${PROG} -B -m
 
 nxbss-mprotect: ${PROG}
 	@./${PROG} -B -p
@@ -34,11 +43,17 @@ nxbss-mprotect: ${PROG}
 nxheap: ${PROG}
 	@./${PROG} -H
 
+nxheap-mmap: ${PROG}
+	@./${PROG} -H -m
+
 nxheap-mprotect: ${PROG}
 	@./${PROG} -H -p
 
 nxstack: ${PROG}
 	@./${PROG} -S
+
+nxstack-mmap: ${PROG}
+	@./${PROG} -S -m
 
 nxstack-mprotect: ${PROG}
 	@./${PROG} -S -p

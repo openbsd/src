@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.4 2003/04/23 21:46:04 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.5 2003/05/03 00:08:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -28,7 +28,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -44,11 +44,28 @@ int page_size;
 char label[64] = "non-exec ";
 
 #define PAD 64*1024
-#define TEST 256	/* assuming the testfly() will fit */
-u_int64_t data[PAD+TEST] = { 0 };
-u_int64_t bss[PAD+TEST];
+#define TESTSZ 256	/* assuming the testfly() will fit */
+u_int64_t data[(PAD + TESTSZ + PAD) / 8] = { 0 };
+u_int64_t bss[(PAD + TESTSZ + PAD) / 8];
 
 void testfly();
+
+void
+fdcache(void *p, size_t size)
+{
+#ifdef __hppa__
+	__asm __volatile(	/* XXX this hardcodes the TESTSZ */
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)\n\t"
+	    "fdc,m	%1(%0)"
+	    : "+r" (p) : "r" (32));
+#endif
+}
 
 void
 sigsegv(int sig, siginfo_t *sip, void *scp)
@@ -61,6 +78,7 @@ noexec(void *p, size_t size)
 {
 	fail = 0;
 	printf("%s: execute\n", label);
+	fflush(stdout);
 	((void (*)(void))p)();
 
 	return (1);
@@ -72,16 +90,18 @@ noexec_mprotect(void *p, size_t size)
 
 	/* here we must fail on segv since we said it gets executable */
 	fail = 1;
-	if (mprotect(p, size, PROT_READ|PROT_WRITE|PROT_EXEC) < 0)
+	if (mprotect(p, size, PROT_READ|PROT_EXEC) < 0)
 		err(1, "mprotect 1");
 	printf("%s: execute\n", label);
+	fflush(stdout);
 	((void (*)(void))p)();
 
 	/* here we are successful on segv and fail if it still executes */
 	fail = 0;
-	if (mprotect(p, size, PROT_READ|PROT_WRITE) < 0)
+	if (mprotect(p, size, PROT_READ) < 0)
 		err(1, "mprotect 2");
 	printf("%s: catch a signal\n", label);
+	fflush(stdout);
 	((void (*)(void))p)();
 
 	return (1);
@@ -105,12 +125,14 @@ noexec_mmap(void *p, size_t size)
 {
 	memcpy(p + page_size * 1, p, page_size);
 	memcpy(p + page_size * 2, p, page_size);
-	/* XXX must flush cache */
+	fdcache(p + page_size * 1, TESTSZ);
+	fdcache(p + page_size * 2, TESTSZ);
 
 	/* here we must fail on segv since we said it gets executable */
 	fail = 1;
 
 	printf("%s: execute #1\n", label);
+	fflush(stdout);
 	((void (*)(void))p)();
 
 	/* unmap the first page to see that the higher page is still exec */
@@ -119,6 +141,7 @@ noexec_mmap(void *p, size_t size)
 
 	p += page_size;
 	printf("%s: execute #2\n", label);
+	fflush(stdout);
 	((void (*)(void))p)();
 
 	/* unmap the last page to see that the lower page is still exec */
@@ -126,6 +149,7 @@ noexec_mmap(void *p, size_t size)
 		err(1, "munmap");
 
 	printf("%s: execute #3\n", label);
+	fflush(stdout);
 	((void (*)(void))p)();
 
 	return (0);
@@ -143,12 +167,12 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	u_int64_t stack[256];	/* assuming the testfly() will fit */
+	u_int64_t stack[TESTSZ/8];	/* assuming the testfly() will fit */
 	struct sigaction sa;
 	int (*func)(void *, size_t);
 	size_t size;
 	char *ep;
-	void *p;
+	void *p, *ptr;
 	int ch;
 
 	if ((page_size = sysconf(_SC_PAGESIZE)) < 0)
@@ -156,7 +180,7 @@ main(int argc, char *argv[])
 
 	p = NULL;
 	func = &noexec;
-	size = TEST;
+	size = TESTSZ;
 	while ((ch = getopt(argc, argv, "TDBHSmps")) != -1)
 		switch (ch) {
 		case 'T':
@@ -164,24 +188,26 @@ main(int argc, char *argv[])
 			strcat(label, "text");
 			break;
 		case 'D':
-			p = &data[PAD];
+			p = &data[PAD/8];
 			strcat(label, "data");
 			break;
 		case 'B':
-			p = &bss[PAD];
+			p = &bss[PAD/8];
 			strcat(label, "bss");
 			break;
 		case 'H':
-			p = malloc(TEST);	/* XXX align? */
+			p = malloc(size + 2 * page_size);
 			if (p == NULL)
 				err(2, "malloc");
+			p += page_size;
+			p = (void *)ALIGN((long)p);
 			strcat(label, "heap");
 			break;
 		case 'S':
-			p = &stack;
+			p = getaddr(&stack);
 			strcat(label, "stack");
 			break;
-		case 's':	/* only valid for stack */
+		case 's':	/* only valid for heap and size */
 			size = strtoul(optarg, &ep, 0);
 			if (size > ULONG_MAX)
 				errno = ERANGE;
@@ -191,12 +217,21 @@ main(int argc, char *argv[])
 				errx(1, "invalid size: %s", optarg);
 			break;
 		case 'm':
-			func = &noexec_mmap;
-			strcat(label, "mmap");
-			if ((p = mmap(NULL, 3 * page_size,
-			    PROT_READ|PROT_WRITE|PROT_EXEC,
-			    MAP_ANON, -1, 0)) == MAP_FAILED)
-				err(1, "mmap");
+			if (p) {
+				if ((ptr = mmap(p, size + 2 * page_size,
+				    PROT_READ|PROT_WRITE,
+				    MAP_ANON, -1, 0)) == MAP_FAILED)
+					err(1, "mmap");
+				strcat(label, "-mmap");
+			} else {
+				if ((ptr = mmap(p, size + 2 * page_size,
+				    PROT_READ|PROT_WRITE|PROT_EXEC,
+				    MAP_ANON, -1, 0)) == MAP_FAILED)
+					err(1, "mmap");
+				func = &noexec_mmap;
+				strcat(label, "mmap");
+			}
+			p = ptr;
 			break;
 		case 'p':
 			func = &noexec_mprotect;
@@ -219,8 +254,10 @@ main(int argc, char *argv[])
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGSEGV, &sa, NULL);
 
-	if (p != &testfly)
-		memcpy(p, &testfly, TEST);
+	if (p != &testfly) {
+		memcpy(p, &testfly, TESTSZ);
+		fdcache(p, size);
+	}
 
 	exit((*func)(p, size));
 }
