@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.65 2003/11/28 07:32:12 sturm Exp $
+#	$OpenBSD: security,v 1.66 2003/12/28 19:51:31 otto Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -472,10 +472,12 @@ if [ -s $OUTPUT ] ; then
 fi
 
 # Display any changes in the setuid/setgid file list.
-egrep -v '^[bc]' $LIST > $TMP1
+FIELDS1=1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,0
+FIELDS2=2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,0
+egrep -av '^[bc]' $LIST | join -o $FIELDS2 -110 -210 -v2 /dev/null - > $TMP1
 if [ -s $TMP1 ] ; then
 	# Check to make sure uudecode isn't setuid.
-	if grep -w uudecode $TMP1 > /dev/null ; then
+	if grep -aw uudecode $TMP1 > /dev/null ; then
 		echo "${pending}\nUudecode is setuid."
 		pending=
 	fi
@@ -488,19 +490,19 @@ if [ -s $TMP1 ] ; then
 			:
 		else
 			> $TMP2
-			join -110 -210 -v2 $CUR $TMP1 > $OUTPUT
+			join -o $FIELDS2 -110 -210 -v2 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				echo "${pending}Setuid additions:"
 				pending=
-				tee -a $TMP2 < $OUTPUT
+				tee -a $TMP2 < $OUTPUT | column -t
 				echo ""
 			fi
 
-			join -110 -210 -v1 $CUR $TMP1 > $OUTPUT
+			join -o $FIELDS1 -110 -210 -v1 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				echo "${pending}Setuid deletions:"
 				pending=
-				tee -a $TMP2 < $OUTPUT
+				tee -a $TMP2 < $OUTPUT | column -t
 				echo ""
 			fi
 
@@ -543,8 +545,11 @@ if [ -s $OUTPUT ] ; then
 	echo ""
 fi
 
+FIELDS1=1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,0
+FIELDS2=2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,0
 # Display any changes in the device file list.
-egrep '^[bc]' $LIST | sort +10 > $TMP1
+egrep -a '^[bc]' $LIST | sort +10 | \
+    join -o $FIELDS2 -111 -211 -v2 /dev/null - > $TMP1
 if [ -s $TMP1 ] ; then
 	CUR=/var/backups/device.current
 	BACK=/var/backups/device.backup
@@ -554,17 +559,17 @@ if [ -s $TMP1 ] ; then
 			:
 		else
 			> $TMP2
-			join -111 -211 -v2 $CUR $TMP1 > $OUTPUT
+			join -o $FIELDS2 -111 -211 -v2 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				echo "Device additions:"
-				tee -a $TMP2 < $OUTPUT
+				tee -a $TMP2 < $OUTPUT | column -t
 				echo ""
 			fi
 
-			join -111 -211 -v1 $CUR $TMP1 > $OUTPUT
+			join -o $FIELDS1 -111 -211 -v1 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
 				echo "Device deletions:"
-				tee -a $TMP2 < $OUTPUT
+				tee -a $TMP2 < $OUTPUT | column -t
 				echo ""
 			fi
 
