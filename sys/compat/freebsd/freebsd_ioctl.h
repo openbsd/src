@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_ioctl.h,v 1.2 1996/08/02 20:34:46 niklas Exp $	*/
+/*	$OpenBSD: freebsd_ioctl.h,v 1.3 1998/04/26 21:22:30 provos Exp $	*/
 /*	$NetBSD: freebsd_ioctl.h,v 1.1 1995/10/10 01:19:32 mycroft Exp $	*/
 
 /*
@@ -34,5 +34,13 @@
 
 #ifndef _FREEBSD_IOCTL_H
 #define _FREEBSD_IOCTL_H
+
+#define	FREEBSD_IOCGROUP(x)	(((x) >> 8) & 0xff)
+
+#define FREEBSD_IOC_DIRMASK	0xe0000000
+#define FREEBSD_IOC_VOID	0x20000000
+#define FREEBSD_IOC_OUT		0x40000000
+#define FREEBSD_IOC_IN		0x80000000
+#define FREEBSD_IOC_INOUT	(FREEBSD_IOC_IN|FREEBSD_IOC_OUT)
 
 #endif /* !_FREEBSD_IOCTL_H */

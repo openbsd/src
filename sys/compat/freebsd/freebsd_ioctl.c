@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_ioctl.c,v 1.2 1996/08/02 20:34:46 niklas Exp $	*/
+/*	$OpenBSD: freebsd_ioctl.c,v 1.3 1998/04/26 21:22:29 provos Exp $	*/
 /*	$NetBSD: freebsd_ioctl.c,v 1.1 1995/10/10 01:19:31 mycroft Exp $	*/
 
 /*
@@ -43,6 +43,33 @@
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_ioctl.h>
 
+#include <compat/ossaudio/ossaudio.h>
+#include <compat/ossaudio/ossaudiovar.h>
+
+/* The FreeBSD and OSS(Linux) encodings of ioctl R/W differ. */
+static void freebsd_to_oss(struct freebsd_sys_ioctl_args *,
+			   struct oss_sys_ioctl_args *);
+
+static void
+freebsd_to_oss(uap, rap)
+struct freebsd_sys_ioctl_args *uap;
+struct oss_sys_ioctl_args *rap;
+{
+	u_long ocmd, ncmd;
+
+        ocmd = SCARG(uap, com);
+        ncmd = ocmd &~ FREEBSD_IOC_DIRMASK;
+	switch(ocmd & FREEBSD_IOC_DIRMASK) {
+        case FREEBSD_IOC_VOID:  ncmd |= OSS_IOC_VOID;  break;
+        case FREEBSD_IOC_OUT:   ncmd |= OSS_IOC_OUT;   break;
+        case FREEBSD_IOC_IN:    ncmd |= OSS_IOC_IN;    break;
+        case FREEBSD_IOC_INOUT: ncmd |= OSS_IOC_INOUT; break;
+        }
+        SCARG(rap, fd) = SCARG(uap, fd);
+        SCARG(rap, com) = ncmd;
+        SCARG(rap, data) = SCARG(uap, data);
+}
+
 int
 freebsd_sys_ioctl(p, v, retval)
 	struct proc *p;
@@ -54,6 +81,7 @@ freebsd_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+        struct oss_sys_ioctl_args ap;
 
 	/*
 	 * XXX - <sys/cdio.h>'s incompatibility
@@ -63,5 +91,18 @@ freebsd_sys_ioctl(p, v, retval)
 	/* XXX - <sys/mtio.h> */
 	/* XXX - <sys/scsiio.h> */
 	/* XXX - should convert machine dependent ioctl()s */
-	return sys_ioctl(p, uap, retval);
+
+	switch (FREEBSD_IOCGROUP(SCARG(uap, com))) {
+	case 'M':
+        	freebsd_to_oss(uap, &ap);
+		return oss_ioctl_mixer(p, &ap, retval);
+	case 'Q':
+        	freebsd_to_oss(uap, &ap);
+		return oss_ioctl_sequencer(p, &ap, retval);
+	case 'P':
+        	freebsd_to_oss(uap, &ap);
+		return oss_ioctl_audio(p, &ap, retval);
+	default:
+		return sys_ioctl(p, uap, retval);
+	}
 }
