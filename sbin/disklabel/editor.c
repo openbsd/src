@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.8 1997/10/03 23:01:52 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.9 1997/10/06 03:49:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.8 1997/10/03 23:01:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.9 1997/10/06 03:49:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1072,9 +1072,9 @@ has_overlap(lp, freep, resolve)
 	u_int16_t npartitions;
 	int c, i, j, rval = 0;
 
-	/* How many "real" partitions do we have? */
+	/* How many "real" partitions do we have? (skip 'c') */
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		if (i != 2 && lp->d_partitions[i].p_fstype != FS_UNUSED &&
 		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			npartitions++;
@@ -1088,7 +1088,7 @@ has_overlap(lp, freep, resolve)
 		errx(4, "out of memory");
 
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		if (i != 2 && lp->d_partitions[i].p_fstype != FS_UNUSED &&
 		    lp->d_partitions[i].p_fstype != FS_BOOT &&
 		    lp->d_partitions[i].p_size != 0)
 			spp[npartitions++] = &lp->d_partitions[i];
