@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.1 2001/08/21 16:19:50 jason Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.2 2002/03/13 21:01:19 jason Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/ic/hmevar.h>
+#include <dev/ofw/openfirm.h>
 
 struct hmesbus_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
@@ -176,7 +177,9 @@ hmeattach_sbus(parent, self, aux)
 	sd->sd_reset = (void *)hme_reset;
 	sbus_establish(sd, self);
 
-	myetheraddr(sc->sc_enaddr);
+	if (OF_getprop(sa->sa_node, "local-mac-address",
+	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
+		myetheraddr(sc->sc_enaddr);
 
 	/*
 	 * Get transfer burst size from PROM and pass it on
