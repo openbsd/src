@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.6 1997/07/23 23:34:46 niklas Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.7 1997/08/07 09:18:40 niklas Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -178,12 +178,10 @@ db_set_breakpoints()
 	         bkpt != 0;
 	         bkpt = bkpt->link)
 		if (db_map_current(bkpt->map)) {
-		    bkpt->bkpt_inst = db_get_value(bkpt->address,
-						   BKPT_SIZE,
-						   FALSE);
-		    db_put_value(bkpt->address,
-				 BKPT_SIZE,
-				 BKPT_SET(bkpt->bkpt_inst));
+		    bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE,
+			FALSE);
+		    db_put_value(bkpt->address, BKPT_SIZE,
+			BKPT_SET(bkpt->bkpt_inst));
 		}
 	    db_breakpoints_inserted = TRUE;
 	}
