@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.48 2003/07/01 23:23:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.49 2003/07/21 22:52:19 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -153,9 +153,12 @@ sys_mquery(p, v, retval)
 	int fd;
 
 	vaddr = (vaddr_t) SCARG(uap, addr);
-	prot = SCARG(uap, prot) & VM_PROT_ALL;
+	prot = SCARG(uap, prot);
 	size = (vsize_t) SCARG(uap, len);
 	fd = SCARG(uap, fd);
+
+	if ((prot & VM_PROT_ALL) != prot)
+		return (EINVAL);
 
 	if (SCARG(uap, flags) & MAP_FIXED)
 		flags |= UVM_FLAG_FIXED;
@@ -391,7 +394,7 @@ sys_mmap(p, v, retval)
 
 	addr = (vaddr_t) SCARG(uap, addr);
 	size = (vsize_t) SCARG(uap, len);
-	prot = SCARG(uap, prot) & VM_PROT_ALL;
+	prot = SCARG(uap, prot);
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
@@ -400,6 +403,10 @@ sys_mmap(p, v, retval)
 	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
 	 * validate the flags.
 	 */
+	if ((prot & VM_PROT_ALL) != prot)
+		return (EINVAL);
+	if ((flags & MAP_FLAGMASK) != flags)
+		return (EINVAL);
 	if (flags & MAP_COPY)
 		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
@@ -812,7 +819,10 @@ sys_mprotect(p, v, retval)
 
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
-	prot = SCARG(uap, prot) & VM_PROT_ALL;
+	prot = SCARG(uap, prot);
+	
+	if ((prot & VM_PROT_ALL) != prot)
+		return (EINVAL);
 
 	/*
 	 * align the address to a page boundary, and adjust the size accordingly
