@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.77 2004/05/14 20:29:52 ish Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.78 2004/05/23 08:48:03 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -89,6 +89,7 @@
 #define ENC_IP		0x4000
 
 #define CMD_MASK	0xff00
+#define XFORM_MASK	0x0f00
 
 #define isencauth(x)	((x)&~CMD_MASK)
 #define iscmd(x,y)	(((x) & CMD_MASK) == (y))
@@ -265,7 +266,7 @@ isvalid(char *option, int type, int mode)
 
 	for (i = sizeof(xf) / sizeof(transform) - 1; i >= 0; i--)
 		if (!strcmp(option, xf[i].name) &&
-		    (xf[i].flags & CMD_MASK) == type &&
+		    (xf[i].flags & XFORM_MASK) == type &&
 		    (xf[i].flags & mode)) {
 			goto gotit;
 		}
