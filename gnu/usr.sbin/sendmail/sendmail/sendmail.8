@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: sendmail.8,v 8.51.2.1 2003/05/20 16:38:15 gshapiro Exp $
+.\"     $Sendmail: sendmail.8,v 8.51.2.3 2003/12/01 17:02:00 ca Exp $
 .\"
-.Dd May 20, 2003
+.Dd December 1, 2003
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -134,11 +134,34 @@ users or mailing lists.
 .It Fl C Ns Ar file
 Use alternate configuration file.
 .Nm Sendmail
-refuses to run as root if an alternate configuration file is specified.
-.It Fl d Ns Ar X
-Set debugging value to
-.Ar X .
-.ne 1i
+gives up any enhanced (set-user-ID or set-group-ID) privileges
+if an alternate configuration file is specified.
+.It Xo Fl d Ns Ar category Ns . Ns
+.Ar level
+.Xc
+Set the debugging flag for
+.Ar category
+to
+.Ar level .
+The
+.Ar category
+is either an integer or a name specifying the topic; the
+.Ar level
+is an integer specifying the level of debugging output desired.
+Higher levels generally mean more output.
+More than one flag may be specified by separating flags with commas.
+A list of numeric debugging categories can be found in the TRACEFLAGS file
+in the sendmail source distribution.
+.br
+The option
+.Fl d Ns Ar 0.1
+prints the version of
+.Nm sendmail
+and the options it was compiled with.
+.br
+Most other categories are only useful with, and documented in,
+.Nm sendmail 's
+source code.
 .It Fl F Ns Ar fullname
 Set the full name of the sender.
 .It Fl f Ns Ar name

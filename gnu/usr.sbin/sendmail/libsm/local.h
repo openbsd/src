@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -11,7 +11,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: local.h,v 1.51.2.1 2002/09/09 21:38:08 gshapiro Exp $
+ *	$Sendmail: local.h,v 1.51.2.2 2004/01/09 18:32:44 ca Exp $
  */
 
 /*
