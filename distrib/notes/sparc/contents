@@ -1,13 +1,11 @@
-dnl	$OpenBSD: contents,v 1.42 2002/10/07 19:32:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.43 2003/02/15 21:22:08 miod Exp $
 TopPart
 
 OpenBSDminiroot
 				It can be copied to the swap partition of
 				an existing OpenBSD, NetBSD, Linux, SunOS,
 				or Solaris installation to allow installing
-dnl uncomment when upgrades are available again
-dnl				or upgrading to OpenBSD OSREV.
-				OpenBSD OSREV.
+				or upgrading to OpenBSD OSREV.
 
 OpenBSDfloppy
 
@@ -35,16 +33,7 @@ The kernel and boot images are provided for net booting installations.
 While the OpenBSD bootblocks will work with the provided miniroot images,
 Sun bootblocks require a separate kernel image and root filesystem.
 
-dnl uncomment when upgrades are available again...
-dnl OpenBSDfloppydesc(single,The)
-dnl ... and remove this paragraph:
-Bootable installation floppy image:
-
-	The single floppy image can be copied to a floppy using rawrite.exe,
-	ntrw.exe or `dd', as described later in this document.
-	The floppy image is a bootable install floppy which can be used
-	to install OpenBSD to the current version.
-	It is also useful for maintenance and disaster recovery.
+OpenBSDfloppydesc(single,The)
 
 DistributionDescription(ten)
 
@@ -52,8 +41,7 @@ OpenBSDbase(24.8,72.1,shared)
 
 OpenBSDcomp(20.4,70.3,shared)
 
-dnl OpenBSDetc(1.5,5.5)
-OpenBSDetc(1.5,5.5,noupgrade)
+OpenBSDetc(1.5,5.5)
 
 OpenBSDgame(2.8,6.2)
 

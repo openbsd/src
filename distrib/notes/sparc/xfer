@@ -1,9 +1,8 @@
-dnl	$OpenBSD: xfer,v 1.34 2002/12/30 11:13:01 miod Exp $
+dnl	$OpenBSD: xfer,v 1.35 2003/02/15 21:22:08 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
-dnl put back after 3.2
-dnl	FFS partitions
+	FFS partitions
 	Tape
 	FTP
 	HTTP
@@ -24,11 +23,8 @@ access the binary distribution sets to actually install the system.
 
 Although you can access the distribution sets directly from the CD-ROM or
 from one of the FTP mirrors over the internet, you may wish to transfer
-dnl when upgrades are back, change
-the sets to a local FTP server, or copy them onto a SCSI tape.
-dnl back to this:
-dnl the sets to a local FTP server, or copy them to a partition on the target
-dnl system's disk or onto a SCSI tape.
+the sets to a local FTP server, or copy them to a partition on the target
+system's disk or onto a SCSI tape.
 
 
 OpenBSDXferFloppyFromDOS
@@ -143,5 +139,4 @@ OpenBSDXferPrelude
 
 OpenBSDXferBootTape(xbase xfont xserv xshare,bsd.rd obs=8k conv=sync,boot obs=8k conv=sync)
 
-dnl put back after 3.2
-dnl OpenBSDXferFFS
+OpenBSDXferFFS
