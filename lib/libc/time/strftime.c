@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.64";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.8 2002/04/04 19:12:09 millert Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.9 2002/05/25 09:11:02 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -331,10 +331,10 @@ label:
 					tm = *t;
 					mkt = mktime(&tm);
 					if (TYPE_SIGNED(time_t))
-						(void) sprintf(buf, "%ld",
-							(long) mkt);
-					else	(void) sprintf(buf, "%lu",
-							(unsigned long) mkt);
+						(void) snprintf(buf, sizeof buf,
+						    "%ld", (long) mkt);
+					else	(void) snprintf(buf, sizeof buf,
+						    "%lu", (unsigned long) mkt);
 					pt = _add(buf, pt, ptlim);
 				}
 				continue;
@@ -584,7 +584,7 @@ const char * const	ptlim;
 {
 	char	buf[INT_STRLEN_MAXIMUM(int) + 1];
 
-	(void) sprintf(buf, format, n);
+	(void) snprintf(buf, sizeof buf, format, n);
 	return _add(buf, pt, ptlim);
 }
 
@@ -648,15 +648,15 @@ _loc P((void))
 		((sizeof locale_home) + namesize + (sizeof lc_time)))
 			goto no_locale;
 	oldsun = 0;
-	(void) sprintf(filename, "%s/%s/%s", locale_home, name, lc_time);
+	(void) snprintf(filename, "%s/%s/%s", locale_home, name, lc_time);
 	fd = open(filename, O_RDONLY);
 	if (fd < 0) {
 		/*
 		** Old Sun systems have a different naming and data convention.
 		*/
 		oldsun = 1;
-		(void) sprintf(filename, "%s/%s/%s", locale_home,
-			lc_time, name);
+		(void) snprintf(filename, sizeof filename, "%s/%s/%s",
+			locale_home, lc_time, name);
 		fd = open(filename, O_RDONLY);
 		if (fd < 0)
 			goto no_locale;

@@ -32,7 +32,7 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: gmon.c,v 1.12 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: gmon.c,v 1.13 2002/05/25 09:11:02 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -223,7 +223,7 @@ _mcleanup()
 		perror("mcount: gmon.log");
 		return;
 	}
-	len = sprintf(dbuf, "[mcleanup1] kcount 0x%x ssiz %d\n",
+	len = snprintf(dbuf, sizeof dbuf, "[mcleanup1] kcount 0x%x ssiz %d\n",
 	    p->kcount, p->kcountsize);
 	write(log, dbuf, len);
 #endif
@@ -245,7 +245,7 @@ _mcleanup()
 		for (toindex = p->froms[fromindex]; toindex != 0;
 		     toindex = p->tos[toindex].link) {
 #ifdef DEBUG
-			len = sprintf(dbuf,
+			len = snprintf(dbuf, sizeof dbuf,
 			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
 				frompc, p->tos[toindex].selfpc,
 				p->tos[toindex].count);

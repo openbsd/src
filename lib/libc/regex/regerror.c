@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.8 2002/05/24 21:22:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: regerror.c,v 1.9 2002/05/25 09:11:02 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ extern "C" {
 #endif
 
 /* === regerror.c === */
-static char *regatoi(const regex_t *preg, char *localbuf);
+static char *regatoi(const regex_t *preg, char *localbuf, int localbufsize);
 
 #ifdef __cplusplus
 }
@@ -130,7 +130,7 @@ size_t errbuf_size;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
-		s = regatoi(preg, convbuf);
+		s = regatoi(preg, convbuf, sizeof convbuf);
 	else {
 		for (r = rerrs; r->code != 0; r++)
 			if (r->code == target)
@@ -141,7 +141,8 @@ size_t errbuf_size;
 				assert(strlen(r->name) < sizeof(convbuf));
 				(void) strlcpy(convbuf, r->name, sizeof convbuf);
 			} else
-				(void)sprintf(convbuf, "REG_0x%x", target);
+				(void)snprintf(convbuf, sizeof convbuf,
+				    "REG_0x%x", target);
 			s = convbuf;
 		} else
 			s = r->explain;
@@ -160,9 +161,10 @@ size_t errbuf_size;
  == static char *regatoi(const regex_t *preg, char *localbuf);
  */
 static char *
-regatoi(preg, localbuf)
+regatoi(preg, localbuf, localbufsize)
 const regex_t *preg;
 char *localbuf;
+int localbufsize;
 {
 	register struct rerr *r;
 
@@ -172,6 +174,6 @@ char *localbuf;
 	if (r->code == 0)
 		return("0");
 
-	(void)sprintf(localbuf, "%d", r->code);
+	(void)snprintf(localbuf, localbufsize, "%d", r->code);
 	return(localbuf);
 }

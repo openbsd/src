@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2002/02/16 21:27:24 millert Exp $	*/
+/*	$OpenBSD: engine.c,v 1.6 2002/05/25 09:11:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -40,7 +40,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.5 2002/02/16 21:27:24 millert Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.6 2002/05/25 09:11:02 deraadt Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -1078,9 +1078,9 @@ int ch;
 	static char pbuf[10];
 
 	if (isprint(ch) || ch == ' ')
-		(void)sprintf(pbuf, "%c", ch);
+		(void)snprintf(pbuf, sizeof pbuf, "%c", ch);
 	else
-		(void)sprintf(pbuf, "\\%o", ch);
+		(void)snprintf(pbuf, sizeof pbuf, "\\%o", ch);
 	return(pbuf);
 }
 #endif
