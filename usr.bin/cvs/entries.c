@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.14 2004/08/13 12:58:44 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.15 2004/08/13 13:24:13 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -449,18 +449,24 @@ cvs_ent_write(CVSENTRIES *ef)
 	/* reposition ourself at beginning of file */
 	rewind(ef->cef_file);
 	TAILQ_FOREACH(ent, &(ef->cef_ent), ce_list) {
-		if (ent->ce_type == CVS_ENT_DIR)
+		if (ent->ce_type == CVS_ENT_DIR) {
 			putc('D', ef->cef_file);
+			timebuf[0] = '\0';
+			revbuf[0] = '\0';
+		}
+		else {
+			rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
+			if (ent->ce_mtime == CVS_DATE_DMSEC)
+				strlcpy(timebuf, CVS_DATE_DUMMY,
+				    sizeof(timebuf));
+			else {
+				ctime_r(&(ent->ce_mtime), timebuf);
+				len = strlen(timebuf);
+				if ((len > 0) && (timebuf[len - 1] == '\n'))
+					timebuf[--len] = '\0';
+			}
+		}
 
-		rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
-
-		if (ent->ce_mtime == CVS_DATE_DMSEC)
-			strlcpy(timebuf, CVS_DATE_DUMMY, sizeof(timebuf));
-		else
-			ctime_r(&(ent->ce_mtime), timebuf);
-		len = strlen(timebuf);
-		if ((len > 0) && (timebuf[len - 1] == '\n'))
-			timebuf[--len] = '\0';
 		fprintf(ef->cef_file, "/%s/%s/%s/%s/%s\n", ent->ce_name,
 		    revbuf, timebuf, "", "");
 	}
