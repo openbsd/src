@@ -1,6 +1,6 @@
-#       $OpenBSD: Makefile,v 1.1 2004/05/12 22:54:13 mickey Exp $
+#       $OpenBSD: Makefile,v 1.2 2004/05/13 01:22:05 mickey Exp $
 
-SUBDIR+= probe
+SUBDIR+= probe sfuid
 
 install:
 
