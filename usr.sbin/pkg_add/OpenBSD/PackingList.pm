@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.40 2004/11/15 15:06:22 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.41 2004/11/18 21:46:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -132,7 +132,7 @@ sub DependOnly
 		# XXX optimization
 		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:pkgdep|newdepend|libdepend)\b/o) {
+			    if (m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend)\b/o) {
 				    &$cont($_);
 			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
 				    last;
@@ -140,7 +140,7 @@ sub DependOnly
 			}
 			return;
 		}
-		next unless m/^\@(?:pkgdep|newdepend|libdepend)\b/o;
+		next unless m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend)\b/o;
 		&$cont($_);
 	}
 }
@@ -169,7 +169,7 @@ sub ConflictOnly
 			while (<$fh>) {
 			    if (m/^\@(?:pkgcfl|conflict|option|name)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:pkgdep|newdepend|libdepend|groups|users|cwd)\b/o) {
+			    } elsif (m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend|groups|users|cwd)\b/o) {
 				    last;
 			    }
 			}
@@ -313,7 +313,7 @@ sub visit
 		$self->{$special}->$method(@l) if defined $self->{$special};
 	}
 
-	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend groups users items)) {
+	for my $listname (qw(modules pkgcfl conflict depend wantlib pkgdep newdepend libdepend groups users items)) {
 		if (defined $self->{$listname}) {
 			for my $item (@{$self->{$listname}}) {
 				$item->$method(@l);

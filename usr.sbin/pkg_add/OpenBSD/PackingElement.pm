@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.71 2004/11/13 12:01:30 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.72 2004/11/18 21:46:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -709,6 +709,34 @@ sub stringize($)
 	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
 	    ':'.$self->{pattern}.':'.$self->{def};
 }
+
+package OpenBSD::PackingElement::Dependency;
+our @ISA=qw(OpenBSD::PackingElement::Depend);
+
+__PACKAGE__->setKeyword('depend');
+sub category() { "depend" }
+sub keyword() { "depend" }
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($pkgpath, $pattern, $def) = split /\:/, $args;
+	bless { pkgpath => $pkgpath, pattern => $pattern, def => $def }, $class;
+}
+
+sub stringize($)
+{
+	my $self = $_[0];
+	return $self->{pkgpath}.':'.$self->{pattern}.':'.$self->{def};
+}
+
+package OpenBSD::PackingElement::Wantlib;
+our @ISA=qw(OpenBSD::PackingElement::Depend);
+
+__PACKAGE__->setKeyword('wantlib');
+sub category() { "wantlib" }
+sub keyword() { "wantlib" }
+
 
 package OpenBSD::PackingElement::LibDepend;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
