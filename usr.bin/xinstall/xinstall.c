@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.11 1997/01/17 07:13:54 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.12 1997/03/07 01:57:08 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.11 1997/01/17 07:13:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.12 1997/03/07 01:57:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -383,9 +383,8 @@ install(from_name, to_name, fset, flags)
 	 */
 	if (fchflags(to_fd,
 	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
-		serrno = errno;
-		(void)unlink(to_name);
-		errx(EX_OSERR, "%s: chflags: %s", to_name, strerror(serrno));
+		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
+			warnx("%s: chflags: %s", to_name, strerror(errno));
 	}
 
 	(void)close(to_fd);
