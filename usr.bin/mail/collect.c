@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.4 1997/04/13 20:22:39 deraadt Exp $	*/
+/*	$OpenBSD: collect.c,v 1.5 1997/04/13 20:32:06 deraadt Exp $	*/
 /*	$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.4 1997/04/13 20:22:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.5 1997/04/13 20:32:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ cont:
 		if (hadintr) {
 			fflush(stdout);
 			fprintf(stderr,
-			"\n(Interrupt -- one more to kill letter)\n");
+			    "\n(Interrupt -- one more to kill letter)\n");
 		} else {
 			if (isatty(0)) {
 				printf("(continue)\n");
@@ -601,7 +601,7 @@ collint(s)
 	/*
 	 * the control flow is subtle, because we can be called from ~q.
 	 */
-	if (!hadintr) {
+	if (hadintr == 0 && isatty(0)) {
 		if (value("ignore") != NOSTR) {
 			puts("@");
 			fflush(stdout);
