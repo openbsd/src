@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.7 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.8 2004/08/04 21:49:18 art Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #ifndef	_SYS_RESOURCEVAR_H_
 #define	_SYS_RESOURCEVAR_H_
 
+#include <sys/timeout.h>
+
 /*
  * Kernel per-process accounting / statistics
  * (not necessarily resident except when running).
@@ -57,6 +59,8 @@ struct pstats {
 	} p_prof;
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */
+	struct	timeout p_virt_to;	/* virtual itimer trampoline. */
+	struct	timeout p_prof_to;	/* prof itimer trampoline. */
 };
 
 /*
@@ -86,5 +90,8 @@ struct plimit *limcopy(struct plimit *lim);
 void	limfree(struct plimit *);
 
 void	 ruadd(struct rusage *ru, struct rusage *ru2);
+
+void	virttimer_trampoline(void *);
+void	proftimer_trampoline(void *);
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.52 2004/07/22 15:42:11 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.53 2004/08/04 21:49:19 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -128,6 +128,8 @@ exit1(p, rv)
 	p->p_sigignore = ~0;
 	p->p_siglist = 0;
 	timeout_del(&p->p_realit_to);
+	timeout_del(&p->p_stats->p_virt_to);
+	timeout_del(&p->p_stats->p_prof_to);
 
 	/*
 	 * Close open files and release open-file table.

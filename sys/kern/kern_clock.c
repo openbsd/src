@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.48 2004/08/04 16:29:32 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.49 2004/08/04 21:49:19 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -171,6 +171,47 @@ initclocks()
 }
 
 /*
+ * hardclock does the accounting needed for ITIMER_PROF and ITIMER_VIRTUAL.
+ * We don't want to send signals with psignal from hardclock because it makes
+ * MULTIPROCESSOR locking very complicated. Instead we use a small trick
+ * to send the signals safely and without blocking too many interrupts
+ * while doing that (signal handling can be heavy).
+ *
+ * hardclock detects that the itimer has expired, and schedules a timeout
+ * to deliver the signal. This works becuse of the following reasons:
+ *  - The tiemout structures can be in struct pstats because the timers
+ *    can be only activated on curproc (never swapped). Swapout can
+ *    only happen from a kernel thread and softclock runs before threads
+ *    are scheduled.
+ *  - The timeout can be scheduled with a 1 tick time because we're
+ *    doing it before the timeout processing in hardclock. So it will
+ *    be scheduled to run as soon as possible.
+ *  - The timeout will be run in softclock which will run before we
+ *    return to userland and process pending signals.
+ *  - If the system is so busy that several VIRTUAL/PROF ticks are
+ *    sent before softclock processing, we'll send only one signal.
+ *    But if we'd send the signal from hardclock only one signal would
+ *    be delivered to the user process. So userland will only see one
+ *    signal anyway.
+ */
+
+void
+virttimer_trampoline(void *v)
+{
+	struct proc *p = v;
+
+	psignal(p, SIGVTALRM);
+}
+
+void
+proftimer_trampoline(void *v)
+{
+	struct proc *p = v;
+
+	psignal(p, SIGPROF);
+}
+
+/*
  * The real-time timer, interrupting hz times per second.
  */
 void
@@ -197,10 +238,10 @@ hardclock(struct clockframe *frame)
 		if (CLKF_USERMODE(frame) &&
 		    timerisset(&pstats->p_timer[ITIMER_VIRTUAL].it_value) &&
 		    itimerdecr(&pstats->p_timer[ITIMER_VIRTUAL], tick) == 0)
-			psignal(p, SIGVTALRM);
+			timeout_add(&pstats->p_virt_to, 1);
 		if (timerisset(&pstats->p_timer[ITIMER_PROF].it_value) &&
 		    itimerdecr(&pstats->p_timer[ITIMER_PROF], tick) == 0)
-			psignal(p, SIGPROF);
+			timeout_add(&pstats->p_prof_to, 1);
 	}
 
 	/*
