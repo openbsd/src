@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.7,v 1.10 2000/03/23 21:10:22 aaron Exp $
+.\"	$OpenBSD: symlink.7,v 1.11 2000/03/24 03:28:37 aaron Exp $
 .\"	$NetBSD: symlink.7,v 1.4 1996/04/25 15:44:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@
 .Sh NAME
 .Nm symlink
 .Nd symbolic link handling
-.Sh SYMBOLIC LINK HANDLING
+.Sh DESCRIPTION
 Symbolic links are files that act as pointers to other files.
 To understand their behavior, you must first understand how hard links
 work.
@@ -94,7 +94,7 @@ Symbolic links encountered by utilities that are traversing a file tree
 (either specified on the command line or encountered as part of the
 file hierarchy walk).
 .El
-.Ss System calls.
+.Ss System calls
 The first area is symbolic links used as file name arguments for
 system calls.
 .Pp
@@ -133,7 +133,7 @@ The
 system call was added later when the limitations of the new
 .Xr chown 2
 became apparent.
-.Ss Commands not traversing a file tree.
+.Ss Commands not traversing a file tree
 The second area is symbolic links, specified as command-line file
 name arguments, to commands which are not traversing a file tree.
 .Pp
@@ -200,7 +200,7 @@ command follows symbolic links named as arguments if the
 option is specified,
 or if the
 .Fl F ,
-.Fl d
+.Fl d ,
 or
 .Fl l
 options are not specified.
@@ -219,11 +219,11 @@ The
 .Bx 4.4
 system differs from historical 4BSD systems in that the
 .Nm chown ,
-.Nm chgrp
+.Nm chgrp ,
 and
 .Nm file
 commands follow symbolic links specified on the command line.
-.Ss Commands traversing a file tree.
+.Ss Commands traversing a file tree
 The following commands either optionally or always traverse file trees:
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
@@ -234,7 +234,7 @@ The following commands either optionally or always traverse file trees:
 .Xr ls 1 ,
 .Xr pax 1 ,
 .Xr rm 1 ,
-.Xr tar 1
+.Xr tar 1 ,
 and
 .Xr chown 8 .
 .Pp
@@ -355,7 +355,7 @@ physical name space.
 .Pp
 For commands that do not by default do file tree traversals, the
 .Fl H ,
-.Fl L
+.Fl L ,
 and
 .Fl P
 flags are ignored if the
@@ -363,7 +363,7 @@ flags are ignored if the
 flag is not also specified.
 In addition, you may specify the
 .Fl H ,
-.Fl L
+.Fl L ,
 and
 .Fl P
 options more than once; the last one specified determines the
@@ -384,7 +384,7 @@ The
 .Nm rm
 command does not support the
 .Fl H ,
-.Fl L
+.Fl L ,
 or
 .Fl P
 options.
