@@ -2042,3 +2042,7 @@
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat9/bus_dma.0
 ./usr/share/man/cat9/bus_space.0
+./usr/share/man/cat4/fea.0
+./usr/share/man/cat4/sparc/fdc.0
+./usr/share/man/cat4/vax/kUmem.0
+./usr/share/man/cat4/cbb.0
