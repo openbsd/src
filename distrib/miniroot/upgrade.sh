@@ -1,6 +1,9 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.19 2001/11/18 22:48:58 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.20 2001/11/25 21:43:08 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
+#
+# Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
+# All rights reserved.
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -178,11 +181,11 @@ cat << \__fstab_config_1
 You may wish to edit the fstab.  For example, you may need to resolve
 dependencies in the order which the filesystems are mounted.
 
-NOTE: 1) this fstab is used only during the upgrade. It will not be
-         copied into the root filesystem.
+NOTE:	1) this fstab is used only during the upgrade. It will not be
+	   copied into the root filesystem.
 
-      2) all non-ffs filesystems, and filesystems with the 'noauto'
-         option, will be ignored during the upgrade.
+	2) all non-ffs filesystems, and filesystems with the 'noauto'
+	   option, will be ignored during the upgrade.
 
 __fstab_config_1
 echo -n	"Edit the fstab with ${EDITOR}? [n] "

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.177 2001/11/24 14:27:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.178 2001/11/25 21:43:08 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -295,8 +295,8 @@ bsort() {
 	# has values to sort.
 
 	if [[ "X$_l" != "X" ]] ; then
-	    echo -n " "
-	    bsort $_l
+		echo -n " "
+		bsort $_l
 	fi
 }
 
@@ -364,44 +364,44 @@ get_localdir() {
 	local _mp=$1 _dir=
 
 	while : ; do
-	    echo -n "Enter the pathname where the sets are stored [$_dir] "
-	    getresp "$_dir"
-	    _dir=$resp
+		echo -n "Enter the pathname where the sets are stored [$_dir] "
+		getresp "$_dir"
+		_dir=$resp
 
-	    # Allow break-out with empty response
-	    if [ -z "$_dir" ]; then
-		echo -n "Are you sure you don't want to set the pathname? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				break
-				;;
-			*)
-				continue
-				;;
-		esac
-	    fi
+		# Allow break-out with empty response
+		if [ -z "$_dir" ]; then
+			echo -n "Are you sure you don't want to set the pathname? [n] "
+			getresp "n"
+			case "$resp" in
+				y*|Y*)
+					break
+					;;
+				*)
+					continue
+					;;
+			esac
+		fi
 
-	    if dir_has_sets "$_mp/$_dir" $THESETS
-	    then
-		local_sets_dir="$_mp/$_dir"
-		break
-	    else
-		cat << __EOT
+		if dir_has_sets "$_mp/$_dir" $THESETS
+		then
+			local_sets_dir="$_mp/$_dir"
+			break
+		else
+			cat << __EOT
 The directory \"$local_sets_dir\" does not exist, or does not hold any of the
 upgrade sets.
 __EOT
-		echo -n "Re-enter pathname? [y] "
-		getresp "y"
-		case "$resp" in
-			y*|Y*)
-				;;
-			*)
-				local_sets_dir=
-				break
-				;;
-		esac
-	    fi
+			echo -n "Re-enter pathname? [y] "
+			getresp "y"
+			case "$resp" in
+				y*|Y*)
+					;;
+				*)
+					local_sets_dir=
+					break
+					;;
+			esac
+		fi
 	done
 }
 
@@ -636,7 +636,7 @@ cat > /etc/dhclient.conf << __EOT
 initial-interval 1;
 send host-name "$_hostname";
 request subnet-mask, broadcast-address, routers,
-       domain-name, domain-name-servers, host-name;
+	domain-name, domain-name-servers, host-name;
 __EOT
 		dhclient -1 ${_if_name}
 
@@ -657,7 +657,7 @@ __EOT
 			cat > /etc/dhclient.conf << __EOT
 initial-interval 1;
 request subnet-mask, broadcast-address, routers,
-       domain-name, domain-name-servers, host-name;
+	domain-name, domain-name-servers, host-name;
 __EOT
 			dhclient -1 ${_if_name}
 			set -- `ifconfig $_if_name | sed -n '
@@ -687,8 +687,9 @@ __EOT
 	else
 		ifconfig ${_if_name} down
 		if ifconfig ${_if_name} inet \
-		    ${_if_ip} \
-		    netmask ${_if_mask} ${_if_extra} up ; then
+			${_if_ip} \
+			netmask ${_if_mask} ${_if_extra} up
+			then
 			addifconfig ${_if_name} ${_if_symname} ${_if_ip} ${_if_mask} "${_if_extra}"
 			return 0
 		fi
@@ -742,31 +743,31 @@ enable_network() {
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
 	for hn in /mnt/etc/hostname.*; do
-    		# Strip off /mnt/etc/hostname. prefix
-    		if=${hn#/mnt/etc/hostname.}
+		# Strip off /mnt/etc/hostname. prefix
+		if=${hn#/mnt/etc/hostname.}
 
-    		# Interface names must be alphanumeric only.  We check to avoid
-    		# configuring backup or temp files, and to catch the "*" case.
-    		if ! isalphanumeric "$if"; then
+		# Interface names must be alphanumeric only.  We check to avoid
+		# configuring backup or temp files, and to catch the "*" case.
+		if ! isalphanumeric "$if"; then
 			continue
-    		fi
-    		ifconfig $if > /dev/null 2>&1
-    		if [ "$?" != "0" ]; then
+		fi
+		ifconfig $if > /dev/null 2>&1
+		if [ "$?" != "0" ]; then
 			continue
-    		fi
+		fi
 
-    		# Now parse the hostname.* file
-    		while :; do
+		# Now parse the hostname.* file
+		while :; do
 			if [ "$cmd2" ]; then
-	    			# we are carrying over from the 'read dt dtaddr' last time
-	    			set -- $cmd2
-	    			af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
-	    			# make sure and get any remaining args in ext2, like the read below
-	    			i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
-	    			ext2="$@"
+				# we are carrying over from the 'read dt dtaddr' last time
+				set -- $cmd2
+				af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
+				# make sure and get any remaining args in ext2, like the read below
+				i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
+				ext2="$@"
 			else
-	    			# read the next line or exit the while loop
-	    			read af name mask bcaddr ext1 ext2 || break
+				# read the next line or exit the while loop
+				read af name mask bcaddr ext1 ext2 || break
 			fi
 			# $af can be "dhcp", "up", "rtsol", an address family, commands, or
 			# a comment.
@@ -774,23 +775,23 @@ enable_network() {
 			"#"*|"!"*|"bridge"|""|"rtsol")
 				# skip comments, user commands, bridges,
 				# IPv6 rtsol and empty lines
-	    			continue
-	    			;;
+				continue
+				;;
 			"dhcp")
-	   			[ "$name" = "NONE" ] && name=
-	    			[ "$mask" = "NONE" ] && mask=
-	    			[ "$bcaddr" = "NONE" ] && bcaddr=
-	    			ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
-	    			cmd="dhclient $if"
-	    			;;
+				[ "$name" = "NONE" ] && name=
+				[ "$mask" = "NONE" ] && mask=
+				[ "$bcaddr" = "NONE" ] && bcaddr=
+				ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
+				cmd="dhclient $if"
+				;;
 			"up")
-	   			# The only one of these guaranteed to be set is $if
-	    			# the remaining ones exist so that media controls work
-	    			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
-	    			;;
+				# The only one of these guaranteed to be set is $if
+				# the remaining ones exist so that media controls work
+				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
+				;;
 			*)
-	    			read dt dtaddr
-	    			if [ "$name"  = "alias" ]; then
+				read dt dtaddr
+				if [ "$name"  = "alias" ]; then
 					# perform a 'shift' of sorts
 					alias=$name
 					name=$mask
@@ -798,41 +799,41 @@ enable_network() {
 					bcaddr=$ext1
 					ext1=$ext2
 					ext2=
-	    			else
+				else
 					alias=
-	    			fi
-	    			cmd="ifconfig $if $af $alias $name "
-	    			case "$dt" in
-	    			dest)
+				fi
+				cmd="ifconfig $if $af $alias $name "
+				case "$dt" in
+				dest)
 					cmd="$cmd $dtaddr"
 					;;
-	    			[a-z!]*)
+				[a-z!]*)
 					cmd2="$dt $dtaddr"
 					;;
-	    			esac
-	    			if [ ! -n "$name" ]; then
-		    			echo "/mnt/etc/hostname.$if: invalid network configuration file"
+				esac
+				if [ ! -n "$name" ]; then
+					echo "/mnt/etc/hostname.$if: invalid network configuration file"
 					return
-	    			fi
-	    			case $af in
-	    			inet)
+				fi
+				case $af in
+				inet)
 					[ "$mask" ] && cmd="$cmd netmask $mask"
 					if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
-		   			 	cmd="$cmd broadcast $bcaddr"
+						cmd="$cmd broadcast $bcaddr"
 					fi
 					[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
 					;;
-	    			inet6)
+				inet6)
 					# Ignore IPv6 setup
 					continue
 					;;
-	    			*)      cmd="$cmd $mask $bcaddr"
-	    			esac
-	    			cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
-	    			;;
+				*)	cmd="$cmd $mask $bcaddr"
+				esac
+				cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+				;;
 			esac
 			eval "$cmd"
-    		done < /mnt/etc/hostname.$if
+		done < /mnt/etc/hostname.$if
 	done
 
 	# /mnt/etc/mygate, if it exists, contains the name of my gateway host
@@ -874,7 +875,7 @@ get_selection() {
 		else
 			echo -n "	[ ] "
 			if [ -z "$_next" ]; then
-			    _next=$_f
+				_next=$_f
 			fi
 		fi
 		echo $_f
@@ -1060,10 +1061,13 @@ if [ X"$_reuse" = X ]; then
 		if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
 			cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 			resp=
-		elif [ -n "$resp" -a `isnumeric $resp` -eq 1 -a ${resp:-0} -ge 1 \
-		    -a -f /tmp/ftplist ]; then
+		elif [ -n "$resp" \
+			-a `isnumeric $resp` -eq 1 \
+			-a ${resp:-0} -ge 1 \
+			-a -f /tmp/ftplist ]
+			then
 			maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
-			    sed -n -e '$p' | cutword 1`
+				sed -n -e '$p' | cutword 1`
 			if [ $maxlines -lt $resp ]; then
 				echo "There is no ${resp}th line in the list."
 				resp=
@@ -1071,7 +1075,7 @@ if [ X"$_reuse" = X ]; then
 			fi
 			tline=`grep "^${_url_type}:" /tmp/ftplist | sed -n -e "${resp}p"`
 			url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
-			    cutword -t' ' 1 | cutword -t' ' 1`
+				cutword -t' ' 1 | cutword -t' ' 1`
 			host=`echo $url | cutword -t/ 1`
 			path=`echo $url | sed -e "s/^${host}\///"`
 			path="${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
@@ -1181,7 +1185,7 @@ else
 	_kernel=
 	for _f in ${_file_list} ; do
 		case "$_f" in
-		    *.tar.gz|*.tgz)	_sets="$_sets ${_f}"
+			*.tar.gz|*.tgz)	_sets="$_sets ${_f}"
 		esac
 	done
 	if [ "X${_sets}" = X"" ]; then
@@ -1638,7 +1642,7 @@ _def_partition=`echo $_likely_partition_range | \
     sed -n 's/^\[\(.\).*\]/\1/p'`
 if [ -z "$_def_partition" ]; then
 	_def_partition=`echo $_partition_range | \
-	    sed -n 's/^\[\(.\).*\]/\1/p'`
+		sed -n 's/^\[\(.\).*\]/\1/p'`
 	if [ -z "$_def_partition" ]; then
 		echo "There are no usable partitions on that disk"
 		return 0
@@ -2099,7 +2103,7 @@ _fstab=$1
 _fstab_shadow=$2
 ( while read _dev _mp _fstype _options _rest; do
 	# Skip comment lines, non-ffs filesystems and
-        # 'noauto' filesystems.
+	# 'noauto' filesystems.
 	case "$_dev" in
 		\#*)	continue;;
 		*)	;;
@@ -2110,12 +2114,12 @@ _fstab_shadow=$2
 	esac
 	case "$_options" in
 		*noauto*)    continue;;
-		*)      ;;
+		*)	;;
 	esac
 	# Don't use soft updates
-        _options="$(echo ${_options} | sed 's/,softdep,/,/; s/,softdep//; s/softdep,//')"
+	_options="$(echo ${_options} | sed 's/,softdep,/,/; s/,softdep//; s/softdep,//')"
 	if [ "$_mp" = "/" ]; then
-	        _mp=""
+		_mp=""
 	fi
 	echo $_dev /mnt$_mp $_fstype $_options $_rest
     done ) < $_fstab > $_fstab_shadow
@@ -2332,8 +2336,8 @@ donetconfig() {
 	get_fqdn /tmp/resolv.conf /tmp/hosts
 
 	resp=`route -n show |
-	    grep '^default' |
-	    sed -e 's/^default          //' -e 's/ .*//'`
+		grep '^default' |
+		sed -e 's/^default          //' -e 's/ .*//'`
 	if [ "X${resp}" = "X" ]; then
 		resp=none
 		if [ -f /tmp/mygate ]; then
@@ -2356,7 +2360,8 @@ donetconfig() {
 	if [ -f /tmp/resolv.conf ]; then
 		resp=
 		for n in `grep '^nameserver ' /tmp/resolv.conf | \
-		    sed -e 's/^nameserver //'`; do
+			sed -e 's/^nameserver //'`
+			do
 			if [ "X${resp}" = "X" ]; then
 				resp="$n"
 			else
@@ -2378,7 +2383,7 @@ donetconfig() {
 		case "$resp" in
 			y*|Y*)
 				cp /tmp/resolv.conf \
-				    /tmp/resolv.conf.shadow
+					/tmp/resolv.conf.shadow
 				;;
 
 			*)
