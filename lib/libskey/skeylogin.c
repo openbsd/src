@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.17 1997/07/26 19:48:19 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.18 1997/07/27 21:20:27 millert Exp $
  */
 
 #include <sys/param.h>
@@ -38,7 +38,7 @@ int skeylookup __P((struct skey *, char *));
 
 /* Issue a skey challenge for user 'name'. If successful,
  * fill in the caller's skey structure and return(0). If unsuccessful
- * (e.g., if name is unknown) return(1).
+ * (e.g., if name is unknown) return(-1).
  *
  * The file read/write pointer is left at the start of the
  * record.
@@ -56,7 +56,7 @@ getskeyprompt(mp, name, prompt)
 	(void)strcpy(prompt, "otp-md0 55 latour1\n");
 	switch (rval) {
 	case -1:	/* File error */
-		return(1);
+		return(-1);
 	case 0:		/* Lookup succeeded, return challenge */
 		(void)sprintf(prompt, "otp-%.*s %d %.*s\n",
 			      SKEY_MAX_HASHNAME_LEN, skey_get_algorithm(),
@@ -64,14 +64,14 @@ getskeyprompt(mp, name, prompt)
 		return(0);
 	case 1:		/* User not found */
 		(void)fclose(mp->keyfile);
-		return(1);
+		return(-1);
 	}
-	return(1);	/* Can't happen */
+	return(-1);	/* Can't happen */
 }
 
 /* Return  a skey challenge string for user 'name'. If successful,
  * fill in the caller's skey structure and return(0). If unsuccessful
- * (e.g., if name is unknown) return(1).
+ * (e.g., if name is unknown) return(-1).
  *
  * The file read/write pointer is left at the start of the
  * record.
@@ -87,7 +87,7 @@ skeychallenge(mp, name, ss)
 	rval = skeylookup(mp,name);
 	switch(rval){
 	case -1:	/* File error */
-		return(1);
+		return(-1);
 	case 0:		/* Lookup succeeded, issue challenge */
 		(void)sprintf(ss, "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
 			      skey_get_algorithm(), mp->n - 1,
@@ -95,9 +95,9 @@ skeychallenge(mp, name, ss)
 		return(0);
 	case 1:		/* User not found */
 		(void)fclose(mp->keyfile);
-		return(1);
+		return(-1);
 	}
-	return(1);	/* Can't happen */
+	return(-1);	/* Can't happen */
 }
 
 /* Find an entry in the One-time Password database.
@@ -128,7 +128,7 @@ skeylookup(mp, name)
 			fchmod(fileno(mp->keyfile), 0600);
 	}
 	if (mp->keyfile == NULL)
-		return(1);
+		return(-1);
 
 	/* Look up user name in database */
 	while (!feof(mp->keyfile)) {
@@ -201,7 +201,7 @@ skeygetnext(mp)
 				fchmod(fileno(mp->keyfile), 0600);
 		}
 		if (mp->keyfile == NULL)
-			return(1);
+			return(-1);
 	}
 
 	/* Look up next user in database */
@@ -262,7 +262,7 @@ skeyverify(mp, response)
 
 	if (response == NULL) {
 		(void)fclose(mp->keyfile);
-		return(1);
+		return(-1);
 	}
 	rip(response);
 
@@ -270,7 +270,7 @@ skeyverify(mp, response)
 	if (etob(key, response) != 1 && atob8(key, response) != 0) {
 		/* Neither english words or ascii hex */
 		(void)fclose(mp->keyfile);
-		return(1);
+		return(-1);
 	}
 
 	/* Compute fkey = f(key) */
@@ -292,7 +292,7 @@ skeyverify(mp, response)
 	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
 		(void)setpriority(PRIO_PROCESS, 0, oldpri);
 		(void)fclose(mp->keyfile);
-		return(1);
+		return(-1);
 	}
 	rip(mp->buf);
 	mp->logname = strtok(mp->buf, " \t");
@@ -390,12 +390,12 @@ skey_passcheck(username, passwd)
 
 	i = skeylookup(&skey, username);
 	if (i == -1 || i == 1)
-		return(1);
+		return(-1);
 
 	if (skeyverify(&skey, passwd) == 0)
 		return(skey.n);
 
-	return(1);
+	return(-1);
 }
 
 /*
@@ -433,7 +433,7 @@ skey_authenticate(username)
 				if (isalpha(*p) && isupper(*p))
 					*p = tolower(*p);
 		if (*p)
-			strncpy(p, "asjd", 4 - (pbuf - p));
+			(void)strncpy(p, "asjd", 4 - (pbuf - p));
 		p = &pbuf[4];
 		*p = '\0';
 
@@ -472,7 +472,7 @@ skey_authenticate(username)
 		}
 		return(0);
 	}
-	return(1);
+	return(-1);
 }
 
 /* Comment out user's entry in the s/key database
@@ -495,7 +495,7 @@ skeyzero(mp, response)
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	if (fputc('#', mp->keyfile) == EOF) {
 		fclose(mp->keyfile);
-		return(1);
+		return(-1);
 	}
 
 	(void)fclose(mp->keyfile);
