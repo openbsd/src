@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.6 2004/11/06 12:19:17 espie Exp $
+# $OpenBSD: Add.pm,v 1.7 2004/11/06 12:20:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -171,6 +171,7 @@ sub install
 		} else {
 			rename($self->{tempname}, $destdir.$fullname);
 			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{very_verbose};
+			undef $self->{tempname};
 		}
 	} else {
 		my $file = $self->prepare_to_extract($state);
