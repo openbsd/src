@@ -1,8 +1,8 @@
-/*	$OpenBSD: exec.h,v 1.5 2004/08/11 09:55:25 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.6 2004/08/11 09:55:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
