@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.12 1998/02/15 01:50:13 deraadt Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.13 1998/03/30 20:49:22 millert Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -93,6 +93,7 @@ le_isa_probe(parent, match, aux)
 {
 	struct le_softc *lesc = match;
 	struct isa_attach_args *ia = aux;
+	u_int8_t bogusether[ETHER_ADDR_LEN] = { 255, 255, 255, 255, 255, 255 };
 
 #if NISADMA == 0
 	if (ia->ia_drq != DRQUNK) {
@@ -101,14 +102,15 @@ le_isa_probe(parent, match, aux)
 	}
 #endif
 
-	if (bicc_isa_probe(lesc, ia))
-		return (1);
-	if (ne2100_isa_probe(lesc, ia))
-		return (1);
-	if (depca_isa_probe(lesc, ia))
-		return (1);
+	if (bicc_isa_probe(lesc, ia) == 0 && ne2100_isa_probe(lesc, ia) == 0 &&
+	    depca_isa_probe(lesc, ia) == 0)
+		return (0);
 
-	return (0);
+	if (bcmp(lesc->sc_am7990.sc_arpcom.ac_enaddr, bogusether,
+	    sizeof(bogusether)) == 0)
+		return (0);
+
+	return (1);
 }
 
 int
