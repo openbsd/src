@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: isp.4,v 1.9 2002/05/17 06:37:15 mjacob Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -26,8 +26,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 25, 1999
-.\".Dt AHC 4
+.Dd May 16, 2002
 .Dt ISP 4
 .Os
 .Sh NAME
@@ -44,7 +43,7 @@ bus or a
 .Tn FibreChannel
 connected to
 .Tn Qlogic
-ISP1000 (SBus), ISP1020 (PCI), ISP1040(PCI), ISP1080(PCI),
+ISP1000 (SBus), ISP1020 (PCI), ISP1040(PCI), ISP1080(PCI), ISP12160(PCI)
 .Tn SCSI
 host adapters or ISP2100(PCI), ISP2200(PCI)
 .Tn FibreChannel
@@ -54,31 +53,26 @@ host adapters.
 .Pp
 Features include support for UltraSCSI and wide mode transactions for
 .Tn SCSI ,
-and LVD (for the ISP1080),
-and the FCP SCSI profile for
+and Ultra2 LVD (for the ISP1080) and Ultra3 LVD (for the ISP12160)
+and the FCP SCSI (private loop, public loop or fabcir) for
 .Tn FibreChannel .
 Command tagging is supported for all (in fact,
 .Tn FibreChannel
 requires tagging).
 .Sh CONFIGURATION
 An optional
-.Tn flags 0x80
-appended to the above
-.Tn isp*
-declarations will disable the download of driver f/w, which means you
-use whatever F/W is running on the card.
-If no firmware is running on the card, you will lose.
+.Tn options ISP_COMPILE_FW=1
+ensures that known good firmware will be downloaded to the driver
+at attach time. This is recommended.
 .Sh BUGS
-The driver currently ignores some NVRAM settings.
-.Pp
-The driver currently doesn't do error recovery for timed out commands
-very gracefully.
+None known at this time.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
+.Xr ses 4
 .Sh AUTHORS
 The
 .Nm
