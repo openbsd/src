@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.14 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.15 2001/11/13 21:00:16 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/sys/dev/nge/if_nge.c,v 1.19 2001/07/25 00:19:55 brooks Exp $
  */
 
 /*
@@ -70,10 +70,22 @@
  * via software. This affects the size of certain fields in the DMA
  * descriptors.
  *
- * As far as I can tell, the 83820 and 83821 are decent chips, marred by
- * only one flaw: the RX buffers must be aligned on 64-bit boundaries.
- * So far this is the only gigE MAC that I've encountered with this
- * requirement.
+ * There are two bugs/misfeatures in the 83820/83821 that I have
+ * discovered so far:
+ *
+ * - Receive buffers must be aligned on 64-bit boundaries, which means
+ *   you must resort to copying data in order to fix up the payload
+ *   alignment.
+ *
+ * - In order to transmit jumbo frames larger than 8170 bytes, you have
+ *   to turn off transmit checksum offloading, because the chip can't
+ *   compute the checksum on an outgoing frame unless it fits entirely
+ *   within the TX FIFO, which is only 8192 bytes in size. If you have
+ *   TX checksum offload enabled and you transmit attempt to transmit a
+ *   frame larger than 8170 bytes, the transmitter will wedge.
+ *
+ * To work around the latter problem, TX checksum offload is disabled
+ * if the user selects an MTU larger than 8152 (8170 - 18).
  */
 
 #include "bpfilter.h"
@@ -376,7 +388,6 @@ void nge_mii_send(sc, bits, cnt)
 int nge_mii_readreg(sc, frame)
 	struct nge_softc		*sc;
 	struct nge_mii_frame	*frame;
-	
 {
 	int			i, ack, s;
 
@@ -389,11 +400,11 @@ int nge_mii_readreg(sc, frame)
 	frame->mii_opcode = NGE_MII_READOP;
 	frame->mii_turnaround = 0;
 	frame->mii_data = 0;
-	
+
 	CSR_WRITE_4(sc, NGE_MEAR, 0);
 
 	/*
- 	 * Turn on data xmit.
+	 * Turn on data xmit.
 	 */
 	SIO_SET(NGE_MEAR_MII_DIR);
 
@@ -468,7 +479,6 @@ fail:
 int nge_mii_writereg(sc, frame)
 	struct nge_softc		*sc;
 	struct nge_mii_frame	*frame;
-	
 {
 	int			s;
 
@@ -480,9 +490,9 @@ int nge_mii_writereg(sc, frame)
 	frame->mii_stdelim = NGE_MII_STARTDELIM;
 	frame->mii_opcode = NGE_MII_WRITEOP;
 	frame->mii_turnaround = NGE_MII_TURNAROUND;
-	
+
 	/*
- 	 * Turn on data output.
+	 * Turn on data output.
 	 */
 	SIO_SET(NGE_MEAR_MII_DIR);
 
@@ -564,14 +574,14 @@ void nge_miibus_statchg(dev)
 		NGE_SETBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
 		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
 		break;
-		
+
 	case IFM_1000_SX:  /* Gigabit using TBI interface */
 	case IFM_1000_CX:
 	case IFM_1000_LX:
 		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
 		NGE_SETBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
 		break;
-		
+
 	default: /* Default to MII interface */
 		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000|
 			   NGE_CFG_TBI_EN);
@@ -584,7 +594,7 @@ u_int32_t nge_crc(sc, addr)
 	struct nge_softc	*sc;
 	caddr_t			addr;
 {
-	u_int32_t		crc, carry; 
+	u_int32_t		crc, carry;
 	int			i, j;
 	u_int8_t		c;
 
@@ -816,7 +826,7 @@ void nge_attach(parent, self, aux)
 		printf(": can't map mem space\n");
 		goto fail;
 	}
-	
+
 	sc->nge_btag = pa->pa_memt;
 #endif
 
@@ -899,7 +909,7 @@ void nge_attach(parent, self, aux)
 	DPRINTFN(5, ("bzero\n"));
 	sc->nge_ldata = (struct nge_list_data *)kva;
 	bzero(sc->nge_ldata, sizeof(struct nge_list_data));
-	
+
 	/* Try to allocate memory for jumbo buffers. */
 	DPRINTFN(5, ("nge_alloc_jumbo_mem\n"));
 	if (nge_alloc_jumbo_mem(sc)) {
@@ -1145,7 +1155,7 @@ int nge_alloc_jumbo_mem(sc)
 		sc->nge_cdata.nge_jslots[i].nge_buf = ptr;
 		sc->nge_cdata.nge_jslots[i].nge_inuse = 0;
 		ptr += NGE_MCLBYTES;
-		entry = malloc(sizeof(struct nge_jpool_entry), 
+		entry = malloc(sizeof(struct nge_jpool_entry),
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
 			bus_dmamap_unload(sc->sc_dmatag, dmamap);
@@ -1172,9 +1182,9 @@ void *nge_jalloc(sc)
 	struct nge_softc	*sc;
 {
 	struct nge_jpool_entry   *entry;
-	
+
 	entry = LIST_FIRST(&sc->nge_jfree_listhead);
-	
+
 	if (entry == NULL) {
 #ifdef NGE_VERBOSE
 		printf("%s: no free jumbo buffers\n", sc->sc_dv.dv_xname);
@@ -1223,11 +1233,12 @@ void nge_jfree(buf, size, arg)
 				panic("nge_jfree: buffer not in use!");
 			entry->slot = i;
 			LIST_REMOVE(entry, jpool_entries);
-			LIST_INSERT_HEAD(&sc->nge_jfree_listhead, 
+			LIST_INSERT_HEAD(&sc->nge_jfree_listhead,
 					 entry, jpool_entries);
 		}
 	}
 }
+
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -1260,7 +1271,7 @@ void nge_rxeof(sc)
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
 		 * it should simply get re-used next time this descriptor
-	 	 * comes up in the ring.
+		 * comes up in the ring.
 		 */
 		if (!(rxstat & NGE_CMDSTS_PKT_OK)) {
 			ifp->if_ierrors++;
@@ -1432,9 +1443,7 @@ void nge_tick(xsc)
 				nge_start(ifp);
 		} else
 			timeout_add(&sc->nge_timeout, hz);
-		
 	}
-
 
 	splx(s);
 }
@@ -1467,7 +1476,7 @@ int nge_intr(arg)
 			break;
 
 		claimed = 1;
-		
+
 		if ((status & NGE_ISR_TX_DESC_OK) ||
 		    (status & NGE_ISR_TX_ERR) ||
 		    (status & NGE_ISR_TX_OK) ||
@@ -1525,9 +1534,9 @@ int nge_encap(sc, m_head, txidx)
 #endif
 
 	/*
- 	 * Start packing the mbufs in this chain into
+	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
- 	 * of fragments or hit the end of the mbuf chain.
+	 * of fragments or hit the end of the mbuf chain.
 	 */
 	m = m_head;
 	cur = frag = *txidx;
@@ -1558,13 +1567,13 @@ int nge_encap(sc, m_head, txidx)
 	 */
 	sc->nge_ldata->nge_tx_list[*txidx].nge_extsts = 0;
 	if (m_head->m_pkthdr.csum) {
-		if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT) 
+		if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
 				NGE_TXEXTSTS_IPCSUM;
-		if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT) 
+		if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
 				NGE_TXEXTSTS_TCPCSUM;
-		if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT) 
+		if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
 				NGE_TXEXTSTS_UDPCSUM;
 	}
@@ -1874,11 +1883,11 @@ int nge_ioctl(ifp, command, data)
 			 * size of the TX buffer, turn off TX
 			 * checksumming.
 			 */
-			if (ifr->ifr_mtu >= 8152) 
+			if (ifr->ifr_mtu >= 8152)
 				ifp->if_capabilities &= ~(IFCAP_CSUM_IPv4 |
 				    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4);
 			else
-				ifp->if_capabilities = IFCAP_CSUM_IPv4 | 
+				ifp->if_capabilities = IFCAP_CSUM_IPv4 |
 					IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 		}
 		break;
