@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.2 2004/01/11 21:01:04 drahn Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.3 2004/01/12 02:19:13 drahn Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -374,11 +374,7 @@ snapper_attach(parent, self, aux)
 	printf(": irq %d,%d,%d\n", sc->sc_dev.dv_xname, cirq, oirq, iirq);
 
 	snapper_config(sc,  sc->sc_node, parent);
-#if 0
-	config_interrupts(self, snapper_defer);
-#else
 	config_defer(self, snapper_defer);
-#endif
 }
 
 void
@@ -567,7 +563,7 @@ snapper_set_params(h, setmode, usemode, play, rec)
 	struct audio_params *p;
 	int mode, rate;
 
-	p = NULL;
+	p = play; /* default to play */
 
 	/*
 	 * This device only has one clock, so make the sample rates match.
@@ -1047,6 +1043,12 @@ snapper_set_rate(sc, rate)
 	int MCLK;
 	int clksrc, mdiv, sdiv;
 	int mclk_fs;
+
+	/* sanify */
+	if (rate > 48000)
+		rate = 48000;
+	else if (rate < 8000)
+		rate = 8000;
 
 	switch (rate) {
 	case 8000:
