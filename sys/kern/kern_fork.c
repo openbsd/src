@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.25 1995/10/07 06:28:15 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.27 1995/12/10 08:26:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -53,7 +53,9 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 
-/* ARGSUSED */
+int	nprocs = 1;		/* process 0 */
+
+int
 sys_fork(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -63,7 +65,7 @@ sys_fork(p, v, retval)
 	return (fork1(p, 0, retval));
 }
 
-/* ARGSUSED */
+int
 sys_vfork(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -73,8 +75,7 @@ sys_vfork(p, v, retval)
 	return (fork1(p, 1, retval));
 }
 
-int	nprocs = 1;		/* process 0 */
-
+int
 fork1(p1, isvfork, retval)
 	register struct proc *p1;
 	int isvfork;
@@ -237,23 +238,33 @@ again:
 	 * from being swapped.
 	 */
 	p1->p_holdcnt++;
+
+#ifdef __FORK_BRAINDAMAGE
 	/*
 	 * Set return values for child before vm_fork,
 	 * so they can be copied to child stack.
-	 * We return parent pid, and mark as child in retval[1].
+	 * We return 0, rather than the traditional behaviour of modifying the
+	 * return value in the system call stub.
 	 * NOTE: the kernel stack may be at a different location in the child
 	 * process, and thus addresses of automatic variables (including retval)
 	 * may be invalid after vm_fork returns in the child process.
 	 */
-	retval[0] = p1->p_pid;
+	retval[0] = 0;
 	retval[1] = 1;
-	if (vm_fork(p1, p2, isvfork))
+	if (vm_fork(p1, p2))
 		return (0);
+#else
+	/*
+	 * Finish creating the child process.  It will return through a
+	 * different path later.
+	 */
+	vm_fork(p1, p2);
+#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
-	(void) splhigh();
+	(void) splstatclock();
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
