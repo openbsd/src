@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1996/06/26 05:40:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1996/06/26 05:40:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -300,7 +300,7 @@ error(fmt, va_alist)
 
 	if (wnd) {
 		getyx(stdscr, oy, ox);
-		(void) vsprintf(buf, fmt, ap);
+		(void) vsnprintf(buf, sizeof buf, fmt, ap);
 		clrtoeol();
 		standout();
 		mvaddstr(CMDLINE, 0, buf);
