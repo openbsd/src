@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.91 2001/07/16 22:11:04 fgsch Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.92 2001/07/17 20:34:50 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -51,10 +51,6 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
-
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/if_ether.h>
@@ -63,6 +59,10 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>

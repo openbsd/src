@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.32 2001/07/09 10:30:56 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.33 2001/07/17 20:34:51 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -103,6 +103,17 @@ struct pf_state {
 	u_int8_t	 log;
 };
 
+#define		MATCH_TUPLE(h,r,d,i) \
+		( \
+		  (r->direction == d) && \
+		  (r->ifp == NULL || r->ifp == i) && \
+		  (!r->proto || r->proto == h->ip_p) && \
+		  (!r->src.mask || pf_match_addr(r->src.not, r->src.addr, \
+		   r->src.mask, h->ip_src.s_addr)) && \
+		  (!r->dst.mask || pf_match_addr(r->dst.not, r->dst.addr, \
+		   r->dst.mask, h->ip_dst.s_addr)) \
+		)
+
 struct pf_natlook {
 	u_int32_t	saddr;
 	u_int32_t	daddr;
@@ -151,6 +162,14 @@ struct pf_rdr {
 	u_int8_t	 opts;
 };
 
+struct pf_tree_key {
+	struct in_addr	 addr[2];
+	u_int16_t	 port[2];
+	u_int8_t	 proto;
+};
+
+TAILQ_HEAD(pf_rulequeue, pf_rule);
+
 /* flags for RDR options */
 #define PF_DPORT_RANGE	0x01		/* Dest port uses range */
 #define PF_RPORT_RANGE	0x02		/* RDR'ed port uses range */
@@ -185,6 +204,20 @@ struct pf_rdr {
 	"state removals", \
 	NULL \
 }
+
+#define ACTION_SET(a, x) \
+	do { \
+		if ((a) != NULL) \
+			*(a) = (x); \
+	} while (0)
+
+#define REASON_SET(a, x) \
+	do { \
+		if ((a) != NULL) \
+			*(a) = (x); \
+		if (x < PFRES_MAX) \
+			pf_status.counters[x]++; \
+	} while (0)
 
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
@@ -259,6 +292,24 @@ struct pfioc_if {
 
 int	pf_test(int, struct ifnet *, struct mbuf **);
 
+struct pf_tree_node;
+struct pf_state
+	*pf_find_state(struct pf_tree_node *, struct pf_tree_key *);
+int	pf_tree_insert(struct pf_tree_node **, struct pf_tree_node *,
+	    struct pf_tree_key *, struct pf_state *);
+int	pf_tree_remove(struct pf_tree_node **, struct pf_tree_node *,
+	    struct pf_tree_key *);
+
+int	pflog_packet(struct mbuf *, int, u_short, u_short, struct pf_rule *);
+int	pf_match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
+
+void	pf_normalize_init(void);
+int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
+void	pf_purge_expired_fragments(void);
+
+extern struct pf_rulequeue *pf_rules_active;
+extern struct pf_status pf_status;
+extern int pf_debug;
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.70 2001/06/28 21:53:42 provos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.71 2001/07/17 20:34:51 provos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -52,10 +52,6 @@
 #include <net/route.h>
 #include <net/netisr.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
-#endif
-
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -65,6 +61,10 @@
 #include <netinet/ip_ipsp.h>
 
 #include <net/if_enc.h>
+#endif
+
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 #if NBPFILTER > 0

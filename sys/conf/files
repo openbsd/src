@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.215 2001/07/13 17:26:44 niklas Exp $
+#	$OpenBSD: files,v 1.216 2001/07/17 20:34:49 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -298,6 +298,7 @@ file	dev/ksyms.c	ksyms needs-flag
 
 pseudo-device pf: ifnet
 file	net/pf.c		pf	needs-flag
+file	net/pf_norm.c		pf
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
