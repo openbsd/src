@@ -11,7 +11,6 @@ root
 sbin
 sys
 tmp
-usr/bin/basename
 usr/bin/chflags
 usr/bin/cksum
 usr/bin/cmp
