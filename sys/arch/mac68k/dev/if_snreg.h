@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snreg.h,v 1.2 1997/03/29 23:26:50 briggs Exp $       */
+/*      $NetBSD: if_snreg.h,v 1.3 1997/04/30 19:47:12 scottr Exp $    */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -7,7 +7,7 @@
  */
 
 /*
- * if_sonic.h -- National Semiconductor DP83932BVF (SONIC)
+ * if_snreg.h -- National Semiconductor DP8393X (SONIC) register defs
  */
 
 /*
@@ -197,6 +197,7 @@
 #define TCR_BCM         0x0002  /* byte count mismatch (TXpkt.pkt_size
                                  * != sum(TXpkt.frag_size) */
 #define TCR_PTX         0x0001  /* packet transmitted without errors */
+#define	TCR_NC		0xf000	/* after transmission, # of colls */
 
 /* transmit control register aliases */
 #define TCR_OWCSFD      0        /* start after start of frame delimiter */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snvar.h,v 1.7 1997/04/25 03:29:14 briggs Exp $       */
+/*    $NetBSD: if_snvar.h,v 1.8 1997/04/25 03:40:09 briggs Exp $      */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -7,8 +7,16 @@
  */
 
 /*
- * if_snvar.h -- National Semiconductor DP83932BVF (SONIC) OpenBSD/mac68k vars
+ * if_snvar.h -- National Semiconductor DP8393X (SONIC) NetBSD/mac68k vars
  */
+
+/*
+ * Vendor types
+ */
+#define	SN_VENDOR_UNKNOWN	0xff	/* Unknown */
+#define	SN_VENDOR_APPLE		0x00	/* Apple Computer/compatible */
+#define	SN_VENDOR_DAYNA		0x01	/* Dayna/Kinetics EtherPort */
+#define	SN_VENDOR_APPLE16	0x02	/* Apple Twisted Pair Ether NB */
 
 /*
  * Memory access macros. Since we handle SONIC in 16 bit mode (PB5X0)
@@ -16,10 +24,10 @@
  * binary, all structures have to be accessed using macros which can
  * adjust the offsets appropriately.
  */
-#define	SWO(m, a, o, x)	(m ? (*(u_int32_t *)((u_int32_t *)a + o) = (x)) : \
-			     (*(u_int16_t *)((u_int16_t *)a + o) = (x)))
-#define	SRO(m, a, o)	(m ? (*(u_int32_t *)((u_int32_t *)a + o) & 0xffff) : \
-			     (*(u_int16_t *)((u_int16_t *)a + o) & 0xffff))
+#define	SWO(m, a, o, x)	(m ? (*(u_int32_t *)((u_int32_t *)(a) + (o)) = (x)) : \
+			     (*(u_int16_t *)((u_int16_t *)(a) + (o)) = (x)))
+#define	SRO(m, a, o)	(m ? (*(u_int32_t *)((u_int32_t *)(a) + (o)) & 0xffff) : \
+			     (*(u_int16_t *)((u_int16_t *)(a) + (o)) & 0xffff))
 
 /*
  * Register access macros. We use bus_space_* to talk to the Sonic
@@ -28,11 +36,15 @@
  */
 #define	NIC_GET(sc, reg)	(bus_space_read_2((sc)->sc_regt,	\
 					(sc)->sc_regh,			\
-					((sc)->sc_reg_map[reg])))
+					((sc)->sc_reg_map[(reg)])))
 #define	NIC_PUT(sc, reg, val)	(bus_space_write_2((sc)->sc_regt,	\
 					(sc)->sc_regh,			\
 					((sc)->sc_reg_map[reg]),	\
 					(val)))
+
+extern int	kvtop(caddr_t addr);
+#define	SONIC_GETDMA(p)	(u_int32_t)(kvtop((caddr_t)(p)))
+
 #define	SN_REGSIZE	SN_NREGS*4
 
 /* mac68k does not have any write buffers to flush... */
@@ -52,7 +64,6 @@
 
 #define NRBA    8		/* # receive buffers < NRRA */
 #define RBAMASK (NRBA-1)
-#define NRDA    146
 #define NTDA    8		/* # transmit descriptors */
 #define NRRA    16		/* # receive resource descriptors */
 #define RRAMASK (NRRA-1)	/* the reason why NRRA must be power of two */
@@ -69,84 +80,49 @@
 /*
  * transmit buffer area
  */
-#define NTXB    NTDA	/* Number of xmit buffers */
-#define TXBSIZE 1536    /* 6*2^8 -- the same size as the 8390 TXBUF */
+#define TXBSIZE	1536	/* 6*2^8 -- the same size as the 8390 TXBUF */
 
-#define	SN_NPAGES	2 + 8 + 4
-
-/*
- * Statistics collected over time
- */
-struct sn_stats {
-	int     ls_opacks;	/* packets transmitted */
-	int     ls_ipacks;	/* packets received */
-	int     ls_tdr;		/* contents of tdr after collision */
-	int     ls_tdef;	/* packets where had to wait */
-	int     ls_tone;	/* packets with one retry */
-	int     ls_tmore;	/* packets with more than one retry */
-	int     ls_tbuff;	/* transmit buff errors */
-	int     ls_tuflo;       /* "      uflo  "     */
-	int     ls_tlcol;
-	int     ls_tlcar;
-	int     ls_trtry;
-	int     ls_rbuff;       /* receive buff errors */
-	int     ls_rfram;       /* framing     */
-	int     ls_roflo;       /* overflow    */
-	int     ls_rcrc;
-	int     ls_rrng;	/* rx ring sequence error */
-	int     ls_babl;	/* chip babl error */
-	int     ls_cerr;	/* collision error */
-	int     ls_miss;	/* missed packet */
-	int     ls_merr;	/* memory error */
-	int     ls_copies;      /* copies due to out of range mbufs */
-	int     ls_maxmbufs;    /* max mbufs on transmit */
-	int     ls_maxslots;    /* max ring slots on transmit */
-};
+#define	SN_NPAGES	2 + NRBA + (NTDA/2)
 
 typedef struct mtd {
 	void		*mtd_txp;
-	int		mtd_vtxp;
-	unsigned char	*mtd_buf;
+	u_int32_t	mtd_vtxp;
+	caddr_t		mtd_buf;
+	u_int32_t	mtd_vbuf;
+	struct mbuf	*mtd_mbuf;
 } mtd_t;
 
 /*
  * The sn_softc for Mac68k if_sn.
  */
 typedef struct sn_softc {
-	struct	device sc_dev;
-	struct	arpcom sc_arpcom;
-#define	sc_if		sc_arpcom.ac_if		/* network visible interface */
+	struct device	sc_dev;
+	struct arpcom	sc_arpcom;
+#define	sc_if		sc_arpcom.ac_if
 #define	sc_enaddr	sc_arpcom.ac_enaddr	/* hardware ethernet address */
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
 
-	struct sn_stats	sc_sum;
-	short		sc_iflags;
-	unsigned short	bitmode;	/* 32 bit mode == 1, 16 == 0 */
+	int		bitmode;	/* 32 bit mode == 1, 16 == 0 */
 	bus_size_t	sc_reg_map[SN_NREGS];	/* register offsets */
 
 	u_int16_t	snr_dcr;	/* DCR for this instance */
 	u_int16_t	snr_dcr2;	/* DCR2 for this instance */
-	int	slotno;			/* Slot number */
+	int		slotno;		/* Slot number */
 
-	int	sc_rxmark;		/* pos. in rx ring for reading buffs */
-	int	sc_rramark;		/* index into p_rra of wp */
-	void *p_rra[NRRA];		/* RX resource descs */
-	int	v_rra[NRRA];		/* DMA addresses of p_rra */
-	int	v_rea;			/* ptr to the end of the rra space */
+	int		sc_rramark;	/* index into p_rra of wp */
+	void		*p_rra[NRRA];	/* RX resource descs */
+	u_int32_t	v_rra[NRRA];	/* DMA addresses of p_rra */
+	u_int32_t	v_rea;		/* ptr to the end of the rra space */
 
-	int	sc_rdamark;
-	void *p_rda[NRDA];
-	int	v_rda[NRDA];
+	int		sc_rxmark;	/* current hw pos in rda ring */
+	int		sc_rdamark;	/* current sw pos in rda ring */
+	int		sc_nrda;	/* total number of RDAs */
+	caddr_t		p_rda;
+	u_int32_t	v_rda;
 
-	caddr_t	rbuf[NRBA];
-
-	int	sc_missed;		/* missed packet counter */
-
-	int	txb_cnt;		/* total number of xmit buffers */
-	int	txb_inuse;		/* number of active xmit buffers */
-	int	txb_new;		/* index of next open slot. */
+	caddr_t		rbuf[NRBA];
 
 	struct mtd	mtda[NTDA];
 	int		mtd_hw;		/* idx of first mtd given to hw */
@@ -157,12 +133,10 @@ typedef struct sn_softc {
 					 * to SONIC. Need to clear EOL on
 					 * this word to add a desc.
 					 */
-
-	caddr_t		tbuf[NTXB];
-	int		vtbuf[NTXB];	/* DMA address of tbuf */
+	int		mtd_pint;	/* Counter to set TXP_PINT */
 
 	void		*p_cda;
-	int		v_cda;
+	u_int32_t	v_cda;
 
 	unsigned char	*space;
 } sn_softc_t;
@@ -239,7 +213,7 @@ typedef struct sn_softc {
 #define	CDA_ENABLE	64	/* mask enabling CAM entries */
 #define	CDA_SIZE(sc)	((4*16 + 1) * ((sc->bitmode) ? 4 : 2))
 
-int	snsetup __P((struct sn_softc *sc));
-void	sn_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
-			   vm_offset_t o, u_char *dst));
+int	snsetup __P((struct sn_softc *sc, u_int8_t *));
 void	snintr __P((void *, int));
+void	sn_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
+	    vm_offset_t o, u_char *dst));

@@ -1,6 +1,4 @@
-/*	$OpenBSD: if_sn_nubus.c,v 1.11 1997/05/01 18:32:48 briggs Exp $	*/
-/*	$NetBSD: if_sn_nubus.c,v 1.12 1997/05/01 18:17:13 briggs Exp $	*/
-
+/*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
  * All rights reserved.
@@ -41,51 +39,54 @@
 
 #include <net/if.h>
 
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#endif
 
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
 #include "nubus.h"
-#include "if_aereg.h"	/* For AE_VENDOR values */
 #include "if_snreg.h"
 #include "if_snvar.h"
 
 static int	sn_nubus_match __P((struct device *, void *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));
-static int	sn_nb_card_vendor __P((struct nubus_attach_args *));
+static int	sn_nb_card_vendor __P((bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *));
 
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
 };
 
+
 static int
-sn_nubus_match(parent, vcf, aux)
+sn_nubus_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf;
+	void *cf;
 	void *aux;
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	bus_space_handle_t bsh;
 	int rv;
 
-	if (bus_space_map(na->na_tag, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
-	    0, &bsh))
+	if (bus_space_map(na->na_tag,
+	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh))
 		return (0);
 
 	rv = 0;
 
 	if (na->category == NUBUS_CATEGORY_NETWORK &&
 	    na->type == NUBUS_TYPE_ETHERNET) {
-		switch (sn_nb_card_vendor(na)) {
-
-		case AE_VENDOR_APPLE:
-		case AE_VENDOR_DAYNA:
-			rv = 1;
+		switch (sn_nb_card_vendor(na->na_tag, bsh, na)) {
+		default:
 			break;
 
-		default:
+		case SN_VENDOR_APPLE:
+		case SN_VENDOR_DAYNA:
+		case SN_VENDOR_APPLE16:
+			rv = 1;
 			break;
 		}
 	}
@@ -103,11 +104,14 @@ sn_nubus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-        struct sn_softc *sc = (void *)self;
-        struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
-	int		i, success, offset;
+	struct sn_softc *sc = (void *)self;
+	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
+	int i, success, offset;
 	bus_space_tag_t	bst;
-	bus_space_handle_t	bsh, tmp_bsh;
+	bus_space_handle_t bsh, tmp_bsh;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
+
+	(void)(&offset);	/* Work around lame gcc initialization bug */
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
@@ -116,88 +120,110 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	sc->sc_regt = bst;
-	sc->bitmode = 1;
 
 	success = 0;
 
-        sc->bitmode = 1;		/* 32-bit card */
-        sc->slotno = na->slot;
+	sc->slotno = na->slot;
 
-        switch (sn_nb_card_vendor(na)) {
-	case AE_VENDOR_DAYNA:
-                sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
-			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+	switch (sn_nb_card_vendor(bst, bsh, na)) {
+	case SN_VENDOR_DAYNA:
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 |
+		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
+		sc->bitmode = 1;	/* 32 bit card */
 
-		if (bus_space_subregion(bst, bsh, 0x00180000, SN_REGSIZE,
-					&sc->sc_regh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x00180000, SN_REGSIZE, &sc->sc_regh)) {
 			printf(": failed to map register space.\n");
 			break;
 		}
 
-		if (bus_space_subregion(bst, bsh, 0x00ffe004, ETHER_ADDR_LEN,
-					&tmp_bsh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x00ffe004, ETHER_ADDR_LEN, &tmp_bsh)) {
 			printf(": failed to map ROM space.\n");
 			break;
 		}
 
-		sn_get_enaddr(bst, tmp_bsh, 0, sc->sc_arpcom.ac_enaddr);
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
 
 		offset = 2;
 		success = 1;
-                break;
+		break;
 
-	case AE_VENDOR_APPLE:
-                sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
-			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+	case SN_VENDOR_APPLE:
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 |
+		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
+		sc->bitmode = 1; /* 32 bit card */
 
-		if (bus_space_subregion(bst, bsh, 0x0, SN_REGSIZE,
-					&sc->sc_regh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x0, SN_REGSIZE, &sc->sc_regh)) {
 			printf(": failed to map register space.\n");
 			break;
 		}
 
-		if (bus_space_subregion(bst, bsh, 0x40000, ETHER_ADDR_LEN,
-					&tmp_bsh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x40000, ETHER_ADDR_LEN, &tmp_bsh)) {
 			printf(": failed to map ROM space.\n");
 			break;
 		}
 
-		sn_get_enaddr(bst, tmp_bsh, 0, sc->sc_arpcom.ac_enaddr);
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
 
 		offset = 0;
 		success = 1;
-                break;
+		break;
 
-        default:
-                /*
-                 * You can't actually get this default, the snmatch
-                 * will fail for unknown hardware. If you're adding support
-                 * for a new card, the following defaults are a
-                 * good starting point.
-                 */
-                sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
-			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+	case SN_VENDOR_APPLE16:
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_EXBUS |
+			DCR_DMABLOCK | DCR_PO1 | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
+		sc->bitmode = 0; /* 16 bit card */
+
+		if (bus_space_subregion(bst, bsh,
+		    0x0, SN_REGSIZE, &sc->sc_regh)) {
+			printf(": failed to map register space.\n");
+			break;
+		}
+
+		if (bus_space_subregion(bst, bsh,
+		    0x40000, ETHER_ADDR_LEN, &tmp_bsh)) {
+			printf(": failed to map ROM space.\n");
+			break;
+		}
+
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
+
 		offset = 0;
+		success = 1;
+		break;
+
+	default:
+		/*
+		 * You can't actually get this default, the snmatch
+		 * will fail for unknown hardware. If you're adding support
+		 * for a new card, the following defaults are a
+		 * good starting point.
+		 */
+		sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
+		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
 		success = 0;
 		printf(": unknown card: attachment incomplete.\n");
-        }
+	}
 
 	if (!success) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}
 
-	snsetup(sc);
 	/* Regs are addressed as words, big endian. */
 	for (i = 0; i < SN_NREGS; i++) {
 		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + offset);
 	}
 
 	/* snsetup returns 1 if something fails */
-	if (snsetup(sc)) {
+	if (snsetup(sc, myaddr)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
 	}
@@ -208,59 +234,34 @@ sn_nubus_attach(parent, self, aux)
 }
 
 static int
-sn_nb_card_vendor(na)
+sn_nb_card_vendor(bst, bsh, na)
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
 	struct nubus_attach_args *na;
 {
-	int vendor;
+	int vendor = SN_VENDOR_UNKNOWN;
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
-		switch (na->drhw) {
-		case NUBUS_DRHW_APPLE_SN:
-		case NUBUS_DRHW_APPLE_SNT:
-			vendor = AE_VENDOR_APPLE;
-			break;
-		default:
-			vendor = AE_VENDOR_UNKNOWN;
-			break;
-		}
+		if (na->drhw == NUBUS_DRHW_APPLE_SN)
+			vendor = SN_VENDOR_APPLE;
+		else if (na->drhw == NUBUS_DRHW_APPLE_SNT)
+			vendor = SN_VENDOR_APPLE16;
 		break;
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_TECHWORKS:
-		vendor = AE_VENDOR_APPLE;
-		break;
-	case NUBUS_DRSW_ASANTE:
-		vendor = AE_VENDOR_ASANTE;
-		break;
-	case NUBUS_DRSW_FARALLON:
-		vendor = AE_VENDOR_FARALLON;
-		break;
-	case NUBUS_DRSW_FOCUS:
-		vendor = AE_VENDOR_FOCUS;
+		vendor = SN_VENDOR_APPLE;
 		break;
 	case NUBUS_DRSW_GATOR:
-		switch (na->drhw) {
-		default:
-		case NUBUS_DRHW_INTERLAN:
-			vendor = AE_VENDOR_INTERLAN;
-			break;
-		case NUBUS_DRHW_KINETICS:
-			if (strncmp(
-			    nubus_get_card_name(na->fmt), "EtherPort", 9) == 0)
-				vendor = AE_VENDOR_KINETICS;
-			else
-				vendor = AE_VENDOR_DAYNA;
-			break;
-		}
+		if (na->drhw == NUBUS_DRHW_KINETICS &&
+		    strncmp(nubus_get_card_name(na->fmt),
+		    "EtherPort", 9) != 0)
+			vendor = SN_VENDOR_DAYNA;
 		break;
 	case NUBUS_DRSW_DAYNA:
-		vendor = AE_VENDOR_DAYNA;
+		vendor = SN_VENDOR_DAYNA;
 		break;
-	default:
-#ifdef DIAGNOSTIC
-		printf("Unknown ethernet drsw: %x\n", na->drsw);
-#endif
-		vendor = AE_VENDOR_UNKNOWN;
 	}
+
 	return vendor;
 }
