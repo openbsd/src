@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_kue.c,v 1.21 2002/07/25 02:18:10 nate Exp $ */
-/*	$NetBSD: if_kue.c,v 1.48 2002/07/08 17:46:24 augustss Exp $	*/
+/*	$OpenBSD: if_kue.c,v 1.22 2002/07/29 02:38:54 nate Exp $ */
+/*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -388,12 +388,11 @@ allmulti:
 Static void
 kue_reset(struct kue_softc *sc)
 {
-	usbd_status		err;
-
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __func__));
 
-	err = usbd_set_config_no(sc->kue_udev, KUE_CONFIG_NO, 1);
-	if (err)
+	if (usbd_set_config_no(sc->kue_udev, KUE_CONFIG_NO, 1) ||
+	    usbd_device2interface_handle(sc->kue_udev, KUE_IFACE_IDX,
+					 &sc->kue_iface))
 		printf("%s: reset failed\n", USBDEVNAME(sc->kue_dev));
 
 	/* Wait a little while for the chip to get its brains in order. */
