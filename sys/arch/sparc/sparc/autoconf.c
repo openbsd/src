@@ -172,11 +172,11 @@ void
 bootstrap()
 {
 	int nregion, nsegment, ncontext, node;
+	extern int msgbufmapped;
 
 #if defined(SUN4)
 	extern void oldmon_w_cmd();
 	extern struct msgbuf *msgbufp;
-	extern int msgbufmapped;
 
 	if (cputyp == CPU_SUN4) {
 		/*
