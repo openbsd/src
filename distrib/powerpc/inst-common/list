@@ -37,6 +37,7 @@ LINK	raminst			sbin/mknod
 LINK	raminst			sbin/mount
 LINK	raminst			sbin/mount_cd9660
 LINK	raminst			sbin/mount_ffs
+LINK	raminst			sbin/mount_msdos
 LINK	raminst			sbin/mount_kernfs
 LINK	raminst			sbin/mount_nfs
 LINK	raminst			sbin/mount_mfs
