@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.32 1998/07/06 22:06:51 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.33 1998/07/07 04:02:47 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -1538,16 +1538,18 @@ plist: install
 	@${MKDIR} ${PKGDIR}
 	@(dirs=""; \
 	  ld=""; \
-	  ${ECHO} "@comment PACKAGE(arch=${ARCH}, opsys=${OPSYS}, vers=${OPSYS_VER})"; \
-	  ${ECHO} "@name ${PKGNAME}"; \
 	  ${ECHO} "@cwd ${PREFIX}"; \
+	  ${ECHO} "@name ${PKGNAME}"; \
+	  ${ECHO} "@comment PACKAGE(arch=${ARCH}, opsys=${OPSYS}, vers=${OPSYS_VER})"; \
 	  for f in `${MAKE} package-depends|sort -u`; do ${ECHO} "@pkgdep $$f"; done; \
 	  for f in `find ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
 	   ff=`${ECHO} $$f | ${SED} -e 's|^${PREFIX}/||'`; \
 	   if [ -d $$f ]; then dirs="$$ff $$dirs"; \
 	   else \
 	    ${ECHO} $$ff; \
-	    if ${ECHO} $$f | ${GREP} -E -q -e '/[^/]+\.so\.[0-9]+\.[0-9]+$$'; then \
+	    if ${ECHO} $$f | ${GREP} -E -q -e '[^/]+\.a$$'; then \
+	     ${ECHO} '@exec ranlib %D/%F'; \
+	    elif ${ECHO} $$f | ${GREP} -E -q -e '[^/]+\.so\.[0-9]+\.[0-9]+$$'; then \
 	     ld="$$LDCONFIG `${DIRNAME} $$f`"; \
 	    fi; \
 	   fi; \
