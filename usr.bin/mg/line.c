@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.10 2002/02/14 03:15:04 vincent Exp $	*/
+/*	$OpenBSD: line.c,v 1.11 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  *		Text line handling.
@@ -72,7 +72,7 @@ lrealloc(LINE *lp, int newsize)
 		return FALSE;
 	lp->l_text = tmp;
 	lp->l_size = newsize;
-	
+
 	return TRUE;
 }
 
@@ -169,11 +169,11 @@ linsert(n, c)
 
 	/* current line */
 	lp1 = curwp->w_dotp;
-	
+
 	/* special case for the end */
 	if (lp1 == curbp->b_linep) {
 		LINE *lp2, *lp3;
-		
+
 		/* now should only happen in empty buffer */
 		if (curwp->w_doto != 0) {
 			ewprintf("bug: linsert");
@@ -182,7 +182,7 @@ linsert(n, c)
 		/* allocate a new line */
 		if ((lp2 = lalloc(n)) == NULL)
 			return FALSE;
-		
+
 		/* previous line */
 		lp3 = lp1->l_bp;
 		/* link in */
@@ -200,7 +200,7 @@ linsert(n, c)
 			if (wp->w_markp == lp1)
 				wp->w_markp = lp2;
 		}
-		
+
 		curwp->w_doto = n;
 		return TRUE;
 	}
@@ -211,9 +211,9 @@ linsert(n, c)
 	if ((lp1->l_used + n) > lp1->l_size) {
 		if (lrealloc(lp1, lp1->l_used + n) == FALSE)
 			return FALSE;
-	} 
+	}
 	lp1->l_used += n;
-	if (lp1->l_used != n) 
+	if (lp1->l_used != n)
 		memmove(&lp1->l_text[doto + n], &lp1->l_text[doto],
 		    lp1->l_used - n - doto);
 

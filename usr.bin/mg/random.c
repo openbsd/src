@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.6 2001/05/24 03:05:25 mickey Exp $	*/
+/*	$OpenBSD: random.c,v 1.7 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  *		Assorted commands.
@@ -180,9 +180,9 @@ newline(f, n)
 	while (n--) {
 		lp = curwp->w_dotp;
 #ifdef undef
-		if (llength(lp) == curwp->w_doto
-		    && lforw(lp) != curbp->b_linep
-		    && llength(lforw(lp)) == 0) {
+		if (llength(lp) == curwp->w_doto &&
+		    lforw(lp) != curbp->b_linep &&
+		    llength(lforw(lp)) == 0) {
 			if ((s = forwchar(FFRAND, 1)) != TRUE)
 				return s;
 		} else
@@ -246,8 +246,8 @@ delwhite(f, n)
 
 	col = curwp->w_doto;
 
-	while (((c = lgetc(curwp->w_dotp, col)) == ' ' || c == '\t')
-	       && col < llength(curwp->w_dotp))
+	while (((c = lgetc(curwp->w_dotp, col)) == ' ' || c == '\t') &&
+	    col < llength(curwp->w_dotp))
 		++col;
 	do {
 		if (curwp->w_doto == 0) {

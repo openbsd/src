@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.8 2002/02/08 21:21:11 deraadt Exp $	*/
+/*	$OpenBSD: window.c,v 1.9 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  *		Window handling.
@@ -409,8 +409,8 @@ wpopup()
 {
 	MGWIN	*wp;
 
-	if (wheadp->w_wndp == NULL
-	    && splitwind(FFRAND, 0) == FALSE)
+	if (wheadp->w_wndp == NULL &&
+	    splitwind(FFRAND, 0) == FALSE)
 		return NULL;
 
 	/* find a window to use */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.20 2002/02/13 03:03:49 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.21 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  *		Buffer handling.
@@ -26,8 +26,8 @@ usebuffer(f, n)
 	char    bufn[NBUFN];
 
 	/* Get buffer to use from user */
-	if ((curbp->b_altb == NULL)
-	    && ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
+	if ((curbp->b_altb == NULL) &&
+	    ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
 		s = eread("Switch to buffer: ", bufn, NBUFN, EFNEW | EFBUF);
 	else
 		s = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
@@ -59,8 +59,8 @@ poptobuffer(f, n)
 	char    bufn[NBUFN];
 
 	/* Get buffer to use from user */
-	if ((curbp->b_altb == NULL)
-	    && ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
+	if ((curbp->b_altb == NULL) &&
+	    ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
 		s = eread("Switch to buffer in other window: ", bufn, NBUFN,
 			  EFNEW | EFBUF);
 	else
@@ -101,7 +101,7 @@ killbuffer(f, n)
 	char    bufn[NBUFN];
 
 	if ((s = eread("Kill buffer: (default %s) ", bufn, NBUFN, EFNEW | EFBUF,
-		       curbp->b_bname)) == ABORT)
+	    curbp->b_bname)) == ABORT)
 		return (s);
 	else if (s == FALSE)
 		bp = curbp;
@@ -379,12 +379,12 @@ anycb(f)
 	char    prompt[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
-		if (bp->b_fname != NULL && *(bp->b_fname) != '\0'
-		    && (bp->b_flag & BFCHG) != 0) {
+		if (bp->b_fname != NULL && *(bp->b_fname) != '\0' &&
+		    (bp->b_flag & BFCHG) != 0) {
 			snprintf(prompt, sizeof prompt, "Save file %s",
 			    bp->b_fname);
-			if ((f == TRUE || (save = eyorn(prompt)) == TRUE)
-			    && buffsave(bp) == TRUE) {
+			if ((f == TRUE || (save = eyorn(prompt)) == TRUE) &&
+			    buffsave(bp) == TRUE) {
 				bp->b_flag &= ~BFCHG;
 				upmodes(bp);
 			} else
@@ -477,8 +477,8 @@ bclear(bp)
 	LINE  *lp;
 	int    s;
 
-	if ((bp->b_flag & BFCHG) != 0	/* Changed.		 */
-	    && (s = eyesno("Buffer modified; kill anyway")) != TRUE)
+	if ((bp->b_flag & BFCHG) != 0 &&	/* Changed.		 */
+	    (s = eyesno("Buffer modified; kill anyway")) != TRUE)
 		return (s);
 	bp->b_flag &= ~BFCHG;	/* Not changed		 */
 	while ((lp = lforw(bp->b_linep)) != bp->b_linep)

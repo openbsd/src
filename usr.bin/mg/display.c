@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.8 2002/02/14 00:11:46 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.9 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -141,7 +141,7 @@ vtresize(int force, int newrow, int newcol)
 	if (first_run) {
 		memset(&blanks, 0, sizeof(blanks));
 	}
-		
+
 	if (rowchanged || first_run) {
 		int vidstart;
 
@@ -197,13 +197,13 @@ vtresize(int force, int newrow, int newcol)
 
 	nrow = newrow;
 	ncol = newcol;
-	
+
 	if (ttrow > nrow)
 		ttrow = nrow;
 	if (ttcol > ncol)
 		ttcol = ncol;
 
-	first_run = 0;	
+	first_run = 0;
 	return 0;
 }
 
@@ -227,7 +227,7 @@ vtinit()
 
 	ttopen();
 	ttinit();
-	
+
 	/*
 	 * ttinit called ttresize(), which called vtresize(), so our data
 	 * structures are setup correctly.
@@ -292,7 +292,7 @@ vtputc(c)
 	VIDEO	*vp;
 
 	c &= 0xff;
-	
+
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
@@ -323,7 +323,7 @@ vtpute(c)
 	VIDEO *vp;
 
 	c &= 0xff;
-	
+
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
@@ -400,7 +400,7 @@ update()
 		 */
 		if (wp->w_flag == 0)
 			continue;
-		
+
 		if ((wp->w_flag & WFFORCE) == 0) {
 			lp = wp->w_linep;
 			for (i = 0; i < wp->w_ntrows; ++i) {
@@ -424,9 +424,8 @@ update()
 			if (i < 0)
 				i = 0;
 		} else
-			i = wp->w_ntrows / 2; /* current center,
-					       * no change */
-		
+			i = wp->w_ntrows / 2; /* current center, no change */
+
 		/*
 		 * Find the line
 		 */

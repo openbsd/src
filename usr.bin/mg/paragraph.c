@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.6 2001/05/24 03:05:25 mickey Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.7 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  * Code for dealing with paragraphs and filling. Adapted from MicroEMACS 3.6
@@ -37,14 +37,14 @@ gotobop(f, n)
 		 * <NL><NL>
 		 */
 		while (lback(curwp->w_dotp) != curbp->b_linep)
-			if (llength(lback(curwp->w_dotp))
-			    && lgetc(curwp->w_dotp, 0) != ' '
-			    && lgetc(curwp->w_dotp, 0) != '.'
-			    && lgetc(curwp->w_dotp, 0) != '\t')
+			if (llength(lback(curwp->w_dotp)) &&
+			    lgetc(curwp->w_dotp, 0) != ' ' &&
+			    lgetc(curwp->w_dotp, 0) != '.' &&
+			    lgetc(curwp->w_dotp, 0) != '\t')
 				curwp->w_dotp = lback(curwp->w_dotp);
 			else {
-				if (llength(lback(curwp->w_dotp))
-				    && lgetc(curwp->w_dotp, 0) == '.') {
+				if (llength(lback(curwp->w_dotp)) &&
+				    lgetc(curwp->w_dotp, 0) == '.') {
 					curwp->w_dotp = lforw(curwp->w_dotp);
 					if (curwp->w_dotp == curbp->b_linep) {
 						/*
@@ -90,10 +90,10 @@ gotoeop(f, n)
 
 		/* and scan forword until we hit a <NL><SP> or ... */
 		while (curwp->w_dotp != curbp->b_linep) {
-			if (llength(curwp->w_dotp)
-			    && lgetc(curwp->w_dotp, 0) != ' '
-			    && lgetc(curwp->w_dotp, 0) != '.'
-			    && lgetc(curwp->w_dotp, 0) != '\t')
+			if (llength(curwp->w_dotp) &&
+			    lgetc(curwp->w_dotp, 0) != ' ' &&
+			    lgetc(curwp->w_dotp, 0) != '.' &&
+			    lgetc(curwp->w_dotp, 0) != '\t')
 				curwp->w_dotp = lforw(curwp->w_dotp);
 			else
 				break;
@@ -304,14 +304,14 @@ fillword(f, n)
 	if ((c = lgetc(curwp->w_dotp, curwp->w_doto)) != ' ' && c != '\t')
 		do {
 			(void)backchar(FFRAND, 1);
-		} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) != ' '
-		    && c != '\t' && curwp->w_doto > 0);
+		} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) != ' ' &&
+		    c != '\t' && curwp->w_doto > 0);
 
 	if (curwp->w_doto == 0)
 		do {
 			(void)forwchar(FFRAND, 1);
-		} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) != ' '
-		    && c != '\t' && curwp->w_doto < llength(curwp->w_dotp));
+		} while ((c = lgetc(curwp->w_dotp, curwp->w_doto)) != ' ' &&
+		    c != '\t' && curwp->w_doto < llength(curwp->w_dotp));
 
 	(void)delwhite(FFRAND, 1);
 	(void)lnewline();

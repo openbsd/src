@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2002/02/13 22:50:40 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  *	File commands.
@@ -72,7 +72,7 @@ poptofile(f, n)
 	char	*adjf;
 
 	if ((s = eread("Find file in other window: ", fname, NFILEN,
-		       EFNEW | EFCR | EFFILE)) != TRUE)
+	    EFNEW | EFCR | EFFILE)) != TRUE)
 		return s;
 	adjf = adjustname(fname);
 	if ((bp = findbuffer(adjf)) == NULL)
@@ -337,7 +337,7 @@ filewrite(f, n)
 	char	*adjfname;
 
 	if ((s = eread("Write file: ", fname, NFILEN,
-		       EFNEW | EFCR | EFFILE)) != TRUE)
+	    EFNEW | EFCR | EFFILE)) != TRUE)
 		return (s);
 	adjfname = adjustname(fname);
 	/* old attributes are no longer current */

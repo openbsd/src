@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.12 2002/02/05 20:47:32 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.13 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  * Terminfo display driver
@@ -371,7 +371,7 @@ ttnowindow()
 {
 	if (change_scroll_region) {
 		putpad(tgoto(change_scroll_region,
-		       (nrow > lines ? nrow : lines) - 1, 0), nrow - ttrow);
+		    (nrow > lines ? nrow : lines) - 1, 0), nrow - ttrow);
 		ttrow = HUGE;	/* Unknown.		 */
 		ttcol = HUGE;
 		tttop = HUGE;	/* No scroll region.	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.17 2002/01/18 08:37:08 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.18 2002/02/14 14:24:21 deraadt Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -101,14 +101,14 @@ eyesno(sp)
 				free((char *)lp);
 			}
 #endif /* !NO_MACRO */
-			if ((buf[0] == 'y' || buf[0] == 'Y')
-			    && (buf[1] == 'e' || buf[1] == 'E')
-			    && (buf[2] == 's' || buf[2] == 'S')
-			    && (buf[3] == '\0'))
+			if ((buf[0] == 'y' || buf[0] == 'Y') &&
+			    (buf[1] == 'e' || buf[1] == 'E') &&
+			    (buf[2] == 's' || buf[2] == 'S') &&
+			    (buf[3] == '\0'))
 				return TRUE;
-			if ((buf[0] == 'n' || buf[0] == 'N')
-			    && (buf[1] == 'o' || buf[0] == 'O')
-			    && (buf[2] == '\0'))
+			if ((buf[0] == 'n' || buf[0] == 'N') &&
+			    (buf[1] == 'o' || buf[0] == 'O') &&
+			    (buf[2] == '\0'))
 				return FALSE;
 		}
 		s = ereply("Please answer yes or no.  %s? (yes or no) ",
