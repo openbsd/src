@@ -1,0 +1,81 @@
+#	$OpenBSD: TIGER,v 1.1 1997/01/24 01:25:25 briggs Exp $
+#	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
+#
+# Allen's Q700
+
+include	"arch/mac68k/conf/std.mac68k"
+
+maxusers	16
+
+makeoptions	COPTS="-O2 -m68040"
+
+# Standard system options
+options		DIAGNOSTIC		# DEBUG for extra kernel debugging
+options		KTRACE			# system call tracing support
+
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		DDB
+options		FFS
+options		QUOTA		# fast filesystem with user and group quotas
+options		MFS		# memory-based filesystem
+options		NFSSERVER	# Sun NFS-compatible filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem
+options		NULLFS		# Null (formerly loop-back) filesystem
+options		CD9660		# ISO-9660 w/ RockRidge
+options		KERNFS		# kernel data-structure filesystem
+options		FDESC		# user file descriptor filesystem
+options		PROCFS		# Process filesystem
+
+options		SCSI
+
+# Networking options
+options		INET
+options		GATEWAY		# IP packet forwarding
+options		COMPAT_43
+options		MAPMEM
+options		SYSVSHM,SYSVSEM,SYSVMSG
+options		PPP_BSDCOMP,PPP_DEFLATE
+
+# Mac-specific options
+options		M68040
+options		FPSP
+options		COMPAT_NOMID
+options		COMPAT_SUNOS
+options		ZS_CONSOLE_ABORT
+
+config		bsd	swap generic
+options		GENERIC
+
+sn0		at obio?	# SONIC ethernet (68040)
+
+# no internal video, but need interrupts, etc.
+intvid*		at obio?
+
+nubus0		at mainbus?
+
+ae*		at nubus?
+macvid*		at nubus?
+
+# grf should be on nubus card
+grf*		at macvid?
+
+# Attach ite semantics to the appropriate grf device
+ite0		at grf?
+
+esp0		at obio?		# SCSI NCR 53C9x
+
+scsibus*	at scsi?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+pseudo-device	pty		16
+pseudo-device	bpfilter	12
+pseudo-device	vnd		2
+pseudo-device	ccd		2
+pseudo-device	ppp		2
+pseudo-device	loop
