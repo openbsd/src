@@ -4127,6 +4127,7 @@
 ./usr/share/man/cat9/pfind.0
 ./usr/share/man/cat9/pgfind.0
 ./usr/share/man/cat9/pgsignal.0
+./usr/share/man/cat9/physio.0
 ./usr/share/man/cat9/pool.0
 ./usr/share/man/cat9/pool_create.0
 ./usr/share/man/cat9/pool_destroy.0
