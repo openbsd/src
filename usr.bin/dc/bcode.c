@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.19 2003/12/02 13:43:02 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.20 2003/12/19 19:23:16 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,12 +17,13 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.19 2003/12/02 13:43:02 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.20 2003/12/19 19:23:16 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
 #include <err.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,10 +50,12 @@ struct bmachine {
 	bool			extended_regs;
 	size_t			reg_array_size;
 	struct stack		*reg;
+	bool			interrupted;
 	struct source		readstack[RECURSION_STACK_SIZE];
 };
 
 static struct bmachine	bmachine;
+static void sighandler(int);
 
 static __inline int	readch(void);
 static __inline int	unreadch(void);
@@ -220,6 +223,12 @@ static const struct jump_entry jump_table_data[] = {
 #define JUMP_TABLE_DATA_SIZE \
 	(sizeof(jump_table_data)/sizeof(jump_table_data[0]))
 
+static void
+sighandler(int ignored)
+{
+	bmachine.interrupted = true;
+}
+
 void
 init_bmachine(bool extended_registers)
 {
@@ -247,6 +256,7 @@ init_bmachine(bool extended_registers)
 	bmachine.obase = bmachine.ibase = 10;
 	BN_init(&zero);
 	bn_check(BN_zero(&zero));
+	signal(SIGINT, sighandler);
 }
 
 /* Reset the things needed before processing a (new) file */
@@ -1689,6 +1699,15 @@ eval(void)
 			src_free();
 			bmachine.readsp--;
 			continue;
+		}
+		if (bmachine.interrupted) {
+			if (bmachine.readsp > 0) {
+				src_free();
+				bmachine.readsp--;
+				continue;
+			} else {
+				bmachine.interrupted = false;
+			}
 		}
 #ifdef DEBUGGING
 		fprintf(stderr, "# %c\n", ch);
