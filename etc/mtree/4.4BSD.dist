@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.108 2001/06/27 12:34:17 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.109 2001/06/29 05:37:59 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -295,6 +295,11 @@ site_perl
 ..
 
 # ./usr/libdata/perl5
+..
+
+# ./usr/libdata/ssh
+ssh
+# ./usr/libdata/ssh
 ..
 
 # ./usr/libdata
