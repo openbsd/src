@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.14 2002/06/02 22:50:00 deraadt Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.15 2004/11/08 21:16:47 deraadt Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -735,6 +735,7 @@ static const char * const tulip_chipdescs[] = {
     "82C168 [10-100Mb/s]",
 };
 
+#ifdef TULIP_DEBUG
 static const char * const tulip_mediums[] = {
     "unknown",			/* TULIP_MEDIA_UNKNOWN */
     "10baseT",			/* TULIP_MEDIA_10BASET */
@@ -749,6 +750,7 @@ static const char * const tulip_mediums[] = {
     "100baseFX",		/* TULIP_MEDIA_100BASEFX */
     "Full Duplex 100baseFX",	/* TULIP_MEDIA_100BASEFX_FD */
 };
+#endif
 
 #if defined(IFM_ETHER)
 static const int tulip_media_to_ifmedia[] = {

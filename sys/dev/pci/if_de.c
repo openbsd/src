@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.61 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.62 2004/11/08 21:16:47 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -450,12 +450,16 @@ tulip_media_print(
     if ((sc->tulip_flags & TULIP_LINKUP) == 0)
 	return;
     if (sc->tulip_flags & TULIP_PRINTMEDIA) {
+#ifdef TULIP_DEBUG
 	printf(TULIP_PRINTF_FMT ": enabling %s port\n",
 	       TULIP_PRINTF_ARGS,
 	       tulip_mediums[sc->tulip_media]);
+#endif
 	sc->tulip_flags &= ~(TULIP_PRINTMEDIA|TULIP_PRINTLINKUP);
     } else if (sc->tulip_flags & TULIP_PRINTLINKUP) {
+#ifdef TULIP_DEBUG
 	printf(TULIP_PRINTF_FMT ": link up\n", TULIP_PRINTF_ARGS);
+#endif
 	sc->tulip_flags &= ~TULIP_PRINTLINKUP;
     }
 }
@@ -531,7 +535,7 @@ tulip_media_link_monitor(
     tulip_link_status_t linkup = TULIP_LINK_DOWN;
 
     if (mi == NULL) {
-#if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
+#if defined(TULIP_DEBUG)
 	printf("tulip_media_link_monitor: %s: botch at line %d\n",
 	      tulip_mediums[sc->tulip_media],__LINE__);
 #endif
@@ -1436,8 +1440,10 @@ tulip_mii_autonegotiate(
 		    tulip_timeout(sc);
 		    return;
 		}
+#ifdef TULIP_DEBUG
 		printf(TULIP_PRINTF_FMT "(phy%d): error: reset of PHY never completed!\n",
 			   TULIP_PRINTF_ARGS, phyaddr);
+#endif
 		sc->tulip_flags &= ~TULIP_TXPROBE_ACTIVE;
 		sc->tulip_probe_state = TULIP_PROBE_FAILED;
 		sc->tulip_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
@@ -2355,7 +2361,9 @@ tulip_identify_asante_nic(
 	    mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, 0);
 	}
 	if (mi->mi_phyaddr == TULIP_MII_NOPHY) {
+#ifdef TULIP_DEBUG
 	    printf(TULIP_PRINTF_FMT ": can't find phy 0\n", TULIP_PRINTF_ARGS);
+#endif
 	    return;
 	}
 
@@ -3481,10 +3489,12 @@ tulip_rx_intr(
 		    }
 		}
 		if (error != NULL && (sc->tulip_flags & TULIP_NOMESSAGES) == 0) {
+#ifdef TULIP_DEBUG
 		    printf(TULIP_PRINTF_FMT ": receive: " TULIP_EADDR_FMT ": %s\n",
 			   TULIP_PRINTF_ARGS,
 			   TULIP_EADDR_ARGS(mtod(ms, u_char *) + 6),
 			   error);
+#endif
 		    sc->tulip_flags |= TULIP_NOMESSAGES;
 		}
 	    }
@@ -3654,7 +3664,8 @@ tulip_tx_intr(
 		m_freem(m);
 #if defined(TULIP_DEBUG)
 		} else {
-		    printf(TULIP_PRINTF_FMT ": tx_intr: failed to dequeue mbuf?!?\n", TULIP_PRINTF_ARGS);
+		    printf(TULIP_PRINTF_FMT ": tx_intr: failed to dequeue mbuf?!?\n",
+			TULIP_PRINTF_ARGS);
 #endif
 		}
 		if (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) {
@@ -4157,7 +4168,9 @@ tulip_txput(
 		 */
 		if (compressed) {
 		    /* should not happen */
+#ifdef TULIP_DEBUG
 		    printf("tulip_txput: compress called twice!\n");
+#endif
 		    goto finish;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, tmp);
@@ -5056,7 +5069,9 @@ tulip_pci_match(
 	return 0;
     irq = pci_inl(pa, PCI_I_LINE) & 0xFF;
     if (irq == 0 || irq >= 16) {
+#ifdef TULIP_DEBUG
 	printf("de?: invalid IRQ %d; skipping\n", irq);
+#endif
 	return 0;
     }
     return 1;
