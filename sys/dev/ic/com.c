@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.48 1999/08/08 01:34:14 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.49 1999/08/08 15:08:24 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -673,23 +673,6 @@ com_activate(self, act)
 	splx(s);
 	return (rv);
 }
-
-#if defined(DDB) || defined(KGDB)
-void
-com_enable_debugport(sc)
-	struct com_softc *sc;
-{
-	int s;
-
-	/* Turn on line break interrupt, set carrier. */
-	s = splhigh();
-	sc->sc_ier = IER_ERXRDY;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
-	splx(s);
-}
-#endif
 
 int
 comopen(dev, flag, mode, p)
