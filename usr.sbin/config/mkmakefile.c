@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.14 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.15 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static int emitrules(FILE *);
 static int emitload(FILE *);
 
 int
-mkmakefile()
+mkmakefile(void)
 {
 	FILE *ifp, *ofp;
 	int lineno;
@@ -151,8 +151,7 @@ bad:
  * get the .o from the obj-directory.
  */
 static const char *
-srcpath(fi)
-	struct files *fi;
+srcpath(struct files *fi)
 {
 #if 1
 	/* Always have source, don't support object dirs for kernel builds. */
@@ -172,8 +171,7 @@ srcpath(fi)
 }
 
 static int
-emitdefs(fp)
-	FILE *fp;
+emitdefs(FILE *fp)
 {
 	struct nvlist *nv;
 	char *sp;
@@ -220,8 +218,7 @@ emitdefs(fp)
 }
 
 static int
-emitobjs(fp)
-	FILE *fp;
+emitobjs(FILE *fp)
 {
 	struct files *fi;
 	struct objects *oi;
@@ -267,25 +264,21 @@ emitobjs(fp)
 }
 
 static int
-emitcfiles(fp)
-	FILE *fp;
+emitcfiles(FILE *fp)
 {
 
 	return (emitfiles(fp, 'c'));
 }
 
 static int
-emitsfiles(fp)
-	FILE *fp;
+emitsfiles(FILE *fp)
 {
 
 	return (emitfiles(fp, 's'));
 }
 
 static int
-emitfiles(fp, suffix)
-	FILE *fp;
-	int suffix;
+emitfiles(FILE *fp, int suffix)
 {
 	struct files *fi;
 	struct config *cf;
@@ -354,8 +347,7 @@ emitfiles(fp, suffix)
  * Emit the make-rules.
  */
 static int
-emitrules(fp)
-	FILE *fp;
+emitrules(FILE *fp)
 {
 	struct files *fi;
 	const char *cp, *fpath;
@@ -391,8 +383,7 @@ emitrules(fp)
  * This function is not to be called `spurt'.
  */
 static int
-emitload(fp)
-	FILE *fp;
+emitload(FILE *fp)
 {
 	struct config *cf;
 	const char *nm, *swname;

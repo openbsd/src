@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.21 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.22 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static int emitroots(FILE *);
 #define	NEWLINE		if (putc('\n', fp) < 0) return (1)
 
 int
-mkioconf()
+mkioconf(void)
 {
 	FILE *fp;
 	int v;
@@ -98,8 +98,7 @@ mkioconf()
 }
 
 static int
-cforder(a, b)
-	const void *a, *b;
+cforder(const void *a, const void *b)
 {
 	int n1, n2;
 
@@ -109,8 +108,7 @@ cforder(a, b)
 }
 
 static int
-emithdr(ofp)
-	FILE *ofp;
+emithdr(FILE *ofp)
 {
 	FILE *ifp;
 	size_t n;
@@ -145,8 +143,7 @@ emithdr(ofp)
 }
 
 static int
-emitexterns(fp)
-	FILE *fp;
+emitexterns(FILE *fp)
 {
 	struct devbase *d;
 	struct deva *da;
@@ -172,8 +169,7 @@ emitexterns(fp)
 }
 
 static int
-emitloc(fp)
-	FILE *fp;
+emitloc(FILE *fp)
 {
 	int i;
 
@@ -197,8 +193,7 @@ static int nlocnames, maxlocnames = 8;
 static char **locnames;
 
 short
-addlocname(name)
-	char *name;
+addlocname(const char *name)
 {
 	int i;
 
@@ -210,7 +205,7 @@ addlocname(name)
 		if (strcmp(name, locnames[i]) == 0)
 			return (i);
 	/*printf("adding %s at %d\n", name, nlocnames);*/
-	locnames[nlocnames++] = name;
+	locnames[nlocnames++] = (char *)name;
 	return (nlocnames - 1);
 }
 
@@ -218,8 +213,7 @@ static int nlocnami, maxlocnami = 8;
 static short *locnami;
 
 void
-addlocnami(index)
-	short index;
+addlocnami(short index)
 {
 	if (locnami == NULL || nlocnami+1 > maxlocnami) {
 		maxlocnami *= 4;
@@ -234,8 +228,7 @@ addlocnami(index)
  * XXX the locnamp[] table is not compressed like it should be!
  */
 static int
-emitlocnames(fp)
-	FILE *fp;
+emitlocnames(FILE *fp)
 {
 	struct devi **p, *i;
 	struct nvlist *nv;
@@ -319,8 +312,7 @@ emitlocnames(fp)
  * Emit global parents-vector.
  */
 static int
-emitpv(fp)
-	FILE *fp;
+emitpv(FILE *fp)
 {
 	int i;
 
@@ -340,8 +332,7 @@ short pv[%d] = {", parents.used) < 0)
  * Emit the cfdata array.
  */
 static int
-emitcfdata(fp)
-	FILE *fp;
+emitcfdata(FILE *fp)
 {
 	struct devi **p, *i, **par;
 	int unit, v;
@@ -425,8 +416,7 @@ struct cfdata cfdata[] = {\n\
  * Emit the table of potential roots.
  */
 static int
-emitroots(fp)
-	FILE *fp;
+emitroots(FILE *fp)
 {
 	struct devi **p, *i;
 	int cnt = 0;
@@ -456,8 +446,7 @@ emitroots(fp)
  * Emit pseudo-device initialization.
  */
 static int
-emitpseudo(fp)
-	FILE *fp;
+emitpseudo(FILE *fp)
 {
 	struct devi *i;
 	struct devbase *d;

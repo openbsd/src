@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.17 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.18 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ static char *cntname(const char *);
  * Make headers containing counts, as needed.
  */
 int
-mkheaders()
+mkheaders(void)
 {
 	struct files *fi;
 	struct nvlist *nv;
@@ -79,8 +79,7 @@ mkheaders()
 }
 
 static int
-emitcnt(head)
-	struct nvlist *head;
+emitcnt(struct nvlist *head)
 {
 	struct nvlist *nv;
 	FILE *fp;
@@ -123,8 +122,7 @@ writeit:
 }
 
 static int
-emitopt(nv)
-	struct nvlist *nv;
+emitopt(struct nvlist *nv)
 {
 	struct nvlist *option;
 	char new_contents[BUFSIZ], buf[BUFSIZ];
@@ -189,10 +187,7 @@ writeit:
 }
 
 static int
-err(what, fname, fp)
-	const char *what;
-	char *fname;
-	FILE *fp;
+err(const char *what, char *fname, FILE *fp)
 {
 
 	(void)fprintf(stderr, "config: error %sing %s: %s\n",
@@ -203,8 +198,7 @@ err(what, fname, fp)
 }
 
 static char *
-cntname(src)
-	const char *src;
+cntname(const char *src)
 {
 	char *dst, c;
 	static char buf[100];

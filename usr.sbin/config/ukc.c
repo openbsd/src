@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.10 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: ukc.c,v 1.11 2003/06/28 04:55:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.10 2003/06/02 21:19:03 maja Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.11 2003/06/28 04:55:07 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -60,11 +60,7 @@ check_int(int idx, const char *name)
 }
 
 int
-ukc(file, outfile, uflag, force)
-	char *file;
-	char *outfile;
-	int uflag;
-	int force;
+ukc(char *file, char *outfile, int uflag, int force)
 {
 	extern char *__progname;
 	int ret, i;
@@ -184,7 +180,7 @@ WARNING this kernel doesn't support pseudo devices.\n");
 }
 
 void
-init()
+init(void)
 {
 	int i = 0, fd;
 	struct cfdata *cd;

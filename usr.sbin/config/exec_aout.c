@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.6 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: exec_aout.c,v 1.7 2003/06/28 04:55:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.6 2003/06/02 21:19:03 maja Exp $";
+static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.7 2003/06/28 04:55:07 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -47,7 +47,7 @@ unsigned long	aout_adjvalue = 0;
 unsigned long	aout_datashift = 0;
 
 void
-aout_computeadj()
+aout_computeadj(void)
 {
 	aout_adjvalue = (unsigned long)aout_p +
 	    N_TXTOFF(aout_ex) - nl[P_KERNEL_TEXT].n_value;
@@ -68,8 +68,7 @@ aout_computeadj()
 
 /* ``kernel'' vaddr -> in-memory address */
 caddr_t
-aout_adjust(x)
-	caddr_t x;
+aout_adjust(caddr_t x)
 {
 
 	if (aout_adjvalue == 0)
@@ -122,8 +121,7 @@ aout_check(file)
 }
 
 void
-aout_loadkernel(file)
-	char *file;
+aout_loadkernel(char *file)
 {
 	int fd;
 	off_t cur, end;
@@ -162,8 +160,7 @@ aout_loadkernel(file)
 }
 
 void
-aout_savekernel(outfile)
-	char *outfile;
+aout_savekernel(char *outfile)
 {
 	int fd;
 

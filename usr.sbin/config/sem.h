@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.11 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.12 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.6 1996/11/11 23:40:10 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ int		defattr(const char *, struct nvlist *);
 void		defdev(struct devbase *, int, struct nvlist *, struct nvlist *);
 void		defdevattach(struct deva *, struct devbase *,
 		    struct nvlist *, struct nvlist *);
-struct devbase *getdevbase(const char *name);
+struct devbase *getdevbase(char *name);
 struct deva    *getdevattach(const char *name);
 struct attr    *getattr(const char *name);
 void		setmajor(struct devbase *d, int n);

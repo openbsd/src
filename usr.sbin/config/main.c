@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ static void optiondelta(void);
 int	madedir = 0;
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -93,9 +93,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	char *p;
 	const char *last_component;
@@ -278,7 +276,7 @@ main(argc, argv)
  * and for the machine's CPU architecture, so that works as well.
  */
 static int
-mksymlinks()
+mksymlinks(void)
 {
 	int ret;
 	char *p, buf[MAXPATHLEN];
@@ -311,7 +309,7 @@ mksymlinks()
 }
 
 static __dead void
-stop()
+stop(void)
 {
 	(void)fprintf(stderr, "*** Stop.\n");
 	exit(1);
@@ -321,8 +319,7 @@ stop()
  * Define a standard option, for which a header file will be generated.
  */
 void
-defoption(name)
-	const char *name;
+defoption(const char *name)
 {
 	const char *n;
 	char *p, c;
@@ -353,8 +350,7 @@ defoption(name)
  * Remove an option.
  */
 void
-removeoption(name)
-        const char *name;
+removeoption(const char *name)
 {
 	struct nvlist *nv, *nvt;
 	const char *n;
@@ -395,8 +391,7 @@ removeoption(name)
  * are "optional foo".
  */
 void
-addoption(name, value)
-	const char *name, *value;
+addoption(const char *name, const char *value)
 {
 	const char *n;
 	char *p, c;
@@ -417,8 +412,7 @@ addoption(name, value)
  * Add a "make" option.
  */
 void
-addmkoption(name, value)
-	const char *name, *value;
+addmkoption(const char *name, const char *value)
 {
 
 	(void)do_option(mkopttab, &nextmkopt, name, value, "mkoptions");
@@ -428,10 +422,8 @@ addmkoption(name, value)
  * Add a name=value pair to an option list.  The value may be NULL.
  */
 static int
-do_option(ht, nppp, name, value, type)
-	struct hashtab *ht;
-	struct nvlist ***nppp;
-	const char *name, *value, *type;
+do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
+    const char *value, const char *type)
 {
 	struct nvlist *nv;
 
@@ -459,9 +451,7 @@ do_option(ht, nppp, name, value, type)
  * on the given device attachment (or any units, if unit == WILD).
  */
 int
-deva_has_instances(deva, unit)
-	struct deva *deva;
-	int unit;
+deva_has_instances(struct deva *deva, int unit)
 {
 	struct devi *i;
 
@@ -478,9 +468,7 @@ deva_has_instances(deva, unit)
  * on the given base (or any units, if unit == WILD).
  */
 int
-devbase_has_instances(dev, unit)
-	struct devbase *dev;
-	int unit;
+devbase_has_instances(struct devbase *dev, int unit)
 {
 	struct deva *da;
 
@@ -491,8 +479,7 @@ devbase_has_instances(dev, unit)
 }
 
 static int
-hasparent(i)
-	struct devi *i;
+hasparent(struct devi *i)
 {
 	struct nvlist *nv;
 	int atunit = i->i_atunit;
@@ -526,10 +513,7 @@ hasparent(i)
 }
 
 static int
-cfcrosscheck(cf, what, nv)
-	struct config *cf;
-	const char *what;
-	struct nvlist *nv;
+cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 {
 	struct devbase *dev;
 	struct devi *pd;
@@ -572,7 +556,7 @@ loop:
  * are there.
  */
 int
-crosscheck()
+crosscheck(void)
 {
 	struct devi *i;
 	struct config *cf;
@@ -608,7 +592,7 @@ crosscheck()
  * Check to see if there is a *'d unit with a needs-count file.
  */
 int
-badstar()
+badstar(void)
 {
 	struct devbase *d;
 	struct deva *da;
@@ -645,7 +629,7 @@ badstar()
  * This will be called when we see the first include.
  */
 void
-setupdirs()
+setupdirs(void)
 {
 	struct stat st;
 
@@ -691,9 +675,9 @@ struct opt {
 };
 
 int
-optcmp(sp1, sp2)
-	struct opt *sp1, *sp2;
+optcmp(const void *v1, const void *v2)
 {
+	const struct opt *sp1 = v1, *sp2 = v2;
 	int r;
 
 	r = strcmp(sp1->name, sp2->name);
@@ -710,7 +694,7 @@ optcmp(sp1, sp2)
 }
 
 void
-optiondelta()
+optiondelta(void)
 {
 	struct nvlist *nv;
 	char nbuf[BUFSIZ], obuf[BUFSIZ];	/* XXX size */

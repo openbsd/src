@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.7 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.7 2003/06/02 21:19:03 maja Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -49,9 +49,14 @@ char		*elf_total;
 char		*elf_shstrtab;
 off_t		elf_size;
 
+caddr_t		elf_adjust(caddr_t);
+caddr_t		elf_readjust(caddr_t);
+int		elf_check(char *);
+void		elf_loadkernel(char *);
+void		elf_savekernel(char *);
+
 caddr_t
-elf_adjust(x)
-	caddr_t x;
+elf_adjust(caddr_t x)
 {
 	int i;
 	Elf_Shdr *s;
@@ -74,8 +79,7 @@ elf_adjust(x)
 }
 
 caddr_t
-elf_readjust(x)
-	caddr_t x;
+elf_readjust(caddr_t x)
 {
 	int i;
 	Elf_Shdr *s;
@@ -96,8 +100,7 @@ elf_readjust(x)
 }
 
 int
-elf_check(file)
-	char *file;
+elf_check(char *file)
 {
 	int fd, ret = 1;
 
@@ -117,8 +120,7 @@ elf_check(file)
 }
 
 void
-elf_loadkernel(file)
-	char *file;
+elf_loadkernel(char *file)
 {
 	int fd;
 	Elf_Phdr *p;
@@ -152,9 +154,7 @@ elf_loadkernel(file)
 }
 
 void
-elf_savekernel(outfile)
-
-	char *outfile;
+elf_savekernel(char *outfile)
 {
 	int fd;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.11 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.12 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static int mkoneswap(struct config *);
  * Make the various swap*.c files.  Nothing to do for generic swap.
  */
 int
-mkswap()
+mkswap(void)
 {
 	struct config *cf;
 
@@ -66,8 +66,7 @@ mkswap()
 }
 
 static char *
-mkdevstr(d)
-dev_t d;
+mkdevstr(dev_t d)
 {
 	static char buf[32];
 
@@ -80,13 +79,11 @@ dev_t d;
 }
 
 static int
-mkoneswap(cf)
-	struct config *cf;
+mkoneswap(struct config *cf)
 {
+	char fname[200], *mountroot;
 	struct nvlist *nv;
 	FILE *fp;
-	char fname[200];
-	char *mountroot;
 
 	(void)snprintf(fname, sizeof fname, "swap%s.c", cf->cf_name);
 	if ((fp = fopen(fname, "w")) == NULL) {

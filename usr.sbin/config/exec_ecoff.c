@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.7 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: exec_ecoff.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.7 2003/06/02 21:19:03 maja Exp $";
+static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.8 2003/06/28 04:55:07 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -46,8 +46,7 @@ int		ecoff_psz = 0, ecoff_rsz = 0, ecoff_bsz = 0;
 struct ecoff_exechdr	ecoff_ex;
 
 caddr_t
-ecoff_adjust(x)
-	caddr_t x;
+ecoff_adjust(caddr_t x)
 {
 	unsigned long y;
 
@@ -57,8 +56,7 @@ ecoff_adjust(x)
 }
 
 caddr_t
-ecoff_readjust(x)
-	caddr_t x;
+ecoff_readjust(caddr_t x)
 {
 	unsigned long y;
 
@@ -68,8 +66,7 @@ ecoff_readjust(x)
 }
 
 int
-ecoff_check(file)
-	char *file;
+ecoff_check(char *file)
 {
 	int fd, ret = 1;
 
@@ -89,8 +86,7 @@ ecoff_check(file)
 }
 
 void
-ecoff_loadkernel(file)
-	char *file;
+ecoff_loadkernel(char *file)
 {
 	int fd;
 	off_t beg, cur, end;
@@ -133,8 +129,7 @@ ecoff_loadkernel(file)
 }
 
 void
-ecoff_savekernel(outfile)
-	char *outfile;
+ecoff_savekernel(char *outfile)
 {
 	int fd;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2003/06/24 15:28:31 mickey Exp $
+#	$OpenBSD: Makefile,v 1.12 2003/06/28 04:55:07 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,10 +15,6 @@ SRCS+=  exec_aout.c
 .endif
 
 CFLAGS+=-I${.CURDIR} -I.
-
-# This program actually requires "flex" (not just any old lex).
-# Also note that it does not use -ll
-LEX=flex
 
 LDADD=	-lkvm
 DPADD=	${LIBKVM}

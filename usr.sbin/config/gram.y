@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.16 2003/06/11 23:33:28 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.17 2003/06/28 04:55:07 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ atname:
 	ROOT				{ $$ = NULL; };
 
 devbase:
-	WORD				{ $$ = getdevbase($1); };
+	WORD				{ $$ = getdevbase((char *)$1); };
 
 devattach_opt:
 	WITH WORD			{ $$ = getdevattach($2); } |
