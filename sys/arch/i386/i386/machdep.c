@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 1999/07/06 07:59:54 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.110 1999/08/04 23:17:40 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2702,12 +2702,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-#if 0
-			if (flags & BUS_DMAMEM_NOSYNC)
-				pmap_changebit(addr, PG_N, ~0);
-			else
-				pmap_changebit(addr, 0, ~PG_N);
-#endif
 		}
 	}
 

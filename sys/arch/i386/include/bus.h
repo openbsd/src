@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.15 1999/03/09 15:39:07 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.16 1999/08/04 23:17:40 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -802,7 +802,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
-#define	BUS_DMAMEM_NOSYNC	0x04	/* map memory to not require sync */
+#define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
 #define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
