@@ -27,6 +27,7 @@ utility processes files ...
 .\" .Sh FILES
 .\" .Sh SEE ALSO
 .\" .Xr foobar 1
+.\" .Sh COMPATIBILITY
 .\" .Sh STANDARDS
 .\" .Sh AUTHORS
 .\" .Sh HISTORY
