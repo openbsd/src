@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.35 2003/10/04 11:35:31 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.36 2004/02/10 20:33:32 jmc Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -466,7 +466,7 @@ warning: variable `foo' might be clobbered by `longjmp' or `vfork'.
 .Pp
 If any warnings of this type occur you must apply the
 .Dq volatile
-specifier to the variable in question.
+type-qualifier to the variable in question.
 Failure to do so may result in improper code generation when optimization
 is enabled.
 Note that for pointers, the location of
