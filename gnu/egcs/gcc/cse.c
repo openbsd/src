@@ -6048,6 +6048,7 @@ fold_rtx (x, insn)
 	      if (flag_propolice_protection
 		  && GET_CODE (y) == PLUS
 		  && XEXP (y, 0) == frame_pointer_rtx
+		  && INTVAL (inner_const) > 0
 		  && INTVAL (new_const) <= 0)
 		break;
 #endif
