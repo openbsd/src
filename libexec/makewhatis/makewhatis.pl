@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.23 2002/11/07 22:23:04 millert Exp $
+# $OpenBSD: makewhatis.pl,v 1.24 2003/07/09 10:00:09 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -530,7 +530,7 @@ sub build_index
 # main code
     
 my %opts;
-getopts('tpd:', \%opts);
+getopts('tpd:u:', \%opts);
 
 if (defined $opts{'p'}) {
     $picky = 1;
@@ -556,6 +556,27 @@ if (defined $opts{'d'}) {
     while (<$old>) {
 	chomp;
 	push(@$subjects, $_);
+    }
+    close($old);
+    write_uniques($subjects, $whatis);
+    exit 0;
+}
+if (defined $opts{'u'}) {
+    my $mandir = $opts{'u'};
+    unless (-d $mandir) {
+	die "$0: $mandir: not a directory"
+    }
+    chdir $mandir;
+
+    my $whatis = "$mandir/whatis.db";
+    open(my $old, '<', $whatis) or
+	die "$0 $whatis to merge with";
+    my $subjects = scan_manpages(\@ARGV);
+    my %remove = map {$_ => 1 } @$subjects;
+    $subjects = [];
+    while (<$old>) {
+	chomp;
+	push(@$subjects, $_) unless defined $remove{$_};
     }
     close($old);
     write_uniques($subjects, $whatis);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.11 2003/06/02 13:59:56 jmc Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.12 2003/07/09 10:00:09 espie Exp $
 .\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,6 +51,10 @@
 .Ar files ...
 .Nm makewhatis
 .Op Fl p
+.Fl u Ar manpath
+.Ar files ...
+.Nm makewhatis
+.Op Fl p
 .Fl t
 .Ar files
 .Sh DESCRIPTION
@@ -85,6 +89,17 @@ option is used,
 merges the description of
 .Ar files
 with an existing
+.Pa whatis.db
+database in
+.Ar manpath .
+.Pp
+If the
+.Fl u
+option is used,
+.Nm
+removes the description of
+.Ar files
+from an existing
 .Pa whatis.db
 database in
 .Ar manpath .
