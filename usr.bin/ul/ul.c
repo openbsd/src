@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.11 2003/06/25 21:09:45 deraadt Exp $	*/
+/*	$OpenBSD: ul.c,v 1.12 2004/03/13 22:11:56 tedu Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ul.c,v 1.11 2003/06/25 21:09:45 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ul.c,v 1.12 2004/03/13 22:11:56 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -344,7 +344,7 @@ overstrike(void)
 		}
 	putchar('\r');
 	for (*cp=' '; *cp==' '; cp--)
-		*cp = 0;
+		*cp = '\0';
 	for (cp=lbuf; *cp; cp++)
 		putchar(*cp);
 	if (hadbold) {
@@ -375,7 +375,7 @@ iattr(void)
 		default:	*cp++ = 'X'; break;
 		}
 	for (*cp=' '; *cp==' '; cp--)
-		*cp = 0;
+		*cp = '\0';
 	for (cp=lbuf; *cp; cp++)
 		putchar(*cp);
 	putchar('\n');
