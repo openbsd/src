@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.3 1996/12/05 13:08:11 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.4 1996/12/05 13:40:28 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.20 1996/02/09 21:32:08 christos Exp $	*/
 
 /*-
@@ -432,6 +432,8 @@ iso_disklabelspoof(dev, strat, lp)
 	/*
 	 * build a disklabel for the CD
 	 */
+	strncpy(lp->d_typename, pri->volume_id, 16);
+	strncpy(lp->d_packname, pri->volume_id+16, 16);
 	lp->d_partitions[0].p_offset = 0;
 	lp->d_partitions[0].p_size = lp->d_secperunit;
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
