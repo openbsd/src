@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.198 2003/03/04 16:23:32 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.199 2003/03/04 16:35:47 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2021,7 +2021,8 @@ timeout        = ( tcp.first | tcp.opening | tcp.established
                  | tcp.closing | tcp.finwait | tcp.closed
                  | udp.first | udp.single | udp.multiple
                  | icmp.first | icmp.error
-                 | other.first | other.multiple ) seconds
+                 | other.first | other.single | other.multiple )
+                 seconds
 seconds        = number
 
 limit-list     = limit [ [ , ] limit-list ]
