@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.44 1998/12/09 13:32:44 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.45 1998/12/20 20:44:12 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -377,6 +377,8 @@ com	GVC5000 #some GVC modem
 pccom	GVC5000 #some GVC modem
 com	MOT15F0 #Motorola VoiceSURFR 56K Modem
 pccom	MOT15F0 #Motorola VoiceSURFR 56K Modem
+com	CIR3000	#Cirrus Logic V43
+pccom	CIR3000	#Cirrus Logic V43
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
