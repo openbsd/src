@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.3 1997/05/14 07:58:55 graichen Exp $
+#	$OpenBSD: install.sub,v 1.4 1997/05/15 12:31:15 graichen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1155,7 +1155,7 @@ get_timezone() {
 	# If the zoneinfo is not on the installation medium or on the
 	# installed filesystem, set TZ to GMT and return immediatly.
 	#
-	if [ ! -e /usr/share/zoneinfo -a ! -e /mnt/usr/share/zoneinfo ]; then
+	if [ ! -e /usr/share/zoneinfo -o ! -e /mnt/usr/share/zoneinfo ]; then
 		TZ=GMT
 		return
 	fi

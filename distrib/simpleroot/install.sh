@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.2 1997/05/13 14:29:38 graichen Exp $
+#	$OpenBSD: install.sh,v 1.3 1997/05/15 12:31:15 graichen Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ MODE="install"
 #	md_makerootwritable()	- make root writable (at least /tmp)
 
 # test if / is read write
-echo "" > /tmp/test_read_write_root
+echo "" > /tmp/test_read_write_root 2> /dev/null
 if [ "X$?" != X"0" ]; then
 	echo "Please mount your rootfilesystem read/write - for"
 	echo "instance - if the disk you booted from is rz0 do"
@@ -298,9 +298,6 @@ getresp "y"
 case "$resp" in
 	y*|Y*)
 		resp=""		# force at least one iteration
-		if [ -f /etc/myname ]; then
-			resp=`cat /etc/myname`
-		fi
 		while [ "X${resp}" = X"" ]; do
 			echo -n "Enter system hostname: [$resp] "
 			getresp "$resp"
@@ -479,9 +476,9 @@ for file in fstab hostname.* hosts myname mygate resolv.conf; do
 done
 
 # If no zoneinfo on the installfs, give them a second chance
-if [ ! -e /usr/share/zoneinfo ]; then
+# TTT if [ ! -e /usr/share/zoneinfo ]; then
 	get_timezone
-fi
+# TTT fi
 if [ ! -e /mnt/usr/share/zoneinfo ]; then
 	echo "Cannot install timezone link..."
 else
@@ -509,7 +506,11 @@ if [ "X${SIMPLEROOT}" != X"simpleroot" ]; then
 	echo "done."
 	cd /
 else
-	echo -n "did you install the comp${VERSION} set ? [y] "
+	echo ""
+	echo "Removing files from the simpleroot which do not belong"
+	echo "to the installed sets."
+	echo ""
+	echo -n "Did you install the comp${VERSION} set ? [y] "
 	getresp "n"
 	case "$resp" in
 		n*|N*)
@@ -518,7 +519,7 @@ else
 		*)
 			;;
 	esac
-	echo -n "did you install the game${VERSION} set ? [y] "
+	echo -n "Did you install the game${VERSION} set ? [y] "
 	getresp "n"
 	case "$resp" in
 		n*|N*)
@@ -531,6 +532,7 @@ fi
 
 umount /kern
 rmdir /kern
+rmdir /mnt2
 
 unmount_fs /tmp/fstab.shadow
 

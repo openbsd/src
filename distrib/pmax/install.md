@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 1997/05/14 21:39:18 millert Exp $
+#	$OpenBSD: install.md,v 1.4 1997/05/15 12:31:11 graichen Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -86,6 +86,10 @@ md_mountkernfs() {
         fi
 	if [ ! -d /kern ]; then
 		mkdir /kern
+	fi
+# TTT use the chance to also make the /mnt2 directory - should be there
+	if [ ! -d /mnt2 ]; then
+		mkdir /mnt2
 	fi
         if ! mount -t kernfs /kern /kern
         then
