@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.282 2002/12/23 13:15:18 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.283 2002/12/26 15:51:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3780,11 +3780,14 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct route		*ro;
 	struct sockaddr_in	*dst;
 	struct ip		*ip;
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = NULL;
 	struct m_tag		*mtag;
 	struct pf_addr		 naddr;
-	int			 hlen;
 	int			 error = 0;
+
+	if (m == NULL || *m == NULL || r == NULL ||
+	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
+		panic("pf_route: invalid parameters");
 
 	if (r->rt == PF_DUPTO) {
 		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
@@ -3796,8 +3799,9 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m0 = *m;
 	}
 
+	if (m0->m_len < sizeof(struct ip))
+		panic("pf_route: m0->m_len < sizeof(struct ip)");
 	ip = mtod(m0, struct ip *);
-	hlen = ip->ip_hl << 2;
 
 	ro = &iproute;
 	bzero((caddr_t)ro, sizeof(*ro));
@@ -3819,29 +3823,28 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	} else {
-		if (!TAILQ_EMPTY(&r->rpool.list)) {
-			if (s == NULL) {
+		if (TAILQ_EMPTY(&r->rpool.list))
+			panic("pf_route: TAILQ_EMPTY(&r->rpool.list)");
+		if (s == NULL) {
+			pf_map_addr(AF_INET, &r->rpool,
+			    (struct pf_addr *)&ip->ip_src,
+			    &naddr, NULL);
+			if (!PF_AZERO(&naddr, AF_INET))
+				dst->sin_addr.s_addr = naddr.v4.s_addr;
+			ifp = r->rpool.cur->ifp;
+		} else {
+			if (s->rt_ifp == NULL) {
+				s->rt_ifp = r->rpool.cur->ifp;
 				pf_map_addr(AF_INET, &r->rpool,
 				    (struct pf_addr *)&ip->ip_src,
 				    &naddr, NULL);
 				if (!PF_AZERO(&naddr, AF_INET))
-					dst->sin_addr.s_addr = naddr.v4.s_addr;
-				ifp = r->rpool.cur->ifp;
-			} else {
-				if (s->rt_ifp == NULL) {
-					s->rt_ifp = r->rpool.cur->ifp;
-					pf_map_addr(AF_INET, &r->rpool,
-					    (struct pf_addr *)&ip->ip_src,
-					    &naddr, NULL);
-					if (!PF_AZERO(&naddr, AF_INET))
-						PF_ACPY(&s->rt_addr, &naddr,
-						    AF_INET);
-				}
-				if (!PF_AZERO(&s->rt_addr, AF_INET))
-					dst->sin_addr.s_addr =
-					    s->rt_addr.v4.s_addr;
-				ifp = s->rt_ifp;
+					PF_ACPY(&s->rt_addr, &naddr, AF_INET);
 			}
+			if (!PF_AZERO(&s->rt_addr, AF_INET))
+				dst->sin_addr.s_addr =
+				    s->rt_addr.v4.s_addr;
+			ifp = s->rt_ifp;
 		}
 	}
 
@@ -3855,13 +3858,13 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 				goto bad;
 			else if (m0 == NULL)
 				goto done;
-			else {
-				mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0,
-				    M_NOWAIT);
-				if (mtag == NULL)
-					goto bad;
-				m_tag_prepend(m0, mtag);
-			}
+			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+			if (mtag == NULL)
+				goto bad;
+			m_tag_prepend(m0, mtag);
+			if (m0->m_len < sizeof(struct ip))
+				panic("pf_route: m0->m_len < sizeof(struct ip)");
+			ip = mtod(m0, struct ip *);
 		}
 	}
 
@@ -3875,7 +3878,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			ipstat.ips_outhwcsum++;
 		} else {
 			ip->ip_sum = 0;
-			ip->ip_sum = in_cksum(m0, hlen);
+			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
 		}
 		/* Update relevant hardware checksum stats for TCP/UDP */
 		if (m0->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
@@ -3942,12 +3945,13 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct route_in6	*ro;
 	struct sockaddr_in6	*dst;
 	struct ip6_hdr		*ip6;
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
 	int			 error = 0;
 
-	if (m == NULL)
-		return;
+	if (m == NULL || *m == NULL || r == NULL ||
+	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
+		panic("pf_route6: invalid parameters");
 
 	if (r->rt == PF_DUPTO) {
 		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
@@ -3959,6 +3963,8 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m0 = *m;
 	}
 
+	if (m0->m_len < sizeof(struct ip6_hdr))
+		panic("pf_route6: m0->m_len < sizeof(struct ip6_hdr)");
 	ip6 = mtod(m0, struct ip6_hdr *);
 
 	ro = &ip6route;
@@ -3968,34 +3974,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin6_len = sizeof(*dst);
 	dst->sin6_addr = ip6->ip6_dst;
 
-	if (!TAILQ_EMPTY(&r->rpool.list)) {
-		if (s == NULL) {
-			pf_map_addr(AF_INET6, &r->rpool,
-			    (struct pf_addr *)&ip6->ip6_src, &naddr, NULL);
-			if (!PF_AZERO(&naddr, AF_INET6)) {
-				PF_ACPY(
-				    (struct pf_addr *)&dst->sin6_addr,
-				    &naddr, AF_INET6);
-			}
-			ifp = r->rpool.cur->ifp;
-		} else {
-			if (s->rt_ifp == NULL) {
-				s->rt_ifp = r->rpool.cur->ifp;
-				pf_map_addr(AF_INET6, &r->rpool,
-				    (struct pf_addr *)&ip6->ip6_src,
-				    &naddr, NULL);
-				if (!PF_AZERO(&naddr, AF_INET6))
-					PF_ACPY(&s->rt_addr, &naddr, AF_INET6);
-			}
-			if (!PF_AZERO(&s->rt_addr, AF_INET6)) {
-				PF_ACPY(
-				    (struct pf_addr *)&dst->sin6_addr,
-				    &naddr, AF_INET6);
-			}
-			ifp = s->rt_ifp;
-		}
-	}
-
 	/* Cheat. */
 	if (r->rt == PF_FASTROUTE) {
 		mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
@@ -4004,6 +3982,30 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		m_tag_prepend(m0, mtag);
 		ip6_output(m0, NULL, NULL, NULL, NULL, NULL);
 		return;
+	}
+
+	if (TAILQ_EMPTY(&r->rpool.list))
+		panic("pf_route6: TAILQ_EMPTY(&r->rpool.list)");
+	if (s == NULL) {
+		pf_map_addr(AF_INET6, &r->rpool,
+		    (struct pf_addr *)&ip6->ip6_src, &naddr, NULL);
+		if (!PF_AZERO(&naddr, AF_INET6))
+			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
+			    &naddr, AF_INET6);
+		ifp = r->rpool.cur->ifp;
+	} else {
+		if (s->rt_ifp == NULL) {
+			s->rt_ifp = r->rpool.cur->ifp;
+			pf_map_addr(AF_INET6, &r->rpool,
+			    (struct pf_addr *)&ip6->ip6_src,
+			    &naddr, NULL);
+			if (!PF_AZERO(&naddr, AF_INET6))
+				PF_ACPY(&s->rt_addr, &naddr, AF_INET6);
+		}
+		if (!PF_AZERO(&s->rt_addr, AF_INET6))
+			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
+			    &naddr, AF_INET6);
+		ifp = s->rt_ifp;
 	}
 
 	if (ifp == NULL)
@@ -4016,13 +4018,10 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 				goto bad;
 			else if (m0 == NULL)
 				goto done;
-			else {
-				mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0,
-				    M_NOWAIT);
-				if (mtag == NULL)
-					goto bad;
-				m_tag_prepend(m0, mtag);
-			}
+			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+			if (mtag == NULL)
+				goto bad;
+			m_tag_prepend(m0, mtag);
 		}
 	}
 
@@ -4232,7 +4231,7 @@ done:
 	}
 
 	/* pf_route can free the mbuf causing *m0 to become NULL */
-	if (r && r->rt)
+	if (r != NULL && r->rt)
 		pf_route(m0, r, dir, ifp, s);
 
 	return (action);
@@ -4406,7 +4405,7 @@ done:
 	}
 
 	/* pf_route6 can free the mbuf causing *m0 to become NULL */
-	if (r && r->rt)
+	if (r != NULL && r->rt)
 		pf_route6(m0, r, dir, ifp, s);
 
 	return (action);
