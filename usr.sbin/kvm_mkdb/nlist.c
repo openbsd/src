@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.30 2002/11/30 15:35:13 mickey Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.31 2003/04/04 22:40:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.30 2002/11/30 15:35:13 mickey Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.31 2003/04/04 22:40:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ __aout_knlist(fd, db, ksyms)
 			if (sname == NULL)
 				errx(1, "cannot allocate memory");
 			*sname = '_';
-			strcpy(sname+1, p);
+			strlcpy(sname+1, p, len);
 			key.data = (u_char *)sname;
 			key.size = len;
 		} else {
@@ -452,7 +452,7 @@ __elf_knlist(fd, db, ksyms)
 			nbuf.n_type = N_EXT;
 
 		*buf = '_';
-		strcpy(buf + 1, strtab + sbuf.st_name);
+		strlcpy(buf + 1, strtab + sbuf.st_name, sizeof buf - 1);
 		key.data = (u_char *)buf;
 		key.size = strlen((char *)key.data);
 		if (db->put(db, &key, &data, 0))
@@ -611,7 +611,8 @@ __ecoff_knlist(fd, db, ksyms)
 		if (sname == NULL)
 			errx(1, "cannot allocate memory");
 		*sname = '_';
-		strcpy(sname+1, &mappedfile[extstroff + esyms[i].es_strindex]);
+		strlcpy(sname+1, &mappedfile[extstroff + esyms[i].es_strindex],
+		    len - 1);
 
 		/* Fill in NLIST */
 		bzero(&nbuf, sizeof(nbuf));
