@@ -9,7 +9,7 @@
 @c in the standalone derivations of this file (e.g. NEWS).
 @set copyrights-news 1995-1999
 
-@set last-update-news 1999-06-16
+@set last-update-news 1999-07-08
 
 @include root.texi
 
@@ -193,8 +193,25 @@ during a @code{BACKSPACE} operation.
 
 @ifclear USERVISONLY
 @item
+@code{libg2c} (@code{libf2c}) fixes a bug whereby
+input to a @code{NAMELIST} read involving a repeat count,
+such as @samp{K(5)=10*3},
+was not properly handled by @code{libf2c}.
+The first item was written to @samp{K(5)},
+but the remaining nine were written elsewhere (still within the array),
+not necessarily starting at @samp{K(6)}.
+@end ifclear
+
+@ifclear USERVISONLY
+@item
 @c Tim Prince reported this, regarding the TEST_FPU benchmark.
 Automatic arrays now seem to be working on HP-UX systems.
+@end ifclear
+
+@ifclear USERVISONLY
+@item
+The @code{Date} intrinsic now returns the correct result
+on big-endian systems.
 @end ifclear
 
 @ifclear USERVISONLY

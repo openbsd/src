@@ -1,3 +1,31 @@
+Sat Jul 17 23:50:47 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (INTERFACE): Bump to 2.
+
+1999-07-17  Alexandre Oliva  <oliva@dcc.unicamp.br>
+        
+	* typeck2.c (my_friendly_abort): Updated URL with bug reporting
+	instructions to gcc.gnu.org.  Removed e-mail address.
+
+1999-07-15  Mark Mitchell  <mark@codesourcery.com>
+
+        * pt.c (check_default_tmpl_args): Handle friends defined in the
+        class just like member functions defined in the class.
+
+Thu Jul 15 01:26:49 1999  H.J. Lu  <hjl@gnu.org>
+
+	* decl.c (duplicate_decls): Relax restriction for exception
+	checks on duplicate symbols.
+
+1999-07-07  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* decl.c (grokdeclarator): Update the names of all variants when
+	de-anonymizing.
+
+Wed Jul  7 01:26:47 1999  Alexandre Oliva  <oliva@dcc.unicamp.br>
+
+	* decl2.c (mark_vtable_entries): Fix check for rtti offset.
+
 1999-06-26  Richard Henderson  <rth@cygnus.com>
 
 	* decl.c (cp_finish_decl): Fix typo in cp_warning_at call.

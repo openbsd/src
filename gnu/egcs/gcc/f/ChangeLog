@@ -1,3 +1,28 @@
+Sat Jul 17 21:57:07 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* root.texi: Clear DEVEOPMENT per Craig's instructions.
+
+1999-07-17  Alexandre Oliva  <oliva@dcc.unicamp.br>
+        
+	* root.texi: Update e-mail addresses to gcc.gnu.org.
+	* g77spec.c (lang_specific_driver): Updated URL with bug reporting 
+	instructions to gcc.gnu.org.  Removed e-mail address.
+
+Sat Jul 17 11:28:43 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* root.texi, g77install.texi: Switchover to GCC terminology.
+	Also, FSF-G77 had been mistakenly set at some point.
+
+Thu Jul  8 15:38:50 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* news.texi: Describe DATE intrinsic fix.
+
+Tue Jun 29 10:10:25 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* bugs.texi: Undo Friday's change, as there's now a fix
+	available from netlib.
+	* news.texi: Document the fix.
+
 Mon Jun 28 10:43:11 1999  Craig Burley  <craig@jcb-sc.com>
 
 	* com.c (ffecom_prepare_expr_): A COMPLEX intrinsic needs
@@ -10,7 +35,7 @@ Fri Jun 25 11:06:32 1999  Craig Burley  <craig@jcb-sc.com>
 	* bugs.texi: Describe K(5)=10*3 NAMELIST-read bug.
 
 Mon Jun 21 12:40:17 1999  Gerald Pfeifer  <pfeifer@dbai.tuwien.ac.at>
- 
+
 	* g77.texi: Update links.
 
 Wed Jun 16 11:43:02 1999  Craig Burley  <craig@jcb-sc.com>

@@ -2106,8 +2106,16 @@ field_byte_offset (decl)
      negative.  Gdb fails when given negative bit offsets.  We avoid this
      by recomputing using the first bit of the bitfield.  This will give
      us an object which does not completely contain the bitfield, but it
-     will be aligned, and it will contain the first bit of the bitfield.  */
-  if (object_offset_in_bits > bitpos_int)
+     will be aligned, and it will contain the first bit of the bitfield.
+
+     However, only do this for a BYTES_BIG_ENDIAN target.  For a
+     ! BYTES_BIG_ENDIAN target, bitpos_int + field_size_in_bits is the first
+     first bit of the bitfield.  If we recompute using bitpos_int + 1 below,
+     then we end up computing the object byte offset for the wrong word of the
+     desired bitfield, which in turn causes the field offset to be negative
+     in bit_offset_attribute.  */
+  if (BYTES_BIG_ENDIAN
+      && object_offset_in_bits > bitpos_int)
     {
       deepest_bitpos = bitpos_int + 1;
       object_offset_in_bits
@@ -4431,7 +4439,10 @@ output_type (type, containing_scope)
 		    && TREE_CODE (TYPE_CONTEXT (type)) != METHOD_TYPE))
 	    && !finalizing)
 	  {
-	    add_incomplete_type (type);
+	    /* We can't do this for function-local types, and we don't need
+               to.  */
+	    if (TREE_PERMANENT (type))
+	      add_incomplete_type (type);
 	    return;	/* EARLY EXIT!  Avoid setting TREE_ASM_WRITTEN.  */
 	  }
 
