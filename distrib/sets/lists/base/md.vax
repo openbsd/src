@@ -371,6 +371,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/czreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/eapreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/emuxkireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/emuxkivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/fmsvar.ph

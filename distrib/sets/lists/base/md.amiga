@@ -33,8 +33,8 @@
 ./usr/lib/lib45.so.0.0
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libasn1.so.1.0
-./usr/lib/libc.so.28.0
-./usr/lib/libc_r.so.6.0
+./usr/lib/libc.so.28.1
+./usr/lib/libc_r.so.6.1
 ./usr/lib/libcrypto.so.5.1
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -809,6 +809,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/czreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/eapreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/emuxkireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/emuxkivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/fmsvar.ph
