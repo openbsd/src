@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.5 1997/01/02 18:16:52 downsj Exp $	*/
+/*	$OpenBSD: history.c,v 1.6 1997/06/18 22:42:35 kstailey Exp $	*/
 
 /*
  * command history
@@ -80,10 +80,10 @@ c_fc(wp)
 {
 	struct shf *shf;
 	struct temp UNINITIALIZED(*tf);
-	char *p, *editor = (char *) 0;
+	char *p, *editor = NULL;
 	int gflag = 0, lflag = 0, nflag = 0, sflag = 0, rflag = 0;
 	int optc;
-	char *first = (char *) 0, *last = (char *) 0;
+	char *first = NULL, *last = NULL;
 	char **hfirst, **hlast, **hp;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != EOF)
@@ -133,7 +133,7 @@ c_fc(wp)
 
 	/* Substitute and execute command */
 	if (sflag) {
-		char *pat = (char *) 0, *rep = (char *) 0;
+		char *pat = NULL, *rep = NULL;
 
 		if (editor || lflag || nflag || rflag) {
 			bi_errorf("can't use -e, -l, -n, -r with -s (-e -)");
@@ -301,7 +301,7 @@ hist_execute(cmd)
 		if ((q = strchr(p, '\n'))) {
 			*q++ = '\0'; /* kill the newline */
 			if (!*q) /* ignore trailing newline */
-				q = (char *) 0;
+				q = NULL;
 		}
 #ifdef EASY_HISTORY
 		if (p != cmd)
@@ -383,7 +383,7 @@ hist_get(str, approx, allow_cur)
 	int approx;
 	int allow_cur;
 {
-	char **hp = (char **) 0;
+	char **hp = NULL;
 	int n;
 
 	if (getn(str, &n)) {
@@ -393,18 +393,18 @@ hist_get(str, approx, allow_cur)
 				hp = hist_get_oldest();
 			else {
 				bi_errorf("%s: not in history", str);
-				hp = (char **) 0;
+				hp = NULL;
 			}
 		} else if (hp > histptr) {
 			if (approx)
 				hp = hist_get_newest(allow_cur);
 			else {
 				bi_errorf("%s: not in history", str);
-				hp = (char **) 0;
+				hp = NULL;
 			}
 		} else if (!allow_cur && hp == histptr) {
 			bi_errorf("%s: invalid range", str);
-			hp = (char **) 0;
+			hp = NULL;
 		}
 	} else {
 		int anchored = *str == '?' ? (++str, 0) : 1;
@@ -413,7 +413,7 @@ hist_get(str, approx, allow_cur)
 		n = findhist(histptr - history - 1, 0, str, anchored);
 		if (n < 0) {
 			bi_errorf("%s: not in history", str);
-			hp = (char **) 0;
+			hp = NULL;
 		} else
 			hp = &history[n];
 	}
@@ -427,7 +427,7 @@ hist_get_newest(allow_cur)
 {
 	if (histptr < history || (!allow_cur && histptr == history)) {
 		bi_errorf("no history (yet)");
-		return (char **) 0;
+		return (NULL);
 	}
 	if (allow_cur)
 		return histptr;
@@ -440,7 +440,7 @@ hist_get_oldest()
 {
 	if (histptr <= history) {
 		bi_errorf("no history (yet)");
-		return (char **) 0;
+		return (NULL);
 	}
 	return history;
 }
@@ -594,7 +594,7 @@ sethistfile(name)
 void
 init_histvec()
 {
-	if (history == (char **)NULL) {
+	if (history == NULL) {
 		histsize = HISTORYSIZE;
 		history = (char **)alloc(histsize*sizeof (char *), APERM);
 		histptr = history - 1;

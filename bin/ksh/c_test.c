@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.2 1996/08/19 20:08:47 downsj Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.3 1997/06/18 22:42:29 kstailey Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -157,8 +157,7 @@ c_test(wp)
 			}
 			if (argc == 1) {
 				opnd1 = (*te.getopnd)(&te, TO_NONOP, 1);
-				res = (*te.eval)(&te, TO_STNZE, opnd1,
-						(char *) 0, 1);
+				res = (*te.eval)(&te, TO_STNZE, opnd1, NULL, 1);
 				if (invert & 1)
 					res = !res;
 				return !res;
@@ -517,7 +516,7 @@ test_primary(te, do_eval)
 			return 0;
 		}
 
-		return (*te->eval)(te, op, opnd1, (const char *) 0, do_eval);
+		return (*te->eval)(te, op, opnd1, NULL, do_eval);
 	}
 	opnd1 = (*te->getopnd)(te, TO_NONOP, do_eval);
 	if (!opnd1) {
@@ -538,7 +537,7 @@ test_primary(te, do_eval)
 		(*te->error)(te, -1, "missing expression operator");
 		return 0;
 	}
-	return (*te->eval)(te, TO_STNZE, opnd1, (const char *) 0, do_eval);
+	return (*te->eval)(te, TO_STNZE, opnd1, NULL, do_eval);
 }
 
 /*
@@ -584,7 +583,7 @@ ptest_getopnd(te, op, do_eval)
 	int do_eval;
 {
 	if (te->pos.wp >= te->wp_end)
-		return op == TO_FILTT ? "1" : (const char *) 0;
+		return op == TO_FILTT ? "1" : NULL;
 	return *te->pos.wp++;
 }
 
@@ -606,7 +605,7 @@ ptest_error(te, offset, msg)
 	const char *msg;
 {
 	const char *op = te->pos.wp + offset >= te->wp_end ?
-				(const char *) 0 : te->pos.wp[offset];
+				NULL : te->pos.wp[offset];
 
 	te->flags |= TEF_ERROR;
 	if (op)

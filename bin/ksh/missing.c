@@ -1,4 +1,4 @@
-/*	$OpenBSD: missing.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: missing.c,v 1.2 1997/06/18 22:42:41 kstailey Exp $	*/
 
 /*
  * Routines which may be missing on some machines
@@ -224,7 +224,7 @@ ksh_times(tms)
 		tms->tms_cstime = ru.ru_stime.tv_sec * CLK_TCK
 			+ ru.ru_stime.tv_usec * CLK_TCK / 1000000;
 
-		gettimeofday(&tv, (struct timezone *) 0);
+		gettimeofday(&tv, NULL);
 		if (base_sec == 0)
 			base_sec = tv.tv_sec;
 		rv = (tv.tv_sec - base_sec) * CLK_TCK;
@@ -261,10 +261,10 @@ ksh_opendir(d)
 	struct stat statb;
 
 	if (stat(d, &statb) != 0)
-		return (DIR *) 0;
+		return NULL;
 	if (!S_ISDIR(statb.st_mode)) {
 		errno = ENOTDIR;
-		return (DIR *) 0;
+		return NULL;
 	}
 	return opendir(d);
 }

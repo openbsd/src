@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.2 1996/08/19 20:08:51 downsj Exp $	*/
+/*	$OpenBSD: io.c,v 1.3 1997/06/18 22:42:36 kstailey Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -93,7 +93,7 @@ bi_errorf(fmt, va_alist)
 	if ((builtin_flag & SPEC_BI)
 	    || (Flag(FPOSIX) && (builtin_flag & KEEPASN)))
 	{
-		builtin_argv0 = (char *) 0;
+		builtin_argv0 = NULL;
 		unwind(LERROR);
 	}
 }
@@ -441,7 +441,7 @@ maketemp(ap)
 	len = strlen(tmp) + 3 + 20 + 20 + 1;
 	tp = (struct temp *) alloc(sizeof(struct temp) + len, ap);
 	tp->name = path = (char *) &tp[1];
-	tp->shf = (struct shf *) 0;
+	tp->shf = NULL;
 	while (1) {
 		/* Note that temp files need to fit 8.3 DOS limits */
 		shf_snprintf(path, len, "%s/sh%05u.%03x",
@@ -451,7 +451,7 @@ maketemp(ap)
 		 */
 		fd = open(path, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0600);
 		if (fd >= 0) {
-			tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
+			tp->shf = shf_fdopen(fd, SHF_WR, NULL);
 			break;
 		}
 		if (errno != EINTR

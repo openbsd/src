@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.3 1997/01/02 17:37:27 downsj Exp $	*/
+/*	$OpenBSD: mail.c,v 1.4 1997/06/18 22:42:39 kstailey Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -47,7 +47,7 @@ mcheck()
 	if (getint(global("MAILCHECK"), &mailcheck) < 0)
 		return;
 
-	now = time((time_t *) 0);
+	now = time(NULL);
 	if (mlastchkd == 0)
 		mlastchkd = now;
 	if (now - mlastchkd >= mailcheck) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: shf.c,v 1.2 1997/06/18 22:42:43 kstailey Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -52,7 +52,7 @@ shf_open(name, oflags, mode, sflags)
 		  : ((oflags & O_ACCMODE) == O_WRONLY ? SHF_WR
 		     : SHF_RDWR);
 
-	return shf_fdopen(fd, sflags, (struct shf *) 0);
+	return shf_fdopen(fd, sflags, NULL);
 }
 
 /* Set up the shf structure for a file descriptor.  Doesn't fail. */
@@ -87,7 +87,7 @@ shf_fdopen(fd, sflags, shf)
 			shf->buf = (unsigned char *) alloc(bsize, ATEMP);
 			sflags |= SHF_ALLOCB;
 		} else
-			shf->buf = (unsigned char *) 0;
+			shf->buf = NULL;
 	} else {
 		shf = (struct shf *) alloc(sizeof(struct shf) + bsize, ATEMP);
 		shf->buf = (unsigned char *) &shf[1];
@@ -536,7 +536,7 @@ shf_getse(buf, bsize, shf)
 		internal_errorf(1, "shf_getse: flags %x", shf->flags);
 
 	if (bsize <= 0)
-		return (char *) 0;
+		return NULL;
 
 	--bsize;	/* save room for null */
 	do {
@@ -793,7 +793,7 @@ shf_smprintf(fmt, va_alist)
 	struct shf shf;
 	va_list args;
 
-	shf_sopen((char *) 0, 0, SHF_WR|SHF_DYNAMIC, &shf);
+	shf_sopen(NULL, 0, SHF_WR|SHF_DYNAMIC, &shf);
 	SH_VA_START(args, fmt);
 	shf_vfprintf(&shf, fmt, args);
 	va_end(args);

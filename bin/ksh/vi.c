@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.3 1996/11/21 07:59:37 downsj Exp $	*/
+/*	$OpenBSD: vi.c,v 1.4 1997/06/18 22:42:49 kstailey Exp $	*/
 
 /*
  *	vi command editing
@@ -1955,7 +1955,7 @@ expand_word(command)
 
 	nwords = x_cf_glob(XCF_COMMAND_FILE|XCF_FULLPATH,
 		es->cbuf, es->linelen, es->cursor,
-		&start, &end, &words, (int *) 0);
+		&start, &end, &words, NULL);
 	if (nwords == 0) {
 		vi_error();
 		return -1;
@@ -2043,12 +2043,12 @@ complete_word(command, count)
 		 */
 		if (is_command) {
 			match = words[count]
-				+ x_basename(words[count], (char *) 0);
+				+ x_basename(words[count], NULL);
 			/* If more than one possible match, use full path */
 			for (i = 0; i < nwords; i++)
 				if (i != count &&
 				    FILECMP(words[i]
-					    + x_basename(words[i], (char *) 0),
+					    + x_basename(words[i], NULL),
 					    match) == 0)
 				{
 					match = words[count];
