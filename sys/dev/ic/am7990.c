@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.36 2004/09/28 04:37:32 brad Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.37 2005/01/01 03:59:52 brad Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -145,6 +145,8 @@ am7990_config(sc)
 #endif
 	ifp->if_baudrate = IF_Mbps(10);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -448,7 +450,7 @@ am7990_read(sc, boff, len)
 #endif
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHERMTU + sizeof(struct ether_header)) {
+	    len > ETHERMTU + ETHER_VLAN_ENCAP_LEN + sizeof(struct ether_header)) {
 #ifdef LEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
