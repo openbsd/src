@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.42 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.43 2004/08/10 13:08:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 	*b++ = type;
 	if (data_len > 255) {
 		tmp = htons(data_len);
-		memcpy(b, &tmp, 2);
+		memcpy(b, &tmp, sizeof(tmp));
 		b += 2;
 	} else
 		*b++ = (u_char)(data_len & 0xff);
