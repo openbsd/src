@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.44 2003/05/26 18:33:17 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.45 2003/08/02 01:47:17 tedu Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -2271,7 +2271,7 @@ handle_workitem_freeblocks(freeblks)
 
 #ifdef DIAGNOSTIC
 	if (freeblks->fb_chkcnt != blocksreleased)
-		printf("handle_workitem_freeblocks: block count");
+		printf("handle_workitem_freeblocks: block count\n");
 	if (allerror)
 		softdep_error("handle_workitem_freeblks", allerror);
 #endif /* DIAGNOSTIC */
