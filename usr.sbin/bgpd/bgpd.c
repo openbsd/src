@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.52 2004/01/03 20:37:34 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.53 2004/01/04 19:39:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -425,6 +425,12 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 				memcpy(&ina, imsg.data, sizeof(ina));
 				kroute_nexthop_delete(ina);
 			}
+			break;
+		case IMSG_CTL_RELOAD:
+			if (idx != PFD_PIPE_SESSION)
+				logit(LOG_CRIT, "reload request not from SE");
+			else
+				reconfig = 1;
 			break;
 		default:
 			break;
