@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.38 2003/07/29 00:24:16 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.39 2004/04/01 12:19:57 markus Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.38 2003/07/29 00:24:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.39 2004/04/01 12:19:57 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -637,6 +637,10 @@ sink(int argc, char *argv[])
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
+		if ((strchr(cp, '/') != NULL) || (strcmp(cp, "..") == 0)) {
+			run_err("error: unexpected filename: %s", cp);
+			exit(1);
+		}
 		if (targisdir) {
 			static char *namebuf;
 			static int cursize;
@@ -655,6 +659,8 @@ sink(int argc, char *argv[])
 		exists = stat(np, &stb) == 0;
 		if (buf[0] == 'D') {
 			int mod_flag = pflag;
+			if (!iamrecursive)
+				SCREWUP("received directory without -r");
 			if (exists) {
 				if (!S_ISDIR(stb.st_mode)) {
 					errno = ENOTDIR;
