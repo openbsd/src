@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.83 2003/07/08 12:02:35 espie Exp $
+.\"	$OpenBSD: afterboot.8,v 1.84 2003/07/10 04:24:07 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -118,8 +118,7 @@ for most shells.
 Furthermore, the superuser's
 .Ev PATH
 should never contain the current directory
-.Po Dq \&.
-.Pc .
+.Pq Dq \&. .
 .Ss System date
 Check the system date with the
 .Xr date 1
@@ -246,7 +245,6 @@ fe80::%lo0/64      fe80::1%lo0   U        0     0   32972  lo0
 ff01::/32          ::1           U        0     0   32972  lo0
 ff02::%le0/32      link#1        UC       0     0    1500  le0
 ff02::%lo0/32      fe80::1%lo0   UC       0     0   32972  lo0
-
 .Ed
 .Pp
 The default gateway address is stored in the
@@ -271,14 +269,12 @@ you will have to kill it by running
 after you flush the routes.
 .Pp
 If you wish to route packets between interfaces, add the directive
-.Bd -literal -offset indent
-net.inet.ip.forwarding=1
-.Ed
+.Pp
+.Dl net.inet.ip.forwarding=1
 .Pp
 or
-.Bd -literal -offset indent
-net.inet6.ip6.forwarding=1
-.Ed
+.Pp
+.Dl net.inet6.ip6.forwarding=1
 .Pp
 to
 .Pa /etc/sysctl.conf ,
@@ -326,9 +322,8 @@ This includes YP and NFS exports, among other services.
 To get the RPC portmapper to start automatically on boot,
 you will need to have this line in
 .Pa /etc/rc.conf.local :
-.Bd -literal -offset indent
-portmap=YES
-.Ed
+.Pp
+.Dl portmap=YES
 .Ss YP Setup
 Check the YP domain name with the
 .Xr domainname 1
@@ -354,7 +349,7 @@ In particular, to enable YP passwd support, you'll need to add the following
 line to
 .Pa /etc/master.passwd :
 .Pp
-+:*::::::::
+.Dl +:*::::::::
 .Pp
 You do this by using
 .Xr vipw 8 .
@@ -483,9 +478,8 @@ the
 .Sq wheel
 group if they need root access (non-Kerberos).
 For example:
-.Bd -literal -offset indent
-wheel:*:0:root,myself
-.Ed
+.Pp
+.Dl wheel:*:0:root,myself
 .Pp
 Follow instructions for
 .Xr login_krb5 8
@@ -611,7 +605,6 @@ for more information.
 The
 .Pa /etc/mail/localhost.cf
 file already has this disabled.
-.br
 .Ss DHCP server
 If this is a
 DHCP
@@ -623,9 +616,8 @@ as needed.
 You will have to make sure
 .Pa /etc/rc.conf.local
 has:
-.Bd -literal -offset indent
-dhcpd_flags=-q
-.Ed
+.Pp
+.Dl dhcpd_flags=-q
 .Pp
 or run
 .Xr dhcpd 8
@@ -646,9 +638,8 @@ If this is an NFS server
 make sure
 .Pa /etc/rc.conf
 has:
-.Bd -literal -offset indent
-nfs_server=YES
-.Ed
+.Pp
+.Dl nfs_server=YES
 .Pp
 Edit
 .Pa /etc/exports
@@ -685,14 +676,12 @@ To take advantage of this, you must have an entry in
 with
 .Dq xx
 for the mount option:
-.Bd -literal -offset indent
-/dev/wd0j /altroot ffs xx 0 0
-.Ed
+.Pp
+.Dl /dev/wd0j /altroot ffs xx 0 0
 .Pp
 and you must add a line to root's crontab:
-.Bd -literal -offset indent
-ROOTBACKUP=1
-.Ed
+.Pp
+.Dl ROOTBACKUP=1
 .Pp
 so that the
 .Pa /etc/daily
@@ -855,11 +844,15 @@ boot time in the kernel image.
 .Xr df 1 ,
 .Xr domainname 1 ,
 .Xr hostname 1 ,
+.Xr ls 1 ,
 .Xr make 1 ,
 .Xr man 1 ,
 .Xr netstat 1 ,
 .Xr passwd 1 ,
+.Xr pkg_add 1 ,
+.Xr ssh 1 ,
 .Xr su 1 ,
+.Xr xdm 1 ,
 .Xr ccd 4 ,
 .Xr aliases 5 ,
 .Xr bootptab 5 ,
@@ -868,11 +861,12 @@ boot time in the kernel image.
 .Xr fbtab 5 ,
 .Xr fstab 5 ,
 .Xr group 5 ,
-.Xr krb.conf 5 ,
-.Xr krb.realms 5 ,
+.Xr hostname.if 5 ,
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
+.Xr printcap 5 ,
 .Xr resolv.conf 5 ,
+.Xr ssh_config 5 ,
 .Xr hostname 7 ,
 .Xr packages 7 ,
 .Xr ports 7 ,
@@ -882,22 +876,30 @@ boot time in the kernel image.
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
 .Xr config 8 ,
+.Xr dhclient 8 ,
 .Xr dhcp 8 ,
 .Xr dhcpd 8 ,
-.Xr ext_srvtab 8 ,
+.Xr dmesg 8 ,
+.Xr ftpd 8 ,
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
+.Xr kbd 8 ,
+.Xr lpd 8 ,
 .Xr mount 8 ,
 .Xr mtree 8 ,
 .Xr named 8 ,
 .Xr netstart 8 ,
 .Xr newaliases 8 ,
+.Xr portmap 8 ,
 .Xr rbootd 8 ,
 .Xr rc 8 ,
 .Xr rmt 8 ,
 .Xr route 8 ,
+.Xr sudo 8 ,
+.Xr telnetd 8 ,
 .Xr umount 8 ,
 .Xr vipw 8 ,
+.Xr yp 8 ,
 .Xr ypbind 8
 .Sh HISTORY
 This document first appeared in
