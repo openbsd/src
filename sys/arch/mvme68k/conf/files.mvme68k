@@ -1,83 +1,108 @@
-#	$Id: files.mvme68k,v 1.2 1995/11/07 08:42:23 deraadt Exp $
+#	$OpenBSD: files.mvme68k,v 1.3 1996/04/28 11:22:55 deraadt Exp $
 
 # config file for mvme68k
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16
 
-device mainbus at root { [addr = -1] }
+device mainbus { [addr = -1] }
+attach mainbus at root
 
-device pcc at mainbus { [offset = -1], [ ipl = 0 ] }
+device pcc { [offset = -1], [ ipl = 0 ] }
+attach pcc at mainbus
 file arch/mvme68k/dev/pcc.c			pcc needs-count
 
-device pcctwo at mainbus { [offset = -1], [ ipl = 0 ] }
+device pcctwo { [offset = -1], [ ipl = 0 ] }
+attach pcctwo at mainbus
 file arch/mvme68k/dev/pcctwo.c			pcctwo needs-count
 
-device mc at mainbus { [offset = -1], [ ipl = 0 ] }
+device mc { [offset = -1], [ ipl = 0 ] }
+attach mc at mainbus
 file arch/mvme68k/dev/mc.c			mc needs-count
 
-device clock at pcc, mc, pcctwo
+device clock
+attach clock at pcc, mc, pcctwo
 file arch/mvme68k/dev/clock.c			clock
 
-device zs at pcc, mc: tty
+device zs: tty
+attach zs at pcc, mc
 file arch/mvme68k/dev/zs.c			zs needs-count
 
-device cl at pcctwo: tty
+device cl: tty
+attach cl at pcctwo
 file arch/mvme68k/dev/cl.c			cl needs-count
 
-device bugtty at mainbus: tty
+device bugtty: tty
+attach bugtty at mainbus
 file arch/mvme68k/dev/bugtty.c			bugtty needs-count
 file arch/mvme68k/dev/bug.c			bugtty
 
-device le at pcc: ifnet, ether
+device le: ifnet, ether
+attach le at pcc
 file    arch/mvme68k/dev/if_le.c		le
 
-device ie at mc, pcctwo: ifnet, ether
+device ie: ifnet, ether
+attach ie at mc, pcctwo
 file    arch/mvme68k/dev/if_ie.c		ie
 
 include "../../../scsi/files.scsi"
 
-device sbic at pcc: scsi
-file	arch/mvme68k/dev/sbic.c			sbic
-file	arch/mvme68k/dev/sbicdma.c		sbic
+device wdsc: scsi
+attach wdsc at pcc
+file	arch/mvme68k/dev/sbic.c			wdsc
+file	arch/mvme68k/dev/wdsc.c			wdsc
 
-device ipic at mc { manu = -1, prod = -1, [vec = -1], [ipl = 0] }
+device ipic { manu = -1, prod = -1, [vec = -1], [ipl = 0] }
+attach ipic at mc
 file	arch/mvme68k/dev/ipic.c			ipic
 
-device fooip at ipic
+device fooip
+attach fooip at ipic
 file	arch/mvme68k/dev/fooip.c		fooip
 
-device siop at mc, pcctwo: scsi
+device siop: scsi
+attach siop at mc, pcctwo
 file	arch/mvme68k/dev/siopdma.c		siop
 file	arch/mvme68k/dev/siop.c			siop
 
-device memc at mc, pcctwo
+device memc
+attach memc at mc, pcctwo
 file	arch/mvme68k/dev/memc.c			memc
 
-device flash at mainbus
+device flash
+attach flash at mainbus
 file	arch/mvme68k/dev/flash.c		flash needs-count
 
-device sram at mainbus
-device nvram at pcc, mc, pcctwo
+device sram
+attach sram at mainbus
+device nvram
+attach nvram at pcc, mc, pcctwo
 file	arch/mvme68k/dev/sram.c			sram needs-count
 file	arch/mvme68k/dev/nvram.c		nvram needs-count
-file	arch/mvme68k/dev/memdevs.c		nvram sram
+file	arch/mvme68k/dev/memdevs.c		nvram | sram
 
-device lp at pcc
+device lp
+attach lp at pcc
 file	arch/mvme68k/dev/lp.c			lp needs-count
 
-device lptwo at pcctwo
+device lptwo
+attach lptwo at pcctwo
 file	arch/mvme68k/dev/lptwo.c		lptwo needs-count
 
-device vme at pcc, mc, pcctwo { }
-device vmes at vme { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
-device vmel at vme { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
-file	arch/mvme68k/dev/vme.c			vme vmes vmel
+device vme { }
+attach vme at pcc, mc, pcctwo
+device vmes { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
+attach vmes at vme
+device vmel { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
+attach vmel at vme
+file	arch/mvme68k/dev/vme.c			vme | vmes | vmel
 file	arch/mvme68k/dev/vmes.c			vmes needs-count
 file	arch/mvme68k/dev/vmel.c			vmel needs-count
 
-device xdc at vmel {target = -1}
-device xd at xdc: disk
+device xdc {target = -1}
+attach xdc at vmel
+device xd: disk
+attach xd at xdc
 file	arch/mvme68k/dev/xd.c			xd needs-flag
 
 major { sd = 4 }
@@ -99,6 +124,8 @@ file arch/mvme68k/mvme68k/vm_machdep.c
 file arch/m68k/m68k/copy.s
 file dev/cons.c
 file dev/cninit.c
+
+file arch/m68k/m68k/db_memrw.c			ddb
 
 # Compatibility modules
 
