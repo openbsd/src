@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"     $OpenBSD: strftime.3,v 1.4 1998/06/10 17:30:10 deraadt Exp $
+.\"     $OpenBSD: strftime.3,v 1.5 1998/07/06 18:57:12 millert Exp $
 .\"
 .Dd Jan 18, 1998
 .Dt STRFTIME 3
@@ -204,3 +204,13 @@ and
 conversion specifications are extensions.
 .Sh BUGS
 There is no conversion specification for the phase of the moon.
+.Pp
+Note that while this implementation of
+.Fn strftime
+will always NUL terminate
+.Fa buf ,
+other implementations may not do so when
+.Fa maxsiz
+is not large enough to store the entire time string.  The contents of
+.Fa buf
+are implementation specific in this case.
