@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.4 1997/06/16 02:21:56 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.5 1997/06/30 04:24:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.4 1997/06/16 02:21:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.5 1997/06/30 04:24:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: msort.c,v 1.4 1997/06/16 02:21:56 millert Exp $
 
 /* Subroutines using comparisons: merge sort and check order */
 #define DELETE (1)
-#define LALIGN(n) ((n+3) & ~3)
+#define LALIGN(n) ((n+(sizeof(long)-1)) & ~(sizeof(long)-1))
 
 typedef struct mfile {
 	u_char *end;
