@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.16 1999/01/31 21:56:46 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.17 1999/02/06 03:42:57 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -143,7 +143,8 @@ hmematch(parent, vcf, aux)
 	register struct romaux *ra = &ca->ca_ra;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
-	    strcmp("SUNW,hme", ra->ra_name)) {
+	    strcmp("SUNW,hme", ra->ra_name) &&
+	    strcmp("SUNW,qfe", ra->ra_name)) {
 		return (0);
 	}
 	if (!sbus_testdma((struct sbus_softc *)parent, ca))
