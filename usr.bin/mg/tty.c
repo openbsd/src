@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.18 2002/08/23 18:43:49 vincent Exp $	*/
+/*	$OpenBSD: tty.c,v 1.19 2002/08/28 19:48:29 art Exp $	*/
 
 /*
  * Terminfo display driver
@@ -430,7 +430,7 @@ ttresize(void)
  */
 /* ARGSUSED */
 static int
-fakec(char c)
+fakec(int c)
 {
 	cci++;
 	return 0;
