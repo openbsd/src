@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2002/12/09 15:38:30 markus Exp $
+#	$OpenBSD: Makefile,v 1.19 2002/12/09 16:05:02 markus Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -17,6 +17,7 @@ LTESTS= 	connect \
 		try-ciphers \
 		yes-head \
 		agent \
+		agent-getpeereid \
 		agent-timeout \
 		agent-ptrace \
 		keyscan \
