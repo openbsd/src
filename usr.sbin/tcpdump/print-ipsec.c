@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.5 2000/10/03 14:21:56 ho Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.6 2001/06/27 03:34:44 angelos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Format and print ipsec (esp/ah) packets.
+ * Format and print IPsec (ESP/AH) packets.
  *      By Tero Kivinen <kivinen@ssh.fi>, Tero Mononen <tmo@ssh.fi>,  
  *         Tatu Ylonen <ylo@ssh.fi> and Timo J. Rinne <tri@ssh.fi>
  *         in co-operation with SSH Communications Security, Espoo, Finland    
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.5 2000/10/03 14:21:56 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.6 2001/06/27 03:34:44 angelos Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ static const char rcsid[] =
 #include "extract.h"		    /* must come after interface.h */
 
 /*
- * IPSec/ESP header
+ * IPsec/ESP header
  */
 struct esp_hdr {
 	u_int esp_spi;
@@ -79,7 +79,7 @@ esp_print (register const u_char *bp, register u_int len,
 }
 
 /*
- * IPSec/AH header
+ * IPsec/AH header
  */
 struct ah_hdr {
 	u_char  ah_nxt_hdr;
