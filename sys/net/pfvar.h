@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.10 2001/06/25 17:17:03 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.11 2001/06/25 22:08:03 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -34,6 +34,7 @@
 #define _NET_PFVAR_H_
 
 #include <sys/types.h>
+#include <sys/queue.h>
 
 enum	{ PF_IN=0, PF_OUT=1 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2 };
@@ -51,7 +52,7 @@ struct pf_rule {
 	struct ifnet	*ifp;
 	struct pf_rule_addr src;
 	struct pf_rule_addr dst;
-	struct pf_rule	*next;
+	TAILQ_ENTRY(pf_rule)	entries;
 
 	u_int8_t	 action;
 	u_int8_t	 direction;

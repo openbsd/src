@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.36 2001/06/25 20:48:17 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.37 2001/06/25 22:08:03 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -78,10 +78,9 @@ struct pf_tree_node {
  * Global variables
  */
 
-struct pf_rule		*pf_rulehead_active;
-struct pf_rule		*pf_rulehead_inactive;
-struct pf_rule		*pf_ruletail_active;
-struct pf_rule		*pf_ruletail_inactive;
+TAILQ_HEAD(pf_rulequeue, pf_rule)	pf_rules[2];
+struct pf_rulequeue	*pf_rules_active;
+struct pf_rulequeue	*pf_rules_inactive;
 struct pf_nat		*pf_nathead_active;
 struct pf_nat		*pf_nathead_inactive;
 struct pf_rdr		*pf_rdrhead_active;
@@ -545,6 +544,10 @@ pfattach(int num)
                 0, NULL, NULL, 0);
         pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
                 0, NULL, NULL, 0);
+	TAILQ_INIT(&pf_rules[0]);
+	TAILQ_INIT(&pf_rules[1]);
+	pf_rules_active = &pf_rules[0];
+	pf_rules_inactive = &pf_rules[1];
 }
 
 int
@@ -604,11 +607,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCBEGINRULES: {
 		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_rule *rule;
 
-		while (pf_rulehead_inactive != NULL) {
-			struct pf_rule *next = pf_rulehead_inactive->next;
-			pool_put(&pf_rule_pl, pf_rulehead_inactive);
-			pf_rulehead_inactive = next;
+		while ((rule = TAILQ_FIRST(pf_rules_inactive)) != NULL) {
+			TAILQ_REMOVE(pf_rules_inactive, rule, entries);
+			pool_put(&pf_rule_pl, rule);
 		}
 		*ticket = ++ticket_rules_inactive;
 		break;
@@ -637,18 +640,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 		}
-		rule->next = NULL;
-		if (pf_ruletail_inactive != NULL) {
-			pf_ruletail_inactive->next = rule;
-			pf_ruletail_inactive = rule;
-		} else
-			pf_rulehead_inactive = pf_ruletail_inactive = rule;
+		TAILQ_INSERT_TAIL(pf_rules_inactive, rule, entries);
 		break;
 	}
 
 	case DIOCCOMMITRULES: {
 		u_int32_t *ticket = (u_int32_t *)addr;
-		struct pf_rule *old_rules;
+		struct pf_rulequeue *old_rules;
+		struct pf_rule *rule;
 
 		if (*ticket != ticket_rules_inactive) {
 			error = EBUSY;
@@ -657,22 +656,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		/* Swap rules, keep the old. */
 		s = splsoftnet();
-		old_rules = pf_rulehead_active;
-		pf_rulehead_active = pf_rulehead_inactive;
-		pf_ruletail_active = pf_ruletail_inactive;
-		pf_rulehead_inactive = NULL;
-		pf_ruletail_inactive = NULL;
+		old_rules = pf_rules_active;
+		pf_rules_active = pf_rules_inactive;
+		pf_rules_inactive = old_rules;
 		ticket_rules_active = ticket_rules_inactive;
 		splx(s);
 
 		/* Purge the old rule list. */
-		while (old_rules != NULL) {
-			struct pf_rule *next = old_rules->next;
-
-			pool_put(&pf_rule_pl, old_rules);
-			old_rules = next;
+		while ((rule = TAILQ_FIRST(old_rules)) != NULL) {
+			TAILQ_REMOVE(old_rules, rule, entries);
+			pool_put(&pf_rule_pl, rule);
 		}
-
 		break;
 	}
 
@@ -681,11 +675,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule *rule;
 
 		s = splsoftnet();
-		rule = pf_rulehead_active;
 		pr->nr = 0;
+		rule = TAILQ_FIRST(pf_rules_active);
 		while (rule != NULL) {
 			pr->nr++;
-			rule = rule->next;
+			rule = TAILQ_NEXT(rule, entries);
 		}
 		pr->ticket = ticket_rules_active;
 		splx(s);
@@ -702,10 +696,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		s = splsoftnet();
-		rule = pf_rulehead_active;
 		nr = 0;
+		rule = TAILQ_FIRST(pf_rules_active);
 		while ((rule != NULL) && (nr < pr->nr)) {
-			rule = rule->next;
+			rule = TAILQ_NEXT(rule, entries);
 			nr++;
 		}
 		if (rule == NULL) {
@@ -1191,7 +1185,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
-	struct pf_rule *r = pf_rulehead_active, *rm = NULL;
+	struct pf_rule *r, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1214,6 +1208,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		}
 	}
 
+	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
 		if (r->direction == direction &&
 		    (r->ifp == NULL || r->ifp == ifp) &&
@@ -1232,7 +1227,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			if (r->quick)
 				break;
 		}
-		r = r->next;
+		r = TAILQ_NEXT(r, entries);
 		nr++;
 	}
 
@@ -1318,7 +1313,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
-	struct pf_rule *r = pf_rulehead_active, *rm = NULL;
+	struct pf_rule *r, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1340,6 +1335,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		}
 	}
 
+	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
@@ -1357,7 +1353,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			if (r->quick)
 				break;
 		}
-		r = r->next;
+		r = TAILQ_NEXT(r, entries);
 		nr++;
 	}
 
@@ -1429,7 +1425,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 {
 	struct pf_nat *nat = NULL;
 	u_int32_t baddr;
-	struct pf_rule *r = pf_rulehead_active, *rm = NULL;
+	struct pf_rule *r, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1440,6 +1436,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		}
 	}
 
+	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
@@ -1455,7 +1452,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			if (r->quick)
 				break;
 		}
-		r = r->next;
+		r = TAILQ_NEXT(r, entries);
 		nr++;
 	}
 
