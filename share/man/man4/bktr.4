@@ -1,4 +1,4 @@
-.\" $OpenBSD: bktr.4,v 1.1 2002/11/08 19:24:45 mickey Exp $
+.\" $OpenBSD: bktr.4,v 1.2 2003/01/05 02:18:35 mickey Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -76,3 +76,7 @@ The
 .Nm
 driver first appeared in
 .Fx 2.2 .
+.Sh CAVEATS
+On big-endian architectures it is not possible to program the
+card to perform proper byte swapping in 24 bit modes,
+therefore only 16 and 32 bit modes are supported.
