@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.37 2004/05/18 10:54:08 otto Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.38 2004/05/18 11:07:53 otto Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -106,26 +106,26 @@ const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_FORCE,
 	MOPT_UPDATE,
-	{ "bg", ALTF_BG, 0 },
-	{ "conn", ALTF_NOCONN, MFLAG_INVERSE },
-	{ "dumbtimer", ALTF_DUMBTIMR, 0 },
-	{ "intr", ALTF_INTR, 0 },
-	{ "nfsv3", ALTF_NFSV3, 0 },
-	{ "rdirplus", ALTF_RDIRPLUS, 0 },
-	{ "mntudp", ALTF_MNTUDP, 0 },
-	{ "resvport", ALTF_RESVPORT, 0 },
+	{ "bg", 0, ALTF_BG, 1 },
+	{ "conn", 1, ALTF_NOCONN, 1 },
+	{ "dumbtimer", 0, ALTF_DUMBTIMR, 1 },
+	{ "intr", 0, ALTF_INTR, 1 },
+	{ "nfsv3", 0, ALTF_NFSV3, 1 },
+	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
+	{ "mntudp", 0, ALTF_MNTUDP, 1 },
+	{ "resvport", 0, ALTF_RESVPORT, 1 },
 #ifdef ISO
-	{ "seqpacket", ALTF_SEQPACKET, 0 },
+	{ "seqpacket", 0, ALTF_SEQPACKET, 1 },
 #endif
-	{ "soft", ALTF_SOFT, 0 },
-	{ "tcp", ALTF_TCP, 0 },
-	{ "port", ALTF_PORT, MFLAG_INTVAL },
-	{ "nfsv2", ALTF_NFSV2, 0 },
-	{ "ac", ALTF_NOAC, 0 },
-	{ "acregmin", ALTF_ACREGMIN, MFLAG_INTVAL },
-	{ "acregmax", ALTF_ACREGMAX, MFLAG_INTVAL },
-	{ "acdirmin", ALTF_ACDIRMIN, MFLAG_INTVAL },
-	{ "acdirmax", ALTF_ACDIRMAX, MFLAG_INTVAL },
+	{ "soft", 0, ALTF_SOFT, 1 },
+	{ "tcp", 0, ALTF_TCP, 1 },
+	{ "port", 0, ALTF_PORT, 1 },
+	{ "nfsv2", 0, ALTF_NFSV2, 1 },
+	{ "ac", 1, ALTF_NOAC, 1 },
+	{ "acregmin", 0, ALTF_ACREGMIN, 1},
+	{ "acregmax", 0, ALTF_ACREGMAX, 1},
+	{ "acdirmin", 0, ALTF_ACDIRMIN, 1},
+	{ "acdirmax", 0, ALTF_ACDIRMAX, 1},
 	{ NULL }
 };
 
@@ -187,13 +187,13 @@ main(int argc, char *argv[])
 	int c;
 	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
-	int mntflags, num;
-	char name[MAXPATHLEN], *options = NULL, *p, *spec;
-	union mntval value;
+	int mntflags, altflags, num;
+	char name[MAXPATHLEN], *p, *spec;
 
 	retrycnt = DEF_RETRY;
 
 	mntflags = 0;
+	altflags = 0;
 	nfsargs = nfsdefargs;
 	nfsargsp = &nfsargs;
 	while ((c = getopt(argc, argv,
@@ -264,7 +264,74 @@ main(int argc, char *argv[])
 			nfsargsp->flags |= NFSMNT_RDIRPLUS;
 			break;
 		case 'o':
-			options = optarg;
+			getmntopts(optarg, mopts, &mntflags, &altflags);
+			if (altflags & ALTF_BG)
+				opflags |= BGRND;
+			if (altflags & ALTF_NOCONN)
+				nfsargsp->flags |= NFSMNT_NOCONN;
+			if (altflags & ALTF_DUMBTIMR)
+				nfsargsp->flags |= NFSMNT_DUMBTIMR;
+			if (altflags & ALTF_INTR)
+				nfsargsp->flags |= NFSMNT_INT;
+			if (altflags & ALTF_NFSV3) {
+				if (force2)
+					errx(1,"conflicting version options");
+				force3 = 1;
+			}
+			if (altflags & ALTF_NFSV2) {
+				if (force3)
+					errx(1,"conflicting version options");
+				force2 = 1;
+				nfsargsp->flags &= ~NFSMNT_NFSV3;
+			}
+			if (altflags & ALTF_RDIRPLUS)
+				nfsargsp->flags |= NFSMNT_RDIRPLUS;
+			if (altflags & ALTF_MNTUDP)
+				mnttcp_ok = 0;
+			if (altflags & ALTF_RESVPORT)
+				nfsargsp->flags |= NFSMNT_RESVPORT;
+#ifdef ISO
+			if (altflags & ALTF_SEQPACKET)
+				nfsargsp->sotype = SOCK_SEQPACKET;
+#endif
+			if (altflags & ALTF_SOFT)
+				nfsargsp->flags |= NFSMNT_SOFT;
+			if (altflags & ALTF_TCP) {
+				nfsargsp->sotype = SOCK_STREAM;
+				nfsproto = IPPROTO_TCP;
+			}
+			if (altflags & ALTF_PORT)
+				port_no = atoi(strstr(optarg, "port=") + 5);
+			if (altflags & ALTF_NOAC) {
+				nfsargsp->flags
+				    |= (NFSMNT_ACREGMIN | NFSMNT_ACREGMAX |
+					NFSMNT_ACDIRMIN | NFSMNT_ACDIRMAX);
+				nfsargsp->acregmin = 0;
+				nfsargsp->acregmax = 0;
+				nfsargsp->acdirmin = 0;
+				nfsargsp->acdirmax = 0;
+			}
+			if (altflags & ALTF_ACREGMIN) {
+				nfsargsp->flags |= NFSMNT_ACREGMIN;
+				nfsargsp->acregmin =
+				    atoi(strstr(optarg, "acregmin=") + 9);
+			}
+			if (altflags & ALTF_ACREGMAX) {
+				nfsargsp->flags |= NFSMNT_ACREGMAX;
+				nfsargsp->acregmax =
+				    atoi(strstr(optarg, "acregmax=") + 9);
+			}
+			if (altflags & ALTF_ACDIRMIN) {
+				nfsargsp->flags |= NFSMNT_ACDIRMIN;
+				nfsargsp->acdirmin =
+				    atoi(strstr(optarg, "acdirmin=") + 9);
+			}
+			if (altflags & ALTF_ACDIRMAX) {
+				nfsargsp->flags |= NFSMNT_ACDIRMAX;
+				nfsargsp->acdirmax =
+				    atoi(strstr(optarg, "acdirmax=") + 9);
+			}
+			altflags = 0;
 			break;
 		case 'P':
 			nfsargsp->flags |= NFSMNT_RESVPORT;
@@ -327,86 +394,6 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 		usage();
-
-	/* parse -o options */
-	while (options != NULL) {
-		switch (getmntopt(&options, &value, mopts, &mntflags)) {
-		case ALTF_BG:
-			opflags |= BGRND;
-			break;
-		case ALTF_NOCONN:
-			nfsargsp->flags |= NFSMNT_NOCONN;
-			break;
-		case ALTF_DUMBTIMR:
-			nfsargsp->flags |= NFSMNT_DUMBTIMR;
-			break;
-		case ALTF_INTR:
-			nfsargsp->flags |= NFSMNT_INT;
-			break;
-		case ALTF_NFSV3:
-			if (force2)
-				errx(1,
-				    "conflicting version options");
-			force3 = 1;
-			break;
-		case ALTF_NFSV2:
-			if (force3)
-				errx(1,
-				    "conflicting version options");
-			force2 = 1;
-			nfsargsp->flags &= ~NFSMNT_NFSV3;
-			break;
-		case ALTF_RDIRPLUS:
-			nfsargsp->flags |= NFSMNT_RDIRPLUS;
-			break;
-		case ALTF_MNTUDP:
-			mnttcp_ok = 0;
-			break;
-		case ALTF_RESVPORT:
-			nfsargsp->flags |= NFSMNT_RESVPORT;
-			break;
-#ifdef ISO
-		case ALTF_SEQPACKET:
-			nfsargsp->sotype = SOCK_SEQPACKET;
-			break;
-#endif
-		case ALTF_SOFT:
-			nfsargsp->flags |= NFSMNT_SOFT;
-			break;
-		case ALTF_TCP:
-			nfsargsp->sotype = SOCK_STREAM;
-			nfsproto = IPPROTO_TCP;
-			break;
-		case ALTF_PORT:
-			port_no = value.ival;
-			break;
-		case ALTF_NOAC:
-			nfsargsp->flags |= (NFSMNT_ACREGMIN |
-			    NFSMNT_ACREGMAX | NFSMNT_ACDIRMIN |
-			    NFSMNT_ACDIRMAX);
-			nfsargsp->acregmin = 0;
-			nfsargsp->acregmax = 0;
-			nfsargsp->acdirmin = 0;
-			nfsargsp->acdirmax = 0;
-			break;
-		case ALTF_ACREGMIN:
-			nfsargsp->flags |= NFSMNT_ACREGMIN;
-			nfsargsp->acregmin = value.ival;
-			break;
-		case ALTF_ACREGMAX:
-			nfsargsp->flags |= NFSMNT_ACREGMAX;
-			nfsargsp->acregmax = value.ival;
-			break;
-		case ALTF_ACDIRMIN:
-			nfsargsp->flags |= NFSMNT_ACDIRMIN;
-			nfsargsp->acdirmin = value.ival;
-			break;
-		case ALTF_ACDIRMAX:
-			nfsargsp->flags |= NFSMNT_ACDIRMAX;
-			nfsargsp->acdirmax = value.ival;
-			break;
-		}
-	}
 
 	spec = *argv++;
 	if (realpath(*argv, name) == NULL)

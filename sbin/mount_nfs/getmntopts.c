@@ -1,5 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.7 2004/05/18 11:07:53 otto Exp $	*/
-/*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.5 2004/05/18 11:07:53 otto Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -31,11 +30,7 @@
  */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
-#else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.7 2004/05/18 11:07:53 otto Exp $";
-#endif
+static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,12 +44,16 @@ static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.7 2004/05/18 11:07:53 otto Exp
 
 #include "mntopts.h"
 
+int getmnt_silent = 0;
+
 void
-getmntopts(const char *options, const struct mntopt *m0, int *flagp)
+getmntopts(const char *options, const struct mntopt *m0, int *flagp,
+    int *altflagp)
 {
 	const struct mntopt *m;
 	int negative;
 	char *opt, *optbuf, *p;
+	int *thisflagp;
 
 	/* Copy option string, since it is about to be torn asunder... */
 	if ((optbuf = strdup(options)) == NULL)
@@ -73,7 +72,7 @@ getmntopts(const char *options, const struct mntopt *m0, int *flagp)
 		 * ignore the assignment as it's handled elsewhere
 		 */
 		p = strchr(opt, '=');
-		if (p != NULL)
+		if (p)
 			 *p = '\0';
 
 		/* Scan option table. */
@@ -83,12 +82,14 @@ getmntopts(const char *options, const struct mntopt *m0, int *flagp)
 
 		/* Save flag, or fail if option is not recognised. */
 		if (m->m_option) {
+			thisflagp = m->m_altloc ? altflagp : flagp;
 			if (negative == m->m_inverse)
-				*flagp |= m->m_flag;
+				*thisflagp |= m->m_flag;
 			else
-				*flagp &= ~m->m_flag;
-		} else
+				*thisflagp &= ~m->m_flag;
+		} else if (!getmnt_silent) {
 			errx(1, "-o %s: option not supported", opt);
+		}
 	}
 
 	free(optbuf);
