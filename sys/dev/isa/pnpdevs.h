@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.12 1998/05/08 18:39:35 csapuntz Exp 
+ *	#	OpenBSD: pnpdevs,v 1.13 1998/06/02 09:54:20 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
