@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.13 1998/05/11 09:59:40 niklas Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.14 1999/04/18 17:15:08 espie Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ emithdr(ofp)
 	register FILE *ofp;
 {
 	register FILE *ifp;
-	register int n;
+	register size_t n;
 	char ifn[200], buf[BUFSIZ];
 
 	if (fprintf(ofp, "\

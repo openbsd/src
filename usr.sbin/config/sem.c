@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.13 1999/01/19 01:11:24 niklas Exp $	*/
+/*	$OpenBSD: sem.c,v 1.14 1999/04/18 17:15:09 espie Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -553,7 +553,8 @@ resolve(nvp, name, what, dflt, part)
 	int unit;
 	char buf[NAMESIZE];
 
-	if ((u_int)(part -= 'a') >= maxpartitions)
+	part -= 'a';
+	if ((part >= maxpartitions) || (part < 0))
 		panic("resolve");
 	if ((nv = *nvp) == NULL) {
 		dev_t	d = NODEV;
@@ -955,7 +956,7 @@ concat(name, c)
 	const char *name;
 	int c;
 {
-	register int len;
+	size_t len;
 	char buf[NAMESIZE];
 
 	len = strlen(name);
@@ -999,7 +1000,8 @@ split(name, nlen, base, bsize, aunit)
 	int *aunit;
 {
 	register const char *cp;
-	register int c, l;
+	register int c;
+	size_t l;
 
 	l = nlen;
 	if (l < 2 || l >= bsize || isdigit(*name))
