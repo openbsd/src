@@ -1,3 +1,4 @@
+/* $OpenBSD: ufs_dirhash.c,v 1.5 2004/02/02 19:34:39 tedu Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
