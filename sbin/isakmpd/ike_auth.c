@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.27 2000/08/03 07:23:32 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.53 2000/07/25 17:15:40 provos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.28 2000/10/07 07:01:04 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.56 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -240,8 +240,8 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  close (fd);
 
 	  /* Parse private key string */
-	  buf2 = kn_get_string(buf);
-	  free(buf);
+	  buf2 = kn_get_string (buf);
+	  free (buf);
 
 	  if (LK (kn_decode_key, (&dc, buf2, KEYNOTE_PRIVATE_KEY)) == -1)
 	    {
@@ -547,10 +547,10 @@ rsa_sig_decode_hash (struct message *msg)
   char header[80];
   int len;
   int initiator = exchange->initiator;
-  u_int8_t **hash_p, *id_cert, *id;
-  u_int32_t id_cert_len;
+  u_int8_t **hash_p, **id_cert, *id;
+  u_int32_t *id_cert_len;
   size_t id_len;
-  int found = 0;
+  int found = 0, n, i, id_found;
 
   /* Choose the right fields to fill-in.  */
   hash_p = initiator ? &ie->hash_r : &ie->hash_i;
@@ -666,23 +666,30 @@ rsa_sig_decode_hash (struct message *msg)
 
       if (GET_ISAKMP_CERT_ENCODING (p->p) == ISAKMP_CERTENC_X509_SIG)
         {
-	  if (!handler->cert_get_subject (cert, &id_cert, &id_cert_len))
+	  if (!handler->cert_get_subjects (cert, &n, &id_cert, &id_cert_len))
 	    {
 	      handler->cert_free (cert);
 	      log_print ("rsa_sig_decode_hash: can not get subject from CERT");
 	      continue;
 	    }
 
-	  if (id_cert_len != id_len || memcmp (id, id_cert, id_len) != 0)
+	  id_found = 0;
+	  for (i = 0; i < n; i++)
+ 	    if (id_cert_len[i] == id_len
+		&& memcmp (id, id_cert[i], id_len) == 0)
+	      {
+		id_found++;
+		break;
+	      }
+	  if (!id_found)
 	    {
 	      handler->cert_free (cert);
-	      log_print ("rsa_sig_decode_hash: CERT subject does "
-			 "not match ID");
+	      log_print ("rsa_sig_decode_hash: no CERT subject match the ID");
 	      free (id_cert);
 	      continue;
 	    }
 
-	  free (id_cert);
+	  cert_free_subjects (n, id_cert, id_cert_len);
 	}
 
       if (!handler->cert_get_key (cert, &key))
@@ -857,8 +864,14 @@ rsa_sig_encode_hash (struct message *msg)
   handler = cert_get (idtype);
   if (!handler)
     {
+      if (idtype == ISAKMP_CERTENC_KEYNOTE)
+        {
+          idtype = ISAKMP_CERTENC_X509_SIG;
+          goto doitagain;
+        }
+
       log_print ("rsa_sig_encode_hash: "
-		 "cert_get(ISAKMP_CERTENC_X509_SIG) failed");
+		 "cert_get(%d) failed", idtype);
       return -1;
     }
 
