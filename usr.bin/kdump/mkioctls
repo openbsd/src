@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.11 2003/06/03 02:56:09 millert Exp $
+#	$OpenBSD: mkioctls,v 1.12 2003/06/23 16:53:06 mickey Exp $
 
 #
 # Copyright (c) 1994
@@ -38,18 +38,30 @@ BEGIN {
 	print "#include <sys/socketvar.h>"
 	print "#include <net/route.h>"
 	print "#include <net/if.h>"
+	print "#include <net/bpf.h>"
 	print "#include <netinet/in.h>"
 	print "#include <netinet/ip_mroute.h>"
 	print "#include <netinet/if_ether.h>"
+	print "#include <netinet6/in6_var.h>"
+	print "#include <netinet6/nd6.h>"
+	print "#include <netinet6/ip6_mroute.h>"
 	print "#include <net/if_bridge.h>"
 	print "#include <sys/termios.h>"
 	print "#include <netinet/ip_ipsp.h>"
 	print "#include <net/if_enc.h>"
+	print "#include <net/if_ieee80211.h>"
+	print "#include <net/ppp_defs.h>"
+	print "#include <net/if_ppp.h>"
+	print "#include <net/if_pppvar.h>"
+	print "#include <net/if_tun.h>"
+	print "#include <net/pfvar.h>"
 	print "#include <sys/disklabel.h>"
+	print "#include <sys/agpio.h>"
 	print "#include <sys/ataio.h>"
 	print "#include <sys/audioio.h>"
 	print "#include <sys/cdio.h>"
 	print "#include <sys/chio.h>"
+	print "#include <sys/disk.h>"
 	print "#include <sys/dkbad.h>"
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
@@ -59,8 +71,15 @@ BEGIN {
 	print "#include <sys/radioio.h>"
 	print "#include <sys/scanio.h>"
 	print "#include <sys/scsiio.h>"
-	print "#include <dev/wscons/wsconsio.h>"
+	print "#include <crypto/cryptodev.h>"
+	print "#include <dev/biovar.h>"
+	print "#include <dev/ccdvar.h>"
+	print "#include <dev/ramdisk.h>"
+	print "#include <dev/rndioctl.h>"
 	print "#include <dev/systrace.h>"
+	print "#include <dev/wscons/wsconsio.h>"
+	print "#include <dev/vndioctl.h>"
+	print "#include <scsi/ses.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print ""
@@ -72,8 +91,8 @@ BEGIN {
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(ATAIO|AUDIO_|CDIO|CHIO|DIOC|MIDI_|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|PCIOC|RIOC|STRIOC|SCIOC|OSCIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z]*[ 	]*_IO/ {
-	
+/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|RD_|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
+
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
 		if ($i ~ /define/)
