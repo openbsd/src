@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.1,v 1.18 2003/06/02 23:32:08 millert Exp $
+.\"	$OpenBSD: mkdir.1,v 1.19 2004/12/13 15:50:02 jmc Exp $
 .\"	$NetBSD: mkdir.1,v 1.9 1995/07/25 19:37:13 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -81,6 +81,9 @@ argument directory already exists.
 .El
 .Pp
 The user must have write permission in the parent directory.
+For an explanation of the directory hierarchy,
+see
+.Xr hier 7 .
 .Pp
 The
 .Nm
@@ -105,7 +108,8 @@ creating any non-existent intermediate directories as necessary.
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr rmdir 1 ,
-.Xr umask 2
+.Xr umask 2 ,
+.Xr hier 7
 .Sh STANDARDS
 The
 .Nm
