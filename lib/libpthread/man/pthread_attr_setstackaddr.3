@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.5 2003/02/20 18:59:12 jmc Exp $
+.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.6 2003/05/08 09:01:15 jmc Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
@@ -34,13 +34,13 @@ attribute specifies the location of storage to be
 used for the created thread's stack.
 The size of the storage is at least
 .Dv PTHREAD_STACK_MIN .
-.Sh RETURN VALUE
+.Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_attr_setstackaddr
 and
 .Fn pthread_attr_getstackaddr
-return a value of 0. Otherwise, an error
-number is returned to indicate the error.
+return a value of 0.
+Otherwise, an error number is returned to indicate the error.
 .Pp
 The
 .Fn pthread_attr_getstackaddr
