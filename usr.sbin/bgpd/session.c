@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.111 2004/02/17 14:40:16 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.112 2004/02/17 15:47:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1125,6 +1125,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			else
 				log_peer_warn(&p->conf, "Write error");
 			bgp_fsm(p, EVNT_CON_FATAL);
+			return (1);
 		}
 		if (!(pfd->revents & POLLIN))
 			return (1);
