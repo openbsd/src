@@ -195,6 +195,13 @@ ext2fs_write(v)
 		panic("%s: mode", "ext2fs_write");
 #endif
 
+	/*
+	 * If writing 0 bytes, succeed and do not change
+	 * update time or file offset (standards compliance)
+	 */
+	if (uio->uio_resid == 0)
+		return (0);
+
 	switch (vp->v_type) {
 	case VREG:
 		if (ioflag & IO_APPEND)
