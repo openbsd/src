@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.8 1998/08/18 03:42:10 millert Exp $	*/
+/*	$OpenBSD: announce.c,v 1.9 2000/07/06 00:01:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.8 1998/08/18 03:42:10 millert Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.9 2000/07/06 00:01:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,6 +160,6 @@ print_mesg(tf, request, remote_machine)
 		*(bptr++) = '\n';
 	}
 	*bptr = '\0';
-	fprintf(tf, big_buf);
+	fprintf(tf, "%s", big_buf);
 	fflush(tf);
 }
