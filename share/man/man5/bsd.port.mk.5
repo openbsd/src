@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.92 2003/06/30 18:44:41 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.93 2003/07/01 10:00:29 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -237,11 +237,10 @@ Force rebuild of the port.
 Run regression tests for the port.
 Essentially depend on a correct build and invoke
 .Bd -literal
-env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${REGRESS_FLAGS} \\
-.Ed
-.Bd -literal
+env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${REGRESS_FLAGS} \e
 	-f ${MAKE_FILE} ${REGRESS_TARGET}
 .Ed
+.Pp
 If a port needs some other ports installed to run regression tests,
 use
 .Ev REGRESS_DEPENDS .
