@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.23 2001/08/17 22:26:58 mickey Exp $	*/
+/*	$OpenBSD: sio.c,v 1.24 2001/08/17 22:55:09 mickey Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -179,7 +179,6 @@ sio_bridge_callback(v)
 		ec.ec_maxslots = sio_eisa_maxslots;
 		ec.ec_intr_map = sio_eisa_intr_map;
 		ec.ec_intr_string = sio_intr_string;
-		ec.ec_intr_line = sio_intr_line;
 		ec.ec_intr_establish = sio_intr_establish;
 		ec.ec_intr_disestablish = sio_intr_disestablish;
 

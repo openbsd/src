@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.9 2001/08/17 22:26:58 mickey Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.10 2001/08/17 22:55:09 mickey Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -259,7 +259,7 @@ dec_eb164_intr_string(ccv, ih)
 }
 
 int
-dec_eb164_intr_string(ccv, ih)
+dec_eb164_intr_line(ccv, ih)
 	void *ccv;
 	pci_intr_handle_t ih;
 {
