@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2001/07/06 02:07:42 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2001/11/30 20:57:52 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -81,9 +81,19 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-/* mac68k, mvme68k and x68k 3 pages of  u-area */
+#ifndef	SEGSHIFT
+#if defined(M68040) || defined(M68060)
+#define	SEGSHIFT	((mmutype <= MMU_68040) ? 18 : (34 - PGSHIFT))
+#else
+#define	SEGSHIFT	(34 - PGSHIFT)
+#endif
+#define	NBSEG		(1 << SEGSHIFT)
+#define	SEGOFSET	(NBSEG - 1)
+#endif
+
+/* mac68k use 3 pages of u-area */
 #ifndef	UPAGES
-# define UPAGES		2		/* pages of u-area */
+#define UPAGES		2		/* pages of u-area */
 #endif
 #define	USPACE		(UPAGES * NBPG)
 
@@ -97,7 +107,7 @@
 #define	MSIZE		256		/* size of an mbuf */
 
 #ifndef	MCLSHIFT
-# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)
@@ -139,5 +149,19 @@
 #define	m68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define	m68k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((unsigned)(x) << PGSHIFT)
+
+#ifdef COMPAT_HPUX
+/*
+ * Constants/macros for HPUX multiple mapping of user address space.
+ * Pages in the first 256Mb are mapped in at every 256Mb segment.
+ */
+#define HPMMMASK	0xF0000000
+#define ISHPMMADDR(v) \
+	((curproc->p_md.md_flags & MDP_HPUXMMAP) && \
+	 ((unsigned)(v) & HPMMMASK) && \
+	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
+#define HPMMBASEADDR(v) \
+	((unsigned)(v) & ~HPMMMASK)
+#endif	/* COMPAT_HPUX */
 
 #endif	/* !_M68K_PARAM_H_ */
