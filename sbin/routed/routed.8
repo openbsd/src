@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.20 1998/12/15 01:20:43 aaron Exp $
+.\"	$OpenBSD: routed.8,v 1.21 1999/03/16 02:46:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,7 +184,7 @@ support multicasting.
 If no response is received on a remote interface, if there are errors
 while sending responses,
 or if there are more errors than input or output (see
-.Xr netstat 8 ),
+.Xr netstat 1 ),
 then the cable or some other part of the interface is assumed to be
 disconnected or broken, and routes are adjusted appropriately.
 .Pp
