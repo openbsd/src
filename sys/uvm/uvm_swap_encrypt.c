@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.12 2003/12/26 10:04:49 markus Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.13 2004/11/29 23:01:37 hshoexer Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -52,14 +52,8 @@ u_int uvm_swpkeysdeleted = 0;
 int swap_encrypt_initialized = 0;
 
 int
-swap_encrypt_ctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+swap_encrypt_ctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -74,9 +68,10 @@ swap_encrypt_ctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (result)
 			return result;
 
-		/* Swap Encryption has been turned on, we need to
+		/*
+		 * Swap Encryption has been turned on, we need to
 		 * initialize state for swap devices that have been
-		 * added 
+		 * added.
 		 */
 		if (doencrypt)
 			uvm_swap_initcrypt_all();
@@ -122,8 +117,8 @@ swap_key_delete(struct swap_key *key)
  */
 
 void
-swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst,
-	     u_int64_t block, size_t count)
+swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst, u_int64_t block,
+    size_t count)
 {
 	u_int32_t *dsrc = (u_int32_t *)src;
 	u_int32_t *ddst = (u_int32_t *)dst;
@@ -148,7 +143,7 @@ swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 		ddst[3] = dsrc[3] ^ iv4;
 		/*
 		 * Do not worry about endianess, it only needs to decrypt
-		 * on this machine
+		 * on this machine.
 		 */
 		rijndael_encrypt(&swap_ctxt, (u_char *)ddst, (u_char *)ddst);
 		iv1 = ddst[0];
@@ -167,8 +162,8 @@ swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst,
  */
 
 void
-swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst,
-	     u_int64_t block, size_t count)
+swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst, u_int64_t block,
+    size_t count)
 {
 	u_int32_t *dsrc = (u_int32_t *)src;
 	u_int32_t *ddst = (u_int32_t *)dst;
@@ -210,9 +205,10 @@ swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 void
 swap_key_prepare(struct swap_key *key, int encrypt)
 {
-	/* Check if we have prepared for this key already,
+	/*
+	 * Check if we have prepared for this key already,
 	 * if we only have the encryption schedule, we have
-	 * to recompute and get the decryption schedule also
+	 * to recompute and get the decryption schedule also.
 	 */
 	if (kcur == key && (encrypt || !swap_ctxt.enc_only))
 		return;
@@ -239,7 +235,7 @@ swap_key_cleanup(struct swap_key *key)
 		return;
 
 	/* Zero out the subkeys */
-       	memset(&swap_ctxt, 0, sizeof(swap_ctxt));
+	memset(&swap_ctxt, 0, sizeof(swap_ctxt));
 
 	kcur = NULL;
 }
