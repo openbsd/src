@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.163 2004/06/06 16:49:09 cedric Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.164 2004/06/21 18:34:52 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -620,6 +620,7 @@ sendit:
 		    ntohs(ip->ip_len) > tdb->tdb_mtu &&
 		    tdb->tdb_mtutimeout > time.tv_sec) {
 			struct rtentry *rt = NULL;
+			int rt_mtucloned = 0;
 
 			icmp_mtu = tdb->tdb_mtu;
 			splx(s);
@@ -632,6 +633,7 @@ sendit:
 					sizeof(struct sockaddr_in), AF_INET};
 				dst.sin_addr = ip->ip_dst;
 				rt = icmp_mtudisc_clone((struct sockaddr *)&dst);
+				rt_mtucloned = 1;
 			}
 			if (rt != NULL) {
 				rt->rt_rmx.rmx_mtu = icmp_mtu;
@@ -640,6 +642,8 @@ sendit:
 					ro->ro_rt = (struct rtentry *) 0;
 					rtalloc(ro);
 				}
+				if (rt_mtucloned)
+					rtfree(rt);
 			}
 			error = EMSGSIZE;
 			goto bad;
