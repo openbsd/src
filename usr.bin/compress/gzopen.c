@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.19 2003/12/16 22:46:25 henning Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.20 2003/12/16 23:25:02 henning Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -60,7 +60,7 @@
 
 #ifndef SMALL
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.19 2003/12/16 22:46:25 henning Exp $";
+    "$OpenBSD: gzopen.c,v 1.20 2003/12/16 23:25:02 henning Exp $";
 #endif
 
 #include <sys/param.h>
@@ -137,6 +137,7 @@ gz_open(int fd, const char *mode, char *name, int bits,
 	s->z_mode = mode[0];
 
 	if (s->z_mode == 'w') {
+#ifndef SMALL
 		/* windowBits is passed < 0 to suppress zlib header */
 		if (deflateInit2(&(s->z_stream), bits, Z_DEFLATED,
 				 -MAX_WBITS, DEF_MEM_LEVEL, 0) != Z_OK) {
@@ -144,6 +145,9 @@ gz_open(int fd, const char *mode, char *name, int bits,
 			return NULL;
 		}
 		s->z_stream.next_out = s->z_buf;
+#else
+		return (NULL);
+#endif
 	} else {
 		if (inflateInit2(&(s->z_stream), -MAX_WBITS) != Z_OK) {
 			free (s);
@@ -182,6 +186,7 @@ gz_close(void *cookie, struct z_info *info)
 	if (s == NULL)
 		return -1;
 
+#ifndef SMALL
 	if (s->z_mode == 'w' && (err = gz_flush (s, Z_FINISH)) == Z_OK) {
 		if ((err = put_int32 (s, s->z_crc)) == Z_OK) {
 			s->z_hlen += sizeof(int32_t);
@@ -189,10 +194,14 @@ gz_close(void *cookie, struct z_info *info)
 				s->z_hlen += sizeof(int32_t);
 		}
 	}
-
+#endif
 	if (!err && s->z_stream.state != NULL) {
 		if (s->z_mode == 'w')
+#ifndef SMALL
 			err = deflateEnd(&s->z_stream);
+#else
+			err = -1;
+#endif;
 		else if (s->z_mode == 'r')
 			err = inflateEnd(&s->z_stream);
 	}
@@ -215,6 +224,7 @@ gz_close(void *cookie, struct z_info *info)
 	return err;
 }
 
+#ifndef SMALL
 int
 gz_flush(void *cookie, int flush)
 {
@@ -252,6 +262,7 @@ gz_flush(void *cookie, int flush)
 	}
 	return 0;
 }
+#endif
 
 static int
 put_int32(gz_stream *s, u_int32_t x)
@@ -461,6 +472,7 @@ gz_read(void *cookie, char *buf, int len)
 int
 gz_write(void *cookie, const char *buf, int len)
 {
+#ifndef SMALL
 	gz_stream *s = (gz_stream*)cookie;
 
 	s->z_stream.next_in = (char *)buf;
@@ -479,4 +491,5 @@ gz_write(void *cookie, const char *buf, int len)
 	s->z_crc = crc32(s->z_crc, buf, len);
 
 	return (int)(len - s->z_stream.avail_in);
+#endif
 }
