@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.16 2004/04/28 00:28:43 mcbride Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.17 2004/08/03 19:05:56 brad Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -102,7 +102,8 @@ mii_phy_setmedia(sc)
 	int bmcr, anar;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
+		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0 ||
+		    (sc->mii_flags & MIIF_FORCEANEG))
 			(void) mii_phy_auto(sc, 1);
 		return;
 	}
