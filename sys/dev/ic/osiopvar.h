@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.1 2003/01/08 02:11:38 krw Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.2 2003/04/06 20:24:31 krw Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -115,6 +115,8 @@ struct osiop_ds {
 	u_int8_t msgout[8];
 	u_int8_t msgbuf[8];
 	u_int8_t stat[8];
+	
+	struct scsi_generic scsi_cmd;	/* DMA'able copy of xs->cmd */
 } __attribute__((__packed__));
 
 /* status can hold the SCSI_* status values, and 2 additionnal values: */
@@ -130,6 +132,7 @@ struct osiop_ds {
 #define OSIOP_DSEXTMSGOFF	OSIOP_DSOFF(msgbuf[2])
 #define OSIOP_DSSYNMSGOFF	OSIOP_DSOFF(msgbuf[3])
 #define OSIOP_DSSTATOFF		OSIOP_DSOFF(stat[0])
+#define OSIOP_DSCMDOFF		OSIOP_DSOFF(scsi_cmd)
 
 /*
  * ACB. Holds additional information for each SCSI command Comments:
@@ -143,14 +146,13 @@ struct osiop_acb {
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from upper layer */
 	struct osiop_softc *sc;	/* points back to our adapter */
 
-	bus_dmamap_t cmddma;	/* DMA map for SCSI command */
 	bus_dmamap_t datadma;	/* DMA map for data transfer */
 
 	struct osiop_ds *ds;	/* data structure for this acb */
 	bus_size_t dsoffset;	/* offset of data structure for this acb */
 
-	bus_size_t cmdlen;	/* command length */
-	bus_size_t datalen;	/* transfer data length */
+	int	xsflags;	/* copy of xs->flags */
+	int	datalen;
 #ifdef OSIOP_DEBUG
 	void *data;		/* transfer data buffer ptr */
 #endif
