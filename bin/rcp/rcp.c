@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.4 1996/03/02 00:35:17 tholo Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.5 1996/08/02 12:17:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -581,22 +581,21 @@ sink(argc, argv)
 		if (ch == '\n')
 			*--cp = 0;
 
-#define getnum(t) (t) = 0; while (isdigit(*cp)) (t) = (t) * 10 + (*cp++ - '0');
 		cp = buf;
 		if (*cp == 'T') {
 			setimes++;
 			cp++;
-			getnum(mtime.tv_sec);
-			if (*cp++ != ' ')
+			mtime.tv_sec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != ' ')
 				SCREWUP("mtime.sec not delimited");
-			getnum(mtime.tv_usec);
-			if (*cp++ != ' ')
+			mtime.tv_usec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != ' ')
 				SCREWUP("mtime.usec not delimited");
-			getnum(atime.tv_sec);
-			if (*cp++ != ' ')
+			atime.tv_sec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != ' ')
 				SCREWUP("atime.sec not delimited");
-			getnum(atime.tv_usec);
-			if (*cp++ != '\0')
+			atime.tv_usec = strtol(cp, &cp, 10);
+			if (!cp || *cp++ != '\0')
 				SCREWUP("atime.usec not delimited");
 			(void)write(rem, "", 1);
 			continue;
