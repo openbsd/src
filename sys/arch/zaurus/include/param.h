@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2004/12/31 14:57:57 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 2004/12/31 14:58:53 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.4 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
@@ -37,10 +37,10 @@
 #define	_ZAURUS_PARAM_H_
 
 /*
- * cats boot dmesg is bigger than 4k
+ * 1 page should be enough
  */
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	(2*NBPG)
+#define MSGBUFSIZE	(1*NBPG)
 #endif
 
 #include <arm/param.h>
