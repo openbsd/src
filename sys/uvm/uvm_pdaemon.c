@@ -1,9 +1,9 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.19 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_pdaemon.c,v 1.31 2001/03/10 22:46:50 chs Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.20 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.36 2001/06/27 18:52:10 thorpej Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -45,17 +45,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -373,14 +373,6 @@ uvmpd_scan_inactive(pglst)
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
-	 * note: we currently keep swap-backed pages on a seperate inactive
-	 * list from object-backed pages.   however, merging the two lists
-	 * back together again hasn't been ruled out.   thus, we keep our
-	 * swap cluster in "swpps" rather than in pps (allows us to mix
-	 * clustering types in the event of a mixed inactive queue).
-	 */
-
-	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
 	 * to stay in the loop while we have a page to scan or we have
 	 * a swap-cluster to build.
@@ -695,13 +687,20 @@ uvmpd_scan_inactive(pglst)
 				 * add block to cluster
 				 */
 
-				swpps[swcpages] = p;
-				if (anon)
+				if (anon) {
 					anon->an_swslot = swslot + swcpages;
-				else
-					uao_set_swslot(uobj,
+				} else {
+					result = uao_set_swslot(uobj,
 					    p->offset >> PAGE_SHIFT,
 					    swslot + swcpages);
+					if (result == -1) {
+						p->flags &= ~PG_BUSY;
+						UVM_PAGE_OWN(p, NULL);
+						simple_unlock(&uobj->vmobjlock);
+						continue;
+					}
+				}
+				swpps[swcpages] = p;
 				swcpages++;
 			}
 		} else {
@@ -872,12 +871,7 @@ uvmpd_scan()
 
 	got_it = FALSE;
 	pages_freed = uvmexp.pdfreed;
-	if ((uvmexp.pdrevs & 1) != 0 && uvmexp.nswapdev != 0)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_swp);
-	if (!got_it)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_obj);
-	if (!got_it && (uvmexp.pdrevs & 1) == 0 && uvmexp.nswapdev != 0)
-		(void) uvmpd_scan_inactive(&uvm.page_inactive_swp);
+	(void) uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*
@@ -965,13 +959,14 @@ uvmpd_scan()
 		}
 
 		/*
-		 * If the page has not been referenced since the
-		 * last scan, deactivate the page if there is a
-		 * shortage of inactive pages.
+		 * If we're short on inactive pages, move this over
+		 * to the inactive list.  The second hand will sweep
+		 * it later, and if it has been referenced again, it
+		 * will be moved back to active.
 		 */
 
-		if (inactive_shortage > 0 &&
-		    pmap_clear_reference(p) == FALSE) {
+		if (inactive_shortage > 0) {
+			pmap_clear_reference(p);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: uvm_param.h,v 1.4 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_param.h,v 1.7 2001/03/21 03:16:06 chs Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.5 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.11 2001/07/14 06:36:03 matt Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -43,17 +43,17 @@
  * All rights reserved.
  *
  * Authors: Avadis Tevanian, Jr., Michael Wayne Young
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -114,7 +114,9 @@ typedef int	boolean_t;
 #define	VM_ANONMIN	7
 #define	VM_VTEXTMIN	8
 #define	VM_VNODEMIN	9
-#define	VM_MAXID	10		/* number of valid vm ids */
+#define	VM_MAXSLP	10
+#define	VM_USPACE	11
+#define	VM_MAXID	12		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -127,6 +129,8 @@ typedef int	boolean_t;
 	{ "anonmin", CTLTYPE_INT }, \
 	{ "vtextmin", CTLTYPE_INT }, \
 	{ "vnodemin", CTLTYPE_INT }, \
+	{ "maxslp", CTLTYPE_INT }, \
+	{ "uspace", CTLTYPE_INT }, \
 }
 
 struct _ps_strings {

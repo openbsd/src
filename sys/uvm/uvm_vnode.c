@@ -1,10 +1,10 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.26 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_vnode.c,v 1.48 2001/03/10 22:46:51 chs Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.27 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.50 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993
- *      The Regents of the University of California.  
+ *      The Regents of the University of California.
  * Copyright (c) 1990 University of Utah.
  *
  * All rights reserved.
@@ -24,7 +24,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Charles D. Cranor,
- *	Washington University, the University of California, Berkeley and 
+ *	Washington University, the University of California, Berkeley and
  *	its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -79,10 +79,11 @@ static int		uvn_findpage __P((struct uvm_object *, voff_t,
 					  struct vm_page **, int));
 boolean_t		uvn_flush __P((struct uvm_object *, voff_t, voff_t,
 				       int));
-static int		uvn_get __P((struct uvm_object *, voff_t, vm_page_t *,
-				     int *, int, vm_prot_t, int, int));
-static int		uvn_put __P((struct uvm_object *, vm_page_t *, int,
-				     boolean_t));
+static int		uvn_get __P((struct uvm_object *, voff_t,
+				     struct vm_page **, int *, int, vm_prot_t,
+				     int, int));
+static int		uvn_put __P((struct uvm_object *, struct vm_page **,
+				     int, boolean_t));
 static void		uvn_reference __P((struct uvm_object *));
 static boolean_t	uvn_releasepg __P((struct vm_page *,
 					   struct vm_page **));
@@ -226,10 +227,10 @@ uvn_attach(arg, accessprot)
  * uvn_reference
  *
  * duplicate a reference to a VM object.  Note that the reference
- * count must already be at least one (the passed in reference) so 
+ * count must already be at least one (the passed in reference) so
  * there is no chance of the uvn being killed or locked out here.
  *
- * => caller must call with object unlocked.  
+ * => caller must call with object unlocked.
  * => caller must be using the same accessprot as was used at attach time
  */
 
@@ -278,7 +279,7 @@ uvn_releasepg(pg, nextpgp)
 	struct vm_page **nextpgp;	/* OUT */
 {
 	KASSERT(pg->flags & PG_RELEASED);
-	
+
 	/*
 	 * dispose of the page [caller handles PG_WANTED]
 	 */
@@ -354,9 +355,9 @@ uvn_releasepg(pg, nextpgp)
  *	in, then it can not be dirty (!PG_CLEAN) because no one has
  *	had a chance to modify it yet.    if the PG_BUSY page is being
  *	paged out then it means that someone else has already started
- *	cleaning the page for us (how nice!).    in this case, if we 
+ *	cleaning the page for us (how nice!).    in this case, if we
  *	have syncio specified, then after we make our pass through the
- *	object we need to wait for the other PG_BUSY pages to clear 
+ *	object we need to wait for the other PG_BUSY pages to clear
  *	off (i.e. we need to do an iosync).   also note that once a
  *	page is PG_BUSY it must stay in its object until it is un-busyed.
  *
@@ -364,13 +365,13 @@ uvn_releasepg(pg, nextpgp)
  *	we can traverse the pages in an object either by going down the
  *	linked list in "uobj->memq", or we can go over the address range
  *	by page doing hash table lookups for each address.    depending
- *	on how many pages are in the object it may be cheaper to do one 
+ *	on how many pages are in the object it may be cheaper to do one
  *	or the other.   we set "by_list" to true if we are using memq.
  *	if the cost of a hash lookup was equal to the cost of the list
  *	traversal we could compare the number of pages in the start->stop
  *	range to the total number of pages in the object.   however, it
  *	seems that a hash table lookup is more expensive than the linked
- *	list traversal, so we multiply the number of pages in the 
+ *	list traversal, so we multiply the number of pages in the
  *	start->stop range by a penalty which we define below.
  */
 
@@ -434,7 +435,7 @@ uvn_flush(uobj, start, stop, flags)
 		start = trunc_page(start);
 		stop = round_page(stop);
 		all = FALSE;
-		by_list = (uobj->uo_npages <= 
+		by_list = (uobj->uo_npages <=
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
 	}
 
@@ -491,7 +492,7 @@ uvn_flush(uobj, start, stop, flags)
 	uvm_lock_pageq();
 
 	/* locked: both page queues and uobj */
-	for ( ; (by_list && pp != NULL) || 
+	for ( ; (by_list && pp != NULL) ||
 		      (!by_list && curoff < stop) ; pp = ppnext) {
 		if (by_list) {
 			if (!all &&
@@ -512,7 +513,7 @@ uvn_flush(uobj, start, stop, flags)
 		 * handle case where we do not need to clean page (either
 		 * because we are not clean or because page is not dirty or
 		 * is busy):
-		 * 
+		 *
 		 * NOTE: we are allowed to deactivate a non-wired active
 		 * PG_BUSY page, but once a PG_BUSY page is on the inactive
 		 * queue it must stay put until it is !PG_BUSY (so as not to
@@ -529,7 +530,7 @@ uvn_flush(uobj, start, stop, flags)
 			 * freeing: nuke all mappings so we can sync
 			 * PG_CLEAN bit with no race
 			 */
-			if ((pp->flags & PG_CLEAN) != 0 && 
+			if ((pp->flags & PG_CLEAN) != 0 &&
 			    (flags & PGO_FREE) != 0 &&
 			    /* XXX ACTIVE|INACTIVE test unnecessary? */
 			    (pp->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) != 0)
@@ -590,14 +591,14 @@ uvn_flush(uobj, start, stop, flags)
 		npages = sizeof(pps) / sizeof(struct vm_page *);
 
 		/* locked: page queues, uobj */
-		result = uvm_pager_put(uobj, pp, &ppsp, &npages, 
+		result = uvm_pager_put(uobj, pp, &ppsp, &npages,
 				       flags | PGO_DOACTCLUST, start, stop);
 		/* unlocked: page queues, uobj */
 
 		/*
 		 * at this point nothing is locked.   if we did an async I/O
-		 * it is remotely possible for the async i/o to complete and 
-		 * the page "pp" be freed or what not before we get a chance 
+		 * it is remotely possible for the async i/o to complete and
+		 * the page "pp" be freed or what not before we get a chance
 		 * to relock the object.   in order to detect this, we have
 		 * saved the version number of the page in "pp_version".
 		 */
@@ -637,10 +638,10 @@ uvn_flush(uobj, start, stop, flags)
 		}
 
 		/*
-		 * need to look at each page of the I/O operation.  we defer 
-		 * processing "pp" until the last trip through this "for" loop 
+		 * need to look at each page of the I/O operation.  we defer
+		 * processing "pp" until the last trip through this "for" loop
 		 * so that we can load "ppnext" for the main loop after we
-		 * play with the cluster pages [thus the "npages + 1" in the 
+		 * play with the cluster pages [thus the "npages + 1" in the
 		 * loop below].
 		 */
 
@@ -714,7 +715,7 @@ uvn_flush(uobj, start, stop, flags)
 					}
 				}
 			}
-	  
+
 			/*
 			 * dispose of page
 			 */
@@ -774,7 +775,7 @@ uvn_flush(uobj, start, stop, flags)
 
 	                vp->v_bioflag |= VBIOWAIT;
 			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput,
-					    &uvn->u_obj.vmobjlock, 
+					    &uvn->u_obj.vmobjlock,
 					    FALSE, "uvn_flush",0);
 			simple_lock(&uvn->u_obj.vmobjlock);
 		}
@@ -840,7 +841,7 @@ uvn_put(uobj, pps, npages, flags)
  * => NOTE: offset is the offset of pps[0], _NOT_ pps[centeridx]
  * => NOTE: caller must check for released pages!!
  */
- 
+
 static int
 uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
@@ -947,7 +948,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 			simple_lock(&uobj->vmobjlock);
 			continue;
 		}
-			
+
 		/* skip PG_RDONLY pages if requested */
 		if ((flags & UFP_NORDONLY) && (pg->flags & PG_RDONLY)) {
 			UVMHIST_LOG(ubchist, "nordonly",0,0,0,0);
@@ -970,7 +971,7 @@ uvn_findpage(uobj, offset, pgp, flags)
  * grow   => just update size value
  * shrink => toss un-needed pages
  *
- * => we assume that the caller has a reference of some sort to the 
+ * => we assume that the caller has a reference of some sort to the
  *	vnode in question so that it will not be yanked out from under
  *	us.
  *

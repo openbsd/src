@@ -1,9 +1,9 @@
-/*	$OpenBSD: uvm_map.h,v 1.17 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.25 2001/03/15 06:10:57 chs Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.18 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.29 2001/06/26 17:55:15 thorpej Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -45,17 +45,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -83,7 +83,7 @@
 /*
  * UVM_MAP_CLIP_START: ensure that the entry begins at or after
  * the starting address, if it doesn't we split the entry.
- * 
+ *
  * => map must be locked by caller
  */
 
@@ -113,26 +113,6 @@
 #include <uvm/uvm_anon.h>
 
 /*
- * types defined:
- *
- *	vm_map_t		the high-level address map data structure.
- *	vm_map_entry_t		an entry in an address map.
- *	vm_map_version_t	a timestamp of a map, for use with vm_map_lookup
- */
-
-/*
- * Objects which live in maps may be either VM objects, or another map
- * (called a "sharing map") which denotes read-write sharing with other maps.
- *
- * XXXCDC: private pager data goes here now
- */
-
-union vm_map_object {
-	struct uvm_object	*uvm_obj;	/* UVM OBJECT */
-	struct vm_map		*sub_map;	/* belongs to another map */
-};
-
-/*
  * Address map entries consist of start and end addresses,
  * a VM object (or sharing map) and offset into that object,
  * and user-exported inheritance and protection information.
@@ -143,7 +123,10 @@ struct vm_map_entry {
 	struct vm_map_entry	*next;		/* next entry */
 	vaddr_t			start;		/* start address */
 	vaddr_t			end;		/* end address */
-	union vm_map_object	object;		/* object I point to */
+	union {
+		struct uvm_object *uvm_obj;	/* uvm object */
+		struct vm_map	*sub_map;	/* belongs to another map */
+	} object;				/* object I point to */
 	voff_t			offset;		/* offset into object */
 	int			etype;		/* entry type */
 	vm_prot_t		protection;	/* protection code */
@@ -215,17 +198,17 @@ struct vm_map_entry {
  */
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
-	lock_data_t		lock;		/* Lock for map data */
+	struct lock		lock;		/* Lock for map data */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* Reference count */
-	simple_lock_data_t	ref_lock;	/* Lock for ref_count field */
-	vm_map_entry_t		hint;		/* hint for quick lookups */
-	simple_lock_data_t	hint_lock;	/* lock for hint storage */
-	vm_map_entry_t		first_free;	/* First free space hint */
+	struct simplelock	ref_lock;	/* Lock for ref_count field */
+	struct vm_map_entry *	hint;		/* hint for quick lookups */
+	struct simplelock	hint_lock;	/* lock for hint storage */
+	struct vm_map_entry *	first_free;	/* First free space hint */
 	int			flags;		/* flags */
-	simple_lock_data_t	flags_lock;	/* Lock for flags field */
+	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
 #define	min_offset		header.start
 #define max_offset		header.end
@@ -258,49 +241,12 @@ do {									\
 #endif /* _KERNEL */
 
 /*
- *	Interrupt-safe maps must also be kept on a special list,
- *	to assist uvm_fault() in avoiding locking problems.
- */
-struct vm_map_intrsafe {
-	struct vm_map	vmi_map;
-	LIST_ENTRY(vm_map_intrsafe) vmi_list;
-};
-
-LIST_HEAD(vmi_list, vm_map_intrsafe);
-#ifdef _KERNEL
-extern simple_lock_data_t vmi_list_slock;
-extern struct vmi_list vmi_list;
-
-static __inline int vmi_list_lock __P((void));
-static __inline void vmi_list_unlock __P((int));
-
-static __inline int
-vmi_list_lock()
-{
-	int s;
-
-	s = splhigh();
-	simple_lock(&vmi_list_slock);
-	return (s);
-}
-
-static __inline void
-vmi_list_unlock(s)
-	int s;
-{
-
-	simple_unlock(&vmi_list_slock);
-	splx(s);
-}
-#endif /* _KERNEL */
-
-/*
  * handle inline options
  */
 
 #ifdef UVM_MAP_INLINE
 #define MAP_INLINE static __inline
-#else 
+#else
 #define MAP_INLINE /* nothing */
 #endif /* UVM_MAP_INLINE */
 
@@ -319,34 +265,39 @@ extern vaddr_t	uvm_maxkaddr;
  */
 
 MAP_INLINE
-void		uvm_map_deallocate __P((vm_map_t));
+void		uvm_map_deallocate __P((struct vm_map *));
 
-int		uvm_map_clean __P((vm_map_t, vaddr_t, vaddr_t, int));
-void		uvm_map_clip_start __P((vm_map_t, vm_map_entry_t, vaddr_t));
-void		uvm_map_clip_end __P((vm_map_t, vm_map_entry_t, vaddr_t));
+int		uvm_map_clean __P((struct vm_map *, vaddr_t, vaddr_t, int));
+void		uvm_map_clip_start __P((struct vm_map *, struct vm_map_entry *,
+		    vaddr_t));
+void		uvm_map_clip_end __P((struct vm_map *, struct vm_map_entry *,
+		    vaddr_t));
 MAP_INLINE
-vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
-int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
-			vm_map_t, vaddr_t *, int));
-vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
-			struct uvm_object *, voff_t, vsize_t, int));
-int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t, vm_inherit_t));
-int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
+struct vm_map	*uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
+int		uvm_map_extract __P((struct vm_map *, vaddr_t, vsize_t,
+		    struct vm_map *, vaddr_t *, int));
+struct vm_map_entry *uvm_map_findspace __P((struct vm_map *, vaddr_t, vsize_t,
+		    vaddr_t *, struct uvm_object *, voff_t, vsize_t, int));
+int		uvm_map_inherit __P((struct vm_map *, vaddr_t, vaddr_t,
+		    vm_inherit_t));
+int		uvm_map_advice __P((struct vm_map *, vaddr_t, vaddr_t, int));
 void		uvm_map_init __P((void));
-boolean_t	uvm_map_lookup_entry __P((vm_map_t, vaddr_t, vm_map_entry_t *));
+boolean_t	uvm_map_lookup_entry __P((struct vm_map *, vaddr_t,
+		    struct vm_map_entry **));
 MAP_INLINE
-void		uvm_map_reference __P((vm_map_t));
-int		uvm_map_replace __P((vm_map_t, vaddr_t, vaddr_t,
-			vm_map_entry_t, int));
-int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vsize_t,
-			vaddr_t *));
-void		uvm_map_setup __P((vm_map_t, vaddr_t, vaddr_t, int));
-int		uvm_map_submap __P((vm_map_t, vaddr_t, vaddr_t, vm_map_t));
+void		uvm_map_reference __P((struct vm_map *));
+int		uvm_map_replace __P((struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map_entry *, int));
+int		uvm_map_reserve __P((struct vm_map *, vsize_t, vaddr_t, vsize_t,
+		    vaddr_t *));
+void		uvm_map_setup __P((struct vm_map *, vaddr_t, vaddr_t, int));
+int		uvm_map_submap __P((struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map *));
 MAP_INLINE
-void		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
-void		uvm_unmap_detach __P((vm_map_entry_t,int));
-void		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
-				      vm_map_entry_t *));
+void		uvm_unmap __P((struct vm_map *, vaddr_t, vaddr_t));
+void		uvm_unmap_detach __P((struct vm_map_entry *,int));
+void		uvm_unmap_remove __P((struct vm_map *, vaddr_t, vaddr_t,
+		    struct vm_map_entry **));
 
 #endif /* _KERNEL */
 
@@ -384,13 +335,13 @@ void		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
-static __inline boolean_t vm_map_lock_try __P((vm_map_t));
-static __inline void vm_map_lock __P((vm_map_t));
+static __inline boolean_t vm_map_lock_try __P((struct vm_map *));
+static __inline void vm_map_lock __P((struct vm_map *));
 extern const char vmmapbsy[];
 
 static __inline boolean_t
 vm_map_lock_try(map)
-	vm_map_t map;
+	struct vm_map *map;
 {
 	boolean_t rv;
 
@@ -414,7 +365,7 @@ vm_map_lock_try(map)
 
 static __inline void
 vm_map_lock(map)
-	vm_map_t map;
+	struct vm_map *map;
 {
 	int error;
 

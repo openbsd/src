@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.17 2001/11/28 13:47:39 art Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.16 2001/03/10 22:46:47 chs Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.18 2001/11/28 19:28:14 art Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.17 2001/05/25 04:06:12 chs Exp $	*/
 
 /*
  *
@@ -116,7 +116,7 @@ uvm_anon_add(count)
 	anonblock->anons = anon;
 	LIST_INSERT_HEAD(&anonblock_list, anonblock, list);
 	memset(anon, 0, sizeof(*anon) * needed);
- 
+
 	simple_lock(&uvm.afreelock);
 	uvmexp.nanon += needed;
 	uvmexp.nfreeanon += needed;
@@ -214,7 +214,7 @@ uvm_anfree(anon)
 	if (pg) {
 
 		/*
-		 * if the page is owned by a uobject (now locked), then we must 
+		 * if the page is owned by a uobject (now locked), then we must
 		 * kill the loan on the page rather than free it.
 		 */
 
@@ -240,10 +240,10 @@ uvm_anfree(anon)
 				/* tell them to dump it when done */
 				pg->flags |= PG_RELEASED;
 				UVMHIST_LOG(maphist,
-				    "  anon 0x%x, page 0x%x: BUSY (released!)", 
+				    "  anon 0x%x, page 0x%x: BUSY (released!)",
 				    anon, pg, 0, 0);
 				return;
-			} 
+			}
 			pmap_page_protect(pg, VM_PROT_NONE);
 			uvm_lock_pageq();	/* lock out pagedaemon */
 			uvm_pagefree(pg);	/* bye bye */
@@ -272,7 +272,7 @@ uvm_anfree(anon)
 
 /*
  * uvm_anon_dropswap:  release any swap resources from this anon.
- * 
+ *
  * => anon must be locked or have a reference count of 0.
  */
 void
@@ -294,7 +294,7 @@ uvm_anon_dropswap(anon)
 		simple_lock(&uvm.swap_data_lock);
 		uvmexp.swpgonly--;
 		simple_unlock(&uvm.swap_data_lock);
-	} 
+	}
 }
 
 /*
@@ -398,7 +398,7 @@ uvm_anon_lockloanpg(anon)
 
 /*
  * page in every anon that is paged out to a range of swslots.
- * 
+ *
  * swap_syscall_lock should be held (protects anonblock_list).
  */
 

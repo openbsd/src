@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm.h,v 1.14 2001/11/10 18:42:31 art Exp $	*/
-/*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.15 2001/11/28 19:28:14 art Exp $	*/
+/*	$NetBSD: uvm.h,v 1.30 2001/06/27 21:18:34 thorpej Exp $	*/
 
 /*
  *
@@ -37,6 +37,12 @@
 
 #ifndef _UVM_UVM_H_
 #define _UVM_UVM_H_
+
+#if defined(_KERNEL_OPT)
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
+#include "opt_uvmhist.h"
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -77,11 +83,11 @@ struct uvm {
 
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
+	int page_free_nextcolor;	/* next color to allocate from */
 	struct pglist page_active;	/* allocated pages, in use */
-	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
-	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
-	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
-	simple_lock_data_t fpageqlock;	/* lock for free page q */
+	struct pglist page_inactive;	/* pages between the clock hands */
+	struct simplelock pageqlock;	/* lock for active/inactive page q */
+	struct simplelock fpageqlock;	/* lock for free page q */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
 	boolean_t page_idle_zero;	/* TRUE if we should try to zero
 					   pages in the idle loop */
@@ -89,26 +95,26 @@ struct uvm {
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
-	simple_lock_data_t pagedaemon_lock;
+	struct simplelock pagedaemon_lock;
 
 		/* aiodone daemon trigger */
 	int aiodoned;			/* daemon sleeps on this */
 	struct proc *aiodoned_proc;	/* daemon's pid */
-	simple_lock_data_t aiodoned_lock;
+	struct simplelock aiodoned_lock;
 
 		/* page hash */
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
-	simple_lock_data_t hashlock;	/* lock on page_hash array */
+	struct simplelock hashlock;	/* lock on page_hash array */
 
 	/* anon stuff */
 	struct vm_anon *afree;		/* anon free list */
-	simple_lock_data_t afreelock; 	/* lock on anon free list */
+	struct simplelock afreelock; 	/* lock on anon free list */
 
 	/* static kernel map entry pool */
-	vm_map_entry_t kentry_free;	/* free page pool */
-	simple_lock_data_t kentry_lock;
+	struct vm_map_entry *kentry_free;	/* free page pool */
+	struct simplelock kentry_lock;
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
@@ -118,7 +124,7 @@ struct uvm {
 	vaddr_t pager_eva;		/* end of pager VA area */
 
 	/* swap-related items */
-	simple_lock_data_t swap_data_lock;
+	struct simplelock swap_data_lock;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
@@ -163,6 +169,20 @@ do {									\
 	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
 	    msg, timo, slock);						\
 } while (0)
+
+/*
+ * UVM_KICK_PDAEMON: perform checks to determine if we need to
+ * give the pagedaemon a nudge, and do so if necessary.
+ */
+
+#define	UVM_KICK_PDAEMON()						\
+do {									\
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||		\
+	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&		\
+	     uvmexp.inactive < uvmexp.inactarg)) {			\
+		wakeup(&uvm.pagedaemon);				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.48 2001/08/18 18:15:52 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.49 2001/11/28 19:28:14 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -93,7 +93,8 @@
 #define	M_UFSMNT	28	/* UFS mount structure */
 #define	M_SHM		29	/* SVID compatible shared memory segments */
 #define	M_VMMAP		30	/* VM map structures */
-/* 31-33 - free */
+#define	M_VMPAGE	31	/* VM page structures */
+/* 32-33 - free */
 #define	M_VMPMAP	34	/* VM pmap */
 #define	M_VMPVENT	35	/* VM phys-virt mapping entry */
 /* 36-37 - free */
@@ -211,7 +212,7 @@
 	"UFS mount",	/* 28 M_UFSMNT */ \
 	"shm",		/* 29 M_SHM */ \
 	"VM map",	/* 30 M_VMMAP */ \
-	NULL,	/* 31 */ \
+	"VM page",	/* 31 M_VMPAGE */ \
 	NULL,	/* 32 */ \
 	NULL,	/* 33 */ \
 	"VM pmap",	/* 34 M_VMPMAP */ \

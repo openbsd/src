@@ -1,10 +1,10 @@
-/*	$OpenBSD: uvm_meter.c,v 1.15 2001/11/12 01:26:09 art Exp $	*/
-/*	$NetBSD: uvm_meter.c,v 1.17 2001/03/09 01:02:12 chs Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.16 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1982, 1986, 1989, 1993
- *      The Regents of the University of California.  
+ *      The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -19,7 +19,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Charles D. Cranor,
- *      Washington University, and the University of California, Berkeley 
+ *      Washington University, and the University of California, Berkeley
  *      and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -62,7 +62,7 @@ int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;
 
 /*
- * constants for averages over 1, 5, and 15 minutes when sampling at 
+ * constants for averages over 1, 5, and 15 minutes when sampling at
  * 5 second intervals.
  */
 
@@ -91,7 +91,7 @@ uvm_meter()
 }
 
 /*
- * uvm_loadav: compute a tenex style load average of a quantity on 
+ * uvm_loadav: compute a tenex style load average of a quantity on
  * 1, 5, and 15 minute internvals.
  */
 static void
@@ -208,6 +208,13 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		uvmexp.vnodeminpct = t;
 		uvmexp.vnodemin = t * 256 / 100;
 		return rv;
+
+	case VM_MAXSLP:
+		return (sysctl_rdint(oldp, oldlenp, newp, maxslp));
+
+	case VM_USPACE:
+		return (sysctl_rdint(oldp, oldlenp, newp, USPACE));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -223,8 +230,8 @@ uvm_total(totalp)
 {
 	struct proc *p;
 #if 0
-	vm_map_entry_t	entry;
-	vm_map_t map;
+	struct vm_map_entry *	entry;
+	struct vm_map *map;
 	int paging;
 #endif
 

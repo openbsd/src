@@ -1,11 +1,11 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.29 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.50 2001/03/15 06:10:57 chs Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.30 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.54 2001/06/14 20:32:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993 The Regents of the University of California.  
+ * Copyright (c) 1991, 1993 The Regents of the University of California.
  * Copyright (c) 1988 University of Utah.
- * 
+ *
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -23,7 +23,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by the Charles D. Cranor,
- *	Washington University, University of California, Berkeley and 
+ *	Washington University, University of California, Berkeley and
  *	its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -132,14 +132,14 @@ sys_mincore(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
-	vm_page_t m;
+	struct vm_page *m;
 	char *vec, pgi;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
 	struct vm_anon *anon;
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	vaddr_t start, end, lim;
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t len;
 	int error = 0, npgs;
 
@@ -328,7 +328,7 @@ sys_mmap(p, v, retval)
 		return (EINVAL);			/* don't allow wrap */
 
 	/*
-	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr" 
+	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
 	 */
 
 	if (flags & MAP_FIXED) {
@@ -402,7 +402,7 @@ sys_mmap(p, v, retval)
 				flags |= MAP_PRIVATE;	/* for a file */
 		}
 
-		/* 
+		/*
 		 * MAP_PRIVATE device mappings don't make sense (and aren't
 		 * supported anyway).  However, some programs rely on this,
 		 * so just change it to MAP_SHARED.
@@ -508,7 +508,7 @@ sys_msync(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	vm_map_t map;
+	struct vm_map *map;
 	int error, rv, flags, uvmflags;
 
 	/*
@@ -558,8 +558,8 @@ sys_msync(p, v, retval)
 	 */
 
 	if (size == 0) {
-		vm_map_entry_t entry;
-		
+		struct vm_map_entry *entry;
+
 		vm_map_lock_read(map);
 		rv = uvm_map_lookup_entry(map, addr, &entry);
 		if (rv == TRUE) {
@@ -603,7 +603,7 @@ sys_munmap(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	struct vm_map_entry *dead_entries;
 
@@ -613,7 +613,7 @@ sys_munmap(p, v, retval)
 
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
-	
+
 	/*
 	 * align the address to a page boundary and adjust the size accordingly.
 	 */
@@ -641,7 +641,7 @@ sys_munmap(p, v, retval)
 	map = &p->p_vmspace->vm_map;
 
 	/*
-	 * interesting system call semantic: make sure entire range is 
+	 * interesting system call semantic: make sure entire range is
 	 * allocated before allowing an unmap.
 	 */
 
@@ -720,7 +720,7 @@ sys_minherit(p, v, retval)
 	vsize_t size, pageoff;
 	vm_inherit_t inherit;
 	int error;
-	
+
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
@@ -760,7 +760,7 @@ sys_madvise(p, v, retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	int advice, error;
-	
+
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	advice = SCARG(uap, behav);
@@ -878,7 +878,7 @@ sys_mlock(p, v, retval)
 	addr -= pageoff;
 	size += pageoff;
 	size = (vsize_t)round_page(size);
-	
+
 	/* disallow wrap-around. */
 	if (addr + size < addr)
 		return (EINVAL);
@@ -1005,7 +1005,7 @@ sys_munlockall(p, v, retval)
 
 int
 uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t *addr;
 	vsize_t size;
 	vm_prot_t prot, maxprot;
@@ -1091,7 +1091,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			uvmflag |= UVM_FLAG_COPYONW;
 	}
 
-	uvmflag = UVM_MAPFLAG(prot, maxprot, 
+	uvmflag = UVM_MAPFLAG(prot, maxprot,
 			(flags & MAP_SHARED) ? UVM_INH_SHARE : UVM_INH_COPY,
 			advice, uvmflag);
 	error = uvm_map(map, addr, size, uobj, foff, 0, uvmflag);

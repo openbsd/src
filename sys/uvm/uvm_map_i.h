@@ -1,9 +1,9 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.10 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_map_i.h,v 1.19 2001/03/15 06:10:57 chs Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.11 2001/11/28 19:28:15 art Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.22 2001/06/26 17:55:15 thorpej Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -45,17 +45,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -84,17 +84,15 @@
  * uvm_map_create: create map
  */
 
-MAP_INLINE vm_map_t
+MAP_INLINE struct vm_map *
 uvm_map_create(pmap, min, max, flags)
 	pmap_t pmap;
 	vaddr_t min, max;
 	int flags;
 {
-	vm_map_t result;
+	struct vm_map *result;
 
-	MALLOC(result, vm_map_t,
-	    (flags & VM_MAP_INTRSAFE) ? sizeof(struct vm_map_intrsafe) :
-					sizeof(struct vm_map),
+	MALLOC(result, struct vm_map *, sizeof(struct vm_map),
 	    M_VMMAP, M_WAITOK);
 	uvm_map_setup(result, min, max, flags);
 	result->pmap = pmap;
@@ -109,7 +107,7 @@ uvm_map_create(pmap, min, max, flags)
 
 MAP_INLINE void
 uvm_map_setup(map, min, max, flags)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t min, max;
 	int flags;
 {
@@ -128,23 +126,6 @@ uvm_map_setup(map, min, max, flags)
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 	simple_lock_init(&map->flags_lock);
-
-	/*
-	 * If the map is interrupt safe, place it on the list
-	 * of interrupt safe maps, for uvm_fault().
-	 *
-	 * We almost never set up an interrupt-safe map, but we set
-	 * up quite a few regular ones (at every fork!), so put
-	 * interrupt-safe map setup in the slow path.
-	 */
-	if (__predict_false(flags & VM_MAP_INTRSAFE)) {
-		struct vm_map_intrsafe *vmi = (struct vm_map_intrsafe *)map;
-		int s;
-
-		s = vmi_list_lock();
-		LIST_INSERT_HEAD(&vmi_list, vmi, vmi_list);
-		vmi_list_unlock(s);
-	}
 }
 
 
@@ -155,16 +136,16 @@ uvm_map_setup(map, min, max, flags)
 /*
  * uvm_unmap: remove mappings from a vm_map (from "start" up to "stop")
  *
- * => caller must check alignment and size 
+ * => caller must check alignment and size
  * => map must be unlocked (we will lock it)
  */
 
 MAP_INLINE void
 uvm_unmap(map, start, end)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start,end;
 {
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x)",
@@ -192,10 +173,10 @@ uvm_unmap(map, start, end)
 
 MAP_INLINE void
 uvm_map_reference(map)
-	vm_map_t map;
+	struct vm_map *map;
 {
 	simple_lock(&map->ref_lock);
-	map->ref_count++; 
+	map->ref_count++;
 	simple_unlock(&map->ref_lock);
 }
 
@@ -208,7 +189,7 @@ uvm_map_reference(map)
 
 MAP_INLINE void
 uvm_map_deallocate(map)
-	vm_map_t map;
+	struct vm_map *map;
 {
 	int c;
 
