@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_open.c,v 1.5 1999/11/25 07:01:41 d Exp $	*/
+/*	$OpenBSD: uthread_open.c,v 1.6 2000/01/06 07:20:10 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -47,7 +47,6 @@ open(const char *path, int flags,...)
 {
 	int             fd;
 	int             mode = 0;
-	int             status;
 	va_list         ap;
 
 	/* This is a cancellation point: */

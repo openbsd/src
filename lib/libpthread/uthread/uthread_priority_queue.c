@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_priority_queue.c,v 1.2 1999/11/25 07:01:41 d Exp $	*/
+/*	$OpenBSD: uthread_priority_queue.c,v 1.3 2000/01/06 07:20:23 d Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -88,7 +88,7 @@ static int _pq_active = 0;
 int
 _pq_alloc(pq_queue_t *pq, int minprio, int maxprio)
 {
-	int i, ret = 0;
+	int ret = 0;
 	int prioslots = maxprio - minprio + 1;
 
 	if (pq == NULL)
