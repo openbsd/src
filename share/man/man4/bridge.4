@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.30 2001/05/30 03:24:15 millert Exp $
+.\"	$OpenBSD: bridge.4,v 1.31 2001/06/23 07:19:32 angelos Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -540,10 +540,7 @@ command and the
 .Xr bridge 4
 kernel interface first appeared in
 .Ox 2.5 .
-.Sh BUGS
-There is currently no loop detection.
-Care must be taken to ensure that loops are not created when a bridge
-is brought up.
+.\".Sh BUGS
 .\"XXX - replace with ipfw when it is in-tree
 .\".Pp
 .\"Only
