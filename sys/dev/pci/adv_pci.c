@@ -1,5 +1,5 @@
-/*	$OpenBSD: adv_pci.c,v 1.1 1998/09/27 03:38:09 downsj Exp $	*/
-/*	$NetBSD: adv_pci.c,v 1.4 1998/08/31 17:15:25 dante Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.2 1998/09/28 01:56:58 downsj Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -40,11 +40,11 @@
  *
  *    Connectivity Products:
  *      ABP920 - Bus-Master PCI (16 CDB)
- *      ABP930 - Bus-Master PCI (16 CDB)		(Footnote 2)
+ *      ABP930 - Bus-Master PCI (16 CDB)		(Footnote 1)
  *      ABP930U - Bus-Master PCI Ultra (16 CDB)
  *      ABP930UA - Bus-Master PCI Ultra (16 CDB)
- *      ABP960 - Bus-Master PCI MAC/PC (16 CDB)		(Footnote 1)
- *      ABP960U - Bus-Master PCI MAC/PC Ultra (16 CDB)	(Footnote 1)
+ *      ABP960 - Bus-Master PCI MAC/PC (16 CDB)		(Footnote 2)
+ *      ABP960U - Bus-Master PCI MAC/PC Ultra (16 CDB)	(Footnote 2)
  *
  *   Single Channel Products:
  *      ABP940 - Bus-Master PCI (240 CDB)
@@ -59,8 +59,8 @@
  *      ABP980U - Four Channel Bus-Master PCI Ultra (240 CDB Per Channel)
  *
  *   Footnotes:
- *     1. This board has been sold by Iomega as a Jaz Jet PCI adapter.
- *     2. This board has been sold by SIIG as the Fast SCSI Pro PCI.
+ *     1. This board has been sold by SIIG as the Fast SCSI Pro PCI.
+ *     2. This board has been sold by Iomega as a Jaz Jet PCI adapter.
  */
 
 #include <sys/types.h>
@@ -117,8 +117,6 @@ adv_pci_match(parent, match, aux)
 		case PCI_PRODUCT_ADVSYS_1200B:
 		case PCI_PRODUCT_ADVSYS_ULTRA:
 			return (1);
-		case PCI_PRODUCT_ADVSYS_2300:
-			return (0);
 		}
 
 	return 0;
@@ -142,12 +140,6 @@ adv_pci_attach(parent, self, aux)
 	int retval;
 
 	sc->sc_flags = 0x0;
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS) &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_2300)) {
-			sc->sc_flags |= ASC_WIDE_BOARD;
-			printf("(unsupported wide board)");
-	}
-
 	/*
 	 * Make sure IO/MEM/MASTER are enabled
 	 */

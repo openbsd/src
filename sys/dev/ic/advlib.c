@@ -1,5 +1,5 @@
-/*	$OpenBSD: advlib.c,v 1.1 1998/09/27 03:36:14 downsj Exp $	*/
-/*      $NetBSD: advlib.c,v 1.3 1998/08/29 13:45:57 dante Exp $        */
+/*	$OpenBSD: advlib.c,v 1.2 1998/09/28 01:56:57 downsj Exp $	*/
+/*      $NetBSD: advlib.c,v 1.4 1998/09/26 16:02:56 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -19,8 +19,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *    This product includes software developed by the NetBSD
- *    Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -101,7 +101,7 @@ static u_int8_t AscGetChipVersion __P((bus_space_tag_t, bus_space_handle_t,
 					u_int16_t));
 static int AscSetRunChipSynRegAtID __P((bus_space_tag_t, bus_space_handle_t,
 					u_int8_t, u_int8_t));
-static int ASC_SET_CHIP_SYNRegAtID __P((bus_space_tag_t, bus_space_handle_t,
+static int AscSetChipSynRegAtID __P((bus_space_tag_t, bus_space_handle_t,
 					u_int8_t, u_int8_t));
 static int AscHostReqRiscHalt __P((bus_space_tag_t, bus_space_handle_t));
 static int AscIsChipHalted __P((bus_space_tag_t, bus_space_handle_t));
@@ -897,7 +897,7 @@ AscSetRunChipSynRegAtID(iot, ioh, tid_no, sdtr_data)
 	int             retval = FALSE;
 
 	if (AscHostReqRiscHalt(iot, ioh)) {
-		retval = ASC_SET_CHIP_SYNRegAtID(iot, ioh, tid_no, sdtr_data);
+		retval = AscSetChipSynRegAtID(iot, ioh, tid_no, sdtr_data);
 		AscStartChip(iot, ioh);
 	}
 	return (retval);
@@ -905,7 +905,7 @@ AscSetRunChipSynRegAtID(iot, ioh, tid_no, sdtr_data)
 
 
 static int
-ASC_SET_CHIP_SYNRegAtID(iot, ioh, id, sdtr_data)
+AscSetChipSynRegAtID(iot, ioh, id, sdtr_data)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_int8_t        id;
@@ -2302,7 +2302,7 @@ AscSetChipSDTR(iot, ioh, sdtr_data, tid_no)
 	u_int8_t        sdtr_data;
 	u_int8_t        tid_no;
 {
-	ASC_SET_CHIP_SYNRegAtID(iot, ioh, tid_no, sdtr_data);
+	AscSetChipSynRegAtID(iot, ioh, tid_no, sdtr_data);
 	AscWriteLramByte(iot, ioh, tid_no + ASCV_SDTR_DONE_BEG, sdtr_data);
 }
 
@@ -3082,7 +3082,7 @@ AscResetBus(sc)
 	for (i = 0; i <= ASC_MAX_TID; i++) {
 		sc->cur_dvc_qng[i] = 0;
 		if (sc->pci_fix_asyn_xfer & (ASC_SCSI_BIT_ID_TYPE) (0x01 << i))
-			ASC_SET_CHIP_SYNRegAtID(iot, ioh, i, ASYN_SDTR_DATA_FIX_PCI_REV_AB);
+			AscSetChipSynRegAtID(iot, ioh, i, ASYN_SDTR_DATA_FIX_PCI_REV_AB);
 	}
 
 	ASC_SET_PC_ADDR(iot, ioh, ASC_MCODE_START_ADDR);

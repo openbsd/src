@@ -1,9 +1,9 @@
-/*	$OpenBSD: adv.h,v 1.1 1998/09/27 03:36:13 downsj Exp $	*/
-/*      $NetBSD: adv.h,v 1.2 1998/08/29 13:45:56 dante Exp $        */
+/*	$OpenBSD: adv.h,v 1.2 1998/09/28 01:56:57 downsj Exp $	*/
+/*      $NetBSD: adv.h,v 1.3 1998/09/26 16:02:56 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
- * Systems Inc. SCSI controllers
+ * Systems Inc. Narrow SCSI controllers
  * 
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -20,8 +20,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *    This product includes software developed by the NetBSD
- *    Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -39,8 +39,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ADVANSYS_H_
-#define _ADVANSYS_H_
+#ifndef _ADVANSYS_NARROW_H_
+#define _ADVANSYS_NARROW_H_
 
 #include <dev/ic/advlib.h>
 
@@ -93,4 +93,4 @@ int adv_intr __P((void *arg));
 
 /******************************************************************************/
 
-#endif /* _ADVANSYS_H_ */
+#endif /* _ADVANSYS_NARROW_H_ */

@@ -1,8 +1,8 @@
-/*	$OpenBSD: adv.c,v 1.1 1998/09/27 03:36:13 downsj Exp $	*/
-/*	$NetBSD: adv.c,v 1.3 1998/09/09 05:28:58 thorpej Exp $	*/
+/*	$OpenBSD: adv.c,v 1.2 1998/09/28 01:56:56 downsj Exp $	*/
+/*	$NetBSD: adv.c,v 1.4 1998/09/26 16:02:56 dante Exp $	*/
 
 /*
- * Generic driver for the Advanced Systems Inc. SCSI controllers
+ * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
  *
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -19,8 +19,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *    This product includes software developed by the NetBSD
- *    Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -462,84 +462,76 @@ adv_init(sc)
 {
 	int             warn;
 
-	if (ASC_IS_NARROW_BOARD(sc)) {
-		if (!AscFindSignature(sc->sc_iot, sc->sc_ioh))
-			panic("adv_init: adv_find_signature failed");
+	if (!AscFindSignature(sc->sc_iot, sc->sc_ioh))
+		panic("adv_init: adv_find_signature failed");
 
-		/*
-                 * Read the board configuration
-                 */
-		AscInitASC_SOFTC(sc);
-		warn = AscInitFromEEP(sc);
-		if (warn) {
-			printf("%s -get: ", sc->sc_dev.dv_xname);
-			switch (warn) {
-			case -1:
-				printf("Chip is not halted\n");
-				break;
+	/*
+         * Read the board configuration
+         */
+	AscInitASC_SOFTC(sc);
+	warn = AscInitFromEEP(sc);
+	if (warn) {
+		printf("%s -get: ", sc->sc_dev.dv_xname);
+		switch (warn) {
+		case -1:
+			printf("Chip is not halted\n");
+			break;
 
-			case -2:
-				printf("Couldn't get MicroCode Start"
-				       " address\n");
-				break;
+		case -2:
+			printf("Couldn't get MicroCode Start"
+			       " address\n");
+			break;
 
-			case ASC_WARN_IO_PORT_ROTATE:
-				printf("I/O port address modified\n");
-				break;
+		case ASC_WARN_IO_PORT_ROTATE:
+			printf("I/O port address modified\n");
+			break;
 
-			case ASC_WARN_AUTO_CONFIG:
-				printf("I/O port increment switch enabled\n");
-				break;
+		case ASC_WARN_AUTO_CONFIG:
+			printf("I/O port increment switch enabled\n");
+			break;
 
-			case ASC_WARN_EEPROM_CHKSUM:
-				printf("EEPROM checksum error\n");
-				break;
+		case ASC_WARN_EEPROM_CHKSUM:
+			printf("EEPROM checksum error\n");
+			break;
 
-			case ASC_WARN_IRQ_MODIFIED:
-				printf("IRQ modified\n");
-				break;
+		case ASC_WARN_IRQ_MODIFIED:
+			printf("IRQ modified\n");
+			break;
 
-			case ASC_WARN_CMD_QNG_CONFLICT:
-				printf("tag queuing enabled w/o disconnects\n");
-				break;
+		case ASC_WARN_CMD_QNG_CONFLICT:
+			printf("tag queuing enabled w/o disconnects\n");
+			break;
 
-			default:
-				printf("unknown warning %d\n", warn);
-			}
+		default:
+			printf("unknown warning %d\n", warn);
 		}
-		if (sc->scsi_reset_wait > ASC_MAX_SCSI_RESET_WAIT)
-			sc->scsi_reset_wait = ASC_MAX_SCSI_RESET_WAIT;
+	}
+	if (sc->scsi_reset_wait > ASC_MAX_SCSI_RESET_WAIT)
+		sc->scsi_reset_wait = ASC_MAX_SCSI_RESET_WAIT;
 
-		/*
-                 * Modify the board configuration
-                 */
-		warn = AscInitFromASC_SOFTC(sc);
-		if (warn) {
-			printf("%s -set: ", sc->sc_dev.dv_xname);
-			switch (warn) {
-			case ASC_WARN_CMD_QNG_CONFLICT:
-				printf("tag queuing enabled w/o disconnects\n");
-				break;
+	/*
+         * Modify the board configuration
+         */
+	warn = AscInitFromASC_SOFTC(sc);
+	if (warn) {
+		printf("%s -set: ", sc->sc_dev.dv_xname);
+		switch (warn) {
+		case ASC_WARN_CMD_QNG_CONFLICT:
+			printf("tag queuing enabled w/o disconnects\n");
+			break;
 
-			case ASC_WARN_AUTO_CONFIG:
-				printf("I/O port increment switch enabled\n");
-				break;
+		case ASC_WARN_AUTO_CONFIG:
+			printf("I/O port increment switch enabled\n");
+			break;
 
-			default:
-				printf("unknown warning %d\n", warn);
-			}
+		default:
+			printf("unknown warning %d\n", warn);
 		}
-		sc->isr_callback = (ulong) adv_narrow_isr_callback;
+	}
+	sc->isr_callback = (ulong) adv_narrow_isr_callback;
 
-		if (!(sc->overrun_buf = adv_alloc_overrunbuf(sc->sc_dev.dv_xname,
-							     sc->sc_dmat))) {
-			return (1);
-		}
-	} else
-		//IS_WIDE_BOARD
-	{
-		printf("%s: Wide boards are not supported yet\n",
-		       sc->sc_dev.dv_xname);
+	if (!(sc->overrun_buf = adv_alloc_overrunbuf(sc->sc_dev.dv_xname,
+						     sc->sc_dmat))) {
 		return (1);
 	}
 
@@ -553,37 +545,31 @@ adv_attach(sc)
 {
 	int             i, error;
 
-	if (ASC_IS_NARROW_BOARD(sc)) {
-		/*
-                 * Initialize board RISC chip and enable interrupts.
-                 */
-		switch (AscInitDriver(sc)) {
-		case 0:
-			/* AllOK */
-			break;
+	/*
+         * Initialize board RISC chip and enable interrupts.
+         */
+	switch (AscInitDriver(sc)) {
+	case 0:
+		/* AllOK */
+		break;
 
-		case 1:
-			panic("%s: bad signature", sc->sc_dev.dv_xname);
-			break;
+	case 1:
+		panic("%s: bad signature", sc->sc_dev.dv_xname);
+		break;
 
-		case 2:
-			panic("%s: unable to load MicroCode",
-			      sc->sc_dev.dv_xname);
-			break;
+	case 2:
+		panic("%s: unable to load MicroCode",
+		      sc->sc_dev.dv_xname);
+		break;
 
-		case 3:
-			panic("%s: unable to initialize MicroCode",
-			      sc->sc_dev.dv_xname);
-			break;
+	case 3:
+		panic("%s: unable to initialize MicroCode",
+		      sc->sc_dev.dv_xname);
+		break;
 
-		default:
-			panic("%s: unable to initialize board RISC chip",
-			      sc->sc_dev.dv_xname);
-		}
-	} else
-		//Wide Boards
-	{
-		/* ToDo */
+	default:
+		panic("%s: unable to initialize board RISC chip",
+		      sc->sc_dev.dv_xname);
 	}
 
 
@@ -595,7 +581,7 @@ adv_attach(sc)
 	sc->sc_link.adapter = &adv_switch;
 	sc->sc_link.device = &adv_dev;
 	sc->sc_link.openings = 4;
-	sc->sc_link.adapter_buswidth = ASC_IS_NARROW_BOARD(sc) ? 7 : 15;
+	sc->sc_link.adapter_buswidth = 7;
 
 
 	TAILQ_INIT(&sc->sc_free_ccb);
@@ -845,13 +831,7 @@ adv_intr(arg)
 	ASC_SOFTC      *sc = arg;
 	struct scsi_xfer *xs;
 
-	if (ASC_IS_NARROW_BOARD(sc)) {
-		AscISR(sc);
-	} else
-		//Wide Boards
-	{
-		/* ToDo AdvISR */
-	}
+	AscISR(sc);
 
 	/*
          * If there are queue entries in the software queue, try to
@@ -1026,8 +1006,9 @@ adv_narrow_isr_callback(sc, qdonep)
 				s2 = &xs->sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
-			} else
+			} else {
 				xs->error = XS_DRIVER_STUFFUP;
+			}
 			break;
 
 		default:
