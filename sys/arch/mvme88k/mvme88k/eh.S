@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.27 2002/12/14 07:42:13 fgsch Exp $   */
+/*   $OpenBSD: eh.S,v 1.28 2003/01/13 20:12:18 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -365,7 +365,7 @@ Lbadcpupanic:
 	set	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
 							; \
 	/* get a stack (exception frame) */		; \
-	1:	bsr	setup_phase_one			; \
+1:	bsr	setup_phase_one				; \
 							; \
 	/* TMP2 now free -- use to set EF_VECTOR */	; \
 	or	TMP2, r0, NUM				; \
@@ -394,13 +394,13 @@ Lbadcpupanic:
 	/* the bsr later clobbers r1, so save now */	; \
 	stcr    r1, SR2   /* r1 now free */		; \
 	/* set or clear the FLAG_FROM_KERNEL bit */	; \
-1:	ldcr    r1, EPSR 				; \
+	ldcr    r1, EPSR 				; \
 	bb0.n   PSR_SUPERVISOR_MODE_BIT, r1, 1f 	; \
 	clr     FLAGS, FLAGS, 1<FLAG_FROM_KERNEL> 	; \
 	set     FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
 							; \
 	/* get a stack (exception frame) */		; \
-	1:	bsr	m88110_setup_phase_one		; \
+1:	bsr	m88110_setup_phase_one			; \
 							; \
 	/* TMP2 now free -- use to set EF_VECTOR */	; \
 	or	TMP2, r0, NUM				; \
@@ -1820,6 +1820,10 @@ ASGLOBAL(fpu_enable)
 	or    r20,  r20,  lo16(0x12345678)
 	st    r20,  r31,  GENREG_OFF(0)
 #endif
+
+	/* get and save IPL */
+	bsr	_C_LABEL(getipl)
+	st	r2, r31, REG_OFF(EF_MASK)
 	
 	/***************** REGISTER STATUS BLOCK ***********************\
 	* SR0: current thread                                           *
@@ -1979,9 +1983,8 @@ ENTRY(proc_do_uret)
 	addu	r3,r3,PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
 	st	r3,r31,0		/* put it on the stack */
 	br	return_from_exception_handler
-   
+
 ASGLOBAL(return_from_exception_handler)
-GLOBAL(return_from_main)
 	/*
 	 * Regs r1-r30 are free. R31 is pointing at the word
 	 * on the kernel stack where our pointer to the exception frame
@@ -2008,7 +2011,7 @@ GLOBAL(return_from_main)
 #define FPTR    r14
 	ld	FPTR, r31, 0                 /* grab exception frame pointer */ 
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r3, _check_ast /*[Oh well, nothing to do here] */
+	bb0	DMT_VALID_BIT, r3, check_ast /*[Oh well, nothing to do here] */
 
 #if 1
 	/*
@@ -2064,7 +2067,7 @@ GLOBAL(return_from_main)
 	/* clear the dmt0 word in the E.F. */
 	st   r0 , FPTR, REG_OFF(EF_DMT0)
 2:
-	br   _check_ast
+	br   check_ast
 #endif /* m88100 */
 
 #ifdef M88110
@@ -2118,7 +2121,7 @@ ASLOCAL(m88110_return_code)
  *   interrupts.
  *   If returning to user land, look for ASTs
  */
-GLOBAL(check_ast)
+ASLOCAL(check_ast)
 
         ld      r2, FPTR, REG_OFF(EF_EPSR)   /* get pre-exception PSR */
         bb1     PSR_INTERRUPT_DISABLE_BIT, r2, 1f /* skip if ints off */
@@ -2150,12 +2153,16 @@ GLOBAL(check_ast)
         /*
          * trap(AST,...) will service ast's.
          */
-#ifdef M88110         
+#if defined(M88110) && defined(M88100)
 	or.u	r2, r0, hi16(_C_LABEL(cputyp))
 	ld	r3, r2, lo16(_C_LABEL(cputyp))
 	cmp	r2, r3, CPU_88110
 	bb0	eq, r2, 2f
+#endif
+#if defined(M88110)
         CALL(_C_LABEL(m88110_trap), T_ASTFLT, FPTR)
+#endif
+#if defined(M88110) && defined(M88100)
 	br	no_ast
 2:
 #endif
@@ -2163,16 +2170,7 @@ GLOBAL(check_ast)
         CALL(_C_LABEL(m88100_trap), T_ASTFLT, FPTR)
 #endif
 
-#if 0
-        /* assert that ipl is 0; if going back to user, it should be 0 */
-
-        bsr     _C_LABEL(getipl)
-        bcnd    eq0, r2, 3f
-        bsr     _C_LABEL(panic)
-3:
-#endif
-
-ASGLOBAL(no_ast)
+ASLOCAL(no_ast)
 
         /* disable interrupts */
         ldcr    r1, PSR                 
@@ -2181,9 +2179,9 @@ ASGLOBAL(no_ast)
         stcr    r1, PSR
 
         /* now ready to return....*/
-	ld      r2, FPTR, REG_OFF(EF_MASK)   /* get pre-exception ipl */
-	bsr.n   _C_LABEL(setipl)
 	subu	r31, r31, 40
+	bsr.n   _C_LABEL(setipl)
+	 ld	r2, FPTR, REG_OFF(EF_MASK)   /* get pre-exception ipl */
 	addu	r31, r31, 40
         
         /*
@@ -2255,9 +2253,8 @@ ASGLOBAL(no_ast)
         ld      r1,  r31, GENREG_OFF(1)
         ld.d    r30, r31, GENREG_OFF(30)
 
-ASGLOBAL(return_from_exception)
         RTE
-	
+
 #ifdef M88110 	
 /*#########################################################################*/
 /*#### THE ACTUAL EXCEPTION HANDLER ENTRY POINTS - MVME197 ################*/

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.99 2003/01/04 23:13:51 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.100 2003/01/13 20:12:18 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -180,7 +180,7 @@ int longformat = 1;  /* for regdump() */
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
-int   safepri = PSR_SUPERVISOR;
+int   safepri = IPL_NONE;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -1738,7 +1738,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl((u_char)eframe->mask);
+	setipl(eframe->mask);
 	flush_pipeline();
 }
 
@@ -1763,8 +1763,8 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get level and mask */
-	mask = *md.intr_mask;
-	level = *md.intr_ipl;
+	mask = *md.intr_mask & 0x07;
+	level = *md.intr_ipl & 0x07;
 
 	/*
 	 * It is really bizarre for the mask and level to the be the same.
@@ -1787,15 +1787,11 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	}
 
 	/* and block interrupts at level or lower */
-	setipl((u_char)level);
+	setipl(level);
 	/* and stash it away in the trap frame */
 	eframe->mask = mask;
 
 	uvmexp.intrs++;
-
-	if (level > 7 || (char)level < 0) {
-		panic("int level (%x) is not between 0 and 7", level);
-	}
 
 	/* generate IACK and get the vector */
 	flush_pipeline();
@@ -1806,7 +1802,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	flush_pipeline();
 	flush_pipeline();
 
-	if (vec > 0xFF) {
+	if (vec > 0xff) {
 		panic("interrupt vector %x greater than 255", vec);
 	}
 
@@ -1859,13 +1855,14 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 		data_access_emulation((unsigned *)eframe);
 		eframe->dmt0 &= ~DMT_VALID;
 	}
+
 	mask = eframe->mask;
 
 	/*
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl((u_char)mask);
+	setipl(mask);
 }
 #endif /* MVME187 */
 
@@ -1879,7 +1876,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get src and mask */
-	mask = *md.intr_mask;
+	mask = *md.intr_mask & 0x07;
 	src = *md.intr_src;
 	
 	if (v == T_NON_MASK) {
@@ -1888,7 +1885,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		vec = BS_ABORTVEC;
 	} else {
 		/* get level  */
-		level = *md.intr_ipl;
+		level = *md.intr_ipl & 0x07;
 	}
 
 	/*
@@ -1901,15 +1898,11 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	}
 
 	/* and block interrupts at level or lower */
-	setipl((u_char)level);
+	setipl(level);
 	/* and stash it away in the trap frame */
 	eframe->mask = mask;
 
 	uvmexp.intrs++;
-
-	if (level > 7 || (char)level < 0) {
-		panic("int level (%x) is not between 0 and 7", level);
-	}
 
 	if (v != T_NON_MASK) {
 		/* generate IACK and get the vector */
@@ -1922,7 +1915,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		flush_pipeline();
 	}
 
-	if (vec > 0xFF) {
+	if (vec > 0xff) {
 		panic("interrupt vector %x greater than 255", vec);
 	}
 
@@ -1971,7 +1964,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl((u_char)mask);
+	setipl(mask);
 }
 #endif 
 

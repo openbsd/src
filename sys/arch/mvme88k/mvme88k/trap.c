@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2003/01/09 22:27:10 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2003/01/13 20:12:18 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -251,34 +251,34 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		/*FALLTHRU*/
 	case T_KDB_BREAK+T_USER:
 		{
-			int s = db_splhigh();
+			int s = splhigh();
 			db_enable_interrupt();
 			ddb_break_trap(T_KDB_BREAK,(db_regs_t*)frame);
 			db_disable_interrupt();
-			db_splx(s);
+			splx(s);
 			return;
 		}
 	case T_KDB_ENTRY:
 		/*FALLTHRU*/
 	case T_KDB_ENTRY+T_USER:
 		{
-			int s = db_splhigh();
+			int s = splhigh();
 			db_enable_interrupt();
 			ddb_entry_trap(T_KDB_ENTRY,(db_regs_t*)frame);
 			db_disable_interrupt();
-			db_splx(s);
+			splx(s);
 			return;
 		}
 
 #if 0
 	case T_ILLFLT:
 		{
-			int s = db_splhigh();
+			int s = splhigh();
 			db_enable_interrupt();
 			ddb_error_trap(type == T_ILLFLT ? "unimplemented opcode" :
 				       "error fault", (db_regs_t*)frame);
 			db_disable_interrupt();
-			db_splx(s);
+			splx(s);
 			return;
 		}
 #endif /* 0 */
@@ -746,49 +746,44 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		/*NOTREACHED*/
    #if defined(DDB)
 	case T_KDB_TRACE:
-		frame->mask = spl(); /* get current spl for reg dump */
-		s = db_splhigh();
+		s = splhigh();
 		db_enable_interrupt();
 		ddb_break_trap(T_KDB_TRACE,(db_regs_t*)frame);
 		db_disable_interrupt();
-		db_splx(s);
+		splx(s);
 		return;
 	case T_KDB_BREAK:
 		/*FALLTHRU*/
 	case T_KDB_BREAK+T_USER:
-		frame->mask = spl(); /* get current spl for reg dump */
-		s = db_splhigh();
-			db_enable_interrupt();
-			ddb_break_trap(T_KDB_BREAK,(db_regs_t*)frame);
-			db_disable_interrupt();
-			db_splx(s);
-			return;
+		s = splhigh();
+		db_enable_interrupt();
+		ddb_break_trap(T_KDB_BREAK,(db_regs_t*)frame);
+		db_disable_interrupt();
+		splx(s);
+		return;
 	case T_KDB_ENTRY:
 		/*FALLTHRU*/
 	case T_KDB_ENTRY+T_USER:
-		frame->mask = spl(); /* get current spl for reg dump */
-		s = db_splhigh();
-			db_enable_interrupt();
-			ddb_entry_trap(T_KDB_ENTRY,(db_regs_t*)frame);
-			db_disable_interrupt();
+		s = splhigh();
+		db_enable_interrupt();
+		ddb_entry_trap(T_KDB_ENTRY,(db_regs_t*)frame);
+		db_disable_interrupt();
 		if (frame->enip) {
 			frame->exip = frame->enip;
 		} else {
                                frame->exip += 4;
 		}
-			db_splx(s);
-			return;
+		splx(s);
+		return;
 #if 0
 	case T_ILLFLT:
-		{
-			int s = db_splhigh();
-			db_enable_interrupt();
-			ddb_error_trap(type == T_ILLFLT ? "unimplemented opcode" :
-				       "error fault", (db_regs_t*)frame);
-			db_disable_interrupt();
-			db_splx(s);
-			return;
-		}
+		s = splhigh();
+		db_enable_interrupt();
+		ddb_error_trap(type == T_ILLFLT ? "unimplemented opcode" :
+		       "error fault", (db_regs_t*)frame);
+		db_disable_interrupt();
+		splx(s);
+		return;
 #endif /* 0 */
 #endif /* DDB */
 	case T_ILLFLT:
@@ -1811,7 +1806,7 @@ splassert_check(int wantipl, const char *func)
 {
 	int oldipl;
 
-	oldipl = spl();
+	oldipl = getipl();
 
 	if (oldipl < wantipl) {
 		splassert_fail(wantipl, oldipl, func);

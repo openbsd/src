@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.25 2002/03/14 01:26:40 millert Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.26 2003/01/13 20:12:18 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -32,7 +32,6 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/board.h>		/* m188 bit defines	*/
 #include <machine/cmmu.h>		/* DMT_VALID		*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
@@ -102,10 +101,7 @@ static char *bytes[] =
 #define DAE_DEBUG(stuff)
 #endif
 
-void setlevel(int);
-#ifdef DDB
-void db_setlevel(int);
-#endif
+void setlevel(unsigned int);
 
 #ifdef M88100
 void 
@@ -379,10 +375,10 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 
 #ifdef MVME188
 #if 0
-unsigned int int_mask_shadow[MAX_CPUS] = {0,0,0,0};
+unsigned int int_mask_shadow[MAX_CPUS] = {0, 0, 0, 0};
 unsigned int blocked_interrupts_mask;
 #endif
-unsigned int m188_curspl[MAX_CPUS] = {0,0,0,0};
+unsigned int m188_curspl[MAX_CPUS] = {0, 0, 0, 0};
 
 unsigned int int_mask_val[INT_LEVEL] = {
 	MASK_LVL_0, 
@@ -406,18 +402,20 @@ safe_level(mask, curlevel)
 	register int i;
 
 	for (i = curlevel; i < 8; i++)
-		if (! (int_mask_val[i] & mask))
+		if (!(int_mask_val[i] & mask))
 			return i;
+
 	panic("safe_level: no safe level for mask 0x%08x level %d found",
 	       mask, curlevel);
 	/* NOTREACHED */
 }
 
 void
-setlevel(int level)
+setlevel(unsigned int level)
 {
-	register unsigned int mask;
-	register int cpu = cpu_number(); 
+	unsigned int mask;
+	int cpu = cpu_number(); 
+
 	if (level > 7) {
 		panic("setlevel: bad level 0x%x", level);
 	}
@@ -428,7 +426,6 @@ setlevel(int level)
 
 #if 0
 	mask &= ISR_SOFTINT_EXCEPT_MASK(cpu);
-
 	mask &= ~blocked_interrupts_mask;
 #endif 
 
@@ -438,131 +435,60 @@ setlevel(int level)
 #endif 
 	m188_curspl[cpu] = level;
 }
-
-#ifdef DDB
-void
-db_setlevel(int level)
-{
-	register unsigned int mask;
-	register int cpu = cpu_number(); 
-
-	mask = int_mask_val[level];
-
-	if (cpu != master_cpu)
-		mask &= SLAVE_MASK;
-#if 0
-	mask &= ISR_SOFTINT_EXCEPT_MASK(cpu);
-
-	mask &= ~blocked_interrupts_mask;
-#endif 
-
-	*int_mask_reg[cpu] = mask;
-#if 0
-	int_mask_shadow[cpu] = mask;
-#endif 
-
-	m188_curspl[cpu] = level;
-}
-#endif /* DDB */
 
 #endif  /* MVME188 */
 
 unsigned 
-spl(void)
-{
-	unsigned curspl;
-	m88k_psr_type psr; /* proccessor status register */
-#ifdef MVME188
-	int cpu = 0;	/* prevent warning */
-#endif 
-	psr = disable_interrupts_return_psr();
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		cpu = cpu_number();
-		curspl = m188_curspl[cpu];
-		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case BRD_187:
-	case BRD_197:
-		curspl = *md.intr_mask;
-		break;
-#endif /* defined(MVME187) || defined(MVME197) */
-	}
-	set_psr(psr);
-	return curspl;
-}
-
-#if DDB
-unsigned 
-db_spl(void)
-{
-	unsigned curspl;
-	m88k_psr_type psr; /* proccessor status register */
-#ifdef MVME188
-	int cpu = 0;	/* prevent warning */
-#endif 
-
-	psr = disable_interrupts_return_psr();
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		cpu = cpu_number();
-		curspl = m188_curspl[cpu];
-		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case BRD_187:
-	case BRD_197:
-		curspl = *md.intr_mask;
-		break;
-#endif /* defined(MVME187) || defined(MVME197) */
-	}
-	set_psr(psr);
-	return curspl;
-}
-#endif /* DDB */
-
-unsigned 
 getipl(void)
 {
-	return (spl());
-}
+	unsigned curspl;
+	m88k_psr_type psr; /* proccessor status register */
 
-#if DDB
-unsigned 
-db_getipl(void)
-{
-	return (db_spl());
+	psr = disable_interrupts_return_psr();
+	switch (brdtyp) {
+#ifdef MVME188
+	case BRD_188:
+		curspl = m188_curspl[cpu_number()];
+		break;
+#endif /* MVME188 */
+#if defined(MVME187) || defined(MVME197)
+	case BRD_187:
+	case BRD_197:
+		curspl = *md.intr_mask & 0x07;
+		break;
+#endif /* defined(MVME187) || defined(MVME197) */
+	}
+	set_psr(psr);
+	return curspl;
 }
-#endif /* DDB */
 
 unsigned 
 setipl(unsigned level)
 {
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
-#ifdef MVME188
-	int cpu = 0;	/* prevent warning */
-#endif 
+
+#ifdef DIAGNOSTIC
 	if (level > 7) {
-		level = 0;	/* XXX assume this for the time being */
+#ifdef DEBUG
+		printf("setipl: invoked with invalid level %x\n", level);
+#endif
+		level &= 0x07;	/* and pray it will work */
 	}
+#endif
 
 	psr = disable_interrupts_return_psr();
 	switch (brdtyp) {
 #ifdef MVME188
 	case BRD_188:
-		cpu = cpu_number();
-		curspl = m188_curspl[cpu];
+		curspl = m188_curspl[cpu_number()];
 		setlevel(level);
 		break;
 #endif /* MVME188 */
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
 	case BRD_197:
-		curspl = *md.intr_mask;
+		curspl = *md.intr_mask & 0x07;
 		*md.intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
@@ -577,45 +503,6 @@ setipl(unsigned level)
 	set_psr(psr);
 	return curspl;
 }
-
-#ifdef DDB
-unsigned 
-db_setipl(unsigned level)
-{
-	unsigned curspl;
-	m88k_psr_type psr; /* proccessor status register */
-#ifdef MVME188
-	int cpu = 0;	/* prevent warning */
-#endif 
-
-	psr = disable_interrupts_return_psr();
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		cpu = cpu_number();
-		curspl = m188_curspl[cpu];
-		db_setlevel(level);
-		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case BRD_187:
-	case BRD_197:
-		curspl = *md.intr_mask;
-		*md.intr_mask = level;
-		break;
-#endif /* defined(MVME187) || defined(MVME197) */
-	}
-
-	flush_pipeline();
-
-	/* The flush pipeline is required to make sure the above write gets
-	 * through the data pipe and to the hardware; otherwise, the next
-	 * bunch of instructions could execute at the wrong spl protection
-	 */
-	set_psr(psr);
-	return curspl;
-}
-#endif /* DDB */
 
 #if NCPUS > 1
 #include <sys/simplelock.h>
