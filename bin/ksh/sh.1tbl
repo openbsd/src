@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.30 2002/09/18 07:33:47 deraadt Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.31 2003/03/14 11:05:55 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -515,7 +515,7 @@ and
 .Ql /
 are dropped.
 Note that any unquoted space before and after a pattern is
-stripped; any space with a pattern must be quoted.
+stripped; any space within a pattern must be quoted.
 Both the word and the
 patterns are subject to parameter, command, and arithmetic substitution, as
 well as tilde substitution.
@@ -2484,7 +2484,7 @@ and the index of the next argument to be processed in the shell parameter
 .Ev OPTIND .
 If the option was introduced with a
 .Ql + ,
-the option places in
+the option placed in
 .Ar name
 is prefixed with a
 .Ql + .
@@ -2496,11 +2496,14 @@ When an illegal option or a missing option argument is encountered, a question
 mark or a colon is placed in
 .Ar name
 (indicating an illegal option or missing argument, respectively) and
-.Ev OPTAG
+.Ev OPTARG
 is set to the option character that caused the problem.
-An error message is also printed to standard error if
+If
 .Ar optstring
-does not being with a colon.
+does not begin with a colon, a question mark is placed in
+.Ar name ,
+.Ev OPTARG
+is unset and an error message is printed to standard error.
 .Pp
 When the end of the options is encountered,
 .Ic getopts
