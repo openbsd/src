@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.4 1999/10/06 22:18:55 chris Exp $
+.\"	$OpenBSD: pciide.4,v 1.5 1999/12/11 19:33:12 millert Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -49,7 +49,7 @@ driver supports the PCI IDE controllers as specified in the
 functions for the
 .Xr wd 4
 and
-.Xr atapi 4
+.Xr atapiscsi 4
 drivers. This driver includes specific, enhanced support for the CMD Tech
 PCI0640 controller and IDE DMA/UltraDMA support for the following
 controllers:
@@ -94,6 +94,7 @@ The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 Mhz. This driver may not
 work properly on overclocked systems.
 .Sh SEE ALSO
+.Xr atapiscsi 4 ,
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr wd 4 ,
