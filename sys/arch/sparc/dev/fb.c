@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.10 1997/08/08 08:25:04 downsj Exp $	*/
+/*	$OpenBSD: fb.c,v 1.11 1997/11/11 11:49:12 niklas Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -405,31 +405,30 @@ fbrcons_init(fb)
 	/* Setup the static font */
 	rc->rc_font = &console_font;
 
-#if defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT)
 	rc->rc_maxcol = rc->rc_width / rc->rc_font->width;
 	rc->rc_maxrow = rc->rc_height / rc->rc_font->height;
-#else
+#if !defined(RASTERCONS_FULLSCREEN) && !defined(RASTERCONS_SMALLFONT)
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 		if (eep == NULL) {
-			rc->rc_maxcol = 80;
-			rc->rc_maxrow = 34;
+			rc->rc_maxcol = max(rc->rc_maxcol, 80);
+			rc->rc_maxrow = max(rc->rc_maxrow, 34);
 		} else {
-			rc->rc_maxcol = eep->eeTtyCols;
-			rc->rc_maxrow = eep->eeTtyRows;
+			rc->rc_maxcol = max(rc->rc_maxcol, eep->eeTtyCols);
+			rc->rc_maxrow = max(rc->rc_maxrow, eep->eeTtyRows);
 		}
 	}
 #endif /* SUN4 */
 
 	if (!CPU_ISSUN4) {
-		rc->rc_maxcol =
-		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-		rc->rc_maxrow =
-		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+		rc->rc_maxcol = max(rc->rc_maxcol,
+		    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
+		rc->rc_maxrow = max(rc->rc_maxrow,
+		    a2int(getpropstring(optionsnode, "screen-#rows"), 34));
 	}
-#endif /* RASTERCONS_FULLSCREEN || RASTERCONS_SMALLFONT */
+#endif /* !RASTERCONS_FULLSCREEN && !RASTERCONS_SMALLFONT */
 
 #if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
 	/* Determine addresses of prom emulator row and column */
