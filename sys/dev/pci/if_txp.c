@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.2 2001/04/08 05:28:49 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.3 2001/04/08 05:40:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -386,6 +386,20 @@ txp_download_fw_section(sc, sect, sectnum)
 	/* Skip zero length sections */
 	if (sect->nbytes == 0)
 		return (0);
+
+	/* Make sure we aren't past the end of the image */
+	rseg = ((u_int8_t *)sect) - ((u_int8_t *)TyphoonImage);
+	if (rseg >= sizeof(TyphoonImage)) {
+		printf(": fw invalid section address, section %d\n", sectnum);
+		return (-1);
+	}
+
+	/* Make sure this section doesn't go past the end */
+	rseg += sect->nbytes;
+	if (rseg >= sizeof(TyphoonImage)) {
+		printf(": fw truncated section %d\n", sectnum);
+		return (-1);
+	}
 
 	/* map a buffer, copy segment to it, get physaddr */
 	if (bus_dmamem_alloc(dmat, sect->nbytes, PAGE_SIZE, 0, &seg, 1, &rseg,
