@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.5 1996/09/24 19:37:26 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.6 1996/09/24 20:04:45 pefo Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -26,7 +26,7 @@
 AS?=	as
 CC?=	cc
 CPP?=	cpp
-LD=	ld.ok			# XXX TEMPORARY
+LD?=	ld
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
@@ -93,9 +93,9 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
-		echo ${LD} $$strip -N -o $@ -e start -Ttext 80100000 \
+		echo ${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
 			'$${SYSTEM_OBJ}' vers.o; \
-		${LD} $$strip -N -o $@ -e start -Ttext 80100000 \
+		${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
 			${SYSTEM_OBJ} vers.o
 #
 SYSTEM_LD_TAIL=	chmod 755 $@; \
