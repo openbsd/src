@@ -1,6 +1,6 @@
-/*	$OpenBSD: archtype.h,v 1.3 2004/08/10 21:10:56 pefo Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.4 2004/10/05 13:07:44 pefo Exp $	*/
 /*
- * Copyright (c) 1997-2003 Opsycon AB, Sweden (www.opsycon.se)
+ * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,8 +47,10 @@
 #define	SGI_INDY		0x0015	/* Indy, Indigo2, Challenge S */
 #define	SGI_POWER10		0x0016	/* POWER Challenge R10k */
 #define	SGI_POWERI		0x0017	/* POWER Indigo2 */
-#define	SGI_O2			0x0018	/* O2/Moosehead */
-#define	SGI_OCTANE		0x0019	/* Octane */
+#define	SGI_O2			0x0018	/* IP32 O2/Moosehead */
+#define	SGI_O200		0x0019	/* IP27 Origin200/Speedo */
+#define	SGI_O2000		0x001a	/* IP27 Origin2000/Lego */
+#define	SGI_OCTANE		0x001b	/* IP30 Octane/Speedracer */
 
 #define	ALGOR_CLASS		0x0020	/* Algorithmics Class */
 #define	ALGOR_P4032		0x0021	/* ALGORITHMICS P-4032 */
