@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.20 2003/05/11 19:45:18 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.21 2004/01/14 05:23:25 tedu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -148,8 +148,8 @@
 50	NOARGS		{ int sys_setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
 52	NOARGS		{ int sys_sigpending(void); }
-53	NOARGS		{ int sys_sigaltstack(const struct sigaltstack *nss, \
-			    struct sigaltstack *oss); }
+53	NOARGS		{ int sys_osigaltstack(const struct osigaltstack *nss, \
+			    struct osigaltstack *oss); }
 54	NOARGS		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	NOARGS		{ int sys_reboot(int opt); }
@@ -564,9 +564,9 @@
 			    struct netbsd_stat *ub); }
 280	STD		{ int netbsd_sys___lstat13(char *path, \
 			    struct netbsd_stat *ub); }
-281	STD		{ int netbsd_sys___sigaltstack14( \
-			    const struct netbsd_sigaltstack *nss, \
-			    struct netbsd_sigaltstack *oss); }
+281	NOARGS		{ int sys_sigaltstack( \
+			    const struct sigaltstack *nss, \
+			    struct sigaltstack *oss); }
 282	STD		{ int netbsd_sys___vfork14(void); }
 283	UNIMPL
 ;283	STD		{ int netbsd_sys___posix_chown(const char *path, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.15 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.16 2004/01/14 05:23:25 tedu Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -149,15 +149,23 @@ typedef	void (*sig_t)(int);	/* type of signal function */
 /*
  * Structure used in sigaltstack call.
  */
-struct	sigaltstack {
+typedef struct sigaltstack {
 	void	*ss_sp;			/* signal stack base */
-	int	ss_size;		/* signal stack length */
+	size_t	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
-};
+} stack_t;
 #define SS_ONSTACK	0x0001	/* take signals on alternate stack */
 #define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
 #define	MINSIGSTKSZ	8192			/* minimum allowable stack */
 #define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
+
+#ifdef _KERNEL
+struct osigaltstack {
+	void	*ss_sp;			/* signal stack base */
+	int	ss_size;		/* signal stack length */
+	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
+};
+#endif
 
 /*
  * 4.3 compatibility:
@@ -180,6 +188,8 @@ struct	sigstack {
 	void	*ss_sp;			/* signal stack pointer */
 	int	ss_onstack;		/* current status */
 };
+
+typedef struct sigcontext ucontext_t;
 
 /*
  * Macro for converting signal number to a mask suitable for

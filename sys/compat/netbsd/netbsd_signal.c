@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_signal.c,v 1.6 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: netbsd_signal.c,v 1.7 2004/01/14 05:23:25 tedu Exp $	*/
 
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
@@ -55,12 +55,6 @@ static void netbsd_to_openbsd_sigaction(struct netbsd_sigaction *,
 static void openbsd_to_netbsd_sigaction(struct sigaction *,
 	struct netbsd_sigaction *);
 
-static void netbsd_to_openbsd_sigaltstack(struct netbsd_sigaltstack *,
-	struct sigaltstack *);
-
-static void openbsd_to_netbsd_sigaltstack(struct sigaltstack *,
-	struct netbsd_sigaltstack *);
-
 static void
 openbsd_to_netbsd_sigaction(obsa, nbsa)
 	struct sigaction	*obsa;
@@ -83,28 +77,6 @@ netbsd_to_openbsd_sigaction(nbsa, obsa)
 		sizeof(sigset_t));
 	obsa->sa_flags = nbsa->netbsd_sa_flags;
 }
-
-static void
-netbsd_to_openbsd_sigaltstack(nbss, obss)
-	struct netbsd_sigaltstack *nbss;
-	struct sigaltstack *obss;
-{
-	obss->ss_sp = nbss->netbsd_ss_sp;
-	obss->ss_size = nbss->netbsd_ss_size; /* XXX may cause truncation */
-	obss->ss_flags = nbss->netbsd_ss_flags;
-}
-
-static void
-openbsd_to_netbsd_sigaltstack(obss, nbss)
-	struct sigaltstack *obss;
-	struct netbsd_sigaltstack *nbss;
-{
-	bzero(nbss, sizeof(nbss));
-	nbss->netbsd_ss_sp = obss->ss_sp;
-	nbss->netbsd_ss_size = (size_t)obss->ss_size;
-	nbss->netbsd_ss_flags = obss->ss_flags;
-}
-
 
 /* ARGSUSED */
 int
@@ -166,51 +138,6 @@ netbsd_sys___sigaction14(p, v, retval)
 		netbsd_to_openbsd_sigaction(&nbsa, sa);
 		setsigvec(p, signum, sa);
 	}
-	return (0);
-}
-
-/* ARGSUSED */
-int
-netbsd_sys___sigaltstack14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct netbsd_sys___sigaltstack14_args /* {
-		syscallarg(struct netbsd_sigaltstack *) nss;
-		syscallarg(struct netbsd_sigaltstack *) oss;
-	} */ *uap = v;
-	struct sigacts *psp;
-	struct sigaltstack ss;
-	struct netbsd_sigaltstack nbss;
-	int error;
-
-	psp = p->p_sigacts;
-	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
-		psp->ps_sigstk.ss_flags |= SS_DISABLE;
-	if (SCARG(uap, oss)) {
-		openbsd_to_netbsd_sigaltstack(&psp->ps_sigstk, &nbss);
-		if ((error = copyout((caddr_t)&nbss, (caddr_t)SCARG(uap, oss),
-			sizeof (struct netbsd_sigaltstack))))
-		return (error);
-	}
-	if (SCARG(uap, nss) == 0)
-		return (0);
-	error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&nbss, sizeof(nbss));
-	if (error)
-		return (error);
-	netbsd_to_openbsd_sigaltstack(&nbss, &ss);
-	if (ss.ss_flags & SS_DISABLE) {
-		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
-			return (EINVAL);
-		psp->ps_flags &= ~SAS_ALTSTACK;
-		psp->ps_sigstk.ss_flags = ss.ss_flags;
-		return (0);
-	}
-	if (ss.ss_size < MINSIGSTKSZ)
-		return (ENOMEM);
-	psp->ps_flags |= SAS_ALTSTACK;
-	psp->ps_sigstk= ss;
 	return (0);
 }
 

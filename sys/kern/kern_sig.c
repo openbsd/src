@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.68 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.69 2004/01/14 05:23:25 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -507,6 +507,51 @@ sys_sigsuspend(p, v, retval)
 
 /* ARGSUSED */
 int
+sys_osigaltstack(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_osigaltstack_args /* {
+		syscallarg(const struct osigaltstack *) nss;
+		syscallarg(struct osigaltstack *) oss;
+	} */ *uap = v;
+	struct sigacts *psp;
+	struct osigaltstack ss;
+	int error;
+
+	psp = p->p_sigacts;
+	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
+		psp->ps_sigstk.ss_flags |= SS_DISABLE;
+	if (SCARG(uap, oss)) {
+		ss.ss_sp = psp->ps_sigstk.ss_sp;
+		ss.ss_size = psp->ps_sigstk.ss_size;
+		ss.ss_flags = psp->ps_sigstk.ss_flags;
+		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))))
+			return (error);
+	}
+	if (SCARG(uap, nss) == NULL)
+		return (0);
+	error = copyin(SCARG(uap, nss), &ss, sizeof(ss));
+	if (error)
+		return (error);
+	if (ss.ss_flags & SS_DISABLE) {
+		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
+			return (EINVAL);
+		psp->ps_flags &= ~SAS_ALTSTACK;
+		psp->ps_sigstk.ss_flags = ss.ss_flags;
+		return (0);
+	}
+	if (ss.ss_size < MINSIGSTKSZ)
+		return (ENOMEM);
+	psp->ps_flags |= SAS_ALTSTACK;
+	psp->ps_sigstk.ss_sp = ss.ss_sp;
+	psp->ps_sigstk.ss_size = ss.ss_size;
+	psp->ps_sigstk.ss_flags = ss.ss_flags;
+	return (0);
+}
+
+int
 sys_sigaltstack(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -524,11 +569,11 @@ sys_sigaltstack(p, v, retval)
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
 		psp->ps_sigstk.ss_flags |= SS_DISABLE;
 	if (SCARG(uap, oss) && (error = copyout(&psp->ps_sigstk,
-	    SCARG(uap, oss), sizeof (struct sigaltstack))))
+	    SCARG(uap, oss), sizeof(struct sigaltstack))))
 		return (error);
 	if (SCARG(uap, nss) == NULL)
 		return (0);
-	error = copyin(SCARG(uap, nss), &ss, sizeof (ss));
+	error = copyin(SCARG(uap, nss), &ss, sizeof(ss));
 	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {
