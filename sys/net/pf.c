@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.13 2001/06/24 23:29:14 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.14 2001/06/24 23:43:59 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -508,7 +508,7 @@ int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	int error = 0;
-	struct ioctlbuffer *ub;
+	struct pfioc *ub;
 	void *kb = NULL;
 	int s;
 
@@ -516,7 +516,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		return EACCES;
 	
 	if ((cmd != DIOCSTART) && (cmd != DIOCSTOP) && (cmd != DIOCCLRSTATES)) {
-		ub = (struct ioctlbuffer *)addr;
+		ub = (struct pfioc *)addr;
 		if (ub == NULL)
 			return ERROR_INVALID_PARAMETERS;
 		kb = malloc(ub->size, M_DEVBUF, M_NOWAIT);

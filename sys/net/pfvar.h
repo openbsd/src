@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.4 2001/06/24 21:50:29 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.5 2001/06/24 23:44:00 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -132,7 +132,7 @@ struct status {
  * ioctl parameter structure
  */
 
-struct ioctlbuffer {
+struct pfioc {
 	u_int32_t	 size;
 	u_int16_t	 entries;
 	void		*buffer;
@@ -144,16 +144,16 @@ struct ioctlbuffer {
 
 #define DIOCSTART	_IO  ('D',  1)
 #define DIOCSTOP	_IO  ('D',  2)
-#define DIOCSETRULES	_IOWR('D',  3, struct ioctlbuffer)
-#define DIOCGETRULES	_IOWR('D',  4, struct ioctlbuffer)
-#define DIOCSETNAT	_IOWR('D',  5, struct ioctlbuffer)
-#define DIOCGETNAT	_IOWR('D',  6, struct ioctlbuffer)
-#define DIOCSETRDR	_IOWR('D',  7, struct ioctlbuffer)
-#define DIOCGETRDR	_IOWR('D',  8, struct ioctlbuffer)
+#define DIOCSETRULES	_IOWR('D',  3, struct pfioc)
+#define DIOCGETRULES	_IOWR('D',  4, struct pfioc)
+#define DIOCSETNAT	_IOWR('D',  5, struct pfioc)
+#define DIOCGETNAT	_IOWR('D',  6, struct pfioc)
+#define DIOCSETRDR	_IOWR('D',  7, struct pfioc)
+#define DIOCGETRDR	_IOWR('D',  8, struct pfioc)
 #define DIOCCLRSTATES	_IO  ('D',  9)
-#define DIOCGETSTATES	_IOWR('D', 10, struct ioctlbuffer)
-#define DIOCSETSTATUSIF _IOWR('D', 11, struct ioctlbuffer)
-#define DIOCGETSTATUS	_IOWR('D', 12, struct ioctlbuffer)
+#define DIOCGETSTATES	_IOWR('D', 10, struct pfioc)
+#define DIOCSETSTATUSIF _IOWR('D', 11, struct pfioc)
+#define DIOCGETSTATUS	_IOWR('D', 12, struct pfioc)
 
 /*
  * ioctl errors
