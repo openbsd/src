@@ -800,6 +800,12 @@ sparc_push_dummy_frame ()
   old_sp = sp = read_register (SP_REGNUM);
 
 #ifdef GDB_TARGET_IS_SPARC64
+  /* PC, NPC, CCR, FSR, FPRS, Y, ASI */
+  read_register_bytes (REGISTER_BYTE (PC_REGNUM), &register_temp[0],
+		       REGISTER_RAW_SIZE (PC_REGNUM) * 7);
+  read_register_bytes (REGISTER_BYTE (PSTATE_REGNUM), 
+		       &register_temp[7 * SPARC_INTREG_SIZE],
+		       REGISTER_RAW_SIZE (PSTATE_REGNUM));
   /* FIXME: not sure what needs to be saved here.  */
 #else
   /* Y, PS, WIM, TBR, PC, NPC, FPS, CPS regs */
