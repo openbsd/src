@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.3 2000/08/11 06:17:18 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.4 2000/11/20 17:48:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -232,6 +232,7 @@ static const struct ich_devtype {
 } ich_devices[] = {
 	{ PCI_PRODUCT_INTEL_82801AA_ACA, 0 },
 	{ PCI_PRODUCT_INTEL_82801AB_ACA, 0 },
+	{ PCI_PRODUCT_INTEL_82801BA_ACA, 0 },
 	{ PCI_PRODUCT_INTEL_82440MX_ACA, 0 },
 };
 
