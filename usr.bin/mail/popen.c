@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.9 1997/07/14 15:56:24 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.10 1997/07/14 16:09:07 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.9 1997/07/14 15:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.10 1997/07/14 16:09:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,24 +225,24 @@ file_pid(fp)
  */
 /*VARARGS4*/
 int
-run_command(cmd, mask, infd, outfd, a0, a1, a2)
+run_command(cmd, nset, infd, outfd, a0, a1, a2)
 	char *cmd;
-	sigset_t *mask;
+	sigset_t *nset;
 	int infd, outfd;
 	char *a0, *a1, *a2;
 {
 	int pid;
 
-	if ((pid = start_command(cmd, mask, infd, outfd, a0, a1, a2)) < 0)
+	if ((pid = start_command(cmd, nset, infd, outfd, a0, a1, a2)) < 0)
 		return(-1);
 	return(wait_command(pid));
 }
 
 /*VARARGS4*/
 int
-start_command(cmd, mask, infd, outfd, a0, a1, a2)
+start_command(cmd, nset, infd, outfd, a0, a1, a2)
 	char *cmd;
-	sigset_t *mask;
+	sigset_t *nset;
 	int infd, outfd;
 	char *a0, *a1, *a2;
 {
@@ -260,7 +260,7 @@ start_command(cmd, mask, infd, outfd, a0, a1, a2)
 		    (argv[i++] = a1) != NULL &&
 		    (argv[i++] = a2) != NULL)
 			argv[i] = NULL;
-		prepare_child(mask, infd, outfd);
+		prepare_child(nset, infd, outfd);
 		execvp(argv[0], argv);
 		warn(argv[0]);
 		_exit(1);
@@ -368,8 +368,8 @@ int
 wait_child(pid)
 	int pid;
 {
-	sigset_t nset, oset;
 	register struct child *cp = findchild(pid);
+	sigset_t nset, oset;
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
@@ -390,8 +390,8 @@ void
 free_child(pid)
 	int pid;
 {
-	sigset_t nset, oset;
 	register struct child *cp = findchild(pid);
+	sigset_t nset, oset;
 
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
