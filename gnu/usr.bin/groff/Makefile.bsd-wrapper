@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/09/14 20:20:39 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/09/14 21:41:16 etheisen Exp $
 
 #
 # groff config
 #
-PREFIX=		/usr/
+PREFIX=		/usr
 DATASUBDIR=	/usr/share
 FONTDIR=	/usr/share/groff_font
 INDEXDIR=	/usr/share/dict/papers
