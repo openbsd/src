@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.92 2002/10/12 01:09:44 krw Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.93 2002/11/08 11:07:28 gluk Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4291,15 +4291,6 @@ pdc20265_pci_intr(arg)
 	struct channel_softc *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t dmastat;
-
-	/* process our own interrupts only during IRQ sharing */
-	if (PDC_IS_268(sc)) {
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    PDC268_REG0, 0xb);
-		if (!(bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    PDC268_REG1) & 0x20))
-			return 0;
-	}
 
 	rv = 0;
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
