@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.1 2000/09/19 03:20:59 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.2 2000/09/19 08:38:59 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -329,6 +329,11 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		     tdb->tdb_dst.sa.sa_family));
 	    return ENXIO;
     }
+
+    /* If there's another (bundled) TDB to apply, do so */
+    if (tdb->tdb_onext)
+      return ipsp_process_packet(m, tdb->tdb_onext,
+				 tdb->tdb_onext->tdb_dst.sa.sa_family, 0);
 
     /*
      * We're done with IPsec processing, transmit the packet using the

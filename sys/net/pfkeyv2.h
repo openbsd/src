@@ -28,7 +28,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #define SADB_X_PROMISC     11
 #define SADB_X_ADDFLOW     12
 #define SADB_X_DELFLOW     13
-#define SADB_MAX           13
+#define SADB_X_GRPSPIS     14
+#define SADB_MAX           14
 
 struct sadb_msg {
   uint8_t sadb_msg_version;
@@ -183,7 +184,9 @@ struct sadb_protocol {
 #define SADB_X_EXT_FLOW_TYPE          19
 #define SADB_X_EXT_SRC_FLOW           20
 #define SADB_X_EXT_DST_FLOW           21
-#define SADB_EXT_MAX                  21
+#define SADB_X_EXT_SA2                22
+#define SADB_X_EXT_DST2               23
+#define SADB_EXT_MAX                  23
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0

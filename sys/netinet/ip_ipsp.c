@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.100 2000/09/19 03:20:58 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.101 2000/09/19 08:38:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -916,6 +916,12 @@ tdb_delete(struct tdb *tdbp, int expflags)
 	tdbp->tdb_dstid = NULL;
     }
 
+    if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
+      tdbp->tdb_onext->tdb_inext = NULL;
+
+    if ((tdbp->tdb_inext) && (tdbp->tdb_inext->tdb_onext == tdbp))
+      tdbp->tdb_inext->tdb_onext = NULL;
+
     FREE(tdbp, M_TDB);
     tdb_count--;
 
@@ -1102,6 +1108,22 @@ ipsp_kern(int off, char **bufp, int len)
 	      if (tdb->tdb_authalgxform)
 		l += sprintf(buffer + l, "\t\tAuthentication = <%s>\n",
 			     tdb->tdb_authalgxform->name);
+
+	      if (tdb->tdb_onext)
+		l += sprintf(buffer + l,
+			     "\tNext SA: SPI = %08x, "
+			     "Destination = %s, Sproto = %u\n",
+			     ntohl(tdb->tdb_onext->tdb_spi),
+			     ipsp_address(tdb->tdb_onext->tdb_dst),
+			     tdb->tdb_onext->tdb_sproto);
+
+	      if (tdb->tdb_inext)
+		l += sprintf(buffer + l,
+			     "\tPrevious SA: SPI = %08x, "
+			     "Destination = %s, Sproto = %u\n",
+			     ntohl(tdb->tdb_inext->tdb_spi),
+			     ipsp_address(tdb->tdb_inext->tdb_dst),
+			     tdb->tdb_inext->tdb_sproto);
 
 	      if (tdb->tdb_interface)
 		l += sprintf(buffer + l, "\tAssociated interface = <%s>\n",

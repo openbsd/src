@@ -56,6 +56,8 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #define BITMAP_X_SRC_FLOW              (1 << SADB_X_EXT_SRC_FLOW)
 #define BITMAP_X_DST_FLOW              (1 << SADB_X_EXT_DST_FLOW)
 #define BITMAP_X_FLOW_TYPE             (1 << SADB_X_EXT_FLOW_TYPE)
+#define BITMAP_X_SA2                   (1 << SADB_X_EXT_SA2)
+#define BITMAP_X_DST2                  (1 << SADB_X_EXT_DST2)
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -87,6 +89,8 @@ uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
   BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SA | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_DELFLOW */
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_SA | BITMAP_ADDRESS_DST | BITMAP_X_FLOW_TYPE,
+  /* X_GRPSPIS */
+  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
 };
 
 uint32_t sadb_exts_required_in[SADB_MAX+1] =
@@ -119,6 +123,8 @@ uint32_t sadb_exts_required_in[SADB_MAX+1] =
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_DELFLOW */
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+  /* X_GRPSPIS */
+  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
 };
 
 uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
@@ -151,6 +157,8 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
   BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SA | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_DELFLOW */
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_SA | BITMAP_ADDRESS_DST | BITMAP_X_FLOW_TYPE,
+  /* X_GRPSPIS */
+  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
 };
 
 uint32_t sadb_exts_required_out[SADB_MAX+1] =
@@ -183,6 +191,8 @@ uint32_t sadb_exts_required_out[SADB_MAX+1] =
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_DELFLOW */
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+  /* X_GRPSPIS */
+  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
 };
 
 int pfkeyv2_parsemessage(void *, int, void **);
@@ -259,6 +269,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 
     switch (sadb_ext->sadb_ext_type) {
       case SADB_EXT_SA:
+      case SADB_X_EXT_SA2:
 	{
 	  struct sadb_sa *sadb_sa = (struct sadb_sa *)p;
 
@@ -300,6 +311,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
       case SADB_X_EXT_DST_MASK:
       case SADB_X_EXT_SRC_FLOW:
       case SADB_X_EXT_DST_FLOW:
+      case SADB_X_EXT_DST2:
       case SADB_EXT_ADDRESS_PROXY:
 	{
 	  struct sadb_address *sadb_address = (struct sadb_address *)p;

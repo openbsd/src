@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.41 2000/09/19 04:23:13 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.42 2000/09/19 08:38:58 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1407,7 +1407,63 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	 break;
 
-	
+	case SADB_X_GRPSPIS:
+	{
+	    struct tdb *tdb1, *tdb2, *tdb3;
+	    struct sadb_protocol *sa_proto;
+
+	    ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
+	    sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
+						sizeof(struct sadb_address));
+
+	    s = spltdb();
+
+	    tdb1 = gettdb(ssa->sadb_sa_spi, sunionp,
+			  SADB_GETSPROTO(smsg->sadb_msg_satype));
+	    if (tdb1 == NULL)
+	    {
+		rval = ESRCH;
+		goto splxret;
+	    }
+
+	    ssa = (struct sadb_sa *) headers[SADB_X_EXT_SA2];
+	    sunionp = (union sockaddr_union *) (headers[SADB_X_EXT_DST2] +
+						sizeof(struct sadb_address));
+	    sa_proto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL]);
+
+	    tdb2 = gettdb(ssa->sadb_sa_spi, sunionp,
+			  SADB_GETSPROTO(sa_proto->sadb_protocol_proto));
+	    if (tdb2 == NULL)
+	    {
+		rval = ESRCH;
+		goto splxret;
+	    }
+
+	    /* Detect cycles */
+	    for (tdb3 = tdb2; tdb3; tdb3 = tdb3->tdb_onext)
+	      if (tdb3 == tdb1)
+	      {
+		  rval = ESRCH;
+		  goto splxret;
+	      }
+
+	    /* Maintenance */
+	    if ((tdb1->tdb_onext) &&
+		(tdb1->tdb_onext->tdb_inext == tdb1))
+	      tdb1->tdb_onext->tdb_inext = NULL;
+
+	    if ((tdb2->tdb_inext) &&
+		(tdb2->tdb_inext->tdb_onext == tdb2))
+	      tdb2->tdb_inext->tdb_onext = NULL;
+
+	    /* Link them */
+	    tdb1->tdb_onext = tdb2;
+	    tdb2->tdb_inext = tdb1;
+
+	    splx(s);
+	}
+	 break;
+	 
 	case SADB_X_DELFLOW:
 	    delflag = 1;   /* fall through */
 	
