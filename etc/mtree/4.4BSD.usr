@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.8 1996/07/27 10:04:32 deraadt Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.9 1996/08/23 15:30:17 etheisen Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -1614,6 +1614,12 @@ tabset          type=dir uname=root gname=wheel mode=0755
 # ./share/tmac
 /set type=file gname=wheel uname=root mode=0644
 tmac            type=dir mode=0755
+
+# ./share/tmac/mdoc
+/set type=file gname=wheel uname=root mode=0644
+mdoc            type=dir mode=0755
+# ./share/tmac/mdoc
+..
 
 # ./share/tmac/mm
 /set type=file gname=wheel uname=root mode=0644
