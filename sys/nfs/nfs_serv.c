@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.32 2002/05/10 22:07:08 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.33 2002/06/11 05:14:54 art Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1175,12 +1175,12 @@ loop1:
  * NB: Must be called at splsoftclock().
  */
 void
-nfsrvw_coalesce(owp, nfsd)
-        struct nfsrv_descript *owp;
-        struct nfsrv_descript *nfsd;
+nfsrvw_coalesce(struct nfsrv_descript *owp, struct nfsrv_descript *nfsd)
 {
         int overlap;
         struct mbuf *mp;
+
+	splassert(IPL_SOFTCLOCK);
 
         LIST_REMOVE(nfsd, nd_hash);
         LIST_REMOVE(nfsd, nd_tq);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.62 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.63 2002/06/11 05:13:59 art Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -563,9 +563,11 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	int errno;
 	void (*notify)(struct inpcb *, int);
 {
-	register struct inpcb *inp, *oinp;
+	struct inpcb *inp, *oinp;
 	struct in_addr faddr;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+
+	splassert(IPL_SOFTNET);
 
 #ifdef INET6
 	/*
