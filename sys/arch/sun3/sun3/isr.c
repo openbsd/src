@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.11 2000/08/28 22:05:26 miod Exp $	*/
+/*	$OpenBSD: isr.c,v 1.12 2001/01/04 22:33:52 miod Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 
-#include <net/netisr.h>
-
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/machdep.h>
@@ -57,10 +55,6 @@
 #include <machine/obio.h>
 
 #include "vector.h"
-
-#include "ether.h"	/* for NETHER */
-#include "ppp.h"	/* for NPPP */
-#include "bridge.h"	/* for NBRIDGE */
 
 extern int intrcnt[];	/* statistics */
 
@@ -86,80 +80,6 @@ isr_add_custom(level, handler)
 {
 	set_vector_entry(AUTOVEC_BASE + level, handler);
 }
-
-/*
- * XXX - This really belongs in some common file,
- *	i.e.  src/sys/net/netisr.c
- * Also, should use an array of chars instead of
- * a bitmask to avoid atomicity locking issues.
- */
-
-/*
- * Declarations for the netisr functions...
- * They are in the header files, but that's not
- * really a good reason to drag all those in.
- */
-void arpintr __P((void));
-void ipintr __P((void));
-void ip6intr __P((void));
-void atintr __P((void));
-void nsintr __P((void));
-void clnlintr __P((void));
-void ccittintr __P((void));
-void pppintr __P((void));
-void bridgeintr __P((void));
-
-void
-netintr()
-{
-	int n, s;
-
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-
-#if	NETHER > 0
-	if (n & (1 << NETISR_ARP))
-		arpintr();
-#endif
-#ifdef INET
-	if (n & (1 << NETISR_IP))
-		ipintr();
-#endif
-#ifdef INET6
-	if (n & (1 << NETISR_IPV6))
-		ip6intr();
-#endif
-#ifdef NETATALK
-	if (n & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#ifdef NS
-	if (n & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef ISO
-	if (n & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef CCITT
-	if (n & (1 << NETISR_CCITT)) {
-		ccittintr();
-	}
-#endif
-#if NPPP > 0
-	if (n & (1 << NETISR_PPP)) {
-		pppintr();
-	}
-#endif
-#if NBRIDGE > 0
-	if (n & (1 << NETISR_BRIDGE)) {
-		bridgeintr();
-	}
-#endif
-}
-
 
 static struct isr *isr_autovec_list[NUM_LEVELS];
 
