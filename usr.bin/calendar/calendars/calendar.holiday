@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.5 1997/08/27 10:48:30 provos Exp $
+ * $OpenBSD: calendar.holiday,v 1.6 1997/08/27 11:20:37 provos Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -460,7 +460,7 @@
 12/26	Boxing Day
 12/26	Family Day in South Africa
 12/26	St. Stephen's Day
-12/26 	Bank Holiday in Canada, Rep. of Ireland, and UK
+12/26	Bank Holiday in Canada, Rep. of Ireland, and UK
 12/27	Bank Holiday in Cayman Islands
 12/27	Constitution Day in North Korea
 12/27	Public Holiday in Lesotho, Zimbabwe

@@ -1,7 +1,7 @@
 /*
  * Wissenschaft
  *
- * $OpenBSD: calendar.wissenschaft,v 1.1 1996/12/05 06:04:55 millert Exp $
+ * $OpenBSD: calendar.wissenschaft,v 1.2 1997/08/27 11:20:42 provos Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_wissenschaft_
@@ -9,10 +9,10 @@
 
 LANG=de_DE.ISO_8859-1
 
-04/12   erster Mann im All, Juri Gagarin, 1961
-04/18   Einstein gestorben, 1955
+04/12	erster Mann im All, Juri Gagarin, 1961
+04/18	Einstein gestorben, 1955
 06/22	Konrad Zuse geboren, 1919, Berlin
-10/04   Sputnik 1, erster Satellit im Weltraum, 1957
+10/04	Sputnik 1, erster Satellit im Weltraum, 1957
 12/18	Konrad Zuse gestorben, 1995, Hünfeld
 
 

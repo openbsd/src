@@ -1,7 +1,7 @@
 /*
  * hrvatski praznici
  *
- * $OpenBSD: calendar.praznici,v 1.1 1996/12/05 06:04:57 millert Exp $
+ * $OpenBSD: calendar.praznici,v 1.2 1997/08/27 11:20:43 provos Exp $
  */
 
 #ifndef _hr_HR_ISO_8859_2_praznici
@@ -21,8 +21,8 @@ Easter+1 	Uskrsni ponedjeljak
 Easter+49	Duhovi
 Easter+50	Duhovni ponedjeljak
 Easter+39	Uza¹a¹æe
-12/25   Bo¾iæ
-12/26   Stjepandan
+12/25	Bo¾iæ
+12/26	Stjepandan
 
 /* godi¹nja doba */
 03/21*	Poèetak proljeæa

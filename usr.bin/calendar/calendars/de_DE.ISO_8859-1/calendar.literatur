@@ -1,7 +1,7 @@
 /*
  * Literatur
  *
- * $OpenBSD: calendar.literatur,v 1.2 1997/08/27 10:48:31 provos Exp $
+ * $OpenBSD: calendar.literatur,v 1.3 1997/08/27 11:20:40 provos Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_literatur_
@@ -11,15 +11,15 @@ LANG=de_DE.ISO_8859-1
 
 /* Schriftsteller */
 
-01/04   Jakob Grimm geboren, 1785
+01/04	Jakob Grimm geboren, 1785
 02/12	Immanuel Kant in Königsberg gestorben, 1804
 02/17	Heinrich Heine in Paris gestorben, 1856
 03/22	Johann Wolfgang von Goethe in Weimar gestorben, 1832
-04/22   Immanuel Kant in Königsberg geboren, 1724
+04/22	Immanuel Kant in Königsberg geboren, 1724
 05/09	Friedrich von Schiller in Weimar gestorben, 1805
 06/06	Thomas Mann in Lübeck geboren, 1875
-07/03   Franz Kafka geboren, 1883
-08/12   Thomas Mann in Kilchberg bei Zürich gestorben, 1955
+07/03	Franz Kafka geboren, 1883
+08/12	Thomas Mann in Kilchberg bei Zürich gestorben, 1955
 08/27	Georg Wilhelm Friedrich Hegel in Stuttgart geboren, 1770
 08/28	Johann Wolfgang von Goethe in Frankfurt am Main geboren, 1749
 09/20	Theodor Fontane in Berlin gestorben, 1898

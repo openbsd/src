@@ -1,7 +1,7 @@
 /*
  * Kirche in Deutschland
  *
- * $OpenBSD: calendar.kirche,v 1.1 1996/12/05 06:04:54 millert Exp $
+ * $OpenBSD: calendar.kirche,v 1.2 1997/08/27 11:20:39 provos Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_kirche_
@@ -26,7 +26,7 @@ Easter-7	Palmsonntag
 12/26	2. Weihnachtstag
 
 /* Evangelische Kirche */
-11/10   Martin Luther geboren in Eisleben, 1483
-10/31   95 Thesen von Luther, Wittenberg, 1517
+11/10	Martin Luther geboren in Eisleben, 1483
+10/31	95 Thesen von Luther, Wittenberg, 1517
 
 #endif /* !_de_DE_ISO_8859_1_kirche_ */
