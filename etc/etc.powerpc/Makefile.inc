@@ -1,9 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.10 1998/09/16 03:39:02 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 1998/09/16 20:27:26 rahnds Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
-
-# HACK ALERT 
-REL=24
-# unhack
 
 .ifdef DESTDIR
 snap_md: bsd distrib
@@ -18,12 +14,12 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/powerpc/compile/DDBOFW && \
 	    make clean && make depend && make
 	(cd  ${.CURDIR}/../sys/arch/powerpc/compile/DDBOFW/ && \
-		tar czf ${DESTDIR}/snapshot/bsdofw${REL}.tar.gz bsd )
+		tar czf ${DESTDIR}/snapshot/bsdofw${OSrev}.tar.gz bsd )
 	cd ${.CURDIR}/../sys/arch/powerpc/conf && config MIX
 	cd ${.CURDIR}/../sys/arch/powerpc/compile/MIX && \
 	    make clean && make depend && make
 	(cd  ${.CURDIR}/../sys/arch/powerpc/compile/MIX/ && \
-		tar czf ${DESTDIR}/snapshot/bsdmix${REL}.tar.gz bsd )
+		tar czf ${DESTDIR}/snapshot/bsdmix${OSrev}.tar.gz bsd )
 
 # knows about  bsd.rd, bsdofw.rd and bsdmix.rd
 distrib:
