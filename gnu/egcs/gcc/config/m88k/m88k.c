@@ -2551,7 +2551,7 @@ m88k_function_arg (args_so_far, mode, type, named)
 	   && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
     return (rtx) 0;
 
-  return gen_rtx_REG(
+  return gen_rtx_REG (
 		  ((mode == BLKmode) ? TYPE_MODE (type) : mode),
 		  2 + args_so_far);
 }
@@ -2571,10 +2571,10 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
   int bytes;
 
   if ((type != 0) &&
-      (TREE_CODE(type) == RECORD_TYPE || TREE_CODE(type) == UNION_TYPE))
+      (TREE_CODE (type) == RECORD_TYPE || TREE_CODE (type) == UNION_TYPE))
     mode = BLKmode;
 
-  bytes = (mode != BLKmode) ? GET_MODE_SIZE (mode) : int_size_in_bytes(type);
+  bytes = (mode != BLKmode) ? GET_MODE_SIZE (mode) : int_size_in_bytes (type);
 
   /* as soon as we put a structure of 32 bytes or more on stack, everything
      needs to go on stack, or varargs will lose. */
@@ -2601,76 +2601,86 @@ struct rtx_def *
 m88k_builtin_saveregs (arglist)
      tree arglist;
 {
-  rtx block, addr, argsize, dest;
+  rtx valist, regblock, addr;
   tree fntype = TREE_TYPE (current_function_decl);
   int argadj = ((!(TYPE_ARG_TYPES (fntype) != 0
 		   && (TREE_VALUE (tree_last (TYPE_ARG_TYPES (fntype)))
 		       != void_type_node)))
 		? -UNITS_PER_WORD : 0) + UNITS_PER_WORD - 1;
-  int fixed;
+  int fixed, delta;
 
-  if (CONSTANT_P (current_function_arg_offset_rtx))
-    {
-      fixed = (XINT (current_function_arg_offset_rtx, 0)
-	       + argadj) / UNITS_PER_WORD;
-      argsize = GEN_INT (fixed);
-    }
-  else
-    {
-      fixed = 0;
-      argsize = plus_constant (current_function_arg_offset_rtx, argadj);
-      argsize = expand_shift (RSHIFT_EXPR, Pmode, argsize,
-			      build_int_2 (2, 0), argsize, 0);
-    }
+  if (! CONSTANT_P (current_function_arg_offset_rtx))
+    abort ();
+
+  fixed = (XINT (current_function_arg_offset_rtx, 0) + argadj) / UNITS_PER_WORD;
 
   /* Allocate the va_list constructor */
-  block = assign_stack_local (BLKmode, 4 * UNITS_PER_WORD, BITS_PER_WORD);
-  MEM_SET_IN_STRUCT_P (block, 1);
-  RTX_UNCHANGING_P (block) = 1;
-  RTX_UNCHANGING_P (XEXP (block, 0)) = 1;
+  valist = assign_stack_local (BLKmode, 4 * UNITS_PER_WORD, BITS_PER_WORD);
+  MEM_SET_IN_STRUCT_P (valist, 1);
+  RTX_UNCHANGING_P (valist) = 1;
+  RTX_UNCHANGING_P (XEXP (valist, 0)) = 1;
 
   /* Store the argsize as the __va_arg member.  */
-  emit_move_insn (change_address (block, SImode, XEXP (block, 0)),
-		  argsize);
+  emit_move_insn (change_address (valist, SImode, XEXP (valist, 0)),
+		  GEN_INT (fixed));
 
   /* Store the arg pointer in the __va_stk member.  */
-  emit_move_insn (change_address (block, Pmode,
-				  plus_constant (XEXP (block, 0),
+  emit_move_insn (change_address (valist, Pmode,
+				  plus_constant (XEXP (valist, 0),
 						 UNITS_PER_WORD)),
-		  copy_to_reg (plus_constant( virtual_incoming_args_rtx,
+		  copy_to_reg (plus_constant (virtual_incoming_args_rtx,
 					      REG_PARM_STACK_SPACE
 						(current_function_decl))));
 
   /* Allocate the register space, and store it as the __va_reg member.  */
-  addr = assign_stack_local (BLKmode, 8 * UNITS_PER_WORD, -1);
-  MEM_SET_IN_STRUCT_P (addr, 1);
-  RTX_UNCHANGING_P (addr) = 1;
-  RTX_UNCHANGING_P (XEXP (addr, 0)) = 1;
-  emit_move_insn (change_address (block, Pmode,
-				  plus_constant (XEXP (block, 0),
-						 2 * UNITS_PER_WORD)),
-		  copy_to_reg (XEXP (addr, 0)));
-
-  /* Now store the incoming registers.  */
   if (fixed < 8)
     {
-      dest = change_address (addr, Pmode,
-			     plus_constant (XEXP (addr, 0),
-					    fixed * UNITS_PER_WORD));
-      move_block_from_reg (2 + fixed, dest, 8 - fixed,
+      if (fixed == 7)
+	{
+	  regblock = assign_stack_local (BLKmode,
+					 UNITS_PER_WORD, BITS_PER_WORD);
+          delta = 0;
+	}
+      else
+	{
+	  delta = (fixed & 1);
+	  regblock = assign_stack_local (BLKmode,
+					 (8 + delta - fixed) * UNITS_PER_WORD,
+					 -1);
+	}
+
+      MEM_SET_IN_STRUCT_P (regblock, 1);
+      RTX_UNCHANGING_P (regblock) = 1;
+      RTX_UNCHANGING_P (XEXP (regblock, 0)) = 1;
+
+      if (delta == 0)
+	addr = regblock;
+      else
+	addr = change_address (regblock, Pmode,
+			       plus_constant (XEXP (regblock, 0),
+					      delta * UNITS_PER_WORD));
+
+      emit_move_insn (change_address (valist, Pmode,
+				      plus_constant (XEXP (valist, 0),
+						     2 * UNITS_PER_WORD)),
+		      copy_to_reg (plus_constant (XEXP (regblock, 0),
+						  (delta - fixed) *
+						  UNITS_PER_WORD)));
+
+      move_block_from_reg (2 + fixed, addr, 8 - fixed,
 			   UNITS_PER_WORD * (8 - fixed));
     }
 
   if (current_function_check_memory_usage)
     {
       emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
-			 block, ptr_mode,
+			 valist, ptr_mode,
 			 GEN_INT (4 * UNITS_PER_WORD), TYPE_MODE (sizetype),
 			 GEN_INT (MEMORY_USE_RW),
 			 TYPE_MODE (integer_type_node));
       if (fixed < 8)
 	emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
-			   dest, ptr_mode,
+			   addr, ptr_mode,
 			   GEN_INT (UNITS_PER_WORD * (8 - fixed)),
 			   TYPE_MODE (sizetype),
 			   GEN_INT (MEMORY_USE_RW),
@@ -2680,7 +2690,7 @@ m88k_builtin_saveregs (arglist)
   /* Return the address of the va_list constructor, but don't put it in a
      register.  This fails when not optimizing and produces worse code when
      optimizing.  */
-  return XEXP (block, 0);
+  return XEXP (valist, 0);
 }
 
 /* If cmpsi has not been generated, emit code to do the test.  Return the
@@ -2707,12 +2717,12 @@ emit_bcnd (op, label)
      rtx label;
 {
   if (m88k_compare_op1 == const0_rtx)
-    emit_jump_insn( gen_bcnd (
+    emit_jump_insn (gen_bcnd (
 			gen_rtx (op, VOIDmode,m88k_compare_op0, const0_rtx),
 			label));
   else if (m88k_compare_op0 == const0_rtx)
-    emit_jump_insn( gen_bcnd(
-		      gen_rtx(
+    emit_jump_insn (gen_bcnd (
+		      gen_rtx (
 			swap_condition (op),
 			VOIDmode, m88k_compare_op1, const0_rtx),
 		      label));
