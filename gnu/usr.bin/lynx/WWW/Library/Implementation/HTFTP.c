@@ -57,16 +57,13 @@ BUGS:	@@@	Limit connection cache size!
 **		same time.
 */
 
-#if defined(DJGPP) && !defined(WATT32)
-#define u_long unsigned long
-#endif
-
 #include <HTUtils.h>
 
 #include <HTAlert.h>
 
 #include <HTFTP.h>	/* Implemented here */
 #include <HTTCP.h>
+#include <HTTP.h>
 #include <HTFont.h>
 
 #define REPEAT_PORT	/* Give the port number for each file */
@@ -96,7 +93,7 @@ BUGS:	@@@	Limit connection cache size!
 
 typedef struct _connection {
     struct _connection *	next;	/* Link on list		*/
-    u_long			addr;	/* IP address		*/
+    unsigned long		addr;	/* IP address		*/
     int				socket; /* Socket number for communication */
     BOOL			binary; /* Binary mode? */
 } connection;
@@ -105,12 +102,13 @@ typedef struct _connection {
 */
 #include <HTML.h>
 
-#define PUTC(c) (*targetClass.put_character)(target, c)
-#define PUTS(s) (*targetClass.put_string)(target, s)
-#define START(e) (*targetClass.start_element)(target, e, 0, 0, -1, 0)
-#define END(e) (*targetClass.end_element)(target, e, 0)
-#define FREE_TARGET (*targetClass._free)(target)
-#define ABORT_TARGET (*targetClass._free)(target)
+#define PUTC(c)      (*targetClass.put_character) (target, c)
+#define PUTS(s)      (*targetClass.put_string)    (target, s)
+#define START(e)     (*targetClass.start_element) (target, e, 0, 0, -1, 0)
+#define END(e)       (*targetClass.end_element)   (target, e, 0)
+#define FREE_TARGET  (*targetClass._free)         (target)
+#define ABORT_TARGET (*targetClass._free)         (target)
+
 struct _HTStructured {
 	CONST HTStructuredClass *	isa;
 	/* ... */
@@ -120,16 +118,12 @@ struct _HTStructured {
 **	---------------------
 */
 PUBLIC int HTfileSortMethod = FILE_BY_NAME;
+
 #ifndef DISABLE_FTP /*This disables everything to end-of-file */
 PRIVATE char ThisYear[8];
 PRIVATE char LastYear[8];
 PRIVATE int TheDate;
 PRIVATE BOOLEAN HaveYears = FALSE;
-#ifdef SOCKS
-extern BOOLEAN socks_flag;
-extern unsigned long socks_bind_remoteAddr;
-#endif /* SOCKS */
-extern char *personal_mail_address;
 
 /*	Module-Wide Variables
 **	---------------------
@@ -140,6 +134,15 @@ PRIVATE connection * control = NULL;	/* Current connection */
 PRIVATE int data_soc = -1;		/* Socket for data transfer =invalid */
 PRIVATE char *user_entered_password = NULL;
 PRIVATE char *last_username_and_host = NULL;
+
+/*
+ * ProFTPD 1.2.5rc1 is known to have a broken implementation of RETR.  If asked
+ * to retrieve a directory, it gets confused and fails subsequent commands such
+ * as CWD and LIST.  Since this is an unusual bug, we should remove this ifdef
+ * at some point - TD 2004/1/1.
+ */
+#define BROKEN_PROFTPD 1
+PRIVATE int ProFTPD_bugs = FALSE;
 
 typedef enum {
 	GENERIC_SERVER
@@ -363,6 +366,7 @@ PRIVATE char *help_message_cache_non_empty NOARGS
 {
   return(help_message_buffer);
 }
+
 PRIVATE char *help_message_cache_contents NOARGS
 {
    return(help_message_buffer);
@@ -481,6 +485,12 @@ PRIVATE int response ARGS1(
 			    continuation == ' ')
 			    continuation_response = -1; /* ended */
 		}
+#ifdef BROKEN_PROFTPD
+		if (result == 220 && LYstrstr(response_text, "ProFTPD 1.2.5")) {
+		    ProFTPD_bugs = TRUE;
+		    CTRACE((tfp, "This server is broken (RETR)\n"));
+		}
+#endif
 		break;
 	    } /* if end of line */
 
@@ -795,8 +805,8 @@ PRIVATE int get_connection ARGS2(
 	return status;			/* Bad return */
     }
 
-    CTRACE((tfp, "FTP connected, socket %d  control %ld\n",
-		con->socket, (long)con));
+    CTRACE((tfp, "FTP connected, socket %d  control %p\n",
+		con->socket, con));
     control = con;		/* Current control connection */
 
     /* Initialise buffering for control connection */
@@ -875,7 +885,7 @@ PRIVATE int get_connection ARGS2(
 		/*
 		 * Use an environment variable and the host global. - FM
 		 */
-		if ((cp=getenv("USER")) != NULL)
+		if ((cp=LYGetEnv("USER")) != NULL)
 		    StrAllocCopy(user, cp);
 		else
 		    StrAllocCopy(user, "WWWuser");
@@ -1789,7 +1799,7 @@ PRIVATE void parse_vms_dir_entry ARGS2(
     /** Wrap it up **/
     CTRACE((tfp, "HTFTP: VMS filename: %s  date: %s  size: %d\n",
 		entry_info->filename,
-		entry_info->date ? entry_info->date : "",
+		NonNull(entry_info->date),
 		entry_info->size));
     return;
 } /* parse_vms_dir_entry() */
@@ -1862,7 +1872,7 @@ PRIVATE void parse_ms_windows_dir_entry ARGS2(
     /** Wrap it up **/
     CTRACE((tfp, "HTFTP: MS Windows filename: %s  date: %s  size: %d\n",
 		entry_info->filename,
-		entry_info->date ? entry_info->date : "",
+		NonNull(entry_info->date),
 		entry_info->size));
     return;
 } /* parse_ms_windows_dir_entry */
@@ -1971,7 +1981,7 @@ PRIVATE void parse_windows_nt_dir_entry ARGS2(
     /** Wrap it up **/
     CTRACE((tfp, "HTFTP: Windows NT filename: %s  date: %s  size: %d\n",
 		entry_info->filename,
-		entry_info->date ? entry_info->date : "",
+		NonNull(entry_info->date),
 		entry_info->size));
     return;
 } /* parse_windows_nt_dir_entry */
@@ -2112,7 +2122,7 @@ PRIVATE void parse_cms_dir_entry ARGS2(
     /** Wrap it up. **/
     CTRACE((tfp, "HTFTP: VM/CMS filename: %s  date: %s  size: %d\n",
 		entry_info->filename,
-		entry_info->date ? entry_info->date : "",
+		NonNull(entry_info->date),
 		entry_info->size));
     return;
 } /* parse_cms_dir_entry */
@@ -2632,7 +2642,7 @@ PRIVATE int read_directory ARGS4(
     **	we could someday set up an equivalent listing
     **	for Unix ftp servers. - FM
     */
-    need_parent_link = HTDirTitles(target, (HTAnchor*)parent, tildeIsTop);
+    need_parent_link = HTDirTitles(target, parent, tildeIsTop);
 
     data_read_pointer = data_write_pointer = data_buffer;
 
@@ -2659,7 +2669,6 @@ PRIVATE int read_directory ARGS4(
 	}
     }
     FREE (filename);
-
 
     {
 	HTBTree * bt = HTBTree_new((HTComparer)compare_EntryInfo_structs);
@@ -2750,8 +2759,6 @@ AgainForMultiNet:
 	    BytesReceived += chunk->size;
 	    if (BytesReceived > BytesReported + 1024) {
 #ifdef _WINDOWS
-		extern int ws_read_per_sec;
-
 		sprintf(NumBytes,gettext("Transferred %d bytes (%5d)"),
 				BytesReceived, ws_read_per_sec);
 #else
@@ -2772,7 +2779,7 @@ AgainForMultiNet:
 		FREE(spilledname);
 		CTRACE((tfp, "Adding file to BTree: %s\n",
 			    entry_info->filename));
-		HTBTree_add(bt, (EntryInfo *)entry_info);
+		HTBTree_add(bt, entry_info);
 	    } else {
 		free_entryinfo_struct_contents(entry_info);
 		FREE(entry_info);
@@ -2912,36 +2919,22 @@ unload_btree:
     return HT_LOADED;
 }
 
-/*	Retrieve File from Server
-**	-------------------------
-**
-** On entry,
-**	name		WWW address of a file: document, including hostname
-** On exit,
-**	returns		Socket number for file if good.
-**			<0 if bad.
-*/
-PUBLIC int HTFTPLoad ARGS4(
+/*
+ * Setup an FTP connection.
+ */
+PRIVATE int setup_connection ARGS2(
 	CONST char *,		name,
-	HTParentAnchor *,	anchor,
-	HTFormat,		format_out,
-	HTStream *,		sink)
+	HTParentAnchor *,	anchor)
 {
-    BOOL isDirectory = NO;
-    HTAtom * encoding = NULL;
-    int status, final_status;
     int retry;			/* How many times tried? */
-    int outstanding = 1;	/* outstanding control connection responses
-				   that we are willing to wait for, if we
-				   get to the point of reading data - kw */
-    HTFormat format;
+    int status;
 
     /* set use_list to NOT since we don't know what kind of server
      * this is yet.  And set the type to GENERIC
      */
     use_list = FALSE;
     server_type = GENERIC_SERVER;
-    HTReadProgress(0,0);
+    ProFTPD_bugs = FALSE;
 
     for (retry = 0; retry < 2; retry++) { /* For timed out/broken connections */
 	status = get_connection(name, anchor);
@@ -3019,7 +3012,7 @@ PUBLIC int HTFTPLoad ARGS4(
 		    return -99;
 		}
 		passive_port = (p0<<8) + p1;
-		snprintf(dst, sizeof(dst), "%d.%d.%d.%d", h0, h1, h2, h3);
+		sprintf(dst, "%d.%d.%d.%d", h0, h1, h2, h3);
 	    } else if (strcmp(p, "EPSV") == 0) {
 		unsigned char c0, c1, c2, c3;
 		struct sockaddr_storage ss;
@@ -3078,10 +3071,10 @@ PUBLIC int HTFTPLoad ARGS4(
 	    /* Open connection for data:  */
 
 #ifdef INET6
-	    HTSprintf0(&command, "ftp://%s:%d/", dst, passive_port);
+	    HTSprintf0(&command, "%s//%s:%d/", STR_FTP_URL, dst, passive_port);
 #else
-	    HTSprintf0(&command, "ftp://%d.%d.%d.%d:%d/",
-		    h0, h1, h2, h3, passive_port);
+	    HTSprintf0(&command, "%s//%d.%d.%d.%d:%d/",
+		    STR_FTP_URL, h0, h1, h2, h3, passive_port);
 #endif
 	    status = HTDoConnect(command, "FTP data", passive_port, &data_soc);
 	    FREE(command);
@@ -3098,6 +3091,37 @@ PUBLIC int HTFTPLoad ARGS4(
 	break;	/* No more retries */
 
     } /* for retries */
+    return status;
+}
+
+/*	Retrieve File from Server
+**	-------------------------
+**
+** On entry,
+**	name		WWW address of a file: document, including hostname
+** On exit,
+**	returns		Socket number for file if good.
+**			<0 if bad.
+*/
+PUBLIC int HTFTPLoad ARGS4(
+	CONST char *,		name,
+	HTParentAnchor *,	anchor,
+	HTFormat,		format_out,
+	HTStream *,		sink)
+{
+    BOOL isDirectory = NO;
+    HTAtom * encoding = NULL;
+    int status, final_status;
+    int outstanding = 1;	/* outstanding control connection responses
+				   that we are willing to wait for, if we
+				   get to the point of reading data - kw */
+    HTFormat format;
+
+    CTRACE((tfp, "HTFTPLoad(%s) %s connection\n", name, ftp_local_passive ? "passive" : "normal"));
+
+    HTReadProgress(0,0);
+
+    status = setup_connection(name, anchor);
     if (status < 0)
 	return status;		/* Failed with this code */
 
@@ -3548,6 +3572,23 @@ PUBLIC int HTFTPLoad ARGS4(
 	*/
 	if (!(type) || (type && *type != 'D')) {
 	    status = send_cmd_2("RETR", filename);
+#ifdef BROKEN_PROFTPD
+	    /*
+	     * ProFTPD 1.2.5rc1 gets confused when asked to RETR a directory.
+	     */
+	    if (status >= 5) {
+		int check;
+
+		if (ProFTPD_bugs) {
+		    CTRACE((tfp, "{{reconnecting...\n"));
+		    close_connection(control);
+		    check = setup_connection(name, anchor);
+		    CTRACE((tfp, "...done }}reconnecting\n"));
+		    if (check < 0)
+			return check;
+		}
+	    }
+#endif
 	} else {
 	    status = 5;		/* Failed status set as flag. - FM */
 	}

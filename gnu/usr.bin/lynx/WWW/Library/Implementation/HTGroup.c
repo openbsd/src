@@ -652,7 +652,7 @@ PUBLIC GroupDefList *HTAA_readGroupFile ARGS1(CONST char *, filename)
     FILE *fp;
     GroupCache *group_cache;
 
-    if (!filename || !*filename) return NULL;
+    if (isEmpty(filename)) return NULL;
 
     if (!group_cache_list)
 	group_cache_list = HTList_new();

@@ -11,7 +11,7 @@
 #include <HTUtils.h>
 
 #include <HTWSRC.h>
-
+#include <LYUtils.h>
 
 #include <HTML.h>
 #include <HTParse.h>
@@ -92,7 +92,7 @@ struct _HTStream {
 	CONST HTStreamClass *	isa;
 	HTStructured *		target;
 	char *			par_value[PAR_COUNT];
-	enum tokenstate 	state;
+	enum tokenstate		state;
 	char			param[BIG+1];
 	int			param_number;
 	int			param_count;
@@ -335,7 +335,8 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 	    char * www_database;
 	    www_database = HTEscape(me->par_value[PAR_DATABASE_NAME],
 		URL_XALPHAS);
-	    HTSprintf0(&WSRC_address, "wais://%s%s%s/%s",
+	    HTSprintf0(&WSRC_address, "%s//%s%s%s/%s",
+		STR_WAIS_URL,
 		me->par_value[PAR_IP_NAME],
 		me->par_value[PAR_TCP_PORT] ? ":" : "",
 		me->par_value[PAR_TCP_PORT] ? me->par_value[PAR_TCP_PORT] :"",
@@ -430,7 +431,7 @@ PRIVATE void WSRCParser_abort ARGS2(HTStream *, me, HTError, e GCC_UNUSED)
 }
 
 
-/*		Stream subclass 	-- method routines
+/*		Stream subclass		-- method routines
 **		---------------
 */
 

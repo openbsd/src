@@ -5,60 +5,66 @@
 #include <HTAnchor.h>
 #endif /* HTANCHOR_H */
 
-typedef struct link {
+typedef struct {
+    char *hl_text;
+    short hl_x;
+} HiliteInfo;
+
+typedef struct {
+    HiliteInfo *hl_info;
+    HiliteInfo hl_base;
+    short hl_len;              /* number of strings in this struct */
+} HiliteList;
+
+typedef struct {
     char *lname;
     char *target;
-    char *hightext;
-    char *hightext2;
-    int hightext2_offset;
+    char *l_hightext;
+    char *l_hightext2;
+    int l_hightext2_offset;
     BOOL inUnderline;	/* TRUE when this link is in underlined context. */
     int lx;
     int ly;
     int type;		/* Type of link, Forms, WWW, etc. */
     int anchor_number;	/* The anchor number within the HText structure.  */
     int anchor_line_num;/* The anchor line number in the HText structure. */
-    struct _FormInfo *form;	/* Pointer to form info. */
-} linkstruct;
-extern linkstruct links[MAXLINKS];
+    HiliteList list;
+    struct _FormInfo *l_form;	/* Pointer to form info. */
+} LinkInfo;
+extern LinkInfo links[MAXLINKS];
 extern int nlinks;
 
-typedef struct _document {
-   char * title;
-   char * address;
-   char * post_data;
-   char * post_content_type;
-   char * bookmark;
-   BOOL   safe;
-   BOOL   isHEAD;
-   int    link;
-   int    line;
-   BOOL   internal_link;	/* whether doc was reached via an internal
+typedef struct {
+    /* FIXME: see DocAddress */
+    char * title;
+    char * address;
+    bstring * post_data;
+    char * post_content_type;
+    char * bookmark;
+    BOOL   isHEAD;
+    BOOL   safe;
+
+    int    link;
+    int    line;
+    BOOL   internal_link;	/* whether doc was reached via an internal
 				 (fragment) link. - kw */
 #ifdef USE_COLOR_STYLE
-   char * style;
+    char * style;
 #endif
-} document;
+} DocInfo;
 
 #ifndef HTFORMS_H
 #include <HTForms.h>
 #endif /* HTFORMS_H */
 
-typedef struct _histstruct {
-    char * title;
-    char * address;
-    char * post_data;
-    char * post_content_type;
-    char * bookmark;
-    BOOL   safe;
-    BOOL   isHEAD;
-    int    link;
-    int    line;
-    BOOL   internal_link;	/* whether doc was reached via an internal
-				 (fragment) link. - kw */
+typedef struct {
+    DocInfo hdoc;
     int    intern_seq_start;	/* indicates which element on the history
 				   is the start of this sequence of
 				   "internal links", otherwise -1 */
-} histstruct;
+} HistInfo;
+
+#define HDOC(n) history[n].hdoc
 
 extern int Visited_Links_As;
 
@@ -77,7 +83,7 @@ typedef struct _VisitedLink {
     struct _VisitedLink *prev_first;
 } VisitedLink;
 
-extern histstruct history[MAXHIST];
+extern HistInfo history[MAXHIST];
 extern int nhist;
 
 /******************************************************************************/

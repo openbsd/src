@@ -1,27 +1,12 @@
-/* $Id: Xsystem.c,v 1.2 2003/05/17 15:01:52 mickey Exp $
+/* $Id: Xsystem.c,v 1.3 2004/06/22 04:01:51 avsm Exp $
  *	like system("cmd") but return with exit code of "cmd"
  *	for Turbo-C/MS-C/LSI-C
  *  This code is in the public domain.
  *
  * $Log: Xsystem.c,v $
- * Revision 1.2  2003/05/17 15:01:52  mickey
- * no need for O0 on hppa anymore
- *
- * Revision 1.1  2003/05/01 18:59:40  avsm
- * Update to lynx-2.8.4-rel1, patchset d, now with IPv6 as well
- *
- * Local patches we maintain to the distribution are:
- * - replace unbounded fscanf with fgets (avsm)
- * - spelling fixes (deraadt)
- * - default to ftp passive (deraadt)
- * - work with non-exec scripts (deraadt,hin,maja)
- * - be more careful with rlogin username (art)
- * - default to our webpage (deraadt)
- * - install helpfiles locally (maja)
- * - mkdtemp temp space directory (art)
- * - install more recent config.guess (avsm)
- *
- * Tested by beck,millert,grange,fries,miod and others, deraadt@ ok
+ * Revision 1.3  2004/06/22 04:01:51  avsm
+ * update to lynx 2.8.5rel.1
+ * tested todd@,naddy@. millert@ deraadt@ ok
  *
  *
  * Revision 1.14  1997/10/17 (Fri) 16:28:24  senshu
@@ -43,6 +28,9 @@
  * NEAR for ms-c
  *
  */
+#include <LYUtils.h>
+
+#if 0
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,6 +39,7 @@
 #include <process.h>
 #ifndef __CYGWIN__
 #include <dos.h>
+#endif
 #endif
 
 #include <LYStrings.h>
@@ -180,7 +169,7 @@ csystem(PRO * p, int flag)
     char SW[3];
     int rc;
 
-    if ((cmp = getenv("COMSPEC")) == 0)
+    if ((cmp = LYGetEnv("COMSPEC")) == 0)
 	return -2;
     SW[0] = (char) getswchar();
     SW[1] = 'c';
@@ -367,7 +356,7 @@ prog_go(PRO * p, int flag)
 	return csystem(p, flag);
 
     if (s < p->cmd) {		/* cmd has no PATH nor Drive */
-	ep = getenv("PATH");
+	ep = LYGetEnv("PATH");
 	LYstrncpy(cmdb, p->cmd, sizeof(cmdb) - 1);
 	for (;;) {
 	    if (extp) {		/* has extension */
@@ -417,7 +406,7 @@ tmpf(char *tp)
     char *ev;
     int i;
 
-    if ((ev = getenv("TMP")) != 0) {
+    if ((ev = LYGetEnv("TMP")) != 0) {
 	LYstrncpy(tplate, ev, sizeof(tplate) - 2 - strlen(tp));
 	i = strlen(ev);
 	if (i && ev[i - 1] != '\\' && ev[i - 1] != '/')
@@ -493,9 +482,6 @@ xsystem(char *cmd)
     int rdstdin, rdstdout;
     int rc = 0;
     static char *cmdline = 0;
-#if USECMDLINE
-    char *oldcmdline;
-#endif
 
 #ifdef SH_EX	/* 1997/11/01 (Sat) 10:04:03 add by JH7AYN */
     pif = cmd;
@@ -517,13 +503,10 @@ xsystem(char *cmd)
     psstdin = psstdout = rdstdin = rdstdout = -1;
     while (p) {
 #if USECMDLINE
-	if (!getenv("NOCMDLINE")) {
-	    oldcmdline = cmdline;
+	if (!LYGetEnv("NOCMDLINE")) {
 	    cmdline = xmalloc(strlen(p->cmd) + strlen(p->arg) + 10);
 	    sprintf(cmdline, "CMDLINE=%s %s", p->cmd, p->arg);
 	    putenv(cmdline);
-	    if (oldcmdline)
-		free(oldcmdline);
 	}
 #endif
 	if (p->next)
@@ -614,8 +597,6 @@ int exec_command(char * cmd, int wait_flag)
 
 
 #ifdef TEST
-#include <stdio.h>
-
 void
 main()
 {

@@ -18,4 +18,3 @@ extern void save_bookmark_link PARAMS((char *address, char *title));
 extern void set_default_bookmark_page PARAMS((char * value));
 
 #endif /* LYBOOKMARK_H */
-

@@ -276,7 +276,3 @@ extern HTStream * SGML_new PARAMS((
 extern CONST HTStreamClass SGMLParser;
 
 #endif	/* SGML_H */
-
-/*
-
-    */

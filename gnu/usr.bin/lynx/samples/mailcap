@@ -26,8 +26,8 @@
 #        configuration file for Lynx
 
 # In the samples given   test=test -n "$DISPLAY"   is used to
-# determine if the current session is X capible by checking
-# for the existance of a DISPLAY environment variable.
+# determine if the current session is X capable by checking
+# for the existence of a DISPLAY environment variable.
 # Lynx actually uses a getenv() call for DISPLAY (DECW$DISPLAY
 # on VMS) when it encounters   test=test -n "$DISPLAY"  or
 # test=test -z "$DISPLAY"  in a viewer assignment, instead of

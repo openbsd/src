@@ -67,12 +67,20 @@ $!
 $ if transport .eqs. "SOCKETSHR_TCP" then extra = extra + ",_DECC_V4_SOURCE"
 $ if transport .eqs. "TCPWARE" then extra = extra + ",UCX"
 $!
+$ if p2 .nes. ""
+$ then
+$   ssl_arg = "openssl"
+$   extra = extra + ",USE_SSL,USE_OPENSSL_INCL"
+$ else
+$   ssl_arg = ""
+$ endif
+$!
 $!	Compiler options can be specified here.  If there was
 $!	a second argument (with any value), then debugger mode
 $!	with no optimization will be specified as well. - FM
 $!
 $ cc_opts = ""
-$ if p2 .nes. "" then cc_opts = cc_opts + "/DEBUG/NOOPT"
+$ if p3 .nes. "" then cc_opts = cc_opts + "/DEBUG/NOOPT"
 $!
 $ IF f$trnlnm("VAXCMSG") .eqs. "DECC$MSG" .or. -
      f$trnlnm("DECC$CC_DEFAULT") .eqs. "/DECC" .or. -

@@ -5,6 +5,9 @@
 TOP="${1-.}"
 OUT=cfg_defs.h
 
+# just in case we want to run this outside the makefile
+: ${SHELL:=/bin/sh}
+
 cat >$OUT <<EOF
 #ifndef CFG_DEFS_H
 #define CFG_DEFS_H 1
@@ -20,7 +23,7 @@ sed \
 	-e 's/^.[^=]*_cv_//' \
 	-e 's/=\${.*=/=/'  \
 	-e 's/}$//'          \
-	config.cache | /bin/sh $TOP/cfg_edit.sh >>$OUT
+	config.cache | $SHELL $TOP/cfg_edit.sh >>$OUT
 
 cat >>$OUT <<EOF
 };
@@ -36,7 +39,7 @@ sed	-e 's@	@ @g' \
 	-e 's@^[ 	]*#define[ 	]*@@' \
 	-e 's@[ ]*/\*.*\*/@@' \
 	-e 's@[ 	][ 	]*@=@' \
-    | /bin/sh $TOP/cfg_edit.sh >>$OUT
+    | $SHELL $TOP/cfg_edit.sh >>$OUT
 
 cat >>$OUT <<EOF
 };

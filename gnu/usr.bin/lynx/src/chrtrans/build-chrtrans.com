@@ -114,6 +114,7 @@ $ makeuctb mnem_suni.tbl
 $ makeuctb mnem2_suni.tbl
 $ makeuctb mnem_suni.tbl
 $ makeuctb next_uni.tbl
+$ makeuctb pt154_uni.tbl
 $ makeuctb rfc_suni.tbl
 $ makeuctb utf8_uni.tbl
 $ makeuctb viscii_uni.tbl

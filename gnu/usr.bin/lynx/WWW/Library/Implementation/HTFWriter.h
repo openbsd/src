@@ -23,7 +23,4 @@ extern HTStream * HTSaveLocally PARAMS((
         HTParentAnchor *        anchor, /* Not used */
         HTStream *              sink));
 
-#endif
-/*
-
-   end */
+#endif /* HTFWRITE_H */

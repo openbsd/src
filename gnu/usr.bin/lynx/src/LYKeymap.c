@@ -77,14 +77,8 @@ LYK_REFRESH,      LYK_ACTIVATE,     LYK_DOWN_TWO,      0,
 /* ^L */            /* cr */        /* ^N */       /* ^O */
 #endif
 
-#ifdef SH_EX	/* 1998/10/02 (Fri) 08:48:44 */
 LYK_UP_TWO,       LYK_CHG_CENTER,   LYK_RELOAD,    LYK_TO_CLIPBOARD,
 /* ^P */            /* XON */       /* ^R */       /* ^S */
-
-#else
-LYK_UP_TWO,             0,          LYK_RELOAD,        0,
-/* ^P */            /* XON */       /* ^R */       /* XOFF */
-#endif
 
 LYK_TRACE_TOGGLE,       0,        LYK_SWITCH_DTD,  LYK_REFRESH,
 /* ^T */            /* ^U */        /* ^V */       /* ^W */
@@ -216,7 +210,7 @@ LYK_PREV_LINK,    LYK_NEXT_LINK,    LYK_ACTIVATE,   LYK_PREV_DOC,
 LYK_NEXT_PAGE,    LYK_PREV_PAGE,    LYK_HOME,       LYK_END,
 /* PGDOWN */      /* PGUP */        /* HOME */      /* END */
 
-#if (defined(_WINDOWS) || defined(__DJGPP__) || defined(__CYGWIN__))
+#if (defined(_WINDOWS) || defined(__DJGPP__))
 
 LYK_DWIMHELP,          0,              0,             0,
 /* F1*/
@@ -225,7 +219,7 @@ LYK_DWIMHELP,          0,              0,             0,
 LYK_DWIMHELP,     LYK_ACTIVATE,     LYK_HOME,       LYK_END,
 /* F1*/ 	  /* Do key */      /* Find key */  /* Select key */
 
-#endif /* _WINDOWS || __DJGPP__ || __CYGWIN__ */
+#endif /* _WINDOWS || __DJGPP__ */
 
 LYK_UP_TWO,       LYK_DOWN_TWO,     LYK_DO_NOTHING, LYK_FASTBACKW_LINK,
 /* Insert key */  /* Remove key */  /* DO_NOTHING*/ /* Back tab */
@@ -935,11 +929,9 @@ PRIVATE Kcmd revmap[] = {
 	LYK_INSTALL, "INSTALL",
 	"install file or tagged files into a system area" ),
 #endif /* DIRED_SUPPORT */
-#ifdef SH_EX /* 1999/01/01 (Fri) 01:18:12 */
     DATA(
 	LYK_CHG_CENTER, "CHANGE_CENTER",
 	"toggle center alignment in HTML TABLE" ),
-#endif
 #ifdef KANJI_CODE_OVERRIDE
     DATA(
 	LYK_CHG_KCODE, "CHANGE_KCODE",
@@ -991,7 +983,7 @@ PRIVATE CONST struct {
     { ' ',		"<space>" },
     { '<',		"<" },
     { '>',		">" },
-    { 0177,		"<delete>" },
+    { CH_DEL,		"<delete>" },
     { UPARROW,		"Up Arrow" },
     { DNARROW,		"Down Arrow" },
     { RTARROW,		"Right Arrow" },
@@ -1172,9 +1164,9 @@ PUBLIC char *LYKeycodeToString ARGS2 (
 	else if (c < ' ')
 	    sprintf(buf, "^%c", c|0100);
 	else if (c >= 0400)
-	    sprintf(buf, "key-%#x", c);
+	    sprintf(buf, "key-0x%x", c);
 	else
-	    return 0;
+	    sprintf(buf, "0x%x", c);
     }
     return buf;
 }
@@ -1186,14 +1178,19 @@ PUBLIC int LYStringToKeycode ARGS1 (
     int key = -1;
     int len = strlen(src);
 
-    if (len == 1)
+    if (len == 1) {
 	key = *src;
-    else if (len == 2 && *src == '^')
+    } else if (len == 2 && *src == '^') {
 	key = src[1] & 0x1f;
-    else if (len > 6 && !strncasecomp(src, "key-", 4)) {
+    } else if (len > 2 && !strncasecomp(src, "0x", 2)) {
+	char *dst = 0;
+	key = strtol(src, &dst, 0);
+	if (isEmpty(dst))
+	    key = -1;
+    } else if (len > 6 && !strncasecomp(src, "key-", 4)) {
 	char *dst = 0;
 	key = strtol(src + 4, &dst, 0);
-	if (dst == 0 || *dst != 0)
+	if (isEmpty(dst))
 	    key = -1;
     }
     if (key < 0) {
@@ -1504,125 +1501,129 @@ PUBLIC int remap ARGS3(
     return 0;
 }
 
+typedef struct {
+    int	code;
+    LYKeymap_t map;
+    LYKeymap_t save;
+} ANY_KEYS;
+
+/*
+ * Save the given keys in the table, setting them to the map'd value.
+ */
+PRIVATE void set_any_keys ARGS2(
+	ANY_KEYS *,	table,
+	int,		size)
+{
+    int j, k;
+
+    for (j = 0; j < size; ++j) {
+	k = table[j].code + 1;
+	table[j].save = keymap[k];
+	keymap[k] = table[j].map;
+    }
+}
+
+/*
+ * Restore the given keys from the table.
+ */
+PRIVATE void reset_any_keys ARGS2(
+	ANY_KEYS *,	table,
+	int,		size)
+{
+    int j, k;
+
+    for (j = 0; j < size; ++j) {
+	k = table[j].code + 1;
+	keymap[k] = table[j].save;
+    }
+}
+
+static ANY_KEYS vms_keys_table[] = {
+    { 26,   LYK_ABORT,   0 },	/* control-Z */
+    { '$',  LYK_SHELL,   0 },
+};
 
 PUBLIC void set_vms_keys NOARGS
 {
-      keymap[26+1] = LYK_ABORT;  /* control-Z */
-      keymap['$'+1] = LYK_SHELL;
+    set_any_keys(vms_keys_table, TABLESIZE(vms_keys_table));
 }
 
-static LYKeymap_t saved_vi_keys[4];
+static ANY_KEYS vi_keys_table[] = {
+    { 'h', LYK_PREV_DOC,  0 },
+    { 'j', LYK_NEXT_LINK, 0 },
+    { 'k', LYK_PREV_LINK, 0 },
+    { 'l', LYK_ACTIVATE,  0 },
+};
+
 static BOOLEAN did_vi_keys;
 
 PUBLIC void set_vi_keys NOARGS
 {
-      saved_vi_keys[0] = keymap['h'+1];
-      keymap['h'+1] = LYK_PREV_DOC;
-      saved_vi_keys[1] = keymap['j'+1];
-      keymap['j'+1] = LYK_NEXT_LINK;
-      saved_vi_keys[2] = keymap['k'+1];
-      keymap['k'+1] = LYK_PREV_LINK;
-      saved_vi_keys[3] = keymap['l'+1];
-      keymap['l'+1] = LYK_ACTIVATE;
-
-      did_vi_keys = TRUE;
+    set_any_keys(vi_keys_table, TABLESIZE(vi_keys_table));
+    did_vi_keys = TRUE;
 }
 
 PUBLIC void reset_vi_keys NOARGS
 {
-      if (!did_vi_keys)
-              return;
-
-      keymap['h'+1] = saved_vi_keys[0];
-      keymap['j'+1] = saved_vi_keys[1];
-      keymap['k'+1] = saved_vi_keys[2];
-      keymap['l'+1] = saved_vi_keys[3];
-
-      did_vi_keys = FALSE;
+    if (did_vi_keys) {
+	reset_any_keys(vi_keys_table, TABLESIZE(vi_keys_table));
+	did_vi_keys = FALSE;
+    }
 }
 
-static LYKeymap_t saved_emacs_keys[4];
+static ANY_KEYS emacs_keys_table[] = {
+    { 2,  LYK_PREV_DOC,  0 },	/* ^B */
+    { 14, LYK_NEXT_LINK, 0 },	/* ^N */
+    { 16, LYK_PREV_LINK, 0 },	/* ^P */
+    { 6,  LYK_ACTIVATE,  0 },	/* ^F */
+};
+
 static BOOLEAN did_emacs_keys;
 
 PUBLIC void set_emacs_keys NOARGS
 {
-      saved_emacs_keys[0] = keymap[2+1];
-      keymap[2+1] = LYK_PREV_DOC;       /* ^B */
-      saved_emacs_keys[1] = keymap[14+1];
-      keymap[14+1] = LYK_NEXT_LINK;     /* ^N */
-      saved_emacs_keys[2] = keymap[16+1];
-      keymap[16+1] = LYK_PREV_LINK;     /* ^P */
-      saved_emacs_keys[3] = keymap[6+1];
-      keymap[6+1] = LYK_ACTIVATE;         /* ^F */
-
-      did_emacs_keys = TRUE;
+    set_any_keys(emacs_keys_table, TABLESIZE(emacs_keys_table));
+    did_emacs_keys = TRUE;
 }
 
 PUBLIC void reset_emacs_keys NOARGS
 {
-      if (!did_emacs_keys)
-              return;
-
-      keymap[2+1] = saved_emacs_keys[0];
-      keymap[14+1] = saved_emacs_keys[1];
-      keymap[16+1] = saved_emacs_keys[2];
-      keymap[6+1] = saved_emacs_keys[3];
-
-      did_emacs_keys = FALSE;
+    if (did_emacs_keys) {
+	reset_any_keys(emacs_keys_table, TABLESIZE(emacs_keys_table));
+	did_emacs_keys = FALSE;
+    }
 }
 
-static LYKeymap_t saved_number_keys[9];
+/*
+ * Map numbers to functions as labeled on the IBM Enhanced keypad, and save
+ * their original mapping for reset_numbers_as_arrows().  - FM
+ */
+static ANY_KEYS number_keys_table[] = {
+    { '1', LYK_END,        0 },
+    { '2', LYK_NEXT_LINK,  0 },
+    { '3', LYK_NEXT_PAGE,  0 },
+    { '4', LYK_PREV_DOC,   0 },
+    { '5', LYK_DO_NOTHING, 0 },
+    { '6', LYK_ACTIVATE,   0 },
+    { '7', LYK_HOME,       0 },
+    { '8', LYK_PREV_LINK,  0 },
+    { '9', LYK_PREV_PAGE,  0 },
+};
+
 static BOOLEAN did_number_keys;
 
 PUBLIC void set_numbers_as_arrows NOARGS
 {
-    /*
-     *  Map numbers to functions as labeled on the
-     *  IBM Enhanced keypad, and save their original
-     *  mapping for reset_numbers_as_arrows(). - FM
-     */
-    saved_number_keys[0] = keymap['4'+1];
-    keymap['4'+1] = LYK_PREV_DOC;
-    saved_number_keys[1] = keymap['2'+1];
-    keymap['2'+1] = LYK_NEXT_LINK;
-    saved_number_keys[2] = keymap['8'+1];
-    keymap['8'+1] = LYK_PREV_LINK;
-    saved_number_keys[3] = keymap['6'+1];
-    keymap['6'+1] = LYK_ACTIVATE;
-    saved_number_keys[4] = keymap['7'+1];
-    keymap['7'+1] = LYK_HOME;
-    saved_number_keys[5] = keymap['1'+1];
-    keymap['1'+1] = LYK_END;
-    saved_number_keys[6] = keymap['9'+1];
-    keymap['9'+1] = LYK_PREV_PAGE;
-    saved_number_keys[7] = keymap['3'+1];
-    keymap['3'+1] = LYK_NEXT_PAGE;
-
-    /*
-     *  Disable the 5.
-     */
-    saved_number_keys[8] = keymap['5'+1];
-    keymap['5'+1] = LYK_DO_NOTHING;
-
+    set_any_keys(number_keys_table, TABLESIZE(number_keys_table));
     did_number_keys = TRUE;
 }
 
 PUBLIC void reset_numbers_as_arrows NOARGS
 {
-    if (!did_number_keys)
-	return;
-
-    keymap['4'+1] = saved_number_keys[0];
-    keymap['2'+1] = saved_number_keys[1];
-    keymap['8'+1] = saved_number_keys[2];
-    keymap['6'+1] = saved_number_keys[3];
-    keymap['7'+1] = saved_number_keys[4];
-    keymap['1'+1] = saved_number_keys[5];
-    keymap['9'+1] = saved_number_keys[6];
-    keymap['3'+1] = saved_number_keys[7];
-    keymap['5'+1] = saved_number_keys[8];
-
-    did_number_keys = FALSE;
+    if (did_number_keys) {
+	reset_any_keys(number_keys_table, TABLESIZE(number_keys_table));
+	did_number_keys = FALSE;
+    }
 }
 
 PUBLIC char *key_for_func ARGS1 (
@@ -1655,6 +1656,7 @@ PUBLIC char *fmt_keys ARGS2(
     BOOLEAN quotes = FALSE;
     char *fmt_first;
     char *fmt_second;
+
     if (lkc_first < 0)
 	return NULL;
     fmt_first = LYKeycodeToString(lkc_first, TRUE);

@@ -53,7 +53,7 @@
 
 /*	Module-wide variables
 */
-PRIVATE int s;					/* Socket for FingerHost */
+PRIVATE int finger_fd;				/* Socket for FingerHost */
 
 struct _HTStructured {
 	CONST HTStructuredClass * isa;		/* For gopher streams */
@@ -69,7 +69,7 @@ PRIVATE HTStructuredClass targetClass;		/* Copy of fn addresses */
 PRIVATE BOOL initialized = NO;
 PRIVATE BOOL initialize NOARGS
 {
-  s = -1;		/* Disconnected */
+  finger_fd = -1;		/* Disconnected */
   return YES;
 }
 
@@ -124,16 +124,16 @@ PRIVATE int response ARGS5(
 
     /* Set up buffering.
     */
-    HTInitInput(s);
+    HTInitInput(finger_fd);
 
     /* Send the command.
     */
     CTRACE((tfp, "HTFinger command to be sent: %s", command));
-    status = NETWRITE(s, (char *)command, length);
+    status = NETWRITE(finger_fd, (char *)command, length);
     if (status < 0) {
 	CTRACE((tfp, "HTFinger: Unable to send command. Disconnecting.\n"));
-	NETCLOSE(s);
-	s = -1;
+	NETCLOSE(finger_fd);
+	finger_fd = -1;
 	return status;
     } /* if bad status */
 
@@ -203,7 +203,7 @@ PRIVATE int response ARGS5(
 	     */
 	    p = l = line;
 	    while (*l) {
-		if (strncmp(l, "news:", 5) &&
+		if (strncmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
 		    strncmp(l, "snews://", 8) &&
 		    strncmp(l, "nntp://", 7) &&
 		    strncmp(l, "snewspost:", 10) &&
@@ -216,7 +216,7 @@ PRIVATE int response ARGS5(
 		    strncmp(l, "http://", 7) &&
 		    strncmp(l, "https://", 8) &&
 		    strncmp(l, "wais://", 7) &&
-		    strncmp(l, "mailto:", 7) &&
+		    strncmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
 		    strncmp(l, "cso://", 6) &&
 		    strncmp(l, "gopher://", 9))
 		    PUTC(*l++);
@@ -232,8 +232,8 @@ PRIVATE int response ARGS5(
 	    PUTC('\n');
 	}
     }
-    NETCLOSE(s);
-    s = -1;
+    NETCLOSE(finger_fd);
+    finger_fd = -1;
 
 end_html:
     END(HTML_PRE);
@@ -258,9 +258,12 @@ PUBLIC int HTLoadFinger ARGS4(
 {
     char *username, *sitename, *colon;	/* Fields extracted from URL */
     char *slash, *at_sign;		/* Fields extracted from URL */
-    char *command, *str;		/* Buffers */
+    char *command, *str, *param;	/* Buffers */
     int port;				/* Port number from URL */
     int status;				/* tcp return */
+    int result = HT_LOADED;
+    BOOL IsGopherURL = FALSE;
+    CONST char * p1 = arg;
 
     CTRACE((tfp, "HTFinger: Looking for %s\n", (arg ? arg : "NULL")));
 
@@ -276,10 +279,6 @@ PUBLIC int HTLoadFinger ARGS4(
 	return HT_NOT_LOADED;	/* FAIL */
     }
 
-  {
-    CONST char * p1=arg;
-    BOOL IsGopherURL = FALSE;
-
     /*  Set up the host and command fields.
     */
     if (!strncasecomp(arg, "finger://", 9)) {
@@ -288,9 +287,13 @@ PUBLIC int HTLoadFinger ARGS4(
 	p1 = arg + 9;  /* Skip "gopher://" prefix */
 	IsGopherURL = TRUE;
     }
-    sitename = (char *)p1;
 
-    if ((slash = strchr(sitename, '/')) != NULL) {
+    param = 0;
+    sitename = StrAllocCopy(param, p1);
+    if (param == 0) {
+	HTAlert(COULD_NOT_LOAD_DATA);
+	return HT_NOT_LOADED;
+    } else if ((slash = strchr(sitename, '/')) != NULL) {
 	*slash++ = '\0';
 	HTUnEscape(slash);
 	if (IsGopherURL) {
@@ -301,15 +304,17 @@ PUBLIC int HTLoadFinger ARGS4(
 	    *slash++ = '\0';
 	}
     }
+
     if ((at_sign = strchr(sitename, '@')) != NULL) {
 	if (IsGopherURL) {
 	    HTAlert(COULD_NOT_LOAD_DATA);
 	    return HT_NOT_LOADED;	/* FAIL */
+	} else {
+	    *at_sign++ = '\0';
+	    username = sitename;
+	    sitename = at_sign;
+	    HTUnEscape(username);
 	}
-	*at_sign++ = '\0';
-	username = sitename;
-	sitename = at_sign;
-	HTUnEscape(username);
     } else if (slash) {
 	username = slash;
     } else {
@@ -318,99 +323,93 @@ PUBLIC int HTLoadFinger ARGS4(
 
     if (*sitename == '\0') {
 	HTAlert(gettext("Could not load data (no sitename in finger URL)"));
-	return HT_NOT_LOADED;		/* Ignore if no name */
-    }
-
-    if ((colon = strchr(sitename, ':')) != NULL) {
+	result = HT_NOT_LOADED;		/* Ignore if no name */
+    } else if ((colon = strchr(sitename, ':')) != NULL) {
 	*colon++ = '\0';
 	port = atoi(colon);
 	if (port != 79) {
 	    HTAlert(gettext("Invalid port number - will only use port 79!"));
-	    return HT_NOT_LOADED;	/* Ignore if wrong port */
+	    result = HT_NOT_LOADED;	/* Ignore if wrong port */
 	}
     }
 
-    /* Load the string for making a connection/
-    */
-    str = 0;
-    HTSprintf0(&str, "lose://%s/", sitename);
+    if (result == HT_LOADED) {
+	/* Load the string for making a connection/
+	*/
+	str = 0;
+	HTSprintf0(&str, "lose://%s/", sitename);
 
-    /* Load the command for the finger server.
-    */
-    command = 0;
-    if (at_sign && slash) {
-	if (*slash == 'w' || *slash == 'W') {
-	    HTSprintf0(&command, "/w %s%c%c", username, CR, LF);
+	/* Load the command for the finger server.
+	*/
+	command = 0;
+	if (at_sign && slash) {
+	    if (*slash == 'w' || *slash == 'W') {
+		HTSprintf0(&command, "/w %s%c%c", username, CR, LF);
+	    } else {
+		HTSprintf0(&command, "%s%c%c", username, CR, LF);
+	    }
+	} else if (at_sign) {
+	    HTSprintf0(&command, "%s%c%c", username, CR, LF);
+	} else if (*username == '/') {
+	    if ((slash = strchr((username+1), '/')) != NULL) {
+		*slash = ' ';
+	    }
+	    HTSprintf0(&command, "%s%c%c", username, CR, LF);
+	} else if ((*username == 'w' || *username == 'W') &&
+		   *(username+1) == '/') {
+	    if (*username+2 != '\0') {
+		*(username+1) = ' ';
+	    } else {
+		*(username+1) = '\0';
+	    }
+	    HTSprintf0(&command, "/%s%c%c", username, CR, LF);
+	} else if ((*username == 'w' || *username == 'W') &&
+		   *(username+1) == '\0') {
+	    HTSprintf0(&command, "/%s%c%c", username, CR, LF);
+	} else if ((slash = strchr(username, '/')) != NULL) {
+	    *slash++ = '\0';
+	    if (*slash == 'w' || *slash == 'W') {
+		HTSprintf0(&command, "/w %s%c%c", username, CR, LF);
+	    } else {
+		HTSprintf0(&command, "%s%c%c", username, CR, LF);
+	    }
 	} else {
 	    HTSprintf0(&command, "%s%c%c", username, CR, LF);
 	}
-    } else if (at_sign) {
-	HTSprintf0(&command, "%s%c%c", username, CR, LF);
-    } else if (*username == '/') {
-	if ((slash = strchr((username+1), '/')) != NULL) {
-	    *slash = ' ';
-	}
-	HTSprintf0(&command, "%s%c%c", username, CR, LF);
-    } else if ((*username == 'w' || *username == 'W') &&
-	       *(username+1) == '/') {
-	if (*username+2 != '\0') {
-	    *(username+1) = ' ';
-	} else {
-	    *(username+1) = '\0';
-	}
-	HTSprintf0(&command, "/%s%c%c", username, CR, LF);
-    } else if ((*username == 'w' || *username == 'W') &&
-	       *(username+1) == '\0') {
-	HTSprintf0(&command, "/%s%c%c", username, CR, LF);
-    } else if ((slash = strchr(username, '/')) != NULL) {
-	*slash++ = '\0';
-	if (*slash == 'w' || *slash == 'W') {
-	    HTSprintf0(&command, "/w %s%c%c", username, CR, LF);
-	} else {
-	    HTSprintf0(&command, "%s%c%c", username, CR, LF);
-	}
-    } else {
-	HTSprintf0(&command, "%s%c%c", username, CR, LF);
-    }
-  } /* scope of p1 */
 
-    /* Now, let's get a stream setup up from the FingerHost:
-    ** CONNECTING to finger host
-    */
-    CTRACE((tfp, "HTFinger: doing HTDoConnect on '%s'\n", str));
-    status = HTDoConnect(str, "finger", FINGER_PORT, &s);
-    CTRACE((tfp, "HTFinger: Done DoConnect; status %d\n", status));
+	/* Now, let's get a stream setup up from the FingerHost:
+	** CONNECTING to finger host
+	*/
+	CTRACE((tfp, "HTFinger: doing HTDoConnect on '%s'\n", str));
+	status = HTDoConnect(str, "finger", FINGER_PORT, &finger_fd);
+	CTRACE((tfp, "HTFinger: Done DoConnect; status %d\n", status));
 
-    if (status == HT_INTERRUPTED) {
-	/* Interrupt cleanly */
-	CTRACE((tfp, "HTFinger: Interrupted on connect; recovering cleanly.\n"));
-	HTProgress (CONNECTION_INTERRUPTED);
+	if (status == HT_INTERRUPTED) {
+	    /* Interrupt cleanly */
+	    CTRACE((tfp, "HTFinger: Interrupted on connect; recovering cleanly.\n"));
+	    HTProgress (CONNECTION_INTERRUPTED);
+	    result = HT_NOT_LOADED;
+	} else if (status < 0) {
+	    NETCLOSE(finger_fd);
+	    finger_fd = -1;
+	    CTRACE((tfp, "HTFinger: Unable to connect to finger host.\n"));
+	    HTAlert(gettext("Could not access finger host."));
+	    result = HT_NOT_LOADED;	/* FAIL */
+	} else {
+	    CTRACE((tfp, "HTFinger: Connected to finger host '%s'.\n", str));
+
+	    /* Send the command, and process response if successful.
+	    */
+	    if (response(command, sitename, anAnchor, format_out, stream) != 0) {
+		HTAlert(gettext("No response from finger server."));
+		result = HT_NOT_LOADED;
+	    }
+	}
 	FREE(str);
 	FREE(command);
-	return HT_NOT_LOADED;
     }
-    if (status < 0) {
-	NETCLOSE(s);
-	s = -1;
-	CTRACE((tfp, "HTFinger: Unable to connect to finger host.\n"));
-	HTAlert(gettext("Could not access finger host."));
-	FREE(str);
-	FREE(command);
-	return HT_NOT_LOADED;	/* FAIL */
-    }
-    CTRACE((tfp, "HTFinger: Connected to finger host '%s'.\n", str));
-    FREE(str);
-
-    /* Send the command, and process response if successful.
-    */
-    if (response(command, sitename, anAnchor, format_out, stream) != 0) {
-	HTAlert(gettext("No response from finger server."));
-	FREE(command);
-	return HT_NOT_LOADED;
-    }
-
-    FREE(command);
-    return HT_LOADED;
+    FREE(param);
+    return result;
 }
 
 #ifdef GLOBALDEF_IS_MACRO

@@ -14,6 +14,7 @@
 #include <LYGlobalDefs.h>
 #include <LYCharUtils.h>
 #include <LYCharSets.h>
+#include <LYHistory.h>
 
 #ifdef DIRED_SUPPORT
 #include <LYUpload.h>
@@ -35,7 +36,7 @@
 
 
 PUBLIC int showlist ARGS2(
-	document *,	newdoc,
+	DocInfo *,	newdoc,
 	BOOLEAN,	titles)
 {
     int cnt;
@@ -47,6 +48,7 @@ PUBLIC int showlist ARGS2(
     char *LinkTitle = NULL;  /* Rel stored as property of link, not of dest */
     BOOLEAN intern_w_post = FALSE;
     char *desc = "unknown field or link";
+    void* helper;
 
     refs = HText_sourceAnchors(HTMainText);
     hidden_links = HText_HiddenLinkCount(HTMainText);
@@ -60,16 +62,8 @@ PUBLIC int showlist ARGS2(
 	return(-1);
     }
 
-    if (LYReuseTempfiles && titles == last_titles) {
-	fp0 = LYOpenTempRewrite(tempfile, HTML_SUFFIX, "w");
-    } else {
-	LYRemoveTemp(tempfile);
-	fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w");
-    }
-    if (fp0 == NULL) {
-	HTUserMsg(CANNOT_OPEN_TEMP);
+    if ((fp0 = InternalPageFP(tempfile, titles == last_titles)) == 0)
 	return(-1);
-    }
 
     LYLocalFileToURL(&(newdoc->address), tempfile);
 
@@ -101,8 +95,9 @@ PUBLIC int showlist ARGS2(
 	if (LYHiddenLinks == HIDDENLINKS_IGNORE)
 	    hidden_links = 0;
     }
+    helper = NULL; /* init */
     for (cnt = 1; cnt <= refs; cnt++) {
-	HTChildAnchor *child = HText_childNumber(cnt);
+	HTChildAnchor *child = HText_childNextNumber(cnt, &helper);
 	HTAnchor *dest_intl = NULL;
 	HTAnchor *dest;
 	HTParentAnchor *parent;
@@ -123,7 +118,7 @@ PUBLIC int showlist ARGS2(
 	     *	right in connection with always treating this file as
 	     *	HIDDENLINKS_MERGE in GridText.c - kw
 	     */
-	    if (keypad_mode == LINKS_AND_FIELDS_ARE_NUMBERED) {
+	    if (fields_are_numbered()) {
 		HText_FormDescNumber(cnt, (char **)&desc);
 		fprintf(fp0,
 		"<li><a id=%d href=\"#%d\">form field</a> = <em>%s</em>\n",
@@ -132,16 +127,16 @@ PUBLIC int showlist ARGS2(
 	    continue;
 	}
 #ifndef DONT_TRACK_INTERNAL_LINKS
-	dest_intl = HTAnchor_followTypedLink((HTAnchor *)child,
-						       LINK_INTERNAL);
+	dest_intl = HTAnchor_followTypedLink(child, HTInternalLink);
 #endif
 	dest = dest_intl ?
-	    dest_intl : HTAnchor_followMainLink((HTAnchor *)child);
+	    dest_intl : HTAnchor_followLink(child);
 	parent = HTAnchor_parent(dest);
 	if (!intern_w_post && dest_intl &&
-	    HTMainAnchor && HTMainAnchor->post_data &&
+	    HTMainAnchor &&
+	    HTMainAnchor->post_data &&
 	    parent->post_data &&
-	    !strcmp(HTMainAnchor->post_data, parent->post_data)) {
+	    BINEQ(HTMainAnchor->post_data, parent->post_data)) {
 	    /*
 	     *	Set flag to note that we had at least one internal link,
 	     *	if the document from which we are generating the list
@@ -155,11 +150,11 @@ PUBLIC int showlist ARGS2(
 	title = titles ? HTAnchor_title(parent) : NULL;
 	if (dest_intl) {
 	    HTSprintf0(&LinkTitle, "(internal)");
-	} else if (titles && child->mainLink.type &&
-		   dest == child->mainLink.dest &&
-		   !strncmp(HTAtom_name(child->mainLink.type),
+	} else if (titles && child->type &&
+		   dest == child->dest &&
+		   !strncmp(HTAtom_name(child->type),
 			    "RelTitle: ", 10)) {
-	    HTSprintf0(&LinkTitle, "(%s)", HTAtom_name(child->mainLink.type)+10);
+	    HTSprintf0(&LinkTitle, "(%s)", HTAtom_name(child->type)+10);
 	} else {
 	    FREE(LinkTitle);
 	}
@@ -170,7 +165,7 @@ PUBLIC int showlist ARGS2(
 	    LYformTitle(&Title, title);
 	    LYEntify(&Title, TRUE);
 	    if (*Title) {
-		cp = strchr(Address, '#');
+		cp = findPoundSelector(Address);
 	    } else {
 		FREE(Title);
 	    }
@@ -178,7 +173,7 @@ PUBLIC int showlist ARGS2(
 
 	fprintf(fp0, "<li><a href=\"%s\"%s>%s%s%s%s%s</a>\n", Address,
 			dest_intl ? " TYPE=\"internal link\"" : "",
-			LinkTitle ? LinkTitle : "",
+			NonNull(LinkTitle),
 			((HTAnchor*)parent != dest) && Title ? "in " : "",
 			(char *)(Title ? Title : Address),
 			(Title && cp) ? " - " : "",
@@ -230,8 +225,7 @@ PUBLIC int showlist ARGS2(
     if (intern_w_post) {
 	newdoc->internal_link = TRUE;
     } else {
-	FREE(newdoc->post_data);
-	FREE(newdoc->post_content_type);
+	LYFreePostData(newdoc);
 	newdoc->internal_link = FALSE;
     }
     newdoc->isHEAD = FALSE;
@@ -256,6 +250,7 @@ PUBLIC void printlist ARGS2(
     int refs, hidden_links;
     char *address = NULL;
     char *desc = gettext("unknown field or link");
+    void* helper;
 
     refs = HText_sourceAnchors(HTMainText);
     if (refs <= 0 && LYHiddenLinks != HIDDENLINKS_SEPARATE)
@@ -270,8 +265,9 @@ PUBLIC void printlist ARGS2(
 	    if (LYHiddenLinks == HIDDENLINKS_IGNORE)
 		hidden_links = 0;
 	}
+       helper = NULL; /* init */
 	for (cnt = 1; cnt <= refs; cnt++) {
-	    HTChildAnchor *child = HText_childNumber(cnt);
+	    HTChildAnchor *child = HText_childNextNumber(cnt, &helper);
 	    HTAnchor *dest;
 	    HTParentAnchor *parent;
 	    CONST char *title;
@@ -286,13 +282,13 @@ PUBLIC void printlist ARGS2(
 		 *  the list page match the numbering in the original document,
 		 *  but won't create a forward link to the form. - FM && LE
 		 */
-		if (keypad_mode == LINKS_AND_FIELDS_ARE_NUMBERED) {
+		if (fields_are_numbered()) {
 		    HText_FormDescNumber(cnt, (char **)&desc);
 		    fprintf(fp, "%4d. form field = %s\n", cnt, desc);
 		}
 		continue;
 	    }
-	    dest = HTAnchor_followMainLink((HTAnchor *)child);
+	    dest = HTAnchor_followLink(child);
 	    /*
 	     *	Ignore if child anchor points to itself, i.e., we had
 	     *	something like <A NAME=xyz HREF="#xyz"> and it is not

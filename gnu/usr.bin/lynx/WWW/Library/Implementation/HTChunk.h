@@ -13,12 +13,12 @@
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif
- 
+
 #include <UCMap.h>
 
 typedef struct {
 	int	size;		/* In bytes			*/
-	int	growby; 	/* Allocation unit in bytes	*/
+	int	growby;		/* Allocation unit in bytes	*/
 	int	allocated;	/* Current size of *data	*/
 	char *	data;		/* Pointer to malloced area or 0 */
 	int	failok;		/* allowed to fail without exiting program? */
@@ -70,11 +70,11 @@ extern HTChunk * HTChunkCreate2 PARAMS((int growby, size_t needed));
  *
  *   ON ENTRY,
  *
- *   ch 		A valid chunk pointer made by HTChunkCreate()
+ *   ch			A valid chunk pointer made by HTChunkCreate()
  *
  *   ON EXIT,
  *
- *   ch 		is invalid and may not be used.
+ *   ch			is invalid and may not be used.
  *
  */
 
@@ -87,7 +87,7 @@ extern void HTChunkFree PARAMS((HTChunk * ch));
  *
  *   ON ENTRY,
  *
- *   ch 		A valid chunk pointer made by HTChunkCreate()
+ *   ch			A valid chunk pointer made by HTChunkCreate()
  *
  *   ON EXIT,
  *
@@ -100,11 +100,30 @@ extern void HTChunkClear PARAMS((HTChunk * ch));
 
 /*
  *
+ * Realloc a chunk
+ *
+ *   ON ENTRY,
+ *
+ *   ch			A valid chunk pointer made by HTChunkCreate()
+ *
+ *   growby		growby
+ *
+ *   ON EXIT,
+ *
+ *   *ch		Expanded by growby
+ *
+ */
+
+extern BOOL HTChunkRealloc PARAMS((HTChunk * ch, int growby));
+
+
+/*
+ *
  * Ensure a chunk has a certain space in
  *
  *   ON ENTRY,
  *
- *   ch 		A valid chunk pointer made by HTChunkCreate()
+ *   ch			A valid chunk pointer made by HTChunkCreate()
  *
  *   s			The size required
  *
@@ -123,7 +142,7 @@ extern void HTChunkEnsure PARAMS((HTChunk * ch, int s));
  *
  *   ON ENTRY,
  *
- *   ch 		A valid chunk pointer made by HTChunkCreate()
+ *   ch			A valid chunk pointer made by HTChunkCreate()
  *
  *   c			The character to be appended
  *
@@ -143,9 +162,9 @@ extern void HTChunkPutUtf8Char PARAMS((HTChunk * ch, UCode_t code));
  *
  *   ON ENTRY,
  *
- *   ch 		A valid chunk pointer made by HTChunkCreate()
+ *   ch			A valid chunk pointer made by HTChunkCreate()
  *
- *   str		Tpoints to a zero-terminated string to be appended
+ *   str		Points to a zero-terminated string to be appended
  *
  *   ON EXIT,
  *
@@ -167,7 +186,7 @@ extern void HTChunkPuts PARAMS((HTChunk * ch, CONST char *str));
  *
  *   ON ENTRY,
  *
- *   ch 		A valid chunk pointer made by HTChunkCreate()
+ *   ch			A valid chunk pointer made by HTChunkCreate()
  *
  *   ON EXIT,
  *

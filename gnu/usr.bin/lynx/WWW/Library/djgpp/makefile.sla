@@ -7,16 +7,20 @@ WWW_MACH = djgpp
 # The ASIS repository's name for the machine we are on
 #ASIS_MACH = hardware/os
 
-CFLAGS = -O1 -DUSE_SLANG -DUSE_ZLIB -DDOSPATH -DNOUSERS -DDISP_PARTIAL \
--DDIRED_SUPPORT -DSOURCE_CACHE -DUSE_PRETTYSRC \
--DWATT32 \
+CFLAGS = -O2 -DUSE_SLANG -DUSE_ZLIB -DDOSPATH -DNOUSERS -DDISP_PARTIAL \
+-DDIRED_SUPPORT -DUSE_SOURCE_CACHE -DUSE_PRETTYSRC \
 -I../Implementation \
--I../../../djgpp/watt32/inc -I../../../djgpp/watt32/inc/sys \
+-I/dev/env/DJDIR/watt32/inc \
 -I../../../src \
--I../../.. $(SLANGINC) $(INTLFLAGS)
+-I../../.. $(SLANGINC) $(INTLFLAGS) $(SSLFLAGS) $(SSLINC)
+
 LFLAGS =
 CC = gcc
 #INTLFLAGS = -DHAVE_GETTEXT -DHAVE_LIBINTL_H
+
+# Uncomment the following to enable SSL.
+#SSLFLAGS = -DUSE_SSL
+#SSLINC = -I/dev/env/DJDIR/include/openssl
 
 # Directory for installed binary:
 !BINDIR = /usr/local/bin

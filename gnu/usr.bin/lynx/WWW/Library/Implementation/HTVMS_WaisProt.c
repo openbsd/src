@@ -12,10 +12,10 @@
 **----------------------------------------------------------------------*/
 /* WIDE AREA INFORMATION SERVER SOFTWARE:
    No guarantees or restrictions.  See the readme file for the full standard
-   disclaimer.	
-  
+   disclaimer.
+
    3.26.90	Harry Morris, morris@think.com
-   3.30.90  Harry Morris 
+   3.30.90  Harry Morris
    -	removed chunk code from WAISSearchAPDU,
    -	added makeWAISQueryType1Query() and readWAISType1Query() which replace
    makeWAISQueryTerms() and makeWAISQueryDocs().
@@ -28,7 +28,7 @@
 
 #define _C_WAIS_protocol_
 
-/*	This file implements the Z39.50 extensions required for WAIS 
+/*	This file implements the Z39.50 extensions required for WAIS
 */
 
 #include <HTUtils.h>
@@ -53,7 +53,7 @@
 
 #define RESERVE_SPACE_FOR_WAIS_HEADER(len)	\
      if (*len > 0)				\
-     	*len -= header_len;
+	*len -= header_len;
 
 /*----------------------------------------------------------------------*/
 
@@ -65,7 +65,7 @@ userInfoTagSize(tag,length)
 data_tag tag;
 unsigned long length;
 /* return the number of bytes required to write the user info tag and
-   length 
+   length
  */
 {
   unsigned long size;
@@ -73,13 +73,13 @@ unsigned long length;
   /* calculate bytes required to represent tag.  max tag is 16K */
   size = writtenCompressedIntSize(tag);
   size += writtenCompressedIntSize(length);
-      
+
   return(size);
-}   
+}
 
 /*----------------------------------------------------------------------*/
 
-static char* writeUserInfoHeader PARAMS((data_tag tag,long infoSize,	
+static char* writeUserInfoHeader PARAMS((data_tag tag,long infoSize,
 				      long estHeaderSize,char* buffer,
 				      long* len));
 
@@ -95,7 +95,7 @@ long* len;
    estHeaderSize.  Note that the argument len is the number of bytes remaining
    in the buffer.  Since we write the tag and size at the begining of the
    buffer (in space that we reserved) we don't want to pass len the calls which
-   do that writing. 
+   do that writing.
  */
 {
   long dummyLen = 100;		/* plenty of space for a tag and size */
@@ -105,10 +105,10 @@ long* len;
 
   if (buffer == NULL || *len == 0)
     return(NULL);
-  
+
   /* write the tag */
   buf = writeTag(tag,buf,&dummyLen);
-  
+
   /* see if the if the header size was correct. if not,
      we have to shift the info to fit the real header size */
   if (estHeaderSize != realHeaderSize)
@@ -116,10 +116,10 @@ long* len;
       CHECK_FOR_SPACE_LEFT(realHeaderSize - estHeaderSize,len);
       memmove(buffer + realHeaderSize,buffer + estHeaderSize,(size_t)(realSize));
     }
-   
+
   /* write the size */
   writeCompressedInteger(realSize,buf,&dummyLen);
-  
+
   /* return the true end of buffer */
   return(buffer + realHeaderSize + realSize);
 }
@@ -139,12 +139,12 @@ char* buffer;
   char* buf = buffer;
   buf = readTag(tag,buf);
   buf = readCompressedInteger(num,buf);
-  return(buf); 
+  return(buf);
 }
 
 /*----------------------------------------------------------------------*/
 
-WAISInitResponse* 
+WAISInitResponse*
 makeWAISInitResponse(chunkCode,
 		     chunkIDLen,
 		     chunkMarker,
@@ -167,13 +167,13 @@ char* newLineChars;
   init->HighlightMarker = highlightMarker;
   init->DeHighlightMarker = deHighlightMarker;
   init->NewlineCharacters = newLineChars;
-  
+
   return(init);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 freeWAISInitResponse(init)
 WAISInitResponse* init;
 /* free an object made with makeWAISInitResponse */
@@ -199,20 +199,20 @@ long* len;
   char* buf = buffer + header_len;
   WAISInitResponse* info = (WAISInitResponse*)init->UserInformationField;
   unsigned long size;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
-    
+
   buf = writeNum(info->ChunkCode,DT_ChunkCode,buf,len);
   buf = writeNum(info->ChunkIDLength,DT_ChunkIDLength,buf,len);
   buf = writeString(info->ChunkMarker,DT_ChunkMarker,buf,len);
   buf = writeString(info->HighlightMarker,DT_HighlightMarker,buf,len);
   buf = writeString(info->DeHighlightMarker,DT_DeHighlightMarker,buf,len);
   buf = writeString(info->NewlineCharacters,DT_NewlineCharacters,buf,len);
-  
+
   /* now write the header and size */
-  size = buf - buffer; 
+  size = buf - buffer;
   buf = writeUserInfoHeader(DT_UserInformationLength,size,header_len,buffer,len);
-  
+
   return(buf);
 }
 
@@ -225,7 +225,7 @@ char* buffer;
 /* read an init response object */
 {
   char* buf = buffer;
-  unsigned long size; 
+  unsigned long size;
   unsigned long headerSize;
   long chunkCode,chunkIDLen;
   data_tag tag1;
@@ -233,12 +233,12 @@ char* buffer;
   char* highlightMarker = NULL;
   char* deHighlightMarker = NULL;
   char* newLineChars = NULL;
-  
+
   chunkCode = chunkIDLen = UNUSED;
-  
+
   buf = readUserInfoHeader(&tag1,&size,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size + headerSize))
     { data_tag tag = peekTag(buf);
       switch (tag)
@@ -268,7 +268,7 @@ char* buffer;
 	    break;
 	  }
     }
-  	  
+
   *info = (void *)makeWAISInitResponse(chunkCode,chunkIDLen,chunkMarker,
 			       highlightMarker,deHighlightMarker,
 			       newLineChars);
@@ -277,7 +277,7 @@ char* buffer;
 
 /*----------------------------------------------------------------------*/
 
-WAISSearch* 
+WAISSearch*
 makeWAISSearch(seedWords,
 	       docs,
 	       textList,
@@ -294,7 +294,7 @@ char* endDateRange;
 long maxDocsRetrieved;
 
 /* create a type 3 query object */
-{ 
+{
   WAISSearch* query = (WAISSearch*)s_malloc((size_t)sizeof(WAISSearch));
 
   query->SeedWords = seedWords;	/* not copied! */
@@ -304,13 +304,13 @@ long maxDocsRetrieved;
   query->BeginDateRange = beginDateRange;
   query->EndDateRange = endDateRange;
   query->MaxDocumentsRetrieved = maxDocsRetrieved;
-  
+
   return(query);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 freeWAISSearch(query)
 WAISSearch* query;
 
@@ -318,14 +318,14 @@ WAISSearch* query;
 {
   void* ptr = NULL;
   long i;
-  
+
   s_free(query->SeedWords);
-  
+
   if (query->Docs != NULL)
     for (i = 0,ptr = (void *)query->Docs[i]; ptr != NULL; ptr = (void *)query->Docs[++i])
       freeDocObj((DocObj*)ptr);
   s_free(query->Docs);
-   
+
   if (query->TextList != NULL)	/* XXX revisit when textlist is fully defined */
     for (i = 0,ptr = (void *)query->TextList[i]; ptr != NULL; ptr = (void *)query->TextList[++i])
       s_free(ptr);
@@ -338,7 +338,7 @@ WAISSearch* query;
 
 /*----------------------------------------------------------------------*/
 
-DocObj* 
+DocObj*
 makeDocObjUsingWholeDocument(docID,type)
 any* docID;
 char* type;
@@ -355,7 +355,7 @@ char* type;
 
 /*----------------------------------------------------------------------*/
 
-DocObj* 
+DocObj*
 makeDocObjUsingLines(docID,type,start,end)
 any* docID;
 char* type;
@@ -376,7 +376,7 @@ long end;
 
 /*----------------------------------------------------------------------*/
 
-DocObj* 
+DocObj*
 makeDocObjUsingBytes(docID,type,start,end)
 any* docID;
 char* type;
@@ -397,7 +397,7 @@ long end;
 
 /*----------------------------------------------------------------------*/
 
-DocObj* 
+DocObj*
 makeDocObjUsingParagraphs(docID,type,start,end)
 any* docID;
 char* type;
@@ -411,8 +411,8 @@ any* end;
   doc->ChunkCode = CT_paragraph;
   doc->DocumentID = docID;		/* not copied */
   doc->Type = type;
-  doc->ChunkStart.ID = start; 
-  doc->ChunkEnd.ID = end; 
+  doc->ChunkStart.ID = start;
+  doc->ChunkEnd.ID = end;
   return(doc);
 }
 
@@ -446,16 +446,16 @@ long* len;
 /* write as little as we can about the doc obj */
 {
   char* buf = buffer;
-  
+
   /* we alwasy have to write the id, but its tag depends on if its a chunk */
   if (doc->ChunkCode == CT_document)
     buf = writeAny(doc->DocumentID,DT_DocumentID,buf,len);
   else
     buf = writeAny(doc->DocumentID,DT_DocumentIDChunk,buf,len);
-  
+
   if (doc->Type != NULL)
     buf = writeString(doc->Type,DT_TYPE,buf,len);
-  
+
   switch (doc->ChunkCode)
     { case CT_document:
 	/* do nothing - there is no chunk data */
@@ -476,7 +476,7 @@ long* len;
 	      doc->ChunkCode);
 	break;
       }
-   
+
   return(buf);
 }
 
@@ -493,12 +493,12 @@ char* buffer;
 {
   char* buf = buffer;
   data_tag tag;
-  
+
   *doc = (DocObj*)s_malloc((size_t)sizeof(DocObj));
-  
+
   tag = peekTag(buf);
   buf = readAny(&((*doc)->DocumentID),buf);
-  
+
   if (tag == DT_DocumentID)
     { (*doc)->ChunkCode = CT_document;
       tag = peekTag(buf);
@@ -539,12 +539,12 @@ char* buffer;
       s_free(*doc);
       REPORT_READ_ERROR(buf);
     }
-  return(buf);  
+  return(buf);
 }
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writeSearchInfo(query,buffer,len)
 SearchAPDU* query;
 char* buffer;
@@ -557,14 +557,14 @@ long* len;
     }
   else
     { unsigned long header_len = userInfoTagSize(DT_UserInformationLength,
-						 DefWAISSearchSize); 
+						 DefWAISSearchSize);
       char* buf = buffer + header_len;
       WAISSearch* info = (WAISSearch*)query->Query;
       unsigned long size;
       long i;
-  
+
       RESERVE_SPACE_FOR_WAIS_HEADER(len);
-       
+
       buf = writeString(info->SeedWords,DT_SeedWords,buf,len);
 
       if (info->Docs != NULL)
@@ -572,25 +572,25 @@ long* len;
 	  { buf = writeDocObj(info->Docs[i],buf,len);
 	  }
 	}
-   
+
       /* XXX text list */
- 
+
       buf = writeNum(info->DateFactor,DT_DateFactor,buf,len);
       buf = writeString(info->BeginDateRange,DT_BeginDateRange,buf,len);
       buf = writeString(info->EndDateRange,DT_EndDateRange,buf,len);
       buf = writeNum(info->MaxDocumentsRetrieved,DT_MaxDocumentsRetrieved,buf,len);
-  
+
       /* now write the header and size */
-      size = buf - buffer; 
+      size = buf - buffer;
       buf = writeUserInfoHeader(DT_UserInformationLength,size,header_len,buffer,len);
-   
+
       return(buf);
     }
 }
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 readSearchInfo(info,buffer)
 void** info;
 char* buffer;
@@ -607,14 +607,14 @@ char* buffer;
     }
   else				/* a type 3 query */
     { char* buf = buffer;
-      unsigned long size; 
+      unsigned long size;
       unsigned long headerSize;
       data_tag tag1;
       char* seedWords = NULL;
       char* beginDateRange = NULL;
       char* endDateRange = NULL;
       long dateFactor,maxDocsRetrieved;
-      char** textList = NULL; 
+      char** textList = NULL;
       DocObj** docIDs = NULL;
       DocObj* doc = NULL;
       long docs = 0;
@@ -622,10 +622,10 @@ char* buffer;
       void* ptr = NULL;
 
       dateFactor = maxDocsRetrieved = UNUSED;
-  
+
       buf = readUserInfoHeader(&tag1,&size,buf);
       headerSize = buf - buffer;
-  
+
       while (buf < (buffer + size + headerSize))
 	{ data_tag tag = peekTag(buf);
 	  switch (tag)
@@ -641,7 +641,7 @@ char* buffer;
 		  { docIDs = (DocObj**)s_realloc((char*)docIDs,(size_t)(sizeof(DocObj*) * (docs + 2)));
 		  }
 		buf = readDocObj(&doc,buf);
-		if (buf == NULL) 
+		if (buf == NULL)
 		  { s_free(seedWords);
 		    s_free(beginDateRange);
 		    s_free(endDateRange);
@@ -683,7 +683,7 @@ char* buffer;
 		break;
 	      }
 	}
-  	  
+
       *info = (void *)makeWAISSearch(seedWords,docIDs,textList,
 				     dateFactor,beginDateRange,endDateRange,
 				     maxDocsRetrieved);
@@ -722,7 +722,7 @@ char* originCity;
    or set the field in this object to NULL before freeing it.
  */
 {
-  WAISDocumentHeader* header = 
+  WAISDocumentHeader* header =
     (WAISDocumentHeader*)s_malloc((size_t)sizeof(WAISDocumentHeader));
 
   header->DocumentID = docID;
@@ -736,7 +736,7 @@ char* originCity;
   header->Date = date;
   header->Headline = headline;
   header->OriginCity = originCity;
-  
+
   return(header);
 }
 
@@ -769,9 +769,9 @@ long* len;
 					     DefWAISDocHeaderSize);
   char* buf = buffer + header_len;
   unsigned long size1;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
-   
+
   buf = writeAny(header->DocumentID,DT_DocumentID,buf,len);
   buf = writeNum(header->VersionNumber,DT_VersionNumber,buf,len);
   buf = writeNum(header->Score,DT_Score,buf,len);
@@ -787,7 +787,7 @@ long* len;
 	{ long typeSize = strlen(ptr);
 	  size += writtenTagSize(DT_TYPE);
 	  size += writtenCompressedIntSize(typeSize);
-	  size += typeSize; 
+	  size += typeSize;
 	}
       buf = writeCompressedInteger((unsigned long)size,buf,len);
       for (i = 0,ptr = header->Types[i]; ptr != NULL; ptr = header->Types[++i])
@@ -797,9 +797,9 @@ long* len;
   buf = writeString(header->Date,DT_Date,buf,len);
   buf = writeString(header->Headline,DT_Headline,buf,len);
   buf = writeString(header->OriginCity,DT_OriginCity,buf,len);
-  
+
   /* now write the header and size */
-  size1 = buf - buffer; 
+  size1 = buf - buffer;
   buf = writeUserInfoHeader(DT_DocumentHeaderGroup,size1,header_len,buffer,len);
 
   return(buf);
@@ -813,7 +813,7 @@ WAISDocumentHeader** header;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size1; 
+  unsigned long size1;
   unsigned long headerSize;
   data_tag tag1;
   any* docID = NULL;
@@ -823,12 +823,12 @@ char* buffer;
   char *date = NULL;
   char *headline = NULL;
   char *originCity = NULL;
-  
+
   versionNumber = score = bestMatch = docLength = lines = UNUSED;
-  
+
   buf = readUserInfoHeader(&tag1,&size1,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size1 + headerSize))
     { data_tag tag = peekTag(buf);
       switch (tag)
@@ -888,7 +888,7 @@ char* buffer;
 	    break;
 	  }
     }
-  	  
+
   *header = makeWAISDocumentHeader(docID,versionNumber,score,bestMatch,
 				   docLength,lines,types,source,date,headline,
 				   originCity);
@@ -915,7 +915,7 @@ long lines;
    or set the field in this object to NULL before freeing it.
  */
 {
-  WAISDocumentShortHeader* header = 
+  WAISDocumentShortHeader* header =
     (WAISDocumentShortHeader*)s_malloc((size_t)sizeof(WAISDocumentShortHeader));
 
   header->DocumentID = docID;
@@ -924,7 +924,7 @@ long lines;
   header->BestMatch = bestMatch;
   header->DocumentLength = docLen;
   header->Lines = lines;
-  
+
   return(header);
 }
 
@@ -950,18 +950,18 @@ long* len;
 					     DefWAISShortHeaderSize);
   char* buf = buffer + header_len;
   unsigned long size;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
-   
+
   buf = writeAny(header->DocumentID,DT_DocumentID,buf,len);
   buf = writeNum(header->VersionNumber,DT_VersionNumber,buf,len);
   buf = writeNum(header->Score,DT_Score,buf,len);
   buf = writeNum(header->BestMatch,DT_BestMatch,buf,len);
   buf = writeNum(header->DocumentLength,DT_DocumentLength,buf,len);
   buf = writeNum(header->Lines,DT_Lines,buf,len);
-  
+
   /* now write the header and size */
-  size = buf - buffer; 
+  size = buf - buffer;
   buf = writeUserInfoHeader(DT_DocumentShortHeaderGroup,size,header_len,buffer,len);
 
   return(buf);
@@ -975,17 +975,17 @@ WAISDocumentShortHeader** header;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size; 
+  unsigned long size;
   unsigned long headerSize;
   data_tag tag1;
   any* docID = NULL;
   long versionNumber,score,bestMatch,docLength,lines;
-  
+
   versionNumber = score = bestMatch = docLength = lines = UNUSED;
-  
+
   buf = readUserInfoHeader(&tag1,&size,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size + headerSize))
     { data_tag tag = peekTag(buf);
       switch (tag)
@@ -1013,7 +1013,7 @@ char* buffer;
 	    break;
 	  }
     }
-  	  
+
   *header = makeWAISDocumentShortHeader(docID,versionNumber,score,bestMatch,
 					docLength,lines);
   return(buf);
@@ -1055,7 +1055,7 @@ char* industryCodes;
    or set the field in this object to NULL before freeing it.
  */
 {
-  WAISDocumentLongHeader* header = 
+  WAISDocumentLongHeader* header =
     (WAISDocumentLongHeader*)s_malloc((size_t)sizeof(WAISDocumentLongHeader));
 
   header->DocumentID = docID;
@@ -1072,7 +1072,7 @@ char* industryCodes;
   header->StockCodes = stockCodes;
   header->CompanyCodes = companyCodes;
   header->IndustryCodes = industryCodes;
-  
+
   return(header);
 }
 
@@ -1106,9 +1106,9 @@ long* len;
 					     DefWAISLongHeaderSize);
   char* buf = buffer + header_len;
   unsigned long size1;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
-   
+
   buf = writeAny(header->DocumentID,DT_DocumentID,buf,len);
   buf = writeNum(header->VersionNumber,DT_VersionNumber,buf,len);
   buf = writeNum(header->Score,DT_Score,buf,len);
@@ -1124,7 +1124,7 @@ long* len;
 	{ long typeSize = strlen(ptr);
 	  size += writtenTagSize(DT_TYPE);
 	  size += writtenCompressedIntSize(typeSize);
-	  size += typeSize; 
+	  size += typeSize;
 	}
       buf = writeCompressedInteger((unsigned long)size,buf,len);
       for (i = 0,ptr = header->Types[i]; ptr != NULL; ptr = header->Types[++i])
@@ -1137,9 +1137,9 @@ long* len;
   buf = writeString(header->StockCodes,DT_StockCodes,buf,len);
   buf = writeString(header->CompanyCodes,DT_CompanyCodes,buf,len);
   buf = writeString(header->IndustryCodes,DT_IndustryCodes,buf,len);
-  
+
   /* now write the header and size */
-  size1 = buf - buffer; 
+  size1 = buf - buffer;
   buf = writeUserInfoHeader(DT_DocumentLongHeaderGroup,size1,header_len,buffer,len);
 
   return(buf);
@@ -1153,22 +1153,22 @@ WAISDocumentLongHeader** header;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size1; 
+  unsigned long size1;
   unsigned long headerSize;
   data_tag tag1;
   any* docID;
   long versionNumber,score,bestMatch,docLength,lines;
   char **types;
   char *source,*date,*headline,*originCity,*stockCodes,*companyCodes,*industryCodes;
-  
+
   docID = NULL;
   versionNumber = score = bestMatch = docLength = lines = UNUSED;
   types = NULL;
   source = date = headline = originCity = stockCodes = companyCodes = industryCodes = NULL;
-  
+
   buf = readUserInfoHeader(&tag1,&size1,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size1 + headerSize))
     { data_tag tag = peekTag(buf);
       switch (tag)
@@ -1240,7 +1240,7 @@ char* buffer;
 	    break;
 	  }
     }
-  	  
+
   *header = makeWAISDocumentLongHeader(docID,versionNumber,score,bestMatch,
 				       docLength,lines,types,source,date,headline,
 				       originCity,stockCodes,companyCodes,
@@ -1269,7 +1269,7 @@ WAISDocumentCodes** codes;
 diagnosticRecord** diagnostics;
 {
   WAISSearchResponse* response = (WAISSearchResponse*)s_malloc((size_t)sizeof(WAISSearchResponse));
-  
+
   response->SeedWordsUsed = seedWordsUsed;
   response->DocHeaders = docHeaders;
   response->ShortHeaders = shortHeaders;
@@ -1278,7 +1278,7 @@ diagnosticRecord** diagnostics;
   response->Headlines = headlines;
   response->Codes = codes;
   response->Diagnostics = diagnostics;
-  
+
   return(response);
 }
 
@@ -1297,43 +1297,43 @@ WAISSearchResponse* response;
     for (i = 0,ptr = (void *)response->DocHeaders[i]; ptr != NULL; ptr = (void *)response->DocHeaders[++i])
       freeWAISDocumentHeader((WAISDocumentHeader*)ptr);
   s_free(response->DocHeaders);
-   
+
   if (response->ShortHeaders != NULL)
     for (i = 0,ptr = (void *)response->ShortHeaders[i]; ptr != NULL; ptr = (void *)response->ShortHeaders[++i])
       freeWAISDocumentShortHeader((WAISDocumentShortHeader*)ptr);
   s_free(response->ShortHeaders);
-   
+
   if (response->LongHeaders != NULL)
     for (i = 0,ptr = (void *)response->LongHeaders[i]; ptr != NULL; ptr = (void *)response->LongHeaders[++i])
       freeWAISDocumentLongHeader((WAISDocumentLongHeader*)ptr);
   s_free(response->LongHeaders);
-   
+
   if (response->Text != NULL)
     for (i = 0,ptr = (void *)response->Text[i]; ptr != NULL; ptr = (void *)response->Text[++i])
       freeWAISDocumentText((WAISDocumentText*)ptr);
   s_free(response->Text);
-   
+
   if (response->Headlines != NULL)
     for (i = 0,ptr = (void *)response->Headlines[i]; ptr != NULL; ptr = (void *)response->Headlines[++i])
       freeWAISDocumentHeadlines((WAISDocumentHeadlines*)ptr);
   s_free(response->Headlines);
-   
+
   if (response->Codes != NULL)
     for (i = 0,ptr = (void *)response->Codes[i]; ptr != NULL; ptr = (void *)response->Codes[++i])
       freeWAISDocumentCodes((WAISDocumentCodes*)ptr);
   s_free(response->Codes);
-   
+
   if (response->Diagnostics != NULL)
     for (i = 0,ptr = (void *)response->Diagnostics[i]; ptr != NULL; ptr = (void *)response->Diagnostics[++i])
       freeDiag((diagnosticRecord*)ptr);
   s_free(response->Diagnostics);
-  
+
   s_free(response);
 }
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writeSearchResponseInfo(query,buffer,len)
 SearchResponseAPDU* query;
 char* buffer;
@@ -1346,17 +1346,17 @@ long* len;
   unsigned long size;
   void* header = NULL;
   long i;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
-  
+
   buf = writeString(info->SeedWordsUsed,DT_SeedWordsUsed,buf,len);
-  
+
   /* write out all the headers */
   if (info->DocHeaders != NULL)
     { for (i = 0,header = (void *)info->DocHeaders[i]; header != NULL; header = (void *)info->DocHeaders[++i])
 	buf = writeWAISDocumentHeader((WAISDocumentHeader*)header,buf,len);
       }
-   
+
   if (info->ShortHeaders != NULL)
     { for (i = 0,header = (void *)info->ShortHeaders[i]; header != NULL; header = (void *)info->ShortHeaders[++i])
 	buf = writeWAISDocumentShortHeader((WAISDocumentShortHeader*)header,buf,len);
@@ -1386,11 +1386,11 @@ long* len;
     { for (i = 0, header = (void *)info->Diagnostics[i]; header != NULL; header = (void *)info->Diagnostics[++i])
 	buf = writeDiag((diagnosticRecord*)header,buf,len);
       }
-   
+
   /* now write the header and size */
-  size = buf - buffer; 
+  size = buf - buffer;
   buf = writeUserInfoHeader(DT_UserInformationLength,size,header_len,buffer,len);
-  
+
   return(buf);
 }
 
@@ -1418,7 +1418,7 @@ WAISDocumentText** text;
 WAISDocumentHeadlines** headlines;
 WAISDocumentCodes** codes;
 diagnosticRecord** diags;
-/* if buf is NULL, we have just gotten a read error, and need to clean up 
+/* if buf is NULL, we have just gotten a read error, and need to clean up
    any state we have built.  If not, then everything is going fine, and
    we should just hang loose
  */
@@ -1426,41 +1426,41 @@ diagnosticRecord** diags;
   void* ptr = NULL;
   long i;
 
-  if (buf == NULL)						
-   { s_free(seedWordsUsed);				
-     if (docHeaders != NULL)				
-       for (i = 0,ptr = (void *)docHeaders[i]; ptr != NULL; 
-	    ptr = (void *)docHeaders[++i])		
-	 freeWAISDocumentHeader((WAISDocumentHeader*)ptr);	
-     s_free(docHeaders);				
-     if (shortHeaders != NULL)	
+  if (buf == NULL)
+   { s_free(seedWordsUsed);
+     if (docHeaders != NULL)
+       for (i = 0,ptr = (void *)docHeaders[i]; ptr != NULL;
+	    ptr = (void *)docHeaders[++i])
+	 freeWAISDocumentHeader((WAISDocumentHeader*)ptr);
+     s_free(docHeaders);
+     if (shortHeaders != NULL)
        for (i = 0,ptr = (void *)shortHeaders[i]; ptr != NULL;
-	    ptr = (void *)shortHeaders[++i])	
+	    ptr = (void *)shortHeaders[++i])
 	 freeWAISDocumentShortHeader((WAISDocumentShortHeader*)ptr);
-     s_free(shortHeaders);						
-     if (longHeaders != NULL)				
-       for (i = 0,ptr = (void *)longHeaders[i]; ptr != NULL; 
-	    ptr = (void *)longHeaders[++i])	
+     s_free(shortHeaders);
+     if (longHeaders != NULL)
+       for (i = 0,ptr = (void *)longHeaders[i]; ptr != NULL;
+	    ptr = (void *)longHeaders[++i])
 	 freeWAISDocumentLongHeader((WAISDocumentLongHeader*)ptr);
-     s_free(longHeaders);				
-     if (text != NULL)					
+     s_free(longHeaders);
+     if (text != NULL)
        for (i = 0,ptr = (void *)text[i]; ptr != NULL; ptr = (void *)text[++i])
-	 freeWAISDocumentText((WAISDocumentText*)ptr);	
-     s_free(text);					
-     if (headlines != NULL)					
+	 freeWAISDocumentText((WAISDocumentText*)ptr);
+     s_free(text);
+     if (headlines != NULL)
        for (i = 0,ptr = (void *)headlines[i]; ptr != NULL;
-	    ptr = (void *)headlines[++i])		
-	 freeWAISDocumentHeadlines((WAISDocumentHeadlines*)ptr);	
-     s_free(headlines);						
-     if (codes != NULL)				     
-       for (i = 0,ptr = (void *)codes[i]; ptr != NULL; 
-	    ptr = (void *)codes[++i])				
-	 freeWAISDocumentCodes((WAISDocumentCodes*)ptr);	 
-     s_free(codes);					
-     if (diags != NULL)				      	
-       for (i = 0,ptr = (void *)diags[i]; ptr != NULL; 
-	    ptr = (void *)diags[++i])	 
-	 freeDiag((diagnosticRecord*)ptr);	     
+	    ptr = (void *)headlines[++i])
+	 freeWAISDocumentHeadlines((WAISDocumentHeadlines*)ptr);
+     s_free(headlines);
+     if (codes != NULL)
+       for (i = 0,ptr = (void *)codes[i]; ptr != NULL;
+	    ptr = (void *)codes[++i])
+	 freeWAISDocumentCodes((WAISDocumentCodes*)ptr);
+     s_free(codes);
+     if (diags != NULL)
+       for (i = 0,ptr = (void *)diags[i]; ptr != NULL;
+	    ptr = (void *)diags[++i])
+	 freeDiag((diagnosticRecord*)ptr);
      s_free(diags);
    }
 }
@@ -1473,7 +1473,7 @@ void** info;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size; 
+  unsigned long size;
   unsigned long headerSize;
   data_tag tag1;
   void* header = NULL;
@@ -1489,123 +1489,123 @@ char* buffer;
   diagnosticRecord** diags = NULL;
   diagnosticRecord* diag = NULL;
   long numDiags = 0;
-  
+
   numDocHeaders = numLongHeaders = numShortHeaders = numText = numHeadlines = numCodes = 0;
-  
+
   buf = readUserInfoHeader(&tag1,&size,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size + headerSize))
    { data_tag tag = peekTag(buf);
      switch (tag)
       { case DT_SeedWordsUsed:
-      	  buf = readString(&seedWordsUsed,buf);
-      	  break;
-      	case DT_DatabaseDiagnosticRecords:
-      	  if (diags == NULL) /* create a new diag list */
-      	   { diags = (diagnosticRecord**)s_malloc((size_t)sizeof(diagnosticRecord*) * 2);
-      	   }
-      	  else /* grow the diag list */
-      	   { diags = (diagnosticRecord**)s_realloc((char*)diags,(size_t)(sizeof(diagnosticRecord*) * (numDiags + 2)));
-      	   }
-      	  buf = readDiag(&diag,buf);
-      	  diags[numDiags++] = diag; /* put it in the list */
-      	  diags[numDiags] = NULL;
-      	  break;
-      	case DT_DocumentHeaderGroup:
-  		  if (docHeaders == NULL) /* create a new header list */
-  		   { docHeaders = (WAISDocumentHeader**)s_malloc((size_t)sizeof(WAISDocumentHeader*) * 2);
-  		   }
-  		  else /* grow the doc list */
-  		   { docHeaders = (WAISDocumentHeader**)s_realloc((char*)docHeaders,(size_t)(sizeof(WAISDocumentHeader*) * (numDocHeaders + 2)));
-  		   }
-  		  buf = readWAISDocumentHeader((WAISDocumentHeader**)&header,buf);
+	  buf = readString(&seedWordsUsed,buf);
+	  break;
+	case DT_DatabaseDiagnosticRecords:
+	  if (diags == NULL) /* create a new diag list */
+	   { diags = (diagnosticRecord**)s_malloc((size_t)sizeof(diagnosticRecord*) * 2);
+	   }
+	  else /* grow the diag list */
+	   { diags = (diagnosticRecord**)s_realloc((char*)diags,(size_t)(sizeof(diagnosticRecord*) * (numDiags + 2)));
+	   }
+	  buf = readDiag(&diag,buf);
+	  diags[numDiags++] = diag; /* put it in the list */
+	  diags[numDiags] = NULL;
+	  break;
+	case DT_DocumentHeaderGroup:
+		  if (docHeaders == NULL) /* create a new header list */
+		   { docHeaders = (WAISDocumentHeader**)s_malloc((size_t)sizeof(WAISDocumentHeader*) * 2);
+		   }
+		  else /* grow the doc list */
+		   { docHeaders = (WAISDocumentHeader**)s_realloc((char*)docHeaders,(size_t)(sizeof(WAISDocumentHeader*) * (numDocHeaders + 2)));
+		   }
+		  buf = readWAISDocumentHeader((WAISDocumentHeader**)&header,buf);
 		  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-  		  RETURN_ON_NULL(buf);
-  		  docHeaders[numDocHeaders++] = 
+		  RETURN_ON_NULL(buf);
+		  docHeaders[numDocHeaders++] =
 		    (WAISDocumentHeader*)header; /* put it in the list */
-  		  docHeaders[numDocHeaders] = NULL;
-  		  break;
-  		case DT_DocumentShortHeaderGroup:
-  		  if (shortHeaders == NULL) /* create a new header list */
-  		   { shortHeaders = (WAISDocumentShortHeader**)s_malloc((size_t)sizeof(WAISDocumentShortHeader*) * 2);
-  		   }
-  		  else /* grow the doc list */
-  		   { shortHeaders = (WAISDocumentShortHeader**)s_realloc((char*)shortHeaders,(size_t)(sizeof(WAISDocumentShortHeader*) * (numShortHeaders + 2)));
-  		   }
-  		  buf = readWAISDocumentShortHeader((WAISDocumentShortHeader**)&header,buf);
+		  docHeaders[numDocHeaders] = NULL;
+		  break;
+		case DT_DocumentShortHeaderGroup:
+		  if (shortHeaders == NULL) /* create a new header list */
+		   { shortHeaders = (WAISDocumentShortHeader**)s_malloc((size_t)sizeof(WAISDocumentShortHeader*) * 2);
+		   }
+		  else /* grow the doc list */
+		   { shortHeaders = (WAISDocumentShortHeader**)s_realloc((char*)shortHeaders,(size_t)(sizeof(WAISDocumentShortHeader*) * (numShortHeaders + 2)));
+		   }
+		  buf = readWAISDocumentShortHeader((WAISDocumentShortHeader**)&header,buf);
 		  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-  		  RETURN_ON_NULL(buf);
-  		  shortHeaders[numShortHeaders++] = 
+		  RETURN_ON_NULL(buf);
+		  shortHeaders[numShortHeaders++] =
 		    (WAISDocumentShortHeader*)header; /* put it in the list */
-  		  shortHeaders[numShortHeaders] = NULL;
-  		  break;
-  		case DT_DocumentLongHeaderGroup:
-  		  if (longHeaders == NULL) /* create a new header list */
-  		   { longHeaders = (WAISDocumentLongHeader**)s_malloc((size_t)sizeof(WAISDocumentLongHeader*) * 2);
-  		   }
-  		  else /* grow the doc list */
-  		   { longHeaders = (WAISDocumentLongHeader**)s_realloc((char*)longHeaders,(size_t)(sizeof(WAISDocumentLongHeader*) * (numLongHeaders + 2)));
-  		   }
-  		  buf = readWAISDocumentLongHeader((WAISDocumentLongHeader**)&header,buf);
+		  shortHeaders[numShortHeaders] = NULL;
+		  break;
+		case DT_DocumentLongHeaderGroup:
+		  if (longHeaders == NULL) /* create a new header list */
+		   { longHeaders = (WAISDocumentLongHeader**)s_malloc((size_t)sizeof(WAISDocumentLongHeader*) * 2);
+		   }
+		  else /* grow the doc list */
+		   { longHeaders = (WAISDocumentLongHeader**)s_realloc((char*)longHeaders,(size_t)(sizeof(WAISDocumentLongHeader*) * (numLongHeaders + 2)));
+		   }
+		  buf = readWAISDocumentLongHeader((WAISDocumentLongHeader**)&header,buf);
 		  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-  		  RETURN_ON_NULL(buf);
-  		  longHeaders[numLongHeaders++] = 
+		  RETURN_ON_NULL(buf);
+		  longHeaders[numLongHeaders++] =
 		    (WAISDocumentLongHeader*)header; /* put it in the list */
-  		  longHeaders[numLongHeaders] = NULL;
-  		  break;
-        case DT_DocumentTextGroup:
-  		  if (text == NULL) /* create a new list */
-  		   { text = (WAISDocumentText**)s_malloc((size_t)sizeof(WAISDocumentText*) * 2);
-  		   }
-  		  else /* grow the list */
-  		   { text = (WAISDocumentText**)s_realloc((char*)text,(size_t)(sizeof(WAISDocumentText*) * (numText + 2)));
-  		   }
-  		  buf = readWAISDocumentText((WAISDocumentText**)&header,buf);
+		  longHeaders[numLongHeaders] = NULL;
+		  break;
+	case DT_DocumentTextGroup:
+		  if (text == NULL) /* create a new list */
+		   { text = (WAISDocumentText**)s_malloc((size_t)sizeof(WAISDocumentText*) * 2);
+		   }
+		  else /* grow the list */
+		   { text = (WAISDocumentText**)s_realloc((char*)text,(size_t)(sizeof(WAISDocumentText*) * (numText + 2)));
+		   }
+		  buf = readWAISDocumentText((WAISDocumentText**)&header,buf);
 		  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-  		  RETURN_ON_NULL(buf);
-  		  text[numText++] = 
+		  RETURN_ON_NULL(buf);
+		  text[numText++] =
 		    (WAISDocumentText*)header; /* put it in the list */
-  		  text[numText] = NULL;
-  		  break;
-  		case DT_DocumentHeadlineGroup:
-  		  if (headlines == NULL) /* create a new list */
-  		   { headlines = (WAISDocumentHeadlines**)s_malloc((size_t)sizeof(WAISDocumentHeadlines*) * 2);
-  		   }
-  		  else /* grow the list */
-  		   { headlines = (WAISDocumentHeadlines**)s_realloc((char*)headlines,(size_t)(sizeof(WAISDocumentHeadlines*) * (numHeadlines + 2)));
-  		   }
-  		  buf = readWAISDocumentHeadlines((WAISDocumentHeadlines**)&header,buf);
+		  text[numText] = NULL;
+		  break;
+		case DT_DocumentHeadlineGroup:
+		  if (headlines == NULL) /* create a new list */
+		   { headlines = (WAISDocumentHeadlines**)s_malloc((size_t)sizeof(WAISDocumentHeadlines*) * 2);
+		   }
+		  else /* grow the list */
+		   { headlines = (WAISDocumentHeadlines**)s_realloc((char*)headlines,(size_t)(sizeof(WAISDocumentHeadlines*) * (numHeadlines + 2)));
+		   }
+		  buf = readWAISDocumentHeadlines((WAISDocumentHeadlines**)&header,buf);
 		  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-  		  RETURN_ON_NULL(buf);
-  		  headlines[numHeadlines++] = 
+		  RETURN_ON_NULL(buf);
+		  headlines[numHeadlines++] =
 		    (WAISDocumentHeadlines*)header; /* put it in the list */
-  		  headlines[numHeadlines] = NULL;
-  		  break;
-  		case DT_DocumentCodeGroup:
-  		  if (codes == NULL) /* create a new list */
-  		   { codes = (WAISDocumentCodes**)s_malloc((size_t)sizeof(WAISDocumentCodes*) * 2);
-  		   }
-  		  else /* grow the list */
-  		   { codes = (WAISDocumentCodes**)s_realloc((char*)codes,(size_t)(sizeof(WAISDocumentCodes*) * (numCodes + 2)));
-  		   }
-  		  buf = readWAISDocumentCodes((WAISDocumentCodes**)&header,buf);
+		  headlines[numHeadlines] = NULL;
+		  break;
+		case DT_DocumentCodeGroup:
+		  if (codes == NULL) /* create a new list */
+		   { codes = (WAISDocumentCodes**)s_malloc((size_t)sizeof(WAISDocumentCodes*) * 2);
+		   }
+		  else /* grow the list */
+		   { codes = (WAISDocumentCodes**)s_realloc((char*)codes,(size_t)(sizeof(WAISDocumentCodes*) * (numCodes + 2)));
+		   }
+		  buf = readWAISDocumentCodes((WAISDocumentCodes**)&header,buf);
 		  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-  		  RETURN_ON_NULL(buf);
-  		  codes[numCodes++] = 
+		  RETURN_ON_NULL(buf);
+		  codes[numCodes++] =
 		    (WAISDocumentCodes*)header; /* put it in the list */
-  		  codes[numCodes] = NULL;
-  		  break;
-        default:
-          cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
-          REPORT_READ_ERROR(buf);
-          break;
+		  codes[numCodes] = NULL;
+		  break;
+	default:
+	  cleanUpWaisSearchResponse(buf,seedWordsUsed,docHeaders,shortHeaders,longHeaders,text,headlines,codes,diags);
+	  REPORT_READ_ERROR(buf);
+	  break;
       }
    }
-  	  
+
   *info = (void *)makeWAISSearchResponse(seedWordsUsed,docHeaders,shortHeaders,
 				 longHeaders,text,headlines,codes,diags);
-  
+
   return(buf);
 }
 
@@ -1622,13 +1622,13 @@ any* documentText;
   docText->DocumentID = docID;
   docText->VersionNumber = versionNumber;
   docText->DocumentText = documentText;
-  
+
   return(docText);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 freeWAISDocumentText(docText)
 WAISDocumentText* docText;
 {
@@ -1639,7 +1639,7 @@ WAISDocumentText* docText;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writeWAISDocumentText(docText,buffer,len)
 WAISDocumentText* docText;
 char* buffer;
@@ -1649,15 +1649,15 @@ long* len;
 											DefWAISDocTextSize);
   char* buf = buffer + header_len;
   unsigned long size;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
 
   buf = writeAny(docText->DocumentID,DT_DocumentID,buf,len);
   buf = writeNum(docText->VersionNumber,DT_VersionNumber,buf,len);
   buf = writeAny(docText->DocumentText,DT_DocumentText,buf,len);
-  
+
   /* now write the header and size */
-  size = buf - buffer; 
+  size = buf - buffer;
   buf = writeUserInfoHeader(DT_DocumentTextGroup,size,header_len,buffer,len);
 
   return(buf);
@@ -1665,44 +1665,44 @@ long* len;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 readWAISDocumentText(docText,buffer)
 WAISDocumentText** docText;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size; 
+  unsigned long size;
   unsigned long headerSize;
   data_tag tag1;
   any *docID,*documentText;
   long versionNumber;
-  
+
   docID = documentText = NULL;
   versionNumber = UNUSED;
-  
+
   buf = readUserInfoHeader(&tag1,&size,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size + headerSize))
    { data_tag tag = peekTag(buf);
      switch (tag)
       { case DT_DocumentID:
-  		  buf = readAny(&docID,buf);
-  		  break;
-  		case DT_VersionNumber:
-  		  buf = readNum(&versionNumber,buf);
-  		  break;
-  		case DT_DocumentText:
-  		  buf = readAny(&documentText,buf);
-  		  break;
-        default:
-          freeAny(docID);
-          freeAny(documentText);
-          REPORT_READ_ERROR(buf);
-          break;
+		  buf = readAny(&docID,buf);
+		  break;
+		case DT_VersionNumber:
+		  buf = readNum(&versionNumber,buf);
+		  break;
+		case DT_DocumentText:
+		  buf = readAny(&documentText,buf);
+		  break;
+	default:
+	  freeAny(docID);
+	  freeAny(documentText);
+	  REPORT_READ_ERROR(buf);
+	  break;
       }
    }
-  	  
+
   *docText = makeWAISDocumentText(docID,versionNumber,documentText);
   return(buf);
 }
@@ -1732,13 +1732,13 @@ char* originCity;
   docHeadline->Date = date;
   docHeadline->Headline = headline;
   docHeadline->OriginCity = originCity;
-  
+
   return(docHeadline);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 freeWAISDocumentHeadlines(docHeadline)
 WAISDocumentHeadlines* docHeadline;
 {
@@ -1752,7 +1752,7 @@ WAISDocumentHeadlines* docHeadline;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writeWAISDocumentHeadlines(docHeadline,buffer,len)
 WAISDocumentHeadlines* docHeadline;
 char* buffer;
@@ -1762,7 +1762,7 @@ long* len;
 											DefWAISDocHeadlineSize);
   char* buf = buffer + header_len;
   unsigned long size;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
 
   buf = writeAny(docHeadline->DocumentID,DT_DocumentID,buf,len);
@@ -1771,9 +1771,9 @@ long* len;
   buf = writeString(docHeadline->Date,DT_Date,buf,len);
   buf = writeString(docHeadline->Headline,DT_Headline,buf,len);
   buf = writeString(docHeadline->OriginCity,DT_OriginCity,buf,len);
-  
+
   /* now write the header and size */
-  size = buf - buffer; 
+  size = buf - buffer;
   buf = writeUserInfoHeader(DT_DocumentHeadlineGroup,size,header_len,buffer,len);
 
   return(buf);
@@ -1781,60 +1781,60 @@ long* len;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 readWAISDocumentHeadlines(docHeadline,buffer)
 WAISDocumentHeadlines** docHeadline;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size; 
+  unsigned long size;
   unsigned long headerSize;
   data_tag tag1;
   any* docID;
   long versionNumber;
   char *source,*date,*headline,*originCity;
-  
+
   docID = NULL;
   versionNumber = UNUSED;
   source = date = headline = originCity = NULL;
-  
+
   buf = readUserInfoHeader(&tag1,&size,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size + headerSize))
    { data_tag tag = peekTag(buf);
      switch (tag)
       { case DT_DocumentID:
-  		  buf = readAny(&docID,buf);
-  		  break;
-  		case DT_VersionNumber:
-  		  buf = readNum(&versionNumber,buf);
-  		  break;
-  		case DT_Source:
-  		  buf = readString(&source,buf);
-  		  break;
-  		case DT_Date:
-  		  buf = readString(&date,buf);
-  		  break;
-  		case DT_Headline:
-  		  buf = readString(&headline,buf);
-  		  break;
-  		case DT_OriginCity:
-  		  buf = readString(&originCity,buf);
-  		  break;
-        default:
-          freeAny(docID);
-          s_free(source);
-          s_free(date);
-          s_free(headline);
-          s_free(originCity);
-          REPORT_READ_ERROR(buf);
-          break;
+		  buf = readAny(&docID,buf);
+		  break;
+		case DT_VersionNumber:
+		  buf = readNum(&versionNumber,buf);
+		  break;
+		case DT_Source:
+		  buf = readString(&source,buf);
+		  break;
+		case DT_Date:
+		  buf = readString(&date,buf);
+		  break;
+		case DT_Headline:
+		  buf = readString(&headline,buf);
+		  break;
+		case DT_OriginCity:
+		  buf = readString(&originCity,buf);
+		  break;
+	default:
+	  freeAny(docID);
+	  s_free(source);
+	  s_free(date);
+	  s_free(headline);
+	  s_free(originCity);
+	  REPORT_READ_ERROR(buf);
+	  break;
       }
    }
-  	  
+
   *docHeadline = makeWAISDocumentHeadlines(docID,versionNumber,source,date,
-  									       headline,originCity);
+									       headline,originCity);
   return(buf);
 }
 
@@ -1859,13 +1859,13 @@ char* industryCodes;
   docCodes->StockCodes = stockCodes;
   docCodes->CompanyCodes = companyCodes;
   docCodes->IndustryCodes = industryCodes;
-  
+
   return(docCodes);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 freeWAISDocumentCodes(docCodes)
 WAISDocumentCodes* docCodes;
 {
@@ -1878,7 +1878,7 @@ WAISDocumentCodes* docCodes;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writeWAISDocumentCodes(docCodes,buffer,len)
 WAISDocumentCodes* docCodes;
 char* buffer;
@@ -1888,7 +1888,7 @@ long* len;
 											DefWAISDocCodeSize);
   char* buf = buffer + header_len;
   unsigned long size;
-  
+
   RESERVE_SPACE_FOR_WAIS_HEADER(len);
 
   buf = writeAny(docCodes->DocumentID,DT_DocumentID,buf,len);
@@ -1896,9 +1896,9 @@ long* len;
   buf = writeString(docCodes->StockCodes,DT_StockCodes,buf,len);
   buf = writeString(docCodes->CompanyCodes,DT_CompanyCodes,buf,len);
   buf = writeString(docCodes->IndustryCodes,DT_IndustryCodes,buf,len);
-  
+
   /* now write the header and size */
-  size = buf - buffer; 
+  size = buf - buffer;
   buf = writeUserInfoHeader(DT_DocumentCodeGroup,size,header_len,buffer,len);
 
   return(buf);
@@ -1906,62 +1906,62 @@ long* len;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 readWAISDocumentCodes(docCodes,buffer)
 WAISDocumentCodes** docCodes;
 char* buffer;
 {
   char* buf = buffer;
-  unsigned long size; 
+  unsigned long size;
   unsigned long headerSize;
   data_tag tag1;
   any* docID;
   long versionNumber;
   char *stockCodes,*companyCodes,*industryCodes;
-  
+
   docID = NULL;
   versionNumber = UNUSED;
   stockCodes = companyCodes = industryCodes = NULL;
-  
+
   buf = readUserInfoHeader(&tag1,&size,buf);
   headerSize = buf - buffer;
-    
+
   while (buf < (buffer + size + headerSize))
    { data_tag tag = peekTag(buf);
      switch (tag)
       { case DT_DocumentID:
-  		  buf = readAny(&docID,buf);
-  		  break;
-  		case DT_VersionNumber:
-  		  buf = readNum(&versionNumber,buf);
-  		  break;
-  		case DT_StockCodes:
-  		  buf = readString(&stockCodes,buf);
-  		  break;
-  		case DT_CompanyCodes:
-  		  buf = readString(&companyCodes,buf);
-  		  break;
-  		case DT_IndustryCodes:
-  		  buf = readString(&industryCodes,buf);
-  		  break;
-        default:
-          freeAny(docID);
-          s_free(stockCodes);
-          s_free(companyCodes);
-          s_free(industryCodes);
-          REPORT_READ_ERROR(buf);
-          break;
+		  buf = readAny(&docID,buf);
+		  break;
+		case DT_VersionNumber:
+		  buf = readNum(&versionNumber,buf);
+		  break;
+		case DT_StockCodes:
+		  buf = readString(&stockCodes,buf);
+		  break;
+		case DT_CompanyCodes:
+		  buf = readString(&companyCodes,buf);
+		  break;
+		case DT_IndustryCodes:
+		  buf = readString(&industryCodes,buf);
+		  break;
+	default:
+	  freeAny(docID);
+	  s_free(stockCodes);
+	  s_free(companyCodes);
+	  s_free(industryCodes);
+	  REPORT_READ_ERROR(buf);
+	  break;
       }
    }
-  	  
+
   *docCodes = makeWAISDocumentCodes(docID,versionNumber,stockCodes,
-  									companyCodes,industryCodes);
+									companyCodes,industryCodes);
   return(buf);
 }
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writePresentInfo(present,buffer,len)
 PresentAPDU* present GCC_UNUSED;
 char* buffer;
@@ -1973,7 +1973,7 @@ long* len GCC_UNUSED;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 readPresentInfo(info,buffer)
 void** info;
 char* buffer;
@@ -1985,7 +1985,7 @@ char* buffer;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 writePresentResponseInfo(response,buffer,len)
 PresentResponseAPDU* response GCC_UNUSED;
 char* buffer;
@@ -1997,7 +1997,7 @@ long* len GCC_UNUSED;
 
 /*----------------------------------------------------------------------*/
 
-char* 
+char*
 readPresentResponseInfo(info,buffer)
 void** info;
 char* buffer;
@@ -2018,36 +2018,36 @@ char* buffer;
 #define DATA_TYPE	"wt"
 
 /* WAIS supports the following semantics for type 1 queries:
-       
+
      1.  retrieve the header/codes from a document:
 
-            System_Control_Number = docID
-            Data Type = type (optional)
-            And
+	    System_Control_Number = docID
+	    Data Type = type (optional)
+	    And
 
      2.  retrieve a fragment of the text of a document:
 
-            System_Control_Number = docID
-            Data Type = type (optional)
-            And
-	    	Chunk >= start
-	    	And
-	    	Chunk < end
-	    	And
+	    System_Control_Number = docID
+	    Data Type = type (optional)
+	    And
+		Chunk >= start
+		And
+		Chunk < end
+		And
 
-   		Information from multiple documents may be requested by using 
-   		groups of the above joined by:
+		Information from multiple documents may be requested by using
+		groups of the above joined by:
 
-            OR
+	    OR
 
-   		( XXX does an OR come after every group but the first, or do they
-              all come at the end? )
-              
-        ( XXX return type could be in the element set)
+		( XXX does an OR come after every group but the first, or do they
+	      all come at the end? )
+
+	( XXX return type could be in the element set)
 */
 
 static query_term** makeWAISQueryTerms PARAMS((DocObj** docs));
-   
+
 static query_term**
 makeWAISQueryTerms(docs)
 DocObj** docs;
@@ -2075,7 +2075,7 @@ DocObj** docs;
 
       if (doc->ChunkCode == CT_document) /* a whole document */
 	{ terms = (query_term**)s_realloc((char*)terms,
-					  (size_t)(sizeof(query_term*) * 
+					  (size_t)(sizeof(query_term*) *
 						   (numTerms + 3 + 1)));
 	  terms[numTerms++] = makeAttributeTerm(SYSTEM_CONTROL_NUMBER,
 						EQUAL,IGNORE,IGNORE,
@@ -2085,16 +2085,16 @@ DocObj** docs;
 						   IGNORE,IGNORE,IGNORE,
 						   IGNORE,type);
 	     terms[numTerms++] = makeOperatorTerm(AND);
-           }
+	   }
 	  terms[numTerms] = NULL;
 	}
       else			/* a document fragment */
 	{	char chunk_att[ATTRIBUTE_SIZE];
 		any* startChunk = NULL;
 		any* endChunk = NULL;
- 
+
 		terms = (query_term**)s_realloc((char*)terms,
-						(size_t)(sizeof(query_term*) * 
+						(size_t)(sizeof(query_term*) *
 							 (numTerms + 7 + 1)));
 
 		switch (doc->ChunkCode)
@@ -2103,7 +2103,7 @@ DocObj** docs;
 		      { char start[20],end[20];
 			(doc->ChunkCode == CT_byte) ?
 			  strncpy(chunk_att,BYTE,ATTRIBUTE_SIZE) :
-			strncpy(chunk_att,LINE,ATTRIBUTE_SIZE);	
+			strncpy(chunk_att,LINE,ATTRIBUTE_SIZE);
 			sprintf(start,"%ld",doc->ChunkStart.Pos);
 			startChunk = stringToAny(start);
 			sprintf(end,"%ld",doc->ChunkEnd.Pos);
@@ -2132,7 +2132,7 @@ DocObj** docs;
 		 }
 		terms[numTerms++] = makeAttributeTerm(chunk_att,
 						      GREATER_THAN_OR_EQUAL,
-						      IGNORE,IGNORE,IGNORE, 
+						      IGNORE,IGNORE,IGNORE,
 						      IGNORE,
 						      startChunk);
 		terms[numTerms++] = makeOperatorTerm(AND);
@@ -2148,12 +2148,12 @@ DocObj** docs;
 		    freeAny(endChunk);
 		  }
 	      }
-      
+
       freeAny(type);
-      
+
      if (i != 0) /* multiple independent queries, need a disjunction */
 	{ terms = (query_term**)s_realloc((char*)terms,
-					  (size_t)(sizeof(query_term*) * 
+					  (size_t)(sizeof(query_term*) *
 						   (numTerms + 1 + 1)));
 	  terms[numTerms++] = makeOperatorTerm(OR);
 	  terms[numTerms] = NULL;
@@ -2167,10 +2167,10 @@ DocObj** docs;
 
 static DocObj** makeWAISQueryDocs PARAMS((query_term** terms));
 
-static DocObj** 
+static DocObj**
 makeWAISQueryDocs(terms)
 query_term** terms;
-/* given a list of terms in the form given above, convert them to 
+/* given a list of terms in the form given above, convert them to
    DocObjs.
  */
 {
@@ -2181,36 +2181,36 @@ query_term** terms;
   long docNum,termNum;
 
   docNum = termNum = 0;
-  
+
   docs = (DocObj**)s_malloc((size_t)(sizeof(DocObj*) * 1));
   docs[docNum] = NULL;
 
   /* translate the terms into DocObjs */
   while (true)
-    {	      
+    {
       query_term* typeTerm = NULL;
       char* type = NULL;
       long startTermOffset;
 
       docTerm = terms[termNum];
-     
+
       if (docTerm == NULL)
 	break;			/* we're done converting */
 
       typeTerm = terms[termNum + 1]; /* get the lead Term if it exists */
 
       if (strcmp(typeTerm->Use,DATA_TYPE) == 0)	/* we do have a type */
-       { startTermOffset = 3;	
+       { startTermOffset = 3;
 	 type = anyToString(typeTerm->Term);
        }
-      else 				   	/* no type */
+      else			/* no type */
        { startTermOffset = 1;
 	 typeTerm = NULL;
 	 type = NULL;
        }
 
       /* grow the doc list */
-      docs = (DocObj**)s_realloc((char*)docs,(size_t)(sizeof(DocObj*) * 
+      docs = (DocObj**)s_realloc((char*)docs,(size_t)(sizeof(DocObj*) *
 						      (docNum + 1 + 1)));
 
       /* figure out what kind of docObj to build - and build it */
@@ -2218,20 +2218,20 @@ query_term** terms;
       if (fragmentTerm != NULL && fragmentTerm->TermType == TT_Attribute)
 	{			/* build a document fragment */
 	  query_term* startTerm = fragmentTerm;
-	  query_term* endTerm = terms[termNum + startTermOffset + 2]; 
+	  query_term* endTerm = terms[termNum + startTermOffset + 2];
 
 	  if (strcmp(startTerm->Use,BYTE) == 0){ /* a byte chunk */
 	    doc = makeDocObjUsingBytes(duplicateAny(docTerm->Term),
 				       type,
 				       anyToLong(startTerm->Term),
 				       anyToLong(endTerm->Term));
-           log_write("byte");
+	   log_write("byte");
 	  }else if (strcmp(startTerm->Use,LINE) == 0){ /* a line chunk */
 	    doc = makeDocObjUsingLines(duplicateAny(docTerm->Term),
 				       type,
 				       anyToLong(startTerm->Term),
 				       anyToLong(endTerm->Term));
-            log_write("line");
+	    log_write("line");
 	  }else{
 	log_write("chunk");			/* a paragraph chunk */
 	    doc = makeDocObjUsingParagraphs(duplicateAny(docTerm->Term),
@@ -2242,18 +2242,18 @@ query_term** terms;
 	  termNum += (startTermOffset + 4);	/* point to next term */
 	}
       else			/* build a full document */
-	{ 
+	{
 	  doc = makeDocObjUsingWholeDocument(duplicateAny(docTerm->Term),
 					     type);
 log_write("whole doc");
 	  termNum += startTermOffset;	/* point to next term */
 	}
-     
+
       docs[docNum++] = doc;	/* insert the new document */
-	 
+
       docs[docNum] = NULL;	/* keep the doc list terminated */
 
-	 
+
       if (terms[termNum] != NULL)
 	termNum++; /* skip the OR operator it necessary */
       else
@@ -2265,7 +2265,7 @@ log_write("whole doc");
 
 /*----------------------------------------------------------------------*/
 
-any* 
+any*
 makeWAISTextQuery(docs)
 DocObj** docs;
 /* given a list of DocObjs, return an any whose contents is the corresponding
@@ -2274,34 +2274,34 @@ DocObj** docs;
 {
   any *buf = NULL;
   query_term** terms = NULL;
-  
+
   terms = makeWAISQueryTerms(docs);
   buf = writeQuery(terms);
-  
+
   doList((void**)terms,freeTerm);
   s_free(terms);
-  
+
   return(buf);
 }
 
 /*----------------------------------------------------------------------*/
 
-DocObj** 
+DocObj**
 readWAISTextQuery(buf)
 any* buf;
-/* given an any whose contents are type 1 queries of the WAIS sort, 
+/* given an any whose contents are type 1 queries of the WAIS sort,
    construct a list of the corresponding DocObjs
  */
 {
   query_term** terms = NULL;
   DocObj** docs = NULL;
-  
+
   terms = readQuery(buf);
   docs = makeWAISQueryDocs(terms);
-  
+
   doList((void**)terms,freeTerm);
   s_free(terms);
-  
+
   return(docs);
 }
 
@@ -2315,7 +2315,7 @@ any* buf;
 /*   caller to assign nulls to the pointer fields of the WAIS object.  */
 /*----------------------------------------------------------------------*/
 
-void 
+void
 CSTFreeWAISInitResponse(init)
 WAISInitResponse* init;
 /* free an object made with makeWAISInitResponse */
@@ -2325,11 +2325,11 @@ WAISInitResponse* init;
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 CSTFreeWAISSearch(query)
 WAISSearch* query;
 /* destroy an object made with makeWAISSearch() */
-{ 
+{
   s_free(query);
 }
 
@@ -2339,7 +2339,7 @@ void
 CSTFreeDocObj(doc)
 DocObj* doc;
 /* free a docObj */
-{ 
+{
     s_free(doc);
 }
 
@@ -2348,7 +2348,7 @@ DocObj* doc;
 void
 CSTFreeWAISDocumentHeader(header)
 WAISDocumentHeader* header;
-{ 
+{
     s_free(header);
 }
 
@@ -2357,7 +2357,7 @@ WAISDocumentHeader* header;
 void
 CSTFreeWAISDocumentShortHeader(header)
 WAISDocumentShortHeader* header;
-{ 
+{
   s_free(header);
 }
 /*----------------------------------------------------------------------*/
@@ -2374,31 +2374,31 @@ WAISDocumentLongHeader* header;
 void
 CSTFreeWAISSearchResponse(response)
 WAISSearchResponse* response;
-{ 
+{
   s_free(response);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 CSTFreeWAISDocumentText(docText)
 WAISDocumentText* docText;
-{ 
+{
   s_free(docText);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 CSTFreeWAISDocHeadlines(docHeadline)
 WAISDocumentHeadlines* docHeadline;
-{ 
+{
   s_free(docHeadline);
 }
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 CSTFreeWAISDocumentCodes(docCodes)
 WAISDocumentCodes* docCodes;
 {
@@ -2407,7 +2407,7 @@ WAISDocumentCodes* docCodes;
 
 /*----------------------------------------------------------------------*/
 
-void 
+void
 CSTFreeWAISTextQuery(query)
 any* query;
 {
@@ -2423,7 +2423,7 @@ any* query;
 **----------------------------------------------------------------------*/
 /* WIDE AREA INFORMATION SERVER SOFTWARE
    No guarantees or restrictions.  See the readme file for the full standard
-   disclaimer.    
+   disclaimer.
    3.26.90
 */
 
@@ -2438,14 +2438,14 @@ any* query;
 
 /*---------------------------------------------------------------------*/
 
-void 
+void
 readWAISPacketHeader(msgBuffer,header_struct)
 char* msgBuffer;
 WAISMessage *header_struct;
 {
   /* msgBuffer is a string containing at least HEADER_LENGTH bytes. */
-		    
-  memmove(header_struct->msg_len,msgBuffer,(size_t)10); 
+
+  memmove(header_struct->msg_len,msgBuffer,(size_t)10);
   header_struct->msg_type = char_downcase((unsigned long)msgBuffer[10]);
   header_struct->hdr_vers = char_downcase((unsigned long)msgBuffer[11]);
   memmove(header_struct->server,(void*)(msgBuffer + 12),(size_t)10);
@@ -2453,13 +2453,13 @@ WAISMessage *header_struct;
   header_struct->encoding = char_downcase((unsigned long)msgBuffer[23]);
   header_struct->msg_checksum = char_downcase((unsigned long)msgBuffer[24]);
 }
- 
+
 /*---------------------------------------------------------------------*/
 
 /* this modifies the header argument.  See wais-message.h for the different
  * options for the arguments.
  */
- 
+
 void
 writeWAISPacketHeader(header,
 		      dataLen,
@@ -2484,19 +2484,19 @@ long version;
   if (serverLen > 10)
     serverLen = 10;
 
-  sprintf(lengthBuf, "%010ld", dataLen);  
+  sprintf(lengthBuf, "%010ld", dataLen);
   strncpy(header,lengthBuf,10);
 
-  header[10] = type & 0xFF; 
+  header[10] = type & 0xFF;
   header[11] = version & 0xFF;
 
-  strncpy(serverBuf,server,serverLen);       
+  strncpy(serverBuf,server,serverLen);
   strncpy((char*)(header + 12),serverBuf,serverLen);
 
-  header[22] = compression & 0xFF;    
-  header[23] = encoding & 0xFF;    
-  header[24] = '0'; /* checkSum(header + HEADER_LENGTH,dataLen);   XXX the result must be ascii */	
-}              
-              
+  header[22] = compression & 0xFF;
+  header[23] = encoding & 0xFF;
+  header[24] = '0'; /* checkSum(header + HEADER_LENGTH,dataLen);   XXX the result must be ascii */
+}
+
 /*---------------------------------------------------------------------*/
 

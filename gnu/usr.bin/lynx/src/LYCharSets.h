@@ -11,6 +11,10 @@
 #include <UCMap.h>
 #endif /* !UCMAP_H */
 
+extern BOOL HTPassEightBitRaw;
+extern BOOL HTPassEightBitNum;
+extern BOOL HTPassHighCtrlRaw;
+extern BOOL HTPassHighCtrlNum;
 extern BOOLEAN LYHaveCJKCharacterSet;
 extern BOOLEAN DisplayCharsetMatchLocale;
 
@@ -110,7 +114,7 @@ extern int auto_display_charset;
 enum switch_display_charset_t {
     SWITCH_DISPLAY_CHARSET_MAYBE,
     SWITCH_DISPLAY_CHARSET_REALLY,
-    SWITCH_DISPLAY_CHARSET_SIZECHANGE
+    SWITCH_DISPLAY_CHARSET_RESIZE
 };
 extern int Switch_Display_Charset PARAMS((int ord, enum switch_display_charset_t really));
 extern int Find_Best_Display_Charset PARAMS((int ord));

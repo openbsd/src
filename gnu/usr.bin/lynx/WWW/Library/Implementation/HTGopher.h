@@ -21,7 +21,3 @@ GLOBALREF HTProtocol HTGopher;
 #endif /* GLOBALREF_IS_MACRO */
 
 #endif /* HTGOPHER_H */
-
-/*
-
-   end of gopher module */

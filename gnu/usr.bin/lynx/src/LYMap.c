@@ -216,7 +216,7 @@ PUBLIC BOOL LYAddMapElement ARGS5(
 	char *,		address,
 	char *,		title,
 	HTParentAnchor *, node_anchor,
-	BOOL,		intern_flag)
+	BOOL,		intern_flag GCC_UNUSED)
 {
     LYMapElement *new = NULL;
     LYImageMap *theMap = NULL;
@@ -341,7 +341,7 @@ PRIVATE void fill_DocAddress ARGS4(
 	wwwdoc->bookmark = NULL;
 	wwwdoc->isHEAD = FALSE;
 	wwwdoc->safe = FALSE;
-	underlying = HTAnchor_parent(HTAnchor_findAddress(wwwdoc));
+	underlying = HTAnchor_findAddress(wwwdoc);
 	if (underlying->safe)
 	    wwwdoc->safe = TRUE;
 	if (punderlying)
@@ -421,8 +421,8 @@ PRIVATE int LYLoadIMGmap ARGS4 (
     BOOL old_reloading = reloading;
     HTFormat old_format_out = HTOutputFormat;
 
-    if (!strncasecomp(arg, "LYNXIMGMAP:", 11)) {
-	address = (char * )(arg + 11);
+    if (isLYNXIMGMAP(arg)) {
+	address = (char *)(arg + LEN_LYNXIMGMAP);
     }
     if (!(address && strchr(address, ':'))) {
 	HTAlert(MISDIRECTED_MAP_REQUEST);
@@ -547,7 +547,7 @@ PRIVATE int LYLoadIMGmap ARGS4 (
     } else if (LYRequestTitle && *LYRequestTitle &&
 	       strcasecomp(LYRequestTitle, "[USEMAP]")) {
 	StrAllocCopy(MapTitle, LYRequestTitle);
-    } else if ((cp=strrchr(address, '#')) != NULL) {
+    } else if ((cp = strchr(address, '#')) != NULL) {
 	StrAllocCopy(MapTitle, (cp+1));
     }
     if (!(MapTitle && *MapTitle)) {

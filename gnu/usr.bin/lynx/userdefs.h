@@ -30,6 +30,13 @@
 #ifndef USERDEFS_H
 #define USERDEFS_H
 
+/*******************************************************************
+ * Insure definition of NOT_ASCII, etc. precedes use below.
+ */
+#ifndef HTUTILS_H
+#include <HTUtils.h>
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <lynx_cfg.h>
 #endif
@@ -353,17 +360,6 @@
 #define EXP_RAND_TEMPNAME 1
 
 /********************************
- * Uncomment this line to use 'mkstemp()' in preference to lynx's own code
- * in fmt_tempname().  Caution: on a few older systems, mkstemp() is less
- * secure than you would like.  For this reason, we do not auto-configure it.
- *
- * Some things to watch out for:  some broken implementations of mkstemp() may
- * not necessarily try a different filename when they are called, making it
- * impossible to rename the file.  Others make world-writable files.
- */
-#define USE_MKSTEMP 
-
-/********************************
  * Comment this line out to let the user enter his/her email address
  * when sending a message.  There should be no need to do this unless
  * your mailer agent does not put in the From: field for you.  (If your
@@ -456,7 +452,7 @@
  * Normally we expect you will connect to a remote site, e.g., the Lynx starting
  * site:
  */
-#define STARTFILE "http://www.OpenBSD.org/"
+#define STARTFILE "http://lynx.isc.org/"
 /*
  * As an alternative, you may want to use a local URL.  A good choice for this
  * is the user's home directory:
@@ -475,11 +471,11 @@
  *   for this distribution (use SHELL syntax including the device
  *   on VMS systems).
  * The default HELPFILE is:
- * http://www.trill-home.com/lynx/lynx_help/lynx_help_main.html
+ * http://www.subir.com/lynx/lynx_help/lynx_help_main.html
  *   This should be changed here or in lynx.cfg to the local path.
  */
-/* #define HELPFILE "http://www.trill-home.com/lynx/lynx_help/lynx_help_main.html" */
-#define HELPFILE "file://localhost/usr/share/doc/html/lynx_help/lynx_help_main.html"
+#define HELPFILE "http://www.subir.com/lynx/lynx_help/lynx_help_main.html"
+/* #define HELPFILE "file://localhost/PATH_TO/lynx_help/lynx_help_main.html" */
 
 /*****************************
  * DEFAULT_INDEX_FILE is the default file retrieved when the
@@ -521,6 +517,8 @@
 /*****************************
  * If FTP_PASSIVE is set to TRUE here or in lynx.cfg, ftp transfers will
  * be done in passive mode.
+ * Note: if passive transfers fail, lynx falls back to active mode, and
+ * vice versa if active transfers fail at first.
  */
 #define FTP_PASSIVE	  TRUE
 
@@ -910,6 +908,9 @@
 #define MESSAGESECS 2
 #define ALERTSECS 3
 
+#define DEBUGSECS 0
+#define REPLAYSECS 0
+
 /******************************
  * SHOW_COLOR controls whether the program displays in color by default.
  */
@@ -934,6 +935,14 @@
  * via the -show_cursor command line switch.
  */
 #define SHOW_CURSOR FALSE
+
+/******************************
+* UNDERLINE_LINKS controls whether links are underlined by default, or shown
+* in bold.  Normally this default is set from the configure script.
+*/
+#ifndef HAVE_CONFIG_H
+#define UNDERLINE_LINKS FALSE
+#endif
 
 /******************************
 * VERBOSE_IMAGES controls whether or not Lynx replaces the [LINK], [INLINE]
@@ -1351,11 +1360,11 @@
  * the version definition with the Project Version on checkout.  Just
  * ignore it. - kw */
 /* $Format: "#define LYNX_VERSION \"$ProjectVersion$\""$ */
-#define LYNX_VERSION "2.8.4rel.1"
-#define LYNX_WWW_HOME "http://lynx.browser.org/"
+#define LYNX_VERSION "2.8.5rel.1"
+#define LYNX_WWW_HOME "http://lynx.isc.org/"
 #define LYNX_WWW_DIST "http://lynx.isc.org/current/"
 /* $Format: "#define LYNX_DATE \"$ProjectDate$\""$ */
-#define LYNX_DATE "Tue, 17 Jul 2001 14:04:37 -0700"
+#define LYNX_DATE "Wed, 04 Feb 2004 04:07:09 -0800"
 #define LYNX_DATE_OFF 5		/* truncate the automatically-generated date */
 #define LYNX_DATE_LEN 11	/* truncate the automatically-generated date */
 
@@ -1383,6 +1392,9 @@
 #define HTML_SUFFIX ".html"
 #endif
 
+#define BIN_SUFFIX  ".bin"
+#define TEXT_SUFFIX ".txt"
+
 #ifdef VMS
 /*
 **  Use the VMS port of gzip for uncompressing both .Z and .gz files.
@@ -1400,6 +1412,12 @@
 #ifdef DOSPATH
 
 #ifdef _WINDOWS
+#ifdef SYSTEM_MAIL
+#undef SYSTEM_MAIL
+#endif
+#ifdef SYSTEM_MAIL_FLAGS
+#undef SYSTEM_MAIL_FLAGS
+#endif
 #ifdef USE_ALT_BLAT_MAILER
 #define SYSTEM_MAIL		"BLAT"
 #define SYSTEM_MAIL_FLAGS	""
@@ -1409,6 +1427,9 @@
 #endif
 #else
 /* have to define something... */
+#ifdef SYSTEM_MAIL
+#undef SYSTEM_MAIL
+#endif /* SYSTEM_MAIL */
 #define SYSTEM_MAIL "sendmail"
 #define SYSTEM_MAIL_FLAGS "-t -oi"
 #endif
@@ -1432,26 +1453,37 @@
 **    WINDOWS/DOS
 **    ===========
 */
+#ifndef HAVE_CONFIG_H
 #define COMPRESS_PATH   "compress"
 #define UNCOMPRESS_PATH "uncompress"
 #define UUDECODE_PATH   "uudecode"
 #define ZCAT_PATH       "zcat"
 #define GZIP_PATH       "gzip"
 #define BZIP2_PATH      "bzip2"
+#define MV_PATH         "mv"
 #define INSTALL_PATH    "install"
 #define TAR_PATH        "tar"
-#define TOUCH_PATH      "touch"
 #define ZIP_PATH        "zip"
 #define UNZIP_PATH      "unzip"
-#define MKDIR_PATH      "mkdir"
-#define MV_PATH         "mv"
 #define RM_PATH         "rm"
-/* COPY_PATH is not required for DOSPATH any more (implemented directly) */
-/* #define COPY_PATH       "cp" */
-#define CHMOD_PATH      "chmod"
 #define TELNET_PATH     "telnet"
 #define TN3270_PATH     "tn3270"
 #define RLOGIN_PATH     "rlogin"
+
+/* see src/LYLocal.c for these */
+#define TAR_UP_OPTIONS	 "-cf"
+#define TAR_DOWN_OPTIONS "-xf"
+#define TAR_PIPE_OPTIONS "-"
+#define TAR_FILE_OPTIONS ""
+
+/*
+ * These are not used:
+ * #define COPY_PATH       "cp"
+ * #define CHMOD_PATH      "chmod"
+ * #define MKDIR_PATH      "mkdir"
+ * #define TOUCH_PATH      "touch"
+ */
+#endif /* HAVE_CONFIG_H */
 
 #else	/* Unix */
 	/* Standard locations are defined via the configure script.  When
@@ -1464,12 +1496,18 @@
 
 
 /***************************** 
+ * I have not ported multibyte support for EBCDIC.  In fact, some multibyte
+ * code in LYLowerCase() crashes on EBCDIC strings.  -- gil
+ */
+#if       ! defined(NOT_ASCII)
+/***************************** 
  * SUPPORT_MULTIBYTE_EDIT provides better support of CJK characters to
  * Lynx's Line Editor.  JIS X0201 Kana is partially supported.  The
  * reason why I didn't support it fully is I think supporting it is not
  * required so much and I don't have an environment to test it. - TH
  */
 #define SUPPORT_MULTIBYTE_EDIT
+#endif /* ! defined(NOT_ASCII) */
 
 /***************************** 
  * SUPPORT_CHDIR provides CD command (bound to 'C' by default).  It allows

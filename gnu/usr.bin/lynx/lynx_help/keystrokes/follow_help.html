@@ -3,14 +3,17 @@
 <HEAD>
 <TITLE>Help on the Follow link (or page) number feature</TITLE>
 <LINK rev="made" href="mailto:lynx-dev@sig.net">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </HEAD>
 <BODY>
 <h1>+++ Follow link (or goto link or page) number Help +++<br>
 +++ Select option (or page) number Help +++</h1>
 
-If a user has set <em>Keypad mode</em> to <em>Links are numbered</em>
-or <em>Links and form fields are numbered</em> as the default or for
-the current session via the <em>Options menu</em>, then hypertext links
+If a user has set <em>Keypad mode</em> to <em>Links are numbered</em>,
+or <em>Form fields are numbered</em>,
+or <em>Links and form fields are numbered</em>
+as the default or for the current session via the <em>Options menu</em>,
+then hypertext links
 (and form fields, depending on the keypad mode)
 are prefixed with numbers in square brackets.  Entering a keyboard
 or keypad number is treated as an <em>F_LINK_NUM</em> command, and should
@@ -23,8 +26,10 @@ the document for that link as if you had paged or used other navigation
 commands to make it the current link and then ACTIVATE-ed it.  The prompt
 can be invoked via '<em>0</em>', but it will not be treated as the lead
 digit for the number entry, whereas '<em>1</em>' through '<em>9</em>' both
-invoke the prompt and are treated as the first digit.  In <em>Links and
-form fields are numbered</em> mode, if the number corresponds to a form
+invoke the prompt and are treated as the first digit.
+In <em>Form fields are numbered</em>
+or <em>Links and form fields are numbered</em> mode,
+if the number corresponds to a form
 field you will be positioned on that field, but if it is a submit button
 it will not be ACTIVATE-ed.
 
@@ -32,8 +37,9 @@ it will not be ACTIVATE-ed.
 <em>123g</em>), then Lynx will make the link corresponding to that number
 the current link, paging as appropriate if the link does not appear in
 the currently displayed page.  The '<em>g</em>' suffix is inferred (need
-not be entered) for form fields in <em>Links and form fields are
-numbered</em> mode.
+not be entered) for form fields in
+<em>Form fields are numbered</em> or
+<em>Links and form fields are numbered</em> mode.
 
 <p>Alternatively, if the number is given a '<em>p</em>' suffix (e.g.,
 <em>123p</em>), Lynx will make the page corresponding to that number
@@ -72,8 +78,10 @@ then only '<em>0</em>', rather than every number, will be treated as an
 number:</em> prompt.  The '<em>0</em>' will not be treated as the first
 digit for the number, or number plus suffix, entry.
 
-<p>Numbers are associated with form fields only when <em>Links and form
-fields are numbered</em> mode has been selected.  If you have selected
+<p>Numbers are associated with form fields only when
+<em>Form fields are numbered</em> or
+<em>Links and form fields are numbered</em> mode has been selected.
+If you have selected
 <em>Numbers act as arrows</em> or <em>Links are numbered</em> mode, you
 can seek form fields in the document via WHEREIS searches for strings in
 their displayed values.  If they are INPUT or TEXTAREA fields with no
@@ -83,8 +91,10 @@ displayed document.
 
 <p ID="select-option">When you have invoked a popup window for a list of
 OPTIONs in a form's SELECT block, each OPTION is associated with a number,
-and that number will be displayed in <em>Links and form fields are
-numbered</em> mode.  In any keypad mode, the <em>F_LINK_NUM</em>
+and that number will be displayed in
+<em>Form fields are numbered</em> or
+<em>Links and form fields are numbered</em> mode.
+In any keypad mode, the <em>F_LINK_NUM</em>
 ('<em>0</em>') command will invoke a <em>Select option (or page)
 number:</em> prompt, and you can enter a number, and optionally a
 '<em>g</em>' or '<em>p</em>' suffix, to select or seek an OPTION in that
@@ -106,6 +116,7 @@ while viewing a popup window, the user can type
 to skip ahead 3 pages, and <em>50g-</em> will move the
 current selection back 50 options.
 This will work whether or not <em>keypad mode</em> is
+<em>Form fields are numbered</em> or
 <em>Links and form fields are numbered</em> since options
 are numbered internally.  If form field numbering is
 turned off, the option numbers won't appear on screen,
@@ -159,6 +170,7 @@ a name/value pair for the fields should be included in the content submitted
 for the form, but the value should not be displayed in the rendered form.
 Lynx respects this attribute as well, and neither displays the HIDDEN field,
 nor assigns it a number for the F_LINK_NUM ('<em>0</em>') command and
+<em>Form fields are numbered</em> or
 <em>Links and form fields are numbered</em> keypad mode handling, nor
 includes an entry for it in the menus created for the LIST ('<em>l</em>')
 or ADDRLIST ('<em>A</em>')

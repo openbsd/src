@@ -20,6 +20,7 @@
 #include <UCMap.h>
 #include <UCAux.h>
 #include <HTFTP.h>
+#include <HTTCP.h>
 #include <HTVMSUtils.h>
 #include <ssdef.h>
 #include <jpidef.h>
@@ -31,11 +32,12 @@
 #include <starlet.h>
 #include <rmsdef.h>
 
+#include <LYGlobalDefs.h>
 #include <LYUtils.h>
 #include <LYLeaks.h>
 #include <LYStrings.h>
 
-PUBLIC BOOL HTVMSFileVersions=FALSE; /* Include version numbers in listing? */
+PUBLIC BOOL HTVMSFileVersions = FALSE; /* Include version numbers in listing? */
 
 typedef struct {
    unsigned long BufferLength : 16;
@@ -43,8 +45,6 @@ typedef struct {
    unsigned long BufferAddress : 32;
    unsigned long ReturnLengthAddress : 32;
 } ItemStruct;
-
-extern CONST char * HTHostName NOPARAMS;
 
 /* PUBLIC							HTVMS_authSysPrv()
 **		CHECKS IF THIS PROCESS IS AUTHORIZED TO ENABLE SYSPRV
@@ -752,9 +752,8 @@ PUBLIC int HTVMSBrowseDir ARGS4(
     struct stat file_info;
     time_t NowTime;
     static char ThisYear[8];
-    VMSEntryInfo *entry_info=0;
+    VMSEntryInfo *entry_info = 0;
     char string_buffer[64];
-    extern BOOLEAN no_dotfiles, show_dotfiles;
 
     HTUnEscape(pathname);
     CTRACE((tfp,"HTVMSBrowseDir: Browsing `%s\'\n", pathname));
@@ -766,10 +765,10 @@ PUBLIC int HTVMSBrowseDir ARGS4(
      *  to /sys$sysroot/syshlp) before calling this routine.
      */
     if (((*pathname != '/') ||
-	 (cp=strchr(pathname+1, '/')) == NULL ||
-	 *(cp+1) == '\0' ||
-	 0==strncmp((cp+1), "000000", 6)) ||
-	(dp=HTVMSopendir(pathname)) == NULL) {
+	 (cp = strchr(pathname+1, '/')) == NULL ||
+	 *(cp + 1) == '\0' ||
+	 0 == strncmp((cp + 1), "000000", 6)) ||
+	(dp = HTVMSopendir(pathname)) == NULL) {
 	FREE(pathname);
 	return HTLoadError(sink, 403, COULD_NOT_ACCESS_DIR);
     }
@@ -1027,7 +1026,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	      {
 		 CTRACE((tfp,"Adding file to BTree: %s\n",
 						      entry_info->filename));
-		 HTBTree_add(bt, (VMSEntryInfo *)entry_info);
+		 HTBTree_add(bt, entry_info);
 	      }
 
 	} /* End while HTVMSreaddir() */

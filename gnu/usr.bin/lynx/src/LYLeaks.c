@@ -2,6 +2,11 @@
 **	Copyright (c) 1994, University of Kansas, All Rights Reserved
 **
 **	This code will be used only if LY_FIND_LEAKS is defined.
+**
+**  Revision History:
+**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
+**	10-30-97	modified to handle StrAllocCopy() and
+**			  StrAllocCat(). - KW & FM
 */
 
 /*
@@ -13,15 +18,142 @@
 #include <LYexit.h>
 #include <LYLeaks.h>
 #include <LYUtils.h>
+#include <LYGlobalDefs.h>
+
+#ifdef LY_FIND_LEAKS
 
 PRIVATE AllocationList *ALp_RunTimeAllocations = NULL;
 
-PRIVATE void AddToList PARAMS((
-	AllocationList *	ALp_new));
-PRIVATE AllocationList *FindInList PARAMS((
-	void *			vp_find));
-PRIVATE void RemoveFromList PARAMS((
-	AllocationList *	ALp_del));
+#define LEAK_SUMMARY
+
+#ifdef LEAK_SUMMARY
+
+PRIVATE long now_allocated = 0;
+PRIVATE long peak_alloced = 0;
+
+PRIVATE long total_alloced = 0;
+PRIVATE long total_freed = 0;
+
+PRIVATE long count_mallocs = 0;
+PRIVATE long count_frees = 0;
+
+PRIVATE void CountMallocs ARGS1(long, size)
+{
+    ++count_mallocs;
+    total_alloced += size;
+    now_allocated += size;
+    if (peak_alloced < now_allocated)
+	peak_alloced = now_allocated;
+}
+
+PRIVATE void CountFrees ARGS1(long, size)
+{
+    ++count_frees;
+    total_freed += size;
+    now_allocated -= size;
+}
+#else
+#define CountMallocs() ++count_mallocs
+#define CountFrees() /* nothing */
+#endif
+
+/*
+**  Purpose:	Add a new allocation item to the list.
+**  Arguments:		ALp_new The new item to add.
+**  Return Value:	void
+**  Remarks/Portability/Dependencies/Restrictions:
+**		Static function made to make code reusable in projects beyond
+**		Lynx (some might ask why not use HTList).
+**  Revision History:
+**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
+*/
+PRIVATE void AddToList ARGS1(
+	AllocationList *,	ALp_new)
+{
+    /*
+     *	Just make this the first item in the list.
+     */
+    ALp_new->ALp_Next = ALp_RunTimeAllocations;
+    ALp_RunTimeAllocations = ALp_new;
+}
+
+/*
+**  Purpose:	Find the place in the list where vp_find is currently
+**		tracked.
+**  Arguments:		vp_find A pointer to look for in the list.
+**  Return Value:	AllocationList *	Either vp_find's place in the
+**						list or NULL if not found.
+**  Remarks/Portability/Dependencies/Restrictions:
+**		Static function made to make code reusable in projects outside
+**		of Lynx (some might ask why not use HTList).
+**  Revision History:
+**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
+*/
+PRIVATE AllocationList *FindInList ARGS1(
+	void *,		vp_find)
+{
+    AllocationList *ALp_find = ALp_RunTimeAllocations;
+
+    /*
+     *	Go through the list of allocated pointers until end of list
+     *		or vp_find is found.
+     */
+    while (ALp_find != NULL) {
+	if (ALp_find->vp_Alloced == vp_find) {
+	    break;
+	}
+	ALp_find = ALp_find->ALp_Next;
+    }
+
+    return(ALp_find);
+}
+
+/*
+**  Purpose:	Remove the specified item from the list.
+**  Arguments:		ALp_del The item to remove from the list.
+**  Return Value:	void
+**  Remarks/Portability/Dependencies/Restrictions:
+**		Static function made to make code reusable in projects outside
+**		of Lynx (some might ask why not use HTList).
+**  Revision History:
+**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
+*/
+PRIVATE void RemoveFromList ARGS1(
+	AllocationList *,	ALp_del)
+{
+    AllocationList *ALp_findbefore = ALp_RunTimeAllocations;
+
+    /*
+     *	There is one special case, where the item to remove is the
+     *		first in the list.
+     */
+    if (ALp_del == ALp_findbefore) {
+	ALp_RunTimeAllocations = ALp_del->ALp_Next;
+	return;
+    }
+
+    /*
+     *	Loop through checking all of the next values, if a match
+     *	don't continue.  Always assume the item will be found.
+     */
+    while (ALp_findbefore->ALp_Next != ALp_del) {
+	ALp_findbefore = ALp_findbefore->ALp_Next;
+    }
+
+    /*
+     *	We are one item before the one to get rid of.
+     *	Get rid of it.
+     */
+    ALp_findbefore->ALp_Next = ALp_del->ALp_Next;
+}
+
+/*
+ *  Make the malloc-sequence available for debugging/tracing.
+ */
+PUBLIC long LYLeakSequence NOARGS
+{
+    return count_mallocs;
+}
 
 /*
 **  Purpose:	Print a report of all memory left unallocated by
@@ -36,16 +168,15 @@ PRIVATE void RemoveFromList PARAMS((
 **		in main.
 **		All output of this function is sent to the file defined in
 **		the header LYLeaks.h (LEAKAGE_SINK).
-**  Revision History:
-**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
-**	10-30-97	modified to handle StrAllocCopy() and
-**			  StrAllocCat(). - KW & FM
 */
 PUBLIC void LYLeaks NOARGS
 {
     AllocationList *ALp_head;
     size_t st_total = (size_t)0;
     FILE *Fp_leakagesink;
+
+    if (LYfind_leaks == FALSE)
+	return;
 
     /*
      *	Open the leakage sink to take all the output.
@@ -76,6 +207,9 @@ PUBLIC void LYLeaks NOARGS
 	     */
 	    fprintf(Fp_leakagesink, "%s.\n",
 		    gettext("Invalid pointer detected."));
+	    fprintf(Fp_leakagesink, "%s\t%ld\n",
+		    gettext("Sequence:"),
+		    ALp_head->st_Sequence);
 	    fprintf(Fp_leakagesink, "%s\t%p\n",
 		    gettext("Pointer:"), ALp_head->vp_BadRequest);
 
@@ -113,6 +247,9 @@ PUBLIC void LYLeaks NOARGS
 
 	    fprintf(Fp_leakagesink, "%s\n",
 		    gettext("Memory leak detected."));
+	    fprintf(Fp_leakagesink, "%s\t%ld\n",
+		    gettext("Sequence:"),
+		    ALp_head->st_Sequence);
 	    fprintf(Fp_leakagesink, "%s\t%p\n",
 		    gettext("Pointer:"),
 		    ALp_head->vp_Alloced);
@@ -166,12 +303,21 @@ PUBLIC void LYLeaks NOARGS
      *	Give a grand total of the leakage.
      *	Close the output file.
      */
-    fprintf(Fp_leakagesink, "\n%s\t%u\n",
+    fprintf(Fp_leakagesink, "%s\t%u\n",
 	    gettext("Total memory leakage this run:"),
 	    (unsigned)st_total);
+#ifdef LEAK_SUMMARY
+    fprintf(Fp_leakagesink, "%s\t%ld\n", gettext("Peak allocation"), peak_alloced);
+    fprintf(Fp_leakagesink, "%s\t%ld\n", gettext("Bytes allocated"), total_alloced);
+    fprintf(Fp_leakagesink, "%s\t%ld\n", gettext("Total mallocs"), count_mallocs);
+    fprintf(Fp_leakagesink, "%s\t%ld\n", gettext("Total frees"), count_frees);
+#endif
     fclose(Fp_leakagesink);
 
     HTSYS_purge(LEAKAGE_SINK);
+#if defined(NCURSES) && defined(HAVE__NC_FREEALL)
+    _nc_freeall();
+#endif
 }
 
 /*
@@ -196,10 +342,16 @@ PUBLIC void *LYLeakMalloc ARGS3(
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
+    void *vp_malloc;
+
+    if (LYfind_leaks == FALSE)
+	return (void *)malloc(st_bytes);
+
     /*
      *	Do the actual allocation.
      */
-    void *vp_malloc = (void *)malloc(st_bytes);
+    vp_malloc = (void *)malloc(st_bytes);
+    CountMallocs(st_bytes);
 
     /*
      *	Only on successful allocation do we track any information.
@@ -219,6 +371,7 @@ PUBLIC void *LYLeakMalloc ARGS3(
 	 *  There is no need to allocate more memory for the
 	 *  file name as it is a static string anyhow.
 	 */
+	ALp_new->st_Sequence = count_mallocs;
 	ALp_new->vp_Alloced = vp_malloc;
 	ALp_new->st_Bytes = st_bytes;
 	ALp_new->SL_memory.cp_FileName = cp_File;
@@ -238,7 +391,7 @@ PUBLIC void *LYLeakMalloc ARGS3(
 **		after a call to malloc or calloc or an equivalent
 **		function which may or may not have already created
 **		a list entry.
-**  Arguments:	vp_malloc	The pointer to newly allocate memory.
+**  Arguments:	vp_malloc	The pointer to newly allocated memory.
 **  Arguments:	st_bytes	The size of the allocation requested
 **				in bytes.
 **		cp_File		The file from which the request for
@@ -260,6 +413,10 @@ PUBLIC AllocationList *LYLeak_mark_malloced ARGS4(
 	CONST short,	ssi_Line)
 {
     AllocationList *ALp_new = NULL;
+
+    if (LYfind_leaks == FALSE)
+	return NULL;
+
     /*
      *	The actual allocation has already been done!
      *
@@ -324,10 +481,16 @@ PUBLIC void *LYLeakCalloc ARGS4(
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
+    void *vp_calloc;
+
+    if (LYfind_leaks == FALSE)
+	return (void *)calloc(st_number, st_bytes);
+
     /*
      *	Allocate the requested memory.
      */
-    void *vp_calloc = (void *)calloc(st_number, st_bytes);
+    vp_calloc = (void *)calloc(st_number, st_bytes);
+    CountMallocs(st_bytes);
 
     /*
      *	Only if the allocation was a success do we track information.
@@ -348,6 +511,7 @@ PUBLIC void *LYLeakCalloc ARGS4(
 	 *  There is no need to allocate memory for the file
 	 *  name as it is a static string anyway.
 	 */
+	ALp_new->st_Sequence = count_mallocs;
 	ALp_new->vp_Alloced = vp_calloc;
 	ALp_new->st_Bytes = (st_number * st_bytes);
 	ALp_new->SL_memory.cp_FileName = cp_File;
@@ -392,6 +556,9 @@ PUBLIC void *LYLeakRealloc ARGS4(
 {
     void *vp_realloc;
     AllocationList *ALp_renew;
+
+    if (LYfind_leaks == FALSE)
+	return (void *)realloc(vp_Alloced, st_newBytes);
 
     /*
      *	If we are asked to resize a NULL pointer, this is just a
@@ -439,7 +606,11 @@ PUBLIC void *LYLeakRealloc ARGS4(
      *	If not NULL, record the information.
      */
     vp_realloc = (void *)realloc(vp_Alloced, st_newBytes);
+    CountMallocs(st_newBytes);
+    CountFrees(ALp_renew->st_Bytes);
+
     if (vp_realloc != NULL) {
+	ALp_renew->st_Sequence = count_mallocs;
 	ALp_renew->vp_Alloced = vp_realloc;
 	ALp_renew->st_Bytes = st_newBytes;
 
@@ -531,6 +702,11 @@ PUBLIC void LYLeakFree ARGS3(
 {
     AllocationList *ALp_free;
 
+    if (LYfind_leaks == FALSE) {
+	free(vp_Alloced);
+	return;
+    }
+
     /*
      *	Find the pointer in the allocated list.
      *	If not found, bad pointer.
@@ -567,6 +743,7 @@ PUBLIC void LYLeakFree ARGS3(
 	 *  Free off the memory.
 	 *  Take entry out of allocation list.
 	 */
+	CountFrees(ALp_free->st_Bytes);
 	RemoveFromList(ALp_free);
 	FREE(ALp_free);
 	FREE(vp_Alloced);
@@ -643,6 +820,7 @@ PUBLIC char * LYLeakSACat ARGS4(
 }
 
 #if defined(LY_FIND_LEAKS) && defined(LY_FIND_LEAKS_EXTENDED)
+
 PUBLIC CONST char * leak_cp_File_hack = __FILE__;
 PUBLIC short leak_ssi_Line_hack = __LINE__;
 
@@ -701,6 +879,11 @@ PRIVATE char * LYLeakSAVsprintf ARGS6(
 
     if (!dest)
 	return NULL;
+
+    if (LYfind_leaks == FALSE) {
+	StrAllocVsprintf(dest, inuse, fmt, ap);
+	return (*dest);
+    }
 
     vp_oldAlloced = *dest;
     if (!vp_oldAlloced) {
@@ -785,7 +968,7 @@ PRIVATE char * LYLeakSAVsprintf ARGS6(
 
 /* Note: the following may need updating if HTSprintf in HTString.c
  * is changed. - kw */
-#if ANSI_VARARGS
+#ifdef ANSI_VARARGS
 PRIVATE char * LYLeakHTSprintf (char **pstr, CONST char *fmt, ...)
 #else
 PRIVATE char * LYLeakHTSprintf (va_alist)
@@ -797,7 +980,7 @@ PRIVATE char * LYLeakHTSprintf (va_alist)
     va_list ap;
     LYva_start(ap,fmt);
     {
-#if !ANSI_VARARGS
+#ifndef ANSI_VARARGS
 	char **		pstr = va_arg(ap, char **);
 	CONST char *	fmt  = va_arg(ap, CONST char *);
 #endif
@@ -812,7 +995,7 @@ PRIVATE char * LYLeakHTSprintf (va_alist)
 
 /* Note: the following may need updating if HTSprintf0 in HTString.c
  * is changed. - kw */
-#if ANSI_VARARGS
+#ifdef ANSI_VARARGS
 PRIVATE char * LYLeakHTSprintf0 (char **pstr, CONST char *fmt, ...)
 #else
 PRIVATE char * LYLeakHTSprintf0 (va_alist)
@@ -823,7 +1006,7 @@ PRIVATE char * LYLeakHTSprintf0 (va_alist)
     va_list ap;
     LYva_start(ap,fmt);
     {
-#if !ANSI_VARARGS
+#ifndef ANSI_VARARGS
 	char **		pstr = va_arg(ap, char **);
 	CONST char *	fmt  = va_arg(ap, CONST char *);
 #endif
@@ -862,94 +1045,9 @@ PUBLIC HTSprintflike *Get_htsprintf0_fn ARGS2(
     return &LYLeakHTSprintf0;
 }
 
-#endif /* not LY_FIND_LEAKS and LY_FIND_LEAKS_EXTENDED */
-
-/*
-**  Purpose:	Add a new allocation item to the list.
-**  Arguments:		ALp_new The new item to add.
-**  Return Value:	void
-**  Remarks/Portability/Dependencies/Restrictions:
-**		Static function made to make code reusable in projects beyond
-**		Lynx (some might ask why not use HTList).
-**  Revision History:
-**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
-*/
-PRIVATE void AddToList ARGS1(
-	AllocationList *,	ALp_new)
-{
-    /*
-     *	Just make this the first item in the list.
-     */
-    ALp_new->ALp_Next = ALp_RunTimeAllocations;
-    ALp_RunTimeAllocations = ALp_new;
-}
-
-/*
-**  Purpose:	Find the place in the list where vp_find is currently
-**		tracked.
-**  Arguments:		vp_find A pointer to look for in the list.
-**  Return Value:	AllocationList *	Either vp_find's place in the
-**						list or NULL if not found.
-**  Remarks/Portability/Dependencies/Restrictions:
-**		Static function made to make code reusable in projects outside
-**		of Lynx (some might ask why not use HTList).
-**  Revision History:
-**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
-*/
-PRIVATE AllocationList *FindInList ARGS1(
-	void *,		vp_find)
-{
-    AllocationList *ALp_find = ALp_RunTimeAllocations;
-
-    /*
-     *	Go through the list of allocated pointers until end of list
-     *		or vp_find is found.
-     */
-    while (ALp_find != NULL) {
-	if (ALp_find->vp_Alloced == vp_find) {
-	    break;
-	}
-	ALp_find = ALp_find->ALp_Next;
-    }
-
-    return(ALp_find);
-}
-
-/*
-**  Purpose:	Remove the specified item from the list.
-**  Arguments:		ALp_del The item to remove from the list.
-**  Return Value:	void
-**  Remarks/Portability/Dependencies/Restrictions:
-**		Static function made to make code reusable in projects outside
-**		of Lynx (some might ask why not use HTList).
-**  Revision History:
-**	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
-*/
-PRIVATE void RemoveFromList ARGS1(
-	AllocationList *,	ALp_del)
-{
-    AllocationList *ALp_findbefore = ALp_RunTimeAllocations;
-
-    /*
-     *	There is one special case, where the item to remove is the
-     *		first in the list.
-     */
-    if (ALp_del == ALp_findbefore) {
-	ALp_RunTimeAllocations = ALp_del->ALp_Next;
-	return;
-    }
-
-    /*
-     *	Loop through checking all of the next values, if a match
-     *	don't continue.  Always assume the item will be found.
-     */
-    while (ALp_findbefore->ALp_Next != ALp_del) {
-	ALp_findbefore = ALp_findbefore->ALp_Next;
-    }
-
-    /*
-     *	We are one item before the one to get rid of.
-     *	Get rid of it.
-     */
-    ALp_findbefore->ALp_Next = ALp_del->ALp_Next;
-}
+#endif /* LY_FIND_LEAKS and LY_FIND_LEAKS_EXTENDED */
+#else
+/* Standard C forbids an empty file */
+void no_leak_checking NOPARAMS;
+void no_leak_checking NOARGS { }
+#endif /* LY_FIND_LEAKS */

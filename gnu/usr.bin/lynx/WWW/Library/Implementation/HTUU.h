@@ -23,4 +23,4 @@ PUBLIC int HTUU_decode PARAMS((char *bufcoded,
                                unsigned char *bufplain,
                                int outbufsize));
 
-#endif
+#endif /* HTUU_H */

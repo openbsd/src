@@ -17,7 +17,7 @@
 #include <HTParse.h>
 #endif
 
-#if _WIN_CC
+#ifdef _WIN_CC
 extern int exec_command(char * cmd, int wait_flag); /* xsystem.c */
 #endif
 
@@ -37,7 +37,7 @@ extern int exec_command(char * cmd, int wait_flag); /* xsystem.c */
 #include <LYLeaks.h>
 #include <LYKeymap.h>
 
-#ifdef EXP_PERSISTENT_COOKIES 
+#ifdef USE_PERSISTENT_COOKIES
 #include <LYCookie.h>
 #endif
 
@@ -48,7 +48,7 @@ PUBLIC BOOLEAN LYCancelDownload=FALSE;   /* exported to HTFormat.c in libWWW */
 
 #ifdef VMS
 PRIVATE char * FIXED_RECORD_COMMAND = NULL;
-#ifdef USE_COMMAND_FILE 	     /* Keep this as an option. - FM	*/
+#ifdef USE_COMMAND_FILE		     /* Keep this as an option. - FM	*/
 #define FIXED_RECORD_COMMAND_MASK "@Lynx_Dir:FIXED512 %s"
 #else
 #define FIXED_RECORD_COMMAND_MASK "%s"
@@ -136,7 +136,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
     char *path = NULL;
     char *addr = NULL;
     int status;
-    BOOL use_gzread = NO;
+    BOOL use_zread = NO;
     BOOLEAN found = FALSE;
 #ifdef WIN_EX
     HANDLE cur_handle;
@@ -183,23 +183,28 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 		    !strcasecomp(&path[len-2], "gz")) {
 #ifdef USE_ZLIB
 		    if (!skip_loadfile) {
-			use_gzread = YES;
+			use_zread = YES;
 		    } else
 #endif /* USE_ZLIB */
 		    {
 			path[len-3] = '\0';
 			remove(path);
 		    }
-#ifdef BZIP2_PATH
 		} else if (len > 4 && !strcasecomp(&path[len-3], "bz2")) {
-		    path[len-4] = '\0';
-		    remove(path);
-#endif /* BZIP2_PATH */
+#ifdef USE_BZLIB
+		    if (!skip_loadfile) {
+			use_zread = YES;
+		    } else
+#endif /* USE_BZLIB */
+		    {
+			path[len-4] = '\0';
+			remove(path);
+		    }
 		} else if (len > 2 && !strcasecomp(&path[len-1], "Z")) {
 		    path[len-2] = '\0';
 		    remove(path);
 		}
-		if (!use_gzread) {
+		if (!use_zread) {
 		    if (!dump_output_immediately) {
 			/*
 			 *  Tell user what's happening. - FM
@@ -257,7 +262,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 		    }
 #endif /* FNAMES_8_3 */
 		    LYLocalFileToURL (&addr, path);
-		    if (!use_gzread) {
+		    if (!use_zread) {
 			LYRenamedTemp(me->anchor->FileCache, path);
 			StrAllocCopy(me->anchor->FileCache, path);
 			StrAllocCopy(me->anchor->content_encoding, "binary");
@@ -291,7 +296,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 			/*
 			 *  Tell user what's happening. - FM
 			 */
-			_user_message(WWW_USING_MESSAGE, addr);
+			HTUserMsg2(WWW_USING_MESSAGE, addr);
 		    }
 
 		    if (skip_loadfile) {
@@ -322,7 +327,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 			    stop_curses();
 #endif
 			}
-#if _WIN_CC
+#ifdef _WIN_CC
 			exec_command(me->end_command, FALSE);
 #else
 			LYSystem(me->end_command);
@@ -334,7 +339,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 			if (!dump_output_immediately) {
 #ifdef WIN_EX
 			    if (focus_window) {
-				HTInfoMsg("Set focus1");
+				HTInfoMsg(gettext("Set focus1"));
 				status = SetForegroundWindow(cur_handle);
 			    }
 #else
@@ -378,7 +383,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 		stop_curses();
 #endif
 	    }
-#if _WIN_CC
+#ifdef _WIN_CC
 	    exec_command(me->end_command, FALSE);
 #else
 	    LYSystem(me->end_command);
@@ -391,7 +396,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 	    if (!dump_output_immediately) {
 #ifdef WIN_EX
 		if (focus_window) {
-		    HTInfoMsg("Set focus2");
+		    HTInfoMsg(gettext("Set focus2"));
 		    status = SetForegroundWindow(cur_handle);
 		}
 #else
@@ -410,11 +415,11 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 	    if (!dump_output_immediately) {
 #ifdef WIN_EX
 		if (focus_window) {
-		    HTInfoMsg("Set focus3");
+		    HTInfoMsg(gettext("Set focus3"));
 		    status = SetForegroundWindow(cur_handle);
 		}
 #else
-	        start_curses();
+		start_curses();
 #endif
 	    }
 	}
@@ -426,20 +431,26 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 	if (me->anchor->FileCache)
 	    remove(me->anchor->FileCache);
 	FREE(me);
-#ifdef EXP_PERSISTENT_COOKIES 
-	/* 
-	 *  We want to save cookies picked up when in source 
-	 *  mode.  ... 
-	 */ 
-	if (persistent_cookies) 
-	    LYStoreCookies(LYCookieSaveFile); 
-#endif /* EXP_PERSISTENT_COOKIES */ 
+#ifdef USE_PERSISTENT_COOKIES
+	/*
+	 *  We want to save cookies picked up when in source
+	 *  mode.  ...
+	 */
+	if (persistent_cookies)
+	    LYStoreCookies(LYCookieSaveFile);
+#endif /* USE_PERSISTENT_COOKIES */
 	exit_immediately(EXIT_SUCCESS);
     }
 
     FREE(me);
     return;
 }
+
+#ifdef VMS
+#  define REMOVE_COMMAND "delete/noconfirm/nolog %s;"
+#else
+#  define REMOVE_COMMAND "%s"
+#endif /* VMS */
 
 /*	Abort writing
 **	-------------
@@ -455,7 +466,19 @@ PRIVATE void HTFWriter_abort ARGS2(
 	CTRACE((tfp, "HTFWriter: Aborting: file not executed or saved.\n"));
 	FREE(me->end_command);
 	if (me->remove_command) {
+#ifdef VMS
 	    LYSystem(me->remove_command);
+#else
+	    chmod(me->remove_command, 0600);		/* Ignore errors */
+	    if (0 != unlink(me->remove_command)) {
+		char buf[560];
+
+		sprintf(buf, "%.60s '%.400s': %.60s",
+			gettext("Error deleting file"),
+			me->remove_command, LYStrerror(errno));
+		HTAlert(buf);
+	    }
+#endif
 	    FREE(me->remove_command);
 	}
     }
@@ -589,12 +612,6 @@ PRIVATE char *mailcap_substitute ARGS3(
     return result;
 }
 
-#ifndef VMS
-#define REMOVE_COMMAND "/bin/rm -f %s"
-#else
-#define REMOVE_COMMAND "delete/noconfirm/nolog %s;"
-#endif /* VMS */
-
 /*	Take action using a system command
 **	----------------------------------
 **
@@ -664,10 +681,10 @@ PUBLIC HTStream* HTSaveAndExecute ARGS3(
 	 *  so that the open fp gets registered in the list keeping track of
 	 *  temp files, equivalent to when LYOpenTemp() gets called below.
 	 *  This avoids a file descriptor leak caused by LYCloseTempFP()
-	 *  not being able to find the fp.  The ".bin" suffix is expected
+	 *  not being able to find the fp.  The binary suffix is expected
 	 *  to not be used, it's only for fallback in unusual error cases. - kw
 	 */
-	me->fp = LYOpenTempRewrite(fnam, ".bin", BIN_W);
+	me->fp = LYOpenTempRewrite(fnam, BIN_SUFFIX, BIN_W);
     } else {
 #if defined(WIN_EX) && !defined(__CYGWIN__)	/* 1998/01/04 (Sun) */
 	if (!strncmp(anchor->address,"file://localhost",16)) {
@@ -719,15 +736,13 @@ PUBLIC HTStream* HTSaveAndExecute ARGS3(
 	 */
 	if (!strcasecomp(pres->rep->name, "text/html")) {
 	    suffix = HTML_SUFFIX;
-	} else if (!strcasecomp(pres->rep->name, "text/plain")) {
-	    suffix = ".txt";
-	} else if (!strcasecomp(pres->rep->name,
-				"application/octet-stream")) {
-	    suffix = ".bin";
-	} else if (
-	(suffix = HTFileSuffix(pres->rep, anchor->content_encoding)) == 0
-		   || *suffix != '.')
-	{
+	} else if (!strncasecomp(pres->rep->name, "text/", 5)) {
+	    suffix = TEXT_SUFFIX;
+	} else if (!strncasecomp(pres->rep->name, "application/", 12)) {
+	    suffix = BIN_SUFFIX;
+	} else if ((suffix = HTFileSuffix(pres->rep,
+					  anchor->content_encoding)) == 0
+		    || *suffix != '.') {
 	    suffix = HTML_SUFFIX;
 	}
 	me->fp = LYOpenTemp(fnam, suffix, BIN_W);
@@ -859,10 +874,10 @@ PUBLIC HTStream* HTSaveToFile ARGS3(
 	 *  so that the open fp gets registered in the list keeping track of
 	 *  temp files, equivalent to when LYOpenTemp() gets called below.
 	 *  This avoids a file descriptor leak caused by LYCloseTempFP()
-	 *  not being able to find the fp.  The ".bin" suffix is expected
+	 *  not being able to find the fp.  The binary suffix is expected
 	 *  to not be used, it's only for fallback in unusual error cases. - kw
 	 */
-	ret_obj->fp = LYOpenTempRewrite(fnam, ".bin", BIN_W);
+	ret_obj->fp = LYOpenTempRewrite(fnam, BIN_SUFFIX, BIN_W);
     } else {
 	/*
 	 *  Check for a suffix.
@@ -870,11 +885,10 @@ PUBLIC HTStream* HTSaveToFile ARGS3(
 	 */
 	if (!strcasecomp(pres->rep->name, "text/html")) {
 	    suffix = HTML_SUFFIX;
-	} else if (!strcasecomp(pres->rep->name, "text/plain")) {
-	    suffix = ".txt";
-	} else if (!strcasecomp(pres->rep->name,
-				    "application/octet-stream")) {
-	    suffix = ".bin";
+	} else if (!strncasecomp(pres->rep->name, "text/", 5)) {
+	    suffix = TEXT_SUFFIX;
+	} else if (!strncasecomp(pres->rep->name, "application/", 12)) {
+	    suffix = BIN_SUFFIX;
 	} else if ((suffix = HTFileSuffix(pres->rep,
 					  anchor->content_encoding)) == 0
 		    || *suffix != '.') {
@@ -1020,6 +1034,7 @@ PUBLIC HTStream* HTCompressed ARGS3(
     BOOL can_present = FALSE;
     char fnam[LY_MAXPATH];
     char temp[LY_MAXPATH];	/* actually stores just a suffix */
+    CONST char *program;
     CONST char *suffix;
     char *uncompress_mask = NULL;
     char *compress_suffix = "";
@@ -1048,37 +1063,43 @@ PUBLIC HTStream* HTCompressed ARGS3(
 	     *	We have a presentation mapping for it. - FM
 	     */
 	    can_present = TRUE;
-	    if (!strcasecomp(anchor->content_encoding, "x-gzip") ||
-		!strcasecomp(anchor->content_encoding, "gzip")) {
+	    if ((!strcasecomp(anchor->content_encoding, "x-gzip") ||
+		 !strcasecomp(anchor->content_encoding, "gzip")) &&
+		 (program = HTGetProgramPath(ppGZIP)) != NULL) {
 		/*
 		 *  It's compressed with the modern gzip. - FM
 		 */
-		StrAllocCopy(uncompress_mask, GZIP_PATH);
+		StrAllocCopy(uncompress_mask, program);
 		StrAllocCat(uncompress_mask, " -d --no-name %s");
 		compress_suffix = "gz";
-#ifdef BZIP2_PATH
-	    } else if (!strcasecomp(anchor->content_encoding, "x-bzip2") ||
-		!strcasecomp(anchor->content_encoding, "bzip2")) {
-		StrAllocCopy(uncompress_mask, BZIP2_PATH);
+		break;
+	    }
+	    if ((!strcasecomp(anchor->content_encoding, "x-bzip2") ||
+		 !strcasecomp(anchor->content_encoding, "bzip2")) &&
+		(program = HTGetProgramPath(ppBZIP2)) != NULL) {
+		StrAllocCopy(uncompress_mask, program);
 		StrAllocCat(uncompress_mask, " -d %s");
 		compress_suffix = "bz2";
-#endif /* BZIP2_PATH */
-	    } else if (!strcasecomp(anchor->content_encoding, "x-compress") ||
-		       !strcasecomp(anchor->content_encoding, "compress")) {
+		break;
+	    }
+	    if ((!strcasecomp(anchor->content_encoding, "x-compress") ||
+		 !strcasecomp(anchor->content_encoding, "compress")) &&
+		(program = HTGetProgramPath(ppUNCOMPRESS)) != NULL) {
 		/*
 		 *  It's compressed the old fashioned Unix way. - FM
 		 */
-		StrAllocCopy(uncompress_mask, UNCOMPRESS_PATH);
+		StrAllocCopy(uncompress_mask, program);
 		StrAllocCat(uncompress_mask, " %s");
 		compress_suffix = "Z";
+		break;
 	    }
 	    break;
 	}
     }
-    if (can_present == FALSE || 		 /* no presentation mapping */
+    if (can_present == FALSE ||			 /* no presentation mapping */
 	uncompress_mask == NULL ||		    /* not gzip or compress */
 	strchr(anchor->content_type, ';') ||		   /* wrong charset */
-	HTOutputFormat == HTAtom_for("www/download") || 	/* download */
+	HTOutputFormat == HTAtom_for("www/download") ||		/* download */
 	!strcasecomp(pres->rep_out->name, "www/download") ||	/* download */
 	(traversal &&	   /* only handle html or plain text for traversals */
 	 strcasecomp(anchor->content_type, "text/html") &&
@@ -1139,11 +1160,10 @@ PUBLIC HTStream* HTCompressed ARGS3(
     if (!strcasecomp(anchor->content_type, "text/html")) {
 	middle = HTML_SUFFIX;
 	middle++;		/* point to 'h' of .htm(l) - kw */
-    } else if (!strcasecomp(anchor->content_type, "text/plain")) {
-	middle = "txt";
-    } else if (!strcasecomp(anchor->content_type,
-			    "application/octet-stream")) {
-	middle = "bin";
+    } else if (!strncasecomp(anchor->content_type, "text/", 5)) {
+	middle = TEXT_SUFFIX + 1;
+    } else if (!strncasecomp(anchor->content_type, "application/", 12)) {
+	middle = BIN_SUFFIX + 1;
     } else if ((suffix =
 		HTFileSuffix(HTAtom_for(anchor->content_type), NULL)) &&
 	       *suffix == '.') {
@@ -1203,12 +1223,22 @@ PUBLIC HTStream* HTCompressed ARGS3(
     /*
      *	Make command to process file. - FM
      */
-#ifdef USE_ZLIB
-    if (compress_suffix[0] == 'g' && /* must be gzip */
-	!me->viewer_command) {
+#ifdef USE_BZLIB
+    if (compress_suffix[0] == 'b'	/* must be bzip2 */
+	&& !me->viewer_command) {
 	/*
-	 *  We won't call gzip externally, so we don't need to supply
-	 *  a command for it. - kw
+	 * We won't call bzip2 externally, so we don't need to supply a command
+	 * for it.
+	 */
+	StrAllocCopy(me->end_command, "");
+    } else
+#endif
+#ifdef USE_ZLIB
+    if (compress_suffix[0] == 'g'	/* must be gzip */
+	&& !me->viewer_command) {
+	/*
+	 * We won't call gzip or compress externally, so we don't need to
+	 * supply a command for it.
 	 */
 	StrAllocCopy(me->end_command, "");
     } else
@@ -1345,7 +1375,7 @@ PUBLIC unsigned long LYVMS_FixedLengthRecords ARGS1(char *, filename)
     attr_rqst_list[2].atr$l_addr = 0;
     /* file "record" attributes */
     memset((void *)&recattr, 0, sizeof recattr);
-    fchars = 0; 	/* file characteristics */
+    fchars = 0;		/* file characteristics */
 
     /* get current attributes */
     sts = sys$qiow(0, channel, IO$_ACCESS, iosb, (void(*)())0, 0,

@@ -69,9 +69,7 @@ PUBLIC void HTAlwaysAlert ARGS2(
 	    LYstore_message2(ALERT_FORMAT, Msg);
 	    LYSleepAlert();
 	} else {
-	    fprintf(((TRACE) ? stdout : stderr),
-		    ALERT_FORMAT,
-		    (Msg == 0) ? "" : Msg);
+	    fprintf(((TRACE) ? stdout : stderr), ALERT_FORMAT, NonNull(Msg));
 	    fflush(stdout);
 	    LYstore_message2(ALERT_FORMAT, Msg);
 	    LYSleepAlert();
@@ -92,7 +90,7 @@ PUBLIC void HTInfoMsg ARGS1(
     if (Msg && *Msg) {
 	CTRACE((tfp, "Info message: %s\n", Msg));
 	LYstore_message(Msg);
-	LYSleep(InfoSecs);
+	LYSleepInfo();
     }
 }
 
@@ -106,6 +104,12 @@ PUBLIC void HTUserMsg ARGS1(
     if (Msg && *Msg) {
 	CTRACE((tfp, "User message: %s\n", Msg));
 	LYstore_message(Msg);
+#if !(defined(USE_SLANG) || defined(WIDEC_CURSES))
+	if (HTCJK != NOCJK) {
+	    clearok(curscr, TRUE);
+	    LYrefresh();
+	}
+#endif
 	LYSleepMsg();
     }
 }
@@ -133,30 +137,34 @@ PUBLIC void HTProgress ARGS1(
     statusline(Msg);
     LYstore_message(Msg);
     CTRACE((tfp, "%s\n", Msg));
-#if defined(SH_EX) && defined(WIN_EX)	/* 1997/10/11 (Sat) 12:51:02 */
-    {
-	if (debug_delay != 0)
-	    Sleep(debug_delay);	/* XXX msec */
-    }
-#endif
+    LYSleepDebug();
 }
 
-PRIVATE char *sprint_bytes ARGS3(
-	char *,		s,
-	long,		n,
-	char *, 	was_units)
+PUBLIC CONST char *HTProgressUnits ARGS1(
+	int,		rate)
 {
-    static long kb_units = 1024;
-    static char *bunits;
-    static char *kbunits;
-    char *u;
+    static CONST char *bunits = 0;
+    static CONST char *kbunits = 0;
 
     if (!bunits) {
 	bunits = gettext("bytes");
-	kbunits = gettext("KB");
+	kbunits = gettext(LYTransferName);
     }
+    return ((rate == rateKB)
+#ifdef USE_READPROGRESS
+    	    || (rate == rateEtaKB)
+#endif
+	    ) ? kbunits : bunits;
+}
 
-    u = kbunits;
+PRIVATE CONST char *sprint_bytes ARGS3(
+	char *,		s,
+	long,		n,
+	CONST char *, 	was_units)
+{
+    static long kb_units = 1024;
+    CONST char *u = HTProgressUnits(LYTransferRate);
+
     if ( (LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe)
 	 && (n >= 10 * kb_units) )
 	sprintf(s, "%ld", n/kb_units);
@@ -165,13 +173,28 @@ PRIVATE char *sprint_bytes ARGS3(
 	sprintf(s, "%.2g", ((double)n)/kb_units);
     else {
 	sprintf(s, "%ld", n);
-	u = bunits;
     }
 
     if (!was_units || was_units != u)
 	sprintf(s + strlen(s), " %s", u);
     return u;
 }
+
+#ifdef USE_READPROGRESS
+#define TIME_HMS_LENGTH (16)
+PRIVATE char *sprint_tbuf ARGS2(
+	char *,	       s,
+	long,	       t)
+{
+    if (t > 3600)
+	sprintf (s, "%ldh%ldm%lds", t / 3600, (t / 60) % 60, t % 60);
+    else if (t > 60)
+	sprintf (s, "%ldm%lds", t / 60, t % 60);
+    else
+	sprintf (s, "%ld sec", t);
+    return s;
+}
+#endif /* USE_READPROGRESS */
 
 /*	Issue a read-progress message.			HTReadProgress()
 **	------------------------------
@@ -185,7 +208,7 @@ PUBLIC void HTReadProgress ARGS2(
     static char *line = NULL;
     char bytesp[80], totalp[80], transferp[80];
     int renew = 0;
-    char *was_units;
+    CONST char *was_units;
 
 #ifdef HAVE_GETTIMEOFDAY
     struct timeval tv;
@@ -224,15 +247,18 @@ PUBLIC void HTReadProgress ARGS2(
 	total_last = total;
 
 	/*
-	 * Optimal refresh time:  every 0.2 sec, use interpolation.  Transfer
-	 * rate is not constant when we have partial content in a proxy, so
-	 * interpolation lies - will check every second at least for sure.
+	 * Optimal refresh time:  every 0.2 sec
 	 */
-#ifdef HAVE_GETTIMEOFDAY
+#if defined(HAVE_GETTIMEOFDAY) || (defined(HAVE_FTIME) && defined(HAVE_SYS_TIMEB_H))
 	if (now >= last + 0.2)
 	    renew = 1;
 #else
-	if (((bytes - bytes_last) > (transfer_rate / 5)) || (now != last)) {
+	/*
+	 * Use interpolation.  (The transfer rate may be not constant
+	 * when we have partial content in a proxy.  We adjust transfer_rate
+	 * once a second to minimize interpolation error below.)
+	 */
+	if ((now != last) || ((bytes - bytes_last) > (transfer_rate / 5))) {
 	    renew = 1;
 	    bytes_last += (transfer_rate / 5);	/* until we got next second */
 	}
@@ -243,7 +269,7 @@ PUBLIC void HTReadProgress ARGS2(
 		if (bytes_last != bytes)
 		    last_active = now;
 		bytes_last = bytes;
-		transfer_rate = (long)(bytes / (now - first)); /* more accurate here */
+		transfer_rate = (long)(bytes / (now - first)); /* more accurate value */
 	    }
 
 	    if (total > 0)
@@ -263,13 +289,18 @@ PUBLIC void HTReadProgress ARGS2(
 		HTSprintf (&line, gettext(", %s/sec"), transferp);
 	    }
 
-#ifdef EXP_READPROGRESS
+#ifdef USE_READPROGRESS
 	    if (LYTransferRate == rateEtaBYTES
 	     || LYTransferRate == rateEtaKB) {
+		char tbuf[TIME_HMS_LENGTH];
 		if (now - last_active >= 5)
-		    HTSprintf (&line, gettext(" (stalled for %ld sec)"), (long)(now - last_active));
+		    HTSprintf (&line,
+			       gettext(" (stalled for %s)"),
+			       sprint_tbuf (tbuf, (long)(now - last_active)));
 		if (total > 0 && transfer_rate)
-		    HTSprintf (&line, gettext(", ETA %ld sec"), (long)((total - bytes)/transfer_rate));
+		    HTSprintf (&line,
+			       gettext(", ETA %s"),
+			       sprint_tbuf (tbuf, (long)((total - bytes)/transfer_rate)));
 	    }
 #endif
 
@@ -297,6 +328,38 @@ PUBLIC BOOL HTLastConfirmCancelled NOARGS
     } else {
 	return(NO);
     }
+}
+
+/*
+ * Prompt for yes/no response, but let a configuration variable override
+ * the prompt entirely.
+ */
+PUBLIC int HTForcedPrompt ARGS3(
+	int,		option,
+	CONST char *,	msg,
+	int,		dft)
+{
+    int result = FALSE;
+    char *show = NULL;
+    char *msg2 = NULL;
+
+    if (option == FORCE_PROMPT_DFT) {
+	result = HTConfirmDefault(msg, dft);
+    } else {
+	if (option == FORCE_PROMPT_YES) {
+	    show = gettext("yes");
+	    result = YES;
+	} else if (option == FORCE_PROMPT_NO) {
+	    show = gettext("no");
+	    result = NO;
+	} else {
+	    return HTConfirmDefault(msg, dft);	/* bug... */
+	}
+	HTSprintf(&msg2, "%s %s", msg, show);
+	HTUserMsg(msg2);
+	free(msg2);
+    }
+    return result;
 }
 
 #define DFT_CONFIRM ~(YES|NO)
@@ -435,14 +498,14 @@ PUBLIC BOOL confirm_post_resub ARGS4(
     size_t maxlen = LYcols - 6;
     if (!address) {
 	return(NO);
-    } else if (!strncmp(address, "LYNXIMGMAP:", 11)) {
+    } else if (isLYNXIMGMAP(address)) {
 	if (if_imgmap <= 0)
 	    return(NO);
 	else if (if_imgmap == 1)
 	    return(YES);
 	else
 	    msg = CONFIRM_POST_LIST_RELOAD;
-    } else if (!strncmp(address, "file:", 5)) {
+    } else if (isFILE_URL(address)) {
 	if (if_file <= 0)
 	    return(NO);
 	else if (if_file == 1)
@@ -769,7 +832,7 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 	_statusline(message);
 	FREE(message);
     }
-    while (1) {
+    for (;;) {
 	if(LYAcceptAllCookies) {
 	    ch = 'A';
 	} else {
@@ -801,15 +864,17 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 		 && isalpha(ch)
 		 && (p = strrchr(prompt, L_PAREN)) != 0) {
 
+		    CTRACE((tfp, "Looking for %c in %s\n", ch, p));
 		    while (*p != R_PAREN && *p != 0 && isalpha(UCH(*s))) {
-			if (*p == ch) {
-			    ch = *s;
-			    break;
-			} else {
-			    if (isalpha(UCH(*p)) && (*p == TOUPPER(*p)))
-				s++;
-			    p++;
+			if (isalpha(UCH(*p)) && (*p == TOUPPER(*p))) {
+			    CTRACE((tfp, "...testing %c/%c\n", *p, *s));
+			    if (*p == ch) {
+				ch = *s;
+				break;
+			    }
+			    ++s;
 			}
+			++p;
 		    }
 		}
 	    }
@@ -1019,6 +1084,12 @@ PUBLIC void LYSleepAlert NOARGS
 	LYSleep(AlertSecs);
 }
 
+PUBLIC void LYSleepDebug NOARGS
+{
+    if (okToSleep())
+	LYSleep(DebugSecs);
+}
+
 PUBLIC void LYSleepInfo NOARGS
 {
     if (okToSleep())
@@ -1030,6 +1101,14 @@ PUBLIC void LYSleepMsg NOARGS
     if (okToSleep())
 	LYSleep(MessageSecs);
 }
+
+#ifdef EXP_CMD_LOGGING
+PUBLIC void LYSleepReplay NOARGS
+{
+    if (okToSleep())
+	LYSleep(ReplaySecs);
+}
+#endif /* EXP_CMD_LOGGING */
 
 /*
  *  LYstrerror emulates the ANSI strerror() function.

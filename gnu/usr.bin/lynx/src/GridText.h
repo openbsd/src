@@ -58,13 +58,12 @@ US-ASCII control characters <32 which are not defined in Unicode standard
 
 extern int HTCurSelectGroupType;
 extern char * HTCurSelectGroupSize;
-extern HText * HTMainText;		/* Equivalent of main window */
-extern HTParentAnchor * HTMainAnchor;	/* Anchor for HTMainText */
 
 #if defined(VMS) && defined(VAXC) && !defined(__DECC)
 extern int HTVirtualMemorySize;
 #endif /* VMS && VAXC && !__DECC */
-extern HTChildAnchor * HText_childNumber PARAMS((int n));
+
+extern HTChildAnchor * HText_childNextNumber PARAMS((int n, void** prev));
 extern void HText_FormDescNumber PARAMS((int n, char **desc));
 
 /*	Is there any file left?
@@ -110,8 +109,8 @@ extern CONST char * HText_getStyle NOPARAMS;
 extern void HText_setMainTextOwner PARAMS((CONST char * owner));
 extern void print_wwwfile_to_fd PARAMS((FILE * fp, BOOLEAN is_reply));
 extern BOOL HText_select PARAMS((HText *text));
-extern BOOL HText_POSTReplyLoaded PARAMS((document *doc));
-extern BOOL HTFindPoundSelector PARAMS((char *selector));
+extern BOOL HText_POSTReplyLoaded PARAMS((DocInfo *doc));
+extern BOOL HTFindPoundSelector PARAMS((CONST char *selector));
 extern int HTGetRelLinkNum PARAMS((int num, int rel, int cur));
 extern int HTGetLinkInfo PARAMS((
 	int		number,
@@ -139,39 +138,45 @@ extern BOOL HText_getFirstTargetInLine PARAMS((
 	CONST char *	target));
 extern int HTisDocumentSource NOPARAMS;
 extern void HTuncache_current_document NOPARAMS;
-#ifdef SOURCE_CACHE
+
+#ifdef USE_SOURCE_CACHE
 extern BOOLEAN HTreparse_document NOPARAMS;
 extern BOOLEAN HTcan_reparse_document NOPARAMS;
 extern BOOLEAN HTdocument_settings_changed NOPARAMS;
 #endif
-extern int HText_getTopOfScreen NOPARAMS;
-extern int HText_getLines PARAMS((HText * text));
-extern int HText_getNumOfLines NOPARAMS;
-extern int do_www_search PARAMS((document *doc));
-extern char * HTLoadedDocumentURL NOPARAMS;
-extern char * HTLoadedDocumentPost_data NOPARAMS;
-extern char * HTLoadedDocumentTitle NOPARAMS;
+
+extern BOOL HTLoadedDocumentEightbit NOPARAMS;
+extern BOOL HText_LastLineEmpty PARAMS((HText *me, BOOL IgnoreSpaces));
+extern BOOL HText_PreviousLineEmpty PARAMS((HText *me, BOOL IgnoreSpaces));
+extern BOOL HText_inLineOne PARAMS((HText *text));
 extern BOOLEAN HTLoadedDocumentIsHEAD NOPARAMS;
 extern BOOLEAN HTLoadedDocumentIsSafe NOPARAMS;
-extern char * HTLoadedDocumentCharset NOPARAMS;
-extern BOOL HTLoadedDocumentEightbit NOPARAMS;
-extern void HText_setNodeAnchorBookmark PARAMS((CONST char *bookmark));
+extern bstring * HTLoadedDocumentPost_data NOPARAMS;
 extern char * HTLoadedDocumentBookmark NOPARAMS;
-extern int HText_LastLineSize PARAMS((HText *me, BOOL IgnoreSpaces));
-extern int HText_LastLineOffset PARAMS((HText *me));
-extern int HText_PreviousLineSize PARAMS((HText *me, BOOL IgnoreSpaces));
-extern void HText_NegateLineOne PARAMS((HText *text));
-extern BOOL HText_inLineOne PARAMS((HText *text));
-extern void HText_RemovePreviousLine PARAMS((HText *text));
-extern int HText_getCurrentColumn PARAMS((HText *text));
-extern int HText_getMaximumColumn PARAMS((HText *text));
-extern void HText_setTabID PARAMS((HText *text, CONST char *name));
-extern int HText_getTabIDColumn PARAMS((HText *text, CONST char *name));
-extern int HText_HiddenLinkCount PARAMS((HText *text));
+extern char * HTLoadedDocumentCharset NOPARAMS;
+extern char * HTLoadedDocumentTitle NOPARAMS;
+extern char * HTLoadedDocumentURL NOPARAMS;
 extern char * HText_HiddenLinkAt PARAMS((HText *text, int number));
+extern int HText_HiddenLinkCount PARAMS((HText *text));
+extern int HText_LastLineOffset PARAMS((HText *me));
+extern int HText_LastLineSize PARAMS((HText *me, BOOL IgnoreSpaces));
+extern int HText_PreviousLineSize PARAMS((HText *me, BOOL IgnoreSpaces));
+extern int HText_getCurrentColumn PARAMS((HText *text));
+extern int HText_getLines PARAMS((HText * text));
+extern int HText_getMaximumColumn PARAMS((HText *text));
+extern int HText_getNumOfLines NOPARAMS;
+extern int HText_getTabIDColumn PARAMS((HText *text, CONST char *name));
+extern int HText_getTopOfScreen NOPARAMS;
+extern int do_www_search PARAMS((DocInfo *doc));
+extern void HText_NegateLineOne PARAMS((HText *text));
+extern void HText_RemovePreviousLine PARAMS((HText *text));
+extern void HText_setNodeAnchorBookmark PARAMS((CONST char *bookmark));
+extern void HText_setTabID PARAMS((HText *text, CONST char *name));
+extern void* HText_pool_calloc PARAMS((HText * text, unsigned size));
 
 /* "simple table" stuff */
 extern int HText_endStblTABLE PARAMS((HText *));
+extern int HText_trimCellLines PARAMS((HText * text));
 extern void HText_cancelStbl PARAMS((HText *));
 extern void HText_endStblCOLGROUP PARAMS((HText *));
 extern void HText_endStblTD PARAMS((HText *));
@@ -207,15 +212,17 @@ extern int HText_beginInput PARAMS((
 	HText *		text,
 	BOOL		underline,
 	InputFieldData *I));
+extern void HText_endInput PARAMS((
+	HText *		text));
 extern int HText_SubmitForm PARAMS((
 	FormInfo *	submit_item,
-	document *	doc,
+	DocInfo *	doc,
 	char *		link_name,
 	char *		link_value));
 extern void HText_DisableCurrentForm NOPARAMS;
 extern void HText_ResetForm PARAMS((FormInfo *form));
 extern void HText_activateRadioButton PARAMS((FormInfo *form));
-extern BOOLEAN HText_HaveUserChangedForms NOPARAMS;
+extern BOOLEAN HText_HaveUserChangedForms PARAMS((HText *text));
 
 extern HTList * search_queries; /* Previous isindex and whereis queries */
 extern void HTSearchQueries_free NOPARAMS;
@@ -229,7 +236,7 @@ extern void user_message PARAMS((
 
 extern void www_user_search PARAMS((
 	int		start_line,
-	document *	doc,
+	DocInfo *	doc,
 	char *		target,
 	int		direction));
 
@@ -258,12 +265,12 @@ extern BOOL HText_AreDifferent PARAMS((
 	CONST char *		full_address));
 
 extern int HText_ExtEditForm PARAMS((
-	struct link *	form_link));
+	LinkInfo *	form_link));
 extern void HText_ExpandTextarea PARAMS((
-	struct link *	form_link,
+	LinkInfo *	form_link,
 	int             newlines));
 extern int HText_InsertFile PARAMS((
-	struct link *	form_link));
+	LinkInfo *	form_link));
 
 extern void redraw_lines_of_link PARAMS((int cur));
 extern void LYMoveToLink PARAMS((

@@ -108,7 +108,7 @@ retry:
 	}
 	HTSprintf0(&filename, "%s/%s", directory, tmpbuf);
 
-#if HAVE_POPEN
+#ifdef HAVE_POPEN
 	if (LYIsPipeCommand(filename)) {
 	    HTAlert(CANNOT_WRITE_TO_FILE);
 	    _statusline(NEW_FILENAME_PROMPT);
@@ -151,7 +151,7 @@ retry:
 
     FREE(the_command);
     FREE(the_upload);
-#ifdef UNIX
+#if defined(MULTI_USER_UNIX)
     if (filename != 0)
 	chmod(filename, HIDE_CHMOD);
 #endif /* UNIX */
@@ -185,16 +185,8 @@ PUBLIC int LYUpload_options ARGS2(
     static char curloc[LY_MAXPATH];
     char *cp;
 
-    if (LYReuseTempfiles) {
-	fp0 = LYOpenTempRewrite(tempfile, HTML_SUFFIX, "w");
-    } else {
-	LYRemoveTemp(tempfile);
-	fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w");
-    }
-    if (fp0 == NULL) {
-	HTAlert(CANNOT_OPEN_TEMP);
+    if ((fp0 = InternalPageFP(tempfile, TRUE)) == 0)
 	return(-1);
-    }
 
 #ifdef VMS
     strcpy(curloc, "/sys$login");

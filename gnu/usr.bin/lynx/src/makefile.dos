@@ -9,7 +9,7 @@ LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
 LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o
 
-CFLAGS= -O2 $(MCFLAGS) $(INTLFLAGS) -I. -I.. $(SLANGINC)
+CFLAGS= -O2 $(MCFLAGS) $(INTLFLAGS) -I. -I..
 
 # comment this line to suppress DIRED support
 DIRED_DEFS = \
@@ -21,8 +21,7 @@ DIRED_DEFS = \
  -DOK_OVERRIDE
 
 # Use this option to enable optional and *experimental* color style.
-#ENABLE_COLOR_STYLE = \
- -DUSE_COLOR_STYLE
+#ENABLE_COLOR_STYLE = -DUSE_COLOR_STYLE
 
 CC = gcc
 
@@ -35,31 +34,29 @@ MCFLAGS = \
  -DDOSPATH \
  -DEXP_ADDRLIST_PAGE \
  -DEXP_ALT_BINDINGS \
- -DEXP_FILE_UPLOAD \
  -DEXP_NESTED_TABLES \
- -DEXP_PERSISTENT_COOKIES \
+ -DUSE_PERSISTENT_COOKIES \
  -DFANCY_CURSES \
  -DNOUSERS \
  -DNO_CUSERID \
  -DNO_TTYTYPE \
  -DNO_UTMP \
  -DPDCURSES \
- -DSOURCE_CACHE \
+ -DUSE_SOURCE_CACHE \
  -DUSE_EXTERNALS \
+ -DUSE_FILE_UPLOAD \
  -DUSE_PRETTYSRC \
  -DUSE_ZLIB \
- -DWATT32 \
  $(SSLFLAGS) \
  $(SSLINC) \
  -I./chrtrans \
  -I../WWW/Library/Implementation \
- -I/djgpp/pdcur24 \
- -I/djgpp/watt32/inc \
- -I/djgpp/watt32/inc/sys
+ -I/djgpp/pdcur26 \
+ -I/djgpp/watt32/inc
 
 WWWLIB = \
  ../WWW/Library/djgpp/libwww.a \
- /djgpp/pdcur24/lib/pdcurses.a
+ /djgpp/pdcur26/lib/pdcurses.a
 
 LIBS= -L/djgpp/watt32/lib -lwatt -lz -lwmemu
 
@@ -67,7 +64,7 @@ LIBS= -L/djgpp/watt32/lib -lwatt -lz -lwmemu
 #INTLFLAGS = -DHAVE_GETTEXT -DHAVE_LIBINTL_H
 #INTLLIBS= -lintl -liconv
 
-# Uncomment the followint to enable SSL.
+# Uncomment the following to enable SSL.
 #SSLFLAGS = -DUSE_SSL
 #SSLLIB = -lssl -lcrypto
 #SSLINC = -I/djgpp/include/openssl

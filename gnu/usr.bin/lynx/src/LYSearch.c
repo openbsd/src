@@ -9,36 +9,41 @@
 #include <LYLeaks.h>
 
 PRIVATE BOOL link_has_target ARGS2(
-	linkstruct *,	a,
+	int,		cur,
 	char *,		target)
 {
+    LinkInfo *a = &links[cur];
     OptionType *option;
     char *stars = NULL, *cp;
+    int count;
 
     /*
-     *  Search the hightext string, and hightext2 if present,
-     *  taking the case_sensitive setting into account. - FM
+     * Search the hightext strings, if present, taking the case_sensitive
+     * setting into account.
      */
-    if (LYno_attr_strstr(a->hightext, target)
-     || LYno_attr_strstr(a->hightext2, target)) {
-	return TRUE;
+    for (count = 0; ; ++count) {
+	char *text = LYGetHiliteStr(cur, count);
+	if (text == NULL)
+	    break;
+	if (LYno_attr_strstr(text, target))
+	    return TRUE;
     }
 
     /*
      *  Search the relevant form fields, taking the
      *  case_sensitive setting into account. - FM
      */
-    if ((a->form != NULL && a->form->value != NULL) &&
-	a->form->type != F_HIDDEN_TYPE) {
-	if (a->form->type == F_PASSWORD_TYPE) {
+    if ((a->l_form != NULL && a->l_form->value != NULL) &&
+	a->l_form->type != F_HIDDEN_TYPE) {
+	if (a->l_form->type == F_PASSWORD_TYPE) {
 	    /*
 	     *  Check the actual, hidden password, and then
 	     *  the displayed string. - FM
 	     */
-	    if (LYno_attr_strstr(a->form->value, target)) {
+	    if (LYno_attr_strstr(a->l_form->value, target)) {
 		return TRUE;
 	    }
-	    StrAllocCopy(stars, a->form->value);
+	    StrAllocCopy(stars, a->l_form->value);
 	    for (cp = stars; *cp != '\0'; cp++)
 		*cp = '*';
 	    if (LYno_attr_strstr(stars, target)) {
@@ -46,23 +51,23 @@ PRIVATE BOOL link_has_target ARGS2(
 		return TRUE;
 	    }
 	    FREE(stars);
-	} else if (a->form->type == F_OPTION_LIST_TYPE) {
+	} else if (a->l_form->type == F_OPTION_LIST_TYPE) {
 	    /*
 	     *  Search the option strings that are displayed
 	     *  when the popup is invoked. - FM
 	     */
-	    option = a->form->select_list;
+	    option = a->l_form->select_list;
 	    while (option != NULL) {
 		if (LYno_attr_strstr(option->name, target)) {
 		    return TRUE;
 		}
 		option = option->next;
 	    }
-	} else if (a->form->type == F_RADIO_TYPE) {
+	} else if (a->l_form->type == F_RADIO_TYPE) {
 	    /*
 	     *  Search for checked or unchecked parens. - FM
 	     */
-	    if (a->form->num_value) {
+	    if (a->l_form->num_value) {
 		cp = checked_radio;
 	    } else {
 		cp = unchecked_radio;
@@ -70,11 +75,11 @@ PRIVATE BOOL link_has_target ARGS2(
 	    if (LYno_attr_strstr(cp, target)) {
 		return TRUE;
 	    }
-	} else if (a->form->type == F_CHECKBOX_TYPE) {
+	} else if (a->l_form->type == F_CHECKBOX_TYPE) {
 	    /*
 	     *  Search for checked or unchecked square brackets. - FM
 	     */
-	    if (a->form->num_value) {
+	    if (a->l_form->num_value) {
 		cp = checked_box;
 	    } else {
 		cp = unchecked_box;
@@ -89,7 +94,7 @@ PRIVATE BOOL link_has_target ARGS2(
 	     *  hightext search, but make sure here
 	     *  that the entire value is searched. - FM
 	     */
-	    if (LYno_attr_strstr(a->form->value, target)) {
+	    if (LYno_attr_strstr(a->l_form->value, target)) {
 		return TRUE;
 	    }
 	}
@@ -113,7 +118,7 @@ PRIVATE int check_next_target_in_links ARGS2(
 
     if (nlinks != 0) {
 	for (i = *cur + 1; i < nlinks; ++i) {
-	    if (link_has_target(&links[i], target)) {
+	    if (link_has_target(i, target)) {
 		*cur = i;
 		return TRUE;
 	    }
@@ -130,7 +135,7 @@ PRIVATE int check_prev_target_in_links ARGS2(
 
     if (nlinks != 0) {
 	for (i = *cur - 1; i >= 0; --i) {
-	    if (link_has_target(&links[i], target)) {
+	    if (link_has_target(i, target)) {
 		*cur = i;
 		return TRUE;
 	    }
@@ -150,7 +155,7 @@ PRIVATE int check_prev_target_in_links ARGS2(
  *  variable
  */
 PUBLIC BOOL textsearch ARGS4(
-	document *,	cur_doc,
+	DocInfo *,	cur_doc,
 	char *,		prev_target,
 	int,		target_size,
 	int,		direction)
@@ -332,7 +337,7 @@ check_recall:
 	    /*
 	     *  Found in link, changed cur, we're done.
 	     */
-	    highlight(OFF, oldcur, prev_target);
+	    LYhighlight(OFF, oldcur, prev_target);
 	    return(TRUE);
 	}
     } else {
@@ -345,7 +350,7 @@ check_recall:
 	    /*
 	     *  Found in link, changed cur, we're done.
 	     */
-	    highlight(OFF, oldcur, prev_target);
+	    LYhighlight(OFF, oldcur, prev_target);
 	    return(TRUE);
 	}
 
@@ -366,7 +371,7 @@ check_recall:
      */
     www_user_search((cur_doc->line + offset), cur_doc, prev_target, direction);
     if (cur_doc->link != oldcur) {
-	highlight(OFF, oldcur, prev_target);
+	LYhighlight(OFF, oldcur, prev_target);
 	return(TRUE);
     }
     return (BOOL) (www_search_result > 0);

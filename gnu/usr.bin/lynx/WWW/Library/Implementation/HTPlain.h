@@ -13,9 +13,4 @@ extern HTStream* HTPlainPresent PARAMS((
         HTParentAnchor *        anchor,
         HTStream *              sink));
 
-
-#endif
-
-/*
-
-    */
+#endif /* HTPLAIN_H */

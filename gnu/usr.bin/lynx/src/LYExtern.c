@@ -68,10 +68,6 @@ static char *decode_string(char *s)
 #ifdef WIN_EX
 /*
  *  Quote the path to make it safe for shell command processing.
- *
- *  We use a simple technique which involves quoting the entire
- *  string using single quotes, escaping the real single quotes
- *  with double quotes. This may be gross but it seems to work.
  */
 PUBLIC char * quote_pathname ARGS1(
 	char *, 	pathname)
@@ -102,7 +98,7 @@ PRIVATE void format ARGS3(
  * Format the given command into a buffer, returning the resulting string.
  *
  * It is too dangerous to leave any URL that may come along unquoted.  They
- * often contain '&', ';', and '?' chars, and who knows what else may occur. 
+ * often contain '&', ';', and '?' chars, and who knows what else may occur.
  * Prevent spoofing of the shell.  Dunno how this needs to be modified for VMS
  * or DOS.  - kw
  */
@@ -110,25 +106,21 @@ PRIVATE char *format_command ARGS2(
     char *,	command,
     char *,	param)
 {
-#ifdef WIN_EX
-    char pram_string[LY_MAXPATH];
-#endif
     char *cmdbuf = NULL;
 
-#if (defined(VMS) || defined(DOSPATH) || defined(__EMX__)) && !defined(WIN_EX)
-    format(&cmdbuf, command, param);
-#else	/* Unix or DOS/Win: */
 #if defined(WIN_EX)
     if (*param != '\"' && strchr(param, ' ') != NULL) {
 	char *cp = quote_pathname(param);
 	format(&cmdbuf, command, cp);
 	FREE(cp);
     } else {
+	char pram_string[LY_MAXPATH];
+
 	LYstrncpy(pram_string, param, sizeof(pram_string)-1);
 	decode_string(pram_string);
 	param = pram_string;
 
-	if (strnicmp("mailto:", param, 7) == 0) {
+	if (isMAILTO_URL(param)) {
 	    format(&cmdbuf, command, param + 7);
 	} else if (strnicmp("telnet://", param, 9) == 0) {
 	    char host[sizeof(pram_string)];
@@ -151,36 +143,30 @@ PRIVATE char *format_command ARGS2(
 	    strncat(e_buff, p, sizeof(e_buff) - strlen(e_buff) - 1);
 	    p = strrchr(e_buff, '.');
 	    if (p) {
-		p = strchr(p, '#');
-		if (p) {
-		    *p = '\0';
-		}
-	    }
-	    if (*e_buff != '\"' && strchr(e_buff, ' ') != NULL) {
-		p = quote_pathname(e_buff);
-		LYstrncpy(e_buff, p, sizeof(e_buff)-1);
-		FREE(p);
+		trimPoundSelector(p);
 	    }
 
-	    /* Less ==> short filename,
-	     * less ==> long filename
+	    /* Less ==> short filename with backslashes,
+	     * less ==> long filename with forward slashes, may be quoted
 	     */
-	    if (isupper(command[0])) {
+	    if (ISUPPER(command[0])) {
 		format(&cmdbuf,
 			command, HTDOS_short_name(e_buff));
 	    } else {
+		if (*e_buff != '\"' && strchr(e_buff, ' ') != NULL) {
+		    p = quote_pathname(e_buff);
+		    LYstrncpy(e_buff, p, sizeof(e_buff)-1);
+		    FREE(p);
+		}
 		format(&cmdbuf, command, e_buff);
 	    }
 	} else {
 	    format(&cmdbuf, command, param);
 	}
     }
-#else	/* Unix */
-    {
-	format(&cmdbuf, command, param);
-    }
+#else
+    format(&cmdbuf, command, param);
 #endif
-#endif	/* VMS */
     return cmdbuf;
 }
 
@@ -236,12 +222,8 @@ PRIVATE char *lookup_external ARGS2(
 	HTUserMsg(EXTERNALS_DISABLED);
     } else if (num_choices > 1) {
 	int old_y, old_x;
-#ifdef USE_SLANG
-	old_y = SLsmg_get_row();
-	old_x = SLsmg_get_column();
-#else
-	getyx(LYwin, old_y, old_x);
-#endif
+
+	LYGetYX(old_y, old_x);
 	cur_choice = LYhandlePopupList(
 			-1,
 			0,
@@ -252,11 +234,7 @@ PRIVATE char *lookup_external ARGS2(
 			FALSE,
 			TRUE,
 			FALSE);
-#ifdef USE_SLANG
-	SLsmg_gotorc(old_y, old_x);
-#else
 	wmove(LYwin, old_y, old_x);
-#endif
 	CTRACE((tfp, "selected choice %d of %d\n", cur_choice, num_choices));
 	if (cur_choice < 0) {
 	    HTInfoMsg(CANCELLED);
@@ -280,7 +258,6 @@ BOOL run_external ARGS2(
 {
 #ifdef WIN_EX
     int status;
-    extern int xsystem(char *cmd);
 #endif
     int redraw_flag = TRUE;
     char *cmdbuf = NULL;
@@ -292,7 +269,7 @@ BOOL run_external ARGS2(
 
 #ifdef WIN_EX			/* 1998/01/26 (Mon) 09:16:13 */
     if (param == NULL) {
-	HTInfoMsg("External command is null");
+	HTInfoMsg(gettext("External command is null"));
 	return 0;
     }
 #endif
@@ -346,7 +323,7 @@ BOOL run_external ARGS2(
 
 	    /* command running. */
 #ifdef WIN_EX			/* 1997/10/17 (Fri) 14:07:50 */
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
 	    status = system(cmdbuf);
 #else
 	    status = xsystem(cmdbuf);

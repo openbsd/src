@@ -3,6 +3,7 @@
 <head>
 <title>Help on Environment variables</title>
 <LINK rev="made" href="mailto:lynx-dev@sig.net">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
 <body>
 <pre>
@@ -45,6 +46,12 @@ Environment Variables Used By Lynx:
                            See  the  userdefs.h  file  for   more
                            information.
 
+       LYNX_LOCALEDIR
+                           If  set,  this  variable overrides the
+                           compiled-in  location  of  the  locale
+                           directory  which  contains native lan-
+                           guage (NLS) message text.
+
        LYNX_LSS
                            This  variable,  if set, specifies the
                            location of the default Lynx character
@@ -65,6 +72,19 @@ Environment Variables Used By Lynx:
                            files that was defined during installation,
                            as well as any value that may
                            be assigned to the TMPDIR variable.
+
+       LYNX_TRACE
+                           If  set,  causes Lynx to write a trace
+                           file as if the -trace option were sup-
+                           plied.
+
+       LYNX_TRACE_FILE
+                           If set, overrides the compiled-in name
+                           of the trace  file,  which  is  either
+                           Lynx.trace or LY-TRACE.LOG (the latter
+                           on the DOS platform).  The trace  file
+                           is in either case relative to the home
+                           directory.
 
        MAIL
                            This variable  specifies  the  default
@@ -106,7 +126,7 @@ Environment Variables Used By Lynx:
                            the form PROTOCOL_proxy (literally:
                            http_proxy, ftp_proxy, gopher_proxy,
                            etc), to "http://some.server.dom:port/".
-                           See <a href="#proxy">details and examples</a>.
+                           See <a href="#proxy">Proxy details and examples</a>.
 
        WWW_access_GATEWAY
                            Lynx still  supports  use  of  gateway
@@ -118,7 +138,7 @@ Environment Variables Used By Lynx:
                            discontinued.  Note that  you  do  not
                            include  a  terminal '/' for gateways,
                            but do for proxies specified by PROTOCOL_proxy
-                           environment variables.  See <a href="#proxy">details</a>.
+                           environment variables.  See <a href="#proxy">Proxy details</a>.
 
        WWW_HOME
                            This  variable,  if set, will override
@@ -179,6 +199,12 @@ Environment Variables Set or Modified By Lynx:
                            Lynx.   See  also  the comments in the
                            distribution's  sample  mailcap  file,
                            for notes on usage in such a file.
+
+       SSL_CERT_DIR        Set to the directory containing trusted
+                           certificates.
+
+       SSL_CERT_FILE       Set to the full path and filename  for
+                           your file of trusted certificates.
 
        TERM                Normally,  this  variable  is  used by
                            Lynx to determine  the  terminal  type
@@ -281,7 +307,7 @@ NATIVE LANGUAGE SUPPORT
                            path prefix for message catalogs.
 
 <a name="proxy"><em>
-Proxy:
+Proxy details and examples:
 </em></a>
 
     To set your site's NTTP server as the default host for news reading

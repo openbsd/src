@@ -1,4 +1,3 @@
-
 #ifndef LYDOWNLOAD_H
 #define LYDOWNLOAD_H
 
@@ -9,5 +8,8 @@
 extern void LYDownload PARAMS((char *line));
 extern int LYdownload_options PARAMS((char **newfile, char *data_file));
 
-#endif /* LYDOWNLOAD_H */
+#ifdef VMS
+extern BOOLEAN LYDidRename;
+#endif
 
+#endif /* LYDOWNLOAD_H */

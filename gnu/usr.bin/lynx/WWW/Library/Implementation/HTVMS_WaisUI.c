@@ -696,9 +696,9 @@ freeSearchAPDU(SearchAPDU* query)
 
 /*----------------------------------------------------------------------*/
 
-#define DB_DELIMITER 	"\037" 	/* hex 1F occurs between each database name */
-#define ES_DELIMITER_1 	"\037" 	/* separates database name from element name */
-#define ES_DELIMITER_2 	"\036" 	/* hex 1E separates <db,es> groups from one another */
+#define DB_DELIMITER	"\037"	/* hex 1F occurs between each database name */
+#define ES_DELIMITER_1	"\037"	/* separates database name from element name */
+#define ES_DELIMITER_2	"\036"	/* hex 1E separates <db,es> groups from one another */
 
 char*
 writeSearchAPDU(SearchAPDU* query, char* buffer, long* len)
@@ -911,9 +911,9 @@ readSearchResponseAPDU(SearchResponseAPDU** queryResponse, char* buffer)
    3.26.90	Harry Morris, morris@think.com
    3.30.90  Harry Morris - Changed any->bits to any->bytes
    4.11.90  HWM - fixed include file names, changed
-   				- writeCompressedIntegerWithPadding() to
-                  writeCompressedIntWithPadding()
-                - generalized conditional includes (see c-dialect.h)
+		- writeCompressedIntegerWithPadding() to
+		  writeCompressedIntWithPadding()
+		- generalized conditional includes (see c-dialect.h)
    3.7.91   Jonny Goldman.  Replaced "short" in makeBitMap with "int" line 632.
 */
 
@@ -1907,7 +1907,7 @@ readQueryTerm(query_term** qt, char* buffer)
   char* buf = buffer;
   char  *attributeList = NULL;
   char* operator = NULL;
-  any* 	term;
+  any*  term;
   char* use = NULL;
   char* relation = NULL;
   char* position = NULL;

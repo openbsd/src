@@ -42,7 +42,7 @@ PUBLIC void HTFormatInit NOARGS
 #else
  if (LYgetXDisplay() != 0) {	/* Must have X11 */
   HTSetPresentation("application/postscript", "ghostview %s&",
-  							    1.0, 3.0, 0.0, 0);
+							    1.0, 3.0, 0.0, 0);
   if (XLoadImageCommand && *XLoadImageCommand) {
       HTSetPresentation("image/gif",	XLoadImageCommand,  1.0, 3.0, 0.0, 0);
       HTSetPresentation("image/x-xbm",	XLoadImageCommand,  1.0, 3.0, 0.0, 0);
@@ -88,25 +88,25 @@ PUBLIC void HTFormatInit NOARGS
  *  Add our compressed file handlers.
  */
  HTSetConversion("www/compressed", "www/download",
- 					      HTCompressed,   1.0, 0.0, 0.0, 0);
+					      HTCompressed,   1.0, 0.0, 0.0, 0);
  HTSetConversion("www/compressed", "www/present",
- 					      HTCompressed,   1.0, 0.0, 0.0, 0);
+					      HTCompressed,   1.0, 0.0, 0.0, 0);
  HTSetConversion("www/compressed", "www/source",
- 					      HTCompressed,   1.0, 0.0, 0.0, 0);
+					      HTCompressed,   1.0, 0.0, 0.0, 0);
  HTSetConversion("www/compressed", "www/dump",
- 					      HTCompressed,   1.0, 0.0, 0.0, 0);
+					      HTCompressed,   1.0, 0.0, 0.0, 0);
 
  /*
   * Added the following to support some content types beginning to surface.
   */
  HTSetConversion("application/html", "text/x-c",
- 					HTMLToC,	0.5, 0.0, 0.0, 0);
+					HTMLToC,	0.5, 0.0, 0.0, 0);
  HTSetConversion("application/html", "text/plain",
- 					HTMLToPlain,	0.5, 0.0, 0.0, 0);
+					HTMLToPlain,	0.5, 0.0, 0.0, 0);
  HTSetConversion("application/html", "www/present",
- 					HTMLPresent,	2.0, 0.0, 0.0, 0);
+					HTMLPresent,	2.0, 0.0, 0.0, 0);
  HTSetConversion("application/html", "www/source",
- 					HTPlainPresent,	1.0, 0.0, 0.0, 0);
+					HTPlainPresent,	1.0, 0.0, 0.0, 0);
  HTSetConversion("application/x-wais-source", "www/source",
 					HTPlainPresent,	1.0, 0.0, 0.0, 0);
  HTSetConversion("application/x-wais-source", "www/present",
@@ -120,32 +120,32 @@ PUBLIC void HTFormatInit NOARGS
   *  Save all unknown mime types to disk.
   */
  HTSetConversion("www/source",  "www/present",
- 					HTSaveToFile,	1.0, 3.0, 0.0, 0);
+					HTSaveToFile,	1.0, 3.0, 0.0, 0);
  HTSetConversion("www/source",  "www/source",
- 					HTSaveToFile,	1.0, 3.0, 0.0, 0);
+					HTSaveToFile,	1.0, 3.0, 0.0, 0);
  HTSetConversion("www/source",  "www/download",
- 					HTSaveToFile,	1.0, 3.0, 0.0, 0);
+					HTSaveToFile,	1.0, 3.0, 0.0, 0);
  HTSetConversion("www/source",  "*",	HTSaveToFile,	1.0, 3.0, 0.0, 0);
 
  /*
   *  Output all www/dump presentations to stdout.
   */
  HTSetConversion("www/source",  "www/dump",
- 					HTDumpToStdout,	1.0, 3.0, 0.0, 0);
+					HTDumpToStdout,	1.0, 3.0, 0.0, 0);
 
 /*
  *  Now add our basic conversions.
  */
  HTSetConversion("text/x-sgml",
- 			      "www/source",  HTPlainPresent, 1.0, 0.0, 0.0, 0);
+			      "www/source",  HTPlainPresent, 1.0, 0.0, 0.0, 0);
  HTSetConversion("text/x-sgml",
- 			      "www/present", HTMLPresent,    2.0, 0.0, 0.0, 0);
+			      "www/present", HTMLPresent,    2.0, 0.0, 0.0, 0);
  HTSetConversion("text/sgml", "www/source",  HTPlainPresent, 1.0, 0.0, 0.0, 0);
  HTSetConversion("text/sgml", "www/present", HTMLPresent,    1.0, 0.0, 0.0, 0);
  HTSetConversion("text/plain","www/present", HTPlainPresent, 1.0, 0.0, 0.0, 0);
  HTSetConversion("text/plain","www/source",  HTPlainPresent, 1.0, 0.0, 0.0, 0);
  HTSetConversion("text/html", "www/source",  HTPlainPresent, 1.0, 0.0, 0.0, 0);
- HTSetConversion("text/html", "text/x-c",    HTMLToC, 	     0.5, 0.0, 0.0, 0);
+ HTSetConversion("text/html", "text/x-c",    HTMLToC,	     0.5, 0.0, 0.0, 0);
  HTSetConversion("text/html", "text/plain",  HTMLToPlain,    0.5, 0.0, 0.0, 0);
  HTSetConversion("text/html", "www/present", HTMLPresent,    1.0, 0.0, 0.0, 0);
 
@@ -281,25 +281,23 @@ PRIVATE int ProcessMailcapEntry ARGS2(
 	FILE *,			fp,
 	struct MailcapEntry *,	mc)
 {
-    size_t rawentryalloc = 2000, len;
+    size_t rawentryalloc = 2000, len, need;
     char *rawentry, *s, *t;
     char *LineBuf = NULL;
 
-    rawentry = (char *)malloc(1 + rawentryalloc);
+    rawentry = (char *)malloc(rawentryalloc);
     if (!rawentry)
 	ExitWithError(MEMORY_EXHAUSTED_ABORT);
     *rawentry = '\0';
     while (LYSafeGets(&LineBuf, fp) != 0) {
-	if (LineBuf[0] == '#')
+	LYTrimNewline(LineBuf);
+	if (LineBuf[0] == '#' || LineBuf[0] == '\0')
 	    continue;
 	len = strlen(LineBuf);
-	if (len == 0)
-	    continue;
-	if (LineBuf[len-1] == '\n')
-	    LineBuf[--len] = '\0';
-	if ((len + strlen(rawentry)) > rawentryalloc) {
-	    rawentryalloc += 2000;
-	    rawentry = realloc(rawentry, rawentryalloc+1);
+	need = len + strlen(rawentry) + 1;
+	if (need > rawentryalloc) {
+	    rawentryalloc += (2000 + need);
+	    rawentry = realloc(rawentry, rawentryalloc);
 	    if (!rawentry)
 	        ExitWithError(MEMORY_EXHAUSTED_ABORT);
 	}
@@ -419,7 +417,7 @@ assign_presentation:
 }
 
 PRIVATE void BuildCommand ARGS5(
-	char **, 	pBuf,
+	char **,	pBuf,
 	size_t,		Bufsize,
 	char *,		controlstring,
 	char *,		TmpFileName,
@@ -542,7 +540,7 @@ PRIVATE int PassesTest ARGS1(
 	0 == strcasecomp(mc->testcommand, "test -n \"$DISPLAY\"")) {
 	FREE(mc->testcommand);
 	CTRACE((tfp, "PassesTest: Testing for XWINDOWS environment.\n"));
-    	if (LYgetXDisplay() != NULL) {
+	if (LYgetXDisplay() != NULL) {
 	    CTRACE((tfp, "PassesTest: Test passed!\n"));
 	    return(0 == 0);
 	} else {
@@ -553,7 +551,7 @@ PRIVATE int PassesTest ARGS1(
     if (0 == strcasecomp(mc->testcommand, "test -z \"$DISPLAY\"")) {
 	FREE(mc->testcommand);
 	CTRACE((tfp, "PassesTest: Testing for NON_XWINDOWS environment.\n"));
-    	if (LYgetXDisplay() == NULL) {
+	if (LYgetXDisplay() == NULL) {
 	    CTRACE((tfp,"PassesTest: Test passed!\n"));
 	    return(0 == 0);
 	} else {
@@ -777,7 +775,7 @@ PUBLIC void HTFileInit NOARGS
 
 #ifdef TRADITIONAL_SUFFIXES
     HTSetSuffix(".exe.Z",	"application/x-Comp. Executable",
-    							     "binary", 1.0);
+							     "binary", 1.0);
     HTSetSuffix(".Z",	        "application/UNIX Compressed", "binary", 1.0);
     HTSetSuffix(".tar_Z",	"application/UNIX Compr. Tar", "binary", 1.0);
     HTSetSuffix(".tar.Z",	"application/UNIX Compr. Tar", "binary", 1.0);
@@ -785,7 +783,7 @@ PUBLIC void HTFileInit NOARGS
     HTSetSuffix5(".Z",	        "application/x-compress", "binary", "UNIX Compressed", 1.0);
     HTSetSuffix5(".Z",	        NULL, "compress",      "UNIX Compressed", 1.0);
     HTSetSuffix5(".exe.Z",	"application/octet-stream", "compress",
-    						       "Executable", 1.0);
+						       "Executable", 1.0);
     HTSetSuffix5(".tar_Z",	"application/x-tar", "compress",
 						       "UNIX Compr. Tar", 1.0);
     HTSetSuffix5(".tar.Z",	"application/x-tar", "compress",
@@ -860,12 +858,12 @@ PUBLIC void HTFileInit NOARGS
 
 #ifdef TRADITIONAL_SUFFIXES
     HTSetSuffix(".latex",	"application/x-Latex", "8bit", 1.0);
-    HTSetSuffix(".tex",  	"application/x-Tex", "8bit", 1.0);
+    HTSetSuffix(".tex",		"application/x-Tex", "8bit", 1.0);
     HTSetSuffix(".texinfo",	"application/x-Texinfo", "8bit", 1.0);
     HTSetSuffix(".texi",	"application/x-Texinfo", "8bit", 1.0);
 #else
     HTSetSuffix5(".latex",	"application/x-latex", "8bit", "LaTeX", 1.0);
-    HTSetSuffix5(".tex",  	"text/x-tex", "8bit", "TeX", 1.0);
+    HTSetSuffix5(".tex",	"text/x-tex", "8bit", "TeX", 1.0);
     HTSetSuffix5(".texinfo",	"application/x-texinfo", "8bit", "Texinfo", 1.0);
     HTSetSuffix5(".texi",	"application/x-texinfo", "8bit", "Texinfo", 1.0);
 #endif
@@ -1013,6 +1011,8 @@ PUBLIC void HTFileInit NOARGS
     HTSetSuffix(".text",	"text/plain", "8bit", 1.0);
     HTSetSuffix(".txt",		"text/plain", "8bit", 1.0);
 
+    HTSetSuffix(".php",		"text/html", "8bit", 1.0);
+    HTSetSuffix(".php3",	"text/html", "8bit", 1.0);
     HTSetSuffix(".html3",	"text/html", "8bit", 1.0);
     HTSetSuffix(".ht3",		"text/html", "8bit", 1.0);
     HTSetSuffix(".phtml",	"text/html", "8bit", 1.0);

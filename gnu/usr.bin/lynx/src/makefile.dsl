@@ -9,7 +9,7 @@ LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
 LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o
 
-CFLAGS= -O1 $(MCFLAGS) $(INTLFLAGS) -I. -I.. $(SLANGINC)
+CFLAGS= -O2 $(MCFLAGS) $(INTLFLAGS) -I. -I.. $(SLANGINC)
 
 # comment this line to suppress DIRED support
 DIRED_DEFS = \
@@ -18,7 +18,7 @@ DIRED_DEFS = \
  -DOK_TAR \
  -DOK_GZIP \
  -DOK_ZIP \
- -DOK_OVERRIDE 
+ -DOK_OVERRIDE
 
 CC = gcc
 
@@ -28,27 +28,36 @@ MCFLAGS = \
  -DDISP_PARTIAL \
  -DDJGPP_KEYHANDLER \
  -DDOSPATH \
+ -DHAVE_POPEN \
  -DNOUSERS \
  -DNO_CUSERID \
  -DNO_TTYTYPE \
  -DNO_UTMP \
- -DSOURCE_CACHE \
  -DUSE_EXTERNALS \
  -DUSE_PRETTYSRC \
  -DUSE_SLANG \
+ -DUSE_SOURCE_CACHE \
  -DUSE_ZLIB \
- -DWATT32 \
+ $(SSLFLAGS) \
+ $(SSLINC) \
  -I./chrtrans \
  -I../WWW/Library/Implementation \
- -I../djgpp/watt32/inc \
- -I../djgpp/watt32/inc/sys
+ -I/dev/env/DJDIR/watt32/inc
 
 WWWLIB = \
  ../WWW/Library/djgpp/libwww.a \
- ../djgpp/watt32/lib/libwatt.a
+ /dev/env/DJDIR/watt32/lib/libwatt.a
 
-LIBS= $(SLANGLIB) -lslang -lz # -lintl
+LIBS= $(SLANGLIB) -lslang $(SSLLIB) -lz $(INTLLIBS)
+
+# Uncomment the following to enable Internationalization.
 #INTLFLAGS = -DHAVE_GETTEXT -DHAVE_LIBINTL_H
+#INTLLIBS= -lintl -liconv
+
+# Uncomment the following to enable SSL.
+#SSLFLAGS = -DUSE_SSL
+#SSLLIB = -lssl -lcrypto
+#SSLINC = -I/dev/env/DJDIR/include/openssl
 
 all: lynx.exe
 

@@ -1,5 +1,6 @@
 #include <HTUtils.h>
 #include <HTAlert.h>
+#include <HTFile.h>
 #include <LYUtils.h>
 #include <LYStrings.h>
 #include <LYBookmark.h>
@@ -118,6 +119,7 @@ PUBLIC char * get_bookmark_filename ARGS1(
 	 * Check if it is a mosaic hotlist.
 	 */
 	if (LYSafeGets(&string_buffer, fp) != 0
+	 && *LYTrimNewline(string_buffer) != '\0'
 	 && !strncmp(string_buffer, "ncsa-xmosaic-hotlist-format-1", 29)) {
 	    char *newname;
 	    /*
@@ -150,7 +152,6 @@ PRIVATE char * convert_mosaic_bookmark_file ARGS1(
     FILE *fp, *nfp;
     char *buf = NULL;
     int line = -2;
-    char *endline;
 
     LYRemoveTemp(newfile);
     if ((nfp = LYOpenTemp(newfile, HTML_SUFFIX, "w")) == NULL) {
@@ -170,16 +171,9 @@ PRIVATE char * convert_mosaic_bookmark_file ARGS1(
      been remapped by you or your system administrator."));
 
     while ((LYSafeGets(&buf, fp)) != NULL) {
-	if(line >= 0) {
-	    endline = &buf[strlen(buf)-1];
-	    if(*endline == '\n')
-		*endline = '\0';
-#ifdef DOSPATH	/* 1998/01/10 (Sat) 15:41:35 */
-	    endline = strchr(buf, '\r');
-	    if (endline == NULL)
-		*endline = '\0';
-#endif
-	    if((line % 2) == 0) { /* even lines */
+	if (line >= 0) {
+	    LYTrimNewline(buf);
+	    if ((line % 2) == 0) { /* even lines */
 		if(*buf != '\0') {
 		    strtok(buf," "); /* kill everything after the space */
 		    fprintf(nfp,"<LI><a href=\"%s\">",buf); /* the URL */
@@ -271,15 +265,18 @@ PUBLIC void save_bookmark_link ARGS2(
      *	If the link will be added to the same
      *	bookmark file, get confirmation. - FM
      */
-    if (LYMultiBookmarks != MBM_OFF &&
-	strstr(HTLoadedDocumentURL(),
-	       (*BookmarkPage == '.' ?
-		    (BookmarkPage+1) : BookmarkPage)) != NULL) {
-	LYMBM_statusline(MULTIBOOKMARKS_SELF);
-	c = LYgetch_single();
-	if (c != 'L') {
-	    FREE(bookmark_URL);
-	    return;
+    if (LYMultiBookmarks != MBM_OFF) {
+	CONST char *url = HTLoadedDocumentURL();
+	CONST char *page = (*BookmarkPage == '.')
+			    ? (BookmarkPage + 1)
+			    : BookmarkPage;
+	if (strstr(url, page) != NULL) {
+	    LYMBM_statusline(MULTIBOOKMARKS_SELF);
+	    c = LYgetch_single();
+	    if (c != 'L') {
+		FREE(bookmark_URL);
+		return;
+	    }
 	}
     }
 
@@ -420,18 +417,16 @@ Note: if you edit this file manually\n\
      */
     if (!first_time && nhist > 0 && bookmark_URL) {
 	for (i = 0; i < nhist; i++) {
-	    if (history[i].bookmark &&
-		!strcmp(history[i].address, bookmark_URL)) {
-		WWWDoc.address = history[i].address;
+	    if (HDOC(i).bookmark &&
+		!strcmp(HDOC(i).address, bookmark_URL)) {
+		WWWDoc.address = HDOC(i).address;
 		WWWDoc.post_data = NULL;
 		WWWDoc.post_content_type = NULL;
-		WWWDoc.bookmark = history[i].bookmark;
+		WWWDoc.bookmark = HDOC(i).bookmark;
 		WWWDoc.isHEAD = FALSE;
 		WWWDoc.safe = FALSE;
-		if (((tmpanchor = HTAnchor_parent(
-					HTAnchor_findAddress(&WWWDoc)
-						 )) != NULL) &&
-		    (text = (HText *)HTAnchor_document(tmpanchor)) != NULL) {
+		tmpanchor = HTAnchor_findAddress(&WWWDoc);
+		if ((text = (HText *)HTAnchor_document(tmpanchor)) != NULL) {
 		    HText_setNoCache(text);
 		}
 		break;
@@ -573,7 +568,7 @@ PUBLIC void remove_bookmark_link ARGS2(
     }
     LYCloseTempFP(nfp);
     nfp = NULL;
-#ifdef DOSPATH
+#if defined(DOSPATH) || defined(__EMX__)
     remove(filename_buffer);
 #endif /* DOSPATH */
 
@@ -612,10 +607,10 @@ PUBLIC void remove_bookmark_link ARGS2(
 #endif  /* UNIX */
 
     if (rename(newfile, filename_buffer) != -1) {
-#ifdef UNIX
+#ifdef MULTI_USER_UNIX
 	if (regular)
 	    chmod(filename_buffer, stat_buf.st_mode & 07777);
-#endif /* UNIX */
+#endif
 	HTSYS_purge(filename_buffer);
 	return;
     } else {
@@ -641,22 +636,25 @@ PUBLIC void remove_bookmark_link ARGS2(
 	if (errno == EXDEV) {
 	    static CONST char MV_FMT[] = "%s %s %s";
 	    char *buffer = 0;
-	    HTAddParam(&buffer, MV_FMT, 1, MV_PATH);
-	    HTAddParam(&buffer, MV_FMT, 2, newfile);
-	    HTAddParam(&buffer, MV_FMT, 3, filename_buffer);
-	    HTEndParam(&buffer, MV_FMT, 3);
-	    if (LYSystem(buffer) == 0) {
-#ifdef UNIX
-		if (regular)
-		    chmod(filename_buffer, stat_buf.st_mode & 07777);
-#endif /* UNIX */
-		FREE(buffer);
-		return;
-	    } else {
-		FREE(buffer);
-		keep_tempfile = TRUE;
-		goto failure;
+	    CONST char *program;
+
+	    if ((program = HTGetProgramPath(ppMV)) != NULL) {
+		HTAddParam(&buffer, MV_FMT, 1, program);
+		HTAddParam(&buffer, MV_FMT, 2, newfile);
+		HTAddParam(&buffer, MV_FMT, 3, filename_buffer);
+		HTEndParam(&buffer, MV_FMT, 3);
+		if (LYSystem(buffer) == 0) {
+#ifdef MULTI_USER_UNIX
+		    if (regular)
+			chmod(filename_buffer, stat_buf.st_mode & 07777);
+#endif
+		    FREE(buffer);
+		    return;
+		}
 	    }
+	    FREE(buffer);
+	    keep_tempfile = TRUE;
+	    goto failure;
 	}
 	CTRACE((tfp, "rename(): %s", LYStrerror(errno)));
 #endif /* _WINDOWS */
@@ -719,7 +717,7 @@ get_advanced_choice:
 	    c = LYCharINTERRUPT2;
 	}
 #endif /* VMS */
-	if (LYisNonAlnumKeyname(c, LYK_PREV_DOC) || LYCharIsINTERRUPT(c)) {
+	if (LYisNonAlnumKeyname(c, LYK_PREV_DOC) || LYCharIsINTERRUPT_HARD(c)) {
 	    /*
 	     *	Treat left-arrow, ^G, or ^C as cancel.
 	     */
@@ -871,15 +869,15 @@ PUBLIC int select_menu_multi_bookmarks NOARGS
 	if (MBM_screens > 1) {
 	    LYmove(LYlines-2, 0);
 	    LYaddstr("'");
-	    start_bold();
+	    lynx_start_bold();
 	    LYaddstr("[");
-	    stop_bold();
+	    lynx_stop_bold();
 	    LYaddstr("' ");
 	    LYaddstr(PREVIOUS);
 	    LYaddstr(", '");
-	    start_bold();
+	    lynx_start_bold();
 	    LYaddstr("]");
-	    stop_bold();
+	    lynx_stop_bold();
 	    LYaddstr("' ");
 	    LYaddstr(NEXT_SCREEN);
 	}

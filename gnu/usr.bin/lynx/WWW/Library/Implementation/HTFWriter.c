@@ -27,8 +27,8 @@ struct _HTStream {
 	CONST HTStreamClass *	isa;
 
 	FILE *			fp;
-	char * 			end_command;
-	char * 			remove_command;
+	char *			end_command;
+	char *			remove_command;
 	BOOL			announce;
 };
 
@@ -61,7 +61,7 @@ PRIVATE CONST HTStreamClass HTBlackHoleClass =
 	"BlackHole",
 	HTBlackHole_free,
 	HTBlackHole_abort,
-	HTBlackHole_put_character, 	HTBlackHole_put_string,
+	HTBlackHole_put_character,	HTBlackHole_put_string,
 	HTBlackHole_write
 };
 
@@ -133,7 +133,7 @@ PRIVATE void HTFWriter_free ARGS1(HTStream *, me)
 {
     fclose(me->fp);
     if (me->end_command) {		/* Temp file */
-        _HTProgress(me->end_command);	/* Tell user what's happening */
+	_HTProgress(me->end_command);	/* Tell user what's happening */
 	system(me->end_command);
 	FREE(me->end_command);
 	if (me->remove_command) {
@@ -173,7 +173,7 @@ PRIVATE CONST HTStreamClass HTFWriter = /* As opposed to print etc */
 	"FileWriter",
 	HTFWriter_free,
 	HTFWriter_abort,
-	HTFWriter_put_character, 	HTFWriter_put_string,
+	HTFWriter_put_character,	HTFWriter_put_string,
 	HTFWriter_write
 };
 
@@ -238,7 +238,7 @@ PUBLIC HTStream* HTSaveAndExecute ARGS3(
     HTStream* me;
 
     if (HTClientHost) {
-        HTAlert(CANNOT_SAVE_REMOTE);
+	HTAlert(CANNOT_SAVE_REMOTE);
 	return HTBlackHole();
     }
 
@@ -259,7 +259,7 @@ PUBLIC HTStream* HTSaveAndExecute ARGS3(
     me->fp = fopen (fnam, BIN_W);
     if (!me->fp) {
 	HTAlert(CANNOT_OPEN_TEMP);
-        FREE(fnam);
+	FREE(fnam);
 	FREE(me);
 	return NULL;
     }
@@ -307,7 +307,7 @@ PUBLIC HTStream* HTSaveLocally ARGS3(
     HTStream* me;
 
     if (HTClientHost) {
-        HTAlert(CANNOT_SAVE_REMOTE);
+	HTAlert(CANNOT_SAVE_REMOTE);
 	return HTBlackHole();
     }
 
@@ -336,7 +336,7 @@ PUBLIC HTStream* HTSaveLocally ARGS3(
     me->fp = fopen (answer, BIN_W);
     if (!me->fp) {
 	HTAlert(CANNOT_OPEN_OUTPUT);
-        FREE(answer);
+	FREE(answer);
 	FREE(me);
 	return NULL;
     }

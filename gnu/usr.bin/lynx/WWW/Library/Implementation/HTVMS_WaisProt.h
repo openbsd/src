@@ -12,17 +12,17 @@
 **----------------------------------------------------------------------*/
 /* WIDE AREA INFORMATION SERVER SOFTWARE:
    No guarantees or restrictions.  See the readme file for the full standard
-   disclaimer.	
-  
+   disclaimer.
+
    3.26.90	Harry Morris, morris@think.com
-   3.30.90  Harry Morris 
-   			-	removed chunk code from WAISSearchAPDU,
-   			-	added makeWAISQueryType1Query() and readWAISType1Query() which
-   				replace makeWAISQueryTerms() and makeWAISQueryDocs().
+   3.30.90  Harry Morris
+			-	removed chunk code from WAISSearchAPDU,
+			-	added makeWAISQueryType1Query() and readWAISType1Query() which
+				replace makeWAISQueryTerms() and makeWAISQueryDocs().
    4.11.90  HWM - added definitions of wais element set names
-   4.14.90  HWM - changed symbol for relevance feedback query from QT_3 to 
-   				  QT_RelevanceFeedbackQuery added QT_TextRetrievalQuery as a
-   				  synonym for QT_BooleanQuery
+   4.14.90  HWM - changed symbol for relevance feedback query from QT_3 to
+				  QT_RelevanceFeedbackQuery added QT_TextRetrievalQuery as a
+				  synonym for QT_BooleanQuery
 				- renamed makeWAISType1Query() to makeWAISTextQuery()
 				  renamed readWAISType1Query() to readWAISTextQuery()
    5.29.90  TS - added CSTFreeWAISFoo functions
@@ -95,16 +95,16 @@
 #define DT_DocumentShortHeaderGroup	(data_tag)151
 #define DT_DocumentLongHeaderGroup	(data_tag)152
 #define DT_DocumentTextGroup		(data_tag)153
-#define DT_DocumentHeadlineGroup 	(data_tag)154
+#define DT_DocumentHeadlineGroup	(data_tag)154
 #define DT_DocumentCodeGroup		(data_tag)155
-#define DT_Lines					(data_tag)131 
-#define	DT_TYPE_BLOCK				(data_tag)132
-#define DT_TYPE						(data_tag)133
+#define DT_Lines			(data_tag)131
+#define	DT_TYPE_BLOCK			(data_tag)132
+#define DT_TYPE				(data_tag)133
 
 /* wais element sets */
 #define ES_DocumentHeader		"Document Header"
-#define ES_DocumentShortHeader	"Document Short Header"
-#define ES_DocumentLongHeader	"Document Long Header"
+#define ES_DocumentShortHeader		"Document Short Header"
+#define ES_DocumentLongHeader		"Document Long Header"
 #define ES_DocumentText			"Document Text"
 #define ES_DocumentHeadline		"Document Headline"
 #define ES_DocumentCodes		"Document Codes"
@@ -122,7 +122,7 @@ typedef struct DocObj { /* specifies a section of a document */
 		any*	ID;
 	} ChunkEnd;
 	} DocObj;
-	
+
 /*----------------------------------------------------------------------*/
 /* WAIS APDU extensions */
 
@@ -131,7 +131,7 @@ typedef struct WAISInitResponse {
 	long				ChunkIDLength;
 	char*				ChunkMarker;
 	char*				HighlightMarker;
-	char* 				DeHighlightMarker;
+	char*				DeHighlightMarker;
 	char*				NewlineCharacters;
 	/* XXX  need to add UpdateFrequency and Update Time */
 	} WAISInitResponse;
@@ -149,10 +149,10 @@ typedef struct WAISSearch {
 typedef struct WAISDocumentHeader {
 	any*				DocumentID;
 	long				VersionNumber;
-	long				Score;     
-	long				BestMatch; 
+	long				Score;
+	long				BestMatch;
 	long				DocumentLength;
-	long 				Lines;
+	long				Lines;
 	char**				Types;
 	char*				Source;
 	char*				Date;
@@ -163,35 +163,35 @@ typedef struct WAISDocumentHeader {
 typedef struct WAISDocumentShortHeader {
 	any*				DocumentID;
 	long				VersionNumber;
-	long				Score;     
-	long				BestMatch; 
+	long				Score;
+	long				BestMatch;
 	long				DocumentLength;
-	long 				Lines;
- 	} WAISDocumentShortHeader;
- 
+	long				Lines;
+	} WAISDocumentShortHeader;
+
 typedef struct WAISDocumentLongHeader {
 	any*				DocumentID;
 	long				VersionNumber;
-	long				Score;     
-	long				BestMatch; 
+	long				Score;
+	long				BestMatch;
 	long				DocumentLength;
-	long 				Lines;
+	long				Lines;
 	char**				Types;
 	char*				Source;
 	char*				Date;
 	char*				Headline;
 	char*				OriginCity;
 	char*				StockCodes;
-	char* 				CompanyCodes;
+	char*				CompanyCodes;
 	char*				IndustryCodes;
- 	} WAISDocumentLongHeader;
+	} WAISDocumentLongHeader;
 
 typedef struct WAISDocumentText {
 	any*				DocumentID;
 	long				VersionNumber;
 	any*				DocumentText;
 	} WAISDocumentText;
-	
+
 typedef struct WAISDocumentHeadlines {
 	any*				DocumentID;
 	long				VersionNumber;
@@ -200,7 +200,7 @@ typedef struct WAISDocumentHeadlines {
 	char*				Headline;
 	char*				OriginCity;
 	} WAISDocumentHeadlines;
-	
+
 typedef struct WAISDocumentCodes {
 	any*				DocumentID;
 	long				VersionNumber;
@@ -208,12 +208,12 @@ typedef struct WAISDocumentCodes {
 	char*				CompanyCodes;
 	char*				IndustryCodes;
 	} WAISDocumentCodes;
-	
+
 typedef struct WAISSearchResponse {
-	char*			       		SeedWordsUsed;
-	WAISDocumentHeader** 		DocHeaders;
-	WAISDocumentShortHeader** 	ShortHeaders;
-	WAISDocumentLongHeader** 	LongHeaders;
+	char*					SeedWordsUsed;
+	WAISDocumentHeader**		DocHeaders;
+	WAISDocumentShortHeader**	ShortHeaders;
+	WAISDocumentLongHeader**	LongHeaders;
 	WAISDocumentText**			Text;
 	WAISDocumentHeadlines**		Headlines;
 	WAISDocumentCodes**			Codes;
@@ -326,7 +326,7 @@ void CSTFreeWAISTextQuery PARAMS(( any* query));
 **----------------------------------------------------------------------*/
 /* WIDE AREA INFORMATION SERVER SOFTWARE
    No guarantees or restrictions.  See the readme file for the full standard
-   disclaimer.    
+   disclaimer.
    3.26.90
 */
 
@@ -351,7 +351,7 @@ void CSTFreeWAISTextQuery PARAMS(( any* query));
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif
- 
+
 #include <HTVMS_WaisUI.h>
 
 typedef struct wais_header {
@@ -361,36 +361,36 @@ typedef struct wais_header {
         char    hdr_vers;       /* version of this header, currently = '2' */
         char    server[10];     /* name or address of server */
         char    compression;    /* <sp>=no compression, 'u'=unix compress */
-        char    encoding;       /* <sp>=no encoding, 'h'=hexize, 
+        char    encoding;       /* <sp>=no encoding, 'h'=hexize,
 				   'u'=uuencode */
         char    msg_checksum;   /* XOR of every byte of message */
         } WAISMessage;
 
-#define HEADER_LENGTH 	25	/* number of bytes needed to write a 
+#define HEADER_LENGTH	25	/* number of bytes needed to write a
 				   wais-header (not sizeof(wais_header)) */
 
-#define HEADER_VERSION 	(long)'2'
+#define HEADER_VERSION	(long)'2'
 
 /* message type */
-#define Z3950			'z'  
-#define ACK			'a'  
-#define	NAK			'n'  
+#define Z3950			'z'
+#define ACK			'a'
+#define	NAK			'n'
 
 /* compression */
-#define NO_COMPRESSION 		' ' 
-#define UNIX_COMPRESSION 	'u' 
+#define NO_COMPRESSION		' '
+#define UNIX_COMPRESSION	'u'
 
 /* encoding */
-#define NO_ENCODING		' '  
-#define HEX_ENCODING	'h'  /* Swartz 4/3 encoding */
-#define IBM_HEXCODING	'i'	 /* same as h but uses characters acceptable for IBM mainframes */
-#define UUENCODE		'u'  
+#define NO_ENCODING		' '
+#define HEX_ENCODING		'h'  /* Swartz 4/3 encoding */
+#define IBM_HEXCODING		'i'  /* same as h but uses characters acceptable for IBM mainframes */
+#define UUENCODE		'u'
 
 
 void readWAISPacketHeader PARAMS((char* msgBuffer,WAISMessage *header_struct));
 long getWAISPacketLength PARAMS((WAISMessage* header));
 void writeWAISPacketHeader PARAMS((char* header,long dataLen,long type,
-				char* server,long compression,	
+				char* server,long compression,
 				long encoding,long version));
 
 #endif /* ndef WMESSAGE_H */

@@ -507,7 +507,7 @@ PUBLIC int Find_Best_Display_Charset ARGS1 (int, ord)
     }
     /* Here r point to the replacement, s to the end of the replacement. */
     if (s >= r + sizeof(buf)) {
-	HTInfoMsg("Charset name in CHARSET_SWITCH_RULES too long");
+	HTInfoMsg(gettext("Charset name in CHARSET_SWITCH_RULES too long"));
 	return ord;
     }
     strncpy(buf, r, s-r);
@@ -548,7 +548,7 @@ PRIVATE int _Switch_Display_Charset ARGS2 (int, ord, enum switch_display_charset
 	ord = Find_Best_Display_Charset(ord);
 
     /* Ignore sizechange unless the font is loaded */
-    if (ord != font_loaded_for && really == SWITCH_DISPLAY_CHARSET_SIZECHANGE)
+    if (ord != font_loaded_for && really == SWITCH_DISPLAY_CHARSET_RESIZE)
 	return ord;
 
     if (ord == real_charsets[0] || ord == real_charsets[1]) {

@@ -333,10 +333,13 @@ PUBLIC void UCSetBoxChars ARGS5(
     int,	vert_in,
     int,	hori_in)
 {
+#ifndef WIDEC_CURSES
     if (cset >= -1 && LYCharSet_UC[cset].enc == UCT_ENC_UTF8) {
 	*pvert_out = (vert_in ? vert_in : '|');
 	*phori_out = (hori_in ? hori_in : '-');
-    } else {
+    } else
+#endif
+    {
 	*pvert_out = vert_in;
 	*phori_out = hori_in;
     }

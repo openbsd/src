@@ -247,11 +247,4 @@ extern char * HTAA_GidToName PARAMS((int gid));
 */
 extern int HTAA_NameToGid PARAMS((char *name));
 
-/*
-
- */
-
 #endif /* not HTAAPROT_H */
-/*
-
-   End of file HTAAProt.h.  */

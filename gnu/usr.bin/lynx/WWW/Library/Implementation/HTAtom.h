@@ -36,6 +36,3 @@ PUBLIC HTList * HTAtom_templateMatches PARAMS((CONST char * templ));
 #define HTAtom_name(a) ((a)->name)
 
 #endif  /* HTATOM_H */
-/*
-
-    */

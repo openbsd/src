@@ -10,6 +10,8 @@ typedef enum {
     , RECALL_MAIL
 } RecallType;
 
+#define is8bits(ch) (UCH(ch) >= 128)	/* isascii(ch) is not POSIX */
+
 /*  UPPER8(ch1,ch2) is an extension of (TOUPPER(ch1) - TOUPPER(ch2))  */
 extern int UPPER8  PARAMS((
 	int		ch1,
@@ -76,6 +78,8 @@ extern char * LYno_attr_mbcs_case_strstr PARAMS((
 	int *		nstartp,
 	int *		nendp));
 
+#define non_empty(s) !isEmpty(s)
+
 #define LYno_attr_mb_strstr(chptr, tarptr, utf_flag, count_gcells, nstartp, nendp) \
 	(case_sensitive \
 	    ? LYno_attr_mbcs_strstr(chptr, tarptr, utf_flag, count_gcells, nstartp, nendp) \
@@ -117,10 +121,6 @@ extern void LYWriteCmdKey PARAMS((int ch));
 #define LYHaveCmdScript() FALSE
 #define LYReadCmdKey(mode) LYgetch_for(mode)
 #define LYCloseCmdLogfile() /* nothing */
-#endif
-
-#ifdef EXP_FILE_UPLOAD
-extern void base64_encode PARAMS((char * dest, char * src, int len));
 #endif
 
 /* values for LYgetch */
@@ -300,7 +300,9 @@ extern void LYLowerCase PARAMS((
 	char *		buffer));
 extern void LYUpperCase PARAMS((
 	char *		buffer));
-extern void LYRemoveBlanks PARAMS((
+extern BOOLEAN LYRemoveNewlines PARAMS((
+	char *		buffer));
+extern char * LYRemoveBlanks PARAMS((
 	char *		buffer));
 extern char * LYSkipBlanks PARAMS((
 	char *		buffer));
@@ -311,6 +313,8 @@ extern CONST char * LYSkipCBlanks PARAMS((
 extern CONST char * LYSkipCNonBlanks PARAMS((
 	CONST char *	buffer));
 extern void LYTrimLeading PARAMS((
+	char *		buffer));
+extern char * LYTrimNewline PARAMS((
 	char *		buffer));
 extern void LYTrimTrailing PARAMS((
 	char *		buffer));

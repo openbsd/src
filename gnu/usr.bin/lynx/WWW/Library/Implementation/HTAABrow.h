@@ -130,11 +130,5 @@ extern void HTAAForwardAuth_set PARAMS((
 	CONST char *	scheme_name,
 	CONST char *	scheme_specifics));
 extern void HTAAForwardAuth_reset NOPARAMS;
-/*
-
- */
 
 #endif  /* NOT HTAABROW_H */
-/*
-
-   End of file HTAABrow.h.  */

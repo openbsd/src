@@ -8,6 +8,7 @@
 #include <LYBookmark.h>
 #include <LYCookie.h>
 #include <LYKeymap.h>
+#include <HTMLDTD.h>
 
 #include <LYLeaks.h>
 
@@ -18,10 +19,11 @@
 #endif /* FNAMES_8_3 */
 
 #define MSG_ENABLE_LYNXRC N_("Normally disabled.  See ENABLE_LYNXRC in lynx.cfg\n")
-#define NonNull(string) ((string) != 0 ? (string) : "")
 #define putBool(value) ((value) ? "on" : "off")
 
 PUBLIC Config_Enum tbl_DTD_recovery[] = {
+    { "true",		TRUE },
+    { "false",		FALSE },
     { "on",		TRUE },
     { "off",		FALSE },
     { "sortasgml",	TRUE },
@@ -32,11 +34,25 @@ PUBLIC Config_Enum tbl_DTD_recovery[] = {
 #ifdef DIRED_SUPPORT
 PRIVATE Config_Enum tbl_dir_list_style[] = {
     { "FILES_FIRST",	FILES_FIRST },
-    { "DIRECTORIES_FIRST", 0 },
+    { "DIRECTORIES_FIRST", DIRS_FIRST },
     { "MIXED_STYLE",	MIXED_STYLE },
     { NULL,		MIXED_STYLE },
 };
+#ifdef LONG_LIST
+PRIVATE Config_Enum tbl_dir_list_order[] = {
+    { "ORDER_BY_NAME",	ORDER_BY_NAME },
+    { "ORDER_BY_TYPE",	ORDER_BY_TYPE },
+    { "ORDER_BY_SIZE",  ORDER_BY_SIZE },
+    { "ORDER_BY_DATE",	ORDER_BY_DATE },
+    { "ORDER_BY_MODE",	ORDER_BY_MODE },
+#ifndef NO_GROUPS
+    { "ORDER_BY_USER",	ORDER_BY_USER },
+    { "ORDER_BY_GROUP",	ORDER_BY_GROUP },
 #endif
+    { NULL,		ORDER_BY_NAME },
+};
+#endif /* LONG_LIST */
+#endif /* DIRED_SUPPORT */
 
 PRIVATE Config_Enum tbl_file_sort[] = {
     { "BY_FILENAME",	FILE_BY_NAME },
@@ -47,9 +63,12 @@ PRIVATE Config_Enum tbl_file_sort[] = {
 };
 
 PUBLIC Config_Enum tbl_keypad_mode[] = {
+    { "FIELDS_ARE_NUMBERED", FIELDS_ARE_NUMBERED },
     { "LINKS_AND_FIELDS_ARE_NUMBERED", LINKS_AND_FIELDS_ARE_NUMBERED },
-    { "LINKS_AND_FORM_FIELDS_ARE_NUMBERED", LINKS_AND_FIELDS_ARE_NUMBERED },
     { "LINKS_ARE_NUMBERED", LINKS_ARE_NUMBERED },
+    { "LINKS_ARE_NOT_NUMBERED", NUMBERS_AS_ARROWS },
+    /* obsolete variations: */
+    { "LINKS_AND_FORM_FIELDS_ARE_NUMBERED", LINKS_AND_FIELDS_ARE_NUMBERED },
     { "NUMBERS_AS_ARROWS", NUMBERS_AS_ARROWS },
     { NULL,		DEFAULT_KEYPAD_MODE }
 };
@@ -79,7 +98,7 @@ PUBLIC Config_Enum tbl_transfer_rate[] = {
     { "TRUE",		rateKB },
     { "BYTES",		rateBYTES },
     { "FALSE",		rateBYTES },
-#ifdef EXP_READPROGRESS
+#ifdef USE_READPROGRESS
     { "KB,ETA",		rateEtaKB },
     { "BYTES,ETA",	rateEtaBYTES },
 #endif
@@ -102,12 +121,19 @@ PRIVATE Config_Enum tbl_visited_links[] = {
     { NULL,		DEFAULT_VISITED_LINKS }
 };
 
+PUBLIC Config_Enum tbl_force_prompt[] = {
+    { "prompt",		FORCE_PROMPT_DFT	},
+    { "yes",		FORCE_PROMPT_YES	},
+    { "no",		FORCE_PROMPT_NO		},
+    { NULL,		-1			}
+};
+
 PRIVATE BOOL getBool ARGS1(char *, src)
 {
     return (BOOL) (!strncasecomp(src, "on", 2) || !strncasecomp(src, "true", 4));
 }
 
-PRIVATE CONST char *LYputEnum ARGS2(
+PUBLIC CONST char *LYputEnum ARGS2(
     Config_Enum *,	table,
     int,		value)
 {
@@ -120,21 +146,33 @@ PRIVATE CONST char *LYputEnum ARGS2(
     return "?";
 }
 
-PRIVATE BOOL LYgetEnum ARGS3(
+PUBLIC BOOL LYgetEnum ARGS3(
     Config_Enum *,	table,
-    char *,		src,
-    int *,		value)
+    char *,		name,
+    int *,		result)
 {
-    while (table->name != 0) {
-	if (!strncasecomp(table->name, src, strlen(table->name))) {
-	    *value = table->value;
+    Config_Enum *found = 0;
+    unsigned len = strlen(name);
+    int match = 0;
+
+    if (len != 0) {
+	while (table->name != 0) {
+	    if (!strncasecomp(table->name, name, len)) {
+		found = table;
+		if (!strcasecomp(table->name, name)) {
+		    match = 1;
+		    break;
+		}
+		++match;
+	    }
+	    table++;
+	}
+	if (match == 1) {	/* if unambiguous */
+	    *result = found->value;
 	    return TRUE;
 	}
-	table++;
     }
-    if (table->value >= 0) 	/* is there a default? */
-	*value = table->value;
-    return FALSE;
+    return FALSE;		/* no match */
 }
 
 /* these are for data that are normally not read/written from .lynxrc */
@@ -172,7 +210,7 @@ typedef enum {
 typedef struct config_type
 {
     CONST char *name;
-    int enabled;		/* see lynx.cfg ENABLE_LYNXRC */
+    int enabled;		/* see lynx.cfg ENABLE_LYNXRC "off" lines */
     Conf_Types type;
     ParseData;
     char **strings;
@@ -234,49 +272,64 @@ PRIVATE void put_editor ARGS2(FILE *, fp, struct config_type *, tbl)
     fprintf(fp, "%s=%s\n\n", tbl->name, NonNull(editor));
 }
 
+PUBLIC int get_tagsoup ARGS1(char *, value)
+{
+    int found = Old_DTD;
+
+    if (LYgetEnum(tbl_DTD_recovery, value, &found)
+     && Old_DTD != found) {
+	Old_DTD = found;
+	HTSwitchDTD(!Old_DTD);
+    }
+    return 0;
+}
+
+PRIVATE void put_tagsoup ARGS2(FILE *, fp, struct config_type *, tbl)
+{
+    fprintf(fp, "%s=%s\n\n", tbl->name, LYputEnum(tbl_DTD_recovery, Old_DTD));
+}
+
 /* This table is searched ignoring case */
 static Config_Type Config_Table [] =
 {
-    MAYBE_ENU("DTD_recovery",          Old_DTD,            tbl_DTD_recovery,
-              MSG_ENABLE_LYNXRC),
-    PARSE_SET("accept_all_cookies",    LYAcceptAllCookies, N_("\
+    PARSE_SET(RC_ACCEPT_ALL_COOKIES,    LYAcceptAllCookies, N_("\
 accept_all_cookies allows the user to tell Lynx to automatically\n\
 accept all cookies if desired.  The default is \"FALSE\" which will\n\
 prompt for each cookie.  Set accept_all_cookies to \"TRUE\" to accept\n\
 all cookies.\n\
 ")),
-    MAYBE_FUN("assume_char_set",       get_assume_charset, put_assume_charset, MSG_ENABLE_LYNXRC),
-    PARSE_STR("bookmark_file",         bookmark_page,     N_("\
+    MAYBE_FUN(RC_ASSUME_CHARSET,        get_assume_charset, put_assume_charset, MSG_ENABLE_LYNXRC),
+    PARSE_STR(RC_BOOKMARK_FILE,         bookmark_page,     N_("\
 bookmark_file specifies the name and location of the default bookmark\n\
 file into which the user can paste links for easy access at a later\n\
 date.\n\
 ")),
-    PARSE_SET("case_sensitive_searching", case_sensitive, N_("\
+    PARSE_SET(RC_CASE_SENSITIVE_SEARCHING, case_sensitive, N_("\
 If case_sensitive_searching is \"on\" then when the user invokes a search\n\
 using the 's' or '/' keys, the search performed will be case sensitive\n\
 instead of case INsensitive.  The default is usually \"off\".\n\
 ")),
-    PARSE_FUN("character_set",         get_display_charset, put_display_charset, N_("\
+    PARSE_FUN(RC_CHARACTER_SET,         get_display_charset, put_display_charset, N_("\
 The character_set definition controls the representation of 8 bit\n\
 characters for your terminal.  If 8 bit characters do not show up\n\
 correctly on your screen you may try changing to a different 8 bit\n\
 set or using the 7 bit character approximations.\n\
 Current valid characters sets are:\n\
 ")),
-    PARSE_LIS("cookie_accept_domains", LYCookieAcceptDomains, N_("\
+    PARSE_LIS(RC_COOKIE_ACCEPT_DOMAINS, LYCookieAcceptDomains, N_("\
 cookie_accept_domains and cookie_reject_domains are comma-delimited\n\
 lists of domains from which Lynx should automatically accept or reject\n\
 all cookies.  If a domain is specified in both options, rejection will\n\
 take precedence.  The accept_all_cookies parameter will override any\n\
 settings made here.\n\
 ")),
-#ifdef EXP_PERSISTENT_COOKIES
-    PARSE_STR("cookie_file",	       LYCookieFile, N_("\
+#ifdef USE_PERSISTENT_COOKIES
+    PARSE_STR(RC_COOKIE_FILE,	        LYCookieFile, N_("\
 cookie_file specifies the file from which to read persistent cookies.\n\
 The default is ~/.lynx_cookies.\n\
 ")),
 #endif
-    PARSE_STR("cookie_loose_invalid_domains", LYCookieLooseCheckDomains, N_("\
+    PARSE_STR(RC_COOKIE_LOOSE_INVALID_DOMAINS, LYCookieLooseCheckDomains, N_("\
 cookie_loose_invalid_domains, cookie_strict_invalid_domains, and\n\
 cookie_query_invalid_domains are comma-delimited lists of which domains\n\
 should be subjected to varying degrees of validity checking.  If a\n\
@@ -285,31 +338,37 @@ be applied.  A domain with loose checking will be allowed to set cookies\n\
 with an invalid path or domain attribute.  All domains will default to\n\
 querying the user for an invalid path or domain.\n\
 ")),
-    PARSE_STR("cookie_query_invalid_domains", LYCookieQueryCheckDomains, NULL),
-    PARSE_LIS("cookie_reject_domains", LYCookieRejectDomains, NULL),
-    PARSE_STR("cookie_strict_invalid_domains", LYCookieStrictCheckDomains, NULL),
+    PARSE_STR(RC_COOKIE_QUERY_INVALID_DOMAINS, LYCookieQueryCheckDomains, NULL),
+    PARSE_LIS(RC_COOKIE_REJECT_DOMAINS, LYCookieRejectDomains, NULL),
+    PARSE_STR(RC_COOKIE_STRICT_INVALID_DOMAIN, LYCookieStrictCheckDomains, NULL),
 #ifdef DIRED_SUPPORT
-    PARSE_ENU("dir_list_style",        dir_list_style,     tbl_dir_list_style, N_("\
+#ifdef LONG_LIST
+    PARSE_ENU(RC_DIR_LIST_ORDER,        dir_list_order,     tbl_dir_list_order, N_("\
+dir_list_order specifies the directory list order under DIRED_SUPPORT\n\
+(if implemented).  The default is \"ORDER_BY_NAME\"\n\
+")),
+#endif
+    PARSE_ENU(RC_DIR_LIST_STYLE,        dir_list_style,     tbl_dir_list_style, N_("\
 dir_list_styles specifies the directory list style under DIRED_SUPPORT\n\
 (if implemented).  The default is \"MIXED_STYLE\", which sorts both\n\
 files and directories together.  \"FILES_FIRST\" lists files first and\n\
 \"DIRECTORIES_FIRST\" lists directories first.\n\
 ")),
 #endif
-    MAYBE_STR("display",               x_display,          MSG_ENABLE_LYNXRC),
-    PARSE_SET("emacs_keys",            emacs_keys, N_("\
+    MAYBE_STR(RC_DISPLAY,               x_display,          MSG_ENABLE_LYNXRC),
+    PARSE_SET(RC_EMACS_KEYS,            emacs_keys, N_("\
 If emacs_keys is to \"on\" then the normal EMACS movement keys:\n\
   ^N = down    ^P = up\n\
   ^B = left    ^F = right\n\
 will be enabled.\n\
 ")),
-    PARSE_FUN("file_editor",           get_editor,         put_editor, N_("\
+    PARSE_FUN(RC_FILE_EDITOR,           get_editor,         put_editor, N_("\
 file_editor specifies the editor to be invoked when editing local files\n\
 or sending mail.  If no editor is specified, then file editing is disabled\n\
 unless it is activated from the command line, and the built-in line editor\n\
 will be used for sending mail.\n\
 ")),
-    PARSE_ENU("file_sorting_method",   HTfileSortMethod,   tbl_file_sort, N_("\
+    PARSE_ENU(RC_FILE_SORTING_METHOD,   HTfileSortMethod,   tbl_file_sort, N_("\
 The file_sorting_method specifies which value to sort on when viewing\n\
 file lists such as FTP directories.  The options are:\n\
    BY_FILENAME -- sorts on the name of the file\n\
@@ -317,11 +376,17 @@ file lists such as FTP directories.  The options are:\n\
    BY_SIZE     -- sorts on the size of the file\n\
    BY_DATE     -- sorts on the date of the file\n\
 ")),
-#ifdef EXP_KEYBOARD_LAYOUT
-    PARSE_ARY("kblayout",              current_layout,     LYKbLayoutNames, NULL),
+    MAYBE_ENU(RC_FORCE_COOKIE_PROMPT,   cookie_noprompt,    tbl_force_prompt,
+	      MSG_ENABLE_LYNXRC),
+#ifdef USE_SSL
+    MAYBE_ENU(RC_FORCE_SSL_PROMPT,      ssl_noprompt,       tbl_force_prompt,
+	      MSG_ENABLE_LYNXRC),
 #endif
-    PARSE_ENU("keypad_mode",           keypad_mode,        tbl_keypad_mode, NULL),
-    PARSE_ARY("lineedit_mode",         current_lineedit,   LYLineeditNames, N_("\
+#ifdef EXP_KEYBOARD_LAYOUT
+    PARSE_ARY(RC_KBLAYOUT,              current_layout,     LYKbLayoutNames, NULL),
+#endif
+    PARSE_ENU(RC_KEYPAD_MODE,           keypad_mode,        tbl_keypad_mode, NULL),
+    PARSE_ARY(RC_LINEEDIT_MODE,         current_lineedit,   LYLineeditNames, N_("\
 lineedit_mode specifies the key binding used for inputting strings in\n\
 prompts and forms.  If lineedit_mode is set to \"Default Binding\" then\n\
 the following control characters are used for moving and deleting:\n\
@@ -334,15 +399,18 @@ the following control characters are used for moving and deleting:\n\
 \n\
 Current lineedit modes are:\n\
 ")),
-    MAYBE_SET("make_pseudo_alts_for_inlines", pseudo_inline_alts, MSG_ENABLE_LYNXRC),
-    MAYBE_SET("make_links_for_all_images", clickable_images, MSG_ENABLE_LYNXRC),
-    PARSE_MBM("multi_bookmark", N_("\
+#ifdef EXP_LOCALE_CHARSET
+    MAYBE_SET(RC_LOCALE_CHARSET,      LYLocaleCharset,        MSG_ENABLE_LYNXRC),
+#endif
+    MAYBE_SET(RC_MAKE_PSEUDO_ALTS_FOR_INLINES, pseudo_inline_alts, MSG_ENABLE_LYNXRC),
+    MAYBE_SET(RC_MAKE_LINKS_FOR_ALL_IMAGES, clickable_images, MSG_ENABLE_LYNXRC),
+    PARSE_MBM(RC_MULTI_BOOKMARK, N_("\
 The following allow you to define sub-bookmark files and descriptions.\n\
 The format is multi_bookmark<capital_letter>=<filename>,<description>\n\
 Up to 26 bookmark files (for the English capital letters) are allowed.\n\
 We start with \"multi_bookmarkB\" since 'A' is the default (see above).\n\
 ")),
-    PARSE_STR("personal_mail_address", personal_mail_address, N_("\
+    PARSE_STR(RC_PERSONAL_MAIL_ADDRESS, personal_mail_address, N_("\
 personal_mail_address specifies your personal mail address.  The\n\
 address will be sent during HTTP file transfers for authorization and\n\
 logging purposes, and for mailed comments.\n\
@@ -351,7 +419,7 @@ to TRUE in lynx.cfg, or use the -nofrom command line switch.  You also\n\
 could leave this field blank, but then you won't have it included in\n\
 your mailed comments.\n\
 ")),
-    PARSE_STR("preferred_charset",     pref_charset, N_("\
+    PARSE_STR(RC_PREFERRED_CHARSET,     pref_charset, N_("\
 preferred_charset specifies the character set in MIME notation (e.g.,\n\
 ISO-8859-2, ISO-8859-5) which Lynx will indicate you prefer in requests\n\
 to http servers using an Accept-Charset header.  The value should NOT\n\
@@ -365,16 +433,16 @@ according to the Accept-Charset header, then the server SHOULD send\n\
 an error response, though the sending of an unacceptable response\n\
 is also allowed.\n\
 ")),
-    PARSE_STR("preferred_language",    language, N_("\
+    PARSE_STR(RC_PREFERRED_LANGUAGE,    language, N_("\
 preferred_language specifies the language in MIME notation (e.g., en,\n\
 fr, may be a comma-separated list in decreasing preference)\n\
 which Lynx will indicate you prefer in requests to http servers.\n\
 If a file in that language is available, the server will send it.\n\
-Otherwise, the server will send the file in it's default language.\n\
+Otherwise, the server will send the file in its default language.\n\
 ")),
-    MAYBE_SET("raw_mode",              LYRawMode,          MSG_ENABLE_LYNXRC),
+    MAYBE_SET(RC_RAW_MODE,              LYRawMode,          MSG_ENABLE_LYNXRC),
 #if defined(ENABLE_OPTS_CHANGE_EXEC) && (defined(EXEC_LINKS) || defined(EXEC_SCRIPTS))
-    PARSE_SET("run_all_execution_links", local_exec, N_("\
+    PARSE_SET(RC_RUN_ALL_EXECUTION_LINKS, local_exec, N_("\
 If run_all_execution_links is set \"on\" then all local execution links\n\
 will be executed when they are selected.\n\
 \n\
@@ -385,7 +453,7 @@ WARNING - This is potentially VERY dangerous.  Since you may view\n\
           or compromise security.  This should only be set to \"on\" if\n\
           you are viewing trusted source information.\n\
 ")),
-    PARSE_SET("run_execution_links_on_local_files", local_exec_on_local_files, N_("\
+    PARSE_SET(RC_RUN_EXECUTION_LINKS_LOCAL, local_exec_on_local_files, N_("\
 If run_execution_links_on_local_files is set \"on\" then all local\n\
 execution links that are found in LOCAL files will be executed when they\n\
 are selected.  This is different from run_all_execution_links in that\n\
@@ -400,7 +468,10 @@ WARNING - This is potentially dangerous.  Since you may view\n\
           you are viewing trusted source information.\n\
 ")),
 #endif
-    PARSE_SET("select_popups",         LYSelectPopups, N_("\
+#ifdef USE_SCROLLBAR
+    MAYBE_SET(RC_SCROLLBAR,             LYShowScrollbar, MSG_ENABLE_LYNXRC),
+#endif
+    PARSE_SET(RC_SELECT_POPUPS,         LYSelectPopups, N_("\
 select_popups specifies whether the OPTIONs in a SELECT block which\n\
 lacks a MULTIPLE attribute are presented as a vertical list of radio\n\
 buttons or via a popup menu.  Note that if the MULTIPLE attribute is\n\
@@ -409,8 +480,8 @@ of checkboxes for the OPTIONs.  A value of \"on\" will set popup menus\n\
 as the default while a value of \"off\" will set use of radio boxes.\n\
 The default can be overridden via the -popup command line toggle.\n\
 ")),
-    MAYBE_SET("set_cookies",           LYSetCookies,      MSG_ENABLE_LYNXRC),
-    PARSE_ENU("show_color",            LYrcShowColor,     tbl_show_colors, N_("\
+    MAYBE_SET(RC_SET_COOKIES,           LYSetCookies,      MSG_ENABLE_LYNXRC),
+    PARSE_ENU(RC_SHOW_COLOR,            LYrcShowColor,     tbl_show_colors, N_("\
 show_color specifies how to set the color mode at startup.  A value of\n\
 \"never\" will force color mode off (treat the terminal as monochrome)\n\
 at startup even if the terminal appears to be color capable.  A value of\n\
@@ -427,7 +498,7 @@ The mode set at startup can be changed via the \"show color\" option in\n\
 the 'o'ptions menu.  If the option settings are saved, the \"on\" and\n\
 \"off\" \"show color\" settings will be treated as \"default\".\n\
 ")),
-    PARSE_SET("show_cursor",           LYShowCursor, N_("\
+    PARSE_SET(RC_SHOW_CURSOR,           LYShowCursor, N_("\
 show_cursor specifies whether to 'hide' the cursor to the right (and\n\
 bottom, if possible) of the screen, or to place it to the left of the\n\
 current link in documents, or current option in select popup windows.\n\
@@ -438,18 +509,18 @@ or color.  A value of \"on\" will set positioning to the left as the\n\
 default while a value of \"off\" will set 'hiding' of the cursor.\n\
 The default can be overridden via the -show_cursor command line toggle.\n\
 ")),
-    PARSE_SET("show_dotfiles",         show_dotfiles, N_("\
+    PARSE_SET(RC_SHOW_DOTFILES,         show_dotfiles, N_("\
 show_dotfiles specifies that the directory listing should include\n\
 \"hidden\" (dot) files/directories.  If set \"on\", this will be\n\
 honored only if enabled via userdefs.h and/or lynx.cfg, and not\n\
 restricted via a command line switch.  If display of hidden files\n\
 is disabled, creation of such files via Lynx also is disabled.\n\
 ")),
-#ifdef EXP_READPROGRESS
-    MAYBE_ENU("show_rate",             LYTransferRate,    tbl_transfer_rate,
+#ifdef USE_READPROGRESS
+    MAYBE_ENU(RC_SHOW_KB_RATE,          LYTransferRate,    tbl_transfer_rate,
 	      MSG_ENABLE_LYNXRC),
 #endif
-    PARSE_ENU("sub_bookmarks",         LYMultiBookmarks,  tbl_multi_bookmarks, N_("\
+    PARSE_ENU(RC_SUB_BOOKMARKS,         LYMultiBookmarks,  tbl_multi_bookmarks, N_("\
 If sub_bookmarks is not turned \"off\", and multiple bookmarks have\n\
 been defined (see below), then all bookmark operations will first\n\
 prompt the user to select an active sub-bookmark file.  If the default\n\
@@ -460,8 +531,10 @@ statusline prompt instead of the menu seen in novice and intermediate\n\
 user modes.  When this option is set to \"standard\", the menu will be\n\
 presented regardless of user mode.\n\
 ")),
-    MAYBE_STR("user_agent",            LYUserAgent,        MSG_ENABLE_LYNXRC),
-    PARSE_ENU("user_mode",             user_mode,          tbl_user_mode, N_("\
+    MAYBE_FUN(RC_TAGSOUP,               get_tagsoup,        put_tagsoup,
+              MSG_ENABLE_LYNXRC),
+    MAYBE_SET(RC_UNDERLINE_LINKS,       LYUnderlineLinks,   MSG_ENABLE_LYNXRC),
+    PARSE_ENU(RC_USER_MODE,             user_mode,          tbl_user_mode, N_("\
 user_mode specifies the users level of knowledge with Lynx.  The\n\
 default is \"NOVICE\" which displays two extra lines of help at the\n\
 bottom of the screen to aid the user in learning the basic Lynx\n\
@@ -469,12 +542,13 @@ commands.  Set user_mode to \"INTERMEDIATE\" to turn off the extra info.\n\
 Use \"ADVANCED\" to see the URL of the currently selected link at the\n\
 bottom of the screen.\n\
 ")),
-    PARSE_SET("verbose_images",        verbose_img, N_("\
+    MAYBE_STR(RC_USERAGENT,             LYUserAgent,        MSG_ENABLE_LYNXRC),
+    PARSE_SET(RC_VERBOSE_IMAGES,        verbose_img, N_("\
 If verbose_images is \"on\", lynx will print the name of the image\n\
 source file in place of [INLINE], [LINK] or [IMAGE]\n\
 See also VERBOSE_IMAGES in lynx.cfg\n\
 ")),
-    PARSE_SET("vi_keys",               vi_keys, N_("\
+    PARSE_SET(RC_VI_KEYS,               vi_keys, N_("\
 If vi_keys is set to \"on\", then the normal VI movement keys:\n\
   j = down    k = up\n\
   h = left    l = right\n\
@@ -482,7 +556,7 @@ will be enabled.  These keys are only lower case.\n\
 Capital 'H', 'J' and 'K will still activate help, jump shortcuts,\n\
 and the keymap display, respectively.\n\
 ")),
-    PARSE_ENU("visited_links",         Visited_Links_As,   tbl_visited_links, N_("\
+    PARSE_ENU(RC_VISITED_LINKS,         Visited_Links_As,   tbl_visited_links, N_("\
 The visited_links setting controls how Lynx organizes the information\n\
 in the Visited Links Page.\n\
 ")),
@@ -530,6 +604,9 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
 	if ((fp = fopen(rcfile, TXT_R)) == NULL) {
 	    return;
 	}
+	CTRACE((tfp, "read_rc opened %s\n", rcfile));
+    } else {
+	CTRACE((tfp, "read_rc used passed-in stream\n"));
     }
 
     /*
@@ -551,20 +628,26 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
 	/*
 	 * Parse the "name=value" strings.
 	 */
-	if ((value = strchr(name, '=')) == 0)
+	if ((value = strchr(name, '=')) == 0) {
+	    CTRACE((tfp, "LYrcFile: missing '=' %s\n", name));
 	    continue;
+	}
 	*value++ = '\0';
 	LYTrimTrailing(name);
 	value = LYSkipBlanks(value);
+	CTRACE2(TRACE_CFG, (tfp, "LYrcFile %s:%s\n", name, value));
+
 	tbl = lookup_config(name);
 	if (tbl->name == 0) {
-	    char *special = "multi_bookmark";
+	    char *special = RC_MULTI_BOOKMARK;
 	    if (!strncasecomp(name, special, strlen(special))) {
 		tbl = lookup_config(special);
 	    }
 	    /* lynx ignores unknown keywords */
-	    if (tbl->name == 0)
+	    if (tbl->name == 0) {
+		CTRACE((tfp, "LYrcFile: ignored %s=%s\n", name, value));
 		continue;
+	    }
 	}
 
 	q = ParseUnionOf(tbl);

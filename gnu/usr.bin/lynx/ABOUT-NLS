@@ -1,3 +1,8 @@
+Some of this discussion is obsolete - lynx does not bundle the "intl"
+directory, and consequently the "--with-included-gettext" configure option is
+not supported.
+------------------------------------------------------------------------------
+
 Notes on the Free Translation Project
 *************************************
 

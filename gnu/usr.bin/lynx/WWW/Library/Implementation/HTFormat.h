@@ -38,7 +38,8 @@ typedef HTAtom * HTFormat;
 
  */
                         /* Internal ones */
-#define WWW_SOURCE HTAtom_for("www/source")     /* Whatever it was originally*/
+/* #define WWW_SOURCE HTAtom_for("www/source") */    /* Whatever it was originally*/
+extern HTAtom * WWW_SOURCE;     /* calculated once, heavy used */
 
 /*
 
@@ -343,7 +344,7 @@ extern int HTFileCopy PARAMS((
         HTStream*               sink));
 
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 #include <HTChunk.h>
 /*
 
@@ -424,7 +425,7 @@ extern int HTParseFile PARAMS((
         FILE            *fp,
         HTStream*       sink));
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 /*
 
 HTParseMem: Parse a document in memory
@@ -443,12 +444,9 @@ extern int HTParseMem PARAMS((
 #endif
 
 #ifdef USE_ZLIB
-
-#ifdef USE_ZLIB
 #include <zlib.h>
-#endif /* USE_ZLIB */
 /*
-HTParseGzFile: Parse a gzipped File through a file pointer
+HTParseGzFile: Parse a gzip'ed File through a file pointer
 
    This routine is called by protocols modules to load an object.  uses
    HTStreamStack and HTGzFileCopy.  Returns HT_LOADED if successful, can also
@@ -462,6 +460,24 @@ extern int HTParseGzFile PARAMS((
         HTStream*       sink));
 
 #endif /* USE_ZLIB */
+
+#ifdef USE_BZLIB
+#include <bzlib.h>
+/*
+HTParseBzFile: Parse a bzip2'ed File through a file pointer
+
+   This routine is called by protocols modules to load an object.  uses
+   HTStreamStack and HTGzFileCopy.  Returns HT_LOADED if successful, can also
+   return HT_PARTIAL_CONTENT, HT_NO_DATA, or other <0 for failure.
+ */
+extern int HTParseBzFile PARAMS((
+        HTFormat        format_in,
+        HTFormat        format_out,
+        HTParentAnchor  *anchor,
+        BZFILE          *bzfp,
+        HTStream*       sink));
+
+#endif /* USE_BZLIB */
 
 /*
 
@@ -493,8 +509,5 @@ Epilogue
 
  */
 extern BOOL HTOutputSource;     /* Flag: shortcut parser */
-#endif
 
-/*
-
-   end */
+#endif /* HTFORMAT_H */

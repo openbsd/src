@@ -8,8 +8,7 @@
 extern BOOL LYVersionIsRelease NOPARAMS;
 extern char *LYVersionStatus NOPARAMS;
 extern char *LYVersionDate NOPARAMS;
-extern int LYShowInfo PARAMS((document *doc, int size_of_file, document *newdoc,
+extern int LYShowInfo PARAMS((DocInfo *doc, int size_of_file, DocInfo *newdoc,
 							char *owner_address));
 
 #endif /* LYSHOWINFO_H */
-

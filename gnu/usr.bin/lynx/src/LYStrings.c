@@ -34,10 +34,12 @@
 #include <LYMainLoop.h>
 #endif
 
+#ifdef EXP_CMD_LOGGING
+#include <LYReadCFG.h>
+#endif
+
 #include <LYShowInfo.h>
 #include <LYLeaks.h>
-
-extern BOOL HTPassHighCtrlRaw;
 
 #if defined(WIN_EX)
 #undef  BUTTON_CTRL
@@ -242,7 +244,7 @@ PUBLIC int fancy_mouse ARGS3(
 	cmd = LYK_QUIT;
     }
 #endif /* NCURSES */
-#endif	/* _WINDOWS */
+#endif /* PDCURSES */
 
 /************************************************************************/
 #endif  /* USE_MOUSE */
@@ -324,7 +326,7 @@ PRIVATE void LYAddToCloset ARGS2(RecallType, recall, char*, str)
 	LYRemoveFromCloset(list);
 }
 
-
+#ifdef USE_MOUSE
 PRIVATE int XYdist ARGS5(
     int,	x1,
     int,	y1,
@@ -386,6 +388,10 @@ PRIVATE int set_clicked_link ARGS4(
 	mouse_link = -2;
 	if (x == 0 && toolbar)		/* On '#' */
 	    c = LAC_TO_LKC0(LYK_TOOLBAR);
+#if defined(CAN_CUT_AND_PASTE) && defined(USE_COLOR_STYLE)
+	else if (y == 0 && x == LYcols - 1 && s_hot_paste != NOSTYLE)
+	    c = LAC_TO_LKC0(LYK_PASTE_URL);
+#endif
 	else if (clicks > 1) {
 	    if (x < left + toolbar)
 		c = (code==FOR_PROMPT && y)
@@ -419,7 +425,7 @@ PRIVATE int set_clicked_link ARGS4(
 		c = LAC_TO_LKC0(LYK_PREV_PAGE);
 	}
 #ifdef USE_SCROLLBAR
-    } else if (x == LYcols - 1 && LYsb && LYsb_begin >= 0) {
+    } else if (x == LYcols - 1 && LYShowScrollbar && LYsb_begin >= 0) {
 	int h = display_lines - 2*(LYsb_arrow != 0);
 
 	mouse_link = -2;
@@ -452,26 +458,28 @@ PRIVATE int set_clicked_link ARGS4(
 	/* Loop over the links and see if we can get a match */
 	for (i = 0; i < nlinks; i++) {
 	    int len, lx = links[i].lx, is_text = 0;
+	    int count = 0;
+	    char *text = LYGetHiliteStr(i, count);
 
 	    if (links[i].type == WWW_FORM_LINK_TYPE
-		&& F_TEXTLIKE(links[i].form->type))
+		&& F_TEXTLIKE(links[i].l_form->type))
 		is_text = 1;
 
-	    if (is_text)
-		len = links[i].form->size;
-	    else
-		len = strlen(links[i].hightext );
-
 	    /* Check the first line of the link */
-	    if ( links[i].hightext != NULL) {
+	    if (text != NULL) {
+		if (is_text)
+		    len = links[i].l_form->size;
+		else
+		    len = strlen(text);
 		cur_err = XYdist(x, y, links[i].lx, links[i].ly, len);
 		/* Check the second line */
-		if (cur_err > 0 && links[i].hightext2 != NULL) {
-		    /* Note that there is never hightext2 if is_text */
+		while (cur_err > 0
+		   && (text = LYGetHiliteStr(i, ++count)) != NULL) {
+		    /* Note that there is at most one hightext if is_text */
 		    int cur_err_2 = XYdist(x, y,
-					   links[i].hightext2_offset,
-					   links[i].ly+1,
-					   strlen(links[i].hightext2));
+					   LYGetHilitePos(i, count),
+					   links[i].ly + count,
+					   strlen(text));
 		    cur_err = HTMIN(cur_err, cur_err_2);
 		}
 		if (cur_err > 0 && is_text)
@@ -484,7 +492,7 @@ PRIVATE int set_clicked_link ARGS4(
 		    /* double-click, if we care:
 		       submit text submit fields. - kw */
 		    if (clicks > 1 && is_text &&
-			links[i].form->type == F_TEXT_SUBMIT_TYPE) {
+			links[i].l_form->type == F_TEXT_SUBMIT_TYPE) {
 			if (code != FOR_INPUT
 			    /* submit current input field directly */
 			    || !(cury == y && (curx >= lx) && ((curx - lx) <= len))) {
@@ -530,11 +538,23 @@ PRIVATE int set_clicked_link ARGS4(
 	    } else if (mouse_err >= 0)
 		c = LAC_TO_LKC0(LYK_CHANGE_LINK);
 	}
+	else {
+	   if (2*y > LYlines){		/* Bottom Half of the screen */
+	      if (4*y < 3*LYlines){
+		c = LAC_TO_LKC0(LYK_DOWN_TWO);	/* Third quarter */
+	      } else
+		c = LAC_TO_LKC0(LYK_DOWN_HALF);	/* Fourth quarter */
+	   } else {			/* Upper Half of the screen */
+	      if (4*y < LYlines){
+		c = LAC_TO_LKC0(LYK_UP_HALF);	/* First quarter */
+	      } else
+		c = LAC_TO_LKC0(LYK_UP_TWO);	/* Second quarter */
+	   }
+	}
     }
     return c;
 }
-
-
+#endif /* USE_MOUSE */
 
 /*
  *  LYstrncpy() terminates strings with a null byte.
@@ -649,7 +669,7 @@ PUBLIC int LYmbcsstrlen ARGS3(
 {
     int i, j, len = 0;
 
-    if (!str && *str)
+    if (!non_empty(str))
 	return(len);
 
     for (i = 0; str[i] != '\0'; i++) {
@@ -668,7 +688,7 @@ PUBLIC int LYmbcsstrlen ARGS3(
 		j++;
 	    }
 	} else if (!utf_flag && HTCJK != NOCJK && !count_gcells &&
-		   !isascii(str[i]) && str[(i + 1)] != '\0' &&
+		   is8bits(str[i]) && str[(i + 1)] != '\0' &&
 		    !IsSpecialAttrChar(str[(i + 1)])) {
 	    i++;
 	}
@@ -700,10 +720,10 @@ PUBLIC int LYmbcsstrlen ARGS3(
 #endif /* USE_SLANG */
 
 #if !defined(GetChar) && defined(NCURSES)
-#define GetChar() wgetch(my_subwindow ? my_subwindow : LYwin)
+#define GetChar() wgetch(LYtopwindow())
 #endif
 
-#if !defined(GetChar) && defined(PDCURSES)
+#if !defined(GetChar) && defined(PDCURSES) && defined(PDC_BUILD) && PDC_BUILD >= 2401
 /* PDCurses sends back key-modifiers that we don't use, but would waste time
  * upon, e.g., repainting the status line
  */
@@ -742,7 +762,7 @@ PRIVATE int myGetChar NOARGS
 #endif
 
 #if !defined(GetChar)
-#if HAVE_KEYPAD
+#ifdef HAVE_KEYPAD
 #define GetChar() getch()
 #else
 #ifndef USE_GETCHAR
@@ -751,37 +771,6 @@ PRIVATE int myGetChar NOARGS
 #define GetChar() getchar()  /* used to be "getc(stdin)" and "getch()" */
 #endif /* HAVE_KEYPAD */
 #endif /* !defined(GetChar) */
-
-/*
- * Workaround a bug in ncurses order-of-refresh by setting a pointer to
- * the topmost window that should be displayed.
- *
- * FIXME: the associated call on 'keypad()' is not needed for Unix, but
- * something in the OS/2 EMX port requires it.
- */
-#ifndef USE_SLANG
-PRIVATE WINDOW *my_subwindow;
-
-PUBLIC void LYsubwindow ARGS1(WINDOW *, param)
-{
-    if (param != 0) {
-	my_subwindow = param;
-#if defined(NCURSES) || defined(PDCURSES)
-	keypad(my_subwindow, TRUE);
-#if defined(HAVE_GETBKGD) /* not defined in ncurses 1.8.7 */
-	wbkgd(my_subwindow, getbkgd(LYwin));
-	wbkgdset(my_subwindow, getbkgd(LYwin));
-#endif
-#endif
-	scrollok(my_subwindow, TRUE);
-    } else {
-	touchwin(LYwin);
-	delwin(my_subwindow);
-	my_subwindow = 0;
-    }
-}
-#endif
-
 
 #if defined(USE_SLANG) && defined(USE_MOUSE)
 PRIVATE int sl_parse_mouse_event ARGS3(int *, x, int *, y, int *, button)
@@ -826,6 +815,9 @@ PRIVATE int sl_read_mouse_event ARGS1(
      {
 	if (button == 0)  /* left */
 	  return set_clicked_link (mouse_x, mouse_y, FOR_PANEL, 1);
+
+	if (button == 1)  /* middle */
+	  return LYReverseKeymap (LYK_VIEW_BOOKMARK);
 
 	if (button == 2)   /* right */
 	  {
@@ -1324,6 +1316,18 @@ PRIVATE void setup_vtXXX_keymap NOARGS
 	INTERN_KEY( "\033OP",	F1,		KEY_F(1) ),
 	INTERN_KEY( "\033[OP",	F1,		KEY_F(1) ),
 	INTERN_KEY( "\033[29~",	DO_KEY,		KEY_F(16) ),
+#if defined(USE_SLANG) && defined(__MINGW32__)
+	INTERN_KEY( "\xE0H",	UPARROW,	KEY_UP ),
+	INTERN_KEY( "\xE0P",	DNARROW,	KEY_DOWN ),
+	INTERN_KEY( "\xE0M",	RTARROW,	KEY_RIGHT ),
+	INTERN_KEY( "\xE0K",	LTARROW,	KEY_LEFT ),
+	INTERN_KEY( "\xE0R",	INSERT_KEY,	KEY_IC ),
+	INTERN_KEY( "\xE0S",	REMOVE_KEY,	KEY_DC ),
+	INTERN_KEY( "\xE0I",	PGUP,		KEY_PPAGE ),
+	INTERN_KEY( "\xE0Q",	PGDOWN,		KEY_NPAGE ),
+	INTERN_KEY( "\xE0G",	HOME,		KEY_HOME),
+	INTERN_KEY( "\xE0O",	END_KEY,	KEY_END ),
+#endif
 #if defined(USE_SLANG) && !defined(VMS)
 	INTERN_KEY(	"^(ku)", UPARROW,	KEY_UP ),
 	INTERN_KEY(	"^(kd)", DNARROW,	KEY_DOWN ),
@@ -1517,8 +1521,30 @@ PRIVATE int LYgetch_for ARGS1(
    current_sl_modifier = 0;
 
    key = SLang_do_key (Keymap_List, myGetChar);
-   if ((key == NULL) || (key->type != SLKEY_F_KEYSYM))
+   if ((key == NULL) || (key->type != SLKEY_F_KEYSYM)) {
+#ifdef __MINGW32__
+	   if ((key == NULL) && (current_sl_modifier == LKC_ISLKC)) {
+		   key = SLang_do_key (Keymap_List, myGetChar);
+		   keysym = key->f.keysym;
+		   switch (keysym) {
+			   case 'H': keysym = UPARROW; break;
+			   case 'P': keysym = DNARROW; break;
+			   case 'M': keysym = RTARROW; break;
+			   case 'K': keysym = LTARROW; break;
+			   case 'R': keysym = INSERT_KEY; break;
+			   case 'S': keysym = REMOVE_KEY; break;
+			   case 'I': keysym = PGUP; break;
+			   case 'Q': keysym = PGDOWN; break;
+			   case 'G': keysym = HOME; break;
+			   case 'O': keysym = END_KEY; break;
+			   case ';': keysym = F1; break;
+		   }
+		   return(keysym);
+	   }
+#endif
+
      return (current_sl_modifier ? 0 : DO_NOTHING);
+   }
 
    keysym = key->f.keysym;
 
@@ -1644,7 +1670,7 @@ re_read:
 #else
     if (c == EOF && errno == EINTR) {
 
-#if HAVE_SIZECHANGE || defined(USE_SLANG)
+#if defined(HAVE_SIZECHANGE) || defined(USE_SLANG)
 	   CTRACE((tfp, "Got EOF with EINTR, recent_sizechange so far is %d\n",
 		  recent_sizechange));
 	   if (!recent_sizechange) { /* not yet detected by ourselves */
@@ -1707,17 +1733,17 @@ re_read:
 
 	switch (a) {
 	case 'A': c = UPARROW; break;
-	case 'x': c = UPARROW; break;	/* keypad up on pc ncsa telnet */
 	case 'B': c = DNARROW; break;
-	case 'r': c = DNARROW; break;	/* keypad down on pc ncsa telnet */
 	case 'C': c = RTARROW; break;
-	case 'v': c = RTARROW; break;	/* keypad right on pc ncsa telnet */
 	case 'D': c = LTARROW; break;
-	case 't': c = LTARROW; break;	/* keypad left on pc ncsa telnet */
-	case 'y': c = PGUP;    break;	/* keypad on pc ncsa telnet */
-	case 's': c = PGDOWN;  break;	/* keypad on pc ncsa telnet */
-	case 'w': c = HOME;    break;	/* keypad on pc ncsa telnet */
-	case 'q': c = END_KEY; break;	/* keypad on pc ncsa telnet */
+	case 'q': c = END_KEY; break;	/* vt100 application keypad 1 */
+	case 'r': c = DNARROW; break;	/* vt100 application keypad 2 */
+	case 's': c = PGDOWN;  break;	/* vt100 application keypad 3 */
+	case 't': c = LTARROW; break;	/* vt100 application keypad 4 */
+	case 'v': c = RTARROW; break;	/* vt100 application keypad 6 */
+	case 'w': c = HOME;    break;	/* vt100 application keypad 7 */
+	case 'x': c = UPARROW; break;	/* vt100 application keypad 8 */
+	case 'y': c = PGUP;    break;	/* vt100 application keypad 9 */
 	case 'M':
 #if defined(USE_SLANG) && defined(USE_MOUSE)
 	   if (found_CSI(c,b))
@@ -1864,7 +1890,7 @@ re_read:
     if (done_esc) {
 	/* don't do keypad() switches below, we already got it - kw */
     } else {
-#if HAVE_KEYPAD
+#ifdef HAVE_KEYPAD
 	/*
 	 *  Convert keypad() mode keys into Lynx defined keys.
 	 */
@@ -2002,7 +2028,7 @@ re_read:
 #endif /* KEY_BTAB */
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:	   /* size change detected by ncurses */
-#if HAVE_SIZECHANGE || defined(USE_SLANG)
+#if defined(HAVE_SIZECHANGE) || defined(USE_SLANG)
 	    /* Make call to detect new size, if that may be implemented.
 	     * The call may set recent_sizechange (except for USE_SLANG),
 	     * which will tell mainloop() to refresh. - kw
@@ -2134,7 +2160,7 @@ re_read:
 			else if (mouse_link >= 0 &&
 				 textfields_need_activation &&
 				 links[mouse_link].type == WWW_FORM_LINK_TYPE &&
-				 F_TEXTLIKE(links[mouse_link].form->type))
+				 F_TEXTLIKE(links[mouse_link].l_form->type))
 			    lac = LYK_ACTIVATE;
 #endif
 		    }
@@ -2156,8 +2182,6 @@ re_read:
 		}
 #else /* pdcurses version */
 
-	/* _WINDOWS 1997/10/18 (Sat) 19:41:59 */
-
 #define H_CMD_AREA	6
 #define HIST_CMD_2	12
 #define V_CMD_AREA	1
@@ -2174,39 +2198,7 @@ re_read:
 		c = -1;
 		mouse_link = -1;
 
-		if (system_is_NT) {
-		/* for Windows NT */
-		  request_mouse_pos();
-
-		  if (BUTTON_STATUS(1) & BUTTON_PRESSED) {
-			if (MOUSE_Y_POS > (LYlines - V_CMD_AREA)) {
-			    /* Screen BOTTOM */
-			    if (MOUSE_X_POS < left) {
-				c = LTARROW;		p = "<-";
-			    } else if (MOUSE_X_POS < HIST_CMD_2) {
-				c = RTARROW;		p = "->";
-			    } else if (MOUSE_X_POS > right) {
-				c = 'z';		p = "Cancel";
-			    } else {
-				c = PGDOWN;		p = "PGDOWN";
-			    }
-			} else if (MOUSE_Y_POS < V_CMD_AREA) {
-			    /* Screen TOP */
-			    if (MOUSE_X_POS < left) {
-				c = LTARROW;		p = "<-";
-			    } else if (MOUSE_X_POS < HIST_CMD_2) {
-				c = RTARROW;		p = "->";
-			    } else if (MOUSE_X_POS > right) {
-				c = 'z';		p = "Cancel";
-			    } else {
-				c = PGUP;		p = "PGUP";
-			    }
-			} else {
-			    c = set_clicked_link(MOUSE_X_POS, MOUSE_Y_POS, FOR_PANEL, 1);
-			}
-		    }
-		} else {
-		    /* for Windows 95 */
+		if (!system_is_NT) {
 		    tick_count = GetTickCount();
 
 		    /* Guard Mouse button miss click */
@@ -2216,15 +2208,18 @@ re_read:
 		    } else {
 			old_click = tick_count;
 		    }
-		    request_mouse_pos();
-		    if (MOUSE_Y_POS > (LYlines - V_CMD_AREA)) {
+		}
+		request_mouse_pos();
+
+		if (BUTTON_STATUS(1) & BUTTON_PRESSED) {
+		    if (MOUSE_Y_POS > (LYlines - V_CMD_AREA - 1)) {
 			/* Screen BOTTOM */
 			if (MOUSE_X_POS < left) {
 			    c = LTARROW;	p = "<-";
 			} else if (MOUSE_X_POS < HIST_CMD_2) {
 			    c = RTARROW;	p = "->";
 			} else if (MOUSE_X_POS > right) {
-			    c = '\b';		p = "History";
+			    c = 'z';		p = "Cancel";
 			} else {
 			    c = PGDOWN;		p = "PGDOWN";
 			}
@@ -2431,7 +2426,8 @@ PUBLIC void LYLowerCase ARGS1(
     for (i = 0; buffer[i]; i++)
 #ifdef SUPPORT_MULTIBYTE_EDIT	/* 1998/11/23 (Mon) 17:04:55 */
     {
-	if (buffer[i] & 0x80) {
+	if ((buffer[i] & 0x80) != 0
+	 && buffer[i+1] != 0) {
 	    if ((kanji_code == SJIS) && IS_SJIS_X0201KANA(UCH((buffer[i])))) {
 		continue;
 	    }
@@ -2456,7 +2452,8 @@ PUBLIC void LYUpperCase ARGS1(
     for (i = 0; buffer[i]; i++)
 #ifdef SUPPORT_MULTIBYTE_EDIT	/* 1998/11/23 (Mon) 17:05:10 */
     {
-	if (buffer[i] & 0x80) {
+	if ((buffer[i] & 0x80) != 0
+	 && buffer[i+1] != 0) {
 	    if ((kanji_code == SJIS) && IS_SJIS_X0201KANA(UCH((buffer[i])))) {
 		continue;
 	    }
@@ -2471,18 +2468,52 @@ PUBLIC void LYUpperCase ARGS1(
 }
 
 /*
- * Remove ALL whitespace from a string (including embedded blanks).
+ * Remove newlines from a string, returning true if we removed any.
  */
-PUBLIC void LYRemoveBlanks ARGS1(
+PUBLIC BOOLEAN LYRemoveNewlines ARGS1(
 	char *,		buffer)
 {
     if (buffer != 0) {
-	size_t i, j;
-	for (i = j = 0; buffer[i]; i++)
-	    if (!isspace(UCH((buffer[i]))))
-		buffer[j++] = buffer[i];
-	buffer[j] = 0;
+	register char* buf = buffer;
+	for ( ; *buf && *buf != '\n' && *buf != '\r'; buf++)
+	    ;
+	if (*buf) {
+	    /* runs very seldom */
+	    char * old = buf;
+	    for ( ; *old; old++) {
+		if (*old != '\n' && *old != '\r')
+		    *buf++ = *old;
+	    }
+	    *buf = '\0';
+	    return TRUE;
+	}
     }
+    return FALSE;
+}
+
+/*
+ * Remove ALL whitespace from a string (including embedded blanks), and returns
+ * a pointer to the end of the trimmed string.
+ */
+PUBLIC char * LYRemoveBlanks ARGS1(
+	char *,		buffer)
+{
+    if (buffer != 0) {
+	register char* buf = buffer;
+	for ( ; *buf && !isspace(UCH(*buf)); buf++)
+	    ;
+	if (*buf) {
+	    /* runs very seldom */
+	    char * old = buf;
+	    for ( ; *old; old++) {
+		if (!isspace(UCH(*old)))
+		    *buf++ = *old;
+	    }
+	    *buf = '\0';
+	}
+	return buf;
+    }
+    return NULL;
 }
 
 /*
@@ -2541,6 +2572,18 @@ PUBLIC void LYTrimLeading ARGS1(
 }
 
 /*
+ * Trim trailing newline(s) from a string
+ */
+PUBLIC char * LYTrimNewline ARGS1(
+	char *,		buffer)
+{
+    size_t i = strlen(buffer);
+    while (i != 0 && (buffer[i-1] == '\n' || buffer[i-1] == '\r'))
+	buffer[--i] = 0;
+    return buffer;
+}
+
+/*
  * Trim trailing blanks from a string
  */
 PUBLIC void LYTrimTrailing ARGS1(
@@ -2587,8 +2630,8 @@ PUBLIC BOOLEAN LYTrimStartfile ARGS1(
 	char *,		buffer)
 {
     LYTrimHead(buffer);
-    if (!strncasecomp(buffer, "lynxexec:", 9) ||
-	!strncasecomp(buffer, "lynxprog:", 9)) {
+    if (isLYNXEXEC(buffer) ||
+	isLYNXPROG(buffer)) {
 	/*
 	 *  The original implementations of these schemes expected
 	 *  white space without hex escaping, and did not check
@@ -2711,8 +2754,8 @@ PRIVATE int prev_pos ARGS2(
 	while (i < pos - 1) {
 	    int c;
 	    c = Buf[i];
-	    if (!(isascii(c) ||
-		  ((kanji_code == SJIS) && IS_SJIS_X0201KANA(UCH(c))))) {
+	    if (is8bits(c) &&
+		  !((kanji_code == SJIS) && IS_SJIS_X0201KANA(UCH(c)))) {
 		i++;
 	    }
 	    i++;
@@ -2945,19 +2988,19 @@ PUBLIC int LYEdit1 ARGS4(
 
 	    pos0 = prev_pos(edit, Pos);
 	    while (Pos &&
-		   (HTCJK == NOCJK || isascii(Buf[pos0])) &&
+		   (HTCJK == NOCJK || !is8bits(Buf[pos0])) &&
 		   !isalnum(UCH(Buf[pos0]))) {
 		Pos = pos0;
 		pos0 = prev_pos(edit, Pos);
 	    }
-	    if (HTCJK != NOCJK && !isascii(Buf[pos0])) {
-		while (Pos && !isascii(Buf[pos0])) {
+	    if (HTCJK != NOCJK && is8bits(Buf[pos0])) {
+		while (Pos && is8bits(Buf[pos0])) {
 		    Pos = pos0;
 		    pos0 = prev_pos(edit, Pos);
 		}
 	    } else {
 		while (Pos
-		 && isascii(UCH(Buf[pos0]))
+		 && !is8bits(Buf[pos0])
 		 && isalnum(UCH(Buf[pos0]))) {
 		    Pos = pos0;
 		    pos0 = prev_pos(edit, Pos);
@@ -2977,14 +3020,14 @@ PUBLIC int LYEdit1 ARGS4(
 	while (!isalnum(Buf[Pos]) && Buf[Pos])
 	    Pos++ ;
 #else /* SUPPORT_MULTIBYTE_EDIT */
-	if (HTCJK != NOCJK && !isascii(Buf[Pos])) {
-	    while (!isascii(Buf[Pos]))
+	if (HTCJK != NOCJK && is8bits(Buf[Pos])) {
+	    while (is8bits(Buf[Pos]))
 		Pos += 2;
 	} else {
-	    while (isascii(UCH(Buf[Pos])) && isalnum(UCH(Buf[Pos])))
+	    while (!is8bits(Buf[Pos]) && isalnum(Buf[Pos]))
 		Pos++;	/* '\0' is not a/n */
 	}
-	while ((HTCJK == NOCJK || isascii(UCH(Buf[Pos]))) &&
+	while ((HTCJK == NOCJK || !is8bits(Buf[Pos])) &&
 	       !isalnum(UCH(Buf[Pos])) && Buf[Pos])
 	    Pos++;
 #endif /* SUPPORT_MULTIBYTE_EDIT */
@@ -3071,7 +3114,7 @@ PUBLIC int LYEdit1 ARGS4(
 	if (Pos >= length)
 	    break;
 #ifdef SUPPORT_MULTIBYTE_EDIT
-	if (HTCJK != NOCJK && !isascii(Buf[Pos]))
+	if (HTCJK != NOCJK && is8bits(Buf[Pos]))
 	    Pos++;
 #endif
 	Pos++;
@@ -3131,7 +3174,7 @@ PUBLIC int LYEdit1 ARGS4(
 #else /* SUPPORT_MULTIBYTE_EDIT */
 	if (Pos < length) {
 	    Pos++;
-	    if (HTCJK != NOCJK && !isascii(Buf[Pos-1]))
+	    if (HTCJK != NOCJK && is8bits(Buf[Pos-1]))
 		Pos++;
 	}
 #endif /* SUPPORT_MULTIBYTE_EDIT */
@@ -3388,7 +3431,7 @@ PUBLIC void LYRefreshEdit ARGS1(
 		int tmp = (Pos - DspWdth) + Margin;
 
 		while (DspStart < tmp) {
-		    if (!isascii(Buf[DspStart]))
+		    if (is8bits(Buf[DspStart]))
 			DspStart++;
 		    DspStart++;
 		}
@@ -3410,7 +3453,7 @@ PUBLIC void LYRefreshEdit ARGS1(
 
 	    DspStart = 0;
 	    while (DspStart < tmp) {
-		if (!isascii(Buf[DspStart]))
+		if (is8bits(Buf[DspStart]))
 		    DspStart++;
 		DspStart++;
 	    }
@@ -3424,7 +3467,7 @@ PUBLIC void LYRefreshEdit ARGS1(
 
     str = &Buf[DspStart];
 #ifdef SUPPORT_MULTIBYTE_EDIT
-    if (HTCJK != NOCJK && !isascii(str[0]))
+    if (HTCJK != NOCJK && is8bits(str[0]))
 	begin_multi = 1;
 #endif /* SUPPORT_MULTIBYTE_EDIT */
 
@@ -3482,16 +3525,22 @@ PUBLIC void LYRefreshEdit ARGS1(
 #endif /* SUPPORT_MULTIBYTE_EDIT */
 	    } else {
 		/* For CJK strings, by Masanobu Kimura */
-		if (HTCJK != NOCJK && !isascii(buffer[0])) {
-#ifndef SUPPORT_MULTIBYTE_EDIT
+		if (HTCJK != NOCJK && is8bits(buffer[0])) {
 		    if (i < (nrdisplayed - 1))
 			buffer[1] = str[++i];
-#else /* SUPPORT_MULTIBYTE_EDIT */
-		    if (i < (nrdisplayed - 1)) {
-			buffer[1] = str[++i];
-			end_multi = 1;
-		    } else
-			end_multi = 0;
+#ifdef SUPPORT_MULTIBYTE_EDIT
+		    end_multi = (i < nrdisplayed);
+#if !(defined(USE_SLANG) || defined(WIDEC_CURSES))
+		    {
+			int ii, yy, xx;
+
+			LYGetYX(yy, xx);
+			for (ii = 0; buffer[ii] != '\0'; ++ii)
+			    LYaddch(' ');
+			LYrefresh();
+			LYmove(yy, xx);
+		    }
+#endif /* USE_SLANG */
 #endif /* SUPPORT_MULTIBYTE_EDIT */
 		    LYaddstr(buffer);
 		    buffer[1] = '\0';
@@ -3554,12 +3603,6 @@ PUBLIC void LYRefreshEdit ARGS1(
     }
 
     LYmove(edit->sy, edit->sx + Pos - DspStart);
-#ifdef SUPPORT_MULTIBYTE_EDIT
-#if (!USE_SLANG && !defined(USE_MULTIBYTE_CURSES))
-    if (HTCJK != NOCJK)
-	lynx_force_repaint();
-#endif /* !USE_SLANG && !defined(USE_MULTIBYTE_CURSES) */
-#endif /* SUPPORT_MULTIBYTE_EDIT */
 
 #ifdef USE_COLOR_STYLE
     if (estyle != NOSTYLE)
@@ -4419,7 +4462,7 @@ redraw:
 		     */
 		    if ((cp = (char *)HTList_objectAt(search_queries,
 						      0)) != NULL) {
-			LYstrncpy(prev_target_buffer, cp, sizeof(prev_target_buffer));
+			LYstrncpy(prev_target_buffer, cp, sizeof(prev_target_buffer) - 1);
 			QueryNum = 0;
 			FirstRecall = FALSE;
 		    }
@@ -4785,13 +4828,8 @@ again:
 		    while (cur_choice < num_options
 		     && strcasecomp(data[cur_choice], MyEdit.buffer) < 0)
 			cur_choice++;
-#ifdef USE_SLANG
-		    old_y = SLsmg_get_row();
-		    old_x = SLsmg_get_column();
-#else
-		    getyx(LYwin, old_y, old_x);
-#endif
 
+		    LYGetYX(old_y, old_x);
 		    cur_choice = LYhandlePopupList(
 			cur_choice,
 			0,
@@ -4807,11 +4845,7 @@ again:
 			    _statusline(": ");
 			reinsertEdit(&MyEdit, data[cur_choice]);
 		    }
-#ifdef USE_SLANG
-		    SLsmg_gotorc(old_y, old_x);
-#else
 		    wmove(LYwin, old_y, old_x);
-#endif
 		    FREE(data);
 		}
 	    } else {
@@ -4851,12 +4885,12 @@ again:
 
 	case LYE_PASTE:
 	    {
-		unsigned char *s = get_clip_grab(), *e;
+		unsigned char *s = (unsigned char *) get_clip_grab(), *e;
 		int len;
 
 		if (!s)
 		    break;
-		len = strlen(s);
+		len = strlen((const char *) s);
 		e = s + len;
 
 		if (len > 0) {
@@ -4868,7 +4902,7 @@ again:
 				LYEditInsert(&MyEdit, s, e1 - s, map_active, TRUE);
 			    s = e1;
 			    if (*e1 == '\t') { /* Replace by space */
-				LYEditInsert(&MyEdit, " ", 1, map_active, TRUE);
+				LYEditInsert(&MyEdit, (unsigned char * ) " ", 1, map_active, TRUE);
 				s = ++e1;
 			    } else
 				break;
@@ -4973,6 +5007,7 @@ PUBLIC CONST char * LYLineeditHelpURL NOARGS
     }
     return NULL;
 }
+
 /*
  *  A replacement for 'strsep()'
  */
@@ -4982,7 +5017,7 @@ PUBLIC char *LYstrsep ARGS2(
 {
     char *tmp, *out;
 
-    if (!stringp || !*stringp)		/* nothing to do? */
+    if (isEmpty(stringp))		/* nothing to do? */
 	return 0;			/* then don't fall on our faces */
 
     out = *stringp;			/* save the start of the string */
@@ -5172,7 +5207,7 @@ PUBLIC char * LYno_attr_mbcs_case_strstr ARGS6(
      *	Seek a first target match. - FM
      */
     for (; *chptr != '\0'; chptr++) {
-	if ((!utf_flag && HTCJK != NOCJK && !isascii(*chptr) &&
+	if ((!utf_flag && HTCJK != NOCJK && is8bits(*chptr) &&
 	     *chptr == *tarptr &&
 	     *(chptr + 1) != '\0' &&
 	     !IsSpecialAttrChar(*(chptr + 1))) ||
@@ -5195,7 +5230,7 @@ PUBLIC char * LYno_attr_mbcs_case_strstr ARGS6(
 		if (nendp)	*nendp = len;
 		return(chptr);
 	    }
-	    if (!utf_flag && HTCJK != NOCJK && !isascii(*chptr) &&
+	    if (!utf_flag && HTCJK != NOCJK && is8bits(*chptr) &&
 		 *chptr == *tarptr &&
 		 *tmpchptr != '\0' &&
 		 !IsSpecialAttrChar(*tmpchptr)) {
@@ -5232,7 +5267,7 @@ PUBLIC char * LYno_attr_mbcs_case_strstr ARGS6(
 	     */
 	    while (1) {
 		if (!IsSpecialAttrChar(*tmpchptr)) {
-		    if (!utf_flag && HTCJK != NOCJK && !isascii(*tmpchptr)) {
+		    if (!utf_flag && HTCJK != NOCJK && is8bits(*tmpchptr)) {
 			if (*tmpchptr == *tmptarptr &&
 			    *(tmpchptr + 1) == *(tmptarptr + 1) &&
 			    !IsSpecialAttrChar(*(tmpchptr + 1))) {
@@ -5266,7 +5301,7 @@ PUBLIC char * LYno_attr_mbcs_case_strstr ARGS6(
 	    }
 	} else if (!(IS_UTF_EXTRA(*chptr) ||
 		      IsSpecialAttrChar(*chptr))) {
-	    if (!utf_flag && HTCJK != NOCJK && !isascii(*chptr) &&
+	    if (!utf_flag && HTCJK != NOCJK && is8bits(*chptr) &&
 		*(chptr + 1) != '\0' &&
 		!IsSpecialAttrChar(*(chptr + 1))) {
 		chptr++;
@@ -5344,7 +5379,7 @@ PUBLIC char * LYno_attr_mbcs_strstr ARGS6(
 		if (nendp)	*nendp = len;
 		return(chptr);
 	    }
-	    if (!utf_flag && HTCJK != NOCJK && !isascii(*chptr) &&
+	    if (!utf_flag && HTCJK != NOCJK && is8bits(*chptr) &&
 		 *tmpchptr != '\0' &&
 		 !IsSpecialAttrChar(*tmpchptr)) {
 		/*
@@ -5380,7 +5415,7 @@ PUBLIC char * LYno_attr_mbcs_strstr ARGS6(
 	     */
 	    while (1) {
 		 if (!IsSpecialAttrChar(*tmpchptr)) {
-		    if (!utf_flag && HTCJK != NOCJK && !isascii(*tmpchptr)) {
+		    if (!utf_flag && HTCJK != NOCJK && is8bits(*tmpchptr)) {
 			if (*tmpchptr == *tmptarptr &&
 			    *(tmpchptr + 1) == *(tmptarptr + 1) &&
 			    !IsSpecialAttrChar(*(tmpchptr + 1))) {
@@ -5413,7 +5448,7 @@ PUBLIC char * LYno_attr_mbcs_strstr ARGS6(
 	    }
 	} else if (!(IS_UTF_EXTRA(*chptr) ||
 		      IsSpecialAttrChar(*chptr))) {
-	    if (!utf_flag && HTCJK != NOCJK && !isascii(*chptr) &&
+	    if (!utf_flag && HTCJK != NOCJK && is8bits(*chptr) &&
 		*(chptr + 1) != '\0' &&
 		!IsSpecialAttrChar(*(chptr + 1))) {
 		chptr++;
@@ -5436,9 +5471,9 @@ PUBLIC char * SNACopy ARGS3(
 {
     FREE(*dest);
     if (src) {
-	*dest = typecallocn(char, n + 1);
+	*dest = typeMallocn(char, n + 1);
 	if (*dest == NULL) {
-	    CTRACE((tfp, "Tried to calloc %d bytes\n", n));
+	    CTRACE((tfp, "Tried to malloc %d bytes\n", n));
 	    outofmem(__FILE__, "SNACopy");
 	}
 	strncpy (*dest, src, n);
@@ -5455,7 +5490,7 @@ PUBLIC char * SNACat ARGS3(
 	CONST char *,	src,
 	int,		n)
 {
-    if (src && *src) {
+    if (non_empty(src)) {
 	if (*dest) {
 	    int length = strlen(*dest);
 	    *dest = (char *)realloc(*dest, length + n + 1);
@@ -5464,7 +5499,7 @@ PUBLIC char * SNACat ARGS3(
 	    strncpy(*dest + length, src, n);
 	    *(*dest + length + n) = '\0'; /* terminate */
 	} else {
-	    *dest = typecallocn(char, n + 1);
+	    *dest = typeMallocn(char, n + 1);
 	    if (*dest == NULL)
 		outofmem(__FILE__, "SNACat");
 	    memcpy(*dest, src, n);
@@ -5598,74 +5633,6 @@ PUBLIC char *LYSafeGets ARGS2(
     return result;
 }
 
-#ifdef EXP_FILE_UPLOAD
-static char basis_64[] =
-   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-#define B64_LINE       76
-
-PUBLIC void base64_encode ARGS3(
-    char *,	dest,
-    char *,	src,
-    int,	len)
-{
-    int rlen;   /* length of result string */
-    unsigned char c1, c2, c3;
-    char *eol, *r, *str;
-    int eollen;
-    int chunk;
-
-    str = src;
-    eol = "\n";
-    eollen = 1;
-
-    /* calculate the length of the result */
-    rlen = (len+2) / 3 * 4;	/* encoded bytes */
-    if (rlen) {
-	/* add space for EOL */
-	rlen += ((rlen-1) / B64_LINE + 1) * eollen;
-    }
-
-    /* allocate a result buffer */
-    r = dest;
-
-    /* encode */
-    for (chunk=0; len > 0; len -= 3, chunk++) {
-	if (chunk == (B64_LINE/4)) {
-	    char *c = eol;
-	    char *e = eol + eollen;
-	    while (c < e)
-		*r++ = *c++;
-	    chunk = 0;
-	}
-	c1 = *str++;
-	c2 = *str++;
-	*r++ = basis_64[c1>>2];
-	*r++ = basis_64[((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)];
-	if (len > 2) {
-	    c3 = *str++;
-	    *r++ = basis_64[((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)];
-	    *r++ = basis_64[c3 & 0x3F];
-	} else if (len == 2) {
-	    *r++ = basis_64[(c2 & 0xF) << 2];
-	    *r++ = '=';
-	} else { /* len == 1 */
-	    *r++ = '=';
-	    *r++ = '=';
-	}
-    }
-    if (rlen) {
-	/* append eol to the result string */
-	char *c = eol;
-	char *e = eol + eollen;
-	while (c < e)
-	    *r++ = *c++;
-    }
-    *r = '\0';  /* every SV in perl should be NUL-terminated */
-}
-
-#endif /* EXP_FILE_UPLOAD */
-
 #ifdef EXP_CMD_LOGGING
 PRIVATE FILE *cmd_logfile;
 PRIVATE FILE *cmd_script;
@@ -5712,25 +5679,51 @@ PUBLIC int LYReadCmdKey ARGS1(
 	char *buffer = 0;
 	char *src;
 	char *tmp;
+	unsigned len;
 
-	while (LYSafeGets(&buffer, cmd_script) != 0) {
+	while ((ch < 0) && LYSafeGets(&buffer, cmd_script) != 0) {
 	    LYTrimTrailing(buffer);
 	    src = LYSkipBlanks(buffer);
 	    tmp = LYSkipNonBlanks(src);
-	    if (tmp - src != 3
-	     || strncasecomp(src, "key", 3))
-		continue;
-	    src = LYSkipBlanks(tmp);
-	    if ((ch = LYStringToKeycode(src)) >= 0) {
-		LYrefresh();
+	    switch (len = (tmp - src)) {
+	    case 4:
+		if (!strncasecomp(src, "exit", 4))
+		    exit(0);
+		break;
+	    case 3:
+		if (!strncasecomp(src, "key", 3)) {
+		    ch = LYStringToKeycode(LYSkipBlanks(tmp));
+		} else if (!strncasecomp(src, "set", 3)) {
+		    src = LYSkipBlanks(tmp);
+		    tmp = src;
+		    while (*tmp != '\0') {
+			if (isspace(UCH(*tmp)) || *tmp == '=')
+			    break;
+			++tmp;
+		    }
+		    if (*tmp != '\0') {
+			*tmp++ = '\0';
+			tmp = LYSkipBlanks(tmp);
+		    }
+		    CTRACE((tfp, "LYSetConfigValue(%s, %s)\n", src, tmp));
+		    LYSetConfigValue(src, tmp);
+		}
 		break;
 	    }
+	}
+	if (feof(cmd_script)) {
+	    fclose(cmd_script);
+	    cmd_script = 0;
+	}
+	if (ch >= 0) {
+	    LYSleepReplay();
+	    LYrefresh();
 	}
 	FREE(buffer);
     } else {
 	ch = LYgetch_for(mode);
     }
-    CTRACE((tfp, "LYReadCmdKey(%d) ->%c (%#x)\n", mode, ch, ch));
+    CTRACE((tfp, "LYReadCmdKey(%d) ->%s (%#x)\n", mode, LYKeycodeToString(ch, TRUE), ch));
     LYWriteCmdKey(ch);
     return ch;
 }

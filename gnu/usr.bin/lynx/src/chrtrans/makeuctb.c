@@ -18,20 +18,13 @@
 
 #define DONT_USE_SOCKS5
 #include <HTUtils.h>
+
 /*
  *  Don't try to use LYexit().
  */
 #ifdef exit
 #undef exit
 #endif /* exit */
-
-#ifndef TOUPPER
-#define TOUPPER(c) (islower(UCH(c)) ? toupper(UCH(c)) : (c))
-#endif /* !TOLOWER */
-
-#ifndef TOLOWER
-#define TOLOWER(c) (isupper(UCH(c)) ? tolower(UCH(c)) : (c))
-#endif /* !TOLOWER */
 
 #include <UCkd.h>
 #include <UCDefs.h>
@@ -78,6 +71,16 @@ PRIVATE void usage NOARGS
     };
     done(EX_USAGE);
 }
+
+#ifdef EXP_ASCII_CTYPES
+PUBLIC int ascii_tolower ARGS1(int, i)
+{
+    if ( 91 > i && i > 64 )
+	return (i+32);
+    else
+	return i;
+}
+#endif
 
 /* copied from HTString.c, not everybody has strncasecmp */
 PUBLIC int strncasecomp ARGS3(
@@ -434,7 +437,7 @@ PUBLIC int main ARGS2(
 		while (*p == ' ' || *p == '\t') {
 		    p++;
 		}
-		useDefaultMap = (*p == '1' || tolower(*p) == 'y');
+		useDefaultMap = (*p == '1' || TOLOWER(*p) == 'y');
 		continue;
 
 	    case 'M':
@@ -884,4 +887,5 @@ id_append, id_append, nuni, id_append, lowest_eight, RawOrEnc, CodePage);
     }
 
     done(EX_OK);
+    return 0;
 }

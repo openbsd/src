@@ -55,7 +55,6 @@ PUBLIC long int HTMaxBytes  = 0;	/* No effective limit */
 #endif
 
 PUBLIC	BOOL HTOutputSource = NO;	/* Flag: shortcut parser to stdout */
-/* extern  BOOL interactive; LJM */
 
 #ifdef ORIGINAL
 struct _HTStream {
@@ -627,8 +626,8 @@ PUBLIC void HTDisplayPartial NOARGS
 		 * If partial_threshold <= 0, then it's a full page
 		 */
 	) {
-	    NumOfLines_partial = HText_getNumOfLines();
-	    LYMainLoop_pageDisplay(Newline_partial);
+	    if (LYMainLoop_pageDisplay(Newline_partial))
+		NumOfLines_partial = HText_getNumOfLines();
 	}
     }
 #else /* nothing */
@@ -688,12 +687,6 @@ PUBLIC int HTCopy ARGS4(
     BOOL suppress_readprogress = NO;
     int bytes;
     int rv = 0;
-#ifdef _WINDOWS	/* 1997/11/11 (Tue) 15:18:16 */
-    long file_length;
-    extern int bytes_already_read;
-
-    file_length = anchor->content_length;
-#endif
 
     /*	Push the data down the stream
     */
@@ -924,7 +917,7 @@ PUBLIC int HTFileCopy ARGS2(
     return rv;
 }
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 /*	Push data from an HTChunk down a stream
 **	---------------------------------------
 **
@@ -1063,6 +1056,83 @@ PRIVATE int HTGzFileCopy ARGS2(
     return rv;
 }
 #endif /* USE_ZLIB */
+
+#ifdef USE_BZLIB
+/*	Push data from a bzip file pointer down a stream
+**	-------------------------------------
+**
+**   This routine is responsible for creating and PRESENTING any
+**   graphic (or other) objects described by the file.
+**
+**
+**  State of file and target stream on entry:
+**		      BZFILE (bzfp) assumed open (should have bzipped content),
+**		      target (sink) assumed valid.
+**
+**  Return values:
+**	HT_INTERRUPTED  Interruption after some data read.
+**	HT_PARTIAL_CONTENT	Error after some data read.
+**	-1		Error before any data read.
+**	HT_LOADED	Normal end of file indication on reading.
+**
+**  State of file and target stream on return:
+**	always		bzfp still open, target stream still valid.
+*/
+PRIVATE int HTBzFileCopy ARGS2(
+	BZFILE *,		bzfp,
+	HTStream*,		sink)
+{
+    HTStreamClass targetClass;
+    int status, bytes;
+    int bzerrnum;
+    int rv = HT_OK;
+
+    /*	Push the data down the stream
+    */
+    targetClass = *(sink->isa); /* Copy pointers to procedures */
+
+    /*	read and inflate bzip'd file, and push binary down sink
+    */
+    HTReadProgress(bytes = 0, 0);
+    for (;;) {
+	status = BZ2_bzread(bzfp, input_buffer, INPUT_BUFFER_SIZE);
+	if (status <= 0) { /* EOF or error */
+	    if (status == 0) {
+		rv = HT_LOADED;
+		break;
+	    }
+	    CTRACE((tfp, "HTBzFileCopy: Read error, bzread returns %d\n",
+			status));
+	    CTRACE((tfp, "bzerror   : %s\n",
+			BZ2_bzerror(bzfp, &bzerrnum)));
+	    if (bytes) {
+		rv = HT_PARTIAL_CONTENT;
+	    } else {
+		rv = -1;
+	    }
+	    break;
+	}
+
+	(*targetClass.put_block)(sink, input_buffer, status);
+	bytes += status;
+	HTReadProgress(bytes, -1);
+	HTDisplayPartial();
+
+	if (HTCheckForInterrupt()) {
+	    _HTProgress (TRANSFER_INTERRUPTED);
+	    if (bytes) {
+		rv = HT_INTERRUPTED;
+	    } else {
+		rv = -1;
+	    }
+	    break;
+	}
+    } /* next bufferload */
+
+    HTFinishDisplayPartial();
+    return rv;
+}
+#endif /* USE_BZLIB */
 
 /*	Push data from a socket down a stream STRIPPING CR
 **	--------------------------------------------------
@@ -1249,7 +1319,7 @@ PUBLIC int HTParseFile ARGS5(
 	return HT_LOADED;
 }
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 /*	Parse a document in memory given format and memory block pointer
 **
 **   This routine is responsible for creating and PRESENTING any
@@ -1382,6 +1452,82 @@ PUBLIC int HTParseGzFile ARGS5(
 	return HT_LOADED;
 }
 #endif /* USE_ZLIB */
+
+#ifdef USE_BZLIB
+PRIVATE void HTCloseBzFile ARGS1(
+	BZFILE *,		bzfp)
+{
+    if (bzfp)
+	BZ2_bzclose(bzfp);
+}
+
+/*	HTParseBzFile
+**
+**  State of file and target stream on entry:
+**			bzFile (bzfp) assumed open,
+**			target (sink) usually NULL (will call stream stack).
+**
+**  Return values:
+**	-501		Stream stack failed (cannot present or convert).
+**	-1		Download cancelled.
+**	HT_NO_DATA	Error before any data read.
+**	HT_PARTIAL_CONTENT	Interruption or error after some data read.
+**	HT_LOADED	Normal end of file indication on reading.
+**
+**  State of file and target stream on return:
+**	always		bzfp closed; target freed, aborted, or NULL.
+*/
+PUBLIC int HTParseBzFile ARGS5(
+	HTFormat,		rep_in,
+	HTFormat,		format_out,
+	HTParentAnchor *,	anchor,
+	BZFILE*,		bzfp,
+	HTStream*,		sink)
+{
+    HTStream * stream;
+    HTStreamClass targetClass;
+    int rv;
+
+    stream = HTStreamStack(rep_in, format_out, sink, anchor);
+
+    if (!stream) {
+	char *buffer = 0;
+	HTCloseBzFile(bzfp);
+	if (LYCancelDownload) {
+	    LYCancelDownload = FALSE;
+	    return -1;
+	}
+	HTSprintf0(&buffer, CANNOT_CONVERT_I_TO_O,
+		HTAtom_name(rep_in), HTAtom_name(format_out));
+	CTRACE((tfp, "HTFormat(in HTParseBzFile): %s\n", buffer));
+	rv = HTLoadError(sink, 501, buffer);
+	FREE(buffer);
+	return rv;
+    }
+
+    /*	Push the data down the stream
+    **
+    **	@@  Bug:  This decision ought to be made based on "encoding"
+    **	rather than on content-type.  @@@  When we handle encoding.
+    **	The current method smells anyway.
+    */
+    targetClass = *(stream->isa);	/* Copy pointers to procedures */
+    rv = HTBzFileCopy(bzfp, stream);
+    if (rv == -1 || rv == HT_INTERRUPTED) {
+	(*targetClass._abort)(stream, NULL);
+    } else {
+	(*targetClass._free)(stream);
+    }
+
+    HTCloseBzFile(bzfp);
+    if (rv == -1)
+	return HT_NO_DATA;
+    else if (rv == HT_INTERRUPTED || (rv > 0 && rv != HT_LOADED))
+	return HT_PARTIAL_CONTENT;
+    else
+	return HT_LOADED;
+}
+#endif /* USE_BZLIB */
 
 /*	Converter stream: Network Telnet to internal character text
 **	-----------------------------------------------------------

@@ -15,6 +15,7 @@
 /* Version 1 of 24-Oct-1991 (JFG), written in C, browser-independent */
 
 #include <HTList.h>
+#include <HTBTree.h>
 #include <HTChunk.h>
 #include <HTAtom.h>
 #include <UCDefs.h>
@@ -26,37 +27,50 @@
 typedef struct _HyperDoc HyperDoc;  /* Ready for forward references */
 typedef struct _HTAnchor HTAnchor;
 typedef struct _HTParentAnchor HTParentAnchor;
+typedef struct _HTParentAnchor0 HTParentAnchor0;
 
 /*	After definition of HTFormat: */
 #include <HTFormat.h>
 
-typedef HTAtom HTLinkType;
 
-typedef struct {
-  HTAnchor *	dest;		/* The anchor to which this leads */
-  HTLinkType *	type;		/* Semantics of this link */
-} HTLink;
-
-struct _HTAnchor {		/* Generic anchor : just links */
-  HTLink	mainLink;	/* Main (or default) destination of this */
-  HTList *	links;		/* List of extra links from this, if any */
-  /* We separate the first link from the others to avoid too many small mallocs
-     involved by a list creation.  Most anchors only point to one place. */
-  HTParentAnchor * parent;	/* Parent of this anchor (self for adults) */
+struct _HTAnchor {		/* Generic anchor */
+  HTParentAnchor0 * parent;	/* Parent of this anchor (self for adults) */
 };
 
+struct _HTParentAnchor0 {	/* One for adult_table,
+				 * generally not used outside HTAnchor.c */
+  /* Common part from the generic anchor structure */
+  HTParentAnchor0 * parent;	/* (self) */
+
+  /* ParentAnchor0-specific information */
+  char		  * address;	/* Absolute address of this node */
+  HTParentAnchor  * info;	/* additional info, allocated on demand */
+
+  HTBTree *	children;	/* Subanchors <a name="tag">, sorted by tag */
+  HTList	sources;	/* List of anchors pointing to this, if any */
+
+  HTList	_add_adult;	/* - just a memory for list entry:) */
+  short		adult_hash;	/* adult list number */
+  BOOL		underway;	/* Document about to be attached to it */
+};
+
+/*
+ *  Separated from the above to save memory:  allocated on demand,
+ *  it is nearly 1:1 to HText (well, sometimes without HText...),
+ *  available for SGML, HTML, and HText stages.
+ *  [being precise, we currently allocate it before HTLoadDocument(),
+ *  in HTAnchor_findAddress() and HTAnchor_parent()].
+ */
 struct _HTParentAnchor {
   /* Common part from the generic anchor structure */
-  HTLink	mainLink;	/* Main (or default) destination of this */
-  HTList *	links;		/* List of extra links from this, if any */
-  HTParentAnchor * parent;	/* Parent of this anchor (self) */
+  HTParentAnchor0 * parent;	/* Parent of this anchor */
 
   /* ParentAnchor-specific information */
-  HTList *	children;	/* Subanchors of this, if any */
-  HTList *	sources;	/* List of anchors pointing to this, if any */
-  HyperDoc *	document;	/* The document within which this is an anchor */
-  char *	address;	/* Absolute address of this node */
-  char *	post_data;	/* Posting data */
+  HTList	children_notag;	/* Subanchors <a href=...>, tag is NULL */
+  HyperDoc *	document;	/* The document within which this is an anchor*/
+
+  char *	address;	/* parent->address, a pointer */
+  bstring *	post_data;	/* Posting data */
   char *	post_content_type;  /* Type of post data */
   char *	bookmark;	/* Bookmark filename */
   HTFormat	format;		/* Pointer to node format descriptor */
@@ -75,11 +89,10 @@ struct _HTParentAnchor {
   HTList*	methods;	/* Methods available as HTAtoms */
   void *	protocol;	/* Protocol object */
   char *	physical;	/* Physical address */
-  BOOL		underway;	/* Document about to be attached to it */
   BOOL		isISMAPScript;	/* Script for clickable image map */
   BOOL		isHEAD;		/* Document is headers from a HEAD request */
   BOOL		safe;			/* Safe */
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
   char *	source_cache_file;
   HTChunk *	source_cache_chunk;
 #endif
@@ -87,6 +100,7 @@ struct _HTParentAnchor {
   char *	SugFname;	/* Suggested filename */
   char *	cache_control;	/* Cache-Control */
   BOOL		no_cache;	/* Cache-Control, Pragma or META "no-cache"? */
+  BOOL		inBASE;		/* duplicated from HTStructured (HTML.c/h) */
   char *	content_type;		/* Content-Type */
   char *	content_language;	/* Content-Language */
   char *	content_encoding;	/* Compression algorithm */
@@ -106,14 +120,20 @@ struct _HTParentAnchor {
   HTList *	imaps;			/* client side image maps */
 };
 
+typedef HTAtom HTLinkType;
+
 typedef struct {
   /* Common part from the generic anchor structure */
-  HTLink	mainLink;	/* Main (or default) destination of this */
-  HTList *	links;		/* List of extra links from this, if any */
-  HTParentAnchor * parent;	/* Parent of this anchor */
+  HTParentAnchor0 * parent;	/* Parent of this anchor */
 
   /* ChildAnchor-specific information */
-  char *	tag;		/* Address of this anchor relative to parent */
+  char *	tag;		/* #fragment,  relative to the parent */
+
+  HTAnchor *	dest;		/* The anchor to which this leads */
+  HTLinkType *	type;		/* Semantics of this link */
+
+  HTList	_add_children_notag;	/* - just a memory for list entry:) */
+  HTList	_add_sources;		/* - just a memory for list entry:) */
 } HTChildAnchor;
 
 /*
@@ -121,29 +141,16 @@ typedef struct {
 **  needed information including posting data and post content type.
 */
 typedef struct _DocAddress {
-    char * address;
-    char * post_data;
-    char * post_content_type;
-    char * bookmark;
-    BOOL   isHEAD;
-    BOOL   safe;
+    char *	address;
+    bstring *	post_data;
+    char *	post_content_type;
+    char *	bookmark;
+    BOOL	isHEAD;
+    BOOL	safe;
 } DocAddress;
 
-/* "internal" means "within the same document, with certainty".
-   It includes a space so it cannot conflict with any (valid) "TYPE"
-   attributes on A elements. [According to which DTD, anyway??] - kw */
-
-#define LINK_INTERNAL HTAtom_for("internal link")
-
-/*	Create new or find old sub-anchor
-**	---------------------------------
-**
-**	This one is for a new anchor being edited into an existing
-**	document.  The parent anchor must already exist.
-*/
-extern HTChildAnchor * HTAnchor_findChild PARAMS((
-	HTParentAnchor *	parent,
-	CONST char *		tag));
+/* "internal" means "within the same document, with certainty". */
+extern HTLinkType * HTInternalLink;
 
 /*	Create or find a child anchor with a possible link
 **	--------------------------------------------------
@@ -158,15 +165,15 @@ extern HTChildAnchor * HTAnchor_findChildAndLink PARAMS((
 	CONST char * href,		/* May be "" or 0 */
 	HTLinkType * ltype));		/* May be 0 */
 
-/*	Create new or find old named anchor
-**	-----------------------------------
+/*	Create new or find old parent anchor
+**	------------------------------------
 **
 **	This one is for a reference which is found in a document, and might
 **	not be already loaded.
 **	Note: You are not guaranteed a new anchor -- you might get an old one,
 **	like with fonts.
 */
-extern HTAnchor * HTAnchor_findAddress PARAMS((
+extern HTParentAnchor * HTAnchor_findAddress PARAMS((
 	CONST DocAddress *	address));
 
 /*	Create new or find old named anchor - simple form
@@ -175,34 +182,33 @@ extern HTAnchor * HTAnchor_findAddress PARAMS((
 **	Like the previous one, but simpler to use for simple cases.
 **	No post data etc. can be supplied. - kw
 */
-extern HTAnchor * HTAnchor_findSimpleAddress PARAMS((
+extern HTParentAnchor * HTAnchor_findSimpleAddress PARAMS((
 	CONST char *	url));
 
 /*	Delete an anchor and possibly related things (auto garbage collection)
 **	--------------------------------------------
 **
 **	The anchor is only deleted if the corresponding document is not loaded.
-**	All outgoing links from parent and children are deleted, and this anchor
-**	is removed from the sources list of all its targets.
+**	All outgoing links from children are deleted, and children are
+**	removed from the sources lists of their targets.
 **	We also try to delete the targets whose documents are not loaded.
-**	If this anchor's source list is empty, we delete it and its children.
+**	If this anchor's sources list is empty, we delete it and its children.
 */
 extern BOOL HTAnchor_delete PARAMS((
+	HTParentAnchor0 *	me));
+
+/*
+ *  Unnamed children (children_notag) have no sense without HText -
+ *  delete them and their links if we are about to free HText.
+ *  Document currently exists.  Called within HText_free().
+ */
+extern void HTAnchor_delete_links PARAMS((
 	HTParentAnchor *	me));
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 extern void HTAnchor_clearSourceCache PARAMS((
 	HTParentAnchor *	me));
 #endif
-
-/*		Move an anchor to the head of the list of its siblings
-**		------------------------------------------------------
-**
-**	This is to ensure that an anchor which might have already existed
-**	is put in the correct order as we load the document.
-*/
-extern void HTAnchor_makeLastChild PARAMS((
-	HTChildAnchor *		me));
 
 /*	Data access functions
 **	---------------------
@@ -232,20 +238,17 @@ extern HTFormat HTAnchor_format PARAMS((
 
 extern void HTAnchor_setIndex PARAMS((
 	HTParentAnchor *	me,
-	char *		address));
+	CONST char *		address));
 
 extern void HTAnchor_setPrompt PARAMS((
 	HTParentAnchor *	me,
-	char *			prompt));
+	CONST char *		prompt));
 
 extern BOOL HTAnchor_isIndex PARAMS((
 	HTParentAnchor *	me));
 
 extern BOOL HTAnchor_isISMAPScript PARAMS((
 	HTAnchor *		me));
-
-extern BOOL HTAnchor_hasChildren PARAMS((
-	HTParentAnchor *	me));
 
 #if defined(USE_COLOR_STYLE)
 extern CONST char * HTAnchor_style PARAMS((
@@ -372,27 +375,15 @@ extern BOOL HTAnchor_setSubject PARAMS((
 	HTParentAnchor *	me,
 	CONST char *		subject));
 
-/*	Link this Anchor to another given one
-**	-------------------------------------
-*/
-extern BOOL HTAnchor_link PARAMS((
-	HTAnchor *		source,
-	HTAnchor *		destination,
-	HTLinkType *		type));
-
 /*	Manipulation of links
 **	---------------------
 */
-extern HTAnchor * HTAnchor_followMainLink PARAMS((
-	HTAnchor *		me));
+extern HTAnchor * HTAnchor_followLink PARAMS((
+	HTChildAnchor *		me));
 
 extern HTAnchor * HTAnchor_followTypedLink PARAMS((
-	HTAnchor *		me,
+	HTChildAnchor *		me,
 	HTLinkType *		type));
-
-extern BOOL HTAnchor_makeMainLink PARAMS((
-	HTAnchor *		me,
-	HTLink *		movingLink));
 
 /*	Read and write methods
 **	----------------------
@@ -455,7 +446,3 @@ extern LYUCcharset * HTAnchor_copyUCInfoStage PARAMS((
 extern void ImageMapList_free PARAMS((HTList * list));
 
 #endif /* HTANCHOR_H */
-
-/*
-
-    */

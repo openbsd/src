@@ -32,17 +32,16 @@
 #include <HTAlert.h>
 
 #include <LYStrings.h>
+#include <LYClean.h>
 #include <LYLeaks.h>
 
 PRIVATE void do_system ARGS1(char *, command)
 {
-    CTRACE((tfp, "HTTelnet: Command is: %s\n\n", command));
-#ifdef UNIX	/* want LYSystem's signal sanitizing - kw */
-    LYSystem(command);
-#else		/* Non-UNIX should use LYSystem too? - left for now - kw */
-    system(command);
-#endif
-    FREE(command);
+    if (!isEmpty(command)) {
+	CTRACE((tfp, "HTTelnet: Command is: %s\n\n", command));
+	LYSystem(command);
+	FREE(command);
+    }
 }
 
 /*	Telnet or "rlogin" access
@@ -50,6 +49,7 @@ PRIVATE void do_system ARGS1(char *, command)
 */
 PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 {
+    CONST char *program;
 	char * user = host;
 	char * password = NULL;
 	char * cp;
@@ -156,13 +156,14 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 #if	!defined(TELNET_DONE) && (defined(NeXT) && defined(NeXTSTEP) && NeXTSTEP<=20100)
 #define FMT_TELNET "%s%s%s %s %s"
 
-	HTAddParam(&command, FMT_TELNET, 1, TELNET_PATH);
-	HTOptParam(&command, FMT_TELNET, 2, user ? " -l " : "");
-	HTAddParam(&command, FMT_TELNET, 3, user);
-	HTAddParam(&command, FMT_TELNET, 4, hostname);
-	HTAddParam(&command, FMT_TELNET, 5, port);
-	HTEndParam(&command, FMT_TELNET, 5);
-
+	if ((program = HTGetProgramPath(ppTELNET)) != NULL) {
+	    HTAddParam(&command, FMT_TELNET, 1, program);
+	    HTOptParam(&command, FMT_TELNET, 2, user ? " -l " : "");
+	    HTAddParam(&command, FMT_TELNET, 3, user);
+	    HTAddParam(&command, FMT_TELNET, 4, hostname);
+	    HTAddParam(&command, FMT_TELNET, 5, port);
+	    HTEndParam(&command, FMT_TELNET, 5);
+	}
 	do_system(command);
 #define TELNET_DONE
 #endif
@@ -174,45 +175,37 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 #define FMT_TN3270 "%s %s %s"
 #define FMT_TELNET "%s %s %s"
 
-	if (login_protocol == rlogin) {
+	switch (login_protocol) {
+	case rlogin:
+	    if ((program = HTGetProgramPath(ppRLOGIN)) != NULL) {
+		HTAddParam(&command, FMT_RLOGIN, 1, program);
+		HTAddParam(&command, FMT_RLOGIN, 2, hostname);
+		HTOptParam(&command, FMT_RLOGIN, 3, user ? " -l " : "");
+		HTAddParam(&command, FMT_RLOGIN, 4, user);
+		HTEndParam(&command, FMT_RLOGIN, 4);
+	    }
+	    break;
 
-	    HTAddParam(&command, FMT_RLOGIN, 1, RLOGIN_PATH);
-	    HTAddParam(&command, FMT_RLOGIN, 2, hostname);
-	    HTOptParam(&command, FMT_RLOGIN, 3, user ? " -l " : "");
-	    HTAddParam(&command, FMT_RLOGIN, 4, user);
-	    HTEndParam(&command, FMT_RLOGIN, 4);
+	case tn3270:
+	    if ((program = HTGetProgramPath(ppTN3270)) != NULL) {
+		HTAddParam(&command, FMT_TN3270, 1, program);
+		HTAddParam(&command, FMT_TN3270, 2, hostname);
+		HTAddParam(&command, FMT_TN3270, 3, port);
+		HTEndParam(&command, FMT_TN3270, 3);
+	    }
+	    break;
 
-	} else if (login_protocol == tn3270) {
-
-	    HTAddParam(&command, FMT_TN3270, 1, TN3270_PATH);
-	    HTAddParam(&command, FMT_TN3270, 2, hostname);
-	    HTAddParam(&command, FMT_TN3270, 3, port);
-	    HTEndParam(&command, FMT_TN3270, 3);
-
-	} else {  /* TELNET */
-
-	    HTAddParam(&command, FMT_TELNET, 1, TELNET_PATH);
-	    HTAddParam(&command, FMT_TELNET, 2, hostname);
-	    HTAddParam(&command, FMT_TELNET, 3, port);
-	    HTEndParam(&command, FMT_TELNET, 3);
+	case telnet:
+	    if ((program = HTGetProgramPath(ppTELNET)) != NULL) {
+		HTAddParam(&command, FMT_TELNET, 1, program);
+		HTAddParam(&command, FMT_TELNET, 2, hostname);
+		HTAddParam(&command, FMT_TELNET, 3, port);
+		HTEndParam(&command, FMT_TELNET, 3);
+	    }
+	    break;
 	}
 
-#ifdef __DJGPP__
-#ifdef WATT32
-	_eth_release();
-#endif /* WATT32 */
-       __djgpp_set_ctrl_c(0);
-       _go32_want_ctrl_break(1);
-#endif /* __DJGPP__ */
-	do_system(command);
-#ifdef __DJGPP__
-       __djgpp_set_ctrl_c(1);
-       _go32_want_ctrl_break(0);
-#ifdef WATT32
-       _eth_init();
-#endif /* WATT32 */
-#endif /* __DJGPP__ */
-
+        LYSystem(command);
 #define TELNET_DONE
 #endif /* unix */
 
@@ -221,22 +214,22 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "RLOGIN%s%s%s%s%s %s",  /*lm 930713 */
 		user ? "/USERNAME=\"" : "",
-		user ? user : "",
+		NonNull(user),
 		user ? "\"" : "",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 
 	} else if (login_protocol == tn3270) {
 	    HTSprintf0(&command, "TELNET/TN3270 %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 
 	} else {  /* TELNET */
 	    HTSprintf0(&command, "TELNET %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 	}
 
@@ -250,22 +243,22 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    if (login_protocol == rlogin) {
 		HTSprintf0(&command, "RLOGIN%s%s%s%s%s %s",  /*lm 930713 */
 		    user ? "/USERNAME=\"" : "",
-		    user ? user : "",
+		    NonNull(user),
 		    user ? "\"" : "",
 		    port ? "/PORT=" : "",
-		    port ? port : "",
+		    NonNull(port),
 		    hostname);
 
 	    } else if (login_protocol == tn3270) {
 		HTSprintf0(&command, "TELNET/TN3270 %s%s %s",
 		    port ? "/PORT=" : "",
-		    port ? port : "",
+		    NonNull(port),
 		    hostname);
 
 	    } else {  /* TELNET */
 		HTSprintf0(&command, "TELNET %s%s %s",
 		    port ? "/PORT=" : "",
-		    port ? port : "",
+		    NonNull(port),
 		    hostname);
 	    }
 
@@ -275,18 +268,18 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 		   hostname,
 		   user ? " -l " : "",
 		   user ? "\"" : "",
-		   user ? user : "",
+		   NonNull(user),
 		   user ? "\"" : "");
 
 	    } else if (login_protocol == tn3270) {
 		HTSprintf0(&command, "TN3270 %s %s",
 		    hostname,
-		    port ? port : "");
+		    NonNull(port));
 
 	    } else {  /* TELNET */
 		HTSprintf0(&command, "TELNET %s %s",
 		    hostname,
-		    port ? port : "");
+		    NonNull(port));
 	    }
 	}
 
@@ -298,20 +291,20 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "RLOGIN%s%s%s %s %s",
 		user ? "/USERNAME=\"" : "",
-		user ? user : "",
+		NonNull(user),
 		user ? "\"" : "",
 		hostname,
-		port ? port : "");
+		NonNull(port));
 
 	} else if (login_protocol == tn3270) {
 	    HTSprintf0(&command, "TN3270 %s %s",
 		hostname,
-		port ? port : "");
+		NonNull(port));
 
 	} else {  /* TELNET */
 	    HTSprintf0(&command, "TELNET %s %s",
 		hostname,
-		port ? port : "");
+		NonNull(port));
 	}
 
 	do_system(command);
@@ -322,13 +315,11 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == telnet) {
 	    HTSprintf0(&command, "TELNET %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 	    do_system(command);
 	}
 	else {
-	    extern BOOLEAN HadVMSInterrupt;
-
 	    printf(
 	"\nSorry, this browser was compiled without the %s access option.\n",
 		acc_method);
@@ -344,21 +335,21 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "MULTINET RLOGIN%s%s%s%s %s",  /*lm 930713 */
 		user ? "/USERNAME=" : "",
-		user ? user : "",
+		NonNull(user),
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 
 	} else if (login_protocol == tn3270) {
 	    HTSprintf0(&command, "MULTINET TELNET/TN3270 %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 
 	} else {  /* TELNET */
 	    HTSprintf0(&command, "MULTINET TELNET %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 	}
 
@@ -370,19 +361,19 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    if (login_protocol == rlogin) {
 		HTSprintf0(&command, "RLOGIN%s%s%s%s %s",  /*lm 930713 */
 		    user ? "/USERNAME=" : "",
-		    user ? user : "",
+		    NonNull(user),
 		    port ? "/PORT=" : "",
-		    port ? port : "",
+		    NonNull(port),
 		    hostname);
 	    } else if (login_protocol == tn3270) {
 		HTSprintf0(&command, "TELNET/TN3270 %s%s %s",
 		    port ? "/PORT=" : "",
-		    port ? port : "",
+		    NonNull(port),
 		    hostname);
 	    } else {  /* TELNET */
 		HTSprintf0(&command, "TELNET %s%s %s",
 		    port ? "/PORT=" : "",
-		    port ? port : "",
+		    NonNull(port),
 		    hostname);
 	    }
 	} else { /* UNIX command syntax */
@@ -390,15 +381,15 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 		HTSprintf0(&command, "RLOGIN %s%s%s",
 		    hostname,
 		    user ? " -l " : "",
-		    user ? user : "");
+		    NonNull(user));
 	    } else if (login_protocol == tn3270) {
 		HTSprintf0(&command, "TN3270 %s %s",
 		    hostname,
-		    port ? port : "");
+		    NonNull(port));
 	    } else {  /* TELNET */
 		HTSprintf0(&command, "TELNET %s %s",
 		    hostname,
-		    port ? port : "");
+		    NonNull(port));
 	    }
 	}
 
@@ -410,19 +401,19 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "RLOGIN%s%s %s %s",
 		user ? "/USERNAME=" : "",
-		user ? user : "",
+		NonNull(user),
 		hostname,
-		port ? port : "");
+		NonNull(port));
 
 	} else if (login_protocol == tn3270) {
 	    HTSprintf0(&command, "TN3270 %s %s",
 		hostname,
-		port ? port : "");
+		NonNull(port));
 
 	} else {  /* TELNET */
 	    HTSprintf0(&command, "TELNET %s %s",
 		hostname,
-		port ? port : "");
+		NonNull(port));
 	}
 
 	do_system(command);
@@ -432,13 +423,11 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == telnet) {
 	    HTSprintf0(&command, "TELNET %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 	    do_system(command);
 	}
 	else {
-	    extern BOOLEAN HadVMSInterrupt;
-
 	    printf(
 	  "\nSorry, this browser was compiled without the %s access option.\n",
 		acc_method);
@@ -451,13 +440,11 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	if (login_protocol == telnet) {
 	    HTSprintf0(&command, "TELNET %s%s %s",
 		port ? "/PORT=" : "",
-		port ? port : "",
+		NonNull(port),
 		hostname);
 	    do_system(command);
 	}
 	else {
-	    extern BOOLEAN HadVMSInterrupt;
-
 	    printf(
 	  "\nSorry, this browser was compiled without the %s access option.\n",
 		acc_method);
@@ -495,10 +482,7 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    fflush(stdout);
 	    LYgetch();
 #ifdef VMS
-	    {
-		extern BOOLEAN HadVMSInterrupt;
-		HadVMSInterrupt = FALSE;
-	    }
+	    HadVMSInterrupt = FALSE;
 #endif /* VMS */
 	}
 #endif /* !TELNET_DONE */
@@ -536,7 +520,7 @@ ARGS4
 	CTRACE((tfp, "HTTelnet: Can't output a live session -- must be interactive!\n"));
 	return HT_NO_DATA;
     }
-    acc_method =  HTParse(addr, "file:", PARSE_ACCESS);
+    acc_method =  HTParse(addr, STR_FILE_URL, PARSE_ACCESS);
 
     host = HTParse(addr, "", PARSE_HOST);
     if (!host || *host == '\0') {

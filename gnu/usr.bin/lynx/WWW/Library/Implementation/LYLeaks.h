@@ -86,6 +86,11 @@ typedef struct AllocationList_tag	{
 	struct AllocationList_tag *ALp_Next;
 
 	/*
+	 *	Count the number of mallocs.
+	 */
+	long st_Sequence;
+
+	/*
 	 *	The memory pointer allocated.
 	 *	If set to NULL, then an invalid request was made.
 	 *	The invalid pointer also.
@@ -152,6 +157,7 @@ typedef struct AllocationList_tag	{
 #undef StrAllocCopy
 #endif /* StrAllocCopy */
 #define StrAllocCopy(dest, src) LYLeakSACopy(&(dest), src, __FILE__, __LINE__)
+
 #ifdef StrAllocCat
 #undef StrAllocCat
 #endif /* StrAllocCat */
@@ -160,19 +166,23 @@ typedef struct AllocationList_tag	{
 #define mark_malloced(a,size) LYLeak_mark_malloced(a,size, __FILE__, __LINE__)
 
 #if defined(LY_FIND_LEAKS_EXTENDED) && !defined(NO_EXTENDED_MEMORY_TRACKING)
+
 #ifdef HTSprintf0
 #undef HTSprintf0
 #endif /* HTSprintf0 */
 #define HTSprintf0 (Get_htsprintf0_fn(__FILE__,__LINE__))
+
 #ifdef HTSprintf
 #undef HTSprintf
 #endif /* HTSprintf */
 #define HTSprintf (Get_htsprintf_fn(__FILE__,__LINE__))
+
 #endif /* LY_FIND_LEAKS_EXTENDED and not NO_EXTENDED_MEMORY_TRACKING */
 
 #else /* LY_FIND_LEAKS && !NO_MEMORY_TRACKING */
 
 #define mark_malloced(a,size)	/* no-op */
+#define LYLeakSequence() (-1)
 
 #endif /* LY_FIND_LEAKS && !NO_MEMORY_TRACKING */
 
@@ -181,10 +191,14 @@ typedef struct AllocationList_tag	{
 #else
 #define PUBLIC_IF_FIND_LEAKS PRIVATE
 #endif
+
 /*
 **	Function declarations
 **	See the appropriate source file for usage.
 */
+#ifndef LYLeakSequence 
+extern long LYLeakSequence NOPARAMS;
+#endif
 extern void LYLeaks NOPARAMS;
 #ifdef LY_FIND_LEAKS_EXTENDED
 extern AllocationList *LYLeak_mark_malloced PARAMS((

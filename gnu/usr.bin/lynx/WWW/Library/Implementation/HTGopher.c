@@ -327,23 +327,16 @@ PRIVATE void parse_menu ARGS2(
 
 	    } else if (port) {		/* Other types need port */
 		char *address = 0;
+		char *format = *selector ? "%s//%s@%s/" : "%s//%s/";
 
 		if (gtype == GOPHER_TELNET) {
 		    PUTS(" (TEL) ");
-		    if (*selector)
-			HTSprintf0(&address, "telnet://%s@%s/",
-					   selector, host);
-		    else
-			HTSprintf0(&address, "telnet://%s/", host);
+		    HTSprintf0(&address, format, STR_TELNET_URL, selector, host);
 		}
 		else if (gtype == GOPHER_TN3270)
 		{
 		    PUTS("(3270) ");
-		    if (*selector)
-			HTSprintf0(&address, "tn3270://%s@%s/",
-				selector, host);
-		    else
-			HTSprintf0(&address, "tn3270://%s/", host);
+		    HTSprintf0(&address, format, STR_TN3270_URL, selector, host);
 		}
 		else {			/* If parsed ok */
 		    char *r;
@@ -1339,7 +1332,7 @@ PRIVATE int generate_cso_report ARGS1(
 			    } else if (*l == '>') {
 				StrAllocCat(buf, "&gt;");
 				l++;
-			    } else if (strncmp(l, "news:", 5) &&
+			    } else if (strncmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
 				       strncmp(l, "snews://", 8) &&
 				       strncmp(l, "nntp://", 7) &&
 				       strncmp(l, "snewspost:", 10) &&
@@ -1352,7 +1345,7 @@ PRIVATE int generate_cso_report ARGS1(
 				       strncmp(l, "http://", 7) &&
 				       strncmp(l, "https://", 8) &&
 				       strncmp(l, "wais://", 7) &&
-				       strncmp(l, "mailto:", 7) &&
+				       strncmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
 				       strncmp(l, "cso://", 6) &&
 				       strncmp(l, "gopher://", 9)) {
 				HTSprintf(&buf, "%c", *l++);
@@ -1383,7 +1376,7 @@ PRIVATE int generate_cso_report ARGS1(
 			} else if (*l == '>') {
 			    StrAllocCat(buf, "&gt;");
 			    l++;
-			} else if (strncmp(l, "news:", 5) &&
+			} else if (strncmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
 				   strncmp(l, "snews://", 8) &&
 				   strncmp(l, "nntp://", 7) &&
 				   strncmp(l, "snewspost:", 10) &&
@@ -1396,7 +1389,7 @@ PRIVATE int generate_cso_report ARGS1(
 				   strncmp(l, "http://", 7) &&
 				   strncmp(l, "https://", 8) &&
 				   strncmp(l, "wais://", 7) &&
-				   strncmp(l, "mailto:", 7) &&
+				   strncmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
 				   strncmp(l, "cso://", 6) &&
 				   strncmp(l, "gopher://", 9)) {
 			    HTSprintf(&buf, "%c", *l++);
@@ -1440,11 +1433,11 @@ PRIVATE int HTLoadCSO ARGS4(
 	HTStream*,		sink)
 {
     static CONST char end_form[] = "</BODY>\n</HTML>\n";
-    char *host, *cp;
+    char *host, *cp, *data;
     int port = CSO_PORT;
     int status;				/* tcp return */
-    char *command = NULL;
-    char *content = NULL;
+    bstring *command = NULL;
+    bstring *content = NULL;
     int len, i, j, start, finish, flen, ndx;
     int return_type, has_indexed;
     CSOfield_info *fld;
@@ -1481,12 +1474,15 @@ PRIVATE int HTLoadCSO ARGS4(
 
     HTInitInput(s);		/* Set up input buffering */
 
-    HTSprintf0(&command, "fields%c%c", CR, LF);
-    CTRACE((tfp, "HTLoadCSO: Connected, writing command `%s' to socket %d\n",
-		command, s));
+    HTBprintf(&command, "fields%c%c", CR, LF);
+    if (TRACE) {
+	CTRACE((tfp, "HTLoadCSO: Connected, writing command `"));
+	trace_bstring(command);
+	CTRACE((tfp, "' to socket %d\n", s));
+    }
     _HTProgress (GOPHER_SENDING_CSO_REQUEST);
-    status = NETWRITE(s, command, (int)strlen(command));
-    FREE(command);
+    status = NETWRITE(s, BStrData(command), BStrLen(command));
+    BStrFree(command);
     if (status < 0) {
 	CTRACE((tfp, "HTLoadCSO: Unable to send command.\n"));
 	return HTInetStatus("send");
@@ -1521,7 +1517,7 @@ PRIVATE int HTLoadCSO ARGS4(
 	return HT_NOT_LOADED;
     }
     host = HTParse(arg, "", PARSE_HOST);
-    if ((cp=strchr(host, ':')) != NULL) {
+    if ((cp = strchr(host, ':')) != NULL) {
 	if (cp[1] >= '0' && cp[1] <= '9') {
 	    port = atoi((cp+1));
 	    if (port == CSO_PORT) {
@@ -1530,7 +1526,7 @@ PRIVATE int HTLoadCSO ARGS4(
 	}
     }
     anAnchor->safe = TRUE;
-    if (!(anAnchor->post_data && *anAnchor->post_data)) {
+    if (isBEmpty(anAnchor->post_data)) {
 	generate_cso_form(host, port, buf, Target);
 	(*Target->isa->_free)(Target);
 	FREE(host);
@@ -1539,66 +1535,72 @@ PRIVATE int HTLoadCSO ARGS4(
 	return HT_LOADED;
     }
 
-    HTSprintf0(&command,
+    HTBprintf(&command,
      "<HTML>\n<HEAD>\n<TITLE>CSO/PH Results on %s</TITLE>\n</HEAD>\n<BODY>\n",
 	    host);
-    (*Target->isa->put_block)(Target, command, strlen(command));
-    FREE(command);
+    (*Target->isa->put_block)(Target, BStrData(command), BStrLen(command));
+    BStrFree(command);
     FREE(host);
 
-    StrAllocCopy(content, anAnchor->post_data);
-    if (content[strlen(content)-1] != '&')
-	StrAllocCat(content, "&");
-    len = strlen(content);
+    BStrCopy(content, anAnchor->post_data);
+
+    if (BStrData(content)[BStrLen(content)-1] != '&')
+	BStrCat0(content, "&");
+
+    data = BStrData(content);
+    len = BStrLen(content);
     for (i = 0; i < len; i++) {
-	if (content[i] == '+') {
-	    content[i] = ' ';
+	if (data[i] == '+') {
+	    data[i] = ' ';
 	}
     }
-    HTUnEscape(content);
-    len = strlen(content);
+
+    data = BStrData(content);
+    HTUnEscape(data);		/* FIXME: could it have embedded null? */
+    len = BStrLen(content);
+
     return_type = 0;
     has_indexed = 0;
     start = finish = 0;
     for (i = 0; i < len; i++) {
-	if (!content[i] || content[i] == '&') {
+	if (!data[i] || data[i] == '&') {
 	    /*
 	    **	Value parsed.  Unescape characters and look for first '='
 	    **	to delimit field name from value.
 	    */
 	    flen = i - start;
 	    finish = start + flen;
-	    content[finish] = '\0';
+	    data[finish] = '\0';
 	    for (j = start; j < finish; j++) {
-		if (content[j] == '=') {
+		if (data[j] == '=') {
 		    /*
-		    **	content[start..j-1] is field name,
+		    **	data[start..j-1] is field name,
 		    **	[j+1..finish-1] is value.
 		    */
-		    if ((content[start+1] == '_') &&
-			((content[start] == 'r') || (content[start] == 'q'))) {
+		    if ((data[start+1] == '_') &&
+			((data[start] == 'r') || (data[start] == 'q'))) {
 			/*
 			**  Decode fields number and lookup field info.
 			*/
-			sscanf (&content[start+2], "%d=", &ndx);
+			sscanf (&data[start+2], "%d=", &ndx);
 			for (fld = CSOfields; fld; fld = fld->next) {
 			    if (ndx==fld->id) {
 				if ((j+1) >= finish)
 				    break;	/* ignore nulls */
-				if (content[start] == 'q') {
+				if (data[start] == 'q') {
 				    /*
 				     * Append field to query line.
 				     */
 				    if (fld->lookup) {
 					if (fld->indexed)
 					    has_indexed = 1;
-					if (command == 0 || *command == 0) {
-					    StrAllocCopy(command, "query ");
+					if (isBEmpty(command)) {
+					    BStrCopy0(command, "query ");
 					} else {
-					    StrAllocCat(command, " ");
+					    BStrCat0(command, " ");
 					}
-					HTSprintf(&command, "%s=\"%s\"",
-						  fld->name, &content[j+1]);
+					HTBprintf(&command, "%s=\"%s\"",
+						  fld->name, &data[j+1]);
 				    } else {
 					strcpy(buf,
 				"Warning: non-lookup field ignored<BR>\n");
@@ -1606,16 +1608,16 @@ PRIVATE int HTLoadCSO ARGS4(
 								  buf,
 								  strlen(buf));
 				    }
-				} else if (content[start] == 'r') {
+				} else if (data[start] == 'r') {
 				    fld->explicit_return = 1;
 				}
 				break;
 			    }
 			}
-		    } else if (!strncmp(&content[start],"return=",7)) {
-			if (!strcmp(&content[start+7],"all")) {
+		    } else if (!strncmp(&data[start], "return=", 7)) {
+			if (!strcmp(&data[start+7], "all")) {
 			    return_type = 1;
-			} else if (!strcmp(&content[start+7],"selected")) {
+			} else if (!strcmp(&data[start+7], "selected")) {
 			    return_type = 2;
 			}
 		    }
@@ -1624,8 +1626,8 @@ PRIVATE int HTLoadCSO ARGS4(
 	    start = i + 1;
 	}
     }
-    FREE(content);
-    if ((command == 0 || *command == 0) || !has_indexed) {
+    BStrFree(content);
+    if (isBEmpty(command) || !has_indexed) {
 	NETCLOSE(s);
 	strcpy(buf,
   "<EM>Error:</EM> At least one indexed field value must be specified!\n");
@@ -1640,25 +1642,28 @@ PRIVATE int HTLoadCSO ARGS4(
     **	Append return fields.
     */
     if (return_type == 1) {
-	StrAllocCat(command, " return all");
+	BStrCat0(command, " return all");
     } else if (return_type == 2) {
-	StrAllocCat(command, " return");
+	BStrCat0(command, " return");
 	for (fld = CSOfields; fld; fld = fld->next) {
 	    if (fld->explicit_return) {
-		HTSprintf(&command, " %s", fld->name);
+		HTBprintf(&command, " %s", fld->name);
 	    }
 	}
     }
-    HTSprintf(&command, "%c%c", CR, LF);
+    HTBprintf(&command, "%c%c", CR, LF);
     strcpy(buf, "<H2>\n<EM>CSO/PH command:</EM> ");
     (*Target->isa->put_block)(Target, buf, strlen(buf));
-    (*Target->isa->put_block)(Target, command, strlen(command));
+    (*Target->isa->put_block)(Target, BStrData(command), BStrLen(command));
     strcpy(buf, "</H2>\n");
     (*Target->isa->put_block)(Target, buf, strlen(buf));
-    CTRACE((tfp, "HTLoadCSO: Writing command `%s' to socket %d\n",
-		command, s));
-    status = NETWRITE(s, command, strlen(command));
-    FREE(command);
+    if (TRACE) {
+	CTRACE((tfp, "HTLoadCSO: Writing command `"));  
+	trace_bstring(command);
+	CTRACE((tfp, "' to socket %d\n", s));
+    }
+    status = NETWRITE(s, BStrData(command), BStrLen(command));
+    BStrFree(command);
     if (status < 0) {
 	CTRACE((tfp, "HTLoadCSO: Unable to send command.\n"));
 	free_CSOfields();

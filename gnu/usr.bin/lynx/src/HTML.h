@@ -66,9 +66,9 @@ typedef struct _stack_element {
 #define MAX_NESTING 800		/* Should be checked by parser */
 
 struct _HTStructured {
-    CONST HTStructuredClass * 	isa;
-    HTParentAnchor * 		node_anchor;
-    HText * 			text;
+    CONST HTStructuredClass *	isa;
+    HTParentAnchor *		node_anchor;
+    HText *			text;
 
     HTStream*			target;			/* Output stream */
     HTStreamClass		targetClass;		/* Output routines */
@@ -78,7 +78,7 @@ struct _HTStructured {
     char *			base_href;	/* current HTML_BASE href */
     char *			map_address;	/* current HTML_MAP address */
 
-    HTChunk 			title;		/* Grow by 128 */
+    HTChunk			title;		/* Grow by 128 */
     HTChunk			object;		/* Grow by 128 */
     BOOL			object_started;
     BOOL			object_declare;
@@ -94,7 +94,7 @@ struct _HTStructured {
     char *			object_codetype;
     char *			object_name;
     int				objects_mixed_open,
-    				objects_figged_open;
+				objects_figged_open;
     HTChunk			option;		/* Grow by 128 */
     BOOL			first_option;	/* First OPTION in SELECT? */
     char *			LastOptionValue;
@@ -105,7 +105,7 @@ struct _HTStructured {
     int				textarea_name_cs;
     char *			textarea_accept_cs;
     char *			textarea_cols;
-    int 			textarea_rows;
+    int				textarea_rows;
     int				textarea_disabled;
     char *			textarea_id;
     HTChunk			math;		/* Grow by 128 */
@@ -116,10 +116,10 @@ struct _HTStructured {
      *  Used for nested lists. - FM
      */
     int		List_Nesting_Level;	/* counter for list nesting level */
-    int 	OL_Counter[12];		/* counter for ordered lists */
-    char 	OL_Type[12];		/* types for ordered lists */
-    int 	Last_OL_Count;		/* last count in ordered lists */
-    char 	Last_OL_Type;		/* last type in ordered lists */
+    int		OL_Counter[12];		/* counter for ordered lists */
+    char	OL_Type[12];		/* types for ordered lists */
+    int		Last_OL_Count;		/* last count in ordered lists */
+    char	Last_OL_Type;		/* last type in ordered lists */
 
     int				Division_Level;
     short			DivisionAlignments[MAX_NESTING];
@@ -139,8 +139,8 @@ struct _HTStructured {
     HTStyle *			old_style;
     int				current_default_alignment;
     BOOL			in_word;  /* Have just had a non-white char */
-    stack_element 	stack[MAX_NESTING];
-    stack_element 	*sp;		/* Style stack pointer */
+    stack_element	stack[MAX_NESTING];
+    stack_element	*sp;		/* Style stack pointer */
     BOOL		stack_overrun;	/* Was MAX_NESTING exceeded? */
     int			skip_stack; /* flag to skip next style stack operation */
 
@@ -212,7 +212,7 @@ struct _HTStructured {
     */
     UCTransParams	T;
 
-    int 		tag_charset; /* charset for attribute values etc. */
+    int			tag_charset; /* charset for attribute values etc. */
 };
 
 extern  HTStyle *LYstyles PARAMS((int style_number));
@@ -285,4 +285,3 @@ extern int HTLoadError PARAMS((
 	CONST char *	message));
 
 #endif /* HTML_H */
-

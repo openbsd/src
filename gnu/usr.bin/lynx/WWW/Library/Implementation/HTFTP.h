@@ -28,7 +28,7 @@ extern int HTfileSortMethod;  /* specifies the method of sorting */
 **	fn		WWW file name
 **
 ** ON EXIT:
-**	returns 	vms file specification
+**	returns		vms file specification
 **
 ** Bug:	Returns pointer to static -- non-reentrant
 */
@@ -68,7 +68,3 @@ Return Host Name
 extern CONST char * HTHostName NOPARAMS;
 
 #endif
-
-/*
-
-   end  */

@@ -9,15 +9,15 @@
 
 /* change_form_link calls change_form_link_ex with all its args and FALSE as
   last arg */
-extern int change_form_link PARAMS((struct link *form_link,
-				    document *newdoc, BOOLEAN *refresh_screen,
-				    char *link_name, char *link_value,
+extern int change_form_link PARAMS((int cur,
+				    DocInfo *newdoc,
+				    BOOLEAN *refresh_screen,
 				    BOOLEAN use_last_tfpos,
 				    BOOLEAN immediate_submit));
 
-extern int change_form_link_ex PARAMS((struct link *form_link,
-				    document *newdoc, BOOLEAN *refresh_screen,
-				    char *link_name, char *link_value,
+extern int change_form_link_ex PARAMS((int cur,
+				    DocInfo *newdoc,
+				    BOOLEAN *refresh_screen,
 				    BOOLEAN use_last_tfpos,
 				    BOOLEAN immediate_submit,
 				    BOOLEAN draw_only));
@@ -103,7 +103,7 @@ typedef struct _FormInfo {
 typedef struct _PerFormInfo
 {
 	int			number;	   /* form number, see GridText.c */
-    /* except for the last two, the followign fields aren't actually used.. */
+    /* except for the last two, the following fields aren't actually used.. */
 	int			disabled;  /* If YES, can't change values */
 	struct _PerFormInfo *	next;	   /* pointer to next form in doc */
 	int			nfields;   /* number of fields */
@@ -132,8 +132,11 @@ typedef struct _PerFormInfo
 #define F_IMAGE_SUBMIT_TYPE 13
 #define F_KEYGEN_TYPE     14
 
-#define F_TEXTLIKE(type) ((type)==F_TEXT_TYPE || (type)==F_TEXT_SUBMIT_TYPE ||\
-			  (type)==F_PASSWORD_TYPE || (type)==F_TEXTAREA_TYPE)
+#define F_TEXTLIKE(type) ((type)==F_TEXT_TYPE ||\
+			  (type)==F_TEXT_SUBMIT_TYPE ||\
+			  (type)==F_PASSWORD_TYPE ||\
+			  (type)==F_FILE_TYPE ||\
+			  (type)==F_TEXTAREA_TYPE)
 
 #define WWW_FORM_LINK_TYPE  1
 #define WWW_LINK_TYPE   2

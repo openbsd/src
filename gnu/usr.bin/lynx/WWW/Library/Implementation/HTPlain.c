@@ -30,9 +30,6 @@
 #include <LYCharSets.h>
 #include <LYLeaks.h>
 
-extern BOOL HTPassEightBitRaw;
-extern BOOL HTPassHighCtrlRaw;
-
 PUBLIC int HTPlain_lastraw = -1;
 PRIVATE int HTPlain_bs_pending = 0; /* 1:bs 2:underline 3:underline+bs - kw */
 
@@ -433,7 +430,7 @@ PRIVATE void HTPlain_write ARGS3(HTStream *, me, CONST char*, s, int, l)
 		       me->T.trans_C0_to_uni) {
 		/*
 		**  Quote from SGML.c:
-		**  	"This else if may be too ugly to keep. - KW"
+		**	"This else if may be too ugly to keep. - KW"
 		*/
 		if (me->T.trans_from_uni &&
 		    (((code = UCTransToUni(c, me->inUCLYhndl)) >= 32) ||

@@ -50,10 +50,6 @@
 #include <HTTCP.h>
 #include <HTTP.h>
 
-#ifdef USE_SSL
-PRIVATE SSL * Handle = NULL;	/* The SSL Handle	*/
-#endif /* USE_SSL */
-
 #include <LYStrings.h>
 #include <LYLeaks.h>
 
@@ -560,8 +556,8 @@ PUBLIC char *HTAA_getUnfoldedLine NOARGS
 
 	if (start_pointer >= end_pointer) {/*Read the next block and continue*/
 #ifdef USE_SSL
-	    if (Handle)
-		count = SSL_read(Handle, buffer, BUFFER_SIZE);
+	    if (SSL_handle)
+		count = SSL_read(SSL_handle, buffer, BUFFER_SIZE);
 	    else
 		count = NETREAD(in_soc, buffer, BUFFER_SIZE);
 #else

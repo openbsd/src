@@ -4,6 +4,7 @@
 
 #include <LYGlobalDefs.h>
 #include <UCMap.h>
+#include <UCdomap.h>
 #include <UCDefs.h>
 #include <LYCharSets.h>
 #include <GridText.h>
@@ -12,17 +13,11 @@
 
 #include <LYLeaks.h>
 
-extern BOOL HTPassEightBitRaw;
-extern BOOL HTPassEightBitNum;
-extern BOOL HTPassHighCtrlRaw;
-extern BOOL HTPassHighCtrlNum;
 PUBLIC HTkcode kanji_code = NOKANJI;
 PUBLIC BOOLEAN LYHaveCJKCharacterSet = FALSE;
 PUBLIC BOOLEAN DisplayCharsetMatchLocale = TRUE;
 PUBLIC BOOL force_old_UCLYhndl_on_reload = FALSE;
 PUBLIC int forced_UCLYhdnl;
-extern void UCInit NOARGS;
-extern int UCInitialized;
 PUBLIC int LYNumCharsets = 0;  /* Will be initialized later by UC_Register. */
 PUBLIC int current_char_set = -1; /* will be intitialized later in LYMain.c */
 PUBLIC CONST char** p_entity_values = NULL; /* Pointer, for HTML_put_entity()*/
@@ -383,8 +378,6 @@ PUBLIC LYUCcharset LYCharSet_UC[MAXCHARSETS]=
                        UCT_REP_SUBSETOF_LAT1,
                        UCT_CP_SUBSETOF_LAT1,   UCT_R_ASCII,UCT_R_ASCII},
 
-/*  {-1,"iso-8859-15",   UCT_ENC_8BIT,0,0,0,     UCT_R_8BIT,UCT_R_ASCII}, */
-
 };
 
 /*
@@ -692,6 +685,8 @@ PRIVATE CONST names_pairs OLD_charset_names[] = {
     {"ISO 8859-6 Arabic",   "iso-8859-6"},
     {"ISO 8859-7 Greek",    "iso-8859-7"},
     {"ISO 8859-8 Hebrew",   "iso-8859-8"},
+    {"ISO-8859-8-I",        "iso-8859-8"},
+    {"ISO-8859-8-E",        "iso-8859-8"},
     {"ISO 8859-9 (Latin 5)","iso-8859-9"},
     {"ISO 8859-10",         "iso-8859-10"},
     {"UNICODE UTF 8",       "utf-8"},
@@ -712,6 +707,8 @@ PUBLIC int UCGetLYhndl_byAnyName ARGS1 (char *, value)
 
     LYTrimTrailing(value);
     if (value == NULL) return -1;
+
+    CTRACE((tfp, "UCGetLYhndl_byAnyName(%s)\n", value));
 
     /* search by name */
     for (i = 0; (i < MAXCHARSETS && LYchar_set_names[i]); i++) {
@@ -739,17 +736,17 @@ PUBLIC int UCGetLYhndl_byAnyName ARGS1 (char *, value)
  */
 PRIVATE CONST char * LYEntityNames[] = {
 /*	 NAME		   DECIMAL VALUE */
-	"nbsp", 	/* 160, non breaking space */
+	"nbsp",		/* 160, non breaking space */
 	"iexcl",	/* 161, inverted exclamation mark */
-	"cent", 	/* 162, cent sign */
+	"cent",		/* 162, cent sign */
 	"pound",	/* 163, pound sign */
 	"curren",	/* 164, currency sign */
 	"yen",		/* 165, yen sign */
 	"brvbar",	/* 166, broken vertical bar, (brkbar) */
-	"sect", 	/* 167, section sign */
+	"sect",		/* 167, section sign */
 	"uml",		/* 168, spacing dieresis */
-	"copy", 	/* 169, copyright sign */
-	"ordf", 	/* 170, feminine ordinal indicator */
+	"copy",		/* 169, copyright sign */
+	"ordf",		/* 170, feminine ordinal indicator */
 	"laquo",	/* 171, angle quotation mark, left */
 	"not",		/* 172, negation sign */
 	"shy",		/* 173, soft hyphen */
@@ -757,15 +754,15 @@ PRIVATE CONST char * LYEntityNames[] = {
 	"hibar",	/* 175, spacing macron */
 	"deg",		/* 176, degree sign */
 	"plusmn",	/* 177, plus-or-minus sign */
-	"sup2", 	/* 178, superscript 2 */
-	"sup3", 	/* 179, superscript 3 */
+	"sup2",		/* 178, superscript 2 */
+	"sup3",		/* 179, superscript 3 */
 	"acute",	/* 180, spacing acute (96) */
 	"micro",	/* 181, micro sign */
-	"para", 	/* 182, paragraph sign */
+	"para",		/* 182, paragraph sign */
 	"middot",	/* 183, middle dot */
 	"cedil",	/* 184, spacing cedilla */
-	"sup1", 	/* 185, superscript 1 */
-	"ordm", 	/* 186, masculine ordinal indicator */
+	"sup1",		/* 185, superscript 1 */
+	"ordm",		/* 186, masculine ordinal indicator */
 	"raquo",	/* 187, angle quotation mark, right */
 	"frac14",	/* 188, fraction 1/4 */
 	"frac12",	/* 189, fraction 1/2 */
@@ -775,31 +772,31 @@ PRIVATE CONST char * LYEntityNames[] = {
 	"Aacute",	/* 193, capital A, acute accent */
 	"Acirc",	/* 194, capital A, circumflex accent */
 	"Atilde",	/* 195, capital A, tilde */
-	"Auml", 	/* 196, capital A, dieresis or umlaut mark */
+	"Auml",		/* 196, capital A, dieresis or umlaut mark */
 	"Aring",	/* 197, capital A, ring */
 	"AElig",	/* 198, capital AE diphthong (ligature) */
 	"Ccedil",	/* 199, capital C, cedilla */
 	"Egrave",	/* 200, capital E, grave accent */
 	"Eacute",	/* 201, capital E, acute accent */
 	"Ecirc",	/* 202, capital E, circumflex accent */
-	"Euml", 	/* 203, capital E, dieresis or umlaut mark */
+	"Euml",		/* 203, capital E, dieresis or umlaut mark */
 	"Igrave",	/* 204, capital I, grave accent */
 	"Iacute",	/* 205, capital I, acute accent */
 	"Icirc",	/* 206, capital I, circumflex accent */
-	"Iuml", 	/* 207, capital I, dieresis or umlaut mark */
+	"Iuml",		/* 207, capital I, dieresis or umlaut mark */
 	"ETH",		/* 208, capital Eth, Icelandic (or Latin2 Dstrok) */
 	"Ntilde",	/* 209, capital N, tilde */
 	"Ograve",	/* 210, capital O, grave accent */
 	"Oacute",	/* 211, capital O, acute accent */
 	"Ocirc",	/* 212, capital O, circumflex accent */
 	"Otilde",	/* 213, capital O, tilde */
-	"Ouml", 	/* 214, capital O, dieresis or umlaut mark */
+	"Ouml",		/* 214, capital O, dieresis or umlaut mark */
 	"times",	/* 215, multiplication sign */
 	"Oslash",	/* 216, capital O, slash */
 	"Ugrave",	/* 217, capital U, grave accent */
 	"Uacute",	/* 218, capital U, acute accent */
 	"Ucirc",	/* 219, capital U, circumflex accent */
-	"Uuml", 	/* 220, capital U, dieresis or umlaut mark */
+	"Uuml",		/* 220, capital U, dieresis or umlaut mark */
 	"Yacute",	/* 221, capital Y, acute accent */
 	"THORN",	/* 222, capital THORN, Icelandic */
 	"szlig",	/* 223, small sharp s, German (sz ligature) */
@@ -807,34 +804,34 @@ PRIVATE CONST char * LYEntityNames[] = {
 	"aacute",	/* 225, small a, acute accent */
 	"acirc",	/* 226, small a, circumflex accent */
 	"atilde",	/* 227, small a, tilde */
-	"auml", 	/* 228, small a, dieresis or umlaut mark */
+	"auml",		/* 228, small a, dieresis or umlaut mark */
 	"aring",	/* 229, small a, ring */
 	"aelig",	/* 230, small ae diphthong (ligature) */
 	"ccedil",	/* 231, small c, cedilla */
 	"egrave",	/* 232, small e, grave accent */
 	"eacute",	/* 233, small e, acute accent */
 	"ecirc",	/* 234, small e, circumflex accent */
-	"euml", 	/* 235, small e, dieresis or umlaut mark */
+	"euml",		/* 235, small e, dieresis or umlaut mark */
 	"igrave",	/* 236, small i, grave accent */
 	"iacute",	/* 237, small i, acute accent */
 	"icirc",	/* 238, small i, circumflex accent */
-	"iuml", 	/* 239, small i, dieresis or umlaut mark */
+	"iuml",		/* 239, small i, dieresis or umlaut mark */
 	"eth",		/* 240, small eth, Icelandic */
 	"ntilde",	/* 241, small n, tilde */
 	"ograve",	/* 242, small o, grave accent */
 	"oacute",	/* 243, small o, acute accent */
 	"ocirc",	/* 244, small o, circumflex accent */
 	"otilde",	/* 245, small o, tilde */
-	"ouml", 	/* 246, small o, dieresis or umlaut mark */
+	"ouml",		/* 246, small o, dieresis or umlaut mark */
 	"divide",	/* 247, division sign */
 	"oslash",	/* 248, small o, slash */
 	"ugrave",	/* 249, small u, grave accent */
 	"uacute",	/* 250, small u, acute accent */
 	"ucirc",	/* 251, small u, circumflex accent */
-	"uuml", 	/* 252, small u, dieresis or umlaut mark */
+	"uuml",		/* 252, small u, dieresis or umlaut mark */
 	"yacute",	/* 253, small y, acute accent */
 	"thorn",	/* 254, small thorn, Icelandic */
-	"yuml", 	/* 255, small y, dieresis or umlaut mark */
+	"yuml",		/* 255, small y, dieresis or umlaut mark */
 };
 
 /*

@@ -1,26 +1,1176 @@
 Changes since Lynx 2.8 release
 ===============================================================================
 
-extracted from 2002-09-12 (2.8.5dev.9)
+2004-02-04 (2.8.5rel.1)
+* build fixes for MINGW32 -DK
+* build fixes for OS/2 (reported by IZ) -TD
+
+2004-02-02 (2.8.5pre.5)
+* MINGW32-specific changes to build with that configuration using the configure
+  script in Cygwin and "-mno-cygwin" option -DK
+* move Cygwin defines for WIN_EX, _WINDOWS_NSL out of www_tcp.h, to the
+  configure script to fix a definition-order problem with CAN_CUT_AND_PASTE
+  (report by DK) -TD
+* improve workaround for ncurses to build with pre-4.0 versions that do not
+  declare attr_t -TD
+
+2004-01-28 (2.8.5pre.4)
+* workaround to build with ncurses 4.2 -TD
+* fixes from Thorsten Glaser:
+  + use ${GNUSYSTEM_AUX_DIR}/mkinstalldirs if it exists.
+  + use $ac_config_sub variable in CF_CHECK_CACHE macro.
+  + add case in CF_XOPEN_SOURCE macro to prevent defining _XOPEN_SOURCE
+  + use $(MKINSTALLDIRS) variable in generated makefile.
+  + correct comment in lynx.cfg for the default value of FTP_PASSIVE 
+  + increase pattern length for mkdtemp() call.
+* add command-line & menu option/config variables to replace the compile-time
+  UNDERLINE_LINKS definition (suggested by BL) -TD
+* correct ownership of installed lynx_doc directory (report by FLWM, PG) -TD
+* modify configure check for tar to test several common variants including
+  star, modify makefile.in to use the configured 'tar' program (request by
+  FLWM) -TD
+* compiler ifdef-fixes -BL
+* documentation updates for DJGPP and OpenSSL -DK
+* fixes/updates for DJGPP makefiles -DK
+* modify po/makefile.inn to substitute the PACKAGE and VERSION strings into
+  lynx.pot automatically, and to remove the unused boilerplate header comment
+  (suggested by LP) -TD
+* fixes for substituted project-version in configure script -TD
+
+2004-01-24 (2.8.5pre.3)
+* update documentation's version numbers for release -TD
+* modify configure check for libbz2 to allow for older headers which do not
+  include <stdio.h> -TD
+* add configure option --enable-locale-charset, which adds configure settings
+  and an option-menu checkbox telling lynx if it should use the function call
+  nl_langinfo(CODESET) to find the display character set rather than rely on
+  the user to set it via lynx.cfg or the options menu (discussion with Andreas
+  Metzler) -TD
+* remove intl subdirectory (gettext-0.10.35), since some of the ".po" files
+  have been modified to rely upon newer features of gettext.  Modified
+  configure script macro to report this properly -TD 
+* add SSL_CERT_DIR, SSL_CERT_FILE to lynx.man (suggested by Stef Caunter) -TD
+* documentation updates for DJGPP -DK, LP, FLWM
+* update address for Free Software Foundation in COPYHEADER and COPYING
+  (Atsuhito Kohda).
+* change CF_CHECK_IPV6 to warn rather than error-out if a working getaddrinfo()
+  function cannot be found.  The previous behavior would warn on Linux and
+  error-out on other systems (report by RobertM) -TD
+* localized displayed strings used for popups in options menu -TD
+* add SHOW_KB_NAME to allow user to decide whether to display "KB" or "Kib"
+  or even "Kilobytes" for the progress message (discussion on lynx-dev) -TD
+* correct form generated to select Visited Links page in LYHistory.c to match
+  the values used in LYOptions.c with new function LYMenuVisitedLinks, and
+  corrected ifdef to ensure that menu is generated when the forms-based option
+  menu is configured (report by TH) -TD
+* modify configure check for ranlib to use AC_CHECK_TOOL, since AC_PROG_RANLIB
+  does not do proper cross-compiling checks.  This actually applies to autoconf
+  2.5x -- autoconf 2.13 does less in that area -TD
+* update config.guess (2004-01-05) and config.sub (2004-01-05).
+* ensure that freeaddrinfo() is only called if lynx has initialized its
+  parameter, fixes a core-dump on IRIX6.5 -TD
+* change remaining references for lynx.browser.org to lynx.isc.org (reported by
+  Frederic L W Meunier) -TD
+
+2004-01-19 (2.8.5pre.2)
+* update URLs in docs/README.ssl (Stef Caunter, DK).
+* use http://search.lycos.com rather than the messy http://www.lycos.com -DK
+* update some URLs in lynx_help -FLWM (Frederic L W Meunier)
+* remove a few unnecessary #include's (reported by Frederic L W Meunier) -TD
+* fix some compiler warnings with casts -PG
+* add docs/ directory to "make install-doc" rule.  If the help-files are
+  compressed, the same will apply to the non-README files in that directory
+  (reported by Frederic L W Meunier) -TD
+* minor fixes to allow compiling with K&R compiler, e.g.,SunOS 4.x with the
+  5lib curses -TD
+* split up remove_file() in LYLocal.c so directory removal is performed in a
+  separate function remove_directory().  Neither will perform an "rm -rf",
+  but only single operations "rm" and "rmdir".  The original behavior can be
+  obtained by setting RMDIR_PATH to point to a script which does "rm -rf"
+  in lynx.cfg (suggested by Pat Walsh).
+* modify configure script so NetBSD does not define _XOPEN_SOURCE, since that
+  makes the IPv6 code not compile.
+* modify configure script to prefer _SGI_SOURCE on IRIX6.5 to allow it to
+  compile IPv6 support (report by RobertM) -TD
+* replace fixed-buffer Style_className[] with a dynamically-allocated buffer,
+  needed for large pages which lack correctly-nested tags, e.g.,
+    http://www.aspas-nature.org/petitions/petition2.html
+  (reported by Frederic L W Meunier) -TD
+* move OMIT_SCN_KEEPING definition to LYHash.h, to avoid mismatch between the
+  LYCurses.c and HTML.c -TD
+* remove obsolete OPT_SCN ifdef from HTML.c since the inactive side does not
+  compile -TD
+* fix a few out-of-bounds errors in LYSetHiText() and related functions,
+  which were found by valgrind -TD
+
+2004-01-07 (2.8.5pre.1)
+This version has been test-built on
+* Linux (ncurses, ncursesw, PDCurses, slang),
+* FreeBSD 4.9, 5.1 (ncurses, ncursesw),
+* Tru64 4.0d, 5.1 (cc, curses),
+* OpenVMS,
+* OS/2 EMX,
+* win32 (Visual C++ 6.0 and Borland C++, Cygwin),
+* AIX 4.3, 5.1,
+* HPUX 11,
+* Solaris 8, 9.
+Other recent builds include IRIX 6.5 (cc and gcc, curses/ncurses),
+FreeBSD 4.1, 4.8, NetBSD 1.5, 1.6 and OpenBSD 2.8 (curses/ncurses).
+
+2004-01-07 (2.8.5dev.17)
+* fix initialization of LYlines and LYcols for curses configurations other than
+  ncurses which implement pads -TD
+* fix ifdef's for alloca(), e.g., on AIX 4 -TD
+* fix misspelled LYGetEnv/LYgetenv in DJGPP configuration -DK
+* a few portability fixes to allow building on OS/2, AIX, Tru64 and HPUX -TD
+* add docs/README.rootcerts -IZ, Stef Caunter, Johannes Hromadka)
+* update po files (ca.po, da.po, de.po, et.po, hu.po, ru.po, sv.po, tr.po and
+  zh_CN.po) from
+  http://www.iro.umontreal.ca/contrib/po/maint/lynx/
+* correct some mismatches between INSTALLATION and "configure --help" (prompted
+  by discussion with Stef Caunter) -TD
+* undef conflicting symbols "small" and FILE_DOES_NOT_EXIST which are
+  misdefined in Cygwin's w32api headers (report by Frederic L W Meunier) -TD
+* amend check for refresh-URL to ensure it only prepends a link for text/html
+  content type (report by Carlton Anderson).
+* do not strip parameters from refresh-URL (report by Carlton Anderson gave an
+  example of their use) -TD
+* correct logic for resetting count of leading/trailing spaces in S_litteral
+  case (report by TH) -TD
+* remove obsolete XMOSAIC_HACK defines -TD
+* adapted patch by Bjoern Jacke <bjoern@j3e.de> to ensure that toupper(),
+  tolower() and isupper() macros are interpreted in POSIX locale.  This is
+  ifdef'd with EXP_ASCII_CTYPES -TD
+* improve check for Unix-style shell given in $SHELL by limiting the check to
+  the base-name (discussion with GV, DK) -TD
+* modify increment_tagged_htline() to reallocate its HTLine parameter if the
+  result would be larger than the allocation.  This can happen when a large
+  textarea is adjusted (report by Thorsten Glaser)  -TD
+* add ifdef'd logic to change HTLine to calloc() rather than memory pools,
+  making it possible to use valgrind, etc., for debugging -LP
+* modify version shown for SSL to be derived from runtime SSLeay_version()
+  function if linked with OpenSSL or SSLeay.  Add corresponding definition
+  for GNU TLS (discussion by Frederic L W Meunier, GV) -TD
+* add check for broken ProFTPD 1.2.5rc1, e.g., at ftp://ftp.oldskool.org/pub,
+  and force a reconnection if an error 550 is detected when doing RETR.  This
+  is ifdef'd with BROKEN_PROFTPD and checks version (reports by GV, DK) -TD
+* modify file-upload to not print a warning message if the form-field is empty
+  (Frank Heckenbach).
+* add a few null-pointer checks to GridText.c (addresses symptoms reported by
+  Frederic L W Meunier when nested-tables are toggled off) -TD
+* modify LYTrimNewline() to trim carriage-returns as well as line-feeds, making
+  it possible to share cookie files between platforms that have different
+  line-terminations (report by Frederic L W Meunier) -TD
+* rename EXP_PERSISTENT_COOKIES ifdef to USE_PERSISTENT_COOKIES -TD
+* rename EXP_READPROGRESS ifdef to USE_READPROGRESS -TD
+* rename SOURCE_CACHE ifdef to USE_SOURCE_CACHE -TD
+* change a few configure script defaults to "enable":  source-cache, prettysrc
+  and read-eta.  Also change default for read-eta configuration flag to "Show
+  KB/Sec" (requests by LP, Frederic L W Meunier) -TD
+* modify generated help_files.sed script to fix a couple of cases where the
+  intermediate result had more than 2 ".gz" substrings to reduce (reported by
+  IZ) -TD
+* change configure script to compile-in file-upload by default, change its
+  corresponding ifdef to USE_FILE_UPLOAD -TD
+* use EXEEXT, OBJEXT substitutions in makefile.in -TD
+* update configure script check for getbegx(), etc -TD
+* revert table-layout changes from dev.15/dev.16 because of unresolved
+  issues -TD
+* add configure option --with-bzlib -TD
+* modify bzip2/zlib ifdef's to make them independent -TD
+* implement support for bzip compression by internal calls to libbz2 -IZ
+* make usage of EDIT_A_PREV_SHORTCUT and EDIT_THE_PREV_SHORTCUT consistent
+  (report by LP) -TD
+* if a document is in the cache (the rendering is in memory), on reload it
+  should not be cleared from the cache until the connection to the server is
+  opened; if the connection fails, the user will reuse the old version (request
+  by IZ) -LP
+* for DJGPP, escape all backslashes in commands given to LYSystem() when
+  a Unix-style shell is given in $SHELL -DK, TD
+* correct strings in LYOptions.c so ENABLE_LYNXRC works for bookmark_file
+  and run_all_execution_links -DK
+* modify comparison in USE_CURSES_PAIR_0 ifdef of parse_attributes() to take
+  into account the mono-attributes as well.  This fixes a case where a color
+  style might have the same color-attributes as the background, and would
+  incorrectly fall-through to use the mono-attributes (report by DK) -TD
+* rewrote lynx_chg_color() to handle a COLORS value of 16 (report by TH) -TD
+* redefine PDCurses' COLORS value to 16, since it incorrectly uses 8.
+* add -scrsize option and corresponding SCREEN_SIZE value to lynx.cfg to allow
+  lynx's screensize to be specified.  To display background color properly,
+  this also requires a patch to PDCurses:
+    http://www.t3.rim.or.jp/~patakuti/tmp/lynx/PDCurses-2.5.patch.resize
+  This requires PDCurses 2.5 and higher -TH
+* add a clean-rule to src/chrtrans/makefile.bcb -TD
+* fix pathname generated for "View temporary file" in LYDownload.c using new
+  function LYAddPathToSave() (report by P.J.Walsh) -TD
+* comment-out --enable-libjs option since it is not used -TD
+* change code to match lynx.cfg description for FORCE_COOKIE_PROMPT and
+  FORCE_SSL_PROMPT, making "prompt" rather than "default" the keyword to use
+  when telling lynx to prompt (report by DK) -TD
+* really add FORCE_COOKIE_PROMPT setting to lynx.cfg (report by DK) -TD
+* change default of configure script options --enable-source-cache and
+  --enable-prettysrc to non-experimental to "yes", so they will normally
+  be compiled-in, but normally disabled in lynx.cfg (suggested by LP).
+* modify configure script and related ifdef's to build with gnutls 0.8.9
+  (report by Atsuhito Kohda) -TD
+* modify ifdef's to use mkdtemp() if it is available (prompted by MirBSD
+  patch) -TD
+* several fixes from Thorsten Glaser (MirBSD):
+  + workaround for invoking shell scripts when executable permissions are
+    discarded as a result from using CVS.
+  + adjust buffer-size used in a readlink() call in case the result is too
+    long to include trailing null.
+  + change default ftp mode to passive.
+  + if ftp connection fails, automatically retry, switching between passive
+    and active modes.  Do this retry switching only when connecting to a
+    different host.  A new variable ftp_local_passive distinguishes this
+    from the user preference in ftp_passive.
+  + improved certificate handling (case-insensitive domain-comparison, strip
+    port-numbers from comparison).
+  + fix a few typos & compiler-warnings.
+* add PT154 charset support.  See
+  http://www.iana.org/assignments/charset-reg/PTCP154 for more information. 
+  (patch by Timur Birsh <birsh@mail.kz>)
+* integrate some improvements for configure script in CF_BUNDLED_INTL and
+  CF_OUR_MESSAGES from tin and dialog -TD
+* remove #undef for UTF8 from UCMap.h, rename UTF8 variable, modify configure
+  check for slang to test-compile with with the Debian slang-utf8 package -TD
+* modify configure script to not use "head -1", which does not work for some
+  platforms when POSIXLY_CORRECT (sic) is set -TD
+* fix configure script check for term.h, which may be <ncursesw/term.h> -TD
+* modify an ifdef in HTCheckForInterrupt() to allow compile with DJGPP -GV
+* add docs/README.sslcerts (Stef Caunter <cauntes@mail.mohawkc.on.ca>).
+* modify LYLocalFileToURL() to allow for CurrentDir() returning a value that
+  does not begin with a slash, e.g., with DJGPP which returns a drive-letter
+  first -DK
+* amend change in dev.15 to HTParse() to escape spaces, to exclude non-URL
+  strings such as absolute filenames (report by Patrick Ash) -TD
+* modify LYParseTagParam() (added in dev.13) to not stop on ';' (fixes a bug
+  reported by LV which broke complicated refresh-URL containing "&amp;") -TD
+* change default start page to lynx.isc.org, since lynx.browser.org is not
+  maintained -TD
+* modify HTML_start_element() to work with a case where there is an HREF
+  attribute without a value, fixes bug introduced after dev.9, e.g., for
+        X-URL: http://bankr.tsr.ru/tv-6.shtml
+  (also reported by Frederic L W Meunier for http://www.jacotei.com.br/) -LP
+* correct construction of link to temporary filename in download options, did
+  not port to DOS-pathnames (report by LP) -TD
+
+2003-06-01 (2.8.5dev.16)
+* add zh_CN.po from
+  http://www.iro.umontreal.ca/contrib/po/maint/lynx/
+* updated obsolete link for nntp in users's guide -TD
+* add F_FILE_TYPE to F_TEXTLIKE() macro, and use it consistently in a few more
+  places, making editing in filename fields consistent with other text input
+  fields -TD
+* add LYAdjHiTextPos() to modify the behavior of color-style code, so leading
+  blanks are not highlighted (reported by Frederic L W Meunier) -TD
+* modify CacheThru_new() to accept "https:" URLs for source-caching (report
+  by Chuck Martin) -TD
+* adapt some of the SH_EX ifdef'd features:
+  + add -delay option, to make progress messages slow, along with corresponding
+    code for lynx.cfg -TD
+  + show build date/time for systems that do not use a configure script.
+  + use LYK_CHG_CENTER keycode bound to ^Q to control whether table cells are
+    centered.  The command-line -center option also controls this behavior.
+* add BIN_SUFFIX, TEXT_SUFFIX to userdefs.h -TD
+* modify BeginInternalPage(), adding a doctype to generated internal pages
+  to allow validating them -TD
+* modify HTFWriter.c to use binary suffix for any file with an application
+  presentation type, to better distinguish it from text and html.  Use text
+  suffix for any "text/" file other than "text/html".  These changes cover the
+  most common cases needed to make a link to view the temporary file useful in
+  the download page -TD
+* modify LYdownload_options(), adding a link to view the temporary file if the
+  downloaded file is text or html -TD
+* modify LYwouldPush(), omitting the download page from list of user-interface
+  pages which should not be pushed onto the history stack when visiting another
+  page, such as info or help.  Otherwise the downloaded file is discarded
+  (report by BL) -TD
+* simplify set_vi_keys() and related functions using table-driven
+  set_any_keys() and reset_any_keys() -TD
+* HTAnchor_findAddress now returns HTParentAnchor, avoid casting -LP
+* change select timeout in HTCheckForInterrupt() to zero, allowing immediate
+  return rather than waiting (DJGPP otherwise blocks for 50msec).  For Unix
+  platforms, the DontCheck() function limits the amount of polling which
+  otherwise would be too much CPU usage -LP
+* modify configure check for gcc -Winline warning to work around defect in
+  gcc 3.3 -TD
+* fix bug introduced recently in forms-submitting for TEXTAREA; the "%0d%0a"
+  was put after each line rather than before, making the first and second lines
+  joined (report by LV) -TD
+* reset the leading/trailing space counts in error-recovery logic added in
+  2.8.5dev.15 for S_litteral case in SGML_character().  Otherwise a mismatch,
+  e.g., due to a stray "<" or ">" in <script>...</script>, prevented a match
+  on the </script> -TD
+* do not free adult_table[] atexit - it should be perfectly empty after
+  free'ing all HText's.  (There is an error if it is not empty at exit) -LP
+* unnamed child anchors (`children_notag' list) now use HText memory pool.
+  Links properly deleted when reparsing the document -LP
+* Use less memory for documents with many anchors:  most anchors are never
+  visited, just stored for the reference.  So fill in adult_table[] with
+  HTParentAnchor0 (36 bytes size) instead of full HTParentAnchor (~200 bytes). 
+  HTParentAnchor now allocated on demand, nearly 1:1 to HText.  [more comments
+  in HTAnchor.h, changes located in HTAnchor.c] -LP
+* HTParentAnchor0 stores its hash value, to avoid calling HASH_FUNCTION twice
+  on the same anchor (Re:  HTAnchor_delete()) -LP
+* fix a potential out-of-bounds bug in HTBEquivalent() -LP
+* change strrchr() calls to strchr() in a few src/*.c file when parsing
+  "#fragment" left-to-right -LP
+* modify HTFWriter_abort() to remove file on error -IZ
+* added hot.paste style which puts a right-arrow at the UR corner (which is
+  currently unused).  Clicking on it initiates a GOTO to the current selection
+  (same as PASTE_URL action).  The hot.paste style is disabled unless STYLES
+  and CUT_AND_PASTE are both enabled.  Disabled and the user defines hot.paste
+  in the ".lss" file -IZ
+* modify LYK_PASTE_URL case in LYMainLoop.c to allow pasting URLs of the form
+  <address> and "<URL:address>" to lynx.  This is useful when it is not easy to
+  choose address without the surrounding "<>" or "<URL:>" -IZ
+* make a minor memory saving (circa 15%) for table processing, improve yet
+  another case of "ladder" (as in the top of google results), and fixes one
+  case of "wrong indentation" (elements of a table which contained <center>
+  were made too wide) -IZ
+* modify Stbl_trimFakeRows() to compensate for 2.8.5dev.15 changes to
+  Stbl_addRowToTable() from 2.8.5dev.15 which caches shrinking cell arrays in a
+  pool.  It did not take into account reallocation of the same data, e.g., in
+  Stbl_reserveCellsInRow().  For example:
+    http://camden-sbc.rutgers.edu/FacultyStaff/Directory/default.htm
+  (report by Patrick Ash) -IZ
+* add FORCE_COOKIE_PROMPT setting to lynx.cfg, allowing for manipulation in the
+  options menu and (if LYNXRC_ENABLE is set) via the .lynxrc file.  This lets
+  the user decide whether to ignore prompting for cookies with invalid syntax.
+  If the prompts are ignored, a corresponding message is displayed -TD
+* add FORCE_SSL_PROMPT setting to lynx.cfg, allowing for manipulation in the
+  options menu and (if LYNXRC_ENABLE is set) via the .lynxrc file.  This lets
+  the user decide whether to ignore prompting for questionable aspects of
+  an SSL connection.  If the prompts are ignored, a corresponding message is
+  displayed -TD
+* change select() calls to use the expected 1+descriptor value documented for
+  that function rather than FD_SETSIZE.  It is possible that some very old
+  or unique platform would not work, but this is more efficient (discussion on
+  lynx-dev) -TD
+* modify logic for S_litteral case in SGML_character() to recover from spaces
+  between the '<', '>' and the corresponding end of the tag, e.g.,
+	<style >
+	< style >
+	< style >
+  match "<style>", and
+	</style >
+	< /style >
+	< /style >
+  match "</style>" (report by TH) -TD
+* correct a check in HText_trimHightext() for the last line of the display,
+  which left unhighlighted the portion of a multi-line anchor which fell in
+  that place (report by TH) -TD
+* correct an off-by-one in redraw_lines_of_link() which left the link on the
+  last line on a page highlighted when moving the cursor up (reported by Morten
+  Bo Johansen) -TD
+
+2003-04-27 (2.8.5dev.15)
+* change definition of docdir1, helpdir1 to avoid using ksh-semantics (see
+  2.8.5dev.2) -TD
+* update ja.po, uk.po, zh_TW.po from
+  http://www.iro.umontreal.ca/contrib/po/maint/lynx/
+* improve layout of TRSTable.c, reducing "laddering" effect, where cells in
+  different columns do not overlap by lines -IZ
+* modify SGML_new() to allow display charset-switching when reloading a
+  document -IZ
+* fix a buffer-size in LYK_PASTE_URL case in LYMainLoop.c -IZ
+* various improvements to load-time for TRSTable.c -IZ
+  As a test:
+   <URL:ilyaz.org/software/tmp/table_2col_bold_it_500000.html.gz>.
+  This is a simple table with 2 columns, one with bold contents, another with
+  italic one.  The total number of rows is 500K.  With the patch and an
+  acceptable malloc(), lynx should use the working set of about 110M to show
+  the table.  On my system with 128M memory, this leads to only 4M of the
+  process space swapped.
+* add case LYK_TO_CLIPBOARD to HTCheckForInterrupt (not a good place), to allow
+  COPY command to work during download (copying the location to clipboard). 
+  The best thing would be to get the location *after* redirects, but this will
+  require some additional work -IZ
+* add popen-based support for cut/paste.  This is a slightly reworked patch to
+  GNU readline.  If RL_PASTE_CMD and RL_CLCOPY_CMD are defined in the
+  environment, lynx will use them as commands to do cut&paste.  The simplest
+  such commands could just store/retrieve things from
+  /tmp/.clipboard_user-name; more advanced ones could use X clipboard -IZ
+* modify yawerty_kb.h to map U+0411 and U+0431 to 'B' and 'W' positions
+  respectively.  The map contained U+0412 and U+0432 at those positions,
+  which are duplicated at other positons -IZ
+* fix HTLoadFinger() which was miscasting const data -TD
+* update Subir Grewal's Lynx links URL to the newest location
+  http://www.subir.com/lynx.html -TD
+* add configure option --with-gnutls, to allow lynx to be built with gnutls. 
+  Used gnutls 0.8.6 on Redhat 8.0 to login at yahoo (gnutls is not very
+  portable, so this is an experimental option) -TD
+* modify loop in HTInitProgramPaths() to convert enum ProgramPaths to an
+  integer, to accommodate HPUX 11.22 compiler (report by JS) -TD
+* amend change in dev.13 to HTParse() to escape spaces, to exclude lynx's
+  internal URL types such as lynxprog (report by P.J.Walsh) -TD
+* modified ifdef's to enable -connect_timeout option for DJGPP -GV
+  In particular, in LYUtils.c, undef "select" in case Lynx is compiled with
+  curses (and not S-Lang).  Watt-32's select_s cannot be used on a 
+  stdin handle, so one must undef it and use DJGPP's select().
+* modify ifdef in HTCheckForInterrupt() to work with MingW and PDcurses -GV
+* add version information for the macros in aclocal.m4 (request by Lars
+  Hecking) -TD
+* modify file-upload to use actual binary-data rather than base64-format -TD
+* generate unique boundary for multipart data in HText_SubmitForm() -TD 
+* reorganize HText_SubmitForm(), maintaining post data using bstring's -TD
+* modify HText_SubmitForm() to add field name for the fake coordinate pair
+  when formatting a multipart submit (report by Peter Pilsl
+  <pilsl_@goldfisch.at>) -TD
+* change post_data to a bstring; implement functions and macros for
+  manipulating bstring data.  This allows post_data to maintain embedded nulls,
+  e.g., for file-upload -TD
+* fix ifdef's for <ncursesw/term.h> -TD
+* fixes for file upload -IZ
+  + modify logic for headers use write them even if MultipartContentType was
+    not set.
+  + change logic for base64 to be used ONLY if \0 was found.
+    If a "strange" char is found, only change "text/plain" to
+    "application/octet-stream".
+* change a couple of _user_message() calls to HTUserMsg2() calls so their
+  content is saved in the "Messages" buffer -IZ, TD
+* undo 2002-11-11 SGMLFindTag optimization (problem with color styles,
+  reported by IZ). Optimize the function by storing the previously found tags.
+  Also use my_casecomp() to decrease AS_casecomp() calls by testing the
+  first character manually -LP
+* optimize HTStyle comparison:  just compare numbers from enum.
+  It was previously implemented as a strcmp comparison with a fixed string.
+  Used in a very inner loop, in HTML_put_character() -LP
+* LYEnsureAbsoluteURL() now absorbs LYFillLocalFileURL() call -LP
+* optimize LYLegitimizeHREF() -LP
+* in HTML.c, revise href resolving logic.  HTAnchor_findChildAndLink now
+  resolves href with respect to BASE internally; HTParse incorporates
+  LYFillLocalFileURL call (after the parsing, and only when the related string
+  is not empty and parse includes access, host, path and punctuation).  This
+  removes all LYFillLocalFileURL and most HTParse calls from HTML.c and makes
+  code more consistent. (Previously, functions were called in a different order
+  for document with/without BASE, which had the side effect in some cases,
+  e.g., href="c:" on a DOS machine was resolved properly with _any_ base, and
+  badly broken without:) -LP
+* add/use HTParseALL macro to simplify coding -LP
+* revise "internal links" logic (read KW 1997-11-03 notes, before v2.8).
+  In HTML.c and HTAnchor.c, internal links code affects only parent lookup
+  in the adults table (more correct in case of post data), now a mainline:
+  we omit "#ifndef DONT_TRACK_INTERNAL_LINKS" condition in the two files.
+  In HTML.c, avoid using internal links for unrelated `src=' attributes
+  (BGSOUND_SRC, FRAME_SRC, IFRAME_SRC, OVERLAY_SRC, EMBED_SRC links:) -LP
+* refine HTAnchor_delete() vs deleteLinks() mutual recursion logic - LP
+* change ALIGN_SIZE in GridText.c to sizeof(double), which is probably more
+  portable than "8" -LP
+* modify a syslog() call to guard against possible '%' in its parameter -TD
+* remove extra quotes from calling HTMake822Word() for form boundary names
+  (addresses bug report for fastmail.fm by P.J.Walsh) -TD
+
+2003-02-04 (2.8.5dev.14)
+* correct a missing ">" at the beginning of page sent as response to mailto -TD
+* simplify (clarify) anchor structure:  links now moved from HTAnchor to
+  HTChildAnchor (the only place they were used).  By this we avoid unneeded
+  casting in calls to HTAnchor_followMainLink, HTAnchor_followTypedLink,
+  deleteLinks. [GridText.c, HTML.c, LYList.c, HTAnchor.c] -LP
+* as of 1998-11-21 "workaround for multiple anchors in the same (invalid) HTML
+  document with the same NAME and different destinations (HTAnchor.c) - KW",
+  along with skipping HTAnchor_link() call in this case now, we realize that
+  HTChildAnchor may have only a single link.  (Previously implemented by
+  mainLink and links list).  This simplifies HTAnchor.c -LP
+* simplify HTChunk.c -LP
+* optimize LYRemoveNewlines() and LYRemoveBlanks() -LP
+* check for no common name (CN) in certificate when connecting via SSL, fixes
+  a SIGSEGV with
+    https://web-shokai.tokyo-denwa.net/
+  (patch by patakuti@t3.rim.or.jp)
+* add uk.po (Ukranian) from
+  http://www.iro.umontreal.ca/contrib/po/maint/lynx/
+* modify HTList_linkObject to avoid an infinite loop in HTList_unlinkObject due
+  to relinking some node several times, corrupting the previous list chain -LP
+* increase ATEXITSIZE to 50, 40 was not enough -TD
+* ifdef-out call to Cygwin_Shell() in LYMainLoop.c, which does not work
+  properly for some environments (report by Corinna Vinschen
+  <vinschen@redhat.com>, forwarded by Frederic L W Meunier) -TD
+* correct a bug in HTAnchor_findChildAndLink() introduced in dev.13 handling
+  USEMAP, e.g.,
+    http://www.sendas-delivery.com.br/topo_sendas.asp
+  (reported by Frederic L W Meunier) -LP
+* minor fixes for K&R compiler on SunOS: prototype of HTDOS_slashes(),
+  definition of LYLeakSequence -TD
+
+2003-01-22 (2.8.5dev.13)
+* change new memory-allocation in HTString.c and GridText.c to provide pointers
+  to data aligned to the host's pointer-size, to work on Tru64 where this
+  happens to be 8 -TD
+* resync ".po" files using msgmerge -TD
+* remove quadratic complexity from insert_blanks_in_line() usage with large
+  tables (Stbl).  It occasionally cleans up split_line() a bit.  CPU load
+  anomaly reported by BL -LP
+* ALLOC_IN_POOL, POOL_NEW, POOL_FREE macros now became functions, suggested by
+  BL -LP
+* define HAVE_ALLOCA for djgpp fixed-configuration -LP
+* add command-line option (--nested-tables) to help in testing this feature -TD
+* add command-line option (--find-leaks) to disable the memory leak checking
+  code, allowing one to build an executable which is useful for both normal
+  and leak-checking (request by Frederic L W Meunier) -TD
+* improve performance of HTParse() for very long strings -LP
+* fix memory leak in HTFileSaveStream() -LP
+* further optimization in HTAnchor.c - save 3 mallocs per HTChildAnchor by
+  using new HTList_ functions:  HTList_linkObject(), HTList_unlinkObject(),
+  HTList_unlinkLastObject() which utilize external memory, no malloc/free -LP
+* modify "make install-help" rule to avoid warning message about keystrokes
+  subdirectory (report by Martin Mokrejs) -TD
+* optimize !HText_TrueLineSize() expressions as HText_TrueEmptyLine() -LP
+* optimize is_url(), rewriting it as case-statements to avoid unnecesary
+  comparisons, make similar optimization in HTParse() -LP, TD
+* corrected logic in is_url() where the "://" was not necessarily checked in
+  the proper position - TD
+* for color-style configuration, add a link to lynx.lss from LYNXCFG: -TD
+* simplify setup of internal pages with new function InternalPageFP() -TD
+* modify parsing of refresh-URL to strip single quotes, to handle
+    http://tovar.yandex.ru/
+  (reported by LP) -TD
+* investigated conflict between NSL_FORK and _WINDOWS_NSL ifdef's for Cygwin
+  configuration in HTTCP.c; left them as-is since #undef'ing _WINDOWS_NSL in
+  that case causes problems connecting (feedback by Frederic L W Meunier) -TD
+* corrected an off-by-one error in computing the location of the bottom line
+  for mouse input in PDCurses configuration which made that area ignore mouse
+  clicks.  Merged almost-identical cases for mouse-input for NT/Windows95 -TD
+* ifdef'd out (USE_CURSES_PAIR_0) the ASSUMED_COLORS logic for the PDCurses
+  configuration (reports by DK) -TD
+* LYSetHiText(), LYAddHiText(), and LYClearHiText() use HText memory pool -TD
+* add atexit-cleanup for history stack, removed incomplete code for this from
+  cleanup(), since that gave misleading results in leak-checking.  Fix a few
+  small leaks as well (reported by LP) -TD
+* modify cleanup() to leave the trace file open if checking for leaks -TD
+* add some simple statistics to summary in Lynx.leaks report -TD
+* add malloc-sequence number to Lynx.leaks report, to help with debugging -TD
+* fix memory leaks in nested-tables logic, which did not free subtable data
+  if there was an enclosing table (reports by Frederic L W Meunier) -TD
+* adapted change by LP to allocate HTLine's from memory pool -TD
+* move fallback definition of MAXHOSTNAMELEN from HTFTP.c to www_tcp.h so it
+  can be used in HTTCP.c (Debian #140682).
+* improved configure script checks for ncurses -TD
+* correct description of XLOADIMAGE_COMMAND in lynx.cfg (report by Mats
+  Peterson <mats@alicja.dyns.cx>) -TD
+* fix configure script so it does not compute basename of system mailer when
+  none was found.  Add check in LYMail.c, LYPrint.c to avoid using system
+  mailer when it is not configured (report by Frederic L W Meunier) -TD
+* update several po files (da.po, de.po, et.po, hu.po, sv.po, tr.po) from
+  http://www.iro.umontreal.ca/contrib/po/maint/lynx/
+* correct logic in recent HTAnchor_findChildAndLink() changes around internal
+  links and fragments; avoid unneeded reallocations by using HTParseAnchor()
+  instead of HTParse() -LP
+* trim some fat from HTML_start_element(), case HTML_A -LP
+* add optimized string functions StrAllocCopy_extra() [and paired FREE_extra()]
+  which store string size and never shrink; for heavily reallocated strings in
+  temp objects.  Used in SGML.c for value[] fields currently -LP
+* in HTUtils.h, FREE macro was unsafe if happen before 'else' -LP
+* modify HTParse() to escape any spaces which remain from LYLegitimizeHREF() or
+  other sources (report by Peter Rasmussen <plr@udgaard.com>) -TD
+
+2002-12-18 (2.8.5dev.12)
+* remove a check in LYMain.c for Cygwin's console, which does not work with
+  screen (report by Frederic L W Meunier) -TD
+* undo line/pool logic, fixing a memory leak -LP
+* changes proposed by Bela Lubkin, to optimize ALLOC_IN_POOL macro
+  substitution, pack bitfields in HTStyleChanges to make them more compact on
+  some systems -LP
+* correct logic of do_check_recall(), broken in dev.9 cleanup of pathname
+  constants with LYIsDosDrive() (report by Frederic L W Meunier) -TD
+* update makelynx.bat, built with slang configuration -TD
+* turn on file-upload in makefile.msc -TD
+
+2002-12-01 (2.8.5dev.11)
+* fix a typo in changelog date -TD
+* add project version & date to lynx.cfg -TD
+* document xxx_PATH variables in lynx.cfg -TD
+
+2002-11-11 (2.8.5dev.10)
+* modify file-upload to provide content-type based on file-suffix.  This is
+  needed to validate local html files with current the W3C validation service
+  webpage -TD
+* modify file-upload to warn but permit the filename or file contents to be
+  missing (report by Clemens Fisher) -TD
+* workaround for compiler bug in fix_httplike_urls() -BL
+* change enumShowColor so SHOW_COLOR_NEVER is zero as in 2.8.3, which makes the
+  result from LYChoosePopup() match the enum values.  This fixes a bug which
+  would make the slang configuration toggle back to color when accepting an
+  options screen (report by Sean McGuire <smcguire@soc.lib.md.us> and Carlton
+  Anderson) -TD
+* add a null-pointer check in content_is_compressed() -TD
+* in partial mode, load document with #fragment on the fly. Long awaited fix.
+  LYMainLoop_pageDisplay() now returns BOOL -LP
+* calculate WWW_SOURCE once, it is now a constant, not a define -LP
+* use malloc instead of calloc in several places, particularly in HTList
+  operations (each field initialized explicitely) -LP
+* fix a few typos in samples/mailcap (Carlton Anderson
+  <canderson1776@yahoo.com>).
+* ifdef'd default_fg and default_bg for PDCURSES to be 15, since that agrees
+  with lynx's use of color names, and works around a bug exposed by the
+  ASSUMED_COLORS change from 2.8.5dev.9 (report by DK) -TD
+* simplify pretty-source code in SGML.c using PUTS(), put_pretty_entity() and
+  put_pretty_number() -TD
+* refine S_attr test in SGML.c to make pretty-source code handle the case where
+  a blank precedes the '='.  The misplaced markers made lynx omit newlines from
+  the pretty-source view (report by LP) -TD
+* rewrote HTStat() to ensure that it does stat() for files on Windows -TD
+* HTTCP.c patch to make DJGPP/Watt-32 non-blocking connect in HTDoConnect().
+  This allows pressing 'z' to abort connections.  Removed extra _HTProgress()
+  for INET6; it overwrote previous progress message -GV, DK
+* in SGML.c, element stack now use a pool of 10 elements to avoid most of
+  malloc/free calls -LP
+* in HTParse(), use single alloca instead of three malloc/free pairs -LP
+* in HTParse.c, avoid most strcasecomp calls in scan() - LP
+* modify GridText.c to store lines, anchors, and forms in the same HText memory
+  pool as styles.  This will optimize memory allocation/deallocation by 8Kb
+  units.  The down side:  lines in TRST mode will be stored twice.  Some
+  structs are made a bit more compact -LP
+* add DJGPP to SINGLE_USER_UNIX special cases -DK
+* modify configure script to not strip the -g option from $CFLAGS if it was
+  present in the user's environment rather than autoconf adding it (report by
+  DK) -TD
+* add --with-curses-dir configure script option -TD
+* in SGMLFindTag, we translate string uppercase in-place and launch case
+  insensitive search, add SGMLFindUprTag() to cover the cases where the string
+  is readonly - LP, TD
+* DJGPP build restored.  MV_PATH was undefined long ago by mistake.  Fix recent
+  DJGPP changes in HTTCP.c:  move _resolve_hook few lines below, it will not
+  compile otherwise.  Remove minor warnings -LP
+* optimize parsing html with many relative links, href="#fragment" -
+  HTAnchor_findChildAndLink() and HTML_start_element(), case HTML_A:  now avoid
+  significant overhead when link == HTInternalLink (e.g., resolving against
+  base, lots of reallocations, parent lookup, etc., all are useless).  Two
+  functions affected.  [HTAnchor.c, HTML.c].  The code works both with and
+  without DONT_TRACK_INTERNAL_LINKS symbol -LP
+* optimize parsing of large html files - with thousands of anchors - LP
+  + remove quadratic complexity from split_line() usage [GridText.c].
+    Because of some work with anchors on the last(=split) line,
+    the anchors list was traversed from the beginning for each output line.
+    Now we store last_anchor_before_split  explicitly.
+    [According to gprof, split_line() weight decreased from 33% down to 4%,
+    with the following test file: 13,000 output lines, 3,100 anchors, ~800Kb]
+  + remove quadratic complexity from HTAnchor_findChild() usage [HTAnchor.c].
+    HTParentAnchor::children list was traversed zillion times, now we
+    split it into a tree (named anchors <a name=...>, fast search required)
+    and a list (just a storage for the rest anchors, no search required).
+    [The same file, gprof shows HTAnchor_findChild() weight decreased
+    from 11% down to 0.1%]
+  + remove quadratic complexity when generating a 'l'ist page,
+    now traverse anchors list only once [LYList.c, GridText.c].
+* add a search method to HTBTree implementation. - LP
+* amend check for refresh-URL to avoid adding a link if the retrieved page is
+  compressed, since the link would be added to the compressed file, corrupting
+  it (reported by Michel SUCH and Karl-Heinz Weirich <weirich@de.ibm.com>) -TD
+* strip parameters from refresh-URL -TD
+* correct misspelled $LYNX_LOCALEDIR variable in LYMain.c (reported by Michel
+  Such)
+* change the install procedure for lynx.cfg to attempt to update the file with
+  the user's customizations if any, and to save the old configuration
+  information in a series, e.g., lynx.cfg-1, lynx.cfg-2, etc. -TD
+* re-fix the problem with config.cache not being removed at the beginning of
+  the configure script - see 2.8.5dev.3 (report by Clemens Fisher) -TD
+
+2002-10-06 (2.8.5dev.9)
+* improve ETA data shown in experimental read-progress (from Debian #117476)
+* modify -dump, -source and related options which set dump mode to also set
+  -nopause (report by Benjamin Pflugmann <benjamin-mutt@pflugmann.de>) -TD
+* correct indexing in LYStyle.c our_pairs[] array, which did not allow for use
+  of default colors -TD
+* make ASSUMED_COLORS in lynx.cfg apply to normal curses implementations which
+  do not implement assume_default_colors() (prompted by discussion with
+  Bela Lubkin) -TD
+* make permanent an ifdef from HS which provides for truncating a too-long
+  title with an ellipsis -HN
+* gettext'ify a few overlooked strings in LYOptions.c -HN
+* modify LYGetHostByName() for MSDOS/DJGPP/Watt-32 to enable terminating it by
+  pressing 'z' (patch by Gisle Vanem)
+* update configure script macros for NLS to gettext 0.10.40 -TD
+* add PRCS version/date to lynx.cfg -TD
+* setup ifdef's for Unix-specific permissions checks to exclude single-user
+  systems such as OS/2 EMX, Cygwin and BeOS, which otherwise act like Unix
+  since we can run the configure script on those platforms -TD
+* re-order some tests in the configure script to allow pdcurses' X11 port to
+  be recognized as supporting color and line-drawing characters -TD
+* work around a Cygwin bug which causes subprocesses of a full-screen program
+  to dump core (perhaps reported by Frederic L W Meunier, but observed in
+  running lynx in a bash shell spawned from my directory editor) -TD
+* fix an inequality in HTDirTitles() which made the "Up to" link omitted for
+  the first level of an ftp listing, making it awkward to visit the parent
+  directory if one first visited a subdirectory -TD
+* change HTURLPath_toFile() to keep local URLs distinct from remote ones, so
+  win32 version will not display misleading drive letter on ftp listings -TD
+* rewrote Home_Dir(), adding checks for "My Documents" on Windows 2000, and
+  ensuring that the resulting directory actually exists -TD
+* change ifdef's in LYwaddnstr() to use waddstr() consistently, since
+  wide-character curses implementation treat the string in the given locale
+  anyway, just like the waddnwstr() call -TD
+* reduce clutter with new macro LYIsDosDrive() -TD
+* add ifdef's for OS/2 EMX to existing DOSPATH code which checks for drive
+  letter (Michel Such)
+* modify definitions of IsOurFile() and OpenHiddenFile() to allow trace file
+  to be written when one already exists -TD
+* use new macros LYSameFilename(), LYSameHostname(), LYIsNullDevice() to hide
+  platform-specific filename comparisons -TD
+* change sed delimiter in configure script to use '%' consistently, to avoid
+  using '@', which may appear in AFS pathnames (report by Martin Mokrejs) -TD
+* narrowed accommodation for paths with embedded blanks in LYLegitimizeHREF()
+  to exclude those containing newlines or tabs (report by Leslie Fairall for
+  http://www.realtor.com) -TD
+* modified VMS build scripts to allow linking with OpenSSL, tested with
+  OpenSSL-0.9.6g using UCX network libraries.  It is reported (by
+  <grant@rigel.cc.wmich.edu>) that one can modify the scripts to also build
+  with Multinet's UCX emulation, but the machine I used for testing has only
+  UCX (comp.os.vms discussion with Christoph Gartmann
+  <gartmann@immunbio.mpg.de>) -TD
+* modify UCSetBoxChars() to assume wide-character curses implementations can
+  draw boxes -TD
+* reduce the number of strncasecomp() calls with associated constants by making
+  macros for the lynx internal URL types, e.g., isLYNXCGI() -TD
+* modify logic that handles goto-fragment (e.g., G #foo) to update the URL
+  shown in the info page (Debian #113734) -TD
+* reduce clutter using new macros findPoundSelector(),
+  restorePoundSelector() and function trimPoundSelector() -TD
+* reduce clutter using functions for updating the strings in DocInfo, mainly in
+  LYMainLoop.c -TD
+* renamed 'document' to 'DocInfo' -TD
+* reduce clutter by using NonNull() macro consistently -TD
+* define HistInfo struct in terms of document, to make it clearer -TD
+* add verification of SSL server certificates.  It requires a "cert.pem" file
+  or cert files in the "certs" subdirectory in your OpenSSL directory for CA
+  verification.  The mod_ssl distribution includes a "ca-bundle.crt" that has a
+  good set of root certifying authority certs and works well for "cert.pem".
+  Adding custom CA root certs can be done by either putting them in the server
+  "cert.pem", or (for a normal user) copying "cert.pem", adding the cert, and
+  setting the SSL_CERT_FILE environment variable before running Lynx (Chris
+  Adams <cmadams@hiwaay.net>).
+* add REPLAYSECS config value to allow slowing command scripts down, for
+  testing -TD
+* implement a "set" command for command-scripts, allowing the script writer
+  to manipulate the sleep-times for messages (prompted by discussion with
+  Ville Herva) -TD
+* implement an "exit" command for command-scripts (Ville Herva)
+* modify logic for -cmd_script to stop reading from the command script when
+  an end-of-file is detected (patch by Ville Herva <vherva@niksula.hut.fi>).
+* fill in a few descriptions of restrictions for the help message, as well
+  as showing the on/off state of the "goto_xxx" restrictions -TD
 * correct inverted logic of restrictions table which made "-restrict=default"
   provide incorrect values for several items.  This was broken in 2.8.4dev.19
   (reported by Jeff Long <long@ukans.edu> and RobertM <robm@bob.bofh.org>) -TD
+* add environment variable LYNX_TRACE_FILE which, if given, overrides the
+  compiled-in value of Lynx.trace (or LY-TRACE.LOG).  This specifies the
+  name of the trace file relative to the home directory -TD
+* treat empty string for most environment variables, e.g., those specifying
+  a pathname, as null -TD
+* add environment variable LYNX_LOCALEDIR to simplify configuration on OS/2
+  EMX (from discussion with Michel Such) -TD
+* add alias for charsets "ISO-8859-8-I" and "ISO-8859-8-E" to "iso-8859-8"
+  (request by Atsuhito Kohda) -TD
+* modify handling of HTML_SUP to always append '^'.  It was checking if the
+  preceding character was a valid hexadecimal code (reported by HN and Steve
+  White <swhite@zipcon.net>) -TD
 * correct check for calling endwin() to allow for curses implementations
   without newterm (report/patch by Brett Lymn).
+* add koi8-r.html as a test for non-ANSI 8-bit displays.
+* construct "Accept-Encoding" gzip/compress parameters based on whether lynx is
+  built with zlib and/or gzip/compress paths are defined.  The latter is
+  assumed on Unix (by the configure script), though non-Unix environments may
+  lack those utilities (report by Roy Langford <rlnopicnodl@geeklife.com>,
+  analysis by Frederic L W Meunier) -TD
+* modify mouse support in slang configuration (Eduardo Chappa):
+  + Middle button takes you to the bookmarks file.
+  + Clicking on empty parts of the screen makes the screen scroll. This is
+    not 100% true, here are the caveats related to this:
+    + When you click in the first line of the screen pine goes back one screen,
+      the same happens when you click in the last line (this is normal Lynx
+      behavior, I did nothing in this respect).  With this patch, intermediate
+      scrolling is enabled, which means that left clicking in different (empty
+      parts) of the screen may move you half a screen or two lines.  The idea
+      is that close to the top you scroll more, close to the center you scroll
+      less and you scroll in the direction up or down according to which half
+      of the screen you click on.
+    + If you click on an empty part of the screen, Lynx changed its behavior
+      from doing nothing to moving the active link to the closest link near the
+      click.  This is not disabled by this patch, instead, if a closest link is
+      not found, the screen will scroll, according to the position of the link.
+* improve check in LYgetEnum() for ambiguous/abbreviated names in the lynx.cfg
+  file, e.g., to match the string "visited_links=first" without confusing it
+  with "visited_links=first_reversed" (report by vortex5 <vortex5@24i.net>,
+  analysis by TH) -TD
+* use StrAllocCopy() rather than strdup() in parse_style() (LYStyle.c) to
+  avoid false report from leak-checking (from report by Martin Mokrejs) -TD
+* share SSL handle between HTTP.c and HTAAUtil.c so that call of
+  HTAA_shouldRetryWithAuth() from HTLoadHTTP() updates the handle used in that
+  function.  This makes lynx able to get the user/password prompt for
+  https://enter.nifty.com/iw/ -TH
+* fix a highlighting problem in view-source mode, which left the final
+  character of the target unhighlighted -TH
+* modify LYStringToKeycode(), which is used by -cmd_script option to decode
+  characters, to handle hexadecimal codes written with -cmd_log option from
+  dev.8 changes (reported by Gleb V Kotelnitskyy <kiz@pth.ntu-kpi.kiev.ua>) -TD
+* modify ifdef's in LYCurses.h to implement underline-links for slang
+  configuration (report by TH) -TD
+* modify checks with WEXITSTATUS() and similar "result" macros to ensure that
+  they consistently use corresponding "test" macros such as WIFEXITED() -TD
+* add a null-pointer check in GridText.c to cover a problem with
+	http://209.1.58.86/store/
+  (reported by Walter Ian Kaye) -TD
+* add some more CTRACE's to LYCookie.c to help diagnose LV problem report -TD
+* updated nl.po (patch by Pieter-Paul Spiertz <pspiertz@sci.kun.nl>) -JS
+* new (cs.po, hu.po, tr.po) and updated (da.po, et.po, it.po, ru.po, sv.po) po
+  files from http://www.iro.umontreal.ca/contrib/po/maint/lynx/, used msgmerge
+  to align with 2.8.4's lynx.pot and corrected some minor issues highlighted by
+  check_po.  Checking for a newer version of check_po (to handle patterns
+  such as "%1$s") found none, but noticed a comment in gettext mailing list
+  stating that msgfmt does checking.  Comparing with "msgfmt -c -v", found
+  that it does useful checks, but misses about 1/4 of what check_po finds.
+  Will use both -TD
 * escape blanks and other non-7bit graphic characters in startfile and similar
   addresses to guard against interpreting the address as multiple lines
   during a GET, etc (report by Ulf Harnhammar <ulfh@Update.UU.SE>) -TD
 
-extracted from 2001-10-06 (2.8.5dev.3)
+2002-05-28 (2.8.5dev.8)
+* updated makelynx.bat (vtailor@gte.net).
+* recognize charset value in meta description even if content-type is not
+  given, in  LYHandleMETA() -VH
+* remove ifdef that disabled home/end keys with Cygwin configuration -DK
+* fix a problem when whereis target string, which includes Japanese and is top
+  of the second line in the link string, is in the current link (patch by
+  Hataguchi Takeshi).
+* fix a problem with highlighting Japanese string (patch by Hataguchi Takeshi).
+* modify LYDownload() to ensure that local addresses under DJGPP using the
+  special form of path beginning "/dev/" are passed to external programs
+  without stripping the initial slash from the path.  This special form of path
+  will be understood only by other DJGPP programs.  Addresses of the form
+  "/dev/x/" are equivalent to the DOS path "x:\".  Addresses of the form
+  "/dev/env/VARI" are equivalent to the environment variable "VARI" -DK
+* modify remove_bookmark_link() to assume that OS/2 EMX does not allow rename
+  of a file overwriting an existing one -IZ
+* recognize local .php files as HTML files (patch by Karl Eichwalder
+  <ke@suse.de>).
+* change LYCurses.c to not redefine gettext(), and use ScreenClear() instead
+  of clrscr() for DJGPP -DK
+* the DJGPP port of Lynx once used to compile with DJ Delorie's tcp/ip library.
+  It is no longer the case; Watt-32 is required.  Changed to assume WATT32 is
+  defined when DJGPP (or __DJGPP__) is defined (patch by Gisle Vanem).
+* change LYKeycodeToString() to provide a default translation for characters
+  which are not key-symbols, etc., so they may be used in command scripts
+  with the -cmd_script option (reported by Christoph Fabianek) -TD
+* new po files (ca.po, et.po, it.po, zh_TW.po) and updated de.po from
+  http://www.iro.umontreal.ca/contrib/po/maint/lynx/, used msgmerge to align
+  with 2.8.4's lynx.pot and corrected some minor issues highlighted by
+  check_po script by Stefan Hundhammer <sh@suse.de> -TD
+* some cleanup/restructuring of HText_SubmitForm(), incomplete - toward
+  implementing correct MIME boundary -TD
+* revalidate user's guide and related files using W3C validator via file-upload
+  facility -TD
+* simplify some loops in GridText.c using new function next_anchor() -TD
+* quote field-names used when submitting form-data as suggested in RFC 2068
+  (report by Lieven Tomme <lieven@itopia.com>) -TD
+* remove configure-check for mkstemp(), which is redundant given that lynx
+  writes temporary files in a directory which is not readable by other users.
+  On more than one system (e.g., Solaris), mkstemp() is not usable in the
+  manner we attempted, since it does not necessarily choose a distinct name if
+  the previously-chosen filename no longer exists (report/analysis by PG) -TD
+* correct a typo in configure macro CF_HEADER_PATH which told the script to
+  look for header files in the user's $HOME/lib rather than $HOME/include
+  directory -TD
+* update config.guess, config.sub -TD
+* add check for HTTP headers using Netscape extension "Refresh", and if found,
+  add a corresponding refresh-URL at the beginning of the document.  Fixes
+  Debian #126723.
+* strip username from URLs used in an HTTP GET, and warn about this condition.
+  The example given was
+    "http://www.microsoft.com&item%3dq209354@212.254.206.213/1338825GHU_98.asp"
+  the text of which could mislead a user into believe it was an official site
+  (reported by Frederic L W Meunier) -TD
+* add limit checks in HText_trimHightext() to fix an infinite loop visiting
+  this site (which contains a form with only hidden input fields):
+  1- http://www.ibazar.com.br/
+  2- Click "Cadastro" and accept all cookies
+  3- Click "[accepte.gif]"
+  (reported by Frederic L W Meunier) -TD
+
+2002-01-06 (2.8.5dev.7)
+* ifdef'd new directory-sorting code to compile when configure --disable-dired
+  is specified -TD
+* add (commented-out) definitions for building with OpenSSL in makefile.msc,
+  tested with OpenSSL 0.9.6c and Visual C++ 5.0 -TD
+* correct call to HTGetLinkInfo() in follow_link_number() from 2.8.5dev.6
+  changes to fix uninitialized pointer (report by PW) -TD
+
+2002-01-01 (2.8.5dev.6)
+* add configure options to link with dbmalloc and dmalloc debugging libraries
+  which offer different features than --enable-find-leaks -TD
+* restructured LYhighlight() and logic related to highlighted text using new
+  functions LYSetHilite(), LYAddHilite(), LYGetHiliteStr() and LYGetHilitePos()
+  to allow more than two lines to be highlighted in links (Debian #114062) -TD
+* simplified some of LYCookie.c with new functions find_domain_entry(),
+  alloc_attr_value() and parse_attribute() -TD
+* modify expansion of %s for WIN_EX EXTERN commands so that short names (used
+  when the command begins with an uppercase character) are not quoted, and use
+  backslashes.  The normal %s expansion uses forward slashes and may quote the
+  name if it contains a blank -TD
+* modify local directory sort by type to ignore leading '.' characters when
+  looking for filetype -TD
+* modify logic of HTDirEntry() to avoid storing a trailing backslash (DOS-style
+  path separator) in the anchor URL for local directory entries (from report
+  by Hataguchi Takeshi) -TD
+* amend change in 2.8.5dev.2 to HTLoadHTTP() to omit "Accept-Encoding:  gzip"
+  ensuring that also -source or -dump option is used.  Retesting excite.com
+  shows that it no longer matters, since the page was replaced by a short
+  javascript which is not sent compressed (request by Hataguchi Takeshi) -TD
+* correct a missing definition for COMPRESS_PROG in the configure script
+  introduced by 2.8.5dev.5 changes (also noted by Stepan Kasal) -TD
+* several fixes from Stepan Kasal <kasal@math.cas.cz>:
+  + remove code in LYCurses.c which checks ttytype variable for "dec-vt"
+    prefix.  EWAN, a decent telnet program for M$ Windows, sets $TERM to
+    dec-vt100.  This is similar to vt102 but it is not appropriate to use vt100
+    settings for it.  ncurses has in its terminfo database an entry for
+	"dec-vt100|EWAN telnet's terminal"
+    The terminfo file is successfully opened when ncurses is initialised and
+    ttytype is set to the name mentioned above.  After stripping "dec-" from
+    it, lynx ends up searching for
+	"/usr/share/terminfo/v/vt100|EWAN telnet's terminal"
+    which cannot cannot be found and lynx crashes.
+  + compress installed html files with the -9 option of gzip.
+  + improved install-help makefile rule
+* fix some longstanding problems with the DOS port -DK
+  + fix inability to break out of a hung nameserver lookup or hung connection
+    attempt without aborting lynx entirely.  Using the WATT-32 signal handler
+    for this seems to work well.  Change the default compile option for DJGPP
+    to -DIGNORE_CTRL_C, causing lynx to ignore SIGINT, so CTRL-BREAK is
+    completely disabled.  With this patch CTRL-C stops current actions without
+    quitting lynx.  To have a way to abort lynx when necessary, bind ALT-X to
+    SIGQUIT.  (The unix default of CTRL-\ is not bound to the same scan code on
+    different international keyboards, while ALT-X is familiar to DOS users for
+    existing programs).  Because the WATT-32 signal handler was not available
+    to external programs, a patch to WATT-32 is necessary for the new lynx code
+    to work.  The patch for WATT-32 is shown in the INSTALLATION documentation.
+  + added some fixes for "/" vs "\" handling in pathnames so that non-DJGPP
+    programs will see standard DOS pathnames when called.  The mailer code was
+    ignoring the environment variable SHELL when calling the mailer, leading to
+    a lack of environment space for the mailer to work -DK
+  + add calls to _eth_release() and _eth_init(), which Gisle Vanem says should
+    not be necessary in this part of lynx.  But this seems to fix get
+    intermittent hung nameserver lookup sessions after using CTRL-C.
+* simplified a loop in HTConfirmCookie() and added CTRACE's to demonstrate that
+  this is working properly (addresses Debian #119751) -TD
+* add some CTRACE's to curses screen initialization and resizing to provide
+  better diagnosis of problem reported by David Balazic
+  <david.balazic@uni-mb.si> on HP-UX 11.00) -PG
+* modify configure.in and aclocal.m4 to work with autoconf 2.52 patched with
+    ftp://invisible-island.net/autoconf/autoconf-2.52-20011227.patch.gz
+* modify configure macros CF_CURSES_CPPFLAGS and CF_NCURSES_CPPFLAGS to ensure
+  that the (n)curses.h header file is actually found, in case someone tries to
+  build lynx without having installed the development files (based on anonymous
+  posting on comp.os.linux.networking newsgroup) -TD
+* update config.guess, config.sub from
+    http://subversions.gnu.org/cgi-bin/viewcvs/config/config/
+
+2001-11-18 (2.8.5dev.5)
+* modify prompt for file- or directory-name in rename/move operation to provide
+  a default based on the selected file/directory -TD
+* add -DOK_OVERRIDE to makefile.msc, to allow rename/move of files in the local
+  directory editor -TD
+* correct delay time for win32's HTAlert, etc., which was in milliseconds
+  rather than seconds -TD
+* modify check for mbstate_t in CF_WIDEC_CURSES to define HAVE_MBSTATE_T if
+  that type is found, use this ifdef in LYwaddnstr() to make that compile
+  properly on Solaris 2.6 (report by PG) -TD
+* disable SUPPORT_MULTIBYTE_EDIT ifdef for EBCDIC (i.e., NOT_ASCII) -PG
+* collect names of lynx.cfg and .lynxrc variables into LYrcFile.h, to simplify
+  checks for matching spelling, e.g., against the values used in LYOptions.c
+* modify dired support to allow sorting by a variety of things in addition to
+  the existing sort into files versus directories.  This is saved in ~/lynxrc
+  as dir_sort_order -TD
+* if --disable-full-paths is specified, do not use full path for SYSTEM_MAIL
+  (report by IZ) -TD
+* modify configure script to reduce the number of xxx_PATH definitions compiled
+  into the code if --disable-dired was specified.  Change configure script so
+  that dired support for chmod, copy, mkdir, and touch to use built-in
+  functions rather than external programs -TD
+* modify configure script tests for program pathnames so that if full pathnames
+  are specified and the program is not found, no corresponding xxx_PATH symbol
+  is defined -TD
+* eliminate duplicate LYGetEnum() in LYrcFile.c, using the variant from
+  LYReadCFG.c which allows abbreviations -TD
+* change handling of tagsoup option in LYrcFile.c to invoke the corresponding
+  HTSwitchDTD() function, so saved tagsoup initializes properly from ~/.lynxrc
+  (report by Michel Such) -TD
+* modify some tag-names in LYOptions.c to correspond to the names used in
+  lynx.cfg to make the corresponding names work properly when used in ~/.lynxrc
+  via ENABLE_LYNXRC settings (report by Michel Such) -TD
+    old             new
+    ----------------------------
+    assume_char_set -> assume_charset
+    show_scrollbar  -> scrollbar
+    DTD_recovery    -> tagsoup
+    show_rate       -> show_kb_rate
+    user_agent      -> useragent
+    ----------------------------
+* correct length passed by LYpaddstr() to LYwaddnstr(), which could be larger
+  than allowed -TD
+
+2001-11-08 (2.8.5dev.4)
+* if file-upload code is configured, suppress message that indicates it is not
+  implemented, i.e., "[FILE Input] (not implemented)" -TD
+* modify file-upload submission to send plain text if the file is entirely
+  printable text.  Mime encoding is needed if the file contains nulls, etc.,
+  but reportedly may confuse some hosts -TD
+* suppress "charset=" clause on form submission if it is iso-8859-1 -TD
+* move case for F_FILE_TYPE in HText_SubmitForm() to obtain original behavior
+  of fallthrough for F_SUBMIT_TYPE, F_TEXT_SUBMIT_TYPE, F_IMAGE_SUBMIT_TYPE to
+  translate their character set, etc.  (report by KW) -TD
+* revert 2.8.4dev.21 change to avoid truncating cookie path in LYSetCookie().
+  The server that wouldn't work with the current lynx behavior is
+  identified as "Oracle_Web_Listener/4.0.8.2.3EnterpriseEdition"  -DK
+* modify LYLegitimizeHREF() change from 2.8.4dev.21 to eliminate newlines from
+  the HREF rather than converting them to spaces.  This fixes a problem with
+  www.ebay.com which splits up HREFs with newlines.  Changing the newlines to
+  spaces made the HREF no longer match, e.g., when it was built up from
+  a CGI script (report by Morten Bo Johansen) -TD
+* add two test files for testing UTF-8, based on Markus Kuhn's demos
+  (quickbrown.html and utf-8-demo.html).  These work with ncurses 20011103
+  patch, for wide-characters except for combining characters (more work is
+  needed in ncurses).  Tested with XFree86 xterm (patch #163) -TD
+* modify select_multi_bookmarks() check for interrupt character to limit it to
+  "hard" interrupt characters such as ^G.  This fixes a case where "z" would
+  have been treated as an interrupt character in advanced multibookmark mode
+  (reports by Michael Warner, HN, as well as Debian #111463) -TD
+* modify SUPPORT_MULTIBYTE_EDIT logic in LYUpperCase() and LYLowerCase() to
+  check for a null character following an upper-128 code.  This is more likely
+  to occur in EBCDIC, though the multibyte strings should not have a null at
+  this position in any case (report by PG) -TD
+* for wide-character curses configuration, do not force repainting at the end
+  of display_page() -TD
+* modify configure test for mkstemp() to check if that function returns
+  distinct values (report by Fr3dY indicates that AmigaOS has a broken version
+  of mkstemp() which always returns the same value) -TD
+* modify LYwaddstr() to use wide-character curses functions to make UTF-8
+  output work without relying upon side-effects of narrow-character functions.
+  Note that this relies on the user having set a UTF-8 locale, e.g.,
+  en_US.UTF-8 -TD
+* modify HText_appendCharacter() to not use utfxtra_on_this_line when compiling
+  with WIDEC_CURSES, since the curses library already does this adjustment -TD
+* correct the following names in LYrcFile.c which were added to allow
+  ENABLE_LYNXRC lines in lynx.cfg to enable them to be saved in ~/.lynxrc
+    old           new          where-used
+    -------------------------------------
+    DTD_recovery  tagsoup      (command-line option and lynx.cfg)
+    show_rate     show_kb_rate (lynx.cfg)
+    user_agent    useragent    (command-line option)
+    -------------------------------------
+  (report by Michel Such <msuch@free.fr>) -TD
+* modify LYRefreshEdit() to clear field before repainting (patch by Hataguchi
+  Takeshi)
+* for CJK configuration, force clearing/repainting in HTUserMsg() (patch by
+  Hataguchi Takeshi)
+* make HTInfoMsg() sleep condition consistent with other messages by using
+  LYSleepInfo() -TD
+* reduce clutter with new function utf8_length() -TD
+* replace !isascii(ch) with new macro is8bits(ch), to reduce clutter, fix some
+  sign-extensions and make it more portable -TD
+* change some of the "#if" statements to "#ifdef", to work around broken
+  versions (2.96, 3.0.1) of gcc distributed with Mandrake 8.1 (though
+  reportedly this is due to Redhat):  the -C option passes through comments as
+  usual, but some comments expand on preprocessor lines, which causes the
+  preprocessor to report an expression error.  This prevented "make
+  install-help" from running, though the -C option is not needed for that.
+  However, lacking a working -C option makes the C preprocessor useless for
+  analyzing bugs -TD
+* modify configure script to accept --with-screen=ncursesw, to build with the
+  wide-character version of ncurses -TD
+* modify configure script to look for mkdtemp(), to quiet another bogus linker
+  message -TD
+
+2001-10-06 (2.8.5dev.3)
+* add CF_MKSTEMP configure macro, from vile, to check for a working mkstemp().
+  This will quiet some bogus warning messages in recent runtime support, but
+  (see 2.8.3) does not affect the security of temporary files in lynx -TD
+* updated CF_PATH_SYNTAX configure macro, from vile, to handle leading "\\" in
+  a win32 pathname -TD
+* for configurations that provide scrollbar, add a checkbox to the Options menu
+  to enable or disable it -TD
+* modify LYGetHostByName() in HTTCP.c to use the threaded _WINDOWS_NSL code for
+  all Cygwin machines.  The ability to interrupt nameserver lookup has not
+  worked in Win98 using the Cygwin port, despite defining _WINDOWS_NSL.  It
+  looks like the threaded code was only for WinNT.  At least under Cygwin, that
+  code also seems to work fine under Win98 -DK
+* add FIELDS_ARE_NUMBERED as a possible value for DEFAULT_KEYPAD_MODE in
+  lynx.cfg as well as keypad_mode in .lynxrc -TD
+* add NUMBER_FIELDS_ON_LEFT and NUMBER_LINKS_ON_LEFT to lynx.cfg, use these to
+  control where field- and link-numbering is placed.  Caveat:  there are some
+  cases where fields that do popup's are truncated, e.g., in the Options menu,
+  when right-alignment is used -TD
+* support for DJGPP's two forms of file addressing, [a-zA-Z]:[/\\] and
+  /dev/[a-zA-z]/ -DK
+* add samples/lynxdump script, to illustrate how to use lynx -dump with no
+  link references (prompted by discussion with LV) -TD
+* add samples/keepviewer script, to illustrate how to retain a temporary file
+  for use in an external viewer -TD
+* add ifdef's in is_url() to avoid recognizing URLs if they are disabled in the
+  given configuration, i.e., bibp, finger, ftp, gopher, news (report by
+  Frederic L W Meunier) -TD
+* modify LYrefresh() to take into account whether a popup window exists, so
+  that a search prompt will not overwrite a popup.  This bug was introduced by
+  the curses pads (reported by Felicia Neff <neff@panix.com> and Fr3dY
+  <fr3dy@retemail.es>) -TD
+* add note in keystroke_help.html about CTRL-V as literal-next (lnext) for
+  users who are unfamiliar with stty -TD
+* add NcFTP-style ftp-URLs which are supported by Netscape and wget (request
+  by Martin Mokrejs) -TD
+* add traces in LYReadCFG.c and LYrcFile.c to report lines which are not found
+  in the symbol table, to help diagnose when a user adds lynx.cfg information
+  to .lynxrc -TD
+* define additional -trace-mask option, 8=config -TD
 * modify LYtouchline() to avoid using wredrawln() for ncurses, since the
   LYwin variable may be a pad much wider than the screen, which is not handled
   properly (report by Karl Eichwalder <keichwa@gmx.net>) -TD
-* correct beginning configure script, which was supposed to remove
+* correct beginning of configure script, which was supposed to remove
   config.cache, but did not, due to a misplaced line when it was added
   1998-06-04 (prompted by a report by Fr3dY <fr3dy@retemail.es> that the
   checks for srand/rand did not work) -TD
 
-extracted from 2001-08-15 (2.8.5dev.2)
+2001-08-15 (2.8.5dev.2)
+* several small fixes to HTFile.c to make directory listings work properly on
+  win32, e.g., stat'ing a directory with a trailing slash fails (reported by
+  Hataguchi Takeshi) -TD
+* adjust definitions in LYCurses.h to get rid of slang-ifdef's for getyx() and
+  wmove() -TD
+* change order of srandom/random versus srand48/lrand48 -DK
+* patch to get the DJGPP port to use the configure script -DK
+  It seems to work well in the variations I have tried, including both PDCurses
+  and SLang.  revised INSTALLATION for DOS, giving a URL for my DOS patch to
+  openssl.  I dropped the reference to goto URL of the form
+  file:///dev/c/path/filename, since this only works in certain parts of lynx
+  (such as lynx.cfg).  I'll try to get this working in the future.  In fixing
+  makefile.in, I patched the sed script for converting the path to docdir.  As
+  far as I can tell, however, from my examination of lynx.cfg, this isn't used
+  for any platform.  Does this part of the sed script do anything?
+  Things still needing fixing for DOS:
+  + support for both forms of file addressing, [a-zA-Z]:[/\\] and
+    /dev/[a-zA-z]/.
+  + support for gzipped help files.  This works with long file names in a DOS
+    box under Windows, but not in plain DOS, which doesn't allow double
+    extensions.
+  + better handling of local files in root directory.  "file:///c:/" takes a
+    long time to work, but "file:///c:/." works fine.  I haven't really looked
+    to see why.
+  + no ability to break out of hung nameserver lookups or http requests without
+    closing lynx with SIGINT.  This is the biggest complaint I get by email.
+* modify ifdef for myGetChar() in LYStrings.c to build with PDCurses 2.3 e.g.,
+  to use a version which is modified for Japanese input (patch by Hataguchi
+  Takeshi <patakuti@t3.rim.or.jp>).
+* review LYSafeGets() calls, stripping newlines from a few places where they
+  were overlooked, and simplifying some places where LYSafeGets() would
+  normally return a buffer ended with a newline (prompted by a report by Brian
+  S Queen <bqueen@nas.nasa.gov> for LYTraversal.c) -TD
+* correct reallocation-size in ProcessMailcapEntry()
+* modify HTLoadHTTP() to omit "Accept-Encoding: gzip" if command-line "-base"
+  option is given.  This makes
+	lynx -base -source excite.com
+  work as expected.  Otherwise, excite.com will transmit the document gzip'd,
+  and the ensuing logic in HTSaveToFile() would see the mime-type as gzip
+  rather than text/html, and not prepend the base URL (report by Kai Shih
+  <kai@mit.edu>) -TD
 * work around defect in move_anchors_in_region() and related logic by changing
   default for nested-tables to FALSE when Lynx is not configured for
   color-style.  The problem is that when an anchor is shifted right by
@@ -35,7 +1185,7 @@ extracted from 2001-08-15 (2.8.5dev.2)
   by adding checks in www_search_backward() and www_search_foreward(), (report
   by -Frederic L W Meunier) -TD
 
-extracted from 2001-07-24 (2.8.5dev.1)
+2001-07-24 (2.8.5dev.1)
 * modify GetChar() definition for PDCurses to ignore key-modifiers which are
   passed back from getch() as if they were key codes.  Those interfere with
   shifted commands such as 'Q' -TD
@@ -176,7 +1326,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   coding for the alphabet -TD
 * workaround in lynx_nl2crlf() for ncurses, which did not refrain from using
   cursor-down if it was set to a newline when nonl() was specified -TD
-* replace permissions[] array in LYLocal.c because cygwin (mis)implements the
+* replace permissions[] array in LYLocal.c because Cygwin (mis)implements the
   S_xxx values as a function -TD
 * add ENABLE_LYNXRC setting to lynx.cfg, which allows one to modify the list
   of values which are visible on the O'ptions form which can be saved to the
@@ -206,7 +1356,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   case where items in very wide popup menus would wrap, e.g., the EXTERN_LINK
   menu -TD
 * add a configure checks for term.h, to work around broken package for ncurses
-  on cygwin -TD
+  on Cygwin -TD
 * combine checks for useragent into one function LYCheckUserAgent() -TD
 * add runtime toggle for EXP_NESTED_TABLES, bind this to "~" (see www.tin.org
   for comparison) -TD
@@ -219,7 +1369,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   has to be set appropriately.  Made EXP_NESTED_TABLES the default and changed
   the default locations for WATT-32 and PDCURSES to top-level directories.  The
   DOS port of gettext is now dependent on libiconv.a to convert character sets
-  as the .mo file is read.  The format for the makefile in WWW/Library/djgpp
+  as the .mo file is read.  The format for the makefile in WWW/Library/DJGPP
   now reflects the changes previously made in the src makefile.
 * improve definition of CTRACE, making it an expression again as it was before
   dev.20 -PG
@@ -672,7 +1822,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   exists; attempt to create the directory if it does not, e.g., ~/tmp/, to
   resolve problem introduced by Mandrake's patch -TD
 * modify SetOutputMode() to flush stdout to work around buffering problem with
-  cygwin on error exit from Lynx (reported by Brad Town <btown@ceddec.com>) -TD
+  Cygwin on error exit from Lynx (reported by Brad Town <btown@ceddec.com>) -TD
 * change definitions for LYCharINTERRUPT1 and LYCharINTERRUPT2 to not use
   FROMASCII() in the EBCDIC configuration, since those symbols are used in case
   statements which otherwise would not compile -PG
@@ -1286,10 +2436,10 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   ShowInfo Page -TH
 * remove spurious backslashes in sed script for adjusting link to htmlized
   lynx.cfg -Michael Warner
-* add -luser32 library for cygwin configuration, needed for WIN_EX ifdefs -DK
+* add -luser32 library for Cygwin configuration, needed for WIN_EX ifdefs -DK
 * correct some screen handling problems when built with SLang -DK
-* updated the INSTALLATION file to reflect building under cygwin -DK
-* define WIN_EX and _WINDOWS_NSL for cygwin configuration -DK
+* updated the INSTALLATION file to reflect building under Cygwin -DK
+* define WIN_EX and _WINDOWS_NSL for Cygwin configuration -DK
 * use select_s() from WATT-32 for the DJGPP port, rather than select() from
   DJGPP (suggested by Gisle Vanem, to make it faster) -DK
 * add a configure check CF_SET_ERRNO to check if we really can set errno,
@@ -1683,7 +2833,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   with ncurses and possibly other curses implementations, but not with slang,
   on Unix-like platforms, and cannot work on platforms where lynx gets keyboard
   input in the form of platform- or implementation-specific keycodes (DOS,
-  Windows - except with cygwin?) instead of as an octet stream.
+  Windows - except with Cygwin?) instead of as an octet stream.
   - The -nozap option takes an argument.  The basic functionality as already
   described gets invoked if the argument is not a specially recognized keyword
   (it is suggested that -nozap=full or -nozap=all be used).  The only
@@ -1973,7 +3123,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   visited links page -IZ
 * reformatted src/makefile.dos and src/makefile.dsl to make them simpler to
   modify -TD
-* add -DOK_OVERRIDE to DIRED_DEFS for djgpp -LP
+* add -DOK_OVERRIDE to DIRED_DEFS for DJGPP -LP
 * change the samples in "URL Schemes Supported in Lynx" so they would appear
   without //user:passw@ but //user@ with the explanation of yet another
   possibility added in words...  So user will not get a wrong impression if
@@ -2015,9 +3165,9 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
   and TEXTAREA_AUTOEXTEDIT, added description -KW
 * minor tweaks: -accept_all_cookies help string, some formatting changes,
   minor text additions and corrections -KW
-* set $(PROG_EXT) variable in makefiles for cygwin -TD
+* set $(PROG_EXT) variable in makefiles for Cygwin -TD
 * define __CYGWIN__ if needed, e.g., for betas that define __CYGWIN32__ -TD
-* workaround cygwin b19.1 problem generating cfg_defs.h because it did not
+* workaround Cygwin b19.1 problem generating cfg_defs.h because it did not
   properly export $PATH -TD
 1999-11-03 (2.8.3dev.14)
 * modify no_color_video check for A_UNDERLINE so it is active for any
@@ -2031,7 +3181,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 * correct ifdef's in LYPrint.c so that send_file_to_mail() works with DJGPP -DK
 * modify DOS makefiles for PDCURSES for watt-32 and some of the other recent
   changes to lynx.  Included some of the EXP_ defines that DOS users may want.
-  Changed the -O3 back to -O2, since -O3 has no advantage under djgpp -DK
+  Changed the -O3 back to -O2, since -O3 has no advantage under DJGPP -DK
 * remove a useless ';', use FREE() instead of free() - JB
 * correct spelling lexem/lexeme (reported by KW) -TD
 * split-out function check_history() in LYMainLoop.c -TD
@@ -6133,7 +7283,7 @@ recently, FreeBSD 4.1, NetBSD 1.5 and OpenBSD 2.8 (curses/ncurses).
 1998-03-20 (2.8.1dev.3)
 * Added death for Win/DOS clients that don't have a TMP space defined. - WB
 * Added _WINDOWS_NSL to provide interruptable lookups in Win32 per a
-  patch from afn06760@afn.org. (modified hopefully for borland AND cygwin and
+  patch from afn06760@afn.org. (modified hopefully for borland AND Cygwin and
   hard defined in tcp.h).  I had to recompile everything in multithread
   mode for borland, including my zlib library. - WB
 * Added _WINDOWS as a target for FNAMES_8_3 in userdefs.h to allow for 16

@@ -17,8 +17,5 @@ GLOBALREF HTProtocol HTTelnet;
 GLOBALREF HTProtocol HTRlogin;
 GLOBALREF HTProtocol HTTn3270;
 #endif /* GLOBALREF_IS_MACRO */
+
 #endif /* HTTELNET_H */
-
-/*
-
-   end */

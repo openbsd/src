@@ -38,11 +38,6 @@
 #include <LYexit.h>
 #include <LYLeaks.h>
 
-extern BOOL HTPassEightBitRaw;
-extern BOOL HTPassEightBitNum;
-extern BOOL HTPassHighCtrlRaw;
-extern BOOL HTPassHighCtrlNum;
-
 /*
  *  Used for nested lists. - FM
  */
@@ -69,7 +64,7 @@ PUBLIC void LYEntify ARGS2(
     int in_sjis = 0;
 #endif
 
-    if (p == NULL || *p == '\0')
+    if (isEmpty(p))
 	return;
 
     /*
@@ -232,18 +227,19 @@ PUBLIC void LYEntify ARGS2(
 PUBLIC void LYTrimHead ARGS1(
 	char *, str)
 {
-    int i = 0, j;
+    CONST char *s = str;
 
-    if (!str || *str == '\0')
+    if (isEmpty(s))
 	return;
 
-    while (str[i] != '\0' && WHITE(str[i]) && UCH(str[i]) != UCH(CH_ESC))   /* S/390 -- gil -- 1669 */
-	i++;
-    if (i > 0) {
-	for (j = 0; str[i] != '\0'; i++) {
-	    str[j++] = str[i];
+    while (*s && WHITE(*s) && UCH(*s) != UCH(CH_ESC))   /* S/390 -- gil -- 1669 */
+	s++;
+    if (s > str) {
+	char *ns = str;
+	while (*s) {
+	    *ns++ = *s++;
 	}
-	str[j] = '\0';
+	*ns = '\0';
     }
 }
 
@@ -257,10 +253,10 @@ PUBLIC void LYTrimTail ARGS1(
 {
     int i;
 
-    if (!str || *str == '\0')
+    if (isEmpty(str))
 	return;
 
-    i = (strlen(str) - 1);
+    i = strlen(str) - 1;
     while (i >= 0) {
 	if (WHITE(str[i]))
 	    str[i] = '\0';
@@ -395,17 +391,17 @@ PUBLIC void LYFillLocalFileURL ARGS2(
 {
     char * temp = NULL;
 
-    if (*href == NULL || *(*href) == '\0')
+    if (isEmpty(*href))
 	return;
 
     if (!strcmp(*href, "//") || !strncmp(*href, "///", 3)) {
-	if (base != NULL && !strncmp(base, "file:", 5)) {
-	    StrAllocCopy(temp, "file:");
+	if (base != NULL && isFILE_URL(base)) {
+	    StrAllocCopy(temp, STR_FILE_URL);
 	    StrAllocCat(temp, *href);
 	    StrAllocCopy(*href, temp);
 	}
     }
-    if (!strncmp(*href, "file:", 5)) {
+    if (isFILE_URL(*href)) {
 	if (*(*href+5) == '\0') {
 	    StrAllocCat(*href, "//localhost");
 	} else if (!strcmp(*href, "file://")) {
@@ -419,8 +415,8 @@ PUBLIC void LYFillLocalFileURL ARGS2(
 	}
     }
 
-#if defined(DOSPATH) || defined(__EMX__)
-    if (isalpha(*(*href)) && (*(*href+1) == ':'))  {
+#if defined(USE_DOS_DRIVES)
+    if (LYIsDosDrive(*href))  {
 	/*
 	 * If it's a local DOS path beginning with drive letter,
 	 * add file://localhost/ prefix and go ahead.
@@ -432,24 +428,23 @@ PUBLIC void LYFillLocalFileURL ARGS2(
     /* use below: strlen("file://localhost/") = 17 */
     if (!strncmp(*href, "file://localhost/", 17)
 	  && (strlen(*href) == 19)
-	  && isalpha(*(*href+17))
-	  && (*(*href+18) == ':')) {
+	  && LYIsDosDrive(*href+17)) {
 	/*
 	 * Terminate DOS drive letter with a slash to surf root successfully.
 	 * Here seems a proper place to do so.
 	 */
-	StrAllocCat(*href, "/");
+	LYAddPathSep(href);
     }
-#endif /* DOSPATH */
+#endif /* USE_DOS_DRIVES */
 
     /*
      * No path in a file://localhost URL means a
      * directory listing for the current default. - FM
      */
     if (!strcmp(*href, "file://localhost")) {
-	char *temp2;
+	CONST char *temp2;
 #ifdef VMS
-	temp2 = HTVMS_wwwName(getenv("PATH"));
+	temp2 = HTVMS_wwwName(LYGetEnv("PATH"));
 #else
 	char curdir[LY_MAXPATH];
 	temp2 = wwwName(Current_Dir(curdir));
@@ -1113,7 +1108,7 @@ PUBLIC char ** LYUCFullyTranslateString ARGS9(
     /*
     **	Make sure we have a non-empty string. - FM
     */
-    if (!str || *str == NULL || **str == '\0')
+    if (!str || isEmpty(*str))
 	return str;
 
     /*
@@ -1986,14 +1981,14 @@ PUBLIC char ** LYUCFullyTranslateString ARGS9(
     *q = '\0';
     if (chunk) {
 	HTChunkPutb(CHUNK, qs, q-qs + 1); /* also terminates */
-	if (stype == st_URL) {
+	if (stype == st_URL || stype == st_other) {
 	    LYTrimHead(chunk->data);
 	    LYTrimTail(chunk->data);
 	}
 	StrAllocCopy(*str, chunk->data);
 	HTChunkFree(chunk);
     } else {
-	if (stype == st_URL) {
+	if (stype == st_URL || stype == st_other) {
 	    LYTrimHead(qs);
 	    LYTrimTail(qs);
 	}
@@ -2038,6 +2033,78 @@ PUBLIC BOOL LYUCTranslateBackFormData ARGS4(
 }
 
 /*
+ * Parse a parameter from an HTML META tag, i.e., the CONTENT.
+ */
+PUBLIC char *LYParseTagParam ARGS2(
+	char *,		from,
+	char *,		name)
+{
+    size_t len = strlen(name);
+    char *result = NULL;
+    char *string = from;
+
+    do {
+	if ((string = strchr(string, ';')) == NULL)
+	    return NULL;
+	while (*string != '\0' && (*string == ';' || isspace(UCH(*string)))) {
+	    string++;
+	}
+	if (strlen(string) < len) return NULL;
+    } while (strncasecomp(string, name, len) != 0);
+    string += len;
+    while (*string != '\0' && (UCH(isspace(*string)) || *string == '=')) {
+	string++;
+    }
+
+    StrAllocCopy(result, string);
+    len = 0;
+    while (isprint(UCH(string[len])) && !isspace(UCH(string[len]))) {
+	len++;
+    }
+    result[len] = '\0';
+
+    /*
+     * Strip single quotes, just in case.
+     */
+    if (len > 2 && result[0] == '\'' && result[len-1] == result[0]) {
+	result[len-1] = '\0';
+	for (string = result; (string[0] = string[1]) != '\0'; ++string)
+	    ;
+    }
+    return result;
+}
+
+/*
+ * Given a refresh-URL content string, parses the delay time and the URL
+ * string.  Ignore the remainder of the content.
+ */
+PUBLIC void LYParseRefreshURL ARGS3(
+	char *,		content,
+	char **,	p_seconds,
+	char **,	p_address)
+{
+    char *cp;
+    char *cp1 = NULL;
+    char *Seconds = NULL;
+
+    /*
+     *  Look for the Seconds field. - FM
+     */
+    cp = LYSkipBlanks(content);
+    if (*cp && isdigit(UCH(*cp))) {
+	cp1 = cp;
+	while (*cp1 && isdigit(UCH(*cp1)))
+	    cp1++;
+	StrnAllocCopy(Seconds, cp, cp1 - cp);
+    }
+    *p_seconds = Seconds;
+    *p_address = LYParseTagParam(content, "URL");
+
+    CTRACE((tfp, "LYParseRefreshURL\n\tcontent: %s\n\tseconds: %s\n\taddress: %s\n",
+	   content, NonNull(*p_seconds), NonNull(*p_address)));
+}
+
+/*
 **  This function processes META tags in HTML streams. - FM
 */
 PUBLIC void LYHandleMETA ARGS4(
@@ -2063,8 +2130,6 @@ PUBLIC void LYHandleMETA ARGS4(
 	convert_to_spaces(http_equiv, TRUE);
 	LYUCTranslateHTMLString(&http_equiv, me->tag_charset, me->tag_charset,
 				 NO, NO, YES, st_other);
-	LYTrimHead(http_equiv);
-	LYTrimTail(http_equiv);
 	if (*http_equiv == '\0') {
 	    FREE(http_equiv);
 	}
@@ -2075,8 +2140,6 @@ PUBLIC void LYHandleMETA ARGS4(
 	convert_to_spaces(name, TRUE);
 	LYUCTranslateHTMLString(&name, me->tag_charset, me->tag_charset,
 				 NO, NO, YES, st_other);
-	LYTrimHead(name);
-	LYTrimTail(name);
 	if (*name == '\0') {
 	    FREE(name);
 	}
@@ -2117,12 +2180,10 @@ PUBLIC void LYHandleMETA ARGS4(
      * Check for a no-cache Pragma
      * or Cache-Control directive. - FM
      */
-    if (!strcasecomp((http_equiv ? http_equiv : ""), "Pragma") ||
-	!strcasecomp((http_equiv ? http_equiv : ""), "Cache-Control")) {
+    if (!strcasecomp(NonNull(http_equiv), "Pragma") ||
+	!strcasecomp(NonNull(http_equiv), "Cache-Control")) {
 	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
 				 NO, NO, YES, st_other);
-	LYTrimHead(content);
-	LYTrimTail(content);
 	if (!strcasecomp(content, "no-cache")) {
 	    me->node_anchor->no_cache = TRUE;
 	    HText_setNoCache(me->text);
@@ -2136,7 +2197,7 @@ PUBLIC void LYHandleMETA ARGS4(
 	 *  should. - FM
 	 */
 	if ((!me->node_anchor->cache_control) &&
-	    !strcasecomp((http_equiv ? http_equiv : ""), "Cache-Control")) {
+	    !strcasecomp(NonNull(http_equiv), "Cache-Control")) {
 	    LYLowerCase(content);
 	    StrAllocCopy(me->node_anchor->cache_control, content);
 	    if (me->node_anchor->no_cache == FALSE) {
@@ -2182,7 +2243,7 @@ PUBLIC void LYHandleMETA ARGS4(
     /*
      * Check for an Expires directive. - FM
      */
-    } else if (!strcasecomp((http_equiv ? http_equiv : ""), "Expires")) {
+    } else if (!strcasecomp(NonNull(http_equiv), "Expires")) {
 	/*
 	 *  If we didn't get an Expires MIME header,
 	 *  store it in the anchor element, and if we
@@ -2195,8 +2256,6 @@ PUBLIC void LYHandleMETA ARGS4(
 	 */
 	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
 				 NO, NO, YES, st_other);
-	LYTrimHead(content);
-	LYTrimTail(content);
 	StrAllocCopy(me->node_anchor->expires, content);
 	if (me->node_anchor->no_cache == FALSE) {
 	    if (!strcmp(content, "0")) {
@@ -2233,18 +2292,14 @@ PUBLIC void LYHandleMETA ARGS4(
      *	the charset via a server's header. - AAC & FM
      */
     } else if (!(me->node_anchor->charset && *me->node_anchor->charset) &&
-	       !strcasecomp((http_equiv ? http_equiv : ""), "Content-Type")) {
+	       !strcasecomp(NonNull(http_equiv), "Content-Type")) {
 	LYUCcharset * p_in = NULL;
 	LYUCcharset * p_out = NULL;
 	LYUCTranslateHTMLString(&content, me->tag_charset, me->tag_charset,
 				 NO, NO, YES, st_other);
-	LYTrimHead(content);
-	LYTrimTail(content);
 	LYLowerCase(content);
 
-	if ((cp = strstr(content, "text/html;")) != NULL &&
-	    (cp1 = strstr(content, "charset")) != NULL &&
-	    cp1 > cp) {
+	if ((cp1 = strstr(content, "charset")) != NULL) {
 	    BOOL chartrans_ok = NO;
 	    char *cp3 = NULL, *cp4;
 	    int chndl;
@@ -2419,47 +2474,17 @@ PUBLIC void LYHandleMETA ARGS4(
     /*
      *	Check for a Refresh directive. - FM
      */
-    } else if (!strcasecomp((http_equiv ? http_equiv : ""), "Refresh")) {
+    } else if (!strcasecomp(NonNull(http_equiv), "Refresh")) {
 	char *Seconds = NULL;
 
-	/*
-	 *  Look for the Seconds field. - FM
-	 */
-	cp = LYSkipBlanks(content);
-	if (*cp && isdigit(UCH(*cp))) {
-	    cp1 = cp;
-	    while (*cp1 && isdigit(UCH(*cp1)))
-		cp1++;
-	    if (*cp1)
-		*cp1++ = '\0';
-	    StrAllocCopy(Seconds, cp);
-	}
+	LYParseRefreshURL(content, &Seconds, &href);
+
 	if (Seconds) {
-	    /*
-	     *	We have the seconds field.
-	     *	Now look for a URL field - FM
-	     */
-	    while (*cp1) {
-		if (!strncasecomp(cp1, "URL", 3)) {
-		    cp = (cp1 + 3);
-		    while (*cp && (*cp == '=' || isspace(UCH(*cp))))
-			cp++;
-		    cp1 = cp;
-		    while (*cp1 && !isspace(UCH(*cp1)))
-			cp1++;
-		    *cp1 = '\0';
-		    if (*cp)
-			StrAllocCopy(href, cp);
-		    break;
-		}
-		cp1++;
-	    }
 	    if (href) {
 		/*
 		 *  We found a URL field, so check it out. - FM
 		 */
-		if (!(url_type = LYLegitimizeHREF(me, (char**)&href,
-						  TRUE, FALSE))) {
+		if (!(url_type = LYLegitimizeHREF(me, &href, TRUE, FALSE))) {
 		    /*
 		     *	The specs require a complete URL,
 		     *	but this is a Netscapism, so don't
@@ -2479,13 +2504,16 @@ PUBLIC void LYHandleMETA ARGS4(
 			StrAllocCopy(href, me->node_anchor->address);
 			HText_setNoCache(me->text);
 		    }
-		}
-		/*
-		 *  Check whether to fill in localhost. - FM
-		 */
-		LYFillLocalFileURL((char **)&href,
+
+		} else {
+		    /*
+		     *  Check whether to fill in localhost. - FM
+		     */
+		    LYFillLocalFileURL(&href,
 				   (me->inBASE ?
 				 me->base_href : me->node_anchor->address));
+		}
+
 		/*
 		 *  Set the no_cache flag if the Refresh URL
 		 *  is the same as the document's address. - FM
@@ -2505,11 +2533,12 @@ PUBLIC void LYHandleMETA ARGS4(
 	    /*
 	     *	Check for an anchor in http or https URLs. - FM
 	     */
+	    cp = NULL;
 #ifndef DONT_TRACK_INTERNAL_LINKS
 	    /* id_string seems to be used wrong below if given.
 	       not that it matters much.  avoid setting it here. - kw */
 	    if ((strncmp(href, "http", 4) == 0) &&
-		(cp = strrchr(href, '#')) != NULL) {
+		(cp = strchr(href, '#')) != NULL) {
 		StrAllocCopy(id_string, cp);
 		*cp = '\0';
 	    }
@@ -2602,7 +2631,7 @@ PUBLIC void LYHandleMETA ARGS4(
     /*
      *	Check for a Set-Cookie directive. - AK
      */
-    } else if (!strcasecomp((http_equiv ? http_equiv : ""), "Set-Cookie")) {
+    } else if (!strcasecomp(NonNull(http_equiv), "Set-Cookie")) {
 	/*
 	 *  This will need to be updated when Set-Cookie/Set-Cookie2
 	 *  handling is finalized.  For now, we'll still assume
@@ -2684,7 +2713,7 @@ PUBLIC void LYHandlePlike ARGS6(
 	     *	to start a newline, if needed, then fall through
 	     *	to handle attributes. - FM
 	     */
-	    if (HText_LastLineSize(me->text, FALSE)) {
+	    if (!HText_LastLineEmpty(me->text, FALSE)) {
 		HText_setLastChar(me->text, ' ');  /* absorb white space */
 		HText_appendCharacter(me->text, '\r');
 	    }
@@ -2705,10 +2734,12 @@ PUBLIC void LYHandlePlike ARGS6(
 	if (LYoverride_default_alignment(me)) {
 	    me->sp->style->alignment = LYstyles(me->sp[0].tag_number)->alignment;
 	} else if ((me->List_Nesting_Level >= 0 &&
-		    strncmp(me->sp->style->name, "Div", 3)) ||
+			(me->sp->style->id == ST_DivCenter ||
+			 me->sp->style->id == ST_DivLeft ||
+			 me->sp->style->id == ST_DivRight)) ||
 		   ((me->Division_Level < 0) &&
-		    (!strcmp(me->sp->style->name, "Normal") ||
-		     !strcmp(me->sp->style->name, "Preformatted")))) {
+			(me->sp->style->id == ST_Normal ||
+			 me->sp->style->id == ST_Preformatted))) {
 		me->sp->style->alignment = HT_LEFT;
 	} else {
 	    me->sp->style->alignment = (short) me->current_default_alignment;
@@ -2967,10 +2998,11 @@ PUBLIC int LYLegitimizeHREF ARGS4(
 	BOOL,			strip_dots)
 {
     int url_type = 0;
+    char *p = NULL;
     char *pound = NULL;
-    char *fragment = NULL;
+    CONST char *Base = NULL;
 
-    if (!me || !href || *href == NULL || *(*href) == '\0')
+    if (!me || !href || isEmpty(*href))
 	return(url_type);
 
     if (!LYTrimStartfile(*href)) {
@@ -2981,33 +3013,55 @@ PUBLIC int LYLegitimizeHREF ARGS4(
 	 *  with atrocities inflicted on the Web by
 	 *  authoring tools such as Frontpage. - FM
 	 */
-	if ((pound = strchr(*href, '#')) != NULL) {
-	    StrAllocCopy(fragment, pound);
-	    *pound = '\0';
-	    convert_to_spaces(fragment, FALSE);
-	}
-	/*
-	 * No blanks really belong in the HREF, but if it refers to an actual
-	 * file, it may actually have blanks in the name.  Try to accommodate.
-	 */
-	convert_to_spaces(*href, FALSE);
-	LYTrimLeading(*href);
-	LYTrimTrailing(*href);
-	if (fragment != NULL) {
-	    StrAllocCat(*href, fragment);
-	    FREE(fragment);
+
+	/*  Before working on spaces check if we have any, usually none. */
+	for (p = *href; (*p && !isspace(*p)); p++)
+	    ;
+
+	if (*p) {  /* p == first space character */
+		   /* no reallocs below, all converted in place */
+
+	    pound = findPoundSelector(*href);
+
+	    if (pound != NULL && pound < p) {
+		convert_to_spaces(p, FALSE);  /* done */
+
+	    } else {
+		if (pound != NULL)
+		    *pound = '\0';  /* mark */
+
+		/*
+		 * No blanks really belong in the HREF,
+		 * but if it refers to an actual file,
+		 * it may actually have blanks in the name.
+		 * Try to accommodate. See also HTParse().
+		 */
+		if (LYRemoveNewlines(p) || strchr(p, '\t') != 0) {
+		    LYRemoveBlanks(p);  /* a compromise... */
+		}
+
+		if (pound != NULL) {
+		    p = strchr(p, '\0');
+		    *pound = '#';  /* restore */
+		    convert_to_spaces(pound, FALSE);
+		    if (p < pound)
+			strcpy(p, pound);
+		}
+	    }
 	}
     }
-    if (*(*href) == '\0')
+    if (**href == '\0')
 	return(url_type);
-    LYUCTranslateHTMLString(href, me->tag_charset, me->tag_charset,
-			     NO, NO, YES, st_URL);
+
+    TRANSLATE_AND_UNESCAPE_TO_STD(href);
+
+    Base = me->inBASE ?
+		me->base_href : me->node_anchor->address;
+
     url_type = is_url(*href);
-    if (!url_type && force_slash &&
+    if (!url_type && force_slash && **href == '.' &&
 	(!strcmp(*href, ".") || !strcmp(*href, "..")) &&
-	 strncmp((me->inBASE ?
-	       me->base_href : me->node_anchor->address),
-		 "file:", 5)) {
+	 !isFILE_URL(Base)) {
 	/*
 	 *  The Fielding RFC/ID for resolving partial HREFs says
 	 *  that a slash should be on the end of the preceding
@@ -3018,10 +3072,8 @@ PUBLIC int LYLegitimizeHREF ARGS4(
 	 */
 	StrAllocCat(*href, "/");
     }
-    if ((!url_type && LYStripDotDotURLs && strip_dots && *(*href) == '.') &&
-	 !strncasecomp((me->inBASE ?
-		     me->base_href : me->node_anchor->address),
-		       "http", 4)) {
+    if ((!url_type && LYStripDotDotURLs && strip_dots && **href == '.') &&
+	 !strncasecomp(Base, "http", 4)) {
 	/*
 	 *  We will be resolving a partial reference versus an http
 	 *  or https URL, and it has lead dots, which may be retained
@@ -3039,18 +3091,12 @@ PUBLIC int LYLegitimizeHREF ARGS4(
 	char *temp = NULL, *path = NULL, *cp;
 	CONST char *str = "";
 
-	if (((temp = HTParse(*href,
-			     (me->inBASE ?
-			   me->base_href : me->node_anchor->address),
-			     PARSE_ALL)) != NULL && temp[0] != '\0') &&
-	    (path = HTParse(temp, "",
-			    PARSE_PATH+PARSE_PUNCTUATION)) != NULL &&
-	    !strncmp(path, "/..", 3)) {
+	temp = HTParse(*href, Base, PARSE_ALL);
+	path = HTParse(temp, "", PARSE_PATH+PARSE_PUNCTUATION);
+	if (!strncmp(path, "/..", 3)) {
 	    cp = (path + 3);
 	    if (LYIsHtmlSep(*cp) || *cp == '\0') {
-		if ((me->inBASE
-		   ? me->base_href[4]
-		   : me->node_anchor->address[4]) == 's') {
+		if (Base[4] == 's') {
 		    str = "s";
 		}
 		CTRACE((tfp, "LYLegitimizeHREF: Bad value '%s' for http%s URL.\n",
@@ -3261,11 +3307,11 @@ PUBLIC void LYEnsureDoubleSpace ARGS1(
     if (!me || !me->text)
 	return;
 
-    if (HText_LastLineSize(me->text, FALSE)) {
+    if (!HText_LastLineEmpty(me->text, FALSE)) {
 	HText_setLastChar(me->text, ' ');  /* absorb white space */
 	HText_appendCharacter(me->text, '\r');
 	HText_appendCharacter(me->text, '\r');
-    } else if (HText_PreviousLineSize(me->text, FALSE)) {
+    } else if (!HText_PreviousLineEmpty(me->text, FALSE)) {
 	HText_setLastChar(me->text, ' ');  /* absorb white space */
 	HText_appendCharacter(me->text, '\r');
     } else if (me->List_Nesting_Level >= 0) {
@@ -3286,7 +3332,7 @@ PUBLIC void LYEnsureSingleSpace ARGS1(
     if (!me || !me->text)
 	return;
 
-    if (HText_LastLineSize(me->text, FALSE)) {
+    if (!HText_LastLineEmpty(me->text, FALSE)) {
 	HText_setLastChar(me->text, ' ');  /* absorb white space */
 	HText_appendCharacter(me->text, '\r');
     } else if (me->List_Nesting_Level >= 0) {
@@ -3308,8 +3354,8 @@ PUBLIC void LYResetParagraphAlignment ARGS1(
 
     if (me->List_Nesting_Level >= 0 ||
 	((me->Division_Level < 0) &&
-	 (!strcmp(me->sp->style->name, "Normal") ||
-	  !strcmp(me->sp->style->name, "Preformatted")))) {
+	 (me->sp->style->id == ST_Normal ||
+	  me->sp->style->id == ST_Preformatted))) {
 	me->sp->style->alignment = HT_LEFT;
     } else {
 	me->sp->style->alignment = (short) me->current_default_alignment;
@@ -3341,7 +3387,7 @@ PUBLIC BOOLEAN LYCheckForCSI ARGS2(
     if (!(anchor && anchor->address))
 	return FALSE;
 
-    if (strncasecomp(anchor->address, "file:", 5))
+    if (!isFILE_URL(anchor->address))
 	return FALSE;
 
     if (!LYisLocalHost(anchor->address))

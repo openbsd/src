@@ -3,6 +3,7 @@
 <HEAD>
 <TITLE>Help on Lynx Keystroke Commands</TITLE>
 <LINK rev="made" href="mailto:lynx-dev@sig.net">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </HEAD>
 <BODY>
 <h1>+++ Keystroke Commands +++</h1>
@@ -105,6 +106,14 @@
                                 CTRL-V prompts for a key command (allows
                                 <A HREF="../Lynx_users_guide.html#CtrlVNote"
                                 >escaping</A> from the field).
+
+                                Note that on most UNIX hosts, CTRL-V is bound
+                                via stty to the lnext (literal-next) code but
+                                the exact behavior of that is implementation
+                                specific.  On Solaris you must type CTRL-V
+                                twice to use it, since it quotes the following
+                                keystroke.
+
                CTRL-U         - Erase input line (<a href="edit_help.html"
                                 >more input line commands</a>)
                CTRL-G         - Cancel input or transfer

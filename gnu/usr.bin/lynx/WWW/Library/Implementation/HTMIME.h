@@ -88,7 +88,3 @@ extern int HTmaybekanji PARAMS((
 	int	c2));
 
 #endif /* !HTMIME_H */
-
-/*
-
-   end of HTMIME */

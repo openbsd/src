@@ -77,6 +77,7 @@ typedef struct _HTStyle {
 */
     struct _HTStyle     *next;          /* Link for putting into stylesheet */
     char *              name;           /* Style name */
+    int                 id;             /* equivalent of name, for speed */
     char *              SGMLTag;        /* Tag name to start */
 
 
@@ -158,6 +159,60 @@ extern HTStyleSheet * HTStyleSheetWrite PARAMS((HTStyleSheet * self,
 #define CLEAR_POINTER ((void *)-1)      /* Pointer value means "clear me" */
 
 /* DefaultStyle.c */
-extern HTStyleSheet * DefaultStyle NOPARAMS;
+extern HTStyleSheet * DefaultStyle PARAMS((HTStyle*** result_array));
+
+/* enum, use this instead of HTStyle name comparisons */
+enum HTStyle_Enum {
+	ST_Normal = 0,
+	ST_DivCenter,
+	ST_DivLeft,
+	ST_DivRight,
+	ST_Banner,
+	ST_Blockquote,
+	ST_Bq,
+	ST_Footnote,
+	ST_List,
+	ST_List1,
+	ST_List2,
+	ST_List3,
+	ST_List4,
+	ST_List5,
+	ST_List6,
+	ST_Menu,
+	ST_Menu1,
+	ST_Menu2,
+	ST_Menu3,
+	ST_Menu4,
+	ST_Menu5,
+	ST_Menu6,
+	ST_Glossary,
+	ST_Glossary1,
+	ST_Glossary2,
+	ST_Glossary3,
+	ST_Glossary4,
+	ST_Glossary5,
+	ST_Glossary6,
+	ST_GlossaryCompact,
+	ST_GlossaryCompact1,
+	ST_GlossaryCompact2,
+	ST_GlossaryCompact3,
+	ST_GlossaryCompact4,
+	ST_GlossaryCompact5,
+	ST_GlossaryCompact6,
+	ST_Example,
+	ST_Preformatted,
+	ST_Listing,
+	ST_Address,
+	ST_Note,
+	ST_Heading1,
+	ST_Heading2,
+	ST_Heading3,
+	ST_Heading4,
+	ST_Heading5,
+	ST_Heading6,
+	ST_HeadingCenter,
+	ST_HeadingLeft,
+	ST_HeadingRight
+};
 
 #endif /* HTStyle_H */

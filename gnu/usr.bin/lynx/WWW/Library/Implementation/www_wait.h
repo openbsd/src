@@ -23,4 +23,12 @@
 # endif
 #endif
 
+#ifndef WSTOPSIG
+# ifdef HAVE_TYPE_UNIONWAIT
+#  define	WSTOPSIG(status)	(status.w_stopsig)
+# else
+#  define	WSTOPSIG(status)	WEXITSTATUS(status)
+# endif
+#endif
+
 #endif /* WWW_WAIT_H */

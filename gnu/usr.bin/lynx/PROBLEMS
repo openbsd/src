@@ -6,6 +6,37 @@ they will be outlined in this file.
 
 ---------
 
+    The install script will attempt to preserve your current settings in the
+    lynx.cfg file.  You should review these (at the end of lynx.cfg) after
+    install.  For instance references to lynx.browser.org for a startfile can
+    be removed, since that site is no longer maintained.
+
+---------
+
+    Some customized installs of OpenSSL are not detected by the configure
+    script.  For example, with Redhat9, we did this to work around:
+
+	#!/bin/sh
+	KRB=/usr/kerberos
+	export LIBS="-L$KRB/lib -lssl -lcrypto -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err"
+	export CPPFLAGS="-I$KRB/include -I/usr/include/openssl"
+	export CFLAGS="-O -g $CPPFLAGS"
+	./configure --with-ssl $*
+
+---------
+
+    The configure script check for IPv6 (--enable-ipv6) assumes that your build
+    machine can listen for IPv6 connections.  It cannot determine if you want
+    to use it only for outgoing connections.  If the configure script is
+    otherwise successful, it will warn about a nonfunctioning getaddrinfo()
+    function, and does not define these symbols needed to successfully compile
+    IPv6 support.  You can work around this by by editing lynx_cfg.h:
+
+	HAVE_GAI_STRERROR
+	HAVE_GETADDRINFO
+
+---------
+
     Control-Z on Unix can cause aberrant behavior.  If you encounter
     problems, use -restrictions=suspend to disable it, and only '!'
     for escapes to shell (on VMS control-Z is unconditional 'Q'uit,
@@ -38,7 +69,7 @@ they will be outlined in this file.
 ---------
 
     On a Sun system, the message:
-        "Alert!:  Unable to connect to remote host"
+	"Alert!:  Unable to connect to remote host"
     will be displayed every time an attempt is made to access a host
     other than localhost if Lynx has been built without the resolv
     library and needed it, or with it and shouldn't have been.
@@ -66,12 +97,12 @@ they will be outlined in this file.
     In order to get bold text to appear differently than inverse video,
     the user should put this line in ~/.Xdefaults:
 
-        Term*boldStyle:         Offset_X
+	Term*boldStyle:		Offset_X
 
     From the `shelltool' man page, it seems that an analogous line
     in ~/.defaults
 
-        /Tty/Bold_style "Offset_X"
+	/Tty/Bold_style "Offset_X"
 
     ought to work just as well, but you may not get the desired
     behavior until you modify your .Xdefaults file (and run `xrdb
@@ -124,7 +155,7 @@ they will be outlined in this file.
     of HP/UX 10.10.  It also breaks tn3270, ncftp, emacs, and xemacs.
     Using:
     		LIBS="-lc -lcurses -ltermcap \
-                      ^^^
+		      ^^^
     (i.e, adding -lc *before* the -lcurses) in the snake3 and snake3-slang
     targets of the top level Makefile yields a usable image, but with
     inappropriate video attributes on the Lynx displays (reverse video and
@@ -217,3 +248,11 @@ they will be outlined in this file.
     SOCKETSHR 0.9D sources and offers the fixes as:
        http://alder.cc.kcl.ac.uk/fileserv/zip/socketshr_src_09d-2.zip
        ftp://ftp2.kcl.ac.uk/zip/socketshr_src_09d-2.zip
+
+---------
+
+    On VMS, to build an SSL-capable version, lynx and the ssl library
+    e.g., OpenSSL, must be built using the same network library.  If you
+    build OpenSSL without specifying the network library (the 5th parameter
+    of the makevms.com script), it will guess, possibly not the one you
+    intended.  We have tested only the UCX configuration -TD (2002/9/15).

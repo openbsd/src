@@ -169,11 +169,5 @@ PUBLIC HTAAFailReasonType HTAA_userAndInetInGroup PARAMS((GroupDef * group,
                                                           char *     username,
                                                           char *     ip_number,
                                                           char *     ip_name));
-/*
-
- */
 
 #endif /* not HTGROUP_H */
-/*
-
-   End of file HTGroup.h.  */

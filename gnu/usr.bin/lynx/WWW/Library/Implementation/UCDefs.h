@@ -8,7 +8,7 @@
 #endif
 
 typedef struct _LYUCcharset {
-    int UChndl;  	/* -1 for "old" charsets, >= 0 for chartrans tables */
+    int UChndl;		/* -1 for "old" charsets, >= 0 for chartrans tables */
 
     CONST char * MIMEname;
     int enc;

@@ -106,7 +106,7 @@ PRIVATE void set_environ ARGS3(
 }
 
 PRIVATE char *suggested_filename ARGS1(
-	document *,	newdoc)
+	DocInfo *,	newdoc)
 {
     char *cp, *sug_filename = 0;
 
@@ -157,7 +157,7 @@ PRIVATE void SetupFilename ARGS2(
 	format = HTFileFormat(filename, &encoding, NULL);
 	if (!strcasecomp(format->name, "text/html") ||
 	    !IsUnityEnc(encoding)) {
-	    strcpy(cp, ".txt");
+	    strcpy(cp, TEXT_SUFFIX);
 	}
     }
 }
@@ -302,7 +302,7 @@ PRIVATE BOOLEAN confirm_by_pages ARGS3(
 }
 
 PRIVATE void send_file_to_file ARGS3(
-	document *,	newdoc,
+	DocInfo *,	newdoc,
 	char *,		content_base,
 	char *,		sug_filename)
 {
@@ -362,7 +362,7 @@ check_recall:
      */
     CTRACE((tfp, "LYPrint: filename is %s, action is `%c'\n", buffer, c));
 
-#if HAVE_POPEN
+#ifdef HAVE_POPEN
     if (*buffer == '|') {
 	if (no_shell) {
 	    HTUserMsg(SPAWNING_DISABLED);
@@ -447,7 +447,7 @@ check_recall:
     if (keypad_mode)
 	printlist(outfile_fp,FALSE);
 
-#if HAVE_POPEN
+#ifdef HAVE_POPEN
     if (LYIsPipeCommand(buffer))
 	pclose(outfile_fp);
     else
@@ -473,7 +473,7 @@ done:
 }
 
 PRIVATE void send_file_to_mail ARGS3(
-	document *,	newdoc,
+	DocInfo *,	newdoc,
 	char *,		content_base,
 	char *,		content_location)
 {
@@ -496,6 +496,9 @@ PRIVATE void send_file_to_mail ARGS3(
     char *buffer = NULL;
     char *subject = NULL;
     char user_response[LINESIZE];
+
+    if (!LYSystemMail())
+	return;
 
     if (LYPreparsedSource && first_mail_preparsed &&
 	HTisDocumentSource()) {
@@ -561,14 +564,14 @@ PRIVATE void send_file_to_mail ARGS3(
     outfile_fp = LYOpenTemp(my_temp,
 			    (HTisDocumentSource())
 				    ? HTML_SUFFIX
-				    : ".txt",
+				    : TEXT_SUFFIX,
 			    "w");
     if (outfile_fp == NULL) {
 	CannotPrint(UNABLE_TO_OPEN_TEMPFILE);
     }
 
     if (isPMDF) {
-	if ((hfd = LYOpenTemp(hdrfile, ".txt", "w")) == NULL) {
+	if ((hfd = LYOpenTemp(hdrfile, TEXT_SUFFIX, "w")) == NULL) {
 	    CannotPrint(UNABLE_TO_OPEN_TEMPFILE);
 	}
 	if (use_type) {
@@ -675,7 +678,7 @@ PRIVATE void send_file_to_mail ARGS3(
 #if CAN_PIPE_TO_MAILER
     outfile_fp = LYPipeToMailer();
 #else
-    outfile_fp = LYOpenTemp(my_temp, ".txt", "w");
+    outfile_fp = LYOpenTemp(my_temp, TEXT_SUFFIX, "w");
 #endif
     if (outfile_fp == NULL) {
 	CannotPrint(MAIL_REQUEST_FAILED);
@@ -794,7 +797,7 @@ done:	/* send_file_to_mail() */
 }
 
 PRIVATE void send_file_to_printer ARGS4(
-	document *,	newdoc,
+	DocInfo *,	newdoc,
 	char *,		content_base,
 	char *,		sug_filename,
 	int,		printer_number)
@@ -810,7 +813,7 @@ PRIVATE void send_file_to_printer ARGS4(
     outfile_fp = LYOpenTemp(my_temp,
 			    (HTisDocumentSource())
 				    ? HTML_SUFFIX
-				    : ".txt",
+				    : TEXT_SUFFIX,
 			    "w");
     if (outfile_fp == NULL) {
 	CannotPrint(FILE_ALLOC_FAILED);
@@ -882,19 +885,9 @@ check_again:
 	}
 	/*
 	 * Cancel if the user entered "/dev/null" on Unix, or an "nl:" path
-	 * (case-insensitive) on VMS.  - FM
+	 * on VMS.  - FM
 	 */
-#ifdef VMS
-	if (!strncasecomp(my_file, "nl:", 3) ||
-	    !strncasecomp(my_file, "/nl/", 4))
-#else
-#if defined(DOSPATH)	/* 1997/10/15 (Wed) 16:41:30 */
-	if (!strcmp(my_file, "nul"))
-#else
-	if (!strcmp(my_file, "/dev/null"))
-#endif /* DOSPATH */
-#endif /* VMS */
-	{
+	if (LYIsNullDevice(my_file)) {
 	    CancelPrint(PRINT_REQUEST_CANCELLED);
 	}
 	HTAddSugFilename(my_file);
@@ -968,7 +961,7 @@ done:	/* send_file_to_printer() */
 }
 
 PRIVATE void send_file_to_screen ARGS3(
-	document *,	newdoc,
+	DocInfo *,	newdoc,
 	char *,		content_base,
 	BOOLEAN,	Lpansi)
 {
@@ -1043,7 +1036,7 @@ done:	/* send_file_to_screen() */
 }
 
 PUBLIC int printfile ARGS1(
-	document *,	newdoc)
+	DocInfo *,	newdoc)
 {
     BOOLEAN Lpansi = FALSE;
     DocAddress WWWDoc;
@@ -1211,8 +1204,8 @@ PRIVATE int remove_quotes ARGS1(
 /*
  *  Mail subject may have 8-bit characters and they are in display charset.
  *  There is no stable practice for 8-bit subject encodings:
- *  MIME define "quoted-printable" which holds charset info
- *  but most mailers still don't support it, on the other hand
+ *  MIME defines "quoted-printable" which holds charset info
+ *  but most mailers still don't support it.  On the other hand
  *  many mailers send open 8-bit subjects without charset info
  *  and use local assumption for certain countries.  Besides that,
  *  obsolete SMTP software is not 8bit clean but still in use,
@@ -1273,16 +1266,8 @@ PUBLIC int print_options ARGS3(
     FILE *fp0;
     lynx_list_item_type *cur_printer;
 
-    if (LYReuseTempfiles) {
-	fp0 = LYOpenTempRewrite(my_temp, HTML_SUFFIX, "w");
-    } else {
-	LYRemoveTemp(my_temp);
-	fp0 = LYOpenTemp(my_temp, HTML_SUFFIX, "w");
-    }
-    if (fp0 == NULL) {
-	HTAlert(UNABLE_TO_OPEN_PRINTOP_FILE);
+    if ((fp0 = InternalPageFP(my_temp, TRUE)) == 0)
 	return(-1);
-    }
 
     LYLocalFileToURL(newfile, my_temp);
 
@@ -1311,7 +1296,8 @@ PUBLIC int print_options ARGS3(
 
     if (child_lynx == FALSE && no_disk_save == FALSE && no_print == FALSE) {
 	fprintf(fp0,
-		"   <a href=\"LYNXPRINT://LOCAL_FILE/lines=%d\">%s</a>\n",
+		"   <a href=\"%s//LOCAL_FILE/lines=%d\">%s</a>\n",
+		STR_LYNXPRINT,
 		lines_in_file,
 		gettext("Save to a local file"));
     } else {
@@ -1319,17 +1305,20 @@ PUBLIC int print_options ARGS3(
     }
     if (child_lynx == FALSE && no_mail == FALSE && local_host_only == FALSE)
 	fprintf(fp0,
-		"   <a href=\"LYNXPRINT://MAIL_FILE/lines=%d\">%s</a>\n",
+		"   <a href=\"%s//MAIL_FILE/lines=%d\">%s</a>\n",
+		STR_LYNXPRINT,
 		lines_in_file,
 		gettext("Mail the file"));
 
-#ifndef DOSPATH
+#if defined(UNIX) || defined(VMS)
     fprintf(fp0,
-	    "   <a href=\"LYNXPRINT://TO_SCREEN/lines=%d\">%s</a>\n",
+	    "   <a href=\"%s//TO_SCREEN/lines=%d\">%s</a>\n",
+	    STR_LYNXPRINT,
 	    lines_in_file,
 	    gettext("Print to the screen"));
     fprintf(fp0,
-	    "   <a href=\"LYNXPRINT://LPANSI/lines=%d\">%s</a>\n",
+	    "   <a href=\"%s//LPANSI/lines=%d\">%s</a>\n",
+	    STR_LYNXPRINT,
 	    lines_in_file,
 	    gettext("Print out on a printer attached to your vt100 terminal"));
 #endif
@@ -1341,7 +1330,8 @@ PUBLIC int print_options ARGS3(
 	cur_printer = cur_printer->next, count++)
     if (no_print == FALSE || cur_printer->always_enabled) {
 	fprintf(fp0,
-		"   <a href=\"LYNXPRINT://PRINTER/number=%d/pagelen=%d/lines=%d\">",
+		"   <a href=\"%s//PRINTER/number=%d/pagelen=%d/lines=%d\">",
+		STR_LYNXPRINT,
 		count, cur_printer->pagelen, lines_in_file);
 	fprintf(fp0, (cur_printer->name ?
 		      cur_printer->name : "No Name Given"));

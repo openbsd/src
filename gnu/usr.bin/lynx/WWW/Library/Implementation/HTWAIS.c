@@ -123,7 +123,7 @@ PRIVATE int fd_mosaic_connect_to_server ARGS3(
     int status;
     int result;
 
-    HTSprintf0(&dummy, "wais://%s:%d/", host_name, port);
+    HTSprintf0(&dummy, "%s//%s:%d/", STR_WAIS_URL, host_name, port);
 
     status = HTDoConnect (dummy, "WAIS", 210, (int *)fd);
     if (status == HT_INTERRUPTED) {
@@ -636,8 +636,6 @@ PUBLIC int HTLoadWAIS ARGS4(
     BOOL ok = NO;
     int return_status = HT_LOADED;
     int rv;
-
-    extern FILE * connect_to_server();
 
     if (!acceptable_inited)
 	init_acceptable();

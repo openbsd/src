@@ -69,7 +69,7 @@ include $(ABS)$(WWW)/Library/Implementation/Version.make
 # XMOsAIC hack is only for server to cope with xmosaic kludge for mmedia
 #
 # add -DNEW_GATEWAY here for the new gateway config stuff
-CFLAGS2 = $(CFLAGS) $(LYFLAGS) $(WAISCFLAGS) -I$(CMN) -DXMOSAIC_HACK -DACCESS_AUTH
+CFLAGS2 = $(CFLAGS) $(LYFLAGS) $(WAISCFLAGS) -I$(CMN) -DACCESS_AUTH
 
 CERNLIBBIN = $(WWW)/bin
 

@@ -21,7 +21,10 @@
 #define PARSE_PATH               4
 #define PARSE_ANCHOR             2
 #define PARSE_PUNCTUATION        1
+
 #define PARSE_ALL               31
+#define PARSE_ALL_WITHOUT_ANCHOR  (PARSE_ALL ^ PARSE_ANCHOR)
+
 /*
 **  Additional flag bits for more details on components already
 **  covered by the above.  The PARSE_PATH above doesn't really
@@ -70,6 +73,15 @@ extern char * HTParse PARAMS((
 	CONST char *	relatedName,
 	int		wanted));
 
+/*	HTParseAnchor(), fast HTParse() specialization
+**	----------------------------------------------
+**
+** On exit,
+**	returns		A pointer within input string (probably to its end '\0')
+*/
+extern CONST char * HTParseAnchor PARAMS((
+	CONST char *	aName));
+
 /*	Simplify a filename.				HTSimplify()
 **	--------------------
 **
@@ -77,7 +89,7 @@ extern char * HTParse PARAMS((
 **  be replaced by "" , and the seqeunce "/./" which may be replaced by "/".
 **  Simplification helps us recognize duplicate filenames.
 **
-**	Thus, 	/etc/junk/../fred 	becomes	/etc/fred
+**	Thus,	/etc/junk/../fred	becomes /etc/fred
 **		/etc/junk/./fred	becomes	/etc/junk/fred
 **
 **      but we should NOT change
@@ -180,10 +192,7 @@ extern char * HTUnEscapeSome PARAMS((
 **  Turn a string which is not a RFC 822 token into a quoted-string. - KW
 */
 extern void HTMake822Word PARAMS((
-	char **		str));
+	char **		str,
+	int		quoted));
 
 #endif  /* HTPARSE_H */
-
-/*
-   end of HTParse
-    */

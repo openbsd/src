@@ -26,7 +26,7 @@
 #endif /* VMS && !USE_SLANG */
 
 PRIVATE int form_getstr PARAMS((
-	struct link *	form_link,
+	int		cur,
 	BOOLEAN		use_last_tfpos,
 	BOOLEAN		redraw_only));
 
@@ -58,17 +58,17 @@ PRIVATE char ** options_list ARGS1(
     return result;
 }
 
-PUBLIC int change_form_link_ex ARGS8(
-	struct link *,	form_link,
-	document *,	newdoc,
+PUBLIC int change_form_link_ex ARGS6(
+	int,		cur,
+	DocInfo *,	newdoc,
 	BOOLEAN *,	refresh_screen,
-	char *,		link_name,
-	char *,		link_value,
 	BOOLEAN,	use_last_tfpos,
 	BOOLEAN,	immediate_submit,
 	BOOLEAN,	redraw_only)
 {
-    FormInfo *form = form_link->form;
+    FormInfo *form = links[cur].l_form;
+    char *link_name = form->name;
+    char *link_value = form->value;
     int newdoc_changed = 0;
     int c = DO_NOTHING;
     int OrigNumValue;
@@ -85,19 +85,14 @@ PUBLIC int change_form_link_ex ARGS8(
     /*
      *  Move to the link position.
      */
-    LYmove(form_link->ly, form_link->lx);
+    LYmove(links[cur].ly, links[cur].lx);
 
     switch(form->type) {
 	case F_CHECKBOX_TYPE:
 	    if (form->disabled == YES)
 		break;
-	    if (form->num_value) {
-		form_link->hightext = unchecked_box;
-		form->num_value = 0;
-	    } else {
-		form_link->hightext = checked_box;
-		form->num_value = 1;
-	    }
+	    LYSetHilite(cur, form->num_value ? unchecked_box : checked_box);
+	    form->num_value = ! form->num_value;
 	    break;
 
 	case F_OPTION_LIST_TYPE:
@@ -110,8 +105,8 @@ PUBLIC int change_form_link_ex ARGS8(
 	    if (form->disabled == YES) {
 		int dummy;
 		dummy = LYhandlePopupList(form->num_value,
-					  form_link->ly,
-					  form_link->lx,
+					  links[cur].ly,
+					  links[cur].lx,
 					  (CONST char **)my_data,
 					  form->size,
 					  form->size_l,
@@ -128,8 +123,8 @@ PUBLIC int change_form_link_ex ARGS8(
 	    }
 	    OrigNumValue = form->num_value;
 	    form->num_value = LYhandlePopupList(form->num_value,
-						form_link->ly,
-						form_link->lx,
+						links[cur].ly,
+						links[cur].lx,
 						(CONST char **)my_data,
 						form->size,
 						form->size_l,
@@ -179,17 +174,17 @@ PUBLIC int change_form_link_ex ARGS8(
 		 */
 		lynx_start_radio_color ();
 		for (i = 0; i < nlinks; i++) {
-		    if (links[i].type == WWW_FORM_LINK_TYPE &&
-			links[i].form->type == F_RADIO_TYPE &&
-			links[i].form->number == form->number &&
+		    if (links[i].type == WWW_FORM_LINK_TYPE
+		     && links[i].l_form->type == F_RADIO_TYPE
+		     && links[i].l_form->number == form->number
 			/*
 			 *  If it has the same name and its on...
 			 */
-			!strcmp(links[i].form->name, form->name) &&
-			links[i].form->num_value) {
+		     && !strcmp(links[i].l_form->name, form->name)
+		     && links[i].l_form->num_value) {
 			LYmove(links[i].ly, links[i].lx);
 			LYaddstr(unchecked_radio);
-			links[i].hightext = unchecked_radio;
+			LYSetHilite(i, unchecked_radio);
 		    }
 		}
 		lynx_stop_radio_color ();
@@ -200,7 +195,7 @@ PUBLIC int change_form_link_ex ARGS8(
 		/*
 		 *  Now highlight this one.
 		 */
-		form_link->hightext = checked_radio;
+		LYSetHilite(cur, checked_radio);
 	    }
 	    break;
 
@@ -208,11 +203,10 @@ PUBLIC int change_form_link_ex ARGS8(
 	case F_TEXT_TYPE:
 	case F_TEXTAREA_TYPE:
 	case F_PASSWORD_TYPE:
-	    c = form_getstr(form_link, use_last_tfpos, redraw_only);
-	    if (form->type == F_PASSWORD_TYPE)
-		form_link->hightext = STARS(strlen(form->value));
-	    else
-		form_link->hightext = form->value;
+	    c = form_getstr(cur, use_last_tfpos, redraw_only);
+	    LYSetHilite(cur, (form->type == F_PASSWORD_TYPE)
+			? STARS(strlen(form->value))
+			: form->value);
 	    break;
 
 	case F_RESET_TYPE:
@@ -224,11 +218,11 @@ PUBLIC int change_form_link_ex ARGS8(
 
 	case F_TEXT_SUBMIT_TYPE:
 	    if (redraw_only) {
-		c = form_getstr(form_link, use_last_tfpos, TRUE);
+		c = form_getstr(cur, use_last_tfpos, TRUE);
 		break;
 	    }
 	    if (!immediate_submit)
-		c = form_getstr(form_link, use_last_tfpos, FALSE);
+		c = form_getstr(cur, use_last_tfpos, FALSE);
 	    if (form->disabled == YES &&
 		(c == '\r' || c == '\n' || immediate_submit)) {
 		if (peek_mouse_link() >= 0)
@@ -257,7 +251,7 @@ PUBLIC int change_form_link_ex ARGS8(
 	    if (immediate_submit ||
 		((c == '\r' || c == '\n' || c == LAC_TO_LKC0(LYK_SUBMIT)) &&
 		 peek_mouse_link() == -1)) {
-		form_link->hightext = form->value;
+		LYSetHilite(cur, form->value);
 #ifdef TEXT_SUBMIT_CONFIRM_WANTED
 		if (!immediate_submit && (c == '\r' || c == '\n') &&
 		    !HTConfirmDefault(NO_SUBMIT_BUTTON_QUERY), YES) {
@@ -282,7 +276,7 @@ PUBLIC int change_form_link_ex ARGS8(
 		    break;
 		} else if (!immediate_submit &&
 			   ((no_file_url &&
-			     !strncasecomp(form->submit_action, "file:", 5)) ||
+			     isFILE_URL(form->submit_action)) ||
 			    !strncasecomp(form->submit_action, "lynx", 4))) {
 		    c = LAC_TO_LKC0(LYK_SUBMIT);
 		    break;
@@ -307,7 +301,7 @@ PUBLIC int change_form_link_ex ARGS8(
 		c = DO_NOTHING;
 		break;
 	    } else {
-		form_link->hightext = form->value;
+		LYSetHilite(cur, form->value);
 	    }
 	    break;
 
@@ -348,18 +342,20 @@ PUBLIC int change_form_link_ex ARGS8(
     return(c);
 }
 
-PUBLIC int change_form_link ARGS7(
-	struct link *,	form_link,
-	document *,	newdoc,
+PUBLIC int change_form_link ARGS5(
+	int,		cur,
+	DocInfo *,	newdoc,
 	BOOLEAN *,	refresh_screen,
-	char *,		link_name,
-	char *,		link_value,
 	BOOLEAN,	use_last_tfpos,
 	BOOLEAN,	immediate_submit)
 {
     /*pass all our args and FALSE as last arg*/
-    return change_form_link_ex(form_link,newdoc,refresh_screen,link_name,
-	link_value,use_last_tfpos,immediate_submit, FALSE /*redraw_only*/ );
+    return change_form_link_ex(cur,
+			       newdoc,
+			       refresh_screen,
+			       use_last_tfpos,
+			       immediate_submit,
+			       FALSE /*redraw_only*/ );
 }
 
 PRIVATE int LastTFPos = -1;	/* remember last text field position */
@@ -371,11 +367,11 @@ PRIVATE void LYSetLastTFPos ARGS1(
 }
 
 PRIVATE int form_getstr ARGS3(
-	struct link *,	form_link,
+	int,		cur,
 	BOOLEAN,	use_last_tfpos,
 	BOOLEAN,	redraw_only)
 {
-    FormInfo *form = form_link->form;
+    FormInfo *form = links[cur].l_form;
     char *value = form->value;
     int ch;
     int far_col;
@@ -603,13 +599,13 @@ again:
 
 #ifdef CAN_CUT_AND_PASTE	/* 1998/10/01 (Thu) 19:19:22 */
 	if (action == LYE_PASTE) {
-	    unsigned char *s = get_clip_grab(), *e;
+	    unsigned char *s = (unsigned char *) get_clip_grab(), *e;
 	    char *buf = NULL;
 	    int len;
 
 	    if (!s)
 		break;
-	    len = strlen(s);
+	    len = strlen((const char *) s);
 	    e = s + len;
 
 	    if (len > 0) {
@@ -621,7 +617,7 @@ again:
 			    LYEditInsert(&MyEdit, s, e1 - s, -1, TRUE);
 			s = e1;
 			if (*e1 == '\t') { /* Replace by space */
-			    LYEditInsert(&MyEdit, " ", 1, -1, TRUE);
+			    LYEditInsert(&MyEdit, (unsigned char *) " ", 1, -1, TRUE);
 			    s = ++e1;
 			} else
 			    break;
@@ -633,7 +629,7 @@ again:
 		while (e1 < e && *e1 == '\r')
 		    e1++;
 		if (e1 + 1 < e && *e1 == '\n')
-		    StrAllocCopy(buf, e1 + 1);	/* Survive _release() */
+		    StrAllocCopy(buf, (char *) e1 + 1);	/* Survive _release() */
 		get_clip_release();
 		if (MyEdit.strlen >= max_length) {
 		    HaveMaxlength = TRUE;
@@ -653,7 +649,7 @@ again:
 		}
 		LYRefreshEdit(&MyEdit);
 	    } else {
-		HTInfoMsg("Clipboard empty or Not text data.");
+		HTInfoMsg(gettext("Clipboard empty or Not text data."));
 		continue;
 	    }
 	}
@@ -760,13 +756,15 @@ again:
 			   to do it inside LYLineEdit().
 			   This should work for prompts too.  */
 			if ( (action != LYE_BACK_LL && action != LYE_FORW_RL)
-			     || ((form_link - links) >= 0
-				&& (form_link - links) < nlinks
+			     || (cur >= 0
+				&& cur < nlinks
 				&& (action==LYE_FORW_RL
-				    ? (form_link - links) < nlinks - 1
-				    : (form_link - links) > 0)
-				&& form_link[action==LYE_FORW_RL ? 1 : -1].ly
-				   == form_link->ly))
+				    ? cur < nlinks - 1
+				    : cur > 0)
+				&& links[cur + ((action==LYE_FORW_RL)
+						? 1
+						: -1)].ly
+				   == links[cur].ly))
 			    goto breakfor;
 		    }
 #ifdef SUPPORT_MULTIBYTE_EDIT

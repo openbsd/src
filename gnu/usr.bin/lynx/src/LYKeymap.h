@@ -229,9 +229,7 @@ typedef enum {
 #define LYK_TAG_LINK      LYK_UNKNOWN
 #endif /* DIRED_SUPPORT */
 
-#ifdef SH_EX
   , LYK_CHG_CENTER
-#endif /* SH_EX */
 
 #ifdef KANJI_CODE_OVERRIDE
   , LYK_CHG_KCODE

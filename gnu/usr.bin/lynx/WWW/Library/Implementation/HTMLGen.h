@@ -24,9 +24,4 @@ extern HTStream * HTPlainToHTML PARAMS((
         HTParentAnchor *        anchor,
         HTStream *              sink));
 
-
-#endif
-
-/*
-
-    */
+#endif /* HTMLGEN_H */

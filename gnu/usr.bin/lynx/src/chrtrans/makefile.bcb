@@ -1,0 +1,122 @@
+#
+# Borland C++ IDE generated makefile
+#
+# 1997/11/09 (Sun) 14:29:50
+#
+.AUTODEPEND
+
+
+#
+# Borland C++ tools
+#
+IMPLIB  = Implib
+BCC32   = Bcc32 +BccW32.cfg
+TLINK32 = TLink32
+TLIB    = TLib
+BRC32   = Brc32
+TASM32  = Tasm32
+#
+# macros
+#
+BCB = $(MAKEDIR)/..
+BCC_INC = $(BCB)/INCLUDE
+
+#
+# Options
+#
+
+INCLUDES = -I.;../..;../../WWW/LIBRARY/IMPLEMENTATION;$(BCC_INC)
+DEFS =-DNO_FILIO_H;NO_UNISTD_H;_WINDOWS;DOSPATH
+LNIEAT_dbmakeuctbdexe = -x
+
+#
+# Dependency List
+#
+Dep_char = .\makeuctb.exe
+
+char : BccW32.cfg $(Dep_char)
+	echo MakeNode
+
+Dep_dbmakeuctbdexe = .\makeuctb.obj
+
+.\makeuctb.exe : $(Dep_dbmakeuctbdexe)
+	$(BCC32) makeuctb.obj
+
+###
+.\makeuctb.obj :  makeuctb.c
+	$(BCC32) -P- -c $(DEFS) $(INCLUDES) -o$@ makeuctb.c
+
+# Compiler configuration file
+BccW32.cfg :
+	Copy &&|
+-R
+-v
+-vi
+-H
+-H=lynx.csm
+-w-
+-A-
+-wcpt
+-wrpt
+-wrng
+-w-voi
+-w-ret
+-w-sus
+-w-dup
+-w-big
+-w-ext
+-w-zdi
+-w-bei
+-w-obi
+-w-ofp
+-w-eas
+-w-hid
+-w-ncf
+-w-ibc
+-w-dsz
+-w-nst
+-w-mpc
+-w-mpd
+-w-ntd
+-w-nvf
+-w-hch
+-w-inl
+-w-lin
+-w-lvc
+-w-pia
+-w-def
+-w-nod
+-w-pro
+-w-rvl
+-w-ccc
+-w-aus
+-w-par
+-w-rch
+-w-eff
+-w-ill
+-w-ias
+-w-msg
+-WC
+-Ot
+-d-
+-K
+-a-
+-w-stu
+-wbbf
+-w-dpu
+-wcln
+-wsig
+-wucp
+-g200
+-H-
+-v-
+| $@
+
+clean :
+	-del *_uni.h
+	-del *.exe
+	-del *.map
+	-del *.obj
+	-del *.tds
+	-del BccW32.cfg
+	-del /f/s/q *.i

@@ -44,28 +44,12 @@ PRIVATE BOOLEAN message_has_content ARGS2(
     while (LYSafeGets(&buffer, fp) != NULL) {
 	char *cp = buffer;
 	char firstnonblank = '\0';
-	if (*cp == '\0') {
-	    break;
-	}
+	LYTrimNewline(cp);
 	for (; *cp; cp++) {
-	    if (*cp == '\n') {
-		break;
-	    } else if (*cp != ' ') {
-		if (!firstnonblank && isgraph(UCH(*cp))) {
-		    firstnonblank = *cp;
-		} else if (!isspace(UCH(*cp))) {
-		    *nonspaces = TRUE;
-		}
-	    }
-	}
-	if (*cp != '\n') {
-	    int c;
-	    while ((c = getc(fp)) != EOF && c != '\n') {
-		if (!firstnonblank && isgraph(UCH(c))) {
-		    firstnonblank = (char)c;
-		} else if (!isspace(UCH(*cp))) {
-		    *nonspaces = TRUE;
-		}
+	    if (!firstnonblank && isgraph(UCH(*cp))) {
+		firstnonblank = *cp;
+	    } else if (!isspace(UCH(*cp))) {
+		*nonspaces = TRUE;
 	    }
 	}
 	if (firstnonblank && firstnonblank != '>') {
@@ -211,7 +195,7 @@ PUBLIC char *LYNewsPost ARGS2(
      */
     LYaddstr(gettext("\n\n Please provide your mail address for the From: header\n"));
     sprintf(user_input, "From: %.*s", (int)sizeof(user_input) - 8,
-	    (personal_mail_address != NULL) ? personal_mail_address : "");
+	    NonNull(personal_mail_address));
     if (LYgetstr(user_input, VISIBLE,
 		 sizeof(user_input), NORECALL) < 0 ||
 	term_message) {
@@ -273,20 +257,17 @@ PUBLIC char *LYNewsPost ARGS2(
      *  Add Organization: header.
      */
     StrAllocCopy(cp, "Organization: ");
-    if (((org = getenv("ORGANIZATION")) != NULL) && *org != '\0') {
+    if ((org = LYGetEnv("ORGANIZATION")) != NULL) {
 	StrAllocCat(cp, org);
-    } else if (((org = getenv("NEWS_ORGANIZATION")) != NULL) &&
-	       *org != '\0') {
+    } else if ((org = LYGetEnv("NEWS_ORGANIZATION")) != NULL) {
 	StrAllocCat(cp, org);
     }
 #ifdef UNIX
     else if ((fp = fopen("/etc/organization", TXT_R)) != NULL) {
 	char *buffer = 0;
 	if (LYSafeGets(&buffer, fp) != NULL) {
-	    if ((org = strchr(buffer, '\n')) != NULL) {
-		*org = '\0';
-	    }
 	    if (user_input[0] != '\0') {
+		LYTrimNewline(buffer);
 		StrAllocCat(cp, buffer);
 	    }
 	}

@@ -10,4 +10,3 @@ extern BOOLEAN term_message;
 extern char *LYNewsPost PARAMS((char *newsgroups, BOOLEAN followup));
 
 #endif /* LYNEWSPOST_H */
-

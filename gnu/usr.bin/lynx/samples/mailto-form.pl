@@ -105,7 +105,7 @@ $|=1;
 ##    s/^./\U$1/;
 ##}
 
-# If there are mutiple occurrences of the same thing, how to join them
+# If there are multiple occurrences of the same thing, how to join them
 # into one string
 %joiner = (from => ', ',
 	   to => ', ',

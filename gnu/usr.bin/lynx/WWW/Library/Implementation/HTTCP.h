@@ -87,11 +87,7 @@ extern BOOL valid_hostname PARAMS((char * name));
 */
 extern int lynx_nsl_status;
 
-#if defined(__DJGPP__) && !defined(WATT32)
-#define LYGetHostByName(host) resolv(host) /* we'll use it the same way */
-#else
 extern struct hostent * LYGetHostByName PARAMS((char * str));
-#endif
 
 /*      Get Name of This Machine
 **      ------------------------
@@ -107,8 +103,8 @@ extern int HTDoConnect PARAMS((
 	int *		s));
 
 extern int HTDoRead PARAMS((
-	int 		fildes,
+	int		fildes,
 	void *		buf,
-	unsigned 	nbyte));
+	unsigned	nbyte));
 
 #endif   /* HTTCP_H */

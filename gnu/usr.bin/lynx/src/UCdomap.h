@@ -39,11 +39,6 @@ extern void UC_Charset_Setup PARAMS((
 	int			UC_rawuni,
 	int			codepage));
 
-CONST char *UC_GNsetMIMEnames[4] =
-	{"iso-8859-1", "x-dec-graphics", "cp437", "x-transparent"};
-
-int UC_GNhandles[4] = {-1, -1, -1, -1};
-
 struct UC_charset {
 	CONST char *MIMEname;
 	CONST char *LYNXname;
@@ -60,9 +55,9 @@ struct UC_charset {
 };
 
 extern int UCNumCharsets;
+extern int UCInitialized;
 
 extern void UCInit NOARGS;
-
 
 /*
  *  INSTRUCTIONS for adding new character sets which do not have

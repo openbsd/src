@@ -3,25 +3,27 @@
 <HEAD>
 <TITLE>URL Schemes Supported in Lynx</TITLE>
 <LINK rev=made href="mailto:lynx-dev@sig.net">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </HEAD>
 
 <BODY>
 <blockquote>
-<em>[</em><a href="#http">http, https</a> <em>|</em>
-<a href="#telnet">telnet, tn3270, rlogin</a> <em>|</em>
-<a href="#gopher">gopher</a> <em>|</em>
-<a href="#file">file</a> <em>|</em>
-<a href="#ftp">ftp</a> <em>|</em>
-<a href="#wais">wais</a> <em>|</em>
-<a href="#news">news, nntp, snews</a> <em>|</em>
-<a href="#newspost">newspost, newsreply, snewspost, snewsreply</a> <em>|</em>
-<a href="#mailto">mailto</a> <em>|</em>
-<a href="#finger">finger</a> <em>|</em>
-<a href="#cso">cso</a> <em>|</em>
-<a href="#bibp">bibp</a> <em>|</em>
-<a href="#exec">lynxexec, lynxprog</a> <em>|</em>
-<a href="#cgi">lynxcgi</a><em>|</em>
-<a href="#internal">internal</a><em>]</em>
+<em>[</em><a href="#http_url">http, https</a> <em>|</em>
+<a href="#telnet_url">telnet, tn3270, rlogin</a> <em>|</em>
+<a href="#gopher_url">gopher</a> <em>|</em>
+<a href="#file_url">file</a> <em>|</em>
+<a href="#ftp_url">ftp</a> <em>|</em>
+<a href="#wais_url">wais</a> <em>|</em>
+<a href="#news_url">news, nntp, snews</a> <em>|</em>
+<a href="#newspost_url">newspost, newsreply, snewspost, snewsreply</a> <em>|</em>
+<a href="#mailto_url">mailto</a> <em>|</em>
+<a href="#finger_url">finger</a> <em>|</em>
+<a href="#cso_url">cso</a> <em>|</em>
+<a href="#bibp_url">bibp</a> <em>|</em>
+<a href="#exec_url">lynxexec, lynxprog</a> <em>|</em>
+<a href="#cgi_url">lynxcgi</a><em>|</em>
+<a href="#ncftp_url">NcFTP</a> <em>|</em>
+<a href="#internal_url">internal</a><em>]</em>
 </blockquote>
 
 <H1><em>URL Schemes Supported in Lynx</em></H1>
@@ -74,7 +76,7 @@ Any partial or relative URLs within HTML documents are resolved
 according to the rules specified in RFC1808 and subsequent IETF drafts.
 <HR>
 
-<H2><a name="http">The <em>http</em> and <em>https</em> URLs:</a></H2>
+<H2><a name="http_url">The <em>http</em> and <em>https</em> URLs:</a></H2>
 
 Lynx handles http URLs exactly as specified in RFC1738.  The format
 is:
@@ -94,12 +96,12 @@ which can correspond to positions in the rendering of the document.
 <p>The https URL has the same format, but the default port is <em>:443</em>.
 Patches for support of https URLs and the CONNECT procedure are available
 for qualified recipients via <a
-href="http://www.trill-home.com/lynx.html">Lynx links</a>.  US Export laws
+href="http://www.subir.com/lynx.html">Lynx links</a>.  US Export laws
 and associated red tape pose severe impediments to inclusion of this support
 in the general distributions of freeware WWW clients such as Lynx.  Sorry.
 <HR>
 
-<H2><a name="telnet"
+<H2><a name="telnet_url"
 >The <em>telnet</em>, <em>tn3270</em>, and <em>rlogin</em> URLs:</a></H2>
 
 A <em>telnet</em> URL generally results in Lynx spawning a telnet
@@ -123,7 +125,7 @@ for most TCP-IP software you will be prompted for a password whether
 or not one was included in the URL.
 <HR>
 
-<H2><a name="gopher">The <em>gopher</em> URL:</a></H2>
+<H2><a name="gopher_url">The <em>gopher</em> URL:</a></H2>
 
 The gopher URL takes the form:
 <pre>
@@ -172,7 +174,7 @@ listings returned by gopher servers, but should be considered Lynxisms
 and UMN Gopherisms.
 <HR>
 
-<H2><a name="file">The <em>file</em> URL:</a></H2>
+<H2><a name="file_url">The <em>file</em> URL:</a></H2>
 
 The file URL is used to retrieve files or generate a directory listing
 on the local host.  The host field can be <em>localhost</em> or a domain
@@ -206,7 +208,7 @@ use the <em>showinfo</em> command (<em>=</em>) to see the file
 URL which Lynx created for it.
 <HR>
 
-<H2><a name="ftp">The <em>ftp</em> URL:</a></H2>
+<H2><a name="ftp_url">The <em>ftp</em> URL:</a></H2>
 
 The ftp URL has the general format:
 <pre>
@@ -267,7 +269,7 @@ tilde (<em>~</em>) as for <a href="#file">file</a> URLs, e.g.:
 </pre>
 <HR>
 
-<H2><a name="wais">The <em>wais</em> URL:</a></H2>
+<H2><a name="wais_url">The <em>wais</em> URL:</a></H2>
 
 The wais URL is used to retrieve resources using the Wide Area Information
 System protocol.  The format is:
@@ -289,7 +291,7 @@ convert the server's reply into a hit list with URLs that include the
 the hit list.
 <HR>
 
-<H2><a name="news"
+<H2><a name="news_url"
 >The <em>news</em>, <em>nntp</em>, and <em>snews</em> URLs:</a></H2>
 
 The news and nntp URLs are handled by Lynx as specified in RFC1738, but
@@ -300,7 +302,7 @@ server pointed to by the NNTPSERVER environment variable or configuration
 symbol (see lynx.cfg), with default port <em>:119</em>.  A host field must
 be included in nntp URLs, and the port field is optional with the same
 default.  Patches for support of snews URLs are available to qualified
-recipients via <a href="http://www.trill-home.com/lynx.html">Lynx links</a>
+recipients via <a href="http://www.subir.com/lynx.html">Lynx links</a>
 but cannot be included in the general distribution (sorry, see <a
 href="#http">http and https</a>).
 
@@ -349,7 +351,7 @@ are specific to each nntp server, unlike the unique identifiers for
 news messages.
 <HR>
 
-<H2><a name="newspost"
+<H2><a name="newspost_url"
 >The <em>newspost</em>, <em>newsreply</em>, <em>snewspost</em>, and
 <em>snewsreply</em> URLs:</a></H2>
 
@@ -395,7 +397,7 @@ href="#mailto">mailto</a> URLs, with the qualification that they presently
 are supported only by Lynx.
 <HR>
 
-<H2><a name="mailto">The <em>mailto</em> URL:</a></H2>
+<H2><a name="mailto_url">The <em>mailto</em> URL:</a></H2>
 
 The mailto URL is used to provide links that when activated can be
 used to send a comment or the content of a FORM to an Internet email
@@ -483,7 +485,7 @@ and the prefixed inclusion should be trimmed by the user to just those
 passages relevant to the message which will be sent.
 <HR>
 
-<H2><a name="finger">The <em>finger</em> URL:</a></H2>
+<H2><a name="finger_url">The <em>finger</em> URL:</a></H2>
 
 Lynx has full support for the finger protocol, but a format for finger
 URLs has not yet been adopted by the IETF.  The formats supported by Lynx
@@ -517,7 +519,7 @@ Lynx will handle such URLs equivalently to overt finger URLs, including
 creation of links for any strings which appear to be supported URLs.
 <HR>
 
-<H2><a name="cso">The <em>cso</em> URL:</a></H2>
+<H2><a name="cso_url">The <em>cso</em> URL:</a></H2>
 
 The cso URL is intended to provide a gateway to CSO/PH (QI) servers.
 The requests are made on port 105 by default (<em>:105</em>), with the
@@ -539,7 +541,7 @@ to the server.   Any strings in the reports returned for these requests
 converted into a link for accessing that URL.
 <HR>
 
-<H2><a name="bibp">The <em>bibp</em> URL:</a></H2>
+<H2><a name="bibp_url">The <em>bibp</em> URL:</a></H2>
 
 <p>Lynx provides built-in support for bibliographic protocol (BibP).
 BibP links are links to published works such as books or journal articles,
@@ -548,7 +550,7 @@ by a local bibhost server (http://bibhost/) if it exists.   Otherwise,
 resolution is performed by a document-specified server or a known global
 server.
 
-<H2><a name="exec">The <em>lynxexec</em> and <em>lynxprog</em> URLs:</a></H2>
+<H2><a name="exec_url">The <em>lynxexec</em> and <em>lynxprog</em> URLs:</a></H2>
 
 If execution of spawned commands has been enabled in your Lynx image, the
 lynxexec and lynxprog URLs can be used to execute arbitrary system commands
@@ -575,7 +577,7 @@ from the utility invoked via lynxprog.
 solely for Lynx.
 <HR>
 
-<H2><a name="cgi">The <em>lynxcgi</em> URL:</a></H2>
+<H2><a name="cgi_url">The <em>lynxcgi</em> URL:</a></H2>
 
 The lynxcgi URL is implemented only on Unix, can be used as the
 ACTION for a FORM, and if enabled in your Lynx image has the format:
@@ -593,16 +595,21 @@ in <em>userdefs.h</em> and <em>lynx.cfg</em>, qv.
 <p>This is a Lynxism and should be used only in local documents intended
 solely for Lynx, or for limited local testing of CGI scripts without an
 http server.
-
-<p>On VMS, you are advised to use the threaded OSU http server, available
-from <a href="ftp://osu.edu"
->ftp://osu.edu</a> as freeware, if your site does not already have an http
-server.  It can be installed as a purely local script server, and is far
-more efficient and comprehensive than any code which might be incorporated
-within Lynx.
 <HR>
 
-<H2><a name="internal">The <em>LYNXfoo</em> internal URLs:</a></H2>
+<H2><a name="ncftp_url">The <em>NcFTP</em> URL:</a></H2>
+
+Lynx recognizes the NcFTP-style ftp URL, e.g.,
+<pre>
+	<cite>ftpHost</cite>:<cite>fileSpecification</cite>
+</pre>
+for example
+<pre><code>
+	ftp.gnu.org:/pub/gnu
+</code></pre>
+<HR>
+
+<H2><a name="internal_url">The <em>LYNXfoo</em> internal URLs:</a></H2>
 
 Lynx uses a variety of private URL schemes for communication among its
 internal modules.  They start with uppercase letters <code>LYNX</code>

@@ -34,7 +34,7 @@
 #define VISITED_LINKS_HELP	"keystrokes/visited_help.html"
 #endif /* LYHELP_H */
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 #include <HTChunk.h>
 #endif
 
@@ -42,6 +42,7 @@
 
 #ifdef SOCKS
 extern BOOLEAN socks_flag;
+extern unsigned long socks_bind_remoteAddr;
 #endif /* SOCKS */
 
 #ifdef IGNORE_CTRL_C
@@ -57,24 +58,39 @@ extern BOOLEAN UseFixedRecords; /* convert binary files to FIXED 512 records */
 extern char *list_format;
 #endif /* !VMS */
 
-#ifdef VMS
-extern char *LYCSwingPath;
-#endif /* VMS */
-
 #ifdef DIRED_SUPPORT
+
+typedef enum {
+    DIRS_FIRST = 0
+    , FILES_FIRST
+    , MIXED_STYLE
+} enumDirListStyle;
+
+typedef enum {
+    ORDER_BY_NAME
+    , ORDER_BY_SIZE
+    , ORDER_BY_DATE
+    , ORDER_BY_MODE
+    , ORDER_BY_TYPE
+    , ORDER_BY_USER
+    , ORDER_BY_GROUP
+} enumDirListOrder;
+
 extern BOOLEAN lynx_edit_mode;
 extern BOOLEAN no_dired_support;
-extern int dir_list_style;
 extern HTList *tagged;
-#define FILES_FIRST 1
-#define MIXED_STYLE 2
+extern int LYAutoUncacheDirLists;
+extern int dir_list_style;	/* enumDirListStyle */
+extern int dir_list_order;	/* enumDirListOrder */
+
 #ifdef OK_OVERRIDE
 extern BOOLEAN prev_lynx_edit_mode;
 #endif /* OK_OVERRIDE */
+
 #ifdef OK_PERMIT
 extern BOOLEAN no_change_exec_perms;
 #endif /* OK_PERMIT */
-extern int LYAutoUncacheDirLists;
+
 #endif /* DIRED_SUPPORT */
 
 extern int HTCacheSize;  /* the number of documents cached in memory */
@@ -96,6 +112,15 @@ extern char *LYCgiDocumentRoot;  /* DOCUMENT_ROOT in the lynxcgi env */
 #define NUMBERS_AS_ARROWS 0
 #define LINKS_ARE_NUMBERED 1
 #define LINKS_AND_FIELDS_ARE_NUMBERED 2
+#define FIELDS_ARE_NUMBERED 3
+
+#define links_are_numbered() \
+	    (keypad_mode == LINKS_ARE_NUMBERED || \
+	     keypad_mode == LINKS_AND_FIELDS_ARE_NUMBERED)
+
+#define fields_are_numbered() \
+	    (keypad_mode == FIELDS_ARE_NUMBERED || \
+	     keypad_mode == LINKS_AND_FIELDS_ARE_NUMBERED)
 
 #define HIDDENLINKS_MERGE	0
 #define HIDDENLINKS_SEPARATE	1
@@ -116,8 +141,8 @@ extern char star_string[MAX_LINE + 1]; /* from GridText.c */
  ((n) >= MAX_LINE ? star_string : &star_string[(MAX_LINE-1)] - (n))
 
 typedef enum {
-    SHOW_COLOR_UNKNOWN = 0
-    , SHOW_COLOR_NEVER
+    SHOW_COLOR_UNKNOWN = -1
+    , SHOW_COLOR_NEVER = 0	/* positive numbers are index in LYOptions.c */
     , SHOW_COLOR_OFF
     , SHOW_COLOR_ON
     , SHOW_COLOR_ALWAYS
@@ -142,13 +167,13 @@ typedef enum {
     rateOFF = 0
     , rateBYTES = 1
     , rateKB
-#ifdef EXP_READPROGRESS
+#ifdef USE_READPROGRESS
     , rateEtaBYTES
     , rateEtaKB
 #endif
 } TransferRate;
 
-#ifdef EXP_READPROGRESS
+#ifdef USE_READPROGRESS
 #  define rateEtaKB_maybe	rateEtaKB
 #else
 #  define rateEtaKB_maybe	rateKB
@@ -159,8 +184,10 @@ extern BOOLEAN LYJumpFileURL;   /* URL from the jump file shortcuts? */
 extern BOOLEAN LYNewsPosting;	/* News posting supported if TRUE */
 extern BOOLEAN LYShowCursor;	/* Show the cursor or hide it?	    */
 extern BOOLEAN LYShowTransferRate;
+extern BOOLEAN LYUnderlineLinks; /* Show the links underlined vs bold */
 extern BOOLEAN LYUseDefShoCur;	/* Command line -show_cursor toggle */
 extern BOOLEAN LYUserSpecifiedURL;  /* URL from a goto or document? */
+extern BOOLEAN LYfind_leaks;
 extern BOOLEAN LYforce_HTML_mode;
 extern BOOLEAN LYforce_no_cache;
 extern BOOLEAN LYinternal_flag; /* don't need fresh copy, was internal link */
@@ -187,6 +214,8 @@ extern BOOLEAN long_url_ok;
 extern BOOLEAN lynx_mode;
 extern BOOLEAN more;		/* is there more document to display? */
 extern BOOLEAN news_ok;
+extern BOOLEAN number_fields_on_left;
+extern BOOLEAN number_links_on_left;
 extern BOOLEAN recent_sizechange;
 extern BOOLEAN rlogin_ok;
 extern BOOLEAN system_editor;	  /* True if locked-down editor */
@@ -195,6 +224,7 @@ extern BOOLEAN verbose_img;	/* display filenames of images?     */
 extern BOOLEAN vi_keys;		/* TRUE to turn on vi-like key movement */
 extern char *LYRequestReferer;	/* Referer, may be set in getfile() */
 extern char *LYRequestTitle;	/* newdoc.title in calls to getfile() */
+extern char *LYTransferName;	/* abbreviation for Kilobytes */
 extern char *LynxHome;
 extern char *LynxSigFile;	/* Signature file, in or off home */
 extern char *checked_box;	/* form boxes */
@@ -309,7 +339,7 @@ extern BOOLEAN historical_comments;
 extern BOOLEAN minimal_comments;
 extern BOOLEAN soft_dquotes;
 
-#ifdef SOURCE_CACHE
+#ifdef USE_SOURCE_CACHE
 extern BOOLEAN source_cache_file_error;
 extern int LYCacheSource;
 #define SOURCE_CACHE_NONE	0
@@ -355,9 +385,13 @@ extern BOOLEAN more_links;
 extern int     ccount;
 extern BOOLEAN LYCancelledFetch;
 extern char * LYToolbarName;
+
+extern int AlertSecs;
 extern int InfoSecs;
 extern int MessageSecs;
-extern int AlertSecs;
+extern int DebugSecs;
+extern int ReplaySecs;
+
 extern char * LYUserAgent;		/* Lynx User-Agent header */
 extern char * LYUserAgentDefault;	/* Lynx default User-Agent header */
 extern BOOLEAN LYNoRefererHeader;	/* Never send Referer header? */
@@ -406,11 +440,11 @@ extern BOOLEAN BibP_bibhost_checked;    /* bibhost has been checked      */
 extern BOOLEAN BibP_bibhost_available;  /* bibhost is responding         */
 #endif
 
-#ifdef EXP_PERSISTENT_COOKIES
+#ifdef USE_PERSISTENT_COOKIES
 extern BOOLEAN persistent_cookies;
 extern char *LYCookieFile;              /* cookie read file              */
 extern char *LYCookieSaveFile;          /* cookie save file              */
-#endif /* EXP_PERSISTENT_COOKIES */
+#endif /* USE_PERSISTENT_COOKIES */
 
 extern char *XLoadImageCommand;		/* Default image viewer for X	 */
 
@@ -424,10 +458,14 @@ extern int LYHiddenLinks;
 extern int Old_DTD;
 
 #define MBM_V_MAXFILES  25		/* Max number of sub-bookmark files */
+
 /*
  *  Arrays that holds the names of sub-bookmark files
  *  and their descriptions.
  */
+extern char *MBM_A_subbookmark[MBM_V_MAXFILES+1];
+extern char *MBM_A_subdescript[MBM_V_MAXFILES+1];
+
 extern BOOLEAN LYForceSSLCookiesSecure;
 extern BOOLEAN LYNoCc;
 extern BOOLEAN LYNonRestartingSIGWINCH;
@@ -441,8 +479,18 @@ extern BOOLEAN LYSeekFragMAPinCur;
 extern BOOLEAN LYStripDotDotURLs;	/* Try to fix ../ in some URLs?  */
 extern BOOLEAN LYUseBuiltinSuffixes;
 extern BOOLEAN dont_wrap_pre;
-extern char *MBM_A_subbookmark[MBM_V_MAXFILES+1];
-extern char *MBM_A_subdescript[MBM_V_MAXFILES+1];
+
+extern int cookie_noprompt;
+
+typedef enum {
+    FORCE_PROMPT_DFT		/* force a prompt, use the result */
+    ,FORCE_PROMPT_YES		/* assume "yes" where a prompt would be used */
+    ,FORCE_PROMPT_NO		/* assume "no" where a prompt would be used */
+} FORCE_PROMPT;
+
+#ifdef USE_SSL
+extern int ssl_noprompt;
+#endif
 
 #ifdef MISC_EXP
 extern int LYNoZapKey;  /* 0: off (do 'z' checking), 1: full, 2: initially */
@@ -453,8 +501,17 @@ extern BOOL ok_justify;
 extern int justify_max_void_percent;
 #endif
 
+#ifdef EXP_LOCALE_CHARSET
+extern BOOLEAN LYLocaleCharset;
+#endif
+
 #ifndef NO_DUMP_WITH_BACKSPACES
 extern BOOLEAN with_backspaces;
+#endif
+
+#if defined(PDCURSES) && defined(PDC_BUILD) && PDC_BUILD >= 2401
+extern int scrsize_x;
+extern int scrsize_y;
 #endif
 
 #ifndef NO_LYNX_TRACE
@@ -484,8 +541,17 @@ extern BOOLEAN LYNoCore;
 extern BOOLEAN restore_sigpipe_for_children;
 #endif /* !VMS */
 
+#if defined(USE_COLOR_STYLE)
+extern char *lynx_lss_file;
+#endif
+
 extern int HTNoDataOK;		/* HT_NO_DATA-is-ok hack */
 extern BOOLEAN FileInitAlreadyDone;
+
+#ifdef __DJGPP__
+extern BOOLEAN watt_debug;
+extern BOOLEAN dj_is_bash;
+#endif /* __DJGPP__ */
 
 #ifdef WIN_EX
 /* LYMain.c */
@@ -497,11 +563,9 @@ extern int lynx_timeout;
 
 #ifdef SH_EX
 extern BOOLEAN show_cfg;
-#ifdef WIN_EX
-extern int     debug_delay;
 #endif
+
 extern BOOLEAN no_table_center;
-#endif
 
 #if USE_BLAT_MAILER
 extern BOOLEAN mail_is_blat;
@@ -525,7 +589,7 @@ extern int setmode(int handle, int amode);
 
 #ifdef USE_SCROLLBAR
 /* GridText.c */
-extern BOOLEAN LYsb;
+extern BOOLEAN LYShowScrollbar;
 extern BOOLEAN LYsb_arrow;
 extern int LYsb_begin;
 extern int LYsb_end;

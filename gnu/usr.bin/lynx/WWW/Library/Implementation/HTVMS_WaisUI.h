@@ -19,7 +19,7 @@ void	log_write PARAMS((char *));
 **
 **----------------------------------------------------------------------*/
 
-void	panic (char* format,...); 
+void	panic (char* format,...);
 
 /*----------------------------------------------------------------------*/
 
@@ -36,11 +36,11 @@ void	panic (char* format,...);
 #endif /* boolean */
 
 #ifndef true
-#define true 	(boolean)1L
+#define true	(boolean)1L
 #endif /* true */
 
 #ifndef false
-#define false 	(boolean)0L   /* used to be (!true), but broke 
+#define false	(boolean)0L   /* used to be (!true), but broke
 				 some compilers */
 #endif /* false */
 
@@ -61,16 +61,16 @@ void	fs_checkPtr PARAMS((void* ptr));
 void*	fs_malloc PARAMS((size_t size));
 void*	fs_realloc PARAMS((void* ptr,size_t size));
 void	fs_free PARAMS((void* ptr));
-char* 	fs_strncat PARAMS((char* dst,char* src,size_t maxToAdd,size_t maxTotal));
+char*	fs_strncat PARAMS((char* dst,char* src,size_t maxToAdd,size_t maxTotal));
 
 /* macros for memory functions.  call these in your program.  */
-#define s_checkPtr(ptr) 	fs_checkPtr(ptr)
-#define s_malloc(size)	      	fs_malloc(size)
+#define s_checkPtr(ptr)		fs_checkPtr(ptr)
+#define s_malloc(size)		fs_malloc(size)
 #define s_realloc(ptr,size)	fs_realloc((ptr),(size))
 #define s_free(ptr)		{ fs_free((char*)ptr); ptr = NULL; }
 #define s_strncat(dst,src,maxToAdd,maxTotal)	fs_strncat((dst),(src),(maxToAdd),(maxTotal))
 
-char* 	s_strdup PARAMS((char* s));
+char*	s_strdup PARAMS((char* s));
 
 #define IS_DELIMITER	1
 #define	NOT_DELIMITER	!IS_DELIMITER
@@ -90,7 +90,7 @@ char *string_downcase PARAMS((char* word));
 /* Data types / constants */
 
 /* bytes to leave for the header size info */
-#define HEADER_LEN	(size_t)2 
+#define HEADER_LEN	(size_t)2
 
 typedef long pdu_type;
 
@@ -108,15 +108,15 @@ typedef long pdu_type;
 #define	resourceControlResponseAPDU	(pdu_type)31
 
 typedef struct any {	/* an any is a non-ascii string of characters */
-	unsigned long	size; 
+	unsigned long	size;
 	char*			bytes;
 	} any;
-	
-typedef any	bit_map; 	/* a bit_map is a group of packed bits */
+
+typedef any	bit_map;	/* a bit_map is a group of packed bits */
 
 typedef unsigned long data_tag;
 
-#define DT_PDUType			(data_tag)1 	
+#define DT_PDUType			(data_tag)1
 #define	DT_ReferenceID			(data_tag)2
 #define	DT_ProtocolVersion		(data_tag)3
 #define	DT_Options			(data_tag)4
@@ -134,7 +134,7 @@ typedef unsigned long data_tag;
 #define	DT_ReplaceIndicator		(data_tag)16
 #define	DT_ResultSetName		(data_tag)17
 #define	DT_DatabaseNames		(data_tag)18
-#define	DT_ElementSetNames 		(data_tag)19
+#define DT_ElementSetNames		(data_tag)19
 #define	DT_QueryType			(data_tag)20
 #define	DT_Query			(data_tag)21
 #define	DT_SearchStatus			(data_tag)22
@@ -162,12 +162,12 @@ typedef unsigned long data_tag;
 
 #define UNUSED	-1
 
-/* number of bytes required to represent the following sizes in compressed 
+/* number of bytes required to represent the following sizes in compressed
    integer format
  */
-#define CompressedInt1Byte	128 		/* 2 ^ 7 */
-#define CompressedInt2Byte	16384 		/* 2 ^ 14 */
-#define CompressedInt3Byte	2097152 	/* 2 ^ 21 */
+#define CompressedInt1Byte	128		/* 2 ^ 7 */
+#define CompressedInt2Byte	16384		/* 2 ^ 14 */
+#define CompressedInt3Byte	2097152		/* 2 ^ 21 */
 /* others may follow ... */
 
 /* types of query */
@@ -198,24 +198,24 @@ typedef unsigned long data_tag;
 #define PARTIAL_2	2
 #define PARTIAL_3	3
 #define PARTIAL_4	4
-#define PS_NONE		5 /* can't use NONE since it was used by result 
+#define PS_NONE		5 /* can't use NONE since it was used by result
 			     set status */
 
 #define DIAGNOSTIC_CODE_SIZE	(size_t)3
 
-typedef struct diagnosticRecord 
+typedef struct diagnosticRecord
  { boolean	SURROGATE;
    char		DIAG[DIAGNOSTIC_CODE_SIZE];
-   char* 	ADDINFO;
+   char*	ADDINFO;
  } diagnosticRecord;
 
 #define D_PermanentSystemError	       "S1"
-#define D_TemporarySystemError	       "S2"
-#define D_UnsupportedSearch	       "S3"
-#define D_TermsOnlyStopWords	       "S5"
-#define D_TooManyArgumentWords	       "S6"
+#define D_TemporarySystemError         "S2"
+#define D_UnsupportedSearch            "S3"
+#define D_TermsOnlyStopWords           "S5"
+#define D_TooManyArgumentWords         "S6"
 #define D_TooManyBooleanOperators      "S7"
-#define D_TooManyTruncatedWords	       "S8"
+#define D_TooManyTruncatedWords        "S8"
 #define D_TooMany IncompleteSubfields  "S9"
 #define D_TruncatedWordsTooShort       "SA"
 #define D_InvalidFormatForRecordNumber "SB"
@@ -251,17 +251,17 @@ typedef struct diagnosticRecord
 
 /* for internal error handling */
 
-extern char* readErrorPosition; 	/* pos where buf stoped making sense */
+extern char* readErrorPosition;		/* pos where buf stoped making sense */
 
 /* the following are macros so that they can return OUT of the function
    which calls them
  */
- 
-#define RETURN_ON_NULL(var) 					\
-	if (var == NULL) 				     	\
+
+#define RETURN_ON_NULL(var)					\
+	if (var == NULL)					\
 	  return(NULL); /* jump out of caller */
 
-#define REPORT_READ_ERROR(pos) 					\
+#define REPORT_READ_ERROR(pos)					\
 	{ readErrorPosition = (pos);				\
 	  return(NULL); /* jump out of caller */		\
     }
@@ -270,8 +270,8 @@ extern char* readErrorPosition; 	/* pos where buf stoped making sense */
 	{ if (*spaceLeft >= spaceNeeded)			\
 	    (*spaceLeft) -= spaceNeeded;			\
 	  else							\
-	   { *spaceLeft = 0; 					\
-	     return(NULL); /* jump out of the caller */ 	\
+	   { *spaceLeft = 0;					\
+	     return(NULL); /* jump out of the caller */		\
 	   }							\
 	}
 
@@ -476,8 +476,8 @@ query_term** readQuery PARAMS((any* info));
 **----------------------------------------------------------------------*/
 
 char *
-generate_retrieval_apdu PARAMS((char *buff, 
-			     long *buff_len, 
+generate_retrieval_apdu PARAMS((char *buff,
+			     long *buff_len,
 			     any *docID,
 			     long chunk_type,
 			     long start_line, long end_line,
@@ -512,7 +512,7 @@ typedef struct InitAPDU {
 	long			MaximumRecordSize;
 	char*			IDAuthentication;
 	char*			ImplementationID;
-	char* 			ImplementationName;
+	char*			ImplementationName;
 	char*			ImplementationVersion;
 	any*			ReferenceID;
 	void*			UserInformationField;
@@ -524,10 +524,10 @@ typedef struct InitResponseAPDU {
 	boolean			willSearch,willPresent,willDelete;
 	boolean			supportAccessControl,supportResourceControl;
 	long			PreferredMessageSize;
-	long 			MaximumRecordSize;
+	long			MaximumRecordSize;
 	char*			IDAuthentication;
 	char*			ImplementationID;
-	char* 			ImplementationName;
+	char*			ImplementationName;
 	char*			ImplementationVersion;
 	any*			ReferenceID;
 	void*			UserInformationField;
@@ -535,14 +535,14 @@ typedef struct InitResponseAPDU {
 
 typedef struct SearchAPDU {
 	pdu_type		PDUType;
-	long	 		SmallSetUpperBound;
+	long			SmallSetUpperBound;
 	long			LargeSetLowerBound;
-	long	 		MediumSetPresentNumber;
-	boolean 		ReplaceIndicator;
+	long			MediumSetPresentNumber;
+	boolean			ReplaceIndicator;
 	char*			ResultSetName;
-	char**			DatabaseNames;   
+	char**			DatabaseNames;
 	char*			QueryType;
-	char**			ElementSetNames;  
+	char**			ElementSetNames;
 	any*			ReferenceID;
 	void*			Query;
 	} SearchAPDU;
@@ -552,9 +552,9 @@ typedef struct SearchResponseAPDU {
 	long			SearchStatus;
 	long			ResultCount;
 	long			NumberOfRecordsReturned;
-	long		 	NextResultSetPosition;
+	long			NextResultSetPosition;
 	long			ResultSetStatus;
-	long 			PresentStatus;
+	long			PresentStatus;
 	any*			ReferenceID;
 	void*			DatabaseDiagnosticRecords;
 	} SearchResponseAPDU;
@@ -563,7 +563,7 @@ typedef struct PresentAPDU {
 	pdu_type		PDUType;
 	long			NumberOfRecordsRequested;
 	long			ResultSetStartPosition;
-	char*		 	ResultSetID;
+	char*			ResultSetID;
 	char*			ElementSetNames;
 	any*			ReferenceID;
 	void*			PresentInfo;

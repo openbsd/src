@@ -6,12 +6,17 @@
 #include <LYMainLoop.h>
 #include <LYGlobalDefs.h>
 #include <LYTraversal.h>
+#include <LYHistory.h>
 #include <LYCookie.h>
 #include <UCAuto.h>
 #include <HTAlert.h>
 
 #include <LYexit.h>
 #include <LYLeaks.h>
+
+#ifdef DJGPP
+extern void sig_handler_watt(int);
+#endif /* DJGPP */
 
 #ifdef VMS
 BOOLEAN HadVMSInterrupt = FALSE;
@@ -29,8 +34,17 @@ PUBLIC void cleanup_sig ARGS1(
 	/*
 	 * Need to rearm the signal.
 	 */
+#ifdef DJGPP
+	if (wathndlcbrk) {
+	    sig_handler_watt(sig);	/* Use WATT-32 signal handler */
+	}
+#endif /* DJGPP */
 	signal(SIGINT, cleanup_sig);
 	sigint = TRUE;
+#ifdef DJGPP
+	_eth_release();
+	_eth_init();
+#endif /* DJGPP */
 	return;
     }
 #endif /* IGNORE_CTRL_C */
@@ -56,9 +70,9 @@ PUBLIC void cleanup_sig ARGS1(
 	 *  Ask if exit is intended.
 	 */
 	if (LYQuitDefaultYes == TRUE) {
-	    c = HTConfirmDefault(REALLY_EXIT_Y, YES);
+	    c = HTConfirmDefault(REALLY_EXIT, YES);
 	} else {
-	    c = HTConfirmDefault(REALLY_EXIT_N, NO);
+	    c = HTConfirmDefault(REALLY_EXIT, NO);
 	}
 	HadVMSInterrupt = TRUE;
 	if (LYQuitDefaultYes == TRUE) {
@@ -138,16 +152,13 @@ PUBLIC void cleanup_sig ARGS1(
 PUBLIC void cleanup_files NOARGS
 {
     LYCleanupTemp();
-
     if (lynx_temp_space != NULL && rmdir(lynx_temp_space))
-        perror("Could not remove the temp-directory");
-
+	perror("Could not remove the temp-directory");
     FREE(lynx_temp_space);
 }
 
 PUBLIC void cleanup NOARGS
 {
-    int i;
 #ifdef VMS
     extern BOOLEAN DidCleanup;
 #endif /* VMS */
@@ -182,7 +193,7 @@ PUBLIC void cleanup NOARGS
     UCChangeTerminalCodepage(-1, (LYUCcharset*)0);
 #endif /* EXP_CHARTRANS_AUTOSWITCH */
 
-#ifdef EXP_PERSISTENT_COOKIES
+#ifdef USE_PERSISTENT_COOKIES
     /*
      * This can go right here for now.  We need to work up a better place
      * to save cookies for the next release, preferably whenever a new
@@ -195,18 +206,17 @@ PUBLIC void cleanup NOARGS
 #endif
 
     cleanup_files();
-    for (i = 0; i < nhist; i++) {
-	FREE(history[i].title);
-	FREE(history[i].address);
-	FREE(history[i].post_data);
-	FREE(history[i].post_content_type);
-	FREE(history[i].bookmark);
-    }
-    nhist = 0;
 #ifdef VMS
     ttclose();
     DidCleanup = TRUE;
 #endif /* VMS */
 
+    /*
+     * If we're looking at memory leaks, hang onto the trace file, since there
+     * is no memory freed in this function, and it is a nuisance to not be able
+     * to trace the cleanup activity -TD
+     */
+#ifndef LY_FIND_LEAKS
     LYCloseTracelog();
+#endif
 }

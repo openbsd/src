@@ -130,7 +130,7 @@ PUBLIC void add_lynxcgi_environment ARGS1(
 {
     char *env_value;
 
-    env_value = getenv(variable_name);
+    env_value = LYGetEnv(variable_name);
     if (env_value != NULL) {
 	char *add_value = NULL;
 
@@ -140,6 +140,16 @@ PUBLIC void add_lynxcgi_environment ARGS1(
     }
 }
 
+#ifdef __MINGW32__
+PRIVATE int LYLoadCGI ARGS4(
+	CONST char *, 		arg,
+	HTParentAnchor *,	anAnchor,
+	HTFormat,		format_out,
+	HTStream*,		sink)
+{
+	return -1;
+}
+#else
 PRIVATE int LYLoadCGI ARGS4(
 	CONST char *, 		arg,
 	HTParentAnchor *,	anAnchor,
@@ -160,7 +170,7 @@ PRIVATE int LYLoadCGI ARGS4(
     char *pgm_buff = NULL;		/* PATH_INFO extraction buffer       */
     char *path_translated;		/* From document_root/path_info      */
 
-    if (!arg || !*arg || strlen(arg) <= 8) {
+    if (isEmpty(arg) || strlen(arg) <= 8) {
 	HTAlert(BAD_REQUEST);
 	status = -2;
 	return(status);
@@ -178,7 +188,7 @@ PRIVATE int LYLoadCGI ARGS4(
     }
 
     StrAllocCopy(orig_pgm, pgm);
-    if ((cp=strchr(pgm, '#')) != NULL) {
+    if ((cp = trimPoundSelector(pgm)) != NULL) {
 	/*
 	 *  Strip a #fragment from path.  In this case any pgm_args
 	 *  found above will also be bogus, since the '?' came after
@@ -186,7 +196,6 @@ PRIVATE int LYLoadCGI ARGS4(
 	 *  handle the case where a '#' appears after a '?' properly
 	 *  according to URL rules. - kw
 	 */
-	*cp = '\0';
 	pgm_args = NULL;
     }
     HTUnEscape(pgm);
@@ -319,7 +328,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	HTStream *target  = NULL;		/* Unconverted data */
 	int fd1[2], fd2[2];
 	char buf[1024];
-	pid_t pid;
+	int pid;
 #ifdef HAVE_TYPE_UNIONWAIT
 	union wait wstatus;
 #else
@@ -389,16 +398,20 @@ PRIVATE int LYLoadCGI ARGS4(
 
 		if (anAnchor->post_data) {
 		    int written, remaining, total_written = 0;
+
 		    close(fd1[0]);
 
 		    /* We have form data to push across the pipe */
-		    CTRACE((tfp, "LYNXCGI: Doing post, content-type '%s'\n",
+		    if (TRACE) {
+			CTRACE((tfp, "LYNXCGI: Doing post, content-type '%s'\n",
 				anAnchor->post_content_type));
-		    CTRACE((tfp, "LYNXCGI: Writing:\n%s----------------------------------\n",
-				anAnchor->post_data));
-		    remaining = strlen(anAnchor->post_data);
+			CTRACE((tfp, "LYNXCGI: Writing:\n"));
+			trace_bstring(anAnchor->post_data);
+			CTRACE((tfp, "----------------------------------\n"));
+		    }
+		    remaining = BStrLen(anAnchor->post_data);
 		    while ((written = write(fd1[1],
-					    anAnchor->post_data + total_written,
+					    BStrData(anAnchor->post_data) + total_written,
 					    remaining)) != 0) {
 			if (written < 0) {
 #ifdef EINTR
@@ -515,7 +528,7 @@ PRIVATE int LYLoadCGI ARGS4(
 		    add_environment_value("REQUEST_METHOD=POST");
 
 		    HTSprintf0(&post_len, "CONTENT_LENGTH=%d",
-			    strlen(anAnchor->post_data));
+			       BStrLen(anAnchor->post_data));
 		    add_environment_value(post_len);
 		} else {
 		    close(fileno(stdin));
@@ -681,6 +694,7 @@ PRIVATE int LYLoadCGI ARGS4(
 #endif /* LYNXCGI_LINKS */
     return(status);
 }
+#endif /* __MINGW32__ */
 
 #ifdef GLOBALDEF_IS_MACRO
 #define _LYCGI_C_GLOBALDEF_1_INIT { "lynxcgi", LYLoadCGI, 0 }

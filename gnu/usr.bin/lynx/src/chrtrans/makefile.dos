@@ -12,11 +12,10 @@
 CFLAGS = $(MCFLAGS)
 
 CC = gcc
-MCFLAGS = -O2 -DDOSPATH -DNO_TTYTYP \
+MCFLAGS = -O2 -DDOSPATH \
 -I. \
 -I../../WWW/Library/Implementation \
--I/djgpp/watt32/inc \
--I/djgpp/watt32/inc/sys \
+-I/djgpp/watt32/inc
 -I../..
 
 .SUFFIXES: .tbl
@@ -64,6 +63,7 @@ TABLES= \
  mnem2_suni.h \
  mnem_suni.h \
  next_uni.h \
+ pt154_uni.h \
  rfc_suni.h \
  utf8_uni.h \
  viscii_uni.h
@@ -98,7 +98,7 @@ cp866u_uni.h:		cp866u_uni.tbl		makeuctb.exe
 cp869_uni.h:		cp869_uni.tbl		makeuctb.exe
 def7_uni.h:		def7_uni.tbl		makeuctb.exe
 dmcs_uni.h:		dmcs_uni.tbl		makeuctb.exe
-hp_uni.h:               hp_uni.tbl              makeuctb.exe 
+hp_uni.h:               hp_uni.tbl              makeuctb.exe
 iso01_uni.h:		iso01_uni.tbl		makeuctb.exe
 iso02_uni.h:		iso02_uni.tbl		makeuctb.exe
 iso03_uni.h:		iso03_uni.tbl		makeuctb.exe
@@ -116,6 +116,7 @@ mac_uni.h:		mac_uni.tbl		makeuctb.exe
 mnem2_suni.h:		mnem2_suni.tbl		makeuctb.exe
 mnem_suni.h:		mnem_suni.tbl		makeuctb.exe
 next_uni.h:		next_uni.tbl		makeuctb.exe
+pt154_uni.h:		pt154_uni.tbl		makeuctb.exe
 rfc_suni.h:		rfc_suni.tbl		makeuctb.exe
 utf8_uni.h:		utf8_uni.tbl		makeuctb.exe
 viscii_uni.h:		viscii_uni.tbl		makeuctb.exe

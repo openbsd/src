@@ -1034,9 +1034,4 @@ extern void HTStartIsIndex PARAMS((
 		CONST char *	prompt,
 		CONST char *	href));
 
-
 #endif /* HTMLDTD_H */
-
-/*
-
-   End of module definition  */

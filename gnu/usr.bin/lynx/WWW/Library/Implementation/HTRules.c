@@ -192,13 +192,13 @@ PRIVATE BOOL rule_cond_ok ARGS1(
 **	The most recently defined rules are applied first.
 **
 ** On entry,
-**	required	points to a string whose equivalent value is neeed
+**	required	points to a string whose equivalent value is needed
 ** On exit,
 **	returns		the address of the equivalent string allocated from
 **			the heap which the CALLER MUST FREE. If no translation
-**			occured, then it is a copy of te original.
+**			occurred, then it is a copy of the original.
 ** NEW FEATURES:
-**			When a "protect" or "defprot" rule is mathed,
+**			When a "protect" or "defprot" rule is matched,
 **			a call to HTAA_setCurrentProtection() or
 **			HTAA_setDefaultProtection() is made to notify
 **			the Access Authorization module that the file is
@@ -213,6 +213,7 @@ char * HTTranslate ARGS1(
     char *msgtmp = NULL, *pMsg;
     int proxy_none_flag = 0;
     int permitredir_flag = 0;
+
     StrAllocCopy(current, required);
 
     HTAA_clearProtections();	/* Reset from previous call -- AL */
@@ -397,8 +398,7 @@ char * HTTranslate ARGS1(
 
 	case HT_Invalid:
 	case HT_Fail:				/* Unauthorised */
-		CTRACE((tfp, "HTRule: *** FAIL `%s'\n",
-			    current));
+		CTRACE((tfp, "HTRule: *** FAIL `%s'\n", current));
 		FREE(current);
 		return (char *)0;
 	} /* if tail matches ... switch operation */
@@ -409,6 +409,7 @@ char * HTTranslate ARGS1(
 	char * temp = NULL;
 	StrAllocCopy(temp, "NoProxy=");
 	StrAllocCat(temp, current);
+	FREE(current);
 	return temp;
     }
 

@@ -6,8 +6,6 @@
 #
 SHELL		= @CONFIG_SHELL@
 
-x		= @PROG_EXT@
-
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 top_srcdir	= @top_srcdir@
@@ -29,7 +27,9 @@ SITE_DEFS	= # FIXME: set in parent makefile
 CC		= @CC@
 CPP		= @CPP@
 CFLAGS		= @CFLAGS@
-_O		= .o
+
+x		= @EXEEXT@
+o		= .@OBJEXT@
 
 CPP_OPTS	= @DEFS@ @CPPFLAGS@ \
 		-I$(top_builddir) \
@@ -86,6 +86,8 @@ TABLES= \
  mnem2_suni.h \
  mnem_suni.h \
  next_uni.h \
+ next_uni.h \
+ pt154_uni.h \
  rfc_suni.h \
  utf8_uni.h \
  viscii_uni.h
@@ -94,14 +96,14 @@ default: $(FONTMAP_INC)
 
 tables: $(TABLES)
 
-makeuctb$x: makeuctb$(_O)
-	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@ makeuctb$(_O) $(INTLLIB) $(LIBS)
+makeuctb$x: makeuctb$o
+	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@ makeuctb$o $(INTLLIB) $(LIBS)
 
-makeuctb$(_O): $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
+makeuctb$o: $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
 
-.SUFFIXES : $(_O) .tbl .i
+.SUFFIXES : $o .tbl .i
 
-.c$(_O):
+.c$o:
 @RULE_CC@
 	@ECHO_CC@$(CC) $(CC_OPTS) -c $(srcdir)/$*.c
 
@@ -151,12 +153,13 @@ mac_uni.h:		$(srcdir)/mac_uni.tbl		makeuctb$x
 mnem2_suni.h:		$(srcdir)/mnem2_suni.tbl	makeuctb$x
 mnem_suni.h:		$(srcdir)/mnem_suni.tbl		makeuctb$x
 next_uni.h:		$(srcdir)/next_uni.tbl		makeuctb$x
+pt154_uni.h:		$(srcdir)/pt154_uni.tbl 	makeuctb$x
 rfc_suni.h:		$(srcdir)/rfc_suni.tbl		makeuctb$x
 utf8_uni.h:		$(srcdir)/utf8_uni.tbl		makeuctb$x
 viscii_uni.h:		$(srcdir)/viscii_uni.tbl	makeuctb$x
 
 clean:
-	rm -f makeuctb$x *$(_O) *uni.h *uni2.h
+	rm -f makeuctb$x *$o *uni.h *uni2.h *.i
 
 distclean: clean
 	-rm -rf obsolete

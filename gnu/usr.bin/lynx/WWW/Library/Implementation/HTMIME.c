@@ -22,11 +22,10 @@
 
 #include <LYCookie.h>
 #include <LYCharSets.h>
+#include <LYCharUtils.h>
 #include <LYStrings.h>
 #include <LYUtils.h>
 #include <LYLeaks.h>
-
-extern BOOL HTPassEightBitRaw;
 
 /*		MIME Object
 **		-----------
@@ -75,6 +74,9 @@ typedef enum {
 	miPRAGMA,
 	miPROXY_AUTHENTICATE,
 	miPUBLIC,
+	miR,
+	miRE,
+	miREFRESH,
 	miRETRY_AFTER,
 	miS,
 	miSAFE,
@@ -130,6 +132,8 @@ struct _HTStream {
 	char *			set_cookie2;	/* Set-Cookie2 */
 	char *			location;	/* Location */
 
+	char *			refresh_url;	/* "Refresh:" URL */
+
 	HTFormat		encoding;	/* Content-Transfer-Encoding */
 	char *			compression_encoding;
 	HTFormat		format;		/* Content-Type */
@@ -165,6 +169,32 @@ PUBLIC void HTMIME_TrimDoubleQuotes ARGS1(
 	value[i] = cp[(i +1)];
 }
 
+PRIVATE BOOL content_is_compressed ARGS1(HTStream *, me)
+{
+    char *encoding = me->anchor->content_encoding;
+
+    return encoding != 0
+        && strcmp(encoding, "8bit") != 0
+	&& strcmp(encoding, "7bit") != 0
+	&& strcmp(encoding, "binary") != 0;
+}
+
+/*
+ * Strip quotes from a refresh-URL.
+ */
+PRIVATE void dequote ARGS1(char *, url)
+{
+    int len;
+
+    len = strlen(url);
+    if (*url == '\'' && len > 1 && url[len-1] == url[0]) {
+	url[len-1] = '\0';
+	while ((url[0] = url[1]) != '\0') {
+	    ++url;
+	}
+    }
+}
+
 PRIVATE int pumpData ARGS1(HTStream *, me)
 {
     if (strchr(HTAtom_name(me->format), ';') != NULL) {
@@ -174,13 +204,13 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 		HTAtom_name(me->format)));
 	StrAllocCopy(cp, HTAtom_name(me->format));
 	/*
-	**	Note that the Content-Type value was converted
-	**	to lower case when we loaded into me->format,
-	**	but there may have been a mixed or upper-case
-	**	atom, so we'll force lower-casing again.  We
-	**	also stripped spaces and double-quotes, but
-	**	we'll make sure they're still gone from any
-	**	charset parameter we check. - FM
+	** Note that the Content-Type value was converted
+	** to lower case when we loaded into me->format,
+	** but there may have been a mixed or upper-case
+	** atom, so we'll force lower-casing again.  We
+	** also stripped spaces and double-quotes, but
+	** we'll make sure they're still gone from any
+	** charset parameter we check.  - FM
 	*/
 	LYLowerCase(cp);
 	if ((cp1 = strchr(cp, ';')) != NULL) {
@@ -352,7 +382,7 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 		LYmktime(me->anchor->date, TRUE)) {
 		me->anchor->no_cache = TRUE;
 	    }
-	} else if (LYmktime(me->anchor->expires, FALSE) <= 0) {
+	} else if (LYmktime(me->anchor->expires, FALSE) == 0) {
 	    /*
 	    **  We don't have a Date header, and
 	    **  the value is in past for us. - FM
@@ -431,6 +461,26 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 	me->state = MIME_TRANSPARENT;	/* Pump rest of data right through */
     } else {
 	me->state = MIME_IGNORE;	/* What else to do? */
+    }
+    if (me->refresh_url != NULL && !content_is_compressed(me)) {
+	char *url = NULL;
+	char *num = NULL;
+	char *txt = NULL;
+	char *base = "";	/* FIXME: refresh_url may be relative to doc */
+
+	LYParseRefreshURL(me->refresh_url, &num, &url);
+	if (url != NULL && me->format == WWW_HTML) {
+	    CTRACE((tfp, "Formatting refresh-url as first line of result\n"));
+	    HTSprintf0(&txt, gettext("Refresh: "));
+	    HTSprintf(&txt, gettext("%s seconds "), num);
+	    dequote(url);
+	    HTSprintf(&txt, "<a href=\"%s%s\">%s</a><br>", base, url, url);
+	    CTRACE((tfp, "URL %s%s\n", base, url));
+	    (me->isa->put_string)(me, txt);
+	    free(txt);
+	}
+	FREE(num);
+	FREE(url);
     }
     return HT_OK;
 }
@@ -605,20 +655,18 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	LYLowerCase(me->value);
 	StrAllocCopy(me->anchor->content_encoding, me->value);
 	FREE(me->compression_encoding);
-	if (!strcmp(me->value, "8bit") ||
-	    !strcmp(me->value, "7bit") ||
-	    !strcmp(me->value, "binary")) {
-	    /*
-	    **	Some server indicated "8bit", "7bit" or "binary"
-	    **	inappropriately.  We'll ignore it. - FM
-	    */
-	    CTRACE((tfp, "                Ignoring it!\n"));
-	} else {
+	if (content_is_compressed(me)) {
 	    /*
 	    **	Save it to use as a flag for setting
 	    **	up a "www/compressed" target. - FM
 	    */
 	    StrAllocCopy(me->compression_encoding, me->value);
+	} else {
+	    /*
+	    **	Some server indicated "8bit", "7bit" or "binary"
+	    **	inappropriately.  We'll ignore it. - FM
+	    */
+	    CTRACE((tfp, "                Ignoring it!\n"));
 	}
 	break;
     case miCONTENT_FEATURES:
@@ -799,6 +847,12 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	HTMIME_TrimDoubleQuotes(me->value);
 	CTRACE((tfp, "HTMIME: PICKED UP Public: '%s'\n",
 		me->value));
+	break;
+    case miREFRESH:		/* nonstandard: Netscape */
+	HTMIME_TrimDoubleQuotes(me->value);
+	CTRACE((tfp, "HTMIME: PICKED UP Refresh: '%s'\n",
+		me->value));
+	StrAllocCopy(me->refresh_url, me->value);
 	break;
     case miRETRY_AFTER:
 	HTMIME_TrimDoubleQuotes(me->value);
@@ -1032,10 +1086,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 
 	case 'r':
 	case 'R':
-	    me->check_pointer = "etry-after:";
-	    me->if_ok = miRETRY_AFTER;
-	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Got 'R' at beginning of line, checking for 'etry-after'\n"));
+	    me->state = miR;
+	    CTRACE((tfp, "HTMIME: Got 'R' at beginning of line, state now R\n"));
 	    break;
 
 	case 's':
@@ -1318,6 +1370,47 @@ PRIVATE void HTMIME_put_character ARGS2(
 	default:
 	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
 			c, "'a' or 'o'"));
+	    goto bad_field_name;
+
+	} /* switch on character */
+	break;
+
+    case miR:				/* Check for 'e' */
+	switch (c) {
+	case 'e':
+	case 'E':
+	    me->state = miRE;
+	    CTRACE((tfp, "HTMIME: Was R, found E\n"));
+	    break;
+	default:
+	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
+			c, "'e'"));
+	    goto bad_field_name;
+
+	} /* switch on character */
+	break;
+
+    case miRE:				/* Check for 'a' or 'o' */
+	switch (c) {
+	case 'f':
+	case 'F':			/* nonstandard: Netscape */
+	    me->check_pointer = "resh:";
+	    me->if_ok = miREFRESH;
+	    me->state = miCHECK;
+	    CTRACE((tfp, "HTMIME: Was RE, found F, checking for '%s'\n", me->check_pointer));
+	    break;
+
+	case 't':
+	case 'T':
+	    me->check_pointer = "ry-after:";
+	    me->if_ok = miRETRY_AFTER;
+	    me->state = miCHECK;
+	    CTRACE((tfp, "HTMIME: Was RE, found T, checking for '%s'\n", me->check_pointer));
+	    break;
+
+	default:
+	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
+			c, "'f' or 't'"));
 	    goto bad_field_name;
 
 	} /* switch on character */
@@ -1672,6 +1765,7 @@ PRIVATE void HTMIME_put_character ARGS2(
     case miPRAGMA:
     case miPROXY_AUTHENTICATE:
     case miPUBLIC:
+    case miREFRESH:
     case miRETRY_AFTER:
     case miSAFE:
     case miSERVER:
@@ -1889,8 +1983,9 @@ PUBLIC HTStream* HTMIMEConvert ARGS3(
     me->format	  =	WWW_HTML;
     me->targetRep =	pres->rep_out;
     me->boundary  =	NULL;		/* Not set yet */
-    me->set_cookie  =	NULL;		/* Not set yet */
-    me->set_cookie2  =	NULL;		/* Not set yet */
+    me->set_cookie =	NULL;		/* Not set yet */
+    me->set_cookie2 =	NULL;		/* Not set yet */
+    me->refresh_url =	NULL;		/* Not set yet */
     me->encoding  =	0;		/* Not set yet */
     me->compression_encoding = NULL;	/* Not set yet */
     me->net_ascii =	NO;		/* Local character set */
@@ -2172,7 +2267,7 @@ PUBLIC int HTrjis ARGS2(
 */
 /*
  * RJIS ( Recover JIS code from broken file )
- * $Header: /home/cvs/src/gnu/usr.bin/lynx/WWW/Library/Implementation/Attic/HTMIME.c,v 1.3 2003/05/01 18:59:36 avsm Exp $
+ * $Header: /home/cvs/src/gnu/usr.bin/lynx/WWW/Library/Implementation/Attic/HTMIME.c,v 1.4 2004/06/22 04:01:42 avsm Exp $
  * Copyright (C) 1992 1994
  * Hironobu Takahashi (takahasi@tiny.or.jp)
  *

@@ -15,7 +15,7 @@
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif
- 
+
 /*
 
 Data structures
@@ -76,6 +76,16 @@ extern void HTBTree_add PARAMS((HTBTree* tree, void * object));
 
 /*
 
+Search an object in a binary tree
+
+  returns          Pointer to equivalent object in a tree or NULL if none.
+ */
+
+extern void * HTBTree_search PARAMS((HTBTree* tree, void * object));
+
+
+/*
+
 Find user object for element
 
  */
@@ -91,7 +101,7 @@ Find next element in depth-first order
   ele                    if NULL, start with leftmost element. if != 0 give next object to
                          the right.
 
-  returns                Pointer to element ot NULL if none left.
+  returns                Pointer to element or NULL if none left.
 
  */
 extern HTBTElement * HTBTree_next PARAMS((HTBTree* tree, HTBTElement * ele));

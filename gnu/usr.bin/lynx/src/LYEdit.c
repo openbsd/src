@@ -54,16 +54,13 @@ PUBLIC int edit_current_file ARGS3(
 {
     int result = FALSE;
     char *filename = NULL;
-#if !(defined(VMS) || defined(DOSPATH) || defined(__EMX__))
+#if !(defined(VMS) || defined(USE_DOS_DRIVES))
     char *colon;
 #endif
     char *number_sign;
     char position[80];
 #if defined(VMS) || defined(CANT_EDIT_UNWRITABLE_FILES)
     FILE *fp;
-#endif
-#if defined(__CYGWIN__) && defined(DOSPATH)
-    unsigned char temp_buff[LY_MAXPATH];
 #endif
 
     CTRACE((tfp, "edit_current_file(newfile=%s, cur=%d, lineno=%d)\n",
@@ -80,9 +77,7 @@ PUBLIC int edit_current_file ARGS3(
     /*
      *  If there's a fragment, trim it. - FM
      */
-    number_sign = strchr(newfile, '#');
-    if (number_sign)
-	*number_sign = '\0';
+    number_sign = trimPoundSelector(newfile);
 
     /*
      *  On Unix, first try to open it as a completely referenced file,
@@ -90,7 +85,7 @@ PUBLIC int edit_current_file ARGS3(
      *
      * On VMS, only try the path.
      */
-#if defined (VMS) || defined (DOSPATH) || defined (__EMX__)
+#if defined (VMS) || defined (USE_DOS_DRIVES)
     filename = HTParse(newfile, "", PARSE_PATH+PARSE_PUNCTUATION);
     HTUnEscape(filename);
     StrAllocCopy(filename, HTSYS_name(filename));
@@ -103,15 +98,11 @@ PUBLIC int edit_current_file ARGS3(
 	CTRACE((tfp, "filename: '%s'\n", filename));
 	goto done;
     }
-#else	/* !(VMS || !DOSPATH || !__EMX__) == UNIX */
-#ifdef SH_EX	/* Speed Up! */
+#else	/* something like UNIX */
     if (strncmp(newfile, "file://localhost/", 16) == 0)
 	colon = newfile + 16;
     else
 	colon = strchr(newfile, ':');
-#else
-    colon = strchr(newfile, ':');
-#endif
     StrAllocCopy(filename, (colon + 1));
     HTUnEscape(filename);
     if (!LYCanReadFile(filename)) {
@@ -123,7 +114,7 @@ PUBLIC int edit_current_file ARGS3(
 	    goto done;
 	}
     }
-#endif /* !(VMS || !DOSPATH || !__EMX__) */
+#endif
 
 #if defined(VMS) || defined(CANT_EDIT_UNWRITABLE_FILES)
     /*
@@ -162,8 +153,7 @@ done:
     /*
      *  Restore the fragment if there was one. - FM
      */
-    if (number_sign)
-	*number_sign = '#';
+    restorePoundSelector(number_sign);
 
     FREE(filename);
     CTRACE((tfp, "edit_current_file returns %d\n", result));
@@ -226,16 +216,7 @@ PUBLIC void edit_temporary_file ARGS3(
 	else
 	    HTAddXpand(&command, format, params++, editor);
 #else
-#if defined(__CYGWIN__) && defined(DOSPATH)
-	if (strchr(editor, ' ')) {
-	    cygwin_conv_to_full_posix_path(HTDOS_short_name(editor), temp_buff);
-	    HTAddXpand(&command, format, params++, temp_buff);
-	} else {
-	    HTAddXpand(&command, format, params++, editor);
-	}
-#else
 	HTAddXpand(&command, format, params++, editor);
-#endif /* __CYGWIN__ */
 #endif
 	HTAddParam(&command, format, params++, filename);
 	HTEndParam(&command, format, params);

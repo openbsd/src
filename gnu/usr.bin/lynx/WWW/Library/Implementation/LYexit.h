@@ -27,14 +27,14 @@
 /*
  *	Constant defines
  */
-#ifdef _WINDOWS
+#ifdef exit
 #undef exit
 #endif /* _WINDOWS */
 
-#define exit LYexit
+#define exit(code) LYexit(code)
 
 #define atexit LYatexit
-#define ATEXITSIZE 40
+#define ATEXITSIZE 50
 
 /*
  *	Data structures

@@ -91,14 +91,18 @@ PUBLIC void LYDownload ARGS1(
     /* FIXME: use HTLocalName */
     if (!strncmp(file, "file://localhost", 16)) {
 #ifdef __DJGPP__
-	file += 17;
-	file = HTDOS_name(file);
+	if (!strncmp(file + 16, "/dev/", 5))
+	    file += 16;
+	else {
+	    file += 17;
+	    file = HTDOS_name(file);
+	}
 #else
 	file += 16;
 #endif /* __DJGPP__ */
     }
-    else if (!strncmp(file, "file:", 5))
-	file += 5;
+    else if (isFILE_URL(file))
+	file += LEN_FILE_URL;
     HTUnEscape(file);
 #else
 #if defined(_WINDOWS)	/* 1997/10/15 (Wed) 16:27:38 */
@@ -216,7 +220,7 @@ check_recall:
 	strcpy(command, buffer);
 	if (!LYValidateFilename(buffer, command))
 	    goto cancelled;
-#if HAVE_POPEN
+#ifdef HAVE_POPEN
 	else if (LYIsPipeCommand(buffer)) {
 	    /* I don't know how to download to a pipe */
 	    HTAlert(CANNOT_WRITE_TO_FILE);
@@ -279,10 +283,7 @@ check_recall:
 #else /* Unix: */
 
 	LYCopyFile(file, buffer);
-
-#if defined(UNIX)
 	LYRelaxFilePermissions(buffer);
-#endif /* defined(UNIX) */
 #endif /* VMS */
 
     } else {
@@ -398,19 +399,9 @@ check_recall:
 		}
 		/*
 		 *  Cancel if the user entered "/dev/null" on Unix,
-		 *  or an "nl:" path (case-insensitive) on VMS. - FM
+		 *  or an "nl:" path on VMS. - FM
 		 */
-#ifdef VMS
-		if (!strncasecomp(buffer, "nl:", 3) ||
-		    !strncasecomp(buffer, "/nl/", 4))
-#else
-#if defined(DOSPATH)	/* 1997/10/15 (Wed) 16:41:30 */
-		if (!strcmp(buffer, "nul"))
-#else
-		if (!strcmp(buffer, "/dev/null"))
-#endif /* DOSPATH */
-#endif /* VMS */
-		{
+		if (LYIsNullDevice(buffer)) {
 		    goto cancelled;
 		}
 		SecondS = TRUE;
@@ -472,6 +463,19 @@ cancelled:
 }
 
 /*
+ * Compare a filename with a given suffix, which we have set to give a rough
+ * idea of its content.
+ */
+PRIVATE int SuffixIs ARGS2(
+	char *,		filename,
+	char *,		suffix)
+{
+    size_t have = strlen(filename);
+    size_t need = strlen(suffix);
+    return have > need && !strcmp(filename + have - need, suffix);
+}
+
+/*
  *  LYdownload_options writes out the current download choices to
  *  a file so that the user can select downloaders in the same way that
  *  they select all other links.  Download links look like:
@@ -494,16 +498,9 @@ PUBLIC int LYdownload_options ARGS2(
     StrAllocCopy(sug_filename, *newfile);
     change_sug_filename(sug_filename);
 
-    if (LYReuseTempfiles) {
-	fp0 = LYOpenTempRewrite(tempfile, HTML_SUFFIX, BIN_W);
-    } else {
-	LYRemoveTemp(tempfile);
-	fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, BIN_W);
-    }
-    if (fp0 == NULL) {
-	HTAlert(CANNOT_OPEN_TEMP);
+    if ((fp0 = InternalPageFP(tempfile, TRUE)) == 0)
 	return(-1);
-    }
+
     StrAllocCopy(downloaded_url, *newfile);
     LYLocalFileToURL(newfile, tempfile);
 
@@ -537,12 +534,33 @@ PUBLIC int LYdownload_options ARGS2(
 	 */
 	if (!lynx_edit_mode)
 #endif /* DIRED_SUPPORT */
-	fprintf(fp0,
-		"   <a href=\"LYNXDOWNLOAD://Method=-1/File=%s/SugFile=%s%s\">%s</a>\n",
-		data_file,
-		(lynx_save_space ? lynx_save_space : ""),
-		sug_filename,
-		gettext("Save to disk"));
+	{
+	    fprintf(fp0,
+		    "   <a href=\"%s//Method=-1/File=%s/SugFile=%s%s\">%s</a>\n",
+		    STR_LYNXDOWNLOAD,
+		    data_file,
+		    NonNull(lynx_save_space),
+		    sug_filename,
+		    gettext("Save to disk"));
+	    /*
+	     * If it is not a binary file, offer the opportunity to view the
+	     * downloaded temporary file (see HTSaveToFile).
+	     */
+	    if (SuffixIs(data_file, HTML_SUFFIX)
+	     || SuffixIs(data_file, TEXT_SUFFIX)) {
+		char *target = NULL;
+		char *source = LYAddPathToSave(data_file);
+
+		LYLocalFileToURL(&target, source);
+		fprintf(fp0,
+			"   <a href=\"%s\">%s</a>\n",
+			target,
+			gettext("View temporary file"));
+
+		FREE(source);
+		FREE(target);
+	    }
+	}
     } else {
 	fprintf(fp0, "   <em>%s</em>\n", gettext("Save to disk disabled."));
     }
@@ -554,8 +572,8 @@ PUBLIC int LYdownload_options ARGS2(
 	for (count = 0, cur_download = downloaders; cur_download != NULL;
 			cur_download = cur_download->next, count++) {
 	    if (!no_download || cur_download->always_enabled) {
-		fprintf(fp0, "   <a href=\"LYNXDOWNLOAD://Method=%d/File=%s/SugFile=%s\">",
-			count,data_file, sug_filename);
+		fprintf(fp0, "   <a href=\"%s//Method=%d/File=%s/SugFile=%s\">",
+			STR_LYNXDOWNLOAD, count,data_file, sug_filename);
 		fprintf(fp0, "%s", (cur_download->name ?
 			cur_download->name : gettext("No Name Given")));
 		fprintf(fp0,"</a>\n");

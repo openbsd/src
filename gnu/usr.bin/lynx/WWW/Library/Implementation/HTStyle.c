@@ -18,10 +18,9 @@
 */
 PUBLIC HTStyle* HTStyleNew NOARGS
 {
-    HTStyle * self = (HTStyle *)malloc(sizeof(*self));
+    HTStyle * self = typecalloc(HTStyle);
     if (self == NULL)
 	outofmem(__FILE__, "HTStyleNew");
-    memset((void *)self, 0, sizeof(*self));
     return self;
 }
 
@@ -31,6 +30,7 @@ PUBLIC HTStyle* HTStyleNewNamed ARGS1 (CONST char *,name)
 {
     HTStyle * self = HTStyleNew();
     StrAllocCopy(self->name, name);
+    self->id = -1; /* <0 */
     return self;
 }
 
@@ -287,15 +287,9 @@ HTStyleSheet * HTStyleSheetRemoveStyle ARGS2
 
 HTStyleSheet * HTStyleSheetNew NOARGS
 {
-    HTStyleSheet * self = (HTStyleSheet *)malloc(sizeof(*self));
+    HTStyleSheet * self = typecalloc(HTStyleSheet);
     if (self == NULL)
 	outofmem(__FILE__, "HTStyleSheetNew");
-
-    memset((void*)self, 0, sizeof(*self));	/* ANSI */
-/* Harbison c ref man says (char*)self
-   but k&r ansii and abc books and Think_C say (void*) */
-
-/*    bzero(self, sizeof(*self)); */		/* BSD */
     return self;
 }
 

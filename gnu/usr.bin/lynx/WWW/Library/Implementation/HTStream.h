@@ -66,7 +66,3 @@ typedef struct _HTStreamClass {
 extern HTStream * HTErrorStream NOPARAMS;
 
 #endif /* HTSTREAM_H */
-
-/*
-
-   end of HTStream.h */

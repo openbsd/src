@@ -1,5 +1,5 @@
 /*             VMS specific routines
-                                             
+
  */
 
 #ifndef HTVMSUTIL_H
@@ -8,7 +8,7 @@
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif
- 
+
 #include <HTAnchor.h>
 
 extern BOOL HTVMSFileVersions;	/* Include version numbers in listing? */
@@ -30,7 +30,7 @@ PUBLIC BOOL HTVMS_authSysPrv NOPARAMS;
 **	No arguments.
 **
 ** ON EXIT:
-**	
+**
 */
 PUBLIC void HTVMS_enableSysPrv NOPARAMS;
 
@@ -41,7 +41,7 @@ PUBLIC void HTVMS_enableSysPrv NOPARAMS;
 **	No arguments.
 **
 ** ON EXIT:
-**	
+**
 */
 PUBLIC void HTVMS_disableSysPrv NOPARAMS;
 
@@ -53,7 +53,7 @@ PUBLIC void HTVMS_disableSysPrv NOPARAMS;
 **
 ** ON EXIT:
 **	returns YES if access is allowed
-**	
+**
 */
 PUBLIC BOOL HTVMS_checkAccess PARAMS((
 	CONST char * FileName,
@@ -62,29 +62,29 @@ PUBLIC BOOL HTVMS_checkAccess PARAMS((
 
 
 /* PUBLIC							HTVMS_wwwName()
-**		CONVERTS VMS Name into WWW Name 
+**		CONVERTS VMS Name into WWW Name
 ** ON ENTRY:
 **	vmsname		VMS file specification (NO NODE)
 **
 ** ON EXIT:
-**	returns 	www file specification
+**	returns		www file specification
 **
 ** EXAMPLES:
 **	vmsname				wwwname
-**	DISK$USER 			disk$user
-**	DISK$USER: 			/disk$user/
-**	DISK$USER:[DUNS] 		/disk$user/duns
-**	DISK$USER:[DUNS.ECHO] 		/disk$user/duns/echo
-**	[DUNS] 				duns
-**	[DUNS.ECHO] 			duns/echo
-**	[DUNS.ECHO.-.TRANS] 		duns/echo/../trans
-**	[DUNS.ECHO.--.TRANS] 		duns/echo/../../trans
-**	[.DUNS] 			duns
-**	[.DUNS.ECHO] 			duns/echo
-**	[.DUNS.ECHO]TEST.COM 		duns/echo/test.com 
-**	TEST.COM 			test.com
+**	DISK$USER			disk$user
+**	DISK$USER:			/disk$user/
+**	DISK$USER:[DUNS]		/disk$user/duns
+**	DISK$USER:[DUNS.ECHO]		/disk$user/duns/echo
+**	[DUNS]				duns
+**	[DUNS.ECHO]			duns/echo
+**	[DUNS.ECHO.-.TRANS]		duns/echo/../trans
+**	[DUNS.ECHO.--.TRANS]		duns/echo/../../trans
+**	[.DUNS]				duns
+**	[.DUNS.ECHO]			duns/echo
+**	[.DUNS.ECHO]TEST.COM		duns/echo/test.com
+**	TEST.COM			test.com
 **
-**	
+**
 */
 PUBLIC char * HTVMS_wwwName PARAMS((
 	CONST char *	vmsname));

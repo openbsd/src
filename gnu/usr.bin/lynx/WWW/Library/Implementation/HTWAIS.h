@@ -34,8 +34,3 @@ GLOBALREF HTProtocol HTWAIS;
 #endif /* GLOBALDEF_IS_MACRO */
 
 #endif /* HTWAIS_H */
-
-/*
-                                                                  Tim BL
-
-*/

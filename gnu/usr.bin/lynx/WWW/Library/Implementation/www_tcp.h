@@ -110,10 +110,7 @@ Default values
 #define AIX
 #endif /* _AIX */
 
-#ifdef __CYGWIN__
-#define _WINDOWS_NSL
-#define WIN_EX
-#else
+#ifndef __CYGWIN__
 #ifdef WIN_EX
 #define HAVE_FTIME 1
 #define HAVE_SYS_TIMEB_H 1
@@ -172,7 +169,11 @@ IBM-PC running Windows NT
 */
 
 #ifdef _WINDOWS
+
+#ifndef _WINDOWS_NSL
 #define _WINDOWS_NSL
+#endif
+
 #include <fcntl.h>                      /* For HTFile.c */
 #include <sys\types.h>                  /* For HTFile.c */
 #include <sys\stat.h>                   /* For HTFile.c */
@@ -549,20 +550,20 @@ extern int errno;
 #ifdef __DJGPP__
 #undef SELECT
 #define TCP_INCLUDES_DONE
-#define NO_IOCTL
+#undef  IOCTL
+#define IOCTL(s,cmd,arg) ioctlsocket(s,cmd,(char*)(arg))
 #define DECL_ERRNO
 #include <errno.h>
 #include <sys/types.h>
-#include <socket.h>
 #include <io.h>
-#ifdef WATT32
+#include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <tcp.h>
 #ifdef word
 #undef word
 #endif /* word */
 #define select select_s
-#endif /* WATT32 */
 
 #undef NETWRITE
 #define NETWRITE write_s
@@ -570,12 +571,18 @@ extern int errno;
 #define NETREAD read_s
 #undef NETCLOSE
 #define NETCLOSE close_s
-#ifndef WATT32
-#define getsockname getsockname_s
-#endif /* !WATT32 */
+#ifdef UNIX
+#undef UNIX
+#endif /* UNIX */
 #ifdef HAVE_GETTEXT
 #define gettext gettext__
 #endif
+#if !defined(NCURSES) && !defined(USE_SLANG)
+#define HAVE_CBREAK 1
+#endif /* !NCURSES && !USE_SLANG */
+#if defined(USE_SLANG) && !defined(NO_DJ_KEYHANDLER) && defined(HAVE_CONFIG_H)
+#define DJGPP_KEYHANDLER
+#endif /* USE_SLANG && !NO_DJ_KEYHANDLER  && HAVE_CONFIG_H */
 #endif /* DJGPP */
 
 #ifdef HAVE_UNISTD_H
@@ -627,10 +634,6 @@ Regular BSD unix versions
 typedef unsigned short mode_t;
 #endif /* !mode_t */
 
-#ifndef pid_t
-typedef int pid_t;
-#endif /* !pid_t */
-
 #endif /* NeXT || sony_news */
 
 #define INCLUDES_DONE
@@ -680,7 +683,11 @@ typedef int pid_t;
 #include <libintl.h>
 #endif
 
-#define N_(s) (s)
+#ifdef HAVE_LIBGETTEXT_H
+#include <libgettext.h>
+#endif
+
+#define N_(s) s
 
 #ifndef HAVE_GETTEXT
 #define gettext(s) s
@@ -839,5 +846,9 @@ typedef struct sockaddr_in SockA;  /* See netinet/in.h */
 #else
 #define SOCKADDR_LEN(soc_address) sizeof(soc_address)
 #endif /* INET6 */
+
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 64		/* Arbitrary limit */
+#endif /* MAXHOSTNAMELEN */
 
 #endif /* TCP_H */

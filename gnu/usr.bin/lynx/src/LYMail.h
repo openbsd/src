@@ -29,6 +29,7 @@
 
 extern BOOLEAN term_letter;
 
+extern BOOLEAN LYSystemMail NOPARAMS;
 extern BOOLEAN LYMailPMDF NOPARAMS;
 extern FILE *LYPipeToMailer NOPARAMS;
 extern int LYSendMailFile PARAMS((

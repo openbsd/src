@@ -25,6 +25,10 @@
 #include <UCDefs.h>
 #include <LYCharSets.h>
 
+#if defined(EXP_LOCALE_CHARSET) && defined(HAVE_LANGINFO_CODESET)
+#include <langinfo.h>
+#endif
+
 #include <LYLeaks.h>
 
 /*
@@ -69,10 +73,16 @@
 #include <viscii_uni.h>		/* Vietnamese (VISCII)	*/
 #include <cp866u_uni.h>		/* Ukrainian Cyrillic (866) */
 #include <koi8u_uni.h>		/* Ukrainian Cyrillic (koi8-u */
+#include <pt154_uni.h>		/* Cyrillic-Asian (PT154) */
 
 #ifdef CAN_AUTODETECT_DISPLAY_CHARSET
 int auto_display_charset = -1;
 #endif
+
+CONST char *UC_GNsetMIMEnames[4] =
+	{"iso-8859-1", "x-dec-graphics", "cp437", "x-transparent"};
+
+int UC_GNhandles[4] = {-1, -1, -1, -1};
 
 /*
  *  Some of the code below, and some of the comments, are left in for
@@ -643,7 +653,7 @@ PUBLIC int UCLYhndl_for_unrec = -1;
  /* easy to type, will initialize later */
 PUBLIC int LATIN1 = -1;        /* UCGetLYhndl_byMIME("iso-8859-1") */
 PUBLIC int US_ASCII = -1;      /* UCGetLYhndl_byMIME("us-ascii")   */
-PUBLIC int UTF8 = -1;          /* UCGetLYhndl_byMIME("utf-8")      */
+PUBLIC int UTF8_handle = -1;   /* UCGetLYhndl_byMIME("utf-8")      */
 PUBLIC int TRANSPARENT = -1;   /* UCGetLYhndl_byMIME("x-transparent")  */
 
 
@@ -831,6 +841,7 @@ PRIVATE int conv_uni_to_str ARGS4(
 }
 
 PUBLIC int UCInitialized = 0;
+
 /*
  *  [ original comment: - KW ]
  * This is called at sys_setup time, after memory and the console are
@@ -1633,7 +1644,7 @@ PRIVATE CONST char ** UC_setup_LYCharSets_repl ARGS2(
 	s7 = SevenBitApproximations[i];
 	s8 = ISO_Latin1[i];
 	*p = s7;
-	if (s8 && UCH(*s8) >= 160 && strlen(s8) == 1) {
+	if (s8 && UCH(*s8) >= 160 && s8[1] == '\0') {
 	    /*
 	     *	We have an entity that is mapped to
 	     *	one valid eightbit latin1 char.
@@ -2069,6 +2080,7 @@ PUBLIC void UCInit NOARGS
     UC_CHARSET_SETUP_mnemonic;		  /* RFC 1345 Mnemonic	  */
     UC_CHARSET_SETUP_cp866u;		  /* Ukrainian Cyrillic (866) */
     UC_CHARSET_SETUP_koi8_u;		  /* Ukrainian Cyrillic (koi8-u) */
+    UC_CHARSET_SETUP_ptcp154;		  /* Cyrillic-Asian (PT154) */
 
 #ifdef CAN_AUTODETECT_DISPLAY_CHARSET
 #  ifdef __EMX__
@@ -2102,7 +2114,7 @@ PUBLIC void UCInit NOARGS
 /* for coding/performance - easy to type: */
     LATIN1   = UCGetLYhndl_byMIME("iso-8859-1");
     US_ASCII = UCGetLYhndl_byMIME("us-ascii");
-    UTF8     = UCGetLYhndl_byMIME("utf-8");
+    UTF8_handle = UCGetLYhndl_byMIME("utf-8");
     TRANSPARENT = UCGetLYhndl_byMIME("x-transparent");
 }
 
@@ -2121,3 +2133,154 @@ PUBLIC int safeUCGetLYhndl_byMIME ARGS1 (CONST char *, value)
 
     return(i);
 }
+
+#ifdef EXP_LOCALE_CHARSET
+
+#if defined(EXP_LOCALE_CHARSET) && !defined(HAVE_LANGINFO_CODESET)
+/*
+ * This is a quick-and-dirty emulator of the nl_langinfo(CODESET)
+ * function defined in the Single Unix Specification for those systems
+ * (FreeBSD, etc.) that don't have one yet. It behaves as if it had
+ * been called after setlocale(LC_CTYPE, ""), that is it looks at
+ * the locale environment variables.
+ *
+ * http://www.opengroup.org/onlinepubs/7908799/xsh/langinfo.h.html
+ *
+ * Please extend it as needed and suggest improvements to the author.
+ * This emulator will hopefully become redundant soon as
+ * nl_langinfo(CODESET) becomes more widely implemented.
+ *
+ * Since the proposed Li18nux encoding name registry is still not mature,
+ * the output follows the MIME registry where possible:
+ *
+ *   http://www.iana.org/assignments/character-sets
+ *
+ * A possible autoconf test for the availability of nl_langinfo(CODESET)
+ * can be found in
+ *
+ *   http://www.cl.cam.ac.uk/~mgk25/unicode.html#activate
+ *
+ * Markus.Kuhn@cl.cam.ac.uk -- 2002-03-11
+ * Permission to use, copy, modify, and distribute this software
+ * for any purpose and without fee is hereby granted. The author
+ * disclaims all warranties with regard to this software.
+ *
+ * Latest version:
+ *
+ *   http://www.cl.cam.ac.uk/~mgk25/ucs/langinfo.c
+ */
+
+/*
+#include "langinfo.h"
+*/
+typedef int nl_item;
+#define CODESET 1
+
+#define C_CODESET "US-ASCII"     /* Return this as the encoding of the
+				  * C/POSIX locale. Could as well one day
+				  * become "UTF-8". */
+
+#define digit(x) ((x) >= '0' && (x) <= '9')
+
+static char buf[16];
+
+PRIVATE char *nl_langinfo(nl_item item)
+{
+  char *l, *p;
+
+  if (item != CODESET)
+    return NULL;
+
+  if (((l = getenv("LC_ALL"))   && *l) ||
+      ((l = getenv("LC_CTYPE")) && *l) ||
+      ((l = getenv("LANG"))     && *l)) {
+    /* check standardized locales */
+    if (!strcmp(l, "C") || !strcmp(l, "POSIX"))
+      return C_CODESET;
+    /* check for encoding name fragment */
+    if (strstr(l, "UTF") || strstr(l, "utf"))
+      return "UTF-8";
+    if ((p = strstr(l, "8859-"))) {
+      memcpy(buf, "ISO-8859-\0\0", 12);
+      p += 5;
+      if (digit(*p)) {
+	buf[9] = *p++;
+	if (digit(*p)) buf[10] = *p++;
+	return buf;
+      }
+    }
+    if (strstr(l, "KOI8-R")) return "KOI8-R";
+    if (strstr(l, "KOI8-U")) return "KOI8-U";
+    if (strstr(l, "620")) return "TIS-620";
+    if (strstr(l, "2312")) return "GB2312";
+    if (strstr(l, "HKSCS")) return "Big5HKSCS";   /* no MIME charset */
+    if (strstr(l, "Big5") || strstr(l, "BIG5")) return "Big5";
+    if (strstr(l, "GBK")) return "GBK";           /* no MIME charset */
+    if (strstr(l, "18030")) return "GB18030";     /* no MIME charset */
+    if (strstr(l, "Shift_JIS") || strstr(l, "SJIS")) return "Shift_JIS";
+    /* check for conclusive modifier */
+    if (strstr(l, "euro")) return "ISO-8859-15";
+    /* check for language (and perhaps country) codes */
+    if (strstr(l, "zh_TW")) return "Big5";
+    if (strstr(l, "zh_HK")) return "Big5HKSCS";   /* no MIME charset */
+    if (strstr(l, "zh")) return "GB2312";
+    if (strstr(l, "ja")) return "EUC-JP";
+    if (strstr(l, "ko")) return "EUC-KR";
+    if (strstr(l, "ru")) return "KOI8-R";
+    if (strstr(l, "uk")) return "KOI8-U";
+    if (strstr(l, "pl") || strstr(l, "hr") ||
+	strstr(l, "hu") || strstr(l, "cs") ||
+	strstr(l, "sk") || strstr(l, "sl")) return "ISO-8859-2";
+    if (strstr(l, "eo") || strstr(l, "mt")) return "ISO-8859-3";
+    if (strstr(l, "el")) return "ISO-8859-7";
+    if (strstr(l, "he")) return "ISO-8859-8";
+    if (strstr(l, "tr")) return "ISO-8859-9";
+    if (strstr(l, "th")) return "TIS-620";      /* or ISO-8859-11 */
+    if (strstr(l, "lt")) return "ISO-8859-13";
+    if (strstr(l, "cy")) return "ISO-8859-14";
+    if (strstr(l, "ro")) return "ISO-8859-2";   /* or ISO-8859-16 */
+    if (strstr(l, "am") || strstr(l, "vi")) return "UTF-8";
+    /* Send me further rules if you like, but don't forget that we are
+     * *only* interested in locale naming conventions on platforms
+     * that do not already provide an nl_langinfo(CODESET) implementation. */
+    return "ISO-8859-1"; /* should perhaps be "UTF-8" instead */
+  }
+  return C_CODESET;
+}
+#endif /* defined(EXP_LOCALE_CHARSET) && !defined(HAVE_LANGINFO_CODESET) */
+
+/*
+ * If LYLocaleCharset is true, use the current locale to lookup a MIME name
+ * that corresponds, and use that as the display charset.  This feature is
+ * experimental because while nl_langinfo(CODESET) itself is standardized,
+ * the return values and their relationship to the locale value is not.
+ * GNU libiconv happens to give useful values, but other implementations are
+ * not guaranteed to do this.
+ *
+ * Not all Linux versions provide useful information.  GNU libc 2.2 returns
+ *	"ANSI_X3.4-1968"
+ * whether locale is POSIX or en_US.UTF-8.
+ *
+ * Another possible thing to investigate is the locale_charset() function
+ * provided in libiconv 1.5.1.
+ */
+PUBLIC void LYFindLocaleCharset NOARGS
+{
+    CTRACE((tfp, "LYFindLocaleCharset(%d)\n", LYLocaleCharset));
+    if (LYLocaleCharset) {
+	char *name = nl_langinfo(CODESET);
+	if (name != 0) {
+	    int value = UCGetLYhndl_byMIME(name);
+	    if (value >= 0) {
+		current_char_set = value;
+	    } else {
+		CTRACE((tfp, "Cannot find a handle for MIME name \"%s\"\n", name));
+		LYLocaleCharset = FALSE;
+	    }
+	} else {
+	    CTRACE((tfp, "Cannot find a MIME name for locale\n"));
+	    LYLocaleCharset = FALSE;
+	}
+    }
+}
+#endif /* EXP_LOCALE_CHARSET */

@@ -27,4 +27,3 @@ extern BOOL LYJumpInit PARAMS((char *config));
 extern char *LYJump PARAMS((int key));
 
 #endif /* LYJUMP_H */
-

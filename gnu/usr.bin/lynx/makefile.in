@@ -3,8 +3,6 @@
 SHELL		= @CONFIG_SHELL@
 CDPATH		= .
 
-x		= @PROG_EXT@
-
 .SUFFIXES:
 @SET_MAKE@
 prefix		= @prefix@
@@ -19,19 +17,29 @@ DEFS		= @DEFS@
 CPPFLAGS	= @CPPFLAGS@
 LINT		= @LINT@
 
+x		= @EXEEXT@
+o		= .@OBJEXT@
+
 LIBS		= @LIBS@
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
+
 LN_S		= @LN_S@
+
+MKINSTALLDIRS	= @MKINSTALLDIRS@
+
+TAR		= @TAR@
+TAR_UP		= $(TAR) @TAR_UP_OPTIONS@ @TAR_PIPE_OPTIONS@
+TAR_DOWN	= $(TAR) @TAR_DOWN_OPTIONS@ @TAR_PIPE_OPTIONS@
 
 ## This is the version which we are developing (or, upon release, make this
 ## the same).  Use no dots in the name, since it must work on VMS and MS-DOS.
-VERSION		= 2-8-4
+VERSION		= 2-8-5
 
 ##this is the name of the directory the lynx source code is in.
-##(e.g., lynx2-8-4, not the full path)
+##(e.g., lynx2-8-5, not the full path)
 lynxdir= lynx$(VERSION)
 lynxname= lynx$(VERSION)
 
@@ -113,13 +121,14 @@ SITE_LYDEFS = # Your defines here
 SITE_DEFS = # Your defines here
 
 # defines for which there are no configure options:
+# -DEXP_ASCII_CTYPES use POSIX locale for toupper/tolower/isupper
 # -DHP_TERMINAL    For DIM workaround to REVERSE problems on HP terminals.
 # -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
-# -DNO_CPU_LIMIT   Disables Max CPU timeout (includes CLOCKS_PER_SECOND)
 # -DNO_RULES       Disables CERN-style access rules (see lynx.cfg).
+# -DMISC_EXP       Enable some truly experimental stuff
 # -DSHORTENED_RBIND  For a SOCKSified lynx with the short version of Rbind.
 # -DSLANG_MBCS_HACK prevent cutoff lines when using UTF8 console (slang only)
-# -DUSE_SCROLLBAR  supports scrollbar when built with ncurses
+# -DUSE_VASPRINT   Use vasprintf() function
 #
 # if you are linking to freeWAIS-0.202 or older, you should define this
 # in SITE_DEFS
@@ -141,44 +150,10 @@ SITE_DEFS = # Your defines here
 #
 # -DDGUX_OLD
 
-# defines which have configure options   (see INSTALLATION, Section II-1c.):
-# -DARCHIVE_ONLY
-# -DDIRED_SUPPORT
-# -DDISP_PARTIAL
-# -DDONT_TRACK_INTERNAL_LINKS
-# -DEXEC_LINKS
-# -DEXEC_SCRIPTS
-# -DEXP_CHARTRANS_AUTOSWITCH
-# -DEXP_PERSISTENT_COOKIES
-# -DLONG_LIST
-# -DLYNXCGI_LINKS
-# -DLY_FIND_LEAKS
-# -DNCURSES
-# -DNO_CHANGE_EXECUTE_PERMS
-# -DNO_EXTENDED_HTMLDTD
-# -DNO_PARENT_DIR_REFERENCE
-# -DNSL_FORK
-# -DOK_GZIP
-# -DOK_OVERRIDE
-# -DOK_PERMIT
-# -DOK_TAR
-# -DOK_UUDECODE
-# -DOK_ZIP
-# -DOPTIONS_FORMS
-# -DOPTIONS_MENU
-# -DSOCKS
-# -DSYSLOG_REQUESTED_URLS
-# -DUNDERLINE_LINKS
-# -DUSE_COLOR_STYLE
-# -DUSE_DEFAULT_COLORS
-# -DUSE_EXTERNALS
-# -DUSE_SLANG
-# -DUSE_SOCKS5
-# -DUSE_ZLIB
+# Many other defines have configure options  (see INSTALLATION, Section II-1c.):
 #
 # for installation of local execution links, please see the file userdefs.h
 
-# TESTED: Linux FreeBSD SunOS Solaris IRIX CLIX HP-UX AIX SCO
 all lynx$x: cfg_defs.h LYHelp.h
 @MSG_DIR_MAKE@	$(SHELL) $(srcdir)/fixtext.sh $(srcdir)/LYMessages_en.h >LYMessages.c
 @INTLDIR_MAKE@	cd intl && $(MAKE) CC="$(CC)"
@@ -212,7 +187,7 @@ help:
 	@echo
 	@echo "Please run make with one of the following arguments"
 	@echo "all        -- to make the executable, put it in this directory"
-	@echo "clean      -- removes all '.o' and 'core' files"
+	@echo "clean      -- removes all '$o' and 'core' files"
 	@echo "depend     -- use makedepend to generate header-dependencies"
 	@echo "tar        -- runs clean, removes executable, and tars the whole directory"
 	@echo "compress   -- runs tar, then compresses the result"
@@ -278,7 +253,7 @@ zip:  clean
 	cd ..; rm -f $(lynxname).zip; zip -r $(lynxname).zip $(lynxdir)
 
 save:
-	cd ..; rm -f $(lynxname).tar; tar -cf - $(lynxdir) > $(lynxname).tar
+	cd ..; rm -f $(lynxname).tar; $(TAR_UP) $(lynxdir) > $(lynxname).tar
 
 compress: tar
 	cd ..; rm -f $(lynxname).tar.Z; compress -f -v $(lynxname).tar
@@ -323,12 +298,16 @@ install-man : $(MANDIR)
 
 install-doc : $(DOCDIR) $(HELPDIR)
 	@echo Copying sample files
-	(cd $(srcdir) && tar cf - C[HO]* PROBLEMS README samples test ) | \
-			       ( cd $(DOCDIR) && chmod -R u+w . && tar xf - )
+	(cd $(srcdir) && $(TAR_UP) C[HO]* PROBLEMS README docs samples test ) | \
+			       ( cd $(DOCDIR) && chmod -R u+w . && $(TAR_DOWN) )
+	$(SHELL) -c 'if test "$(COMPRESS_PROG)" != "" ; then \
+		(cd $(DOCDIR) && $(COMPRESS_PROG) -f docs/CHANGES*.[0-9] docs/*.announce ) \
+	fi'
 	$(SHELL) -c 'for name in COPYING COPYHEADER; do \
 		cd $(HELPDIR) && rm -f $$name ;\
 		cd $(HELPDIR) && ( $(LN_S) $(DOCDIR)/$$name . || cp $(DOCDIR)/$$name . );\
 		done'
+	-$(SHELL) -c 'case `id|sed -e "s/(.*//"` in uid=0) chown -R root $(DOCDIR);; esac'
 
 # HPUX 'sed' does not seem to like '=' as pattern delimiter.
 # We cannot use '%' because it may appear in a URL.
@@ -356,11 +335,12 @@ help_files.sed : makefile $(srcdir)/lynx_help/help_files.txt
 		-e 's%\(.*\)=\(.*\.html\)$$%s=\2=\2$(COMPRESS_EXT)=g%' \
 		-e 's%\.html=%\\.html=%' \
 		help_files.tmp | $(FIX_SED) >> $@
-	@ECHO_CC@if test -n "$(COMPRESS_EXT)"; then echo 's%\$(COMPRESS_EXT)\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g' >> $@; fi
+	@ECHO_CC@if test -n "$(COMPRESS_EXT)"; then echo 's%\(\$(COMPRESS_EXT)\)*\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g' >> $@; fi
 	@-rm -f help_files.tmp
 
 install-help : help_files.sed $(HELPDIR)
-	(cd $(HELPDIR) && WD=`pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_help$$!!'` && test $$WD != $$HEAD && rm -rf *)
+	- (cd $(HELPDIR) && WD=`pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_help$$!!'` && test $$WD != $$HEAD && rm -fr *)
+	test -d $(HELPDIR)/keystrokes || mkdir $(HELPDIR)/keystrokes
 @LYNXCFG_MAKE@	@echo 'Making htmlized lynx.cfg'
 @LYNXCFG_MAKE@	cd src && make LYReadCFG.i
 @LYNXCFG_MAKE@	@-rm -f alphatoc.html body.html cattoc.html
@@ -368,25 +348,22 @@ install-help : help_files.sed $(HELPDIR)
 @LYNXCFG_MAKE@	sed  -e 's/ *{ *"\([^"]*\)".*/\1/' | \
 @LYNXCFG_MAKE@	perl $(srcdir)/scripts/cfg2html.pl -ms $(srcdir)/lynx.cfg
 	@echo Translating/copying html files
-	@cat help_files.sed > $(HELPDIR)/help_files.sed
 @LYNXCFG_MAKE@	@$(SHELL) -c 'for f in alphatoc.html body.html cattoc.html ; do \
-@LYNXCFG_MAKE@		sed -f $(HELPDIR)/help_files.sed $$f > $(HELPDIR)/$$f ; \
+@LYNXCFG_MAKE@		sed -f help_files.sed $$f > $(HELPDIR)/$$f ; \
 @LYNXCFG_MAKE@		done'
 @LYNXCFG_MAKE@	-rm -f src/LYReadCFG.i
-	@ECHO_CC@$(SHELL) -c 'cd $(srcdir)/lynx_help && ( \
-		dirs=keystrokes; \
-		(cd $(HELPDIR) && mkdir $$dirs 2>/dev/null ) ; \
-		files="*.html */*.html" ; \
+	@ECHO_CC@$(SHELL) -c 'sed_prog=`pwd`/help_files.sed && \
+		cd $(srcdir)/lynx_help && \
+		dirs=keystrokes && \
+		files="*.html */*.html" && \
 		for f in $$files ; do \
-			sed -f $(HELPDIR)/help_files.sed $$f > $(HELPDIR)/$$f ; \
-		done ; \
+			sed -f $$sed_prog $$f > $(HELPDIR)/$$f ; \
+		done && \
 		if test "$(COMPRESS_PROG)" != "" ; then \
 			(cd $(HELPDIR) && $(COMPRESS_PROG) $$files ) \
-		fi ; \
-		)'
-	@-rm -f $(HELPDIR)/help_files.sed
+		fi'
 	@echo Updating $(libdir)/lynx.cfg
-	$(SHELL) -c 'if test -f $(LIBDIR)/lynx.cfg ; then \
+	@ECHO_CC@$(SHELL) -c 'if test -f $(LIBDIR)/lynx.cfg ; then \
 		mv $(LIBDIR)/lynx.cfg $(LIBDIR)/lynx.tmp ; \
 	else \
 		cp $(srcdir)/lynx.cfg $(LIBDIR)/lynx.tmp ; \
@@ -419,11 +396,10 @@ LYHelp.h : help_files.sed LYHelp.hin
 
 cfg_defs.h : $(srcdir)/cfg_defs.sh $(srcdir)/cfg_edit.sh config.cache lynx_cfg.h
 	@rm -f $@
-	$(SHELL) -c '/bin/sh $(srcdir)/cfg_defs.sh $(srcdir)'
+	$(SHELL) -c 'SHELL=$(SHELL) $(SHELL) $(srcdir)/cfg_defs.sh $(srcdir)'
 
 install-cfg : $(LIBDIR)
-	-mv -f $(LIBDIR)/lynx.cfg $(LIBDIR)/lynx.oldcfg
-	$(INSTALL_DATA) $(srcdir)/lynx.cfg $(LIBDIR)/lynx.cfg
+	@$(SHELL) -c '$(srcdir)/scripts/install-cfg.sh "$(INSTALL_DATA)" $(srcdir)/lynx.cfg $(LIBDIR)/lynx.cfg'
 
 install-lss : $(LIBDIR)
 	-mv -f $(LIBDIR)/lynx.lss $(LIBDIR)/lynx.oldlss
@@ -445,7 +421,11 @@ uninstall-doc ::
 	-test -d $(DOCDIR) && WD=`cd $(DOCDIR) && pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_doc$$!!'` && test $$WD != $$HEAD && rm -rf $(DOCDIR)
 	-test -d $(HELPDIR) && WD=`cd $(HELPDIR) && pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_help$$!!'` && test $$WD != $$HEAD && cd $(HELPDIR) && rm -f COPYING COPYHEADER
 
-$(BINDIR) $(MANDIR) $(LIBDIR) $(HELPDIR) $(DOCDIR) :
-	$(srcdir)/mkdirs.sh $@
+$(BINDIR) \
+$(MANDIR) \
+$(LIBDIR) \
+$(HELPDIR) \
+$(DOCDIR) :
+	$(SHELL) $(MKINSTALLDIRS) $@
 etags:
 	etags -r "/\(PRIVATE\|PUBLIC\)[ \t]+\([a-zA-Z_][a-zA-Z_0-1]*[ \t*]+\)*\([a-zA-Z_][a-zA-Z_0-1]*\)[ \t]+\(ARGS[0-9]\|NOARGS\)/\3/" *.[ch] */*.[ch] */*/*.[ch] */*/*/*.[ch]

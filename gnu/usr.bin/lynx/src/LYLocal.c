@@ -110,6 +110,7 @@ struct dired_menu {
     char *href;
     struct dired_menu *next;
 } defmenu[] = {
+
 /*
  *  The following initializations determine the contents of the f)ull menu
  *  selection when in dired mode.  If any menu entries are defined in the
@@ -326,30 +327,13 @@ PRIVATE BOOLEAN ok_localname ARGS2(char*, dst, CONST char*, src)
  *  Execute DIRED command, return -1 or 0 on failure, 1 success.
  */
 PRIVATE int LYExecv ARGS3(
-	char *,		path,
+	CONST char *,	path,
 	char **,	argv,
 	char *,		msg)
 {
     int rc = 0;
-#if defined(VMS)
-    CTRACE((tfp, "LYExecv:  Called inappropriately!\n"));
-#else
-#if defined(_WINDOWS)
-    if (!strcmp(path, TOUCH_PATH)) {
-#if defined(__BORLANDC__) || defined(__MINGW32__)
-	int fd = _creat(argv[1], S_IREAD | S_IWRITE);
-#else /* Visual C++ */
-	int fd = _creat(argv[1], _S_IREAD | _S_IWRITE);
-#endif
-	if (fd >= 0) {
-	    close(fd);
-	    return(1);
-	}
-    } else if (!strcmp(path, RM_PATH)) {
-	rc = remove(argv[2]);
-    } else {
-	CTRACE((tfp, "LYExecv:  Called inappropriately! (path=%s)\n", path));
-    }
+#if defined(VMS) || defined(_WINDOWS)
+    CTRACE((tfp, "LYExecv:  Called inappropriately! (path=%s)\n", path));
 #else
     int n;
     char *tmpbuf = 0;
@@ -361,7 +345,7 @@ PRIVATE int LYExecv ARGS3(
     HTSprintf(&tmpbuf, "\n");
     rc = LYSystem(tmpbuf) ? 0 : 1;
 #else
-    pid_t pid;
+    int pid;
 #ifdef HAVE_TYPE_UNIONWAIT
     union wait wstatus;
 #else
@@ -410,8 +394,10 @@ PRIVATE int LYExecv ARGS3(
 		break;
 	    }
 #endif /* !HAVE_WAITPID */
-	    if (WEXITSTATUS(wstatus) != 0 ||
-		WTERMSIG(wstatus) > 0)	{ /* error return */
+	    if ((WIFEXITED(wstatus)
+	      && (WEXITSTATUS(wstatus) != 0))
+	     || (WIFSIGNALED(wstatus)
+	      && (WTERMSIG(wstatus) > 0)))	{ /* error return */
 		HTSprintf0(&tmpbuf, gettext("Probable failure to %s due to system error!"),
 				   msg);
 		rc = 0;
@@ -433,31 +419,140 @@ PRIVATE int LYExecv ARGS3(
 	FREE(tmpbuf);
     }
 
-#endif /* _WINDOWS */
-#endif /* VMS */
+#endif /* VMS || _WINDOWS */
     return(rc);
 }
+
+PRIVATE int make_directory ARGS1(char *, path)
+{
+    int code;
+    CONST char *program;
+
+    if ((program = HTGetProgramPath(ppMKDIR)) != NULL) {
+	char *args[5];
+	char *msg = 0;
+
+	HTSprintf0(&msg,"make directory %s", path);
+	args[0] = "mkdir";
+	args[1] = path;
+	args[2] = (char *) 0;
+	code = (LYExecv(program, args, msg) <= 0) ? -1 : 1;
+	FREE(msg);
+    } else {
+#ifdef _WINDOWS
+	code = mkdir(path) ? -1 : 1;
+#else
+	code = mkdir(path, 0777) ? -1 : 1;
+#endif
+    }
+    return (code);
+}
+
+PRIVATE int remove_file ARGS1(char *, path)
+{
+    int code;
+    CONST char *program;
+
+    if ((program = HTGetProgramPath(ppRM)) != NULL) {
+	char *args[5];
+	char *tmpbuf = NULL;
+
+	args[0] = "rm";
+	args[1] = "-f";
+	args[2] = path;
+	args[3] = (char *) 0;
+	HTSprintf0(&tmpbuf, gettext("remove %s"), path);
+	code = LYExecv(program, args, tmpbuf);
+	FREE(tmpbuf);
+    } else {
+	code = remove(path) ? -1 : 1;
+    }
+    return (code);
+}
+
+PRIVATE int remove_directory ARGS1(char *, path)
+{
+    int code;
+    CONST char *program;
+
+    if ((program = HTGetProgramPath(ppRMDIR)) != NULL) {
+	char *args[5];
+	char *tmpbuf = NULL;
+
+	args[0] = "rmdir";
+	args[1] = path;
+	args[2] = (char *) 0;
+	HTSprintf0(&tmpbuf, gettext("remove %s"), path);
+	code = LYExecv(program, args, tmpbuf);
+	FREE(tmpbuf);
+    } else {
+	code = rmdir(path) ? -1 : 1;
+    }
+    return (code);
+}
+
+PRIVATE int touch_file ARGS1(char *, path)
+{
+    int code;
+    CONST char *program;
+
+    if ((program = HTGetProgramPath(ppTOUCH)) != NULL) {
+	char *args[5];
+	char *msg = NULL;
+
+	HTSprintf0(&msg, gettext("touch %s"), path);
+	args[0] = "touch";
+	args[1] = path;
+	args[2] = (char *) 0;
+	code = (LYExecv(program, args, msg) <= 0) ? -1 : 1;
+	FREE(msg);
+    } else {
+	FILE *fp;
+	if ((fp = fopen(path, "w")) != 0) {
+	    fclose(fp);
+	    code = 1;
+	} else {
+	    code = -1;
+	}
+    }
+    return (code);
+}
+
 PRIVATE int move_file ARGS2(char *, source, char *, target)
 {
     int code;
-#ifdef WIN_EX	/* 1999/01/02 (Sat) 23:24:20 */
-    if ((code = rename(source, target)) != 0)
-	if ((code = LYCopyFile(source, target)) >= 0)
-	    code = remove(source);
-    if (code == 0)
-	code = 1;
-#else
-    char *msg = 0;
-    char *args[5];
+    CONST char *program;
 
-    HTSprintf0(&msg, gettext("move %s to %s"), source, target);
-    args[0] = "mv";
-    args[1] = source;
-    args[2] = target;
-    args[3] = (char *) 0;
-    code = (LYExecv(MV_PATH, args, msg) <= 0) ? -1 : 1;
-    FREE(msg);
-#endif
+    if ((program = HTGetProgramPath(ppMV)) != NULL) {
+	char *msg = 0;
+	char *args[5];
+
+	HTSprintf0(&msg, gettext("move %s to %s"), source, target);
+	args[0] = "mv";
+	args[1] = source;
+	args[2] = target;
+	args[3] = (char *) 0;
+	code = (LYExecv(program, args, msg) <= 0) ? -1 : 1;
+	FREE(msg);
+    } else {
+	struct stat sb;
+	char *actual = 0;
+	/* the caller sets up a target directory; we need a file path */
+	if (stat(target, &sb) == 0
+	 && S_ISDIR(sb.st_mode)) {
+	    HTSprintf0(&actual, "%s/%s", target, LYPathLeaf(source));
+	    CTRACE((tfp, "move_file source=%s, target=%s\n", source, target));
+	    target = actual;
+	}
+	if ((code = rename(source, target)) != 0)
+	    if ((code = LYCopyFile(source, target)) >= 0)
+		code = remove(source);
+	if (code == 0)
+	    code = 1;
+	if (actual != target) {
+	    FREE(actual);
+	}
+    }
     return code;
 }
 
@@ -508,7 +603,6 @@ PRIVATE int remove_tagged NOARGS
     struct stat dir_info;
     int count;
     HTList *tag;
-    char *args[5];
 
     if (HTList_isEmpty(tagged))  /* should never happen */
 	return 0;
@@ -530,12 +624,7 @@ PRIVATE int remove_tagged NOARGS
 		will_clear = FALSE;
 		break;
 	    } else {
-		args[0] = "rm";
-		args[1] = "-rf";
-		args[2] = testpath;
-		args[3] = (char *) 0;
-		HTSprintf0(&tmpbuf, gettext("remove %s"), testpath);
-		if (LYExecv(RM_PATH, args, tmpbuf) <= 0) {
+		if (remove_file(testpath) <= 0) {
 		    if (count == 0) count = -1;
 		    will_clear = FALSE;
 		    break;
@@ -611,18 +700,18 @@ PRIVATE int modify_tagged ARGS1(
 	    if (cp) {
 		cp = strip_trailing_slash(cp);
 		cp = HTParse(".", cp, PARSE_PATH+PARSE_PUNCTUATION);
-		savepath = HTURLPath_toFile(cp, TRUE);
+		savepath = HTURLPath_toFile(cp, TRUE, FALSE);
 		FREE(cp);
 	    } else {	/* Last resort, should never happen. */
-		savepath = HTURLPath_toFile(".", TRUE);
+		savepath = HTURLPath_toFile(".", TRUE, FALSE);
 	    }
 	} else {
 	    if (!strncmp(cp, "file://localhost", 16)) {
 		cp += 16;
-	    } else if (!strncmp(cp, "file:", 5)) {
-		cp += 5;
+	    } else if (isFILE_URL(cp)) {
+		cp += LEN_FILE_URL;
 	    }
-	    savepath = HTURLPath_toFile(cp, TRUE);
+	    savepath = HTURLPath_toFile(cp, TRUE, FALSE);
 	}
 
 	if (!ok_stat(savepath, &dir_info)) {
@@ -684,7 +773,7 @@ PRIVATE int modify_tagged ARGS1(
 
 	/*
 	 *  Make sure the target location is a directory which is owned
-	 * by the same uid as the owner of the current location.
+	 *  by the same uid as the owner of the current location.
 	 */
 	if (dir_has_same_owner(&dir_info, owner)) {
 	    count = 0;
@@ -741,6 +830,7 @@ PRIVATE int modify_name ARGS1(
 	} else {
 	     return ok_file_or_dir(&dir_info);
 	}
+	LYstrncpy(tmpbuf, LYPathLeaf(testpath), sizeof(tmpbuf)-1);
 	if (get_filename(cp, tmpbuf, sizeof(tmpbuf)) == NULL)
 	    return 0;
 
@@ -788,7 +878,6 @@ PRIVATE int modify_location ARGS1(
      *	Determine the status of the selected item.
      */
     testpath = strip_trailing_slash(testpath);
-
     if (!ok_stat(testpath, &dir_info)) {
 	return 0;
     }
@@ -797,12 +886,19 @@ PRIVATE int modify_location ARGS1(
      *	Change the location of the file or directory.
      */
     if (S_ISDIR(dir_info.st_mode)) {
-	cp = gettext("Enter new location for directory: ");
+	if (HTGetProgramPath(ppMV) != NULL) {
+	    cp = gettext("Enter new location for directory: ");
+	} else {
+	    HTAlert(COULD_NOT_ACCESS_DIR);
+	    return 0;
+	}
     } else if (S_ISREG(dir_info.st_mode)) {
 	cp = gettext("Enter new location for file: ");
     } else {
 	return ok_file_or_dir(&dir_info);
     }
+    LYstrncpy(tmpbuf, testpath, sizeof(tmpbuf)-1);
+    *LYPathLeaf(tmpbuf) = '\0';
     if (get_filename(cp, tmpbuf, sizeof(tmpbuf)) == NULL)
 	return 0;
     if (strlen(tmpbuf)) {
@@ -839,14 +935,16 @@ PRIVATE int modify_location ARGS1(
 	if (!ok_stat(newpath, &dir_info)) {
 	    code = 0;
 	}
-
+#ifdef UNIX
 	/*
 	 *  Make sure the source and target are not the same location.
 	 */
 	else if (dev == dir_info.st_dev && inode == dir_info.st_ino) {
 	    HTAlert(gettext("Source and destination are the same location!  Request ignored!"));
 	    code = 0;
-	} else if (dir_has_same_owner(&dir_info, owner)) {
+	}
+#endif
+	else if (dir_has_same_owner(&dir_info, owner)) {
 	    code = move_file(savepath,newpath);
 	}
 	FREE(newpath);
@@ -859,7 +957,7 @@ PRIVATE int modify_location ARGS1(
  *  Modify name or location of a file or directory on localhost.
  */
 PUBLIC int local_modify ARGS2(
-	document *,	doc,
+	DocInfo *,	doc,
 	char **,	newpath)
 {
     int ans;
@@ -937,9 +1035,9 @@ PRIVATE int create_file ARGS1(
     int code = FALSE;
     char tmpbuf[DIRED_MAXBUF];
     char *testpath = NULL;
-    char *args[5];
     char *bad_chars = ".~/";
 
+    tmpbuf[0] = '\0';
     if (get_filename(gettext("Enter name of file to create: "),
 		     tmpbuf, sizeof(tmpbuf)) != NULL) {
 
@@ -962,13 +1060,7 @@ PRIVATE int create_file ARGS1(
 	     *  Make sure the target does not already exist
 	     */
 	    if (not_already_exists(testpath)) {
-		char *msg = 0;
-		HTSprintf0(&msg,gettext("create %s"),testpath);
-		args[0] = "touch";
-		args[1] = testpath;
-		args[2] = (char *) 0;
-		code = (LYExecv(TOUCH_PATH, args, msg) <= 0) ? -1 : 1;
-		FREE(msg);
+		code = touch_file(testpath);
 	    }
 	    FREE(testpath);
 	}
@@ -985,9 +1077,9 @@ PRIVATE int create_directory ARGS1(
     int code = FALSE;
     char tmpbuf[DIRED_MAXBUF];
     char *testpath = NULL;
-    char *args[5];
     char *bad_chars = ".~/";
 
+    tmpbuf[0] = '\0';
     if (get_filename(gettext("Enter name for new directory: "),
 		     tmpbuf, sizeof(tmpbuf)) != NULL) {
 
@@ -1007,13 +1099,7 @@ PRIVATE int create_directory ARGS1(
 	     *  Make sure the target does not already exist.
 	     */
 	    if (not_already_exists(testpath)) {
-		char *msg = 0;
-		HTSprintf0(&msg,"make directory %s",testpath);
-		args[0] = "mkdir";
-		args[1] = testpath;
-		args[2] = (char *) 0;
-		code = (LYExecv(MKDIR_PATH, args, msg) <= 0) ? -1 : 1;
-		FREE(msg);
+		code = make_directory(testpath);
 	    }
 	    FREE(testpath);
 	}
@@ -1025,7 +1111,7 @@ PRIVATE int create_directory ARGS1(
  *  Create a file or a directory at the current location.
  */
 PUBLIC int local_create ARGS1(
-	document *,	doc)
+	DocInfo *,	doc)
 {
     int ans;
     char *cp;
@@ -1061,7 +1147,7 @@ PRIVATE int remove_single ARGS1(
     char *cp;
     char *tmpbuf = 0;
     struct stat dir_info;
-    char *args[5];
+    BOOL is_directory = FALSE;
 
     if (!ok_lstat(testpath, &dir_info)) {
 	return 0;
@@ -1080,11 +1166,12 @@ PRIVATE int remove_single ARGS1(
 	/*** Course, it's probably broken for screen sizes other 80, too     ***/
 	if (strlen(cp) < 37) {
 	    HTSprintf0(&tmpbuf,
-		       gettext("Remove '%s' and all of its contents?"), cp);
+		       gettext("Remove directory '%s'?"), cp);
 	} else {
 	    HTSprintf0(&tmpbuf,
-		       gettext("Remove directory and all of its contents?"));
+		       gettext("Remove directory?"));
 	}
+	is_directory = TRUE;
     } else if (S_ISREG(dir_info.st_mode)) {
 	if (strlen(cp) < 60) {
 	    HTSprintf0(&tmpbuf, gettext("Remove file '%s'?"), cp);
@@ -1106,12 +1193,9 @@ PRIVATE int remove_single ARGS1(
     }
 
     if (HTConfirm(tmpbuf) == YES) {
-	HTSprintf0(&tmpbuf,"remove %s",testpath);
-	args[0] = "rm";
-	args[1] = "-rf";
-	args[2] = testpath;
-	args[3] = (char *) 0;
-	code = (LYExecv(RM_PATH, args, tmpbuf) <= 0) ? -1 : 1;
+	code = is_directory
+	     ? remove_directory(testpath)
+	     : remove_file(testpath);
     }
     FREE(tmpbuf);
     return code;
@@ -1121,7 +1205,7 @@ PRIVATE int remove_single ARGS1(
  *  Remove a file or a directory.
  */
 PUBLIC int local_remove ARGS1(
-	document *,	doc)
+	DocInfo *,	doc)
 {
     char *cp, *tp;
     char testpath[DIRED_MAXBUF];
@@ -1192,9 +1276,9 @@ PRIVATE int permit_location ARGS3(
 #else
     static char tempfile[LY_MAXPATH] = "\0";
     char *cp;
-    char *tmpbuf = NULL;
     char tmpdst[LY_MAXPATH];
     struct stat dir_info;
+    CONST char *program;
 
     if (srcpath) {
 	/*
@@ -1239,8 +1323,8 @@ PRIVATE int permit_location ARGS3(
 	     *	Prevent filenames which include '#' or '?' from messing it up.
 	     */
 	    char * srcpath_url = HTEscape(srcpath, URL_PATH);
-	    fprintf(fp0, "<Form Action=\"LYNXDIRED://PERMIT_LOCATION%s\">\n",
-		    srcpath_url);
+	    fprintf(fp0, "<Form Action=\"%s//PERMIT_LOCATION%s\">\n",
+		    STR_LYNXDIRED, srcpath_url);
 	    FREE(srcpath_url);
 	}
 
@@ -1306,8 +1390,6 @@ PRIVATE int permit_location ARGS3(
 
     } else {				 /* The form being activated. */
 	mode_t new_mode = 0;
-	char *args[5];
-	char amode[10];
 
 	/*
 	 *  Make sure we have a valid set-permission
@@ -1335,7 +1417,7 @@ PRIVATE int permit_location ARGS3(
 			   start working on the masks. */
 
 	/* Will now operate only on filename part. */
-	if ((destpath = HTURLPath_toFile(destpath, TRUE)) == 0)
+	if ((destpath = HTURLPath_toFile(destpath, TRUE, FALSE)) == 0)
 		return(0);
 	if (strlen(destpath) >= LY_MAXPATH) {
 	    FREE(destpath);
@@ -1404,22 +1486,29 @@ PRIVATE int permit_location ARGS3(
 	    cp = cr;
 	}
 
-#ifdef UNIX
 	/*
 	 *  Call chmod().
 	 */
-	HTSprintf0(&tmpbuf, "chmod %.4o %s", (unsigned int)new_mode, destpath);
-	sprintf(amode, "%.4o", (unsigned int)new_mode);
-	args[0] = "chmod";
-	args[1] = amode;
-	args[2] = destpath;
-	args[3] = (char *) 0;
-	if (LYExecv(CHMOD_PATH, args, tmpbuf) <= 0) {
+	if ((program = HTGetProgramPath(ppCHMOD)) != NULL) {
+	    char *args[5];
+	    char amode[10];
+	    char *tmpbuf = NULL;
+
+	    HTSprintf0(&tmpbuf, "chmod %.4o %s", (unsigned int)new_mode, destpath);
+	    sprintf(amode, "%.4o", (unsigned int)new_mode);
+	    args[0] = "chmod";
+	    args[1] = amode;
+	    args[2] = destpath;
+	    args[3] = (char *) 0;
+	    if (LYExecv(program, args, tmpbuf) <= 0) {
+		FREE(tmpbuf);
+		return (-1);
+	    }
 	    FREE(tmpbuf);
-	    return (-1);
+	} else {
+	    if (chmod(destpath, new_mode) < 0)
+		return (-1);
 	}
-	FREE(tmpbuf);
-#endif /* UNIX */
 	LYforce_no_cache = TRUE;	/* Force update of dired listing. */
 	return 1;
     }
@@ -1436,7 +1525,7 @@ PUBLIC void tagflag ARGS2(
 {
     if (nlinks > 0) {
 	LYmove(links[cur].ly, 2);
-	stop_reverse();
+	lynx_stop_reverse();
 	if (flag == ON) {
 	    LYaddch('+');
 	} else {
@@ -1482,12 +1571,14 @@ PRIVATE char * DirectoryOf ARGS1(
 	char *,		pathname)
 {
     char *result = 0;
-    char *result1 = 0;
     char *leaf;
 
     StrAllocCopy(result, pathname);
     leaf = LYPathLeaf(result);
+
     if (leaf != result) {
+	CONST char *result1 = 0;
+
 	*leaf = '\0';
 	if (!LYisRootPath(result))
 	    LYTrimPathSep(result);
@@ -1537,7 +1628,7 @@ PRIVATE char * match_op ARGS2(
     if (!strncmp("LYNXDIRED://", data, 12)
      && !strncmp(prefix, data + 12, (unsigned)len)) {
 	len += 12;
-#if defined(DOSPATH) || defined(__EMX__)
+#if defined(USE_DOS_DRIVES)
 	if (data[len] == '/') {	/* this is normal */
 	    len++;
 	}
@@ -1545,6 +1636,202 @@ PRIVATE char * match_op ARGS2(
 	return data + len;
     }
     return 0;
+}
+
+/*
+ *  Construct the appropriate system command taking care to
+ *  escape all path references to avoid spoofing the shell.
+ */
+PRIVATE char *build_command ARGS3(
+	char *,		line,
+	char *,		dirname,
+	char *,		arg)
+{
+    char *buffer = NULL;
+    CONST char *program;
+    CONST char *tar_path = HTGetProgramPath(ppTAR);
+
+    if ((arg = match_op("DECOMPRESS", line)) != 0) {
+#define FMT_UNCOMPRESS "%s %s"
+	if ((program = HTGetProgramPath(ppUNCOMPRESS)) != NULL) {
+	    HTAddParam(&buffer, FMT_UNCOMPRESS, 1, program);
+	    HTAddParam(&buffer, FMT_UNCOMPRESS, 2, arg);
+	    HTEndParam(&buffer, FMT_UNCOMPRESS, 2);
+	}
+	return buffer;
+    }
+
+#if defined(OK_UUDECODE) && !defined(ARCHIVE_ONLY)
+    if ((arg = match_op("UUDECODE", line)) != 0) {
+#define FMT_UUDECODE "%s %s"
+	if ((program = HTGetProgramPath(ppUUDECODE)) != NULL) {
+	    HTAddParam(&buffer, FMT_UUDECODE, 1, program);
+	    HTAddParam(&buffer, FMT_UUDECODE, 2, arg);
+	    HTEndParam(&buffer, FMT_UUDECODE, 2);
+	    HTAlert(gettext("Warning!  UUDecoded file will exist in the directory you started Lynx."));
+	}
+	return buffer;
+    }
+#endif /* OK_UUDECODE && !ARCHIVE_ONLY */
+
+#ifdef OK_TAR
+    if (tar_path != NULL) {
+# ifndef ARCHIVE_ONLY
+#  ifdef OK_GZIP
+	if ((arg = match_op("UNTAR_GZ", line)) != 0) {
+#define FMT_UNTAR_GZ "cd %s; %s -qdc %s |  %s %s %s"
+	    if ((program = HTGetProgramPath(ppGZIP)) != NULL) {
+		dirname = DirectoryOf(arg);
+		HTAddParam(&buffer, FMT_UNTAR_GZ, 1, dirname);
+		HTAddParam(&buffer, FMT_UNTAR_GZ, 2, program);
+		HTAddParam(&buffer, FMT_UNTAR_GZ, 3, arg);
+		HTAddParam(&buffer, FMT_UNTAR_GZ, 4, tar_path);
+		HTAddToCmd(&buffer, FMT_UNTAR_GZ, 5, TAR_DOWN_OPTIONS);
+		HTAddToCmd(&buffer, FMT_UNTAR_GZ, 6, TAR_PIPE_OPTIONS);
+		HTEndParam(&buffer, FMT_UNTAR_GZ, 6);
+	    }
+	    return buffer;
+	}
+#  endif /* OK_GZIP */
+	if ((arg = match_op("UNTAR_Z", line)) != 0) {
+#define FMT_UNTAR_Z "cd %s; %s %s |  %s %s %s"
+	    if ((program = HTGetProgramPath(ppZCAT)) != NULL) {
+		dirname = DirectoryOf(arg);
+		HTAddParam(&buffer, FMT_UNTAR_Z, 1, dirname);
+		HTAddParam(&buffer, FMT_UNTAR_Z, 2, program);
+		HTAddParam(&buffer, FMT_UNTAR_Z, 3, arg);
+		HTAddParam(&buffer, FMT_UNTAR_Z, 4, tar_path);
+		HTAddToCmd(&buffer, FMT_UNTAR_Z, 5, TAR_DOWN_OPTIONS);
+		HTAddToCmd(&buffer, FMT_UNTAR_Z, 6, TAR_PIPE_OPTIONS);
+		HTEndParam(&buffer, FMT_UNTAR_Z, 6);
+	    }
+	    return buffer;
+	}
+	if ((arg = match_op("UNTAR", line)) != 0) {
+#define FMT_UNTAR "cd %s; %s %s %s"
+	    dirname = DirectoryOf(arg);
+	    HTAddParam(&buffer, FMT_UNTAR, 1, dirname);
+	    HTAddParam(&buffer, FMT_UNTAR, 2, tar_path);
+	    HTAddToCmd(&buffer, FMT_UNTAR, 3, TAR_DOWN_OPTIONS);
+	    HTAddParam(&buffer, FMT_UNTAR, 4, arg);
+	    HTEndParam(&buffer, FMT_UNTAR, 4);
+	    return buffer;
+	}
+# endif /* !ARCHIVE_ONLY */
+
+# ifdef OK_GZIP
+	if ((arg = match_op("TAR_GZ", line)) != 0) {
+#define FMT_TAR_GZ "cd %s; %s %s %s %s | %s -qc >%s%s"
+	    if ((program = HTGetProgramPath(ppGZIP)) != NULL) {
+		dirname = DirectoryOf(arg);
+		HTAddParam(&buffer, FMT_TAR_GZ, 1, dirname);
+		HTAddParam(&buffer, FMT_TAR_GZ, 2, tar_path);
+		HTAddToCmd(&buffer, FMT_TAR_GZ, 3, TAR_UP_OPTIONS);
+		HTAddToCmd(&buffer, FMT_TAR_GZ, 4, TAR_PIPE_OPTIONS);
+		HTAddParam(&buffer, FMT_TAR_GZ, 5, LYPathLeaf(arg));
+		HTAddParam(&buffer, FMT_TAR_GZ, 6, program);
+		HTAddParam(&buffer, FMT_TAR_GZ, 7, LYonedot(LYPathLeaf(arg)));
+		HTAddParam(&buffer, FMT_TAR_GZ, 8, EXT_TAR_GZ);
+		HTEndParam(&buffer, FMT_TAR_GZ, 8);
+	    }
+	    return buffer;
+	}
+# endif /* OK_GZIP */
+
+	if ((arg = match_op("TAR_Z", line)) != 0) {
+#define FMT_TAR_Z "cd %s; %s %s %s %s | %s >%s%s"
+	    if ((program = HTGetProgramPath(ppCOMPRESS)) != NULL) {
+		dirname = DirectoryOf(arg);
+		HTAddParam(&buffer, FMT_TAR_Z, 1, dirname);
+		HTAddParam(&buffer, FMT_TAR_Z, 2, tar_path);
+		HTAddToCmd(&buffer, FMT_TAR_Z, 3, TAR_UP_OPTIONS);
+		HTAddToCmd(&buffer, FMT_TAR_Z, 4, TAR_PIPE_OPTIONS);
+		HTAddParam(&buffer, FMT_TAR_Z, 5, LYPathLeaf(arg));
+		HTAddParam(&buffer, FMT_TAR_Z, 6, program);
+		HTAddParam(&buffer, FMT_TAR_Z, 7, LYonedot(LYPathLeaf(arg)));
+		HTAddParam(&buffer, FMT_TAR_Z, 8, EXT_TAR_Z);
+		HTEndParam(&buffer, FMT_TAR_Z, 8);
+	    }
+	    return buffer;
+	}
+
+	if ((arg = match_op("TAR", line)) != 0) {
+#define FMT_TAR "cd %s; %s %s %s %s.tar %s"
+	    dirname = DirectoryOf(arg);
+	    HTAddParam(&buffer, FMT_TAR, 1, dirname);
+	    HTAddParam(&buffer, FMT_TAR, 2, tar_path);
+	    HTAddToCmd(&buffer, FMT_TAR, 3, TAR_UP_OPTIONS);
+	    HTAddToCmd(&buffer, FMT_TAR, 4, TAR_FILE_OPTIONS);
+	    HTAddParam(&buffer, FMT_TAR, 5, LYonedot(LYPathLeaf(arg)));
+	    HTAddParam(&buffer, FMT_TAR, 6, LYPathLeaf(arg));
+	    HTEndParam(&buffer, FMT_TAR, 6);
+	    return buffer;
+	}
+    }
+#endif /* OK_TAR */
+
+#ifdef OK_GZIP
+    if ((arg = match_op("GZIP", line)) != 0) {
+#define FMT_GZIP "%s -q %s"
+	if ((program = HTGetProgramPath(ppGZIP)) != NULL) {
+	    HTAddParam(&buffer, FMT_GZIP, 1, program);
+	    HTAddParam(&buffer, FMT_GZIP, 2, arg);
+	    HTEndParam(&buffer, FMT_GZIP, 2);
+	}
+	return buffer;
+    }
+#ifndef ARCHIVE_ONLY
+    if ((arg = match_op("UNGZIP", line)) != 0) {
+#define FMT_UNGZIP "%s -d %s"
+	if ((program = HTGetProgramPath(ppGZIP)) != NULL) {
+	    HTAddParam(&buffer, FMT_UNGZIP, 1, program);
+	    HTAddParam(&buffer, FMT_UNGZIP, 2, arg);
+	    HTEndParam(&buffer, FMT_UNGZIP, 2);
+	}
+	return buffer;
+    }
+#endif /* !ARCHIVE_ONLY */
+#endif /* OK_GZIP */
+
+#ifdef OK_ZIP
+    if ((arg = match_op("ZIP", line)) != 0) {
+#define FMT_ZIP "cd %s; %s -rq %s.zip %s"
+	if ((program = HTGetProgramPath(ppZIP)) != NULL) {
+	    dirname = DirectoryOf(arg);
+	    HTAddParam(&buffer, FMT_ZIP, 1, dirname);
+	    HTAddParam(&buffer, FMT_ZIP, 2, program);
+	    HTAddParam(&buffer, FMT_ZIP, 3, LYonedot(LYPathLeaf(arg)));
+	    HTAddParam(&buffer, FMT_ZIP, 4, LYPathLeaf(arg));
+	    HTEndParam(&buffer, FMT_ZIP, 4);
+	}
+	return buffer;
+    }
+#if !defined(ARCHIVE_ONLY)
+    if ((arg = match_op("UNZIP", line)) != 0) {
+#define FMT_UNZIP "cd %s; %s -q %s"
+	if ((program = HTGetProgramPath(ppUNZIP)) != NULL) {
+	    dirname = DirectoryOf(arg);
+	    HTAddParam(&buffer, FMT_UNZIP, 1, dirname);
+	    HTAddParam(&buffer, FMT_UNZIP, 2, program);
+	    HTAddParam(&buffer, FMT_UNZIP, 3, arg);
+	    HTEndParam(&buffer, FMT_UNZIP, 3);
+	}
+	return buffer;
+    }
+# endif /* !ARCHIVE_ONLY */
+#endif /* OK_ZIP */
+
+    if ((arg = match_op("COMPRESS", line)) != 0) {
+#define FMT_COMPRESS "%s %s"
+	if ((program = HTGetProgramPath(ppCOMPRESS)) != NULL) {
+	    HTAddParam(&buffer, FMT_COMPRESS, 1, program);
+	    HTAddParam(&buffer, FMT_COMPRESS, 2, arg);
+	    HTEndParam(&buffer, FMT_COMPRESS, 2);
+	}
+	return buffer;
+    }
+
+    return NULL;
 }
 
 /*
@@ -1558,7 +1845,7 @@ PRIVATE char * match_op ARGS2(
  *  doesn't look like a clean way.)
  */
 PUBLIC int local_dired ARGS1(
-	document *,	doc)
+	DocInfo *,	doc)
 {
     char *line_url;    /* will point to doc's address, which is a URL */
     char *line = NULL; /* same as line_url, but HTUnEscaped, will be alloced */
@@ -1651,131 +1938,7 @@ PUBLIC int local_dired ARGS1(
 	    return 0;
 	}
 
-	/*
-	 *  Construct the appropriate system command taking care to
-	 *  escape all path references to avoid spoofing the shell.
-	 */
-	if ((arg = match_op("DECOMPRESS", line)) != 0) {
-#define FMT_UNCOMPRESS "%s %s"
-	    HTAddParam(&buffer, FMT_UNCOMPRESS, 1, UNCOMPRESS_PATH);
-	    HTAddParam(&buffer, FMT_UNCOMPRESS, 2, arg);
-	    HTEndParam(&buffer, FMT_UNCOMPRESS, 2);
-
-#if defined(OK_UUDECODE) && !defined(ARCHIVE_ONLY)
-	} else if ((arg = match_op("UUDECODE", line)) != 0) {
-#define FMT_UUDECODE "%s %s"
-	    HTAddParam(&buffer, FMT_UUDECODE, 1, UUDECODE_PATH);
-	    HTAddParam(&buffer, FMT_UUDECODE, 2, arg);
-	    HTEndParam(&buffer, FMT_UUDECODE, 2);
-	    HTAlert(gettext("Warning!  UUDecoded file will exist in the directory you started Lynx."));
-#endif /* OK_UUDECODE && !ARCHIVE_ONLY */
-
-#ifdef OK_TAR
-# ifndef ARCHIVE_ONLY
-#  ifdef OK_GZIP
-	} else if ((arg = match_op("UNTAR_GZ", line)) != 0) {
-#define FMT_UNTAR_GZ "cd %s; %s -qdc %s |  %s -xf -"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 1, dirname);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 2, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 3, arg);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 4, TAR_PATH);
-	    HTEndParam(&buffer, FMT_UNTAR_GZ, 4);
-#  endif /* OK_GZIP */
-
-	} else if ((arg = match_op("UNTAR_Z", line)) != 0) {
-#define FMT_UNTAR_Z "cd %s; %s %s |  %s -xf -"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 1, dirname);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 2, ZCAT_PATH);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 3, arg);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 4, TAR_PATH);
-	    HTEndParam(&buffer, FMT_UNTAR_Z, 4);
-
-	} else if ((arg = match_op("UNTAR", line)) != 0) {
-#define FMT_UNTAR "cd %s; %s -xf %s"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_UNTAR, 1, dirname);
-	    HTAddParam(&buffer, FMT_UNTAR, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_UNTAR, 3, arg);
-	    HTEndParam(&buffer, FMT_UNTAR, 3);
-# endif /* !ARCHIVE_ONLY */
-
-# ifdef OK_GZIP
-	} else if ((arg = match_op("TAR_GZ", line)) != 0) {
-#define FMT_TAR_GZ "cd %s; %s -cf - %s | %s -qc >%s%s"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 1, dirname);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 3, LYPathLeaf(arg));
-	    HTAddParam(&buffer, FMT_TAR_GZ, 4, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 5, LYonedot(LYPathLeaf(arg)));
-	    HTAddParam(&buffer, FMT_TAR_GZ, 6, EXT_TAR_GZ);
-	    HTEndParam(&buffer, FMT_TAR_GZ, 6);
-# endif /* OK_GZIP */
-
-	} else if ((arg = match_op("TAR_Z", line)) != 0) {
-#define FMT_TAR_Z "cd %s; %s -cf - %s | %s >%s%s"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_TAR_Z, 1, dirname);
-	    HTAddParam(&buffer, FMT_TAR_Z, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_TAR_Z, 3, LYPathLeaf(arg));
-	    HTAddParam(&buffer, FMT_TAR_Z, 4, COMPRESS_PATH);
-	    HTAddParam(&buffer, FMT_TAR_Z, 5, LYonedot(LYPathLeaf(arg)));
-	    HTAddParam(&buffer, FMT_TAR_Z, 6, EXT_TAR_Z);
-	    HTEndParam(&buffer, FMT_TAR_Z, 6);
-
-	} else if ((arg = match_op("TAR", line)) != 0) {
-#define FMT_TAR "cd %s; %s -cf %s.tar %s"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_TAR, 1, dirname);
-	    HTAddParam(&buffer, FMT_TAR, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_TAR, 3, LYonedot(LYPathLeaf(arg)));
-	    HTAddParam(&buffer, FMT_TAR, 4, LYPathLeaf(arg));
-	    HTEndParam(&buffer, FMT_TAR, 4);
-#endif /* OK_TAR */
-
-#ifdef OK_GZIP
-	} else if ((arg = match_op("GZIP", line)) != 0) {
-#define FMT_GZIP "%s -q %s"
-	    HTAddParam(&buffer, FMT_GZIP, 1, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_GZIP, 2, arg);
-	    HTEndParam(&buffer, FMT_GZIP, 2);
-#ifndef ARCHIVE_ONLY
-	} else if ((arg = match_op("UNGZIP", line)) != 0) {
-#define FMT_UNGZIP "%s -d %s"
-	    HTAddParam(&buffer, FMT_UNGZIP, 1, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_UNGZIP, 2, arg);
-	    HTEndParam(&buffer, FMT_UNGZIP, 2);
-#endif /* !ARCHIVE_ONLY */
-#endif /* OK_GZIP */
-
-#ifdef OK_ZIP
-	} else if ((arg = match_op("ZIP", line)) != 0) {
-#define FMT_ZIP "cd %s; %s -rq %s.zip %s"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_ZIP, 1, dirname);
-	    HTAddParam(&buffer, FMT_ZIP, 2, ZIP_PATH);
-	    HTAddParam(&buffer, FMT_ZIP, 3, LYonedot(LYPathLeaf(arg)));
-	    HTAddParam(&buffer, FMT_ZIP, 4, LYPathLeaf(arg));
-	    HTEndParam(&buffer, FMT_ZIP, 4);
-#ifndef ARCHIVE_ONLY
-	} else if ((arg = match_op("UNZIP", line)) != 0) {
-#define FMT_UNZIP "cd %s; %s -q %s"
-	    dirname = DirectoryOf(arg);
-	    HTAddParam(&buffer, FMT_UNZIP, 1, dirname);
-	    HTAddParam(&buffer, FMT_UNZIP, 2, UNZIP_PATH);
-	    HTAddParam(&buffer, FMT_UNZIP, 3, arg);
-	    HTEndParam(&buffer, FMT_UNZIP, 3);
-# endif /* !ARCHIVE_ONLY */
-#endif /* OK_ZIP */
-
-	} else if ((arg = match_op("COMPRESS", line)) != 0) {
-#define FMT_COMPRESS "%s %s"
-	    HTAddParam(&buffer, FMT_COMPRESS, 1, COMPRESS_PATH);
-	    HTAddParam(&buffer, FMT_COMPRESS, 2, arg);
-	    HTEndParam(&buffer, FMT_COMPRESS, 2);
-	}
+	buffer = build_command(line, dirname, arg);
 
 	if (buffer != 0) {
 	    if ((int) strlen(buffer) < LYcols - 15) {
@@ -1810,7 +1973,7 @@ PUBLIC int local_dired ARGS1(
  *  Provide a menu of file management options.
  */
 PUBLIC int dired_options ARGS2(
-	document *,	doc,
+	DocInfo *,	doc,
 	char **,	newfile)
 {
     static char tempfile[LY_MAXPATH];
@@ -1826,11 +1989,8 @@ PUBLIC int dired_options ARGS2(
     struct dired_menu *mp;
     char buf[2048];
 
-    LYRemoveTemp(tempfile);
-    if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
-	HTAlert(gettext("Unable to open file management menu file."));
+    if ((fp0 = InternalPageFP(tempfile, FALSE)) == 0)
 	return(0);
-    }
 
     /*
      *  Make the tempfile a URL.
@@ -1977,7 +2137,6 @@ PRIVATE char *get_filename ARGS3(
 
     _statusline(prompt);
 
-    *buf = '\0';
     LYgetstr(buf, VISIBLE, bufsize, NORECALL);
     if (strstr(buf, "../") != NULL) {
 	HTAlert(gettext("Illegal filename; request ignored."));
@@ -2011,6 +2170,7 @@ PRIVATE void clear_install_path NOARGS
     FREE(install_path);
 }
 #endif /* LY_FIND_LEAKS */
+
 /*
  *  Fill in args array for execv (or execvp etc.) call, after first
  *  allocating it if necessary.  No fancy parsing, cmd_args is just
@@ -2064,6 +2224,7 @@ PRIVATE int fill_argv_for_execv ARGS5(
     args[n] = (char *)0;
     return(n);
 }
+
 /*
  *  Install the specified file or directory.
  */
@@ -2083,6 +2244,12 @@ PUBLIC BOOLEAN local_install ARGS3(
     int count = 0;
     int n = 0;		/* indices into 'args[]' */
     static int src = -1;
+    CONST char *program;
+
+    if ((program = HTGetProgramPath(ppINSTALL)) == NULL) {
+	HTAlert(gettext("Install in the selected directory not permitted."));
+	return 0;
+    }
 
     /*
      *	Determine the status of the selected item.
@@ -2181,10 +2348,7 @@ PUBLIC BOOLEAN local_install ARGS3(
 	    return(-1);		/* don't do it */
 	} else if (!strncmp(savepath, destpath, strlen(destpath)) &&
 		   LYIsPathSep(savepath[strlen(destpath)]) &&
-#ifdef DOSPATH
-		   !strchr(savepath + strlen(destpath) + 1, '\\') &&
-#endif
-		   !strchr(savepath + strlen(destpath) + 1, '/')) {
+		   LYLastPathSep(savepath + strlen(destpath) + 1) == 0) {
 	    HTUserMsg2(gettext("Already in target directory: %s"),
 		       savepath);
 	    FREE(tmpdest);
@@ -2192,7 +2356,7 @@ PUBLIC BOOLEAN local_install ARGS3(
 	}
 	args[src] = savepath;
 	HTSprintf0(&tmpbuf, "install %s in %s", savepath, destpath);
-	if (LYExecv(INSTALL_PATH, args, tmpbuf) <= 0) {
+	if (LYExecv(program, args, tmpbuf) <= 0) {
 	    FREE(tmpbuf);
 	    FREE(tmpdest);
 	    return (-1);
@@ -2213,16 +2377,13 @@ PUBLIC BOOLEAN local_install ARGS3(
 		continue;	/* skip this source file */
 	    } else if (!strncmp(args[src], destpath, strlen(destpath)) &&
 		       LYIsPathSep(args[src][strlen(destpath)]) &&
-#ifdef DOSPATH
-		       !strchr(args[src] + strlen(destpath) + 1, '\\') &&
-#endif
-		       !strchr(args[src] + strlen(destpath) + 1, '/')) {
+		       LYLastPathSep(args[src] + strlen(destpath) + 1) == 0) {
 		HTUserMsg2(gettext("Already in target directory: %s"),
 			   args[src]);
 		FREE(args[src]);
 		continue;	/* skip this source file */
 	    }
-	    err = (LYExecv(INSTALL_PATH, args, tmpbuf) <= 0);
+	    err = (LYExecv(program, args, tmpbuf) <= 0);
 	    FREE(args[src]);
 	    if (err) {
 		FREE(tmpbuf);

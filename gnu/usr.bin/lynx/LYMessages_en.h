@@ -20,7 +20,7 @@
  * Links to collections of alternate definitions, developed by the Lynx
  * User Community, are maintained in Lynx links:
  *
- *    http://www.trill-home.com/lynx.html
+ *    http://www.subir.com/lynx.html
  *
  * See ABOUT-NLS and po/readme for details and location of contributed
  * translations.  When no translation is available, the English default is
@@ -28,11 +28,9 @@
  */
 #define ALERT_FORMAT gettext("Alert!: %s")
 #define WELCOME_MSG gettext("Welcome")
-#define REALLY_QUIT_Y gettext("Are you sure you want to quit?")
-#define REALLY_QUIT_N gettext("Are you sure you want to quit?")
+#define REALLY_QUIT gettext("Are you sure you want to quit?")
 #ifdef VMS
-#define REALLY_EXIT_Y gettext("Really exit from Lynx?")
-#define REALLY_EXIT_N gettext("Really exit from Lynx?")
+#define REALLY_EXIT gettext("Really exit from Lynx?")
 #endif /* VMS */
 #define CONNECTION_INTERRUPTED gettext("Connection interrupted.")
 #define TRANSFER_INTERRUPTED gettext("Data transfer interrupted.")
@@ -831,6 +829,7 @@
 #define YOUR_SEGMENT gettext("your")
 #define RUNTIME_OPT_SEGMENT gettext("for runtime options")
 #define COMPILE_OPT_SEGMENT gettext("compile time options")
+#define COLOR_STYLE_SEGMENT gettext("color-style configuration")
 #define REL_VERSION gettext("latest release")
 #define PRE_VERSION gettext("pre-release version")
 #define DEV_VERSION gettext("development version")

@@ -21,7 +21,8 @@ extern  int popup_choice PARAMS((
 	popup_choice(cur, line, column, (CONST char **)choices, length, disabled, mouse)
 
 #ifndef NO_OPTION_FORMS
-extern int postoptions PARAMS((document *newdoc));
+extern void LYMenuVisitedLinks PARAMS((FILE * fp0, int disable_all));
+extern int postoptions PARAMS((DocInfo *newdoc));
 #endif /* !NO_OPTION_FORMS */
 
 #ifndef NO_OPTION_MENU

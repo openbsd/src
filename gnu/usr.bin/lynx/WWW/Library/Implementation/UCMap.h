@@ -41,6 +41,10 @@ extern int UCGetLYhndl_byMIME PARAMS((
 extern int safeUCGetLYhndl_byMIME PARAMS((
 	CONST char *	p)); /* returns LATIN1 if name not recognized */
 
+#ifdef EXP_LOCALE_CHARSET
+extern void LYFindLocaleCharset NOPARAMS;
+#endif
+
 extern int UCLYhndl_for_unspec;
 extern int UCLYhndl_for_unrec;
 extern int UCLYhndl_HTFile_for_unspec;
@@ -49,7 +53,7 @@ extern int UCLYhndl_HTFile_for_unrec;
 /* easy to type: */
 extern int LATIN1;     /* UCGetLYhndl_byMIME("iso-8859-1") */
 extern int US_ASCII;   /* UCGetLYhndl_byMIME("us-ascii")   */
-extern int UTF8;       /* UCGetLYhndl_byMIME("utf-8")      */
+extern int UTF8_handle;	/* UCGetLYhndl_byMIME("utf-8")      */
 
 #undef TRANSPARENT	/* defined on Solaris in <sys/stream.h> */
 extern int TRANSPARENT; /* UCGetLYhndl_byMIME("x-transparent")  */

@@ -30,7 +30,7 @@ PUBLIC int hash_code_lowercase_on_fly ARGS1 (CONST char*, string)
     CONST char *p;
 
     for (p = string, hash = 0; *p; p++)
-	hash = HASH_OF(hash,tolower(*p));
+	hash = HASH_OF(hash, TOLOWER(*p));
 
     return hash;
 }
@@ -46,7 +46,7 @@ PUBLIC int hash_code_aggregate_lower_str ARGS2 (CONST char*, string,int,hash_was
     CONST char *p;
 
     for (p = string, hash = hash_was ; *p; p++)
-	hash = HASH_OF(hash,tolower(*p));
+	hash = HASH_OF(hash, TOLOWER(*p));
 
     return hash;
 }

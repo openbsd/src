@@ -88,12 +88,14 @@ Using curses or ncurses library:
                    for UNIX handled by ./configure, may be set in HTUtils.h
 # -DCOLOR_CURSES    whether curses lib supports color (in the right way).
                    for UNIX handled by ./configure
+# -DUSE_COLOR_STYLE (see INSTALLATION, Section II-1c) needs SVr4 curses
 # -DUNDERLINE_LINKS  Define if you want links underlined instead of bold.
 # -DHP_TERMINAL    For DIM workaround to REVERSE problems on HP terminals.
 # -DNO_SIZECHANGE (old) or HAVE_SIZECHANGE (new) whether using code to detect
                    new size after size changes of the terminal (window).
                    for UNIX handled by ./configure, may be set in HTUtils.h
 # -DUSE_SCROLLBAR  supports scrollbar when built with ncurses
+# -DWIDEC_CURSES   whether curses lib supports wide/multibyte characters.
 
 Using slang library:
 # -DUSE_SLANG      (see INSTALLATION, Section II-1c)
@@ -103,19 +105,15 @@ Both:
 # 	if you have the reverse clear screen problem of some SUN4 systems, or
 # 	to work around some other "garbage on the screen" problems
 
-Related to experimental (unsupported) character style code
-------------------------------------------------------------
-# -DUSE_COLOR_STYLE (see INSTALLATION, Section II-1c) needs SVr4 curses
-
 Other general
 -------------
+# -DEXP_ASCII_CTYPES use POSIX locale for toupper/tolower/isupper
 # -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
-# -DNO_CPU_LIMIT   Disables Max CPU timeout (includes CLOCKS_PER_SECOND)
-# -DNO_DUMP_WITH_BACKSPACES Disables -with_backspaces code
-# -DUSE_VASPRINT   Use vasprintf() function
-# -DNO_RULES	   Disables code for CERN-style rules files
-# -DMISC_EXP       Enable some truly experimental stuff
 # -DINACTIVE_INPUT_STYLE_VH  Different style for showing inactive text fields
+# -DMISC_EXP       Enable some truly experimental stuff
+# -DNO_DUMP_WITH_BACKSPACES Disables -with_backspaces code
+# -DNO_RULES	   Disables code for CERN-style rules files
+# -DUSE_VASPRINT   Use vasprintf() function
 
 Untested
 --------

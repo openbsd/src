@@ -50,7 +50,7 @@ PUBLIC HTAtom * HTAtom_for ARGS1(CONST char *, string)
      *  05-29-94 Lynx 2-3-1 Garrett Arch Blythe
      */
     if (!initialised) {
-        int i;
+	int i;
 	for (i = 0; i < HASH_SIZE; i++)
 	    hash_table[i] = (HTAtom *) 0;
 	initialised = YES;
@@ -67,7 +67,7 @@ PUBLIC HTAtom * HTAtom_for ARGS1(CONST char *, string)
     */
     for (a = hash_table[hash]; a; a = a->next) {
 	if (0 == strcasecomp(a->name, string)) {
-    	    /* CTRACE((tfp, "HTAtom: Old atom %p for `%s'\n", a, string)); */
+	    /* CTRACE((tfp, "HTAtom: Old atom %p for `%s'\n", a, string)); */
 	    return a;				/* Found: return it */
 	}
     }
@@ -76,10 +76,10 @@ PUBLIC HTAtom * HTAtom_for ARGS1(CONST char *, string)
     */
     a = (HTAtom *)malloc(sizeof(*a));
     if (a == NULL)
-        outofmem(__FILE__, "HTAtom_for");
+	outofmem(__FILE__, "HTAtom_for");
     a->name = (char *)malloc(strlen(string)+1);
     if (a->name == NULL)
-        outofmem(__FILE__, "HTAtom_for");
+	outofmem(__FILE__, "HTAtom_for");
     strcpy(a->name, string);
     a->next = hash_table[hash];		/* Put onto the head of list */
     hash_table[hash] = a;
@@ -112,7 +112,7 @@ PRIVATE void free_atoms NOARGS
 		 */
 		while (hash_table[i_counter] != NULL)	{
 			/*
-		 	 *	Free off atoms and any members.
+			 *	Free off atoms and any members.
 			 */
 			HTAp_freeme = hash_table[i_counter];
 			hash_table[i_counter] = HTAp_freeme->next;

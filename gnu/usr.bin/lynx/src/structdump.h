@@ -10,15 +10,15 @@
 #define   DUMPSTRUCT_LINK(L,X) \
 if ((L)) { \
 CTRACE((tfp, "\n" \
-            "KED:     link_ptr=0x%08x  sizeof=%d  ["X"]\n" \
+            "KED:     link_ptr=%p  sizeof=%d  ["X"]\n" \
             "link       struct {\n"      \
-            "           *lname=0x%08x\n" \
+            "           *lname=%p\n"     \
             "            lname=|%s|\n"   \
-            "          *target=0x%08x\n" \
+            "          *target=%p\n"     \
             "           target=|%s|\n"   \
-            "        *hightext=0x%08x\n" \
+            "        *hightext=%p\n"     \
             "         hightext=|%s|\n"   \
-            "       *hightext2=0x%08x\n" \
+            "       *hightext2=%p\n"     \
             "        hightext2=|%s|\n"   \
             " hightext2_offset=%d\n"     \
             "      inUnderline=%1x\n"    \
@@ -27,12 +27,14 @@ CTRACE((tfp, "\n" \
             "             type=%d\n"     \
             "    anchor_number=%d\n"     \
             "  anchor_line_num=%d\n"     \
-            "            *form=0x%08x\n" \
+            "            *form=%p\n"     \
             "}\n", \
             (L), sizeof(*((L))), \
             (L)->lname, (L)->lname, (L)->target, (L)->target, \
-            (L)->hightext, (L)->hightext, (L)->hightext2, (L)->hightext2, \
-            (L)->hightext2_offset, (L)->inUnderline, (L)->lx, (L)->ly, \
+            (L)->l_hightext, (L)->l_hightext, \
+	    (L)->l_hightext2, (L)->l_hightext2, \
+            (L)->l_hightext2_offset, \
+	    (L)->inUnderline, (L)->lx, (L)->ly, \
             (L)->type, (L)->anchor_number, (L)->anchor_line_num, (L)->form)); \
 }else{ \
 CTRACE((tfp, "\n" \
@@ -45,33 +47,32 @@ CTRACE_FLUSH(tfp);
 #define   DUMPSTRUCT_ANCHOR(A,X) \
 if ((A)) { \
 CTRACE((tfp, "\n" \
-            "KED:   anchor_ptr=0x%08x  sizeof=%d  ["X"]\n" \
+            "KED:   anchor_ptr=%p  sizeof=%d  ["X"]\n" \
             "TextAnchor struct {\n"      \
-            "            *next=0x%08x\n" \
+            "            *next=%p\n"     \
             "           number=%d\n"     \
-            "            start=%d\n"     \
             "         line_pos=%d\n"     \
             "           extent=%d\n"     \
             "         line_num=%d\n"     \
-            "        *hightext=0x%08x\n" \
+            "        *hightext=%p\n"     \
             "         hightext=|%s|\n"   \
-            "       *hightext2=0x%08x\n" \
+            "       *hightext2=%p\n"     \
             "        hightext2=|%s|\n"   \
             "  hightext2offset=%d\n"     \
             "        link_type=%d\n"     \
-            "     *input_field=0x%08x\n" \
+            "     *input_field=%p\n"     \
             "      input_field=|%s|\n"   \
             "      show_anchor=%1x\n"    \
             "      inUnderline=%1x\n"    \
             "   expansion_anch=%1x\n"    \
-            "          *anchor=0x%08x\n" \
+            "          *anchor=%p\n"     \
             "}\n", \
             (A), sizeof(*((A))), \
-            (A)->next, (A)->number, (A)->start, (A)->line_pos, \
+            (A)->next, (A)->number, (A)->line_pos, \
             (A)->extent, (A)->line_num, \
             (A)->hightext, (A)->hightext, (A)->hightext2, (A)->hightext2, \
             (A)->hightext2offset, (A)->link_type, \
-            (A)->input_field, (A)->input_field, (A)->show_anchor, \
+            (A)->input_field, (A)->input_field->name, (A)->show_anchor, \
             (A)->inUnderline, (A)->expansion_anch, (A)->anchor)); \
 }else{ \
 CTRACE((tfp, "\n" \
@@ -84,15 +85,15 @@ CTRACE_FLUSH(tfp);
 #define   DUMPSTRUCT_FORMINFO(F,X) \
 if ((F)) { \
 CTRACE((tfp, "\n" \
-            "KED: forminfo_ptr=0x%08x  sizeof=%d  ["X"]\n" \
+            "KED: forminfo_ptr=%p  sizeof=%d  ["X"]\n" \
             "FormInfo   struct {\n"      \
-            "            *name=0x%08x\n" \
+            "            *name=%p\n"     \
             "             name=|%s|\n"   \
             "           number=%d\n"     \
             "             type=%d\n"     \
-            "           *value=0x%08x\n" \
+            "           *value=%p\n"     \
             "            value=|%s|\n"   \
-            "      *orig_value=0x%08x\n" \
+            "      *orig_value=%p\n"     \
             "       orig_value=|%s|\n"   \
             "             size=%d\n"     \
             "        maxlength=%d\n"     \
@@ -100,7 +101,7 @@ CTRACE((tfp, "\n" \
             "        num_value=%d\n"     \
             "           hrange=%d\n"     \
             "           lrange=%d\n"     \
-            "     *select_list=0x%08x\n" \
+            "     *select_list=%p\n"     \
             "    submit_action=|%s|\n"   \
             "    submit_method=%d\n"     \
             "   submit_enctype=|%s|\n"   \
@@ -134,17 +135,17 @@ CTRACE_FLUSH(tfp);
 #define   DUMPSTRUCT_LINE(L,X) \
 if ((L)) { \
 CTRACE((tfp, "\n" \
-            "KED: htline_ptr=0x%08x  sizeof=%d  ["X"]\n" \
+            "KED: htline_ptr=%p  sizeof=%d  ["X"]\n" \
             "HTLine  struct {\n"      \
-            "         *next=0x%08x\n" \
-            "         *prev=0x%08x\n" \
+            "         *next=%p\n"     \
+            "         *prev=%p\n"     \
             "        offset=%d\n"     \
             "          size=%d\n"     \
             "   split_after=%1x\n"    \
             "        bullet=%1x\n"    \
             "expansion_line=%1x\n"    \
             "w/o U_C_S def\n"         \
-            "        data[]=0x%08x\n" \
+            "        data[]=%p\n"     \
             "          data=|%s|\n"   \
             "}\n", \
             (L), sizeof(*((L))), \

@@ -1,6 +1,6 @@
 /* character level styles for Lynx
  * (c) 1996 Rob Partington -- donated to the Lyncei (if they want it :-)
- * $Id: LYStyle.c,v 1.3 2003/05/01 18:59:39 avsm Exp $
+ * $Id: LYStyle.c,v 1.4 2004/06/22 04:01:50 avsm Exp $
  */
 #include <HTUtils.h>
 #include <HTML.h>
@@ -28,7 +28,7 @@
 PRIVATE void style_initialiseHashTable NOPARAMS;
 
 /* stack of attributes during page rendering */
-PUBLIC int last_styles[128];
+PUBLIC int last_styles[128] = { 0 };
 PUBLIC int last_colorattr_ptr = 0;
 
 PUBLIC bucket hashStyles[CSHASHSIZE];
@@ -59,6 +59,13 @@ PUBLIC int s_alert		= NOSTYLE;
 PUBLIC int s_alink		= NOSTYLE;
 PUBLIC int s_curedit		= NOSTYLE;
 PUBLIC int s_forw_backw		= NOSTYLE;
+PUBLIC int s_hot_paste		= NOSTYLE;
+PUBLIC int s_menu_active	= NOSTYLE;
+PUBLIC int s_menu_bg		= NOSTYLE;
+PUBLIC int s_menu_entry		= NOSTYLE;
+PUBLIC int s_menu_frame		= NOSTYLE;
+PUBLIC int s_menu_number	= NOSTYLE;
+PUBLIC int s_menu_sb		= NOSTYLE;
 PUBLIC int s_normal		= NOSTYLE;
 PUBLIC int s_prompt_edit	= NOSTYLE;
 PUBLIC int s_prompt_edit_arr	= NOSTYLE;
@@ -67,12 +74,6 @@ PUBLIC int s_prompt_sel		= NOSTYLE;
 PUBLIC int s_status		= NOSTYLE;
 PUBLIC int s_title		= NOSTYLE;
 PUBLIC int s_whereis		= NOSTYLE;
-PUBLIC int s_menu_frame		= NOSTYLE;
-PUBLIC int s_menu_bg		= NOSTYLE;
-PUBLIC int s_menu_number	= NOSTYLE;
-PUBLIC int s_menu_entry		= NOSTYLE;
-PUBLIC int s_menu_active	= NOSTYLE;
-PUBLIC int s_menu_sb		= NOSTYLE;
 
 #ifdef USE_SCROLLBAR
 PUBLIC int s_sb_aa		= NOSTYLE;
@@ -93,7 +94,10 @@ PRIVATE int colorPairs = 0;
 #  define M_BLINK	0
 #endif
 
-PRIVATE unsigned char our_pairs[2][MAX_BLINK][MAX_COLOR][MAX_COLOR];
+PRIVATE unsigned char our_pairs[2]
+				[MAX_BLINK]
+				[MAX_COLOR + 1]
+				[MAX_COLOR + 1];
 
 /*
  * Parse a string containing a combination of video attributes and color.
@@ -180,29 +184,33 @@ PRIVATE void parse_attributes ARGS5(
      * If we have colour, and space to create a new colour attribute,
      * and we have a valid colour description, then add this style
      */
-    if (lynx_has_color && colorPairs < COLOR_PAIRS-1 && fA != NO_COLOR)
-    {
-	int curPair;
+    if (lynx_has_color && colorPairs < COLOR_PAIRS-1 && fA != NO_COLOR) {
+	int curPair = 0;
+	int iFg = (1 + (fA >= 0 ? fA : 0));
+	int iBg = (1 + (bA >= 0 ? bA : 0));
+	int iBold = !!(cA & A_BOLD);
+	int iBlink = !!(cA & M_BLINK);
 
+	CTRACE2(TRACE_STYLE, (tfp, "parse_attributes %d/%d %d/%d %#x\n", fA, default_fg, bA, default_bg, cA));
 	if (fA < MAX_COLOR
 	 && bA < MAX_COLOR
-	 && our_pairs[!!(cA & A_BOLD)][!!(cA & A_BLINK)][fA][bA])
-	    curPair = our_pairs[!!(cA & A_BOLD)][!!(cA & M_BLINK)][fA][bA] - 1;
-	else {
-	    curPair = ++colorPairs;
-	    init_pair((short)curPair, (short)fA, (short)bA);
-	    if (fA < MAX_COLOR
-	     && bA < MAX_COLOR
-	     && curPair < 255)
-		our_pairs[!!(cA & A_BOLD)][!!(cA & M_BLINK)][fA][bA] = curPair + 1;
+#ifdef USE_CURSES_PAIR_0
+	 && (cA != A_NORMAL || fA != default_fg || bA != default_bg)
+#endif
+	 && curPair < 255) {
+	    if (our_pairs[iBold][iBlink][iFg][iBg] != 0) {
+		curPair = our_pairs[iBold][iBlink][iFg][iBg];
+	    } else {
+		curPair = ++colorPairs;
+		init_pair((short)curPair, (short)fA, (short)bA);
+		our_pairs[iBold][iBlink][iFg][iBg] = curPair;
+	    }
 	}
 	CTRACE2(TRACE_STYLE, (tfp, "CSS(CURPAIR):%d\n", curPair));
 	if (style < DSTYLE_ELEMENTS)
 	    setStyle(style, COLOR_PAIR(curPair)|cA, cA, mA);
 	setHashStyle(newstyle, COLOR_PAIR(curPair)|cA, cA, mA, element);
-    }
-    else
-    {
+    } else {
 	if (lynx_has_color && fA != NO_COLOR) {
 	    CTRACE2(TRACE_STYLE, (tfp, "CSS(NC): maximum of %d colorpairs exhausted\n", COLOR_PAIRS - 1));
 	}
@@ -244,6 +252,7 @@ PRIVATE void parse_style ARGS1(char*, param)
 	{ "edit.prompt.marked",	DSTYLE_ELEMENTS,	&s_prompt_sel },
 	{ "edit.prompt",	DSTYLE_ELEMENTS,	&s_prompt_edit },
 	{ "forwbackw.arrow",	DSTYLE_ELEMENTS,	&s_forw_backw },
+	{ "hot.paste",		DSTYLE_ELEMENTS,	&s_hot_paste },
 	{ "menu.frame",		DSTYLE_ELEMENTS,	&s_menu_frame },
 	{ "menu.bg",		DSTYLE_ELEMENTS,	&s_menu_bg },
 	{ "menu.n",		DSTYLE_ELEMENTS,	&s_menu_number },
@@ -254,12 +263,18 @@ PRIVATE void parse_style ARGS1(char*, param)
     unsigned n;
     BOOL found = FALSE;
 
-    char *buffer = strdup(param);
-    char *tmp = strchr(buffer, ':');
+    char *buffer = 0;
+    char *tmp = 0;
     char *element, *mono, *fg, *bg;
 
-    if(!tmp)
-    {
+    if (param == 0)
+	return;
+    CTRACE2(TRACE_STYLE, (tfp, "parse_style(%s)\n", param));
+    StrAllocCopy(buffer, param);
+    if (buffer == 0)
+	return;
+
+    if ((tmp = strchr(buffer, ':')) == 0) {
 	fprintf (stderr, gettext("\
 Syntax Error parsing style in lss file:\n\
 [%s]\n\
@@ -417,7 +432,6 @@ PRIVATE HTList *lss_styles = NULL;
 
 PUBLIC void parse_userstyles NOARGS
 {
-    static BOOL first = TRUE;
     char *name;
     HTList *cur = lss_styles;
 
@@ -497,7 +511,7 @@ PRIVATE int style_readFromFileREC ARGS2(
     int len;
 
     CTRACE2(TRACE_STYLE, (tfp, "CSS:Reading styles from file: %s\n", lss_filename ? lss_filename : "?!? empty ?!?"));
-    if (lss_filename == NULL || *lss_filename == '\0')
+    if (isEmpty(lss_filename))
 	return -1;
     if ((fh = LYOpenCFG(lss_filename, parent_filename, LYNX_LSS_FILE)) == 0) {
 	/* this should probably be an alert or something */
@@ -605,7 +619,7 @@ PUBLIC void cache_tag_styles NOARGS
 
     for (i = 0; i < HTML_ELEMENTS; ++i)
     {
-	strcpy(buf, HTML_dtd.tags[i].name);
+	LYstrncpy(buf, HTML_dtd.tags[i].name, sizeof(buf)-1);
 	LYLowerCase(buf);
 	cached_tag_styles[i] = hash_code(buf);
     }

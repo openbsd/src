@@ -8,10 +8,7 @@ WWW_MACH = djgpp
 #ASIS_MACH = hardware/os
 
 # Use this option to enable optional and *experimental* color style.
-#ENABLE_COLOR_STYLE = \
- -DUSE_COLOR_STYLE \
- -DUSE_HASH \
- -DLINKEDSTYLES
+#ENABLE_COLOR_STYLE = -DUSE_COLOR_STYLE
 
 # comment this line to suppress DIRED support
 DIRED_DEFS = -DDIRED_SUPPORT
@@ -23,18 +20,16 @@ MCFLAGS = \
  $(ENABLE_COLOR_STYLE) \
  -DDISP_PARTIAL \
  -DDOSPATH \
- -DEXP_FILE_UPLOAD \
+ -DUSE_FILE_UPLOAD \
  -DNOUSERS \
- -DSOURCE_CACHE \
+ -DUSE_SOURCE_CACHE \
  -DUSE_PRETTYSRC \
  -DUSE_ZLIB \
- -DWATT32 \
  -I../Implementation \
  -I../../../src \
  -I../../.. \
- -I/djgpp/pdcur24 \
- -I/djgpp/watt32/inc \
- -I/djgpp/watt32/inc/sys
+ -I/djgpp/pdcur26 \
+ -I/djgpp/watt32/inc
 
 LFLAGS =
 CC = gcc
@@ -44,7 +39,7 @@ CC = gcc
 
 # Uncomment the following to enable SSL.
 #SSLFLAGS = -DUSE_SSL
-#SSLINC = -I/djgpp/include/openssl
+#SSLINC = -I/dev/env/DJDIR/include/openssl
 
 # Directory for installed binary:
 !BINDIR = /usr/local/bin

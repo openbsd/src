@@ -28,6 +28,3 @@ PUBLIC char *HTAssocList_lookup PARAMS((HTAssocList *   alist,
                                         CONST char *    name));
 
 #endif /* not HTASSOC_H */
-/*
-
-   End of file HTAssoc.h.  */

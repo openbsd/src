@@ -40,6 +40,7 @@ extern void HTUserMsg2 PARAMS((CONST char * Msg, CONST char * Arg));
 **      On entry,
 **              The input is a list of parameters for printf.
 */
+extern CONST char *HTProgressUnits PARAMS((int kilobytes));
 extern void HTProgress PARAMS((CONST char * Msg));
 extern void HTReadProgress PARAMS((long bytes, long total));
 #define _HTProgress(msg)	mustshow = TRUE, HTProgress(msg)
@@ -49,6 +50,11 @@ extern void HTReadProgress PARAMS((long bytes, long total));
  *  resets flag. (so only call once!) - kw
  */
 extern BOOL HTLastConfirmCancelled NOPARAMS;
+
+/*
+**	Supports logic for forced yes/no prompt results.
+*/
+extern int HTForcedPrompt PARAMS((int Opt, CONST char * Msg, int Dft));
 
 /*      Display a message, then wait for 'yes' or 'no', allowing default
 **	response if a return or left-arrow is used.
@@ -150,8 +156,10 @@ extern int HTConfirmPostRedirect PARAMS((
 
 
 extern void LYSleepAlert NOPARAMS;
+extern void LYSleepDebug NOPARAMS;
 extern void LYSleepInfo NOPARAMS;
 extern void LYSleepMsg NOPARAMS;
+extern void LYSleepReplay NOPARAMS;
 
 #ifdef HAVE_STRERROR
 #define LYStrerror strerror

@@ -59,7 +59,7 @@ typedef struct {
 /* slang doesn't really do windows... */
 #define waddch(w,c)  LYaddch(c)
 #define waddstr(w,s) addstr(s)
-#define wmove(win, row, col) SLsmg_gotorc((win)->top_y + (row), (win)->left_x + (col));
+#define wmove(win, row, col) SLsmg_gotorc(((win)?(win)->top_y:0) + (row), ((win)?(win)->left_x:0) + (col))
 
 #ifndef SLSMG_UARROW_CHAR
 #define SLSMG_UARROW_CHAR '^'
@@ -85,7 +85,7 @@ typedef struct {
 #define SLSMG_BLOCK_CHAR '#'
 #endif
 
-#ifndef ACS_UARROW  
+#ifndef ACS_UARROW
 #define ACS_UARROW  SLSMG_UARROW_CHAR
 #endif
 
@@ -170,23 +170,33 @@ typedef struct {
 #undef ERR			/* all versions of curses define this */
 #endif
 
+#ifdef MOUSE_MOVED
+#undef MOUSE_MOVED		/* wincon.h or MINGW32's copy of it */
+#endif
+
 #ifdef HAVE_CONFIG_H
-# ifdef HAVE_NCURSES_NCURSES_H
-#   include <ncurses/ncurses.h>
+# ifdef HAVE_NCURSESW_NCURSES_H
+#  undef GCC_PRINTFLIKE		/* <libutf8.h> may define 'printf' */
+#  include <ncursesw/ncurses.h>
+#  undef printf			/* but we don't want that... */
 # else
-#  ifdef HAVE_NCURSES_H
-#   include <ncurses.h>
+#  ifdef HAVE_NCURSES_NCURSES_H
+#   include <ncurses/ncurses.h>
 #  else
-#   ifdef HAVE_CURSESX_H
-#    include <cursesX.h>	/* Ultrix */
+#   ifdef HAVE_NCURSES_H
+#    include <ncurses.h>
 #   else
-#    ifdef HAVE_JCURSES_H
-#     include <jcurses.h>	/* sony_news */
+#    ifdef HAVE_CURSESX_H
+#     include <cursesX.h>	/* Ultrix */
 #    else
-#     ifdef HAVE_XCURSES
-#      include <xcurses.h>	/* PDCurses' UNIX port */
+#     ifdef HAVE_JCURSES_H
+#      include <jcurses.h>	/* sony_news */
 #     else
-#      include <curses.h>	/* default */
+#      ifdef HAVE_XCURSES
+#       include <xcurses.h>	/* PDCurses' UNIX port */
+#      else
+#       include <curses.h>	/* default */
+#      endif
 #     endif
 #    endif
 #   endif
@@ -198,11 +208,18 @@ typedef struct {
 # endif
 
 # ifdef FANCY_CURSES
-#  if defined(NCURSES) && defined(HAVE_NCURSES_TERM_H)
-#    include <ncurses/term.h>
+#  if defined(NCURSES) && defined(HAVE_NCURSESW_TERM_H)
+#    include <ncursesw/term.h>
 #  else
-#   if defined(HAVE_TERM_H)
-#    include <term.h>
+#    if defined(NCURSES) && defined(HAVE_NCURSES_TERM_H)
+#      include <ncurses/term.h>
+#    else
+#     if defined(HAVE_NCURSESW_NCURSES_H) || defined(HAVE_NCURSES_NCURSES_H) || defined(HAVE_XCURSES)
+#       undef HAVE_TERM_H			/* only use one in comparable path! */
+#     endif
+#     if defined(HAVE_TERM_H)
+#      include <term.h>
+#     endif
 #   endif
 #  endif
 # endif
@@ -236,7 +253,7 @@ typedef struct {
 /*
  * If we have pads, use them to implement left/right scrolling.
  */
-#if defined(HAVE_NEWPAD) && defined(HAVE_PNOUTREFRESH)
+#if defined(HAVE_NEWPAD) && defined(HAVE_PNOUTREFRESH) && !defined(PDCURSES)
 #define USE_CURSES_PADS 1
 #endif
 
@@ -248,12 +265,31 @@ typedef struct {
 #undef USE_CURSES_PADS
 #endif
 
+/*
+ * Most implementations of curses treat pair 0 specially, as the default
+ * foreground and background color.  Also, the COLORS variable corresponds to
+ * the total number of colors.
+ *
+ * PDCurses does not follow these rules.  Its COLORS variable claims it has
+ * 8 colors, but it actually implements 16.  That makes it hard to optimize
+ * color settings against color pair 0 in a portable fashion.
+ */
+#if defined(COLOR_CURSES)
+#if defined(PDCURSES) || defined(HAVE_XCURSES)
+#define COLORS 16		/* should be a variable... */
+#else
+#define USE_CURSES_PAIR_0
+#endif
+#endif
+
 #endif /* USE_SLANG */
 
 #ifdef USE_SLANG
 #define LYstopPopup() /* nothing */
+#define LYtopwindow() LYwin
 #else
 extern void LYsubwindow PARAMS((WINDOW * param));
+extern WINDOW * LYtopwindow NOPARAMS;
 #define LYstopPopup() LYsubwindow(0)
 #endif /* NCURSES */
 
@@ -263,9 +299,6 @@ extern WINDOW *LYstartPopup PARAMS((int top_y, int left_x, int height, int width
 /*
  * Useful macros not in PDCurses or very old ncurses headers.
  */
-#if !defined(HAVE_GETATTRS) && !defined(getattrs)
-#define getattrs(win) ((win)->_attrs)
-#endif
 #if !defined(HAVE_GETBEGX) && !defined(getbegx)
 #define getbegx(win) ((win)->_begx)
 #endif
@@ -276,8 +309,29 @@ extern WINDOW *LYstartPopup PARAMS((int top_y, int left_x, int height, int width
 #define getbkgd(win) ((win)->_bkgd)
 #endif
 
+#if defined(HAVE_WATTR_GET)
+extern long LYgetattrs PARAMS((WINDOW *win));
+#else
+#if defined(HAVE_GETATTRS) || defined(getattrs)
+#define LYgetattrs(win) getattrs(win)
+#else
+#define LYgetattrs(win) ((win)->_attrs)
+#endif
+#endif /* HAVE_WATTR_GET */
+
 #if defined(PDCURSES)
 #define HAVE_GETBKGD 1	/* can use fallback definition */
+#define HAVE_NAPMS 1	/* can use millisecond-delays */
+#endif
+
+#ifdef HAVE_NAPMS
+#define SECS2Secs(n) (1000 * (n))
+#define Secs2SECS(n) ((n) / 1000.0)
+#define SECS_FMT "%.3f"
+#else
+#define SECS2Secs(n) (n)
+#define Secs2SECS(n) (n)
+#define SECS_FMT "%.0f"
 #endif
 
 /* Both slang and curses: */
@@ -372,7 +426,7 @@ extern void curses_w_style PARAMS((WINDOW* win, int style, int	dir));
 #  define LynxWChangeStyle(win,style,dir)	(void)1
 #endif /* USE_COLOR_STYLE */
 
-#if USE_COLOR_TABLE
+#ifdef USE_COLOR_TABLE
 extern void LYaddAttr PARAMS((int a));
 extern void LYsubAttr PARAMS((int a));
 extern void lynx_setup_colors NOPARAMS;
@@ -393,12 +447,12 @@ extern unsigned int Lynx_Color_Flags;
 #define SL_LYNX_USE_COLOR	1
 #define SL_LYNX_OVERRIDE_COLOR	2
 
-#define start_bold()      	LYaddAttr(1)
+#define start_bold()      	LYaddAttr(LYUnderlineLinks ? 4 : 1)
 #define start_reverse()   	LYaddAttr(2)
-#define start_underline() 	LYaddAttr(4)
-#define stop_bold()       	LYsubAttr(1)
+#define start_underline() 	LYaddAttr(LYUnderlineLinks ? 1 : 4)
+#define stop_bold()       	LYsubAttr(LYUnderlineLinks ? 4 : 1)
 #define stop_reverse()    	LYsubAttr(2)
-#define stop_underline()  	LYsubAttr(4)
+#define stop_underline()  	LYsubAttr(LYUnderlineLinks ? 1 : 4)
 
 #ifdef FANCY_CURSES
 #undef FANCY_CURSES
@@ -407,7 +461,7 @@ extern unsigned int Lynx_Color_Flags;
 /*
  *  Map some curses functions to slang functions.
  */
-#define stdscr NULL
+#define stdscr ((WINDOW *)0)
 #ifdef SLANG_MBCS_HACK
 extern int PHYSICAL_SLtt_Screen_Cols;
 #define COLS PHYSICAL_SLtt_Screen_Cols
@@ -470,17 +524,10 @@ extern void VTHome NOPARAMS;
  *  add and subtract, respectively, the attributes
  *  _UNDERLINE, _BOLD, _REVERSE, and _BLINK. - FM
  */
-#ifdef UNDERLINE_LINKS
-#define start_bold()		setattr(_UNDERLINE)
-#define stop_bold()		clrattr(_UNDERLINE)
-#define start_underline()	setattr(_BOLD)
-#define stop_underline()	clrattr(_BOLD)
-#else /* not UNDERLINE_LINKS */
-#define start_bold()		setattr(_BOLD)
-#define stop_bold()		clrattr(_BOLD)
-#define start_underline()	setattr(_UNDERLINE)
-#define stop_underline()	clrattr(_UNDERLINE)
-#endif /* UNDERLINE_LINKS */
+#define start_bold()		setattr(LYUnderlineLinks ? _UNDERLINE : _BOLD)
+#define stop_bold()		clrattr(LYUnderlineLinks ? _UNDERLINE : _BOLD)
+#define start_underline()	setattr(LYUnderlineLinks ? _BOLD : _UNDERLINE)
+#define stop_underline()	clrattr(LYUnderlineLinks ? _BOLD : _UNDERLINE)
 #define start_reverse()		setattr(_REVERSE)
 #define wstart_reverse(w)	wsetattr(w, _REVERSE)
 #define stop_reverse()		clrattr(_REVERSE)
@@ -495,7 +542,7 @@ extern int string_to_attr PARAMS((char *name));
  *  our own functions to add or subtract the
  *  A_foo attributes. - FM
  */
-#if USE_COLOR_TABLE
+#ifdef USE_COLOR_TABLE
 extern void LYaddWAttr PARAMS((WINDOW *win, int a));
 extern void LYsubWAttr PARAMS((WINDOW *win, int a));
 extern void LYaddWAttr PARAMS((WINDOW *win, int a));
@@ -514,26 +561,10 @@ extern int  lynx_chg_color PARAMS((int, int, int));
 #define LYsubWAttr(win,attr)	wattroff(win,attr)
 #endif
 
-#ifdef UNDERLINE_LINKS
-#define start_bold()		LYaddAttr(A_UNDERLINE)
-#define stop_bold()		LYsubAttr(A_UNDERLINE)
-#ifdef __CYGWIN__	/* 1999/02/25 (Thu) 01:09:45 */
-#define start_underline()	/* LYaddAttr(A_BOLD) */
-#define stop_underline()	/* LYsubAttr(A_BOLD) */
-#else
-#define start_underline()	LYaddAttr(A_BOLD)
-#define stop_underline()	LYsubAttr(A_BOLD)
-#endif /* __CYGWIN__ */
-#else /* not UNDERLINE_LINKS: */
-#define start_bold()		LYaddAttr(A_BOLD)
-#define stop_bold()		LYsubAttr(A_BOLD)
-#ifdef USE_COLOR_STYLE
-#define start_underline()	attron(A_UNDERLINE) /* allow combining - kw */
-#else
-#define start_underline()	LYaddAttr(A_UNDERLINE)
-#endif /* USE_COLOR_STYLE */
-#define stop_underline()	LYsubAttr(A_UNDERLINE)
-#endif /* UNDERLINE_LINKS */
+#define start_bold()		LYaddAttr(LYUnderlineLinks ? A_UNDERLINE : A_BOLD)
+#define stop_bold()		LYsubAttr(LYUnderlineLinks ? A_UNDERLINE : A_BOLD)
+#define start_underline()	LYaddAttr(LYUnderlineLinks ? A_BOLD : A_UNDERLINE)
+#define stop_underline()	LYsubAttr(LYUnderlineLinks ? A_BOLD : A_UNDERLINE)
 
 #if defined(SNAKE) && defined(HP_TERMINAL)
 #define start_reverse()		LYaddWAttr(LYwin, A_DIM)
@@ -575,7 +606,16 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 
 #endif /* FANCY_CURSES */
 
-#ifndef ACS_UARROW  
+#ifdef __hpux			/* FIXME: configure check */
+#undef ACS_UARROW
+#undef ACS_DARROW
+#undef ACS_LARROW
+#undef ACS_RARROW
+#undef ACS_BLOCK
+#undef ACS_CKBOARD
+#endif
+
+#ifndef ACS_UARROW
 #define ACS_UARROW  '^'
 #endif
 
@@ -589,6 +629,14 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 
 #ifndef ACS_RARROW
 #define ACS_RARROW '}'
+#endif
+
+#ifndef ACS_BLOCK
+#define ACS_BLOCK  '}'
+#endif
+
+#ifndef ACS_CKBOARD
+#define ACS_CKBOARD '}'
 #endif
 
 #define LYaddch(ch)		waddch(LYwin, ch)
@@ -608,11 +656,11 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 #endif /* USE_SLANG */
 
 /*
- * If the screen library allows us to specify "default" color, allow user to 
+ * If the screen library allows us to specify "default" color, allow user to
  * control it.
  */
-#if USE_DEFAULT_COLORS
-#if USE_SLANG || (HAVE_ASSUME_DEFAULT_COLORS && !defined(USE_COLOR_STYLE))
+#ifdef USE_DEFAULT_COLORS
+#if defined(USE_SLANG) || defined(HAVE_ASSUME_DEFAULT_COLORS)
 #define EXP_ASSUMED_COLOR 1
 #endif
 #endif
@@ -635,6 +683,13 @@ extern void lynx_stop_prompt_color NOPARAMS;
 extern void lynx_start_radio_color NOPARAMS;
 extern void lynx_stop_radio_color NOPARAMS;
 extern void lynx_stop_all_colors NOPARAMS;
+
+extern void lynx_start_bold NOPARAMS;
+extern void lynx_start_reverse NOPARAMS;
+extern void lynx_start_underline NOPARAMS;
+extern void lynx_stop_bold NOPARAMS;
+extern void lynx_stop_reverse NOPARAMS;
+extern void lynx_stop_underline NOPARAMS;
 
 /*
  * To prevent corrupting binary data on DOS, MS-WINDOWS or OS/2 we open files

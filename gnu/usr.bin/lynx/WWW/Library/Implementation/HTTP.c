@@ -7,9 +7,6 @@
 */
 
 #include <HTUtils.h>
-#if defined(__DJGPP__) && defined (WATT32)
-#include <tcp.h>
-#endif /* __DJGPP__ */
 #include <HTTP.h>
 #include <LYUtils.h>
 
@@ -36,6 +33,7 @@
 #include <HTML.h>
 #include <HTInit.h>
 #include <HTAABrow.h>
+#include <HTAccess.h>		/* Are we using an HTTP gateway? */
 
 #include <LYCookie.h>
 #include <LYGlobalDefs.h>
@@ -50,34 +48,41 @@ struct _HTStream
 
 extern char * HTAppName;	/* Application name: please supply */
 extern char * HTAppVersion;	/* Application version: please supply */
-extern char * personal_mail_address;	/* User's name/email address */
-extern char * LYUserAgent;	/* Lynx User-Agent string */
-extern BOOL LYNoRefererHeader;	/* Never send Referer header? */
-extern BOOL LYNoRefererForThis; /* No Referer header for this URL? */
-extern BOOL LYNoFromHeader;	/* Never send From header? */
-extern BOOL LYSetCookies;	/* Act on Set-Cookie headers? */
 
-extern BOOL using_proxy;	/* Are we using an HTTP gateway? */
 PUBLIC BOOL reloading = FALSE;	/* Reloading => send no-cache pragma to proxy */
 PUBLIC char * redirecting_url = NULL;	    /* Location: value. */
 PUBLIC BOOL permanent_redirection = FALSE;  /* Got 301 status? */
 PUBLIC BOOL redirect_post_content = FALSE;  /* Don't convert to GET? */
 
-extern BOOLEAN LYUserSpecifiedURL; /* Is the URL a goto? */
-
-extern BOOL keep_mime_headers;	 /* Include mime headers and force source dump */
-extern BOOL no_url_redirection;  /* Don't follow Location: URL for */
-extern char *http_error_file;	 /* Store HTTP status code in this file */
-extern BOOL traversal;		 /* TRUE if we are doing a traversal */
-extern BOOL dump_output_immediately;  /* TRUE if no interactive user */
-
 #ifdef USE_SSL
 PUBLIC SSL_CTX * ssl_ctx = NULL;	/* SSL ctx */
+PUBLIC SSL * SSL_handle = NULL;
+PUBLIC int ssl_okay;
 
 PRIVATE void free_ssl_ctx NOARGS
 {
     if (ssl_ctx != NULL)
 	SSL_CTX_free(ssl_ctx);
+}
+
+PRIVATE int HTSSLCallback(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+    char *msg = NULL;
+    int result = 1;
+
+    if (!(preverify_ok || ssl_okay || ssl_noprompt)) {
+#ifdef USE_X509_SUPPORT
+	HTSprintf0(&msg, "SSL error:%s-Continue?",
+		   X509_verify_cert_error_string(X509_STORE_CTX_get_error(x509_ctx)));
+	if (HTForcedPrompt(ssl_noprompt, msg, YES))
+	    ssl_okay = 1;
+	else
+	    result = 0;
+#endif
+
+	FREE(msg);
+    }
+    return result;
 }
 
 PUBLIC SSL * HTGetSSLHandle NOARGS
@@ -94,9 +99,11 @@ PUBLIC SSL * HTGetSSLHandle NOARGS
 	ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 	SSL_CTX_set_options(ssl_ctx, SSL_OP_ALL);
 	SSL_CTX_set_default_verify_paths(ssl_ctx);
+	SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, HTSSLCallback);
 #endif /* SSLEAY_VERSION_NUMBER < 0x0800 */
 	atexit(free_ssl_ctx);
     }
+    ssl_okay = 0;
     return(SSL_new(ssl_ctx));
 }
 
@@ -106,7 +113,7 @@ PUBLIC void HTSSLInitPRNG NOARGS
     if (RAND_status() == 0) {
 	char rand_file[256];
 	time_t t;
-	pid_t pid;
+	int pid;
 	long l,seed;
 
 	t = time(NULL);
@@ -120,7 +127,7 @@ PUBLIC void HTSSLInitPRNG NOARGS
 	/* Seed in time (mod_ssl does this) */
 	RAND_seed((unsigned char *)&t, sizeof(time_t));
 	/* Seed in pid (mod_ssl does this) */
-	RAND_seed((unsigned char *)&pid, sizeof(pid_t));
+	RAND_seed((unsigned char *)&pid, sizeof(pid));
 	/* Initialize system's random number generator */
 	RAND_bytes((unsigned char *)&seed, sizeof(long));
 	lynx_srand(seed);
@@ -143,7 +150,7 @@ PUBLIC void HTSSLInitPRNG NOARGS
 #define HTTP_NETWRITE(sock, buff, size, handle) \
 	(handle ? SSL_write(handle, buff, size) : NETWRITE(sock, buff, size))
 #define HTTP_NETCLOSE(sock, handle)  \
-	{ (void)NETCLOSE(sock); if (handle) SSL_free(handle); handle = NULL; }
+	{ (void)NETCLOSE(sock); if (handle) SSL_free(handle); SSL_handle = handle = NULL; }
 
 #else
 #define HTTP_NETREAD(a, b, c, d)   NETREAD(a, b, c)
@@ -245,7 +252,6 @@ PUBLIC int ws_netread(int fd, char *buf, int len)
 
     extern int win32_check_interrupt(void);	/* LYUtil.c */
     extern int lynx_timeout;			/* LYMain.c */
-    extern int AlertSecs;			/* LYMain.c */
     extern CRITICAL_SECTION critSec_READ;	/* LYMain.c */
 
 #define TICK	5
@@ -324,6 +330,32 @@ PUBLIC int ws_netread(int fd, char *buf, int len)
 }
 #endif
 
+/*
+ * Strip any username from the given string so we retain only the host.
+ * If the
+ */
+PRIVATE void strip_userid ARGS1(
+	char *,		host)
+{
+    char *p1 = host;
+    char *p2 = strchr(host, '@');
+    char *fake;
+
+    if (p2 != 0) {
+	*p2++ = '\0';
+	if ((fake = HTParse(host, "", PARSE_HOST)) != NULL) {
+	    char *msg = NULL;
+
+	    CTRACE((tfp, "FIXME:%s\n", fake));
+	    HTSprintf0(&msg, gettext("Address contains a username: %s"), host);
+	    HTAlert(msg);
+	    FREE(msg);
+	}
+	while ((*p1++ = *p2++) != '\0') {
+	    ;
+	}
+    }
+}
 
 /*		Load Document from HTTP Server			HTLoadHTTP()
 **		==============================
@@ -350,7 +382,7 @@ PRIVATE int HTLoadHTTP ARGS4 (
 {
   int s;			/* Socket number for returned data */
   CONST char *url = arg;	/* The URL which get_physical() returned */
-  char *command = NULL;		/* The whole command */
+  bstring *command = NULL;	/* The whole command */
   char *eol;			/* End of line if found */
   char *start_of_data;		/* Start of body of reply */
   int status;			/* tcp return */
@@ -385,10 +417,15 @@ PRIVATE int HTLoadHTTP ARGS4 (
   CONST char *connect_url = NULL; /* The URL being proxied */
   char *connect_host = NULL;	/* The host being proxied */
   SSL * handle = NULL;		/* The SSL handle */
-  char SSLprogress[256];	/* progress bar message */
+  char ssl_dn[256];
+  char *cert_host;
+  char *ssl_host;
+  char *p;
+  char *msg = NULL;
 #if SSLEAY_VERSION_NUMBER >= 0x0900
   BOOL try_tls = TRUE;
 #endif /* SSLEAY_VERSION_NUMBER >= 0x0900 */
+  SSL_handle = NULL;
 #else
   void * handle = NULL;
 #endif /* USE_SSL */
@@ -505,7 +542,7 @@ use_tunnel:
   ** then do the SSL stuff here
   */
   if (did_connect || !strncmp(url, "https", 5)) {
-      handle = HTGetSSLHandle();
+      SSL_handle = handle = HTGetSSLHandle();
       SSL_set_fd(handle, s);
 #if SSLEAY_VERSION_NUMBER >= 0x0900
       if (!try_tls)
@@ -517,8 +554,7 @@ use_tunnel:
       if (status <= 0) {
 #if SSLEAY_VERSION_NUMBER >= 0x0900
 	  if (try_tls) {
-	      CTRACE((tfp, "HTTP: Retrying connection without TLS\n"));
-	      _HTProgress("Retrying connection.");
+	      _HTProgress(gettext("Retrying connection without TLS."));
 	      try_tls = FALSE;
 	      if (did_connect)
 		  HTTP_NETCLOSE(s, handle);
@@ -554,20 +590,46 @@ use_tunnel:
 	  goto done;
 #endif /* SSLEAY_VERSION_NUMBER >= 0x0900 */
       }
-      sprintf(SSLprogress,"Secure %d-bit %s (%s) HTTP connection",SSL_get_cipher_bits(handle,NULL),SSL_get_cipher_version(handle),SSL_get_cipher(handle));
-      _HTProgress(SSLprogress);
 
-#ifdef NOTDEFINED
-      if (strcmp(HTParse(url, "", PARSE_HOST),
-		 strstr(X509_NAME_oneline(
-			X509_get_subject_name(
-				handle->session->peer)),"/CN=")+4)) {
-	  HTAlert("Certificate is for different host name");
-	  HTAlert(strstr(X509_NAME_oneline(
-			 X509_get_subject_name(
-				handle->session->peer)),"/CN=")+4);
+      X509_NAME_oneline(X509_get_subject_name(SSL_get_peer_certificate(handle)),
+		        ssl_dn, sizeof(ssl_dn));
+      if ((cert_host = strstr(ssl_dn, "/CN=")) == NULL) {
+	  HTSprintf0(&msg,
+		     gettext("SSL error:Can't find common name in certificate-Continue?"));
+	   if (! HTForcedPrompt(ssl_noprompt, msg, YES)) {
+	      status = HT_NOT_LOADED;
+	      FREE(msg);
+	      goto done;
+	  }
+      } else {
+	  cert_host += 4;
+	  if ((p = strchr(cert_host, '/')) != NULL)
+	      *p = '\0';
+	  if ((p = strchr(cert_host, ':')) != NULL)
+	      *p = '\0';
+	  ssl_host = HTParse(url, "", PARSE_HOST);
+	  if ((p = strchr(ssl_host, ':')) != NULL)
+	      *p = '\0';
+	  if (strcasecomp(ssl_host, cert_host)) {
+	      HTSprintf0(&msg,
+			 gettext("SSL error:host(%s)!=cert(%s)-Continue?"),
+			 ssl_host,
+			 cert_host);
+	      if (! HTForcedPrompt(ssl_noprompt, msg, YES)) {
+		  status = HT_NOT_LOADED;
+		  FREE(msg);
+		  goto done;
+	      }
+	  }
       }
-#endif /* NOTDEFINED */
+
+      HTSprintf0(&msg,
+		 gettext("Secure %d-bit %s (%s) HTTP connection"),
+		 SSL_get_cipher_bits(handle, NULL),
+		 SSL_get_cipher_version(handle),
+		 SSL_get_cipher(handle));
+      _HTProgress(msg);
+      FREE(msg);
   }
 #endif /* USE_SSL */
 
@@ -580,18 +642,18 @@ use_tunnel:
 #ifdef USE_SSL
     if (do_connect) {
 	METHOD = "CONNECT";
-	StrAllocCopy(command, "CONNECT ");
+	BStrCopy0(command, "CONNECT ");
     } else
 #endif /* USE_SSL */
     if (do_post) {
 	METHOD = "POST";
-	StrAllocCopy(command, "POST ");
+	BStrCopy0(command, "POST ");
     } else if (do_head) {
 	METHOD = "HEAD";
-	StrAllocCopy(command, "HEAD ");
+	BStrCopy0(command, "HEAD ");
     } else {
 	METHOD = "GET";
-	StrAllocCopy(command, "GET ");
+	BStrCopy0(command, "GET ");
     }
 
     /*
@@ -602,31 +664,32 @@ use_tunnel:
 #ifdef USE_SSL
     if (using_proxy && !did_connect) {
 	if (do_connect)
-	    StrAllocCat(command, connect_host);
+	    BStrCat0(command, connect_host);
 	else
-	    StrAllocCat(command, p1+1);
+	    BStrCat0(command, p1+1);
     }
 #else
     if (using_proxy)
-	StrAllocCat(command, p1+1);
+	BStrCat0(command, p1+1);
 #endif /* USE_SSL */
     else
-	StrAllocCat(command, p1);
+	BStrCat0(command, p1);
     FREE(p1);
   }
   if (extensions) {
-      StrAllocCat(command, " ");
-      StrAllocCat(command, HTTP_VERSION);
+      BStrCat0(command, " ");
+      BStrCat0(command, HTTP_VERSION);
   }
 
-  StrAllocCat(command, crlf);	/* CR LF, as in rfc 977 */
+  BStrCat0(command, crlf);	/* CR LF, as in rfc 977 */
 
   if (extensions) {
       int n, i;
       char * host = NULL;
 
       if ((host = HTParse(anAnchor->address, "", PARSE_HOST)) != NULL) {
-	  HTSprintf(&command, "Host: %s%c%c", host, CR,LF);
+	  strip_userid(host);
+	  HTBprintf(&command, "Host: %s%c%c", host, CR,LF);
 	  FREE(host);
       }
 
@@ -659,31 +722,56 @@ use_tunnel:
 			    temp);
 	      len += strlen(linebuf);
 	      if (len > 252 && !first_Accept) {
-		  StrAllocCat(command, crlf);
+		  BStrCat0(command, crlf);
 		  HTSprintf0(&linebuf, "Accept: %s%s",
 				HTAtom_name(pres->rep),
 				temp);
 		  len = strlen(linebuf);
 	      }
-	      StrAllocCat(command, linebuf);
+	      BStrCat0(command, linebuf);
 	      first_Accept = FALSE;
 	  }
       }
-      HTSprintf(&command, "%s*/*;q=0.01%c%c",
+      HTBprintf(&command, "%s*/*;q=0.01%c%c",
 		    (first_Accept ?
 		       "Accept: " : ", "), CR, LF);
       first_Accept = FALSE;
       len = 0;
 
-      HTSprintf(&command, "Accept-Encoding: %s, %s%c%c",
-		    "gzip", "compress", CR, LF);
+      /*
+       * FIXME:  suppressing the "Accept-Encoding" in this case is done to work
+       * around limitations of the presentation logic used for the command-line
+       * "-base" option.  The remote site may transmit the document gzip'd, but
+       * the ensuing logic in HTSaveToFile() would see the mime-type as gzip
+       * rather than text/html, and not prepend the base URL.  This is less
+       * efficient than accepting the compressed data and uncompressing it,
+       * adding the base URL but is simpler than augmenting the dump's
+       * presentation logic -TD
+       */
+      if (LYPrependBaseToSource && dump_output_immediately) {
+	  CTRACE((tfp, "omit Accept-Encoding to work-around interaction with -source\n"));
+      } else {
+	  char *list = 0;
+#if defined(USE_ZLIB) || defined(GZIP_PATH)
+	  StrAllocCopy(list, "gzip");
+#endif
+#if defined(USE_ZLIB) || defined(COMPRESS_PATH)
+	  if (list != 0)
+	      StrAllocCat(list, ", ");
+	  StrAllocCat(list, "compress");
+#endif
+	  if (list != 0) {
+	      HTBprintf(&command, "Accept-Encoding: %s%c%c", list, CR, LF);
+	      free(list);
+	  }
+      }
 
       if (language && *language) {
-	  HTSprintf(&command, "Accept-Language: %s%c%c", language, CR, LF);
+	  HTBprintf(&command, "Accept-Language: %s%c%c", language, CR, LF);
       }
 
       if (pref_charset && *pref_charset) {
-	  StrAllocCat(command, "Accept-Charset: ");
+	  BStrCat0(command, "Accept-Charset: ");
 	  StrAllocCopy(linebuf, pref_charset);
 	  if (linebuf[strlen(linebuf)-1] == ',')
 	      linebuf[strlen(linebuf)-1] = '\0';
@@ -692,8 +780,8 @@ use_tunnel:
 	      StrAllocCat(linebuf, ", iso-8859-1;q=0.01");
 	  if (strstr(linebuf, "us-ascii") == NULL)
 	      StrAllocCat(linebuf, ", us-ascii;q=0.01");
-	  StrAllocCat(command, linebuf);
-	  HTSprintf(&command, "%c%c", CR, LF);
+	  BStrCat0(command, linebuf);
+	  HTBprintf(&command, "%c%c", CR, LF);
       }
 
 #if 0
@@ -720,7 +808,7 @@ use_tunnel:
       **  new-httpd@apache.org from Koen Holtman, Jan 1999.
       */
       if (!do_post) {
-	  HTSprintf(&command, "Negotiate: trans%c%c", CR, LF);
+	  HTBprintf(&command, "Negotiate: trans%c%c", CR, LF);
       }
 #endif /* 0 */
 
@@ -731,25 +819,25 @@ use_tunnel:
       **  Also send it as a Cache-Control header for HTTP/1.1. - FM
       */
       if (reloading) {
-	  HTSprintf(&command, "Pragma: no-cache%c%c", CR, LF);
-	  HTSprintf(&command, "Cache-Control: no-cache%c%c", CR, LF);
+	  HTBprintf(&command, "Pragma: no-cache%c%c", CR, LF);
+	  HTBprintf(&command, "Cache-Control: no-cache%c%c", CR, LF);
       }
 
       if (LYUserAgent && *LYUserAgent) {
 	  char *cp = LYSkipBlanks(LYUserAgent);
 	  /* Won't send it at all if all blank - kw */
 	  if (*cp != '\0')
-	      HTSprintf(&command, "User-Agent: %.*s%c%c",
+	      HTBprintf(&command, "User-Agent: %.*s%c%c",
 		      INIT_LINE_SIZE-15, LYUserAgent, CR, LF);
       } else {
-	  HTSprintf(&command, "User-Agent: %s/%s  libwww-FM/%s%c%c",
+	  HTBprintf(&command, "User-Agent: %s/%s  libwww-FM/%s%c%c",
 		  HTAppName ? HTAppName : "unknown",
 		  HTAppVersion ? HTAppVersion : "0.0",
 		  HTLibraryVersion, CR, LF);
       }
 
       if (personal_mail_address && !LYNoFromHeader) {
-	  HTSprintf(&command, "From: %s%c%c", personal_mail_address, CR,LF);
+	  HTBprintf(&command, "From: %s%c%c", personal_mail_address, CR,LF);
       }
 
       if (!(LYUserSpecifiedURL ||
@@ -757,18 +845,15 @@ use_tunnel:
 	  strcmp(HTLoadedDocumentURL(), "")) {
 	  char *cp = LYRequestReferer;
 	  if (!cp) cp = HTLoadedDocumentURL(); /* @@@ Try both? - kw */
-	  StrAllocCat(command, "Referer: ");
-	  if (!strncasecomp(cp, "LYNXIMGMAP:", 11)) {
-	      char *cp1 = strchr(cp, '#');
-	      if (cp1)
-		  *cp1 = '\0';
-	      StrAllocCat(command, cp + 11);
-	      if (cp1)
-		  *cp1 = '#';
+	  BStrCat0(command, "Referer: ");
+	  if (isLYNXIMGMAP(cp)) {
+	      char *cp1 = trimPoundSelector(cp);
+	      BStrCat0(command, cp + LEN_LYNXIMGMAP);
+	      restorePoundSelector(cp1);
 	  } else {
-	      StrAllocCat(command, cp);
+	      BStrCat0(command, cp);
 	  }
-	  HTSprintf(&command, "%c%c", CR, LF);
+	  HTBprintf(&command, "%c%c", CR, LF);
       }
 
       {
@@ -830,7 +915,7 @@ use_tunnel:
 		**  If auth is not NULL nor zero-length, it's
 		**  an Authorization header to be included. - FM
 		*/
-		HTSprintf(&command, "%s%c%c", auth, CR, LF);
+		HTBprintf(&command, "%s%c%c", auth, CR, LF);
 		CTRACE((tfp, "HTTP: Sending authorization: %s\n", auth));
 	    } else if (auth && *auth == '\0') {
 		/*
@@ -848,7 +933,7 @@ use_tunnel:
 		    if (did_connect)
 			HTTP_NETCLOSE(s, handle);
 #endif /* USE_SSL */
-		    FREE(command);
+		    BStrFree(command);
 		    FREE(hostname);
 		    FREE(docname);
 		    FREE(abspath);
@@ -865,7 +950,7 @@ use_tunnel:
 	    **	document being proxied.
 	    */
 	    if (!strncmp(docname, "http", 4)) {
-		cookie = LYCookie(host2, path2, port2, secure);
+		cookie = LYAddCookieHeader(host2, path2, port2, secure);
 	    }
 	    FREE(host2);
 	    FREE(path2);
@@ -877,7 +962,7 @@ use_tunnel:
 	    /*
 	    **	Add cookie for a non-proxied request. - FM
 	    */
-	    cookie = LYCookie(hostname, abspath, portnumber, secure);
+	    cookie = LYAddCookieHeader(hostname, abspath, portnumber, secure);
 	    auth_proxy = NO;
 	}
 	/*
@@ -889,8 +974,8 @@ use_tunnel:
 		**  It's a historical cookie, so signal to the
 		**  server that we support modern cookies. - FM
 		*/
-		StrAllocCat(command, "Cookie2: $Version=\"1\"");
-		StrAllocCat(command, crlf);
+		BStrCat0(command, "Cookie2: $Version=\"1\"");
+		BStrCat0(command, crlf);
 		CTRACE((tfp, "HTTP: Sending Cookie2: $Version =\"1\"\n"));
 	    }
 	    if (*cookie != '\0') {
@@ -899,9 +984,9 @@ use_tunnel:
 		**  Note that any folding of long strings has been
 		**  done already in LYCookie.c. - FM
 		*/
-		StrAllocCat(command, "Cookie: ");
-		StrAllocCat(command, cookie);
-		StrAllocCat(command, crlf);
+		BStrCat0(command, "Cookie: ");
+		BStrCat0(command, cookie);
+		BStrCat0(command, crlf);
 		CTRACE((tfp, "HTTP: Sending Cookie: %s\n", cookie));
 	    }
 	    FREE(cookie);
@@ -925,7 +1010,7 @@ use_tunnel:
 	    **	an Authorization or Proxy-Authorization
 	    **	header to be included. - FM
 	    */
-	    HTSprintf(&command, "%s%c%c", auth, CR, LF);
+	    HTBprintf(&command, "%s%c%c", auth, CR, LF);
 	    CTRACE((tfp, (auth_proxy ?
 			 "HTTP: Sending proxy authorization: %s\n" :
 			 "HTTP: Sending authorization: %s\n"),
@@ -945,7 +1030,7 @@ use_tunnel:
 	    } else {
 		if (traversal || dump_output_immediately)
 		    HTAlert(FAILED_NEED_PASSWD);
-		FREE(command);
+		BStrFree(command);
 		FREE(hostname);
 		FREE(docname);
 		status = HT_NOT_LOADED;
@@ -968,51 +1053,52 @@ use_tunnel:
 #endif /* USE_SSL */
 	do_post) {
 	CTRACE((tfp, "HTTP: Doing post, content-type '%s'\n",
-		     anAnchor->post_content_type ? anAnchor->post_content_type
-						 : "lose"));
-	HTSprintf(&command, "Content-type: %s%c%c",
+		     anAnchor->post_content_type
+		     ? anAnchor->post_content_type
+		     : "lose"));
+	HTBprintf(&command, "Content-type: %s%c%c",
 		   anAnchor->post_content_type
 		   ? anAnchor->post_content_type
 		   : "lose",
 		  CR, LF);
-/*
- * Ack!  This assumes non-binary data!  Icky!
- *
- */
-	HTSprintf(&command, "Content-length: %d%c%c",
-		  (anAnchor->post_data)
-		   ? strlen (anAnchor->post_data)
+
+	HTBprintf(&command, "Content-length: %d%c%c",
+		  !isBEmpty(anAnchor->post_data)
+		   ? BStrLen(anAnchor->post_data)
 		   : 0,
 		  CR, LF);
 
-	StrAllocCat(command, crlf);	/* Blank line means "end" of headers */
+	BStrCat0(command, crlf);	/* Blank line means "end" of headers */
 
-	StrAllocCat(command, anAnchor->post_data);
+	BStrCat(command, anAnchor->post_data);
     }
     else
-	StrAllocCat(command, crlf);	/* Blank line means "end" of headers */
+	BStrCat0(command, crlf);	/* Blank line means "end" of headers */
 
+    if (TRACE) {
+	CTRACE((tfp, "Writing:\n"));
+	trace_bstring(command);
 #ifdef USE_SSL
-  CTRACE((tfp, "Writing:\n%s%s----------------------------------\n",
-	       command,
+	CTRACE((tfp, "%s",
 	       (anAnchor->post_data && !do_connect ? crlf : "")));
 #else
-  CTRACE((tfp, "Writing:\n%s%s----------------------------------\n",
-	       command,
+	CTRACE((tfp, "%s",
 	       (anAnchor->post_data ? crlf : "")));
 #endif /* USE_SSL */
+	CTRACE((tfp, "----------------------------------\n"));
+    }
 
   _HTProgress (gettext("Sending HTTP request."));
 
 #ifdef    NOT_ASCII  /* S/390 -- gil -- 0548 */
   {   char *p;
 
-      for ( p = command; p < command + strlen(command); p++ )
+      for ( p = BStrData(command); p < BStrData(command) + BStrLen(command); p++ )
 	  *p = TOASCII(*p);
   }
 #endif /* NOT_ASCII */
-  status = HTTP_NETWRITE(s, command, (int)strlen(command), handle);
-  FREE(command);
+  status = HTTP_NETWRITE(s, BStrData(command), BStrLen(command), handle);
+  BStrFree(command);
   FREE(linebuf);
   if (status <= 0) {
       if (status == 0) {
@@ -1024,7 +1110,7 @@ use_tunnel:
 		 !already_retrying &&
 		 /* Don't retry if we're posting. */ !do_post) {
 	    /*
-	    **	Arrrrgh, HTTP 0/1 compability problem, maybe.
+	    **	Arrrrgh, HTTP 0/1 compatibility problem, maybe.
 	    */
 	    CTRACE((tfp, "HTTP: BONZO ON WRITE Trying again with HTTP0 request.\n"));
 	    _HTProgress (RETRYING_AS_HTTP0);
@@ -2033,7 +2119,7 @@ done:
   FREE(connect_host);
   if (handle) {
     SSL_free(handle);
-    handle = NULL;
+    SSL_handle = handle = NULL;
   }
 #endif /* USE_SSL */
   return status;

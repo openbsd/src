@@ -90,7 +90,7 @@ $(srcdir)/$(PACKAGE).pot: $(POTFILES)
 	  --files-from=$(srcdir)/POTFILES.in \
 	&& test ! -f $(PACKAGE).po \
 	   || ( rm -f $(srcdir)/$(PACKAGE).pot \
-		&& mv $(PACKAGE).po $(srcdir)/$(PACKAGE).pot )
+		&& ( sed -e 1,5d -e s/"Project-Id-Version: PACKAGE VERSION"/"Project-Id-Version: $(PACKAGE) $(VERSION)"/ $(PACKAGE).po > $(srcdir)/$(PACKAGE).pot ) )
 
 $(srcdir)/cat-id-tbl.c: stamp-cat-id; @:
 $(srcdir)/stamp-cat-id: $(PACKAGE).pot

@@ -35,10 +35,4 @@ extern char * HTDeSlash PARAMS((CONST char * str));
 
 extern char * HTEnSlash PARAMS((CONST char * str));
 
-#endif
-
-/*
-
-                                                                                    Tim BL
-
-    */
+#endif /* HTWSRC_H */

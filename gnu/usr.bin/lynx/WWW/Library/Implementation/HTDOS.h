@@ -18,6 +18,10 @@
 */
 char * HTDOS_wwwName PARAMS((CONST char * dosname));
 
+/*
+ * Converts Unix slashes to DOS
+ */
+char * HTDOS_slashes PARAMS((char * path));
 
 /* PUBLIC                                                       HTDOS_name()
 **              CONVERTS WWW name into a DOS name

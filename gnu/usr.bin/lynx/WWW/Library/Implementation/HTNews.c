@@ -17,6 +17,7 @@
 #include <HTCJK.h>
 #include <HTMIME.h>
 #include <HTFont.h>
+#include <HTFormat.h>
 #include <HTTCP.h>
 #include <LYUtils.h>
 #include <LYStrings.h>
@@ -51,6 +52,7 @@ PRIVATE char HTNewsGetCharacter NOPARAMS;
 #endif /* USE_SSL */
 
 #include <HTML.h>
+#include <HTAccess.h>
 #include <HTParse.h>
 #include <HTFormat.h>
 #include <HTAlert.h>
@@ -59,7 +61,8 @@ PRIVATE char HTNewsGetCharacter NOPARAMS;
 #include <LYGlobalDefs.h>
 #include <LYLeaks.h>
 
-#define SnipIn(d,fmt,len,s) sprintf(d, fmt, (int)sizeof(d)-len, s)
+#define SnipIn(d,fmt,len,s)      sprintf(d, fmt,      (int)sizeof(d)-len, s)
+#define SnipIn2(d,fmt,tag,len,s) sprintf(d, fmt, tag, (int)sizeof(d)-len, s)
 
 struct _HTStructured {
 	CONST HTStructuredClass *	isa;
@@ -72,12 +75,6 @@ struct _HTStream
 
 #define LINE_LENGTH 512			/* Maximum length of line of ARTICLE etc */
 #define GROUP_NAME_LENGTH	256	/* Maximum length of group name */
-extern BOOLEAN scan_for_buried_news_references;
-extern BOOLEAN LYListNewsNumbers;
-extern BOOLEAN LYListNewsDates;
-extern int interrupted_in_htgetcharacter;
-extern BOOL keep_mime_headers;	 /* Include mime headers and force raw text */
-extern BOOL using_proxy;	/* Are we using an NNTP proxy? */
 
 /*
 **  Module-wide variables.
@@ -203,8 +200,8 @@ PRIVATE BOOL initialize NOARGS
 	cp = NULL;
     }
 #else
-    if (getenv("NNTPSERVER")) {
-	StrAllocCopy(HTNewsHost, (char *)getenv("NNTPSERVER"));
+    if (LYGetEnv("NNTPSERVER")) {
+	StrAllocCopy(HTNewsHost, LYGetEnv("NNTPSERVER"));
 	CTRACE((tfp, "HTNews: NNTPSERVER defined as `%s'\n",
 		    HTNewsHost));
     } else {
@@ -848,7 +845,7 @@ PRIVATE void post_article ARGS1(
     **	Open the temporary file with the
     **	nntp headers and message body. - FM
     */
-    if ((fd = fopen((postfile ? postfile : ""), TXT_R)) == NULL) {
+    if ((fd = fopen(NonNull(postfile), TXT_R)) == NULL) {
 	HTAlert(FAILED_CANNOT_OPEN_POST);
 	return;
     }
@@ -944,8 +941,7 @@ PRIVATE void post_article ARGS1(
 }
 
 #ifdef SH_EX	/* for MIME */
-#define NEWS_DEBUG 0
-#if NEWS_DEBUG
+#ifdef NEWS_DEBUG
 /* for DEBUG 1997/11/07 (Fri) 17:20:16 */
 void debug_print(unsigned char *p)
 {
@@ -987,7 +983,7 @@ static char *decode_mime(char *str)
 	    q = p + 1;
 	}
     }
-#if NEWS_DEBUG
+#ifdef NEWS_DEBUG
     printf("new=[");
     debug_print(temp);
 #endif
@@ -1146,7 +1142,7 @@ PRIVATE int read_article ARGS1(
 	if (from || replyto) {
 	    char *temp = NULL;
 	    StrAllocCopy(temp, author_address(replyto ? replyto : from));
-	    StrAllocCopy(href,"mailto:");
+	    StrAllocCopy(href, STR_MAILTO_URL);
 	    if (strchr(temp, '%') || strchr(temp, '?')) {
 		cp = HTEscape(temp, URL_XPALPHAS);
 		StrAllocCat(href, cp);
@@ -1292,7 +1288,7 @@ PRIVATE int read_article ARGS1(
 	    **	so add a link for posting followups for
 	    **	this article. - FM
 	    */
-	    if (!strncasecomp(NewsHREF, "snews:", 6))
+	    if (!strncasecomp(NewsHREF, STR_SNEWS_URL, 6))
 		StrAllocCopy(href,"snewsreply://");
 	    else
 		StrAllocCopy(href,"newsreply://");
@@ -1391,7 +1387,7 @@ PRIVATE int read_article ARGS1(
 	if (((char)ich == LF) || (p == &line[LINE_LENGTH])) {
 	    *p++ = '\0';			/* Terminate the string */
 	    CTRACE((tfp, "B %s", line));
-#if NEWS_DEBUG	/* 1997/11/09 (Sun) 15:56:11 */
+#ifdef NEWS_DEBUG	/* 1997/11/09 (Sun) 15:56:11 */
 	    debug_print(line);	/* @@@ */
 #endif
 	    if (line[0] == '.') {
@@ -1441,7 +1437,7 @@ PRIVATE int read_article ARGS1(
 			    p2 += 7;
 			    *p2 = 0;
 			    while (*l) {
-				if (strncmp(l, "news:", 5) &&
+				if (strncmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
 				    strncmp(l, "snews://", 8) &&
 				    strncmp(l, "nntp://", 7) &&
 				    strncmp(l, "snewspost:", 10) &&
@@ -1454,7 +1450,7 @@ PRIVATE int read_article ARGS1(
 				    strncmp(l, "http://", 7) &&
 				    strncmp(l, "https://", 8) &&
 				    strncmp(l, "wais://", 7) &&
-				    strncmp(l, "mailto:", 7) &&
+				    strncmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
 				    strncmp(l, "cso://", 6) &&
 				    strncmp(l, "gopher://", 9)) {
 				    PUTC (*l++);
@@ -1480,7 +1476,7 @@ PRIVATE int read_article ARGS1(
 			}
 		    }
 		    while (*l) {		/* Last bit of the line */
-			if (strncmp(l, "news:", 5) &&
+			if (strncmp(l, STR_NEWS_URL, LEN_NEWS_URL) &&
 			    strncmp(l, "snews://", 8) &&
 			    strncmp(l, "nntp://", 7) &&
 			    strncmp(l, "snewspost:", 10) &&
@@ -1493,7 +1489,7 @@ PRIVATE int read_article ARGS1(
 			    strncmp(l, "http://", 7) &&
 			    strncmp(l, "https://", 8) &&
 			    strncmp(l, "wais://", 7) &&
-			    strncmp(l, "mailto:", 7) &&
+			    strncmp(l, STR_MAILTO_URL, LEN_MAILTO_URL) &&
 			    strncmp(l, "cso://", 6) &&
 			    strncmp(l, "gopher://", 9))
 			    PUTC (*l++);
@@ -2097,7 +2093,7 @@ add_post:
 
 	START(HTML_HR);
 	PUTC('\n');
-	if (!strncasecomp(NewsHREF, "snews:", 6))
+	if (!strncasecomp(NewsHREF, STR_SNEWS_URL, 6))
 	    StrAllocCopy(href,"snewspost://");
 	else
 	    StrAllocCopy(href,"newspost://");
@@ -2178,7 +2174,7 @@ PRIVATE int HTLoadNews ARGS4(
 	**	xxxxx			News group (no "@")
 	**	group/n1-n2		Articles n1 to n2 in group
 	*/
-	normal_url = (BOOL) (!strncmp(arg, "news:", 5) || !strncmp(arg, "nntp:", 5));
+	normal_url = (BOOL) (!strncmp(arg, STR_NEWS_URL, LEN_NEWS_URL) || !strncmp(arg, "nntp:", 5));
 	spost_wanted = (BOOL) (!normal_url && strstr(arg, "snewspost:") != NULL);
 	sreply_wanted = (BOOL) (!(normal_url || spost_wanted) &&
 			 strstr(arg, "snewsreply:") != NULL);
@@ -2254,7 +2250,7 @@ PRIVATE int HTLoadNews ARGS4(
 	**  rules.  For instance, if the article reference contains a '#',
 	**  the rest of it is lost -- JFG 10/7/92, from a bug report
 	*/
-	} else if (!strncasecomp (arg, "nntp:", 5)) {
+	} else if (isNNTP_URL(arg)) {
 	    if (((*(arg + 5) == '\0') ||
 		 (!strcmp((arg + 5), "/") ||
 		  !strcmp((arg + 5), "//") ||
@@ -2285,10 +2281,10 @@ PRIVATE int HTLoadNews ARGS4(
 		StrAllocCopy(NewsHost, cp);
 	    }
 	    FREE(cp);
-	    SnipIn(command, "nntp://%.*s/", 9, NewsHost);
+	    SnipIn2(command, "%s//%.*s/", STR_NNTP_URL, 9, NewsHost);
 	    StrAllocCopy(NewsHREF, command);
 	}
-	else if (!strncasecomp(arg, "snews:", 6)) {
+	else if (!strncasecomp(arg, STR_SNEWS_URL, 6)) {
 #ifdef USE_SSL
 	    if (((*(arg + 6) == '\0') ||
 		 (!strcmp((arg + 6), "/") ||
@@ -2317,10 +2313,10 @@ PRIVATE int HTLoadNews ARGS4(
 		    NEWS_NETCLOSE(s);
 		    s = -1;
 		}
-	    StrAllocCopy(NewsHost, cp);
+		StrAllocCopy(NewsHost, cp);
 	    }
 	    FREE(cp);
-	    sprintf(command, "snews://%.250s/", NewsHost);
+	    sprintf(command, "%s//%.250s/", STR_SNEWS_URL, NewsHost);
 	    StrAllocCopy(NewsHREF, command);
 #else
 	    HTAlert(gettext("This client does not contain support for SNEWS URLs."));
@@ -2369,7 +2365,7 @@ PRIVATE int HTLoadNews ARGS4(
 		s = -1;
 	    }
 	    StrAllocCopy(NewsHost, HTNewsHost);
-	    StrAllocCopy(NewsHREF, "news:");
+	    StrAllocCopy(NewsHREF, STR_NEWS_URL);
 	}
 
 	/*
@@ -2378,15 +2374,15 @@ PRIVATE int HTLoadNews ARGS4(
 	**  doing the conversion itself, and for handling posts
 	**  or followups.  - TZ & FM
 	*/
-	if (!strncasecomp(p1, "snews:", 6) ||
+	if (!strncasecomp(p1, STR_SNEWS_URL, 6) ||
 	    !strncasecomp(p1, "snewspost:", 10) ||
 	    !strncasecomp(p1, "snewsreply:", 11)) {
 	    StrAllocCopy(ProxyHost, NewsHost);
 	    if ((cp = HTParse(p1, "", PARSE_HOST)) != NULL && *cp != '\0') {
-		SnipIn(command, "snews://%.*s", 10, cp);
+		SnipIn2(command, "%s//%.*s", STR_SNEWS_URL, 10, cp);
 		StrAllocCopy(NewsHost, cp);
 	    } else {
-		SnipIn(command, "snews://%.*s", 10, NewsHost);
+		SnipIn2(command, "%s//%.*s", STR_SNEWS_URL, 10, NewsHost);
 	    }
 	    command[sizeof(command)-2] = '\0';
 	    FREE(cp);
@@ -2552,7 +2548,7 @@ PRIVATE int HTLoadNews ARGS4(
 	if (s < 0) {
 	    /* CONNECTING to news host */
 	    char url[260];
-	    if (!strcmp(NewsHREF, "news:")) {
+	    if (!strcmp(NewsHREF, STR_NEWS_URL)) {
 		SnipIn (url, "lose://%.*s/", 9, NewsHost);
 	    } else if (ProxyHREF) {
 		SnipIn (url, "%.*s", 1, ProxyHREF);
@@ -2565,7 +2561,7 @@ PRIVATE int HTLoadNews ARGS4(
 
 #ifdef USE_SSL
 	    if (!using_proxy &&
-		(!strncmp(arg, "snews:", 6) ||
+		(!strncmp(arg, STR_SNEWS_URL, 6) ||
 		 !strncmp(arg, "snewspost:", 10) ||
 		 !strncmp(arg, "snewsreply:", 11)))
 		status = HTDoConnect (url, "NNTPS", SNEWS_PORT, &s);

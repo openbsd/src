@@ -19,15 +19,14 @@ GLOBALREF HTProtocol HTTPS;
 #define URL_POST_METHOD 2
 #define URL_MAIL_METHOD 3
 
+extern int ws_read_per_sec;
 extern BOOL reloading;
 extern char * redirecting_url;
 extern BOOL permanent_redirection;
 extern BOOL redirect_post_content;
 
+#ifdef USE_SSL
+extern SSL * SSL_handle;
+#endif
+
 #endif /* HTTP_H */
-
-/*
-
-   end of HTTP module definition
-
- */

@@ -139,6 +139,29 @@ extern void * HTList_objectAt PARAMS((
 	HTList *	me,
 	int		position));
 
+/*      Link object to START of list (so it is pointed to by the head).
+ *
+ *      Unlike HTList_addObject(), it does not malloc memory for HTList entry,
+ *	it use already allocated memory which should not be free'd by any
+ *	list operations (optimization).
+ */
+extern void HTList_linkObject PARAMS((
+	HTList *	me,
+	void *		newObject,
+	HTList *	newNode));
+
+/*	Unlink object from START of list (the Last one inserted
+ *	via HTList_linkObject(), and pointed to by the head).
+ *	It does not free memory.
+ */
+extern void * HTList_unlinkLastObject PARAMS((
+	HTList *	me));
+
+/*	Unlink specified object from list.
+ *	It does not free memory.
+ */
+extern BOOL HTList_unlinkObject PARAMS((
+	HTList *	me,
+	void *		oldObject));
 
 #endif /* HTLIST_H */
-

@@ -791,7 +791,7 @@ static attr object_attr[] = {		/* OBJECT attributes */
 	{ "USEMAP"        T(h) },
 	{ "VSPACE"        T(N) },
 	{ "WIDTH"         T(N) },
-	{ 0               T(N) } 	/* Terminate list */
+	{ 0               T(N) }	/* Terminate list */
 };
 
 static attr olist_attr[] = {		/* OL attributes */
@@ -1663,7 +1663,8 @@ PUBLIC void HTSwitchDTD ARGS1(
     int,		new_flag)
 {
     if (TRACE)
-	CTRACE((tfp,"HTMLDTD: Copying DTD element info of size %d, %d * %d\n",
+	CTRACE((tfp,"HTMLDTD: Copying %s DTD element info of size %d, %d * %d\n",
+		new_flag ? "strict" : "tagsoup",
 		(int) (new_flag ? sizeof(tags_new) : sizeof(tags_old)),
 		HTML_ALL_ELEMENTS,
 		(int) sizeof(HTTag)));

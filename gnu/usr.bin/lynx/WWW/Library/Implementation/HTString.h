@@ -59,6 +59,15 @@ extern char * HTSACopy PARAMS ((char **dest, CONST char *src));
 extern char * HTSACat  PARAMS ((char **dest, CONST char *src));
 
 /*
+optimized for heavily realloc'd strings in temp objects
+*/
+#define StrAllocCopy_extra(dest, src) HTSACopy_extra (&(dest), src)
+#define FREE_extra(x)   {if (x != NULL) {HTSAFree_extra(x); x = NULL;}}
+#define Clear_extra(x)  {if (x != NULL) {*x = '\0';}}
+extern char * HTSACopy_extra PARAMS ((char **dest, CONST char *src));
+extern void   HTSAFree_extra PARAMS ((char *s));
+
+/*
 
 Next word or quoted string
 
@@ -69,7 +78,7 @@ extern char * HTNextField PARAMS ((char** pstr));
 extern char * HTNextTok PARAMS((char ** pstr,
 		      CONST char * delims, CONST char * bracks, char * found));
 
-#if ANSI_VARARGS
+#ifdef ANSI_VARARGS
 extern char * HTSprintf (char ** pstr, CONST char * fmt, ...)
 			GCC_PRINTFLIKE(2,3);
 extern char * HTSprintf0 (char ** pstr, CONST char * fmt, ...)
@@ -102,6 +111,7 @@ extern void HTAddXpand PARAMS((char ** result, CONST char * command, int number,
 #endif
 
 extern int HTCountCommandArgs PARAMS((CONST char * command));
+extern void HTAddToCmd PARAMS((char ** result, CONST char * command, int number, CONST char * string));
 extern void HTAddParam PARAMS((char ** result, CONST char * command, int number, CONST char * parameter));
 extern void HTEndParam PARAMS((char ** result, CONST char * command, int number));
 
@@ -109,15 +119,39 @@ extern void HTEndParam PARAMS((char ** result, CONST char * command, int number)
 #define HTOptParam(result, command, number, parameter) HTSACat(result, parameter)
 
 /* Binary copy and concat */
-#ifdef EXP_FILE_UPLOAD
-
 typedef struct {
 	char *str;
 	int len;
 } bstring;
 
-extern void HTSABCopy PARAMS((bstring** dest, CONST char * src, int len));
-extern void HTSABCat PARAMS((bstring ** dest, CONST char * src, int len));
+extern void HTSABCopy  PARAMS((bstring ** dest, CONST char * src, int len));
+extern void HTSABCopy0 PARAMS((bstring ** dest, CONST char * src));
+extern void HTSABCat   PARAMS((bstring ** dest, CONST char * src, int len));
+extern void HTSABCat0  PARAMS((bstring ** dest, CONST char * src));
+extern BOOL HTSABEql   PARAMS((bstring * a, bstring * b));
+extern void HTSABFree  PARAMS((bstring ** ptr));
+
+#define BStrLen(s)    (((s) != 0) ? (s)->len : 0)
+#define BStrData(s)   (((s) != 0) ? (s)->str : 0)
+
+#define BINEQ(a,b)    (HTSABEql(a,b))	/* like STREQ() */
+
+#define isBEmpty(p)   ((p) == 0 || BStrLen(p) == 0)
+
+#define BStrCopy(d,s)  HTSABCopy(  &(d), BStrData(s), BStrLen(s))
+#define BStrCopy0(d,s) HTSABCopy0( &(d), s)
+#define BStrCat(d,s)   HTSABCat(   &(d), BStrData(s), BStrLen(s))
+#define BStrCat0(d,s)  HTSABCat0(  &(d), s)
+#define BStrFree(d)    HTSABFree(  &(d))
+
+#ifdef ANSI_VARARGS
+extern bstring * HTBprintf (bstring ** pstr, CONST char * fmt, ...)
+			    GCC_PRINTFLIKE(2,3);
+#else
+extern bstring * HTBprintf () GCC_PRINTFLIKE(2,3);
 #endif
+
+extern void trace_bstring PARAMS((bstring *data));
+extern void trace_bstring2 PARAMS((CONST char *text, int size));
 
 #endif /* HTSTRING_H */

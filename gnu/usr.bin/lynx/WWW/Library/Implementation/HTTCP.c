@@ -32,7 +32,7 @@
 #include <resolv.h>
 #endif
 
-#if defined(__DJGPP__) && defined (WATT32)
+#ifdef __DJGPP__
 #include <netdb.h>
 #endif /* __DJGPP__ */
 
@@ -59,14 +59,6 @@ PUBLIC int BSDselect PARAMS((
 
 #include <LYLeaks.h>
 
-#ifndef FD_SETSIZE
-#if defined(UCX) || defined(SOCKETSHR_TCP) || defined(CMU_TCP)
-#define FD_SETSIZE 32
-#else
-#define FD_SETSIZE 256
-#endif /* Limit # sockets to 32 for UCX, BSN - also SOCKETSHR and CMU, AH */
-#endif /* FD_SETSIZE */
-
 /*
 **  Module-Wide variables
 */
@@ -76,7 +68,6 @@ PRIVATE char *hostname = NULL;		/* The name of this host */
 **  PUBLIC VARIABLES
 */
 #ifdef SOCKS
-extern BOOLEAN socks_flag;
 PUBLIC unsigned long socks_bind_remoteAddr; /* for long Rbind */
 #endif /* SOCKS */
 
@@ -99,12 +90,22 @@ extern char *sys_errlist[];		/* see man perror on cernvax */
 extern int sys_nerr;
 #endif /* DECL_SYS_ERRLIST */
 
-#ifdef _WINDOWS_NSL
-char host[512];
-struct hostent  *phost;	/* Pointer to host - See netdb.h */
-int donelookup;
+#ifdef __DJGPP__
+static int ResolveYield (void)
+{
+    return HTCheckForInterrupt() ? 0 : 1;
+}
+#endif
 
-static unsigned long _fork_func (void *arglist)
+/*
+ * This chunk of code is used in both win32 and cygwin.
+ */
+#if defined(_WINDOWS_NSL)
+static char host[512];
+static struct hostent *phost; /* Pointer to host - See netdb.h */
+static int donelookup;
+
+static unsigned long _fork_func (void *arglist GCC_UNUSED)
 {
 #ifdef SH_EX
     unsigned long addr;
@@ -381,8 +382,6 @@ PRIVATE void quench ARGS1(
 
 PUBLIC int lynx_nsl_status = HT_OK;
 
-#if !( defined(__DJGPP__) && !defined(WATT32) )    /* much excluded! */
-
 #define DEBUG_HOSTENT		/* disable in case of problems */
 #define DEBUG_HOSTENT_CHILD  /* for NSL_FORK, may screw up trace file */
 
@@ -643,6 +642,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 #ifndef _WINDOWS_NSL
     char *host = str;
 #endif
+
 #ifdef NSL_FORK
     /* for transfer of result between from child to parent: */
     static AlignedHOSTENT aligned_full_rehostent;
@@ -675,6 +675,10 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 #endif /* NSL_FORK */
 
     struct hostent *result_phost = NULL;
+
+#ifdef __DJGPP__
+    _resolve_hook = ResolveYield;
+#endif
 
     if (!str) {
 	CTRACE((tfp, "LYGetHostByName: Can't parse `NULL'.\n"));
@@ -730,7 +734,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	**	Pipe, child pid, status buffers, start time, select()
 	**	control variables.
 	*/
-	pid_t fpid, waitret;
+	int fpid, waitret;
 	int pfd[2], selret, readret;
 #ifdef HAVE_TYPE_UNIONWAIT
 	union wait waitstat;
@@ -1076,7 +1080,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 #endif /* WCOREDUMP */
 	    } else if (WIFSTOPPED(waitstat)) {
 		CTRACE((tfp, "LYGetHostByName: NSL_FORK child %d is stopped, status 0x%x!\n",
-			(int)waitret, WEXITSTATUS(waitstat)));
+			(int)waitret, WSTOPSIG(waitstat)));
 	    }
 	}
 	if (!got_rehostent) {
@@ -1089,6 +1093,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
     {
 	HANDLE hThread, dwThreadID;
 
+#ifndef __CYGWIN__
 	if (!system_is_NT) {	/* for Windows9x */
 	    unsigned long t;
 	    t = (unsigned long)inet_addr(host);
@@ -1097,6 +1102,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	    else
 		phost = gethostbyname(host);
 	} else {		/* for Windows NT */
+#endif /* !__CYGWIN__ */
 	    phost = (struct hostent *) NULL;
 	    donelookup = FALSE;
 	    hThread = CreateThread((void *)NULL, 4096UL,
@@ -1118,7 +1124,9 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 		    return NULL;
 		}
 	    }
+#ifndef __CYGWIN__
 	}
+#endif /* !__CYGWIN__ */
 	if (phost) {
 	    lynx_nsl_status = HT_OK;
 	    result_phost = phost;
@@ -1158,8 +1166,6 @@ failed:
 		host));
     return NULL;
 }
-
-#endif /* from here on DJGPP without WATT32 joins us again. */
 
 
 /*	Parse a network node address and port
@@ -1266,10 +1272,6 @@ PRIVATE int HTParseInet ARGS2(
     */
     if (dotcount_ip == 3)   /* Numeric node address: */
     {
-
-#if defined(__DJGPP__) && !defined(WATT32)
-	soc_in->sin_addr.s_addr = htonl(aton(host));
-#else
 #ifdef DGUX_OLD
 	soc_in->sin_addr.s_addr = inet_addr(host).s_addr; /* See arpa/inet.h */
 #else
@@ -1289,7 +1291,6 @@ PRIVATE int HTParseInet ARGS2(
 #endif /* HAVE_INET_ATON */
 #endif /* GUSI */
 #endif /* DGUX_OLD */
-#endif /* __DJGPP__ && !WATT32 */
 #ifndef _WINDOWS_NSL
 	FREE(host);
 #endif /* _WINDOWS_NSL */
@@ -1300,21 +1301,11 @@ PRIVATE int HTParseInet ARGS2(
 	CTRACE((tfp, "HTParseInet: Calling LYGetHostByName(%s)\n", host));
 #endif /* MVS */
 
-#if defined(__DJGPP__) && !defined(WATT32)
-	if (!valid_hostname(host)) {
-	    FREE(host);
-	    return HT_NOT_ACCEPTABLE; /* only HTDoConnect checks this. */
-	}
-	soc_in->sin_addr.s_addr = htonl(resolve(host));
-	if (soc_in->sin_addr.s_addr == 0) {
-	    goto failed;
-	}
-#else /* !(__DJGPP__ && !WATT32) */
 #ifdef _WINDOWS_NSL
 	phost = LYGetHostByName(host);	/* See above */
 	if (!phost) goto failed;
 	memcpy((void *)&soc_in->sin_addr, phost->h_addr, phost->h_length);
-#else /* !(__DJGPP__ && !WATT32) && !_WINDOWS_NSL */
+#else /* !_WINDOWS_NSL */
 	{
 	    struct hostent  *phost;
 	    phost = LYGetHostByName(host);	/* See above */
@@ -1339,7 +1330,7 @@ PRIVATE int HTParseInet ARGS2(
 #endif /* VMS && CMU_TCP */
 	}
 #endif /* _WINDOWS_NSL */
-#endif /* __DJGPP__ && !WATT32 */
+
 #ifndef _WINDOWS_NSL
 	FREE(host);
 #endif /* _WINDOWS_NSL */
@@ -1383,7 +1374,7 @@ HTGetAddrInfo ARGS2(
     char *p;
     char *s;
     char *host, *port;
-    char pbuf[10];
+    char pbuf[80];
 
     s = strdup(str);
 
@@ -1398,7 +1389,7 @@ HTGetAddrInfo ARGS2(
     if (port) {
 	*port++ = '\0';
     } else {
-	snprintf(pbuf, sizeof(pbuf), "%d", defport);
+	sprintf(pbuf, "%d", defport);
 	port = pbuf;
     }
 
@@ -1431,10 +1422,6 @@ PRIVATE void free_HTTCP_hostname NOARGS
 **	-------------------------------------------
 **
 */
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 64		/* Arbitrary limit */
-#endif /* MAXHOSTNAMELEN */
-
 PRIVATE void get_host_details NOARGS
 {
     char name[MAXHOSTNAMELEN+1];	/* The name of this host */
@@ -1464,9 +1451,9 @@ PRIVATE void get_host_details NOARGS
     **	Get rest from UCX$BIND_DOM logical.
     */
     if (strchr(hostname,'.') == NULL) {		  /* Not full address */
-	domain_name = getenv("UCX$BIND_DOMAIN");
+	domain_name = LYGetEnv("UCX$BIND_DOMAIN");
 	if (domain_name == NULL)
-	    domain_name = getenv("TCPIP$BIND_DOMAIN");
+	    domain_name = LYGetEnv("TCPIP$BIND_DOMAIN");
 	if (domain_name != NULL) {
 	    StrAllocCat(hostname, ".");
 	    StrAllocCat(hostname, domain_name);
@@ -1537,7 +1524,7 @@ PUBLIC int HTDoConnect ARGS4(
     char *at_sign = NULL;
     char *host = NULL;
 #ifdef INET6
-    struct addrinfo *res, *res0;
+    struct addrinfo *res = 0, *res0 = 0;
 #else
     struct sockaddr_in soc_address;
     struct sockaddr_in *soc_in = &soc_address;
@@ -1568,7 +1555,6 @@ PUBLIC int HTDoConnect ARGS4(
     _HTProgress (line);
 #ifdef INET6
     /* HTParseInet() is useless! */
-    _HTProgress(host);
     res0 = HTGetAddrInfo(host, default_port);
     if (res0 == NULL) {
 	HTSprintf0 (&line, gettext("Unable to locate remote host %s."), host);
@@ -1630,7 +1616,7 @@ PUBLIC int HTDoConnect ARGS4(
     }
 #endif /* INET6 */
 
-#ifndef DOSPATH
+#if !defined(DOSPATH) || defined(__DJGPP__)
 #if !defined(NO_IOCTL) || defined(USE_FCNTL)
     /*
     **	Make the socket non-blocking, so the connect can be canceled.
@@ -1648,7 +1634,7 @@ PUBLIC int HTDoConnect ARGS4(
 	    _HTProgress(gettext("Could not make connection non-blocking."));
     }
 #endif /* !NO_IOCTL || USE_FCNTL */
-#endif /* !DOSPATH */
+#endif /* !DOSPATH || __DJGPP__ */
 
     /*
     **	Issue the connect.  Since the server can't do an instantaneous
@@ -1674,7 +1660,7 @@ PUBLIC int HTDoConnect ARGS4(
 #else
     status = connect(*s, (struct sockaddr*)&soc_address, sizeof(soc_address));
 #endif /* INET6 */
-#ifndef __DJGPP__
+
     /*
     **	According to the Sun man page for connect:
     **	   EINPROGRESS	       The socket is non-blocking and the  con-
@@ -1717,7 +1703,8 @@ PUBLIC int HTDoConnect ARGS4(
 		HTAlert(gettext("Connection failed (too many retries)."));
 #ifdef INET6
 		FREE(line);
-		freeaddrinfo(res0);
+		if (res0)
+		    freeaddrinfo(res0);
 #endif /* INET6 */
 		return HT_NO_DATA;
 	    }
@@ -1733,11 +1720,11 @@ PUBLIC int HTDoConnect ARGS4(
 	    FD_SET((unsigned) *s, &writefds);
 #ifdef SOCKS
 	    if (socks_flag)
-		ret = Rselect(*s + 1, NULL,
+		ret = Rselect((unsigned)*s + 1, NULL,
 			      (void *)&writefds, NULL, &select_timeout);
 	    else
 #endif /* SOCKS */
-	    ret = select(*s + 1, NULL, (void *)&writefds, NULL, &select_timeout);
+	    ret = select((unsigned)*s + 1, NULL, (void *)&writefds, NULL, &select_timeout);
 
 #ifdef SOCKET_DEBUG_TRACE
 	    if (tries == 1) {
@@ -1881,7 +1868,7 @@ PUBLIC int HTDoConnect ARGS4(
 	break;
     }
 #endif /* INET6 */
-#endif /* !__DJGPP__ */
+
 #ifdef INET6
     if (*s < 0)
 #else
@@ -1894,7 +1881,7 @@ PUBLIC int HTDoConnect ARGS4(
 	*/
 	NETCLOSE(*s);
     }
-#ifndef DOSPATH
+#if !defined(DOSPATH) || defined(__DJGPP__)
 #if !defined(NO_IOCTL) || defined(USE_FCNTL)
     else {
 	/*
@@ -1910,11 +1897,12 @@ PUBLIC int HTDoConnect ARGS4(
 	    _HTProgress(gettext("Could not restore socket to blocking."));
     }
 #endif /* !NO_IOCTL || USE_FCNTL */
-#endif /* !DOSPATH */
+#endif /* !DOSPATH || __DJGPP__ */
 
 #ifdef INET6
     FREE(line);
-    freeaddrinfo(res0);
+    if (res0)
+	freeaddrinfo(res0);
 #endif /* INET6 */
     return status;
 }
@@ -1931,7 +1919,7 @@ PUBLIC int HTDoRead ARGS3(
     fd_set readfds;
     struct timeval select_timeout;
     int tries=0;
-#ifdef EXP_READPROGRESS
+#ifdef USE_READPROGRESS
     int otries = 0;
     time_t otime = time((time_t *)0);
 #endif
@@ -1982,7 +1970,7 @@ PUBLIC int HTDoRead ARGS3(
 	    return HT_INTERRUPTED;
 	}
 
-#ifdef EXP_READPROGRESS
+#ifdef USE_READPROGRESS
 	if (tries - otries > 10) {
 	    time_t t = time((time_t *)0);
 
@@ -2005,11 +1993,11 @@ PUBLIC int HTDoRead ARGS3(
 	    FD_SET((unsigned)fildes, &readfds);
 #ifdef SOCKS
 	    if (socks_flag)
-		ret = Rselect(fildes + 1,
+		ret = Rselect((unsigned)fildes + 1,
 			      (void *)&readfds, NULL, NULL, &select_timeout);
 	    else
 #endif /* SOCKS */
-		ret = select(fildes + 1,
+		ret = select((unsigned)fildes + 1,
 			     (void *)&readfds, NULL, NULL, &select_timeout);
 	} while ((ret == -1) && (errno == EINTR));
 

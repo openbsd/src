@@ -1,0 +1,15 @@
+#!/bin/sh
+# lynx -dump w/o numbers
+: ${TMPDIR-/tmp}
+: ${HOME-`pwd`}
+oldmask=`umask`
+umask 077
+MYTMP=$TMPDIR/mytmp$$
+mkdir $MYTMP || exit 1
+trap 'cd /; rm -rf $MYTMP' 0 1 2 5 15
+if test $HOME/.lynxrc ; then
+  cp $HOME/.lynxrc $MYTMP/.lynxrc
+fi
+echo 'keypad_mode=NUMBERS_AS_ARROWS' >> $MYTMP/.lynxrc
+HOME=$MYTMP; export HOME
+lynx -justify -dump -force_html -with_backspaces -nolist $*

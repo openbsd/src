@@ -1,17 +1,19 @@
-# Japanese PO file for Lynx.
+# Japanese messages for Lynx
 # Copyright (C) 2000 Free Software Foundation, Inc.
-# Masayuki Hatta <mhatta@po.airs.net>, 2000, 2001.
+# This file is distributed under the same license as the lynx package.
+# Masayuki Hatta <mhatta@po.airs.net>, 2000-2003.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: lynx 2.8.4.rel1\n"
-"POT-Creation-Date: 2001-06-01 18:55-0400\n"
-"PO-Revision-Date: 2001-05-22 16:47+09:00\n"
+"Project-Id-Version: lynx 2.8.5pre9\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-01-03 12:18-0500\n"
+"PO-Revision-Date: 2003-04-19 20:40+0900\n"
 "Last-Translator: Masayuki Hatta <mhatta@po.airs.net>\n"
-"Language-Team: Japanese <ja@li.org>\n"
+"Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=euc-jp\n"
-"Content-Transfer-Encoding: 8-bit\n"
+"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Transfer-Encoding: 8bit\n"
 
 #. ******************************************************************
 #. * The following definitions are for status line prompts, messages, or
@@ -26,7 +28,7 @@ msgstr ""
 #. * Links to collections of alternate definitions, developed by the Lynx
 #. * User Community, are maintained in Lynx links:
 #. *
-#. *    http://www.trill-home.com/lynx.html
+#. *    http://www.subir.com/lynx.html
 #. *
 #. * See ABOUT-NLS and po/readme for details and location of contributed
 #. * translations.  When no translation is available, the English default is
@@ -41,1992 +43,1992 @@ msgstr "警告!: %s"
 msgid "Welcome"
 msgstr "ようこそ"
 
-#: LYMessages.c:31 LYMessages.c:32
+#: LYMessages.c:31
 msgid "Are you sure you want to quit?"
 msgstr "本当に終了してもよろしいですか?"
 
-#: LYMessages.c:34 LYMessages.c:35
+#: LYMessages.c:33
 msgid "Really exit from Lynx?"
 msgstr "本当に Lynx を終了しますか?"
 
-#: LYMessages.c:37
+#: LYMessages.c:35
 msgid "Connection interrupted."
 msgstr "接続が中断されました。"
 
-#: LYMessages.c:38
+#: LYMessages.c:36
 msgid "Data transfer interrupted."
 msgstr "データ転送が中断されました。"
 
-#: LYMessages.c:39
+#: LYMessages.c:37
 msgid "Cancelled!!!"
 msgstr "キャンセルされました!!!"
 
-#: LYMessages.c:40
+#: LYMessages.c:38
 msgid "Cancelling!"
 msgstr "キャンセルします!"
 
-#: LYMessages.c:41
+#: LYMessages.c:39
 msgid "Excellent!!!"
 msgstr "そう来なくっちゃ!!!"
 
-#: LYMessages.c:42
+#: LYMessages.c:40
 msgid "OK"
 msgstr "OK"
 
-#: LYMessages.c:43
+#: LYMessages.c:41
 msgid "Done!"
 msgstr "完了!"
 
-#: LYMessages.c:44
+#: LYMessages.c:42
 msgid "Bad request!"
 msgstr "無効なリクエストです!"
 
-#: LYMessages.c:45
+#: LYMessages.c:43
 msgid "previous"
 msgstr "前の画面"
 
-#: LYMessages.c:46
+#: LYMessages.c:44
 msgid "next screen"
 msgstr "次の画面"
 
-#: LYMessages.c:47
+#: LYMessages.c:45
 msgid "HELP!"
 msgstr "ヘルプ!"
 
-#: LYMessages.c:48
+#: LYMessages.c:46
 msgid ", help on "
 msgstr ", ヘルプ→"
 
 #. #define HELP
-#: LYMessages.c:50
+#: LYMessages.c:48
 msgid "Commands: Use arrow keys to move, '?' for help, 'q' to quit, '<-' to go back."
 msgstr "コマンド: [矢印キー] 移動、[?] ヘルプ、[q] 終了、[←] 戻る"
 
 #. #define MOREHELP
-#: LYMessages.c:52
+#: LYMessages.c:50
 msgid "-- press space for more, use arrow keys to move, '?' for help, 'q' to quit."
 msgstr "-- [スペースキー] 次ページへ [矢印キー] 移動 [?] ヘルプ [q] 終了"
 
-#: LYMessages.c:53
+#: LYMessages.c:51
 msgid "-- press space for next page --"
 msgstr "-- スペースキーで次のページ --"
 
-#: LYMessages.c:54
+#: LYMessages.c:52
 msgid "URL too long"
 msgstr "URL が長すぎます"
 
 #. Inactive input fields, messages used with -tna option - kw
 #. #define FORM_LINK_TEXT_MESSAGE_INA
-#: LYMessages.c:60
+#: LYMessages.c:58
 msgid "(Text entry field) Inactive.  Press <return> to activate."
 msgstr "(テキスト入力フィールド) 現在未選択 リターンキーで入力開始"
 
 #. #define FORM_LINK_TEXTAREA_MESSAGE_INA
-#: LYMessages.c:62
+#: LYMessages.c:60
 msgid "(Textarea) Inactive.  Press <return> to activate."
 msgstr "(テキストエリア) 現在未選択 リターンキーで入力開始"
 
 #. #define FORM_LINK_TEXTAREA_MESSAGE_INA_E
-#: LYMessages.c:64
+#: LYMessages.c:62
 #, c-format
 msgid "(Textarea) Inactive.  Press <return> to activate (%s for editor)."
 msgstr "(テキストエリア) 未選択 リターンで入力開始 (%s でエディタ起動)"
 
 #. #define FORM_LINK_TEXT_SUBMIT_MESSAGE_INA
-#: LYMessages.c:66
+#: LYMessages.c:64
 msgid "(Form field) Inactive.  Use <return> to edit."
 msgstr "(フォームフィールド) 現在未選択 リターンキーで編集開始"
 
 #. #define FORM_TEXT_SUBMIT_MESSAGE_INA_X
-#: LYMessages.c:68
+#: LYMessages.c:66
 #, c-format
 msgid "(Form field) Inactive.  Use <return> to edit (%s to submit with no cache)."
 msgstr "(フォームフィールド) 現在未選択 リターンで編集開始 (%s はキャッシュ無効で送信)"
 
 #. #define FORM_TEXT_RESUBMIT_MESSAGE_INA
-#: LYMessages.c:70
+#: LYMessages.c:68
 msgid "(Form field) Inactive. Press <return> to edit, press <return> twice to submit."
 msgstr "(フォームフィールド) 現在未選択 リターンで編集、リターン2回で送信"
 
 #. #define FORM_TEXT_SUBMIT_MAILTO_MSG_INA
-#: LYMessages.c:72
+#: LYMessages.c:70
 msgid "(mailto form field) Inactive.  Press <return> to change."
 msgstr "(mailto フォームフィールド) 現在未選択 リターンで変更"
 
 #. #define FORM_LINK_PASSWORD_MESSAGE_INA
-#: LYMessages.c:74
+#: LYMessages.c:72
 msgid "(Password entry field) Inactive.  Press <return> to activate."
 msgstr "(パスワード入力フィールド) 現在未選択 リターンキーで入力開始"
 
 #. #define FORM_LINK_FILE_UNM_MSG
-#: LYMessages.c:77
+#: LYMessages.c:75
 msgid "UNMODIFIABLE file entry field.  Use UP or DOWN arrows or tab to move off."
 msgstr "変更できないファイル入力フィールド [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_FILE_MESSAGE
-#: LYMessages.c:79
+#: LYMessages.c:77
 msgid "(File entry field) Enter filename.  Use UP or DOWN arrows or tab to move off."
 msgstr "(ファイル入力フィールド) ファイル名を入力 [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_TEXT_MESSAGE
-#: LYMessages.c:81
+#: LYMessages.c:79
 msgid "(Text entry field) Enter text.  Use UP or DOWN arrows or tab to move off."
 msgstr "(テキスト入力フィールド) テキストを入力 [↑][↓] とタブで移動"
 
 #. #define FORM_LINK_TEXTAREA_MESSAGE
-#: LYMessages.c:83
+#: LYMessages.c:81
 msgid "(Textarea) Enter text. Use UP/DOWN arrows or TAB to move off."
 msgstr "(テキストエリア) テキストを入力 [↑][↓] とタブで移動"
 
 #. #define FORM_LINK_TEXTAREA_MESSAGE_E
-#: LYMessages.c:85
+#: LYMessages.c:83
 #, c-format
 msgid "(Textarea) Enter text. Use UP/DOWN arrows or TAB to move off (%s for editor)."
 msgstr "(テキストエリア) テキストを入力 [↑][↓] とタブで移動 (%s でエディタ起動)"
 
 #. #define FORM_LINK_TEXT_UNM_MSG
-#: LYMessages.c:87
+#: LYMessages.c:85
 msgid "UNMODIFIABLE form text field.  Use UP or DOWN arrows or tab to move off."
 msgstr "変更できないフォームテキストフィールド [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_TEXT_SUBMIT_MESSAGE
-#: LYMessages.c:89
+#: LYMessages.c:87
 msgid "(Form field) Enter text.  Use <return> to submit."
 msgstr "(フォームフィールド) テキストを入力 リターンキーで送信"
 
 #. #define FORM_LINK_TEXT_SUBMIT_MESSAGE_X
-#: LYMessages.c:91
+#: LYMessages.c:89
 #, c-format
 msgid "(Form field) Enter text.  Use <return> to submit (%s for no cache)."
 msgstr "(フォームフィールド) テキストを入力 リターンキーで送信 (%s でキャッシュ無効)"
 
 #. #define FORM_LINK_TEXT_RESUBMIT_MESSAGE
-#: LYMessages.c:93
+#: LYMessages.c:91
 msgid "(Form field) Enter text.  Use <return> to submit, arrows or tab to move off."
 msgstr "(フォームフィールド) テキストを入力 リターンキーで送信、矢印キーかタブで移動"
 
 #. #define FORM_LINK_TEXT_SUBMIT_UNM_MSG
-#: LYMessages.c:95
+#: LYMessages.c:93
 msgid "UNMODIFIABLE form field.  Use UP or DOWN arrows or tab to move off."
 msgstr "変更できないフォームフィールド [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_TEXT_SUBMIT_MAILTO_MSG
-#: LYMessages.c:97
+#: LYMessages.c:95
 msgid "(mailto form field) Enter text.  Use <return> to submit, arrows to move off."
 msgstr "(mailto フォームフィールド) テキストを入力 リターンで送信、矢印キーで移動"
 
 #. #define FORM_LINK_TEXT_SUBMIT_MAILTO_DIS_MSG
-#: LYMessages.c:99
+#: LYMessages.c:97
 msgid "(mailto form field) Mail is disallowed so you cannot submit."
 msgstr "(mailto フォームフィールド) メールは禁止されていますので送信できません。"
 
 #. #define FORM_LINK_PASSWORD_MESSAGE
-#: LYMessages.c:101
+#: LYMessages.c:99
 msgid "(Password entry field) Enter text.  Use UP or DOWN arrows or tab to move off."
 msgstr "(パスワード入力フィールド) テキストを入力 [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_PASSWORD_UNM_MSG
-#: LYMessages.c:103
+#: LYMessages.c:101
 msgid "UNMODIFIABLE form password.  Use UP or DOWN arrows or tab to move off."
 msgstr "変更できないパスワードフォーム [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_CHECKBOX_MESSAGE
-#: LYMessages.c:105
+#: LYMessages.c:103
 msgid "(Checkbox Field)   Use right-arrow or <return> to toggle."
 msgstr "(チェックボックス) [→] かリターンキーでトグル変更"
 
 #. #define FORM_LINK_CHECKBOX_UNM_MSG
-#: LYMessages.c:107
+#: LYMessages.c:105
 msgid "UNMODIFIABLE form checkbox.  Use UP or DOWN arrows or tab to move off."
 msgstr "変更できないフォームチェックボックス [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_RADIO_MESSAGE
-#: LYMessages.c:109
+#: LYMessages.c:107
 msgid "(Radio Button)   Use right-arrow or <return> to toggle."
 msgstr "(ラジオボタン) [→] かリターンキーでトグル選択"
 
 #. #define FORM_LINK_RADIO_UNM_MSG
-#: LYMessages.c:111
+#: LYMessages.c:109
 msgid "UNMODIFIABLE form radio button.  Use UP or DOWN arrows or tab to move off."
 msgstr "変更できないフォームラジオボタン [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_SUBMIT_PREFIX
-#: LYMessages.c:113
+#: LYMessages.c:111
 msgid "Submit ('x' for no cache) to "
 msgstr "送信([x] でキャッシュ無効): "
 
 #. #define FORM_LINK_RESUBMIT_PREFIX
-#: LYMessages.c:115
+#: LYMessages.c:113
 msgid "Submit to "
 msgstr "送信対象: "
 
 #. #define FORM_LINK_SUBMIT_MESSAGE
-#: LYMessages.c:117
+#: LYMessages.c:115
 msgid "(Form submit button) Use right-arrow or <return> to submit ('x' for no cache)."
 msgstr "(フォーム送信ボタン) [→] かリターンキーで送信 ([x] でキャッシュ無効)"
 
 #. #define FORM_LINK_RESUBMIT_MESSAGE
-#: LYMessages.c:119
+#: LYMessages.c:117
 msgid "(Form submit button) Use right-arrow or <return> to submit."
 msgstr "(フォーム送信ボタン) [→] かリターンキーで送信"
 
 #. #define FORM_LINK_SUBMIT_DIS_MSG
-#: LYMessages.c:121
+#: LYMessages.c:119
 msgid "DISABLED form submit button.  Use UP or DOWN arrows or tab to move off."
 msgstr "無効にされた送信ボタン [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_SUBMIT_MAILTO_PREFIX
-#: LYMessages.c:123
+#: LYMessages.c:121
 msgid "Submit mailto form to "
 msgstr "mailto フォームを以下に送信: "
 
 #. #define FORM_LINK_SUBMIT_MAILTO_MSG
-#: LYMessages.c:125
+#: LYMessages.c:123
 msgid "(mailto form submit button) Use right-arrow or <return> to submit."
 msgstr "(mailto フォーム送信ボタン) [→]かリターンで送信"
 
 #. #define FORM_LINK_SUBMIT_MAILTO_DIS_MSG
-#: LYMessages.c:127
+#: LYMessages.c:125
 msgid "(mailto form submit button) Mail is disallowed so you cannot submit."
 msgstr "(mailto フォーム送信ボタン) メールは禁止されていますので送信できません"
 
 #. #define FORM_LINK_RESET_MESSAGE
-#: LYMessages.c:129
+#: LYMessages.c:127
 msgid "(Form reset button)   Use right-arrow or <return> to reset form to defaults."
 msgstr "(フォームリセットボタン) [→] かリターンキーでフォーム内容をリセット"
 
 #. #define FORM_LINK_RESET_DIS_MSG
-#: LYMessages.c:131
+#: LYMessages.c:129
 msgid "DISABLED form reset button.  Use UP or DOWN arrows or tab to move off."
 msgstr "無効にされたフォームリセットボタン [↑][↓]かタブで移動"
 
 #. #define FORM_LINK_OPTION_LIST_MESSAGE
-#: LYMessages.c:133
+#: LYMessages.c:131
 msgid "(Option list) Hit return and use arrow keys and return to select option."
 msgstr "(オプションリスト) リターンキーを押し、矢印キーとリターンキーで一覧から選択"
 
 #. #define CHOICE_LIST_MESSAGE
-#: LYMessages.c:135
+#: LYMessages.c:133
 msgid "(Choice list) Hit return and use arrow keys and return to select option."
 msgstr "(チョイスリスト) リターンキーを押し、矢印キーとリターンキーで一覧から選択"
 
 #. #define FORM_LINK_OPTION_LIST_UNM_MSG
-#: LYMessages.c:137
+#: LYMessages.c:135
 msgid "UNMODIFIABLE option list.  Use return or arrow keys to review or leave."
 msgstr "変更できないオプションリストです。リターンか矢印キーで閲覧または移動"
 
 #. #define CHOICE_LIST_UNM_MSG
-#: LYMessages.c:139
+#: LYMessages.c:137
 msgid "UNMODIFIABLE choice list.  Use return or arrow keys to review or leave."
 msgstr "変更できない選択リストです。リターンキーか矢印キーで閲覧または移動"
 
-#: LYMessages.c:140
+#: LYMessages.c:138
 msgid "Submitting form..."
 msgstr "フォームを送信しています..."
 
-#: LYMessages.c:141
+#: LYMessages.c:139
 msgid "Resetting form..."
 msgstr "フォームをリセットしています..."
 
 #. #define RELOADING_FORM
-#: LYMessages.c:143
+#: LYMessages.c:141
 msgid "Reloading document.  Any form entries will be lost!"
 msgstr "文書の再読み込み中。フォーム内容は全て失われます!"
 
-#: LYMessages.c:144
+#: LYMessages.c:142
 #, c-format
 msgid "Warning: Cannot transcode form data to charset %s!"
 msgstr "注意: フォームデータをキャラクタセット %s に変換できません!"
 
 #. #define NORMAL_LINK_MESSAGE
-#: LYMessages.c:147
+#: LYMessages.c:145
 msgid "(NORMAL LINK)   Use right-arrow or <return> to activate."
 msgstr "(通常リンク) [→] かリターンキーで選択"
 
-#: LYMessages.c:148
+#: LYMessages.c:146
 msgid "The resource requested is not available at this time."
 msgstr "現在要求されたリソースは利用できません。"
 
-#: LYMessages.c:149
+#: LYMessages.c:147
 msgid "Enter Lynx keystroke command: "
 msgstr "Lynx のコマンドキーを入力: "
 
-#: LYMessages.c:150
+#: LYMessages.c:148
 msgid "Looking up "
 msgstr "探索中: "
 
-#: LYMessages.c:151
+#: LYMessages.c:149
 #, c-format
 msgid "Getting %s"
 msgstr "%s を取得中"
 
-#: LYMessages.c:152
+#: LYMessages.c:150
 #, c-format
 msgid "Skipping %s"
 msgstr "%s を飛ばします"
 
-#: LYMessages.c:153
+#: LYMessages.c:151
 #, c-format
 msgid "Using %s"
 msgstr "%s を使います"
 
-#: LYMessages.c:154
+#: LYMessages.c:152
 #, c-format
 msgid "Illegal URL: %s"
 msgstr "不正な URL です: %s"
 
-#: LYMessages.c:155
+#: LYMessages.c:153
 #, c-format
 msgid "Badly formed address %s"
 msgstr "%s はアドレスとして無効です"
 
-#: LYMessages.c:156
+#: LYMessages.c:154
 #, c-format
 msgid "URL: %s"
 msgstr "URL: %s"
 
-#: LYMessages.c:157
+#: LYMessages.c:155
 msgid "Unable to access WWW file!!!"
 msgstr "WWW ファイルにアクセスできません!!!"
 
-#: LYMessages.c:158
+#: LYMessages.c:156
 #, c-format
 msgid "This is a searchable index.  Use %s to search."
 msgstr "これは検索可能なインデックスです。%s で検索できます。"
 
 #. #define WWW_INDEX_MORE_MESSAGE
-#: LYMessages.c:160
+#: LYMessages.c:158
 #, c-format
 msgid "--More--  This is a searchable index.  Use %s to search."
 msgstr "--続きあり-- これは検索可能なインデックスです。%s で検索できます。"
 
-#: LYMessages.c:161
+#: LYMessages.c:159
 msgid "You have entered an invalid link number."
 msgstr "不正なリンク番号が入力されました。"
 
 #. #define SOURCE_HELP
-#: LYMessages.c:163
+#: LYMessages.c:161
 msgid "Currently viewing document source.  Press '\\' to return to rendered version."
 msgstr "現在文書のソースを閲覧中です。[\\] で通常画面に戻ります。"
 
 #. #define NOVICE_LINE_ONE
-#: LYMessages.c:165
+#: LYMessages.c:163
 msgid "  Arrow keys: Up and Down to move.  Right to follow a link; Left to go back.  \n"
 msgstr "  矢印キー: [↑][↓]で移動 [→]でリンクを辿る [←]で一つ戻る  \n"
 
 #. #define NOVICE_LINE_TWO
-#: LYMessages.c:167
+#: LYMessages.c:165
 msgid " H)elp O)ptions P)rint G)o M)ain screen Q)uit /=search [delete]=history list \n"
-msgstr " [h]ヘルプ[o]設定[p]印刷[g]移動[m]メイン画面[q]終了 /=検索 [Delete]=履歴 \n"
+msgstr " [H]ヘルプ[o]設定[p]印刷[g]移動[m]メイン画面[q]終了 /=検索 [Delete]=履歴 \n"
 
 #. #define NOVICE_LINE_TWO_A
-#: LYMessages.c:169
+#: LYMessages.c:167
 msgid "  O)ther cmds  H)elp  K)eymap  G)oto  P)rint  M)ain screen  o)ptions  Q)uit  \n"
-msgstr "  [o]その他[h]ヘルプ[k]キー配置[g]移動[p]印刷[m]メイン [o]オプション [q]終了 \n"
+msgstr "  [o]その他[H]ヘルプ[K]キー配置[g]移動[p]印刷[m]メイン [o]オプション [q]終了 \n"
 
 #. #define NOVICE_LINE_TWO_B
-#: LYMessages.c:171
+#: LYMessages.c:169
 msgid "  O)ther cmds  B)ack  E)dit  D)ownload ^R)eload ^W)ipe screen  search doc: / \n"
 msgstr "  [o]その他[b]戻る[e]編集[d]ダウンロード [^R]再読込[^W]クリア 文書検索: / \n"
 
 #. #define NOVICE_LINE_TWO_C
-#: LYMessages.c:173
+#: LYMessages.c:171
 msgid "O)ther cmds  C)omment  History: <backspace>  Bookmarks: V)iew, A)dd, R)emove \n"
 msgstr "[o]その他[c]コメント 履歴: [Backspace] ブックマーク: [v]閲覧[a]追加[r]削除 \n"
 
 #. #define FORM_NOVICELINE_ONE
-#: LYMessages.c:175
+#: LYMessages.c:173
 msgid "            Enter text into the field by typing on the keyboard              "
 msgstr "            キーボードをタイプすることでテキストをフィールド内に入力"
 
 #. #define FORM_NOVICELINE_TWO
-#: LYMessages.c:177
+#: LYMessages.c:175
 msgid "    Ctrl-U to delete all text in field, [Backspace] to delete a character    "
 msgstr "    Ctrl-U でフィールド内の全テキストを削除、[Backspace] で一文字削除        "
 
 #. #define FORM_NOVICELINE_TWO_DELBL
-#: LYMessages.c:179
+#: LYMessages.c:177
 msgid "      Ctrl-U to delete text in field, [Backspace] to delete a character    "
 msgstr "      Ctrl-U でフィールド内のテキストを削除、[Backspace] で一文字削除      "
 
 #. #define FORM_NOVICELINE_TWO_VAR
-#: LYMessages.c:181
+#: LYMessages.c:179
 #, c-format
 msgid "    %s to delete all text in field, [Backspace] to delete a character    "
 msgstr "    %s でフィールド内の全テキストを削除、[Backspace] で一文字削除        "
 
 #. #define FORM_NOVICELINE_TWO_DELBL_VAR
-#: LYMessages.c:183
+#: LYMessages.c:181
 #, c-format
 msgid "      %s to delete text in field, [Backspace] to delete a character    "
 msgstr "      %s でフィールド内のテキストを削除、[Backspace] で一文字削除     "
 
 #. mailto
-#: LYMessages.c:186
+#: LYMessages.c:184
 msgid "Malformed mailto form submission!  Cancelled!"
 msgstr "不正な mailto フォーム送信です! キャンセルされました!"
 
-#: LYMessages.c:187
+#: LYMessages.c:185
 msgid "Warning!  Control codes in mail address replaced by ?"
 msgstr "注意! メールアドレス中のコントロールコードは ? で置換されます"
 
-#: LYMessages.c:188
+#: LYMessages.c:186
 msgid "Mail disallowed!  Cannot submit."
 msgstr "メールは禁止されています! 送信できません。"
 
-#: LYMessages.c:189
+#: LYMessages.c:187
 msgid "Mailto form submission failed!"
 msgstr "Mailto フォームの送信に失敗しました!"
 
-#: LYMessages.c:190
+#: LYMessages.c:188
 msgid "Mailto form submission Cancelled!!!"
 msgstr "Mailto フォームの送信がキャンセルされました!!!"
 
-#: LYMessages.c:191
+#: LYMessages.c:189
 msgid "Sending form content..."
 msgstr "フォームの内容を送信中..."
 
-#: LYMessages.c:192
+#: LYMessages.c:190
 msgid "No email address is present in mailto URL!"
 msgstr "mailto URL に電子メールアドレスが指定されていません!"
 
 #. #define MAILTO_URL_TEMPOPEN_FAILED
-#: LYMessages.c:194
+#: LYMessages.c:192
 msgid "Unable to open temporary file for mailto URL!"
 msgstr "mailto URL のための一次ファイルが開けません!"
 
 #. #define INC_ORIG_MSG_PROMPT
-#: LYMessages.c:196
+#: LYMessages.c:194
 msgid "Do you wish to include the original message?"
 msgstr "元のメッセージを含めますか?"
 
 #. #define INC_PREPARSED_MSG_PROMPT
-#: LYMessages.c:198
+#: LYMessages.c:196
 msgid "Do you wish to include the preparsed source?"
 msgstr "解析済みのソースを含めますか?"
 
 #. #define SPAWNING_EDITOR_FOR_MAIL
-#: LYMessages.c:200
+#: LYMessages.c:198
 msgid "Spawning your selected editor to edit mail message"
 msgstr "メール本文を編集するため指定のエディタを起動しています"
 
 #. #define ERROR_SPAWNING_EDITOR
-#: LYMessages.c:202
+#: LYMessages.c:200
 msgid "Error spawning editor, check your editor definition in the options menu"
 msgstr "エディタの起動でエラーが発生しました。設定メニューのエディタの設定を確かめて下さい。"
 
-#: LYMessages.c:203
+#: LYMessages.c:201
 msgid "Send this comment?"
 msgstr "このコメントを送りますか?"
 
-#: LYMessages.c:204
+#: LYMessages.c:202
 msgid "Send this message?"
 msgstr "このメッセージを送りますか?"
 
-#: LYMessages.c:205
+#: LYMessages.c:203
 msgid "Sending your message..."
 msgstr "メッセージを送っています..."
 
-#: LYMessages.c:206
+#: LYMessages.c:204
 msgid "Sending your comment:"
 msgstr "コメント送付先:"
 
 #. textarea
-#: LYMessages.c:209
+#: LYMessages.c:207
 msgid "Not in a TEXTAREA; cannot use external editor."
 msgstr "テキストエリアではないので外部エディタは使えません。"
 
-#: LYMessages.c:210
+#: LYMessages.c:208
 msgid "Not in a TEXTAREA; cannot use command."
 msgstr "テキストエリアではないのでコマンドは使えません。"
 
-#: LYMessages.c:213
+#: LYMessages.c:211
 msgid "file: ACTIONs are disallowed!"
 msgstr "file: ACTION は許可されていません!"
 
 #. #define FILE_SERVED_LINKS_DISALLOWED
-#: LYMessages.c:215
+#: LYMessages.c:213
 msgid "file: URLs via served links are disallowed!"
 msgstr "file: 提供されたリンク経由の URL は認められていません!"
 
-#: LYMessages.c:216
+#: LYMessages.c:214
 msgid "Access to local files denied."
 msgstr "ローカルファイルへのアクセスは拒否されました。"
 
-#: LYMessages.c:217
+#: LYMessages.c:215
 msgid "file: URLs via bookmarks are disallowed!"
 msgstr "file: ブックマーク経由の URL は許可されていません!"
 
 #. #define SPECIAL_VIA_EXTERNAL_DISALLOWED
-#: LYMessages.c:219
+#: LYMessages.c:217
 msgid "This special URL is not allowed in external documents!"
 msgstr "この特別な URL は外部文書中では認められていません!"
 
-#: LYMessages.c:220
+#: LYMessages.c:218
 msgid "Press <return> to return to Lynx."
 msgstr "リターンキーで Lynx に戻ります。"
 
 #. #define SPAWNING_MSG
-#: LYMessages.c:223
+#: LYMessages.c:221
 msgid "Spawning DCL subprocess.  Use 'logout' to return to Lynx.\n"
 msgstr "DCL サブプロセスを起動しています。'logout' で Lynx に戻ります。\n"
 
 #. #define SPAWNING_MSG
-#: LYMessages.c:227
+#: LYMessages.c:225
 msgid "Type EXIT to return to Lynx.\n"
 msgstr "EXIT とタイプすると Lynx に戻ります。\n"
 
 #. #define SPAWNING_MSG
-#: LYMessages.c:230
+#: LYMessages.c:228
 msgid "Spawning your default shell.  Use 'exit' to return to Lynx.\n"
 msgstr "デフォルトシェルを起動しました。'exit' で Lynx に戻ります。\n"
 
-#: LYMessages.c:233
+#: LYMessages.c:231
 msgid "Spawning is currently disabled."
 msgstr "外部コマンド起動は現在できません。"
 
-#: LYMessages.c:234
+#: LYMessages.c:232
 msgid "The 'd'ownload command is currently disabled."
 msgstr "ダウンロードコマンド [d] は現在利用できません。"
 
-#: LYMessages.c:235
+#: LYMessages.c:233
 msgid "You cannot download an input field."
 msgstr "入力フィールドをダウンロードすることはできません。"
 
-#: LYMessages.c:236
+#: LYMessages.c:234
 msgid "Form has a mailto action!  Cannot download."
 msgstr "フォームには mailto アクションが含まれています! ダウンロードできません。"
 
-#: LYMessages.c:237
+#: LYMessages.c:235
 msgid "You cannot download a mailto: link."
 msgstr "mailto: リンクはダウンロードできません。"
 
-#: LYMessages.c:238
+#: LYMessages.c:236
 msgid "You cannot download cookies."
 msgstr "クッキーをダウンロードできません。"
 
-#: LYMessages.c:239
+#: LYMessages.c:237
 msgid "You cannot download a printing option."
 msgstr "印刷オプションをダウンロードすることはできません。"
 
-#: LYMessages.c:240
+#: LYMessages.c:238
 msgid "You cannot download an upload option."
 msgstr "アップロードオプションをダウンロードすることはできません。"
 
-#: LYMessages.c:241
+#: LYMessages.c:239
 msgid "You cannot download an permit option."
 msgstr "許可オプションをダウンロードすることはできません。"
 
-#: LYMessages.c:242
+#: LYMessages.c:240
 msgid "This special URL cannot be downloaded!"
 msgstr "この特殊な URL はダウンロードできません!"
 
-#: LYMessages.c:243
+#: LYMessages.c:241
 msgid "Nothing to download."
 msgstr "ダウンロードするものがありません。"
 
-#: LYMessages.c:244
+#: LYMessages.c:242
 msgid "Trace ON!"
 msgstr "追跡開始!"
 
-#: LYMessages.c:245
+#: LYMessages.c:243
 msgid "Trace OFF!"
 msgstr "追跡終了!"
 
 #. #define CLICKABLE_IMAGES_ON
-#: LYMessages.c:247
+#: LYMessages.c:245
 msgid "Links will be included for all images!  Reloading..."
 msgstr "画像すべてへのリンクを表示します! 再読み込み中..."
 
 #. #define CLICKABLE_IMAGES_OFF
-#: LYMessages.c:249
+#: LYMessages.c:247
 msgid "Standard image handling restored!  Reloading..."
 msgstr "標準的な画像の取り扱いに戻します! 再読み込み中..."
 
 #. #define PSEUDO_INLINE_ALTS_ON
-#: LYMessages.c:251
+#: LYMessages.c:249
 msgid "Pseudo_ALTs will be inserted for inlines without ALT strings!  Reloading..."
 msgstr "ALT 指定の無いインラインに疑似的 ALT を挿入します。再読み込み中..."
 
 #. #define PSEUDO_INLINE_ALTS_OFF
-#: LYMessages.c:253
+#: LYMessages.c:251
 msgid "Inlines without an ALT string specified will be ignored!  Reloading..."
 msgstr "ALT 指定の無いインラインは無視されます! 再読み込み中..."
 
-#: LYMessages.c:254
+#: LYMessages.c:252
 msgid "Raw 8-bit or CJK mode toggled OFF!  Reloading..."
 msgstr "生 8 ビット / CJK モード トグルオフ! 再読み込み中..."
 
-#: LYMessages.c:255
+#: LYMessages.c:253
 msgid "Raw 8-bit or CJK mode toggled ON!  Reloading..."
 msgstr "生 8 ビット / CJK モード トグルオン! 再読み込み中..."
 
 #. #define HEAD_D_L_OR_CANCEL
-#: LYMessages.c:257
+#: LYMessages.c:255
 msgid "Send HEAD request for D)ocument or L)ink, or C)ancel? (d,l,c): "
 msgstr "[d]文書 か [l]リンクに HEAD リクエストを送りますか? ([c]キャンセル): "
 
 #. #define HEAD_D_OR_CANCEL
-#: LYMessages.c:259
+#: LYMessages.c:257
 msgid "Send HEAD request for D)ocument, or C)ancel? (d,c): "
 msgstr "[d]文書 に HEAD リクエストを送りますか? ([c]キャンセル): "
 
-#: LYMessages.c:260
+#: LYMessages.c:258
 msgid "Sorry, the document is not an http URL."
 msgstr "この文書は http URL ではないようです。"
 
-#: LYMessages.c:261
+#: LYMessages.c:259
 msgid "Sorry, the link is not an http URL."
 msgstr "このリンクは http URL ではないようです。"
 
-#: LYMessages.c:262
+#: LYMessages.c:260
 msgid "Sorry, the ACTION for this form is disabled."
 msgstr "このフォームへの ACTION はできません。"
 
 #. #define FORM_ACTION_NOT_HTTP_URL
-#: LYMessages.c:264
+#: LYMessages.c:262
 msgid "Sorry, the ACTION for this form is not an http URL."
 msgstr "このフォームへの ACTION は http URL ではありません。"
 
-#: LYMessages.c:265
+#: LYMessages.c:263
 msgid "Not an http URL or form ACTION!"
 msgstr "http URL でもフォーム ACTION でもありません!"
 
-#: LYMessages.c:266
+#: LYMessages.c:264
 msgid "This special URL cannot be a form ACTION!"
 msgstr "この特別な URL はフォーム ACTION にはなり得ません!"
 
-#: LYMessages.c:267
+#: LYMessages.c:265
 msgid "URL is not in starting realm!"
 msgstr "URL が開始領域にありません!"
 
-#: LYMessages.c:268
+#: LYMessages.c:266
 msgid "News posting is disabled!"
 msgstr "ニュース投稿はできません!"
 
-#: LYMessages.c:269
+#: LYMessages.c:267
 msgid "File management support is disabled!"
 msgstr "ファイル管理サポートは利用できません!"
 
-#: LYMessages.c:270
+#: LYMessages.c:268
 msgid "No jump file is currently available."
 msgstr "現在利用可能なジャンプファイルはありません。"
 
-#: LYMessages.c:271
+#: LYMessages.c:269
 msgid "Jump to (use '?' for list): "
 msgstr "ジャンプ先 ([?] で一覧): "
 
-#: LYMessages.c:272
+#: LYMessages.c:270
 msgid "Jumping to a shortcut URL is disallowed!"
 msgstr "ショートカット URL へのジャンプは許可されていません!"
 
-#: LYMessages.c:273
+#: LYMessages.c:271
 msgid "Random URL is disallowed!  Use a shortcut."
 msgstr "ランダム URL は許可されていません! ショートカットを使ってください。"
 
-#: LYMessages.c:274
+#: LYMessages.c:272
 msgid "No random URLs have been used thus far."
 msgstr "今までのところランダム URL は一つも使われていません。"
 
-#: LYMessages.c:275
+#: LYMessages.c:273
 msgid "Bookmark features are currently disabled."
 msgstr "ブックマーク機能は現在利用できません。"
 
-#: LYMessages.c:276
+#: LYMessages.c:274
 msgid "Execution via bookmarks is disabled."
 msgstr "ブックマークからの実行はできません。"
 
 #. #define BOOKMARK_FILE_NOT_DEFINED
-#: LYMessages.c:278
+#: LYMessages.c:276
 #, c-format
 msgid "Bookmark file is not defined. Use %s to see options."
 msgstr "ブックマークファイルは定義されていません。%s でオプションが見られます。"
 
 #. #define NO_TEMP_FOR_HOTLIST
-#: LYMessages.c:280
+#: LYMessages.c:278
 msgid "Unable to open tempfile for X Mosaic hotlist conversion."
 msgstr "X Mosaic ホットリスト変換用の一時ファイルが開けません。"
 
-#: LYMessages.c:281
+#: LYMessages.c:279
 msgid "ERROR - unable to open bookmark file."
 msgstr "エラー - ブックマークファイルを開けません。"
 
 #. #define BOOKMARK_OPEN_FAILED_FOR_DEL
-#: LYMessages.c:283
+#: LYMessages.c:281
 msgid "Unable to open bookmark file for deletion of link."
 msgstr "リンクを削除するのにブックマークファイルが開けません。"
 
 #. #define BOOKSCRA_OPEN_FAILED_FOR_DEL
-#: LYMessages.c:285
+#: LYMessages.c:283
 msgid "Unable to open scratch file for deletion of link."
 msgstr "リンクを削除するのにスクラッチファイルが開けません。"
 
-#: LYMessages.c:287
+#: LYMessages.c:285
 msgid "Error renaming scratch file."
 msgstr "スクラッチファイルの改名時にエラーが発生しました。"
 
-#: LYMessages.c:289
+#: LYMessages.c:287
 msgid "Error renaming temporary file."
 msgstr "一時ファイルの改名時にエラーが発生しました。"
 
 #. #define BOOKTEMP_COPY_FAIL
-#: LYMessages.c:291
+#: LYMessages.c:289
 msgid "Unable to copy temporary file for deletion of link."
 msgstr "リンク削除のために、一時ファイルをコピーすることができません。"
 
 #. #define BOOKTEMP_REOPEN_FAIL_FOR_DEL
-#: LYMessages.c:293
+#: LYMessages.c:291
 msgid "Unable to reopen temporary file for deletion of link."
 msgstr "リンク削除のために、一時ファイルを再オープンすることができません。"
 
 #. #define BOOKMARK_LINK_NOT_ONE_LINE
-#: LYMessages.c:296
+#: LYMessages.c:294
 msgid "Link is not by itself all on one line in bookmark file."
 msgstr "リンクが、ブックマークファイルにおいてそれだけで一行にまとまっていてはいけません。"
 
-#: LYMessages.c:297
+#: LYMessages.c:295
 msgid "Bookmark deletion failed."
 msgstr "ブックマーク削除に失敗しました。"
 
 #. #define BOOKMARKS_NOT_TRAVERSED
-#: LYMessages.c:299
+#: LYMessages.c:297
 msgid "Bookmark files cannot be traversed (only http URLs)."
 msgstr "ブックマークファイルはトラバースできません (http URL のみ)。"
 
 #. #define BOOKMARKS_NOT_OPEN
-#: LYMessages.c:301
+#: LYMessages.c:299
 msgid "Unable to open bookmark file, use 'a' to save a link first"
 msgstr "ブックマークを開けません。最初に [a] でリンクを保存してください。"
 
-#: LYMessages.c:302
+#: LYMessages.c:300
 msgid "There are no links in this bookmark file!"
 msgstr "このブックマークファイルには一つもリンクが含まれていません!"
 
 #. #define BOOK_D_L_OR_CANCEL
-#: LYMessages.c:304
+#: LYMessages.c:302
 msgid "Save D)ocument or L)ink to bookmark file or C)ancel? (d,l,c): "
 msgstr "[d]文書 [l]リンク をブックマークに保存します ([c]キャンセル): "
 
-#: LYMessages.c:305
+#: LYMessages.c:303
 msgid "Save D)ocument to bookmark file or C)ancel? (d,c): "
 msgstr "[d]で文書をブックマークファイルに保存 ([c]キャンセル): "
 
-#: LYMessages.c:306
+#: LYMessages.c:304
 msgid "Save L)ink to bookmark file or C)ancel? (l,c): "
 msgstr "[l]でリンクをブックマークファイルに保存 ([c]キャンセル): "
 
 #. #define NOBOOK_POST_FORM
-#: LYMessages.c:308
+#: LYMessages.c:306
 msgid "Documents from forms with POST content cannot be saved as bookmarks."
 msgstr "POST コンテントのフォームからのドキュメントはブックマークとして保存できません。"
 
-#: LYMessages.c:309
+#: LYMessages.c:307
 msgid "Cannot save form fields/links"
 msgstr "フォームフィールド/リンクは保存できません"
 
 #. #define NOBOOK_HSML
-#: LYMessages.c:311
+#: LYMessages.c:309
 msgid "History, showinfo, menu and list files cannot be saved as bookmarks."
 msgstr "履歴や情報表示、メニュー、ファイル一覧はブックマークとして保存できません。"
 
 #. #define CONFIRM_BOOKMARK_DELETE
-#: LYMessages.c:313
+#: LYMessages.c:311
 msgid "Do you really want to delete this link from your bookmark file?"
 msgstr "本当にこのリンクをブックマークから削除してよろしいですか?"
 
-#: LYMessages.c:314
+#: LYMessages.c:312
 msgid "Malformed address."
 msgstr "不正なアドレスです。"
 
 #. #define HISTORICAL_ON_MINIMAL_OFF
-#: LYMessages.c:316
+#: LYMessages.c:314
 msgid "Historical comment parsing ON (Minimal is overridden)!"
 msgstr "昔ながらのコメント解析オン(最小限の解析より優先)!"
 
 #. #define HISTORICAL_OFF_MINIMAL_ON
-#: LYMessages.c:318
+#: LYMessages.c:316
 msgid "Historical comment parsing OFF (Minimal is in effect)!"
 msgstr "昔ながらのコメント解析オフ(最小限の解析が有効)!"
 
 #. #define HISTORICAL_ON_VALID_OFF
-#: LYMessages.c:320
+#: LYMessages.c:318
 msgid "Historical comment parsing ON (Valid is overridden)!"
 msgstr "昔ながらのコメント解析オン(厳密な解析より優先)!"
 
 #. #define HISTORICAL_OFF_VALID_ON
-#: LYMessages.c:322
+#: LYMessages.c:320
 msgid "Historical comment parsing OFF (Valid is in effect)!"
 msgstr "昔ながらのコメント解析オフ(厳密な解析が有効)!"
 
 #. #define MINIMAL_ON_IN_EFFECT
-#: LYMessages.c:324
+#: LYMessages.c:322
 msgid "Minimal comment parsing ON (and in effect)!"
 msgstr "最小限のコメント解析オン(かつ有効)!"
 
 #. #define MINIMAL_OFF_VALID_ON
-#: LYMessages.c:326
+#: LYMessages.c:324
 msgid "Minimal comment parsing OFF (Valid is in effect)!"
 msgstr "最小限のコメント解析オフ(厳密な解析が有効)!"
 
 #. #define MINIMAL_ON_BUT_HISTORICAL
-#: LYMessages.c:328
+#: LYMessages.c:326
 msgid "Minimal comment parsing ON (but Historical is in effect)!"
 msgstr "最小限のコメント解析オン(でも昔ながらの解析が有効)!"
 
 #. #define MINIMAL_OFF_HISTORICAL_ON
-#: LYMessages.c:330
+#: LYMessages.c:328
 msgid "Minimal comment parsing OFF (Historical is in effect)!"
 msgstr "最小限のコメント解析オフ(昔ながらの解析が有効)!"
 
-#: LYMessages.c:331
+#: LYMessages.c:329
 msgid "Soft double-quote parsing ON!"
 msgstr "緩やかなダブルクォート解析オン!"
 
-#: LYMessages.c:332
+#: LYMessages.c:330
 msgid "Soft double-quote parsing OFF!"
 msgstr "緩やかなダブルクォート解析オフ!"
 
-#: LYMessages.c:333
+#: LYMessages.c:331
 msgid "Now using TagSoup parsing of HTML."
 msgstr "HTML を「タグのごった煮」風味で解析します。"
 
-#: LYMessages.c:334
+#: LYMessages.c:332
 msgid "Now using SortaSGML parsing of HTML!"
 msgstr "HTML を「そこそこ厳密 SGML」風味で解析します!"
 
-#: LYMessages.c:335
+#: LYMessages.c:333
 msgid "You are already at the end of this document."
 msgstr "すでにこの文書の末尾にいます。"
 
-#: LYMessages.c:336
+#: LYMessages.c:334
 msgid "You are already at the beginning of this document."
 msgstr "すでにこの文書の先頭にいます。"
 
-#: LYMessages.c:337
+#: LYMessages.c:335
 #, c-format
 msgid "You are already at page %d of this document."
 msgstr "すでにこの文書の %d ページ目にいます。"
 
-#: LYMessages.c:338
+#: LYMessages.c:336
 #, c-format
 msgid "Link number %d already is current."
 msgstr "すでにリンク番号 %d を選択しています。"
 
-#: LYMessages.c:339
+#: LYMessages.c:337
 msgid "You are already at the first document"
 msgstr "これ以上戻れません。"
 
-#: LYMessages.c:340
+#: LYMessages.c:338
 msgid "There are no links above this line of the document."
 msgstr "当文書のこの行より上にリンクはありません。"
 
-#: LYMessages.c:341
+#: LYMessages.c:339
 msgid "There are no links below this line of the document."
 msgstr "当文書のこの行より下にリンクはありません。"
 
 #. #define MAXLEN_REACHED_DEL_OR_MOV
-#: LYMessages.c:343
+#: LYMessages.c:341
 msgid "Maximum length reached!  Delete text or move off field."
 msgstr "長さの限界です! テキストを削除するかフィールドを移動してください"
 
 #. #define NOT_ON_SUBMIT_OR_LINK
-#: LYMessages.c:345
+#: LYMessages.c:343
 msgid "You are not on a form submission button or normal link."
 msgstr "現在フォーム送信ボタンまたは通常のリンクの上にいません"
 
 #. #define NEED_CHECKED_RADIO_BUTTON
-#: LYMessages.c:347
+#: LYMessages.c:345
 msgid "One radio button must be checked at all times!"
 msgstr "ラジオボタンは最低一つは指定しなければなりません!"
 
-#: LYMessages.c:348
+#: LYMessages.c:346
 msgid "No submit button for this form, submit single text field?"
 msgstr "フォームには送信ボタンがありません。単一のテキストフィールドを送信しますか?"
 
-#: LYMessages.c:349
+#: LYMessages.c:347
 msgid "Do you want to go back to the previous document?"
 msgstr "一つ前の文書に戻りますか?"
 
-#: LYMessages.c:350
+#: LYMessages.c:348
 msgid "Use arrows or tab to move off of field."
 msgstr "矢印キーかタブでフィールドを移動"
 
 #. #define ENTER_TEXT_ARROWS_OR_TAB
-#: LYMessages.c:352
+#: LYMessages.c:350
 msgid "Enter text.  Use arrows or tab to move off of field."
 msgstr "テキストを入力 矢印キーかタブでフィールドを移動"
 
-#: LYMessages.c:353
+#: LYMessages.c:351
 msgid "** Bad HTML!!  No form action defined. **"
 msgstr "不正な HTML です!! フォームアクションが定義されていません **"
 
-#: LYMessages.c:354
+#: LYMessages.c:352
 msgid "Bad HTML!!  Unable to create popup window!"
 msgstr "不正な HTML です!! ポップアップウィンドウが作れません **"
 
-#: LYMessages.c:355
+#: LYMessages.c:353
 msgid "Unable to create popup window!"
 msgstr "ポップアップウィンドウが作れません!"
 
-#: LYMessages.c:356
+#: LYMessages.c:354
 msgid "Goto a random URL is disallowed!"
 msgstr "ランダム URL への Goto は許可されていません!"
 
-#: LYMessages.c:357
+#: LYMessages.c:355
 msgid "Goto a non-http URL is disallowed!"
 msgstr "非 http URL への Goto は許可されていません!"
 
-#: LYMessages.c:358
+#: LYMessages.c:356
 #, c-format
 msgid "You are not allowed to goto \"%s\" URLs"
 msgstr "Goto で \"%s\" URL を指定するのは禁止されています"
 
-#: LYMessages.c:359
+#: LYMessages.c:357
 msgid "URL to open: "
 msgstr "開きたい URL: "
 
-#: LYMessages.c:360
+#: LYMessages.c:358
 msgid "Edit the current Goto URL: "
 msgstr "現在の Goto URL を編集: "
 
-#: LYMessages.c:361
+#: LYMessages.c:359
 msgid "Edit the previous Goto URL: "
 msgstr "前の Goto URL: を編集: "
 
-#: LYMessages.c:362
+#: LYMessages.c:360
 msgid "Edit a previous Goto URL: "
 msgstr "以前の Goto URL: を編集: "
 
-#: LYMessages.c:363
+#: LYMessages.c:361
 msgid "Current document has POST data."
 msgstr "現在の文書は POST データを含んでいます。"
 
-#: LYMessages.c:364
+#: LYMessages.c:362
 msgid "Edit this document's URL: "
 msgstr "この文書の URL を編集: "
 
-#: LYMessages.c:365
+#: LYMessages.c:363
 msgid "Edit the current link's URL: "
 msgstr "現在の URL リンク先を編集: "
 
-#: LYMessages.c:366
+#: LYMessages.c:364
 msgid "You cannot edit File Management URLs"
 msgstr "ファイル管理 URL は編集できません。"
 
-#: LYMessages.c:367
+#: LYMessages.c:365
 msgid "Enter a database query: "
 msgstr "データベースで検索する文字列を入力: "
 
-#: LYMessages.c:368
+#: LYMessages.c:366
 msgid "Enter a whereis query: "
 msgstr "検索する文字列: "
 
-#: LYMessages.c:369
+#: LYMessages.c:367
 msgid "Edit the current query: "
 msgstr "現在の検索文字列を編集: "
 
-#: LYMessages.c:370
+#: LYMessages.c:368
 msgid "Edit the previous query: "
 msgstr "一つ前の検索文字列を編集: "
 
-#: LYMessages.c:371
+#: LYMessages.c:369
 msgid "Edit a previous query: "
 msgstr "以前の検索文字列を編集: "
 
 #. #define USE_C_R_TO_RESUB_CUR_QUERY
-#: LYMessages.c:373
+#: LYMessages.c:371
 msgid "Use Control-R to resubmit the current query."
 msgstr "Ctrl-R で現在の検索文字列を再送信"
 
-#: LYMessages.c:374
+#: LYMessages.c:372
 msgid "Edit the current shortcut: "
 msgstr "現在のショートカットを編集: "
 
-#: LYMessages.c:375
+#: LYMessages.c:373
 msgid "Edit the previous shortcut: "
 msgstr "一つ前のショートカットを編集: "
 
-#: LYMessages.c:376
+#: LYMessages.c:374
 msgid "Edit a previous shortcut: "
 msgstr "以前のショートカットを編集: "
 
-#: LYMessages.c:377
+#: LYMessages.c:375
 #, c-format
 msgid "Key '%c' is not mapped to a jump file!"
 msgstr "キー '%c' はジャンプファイルに割り当てられていません!"
 
-#: LYMessages.c:378
+#: LYMessages.c:376
 msgid "Cannot locate jump file!"
 msgstr "ジャンプファイルが見つかりません!"
 
-#: LYMessages.c:379
+#: LYMessages.c:377
 msgid "Cannot open jump file!"
 msgstr "ジャンプファイルが開けません!"
 
-#: LYMessages.c:380
+#: LYMessages.c:378
 msgid "Error reading jump file!"
 msgstr "ジャンプファイルの読み込みでエラーが発生しました!"
 
-#: LYMessages.c:381
+#: LYMessages.c:379
 msgid "Out of memory reading jump file!"
 msgstr "ジャンプファイルの読み込みでメモリが足りなくなりました!"
 
-#: LYMessages.c:382
+#: LYMessages.c:380
 msgid "Out of memory reading jump table!"
 msgstr "ジャンプテーブルの読み込みでメモリが足りなくなりました!"
 
-#: LYMessages.c:383
+#: LYMessages.c:381
 msgid "No index is currently available."
 msgstr "現在利用可能なインデックスはありません。"
 
 #. #define CONFIRM_MAIN_SCREEN
-#: LYMessages.c:385
+#: LYMessages.c:383
 msgid "Do you really want to go to the Main screen?"
 msgstr "本当にメイン画面に行きますか?"
 
-#: LYMessages.c:386
+#: LYMessages.c:384
 msgid "You are already at main screen!"
 msgstr "すでにメイン画面にいます!"
 
 #. #define NOT_ISINDEX
-#: LYMessages.c:388
+#: LYMessages.c:386
 msgid "Not a searchable indexed document -- press '/' to search for a text string"
 msgstr "検索可能な索引付き文書ではありません -- [/] で文字列を検索"
 
 #. #define NO_OWNER
-#: LYMessages.c:390
+#: LYMessages.c:388
 msgid "No owner is defined for this file so you cannot send a comment"
 msgstr "ファイルの所有者が指定されていないのでコメントは送れません"
 
-#: LYMessages.c:391
+#: LYMessages.c:389
 #, c-format
 msgid "No owner is defined. Use %s?"
 msgstr "所有者が指定されていません。%s を使いますか?"
 
-#: LYMessages.c:392
+#: LYMessages.c:390
 msgid "Do you wish to send a comment?"
 msgstr "コメントを送りますか?"
 
-#: LYMessages.c:393
+#: LYMessages.c:391
 msgid "Mail is disallowed so you cannot send a comment"
 msgstr "メールは許可されていないのでコメントは送れません。"
 
-#: LYMessages.c:394
+#: LYMessages.c:392
 msgid "The 'e'dit command is currently disabled."
 msgstr "編集 [e] コマンドは現在利用できません。"
 
-#: LYMessages.c:395
+#: LYMessages.c:393
 msgid "External editing is currently disabled."
 msgstr "外部編集機能は現在利用できません。"
 
-#: LYMessages.c:396
+#: LYMessages.c:394
 msgid "System error - failure to get status."
 msgstr "システムエラー - ステータスを得るのに失敗しました。"
 
-#: LYMessages.c:397
+#: LYMessages.c:395
 msgid "No editor is defined!"
 msgstr "エディタが定義されていません!"
 
-#: LYMessages.c:398
+#: LYMessages.c:396
 msgid "The 'p'rint command is currently disabled."
 msgstr "印刷コマンド [p] は現在利用できません。"
 
-#: LYMessages.c:399
+#: LYMessages.c:397
 msgid "Document has no Toolbar links or Banner."
 msgstr "この文書にはツールバーリンクもバナーも含まれていません。"
 
-#: LYMessages.c:400
+#: LYMessages.c:398
 msgid "Unable to open traversal file."
 msgstr "トラバーサルファイルが開けません。"
 
-#: LYMessages.c:401
+#: LYMessages.c:399
 msgid "Unable to open traversal found file."
 msgstr "トラバーサル発見ファイルが開けません。"
 
-#: LYMessages.c:402
+#: LYMessages.c:400
 msgid "Unable to open reject file."
 msgstr "リジェクトファイルが開けません。"
 
-#: LYMessages.c:403
+#: LYMessages.c:401
 msgid "Unable to open traversal errors output file"
 msgstr "トラバーサルエラー出力ファイルが開けません"
 
-#: LYMessages.c:404
+#: LYMessages.c:402
 msgid "TRAVERSAL WAS INTERRUPTED"
 msgstr "トラバーサルが中断されました"
 
-#: LYMessages.c:405
+#: LYMessages.c:403
 msgid "Follow link (or goto link or page) number: "
 msgstr "辿るリンク(もしくは goto リンクかページ)の番号: "
 
-#: LYMessages.c:406
+#: LYMessages.c:404
 msgid "Select option (or page) number: "
 msgstr "オプション(またはページ)番号を選択: "
 
-#: LYMessages.c:407
+#: LYMessages.c:405
 #, c-format
 msgid "Option number %d already is current."
 msgstr "オプション番号 %d はすでに選択されています。"
 
 #. #define ALREADY_AT_OPTION_END
-#: LYMessages.c:409
+#: LYMessages.c:407
 msgid "You are already at the end of this option list."
 msgstr "すでにこのオプションリストの終端にいます。"
 
 #. #define ALREADY_AT_OPTION_BEGIN
-#: LYMessages.c:411
+#: LYMessages.c:409
 msgid "You are already at the beginning of this option list."
 msgstr "すでにこのオプションリストの先頭にいます。"
 
 #. #define ALREADY_AT_OPTION_PAGE
-#: LYMessages.c:413
+#: LYMessages.c:411
 #, c-format
 msgid "You are already at page %d of this option list."
 msgstr "すでにこのオプションリストのページ %d にいます。"
 
-#: LYMessages.c:414
+#: LYMessages.c:412
 msgid "You have entered an invalid option number."
 msgstr "不正なオプション番号が入力されました。"
 
-#: LYMessages.c:415
+#: LYMessages.c:413
 msgid "** Bad HTML!!  Use -trace to diagnose. **"
 msgstr "** 不正な HTML です!! -trace で原因を調べられます **"
 
-#: LYMessages.c:416
+#: LYMessages.c:414
 msgid "Give name of file to save in"
 msgstr "保存するファイルの名前を入力してください"
 
-#: LYMessages.c:417
+#: LYMessages.c:415
 msgid "Can't save data to file -- please run WWW locally"
 msgstr "データをファイルに保存できません -- WWW をローカルで実行してください"
 
-#: LYMessages.c:418
+#: LYMessages.c:416
 msgid "Can't open temporary file!"
 msgstr "一時的ファイルが開けません!"
 
-#: LYMessages.c:419
+#: LYMessages.c:417
 msgid "Can't open output file!  Cancelling!"
 msgstr "出力ファイルが開けません! キャンセルします!"
 
-#: LYMessages.c:420
+#: LYMessages.c:418
 msgid "Execution is disabled."
 msgstr "実行機能は利用できません。"
 
 #. #define EXECUTION_DISABLED_FOR_FILE
-#: LYMessages.c:422
+#: LYMessages.c:420
 #, c-format
 msgid "Execution is not enabled for this file.  See the Options menu (use %s)."
 msgstr "このファイルを実行することはできません。オプションメニューを参照(%sを使う)してください。"
 
 #. #define EXECUTION_NOT_COMPILED
-#: LYMessages.c:424
+#: LYMessages.c:422
 msgid "Execution capabilities are not compiled into this version."
 msgstr "実行機能はこのバージョンではコンパイル時に組み込まれていません。"
 
-#: LYMessages.c:425
+#: LYMessages.c:423
 msgid "This file cannot be displayed on this terminal."
 msgstr "このファイルは現在の端末では表示できません。"
 
 #. #define CANNOT_DISPLAY_FILE_D_OR_C
-#: LYMessages.c:427
+#: LYMessages.c:425
 msgid "This file cannot be displayed on this terminal:  D)ownload, or C)ancel"
 msgstr "このファイルは現在の端末では表示できません。[d]ダウンロード [c]キャンセル"
 
-#: LYMessages.c:428
+#: LYMessages.c:426
 #, c-format
 msgid "%s  D)ownload, or C)ancel"
 msgstr "%s [d]ダウンロード または [c]キャンセル"
 
-#: LYMessages.c:429
+#: LYMessages.c:427
 msgid "Cancelling file."
 msgstr "ファイルをキャンセルします。"
 
-#: LYMessages.c:430
+#: LYMessages.c:428
 msgid "Retrieving file.  - PLEASE WAIT -"
 msgstr "ファイルを受信中 - お待ちください"
 
-#: LYMessages.c:431
+#: LYMessages.c:429
 msgid "Enter a filename: "
 msgstr "ファイル名を入力: "
 
-#: LYMessages.c:432
+#: LYMessages.c:430
 msgid "Edit the previous filename: "
 msgstr "一つ前のファイル名を編集: "
 
-#: LYMessages.c:433
+#: LYMessages.c:431
 msgid "Edit a previous filename: "
 msgstr "以前のファイル名を編集: "
 
-#: LYMessages.c:434
+#: LYMessages.c:432
 msgid "Enter a new filename: "
 msgstr "新しいファイル名を入力: "
 
-#: LYMessages.c:435
+#: LYMessages.c:433
 msgid "File name may not begin with a dot."
 msgstr "ファイル名はドットで始まってはいけません。"
 
-#: LYMessages.c:437
+#: LYMessages.c:435
 msgid "File exists.  Create higher version?"
 msgstr "ファイルが存在します。より高いバージョンを作成しますか?"
 
-#: LYMessages.c:439
+#: LYMessages.c:437
 msgid "File exists.  Overwrite?"
 msgstr "ファイルが存在します。上書きしますか?"
 
-#: LYMessages.c:441
+#: LYMessages.c:439
 msgid "Cannot write to file."
 msgstr "ファイルに書き込めません。"
 
-#: LYMessages.c:442
+#: LYMessages.c:440
 msgid "ERROR! - download command is misconfigured."
 msgstr "エラー! - ダウンロードコマンドの設定が間違っています。"
 
-#: LYMessages.c:443
+#: LYMessages.c:441
 msgid "Unable to download file."
 msgstr "ファイルをダウンロードできません。"
 
-#: LYMessages.c:444
+#: LYMessages.c:442
 msgid "Reading directory..."
 msgstr "ディレクトリを読み込み中..."
 
-#: LYMessages.c:445
+#: LYMessages.c:443
 msgid "Building directory listing..."
 msgstr "ディレクトリ一覧を作成中..."
 
-#: LYMessages.c:446
+#: LYMessages.c:444
 msgid "Saving..."
 msgstr "保存しています..."
 
-#: LYMessages.c:447
+#: LYMessages.c:445
 #, c-format
 msgid "Could not edit file '%s'."
 msgstr "ファイル '%s' を編集できません。"
 
-#: LYMessages.c:448
+#: LYMessages.c:446
 msgid "Unable to access document!"
 msgstr "文書にアクセスできません!"
 
-#: LYMessages.c:449
+#: LYMessages.c:447
 msgid "Could not access file."
 msgstr "ファイルにアクセスできません。"
 
-#: LYMessages.c:450
+#: LYMessages.c:448
 msgid "Could not access directory."
 msgstr "ディレクトリにアクセスできません。"
 
-#: LYMessages.c:451
+#: LYMessages.c:449
 msgid "Could not load data."
 msgstr "データを読み込めません。"
 
 #. #define CANNOT_EDIT_REMOTE_FILES
-#: LYMessages.c:453
+#: LYMessages.c:451
 msgid "Lynx cannot currently (e)dit remote WWW files."
 msgstr "現在 Lynx はリモート WWW ファイルを [e] 編集できません。"
 
 #. #define CANNOT_EDIT_FIELD
-#: LYMessages.c:455
+#: LYMessages.c:453
 msgid "This field cannot be (e)dited with an external editor."
 msgstr "このフィールドは外部エディタで編集 [e] できません。"
 
-#: LYMessages.c:456
+#: LYMessages.c:454
 msgid "Bad rule"
 msgstr "不正なルールです。"
 
-#: LYMessages.c:457
+#: LYMessages.c:455
 msgid "Insufficient operands:"
 msgstr "オペランドが足りません:"
 
-#: LYMessages.c:458
+#: LYMessages.c:456
 msgid "You are not authorized to edit this file."
 msgstr "このファイルを編集する権限がありません。"
 
-#: LYMessages.c:459
+#: LYMessages.c:457
 msgid "Title: "
 msgstr "題名: "
 
-#: LYMessages.c:460
+#: LYMessages.c:458
 msgid "Subject: "
 msgstr "サブジェクト: "
 
-#: LYMessages.c:461
+#: LYMessages.c:459
 msgid "Username: "
 msgstr "ユーザ名: "
 
-#: LYMessages.c:462
+#: LYMessages.c:460
 msgid "Password: "
 msgstr "パスワード: "
 
-#: LYMessages.c:463
+#: LYMessages.c:461
 msgid "lynx: Username and Password required!!!"
 msgstr "lynx: ユーザ名とパスワードが必要です!!!"
 
-#: LYMessages.c:464
+#: LYMessages.c:462
 msgid "lynx: Password required!!!"
 msgstr "lynx: パスワードが必要です!!!"
 
-#: LYMessages.c:465
+#: LYMessages.c:463
 msgid "Clear all authorization info for this session?"
 msgstr "このセッションのすべての認証情報をクリアしますか?"
 
-#: LYMessages.c:466
+#: LYMessages.c:464
 msgid "Authorization info cleared."
 msgstr "認証情報をクリアしました。"
 
-#: LYMessages.c:467
+#: LYMessages.c:465
 msgid "Authorization failed.  Retry?"
 msgstr "認証に失敗しました。再試行しますか?"
 
-#: LYMessages.c:468
+#: LYMessages.c:466
 msgid "cgi support has been disabled."
 msgstr "cgi サポートは利用できません。"
 
 #. #define CGI_NOT_COMPILED
-#: LYMessages.c:470
+#: LYMessages.c:468
 msgid "Lynxcgi capabilities are not compiled into this version."
 msgstr "Lynxcgi 機能はこのバージョンには組み込まれていません。"
 
-#: LYMessages.c:471
+#: LYMessages.c:469
 #, c-format
 msgid "Sorry, no known way of converting %s to %s."
 msgstr "%s を %s に変換する手段はありません。"
 
-#: LYMessages.c:472
+#: LYMessages.c:470
 msgid "Unable to set up connection."
 msgstr "接続を準備できません。"
 
-#: LYMessages.c:473
+#: LYMessages.c:471
 msgid "Unable to make connection"
 msgstr "接続を確立できません。"
 
 #. #define MALFORMED_EXEC_REQUEST
-#: LYMessages.c:475
+#: LYMessages.c:473
 msgid "Executable link rejected due to malformed request."
 msgstr "不正なリクエストのため、実行可能なリンクは拒否されました。"
 
 #. #define BADCHAR_IN_EXEC_LINK
-#: LYMessages.c:477
+#: LYMessages.c:475
 #, c-format
 msgid "Executable link rejected due to `%c' character."
 msgstr "キャラクタ '%c' のため、実行可能なリンクは拒否されました。"
 
 #. #define RELPATH_IN_EXEC_LINK
-#: LYMessages.c:479
+#: LYMessages.c:477
 msgid "Executable link rejected due to relative path string ('../')."
 msgstr "相対パス文字列('../')のため、実行可能なリンクは拒否されました。"
 
 #. #define BADLOCPATH_IN_EXEC_LINK
-#: LYMessages.c:481
+#: LYMessages.c:479
 msgid "Executable link rejected due to location or path."
 msgstr "場所またはパスのため、実行可能なリンクは拒否されました。"
 
-#: LYMessages.c:482
+#: LYMessages.c:480
 msgid "Mail access is disabled!"
 msgstr "メールアクセスは利用できません!"
 
 #. #define ACCESS_ONLY_LOCALHOST
-#: LYMessages.c:484
+#: LYMessages.c:482
 msgid "Only files and servers on the local host can be accessed."
 msgstr "ローカルホスト上のファイルとサーバのみアクセスできます。"
 
-#: LYMessages.c:485
+#: LYMessages.c:483
 msgid "Telnet access is disabled!"
 msgstr "Telnet アクセスは利用できません!"
 
 #. #define TELNET_PORT_SPECS_DISABLED
-#: LYMessages.c:487
+#: LYMessages.c:485
 msgid "Telnet port specifications are disabled."
 msgstr "Telnet ポート指定は利用できません!"
 
-#: LYMessages.c:488
+#: LYMessages.c:486
 msgid "USENET news access is disabled!"
 msgstr "USENET ニュースアクセスは利用できません!"
 
-#: LYMessages.c:489
+#: LYMessages.c:487
 msgid "Rlogin access is disabled!"
 msgstr "Rlogin アクセスは利用できません!"
 
-#: LYMessages.c:490
+#: LYMessages.c:488
 msgid "Ftp access is disabled!"
 msgstr "Ftp アクセスは利用できません!"
 
-#: LYMessages.c:491
+#: LYMessages.c:489
 msgid "There are no references from this document."
 msgstr "この文書からの参照はありません。"
 
-#: LYMessages.c:492
+#: LYMessages.c:490
 msgid "There are only hidden links from this document."
 msgstr "この文書には隠しリンクしかありません。"
 
-#: LYMessages.c:494
+#: LYMessages.c:492
 msgid "Unable to open command file."
 msgstr "コマンドファイルが開けません。"
 
-#: LYMessages.c:496
+#: LYMessages.c:494
 msgid "News Post Cancelled!!!"
 msgstr "ニュースの投稿はキャンセルされました!!!"
 
 #. #define SPAWNING_EDITOR_FOR_NEWS
-#: LYMessages.c:498
+#: LYMessages.c:496
 msgid "Spawning your selected editor to edit news message"
 msgstr "指定のエディタを起動してニュースメッセージを編集します"
 
-#: LYMessages.c:499
+#: LYMessages.c:497
 msgid "Post this message?"
 msgstr "このメッセージを投稿しますか?"
 
-#: LYMessages.c:500
+#: LYMessages.c:498
 #, c-format
 msgid "Append '%s'?"
 msgstr "'%s' を追加しますか?"
 
-#: LYMessages.c:501
+#: LYMessages.c:499
 msgid "Posting to newsgroup(s)..."
 msgstr "ニュースグループに投稿中..."
 
-#: LYMessages.c:503
+#: LYMessages.c:501
 msgid "*** You have unread mail. ***"
 msgstr "*** まだ読んでいないメールがあります ***"
 
-#: LYMessages.c:505
+#: LYMessages.c:503
 msgid "*** You have mail. ***"
 msgstr "*** メールが来ています ***"
 
-#: LYMessages.c:507
+#: LYMessages.c:505
 msgid "*** You have new mail. ***"
 msgstr "*** 新着メールがあります ***"
 
-#: LYMessages.c:508
+#: LYMessages.c:506
 msgid "File insert cancelled!!!"
 msgstr "ファイル挿入がキャンセルされました!!!"
 
-#: LYMessages.c:509
+#: LYMessages.c:507
 msgid "Not enough memory for file!"
 msgstr "ファイルを読み込むメモリが足りません"
 
-#: LYMessages.c:510
+#: LYMessages.c:508
 msgid "Can't open file for reading."
 msgstr "読み込むファイルが開けません。"
 
-#: LYMessages.c:511
+#: LYMessages.c:509
 msgid "File does not exist."
 msgstr "ファイルが存在しません。"
 
-#: LYMessages.c:512
+#: LYMessages.c:510
 msgid "File does not exist - reenter or cancel:"
 msgstr "ファイルが存在しません - 再入力かキャンセル:"
 
-#: LYMessages.c:513
+#: LYMessages.c:511
 msgid "File is not readable."
 msgstr "ファイルは読み込み不可です。"
 
-#: LYMessages.c:514
+#: LYMessages.c:512
 msgid "File is not readable - reenter or cancel:"
 msgstr "ファイルが読めません - 再入力かキャンセル:"
 
-#: LYMessages.c:515
+#: LYMessages.c:513
 msgid "Nothing to insert - file is 0-length."
 msgstr "挿入する内容がありません - ファイルの長さが 0 です。"
 
-#: LYMessages.c:516
+#: LYMessages.c:514
 msgid "Save request cancelled!!!"
 msgstr "保存リクエストがキャンセルされました!!!"
 
-#: LYMessages.c:517
+#: LYMessages.c:515
 msgid "Mail request cancelled!!!"
 msgstr "メールリクエストがキャンセルされました!!!"
 
 #. #define CONFIRM_MAIL_SOURCE_PREPARSED
-#: LYMessages.c:519
+#: LYMessages.c:517
 msgid "Viewing preparsed source.  Are you sure you want to mail it?"
 msgstr "解析済みソースを閲覧中です。本当にこれをメールしますか?"
 
-#: LYMessages.c:520
+#: LYMessages.c:518
 msgid "Please wait..."
 msgstr "お待ちください..."
 
-#: LYMessages.c:521
+#: LYMessages.c:519
 msgid "Mailing file.  Please wait..."
 msgstr "ファイルをメールで送信中。お待ちください..."
 
-#: LYMessages.c:522
+#: LYMessages.c:520
 msgid "ERROR - Unable to mail file"
 msgstr "エラー - ファイルをメールで送信できません。"
 
 #. #define CONFIRM_LONG_SCREEN_PRINT
-#: LYMessages.c:524
+#: LYMessages.c:522
 #, c-format
 msgid "File is %d screens long.  Are you sure you want to print?"
 msgstr "ファイルは %d 画面分の長さです。本当に印刷しますか?"
 
-#: LYMessages.c:525
+#: LYMessages.c:523
 msgid "Print request cancelled!!!"
 msgstr "印刷リクエストはキャンセルされました!!!"
 
-#: LYMessages.c:526
+#: LYMessages.c:524
 msgid "Press <return> to begin: "
 msgstr "リターンキーで開始: "
 
-#: LYMessages.c:527
+#: LYMessages.c:525
 msgid "Press <return> to finish: "
 msgstr "リターンキーで終了"
 
 #. #define CONFIRM_LONG_PAGE_PRINT
-#: LYMessages.c:529
+#: LYMessages.c:527
 #, c-format
 msgid "File is %d pages long.  Are you sure you want to print?"
 msgstr "ファイルは %d ページ分の長さです。本当に印刷しますか?"
 
 #. #define CHECK_PRINTER
-#: LYMessages.c:531
+#: LYMessages.c:529
 msgid "Be sure your printer is on-line.  Press <return> to start printing:"
 msgstr "プリンタがオンラインか確かめてください。リターンキーで印刷開始:"
 
-#: LYMessages.c:532
+#: LYMessages.c:530
 msgid "ERROR - Unable to allocate file space!!!"
 msgstr "エラー - ファイル領域が確保できません!!!"
 
-#: LYMessages.c:533
+#: LYMessages.c:531
 msgid "Unable to open tempfile"
 msgstr "一時ファイルが開けません"
 
-#: LYMessages.c:534
+#: LYMessages.c:532
 msgid "Unable to open print options file"
 msgstr "印刷オプションファイルが開けません"
 
-#: LYMessages.c:535
+#: LYMessages.c:533
 msgid "Printing file.  Please wait..."
 msgstr "ファイルを印刷しています。お待ちください..."
 
-#: LYMessages.c:536
+#: LYMessages.c:534
 msgid "Please enter a valid internet mail address: "
 msgstr "正しいインターネットメールアドレスを入力してください: "
 
-#: LYMessages.c:537
+#: LYMessages.c:535
 msgid "ERROR! - printer is misconfigured!"
 msgstr "エラー! - プリンタの設定が間違っています"
 
-#: LYMessages.c:538
+#: LYMessages.c:536
 msgid "Image map from POST response not available!"
 msgstr "POST レスポンスからのイメージマップが利用できません!"
 
-#: LYMessages.c:539
+#: LYMessages.c:537
 msgid "Misdirected client-side image MAP request!"
 msgstr "クライアントサイドイメージ MAP リクエストのディレクションが不正です!"
 
-#: LYMessages.c:540
+#: LYMessages.c:538
 msgid "Client-side image MAP is not accessible!"
 msgstr "クライアントサイドイメージ MAP にアクセスできません!"
 
-#: LYMessages.c:541
+#: LYMessages.c:539
 msgid "No client-side image MAPs are available!"
 msgstr "利用できるクライアントサイドイメージ MAP がありません!"
 
-#: LYMessages.c:542
+#: LYMessages.c:540
 msgid "Client-side image MAP is not available!"
 msgstr "クライアントサイドイメージ MAP は利用できません!"
 
 #. #define OPTION_SCREEN_NEEDS_24
-#: LYMessages.c:545
+#: LYMessages.c:543
 msgid "Screen height must be at least 24 lines for the Options menu!"
 msgstr "オプションメニューを表示するにはスクリーンの高さが最低 24 行分必要です!"
 
 #. #define OPTION_SCREEN_NEEDS_23
-#: LYMessages.c:547
+#: LYMessages.c:545
 msgid "Screen height must be at least 23 lines for the Options menu!"
 msgstr "オプションメニューを表示するにはスクリーンの高さが最低 23 行分必要です!"
 
 #. #define OPTION_SCREEN_NEEDS_22
-#: LYMessages.c:549
+#: LYMessages.c:547
 msgid "Screen height must be at least 22 lines for the Options menu!"
 msgstr "オプションメニューを表示するにはスクリーンの高さが最低 22 行分必要です!"
 
-#: LYMessages.c:551
+#: LYMessages.c:549
 msgid "That key requires Advanced User mode."
 msgstr "そのキーを使うには高度ユーザモードでなければなりません。"
 
-#: LYMessages.c:552
+#: LYMessages.c:550
 #, c-format
 msgid "Content-type: %s"
 msgstr "Content-type: %s"
 
-#: LYMessages.c:553
+#: LYMessages.c:551
 msgid "Command: "
 msgstr "コマンド: "
 
-#: LYMessages.c:554
+#: LYMessages.c:552
 msgid "Unknown or ambiguous command"
 msgstr "不明またはあいまいなコマンドです"
 
-#: LYMessages.c:555
+#: LYMessages.c:553
 msgid " Version "
 msgstr " バージョン "
 
-#: LYMessages.c:556
+#: LYMessages.c:554
 msgid " first"
 msgstr " を最初に探します"
 
-#: LYMessages.c:557
+#: LYMessages.c:555
 msgid ", guessing..."
 msgstr "、推測中..."
 
-#: LYMessages.c:558
+#: LYMessages.c:556
 msgid "Permissions for "
 msgstr "パーミッション: "
 
-#: LYMessages.c:559
+#: LYMessages.c:557
 msgid "Select "
 msgstr "選択 "
 
-#: LYMessages.c:560
+#: LYMessages.c:558
 msgid "capital letter"
 msgstr "大文字"
 
-#: LYMessages.c:561
+#: LYMessages.c:559
 msgid " of option line,"
 msgstr " のオプションライン、"
 
-#: LYMessages.c:562
+#: LYMessages.c:560
 msgid " to save,"
 msgstr " で保存、"
 
-#: LYMessages.c:563
+#: LYMessages.c:561
 msgid " to "
 msgstr " へ "
 
-#: LYMessages.c:564
+#: LYMessages.c:562
 msgid " or "
 msgstr " または "
 
-#: LYMessages.c:565
+#: LYMessages.c:563
 msgid " index"
 msgstr " 索引"
 
-#: LYMessages.c:566
+#: LYMessages.c:564
 msgid " to return to Lynx."
 msgstr " で Lynx に戻る。"
 
-#: LYMessages.c:567
+#: LYMessages.c:565
 msgid "Accept Changes"
 msgstr "変更を有効にする"
 
-#: LYMessages.c:568
+#: LYMessages.c:566
 msgid "Reset Changes"
 msgstr "変更をリセット"
 
-#: LYMessages.c:569
+#: LYMessages.c:567
 msgid "Left Arrow cancels changes"
 msgstr "[←] キャンセル"
 
-#: LYMessages.c:570
+#: LYMessages.c:568
 msgid "Save options to disk"
 msgstr "変更をディスクに保存"
 
-#: LYMessages.c:571
+#: LYMessages.c:569
 msgid "Hit RETURN to accept entered data."
 msgstr "リターンキーで入力したデータを登録"
 
 #. #define ACCEPT_DATA_OR_DEFAULT
-#: LYMessages.c:573
+#: LYMessages.c:571
 msgid "Hit RETURN to accept entered data.  Delete data to invoke the default."
 msgstr "リターンで入力したデータを受け付けます。デフォルトに戻すにはデータを削除"
 
-#: LYMessages.c:574
+#: LYMessages.c:572
 msgid "Value accepted!"
 msgstr "値を受け入れました!"
 
 #. #define VALUE_ACCEPTED_WARNING_X
-#: LYMessages.c:576
+#: LYMessages.c:574
 msgid "Value accepted! -- WARNING: Lynx is configured for XWINDOWS!"
 msgstr "値を受け入れました! -- 注意: Lynx は XWINDOWS 向けに設定されました!"
 
 #. #define VALUE_ACCEPTED_WARNING_NONX
-#: LYMessages.c:578
+#: LYMessages.c:576
 msgid "Value accepted! -- WARNING: Lynx is NOT configured for XWINDOWS!"
 msgstr "値を受け入れました! -- 注意: Lynx は XWINDOWS 向けに設定されて*いません*"
 
-#: LYMessages.c:579
+#: LYMessages.c:577
 msgid "You are not allowed to change which editor to use!"
 msgstr "使用するエディタの変更は許可されていません!"
 
-#: LYMessages.c:580
+#: LYMessages.c:578
 msgid "Failed to set DISPLAY variable!"
 msgstr "環境変数 DISPLAY の設定に失敗しました!"
 
-#: LYMessages.c:581
+#: LYMessages.c:579
 msgid "Failed to clear DISPLAY variable!"
 msgstr "環境変数 DISPLAY のクリアに失敗しました!"
 
 #. #define BOOKMARK_CHANGE_DISALLOWED
-#: LYMessages.c:583
+#: LYMessages.c:581
 msgid "You are not allowed to change the bookmark file!"
 msgstr "ブックマークファイルの変更は許可されていません!"
 
-#: LYMessages.c:584
+#: LYMessages.c:582
 msgid "Terminal does not support color"
 msgstr "端末がカラー表示をサポートしていません。"
 
-#: LYMessages.c:585
+#: LYMessages.c:583
 #, c-format
 msgid "Your '%s' terminal does not support color."
 msgstr "あなたの端末 '%s' はカラー表示をサポートしていません。"
 
-#: LYMessages.c:586
+#: LYMessages.c:584
 msgid "Access to dot files is disabled!"
 msgstr "ドットファイルへのアクセスはできません!"
 
 #. #define UA_NO_LYNX_WARNING
-#: LYMessages.c:588
+#: LYMessages.c:586
 msgid "User-Agent string does not contain \"Lynx\" or \"L_y_n_x\""
 msgstr "User-Agent に \"Lynx\" あるいは \"L_y_n_x\" という文字列が含まれていません"
 
 #. #define UA_PLEASE_USE_LYNX
-#: LYMessages.c:590
+#: LYMessages.c:588
 msgid "Use \"L_y_n_x\" or \"Lynx\" in User-Agent, or it looks like intentional deception!"
 msgstr "User-Agent に \"L_y_n_x\" ないし \"Lynx\" という文字列を含めてください。さもないと意図的な欺瞞と見なします!"
 
 #. #define UA_CHANGE_DISABLED
-#: LYMessages.c:592
+#: LYMessages.c:590
 msgid "Changing of the User-Agent string is disabled!"
 msgstr "User-Agent 文字列の変更はできません!"
 
 #. #define CHANGE_OF_SETTING_DISALLOWED
-#: LYMessages.c:594
+#: LYMessages.c:592
 msgid "You are not allowed to change this setting."
 msgstr "この設定の変更は許可されていません。"
 
-#: LYMessages.c:595
+#: LYMessages.c:593
 msgid "Saving Options..."
 msgstr "設定を保存中..."
 
-#: LYMessages.c:596
+#: LYMessages.c:594
 msgid "Options saved!"
 msgstr "設定を保存しました!"
 
-#: LYMessages.c:597
+#: LYMessages.c:595
 msgid "Unable to save Options!"
 msgstr "設定を保存できません!"
 
-#: LYMessages.c:598
+#: LYMessages.c:596
 msgid " 'r' to return to Lynx "
 msgstr "[r]で Lynx に戻ります "
 
-#: LYMessages.c:599
+#: LYMessages.c:597
 msgid " '>' to save, or 'r' to return to Lynx "
 msgstr " [>] で保存、[r] で Lynx に戻ります "
 
 #. #define ANY_KEY_CHANGE_RET_ACCEPT
-#: LYMessages.c:601
+#: LYMessages.c:599
 msgid "Hit any key to change value; RETURN to accept."
 msgstr "何かキーを押して値を変えてください。リターンで登録"
 
-#: LYMessages.c:602
+#: LYMessages.c:600
 msgid "Error uncompressing temporary file!"
 msgstr "一時ファイルの展開でエラーが発生しました!"
 
-#: LYMessages.c:603
+#: LYMessages.c:601
 msgid "Unsupported URL scheme!"
 msgstr "サポートされていない URL スキームです!"
 
-#: LYMessages.c:604
+#: LYMessages.c:602
 msgid "Unsupported data: URL!  Use SHOWINFO, for now."
 msgstr "サポートされていないデータ: URL! とりあえず SHOWINFO を使ってください。"
 
-#: LYMessages.c:605
+#: LYMessages.c:603
 msgid "Redirection limit of 10 URL's reached."
 msgstr "リダイレクション制限 (10 URL) に到達しました。"
 
-#: LYMessages.c:606
+#: LYMessages.c:604
 msgid "Illegal redirection URL received from server!"
 msgstr "サーバから不正なリダイレクション URL を受信しました!"
 
 #. #define SERVER_ASKED_FOR_REDIRECTION
-#: LYMessages.c:608
+#: LYMessages.c:606
 #, c-format
 msgid "Server asked for %d redirection of POST content to"
 msgstr "サーバは POST コンテントの以下への %d リダイレクションを要求しました: "
 
-#: LYMessages.c:611
+#: LYMessages.c:609
 msgid "P)roceed, use G)ET or C)ancel "
 msgstr "[p]で続行、[g]GETを使う、[c]キャンセル"
 
-#: LYMessages.c:612
+#: LYMessages.c:610
 msgid "P)roceed, or C)ancel "
 msgstr "[p]で続行、または [c]キャンセル"
 
 #. #define ADVANCED_POST_GET_REDIRECT
-#: LYMessages.c:614
+#: LYMessages.c:612
 msgid "Redirection of POST content.  P)roceed, see U)RL, use G)ET or C)ancel"
 msgstr "POST コンテントのリダイレクション [p]続行 [u]URLを見る [g]GETを使う [c]キャンセル"
 
 #. #define ADVANCED_POST_REDIRECT
-#: LYMessages.c:616
+#: LYMessages.c:614
 msgid "Redirection of POST content.  P)roceed, see U)RL, or C)ancel"
 msgstr "POST コンテントのリダイレクション [p]続行 [u]URLを見る [c]キャンセル"
 
 #. #define CONFIRM_POST_RESUBMISSION
-#: LYMessages.c:618
+#: LYMessages.c:616
 msgid "Document from Form with POST content.  Resubmit?"
 msgstr "POST コンテントを持つフォームからのドキュメントです。再送信しますか?"
 
 #. #define CONFIRM_POST_RESUBMISSION_TO
-#: LYMessages.c:620
+#: LYMessages.c:618
 #, c-format
 msgid "Resubmit POST content to %s ?"
 msgstr "POST コンテントを %s に再送信しますか?"
 
 #. #define CONFIRM_POST_LIST_RELOAD
-#: LYMessages.c:622
+#: LYMessages.c:620
 #, c-format
 msgid "List from document with POST data.  Reload %s ?"
 msgstr "POST データを持つドキュメントからのリストです。%s を再読み込みしますか?"
 
 #. #define CONFIRM_POST_DOC_HEAD
-#: LYMessages.c:624
+#: LYMessages.c:622
 msgid "Document from POST action, HEAD may not be understood.  Proceed?"
 msgstr "POST アクションからの文書ですが、HEAD は理解されていないかもしれません。続行しますか?"
 
 #. #define CONFIRM_POST_LINK_HEAD
-#: LYMessages.c:626
+#: LYMessages.c:624
 msgid "Form submit action is POST, HEAD may not be understood.  Proceed?"
 msgstr "フォーム送信アクションは POST ですが、HEAD は理解されていないかもしれません。続行しますか?"
 
-#: LYMessages.c:627
+#: LYMessages.c:625
 msgid "Proceed without a username and password?"
 msgstr "ユーザ名もパスワードも無しで続行しますか?"
 
-#: LYMessages.c:628
+#: LYMessages.c:626
 #, c-format
 msgid "Proceed (%s)?"
 msgstr "続行しますか (%s)?"
 
-#: LYMessages.c:629
+#: LYMessages.c:627
 msgid "Cannot POST to this host."
 msgstr "このホストには POST できません。"
 
-#: LYMessages.c:630
+#: LYMessages.c:628
 msgid "POST not supported for this URL - ignoring POST data!"
 msgstr "この URL のための POST はサポートされていません。POST データは無視されます!"
 
-#: LYMessages.c:631
+#: LYMessages.c:629
 msgid "Discarding POST data..."
 msgstr "POST データを廃棄しています..."
 
-#: LYMessages.c:632
+#: LYMessages.c:630
 msgid "Document will not be reloaded!"
 msgstr "文書は再読み込みされません!"
 
-#: LYMessages.c:633
+#: LYMessages.c:631
 msgid "Location: "
 msgstr "場所: "
 
-#: LYMessages.c:634
+#: LYMessages.c:632
 #, c-format
 msgid "'%s' not found!"
 msgstr "'%s' は見つかりませんでした!"
 
-#: LYMessages.c:635
+#: LYMessages.c:633
 msgid "Default Bookmark File"
 msgstr "デフォルトブックマークファイル"
 
-#: LYMessages.c:636
+#: LYMessages.c:634
 msgid "Screen too small! (8x35 min)"
 msgstr "スクリーンが小さすぎます!!! (最低 8x35 必要です)"
 
-#: LYMessages.c:637
+#: LYMessages.c:635
 msgid "Select destination or ^G to Cancel: "
 msgstr "ファイルを選択してください (^G でキャンセル): "
 
 #. #define MULTIBOOKMARKS_SELECT
-#: LYMessages.c:639
+#: LYMessages.c:637
 msgid "Select subbookmark, '=' for menu, or ^G to cancel: "
 msgstr "ブックマークを選択 [=] メニュー [^g] キャンセル: "
 
 #. #define MULTIBOOKMARKS_SELF
-#: LYMessages.c:641
+#: LYMessages.c:639
 msgid "Reproduce L)ink in this bookmark file or C)ancel? (l,c): "
 msgstr "[l]このブックマークファイル内でリンクを再製 ([c]キャンセル): "
 
-#: LYMessages.c:642
+#: LYMessages.c:640
 msgid "Multiple bookmark support is not available."
 msgstr "マルチブックマークはサポートされていません。"
 
-#: LYMessages.c:643
+#: LYMessages.c:641
 #, c-format
 msgid " Select Bookmark (screen %d of %d)"
 msgstr "ブックマークを選択 (ページ %d、全 %d ページ)"
 
-#: LYMessages.c:644
+#: LYMessages.c:642
 msgid "       Select Bookmark"
 msgstr "       ブックマークを選択"
 
 #. #define MULTIBOOKMARKS_EHEAD_MASK
-#: LYMessages.c:646
+#: LYMessages.c:644
 #, c-format
 msgid "Editing Bookmark DESCRIPTION and FILEPATH (%d of 2)"
 msgstr "ブックマークの説明とファイルへのパスを編集 (2 の %d) "
 
 #. #define MULTIBOOKMARKS_EHEAD
-#: LYMessages.c:648
+#: LYMessages.c:646
 msgid "         Editing Bookmark DESCRIPTION and FILEPATH"
 msgstr "ブックマークの説明とファイル名を編集"
 
-#: LYMessages.c:649
+#: LYMessages.c:647
 msgid "Letter: "
 msgstr "文字を入力: "
 
 #. #define USE_PATH_OFF_HOME
-#: LYMessages.c:652
+#: LYMessages.c:650
 msgid "Use a filepath off your login directory in SHELL syntax!"
 msgstr "SHELL 構文ではあなたのログインディレクトリを除いたファイルパスを指定してください!"
 
-#: LYMessages.c:654
+#: LYMessages.c:652
 msgid "Use a filepath off your home directory!"
 msgstr "あなたのホームディレクトリを除いたファイルパスを指定してください!"
 
 #. #define MAXLINKS_REACHED
-#: LYMessages.c:657
+#: LYMessages.c:655
 msgid "Maximum links per page exceeded!  Use half-page or two-line scrolling."
 msgstr "一ページあたりのリンクの最大数を超えました! 半ページないし二行単位のスクロールを使ってください。"
 
 #. #define MAXHIST_REACHED
-#: LYMessages.c:659
+#: LYMessages.c:657
 msgid "History List maximum reached!  Document not pushed."
 msgstr "履歴リストが最大数を超えました! ドキュメントはプッシュされません。"
 
-#: LYMessages.c:660
+#: LYMessages.c:658
 msgid "No previously visited links available!"
 msgstr "以前に訪ねたリンクは一つもありません!"
 
-#: LYMessages.c:661
+#: LYMessages.c:659
 msgid "Memory exhausted!  Program aborted!"
 msgstr "メモリを使いきりました! プログラムが中断されました!"
 
-#: LYMessages.c:662
+#: LYMessages.c:660
 msgid "Memory exhausted!  Aborting..."
 msgstr "メモリを使いきりました! 終了します..."
 
-#: LYMessages.c:663
+#: LYMessages.c:661
 msgid "Not enough memory!"
 msgstr "メモリが足りません!"
 
-#: LYMessages.c:664
+#: LYMessages.c:662
 msgid "Directory/File Manager not available"
 msgstr "ディレクトリ/ファイルマネージャは利用できません"
 
-#: LYMessages.c:665
+#: LYMessages.c:663
 msgid "HREF in BASE tag is not an absolute URL."
 msgstr "BASE タグ中の HREF は絶対 URL ではありません。"
 
-#: LYMessages.c:666
+#: LYMessages.c:664
 msgid "Location URL is not absolute."
 msgstr "ロケーション URL は絶対的なものではありません。"
 
-#: LYMessages.c:667
+#: LYMessages.c:665
 msgid "Refresh URL is not absolute."
 msgstr "リフレッシュ URL は絶対的なものではありません。"
 
 #. #define SENDING_MESSAGE_WITH_BODY_TO
-#: LYMessages.c:669
+#: LYMessages.c:667
 msgid ""
 "You are sending a message with body to:\n"
 "  "
@@ -2034,7 +2036,7 @@ msgstr ""
 "本文を含むメッセージを以下へ送ろうとしています:\n"
 "  "
 
-#: LYMessages.c:670
+#: LYMessages.c:668
 msgid ""
 "You are sending a comment to:\n"
 "  "
@@ -2042,7 +2044,7 @@ msgstr ""
 "以下のアドレスにコメントを送ります:\n"
 "  "
 
-#: LYMessages.c:671
+#: LYMessages.c:669
 msgid ""
 "\n"
 " With copy to:\n"
@@ -2052,7 +2054,7 @@ msgstr ""
 " 以下へもコピーを送ります:\n"
 "  "
 
-#: LYMessages.c:672
+#: LYMessages.c:670
 msgid ""
 "\n"
 " With copies to:\n"
@@ -2063,7 +2065,7 @@ msgstr ""
 "  "
 
 #. #define CTRL_G_TO_CANCEL_SEND
-#: LYMessages.c:674
+#: LYMessages.c:672
 msgid ""
 "\n"
 "\n"
@@ -2074,7 +2076,7 @@ msgstr ""
 "Ctrl-G でメッセージ送信を中止します\n"
 
 #. #define ENTER_NAME_OR_BLANK
-#: LYMessages.c:676
+#: LYMessages.c:674
 msgid ""
 "\n"
 " Please enter your name, or leave it blank to remain anonymous\n"
@@ -2083,7 +2085,7 @@ msgstr ""
 "あなたのお名前を入力してください。空白のままだと匿名になります\n"
 
 #. #define ENTER_MAIL_ADDRESS_OR_OTHER
-#: LYMessages.c:678
+#: LYMessages.c:676
 msgid ""
 "\n"
 " Please enter a mail address or some other\n"
@@ -2092,11 +2094,11 @@ msgstr ""
 " 返事を希望する場合は、メールアドレスか、その他の\n"
 
 #. #define MEANS_TO_CONTACT_FOR_RESPONSE
-#: LYMessages.c:680
+#: LYMessages.c:678
 msgid " means to contact you, if you desire a response.\n"
 msgstr " 連絡手段をここで指定してください。\n"
 
-#: LYMessages.c:681
+#: LYMessages.c:679
 msgid ""
 "\n"
 " Please enter a subject line.\n"
@@ -2105,7 +2107,7 @@ msgstr ""
 " サブジェクトを入力してください。\n"
 
 #. #define ENTER_ADDRESS_FOR_CC
-#: LYMessages.c:683
+#: LYMessages.c:681
 msgid ""
 "\n"
 " Enter a mail address for a CC of your message.\n"
@@ -2113,11 +2115,11 @@ msgstr ""
 "\n"
 " あなたのメッセージを CC するメールアドレスを入力してください。\n"
 
-#: LYMessages.c:684
+#: LYMessages.c:682
 msgid " (Leave blank if you don't want a copy.)\n"
 msgstr " (もしコピーしたくなければ空白のままにしておいてください)\n"
 
-#: LYMessages.c:685
+#: LYMessages.c:683
 msgid ""
 "\n"
 " Please review the message body:\n"
@@ -2127,7 +2129,7 @@ msgstr ""
 " メッセージ本文を確認して下さい:\n"
 "\n"
 
-#: LYMessages.c:686
+#: LYMessages.c:684
 msgid ""
 "\n"
 "Press RETURN to continue: "
@@ -2135,7 +2137,7 @@ msgstr ""
 "\n"
 "続けるにはリターンキーを押して下さい: "
 
-#: LYMessages.c:687
+#: LYMessages.c:685
 msgid ""
 "\n"
 "Press RETURN to clean up: "
@@ -2143,11 +2145,11 @@ msgstr ""
 "\n"
 "全て削除するにはリターンキーを押して下さい: "
 
-#: LYMessages.c:688
+#: LYMessages.c:686
 msgid " Use Control-U to erase the default.\n"
 msgstr "Ctrl-U でデフォルト値を削除します。\n"
 
-#: LYMessages.c:689
+#: LYMessages.c:687
 msgid ""
 "\n"
 " Please enter your message below."
@@ -2156,7 +2158,7 @@ msgstr ""
 " あなたのメッセージを以下に入力してください。"
 
 #. #define ENTER_PERIOD_WHEN_DONE_A
-#: LYMessages.c:691 src/LYNews.c:380
+#: LYMessages.c:689 src/LYNews.c:361
 msgid ""
 "\n"
 " When you are done, press enter and put a single period (.)"
@@ -2165,7 +2167,7 @@ msgstr ""
 " 終わったら、改行キーを押してその行にピリオド (.) を一つ"
 
 #. #define ENTER_PERIOD_WHEN_DONE_B
-#: LYMessages.c:693 src/LYNews.c:381
+#: LYMessages.c:691 src/LYNews.c:362
 msgid ""
 "\n"
 " on a line and press enter again."
@@ -2175,248 +2177,248 @@ msgstr ""
 
 #. Cookies messages
 #. #define ADVANCED_COOKIE_CONFIRMATION
-#: LYMessages.c:697
+#: LYMessages.c:695
 #, c-format
 msgid "%s cookie: %.*s=%.*s  Allow? (Y/N/Always/neVer)"
 msgstr "%s からのクッキー: %.*s=%.*s 受け付けますか? (Y/N/Always/neVer)"
 
 #. #define INVALID_COOKIE_DOMAIN_CONFIRMATION
-#: LYMessages.c:699
+#: LYMessages.c:697
 #, c-format
 msgid "Accept invalid cookie domain=%s for '%s'?"
 msgstr "不正なクッキードメイン= %s を %s として受け付けますか?"
 
 #. #define INVALID_COOKIE_PATH_CONFIRMATION
-#: LYMessages.c:701
+#: LYMessages.c:699
 #, c-format
 msgid "Accept invalid cookie path=%s as a prefix of '%s'?"
 msgstr "不正なクッキーパス = %s を %s のプリフィックスとして受け付けますか? "
 
-#: LYMessages.c:702
+#: LYMessages.c:700
 msgid "Allowing this cookie."
 msgstr "このクッキーを受け付けます。"
 
-#: LYMessages.c:703
+#: LYMessages.c:701
 msgid "Rejecting this cookie."
 msgstr "このクッキーを拒否します。"
 
-#: LYMessages.c:704
+#: LYMessages.c:702
 msgid "The Cookie Jar is empty."
 msgstr "クッキー箱は空っぽです。"
 
 #. #define ACTIVATE_TO_GOBBLE
-#: LYMessages.c:706
+#: LYMessages.c:704
 msgid "Activate links to gobble up cookies or entire domains,"
 msgstr "リンクを辿ると、クッキーやドメイン全体を「食べ」たり、"
 
-#: LYMessages.c:707
+#: LYMessages.c:705
 msgid "or to change a domain's 'allow' setting."
 msgstr "ドメインごとのクッキー受け付け設定を変えることができます。"
 
-#: LYMessages.c:708
+#: LYMessages.c:706
 msgid "(Cookies never allowed.)"
 msgstr "(クッキーを常に拒否します)"
 
-#: LYMessages.c:709
+#: LYMessages.c:707
 msgid "(Cookies always allowed.)"
 msgstr "(クッキーを常に受け付けます)"
 
-#: LYMessages.c:710
+#: LYMessages.c:708
 msgid "(Cookies allowed via prompt.)"
 msgstr "(クッキー受け付けはそのつど判断します)"
 
-#: LYMessages.c:711
+#: LYMessages.c:709
 msgid "(Persistent Cookies.)"
 msgstr "(永続的なクッキー)"
 
-#: LYMessages.c:712
+#: LYMessages.c:710
 msgid "(No title.)"
 msgstr "(タイトルなし)"
 
-#: LYMessages.c:713
+#: LYMessages.c:711
 msgid "(No name.)"
 msgstr "(名前なし)"
 
-#: LYMessages.c:714
+#: LYMessages.c:712
 msgid "(No value.)"
 msgstr "(値なし)"
 
-#: LYMessages.c:715
+#: LYMessages.c:713
 msgid "None"
 msgstr "なし"
 
-#: LYMessages.c:716
+#: LYMessages.c:714
 msgid "(End of session.)"
 msgstr "(セッションの終わり)"
 
-#: LYMessages.c:717
+#: LYMessages.c:715
 msgid "Delete this cookie?"
 msgstr "このクッキーを削除しますか?"
 
-#: LYMessages.c:718
+#: LYMessages.c:716
 msgid "The cookie has been eaten!"
 msgstr "クッキーは食べられてしまいました!"
 
-#: LYMessages.c:719
+#: LYMessages.c:717
 msgid "Delete this empty domain?"
 msgstr "この空になったドメインを削除しますか?"
 
-#: LYMessages.c:720
+#: LYMessages.c:718
 msgid "The domain has been eaten!"
 msgstr "ドメインは食べられてしまいました!"
 
 #. #define DELETE_COOKIES_SET_ALLOW_OR_CANCEL
-#: LYMessages.c:722
+#: LYMessages.c:720
 msgid "D)elete domain's cookies, set allow A)lways/P)rompt/neV)er, or C)ancel? "
 msgstr "ドメインのクッキーを[d]削除、常に[a]受付[v]拒否、[p]判断 ([c]キャンセル)? "
 
 #. #define DELETE_DOMAIN_SET_ALLOW_OR_CANCEL
-#: LYMessages.c:724
+#: LYMessages.c:722
 msgid "D)elete domain, set allow A)lways/P)rompt/neV)er, or C)ancel? "
 msgstr "ドメインを[d]削除、常に[a]受付[v]拒否、[p]判断 ([c]キャンセル)? "
 
-#: LYMessages.c:725
+#: LYMessages.c:723
 msgid "All cookies in the domain have been eaten!"
 msgstr "ドメインのクッキーはすべて食べられてしまいました!"
 
-#: LYMessages.c:726
+#: LYMessages.c:724
 #, c-format
 msgid "'A'lways allowing from domain '%s'."
 msgstr "ドメイン %s からは常に受け付けます。"
 
-#: LYMessages.c:727
+#: LYMessages.c:725
 #, c-format
 msgid "ne'V'er allowing from domain '%s'."
 msgstr "ドメイン %s からは全て拒否します。"
 
-#: LYMessages.c:728
+#: LYMessages.c:726
 #, c-format
 msgid "'P'rompting to allow from domain '%s'."
 msgstr "ドメイン %s からはそのつど判断します。"
 
-#: LYMessages.c:729
+#: LYMessages.c:727
 msgid "Delete all cookies in this domain?"
 msgstr "このドメインのクッキーをすべて削除しますか?"
 
-#: LYMessages.c:730
+#: LYMessages.c:728
 msgid "All of the cookies in the jar have been eaten!"
 msgstr "クッキー箱のクッキーはみんな食べられてしまいました!"
 
-#: LYMessages.c:732
+#: LYMessages.c:730
 msgid "Port 19 not permitted in URLs."
 msgstr "ポート 19 を URL で指定することは認められません。"
 
-#: LYMessages.c:733
+#: LYMessages.c:731
 msgid "Port 25 not permitted in URLs."
 msgstr "ポート 25 を URL で指定することは認められません。"
 
-#: LYMessages.c:734
+#: LYMessages.c:732
 #, c-format
 msgid "Port %lu not permitted in URLs."
 msgstr "ポート %lu を URL で指定することは認められません。"
 
-#: LYMessages.c:735
+#: LYMessages.c:733
 msgid "URL has a bad port field."
 msgstr "URL に不正なポートフィールドが含まれています。"
 
-#: LYMessages.c:736
+#: LYMessages.c:734
 msgid "Maximum nesting of HTML elements exceeded."
 msgstr "HTML エレメントのネスティングが限界を超えました。"
 
-#: LYMessages.c:737
+#: LYMessages.c:735
 msgid "Bad partial reference!  Stripping lead dots."
 msgstr "不正な部分的参照です! 先頭ドットを削ります。"
 
-#: LYMessages.c:738
+#: LYMessages.c:736
 msgid "Trace Log open failed.  Trace off!"
 msgstr "追跡ログを開くのに失敗しました。追跡終了!"
 
-#: LYMessages.c:739
+#: LYMessages.c:737
 msgid "Lynx Trace Log"
 msgstr "Lynx 追跡ログ"
 
-#: LYMessages.c:740
+#: LYMessages.c:738
 msgid "No trace log has been started for this session."
 msgstr "このセッションで開始された追跡ログはありません。"
 
 #. #define MAX_TEMPCOUNT_REACHED
-#: LYMessages.c:742
+#: LYMessages.c:740
 msgid "The maximum temporary file count has been reached!"
 msgstr "一時的ファイル数が限界を越えました!"
 
 #. #define FORM_VALUE_TOO_LONG
-#: LYMessages.c:744
+#: LYMessages.c:742
 msgid "Form field value exceeds buffer length!  Trim the tail."
 msgstr "フォームフィールドの値がバッファの長さを越えました。終端を切ります。"
 
 #. #define FORM_TAIL_COMBINED_WITH_HEAD
-#: LYMessages.c:746
+#: LYMessages.c:744
 msgid "Modified tail combined with head of form field value."
 msgstr "終端をフォームフィールドの値の先頭と結合するよう変更しました。"
 
 #. HTFile.c
-#: LYMessages.c:749
+#: LYMessages.c:747
 msgid "Directory"
 msgstr "ディレクトリ"
 
-#: LYMessages.c:750
+#: LYMessages.c:748
 msgid "Directory browsing is not allowed."
 msgstr "ディレクトリ閲覧は許可されていません。"
 
-#: LYMessages.c:751
+#: LYMessages.c:749
 msgid "Selective access is not enabled for this directory"
 msgstr "選択的アクセスはこのディレクトリでは使えません。"
 
-#: LYMessages.c:752
+#: LYMessages.c:750
 msgid "Multiformat: directory scan failed."
 msgstr "マルチフォーマット: ディレクトリのスキャンに失敗しました。"
 
-#: LYMessages.c:753
+#: LYMessages.c:751
 msgid "This directory is not readable."
 msgstr "このディレクトリは読めません。"
 
-#: LYMessages.c:754
+#: LYMessages.c:752
 msgid "Can't access requested file."
 msgstr "要求されたファイルにアクセスできません。"
 
-#: LYMessages.c:755
+#: LYMessages.c:753
 msgid "Could not find suitable representation for transmission."
 msgstr "伝達する適当な表現を見つけられませんでした。"
 
-#: LYMessages.c:756
+#: LYMessages.c:754
 msgid "Could not open file for decompression!"
 msgstr "展開するファイルが開けません!"
 
-#: LYMessages.c:757
+#: LYMessages.c:755
 msgid "Files:"
 msgstr "ファイル:"
 
-#: LYMessages.c:758
+#: LYMessages.c:756
 msgid "Subdirectories:"
 msgstr "サブディレクトリ:"
 
-#: LYMessages.c:759
+#: LYMessages.c:757
 msgid " directory"
 msgstr " ディレクトリ"
 
-#: LYMessages.c:760
+#: LYMessages.c:758
 msgid "Up to "
 msgstr "以下まで: "
 
-#: LYMessages.c:761
+#: LYMessages.c:759
 msgid "Current directory is "
 msgstr "現在のディレクトリは "
 
 #. HTGopher.c
-#: LYMessages.c:764
+#: LYMessages.c:762
 msgid "No response from server!"
 msgstr "サーバから応答がありません!"
 
-#: LYMessages.c:765
+#: LYMessages.c:763
 msgid "CSO index"
 msgstr "CSO インデックス"
 
-#: LYMessages.c:766
+#: LYMessages.c:764
 msgid ""
 "\n"
 "This is a searchable index of a CSO database.\n"
@@ -2424,16 +2426,16 @@ msgstr ""
 "\n"
 "これはCSOデータベースの検索可能なインデックスです。\n"
 
-#: LYMessages.c:767
+#: LYMessages.c:765
 msgid "CSO Search Results"
 msgstr "CSO 検索結果"
 
-#: LYMessages.c:768
+#: LYMessages.c:766
 #, c-format
 msgid "Seek fail on %s\n"
 msgstr "%s で検索に失敗\n"
 
-#: LYMessages.c:769
+#: LYMessages.c:767
 msgid ""
 "\n"
 "Press the 's' key and enter search keywords.\n"
@@ -2441,7 +2443,7 @@ msgstr ""
 "\n"
 " 's' キーを押して検索するキーワードを入力して下さい。\n"
 
-#: LYMessages.c:770
+#: LYMessages.c:768
 msgid ""
 "\n"
 "This is a searchable Gopher index.\n"
@@ -2449,35 +2451,35 @@ msgstr ""
 "\n"
 "これは検索可能な Gopher インデックスです。\n"
 
-#: LYMessages.c:771
+#: LYMessages.c:769
 msgid "Gopher index"
 msgstr "Gopher インデックス"
 
-#: LYMessages.c:772
+#: LYMessages.c:770
 msgid "Gopher Menu"
 msgstr "Gopher メニュー"
 
-#: LYMessages.c:773
+#: LYMessages.c:771
 msgid " Search Results"
 msgstr " 検索結果"
 
-#: LYMessages.c:774
+#: LYMessages.c:772
 msgid "Sending CSO/PH request."
 msgstr "CSO/PH リクエストを送信中。"
 
-#: LYMessages.c:775
+#: LYMessages.c:773
 msgid "Sending Gopher request."
 msgstr "Gopher リクエストを送信中。"
 
-#: LYMessages.c:776
+#: LYMessages.c:774
 msgid "CSO/PH request sent; waiting for response."
 msgstr "CSO/PH リクエストを送信しました。応答を待っています。"
 
-#: LYMessages.c:777
+#: LYMessages.c:775
 msgid "Gopher request sent; waiting for response."
 msgstr "Gopher リクエストを送信しました。応答を待っています。"
 
-#: LYMessages.c:778
+#: LYMessages.c:776
 msgid ""
 "\n"
 "Please enter search keywords.\n"
@@ -2485,7 +2487,7 @@ msgstr ""
 "\n"
 "検索するキーワードを入力して下さい。\n"
 
-#: LYMessages.c:779
+#: LYMessages.c:777
 msgid ""
 "\n"
 "The keywords that you enter will allow you to search on a"
@@ -2493,193 +2495,198 @@ msgstr ""
 "\n"
 "入力したキーワードにより、データベース内の個人氏名を"
 
-#: LYMessages.c:780
+#: LYMessages.c:778
 msgid " person's name in the database.\n"
 msgstr "検索することが可能になります。\n"
 
 #. HTNews.c
-#: LYMessages.c:783
+#: LYMessages.c:781
 msgid "Connection closed ???"
 msgstr "接続が閉じられたのかも ???"
 
-#: LYMessages.c:784
+#: LYMessages.c:782
 msgid "Cannot open temporary file for news POST."
 msgstr "ニュース POST のための一時ファイルが開けません。"
 
-#: LYMessages.c:785
+#: LYMessages.c:783
 msgid "This client does not contain support for posting to news with SSL."
 msgstr "このクライアントではニュースを SSL 経由でポストする機能がサポートされていません。"
 
 #. HTStyle.c
-#: LYMessages.c:788
+#: LYMessages.c:786
 #, c-format
 msgid "Style %d `%s' SGML:%s.  Font %s %.1f point.\n"
 msgstr "スタイル %d `%s'、SGML:%s。 フォント %s %.1f ポイント。\n"
 
-#: LYMessages.c:789
+#: LYMessages.c:787
 #, c-format
 msgid "\tIndents: first=%.0f others=%.0f, Height=%.1f Desc=%.1f\n"
 msgstr "\tインデント: 最初=%.0f その他=%.0f、高さ=%.1f Desc=%.1f\n"
 
-#: LYMessages.c:790
+#: LYMessages.c:788
 #, c-format
 msgid "\tAlign=%d, %d tabs. (%.0f before, %.0f after)\n"
 msgstr "\t調整=%d、%d タブ。(前に %.0f、後に %.0f)\n"
 
-#: LYMessages.c:791
+#: LYMessages.c:789
 #, c-format
 msgid "\t\tTab kind=%d at %.0f\n"
 msgstr "\t\tタブ 種類=%d (%.0f における)\n"
 
 #. HTTP.c
-#: LYMessages.c:794
+#: LYMessages.c:792
 msgid "Can't proceed without a username and password."
 msgstr "ユーザ名とパスワード無しでは続行できません。"
 
-#: LYMessages.c:795
+#: LYMessages.c:793
 msgid "Can't retry with authorization!  Contact the server's WebMaster."
 msgstr "認証付きで再試行できません! サーバのウェブマスタに連絡してください。"
 
-#: LYMessages.c:796
+#: LYMessages.c:794
 msgid "Can't retry with proxy authorization!  Contact the server's WebMaster."
 msgstr "プロキシ認証付きで再試行できません! サーバのウェブマスタに連絡してください。"
 
-#: LYMessages.c:797
+#: LYMessages.c:795
 msgid "Retrying with proxy authorization information."
 msgstr "プロキシ認証情報付きで再試行しています。"
 
 #. HTWAIS.c
-#: LYMessages.c:800
+#: LYMessages.c:798
 msgid "HTWAIS: Return message too large."
 msgstr "HTWAIS: リターンメッセージが大きすぎます。"
 
-#: LYMessages.c:801
+#: LYMessages.c:799
 msgid "Enter WAIS query: "
 msgstr "WAIS 検索文字列を入力: "
 
 #. Miscellaneous status
-#: LYMessages.c:804
+#: LYMessages.c:802
 msgid "Retrying as HTTP0 request."
 msgstr "HTTP0 リクエストとして再送信しています。"
 
-#: LYMessages.c:805
+#: LYMessages.c:803
 #, c-format
 msgid "Transferred %d bytes"
 msgstr "%d バイト転送済"
 
-#: LYMessages.c:806
+#: LYMessages.c:804
 msgid "Data transfer complete"
 msgstr "データ転送完了"
 
-#: LYMessages.c:807
+#: LYMessages.c:805
 #, c-format
 msgid "Error processing line %d of %s\n"
 msgstr "%d 行目(%s 中)の処理でエラー\n"
 
 #. Lynx internal page titles
-#: LYMessages.c:810
+#: LYMessages.c:808
 msgid "Address List Page"
 msgstr "アドレスリストページ"
 
-#: LYMessages.c:811
+#: LYMessages.c:809
 msgid "Bookmark file"
 msgstr "ブックマークファイル"
 
-#: LYMessages.c:812
+#: LYMessages.c:810
 msgid "Configuration Definitions"
 msgstr "コンパイル時に定義された設定"
 
-#: LYMessages.c:813
+#: LYMessages.c:811
 msgid "Cookie Jar"
 msgstr "クッキー箱"
 
-#: LYMessages.c:814
+#: LYMessages.c:812
 msgid "Current Key Map"
 msgstr "現在のキーマップ"
 
-#: LYMessages.c:815
+#: LYMessages.c:813
 msgid "File Management Options"
 msgstr "ファイル管理オプション"
 
-#: LYMessages.c:816
+#: LYMessages.c:814
 msgid "Download Options"
 msgstr "ダウンロード先を選択"
 
-#: LYMessages.c:817
+#: LYMessages.c:815
 msgid "History Page"
 msgstr "履歴ページ"
 
-#: LYMessages.c:818
+#: LYMessages.c:816
 msgid "List Page"
 msgstr "リストページ"
 
-#: LYMessages.c:819
+#: LYMessages.c:817
 msgid "Lynx.cfg Information"
 msgstr "Lynx.cfg の情報"
 
-#: LYMessages.c:820
+#: LYMessages.c:818
 msgid "Converted Mosaic Hotlist"
 msgstr "変換された Mosaic の Hotlist"
 
-#: LYMessages.c:821
+#: LYMessages.c:819
 msgid "Options Menu"
 msgstr "設定メニュー"
 
-#: LYMessages.c:822
+#: LYMessages.c:820
 msgid "File Permission Options"
 msgstr "ファイルパーミッションの設定"
 
-#: LYMessages.c:823
+#: LYMessages.c:821
 msgid "Printing Options"
 msgstr "印刷の設定"
 
-#: LYMessages.c:824
+#: LYMessages.c:822
 msgid "Information about the current document"
 msgstr "現在の文書についての情報"
 
-#: LYMessages.c:825
+#: LYMessages.c:823
 msgid "Your recent statusline messages"
 msgstr "最近のステータスラインメッセージ"
 
-#: LYMessages.c:826
+#: LYMessages.c:824
 msgid "Upload Options"
 msgstr "アップロードの設定"
 
-#: LYMessages.c:827
+#: LYMessages.c:825
 msgid "Visited Links Page"
 msgstr "訪れたリンク一覧"
 
 #. CONFIG_DEF_TITLE subtitles
-#: LYMessages.c:830
+#: LYMessages.c:828
 msgid "See also"
 msgstr "こちらも参照:"
 
-#: LYMessages.c:831
+#: LYMessages.c:829
 msgid "your"
 msgstr "あなたの"
 
-#: LYMessages.c:832
+#: LYMessages.c:830
 msgid "for runtime options"
 msgstr "ランタイムオプション向け"
 
-#: LYMessages.c:833
+#: LYMessages.c:831
 msgid "compile time options"
 msgstr "コンパイル時のオプション"
 
-#: LYMessages.c:834
+#: LYMessages.c:832
+#, fuzzy
+msgid "color-style configuration"
+msgstr "最初に参照される設定ファイルは"
+
+#: LYMessages.c:833
 msgid "latest release"
 msgstr "最新版"
 
-#: LYMessages.c:835
+#: LYMessages.c:834
 msgid "pre-release version"
 msgstr "プレリリース版"
 
-#: LYMessages.c:836
+#: LYMessages.c:835
 msgid "development version"
 msgstr "開発版"
 
 #. #define AUTOCONF_CONFIG_CACHE
-#: LYMessages.c:838
+#: LYMessages.c:837
 msgid ""
 "The following data were derived during the automatic configuration/build\n"
 "process of this copy of Lynx.  When reporting a bug, please include a copy\n"
@@ -2690,7 +2697,7 @@ msgstr ""
 "含めてください。"
 
 #. #define AUTOCONF_LYNXCFG_H
-#: LYMessages.c:842
+#: LYMessages.c:841
 msgid ""
 "The following data were used as automatically-configured compile-time\n"
 "definitions when this copy of Lynx was built."
@@ -2699,104 +2706,103 @@ msgstr ""
 "コンパイル時定義として使われたものです。"
 
 #. #define DIRED_NOVICELINE
-#: LYMessages.c:847
+#: LYMessages.c:846
 msgid "  C)reate  D)ownload  E)dit  F)ull menu  M)odify  R)emove  T)ag  U)pload     \n"
 msgstr "  [c]作成 [d]ダウンロード [e]編集 [f]フルメニュー [m]変更 [r]削除 [t]タグ [u]アップロード     \n"
 
-#: LYMessages.c:848
+#: LYMessages.c:847
 msgid "Failed to obtain status of current link!"
 msgstr "現在のリンクのステータスの入手に失敗しました!"
 
 #. #define INVALID_PERMIT_URL
-#: LYMessages.c:851
+#: LYMessages.c:850
 msgid "Special URL only valid from current File Permission menu!"
 msgstr "特別 URL は現在のファイル許可メニューからのみ有効です!"
 
-#: LYMessages.c:855
+#: LYMessages.c:854
 msgid "External support is currently disabled."
 msgstr "外部サポートは現在無効になっています。"
 
 #. new with 2.8.4dev.21
-#: LYMessages.c:859
-#, fuzzy
+#: LYMessages.c:858
 msgid "Changing working-directory is currently disabled."
-msgstr "外部コマンド起動は現在できません。"
+msgstr "作業ディレクトリの変更は現在無効になっています。"
+
+#: LYMessages.c:859
+msgid "Linewrap OFF!"
+msgstr "行ラップ オフ!"
 
 #: LYMessages.c:860
-#, fuzzy
-msgid "Linewrap OFF!"
-msgstr "追跡終了!"
+msgid "Linewrap ON!"
+msgstr "行ラップ オン!"
 
 #: LYMessages.c:861
-msgid "Linewrap ON!"
-msgstr ""
+msgid "Parsing nested-tables toggled OFF!  Reloading..."
+msgstr "入れ子テーブルの解析 トグルオフ! 再読み込み中..."
 
 #: LYMessages.c:862
-#, fuzzy
-msgid "Parsing nested-tables toggled OFF!  Reloading..."
-msgstr "生 8 ビット / CJK モード トグルオフ! 再読み込み中..."
+msgid "Parsing nested-tables toggled ON!  Reloading..."
+msgstr "入れ子テーブルの解析 トグルオン! 再読み込み中..."
 
 #: LYMessages.c:863
-#, fuzzy
-msgid "Parsing nested-tables toggled ON!  Reloading..."
-msgstr "生 8 ビット / CJK モード トグルオン! 再読み込み中..."
+msgid "Shifting is disabled while line-wrap is in effect"
+msgstr "行ラップが有効な間、移動は無効になっています"
 
 #: LYMessages.c:864
-msgid "Shifting is disabled while line-wrap is in effect"
-msgstr ""
-
-#: LYMessages.c:865
-#, fuzzy
 msgid "Trace not supported"
-msgstr "端末がカラー表示をサポートしていません。"
+msgstr "追跡はサポートされていません。"
 
-#: WWW/Library/Implementation/HTAABrow.c:648
+#: WWW/Library/Implementation/HTAABrow.c:647
 #, c-format
 msgid "Username for '%s' at %s '%s%s':"
 msgstr "'%s' のための %s '%s%s' におけるユーザ名:"
 
-#: WWW/Library/Implementation/HTAABrow.c:914
+#: WWW/Library/Implementation/HTAABrow.c:913
 msgid "This client doesn't know how to compose proxy authorization information for scheme"
 msgstr "このクライアントはこのスキーム向けにプロキシ認証情報を構成することができません"
 
-#: WWW/Library/Implementation/HTAABrow.c:989
+#: WWW/Library/Implementation/HTAABrow.c:988
 msgid "This client doesn't know how to compose authorization information for scheme"
 msgstr "このクライアントはこのスキーム向けに認証情報を構成することができません"
 
-#: WWW/Library/Implementation/HTAABrow.c:1097
+#: WWW/Library/Implementation/HTAABrow.c:1096
 #, c-format
 msgid "Invalid header '%s%s%s%s%s'"
 msgstr "不正なヘッダ '%s%s%s%s%s' です"
 
-#: WWW/Library/Implementation/HTAABrow.c:1201
+#: WWW/Library/Implementation/HTAABrow.c:1200
 msgid "Proxy authorization required -- retrying"
 msgstr "プロキシ認証が必要です -- 再試行しています"
 
-#: WWW/Library/Implementation/HTAABrow.c:1260
+#: WWW/Library/Implementation/HTAABrow.c:1259
 msgid "Access without authorization denied -- retrying"
 msgstr "認証無しのアクセスは拒否されました -- 再試行しています"
 
-#: WWW/Library/Implementation/HTAccess.c:683
+#: WWW/Library/Implementation/HTAccess.c:677
 msgid "Access forbidden by rule"
 msgstr "規則によりアクセスは禁止されています。"
 
-#: WWW/Library/Implementation/HTAccess.c:785
+#: WWW/Library/Implementation/HTAccess.c:779
 msgid "Document with POST content not found in cache.  Resubmit?"
 msgstr "POST コンテンツを含むドキュメントはキャッシュの中にありませんでした。再送信しますか?"
 
-#: WWW/Library/Implementation/HTAccess.c:1026 src/GridText.c:8039
+#: WWW/Library/Implementation/HTAccess.c:939
+msgid "Loading failed, use a previous copy."
+msgstr ""
+
+#: WWW/Library/Implementation/HTAccess.c:1047 src/GridText.c:8312
 msgid "Loading incomplete."
 msgstr "読み込みが中断されました。"
 
-#: WWW/Library/Implementation/HTAccess.c:1056
+#: WWW/Library/Implementation/HTAccess.c:1077
 msgid "**** HTAccess: socket or file number returned by obsolete load routine!\n"
 msgstr "*** HTAccess: ソケットかファイルの番号が、旧式の読み込みルーチンから返されています!\n"
 
-#: WWW/Library/Implementation/HTAccess.c:1058
+#: WWW/Library/Implementation/HTAccess.c:1079
 msgid "**** HTAccess: Internal software error.  Please mail lynx-dev@sig.net!\n"
 msgstr "**** HTAccess: ソフトウェア内部のエラーです。lynx-dev@sig.net にメールで報告してください!\n"
 
-#: WWW/Library/Implementation/HTAccess.c:1059
+#: WWW/Library/Implementation/HTAccess.c:1080
 #, c-format
 msgid "**** HTAccess: Status returned was: %d\n"
 msgstr "**** HTAccess: 返ってきたステータスは: %d\n"
@@ -2805,28 +2811,28 @@ msgstr "**** HTAccess: 返ってきたステータスは: %d\n"
 #. * hack: if we fail in HTAccess.c
 #. * avoid duplicating URL, oh.
 #.
-#: WWW/Library/Implementation/HTAccess.c:1065 src/LYMainLoop.c:7834
+#: WWW/Library/Implementation/HTAccess.c:1086 src/LYMainLoop.c:7736
 msgid "Can't Access"
 msgstr "アクセスできません。"
 
-#: WWW/Library/Implementation/HTAccess.c:1073
+#: WWW/Library/Implementation/HTAccess.c:1094
 msgid "Unable to access document."
 msgstr "文書にアクセスできません。"
 
-#: WWW/Library/Implementation/HTFTP.c:756
+#: WWW/Library/Implementation/HTFTP.c:766
 #, c-format
 msgid "Enter password for user %s@%s:"
 msgstr "ユーザ %s@%s のパスワードを入力:"
 
-#: WWW/Library/Implementation/HTFTP.c:784
+#: WWW/Library/Implementation/HTFTP.c:794
 msgid "Unable to connect to FTP host."
 msgstr "FTP ホストに接続できません。"
 
-#: WWW/Library/Implementation/HTFTP.c:1054
+#: WWW/Library/Implementation/HTFTP.c:1064
 msgid "close master socket"
 msgstr "マスターソケットが閉じます"
 
-#: WWW/Library/Implementation/HTFTP.c:1116
+#: WWW/Library/Implementation/HTFTP.c:1126
 msgid "socket for master socket"
 msgstr "マスターソケット用ソケット"
 
@@ -2835,36 +2841,36 @@ msgstr "マスターソケット用ソケット"
 #. **  knowing if it is symbolic?	I think so since
 #. **  it might be a directory.
 #.
-#: WWW/Library/Implementation/HTFTP.c:1630 WWW/Library/Implementation/HTFTP.c:2251
+#: WWW/Library/Implementation/HTFTP.c:1640 WWW/Library/Implementation/HTFTP.c:2261
 msgid "Symbolic Link"
 msgstr "シンボリックリンク"
 
-#: WWW/Library/Implementation/HTFTP.c:2612
+#: WWW/Library/Implementation/HTFTP.c:2622
 msgid "Receiving FTP directory."
 msgstr "FTP ディレクトリを受信中"
 
-#: WWW/Library/Implementation/HTFTP.c:2755
+#: WWW/Library/Implementation/HTFTP.c:2762
 #, c-format
 msgid "Transferred %d bytes (%5d)"
 msgstr "%d バイト転送済 (%5d)"
 
-#: WWW/Library/Implementation/HTFTP.c:3090
+#: WWW/Library/Implementation/HTFTP.c:3083
 msgid "connect for data"
 msgstr "データに接続"
 
-#: WWW/Library/Implementation/HTFTP.c:3690
+#: WWW/Library/Implementation/HTFTP.c:3731
 msgid "Receiving FTP file."
 msgstr "FTP ファイルを受信中"
 
-#: WWW/Library/Implementation/HTFinger.c:275
+#: WWW/Library/Implementation/HTFinger.c:278
 msgid "Could not set up finger connection."
 msgstr "finger 接続を用意できませんでした。"
 
-#: WWW/Library/Implementation/HTFinger.c:320
+#: WWW/Library/Implementation/HTFinger.c:325
 msgid "Could not load data (no sitename in finger URL)"
 msgstr "データが読み込めませんでした(finger URL にサイト名が指定されていません)"
 
-#: WWW/Library/Implementation/HTFinger.c:328
+#: WWW/Library/Implementation/HTFinger.c:331
 msgid "Invalid port number - will only use port 79!"
 msgstr "不正なポート番号です - ポート 79 のみを使います!"
 
@@ -2872,7 +2878,7 @@ msgstr "不正なポート番号です - ポート 79 のみを使います!"
 msgid "Could not access finger host."
 msgstr "finger ホストに接続できません。"
 
-#: WWW/Library/Implementation/HTFinger.c:407
+#: WWW/Library/Implementation/HTFinger.c:404
 msgid "No response from finger server."
 msgstr "finger サーバが応答しません。"
 
@@ -2898,12 +2904,12 @@ msgstr "ニュースホスト '%s' のパスワード:"
 msgid "Change password?"
 msgstr "パスワードを変更しますか?"
 
-#: WWW/Library/Implementation/HTNews.c:1691
+#: WWW/Library/Implementation/HTNews.c:1690
 #, c-format
 msgid "No matches for: %s"
 msgstr "該当するものがありません: %s"
 
-#: WWW/Library/Implementation/HTNews.c:1744
+#: WWW/Library/Implementation/HTNews.c:1743
 msgid ""
 "\n"
 "No articles in this group.\n"
@@ -2911,7 +2917,7 @@ msgstr ""
 "\n"
 "このグループ内には記事がありません。\n"
 
-#: WWW/Library/Implementation/HTNews.c:1757
+#: WWW/Library/Implementation/HTNews.c:1756
 msgid ""
 "\n"
 "No articles in this range.\n"
@@ -2922,16 +2928,16 @@ msgstr ""
 #.
 #. **	Set window title.
 #.
-#: WWW/Library/Implementation/HTNews.c:1770
+#: WWW/Library/Implementation/HTNews.c:1769
 #, c-format
 msgid "%s,  Articles %d-%d"
 msgstr "%s、記事 %d-%d"
 
-#: WWW/Library/Implementation/HTNews.c:1792
+#: WWW/Library/Implementation/HTNews.c:1791
 msgid "Earlier articles"
 msgstr "以前の記事"
 
-#: WWW/Library/Implementation/HTNews.c:1805
+#: WWW/Library/Implementation/HTNews.c:1804
 #, c-format
 msgid ""
 "\n"
@@ -2942,41 +2948,41 @@ msgstr ""
 "現在 %d 通ほどの記事を %s で読むことができます。ID は以下の通り:\n"
 "\n"
 
-#: WWW/Library/Implementation/HTNews.c:1865
+#: WWW/Library/Implementation/HTNews.c:1864
 msgid "All available articles in "
 msgstr "以下で読める全記事: "
 
-#: WWW/Library/Implementation/HTNews.c:2081
+#: WWW/Library/Implementation/HTNews.c:2080
 msgid "Later articles"
 msgstr "その後の記事"
 
-#: WWW/Library/Implementation/HTNews.c:2105
+#: WWW/Library/Implementation/HTNews.c:2104
 msgid "Post to "
 msgstr "以下へポスト: "
 
-#: WWW/Library/Implementation/HTNews.c:2323
+#: WWW/Library/Implementation/HTNews.c:2322
 msgid "This client does not contain support for SNEWS URLs."
 msgstr "このクライアントには SNEWS URL のサポートが含まれていません。"
 
-#: WWW/Library/Implementation/HTNews.c:2531
+#: WWW/Library/Implementation/HTNews.c:2530
 msgid "No target for raw text!"
 msgstr "生テキスト向けのターゲットがありません!"
 
-#: WWW/Library/Implementation/HTNews.c:2561
+#: WWW/Library/Implementation/HTNews.c:2560
 msgid "Connecting to NewsHost ..."
 msgstr "ニュースホストに接続中 ..."
 
-#: WWW/Library/Implementation/HTNews.c:2612
+#: WWW/Library/Implementation/HTNews.c:2611
 #, c-format
 msgid "Could not access %s."
 msgstr "%s にアクセスできません。"
 
-#: WWW/Library/Implementation/HTNews.c:2712
+#: WWW/Library/Implementation/HTNews.c:2711
 #, c-format
 msgid "Can't read news info.  News host %.20s responded: %.200s"
 msgstr "ニュース情報が読めません。ニュースホスト %.20s の応答: %.200s"
 
-#: WWW/Library/Implementation/HTNews.c:2716
+#: WWW/Library/Implementation/HTNews.c:2715
 #, c-format
 msgid "Can't read news info, empty response from host %s"
 msgstr "ニュース情報が読めません。ホスト %s からの応答は空です"
@@ -2984,34 +2990,34 @@ msgstr "ニュース情報が読めません。ホスト %s からの応答は空です"
 #.
 #. **	List available newsgroups. - FM
 #.
-#: WWW/Library/Implementation/HTNews.c:2920
+#: WWW/Library/Implementation/HTNews.c:2919
 msgid "Reading list of available newsgroups."
 msgstr "利用可能なニュースグループのリストを読み込み中。"
 
-#: WWW/Library/Implementation/HTNews.c:2942
+#: WWW/Library/Implementation/HTNews.c:2941
 msgid "Reading list of articles in newsgroup."
 msgstr "ニュースグループ内の記事のリストを読み込み中。"
 
 #.
 #. **	Get an article from a news group. - FM
 #.
-#: WWW/Library/Implementation/HTNews.c:2948
+#: WWW/Library/Implementation/HTNews.c:2947
 msgid "Reading news article."
 msgstr "ニュース記事を読み込み中。"
 
-#: WWW/Library/Implementation/HTNews.c:2978
+#: WWW/Library/Implementation/HTNews.c:2977
 msgid "Sorry, could not load requested news."
 msgstr "ううむ、要求されたニュースを読み込めませんでした。"
 
-#: WWW/Library/Implementation/HTTCP.c:1233
+#: WWW/Library/Implementation/HTTCP.c:1239
 msgid "Address has invalid port"
 msgstr "アドレスに不正なポートが指定されています"
 
-#: WWW/Library/Implementation/HTTCP.c:1336
+#: WWW/Library/Implementation/HTTCP.c:1327
 msgid "Address length looks invalid"
 msgstr "アドレス長が不正のようです"
 
-#: WWW/Library/Implementation/HTTCP.c:1574 WWW/Library/Implementation/HTTCP.c:1592
+#: WWW/Library/Implementation/HTTCP.c:1560 WWW/Library/Implementation/HTTCP.c:1578
 #, c-format
 msgid "Unable to locate remote host %s."
 msgstr "リモートホスト %s の位置を特定できません。"
@@ -3020,62 +3026,85 @@ msgstr "リモートホスト %s の位置を特定できません。"
 #. *  immediately; but not HTAlert, because typically
 #. *  there will be other alerts from the callers. - kw
 #.
-#: WWW/Library/Implementation/HTTCP.c:1589 WWW/Library/Implementation/HTTelnet.c:103
+#: WWW/Library/Implementation/HTTCP.c:1575 WWW/Library/Implementation/HTTelnet.c:103
 #, c-format
 msgid "Invalid hostname %s"
 msgstr "%s は不正なホスト名です"
 
-#: WWW/Library/Implementation/HTTCP.c:1603
+#: WWW/Library/Implementation/HTTCP.c:1589
 #, c-format
 msgid "Making %s connection to %s"
 msgstr "%s で %s に接続中"
 
-#: WWW/Library/Implementation/HTTCP.c:1619
+#: WWW/Library/Implementation/HTTCP.c:1605
 #, c-format
 msgid "socket failed: family %d addr %s port %s."
 msgstr "ソケットが失敗しました: ファミリ %d アドレス %s ポート %s。"
 
-#: WWW/Library/Implementation/HTTCP.c:1628
+#: WWW/Library/Implementation/HTTCP.c:1614
 msgid "socket failed."
 msgstr "ソケットが失敗しました。"
 
-#: WWW/Library/Implementation/HTTCP.c:1648
+#: WWW/Library/Implementation/HTTCP.c:1634
 msgid "Could not make connection non-blocking."
 msgstr "接続を非ブロッキングにできませんでした。"
 
-#: WWW/Library/Implementation/HTTCP.c:1717
+#: WWW/Library/Implementation/HTTCP.c:1703
 msgid "Connection failed (too many retries)."
 msgstr "接続に失敗しました (再試行が多すぎます)"
 
-#: WWW/Library/Implementation/HTTCP.c:1910
+#: WWW/Library/Implementation/HTTCP.c:1896
 msgid "Could not restore socket to blocking."
 msgstr "ブロッキングのためのソケットを復旧できませんでした。"
 
-#: WWW/Library/Implementation/HTTCP.c:1976
+#: WWW/Library/Implementation/HTTCP.c:1962
 msgid "Socket read failed for 180,000 tries."
 msgstr "180,000 回試行しましたがソケットの読み込みに失敗しました。"
 
-#: WWW/Library/Implementation/HTTP.c:466
+#: WWW/Library/Implementation/HTTP.c:350
+#, c-format
+msgid "Address contains a username: %s"
+msgstr "アドレスはユーザ名 %s を含んでいます"
+
+#: WWW/Library/Implementation/HTTP.c:503
 msgid "This client does not contain support for HTTPS URLs."
 msgstr "このクライアントは HTTPS URL をサポートしていません。"
 
-#: WWW/Library/Implementation/HTTP.c:491
+#: WWW/Library/Implementation/HTTP.c:528
 msgid "Unable to connect to remote host."
 msgstr "リモートホストに接続できません。"
 
-#: WWW/Library/Implementation/HTTP.c:1005
+#: WWW/Library/Implementation/HTTP.c:557
+msgid "Retrying connection without TLS."
+msgstr "TLSを使わずに接続を再試行しています。"
+
+#: WWW/Library/Implementation/HTTP.c:598
+msgid "SSL error:Can't find common name in certificate-Continue?"
+msgstr ""
+
+#: WWW/Library/Implementation/HTTP.c:615
+#, c-format
+msgid "SSL error:host(%s)!=cert(%s)-Continue?"
+msgstr "SSLエラー: ホスト(%s) が cert(%s) と一致しません 続けますか?"
+
+#: WWW/Library/Implementation/HTTP.c:627
+#, c-format
+msgid "Secure %d-bit %s (%s) HTTP connection"
+msgstr "セキュアな %d ビット %s (%s) HTTP 接続"
+
+#: WWW/Library/Implementation/HTTP.c:1091
 msgid "Sending HTTP request."
 msgstr "HTTP リクエストを送信中"
 
-#: WWW/Library/Implementation/HTTP.c:1039
+#: WWW/Library/Implementation/HTTP.c:1125
 msgid "Unexpected network write error; connection aborted."
 msgstr "突然のネットワーク書き込みエラー: 接続が中断されました。"
 
-#: WWW/Library/Implementation/HTTP.c:1045
+#: WWW/Library/Implementation/HTTP.c:1131
 msgid "HTTP request sent; waiting for response."
 msgstr "HTTP リクエストを送信しました: 応答を待っています"
 
-#: WWW/Library/Implementation/HTTP.c:1109
+#: WWW/Library/Implementation/HTTP.c:1195
 msgid "Unexpected network read error; connection aborted."
 msgstr "突然のネットワーク読み込みエラー: 接続が中断されました。"
 
@@ -3089,7 +3118,7 @@ msgstr "突然のネットワーク読み込みエラー: 接続が中断されました。"
 #. **	so we'll deal with them by showing the full
 #. **	header to the user as text/plain. - FM
 #.
-#: WWW/Library/Implementation/HTTP.c:1305
+#: WWW/Library/Implementation/HTTP.c:1391
 msgid "Got unexpected Informational Status."
 msgstr "予期しない Informational Status を受け取りました。"
 
@@ -3100,7 +3129,7 @@ msgstr "予期しない Informational Status を受け取りました。"
 #. *  user to do that, and restore the current
 #. *  document. - FM
 #.
-#: WWW/Library/Implementation/HTTP.c:1340
+#: WWW/Library/Implementation/HTTP.c:1426
 msgid "Request fulfilled.  Reset Content."
 msgstr "リクエストが実行されました。コンテントをリセットしてください。"
 
@@ -3111,27 +3140,27 @@ msgstr "リクエストが実行されました。コンテントをリセットしてください。"
 #. *  with it by showing the full header to the user
 #. *  as text/plain. - FM
 #.
-#: WWW/Library/Implementation/HTTP.c:1459
+#: WWW/Library/Implementation/HTTP.c:1545
 msgid "Got unexpected 304 Not Modified status."
 msgstr "予期せぬ 304 Not Modified ステータスを受け取りました。"
 
-#: WWW/Library/Implementation/HTTP.c:1526
+#: WWW/Library/Implementation/HTTP.c:1612
 msgid "Redirection of POST content requires user approval."
 msgstr "POST コンテントのリダイレクションにはユーザの承認が必要です。"
 
-#: WWW/Library/Implementation/HTTP.c:1541
+#: WWW/Library/Implementation/HTTP.c:1627
 msgid "Have POST content.  Treating Permanent Redirection as Temporary.\n"
 msgstr "POST コンテントを含んでいます。永続的なリダイレクションを一時的なものとして扱います。\n"
 
-#: WWW/Library/Implementation/HTTP.c:1586
+#: WWW/Library/Implementation/HTTP.c:1672
 msgid "Retrying with access authorization information."
 msgstr "アクセス認証情報付きで再試行しています。"
 
-#: WWW/Library/Implementation/HTTP.c:1598
+#: WWW/Library/Implementation/HTTP.c:1684
 msgid "Show the 401 message body?"
 msgstr "401 メッセージ本体を見ますか?"
 
-#: WWW/Library/Implementation/HTTP.c:1643
+#: WWW/Library/Implementation/HTTP.c:1729
 msgid "Show the 407 message body?"
 msgstr "407 メッセージ本体を見ますか?"
 
@@ -3140,7 +3169,7 @@ msgstr "407 メッセージ本体を見ますか?"
 #. **	Take a chance and hope there is
 #. **	something to display. - FM
 #.
-#: WWW/Library/Implementation/HTTP.c:1748
+#: WWW/Library/Implementation/HTTP.c:1834
 msgid "Unknown status reply from server!"
 msgstr "サーバからの不明なステータスリプライです!"
 
@@ -3222,27 +3251,27 @@ msgstr ""
 "\n"
 "コードレコード、表示不能\n"
 
-#: WWW/Library/Implementation/HTWAIS.c:691
+#: WWW/Library/Implementation/HTWAIS.c:689
 msgid "Syntax error in WAIS URL"
 msgstr "WAIS URL の構文エラーです。"
 
-#: WWW/Library/Implementation/HTWAIS.c:761
+#: WWW/Library/Implementation/HTWAIS.c:759
 msgid " (WAIS Index)"
 msgstr "(WAIS インデックス)"
 
-#: WWW/Library/Implementation/HTWAIS.c:768
+#: WWW/Library/Implementation/HTWAIS.c:766
 msgid "WAIS Index: "
 msgstr "WAIS インデックス: "
 
-#: WWW/Library/Implementation/HTWAIS.c:774
+#: WWW/Library/Implementation/HTWAIS.c:772
 msgid "This is a link for searching the "
 msgstr "これは以下を検索するためのリンクです: "
 
-#: WWW/Library/Implementation/HTWAIS.c:778
+#: WWW/Library/Implementation/HTWAIS.c:776
 msgid " WAIS Index.\n"
 msgstr " WAIS インデックス。\n"
 
-#: WWW/Library/Implementation/HTWAIS.c:805
+#: WWW/Library/Implementation/HTWAIS.c:803
 msgid ""
 "\n"
 "Enter the 's'earch command and then specify search words.\n"
@@ -3250,48 +3279,48 @@ msgstr ""
 "\n"
 "検索コマンド 's' を入力し、検索する言葉を指定してください。\n"
 
-#: WWW/Library/Implementation/HTWAIS.c:827
+#: WWW/Library/Implementation/HTWAIS.c:825
 msgid " (in "
 msgstr " (含まれているのは "
 
-#: WWW/Library/Implementation/HTWAIS.c:836
+#: WWW/Library/Implementation/HTWAIS.c:834
 msgid "WAIS Search of \""
 msgstr "WAIS サーチ 対象: \""
 
-#: WWW/Library/Implementation/HTWAIS.c:840
+#: WWW/Library/Implementation/HTWAIS.c:838
 msgid "\" in: "
 msgstr "\" 含まれるのは: "
 
-#: WWW/Library/Implementation/HTWAIS.c:855
+#: WWW/Library/Implementation/HTWAIS.c:853
 msgid "HTWAIS: Request too large."
 msgstr "HTWAIS: リクエストが大きすぎます。"
 
-#: WWW/Library/Implementation/HTWAIS.c:864
+#: WWW/Library/Implementation/HTWAIS.c:862
 msgid "Searching WAIS database..."
 msgstr "WAIS データベースを検索しています..."
 
-#: WWW/Library/Implementation/HTWAIS.c:874
+#: WWW/Library/Implementation/HTWAIS.c:872
 msgid "Search interrupted."
 msgstr "検索が中断されました。"
 
-#: WWW/Library/Implementation/HTWAIS.c:924
+#: WWW/Library/Implementation/HTWAIS.c:922
 msgid "Can't convert format of WAIS document"
 msgstr "WAIS ドキュメントの形式に変換できません。"
 
-#: WWW/Library/Implementation/HTWAIS.c:968
+#: WWW/Library/Implementation/HTWAIS.c:966
 msgid "HTWAIS: Request too long."
 msgstr "HTWAIS: リクエストが長すぎます。"
 
 #.
 #. **	Actually do the transaction given by request_message.
 #.
-#: WWW/Library/Implementation/HTWAIS.c:982
+#: WWW/Library/Implementation/HTWAIS.c:980
 msgid "Fetching WAIS document..."
 msgstr "WAIS ドキュメントを取得中..."
 
 #. display_search_response(target, retrieval_response,
 #. wais_database, keywords);
-#: WWW/Library/Implementation/HTWAIS.c:1021
+#: WWW/Library/Implementation/HTWAIS.c:1019
 msgid "No text was returned!\n"
 msgstr "返ってきたテキストはありません!\n"
 
@@ -3311,167 +3340,160 @@ msgstr " 説明"
 msgid "Access links"
 msgstr "リンクにアクセス"
 
-#: WWW/Library/Implementation/HTWSRC.c:345
+#: WWW/Library/Implementation/HTWSRC.c:346
 msgid "Direct access"
 msgstr "直接アクセス"
 
 #. * Proxy will be used if defined, so let user know that - FM *
-#: WWW/Library/Implementation/HTWSRC.c:348
+#: WWW/Library/Implementation/HTWSRC.c:349
 msgid " (or via proxy server, if defined)"
 msgstr "(あるいはプロキシサーバ経由で、もし定義されていれば)"
 
-#: WWW/Library/Implementation/HTWSRC.c:363
+#: WWW/Library/Implementation/HTWSRC.c:364
 msgid "Maintainer"
 msgstr "メンテナ"
 
-#: WWW/Library/Implementation/HTWSRC.c:371
+#: WWW/Library/Implementation/HTWSRC.c:372
 msgid "Host"
 msgstr "ホスト"
 
-#: src/GridText.c:607
+#: src/GridText.c:688
 msgid "Memory exhausted, display interrupted!"
 msgstr "メモリを使いきりました。表示を中断します!"
 
-#: src/GridText.c:612
+#: src/GridText.c:693
 msgid "Memory exhausted, will interrupt transfer!"
 msgstr "メモリを使いきりました。転送を中断します!"
 
-#: src/GridText.c:3395
+#: src/GridText.c:3578
 msgid " *** MEMORY EXHAUSTED ***"
 msgstr "*** メモリを使いきりました ***"
 
-#: src/GridText.c:5733 src/GridText.c:5740 src/LYList.c:258
+#: src/GridText.c:6007 src/GridText.c:6014 src/LYList.c:252
 msgid "unknown field or link"
 msgstr "未知のフィールドまたはリンクです"
 
-#: src/GridText.c:5749
+#: src/GridText.c:6023
 msgid "text entry field"
 msgstr "テキスト入力フィールド"
 
-#: src/GridText.c:5752
+#: src/GridText.c:6026
 msgid "password entry field"
 msgstr "パスワード入力フィールド"
 
-#: src/GridText.c:5755
+#: src/GridText.c:6029
 msgid "checkbox"
 msgstr "チェックボックス"
 
-#: src/GridText.c:5758
+#: src/GridText.c:6032
 msgid "radio button"
 msgstr "ラジオボタン"
 
-#: src/GridText.c:5761
+#: src/GridText.c:6035
 msgid "submit button"
 msgstr "送信ボタン"
 
-#: src/GridText.c:5764
+#: src/GridText.c:6038
 msgid "reset button"
 msgstr "リセットボタン"
 
-#: src/GridText.c:5767
+#: src/GridText.c:6041
 msgid "popup menu"
 msgstr "ポップアップメニュー"
 
-#: src/GridText.c:5770
+#: src/GridText.c:6044
 msgid "hidden form field"
 msgstr "隠されたフォームフィールド"
 
-#: src/GridText.c:5773
+#: src/GridText.c:6047
 msgid "text entry area"
 msgstr "テキスト入力エリア"
 
-#: src/GridText.c:5776
+#: src/GridText.c:6050
 msgid "range entry field"
 msgstr "範囲入力フィールド"
 
-#: src/GridText.c:5779
+#: src/GridText.c:6053
 msgid "file entry field"
 msgstr "ファイル入力フィールド"
 
-#: src/GridText.c:5782
+#: src/GridText.c:6056
 msgid "text-submit field"
 msgstr "テキスト送信フィールド"
 
-#: src/GridText.c:5785
+#: src/GridText.c:6059
 msgid "image-submit button"
 msgstr "画像送信ボタン"
 
-#: src/GridText.c:5788
+#: src/GridText.c:6062
 msgid "keygen field"
 msgstr "keygen フィールド"
 
-#: src/GridText.c:5791
+#: src/GridText.c:6065
 msgid "unknown form field"
 msgstr "未知のフォームフィールド"
 
-#. We can't open the file, what do we do?
-#: src/GridText.c:10348
-#, fuzzy
+#: src/GridText.c:10066
 msgid "Can't open file for uploading"
-msgstr "読み込むファイルが開けません。"
+msgstr "アップロードするファイルが開けません。"
 
-#. We got an error reading the file, what do we do?
-#: src/GridText.c:10359
-msgid "Short read from file, problem?"
-msgstr ""
-
-#: src/GridText.c:10721
+#: src/GridText.c:11218
 #, c-format
 msgid "Submitting %s"
 msgstr "%s を送信中"
 
 #. ugliness has happened; inform user and do the best we can
-#: src/GridText.c:11887
+#: src/GridText.c:12375
 msgid "Hang Detect: TextAnchor struct corrupted - suggest aborting!"
-msgstr ""
+msgstr "ハング検出: TextAnchor 構造体が壊れました - 終了をお勧めします!"
 
 #. don't show previous state
-#: src/GridText.c:12092
+#: src/GridText.c:12581
 msgid "Wrap lines to fit displayed area?"
 msgstr "表示領域に収まるよう行を折り返しますか?"
 
-#: src/GridText.c:12144
+#: src/GridText.c:12633
 msgid "Very long lines have been wrapped!"
 msgstr "長すぎる行は折り返されます!"
 
-#: src/GridText.c:12591
+#: src/GridText.c:13079
 msgid "Very long lines have been truncated!"
 msgstr "長すぎる行は切り詰められます!"
 
-#: src/HTAlert.c:155 src/LYShowInfo.c:318
+#: src/HTAlert.c:154 src/LYShowInfo.c:318
 msgid "bytes"
 msgstr "バイト"
 
-#: src/HTAlert.c:156
+#: src/HTAlert.c:155
 msgid "KB"
 msgstr "KB"
 
-#: src/HTAlert.c:255
+#: src/HTAlert.c:274
 #, c-format
 msgid "Read %s of %s of data"
 msgstr "%s (%s 中) 読み込み済"
 
-#: src/HTAlert.c:257
+#: src/HTAlert.c:276
 #, c-format
 msgid "Read %s of data"
 msgstr "%s 読み込み済"
 
-#: src/HTAlert.c:262
+#: src/HTAlert.c:281
 #, c-format
 msgid ", %s/sec"
 msgstr "、%s/秒"
 
-#: src/HTAlert.c:269
+#: src/HTAlert.c:290
 #, c-format
-msgid " (stalled for %ld sec)"
-msgstr " (%ld 秒停止中)"
+msgid " (stalled for %s)"
+msgstr " (%s 秒停止中)"
 
-#: src/HTAlert.c:271
+#: src/HTAlert.c:294
 #, c-format
-msgid ", ETA %ld sec"
-msgstr "、 ETA %ld 秒"
+msgid ", ETA %s"
+msgstr "、 ETA %s 秒"
 
-#: src/HTAlert.c:277
+#: src/HTAlert.c:301
 msgid " (Press 'z' to abort)"
 msgstr " ([z] で中止)"
 
@@ -3500,43 +3522,43 @@ msgstr " ([z] で中止)"
 #. *  Lynx will also accept y Y n N as responses unless there is a conflict
 #. *  with the first letter of the "yes" or "no" translation.
 #.
-#: src/HTAlert.c:334
+#: src/HTAlert.c:342 src/HTAlert.c:390
 msgid "yes"
 msgstr "yes"
 
-#: src/HTAlert.c:335
+#: src/HTAlert.c:345 src/HTAlert.c:391
 msgid "no"
 msgstr "no"
 
-#: src/HTML.c:6342
+#: src/HTML.c:5985
 msgid "Description:"
 msgstr "説明:"
 
-#: src/HTML.c:6347
+#: src/HTML.c:5990
 msgid "(none)"
 msgstr "(なし)"
 
-#: src/HTML.c:6351
+#: src/HTML.c:5994
 msgid "Filepath:"
 msgstr "ファイルへのパス:"
 
-#: src/HTML.c:6356
+#: src/HTML.c:5999
 msgid "(unknown)"
 msgstr "(不明)"
 
-#: src/HTML.c:7804
+#: src/HTML.c:7452
 msgid "Document has only hidden links.  Use the 'l'ist command."
 msgstr "文書には隠しリンクしかありません。[l]から辿ってください。"
 
-#: src/HTML.c:8328
+#: src/HTML.c:7958
 msgid "Source cache error - disk full?"
 msgstr "ソースキャッシュエラーです - ディスクが一杯かも?"
 
-#: src/HTML.c:8341
+#: src/HTML.c:7971
 msgid "Source cache error - not enough memory!"
 msgstr "ソースキャッシュエラーです - メモリが足りません!"
 
-#: src/LYBookmark.c:166
+#: src/LYBookmark.c:167
 msgid ""
 "     This file is an HTML representation of the X Mosaic hotlist file.\n"
 "     Outdated or invalid links may be removed by using the\n"
@@ -3548,7 +3570,7 @@ msgstr ""
 "     このコマンドは通常 [r] キーに割り当てられていますが、あなたかシステム\n"
 "     管理者によって変更されているかもしれません。"
 
-#: src/LYBookmark.c:382
+#: src/LYBookmark.c:379
 msgid ""
 "     You can delete links by the 'R' key<br>\n"
 "<ol>\n"
@@ -3556,7 +3578,7 @@ msgstr ""
 "     [r] キーでリンクを削除できます<br>\n"
 "<ol>\n"
 
-#: src/LYBookmark.c:385
+#: src/LYBookmark.c:382
 msgid ""
 "     You can delete links using the remove bookmark command.  It is usually\n"
 "     the 'R' key but may have been remapped by you or your system\n"
@@ -3566,7 +3588,7 @@ msgstr ""
 "     通常 [r] キーに割り当てられていますが、あなたかシステム管理者によって\n"
 "     変更されているかもしれません。"
 
-#: src/LYBookmark.c:389
+#: src/LYBookmark.c:386
 msgid ""
 "     This file also may be edited with a standard text editor to delete\n"
 "     outdated or invalid links, or to change their order."
@@ -3575,7 +3597,7 @@ msgstr ""
 "     古かったり間違ったりしているリンクを削除したり、\n"
 "     順番を変えたりすることもできます。"
 
-#: src/LYBookmark.c:392
+#: src/LYBookmark.c:389
 msgid ""
 "Note: if you edit this file manually\n"
 "      you should not change the format within the lines\n"
@@ -3586,7 +3608,7 @@ msgstr ""
 "      変更したり、他の HTML マークアップを加えたりしてはなりません。\n"
 "      ブックマークのリンクは一行に収まるようにしてください。"
 
-#: src/LYBookmark.c:683
+#: src/LYBookmark.c:681
 #, c-format
 msgid "File may be recoverable from %s during this session"
 msgstr "このセッションの間は %s からファイルを復旧することができるかもしれません"
@@ -3595,71 +3617,71 @@ msgstr "このセッションの間は %s からファイルを復旧することができるかもしれません
 #. *  Neither the path as given nor any components examined by
 #. *  backing up were stat()able. - kw
 #.
-#: src/LYCgi.c:232
+#: src/LYCgi.c:231
 msgid "Unable to access cgi script"
 msgstr "cgi スクリプトにアクセスできません"
 
-#: src/LYCgi.c:651 src/LYCgi.c:654
+#: src/LYCgi.c:654 src/LYCgi.c:657
 msgid "Good Advice"
 msgstr "良いアドバイス"
 
-#: src/LYCgi.c:657
+#: src/LYCgi.c:660
 msgid "An excellent http server for VMS is available via"
 msgstr "VMS にしてはなかなか優れた http サーバが以下から利用可能です: "
 
-#: src/LYCgi.c:664
+#: src/LYCgi.c:667
 msgid "this link"
 msgstr "このリンク"
 
-#: src/LYCgi.c:668
+#: src/LYCgi.c:671
 msgid "It provides state of the art CGI script support.\n"
 msgstr "現在望みうる最高水準の CGI スクリプトサポートを備えています。\n"
 
-#: src/LYClean.c:108
+#: src/LYClean.c:122
 msgid "Exiting via interrupt:"
 msgstr "終了します 原因: 割り込み"
 
-#: src/LYCookie.c:2659
+#: src/LYCookie.c:2462
 msgid "(from a previous session)"
 msgstr "(以前のセッションから)"
 
-#: src/LYCookie.c:2719
+#: src/LYCookie.c:2522
 msgid "Maximum Gobble Date:"
 msgstr "賞味期限:"
 
-#: src/LYCookie.c:2764
+#: src/LYCookie.c:2564
 msgid "Internal"
 msgstr "内部"
 
-#: src/LYCookie.c:2765
+#: src/LYCookie.c:2565
 msgid "cookie_domain_flag_set error, aborting program"
 msgstr "cookie_domain_flag_set エラー、プログラムを終了します"
 
-#: src/LYCurses.c:936
+#: src/LYCurses.c:1004
 msgid "Terminal initialisation failed - unknown terminal type?"
 msgstr "端末の初期化に失敗しました - 端末のタイプが不明?"
 
-#: src/LYCurses.c:1328
+#: src/LYCurses.c:1426
 msgid "Terminal ="
 msgstr "端末 ="
 
-#: src/LYCurses.c:1332
+#: src/LYCurses.c:1430
 msgid "You must use a vt100, 200, etc. terminal with this program."
 msgstr "このプログラムは vt100、200 などの端末上で実行してください。"
 
-#: src/LYCurses.c:1384
+#: src/LYCurses.c:1480
 msgid "Your Terminal type is unknown!"
 msgstr "お使いの端末タイプが分かりません!"
 
-#: src/LYCurses.c:1385
+#: src/LYCurses.c:1481
 msgid "Enter a terminal type:"
 msgstr "端末タイプを入力:"
 
-#: src/LYCurses.c:1398
+#: src/LYCurses.c:1495
 msgid "TERMINAL TYPE IS SET TO"
 msgstr "設定される端末タイプは"
 
-#: src/LYCurses.c:1749
+#: src/LYCurses.c:1994
 #, c-format
 msgid ""
 "\n"
@@ -3668,7 +3690,7 @@ msgstr ""
 "\n"
 "致命的なエラーが %s バージョン %s で発生しました\n"
 
-#: src/LYCurses.c:1751
+#: src/LYCurses.c:1996
 msgid ""
 "\n"
 "Please notify your system administrator to confirm a bug, and if\n"
@@ -3683,136 +3705,162 @@ msgstr ""
 "URL の正確な説明とオペレーティングシステム名(バージョン番号含む)、TCPIP \n"
 "実装、もし捕捉できたならば TRACEBACK、その他の適切な情報を含めてください。\n"
 
-#: src/LYEdit.c:264
+#: src/LYEdit.c:249
 msgid "Editor killed by signal"
 msgstr "エディタが異常終了しました シグナル:"
 
-#: src/LYEdit.c:266
+#: src/LYEdit.c:251
 #, c-format
 msgid "Editor returned with error status, %s"
 msgstr "エディタはエラーステータス %s を返しました"
 
-#: src/LYEdit.c:267
+#: src/LYEdit.c:252
 msgid "reason unknown."
 msgstr "(不明)"
 
-#: src/LYDownload.c:520
+#: src/LYDownload.c:517
 msgid "Downloaded link:"
 msgstr "ダウンロードしたリンク:"
 
-#: src/LYDownload.c:525
+#: src/LYDownload.c:522
 msgid "Suggested file name:"
 msgstr "推奨するファイル名:"
 
-#: src/LYDownload.c:530
+#: src/LYDownload.c:527
 msgid "Standard download options:"
 msgstr "標準のダウンロード先:"
 
-#: src/LYDownload.c:531
+#: src/LYDownload.c:528
 msgid "Download options:"
 msgstr "ダウンロード先"
 
-#: src/LYDownload.c:545
+#: src/LYDownload.c:544
 msgid "Save to disk"
 msgstr "ディスクに保存"
 
-#: src/LYDownload.c:547
+#: src/LYDownload.c:558
+#, fuzzy
+msgid "View temporary file"
+msgstr "ファイルを閲覧"
+
+#: src/LYDownload.c:565
 msgid "Save to disk disabled."
 msgstr "ディスクに保存できません。"
 
-#: src/LYDownload.c:551 src/LYPrint.c:1338
+#: src/LYDownload.c:569 src/LYPrint.c:1327
 msgid "Local additions:"
 msgstr "ローカルでの追加:"
 
-#: src/LYDownload.c:560 src/LYUpload.c:224
+#: src/LYDownload.c:578 src/LYUpload.c:216
 msgid "No Name Given"
 msgstr "名前が指定されていません"
 
-#: src/LYHistory.c:633
+#: src/LYHistory.c:657
 msgid "You selected:"
 msgstr "選択したページ: "
 
-#: src/LYHistory.c:657 src/LYHistory.c:905
+#: src/LYHistory.c:681 src/LYHistory.c:921
 msgid "(no address)"
 msgstr "(アドレスなし)"
 
-#: src/LYHistory.c:661
+#: src/LYHistory.c:685
 msgid " (internal)"
 msgstr " (内部)"
 
-#: src/LYHistory.c:663
+#: src/LYHistory.c:687
 msgid " (was internal)"
 msgstr "(かつて内部)"
 
-#: src/LYHistory.c:761
+#: src/LYHistory.c:785
 msgid " (From History)"
 msgstr " (履歴より)"
 
-#: src/LYHistory.c:825
+#: src/LYHistory.c:841
 msgid "You visited (POSTs, bookmark, menu and list files excluded):"
 msgstr "あなたが訪れたリンク(POST、ブックマーク、メニュー、リストファイルは除く):"
 
-#: src/LYHistory.c:1124
+#: src/LYHistory.c:1137
 msgid "(No messages yet)"
 msgstr "(まだメッセージは無い)"
 
-#: src/LYLeaks.c:78
+#: src/LYLeaks.c:209
 msgid "Invalid pointer detected."
 msgstr "不正なポインタが検出されました。"
 
-#: src/LYLeaks.c:80 src/LYLeaks.c:117
+#: src/LYLeaks.c:211 src/LYLeaks.c:251
+msgid "Sequence:"
+msgstr ""
+
+#: src/LYLeaks.c:214 src/LYLeaks.c:254
 msgid "Pointer:"
 msgstr "ポインタ:"
 
-#: src/LYLeaks.c:91 src/LYLeaks.c:98 src/LYLeaks.c:136
+#: src/LYLeaks.c:225 src/LYLeaks.c:232 src/LYLeaks.c:273
 msgid "FileName:"
 msgstr "ファイル名:"
 
-#: src/LYLeaks.c:94 src/LYLeaks.c:101 src/LYLeaks.c:139 src/LYLeaks.c:150
+#: src/LYLeaks.c:228 src/LYLeaks.c:235 src/LYLeaks.c:276 src/LYLeaks.c:287
 msgid "LineCount:"
 msgstr "行数:"
 
-#: src/LYLeaks.c:115
+#: src/LYLeaks.c:249
 msgid "Memory leak detected."
 msgstr "メモリリークが検出されました。"
 
-#: src/LYLeaks.c:120
+#: src/LYLeaks.c:257
 msgid "Contains:"
 msgstr "含む:"
 
-#: src/LYLeaks.c:133
+#: src/LYLeaks.c:270
 msgid "ByteSize:"
 msgstr "バイトサイズ:"
 
-#: src/LYLeaks.c:147
+#: src/LYLeaks.c:284
 msgid "realloced:"
 msgstr "再割り当て:"
 
-#: src/LYLeaks.c:170
+#: src/LYLeaks.c:307
 msgid "Total memory leakage this run:"
 msgstr "今回の実行でのメモリリーク総量"
 
-#: src/LYList.c:91
+#: src/LYLeaks.c:310
+msgid "Peak allocation"
+msgstr ""
+
+#: src/LYLeaks.c:311
+#, fuzzy
+msgid "Bytes allocated"
+msgstr "再割り当て:"
+
+#: src/LYLeaks.c:312
+msgid "Total mallocs"
+msgstr ""
+
+#: src/LYLeaks.c:313
+msgid "Total frees"
+msgstr ""
+
+#: src/LYList.c:85
 msgid "References in "
 msgstr "右からの参照: "
 
-#: src/LYList.c:92
+#: src/LYList.c:86
 msgid "this document:"
 msgstr "この文書:"
 
-#: src/LYList.c:98
+#: src/LYList.c:92
 msgid "Visible links:"
 msgstr "見えるリンク:"
 
-#: src/LYList.c:199 src/LYList.c:319
+#: src/LYList.c:194 src/LYList.c:315
 msgid "Hidden links:"
 msgstr "隠されたリンク:"
 
-#: src/LYList.c:267
+#: src/LYList.c:262
 msgid "References"
 msgstr "参照"
 
-#: src/LYList.c:269
+#: src/LYList.c:264
 msgid "Visible links"
 msgstr "見えるリンク"
 
@@ -3825,314 +3873,314 @@ msgstr "'%s' のステータスを得ることができません。"
 msgid "The selected item is not a file or a directory!  Request ignored."
 msgstr "選択されたアイテムはファイルでもディレクトリでもありません。リクエストは無視されます。"
 
-#: src/LYLocal.c:383
+#: src/LYLocal.c:366
 #, c-format
 msgid "Unable to %s due to system error!"
 msgstr "システムエラーにより %s できません!"
 
 #. error return
-#: src/LYLocal.c:415
+#: src/LYLocal.c:400
 #, c-format
 msgid "Probable failure to %s due to system error!"
 msgstr "システムエラーにより %s が失敗したようです!"
 
-#: src/LYLocal.c:453
-#, c-format
-msgid "move %s to %s"
-msgstr "%s を %s に移動します"
-
-#: src/LYLocal.c:475
-msgid "There is already a directory with that name!  Request ignored."
-msgstr "指定の名前を持つディレクトリがすでに存在します! リクエストは無視されました。"
-
-#: src/LYLocal.c:477
-msgid "There is already a file with that name!  Request ignored."
-msgstr "指定の名前を持つファイルがすでに存在します! リクエストは無視されました。"
-
-#: src/LYLocal.c:479
-msgid "The specified name is already in use!  Request ignored."
-msgstr "指定の名前はすでに使われています! リクエストは無視されました。"
-
-#: src/LYLocal.c:490
-msgid "Destination has different owner!  Request denied."
-msgstr "目的地は所有者が異なります! リクエストは拒否されました。"
-
-#: src/LYLocal.c:493
-msgid "Destination is not a valid directory!  Request denied."
-msgstr "目的地は正しいディレクトリではありません! 要求は拒否されました。"
-
-#: src/LYLocal.c:516
-msgid "Remove all tagged files and directories?"
-msgstr "選択した全てのファイルとディレクトリを削除しますか?"
-
-#: src/LYLocal.c:537
+#: src/LYLocal.c:463
 #, c-format
 msgid "remove %s"
 msgstr "%s を削除します"
 
-#: src/LYLocal.c:580
+#: src/LYLocal.c:481
+#, c-format
+msgid "touch %s"
+msgstr "%s を touch します"
+
+#: src/LYLocal.c:508
+#, c-format
+msgid "move %s to %s"
+msgstr "%s を %s に移動します"
+
+#: src/LYLocal.c:548
+msgid "There is already a directory with that name!  Request ignored."
+msgstr "指定の名前を持つディレクトリがすでに存在します! リクエストは無視されました。"
+
+#: src/LYLocal.c:550
+msgid "There is already a file with that name!  Request ignored."
+msgstr "指定の名前を持つファイルがすでに存在します! リクエストは無視されました。"
+
+#: src/LYLocal.c:552
+msgid "The specified name is already in use!  Request ignored."
+msgstr "指定の名前はすでに使われています! リクエストは無視されました。"
+
+#: src/LYLocal.c:563
+msgid "Destination has different owner!  Request denied."
+msgstr "目的地は所有者が異なります! リクエストは拒否されました。"
+
+#: src/LYLocal.c:566
+msgid "Destination is not a valid directory!  Request denied."
+msgstr "目的地は正しいディレクトリではありません! 要求は拒否されました。"
+
+#: src/LYLocal.c:588
+msgid "Remove all tagged files and directories?"
+msgstr "選択した全てのファイルとディレクトリを削除しますか?"
+
+#: src/LYLocal.c:647
 msgid "Enter new location for tagged items: "
 msgstr "選択したアイテムの新しい場所を入力: "
 
-#: src/LYLocal.c:649
+#: src/LYLocal.c:716
 msgid "Path too long"
 msgstr "パスが長すぎます"
 
-#: src/LYLocal.c:680
+#: src/LYLocal.c:747
 msgid "Source and destination are the same location - request ignored!"
 msgstr "ソースと目的地が同じ場所です - 要求は無視されました!"
 
-#: src/LYLocal.c:738
+#: src/LYLocal.c:805
 msgid "Enter new name for directory: "
 msgstr "新しいディレクトリ名を入力"
 
-#: src/LYLocal.c:740
+#: src/LYLocal.c:807
 msgid "Enter new name for file: "
 msgstr "新しいファイル名を入力: "
 
-#: src/LYLocal.c:751
+#: src/LYLocal.c:819
 msgid "Illegal character (path-separator) found! Request ignored."
 msgstr "不正なキャラクタ(パスセパレータ)が見つかりました! リクエストは無視されました。"
 
-#: src/LYLocal.c:800
+#: src/LYLocal.c:868
 msgid "Enter new location for directory: "
 msgstr "ディレクトリの新しい場所を入力: "
 
-#: src/LYLocal.c:802
+#: src/LYLocal.c:874
 msgid "Enter new location for file: "
 msgstr "ファイルの新しい場所を入力: "
 
-#: src/LYLocal.c:827
+#: src/LYLocal.c:901
 msgid "Unexpected failure - unable to find trailing path separator"
 msgstr "予期せぬ失敗 - 追うパスセパレータを見つけられません"
 
-#: src/LYLocal.c:847
+#: src/LYLocal.c:921
 msgid "Source and destination are the same location!  Request ignored!"
 msgstr "ソースと目的地が同じ場所です! リクエストは無視されます!"
 
-#: src/LYLocal.c:894
+#: src/LYLocal.c:970
 msgid "Modify name, location, or permission (n, l, or p): "
 msgstr "[n]名前、[l]場所、あるいは [p]パーミッションを変更: "
 
-#: src/LYLocal.c:896
+#: src/LYLocal.c:972
 msgid "Modify name or location (n or l): "
 msgstr "[n]名前 あるいは [l]場所を変更: "
 
 #.
 #. *	Code for changing ownership needed here.
 #.
-#: src/LYLocal.c:925
+#: src/LYLocal.c:1001
 msgid "This feature not yet implemented!"
 msgstr "この機能はまだ実装されていません!"
 
-#: src/LYLocal.c:943
+#: src/LYLocal.c:1019
 msgid "Enter name of file to create: "
 msgstr "作成するファイル名を入力: "
 
-#: src/LYLocal.c:951 src/LYLocal.c:999
+#: src/LYLocal.c:1027 src/LYLocal.c:1069
 msgid "Illegal redirection \"//\" found! Request ignored."
 msgstr "不正なリダイレクション \"//\" を検出しました! 要求は無視されます。"
 
-#: src/LYLocal.c:966
-#, c-format
-msgid "create %s"
-msgstr "%s を作成します"
-
-#: src/LYLocal.c:991
+#: src/LYLocal.c:1061
 msgid "Enter name for new directory: "
 msgstr "新しいディレクトリ名を入力: "
 
-#: src/LYLocal.c:1042
+#: src/LYLocal.c:1106
 msgid "Create file or directory (f or d): "
 msgstr "ファイル [f] または ディレクトリ [d] を作成: "
 
-#: src/LYLocal.c:1083
+#: src/LYLocal.c:1146
 #, c-format
 msgid "Remove '%s' and all of its contents?"
 msgstr "'%s' とその全ての内容を削除しますか?"
 
-#: src/LYLocal.c:1086
+#: src/LYLocal.c:1149
 msgid "Remove directory and all of its contents?"
 msgstr "ディレクトリとその全ての内容を削除しますか?"
 
-#: src/LYLocal.c:1090
+#: src/LYLocal.c:1153
 #, c-format
 msgid "Remove file '%s'?"
 msgstr "ファイル '%s' を削除しますか?"
 
-#: src/LYLocal.c:1092
+#: src/LYLocal.c:1155
 msgid "Remove file?"
 msgstr "ファイルを削除しますか?"
 
-#: src/LYLocal.c:1097
+#: src/LYLocal.c:1160
 #, c-format
 msgid "Remove symbolic link '%s'?"
 msgstr "シンボリックリンク '%s' を削除しますか?"
 
-#: src/LYLocal.c:1099
+#: src/LYLocal.c:1162
 msgid "Remove symbolic link?"
 msgstr "シンボリックリンクを削除しますか?"
 
-#: src/LYLocal.c:1190
+#: src/LYLocal.c:1248
 msgid "Sorry, don't know how to permit non-UNIX files yet."
 msgstr "非 UNIX ファイルのパーミッションはまだ扱えません。"
 
-#: src/LYLocal.c:1220
+#: src/LYLocal.c:1278
 msgid "Unable to open permit options file"
 msgstr "パーミッションオプションファイルが開けません"
 
-#: src/LYLocal.c:1247
+#: src/LYLocal.c:1305
 msgid "Specify permissions below:"
 msgstr "以下のパーミッションを指定:"
 
-#: src/LYLocal.c:1248 src/LYShowInfo.c:196
+#: src/LYLocal.c:1306 src/LYShowInfo.c:196
 msgid "Owner:"
 msgstr "所有者:"
 
-#: src/LYLocal.c:1264
+#: src/LYLocal.c:1322
 msgid "Group"
 msgstr "グループ"
 
-#: src/LYLocal.c:1280
+#: src/LYLocal.c:1338
 msgid "Others:"
 msgstr "その他:"
 
-#: src/LYLocal.c:1298
+#: src/LYLocal.c:1356
 msgid "form to permit"
 msgstr "許可するフォーム"
 
-#: src/LYLocal.c:1396
+#: src/LYLocal.c:1452
 msgid "Invalid mode format."
 msgstr "不正なモードフォーマット"
 
-#: src/LYLocal.c:1400
+#: src/LYLocal.c:1456
 msgid "Invalid syntax format."
 msgstr "不正な構文フォーマット"
 
-#: src/LYLocal.c:1575
-msgid "NULL URL pointer"
-msgstr "ヌル URL ポインタ"
-
-#: src/LYLocal.c:1670
+#: src/LYLocal.c:1645
 msgid "Warning!  UUDecoded file will exist in the directory you started Lynx."
 msgstr "注意! UUDecode されたファイルはあなたが Lynx を起動したディレクトリ内に置かれます。"
 
-#: src/LYLocal.c:1782
+#: src/LYLocal.c:1825
+msgid "NULL URL pointer"
+msgstr "ヌル URL ポインタ"
+
+#: src/LYLocal.c:1908
 #, c-format
 msgid "Executing %s "
 msgstr "%s を実行中 "
 
-#: src/LYLocal.c:1785
+#: src/LYLocal.c:1911
 msgid "Executing system command. This might take a while."
 msgstr "システムコマンドを実行中です。しばらくかかります。"
 
-#: src/LYLocal.c:1831
-msgid "Unable to open file management menu file."
-msgstr "ファイル管理メニューファイルを開けません。"
-
-#: src/LYLocal.c:1862
+#: src/LYLocal.c:1985
 msgid "Current directory:"
 msgstr "現在のディレクトリ:"
 
-#: src/LYLocal.c:1865 src/LYLocal.c:1883
+#: src/LYLocal.c:1988 src/LYLocal.c:2006
 msgid "Current selection:"
 msgstr "現在選択:"
 
-#: src/LYLocal.c:1869
+#: src/LYLocal.c:1992
 msgid "Nothing currently selected."
 msgstr "現在何も選択されていません。"
 
-#: src/LYLocal.c:1884
+#: src/LYLocal.c:2007
 msgid "tagged item:"
 msgstr "選択されたアイテム:"
 
-#: src/LYLocal.c:1884
+#: src/LYLocal.c:2007
 msgid "tagged items:"
 msgstr "選択されたアイテム:"
 
-#: src/LYLocal.c:1983 src/LYLocal.c:1994
+#: src/LYLocal.c:2105 src/LYLocal.c:2116
 msgid "Illegal filename; request ignored."
 msgstr "不正なファイル名です: 要求は無視されます。"
 
-#: src/LYLocal.c:2137
-msgid "The selected item is not a directory!  Request ignored."
-msgstr "選択されたアイテムはディレクトリではありません! 要求は無視されます。"
-
 #. directory not writable
-#: src/LYLocal.c:2141
+#: src/LYLocal.c:2213 src/LYLocal.c:2271
 msgid "Install in the selected directory not permitted."
 msgstr "選択されたディレクトリへのインストールは許可されていません。"
 
-#: src/LYLocal.c:2146
+#: src/LYLocal.c:2267
+msgid "The selected item is not a directory!  Request ignored."
+msgstr "選択されたアイテムはディレクトリではありません! 要求は無視されます。"
+
+#: src/LYLocal.c:2276
 msgid "Just a moment, ..."
 msgstr "お待ちください ..."
 
-#: src/LYLocal.c:2163
+#: src/LYLocal.c:2293
 msgid "Error buiding install args"
 msgstr "インストール引数を生成するのに失敗しました"
 
-#: src/LYLocal.c:2178 src/LYLocal.c:2210
+#: src/LYLocal.c:2308 src/LYLocal.c:2337
 #, c-format
 msgid "Source and target are the same: %s"
 msgstr "ソースとターゲットが同じです: %s"
 
-#: src/LYLocal.c:2188 src/LYLocal.c:2220
+#: src/LYLocal.c:2315 src/LYLocal.c:2344
 #, c-format
 msgid "Already in target directory: %s"
 msgstr "すでにターゲットディレクトリにいます: %s"
 
-#: src/LYLocal.c:2238
+#: src/LYLocal.c:2362
 msgid "Installation complete"
 msgstr "インストール完了"
 
-#: src/LYLocal.c:2427
+#: src/LYLocal.c:2551
 msgid "Temporary URL or list would be too long."
 msgstr "一時的 URL あるいはリストが長すぎるようです。"
 
-#: src/LYMail.c:503
+#: src/LYMail.c:534
 msgid "Sending"
 msgstr "送信中"
 
-#: src/LYMail.c:989
+#: src/LYMail.c:1024
 #, c-format
 msgid "The link   %s :?: %s \n"
 msgstr "リンク   %s :?: %s \n"
 
-#: src/LYMail.c:991
+#: src/LYMail.c:1026
 #, c-format
 msgid "called \"%s\"\n"
 msgstr "\"%s\"として呼ばれる\n"
 
-#: src/LYMail.c:992
+#: src/LYMail.c:1027
 #, c-format
 msgid "in the file \"%s\" called \"%s\"\n"
 msgstr "ファイル \"%s\" で \"%s\" と呼ばれる\n"
 
-#: src/LYMail.c:993
+#: src/LYMail.c:1028
 msgid "was requested but was not available."
 msgstr "が要求されましたが利用できませんでした。"
 
-#: src/LYMail.c:994
+#: src/LYMail.c:1029
 msgid "Thought you might want to know."
 msgstr "あなたが知りたいかもしれないと思いました。"
 
-#: src/LYMail.c:996
+#: src/LYMail.c:1031
 msgid "This message was automatically generated by"
 msgstr "このメッセージは以下によって自動的に生成されました: "
 
-#: src/LYMain.c:897
+#: src/LYMail.c:1753
+msgid "No system mailer configured"
+msgstr ""
+
+#: src/LYMain.c:969
 msgid "No Winsock found, sorry."
 msgstr "Winsock が見つかりません。"
 
-#: src/LYMain.c:1103
+#: src/LYMain.c:1170
 msgid "You MUST define a valid TMP or TEMP area!\n"
 msgstr "TMP ないし TEMP 領域を正しく定義しなければ*なりません*!\n"
 
-#: src/LYMain.c:1156 src/LYMainLoop.c:5117
+#: src/LYMain.c:1224 src/LYMainLoop.c:5028
 msgid "No such directory"
 msgstr "そんなディレクトリはありません"
 
-#: src/LYMain.c:1378
+#: src/LYMain.c:1436
 #, c-format
 msgid ""
 "\n"
@@ -4143,7 +4191,7 @@ msgstr ""
 "定義ファイル %s が利用できません。\n"
 "\n"
 
-#: src/LYMain.c:1388
+#: src/LYMain.c:1446
 msgid ""
 "\n"
 "Lynx character sets not declared.\n"
@@ -4153,7 +4201,7 @@ msgstr ""
 "Lynx キャラクタセットが宣言されていません。\n"
 "\n"
 
-#: src/LYMain.c:1417
+#: src/LYMain.c:1475
 msgid ""
 "\n"
 "Lynx edit map not declared.\n"
@@ -4163,7 +4211,7 @@ msgstr ""
 "Lynx 編集マップが宣言されていません。\n"
 "\n"
 
-#: src/LYMain.c:1446
+#: src/LYMain.c:1504
 #, c-format
 msgid ""
 "\n"
@@ -4174,60 +4222,60 @@ msgstr ""
 "Lynx ファイル %s は利用できません。\n"
 "\n"
 
-#: src/LYMain.c:1704
+#: src/LYMain.c:1743
 msgid "Warning:"
 msgstr "注意: "
 
-#: src/LYMain.c:2247
+#: src/LYMain.c:2293
 msgid "persistent cookies state will be changed in next session only."
 msgstr "永続的クッキーの状態は次のセッションにならないと変更されません。"
 
-#: src/LYMain.c:2477 src/LYMain.c:2525
+#: src/LYMain.c:2540 src/LYMain.c:2588
 #, c-format
 msgid "Lynx: ignoring unrecognized charset=%s\n"
 msgstr "Lynx: 不明なキャラクタセット %s を無視します。\n"
 
-#: src/LYMain.c:3047
-#, c-format
-msgid "%s Version %s (%s)\n"
+#: src/LYMain.c:3120
+#, fuzzy, c-format
+msgid "%s Version %s (%s)"
 msgstr "%s バージョン %s (%s)\n"
 
-#: src/LYMain.c:3072
+#: src/LYMain.c:3143
 #, c-format
 msgid "Built on %s %s %s\n"
 msgstr "%s 上で %s %s にビルドされました。\n"
 
-#: src/LYMain.c:3077
+#: src/LYMain.c:3166
 msgid "Copyrights held by the University of Kansas, CERN, and other contributors.\n"
 msgstr "カンザス大学、CERN とその他の貢献者が著作権を保有し、\n"
 
-#: src/LYMain.c:3079
+#: src/LYMain.c:3168
 msgid "Distributed under the GNU General Public License.\n"
 msgstr "GNU 一般公有使用許諾契約書の下で配布されています。\n"
 
-#: src/LYMain.c:3081
+#: src/LYMain.c:3170
 msgid ""
-"See http://lynx.browser.org/ and the online help for more information.\n"
+"See http://lynx.isc.org/ and the online help for more information.\n"
 "\n"
 msgstr ""
-"詳しくは http://lynx.browser.org/ とオンラインヘルプをご覧ください。\n"
+"詳しくは http://lynx.isc.org/ とオンラインヘルプをご覧ください。\n"
 "\n"
 
-#: src/LYMain.c:3800
+#: src/LYMain.c:3919
 #, c-format
 msgid "USAGE: %s [options] [file]\n"
 msgstr "使い方: %s [オプション] [ファイル]\n"
 
-#: src/LYMain.c:3801
+#: src/LYMain.c:3920
 msgid "Options are:\n"
 msgstr "オプション:\n"
 
-#: src/LYMain.c:4060
+#: src/LYMain.c:4191
 #, c-format
 msgid "%s: Invalid Option: %s\n"
 msgstr "%s: 不正なオプションです: %s\n"
 
-#: src/LYMainLoop.c:512
+#: src/LYMainLoop.c:539
 #, c-format
 msgid "Internal error: Invalid mouse link %d!"
 msgstr "内部エラー: %d は不正なマウスリンクです!"
@@ -4235,80 +4283,109 @@ msgstr "内部エラー: %d は不正なマウスリンクです!"
 #.
 #. * Make a name for this new URL.
 #.
-#: src/LYMainLoop.c:625 src/LYMainLoop.c:5139
+#: src/LYMainLoop.c:653 src/LYMainLoop.c:5050
 msgid "A URL specified by the user"
 msgstr "ユーザによって指定された URL"
 
-#: src/LYMainLoop.c:1114
+#: src/LYMainLoop.c:1110
 msgid "Enctype multipart/form-data not yet supported!  Cannot submit."
 msgstr "Enctype multipart/form-data はまだサポートされていません! 送信できません。"
 
 #.
 #. *  Make a name for this help file.
 #.
-#: src/LYMainLoop.c:3097
+#: src/LYMainLoop.c:3053
 msgid "Help Screen"
 msgstr "ヘルプ画面"
 
-#: src/LYMainLoop.c:3231
+#: src/LYMainLoop.c:3177
 msgid "System Index"
 msgstr "システムインデックス"
 
-#: src/LYMainLoop.c:3611 src/LYMainLoop.c:5347
+#: src/LYMainLoop.c:3549 src/LYMainLoop.c:5270
 msgid "Entry into main screen"
 msgstr "メイン画面への入力"
 
-#: src/LYMainLoop.c:3897
+#: src/LYMainLoop.c:3824
 msgid "No next document present"
-msgstr ""
+msgstr "次のドキュメントが存在しません"
 
-#: src/LYMainLoop.c:4206
+#: src/LYMainLoop.c:4131
 msgid "charset for this document specified explicitly, sorry..."
 msgstr "この文書のキャラクタセットは明示的に指定されています..."
 
-#: src/LYMainLoop.c:5093
+#: src/LYMainLoop.c:5004
 msgid "cd to:"
 msgstr "以下へ移動:"
 
-#: src/LYMainLoop.c:5120
+#: src/LYMainLoop.c:5031
 msgid "A component of path is not a directory"
 msgstr "パスの一部がディレクトリではありません"
 
-#: src/LYMainLoop.c:5123
+#: src/LYMainLoop.c:5034
 msgid "failed to change directory"
 msgstr "ディレクトリを変更できません"
 
-#: src/LYMainLoop.c:6291
+#: src/LYMainLoop.c:6204
 msgid "Reparsing document under current settings..."
 msgstr "現在の設定の下で文書を再解釈中..."
 
-#: src/LYMainLoop.c:6579 src/LYMainLoop.c:6583
+#: src/LYMainLoop.c:6489 src/LYMainLoop.c:6493
 #, c-format
 msgid "Fatal error - could not open output file %s\n"
 msgstr "致命的エラー - 出力ファイル %s が開けません\n"
 
-#: src/LYMainLoop.c:7719 src/LYMainLoop.c:7892
+#: src/LYMainLoop.c:6834
+msgid "TABLE center enable."
+msgstr ""
+
+#: src/LYMainLoop.c:6837
+msgid "TABLE center disable."
+msgstr ""
+
+#: src/LYMainLoop.c:6914
+#, fuzzy
+msgid "Current URL is empty."
+msgstr "現在のディレクトリ:"
+
+#: src/LYMainLoop.c:6916 src/LYUtils.c:1688
+msgid "Copy to clipboard failed."
+msgstr ""
+
+#: src/LYMainLoop.c:6918
+msgid "Document URL put to clipboard."
+msgstr ""
+
+#: src/LYMainLoop.c:6920
+msgid "Link URL put to clipboard."
+msgstr ""
+
+#: src/LYMainLoop.c:6946
+msgid "No URL in the clipboard."
+msgstr ""
+
+#: src/LYMainLoop.c:7621 src/LYMainLoop.c:7794
 msgid "-index-"
 msgstr "-インデックス-"
 
-#: src/LYMainLoop.c:7829
+#: src/LYMainLoop.c:7731
 msgid "lynx: Can't access startfile"
 msgstr "lynx: スタートファイルにアクセスできません"
 
-#: src/LYMainLoop.c:7842
+#: src/LYMainLoop.c:7744
 msgid "lynx: Start file could not be found or is not text/html or text/plain"
 msgstr "lynx: スタートファイルが見つからないか、text/html ないし text/plain ではありません"
 
-#: src/LYMainLoop.c:7843
+#: src/LYMainLoop.c:7745
 msgid "      Exiting..."
 msgstr "      終了します..."
 
-#: src/LYMainLoop.c:7886
+#: src/LYMainLoop.c:7788
 msgid "-more-"
 msgstr "-続きあり-"
 
 #. Enable scrolling.
-#: src/LYNews.c:203
+#: src/LYNews.c:187
 msgid "You will be posting to:"
 msgstr "投稿先: "
 
@@ -4316,7 +4393,7 @@ msgstr "投稿先: "
 #. *  Get the mail address for the From header,
 #. *  offering personal_mail_address as default.
 #.
-#: src/LYNews.c:212
+#: src/LYNews.c:196
 msgid ""
 "\n"
 "\n"
@@ -4331,7 +4408,7 @@ msgstr ""
 #. *  document's title as the default if this is a
 #. *  followup rather than a new post. - FM
 #.
-#: src/LYNews.c:230
+#: src/LYNews.c:214
 msgid ""
 "\n"
 "\n"
@@ -4341,7 +4418,7 @@ msgstr ""
 "\n"
 " Subject: ヘッダを編集して用意してください\n"
 
-#: src/LYNews.c:322
+#: src/LYNews.c:303
 msgid ""
 "\n"
 "\n"
@@ -4354,7 +4431,7 @@ msgstr ""
 #.
 #. *  Use the built in line editior.
 #.
-#: src/LYNews.c:379
+#: src/LYNews.c:360
 msgid ""
 "\n"
 "\n"
@@ -4364,94 +4441,112 @@ msgstr ""
 "\n"
 " 以下にあなたのメッセージを入力してください。"
 
-#: src/LYNews.c:425
+#: src/LYNews.c:406
 msgid "Message has no original text!"
 msgstr "メッセージには元のテキストが含まれていません!"
 
-#: src/LYOptions.c:743
+#: src/LYOptions.c:746
 msgid "review/edit B)ookmarks files"
 msgstr "[b]ブックマークファイルを閲覧/編集"
 
-#: src/LYOptions.c:745
+#: src/LYOptions.c:748
 msgid "B)ookmark file: "
 msgstr "[b]ブックマークファイル"
 
-#: src/LYOptions.c:2507 src/LYOptions.c:2531
+#: src/LYOptions.c:2547 src/LYOptions.c:2571
 #, c-format
 msgid "Use %s to invoke the Options menu!"
 msgstr "%s で設定メニューを起動します!"
 
-#: src/LYOptions.c:3208
+#: src/LYOptions.c:3253
+msgid "(options marked with (!) will not be saved)"
+msgstr "((!) がついたオプションは保存されません)"
+
+#: src/LYOptions.c:3261
 msgid "General Preferences"
 msgstr "全般的な設定"
 
 #. ***************************************************************
 #. User Mode: SELECT
-#: src/LYOptions.c:3212
+#: src/LYOptions.c:3265
 msgid "User mode"
 msgstr "ユーザモード"
 
 #. Editor: INPUT
-#: src/LYOptions.c:3218
+#: src/LYOptions.c:3271
 msgid "Editor"
 msgstr "使用するエディタ"
 
 #. Search Type: SELECT
-#: src/LYOptions.c:3223
+#: src/LYOptions.c:3276
 msgid "Type of Search"
 msgstr "検索タイプ"
 
+#: src/LYOptions.c:3281
+msgid "Security and Privacy"
+msgstr ""
+
+#. ***************************************************************
 #. Cookies: SELECT
-#: src/LYOptions.c:3229
+#: src/LYOptions.c:3285
 msgid "Cookies"
 msgstr "クッキー"
 
-#: src/LYOptions.c:3243
+#. Cookie Prompting: SELECT
+#: src/LYOptions.c:3299
+msgid "Invalid-Cookie Prompting"
+msgstr ""
+
+#. SSL Prompting: SELECT
+#: src/LYOptions.c:3306
+msgid "SSL Prompting"
+msgstr ""
+
+#: src/LYOptions.c:3312
 msgid "Keyboard Input"
 msgstr "キーボード入力"
 
 #. ***************************************************************
 #. Keypad Mode: SELECT
-#: src/LYOptions.c:3247
+#: src/LYOptions.c:3316
 msgid "Keypad mode"
 msgstr "キーパッドのモード"
 
 #. Emacs keys: ON/OFF
-#: src/LYOptions.c:3253
+#: src/LYOptions.c:3322
 msgid "Emacs keys"
 msgstr "Emacs 風キー配列"
 
 #. VI Keys: ON/OFF
-#: src/LYOptions.c:3259
+#: src/LYOptions.c:3328
 msgid "VI keys"
 msgstr "VI 風キー配列"
 
 #. Line edit style: SELECT
 #. well, at least 2 line edit styles available
-#: src/LYOptions.c:3266
+#: src/LYOptions.c:3335
 msgid "Line edit style"
-msgstr ""
+msgstr "行編集スタイル"
 
 #. Keyboard layout: SELECT
-#: src/LYOptions.c:3278
-#, fuzzy
+#: src/LYOptions.c:3347
 msgid "Keyboard layout"
-msgstr "キーボード入力"
+msgstr "キーボードレイアウト"
 
 #.
 #. * Display and Character Set
 #.
-#: src/LYOptions.c:3291
+#: src/LYOptions.c:3360
 msgid "Display and Character Set"
 msgstr "表示とキャラクタセット"
 
 #. ***************************************************************
 #. Display Character Set: SELECT
-#: src/LYOptions.c:3295
+#: src/LYOptions.c:3364
 msgid "Display character set"
 msgstr "表示するキャラクタセット"
 
-#: src/LYOptions.c:3324
+#: src/LYOptions.c:3393
 msgid "Assumed document character set"
 msgstr "仮定するキャラクタセット"
 
@@ -4460,202 +4555,216 @@ msgstr "仮定するキャラクタセット"
 #. * we split the header to make it more readable:
 #. * "CJK mode" for CJK display charsets, and "Raw 8-bit" for others.
 #.
-#: src/LYOptions.c:3344
+#: src/LYOptions.c:3413
 msgid "CJK mode"
 msgstr "CJK モード"
 
-#: src/LYOptions.c:3346
+#: src/LYOptions.c:3415
 msgid "Raw 8-bit"
 msgstr "生 8 ビット"
 
 #. X Display: INPUT
-#: src/LYOptions.c:3354
+#: src/LYOptions.c:3423
 msgid "X Display"
 msgstr "X ディスプレイ"
 
 #.
 #. * Document Appearance
 #.
-#: src/LYOptions.c:3360
+#: src/LYOptions.c:3429
 msgid "Document Appearance"
 msgstr "文書の外見"
 
-#: src/LYOptions.c:3366
+#: src/LYOptions.c:3435
 msgid "Show color"
 msgstr "色を付ける"
 
 #. Show cursor: ON/OFF
-#: src/LYOptions.c:3390
+#: src/LYOptions.c:3459
 msgid "Show cursor"
 msgstr "カーソルを見せる"
 
+#. Show scrollbar: ON/OFF
+#: src/LYOptions.c:3466
+msgid "Show scrollbar"
+msgstr "スクロールバーを表示"
+
 #. Select Popups: ON/OFF
-#: src/LYOptions.c:3396
+#: src/LYOptions.c:3473
 msgid "Popups for select fields"
 msgstr "フィールド選択時にポップアップ"
 
 #. HTML error recovery: SELECT
-#: src/LYOptions.c:3403
+#: src/LYOptions.c:3479
 msgid "HTML error recovery"
 msgstr "HTML エラーからの回復"
 
 #. Show Images: SELECT
-#: src/LYOptions.c:3410
+#: src/LYOptions.c:3485
 msgid "Show images"
 msgstr "画像の表示"
 
 #. Verbose Images: ON/OFF
-#: src/LYOptions.c:3424
+#: src/LYOptions.c:3499
 msgid "Verbose images"
 msgstr "冗長な画像表示"
 
 #.
 #. * Headers Transferred to Remote Servers
 #.
-#: src/LYOptions.c:3432
+#: src/LYOptions.c:3507
 msgid "Headers Transferred to Remote Servers"
 msgstr "リモートサーバに転送されるヘッダ"
 
 #. ***************************************************************
 #. Mail Address: INPUT
-#: src/LYOptions.c:3436
+#: src/LYOptions.c:3511
 msgid "Personal mail address"
 msgstr "個人のメールアドレス"
 
 #. Preferred Document Character Set: INPUT
-#: src/LYOptions.c:3441
+#: src/LYOptions.c:3516
 msgid "Preferred document character set"
 msgstr "表示したいキャラクターセット"
 
 #. Preferred Document Language: INPUT
-#: src/LYOptions.c:3446
+#: src/LYOptions.c:3521
 msgid "Preferred document language"
 msgstr "表示したい言語"
 
-#: src/LYOptions.c:3452
+#: src/LYOptions.c:3527
 msgid "User-Agent header"
 msgstr "User-Agent ヘッダ"
 
 #.
 #. * Listing and Accessing Files
 #.
-#: src/LYOptions.c:3460
+#: src/LYOptions.c:3535
 msgid "Listing and Accessing Files"
 msgstr "リスト表示とファイルへのアクセス"
 
 #. ***************************************************************
 #. FTP sort: SELECT
-#: src/LYOptions.c:3464
+#: src/LYOptions.c:3539
 msgid "FTP sort criteria"
 msgstr "FTP ディレクトリのソート基準"
 
 #. Local Directory Sort: SELECT
-#: src/LYOptions.c:3471
+#: src/LYOptions.c:3546
 msgid "Local directory sort criteria"
 msgstr "ローカルディレクトリのソート基準"
 
-#: src/LYOptions.c:3479
+#. Local Directory Order: SELECT
+#: src/LYOptions.c:3552
+msgid "Local directory sort order"
+msgstr "ローカルディレクトリのソート順"
+
+#: src/LYOptions.c:3561
 msgid "Show dot files"
 msgstr "ドットファイルを表示"
 
-#: src/LYOptions.c:3487
+#: src/LYOptions.c:3569
 msgid "Execution links"
 msgstr "リンクを実行"
 
 #. Local Directory Sort: SELECT
-#: src/LYOptions.c:3507
+#: src/LYOptions.c:3589
 msgid "Show transfer rate"
 msgstr "転送レートを表示"
 
 #.
 #. * Special Files and Screens
 #.
-#: src/LYOptions.c:3516
+#: src/LYOptions.c:3598
 msgid "Special Files and Screens"
 msgstr "特別ファイルと画面"
 
-#: src/LYOptions.c:3521
+#: src/LYOptions.c:3603
 msgid "Multi-bookmarks"
 msgstr "マルチブックマークを使う"
 
-#: src/LYOptions.c:3529
+#: src/LYOptions.c:3611
 msgid "Review/edit Bookmarks files"
 msgstr "ブックマークファイルの閲覧/編集"
 
-#: src/LYOptions.c:3531
+#: src/LYOptions.c:3613
 msgid "Goto multi-bookmark menu"
 msgstr "マルチブックマークメニューへ"
 
-#: src/LYOptions.c:3533
+#: src/LYOptions.c:3615
 msgid "Bookmarks file"
 msgstr "ブックマークファイル"
 
 #. Visited Pages: SELECT
-#: src/LYOptions.c:3539
+#: src/LYOptions.c:3621
 msgid "Visited Pages"
 msgstr "訪れたページ"
 
-#: src/LYPrint.c:959
+#: src/LYOptions.c:3628
+msgid "View the file "
+msgstr "ファイルを閲覧"
+
+#: src/LYPrint.c:952
 msgid " Print job complete.\n"
 msgstr "印刷ジョブが完了しました。\n"
 
-#: src/LYPrint.c:1296
+#: src/LYPrint.c:1281
 msgid "Document:"
 msgstr "文書:"
 
-#: src/LYPrint.c:1297
+#: src/LYPrint.c:1282
 msgid "Number of lines:"
 msgstr "行数:"
 
-#: src/LYPrint.c:1298
+#: src/LYPrint.c:1283
 msgid "Number of pages:"
 msgstr "ページ数:"
 
-#: src/LYPrint.c:1299
+#: src/LYPrint.c:1284
 msgid "pages"
 msgstr "ページ"
 
-#: src/LYPrint.c:1299
+#: src/LYPrint.c:1284
 msgid "page"
 msgstr "ページ"
 
-#: src/LYPrint.c:1300
+#: src/LYPrint.c:1285
 msgid "(approximately)"
 msgstr "(概算)"
 
-#: src/LYPrint.c:1305
+#: src/LYPrint.c:1290
 msgid "Some print functions have been disabled!"
 msgstr "印刷機能の一部は使えません!"
 
-#: src/LYPrint.c:1309
+#: src/LYPrint.c:1294
 msgid "Standard print options:"
 msgstr "標準の印刷先"
 
-#: src/LYPrint.c:1310
+#: src/LYPrint.c:1295
 msgid "Print options:"
 msgstr "印刷先を選択:"
 
-#: src/LYPrint.c:1316
+#: src/LYPrint.c:1302
 msgid "Save to a local file"
 msgstr "ローカルファイルに保存"
 
-#: src/LYPrint.c:1318
+#: src/LYPrint.c:1304
 msgid "Save to disk disabled"
 msgstr "ディスクへの保存はできません"
 
-#: src/LYPrint.c:1324
+#: src/LYPrint.c:1311
 msgid "Mail the file"
 msgstr "ファイルをメールで送信"
 
-#: src/LYPrint.c:1330
+#: src/LYPrint.c:1318
 msgid "Print to the screen"
 msgstr "画面に表示"
 
-#: src/LYPrint.c:1334
+#: src/LYPrint.c:1323
 msgid "Print out on a printer attached to your vt100 terminal"
 msgstr "あなたの vt100 端末に接続されたプリンタに印刷"
 
-#: src/LYReadCFG.c:340
+#: src/LYReadCFG.c:339
 msgid ""
 "Syntax Error parsing COLOR in configuration file:\n"
 "The line must be of the form:\n"
@@ -4671,76 +4780,76 @@ msgstr ""
 "FOREGROUND と BACKGROUND は以下のうち一つを取ります:\n"
 "特別文字列の「nocolor」、「default」、あるいは\n"
 
-#: src/LYReadCFG.c:353
+#: src/LYReadCFG.c:352
 msgid "Offending line:"
 msgstr "問題の行:"
 
-#: src/LYReadCFG.c:660
+#: src/LYReadCFG.c:638
 #, c-format
 msgid "key remapping of %s to %s for %s failed\n"
 msgstr "キー %s を %s へ (動作は %s) 再定義するのに失敗しました\n"
 
-#: src/LYReadCFG.c:667
+#: src/LYReadCFG.c:645
 #, c-format
 msgid "key remapping of %s to %s failed\n"
 msgstr "キー %s を %s へ再定義するのに失敗しました\n"
 
-#: src/LYReadCFG.c:688
+#: src/LYReadCFG.c:666
 #, c-format
 msgid "invalid line-editor selection %s for key %s, selecting all\n"
 msgstr "キー %s の行エディタ選択 %s が不正です、全体を選択します\n"
 
-#: src/LYReadCFG.c:715 src/LYReadCFG.c:728
+#: src/LYReadCFG.c:693 src/LYReadCFG.c:706
 #, c-format
 msgid "setting of line-editor binding for key %s (0x%x) to 0x%x for %s failed\n"
 msgstr "行エディタバインディングでキー %s (0x%x) を 0x%x (動作 は %s)に設定するのに失敗しました\n"
 
-#: src/LYReadCFG.c:733
+#: src/LYReadCFG.c:711
 #, c-format
 msgid "setting of line-editor binding for key %s (0x%x) for %s failed\n"
 msgstr "行エディタバインディングでキー %s (0x%x) を動作 %sに設定するのに失敗しました\n"
 
-#: src/LYReadCFG.c:838
+#: src/LYReadCFG.c:816
 #, c-format
 msgid "Lynx: cannot start, CERN rules file %s is not available\n"
 msgstr "Lynx: 開始できません。CERN ルールファイル %s が利用できません\n"
 
-#: src/LYReadCFG.c:840
+#: src/LYReadCFG.c:818
 msgid "(no name)"
 msgstr "(名前無し)"
 
-#: src/LYReadCFG.c:1658
+#: src/LYReadCFG.c:1782
 #, c-format
 msgid "More than %d nested lynx.cfg includes -- perhaps there is a loop?!?\n"
 msgstr "lynx.cfg インクルードが %d 回以上の入れ子になっています -- おそらくループがあるのでは!?\n"
 
-#: src/LYReadCFG.c:1660
+#: src/LYReadCFG.c:1784
 #, c-format
 msgid "Last attempted include was '%s',\n"
 msgstr "最後に試みたインクルードは '%s' で、\n"
 
-#: src/LYReadCFG.c:1661
+#: src/LYReadCFG.c:1785
 #, c-format
 msgid "included from '%s'.\n"
 msgstr "'%s' からインクルードされています。\n"
 
-#: src/LYReadCFG.c:2116 src/LYReadCFG.c:2129 src/LYReadCFG.c:2165
+#: src/LYReadCFG.c:2191 src/LYReadCFG.c:2204 src/LYReadCFG.c:2262
 msgid "The following is read from your lynx.cfg file."
 msgstr "以下はあなたの lynx.cfg ファイルから読み込まれた情報です。"
 
-#: src/LYReadCFG.c:2117 src/LYReadCFG.c:2130
+#: src/LYReadCFG.c:2192 src/LYReadCFG.c:2205
 msgid "Please read the distribution"
 msgstr "配布の"
 
-#: src/LYReadCFG.c:2123 src/LYReadCFG.c:2133
+#: src/LYReadCFG.c:2198 src/LYReadCFG.c:2208
 msgid "for more comments."
 msgstr "には詳細な注が付いていますので参照してください。"
 
-#: src/LYReadCFG.c:2147
+#: src/LYReadCFG.c:2244
 msgid "RELOAD THE CHANGES"
 msgstr "変更を再読み込み"
 
-#: src/LYReadCFG.c:2156
+#: src/LYReadCFG.c:2253
 msgid "Your primary configuration"
 msgstr "最初に参照される設定ファイルは"
 
@@ -4816,7 +4925,7 @@ msgstr "アクセス許可"
 msgid "File that you are currently viewing"
 msgstr "現在あなたが見ているファイル"
 
-#: src/LYShowInfo.c:266 src/LYShowInfo.c:375
+#: src/LYShowInfo.c:266 src/LYShowInfo.c:377
 msgid "Linkname:"
 msgstr "リンク名"
 
@@ -4856,79 +4965,79 @@ msgstr "言語:"
 msgid "Post Data:"
 msgstr "Post データ:"
 
-#: src/LYShowInfo.c:331
+#: src/LYShowInfo.c:333
 msgid "Post Content Type:"
 msgstr "Post コンテントタイプ:"
 
-#: src/LYShowInfo.c:340
+#: src/LYShowInfo.c:342
 msgid "Owner(s):"
 msgstr "所有者:"
 
-#: src/LYShowInfo.c:343
+#: src/LYShowInfo.c:345
 msgid "size:"
 msgstr "サイズ:"
 
-#: src/LYShowInfo.c:343
+#: src/LYShowInfo.c:345
 msgid "lines"
 msgstr "行"
 
-#: src/LYShowInfo.c:346
+#: src/LYShowInfo.c:348
 msgid "mode:"
 msgstr "モード:"
 
-#: src/LYShowInfo.c:348
+#: src/LYShowInfo.c:350
 msgid "forms mode"
 msgstr "複数フォームモード"
 
-#: src/LYShowInfo.c:350
+#: src/LYShowInfo.c:352
 msgid "source"
 msgstr "ソース"
 
-#: src/LYShowInfo.c:350
+#: src/LYShowInfo.c:352
 msgid "normal"
 msgstr "通常"
 
-#: src/LYShowInfo.c:351
+#: src/LYShowInfo.c:353
 msgid ", safe"
 msgstr "、安全"
 
-#: src/LYShowInfo.c:352
+#: src/LYShowInfo.c:354
 msgid ", via internal link"
 msgstr "、内部リンク経由"
 
-#: src/LYShowInfo.c:358
+#: src/LYShowInfo.c:360
 msgid ", no-cache"
 msgstr "、キャッシュ無し"
 
-#: src/LYShowInfo.c:360
+#: src/LYShowInfo.c:362
 msgid ", ISMAP script"
 msgstr "、ISMAP スクリプト"
 
-#: src/LYShowInfo.c:362
+#: src/LYShowInfo.c:364
 msgid ", bookmark file"
 msgstr "、ブックマークファイル"
 
-#: src/LYShowInfo.c:371
+#: src/LYShowInfo.c:373
 msgid "Link that you currently have selected"
 msgstr "現在選択しているリンク"
 
-#: src/LYShowInfo.c:384
+#: src/LYShowInfo.c:386
 msgid "Method:"
 msgstr "メソッド:"
 
-#: src/LYShowInfo.c:389
+#: src/LYShowInfo.c:391
 msgid "Enctype:"
 msgstr "Enctype:"
 
-#: src/LYShowInfo.c:401
+#: src/LYShowInfo.c:403
 msgid "(Form field)"
 msgstr "(フォームフィールド)"
 
-#: src/LYShowInfo.c:416
+#: src/LYShowInfo.c:418
 msgid "No Links on the current page"
 msgstr "現在のページにはリンクがありません"
 
-#: src/LYStyle.c:250
+#: src/LYStyle.c:278
 #, c-format
 msgid ""
 "Syntax Error parsing style in lss file:\n"
@@ -4969,44 +5078,47 @@ msgstr "不正なリダイレクション \"~\" 発見! リクエストは無視されます。"
 msgid "Unable to upload file."
 msgstr "ファイルをアップロードできません。"
 
-#: src/LYUpload.c:214
+#: src/LYUpload.c:206
 msgid "Upload To:"
 msgstr "以下にアップロード:"
 
-#: src/LYUpload.c:215
+#: src/LYUpload.c:207
 msgid "Upload options:"
 msgstr "アップロードオプション:"
 
-#: src/LYUtils.c:3075
+#: src/LYUtils.c:1690
+msgid "Download document URL put to clipboard."
+msgstr ""
+
+#: src/LYUtils.c:2468
 msgid "Unexpected access protocol for this URL scheme."
 msgstr "この URL スキームでは想定されていないアクセスプロトコルです。"
 
-#: src/LYUtils.c:3915
+#: src/LYUtils.c:3294
 msgid "Too many tempfiles"
-msgstr ""
+msgstr "一時ファイルが多すぎます"
 
-#: src/LYUtils.c:4217
-#, fuzzy
+#: src/LYUtils.c:3595
 msgid "unknown restriction"
-msgstr "制限は設定されていません。\n"
+msgstr "不明な制限"
 
-#: src/LYUtils.c:4248
+#: src/LYUtils.c:3626
 msgid "No restrictions set.\n"
 msgstr "制限は設定されていません。\n"
 
-#: src/LYUtils.c:4251
+#: src/LYUtils.c:3629
 msgid "Restrictions set:\n"
 msgstr "制限を以下に設定:\n"
 
-#: src/LYUtils.c:5601
-msgid "Ignoring invalid HOME"
-msgstr "不正な HOME を無視します"
+#: src/LYUtils.c:5034
+msgid "Cannot find HOME directory"
+msgstr "HOME ディレクトリが見つかりません"
 
-#: src/LYrcFile.c:20
+#: src/LYrcFile.c:21
 msgid "Normally disabled.  See ENABLE_LYNXRC in lynx.cfg\n"
-msgstr ""
+msgstr "通常は無効になっています。lynx.cfg の ENABLE_LYNXRC の部分を参照して下さい\n"
 
-#: src/LYrcFile.c:242
+#: src/LYrcFile.c:295
 msgid ""
 "accept_all_cookies allows the user to tell Lynx to automatically\n"
 "accept all cookies if desired.  The default is \"FALSE\" which will\n"
@@ -5018,7 +5130,7 @@ msgstr ""
 "prompt for each cookie.  Set accept_all_cookies to \"TRUE\" to accept\n"
 "all cookies.\n"
 
-#: src/LYrcFile.c:249
+#: src/LYrcFile.c:302
 msgid ""
 "bookmark_file specifies the name and location of the default bookmark\n"
 "file into which the user can paste links for easy access at a later\n"
@@ -5028,7 +5140,7 @@ msgstr ""
 "file into which the user can paste links for easy access at a later\n"
 "date.\n"
 
-#: src/LYrcFile.c:254
+#: src/LYrcFile.c:307
 msgid ""
 "If case_sensitive_searching is \"on\" then when the user invokes a search\n"
 "using the 's' or '/' keys, the search performed will be case sensitive\n"
@@ -5037,99 +5149,107 @@ msgstr ""
 "If case_sensitive_searching is \"on\" then when the user invokes a search\n"
 "using the 's' or '/' keys, the search performed will be case sensitive\n"
 "instead of case INsensitive.  The default is usually \"off\".\n"
-
-#: src/LYrcFile.c:259
-msgid ""
-"The character_set definition controls the representation of 8 bit\n"
-"characters for your terminal.  If 8 bit characters do not show up\n"
-"correctly on your screen you may try changing to a different 8 bit\n"
-"set or using the 7 bit character approximations.\n"
-"Current valid characters sets are:\n"
-msgstr ""
-"The character_set definition controls the representation of 8 bit\n"
-"characters for your terminal.  If 8 bit characters do not show up\n"
-"correctly on your screen you may try changing to a different 8 bit\n"
-"set or using the 7 bit character approximations.\n"
-"Current valid characters sets are:\n"
-
-#: src/LYrcFile.c:266
-msgid ""
-"cookie_accept_domains and cookie_reject_domains are comma-delimited\n"
-"lists of domains from which Lynx should automatically accept or reject\n"
-"all cookies.  If a domain is specified in both options, rejection will\n"
-"take precedence.  The accept_all_cookies parameter will override any\n"
-"settings made here.\n"
-msgstr ""
-"cookie_accept_domains and cookie_reject_domains are comma-delimited\n"
-"lists of domains from which Lynx should automatically accept or reject\n"
-"all cookies.  If a domain is specified in both options, rejection will\n"
-"take precedence.  The accept_all_cookies parameter will override any\n"
-"settings made here.\n"
-
-#: src/LYrcFile.c:274
-msgid ""
-"cookie_file specifies the file from which to read persistent cookies.\n"
-"The default is ~/.lynx_cookies.\n"
-msgstr ""
-"cookie_file specifies the file from which to read persistent cookies.\n"
-"The default is ~/.lynx_cookies.\n"
-
-#: src/LYrcFile.c:279
-msgid ""
-"cookie_loose_invalid_domains, cookie_strict_invalid_domains, and\n"
-"cookie_query_invalid_domains are comma-delimited lists of which domains\n"
-"should be subjected to varying degrees of validity checking.  If a\n"
-"domain is set to strict checking, strict conformance to RFC2109 will\n"
-"be applied.  A domain with loose checking will be allowed to set cookies\n"
-"with an invalid path or domain attribute.  All domains will default to\n"
-"querying the user for an invalid path or domain.\n"
-msgstr ""
-"cookie_loose_invalid_domains, cookie_strict_invalid_domains, and\n"
-"cookie_query_invalid_domains are comma-delimited lists of which domains\n"
-"should be subjected to varying degrees of validity checking.  If a\n"
-"domain is set to strict checking, strict conformance to RFC2109 will\n"
-"be applied.  A domain with loose checking will be allowed to set cookies\n"
-"with an invalid path or domain attribute.  All domains will default to\n"
-"querying the user for an invalid path or domain.\n"
-
-#: src/LYrcFile.c:292
-msgid ""
-"dir_list_styles specifies the directory list style under DIRED_SUPPORT\n"
-"(if implemented).  The default is \"MIXED_STYLE\", which sorts both\n"
-"files and directories together.  \"FILES_FIRST\" lists files first and\n"
-"\"DIRECTORIES_FIRST\" lists directories first.\n"
-msgstr ""
-"dir_list_styles specifies the directory list style under DIRED_SUPPORT\n"
-"(if implemented).  The default is \"MIXED_STYLE\", which sorts both\n"
-"files and directories together.  \"FILES_FIRST\" lists files first and\n"
-"\"DIRECTORIES_FIRST\" lists directories first.\n"
-
-#: src/LYrcFile.c:300
-msgid ""
-"If emacs_keys is to \"on\" then the normal EMACS movement keys:\n"
-"  ^N = down    ^P = up\n"
-"  ^B = left    ^F = right\n"
-"will be enabled.\n"
-msgstr ""
-"If emacs_keys is to \"on\" then the normal EMACS movement keys:\n"
-"  ^N = down    ^P = up\n"
-"  ^B = left    ^F = right\n"
-"will be enabled.\n"
-
-#: src/LYrcFile.c:306
-msgid ""
-"file_editor specifies the editor to be invoked when editing local files\n"
-"or sending mail.  If no editor is specified, then file editing is disabled\n"
-"unless it is activated from the command line, and the built-in line editor\n"
-"will be used for sending mail.\n"
-msgstr ""
-"file_editor specifies the editor to be invoked when editing local files\n"
-"or sending mail.  If no editor is specified, then file editing is disabled\n"
-"unless it is activated from the command line, and the built-in line editor\n"
-"will be used for sending mail.\n"
 
 #: src/LYrcFile.c:312
 msgid ""
+"The character_set definition controls the representation of 8 bit\n"
+"characters for your terminal.  If 8 bit characters do not show up\n"
+"correctly on your screen you may try changing to a different 8 bit\n"
+"set or using the 7 bit character approximations.\n"
+"Current valid characters sets are:\n"
+msgstr ""
+"The character_set definition controls the representation of 8 bit\n"
+"characters for your terminal.  If 8 bit characters do not show up\n"
+"correctly on your screen you may try changing to a different 8 bit\n"
+"set or using the 7 bit character approximations.\n"
+"Current valid characters sets are:\n"
+
+#: src/LYrcFile.c:319
+msgid ""
+"cookie_accept_domains and cookie_reject_domains are comma-delimited\n"
+"lists of domains from which Lynx should automatically accept or reject\n"
+"all cookies.  If a domain is specified in both options, rejection will\n"
+"take precedence.  The accept_all_cookies parameter will override any\n"
+"settings made here.\n"
+msgstr ""
+"cookie_accept_domains and cookie_reject_domains are comma-delimited\n"
+"lists of domains from which Lynx should automatically accept or reject\n"
+"all cookies.  If a domain is specified in both options, rejection will\n"
+"take precedence.  The accept_all_cookies parameter will override any\n"
+"settings made here.\n"
+
+#: src/LYrcFile.c:327
+msgid ""
+"cookie_file specifies the file from which to read persistent cookies.\n"
+"The default is ~/.lynx_cookies.\n"
+msgstr ""
+"cookie_file specifies the file from which to read persistent cookies.\n"
+"The default is ~/.lynx_cookies.\n"
+
+#: src/LYrcFile.c:332
+msgid ""
+"cookie_loose_invalid_domains, cookie_strict_invalid_domains, and\n"
+"cookie_query_invalid_domains are comma-delimited lists of which domains\n"
+"should be subjected to varying degrees of validity checking.  If a\n"
+"domain is set to strict checking, strict conformance to RFC2109 will\n"
+"be applied.  A domain with loose checking will be allowed to set cookies\n"
+"with an invalid path or domain attribute.  All domains will default to\n"
+"querying the user for an invalid path or domain.\n"
+msgstr ""
+"cookie_loose_invalid_domains, cookie_strict_invalid_domains, and\n"
+"cookie_query_invalid_domains are comma-delimited lists of which domains\n"
+"should be subjected to varying degrees of validity checking.  If a\n"
+"domain is set to strict checking, strict conformance to RFC2109 will\n"
+"be applied.  A domain with loose checking will be allowed to set cookies\n"
+"with an invalid path or domain attribute.  All domains will default to\n"
+"querying the user for an invalid path or domain.\n"
+
+#: src/LYrcFile.c:346
+msgid ""
+"dir_list_order specifies the directory list order under DIRED_SUPPORT\n"
+"(if implemented).  The default is \"ORDER_BY_NAME\"\n"
+msgstr ""
+"dir_list_order specifies the directory list order under DIRED_SUPPORT\n"
+"(if implemented).  The default is \"ORDER_BY_NAME\"\n"
+
+#: src/LYrcFile.c:351
+msgid ""
+"dir_list_styles specifies the directory list style under DIRED_SUPPORT\n"
+"(if implemented).  The default is \"MIXED_STYLE\", which sorts both\n"
+"files and directories together.  \"FILES_FIRST\" lists files first and\n"
+"\"DIRECTORIES_FIRST\" lists directories first.\n"
+msgstr ""
+"dir_list_styles specifies the directory list style under DIRED_SUPPORT\n"
+"(if implemented).  The default is \"MIXED_STYLE\", which sorts both\n"
+"files and directories together.  \"FILES_FIRST\" lists files first and\n"
+"\"DIRECTORIES_FIRST\" lists directories first.\n"
+
+#: src/LYrcFile.c:359
+msgid ""
+"If emacs_keys is to \"on\" then the normal EMACS movement keys:\n"
+"  ^N = down    ^P = up\n"
+"  ^B = left    ^F = right\n"
+"will be enabled.\n"
+msgstr ""
+"If emacs_keys is to \"on\" then the normal EMACS movement keys:\n"
+"  ^N = down    ^P = up\n"
+"  ^B = left    ^F = right\n"
+"will be enabled.\n"
+
+#: src/LYrcFile.c:365
+msgid ""
+"file_editor specifies the editor to be invoked when editing local files\n"
+"or sending mail.  If no editor is specified, then file editing is disabled\n"
+"unless it is activated from the command line, and the built-in line editor\n"
+"will be used for sending mail.\n"
+msgstr ""
+"file_editor specifies the editor to be invoked when editing local files\n"
+"or sending mail.  If no editor is specified, then file editing is disabled\n"
+"unless it is activated from the command line, and the built-in line editor\n"
+"will be used for sending mail.\n"
+
+#: src/LYrcFile.c:371
+msgid ""
 "The file_sorting_method specifies which value to sort on when viewing\n"
 "file lists such as FTP directories.  The options are:\n"
 "   BY_FILENAME -- sorts on the name of the file\n"
@@ -5144,7 +5264,7 @@ msgstr ""
 "   BY_SIZE     -- sorts on the size of the file\n"
 "   BY_DATE     -- sorts on the date of the file\n"
 
-#: src/LYrcFile.c:324
+#: src/LYrcFile.c:389
 msgid ""
 "lineedit_mode specifies the key binding used for inputting strings in\n"
 "prompts and forms.  If lineedit_mode is set to \"Default Binding\" then\n"
@@ -5170,7 +5290,7 @@ msgstr ""
 "\n"
 "Current lineedit modes are:\n"
 
-#: src/LYrcFile.c:339
+#: src/LYrcFile.c:404
 msgid ""
 "The following allow you to define sub-bookmark files and descriptions.\n"
 "The format is multi_bookmark<capital_letter>=<filename>,<description>\n"
@@ -5182,7 +5302,7 @@ msgstr ""
 "Up to 26 bookmark files (for the English capital letters) are allowed.\n"
 "We start with \"multi_bookmarkB\" since 'A' is the default (see above).\n"
 
-#: src/LYrcFile.c:345
+#: src/LYrcFile.c:410
 msgid ""
 "personal_mail_address specifies your personal mail address.  The\n"
 "address will be sent during HTTP file transfers for authorization and\n"
@@ -5200,7 +5320,7 @@ msgstr ""
 "could leave this field blank, but then you won't have it included in\n"
 "your mailed comments.\n"
 
-#: src/LYrcFile.c:354
+#: src/LYrcFile.c:419
 msgid ""
 "preferred_charset specifies the character set in MIME notation (e.g.,\n"
 "ISO-8859-2, ISO-8859-5) which Lynx will indicate you prefer in requests\n"
@@ -5228,21 +5348,16 @@ msgstr ""
 "an error response, though the sending of an unacceptable response\n"
 "is also allowed.\n"
 
-#: src/LYrcFile.c:368
+#: src/LYrcFile.c:433
 msgid ""
 "preferred_language specifies the language in MIME notation (e.g., en,\n"
 "fr, may be a comma-separated list in decreasing preference)\n"
 "which Lynx will indicate you prefer in requests to http servers.\n"
 "If a file in that language is available, the server will send it.\n"
-"Otherwise, the server will send the file in it's default language.\n"
-msgstr ""
-"preferred_language specifies the language in MIME notation (e.g., en,\n"
-"fr, may be a comma-separated list in decreasing preference)\n"
-"which Lynx will indicate you prefer in requests to http servers.\n"
-"If a file in that language is available, the server will send it.\n"
-"Otherwise, the server will send the file in it's default language.\n"
+"Otherwise, the server will send the file in its default language.\n"
+msgstr " ----\n"
 
-#: src/LYrcFile.c:377
+#: src/LYrcFile.c:442
 msgid ""
 "If run_all_execution_links is set \"on\" then all local execution links\n"
 "will be executed when they are selected.\n"
@@ -5264,7 +5379,7 @@ msgstr ""
 "          or compromise security.  This should only be set to \"on\" if\n"
 "          you are viewing trusted source information.\n"
 
-#: src/LYrcFile.c:388
+#: src/LYrcFile.c:453
 msgid ""
 "If run_execution_links_on_local_files is set \"on\" then all local\n"
 "execution links that are found in LOCAL files will be executed when they\n"
@@ -5292,7 +5407,7 @@ msgstr ""
 "          or compromise security.  This should only be set to \"on\" if\n"
 "          you are viewing trusted source information.\n"
 
-#: src/LYrcFile.c:403
+#: src/LYrcFile.c:471
 msgid ""
 "select_popups specifies whether the OPTIONs in a SELECT block which\n"
 "lacks a MULTIPLE attribute are presented as a vertical list of radio\n"
@@ -5310,7 +5425,7 @@ msgstr ""
 "as the default while a value of \"off\" will set use of radio boxes.\n"
 "The default can be overridden via the -popup command line toggle.\n"
 
-#: src/LYrcFile.c:413
+#: src/LYrcFile.c:481
 msgid ""
 "show_color specifies how to set the color mode at startup.  A value of\n"
 "\"never\" will force color mode off (treat the terminal as monochrome)\n"
@@ -5344,7 +5459,7 @@ msgstr ""
 "the 'o'ptions menu.  If the option settings are saved, the \"on\" and\n"
 "\"off\" \"show color\" settings will be treated as \"default\".\n"
 
-#: src/LYrcFile.c:430
+#: src/LYrcFile.c:498
 msgid ""
 "show_cursor specifies whether to 'hide' the cursor to the right (and\n"
 "bottom, if possible) of the screen, or to place it to the left of the\n"
@@ -5366,7 +5481,7 @@ msgstr ""
 "default while a value of \"off\" will set 'hiding' of the cursor.\n"
 "The default can be overridden via the -show_cursor command line toggle.\n"
 
-#: src/LYrcFile.c:441
+#: src/LYrcFile.c:509
 msgid ""
 "show_dotfiles specifies that the directory listing should include\n"
 "\"hidden\" (dot) files/directories.  If set \"on\", this will be\n"
@@ -5380,7 +5495,7 @@ msgstr ""
 "restricted via a command line switch.  If display of hidden files\n"
 "is disabled, creation of such files via Lynx also is disabled.\n"
 
-#: src/LYrcFile.c:452
+#: src/LYrcFile.c:520
 msgid ""
 "If sub_bookmarks is not turned \"off\", and multiple bookmarks have\n"
 "been defined (see below), then all bookmark operations will first\n"
@@ -5402,7 +5517,7 @@ msgstr ""
 "user modes.  When this option is set to \"standard\", the menu will be\n"
 "presented regardless of user mode.\n"
 
-#: src/LYrcFile.c:464
+#: src/LYrcFile.c:533
 msgid ""
 "user_mode specifies the users level of knowledge with Lynx.  The\n"
 "default is \"NOVICE\" which displays two extra lines of help at the\n"
@@ -5418,7 +5533,7 @@ msgstr ""
 "Use \"ADVANCED\" to see the URL of the currently selected link at the\n"
 "bottom of the screen.\n"
 
-#: src/LYrcFile.c:472
+#: src/LYrcFile.c:542
 msgid ""
 "If verbose_images is \"on\", lynx will print the name of the image\n"
 "source file in place of [INLINE], [LINK] or [IMAGE]\n"
@@ -5428,7 +5543,7 @@ msgstr ""
 "source file in place of [INLINE], [LINK] or [IMAGE]\n"
 "See also VERBOSE_IMAGES in lynx.cfg\n"
 
-#: src/LYrcFile.c:477
+#: src/LYrcFile.c:547
 msgid ""
 "If vi_keys is set to \"on\", then the normal VI movement keys:\n"
 "  j = down    k = up\n"
@@ -5444,7 +5559,7 @@ msgstr ""
 "Capital 'H', 'J' and 'K will still activate help, jump shortcuts,\n"
 "and the keymap display, respectively.\n"
 
-#: src/LYrcFile.c:485
+#: src/LYrcFile.c:555
 msgid ""
 "The visited_links setting controls how Lynx organizes the information\n"
 "in the Visited Links Page.\n"
@@ -5452,7 +5567,7 @@ msgstr ""
 "The visited_links setting controls how Lynx organizes the information\n"
 "in the Visited Links Page.\n"
 
-#: src/LYrcFile.c:693
+#: src/LYrcFile.c:772
 msgid ""
 "If keypad_mode is set to \"NUMBERS_AS_ARROWS\", then the numbers on\n"
 "your keypad when the numlock is on will act as arrow keys:\n"
@@ -5470,7 +5585,7 @@ msgstr ""
 "and the corresponding keyboard numbers will act as arrow keys,\n"
 "regardless of whether numlock is on.\n"
 
-#: src/LYrcFile.c:702
+#: src/LYrcFile.c:781
 msgid ""
 "If keypad_mode is set to \"LINKS_ARE_NUMBERED\", then numbers will\n"
 "appear next to each link and numbers are used to select links.\n"
@@ -5478,7 +5593,7 @@ msgstr ""
 "If keypad_mode is set to \"LINKS_ARE_NUMBERED\", then numbers will\n"
 "appear next to each link and numbers are used to select links.\n"
 
-#: src/LYrcFile.c:706
+#: src/LYrcFile.c:785
 msgid ""
 "If keypad_mode is set to \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\", then\n"
 "numbers will appear next to each link and visible form input field.\n"
@@ -5496,7 +5611,7 @@ msgstr ""
 "a popup menu, even if the option isn't visible on the screen.  Reference\n"
 "lists and output from the list command also enumerate form inputs.\n"
 
-#: src/LYrcFile.c:715
+#: src/LYrcFile.c:794
 msgid ""
 "NOTE: Some fixed format documents may look disfigured when\n"
 "\"LINKS_ARE_NUMBERED\" or \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\" are\n"
@@ -5506,7 +5621,7 @@ msgstr ""
 "\"LINKS_ARE_NUMBERED\" or \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\" are\n"
 "enabled.\n"
 
-#: src/LYrcFile.c:748
+#: src/LYrcFile.c:827
 msgid ""
 "Lynx User Defaults File\n"
 "\n"
@@ -5529,3 +5644,9 @@ msgstr ""
 "If you are looking for the general configuration file - it is normally\n"
 "called lynx.cfg, and it has different content and a different format.\n"
 "It is not this file.\n"
+
+#~ msgid "Short read from file, problem?"
+#~ msgstr "ファイルからの読み込みが中断しました 問題発生かも?"
+
+#~ msgid "Unable to open file management menu file."
+#~ msgstr "ファイル管理メニューファイルを開けません。"

@@ -55,6 +55,13 @@ extern void LYAddMETAcharsetToFD PARAMS((
 extern void LYformTitle PARAMS((
 	char **		dst,
 	CONST char *	src));
+extern char *LYParseTagParam PARAMS((
+	char *		from,
+	char *		name));
+extern void LYParseRefreshURL PARAMS((
+	char *		content,
+	char **		p_seconds,
+	char **		p_address));
 
 #ifdef Lynx_HTML_Handler
 extern int OL_CONTINUE;		/* flag for whether CONTINUE is set */

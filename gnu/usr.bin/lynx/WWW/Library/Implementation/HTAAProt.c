@@ -59,7 +59,7 @@ PRIVATE BOOL isNumber ARGS1(CONST char *, s)
 {
     CONST char *cur = s;
 
-    if (!s || !*s) return NO;
+    if (isEmpty(s)) return NO;
 
     if (*cur == '-')
 	cur++;		/* Allow initial minus sign in a number */
