@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520reg.h,v 1.1 2003/01/21 17:02:29 markus Exp $	*/
+/*	$OpenBSD: elan520reg.h,v 1.2 2004/06/05 15:06:22 grange Exp $	*/
 /*	$NetBSD: elan520reg.h,v 1.1 2002/08/12 01:03:14 thorpej Exp $	*/
 
 /*-
@@ -97,6 +97,8 @@
 #define	MMCR_PIOSET31_16	0x0c36	/* PIO31-PIO16 set */
 #define	MMCR_PIOCLR15_0		0x0c38	/* PIO15-PIO0 clear */
 #define	MMCR_PIOCLR31_16	0x0c3a	/* PIO31-PIO16 clear */
+
+#define	ELANSC_PIO_NPINS	32	/* total number of PIO pins */
 
 /*
  * Watchdog Timer Registers.

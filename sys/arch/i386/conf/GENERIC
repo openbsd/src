@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.367 2004/06/03 18:28:02 grange Exp $
+#	$OpenBSD: GENERIC,v 1.368 2004/06/05 15:06:22 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -66,6 +66,7 @@ gpio*	at gscpcib?
 # power management and other environmental stuff
 #amdpm*	at pci? dev ? function ?	# AMD768MPX
 elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
+gpio*	at elansc?
 geodesc* at pci? dev ? function ?	# Geode SC1100/SCx200 IAOC
 
 # National Semiconductor LM7[89] and compatible hardware monitors

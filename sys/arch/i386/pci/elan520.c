@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.7 2004/06/04 18:56:03 grange Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.8 2004/06/05 15:06:22 grange Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 #include <sys/sysctl.h>
 
 #include <machine/bus.h>
@@ -53,12 +54,18 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/gpio/gpiovar.h>
+
 #include <arch/i386/pci/elan520reg.h>
 
 struct elansc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
+
+	/* GPIO interface */
+	struct gpio_chipset_tag sc_gpio_gc;
+	gpio_pin_t sc_gpio_pins[ELANSC_PIO_NPINS];
 } *elansc;
 
 int	elansc_match(struct device *, void *, void *);
@@ -70,6 +77,10 @@ void	elansc_wdogctl(struct elansc_softc *, int, uint16_t);
 #define elansc_wdogctl_reset(sc)	elansc_wdogctl(sc, 1, 0)
 #define elansc_wdogctl_write(sc, val)	elansc_wdogctl(sc, 0, val)
 int	elansc_wdogctl_cb(void *, int);
+
+int	elansc_gpio_pin_read(void *, int);
+void	elansc_gpio_pin_write(void *, int, int);
+void	elansc_gpio_pin_ctl(void *, int, int);
 
 struct cfattach elansc_ca = {
 	sizeof(struct elansc_softc), elansc_match, elansc_attach
@@ -105,8 +116,12 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct elansc_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
+	struct gpiobus_attach_args gba;
 	uint16_t rev;
 	uint8_t ressta, cpuctl;
+	int pin;
+	int reg, shift;
+	u_int16_t data;
 
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, NBPG, 0,
@@ -145,6 +160,40 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	elansc = sc;
 	cpu_cpuspeed = elansc_cpuspeed;
 	cpu_setperf = elansc_setperf;
+
+	/* Initialize GPIO pins array */
+	for (pin = 0; pin < ELANSC_PIO_NPINS; pin++) {
+		sc->sc_gpio_pins[pin].pin_num = pin;
+		sc->sc_gpio_pins[pin].pin_caps = GPIO_PIN_INPUT |
+		    GPIO_PIN_OUTPUT;
+
+		/* Read initial state */
+		reg = (pin < 16 ? MMCR_PIODIR15_0 : MMCR_PIODIR31_16);
+		shift = pin % 16;
+		data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
+		if ((data & (1 << shift)) == 0)
+			sc->sc_gpio_pins[pin].pin_flags = GPIO_PIN_INPUT;
+		else
+			sc->sc_gpio_pins[pin].pin_flags = GPIO_PIN_OUTPUT;
+		if (elansc_gpio_pin_read(sc, pin) == 0)
+			sc->sc_gpio_pins[pin].pin_state = GPIO_PIN_LOW;
+		else
+			sc->sc_gpio_pins[pin].pin_state = GPIO_PIN_HIGH;
+	}
+
+	/* Create controller tag */
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = elansc_gpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = elansc_gpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = elansc_gpio_pin_ctl;
+
+	gba.gba_name = "gpio";
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = ELANSC_PIO_NPINS;
+
+	/* Attach GPIO framework */
+	config_found(&sc->sc_dev, &gba, gpiobus_print);
 }
 
 void
@@ -252,4 +301,54 @@ elansc_setperf(int level)
 	write_eflags(eflags);
 
 	return (0);
+}
+
+int
+elansc_gpio_pin_read(void *arg, int pin)
+{
+	struct elansc_softc *sc = arg;
+	int reg, shift;
+	u_int16_t data;
+
+	reg = (pin < 16 ? MMCR_PIODATA15_0 : MMCR_PIODATA31_16);
+	shift = pin % 16;
+	data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
+
+	return ((data >> shift) & 0x1);
+}
+
+void
+elansc_gpio_pin_write(void *arg, int pin, int value)
+{
+	struct elansc_softc *sc = arg;
+	int reg, shift;
+	u_int16_t data;
+
+	reg = (pin < 16 ? MMCR_PIODATA15_0 : MMCR_PIODATA31_16);
+	shift = pin % 16;
+	data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
+	if (value == 0)
+		data &= ~(1 << shift);
+	else if (value == 1)
+		data |= (1 << shift);
+
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, reg, data);
+}
+
+void
+elansc_gpio_pin_ctl(void *arg, int pin, int flags)
+{
+	struct elansc_softc *sc = arg;
+	int reg, shift;
+	u_int16_t data;
+
+	reg = (pin < 16 ? MMCR_PIODIR15_0 : MMCR_PIODIR31_16);
+	shift = pin % 16;
+	data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
+	if (flags & GPIO_PIN_INPUT)
+		data &= ~(1 << shift);
+	if (flags & GPIO_PIN_OUTPUT)
+		data |= (1 << shift);
+
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, reg, data);
 }
