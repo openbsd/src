@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.4 2001/06/26 23:25:11 rees Exp $ */
+/* $Id: cyberflex.c,v 1.5 2001/06/27 22:33:35 rees Exp $ */
 
 /*
 copyright 2000
@@ -54,8 +54,7 @@ such damages.
 #define key_number 0x10
 #define key_type 0xc8 /* key type 0xc8 (1024 bit RSA private) */
 #define KEY_FILE_HEADER_SIZE 8
-
-static unsigned char root_fid[] = {0x3f, 0x00};
+#define BLOCK_SIZE 8
 
 int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size)
 {
@@ -64,7 +63,7 @@ int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size)
 
     size += 16;
 
-    data[0] = (size >> 16);
+    data[0] = (size >> 8);
     data[1] = (size & 0xff);
     data[2] = fid[0];
     data[3] = fid[1];
@@ -252,6 +251,37 @@ cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len)
 	return -1;
     }
     return 0;
+}
+
+/* fill the key block.
+
+   Input
+   dst     : destination buffer
+   key_num : key number (0: AUT, 5: signed applet, etc.)
+   alg_num : algorithm number
+   key     : incoming 8 byte DES key
+
+   The resulting format:
+   00 0e key_num alg_num key(8 byte) 0a 0a
+
+   total 14 byte
+*/
+void
+cyberflex_fill_key_block (unsigned char *dst, int key_num,
+			       int alg_num, unsigned char *key)
+{
+    int i;
+
+    *(dst+0) = 0x00;		/* const */
+    *(dst+1) = 0x0e;		/* const */
+    *(dst+2) = key_num;		/* key number */
+    *(dst+3) = alg_num;		/* algorithm number */
+    for (i = 0; i < BLOCK_SIZE; i++)
+	*(dst+i+4) = *(key+i);
+    *(dst+12) = 0x0a;		/* const */
+    *(dst+13) = 0x0a;		/* const */
+
+    return;
 }
 
 int

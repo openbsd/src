@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.8 2001/06/26 23:25:12 rees Exp $ */
+/* $Id: sectok.h,v 1.9 2001/06/27 22:33:36 rees Exp $ */
 
 /*
 copyright 1997, 2000
@@ -80,6 +80,8 @@ extern struct scparam {
     int t, etu, cwt, bwt, n;
 } scparam[];
 
+extern unsigned char root_fid[];
+
 /* forward declarations */
 
 int scopen(int ttyn, int flags, int *ep);
@@ -130,6 +132,8 @@ int cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 			    int nkey_elems, int keylen, unsigned char *key_elems[]);
 int cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len);
 int cyberflex_inq_class(int fd);
+void cyberflex_fill_key_block (unsigned char *dst, int key_num,
+			       int alg_num, unsigned char *key);
 
 /* SCPERF - performance evaluation */
 #ifdef SCPERF
