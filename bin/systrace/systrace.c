@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.9 2002/06/04 22:45:25 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.10 2002/06/05 15:59:52 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
@@ -52,6 +53,7 @@ int inherit = 0;		/* Inherit policy to childs */
 int automatic = 0;		/* Do not run interactively */
 int userpolicy = 1;		/* Permit user defined policies */
 char *username = NULL;		/* Username in automatic mode */
+char cwd[MAXPATHLEN];		/* Current working directory of process */
 
 short
 trans_cb(int fd, pid_t pid, int policynr,
@@ -422,6 +424,10 @@ main(int argc, char **argv)
 
 	if (argc == 0)
 		usage();
+
+	/* Determine current working directory for filtering */
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		err(1, "getcwd");
 
 	if ((args = malloc((argc + 1) * sizeof(char *))) == NULL)
 		err(1, "malloc");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.4 2002/06/05 15:59:52 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,6 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
@@ -44,6 +45,7 @@
 #include "systrace.h"
 
 extern int connected;
+extern char cwd[];
 
 int
 filter_match(struct intercept_tlq *tls, struct logic *logic)
@@ -385,7 +387,7 @@ filter_replace(char *buf, size_t buflen, char *match, char *repl)
 char *
 filter_expand(char *data)
 {
-	static char expand[1024];
+	static char expand[2*MAXPATHLEN];
 	char *what;
 
 	if (data != NULL)
@@ -397,6 +399,8 @@ filter_expand(char *data)
 	what = getenv("USER");
 	if (what != NULL)
 		filter_replace(expand, sizeof(expand), "$USER", what);
+
+	filter_replace(expand, sizeof(expand), "$CWD", cwd);
 
 	return (expand);
 }
