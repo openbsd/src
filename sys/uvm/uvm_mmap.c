@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.52 2003/09/01 18:06:44 henning Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.53 2003/09/02 17:57:12 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ sys_mmap(p, v, retval)
 		if (addr == 0)
 			addr = uvm_map_hint(p, prot);
 		else if (!(flags & MAP_TRYFIXED) &&
-		    addr < uvm_map_hint(p, prot))
+		    addr < (vaddr_t)p->p_vmspace->vm_daddr)
 			addr = uvm_map_hint(p, prot);
 	}
 

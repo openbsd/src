@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.60 2003/06/29 17:31:12 avsm Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.61 2003/09/02 17:57:12 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -78,6 +78,8 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
+
+#include <dev/rndvar.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -1078,16 +1080,25 @@ uvm_map_spacefits(vm_map_t map, vaddr_t *phint, vsize_t length,
 vaddr_t
 uvm_map_hint(struct proc *p, vm_prot_t prot)
 {
+	vaddr_t addr;
+
 #ifdef __i386__
 	/*
 	 * If executable skip first two pages, otherwise start
 	 * after data + heap region.
 	 */
 	if ((prot & VM_PROT_EXECUTE) &&
-	    ((vaddr_t)p->p_vmspace->vm_daddr >= I386_MAX_EXE_ADDR))
-		return (round_page(PAGE_SIZE*2));
+	    ((vaddr_t)p->p_vmspace->vm_daddr >= I386_MAX_EXE_ADDR)) {
+		addr = (PAGE_SIZE*2) +
+		    (arc4random() & (I386_MAX_EXE_ADDR / 2 - 1));
+		return (round_page(addr));
+	}
 #endif
-	return (round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ));
+	addr = (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ;
+#ifndef __vax__
+	addr += arc4random() & (256 * 1024 * 1024 - 1);
+#endif
+	return (round_page(addr));
 }
 
 /*
