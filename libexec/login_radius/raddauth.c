@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.1 2001/07/08 17:56:33 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.2 2001/07/08 20:26:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -78,7 +78,6 @@
 #define	MAXPWNETNAM		64	/* longest username */
 #define MAXSECRETLEN		128	/* maximum length of secret */
 
-
 #define AUTH_VECTOR_LEN			16
 #define AUTH_HDR_LEN			20
 #define	AUTH_PASS_LEN			(256 - 16)
@@ -100,6 +99,7 @@
 
 char *radius_dir = RADIUS_DIR;
 char auth_secret[MAXSECRETLEN+1];
+volatile sig_atomic_t timedout;
 int alt_retries;
 int retries;
 int sockfd;
@@ -117,12 +117,12 @@ typedef struct {
 } auth_hdr_t;
 
 void servtimeout(int);
-in_addr_t get_ipaddr();
-in_addr_t gethost();
+in_addr_t get_ipaddr(char *);
+in_addr_t gethost(void);
 int rad_recv(char *, char *);
-void parse_challenge(auth_hdr_t *, int, char *, char *);
+void parse_challenge(auth_hdr_t *, char *, char *);
 void rad_request(pid_t, char *, char *, int, char *, char *);
-void getsecret();
+void getsecret(void);
 
 /*
  * challenge -- NULL for interactive service
@@ -149,7 +149,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 		snprintf(_pwstate, sizeof(_pwstate),
 		    "%s: no such class", class);
 		*emsg = _pwstate;
-		return(1);
+		return (1);
 	}
 
 	timeout = login_getcapnum(lc, "radius-timout", 2, 2);
@@ -208,7 +208,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		snprintf(_pwstate, sizeof(_pwstate), "%s", strerror(errno));
 		*emsg = _pwstate;
-		return(1);
+		return (1);
 	}
 
 	/* set up client structure */
@@ -230,17 +230,32 @@ raddauth(char *username, char *class, char *style, char *challenge,
 		userstyle = username;
 
 	/* generate random vector */
-	for (i = 0; i < AUTH_VECTOR_LEN; i++) {
+	for (i = 0; i < AUTH_VECTOR_LEN;) {
 		r = arc4random();
-		vector[i]   = r & 0xff;
-		vector[++i] = (r >> 8)  & 0xff;
-		vector[++i] = (r >> 16) & 0xff;
-		vector[++i] = (r >> 24) & 0xff;
+		memcpy(&vector[i], &r, sizeof(r));
+		i += sizeof(r);
 	}
 	vector[AUTH_VECTOR_LEN] = '\0';
 
 	signal(SIGALRM, servtimeout);
 	setjmp(timerfail);
+
+	if (timedout) {
+		timedout = 0;
+		if (--retries <= 0) {
+			/*
+			 * If we ran out of tries but there is an alternate
+			 * server, switch to it and try again.
+			 */
+			if (alt_retries) {
+				auth_server = alt_server;
+				retries = alt_retries;
+				alt_retries = 0;
+				getsecret();
+			} else
+				warnx("no response from authentication server");
+		}
+	}
 
 	while (retries > 0) {
 		rad_request(req_id, userstyle, passwd, auth_port, vector,
@@ -283,18 +298,14 @@ raddauth(char *username, char *class, char *style, char *challenge,
 			snprintf(_pwstate, sizeof(_pwstate),
 			    "invalid response type %d\n", i);
 			*emsg = _pwstate;
-			return(1);
+			return (1);
 		}
 	}
 	return (1);
 }
 
-
 /*
- *
- *	rad_request() -- build a radius authentication digest and
- *	submit it to the radius server
- *
+ * Build a radius authentication digest and submit it to the radius server
  */
 void
 rad_request(pid_t id, char *name, char *password, int port, char *vector,
@@ -317,20 +328,17 @@ rad_request(pid_t id, char *name, char *password, int port, char *vector,
 	total_length = AUTH_HDR_LEN;
 	ptr = auth.data;
 
+	/* User name */
 	*ptr++ = PW_USER_NAME;
 	length = strlen(name);
 	if (length > MAXPWNETNAM)
 		length = MAXPWNETNAM;
-
 	*ptr++ = length + 2;
 	memcpy(ptr, name, length);
 	ptr += length;
 	total_length += length + 2;
 
-	/* password */
-
-	/* encrypt the password */
-
+	/* Password */
 	length = strlen(password);
 	if (length > AUTH_PASS_LEN)
 		length = AUTH_PASS_LEN;
@@ -341,14 +349,14 @@ rad_request(pid_t id, char *name, char *password, int port, char *vector,
 
 	strncpy(pass_buf, password, AUTH_PASS_LEN);	/* must zero fill */
 
-	/* calculate the md5 digest */
+	/* Calculate the md5 digest */
 	secretlen = strlen(auth_secret);
 	memcpy(md5buf, auth_secret, secretlen);
 	memcpy(md5buf + secretlen, auth.vector, AUTH_VECTOR_LEN);
 
 	total_length += 2;
 
-	/* xor the password into the md5 digest */
+	/* XOR the password into the md5 digest */
 	pw = pass_buf;
 	while (p-- > 0) {
 		MD5Init(&context);
@@ -362,8 +370,7 @@ rad_request(pid_t id, char *name, char *password, int port, char *vector,
 		total_length += AUTH_VECTOR_LEN;
 	}
 
-
-	/* client id */
+	/* Client id */
 	*ptr++ = PW_CLIENT_ID;
 	*ptr++ = sizeof(in_addr_t) + 2;
 	ipaddr = gethost();
@@ -406,51 +413,48 @@ rad_request(pid_t id, char *name, char *password, int port, char *vector,
 }
 
 /*
- *
- * rad_recv() -- receive udp responses from the radius server
- *
+ * Receive UDP responses from the radius server
  */
 int
 rad_recv(char *state, char *challenge)
 {
 	auth_hdr_t auth;
-	int nread, salen;
+	size_t salen;
 	struct sockaddr_in sin;
 
 	salen = sizeof(sin);
 
 	alarm(timeout);
 
-	nread = recvfrom(sockfd, &auth, sizeof(auth), 0,
-				(struct sockaddr *)&sin, &salen);
+	if ((recvfrom(sockfd, &auth, sizeof(auth), 0,
+	    (struct sockaddr *)&sin, &salen)) < AUTH_HDR_LEN)
+		errx(1, "bogus auth packet from server");
 	alarm(0);
 
 	if (sin.sin_addr.s_addr != auth_server)
 		errx(1, "bogus authentication server");
 
 	if (auth.code == PW_ACCESS_CHALLENGE)
-		parse_challenge(&auth, nread, state, challenge);
+		parse_challenge(&auth, state, challenge);
 
-	return(auth.code);
+	return (auth.code);
 }
 
-
 /*
- * gethost() -- get local hostname
+ * Get IP address of local hostname
  */
 in_addr_t
-gethost()
+gethost(void)
 {
 	char hostname[MAXHOSTNAMELEN];
 
 	if (gethostname(hostname, sizeof(hostname)))
 		err(1, "gethost");
-	return(get_ipaddr(hostname));
+	return (get_ipaddr(hostname));
 }
 
 /*
- * get_ipaddr -- get an ip address in host long notation from a
- * hostname or dotted quad.
+ * Get an IP address in host in_addr_t notation from a hostname or dotted quad.
  */
 in_addr_t
 get_ipaddr(char *host)
@@ -458,16 +462,16 @@ get_ipaddr(char *host)
 	struct hostent *hp;
 
 	if ((hp = gethostbyname(host)) == NULL)
-        	return(0);
+        	return (0);
 
 	return (((struct in_addr *)hp->h_addr)->s_addr);
 }
 
 /*
- * get the secret from the servers file
+ * Get the secret from the servers file
  */
 void
-getsecret()
+getsecret(void)
 {
     	FILE *servfd;
 	char *host, *secret, buffer[MAXPATHLEN];
@@ -482,18 +486,26 @@ getsecret()
 	}
 
 	secret = NULL;			/* Keeps gcc happy */
-
 	while ((host = fgetln(servfd, &len)) != NULL) {
 		if (*host == '#') {
 			memset(host, 0, len);
 			continue;
 		}
-		/* XXX - in no newline we could oflow */
 		if (host[len-1] == '\n')
 			--len;
+		else {
+			/* No trailing newline, must allocate len+1 for NUL */
+			if ((secret = malloc(len + 1)) == NULL) {
+				memset(host, 0, len);
+				continue;
+			}
+			memcpy(secret, host, len);
+			memset(host, 0, len);
+			host = secret;
+		}
 		while (len > 0 && isspace(host[--len]))
 			;
-		host[len+1] = '\0';
+		host[++len] = '\0';
 		while (isspace(*host)) {
 			++host;
 			--len;
@@ -525,25 +537,17 @@ void
 servtimeout(int signo)
 {
 
-	if (--retries <= 0) {
-		/*
-		 * If we ran out of tries but there is an alternate
-		 * server, switch to it and try again.
-		 */
-		if (alt_retries) {
-			auth_server = alt_server;
-			retries = alt_retries;
-			alt_retries = 0;
-			getsecret();
-		} else
-			warnx("no response from authentication server");
-	}
+	timedout = 1;
 	longjmp(timerfail, 1);
 }
 
+/*
+ * Parse a challenge received from the server
+ */
 void
-parse_challenge(auth_hdr_t *authhdr, int length, char *state, char *challenge)
+parse_challenge(auth_hdr_t *authhdr, char *state, char *challenge)
 {
+	int length;
 	int attribute, attribute_len;
 	u_char *ptr;
 
