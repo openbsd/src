@@ -1,7 +1,7 @@
-/*	$OpenBSD: ukc.c,v 1.3 2000/12/06 14:06:16 ho Exp $ */
+/*	$OpenBSD: ukc.c,v 1.4 2001/01/31 22:41:32 maja Exp $ */
 
 /*
- * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
+ * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.3 2000/12/06 14:06:16 ho Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.4 2001/01/31 22:41:32 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -53,6 +53,8 @@ static char rcsid[] = "$OpenBSD: ukc.c,v 1.3 2000/12/06 14:06:16 ho Exp $";
 
 void	init __P((void));
 void	usage __P((void));
+
+int	ukc_mod_kernel = 0;
 
 int
 ukc(file, outfile, uflag, force)
@@ -157,8 +159,13 @@ WARNING the commands add and change might not work.\n");
 		}
 		if (outfile == NULL)
 			outfile = file;
-		printf ("Saving modified kernel.\n");
-		savekernel(outfile);
+		if (ukc_mod_kernel == 0) {
+			fprintf(stderr, "Kernel not modified\n");
+			exit(1);
+		} else {
+			printf ("Saving modified kernel.\n");
+			savekernel(outfile);
+		}
 	}
 
 	return(0);

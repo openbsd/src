@@ -1,7 +1,7 @@
-/*	$OpenBSD: cmd.c,v 1.3 2000/02/27 21:10:01 deraadt Exp $ */
+/*	$OpenBSD: cmd.c,v 1.4 2001/01/31 22:41:32 maja Exp $ */
 
 /*
- * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
+ * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.3 2000/02/27 21:10:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.4 2001/01/31 22:41:32 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -46,6 +46,8 @@ static char rcsid[] = "$OpenBSD: cmd.c,v 1.3 2000/02/27 21:10:01 deraadt Exp $";
 #include "cmd.h"
 #include "ukc.h"
 #include "exec.h"
+
+extern int ukc_mod_kernel;
 
 /* Our command table */
 cmd_table_t cmd_table[] = {
@@ -268,6 +270,8 @@ Xtimezone(cmd)
 	struct timezone *tz;
 	int	num;
 	char	*c;
+
+	ukc_mod_kernel = 1;
 
 	tz = (struct timezone *)adjust((caddr_t)(nl[TZ_TZ].n_value));
 

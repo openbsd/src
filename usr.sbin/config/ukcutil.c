@@ -1,7 +1,7 @@
-/*	$OpenBSD: ukcutil.c,v 1.4 2001/01/15 23:53:34 maja Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.5 2001/01/31 22:41:32 maja Exp $ */
 
 /*
- * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
+ * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.4 2001/01/15 23:53:34 maja Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.5 2001/01/31 22:41:32 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -46,6 +46,8 @@ static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.4 2001/01/15 23:53:34 maja Exp $"
 #include "exec.h"
 #include "ukc.h"
 #include "misc.h"
+
+extern int ukc_mod_kernel;
 
 struct cfdata *
 get_cfdata(idx)
@@ -341,6 +343,8 @@ modify(item, val)
 	cmd_t cmd;
 	int a;
 
+	ukc_mod_kernel = 1;
+
 	while(1) {
 		printf("%s [", item);
 		pnum(*val);
@@ -372,6 +376,8 @@ change(devno)
 	caddr_t	*p;
 	int	 i,share = 0,*j,*k,*l;
 	short	*ln,*lk;
+
+	ukc_mod_kernel = 1;
 
 	j = k = NULL;
 
@@ -460,6 +466,8 @@ change_history(devno,str)
 	caddr_t	*p;
 	int	 i,share = 0,*j,*k,*l;
 	short	*ln,*lk;
+
+	ukc_mod_kernel = 1;
 
 	j = k = NULL;
 
@@ -553,6 +561,8 @@ disable(devno)
 	struct cfdata *cd;
 	int done = 0;
 
+	ukc_mod_kernel = 1;
+
 	if (devno <= maxdev) {
 		
 		cd = get_cfdata(devno);
@@ -590,6 +600,8 @@ enable(devno)
 	struct cfdata *cd;
 	int done = 0;
 	
+	ukc_mod_kernel = 1;
+
 	if (devno <= maxdev) {
 		
 		cd = get_cfdata(devno);
@@ -921,6 +933,8 @@ add(dev, len, unit, state)
 	struct cfdriver *cdrv;
 	int  val, max_unit;
 
+	ukc_mod_kernel = 1;
+
 	bzero(&new, sizeof(struct cfdata));
 
 	if (maxdev == totdev) {
@@ -1062,6 +1076,8 @@ add_history(devno, unit, state, newno)
 	int  val, max_unit;
 	int  len;
 	char *dev;
+
+	ukc_mod_kernel = 1;
 
 	bzero(&new, sizeof(struct cfdata));
 
@@ -1281,6 +1297,7 @@ process_history(len,buf)
 			while (*c != ' ') c++; c++;
 			tz->tz_dsttime = atoi(c);
 			while (*c != '\n') c++; c++;
+			ukc_mod_kernel = 1;
 			break;
 		case 'q':
 			while (*c != NULL) c++;
