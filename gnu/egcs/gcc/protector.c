@@ -73,6 +73,7 @@ static int current_function_defines_short_string;
 static int current_function_has_variable_string;
 static int current_function_defines_vsized_array;
 static int current_function_is_inlinable;
+static int is_array;
 
 static rtx guard_area, _guard;
 static rtx function_first_insn, prologue_insert_point;
@@ -139,7 +140,8 @@ prepare_stack_protection (inlinable)
 
   current_function_defines_vulnerable_string = search_string_from_argsandvars (0);
 
-  if (current_function_defines_vulnerable_string)
+  if (current_function_defines_vulnerable_string
+      || flag_stack_protection)
     {
       HOST_WIDE_INT offset;
       function_first_insn = get_insns ();
@@ -388,6 +390,10 @@ search_string_def (type)
 
 	  current_function_defines_short_string = TRUE;
 	}
+      
+      /* to protect every functions, sweep any arrays to the frame top */
+      is_array = TRUE;
+
       return search_string_def(TREE_TYPE(type));
 	
     case UNION_TYPE:
@@ -919,7 +925,10 @@ arrange_var_order (block)
 	      && DECL_RTL (types)
 	      && GET_CODE (DECL_RTL (types)) == MEM)
 	    {
-	      if (search_string_def (TREE_TYPE (types)))
+	      is_array = 0;
+	      if (search_string_def (TREE_TYPE (types))
+		  || (! current_function_defines_vulnerable_string
+		      && is_array))
 		{
 		  rtx home = DECL_RTL (types);
 
