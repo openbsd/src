@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.13 2001/01/28 19:56:10 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.14 2001/05/12 19:12:44 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -660,10 +660,12 @@ pci_intr_header_fixup(pc, tag, ihp)
 }
 
 int
-pci_intr_fixup(pc, iot)
+pci_intr_fixup(sc, pc, iot)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
+	struct pcibios_pir_header *pirh = &pcibios_pir_header;
 	const struct pciintr_icu_table *piit = NULL;
 	pcitag_t icutag;
 	pcireg_t icuid;
@@ -675,11 +677,11 @@ pci_intr_fixup(pc, iot)
 	 * if present.  Otherwise, we have to look for the router
 	 * ourselves (the PCI-ISA bridge).
 	 */
-	if (pcibios_pir_header.signature != 0) {
-		icutag = pci_make_tag(pc, pcibios_pir_header.router_bus,
-		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
-		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
-		icuid = pcibios_pir_header.compat_router;
+	if (pirh->signature != 0) {
+		icutag = pci_make_tag(pc, pirh->router_bus,
+		    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc));
+		icuid = pirh->compat_router;
 		if (icuid == 0 ||
 		    (piit = pciintr_icu_lookup(icuid)) == NULL) {
 			/*
@@ -708,14 +710,19 @@ pci_intr_fixup(pc, iot)
 			if (PCI_VENDOR(icuid) == 0)
 				continue;
 
-			if ((piit = pciintr_icu_lookup(icuid)))
+			if ((piit = pciintr_icu_lookup(icuid))) {
+				pirh->compat_router = icuid;
+				pirh->router_bus = 0;
+				pirh->router_devfunc =
+				    PIR_DEVFUNC_COMPOSE(device, 0);
 				break;
+			}
 		}
 	}
 
 	if (piit == NULL) {
-		printf("pcibios: no compatible PCI ICU found");
-		if (pcibios_pir_header.signature != 0 && icuid != 0)
+		printf("%s: no compatible PCI ICU found", sc->sc_dev.dv_xname);
+		if (pirh->signature != 0 && icuid != 0)
 			printf(": ICU vendor 0x%04x product 0x%04x",
 			    PCI_VENDOR(icuid), PCI_PRODUCT(icuid));
 		printf("\n");
@@ -727,6 +734,18 @@ pci_intr_fixup(pc, iot)
 			return (0);		/* success! */
 		} else
 			return (-1);		/* non-fatal */
+	} else {
+		char devinfo[256];
+
+		printf("%s: PCI Interrupt Router at %03d:%02d:%01d",
+		    sc->sc_dev.dv_xname, pirh->router_bus,
+		    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc));
+		if (pirh->compat_router != 0) {
+			pci_devinfo(pirh->compat_router, 0, 0, devinfo);
+			printf(" (%s)", devinfo);
+		}
+		printf("\n");
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.23 2001/02/28 20:33:30 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.24 2001/05/12 19:12:44 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ pcibiosattach(parent, self, aux)
 		/*
 		 * Fixup interrupt routing.
 		 */
-		rv = pci_intr_fixup(NULL, I386_BUS_SPACE_IO);
+		rv = pci_intr_fixup(sc, NULL, I386_BUS_SPACE_IO);
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */
@@ -253,7 +253,6 @@ pcibios_pir_init(sc)
 
 	pcibios_pir_table = NULL;
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
-		char devinfo[256];
 		u_int8_t *p, cksum;
 		struct pcibios_pir_header *pirh;
 		int i;
@@ -301,15 +300,6 @@ pcibios_pir_init(sc)
 		bcopy(p + 32, pcibios_pir_table, pirh->tablesize - 32);
 		pcibios_pir_table_nentries = (pirh->tablesize - 32) / 16;
 
-		printf("%s: PCI Interrupt Router at %03d:%02d:%01d",
-		    sc->sc_dev.dv_xname, pirh->router_bus,
-		    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
-		    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc));
-		if (pirh->compat_router != 0) {
-			pci_devinfo(pirh->compat_router, 0, 0, devinfo);
-			printf(" (%s)", devinfo);
-		}
-		printf("\n");
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.6 2001/01/27 04:59:40 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.7 2001/05/12 19:12:44 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ struct pcibios_pir_header {
 
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
+#define	PIR_DEVFUNC_COMPOSE(dev,func)	((((dev) &0x1f) << 3) | ((func) & 7))
 
 void	pcibios_init __P((void));
 
@@ -144,7 +145,7 @@ typedef const struct pciintr_icu *pciintr_icu_tag_t;
 #define	PCIADDR_SEARCH_MEM	1
 struct extent *pciaddr_search __P((int, bus_addr_t *, bus_size_t));
 
-int  pci_intr_fixup __P((pci_chipset_tag_t, bus_space_tag_t));
+int  pci_intr_fixup __P((struct pcibios_softc *, pci_chipset_tag_t, bus_space_tag_t));
 int  pci_bus_fixup __P((pci_chipset_tag_t, int));
 void pci_addr_fixup __P((struct pcibios_softc *, pci_chipset_tag_t, int));
 void pci_device_foreach __P((struct pcibios_softc *, pci_chipset_tag_t, int,
