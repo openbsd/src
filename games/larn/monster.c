@@ -1105,9 +1105,9 @@ spattack(x,xx,yy)
 				if (j==0)	/* if rusting did not occur */
 				  switch(m)
 					{
-					case OLEATHER:	p = "\nThe %s hit you -- Your lucky you have leather on";
+					case OLEATHER:	p = "\nThe %s hit you -- You're lucky you have leather on";
 									break;
-				    case OSSPLATE:	p = "\nThe %s hit you -- Your fortunate to have stainless steel armor!";
+				    case OSSPLATE:	p = "\nThe %s hit you -- You're fortunate to have stainless steel armor!";
 									break;
 					}
 				else  { beep(); p = "\nThe %s hit you -- your armor feels weaker"; }
