@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.3 1997/09/30 18:34:43 mickey Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.4 1997/09/30 18:56:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -102,7 +102,7 @@ lpt_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
-	int i, rv, nports;
+	int i, rv;
 
 #ifdef DEBUG
 #define	ABORT								     \
@@ -117,8 +117,9 @@ lpt_isa_probe(parent, match, aux)
 
 	iot = ia->ia_iot;
 	base = ia->ia_iobase;
-	nports = (base == 0x3bc)? 4 : LPT_NPORTS;	/* XXX only 4 on MDPA */
-	if (bus_space_map(iot, base, nports, 0, &ioh))
+	if (ia->ia_iosize == -1)
+		ia->ia_iosize = LPT_NPORTS;
+	if (bus_space_map(iot, base, ia->ia_iosize, 0, &ioh))
 		return 0;
 
 	rv = 0;
@@ -147,13 +148,12 @@ lpt_isa_probe(parent, match, aux)
 	bus_space_write_1(iot, ioh, lpt_data, 0);
 	bus_space_write_1(iot, ioh, lpt_control, 0);
 
-	ia->ia_iosize = nports;
 	ia->ia_msize = 0;
 
 	rv = 1;
 
 out:
-	bus_space_unmap(iot, ioh, nports);
+	bus_space_unmap(iot, ioh, ia->ia_iosize);
 	return rv;
 }
 
