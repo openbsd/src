@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.79 2001/07/26 02:10:41 assar Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.80 2001/07/26 20:24:47 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1249,8 +1249,6 @@ sys_mknod(p, v, retval)
 		} else {
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
-			if (error == 0)
-				vput(nd.ni_vp);
 		}
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1301,10 +1299,7 @@ sys_mkfifo(p, v, retval)
 	vattr.va_type = VFIFO;
 	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	if (error == 0)
-		vput(nd.ni_vp);
-	return (error);
+	return (VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr));
 #endif /* FIFO */
 }
 
@@ -1398,8 +1393,6 @@ sys_symlink(p, v, retval)
 	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
-	if (error == 0)
-		vput(nd.ni_vp);
 out:
 	FREE(path, M_NAMEI);
 	return (error);

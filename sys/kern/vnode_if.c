@@ -154,7 +154,7 @@ int vop_mknod_vp_offsets[] = {
 struct vnodeop_desc vop_mknod_desc = {
 	0,
 	"vop_mknod",
-	0 | VDESC_VP0_WILLRELE,
+	0 | VDESC_VP0_WILLRELE | VDESC_VPP_WILLRELE,
 	vop_mknod_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_mknod_args, a_vpp),
 	VDESC_NO_OFFSET,
@@ -797,7 +797,7 @@ int vop_symlink_vp_offsets[] = {
 struct vnodeop_desc vop_symlink_desc = {
 	0,
 	"vop_symlink",
-	0 | VDESC_VP0_WILLRELE,
+	0 | VDESC_VP0_WILLRELE | VDESC_VPP_WILLRELE,
 	vop_symlink_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_symlink_args, a_vpp),
 	VDESC_NO_OFFSET,
