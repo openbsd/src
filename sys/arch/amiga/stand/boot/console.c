@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: console.c,v 1.1 1997/01/16 09:26:32 niklas Exp $
+ * $OpenBSD: console.c,v 1.2 1997/05/13 16:16:38 niklas Exp $
  * $NetBSD: console.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -92,7 +92,8 @@ consinit() {
 	if (!cnmp)
 		goto err;
 
-	cnior = (struct AmigaIO *)CreateIORequest(cnmp, sizeof(struct AmigaIO));
+	cnior = (struct AmigaIO *)CreateIORequest(cnmp,
+	    sizeof(struct AmigaIO));
 	if (!cnior)
 		goto err;
 
@@ -100,7 +101,8 @@ consinit() {
 	if (OpenDevice("console.device", 0, cnior, 0))
 		goto err;
 
-	tmior = (struct TimerIO *)CreateIORequest(cnmp, sizeof(struct TimerIO));
+	tmior = (struct TimerIO *)CreateIORequest(cnmp,
+	    sizeof(struct TimerIO));
 	if (!tmior)
 		goto err;
 
