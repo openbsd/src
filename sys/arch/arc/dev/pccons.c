@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.17 1998/01/29 14:54:51 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.18 1998/03/01 16:45:50 niklas Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -215,8 +215,6 @@ void sput __P((u_char *, int));
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
 static __inline void wcopy __P((void *, void *, u_int));
-
-char	partab[];
 
 extern void fillw __P((int, u_int16_t *, int));
 
