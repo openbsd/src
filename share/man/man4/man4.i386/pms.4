@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: pms.4,v 1.3 1996/10/13 05:58:33 downsj Exp $
+.\"	$OpenBSD: pms.4,v 1.4 1996/10/15 07:52:12 downsj Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -73,10 +73,10 @@ puts it into translated (or cooked) mode.  If the mode of the
 device driver changes, all pending but not yet read input is flushed.
 .Sh FILES
 .Bl -tag -width Pa -compact
+.It Pa /dev/psm0
+PS/2 mouse device file, defaulting to raw mode
 .It Pa /dev/pms0
 PS/2 mouse device file, defaulting to translating mode
-.It Pa /dev/pms0r
-PS/2 mouse device file, defaulting to raw mode
 .El
 .Sh SEE ALSO
 .Xr lms 4 ,
