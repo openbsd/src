@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.4 1998/03/26 21:16:45 pjanzen Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.5 2001/02/17 22:38:06 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: bdisp.c,v 1.4 1998/03/26 21:16:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bdisp.c,v 1.5 2001/02/17 22:38:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,19 +129,28 @@ void
 bdwho(update)
 	int update;
 {
-	int i;
+	int i, j;
 	extern char *plyr[];
 
 	move(21, 0);
 	clrtoeol();
-	i = 4 - strlen(plyr[BLACK]) / 2;
-	move(21, i > 0 ? i : 0);
-	printw("BLACK/%s (*)", plyr[BLACK]);
-	i = 28 - strlen(plyr[WHITE]) / 2;
-	move(21, i > 24 ? i : 24);
-	printw("WHITE/%s (O)", plyr[WHITE]);
-	move(21, 19);
-	addstr(" vs. ");
+	i = strlen(plyr[BLACK]);
+	j = strlen(plyr[WHITE]);
+	if (i + j <= 20) {
+		move(21, 10 - (i + j)/2);
+		printw("BLACK/%s (*) vs. WHITE/%s (O)",
+		    plyr[BLACK], plyr[WHITE]);
+	} else {
+		move(21, 0);
+		if (i <= 10)
+			j = 20 - i;
+		else if (j <= 10)
+			i = 20 - j;
+		else
+			i = j = 10;
+		printw("BLACK/%.*s (*) vs. WHITE/%.*s (O)",
+		    i, plyr[BLACK], j, plyr[WHITE]);
+	}
 	if (update)
 		refresh();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1998/03/26 21:16:49 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2001/02/17 22:38:06 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,17 +45,19 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/03/26 21:16:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 2001/02/17 22:38:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "gomoku.h"
+#include <sys/param.h>
 #include <curses.h>
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "gomoku.h"
 
 #define USER	0		/* get input from standard input */
 #define PROGRAM	1		/* get input from program */
@@ -80,7 +82,7 @@ int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
 char	*plyr[2];			/* who's who */
 
-static char you[9] = "you\0\0\0\0\0\0";	/* username */
+static char you[MAXLOGNAME];	/* username */
 
 int
 main(argc, argv)
@@ -106,8 +108,10 @@ main(argc, argv)
 	else
 		prog = argv[0];
 
-	if ((tmpname = getlogin()) != 0)
-		strncpy(you,tmpname,8);
+	if ((tmpname = getlogin()) != NULL)
+		strlcpy(you, tmpname, sizeof(you));
+	else
+		strlcpy(you, "you", sizeof(you));
 
 	while ((ch = getopt(argc, argv, "bcdD:hu")) != -1) {
 		switch (ch) {
