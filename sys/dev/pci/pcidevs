@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.814 2005/01/14 22:36:36 pedro Exp $
+$OpenBSD: pcidevs,v 1.815 2005/01/15 05:54:02 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2435,6 +2435,8 @@ product TI PCI1211		0xac1e	PCI1211 CardBus
 product TI PCI1251B		0xac1f	PCI1251B CardBus
 product TI PCI2030		0xac20	PCI2030 PCI-PCI
 product TI PCI2031		0xac21	PCI2031 PCI-PCI
+product TI PCI2250		0xac23	PCI2250 PCI-PCI
+product TI PCI2050		0xac28	PCI2050 PCI-PCI
 product TI PCI4450_CB		0xac40	PCI4450 CardBus
 product TI PCI4410_CB		0xac41	PCI4410 CardBus
 product TI PCI4451_CB		0xac42	PCI4451 CardBus
