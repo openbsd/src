@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 1997/05/29 00:04:45 niklas Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2000/10/09 22:57:42 bjc Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #ifndef _VAX_PCB_H_
 #define _VAX_PCB_H_
 
-#include <machine/trap.h>
+#include <machine/reg.h>
 
 struct pcb {
 
@@ -64,9 +64,9 @@ struct pcb {
 #define	AST_MASK 0x07000000
 #define	AST_PCB	 0x04000000
 
-/* machine-specific core dump; save trapframe */
+/* machine-specific core dump; save regs */
 struct	md_coredump {
-	struct trapframe md_tf;
+	struct reg md_reg;
 };
 
 #endif /* _VAX_PCB_H_ */
