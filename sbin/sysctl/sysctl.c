@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.59 2001/01/22 23:10:33 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.60 2001/02/23 16:46:36 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.59 2001/01/22 23:10:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.60 2001/02/23 16:46:36 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.59 2001/01/22 23:10:33 deraadt Exp 
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
+#include <sys/dkstat.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 #include <net/route.h>
@@ -169,7 +170,8 @@ int	Aflag, aflag, nflag, wflag;
 #define	BIOSDEV		0x00000080
 #define	MAJ2DEV		0x00000100
 #define	UNSIGNED	0x00000200
-#define KMEMBUCKETS     0x00000400
+#define	KMEMBUCKETS	0x00000400
+#define	LONGARRAY	0x00000800
 
 /* prototypes */
 void debuginit __P((void));
@@ -273,7 +275,7 @@ parse(string, flags)
 {
 	int indx, type, state, intval, len;
 	size_t size, newsize = 0;
-	int special = 0;
+	int lal = 0, special = 0;
 	void *newval = 0;
 	quad_t quadval;
 	struct list *lp;
@@ -337,7 +339,7 @@ parse(string, flags)
 			if (len < 0)
 				return;
 			if (mib[2] == KERN_MALLOC_BUCKET)
-			        special |= KMEMBUCKETS;
+				special |= KMEMBUCKETS;
 			newsize = 0;
 			break;
 		case KERN_VNODE:
@@ -368,6 +370,10 @@ parse(string, flags)
 		case KERN_HOSTID:
 		case KERN_ARND:
 			special |= UNSIGNED;
+			break;
+		case KERN_CPTIME:
+			special |= LONGARRAY;
+			lal = CPUSTATES;
 			break;
 		}
 		break;
@@ -532,7 +538,7 @@ parse(string, flags)
 	default:
 		warnx("illegal top level value: %d", mib[0]);
 		return;
-	
+
 	}
 	if (bufp) {
 		warnx("name %s in %s is unknown", bufp, string);
@@ -590,9 +596,9 @@ parse(string, flags)
 		}
 	}
 	if (special & KMEMBUCKETS) {
-	        struct kmembuckets *kb = (struct kmembuckets *)buf;
+		struct kmembuckets *kb = (struct kmembuckets *)buf;
 		if (!nflag)
-		        (void)printf("%s = ", string);
+			(void)printf("%s = ", string);
 		(void)printf("calls = %qu, total_allocated = %qu, total_free = %qu, elements = %qu, high_watermark = %qu, could_free = %qu\n", kb->kb_calls, kb->kb_total, kb->kb_totalfree, kb->kb_elmpercl, kb->kb_highwat, kb->kb_couldfree);
 		return;
 	}
@@ -727,6 +733,15 @@ parse(string, flags)
 				}
 		}
 		(void)putchar('\n');
+		return;
+	}
+	if (special & LONGARRAY) {
+		long *la = (long *)buf;
+		if (!nflag)
+			printf("%s = ", string, lal);
+		while (lal--)
+			printf("%ld%s", *la++, lal? ",":"");
+		putchar('\n');
 		return;
 	}
 	switch (type) {
@@ -1242,35 +1257,35 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 {
 	int indx, size, stor, i;
 	char *name, bufp[BUFSIZ], *buf;
-        struct list lp;
+	struct list lp;
 
 	if (*bufpp == NULL) {
 		listall(string, &kernmalloclist);
 		return(-1);
 	}
 	if ((indx = findname(string, "third", bufpp, &kernmalloclist)) == -1)
-	        return (-1);
+		return (-1);
 	mib[2] = indx;
 	if (mib[2] == KERN_MALLOC_BUCKET) {
-	        if ((name = strsep(bufpp, ".")) == NULL) {
-		        size = BUFSIZ;
+		if ((name = strsep(bufpp, ".")) == NULL) {
+			size = BUFSIZ;
 			stor = mib[2];
 			mib[2] = KERN_MALLOC_BUCKETS;
 			buf = bufp;
 			if (sysctl(mib, 3, buf, &size, NULL, 0) < 0)
-			        return(-1);
+				return(-1);
 			mib[2] = stor;
 			for (stor = 0, i = 0; i < size; i++)
-			        if (buf[i] == ',')
-				        stor++;
+				if (buf[i] == ',')
+					stor++;
 			lp.list = calloc(stor + 2, sizeof(struct ctlname));
 			if (lp.list == NULL)
-			        return(-1);
+				return(-1);
 			lp.size = stor + 2;
 			for (i = 1;
 			     (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
 			     i++) {
-			        lp.list[i].ctl_type = CTLTYPE_STRUCT;
+				lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			}
 			lp.list[i].ctl_name = buf;
 			lp.list[i].ctl_type = CTLTYPE_STRUCT;
@@ -1281,8 +1296,8 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 		mib[3] = atoi(name);
 		return(4);
 	} else {
-	        *typep = CTLTYPE_STRING;
-	        return(3);
+		*typep = CTLTYPE_STRING;
+		return(3);
 	}
 }
 
