@@ -393,6 +393,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AHA-2940AU/CN",
 	},
 	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2930CU,
+	    0,
+	    "Adaptec",
+	    "AHA-2930CU",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
 	    0,
 	    "Adaptec",
