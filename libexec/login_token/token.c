@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.8 2002/07/16 12:38:40 jufi Exp $	*/
+/*	$OpenBSD: token.c,v 1.9 2003/02/20 17:32:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -189,7 +189,7 @@ tokenverify(char *username, char *challenge, char *response)
 		return (-1);
 
 	h2cb(tokenrec.secret, &user_seed);
-	memset((char*)&tokenrec.secret, 0, sizeof(tokenrec.secret));
+	memset(&tokenrec.secret, 0, sizeof(tokenrec.secret));
 
 	if (!(tokenrec.flags & TOKEN_ENABLED))
 		return (-1);
