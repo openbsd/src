@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.1 1997/04/15 13:06:54 provos Exp $
+.\" $OpenBSD: arc4random.3,v 1.2 1997/04/27 22:40:25 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -39,7 +39,7 @@
 .Nd arc4 random number generator.
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
-.Ft void
+.Ft u_int32_t
 .Fn arc4random "void"
 .Ft void
 .Fn arc4random_stir "void"
@@ -78,5 +78,5 @@ has been designed by RSA Data Security, Inc. It was posted anonymously
 to the USENET and was confirmed to be equivalent by several sources who
 had access to the original cipher. Since 
 .Pa RC4
-used to by a trade secret, the cipher is now refered to as 
+used to be a trade secret, the cipher is now refered to as 
 .Pa ARC4 .
