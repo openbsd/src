@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.6 2003/12/19 00:29:20 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.7 2004/01/28 22:30:50 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -59,6 +59,58 @@ sub new
 	}
 }
 
+
+# by default, all objects may exist
+sub may_exist
+{
+	return 1;
+}
+
+# by default, we don't track opened files for this key
+
+sub opened
+{
+	undef;
+}
+
+sub close
+{
+	my ($self, $object) = @_;
+	close($object->{fh}) if defined $object->{fh};
+	$object->_close();
+}
+
+
+# open method that tracks opened files per-host.
+sub open
+{
+	my ($self, $object) = @_;
+
+	return undef unless $self->may_exist($object->{name});
+
+	# kill old files if too many
+	my $already = $self->opened();
+	if (defined $already) {
+		# gc old objects
+		if (@$already >= $self->maxcount()) {
+			@$already = grep { defined $_->{fh} } @$already;
+		}
+		while (@$already >= $self->maxcount()) {
+			my $o = shift @$already;
+			$self->close($o);
+		}
+	}
+
+	my $p = $self->pipename($object->{name});
+	
+	open(my $fh, '-|', $p) or return undef;
+	$object->{fh} = $fh;
+	if (defined $already) {
+		push @$already, $object;
+	}
+	return $fh;
+}
+
 package OpenBSD::PackageLocation::SCP;
 our @ISA=qw(OpenBSD::PackageLocation OpenBSD::PackageLocation::FTPorSCP);
 
@@ -70,13 +122,12 @@ sub _new
 	bless {	host => $`, path => "/$'" }, $class;
 }
 
-sub open
+sub pipename
 {
 	my ($self, $name) = @_;
 	my $host = $self->{host};
 	my $path = $self->{path};
-	open(my $fh, '-|', "scp $host:$path$name /dev/stdout 2> /dev/null|gzip -d -c -q - 2> /dev/null") or return undef;
-	return $fh;
+	return "scp $host:$path$name /dev/stdout 2> /dev/null|gzip -d -c -q - 2> /dev/null";
 }
 
 sub list
@@ -90,12 +141,17 @@ sub list
 package OpenBSD::PackageLocation::Local;
 our @ISA=qw(OpenBSD::PackageLocation);
 
-sub open
+sub pipename
 {
 	my ($self, $name) = @_;
 	my $fullname = $self->{location}.$name;
-	open(my $fh, '-|', "gzip -d -c -q -f 2>/dev/null $fullname") or return undef;
-	return $fh;
+	return "gzip -d -c -q -f 2>/dev/null $fullname";
+}
+
+sub may_exist
+{
+	my ($self, $name) = @_;
+	return -r $self->{location}.$name;
 }
 
 sub list
@@ -131,12 +187,39 @@ sub _list
 }
 
 package OpenBSD::PackageLocation::HTTPorFTP;
-sub open
+
+my %distant = ();
+
+sub maxcount
+{
+	return 1;
+}
+
+sub opened
+{
+	my $self = $_[0];
+	my $k = $self->{key};
+	if (!defined $distant{$k}) {
+		$distant{$k} = [];
+	}
+	return $distant{$k};
+}
+
+sub _new
+{
+	my ($class, $location) = @_;
+	my $distant_host;
+	if ($location =~ m/^(http|ftp)\:\/\/(.*?)\//i) {
+	    $distant_host = $&;
+	}
+	bless { location => $location, key => $distant_host }, $class;
+}
+
+sub pipename
 {
 	my ($self, $name) = @_;
 	my $fullname = $self->{location}.$name;
-	open(my $fh, '-|', "ftp -o - $fullname 2>/dev/null|gzip -d -c -q - 2>/dev/null") or return undef;
-	return $fh;
+	return "ftp -o - $fullname 2>/dev/null|gzip -d -c -q - 2>/dev/null";
 }
 
 package OpenBSD::PackageLocation::HTTP;
@@ -239,7 +322,12 @@ sub info
 sub close
 {
 	my $self = shift;
-	close($self->{fh}) if defined $self->{fh};
+	$self->{location}->close($self);
+}
+
+sub _close
+{
+	my $self = shift;
 	$self->{fh} = undef;
 	$self->{_archive} = undef;
 }
@@ -248,8 +336,7 @@ sub _open
 {
 	my $self = shift;
 
-	my $fh = $self->{location}->open($self->{name});
-	$self->{fh} = $fh;
+	my $fh = $self->{location}->open($self);
 	if (!defined $fh) {
 		return undef;
 	}
@@ -273,7 +360,7 @@ sub openAbsolute
 	while (my $e = $self->next()) {
 		if ($e->isFile() && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
-			$e->create();
+			eval { $e->create(); }
 		} else {
 			$self->unput();
 			last;
@@ -291,12 +378,10 @@ sub openAbsolute
 sub reopen
 {
 	my $self = shift;
-#	print "Reopening ", $self->{name}, "\n";
 	if (!$self->_open()) {
 		return undef;
 	}
 	while (my $e = $self->{_archive}->next()) {
-#		print "Scanning ", $e->{name}, "\n";
 		if ($e->{name} eq $self->{_current}->{name}) {
 			$self->{_current} = $e;
 			return $self;
