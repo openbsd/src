@@ -1,3 +1,4 @@
+/* $OpenBSD: radioctl.c,v 1.4 2001/12/06 10:04:11 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -61,7 +62,7 @@ const char *varname[] = {
 };
 
 #define OPTION_NONE		~0u
-#define VALUE_NONE		~0ul
+#define VALUE_NONE		~0u
 
 struct opt_t {
 	char *string;
