@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.12 1999/08/10 08:10:35 deraadt Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.13 2001/01/31 23:05:17 tholo Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -160,8 +160,11 @@ le_pci_attach(parent, self, aux)
 	bus_space_tag_t iot = pa->pa_iot;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
-	int i;
+	int i, rseg;
 	const char *intrstr;
+	bus_dma_segment_t seg;
+	bus_dmamap_t dmamap;
+	caddr_t kva;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
@@ -185,11 +188,34 @@ le_pci_attach(parent, self, aux)
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
 		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
-	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mem == 0) {
+	if (bus_dmamem_alloc(pa->pa_dmat, PCNET_MEMSIZE, PAGE_SIZE,
+	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf(": couldn't allocate memory for card\n");
 		return;
 	}
+	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, PCNET_MEMSIZE,
+	    &kva, BUS_DMA_NOWAIT)) {
+		printf(": couldn't map memory for card\n");
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_create(pa->pa_dmat, PCNET_MEMSIZE, 1, 36384,
+	    0, BUS_DMA_NOWAIT, &dmamap)) {
+		printf(": couldn't create dma map\n");
+		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_load(pa->pa_dmat, dmamap, kva, PCNET_MEMSIZE,
+	    NULL, BUS_DMA_NOWAIT)) {
+		printf(": couldn't load dma map\n");
+		bus_dmamap_destroy(pa->pa_dmat, dmamap);
+		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		return;
+	}
+	sc->sc_mem = kva;
+	bzero(sc->sc_mem, PCNET_MEMSIZE);
 
 	printf("\n");
 
@@ -198,7 +224,7 @@ le_pci_attach(parent, self, aux)
 
 	sc->sc_conf3 = 0;
 	sc->sc_addr = vtophys(sc->sc_mem);	/* XXX XXX XXX */
-	sc->sc_memsize = 16384;
+	sc->sc_memsize = PCNET_MEMSIZE;
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;

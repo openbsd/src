@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.4 1997/11/07 08:07:29 niklas Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.5 2001/01/31 23:05:17 tholo Exp $	*/
 /*	$NetBSD: if_levar.h,v 1.3 1996/10/21 22:56:46 thorpej Exp $	*/
 
 /*
@@ -16,6 +16,18 @@
 
 #define	PCNET_PCI_RDP	0x10
 #define	PCNET_PCI_RAP	0x12
+
+/*
+ * Size of packet buffer
+ *
+ * The MI code will split this between initialization block, descriptors,
+ * transmit and receive buffers.
+ *
+ * Must be 8192 <= PCNET_MEMSIZE <= 262144 and a power of 2
+ */
+
+#define	PCNET_MEMSIZE	16384
+
 
 /*
  * Ethernet software status per interface.
