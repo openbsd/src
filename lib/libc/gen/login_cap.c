@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.5 2000/12/04 15:31:50 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.6 2001/05/30 16:56:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -893,10 +893,7 @@ secure_path(char *path)
 	 * other than root, quit.
 	 */
 	if (lstat(path, &sb) < 0) {
-#if 1 /* XXX - remove after 2.8 is out? */
-		if (errno != ENOENT)
-#endif
-			syslog(LOG_ERR, "cannot stat %s: %m", path);
+		syslog(LOG_ERR, "cannot stat %s: %m", path);
 		return (-1);
 	} else if (!S_ISREG(sb.st_mode)) {
 		syslog(LOG_ERR, "%s: not a regular file", path);
