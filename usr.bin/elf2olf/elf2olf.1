@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2olf.1,v 1.10 2000/07/06 04:06:54 aaron Exp $
+.\"	$OpenBSD: elf2olf.1,v 1.11 2000/11/10 05:10:24 aaron Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Erik Theisen.
 .\"	All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"     @(#)$Id: elf2olf.1,v 1.10 2000/07/06 04:06:54 aaron Exp $
+.\"     @(#)$Id: elf2olf.1,v 1.11 2000/11/10 05:10:24 aaron Exp $
 .\"
 .Dd May 5, 1997
 .Dt ELF2OLF 1
@@ -44,12 +44,13 @@
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm
+.Nm elf2olf
 utility reads the specified
 .Em ELF
 version 1 module operands and converts them to the default operating system's
 .Em OLF
 object module format.
+.Pp
 The
 .Nm olf2elf
 utility reverses the process.
@@ -67,7 +68,8 @@ Specifies the operating system
 tag
 .Em "opsys"
 as follows:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It Ta Pa "openbsd" Ta "OpenBSD"
 .It Ta Pa "netbsd" Ta "NetBSD"
 .It Ta Pa "freebsd" Ta "FreeBSD"
@@ -84,10 +86,19 @@ as follows:
 .El
 .Pp
 The
-.Nm
+.Nm elf2olf
 and
 .Nm olf2elf
 utilities exit 0 on success or >0 if an error occurred.
+.Sh AUTHORS
+Erik Theisen
+.Sh HISTORY
+The
+.Nm elf2olf
+and
+.Nm olf2elf
+utilities first appeared in
+.Ox 2.1 .
 .Sh BUGS
 The
 .Em ELF
@@ -95,17 +106,8 @@ version 1 object module format lacks any real method to determine the native
 operating system for any given binary thus mandating the existence of these
 tools.
 The converted binaries created by
-.Nm
+.Nm elf2olf
 will no longer execute on their native operating system, only on OLF
 enabled platforms, although
 .Nm olf2elf
 will undo the damage.
-.Sh AUTHOR
-Erik Theisen
-.Sh HISTORY
-The
-.Nm
-and
-.Nm olf2elf
-utilities first appeared in
-.Ox 2.1 .

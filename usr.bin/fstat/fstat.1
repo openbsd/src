@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.18 2000/07/16 23:40:48 hugh Exp $
+.\"	$OpenBSD: fstat.1,v 1.19 2000/11/10 05:10:27 aaron Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,13 +48,13 @@
 .Op Fl u Ar user
 .Op Ar file ...
 .Sh DESCRIPTION
-.Nm fstat
+.Nm
 identifies open files.
 A file is considered open by a process if it was explicitly opened,
 is the working directory, root directory, active pure text, or kernel
 trace file for that process.
 If no options are specified,
-.Nm fstat
+.Nm
 reports on all open files in the system.
 .Pp
 The options are as follows:
@@ -88,9 +88,9 @@ Also, print the mode of the file in octal instead of symbolic form.
 Output file offset.
 Follow the size field with the descriptor's offset.
 Useful for checking progress as a process works through a large file.
-.It Fl p pid
+.It Fl p Ar pid
 Report all files open by the specified process.
-.It Fl u user
+.It Fl u Ar user
 Report all files open by the specified user.
 .It Fl v
 Verbose mode.
@@ -98,10 +98,10 @@ Print error messages upon failures to locate particular
 system data structures rather than silently ignoring them.
 Most of these data structures are dynamically created or deleted and it is
 possible for them to disappear while
-.Nm fstat
+.Nm
 is running.
 This is normal and unavoidable since the rest of the system is running while
-.Nm fstat
+.Nm
 itself is running.
 .It Ar file ...
 Restrict reports to the specified files.
@@ -219,8 +219,10 @@ or
 and a full duplex socket shows a double arrow
 .Pq Dq <-> ) .
 .Pp
-For AF_INET sockets,
-.Nm fstat
+For
+.Dv AF_INET
+sockets,
+.Nm
 also attempts to print the internet address and port for the
 local end of a connection.
 If the socket is connected, it also prints the remote internet address
@@ -243,17 +245,6 @@ the pipe and a state that is built of the letters
 W - The pipe blocks waiting for the reader to read data.
 R - The pipe blocks waiting for the writer to write data.
 E - The pipe is in EOF state.
-.Sh BUGS
-Since
-.Nm fstat
-takes a snapshot of the system, it is only correct for a very short period
-of time.
-.Pp
-Moreover, because DNS resolution and YP lookups cause many file
-descriptor changes,
-.Nm fstat
-does not attempt to translate the internet address and port numbers into
-symbolic names.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr nfsstat 1 ,
@@ -267,3 +258,14 @@ The
 .Nm
 command appeared in
 .Bx 4.3 tahoe .
+.Sh BUGS
+Since
+.Nm
+takes a snapshot of the system, it is only correct for a very short period
+of time.
+.Pp
+Moreover, because DNS resolution and YP lookups cause many file
+descriptor changes,
+.Nm
+does not attempt to translate the internet address and port numbers into
+symbolic names.

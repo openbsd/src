@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.11 2000/04/15 11:45:55 aaron Exp $
+.\"	$OpenBSD: renice.8,v 1.12 2000/11/10 05:10:39 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,11 +127,11 @@ for mapping user names to user IDs
 .Xr nice 1 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2
-.Sh BUGS
-Non-superusers cannot increase scheduling priorities of their own processes,
-even if they were the ones that decreased the priorities in the first place.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.0 .
+.Sh BUGS
+Non-superusers cannot increase scheduling priorities of their own processes,
+even if they were the ones that decreased the priorities in the first place.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.9 2000/03/05 20:09:21 aaron Exp $
+.\"	$OpenBSD: ctags.1,v 1.10 2000/11/10 05:10:23 aaron Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -174,22 +174,27 @@ of the second section of the yacc file, and
 .Ar yylex
 is the start of
 the second section of the lex file.
+.Sh DIAGNOSTICS
+.Nm
+exits with a value of 1 if an error occurred, 0 otherwise.
+Duplicate objects are not considered errors.
 .Sh FILES
 .Bl -tag -width tags -compact
 .It Pa tags
 default output tags file
 .El
-.Sh DIAGNOSTICS
-.Nm
-exits with a value of 1 if an error occurred, 0 otherwise.
-Duplicate objects are not considered errors.
 .Sh SEE ALSO
 .Xr ex 1 ,
 .Xr vi 1
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 3.0 .
 .Sh BUGS
 Recognition of
 .Nm functions ,
-.Nm subroutines
+.Nm subroutines ,
 and
 .Nm procedures
 for
@@ -222,8 +227,3 @@ the searching pattern.
 The last line of multiple line
 .Li typedef Ns 's
 will similarly be noted.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 3.0 .

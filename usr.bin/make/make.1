@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.36 2000/07/31 21:01:40 espie Exp $
+.\"	$OpenBSD: make.1,v 1.37 2000/11/10 05:10:34 aaron Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1141,23 +1141,6 @@ Each source specifies a suffix to
 .Nm make .
 If no sources are specified, any previous specified suffices are deleted.
 .El
-.Sh COMPATIBILITY
-Older versions of
-.Nm
-used
-.Ev MAKE
-instead of
-.Ev MAKEFLAGS .
-This was removed for POSIX compatibility.
-The internal variable
-.Va MAKE
-is set to the same value as
-.Va .MAKE ,
-support for this may be removed in the future.
-.Pp
-Most of the more esoteric features of
-.Nm
-should probably be avoided for greater compatibility.
 .Sh ENVIRONMENT
 .Nm
 uses the following environment variables, if they exist:
@@ -1189,6 +1172,32 @@ system makefile directory
 default
 .Ev MAKEOBJDIRPREFIX directory.
 .El
+.Sh SEE ALSO
+.Xr mkdep 1
+.Pp
+.%T "Make \- A Tutorial" .
+.Sh COMPATIBILITY
+Older versions of
+.Nm
+used
+.Ev MAKE
+instead of
+.Ev MAKEFLAGS .
+This was removed for POSIX compatibility.
+The internal variable
+.Va MAKE
+is set to the same value as
+.Va .MAKE ,
+support for this may be removed in the future.
+.Pp
+Most of the more esoteric features of
+.Nm
+should probably be avoided for greater compatibility.
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v7 .
 .Sh BUGS
 The determination of
 .Va .OBJDIR
@@ -1272,12 +1281,3 @@ A will evaluate to a b c d after the loop, not z b c d.
 The 
 .Ql +
 command modificator is ignored in parallel make mode.
-.Sh SEE ALSO
-.Xr mkdep 1
-.Pp
-.%T "Make \- A Tutorial" .
-.Sh HISTORY
-A
-.Nm
-command appeared in
-.At v7 .

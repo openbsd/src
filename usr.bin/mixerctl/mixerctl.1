@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.11 2000/11/09 17:52:24 aaron Exp $
+.\" $OpenBSD: mixerctl.1,v 1.12 2000/11/10 05:10:35 aaron Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -139,17 +139,17 @@ record.record=220,220 volume
 record.record.source=mic  [ mic cd dac ]
 monitor.monitor=0 volume
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/mixer
-.It Pa /dev/mixer
-mixer audio device
-.El
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm mixerctl :
 .Bl -tag -width MIXERDEVICE
 .It Ev MIXERDEVICE
 The audio mixer device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/mixer
+.It Pa /dev/mixer
+mixer audio device
 .El
 .Sh SEE ALSO
 .Xr audioctl 1 ,

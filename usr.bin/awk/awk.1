@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.7 2000/08/30 13:37:51 aaron Exp $
+.\"	$OpenBSD: awk.1,v 1.8 2000/11/10 05:10:21 aaron Exp $
 .\" EX/EE is a Bd
 .Dd June 29, 1996
 .Dt AWK 1
@@ -510,6 +510,12 @@ BEGIN { # Simulate echo(1)
 .%D 1988
 .%O ISBN 0-201-07981-X
 .Re
+.Sh HISTORY
+AT&T
+.Nm
+by B. W. Kernighan was updated for
+.Bx 4.4
+and again in 1996.
 .Sh BUGS
 There are no explicit conversions between numbers and strings.
 To force an expression to be treated as a number add 0 to it;
@@ -519,9 +525,3 @@ to it.
 .Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.
-.Sh HISTORY
-AT&T
-.Nm
-by B. W. Kernighan was updated for
-.Bx 4.4
-and again in 1996.

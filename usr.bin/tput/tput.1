@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.10 2000/03/11 21:40:05 aaron Exp $
+.\"	$OpenBSD: tput.1,v 1.11 2000/11/10 05:10:41 aaron Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -118,6 +118,14 @@ Print the descriptive name of the user's terminal type.
 Reset the terminal (using the
 .Xr terminfo
 reset sequences).
+.Sh EXAMPLES
+.Bl -tag -width "tput cup 6 11 dch 6" -compact
+.It Li "tput clear cup 5 10"
+clear the screen and goto line 5 column 10
+.Pp
+.It Li "tput cup 6 11 dch 6"
+goto line 6 column 11 and delete 6 characters
+.El
 .Sh DIAGNOSTICS
 The exit value of
 .Nm
@@ -142,13 +150,6 @@ If the attribute is of type boolean,
 .Nm
 exits with a value of 0 if the terminal has this attribute or
 1 if it does not.
-.Sh EXAMPLES
-.Bl -tag -width "tput cup 6 11 dch 6" -compact
-.It Li "tput clear cup 5 10"
-clear the screen and goto line 5 column 10
-.Pp
-.It Li "tput cup 6 11 dch 6"
-goto line 6 column 11 and delete 6 characters
 .Sh SEE ALSO
 .Xr terminfo 3 ,
 .Xr terminfo 5

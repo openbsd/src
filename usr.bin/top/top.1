@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.15 2000/11/09 17:52:44 aaron Exp $
+.\"	$OpenBSD: top.1,v 1.16 2000/11/10 05:10:41 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -340,8 +340,6 @@ state (known in the kernel as
 .Em SWAIT Ns )
 was abandoned, thus the name.
 A process should never end up in this state.
-.Sh AUTHOR
-William LeFebvre, EECS Department, Northwestern University
 .Sh ENVIRONMENT
 .Bl -tag -width XxXXXX
 .It Ev TOP
@@ -363,6 +361,8 @@ kernel image
 .Xr systat 1 ,
 .Xr mem 4 ,
 .Xr renice 8
+.Sh AUTHORS
+William LeFebvre, EECS Department, Northwestern University
 .Sh BUGS
 Don't shoot me, but the default for
 .Fl I

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.29 2000/07/10 14:32:41 millert Exp $
+.\"	$OpenBSD: find.1,v 1.30 2000/11/10 05:10:26 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -594,6 +594,11 @@ in the utility name or the
 utility arguments if it had preceding or following non-whitespace characters.
 This version replaces it no matter where in the utility name or arguments
 it appears.
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v1 .
 .Sh BUGS
 The special characters used by
 .Nm
@@ -629,8 +634,3 @@ The
 .Fl W
 option is probably not the most elegant way to handle whiteouts.
 It may be replaced by a more sophisticated algorithm eventually.
-.Sh HISTORY
-A
-.Nm
-command appeared in
-.At v1 .

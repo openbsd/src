@@ -1,4 +1,4 @@
-.\"	$OpenBSD: column.1,v 1.7 1999/07/07 10:50:07 aaron Exp $
+.\"	$OpenBSD: column.1,v 1.8 2000/11/10 05:10:22 aaron Exp $
 .\"	$NetBSD: column.1,v 1.3 1995/03/26 09:08:28 glass Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -80,6 +80,8 @@ Fill columns before filling rows.
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+.Dl (printf \&"PERM\ LINKS\ OWNER\ GROUP\ SIZE\ MONTH\ DAY\ HH:MM/YEAR\ NAME\en\&"\ \&; ls -l\ \&| sed 1d) \&| column -t
 .Sh ENVIRONMENT
 .Bl -tag -width COLUMNS
 .It Ev COLUMNS
@@ -88,8 +90,6 @@ The environment variable
 is used to determine the size of
 the screen if no other information is available.
 .El
-.Sh EXAMPLES
-.Dl (printf \&"PERM\ LINKS\ OWNER\ GROUP\ SIZE\ MONTH\ DAY\ HH:MM/YEAR\ NAME\en\&"\ \&; ls -l\ \&| sed 1d) \&| column -t
 .Sh SEE ALSO
 .Xr colrm 1 ,
 .Xr ls 1 ,

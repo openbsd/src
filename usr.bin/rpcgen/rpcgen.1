@@ -1,4 +1,4 @@
-.\" $OpenBSD: rpcgen.1,v 1.7 2000/11/09 17:52:33 aaron Exp $
+.\" $OpenBSD: rpcgen.1,v 1.8 2000/11/10 05:10:39 aaron Exp $
 .\" $NetBSD: rpcgen.1,v 1.5.2.1 1995/12/05 02:51:02 jtc Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
@@ -385,27 +385,6 @@ while the options
 and
 .Fl T
 are global and can be used with the other options.
-.Sh NOTES
-The
-.Tn RPC
-Language does not support nesting of structures.
-As a work-around,
-structures can be declared at the top-level,
-and their name used inside other structures in
-order to achieve the same effect.
-.Pp
-Name clashes can occur when using program definitions,
-since the apparent scoping does not really apply.
-Most of these can be avoided by giving
-unique names for programs,
-versions,
-procedures and types.
-.Pp
-The server code generated with
-.Fl n
-option refers to the transport indicated by
-.Em netid
-and hence is very site specific.
 .Sh EXAMPLES
 The command
 .Pp
@@ -447,5 +426,22 @@ use:
 .Bd -literal -offset indent
 $ rpcgen -n tcp -o prot_svc.c prot.x
 .Ed
+.Sh NOTES
+The
+.Tn RPC
+Language does not support nesting of structures.
+As a workaround, structures can be declared at the top-level, and their
+name used inside other structures in order to achieve the same effect.
+.Pp
+Name clashes can occur when using program definitions, since the apparent
+scoping does not really apply.
+Most of these can be avoided by giving unique names for programs,
+versions, procedures, and types.
+.Pp
+The server code generated with
+.Fl n
+option refers to the transport indicated by
+.Em netid
+and hence is very site specific.
 .Sh SEE ALSO
 .Xr cpp 1

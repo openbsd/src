@@ -1,8 +1,8 @@
 .\" Copyright (c) 1988 Massachusetts Institute of Technology,
 .\" Student Information Processing Board.  All rights reserved.
 .\"
-.\" $OpenBSD: compile_et.1,v 1.10 2000/03/23 21:10:14 aaron Exp $
-.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.10 2000/03/23 21:10:14 aaron Exp $
+.\" $OpenBSD: compile_et.1,v 1.11 2000/11/10 05:10:23 aaron Exp $
+.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.11 2000/11/10 05:10:23 aaron Exp $
 .\"
 .Dd November 22, 1988
 .Dt COMPILE_ET 1
@@ -84,12 +84,6 @@ A hash mark
 .Pq Ql #
 in the source file is treated as a comment character; subsequent
 characters to the end of the source line will be ignored.
-.Sh BUGS
-Since
-.Nm
-uses a very simple parser based on
-.Xr yacc 1 ,
-its error recovery leaves much to be desired.
 .Sh SEE ALSO
 .Xr yacc 1 ,
 .Xr com_err 3
@@ -100,3 +94,9 @@ its error recovery leaves much to be desired.
 .%A Ken Raeburn
 .%T "A Common Error Description Library for UNIX"
 .Re
+.Sh BUGS
+Since
+.Nm
+uses a very simple parser based on
+.Xr yacc 1 ,
+its error recovery leaves much to be desired.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: head.1,v 1.9 2000/10/07 14:42:28 aaron Exp $
+.\"	$OpenBSD: head.1,v 1.10 2000/11/10 05:10:29 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -79,8 +79,6 @@ precedes the output of each file with the following, in order to distinguish
 the head of each file:
 .Pp
 .Dl ==> Ar file No <==
-.Sh COMPATIBILITY
-The historic command line syntax is supported by this implementation.
 .Sh EXAMPLES
 To display the first 500 lines of the file
 .Ar foo :
@@ -99,6 +97,8 @@ in the following way to, for example, display only line 500 from the file
 .Xr less 1 ,
 .Xr more 1 ,
 .Xr tail 1
+.Sh COMPATIBILITY
+The historic command line syntax is supported by this implementation.
 .Sh STANDARDS
 The
 .Nm

@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.16 2000/11/09 17:52:02 aaron Exp $
+.\" $OpenBSD: at.1,v 1.17 2000/11/10 05:10:21 aaron Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -255,6 +255,10 @@ job-creation lock file
 .Xr atrun 8 ,
 .Xr cron 8 ,
 .Xr sendmail 8
+.Sh AUTHORS
+.Nm at
+was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
+The time parsing routines are by David Parsons <orc@pell.chi.il.us>.
 .Sh BUGS
 If the file
 .Pa /var/run/utmp
@@ -281,7 +285,3 @@ Since
 .Nm at
 only permits submission of jobs in the future, it is somewhat
 clear which century the job will run in.
-.Sh AUTHORS
-.Nm at
-was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
-The time parsing routines are by David Parsons <orc@pell.chi.il.us>.

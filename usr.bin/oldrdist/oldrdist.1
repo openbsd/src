@@ -1,4 +1,4 @@
-.\"	$OpenBSD: oldrdist.1,v 1.8 2000/04/12 21:47:50 aaron Exp $
+.\"	$OpenBSD: oldrdist.1,v 1.9 2000/11/10 05:10:38 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,11 +52,11 @@
 .Ar name ...
 .Oo login@ Oc Ns Ar host Ns Op :dest
 .Sh DESCRIPTION
-.Nm rdist
+.Nm
 is a program to maintain identical copies of files over multiple hosts.
 It preserves the owner, group, mode, and mtime of files if possible and
 can update programs that are executing.
-.Nm rdist
+.Nm
 reads commands from
 .Ar distfile
 to direct the updating of files and/or directories.
@@ -83,7 +83,7 @@ then
 .Dq Pa Distfile
 to use as the input.
 If no names are specified on the command line,
-.Nm rdist
+.Nm
 will update all of the files and directories listed in
 .Ar distfile .
 Otherwise, the argument is taken to be the name of a file to be updated
@@ -96,7 +96,7 @@ Options specific to the second SYNOPSIS form:
 .Bl -tag -width Fl c
 .It Fl c
 Forces
-.Nm rdist
+.Nm
 to interpret the remaining arguments as a small
 .Ar distfile .
 .Pp
@@ -137,7 +137,7 @@ Follow symbolic links.
 Copy the file that the link points to rather than the link itself.
 .It Fl i
 Ignore unresolved links.
-.Nm rdist
+.Nm
 will normally try to maintain the link structure of files being transferred
 and warn the user if all the links cannot be found.
 .It Fl m Ar host
@@ -188,7 +188,7 @@ disagree.
 The
 .Fl y
 option causes
-.Nm rdist
+.Nm
 not to update files that are younger than the master copy.
 This can be used
 to prevent newer copies on other hosts from being replaced.
@@ -427,6 +427,11 @@ imagen:
 ${FILES} :: stamp.cory
 \tnotify root@cory ;
 .Ed
+.Sh DIAGNOSTICS
+A complaint about mismatch of
+.Nm
+version numbers may really stem
+from some problem with starting your shell, e.g., you are in too many groups.
 .Sh FILES
 .Bl -tag -width /tmp/rdist* -compact
 .It Pa distfile
@@ -440,17 +445,12 @@ temporary file for update lists
 .Xr stat 2
 .Sh HISTORY
 The
-.Nm rdist
+.Nm
 command appeared in
 .Bx 4.3 .
-.Sh DIAGNOSTICS
-A complaint about mismatch of
-.Nm rdist
-version numbers may really stem
-from some problem with starting your shell, e.g., you are in too many groups.
 .Sh BUGS
 Source files must reside on the local host where
-.Nm rdist
+.Nm
 is executed.
 .Pp
 There is no easy way to have a special command executed after all files
@@ -459,7 +459,7 @@ in a directory have been updated.
 Variable expansion only works for name lists; there should be a general macro
 facility.
 .Pp
-.Nm rdist
+.Nm
 aborts on files which have a negative mtime (before Jan 1, 1970).
 .Pp
 There should be a

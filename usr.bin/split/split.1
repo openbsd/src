@@ -1,4 +1,4 @@
-.\"	$OpenBSD: split.1,v 1.5 2000/03/11 21:40:03 aaron Exp $
+.\"	$OpenBSD: split.1,v 1.6 2000/11/10 05:10:40 aaron Exp $
 .\"	$NetBSD: split.1,v 1.5 1994/12/21 08:20:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
@@ -99,6 +99,13 @@ If the
 argument is not specified, the file is split into lexically ordered
 files named in the range of
 .Dq xaa-zzz .
+.Sh SEE ALSO
+.Xr re_format 7 .
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .
 .Sh BUGS
 For historical reasons, if you specify
 .Ar name ,
@@ -108,10 +115,3 @@ files.
 The default naming convention allows 2028 separate files.
 .Pp
 The maximum line length for matching patterns is 65536.
-.Sh SEE ALSO
-.Xr re_format 7 .
-.Sh HISTORY
-A
-.Nm
-command appeared in
-.At v6 .

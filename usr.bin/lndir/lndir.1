@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.11 2000/11/09 17:52:18 aaron Exp $
+.\" $OpenBSD: lndir.1,v 1.12 2000/11/10 05:10:30 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -73,7 +73,7 @@
 .Op Ar todir
 .Sh DESCRIPTION
 The
-.Nm lndir
+.Nm
 program makes a shadow copy
 .Ar todir
 of a directory tree
@@ -116,7 +116,7 @@ addition to any specified on the command line with
 arguments.
 .Pp
 If you add files, simply run
-.Nm lndir
+.Nm
 again.
 New files will be silently added.
 Old files will be
@@ -128,7 +128,7 @@ just point into never never land.
 If a file in
 .Ar fromdir
 is a symbolic link,
-.Nm lndir
+.Nm
 will make the same link in
 .Ar todir
 rather than making a link back to the (symbolic link) entry in
@@ -141,13 +141,12 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl e Ar exceptfile
 Add the specified file to the list of excluded files/directories.
-This is
-effective in all directories searched by
+This is effective in all directories searched by
 .Nm lndir .
 This option may be specified as many times as needed.
 .It Fl s
 Suppresses status messages normally output as
-.Nm lndir
+.Nm
 descends into each subdirectory.
 .It Fl i
 Causes the program to not treat symbolic links in
@@ -160,7 +159,7 @@ will point back to the corresponding (symbolic link) file in
 If the link is to a directory, this is almost certainly the wrong thing.
 .Pp
 This option exists mostly to emulate the behavior the C version of
-.Nm lndir
+.Nm
 had in X11R6.
 Its use is not recommended.
 .El
@@ -177,6 +176,16 @@ exists.
 .Pp
 If the link already exists but doesn't point to the correct file, the
 program prints the link name and the location where it does point.
+.Sh SEE ALSO
+.Xr find 1 ,
+.Xr ln 1 ,
+.Xr patch 1
+.Sh HISTORY
+.Nm
+was first distributed as part of X11.
+.Pp
+This version first appeared in
+.Ox 1.2 .
 .Sh BUGS
 The
 .Xr patch 1
@@ -197,13 +206,3 @@ find . \|\\! \|\-type d \|\-print
 .Ed
 .Pp
 will find all files that are not directories.
-.Sh SEE ALSO
-.Xr find 1 ,
-.Xr ln 1 ,
-.Xr patch 1
-.Sh HISTORY
-.Nm lndir
-was first distributed as part of X11.
-.Pp
-This version first appeared in
-.Ox 1.2 .
