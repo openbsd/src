@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.20 2001/05/18 07:15:18 mickey Exp $	*/
+/*	$OpenBSD: part.c,v 1.21 2001/05/18 20:22:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,7 +47,6 @@
 static const struct part_type {
 	int	type;
 	char	sname[14];
-	char	osname[8];
 	char	*lname;
 } part_types[] = {
 	{ 0x00, "unused      ", "unused"},
