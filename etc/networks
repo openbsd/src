@@ -1,8 +1,8 @@
-#	$OpenBSD: networks,v 1.3 1997/01/25 23:13:56 tholo Exp $
+#	$OpenBSD: networks,v 1.4 1997/05/30 09:22:43 downsj Exp $
 #
 # Your Local Networks Database
 #
-loopback	127	loop
+loopback		127	loop
 
 #
 # Your subnets
@@ -11,3 +11,8 @@ loopback	127	loop
 #
 # Internet networks (from nic.ddn.mil)
 #
+
+#
+# The multicast network
+#
+BASE-ADDRESS.MCAST.NET	224
