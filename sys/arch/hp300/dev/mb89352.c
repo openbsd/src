@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.7 2004/08/30 17:01:43 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.8 2004/09/29 09:55:48 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -211,7 +211,10 @@ spc_attach(struct spc_softc *sc)
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &spc_switch;
 	sc->sc_link.device = &spc_dev;
-	sc->sc_link.openings = 2;
+	if (sc->sc_dma_start != NULL)
+		sc->sc_link.openings = 1;
+	else
+		sc->sc_link.openings = 2;
 
 	/*
 	 * ask the adapter what subunits are present
