@@ -1,17 +1,7 @@
 
-	This is an SSLeay-0.9.0b (the b means the PKCS#1 bug is fixed) tree.
+	This is based on an OpenSSL-0.9.4
 	
 	It has the following modifcations made to it.
-
-	0) util/perlpath.pl has been run to change perlpath to /usr/bin
-	   util/ssldir.pl has been run to change the ssl dir to /usr/ssl
-	   Null check added to crypto/err/err.c (mailed to Eric Young)
-	   to avoid problems in error handling.  Includes install into
-           /usr/include/ssl, certs and configs are expected to be in
-           /etc/ssl.
-
-	1) Changes for openbsd compilation to have been made to
-	   config and Configure (these have been sent to Eric Young)
 
 NOTES:
 

@@ -1,34 +1,33 @@
-# Build wrapper for SSLeay.
-# $OpenBSD: Makefile.bsd-wrapper,v 1.9 1999/03/17 18:25:56 deraadt Exp $
+# Build wrapper for OpenSSL
+# $OpenBSD: Makefile.bsd-wrapper,v 1.10 1999/09/29 05:55:59 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
 LNDIR=          /usr/bin/lndir
 
-
-# Figure out what flag we use to SSLeay's configure. This
+# Figure out what flag we use to OpenSSL's configure. This
 # needs to be tested on all architectures.
 
 .if ${MACHINE_ARCH} == "i386"
-SSLCONF=	OpenBSD-x86
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-x86
 .else
-.if ${MACHINE_ARCH} == "pmax"
-SSLCONF=	OpenBSD-pmax
+.if ${MACHINE} == "pmax"
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-pmax
 .else
-.if ${MACHINE_ARCH} == "arc"
-SSLCONF=	OpenBSD-arc
+.if ${MACHINE} == "arc"
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-arc
 .else
 .if ${MACHINE_ARCH} == "alpha"
-SSLCONF=	OpenBSD-alpha
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-alpha
 .else
 .if ${MACHINE_ARCH} == "sparc"
-SSLCONF=	OpenBSD-bigendian
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-bigendian
 .else
 .if ${MACHINE_ARCH} == "m88k"
-SSLCONF=	OpenBSD-bigendian
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-bigendian
 .else
 ##UNTESTED!	
-SSLCONF=	OpenBSD-bigendian
+SSLCONF=	--openssldir=/etc/ssl OpenBSD-bigendian
 .endif
 .endif
 .endif
@@ -36,15 +35,7 @@ SSLCONF=	OpenBSD-bigendian
 .endif
 .endif
 
-MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/bf/bf_locl.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/bn/bn.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/des/des.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/des/des_locl.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/idea/idea.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/rc2/rc2.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/rc4/rc4.h \
-		${.OBJDIR}/${SSL_SRC}/crypto/rc4/rc4_locl.h
+MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h ${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/Makefile ${.OBJDIR}/${SSL_SRC}/apps/der_chop ${.OBJDIR}/${SSL_SRC}/tools/c_rehash
 
 
 .include <bsd.own.mk>
@@ -61,29 +52,32 @@ all: 	prereq
 includes: prereq
 	cd ${.OBJDIR} && ${MAKE} includes
 
-prereq:	${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h
+prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
 install:
 	cd ${.OBJDIR} && ${MAKE} install
 
-${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h : ${.OBJDIR}/${SSL_SRC}/Makefile.ssl
+${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
+	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl < ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h > ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+
+${.OBJDIR}/${SSL_SRC}/Makefile.ssl : ${.OBJDIR}/${SSL_SRC}/Makefile.org
 	cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
 
-.if !exists(${.OBJDIR}/${SSL_SRC}/Makefile.ssl)
-${.OBJDIR}/${SSL_SRC}/Makefile.ssl: ${.CURDIR}/${SSL_SRC}/Makefile.ssl
-	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.ssl ${.CURDIR} && cp ${.CURDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}
+.if !exists(${.OBJDIR}/${SSL_SRC}/Makefile.org)
+${.OBJDIR}/${SSL_SRC}/Makefile.org: ${.CURDIR}/${SSL_SRC}/Makefile.org
+	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
 .endif
 
-clean:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl
+clean:
 	cd ${.OBJDIR} && ${MAKE} clean
 
-cleandir: ${.OBJDIR}/${SSL_SRC}/Makefile.ssl
-	cd ${.OBJDIR} && rm -f ${MUNGEDFILES} && ${MAKE} cleandir
+cleandir: clean
+	cd ${.OBJDIR} && rm -f ${MUNGEDFILES}
 
 test:
 	# Nothing here so far...
 
-depend:
+depend: prereq
 	# Nothing here so far...
 
 lint:
@@ -94,7 +88,7 @@ tags:
 
 distribution:
 	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-	   ${.CURDIR}/ssleay.cnf ${DESTDIR}/etc/ssl/lib/ssleay.cnf
+	   ${.CURDIR}/openssl.cnf ${DESTDIR}/etc/ssl/openssl.cnf
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
