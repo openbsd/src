@@ -1,6 +1,6 @@
 # Host: Little-endian Alpha running OpenBSD/Alpha
 XDEPFILES= 
-XM_FILE= xm-alpha.h
+XM_FILE= xm-alphaobsd.h
 NAT_FILE= nm-obsd.h
 NATDEPFILES= infptrace.o inftarg.o corelow.o alphaobsd-nat.o fork-child.o
 
