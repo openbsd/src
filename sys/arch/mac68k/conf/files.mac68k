@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.17 1997/06/05 18:34:50 gene Exp $
+#	$OpenBSD: files.mac68k,v 1.18 1998/04/27 02:02:49 gene Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -101,6 +101,7 @@ file	arch/m68k/m68k/db_memrw.c	ddb
 include "arch/m68k/fpe/files.fpe"
 
 file	arch/mac68k/mac68k/autoconf.c
+file	arch/mac68k/mac68k/bus_space.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
