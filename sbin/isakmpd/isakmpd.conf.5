@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.27 1999/10/01 14:09:58 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.28 2000/01/22 13:39:28 aaron Exp $
 .\" $EOM: isakmpd.conf.5,v 1.34 1999/10/01 14:00:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -319,7 +319,7 @@ The domain of interpretation as given by the RFCs.  Normally
 The exchange type as given by the RFCs.  For quick mode this is
 .Li QUICK_MODE .
 .It Em Suites
-A list of protection suites (bundles of protocols) useable for
+A list of protection suites (bundles of protocols) usable for
 protecting the IP traffic.  Each of the list elements is a
 name of	an <IPSec-suite> section.  See below.
 .El
@@ -339,7 +339,7 @@ are
 and
 .Li IPSEC_ESP .
 .It Em Transforms
-A list of transforms useable for implementing the protocol.
+A list of transforms usable for implementing the protocol.
 Each of the list elements is a name of an <IPSec-transform>
 section.  See below.
 .It Em ReplayWindow
