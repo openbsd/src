@@ -1,8 +1,8 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$OpenBSD: README,v 1.5 2000/05/31 03:09:21 itojun Exp $
-$KAME: README,v 1.3 2000/05/31 03:08:04 itojun Exp $
+$OpenBSD: README,v 1.6 2000/07/02 09:21:50 itojun Exp $
+$KAME: README,v 1.5 2000/07/02 08:50:50 itojun Exp $
 
 
 Introduction
@@ -58,13 +58,8 @@ The following example assumes:
 (3) Route packets toward FAITH prefix into "faith0" interface.
 
 	# ifconfig faith0 up
-	# route add -inet6 3ffe:0501:1234:ffff:: -prefixlen 64 -interface faith0
-
-	or, on platforms that has problem with "-interface":
-	# ifconfig faith0 up
 	# route add -inet6 3ffe:0501:1234:ffff:: -prefixlen 64 \
-		fe80:q::xxxx:yyyy:zzzz:wwww
-	(the last one is link-local address assigned for faith0)
+		fe80::xxxx:yyyy:zzzz:wwww%faith0
 
 (4) Execute "faithd" by root as follows:
 
