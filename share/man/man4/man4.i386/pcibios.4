@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.5 2001/01/28 20:55:29 mickey Exp $
+.\" $OpenBSD: pcibios.4,v 1.6 2001/01/28 22:28:49 deraadt Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michale Shalayeff, All rights reserved.
@@ -127,20 +127,20 @@ of relying upon the BIOS to do so.
 If the BIOS has already assigned an interrupt to a device, this
 procedure leaves the interrupt as is.
 .It 0x0008
-Make PCI interrupt routing fixup work with unknown interrupt router.
-If specified and a PCI interrupt routing table entry indicates that only
-one IRQ is available for the entry, the IRQ is assumed to be already
-connected to the device, and corresponding PCI Interrupt
-Configuration Register will be configured accordingly.
+Make PCI interrupt routing fixup work with unknown interrupt routers.
+If this flag is specified and a PCI interrupt routing table entry
+indicates that only one IRQ is available for the entry, the IRQ is
+assumed to be already connected to the device, and the corresponding PCI
+Interrupt Configuration Register will be configured accordingly.
 .Pp
-If a PCI interrupt router is not known, normally interrupt
-configuraion will not be touched.
+Without this flag, if a PCI interrupt router is not known, interrupt
+configuration will not be modified.
 .It 0x0010
-Be verbose when perfoming
+Be verbose when performing
 .Nm pcibios
-tasks, such as print out pci devices address fixup tables,
-print more information durign interrupt fixup and
-other diagnostic and non-fatal messages.
+tasks.
+Included in these diagnostics are: PCI device address fixup tables,
+interrupt fixup reports, and other diagnostic and non-fatal messages.
 .It 0x0020
 Make the PCI interrupt routing fixup procedure verbose.
 .El
@@ -245,12 +245,9 @@ wich are modifiable through the
 interface.
 For
 .Ox 2.9
-PIC interrupt routing procedure was redone to only fixup and route
-interrupts for attaching pci devices, this fixed several
-cases of system hangs due to absent interrupt handlers
-during
-.Xr autoconf 4
-procedures.
+the PIC interrupt routing establishment sequence was redone to only
+fixup and route interrupts when attaching interrupts for a particular PCI
+device.
 .Sh BUGS
 The
 .Em PCIBIOS Adress Fixup
