@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: sock.h,v 1.2 2004/07/25 03:31:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -48,15 +48,12 @@
 
 
 extern char *cvsd_sock_path;
-
-extern volatile sig_atomic_t cvs_sock_doloop;
-
+extern int   cvsd_sock;
 
 /* daemon api */
 int  cvsd_sock_open   (void);
 void cvsd_sock_close  (void);
-void cvsd_sock_loop   (void);
-int  cvsd_sock_hdl    (int);
+int  cvsd_sock_accept (int);
 
 /* client api */
 int  cvs_sock_connect    (const char *);

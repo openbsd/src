@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: sock.c,v 1.2 2004/07/25 03:31:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -49,7 +49,7 @@ char     *cvsd_sock_path = CVSD_SOCK_PATH;
 
 
 /* daemon API */
-static int cvsd_sock = -1;
+int cvsd_sock = -1;
 static struct sockaddr_un cvsd_sun;
 
 /* for client API */
@@ -60,12 +60,17 @@ static struct sockaddr_un cvs_sun;
 /*
  * cvsd_sock_open()
  *
- * Open the daemon's local socket.
+ * Open the daemon's local socket.  If the server socket is already opened,
+ * we close it before reopening it.
+ * Returns 0 on success, -1 on failure.
  */
 
 int
 cvsd_sock_open(void)
 {
+	if (cvs_sock >= 0)
+		cvsd_sock_close();
+
 	cvsd_sun.sun_family = AF_LOCAL;
 	strlcpy(cvsd_sun.sun_path, cvsd_sock_path, sizeof(cvsd_sun.sun_path));
 
@@ -114,74 +119,31 @@ cvsd_sock_close(void)
 	}
 	if (unlink(cvsd_sock_path) == -1)
 		cvs_log(LP_ERRNO, "failed to unlink local socket `%s'",
-		    CVSD_SOCK_PATH);
+		    cvsd_sock_path);
 }
 
 
 /*
- * cvsd_sock_loop()
+ * cvsd_sock_accept()
  *
- */
-
-void
-cvsd_sock_loop(void)
-{
-	int nfds, sock;
-	socklen_t slen;
-	struct sockaddr_un sun;
-	struct pollfd pfd[1];
-
-	cvs_sock_doloop = 1;
-
-	while (cvs_sock_doloop) {
-		pfd[0].fd = cvsd_sock;
-		pfd[0].events = POLLIN;
-
-		nfds = poll(pfd, 1, INFTIM);
-		if (nfds == -1) {
-			if (errno == EINTR)
-				continue;
-			cvs_log(LP_ERR, "failed to poll local socket");
-		}
-
-		if ((nfds == 0) || !(pfd[0].revents & POLLIN))
-			continue;
-
-		sock = accept(pfd[0].fd, (struct sockaddr *)&sun, &slen);
-		if (sock == -1) {
-			cvs_log(LP_ERRNO, "failed to accept connection");
-		}
-		cvs_log(LP_DEBUG, "accepted connection");
-
-		cvsd_sock_hdl(sock);
-	}
-
-
-}
-
-
-/*
- * cvsd_sock_hdl()
- *
- * Handle the events for a single connection.
+ * Handler for connections made on the server's local domain socket.
+ * It accepts connections and looks for a child process that is currently
+ * idle to which it can dispatch the connection's descriptor.  If there are
+ * no available child processes, a new one will be created unless the number
+ * of children has attained the maximum.
  */
 
 int
-cvsd_sock_hdl(int fd)
+cvsd_sock_accept(int fd)
 {
-	uid_t uid;
-	gid_t gid;
-	struct cvs_event ev;
+	int cfd;
+	socklen_t slen;
+	struct sockaddr_un sun;
 
-	/* don't trust what the other end put in */
-	if (getpeereid(fd, &uid, &gid) == -1) {
-		cvs_log(LP_ERR, "failed to get peer credentials");
-		(void)close(fd);
-		return (-1);
-	}
-
-	if (read(fd, &ev, sizeof(ev)) == -1) {
-		cvs_log(LP_ERR, "failed to read cvs event");
+	slen = sizeof(sun);
+	cfd = accept(fd, (struct sockaddr *)&sun, &slen);
+	if (cfd == -1) {
+		cvs_log(LP_ERRNO, "failed to accept client connection");
 		return (-1);
 	}
 
