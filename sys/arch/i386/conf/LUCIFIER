@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.10 1997/10/25 08:58:49 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.11 1998/02/21 06:26:15 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -6,6 +6,7 @@ machine		i386		# architecture, used by config; REQUIRED
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
+option		I686_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
 option		VM86		# Virtual 8086 emulation
@@ -99,8 +100,10 @@ option	EISAVERBOSE
 pci0	at mainbus0 bus ?
 option	PCIVERBOSE
 
+pchb*	at pci? dev ? function ?	# PCI Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
+pci*	at pchb? bus ?
 
 pcicmaster0     at isa? port 0x3E0 size 2
 pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
@@ -120,9 +123,8 @@ isadma0	at isa?
 vt0	at isa? port 0x60 irq 1
 
 pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-pccom1	at isa? port 0x2f8 irq 3
+#pccom1	at isa? port 0x2f8 irq 3
 pccom2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
 #com*	at ast? slave ?
@@ -177,7 +179,7 @@ scsibus* at ahc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# unknown SCSI
@@ -187,7 +189,7 @@ fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
-scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
+#scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
 #pcd0	at isa? port 0x300 irq 10	# Panasonic CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
@@ -199,32 +201,7 @@ acd*	at atapibus? drive?
 
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-ed1	at isa? port 0x240 iomem 0xd8000 irq 9	#   ethernet cards
-ed2	at isa? port 0x300 iomem 0xcc000 irq 10
-#eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
-#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-#ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-#ep*	at isa? port ? irq ?			# 3C509 ethernet cards
-#ex0	at isa? port ? irq ?			# Intel EtherExpress PRO/10
-#ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
-#ie1	at isa? port 0x300 irq 10		# EtherExpress
-#le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
-#ep0	at eisa? slot ?
-#ep*	at eisa? slot ?				# 3C579 ethernet cards
-#fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
-#le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
-#de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
-#fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-#ed*	at pci? dev ? function ?		# NE2000-compat ethernet cards
-#ep0	at pci? dev ? function ?		# 3C590 ethernet cards
-#ep*	at pci? dev ? function ?		# 3C590 ethernet cards
-#ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
-#ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
-#fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
-
-#pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+ed0	at isa? port 0x280 iomem 0xd0000 irq 3	# WD/SMC, 3C503, and NE[12]000
 
 sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
@@ -235,7 +212,8 @@ spkr0	at pckbd? port 0x61
 # Joystick driver. Probe is a little strange; add only if you have one.
 joy0	at isa? port 0x201
 
-pseudo-device	loop	1	# network loopback
+pseudo-device	loop	2	# network loopback
+#pseudo-device	null	1	# network blackhole
 pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
 pseudo-device	ppp	2	# PPP
