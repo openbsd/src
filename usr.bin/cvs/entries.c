@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.22 2005/01/14 16:39:21 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.23 2005/01/14 16:57:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -255,9 +255,6 @@ cvs_ent_remove(CVSENTRIES *ef, const char *name)
 	}
 	TAILQ_REMOVE(&(ef->cef_ent), ent, ce_list);
 	cvs_ent_free(ent);
-
-	if (TAILQ_EMPTY(&(ef->cef_ent)))	/* reset */
-		TAILQ_INIT(&(ef->cef_ent));
 
 	ef->cef_flags &= ~CVS_ENTF_SYNC;
 
