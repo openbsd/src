@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.50 2002/06/03 20:01:37 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.51 2003/11/07 10:16:45 jmc Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ struct pcmciadevs pcmcia_ed_devs[]={
       { "ed", 0, "Ethernet", "Adapter", "2.0", NULL, (void *) -1,
 	(void *)&pcmcia_dlink },
 #if 0
-      /* not quite right for ethernet adress */
+      /* not quite right for ethernet address */
       { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *)-1,
         (void *)&pcmcia_dlink },
 #endif

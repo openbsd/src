@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.16 2003/11/06 21:09:35 mickey Exp $   */
+/*	$OpenBSD: intvec.s,v 1.17 2003/11/07 10:16:45 jmc Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -189,7 +189,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	brb	2f
 
 3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-2:	movl	_memtest,(sp)	# REI to new adress
+2:	movl	_memtest,(sp)	# REI to new address
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)

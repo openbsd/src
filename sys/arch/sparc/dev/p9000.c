@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.3 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.4 2003/11/07 10:16:45 jmc Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -164,7 +164,7 @@ struct cfdriver pninek_cd = {
  * register group first.
  *
  * Register groups are 0x80 bytes long (i.e. it is necessary to force a read
- * when writing to an adress which upper 25 bit differ from the previous
+ * when writing to an address which upper 25 bit differ from the previous
  * read or write operation).
  *
  * This is specific to the Tadpole design, and not a limitation of the

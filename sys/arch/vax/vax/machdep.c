@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.68 2003/06/26 13:06:26 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.69 2003/11/07 10:16:45 jmc Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -872,7 +872,7 @@ skip_opcode(ib)
 			}
 			break;
 
-		case 'a':	/* absolute adressing mode */
+		case 'a':	/* absolute addressing mode */
 			/* FALLTHROUGH */
 		default:
 			switch (*(++argp)) {

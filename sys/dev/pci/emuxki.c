@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.14 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.15 2003/11/07 10:16:45 jmc Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1639,7 +1639,7 @@ emuxki_open(void *addr, int flags)
 	/*
 	 * I did this because i have problems identifying the selected
 	 * recording source(s) which is necessary when setting recording
-	 * params This will be adressed very soon
+	 * params. This will be addressed very soon.
 	 */
 	if (flags & AUOPEN_READ)
 		return (EOPNOTSUPP);

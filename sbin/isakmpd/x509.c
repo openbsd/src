@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.83 2003/11/06 16:12:08 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.84 2003/11/07 10:16:44 jmc Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1369,7 +1369,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
 
 	    default:
 	      log_print ("x509_cert_get_subject: "
-			 "invalid subjectAltName iPAdress length %d ", altlen);
+			 "invalid subjectAltName IPaddress length %d ", altlen);
 	      goto fail;
 	    }
 	  break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.2 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: if_le.c,v 1.3 2003/11/07 10:16:45 jmc Exp $ */
 /*	$NetBSD: if_le.c,v 1.6 2000/05/20 13:30:03 ragge Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
@@ -150,7 +150,7 @@ leopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		nireg = (void *)0x20084400;
 	} else {
 		*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
-		ea = (void *)0x20090000; /* XXX ethernetadressen */
+		ea = (void *)0x20090000; /* XXX Ethernet address */
 		nireg = (void *)0x200e0000;
 	}
 	if (askname == 0) /* Override if autoboot */

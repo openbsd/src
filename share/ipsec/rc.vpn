@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: rc.vpn,v 1.19 2003/03/09 06:08:28 david Exp $
+#	$OpenBSD: rc.vpn,v 1.20 2003/11/07 10:16:45 jmc Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -20,7 +20,7 @@
 # Uncomment to debug (and not execute) commands
 DEBUG=echo
 
-# Gateway adresses
+# Gateway addresses
 GW_LOCAL=192.168.254.254
 GW_REMOTE=192.168.1.2
 

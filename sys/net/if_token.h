@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_token.h,v 1.4 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_token.h,v 1.5 2003/11/07 10:16:46 jmc Exp $	*/
 /*	$NetBSD: if_token.h,v 1.6 1999/11/19 20:41:19 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ struct token_rif {
 	u_int16_t tr_rdf[TOKEN_MAX_BRIDGE];	/* route-designator fields */
 } __attribute__((__packed__));
 
-/* standard values for adress control and frame control field */
+/* standard values for address control and frame control field */
 #define TOKEN_AC		0x10
 #define TOKEN_FC		0x40
 

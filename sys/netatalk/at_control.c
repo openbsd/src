@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.5 2003/09/02 16:57:29 tedu Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.6 2003/11/07 10:16:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -552,7 +552,7 @@ at_broadcast( sat )
  * between the two addresses, makes it's transition
  * Each of the upper and lower ranges might not exist, or might be 
  * representable by 1 or more netmasks. In addition, if both
- * ranges can be represented by the same netmask, then teh can be merged
+ * ranges can be represented by the same netmask, then they can be merged
  * by using the next higher netmask..
  */
 

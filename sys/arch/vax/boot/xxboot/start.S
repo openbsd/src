@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.1 2002/06/11 09:36:24 hugh Exp $ */
+/*	$OpenBSD: start.S,v 1.2 2003/11/07 10:16:45 jmc Exp $ */
 /*	$NetBSD: start.S,v 1.1 2002/02/24 01:04:26 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -48,7 +48,7 @@ _C_LABEL(_start):
 _C_LABEL(start):
 	.globl _C_LABEL(start)	# this is the symbolic name for the start
 	.globl _C_LABEL(_start) # of code to be relocated. We can use this
-				# to get the actual/real adress (pc-rel)
+				# to get the actual/real address (pc-rel)
 				# or to get the relocated address (abs).
 
 .org	0x00			# uVAX booted from TK50 starts here

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.11 2003/11/03 06:54:25 david Exp $ */
+/*	$OpenBSD: vs.c,v 1.12 2003/11/07 10:16:45 jmc Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -934,9 +934,9 @@ vs_build_memory_structure(xs, iopb)
 					    trunc_page(starting_point_virt +
 						MAX_SG_BLOCK_SIZE-1);
 					/* So go back to the beginning of the
-					   last matching page and gererate the
-					   physadress of this location for the
-					   next time. */
+					   last matching page and generate the
+					   physical address of this location
+					   for the next time. */
 					point2_phys = kvtop(point_virt);
 				}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.148 2003/10/31 04:11:41 drahn Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.149 2003/11/07 10:16:45 jmc Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2842,7 +2842,7 @@ cmd_chip_map(sc, pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	/*
  	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
-	 * and base adresses registers can be disabled at
+	 * and base address registers can be disabled at
  	 * hardware level. In this case, the device is wired
 	 * in compat mode and its first channel is always enabled,
 	 * but we can't rely on PCI_COMMAND_IO_ENABLE.
@@ -2897,7 +2897,7 @@ cmd0643_9_chip_map(sc, pa)
 
 	/*
 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
-	 * and base adresses registers can be disabled at
+	 * and base address registers can be disabled at
 	 * hardware level. In this case, the device is wired
 	 * in compat mode and its first channel is always enabled,
  	 * but we can't rely on PCI_COMMAND_IO_ENABLE.

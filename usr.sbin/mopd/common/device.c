@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.9 2003/08/31 09:06:46 maja Exp $ */
+/*	$OpenBSD: device.c,v 1.10 2003/11/07 10:16:46 jmc Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: device.c,v 1.9 2003/08/31 09:06:46 maja Exp $";
+static char rcsid[] = "$OpenBSD: device.c,v 1.10 2003/11/07 10:16:46 jmc Exp $";
 #endif
 
 #include "os.h"
@@ -44,7 +44,7 @@ int  pfWrite();
 
 #ifdef	DEV_NEW_CONF
 /*
- * Return ethernet adress for interface
+ * Return ethernet address for interface
  */
 
 void

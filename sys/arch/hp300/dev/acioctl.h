@@ -1,4 +1,4 @@
-/*	$OpenBSD: acioctl.h,v 1.3 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: acioctl.h,v 1.4 2003/11/07 10:16:45 jmc Exp $	*/
 /*	$NetBSD: acioctl.h,v 1.2 1994/10/26 07:23:25 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct acinfo {
 };
 
 struct aceltstat {
-	short	eaddr;		/* element adress */
+	short	eaddr;		/* element address */
 	char	type;		/* type of element */
 	char	flags;		/* flags */
 };
