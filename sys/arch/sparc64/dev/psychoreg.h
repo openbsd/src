@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.6 2002/01/25 23:47:44 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.7 2002/01/25 23:51:04 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -273,6 +273,16 @@ struct psychoreg {
 #define	PSY_UEAFSR_MASK	0x0000ffff00000000	/* byte mask */
 #define	PSY_UEAFSR_OFF	0x00000000e0000000	/* offset (afar [5:3]) */
 #define	PSY_UEAFSR_BLK	0x0000000000800000	/* block operation */
+
+/* correctable error fault status */
+#define	PSY_CEAFSR_PDRD	0x4000000000000000	/* primary pci dma read */
+#define	PSY_CEAFSR_PDWR	0x2000000000000000	/* primary pci dma write */
+#define	PSY_CEAFSR_SDRD	0x0800000000000000	/* secondary pci dma read */
+#define	PSY_CEAFSR_SDWR	0x0400000000000000	/* secondary pci dma write */
+#define	PSY_CEAFSR_SYND	0x00ff000000000000	/* ecc syndrome */
+#define	PSY_CEAFSR_MASK	0x0000ffff00000000	/* byte mask */
+#define	PSY_CEAFSR_OFF	0x00000000e0000000	/* offset (afar [5:3]) */
+#define	PSY_CEAFSR_BLK	0x0000000000800000	/* block operation */
 
 /* PCI [a|b] control/status register */
 /* note that the sabre only has one set of PCI control/status registers */
