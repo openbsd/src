@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.40 2003/12/27 14:24:42 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.41 2003/12/27 18:41:40 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -612,12 +612,18 @@ kroute_match(in_addr_t key)
 	ina = ntohl(key);
 
 	/* we will never match the default route */
-	for (i = 32; i >= 0; i--) {
+	for (i = 32; i > 0; i--) {
 		s.r.prefix = htonl(ina & (0xffffffff << (32 - i)));
 		s.r.prefixlen = i;
 		if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL)
 			return (kr);
 	}
+
+	/* if we don't have a match yet, try to find a defautl route */
+	s.r.prefix = 0;
+	s.r.prefixlen = 0;
+	if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL)
+		return (kr);
 
 	return (NULL);
 }
