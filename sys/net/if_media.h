@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.13 2004/06/19 16:01:42 deraadt Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.14 2004/06/27 03:44:50 millert Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -213,11 +213,29 @@ int	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
 #define	IFM_IEEE80211_DS1	8	/* Direct Sequence  1Mbps*/
+#define IFM_IEEE80211_DS22      9	/* Direct Sequence 22Mbps */ 
+#define IFM_IEEE80211_OFDM6     10	/* OFDM 6Mbps */
+#define IFM_IEEE80211_OFDM9     11	/* OFDM 9Mbps */
+#define IFM_IEEE80211_OFDM12    12	/* OFDM 12Mbps */
+#define IFM_IEEE80211_OFDM18    13	/* OFDM 18Mbps */
+#define IFM_IEEE80211_OFDM24    14	/* OFDM 24Mbps */
+#define IFM_IEEE80211_OFDM36    15	/* OFDM 36Mbps */
+#define IFM_IEEE80211_OFDM48    16	/* OFDM 48Mbps */
+#define IFM_IEEE80211_OFDM54    17	/* OFDM 54Mbps */
+#define IFM_IEEE80211_OFDM72    18	/* OFDM 72Mbps */
+
 #define	IFM_IEEE80211_ADHOC	0x100	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	0x200	/* Operate in Host AP mode */
 #define	IFM_IEEE80211_IBSS	0x400	/* Operate in IBSS mode */
 #define	IFM_IEEE80211_IBSSMASTER 0x800	/* Operate as an IBSS master */
 #define	IFM_IEEE80211_MONITOR	0x1000	/* Operate in Monitor mode */
+#define	IFM_IEEE80211_TURBO	0x2000	/* Operate in Turbo mode */
+
+/* operating mode for multi-mode devices */
+#define IFM_IEEE80211_11A	0x00010000	/* 5Ghz, OFDM mode */
+#define IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
+#define IFM_IEEE80211_11G	0x00030000	/* 2Ghz, CCK mode */
+#define IFM_IEEE80211_FH	0x00040000	/* 2Ghz, GFSK mode */
 
 /*
  * Digitally multiplexed "Carrier" Serial Interfaces
@@ -270,6 +288,8 @@ int	ifmedia_baudrate(int);
 #define	IFM_IMASK	0xf0000000	/* Instance */
 #define	IFM_ISHIFT	28		/* Instance shift */
 #define	IFM_OMASK	0x0000ff00	/* Type specific options */
+#define	IFM_MMASK	0x00070000	/* Mode */
+#define	IFM_MSHIFT	16		/* Mode shift */
 #define	IFM_GMASK	0x0ff00000	/* Global options */
 
 #define	IFM_NMIN	IFM_ETHER	/* lowest Network type */
@@ -297,6 +317,7 @@ int	ifmedia_baudrate(int);
 #define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
 #define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
+#define	IFM_MODE(x)	((x) & IFM_MMASK)
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
 #define	IFM_INST_ANY	(-1)
@@ -408,6 +429,16 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS22,	"DS22" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM6,	"OFDM6" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM9,	"OFDM9" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM12,	"OFDM12" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM18,	"OFDM18" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM24,	"OFDM24" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM36,	"OFDM36" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM48,	"OFDM48" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM54,	"OFDM54" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_OFDM72,	"OFDM72" },		\
 									\
 	{ IFM_TDM|IFM_TDM_T1,		"t1" },				\
 	{ IFM_TDM|IFM_TDM_T1_AMI,	"t1-ami" },			\
