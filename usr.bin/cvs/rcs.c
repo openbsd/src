@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.22 2005/01/14 00:47:44 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.23 2005/01/24 20:43:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -619,8 +619,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 			/* Apply patches backwards to get the right version.
 			 * This will need some rework to support sub branches.
 			 */
-			crev = rcsnum_alloc();
-			if (crev == NULL) {
+			if ((crev = rcsnum_alloc()) == NULL) {
 				cvs_buf_free(rbuf);
 				return (NULL);
 			}
@@ -634,7 +633,11 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 					return (NULL);
 				}
 
-				cvs_buf_putc(rbuf, '\0');
+				if (cvs_buf_putc(rbuf, '\0') < 0) {
+					rcsnum_free(crev);
+					cvs_buf_free(rbuf);
+					return (NULL);
+				}
 				bp = cvs_buf_release(rbuf);
 				rbuf = rcs_patch((char *)bp, rdp->rd_text);
 				if (rbuf == NULL)
