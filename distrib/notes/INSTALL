@@ -18,7 +18,7 @@ continue.
 Security of the system as a whole has been significantly improved.
 Source code for all critical system components has been checked for
 remote-access, local-access, denial-of-service, data destruction, or
-information-gathering problems.  Tools like ipf, ipnat, and nc have
+information-gathering problems.  Tools like ssh, ipf, ipnat, and nc have
 been added to the tree because security conscious people often need
 them.
 
