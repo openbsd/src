@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sockio.h,v 1.6 1997/12/10 12:44:39 provos Exp $	*/
+/*	$OpenBSD: linux_sockio.h,v 1.7 1999/02/10 08:02:15 deraadt Exp $	*/
 /*	$NetBSD: linux_sockio.h,v 1.5 1996/03/08 04:56:07 mycroft Exp $	*/
 
 /*
@@ -35,6 +35,12 @@
 #ifndef _LINUX_SOCKIO_H
 #define _LINUX_SOCKIO_H
 
+#define	LINUX_FIOSETOWN		_LINUX_IO(0x89, 1)
+#define	LINUX_SIOCSPGRP		_LINUX_IO(0x89, 2)
+#define	LINUX_FIOGETOWN		_LINUX_IO(0x89, 3)
+#define	LINUX_SIOCGPGRP		_LINUX_IO(0x89, 4)
+#define	LINUX_SIOCATMARK	_LINUX_IO(0x89, 5)
+#define	LINUX_SIOCGSTAMP	_LINUX_IO(0x89, 6)
 #define	LINUX_SIOCGIFCONF	_LINUX_IO(0x89, 18)
 #define	LINUX_SIOCGIFFLAGS	_LINUX_IO(0x89, 19)
 #define	LINUX_SIOCGIFADDR	_LINUX_IO(0x89, 21)
