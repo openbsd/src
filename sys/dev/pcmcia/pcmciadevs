@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.10 1999/03/04 05:50:28 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.11 1999/05/16 22:42:44 niklas Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -44,6 +44,7 @@ vendor 3COM			0x0101	3Com
 vendor MEGAHERTZ		0x0102	Megahertz
 vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK
+vendor XIRCOM			0x0105	XIRCOM -- same as TDK
 vendor SMC			0x0108	SMC
 vendor MOTOROLA			0x0109	Motorola
 vendor USROBOTICS		0x0115	US Robotics
