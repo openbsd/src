@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.96 2004/05/03 15:18:21 drahn Exp $	*/
+/*	$OpenBSD: com.c,v 1.97 2004/05/30 20:59:57 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1494,7 +1494,11 @@ comcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, CONUNIT);
+#if defined(COMCONSOLE) || defined(PCCOMCONSOLE) || !defined(__amd64__)
 	cp->cn_pri = CN_REMOTE;
+#else
+	cp->cn_pri = CN_NORMAL;
+#endif
 }
 
 void
