@@ -1,4 +1,4 @@
-.\" $OpenBSD: ahd.4,v 1.3 2004/07/05 21:24:05 deraadt Exp $
+.\" $OpenBSD: ahd.4,v 1.4 2004/07/05 23:29:37 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -45,9 +45,9 @@ bus(es) connected to Adaptec
 .Tn AIC79xx
 host adapter chips.
 .Pp
-Driver features include support for narrow and wide busses,
+Driver features include support for narrow and wide buses,
 fast, ultra, ultra2, ultra160, and ultra320 synchronous transfers,
-packetized transfers, tagged queuing, 512 SCB's, and target mode.
+packetized transfers, tagged queuing, 512 SCBs, and target mode.
 .Pp
 The
 .Nm
@@ -92,8 +92,6 @@ To configure one or more controllers to assume the target role:
 .Cd options AHD_TMODE_ENABLE=<bitmask of units>
 .Ed
 .Pp
-.Bd -ragged -offset indent -compact
-.Ed
 The
 .Dv AHD_DEBUG_OPTS
 option is used to control which diagnostic messages are printed to the
@@ -146,12 +144,6 @@ disconnection,
 and the host adapters
 .Tn SCSI
 ID.
-.Sh BUGS
-The current generation of 79xx chips do not support target mode in Ultra320
-mode.
-In this driver all target mode code has been commented out.
-.Pp
-Currently the driver has issues with Rev B of the AIC7902 chip.
 .Sh SEE ALSO
 .Xr ahc 4 ,
 .Xr cd 4 ,
@@ -179,3 +171,9 @@ and the firmware running on the aic79xx chips was written by
 .An Justin T. Gibbs .
 .Pp
 OpenBSD port by Milos Urbanek, Kenneth R. Westerback & Marco Peereboom.
+.Sh BUGS
+The current generation of 79xx chips do not support target mode in Ultra320
+mode.
+In this driver all target mode code has been commented out.
+.Pp
+Currently the driver has issues with Rev B of the AIC7902 chip.
