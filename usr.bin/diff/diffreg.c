@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.51 2003/10/28 13:23:59 avsm Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.52 2003/11/10 18:51:35 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.51 2003/10/28 13:23:59 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.52 2003/11/10 18:51:35 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1119,8 +1119,12 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		col = 0;
 		for (j = 0, lastc = '\0'; j < nc; j++, lastc = c) {
 			if ((c = getc(lb)) == EOF) {
-				puts("\n\\ No newline at end of file");
-				return (0);;
+				if (format == D_EDIT || format == D_REVERSE ||
+				    format == D_NREVERSE)
+					warnx("No newline at end of file");
+				else
+					puts("\n\\ No newline at end of file");
+				return (0);
 			}
 			if (c == '\t' && tflag) {
 				do {
