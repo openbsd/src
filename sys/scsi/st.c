@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.17 1997/07/11 19:26:00 tholo Exp $	*/
+/*	$OpenBSD: st.c,v 1.18 1997/08/19 03:50:59 dgregor Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -592,7 +592,9 @@ stclose(dev, flags, mode, p)
 		st_unmount(st, EJECT, NOREWIND);
 		break;
 	case 1:		/* no rewind */
-		st_unmount(st, NOEJECT, NOREWIND);
+		/* leave mounted unless media seems to have been removed */
+		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
+			st_unmount(st, NOEJECT, NOREWIND);
 		break;
 	case 2:		/* rewind, eject */
 		st_unmount(st, EJECT, DOREWIND);
