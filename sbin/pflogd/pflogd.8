@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.3 2001/08/24 19:39:19 deraadt Exp $
+.\"	$OpenBSD: pflogd.8,v 1.4 2001/08/27 17:36:53 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -52,8 +52,8 @@ binary format.
 These logs can be reviewed later using the
 .Ar -r
 option of
-.Xr tcpdump 8 , hopefully offline in case there are bugs in the packet
-parsing code of
+.Xr tcpdump 8 ,
+hopefully offline in case there are bugs in the packet parsing code of
 .Xr tcpdump 8 .
 .Pp
 .Nm
@@ -70,6 +70,13 @@ recent logs available.
 The buffers are also flushed every
 .Ar delay
 seconds.
+.Pp
+If the log file contains data after a restart or a
+.Va SIGHUP ,
+new logs are appended to the existing file.
+If the existing log file was created with a different snaplen,
+.Nm
+temporarily uses the old snaplen to keep the log file consistent.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
