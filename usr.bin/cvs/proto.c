@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.15 2004/07/30 23:10:21 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.16 2004/08/02 17:16:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -93,6 +93,7 @@ static int  cvs_resp_removed   (struct cvsroot *, int, char *);
 static int  cvs_resp_mode      (struct cvsroot *, int, char *);
 static int  cvs_resp_modxpand  (struct cvsroot *, int, char *);
 static int  cvs_resp_rcsdiff   (struct cvsroot *, int, char *);
+static int  cvs_resp_template  (struct cvsroot *, int, char *);
 
 static int  cvs_initlog   (void);
 
@@ -189,6 +190,7 @@ struct cvs_resp {
 	{ CVS_RESP_SETSTICKY,  "Set-sticky",             cvs_resp_sticky   },
 	{ CVS_RESP_CLRSTICKY,  "Clear-sticky",           cvs_resp_sticky   },
 	{ CVS_RESP_RCSDIFF,    "Rcs-diff",               cvs_resp_rcsdiff  },
+	{ CVS_RESP_TEMPLATE,   "Template",               cvs_resp_template },
 };
 
 
@@ -472,7 +474,31 @@ cvs_req_getvalid(void)
 int
 cvs_req_handle(char *line)
 {
-	return (0);
+	u_int i;
+	char *cp, *cmd;
+
+	cmd = line;
+
+	cp = strchr(cmd, ' ');
+	if (cp != NULL)
+		*(cp++) = '\0';
+
+	for (i = 0; i < CVS_NBREQ; i++) {
+		if (strcmp(cvs_requests[i].req_str, cmd) == 0) {
+			if (cvs_requests[i].req_hdlr == NULL) {
+				cvs_log(LP_ERR,
+				    "unimplemented request handler for `%s'",
+				    cmd);
+				break;
+			}
+			else
+				return (*cvs_requests[i].req_hdlr)
+				    (cvs_requests[i].req_id, cp);
+		}
+	}
+
+	/* unhandled */
+	return (-1);
 }
 
 
@@ -578,9 +604,17 @@ cvs_resp_handle(struct cvsroot *root, char *line)
 		*(cp++) = '\0';
 
 	for (i = 0; i < CVS_NBRESP; i++) {
-		if (strcmp(cvs_responses[i].resp_str, cmd) == 0)
-			return (*cvs_responses[i].resp_hdlr)
-			    (root, cvs_responses[i].resp_id, cp);
+		if (strcmp(cvs_responses[i].resp_str, cmd) == 0) {
+			if (cvs_responses[i].resp_hdlr == NULL) {
+				cvs_log(LP_ERRNO,
+				    "unimplemented response handler for `%s'",
+				    cmd);
+				return (-1);
+			}
+			else
+				return (*cvs_responses[i].resp_hdlr)
+				    (root, cvs_responses[i].resp_id, cp);
+		}
 	}
 
 	/* unhandled */
@@ -1113,6 +1147,26 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 		return (-1);
 
 	cvs_ent_close(entf);
+
+	return (0);
+}
+
+
+/*
+ * cvs_resp_template()
+ *
+ * Handler for the `Template' response.
+ */
+
+static int
+cvs_resp_template(struct cvsroot *root, int type, char *line)
+{
+	mode_t mode;
+	BUF *tmpl;
+
+	tmpl = cvs_recvfile(root, &mode);
+	if (tmpl == NULL)
+		return (-1);
 
 	return (0);
 }
