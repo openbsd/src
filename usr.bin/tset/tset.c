@@ -155,8 +155,8 @@ err(const char *fmt, ...)
 static void
 failed(const char *msg)
 {
-	char	temp[BUFSIZ];
-	perror(strcat(strcpy(temp, "tset: "), msg));
+	(void)fputs("tset: ", stderr);
+	perror(msg);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
