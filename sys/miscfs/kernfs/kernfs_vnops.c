@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.35 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.36 2003/11/15 21:09:39 tedu Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -585,7 +585,6 @@ kernfs_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
-	struct timeval tv;
 	int error = 0;
 	char strbuf[KSTRING], *buf;
 
@@ -597,8 +596,7 @@ kernfs_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
+	TIMEVAL_TO_TIMESPEC(&time, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
 	vap->va_ctime = vap->va_atime;
 	vap->va_gen = 0;
@@ -622,6 +620,12 @@ kernfs_getattr(v)
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
 #endif
+		if (kt == &kern_targets[2]) {
+			/* set boottime times to boottime */
+			TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_atime);
+			vap->va_mtime = vap->va_atime;
+			vap->va_ctime = vap->va_atime;
+		}
 		vap->va_type = kt->kt_vtype;
 		vap->va_mode = kt->kt_mode;
 		vap->va_nlink = 1;
