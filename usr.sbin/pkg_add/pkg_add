@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.23 2004/01/27 13:09:16 espie Exp $
+# $OpenBSD: pkg_add,v 1.24 2004/01/27 14:50:52 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -126,6 +126,10 @@ if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
 
+if ($< && !$forced{nonroot}) {
+	die "$0 must be run as root";
+}
+
 my $conflict_list = {};
 
 # first, find all possible potential conflicts
@@ -142,14 +146,14 @@ sub can_install($)
 
 	if (is_installed $pkgname) {
 		print "package $pkgname is already installed\n";
-		return undef;
+		return undef unless $forced{installed};
 	}
 
 	while (my ($name, $l) = each %$conflict_list) {
 		if ($l->conflicts_with($pkgname)) {
 			print "package $pkgname conflicts with installed package $name\n";
 			$errors++;
-			return undef;
+			return undef unless $forced{conflicts};
 		}
 	}
 
@@ -201,7 +205,7 @@ sub pre_add($$)
 	if ($l->conflicts_with(installed_packages())) {
 		print "package $pkg has conflicts\n";
 		$errors++;
-		return undef;
+		return undef unless $forced{conflicts};
 	}
 	return $handle;
 }
@@ -329,6 +333,17 @@ sub check_lib_specs
 	return 1;
 }
 
+sub borked_script($)
+{
+	my $msg = shift;
+
+	if ($forced{scripts}) {
+		print "$msg borked\n";
+	} else {
+		die "$msg borked";
+	}
+}
+
 sub really_add($)
 {
 	my $handle = shift;
@@ -367,14 +382,16 @@ sub really_add($)
 		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			chmod 0755, $dir.REQUIRE;
-			system($dir.REQUIRE, $pkgname, "INSTALL") == 0 or die "require script borked";
+			system($dir.REQUIRE, $pkgname, "INSTALL") == 0 or
+			    borked_script("require script");
 		}
 	}
 	if ($plist->has(INSTALL)) {
 		print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			chmod 0755, $dir.INSTALL;
-			system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or die "install script borked";
+			system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or
+			    borked_script("install script");
 		}
 	}
 
@@ -398,7 +415,7 @@ sub really_add($)
 		unless ($opt_n) {
 			if (system($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
 				print STDERR "install script for $pkgname borked\n";
-				$errors++;
+				$errors++ unless $forced{scripts};
 			}
 		}
 	}
@@ -442,7 +459,7 @@ while (my $pkg = shift @todo) {
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check()) {
 			print "$pkg is not for the right architecture\n";
-			next MAINLOOP;
+			next MAINLOOP unless $forced{arch};
 		}
 	}
 	if (!defined $handle->{solved_dependencies}) {
@@ -466,7 +483,7 @@ while (my $pkg = shift @todo) {
 		if (!check_lib_specs('/usr/local', $dep->{libspec})) {
 			print "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
-			next MAINLOOP;
+			next MAINLOOP unless $forced{libdepends};
 		}
 	}
 	for my $dep (@{$handle->{solved_dependencies}}) {

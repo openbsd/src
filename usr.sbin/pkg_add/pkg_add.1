@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.9 2004/01/27 13:50:55 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.10 2004/01/27 14:50:52 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -123,7 +123,22 @@ would be taken if it was.
 Force installation of the package.
 .Ar keys
 is a comma-separated list of keywords that state what failsafes
-should be waived.
+should be waived. 
+These include:
+.Bl -tag -width keyword
+.It Ar arch
+architecture recorded in package may not match.
+.It Ar conflicts
+package may conflict with other packages.
+.It Ar installed
+reinstall an existing package.
+.It Ar libdepends
+library specifications may not be fullfilled.
+.It Ar nonroot
+install even if not running as root.
+.It Ar scripts
+install scripts may fail.
+.El
 .El
 .Pp
 By default, when adding packages via FTP, the
