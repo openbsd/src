@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.1 1996/11/29 23:51:13 niklas Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.2 1996/11/30 00:53:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -60,15 +60,38 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/isa/lptreg.h>
+#include <dev/isa/isavar.h>
+#include <dev/ic/lptreg.h>
+#include <dev/ic/lptvar.h>
 
-int lpt_isa_probe __P((struct device *, void *, void *));
-void lpt_isa_attach __P((struct device *, struct device *, void *));
+int	lpt_isa_probe __P((struct device *, void *, void *));
+void	lpt_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach lpt_isa_ca = {
 	sizeof(struct lpt_softc), lpt_isa_probe, lpt_isa_attach
 };
 
+/*
+ * Logic:
+ *	1) You should be able to write to and read back the same value
+ *	   to the data port.  Do an alternating zeros, alternating ones,
+ *	   walking zero, and walking one test to check for stuck bits.
+ *
+ *	2) You should be able to write to and read back the same value
+ *	   to the control port lower 5 bits, the upper 3 bits are reserved
+ *	   per the IBM PC technical reference manauls and different boards
+ *	   do different things with them.  Do an alternating zeros, alternating
+ *	   ones, walking zero, and walking one test to check for stuck bits.
+ *
+ *	   Some printers drag the strobe line down when the are powered off
+ * 	   so this bit has been masked out of the control port test.
+ *
+ *	   XXX Some printers may not like a fast pulse on init or strobe, I
+ *	   don't know at this point, if that becomes a problem these bits
+ *	   should be turned off in the mask byte for the control port test.
+ *
+ *	3) Set the data and control ports to a value of 0
+ */
 int
 lpt_isa_probe(parent, match, aux)
 	struct device *parent;
@@ -77,8 +100,8 @@ lpt_isa_probe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	u_long base;
-	u_char mask, data;
+	bus_addr_t base;
+	u_int8_t mask, data;
 	int i, rv;
 
 #ifdef DEBUG
@@ -145,15 +168,15 @@ lpt_isa_attach(parent, self, aux)
 
 	if (ia->ia_irq != IRQUNK)
 		printf("\n");
-	else
+	else {
+		sc->sc_flags |= LPT_POLLED;
 		printf(": polled\n");
+	}
 
-	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_irq = ia->ia_irq;
 	sc->sc_state = 0;
 
 	iot = sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, sc->sc_iobase, LPT_NPORTS, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, LPT_NPORTS, 0, &ioh))
 		panic("lpt_isa_attach: couldn't map I/O ports");
 	sc->sc_ioh = ioh;
 

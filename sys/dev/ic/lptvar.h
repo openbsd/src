@@ -1,4 +1,5 @@
-/*	$OpenBSD: lpt_pica.c,v 1.2 1996/11/30 00:53:39 niklas Exp $	*/
+/*	$OpenBSD: lptvar.h,v 1.1 1996/11/30 00:53:36 niklas Exp $ */
+/*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -49,103 +50,29 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Device Driver for AT parallel printer port
- */
+struct lpt_softc {
+	struct device sc_dev;
+	void *sc_ih;
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-
-#include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
-
-#include <dev/ic/lptreg.h>
-#include <dev/ic/lptvar.h>
-
-int lpt_pica_probe __P((struct device *, void *, void *));
-void lpt_pica_attach __P((struct device *, struct device *, void *));
-
-struct cfattach lpt_pica_ca = {
-	sizeof(struct lpt_softc), lpt_pica_probe, lpt_pica_attach
+	size_t sc_count;
+	struct buf *sc_inbuf;
+	u_int8_t *sc_cp;
+	int sc_spinmax;
+	bus_space_tag_t sc_iot;	/* bus tag */
+	bus_space_handle_t sc_ioh; /* handle to the registers */
+	u_int8_t sc_state;
+#define	LPT_OPEN	0x01	/* device is open */
+#define	LPT_OBUSY	0x02	/* printer is busy doing output */
+#define	LPT_INIT	0x04	/* waiting to initialize for open */
+	u_int8_t sc_flags;
+#define	LPT_POLLED	0x10	/* configured for polling only */
+#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
+#define	LPT_NOPRIME	0x40	/* don't prime on open */
+#define	LPT_NOINTR	0x80	/* do not use interrupt */
+	u_int8_t sc_control;
+	u_int8_t sc_laststatus;
 };
 
-int
-lpt_pica_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct confargs *ca = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	u_int8_t mask, data;
-	int i;
-
-#ifdef DEBUG
-#define	ABORT								     \
-	do {								     \
-		printf("lpt_pica_probe: mask %x data %x failed\n", mask,     \
-		    data);						     \
-		return 0;						     \
-	} while (0)
-#else
-#define	ABORT	return 0
-#endif
-
-	if(!BUS_MATCHNAME(ca, "lpt"))
-		 return(0);
-
-	iot = 0;
-	base = (bus_addr_t)BUS_CVTADDR(ca);
-	ioh = (bus_space_handle_t)base;
-
-	mask = 0xff;
-
-	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-		ABORT;
-
-	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-		ABORT;
-
-	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
-		data = ~(1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-			ABORT;
-	}
-
-	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
-		data = (1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-			ABORT;
-	}
-
-	bus_space_write_1(iot, ioh, lpt_data, 0);
-	bus_space_write_1(iot, ioh, lpt_control, 0);
-
-	return 1;
-}
-
-void
-lpt_pica_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct lpt_softc *sc = (void *)self;
-	struct confargs *ca = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	printf("\n");
-
-	sc->sc_state = 0;
-	iot = sc->sc_iot = 0;
-	sc->sc_ioh = (bus_space_handle_t)BUS_CVTADDR(ca);
-
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-
-	BUS_INTR_ESTABLISH(ca, lptintr, sc);
-}
+int	lptintr __P((void *));
+int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    bus_size_t, u_int8_t, u_int8_t));

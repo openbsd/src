@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.46 1996/11/28 23:10:28 niklas Exp $
+#	$OpenBSD: files,v 1.47 1996/11/30 00:53:34 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -50,9 +50,13 @@ file	dev/ic/elink3.c		ep
 device	le: ether, ifnet
 file	dev/ic/am7990.c		le
 
-# LANCE and PCnet Ethernet controllers
+# Cyclades Cyclom multiport serial cards
 device	cy: tty
 file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
+
+# PC parallel ports (XXX what chip?)
+device	lpt
+file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica) needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
