@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.11 2004/10/17 18:16:12 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.12 2004/10/17 18:22:13 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct pciide_softc {
 	/* internal bookkeeping */
 	struct pciide_channel {			/* per-channel data */
 		struct channel_softc wdc_channel; /* generic part */
-		char		*name;
+		const char	*name;
 		int		hw_ok;		/* hardware mapped & OK? */
 		int		compat;		/* is it compat? */
 		int             dma_in_progress;
