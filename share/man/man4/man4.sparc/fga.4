@@ -1,0 +1,103 @@
+.\"     $OpenBSD: fga.4,v 1.1 1999/07/25 23:05:53 jason Exp $
+.\"
+.\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" This software was developed by Jason L. Wright under contract with
+.\" RTMX Incorporated (http://www.rtmx.com).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason L. Wright for
+.\"	 RTMX Incorporated.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 25, 1999
+.Dt FGA 4 sparc
+.Os
+.Sh NAME
+.Nm fga
+.Nd SPARC Force FGA5000 VME/SBus bridge driver
+.Sh SYNOPSIS
+.Cd "fga0 at iommu0"
+.Cd "fvme* at fga0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides a bridge between SBus and VME interfaces.
+It has support for accessing VME address and data spaces as if they
+were SBus address ranges, and mapping of VME interrupt levels to
+SBus interrupts.
+The
+.Nm
+also provides a set of semaphores and mailboxes which are accessible
+from user programs via
+.Xr ioctl 2 .
+.Pp
+VME devices are attached to the
+.Nm fvme
+pseudo-devices, which provide an interface for drivers to establish
+VME level/vectored interrupts and map address ranges.
+By default the following address ranges are established:
+.Pp
+.Bl -column "256MBXXX" "SBus Slot" "SBus Offset" "VME Space" "VME Offset" -offset indent
+.It Sy Size	SBus Slot	SBus Offset	VME Space	VME Offset
+.It Dv "256MB" No "	1" No "	0x0000000" No "	A32/D32	0xf0000000"
+.It Dv "256MB" No "	4" No "	0x0000000" No "	A32/D16	0xf0000000"
+.It Dv "16MB" No "	5" No "	0xe000000" No "	A24/D16	0x000000"
+.It Dv "64KB" No "	5" No "	0xffc0000" No "	A16/D8	0x0000"
+.It Dv "64KB" No "	5" No "	0xffd0000" No "	A16/D16	0x0000"
+.It Dv "64KB" No "	5" No "	0xffe0000" No "	A16/D32	0x0000"
+.El
+.Pp
+The abort switch on the FORCE CPU boards is also controlled by the
+.Nm fga ,
+and is enabled if the eeprom variable
+.Pa abort-ena?
+is set to
+.Pa true .
+Toggling the switch when enabled, stops the kernel and starts the
+kernel debugger
+.Xr ddb 4 .
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr ddb 4 ,
+.Xr eeprom 8
+.Sh HISTORY
+.Ox
+support for the
+.Nm
+first appeared in
+.Ox 2.6 .
+.Sh AUTHOR
+The driver for the
+.Nm fga
+was written by Jason L. Wright <jason@thought.net> under contract with
+RTMX Incorporated.
+.Sh BUGS
+There are several features provided by the FGA5000 that are not implemented
+in the driver.
+Most notably, VME slave ranges are not mapped and the DMA
+engine is not used.
+Also, several VME interrupts are not handled: SYSFAIL and ACFAIL.
