@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.7 1997/02/06 12:49:56 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.8 1997/04/06 09:14:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ static char rcsid[] = "$Id: rexecd.c,v 1.7 1997/02/06 12:49:56 deraadt Exp $";
 #include <arpa/inet.h>
 
 /*VARARGS1*/
-int error();
+void error __P(());
 
 char	username[20] = "USER=";
 char	homedir[MAXPATHLEN] = "HOME=";
@@ -74,6 +74,9 @@ char	*remote;
 
 struct	sockaddr_in asin = { AF_INET };
 
+void doit __P((int, struct sockaddr_in *));
+void getstr __P((char *buf, int cnt, char *err));
+
 /*
  * remote execute server:
  *	username\0
@@ -82,6 +85,7 @@ struct	sockaddr_in asin = { AF_INET };
  *	data
  */
 /*ARGSUSED*/
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -103,8 +107,10 @@ main(argc, argv)
 	remote = strdup(hp ? hp->h_name : inet_ntoa(from.sin_addr));
 
 	doit(0, &from);
+	exit(0);
 }
 
+void
 doit(f, fromp)
 	int f;
 	struct sockaddr_in *fromp;
@@ -251,6 +257,7 @@ doit(f, fromp)
 }
 
 /*VARARGS1*/
+void
 error(fmt, a1, a2, a3)
 	char *fmt;
 	int a1, a2, a3;
@@ -262,6 +269,7 @@ error(fmt, a1, a2, a3)
 	(void) write(2, buf, strlen(buf));
 }
 
+void
 getstr(buf, cnt, err)
 	char *buf;
 	int cnt;
