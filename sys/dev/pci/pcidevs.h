@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.458 2001/10/31 06:14:19 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -537,6 +537,7 @@
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava */
+#define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
 #define	PCI_VENDOR_OXFORD	0x14d2		/* Oxford */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
@@ -551,6 +552,7 @@
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
+#define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
@@ -800,6 +802,9 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID428	0x9010		/* MegaRAID Series 428 */
 #define	PCI_PRODUCT_AMI_MEGARAID434	0x9060		/* MegaRAID Series 434 */
+
+/* Antares Microsystems, Inc. products */
+#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit Ethernet */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit */
@@ -1834,6 +1839,7 @@
 
 /* Sundance products */
 #define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */
+#define	PCI_PRODUCT_SUNDANCE_ST2021	0x2021		/* ST2021 Gigabit Ethernet */
 
 /* Surecom products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* Surecom NE-34 */
@@ -1844,6 +1850,10 @@
 #define	PCI_PRODUCT_SYMPHONY_82C105	0x0105		/* 82C105 */
 #define	PCI_PRODUCT_SYMPHONY2_82C101	0x0001		/* 82C101 */
 #define	PCI_PRODUCT_SYMPHONY_82C565	0x0565		/* 82C565 PCI-ISA */
+
+/* Tamarack Microelectronics */
+#define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* Tamarack TC9021 GigE */
+#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* Tamarack TC9021 GigE (alt ID) */
 
 /* Tekram Technology products (1st ID)*/
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */

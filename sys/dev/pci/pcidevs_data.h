@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.458 2001/10/31 06:14:19 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -741,6 +741,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID434,
 	    "MegaRAID Series 434",
+	},
+	{
+	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
+	    "Antares Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
@@ -3863,6 +3867,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ST201",
 	},
 	{
+	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST2021,
+	    "ST2021 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
 	    "Surecom NE-34",
 	},
@@ -3885,6 +3893,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C565,
 	    "82C565 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
+	    "Tamarack TC9021 GigE",
+	},
+	{
+	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT,
+	    "Tamarack TC9021 GigE (alt ID)",
 	},
 	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
@@ -6799,6 +6815,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Lava",
 	},
 	{
+	    PCI_VENDOR_TAMARACK,
+	    "Tamarack Microelectronics",
+	},
+	{
 	    PCI_VENDOR_OXFORD,
 	    "Oxford",
 	},
@@ -6853,6 +6873,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_GLOBALSUN,
 	    "Global Sun",
+	},
+	{
+	    PCI_VENDOR_ANTARES,
+	    "Antares Microsystems",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
