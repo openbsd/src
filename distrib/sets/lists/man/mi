@@ -1,3 +1,7 @@
+./usr/share/man/cat4/advansys.0
+./usr/share/man/cat4/adw.0
+./usr/share/man/cat4/rlphy.0
+./usr/share/man/cat5/malloc.conf.0
 ./usr/share/man/cat1/afslog.0
 ./usr/share/man/cat8/afsd.0
 ./usr/share/doc/html
@@ -620,7 +624,6 @@
 ./usr/share/man/cat4/i386/bt.0
 ./usr/share/man/cat4/i386/com.0
 ./usr/share/man/cat4/i386/cy.0
-./usr/share/man/cat4/i386/ed.0
 ./usr/share/man/cat4/i386/eg.0
 ./usr/share/man/cat4/i386/el.0
 ./usr/share/man/cat4/tx.0

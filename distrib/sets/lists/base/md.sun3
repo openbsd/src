@@ -4,7 +4,7 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.3
+./usr/lib/libc.so.21.0
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0

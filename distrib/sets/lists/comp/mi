@@ -56,6 +56,9 @@
 ./usr/include/ddb/db_variables.h
 ./usr/include/ddb/db_watch.h
 ./usr/include/des.h
+./usr/include/dev/ic/adw.h
+./usr/include/dev/ic/adwlib.h
+./usr/include/dev/ic/adwmcode.h
 ./usr/include/dev/atapi
 ./usr/include/dev/atapi/atapi.h
 ./usr/include/dev/atapi/atapilink.h
@@ -1340,6 +1343,7 @@
 ./usr/share/man/cat2/waitpid.0
 ./usr/share/man/cat2/write.0
 ./usr/share/man/cat2/writev.0
+./usr/share/man/cat3/curs_scr_dump.0
 ./usr/share/man/cat3/MD4Data.0
 ./usr/share/man/cat3/MD4End.0
 ./usr/share/man/cat3/MD4File.0
@@ -1541,7 +1545,6 @@
 ./usr/share/man/cat3/curs_printw.0
 ./usr/share/man/cat3/curs_refresh.0
 ./usr/share/man/cat3/curs_scanw.0
-./usr/share/man/cat3/curs_scr_dmp.0
 ./usr/share/man/cat3/curs_scroll.0
 ./usr/share/man/cat3/curs_set.0
 ./usr/share/man/cat3/curs_slk.0

@@ -8,7 +8,7 @@
 ./usr/include/readline
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.3
+./usr/lib/libc.so.21.0
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -280,6 +280,10 @@
 ./usr/lib/perl5/m68k-openbsd/5.00404/overload.pm
 ./usr/lib/perl5/m68k-openbsd/5.00404/pod
 ./usr/lib/perl5/m68k-openbsd/5.00404/pod/perldiag.pod
+./usr/lib/perl5/site_perl/m68k-openbsd/ansidecl.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/bfd.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/bfdlink.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/lib/perl5/site_perl/m68k-openbsd/a.out.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ar.ph
