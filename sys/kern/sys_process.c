@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.5 1998/06/09 18:13:45 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.6 1998/06/27 07:32:13 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -59,8 +59,6 @@
 #include <sys/errno.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
-#include <sys/vnode.h>
-#include <sys/stat.h>
 #include <sys/user.h>
 
 #include <sys/mount.h>
@@ -93,7 +91,6 @@ sys_ptrace(p, v, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
-	struct vattr va;
 	int error, write;
 
 	/* "A foolish consistency..." XXX */
@@ -149,12 +146,6 @@ sys_ptrace(p, v, retval)
 		 *	    on.
 		 */
 		if ((t->p_pid == 1) && (securelevel > -1))
-			return (EPERM);
-
-		error = VOP_GETATTR(t->p_textvp, &va, p->p_ucred, p);
-		if (error)
-			return (error);
-		if (va.va_flags & IMMUTABLE)
 			return (EPERM);
 		break;
 
