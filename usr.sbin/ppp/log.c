@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: log.c,v 1.4 1998/01/21 02:13:35 brian Exp $
+ *	$Id: log.c,v 1.5 1998/03/13 01:50:42 brian Exp $
  */
 
 #include <sys/param.h>
@@ -31,6 +31,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
 
 #include "command.h"
