@@ -255,6 +255,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MPX 5030/5038",
 	},
 	{
+	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN1217,
+	    0,
+	    "Accton Technology",
+	    "EN1217",
+	},
+	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 	    0,
 	    "Addtron",
