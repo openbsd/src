@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.57";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.3 1998/07/06 18:57:09 millert Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.4 1998/07/06 19:00:38 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -160,7 +160,8 @@ const struct tm * const	t;
 	}
 #endif /* !defined NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU */
 	if (p == s + maxsize) {
-		s[maxsize - 1] = '\0';
+		if (maxsize > 0)
+			s[maxsize - 1] = '\0';
 		return 0;
 	}
 	*p = '\0';
