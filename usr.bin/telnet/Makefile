@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2001/06/23 02:11:43 hin Exp $
+#	$OpenBSD: Makefile,v 1.14 2001/07/19 10:43:15 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,7 +54,7 @@ DPADD+= ${LIBDES} ${LIBKRB}
 
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+=-DENCRYPTION -DAUTHENTICATION -DKRB5
-LDADD+= -lkrb5 -lasn1 -lcrypto -lcom_err
+LDADD+= -lkrb5 -lasn1 -lcrypto -lcom_err -lkafs
 DPADD+= ${LIBKRB5}
 .endif
 
