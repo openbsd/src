@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 1997/04/17 07:24:08 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.16 1997/05/29 19:24:27 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -52,6 +52,7 @@ option		UNION		# union file system
 
 #option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
 #option		NS		# XNS
 #option		NSIP		# XNS tunneling over IP
 #option		IPX		# IPX+SPX
@@ -66,6 +67,7 @@ pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
 pseudo-device	ppp	2	# PPP
 pseudo-device	tun	2	# network tunneling over tty
+pseudo-device	enc		4	# encryption device
 
 pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline
