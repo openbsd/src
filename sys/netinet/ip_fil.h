@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $OpenBSD: ip_fil.h,v 1.6 1996/10/08 07:33:26 niklas Exp $
+ * $OpenBSD: ip_fil.h,v 1.7 1997/02/05 00:53:12 kstailey Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -271,8 +271,8 @@ typedef	struct ipl_ci	{
 } ipl_ci_t;
 
 
-#ifndef	ICMP_UNREACH_FILTER
-#define	ICMP_UNREACH_FILTER	13
+#ifndef	ICMP_UNREACH_FILTER_PROHIB
+#define	ICMP_UNREACH_FILTER_PROHIB	13
 #endif
 /*
  * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.
