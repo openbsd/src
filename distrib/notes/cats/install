@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2004/02/13 11:00:24 miod Exp $
+dnl	$OpenBSD: install,v 1.5 2004/02/15 23:24:07 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way
@@ -8,7 +8,7 @@ is versatile and will boot from a variety of devices and filesystems.
 Booting from CD-ROM installation media:
 
 At the ABLE firmware prompt, enter :
-    boot (cd0)bsd.rd
+    > (cd0)bsd.rd
 to boot from the first detected cd-rom drive. If the cd-rom drive has not
 been detected, be sure to put a disk in the tray, and reset the machine.
 

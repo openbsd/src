@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_cats.8,v 1.1 2004/02/13 11:23:52 miod Exp $
+.\"	$OpenBSD: boot_cats.8,v 1.2 2004/02/15 23:24:09 miod Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\" All rights reserved.
@@ -43,7 +43,8 @@ can be run.
 .Ss Boot process options
 The ABLE firmware will attempt to boot the commandline stored in the
 .Em boot.cmd
-environment variable.
+environment variable, such as
+.Dq (hd0)bsd -f .
 Autoboot is enabled by setting the
 .Em boot.auto
 environment variable to
@@ -52,14 +53,10 @@ and will start after
 .Em boot.timeout
 seconds.
 .Pp
-The kernel will be passed the argument string managed by the
-.Em showargs
-and
-.Em setargs
-firmware commands.
+The kernel can be passed arguments on the commandline.
 The expected syntax for
 .Ox
-kernels is one or more option letters from the following list,
+kernels parameters is one or more option letters from the following list,
 prefixed by a dash
 .Pq - :
 .Bl -tag -width "XXX" -offset indent -compact
