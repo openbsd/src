@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.612 2003/04/02 22:32:04 jason Exp 
+ *		OpenBSD: pcidevs,v 1.613 2003/04/19 11:50:57 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1197,6 +1197,7 @@
 /* Davicom Technologies */
 #define	PCI_PRODUCT_DAVICOM_DM9100	0x9100		/* DM9100 */
 #define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 */
+#define	PCI_PRODUCT_DAVICOM_DM9009	0x9009		/* DM9009 */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* 21050 PCI-PCI */
