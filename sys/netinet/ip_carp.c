@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.21 2003/11/04 21:30:44 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.22 2003/11/05 06:39:48 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -660,7 +660,7 @@ carp_send_ad(void *v)
 	struct carp_softc *sc = v;
 	struct carp_header *ch_ptr;
 	struct mbuf *m;
-	int len, advbase, advskew, error;
+	int len, advbase, advskew;
 
 	/* bow out if we've lost our UPness or RUNNINGuiness */
 	if ((sc->sc_ac.ac_if.if_flags &
@@ -718,8 +718,7 @@ carp_send_ad(void *v)
 
 		ch_ptr = (void *)ip + sizeof(*ip);
 		bcopy(&ch, ch_ptr, sizeof(ch));
-		error = carp_prepare_ad(m, sc, ch_ptr);
-		if (error)
+		if (carp_prepare_ad(m, sc, ch_ptr))
 			return;
 
 		m->m_data += sizeof(*ip);
@@ -731,8 +730,7 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets++;
 
-		if ((error = ip_output(m, NULL, NULL,
-		    IP_RAWOUTPUT, &sc->sc_imo, NULL)))
+		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))
 			sc->sc_ac.ac_if.if_oerrors++;
 	}
 #endif /* INET */
@@ -770,8 +768,7 @@ carp_send_ad(void *v)
 
 		ch_ptr = (void *)ip6 + sizeof(*ip6);
 		bcopy(&ch, ch_ptr, sizeof(ch));
-		error = carp_prepare_ad(m, sc, ch_ptr);
-		if (error)
+		if (carp_prepare_ad(m, sc, ch_ptr))
 			return;
 
 		m->m_data += sizeof(*ip6);
@@ -783,10 +780,10 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets6++;
 
-		if ((error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL)))
+		if (ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL))
 			sc->sc_ac.ac_if.if_oerrors++;
 	}
-#endif
+#endif /* INET6 */
 
 	if (advbase != 255 || advskew != 255)
 		timeout_add(&sc->sc_ad_tmo, tvtohz(&tv));
@@ -950,7 +947,7 @@ carp_macmatch6(void *v, struct mbuf *m, struct in6_addr *taddr)
 
 	return (NULL);
 }
-#endif
+#endif /* INET6 */
 
 struct ifnet *
 carp_forus(void *v, void *dhost)
@@ -1022,7 +1019,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 			carp_send_arp(sc);
 #ifdef INET6
 			carp_send_na(sc);
-#endif
+#endif /* INET6 */
 			sc->sc_state = MASTER;
 			carp_setroute(sc, RTM_ADD);
 		} else {
