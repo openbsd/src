@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.42 2003/11/17 19:05:03 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.43 2003/11/17 19:14:01 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -257,7 +257,6 @@ MANUALFILES= \
 	manual/configuring.html.fr \
 	manual/configuring.html.html \
 	manual/configuring.html.ja.jis \
-	manual/content-negotiation.html \
 	manual/content-negotiation.html.en \
 	manual/content-negotiation.html.html \
 	manual/content-negotiation.html.ja.jis \
@@ -489,7 +488,6 @@ MANUALFILES= \
 	manual/mod/mod_isapi.html \
 	manual/mod/mod_log_agent.html \
 	manual/mod/mod_log_common.html \
-	manual/mod/mod_log_config.html \
 	manual/mod/mod_log_config.html.en \
 	manual/mod/mod_log_config.html.html \
 	manual/mod/mod_log_config.html.ja.jis \
