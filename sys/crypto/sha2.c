@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.4 2004/04/29 14:13:18 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.5 2004/05/03 02:55:56 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -34,7 +34,7 @@
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <crypto/sha2.h>
@@ -269,10 +269,10 @@ const static u_int64_t sha512_initial_hash_value[8] = {
 
 /*** SHA-256: *********************************************************/
 void
-SHA256_Init(SHA256_CTX *context) {
-	if (context == (SHA256_CTX *)0) {
+SHA256_Init(SHA256_CTX *context)
+{
+	if (context == NULL)
 		return;
-	}
 	bcopy(sha256_initial_hash_value, context->state, SHA256_DIGEST_LENGTH);
 	bzero(context->buffer, SHA256_BLOCK_LENGTH);
 	context->bitcount = 0;
@@ -316,7 +316,8 @@ SHA256_Init(SHA256_CTX *context) {
 	j++
 
 void
-SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
+SHA256_Transform(SHA256_CTX *context, const u_int32_t *data)
+{
 	u_int32_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int32_t	T1, *W256;
 	int		j;
@@ -375,7 +376,8 @@ SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
 #else /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
+SHA256_Transform(SHA256_CTX *context, const u_int32_t *data)
+{
 	u_int32_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int32_t	T1, T2, *W256;
 	int		j;
@@ -456,13 +458,13 @@ SHA256_Transform(SHA256_CTX *context, const u_int32_t *data) {
 #endif /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len) {
-	unsigned int	freespace, usedspace;
+SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len)
+{
+	size_t	freespace, usedspace;
 
-	if (len == 0) {
-		/* Calling with no data is valid - we do nothing */
+	/* Calling with no data is valid (we do nothing) */
+	if (len == 0)
 		return;
-	}
 
 	usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
 	if (usedspace > 0) {
@@ -502,12 +504,13 @@ SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len) {
 }
 
 void
-SHA256_Final(u_int8_t digest[], SHA256_CTX *context) {
+SHA256_Final(u_int8_t digest[], SHA256_CTX *context)
+{
 	u_int32_t	*d = (u_int32_t *)digest;
 	unsigned int	usedspace;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != (u_int8_t *)0) {
+	if (digest != NULL) {
 		usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
 #if BYTE_ORDER == LITTLE_ENDIAN
 		/* Convert FROM host byte order */
@@ -565,10 +568,10 @@ SHA256_Final(u_int8_t digest[], SHA256_CTX *context) {
 
 /*** SHA-512: *********************************************************/
 void
-SHA512_Init(SHA512_CTX *context) {
-	if (context == (SHA512_CTX *)0) {
+SHA512_Init(SHA512_CTX *context)
+{
+	if (context == NULL)
 		return;
-	}
 	bcopy(sha512_initial_hash_value, context->state, SHA512_DIGEST_LENGTH);
 	bzero(context->buffer, SHA512_BLOCK_LENGTH);
 	context->bitcount[0] = context->bitcount[1] =  0;
@@ -611,7 +614,8 @@ SHA512_Init(SHA512_CTX *context) {
 	j++
 
 void
-SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
+SHA512_Transform(SHA512_CTX *context, const u_int64_t *data)
+{
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int64_t	T1, *W512 = (u_int64_t *)context->buffer;
 	int		j;
@@ -667,7 +671,8 @@ SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 #else /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
+SHA512_Transform(SHA512_CTX *context, const u_int64_t *data)
+{
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
 	u_int64_t	T1, T2, *W512 = (u_int64_t *)context->buffer;
 	int		j;
@@ -744,13 +749,13 @@ SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 #endif /* SHA2_UNROLL_TRANSFORM */
 
 void
-SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len) {
-	unsigned int	freespace, usedspace;
+SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len)
+{
+	size_t	freespace, usedspace;
 
-	if (len == 0) {
-		/* Calling with no data is valid - we do nothing */
+	/* Calling with no data is valid (we do nothing) */
+	if (len == 0)
 		return;
-	}
 
 	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
 	if (usedspace > 0) {
@@ -790,7 +795,8 @@ SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len) {
 }
 
 void
-SHA512_Last(SHA512_CTX *context) {
+SHA512_Last(SHA512_CTX *context)
+{
 	unsigned int	usedspace;
 
 	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
@@ -832,11 +838,12 @@ SHA512_Last(SHA512_CTX *context) {
 }
 
 void
-SHA512_Final(u_int8_t digest[], SHA512_CTX *context) {
+SHA512_Final(u_int8_t digest[], SHA512_CTX *context)
+{
 	u_int64_t	*d = (u_int64_t *)digest;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != (u_int8_t *)0) {
+	if (digest != NULL) {
 		SHA512_Last(context);
 
 		/* Save the hash data for output: */
@@ -861,26 +868,28 @@ SHA512_Final(u_int8_t digest[], SHA512_CTX *context) {
 
 /*** SHA-384: *********************************************************/
 void
-SHA384_Init(SHA384_CTX *context) {
-	if (context == (SHA384_CTX *)0) {
+SHA384_Init(SHA384_CTX *context)
+{
+	if (context == NULL)
 		return;
-	}
 	bcopy(sha384_initial_hash_value, context->state, SHA512_DIGEST_LENGTH);
 	bzero(context->buffer, SHA384_BLOCK_LENGTH);
 	context->bitcount[0] = context->bitcount[1] = 0;
 }
 
 void
-SHA384_Update(SHA384_CTX *context, const u_int8_t *data, size_t len) {
+SHA384_Update(SHA384_CTX *context, const u_int8_t *data, size_t len)
+{
 	SHA512_Update((SHA512_CTX *)context, data, len);
 }
 
 void
-SHA384_Final(u_int8_t digest[], SHA384_CTX *context) {
+SHA384_Final(u_int8_t digest[], SHA384_CTX *context)
+{
 	u_int64_t	*d = (u_int64_t *)digest;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
-	if (digest != (u_int8_t *)0) {
+	if (digest != NULL) {
 		SHA512_Last((SHA512_CTX *)context);
 
 		/* Save the hash data for output: */
