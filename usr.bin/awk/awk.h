@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.7 1999/12/04 00:12:25 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.8 1999/12/08 23:09:45 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -38,12 +38,6 @@ typedef	unsigned char uschar;
 #else
 #	define	dprintf(x)
 #endif
-
-extern	char	errbuf[300];
-#define	ERROR	snprintf(errbuf, sizeof(errbuf),
-#define	FATAL	), error(1, errbuf)
-#define	WARNING	), error(0, errbuf)
-#define	SYNTAX	), yyerror(errbuf)
 
 extern int	compile_time;	/* 1 if compiling, 0 if running */
 extern int	safe;		/* 0 => unsafe, 1 => safe */

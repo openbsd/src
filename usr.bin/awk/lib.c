@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.6 1999/04/20 17:31:29 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.7 1999/12/08 23:09:45 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -29,6 +29,7 @@ THIS SOFTWARE.
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "awk.h"
 #include "ytab.h"
 
@@ -61,7 +62,7 @@ void recinit(unsigned int n)
 	fields = (char *) malloc(n);
 	fldtab = (Cell **) malloc((nfields+1) * sizeof(Cell *));
 	if (record == NULL || fields == NULL || fldtab == NULL)
-		ERROR "out of space for $0 and fields" FATAL;
+		FATAL("out of space for $0 and fields");
 
 	fldtab[0] = (Cell *) malloc(sizeof (Cell));
 	*fldtab[0] = dollar0;
@@ -78,7 +79,7 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 	for (i = n1; i <= n2; i++) {
 		fldtab[i] = (Cell *) malloc(sizeof (struct Cell));
 		if (fldtab[i] == NULL)
-			ERROR "out of space in makefields %d", i FATAL;
+			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
 		sprintf(temp, "%d", i);
 		fldtab[i]->nval = tostring(temp);
@@ -137,7 +138,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 			if (*file == '-' && *(file+1) == '\0')
 				infile = stdin;
 			else if ((infile = fopen(file, "r")) == NULL)
-				ERROR "can't open file %s", file FATAL;
+				FATAL("can't open file %s", file);
 			setfval(fnrloc, 0.0);
 		}
 		c = readrec(&buf, &bufsize, infile);
@@ -184,7 +185,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 	int bufsize = *pbufsize;
 
 	if (strlen(*FS) >= sizeof(inputFS))
-		ERROR "field separator %.10s... is too long", *FS FATAL;
+		FATAL("field separator %.10s... is too long", *FS);
 	strcpy(inputFS, *FS);	/* for subsequent field splitting */
 	if ((sep = **RS) == 0) {
 		sep = '\n';
@@ -197,7 +198,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 		for (; (c=getc(inf)) != sep && c != EOF; ) {
 			if (rr-buf+1 > bufsize)
 				if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 1"))
-					ERROR "input record `%.30s...' too long", buf FATAL;
+					FATAL("input record `%.30s...' too long", buf);
 			*rr++ = c;
 		}
 		if (**RS == sep || c == EOF)
@@ -205,12 +206,12 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 		if ((c = getc(inf)) == '\n' || c == EOF) /* 2 in a row */
 			break;
 		if (!adjbuf(&buf, &bufsize, 2+rr-buf, recsize, &rr, "readrec 2"))
-			ERROR "input record `%.30s...' too long", buf FATAL;
+			FATAL("input record `%.30s...' too long", buf);
 		*rr++ = '\n';
 		*rr++ = c;
 	}
 	if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
-		ERROR "input record `%.30s...' too long", buf FATAL;
+		FATAL("input record `%.30s...' too long", buf);
 	*rr = 0;
 	   dprintf( ("readrec saw <%s>, returns %d\n", buf, c == EOF && rr == buf ? 0 : 1) );
 	*pbuf = buf;
@@ -267,7 +268,7 @@ void fldbld(void)	/* create fields from current record */
 	if (n > fieldssize) {
 		xfree(fields);
 		if ((fields = (char *) malloc(n+1)) == NULL)
-			ERROR "out of space for fields in fldbld %d", n FATAL;
+			FATAL("out of space for fields in fldbld %d", n);
 		fieldssize = n;
 	}
 	fr = fields;
@@ -325,7 +326,7 @@ void fldbld(void)	/* create fields from current record */
 		*fr = 0;
 	}
 	if (i > nfields)
-		ERROR "record `%.30s...' has too many fields; can't happen", r FATAL;
+		FATAL("record `%.30s...' has too many fields; can't happen", r);
 	cleanfld(i+1, lastfld);	/* clean out junk from previous record */
 	lastfld = i;
 	donefld = 1;
@@ -371,7 +372,7 @@ void newfld(int n)	/* add field n after end of existing lastfld */
 Cell *fieldadr(int n)	/* get nth field */
 {
 	if (n < 0)
-		ERROR "trying to access field %d", n FATAL;
+		FATAL("trying to access field %d", n);
 	if (n > nfields)	/* fields after NF are empty */
 		growfldtab(n);	/* but does not increase NF */
 	return(fldtab[n]);
@@ -385,7 +386,7 @@ void growfldtab(int n)	/* make new fields up to at least $n */
 		nf = n;
 	fldtab = (Cell **) realloc(fldtab, (nf+1) * (sizeof (struct Cell *)));
 	if (fldtab == NULL)
-		ERROR "out of space creating %d fields", nf FATAL;
+		FATAL("out of space creating %d fields", nf);
 	makefields(nfields+1, nf);
 	nfields = nf;
 }
@@ -402,7 +403,7 @@ int refldbld(char *rec, char *fs)	/* build fields from reg expr in FS */
 	if (n > fieldssize) {
 		xfree(fields);
 		if ((fields = (char *) malloc(n+1)) == NULL)
-			ERROR "out of space for fields in refldbld %d", n FATAL;
+			FATAL("out of space for fields in refldbld %d", n);
 		fieldssize = n;
 	}
 	fr = fields;
@@ -448,18 +449,18 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	for (i = 1; i <= *NF; i++) {
 		p = getsval(fldtab[i]);
 		if (!adjbuf(&record, &recsize, 1+strlen(p)+r-record, recsize, &r, "recbld 1"))
-			ERROR "created $0 `%.30s...' too long", record FATAL;
+			FATAL("created $0 `%.30s...' too long", record);
 		while ((*r = *p++) != 0)
 			r++;
 		if (i < *NF) {
 			if (!adjbuf(&record, &recsize, 2+strlen(*OFS)+r-record, recsize, &r, "recbld 2"))
-				ERROR "created $0 `%.30s...' too long", record FATAL;
+				FATAL("created $0 `%.30s...' too long", record);
 			for (p = *OFS; (*r = *p++) != 0; )
 				r++;
 		}
 	}
 	if (!adjbuf(&record, &recsize, 2+r-record, recsize, &r, "recbld 3"))
-		ERROR "built giant record `%.30s...'", record FATAL;
+		FATAL("built giant record `%.30s...'", record);
 	*r = '\0';
 	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, fldtab[0]) );
 
@@ -474,16 +475,24 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 }
 
 int	errorflag	= 0;
-char	errbuf[300];	/* used by ERROR macro */
 
 void yyerror(char *s)
 {
+	SYNTAX(s);
+}
+
+void SYNTAX(char *fmt, ...)
+{
 	extern char *cmdname, *curfname;
 	static int been_here = 0;
+	va_list varg;
 
 	if (been_here++ > 2)
 		return;
-	fprintf(stderr, "%s: %s", cmdname, s);
+	fprintf(stderr, "%s: ", cmdname);
+	va_start(varg, fmt);
+	vfprintf(stderr, fmt, varg);
+	va_end(varg);
 	fprintf(stderr, " at source line %d", lineno);
 	if (curfname != NULL)
 		fprintf(stderr, " in function %s", curfname);
@@ -496,7 +505,7 @@ void yyerror(char *s)
 
 void fpecatch(int n)
 {
-	ERROR "floating point exception %d", n FATAL;
+	FATAL("floating point exception %d", n);
 }
 
 extern int bracecnt, brackcnt, parencnt;
@@ -527,14 +536,39 @@ void bcheck2(int n, int c1, int c2)
 		fprintf(stderr, "\t%d extra %c's\n", -n, c2);
 }
 
-void error(int f, char *s)
+void FATAL(char *fmt, ...)
 {
-	extern Node *curnode;
 	extern char *cmdname;
+	va_list varg;
 
 	fflush(stdout);
 	fprintf(stderr, "%s: ", cmdname);
-	fprintf(stderr, "%s", s);
+	va_start(varg, fmt);
+	vfprintf(stderr, fmt, varg);
+	va_end(varg);
+	error();
+	if (dbg > 1)		/* core dump if serious debugging on */
+		abort();
+	exit(2);
+}
+
+void WARNING(char *fmt, ...)
+{
+	extern char *cmdname;
+	va_list varg;
+
+	fflush(stdout);
+	fprintf(stderr, "%s: ", cmdname);
+	va_start(varg, fmt);
+	vfprintf(stderr, fmt, varg);
+	va_end(varg);
+	error();
+}
+
+void error()
+{
+	extern Node *curnode;
+
 	fprintf(stderr, "\n");
 	if (compile_time != 2 && NR && *NR > 0) {
 		fprintf(stderr, " input record number %d", (int) (*FNR));
@@ -550,11 +584,6 @@ void error(int f, char *s)
 		fprintf(stderr, " source file %s", cursource());
 	fprintf(stderr, "\n");
 	eprint();
-	if (f) {
-		if (dbg > 1)		/* core dump if serious debugging on */
-			abort();
-		exit(2);
-	}
 }
 
 void eprint(void)	/* try to print context around error */
@@ -610,11 +639,11 @@ double errcheck(double x, char *s)
 
 	if (errno == EDOM) {
 		errno = 0;
-		ERROR "%s argument out of domain", s WARNING;
+		WARNING("%s argument out of domain", s);
 		x = 1;
 	} else if (errno == ERANGE) {
 		errno = 0;
-		ERROR "%s result out of range", s WARNING;
+		WARNING("%s result out of range", s);
 		x = 1;
 	}
 	return x;

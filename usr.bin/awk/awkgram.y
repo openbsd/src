@@ -1,4 +1,4 @@
-/*	$OpenBSD: awkgram.y,v 1.5 1999/04/20 17:31:29 millert Exp $	*/
+/*	$OpenBSD: awkgram.y,v 1.6 1999/12/08 23:09:45 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -98,7 +98,7 @@ Node	*arglist = 0;	/* list of args for current function */
 program:
 	  pas	{ if (errorflag==0)
 			winner = (Node *)stat3(PROGRAM, beginloc, $1, endloc); }
-	| error	{ yyclearin; bracecheck(); ERROR "bailing out" SYNTAX; }
+	| error	{ yyclearin; bracecheck(); SYNTAX("bailing out"); }
 	;
 
 and:
@@ -240,10 +240,10 @@ pattern:
 	| pattern IN varname		{ $$ = op2(INTEST, $1, makearr($3)); }
 	| '(' plist ')' IN varname	{ $$ = op2(INTEST, $2, makearr($5)); }
 	| pattern '|' GETLINE var	{ 
-			if (safe) ERROR "cmd | getline is unsafe" SYNTAX;
+			if (safe) SYNTAX("cmd | getline is unsafe");
 			else $$ = op3(GETLINE, $4, itonp($2), $1); }
 	| pattern '|' GETLINE		{ 
-			if (safe) ERROR "cmd | getline is unsafe" SYNTAX;
+			if (safe) SYNTAX("cmd | getline is unsafe");
 			else $$ = op3(GETLINE, (Node*)0, itonp($2), $1); }
 	| pattern term %prec CAT	{ $$ = op2(CAT, $1, $2); }
 	| re
@@ -294,19 +294,19 @@ rparen:
 
 simple_stmt:
 	  print prarg '|' term		{ 
-			if (safe) ERROR "print | is unsafe" SYNTAX;
+			if (safe) SYNTAX("print | is unsafe");
 			else $$ = stat3($1, $2, itonp($3), $4); }
 	| print prarg APPEND term	{
-			if (safe) ERROR "print >> is unsafe" SYNTAX;
+			if (safe) SYNTAX("print >> is unsafe");
 			else $$ = stat3($1, $2, itonp($3), $4); }
 	| print prarg GT term		{
-			if (safe) ERROR "print > is unsafe" SYNTAX;
+			if (safe) SYNTAX("print > is unsafe");
 			else $$ = stat3($1, $2, itonp($3), $4); }
 	| print prarg			{ $$ = stat3($1, $2, NIL, NIL); }
 	| DELETE varname '[' patlist ']' { $$ = stat2(DELETE, makearr($2), $4); }
 	| DELETE varname		 { $$ = stat2(DELETE, makearr($2), 0); }
 	| pattern			{ $$ = exptostat($1); }
-	| error				{ yyclearin; ERROR "illegal statement" SYNTAX; }
+	| error				{ yyclearin; SYNTAX("illegal statement"); }
 	;
 
 st:
@@ -315,10 +315,10 @@ st:
 	;
 
 stmt:
-	  BREAK st		{ if (!inloop) ERROR "break illegal outside of loops" SYNTAX;
+	  BREAK st		{ if (!inloop) SYNTAX("break illegal outside of loops");
 				  $$ = stat1(BREAK, NIL); }
 	| CLOSE pattern st	{ $$ = stat1(CLOSE, $2); }
-	| CONTINUE st		{  if (!inloop) ERROR "continue illegal outside of loops" SYNTAX;
+	| CONTINUE st		{  if (!inloop) SYNTAX("continue illegal outside of loops");
 				  $$ = stat1(CONTINUE, NIL); }
 	| do {inloop++;} stmt {--inloop;} WHILE '(' pattern ')' st
 		{ $$ = stat2(DO, $3, notnull($7)); }
@@ -329,10 +329,10 @@ stmt:
 	| if stmt		{ $$ = stat3(IF, $1, $2, NIL); }
 	| lbrace stmtlist rbrace { $$ = $2; }
 	| NEXT st	{ if (infunc)
-				ERROR "next is illegal inside a function" SYNTAX;
+				SYNTAX("next is illegal inside a function");
 			  $$ = stat1(NEXT, NIL); }
 	| NEXTFILE st	{ if (infunc)
-				ERROR "nextfile is illegal inside a function" SYNTAX;
+				SYNTAX("nextfile is illegal inside a function");
 			  $$ = stat1(NEXTFILE, NIL); }
 	| RETURN pattern st	{ $$ = stat1(RETURN, $2); }
 	| RETURN st		{ $$ = stat1(RETURN, NIL); }
@@ -377,7 +377,7 @@ term:
 	| INDEX '(' pattern comma pattern ')'
 		{ $$ = op2(INDEX, $3, $5); }
 	| INDEX '(' pattern comma reg_expr ')'
-		{ ERROR "index() doesn't permit regular expressions" SYNTAX;
+		{ SYNTAX("index() doesn't permit regular expressions");
 		  $$ = op2(INDEX, $3, (Node*)$5); }
 	| '(' pattern ')'		{ $$ = $2; }
 	| MATCHFCN '(' pattern comma reg_expr ')'
@@ -448,9 +448,9 @@ while:
 void setfname(Cell *p)
 {
 	if (isarr(p))
-		ERROR "%s is an array, not a function", p->nval SYNTAX;
+		SYNTAX("%s is an array, not a function", p->nval);
 	else if (isfcn(p))
-		ERROR "you can't define function %s more than once", p->nval SYNTAX;
+		SYNTAX("you can't define function %s more than once", p->nval);
 	curfname = p->nval;
 }
 
@@ -480,7 +480,7 @@ void checkdup(Node *vl, Cell *cp)	/* check if name already in list */
 	char *s = cp->nval;
 	for ( ; vl; vl = vl->nnext) {
 		if (strcmp(s, ((Cell *)(vl->narg[0]))->nval) == 0) {
-			ERROR "duplicate argument %s", s SYNTAX;
+			SYNTAX("duplicate argument %s", s);
 			break;
 		}
 	}

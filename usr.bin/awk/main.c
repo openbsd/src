@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1999/12/04 00:12:25 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1999/12/08 23:09:45 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-char	*version = "version 19990416";
+char	*version = "version 19990620";
 
 #define DEBUG
 #include <stdio.h>
@@ -85,9 +85,9 @@ int main(int argc, char *argv[])
 			argc--;
 			argv++;
 			if (npfile >= MAX_PFILE - 1)
-				ERROR "too many -f options" FATAL;
+				FATAL("too many -f options");
 			if (argc <= 1)
-				ERROR "no program filename" FATAL;
+				FATAL("no program filename");
 			pfile[npfile++] = argv[1];
 			break;
 		case 'F':	/* set field separator */
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 					fs = &argv[1][0];
 			}
 			if (fs == NULL || *fs == '\0')
-				ERROR "field separator FS is empty" WARNING;
+				WARNING("field separator FS is empty");
 			break;
 		case 'v':	/* -v a=1 to be done NOW.  one -v for each */
 			if (argv[1][2] == '\0' && --argc > 1 && isclvar((++argv)[1]))
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 			switch (marg[2]) {
 			case 'r':	recsize = temp; break;
 			case 'f':	nfields = temp; break;
-			default: ERROR "unknown option %s\n", marg FATAL;
+			default: FATAL("unknown option %s\n", marg);
 			}
 			break;
 		case 'd':
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 			exit(0);
 			break;
 		default:
-			ERROR "unknown option %s ignored", argv[1] WARNING;
+			WARNING("unknown option %s ignored", argv[1]);
 			break;
 		}
 		argc--;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 		if (argc <= 1) {
 			if (dbg)
 				exit(0);
-			ERROR "no program given" FATAL;
+			FATAL("no program given");
 		}
 		   dprintf( ("program = |%s|\n", argv[1]) );
 		lexprog = argv[1];
@@ -185,7 +185,7 @@ int pgetc(void)		/* get 1 character from awk program */
 			if (strcmp(pfile[curpfile], "-") == 0)
 				yyin = stdin;
 			else if ((yyin = fopen(pfile[curpfile], "r")) == NULL)
-				ERROR "can't open file %s", pfile[curpfile] FATAL;
+				FATAL("can't open file %s", pfile[curpfile]);
 			lineno = 1;
 		}
 		if ((c = getc(yyin)) != EOF)

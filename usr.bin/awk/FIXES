@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.8 1999/04/20 17:31:25 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.9 1999/12/08 23:09:45 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,26 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Jun 20, 1999:
+	added *bp in gettok in lex.c; appears possible to exit function
+	without terminating the string.  thanks to russ cox.
+
+Jun 2, 1999:
+	added function stdinit() to run to initialize files[] array,
+	in case stdin, etc., are not constants; some compilers care.
+
+May 10, 1999:
+	replaced the ERROR ... FATAL, etc., macros with functions
+	based on vprintf, to avoid problems caused by overrunning
+	fixed-size errbuf array.  thanks to ralph corderoy for the
+	impetus, and for pointing out a string termination bug in
+	qstring as well.
+
+Apr 21, 1999:
+	fixed bug that caused occasional core dumps with commandline
+	variable with value ending in \.  (thanks to nelson beebe for
+	the test case.)
 
 Apr 16, 1999:
 	with code kindly provided by Bruce Lilly, awk now parses 
@@ -54,10 +74,8 @@ Mar 24, 1999:
 	is unlikely to fix it.
 
 Mar 5, 1999:
-	after hearing from yet another innocent victim, changed 
-	isnumber to is_number to avoid the problem caused by
-	freeBSD gratuitously and incorrectly including the name
-	isnumber in the standard header file ctype.h.
+	changed isnumber to is_number to avoid the problem caused by
+	versions of ctype.h that include the name isnumber.
 
 	distribution now includes a script for building on a Mac,
 	thanks to Dan Allen.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.5 1999/04/20 17:31:31 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.6 1999/12/08 23:09:46 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -144,7 +144,7 @@ Array *makesymtab(int n)	/* make a new symbol table */
 	ap = (Array *) malloc(sizeof(Array));
 	tp = (Cell **) calloc(n, sizeof(Cell *));
 	if (ap == NULL || tp == NULL)
-		ERROR "out of space in makesymtab" FATAL;
+		FATAL("out of space in makesymtab");
 	ap->nelem = 0;
 	ap->size = n;
 	ap->tab = tp;
@@ -211,7 +211,7 @@ Cell *setsymtab(char *n, char *s, Awkfloat f, unsigned t, Array *tp)
 	}
 	p = (Cell *) malloc(sizeof(Cell));
 	if (p == NULL)
-		ERROR "out of space for symbol table at %s", n FATAL;
+		FATAL("out of space for symbol table at %s", n);
 	p->nval = tostring(n);
 	p->sval = s ? tostring(s) : tostring("");
 	p->fval = f;
@@ -299,11 +299,11 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 void funnyvar(Cell *vp, char *rw)
 {
 	if (isarr(vp))
-		ERROR "can't %s %s; it's an array name.", rw, vp->nval FATAL;
+		FATAL("can't %s %s; it's an array name.", rw, vp->nval);
 	if (vp->tval & FCN)
-		ERROR "can't %s %s; it's a function.", rw, vp->nval FATAL;
-	ERROR "funny variable %p: n=%s s=\"%s\" f=%g t=%o",
-		vp, vp->nval, vp->sval, vp->fval, vp->tval WARNING;
+		FATAL("can't %s %s; it's a function.", rw, vp->nval);
+	WARNING("funny variable %p: n=%s s=\"%s\" f=%g t=%o",
+		vp, vp->nval, vp->sval, vp->fval, vp->tval);
 }
 
 char *setsval(Cell *vp, char *s)	/* set string val of a Cell */
@@ -383,25 +383,31 @@ char *tostring(char *s)	/* make a copy of string s */
 
 	p = (char *) malloc(strlen(s)+1);
 	if (p == NULL)
-		ERROR "out of space in tostring on %s", s FATAL;
+		FATAL("out of space in tostring on %s", s);
 	strcpy(p, s);
 	return(p);
 }
 
 char *qstring(char *s, int delim)	/* collect string up to next delim */
 {
+	char *os = s;
 	int c, n;
-	char *buf = 0, *bp;
+	char *buf, *bp;
 
 	if ((buf = (char *) malloc(strlen(s)+3)) == NULL)
-		ERROR "out of space in qstring(%s)", s);
+		FATAL( "out of space in qstring(%s)", s);
 	for (bp = buf; (c = *s) != delim; s++) {
 		if (c == '\n')
-			ERROR "newline in string %.10s...", buf SYNTAX;
+			SYNTAX( "newline in string %.20s...", os );
 		else if (c != '\\')
 			*bp++ = c;
-		else {	/* \something */	
-			switch (c = *++s) {
+		else {	/* \something */
+			c = *++s;
+			if (c == 0) {	/* \ at end */
+				*bp++ = '\\';
+				break;	/* for loop */
+			}	
+			switch (c) {
 			case '\\':	*bp++ = '\\'; break;
 			case 'n':	*bp++ = '\n'; break;
 			case 't':	*bp++ = '\t'; break;
