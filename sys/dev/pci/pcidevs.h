@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.222 2000/03/04 18:46:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.223 2000/03/05 21:42:00 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1384,6 +1384,7 @@
 
 /* Toshiba (2nd ID) products */
 #define	PCI_PRODUCT_TOSHIBA2_THB	0x0601		/* Host-PCI */
+#define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* PCI-ISA */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95B	0x060a		/* ToPIC95B PCI-CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 PCI-CardBus */

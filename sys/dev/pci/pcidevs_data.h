@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.222 2000/03/04 18:46:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.223 2000/03/05 21:42:00 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3535,6 +3535,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba (2nd ID)",
 	    "Host-PCI",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
