@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.28 2003/01/15 23:12:03 millert Exp $
+	$OpenBSD: na.phone,v 1.29 2004/04/14 17:49:18 jason Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -726,7 +726,7 @@
 740:Delaware:Ohio:OH
 740:Lancaster:Ohio:OH
 740:Marion:Ohio:OH
-757:Norfolk:Virginia:VI
+757:Norfolk:Virginia:VA
 758::St Lucia:LC
 760:Carlsbad:California:CA
 760:Escondido:California:CA
@@ -854,9 +854,9 @@
 819:Val d'Or:Quebec:PQ
 819:Victoriaville:Quebec:PQ
 819:Wakefield:Quebec:PQ
-828:Asheville:Carolina:NC
-828:Boone:Carolina:NC
-828:Hickory:Carolina:NC
+828:Asheville:North Carolina:NC
+828:Boone:North Carolina:NC
+828:Hickory:North Carolina:NC
 830:Del Rio:Texas:TX
 830:Eagle Pass:Texas:TX
 830:Kerrville:Texas:TX
