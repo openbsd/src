@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.8 1999/08/08 01:34:15 niklas Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.9 2000/02/04 06:12:21 angelos Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct com_softc {
 
 int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
+int	comstop __P((struct tty *, int));
 int	comintr __P((void *));
 int	com_detach __P((struct device *, int));
 int	com_activate __P((struct device *, enum devact));
