@@ -27,3 +27,14 @@
  * RIGHTS (PATENT, COPYRIGHT, TRADE SECRET, MASK WORK, OR OTHER
  * PROPRIETARY RIGHT) EMBODIED IN ANY OTHER ATMEL HARDWARE OR
  * FIRMWARE EITHER SOLELY OR IN COMBINATION WITH THE FIRMWARE.
+
+The following files are under this license:
+
+atu-intersil-ext
+atu-intersil-int
+atu-rfmd-ext
+atu-rfmd-int
+atu-rfmd2958-ext
+atu-rfmd2958-int
+atu-rfmd2958smc-ext
+atu-rfmd2958smc-int
