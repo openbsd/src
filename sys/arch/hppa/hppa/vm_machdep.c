@@ -1,7 +1,7 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2000/01/11 20:27:57 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2000/01/17 06:02:49 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -214,7 +214,9 @@ cpu_fork(p1, p2, stack, stacksize)
 	cpu_swapin(p2);
 
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
-		     tf->tf_sr5 = tf->tf_sr6 =
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 =
+		p2->p_vmspace->vm_map.pmap->pmap_space;
+	tf->tf_iisq_head = tf->tf_iisq_tail =
 		p2->p_vmspace->vm_map.pmap->pmap_space;
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	tf->tf_pidr1 = tf->tf_pidr2 = p2->p_vmspace->vm_map.pmap->pmap_pid;
@@ -236,7 +238,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	*(register_t*)(sp + HPPA_FRAME_CRP) =
 		(register_t)switch_trampoline;
 	tf->tf_sp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)tf, sizeof(*tf));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
 }
 
 void
