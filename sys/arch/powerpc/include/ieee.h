@@ -1,5 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.2 1996/12/28 06:25:11 rahnds Exp $	*/
-/*	$NetBSD: ieee.h,v 1.1 1996/09/30 16:34:25 ws Exp $ */
+/*	$OpenBSD: ieee.h,v 1.3 1997/10/13 10:53:45 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

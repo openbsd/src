@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_MACHINE_TYPES_H_
+#define	_MACHINE_TYPES_H_
 
 #include <sys/cdefs.h>
 
@@ -55,4 +55,4 @@ typedef struct label_t {
         int val[40]; /* double check this XXX */
 } label_t;
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* _MACHINE_TYPES_H_ */

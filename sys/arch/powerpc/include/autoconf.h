@@ -1,7 +1,7 @@
-/*	$OpenBSD: exec.h,v 1.5 1997/10/13 10:53:43 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.1 1997/10/13 10:53:41 pefo Exp $ */
 
 /*
- * Copyright (c) 1997 Per Fogelstrom, Opsycon AB.
+ * Copyright (c) 1997 Per Fogelstrom
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,8 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD for RTMX Inc,
- *	North Carolina, USA, by	Per Fogelstrom, Opsycon AB, Sweden.
+ *	This product includes software developed under OpenBSD for RTMX inc
+ *      by Per Fogelstrom, Opsycon AB.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,26 +30,57 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.5 1997/10/13 10:53:43 pefo Exp $
+ */
+/*
+ * Machine-dependent structures of autoconfiguration
  */
 
-#ifndef _MACHINE_EXEC_H_
-#define _MACHINE_EXEC_H_
-
-#define __LDPGSZ	4096	/* linker page size */
+#ifndef _MACHINE_AUTOCONF_H_
+#define _MACHINE_AUTOCONF_H_
 
 /*
- *  Define what exec "formats" we should handle.
+ *   System types.
  */
-#define NATIVE_EXEC_ELF
-#define	EXEC_SCRIPT
+#define	POWER4e		1	/* V.I Power.4e board */
 
-#define ELF_TARG_CLASS          ELFCLASS32
-#define ELF_TARG_DATA           ELFDATA2MSB
-#define ELF_TARG_MACH           EM_PPC
+extern int system_type;
 
-#define _NLIST_DO_ELF
+/**/
+struct confargs;
 
-#define _KERN_DO_ELF
+typedef int (*intr_handler_t) __P((void *));
 
-#endif  /* _MACHINE_EXEC_H_ */
+typedef struct bushook {
+	struct	device *bh_dv;
+	int	bh_type;
+	void	(*bh_intr_establish)
+		    __P((struct confargs *, intr_handler_t, void *));
+	void	(*bh_intr_disestablish)
+		    __P((struct confargs *));
+	int	(*bh_matchname)	
+		    __P((struct confargs *, char *));
+} bushook_t;
+
+#define	BUS_MAIN	1		/* mainbus */
+#define	BUS_ISABR	2		/* ISA Bridge Bus */
+#define	BUS_PCIBR	3		/* Algorithmics PCI bridge */
+
+#define	BUS_INTR_ESTABLISH(ca, handler, val)				\
+	    (*(ca)->ca_bus->bh_intr_establish)((ca), (handler), (val))
+#define	BUS_INTR_DISESTABLISH(ca)					\
+	    (*(ca)->ca_bus->bh_intr_establish)(ca)
+#define	BUS_CVTADDR(ca)							\
+	    (*(ca)->ca_bus->bh_cvtaddr)(ca)
+#define	BUS_MATCHNAME(ca, name)						\
+	    (*(ca)->ca_bus->bh_matchname)((ca), (name))
+
+struct confargs {
+	char	*ca_name;		/* Device name. */
+	bushook_t *ca_bus;		/* bus device resides on. */
+};
+
+void	set_clockintr __P((void (*)(struct clockframe *)));
+void	set_iointr __P((void (*)(void *, int)));
+int	badaddr			__P((void *, u_int64_t));
+
+#endif /* _MACHINE_AUTOCONF_H_ */

@@ -3,8 +3,8 @@
  * Public domain.
  */
 
-#ifndef _POWERPC_IEEEFP_H_
-#define _POWERPC_IEEEFP_H_
+#ifndef _MACHINE_IEEEFP_H_
+#define _MACHINE_IEEEFP_H_
 
 typedef int fp_except;
 #define FP_X_IMP	0x01	/* imprecise (loss of precision) */
@@ -20,4 +20,4 @@ typedef enum {
     FP_RP=3			/* round toward positive infinity */
 } fp_rnd;
 
-#endif /* _POWERPC_IEEEFP_H_ */
+#endif /* _MACHINE_IEEEFP_H_ */

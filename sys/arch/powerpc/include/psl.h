@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.2 1996/12/28 06:25:23 rahnds Exp $	*/
+/*	$OpenBSD: psl.h,v 1.3 1997/10/13 10:53:48 pefo Exp $	*/
 /*	$NetBSD: psl.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*
@@ -72,101 +72,6 @@
 
 #define	PSL_USERSTATIC	(PSL_USERSET | PSL_IP | 0x87c0008c)
 
+#include <machine/intr.h>
 
-#ifdef	_KERNEL
-/*
- * Current processor level.
- */
-#ifndef	_LOCORE
-extern int cpl;
-extern int clockpending, softclockpending, softnetpending;
-#endif
-#define	SPLBIO		0x01
-#define	SPLNET		0x02
-#define	SPLTTY		0x04
-#define	SPLIMP		0x08
-#define	SPLSOFTCLOCK	0x10
-#define	SPLSOFTNET	0x20
-#define	SPLCLOCK	0x80
-#define	SPLMACHINE	0x0f	/* levels handled by machine interface */
-
-#ifndef	_LOCORE
-extern int splx __P((int));
-
-extern int splraise __P((int));
-
-extern __inline int
-splhigh()
-{
-	return splraise(-1);
-}
-
-extern __inline int
-spl0()
-{
-	return splx(0);
-}
-
-extern __inline int
-splbio()
-{
-	return splraise(SPLBIO | SPLSOFTCLOCK | SPLSOFTNET);
-}
-
-extern __inline int
-splnet()
-{
-	return splraise(SPLNET | SPLSOFTCLOCK | SPLSOFTNET);
-}
-
-extern __inline int
-spltty()
-{
-	return splraise(SPLTTY | SPLSOFTCLOCK | SPLSOFTNET);
-}
-
-extern __inline int
-splimp()
-{
-	return splraise(SPLIMP | SPLSOFTCLOCK | SPLSOFTNET);
-}
-extern __inline int
-splclock()
-{
-	return splraise(SPLCLOCK | SPLSOFTCLOCK | SPLSOFTNET);
-}
-
-extern __inline int
-splsoftclock()
-{
-	return splraise(SPLSOFTCLOCK);
-}
-
-extern __inline int
-splsoftnet()
-{
-	return splraise(SPLSOFTNET);
-}
-
-extern __inline void
-setsoftclock()
-{
-	softclockpending = 1;
-	if (!(cpl & SPLSOFTCLOCK))
-		splx(cpl);
-}
-
-extern __inline void
-setsoftnet()
-{
-	softnetpending = 1;
-	if (!(cpl & SPLSOFTNET))
-		splx(cpl);
-}
-
-#endif	/* !_LOCORE */
-
-#define	splstatclock()		splclock()
-
-#endif	/* _KERNEL */
 #endif	/* _MACHINE_PSL_H_ */

@@ -35,8 +35,8 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _PPC_STDARG_H_
-#define	_PPC_STDARG_H_
+#ifndef _MACHINE_STDARG_H_
+#define	_MACHINE_STDARG_H_
 
 #include <machine/ansi.h>
 
@@ -47,4 +47,4 @@
 
 typedef _BSD_VA_LIST_	va_list;
 
-#endif /* !_PPC_STDARG_H_ */
+#endif /* !_MACHINE_STDARG_H_ */

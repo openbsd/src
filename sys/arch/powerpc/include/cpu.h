@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 1996/12/28 06:25:03 rahnds Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 1997/10/13 10:53:42 pefo Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -36,16 +36,7 @@
 
 #include <machine/frame.h>
 
-struct machvec {
-	void (*splx) __P((int));
-	void (*irq_establish) __P((int, int, void (*)(void *), void *));
-};
-extern struct machvec machine_interface;
-
 #include <machine/psl.h>
-
-#define	irq_establish(irq, level, handler, arg)	\
-	((*machine_interface.irq_establish)((irq), (level), (handler), (arg)))
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.2 1996/12/28 06:25:21 rahnds Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.3 1997/10/13 10:53:48 pefo Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -48,9 +48,5 @@ void mem_regions __P((struct mem_region **, struct mem_region **));
  */
 void ppc_exit __P((void)) __attribute__((__noreturn__));
 void ppc_boot __P((char *bootspec)) __attribute__((__noreturn__));
-
-int dk_match __P((char *name));
-
-void ofrootfound __P((void));
 
 #endif	/* _MACHINE_POWERPC_H_ */
