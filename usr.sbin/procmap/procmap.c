@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.3 2004/02/17 20:13:53 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.4 2004/02/18 00:46:25 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -481,8 +481,8 @@ load_symbols(kvm_t *kd)
 	if (rc == -1)
 		errx(1, "%s == %d", kvm_geterr(kd), rc);
 	for (i = 0; i < sizeof(nl)/sizeof(nl[0]); i++)
-		if (nl[i].n_value == 0)
-			printf("%s\n", nl[i].n_name);
+		if (nl[i].n_value == 0 && nl[i].n_name)
+			printf("%s not found\n", nl[i].n_name);
 
 	uvm_vnodeops =	(void*)nl[NL_UVM_VNODEOPS].n_value;
 	uvm_deviceops =	(void*)nl[NL_UVM_DEVICEOPS].n_value;
