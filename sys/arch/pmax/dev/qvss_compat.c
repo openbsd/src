@@ -566,9 +566,9 @@ genConfigMouse()
 #if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
-		sccDivertXInput = genKbdEvent;
-		sccMouseEvent = genMouseEvent;
-		sccMouseButtons = genMouseButtons;
+		sccDivertXInput = (void (*) __P((int)))genKbdEvent;
+		sccMouseEvent = (void (*) __P((int)))genMouseEvent;
+		sccMouseButtons = (void (*) __P((int)))genMouseButtons;
 		break;
 #endif
 #if NDTOP > 0
@@ -611,12 +611,12 @@ genDeconfigMouse()
 		break;
 #endif /* NDC_DS */
 
-#if NSCC > 1
+#if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
-		sccDivertXInput = (void (*) __P((int)) )0;
-		sccMouseEvent = (void (*) __P((MouseReport *)) )0;
-		sccMouseButtons = (void (*) __P((MouseReport *)) )0;
+		sccDivertXInput = (void (*) __P((int)))0;
+		sccMouseEvent = (void (*) __P((int)))0;
+		sccMouseButtons = (void (*) __P((int)))0;
 		break;
 #endif
 
