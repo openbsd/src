@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.10 1999/02/26 03:30:00 niklas Exp $
-#	$EOM: Makefile,v 1.41 1999/02/25 15:53:37 niklas Exp $
+#	$OpenBSD: Makefile,v 1.11 1999/03/02 15:06:12 niklas Exp $
+#	$EOM: Makefile,v 1.43 1999/03/02 14:27:47 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -85,11 +85,11 @@ DEBUG=		-g
 #LDADD+=		-L/usr/local/lib -lefence
 #
 
-.include "sysdep/${OS}/Makefile.inc"
-
 .if !make(install)
 SUBDIR=		regress
 .endif
+
+.include "sysdep/${OS}/Makefile.sysdep"
 
 exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num
