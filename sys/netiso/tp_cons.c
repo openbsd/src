@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_cons.c,v 1.5 2001/06/27 03:49:54 angelos Exp $	*/
+/*	$OpenBSD: tp_cons.c,v 1.6 2001/09/05 22:32:40 deraadt Exp $	*/
 /*	$NetBSD: tp_cons.c,v 1.8 1996/02/14 21:32:37 christos Exp $	*/
 
 /*-
@@ -239,7 +239,7 @@ tpcons_input(m, va_alist)
 	faddr = va_arg(ap, struct sockaddr *);
 	laddr = va_arg(ap, struct sockaddr *);
 	channel = va_arg(ap, caddr_t);
-
+	va_end(ap);
 
 	m = (struct mbuf *) tp_inputprep(m);
 

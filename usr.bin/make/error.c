@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.c,v 1.8 2001/07/18 14:49:13 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.9 2001/09/05 22:32:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -232,5 +232,6 @@ Parse_Error(va_alist)
 #endif
 
 	ParseVErrorInternal(Parse_Getfilename(), Parse_Getlineno(), type, fmt, ap);
+	va_end(va);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.6 1999/08/09 22:22:52 pjanzen Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.7 2001/09/05 22:32:27 deraadt Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.6 1999/08/09 22:22:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.7 2001/09/05 22:32:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,8 +126,10 @@ tty_prnt(fmt, va_alist)
 #	else
 	va_start(ap);
 #	endif
-	if (ttyoutf == NULL)
+	if (ttyoutf == NULL) {
+		va_end(ap);
 		return;
+	}
 	(void)vfprintf(ttyoutf, fmt, ap);
 	va_end(ap);
 	(void)fflush(ttyoutf);

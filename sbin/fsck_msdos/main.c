@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2000/01/22 20:24:57 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2001/09/05 22:32:37 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2000/01/22 20:24:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2001/09/05 22:32:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -145,6 +145,7 @@ ask(def, fmt, va_alist)
 	va_start(ap);
 #endif
 	vsnprintf(prompt, sizeof(prompt), fmt, ap);
+	va_end(ap);
 	if (alwaysyes || rdonly) {
 		printf("%s? %s\n", prompt, rdonly ? "no" : "yes");
 		return (!rdonly);

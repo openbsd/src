@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.13 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.14 2001/09/05 22:32:41 deraadt Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -1438,8 +1438,8 @@ va_dcl
 	    va_start(argp);
 	    execvp (cmd, argp);
 	    write (2, "exec failed\n", 12);
-	    exit (1);
 	    va_end(argp);	/* balance {}'s for some UNIX's */
+	    exit (1);
 	}
 	if (id > 0) {
 	    signal (SIGINT, SIG_IGN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.5 1997/08/24 08:07:25 downsj Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.6 2001/09/05 22:32:37 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.5 1997/08/24 08:07:25 downsj Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.6 2001/09/05 22:32:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -426,6 +426,7 @@ panic(fmt, va_alist)
 #endif
 
 	vfprintf(stderr, fmt, ap);
+	va_end(ap);
 	if (yflag)
 		return;
 	if (reply("abort") == GOOD) {

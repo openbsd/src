@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2001/07/04 08:44:59 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2001/09/05 22:32:38 deraadt Exp $	*/
 
 /* -------------------------------------------------- 
  |  NAME
@@ -236,6 +236,7 @@ ask_bool (int def, int other, char *f, ...)
     va_start (ap, f);
     vfprintf (mout, f, ap);
     fprintf (mout, "? [%lc%lc]:",toupper (def),tolower (other));
+    va_end (ap);
     fflush (mout);
     if (fgets (buffer, 18, min)) {
 	char *s = stripws (buffer);
@@ -287,6 +288,7 @@ verbose_message (char *f, ...)
 	va_start (ap, f);
 	vfprintf (mout, f, ap);
 	fprintf (mout, "\n");
+	va_end (ap);
     }
 }
 
@@ -299,6 +301,7 @@ debug_message (char *f, ...)
 	fprintf (mout, "debug: ");
 	vfprintf (mout, f, ap);
         fprintf (mout, "\n");
+	va_end (ap);
     }
 }
 
@@ -311,6 +314,7 @@ verbose_debug_message (char *f, ...)
 	fprintf (mout, "debug: ");
 	vfprintf (mout, f, ap);
 	fprintf (mout, "\n");
+	va_end (ap);
     }
 }
 
@@ -321,6 +325,7 @@ message (char *f, ...)
     va_start (ap, f);
     vfprintf (mout, f, ap);
     fprintf (mout, "\n");
+    va_end (ap);
 }
 
 void
@@ -331,6 +336,7 @@ warn_message (char *f, ...)
     fprintf (mout, "warn: ");
     vfprintf (mout, f, ap);
     fprintf (mout, "\n");
+    va_end (ap);
 }
 
 void

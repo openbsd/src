@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.103 2001/07/08 21:18:07 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.104 2001/09/05 22:32:36 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.103 2001/07/08 21:18:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.104 2001/09/05 22:32:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1866,6 +1866,7 @@ reply(n, fmt, va_alist)
 	}
 	(void)fflush(stdout);
 	free(buf);
+	va_end(ap);
 }
 
 void

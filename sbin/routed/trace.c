@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.8 1997/07/30 23:28:46 deraadt Exp $	*/
+/*	$OpenBSD: trace.c,v 1.9 2001/09/05 22:32:38 deraadt Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.8 1997/07/30 23:28:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.9 2001/09/05 22:32:38 deraadt Exp $";
 #endif
 
 #define	RIPCMDS
@@ -134,6 +134,7 @@ tmsg(char *p, ...)
 		va_start(args, p);
 		vfprintf(ftrace, p, args);
 		fflush(ftrace);
+		va_end(args);
 	}
 }
 
@@ -181,6 +182,7 @@ trace_off(char *p, ...)
 		va_start(args, p);
 		vfprintf(ftrace, p, args);
 		fflush(ftrace);
+		va_end(args);
 	}
 	trace_close();
 
@@ -591,6 +593,7 @@ trace_kernel(char *p, ...)
 	lastlog();
 	va_start(args, p);
 	vfprintf(ftrace, p, args);
+	va_end(args);
 }
 
 
@@ -607,6 +610,7 @@ trace_act(char *p, ...)
 	lastlog();
 	va_start(args, p);
 	vfprintf(ftrace, p, args);
+	va_end(args);
 }
 
 
@@ -623,6 +627,7 @@ trace_pkt(char *p, ...)
 	lastlog();
 	va_start(args, p);
 	vfprintf(ftrace, p, args);
+	va_end(args);
 }
 
 

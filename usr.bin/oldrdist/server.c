@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.13 2001/07/09 07:04:50 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.14 2001/09/05 22:32:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.13 2001/07/09 07:04:50 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.14 2001/09/05 22:32:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -1539,6 +1539,7 @@ fatal(fmt, va_alist)
 		(void) vfprintf(lfp, fmt, ap);
 		fflush(lfp);
 	}
+	va_end(ap);
 	cleanup(0);
 }
 

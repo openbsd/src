@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.3 2001/08/24 00:03:23 art Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.4 2001/09/05 22:32:39 deraadt Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -355,10 +355,14 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	va_start(ap, nreturns);
 	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, unsigned long);
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
 		return -1;
-	if (args.args_n_results[nargs])
+	}
+	if (args.args_n_results[nargs]) {
+		va_end(ap);
 		return args.args_n_results[nargs];
+	}
 	for (ip = (long*)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
 		*va_arg(ap, unsigned long *) = *--ip;
 	va_end(ap);
@@ -398,10 +402,14 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, unsigned long);
 	va_end(ap);
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
 		return -1;
-	if (args.args_n_results[nargs])
+	}
+	if (args.args_n_results[nargs]) {
+		va_end(ap);
 		return -1;
+	}
 	return args.args_n_results[nargs + 1];
 }
 

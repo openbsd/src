@@ -1442,6 +1442,7 @@ mailerr(hdr, fmt, va_alist)
 		}
 	}
 	(void) vsnprintf(&ErrBuf[len], sizeof ErrBuf - len, fmt, ap);
+	va_end(ap);
 
 	if (!HoldErrs)
 		flush_error();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.2 1996/07/31 09:25:48 niklas Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.3 2001/09/05 22:32:36 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -355,31 +355,42 @@ char *fmt, va_list ap)
 int scsireq_decode(scsireq_t *scsireq, char *fmt, ...)
 {
 	va_list ap;
+	int ret;
+
 	va_start (ap, fmt);
-	return do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
+	ret = do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
 	 0, 0, fmt, ap);
+	va_end (ap);
+	return (ret);
 }
 
 int scsireq_decode_visit(scsireq_t *scsireq, char *fmt,
 void (*arg_put)(void *, int , void *, int, char *), void *puthook)
 {
 	va_list ap;
-	return do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
+	int ret;
+
+	ret = do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
 	 arg_put, puthook, fmt, ap);
+	va_end (ap);
+	return (ret);
 }
 
 int scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
 {
 	va_list ap;
+	int ret;
+
 	va_start (ap, fmt);
-	return do_buff_decode(buff, len, 0, 0, fmt, ap);
+	ret = do_buff_decode(buff, len, 0, 0, fmt, ap);
+	va_end (ap);
+	return (ret);
 }
 
 int scsireq_buff_decode_visit(u_char *buff, size_t len, char *fmt,
 void (*arg_put)(void *, int, void *, int, char *), void *puthook)
 {
-	va_list ap;
-	return do_buff_decode(buff, len, arg_put, puthook, fmt, ap);
+	return do_buff_decode(buff, len, arg_put, puthook, fmt, NULL);
 }
 
 /* next_field: Return the next field in a command specifier.  This
@@ -789,6 +800,7 @@ scsireq_t *scsireq_build(scsireq_t *scsireq,
 
  	if (do_encode(scsireq->cmd, CMD_BUFLEN, &cmdlen, 0, 0, cmd_spec, ap) == -1)
  		return 0;
+	va_end (ap);
 
 	scsireq->cmdlen = cmdlen;
 	return scsireq;
@@ -837,14 +849,17 @@ scsireq_t
 int scsireq_encode(scsireq_t *scsireq, char *fmt, ...)
 {
 	va_list ap;
+	int ret;
 
 	if (scsireq == 0)
 		return 0;
 
  	va_start(ap, fmt);
 
- 	return do_encode(scsireq->databuf,
+ 	ret = do_encode(scsireq->databuf,
  	 scsireq->datalen, 0, 0, 0, fmt, ap);
+	va_end (ap);
+	return (ret);
 }
 
 int scsireq_buff_encode_visit(u_char *buff, size_t len, char *fmt,
@@ -852,7 +867,7 @@ int scsireq_buff_encode_visit(u_char *buff, size_t len, char *fmt,
 {
 	va_list ap;
 	return do_encode(buff, len, 0,
-	arg_get, gethook, fmt, ap);
+	    arg_get, gethook, fmt, ap);
 }
 
 int scsireq_encode_visit(scsireq_t *scsireq, char *fmt,
@@ -860,7 +875,7 @@ int scsireq_encode_visit(scsireq_t *scsireq, char *fmt,
 {
 	va_list ap;
 	return do_encode(scsireq->databuf, scsireq->datalen, 0,
-	arg_get, gethook, fmt, ap);
+	    arg_get, gethook, fmt, ap);
 }
 
 FILE *scsi_debug_output(char *s)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.39 2001/07/09 07:04:44 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.40 2001/09/05 22:32:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.39 2001/07/09 07:04:44 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.40 2001/09/05 22:32:36 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -792,6 +792,7 @@ error(fmt, va_alist)
 		len = 0;
 	(void)vsnprintf(bp, sizeof(buf) - len, fmt, ap);
 	(void)write(STDERR_FILENO, buf, len + strlen(bp));
+	va_end(ap);
 }
 
 void

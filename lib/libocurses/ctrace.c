@@ -67,8 +67,10 @@ __CTRACE(fmt, va_alist)
 #endif
 	if (tracefp == NULL)
 		tracefp = fopen(TFILE, "w");
-	if (tracefp == NULL)
+	if (tracefp == NULL) {
+		va_end(ap);
 		return;
+	}
 	(void)vfprintf(tracefp, fmt, ap);
 	va_end(ap);
 	(void)fflush(tracefp);

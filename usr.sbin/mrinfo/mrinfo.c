@@ -176,6 +176,7 @@ log(severity, syserr, format, va_alist)
 			strcat(fmt, "warning - ");
 		strncat(fmt, format, 80);
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
 		if (syserr == 0)
 			fputc('\n', stderr);
 		else if (syserr < sys_nerr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.34 2001/09/05 19:22:23 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.35 2001/09/05 22:32:39 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -203,6 +203,7 @@ panic(fmt, va_alist)
 		vsprintf(panicbuf, fmt, ap);
 		panicstr = panicbuf;
 	}
+	va_end(ap);
 
 	printf("panic: ");
 	va_start(ap, fmt);
@@ -252,8 +253,8 @@ log(level, fmt, va_alist)
 	logpri(level);		/* log the level first */
 	va_start(ap, fmt);
 	kprintf(fmt, TOLOG, NULL, NULL, ap);
-	splx(s);
 	va_end(ap);
+	splx(s);
 	if (!log_open) {
 		va_start(ap, fmt);
 		kprintf(fmt, TOCONS, NULL, NULL, ap);
@@ -299,8 +300,8 @@ addlog(fmt, va_alist)
 	s = splhigh();
 	va_start(ap, fmt);
 	kprintf(fmt, TOLOG, NULL, NULL, ap);
-	splx(s);
 	va_end(ap);
+	splx(s);
 	if (!log_open) {
 		va_start(ap, fmt);
 		kprintf(fmt, TOCONS, NULL, NULL, ap);

@@ -284,6 +284,7 @@ command (char *fmt,...)
 	    printf("PASS XXXX");
 	else 
 	    vfprintf(stdout, fmt, ap);
+	va_end(ap);
 	va_start(ap, fmt);
     }
     sec_vfprintf(cout, fmt, ap);
