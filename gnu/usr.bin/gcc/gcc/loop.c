@@ -562,6 +562,9 @@ loop_optimize (f, dumpfile, flags)
   end_alias_analysis ();
 
   /* Clean up.  */
+  for (i = 0; i < (int) loops->num; i++)
+    free (loops_info[i].mems);
+
   free (uid_luid);
   free (uid_loop);
   free (loops_info);
