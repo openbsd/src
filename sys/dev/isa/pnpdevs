@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.11 1998/04/26 21:02:53 provos Exp $
+#	$OpenBSD: pnpdevs,v 1.12 1998/05/08 18:39:35 csapuntz Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -368,5 +368,5 @@ sb	CTL0041	#SB16 PnP (CT4131)
 sb	CTL0042	#SB AWE64 Value
 sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
-sb	YMH0021 #
+ym	YMH0021 #
 sb	ESS1868	#
