@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.47 2004/08/07 17:27:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.48 2004/08/10 11:53:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -130,6 +130,15 @@ package OpenBSD::PackingElement::Sampledir;
 sub install
 {
 	&OpenBSD::PackingElement::Dir::install;
+}
+
+package OpenBSD::PackingElement::Mandir;
+
+sub install
+{
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	$self->SUPER::install->($archive, $destdir, $verbose, $not);
+	print "You may wish to add ", $self->fullname(), " to /etc/man.conf\n";
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -713,6 +722,7 @@ while (my $pkg = shift @todo) {
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
 
+OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 ensure_ldconfig($opt_v) unless $opt_n;
 
 if ($opt_n or $opt_v) {

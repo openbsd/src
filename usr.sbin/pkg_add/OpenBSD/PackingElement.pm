@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.20 2004/08/07 17:27:26 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.21 2004/08/10 11:53:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub category() { 'items' }
 sub new
 {
 	my ($class, $args) = @_;
-	if ($args =~ m|/$| and defined $class->dirclass()) {
+	if ($args =~ m|/+$| and defined $class->dirclass()) {
 		bless { name => $` }, $class->dirclass();
 	} else {
 	    bless { name => $args }, $class;
@@ -110,10 +110,12 @@ sub needs_keyword() { 1 }
 sub write
 {
 	my ($self, $fh) = @_;
+	my $s = $self->stringize();
 	if ($self->needs_keyword()) {
-		print $fh "\@", $self->keyword(), " ", $self->stringize(), "\n";
+		$s = " $s" unless $s eq '';
+		print $fh "\@", $self->keyword(), "$s\n";
 	} else {
-		print $fh $self->stringize(), "\n";
+		print $fh "$s\n";
 	}
 }
 
@@ -121,10 +123,12 @@ sub write
 sub fullstring
 {
 	my ($self, $fh) = @_;
+	my $s = $self->stringize();
 	if ($self->needs_keyword()) {
-		return "\@".$self->keyword()." ".$self->stringize();
+		$s = " $s" unless $s eq '';
+		return "\@".$self->keyword().$s;
 	} else {
-		return $self->stringize();
+		return $s;
 	}
 }
 
@@ -768,7 +772,8 @@ sub NoDuplicateNames() { 1 }
 package OpenBSD::PackingElement::DirBase;
 sub stringize($)
 {
-	return $_[0]->{name}."/";
+	my $self = $_[0];
+	return $self->{name}."/";
 }
 
 sub NoDuplicateNames() { 1 }
@@ -797,12 +802,56 @@ our @ISA=qw(OpenBSD::PackingElement::Dir);
 __PACKAGE__->setKeyword('fontdir');
 sub keyword() { "fontdir" }
 sub needs_keyword { 1 }
+sub dirclass() { "OpenBSD::PackingElement::Fontdir" }
+
+our %fonts_todo = ();
+
+sub install
+{
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	$self->SUPER::install($archive, $destdir, $verbose, $not);
+	$fonts_todo{$destdir.$self->fullname()} = 1;
+}
+
+sub reload
+{
+	my ($self, $state) = @_;
+	$fonts_todo{$state->{destdir}.$self->fullname()} = 1;
+}
+
+sub update_fontalias
+{
+	my $dirname = shift;
+	my @aliases;
+
+	for my $alias (glob "$dirname/fonts.alias-*") {
+		open my $f ,'<', $alias or next;
+		push(@aliases, <$f>);
+		close $f;
+	}
+	open my $f, '>', "$dirname/fonts.alias";
+	print $f @aliases;
+	close $f;
+}
+
+sub finish_fontdirs
+{
+	my @l = keys %fonts_todo;
+	if (@l != 0) {
+		map { update_fontalias($_) } @l;
+		print "You may wish to update your font path for ", join(' ', @l), "\n";
+		eval { system("/usr/X11R6/bin/mkfontdir", @l); };
+		eval { system("/usr/X11R6/bin/fc-cache", @l); };
+	}
+}
+
 
 package OpenBSD::PackingElement::Mandir;
 our @ISA=qw(OpenBSD::PackingElement::Dir);
 __PACKAGE__->setKeyword('mandir');
 sub keyword() { "mandir" }
 sub needs_keyword { 1 }
+sub dirclass() { "OpenBSD::PackingElement::Mandir" }
 
 package OpenBSD::PackingElement::Extra;
 our @ISA=qw(OpenBSD::PackingElement);

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.38 2004/08/09 01:40:57 espie Exp $
+# $OpenBSD: pkg_delete,v 1.39 2004/08/10 11:53:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -39,14 +39,14 @@ sub ensure_ldconfig
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
 
-sub find_alldirrms
+sub erase_alldirrms
 {
 	my $db = {};
 	my @list = installed_packages();
 	for my $e (@list) {
 		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
 		for my $item (@{$plist->{items}}) {
-			$item->record_dirrm($e, $db);
+			$item->erase_dir($e, $db);
 		}
 	}
 	return $db;
@@ -59,13 +59,21 @@ sub remove_dirs
 	my $h = $state->{dirs_to_rm};
 	return unless defined $h;
 
-	my $remaining = find_alldirrms();
+	my $remaining = erase_alldirrms();
 
 	for my $d (sort {$b cmp $a} keys %$h) {
-		next if defined $remaining->{$d};
 		my $realname = $state->{destdir}.$d;
-		if (!rmdir $realname) {
-			    print "Error deleting directory $realname: $!\n";
+		if ($remaining->{$realname}) {
+			for my $i (@{$h->{$d}}) {
+				$i->reload($state);
+			}
+		} else {
+			for my $i (@{$h->{$d}}) {
+				$i->cleanup($state);
+			}
+			if (!rmdir $realname) {
+				    print "Error deleting directory $realname: $!\n";
+			}
 		}
 	}
 }
@@ -76,7 +84,15 @@ sub delete
 {
 }
 
-sub record_dirrm
+sub erase_dir
+{
+}
+
+sub cleanup
+{
+}
+
+sub reload
 {
 }
 
@@ -92,12 +108,11 @@ sub log_pkgname
 
 
 package OpenBSD::PackingElement::DirBase;
-sub record_dirrm
+sub erase_dir
 {
 	my ($self, $pkgname, $db) = @_;
 	my $k = $self->fullname();
-	$db->{$k} = [] unless defined $db->{$k};
-	push(@{$db->{$k}}, $pkgname);
+	$db->{$k} = 1;
 }
 
 sub delete
@@ -114,13 +129,13 @@ sub delete
 
 	my $h = $state->{dirs_to_rm};
 	$h->{$name} = [] unless defined $h->{$name};
-	push(@{$h->{$name}}, $state->{pkgname});
+	push(@{$h->{$name}}, $self->clone());
 }
 
 package OpenBSD::PackingElement::DirRm;
-sub record_dirrm
+sub erase_dir
 {
-	&OpenBSD::PackingElement::DirBase::record_dirrm;
+	&OpenBSD::PackingElement::DirBase::erase_dir;
 }
 
 sub delete
@@ -277,6 +292,26 @@ sub delete
 	return unless $state->{extra};
 	return unless -e $state->{destdir}.$self->fullname();
 	$self->SUPER::delete($state);
+}
+
+package OpenBSD::PackingElement::Mandir;
+sub cleanup
+{
+	my ($self, $state) = @_;
+	my $fullname = $state->{destdir}.self->fullname();
+	print "You may wish to remove ", $fullname, " from man.conf\n";
+	unlink("$fullname/whatis.db");
+}
+
+package OpenBSD::PackingElement::Fontdir;
+sub cleanup
+{
+	my ($self, $state) = @_;
+	my $fullname = $state->{destdir}.$self->fullname();
+	print "You may wish to remove ", $fullname, " from your font path\n";
+	unlink("$fullname/fonts.alias");
+	unlink("$fullname/fonts.dir");
+	unlink("$fullname/fonts.cache-1");
 }
 
 package OpenBSD::PackingElement::ExtraUnexec;
@@ -567,6 +602,7 @@ if ($opt_B eq '') {
 ensure_ldconfig($opt_v) unless $opt_n;
 # delayed directory removal
 remove_dirs($state);
+OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 
 my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {
