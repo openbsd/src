@@ -40,7 +40,7 @@ $ ENODEV
 $ ENOTDIR
 20 N'est pas un répertoire
 $ EISDIR
-21 C'est un réperoire
+21 Est un répertoire
 $ EINVAL
 22 Paramètre invalide
 $ ENFILE
@@ -76,7 +76,7 @@ $ EALREADY
 $ ENOTSOCK
 38 Opération réservée aux sockets
 $ EDESTADDRREQ
-39 Adresse de destination nécéssaire
+39 Adresse de destination nécessaire
 $ EMSGSIZE
 40 Message trop long
 $ EPROTOTYPE
@@ -92,7 +92,7 @@ $ EOPNOTSUPP
 $ EPFNOSUPPORT
 46 Famille de protocoles non supportée
 $ EAFNOSUPPORT
-47 Famille d'adresses non supporté par cette famille de protocoles
+47 Famille d'adresses non supportée par cette famille de protocoles
 $ EADDRINUSE
 48 Adresse déjà utilisée
 $ EADDRNOTAVAIL
@@ -102,7 +102,7 @@ $ ENETDOWN
 $ ENETUNREACH
 51 Réseau non atteignable
 $ ENETRESET
-52 Connexion perdue après un RAZ du réseau
+52 Connexion perdue après RAZ du réseau
 $ ECONNABORTED
 53 Fin de connexion causée par logiciel
 $ ECONNRESET
