@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.9 1997/04/13 05:11:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.10 1997/04/18 18:55:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -489,7 +489,7 @@ __has_yppw()
 	len = strlen("+");
 	bcopy("+", bf + 1, MIN(len, UT_NAMESIZE));
 	pkey.data = (u_char *)bf;
-	pkey.size = len + 1;
+	pkey.size = MIN(len, UT_NAMESIZE) + 1;
 
 	if ((_pw_db->get)(_pw_db, &key, &data, 0)
 	    && (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
@@ -699,7 +699,7 @@ pwnam_netgrp:
 	len = strlen(name);
 	bcopy(name, bf + 1, MIN(len, UT_NAMESIZE));
 	key.data = (u_char *)bf;
-	key.size = len + 1;
+	key.size = MIN(len, UT_NAMESIZE) + 1;
 	rval = __hashpw(&key);
 
 	if (!_pw_stayopen) {
