@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhci.c,v 1.11 2000/03/30 16:19:33 aaron Exp $	*/
-/*	$NetBSD: uhci.c,v 1.108 2000/03/29 18:55:36 augustss Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.12 2000/04/14 22:50:25 aaron Exp $	*/
+/*	$NetBSD: uhci.c,v 1.110 2000/04/14 14:11:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -252,12 +252,14 @@ Static __inline__ uhci_soft_qh_t *uhci_find_prev_qh
     __P((uhci_soft_qh_t *, uhci_soft_qh_t *));
 
 #ifdef UHCI_DEBUG
+Static void		uhci_dump_all __P((uhci_softc_t *));
 Static void		uhci_dumpregs __P((uhci_softc_t *));
 Static void		uhci_dump_qhs __P((uhci_soft_qh_t *));
 Static void		uhci_dump_qh __P((uhci_soft_qh_t *));
 Static void		uhci_dump_tds __P((uhci_soft_td_t *));
 Static void		uhci_dump_td __P((uhci_soft_td_t *));
 Static void		uhci_dump_ii __P((uhci_intr_info_t *ii));
+Static void		uhci_dump __P((void));
 #endif
 
 #define UWRITE1(sc, r, x) bus_space_write_1((sc)->iot, (sc)->ioh, (r), (x))
@@ -354,7 +356,7 @@ uhci_find_prev_qh(pqh, sqh)
 	for (; pqh->hlink != sqh; pqh = pqh->hlink) {
 #if defined(DIAGNOSTIC) || defined(UHCI_DEBUG)		
 		if (le32toh(pqh->qh.qh_hlink) & UHCI_PTR_T) {
-			printf("uhci_find_qh: QH not found\n");
+			printf("uhci_find_prev_qh: QH not found\n");
 			return (NULL);
 		}
 #endif
@@ -585,7 +587,7 @@ uhci_allocx(bus)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
 #ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
-			printf("uhci_freex: xfer=%p not free, 0x%08x\n", xfer,
+			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,
 			       xfer->busy_free);
 		}
 #endif
@@ -644,7 +646,7 @@ uhci_shutdown(v)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
@@ -771,18 +773,23 @@ uhci_dump_qh(sqh)
 }
 
 
-#if 0
+#if 1
 void
 uhci_dump()
 {
-	uhci_softc_t *sc = thesc;
-
-	uhci_dumpregs(sc);
-	printf("intrs=%d\n", sc->sc_bus.no_intrs);
-	printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);
-	uhci_dump_qh(sc->sc_ctl_start->qh.hlink);
+	uhci_dump_all(thesc);
 }
 #endif
+
+void
+uhci_dump_all(sc)
+	uhci_softc_t *sc;
+{
+	uhci_dumpregs(sc);
+	printf("intrs=%d\n", sc->sc_bus.no_intrs);
+	/*printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);*/
+	uhci_dump_qh(sc->sc_ctl_start);
+}
 
 
 void
@@ -1063,6 +1070,10 @@ uhci_intr(arg)
 		printf("%s: host controller halted\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
 		sc->sc_dying = 1;
+#ifdef UHCI_DEBUG
+		uhci_dump_all(sc);
+#endif
+
 	}
 
 	if (ack)	/* acknowledge the ints */

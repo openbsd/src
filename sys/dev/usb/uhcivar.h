@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhcivar.h,v 1.7 2000/03/28 19:37:49 aaron Exp $ */
-/*	$NetBSD: uhcivar.h,v 1.27 2000/03/25 18:02:33 augustss Exp $	*/
+/*	$OpenBSD: uhcivar.h,v 1.8 2000/04/14 22:50:26 aaron Exp $ */
+/*	$NetBSD: uhcivar.h,v 1.28 2000/04/06 23:44:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -42,13 +42,14 @@
 /*
  * To avoid having 1024 TDs for each isochronous transfer we introduce
  * a virtual frame list.  Every UHCI_VFRAMELIST_COUNT entries in the real
- * frame list points to a non-active TD.  These, in turn, which form the 
+ * frame list points to a non-active TD.  These, in turn, form the 
  * starts of the virtual frame list.  This also has the advantage that it 
- * simplifies linking in/out TD/QH in the schedule.
+ * simplifies linking in/out of TDs/QHs in the schedule.
  * Furthermore, initially each of the inactive TDs point to an inactive
  * QH that forms the start of the interrupt traffic for that slot.
  * Each of these QHs point to the same QH that is the start of control
- * traffic.
+ * traffic.  This QH points at another QH which is the start of the
+ * bulk traffic.
  *
  * UHCI_VFRAMELIST_COUNT should be a power of 2 and <= UHCI_FRAMELIST_COUNT.
  */
@@ -161,8 +162,8 @@ typedef struct uhci_softc {
 
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;
 
-	/* Info for the root hub interrupt channel. */
-	int sc_ival;			/* time between root hug intrs */
+	/* Info for the root hub interrupt "pipe". */
+	int sc_ival;			/* time between root hub intrs */
 	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
 	usb_callout_t sc_poll_handle;
 
@@ -172,7 +173,7 @@ typedef struct uhci_softc {
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
-	device_ptr_t sc_child;		/* /dev/usb device */
+	device_ptr_t sc_child;		/* /dev/usb# device */
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));

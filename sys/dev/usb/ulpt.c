@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.2 2000/03/30 16:19:33 aaron Exp $ */
-/*	$NetBSD: ulpt.c,v 1.35 2000/03/29 18:24:53 augustss Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.3 2000/04/14 22:50:27 aaron Exp $ */
+/*	$NetBSD: ulpt.c,v 1.36 2000/04/14 14:12:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ USB_ATTACH(ulpt)
 
 #if 0
 /*
- * This code is disabled because for some mysterious it causes
+ * This code is disabled because for some mysterious reason it causes
  * printing not to work.  But only sometimes, and mostly with
  * UHCI and less often with OHCI.  *sigh*
  */

@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.18 2000/04/11 19:03:19 jakob Exp $
+$OpenBSD: usbdevs,v 1.19 2000/04/14 22:50:29 aaron Exp $
 /* $NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $ */
 
 /*
@@ -47,7 +47,7 @@ vendor ATMEL		0x03eb	Atmel Corp.
 vendor HP		0x03f0	Hewlett Packard
 vendor ADAPTEC		0x03f3	Adaptec, Inc.
 vendor ACERLABS		0x0402	Acer Labs, Inc.
-vendor FUTURE		0x0403	Future Technology Devices
+vendor FTDI		0x0403	Future Technology Devices
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak Corp.
 vendor MELCO		0x0411	Melco, Inc.
@@ -147,6 +147,7 @@ vendor LINKSYS		0x066b	Linksys, Inc.
 vendor ACERSA		0x066e	Acer Semiconductor America, Inc.
 vendor AIWA		0x0677	Aiwa Co., Ltd.
 vendor ACARD		0x0678	ACARD Technology Corp.
+vendor PROLIFIC		0x067b	Prolific Technology Inc.
 vendor ADVANCELOGIC	0x0680	Avance Logic, Inc.
 vendor ASKEY		0x069a	Askey Computer Corp.
 vendor ALCATELT		0x06b9	Alcatel Telecom
@@ -322,6 +323,7 @@ product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
+product CYPRESS FMRADIO		0x1002	FM Radio
 
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
@@ -373,7 +375,7 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
-product FUTURE SERIAL		0x8372	Serial converter
+product FTDI SERIAL		0x8372	Serial converter
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
@@ -395,7 +397,8 @@ product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
-product INSYSTEM ISD110		0x0200  IDE adapter
+product INSYSTEM ISD110		0x0200  IDE adapter ISD110
+product INSYSTEM ISD105		0x0202  IDE adapter ISD105
 
 /* Intel products */
 product INTEL TESTBOARD		0x9890	82930 test board
@@ -515,7 +518,6 @@ product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
-product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera 
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
@@ -527,6 +529,10 @@ product PLX TESTBOARD		0x9060	test board
 product PRIMAX COMFORT		0x4d01	Comfort
 product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
+
+/* Prolific products */
+product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
+product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_subr.c,v 1.10 2000/04/08 20:55:41 aaron Exp $ */
-/*	$NetBSD: usb_subr.c,v 1.71 2000/03/29 18:24:53 augustss Exp $	*/
+/*	$OpenBSD: usb_subr.c,v 1.11 2000/04/14 22:50:28 aaron Exp $ */
+/*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -769,8 +769,8 @@ usbd_probe_and_attach(parent, dev, port, addr)
 #endif
 
 	uaa.device = dev;
-	uaa.iface = 0;
-	uaa.ifaces = 0;
+	uaa.iface = NULL;
+	uaa.ifaces = NULL;
 	uaa.nifaces = 0;
 	uaa.usegeneric = 0;
 	uaa.port = port;
@@ -873,13 +873,10 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	DPRINTF(("usbd_probe_and_attach: no interface drivers found\n"));
 
 	/* Finally try the generic driver. */
-	uaa.iface = 0;
+	uaa.iface = NULL;
 	uaa.usegeneric = 1;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
-	uaa.vendor = UHUB_UNK_VENDOR;
-	uaa.product = UHUB_UNK_PRODUCT;
-	uaa.release = UHUB_UNK_RELEASE;
 	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
 	if (dv != NULL) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
@@ -924,8 +921,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	int addr;
 	int i;
 
-	DPRINTF(("usbd_new_device bus=%p depth=%d lowspeed=%d\n",
-		 bus, depth, lowspeed));
+	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d lowspeed=%d\n",
+		 bus, port, depth, lowspeed));
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n", 
@@ -1136,24 +1133,34 @@ usbd_submatch(parent, match, aux)
 #endif
 	struct usb_attach_arg *uaa = aux;
 
-	if ((uaa->port != 0 &&
-	     cf->uhubcf_port != UHUB_UNK_PORT &&
-	     cf->uhubcf_port != uaa->port) ||
-	    (uaa->configno != UHUB_UNK_CONFIGURATION &&
-	     cf->uhubcf_configuration != UHUB_UNK_CONFIGURATION &&
-	     cf->uhubcf_configuration != uaa->configno) ||
-	    (uaa->ifaceno != UHUB_UNK_INTERFACE &&
-	     cf->uhubcf_interface != UHUB_UNK_INTERFACE &&
-	     cf->uhubcf_interface != uaa->ifaceno) ||
-	    (uaa->vendor != UHUB_UNK_VENDOR &&
-	     cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
-	     cf->uhubcf_vendor != uaa->vendor) ||
-	    (uaa->product != UHUB_UNK_PRODUCT &&
-	     cf->uhubcf_product != UHUB_UNK_PRODUCT &&
-	     cf->uhubcf_product != uaa->product) ||
-	    (uaa->release != UHUB_UNK_RELEASE &&
-	     cf->uhubcf_release != UHUB_UNK_RELEASE &&
-	     cf->uhubcf_release != uaa->release)
+	DPRINTFN(5,("usbd_submatch port=%d,%d configno=%d,%d "
+	    "ifaceno=%d,%d vendor=%d,%d product=%d,%d release=%d,%d\n",
+	    uaa->port, cf->uhubcf_port,
+	    uaa->configno, cf->uhubcf_configuration,
+	    uaa->ifaceno, cf->uhubcf_interface,
+	    uaa->vendor, cf->uhubcf_vendor,
+	    uaa->product, cf->uhubcf_product,
+	    uaa->release, cf->uhubcf_release));
+	if (uaa->port != 0 &&	/* root hub has port 0, it should match */
+	    ((uaa->port != 0 &&
+	      cf->uhubcf_port != UHUB_UNK_PORT &&
+	      cf->uhubcf_port != uaa->port) ||
+	     (uaa->configno != UHUB_UNK_CONFIGURATION &&
+	      cf->uhubcf_configuration != UHUB_UNK_CONFIGURATION &&
+	      cf->uhubcf_configuration != uaa->configno) ||
+	     (uaa->ifaceno != UHUB_UNK_INTERFACE &&
+	      cf->uhubcf_interface != UHUB_UNK_INTERFACE &&
+	      cf->uhubcf_interface != uaa->ifaceno) ||
+	     (uaa->vendor != UHUB_UNK_VENDOR &&
+	      cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
+	      cf->uhubcf_vendor != uaa->vendor) ||
+	     (uaa->product != UHUB_UNK_PRODUCT &&
+	      cf->uhubcf_product != UHUB_UNK_PRODUCT &&
+	      cf->uhubcf_product != uaa->product) ||
+	     (uaa->release != UHUB_UNK_RELEASE &&
+	      cf->uhubcf_release != UHUB_UNK_RELEASE &&
+	      cf->uhubcf_release != uaa->release)
+	     )
 	   )
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));

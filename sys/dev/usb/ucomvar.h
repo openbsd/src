@@ -1,5 +1,5 @@
-/*	$OpenBSD: ucomvar.h,v 1.2 2000/04/12 16:19:12 aaron Exp $ */
-/*	$NetBSD: ucomvar.h,v 1.2 2000/02/08 09:18:02 augustss Exp $	*/
+/*	$OpenBSD: ucomvar.h,v 1.3 2000/04/14 22:50:25 aaron Exp $ */
+/*	$NetBSD: ucomvar.h,v 1.5 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #define CLR(t, f)       (t) &= ~(f)
 #define ISSET(t, f)     ((t) & (f))
 
-#if !defined(__OpenBSD__)
+#if defined(__NetBSD__)
 #include "locators.h"
 #endif
 
@@ -63,8 +63,12 @@ struct ucom_methods {
 	int (*ucom_param)__P((void *sc, int portno, struct termios *));
 	int (*ucom_ioctl)__P((void *sc, int portno, u_long cmd, 
 			      caddr_t data, int flag, struct proc *p));
-	void (*ucom_open)__P((void *sc, int portno));
+	int (*ucom_open)__P((void *sc, int portno));
 	void (*ucom_close)__P((void *sc, int portno));
+	void (*ucom_read)__P((void *sc, int portno, u_char **ptr, 
+			      u_int32_t *count));
+	void (*ucom_write)__P((void *sc, int portno, u_char *to, u_char *from,
+			       u_int32_t *count));
 };
 
 /* modem control register */
@@ -97,6 +101,10 @@ struct ucom_attach_args {
 	int portno;
 	int bulkin;
 	int bulkout;
+	u_int ibufsize;
+	u_int ibufsizepad;
+	u_int obufsize;
+	u_int obufsizepad;
 	usbd_device_handle device;
 	usbd_interface_handle iface;
 	struct ucom_methods *methods;
@@ -105,8 +113,8 @@ struct ucom_attach_args {
 
 int ucomprint __P((void *aux, const char *pnp));
 #if defined(__OpenBSD__)
-int ucomsubmatch __P((struct device *parent, void *cf, void *aux));
+int ucomsubmatch __P((struct device *parent, void *match, void *aux));
 #else
 int ucomsubmatch __P((struct device *parent, struct cfdata *cf, void *aux));
 #endif
-void ucom_status_change __P((struct ucom_softc *sc));
+void ucom_status_change __P((struct ucom_softc *));

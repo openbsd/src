@@ -4,11 +4,17 @@ Some things that need to be done in no particular order:
 Before 1.5:
 -----------
 
-Add isoc to OHCI driver.
+Reset toggle on SET_INTERFACE (USB 1.1)
 
-Port FreeBSD umass driver.
+Allow interrupt out endpoints. (USB 1.1)
 
 -----------
+
+Make flow control work in ucom.
+
+Figure out why uvisor is so slow.
+
+Translate UFI commands?
 
 Add lots of bus_dmamap_sync().
 
@@ -25,9 +31,6 @@ Some hubs change the number of available ports on this transition. :(
 Handle overcurrent conditions.
 
 Make it possible to open any device in a "generic" way, i.e., like ugen.
-
-Rewrite mouse and keyboard driver to handle devices which use the
-report ID.  One way would be to attach ums and ukbd to uhid.
 
 Rotate the QHs for bulk transport to get fairer scheduling.
 
@@ -59,6 +62,9 @@ Add threads to the Ethernet drivers.
 Change what's done at watchdog timeout inb if_{a,c,k}ue.c; what we have
 now doesn't work because it's done in an interrupt context.
 
+Factor out the common code from the Ethernet drivers and reuse that.
+
 Rewrite HID driver to handle report IDs properly.  Perhaps there should
 be a hiddev to which hid with different IDs can attach?
 
+Get rid of hcpriv.

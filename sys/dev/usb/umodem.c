@@ -1,5 +1,5 @@
-/*	$OpenBSD: umodem.c,v 1.2 2000/04/08 20:03:34 aaron Exp $ */
-/*	$NetBSD: umodem.c,v 1.25 2000/03/27 12:33:57 augustss Exp $	*/
+/*	$OpenBSD: umodem.c,v 1.3 2000/04/14 22:50:28 aaron Exp $ */
+/*	$NetBSD: umodem.c,v 1.27 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,14 @@ int	umodemdebug = 0;
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
+/*
+ * These are the maximum number of bytes transferred per frame.
+ * If some really high speed devices should use this driver they
+ * may need to be increased, but this is good enough for normal modems.
+ */
+#define UMODEMIBUFSIZE 64
+#define UMODEMOBUFSIZE 256
+
 struct umodem_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 
@@ -132,6 +140,8 @@ Static struct ucom_methods umodem_methods = {
 	umodem_set,
 	umodem_param,
 	umodem_ioctl,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 };
@@ -267,6 +277,10 @@ USB_ATTACH(umodem)
 
 	uca.portno = UCOM_UNK_PORTNO;
 	/* bulkin, bulkout set above */
+	uca.ibufsize = UMODEMIBUFSIZE;
+	uca.obufsize = UMODEMOBUFSIZE;
+	uca.ibufsizepad = UMODEMIBUFSIZE;
+	uca.obufsizepad = UMODEMOBUFSIZE;
 	uca.device = sc->sc_udev;
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
@@ -480,6 +494,7 @@ void
 umodem_set(addr, portno, reg, onoff)
 	void *addr;
 	int portno;
+	int reg;
 	int onoff;
 {
 	struct umodem_softc *sc = addr;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhid.c,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
-/*	$NetBSD: uhid.c,v 1.36 2000/03/27 12:33:56 augustss Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.10 2000/04/14 22:50:26 aaron Exp $ */
+/*	$NetBSD: uhid.c,v 1.37 2000/04/14 14:12:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/signalvar.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -104,6 +105,7 @@ struct uhid_softc {
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
+	struct proc *sc_async;	/* process that wants SIGIO */
 	u_char sc_state;	/* driver state */
 #define	UHID_OPEN	0x01	/* device is open */
 #define	UHID_ASLP	0x02	/* waiting for device data */
@@ -357,6 +359,10 @@ uhid_intr(xfer, addr, status)
 		wakeup(&sc->sc_q);
 	}
 	selwakeup(&sc->sc_rsel);
+	if (sc->sc_async != NULL) {
+		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
+		psignal(sc->sc_async, SIGIO);
+	}
 }
 
 int
@@ -403,6 +409,8 @@ uhidopen(dev, flag, mode, p)
 
 	sc->sc_state &= ~UHID_IMMED;
 
+	sc->sc_async = 0;
+
 	return (0);
 }
 
@@ -430,6 +438,8 @@ uhidclose(dev, flag, mode, p)
 	free(sc->sc_obuf, M_USBDEV);
 
 	sc->sc_state &= ~UHID_OPEN;
+
+	sc->sc_async = 0;
 
 	return (0);
 }
@@ -590,6 +600,24 @@ uhid_do_ioctl(sc, cmd, addr, flag, p)
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
+		break;
+
+	case FIOASYNC:
+		if (*(int *)addr) {
+			if (sc->sc_async != NULL)
+				return (EBUSY);
+			sc->sc_async = p;
+			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", p));
+		} else
+			sc->sc_async = NULL;
+		break;
+
+	/* XXX this is not the most general solution. */
+	case TIOCSPGRP:
+		if (sc->sc_async == NULL)
+			return (EINVAL);
+		if (*(int *)addr != sc->sc_async->p_pgid)
+			return (EPERM);
 		break;
 
 	case USB_GET_REPORT_DESC:

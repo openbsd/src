@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_aue.c,v 1.3 2000/04/04 22:52:29 aaron Exp $ */
-/*	$NetBSD: if_aue.c,v 1.37 2000/04/02 21:25:41 augustss Exp $	*/
+/*	$OpenBSD: if_aue.c,v 1.4 2000/04/14 22:50:24 aaron Exp $ */
+/*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1134,8 +1134,13 @@ aue_intr(xfer, priv, status)
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			return;
 		}
-		printf("%s: usb error on intr: %s\n", USBDEVNAME(sc->aue_dev),
-		    usbd_errstr(status));
+		sc->aue_intr_errs++;
+		if (usbd_ratecheck(&sc->aue_rx_notice)) {
+			printf("%s: %u usb errors on intr: %s\n",
+			    USBDEVNAME(sc->aue_dev), sc->aue_rx_errs,
+			    usbd_errstr(status));
+			sc->aue_intr_errs = 0;
+		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_RX]);
 		return;
@@ -1175,15 +1180,6 @@ aue_rxstart(ifp)
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
- *
- * Grrr. Receiving transfers larger than about 1152 bytes sometimes
- * doesn't work. We get an incomplete frame. In order to avoid
- * this, we queue up RX transfers that are shorter than a full sized
- * frame. If the received frame is larger than our transfer size,
- * we snag the rest of the data using a second transfer. Does this
- * hurt performance? Yes. But after fighting with this stupid thing
- * for three days, I'm willing to settle. I'd rather have reliable
- * receive performance that fast but spotty performance.
  */
 Static void
 aue_rxeof(xfer, priv, status)

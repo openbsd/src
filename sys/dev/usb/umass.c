@@ -1,5 +1,5 @@
-/*	$OpenBSD: umass.c,v 1.5 2000/04/08 20:28:07 csapuntz Exp $ */
-/*	$NetBSD: umass.c,v 1.31 2000/04/03 12:31:34 augustss Exp $	*/
+/*	$OpenBSD: umass.c,v 1.6 2000/04/14 22:50:28 aaron Exp $ */
+/*	$NetBSD: umass.c,v 1.33 2000/04/06 13:52:04 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -787,6 +787,7 @@ USB_ATTACH(umass)
 	USB_ATTACH_START(umass, sc, uaa);
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+	const char *sSubclass, *sProto;
 	char devinfo[1024];
 	int i, bno;
 	int err;
@@ -817,36 +818,45 @@ USB_ATTACH(umass)
 	id = usbd_get_interface_descriptor(sc->iface);
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
-	printf("%s: using ", USBDEVNAME(sc->sc_dev));
-	switch (sc->proto & PROTO_COMMAND) {
-	case PROTO_SCSI:
-		printf("SCSI");
+	switch (id->bInterfaceSubClass) {
+	case UISUBCLASS_SCSI:
+		sSubclass = "SCSI";
 		break;
-	case PROTO_8070:
-		printf("8070i");
+	case UISUBCLASS_UFI:
+		sSubclass = "UFI";
 		break;
-	case PROTO_UFI:
-		printf("UFI");
+	case UISUBCLASS_SFF8020I:
+		sSubclass = "SFF8020i";
 		break;
-	default:
-		printf("(unknown 0x%02x)", sc->proto&PROTO_COMMAND);
+	case UISUBCLASS_SFF8070I:
+		sSubclass = "SFF8070i";
 		break;
-	}
-	printf(" over ");
-	switch (sc->proto & PROTO_WIRE) {
-	case PROTO_BBB:
-		printf("Bulk-Only");
-		break;
-	case PROTO_CBI:			/* uses Command/Bulk pipes */
-		printf("CBI");
-		break;
-	case PROTO_CBI_I:		/* uses Command/Bulk/Interrupt pipes */
-		printf("CBI with CCI");
+	case UISUBCLASS_QIC157:
+		sSubclass = "QIC157";
 		break;
 	default:
-		printf("(unknown 0x%02x)", sc->proto&PROTO_WIRE);
+		sSubclass = "unknown";
+		break;
 	}
-	printf("\n");
+	switch (id->bInterfaceProtocol) {
+	case UIPROTO_MASS_CBI:
+		sProto = "CBI";
+		break;
+	case UIPROTO_MASS_CBI_I:
+		sProto = "CBI-I";
+		break;
+	case UIPROTO_MASS_BBB:
+		sProto = "BBB";
+		break;
+	case UIPROTO_MASS_BBB_P:
+		sProto = "BBB-P";
+		break;
+	default:
+		sProto = "unknown";
+		break;
+	}
+	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sSubclass, 
+	       sProto);
 
 	/*
 	 * In addition to the Control endpoint the following endpoints

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_cuereg.h,v 1.1 2000/03/28 19:37:47 aaron Exp $ */
-/*	$NetBSD: if_cuereg.h,v 1.9 2000/03/24 22:13:24 augustss Exp $	*/
+/*	$OpenBSD: if_cuereg.h,v 1.2 2000/04/14 22:50:25 aaron Exp $ */
+/*	$NetBSD: if_cuereg.h,v 1.11 2000/04/08 20:54:38 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -187,7 +187,6 @@ struct cue_softc {
 	u_int16_t		cue_product;
 	int			cue_ed[CUE_ENDPT_MAX];
 	usbd_pipe_handle	cue_ep[CUE_ENDPT_MAX];
-	int			cue_unit;
 	u_int8_t		cue_mctab[CUE_MCAST_TABLE_LEN];
 	int			cue_if_flags;
 	u_int16_t		cue_rxfilt;
