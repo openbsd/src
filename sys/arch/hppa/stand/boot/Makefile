@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.15 2003/01/16 19:13:05 mickey Exp $
+#	$OpenBSD: Makefile,v 1.16 2003/01/27 23:56:44 miod Exp $
 
 MAN=	boot.8
 MANSUBDIR=/hppa
 MLINKS=	boot.8 boot.conf.8
 S	=${.CURDIR}/../../../..
-CLEANFILES+=	boot.gdb boot.map boot.lif bsd
+CLEANFILES+=	boot.gdb boot.map boot.lif
 
 .if ${MACHINE} == "hppa"
 PROG=	boot
