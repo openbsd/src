@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 2002/09/22 22:42:25 krw Exp $
+#	$OpenBSD: install.md,v 1.13 2002/10/05 21:01:17 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ __EOT
 	# Manually configure the MBR.
 	cat << __EOT
 
-Your will now create a single MBR partition to contain your OpenBSD data. This
+You will now create a single MBR partition to contain your OpenBSD data. This
 partition must have an id of 'A6'; must *NOT* overlap other partitions; and
 must be marked as the only active partition.
 
