@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 1996/04/18 04:04:57 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 1996/04/18 04:19:49 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.191 1996/03/01 21:49:49 scottr Exp $	*/
 
 /*-
@@ -563,7 +563,7 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflag(p);
+		frame.sf_sc.sc_eflags = get_vflags(p);
 		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
