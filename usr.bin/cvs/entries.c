@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.24 2005/02/01 18:51:04 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.25 2005/02/22 16:09:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -122,6 +122,7 @@ cvs_ent_open(const char *dir, int flags)
 	}
 	if (ferror(fp)) {
 		cvs_log(LP_ERRNO, "read error on %s", entpath);
+		(void)fclose(fp);
 		cvs_ent_close(ep);
 		return (NULL);
 	}
@@ -304,7 +305,7 @@ cvs_ent_next(CVSENTRIES *ef)
 /*
  * cvs_ent_parse()
  *
- * Parse a single line from a CVS/Entries file and return a cvs_entry structure
+ * Parse a single line from a CVS/Entries file and return a cvs_ent structure
  * containing all the parsed information.
  */
 struct cvs_ent*
