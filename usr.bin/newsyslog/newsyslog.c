@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.31 2000/06/10 02:49:41 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.32 2000/06/12 17:41:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.31 2000/06/10 02:49:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.32 2000/06/12 17:41:21 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -494,20 +494,33 @@ parse_file(nentries)
                 else
                         working->hours = -1;
 
-                q = parse = sob(++parse); /* Optional field */
-                *(parse = son(parse)) = '\0';
                 working->flags = 0;
-                while (q && *q && !isspace(*q)) {
-                        if ((*q == 'Z') || (*q == 'z'))
-                                working->flags |= CE_COMPACT;
-                        else if ((*q == 'B') || (*q == 'b'))
-                                working->flags |= CE_BINARY;
-			else if ((*q == 'M') || (*q == 'm'))
-				working->flags |= CE_MONITOR;
-                        else
-				errx(1, "Illegal flag in config file: %c", *q);
-                        q++;
-                }
+                q = sob(++parse);	/* Optional field */
+		if (*q == 'Z' || *q == 'z' || *q == 'B' || *q == 'b' ||
+		    *q == 'M' || *q == 'm') {
+			*(parse = son(q)) = '\0';
+			while (*q) {
+				switch (*q) {
+				case 'Z':
+				case 'z':
+					working->flags |= CE_COMPACT;
+					break;
+				case 'B':
+				case 'b':
+					working->flags |= CE_BINARY;
+					break;
+				case 'M':
+				case 'm':
+					working->flags |= CE_MONITOR;
+					break;
+				default:
+					errx(1, "Illegal flag in config file: %c", *q);
+					break;
+				}
+				q++;
+			}
+		} else
+		    parse--;	/* no flags so undo */
 
 		working->whom = NULL;
 		if (working->flags & CE_MONITOR) {	/* Optional field */
