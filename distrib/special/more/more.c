@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.5 2003/05/27 23:47:36 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.6 2003/05/28 00:04:20 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.5 2003/05/27 23:47:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.6 2003/05/28 00:04:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,12 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.5 2003/05/27 23:47:36 millert 
  */
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/exec.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+
 #include <ctype.h>
 #include <curses.h>
 #include <errno.h>
@@ -75,22 +76,23 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.5 2003/05/27 23:47:36 millert 
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+
 #include "pathnames.h"
 
-#define Fopen(s,m)	(Currline = 0,file_pos=0,fopen(s,m))
-#define Ftell(f)	file_pos
-#define Fseek(f,off)	(file_pos=off,fseek(f,off,0))
+#define Fopen(s,m)	(Currline = 0, file_pos=0, fopen(s,m))
+#define Ftell(f)	(file_pos)
+#define Fseek(f,off)	(file_pos=off, fseek(f,off,0))
 #define Getc(f)		(++file_pos, getc(f))
 #define Ungetc(c,f)	(--file_pos, ungetc(c,f))
 
-#define TBUFSIZ	1024
-#define LINSIZ	256
+#define TBUFSIZ		1024
+#define LINSIZ		256
 #define ctrl(letter)	(letter & 077)
-#define RUBOUT	'\177'
-#define ESC	'\033'
-#define QUIT	'\034'
+#define RUBOUT		'\177'
+#define ESC		'\033'
+#define QUIT		'\034'
 
-struct termios	otty, savetty0;
+struct termios	otty, osavetty;
 long		file_pos, file_size;
 int		fnum, no_intty, no_tty, slow_tty;
 int		dum_opt, dlines;
@@ -108,8 +110,8 @@ int		docrterase = 0;
 int		docrtkill = 0;
 int		bad_so;	/* True if overwriting does not turn off standout */
 int		inwait, Pause, errors;
-int		within;	/* true if we are within a file,
-			false if we are between files */
+int		within;		/* true if we are within a file,
+				   false if we are between files */
 int		hard, dumb, noscroll, hardtabs, clreol, eatnl;
 int		catch_susp;	/* We should catch the SIGTSTP signal */
 char		**fnames;	/* The list of file names */
@@ -122,7 +124,7 @@ int		Lpp = 24;	/* lines per page */
 char		*Clear;		/* clear screen */
 char		*eraseln;	/* erase line */
 char		*Senter, *Sexit;/* enter and exit standout mode */
-char		*ULenter, *ULexit;	/* enter and exit underline mode */
+char		*ULenter, *ULexit; /* enter and exit underline mode */
 char		*chUL;		/* underline character */
 char		*chBS;		/* backspace character */
 char		*Home;		/* go to home */
@@ -134,54 +136,55 @@ int		Wrap = 1;	/* set if automargins */
 int		soglitch;	/* terminal has standout mode glitch */
 int		ulglitch;	/* terminal has underline mode glitch */
 int		pstate = 0;	/* current UL state */
+
 struct {
     long chrctr, line;
 } context, screen_start;
-extern char	PC;		/* pad character */
-extern char	*__progname;
 
-int  magic(FILE *, char *);
-void initterm(void);
-void kill_line(void);
-void doclear(void);
-void cleareol(void);
-void clreos(void);
-void home(void);
-void error(char *);
-void do_shell(char *);
-int  colon(char *, int, int);
-int  expand(char *, size_t, char *);
-void argscan(char *);
-void rdline(FILE *);
-void copy_file(FILE *);
-void search(char *, FILE *, int);
-void skipf(int);
-void skiplns(int, FILE *);
-void screen(FILE *, int);
-int  command(char *, FILE *);
-void erasep(int);
-void show(int);
-int  pr(char *);
-int  printd(int);
-void putch(int);
-void set_tty(void);
-void reset_tty(void);
-void ttyin(char *, int, char);
-int  number(char *);
-int  readch(void);
-int  get_line(FILE *, int *);
-void prbuf(char *, int);
-int  prtf(char *, ...);
-void execute(char *filename, char *cmd, char *, char *, char *);
-void errwrite(char *);
-void errwrite1(char *);
+extern char	PC;		/* pad character (termcap) */
+extern char	*__progname;	/* program name (crt0) */
+
+int   colon(char *, int, int);
+int   command(char *, FILE *);
+int   expand(char *, size_t, char *);
+int   getline(FILE *, int *);
+int   magic(FILE *, char *);
+int   number(char *);
+int   pr(char *);
+int   printd(int);
+int   prtf(char *, ...);
+int   readch(void);
+void  argscan(char *);
+void  chgwinsz(int);
+void  cleareol(void);
+void  clreos(void);
+void  copy_file(FILE *);
+void  do_shell(char *);
+void  doclear(void);
+void  end_it(int);
+void  erasep(int);
+void  error(char *);
+void  errwrite(char *);
+void  errwrite1(char *);
+void  execute(char *filename, char *cmd, char *, char *, char *);
+void  home(void);
+void  initterm(void);
+void  kill_line(void);
+void  onquit(int);
+void  onsusp(int);
+void  prbuf(char *, int);
+void  putch(int);
+void  rdline(FILE *);
+void  reset_tty(void);
+void  screen(FILE *, int);
+void  search(char *, FILE *, int);
+void  set_tty(void);
+void  show(int);
+void  skipf(int);
+void  skiplns(int, FILE *);
+void  Sprintf(int);
+void  ttyin(char *, int, char);
 FILE *checkf(char *, int *);
-void chgwinsz(int);
-void end_it(int);
-void onquit(int);
-void onsusp(int);
-void Sprintf(int);
-int  getline(FILE *, int *);
 __dead void usage(void);
 
 int
@@ -1346,7 +1349,7 @@ do_shell(char *filename)
 		pr(shell_line);
 	else {
 		ttyin(cmdbuf, sizeof(cmdbuf)-2, '!');
-		if (expand(shell_line, sizeof shell_line, cmdbuf)) {
+		if (expand(shell_line, sizeof(shell_line), cmdbuf)) {
 			kill_line();
 			promptlen = prtf ("!%s", shell_line);
 		}
@@ -1364,7 +1367,7 @@ do_shell(char *filename)
 void
 search(char *buf, FILE *file, int n)
 {
-	long startline = Ftell (file);
+	long startline = Ftell(file);
 	long line1 = startline;
 	long line2 = startline;
 	long line3 = startline;
@@ -1390,7 +1393,7 @@ search(char *buf, FILE *file, int n)
 	while (!feof(file)) {
 		line3 = line2;
 		line2 = line1;
-		line1 = Ftell (file);
+		line1 = Ftell(file);
 		rdline (file);
 		lncount++;
 		if ((rv = regexec(&reg, Line, 0, NULL, 0)) == 0) {
@@ -1646,11 +1649,9 @@ retry:
 	}
 	no_intty = tcgetattr(STDIN_FILENO, &otty);
 	tcgetattr(STDERR_FILENO, &otty);
-	savetty0 = otty;
+	osavetty = otty;
 	slow_tty = cfgetospeed(&otty) < B1200;
-#if 0
-	hardtabs = (otty.c_oflag & TABDLY) != OXTABS;
-#endif
+	hardtabs = !(otty.c_oflag & OXTABS);
 	if (!no_tty) {
 		otty.c_lflag &= ~(ICANON|ECHO);
 		otty.c_cc[VMIN] = 1;
@@ -1765,6 +1766,7 @@ ttyin(char *buf, int nmax, char pchar)
 int
 expand(char *outbuf, size_t olen, char *inbuf)
 {
+	size_t len;
 	char *instr;
 	char *outstr;
 	char ch;
@@ -1777,9 +1779,11 @@ expand(char *outbuf, size_t olen, char *inbuf)
 		switch (ch) {
 		case '%':
 			if (!no_intty) {
-				strlcpy(outstr, fnames[fnum],
+				len = strlcpy(outstr, fnames[fnum],
 				    temp + sizeof(temp) - outstr);
-				outstr += strlen (fnames[fnum]);
+				if (len >= temp + sizeof(temp) - outstr)
+					len = temp + sizeof(temp) - outstr - 1;
+				outstr += len;
 				changed++;
 			} else
 				*outstr++ = ch;
@@ -1787,10 +1791,11 @@ expand(char *outbuf, size_t olen, char *inbuf)
 		case '!':
 			if (!shellp)
 				error ("No previous command to substitute for");
-			/* XXX - use strlcpy() rval (millert) */
-			strlcpy(outstr, shell_line,
+			len = strlcpy(outstr, shell_line,
 			    temp + sizeof(temp) - outstr);
-			outstr += strlen(shell_line);
+			if (len >= temp + sizeof(temp) - outstr)
+				len = temp + sizeof(temp) - outstr - 1;
+			outstr += len;
 			changed++;
 			break;
 		case '\\':
@@ -1862,13 +1867,13 @@ reset_tty(void)
 		pstate = 0;
 	}
 	otty.c_lflag |= ICANON|ECHO;
-	otty.c_cc[VMIN] = savetty0.c_cc[VMIN];
-	otty.c_cc[VTIME] = savetty0.c_cc[VTIME];
-	tcsetattr(STDERR_FILENO, TCSANOW, &savetty0);
+	otty.c_cc[VMIN] = osavetty.c_cc[VMIN];
+	otty.c_cc[VTIME] = osavetty.c_cc[VTIME];
+	tcsetattr(STDERR_FILENO, TCSANOW, &osavetty);
 }
 
 void
-rdline (FILE *f)
+rdline(FILE *f)
 {
 	char c;
 	char *p;
