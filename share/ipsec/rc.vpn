@@ -1,0 +1,177 @@
+#!/bin/sh
+
+#
+# rc.vpn -- configure IPSec in tunnel mode for M x N networks
+#
+# Richard Reiner, Ph.D., FSC Internet Corp.
+# rreiner@fscinternet.com
+# v0.81 / 26Jul98
+#
+
+echo ' VPN'
+
+
+#############################################################################
+#
+# Configurable parameters
+#
+
+# Should all the commands executed be printed when the script runs?
+# N.B. setting this to "YES" may reveal your keys to persons present
+# at the console when your system boots.
+VPN_DO_ECHO_COMMANDS="YES"
+
+# My interfaces
+VPN_MY_INT_IFACE="ep0"
+VPN_MY_EXT_IFACE="ep1"
+
+# External IP of my tunnel partner
+VPN_PEER_EXT_IP="207.253.158.194"
+
+# The internal IP(s) and mask(s) on the other end of the tunnel -- add as
+# many sets as necessary, numbered from 0 upwards.
+VPN_PEER_INT_IP_0="192.139.247.253"
+VPN_PEER_INT_MASK_0="255.255.255.0"
+
+# IP(s) and mask(s) for *additional* subnets on *our* end of the tunnel
+# (the first one is automagically determined below) -- add as many sets
+# as necessary, numbered from *1* upwards, or comment out if not needed.
+VPN_MY_INT_IP_1="192.139.241.1"
+VPN_MY_INT_MASK_1="255.255.255.0"
+VPN_MY_INT_IP_2="192.139.243.1"
+VPN_MY_INT_MASK_2="255.255.255.0"
+
+# Crypto options and keys
+VPN_ENC="des"
+VPN_AUTH="sha1"
+VPN_SPI_OUT="1000"
+VPN_SPI_IN="1001"
+VPN_KEY="2ea140ac3911cb27"
+VPN_AUTHKEY="176cc284bc1631afbd1468fbe976fa729fcb4321"
+VPN_IV="c4b279f1a9bcd849"
+
+
+
+#############################################################################
+#############                                                   #############
+############# -- NO CHANGES SHOULD BE NEEDED BELOW THIS LINE -- #############
+#############                                                   #############
+#############################################################################
+
+
+
+#############################################################################
+#
+# Derived (automagically found) parameters
+#
+# Hostnames for ech of our interfaces
+VPN_MY_EXT_NAME=`cut -d" " -f2 < /etc/hostname.$VPN_MY_EXT_IFACE`
+VPN_MY_INT_NAME=`cut -d" " -f2 < /etc/hostname.$VPN_MY_INT_IFACE`
+
+# Our internal IP and mask (extra subnets, if any, are configured above)
+VPN_MY_INT_IP_0=`grep $VPN_MY_INT_NAME < /etc/hosts | cut -d" " -f1`
+VPN_MY_INT_MASK_0=`cut -d" " -f3 < /etc/hostname.$VPN_MY_INT_IFACE`
+
+# Our external IP and mask
+VPN_MY_EXT_IP=`grep $VPN_MY_EXT_NAME < /etc/hosts | cut -d" " -f1`
+VPN_MY_EXT_MASK=`cut -d" " -f3 < /etc/hostname.$VPN_MY_INT_IFACE`
+
+
+#############################################################################
+#
+# Pseudo-constants
+#
+ipsecadm=/sbin/ipsecadm
+
+
+#############################################################################
+#
+# Function definitions
+#
+eval_and_echo () {
+  if [ "$VPN_DO_ECHO_COMMANDS" = "YES" ]; then
+    echo "$*"
+  fi
+  eval "$*"
+}
+
+
+#############################################################################
+#
+# Executable setup statements
+#
+
+# Create the SAs
+eval_and_echo "$ipsecadm new esp -src $VPN_MY_EXT_IP -dst $VPN_PEER_EXT_IP -tunnel $VPN_MY_EXT_IP $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -enc $VPN_ENC -auth $VPN_AUTH -iv $VPN_IV -key $VPN_KEY -authkey $VPN_AUTHKEY"
+
+eval_and_echo "$ipsecadm new esp -src $VPN_PEER_EXT_IP -dst $VPN_MY_EXT_IP -tunnel $VPN_PEER_EXT_IP $VPN_MY_EXT_IP -spi $VPN_SPI_IN -enc $VPN_ENC -auth $VPN_AUTH -iv $VPN_IV -key $VPN_KEY -authkey $VPN_AUTHKEY"
+
+
+#
+# Create IPSec routes
+#
+
+# Route between the two external IPs
+eval_and_echo "ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $VPN_PEER_EXT_IP 255.255.255.255 -local"
+
+# Routes from each internal subnet, to each internal subnet on the far side
+mycount=0
+while :
+do
+    eval next_my_ip=\$VPN_MY_INT_IP_${mycount}
+    eval next_my_mask=\$VPN_MY_INT_MASK_${mycount}
+    if [ -n "${next_my_ip}" ]; then
+
+	peercount=0
+	while :
+	do
+	    eval next_peer_ip=\$VPN_PEER_INT_IP_${peercount}
+	    eval next_peer_mask=\$VPN_PEER_INT_MASK_${peercount}
+	    if [ -n "${next_peer_ip}" ]; then
+		# set an IPSec route for this pair of networks
+		eval_and_echo "$ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $next_peer_ip $next_peer_mask"
+		peercount=`expr ${peercount} + 1`
+	    else
+		    break;
+	    fi
+	done
+	mycount=`expr ${mycount} + 1`
+    else
+	break;
+    fi
+done
+
+
+# Routes to each remote internal subnet
+peercount=0
+while :
+do
+    eval next_peer_ip=\$VPN_PEER_INT_IP_${peercount}
+    eval next_peer_mask=\$VPN_PEER_INT_MASK_${peercount}
+    if [ -n "${next_peer_ip}" ]; then
+
+        # Route from my ext IP to each remote internal subnet
+	eval_and_echo "$ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $next_peer_ip $next_peer_mask -local"
+	peercount=`expr ${peercount} + 1`
+    else
+	break;
+    fi
+done
+
+
+# Routes from each of my internal subnets to the remote external IP
+mycount=0
+while :
+do
+    eval next_my_ip=\$VPN_MY_INT_IP_${mycount}
+    eval next_my_mask=\$VPN_MY_INT_MASK_${mycount}
+    if [ -n "${next_my_ip}" ]; then
+	eval_and_echo $ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $VPN_PEER_EXT_IP 255.255.255.255
+	mycount=`expr ${mycount} + 1`
+    else
+	break;
+    fi
+done
+
+
+

@@ -1,7 +1,7 @@
 #
-#	$OpenBSD: Makefile,v 1.2 1997/10/09 14:17:23 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/07/30 08:14:36 provos Exp $
 #
-FILES=	*.conf *.startup
+FILES=	*.conf *.startup rc.vpn
 NOOBJ=	noobj
 
 all clean cleandir depend lint tags:
