@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.95 2001/12/06 02:12:52 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.96 2001/12/10 12:05:40 ho Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ ipv4_input(m)
 	if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
 		goto bad;
 	if (m == NULL)
-		goto bad;
+		return;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
