@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.3 1999/05/21 02:47:12 millert Exp $	*/
+/*	$OpenBSD: vars.c,v 1.4 1999/06/12 01:22:47 todd Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -48,6 +48,7 @@ static int Xdebug __P((void));
 static int Ximage __P((void));
 static int Xhowto __P((void));
 static int Xtty __P((void));
+static int Xtimeout __P((void));
 int Xset __P((void));
 int Xenv __P((void));
 
@@ -60,6 +61,7 @@ const struct cmd_table cmd_set[] = {
 	{"device", CMDT_VAR, Xdevice},
 	{"tty",    CMDT_VAR, Xtty},
 	{"image",  CMDT_VAR, Ximage},
+	{"timeout",CMDT_VAR, Xtimeout},
 	{NULL,0}
 };
 
@@ -68,7 +70,7 @@ static int
 Xdebug()
 {
 	if (cmd.argc !=2)
-		printf(debug? "on": "off");
+		printf( "o%s\n", debug? "n": "ff" );
 	else
 		debug = (cmd.argv[1][0] == '0' ||
 			 (cmd.argv[1][0] == 'o' && cmd.argv[1][1] == 'f'))?
@@ -76,6 +78,17 @@ Xdebug()
 	return 0;
 }
 #endif
+
+static int
+Xtimeout()
+{
+	if (cmd.argc !=2)
+		printf( "%d\n", cmd.timeout );
+	else
+		if( (cmd.argv[1][0] >= 48) && (cmd.argv[1][0] <= 57) )
+			cmd.timeout = cmd.argv[1][0] - 48;
+	return 0;
+}
 
 /* called only w/ no arguments */
 int
@@ -87,7 +100,6 @@ Xset()
 	for (ct = cmd_set; ct->cmd_name != NULL; ct++) {
 		printf("%s\t ", ct->cmd_name);
 		(*ct->cmd_exec)();
-		putchar('\n');
 	}
 	return 0;
 }
@@ -96,7 +108,7 @@ static int
 Xdevice()
 {
 	if (cmd.argc != 2)
-		printf(cmd.bootdev);
+		printf("%s\n", cmd.bootdev);
 	else
 		strncpy(cmd.bootdev, cmd.argv[1], sizeof(cmd.bootdev));
 	return 0;
@@ -106,7 +118,7 @@ static int
 Ximage()
 {
 	if (cmd.argc != 2)
-		printf(cmd.image);
+		printf("%s\n", cmd.image);
 	else
 		strncpy(cmd.image, cmd.argv[1], sizeof(cmd.image));
 	return 0;
@@ -116,7 +128,7 @@ static int
 Xaddr()
 {
 	if (cmd.argc != 2)
-		printf("%p", cmd.addr);
+		printf("%p\n", cmd.addr);
 	else
 		cmd.addr = (void *)strtol(cmd.argv[1], NULL, 0);
 	return 0;
@@ -128,7 +140,7 @@ Xtty()
 	dev_t dev;
 
 	if (cmd.argc != 2)
-		printf(ttyname(0));
+		printf("%s\n", ttyname(0));
 	else {
 		dev = ttydev(cmd.argv[1]);
 		if (dev == NODEV)
@@ -160,6 +172,7 @@ Xhowto()
 			if (cmd.boothowto & RB_KDB)
 				putchar('d');
 		}
+		putchar('\n');
 	} else
 		bootparse(1);
 	return 0;
