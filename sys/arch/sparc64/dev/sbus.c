@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.13 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.14 2002/03/14 20:26:20 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -715,12 +715,18 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 		return (NULL);
 
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) != 0)
-		ipl = vec;
+		ipl = 1 << vec;
 	else if ((vec & SBUS_INTR_COMPAT) != 0)
-		ipl = vec & ~SBUS_INTR_COMPAT;
+		ipl = 1 << (vec & ~SBUS_INTR_COMPAT);
 	else {
 		/* Decode and remove IPL */
-		ipl = INTLEV(vec);
+		ipl = level;
+		if (ipl == IPL_NONE)
+			ipl = 1 << INTLEV(vec);
+		if (ipl == IPL_NONE) {
+			printf("ERROR: no IPL, setting IPL 2.\n");
+			ipl = 2;
+		}
 		vec = INTVEC(vec);
 		DPRINTF(SDB_INTR,
 		    ("\nsbus: intr[%ld]%lx: %lx\nHunting for IRQ...\n",
@@ -784,8 +790,8 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
-	ih->ih_pil = (1<<ipl);
-	intr_establish(ipl, ih);
+	ih->ih_pil = ipl;
+	intr_establish(ih->ih_pil, ih);
 	return (ih);
 }
 
