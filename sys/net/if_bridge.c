@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.91 2002/06/07 18:29:43 jasoni Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.92 2002/06/08 23:04:53 jasoni Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -65,6 +65,7 @@
 #include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_icmp.h>
 
 #include <net/if_enc.h>
 #endif
@@ -159,6 +160,10 @@ struct mbuf *bridge_filter(struct bridge_softc *, int, struct ifnet *,
 int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_fragment(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
+#ifdef INET
+void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *, int, struct llc *, int, int);
+#endif
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -2277,9 +2282,12 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	NTOHS(ip->ip_len);
 	NTOHS(ip->ip_off);
 
-	/* Respect IP_DF */
-	if (ip->ip_off & IP_DF)
-		goto dropit;
+	/* Respect IP_DF, return a ICMP_UNREACH_NEEDFRAG. */
+	if (ip->ip_off & IP_DF) {
+		bridge_send_icmp_err(sc, ifp, eh, m, hassnap, &llc,
+		    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
+		return;
+	}
 
 	error = ip_fragment(m, ifp, ifp->if_mtu);
 	if (error == EMSGSIZE)
@@ -2354,3 +2362,77 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 
 	return (0);
 }
+
+#ifdef INET
+void	
+bridge_send_icmp_err(sc, ifp, eh, n, hassnap, llc, type, code)
+	struct bridge_softc *sc;
+	struct ifnet *ifp;
+	struct ether_header *eh;
+	struct mbuf *n;
+	int hassnap;
+	struct llc *llc;
+	int type;
+	int code;
+{
+	struct ip *ip;
+	struct icmp *icp;
+	struct in_addr t;
+	struct mbuf *m;
+	int hlen;
+	u_int8_t ether_tmp[ETHER_ADDR_LEN];
+
+	m = icmp_do_error(n, type, code, 0, ifp);
+	if (m == NULL)
+		return;
+
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+	t = ip->ip_dst;
+	ip->ip_dst = ip->ip_src;
+	ip->ip_src = t;
+
+	m->m_data += hlen;
+	m->m_len -= hlen;
+	icp = mtod(m, struct icmp *);
+	icp->icmp_cksum = 0;
+	icp->icmp_cksum = in_cksum(m, ip->ip_len - hlen);
+	m->m_data -= hlen;
+	m->m_len += hlen;
+
+	ip->ip_v = IPVERSION;
+	ip->ip_off &= IP_DF;
+	ip->ip_id = htons(ip_randomid());
+	ip->ip_ttl = MAXTTL;
+	HTONS(ip->ip_len);
+	HTONS(ip->ip_off);
+	ip->ip_sum = 0;
+	ip->ip_sum = in_cksum(m, hlen);
+
+	/* Swap ethernet addresses */
+	bcopy(&eh->ether_dhost, &ether_tmp, sizeof(ether_tmp));
+	bcopy(&eh->ether_shost, &eh->ether_dhost, sizeof(ether_tmp));
+	bcopy(&ether_tmp, &eh->ether_shost, sizeof(ether_tmp));
+
+	/* Reattach SNAP header */
+	if (hassnap) {
+		M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
+		if (m == NULL)
+			goto dropit;
+		bcopy(llc, mtod(m, caddr_t), LLC_SNAPFRAMELEN);
+	}
+
+	/* Reattach ethernet header */
+	M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+	if (m == NULL)
+		goto dropit;
+	bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
+
+	bridge_output(ifp, m, NULL, NULL);
+	m_freem(n);
+	return;
+
+ dropit:
+	m_freem(n);
+}
+#endif
