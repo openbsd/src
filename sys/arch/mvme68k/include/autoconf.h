@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 1996/04/28 10:56:03 deraadt Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.4 1996/05/29 15:43:55 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -51,6 +51,17 @@ struct confargs {
 #define BUS_VMES	5	/* 16 bit VME access */
 #define BUS_VMEL	6	/* 32 bit VME access */
 #define BUS_IP		7	/* VME162 IP module bus */
+
+/* the following are from the prom/bootblocks */
+void	*bootaddr;	/* PA of boot device */
+int	bootctrllun;	/* ctrl_lun of boot device */
+int	bootdevlun;	/* dev_lun of boot device */
+int	bootpart;	/* boot partition (disk) */
+
+struct	device *bootdv; /* boot device */
+
+/* PARTITIONSHIFT from disklabel.h */
+#define PARTITIONMASK   ((1 << PARTITIONSHIFT) - 1) 
 
 caddr_t	mapiodev __P((caddr_t pa, int size));
 void	unmapiodev __P((caddr_t kva, int size));
