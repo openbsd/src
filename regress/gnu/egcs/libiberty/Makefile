@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2001/10/07 13:24:56 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2004/07/09 21:51:30 david Exp $
 
 NOMAN=
 NOPROG=
 
-TESTDIR=${BSDSRCDIR}/gnu/egcs/libiberty
+TESTDIR=${BSDSRCDIR}/gnu/lib/libiberty
 
 
 regress: 
