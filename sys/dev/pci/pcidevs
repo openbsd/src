@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.546 2002/09/16 00:27:35 krw Exp $
+	$OpenBSD: pcidevs,v 1.547 2002/09/23 17:20:51 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -811,6 +811,7 @@ product	AMD 766_ISA		0x7410	766 PCI-ISA
 product	AMD 766_IDE		0x7411	766 IDE
 product	AMD 766_USB		0x7412	766 USB
 product	AMD 766_PMC		0x7413	766 Power Mgmt
+product	AMD 766_USB_HCI		0x7414	766 USB OpenHCI
 product	AMD PBC768_ISA		0x7440	768 PCI-ISA
 product	AMD PBC768_IDE		0x7441	768 IDE
 product	AMD PBC768_PMC		0x7443	768 Power Mgmt
