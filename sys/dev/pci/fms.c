@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.8 2002/03/14 03:16:06 millert Exp $ */
+/*	$OpenBSD: fms.c,v 1.9 2002/05/06 16:37:43 mickey Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -41,6 +41,8 @@
  * Forte Media FM801 Audio Device Driver
  */
 
+#include "radio.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -59,10 +61,16 @@
 #include <dev/auconv.h>
 
 #include <dev/ic/ac97.h>
+#if NRADIO > 0
+#include <sys/radioio.h>
+#include <dev/radio_if.h>
+#include <dev/pci/fmsradio.h>
+#endif /* NRADIO > 0 */
 #if 0
 #include <dev/ic/mpuvar.h>
 #endif
 
+#include <dev/pci/fmsreg.h>
 #include <dev/pci/fmsvar.h>
 
 
@@ -146,6 +154,17 @@ struct audio_hw_if fms_hw_if = {
 	fms_trigger_input
 };
 
+#if NRADIO > 0
+struct radio_hw_if fmsradio_hw_if = {
+	NULL,	/* open */
+	NULL,	/* close */
+	fmsradio_get_info,
+	fmsradio_set_info,
+	fmsradio_search
+};
+#endif /* NRADIO > 0 */
+
+
 int	fms_attach_codec(void *, struct ac97_codec_if *);
 int	fms_read_codec(void *, u_int8_t, u_int16_t *);
 int	fms_write_codec(void *, u_int8_t, u_int16_t);
@@ -154,69 +173,6 @@ void	fms_reset_codec(void *);
 int	fms_allocmem(struct fms_softc *, size_t, size_t,
 			  struct fms_dma *);
 int	fms_freemem(struct fms_softc *, struct fms_dma *);
-
-#define FM_PCM_VOLUME		0x00
-#define FM_FM_VOLUME		0x02
-#define FM_I2S_VOLUME		0x04
-#define FM_RECORD_SOURCE	0x06
-
-#define FM_PLAY_CTL		0x08
-#define  FM_PLAY_RATE_MASK		0x0f00
-#define  FM_PLAY_BUF1_LAST		0x0001
-#define  FM_PLAY_BUF2_LAST		0x0002
-#define  FM_PLAY_START			0x0020
-#define  FM_PLAY_PAUSE			0x0040
-#define  FM_PLAY_STOPNOW		0x0080
-#define  FM_PLAY_16BIT			0x4000
-#define  FM_PLAY_STEREO			0x8000
-
-#define FM_PLAY_DMALEN		0x0a
-#define FM_PLAY_DMABUF1		0x0c
-#define FM_PLAY_DMABUF2		0x10
-
-
-#define FM_REC_CTL		0x14
-#define  FM_REC_RATE_MASK		0x0f00
-#define  FM_REC_BUF1_LAST		0x0001
-#define  FM_REC_BUF2_LAST		0x0002
-#define  FM_REC_START			0x0020
-#define  FM_REC_PAUSE			0x0040
-#define  FM_REC_STOPNOW			0x0080
-#define  FM_REC_16BIT			0x4000
-#define  FM_REC_STEREO			0x8000
-
-
-#define FM_REC_DMALEN		0x16
-#define FM_REC_DMABUF1		0x18
-#define FM_REC_DMABUF2		0x1c
-
-#define FM_CODEC_CTL		0x22
-#define FM_VOLUME		0x26
-#define  FM_VOLUME_MUTE			0x8000
-
-#define FM_CODEC_CMD		0x2a
-#define  FM_CODEC_CMD_READ		0x0080
-#define  FM_CODEC_CMD_VALID		0x0100
-#define  FM_CODEC_CMD_BUSY		0x0200
-
-#define FM_CODEC_DATA		0x2c
-
-#define FM_IO_CTL		0x52
-#define FM_CARD_CTL		0x54
-
-#define FM_INTMASK		0x56
-#define  FM_INTMASK_PLAY		0x0001
-#define  FM_INTMASK_REC			0x0002
-#define  FM_INTMASK_VOL			0x0040
-#define  FM_INTMASK_MPU			0x0080
-
-#define FM_INTSTATUS		0x5a
-#define  FM_INTSTATUS_PLAY		0x0100
-#define  FM_INTSTATUS_REC		0x0200
-#define  FM_INTSTATUS_VOL		0x4000
-#define  FM_INTSTATUS_MPU		0x8000
-
-
 
 int
 fms_match(parent, match, aux)
@@ -311,6 +267,17 @@ fms_attach(parent, self, aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS, 
 	    FM_INTSTATUS_PLAY | FM_INTSTATUS_REC | FM_INTSTATUS_MPU | 
 	    FM_INTSTATUS_VOL);
+
+#if NRADIO > 0
+	sc->radio.tea.iot = sc->sc_iot;
+	sc->radio.tea.ioh = sc->sc_ioh;
+	sc->radio.tea.offset = FM_IO_CTL;
+	sc->radio.tea.flags = sc->sc_dev.dv_cfdata->cf_flags;
+
+	fmsradio_attach(&sc->radio, sc->sc_dev.dv_xname);
+	/* /dev/radio will attach anyway */
+	radio_attach_mi(&fmsradio_hw_if, sc, &sc->sc_dev);
+#endif /* NRADIO > 0 */
 	
 	sc->host_if.arg = sc;
 	sc->host_if.attach = fms_attach_codec;

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.295 2002/04/25 04:56:59 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.296 2002/05/06 16:37:43 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -450,7 +450,6 @@ bktr0	at pci? dev ? function ?
 
 # FM-Radio devices
 #mr*	at pci? dev ? function ? # Guillemot Maxi Radio FM2000 PCI Radio Card
-#sf4r*	at pci? dev ? function ? # SoundForte RadioLink SF64-PCR FM Radio Card
 #sfr0	at isa? port 0x384	# SoundForte RadioLink SF16-FMR FM Radio Card
 #sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
 #az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
@@ -459,8 +458,8 @@ bktr0	at pci? dev ? function ?
 
 # FM-Radio support
 #radio*	at mr?
-#radio*	at sf4r?
 #radio*	at bktr?
+#radio*	at fms?
 #radio*	at sf2r0
 #radio*	at az0
 #radio*	at rt0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsvar.h,v 1.2 2000/10/14 18:04:07 aaron Exp $ */
+/*	$OpenBSD: fmsvar.h,v 1.3 2002/05/06 16:37:43 mickey Exp $ */
 /*	$NetBSD: fmsvar.h,v 1.1 1999/11/01 21:54:12 augustss Exp $	*/
 
 /*-
@@ -58,6 +58,10 @@ struct fms_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
+
+#if NRADIO > 0
+	struct fmsradio_if radio;
+#endif
 
 	struct fms_dma *sc_dmas;
 

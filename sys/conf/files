@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.246 2002/04/25 04:56:59 mickey Exp $
+#	$OpenBSD: files,v 1.247 2002/05/06 16:37:39 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -15,7 +15,7 @@ define	ifmedia
 define	mii {[phy = -1]}
 define	midibus { }
 define	midisyn
-define	radio {}
+define	radiobus {}
 
 # audio device attributes
 define	mulaw
@@ -296,7 +296,8 @@ file	dev/usb/ohci.c			ohci	needs-flag
 
 # radio devices, attaches to radio hardware driver
 device	radio
-attach	radio at radio
+attach	radio at radiobus
+file dev/radio.c			radio	needs-flag
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
@@ -375,7 +376,6 @@ file ddb/db_usrreq.c			ddb
 file ddb/db_hangman.c			ddb
 file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
-file dev/radio.c			radio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
