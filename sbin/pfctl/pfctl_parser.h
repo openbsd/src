@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.41 2003/01/18 15:00:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.42 2003/01/25 16:33:19 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -117,6 +117,7 @@ int	 eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
 
 void	pfctl_begin_table(void);
 void	pfctl_append_addr(char *, int, int);
+void	pfctl_append_file(char *);
 void	pfctl_define_table(char *, int, int);
 void	pfctl_commit_table(void);
 

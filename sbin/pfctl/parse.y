@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.297 2003/01/25 15:37:00 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.298 2003/01/25 16:33:19 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -210,6 +210,11 @@ struct queue_opts {
 	int			qlimit;
 } queue_opts;
 
+struct table_opts {
+	int			flags;
+	int			init_addr;
+} table_opts;
+
 int	yyerror(char *, ...);
 int	disallow_table(struct node_host *, char *);
 int	rule_consistent(struct pf_rule *);
@@ -325,6 +330,7 @@ typedef struct {
 		struct filter_opts	 filter_opts;
 		struct queue_opts	 queue_opts;
 		struct scrub_opts	 scrub_opts;
+		struct table_opts	 table_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -346,7 +352,7 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
-%token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO REPLYTO NO LABEL
+%token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	FRAGNORM FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
@@ -360,7 +366,7 @@ typedef struct {
 %token	<v.i>			PORTUNARY PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number port icmptype icmp6type uid gid
-%type	<v.number>		tos tableopts tableinit
+%type	<v.number>		tos
 %type	<v.i>			no dir log af fragcache
 %type	<v.i>			staticport
 %type	<v.b>			action flags flag blockspec
@@ -395,6 +401,7 @@ typedef struct {
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
+%type	<v.table_opts>		table_opts table_opt table_opts_l
 %%
 
 ruleset		: /* empty */
@@ -743,7 +750,7 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		}
 		;
 
-tabledef	: TABLE PORTUNARY STRING PORTUNARY tableopts tableinit {
+tabledef	: TABLE PORTUNARY STRING PORTUNARY table_opts {
 			if ($2 != PF_OP_LT || $4 != PF_OP_GT)
 				YYERROR;
 			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
@@ -751,23 +758,41 @@ tabledef	: TABLE PORTUNARY STRING PORTUNARY tableopts tableinit {
 				    PF_TABLE_NAME_SIZE - 1);
 				YYERROR;
 			}
-			pfctl_define_table($3, $5, $6);
+			pfctl_define_table($3, $5.flags, $5.init_addr);
 		}
 		;
 
-tableopts	: /* empty */		{ $$ = 0; }
-		| tableopts STRING	{
-			$$ = $1;
-			if (!strcmp($2, "const"))
-				$$ |= PFR_TFLAG_CONST;
-			else if (!strcmp($2, "persist"))
-				$$ |= PFR_TFLAG_PERSIST;
+table_opts	:	{
+			bzero(&table_opts, sizeof table_opts);
+		}
+		   table_opts_l
+			{ $$ = table_opts; }
+		| /* empty */
+			{
+			bzero(&table_opts, sizeof table_opts);
+			$$ = table_opts;
+		}
+		;
+
+table_opts_l	: table_opts_l table_opt
+		| table_opt
+		;
+
+table_opt	: STRING
+			{
+			if (!strcmp($1, "const"))
+				table_opts.flags |= PFR_TFLAG_CONST;
+			else if (!strcmp($1, "persist"))
+				table_opts.flags |= PFR_TFLAG_PERSIST;
 			else
 				YYERROR;
 		}
-
-tableinit	: /* empty */		{ $$ = 0; }
-		| '{' tableaddrs '}'	{ $$ = 1; }
+		| '{' tableaddrs '}'	{ table_opts.init_addr = 1; }
+		| FILENAME STRING	{
+			pfctl_append_file($2);
+			table_opts.init_addr = 1;
+		}
+		;
 
 tableaddrs	: /* empty */
 		| tableaddrs tableaddr comma
@@ -3528,6 +3553,7 @@ lookup(char *s)
 		{ "dup-to",		DUPTO},
 		{ "ecn",		ECN},
 		{ "fastroute",		FASTROUTE},
+		{ "file",		FILENAME},
 		{ "flags",		FLAGS},
 		{ "for",		FOR},
 		{ "fragment",		FRAGMENT},
