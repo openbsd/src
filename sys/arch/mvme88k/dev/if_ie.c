@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.28 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.29 2004/07/02 14:00:43 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -105,6 +105,7 @@ Mode of operation:
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -163,7 +164,7 @@ struct vm_map *ie_map; /* for obio */
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
 	struct intrhand sc_ih, sc_failih;  /* interrupt info */
-	struct evcnt sc_intrcnt; /* # of interrupts, per ie */
+	struct evcount sc_intrcnt; /* # of interrupts, per ie */
 
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
@@ -494,7 +495,8 @@ ieattach(parent, self, aux)
 	    PCCTWO_IEBERR, PCC2_IRQ_IEN | PCC2_IRQ_ICLR |
 	      (ca->ca_ipl & PCC2_IRQ_IPL));
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
+	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
 }
 
 /*
@@ -596,7 +598,7 @@ loop:
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
 		goto loop;
 
-	sc->sc_intrcnt.ev_count++;
+	sc->sc_intrcnt.ec_count++;
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.41 2004/06/10 16:05:22 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.42 2004/07/02 14:00:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -48,6 +48,7 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 
 #include <uvm/uvm.h>
 
@@ -183,8 +184,13 @@ vsattach(struct device *parent, struct device *self, void *args)
 
 	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
 	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
+
+	evcount_attach(&sc->sc_intrcnt_n, self->dv_xname,
+	    (void *)&sc->sc_ih_n.ih_ipl, &evcount_intr);
+	snprintf(sc->sc_intrname_e, sizeof sc->sc_intrname_e,
+	    "%s_err", self->dv_xname);
+	evcount_attach(&sc->sc_intrcnt_e, sc->sc_intrname_e,
+	    (void *)&sc->sc_ih_e.ih_ipl, &evcount_intr);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
@@ -697,7 +703,7 @@ vs_nintr(void *vsc)
 
 	/* Got a valid interrupt on this device */
 	s = splbio();
-	sc->sc_intrcnt_n.ev_count++;
+	sc->sc_intrcnt_n.ec_count++;
 	m328_cmd = (void *)crb_read(4, CRB_CTAG);
 
 	/*
@@ -742,7 +748,7 @@ vs_eintr(void *vsc)
 
 	/* Got a valid interrupt on this device */
 	s = splbio();
-	sc->sc_intrcnt_e.ev_count++;
+	sc->sc_intrcnt_e.ec_count++;
 
 	crsw = vs_read(2, sh_CEVSB + CEVSB_CRSW);
 	ecode = vs_read(1, sh_CEVSB + CEVSB_ERROR);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2004/07/02 11:19:58 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.9 2004/07/02 14:00:43 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 
 #include <net/if.h>
 
@@ -205,9 +206,11 @@ int
 vle_intr(sc)
 	void *sc;
 {
-	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct le_softc *lesc = (struct le_softc *)sc;
+	struct vlereg1 *reg1 = (struct vlereg1 *)lesc->sc_r1;
 	int rc;
 
+	lesc->sc_intrcnt.ec_count++;
 	rc = am7990_intr(sc);
 	ENABLE_INTR;
 	return (rc);
@@ -356,9 +359,6 @@ leattach(parent, self, aux)
 	/* get Ethernet address */
 	vleetheraddr(sc);
 
-	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "errs", &lesc->sc_errcnt);
-
 	am7990_config(sc);
 
 	/* connect the interrupt */
@@ -367,4 +367,6 @@ leattach(parent, self, aux)
 	lesc->sc_ih.ih_wantframe = 0;
 	lesc->sc_ih.ih_ipl = ca->ca_ipl;
 	vmeintr_establish(ca->ca_vec, &lesc->sc_ih);
+	evcount_attach(&lesc->sc_intrcnt, self->dv_xname,
+	    (void *)&lesc->sc_ih.ih_ipl, &evcount_intr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.46 2004/07/02 11:19:58 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.47 2004/07/02 14:00:42 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
+#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -109,9 +110,12 @@ struct clsoftc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	struct evcnt		sc_txintrcnt;
-	struct evcnt		sc_rxintrcnt;
-	struct evcnt		sc_mxintrcnt;
+	struct evcount		sc_txintrcnt;
+	char			sc_txintrname[16 + 3];
+	struct evcount		sc_rxintrcnt;
+	char			sc_rxintrname[16 + 3];
+	struct evcount		sc_mxintrcnt;
+	char			sc_mxintrname[16 + 3];
 	time_t			sc_fotime;	/* time of last fifo overrun */
 	struct cl_info		sc_cl[CLCD_PORTS_PER_CHIP];
 	struct intrhand		sc_ih_e;
@@ -369,9 +373,18 @@ clattach(parent, self, aux)
 	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
 	    PCCTWO_SCCRX, PCC2_IRQ_IEN | (ca->ca_ipl & PCC2_IRQ_IPL));
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_txintrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_rxintrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_mxintrcnt);
+	snprintf(sc->sc_txintrname, sizeof sc->sc_txintrname,
+	    "%s_tx", self->dv_xname);
+	evcount_attach(&sc->sc_txintrcnt, sc->sc_txintrname,
+	    (void *)&sc->sc_ih_t.ih_ipl, &evcount_intr);
+	snprintf(sc->sc_rxintrname, sizeof sc->sc_rxintrname,
+	    "%s_rx", self->dv_xname);
+	evcount_attach(&sc->sc_rxintrcnt, sc->sc_rxintrname,
+	    (void *)&sc->sc_ih_r.ih_ipl, &evcount_intr);
+	snprintf(sc->sc_mxintrname, sizeof sc->sc_mxintrname,
+	    "%s_mx", self->dv_xname);
+	evcount_attach(&sc->sc_mxintrcnt, sc->sc_mxintrname,
+	    (void *)&sc->sc_ih_m.ih_ipl, &evcount_intr);
 
 	printf("\n");
 }
@@ -1302,7 +1315,7 @@ cl_mintr(arg)
 		log(LOG_WARNING, "cl_mintr extra intr\n");
 		return 0;
 	}
-	sc->sc_mxintrcnt.ev_count++;
+	sc->sc_mxintrcnt.ec_count++;
 
 	channel = mir & 0x03;
 	misr = bus_space_read_1(iot, ioh, CL_MISR);
@@ -1365,7 +1378,7 @@ cl_txintr(arg)
 		log(LOG_WARNING, "cl_txintr extra intr\n");
 		return 0;
 	}
-	sc->sc_txintrcnt.ev_count++;
+	sc->sc_txintrcnt.ec_count++;
 
 	channel = tir & 0x03;
 	sc->sc_cl[channel].txcnt ++;
@@ -1500,7 +1513,7 @@ cl_rxintr(arg)
 		log(LOG_WARNING, "cl_rxintr extra intr\n");
 		return 0;
 	}
-	sc->sc_rxintrcnt.ev_count++;
+	sc->sc_rxintrcnt.ec_count++;
 	channel = rir & 0x3;
 	cmr = bus_space_read_1(iot, ioh, CL_CMR);
 

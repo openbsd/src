@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.7 1995/07/05 17:46:11 pk Exp $ */
-/*	$OpenBSD: types.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: types.h,v 1.2 2004/07/02 14:00:38 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,12 +41,12 @@
  *	@(#)types.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_M88K_TYPES_H_
+#define	_M88K_TYPES_H_
 
 #include <sys/cdefs.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if defined(_KERNEL)
 typedef struct label_t {
 	int val[19];
 } label_t;
@@ -77,4 +77,6 @@ typedef	unsigned long long	 uint64_t;
 
 typedef int32_t			register_t;
 
-#endif	/* _MACHTYPES_H_ */
+#define	__HAVE_EVCOUNT
+
+#endif	/* _M88K_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_pcctwo.c,v 1.1 2004/05/07 18:12:58 miod Exp $	*/
+/*	$OpenBSD: osiop_pcctwo.c,v 1.2 2004/07/02 14:00:43 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -29,6 +29,7 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
+#include <sys/evcount.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -53,7 +54,7 @@ int	osiop_pcctwo_match(struct device *, void *, void *);
 struct osiop_pcctwo_softc {
 	struct osiop_softc sc_osiop;
 	struct intrhand sc_ih;
-	struct evcnt sc_intrcnt;
+	struct evcount sc_intrcnt;
 };
 
 struct cfattach osiop_pcctwo_ca = {
@@ -163,12 +164,14 @@ osiop_pcctwo_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(pcctwo->sc_iot, pcctwo->sc_ioh,
 	    PCCTWO_SCSIICR, PCC2_IRQ_IEN | (ca->ca_ipl & PCC2_IRQ_IPL));
 
-	evcnt_attach(self, "intr", &psc->sc_intrcnt);
+	evcount_attach(&psc->sc_intrcnt, self->dv_xname,
+	    (void *)&psc->sc_ih.ih_ipl, &evcount_intr);
 }
 
 int
 osiop_pcctwo_intr(void *arg)
 {
+	struct osiop_pcctwo_softc *psc = arg;
 	struct osiop_softc *sc = arg;
 	u_int8_t istat;
 
@@ -178,6 +181,8 @@ osiop_pcctwo_intr(void *arg)
 	istat = osiop_read_1(sc, OSIOP_ISTAT);
 	if ((istat & (OSIOP_ISTAT_SIP | OSIOP_ISTAT_DIP)) == 0)
 		return 0;
+
+	psc->sc_intrcnt.ec_count++;
 
 	/*
 	 * 53c710 manual recommends reading dstat and sstat0 at least
