@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.22 2003/05/22 07:28:11 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.23 2003/06/04 22:08:17 deraadt Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -26,8 +26,6 @@
  *	Harvard University.
  *	This product includes software developed for the NetBSD Project
  *	by Jason R. Thorpe.
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

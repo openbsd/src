@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.15 2003/01/09 22:27:08 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.16 2003/06/04 22:08:14 deraadt Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -19,11 +19,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND

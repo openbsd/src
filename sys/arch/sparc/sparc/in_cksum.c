@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.9 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.10 2003/06/04 22:08:17 deraadt Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 1996/10/05 23:44:34 mrg Exp $ */
 
 /*
@@ -7,11 +7,6 @@
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, and it's contributors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
