@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.30 1996/07/27 11:27:38 deraadt Exp $
+#	$OpenBSD: files,v 1.31 1996/07/29 05:50:17 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -44,7 +44,7 @@ file	dev/ic/am7990.c		le
 
 # LANCE and PCnet Ethernet controllers
 device	cy: tty
-file	dev/ic/cy.c		cy
+file	dev/ic/cy.c		cy	needs-count
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
