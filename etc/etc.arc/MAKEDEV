@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.19 1997/05/21 18:30:50 pefo Exp $
+#	$OpenBSD: MAKEDEV,v 1.20 1997/09/07 20:29:09 dgregor Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -360,7 +360,7 @@ pty*)
 		while [ $n -lt 16 ]
 		do
 			nam=$name`hex $n`
-			rm -rf {tty,pty}$n
+			rm -f {tty,pty}$nam
 			mknod tty$nam c 4 "$(( $offset + $n ))"
 			mknod pty$nam c 5 "$(( $offset + $n ))"
 			n="$(( $n + 1 ))"
