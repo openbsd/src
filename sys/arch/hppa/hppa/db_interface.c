@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2001/01/30 21:45:32 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -247,9 +247,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	char *name;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
 
-	if (USERMODE(pc))
-		return;
-
 	if (count < 0)
 		count = 65536;
 
@@ -267,6 +264,9 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	/* db_printf (">> %x, %x, %x\t", fp, pc, rp); */
 #endif
 	while (fp && count--) {
+
+		if (USERMODE(pc))
+			return;
 
 		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
 		db_symbol_values (sym, &name, NULL);
