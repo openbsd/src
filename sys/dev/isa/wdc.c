@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.34 1998/09/14 01:55:52 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.35 1998/09/15 01:40:08 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -1550,7 +1550,15 @@ wdcintr(arg)
 	struct wdc_softc *wdc = arg;
 	struct wdc_xfer *xfer;
 
-	if ((wdc->sc_flags & WDCF_IRQ_WAIT) == 0) {
+	/*
+	 * It appears that some drives are causing the controller to
+	 * interrupt too quickly.  It also appears that such drives do not
+	 * conform to the MMC2 specifications.  This needs to be fixed
+	 * correctly and the extra check for NULL removed from the following
+	 * if().
+	 */
+	if (((wdc->sc_flags & WDCF_IRQ_WAIT) == 0)
+	    || (wdc->sc_xfer.tqh_first == NULL)) {
 		bus_space_tag_t iot = wdc->sc_iot;
 		bus_space_handle_t ioh = wdc->sc_ioh;
 		u_char s;
