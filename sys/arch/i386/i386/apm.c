@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.41 2000/10/18 16:53:01 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.42 2000/12/12 00:36:58 angelos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -857,6 +857,14 @@ apmattach(parent, self, aux)
 		apm_cpu_busy();
 
 		lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+
+		/*
+		 * Do a check once, ignoring any errors. This avoids
+		 * gratuitous APM disconnects on laptops where the first
+		 * event in the queue (after a boot) is non-recognizable.
+		 * The IBM ThinkPad 770Z is one of those.
+		 */
+		apm_periodic_check(sc);
 
 		if (apm_periodic_check(sc) == -1) {
 			apm_disconnect(sc);
