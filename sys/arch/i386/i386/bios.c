@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.53 2003/11/03 06:35:34 david Exp $	*/
+/*	$OpenBSD: bios.c,v 1.54 2004/01/29 01:36:13 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -275,26 +275,9 @@ bios_getopt()
 		switch (q->ba_type) {
 		case BOOTARG_MEMMAP:
 			bios_memmap = (bios_memmap_t *)q->ba_arg;
-			if (bootapiver & BAPIV_BMEMMAP) {
 #ifdef BIOS_DEBUG
-				printf(" memmap %p", bios_memmap);
+			printf(" memmap %p", bios_memmap);
 #endif
-			} else {
-				register bios_memmap_t *p;
-#ifdef BIOS_DEBUG
-				printf(" omemmap %p", bios_memmap);
-#endif
-				/*
-				 * older /boots passed memmap in Kbytes,
-				 * which is very inconvenient from the
-				 * point of view of memory management
-				 */
-				for (p = bios_memmap;
-				     p->type != BIOS_MAP_END; p++) {
-					p->addr /= 1024;
-					p->size *= 1024;
-				}
-			}
 			break;
 		case BOOTARG_DISKINFO:
 			bios_diskinfo = (bios_diskinfo_t *)q->ba_arg;
