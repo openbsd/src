@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.46 2004/09/16 18:34:05 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.47 2004/11/04 18:44:59 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.46 2004/09/16 18:34:05 deraadt Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.47 2004/11/04 18:44:59 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -461,7 +461,10 @@ edit_cmd(void) {
 			printf("Do you want to retry the same edit? ");
 			fflush(stdout);
 			q[0] = '\0';
-			(void) fgets(q, sizeof q, stdin);
+			if (fgets(q, sizeof q, stdin) == NULL) {
+				putchar('\n');
+				goto abandon;
+			}
 			switch (q[0]) {
 			case 'y':
 			case 'Y':
@@ -508,8 +511,8 @@ replace_cmd(void) {
 		fprintf(stderr, "%s: Cannot allocate memory.\n", ProgramName);
 		return (-2);
 	}
-	if (snprintf(TempFilename, sizeof TempFilename, "%s/tmp.XXXXXXXXX", SPOOL_DIR) >=
-		sizeof(TempFilename)) {
+	if (snprintf(TempFilename, sizeof TempFilename, "%s/tmp.XXXXXXXXX",
+	    SPOOL_DIR) >= sizeof(TempFilename)) {
 		TempFilename[0] = '\0';
 		fprintf(stderr, "path too long\n");
 		return (-2);

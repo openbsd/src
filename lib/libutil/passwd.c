@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.44 2004/07/13 21:09:48 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.45 2004/11/04 18:44:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.44 2004/07/13 21:09:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.45 2004/11/04 18:44:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -275,8 +275,15 @@ pw_prompt(void)
 	first = c = getchar();
 	while (c != '\n' && c != EOF)
 		c = getchar();
-	if (first == 'n')
+	switch (first) {
+	case EOF:
+		putchar('\n');
+		/* FALLTHROUGH */
+	case 'n':
+	case 'N':
 		pw_error(NULL, 0, 0);
+		break;
+	}
 }
 
 static int
