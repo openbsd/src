@@ -1,48 +1,27 @@
 #
-#	$OpenBSD: ttys,v 1.4 2002/06/09 06:15:14 todd Exp $
+#	$OpenBSD: ttys,v 1.5 2003/08/07 21:06:37 miod Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		unknown	off secure
-ttye0	"/usr/libexec/getty Pc"		unknown	on  secure clocal
-ttye1	"/usr/libexec/getty Pc"		unknown	on
-ttye2	"/usr/libexec/getty Pc"		unknown	off
-ttye3	"/usr/libexec/getty Pc"		unknown	off
-#tty00	"/usr/libexec/getty std.9600"	unknown off secure clocal # int. serial.
-#tty01	"/usr/libexec/getty std.9600"	unknown off clocal	# int. serial.
-#tty02	"/usr/libexec/getty std.9600"	unknown off clocal	# int. serial.
-#tty03	"/usr/libexec/getty std.9600"	unknown off clocal	# int. serial.
-ttyp0	none			network
-ttyp1	none			network
-ttyp2	none			network
-ttyp3	none			network
-ttyp4	none			network
-ttyp5	none			network
-ttyp6	none			network
-ttyp7	none			network
-ttyp8	none			network
-ttyp9	none			network
-ttypa	none			network
-ttypb	none			network
-ttypc	none			network
-ttypd	none			network
-ttype	none			network
-ttypf	none			network
-ttyq0	none			network
-ttyq1	none			network
-ttyq2	none			network
-ttyq3	none			network
-ttyq4	none			network
-ttyq5	none			network
-ttyq6	none			network
-ttyq7	none			network
-ttyq8	none			network
-ttyq9	none			network
-ttyqa	none			network
-ttyqb	none			network
-ttyqc	none			network
-ttyqd	none			network
-ttyqe	none			network
-ttyqf	none			network
+console	"/usr/libexec/getty Pc"		unknown	off  secure
+# MVME188 dart(4) serial ports
+ttya	"/usr/libexec/getty Pc"		unknown	off  secure	# console
+ttyb	"/usr/libexec/getty Pc"		unknown	off
+ttyc	"/usr/libexec/getty Pc"		unknown	off
+ttyd	"/usr/libexec/getty Pc"		unknown	off
+# MVME1x7 cl(4) serial ports
+tty00	"/usr/libexec/getty Pc"		unknown off  secure	# console
+tty01	"/usr/libexec/getty Pc"		unknown off
+tty02	"/usr/libexec/getty Pc"		unknown off
+tty03	"/usr/libexec/getty Pc"		unknown off
+# MVME332 vx(4) serial ports
+ttyv0	"/usr/libexec/getty Pc"		unknown off
+ttyv1	"/usr/libexec/getty Pc"		unknown off
+ttyv2	"/usr/libexec/getty Pc"		unknown off
+ttyv3	"/usr/libexec/getty Pc"		unknown off
+ttyv4	"/usr/libexec/getty Pc"		unknown off
+ttyv5	"/usr/libexec/getty Pc"		unknown off
+ttyv6	"/usr/libexec/getty Pc"		unknown off
+ttyv7	"/usr/libexec/getty Pc"		unknown off
