@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.7 2000/04/05 17:26:47 espie Exp $	*/
+/*	$OpenBSD: plist.c,v 1.8 2000/04/26 15:28:14 espie Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.7 2000/04/05 17:26:47 espie Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.8 2000/04/26 15:28:14 espie Exp $";
 #endif
 
 /*
@@ -342,8 +342,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 		    if ((cp = MD5File(tmp, buf)) != NULL) {
 			/* Mismatch? */
 			if (strcmp(cp, p->next->name + 4)) {
-			    if (Verbose)
-				printf("%s fails original MD5 checksum - %s\n",
+			    printf("%s fails original MD5 checksum - %s\n",
 				       tmp, Force ? "deleted anyway." : "not deleted.");
 			    if (!Force) {
 				fail = FAIL;
