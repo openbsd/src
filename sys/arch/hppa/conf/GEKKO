@@ -1,4 +1,4 @@
-#	$OpenBSD: GEKKO,v 1.2 1998/11/04 02:32:42 mickey Exp $
+#	$OpenBSD: GEKKO,v 1.3 1998/11/04 17:06:05 mickey Exp $
 #
 # HP 9000/712/* boxens
 #
@@ -94,8 +94,8 @@ lasi*	at mainbus0	# LASI host adapter (LSI ???)
 
 gsc*	at lasi?	# internal i/o space
 
-ncr*	at gsc?		# NCR 53C710
-scsibus* at ncr?
+siop*	at gsc?		# NCR 53C710
+scsibus* at siop?
 
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
