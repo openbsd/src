@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.3 2004/08/10 19:16:18 deraadt Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.4 2004/09/16 07:54:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -104,7 +104,7 @@
 #define	MACE_ISA_INT_SERIAL_2	0xfc000000	/* Serial port 2 */
 
 
-/* ISA Periferials */
+/* ISA Peripherals */
 #define	MACE_ISA_EPP_OFFS	(MACE_ISAX_OFFS+0x00000000)
 #define	MACE_ISA_ECP_OFFS	(MACE_ISAX_OFFS+0x00008000)
 #define	MACE_ISA_SER1_OFFS	(MACE_ISAX_OFFS+0x00010000)
