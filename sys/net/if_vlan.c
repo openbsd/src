@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.9 2001/03/22 05:26:35 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.10 2001/03/23 07:14:53 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -343,6 +343,12 @@ vlan_input(eh, m)
 	struct ifvlan *ifv;
 	u_int tag;
 
+	if (m->m_len < EVL_ENCAPLEN &&
+	    (m = m_pullup(m, EVL_ENCAPLEN)) == NULL) {
+		m_freem(m);
+		return (-1);
+	}
+
 	tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
 
 	for (i = 0; i < NVLAN; i++) {
@@ -366,9 +372,7 @@ vlan_input(eh, m)
 	 */
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	eh->ether_type = mtod(m, u_int16_t *)[1];
-	m->m_data += EVL_ENCAPLEN;
-	m->m_len -= EVL_ENCAPLEN;
-	m->m_pkthdr.len -= EVL_ENCAPLEN;
+	m_adj(m, EVL_ENCAPLEN);
 
 #if NBPFILTER > 0
 	if (ifv->ifv_if.if_bpf) {
