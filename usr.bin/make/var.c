@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.43 2000/07/17 23:09:06 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.44 2000/07/17 23:26:50 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.43 2000/07/17 23:09:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.44 2000/07/17 23:26:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -769,239 +769,119 @@ Var_Value(name, ctxt)
  *	2...?).
  *	A Boolean in *freePtr telling whether the returned string should
  *	be freed by the caller.
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 char *
 Var_Parse(str, ctxt, err, lengthPtr, freePtr)
-    char    	  *str;	    	/* The string to parse */
-    SymTable   	  *ctxt;    	/* The context for the variable */
-    Boolean 	    err;    	/* TRUE if undefined variables are an error */
-    size_t	    *lengthPtr;	/* OUT: The length of the specification */
-    Boolean 	    *freePtr; 	/* OUT: TRUE if caller should free result */
+    char    	*str;	    	/* The string to parse */
+    SymTable   	*ctxt;    	/* The context for the variable */
+    Boolean 	err;    	/* TRUE if undefined variables are an error */
+    size_t	*lengthPtr;	/* OUT: The length of the specification */
+    Boolean 	*freePtr; 	/* OUT: TRUE if caller should free result */
 {
-    char   	    *tstr;    	/* Pointer into str */
-    Var	    	    *v;	    	/* Variable in invocation */
-    Boolean 	    haveModifier;/* TRUE if have modifiers for the variable */
-    char   	    endc;    	/* Ending character when variable in parens
+    char  	*tstr;    	/* Pointer into str */
+    Var	    	*v;	    	/* Variable in invocation */
+    char   	endc;    	/* Ending character when variable in parens
 				 * or braces */
-    char    	    *start;
-    Boolean 	    dynamic;	/* TRUE if the variable is local and we're
-				 * expanding it in a non-local context. This
-				 * is done to support dynamic sources. The
-				 * result is just the invocation, unaltered */
+    char    	*start;
+    char	*val;		/* Variable value  */
+    u_int32_t	k;
+    int		idx;
 
     *freePtr = FALSE;
-    dynamic = FALSE;
-    start = str;
+    start = str++;
 
-    if (str[1] != '(' && str[1] != '{') {
-	/*
-	 * If it's not bounded by braces of some sort, life is much simpler.
-	 * We just need to check for the first character and return the
-	 * value if it exists.
-	 */
-	v = VarFind_interval(str+1, str+2, ctxt, FIND_ENV | FIND_MINE);
-	if (v == NULL) {
-	    *lengthPtr = 2;
+    val = NULL;
 
-	    if (ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL || ctxt == NULL) {
-		/*
-		 * If substituting a local variable in a non-local context,
-		 * assume it's for dynamic source stuff. We have to handle
-		 * this specially and return the longhand for the variable
-		 * with the dollar sign escaped so it makes it back to the
-		 * caller. Only four of the local variables are treated
-		 * specially as they are the only four that will be set
-		 * when dynamic sources are expanded.
-		 */
-		switch (str[1]) {
-		    case '@':
-			return "$(.TARGET)";
-		    case '%':
-			return "$(.ARCHIVE)";
-		    case '*':
-			return "$(.PREFIX)";
-		    case '!':
-			return "$(.MEMBER)";
+    if (*str != '(' && *str != '{') {
+    	tstr = str + 1;
+	*lengthPtr = 2;
+	endc = '\0';
+    } else {
+	endc = *str == '(' ? ')' : '}';
+    	str++;
+
+	/* Find eventual modifiers in the variable */
+	for (tstr = str; *tstr != ':'; tstr++)
+	    if (*tstr == '\0' || *tstr == endc) {
+	    	endc = '\0';
+		break;
+	    }
+	*lengthPtr = tstr+1 - start;
+    }
+
+    idx = quick_lookup(str, &tstr, &k);
+    v = varfind(str, tstr, ctxt, FIND_ENV | FIND_MINE, idx, k);
+    if (v == NULL) {
+    	/* Find out about D and F forms of local variables. */
+    	if (idx == -1 && tstr == str+2 && (str[1] == 'D' || str[1] == 'F')) {
+	    switch (*str) {
+	    case '@':
+	    	idx = TARGET_INDEX;
+		break;
+	    case '!':
+	    	idx = ARCHIVE_INDEX;
+		break;
+	    case '*':
+	    	idx = PREFIX_INDEX;
+		break;
+	    case '%':
+	    	idx = MEMBER_INDEX;
+		break;
+	    default:
+	    	break;
+	    }
+	    /* This is a DF form, check if we can expand it now.  */
+	    if (idx != -1 && ctxt != NULL && ctxt != CTXT_GLOBAL) {
+	    	v = varfind(str, str+1, ctxt, 0, idx, 0);
+		/* No need for nested expansion or anything, as we're
+		 * the only one who sets these things and we sure don't
+		 * do nested invocations in them...  */
+		if (v != NULL) {
+		    val = VarValue(v);
+		    if (str[1] == 'D')
+			val = Var_GetHead(val);
+		    else
+			val = Var_GetTail(val);
+		    *freePtr = TRUE;
 		}
 	    }
-	    /* Error.  */
-	    return err ? var_Error : varNoError;
-	} else {
-	    haveModifier = FALSE;
-	    tstr = &str[1];
-	    endc = str[1];
 	}
     } else {
-	endc = str[1] == '(' ? ')' : '}';
-
-	/* Skip to the end character or a colon, whichever comes first.  */
-	for (tstr = str + 2; *tstr != '\0' && *tstr != endc && *tstr != ':';)
-	     tstr++;
-	if (*tstr == ':')
-	    haveModifier = TRUE;
-	else if (*tstr != '\0')
-	    haveModifier = FALSE;
-	else {
-	    /*
-	     * If we never did find the end character, return NULL
-	     * right now, setting the length to be the distance to
-	     * the end of the string, since that's what make does.
-	     */
-	    *lengthPtr = tstr - str;
-	    return var_Error;
-	}
-
-	v = VarFind_interval(str + 2, tstr, ctxt, FIND_ENV | FIND_MINE);
-	if (v == NULL && ctxt != CTXT_CMD && ctxt != CTXT_GLOBAL && 
-	    ctxt != NULL &&
-	    (tstr-str) == 4 && (str[3] == 'F' || str[3] == 'D'))
-	{
-	    /*
-	     * Check for bogus D and F forms of local variables since we're
-	     * in a local context and the name is the right length.
-	     */
-	    switch (str[2]) {
-		case '@':
-		case '%':
-		case '*':
-		case '!':
-		case '>':
-		case '<':
-		{
-		    char    *val;
-
-		    /* Well, it's local -- go look for it.  */
-		    v = VarFind_interval(str+2, str+3, ctxt, 0);
-
-		    if (v != NULL) {
-			/* No need for nested expansion or anything, as we're
-			 * the only one who sets these things and we sure don't
-			 * but nested invocations in them...  */
-			val = VarValue(v);
-
-			if (str[3] == 'D')
-			    val = Var_GetHead(val);
-			else
-			    val = Var_GetTail(val);
-			/* Resulting string is dynamically allocated, so
-			 * tell caller to free it.  */
-			*freePtr = TRUE;
-			*lengthPtr = tstr-start+1;
-			*tstr = endc;
-			return val;
-		    }
-		    break;
-		}
-	    }
-	}
-
-	if (v == NULL) {
-	    if ((tstr-str == 3 ||
-		 (tstr-str == 4 && (str[3] == 'F' ||
-					 str[3] == 'D'))) &&
-		(ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL || ctxt == NULL))
-	    {
-		/* If substituting a local variable in a non-local context,
-		 * assume it's for dynamic source stuff. We have to handle
-		 * this specially and return the longhand for the variable
-		 * with the dollar sign escaped so it makes it back to the
-		 * caller. Only four of the local variables are treated
-		 * specially as they are the only four that will be set
-		 * when dynamic sources are expanded.  */
-		switch (str[2]) {
-		    case '@':
-		    case '%':
-		    case '*':
-		    case '!':
-			dynamic = TRUE;
-			break;
-		}
-	    } else if (tstr-str > 4 && str[2] == '.' &&
-		       isupper((unsigned char) str[3]) &&
-		       (ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL || ctxt == NULL))
-	    {
-		int	len;
-
-		len = (tstr-str) - 3;
-		if ((strncmp(str+2, ".TARGET", len) == 0) ||
-		    (strncmp(str+2, ".ARCHIVE", len) == 0) ||
-		    (strncmp(str+2, ".PREFIX", len) == 0) ||
-		    (strncmp(str+2, ".MEMBER", len) == 0)) {
-		    dynamic = TRUE;
-		}
-	    }
-
-	    if (!haveModifier) {
-		/* No modifiers -- have specification length so we can return
-		 * now.  */
-		*lengthPtr = tstr - start + 1;
-		*tstr = endc;
-		if (dynamic) {
-		    char *n; 
-		    n = emalloc(*lengthPtr + 1);
-		    strncpy(n, start, *lengthPtr);
-		    n[*lengthPtr] = '\0';
-		    *freePtr = TRUE;
-		    return n;
-		} else
-		    return err ? var_Error : varNoError;
-	    } else {
-		/* Still need to get to the end of the variable specification,
-		 * so kludge up a Var structure for the modifications */
-		v = new_var(str+1, NULL);	/* junk has name, for error reports */
-		v->flags = VAR_JUNK;
-	    }
-	}
-    }
-
-    if (v->flags & VAR_IN_USE)
-	Fatal("Variable %s is recursive.", v->name);
-	/*NOTREACHED*/
-    else
-	v->flags |= VAR_IN_USE;
-    /* Before doing any modification, we have to make sure the value
-     * has been fully expanded. If it looks like recursion might be
-     * necessary (there's a dollar sign somewhere in the variable's value)
-     * we just call Var_Subst to do any other substitutions that are
-     * necessary. Note that the value returned by Var_Subst will have
-     * been dynamically-allocated, so it will need freeing when we
-     * return.  */
-    str = VarValue(v);
-    if (strchr(str, '$') != NULL) {
-	str = Var_Subst(str, ctxt, err);
-	*freePtr = TRUE;
-    }
-
-    v->flags &= ~VAR_IN_USE;
-
-    *lengthPtr = tstr - start + 1;
-    if (str != NULL && haveModifier)
-    	str = VarModifiers_Apply(str, ctxt, err, freePtr, tstr+1, endc, 
-	    lengthPtr);
-
-    if (v->flags & VAR_JUNK) {
-	/* Perform any free'ing needed and set *freePtr to FALSE so the caller
-	 * doesn't try to free a static pointer.  */
-	if (*freePtr)
-	    free(str);
-	*freePtr = FALSE;
-	Buf_Destroy(&(v->val));
-	free(v);
-	if (dynamic) {
-	    str = emalloc(*lengthPtr + 1);
-	    strncpy(str, start, *lengthPtr);
-	    str[*lengthPtr] = '\0';
+	if (v->flags & VAR_IN_USE)
+	    Fatal("Variable %s is recursive.", v->name);
+	    /*NOTREACHED*/
+	else
+	    v->flags |= VAR_IN_USE;
+	/* Before doing any modification, we have to make sure the value
+	 * has been fully expanded. If it looks like recursion might be
+	 * necessary (there's a dollar sign somewhere in the variable's value)
+	 * we just call Var_Subst to do any other substitutions that are
+	 * necessary. Note that the value returned by Var_Subst will have
+	 * been dynamically-allocated, so it will need freeing when we
+	 * return.  */
+	val = VarValue(v);
+	if (strchr(val, '$') != NULL) {
+	    val = Var_Subst(val, ctxt, err);
 	    *freePtr = TRUE;
-	} else {
-	    str = err ? var_Error : varNoError;
 	}
+
+	v->flags &= ~VAR_IN_USE;
     }
-    return str;
+    if (endc != '\0')
+	val = VarModifiers_Apply(val, ctxt, err, freePtr, tstr+1, endc, 
+	    lengthPtr);
+    if (val == NULL) {
+    	/* Dynamic source that can't be expanded for now: copy the var
+	 * specification instead.  */
+    	if (idx != -1 && (ctxt == NULL || ctxt == CTXT_GLOBAL)) {
+	    *freePtr = TRUE;
+	    val = interval_dup(start, start+ *lengthPtr);
+	} else 
+	    val = err ? var_Error : varNoError;
+    }
+
+    return val;
 }
 
 /*-

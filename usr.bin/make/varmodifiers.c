@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.1 2000/07/17 23:09:06 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.2 2000/07/17 23:26:51 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -783,6 +783,9 @@ VarModify (str, modProc, datum)
     char 	  *as;		    /* word list memory */
     int ac, i;
 
+    if (str == NULL)
+    	return NULL;
+
     Buf_Init(&buf, 0);
     addSpace = FALSE;
 
@@ -935,7 +938,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 	char	termc;	    /* Character which terminated scan */
 
 	if (DEBUG(VAR))
-	    printf("Applying :%c to \"%s\"\n", *tstr, str);
+	    printf("Applying :%c to \"%s\"\n", *tstr, str ? str : "");
 	switch (*tstr) {
 	    case 'N':
 	    case 'M':
@@ -1122,7 +1125,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 	    case 's':
 		if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
 		    char *err;
-		    newStr = Cmd_Exec(str, &err);
+		    newStr = str ? Cmd_Exec(str, &err) : NULL;
 		    if (err)
 			Error(err, str);
 		    cp = tstr + 2;
@@ -1210,12 +1213,12 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 	    }
 	}
 	if (DEBUG(VAR))
-	    printf("Result is \"%s\"\n", newStr);
+	    printf("Result is \"%s\"\n", newStr != NULL ? newStr : "");
 
 	if (*freePtr)
 	    free(str);
 	str = newStr;
-	if (str != var_Error)
+	if (str != var_Error && str != NULL)
 	    *freePtr = TRUE;
 	else
 	    *freePtr = FALSE;
@@ -1256,6 +1259,9 @@ VarQuote(str)
     BUFFER  	  buf;
     /* This should cover most shells :-( */
     static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
+
+    if (str == NULL)
+    	return NULL;
 
     Buf_Init(&buf, MAKE_BSIZE);
     for (; *str; str++) {
