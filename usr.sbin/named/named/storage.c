@@ -1,4 +1,4 @@
-/*	$OpenBSD: storage.c,v 1.6 2002/07/30 22:39:35 deraadt Exp $	*/
+/*	$OpenBSD: storage.c,v 1.7 2002/07/31 09:19:40 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -192,7 +192,7 @@ calloc(num, size)
 {
 	register char *p;
 
-	if (SIZE_T_MAX / num < size) {
+	if (num && size && SIZE_T_MAX / num < size) {
 		errno = ENOMEM;
 		return NULL;
 	}
