@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2003/02/01 01:51:31 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2003/02/01 14:09:16 dhartmei Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.34 2003/02/01 01:51:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.35 2003/02/01 14:09:16 dhartmei Exp $";
 #endif
 #endif /* not lint */
 
@@ -550,17 +550,18 @@ static void
 printproto(struct protox *tp, char *name)
 {
 	void (*pr)();
-	u_long off;
+	u_char i;
 
 	if (sflag) {
 		pr = tp->pr_stats;
-		off = nl[tp->pr_sindex].n_value;
+		i = tp->pr_sindex;
 	} else {
 		pr = tp->pr_cblocks;
-		off = nl[tp->pr_index].n_value;
+		i = tp->pr_index;
 	}
-	if (pr != NULL && (off || af != AF_UNSPEC))
-		(*pr)(off, name);
+	if (pr != NULL && i < sizeof(nl) / sizeof(nl[0]) &&
+	    (nl[i].n_value || af != AF_UNSPEC))
+		(*pr)(nl[i].n_value, name);
 }
 
 /*
