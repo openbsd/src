@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.37 2003/08/23 20:36:44 itojun Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.38 2003/08/23 21:22:34 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -77,6 +77,8 @@ struct con {
 	size_t osize;
 	char *op;
 	int ol;
+	int data_lines;
+	int data_body;
 } *con;
 
 void     usage(void);
@@ -113,6 +115,7 @@ time_t t;
 int maxcon = MAXCON;
 int clients;
 int debug;
+int stutter = 1;
 #define MAXTIME 400
 
 
@@ -120,7 +123,8 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: spamd [-45d] [-c maxcon] [-n name] [-p port] [-r reply]\n");
+	    "usage: spamd [-45d] [-c maxcon] [-n name] [-p port] [-r reply] "
+	    "[-s secs]\n");
 	exit(1);
 }
 
@@ -521,22 +525,23 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	    hostname, spamd, ctime(&t));
 	cp->op = cp->obuf;
 	cp->ol = strlen(cp->op);
-	cp->w = t + 1;
+	cp->w = t + stutter;
 	cp->s = t;
-	strlcpy(cp->rend, "\n\r", sizeof cp->rend);
+	strlcpy(cp->rend, "\n", sizeof cp->rend);
 	clients++;
 }
 
 void
 closecon(struct con *cp)
 {
-	if (debug > 0) {
-		time_t t;
+	time_t t;
 
-		time(&t);
+	time(&t);
+	syslog_r(LOG_INFO, &sdata, "%s disconnected after %ld seconds.",
+	    cp->addr, (long)(t - cp->s));
+	if (debug > 0)
 		printf("%s connected for %ld seconds.\n", cp->addr,
 		    (long)(t - cp->s));
-	}
 	if (cp->lists != NULL) {
 		free(cp->lists);
 		cp->lists = NULL;
@@ -578,7 +583,7 @@ nextstate(struct con *cp)
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
 			cp->state = 2;
-			cp->w = t + 1;
+			cp->w = t + stutter;
 			break;
 		}
 		goto mail;
@@ -599,7 +604,7 @@ nextstate(struct con *cp)
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
 			cp->state = 4;
-			cp->w = t + 1;
+			cp->w = t + stutter;
 			break;
 		}
 		goto rcpt;
@@ -620,7 +625,10 @@ nextstate(struct con *cp)
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
 			cp->state = 6;
-			cp->w = t + 1;
+			cp->w = t + stutter;
+			if (cp->mail[0] && cp->rcpt[0])
+				syslog_r(LOG_INFO, &sdata, "%s: %s -> %s",
+				    cp->addr, cp->mail, cp->rcpt);
 			break;
 		}
 		goto spam;
@@ -634,16 +642,49 @@ nextstate(struct con *cp)
 
 	spam:
 	case 50:
+		if (match(cp->ibuf, "DATA")) {
+			snprintf(cp->obuf, cp->osize,
+			    "354 Enter spam, end with \".\" on a line by "
+			    "itself\n");
+			cp->state = 60;
+		} else {
+			snprintf(cp->obuf, cp->osize,
+			    "500 5.5.1 Command unrecognized\n");
+		}
+		cp->ip = cp->ibuf;
+		cp->il = sizeof(cp->ibuf) - 1;
+		cp->op = cp->obuf;
+		cp->ol = strlen(cp->op);
+		cp->w = t + stutter;
+		break;
+	case 60:
+		if (!strcmp(cp->ibuf, ".") ||
+		    (cp->data_body && ++cp->data_lines >= 10)) {
+			cp->state = 98;
+			goto done;
+		}
+		if (!cp->data_body && !*cp->ibuf)
+			cp->data_body = 1;
+		if (cp->data_body && *cp->ibuf)
+			syslog_r(LOG_INFO, &sdata, "%s: Body: %s", cp->addr,
+			    cp->ibuf);
+		else if (match(cp->ibuf, "FROM:") || match(cp->ibuf, "TO:") ||
+		    match(cp->ibuf, "SUBJECT:"))
+			syslog_r(LOG_INFO, &sdata, "%s: %s", cp->addr,
+			    cp->ibuf);
+		cp->ip = cp->ibuf;
+		cp->il = sizeof(cp->ibuf) - 1;
+		cp->r = t;
+		break;
+	done:
+	case 98:
 		cp->lists = strdup(doreply(cp));
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
+		cp->w = t + stutter;
 		cp->state = 99;
-		cp->w = t + 1;
 		break;
 	case 99:
-		syslog_r(LOG_INFO, &sdata, "%s: %s -> %s %ldsec by lists:%s",
-		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s),
-		    (cp->lists != NULL) ? cp->lists : "");
 		closecon(cp);
 		break;
 	default:
@@ -676,8 +717,13 @@ handler(struct con *cp)
 		}
 	}
 	if (end || cp->il == 0) {
+		while (cp->ip > cp->ibuf &&
+		    (cp->ip[-1] == '\r' || cp->ip[-1] == '\n'))
+			cp->ip--;
 		*cp->ip = '\0';
 		cp->r = 0;
+		syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
+		    cp->ibuf);
 		nextstate(cp);
 	}
 }
@@ -714,7 +760,7 @@ handlew(struct con *cp, int one)
 		}
 	}
 handled:
-	cp->w = t + 1;
+	cp->w = t + stutter;
 	if (cp->ol == 0) {
 		cp->w = 0;
 		nextstate(cp);
@@ -747,7 +793,7 @@ main(int argc, char *argv[])
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	while ((ch = getopt(argc, argv, "45c:p:dr:n:")) != -1) {
+	while ((ch = getopt(argc, argv, "45c:p:dr:s:n:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
@@ -771,6 +817,11 @@ main(int argc, char *argv[])
 		case 'r':
 			reply = optarg;
 			break;
+		case 's':
+			i = atoi(optarg);
+			if (i < 0 || i > 10)
+				usage();
+			stutter = i;
 		case 'n':
 			spamd = optarg;
 			break;
@@ -806,6 +857,12 @@ main(int argc, char *argv[])
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one,
 	    sizeof(one)) == -1)
 		return (-1);
+
+	one = 1;
+	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &one, sizeof(one)) == -1) {
+		syslog(LOG_ERR, "setsockopt: %s", strerror(errno));
+		return (-1);
+	}
 
 	conflisten = socket(AF_INET, SOCK_STREAM, 0);
 	if (conflisten == -1)
@@ -861,6 +918,7 @@ main(int argc, char *argv[])
 			err(1, "fork");
 	} else
 		printf("listening for incoming connections.\n");
+	syslog_r(LOG_WARNING, &sdata, "listening for incoming connections.");
 
 	while (1) {
 		struct timeval tv, *tvp;
@@ -959,8 +1017,11 @@ main(int argc, char *argv[])
 					break;
 			if (i == maxcon)
 				close(s2);
-			else
+			else {
 				initcon(&con[i], s2, &sin);
+				syslog_r(LOG_INFO, &sdata, "%s: connected (%d)",
+				    con[i].addr, clients);
+			}
 		}
 		if (FD_ISSET(conflisten, fdsr)) {
 			sinlen = sizeof(lin);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.35 2003/06/02 14:27:12 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.36 2003/08/23 21:22:34 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -35,6 +35,7 @@
 .Op Fl n Ar name
 .Op Fl p Ar port
 .Op Fl r Ar reply
+.Op Fl s Ar secs
 .Sh DESCRIPTION
 .Nm
 is a fake
@@ -74,6 +75,10 @@ using
 .It Fl r Ar reply
 The SMTP error to return to the spammer, i.e. 450, 451, 550.
 This defaults to 450.
+.It Fl s Ar secs
+Delay each character sent to the client by the specified
+amount of seconds.
+Defaults to 1.
 .El
 .Pp
 .Nm
@@ -175,14 +180,32 @@ will reject mail by displaying all the messages from all blacklists in which
 a connecting address is matched.
 .Xr spamd-setup 8
 is normally used to configure this information.
+.Sh LOGGING
+.Nm
+sends log messages to
+.Xr syslogd 8
+using
+.Em facility
+daemon and, with increasing verbosity,
+.Em level
+err, warn, info and debug.
+The following
+.Xr syslog.conf 5
+section can be used to log connection details to a dedicated file:
+.Bd -literal
+!spamd
+daemon.err;daemon.warn;daemon.info	/var/log/spamd
+.Ed
 .Sh FILES
 /etc/spamd.conf
 .Sh SEE ALSO
 .Xr pf.conf 5 ,
 .Xr services 5 ,
 .Xr spamd.conf 5 ,
+.Xr syslog.conf 5 ,
 .Xr pfctl 8 ,
-.Xr spamd-setup 8
+.Xr spamd-setup 8 ,
+.Xr syslogd 8
 .Sh HISTORY
 The
 .Nm
