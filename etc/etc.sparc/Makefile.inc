@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 1997/09/21 11:50:38 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 1998/09/23 07:27:06 todd Exp $
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -20,6 +20,8 @@ bsd.scsi3:
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
+	${DESTDIR}/usr/mdec/binstall net /tmp && \
+	  mv /tmp/boot.sparc.openbsd ${DESTDIR}/snapshot/boot.net
 
 distrib:
 	cd ${.CURDIR}/../distrib && make cleandir && \
