@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.44 2004/10/05 20:20:59 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.45 2004/10/05 20:22:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1038,6 +1038,11 @@ sub dirclass() { "OpenBSD::PackingElement::Extradir" }
 
 package OpenBSD::PackingElement::Extradir;
 our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::Extra);
+
+sub destate
+{
+	&OpenBSD::PackingElement::Extra::destate;
+}
 
 package OpenBSD::PackingElement::SpecialFile;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
