@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expr.1,v 1.13 2003/03/12 20:12:35 deraadt Exp $
+.\"	$OpenBSD: expr.1,v 1.14 2003/12/22 12:01:41 jmc Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
@@ -71,6 +71,22 @@ otherwise, the matching operator returns the number of characters matched.
 If the match fails and the pattern contains a regular expression subexpression
 the null string is returned;
 otherwise, returns 0.
+.Pp
+Note: the empty string cannot be matched using
+.Bd -literal -offset indent
+expr '' : '$'
+.Ed
+.Pp
+This is because the returned number of matched characters
+.Pq zero
+is indistinguishable from a failed match, so
+.Nm
+returns failure
+.Pq 0 .
+To match the empty string, use a structure such as:
+.Bd -literal -offset indent
+expr X'' : 'X$'
+.Ed
 .El
 .Pp
 Parentheses are used for grouping in the usual manner.
