@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.3 1999/10/08 01:50:37 aaron Exp $
+.\"	$OpenBSD: enc.4,v 1.4 1999/10/29 05:37:44 angelos Exp $
 .Dd October 7, 1999
 .Dt ENC 4
 .Os
@@ -6,7 +6,7 @@
 .Nm enc
 .Nd Encapsulating Interface
 .Sh SYNOPSIS
-.Cd "pseudo-device enc 1"
+.Cd "pseudo-device enc 4"
 .Sh DESCRIPTION
 The
 .Nm
@@ -19,7 +19,28 @@ The
 .Xr vpn 8
 manpage shows an example of such a setup.
 .Pp
-The other use of the
+Another use is to allow the creation of virtual-ethernets, using
+.Xr ipsec 4 .
+See
+.Xr bridge 4
+and
+.Xr ipsecadm 8
+for more details. Briefly,
+.Nm
+interfaces can be part of a bridge configuration. Such interfaces are
+treated as ethernet interfaces; packets sent to them by the bridge are
+IPsec-processed and sent to the remote bridge (which reverses the process and
+injects the original ethernet frames in the local ethernet segments).
+Packets received with the appropriate IPsec SA are made to appear as if
+they arrived over the corresponding
+.Nm
+interface, and are then processed by the bridge accordingly.
+.Xr ipsecadm 8
+is used to associate an
+.Nm
+interface with an IPsec SA. This is a one-to-one correspondence.
+.Pp
+The last use of the
 .Nm
 interface is to allow an administrator to see outgoing packets before
 they have been processed by
@@ -27,13 +48,28 @@ they have been processed by
 or incoming packets after they have been similarly processed, via
 .Xr tcpdump 1 .
 .Pp
-There is only one
+The
+.Dq enc0
+interface inherits all the IPsec traffic that does not have another
 .Nm
-interface, named
+interface explicitly assigned to it. Thus, if one were never to assign
+an IPsec SA to another
+.Nm
+interface, all IPsec traffic could be filtered based on
 .Dq enc0 ,
-regardless of the argument given on the
-.Sy pseudo-device
-line in the kernel configuration file.
+and all IPsec traffic could be seen by invoking
+.Xr tcpdump 1
+on the
+.Dq enc0
+interface. IPsec SAs that have been assigned to some other
+.Nm
+interface can be snooped via
+.Xr tcpdump 1
+or filtered via
+.Xr ipf 5
+through that
+.Nm
+interface.
 .Sh EXAMPLES
 To see all outgoing packets before they have been processed via
 .Xr ipsec 4 ,
