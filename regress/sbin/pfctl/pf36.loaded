@@ -1,0 +1,56 @@
+@0 nat on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@1 nat on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@2 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 bitmask static-port
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@3 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 random
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@4 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x0123456789abcdef0123456789abcdef
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@5 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x4da8e393fd22f577426cfdf7fe52d3b0
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@6 nat on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 round-robin
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@0 rdr on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@1 rdr on lo0 inet from any to 127.0.0.1 -> { 127.0.0.1, 127.0.0.2 } round-robin
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@2 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 bitmask
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@3 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 random
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@4 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x0123456789abcdef0123456789abcdef
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@5 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 source-hash 0x4da8e393fd22f577426cfdf7fe52d3b0
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@6 rdr on lo0 inet from any to 127.0.0.1 -> 127.0.0.0/24 round-robin
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
