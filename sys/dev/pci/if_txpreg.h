@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.20 2001/05/03 05:22:51 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.21 2001/05/08 03:52:43 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -165,6 +165,7 @@
 #define	TXP_CMD_GET_IP_ADDRESS			0x4a
 #define	TXP_CMD_READ_PCI_REG			0x4c
 #define	TXP_CMD_WRITE_PCI_REG			0x4d
+#define	TXP_CMD_OFFLOAD_READ			0x4e
 #define	TXP_CMD_OFFLOAD_WRITE			0x4f
 #define	TXP_CMD_HELLO_RESPONSE			0x57
 #define	TXP_CMD_ENABLE_RX_FILTER		0x58
@@ -247,9 +248,9 @@ struct txp_tx_desc {
 #define	TX_PFLAGS_PRIO		0x00000040	/* priority field valid */
 #define	TX_PFLAGS_UDPCKSUM	0x00000080	/* udp checksum */
 #define	TX_PFLAGS_PADFRAME	0x00000100	/* pad frame */
-#define	TX_PFLAGS_VLANTAG_M	0x000ff000	/* vlan tag mask */
+#define	TX_PFLAGS_VLANTAG_M	0x0ffff000	/* vlan tag mask */
 #define	TX_PFLAGS_VLANPRI_M	0x00700000	/* vlan priority mask */
-#define	TX_PFLAGS_VLANTAG_S	16		/* amount to shift tag */
+#define	TX_PFLAGS_VLANTAG_S	12		/* amount to shift tag */
 
 struct txp_rx_desc {
 	volatile u_int8_t	rx_flags;	/* type/descriptor flags */
@@ -308,6 +309,14 @@ struct txp_rxbuf_desc {
 	volatile u_int32_t	rb_paddrhi;
 	volatile u_int32_t	rb_vaddrlo;
 	volatile u_int32_t	rb_vaddrhi;
+};
+
+/* Extension descriptor */
+struct txp_ext_desc {
+	volatile u_int32_t	ext_1;
+	volatile u_int32_t	ext_2;
+	volatile u_int32_t	ext_3;
+	volatile u_int32_t	ext_4;
 };
 
 struct txp_cmd_desc {
@@ -496,6 +505,16 @@ struct txp_hostvar {
 #define	RXBUF_ENTRIES			256
 #define	CMD_ENTRIES			32
 #define	RSP_ENTRIES			32
+
+#define	OFFLOAD_TCPCKSUM		0x00000002	/* tcp checksum */
+#define	OFFLOAD_UDPCKSUM		0x00000004	/* udp checksum */
+#define	OFFLOAD_IPCKSUM			0x00000008	/* ip checksum */
+#define	OFFLOAD_IPSEC			0x00000010	/* ipsec enable */
+#define	OFFLOAD_BCAST			0x00000020	/* broadcast throttle */
+#define	OFFLOAD_DHCP			0x00000040	/* dhcp prevention */
+#define	OFFLOAD_VLAN			0x00000080	/* vlan enable */
+#define	OFFLOAD_FILTER			0x00000100	/* filter enable */
+#define	OFFLOAD_TCPSEG			0x00000200	/* tcp segmentation */
 
 /*
  * Macros for converting array indices to offsets within the descriptor

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.23 2001/05/03 05:22:51 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.24 2001/05/08 03:52:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -116,9 +116,13 @@ void txp_set_filter __P((struct txp_softc *));
 int txp_cmd_desc_numfree __P((struct txp_softc *));
 int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
     u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int));
+int txp_command2 __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
+    u_int32_t, struct txp_rsp_desc **, int));
 int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
     struct txp_rsp_desc **));
-void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *));
+void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *,
+    struct txp_rsp_desc *));
+void txp_vlan_enable __P((struct txp_softc *));
 
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
@@ -232,6 +236,10 @@ txp_attach(parent, self, aux)
 		return;
 
 	txp_set_filter(sc);
+
+#if NVLAN > 0
+	txp_vlan_enable(sc);
+#endif
 
 	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
 	sc->sc_arpcom.ac_enaddr[1] = ((u_int8_t *)&p1)[0];
@@ -607,6 +615,14 @@ txp_rx_reclaim(sc, r)
 #endif
 
 		m_adj(m, sizeof(struct ether_header));
+
+#if NVLAN > 0
+		if (rxd->rx_stat & RX_STAT_VLAN) {
+			if (vlan_input_tag(eh, m, htons(rxd->rx_vlan >> 16)) < 0)
+				ifp->if_noproto++;
+			goto next;
+		}
+#endif
 
 		ether_input(ifp, eh, m);
 
@@ -1129,6 +1145,9 @@ txp_start(ifp)
 	struct txp_frag_desc *fxd;
 	struct mbuf *m;
 	u_int32_t firstprod, firstcnt, prod, cnt;
+#if NVLAN > 0
+	struct ifvlan		*ifv;
+#endif
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1163,6 +1182,15 @@ txp_start(ifp)
 		txd->tx_addrhi = 0;
 		txd->tx_totlen = 0;
 		txd->tx_pflags = 0;
+
+#if NVLAN > 0
+		if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
+		    m->m_pkthdr.rcvif != NULL) {
+			ifv = m->m_pkthdr.rcvif->if_softc;
+			txd->tx_pflags = TX_PFLAGS_VLAN |
+			    (htons(ifv->ifv_tag) << TX_PFLAGS_VLANTAG_S);
+		}
+#endif
 
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		while (m != NULL) {
@@ -1207,7 +1235,7 @@ oactive:
 }
 
 /*
- * XXX this needs to have a callback mechanism
+ * Handle simple commands sent to the typhoon
  */
 int
 txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
@@ -1263,6 +1291,8 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	}
 	if (i == 1000 || rsp == NULL) {
 		printf("%s: 0x%x command failed\n", TXP_DEVNAME(sc), id);
+		if (rsp != NULL)
+			free(rsp, M_DEVBUF);
 		return (-1);
 	}
 
@@ -1273,10 +1303,67 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	if (out3 != NULL)
 		*out3 = rsp->rsp_par3;
 
-	idx += sizeof(struct txp_rsp_desc);
-	if (idx == sc->sc_rspring.size)
+	free(rsp, M_DEVBUF);
+
+	return (0);
+}
+
+int
+txp_command2(sc, id, in1, in2, in3, rspp, wait)
+	struct txp_softc *sc;
+	u_int16_t id, in1;
+	u_int32_t in2, in3;
+	struct txp_rsp_desc **rspp;
+	int wait;
+{
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	struct txp_cmd_desc *cmd;
+	u_int32_t idx, i;
+	u_int16_t seq;
+
+	if (txp_cmd_desc_numfree(sc) == 0) {
+		printf("%s: no free cmd descriptors\n", TXP_DEVNAME(sc));
+		return (-1);
+	}
+
+	idx = sc->sc_cmdring.lastwrite;
+	cmd = (struct txp_cmd_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
+	bzero(cmd, sizeof(*cmd));
+
+	cmd->cmd_numdesc = 0;
+	cmd->cmd_seq = seq = sc->sc_seq++;
+	cmd->cmd_id = id;
+	cmd->cmd_par1 = in1;
+	cmd->cmd_par2 = in2;
+	cmd->cmd_par3 = in3;
+	cmd->cmd_flags = CMD_FLAGS_TYPE_CMD |
+	    (wait ? CMD_FLAGS_RESP : 0) | CMD_FLAGS_VALID;
+
+	idx += sizeof(struct txp_cmd_desc);
+	if (idx == sc->sc_cmdring.size)
 		idx = 0;
-	sc->sc_rspring.lastwrite = hv->hv_resp_read_idx = idx;
+	sc->sc_cmdring.lastwrite = idx;
+
+	WRITE_REG(sc, TXP_H2A_2, sc->sc_cmdring.lastwrite);
+
+	if (!wait)
+		return (0);
+
+	for (i = 0; i < 10000; i++) {
+		idx = hv->hv_resp_read_idx;
+		if (idx != hv->hv_resp_write_idx) {
+			*rspp = NULL;
+			if (txp_response(sc, idx, cmd->cmd_id, seq, rspp))
+				return (-1);
+			if (*rspp != NULL)
+				break;
+		}
+		DELAY(50);
+	}
+	if (i == 1000 || (*rspp) == NULL) {
+		printf("%s: 0x%x command failed\n", TXP_DEVNAME(sc), id);
+		return (-1);
+	}
 
 	return (0);
 }
@@ -1296,13 +1383,18 @@ txp_response(sc, ridx, id, seq, rspp)
 		rsp = (struct txp_rsp_desc *)(((u_int8_t *)sc->sc_rspring.base) + ridx);
 
 		if (id == rsp->rsp_id && rsp->rsp_seq == seq) {
-			*rspp = rsp;
+			*rspp = (struct txp_rsp_desc *)malloc(
+			    sizeof(struct txp_rsp_desc) * (rsp->rsp_numdesc + 1),
+			    M_DEVBUF, M_NOWAIT);
+			if ((*rspp) == NULL)
+				return (-1);
+			txp_rsp_fixup(sc, rsp, *rspp);
 			return (0);
 		}
 
 		if (rsp->rsp_flags & RSP_FLAGS_ERROR) {
 			printf("%s: response error!\n", TXP_DEVNAME(sc));
-			txp_rsp_fixup(sc, rsp);
+			txp_rsp_fixup(sc, rsp, NULL);
 			ridx = hv->hv_resp_read_idx;
 			continue;
 		}
@@ -1321,7 +1413,7 @@ txp_response(sc, ridx, id, seq, rspp)
 			    rsp->rsp_id);
 		}
 
-		txp_rsp_fixup(sc, rsp);
+		txp_rsp_fixup(sc, rsp, NULL);
 		ridx = hv->hv_resp_read_idx;
 		hv->hv_resp_read_idx = ridx;
 	}
@@ -1330,19 +1422,25 @@ txp_response(sc, ridx, id, seq, rspp)
 }
 
 void
-txp_rsp_fixup(sc, rsp)
+txp_rsp_fixup(sc, rsp, dst)
 	struct txp_softc *sc;
-	struct txp_rsp_desc *rsp;
+	struct txp_rsp_desc *rsp, *dst;
 {
+	struct txp_rsp_desc *src = rsp;
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	u_int32_t i, ridx;
 
 	ridx = hv->hv_resp_read_idx;
 
 	for (i = 0; i < rsp->rsp_numdesc + 1; i++) {
+		if (dst != NULL)
+			bcopy(src, dst++, sizeof(struct txp_rsp_desc));
 		ridx += sizeof(struct txp_rsp_desc);
-		if (ridx == sc->sc_rspring.size)
+		if (ridx == sc->sc_rspring.size) {
+			src = sc->sc_rspring.base;
 			ridx = 0;
+		} else
+			src++;
 		sc->sc_rspring.lastwrite = hv->hv_resp_read_idx = ridx;
 	}
 	
@@ -1613,4 +1711,37 @@ again:
 setit:
 	txp_command(sc, TXP_CMD_RX_FILTER_WRITE, filter, 0, 0,
 	    NULL, NULL, NULL, 1);
+}
+
+void
+txp_vlan_enable(sc)
+	struct txp_softc *sc;
+{
+	struct txp_rsp_desc *rsp = NULL;
+	struct txp_ext_desc *ext;
+
+	/* Setup type filter */
+	if (txp_command(sc, TXP_CMD_VLAN_ETHER_TYPE_WRITE, ETHERTYPE_8021Q,
+	    0, 0, NULL, NULL, NULL, 1))
+		goto out;
+
+	/*
+	 * Try to enable VLAN offload capability
+	 */
+	if (txp_command2(sc, TXP_CMD_OFFLOAD_READ, 0, 0, 0, &rsp, 1))
+		goto out;
+
+	if (rsp->rsp_numdesc != 1)
+		goto out;
+	ext = (struct txp_ext_desc *)(rsp + 1);
+
+	if (txp_command(sc, TXP_CMD_OFFLOAD_WRITE, 0,
+	    (ext->ext_1 | OFFLOAD_VLAN) & rsp->rsp_par2,
+	    (ext->ext_2 | OFFLOAD_VLAN) & rsp->rsp_par3,
+	    NULL, NULL, NULL, 1))
+		goto out;
+
+out:
+	if (rsp != NULL)
+		free(rsp, M_DEVBUF);
 }
