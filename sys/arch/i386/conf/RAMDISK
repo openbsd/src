@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.68 1999/10/11 19:46:59 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.69 1999/10/12 17:06:56 jason Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -215,6 +215,7 @@ wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 # Media Independent Interface (mii) drivers
 exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
+iophy*	at mii? phy ?				# Intel 82553 PHYs
 icsphy*	at mii? phy ?				# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
