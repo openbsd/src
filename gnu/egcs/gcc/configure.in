@@ -406,7 +406,7 @@ AC_FUNC_VFORK
 
 GCC_NEED_DECLARATIONS(malloc realloc calloc free bcopy bzero bcmp \
 	index rindex getenv atol sbrk abort atof strerror getcwd getwd \
-	strsignal putc_unlocked fputs_unlocked)
+	strsignal putc_unlocked fputs_unlocked strstr)
 
 GCC_NEED_DECLARATIONS(getrlimit setrlimit, [
 #include <sys/types.h>
@@ -2920,24 +2920,24 @@ changequote([,])dnl
 changequote(,)dnl
 	rs6000-ibm-aix4.[12]* | powerpc-ibm-aix4.[12]*)
 changequote([,])dnl
-		if test "$gnu_ld" = yes
-		then
-			tm_file=rs6000/aix41-gld.h
-		else
-			tm_file=rs6000/aix41.h
-		fi
+		tm_file=rs6000/aix41.h
 		if test x$host != x$target
 		then
 			tmake_file=rs6000/t-xnewas
 		else
 			tmake_file=rs6000/t-newas
 		fi
-		xmake_file=rs6000/x-aix41
+		if test "$gnu_ld" = yes
+		then
+			xmake_file=rs6000/x-aix41-gld
+		else
+			xmake_file=rs6000/x-aix41
+		fi
 		float_format=none
 		use_collect2=yes
 		;;
 changequote(,)dnl
-	rs6000-ibm-aix4.[3456789].* | powerpc-ibm-aix4.[3456789].*)
+	rs6000-ibm-aix4.[3456789]* | powerpc-ibm-aix4.[3456789]*)
 changequote([,])dnl
 		tm_file=rs6000/aix43.h
 		if test x$host != x$target
