@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.10 2004/02/15 00:56:01 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.11 2004/02/16 05:26:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -575,6 +575,7 @@ fetch_state(void)
 			scan_ifstate(if_nametoindex(ifa->ifa_name),
 			    ifrdat.ifi_link_state, conf->curstate);
 	}
+	freeifaddrs(ifap);
 	close(sock);
 }
 
