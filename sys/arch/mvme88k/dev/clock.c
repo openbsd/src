@@ -1,8 +1,8 @@
-/*	$OpenBSD: clock.c,v 1.21 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: clock.c,v 1.22 2003/09/28 18:03:41 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -88,7 +88,7 @@
 #include <machine/cpu.h>
 #include <machine/cmmu.h>	/* DMA_CACHE_SYNC, etc... */
 #include "pcctwo.h"
-#if NPCCTWO > 0 
+#if NPCCTWO > 0
 #include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 #include "bugtty.h"
@@ -97,19 +97,18 @@
 #endif
 #endif
 #include "syscon.h"
-#if NSYSCON > 0 
+#if NSYSCON > 0
 #include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
 #include <mvme88k/dev/vme.h>
 
 extern struct vme2reg *sys_vme2;
-int timerok = 0;
 
 u_long delay_factor = 1;
 
-static int	clockmatch(struct device *, void *, void *);
-static void	clockattach(struct device *, struct device *, void *);
+int	clockmatch(struct device *, void *, void *);
+void	clockattach(struct device *, struct device *, void *);
 
 void	sbc_initclock(void);
 void	m188_initclock(void);
@@ -123,11 +122,11 @@ struct clocksoftc {
 
 struct cfattach clock_ca = {
         sizeof(struct clocksoftc), clockmatch, clockattach
-}; 
- 
-struct cfdriver clock_cd = { 
+};
+
+struct cfdriver clock_cd = {
         NULL, "clock", DV_DULL, 0
-}; 
+};
 
 int	sbc_clockintr(void *);
 int	m188_clockintr(void *);
@@ -144,8 +143,8 @@ clockmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	register struct confargs *ca = args;
-	register struct cfdata *cf = vcf;
+	struct confargs *ca = args;
+	struct cfdata *cf = vcf;
 
 	if (strcmp(cf->cf_driver->cd_name, "clock")) {
 		return (0);
@@ -185,7 +184,7 @@ clockattach(parent, self, args)
 		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
-#if NSYSCON > 0 && defined(MVME188)
+#if NSYSCON > 0
 	case BUS_SYSCON:
 		sc->sc_profih.ih_fn = m188_clockintr;
 		sc->sc_profih.ih_arg = 0;
@@ -196,7 +195,7 @@ clockattach(parent, self, args)
 		printf(": VME188");
 		break;
 #endif /* NSYSCON */
-	}         
+	}
 	printf("\n");
 }
 
@@ -206,7 +205,7 @@ sbc_initclock(void)
 {
 #ifdef CLOCK_DEBUG
 	printf("SBC clock init\n");
-#endif 
+#endif
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
@@ -231,23 +230,24 @@ sbc_clockintr(eframe)
 	void *eframe;
 {
 	sys_pcc2->pcc2_t1irq = prof_reset;
-	
+
 	/* increment intr counter */
-	intrcnt[M88K_CLK_IRQ]++; 
-	
+	intrcnt[M88K_CLK_IRQ]++;
+
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
-	timerok = 1;
+
 	return (1);
 }
 #endif /* NPCCTWO */
+
 int
 delay(us)
-	register int us;
+	int us;
 {
-	volatile register int c;
+	volatile int c;
 
 	/*
 	 * We use the vme system controller for the delay clock.
@@ -255,7 +255,7 @@ delay(us)
 	 * Or, in the case of MVME188, not at all.
 	 */
 	if (sys_vme2 == NULL || brdtyp == BRD_188) {
-		c = 3 * us;
+		c = 3 * us;	/* XXX not accurate! */
 		while (--c > 0);
 		return (0);
 	}
@@ -269,9 +269,9 @@ delay(us)
 	return (0);
 }
 
-#if NSYSCON > 0 
-int counter = 0;
-#define IST	
+#if NSYSCON > 0
+int counter;
+
 int
 m188_clockintr(eframe)
 	void *eframe;
@@ -280,29 +280,13 @@ m188_clockintr(eframe)
 	int *volatile dti_stop = (int *volatile)DART_STOPC;
 	int *volatile dti_start = (int *volatile)DART_STARTC;
         int *volatile ist = (int *volatile)MVME188_IST;
-#ifdef DEBUG
-	register unsigned long sp;
-#endif
-	
+
 	/* increment intr counter */
-	intrcnt[M88K_CLK_IRQ]++; 
+	intrcnt[M88K_CLK_IRQ]++;
 	/* acknowledge the timer interrupt */
 	dma_cachectl(0xFFF82000, 0x1000, DMA_CACHE_SYNC_INVAL);
 	tmp = *dti_stop;
-	
 
-#ifdef DEBUG
-	/* check kernel stack for overflow */
-	sp = stack_pointer();
-	if (sp < UADDR + NBPG && sp > UADDR) {
-		if (*ist & DTI_BIT) {
-			printf("DTI not clearing!\n");
-		}
-		printf("kernel stack @ 0x%8x\n", sp);
-		panic("stack overflow imminent!");
-	}
-#endif
-	
 #if 0
 	/* clear the counter/timer output OP3 while we program the DART */
 	*((int *volatile) DART_OPCR) = 0x00;
@@ -316,19 +300,21 @@ m188_clockintr(eframe)
 	*((int *volatile) DART_CTUR) = counter / 256;	     /* set counter MSB */
 	*((int *volatile) DART_CTLR) = counter % 256;	     /* set counter LSB */
 	*((int *volatile) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
-#endif 
+#endif
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
+
 	/* give the start counter/timer command */
 	tmp = *dti_start;
 #if 0
 	*((int *volatile) DART_OPCR) = 0x04;
-#endif 
+#endif
 	if (*ist & DTI_BIT) {
 		printf("DTI not clearing!\n");
 	}
+
 	return (1);
 }
 
@@ -346,10 +332,10 @@ m188_initclock(void)
 	m188_timer_init(tick);
 }
 
-void 
+void
 m188_timer_init(unsigned period)
 {
-	int imr;
+	volatile int imr;
 	dma_cachectl(0xFFF82000, 0x1000, DMA_CACHE_SYNC_INVAL);
 
 	/* make sure the counter range is proper. */
@@ -375,7 +361,7 @@ m188_timer_init(unsigned period)
 	*((int *volatile) DART_CTUR) = counter / 256;	    /* set counter MSB */
 	*((int *volatile) DART_CTLR) = counter % 256;	    /* set counter LSB */
 	*((int *volatile) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
-	
+
 	/* give the start counter/timer command */
 	/* (yes, this is supposed to be a read) */
 	imr = *((int *volatile) DART_STARTC);
