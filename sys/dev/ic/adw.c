@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.20 2001/07/11 17:31:24 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.21 2001/08/26 02:39:05 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -854,9 +854,10 @@ adw_build_req(xs, ccb, flags)
 			adw_free_ccb(sc, ccb);
 			return (0);
 		}
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
-				(xs->flags & SCSI_DATA_IN) ?
-				BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+		adw_bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		    0, ccb->dmamap_xfer->dm_mapsize,
+		    (xs->flags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Build scatter-gather list.
@@ -1205,9 +1206,10 @@ adw_isr_callback(sc, scsiq)
          */
 	dmat = sc->sc_dmat;
 	if (xs->datalen) {
-		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
-		    (xs->flags & SCSI_DATA_IN) ?
-		        BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		adw_bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		    0, ccb->dmamap_xfer->dm_mapsize,
+		    ((xs->flags & SCSI_DATA_IN) ?
+		        BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.8 2001/07/13 04:27:09 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.9 2001/08/26 02:39:05 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -308,7 +308,8 @@ iha_scsi_cmd(xs)
 		} else
 			pScb->SCB_BufPAddr = dm->dm_segs[0].ds_addr;
 
-		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap,
+		iha_bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap, 
+		    0, pScb->SCB_Dmamap->dm_mapsize,
 		    (pScb->SCB_Flags & SCSI_DATA_IN) ?
 		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
@@ -2475,9 +2476,10 @@ iha_done_scb(sc, pScb)
 		}
 
 		if (xs->datalen > 0) {
-			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap
-			    ,(xs->flags & SCSI_DATA_IN) ? 
-			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			iha_bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap,
+			    0, pScb->SCB_Dmamap->dm_mapsize,
+			    ((xs->flags & SCSI_DATA_IN) ? 
+				BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_Dmamap);
 		}
 
