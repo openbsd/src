@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.2 2001/06/27 02:06:37 mickey Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.3 2001/06/27 02:15:41 niklas Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -425,7 +425,7 @@ iopsp_scsi_cmd(xs)
 	struct iop_softc *iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 	struct iop_msg *im;
 	struct i2o_scsi_scb_exec *mf;
-	int error, flags, tid, s;
+	int error, tid, s;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	tid = IOPSP_TIDMAP(sc->sc_tidmap, link->target, link->lun);
