@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2002/03/14 18:43:51 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.63 2002/03/21 05:39:22 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -499,7 +499,7 @@ if (pm == pmap_kernel() && stop_on_kernel)
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
 		pted = pool_get(&pmap_pted_pool, PR_NOWAIT);	
-		pted->pted_pte.pte_hi = NULL;
+		bzero(pted, sizeof (*pted));
 		pmap_vp_enter(pm, va, pted);
 	}
 
@@ -640,6 +640,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		printf("pted not preallocated in pmap_kernel() va %x pa %x \n",
 		    va, pa);
 		pted = pool_get(&pmap_pted_pool, PR_NOWAIT);	
+		bzero(pted, sizeof (*pted));
 		pmap_vp_enter(pm, va, pted);
 	}
 
@@ -1184,8 +1185,8 @@ pmap_avail_setup(void)
 		physmem += btoc(mp->size);
 	}
 
-	/* limit to 256MB available, for now -XXXGRR */
-#define MEMMAX 0x10000000
+	/* limit to 1GB available, for now -XXXGRR */
+#define MEMMAX 0x40000000
 	for (mp = pmap_avail; mp->size !=0 ; /* increment in loop */) {
 		if (mp->start + mp->size > MEMMAX) {
 			int rm_start;
@@ -1393,6 +1394,10 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	pmap_remove_avail(kernelstart, kernelend);
 
 	msgbuf_addr = pmap_steal_avail(MSGBUFSIZE,4);
+
+	for (mp = pmap_avail; mp->size; mp++) {
+		bzero((void *)mp->start, mp->size);
+	}
 
 #ifdef  HTABENTS
 	pmap_ptab_cnt = HTABENTS;
@@ -1958,6 +1963,7 @@ pmap_init()
 	for (i = npgs; i > 0; i--)
 		LIST_INIT(pvh++);
 	pmap_attrib = (char *)pvh; /* attrib was allocated at the end of pv */
+	attr = pmap_attrib;
 	bzero(pmap_attrib, npgs);
 	pvh = (struct pted_pv_head *)addr;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
