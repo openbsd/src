@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.4 1999/05/31 20:10:00 angelos Exp $ */
+/* $OpenBSD: signature.c,v 1.5 1999/08/13 22:49:54 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -1027,7 +1027,12 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 	  }
 
 	  /* RSA-specific */
+#if SSLEAY_VERSION_NUMBER >= 0x00904
+	  rsa = (RSA *) PEM_read_bio_RSAPrivateKey(biokey, NULL, NULL, NULL);
+#else /* SSLEAY_VERSION_NUMBER */
 	  rsa = (RSA *) PEM_read_bio_RSAPrivateKey(biokey, NULL, NULL);
+#endif /* SSLEAY_VERSION_NUMBER */
+
 	  if (rsa == (RSA *) NULL)
 	  {
 	      BIO_free(biokey);
