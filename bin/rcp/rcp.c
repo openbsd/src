@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.35 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.36 2003/07/18 00:44:50 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 	port = sp->s_port;
 
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
-		errx(1, "unknown user %d", (int)userid);
+		errx(1, "unknown user %u", userid);
 
 	unsetenv("RSH");		/* Force the use of /usr/bin/rsh */
 
