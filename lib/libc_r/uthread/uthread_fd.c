@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.13 2002/11/03 23:58:39 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.14 2002/11/05 22:19:56 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -145,7 +145,7 @@ _thread_fd_table_init(int fd)
  */
 void
 _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type,
-			 char *fname, int lineno)
+			 const char *fname, int lineno)
 {
 	struct fd_table_entry *entry;
 	int	ret;
@@ -170,7 +170,7 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type,
 		 * thread's accesses:
 		 */
 		if (fname)
-			_spinlock_debug(&entry->lock, fname, lineno);
+			_spinlock_debug(&entry->lock, (char *)fname, lineno);
 		else
 			_SPINLOCK(&entry->lock);
 
@@ -266,22 +266,11 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type,
  * fname and lineno (debug variables).
  */
 void
-_thread_fd_unlock_debug(int fd, int lock_type, char *fname, int lineno)
+_thread_fd_unlock(int fd, int lock_type, const char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 	return (_thread_fd_unlock_thread(curthread, fd, lock_type,
 					 fname, lineno));
-}
-
-/*
- * Unlock an fd table entry for the given fd and lock type (read,
- * write, or read-write).
- */
-void
-_thread_fd_unlock(int fd, int lock_type)
-{
-	struct pthread	*curthread = _get_curthread();
-	return (_thread_fd_unlock_thread(curthread, fd, lock_type, NULL, 0));
 }
 
 /*
@@ -323,8 +312,8 @@ _thread_fd_unlock_owned(pthread_t pthread)
  * null when called by the non-debug version of the function.
  */
 int
-_thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
-		      char *fname, int lineno)
+_thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
+		const char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 	struct fd_table_entry *entry;
@@ -344,7 +333,7 @@ _thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
 		 * thread's accesses:
 		 */
 		if (fname)
-			_spinlock_debug(&entry->lock, fname, lineno);
+			_spinlock_debug(&entry->lock, (char *)fname, lineno);
 		else
 			_SPINLOCK(&entry->lock);
 
@@ -376,7 +365,8 @@ _thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
 					 */
 					curthread->data.fd.fd = fd;
 					curthread->data.fd.branch = lineno;
-					curthread->data.fd.fname = fname;
+					curthread->data.fd.fname =
+						(char *)fname;
 
 					/* Set the timeout: */
 					_thread_kern_set_timeout(timeout);
@@ -455,7 +445,8 @@ _thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
 					 */
 					curthread->data.fd.fd = fd;
 					curthread->data.fd.branch = lineno;
-					curthread->data.fd.fname = fname;
+					curthread->data.fd.fname =
+						(char *)fname;
 
 					/* Set the timeout: */
 					_thread_kern_set_timeout(timeout);
@@ -510,16 +501,6 @@ _thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
 
 	/* Return the completion status: */
 	return (ret);
-}
-
-/*
- * Non-debug version of fd locking.  Just call the debug version
- * passing a null file and line
- */
-int
-_thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
-{
-	return (_thread_fd_lock_debug(fd, lock_type, timeout, NULL, 0));
 }
 
 #endif

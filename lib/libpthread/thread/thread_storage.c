@@ -1,5 +1,9 @@
+/* $OpenBSD: thread_storage.c,v 1.6 2002/11/05 22:19:55 marc Exp $ */
+/* Public Domain */
 
-/* libpthread's stronger functions */
+/*
+ * libpthread's stronger functions
+ */
 
 #include <stdlib.h>
 #include <pthread.h>
