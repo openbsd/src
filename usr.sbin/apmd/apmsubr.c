@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmsubr.c,v 1.2 2001/03/23 01:00:41 mickey Exp $	*/
+/*	$OpenBSD: apmsubr.c,v 1.3 2001/07/07 01:10:42 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995,1996 John T. Kohl
@@ -29,53 +29,44 @@
  * 
  */
 
-#include <stdio.h>
-#include <errno.h>
-#include <syslog.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
 #include <machine/apmvar.h>
-#include <err.h>
 #include "apm-proto.h"
 
 const char *
 battstate(int state)
 {
-    switch (state) {
-    case APM_BATT_HIGH:
-	return "high";
-    case APM_BATT_LOW:
-	return "low";
-    case APM_BATT_CRITICAL:
-	return "CRITICAL";
-    case APM_BATT_CHARGING:
-	return "charging";
-    case APM_BATTERY_ABSENT:
-	return "absent";
-    case APM_BATT_UNKNOWN:
-	return "unknown (absent?)";
-    default:
-	return "invalid battery state";
-    }
+	switch (state) {
+	case APM_BATT_HIGH:
+		return "high";
+	case APM_BATT_LOW:
+		return "low";
+	case APM_BATT_CRITICAL:
+		return "CRITICAL";
+	case APM_BATT_CHARGING:
+		return "charging";
+	case APM_BATTERY_ABSENT:
+		return "absent";
+	case APM_BATT_UNKNOWN:
+		return "unknown (absent?)";
+	default:
+		return "invalid battery state";
+	}
 }
 
 const char *
 ac_state(int state)
 {
-    switch (state) {
-    case APM_AC_OFF:
-	return "not connected";
-    case APM_AC_ON:
-	return "connected";
-    case APM_AC_BACKUP:
-	return "backup power source";
-    case APM_AC_UNKNOWN:
-	return "not known";
-    default:
-	return "invalid AC status";
-    }
+	switch (state) {
+	case APM_AC_OFF:
+		return "not connected";
+	case APM_AC_ON:
+		return "connected";
+	case APM_AC_BACKUP:
+		return "backup power source";
+	case APM_AC_UNKNOWN:
+		return "not known";
+	default:
+		return "invalid AC status";
+	}
 }
