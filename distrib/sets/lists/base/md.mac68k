@@ -282,7 +282,6 @@
 ./usr/lib/perl5/m68k-openbsd/5.00404/pod/perldiag.pod
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/lib/perl5/site_perl/m68k-openbsd/a.out.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/ansidecl.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa/ftp.ph
@@ -291,8 +290,6 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa/telnet.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa/tftp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/assert.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/bitstring.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/blf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/bm.ph
@@ -412,7 +409,6 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/nlist.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/panel.ph
