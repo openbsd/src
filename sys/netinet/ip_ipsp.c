@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.138 2001/06/27 01:34:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.139 2001/06/27 02:32:58 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -196,13 +196,13 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	if (sspi <= SPI_RESERVED_MAX)
 		sspi = SPI_RESERVED_MAX + 1;
 
-	if (sspi == tspi)   /* Asking for a specific SPI */
+	if (sspi == tspi)   /* Asking for a specific SPI. */
 		nums = 1;
 	else
 		nums = 100;  /* Arbitrarily chosen */
 
 	while (nums--) {
-		if (sspi == tspi)  /* Specific SPI asked */
+		if (sspi == tspi)  /* Specific SPI asked. */
 			spi = tspi;
 		else    /* Range specified */
 			spi = sspi + (arc4random() % (tspi - sspi));
@@ -213,7 +213,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 		else
 			spi = htonl(spi);
 
-		/* Check whether we're using this SPI already */
+		/* Check whether we're using this SPI already. */
 		s = spltdb();
 		tdbp = gettdb(spi, dst, sproto);
 		splx(s);
@@ -231,7 +231,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 		tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
 		puttdb(tdbp);
 
-		/* Setup a "silent" expiration (since TDBF_INVALID's set) */
+		/* Setup a "silent" expiration (since TDBF_INVALID's set). */
 		if (ipsec_keep_invalid > 0) {
 			tdbp->tdb_flags |= TDBF_TIMER;
 			tdbp->tdb_exp_timeout = ipsec_keep_invalid;
@@ -296,15 +296,16 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (!bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))) {
 			/*
-			 * If the IDs are not set, this was probably a manually-keyed
-			 * SA, so it can be used for any type of traffic.
+			 * If the IDs are not set, this was probably a
+			 * manually-keyed SA, so it can be used for
+			 * any type of traffic.
 			 */
 			if (tdbp->tdb_srcid != NULL) {
 				if (ipo->ipo_srcid != NULL &&
 				    !ipsp_ref_match(ipo->ipo_srcid,
 					tdbp->tdb_srcid))
 					continue;
-				/* Otherwise, this is fine */
+				/* Otherwise, this is fine. */
 			} else if (ipo->ipo_srcid != NULL)
 				continue;
 
@@ -313,11 +314,11 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 				    !ipsp_ref_match(ipo->ipo_dstid,
 					tdbp->tdb_dstid))
 					continue;
-				/* Otherwise, this is fine */
+				/* Otherwise, this is fine. */
 			} else if (ipo->ipo_dstid != NULL)
 				continue;
 
-			/* Check for credential matches */
+			/* Check for credential matches. */
 			if (tdbp->tdb_local_cred != NULL) {
 				if (ipo->ipo_local_cred != NULL &&
 				    !ipsp_ref_match(ipo->ipo_local_cred,
@@ -334,7 +335,7 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 					   * that credential.
 					   */
 
-			/* XXX Check for filter matches */
+			/* XXX Check for filter matches. */
 			break;
 		}
 
@@ -362,15 +363,16 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (!bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))) {
 			/*
-			 * If the IDs are not set, this was probably a manually-keyed
-			 * SA, so it can be used for any type of traffic.
+			 * If the IDs are not set, this was probably a
+			 * manually-keyed SA, so it can be used for
+			 * any type of traffic.
 			 */
 			if (tdbp->tdb_srcid != NULL) {
 				if (ipo->ipo_dstid != NULL &&
 				    !ipsp_ref_match(ipo->ipo_dstid,
 					tdbp->tdb_srcid))
 					continue;
-				/* Otherwise, this is fine */
+				/* Otherwise, this is fine. */
 			} else if (ipo->ipo_dstid != NULL)
 				continue;
 
@@ -379,11 +381,11 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 				    !ipsp_ref_match(ipo->ipo_srcid,
 					tdbp->tdb_dstid))
 					continue;
-				/* Otherwise, this is fine */
+				/* Otherwise, this is fine. */
 			} else if (ipo->ipo_srcid != NULL)
 				continue;
 
-			/* XXX Check for filter matches */
+			/* XXX Check for filter matches. */
 			break;
 		}
 
@@ -468,7 +470,7 @@ tdb_firstuse(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-        /* If the TDB hasn't been used, don't renew it */
+        /* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
@@ -482,7 +484,7 @@ tdb_soft_timeout(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_TIMER))
 		return;
 
-	/* Soft expirations */
+	/* Soft expirations. */
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 }
@@ -495,7 +497,7 @@ tdb_soft_firstuse(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-	/* If the TDB hasn't been used, don't renew it */
+	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
@@ -513,8 +515,8 @@ tdb_rehash(void)
 
 	tdb_hashmask = (tdb_hashmask << 1) | 1;
 
-	MALLOC(new_tdbh, struct tdb **, sizeof(struct tdb *) * (tdb_hashmask + 1),
-	    M_TDB, M_WAITOK);
+	MALLOC(new_tdbh, struct tdb **,
+	    sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB, M_WAITOK);
 	MALLOC(new_tdbaddr, struct tdb **,
 	    sizeof(struct tdb *) * (tdb_hashmask + 1), M_TDB, M_WAITOK);
 	MALLOC(new_srcaddr, struct tdb **,
@@ -535,14 +537,16 @@ tdb_rehash(void)
 
 		for (tdbp = tdbaddr[i]; tdbp != NULL; tdbp = tdbnp) {
 			tdbnp = tdbp->tdb_anext;
-			hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
+			hashval = tdb_hash(0, &tdbp->tdb_dst,
+			    tdbp->tdb_sproto);
 			tdbp->tdb_anext = new_tdbaddr[hashval];
 			new_tdbaddr[hashval] = tdbp;
 		}
 
 		for (tdbp = tdbsrc[i]; tdbp != NULL; tdbp = tdbnp) {
 			tdbnp = tdbp->tdb_snext;
-			hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
+			hashval = tdb_hash(0, &tdbp->tdb_src,
+			    tdbp->tdb_sproto);
 			tdbp->tdb_snext = new_srcaddr[hashval];
 			new_srcaddr[hashval] = tdbp;
 		}
@@ -586,11 +590,12 @@ puttdb(struct tdb *tdbp)
 	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	/*
-	 * Rehash if this tdb would cause a bucket to have more than two items
-	 * and if the number of tdbs exceed 10% of the bucket count.  This
-	 * number is arbitratily chosen and is just a measure to not keep rehashing
-	 * when adding and removing tdbs which happens to always end up in the
-	 * same bucket, which is not uncommon when doing manual keying.
+	 * Rehash if this tdb would cause a bucket to have more than
+	 * two items and if the number of tdbs exceed 10% of the
+	 * bucket count.  This number is arbitratily chosen and is
+	 * just a measure to not keep rehashing when adding and
+	 * removing tdbs which happens to always end up in the same
+	 * bucket, which is not uncommon when doing manual keying.
 	 */
 	if (tdbh[hashval] != NULL && tdbh[hashval]->tdb_hnext != NULL &&
 	    tdb_count * 10 > tdb_hashmask + 1) {
@@ -691,7 +696,7 @@ tdb_delete(struct tdb *tdbp)
 		tdbp->tdb_xform = NULL;
 	}
 
-	/* Cleanup inp references */
+	/* Cleanup inp references. */
 	for (inp = TAILQ_FIRST(&tdbp->tdb_inp_in); inp;
 	     inp = TAILQ_FIRST(&tdbp->tdb_inp_in)) {
 		TAILQ_REMOVE(&tdbp->tdb_inp_in, inp, inp_tdb_in_next);
@@ -704,15 +709,15 @@ tdb_delete(struct tdb *tdbp)
 		inp->inp_tdb_out = NULL;
 	}
 
-	/* Cleanup SPD references */
+	/* Cleanup SPD references. */
 	for (ipo = TAILQ_FIRST(&tdbp->tdb_policy_head); ipo;
 	     ipo = TAILQ_FIRST(&tdbp->tdb_policy_head))	{
 		TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
 		ipo->ipo_tdb = NULL;
-		ipo->ipo_last_searched = 0; /* Force a re-search */
+		ipo->ipo_last_searched = 0; /* Force a re-search. */
 	}
 
-	/* Remove expiration timeouts.  */
+	/* Remove expiration timeouts. */
 	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |
 	    TDBF_SOFT_TIMER);
 	timeout_del(&tdbp->tdb_timer_tmo);
@@ -773,17 +778,17 @@ tdb_alloc(void)
 	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
 	bzero((caddr_t) tdbp, sizeof(struct tdb));
 
-	/* Init Incoming SA-Binding Queues */
+	/* Init Incoming SA-Binding Queues. */
 	TAILQ_INIT(&tdbp->tdb_inp_out);
 	TAILQ_INIT(&tdbp->tdb_inp_in);
 
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
-	/* Record establishment time */
+	/* Record establishment time. */
 	tdbp->tdb_established = time.tv_sec;
 	tdbp->tdb_epoch = kernfs_epoch - 1;
 
-	/* Initialize timeouts */
+	/* Initialize timeouts. */
 	timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
 	timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
 	timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
@@ -1156,7 +1161,7 @@ ipsp_is_unspecified(union sockaddr_union addr)
 			return 0;
 #endif /* INET6 */
 
-	case 0: /* No family set */
+	case 0: /* No family set. */
 	default:
 		return 1;
 	}
@@ -1229,7 +1234,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 	struct in6_addr ip6_dst;
 #endif /* INET6 */
 
-	/* We have to start with a known network protocol */
+	/* We have to start with a known network protocol. */
 	if (proto != IPPROTO_IPV4 && proto != IPPROTO_IPV6)
 		return NULL;
 
@@ -1271,7 +1276,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 				off += l;
 				proto = nxtp;
 
-				/* Construct a tag */
+				/* Construct a tag. */
 				if (nxtp == IPPROTO_AH)	{
 					mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
 					    sizeof(struct tdb_ident),
@@ -1308,7 +1313,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 #endif /* INET6 */
 
 		case IPPROTO_ESP:
-		/* Verify that this has been decrypted */
+		/* Verify that this has been decrypted. */
 		{
 			union sockaddr_union su;
 			u_int32_t spi;
@@ -1368,7 +1373,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			m_copydata(m, m->m_pkthdr.len - trail - 8, 8,
 			    lasteight);
 
-			/* Verify the self-describing padding values */
+			/* Verify the self-describing padding values. */
 			if (lasteight[6] != 0) {
 				if (lasteight[6] != lasteight[5])
 					return tags.slh_first;
@@ -1380,7 +1385,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 						return tags.slh_first;
 			}
 		}
-		/* Fall through */
+		/* Fall through. */
 		case IPPROTO_AH:
 			mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
 			    sizeof(struct tdb_ident), M_NOWAIT);
@@ -1390,7 +1395,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			tdbi = (struct tdb_ident *) (mtag + 1);
 			bzero(tdbi, sizeof(struct tdb_ident));
 
-			/* Get SPI off the relevant header */
+			/* Get SPI off the relevant header. */
 			if (proto == IPPROTO_AH)
 				m_copydata(m, off + sizeof(u_int32_t),
 				    sizeof(u_int32_t), (caddr_t) &tdbi->spi);
@@ -1411,7 +1416,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 #endif /* INET */
 
 #ifdef INET6
-			/* Last network header was IPv6 */
+			/* Last network header was IPv6. */
 			if (!ipv4sa) {
 				tdbi->dst.sin6.sin6_family = AF_INET6;
 				tdbi->dst.sin6.sin6_len =
@@ -1430,14 +1435,14 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 				proto = foo[0];
 				off += (foo[1] + 2) << 2;
 			} else {/* IPPROTO_ESP */
-				/* Initialized in IPPROTO_ESP case */
+				/* Initialized in IPPROTO_ESP case. */
 				off += esphlen;
 				proto = lasteight[7];
 			}
 			break;
 
 		default:
-			return tags.slh_first; /* done */
+			return tags.slh_first; /* We're done. */
 		}
 	}
 }
