@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.10 2001/03/23 07:14:53 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.11 2001/03/23 07:37:21 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -303,7 +303,7 @@ vlan_input_tag(struct ether_header *eh, struct mbuf *m, u_int16_t t)
 
 	if (i >= NVLAN || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
-		m_free(m);
+		m_freem(m);
 		return -1;	/* so the parent can take note */
 	}
 
