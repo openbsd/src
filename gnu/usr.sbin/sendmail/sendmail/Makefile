@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2001/01/15 21:09:06 millert Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/02/11 22:35:18 millert Exp $
 
 PROG=	sendmail
 
@@ -9,6 +9,9 @@ WANT_LIBSMUTIL=1
 ENVDEF+= -DSTARTTLS -D_FFR_TLS_TOREK
 LDADD+= -lssl -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
+
+# Work around broken name servers that return SERV_FAIL for AAAA records
+ENVDEF+= -D_FFR_WORKAROUND_BROKEN_NAMESERVERS
 
 # To cause sendmail to drop privs in test mode (-bt) uncomment the following
 #ENVDEF+= -D_FFR_TESTMODE_DROP_PRIVS
