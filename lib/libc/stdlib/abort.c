@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: abort.c,v 1.8 2002/09/14 22:03:14 dhartmei Exp $";
+static char *rcsid = "$OpenBSD: abort.c,v 1.9 2002/11/03 20:36:43 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -55,11 +55,7 @@ abort()
 	 * any errors -- X311J doesn't allow abort to return anyway.
 	 */
 	sigdelset(&mask, SIGABRT);
-#ifdef _THREAD_SAFE
 	(void)_thread_sys_sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#else  /* _THREAD_SAFE */
-	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#endif /* _THREAD_SAFE */
 
 	/*
 	 * POSIX requires we flush stdio buffers on abort
@@ -80,11 +76,7 @@ abort()
 	 * it again, only harder.
 	 */
 	(void)signal(SIGABRT, SIG_DFL);
-#ifdef _THREAD_SAFE
 	(void)_thread_sys_sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#else  /* _THREAD_SAFE */
-	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#endif /* _THREAD_SAFE */
 	(void)kill(getpid(), SIGABRT);
 	exit(1);
 }
