@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.13 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: list.c,v 1.14 2003/10/13 00:46:08 tedu Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static const char rcsid[] = "$OpenBSD: list.c,v 1.13 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: list.c,v 1.14 2003/10/13 00:46:08 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -382,8 +382,8 @@ getrawlist(char *line, char **argv, int argc)
 {
 	char c, *cp, *cp2, quotec;
 	int argn;
-	char *linebuf;
-	size_t linebufsize = BUFSIZ;
+	char *linebuf, *linebuf2;
+	size_t newsize, linebufsize = BUFSIZ;
 
 	if ((linebuf = (char *)malloc(linebufsize)) == NULL)
 		errx(1, "Out of memory");
@@ -404,10 +404,12 @@ getrawlist(char *line, char **argv, int argc)
 		while ((c = *cp) != '\0') {
 			/* Alloc more space if necessary */
 			if (cp2 - linebuf == linebufsize - 1) {
-				linebufsize += BUFSIZ;
-				linebuf = (char *)realloc(linebuf, linebufsize);
-				if (linebuf == NULL)
+				newsize = linebufsize + BUFSIZ;
+				linebuf2 = realloc(linebuf, newsize);
+				if (linebuf2 == NULL)
 					errx(1, "Out of memory");
+				linebuf = linebuf2;
+				linebufsize = newsize;
 				cp2 = linebuf + linebufsize - BUFSIZ - 1;
 			}
 			cp++;
