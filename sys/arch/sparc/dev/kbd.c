@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.13 2001/03/24 11:07:50 ho Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.14 2001/09/22 21:25:55 mickey Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -398,6 +398,7 @@ u_short	kbd_cnv_out __P((u_short));
 /* set in kbdattach() */
 int kbd_repeat_start;
 int kbd_repeat_step;
+int kbd_initialized;
 
 /*
  * Attach the console keyboard ASCII (up-link) interface.
@@ -475,6 +476,8 @@ kbdattach(kbd)
 	}
 
 	timeout_set(&kbd_softc.k_repeat_tmo, kbd_repeat, k);
+
+	kbd_initialized = 1;
 }
 
 void
@@ -676,6 +679,9 @@ kbd_rint(c)
 	register struct kbd_softc *k = &kbd_softc;
 	register struct firm_event *fe;
 	register int put;
+
+	if (!kbd_initialized)
+		return;
 
 	if (k->k_repeating) {
 		k->k_repeating = 0;
