@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.115 2002/09/24 18:33:26 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.116 2002/10/05 00:21:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -149,7 +149,8 @@ ubsec_probe(parent, match, aux)
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822))
 		return (1);
 	return (0);
 }
