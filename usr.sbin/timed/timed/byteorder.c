@@ -1,4 +1,4 @@
-/*	$OpenBSD: byteorder.c,v 1.2 2001/04/07 20:00:15 ho Exp $	*/
+/*	$OpenBSD: byteorder.c,v 1.3 2001/05/05 05:10:04 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)byteorder.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif
 
 #include "globals.h"
@@ -60,7 +60,7 @@ bytenetorder(struct tsp *ptr)
 		ptr->tsp_time.tv_sec = htonl((u_long)ptr->tsp_time.tv_sec);
 		ptr->tsp_time.tv_usec = htonl((u_long)ptr->tsp_time.tv_usec);
 		break;
-	
+
 	default:
 		break;		/* nothing more needed */
 	}
@@ -79,7 +79,7 @@ bytehostorder(struct tsp *ptr)
 		ptr->tsp_time.tv_sec = ntohl((u_long)ptr->tsp_time.tv_sec);
 		ptr->tsp_time.tv_usec = ntohl((u_long)ptr->tsp_time.tv_usec);
 		break;
-	
+
 	default:
 		break;		/* nothing more needed */
 	}

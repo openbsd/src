@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.2 2001/04/07 20:00:16 ho Exp $	*/
+/*	$OpenBSD: globals.h,v 1.3 2001/05/05 05:10:04 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif
 
 #include <sys/param.h>
@@ -183,6 +183,6 @@ extern int nnets;			/* nets I am connected to */
 }
 
 
-# define max(a,b) 	(a<b ? b : a)
-# define min(a,b) 	(a>b ? b : a)
+# define max(a,b)	(a<b ? b : a)
+# define min(a,b)	(a>b ? b : a)
 # define abs(x)		(x>=0 ? x : -(x))

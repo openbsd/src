@@ -1,4 +1,4 @@
-/*	$OpenBSD: correct.c,v 1.5 2001/04/07 20:00:15 ho Exp $	*/
+/*	$OpenBSD: correct.c,v 1.6 2001/05/05 05:10:04 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)correct.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif
 
 #include "globals.h"
@@ -91,9 +91,7 @@ correct(long avdelta)
 				to.tsp_time.tv_usec = tmptv.tv_usec;
 				to.tsp_type = TSP_ADJTIME;
 			}
-			(void)strncpy(to.tsp_name, hostname,
-			    sizeof to.tsp_name-1);
-			to.tsp_name[sizeof to.tsp_name-1] = '\0';
+			strlcpy(to.tsp_name, hostname, sizeof to.tsp_name);
 			answer = acksend(&to, &htp->addr, htp->name,
 					 TSP_ACK, 0, 0);
 			if (!answer) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.7 2001/04/07 20:00:16 ho Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.8 2001/05/05 05:10:04 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "globals.h"
@@ -52,7 +52,7 @@ extern char *tsptype[];
 #define LOOKAT(msg, mtype, mfrom, netp, froms) \
 	(((mtype) == TSP_ANY || (mtype) == (msg).tsp_type) &&		\
 	 ((mfrom) == 0 || !strcmp((mfrom), (msg).tsp_name)) &&		\
-	 ((netp) == 0 || 						\
+	 ((netp) == 0 ||						\
 	  ((netp)->mask & (froms).sin_addr.s_addr) == (netp)->net.s_addr))
 
 struct timeval rtime, rwait, rtout;
@@ -406,8 +406,7 @@ masterack()
 
 	resp = msgin;
 	resp.tsp_vers = TSPVERSION;
-	(void)strncpy(resp.tsp_name, hostname, sizeof resp.tsp_name-1);
-	resp.tsp_name[sizeof resp.tsp_name-1] = '\0';
+	strlcpy(resp.tsp_name, hostname, sizeof resp.tsp_name);
 
 	switch(msgin.tsp_type) {
 
@@ -450,7 +449,7 @@ struct sockaddr_in *addr;
 {
 	char tm[26];
 	time_t msgtime;
-	
+
 	if (msg->tsp_type >= TSPTYPENUMBER) {
 		fprintf(fd, "bad type (%u) on packet from %s\n",
 		    msg->tsp_type, inet_ntoa(addr->sin_addr));
@@ -476,8 +475,7 @@ struct sockaddr_in *addr;
 		(void)cftime(tm, "%D %T", &msg->tsp_time.tv_sec);
 #else
 		msgtime = msg->tsp_time.tv_sec;
-		strncpy(tm, ctime(&msgtime)+3+1, sizeof(tm));
-		tm[15] = '\0';		/* ugh */
+		strftime(tm, sizeof(tm), "%D %T", localtime(&msgtime));
 #endif /* sgi */
 		fprintf(fd, "%s %d %-6u %s %-15s %s\n",
 			tsptype[msg->tsp_type],

@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.3 2001/04/07 20:00:16 ho Exp $	*/
+/*	$OpenBSD: measure.c,v 1.4 2001/05/05 05:10:04 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -100,7 +100,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			goto quit;
 		}
 	}
-	    
+
 
 	/*
 	 * empty the icmp input queue
@@ -194,7 +194,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			if (cc < 0)
 				goto quit;
 
-			/* 
+			/*
 			 * got something.  See if it is ours
 			 */
 			icp = (struct icmp *)(packet + (ip->ip_hl << 2));
@@ -272,7 +272,7 @@ quit:
 		if (trace) {
 			fprintf(fd,
 				"measured delta %4d, %d trials to %-15s %s\n",
-			   	measure_delta, trials,
+				measure_delta, trials,
 				inet_ntoa(addr->sin_addr), hname);
 		}
 	} else if (print) {

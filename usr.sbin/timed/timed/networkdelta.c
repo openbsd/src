@@ -1,4 +1,4 @@
-/*	$OpenBSD: networkdelta.c,v 1.3 2001/04/07 20:00:16 ho Exp $	*/
+/*	$OpenBSD: networkdelta.c,v 1.4 2001/05/05 05:10:04 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)networkdelta.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -252,7 +252,7 @@ median(float a,				/* initial guess for the median */
 		else
 			a = (xm+a)/2;
 
-	} else 	if (npts != 0) {	/* odd number of points */
+	} else	if (npts != 0) {	/* odd number of points */
 		if (npts > 0)
 			a = xp;
 		else
