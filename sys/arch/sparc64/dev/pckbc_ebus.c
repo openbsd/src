@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.5 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.6 2003/12/16 15:08:50 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -120,7 +120,7 @@ pckbc_ebus_attach(parent, self, aux)
 			    &sc->sc_ioh);
 		else if (ebus_bus_map(sc->sc_iot, 0,
 		    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
-		    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_ioh) != 0) {
+		    0, 0, &sc->sc_ioh) != 0) {
 			printf(": can't map register space\n");
 			return;
 		}

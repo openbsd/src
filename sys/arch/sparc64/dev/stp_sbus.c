@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.4 2003/06/25 17:36:51 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.5 2003/12/16 15:08:50 jason Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -137,8 +137,8 @@ stpattach(parent, self, aux)
 			continue;
 
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[i].sbr_slot,
-		    sa->sa_reg[i].sbr_offset, sa->sa_reg[i].sbr_size,
-		    BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+		    sa->sa_reg[i].sbr_offset, sa->sa_reg[i].sbr_size, 0, 0,
+		    &bh) != 0) {
 			printf(": attach: cannot map registers\n");
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.8 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.9 2003/12/16 15:08:50 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -113,8 +113,8 @@ beeper_attach(parent, self, aux)
 			return;
 		}
 	} else if (ebus_bus_map(sc->sc_iot, 0,
-	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_ioh) != 0) {
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size, 0, 0,
+	    &sc->sc_ioh) != 0) {
 		printf(": can't map register space\n");
                 return;
 	}
