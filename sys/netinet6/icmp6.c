@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.3 1999/12/15 07:08:00 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.4 2000/01/02 04:52:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,6 +108,7 @@ struct icmp6stat icmp6stat;
 
 extern struct in6pcb rawin6pcb;
 extern u_int icmp6errratelim;
+extern int icmp6_nodeinfo;
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
 
@@ -588,6 +589,9 @@ icmp6_input(mp, offp, proto)
 
 		if (code != 0)
 			goto badcode;
+		if (!icmp6_nodeinfo)
+			break;
+
 		if (icmp6len == sizeof(struct icmp6_hdr) + 4)
 			mode = WRU;
 		else if (icmp6len >= sizeof(struct icmp6_hdr) + 8) /* XXX */
@@ -596,12 +600,16 @@ icmp6_input(mp, offp, proto)
 			goto badlen;
 
 		if (mode == FQDN) {
+#ifndef PULLDOWN_TEST
 			IP6_EXTHDR_CHECK(m, off, sizeof(struct icmp6_nodeinfo),
 					 IPPROTO_DONE);
-			n = ni6_input(m, off);
-			noff = sizeof(struct ip6_hdr);
-		}
-		else {
+#endif
+			n = m_copy(m, 0, M_COPYALL);
+			if (n)
+				n = ni6_input(n, off);
+			if (n)
+				noff = sizeof(struct ip6_hdr);
+		} else {
 			u_char *p;
 
 			MGETHDR(n, M_DONTWAIT, m->m_type);
@@ -848,10 +856,11 @@ ni6_input(m, off)
 #ifndef PULLDOWN_TEST
 	ni6 = (struct icmp6_nodeinfo *)(mtod(m, caddr_t) + off);
 #else
-	IP6_EXTHDR_GET(ni6, struct icmp6_nodeinfo *, m, off,
-		sizeof(*ni6));
-	if (ni6 == NULL)
+	IP6_EXTHDR_GET(ni6, struct icmp6_nodeinfo *, m, off, sizeof(*ni6));
+	if (ni6 == NULL) {
+		/* m is already reclaimed */
 		return NULL;
+	}
 #endif
 	qtype = ntohs(ni6->ni_qtype);
 
@@ -889,8 +898,10 @@ ni6_input(m, off)
 
 	/* allocate a mbuf to reply. */
 	MGETHDR(n, M_DONTWAIT, m->m_type);
-	if (n == NULL)
+	if (n == NULL) {
+		m_freem(m);
 		return(NULL);
+	}
 	M_COPY_PKTHDR(n, m); /* just for recvif */
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES)
@@ -956,9 +967,11 @@ ni6_input(m, off)
 
 	nni6->ni_type = ICMP6_NI_REPLY;
 	nni6->ni_code = ICMP6_NI_SUCESS;
+	m_freem(m);
 	return(n);
 
   bad:
+	m_freem(m);
 	if (n)
 		m_freem(n);
 	return(NULL);
@@ -1979,6 +1992,8 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&nd6_useloopback);
 	case ICMPV6CTL_ND6_PROXYALL:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_proxyall);
+	case ICMPV6CTL_NODEINFO:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6_nodeinfo);
 	default:
 		return ENOPROTOOPT;
 	}

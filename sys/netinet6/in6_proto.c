@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_proto.c,v 1.6 1999/12/10 10:04:28 angelos Exp $ */
+/* $OpenBSD: in6_proto.c,v 1.7 2000/01/02 04:52:26 itojun Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -292,6 +292,7 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
 u_int	icmp6errratelim = 1000;		/* 1000usec = 1msec */
+int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
 
 #ifdef TCP6
 /* TCP on IP6 parameters */
