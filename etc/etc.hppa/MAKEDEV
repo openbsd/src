@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.15 2003/08/07 09:19:14 mickey Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.16 2003/12/09 04:27:51 mickey Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
 #
@@ -30,12 +30,12 @@
 # Tapes:
 #	st*	SCSI tapes
 # Disks:
-#	fd*	Floppy disk drives (3 1/2", 5 1/4")
-#	sd*	SCSI disks
-#	cd*	SCSI cdrom drives
 #	ccd*	concatenated disk devices
 #	vnd*	"file" pseudo-disks
 #	rd*	"rd" pseudo-disks
+#	sd*	SCSI disks
+#	cd*	SCSI cdrom drives
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 # Terminal ports:
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
@@ -52,21 +52,22 @@
 #	wsmouse*	wscons mice
 # Call units:
 # Special purpose devices:
-#	fd	makes fd/* for the fdescfs
-#	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
-#	pf*	Packet Filter
-#	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
-#	xfs*	XFS filesystem devices
 #	ch*	SCSI media changer
 #	ss*	SCSI scanners
 #	uk*	SCSI Unknown device
-#	ses*	SES/SAF-TE SCSI devices
+#	fd	makes fd/* for the fdescfs
+#	bpf*	Berkeley Packet Filter
+#	tun*	network tunnel driver
+#	lkm	loadable kernel modules interface
+#	*random	inkernel random data source
+#	pf*	Packet Filter
 #	pdc	PDC device
+#	pci	PCI bus device
+#	xfs*	XFS filesystem devices
 #	systrace*	system call tracing device
 #	audio*	audio device
 #	crypto	hardware crypto access driver
+#	ses*	SES/SAF-TE SCSI devices
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -211,6 +212,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+ses*)
+	M ses$U c 37 $U 640 operator
+	;;
+
 crypto)
 	M crypto c 36 0
 	;;
@@ -230,8 +235,43 @@ systrace)
 	M systrace c 34 0 644
 	;;
 
-ses*)
-	M ses$U c 37 $U 640 operator
+xfs*)
+	M xfs$U c 32 $U 600
+	;;
+
+pci)
+	M pci c 31 0 600
+	;;
+
+pf*)
+	M pf c 21 0 600
+	;;
+
+*random)
+	n=0
+	for pre in " " s u p a
+	do
+		M ${pre}random c 20 $n 644
+		n=$(($n+1))
+	done
+	;;
+
+lkm)
+	M lkm c 19 0 640 _lkm
+	;;
+
+tun*)
+	M tun$U c 18 $U 600
+	;;
+
+bpf*)
+	M bpf$U c 17 $U 600
+	;;
+
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 16 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
 	;;
 
 uk*)
@@ -248,41 +288,6 @@ ss*)
 
 ch*)
 	M ch$U c 13 $U 660 operator
-	;;
-
-xfs*)
-	M xfs$U c 32 $U 600
-	;;
-
-*random)
-	n=0
-	for pre in " " s u p a
-	do
-		M ${pre}random c 20 $n 644
-		n=$(($n+1))
-	done
-	;;
-
-lkm)
-	M lkm c 19 0 640 _lkm
-	;;
-
-pf*)
-	M pf c 21 0 600
-	;;
-
-tun*)
-	M tun$U c 18 $U 600
-	;;
-
-bpf*)
-	M bpf$U c 17 $U 600
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 16 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
 	;;
 
 wsmouse*)
@@ -352,19 +357,6 @@ tty[0-7][0-9a-f])
 	M cua$U c 23 $(($o+128)) 660 dialer uucp
 	;;
 
-rd*)
-	dodisk2 rd $U 3 9 $U 0
-	;;
-
-vnd*)
-	dodisk vnd $U 2 8 $U 0
-	dodisk svnd $U 2 8 $U 2048
-	;;
-
-cd*)
-	dodisk2 cd $U 6 12 $U 0
-	;;
-
 fd*)
 	typnam=$U${i#fd[01]*}
 	case $typnam in
@@ -393,6 +385,19 @@ fd*)
 	M r${nam}c	c $chr $(($n+2)) 640 operator
 	;;
 
+cd*)
+	dodisk2 cd $U 6 12 $U 0
+	;;
+
+rd*)
+	dodisk2 rd $U 3 9 $U 0
+	;;
+
+vnd*)
+	dodisk vnd $U 2 8 $U 0
+	dodisk svnd $U 2 8 $U 2048
+	;;
+
 st*)
 	n=$(($U*16))
 	for pre in " " n e en
@@ -412,7 +417,7 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xfs0 ss0 ss1 ch0 ses0 wscons audio0 uk0 random lpa0 lpa1
+	R xfs0 ss0 ss1 ch0 ses0 wscons pci audio0 uk0 random lpa0 lpa1
 	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf
 	R systrace std st0 st1 fd
 	;;
