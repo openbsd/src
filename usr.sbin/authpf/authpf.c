@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.11 2002/04/09 20:07:16 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.12 2002/04/09 23:19:01 frantzen Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -400,6 +400,7 @@ print_message(char *filename)
 			return;
 		}
 	} while (fputs(buf, stdout) != EOF && !feof(f));
+	fflush(stdout);
 	fclose(f);
 }
 
@@ -785,7 +786,7 @@ changefilter(int add, char *luser, char *ipsrc)
 
 /*
  * authpf_kill_states:
- * This is to kill off states that would otherwide be left behind stateful
+ * This is to kill off states that would otherwise be left behind stateful
  * rules. This means we don't need to allow in more traffic than we really
  * want to, since we don't have to worry about any luser sessions lasting
  * longer than their ssh session. This function is based on
