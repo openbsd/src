@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.5 2000/07/08 19:53:12 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.6 2000/07/28 13:09:01 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -188,9 +188,8 @@ void
 openpic_collect_preconf_intr()
 {
 	int i;
-	printf("postconfiguring interrupts\n");
 	for (i = 0; i < ppc_configed_intr_cnt; i++) {
-		printf("\t%s irq %d level %d fun %x arg %x\n",
+		printf("\n\t%s irq %d level %d fun %x arg %x",
 			ppc_configed_intr[i].ih_what,
 			ppc_configed_intr[i].ih_irq,
 			ppc_configed_intr[i].ih_level,

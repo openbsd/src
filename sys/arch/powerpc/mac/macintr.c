@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.4 2000/06/15 03:11:01 rahnds Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.5 2000/07/28 13:09:01 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -116,16 +116,14 @@ macintr_match(parent, cf, aux)
 	void *cf;
 	void *aux;
 {
-	char type[40];
 	struct confargs *ca = aux;
 
-	bzero (type, sizeof(type));
-
+	/*
+	 * Only check name, to allow legacy interrupt controllers
+	 * to slip in here.
+	 */
 	if (strcmp(ca->ca_name, "interrupt-controller") == 0 ) {
-		OF_getprop(ca->ca_node, "device_type", type, sizeof(type));
-		if (strcmp(type,  "interrupt-controller") == 0) {
-			return 1;
-		}
+		return 1;
 	}
 	return 0;
 }
@@ -144,6 +142,7 @@ intr_establish_t macintr_establish;
 intr_disestablish_t macintr_disestablish;
 extern intr_establish_t *mac_intr_establish_func;
 extern intr_disestablish_t *mac_intr_disestablish_func;
+void macintr_collect_preconf_intr();
 
 void
 macintr_attach(parent, self, aux)
@@ -164,12 +163,35 @@ macintr_attach(parent, self, aux)
 	mac_intr_establish_func  = macintr_establish;
 	mac_intr_disestablish_func  = macintr_disestablish;
 
+	macintr_collect_preconf_intr();
 
 	mac_intr_establish(parent, 0x14, IST_LEVEL, IPL_HIGH,
 		prog_switch, (void *)0x14, "prog button");
 
 	printf("\n");
 }
+void
+macintr_collect_preconf_intr()
+{
+	int i;
+	for (i = 0; i < ppc_configed_intr_cnt; i++) {
+		printf("\n\t%s irq %d level %d fun %x arg %x",
+			ppc_configed_intr[i].ih_what,
+			ppc_configed_intr[i].ih_irq,
+			ppc_configed_intr[i].ih_level,
+			ppc_configed_intr[i].ih_fun,
+			ppc_configed_intr[i].ih_arg
+			);
+		macintr_establish(NULL,
+			ppc_configed_intr[i].ih_irq,
+			IST_LEVEL,
+			ppc_configed_intr[i].ih_level,
+			ppc_configed_intr[i].ih_fun,
+			ppc_configed_intr[i].ih_arg,
+			ppc_configed_intr[i].ih_what);
+	}
+}
+
 
 int
 prog_switch (void *arg)
