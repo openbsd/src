@@ -1,4 +1,4 @@
-.\"	$OpenBSD: infnan.3,v 1.5 2000/11/08 20:43:38 deraadt Exp $
+.\"	$OpenBSD: infnan.3,v 1.6 2003/03/06 20:13:15 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,24 +63,26 @@ by calls to a
 procedure
 .Fn infnan
 in appropriate places in
-.Xr libm 3 .
+.Em libm .
+(See
+.Xr math 3 ) .
 When
 better exception\-handling is implemented in
 .Tn UNIX ,
 only
 .Fn infnan
 among the codes in
-.Xr libm
+.Em libm
 will have to be changed.
 And users of
-.Xr libm
+.Em libm
 can design their own
 .Fn infnan
 now to
 insulate themselves from future changes.
 .Pp
 Whenever an elementary function code in
-.Xr libm
+.Em libm
 has to
 simulate one of the aforementioned
 .Tn IEEE
@@ -109,7 +111,7 @@ result it prescribes.  The third column shows what value is
 given to
 .Fa iarg
 by functions in
-.Xr libm
+.Em libm
 when they
 invoke
 .Fn infnan iarg

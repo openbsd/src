@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.3,v 1.7 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: scsi.3,v 1.8 2003/03/06 20:13:15 jmc Exp $
 .\" Copyright (c) 1994 HD Associates (hd@world.std.com)
 .\" All rights reserved.
 .\"
@@ -94,9 +94,9 @@ not all devices accept the SCIOCCOMAND ioctl.
 It is accepted by the
 control device for tape drives, partition D for disk drives, partition C
 for CD ROM drives, and any "unknown" device.
-The "super scsi"
-.Xr ssc 4
-device also accepts the ioctl.
+.\" The "super scsi"
+.\" .Xr ssc 4
+.\" device also accepts the ioctl.
 .Pp
 Most of the SCSI library functions build up and manipulate the
 .Ar scsireq
