@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.49 2003/12/02 23:16:29 markus Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.50 2004/01/27 09:27:17 markus Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -216,6 +216,7 @@ struct sadb_x_udpencap {
 #define SADB_X_GETSPROTO(x) \
 	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
 	(x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
+	(x) == SADB_X_SATYPE_TCPSIGNATURE ? IPPROTO_TCP :\
 	(x) == SADB_X_SATYPE_IPCOMP ? IPPROTO_IPCOMP: IPPROTO_IPIP )
 #endif
 
