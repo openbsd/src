@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.19 2001/04/17 21:12:07 millert Exp $	*/
+/*	$OpenBSD: ps.c,v 1.20 2001/06/03 04:30:47 angelos Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.19 2001/04/17 21:12:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.20 2001/06/03 04:30:47 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,9 +115,10 @@ main(argc, argv)
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
-	int all, ch, flag, i, fmt, lineno, nentries;
+	int all, ch, flag, i, fmt, lineno, nentries, mib[4], mibcnt;
 	int prtheader, wflag, kflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
+	size_t size;
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
@@ -305,26 +306,49 @@ main(argc, argv)
 	 * get proc list
 	 */
 	if (uid != (uid_t) -1) {
-		what = KERN_PROC_UID;
-		flag = uid;
+		what = mib[2] = KERN_PROC_UID;
+		flag = mib[3] = uid;
+		mibcnt = 4;
 	} else if (ttydev != NODEV) {
-		what = KERN_PROC_TTY;
-		flag = ttydev;
+		what = mib[2] = KERN_PROC_TTY;
+		flag = mib[3] = ttydev;
+		mibcnt = 4;
 	} else if (pid != -1) {
-		what = KERN_PROC_PID;
-		flag = pid;
+		what = mib[2] = KERN_PROC_PID;
+		flag = mib[3] = pid;
+		mibcnt = 4;
 	} else if (kflag) {
-		what = KERN_PROC_KTHREAD;
+		what = mib[2] = KERN_PROC_KTHREAD;
 		flag = 0;
+		mibcnt = 3;
 	} else {
-		what = KERN_PROC_ALL;
+		what = mib[2] = KERN_PROC_ALL;
 		flag = 0;
+		mibcnt = 3;
 	}
 	/*
 	 * select procs
 	 */
-	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
-		errx(1, "%s", kvm_geterr(kd));
+	if (kd != NULL) {
+		if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
+			errx(1, "%s", kvm_geterr(kd));
+	}
+	else {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_PROC;
+		size = 0;
+		if (sysctl(mib, mibcnt, NULL, &size, NULL, 0) < 0)
+			err(1, "could not get kern.proc size");
+		size *= 2;
+		kp = calloc(size, sizeof(char));
+		if (kp == NULL)
+			err(1,
+			    "failed to allocated memory for proc structures");
+		if (sysctl(mib, mibcnt, kp, &size, NULL, 0) < 0)
+			err(1, "could not read kern.proc");
+		nentries = size / sizeof(struct kinfo_proc);
+	}
+
 	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
 		err(1, NULL);
 	for (i = nentries; --i >= 0; ++kp) {
