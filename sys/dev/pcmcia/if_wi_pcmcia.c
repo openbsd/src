@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.60 2005/01/27 17:04:56 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.61 2005/03/06 23:32:07 jsg Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -165,6 +165,10 @@ static const struct wi_pcmcia_product {
 	{ PCMCIA_VENDOR_ELSA,
 	  PCMCIA_PRODUCT_ELSA_XI325_IEEE,
 	  PCMCIA_CIS_ELSA_XI325_IEEE
+	},
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_WNB11CFZ,
+	  PCMCIA_CIS_ELSA_WNB11CFZ
 	},
 	{ PCMCIA_VENDOR_COMPAQ,
 	  PCMCIA_PRODUCT_COMPAQ_NC5004,
