@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.35 2004/03/18 18:09:57 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.36 2004/03/18 19:15:27 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -269,6 +269,44 @@ Create a host-based wireless bridge to fxp0 (Prism only):
 # ifconfig wi0 inet up nwid my_ap mediaopt hostap
 # brconfig bridge0 add fxp0 add wi0 up
 .Ed
+.Pp
+The following examples utilize
+.Xr wicontrol 8
+to set options not supported by
+.Xr ifconfig 8 .
+.Pp
+Enable software-based WEP (Prism only, see CAVEATS below):
+.Bd -literal -compact -offset indent
+# wicontrol wi0 -x 1
+.Ed
+.Pp
+Hide the SSID of a HostAP server (Prism only, requires firmware >= 1.6.3)
+.Bd -literal -compact -offset indent
+# wicontrol wi0 -E 3
+.Ed
+.Pp
+Note that when setting options via
+.Xr wicontrol 8
+in a
+.Xr hostname.if 5
+file (e.g.
+.Pa /etc/hostname.wi0 ) ,
+the
+.Xr wicontrol 8
+commands should be specified first.
+.Pp
+The following
+.Xr hostname.if 5
+example will set the channel to 11, enable software
+WEP, and turn on enhanced security (SSID hiding) before configuring
+the interface as a host-based access point:
+.Bd -literal -offset indent
+!/sbin/wicontrol \e$if -f 11 -x 1 -E 3
+inet 192.168.1.1 255.255.255.0 NONE nwid my_net \e
+	nwkey 0x8736639624 mediaopt hostap
+.Ed
+.Pp
+Note that the line beginning with "inet" has been split for readability.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "wi%d: init failed"
