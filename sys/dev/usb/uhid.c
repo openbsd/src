@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.20 2002/07/10 21:41:50 mickey Exp $ */
+/*	$OpenBSD: uhid.c,v 1.21 2002/07/11 03:11:17 nate Exp $ */
 /*	$NetBSD: uhid.c,v 1.51 2002/03/17 18:02:53 augustss Exp $	*/
 
 /*
@@ -100,6 +100,10 @@ struct uhid_softc {
 #define	UHIDUNIT(dev)	(minor(dev))
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
+
+#if defined(__NetBSD__)
+cdev_decl(uhid);
+#endif
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
 
