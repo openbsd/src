@@ -80,6 +80,12 @@ file resides in
 .Xr getservent 3
 .Sh BUGS
 A name server should be used instead of a static file.
+.br
+Lines in
+.Pa /etc/services
+are limited to
+.Ev BUFSIZE
+characters (currently 1024).  Longer lines will be ignored.
 .Sh HISTORY
 The
 .Nm

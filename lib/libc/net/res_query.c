@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.10 1997/07/09 01:08:53 millert Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.11 1998/03/16 05:07:02 millert Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.10 1997/07/09 01:08:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.11 1998/03/16 05:07:02 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -359,6 +359,7 @@ hostalias(name)
 	char *file;
 	char buf[BUFSIZ];
 	static char abuf[MAXDNAME];
+	size_t len;
 
 	if (_res.options & RES_NOALIASES)
 		return (NULL);
@@ -366,8 +367,14 @@ hostalias(name)
 	if (issetugid() != 0 || file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
 	setbuf(fp, NULL);
-	buf[sizeof(buf) - 1] = '\0';
-	while (fgets(buf, sizeof(buf), fp)) {
+	while ((cp1 = fgetln(fp, &len)) != NULL) {
+		if (cp1[len-1] == '\n')
+			len--;
+		if (len >= sizeof(buf) || len == 0)
+			continue;
+		(void)memcpy(buf, cp1, len);
+		buf[len] = '\0';
+		
 		for (cp1 = buf; *cp1 && !isspace(*cp1); ++cp1)
 			;
 		if (!*cp1)

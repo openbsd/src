@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.29 1998/01/20 18:28:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.30 1998/03/16 05:06:55 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -721,22 +721,28 @@ _gethtent()
 {
 	char *p;
 	register char *cp, **q;
-	int af, len;
+	int af;
+	size_t len;
 
 	if (!hostf && !(hostf = fopen(_PATH_HOSTS, "r" ))) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
  again:
-	if (!(p = fgets(hostbuf, sizeof hostbuf, hostf))) {
+	if ((p = fgetln(hostf, &len)) == NULL) {
 		h_errno = HOST_NOT_FOUND;
 		return (NULL);
 	}
+	if (p[len-1] == '\n')
+		len--;
+	if (len >= sizeof(hostbuf) || len == 0)
+		goto again;
+	p = memcpy(hostbuf, p, len);
+	hostbuf[len] = '\0';
 	if (*p == '#')
 		goto again;
-	if (!(cp = strpbrk(p, "#\n")))
-		goto again;
-	*cp = '\0';
+	if ((cp = strchr(p, '#')))
+		*cp = '\0';
 	if (!(cp = strpbrk(p, " \t")))
 		goto again;
 	*cp++ = '\0';

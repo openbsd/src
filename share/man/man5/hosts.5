@@ -104,6 +104,14 @@ file resides in
 .Rs
 .%T "Name Server Operations Guide for BIND"
 .Re
+.Sh BUGS
+A name server should be used instead of a static file.
+.br
+Lines in
+.Pa /etc/hosts
+are limited to
+.Ev BUFSIZE
+characters (currently 1024).  Longer lines will be ignored.
 .Sh HISTORY
 The
 .Nm

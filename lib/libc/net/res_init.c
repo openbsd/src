@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.15 1997/07/15 18:33:50 flipk Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.16 1998/03/16 05:07:01 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.15 1997/07/15 18:33:50 flipk Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.16 1998/03/16 05:07:01 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,6 +151,7 @@ res_init()
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
+	size_t len;
 #ifdef RESOLVSORT
 	int nsort = 0;
 	char *net;
@@ -241,9 +242,17 @@ res_init()
 	    strncpy(_res.lookups, "bf", sizeof _res.lookups);
 
 	    /* read the config file */
-	    while (fgets(buf, sizeof(buf), fp) != NULL) {
+	    buf[0] = '\0';
+	    while ((cp = fgetln(fp, &len)) != NULL) {
+		/* skip lines that are too long or zero length */
+		if (len >= sizeof(buf) || len == 0)
+		    continue;
+		(void)memcpy(buf, cp, len);
+		buf[len] = '\0';
 		/* skip comments */
-		if (*buf == ';' || *buf == '#')
+		if ((cp = strpbrk(buf, ";#")) != NULL)
+			*cp = '\0';
+		if (buf[0] == '\0')
 			continue;
 		/* read default domain name */
 		if (MATCH(buf, "domain")) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetent.3,v 1.4 1997/04/05 21:13:07 millert Exp $
+.\"	$OpenBSD: getnetent.3,v 1.5 1998/03/16 05:06:56 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,10 +141,8 @@ and
 functions appeared in 
 .Bx 4.2 .
 .Sh BUGS
-The data space used by
-these functions is static; if future use requires the data, it should be
-copied before any subsequent calls to these functions overwrite it.
-Only Internet network
-numbers are currently understood.
-Expecting network numbers to fit
-in no more than 32 bits is naive.
+The data space used by these functions is static; if future use
+requires the data, it should be copied before any subsequent calls
+to these functions overwrite it.  Only Internet network numbers
+are currently understood.  Expecting network numbers to fit in no
+more than 32 bits is naive.

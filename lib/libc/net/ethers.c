@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.3 1996/08/19 08:28:36 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.4 1998/03/16 05:06:53 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,8 @@ ether_ntohost(hostname, e)
 	struct ether_addr *e;
 {
 	FILE *f; 
-	char buf[BUFSIZ];
+	char buf[BUFSIZ+1], *p;
+	size_t len;
 	struct ether_addr try;
 
 #ifdef YP
@@ -79,9 +80,16 @@ ether_ntohost(hostname, e)
 #endif
 
 	f = fopen(_PATH_ETHERS, "r");
-	if (f==NULL)
+	if (f == NULL)
 		return -1;
-	while (fgets(buf, sizeof buf, f)) {
+	while ((p = fgetln(f, &len)) != NULL) {
+		if (p[len-1] == '\n')
+			len--;
+		if (len > sizeof(buf) - 2)
+			continue;
+		memcpy(buf, p, len);
+		buf[len] = '\n';	/* code assumes newlines later on */
+		buf[len+1] = '\0';
 #ifdef YP
 		/* A + in the file means try YP now.  */
 		if (!strncmp(buf, "+\n", sizeof buf)) {
@@ -103,7 +111,7 @@ ether_ntohost(hostname, e)
 		}
 #endif
 		if (ether_line(buf, &try, hostname) == 0 &&
-		    bcmp((char *)&try, (char *)e, sizeof try) == 0) {
+		    memcmp((char *)&try, (char *)e, sizeof try) == 0) {
 			(void)fclose(f);
 			return 0;
 		}     
@@ -119,8 +127,9 @@ ether_hostton(hostname, e)
 	struct ether_addr *e;
 {
 	FILE *f;
-	char buf[BUFSIZ];
+	char buf[BUFSIZ+1], *p;
 	char try[MAXHOSTNAMELEN];
+	size_t len;
 #ifdef YP
 	int hostlen = strlen(hostname);
 #endif
@@ -129,7 +138,14 @@ ether_hostton(hostname, e)
 	if (f==NULL)
 		return -1;
 
-	while (fgets(buf, sizeof buf, f)) {
+	while ((p = fgetln(f, &len)) != NULL) {
+		if (p[len-1] == '\n')
+			len--;
+		if (len > sizeof(buf) - 2)
+			continue;
+		memcpy(buf, p, len);
+		buf[len] = '\n';	/* code assumes newlines later on */
+		buf[len+1] = '\0';
 #ifdef YP
 		/* A + in the file means try YP now.  */
 		if (!strncmp(buf, "+\n", sizeof buf)) {
