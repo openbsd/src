@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 2002/12/04 13:11:23 miod Exp $
+#	$OpenBSD: install.md,v 1.17 2003/08/16 20:37:24 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,10 +94,10 @@ md_init_mbr() {
 		sleep 2
 		echo -n "Creating Master Boot Record (MBR)..."
 		fdisk -i -f /usr/mdec/mbr $1
-		echo "..done."
+		echo "done."
 		echo -n "Copying 1MB MSDOS partition to disk..."
 		gunzip < /usr/mdec/msdos1mb.gz | dd of=/dev/r$1c bs=512 seek=1 >/dev/null 2>&1
-		echo "..done."
+		echo "done."
 		;;
 	esac
 }

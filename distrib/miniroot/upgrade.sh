@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.50 2003/06/23 00:43:18 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.51 2003/08/16 20:37:24 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -69,12 +69,12 @@ if ! fsck -fp /dev/$ROOTDEV > /dev/null 2>&1; then
 fi
 echo	"OK."
 
-echo -n "Mounting root filesystem ... "
+echo -n "Mounting root filesystem..."
 if ! mount -o ro /dev/$ROOTDEV /mnt; then
 	echo	"ERROR: can't mount root filesystem!"
 	exit
 fi
-echo	"Done."
+echo	"done."
 
 # The fstab, hosts and myname files are required.
 for _file in fstab hosts myname; do
