@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 1999/02/25 16:36:08 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.3 1999/02/25 16:48:06 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -44,7 +44,7 @@ asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
 #wax*	at mainbus0 irq 28	# Wax may host EISA as well
 eba*	at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 #vmeb*	at mainbus0 irq ?	# VME bus adapter
-#pcib*	at mainbus0 irq ?	# PCI bus adapter
+#dino*	at mainbus0 irq ?	# PCI bus adapter
 
 #sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
 #myri*	at mainbus0 irq ?	# ANSI/VITA-26-1998 Gbit iface
@@ -55,7 +55,7 @@ gsc*	at asp?			# 7xx
 #gsc*	at wax?			# 715?
 
 #vme*	at vmeb?
-#pci*	at pcib?
+#pci*	at dino?
 eisa*	at eba?
 #eisa*	at wax?
 #isa*	at eba?
