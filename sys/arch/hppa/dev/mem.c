@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 2002/02/02 21:06:46 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.8 2002/02/28 22:18:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -97,6 +97,8 @@
 
 #include <hppa/dev/cpudevs.h>
 #include <hppa/dev/viper.h>
+
+#define	VIPER_HPA	0xfffbf000
 
 struct mem_softc {
 	struct device sc_dev;
