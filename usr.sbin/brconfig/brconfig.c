@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.9 1999/03/19 22:47:33 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.10 1999/03/23 08:10:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -715,10 +715,8 @@ is_bridge(s, brdg)
 	strncpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name) - 1);
 	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCGIFFLAGS)");
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
 		return (0);
-	}
 
 	ifbac.ifbac_len = 0;
 	strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name) - 1);
