@@ -1,4 +1,4 @@
-/*	$OpenBSD: memreg.c,v 1.6 1997/11/11 10:47:23 niklas Exp $	*/
+/*	$OpenBSD: memreg.c,v 1.7 1997/11/11 10:53:12 niklas Exp $	*/
 /*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
 
 /*
@@ -86,13 +86,13 @@ memregmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	register struct cfdata *cf;
+	register struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 	if (CPU_ISSUN4) {
 		if (ca->ca_bustype == BUS_OBIO)
 			return (strcmp(cf->cf_driver->cd_name,
-				       ca->ca_ra.ra_name) == 0);
+			    ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
 	return (strcmp("memory-error", ca->ca_ra.ra_name) == 0);
