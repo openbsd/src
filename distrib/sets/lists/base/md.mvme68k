@@ -1708,3 +1708,5 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693var.ph

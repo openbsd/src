@@ -2,6 +2,7 @@
 ./bin
 ./bin/[
 ./bin/cat
+./bin/chgrp
 ./bin/chio
 ./bin/chmod
 ./bin/cp
@@ -65,6 +66,7 @@
 ./sbin/badsect
 ./sbin/brconfig
 ./sbin/ccdconfig
+./sbin/chown
 ./sbin/clri
 ./sbin/dhclient
 ./sbin/dhclient-script

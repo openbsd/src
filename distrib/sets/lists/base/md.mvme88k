@@ -411,3 +411,5 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693var.ph
