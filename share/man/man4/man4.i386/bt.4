@@ -23,7 +23,7 @@
 .\"
 .Dd November 29, 1994
 .Dt BT 4 i386
-.Os NetBSD 
+.Os 
 .Sh NAME
 .Nm bt
 .Nd Buslogic SCSI adapter driver
@@ -36,9 +36,9 @@ The
 driver supports the following Buslogic SCSI adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Buslogic BT-445
-.It Buslogic BT-74x 
-.It Buslogic BT-9xx 
+.It Buslogic BT-445	VLB
+.It Buslogic BT-74x	EISA
+.It Buslogic BT-9xx	PCI
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
