@@ -1,4 +1,4 @@
-/*	$OpenBSD: dohits.c,v 1.6 2003/04/06 22:02:05 tedu Exp $	*/
+/*	$OpenBSD: dohits.c,v 1.7 2003/04/25 18:56:14 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dohits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: dohits.c,v 1.6 2003/04/06 22:02:05 tedu Exp $";
+static char rcsid[] = "$OpenBSD: dohits.c,v 1.7 2003/04/25 18:56:14 avsm Exp $";
 #endif /* not lint */
 
 /*
@@ -269,7 +269,7 @@ char	*aidfile, *fcnfile;
 	plain[0] = shifted[0] = alted[0] = shiftalted[0] = 0;
 	keynumber = -1;
 	scancode = -1;
-	(void) sscanf(line, "%d %x %s %s %s %s", &keynumber,
+	(void) sscanf(line, "%d %x %99s %99s %99s %99s", &keynumber,
 		    &scancode, plain, shifted, alted, shiftalted);
 	if ((keynumber == -1) || (scancode == -1)
 		|| ((plain[0] == 0)
