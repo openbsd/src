@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.6 1996/09/05 21:26:48 deraadt Exp $
+#	$Id: install.sh,v 1.7 1997/09/26 02:37:17 millert Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -400,33 +400,33 @@ if [ "$sect_fwd" = "sf:" ]; then
 fi
 
 echo	"Initializing root filesystem, and mounting..."
-$DONTDOIT newfs /dev/r${drivename}a $name
+$DONTDOIT newfs /dev/r${drivename}a
 $DONTDOIT mount -v /dev/${drivename}a /mnt
 if [ "$dname" != "" -a "$dname" != "NO" ]; then
 	echo	""
 	echo	"Initializing $dname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}d $name
+	$DONTDOIT newfs /dev/r${drivename}d
 	$DONTDOIT mkdir -p /mnt/$dname
 	$DONTDOIT mount -v /dev/${drivename}d /mnt/$dname
 fi
 if [ "$ename" != "" -a "$ename" != "NO" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}e $name
+	$DONTDOIT newfs /dev/r${drivename}e
 	$DONTDOIT mkdir -p /mnt/$ename
 	$DONTDOIT mount -v /dev/${drivename}e /mnt/$ename
 fi
 if [ "$fname" != "" -a "$fname" != "NO" ]; then
 	echo	""
 	echo	"Initializing $fname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}f $name
+	$DONTDOIT newfs /dev/r${drivename}f
 	$DONTDOIT mkdir -p /mnt/$fname
 	$DONTDOIT mount -v /dev/${drivename}f /mnt/$fname
 fi
 if [ "$gname" != "" -a "$gname" != "NO" ]; then
 	echo	""
 	echo	"Initializing $gname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}g $name
+	$DONTDOIT newfs /dev/r${drivename}g
 	$DONTDOIT mkdir -p /mnt/$gname
 	$DONTDOIT mount -v /dev/${drivename}g /mnt/$gname
 fi

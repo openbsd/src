@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.18 1997/04/23 19:52:16 gvf Exp $
+#	$OpenBSD: install.sh,v 1.19 1997/09/26 02:37:15 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -485,89 +485,89 @@ if [ "$sect_fwd" = "sf:" ]; then
 fi
 
 echo	"Initializing root filesystem, and mounting..."
-$DONTDOIT newfs /dev/r${drivename}a $name
+$DONTDOIT newfs /dev/r${drivename}a
 $DONTDOIT mount -v /dev/${drivename}a /mnt
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}e $name
+	$DONTDOIT newfs /dev/r${drivename}e
 	$DONTDOIT mkdir -p /mnt/$ename
 	$DONTDOIT mount -v /dev/${drivename}e /mnt/$ename
 fi
 if [ "$fname" != "" ]; then
 	echo	""
 	echo	"Initializing $fname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}f $name
+	$DONTDOIT newfs /dev/r${drivename}f
 	$DONTDOIT mkdir -p /mnt/$fname
 	$DONTDOIT mount -v /dev/${drivename}f /mnt/$fname
 fi
 if [ "$gname" != "" ]; then
 	echo	""
 	echo	"Initializing $gname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}g $name
+	$DONTDOIT newfs /dev/r${drivename}g
 	$DONTDOIT mkdir -p /mnt/$gname
 	$DONTDOIT mount -v /dev/${drivename}g /mnt/$gname
 fi
 if [ "$hname" != "" ]; then
 	echo	""
 	echo	"Initializing $hname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}h $name
+	$DONTDOIT newfs /dev/r${drivename}h
 	$DONTDOIT mkdir -p /mnt/$hname
 	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
 fi
 if [ "$iname" != "" ]; then
 	echo	""
 	echo	"Initializing $iname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}i $name
+	$DONTDOIT newfs /dev/r${drivename}i
 	$DONTDOIT mkdir -p /mnt/$iname
 	$DONTDOIT mount -v /dev/${drivename}i /mnt/$iname
 fi
 if [ "$jname" != "" ]; then
 	echo	""
 	echo	"Initializing $jname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}j $name
+	$DONTDOIT newfs /dev/r${drivename}j
 	$DONTDOIT mkdir -p /mnt/$jname
 	$DONTDOIT mount -v /dev/${drivename}j /mnt/$jname
 fi
 if [ "$kname" != "" ]; then
 	echo	""
 	echo	"Initializing $kname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}k $name
+	$DONTDOIT newfs /dev/r${drivename}k
 	$DONTDOIT mkdir -p /mnt/$kname
 	$DONTDOIT mount -v /dev/${drivename}k /mnt/$kname
 fi
 if [ "$lname" != "" ]; then
 	echo	""
 	echo	"Initializing $lname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}l $name
+	$DONTDOIT newfs /dev/r${drivename}l
 	$DONTDOIT mkdir -p /mnt/$lname
 	$DONTDOIT mount -v /dev/${drivename}l /mnt/$lname
 fi
 if [ "$mname" != "" ]; then
 	echo	""
 	echo	"Initializing $mname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}m $name
+	$DONTDOIT newfs /dev/r${drivename}m
 	$DONTDOIT mkdir -p /mnt/$mname
 	$DONTDOIT mount -v /dev/${drivename}m /mnt/$mname
 fi
 if [ "$nname" != "" ]; then
 	echo	""
 	echo	"Initializing $nname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}n $name
+	$DONTDOIT newfs /dev/r${drivename}n
 	$DONTDOIT mkdir -p /mnt/$nname
 	$DONTDOIT mount -v /dev/${drivename}n /mnt/$nname
 fi
 if [ "$oname" != "" ]; then
 	echo	""
 	echo	"Initializing $oname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}o $name
+	$DONTDOIT newfs /dev/r${drivename}o
 	$DONTDOIT mkdir -p /mnt/$oname
 	$DONTDOIT mount -v /dev/${drivename}o /mnt/$oname
 fi
 if [ "$pname" != "" ]; then
 	echo	""
 	echo	"Initializing $pname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}p $name
+	$DONTDOIT newfs /dev/r${drivename}p
 	$DONTDOIT mkdir -p /mnt/$pname
 	$DONTDOIT mount -v /dev/${drivename}p /mnt/$pname
 fi
