@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 1999/01/20 19:32:02 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 1999/02/17 22:29:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -60,7 +60,6 @@
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#include <machine/break.h>
 #include <machine/iomod.h>
 #include <machine/pdc.h>
 #include <machine/intr.h>
