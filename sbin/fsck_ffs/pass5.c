@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.16 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.17 2003/10/11 01:43:45 tedu Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.16 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.17 2003/10/11 01:43:45 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ pass5(void)
 			default:
 				if (j < ROOTINO)
 					break;
-				errexit("BAD STATE %d FOR INODE I=%ld",
+				errexit("BAD STATE %d FOR INODE I=%ld\n",
 				    statemap[j], j);
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.9 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.10 2003/10/11 01:43:45 tedu Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass4.c,v 1.9 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.10 2003/10/11 01:43:45 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ pass4(void)
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d",
+			errexit("BAD STATE %d FOR INODE I=%d\n",
 			    statemap[inumber], inumber);
 		}
 	}

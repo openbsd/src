@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.18 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.19 2003/10/11 01:43:45 tedu Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.18 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.19 2003/10/11 01:43:45 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ pass2(void)
 		break;
 
 	default:
-		errexit("BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
+		errexit("BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
 	}
 	statemap[ROOTINO] = DFOUND;
 	if (newinofmt) {
@@ -494,7 +494,7 @@ again:
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d",
+			errexit("BAD STATE %d FOR INODE I=%d\n",
 			    statemap[dirp->d_ino], dirp->d_ino);
 		}
 	}

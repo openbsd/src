@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.25 2003/09/25 04:23:26 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.26 2003/10/11 01:43:45 tedu Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.25 2003/09/25 04:23:26 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.26 2003/10/11 01:43:45 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,7 +372,7 @@ cacheino(struct ufs1_dinode *dp, ino_t inumber)
 		blks = NDADDR + NIADDR;
 	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
 	if (inp == NULL)
-		errexit("cannot allocate memory for inode cache");
+		errexit("cannot allocate memory for inode cache\n");
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
@@ -535,7 +535,7 @@ blkerror(ino_t ino, char *type, daddr_t blk)
 		return;
 
 	default:
-		errexit("BAD STATE %d TO BLKERR", statemap[ino]);
+		errexit("BAD STATE %d TO BLKERR\n", statemap[ino]);
 		/* NOTREACHED */
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.14 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.15 2003/10/11 01:43:45 tedu Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.14 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.15 2003/10/11 01:43:45 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (bread(fsreadfd, symbuf,
 			    fsbtodb(&sblock, dp->di_db[0]),
 			    (long)secsize) != 0)
-				errexit("cannot read symlink");
+				errexit("cannot read symlink\n");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
 				printf("convert symlink %d(%s) of size %llu\n",
