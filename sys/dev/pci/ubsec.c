@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.88 2002/04/26 05:08:49 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.89 2002/04/26 17:54:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1764,10 +1764,12 @@ ubsec_kprocess_modexp(sc, krp)
 	u_int len;
 	u_int16_t ilen = 0;
 
+#ifdef UBSEC_DEBUG
 	for (s = 0; s < (krp->krp_iparams + krp->krp_oparams); s++) {
 		printf("param %d: bits %d\n",
 		    s, krp->krp_param[s].crp_nbits);
 	}
+#endif
 
 	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
 	if (me == NULL)
@@ -1820,8 +1822,10 @@ ubsec_kprocess_modexp(sc, krp)
 	epb->pb_next = 0;
 	epb->pb_len = htole32(len);
 	ilen += len;
+#ifdef UBSEC_DEBUG
 	printf("Epb ");
 	ubsec_dump_pb(epb);
+#endif
 
 	mcr = (struct ubsec_mcr *)me->me_q.q_mcr.dma_vaddr;
 	bzero(mcr, sizeof(*mcr));
@@ -1845,7 +1849,9 @@ ubsec_kprocess_modexp(sc, krp)
 	mcr->mcr_opktbuf.pb_addr = htole32(me->me_C.dma_paddr);
 	mcr->mcr_opktbuf.pb_next = 0;
 	mcr->mcr_opktbuf.pb_len = htole32(me->me_C.dma_size);
+#ifdef UBSEC_DEBUG
 	ubsec_dump_mcr(mcr);
+#endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof(*ctx));
@@ -1861,8 +1867,9 @@ ubsec_kprocess_modexp(sc, krp)
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
 	ctx->me_E_len = htole16(((krp->krp_param[1].crp_nbits + 31) / 32) * 32);
 	ctx->me_N_len = htole16(len);
+#ifdef UBSEC_DEBUG
 	ubsec_dump_ctx2((struct ubsec_ctx_keyop *)ctx);
-
+#endif
 	/*
 	 * ubsec_feed2 will sync mcr and ctx, we just need to sync
 	 * everything else.
@@ -1920,11 +1927,13 @@ ubsec_kcopyout(crpar, buf, bufsiz)
 	u_int bufsiz;
 {
 	u_int nbytes = (crpar->crp_nbits + 7) / 8;
+#ifdef UBSEC_DEBUG
 	u_int i;
 
 	for (i = 0; i < bufsiz; i++)
 		printf("%s%02x", (i == 0) ? "ko " : ":", (u_int8_t)buf[i]);
 	printf("\n");
+#endif
 
 	if (bufsiz > nbytes)
 		return (-1);
