@@ -6,6 +6,8 @@
 
 #include <resolv.h>
 
+RCSID("$OpenBSD: uuencode.c,v 1.6 2000/06/22 23:55:00 djm Exp $");
+
 int
 uuencode(unsigned char *src, unsigned int srclength,
     char *target, size_t targsize)
