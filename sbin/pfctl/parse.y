@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.330 2003/02/25 12:22:25 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.331 2003/02/25 20:59:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -539,8 +539,9 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			}
 			if ($6.dst.port != NULL) {
 				if ($6.dst.port->next != NULL) {
-					yyerror("destination port list expansion"
-					    " not supported in rdr-anchor");
+					yyerror("destination port list "
+					    "expansion not supported in "
+					    "rdr-anchor");
 					YYERROR;
 				} else if ($6.dst.port->op != PF_OP_EQ) {
 					yyerror("destination port operators"
@@ -1176,8 +1177,8 @@ pfrule		: action dir logquick interface route af proto fromto
 				decide_address_family($5.host, &r.af);
 				remove_invalid_hosts(&$5.host, &r.af);
 				if ($5.host == NULL) {
-					yyerror("no routing address with matching address family "
-					    "found.");
+					yyerror("no routing address with "
+					    "matching address family found.");
 					YYERROR;
 				}
 				if ($5.host->next != NULL) {
@@ -1504,7 +1505,10 @@ to		: /* empty */			{
 		}
 		;
 
-ipportspec	: ipspec			{ $$.host = $1; $$.port = NULL; }
+ipportspec	: ipspec			{
+			$$.host = $1;
+			$$.port = NULL;
+		}
 		| ipspec PORT portspec		{
 			$$.host = $1;
 			$$.port = $3;
@@ -1960,7 +1964,8 @@ icmp6_item	: icmp6type		{
 
 			if (atoul($3, &ulval) == 0) {
 				if (ulval > 255) {
-					yyerror("illegal icmp6-code %ld", ulval);
+					yyerror("illegal icmp6-code %ld",
+					    ulval);
 					YYERROR;
 				}
 			} else {
@@ -1993,7 +1998,8 @@ icmptype	: STRING			{
 				}
 				$$ = ulval + 1;
 			} else {
-				if ((p = geticmptypebyname($1, AF_INET)) == NULL) {
+				if ((p = geticmptypebyname($1, AF_INET)) ==
+				    NULL) {
 					yyerror("unknown icmp-type %s", $1);
 					YYERROR;
 				}
@@ -2013,7 +2019,8 @@ icmp6type	: STRING			{
 				}
 				$$ = ulval + 1;
 			} else {
-				if ((p = geticmptypebyname($1, AF_INET6)) == NULL) {
+				if ((p = geticmptypebyname($1, AF_INET6)) ==
+				    NULL) {
 					yyerror("unknown icmp6-type %s", $1);
 					YYERROR;
 				}
@@ -2287,7 +2294,8 @@ nataction	: no NAT {
 		}
 		;
 
-natrule		: nataction interface af proto fromto redirpool pooltype staticport
+natrule		: nataction interface af proto fromto redirpool pooltype
+		  staticport
 		{
 			struct pf_rule	r;
 
@@ -2509,7 +2517,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					YYERROR;
 				}
 
-				if (!PF_AZERO(&binat.src.addr.v.a.mask, binat.af) &&
+				if (!PF_AZERO(&binat.src.addr.v.a.mask,
+				    binat.af) &&
 				    !PF_AEQ(&binat.src.addr.v.a.mask,
 				    &$10->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
