@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.10 1998/06/20 01:49:03 downsj Exp $
+#	$OpenBSD: ndc.sh,v 1.11 1998/07/07 22:05:15 millert Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -9,18 +9,30 @@ USAGE='echo \
 
 PATH=%DESTSBIN%:/bin:/usr/bin:/usr/ucb:$PATH
 
+NAMED_CMD=named
+RUNNING=0
 if [ -r /etc/rc.conf ]; then
 	CHROOTDIR=`. /etc/rc.conf ; echo "$named_chroot"`
-	# In case rc.conf exists but does not specify $named_chroot.
-	if [ "X${CHROOTDIR}" == "X" ]; then
+	if [ "X${CHROOTDIR}" != "X" ]; then
+		NAMED_CMD="${NAMED_CMD} -t ${CHROOTDIR}"
+	else
+		# Need a default
 		CHROOTDIR=/var/named
+	fi
+
+	NAMED_USER=`. /etc/rc.conf ; echo "$named_user"`
+	if [ "X${NAMED_USER}" != "X" ]; then
+		NAMED_CMD="${NAMED_CMD} -u ${NAMED_USER}"
+	fi
+
+	NAMED_FLAGS=`. /etc/rc.conf ; echo "$named_flags"`
+	if [ "X${NAMED_FLAGS}" != "X" ]; then
+		NAMED_CMD="${NAMED_CMD} ${NAMED_FLAGS}"
 	fi
 else
 	CHROOTDIR=%CHROOTDIR%
 fi
 PIDFILE=${CHROOTDIR}/named.pid
-NAMED_CMD=named
-RUNNING=0
 
 #
 # Pid file may live in chroot dir, check there first.
