@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.14 1999/03/15 15:35:36 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.15 1999/04/20 22:56:11 alex Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -188,8 +188,8 @@ block out log on ed0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
-pass in proto sipp-esp from gatewB/32 to gatewA/32
-pass out proto sipp-esp from gatewA/32 to gatewB/32
+pass in proto esp from gatewB/32 to gatewA/32
+pass out proto esp from gatewA/32 to gatewB/32
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from netB/netBmask to netA/netAmask
@@ -287,8 +287,8 @@ block out log on ed0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
-pass in proto sipp-esp from 192.168.2.1/32 to 192.168.1.254/32
-pass out proto sipp-esp from 192.168.1.254/32 to 192.168.2.1/32
+pass in proto esp from 192.168.2.1/32 to 192.168.1.254/32
+pass out proto esp from 192.168.1.254/32 to 192.168.2.1/32
 
 # Passing in traffic from the designated subnets.
 pass in quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
@@ -302,8 +302,8 @@ block out log on ed0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
-pass in proto sipp-esp from 192.168.1.254/32 to 192.168.2.1/32
-pass out proto sipp-esp from 192.168.2.1/32 to 192.168.1.254/32
+pass in proto esp from 192.168.1.254/32 to 192.168.2.1/32
+pass out proto esp from 192.168.2.1/32 to 192.168.1.254/32
 
 # Passing in traffic from the designated subnets.
 pass in quick on enc0 from 10.0.50.0/24 to 10.0.99.0/24
