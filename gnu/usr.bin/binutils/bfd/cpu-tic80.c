@@ -1,5 +1,5 @@
 /* bfd back-end for TI TMS320C80 (MVP) support
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 2002 Free Software Foundation, Inc.
    Written by Fred Fish at Cygnus support (fnf@cygnus.com)
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -32,7 +32,7 @@ const bfd_arch_info_type bfd_tic80_arch =
     "tic80",			/* architecture name */
     "tic80",			/* printable name */
     2,				/* section alignment power */
-    true,			/* default machine for architecture */
+    TRUE,			/* default machine for architecture */
     bfd_default_compatible,
     bfd_default_scan ,
     NULL,				/* Pointer to next in chain */

@@ -1,6 +1,7 @@
 #undef vms
 /* vms.h -- Header file for VMS (Alpha and Vax) support.
-   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
    Written by Klaus K"ampf (kkaempf@rmi.de)
 
@@ -504,7 +505,7 @@ typedef struct _vms_section {
   struct _vms_section *next;
 } vms_section;
 
-extern boolean _bfd_save_vms_section
+extern bfd_boolean _bfd_save_vms_section
   PARAMS ((bfd *abfd, asection *section, PTR data, file_ptr offset,
 	   bfd_size_type count));
 extern vms_section *_bfd_get_vms_section PARAMS ((bfd *abfd, int index));
@@ -535,7 +536,7 @@ struct hdr_struc {
 struct eom_struc {
   long eom_l_total_lps;
   unsigned char eom_b_comcod;
-  boolean eom_has_transfer;
+  bfd_boolean eom_has_transfer;
   unsigned char eom_b_tfrflg;
   long eom_l_psindx;
   long eom_l_tfradr;
@@ -568,7 +569,7 @@ struct location_struct {
 
 struct vms_private_data_struct {
   int is_vax;
-  boolean fixup_done;			/* Flag to indicate if all
+  bfd_boolean fixup_done;		/* Flag to indicate if all
 					   section pointers and PRIV(sections)
 					   are set up correctly  */
   unsigned char *vms_buf;		/* buffer to record  */
@@ -647,7 +648,7 @@ extern char *_bfd_vms_save_counted_string PARAMS ((unsigned char *ptr));
 extern void _bfd_vms_push PARAMS ((bfd *abfd, uquad val, int psect));
 extern uquad _bfd_vms_pop PARAMS ((bfd *abfd, int *psect));
 
-extern boolean _bfd_save_vms_section
+extern bfd_boolean _bfd_save_vms_section
   PARAMS ((bfd *abfd, asection *section, PTR data, file_ptr offset,
 	   bfd_size_type count));
 extern void _bfd_vms_output_begin

@@ -1,5 +1,5 @@
 /* BFD support for the ARC processor
-   Copyright 1994, 1995, 1997, 2001 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1997, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -40,20 +40,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  ARC ( bfd_mach_arc_5, "arc5", false, &arch_info_struct[1] ),
-  ARC ( bfd_mach_arc_5, "base", false, &arch_info_struct[2] ),
-  ARC ( bfd_mach_arc_6, "arc6", false, &arch_info_struct[3] ),
-  ARC ( bfd_mach_arc_7, "arc7", false, &arch_info_struct[4] ),
-  ARC ( bfd_mach_arc_8, "arc8", false, NULL ),
+  ARC ( bfd_mach_arc_5, "arc5", FALSE, &arch_info_struct[1] ),
+  ARC ( bfd_mach_arc_5, "base", FALSE, &arch_info_struct[2] ),
+  ARC ( bfd_mach_arc_6, "arc6", FALSE, &arch_info_struct[3] ),
+  ARC ( bfd_mach_arc_7, "arc7", FALSE, &arch_info_struct[4] ),
+  ARC ( bfd_mach_arc_8, "arc8", FALSE, NULL ),
 };
 
 const bfd_arch_info_type bfd_arc_arch =
-  ARC ( bfd_mach_arc_6, "arc", true, &arch_info_struct[0] );
+  ARC ( bfd_mach_arc_6, "arc", TRUE, &arch_info_struct[0] );
 
 /* Utility routines.  */
 
 /* Given cpu type NAME, return its bfd_mach_arc_xxx value.
    Returns -1 if not found.  */
+
+int arc_get_mach PARAMS ((char *));
 
 int
 arc_get_mach (name)

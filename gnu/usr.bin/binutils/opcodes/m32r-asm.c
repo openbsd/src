@@ -26,7 +26,6 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
    Keep that in mind.  */
 
 #include "sysdep.h"
-#include <ctype.h>
 #include <stdio.h>
 #include "ansidecl.h"
 #include "bfd.h"
@@ -34,27 +33,38 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
 #include "m32r-desc.h"
 #include "m32r-opc.h"
 #include "opintl.h"
+#include "xregex.h"
+#include "libiberty.h"
+#include "safe-ctype.h"
 
-#undef min
+#undef  min
 #define min(a,b) ((a) < (b) ? (a) : (b))
-#undef max
+#undef  max
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 static const char * parse_insn_normal
      PARAMS ((CGEN_CPU_DESC, const CGEN_INSN *, const char **, CGEN_FIELDS *));
 
-/* -- assembler routines inserted here */
+/* -- assembler routines inserted here.  */
 
 /* -- asm.c */
+static const char * parse_hash
+  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
+static const char * parse_hi16
+  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
+static const char * parse_slo16
+  PARAMS ((CGEN_CPU_DESC, const char **, int, long *));
+static const char * parse_ulo16
+  PARAMS ((CGEN_CPU_DESC, const char **, int, unsigned long *));
 
 /* Handle '#' prefixes (i.e. skip over them).  */
 
 static const char *
 parse_hash (cd, strp, opindex, valuep)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      const char **strp;
-     int opindex;
-     unsigned long *valuep;
+     int opindex ATTRIBUTE_UNUSED;
+     unsigned long *valuep ATTRIBUTE_UNUSED;
 {
   if (**strp == '#')
     ++*strp;
@@ -195,6 +205,9 @@ parse_ulo16 (cd, strp, opindex, valuep)
 
 /* -- */
 
+const char * m32r_cgen_parse_operand
+  PARAMS ((CGEN_CPU_DESC, int, const char **, CGEN_FIELDS *));
+
 /* Main entry point for operand parsing.
 
    This function is basically just a big switch statement.  Earlier versions
@@ -206,8 +219,7 @@ parse_ulo16 (cd, strp, opindex, valuep)
 
    This function could be moved into `parse_insn_normal', but keeping it
    separate makes clear the interface between `parse_insn_normal' and each of
-   the handlers.
-*/
+   the handlers.  */
 
 const char *
 m32r_cgen_parse_operand (cd, opindex, strp, fields)
@@ -218,7 +230,7 @@ m32r_cgen_parse_operand (cd, opindex, strp, fields)
 {
   const char * errmsg = NULL;
   /* Used by scalar operands that still need to be parsed.  */
-  long junk;
+  long junk ATTRIBUTE_UNUSED;
 
   switch (opindex)
     {
@@ -333,6 +345,129 @@ m32r_cgen_init_asm (cd)
 }
 
 
+
+/* Regex construction routine.
+
+   This translates an opcode syntax string into a regex string,
+   by replacing any non-character syntax element (such as an
+   opcode) with the pattern '.*'
+
+   It then compiles the regex and stores it in the opcode, for
+   later use by m32r_cgen_assemble_insn
+
+   Returns NULL for success, an error message for failure.  */
+
+char * 
+m32r_cgen_build_insn_regex (insn)
+     CGEN_INSN *insn;
+{  
+  CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
+  const char *mnem = CGEN_INSN_MNEMONIC (insn);
+  char rxbuf[CGEN_MAX_RX_ELEMENTS];
+  char *rx = rxbuf;
+  const CGEN_SYNTAX_CHAR_TYPE *syn;
+  int reg_err;
+
+  syn = CGEN_SYNTAX_STRING (CGEN_OPCODE_SYNTAX (opc));
+
+  /* Mnemonics come first in the syntax string.  */
+  if (! CGEN_SYNTAX_MNEMONIC_P (* syn))
+    return _("missing mnemonic in syntax string");
+  ++syn;
+
+  /* Generate a case sensitive regular expression that emulates case
+     insensitive matching in the "C" locale.  We cannot generate a case
+     insensitive regular expression because in Turkish locales, 'i' and 'I'
+     are not equal modulo case conversion.  */
+
+  /* Copy the literal mnemonic out of the insn.  */
+  for (; *mnem; mnem++)
+    {
+      char c = *mnem;
+
+      if (ISALPHA (c))
+	{
+	  *rx++ = '[';
+	  *rx++ = TOLOWER (c);
+	  *rx++ = TOUPPER (c);
+	  *rx++ = ']';
+	}
+      else
+	*rx++ = c;
+    }
+
+  /* Copy any remaining literals from the syntax string into the rx.  */
+  for(; * syn != 0 && rx <= rxbuf + (CGEN_MAX_RX_ELEMENTS - 7 - 4); ++syn)
+    {
+      if (CGEN_SYNTAX_CHAR_P (* syn)) 
+	{
+	  char c = CGEN_SYNTAX_CHAR (* syn);
+
+	  switch (c) 
+	    {
+	      /* Escape any regex metacharacters in the syntax.  */
+	    case '.': case '[': case '\\': 
+	    case '*': case '^': case '$': 
+
+#ifdef CGEN_ESCAPE_EXTENDED_REGEX
+	    case '?': case '{': case '}': 
+	    case '(': case ')': case '*':
+	    case '|': case '+': case ']':
+#endif
+	      *rx++ = '\\';
+	      *rx++ = c;
+	      break;
+
+	    default:
+	      if (ISALPHA (c))
+		{
+		  *rx++ = '[';
+		  *rx++ = TOLOWER (c);
+		  *rx++ = TOUPPER (c);
+		  *rx++ = ']';
+		}
+	      else
+		*rx++ = c;
+	      break;
+	    }
+	}
+      else
+	{
+	  /* Replace non-syntax fields with globs.  */
+	  *rx++ = '.';
+	  *rx++ = '*';
+	}
+    }
+
+  /* Trailing whitespace ok.  */
+  * rx++ = '['; 
+  * rx++ = ' '; 
+  * rx++ = '\t'; 
+  * rx++ = ']'; 
+  * rx++ = '*'; 
+
+  /* But anchor it after that.  */
+  * rx++ = '$'; 
+  * rx = '\0';
+
+  CGEN_INSN_RX (insn) = xmalloc (sizeof (regex_t));
+  reg_err = regcomp ((regex_t *) CGEN_INSN_RX (insn), rxbuf, REG_NOSUB);
+
+  if (reg_err == 0) 
+    return NULL;
+  else
+    {
+      static char msg[80];
+
+      regerror (reg_err, (regex_t *) CGEN_INSN_RX (insn), msg, 80);
+      regfree ((regex_t *) CGEN_INSN_RX (insn));
+      free (CGEN_INSN_RX (insn));
+      (CGEN_INSN_RX (insn)) = NULL;
+      return msg;
+    }
+}
+
+
 /* Default insn parser.
 
    The syntax string is scanned and operands are parsed and stored in FIELDS.
@@ -344,8 +479,7 @@ m32r_cgen_init_asm (cd)
    but that can be handled there.  Not handling backtracking here may get
    expensive in the case of the m68k.  Deal with later.
 
-   Returns NULL for success, an error message for failure.
-*/
+   Returns NULL for success, an error message for failure.  */
 
 static const char *
 parse_insn_normal (cd, insn, strp, fields)
@@ -359,7 +493,7 @@ parse_insn_normal (cd, insn, strp, fields)
   const char *str = *strp;
   const char *errmsg;
   const char *p;
-  const unsigned char * syn;
+  const CGEN_SYNTAX_CHAR_TYPE * syn;
 #ifdef CGEN_MNEMONIC_OPERANDS
   /* FIXME: wip */
   int past_opcode_p;
@@ -370,14 +504,14 @@ parse_insn_normal (cd, insn, strp, fields)
      GAS's input scrubber will ensure mnemonics are lowercase, but we may
      not be called from GAS.  */
   p = CGEN_INSN_MNEMONIC (insn);
-  while (*p && tolower (*p) == tolower (*str))
+  while (*p && TOLOWER (*p) == TOLOWER (*str))
     ++p, ++str;
 
   if (* p)
     return _("unrecognized instruction");
 
 #ifndef CGEN_MNEMONIC_OPERANDS
-  if (* str && !isspace (* str))
+  if (* str && ! ISSPACE (* str))
     return _("unrecognized instruction");
 #endif
 
@@ -406,29 +540,40 @@ parse_insn_normal (cd, insn, strp, fields)
 	     first char after the mnemonic part is a space.  */
 	  /* FIXME: We also take inappropriate advantage of the fact that
 	     GAS's input scrubber will remove extraneous blanks.  */
-	  if (tolower (*str) == tolower (CGEN_SYNTAX_CHAR (* syn)))
+	  if (TOLOWER (*str) == TOLOWER (CGEN_SYNTAX_CHAR (* syn)))
 	    {
 #ifdef CGEN_MNEMONIC_OPERANDS
-	      if (* syn == ' ')
+	      if (CGEN_SYNTAX_CHAR(* syn) == ' ')
 		past_opcode_p = 1;
 #endif
 	      ++ syn;
 	      ++ str;
 	    }
-	  else
+	  else if (*str)
 	    {
 	      /* Syntax char didn't match.  Can't be this insn.  */
 	      static char msg [80];
+
 	      /* xgettext:c-format */
 	      sprintf (msg, _("syntax error (expected char `%c', found `%c')"),
-		       *syn, *str);
+		       CGEN_SYNTAX_CHAR(*syn), *str);
+	      return msg;
+	    }
+	  else
+	    {
+	      /* Ran out of input.  */
+	      static char msg [80];
+
+	      /* xgettext:c-format */
+	      sprintf (msg, _("syntax error (expected char `%c', found end of instruction)"),
+		       CGEN_SYNTAX_CHAR(*syn));
 	      return msg;
 	    }
 	  continue;
 	}
 
       /* We have an operand of some sort.  */
-      errmsg = m32r_cgen_parse_operand (cd, CGEN_SYNTAX_FIELD (*syn),
+      errmsg = cd->parse_operand (cd, CGEN_SYNTAX_FIELD (*syn),
 					  &str, fields);
       if (errmsg)
 	return errmsg;
@@ -438,13 +583,13 @@ parse_insn_normal (cd, insn, strp, fields)
     }
 
   /* If we're at the end of the syntax string, we're done.  */
-  if (* syn == '\0')
+  if (* syn == 0)
     {
       /* FIXME: For the moment we assume a valid `str' can only contain
 	 blanks now.  IE: We needn't try again with a longer version of
 	 the insn and it is assumed that longer versions of insns appear
 	 before shorter ones (eg: lsr r2,r3,1 vs lsr r2,r3).  */
-      while (isspace (* str))
+      while (ISSPACE (* str))
 	++ str;
 
       if (* str != '\0')
@@ -488,10 +633,12 @@ m32r_cgen_assemble_insn (cd, str, fields, buf, errmsg)
 {
   const char *start;
   CGEN_INSN_LIST *ilist;
-  const char *tmp_errmsg = NULL;
+  const char *parse_errmsg = NULL;
+  const char *insert_errmsg = NULL;
+  int recognized_mnemonic = 0;
 
   /* Skip leading white space.  */
-  while (isspace (* str))
+  while (ISSPACE (* str))
     ++ str;
 
   /* The instructions are stored in hashed lists.
@@ -499,19 +646,19 @@ m32r_cgen_assemble_insn (cd, str, fields, buf, errmsg)
   ilist = CGEN_ASM_LOOKUP_INSN (cd, str);
 
   /* Keep looking until we find a match.  */
-
   start = str;
   for ( ; ilist != NULL ; ilist = CGEN_ASM_NEXT_INSN (ilist))
     {
       const CGEN_INSN *insn = ilist->insn;
+      recognized_mnemonic = 1;
 
 #ifdef CGEN_VALIDATE_INSN_SUPPORTED 
-      /* not usually needed as unsupported opcodes shouldn't be in the hash lists */
+      /* Not usually needed as unsupported opcodes
+	 shouldn't be in the hash lists.  */
       /* Is this insn supported by the selected cpu?  */
       if (! m32r_cgen_insn_supported (cd, insn))
 	continue;
 #endif
-
       /* If the RELAX attribute is set, this is an insn that shouldn't be
 	 chosen immediately.  Instead, it is used during assembler/linker
 	 relaxation if possible.  */
@@ -520,17 +667,22 @@ m32r_cgen_assemble_insn (cd, str, fields, buf, errmsg)
 
       str = start;
 
+      /* Skip this insn if str doesn't look right lexically.  */
+      if (CGEN_INSN_RX (insn) != NULL &&
+	  regexec ((regex_t *) CGEN_INSN_RX (insn), str, 0, NULL, 0) == REG_NOMATCH)
+	continue;
+
       /* Allow parse/insert handlers to obtain length of insn.  */
       CGEN_FIELDS_BITSIZE (fields) = CGEN_INSN_BITSIZE (insn);
 
-      tmp_errmsg = CGEN_PARSE_FN (cd, insn) (cd, insn, & str, fields);
-      if (tmp_errmsg != NULL)
+      parse_errmsg = CGEN_PARSE_FN (cd, insn) (cd, insn, & str, fields);
+      if (parse_errmsg != NULL)
 	continue;
 
-      /* ??? 0 is passed for `pc' */
-      tmp_errmsg = CGEN_INSERT_FN (cd, insn) (cd, insn, fields, buf,
-					      (bfd_vma) 0);
-      if (tmp_errmsg != NULL)
+      /* ??? 0 is passed for `pc'.  */
+      insert_errmsg = CGEN_INSERT_FN (cd, insn) (cd, insn, fields, buf,
+						 (bfd_vma) 0);
+      if (insert_errmsg != NULL)
         continue;
 
       /* It is up to the caller to actually output the insn and any
@@ -538,15 +690,19 @@ m32r_cgen_assemble_insn (cd, str, fields, buf, errmsg)
       return insn;
     }
 
-  /* Make sure we leave this with something at this point. */
-  if (tmp_errmsg == NULL)
-    tmp_errmsg = "unknown mnemonic";
-
   {
     static char errbuf[150];
-
 #ifdef CGEN_VERBOSE_ASSEMBLER_ERRORS
-    /* if verbose error messages, use errmsg from CGEN_PARSE_FN */
+    const char *tmp_errmsg;
+
+    /* If requesting verbose error messages, use insert_errmsg.
+       Failing that, use parse_errmsg.  */
+    tmp_errmsg = (insert_errmsg ? insert_errmsg :
+		  parse_errmsg ? parse_errmsg :
+		  recognized_mnemonic ?
+		  _("unrecognized form of instruction") :
+		  _("unrecognized instruction"));
+
     if (strlen (start) > 50)
       /* xgettext:c-format */
       sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);

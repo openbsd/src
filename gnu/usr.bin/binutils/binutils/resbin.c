@@ -1,5 +1,5 @@
 /* resbin.c -- manipulate the Windows binary resource format.
-   Copyright 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2002 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -30,6 +30,7 @@
 
 /* Macros to swap in values.  */
 
+#define get_8(s)      (*((unsigned char *)(s)))
 #define get_16(be, s) ((be) ? bfd_getb16 (s) : bfd_getl16 (s))
 #define get_32(be, s) ((be) ? bfd_getb32 (s) : bfd_getl32 (s))
 
@@ -68,6 +69,9 @@ static struct res_resource *bin_to_res_version
   PARAMS ((const unsigned char *, unsigned long, int));
 static struct res_resource *bin_to_res_userdata
   PARAMS ((const unsigned char *, unsigned long, int));
+static void get_version_header
+  PARAMS ((const unsigned char *, unsigned long, int, const char *,
+	   unichar **, int *, int *, int *, int *));
 
 /* Given a resource type ID, a pointer to data, a length, return a
    res_resource structure which represents that resource.  The caller
@@ -460,7 +464,7 @@ bin_to_res_dialog (data, length, big_endian)
      unsigned long length;
      int big_endian;
 {
-  int version;
+  int signature;
   struct dialog *d;
   int c, sublen, i;
   unsigned int off;
@@ -472,8 +476,8 @@ bin_to_res_dialog (data, length, big_endian)
 
   d = (struct dialog *) res_alloc (sizeof *d);
 
-  version = get_16 (big_endian, data);
-  if (version != 1)
+  signature = get_16 (big_endian, data + 2);
+  if (signature != 0xffff)
     {
       d->ex = NULL;
       d->style = get_32 (big_endian, data);
@@ -482,11 +486,11 @@ bin_to_res_dialog (data, length, big_endian)
     }
   else
     {
-      int signature;
+      int version;
 
-      signature = get_16 (big_endian, data + 2);
-      if (signature != 0xffff)
-	fatal (_("unexpected dialog signature %d"), signature);
+      version = get_16 (big_endian, data);
+      if (version != 1)
+	fatal (_("unexpected DIALOGEX version %d"), version);
 
       d->ex = (struct dialog_ex *) res_alloc (sizeof (struct dialog_ex));
       d->ex->help = get_32 (big_endian, data + 4);
@@ -514,6 +518,8 @@ bin_to_res_dialog (data, length, big_endian)
 
   d->caption = get_unicode (data + off, length - off, big_endian, &sublen);
   off += sublen * 2 + 2;
+  if (sublen == 0)
+    d->caption = NULL;
 
   if ((d->style & DS_SETFONT) == 0)
     {
@@ -523,6 +529,7 @@ bin_to_res_dialog (data, length, big_endian)
 	{
 	  d->ex->weight = 0;
 	  d->ex->italic = 0;
+	  d->ex->charset = 1; /* Default charset.  */
 	}
     }
   else
@@ -538,7 +545,8 @@ bin_to_res_dialog (data, length, big_endian)
 	  if (length < off + 4)
 	    toosmall (_("dialogex font information"));
 	  d->ex->weight = get_16 (big_endian, data + off);
-	  d->ex->italic = get_16 (big_endian, data + off + 2);
+	  d->ex->italic = get_8 (data + off + 2);
+	  d->ex->charset = get_8 (data + off + 3);
 	  off += 4;
 	}
 
@@ -587,9 +595,9 @@ bin_to_res_dialog (data, length, big_endian)
       dc->height = get_16 (big_endian, data + off + 6);
 
       if (d->ex != NULL)
-        dc->id = get_32 (big_endian, data + off + 8);
+	dc->id = get_32 (big_endian, data + off + 8);
       else
-        dc->id = get_16 (big_endian, data + off + 8);
+	dc->id = get_16 (big_endian, data + off + 8);
 
       off += 10 + (d->ex != NULL ? 2 : 0);
 
@@ -621,7 +629,7 @@ bin_to_res_dialog (data, length, big_endian)
 	  dc->data->u.buffer.length = datalen;
 	  dc->data->u.buffer.data = data + off;
 
-	  off += datalen;	  
+	  off += datalen;
 	}
 
       dc->next = NULL;
@@ -808,7 +816,7 @@ static struct res_resource *
 bin_to_res_rcdata (data, length, big_endian)
      const unsigned char *data;
      unsigned long length;
-     int big_endian;
+     int big_endian ATTRIBUTE_UNUSED;
 {
   struct rcdata_item *ri;
   struct res_resource *r;
@@ -1019,7 +1027,7 @@ bin_to_res_version (data, length, big_endian)
   struct res_resource *r;
 
   get_version_header (data, length, big_endian, "VS_VERSION_INFO",
-		      (unichar *) NULL, &verlen, &vallen, &type, &off);
+		      (unichar **) NULL, &verlen, &vallen, &type, &off);
 
   if ((unsigned int) verlen != length)
     fatal (_("version length %d does not match resource length %lu"),
@@ -1091,7 +1099,7 @@ bin_to_res_version (data, length, big_endian)
 	  vi->type = VERINFO_STRING;
 
 	  get_version_header (data, length, big_endian, "StringFileInfo",
-			      (unichar *) NULL, &verlen, &vallen, &type,
+			      (unichar **) NULL, &verlen, &vallen, &type,
 			      &off);
 
 	  if (vallen != 0)
@@ -1163,7 +1171,7 @@ bin_to_res_version (data, length, big_endian)
 	  vi->type = VERINFO_VAR;
 
 	  get_version_header (data, length, big_endian, "VarFileInfo",
-			      (unichar *) NULL, &verlen, &vallen, &type,
+			      (unichar **) NULL, &verlen, &vallen, &type,
 			      &off);
 
 	  if (vallen != 0)
@@ -1211,7 +1219,7 @@ bin_to_res_version (data, length, big_endian)
 
       vi->next = NULL;
       *pp = vi;
-      pp = &vi->next;      
+      pp = &vi->next;
     }
 
   v = (struct versioninfo *) res_alloc (sizeof *v);
@@ -1222,7 +1230,7 @@ bin_to_res_version (data, length, big_endian)
   r->type = RES_TYPE_VERSIONINFO;
   r->u.versioninfo = v;
 
-  return r;  
+  return r;
 }
 
 /* Convert an arbitrary user defined resource from binary.  */
@@ -1231,7 +1239,7 @@ static struct res_resource *
 bin_to_res_userdata (data, length, big_endian)
      const unsigned char *data;
      unsigned long length;
-     int big_endian;
+     int big_endian ATTRIBUTE_UNUSED;
 {
   struct rcdata_item *ri;
   struct res_resource *r;
@@ -1252,6 +1260,7 @@ bin_to_res_userdata (data, length, big_endian)
 
 /* Macros to swap out values.  */
 
+#define put_8(v, s)      (*((unsigned char *) (s)) = (unsigned char) (v))
 #define put_16(be, v, s) ((be) ? bfd_putb16 ((v), (s)) : bfd_putl16 ((v), (s)))
 #define put_32(be, v, s) ((be) ? bfd_putb32 ((v), (s)) : bfd_putl32 ((v), (s)))
 
@@ -1621,12 +1630,14 @@ res_to_bin_dialog (dialog, big_endian)
 	  if (dialog->ex == NULL)
 	    {
 	      put_16 (big_endian, 0, d->data + 2);
-	      put_16 (big_endian, 0, d->data + 4);
+	      put_8 (0, d->data + 4);
+	      put_8 (1, d->data + 5);
 	    }
 	  else
 	    {
 	      put_16 (big_endian, dialog->ex->weight, d->data + 2);
-	      put_16 (big_endian, dialog->ex->italic, d->data + 4);
+	      put_8 (dialog->ex->italic, d->data + 4);
+	      put_8 (dialog->ex->charset, d->data + 5);
 	    }
 	}
 
@@ -1674,9 +1685,9 @@ res_to_bin_dialog (dialog, big_endian)
       put_16 (big_endian, dc->height, d->data + dcoff + 6);
 
       if (dialogex)
-        put_32 (big_endian, dc->id, d->data + dcoff + 8);
+	put_32 (big_endian, dc->id, d->data + dcoff + 8);
       else
-        put_16 (big_endian, dc->id, d->data + dcoff + 8);
+	put_16 (big_endian, dc->id, d->data + dcoff + 8);
 
       *pp = d;
       pp = &d->next;
@@ -1765,12 +1776,12 @@ res_to_bin_fontdir (fontdirs, big_endian)
 
       d->next = NULL;
       *pp = d;
-      pp = &d->next;      
+      pp = &d->next;
     }
 
   put_16 (big_endian, c, first->data);
 
-  return first;  
+  return first;
 }
 
 /* Convert a group icon resource to binary.  */
@@ -2082,7 +2093,7 @@ res_to_bin_stringtable (st, big_endian)
 
       d->next = NULL;
       *pp = d;
-      pp = &d->next;      
+      pp = &d->next;
     }
 
   return first;
@@ -2111,7 +2122,7 @@ string_to_unicode_bin (s, big_endian)
 
   d->next = NULL;
 
-  return d;  
+  return d;
 }
 
 /* Convert a versioninfo resource to binary.  */
@@ -2276,7 +2287,7 @@ res_to_bin_versioninfo (versioninfo, big_endian)
 		vsslen += length - hold;
 
 		*pp = unicode_to_bin (vs->value, big_endian);
- 		put_16 (big_endian, (*pp)->length / 2, vssd->data + 2);
+		put_16 (big_endian, (*pp)->length / 2, vssd->data + 2);
 		length += (*pp)->length;
 		vilen += (*pp)->length;
 		vslen += (*pp)->length;

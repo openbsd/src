@@ -8,6 +8,5 @@ MACHINE=
 MAXPAGESIZE=32
 EMBEDDED=yes
 
-# Hmmm, there's got to be a better way.  This sets the stack to the
-# top of simulator memory (8MB).
-OTHER_RELOCATING_SECTIONS='PROVIDE (_stack = 0x800000);'
+# This sets the stack to the top of simulator memory (8MB).
+OTHER_END_SYMBOLS='PROVIDE (_stack = 0x800000);'

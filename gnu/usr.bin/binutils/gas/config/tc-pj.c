@@ -1,6 +1,6 @@
 /*-
    tc-pj.c -- Assemble code for Pico Java
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -22,6 +22,7 @@
 /* Contributed by Steve Chamberlain of Transmeta <sac@pobox.com>.  */
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "opcode/pj.h"
 
 extern const pj_opc_info_t pj_opc_info[512];
@@ -32,6 +33,21 @@ const char line_comment_chars[] = "/!#";
 
 static int pending_reloc;
 static struct hash_control *opcode_hash_control;
+
+static void little
+  PARAMS ((int));
+static void big
+  PARAMS ((int));
+static char *parse_exp_save_ilp
+  PARAMS ((char *, expressionS *));
+static int c_to_r
+  PARAMS ((char));
+static void ipush_code
+  PARAMS ((pj_opc_info_t *, char *));
+static void fake_opcode
+  PARAMS ((const char *, void (*) (struct pj_opc_info_t *, char *)));
+static void alias
+  PARAMS ((const char *, const char *));
 
 static void
 little (ignore)
@@ -154,15 +170,17 @@ ipush_code (opcode, str)
      pj_opc_info_t *opcode ATTRIBUTE_UNUSED;
      char *str;
 {
-  int mod = 0;
   char *b = frag_more (6);
   expressionS arg;
 
   b[0] = 0x11;
   b[3] = 0xed;
-  parse_exp_save_ilp (str + 1, &arg, &mod);
-  if (mod)
-    as_bad (_("can't have relocation for ipush"));
+  parse_exp_save_ilp (str + 1, &arg);
+  if (pending_reloc)
+    {
+      as_bad (_("can't have relocation for ipush"));
+      pending_reloc = 0;
+    }
 
   fix_new_exp (frag_now, b - frag_now->fr_literal + 1, 2,
 	       &arg, 0, BFD_RELOC_PJ_CODE_DIR16);
@@ -176,13 +194,13 @@ ipush_code (opcode, str)
 static void
 fake_opcode (name, func)
      const char *name;
-     void (*func) ();
+     void (*func) PARAMS ((struct pj_opc_info_t *, char *));
 {
   pj_opc_info_t *fake = (pj_opc_info_t *) xmalloc (sizeof (pj_opc_info_t));
 
   fake->opcode = -1;
   fake->opcode_next = -1;
-  fake->name = (const char *) func;
+  fake->u.func = func;
   hash_insert (opcode_hash_control, name, (char *) fake);
 }
 
@@ -209,8 +227,8 @@ md_begin ()
   opcode_hash_control = hash_new ();
 
   /* Insert names into hash table.  */
-  for (opcode = pj_opc_info; opcode->name; opcode++)
-    hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
+  for (opcode = pj_opc_info; opcode->u.name; opcode++)
+    hash_insert (opcode_hash_control, opcode->u.name, (char *) opcode);
 
   /* Insert the only fake opcode.  */
   fake_opcode ("ipush", ipush_code);
@@ -277,7 +295,7 @@ md_assemble (str)
     {
       /* It's a fake opcode.  Dig out the args and pretend that was
          what we were passed.  */
-      ((void (*) ()) opcode->name) (opcode, op_end);
+      (*opcode->u.func) (opcode, op_end);
     }
   else
     {
@@ -312,7 +330,7 @@ md_assemble (str)
 	  pending_reloc = 0;
 	}
 
-      while (isspace (*op_end))
+      while (ISSPACE (*op_end))
 	op_end++;
 
       if (*op_end != 0)
@@ -382,7 +400,7 @@ md_atof (type, litP, sizeP)
   return NULL;
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 
 struct option md_longopts[] = {
 
@@ -403,10 +421,10 @@ md_parse_option (c, arg)
   switch (c)
     {
     case OPTION_LITTLE:
-      little ();
+      little (0);
       break;
     case OPTION_BIG:
-      big ();
+      big (0);
       break;
     default:
       return 0;
@@ -426,23 +444,16 @@ PJ options:\n\
 
 /* Apply a fixup to the object file.  */
 
-int
-md_apply_fix (fixP, valp)
+void
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     valueT *valp;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-  long val = *valp;
+  long val = *valP;
   long max, min;
   int shift;
-
-  /* adjust_reloc_syms won't convert a reloc against a weak symbol
-     into a reloc against a section, but bfd_install_relocation will
-     screw up if the symbol is defined, so we have to adjust val here
-     to avoid the screw up later.  */
-
-  if (fixP->fx_addsy != NULL && S_IS_WEAK (fixP->fx_addsy))
-    val -= S_GET_VALUE (fixP->fx_addsy);
 
   max = min = 0;
   shift = 0;
@@ -451,7 +462,7 @@ md_apply_fix (fixP, valp)
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_VTABLE_ENTRY:
       fixP->fx_done = 0;
-      return 0;
+      return;
 
     case BFD_RELOC_PJ_CODE_REL16:
       if (val < -0x8000 || val >= 0x7fff)
@@ -525,7 +536,8 @@ md_apply_fix (fixP, valp)
   if (max != 0 && (val < min || val > max))
     as_bad_where (fixP->fx_file, fixP->fx_line, _("offset out of range"));
 
-  return 0;
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Put number into target byte order.  Always put values in an

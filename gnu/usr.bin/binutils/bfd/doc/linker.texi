@@ -158,7 +158,7 @@ If the @code{_bfd_final_link} routine is also going to need to
 read the symbol information, the @code{_bfd_link_add_symbols}
 routine should save it somewhere attached to the object file
 BFD.  However, the information should only be saved if the
-@code{keep_memory} field of the @code{info} argument is true, so
+@code{keep_memory} field of the @code{info} argument is TRUE, so
 that the @code{-no-keep-memory} linker switch is effective.
 
 The a.out function which adds symbols from an object file is
@@ -352,7 +352,7 @@ file at the end of @code{NAME(aout,final_link)}.
 @subsubsection @code{bfd_link_split_section}
 @strong{Synopsis}
 @example
-boolean bfd_link_split_section(bfd *abfd, asection *sec);
+bfd_boolean bfd_link_split_section(bfd *abfd, asection *sec);
 @end example
 @strong{Description}@*
 Return nonzero if @var{sec} should be split during a

@@ -25,17 +25,20 @@
 				supported, no 8K wrap on RJMP and RCALL) */
 #define AVR_ISA_MUL   0x0040 /* device has new core (MUL, MOVW, ...) */
 #define AVR_ISA_ELPM  0x0080 /* device has >64K program memory (ELPM) */
-#define AVR_ISA_ELPMX 0x0100 /* device has ELPM Rd,Z[+] (none yet) */
+#define AVR_ISA_ELPMX 0x0100 /* device has ELPM Rd,Z[+] */
 #define AVR_ISA_SPM   0x0200 /* device can program itself */
+#define AVR_ISA_BRK   0x0400 /* device has BREAK (on-chip debug) */
 #define AVR_ISA_EIND  0x0800 /* device has >128K program memory (none yet) */
 
 #define AVR_ISA_TINY1 (AVR_ISA_1200 | AVR_ISA_LPM)
 #define AVR_ISA_2xxx (AVR_ISA_TINY1 | AVR_ISA_SRAM)
-#define AVR_ISA_M83  (AVR_ISA_2xxx | AVR_ISA_MUL | AVR_ISA_LPMX | AVR_ISA_SPM)
+#define AVR_ISA_M8   (AVR_ISA_2xxx | AVR_ISA_MUL | AVR_ISA_LPMX | AVR_ISA_SPM)
 #define AVR_ISA_M603 (AVR_ISA_2xxx | AVR_ISA_MEGA)
 #define AVR_ISA_M103 (AVR_ISA_M603 | AVR_ISA_ELPM)
 #define AVR_ISA_M161 (AVR_ISA_M603 | AVR_ISA_MUL | AVR_ISA_LPMX | AVR_ISA_SPM)
 #define AVR_ISA_94K  (AVR_ISA_M603 | AVR_ISA_MUL | AVR_ISA_LPMX)
+#define AVR_ISA_M323 (AVR_ISA_M161 | AVR_ISA_BRK)
+#define AVR_ISA_M128 (AVR_ISA_M323 | AVR_ISA_ELPM | AVR_ISA_ELPMX)
 
 #define AVR_ISA_ALL   0xFFFF
 
@@ -86,7 +89,7 @@
    Order is important - some binary opcodes have more than one name,
    the disassembler will only see the first match.
 
-   Remaining undefined opcodes (1700 total - some of them might work
+   Remaining undefined opcodes (1699 total - some of them might work
    as normal instructions if not all of the bits are decoded):
 
     0x0001...0x00ff    (255) (known to be decoded as `nop' by the old core)
@@ -100,7 +103,7 @@
    "1001010xxxxx1011"   (32) 0x9[45][0-9a-f]b
    "10010101001x1000"    (2) 0x95[23]8
    "1001010101xx1000"    (4) 0x95[4-7]8
-   "1001010110x11000"    (2) 0x95[9b]8
+   "1001010110111000"    (1) 0x95b8
    "1001010111111000"    (1) 0x95f8 (`espm' removed in databook update)
    "11111xxxxxxx1xxx" (1024) 0xf[8-9a-f][0-9a-f][8-9a-f]
  */
@@ -139,6 +142,7 @@ AVR_INSN (nop,  "",    "0000000000000000", 1, AVR_ISA_1200, 0x0000)
 AVR_INSN (ret,  "",    "1001010100001000", 1, AVR_ISA_1200, 0x9508)
 AVR_INSN (reti, "",    "1001010100011000", 1, AVR_ISA_1200, 0x9518)
 AVR_INSN (sleep,"",    "1001010110001000", 1, AVR_ISA_1200, 0x9588)
+AVR_INSN (break,"",    "1001010110011000", 1, AVR_ISA_BRK,  0x9598)
 AVR_INSN (wdr,  "",    "1001010110101000", 1, AVR_ISA_1200, 0x95a8)
 AVR_INSN (spm,  "",    "1001010111101000", 1, AVR_ISA_SPM,  0x95e8)
 

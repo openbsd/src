@@ -1,5 +1,5 @@
 # po2msg.sed - Convert Uniforum style .po file to Linux style .msg file
-# Copyright (C) 1995 Free Software Foundation, Inc.
+# Copyright 1995, 2002 Free Software Foundation, Inc.
 # Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,7 @@ $set 1 # Automatically created by po2msg.sed
   s/\(.*\)"\n\([0-9]*\)/$ #\2 Original Message:(\1)/p
 }
 #
-# The .msg file contains, other then the .po file, only the translations
+# The .msg file contains, other than the .po file, only the translations
 # but each given a unique ID.  Starting from 1 and incrementing by 1 for
 # each message we assign them to the messages.
 # It is important that the .po file used to generate the cat-id-tbl.c file

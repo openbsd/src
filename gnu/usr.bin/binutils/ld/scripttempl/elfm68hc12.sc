@@ -1,6 +1,6 @@
 #
 # Unusual variables checked by this code:
-#	NOP - two byte opcode for no-op (defaults to 0)
+#	NOP - four byte opcode for no-op (defaults to 0)
 #	DATA_ADDR - if end-of-text-plus-one-page isn't right for data start
 #	OTHER_READWRITE_SECTIONS - other than .data .bss .ctors .sdata ...
 #		(e.g., .PARISC.global)
@@ -26,7 +26,7 @@ test "$LD_FLAG" = "N" && DATA_ADDR=.
 
 CTOR=".ctors ${CONSTRUCTING-0} : 
   {
-    ${CONSTRUCTING+ __CTOR_LIST__ = .; }
+    ${CONSTRUCTING+ PROVIDE (__CTOR_LIST__ = .); }
     ${CONSTRUCTING+${CTOR_START}}
     *(.ctors)
     /* We don't want to include the .ctor section from
@@ -39,20 +39,20 @@ CTOR=".ctors ${CONSTRUCTING-0} :
     KEEP (*(.ctors)) */
 
     ${CONSTRUCTING+${CTOR_END}}
-    ${CONSTRUCTING+ __CTOR_END__ = .; }
-  } ${RELOCATING+ > ${DATA_MEMORY}}"
+    ${CONSTRUCTING+ PROVIDE(__CTOR_END__ = .); }
+  } ${RELOCATING+ > ${TEXT_MEMORY}}"
 
 DTOR="  .dtors	${CONSTRUCTING-0} :
   {
-    ${CONSTRUCTING+ __DTOR_LIST__ = .; }
+    ${CONSTRUCTING+ PROVIDE(__DTOR_LIST__ = .); }
     *(.dtors)
     /*
     KEEP (*crtbegin.o(.dtors))
     KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors)) */
-    ${CONSTRUCTING+ __DTOR_END__ = .; }
-  } ${RELOCATING+ > ${DATA_MEMORY}}"
+    ${CONSTRUCTING+ PROVIDE(__DTOR_END__ = .); }
+  } ${RELOCATING+ > ${TEXT_MEMORY}}"
 
 
 VECTORS="
@@ -75,7 +75,7 @@ VECTORS="
   PROVIDE (_vectors_addr = DEFINED (vectors_addr) ? vectors_addr : 0xffc0);
   .vectors DEFINED (vectors_addr) ? vectors_addr : 0xffc0 :
   {
-    *(.vectors)
+    KEEP (*(.vectors))
   }"
 
 #
@@ -110,11 +110,20 @@ esac
 
 STARTUP_CODE="
     /* Startup code.  */
-    *(.install0)	/* Section should setup the stack pointer.  */
-    *(.install1)	/* Place holder for applications.  */
-    *(.install2)	/* Optional installation of data sections in RAM.  */
-    *(.install3)	/* Place holder for applications.  */
-    *(.install4)	/* Section that calls the main.  */
+    KEEP (*(.install0))	/* Section should setup the stack pointer.  */
+    KEEP (*(.install1))	/* Place holder for applications.  */
+    KEEP (*(.install2))	/* Optional installation of data sections in RAM.  */
+    KEEP (*(.install3))	/* Place holder for applications.  */
+    KEEP (*(.install4))	/* Section that calls the main.  */
+"
+
+FINISH_CODE="
+    /* Finish code.  */
+    KEEP (*(.fini0))	/* Beginning of finish code (_exit symbol).  */
+    KEEP (*(.fini1))	/* Place holder for applications.  */
+    KEEP (*(.fini2))	/* C++ destructors.  */
+    KEEP (*(.fini3))	/* Place holder for applications.  */
+    KEEP (*(.fini4))	/* Runtime exit.  */
 "
 
 PRE_COMPUTE_DATA_SIZE="
@@ -137,6 +146,14 @@ INSTALL_RELOC="
   .install4 0 : { *(.install4) }
 "
 
+FINISH_RELOC="
+  .fini0 0 : { *(.fini0) }
+  .fini1 0 : { *(.fini1) }
+  .fini2 0 : { *(.fini2) }
+  .fini3 0 : { *(.fini3) }
+  .fini4 0 : { *(.fini4) }
+"
+
 BSS_DATA_RELOC="
   .data1 0 : { *(.data1) }
 
@@ -146,6 +163,10 @@ BSS_DATA_RELOC="
   .sdata   0 : { *(.sdata) }
   .sbss    0 : { *(.sbss) }
   .scommon 0 : { *(.scommon) }
+"
+
+SOFT_REGS_RELOC="
+  .softregs 0 : { *(.softregs) }
 "
 
 cat <<EOF
@@ -170,44 +191,106 @@ SECTIONS
   .gnu.version_d	${RELOCATING-0} : { *(.gnu.version_d) }
   .gnu.version_r	${RELOCATING-0} : { *(.gnu.version_r) }
 
-  .rela.text		${RELOCATING-0} : { *(.rela.text) *(.rela.gnu.linkonce.t*) }
-  .rela.data		${RELOCATING-0} : { *(.rela.data) *(.rela.gnu.linkonce.d*) }
-  .rela.rodata		${RELOCATING-0} : { *(.rela.rodata) *(.rela.gnu.linkonce.r*) }
-  .rela.stext		${RELOCATING-0} : { *(.rela.stest) }
-  .rela.etext		${RELOCATING-0} : { *(.rela.etest) }
-  .rela.sdata		${RELOCATING-0} : { *(.rela.sdata) }
-  .rela.edata		${RELOCATING-0} : { *(.rela.edata) }
-  .rela.eit_v		${RELOCATING-0} : { *(.rela.eit_v) }
-  .rela.sbss		${RELOCATING-0} : { *(.rela.sbss) }
-  .rela.ebss		${RELOCATING-0} : { *(.rela.ebss) }
-  .rela.srodata		${RELOCATING-0} : { *(.rela.srodata) }
-  .rela.erodata		${RELOCATING-0} : { *(.rela.erodata) }
-  .rela.got		${RELOCATING-0} : { *(.rela.got) }
-  .rela.ctors		${RELOCATING-0} : { *(.rela.ctors) }
-  .rela.dtors		${RELOCATING-0} : { *(.rela.dtors) }
-  .rela.init		${RELOCATING-0} : { *(.rela.init) }
-  .rela.fini		${RELOCATING-0} : { *(.rela.fini) }
-  .rela.bss		${RELOCATING-0} : { *(.rela.bss) }
-  .rela.plt		${RELOCATING-0} : { *(.rela.plt) }
-
-  .rel.data		${RELOCATING-0} : { *(.rel.data) *(.rel.gnu.linkonce.d*) }
-  .rel.rodata		${RELOCATING-0} : { *(.rel.rodata) *(.rel.gnu.linkonce.r*) }
+  .rel.text    ${RELOCATING-0} :
+    {
+      *(.rel.text)
+      ${RELOCATING+*(.rel.text.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.t.*)}
+    }
+  .rela.text   ${RELOCATING-0} :
+    {
+      *(.rela.text)
+      ${RELOCATING+*(.rela.text.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.t.*)}
+    }
+  .rel.data    ${RELOCATING-0} :
+    {
+      *(.rel.data)
+      ${RELOCATING+*(.rel.data.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.d.*)}
+    }
+  .rela.data   ${RELOCATING-0} :
+    {
+      *(.rela.data)
+      ${RELOCATING+*(.rela.data.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.d.*)}
+    }
+  .rel.rodata  ${RELOCATING-0} :
+    {
+      *(.rel.rodata)
+      ${RELOCATING+*(.rel.rodata.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.r.*)}
+    }
+  .rela.rodata ${RELOCATING-0} :
+    {
+      *(.rela.rodata)
+      ${RELOCATING+*(.rela.rodata.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.r.*)}
+    }
+  .rel.sdata   ${RELOCATING-0} :
+    {
+      *(.rel.sdata)
+      ${RELOCATING+*(.rel.sdata.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.s.*)}
+    }
+  .rela.sdata   ${RELOCATING-0} :
+    {
+      *(.rela.sdata)
+      ${RELOCATING+*(.rela.sdata.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.s.*)}
+    }
+  .rel.sbss    ${RELOCATING-0} :
+    { 
+      *(.rel.sbss)
+      ${RELOCATING+*(.rel.sbss.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.sb.*)}
+    }
+  .rela.sbss   ${RELOCATING-0} :
+    {
+      *(.rela.sbss)
+      ${RELOCATING+*(.rela.sbss.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.sb.*)}
+    }
+  .rel.bss     ${RELOCATING-0} : 
+    { 
+      *(.rel.bss)
+      ${RELOCATING+*(.rel.bss.*)}
+      ${RELOCATING+*(.rel.gnu.linkonce.b.*)}
+    }
+  .rela.bss    ${RELOCATING-0} : 
+    { 
+      *(.rela.bss)
+      ${RELOCATING+*(.rela.bss.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.b.*)}
+    }
   .rel.stext		${RELOCATING-0} : { *(.rel.stest) }
+  .rela.stext		${RELOCATING-0} : { *(.rela.stest) }
   .rel.etext		${RELOCATING-0} : { *(.rel.etest) }
+  .rela.etext		${RELOCATING-0} : { *(.rela.etest) }
   .rel.sdata		${RELOCATING-0} : { *(.rel.sdata) }
+  .rela.sdata		${RELOCATING-0} : { *(.rela.sdata) }
   .rel.edata		${RELOCATING-0} : { *(.rel.edata) }
-  .rel.sbss		${RELOCATING-0} : { *(.rel.sbss) }
-  .rel.ebss		${RELOCATING-0} : { *(.rel.ebss) }
+  .rela.edata		${RELOCATING-0} : { *(.rela.edata) }
   .rel.eit_v		${RELOCATING-0} : { *(.rel.eit_v) }
+  .rela.eit_v		${RELOCATING-0} : { *(.rela.eit_v) }
+  .rel.ebss		${RELOCATING-0} : { *(.rel.ebss) }
+  .rela.ebss		${RELOCATING-0} : { *(.rela.ebss) }
   .rel.srodata		${RELOCATING-0} : { *(.rel.srodata) }
+  .rela.srodata		${RELOCATING-0} : { *(.rela.srodata) }
   .rel.erodata		${RELOCATING-0} : { *(.rel.erodata) }
+  .rela.erodata		${RELOCATING-0} : { *(.rela.erodata) }
   .rel.got		${RELOCATING-0} : { *(.rel.got) }
+  .rela.got		${RELOCATING-0} : { *(.rela.got) }
   .rel.ctors		${RELOCATING-0} : { *(.rel.ctors) }
+  .rela.ctors		${RELOCATING-0} : { *(.rela.ctors) }
   .rel.dtors		${RELOCATING-0} : { *(.rel.dtors) }
+  .rela.dtors		${RELOCATING-0} : { *(.rela.dtors) }
   .rel.init		${RELOCATING-0} : { *(.rel.init) }
+  .rela.init		${RELOCATING-0} : { *(.rela.init) }
   .rel.fini		${RELOCATING-0} : { *(.rel.fini) }
-  .rel.bss		${RELOCATING-0} : { *(.rel.bss) }
+  .rela.fini		${RELOCATING-0} : { *(.rela.fini) }
   .rel.plt		${RELOCATING-0} : { *(.rel.plt) }
+  .rela.plt		${RELOCATING-0} : { *(.rela.plt) }
 
   /* Concatenate .page0 sections.  Put them in the page0 memory bank
      unless we are creating a relocatable file.  */
@@ -228,6 +311,7 @@ SECTIONS
   } ${RELOCATING+=${NOP-0}}
 
   ${RELOCATING-${INSTALL_RELOC}}
+  ${RELOCATING-${FINISH_RELOC}}
 
   .text ${RELOCATING-0}:
   {
@@ -236,10 +320,12 @@ SECTIONS
 
     ${RELOCATING+*(.init)}
     *(.text)
-    *(.fini)
+    ${RELOCATING+*(.text.*)}
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
-    *(.gnu.linkonce.t*)
+    ${RELOCATING+*(.gnu.linkonce.t.*)}
+
+    ${RELOCATING+${FINISH_CODE}}
 
     ${RELOCATING+_etext = .;}
     ${RELOCATING+PROVIDE (etext = .);}
@@ -248,18 +334,28 @@ SECTIONS
 
   .eh_frame ${RELOCATING-0} :
   {
-    *(.eh_frame)
+    KEEP (*(.eh_frame))
   } ${RELOCATING+ > ${TEXT_MEMORY}}
 
   .rodata  ${RELOCATING-0} :
   {
     *(.rodata)
-    *(.gnu.linkonce.r*)
+    ${RELOCATING+*(.rodata.*)}
+    ${RELOCATING+*(.gnu.linkonce.r*)}
   } ${RELOCATING+ > ${TEXT_MEMORY}}
 
   .rodata1 ${RELOCATING-0} :
   {
     *(.rodata1)
+  } ${RELOCATING+ > ${TEXT_MEMORY}}
+
+  /* Constructor and destructor tables are in ROM.  */
+  ${RELOCATING+${CTOR}}
+  ${RELOCATING+${DTOR}}
+
+  .jcr ${RELOCATING-0} :
+  {
+    KEEP (*(.jcr))
   } ${RELOCATING+ > ${TEXT_MEMORY}}
 
   /* Start of the data section image in ROM.  */
@@ -278,8 +374,9 @@ SECTIONS
     ${RELOCATING+${DATA_START_SYMBOLS}}
     ${RELOCATING+*(.sdata)}
     *(.data)
+    ${RELOCATING+*(.data.*)}
     ${RELOCATING+*(.data1)}
-    *(.gnu.linkonce.d*)
+    ${RELOCATING+*(.gnu.linkonce.d.*)}
     ${CONSTRUCTING+CONSTRUCTORS}
 
     ${RELOCATING+_edata  =  .;}
@@ -299,23 +396,30 @@ SECTIONS
 
   /* Relocation for some bss and data sections.  */
   ${RELOCATING-${BSS_DATA_RELOC}}
+  ${RELOCATING-${SOFT_REGS_RELOC}}
 
   .bss ${RELOCATING-0} :
   {
     ${RELOCATING+__bss_start = .;}
+    ${RELOCATING+*(.softregs)}
     ${RELOCATING+*(.sbss)}
     ${RELOCATING+*(.scommon)}
 
     *(.dynbss)
     *(.bss)
+    ${RELOCATING+*(.bss.*)}
+    ${RELOCATING+*(.gnu.linkonce.b.*)}
     *(COMMON)
     ${RELOCATING+PROVIDE (_end = .);}
   } ${RELOCATING+ > ${DATA_MEMORY}}
   ${RELOCATING+__bss_size = SIZEOF(.bss);}
   ${RELOCATING+PROVIDE (__bss_size = SIZEOF(.bss));}
 
-  ${RELOCATING+${CTOR}}
-  ${RELOCATING+${DTOR}}
+  .eeprom ${RELOCATING-0} :
+  {
+    *(.eeprom)
+    *(.eeprom.*)
+  } ${RELOCATING+ > ${EEPROM_MEMORY}}
 
   ${RELOCATING+${VECTORS}}
 

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -27,9 +27,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 /* -- opc.h */
 
-#undef CGEN_DIS_HASH_SIZE
+#undef  CGEN_DIS_HASH_SIZE
 #define CGEN_DIS_HASH_SIZE 256
-#undef CGEN_DIS_HASH
+#undef  CGEN_DIS_HASH
 #define X(b) (((unsigned char *) (b))[0] & 0xf0)
 #define CGEN_DIS_HASH(buffer, value) \
 (X (buffer) | \
@@ -74,14 +74,14 @@ typedef enum cgen_insn_type {
  , M32R_INSN_SUBV, M32R_INSN_SUBX, M32R_INSN_TRAP, M32R_INSN_UNLOCK
  , M32R_INSN_SATB, M32R_INSN_SATH, M32R_INSN_SAT, M32R_INSN_PCMPBZ
  , M32R_INSN_SADD, M32R_INSN_MACWU1, M32R_INSN_MSBLO, M32R_INSN_MULWU1
- , M32R_INSN_MACLH1, M32R_INSN_SC, M32R_INSN_SNC, M32R_INSN_MAX
+ , M32R_INSN_MACLH1, M32R_INSN_SC, M32R_INSN_SNC
 } CGEN_INSN_TYPE;
 
 /* Index of `invalid' insn place holder.  */
 #define CGEN_INSN_INVALID M32R_INSN_INVALID
 
 /* Total number of insns in table.  */
-#define MAX_INSNS ((int) M32R_INSN_MAX)
+#define MAX_INSNS ((int) M32R_INSN_SNC + 1)
 
 /* This struct records data prior to insertion or after extraction.  */
 struct cgen_fields

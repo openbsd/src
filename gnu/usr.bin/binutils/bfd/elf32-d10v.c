@@ -1,5 +1,5 @@
 /* D10V-specific support for 32-bit ELF
-   Copyright 1996, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -27,172 +27,184 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   PARAMS ((bfd *abfd, bfd_reloc_code_real_type code));
 static void d10v_info_to_howto_rel
-  PARAMS ((bfd *, arelent *, Elf32_Internal_Rel *));
+  PARAMS ((bfd *, arelent *, Elf_Internal_Rela *));
+static asection * elf32_d10v_gc_mark_hook
+  PARAMS ((asection *, struct bfd_link_info *, Elf_Internal_Rela *,
+	   struct elf_link_hash_entry *, Elf_Internal_Sym *));
+static bfd_boolean elf32_d10v_gc_sweep_hook
+  PARAMS ((bfd *, struct bfd_link_info *, asection *,
+	   const Elf_Internal_Rela *));
+static bfd_boolean elf32_d10v_check_relocs
+  PARAMS ((bfd *, struct bfd_link_info *, asection *,
+	   const Elf_Internal_Rela *));
+static bfd_boolean elf32_d10v_relocate_section
+  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *,
+	   bfd_byte *, Elf_Internal_Rela *, Elf_Internal_Sym *,
+	   asection **));
 
-/* Use REL instead of RELA to save space */
-#define USE_REL
+/* Use REL instead of RELA to save space.  */
+#define USE_REL	1
 
 static reloc_howto_type elf_d10v_howto_table[] =
-{
-  /* This reloc does nothing.  */
-  HOWTO (R_D10V_NONE,		/* type */
-	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
-	 false,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_D10V_NONE",		/* name */
-	 false,			/* partial_inplace */
-	 0,			/* src_mask */
-	 0,			/* dst_mask */
-	 false),		/* pcrel_offset */
+  {
+    /* This reloc does nothing.  */
+    HOWTO (R_D10V_NONE,		/* type */
+	   0,			/* rightshift */
+	   2,			/* size (0 = byte, 1 = short, 2 = long) */
+	   32,			/* bitsize */
+	   FALSE,		/* pc_relative */
+	   0,			/* bitpos */
+	   complain_overflow_dont, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_NONE",	/* name */
+	   FALSE,		/* partial_inplace */
+	   0,			/* src_mask */
+	   0,			/* dst_mask */
+	   FALSE),		/* pcrel_offset */
 
-  /* An PC Relative 10-bit relocation, shifted by 2  */
-  /* right container */
-  HOWTO (R_D10V_10_PCREL_R,	/* type */
-	 2,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 10,	                /* bitsize */
-	 true,	                /* pc_relative */
-	 0,	                /* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
-	 "R_D10V_10_PCREL_R",	/* name */
-	 false,	                /* partial_inplace */
-	 0xff,		        /* src_mask */
-	 0xff,   		/* dst_mask */
-	 true),			/* pcrel_offset */
+    /* An PC Relative 10-bit relocation, shifted by 2  */
+    /* right container */
+    HOWTO (R_D10V_10_PCREL_R,	/* type */
+	   2,	                /* rightshift */
+	   2,	                /* size (0 = byte, 1 = short, 2 = long) */
+	   7,	                /* bitsize */
+	   TRUE,	        /* pc_relative */
+	   0,	                /* bitpos */
+	   complain_overflow_bitfield, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_10_PCREL_R",	/* name */
+	   FALSE,	        /* partial_inplace */
+	   0xff,		/* src_mask */
+	   0xff,   		/* dst_mask */
+	   TRUE),		/* pcrel_offset */
 
-  /* An PC Relative 10-bit relocation, shifted by 2  */
-  /* left container */
-  HOWTO (R_D10V_10_PCREL_L,	/* type */
-	 2,	                /* rightshift */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
-	 10,	                /* bitsize */
-	 true,	                /* pc_relative */
-	 15,	                /* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc, /* special_function */
-	 "R_D10V_10_PCREL_L",	/* name */
-	 false,	                /* partial_inplace */
-	 0x07f8000,		        /* src_mask */
-	 0x07f8000,   		/* dst_mask */
-	 true),			/* pcrel_offset */
+    /* An PC Relative 10-bit relocation, shifted by 2  */
+    /* left container */
+    HOWTO (R_D10V_10_PCREL_L,	/* type */
+	   2,	                /* rightshift */
+	   2,	                /* size (0 = byte, 1 = short, 2 = long) */
+	   7,	                /* bitsize */
+	   TRUE,	        /* pc_relative */
+	   15,	                /* bitpos */
+	   complain_overflow_bitfield, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_10_PCREL_L",	/* name */
+	   FALSE,	        /* partial_inplace */
+	   0x07f8000,		/* src_mask */
+	   0x07f8000,   	/* dst_mask */
+	   TRUE),		/* pcrel_offset */
 
-  /* A 16 bit absolute relocation */
-  HOWTO (R_D10V_16,		/* type */
-	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
-	 16,			/* bitsize */
-	 false,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_D10V_16",		/* name */
-	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
-	 false),		/* pcrel_offset */
+    /* A 16 bit absolute relocation */
+    HOWTO (R_D10V_16,		/* type */
+	   0,			/* rightshift */
+	   1,			/* size (0 = byte, 1 = short, 2 = long) */
+	   16,			/* bitsize */
+	   FALSE,		/* pc_relative */
+	   0,			/* bitpos */
+	   complain_overflow_dont, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_16",		/* name */
+	   FALSE,		/* partial_inplace */
+	   0xffff,		/* src_mask */
+	   0xffff,		/* dst_mask */
+	   FALSE),		/* pcrel_offset */
 
-  /* An 18 bit absolute relocation, right shifted 2 */
-  HOWTO (R_D10V_18,		/* type */
-	 2,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
-	 18,			/* bitsize */
-	 false,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_D10V_18",		/* name */
-	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
-	 false),		/* pcrel_offset */
+    /* An 18 bit absolute relocation, right shifted 2 */
+    HOWTO (R_D10V_18,		/* type */
+	   2,			/* rightshift */
+	   1,			/* size (0 = byte, 1 = short, 2 = long) */
+	   16,			/* bitsize */
+	   FALSE,		/* pc_relative */
+	   0,			/* bitpos */
+	   complain_overflow_dont, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_18",		/* name */
+	   FALSE,		/* partial_inplace */
+	   0xffff,		/* src_mask */
+	   0xffff,		/* dst_mask */
+	   FALSE),		/* pcrel_offset */
 
-  /* A relative 18 bit relocation, right shifted by 2  */
-  HOWTO (R_D10V_18_PCREL,	/* type */
-	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 18,			/* bitsize */
-	 true,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_signed, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_D10V_18_PCREL",	/* name */
-	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
-	 true),			/* pcrel_offset */
+    /* A relative 18 bit relocation, right shifted by 2  */
+    HOWTO (R_D10V_18_PCREL,	/* type */
+	   2,			/* rightshift */
+	   2,			/* size (0 = byte, 1 = short, 2 = long) */
+	   15,			/* bitsize */
+	   TRUE,		/* pc_relative */
+	   0,			/* bitpos */
+	   complain_overflow_bitfield, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_18_PCREL",	/* name */
+	   FALSE,		/* partial_inplace */
+	   0xffff,		/* src_mask */
+	   0xffff,		/* dst_mask */
+	   TRUE),			/* pcrel_offset */
 
-  /* A 32 bit absolute relocation */
-  HOWTO (R_D10V_32,		/* type */
-	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
-	 false,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_D10V_32",		/* name */
-	 false,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
-	 0xffffffff,		/* dst_mask */
-	 false),		/* pcrel_offset */
+    /* A 32 bit absolute relocation */
+    HOWTO (R_D10V_32,		/* type */
+	   0,			/* rightshift */
+	   2,			/* size (0 = byte, 1 = short, 2 = long) */
+	   32,			/* bitsize */
+	   FALSE,		/* pc_relative */
+	   0,			/* bitpos */
+	   complain_overflow_dont, /* complain_on_overflow */
+	   bfd_elf_generic_reloc, /* special_function */
+	   "R_D10V_32",		/* name */
+	   FALSE,		/* partial_inplace */
+	   0xffffffff,		/* src_mask */
+	   0xffffffff,		/* dst_mask */
+	   FALSE),		/* pcrel_offset */
 
-  /* GNU extension to record C++ vtable hierarchy */
-  HOWTO (R_D10V_GNU_VTINHERIT, /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         false,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         NULL,                  /* special_function */
-         "R_D10V_GNU_VTINHERIT", /* name */
-         false,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         false),                /* pcrel_offset */
+    /* GNU extension to record C++ vtable hierarchy */
+    HOWTO (R_D10V_GNU_VTINHERIT, /* type */
+	   0,                     /* rightshift */
+	   2,                     /* size (0 = byte, 1 = short, 2 = long) */
+	   0,                     /* bitsize */
+	   FALSE,                 /* pc_relative */
+	   0,                     /* bitpos */
+	   complain_overflow_dont, /* complain_on_overflow */
+	   NULL,                  /* special_function */
+	   "R_D10V_GNU_VTINHERIT", /* name */
+	   FALSE,                 /* partial_inplace */
+	   0,                     /* src_mask */
+	   0,                     /* dst_mask */
+	   FALSE),                /* pcrel_offset */
 
-  /* GNU extension to record C++ vtable member usage */
-  HOWTO (R_D10V_GNU_VTENTRY,     /* type */
-         0,                     /* rightshift */
-         2,                     /* size (0 = byte, 1 = short, 2 = long) */
-         0,                     /* bitsize */
-         false,                 /* pc_relative */
-         0,                     /* bitpos */
-         complain_overflow_dont, /* complain_on_overflow */
-         _bfd_elf_rel_vtable_reloc_fn,  /* special_function */
-         "R_D10V_GNU_VTENTRY",   /* name */
-         false,                 /* partial_inplace */
-         0,                     /* src_mask */
-         0,                     /* dst_mask */
-         false),                /* pcrel_offset */
-
-};
+    /* GNU extension to record C++ vtable member usage */
+    HOWTO (R_D10V_GNU_VTENTRY,     /* type */
+	   0,                     /* rightshift */
+	   2,                     /* size (0 = byte, 1 = short, 2 = long) */
+	   0,                     /* bitsize */
+	   FALSE,                 /* pc_relative */
+	   0,                     /* bitpos */
+	   complain_overflow_dont, /* complain_on_overflow */
+	   _bfd_elf_rel_vtable_reloc_fn,  /* special_function */
+	   "R_D10V_GNU_VTENTRY",   /* name */
+	   FALSE,                 /* partial_inplace */
+	   0,                     /* src_mask */
+	   0,                     /* dst_mask */
+	   FALSE),                /* pcrel_offset */
+  };
 
 /* Map BFD reloc types to D10V ELF reloc types.  */
 
 struct d10v_reloc_map
-{
-  bfd_reloc_code_real_type bfd_reloc_val;
-  unsigned char elf_reloc_val;
-};
+  {
+    bfd_reloc_code_real_type bfd_reloc_val;
+    unsigned char elf_reloc_val;
+  };
 
- static const struct d10v_reloc_map d10v_reloc_map[] =
-{
-  { BFD_RELOC_NONE, R_D10V_NONE, },
-  { BFD_RELOC_D10V_10_PCREL_R, R_D10V_10_PCREL_R },
-  { BFD_RELOC_D10V_10_PCREL_L, R_D10V_10_PCREL_L },
-  { BFD_RELOC_16, R_D10V_16 },
-  { BFD_RELOC_D10V_18, R_D10V_18 },
-  { BFD_RELOC_D10V_18_PCREL, R_D10V_18_PCREL },
-  { BFD_RELOC_32, R_D10V_32 },
-  { BFD_RELOC_VTABLE_INHERIT, R_D10V_GNU_VTINHERIT },
-  { BFD_RELOC_VTABLE_ENTRY, R_D10V_GNU_VTENTRY },
-};
+static const struct d10v_reloc_map d10v_reloc_map[] =
+  {
+    { BFD_RELOC_NONE, R_D10V_NONE, },
+    { BFD_RELOC_D10V_10_PCREL_R, R_D10V_10_PCREL_R },
+    { BFD_RELOC_D10V_10_PCREL_L, R_D10V_10_PCREL_L },
+    { BFD_RELOC_16, R_D10V_16 },
+    { BFD_RELOC_D10V_18, R_D10V_18 },
+    { BFD_RELOC_D10V_18_PCREL, R_D10V_18_PCREL },
+    { BFD_RELOC_32, R_D10V_32 },
+    { BFD_RELOC_VTABLE_INHERIT, R_D10V_GNU_VTINHERIT },
+    { BFD_RELOC_VTABLE_ENTRY, R_D10V_GNU_VTENTRY },
+  };
 
 static reloc_howto_type *
 bfd_elf32_bfd_reloc_type_lookup (abfd, code)
@@ -218,7 +230,7 @@ static void
 d10v_info_to_howto_rel (abfd, cache_ptr, dst)
      bfd *abfd ATTRIBUTE_UNUSED;
      arelent *cache_ptr;
-     Elf32_Internal_Rel *dst;
+     Elf_Internal_Rela *dst;
 {
   unsigned int r_type;
 
@@ -228,12 +240,12 @@ d10v_info_to_howto_rel (abfd, cache_ptr, dst)
 }
 
 static asection *
-elf32_d10v_gc_mark_hook (abfd, info, rel, h, sym)
-       bfd *abfd;
-       struct bfd_link_info *info ATTRIBUTE_UNUSED;
-       Elf_Internal_Rela *rel;
-       struct elf_link_hash_entry *h;
-       Elf_Internal_Sym *sym;
+elf32_d10v_gc_mark_hook (sec, info, rel, h, sym)
+     asection *sec;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
+     Elf_Internal_Rela *rel;
+     struct elf_link_hash_entry *h;
+     Elf_Internal_Sym *sym;
 {
   if (h != NULL)
     {
@@ -259,19 +271,12 @@ elf32_d10v_gc_mark_hook (abfd, info, rel, h, sym)
        }
      }
    else
-     {
-       if (!(elf_bad_symtab (abfd)
-           && ELF_ST_BIND (sym->st_info) != STB_LOCAL)
-         && ! ((sym->st_shndx <= 0 || sym->st_shndx >= SHN_LORESERVE)
-                && sym->st_shndx != SHN_COMMON))
-          {
-            return bfd_section_from_elf_index (abfd, sym->st_shndx);
-          }
-      }
+     return bfd_section_from_elf_index (sec->owner, sym->st_shndx);
+
   return NULL;
 }
 
-static boolean
+static bfd_boolean
 elf32_d10v_gc_sweep_hook (abfd, info, sec, relocs)
      bfd *abfd ATTRIBUTE_UNUSED;
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
@@ -279,14 +284,14 @@ elf32_d10v_gc_sweep_hook (abfd, info, sec, relocs)
      const Elf_Internal_Rela *relocs ATTRIBUTE_UNUSED;
 {
   /* we don't use got and plt entries for d10v */
-  return true;
+  return TRUE;
 }
 
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
 
-static boolean
+static bfd_boolean
 elf32_d10v_check_relocs (abfd, info, sec, relocs)
      bfd *abfd;
      struct bfd_link_info *info;
@@ -299,7 +304,7 @@ elf32_d10v_check_relocs (abfd, info, sec, relocs)
   const Elf_Internal_Rela *rel_end;
 
   if (info->relocateable)
-    return true;
+    return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
@@ -325,26 +330,26 @@ elf32_d10v_check_relocs (abfd, info, sec, relocs)
            Reconstruct it for later use during GC.  */
         case R_D10V_GNU_VTINHERIT:
           if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-            return false;
+            return FALSE;
           break;
 
         /* This relocation describes which C++ vtable entries are actually
            used.  Record for later use during GC.  */
         case R_D10V_GNU_VTENTRY:
           if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_offset))
-            return false;
+            return FALSE;
           break;
         }
     }
 
-  return true;
+  return TRUE;
 }
 
 /* Relocate a D10V ELF section.  */
-static boolean
+static bfd_boolean
 elf32_d10v_relocate_section (output_bfd, info, input_bfd, input_section,
 			    contents, relocs, local_syms, local_sections)
-     bfd *output_bfd ATTRIBUTE_UNUSED;
+     bfd *output_bfd;
      struct bfd_link_info *info;
      bfd *input_bfd;
      asection *input_section;
@@ -410,9 +415,7 @@ elf32_d10v_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = (sec->output_section->vma
-			+ sec->output_offset
-			+ sym->st_value);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
 	}
       else
 	{
@@ -434,8 +437,8 @@ elf32_d10v_relocate_section (output_bfd, info, input_bfd, input_section,
 	    {
 	      if (!((*info->callbacks->undefined_symbol)
 		    (info, h->root.root.string, input_bfd,
-		     input_section, rel->r_offset, true)))
-		return false;
+		     input_section, rel->r_offset, TRUE)))
+		return FALSE;
 	      relocation = 0;
 	    }
 	}
@@ -464,46 +467,47 @@ elf32_d10v_relocate_section (output_bfd, info, input_bfd, input_section,
 	      if (!((*info->callbacks->reloc_overflow)
 		    (info, name, howto->name, (bfd_vma) 0,
 		     input_bfd, input_section, rel->r_offset)))
-		return false;
+		return FALSE;
 	      break;
 
 	    case bfd_reloc_undefined:
 	      if (!((*info->callbacks->undefined_symbol)
 		    (info, name, input_bfd, input_section,
-		     rel->r_offset, true)))
-		return false;
+		     rel->r_offset, TRUE)))
+		return FALSE;
 	      break;
 
 	    case bfd_reloc_outofrange:
-	      msg = _ ("internal error: out of range error");
+	      msg = _("internal error: out of range error");
 	      goto common_error;
 
 	    case bfd_reloc_notsupported:
-	      msg = _ ("internal error: unsupported relocation error");
+	      msg = _("internal error: unsupported relocation error");
 	      goto common_error;
 
 	    case bfd_reloc_dangerous:
-	      msg = _ ("internal error: dangerous error");
+	      msg = _("internal error: dangerous error");
 	      goto common_error;
 
 	    default:
-	      msg = _ ("internal error: unknown error");
+	      msg = _("internal error: unknown error");
 	      /* fall through */
 
 	    common_error:
 	      if (!((*info->callbacks->warning)
 		    (info, msg, name, input_bfd, input_section,
 		     rel->r_offset)))
-		return false;
+		return FALSE;
 	      break;
 	    }
 	}
     }
 
-  return true;
+  return TRUE;
 }
 #define ELF_ARCH		bfd_arch_d10v
-#define ELF_MACHINE_CODE	EM_CYGNUS_D10V
+#define ELF_MACHINE_CODE	EM_D10V
+#define ELF_MACHINE_ALT1	EM_CYGNUS_D10V
 #define ELF_MAXPAGESIZE		0x1000
 
 #define TARGET_BIG_SYM          bfd_elf32_d10v_vec

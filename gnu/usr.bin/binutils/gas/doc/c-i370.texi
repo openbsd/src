@@ -73,7 +73,7 @@ for r3 and rpgt or r.pgt for r4.
 
 @samp{*} is the current location counter.  Unlike @samp{.} it is always
 relative to the last USING directive.  Note that this means that 
-expressions cannot use multiplication, as any occurence of @samp{*}
+expressions cannot use multiplication, as any occurrence of @samp{*}
 will be interpreted as a location counter.
 
 All labels are relative to the last USING.  Thus, branches to a label 
@@ -103,7 +103,7 @@ directive).
 @cindex floating point, ESA/390 (@sc{ieee})
 @cindex ESA/390 floating point (@sc{ieee})
 The assembler generates only @sc{ieee} floating-point numbers.  The older
-floiating point formats are not supported.
+floating point formats are not supported.
 
 
 @node ESA/390 Directives

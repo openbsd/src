@@ -15,7 +15,7 @@
 
 @cindex PJ options
 @cindex options, PJ
-@code{@value{AS}} has two addiitional command-line options for the picoJava
+@code{@value{AS}} has two additional command-line options for the picoJava
 architecture.
 @table @code
 @item -ml

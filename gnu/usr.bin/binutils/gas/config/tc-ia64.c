@@ -1,5 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -43,6 +43,7 @@
  */
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "dwarf2dbg.h"
 #include "subsegs.h"
 
@@ -61,26 +62,38 @@
 
 enum special_section
   {
+    /* IA-64 ABI section pseudo-ops.  */
     SPECIAL_SECTION_BSS = 0,
     SPECIAL_SECTION_SBSS,
     SPECIAL_SECTION_SDATA,
     SPECIAL_SECTION_RODATA,
     SPECIAL_SECTION_COMMENT,
     SPECIAL_SECTION_UNWIND,
-    SPECIAL_SECTION_UNWIND_INFO
+    SPECIAL_SECTION_UNWIND_INFO,
+    /* HPUX specific section pseudo-ops.  */
+    SPECIAL_SECTION_INIT_ARRAY,
+    SPECIAL_SECTION_FINI_ARRAY,
   };
 
 enum reloc_func
   {
+    FUNC_DTP_MODULE,
+    FUNC_DTP_RELATIVE,
     FUNC_FPTR_RELATIVE,
     FUNC_GP_RELATIVE,
     FUNC_LT_RELATIVE,
+    FUNC_LT_RELATIVE_X,
     FUNC_PC_RELATIVE,
     FUNC_PLT_RELATIVE,
     FUNC_SEC_RELATIVE,
     FUNC_SEG_RELATIVE,
+    FUNC_TP_RELATIVE,
     FUNC_LTV_RELATIVE,
     FUNC_LT_FPTR_RELATIVE,
+    FUNC_LT_DTP_MODULE,
+    FUNC_LT_DTP_RELATIVE,
+    FUNC_LT_TP_RELATIVE,
+    FUNC_IPLT_RELOC,
   };
 
 enum reg_symbol
@@ -279,6 +292,9 @@ static struct
       int g_reg_set_conditionally[128];
     } last_groups[3];
     int group_idx;
+
+    int pointer_size;       /* size in bytes of a pointer */
+    int pointer_size_shift; /* shift size of a pointer for alignment */
   }
 md;
 
@@ -467,15 +483,23 @@ static struct
 pseudo_func[] =
   {
     /* reloc pseudo functions (these must come first!):  */
+    { "dtpmod",	PSEUDO_FUNC_RELOC, { 0 } },
+    { "dtprel",	PSEUDO_FUNC_RELOC, { 0 } },
     { "fptr",	PSEUDO_FUNC_RELOC, { 0 } },
     { "gprel",	PSEUDO_FUNC_RELOC, { 0 } },
     { "ltoff",	PSEUDO_FUNC_RELOC, { 0 } },
+    { "ltoffx",	PSEUDO_FUNC_RELOC, { 0 } },
     { "pcrel",	PSEUDO_FUNC_RELOC, { 0 } },
     { "pltoff",	PSEUDO_FUNC_RELOC, { 0 } },
     { "secrel",	PSEUDO_FUNC_RELOC, { 0 } },
     { "segrel",	PSEUDO_FUNC_RELOC, { 0 } },
+    { "tprel",	PSEUDO_FUNC_RELOC, { 0 } },
     { "ltv",	PSEUDO_FUNC_RELOC, { 0 } },
     { "", 0, { 0 } },	/* placeholder for FUNC_LT_FPTR_RELATIVE */
+    { "", 0, { 0 } },	/* placeholder for FUNC_LT_DTP_MODULE */
+    { "", 0, { 0 } },	/* placeholder for FUNC_LT_DTP_RELATIVE */
+    { "", 0, { 0 } },	/* placeholder for FUNC_LT_TP_RELATIVE */
+    { "iplt",	PSEUDO_FUNC_RELOC, { 0 } },
 
     /* mbtype4 constants:  */
     { "alt",	PSEUDO_FUNC_CONST, { 0xa } },
@@ -496,6 +520,9 @@ pseudo_func[] =
     { "inf",	PSEUDO_FUNC_CONST, { 0x020 } },
 
     { "natval",	PSEUDO_FUNC_CONST, { 0x100 } }, /* old usage */
+
+    /* hint constants: */
+    { "pause",	PSEUDO_FUNC_CONST, { 0x0 } },
 
     /* unwind-related constants:  */
     { "svr4",	PSEUDO_FUNC_CONST, { 0 } },
@@ -523,7 +550,13 @@ static const bfd_vma nop[IA64_NUM_UNITS] =
 static char special_section_name[][20] =
   {
     {".bss"}, {".sbss"}, {".sdata"}, {".rodata"}, {".comment"},
-    {".IA_64.unwind"}, {".IA_64.unwind_info"}
+    {".IA_64.unwind"}, {".IA_64.unwind_info"},
+    {".init_array"}, {".fini_array"}
+  };
+
+static char *special_linkonce_name[] =
+  {
+    ".gnu.linkonce.ia64unw.", ".gnu.linkonce.ia64unwi."
   };
 
 /* The best template for a particular sequence of up to three
@@ -607,6 +640,15 @@ typedef struct unw_rec_list {
 
 #define SLOT_NUM_NOT_SET        (unsigned)-1
 
+/* Linked list of saved prologue counts.  A very poor
+   implementation of a map from label numbers to prologue counts.  */
+typedef struct label_prologue_count
+{
+  struct label_prologue_count *next;
+  unsigned long label_number;
+  unsigned int prologue_count;
+} label_prologue_count;
+
 static struct
 {
   unsigned long next_slot_number;
@@ -633,6 +675,8 @@ static struct
   int prologue;
   int prologue_mask;
   unsigned int prologue_count;	/* number of .prologues seen so far */
+  /* Prologue counts at previous .label_state directives.  */
+  struct label_prologue_count * saved_prologue_counts;
 } unwind;
 
 typedef void (*vbyte_func) PARAMS ((int, char *, char *));
@@ -703,6 +747,7 @@ static enum operand_match_result operand_match PARAMS ((const struct ia64_opcode
 							expressionS *e));
 static int parse_operand PARAMS ((expressionS *e));
 static struct ia64_opcode * parse_operands PARAMS ((struct ia64_opcode *));
+static int errata_nop_necessary_p PARAMS ((struct slot *, enum ia64_unit));
 static void build_insn PARAMS ((struct slot *, bfd_vma *));
 static void emit_one_bundle PARAMS ((void));
 static void fix_insn PARAMS ((fixS *, const struct ia64_operand *, valueT));
@@ -716,6 +761,7 @@ static void add_qp_imply PARAMS((int p1, int p2));
 static void clear_qp_branch_flag PARAMS((valueT mask));
 static void clear_qp_mutex PARAMS((valueT mask));
 static void clear_qp_implies PARAMS((valueT p1_mask, valueT p2_mask));
+static int has_suffix_p PARAMS((const char *, const char *));
 static void clear_register_values PARAMS ((void));
 static void print_dependency PARAMS ((const char *action, int depind));
 static void instruction_serialization PARAMS ((void));
@@ -844,19 +890,31 @@ static int output_unw_records PARAMS ((unw_rec_list *, void **));
 static int convert_expr_to_ab_reg PARAMS ((expressionS *, unsigned int *, unsigned int *));
 static int convert_expr_to_xy_reg PARAMS ((expressionS *, unsigned int *, unsigned int *));
 static int generate_unwind_image PARAMS ((const char *));
+static unsigned int get_saved_prologue_count PARAMS ((unsigned long));
+static void save_prologue_count PARAMS ((unsigned long, unsigned int));
+static void free_saved_prologue_counts PARAMS ((void));
 
 /* Build the unwind section name by appending the (possibly stripped)
    text section NAME to the unwind PREFIX.  The resulting string
    pointer is assigned to RESULT.  The string is allocated on the
-   stack, so this must be a macro... */
+   stack, so this must be a macro...  */
 #define make_unw_section_name(special, text_name, result)		   \
   {									   \
-    char *_prefix = special_section_name[special];			   \
-    size_t _prefix_len = strlen (_prefix), _text_len = strlen (text_name); \
-    char *_result = alloca (_prefix_len + _text_len + 1);		   \
-    memcpy(_result, _prefix, _prefix_len);				   \
-    memcpy(_result + _prefix_len, text_name, _text_len);		   \
-    _result[_prefix_len + _text_len] = '\0';				   \
+    const char *_prefix = special_section_name[special];		   \
+    const char *_suffix = text_name;					   \
+    size_t _prefix_len, _suffix_len;					   \
+    char *_result;							   \
+    if (strncmp (text_name, ".gnu.linkonce.t.",				   \
+		 sizeof (".gnu.linkonce.t.") - 1) == 0)			   \
+      {									   \
+	_prefix = special_linkonce_name[special - SPECIAL_SECTION_UNWIND]; \
+	_suffix += sizeof (".gnu.linkonce.t.") - 1;			   \
+      }									   \
+    _prefix_len = strlen (_prefix), _suffix_len = strlen (_suffix);	   \
+    _result = alloca (_prefix_len + _suffix_len + 1);		   	   \
+    memcpy (_result, _prefix, _prefix_len);				   \
+    memcpy (_result + _prefix_len, _suffix, _suffix_len);		   \
+    _result[_prefix_len + _suffix_len] = '\0';				   \
     result = _result;							   \
   }									   \
 while (0)
@@ -892,6 +950,20 @@ set_section (name)
   input_line_pointer = saved_input_line_pointer;
 }
 
+/* Map 's' to SHF_IA_64_SHORT.  */
+
+int
+ia64_elf_section_letter (letter, ptr_msg)
+     int letter;
+     char **ptr_msg;
+{
+  if (letter == 's')
+    return SHF_IA_64_SHORT;
+
+  *ptr_msg = _("Bad .section directive: want a,s,w,x,M,S,G,T in string");
+  return 0;
+}
+
 /* Map SHF_IA_64_SHORT to SEC_SMALL_DATA.  */
 
 flagword
@@ -906,18 +978,31 @@ ia64_elf_section_flags (flags, attr, type)
 
 int
 ia64_elf_section_type (str, len)
-	const char *str;
-	size_t len;
+     const char *str;
+     size_t len;
 {
-  len = sizeof (ELF_STRING_ia64_unwind_info) - 1;
-  if (strncmp (str, ELF_STRING_ia64_unwind_info, len) == 0)
+#define STREQ(s) ((len == sizeof (s) - 1) && (strncmp (str, s, sizeof (s) - 1) == 0))
+
+  if (STREQ (ELF_STRING_ia64_unwind_info))
     return SHT_PROGBITS;
 
-  len = sizeof (ELF_STRING_ia64_unwind) - 1;
-  if (strncmp (str, ELF_STRING_ia64_unwind, len) == 0)
+  if (STREQ (ELF_STRING_ia64_unwind_info_once))
+    return SHT_PROGBITS;
+
+  if (STREQ (ELF_STRING_ia64_unwind))
     return SHT_IA_64_UNWIND;
 
+  if (STREQ (ELF_STRING_ia64_unwind_once))
+    return SHT_IA_64_UNWIND;
+
+  if (STREQ ("init_array"))
+    return SHT_INIT_ARRAY;
+
+  if (STREQ ("fini_array"))
+    return SHT_FINI_ARRAY;
+
   return -1;
+#undef STREQ
 }
 
 static unsigned int
@@ -2641,7 +2726,11 @@ fixup_unw_records (list)
 	    size = (slot_index (last_addr, last_frag, first_addr, first_frag)
 		    + dir_len);
 	    rlen = ptr->r.record.r.rlen = size;
-	    region = ptr;
+	    if (ptr->r.type == body)
+	      /* End of region.  */
+	      region = 0;
+	    else
+	      region = ptr;
 	    break;
 	  }
 	case epilogue:
@@ -2735,6 +2824,47 @@ fixup_unw_records (list)
     }
 }
 
+/* Helper routine for output_unw_records.  Emits the header for the unwind
+   info.  */
+
+static int
+setup_unwind_header (int size, unsigned char **mem)
+{
+  int x, extra = 0;
+  valueT flag_value;
+
+  /* pad to pointer-size boundry.  */
+  x = size % md.pointer_size;
+  if (x != 0)
+    extra = md.pointer_size - x;
+
+  /* Add 8 for the header + a pointer for the
+     personality offset.  */
+  *mem = xmalloc (size + extra + 8 + md.pointer_size);
+
+  /* Clear the padding area and personality.  */
+  memset (*mem + 8 + size, 0, extra + md.pointer_size);
+
+  /* Initialize the header area.  */
+  if (unwind.personality_routine)
+    {
+      if (md.flags & EF_IA_64_ABI64)
+	flag_value = (bfd_vma) 3 << 32;
+      else
+	/* 32-bit unwind info block.  */
+	flag_value = (bfd_vma) 0x1003 << 32;
+    }
+  else
+    flag_value = 0;
+
+  md_number_to_chars (*mem, (((bfd_vma) 1 << 48)     /* Version.  */
+			     | flag_value            /* U & E handler flags.  */
+			     | ((size + extra) / md.pointer_size)), /* Length.  */
+		      8);
+
+  return extra;
+}
+
 /* Generate an unwind image from a record list.  Returns the number of
    bytes in the resulting image. The memory image itselof is returned
    in the 'ptr' parameter.  */
@@ -2743,7 +2873,7 @@ output_unw_records (list, ptr)
      unw_rec_list *list;
      void **ptr;
 {
-  int size, x, extra = 0;
+  int size, extra;
   unsigned char *mem;
 
   *ptr = NULL;
@@ -2752,35 +2882,17 @@ output_unw_records (list, ptr)
   fixup_unw_records (list);
   size = calc_record_size (list);
 
-  /* pad to 8 byte boundry.  */
-  x = size % 8;
-  if (x != 0)
-    extra = 8 - x;
-
   if (size > 0 || unwind.force_unwind_entry)
     {
       unwind.force_unwind_entry = 0;
-
-      /* Add 8 for the header + 8 more bytes for the personality offset.  */
-      mem = xmalloc (size + extra + 16);
+      extra = setup_unwind_header (size, &mem);
 
       vbyte_mem_ptr = mem + 8;
-      /* Clear the padding area and personality.  */
-      memset (mem + 8 + size, 0 , extra + 8);
-      /* Initialize the header area.  */
-      md_number_to_chars (mem,
-			  (((bfd_vma) 1 << 48)     /* version */
-			   | (unwind.personality_routine
-			      ? ((bfd_vma) 3 << 32) /* U & E handler flags */
-			      : 0)
-			   | ((size + extra) / 8)),  /* length (dwords) */
-			  8);
-
       process_unw_records (list, output_vbyte_mem);
 
       *ptr = mem;
 
-      size += extra + 16;
+      size += extra + 8 + md.pointer_size;
     }
   return size;
 }
@@ -2956,7 +3068,7 @@ dot_vframesp (dummy)
       add_unwind_entry (output_psp_sprel (e.X_add_number));
     }
   else
-    as_bad ("First operand to .vframesp must be a general register");
+    as_bad ("Operand to .vframesp must be a constant (sp-relative offset)");
 }
 
 static void
@@ -2972,7 +3084,7 @@ dot_vframepsp (dummy)
       add_unwind_entry (output_psp_sprel (e.X_add_number));
     }
   else
-    as_bad ("First operand to .vframepsp must be a general register");
+    as_bad ("Operand to .vframepsp must be a constant (psp-relative offset)");
 }
 
 static void
@@ -3079,6 +3191,14 @@ dot_restore (dummy)
     }
   else
     ecount = unwind.prologue_count - 1;
+
+  if (ecount >= unwind.prologue_count)
+    {
+      as_bad ("Epilogue count of %lu exceeds number of nested prologues (%u)",
+	      ecount + 1, unwind.prologue_count);
+      return;
+    }
+
   add_unwind_entry (output_epilogue (ecount));
 
   if (ecount < unwind.prologue_count)
@@ -3141,16 +3261,16 @@ generate_unwind_image (text_name)
      const char *text_name;
 {
   int size;
-  unsigned char *unw_rec;
+  void *unw_rec;
 
   /* Force out pending instructions, to make sure all unwind records have
      a valid slot_number field.  */
   ia64_flush_insns ();
 
   /* Generate the unwind record.  */
-  size = output_unw_records (unwind.list, (void **) &unw_rec);
-  if (size % 8 != 0)
-    as_bad ("Unwind record is not a multiple of 8 bytes.");
+  size = output_unw_records (unwind.list, &unw_rec);
+  if (size % md.pointer_size != 0)
+    as_bad ("Unwind record is not a multiple of %d bytes.", md.pointer_size);
 
   /* If there are unwind records, switch sections, and output the info.  */
   if (size != 0)
@@ -3158,15 +3278,17 @@ generate_unwind_image (text_name)
       unsigned char *where;
       char *sec_name;
       expressionS exp;
+      bfd_reloc_code_real_type reloc;
 
       make_unw_section_name (SPECIAL_SECTION_UNWIND_INFO, text_name, sec_name);
       set_section (sec_name);
       bfd_set_section_flags (stdoutput, now_seg,
 			     SEC_LOAD | SEC_ALLOC | SEC_READONLY);
 
-      /* Make sure the section has 8 byte alignment.  */
-      frag_align (3, 0, 0);
-      record_alignment (now_seg, 3);
+      /* Make sure the section has 4 byte alignment for ILP32 and
+	 8 byte alignment for LP64.  */
+      frag_align (md.pointer_size_shift, 0, 0);
+      record_alignment (now_seg, md.pointer_size_shift);
 
       /* Set expression which points to start of unwind descriptor area.  */
       unwind.info = expr_build_dot ();
@@ -3183,16 +3305,33 @@ generate_unwind_image (text_name)
       /* Add the personality address to the image.  */
       if (unwind.personality_routine != 0)
 	{
-	  exp.X_op  = O_symbol;
+	  exp.X_op = O_symbol;
 	  exp.X_add_symbol = unwind.personality_routine;
 	  exp.X_add_number = 0;
-	  fix_new_exp (frag_now, frag_now_fix () - 8, 8,
-	  		     &exp, 0, BFD_RELOC_IA64_LTOFF_FPTR64LSB);
+
+	  if (md.flags & EF_IA_64_BE)
+	    {
+	      if (md.flags & EF_IA_64_ABI64)
+		reloc = BFD_RELOC_IA64_LTOFF_FPTR64MSB;
+	      else
+		reloc = BFD_RELOC_IA64_LTOFF_FPTR32MSB;
+	    }
+	  else
+	    {
+	      if (md.flags & EF_IA_64_ABI64)
+		reloc = BFD_RELOC_IA64_LTOFF_FPTR64LSB;
+	      else
+		reloc = BFD_RELOC_IA64_LTOFF_FPTR32LSB;
+	    }
+
+	  fix_new_exp (frag_now, frag_now_fix () - md.pointer_size,
+		       md.pointer_size, &exp, 0, reloc);
 	  unwind.personality_routine = 0;
 	}
     }
 
   free_list_records (unwind.list);
+  free_saved_prologue_counts ();
   unwind.list = unwind.tail = unwind.current_entry = NULL;
 
   return size;
@@ -3619,6 +3758,61 @@ dot_spillmem_p (psprel)
     add_unwind_entry (output_spill_sprel_p (ab, reg, e3.X_add_number, qp));
 }
 
+static unsigned int
+get_saved_prologue_count (lbl)
+     unsigned long lbl;
+{
+  label_prologue_count *lpc = unwind.saved_prologue_counts;
+
+  while (lpc != NULL && lpc->label_number != lbl)
+    lpc = lpc->next;
+
+  if (lpc != NULL)
+    return lpc->prologue_count;
+
+  as_bad ("Missing .label_state %ld", lbl);
+  return 1;
+}
+
+static void
+save_prologue_count (lbl, count)
+     unsigned long lbl;
+     unsigned int count;
+{
+  label_prologue_count *lpc = unwind.saved_prologue_counts;
+
+  while (lpc != NULL && lpc->label_number != lbl)
+    lpc = lpc->next;
+
+  if (lpc != NULL)
+    lpc->prologue_count = count;
+  else
+    {
+      label_prologue_count *new_lpc = xmalloc (sizeof (* new_lpc));
+
+      new_lpc->next = unwind.saved_prologue_counts;
+      new_lpc->label_number = lbl;
+      new_lpc->prologue_count = count;
+      unwind.saved_prologue_counts = new_lpc;
+    }
+}
+
+static void
+free_saved_prologue_counts ()
+{
+  label_prologue_count *lpc = unwind.saved_prologue_counts;
+  label_prologue_count *next;
+
+  while (lpc != NULL)
+    {
+      next = lpc->next;
+      free (lpc);
+      lpc = next;
+    }
+
+  unwind.saved_prologue_counts = NULL;
+}
+
 static void
 dot_label_state (dummy)
      int dummy ATTRIBUTE_UNUSED;
@@ -3632,6 +3826,7 @@ dot_label_state (dummy)
       return;
     }
   add_unwind_entry (output_label_state (e.X_add_number));
+  save_prologue_count (e.X_add_number, unwind.prologue_count);
 }
 
 static void
@@ -3647,6 +3842,7 @@ dot_copy_state (dummy)
       return;
     }
   add_unwind_entry (output_copy_state (e.X_add_number));
+  unwind.prologue_count = get_saved_prologue_count (e.X_add_number);
 }
 
 static void
@@ -3797,6 +3993,8 @@ dot_endp (dummy)
   segT saved_seg;
   subsegT saved_subseg;
   const char *sec_name, *text_name;
+  char *name, *p, c;
+  symbolS *sym;
 
   if (unwind.saved_text_seg)
     {
@@ -3820,6 +4018,8 @@ dot_endp (dummy)
     .text       .IA_64.unwind
     .text.foo   .IA_64.unwind.text.foo
     .foo        .IA_64.unwind.foo
+    .gnu.linkonce.t.foo
+		.gnu.linkonce.ia64unw.foo
     _info       .IA_64.unwind_info         gas issues error message (ditto)
     _infoFOO    .IA_64.unwind_infoFOO      gas issues error message (ditto)
 
@@ -3837,7 +4037,7 @@ dot_endp (dummy)
 	    lets GNU ld support programs with multiple segments
 	    containing unwind info (as might be the case for certain
 	    embedded applications).
-	    
+
 	(c) An error is issued if there would be a name clash.
   */
   text_name = segment_name (saved_seg);
@@ -3850,9 +4050,6 @@ dot_endp (dummy)
     }
   if (strcmp (text_name, ".text") == 0)
     text_name = "";
-
-  expression (&e);
-  demand_empty_rest_of_line ();
 
   insn_group_break (1, 0, 0);
 
@@ -3870,14 +4067,17 @@ dot_endp (dummy)
       bfd_set_section_flags (stdoutput, now_seg,
 			     SEC_LOAD | SEC_ALLOC | SEC_READONLY);
 
-      /* Make sure the section has 8 byte alignment.  */
-      record_alignment (now_seg, 3);
+      /* Make sure that section has 4 byte alignment for ILP32 and
+         8 byte alignment for LP64.  */
+      record_alignment (now_seg, md.pointer_size_shift);
 
-      ptr = frag_more (24);
-      where = frag_now_fix () - 24;
+      /* Need space for 3 pointers for procedure start, procedure end,
+	 and unwind info.  */
+      ptr = frag_more (3 * md.pointer_size);
+      where = frag_now_fix () - (3 * md.pointer_size);
       bytes_per_address = bfd_arch_bits_per_address (stdoutput) / 8;
 
-      /* Issue the values of  a) Proc Begin, b) Proc End, c) Unwind Record. */
+      /* Issue the values of  a) Proc Begin, b) Proc End, c) Unwind Record.  */
       e.X_op = O_pseudo_fixup;
       e.X_op_symbol = pseudo_func[FUNC_SEG_RELATIVE].u.sym;
       e.X_add_number = 0;
@@ -3906,6 +4106,50 @@ dot_endp (dummy)
 
     }
   subseg_set (saved_seg, saved_subseg);
+
+  /* Parse names of main and alternate entry points and set symbol sizes.  */
+  while (1)
+    {
+      SKIP_WHITESPACE ();
+      name = input_line_pointer;
+      c = get_symbol_end ();
+      p = input_line_pointer;
+      sym = symbol_find (name);
+      if (sym && unwind.proc_start
+	  && (symbol_get_bfdsym (sym)->flags & BSF_FUNCTION)
+	  && S_GET_SIZE (sym) == 0 && symbol_get_obj (sym)->size == NULL)
+	{
+	  fragS *fr = symbol_get_frag (unwind.proc_start);
+	  fragS *frag = symbol_get_frag (sym);
+
+	  /* Check whether the function label is at or beyond last
+	     .proc directive.  */
+	  while (fr && fr != frag)
+	    fr = fr->fr_next;
+	  if (fr)
+	    {
+	      if (frag == frag_now && SEG_NORMAL (now_seg))
+		S_SET_SIZE (sym, frag_now_fix () - S_GET_VALUE (sym));
+	      else
+		{
+		  symbol_get_obj (sym)->size =
+		    (expressionS *) xmalloc (sizeof (expressionS));
+		  symbol_get_obj (sym)->size->X_op = O_subtract;
+		  symbol_get_obj (sym)->size->X_add_symbol
+		    = symbol_new (FAKE_LABEL_NAME, now_seg,
+				  frag_now_fix (), frag_now);
+		  symbol_get_obj (sym)->size->X_op_symbol = sym;
+		  symbol_get_obj (sym)->size->X_add_number = 0;
+		}
+	    }
+	}
+      *p = c;
+      SKIP_WHITESPACE ();
+      if (*input_line_pointer != ',')
+	break;
+      ++input_line_pointer;
+    }
+  demand_empty_rest_of_line ();
   unwind.proc_start = unwind.proc_end = unwind.info = 0;
 }
 
@@ -4406,7 +4650,7 @@ dot_pred_rel (type)
       valueT bit = 1;
       int regno;
 
-      if (toupper (*input_line_pointer) != 'P'
+      if (TOUPPER (*input_line_pointer) != 'P'
 	  || (regno = atoi (++input_line_pointer)) < 0
 	  || regno > 63)
 	{
@@ -4414,7 +4658,7 @@ dot_pred_rel (type)
 	  ignore_rest_of_line ();
 	  return;
 	}
-      while (isdigit (*input_line_pointer))
+      while (ISDIGIT (*input_line_pointer))
 	++input_line_pointer;
       if (p1 == -1)
 	p1 = regno;
@@ -4431,7 +4675,7 @@ dot_pred_rel (type)
 	  valueT stop = 1;
 	  ++input_line_pointer;
 
-	  if (toupper (*input_line_pointer) != 'P'
+	  if (TOUPPER (*input_line_pointer) != 'P'
 	      || (regno = atoi (++input_line_pointer)) < 0
 	      || regno > 63)
 	    {
@@ -4439,7 +4683,7 @@ dot_pred_rel (type)
 	      ignore_rest_of_line ();
 	      return;
 	    }
-	  while (isdigit (*input_line_pointer))
+	  while (ISDIGIT (*input_line_pointer))
 	    ++input_line_pointer;
 	  stop <<= regno;
 	  if (bit >= stop)
@@ -4582,11 +4826,13 @@ const pseudo_typeS md_pseudo_table[] =
     { "comment", dot_special_section, SPECIAL_SECTION_COMMENT },
     { "ia_64.unwind", dot_special_section, SPECIAL_SECTION_UNWIND },
     { "ia_64.unwind_info", dot_special_section, SPECIAL_SECTION_UNWIND_INFO },
+    { "init_array", dot_special_section, SPECIAL_SECTION_INIT_ARRAY },
+    { "fini_array", dot_special_section, SPECIAL_SECTION_FINI_ARRAY },
     { "proc", dot_proc, 0 },
     { "body", dot_body, 0 },
     { "prologue", dot_prologue, 0 },
     { "endp", dot_endp, 0 },
-    { "file", dwarf2_directive_file, 0 },
+    { "file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
     { "loc", dwarf2_directive_loc, 0 },
 
     { "fframe", dot_fframe, 0 },
@@ -4677,6 +4923,15 @@ const pseudo_typeS md_pseudo_table[] =
     { "explicit", dot_dv_mode, 'e' },
     { "default", dot_dv_mode, 'd' },
 
+    /* ??? These are needed to make gas/testsuite/gas/elf/ehopt.s work.
+       IA-64 aligns data allocation pseudo-ops by default, so we have to
+       tell it that these ones are supposed to be unaligned.  Long term,
+       should rewrite so that only IA-64 specific data allocation pseudo-ops
+       are aligned by default.  */
+    {"2byte", stmt_cons_ua, 2},
+    {"4byte", stmt_cons_ua, 4},
+    {"8byte", stmt_cons_ua, 8},
+
     { NULL, 0, 0 }
   };
 
@@ -4693,6 +4948,7 @@ pseudo_opcode[] =
     { "data2", cons, 2 },
     { "data4", cons, 4 },
     { "data8", cons, 8 },
+    { "data16", cons, 16 },
     { "real4", stmt_float_cons, 'f' },
     { "real8", stmt_float_cons, 'd' },
     { "real10", stmt_float_cons, 'x' },
@@ -4703,6 +4959,7 @@ pseudo_opcode[] =
     { "data2.ua", stmt_cons_ua, 2 },
     { "data4.ua", stmt_cons_ua, 4 },
     { "data8.ua", stmt_cons_ua, 8 },
+    { "data16.ua", stmt_cons_ua, 16 },
     { "real4.ua", float_cons, 'f' },
     { "real8.ua", float_cons, 'd' },
     { "real10.ua", float_cons, 'x' },
@@ -4777,6 +5034,11 @@ operand_match (idesc, index, e)
 
     case IA64_OPND_AR_CCV:
       if (e->X_op == O_register && e->X_add_number == REG_AR + 32)
+	return OPERAND_MATCH;
+      break;
+
+    case IA64_OPND_AR_CSD:
+      if (e->X_op == O_register && e->X_add_number == REG_AR + 25)
 	return OPERAND_MATCH;
       break;
 
@@ -4897,7 +5159,7 @@ operand_match (idesc, index, e)
 
     case IA64_OPND_R3_2:
       if (e->X_op == O_register && e->X_add_number >= REG_GR)
-	{ 
+	{
 	  if (e->X_add_number < REG_GR + 4)
 	    return OPERAND_MATCH;
 	  else if (e->X_add_number < REG_GR + 128)
@@ -5256,7 +5518,10 @@ operand_match (idesc, index, e)
 
 	case O_symbol:
 	  fix = CURR_SLOT.fixup + CURR_SLOT.num_fixups;
-	  fix->code = ia64_gen_real_reloc_type (e->X_op_symbol, 0);
+	  /* There are no external relocs for TAG13/TAG13b fields, so we
+	     create a dummy reloc.  This will not live past md_apply_fix3.  */
+	  fix->code = BFD_RELOC_UNUSED;
+	  fix->code = ia64_gen_real_reloc_type (e->X_op_symbol, fix->code);
 	  fix->opnd = idesc->operands[index];
 	  fix->expr = *e;
 	  fix->is_pcrel = 1;
@@ -5267,6 +5532,15 @@ operand_match (idesc, index, e)
 	  break;
 	}
       break;
+
+    case IA64_OPND_LDXMOV:
+      fix = CURR_SLOT.fixup + CURR_SLOT.num_fixups;
+      fix->code = BFD_RELOC_IA64_LDXMOV;
+      fix->opnd = idesc->operands[index];
+      fix->expr = *e;
+      fix->is_pcrel = 0;
+      ++CURR_SLOT.num_fixups;
+      return OPERAND_MATCH;
 
     default:
       break;
@@ -5564,7 +5838,7 @@ errata_nop_necessary_p (slot, insn_unit)
 		  && strncmp (idesc->name, "ptr", 3) != 0
 		  && strncmp (idesc->name, "ptc", 3) != 0
 		  && strncmp (idesc->name, "probe", 5) != 0)
-	      return 0;
+		return 0;
 	    }
 	  if (prev_group->g_reg_set_conditionally[regno])
 	    return 1;
@@ -5892,10 +6166,11 @@ emit_one_bundle ()
 	}
       required_unit = ia64_templ_desc[template].exec_unit[i];
 
-      /* resolve dynamic opcodes such as "break" and "nop":  */
+      /* resolve dynamic opcodes such as "break", "hint", and "nop":  */
       if (idesc->type == IA64_TYPE_DYN)
 	{
 	  if ((strcmp (idesc->name, "nop") == 0)
+	      || (strcmp (idesc->name, "hint") == 0)
 	      || (strcmp (idesc->name, "break") == 0))
 	    insn_unit = required_unit;
 	  else if (strcmp (idesc->name, "chk.s") == 0)
@@ -5956,12 +6231,12 @@ emit_one_bundle ()
 	  continue;		/* try next slot */
 	}
 
-	{
-	  bfd_vma addr;
+      {
+	bfd_vma addr;
 
-	  addr = frag_now->fr_address + frag_now_fix () - 16 + i;
-	  dwarf2_gen_line_info (addr, &md.slot[curr].debug_line);
-	}
+	addr = frag_now->fr_address + frag_now_fix () - 16 + i;
+	dwarf2_gen_line_info (addr, &md.slot[curr].debug_line);
+      }
 
       if (errata_nop_necessary_p (md.slot + curr, insn_unit))
 	as_warn (_("Additional NOP may be necessary to workaround Itanium processor A/B step errata"));
@@ -6058,6 +6333,7 @@ md_parse_option (c, arg)
      int c;
      char *arg;
 {
+
   switch (c)
     {
     /* Switches from the Intel assembler.  */
@@ -6176,12 +6452,24 @@ md_show_usage (stream)
 {
   fputs (_("\
 IA-64 options:\n\
+  --mconstant-gp	  mark output file as using the constant-GP model\n\
+			  (sets ELF header flag EF_IA_64_CONS_GP)\n\
+  --mauto-pic		  mark output file as using the constant-GP model\n\
+			  without function descriptors (sets ELF header flag\n\
+			  EF_IA_64_NOFUNCDESC_CONS_GP)\n\
   -milp32|-milp64|-mlp64|-mp64	select data model (default -mlp64)\n\
   -mle | -mbe		  select little- or big-endian byte order (default -mle)\n\
   -x | -xexplicit	  turn on dependency violation checking (default)\n\
   -xauto		  automagically remove dependency violations\n\
   -xdebug		  debug dependency violation checker\n"),
 	stream);
+}
+
+void
+ia64_after_parse_args ()
+{
+  if (debug_type == DEBUG_STABS)
+    as_fatal (_("--gstabs is not supported for ia64"));
 }
 
 /* Return true if TYPE fits in TEMPL at SLOT.  */
@@ -6238,6 +6526,14 @@ md_begin ()
   bfd_set_section_alignment (stdoutput, text_section, 4);
 
   target_big_endian = TARGET_BYTES_BIG_ENDIAN;
+  pseudo_func[FUNC_DTP_MODULE].u.sym =
+    symbol_new (".<dtpmod>", undefined_section, FUNC_DTP_MODULE,
+		&zero_address_frag);
+
+  pseudo_func[FUNC_DTP_RELATIVE].u.sym =
+    symbol_new (".<dtprel>", undefined_section, FUNC_DTP_RELATIVE,
+		&zero_address_frag);
+
   pseudo_func[FUNC_FPTR_RELATIVE].u.sym =
     symbol_new (".<fptr>", undefined_section, FUNC_FPTR_RELATIVE,
 		&zero_address_frag);
@@ -6248,6 +6544,10 @@ md_begin ()
 
   pseudo_func[FUNC_LT_RELATIVE].u.sym =
     symbol_new (".<ltoff>", undefined_section, FUNC_LT_RELATIVE,
+		&zero_address_frag);
+
+  pseudo_func[FUNC_LT_RELATIVE_X].u.sym =
+    symbol_new (".<ltoffx>", undefined_section, FUNC_LT_RELATIVE_X,
 		&zero_address_frag);
 
   pseudo_func[FUNC_PC_RELATIVE].u.sym =
@@ -6266,12 +6566,32 @@ md_begin ()
     symbol_new (".<segrel>", undefined_section, FUNC_SEG_RELATIVE,
 		&zero_address_frag);
 
+  pseudo_func[FUNC_TP_RELATIVE].u.sym =
+    symbol_new (".<tprel>", undefined_section, FUNC_TP_RELATIVE,
+		&zero_address_frag);
+
   pseudo_func[FUNC_LTV_RELATIVE].u.sym =
     symbol_new (".<ltv>", undefined_section, FUNC_LTV_RELATIVE,
 		&zero_address_frag);
 
   pseudo_func[FUNC_LT_FPTR_RELATIVE].u.sym =
     symbol_new (".<ltoff.fptr>", undefined_section, FUNC_LT_FPTR_RELATIVE,
+		&zero_address_frag);
+
+  pseudo_func[FUNC_LT_DTP_MODULE].u.sym =
+    symbol_new (".<ltoff.dtpmod>", undefined_section, FUNC_LT_DTP_MODULE,
+		&zero_address_frag);
+
+  pseudo_func[FUNC_LT_DTP_RELATIVE].u.sym =
+    symbol_new (".<ltoff.dptrel>", undefined_section, FUNC_LT_DTP_RELATIVE,
+		&zero_address_frag);
+
+  pseudo_func[FUNC_LT_TP_RELATIVE].u.sym =
+    symbol_new (".<ltoff.tprel>", undefined_section, FUNC_LT_TP_RELATIVE,
+		&zero_address_frag);
+
+  pseudo_func[FUNC_IPLT_RELOC].u.sym =
+    symbol_new (".<iplt>", undefined_section, FUNC_IPLT_RELOC,
 		&zero_address_frag);
 
   /* Compute the table of best templates.  We compute goodness as a
@@ -6446,6 +6766,19 @@ md_begin ()
   if (! ok)
      as_warn (_("Could not set architecture and machine"));
 
+  /* Set the pointer size and pointer shift size depending on md.flags */
+
+  if (md.flags & EF_IA_64_ABI64)
+    {
+      md.pointer_size = 8;         /* pointers are 8 bytes */
+      md.pointer_size_shift = 3;   /* alignment is 8 bytes = 2^2 */
+    }
+  else
+    {
+      md.pointer_size = 4;         /* pointers are 4 bytes */
+      md.pointer_size_shift = 2;   /* alignment is 4 bytes = 2^2 */
+    }
+
   md.mem_offset.hint = 0;
   md.path = 0;
   md.maxpaths = 0;
@@ -6462,9 +6795,7 @@ ia64_init (argc, argv)
      int argc ATTRIBUTE_UNUSED;
      char **argv ATTRIBUTE_UNUSED;
 {
-  md.flags = EF_IA_64_ABI64;
-  if (TARGET_BYTES_BIG_ENDIAN)
-    md.flags |= EF_IA_64_BE;
+  md.flags = MD_FLAGS_DEFAULT;
 }
 
 /* Return a string for the target object file format.  */
@@ -6477,16 +6808,36 @@ ia64_target_format ()
       if (md.flags & EF_IA_64_BE)
 	{
 	  if (md.flags & EF_IA_64_ABI64)
+#if defined(TE_AIX50)
+	    return "elf64-ia64-aix-big";
+#elif defined(TE_HPUX)
+	    return "elf64-ia64-hpux-big";
+#else
 	    return "elf64-ia64-big";
+#endif
 	  else
+#if defined(TE_AIX50)
+	    return "elf32-ia64-aix-big";
+#elif defined(TE_HPUX)
+	    return "elf32-ia64-hpux-big";
+#else
 	    return "elf32-ia64-big";
+#endif
 	}
       else
 	{
 	  if (md.flags & EF_IA_64_ABI64)
+#ifdef TE_AIX50
+	    return "elf64-ia64-aix-little";
+#else
 	    return "elf64-ia64-little";
+#endif
 	  else
+#ifdef TE_AIX50
+	    return "elf32-ia64-aix-little";
+#else
 	    return "elf32-ia64-little";
+#endif
 	}
     }
   else
@@ -6621,10 +6972,10 @@ ia64_unrecognized_line (ch)
 	    c = get_symbol_end ();
 	  }
 	else if (LOCAL_LABELS_FB
-		 && isdigit ((unsigned char) *input_line_pointer))
+		 && ISDIGIT (*input_line_pointer))
 	  {
 	    temp = 0;
-	    while (isdigit ((unsigned char) *input_line_pointer))
+	    while (ISDIGIT (*input_line_pointer))
 	      temp = (temp * 10) + *input_line_pointer++ - '0';
 	    fb_label_instance_inc (temp);
 	    s = fb_label_name (temp, 0);
@@ -6797,7 +7148,7 @@ ia64_parse_name (name, e)
   switch (name[0])
     {
     case 'i':
-      if (name[1] == 'n' && isdigit (name[2]))
+      if (name[1] == 'n' && ISDIGIT (name[2]))
 	{
 	  dr = &md.in;
 	  name += 2;
@@ -6805,7 +7156,7 @@ ia64_parse_name (name, e)
       break;
 
     case 'l':
-      if (name[1] == 'o' && name[2] == 'c' && isdigit (name[3]))
+      if (name[1] == 'o' && name[2] == 'c' && ISDIGIT (name[3]))
 	{
 	  dr = &md.loc;
 	  name += 3;
@@ -6813,7 +7164,7 @@ ia64_parse_name (name, e)
       break;
 
     case 'o':
-      if (name[1] == 'u' && name[2] == 't' && isdigit (name[3]))
+      if (name[1] == 'u' && name[2] == 't' && ISDIGIT (name[3]))
 	{
 	  dr = &md.out;
 	  name += 3;
@@ -6870,19 +7221,29 @@ ia64_canonicalize_symbol_name (name)
   return name;
 }
 
-/* Return true if idesc is a conditional branch instruction.  */
+/* Return true if idesc is a conditional branch instruction.  This excludes
+   the modulo scheduled branches, and br.ia.  Mod-sched branches are excluded
+   because they always read/write resources regardless of the value of the
+   qualifying predicate.  br.ia must always use p0, and hence is always
+   taken.  Thus this function returns true for branches which can fall
+   through, and which use no resources if they do fall through.  */
 
 static int
 is_conditional_branch (idesc)
      struct ia64_opcode *idesc;
 {
   /* br is a conditional branch.  Everything that starts with br. except
-     br.ia is a conditional branch.  Everything that starts with brl is a
-     conditional branch.  */
+     br.ia, br.c{loop,top,exit}, and br.w{top,exit} is a conditional branch.
+     Everything that starts with brl is a conditional branch.  */
   return (idesc->name[0] == 'b' && idesc->name[1] == 'r'
 	  && (idesc->name[2] == '\0'
-	      || (idesc->name[2] == '.' && idesc->name[3] != 'i')
-	      || idesc->name[2] == 'l'));
+	      || (idesc->name[2] == '.' && idesc->name[3] != 'i'
+		  && idesc->name[3] != 'c' && idesc->name[3] != 'w')
+	      || idesc->name[2] == 'l'
+	      /* br.cond, br.call, br.clr  */
+	      || (idesc->name[2] == '.' && idesc->name[3] == 'c'
+		  && (idesc->name[4] == 'a' || idesc->name[4] == 'o'
+		      || (idesc->name[4] == 'l' && idesc->name[5] == 'r')))));
 }
 
 /* Return whether the given opcode is a taken branch.  If there's any doubt,
@@ -7158,7 +7519,7 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	    }
 	  else
 	    {
-	      for (i = idesc->num_outputs;i < NELEMS (idesc->operands); i++)
+	      for (i = idesc->num_outputs; i < NELEMS (idesc->operands); i++)
 		if (idesc->operands[i] == IA64_OPND_B1
 		    || idesc->operands[i] == IA64_OPND_B2)
 		  {
@@ -7616,8 +7977,8 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	    {
 	      int p1 = CURR_SLOT.opnd[0].X_add_number - REG_P;
 	      int p2 = CURR_SLOT.opnd[1].X_add_number - REG_P;
-	      int or_andcm = strstr(idesc->name, "or.andcm") != NULL;
-	      int and_orcm = strstr(idesc->name, "and.orcm") != NULL;
+	      int or_andcm = strstr (idesc->name, "or.andcm") != NULL;
+	      int and_orcm = strstr (idesc->name, "and.orcm") != NULL;
 
 	      if ((idesc->operands[0] == IA64_OPND_P1
 		   || idesc->operands[0] == IA64_OPND_P2)
@@ -7680,7 +8041,7 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	      && idesc->operands[0] == IA64_OPND_PR)
 	    {
 	      mask = CURR_SLOT.opnd[2].X_add_number;
-	      if (mask & ((valueT) 1<<16))
+	      if (mask & ((valueT) 1 << 16))
 		for (i = 16; i < 63; i++)
 		  {
 		    specs[count] = tmpl;
@@ -7738,8 +8099,8 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	    {
 	      int p1 = CURR_SLOT.opnd[0].X_add_number - REG_P;
 	      int p2 = CURR_SLOT.opnd[1].X_add_number - REG_P;
-	      int or_andcm = strstr(idesc->name, "or.andcm") != NULL;
-	      int and_orcm = strstr(idesc->name, "and.orcm") != NULL;
+	      int or_andcm = strstr (idesc->name, "or.andcm") != NULL;
+	      int and_orcm = strstr (idesc->name, "and.orcm") != NULL;
 
 	      if ((idesc->operands[0] == IA64_OPND_P1
 		   || idesc->operands[0] == IA64_OPND_P2)
@@ -8171,13 +8532,13 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	  specs[count++] = tmpl;
 	}
       else if (note == 7)
-        {
-          valueT mask = 0;
-          if (idesc->operands[2] == IA64_OPND_IMM17)
-            mask = CURR_SLOT.opnd[2].X_add_number;
-          if (mask & ((valueT) 1 << 63))
+	{
+	  valueT mask = 0;
+	  if (idesc->operands[2] == IA64_OPND_IMM17)
+	    mask = CURR_SLOT.opnd[2].X_add_number;
+	  if (mask & ((valueT) 1 << 63))
 	    specs[count++] = tmpl;
-        }
+	}
       else if (note == 11)
 	{
 	  if ((idesc->operands[0] == IA64_OPND_P1
@@ -8199,16 +8560,16 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	{
 	  if (rsrc_write)
 	    {
-              int p1 = CURR_SLOT.opnd[0].X_add_number - REG_P;
-              int p2 = CURR_SLOT.opnd[1].X_add_number - REG_P;
-	      int or_andcm = strstr(idesc->name, "or.andcm") != NULL;
-	      int and_orcm = strstr(idesc->name, "and.orcm") != NULL;
+	      int p1 = CURR_SLOT.opnd[0].X_add_number - REG_P;
+	      int p2 = CURR_SLOT.opnd[1].X_add_number - REG_P;
+	      int or_andcm = strstr (idesc->name, "or.andcm") != NULL;
+	      int and_orcm = strstr (idesc->name, "and.orcm") != NULL;
 
 	      if (p1 == 63
 		  && (idesc->operands[0] == IA64_OPND_P1
 		      || idesc->operands[0] == IA64_OPND_P2))
 		{
-                  specs[count] = tmpl;
+		  specs[count] = tmpl;
 		  specs[count++].cmp_type =
 		    (or_andcm ? CMP_OR : (and_orcm ? CMP_AND : CMP_NONE));
 		}
@@ -8216,7 +8577,7 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 		  && (idesc->operands[1] == IA64_OPND_P1
 		      || idesc->operands[1] == IA64_OPND_P2))
 		{
-                  specs[count] = tmpl;
+		  specs[count] = tmpl;
 		  specs[count++].cmp_type =
 		    (or_andcm ? CMP_AND : (and_orcm ? CMP_OR : CMP_NONE));
 		}
@@ -8453,6 +8814,19 @@ add_qp_mutex (mask)
   qp_mutexes[qp_mutexeslen++].prmask = mask;
 }
 
+static int
+has_suffix_p (name, suffix)
+     const char *name;
+     const char *suffix;
+{
+  size_t namelen = strlen (name);
+  size_t sufflen = strlen (suffix);
+
+  if (namelen <= sufflen)
+    return 0;
+  return strcmp (name + namelen - sufflen, suffix) == 0;
+}
+
 static void
 clear_register_values ()
 {
@@ -8570,21 +8944,19 @@ note_register_values (idesc)
 	}
       /* In general, clear mutexes and implies which include P1 or P2,
 	 with the following exceptions.  */
-      else if (strstr (idesc->name, ".or.andcm") != NULL)
+      else if (has_suffix_p (idesc->name, ".or.andcm")
+	       || has_suffix_p (idesc->name, ".and.orcm"))
 	{
 	  add_qp_mutex (p1mask | p2mask);
 	  clear_qp_implies (p2mask, p1mask);
 	}
-      else if (strstr (idesc->name, ".and.orcm") != NULL)
-	{
-	  add_qp_mutex (p1mask | p2mask);
-	  clear_qp_implies (p1mask, p2mask);
-	}
-      else if (strstr (idesc->name, ".and") != NULL)
+      else if (has_suffix_p (idesc->name, ".andcm")
+	       || has_suffix_p (idesc->name, ".and"))
 	{
 	  clear_qp_implies (0, p1mask | p2mask);
 	}
-      else if (strstr (idesc->name, ".or") != NULL)
+      else if (has_suffix_p (idesc->name, ".orcm")
+	       || has_suffix_p (idesc->name, ".or"))
 	{
 	  clear_qp_mutex (p1mask | p2mask);
 	  clear_qp_implies (p1mask | p2mask, 0);
@@ -8592,7 +8964,7 @@ note_register_values (idesc)
       else
 	{
 	  clear_qp_implies (p1mask | p2mask, p1mask | p2mask);
-	  if (strstr (idesc->name, ".unc") != NULL)
+	  if (has_suffix_p (idesc->name, ".unc"))
 	    {
 	      add_qp_mutex (p1mask | p2mask);
 	      if (CURR_SLOT.qp_regno != 0)
@@ -9514,11 +9886,22 @@ md_operand (e)
 		  as_bad ("Not a symbolic expression");
 		  goto err;
 		}
-	      if (S_GET_VALUE (e->X_op_symbol) == FUNC_FPTR_RELATIVE
-		  && i == FUNC_LT_RELATIVE)
-		i = FUNC_LT_FPTR_RELATIVE;
-	      else
+	      if (i != FUNC_LT_RELATIVE)
 		{
+		  as_bad ("Illegal combination of relocation functions");
+		  goto err;
+		}
+	      switch (S_GET_VALUE (e->X_op_symbol))
+		{
+		case FUNC_FPTR_RELATIVE:
+		  i = FUNC_LT_FPTR_RELATIVE; break;
+		case FUNC_DTP_MODULE:
+		  i = FUNC_LT_DTP_MODULE; break;
+		case FUNC_DTP_RELATIVE:
+		  i = FUNC_LT_DTP_RELATIVE; break;
+		case FUNC_TP_RELATIVE:
+		  i = FUNC_LT_TP_RELATIVE; break;
+		default:
 		  as_bad ("Illegal combination of relocation functions");
 		  goto err;
 		}
@@ -9623,12 +10006,16 @@ ia64_force_relocation (fix)
     case BFD_RELOC_IA64_PLTOFF64I:
     case BFD_RELOC_IA64_PLTOFF64MSB:
     case BFD_RELOC_IA64_PLTOFF64LSB:
+
+    case BFD_RELOC_IA64_LTOFF22X:
+    case BFD_RELOC_IA64_LDXMOV:
       return 1;
 
     default:
-      return 0;
+      break;
     }
-  return 0;
+
+  return generic_force_reloc (fix);
 }
 
 /* Decide from what point a pc-relative relocation is relative to,
@@ -9644,6 +10031,20 @@ ia64_pcrel_from_section (fix, sec)
     off &= ~0xfUL;
 
   return off;
+}
+
+
+/* Used to emit section-relative relocs for the dwarf2 debug data.  */
+void
+ia64_dwarf2_emit_offset (symbolS *symbol, unsigned int size)
+{
+  expressionS expr;
+
+  expr.X_op = O_pseudo_fixup;
+  expr.X_op_symbol = pseudo_func[FUNC_SEC_RELATIVE].u.sym;
+  expr.X_add_number = 0;
+  expr.X_add_symbol = symbol;
+  emit_expr (&expr, size);
 }
 
 /* This is called whenever some data item (not an instruction) needs a
@@ -9674,27 +10075,59 @@ ia64_cons_fix_new (f, where, nbytes, exp)
       break;
 
     case 8:
-      if (target_big_endian)
-	code = BFD_RELOC_IA64_DIR64MSB;
+      /* In 32-bit mode, data8 could mean function descriptors too.  */
+      if (exp->X_op == O_pseudo_fixup
+	  && exp->X_op_symbol
+	  && S_GET_VALUE (exp->X_op_symbol) == FUNC_IPLT_RELOC
+	  && !(md.flags & EF_IA_64_ABI64))
+	{
+	  if (target_big_endian)
+	    code = BFD_RELOC_IA64_IPLTMSB;
+	  else
+	    code = BFD_RELOC_IA64_IPLTLSB;
+	  exp->X_op = O_symbol;
+	  break;
+	}
       else
-	code = BFD_RELOC_IA64_DIR64LSB;
-      break;
+	{
+	  if (target_big_endian)
+	    code = BFD_RELOC_IA64_DIR64MSB;
+	  else
+	    code = BFD_RELOC_IA64_DIR64LSB;
+	  break;
+	}
+
+    case 16:
+      if (exp->X_op == O_pseudo_fixup
+	  && exp->X_op_symbol
+	  && S_GET_VALUE (exp->X_op_symbol) == FUNC_IPLT_RELOC)
+	{
+	  if (target_big_endian)
+	    code = BFD_RELOC_IA64_IPLTMSB;
+	  else
+	    code = BFD_RELOC_IA64_IPLTLSB;
+	  exp->X_op = O_symbol;
+	  break;
+	}
+      /* FALLTHRU */
 
     default:
       as_bad ("Unsupported fixup size %d", nbytes);
       ignore_rest_of_line ();
       return;
     }
+
   if (exp->X_op == O_pseudo_fixup)
     {
-      /* ??? */
       exp->X_op = O_symbol;
       code = ia64_gen_real_reloc_type (exp->X_op_symbol, code);
+      /* ??? If code unchanged, unsupported.  */
     }
+
   fix = fix_new_exp (f, where, nbytes, exp, 0, code);
   /* We need to store the byte order in effect in case we're going
      to fix an 8 or 16 bit relocation (for which there no real
-     relocs available).  See md_apply_fix().  */
+     relocs available).  See md_apply_fix3().  */
   fix->tc_fix_data.bigendian = target_big_endian;
 }
 
@@ -9746,6 +10179,14 @@ ia64_gen_real_reloc_type (sym, r_type)
 	{
 	case BFD_RELOC_IA64_IMM22:	new = BFD_RELOC_IA64_LTOFF22; break;
 	case BFD_RELOC_IA64_IMM64:	new = BFD_RELOC_IA64_LTOFF64I; break;
+	default:			break;
+	}
+      break;
+
+    case FUNC_LT_RELATIVE_X:
+      switch (r_type)
+	{
+	case BFD_RELOC_IA64_IMM22:	new = BFD_RELOC_IA64_LTOFF22X; break;
 	default:			break;
 	}
       break;
@@ -9818,9 +10259,76 @@ ia64_gen_real_reloc_type (sym, r_type)
 	  break;
 	}
       break;
+
+    case FUNC_TP_RELATIVE:
+      switch (r_type)
+	{
+	case BFD_RELOC_IA64_IMM14:
+	  new = BFD_RELOC_IA64_TPREL14; break;
+	case BFD_RELOC_IA64_IMM22:
+	  new = BFD_RELOC_IA64_TPREL22; break;
+	case BFD_RELOC_IA64_IMM64:
+	  new = BFD_RELOC_IA64_TPREL64I; break;
+	default:
+	  break;
+	}
+      break;
+
+    case FUNC_LT_TP_RELATIVE:
+      switch (r_type)
+	{
+	case BFD_RELOC_IA64_IMM22:
+	  new = BFD_RELOC_IA64_LTOFF_TPREL22; break;
+	default:
+	  break;
+	}
+      break;
+
+    case FUNC_LT_DTP_MODULE:
+      switch (r_type)
+	{
+	case BFD_RELOC_IA64_IMM22:
+	  new = BFD_RELOC_IA64_LTOFF_DTPMOD22; break;
+	default:
+	  break;
+	}
+      break;
+
+    case FUNC_DTP_RELATIVE:
+      switch (r_type)
+	{
+	case BFD_RELOC_IA64_DIR64MSB:
+	  new = BFD_RELOC_IA64_DTPREL64MSB; break;
+	case BFD_RELOC_IA64_DIR64LSB:
+	  new = BFD_RELOC_IA64_DTPREL64LSB; break;
+	case BFD_RELOC_IA64_IMM14:
+	  new = BFD_RELOC_IA64_DTPREL14; break;
+	case BFD_RELOC_IA64_IMM22:
+	  new = BFD_RELOC_IA64_DTPREL22; break;
+	case BFD_RELOC_IA64_IMM64:
+	  new = BFD_RELOC_IA64_DTPREL64I; break;
+	default:
+	  break;
+	}
+      break;
+
+    case FUNC_LT_DTP_RELATIVE:
+      switch (r_type)
+	{
+	case BFD_RELOC_IA64_IMM22:
+	  new = BFD_RELOC_IA64_LTOFF_DTPREL22; break;
+	default:
+	  break;
+	}
+      break;
+
+    case FUNC_IPLT_RELOC:
+      break;
+
     default:
       abort ();
     }
+
   /* Hmmmm.  Should this ever occur?  */
   if (new)
     return new;
@@ -9916,15 +10424,15 @@ fix_insn (fix, odesc, value)
 
    If fixp->fx_addsy is non-NULL, we'll have to generate a reloc entry
    (if possible).  */
-int
-md_apply_fix3 (fix, valuep, seg)
+
+void
+md_apply_fix3 (fix, valP, seg)
      fixS *fix;
-     valueT *valuep;
+     valueT *valP;
      segT seg ATTRIBUTE_UNUSED;
 {
   char *fixpos;
-  valueT value = *valuep;
-  int adjust = 0;
+  valueT value = *valP;
 
   fixpos = fix->fx_frag->fr_literal + fix->fx_where;
 
@@ -9934,22 +10442,18 @@ md_apply_fix3 (fix, valuep, seg)
 	{
 	case BFD_RELOC_IA64_DIR32MSB:
 	  fix->fx_r_type = BFD_RELOC_IA64_PCREL32MSB;
-	  adjust = 1;
 	  break;
 
 	case BFD_RELOC_IA64_DIR32LSB:
 	  fix->fx_r_type = BFD_RELOC_IA64_PCREL32LSB;
-	  adjust = 1;
 	  break;
 
 	case BFD_RELOC_IA64_DIR64MSB:
 	  fix->fx_r_type = BFD_RELOC_IA64_PCREL64MSB;
-	  adjust = 1;
 	  break;
 
 	case BFD_RELOC_IA64_DIR64LSB:
 	  fix->fx_r_type = BFD_RELOC_IA64_PCREL64LSB;
-	  adjust = 1;
 	  break;
 
 	default:
@@ -9960,20 +10464,30 @@ md_apply_fix3 (fix, valuep, seg)
     {
       switch (fix->fx_r_type)
 	{
-	case 0:
+	case BFD_RELOC_UNUSED:
+	  /* This must be a TAG13 or TAG13b operand.  There are no external
+	     relocs defined for them, so we must give an error.  */
 	  as_bad_where (fix->fx_file, fix->fx_line,
 			"%s must have a constant value",
 			elf64_ia64_operands[fix->tc_fix_data.opnd].desc);
+	  fix->fx_done = 1;
+	  return;
+
+	case BFD_RELOC_IA64_TPREL14:
+	case BFD_RELOC_IA64_TPREL22:
+	case BFD_RELOC_IA64_TPREL64I:
+	case BFD_RELOC_IA64_LTOFF_TPREL22:
+	case BFD_RELOC_IA64_LTOFF_DTPMOD22:
+	case BFD_RELOC_IA64_DTPREL14:
+	case BFD_RELOC_IA64_DTPREL22:
+	case BFD_RELOC_IA64_DTPREL64I:
+	case BFD_RELOC_IA64_LTOFF_DTPREL22:
+	  S_SET_THREAD_LOCAL (fix->fx_addsy);
 	  break;
 
 	default:
 	  break;
 	}
-
-      /* ??? This is a hack copied from tc-i386.c to make PCREL relocs
-	 work.  There should be a better way to handle this.  */
-      if (adjust)
-	fix->fx_offset += fix->fx_where + fix->fx_frag->fr_address;
     }
   else if (fix->tc_fix_data.opnd == IA64_OPND_NIL)
     {
@@ -9982,15 +10496,12 @@ md_apply_fix3 (fix, valuep, seg)
       else
 	number_to_chars_littleendian (fixpos, value, fix->fx_size);
       fix->fx_done = 1;
-      return 1;
     }
   else
     {
       fix_insn (fix, elf64_ia64_operands + fix->tc_fix_data.opnd, value);
       fix->fx_done = 1;
-      return 1;
     }
-  return 1;
 }
 
 /* Generate the BFD reloc to be stuck in the object file from the

@@ -1,5 +1,5 @@
 /* BFD library support routines for the Pico Java architecture.
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Transmeta. sac@pobox.com
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -22,49 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-static boolean
-scan_mach (info, string)
-     const struct bfd_arch_info *info;
-     const char *string;
-{
-  if (strcasecmp (info->printable_name, string) == 0)
-    return true;
-  return false;
-}
-
-#if 0
-/* This routine is provided two arch_infos and returns whether
-   they'd be compatible */
-
-static const bfd_arch_info_type *
-compatible (a,b)
-     const bfd_arch_info_type *a;
-     const bfd_arch_info_type *b;
-{
-  if (a->arch != b->arch || a->mach != b->mach)
-   return NULL;
-  return a;
-}
-#endif
-
-static const bfd_arch_info_type arch_info_struct[] =
-{
-  {
-    32,				/* 32 bits in a word */
-    32,				/* 32 bits in an address */
-    8,				/* 8 bits in a byte */
-    bfd_arch_pj,
-    0,
-    "pj",			/* arch_name  */
-    "pj",			/* printable name */
-    1,
-    false,			/* not the default */
-    bfd_default_compatible,
-    scan_mach,
-    0,
-  },
-};
-
 const bfd_arch_info_type bfd_pj_arch =
 {
   32,				/* 32 bits in a word */
@@ -75,8 +32,8 @@ const bfd_arch_info_type bfd_pj_arch =
   "pj",				/* arch_name  */
   "pj",				/* printable name */
   1,
-  true,				/* the default machine */
+  TRUE,				/* the default machine */
   bfd_default_compatible,
-  scan_mach,
-  &arch_info_struct [0]
+  bfd_default_scan,
+  0
 };

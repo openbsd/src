@@ -1,5 +1,5 @@
 /* dwarf2dbg.c - DWARF2 debug support
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -41,9 +41,23 @@
 #endif
 #endif
 
+#include "dwarf2dbg.h"
+#include <filenames.h>
+
+#ifndef DWARF2_FORMAT
+# define DWARF2_FORMAT() dwarf2_format_32bit
+#endif
+
+#ifndef DWARF2_ADDR_SIZE
+# define DWARF2_ADDR_SIZE(bfd) (bfd_arch_bits_per_address (bfd) / 8);
+#endif
+
+#ifndef TC_DWARF2_EMIT_OFFSET
+# define TC_DWARF2_EMIT_OFFSET  generic_dwarf2_emit_offset
+#endif
+
 #ifdef BFD_ASSEMBLER
 
-#include "dwarf2dbg.h"
 #include "subsegs.h"
 
 #include "elf/dwarf2.h"
@@ -122,7 +136,7 @@ struct line_seg {
 static struct line_seg *all_segs;
 
 struct file_entry {
-  char *filename;
+  const char *filename;
   unsigned int dir;
 };
 
@@ -131,9 +145,14 @@ static struct file_entry *files;
 static unsigned int files_in_use;
 static unsigned int files_allocated;
 
-/* True when we've seen a .loc directive recently.  Used to avoid
+/* Table of directories used by .debug_line.  */
+static char **dirs;
+static unsigned int dirs_in_use;
+static unsigned int dirs_allocated;
+
+/* TRUE when we've seen a .loc directive recently.  Used to avoid
    doing work when there's nothing to do.  */
-static boolean loc_directive_seen;
+static bfd_boolean loc_directive_seen;
 
 /* Current location as indicated by the most recent .loc directive.  */
 static struct dwarf2_line_info current;
@@ -144,8 +163,9 @@ static char const fake_label_name[] = ".L0\001";
 /* The size of an address on the target.  */
 static unsigned int sizeof_address;
 
+static void generic_dwarf2_emit_offset PARAMS((symbolS *, unsigned int));
 static struct line_subseg *get_line_subseg PARAMS ((segT, subsegT));
-static unsigned int get_filenum PARAMS ((const char *));
+static unsigned int get_filenum PARAMS ((const char *, unsigned int));
 static struct frag *first_frag_for_seg PARAMS ((segT));
 static struct frag *last_frag_for_seg PARAMS ((segT));
 static void out_byte PARAMS ((int));
@@ -170,6 +190,21 @@ static void out_debug_aranges PARAMS ((segT, segT));
 static void out_debug_abbrev PARAMS ((segT));
 static void out_debug_info PARAMS ((segT, segT, segT));
 
+/* Create an offset to .dwarf2_*.  */
+
+static void
+generic_dwarf2_emit_offset (symbol, size)
+     symbolS *symbol;
+     unsigned int size;
+{
+  expressionS expr;
+
+  expr.X_op = O_symbol;
+  expr.X_add_symbol = symbol;
+  expr.X_add_number = 0;
+  emit_expr (&expr, size);
+}
+
 /* Find or create an entry for SEG+SUBSEG in ALL_SEGS.  */
 
 static struct line_subseg *
@@ -230,10 +265,23 @@ dwarf2_gen_line_info (ofs, loc)
 {
   struct line_subseg *ss;
   struct line_entry *e;
+  static unsigned int line = -1;
+  static unsigned int filenum = -1;
 
   /* Early out for as-yet incomplete location information.  */
   if (loc->filenum == 0 || loc->line == 0)
     return;
+
+  /* Don't emit sequences of line symbols for the same line when the
+     symbols apply to assembler code.  It is necessary to emit
+     duplicate line symbols when a compiler asks for them, because GDB
+     uses them to determine the end of the prologue.  */
+  if (debug_type == DEBUG_DWARF2
+      && line == loc->line && filenum == loc->filenum)
+    return;
+
+  line = loc->line;
+  filenum = loc->filenum;
 
   e = (struct line_entry *) xmalloc (sizeof (*e));
   e->next = NULL;
@@ -254,7 +302,7 @@ dwarf2_where (line)
     {
       char *filename;
       as_where (&filename, &line->line);
-      line->filenum = get_filenum (filename);
+      line->filenum = get_filenum (filename, 0);
       line->column = 0;
       line->flags = DWARF2_FLAG_BEGIN_STMT;
     }
@@ -273,30 +321,106 @@ dwarf2_emit_insn (size)
 {
   struct dwarf2_line_info loc;
 
-  if (debug_type != DEBUG_DWARF2 && ! loc_directive_seen)
-    return;
-  loc_directive_seen = false;
+  if (loc_directive_seen)
+    {
+      /* Use the last location established by a .loc directive, not
+	 the value returned by dwarf2_where().  That calls as_where()
+	 which will return either the logical input file name (foo.c)
+	or the physical input file name (foo.s) and not the file name
+	specified in the most recent .loc directive (eg foo.h).  */
+      loc = current;
 
-  dwarf2_where (&loc);
+      /* Unless we generate DWARF2 debugging information for each
+	 assembler line, we only emit one line symbol for one LOC.  */
+      if (debug_type != DEBUG_DWARF2)
+	loc_directive_seen = FALSE;
+    }
+  else if (debug_type != DEBUG_DWARF2)
+    return;
+  else
+    dwarf2_where (& loc);
+
   dwarf2_gen_line_info (frag_now_fix () - size, &loc);
 }
 
-/* Get a .debug_line file number for FILENAME.  */
+/* Get a .debug_line file number for FILENAME.  If NUM is nonzero,
+   allocate it on that file table slot, otherwise return the first
+   empty one.  */
 
 static unsigned int
-get_filenum (filename)
+get_filenum (filename, num)
      const char *filename;
+     unsigned int num;
 {
-  static unsigned int last_used;
-  unsigned int i;
+  static unsigned int last_used, last_used_dir_len;
+  const char *file;
+  size_t dir_len;
+  unsigned int i, dir;
 
-  if (last_used)
-    if (strcmp (filename, files[last_used].filename) == 0)
-      return last_used;
+  if (num == 0 && last_used)
+    {
+      if (! files[last_used].dir
+	  && strcmp (filename, files[last_used].filename) == 0)
+	return last_used;
+      if (files[last_used].dir
+	  && strncmp (filename, dirs[files[last_used].dir],
+		      last_used_dir_len) == 0
+	  && IS_DIR_SEPARATOR (filename [last_used_dir_len])
+	  && strcmp (filename + last_used_dir_len + 1,
+		     files[last_used].filename) == 0)
+	return last_used;
+    }
 
-  for (i = 1; i < files_in_use; ++i)
-    if (strcmp (filename, files[i].filename) == 0)
-      return i;
+  file = lbasename (filename);
+  /* Don't make empty string from / or A: from A:/ .  */
+#ifdef HAVE_DOS_BASED_FILE_SYSTEM
+  if (file <= filename + 3)
+    file = filename;
+#else
+  if (file == filename + 1)
+    file = filename;
+#endif
+  dir_len = file - filename;
+
+  dir = 0;
+  if (dir_len)
+    {
+      --dir_len;
+      for (dir = 1; dir < dirs_in_use; ++dir)
+	if (memcmp (filename, dirs[dir], dir_len) == 0
+	    && dirs[dir][dir_len] == '\0')
+	  break;
+
+      if (dir >= dirs_in_use)
+	{
+	  if (dir >= dirs_allocated)
+	    {
+	      dirs_allocated = dir + 32;
+	      dirs = (char **)
+		     xrealloc (dirs, (dir + 32) * sizeof (const char *));
+	    }
+
+	  dirs[dir] = xmalloc (dir_len + 1);
+	  memcpy (dirs[dir], filename, dir_len);
+	  dirs[dir][dir_len] = '\0';
+	  dirs_in_use = dir + 1;
+	}
+    }
+
+  if (num == 0)
+    {
+      for (i = 1; i < files_in_use; ++i)
+	if (files[i].dir == dir
+	    && files[i].filename
+	    && strcmp (file, files[i].filename) == 0)
+	  {
+	    last_used = i;
+	    last_used_dir_len = dir_len;
+	    return i;
+	  }
+    }
+  else
+    i = num;
 
   if (i >= files_allocated)
     {
@@ -309,17 +433,22 @@ get_filenum (filename)
       memset (files + old, 0, (i + 32 - old) * sizeof (struct file_entry));
     }
 
-  files[i].filename = xstrdup (filename);
-  files[i].dir = 0;
+  files[i].filename = num ? file : xstrdup (file);
+  files[i].dir = dir;
   files_in_use = i + 1;
   last_used = i;
+  last_used_dir_len = dir_len;
 
   return i;
 }
 
-/* Handle the .file directive.  */
+/* Handle two forms of .file directive:
+   - Pass .file "source.c" to s_app_file
+   - Handle .file 1 "source.c" by adding an entry to the DWARF-2 file table
 
-void
+   If an entry is added to the file table, return a pointer to the filename. */
+
+char *
 dwarf2_directive_file (dummy)
      int dummy ATTRIBUTE_UNUSED;
 {
@@ -332,7 +461,7 @@ dwarf2_directive_file (dummy)
   if (*input_line_pointer == '"')
     {
       s_app_file (0);
-      return;
+      return NULL;
     }
 
   num = get_absolute_expression ();
@@ -341,31 +470,19 @@ dwarf2_directive_file (dummy)
 
   if (num < 1)
     {
-      as_bad (_("File number less than one"));
-      return;
+      as_bad (_("file number less than one"));
+      return NULL;
     }
 
-  if (num < files_in_use && files[num].filename != 0)
+  if (num < (int) files_in_use && files[num].filename != 0)
     {
-      as_bad (_("File number %ld already allocated"), (long) num);
-      return;
+      as_bad (_("file number %ld already allocated"), (long) num);
+      return NULL;
     }
 
-  if (num >= (int) files_allocated)
-    {
-      unsigned int old = files_allocated;
+  get_filenum (filename, num);
 
-      files_allocated = num + 16;
-      files = (struct file_entry *)
-	xrealloc (files, (num + 16) * sizeof (struct file_entry));
-
-      /* Zero the new memory.  */
-      memset (files + old, 0, (num + 16 - old) * sizeof (struct file_entry));
-    }
-
-  files[num].filename = filename;
-  files[num].dir = 0;
-  files_in_use = num + 1;
+  return filename;
 }
 
 void
@@ -383,12 +500,12 @@ dwarf2_directive_loc (dummy)
 
   if (filenum < 1)
     {
-      as_bad (_("File number less than one"));
+      as_bad (_("file number less than one"));
       return;
     }
   if (filenum >= (int) files_in_use || files[filenum].filename == 0)
     {
-      as_bad (_("Unassigned file number %ld"), (long) filenum);
+      as_bad (_("unassigned file number %ld"), (long) filenum);
       return;
     }
 
@@ -397,11 +514,27 @@ dwarf2_directive_loc (dummy)
   current.column = column;
   current.flags = DWARF2_FLAG_BEGIN_STMT;
 
-  loc_directive_seen = true;
+  loc_directive_seen = TRUE;
 
 #ifndef NO_LISTING
   if (listing)
-    listing_source_line (line);
+    {
+      if (files[filenum].dir)
+	{
+	  size_t dir_len = strlen (dirs[files[filenum].dir]);
+	  size_t file_len = strlen (files[filenum].filename);
+	  char *cp = (char *) alloca (dir_len + 1 + file_len + 1);
+
+	  memcpy (cp, dirs[files[filenum].dir], dir_len);
+	  cp[dir_len] = '/';
+	  memcpy (cp + dir_len + 1, files[filenum].filename, file_len);
+	  cp[dir_len + file_len + 1] = '\0';
+	  listing_source_file (cp);
+	}
+      else
+	listing_source_file (files[filenum].filename);
+      listing_source_line (line);
+    }
 #endif
 }
 
@@ -524,8 +657,9 @@ get_frag_fix (frag)
   for (fr = frchain_root; fr; fr = fr->frch_next)
     if (fr->frch_last == frag)
       {
-	return ((char *) obstack_next_free (&fr->frch_obstack)
-		- frag->fr_literal);
+	long align_mask = -1 << get_recorded_alignment (fr->frch_seg);
+	return (((char *) obstack_next_free (&fr->frch_obstack)
+		 - frag->fr_literal) + ~align_mask) & align_mask;
       }
 
   abort ();
@@ -554,6 +688,26 @@ out_set_addr (seg, frag, ofs)
   emit_expr (&expr, sizeof_address);
 }
 
+#if DWARF2_LINE_MIN_INSN_LENGTH > 1
+static void scale_addr_delta PARAMS ((addressT *));
+
+static void
+scale_addr_delta (addr_delta)
+     addressT *addr_delta;
+{
+  static int printed_this = 0;
+  if (*addr_delta % DWARF2_LINE_MIN_INSN_LENGTH != 0)
+    {
+      if (!printed_this)
+	as_bad("unaligned opcodes detected in executable segment");
+      printed_this = 1;
+    }
+  *addr_delta /= DWARF2_LINE_MIN_INSN_LENGTH;
+}
+#else
+#define scale_addr_delta(A)
+#endif
+
 /* Encode a pair of line and address skips as efficiently as possible.
    Note that the line skip is signed, whereas the address skip is unsigned.
 
@@ -570,10 +724,7 @@ size_inc_line_addr (line_delta, addr_delta)
   int len = 0;
 
   /* Scale the address delta by the minimum instruction length.  */
-#if DWARF2_LINE_MIN_INSN_LENGTH > 1
-  assert (addr_delta % DWARF2_LINE_MIN_INSN_LENGTH == 0);
-  addr_delta /= DWARF2_LINE_MIN_INSN_LENGTH;
-#endif
+  scale_addr_delta (&addr_delta);
 
   /* INT_MAX is a signal that this is actually a DW_LNE_end_sequence.
      We cannot use special opcodes here, since we want the end_sequence
@@ -636,11 +787,9 @@ emit_inc_line_addr (line_delta, addr_delta, p, len)
   int need_copy = 0;
   char *end = p + len;
 
-#if DWARF2_LINE_MIN_INSN_LENGTH > 1
   /* Scale the address delta by the minimum instruction length.  */
-  assert (addr_delta % DWARF2_LINE_MIN_INSN_LENGTH == 0);
-  addr_delta /= DWARF2_LINE_MIN_INSN_LENGTH;
-#endif
+  scale_addr_delta (&addr_delta);
+
   /* INT_MAX is a signal that this is actually a DW_LNE_end_sequence.
      We cannot use special opcodes here, since we want the end_sequence
      to emit the matrix entry.  */
@@ -772,7 +921,7 @@ dwarf2dbg_estimate_size_before_relax (frag)
   offsetT addr_delta;
   int size;
 
-  addr_delta = resolve_symbol_value (frag->fr_symbol, 0);
+  addr_delta = resolve_symbol_value (frag->fr_symbol);
   size = size_inc_line_addr (frag->fr_offset, addr_delta);
 
   frag->fr_subtype = size;
@@ -806,7 +955,7 @@ dwarf2dbg_convert_frag (frag)
 {
   offsetT addr_diff;
 
-  addr_diff = resolve_symbol_value (frag->fr_symbol, 1);
+  addr_diff = resolve_symbol_value (frag->fr_symbol);
 
   /* fr_var carries the max_chars that we created the fragment with.
      fr_subtype carries the current expected length.  We must, of
@@ -926,14 +1075,23 @@ out_file_list ()
   char *cp;
   unsigned int i;
 
-  /* Terminate directory list.  */
+  /* Emit directory list.  */
+  for (i = 1; i < dirs_in_use; ++i)
+    {
+      size = strlen (dirs[i]) + 1;
+      cp = frag_more (size);
+      memcpy (cp, dirs[i], size);
+    }
+  /* Terminate it.  */
   out_byte ('\0');
 
   for (i = 1; i < files_in_use; ++i)
     {
       if (files[i].filename == NULL)
 	{
-	  as_bad (_("Unassigned file number %u"), i);
+	  as_bad (_("unassigned file number %ld"), (long) i);
+	  /* Prevent a crash later, particularly for file 1.  */
+	  files[i].filename = "";
 	  continue;
 	}
 
@@ -961,6 +1119,8 @@ out_debug_line (line_seg)
   symbolS *prologue_end;
   symbolS *line_end;
   struct line_seg *s;
+  enum dwarf2_format d2f;
+  int sizeof_offset;
 
   subseg_set (line_seg, 0);
 
@@ -972,8 +1132,31 @@ out_debug_line (line_seg)
   expr.X_op = O_subtract;
   expr.X_add_symbol = line_end;
   expr.X_op_symbol = line_start;
-  expr.X_add_number = -4;
-  emit_expr (&expr, 4);
+
+  d2f = DWARF2_FORMAT ();
+  if (d2f == dwarf2_format_32bit)
+    {
+      expr.X_add_number = -4;
+      emit_expr (&expr, 4);
+      sizeof_offset = 4;
+    }
+  else if (d2f == dwarf2_format_64bit)
+    {
+      expr.X_add_number = -12;
+      out_four (-1);
+      emit_expr (&expr, 8);
+      sizeof_offset = 8;
+    }
+  else if (d2f == dwarf2_format_64bit_irix)
+    {
+      expr.X_add_number = -8;
+      emit_expr (&expr, 8);
+      sizeof_offset = 8;
+    }
+  else
+    {
+      as_fatal (_("internal error: unknown dwarf2 format"));
+    }
 
   /* Version.  */
   out_two (2);
@@ -983,7 +1166,7 @@ out_debug_line (line_seg)
   expr.X_add_symbol = prologue_end;
   expr.X_op_symbol = line_start;
   expr.X_add_number = - (4 + 2 + 4);
-  emit_expr (&expr, 4);
+  emit_expr (&expr, sizeof_offset);
 
   /* Parameters of the state machine.  */
   out_byte (DWARF2_LINE_MIN_INSN_LENGTH);
@@ -1048,10 +1231,8 @@ out_debug_aranges (aranges_seg, info_seg)
   out_two (2);
 
   /* Offset to .debug_info.  */
-  expr.X_op = O_symbol;
-  expr.X_add_symbol = section_symbol (info_seg);
-  expr.X_add_number = 0;
-  emit_expr (&expr, 4);
+  /* ??? sizeof_offset */
+  TC_DWARF2_EMIT_OFFSET (section_symbol (info_seg), 4);
 
   /* Size of an address (offset portion).  */
   out_byte (addr_size);
@@ -1111,6 +1292,7 @@ out_debug_abbrev (abbrev_seg)
       out_abbrev (DW_AT_low_pc, DW_FORM_addr);
       out_abbrev (DW_AT_high_pc, DW_FORM_addr);
     }
+  out_abbrev (DW_AT_name, DW_FORM_string);
   out_abbrev (DW_AT_comp_dir, DW_FORM_string);
   out_abbrev (DW_AT_producer, DW_FORM_string);
   out_abbrev (DW_AT_language, DW_FORM_data2);
@@ -1135,6 +1317,8 @@ out_debug_info (info_seg, abbrev_seg, line_seg)
   symbolS *info_end;
   char *p;
   int len;
+  enum dwarf2_format d2f;
+  int sizeof_offset;
 
   subseg_set (info_seg, 0);
 
@@ -1145,17 +1329,37 @@ out_debug_info (info_seg, abbrev_seg, line_seg)
   expr.X_op = O_subtract;
   expr.X_add_symbol = info_end;
   expr.X_op_symbol = info_start;
-  expr.X_add_number = -4;
-  emit_expr (&expr, 4);
+
+  d2f = DWARF2_FORMAT ();
+  if (d2f == dwarf2_format_32bit)
+    {
+      expr.X_add_number = -4;
+      emit_expr (&expr, 4);
+      sizeof_offset = 4;
+    }
+  else if (d2f == dwarf2_format_64bit)
+    {
+      expr.X_add_number = -12;
+      out_four (-1);
+      emit_expr (&expr, 8);
+      sizeof_offset = 8;
+    }
+  else if (d2f == dwarf2_format_64bit_irix)
+    {
+      expr.X_add_number = -8;
+      emit_expr (&expr, 8);
+      sizeof_offset = 8;
+    }
+  else
+    {
+      as_fatal (_("internal error: unknown dwarf2 format"));
+    }
 
   /* DWARF version.  */
   out_two (2);
 
   /* .debug_abbrev offset */
-  expr.X_op = O_symbol;
-  expr.X_add_symbol = section_symbol (abbrev_seg);
-  expr.X_add_number = 0;
-  emit_expr (&expr, 4);
+  TC_DWARF2_EMIT_OFFSET (section_symbol (abbrev_seg), sizeof_offset);
 
   /* Target address size.  */
   out_byte (sizeof_address);
@@ -1164,10 +1368,8 @@ out_debug_info (info_seg, abbrev_seg, line_seg)
   out_uleb128 (1);
 
   /* DW_AT_stmt_list */
-  expr.X_op = O_symbol;
-  expr.X_add_symbol = section_symbol (line_seg);
-  expr.X_add_number = 0;
-  emit_expr (&expr, 4);
+  /* ??? sizeof_offset */
+  TC_DWARF2_EMIT_OFFSET (section_symbol (line_seg), 4);
 
   /* These two attributes may only be emitted if all of the code is
      contiguous.  Multiple sections are not that.  */
@@ -1185,6 +1387,23 @@ out_debug_info (info_seg, abbrev_seg, line_seg)
       expr.X_add_number = 0;
       emit_expr (&expr, sizeof_address);
     }
+
+  /* DW_AT_name.  We don't have the actual file name that was present
+     on the command line, so assume files[1] is the main input file.
+     We're not supposed to get called unless at least one line number
+     entry was emitted, so this should always be defined.  */
+  if (!files || files_in_use < 1)
+    abort ();
+  if (files[1].dir)
+    {
+      len = strlen (dirs[files[1].dir]);
+      p = frag_more (len + 1);
+      memcpy (p, dirs[files[1].dir], len);
+      p[len] = '/';
+    }
+  len = strlen (files[1].filename) + 1;
+  p = frag_more (len);
+  memcpy (p, files[1].filename, len);
 
   /* DW_AT_comp_dir */
   comp_dir = getpwd ();
@@ -1211,12 +1430,19 @@ dwarf2_finish ()
   segT line_seg;
   struct line_seg *s;
 
-  /* If no debug information was recorded, nothing to do.  */
-  if (all_segs == NULL)
+  /* We don't need to do anything unless:
+     - Some debug information was recorded via .file/.loc
+     - or, we are generating DWARF2 information ourself (--gdwarf2)
+     - or, there is a user-provided .debug_info section which could
+       reference the file table in the .debug_line section we generate
+       below.  */
+  if (all_segs == NULL
+      && debug_type != DEBUG_DWARF2
+      && bfd_get_section_by_name (stdoutput, ".debug_info") == NULL)
     return;
 
   /* Calculate the size of an address for the target machine.  */
-  sizeof_address = bfd_arch_bits_per_address (stdoutput) / 8;
+  sizeof_address = DWARF2_ADDR_SIZE (stdoutput);
 
   /* Create and switch to the line number section.  */
   line_seg = subseg_new (".debug_line", 0);
@@ -1239,7 +1465,7 @@ dwarf2_finish ()
 
   /* If this is assembler generated line info, we need .debug_info
      and .debug_abbrev sections as well.  */
-  if (debug_type == DEBUG_DWARF2)
+  if (all_segs != NULL && debug_type == DEBUG_DWARF2)
     {
       segT abbrev_seg;
       segT info_seg;
@@ -1296,11 +1522,12 @@ dwarf2_emit_insn (size)
 {
 }
 
-void
+char *
 dwarf2_directive_file (dummy)
      int dummy ATTRIBUTE_UNUSED;
 {
   s_app_file (0);
+  return NULL;
 }
 
 void

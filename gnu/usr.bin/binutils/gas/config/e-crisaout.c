@@ -1,6 +1,8 @@
 #include "as.h"
 #include "emul.h"
 
+static const char *crisaout_bfd_name PARAMS ((void));
+
 static const char *
 crisaout_bfd_name ()
 {

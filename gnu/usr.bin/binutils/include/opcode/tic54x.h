@@ -19,8 +19,8 @@ along with this file; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-#ifndef _TIC54X_H_
-#define _TIC54X_H_
+#ifndef _opcode_tic54x_h_
+#define _opcode_tic54x_h_
 
 typedef struct _symbol
 {
@@ -86,7 +86,6 @@ typedef struct _template
 {
   /* The opcode mnemonic */
   const char *name;
-
   unsigned int words; /* insn size in words */
   int minops, maxops; /* min/max operand count */
   /* The significant bits in the opcode.  Other bits are zero. 
@@ -141,27 +140,24 @@ typedef struct _template
 #define FL_NR       0x100 /* no repeat allowed */
 #define FL_SMR      0x200 /* Smem read (for flagging write-only *+ARx */
 
+#define FL_PAR      0x400 /* Parallel instruction. */
+
   unsigned short opcode2, mask2;   /* some insns have an extended opcode */
+
+  const char* parname;
+  enum optype paroperand_types[MAX_OPERANDS];
 
 } template;
 
-typedef struct _partemplate {
-  char *name;
-  char *parname;
-  unsigned int words; /* length in words */
-  int minops, maxops; /* min/max operand count for 2nd part of insn */
-  unsigned short opcode;
-  unsigned short mask;
-  enum optype operand_types[MAX_OPERANDS];
-  enum optype paroperand_types[MAX_OPERANDS];
-} partemplate;
-
 extern const template tic54x_unknown_opcode;
 extern const template tic54x_optab[];
-extern const partemplate tic54x_paroptab[];
+extern const template tic54x_paroptab[];
 extern const symbol mmregs[], regs[];
 extern const symbol condition_codes[], cc2_codes[], status_bits[];
 extern const symbol cc3_codes[];
 extern const char *misc_symbols[];
+struct disassemble_info;
+extern const template* tic54x_get_insn (struct disassemble_info *, 
+                                        bfd_vma, unsigned short, int *);
 
-#endif /* TIC54X_H */
+#endif /* _opcode_tic54x_h_ */

@@ -1,6 +1,6 @@
 /* m68hc11.h -- Header file for Motorola 68HC11 & 68HC12 opcode table
-   Copyright 1999, 2000 Free Software Foundation, Inc.
-   Written by Stephane Carrez (stcarrez@worldnet.fr)
+   Copyright 1999, 2000, 2002, 2003 Free Software Foundation, Inc.
+   Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
 
@@ -191,7 +191,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 /* Flags of the SPSR register.  */
 #define M6811_SPIF	0x80	/* SPI Transfer Complete flag */
 #define M6811_WCOL	0x40	/* Write Collision */
-#define M6811_MODF	0x20	/* Mode Fault */
+#define M6811_MODF	0x10	/* Mode Fault */
 
 /* Flags of the ADCTL register.  */
 #define M6811_CCF	0x80	/* Conversions Complete Flag */
@@ -212,8 +212,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 /* Flags of the OC1M register.  */
 #define M6811_OC1M7	0x80	/* Output Compare 7 */
 #define M6811_OC1M6	0x40	/*                6 */
-#define M6811_OC1M5	0x40	/*                5 */
-#define M6811_OC1M4	0x40	/*                4 */
+#define M6811_OC1M5	0x20	/*                5 */
+#define M6811_OC1M4	0x10	/*                4 */
 #define M6811_OC1M3	0x08	/*                3 */
 
 /* Flags of the OC1D register.  */
@@ -341,7 +341,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define M6812_OP_IDX_2        0x0800   /* N,r N:16-bits */
 #define M6812_OP_D_IDX        0x1000   /* Indirect indexed: [D,r] */
 #define M6812_OP_D_IDX_2      0x2000   /* [N,r] N:16-bits */
-#define M6811_OP_MASK         0x0FFFF
+#define M6812_OP_PAGE         0x4000   /* Page number */
+#define M6811_OP_MASK         0x07FFF
+#define M6811_OP_BRANCH       0x00008000 /* Branch, jsr, call */
 #define M6811_OP_BITMASK      0x00010000 /* Bitmask:             #<val-8>    */
 #define M6811_OP_JUMP_REL     0x00020000 /* Pc-Relative:         <val-8>     */
 #define M6812_OP_JUMP_REL16   0x00040000 /* Pc-relative:         <val-16>    */
@@ -376,9 +378,17 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define M6811_OP_HIGH_ADDR    0x01000000 /* Used internally by gas.  */
 #define M6811_OP_LOW_ADDR     0x02000000
 
+#define M68HC12_BANK_VIRT 0x010000
+#define M68HC12_BANK_MASK 0x00003fff
+#define M68HC12_BANK_BASE 0x00008000
+#define M68HC12_BANK_SHIFT 14
+#define M68HC12_BANK_PAGE_MASK 0x0ff
+
+
 /* CPU identification.  */
 #define cpu6811 0x01
 #define cpu6812 0x02
+#define cpu6812s 0x04
 
 /* The opcode table is an array of struct m68hc11_opcode.  */
 struct m68hc11_opcode {
@@ -415,4 +425,3 @@ extern const struct m68hc12_opcode_alias m68hc12_alias[];
 extern const int m68hc12_num_alias;
 
 #endif /* _OPCODE_M68HC11_H */
-

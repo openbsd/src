@@ -1,5 +1,5 @@
 /* Disassembler code for CRIS.
-   Copyright 2000 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Axis Communications AB, Lund, Sweden.
    Written by Hans-Peter Nilsson.
 
@@ -7,7 +7,7 @@ This file is part of the GNU binutils and GDB, the GNU debugger.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
+Software Foundation; either version 2, or (at your option)
 any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
@@ -77,26 +77,34 @@ static long no_of_case_offsets = 0;
 /* Candidate for next case_offset.  */
 static long last_immediate = 0;
 
-static int number_of_bits PARAMS ((unsigned int));
-static char *format_hex PARAMS ((unsigned long, char *));
-static char *format_dec PARAMS ((long, char *, int));
-static char *format_reg PARAMS ((int, char *, boolean));
-static int cris_constraint PARAMS ((const char *, unsigned int,
-				    unsigned int));
-static unsigned bytes_to_skip PARAMS ((unsigned int,
-				       const struct cris_opcode *));
-static char *print_flags PARAMS ((unsigned int, char *));
+static int number_of_bits
+  PARAMS ((unsigned int));
+static char *format_hex
+  PARAMS ((unsigned long, char *));
+static char *format_dec
+  PARAMS ((long, char *, int));
+static char *format_reg
+  PARAMS ((int, char *, bfd_boolean));
+static int cris_constraint
+  PARAMS ((const char *, unsigned int, unsigned int));
+static unsigned bytes_to_skip
+  PARAMS ((unsigned int, const struct cris_opcode *));
+static char *print_flags
+  PARAMS ((unsigned int, char *));
 static void print_with_operands
   PARAMS ((const struct cris_opcode *, unsigned int, unsigned char *,
 	   bfd_vma, disassemble_info *, const struct cris_opcode *,
-	   unsigned int, unsigned char *, boolean));
-static const struct cris_spec_reg *spec_reg_info PARAMS ((unsigned int));
+	   unsigned int, unsigned char *, bfd_boolean));
+static const struct cris_spec_reg *spec_reg_info
+  PARAMS ((unsigned int));
 static int print_insn_cris_generic
-  PARAMS ((bfd_vma, disassemble_info *, boolean));
+  PARAMS ((bfd_vma, disassemble_info *, bfd_boolean));
 static int print_insn_cris_with_register_prefix
   PARAMS ((bfd_vma, disassemble_info *));
 static int print_insn_cris_without_register_prefix
   PARAMS ((bfd_vma, disassemble_info *));
+static const struct cris_opcode *get_opcode_entry
+  PARAMS ((unsigned int, unsigned int));
 
 /* Return the descriptor of a special register.
    FIXME: Depend on a CPU-version specific argument when all machinery
@@ -124,7 +132,7 @@ number_of_bits (val)
 {
   int bits;
 
-  for (bits = 0; val != 0; val &= val-1)
+  for (bits = 0; val != 0; val &= val - 1)
     bits++;
 
   return bits;
@@ -332,7 +340,7 @@ static char *
 format_reg (regno, outbuffer_start, with_reg_prefix)
      int regno;
      char *outbuffer_start;
-     boolean with_reg_prefix;
+     bfd_boolean with_reg_prefix;
 {
   char *outbuffer = outbuffer_start;
 
@@ -372,7 +380,7 @@ cris_constraint (cs, insn, prefix_insn)
   int prefix_ok = 0;
 
   const char *s;
-  for (s  = cs; *s; s++)
+  for (s = cs; *s; s++)
     switch (*s)
       {
       case '!':
@@ -591,7 +599,7 @@ print_with_operands (opcodep, insn, buffer, addr, info, prefix_opcodep,
      const struct cris_opcode *prefix_opcodep;
      unsigned int prefix_insn;
      unsigned char *prefix_buffer;
-     boolean with_reg_prefix;
+     bfd_boolean with_reg_prefix;
 {
   /* Get a buffer of somewhat reasonable size where we store
      intermediate parts of the insn.  */
@@ -1184,7 +1192,7 @@ static int
 print_insn_cris_generic (memaddr, info, with_reg_prefix)
      bfd_vma memaddr;
      disassemble_info *info;
-     boolean with_reg_prefix;
+     bfd_boolean with_reg_prefix;
 {
   int nbytes;
   unsigned int insn;
@@ -1195,7 +1203,7 @@ print_insn_cris_generic (memaddr, info, with_reg_prefix)
      bytes; stacked prefixes will not be expanded.  */
   unsigned char buffer[MAX_BYTES_PER_CRIS_INSN];
   unsigned char *bufp;
-  int status;
+  int status = 0;
   bfd_vma addr;
 
   /* There will be an "out of range" error after the last instruction.
@@ -1367,7 +1375,7 @@ print_insn_cris_with_register_prefix (vma, info)
      bfd_vma vma;
      disassemble_info *info;
 {
-  return print_insn_cris_generic (vma, info, true);
+  return print_insn_cris_generic (vma, info, TRUE);
 }
 
 /* Disassemble, no prefixes on register names.  */
@@ -1377,7 +1385,7 @@ print_insn_cris_without_register_prefix (vma, info)
      bfd_vma vma;
      disassemble_info *info;
 {
-  return print_insn_cris_generic (vma, info, false);
+  return print_insn_cris_generic (vma, info, FALSE);
 }
 
 /* Return a disassembler-function that prints registers with a `$' prefix,

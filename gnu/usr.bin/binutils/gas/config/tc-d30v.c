@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,8 +19,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/d30v.h"
 
@@ -246,38 +246,37 @@ check_range (num, bits, flags)
   if (bits == 32)
     {
       if (sizeof (unsigned long) * CHAR_BIT == 32)
-        return 0;
+	return 0;
 
       /* We don't record signed or unsigned for 32-bit quantities.
 	 Allow either.  */
       min = -((unsigned long) 1 << (bits - 1));
       max = ((unsigned long) 1 << bits) - 1;
-      return (long)num < min || (long)num > max;
+      return (long) num < min || (long) num > max;
     }
 
   if (flags & OPERAND_SHIFT)
     {
       /* We know that all shifts are right by three bits.  */
+      num >>= 3;
 
       if (flags & OPERAND_SIGNED)
-	num = (unsigned long) ((long) num >= 0)
-		? (((long) num) >> 3)
-		: ((num >> 3) | ~(~(unsigned long) 0 >> 3));
-      else
-	num >>= 3;
+	{
+	  unsigned long sign_bit = ((unsigned long) -1L >> 4) + 1;
+	  num = (num ^ sign_bit) - sign_bit;
+	}
     }
 
   if (flags & OPERAND_SIGNED)
     {
       max = ((unsigned long) 1 << (bits - 1)) - 1;
       min = - ((unsigned long) 1 << (bits - 1));
-      return (long)num > max || (long)num < min;
+      return (long) num > max || (long) num < min;
     }
   else
     {
       max = ((unsigned long) 1 << bits) - 1;
-      min = 0;
-      return num > max || num < min;
+      return num > (unsigned long) max;
     }
 }
 
@@ -296,7 +295,7 @@ md_show_usage (stream)
 int
 md_parse_option (c, arg)
      int c;
-     char *arg;
+     char *arg ATTRIBUTE_UNUSED;
 {
   switch (c)
     {
@@ -332,7 +331,7 @@ md_parse_option (c, arg)
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -382,9 +381,9 @@ md_atof (type, litP, sizeP)
 
 void
 md_convert_frag (abfd, sec, fragP)
-     bfd *abfd;
-     asection *sec;
-     fragS *fragP;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     asection *sec ATTRIBUTE_UNUSED;
+     fragS *fragP ATTRIBUTE_UNUSED;
 {
   abort ();
 }
@@ -653,7 +652,7 @@ build_insn (opcode, opers)
 
       /* Truncate to the proper number of bits.  */
       if ((opers[i].X_op == O_constant) && check_range (number, bits, flags))
-	as_bad (_("operand out of range: %d"), number);
+	as_bad (_("operand out of range: %ld"), number);
       if (bits < 31)
 	number &= 0x7FFFFFFF >> (31 - bits);
       if (flags & OPERAND_SHIFT)
@@ -677,7 +676,7 @@ build_insn (opcode, opers)
 
 static void
 write_long (opcode, insn, fx)
-     struct d30v_insn *opcode;
+     struct d30v_insn *opcode ATTRIBUTE_UNUSED;
      long long insn;
      Fixups *fx;
 {
@@ -793,7 +792,7 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
 	 we are not optimizing, then we have been asked to produce
 	 an error about such constructs.  For the purposes of this
 	 test, subroutine calls are considered to be branches.  */
-      write_1_short (opcode1, insn1, fx->next, false);
+      write_1_short (opcode1, insn1, fx->next, FALSE);
       return 1;
     }
 
@@ -833,14 +832,14 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
 	  /* We must treat repeat instructions likewise, since the
 	     following instruction has to be separate from the repeat
 	     in order to be repeated.  */
-	  write_1_short (opcode1, insn1, fx->next, false);
+	  write_1_short (opcode1, insn1, fx->next, FALSE);
 	  return 1;
 	}
       else if (prev_left_kills_right_p)
 	{
 	  /* The left instruction kils the right slot, so we
 	     must leave it empty.  */
-	  write_1_short (opcode1, insn1, fx->next, false);
+	  write_1_short (opcode1, insn1, fx->next, FALSE);
 	  return 1;
 	}
       else if (opcode1->op->unit == IU)
@@ -850,7 +849,7 @@ write_2_short (opcode1, insn1, opcode2, insn2, exec_type, fx)
 	      /* Case 103810 is a request from Mitsubishi that opcodes
 		 with EITHER_BUT_PREFER_MU should not be executed in
 		 reverse sequential order.  */
-	      write_1_short (opcode1, insn1, fx->next, false);
+	      write_1_short (opcode1, insn1, fx->next, FALSE);
 	      return 1;
 	    }
 
@@ -1211,7 +1210,7 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
 	    return 0;
 	}
       else
-        if ((mod_reg[0][j] & (mod_reg[1][j] | used_reg[1][j])) != 0)
+	if ((mod_reg[0][j] & (mod_reg[1][j] | used_reg[1][j])) != 0)
 	  return 0;
     }
 
@@ -1243,7 +1242,7 @@ md_assemble (str)
 
   if ((prev_insn != -1) && prev_seg
       && ((prev_seg != now_seg) || (prev_subseg != now_subseg)))
-    d30v_cleanup (false);
+    d30v_cleanup (FALSE);
 
   if (d30v_current_align < 3)
     d30v_align (3, NULL, d30v_last_label);
@@ -1282,7 +1281,7 @@ md_assemble (str)
 
 	  /* If two instructions are present and we already have one saved,
 	     then first write it out.  */
-	  d30v_cleanup (false);
+	  d30v_cleanup (FALSE);
 
 	  /* Assemble first instruction and save it.  */
 	  prev_insn = do_assemble (str, &prev_opcode, 1, 0);
@@ -1343,13 +1342,13 @@ md_assemble (str)
 	     of NOPs for us.  */
 
 	  if (prev_insn != -1 && (strcmp (prev_opcode.op->name, "nop") == 0))
-	    d30v_cleanup (false);
+	    d30v_cleanup (FALSE);
 	  else
 	    {
 	      char *f;
 
 	      if (prev_insn != -1)
-		d30v_cleanup (true);
+		d30v_cleanup (TRUE);
 	      else
 		{
 		  f = frag_more (8);
@@ -1374,7 +1373,7 @@ md_assemble (str)
     {
       /* Can't parallelize, flush current instruction and add a
          sequential NOP.  */
-      write_1_short (&opcode, (long) insn, fixups->next->next, true);
+      write_1_short (&opcode, (long) insn, fixups->next->next, TRUE);
 
       /* Make the previous instruction the current one.  */
       extype = EXEC_UNKNOWN;
@@ -1393,7 +1392,7 @@ md_assemble (str)
     {
       if (extype != EXEC_UNKNOWN)
 	as_bad (_("Instruction uses long version, so it cannot be mixed as specified"));
-      d30v_cleanup (false);
+      d30v_cleanup (FALSE);
       write_long (&opcode, insn, fixups);
       prev_insn = -1;
     }
@@ -1454,7 +1453,7 @@ do_assemble (str, opcode, shortp, is_parallel)
        && !is_end_of_line[*op_end] && *op_end != ' ';
        op_end++)
     {
-      name[nlen] = tolower (op_start[nlen]);
+      name[nlen] = TOLOWER (op_start[nlen]);
       nlen++;
     }
 
@@ -1792,7 +1791,7 @@ find_format (opcode, myops, fsize, cmp_hack)
 
 arelent *
 tc_gen_reloc (seg, fixp)
-     asection *seg;
+     asection *seg ATTRIBUTE_UNUSED;
      fixS *fixp;
 {
   arelent *reloc;
@@ -1808,14 +1807,15 @@ tc_gen_reloc (seg, fixp)
 		    (int) fixp->fx_r_type);
       return NULL;
     }
-  reloc->addend = fixp->fx_addnumber;
+
+  reloc->addend = 0;
   return reloc;
 }
 
 int
 md_estimate_size_before_relax (fragp, seg)
-     fragS *fragp;
-     asection *seg;
+     fragS *fragp ATTRIBUTE_UNUSED;
+     asection *seg ATTRIBUTE_UNUSED;
 {
   abort ();
   return 0;
@@ -1833,73 +1833,56 @@ md_pcrel_from_section (fixp, sec)
   return fixp->fx_frag->fr_address + fixp->fx_where;
 }
 
-int
-md_apply_fix3 (fixp, valuep, seg)
-     fixS *fixp;
-     valueT *valuep;
-     segT seg;
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS *fixP;
+     valueT *valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
   char *where;
   unsigned long insn, insn2;
-  long value;
+  long value = *valP;
 
-  if (fixp->fx_addsy == (symbolS *) NULL)
-    {
-      value = *valuep;
-      fixp->fx_done = 1;
-    }
-  else if (fixp->fx_pcrel)
-    value = *valuep;
-  else
-    {
-      value = fixp->fx_offset;
+  if (fixP->fx_addsy == (symbolS *) NULL)
+    fixP->fx_done = 1;
 
-      if (fixp->fx_subsy != (symbolS *) NULL)
-	{
-	  if (S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
-	    value -= S_GET_VALUE (fixp->fx_subsy);
-	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    _("expression too complex"));
-	    }
-	}
-    }
+  /* We don't support subtracting a symbol.  */
+  if (fixP->fx_subsy != (symbolS *) NULL)
+    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
 
   /* Fetch the instruction, insert the fully resolved operand
      value, and stuff the instruction back again.  */
-  where = fixp->fx_frag->fr_literal + fixp->fx_where;
+  where = fixP->fx_frag->fr_literal + fixP->fx_where;
   insn = bfd_getb32 ((unsigned char *) where);
 
-  switch (fixp->fx_r_type)
+  switch (fixP->fx_r_type)
     {
     case BFD_RELOC_8:  /* Check for a bad .byte directive.  */
-      if (fixp->fx_addsy != NULL)
+      if (fixP->fx_addsy != NULL)
 	as_bad (_("line %d: unable to place address of symbol '%s' into a byte"),
-		fixp->fx_line, S_GET_NAME (fixp->fx_addsy));
+		fixP->fx_line, S_GET_NAME (fixP->fx_addsy));
       else if (((unsigned)value) > 0xff)
-	as_bad (_("line %d: unable to place value %x into a byte"),
-		fixp->fx_line, value);
+	as_bad (_("line %d: unable to place value %lx into a byte"),
+		fixP->fx_line, value);
       else
 	*(unsigned char *) where = value;
       break;
 
     case BFD_RELOC_16:  /* Check for a bad .short directive.  */
-      if (fixp->fx_addsy != NULL)
+      if (fixP->fx_addsy != NULL)
 	as_bad (_("line %d: unable to place address of symbol '%s' into a short"),
-		fixp->fx_line, S_GET_NAME (fixp->fx_addsy));
+		fixP->fx_line, S_GET_NAME (fixP->fx_addsy));
       else if (((unsigned)value) > 0xffff)
-	as_bad (_("line %d: unable to place value %x into a short"),
-		fixp->fx_line, value);
+	as_bad (_("line %d: unable to place value %lx into a short"),
+		fixP->fx_line, value);
       else
 	bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
       break;
 
     case BFD_RELOC_64:  /* Check for a bad .quad directive.  */
-      if (fixp->fx_addsy != NULL)
+      if (fixP->fx_addsy != NULL)
 	as_bad (_("line %d: unable to place address of symbol '%s' into a quad"),
-		fixp->fx_line, S_GET_NAME (fixp->fx_addsy));
+		fixP->fx_line, S_GET_NAME (fixP->fx_addsy));
       else
 	{
 	  bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
@@ -1908,58 +1891,58 @@ md_apply_fix3 (fixp, valuep, seg)
       break;
 
     case BFD_RELOC_D30V_6:
-      check_size (value, 6, fixp->fx_file, fixp->fx_line);
+      check_size (value, 6, fixP->fx_file, fixP->fx_line);
       insn |= value & 0x3F;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_9_PCREL:
-      if (fixp->fx_where & 0x7)
+      if (fixP->fx_where & 0x7)
 	{
-	  if (fixp->fx_done)
+	  if (fixP->fx_done)
 	    value += 4;
 	  else
-	    fixp->fx_r_type = BFD_RELOC_D30V_9_PCREL_R;
+	    fixP->fx_r_type = BFD_RELOC_D30V_9_PCREL_R;
 	}
-      check_size (value, 9, fixp->fx_file, fixp->fx_line);
+      check_size (value, 9, fixP->fx_file, fixP->fx_line);
       insn |= ((value >> 3) & 0x3F) << 12;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_15:
-      check_size (value, 15, fixp->fx_file, fixp->fx_line);
+      check_size (value, 15, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0xFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_15_PCREL:
-      if (fixp->fx_where & 0x7)
+      if (fixP->fx_where & 0x7)
 	{
-	  if (fixp->fx_done)
+	  if (fixP->fx_done)
 	    value += 4;
 	  else
-	    fixp->fx_r_type = BFD_RELOC_D30V_15_PCREL_R;
+	    fixP->fx_r_type = BFD_RELOC_D30V_15_PCREL_R;
 	}
-      check_size (value, 15, fixp->fx_file, fixp->fx_line);
+      check_size (value, 15, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0xFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_21:
-      check_size (value, 21, fixp->fx_file, fixp->fx_line);
+      check_size (value, 21, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0x3FFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_21_PCREL:
-      if (fixp->fx_where & 0x7)
+      if (fixP->fx_where & 0x7)
 	{
-	  if (fixp->fx_done)
+	  if (fixP->fx_done)
 	    value += 4;
 	  else
-	    fixp->fx_r_type = BFD_RELOC_D30V_21_PCREL_R;
+	    fixP->fx_r_type = BFD_RELOC_D30V_21_PCREL_R;
 	}
-      check_size (value, 21, fixp->fx_file, fixp->fx_line);
+      check_size (value, 21, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0x3FFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
@@ -1988,10 +1971,8 @@ md_apply_fix3 (fixp, valuep, seg)
 
     default:
       as_bad (_("line %d: unknown relocation type: 0x%x"),
-	      fixp->fx_line, fixp->fx_r_type);
+	      fixP->fx_line, fixP->fx_r_type);
     }
-
-  return 0;
 }
 
 /* Called after the assembler has finished parsing the input file or
@@ -2017,7 +1998,7 @@ d30v_cleanup (use_sequential)
       subseg_set (seg, subseg);
       prev_insn = -1;
       if (use_sequential)
-	prev_mul32_p = false;
+	prev_mul32_p = FALSE;
     }
 
   return 1;
@@ -2045,11 +2026,11 @@ d30v_start_line ()
 {
   char *c = input_line_pointer;
 
-  while (isspace (*c))
+  while (ISSPACE (*c))
     c++;
 
   if (*c == '.')
-    d30v_cleanup (false);
+    d30v_cleanup (FALSE);
 }
 
 static void
@@ -2081,7 +2062,7 @@ d30v_frob_label (lab)
      symbolS *lab;
 {
   /* Emit any pending instructions.  */
-  d30v_cleanup (false);
+  d30v_cleanup (FALSE);
 
   /* Update the label's address with the current output pointer.  */
   symbol_set_frag (lab, frag_now);
@@ -2131,7 +2112,7 @@ d30v_align (n, pfill, label)
      this alignement request.  The alignment of the current frag
      can be changed under our feet, for example by a .ascii
      directive in the source code.  cf testsuite/gas/d30v/reloc.s  */
-  d30v_cleanup (false);
+  d30v_cleanup (FALSE);
 
   if (pfill == NULL)
     {
@@ -2158,7 +2139,7 @@ d30v_align (n, pfill, label)
   if (label != NULL)
     {
       symbolS     *sym;
-      int          label_seen = false;
+      int          label_seen = FALSE;
       struct frag *old_frag;
       valueT       old_value;
       valueT       new_value;
@@ -2185,7 +2166,7 @@ d30v_align (n, pfill, label)
 	  if (symbol_get_frag (sym) == old_frag
 	      && S_GET_VALUE (sym) == old_value)
 	    {
-	      label_seen = true;
+	      label_seen = TRUE;
 	      symbol_set_frag (sym, frag_now);
 	      S_SET_VALUE (sym, new_value);
 	    }
@@ -2202,7 +2183,7 @@ d30v_align (n, pfill, label)
 
 static void
 s_d30v_align (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   int align;
   char fill, *pfill = NULL;

@@ -36,7 +36,7 @@ struct dwarf2_line_info {
 /* Implements the .file FILENO "FILENAME" directive.  FILENO can be 0
    to indicate that no file number has been assigned.  All real file
    number must be >0.  */
-extern void dwarf2_directive_file PARAMS ((int dummy));
+extern char *dwarf2_directive_file PARAMS ((int dummy));
 
 /* Implements the .loc FILENO LINENO [COLUMN] directive.  FILENO is
    the file number, LINENO the line number and the (optional) COLUMN
@@ -68,5 +68,18 @@ extern void dwarf2_finish PARAMS ((void));
 extern int dwarf2dbg_estimate_size_before_relax PARAMS ((fragS *));
 extern int dwarf2dbg_relax_frag PARAMS ((fragS *));
 extern void dwarf2dbg_convert_frag PARAMS ((fragS *));
+
+/* An enumeration which describes the sizes of offsets (to DWARF sections)
+   and the mechanism by which the size is indicated.  */
+enum dwarf2_format {
+  /* 32-bit format: the initial length field is 4 bytes long.  */
+  dwarf2_format_32bit,
+  /* DWARF3 64-bit format: the representation of the initial length
+     (of a DWARF section) is 0xffffffff (4 bytes) followed by eight
+     bytes indicating the actual length.  */
+  dwarf2_format_64bit,
+  /* SGI extension to DWARF2: The initial length is eight bytes.  */
+  dwarf2_format_64bit_irix
+};
 
 #endif /* AS_DWARF2DBG_H */

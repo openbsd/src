@@ -1,6 +1,8 @@
 #include "as.h"
 #include "emul.h"
 
+static const char *criself_bfd_name PARAMS ((void));
+
 static const char *
 criself_bfd_name ()
 {

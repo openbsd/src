@@ -19,8 +19,8 @@
 
 @cindex H8/500 options (none)
 @cindex options, H8/500 (none)
-@code{@value{AS}} has no additional command-line options for the Hitachi
-H8/500 family.
+@code{@value{AS}} has no additional command-line options for the
+Renesas (formerly Hitachi) H8/500 family.
 
 @node H8/500 Syntax
 @section Syntax
@@ -153,7 +153,7 @@ generate 16-bit numbers.
 @cindex mnemonics, H8/500
 @cindex instruction summary, H8/500
 For detailed information on the H8/500 machine instruction set, see
-@cite{H8/500 Series Programming Manual} (Hitachi M21T001).
+@cite{H8/500 Series Programming Manual} (Renesas M21T001).
 
 @code{@value{AS}} implements all the standard H8/500 opcodes.  No additional
 pseudo-instructions are needed on this family.

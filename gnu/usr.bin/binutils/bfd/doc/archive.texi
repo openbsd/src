@@ -73,7 +73,7 @@ user-visible element is its name, a null-terminated string.
 @subsubsection @code{bfd_set_archive_head}
 @strong{Synopsis}
 @example
-boolean bfd_set_archive_head(bfd *output, bfd *new_head);
+bfd_boolean bfd_set_archive_head(bfd *output, bfd *new_head);
 @end example
 @strong{Description}@*
 Set the head of the chain of

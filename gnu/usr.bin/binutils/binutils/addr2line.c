@@ -1,5 +1,5 @@
 /* addr2line.c -- convert addresses to line number and function name
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Ulrich Lauther <Ulrich.Lauther@mchp.siemens.de>
 
    This file is part of GNU Binutils.
@@ -20,15 +20,14 @@
 
 /* Derived from objdump.c and nm.c by Ulrich.Lauther@mchp.siemens.de
 
-   Usage: 
+   Usage:
    addr2line [options] addr addr ...
    or
-   addr2line [options] 
+   addr2line [options]
 
    both forms write results to stdout, the second form reads addresses
    to be converted from stdin.  */
 
-#include <ctype.h>
 #include <string.h>
 
 #include "bfd.h"
@@ -36,12 +35,11 @@
 #include "libiberty.h"
 #include "demangle.h"
 #include "bucomm.h"
+#include "budemang.h"
 
-extern char *program_version;
-
-static boolean with_functions;	/* -f, show function names.  */
-static boolean do_demangle;	/* -C, demangle names.  */
-static boolean base_names;	/* -s, strip directory names.  */
+static bfd_boolean with_functions;	/* -f, show function names.  */
+static bfd_boolean do_demangle;		/* -C, demangle names.  */
+static bfd_boolean base_names;		/* -s, strip directory names.  */
 
 static int naddr;		/* Number of addresses to process.  */
 static char **addr;		/* Hex addresses to process.  */
@@ -73,11 +71,19 @@ usage (stream, status)
      FILE *stream;
      int status;
 {
-  fprintf (stream, _("\
-Usage: %s [-CfsHV] [-b bfdname] [--target=bfdname]\n\
-       [-e executable] [--exe=executable] [--demangle[=style]]\n\
-       [--basenames] [--functions] [addr addr ...]\n"),
-	   program_name);
+  fprintf (stream, _("Usage: %s [option(s)] [addr(s)]\n"), program_name);
+  fprintf (stream, _(" Convert addresses into line number/file name pairs.\n"));
+  fprintf (stream, _(" If no addresses are specified on the command line, they will be read from stdin\n"));
+  fprintf (stream, _(" The options are:\n\
+  -b --target=<bfdname>  Set the binary file format\n\
+  -e --exe=<executable>  Set the input file name (default is a.out)\n\
+  -s --basenames         Strip directory names\n\
+  -f --functions         Show function names\n\
+  -C --demangle[=style]  Demangle function names\n\
+  -h --help              Display this information\n\
+  -v --version           Display the program's version\n\
+\n"));
+
   list_supported_targets (program_name, stream);
   if (status == 0)
     fprintf (stream, _("Report bugs to %s\n"), REPORT_BUGS_TO);
@@ -90,19 +96,16 @@ static void
 slurp_symtab (abfd)
      bfd *abfd;
 {
-  long storage;
   long symcount;
+  unsigned int size;
 
   if ((bfd_get_file_flags (abfd) & HAS_SYMS) == 0)
     return;
 
-  storage = bfd_get_symtab_upper_bound (abfd);
-  if (storage < 0)
-    bfd_fatal (bfd_get_filename (abfd));
+  symcount = bfd_read_minisymbols (abfd, FALSE, (PTR) &syms, &size);
+  if (symcount == 0)
+    symcount = bfd_read_minisymbols (abfd, TRUE /* dynamic */, (PTR) &syms, &size);
 
-  syms = (asymbol **) xmalloc (storage);
-
-  symcount = bfd_canonicalize_symtab (abfd, syms);
   if (symcount < 0)
     bfd_fatal (bfd_get_filename (abfd));
 }
@@ -114,7 +117,7 @@ static bfd_vma pc;
 static const char *filename;
 static const char *functionname;
 static unsigned int line;
-static boolean found;
+static bfd_boolean found;
 
 /* Look for an address in a section.  This is called via
    bfd_map_over_sections.  */
@@ -173,7 +176,7 @@ translate_addresses (abfd)
 	  pc = bfd_scan_vma (*addr++, NULL, 16);
 	}
 
-      found = false;
+      found = FALSE;
       bfd_map_over_sections (abfd, find_address_in_section, (PTR) NULL);
 
       if (! found)
@@ -186,23 +189,22 @@ translate_addresses (abfd)
 	{
 	  if (with_functions)
 	    {
-	      if (functionname == NULL || *functionname == '\0')
-		printf ("??\n");
-	      else if (! do_demangle)
-		printf ("%s\n", functionname);
-	      else
-		{
-		  char *res;
+	      const char *name;
+	      char *alloc = NULL;
 
-		  res = cplus_demangle (functionname, DMGL_ANSI | DMGL_PARAMS);
-		  if (res == NULL)
-		    printf ("%s\n", functionname);
-		  else
-		    {
-		      printf ("%s\n", res);
-		      free (res);
-		    }
+	      name = functionname;
+	      if (name == NULL || *name == '\0')
+		name = "??";
+	      else if (do_demangle)
+		{
+		  alloc = demangle (abfd, name);
+		  name = alloc;
 		}
+
+	      printf ("%s\n", name);
+
+	      if (alloc != NULL)
+		free (alloc);
 	    }
 
 	  if (base_names && filename != NULL)
@@ -228,19 +230,19 @@ translate_addresses (abfd)
 /* Process a file.  */
 
 static void
-process_file (filename, target)
-     const char *filename;
+process_file (file_name, target)
+     const char *file_name;
      const char *target;
 {
   bfd *abfd;
   char **matching;
 
-  abfd = bfd_openr (filename, target);
+  abfd = bfd_openr (file_name, target);
   if (abfd == NULL)
-    bfd_fatal (filename);
+    bfd_fatal (file_name);
 
   if (bfd_check_format (abfd, bfd_archive))
-    fatal (_("%s: can not get addresses from archive"), filename);
+    fatal (_("%s: can not get addresses from archive"), file_name);
 
   if (! bfd_check_format_matches (abfd, bfd_object, &matching))
     {
@@ -266,17 +268,22 @@ process_file (filename, target)
   bfd_close (abfd);
 }
 
+int main PARAMS ((int, char **));
+
 int
 main (argc, argv)
      int argc;
      char **argv;
 {
-  const char *filename;
+  const char *file_name;
   char *target;
   int c;
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
+#endif
+#if defined (HAVE_SETLOCALE)
+  setlocale (LC_CTYPE, "");
 #endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -287,44 +294,46 @@ main (argc, argv)
   bfd_init ();
   set_default_bfd_target ();
 
-  filename = NULL;
+  file_name = NULL;
   target = NULL;
-  while ((c = getopt_long (argc, argv, "b:Ce:sfHV", long_options, (int *) 0))
+  while ((c = getopt_long (argc, argv, "b:Ce:sfHhVv", long_options, (int *) 0))
 	 != EOF)
     {
       switch (c)
 	{
 	case 0:
-	  break;		/* we've been given a long option */
+	  break;		/* We've been given a long option.  */
 	case 'b':
 	  target = optarg;
 	  break;
 	case 'C':
-	  do_demangle = true;
+	  do_demangle = TRUE;
 	  if (optarg != NULL)
 	    {
 	      enum demangling_styles style;
-	      
+
 	      style = cplus_demangle_name_to_style (optarg);
-	      if (style == unknown_demangling) 
+	      if (style == unknown_demangling)
 		fatal (_("unknown demangling style `%s'"),
 		       optarg);
-	      
+
 	      cplus_demangle_set_style (style);
-           }
+	    }
 	  break;
 	case 'e':
-	  filename = optarg;
+	  file_name = optarg;
 	  break;
 	case 's':
-	  base_names = true;
+	  base_names = TRUE;
 	  break;
 	case 'f':
-	  with_functions = true;
+	  with_functions = TRUE;
 	  break;
+	case 'v':
 	case 'V':
 	  print_version ("addr2line");
 	  break;
+	case 'h':
 	case 'H':
 	  usage (stdout, 0);
 	  break;
@@ -334,13 +343,13 @@ main (argc, argv)
 	}
     }
 
-  if (filename == NULL)
-    filename = "a.out";
+  if (file_name == NULL)
+    file_name = "a.out";
 
   addr = argv + optind;
   naddr = argc - optind;
 
-  process_file (filename, target);
+  process_file (file_name, target);
 
   return 0;
 }

@@ -1,5 +1,6 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright 1994, 1995, 1997, 1999, 2001 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1997, 1999, 2001, 2002
+   Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,20 +24,23 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/arc.h"
+#include "libiberty.h"
 
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   PARAMS ((bfd *abfd, bfd_reloc_code_real_type code));
 static void arc_info_to_howto_rel
-  PARAMS ((bfd *, arelent *, Elf32_Internal_Rel *));
-static boolean arc_elf_object_p
+  PARAMS ((bfd *, arelent *, Elf_Internal_Rela *));
+static bfd_boolean arc_elf_object_p
   PARAMS ((bfd *));
 static void arc_elf_final_write_processing
-  PARAMS ((bfd *, boolean));
+  PARAMS ((bfd *, bfd_boolean));
+static bfd_reloc_status_type arc_elf_b22_pcrel
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
 
 /* Try to minimize the amount of space occupied by relocation tables
    on the ROM (not that the ROM won't be swamped by other ELF overhead).  */
 
-#define USE_REL
+#define USE_REL	1
 
 static reloc_howto_type elf_arc_howto_table[] =
 {
@@ -45,61 +49,60 @@ static reloc_howto_type elf_arc_howto_table[] =
 	 0,			/* rightshift  */
 	 2,			/* size (0 = byte, 1 = short, 2 = long)  */
 	 32,			/* bitsize  */
-	 false,			/* pc_relative  */
+	 FALSE,			/* pc_relative  */
 	 0,			/* bitpos  */
 	 complain_overflow_bitfield, /* complain_on_overflow  */
 	 bfd_elf_generic_reloc,	/* special_function  */
 	 "R_ARC_NONE",		/* name  */
-	 false,			/* partial_inplace  */
+	 TRUE,			/* partial_inplace  */
 	 0,			/* src_mask  */
 	 0,			/* dst_mask  */
-	 false),		/* pcrel_offset  */
+	 FALSE),		/* pcrel_offset  */
 
   /* A standard 32 bit relocation.  */
   HOWTO (R_ARC_32,		/* type  */
 	 0,			/* rightshift  */
 	 2,			/* size (0 = byte, 1 = short, 2 = long)  */
 	 32,			/* bitsize  */
-	 false,			/* pc_relative  */
+	 FALSE,			/* pc_relative  */
 	 0,			/* bitpos  */
 	 complain_overflow_bitfield, /* complain_on_overflow  */
 	 bfd_elf_generic_reloc,	/* special_function  */
 	 "R_ARC_32",		/* name  */
-	 false,			/* partial_inplace  */
+	 TRUE,			/* partial_inplace  */
 	 0xffffffff,		/* src_mask  */
 	 0xffffffff,		/* dst_mask  */
-	 false),		/* pcrel_offset  */
+	 FALSE),		/* pcrel_offset  */
 
   /* A 26 bit absolute branch, right shifted by 2.  */
   HOWTO (R_ARC_B26,		/* type  */
 	 2,			/* rightshift  */
 	 2,			/* size (0 = byte, 1 = short, 2 = long)  */
 	 26,			/* bitsize  */
-	 false,			/* pc_relative  */
+	 FALSE,			/* pc_relative  */
 	 0,			/* bitpos  */
 	 complain_overflow_bitfield, /* complain_on_overflow  */
 	 bfd_elf_generic_reloc,	/* special_function  */
 	 "R_ARC_B26",		/* name  */
-	 false,			/* partial_inplace  */
+	 TRUE,			/* partial_inplace  */
 	 0x00ffffff,		/* src_mask  */
 	 0x00ffffff,		/* dst_mask  */
-	 false),		/* pcrel_offset  */
+	 FALSE),		/* pcrel_offset  */
 
   /* A relative 22 bit branch; bits 21-2 are stored in bits 26-7.  */
   HOWTO (R_ARC_B22_PCREL,	/* type  */
 	 2,			/* rightshift  */
 	 2,			/* size (0 = byte, 1 = short, 2 = long)  */
 	 22,			/* bitsize  */
-	 true,			/* pc_relative  */
+	 TRUE,			/* pc_relative  */
 	 7,			/* bitpos  */
 	 complain_overflow_signed, /* complain_on_overflow  */
-	 bfd_elf_generic_reloc,	/* special_function  */
+	 arc_elf_b22_pcrel,	/* special_function  */
 	 "R_ARC_B22_PCREL",	/* name  */
-	 false,			/* partial_inplace  */
+	 TRUE,			/* partial_inplace  */
 	 0x07ffff80,		/* src_mask  */
 	 0x07ffff80,		/* dst_mask  */
-	 true),			/* pcrel_offset  */
-
+	 FALSE),		/* pcrel_offset  */
 };
 
 /* Map BFD reloc types to ARC ELF reloc types.  */
@@ -126,11 +129,10 @@ bfd_elf32_bfd_reloc_type_lookup (abfd, code)
 {
   unsigned int i;
 
-  for (i = 0; i < sizeof (arc_reloc_map) / sizeof (struct arc_reloc_map); i++)
-    {
-      if (arc_reloc_map[i].bfd_reloc_val == code)
-	return &elf_arc_howto_table[arc_reloc_map[i].elf_reloc_val];
-    }
+  for (i = ARRAY_SIZE (arc_reloc_map); i--;)
+    if (arc_reloc_map[i].bfd_reloc_val == code)
+      return elf_arc_howto_table + arc_reloc_map[i].elf_reloc_val;
+
   return NULL;
 }
 
@@ -140,7 +142,7 @@ static void
 arc_info_to_howto_rel (abfd, cache_ptr, dst)
      bfd *abfd ATTRIBUTE_UNUSED;
      arelent *cache_ptr;
-     Elf32_Internal_Rel *dst;
+     Elf_Internal_Rela *dst;
 {
   unsigned int r_type;
 
@@ -151,11 +153,11 @@ arc_info_to_howto_rel (abfd, cache_ptr, dst)
 
 /* Set the right machine number for an ARC ELF file.  */
 
-static boolean
+static bfd_boolean
 arc_elf_object_p (abfd)
      bfd *abfd;
 {
-  int mach = bfd_mach_arc_6;
+  unsigned int mach = bfd_mach_arc_6;
 
   if (elf_elfheader(abfd)->e_machine == EM_ARC)
     {
@@ -187,7 +189,7 @@ arc_elf_object_p (abfd)
 static void
 arc_elf_final_write_processing (abfd, linker)
      bfd *abfd;
-     boolean linker ATTRIBUTE_UNUSED;
+     bfd_boolean linker ATTRIBUTE_UNUSED;
 {
   unsigned long val;
 
@@ -207,9 +209,32 @@ arc_elf_final_write_processing (abfd, linker)
       val = E_ARC_MACH_ARC8;
       break;
     }
-  elf_elfheader (abfd)->e_machine = EM_ARC;
   elf_elfheader (abfd)->e_flags &=~ EF_ARC_MACH;
   elf_elfheader (abfd)->e_flags |= val;
+}
+
+bfd_reloc_status_type
+arc_elf_b22_pcrel (abfd, reloc_entry, symbol, data, input_section,
+		   output_bfd, error_message)
+     bfd * abfd;
+     arelent * reloc_entry;
+     asymbol * symbol;
+     PTR data;
+     asection * input_section;
+     bfd * output_bfd;
+     char ** error_message;
+{
+  /* If linking, back up the final symbol address by the address of the
+     reloc.  This cannot be accomplished by setting the pcrel_offset
+     field to TRUE, as bfd_install_relocation will detect this and refuse
+     to install the offset in the first place, but bfd_perform_relocation
+     will still insist on removing it.  */
+  if (output_bfd == (bfd *) NULL)
+    reloc_entry->addend -= reloc_entry->address;
+
+  /* Fall through to the default elf reloc handler.  */
+  return bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
+				input_section, output_bfd, error_message);
 }
 
 #define TARGET_LITTLE_SYM bfd_elf32_littlearc_vec

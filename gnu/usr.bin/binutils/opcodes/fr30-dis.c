@@ -4,7 +4,8 @@
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 - the resultant file is machine generated, cgen-dis.in isn't
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and GDB, the GNU debugger.
 
@@ -31,6 +32,7 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
 #include "dis-asm.h"
 #include "bfd.h"
 #include "symcat.h"
+#include "libiberty.h"
 #include "fr30-desc.h"
 #include "fr30-opc.h"
 #include "opintl.h"
@@ -47,14 +49,29 @@ static void print_keyword
 static void print_insn_normal
      PARAMS ((CGEN_CPU_DESC, PTR, const CGEN_INSN *, CGEN_FIELDS *,
 	      bfd_vma, int));
-static int print_insn PARAMS ((CGEN_CPU_DESC, bfd_vma,
-			       disassemble_info *, char *, int));
+static int print_insn
+     PARAMS ((CGEN_CPU_DESC, bfd_vma,  disassemble_info *, char *, unsigned));
 static int default_print_insn
      PARAMS ((CGEN_CPU_DESC, bfd_vma, disassemble_info *));
+static int read_insn
+     PARAMS ((CGEN_CPU_DESC, bfd_vma, disassemble_info *, char *, int,
+	      CGEN_EXTRACT_INFO *, unsigned long *));
 
 /* -- disassembler routines inserted here */
 
 /* -- dis.c */
+static void print_register_list
+  PARAMS ((PTR, long, long, int));
+static void print_hi_register_list_ld
+  PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
+static void print_low_register_list_ld
+  PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
+static void print_hi_register_list_st
+  PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
+static void print_low_register_list_st
+  PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
+static void print_m4
+  PARAMS ((CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int));
 
 static void
 print_register_list (dis_info, value, offset, load_store)
@@ -156,6 +173,10 @@ print_m4 (cd, dis_info, value, attrs, pc, length)
 }
 /* -- */
 
+void fr30_cgen_print_operand
+  PARAMS ((CGEN_CPU_DESC, int, PTR, CGEN_FIELDS *,
+           void const *, bfd_vma, int));
+
 /* Main entry point for printing operands.
    XINFO is a `void *' and not a `disassemble_info *' to not put a requirement
    of dis-asm.h on cgen.h.
@@ -169,8 +190,7 @@ print_m4 (cd, dis_info, value, attrs, pc, length)
 
    This function could be moved into `print_insn_normal', but keeping it
    separate makes clear the interface between `print_insn_normal' and each of
-   the handlers.
-*/
+   the handlers.  */
 
 void
 fr30_cgen_print_operand (cd, opindex, xinfo, fields, attrs, pc, length)
@@ -324,21 +344,12 @@ fr30_cgen_init_dis (cd)
 
 static void
 print_normal (cd, dis_info, value, attrs, pc, length)
-#ifdef CGEN_PRINT_NORMAL
-     CGEN_CPU_DESC cd;
-#else
      CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
-#endif
      PTR dis_info;
      long value;
      unsigned int attrs;
-#ifdef CGEN_PRINT_NORMAL
-     bfd_vma pc;
-     int length;
-#else
      bfd_vma pc ATTRIBUTE_UNUSED;
      int length ATTRIBUTE_UNUSED;
-#endif
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
@@ -359,21 +370,12 @@ print_normal (cd, dis_info, value, attrs, pc, length)
 
 static void
 print_address (cd, dis_info, value, attrs, pc, length)
-#ifdef CGEN_PRINT_NORMAL
-     CGEN_CPU_DESC cd;
-#else
      CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
-#endif
      PTR dis_info;
      bfd_vma value;
      unsigned int attrs;
-#ifdef CGEN_PRINT_NORMAL
-     bfd_vma pc;
-     int length;
-#else
      bfd_vma pc ATTRIBUTE_UNUSED;
      int length ATTRIBUTE_UNUSED;
-#endif
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
@@ -430,7 +432,7 @@ print_insn_normal (cd, dis_info, insn, fields, pc, length)
 {
   const CGEN_SYNTAX *syntax = CGEN_INSN_SYNTAX (insn);
   disassemble_info *info = (disassemble_info *) dis_info;
-  const unsigned char *syn;
+  const CGEN_SYNTAX_CHAR_TYPE *syn;
 
   CGEN_INIT_PRINT (cd);
 
@@ -456,6 +458,7 @@ print_insn_normal (cd, dis_info, insn, fields, pc, length)
 /* Subroutine of print_insn. Reads an insn into the given buffers and updates
    the extract info.
    Returns 0 if all is well, non-zero otherwise.  */
+
 static int
 read_insn (cd, pc, info, buf, buflen, ex_info, insn_value)
      CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
@@ -477,21 +480,7 @@ read_insn (cd, pc, info, buf, buflen, ex_info, insn_value)
   ex_info->valid = (1 << buflen) - 1;
   ex_info->insn_bytes = buf;
 
-  switch (buflen)
-    {
-    case 1:
-      *insn_value = buf[0];
-      break;
-    case 2:
-      *insn_value = info->endian == BFD_ENDIAN_BIG ? bfd_getb16 (buf) : bfd_getl16 (buf);
-      break;
-    case 4:
-      *insn_value = info->endian == BFD_ENDIAN_BIG ? bfd_getb32 (buf) : bfd_getl32 (buf);
-      break;
-    default:
-      abort ();
-    }
-
+  *insn_value = bfd_get_bits (buf, buflen * 8, info->endian == BFD_ENDIAN_BIG);
   return 0;
 }
 
@@ -507,15 +496,25 @@ print_insn (cd, pc, info, buf, buflen)
      bfd_vma pc;
      disassemble_info *info;
      char *buf;
-     int buflen;
+     unsigned int buflen;
 {
-  unsigned long insn_value;
+  CGEN_INSN_INT insn_value;
   const CGEN_INSN_LIST *insn_list;
   CGEN_EXTRACT_INFO ex_info;
+  int basesize;
 
-  int rc = read_insn (cd, pc, info, buf, buflen, & ex_info, & insn_value);
-  if (rc != 0)
-    return rc;
+  /* Extract base part of instruction, just in case CGEN_DIS_* uses it. */
+  basesize = cd->base_insn_bitsize < buflen * 8 ?
+                                     cd->base_insn_bitsize : buflen * 8;
+  insn_value = cgen_get_insn_value (cd, buf, basesize);
+
+
+  /* Fill in ex_info fields like read_insn would.  Don't actually call
+     read_insn, since the incoming buffer is already read (and possibly
+     modified a la m32r).  */
+  ex_info.valid = (1 << buflen) - 1;
+  ex_info.dis_info = info;
+  ex_info.insn_bytes = buf;
 
   /* The instructions are stored in hash lists.
      Pick the first one and keep trying until we find the right one.  */
@@ -526,9 +525,10 @@ print_insn (cd, pc, info, buf, buflen)
       const CGEN_INSN *insn = insn_list->insn;
       CGEN_FIELDS fields;
       int length;
+      unsigned long insn_value_cropped;
 
 #ifdef CGEN_VALIDATE_INSN_SUPPORTED 
-      /* not needed as insn shouldn't be in hash lists if not supported */
+      /* Not needed as insn shouldn't be in hash lists if not supported.  */
       /* Supported by this cpu?  */
       if (! fr30_cgen_insn_supported (cd, insn))
         {
@@ -540,7 +540,17 @@ print_insn (cd, pc, info, buf, buflen)
       /* Basic bit mask must be correct.  */
       /* ??? May wish to allow target to defer this check until the extract
 	 handler.  */
-      if ((insn_value & CGEN_INSN_BASE_MASK (insn))
+
+      /* Base size may exceed this instruction's size.  Extract the
+         relevant part from the buffer. */
+      if ((unsigned) (CGEN_INSN_BITSIZE (insn) / 8) < buflen &&
+	  (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
+	insn_value_cropped = bfd_get_bits (buf, CGEN_INSN_BITSIZE (insn), 
+					   info->endian == BFD_ENDIAN_BIG);
+      else
+	insn_value_cropped = insn_value;
+
+      if ((insn_value_cropped & CGEN_INSN_BASE_MASK (insn))
 	  == CGEN_INSN_BASE_VALUE (insn))
 	{
 	  /* Printing is handled in two passes.  The first pass parses the
@@ -549,7 +559,7 @@ print_insn (cd, pc, info, buf, buflen)
 
 	  /* Make sure the entire insn is loaded into insn_value, if it
 	     can fit.  */
-	  if ((unsigned) CGEN_INSN_BITSIZE (insn) > cd->base_insn_bitsize &&
+	  if (((unsigned) CGEN_INSN_BITSIZE (insn) > cd->base_insn_bitsize) &&
 	      (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
 	    {
 	      unsigned long full_insn_value;
@@ -563,7 +573,7 @@ print_insn (cd, pc, info, buf, buflen)
 	    }
 	  else
 	    length = CGEN_EXTRACT_FN (cd, insn)
-	      (cd, insn, &ex_info, insn_value, &fields, pc);
+	      (cd, insn, &ex_info, insn_value_cropped, &fields, pc);
 
 	  /* length < 0 -> error */
 	  if (length < 0)
@@ -597,29 +607,48 @@ default_print_insn (cd, pc, info)
      disassemble_info *info;
 {
   char buf[CGEN_MAX_INSN_SIZE];
+  int buflen;
   int status;
 
-  /* Read the base part of the insn.  */
+  /* Attempt to read the base part of the insn.  */
+  buflen = cd->base_insn_bitsize / 8;
+  status = (*info->read_memory_func) (pc, buf, buflen, info);
 
-  status = (*info->read_memory_func) (pc, buf, cd->base_insn_bitsize / 8, info);
+  /* Try again with the minimum part, if min < base.  */
+  if (status != 0 && (cd->min_insn_bitsize < cd->base_insn_bitsize))
+    {
+      buflen = cd->min_insn_bitsize / 8;
+      status = (*info->read_memory_func) (pc, buf, buflen, info);
+    }
+
   if (status != 0)
     {
       (*info->memory_error_func) (status, pc, info);
       return -1;
     }
 
-  return print_insn (cd, pc, info, buf, cd->base_insn_bitsize / 8);
+  return print_insn (cd, pc, info, buf, buflen);
 }
 
 /* Main entry point.
    Print one instruction from PC on INFO->STREAM.
    Return the size of the instruction (in bytes).  */
 
+typedef struct cpu_desc_list {
+  struct cpu_desc_list *next;
+  int isa;
+  int mach;
+  int endian;
+  CGEN_CPU_DESC cd;
+} cpu_desc_list;
+
 int
 print_insn_fr30 (pc, info)
      bfd_vma pc;
      disassemble_info *info;
 {
+  static cpu_desc_list *cd_list = 0;
+  cpu_desc_list *cl = 0;
   static CGEN_CPU_DESC cd = 0;
   static int prev_isa;
   static int prev_mach;
@@ -638,26 +667,39 @@ print_insn_fr30 (pc, info)
   arch = info->arch;
   if (arch == bfd_arch_unknown)
     arch = CGEN_BFD_ARCH;
-      
-  /* There's no standard way to compute the isa number (e.g. for arm thumb)
+   
+  /* There's no standard way to compute the machine or isa number
      so we leave it to the target.  */
+#ifdef CGEN_COMPUTE_MACH
+  mach = CGEN_COMPUTE_MACH (info);
+#else
+  mach = info->mach;
+#endif
+
 #ifdef CGEN_COMPUTE_ISA
   isa = CGEN_COMPUTE_ISA (info);
 #else
-  isa = 0;
+  isa = info->insn_sets;
 #endif
 
-  mach = info->mach;
-
-  /* If we've switched cpu's, close the current table and open a new one.  */
+  /* If we've switched cpu's, try to find a handle we've used before */
   if (cd
       && (isa != prev_isa
 	  || mach != prev_mach
 	  || endian != prev_endian))
     {
-      fr30_cgen_cpu_close (cd);
       cd = 0;
-    }
+      for (cl = cd_list; cl; cl = cl->next)
+	{
+	  if (cl->isa == isa &&
+	      cl->mach == mach &&
+	      cl->endian == endian)
+	    {
+	      cd = cl->cd;
+	      break;
+	    }
+	}
+    } 
 
   /* If we haven't initialized yet, initialize the opcode table.  */
   if (! cd)
@@ -678,6 +720,16 @@ print_insn_fr30 (pc, info)
 				 CGEN_CPU_OPEN_END);
       if (!cd)
 	abort ();
+
+      /* save this away for future reference */
+      cl = xmalloc (sizeof (struct cpu_desc_list));
+      cl->cd = cd;
+      cl->isa = isa;
+      cl->mach = mach;
+      cl->endian = endian;
+      cl->next = cd_list;
+      cd_list = cl;
+
       fr30_cgen_init_dis (cd);
     }
 

@@ -20,14 +20,14 @@ CTOR=".ctors ${CONSTRUCTING-0} :
        doesn't matter which directory crtbegin.o
        is in.  */
 
-    KEEP (*crtbegin.o(.ctors))
+    KEEP (*crtbegin*.o(.ctors))
 
     /* We don't want to include the .ctor section from
        from the crtend.o file until after the sorted ctors.
        The .ctor section from the crtend file contains the
        end of ctors marker and it must be last */
 
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(EXCLUDE_FILE (*crtend*.o) .ctors))
     KEEP (*(SORT(.ctors.*)))
     KEEP (*(.ctors))
     ${CONSTRUCTING+${CTOR_END}}
@@ -36,8 +36,8 @@ CTOR=".ctors ${CONSTRUCTING-0} :
 DTOR=" .dtors       ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${DTOR_START}}
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*crtbegin*.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend*.o) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
     ${CONSTRUCTING+${DTOR_END}}
@@ -65,19 +65,30 @@ ${RELOCATING+${EXECUTABLE_SYMBOLS}}
 
 MEMORY
 {
-  UNIFIED : org = 0,         len = 0x1000000
-  INSN    : org = 0x1000000, len = 0x40000
-  DATA    : org = 0x2000004, len = 0x7FFC
-  STACK   : org = 0x2007FFE, len = 4
+  /* These are the values for the D10V-TS3 board.
+     There are other memory regions available on
+     the TS3 (eg ROM, FLASH, etc) but these are not
+     used by this script.  */
+     
+  INSN       : org = 0x01000000, len = 256K
+  DATA       : org = 0x02000000, len = 48K
+
+  /* This is a fake memory region at the top of the
+     on-chip RAM, used as the start of the
+     (descending) stack.  */
+     
+  STACK      : org = 0x0200BFFC, len = 4
 }
 
 SECTIONS
 {
-  .text :
+  .text ${RELOCATING+${TEXT_START_ADDR}} :
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
     KEEP (*(.init))
+    KEEP (*(.init.*))
     KEEP (*(.fini))
+    KEEP (*(.fini.*))
     *(.text)
     *(.text.*)
     /* .gnu.warning sections are handled specially by elf32.em.  */
@@ -87,10 +98,16 @@ SECTIONS
     ${RELOCATING+PROVIDE (etext = .);}
   } ${RELOCATING+ >INSN} =${NOP-0}
 
-  .rodata  ${RELOCATING-0} : {
-    *(.rodata) *(.gnu.linkonce.r*)
+  .rodata ${RELOCATING+${READONLY_START_ADDR}} : {
+    *(.rodata)
+    *(.gnu.linkonce.r*)
+    *(.rodata.*)
   } ${RELOCATING+ >DATA}
-  .rodata1 ${RELOCATING-0} : { *(.rodata1) } ${RELOCATING+ >DATA}
+
+  .rodata1 ${RELOCATING-0} : {
+    *(.rodata1)
+    *(.rodata1.*)
+   } ${RELOCATING+ >DATA}
 
   .data  ${RELOCATING-0} :
   {
@@ -100,14 +117,23 @@ SECTIONS
     *(.gnu.linkonce.d*)
     ${CONSTRUCTING+CONSTRUCTORS}
   } ${RELOCATING+ >DATA}
-  .data1 ${RELOCATING-0} : { *(.data1) } ${RELOCATING+ >DATA}
+
+  .data1 ${RELOCATING-0} : {
+    *(.data1)
+    *(.data1.*)
+  } ${RELOCATING+ >DATA}
+
   ${RELOCATING+${CTOR} >DATA}
   ${RELOCATING+${DTOR} >DATA}
 
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
-  .sdata   ${RELOCATING-0} : { *(.sdata) } ${RELOCATING+ >DATA}
+  .sdata   ${RELOCATING-0} : {
+    *(.sdata)
+    *(.sdata.*)
+  } ${RELOCATING+ >DATA}
+
   ${RELOCATING+_edata = .;}
   ${RELOCATING+PROVIDE (edata = .);}
   ${RELOCATING+__bss_start = .;}
@@ -115,9 +141,12 @@ SECTIONS
   .bss     ${RELOCATING-0} :
   {
    *(.dynbss)
+   *(.dynbss.*)
    *(.bss)
+   *(.bss.*)
    *(COMMON)
   } ${RELOCATING+ >DATA}
+
   ${RELOCATING+_end = . ;}
   ${RELOCATING+PROVIDE (end = .);}
 

@@ -1,5 +1,5 @@
 /* BFD support for the Matsushita 10300 processor
-   Copyright 1996, 1997, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1999, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,7 +31,7 @@ const bfd_arch_info_type bfd_am33_arch =
     "am33",
     "am33",
     2,
-    false,
+    FALSE,
     bfd_default_compatible,
     bfd_default_scan,
     0,
@@ -47,7 +47,7 @@ const bfd_arch_info_type bfd_mn10300_arch =
     "mn10300",
     "mn10300",
     2,
-    true, /* the one and only */
+    TRUE, /* the one and only */
     bfd_default_compatible,
     bfd_default_scan,
     &bfd_am33_arch,

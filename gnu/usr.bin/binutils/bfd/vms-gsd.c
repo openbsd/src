@@ -1,6 +1,7 @@
 /* vms-gsd.c -- BFD back-end for VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
    go and read the openVMS linker manual (esp. appendix B)
    if you don't know what's going on here :-)
@@ -20,8 +21,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
-#include <ctype.h>
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -139,14 +138,17 @@ static struct sec_flags_struct evax_section_flags[] = {
 	(SEC_IN_MEMORY|SEC_DATA|SEC_HAS_CONTENTS|SEC_ALLOC|SEC_LOAD) }
 };
 
+static flagword vms_secflag_by_name PARAMS ((bfd *, struct sec_flags_struct *, char *, int));
+static flagword vms_esecflag_by_name PARAMS ((struct sec_flags_struct *, char *, int));
+
 /* Retrieve bfd section flags by name and size  */
 
 static flagword
-vms_secflag_by_name (abfd, section_flags, name, size)
+vms_secflag_by_name (abfd, section_flags, name, hassize)
      bfd *abfd;
      struct sec_flags_struct *section_flags;
      char *name;
-     int size;
+     int hassize;
 {
   int i = 0;
 
@@ -156,14 +158,14 @@ vms_secflag_by_name (abfd, section_flags, name, size)
 	    strcasecmp (name, section_flags[i].name):
 	    strcmp (name, section_flags[i].name)) == 0)
 	{
-	  if (size > 0)
+	  if (hassize)
 	    return section_flags[i].flags_hassize;
 	  else
 	    return section_flags[i].flags_always;
 	}
       i++;
     }
-  if (size > 0)
+  if (hassize)
     return section_flags[i].flags_hassize;
   return section_flags[i].flags_always;
 }
@@ -171,10 +173,10 @@ vms_secflag_by_name (abfd, section_flags, name, size)
 /* Retrieve vms section flags by name and size  */
 
 static flagword
-vms_esecflag_by_name (section_flags, name, size)
+vms_esecflag_by_name (section_flags, name, hassize)
      struct sec_flags_struct *section_flags;
      char *name;
-     int size;
+     int hassize;
 {
   int i = 0;
 
@@ -182,14 +184,14 @@ vms_esecflag_by_name (section_flags, name, size)
     {
       if (strcmp (name, section_flags[i].name) == 0)
 	{
-	  if (size > 0)
+	  if (hassize)
 	    return section_flags[i].vflags_hassize;
 	  else
 	    return section_flags[i].vflags_always;
 	}
       i++;
     }
-  if (size > 0)
+  if (hassize)
     return section_flags[i].vflags_hassize;
   return section_flags[i].vflags_always;
 }
@@ -287,16 +289,16 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 
   switch (objtype)
     {
-      case EOBJ_S_C_EGSD:
- 	PRIV(vms_rec) += 8;	/* skip type, size, l_temp */
-	PRIV(rec_size) -= 8;
-	break;
-      case OBJ_S_C_GSD:
-	PRIV(vms_rec) += 1;
-	PRIV(rec_size) -= 1;
-	break;
-      default:
-	return -1;
+    case EOBJ_S_C_EGSD:
+      PRIV(vms_rec) += 8;	/* skip type, size, l_temp */
+      PRIV(rec_size) -= 8;
+      break;
+    case OBJ_S_C_GSD:
+      PRIV(vms_rec) += 1;
+      PRIV(rec_size) -= 1;
+      break;
+    default:
+      return -1;
     }
 
   /* calculate base address for each section  */
@@ -356,8 +358,9 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 		  return -1;
 		}
 	      old_flags = bfd_getl16 (vms_rec + 2);
-	      section->_raw_size = bfd_getl32(vms_rec + 4);	/* allocation */
-	      new_flags = vms_secflag_by_name (abfd, vax_section_flags, name, section->_raw_size);
+	      section->_raw_size = bfd_getl32 (vms_rec + 4);  /* allocation */
+	      new_flags = vms_secflag_by_name (abfd, vax_section_flags, name,
+					       section->_raw_size > 0);
 	      if (old_flags & EGPS_S_V_REL)
 		new_flags |= SEC_RELOC;
 	      if (old_flags & GPS_S_M_OVR)
@@ -411,24 +414,24 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 		  else if (section->_raw_size > old_section->_raw_size)
 		    {
 		      section->contents = ((unsigned char *)
-				    bfd_realloc (old_section->contents, section->_raw_size));
+					   bfd_realloc (old_section->contents,
+							section->_raw_size));
 		      if (section->contents == NULL)
 			{
 			  bfd_set_error (bfd_error_no_memory);
 			  return -1;
-		        }
+			}
 		    }
 		}
 	      else
 		{
 		  section->contents = ((unsigned char *)
-					bfd_malloc (section->_raw_size));
+				       bfd_zmalloc (section->_raw_size));
 		  if (section->contents == NULL)
 		    {
 		      bfd_set_error (bfd_error_no_memory);
 		      return -1;
 		    }
-		  memset (section->contents, 0, (size_t)section->_raw_size);
 		}
 	      section->_cooked_size = section->_raw_size;
 #if VMS_DEBUG
@@ -453,7 +456,7 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	  case GSD_S_C_SYM:
 	  case GSD_S_C_SYMW:
 	    {
-	      int name_offset, value_offset;
+	      int name_offset = 0, value_offset = 0;
 
 	      /*
 	       * symbol specification (definition or reference)
@@ -470,30 +473,30 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 
 	      switch (gsd_type)
 		{
-		  case GSD_S_C_EPM:
-		    name_offset = 11;
-		    value_offset = 5;
-		    new_flags |= BSF_FUNCTION;
-		    break;
-		  case GSD_S_C_EPMW:
-		    name_offset = 12;
-		    value_offset = 6;
-		    new_flags |= BSF_FUNCTION;
-		    break;
-		  case GSD_S_C_SYM:
-		    if (old_flags & GSY_S_M_DEF)	/* symbol definition */
-		      name_offset = 9;
-		    else
-		      name_offset = 4;
-		    value_offset = 5;
-		    break;
-		  case GSD_S_C_SYMW:
-		    if (old_flags & GSY_S_M_DEF)	/* symbol definition */
-		      name_offset = 10;
-		    else
-		      name_offset = 5;
-		    value_offset = 6;
-		    break;
+		case GSD_S_C_EPM:
+		  name_offset = 11;
+		  value_offset = 5;
+		  new_flags |= BSF_FUNCTION;
+		  break;
+		case GSD_S_C_EPMW:
+		  name_offset = 12;
+		  value_offset = 6;
+		  new_flags |= BSF_FUNCTION;
+		  break;
+		case GSD_S_C_SYM:
+		  if (old_flags & GSY_S_M_DEF)	/* symbol definition */
+		    name_offset = 9;
+		  else
+		    name_offset = 4;
+		  value_offset = 5;
+		  break;
+		case GSD_S_C_SYMW:
+		  if (old_flags & GSY_S_M_DEF)	/* symbol definition */
+		    name_offset = 10;
+		  else
+		    name_offset = 5;
+		  value_offset = 6;
+		  break;
 		}
 
 	      /* save symbol in vms_symbol_table */
@@ -601,7 +604,8 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	      return -1;
 	    old_flags = bfd_getl16 (vms_rec + 6);
 	    section->_raw_size = bfd_getl32 (vms_rec + 8);	/* allocation */
-	    new_flags = vms_secflag_by_name (abfd, evax_section_flags, name, (int) section->_raw_size);
+	    new_flags = vms_secflag_by_name (abfd, evax_section_flags, name,
+					     section->_raw_size > 0);
 	    if (old_flags & EGPS_S_V_REL)
 	      new_flags |= SEC_RELOC;
 	    if (!bfd_set_section_flags (abfd, section, new_flags))
@@ -613,10 +617,9 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	    section->vma = (bfd_vma)base_addr;
 	    base_addr += section->_raw_size;
 	    section->contents = ((unsigned char *)
-				 bfd_malloc (section->_raw_size));
+				 bfd_zmalloc (section->_raw_size));
 	    if (section->contents == NULL)
 	      return -1;
-	    memset (section->contents, 0, (size_t) section->_raw_size);
 	    section->_cooked_size = section->_raw_size;
 #if VMS_DEBUG
 	    vms_debug(4, "egsd psc %d (%s, flags %04x=%s) ",
@@ -631,7 +634,7 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	  {
 	    /* symbol specification (definition or reference)  */
 
-	    symbol = _bfd_vms_make_empty_symbol (abfd);
+	    symbol = bfd_make_empty_symbol (abfd);
 	    if (symbol == 0)
 	      return -1;
 
@@ -658,20 +661,22 @@ _bfd_vms_slurp_gsd (abfd, objtype)
 	      }
 	    else	/* symbol reference */
 	      {
-	        symbol->name =
+		symbol->name =
 		  _bfd_vms_save_counted_string (vms_rec+8);
 #if VMS_DEBUG
 		vms_debug(4, "egsd sym ref #%d (%s, %04x=%s)\n", abfd->symcount,
 			   symbol->name, old_flags, flag2str(gsyflagdesc, old_flags));
 #endif
-	        symbol->section = bfd_make_section (abfd, BFD_UND_SECTION_NAME);
+		symbol->section = bfd_make_section (abfd, BFD_UND_SECTION_NAME);
 	      }
 
 	    symbol->flags = new_flags;
 
 	    /* save symbol in vms_symbol_table  */
 
-	    entry = (vms_symbol_entry *) bfd_hash_lookup (PRIV(vms_symbol_table), symbol->name, true, false);
+	    entry = (vms_symbol_entry *) bfd_hash_lookup (PRIV(vms_symbol_table),
+							  symbol->name,
+							  TRUE, FALSE);
 	    if (entry == (vms_symbol_entry *)NULL)
 	      {
 		bfd_set_error (bfd_error_no_memory);
@@ -818,10 +823,11 @@ _bfd_vms_write_gsd (abfd, objtype)
 	}
       else
 	{
-	  new_flags = vms_esecflag_by_name (evax_section_flags, sname, section->_raw_size);
+	  new_flags = vms_esecflag_by_name (evax_section_flags, sname,
+					    section->_raw_size > 0);
 	}
       _bfd_vms_output_short (abfd, new_flags);
-      _bfd_vms_output_long (abfd, section->_raw_size);
+      _bfd_vms_output_long (abfd, (unsigned long) section->_raw_size);
       _bfd_vms_output_counted (abfd, sname);
       _bfd_vms_output_flush (abfd);
 
@@ -839,6 +845,7 @@ _bfd_vms_write_gsd (abfd, objtype)
 
   for (symnum = 0; symnum < abfd->symcount; symnum++)
     {
+      char *hash;
 
       symbol = abfd->outsymbols[symnum];
       if (*(symbol->name) == '_')
@@ -890,27 +897,26 @@ _bfd_vms_write_gsd (abfd, objtype)
 	}
       _bfd_vms_output_short (abfd, new_flags);
 
-      if (old_flags & (BSF_GLOBAL|BSF_WEAK))		/* symbol definition */
+      if (old_flags & (BSF_GLOBAL | BSF_WEAK))		/* symbol definition */
 	{
-	  if (old_flags & BSF_FUNCTION)
+	  uquad code_address = 0;
+	  unsigned long ca_psindx = 0;
+	  unsigned long psindx;
+
+	  if ((old_flags & BSF_FUNCTION) && symbol->udata.p != NULL)
 	    {
-	      _bfd_vms_output_quad (abfd, symbol->value);
-	      _bfd_vms_output_quad (abfd,
-				     ((asymbol *) (symbol->udata.p))->value);
-	      _bfd_vms_output_long (abfd,
-				     (((asymbol *) (symbol->udata.p))
-				      ->section->index));
-	      _bfd_vms_output_long (abfd, symbol->section->index);
+	      code_address = ((asymbol *) (symbol->udata.p))->value;
+	      ca_psindx = ((asymbol *) (symbol->udata.p))->section->index;
 	    }
-	  else
-	    {
-	      _bfd_vms_output_quad (abfd, symbol->value);	/* L_VALUE */
-	      _bfd_vms_output_quad (abfd, 0);			/* L_CODE_ADDRESS */
-	      _bfd_vms_output_long (abfd, 0);			/* L_CA_PSINDX */
-	      _bfd_vms_output_long (abfd, symbol->section->index);/* L_PSINDX */
-	    }
+	  psindx = symbol->section->index;
+
+	  _bfd_vms_output_quad (abfd, symbol->value);
+	  _bfd_vms_output_quad (abfd, code_address);
+	  _bfd_vms_output_long (abfd, ca_psindx);
+	  _bfd_vms_output_long (abfd, psindx);
 	}
-      _bfd_vms_output_counted (abfd, _bfd_vms_length_hash_symbol (abfd, symbol->name, EOBJ_S_C_SYMSIZ));
+      hash = _bfd_vms_length_hash_symbol (abfd, symbol->name, EOBJ_S_C_SYMSIZ);
+      _bfd_vms_output_counted (abfd, hash);
 
       _bfd_vms_output_flush (abfd);
 

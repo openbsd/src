@@ -256,8 +256,8 @@ __argz_count __argz_stringify __argz_next])
 
    dnl Generate list of files to be processed by xgettext which will
    dnl be included in po/Makefile.  But only do this if the po directory
-   dnl exists in srcdir.
-   if test -d $srcdir/po; then
+   dnl exists in srcdir and contains POTFILES.in.
+   if test -f $srcdir/po/POTFILES.in; then
       test -d po || mkdir po
       if test "x$srcdir" != "x."; then
 	 if test "x`echo $srcdir | sed 's@/.*@@'`" = "x"; then

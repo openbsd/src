@@ -39,7 +39,7 @@ typedef struct inst
 mcore_opcode_info;
 
 #ifdef DEFINE_TABLE
-mcore_opcode_info mcore_table[] =
+const mcore_opcode_info mcore_table[] =
 {
   { "bkpt",	O0,	0,	0x0000 },
   { "sync",	O0,	0,	0x0001 },

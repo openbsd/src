@@ -1,5 +1,6 @@
 /* Header describing internals of gettext library
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
+   Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,11 +31,19 @@
 # endif
 #endif
 
+#ifndef internal_function
+# define internal_function
+#endif
+
 #ifndef W
 # define W(flag, data) ((flag) ? SWAP (data) : (data))
 #endif
 
 
+#ifdef _LIBC
+# include <byteswap.h>
+# define SWAP(i) bswap_32 (i)
+#else
 static nls_uint32 SWAP PARAMS ((nls_uint32 i));
 
 static inline nls_uint32
@@ -43,11 +52,14 @@ SWAP (i)
 {
   return (i << 24) | ((i & 0xff00) << 8) | ((i >> 8) & 0xff00) | (i >> 24);
 }
+#endif
 
 
 struct loaded_domain
 {
   const char *data;
+  int use_mmap;
+  size_t mmap_size;
   int must_swap;
   nls_uint32 nstrings;
   struct string_desc *orig_tab;
@@ -65,8 +77,12 @@ struct binding
 
 struct loaded_l10nfile *_nl_find_domain PARAMS ((const char *__dirname,
 						 char *__locale,
-						 const char *__domainname));
-void _nl_load_domain PARAMS ((struct loaded_l10nfile *__domain));
+						 const char *__domainname))
+     internal_function;
+void _nl_load_domain PARAMS ((struct loaded_l10nfile *__domain))
+     internal_function;
+void _nl_unload_domain PARAMS ((struct loaded_domain *__domain))
+     internal_function;
 
 /* @@ begin of epilog @@ */
 

@@ -1,5 +1,6 @@
 /* windres.c -- a program to manipulate Windows resources
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -31,22 +32,19 @@
    * The rcl program, written by Gunther Ebert
      <gunther.ebert@ixos-leipzig.de>.
 
-   * The res2coff program, written by Pedro A. Aranda <paag@tid.es>.
-
-   */
+   * The res2coff program, written by Pedro A. Aranda <paag@tid.es>.  */
 
 #include "bfd.h"
 #include "getopt.h"
 #include "bucomm.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "obstack.h"
 #include "windres.h"
-
 #include <assert.h>
-#include <ctype.h>
 #include <time.h>
 
-/* used by resrc.c at least */
+/* Used by resrc.c at least.  */
 
 int verbose = 0;
 
@@ -104,47 +102,17 @@ struct include_dir
 
 static struct include_dir *include_dirs;
 
-/* Long options.  */
-
-/* 150 isn't special; it's just an arbitrary non-ASCII char value.  */
-
-#define OPTION_DEFINE 150
-#define OPTION_HELP (OPTION_DEFINE + 1)
-#define OPTION_INCLUDE_DIR (OPTION_HELP + 1)
-#define OPTION_LANGUAGE (OPTION_INCLUDE_DIR + 1)
-#define OPTION_PREPROCESSOR (OPTION_LANGUAGE + 1)
-#define OPTION_USE_TEMP_FILE (OPTION_PREPROCESSOR + 1)
-#define OPTION_NO_USE_TEMP_FILE (OPTION_USE_TEMP_FILE + 1)
-#define OPTION_VERSION (OPTION_NO_USE_TEMP_FILE + 1)
-#define OPTION_YYDEBUG (OPTION_VERSION + 1)
-
-static const struct option long_options[] =
-{
-  {"define", required_argument, 0, OPTION_DEFINE},
-  {"help", no_argument, 0, OPTION_HELP},
-  {"include-dir", required_argument, 0, OPTION_INCLUDE_DIR},
-  {"input-format", required_argument, 0, 'I'},
-  {"language", required_argument, 0, OPTION_LANGUAGE},
-  {"output-format", required_argument, 0, 'O'},
-  {"preprocessor", required_argument, 0, OPTION_PREPROCESSOR},
-  {"target", required_argument, 0, 'F'},
-  {"use-temp-file", no_argument, 0, OPTION_USE_TEMP_FILE},
-  {"no-use-temp-file", no_argument, 0, OPTION_NO_USE_TEMP_FILE},
-  {"verbose", no_argument, 0, 'v'},
-  {"version", no_argument, 0, OPTION_VERSION},
-  {"yydebug", no_argument, 0, OPTION_YYDEBUG},
-  {0, no_argument, 0, 0}
-};
-
 /* Static functions.  */
 
 static void res_init PARAMS ((void));
 static int extended_menuitems PARAMS ((const struct menuitem *));
-static enum res_format format_from_name PARAMS ((const char *));
+static enum res_format format_from_name PARAMS ((const char *, int));
 static enum res_format format_from_filename PARAMS ((const char *, int));
 static void usage PARAMS ((FILE *, int));
 static int cmp_res_entry PARAMS ((const PTR, const PTR));
 static struct res_directory *sort_resources PARAMS ((struct res_directory *));
+static void reswr_init PARAMS ((void));
+static const char * quot PARAMS ((const char *));
 
 /* When we are building a resource tree, we allocate everything onto
    an obstack, so that we can free it all at once if we want.  */
@@ -441,11 +409,9 @@ define_resource (resources, cids, ids, dupok)
 
   re->u.res = ((struct res_resource *)
 	       res_alloc (sizeof (struct res_resource)));
+  memset (re->u.res, 0, sizeof (struct res_resource));
 
   re->u.res->type = RES_TYPE_UNINITIALIZED;
-  memset (&re->u.res->res_info, 0, sizeof (struct res_res_info));
-  memset (&re->u.res->coff_info, 0, sizeof (struct res_coff_info));
-
   return re->u.res;
 }
 
@@ -588,8 +554,9 @@ extended_menuitems (menuitems)
 /* Convert a string to a format type, or exit if it can't be done.  */
 
 static enum res_format
-format_from_name (name)
+format_from_name (name, exit_on_error)
      const char *name;
+     int exit_on_error;
 {
   const struct format_map *m;
 
@@ -597,7 +564,7 @@ format_from_name (name)
     if (strcasecmp (m->name, name) == 0)
       break;
 
-  if (m->name == NULL)
+  if (m->name == NULL && exit_on_error)
     {
       non_fatal (_("unknown format type `%s'"), name);
       fprintf (stderr, _("%s: supported formats:"), program_name);
@@ -638,13 +605,11 @@ format_from_filename (filename, input)
 
   /* If we don't recognize the name of an output file, assume it's a
      COFF file.  */
-
   if (! input)
     return RES_FORMAT_COFF;
 
   /* Read the first few bytes of the file to see if we can guess what
      it is.  */
-
   e = fopen (filename, FOPEN_RB);
   if (e == NULL)
     fatal ("%s: %s", filename, strerror (errno));
@@ -679,11 +644,11 @@ format_from_filename (filename, input)
     return RES_FORMAT_RES;
 
   /* If every character is printable or space, assume it's an RC file.  */
-  if ((isprint (b1) || isspace (b1))
-      && (isprint (b2) || isspace (b2))
-      && (isprint (b3) || isspace (b3))
-      && (isprint (b4) || isspace (b4))
-      && (isprint (b5) || isspace (b5)))
+  if ((ISPRINT (b1) || ISSPACE (b1))
+      && (ISPRINT (b2) || ISSPACE (b2))
+      && (ISPRINT (b3) || ISSPACE (b3))
+      && (ISPRINT (b4) || ISSPACE (b4))
+      && (ISPRINT (b5) || ISSPACE (b5)))
     return RES_FORMAT_RC;
 
   /* Otherwise, we give up.  */
@@ -701,45 +666,48 @@ usage (stream, status)
      FILE *stream;
      int status;
 {
-  fprintf (stream, _("Usage: %s [options] [input-file] [output-file]\n"),
+  fprintf (stream, _("Usage: %s [option(s)] [input-file] [output-file]\n"),
 	   program_name);
-  fprintf (stream, _("\
-Options:\n\
-  -i FILE, --input FILE       Name input file\n\
-  -o FILE, --output FILE      Name output file\n\
-  -I FORMAT, --input-format FORMAT\n\
-                              Specify input format\n\
-  -O FORMAT, --output-format FORMAT\n\
-                              Specify output format\n\
-  -F TARGET, --target TARGET  Specify COFF target\n\
-  --preprocessor PROGRAM      Program to use to preprocess rc file\n\
-  --include-dir DIR           Include directory when preprocessing rc file\n\
-  -DSYM[=VAL], --define SYM[=VAL]\n\
-                              Define SYM when preprocessing rc file\n\
-  -v                          Verbose - tells you what it's doing\n\
-  --language VAL              Set language when reading rc file\n\
-  --use-temp-file             Use a temporary file instead of popen to read\n\
-                              the preprocessor output\n\
-  --no-use-temp-file          Use popen (default)\n"));
+  fprintf (stream, _(" The options are:\n\
+  -i --input=<file>            Name input file\n\
+  -o --output=<file>           Name output file\n\
+  -J --input-format=<format>   Specify input format\n\
+  -O --output-format=<format>  Specify output format\n\
+  -F --target=<target>         Specify COFF target\n\
+     --preprocessor=<program>  Program to use to preprocess rc file\n\
+  -I --include-dir=<dir>       Include directory when preprocessing rc file\n\
+  -D --define <sym>[=<val>]    Define SYM when preprocessing rc file\n\
+  -U --undefine <sym>          Undefine SYM when preprocessing rc file\n\
+  -v --verbose                 Verbose - tells you what it's doing\n\
+  -l --language=<val>          Set language when reading rc file\n\
+     --use-temp-file           Use a temporary file instead of popen to read\n\
+                               the preprocessor output\n\
+     --no-use-temp-file        Use popen (default)\n"));
 #ifdef YYDEBUG
   fprintf (stream, _("\
-  --yydebug                   Turn on parser debugging\n"));
+     --yydebug                 Turn on parser debugging\n"));
 #endif
   fprintf (stream, _("\
-  --help                      Print this help message\n\
-  --version                   Print version information\n"));
+  -r                           Ignored for compatibility with rc\n\
+  -h --help                    Print this help message\n\
+  -V --version                 Print version information\n"));
   fprintf (stream, _("\
 FORMAT is one of rc, res, or coff, and is deduced from the file name\n\
 extension if not specified.  A single file name is an input file.\n\
 No input-file is stdin, default rc.  No output-file is stdout, default rc.\n"));
+
   list_supported_targets (program_name, stream);
+
   if (status == 0)
     fprintf (stream, _("Report bugs to %s\n"), REPORT_BUGS_TO);
+
   exit (status);
 }
 
-/* Quote characters that will confuse the shell when we run the preprocessor */
-static const char *quot (string)
+/* Quote characters that will confuse the shell when we run the preprocessor.  */
+
+static const char *
+quot (string)
      const char *string;
 {
   static char *buf = 0;
@@ -766,6 +734,39 @@ static const char *quot (string)
   return buf;
 }
 
+/* Long options.  */
+
+/* 150 isn't special; it's just an arbitrary non-ASCII char value.  */
+
+#define OPTION_PREPROCESSOR	150
+#define OPTION_USE_TEMP_FILE	(OPTION_PREPROCESSOR + 1)
+#define OPTION_NO_USE_TEMP_FILE	(OPTION_USE_TEMP_FILE + 1)
+#define OPTION_YYDEBUG		(OPTION_NO_USE_TEMP_FILE + 1)
+
+static const struct option long_options[] =
+{
+  {"input", required_argument, 0, 'i'},
+  {"output", required_argument, 0, 'o'},
+  {"input-format", required_argument, 0, 'J'},
+  {"output-format", required_argument, 0, 'O'},
+  {"target", required_argument, 0, 'F'},
+  {"preprocessor", required_argument, 0, OPTION_PREPROCESSOR},
+  {"include-dir", required_argument, 0, 'I'},
+  {"define", required_argument, 0, 'D'},
+  {"undefine", required_argument, 0, 'U'},
+  {"verbose", no_argument, 0, 'v'},
+  {"language", required_argument, 0, 'l'},
+  {"use-temp-file", no_argument, 0, OPTION_USE_TEMP_FILE},
+  {"no-use-temp-file", no_argument, 0, OPTION_NO_USE_TEMP_FILE},
+  {"yydebug", no_argument, 0, OPTION_YYDEBUG},
+  {"version", no_argument, 0, 'V'},
+  {"help", no_argument, 0, 'h'},
+  {0, no_argument, 0, 0}
+};
+
+/* This keeps gcc happy when using -Wmissing-prototypes -Wstrict-prototypes.  */
+int main PARAMS ((int, char **));
+
 /* The main function.  */
 
 int
@@ -777,6 +778,7 @@ main (argc, argv)
   char *input_filename;
   char *output_filename;
   enum res_format input_format;
+  enum res_format input_format_tmp;
   enum res_format output_format;
   char *target;
   char *preprocessor;
@@ -788,6 +790,9 @@ main (argc, argv)
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
+#endif
+#if defined (HAVE_SETLOCALE)
+  setlocale (LC_CTYPE, "");
 #endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -807,10 +812,10 @@ main (argc, argv)
   target = NULL;
   preprocessor = NULL;
   preprocargs = NULL;
-  language = -1;
+  language = 0x409;   /* LANG_ENGLISH, SUBLANG_ENGLISH_US.  */
   use_temp_file = 0;
 
-  while ((c = getopt_long (argc, argv, "i:o:I:O:F:D:v", long_options,
+  while ((c = getopt_long (argc, argv, "f:i:l:o:I:J:O:F:D:U:rhHvV", long_options,
 			   (int *) 0)) != EOF)
     {
       switch (c)
@@ -819,16 +824,32 @@ main (argc, argv)
 	  input_filename = optarg;
 	  break;
 
+	case 'f':
+	  /* For compatability with rc we accept "-fo <name>" as being the
+	     equivalent of "-o <name>".  We do not advertise this fact
+	     though, as we do not want users to use non-GNU like command
+	     line switches.  */
+	  if (*optarg != 'o')
+	    fatal (_("invalid option -f\n"));
+	  optarg++;
+	  if (* optarg == 0)
+	    {
+	      if (optind == argc)
+		fatal (_("No filename following the -fo option.\n"));	    
+	      optarg = argv [optind++];
+	    }
+	  /* Fall through.  */
+
 	case 'o':
 	  output_filename = optarg;
 	  break;
 
-	case 'I':
-	  input_format = format_from_name (optarg);
+	case 'J':
+	  input_format = format_from_name (optarg, 1);
 	  break;
 
 	case 'O':
-	  output_format = format_from_name (optarg);
+	  output_format = format_from_name (optarg, 1);
 	  break;
 
 	case 'F':
@@ -840,12 +861,12 @@ main (argc, argv)
 	  break;
 
 	case 'D':
-	case OPTION_DEFINE:
+	case 'U':
 	  if (preprocargs == NULL)
 	    {
 	      quotedarg = quot (optarg);
 	      preprocargs = xmalloc (strlen (quotedarg) + 3);
-	      sprintf (preprocargs, "-D%s", quotedarg);
+	      sprintf (preprocargs, "-%c%s", c, quotedarg);
 	    }
 	  else
 	    {
@@ -853,17 +874,30 @@ main (argc, argv)
 
 	      quotedarg = quot (optarg);
 	      n = xmalloc (strlen (preprocargs) + strlen (quotedarg) + 4);
-	      sprintf (n, "%s -D%s", preprocargs, quotedarg);
+	      sprintf (n, "%s -%c%s", preprocargs, c, quotedarg);
 	      free (preprocargs);
 	      preprocargs = n;
 	    }
+	  break;
+
+	case 'r':
+	  /* Ignored for compatibility with rc.  */
 	  break;
 
 	case 'v':
 	  verbose ++;
 	  break;
 
-	case OPTION_INCLUDE_DIR:
+	case 'I':
+	  /* For backward compatibility, should be removed in the future.  */
+	  input_format_tmp = format_from_name (optarg, 0);
+	  if (input_format_tmp != RES_FORMAT_UNKNOWN)
+	    {
+	      fprintf (stderr, _("Option -I is deprecated for setting the input format, please use -J instead.\n"));
+	      input_format = input_format_tmp;
+	      break;
+	    }
+	  
 	  if (preprocargs == NULL)
 	    {
 	      quotedarg = quot (optarg);
@@ -895,7 +929,7 @@ main (argc, argv)
 
 	  break;
 
-	case OPTION_LANGUAGE:
+	case 'l':
 	  language = strtol (optarg, (char **) NULL, 16);
 	  break;
 
@@ -913,11 +947,12 @@ main (argc, argv)
 	  break;
 #endif
 
-	case OPTION_HELP:
+	case 'h':
+	case 'H':
 	  usage (stdout, 0);
 	  break;
 
-	case OPTION_VERSION:
+	case 'V':
 	  print_version ("windres");
 	  break;
 
@@ -959,7 +994,6 @@ main (argc, argv)
     }
 
   /* Read the input file.  */
-
   switch (input_format)
     {
     default:
@@ -981,11 +1015,9 @@ main (argc, argv)
 
   /* Sort the resources.  This is required for COFF, convenient for
      rc, and unimportant for res.  */
-
   resources = sort_resources (resources);
 
   /* Write the output file.  */
-
   reswr_init ();
 
   switch (output_format)

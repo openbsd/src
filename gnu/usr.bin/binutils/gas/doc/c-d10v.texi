@@ -227,7 +227,7 @@ Any symbol followed by @code{@@word} will be replaced by the symbol's value
 shifted right by 2.  This is used in situations such as loading a register
 with the address of a function (or any other code fragment).  For example, if
 you want to load a register with the location of the function @code{main} then
-jump to that function, you could do it as follws:
+jump to that function, you could do it as follows:
 @smallexample
 @group
 ldi     r2, main@@word

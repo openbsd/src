@@ -1,5 +1,6 @@
 /* Disassemble V850 instructions.
-   Copyright 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -41,22 +42,25 @@ static const char *const v850_cc_names[] =
 { "v", "c/l", "z", "nh", "s/n", "t", "lt", "le", 
   "nv", "nc/nl", "nz", "h", "ns/p", "sa", "ge", "gt" };
 
+static int disassemble
+  PARAMS ((bfd_vma, struct disassemble_info *, unsigned long));
+
 static int
 disassemble (memaddr, info, insn)
      bfd_vma memaddr;
      struct disassemble_info *info;
      unsigned long insn;
 {
-  struct v850_opcode *          op = (struct v850_opcode *)v850_opcodes;
-  const struct v850_operand *   operand;
-  int                           match = 0;
-  int                         	short_op = ((insn & 0x0600) != 0x0600);
-  int				bytes_read;
-  int				target_processor;
+  struct v850_opcode *op = (struct v850_opcode *)v850_opcodes;
+  const struct v850_operand *operand;
+  int match = 0;
+  int short_op = ((insn & 0x0600) != 0x0600);
+  int bytes_read;
+  int target_processor;
   
   /* Special case: 32 bit MOV */
   if ((insn & 0xffe0) == 0x0620)
-    short_op = true;
+    short_op = 1;
   
   bytes_read = short_op ? 2 : 4;
   
@@ -74,10 +78,6 @@ disassemble (memaddr, info, insn)
     case bfd_mach_v850e:
       target_processor = PROCESSOR_V850E;
       break;
-
-    case bfd_mach_v850ea: 
-      target_processor = PROCESSOR_V850EA;
-      break;
     }
   
   /* Find the opcode.  */
@@ -86,9 +86,9 @@ disassemble (memaddr, info, insn)
       if ((op->mask & insn) == op->opcode
 	  && (op->processors & target_processor))
 	{
-	  const unsigned char * opindex_ptr;
-	  unsigned int          opnum;
-	  unsigned int          memop;
+	  const unsigned char *opindex_ptr;
+	  unsigned int opnum;
+	  unsigned int memop;
 
 	  match = 1;
 	  (*info->fprintf_func) (info->stream, "%s\t", op->name);
@@ -112,10 +112,10 @@ disassemble (memaddr, info, insn)
 	       *opindex_ptr != 0;
 	       opindex_ptr++, opnum++)
 	    {
-	      long 	value;
-	      int  	flag;
-	      int       status;
-	      bfd_byte	buffer[ 4 ];
+	      long value;
+	      int flag;
+	      int status;
+	      bfd_byte buffer[4];
 	      
 	      operand = &v850_operands[*opindex_ptr];
 	      
@@ -204,11 +204,11 @@ disassemble (memaddr, info, insn)
 		    static int list12_regs[32]   = { 30,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0, 31, 29, 28, 23, 22, 21, 20, 27, 26, 25, 24 };
 		    static int list18_h_regs[32] = { 19, 18, 17, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 30, 31, 29, 28, 23, 22, 21, 20, 27, 26, 25, 24 };
 		    static int list18_l_regs[32] = {  3,  2,  1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 14, 15, 13, 12,  7,  6,  5,  4, 11, 10,  9,  8 };
-		    int *             regs;
-		    int               i;
+		    int *regs;
+		    int i;
 		    unsigned long int mask = 0;
-		    int               pc   = false;
-		    int               sr   = false;
+		    int pc = 0;
+		    int sr = 0;
 		    
 		    
 		    switch (operand->shift)
@@ -231,8 +231,8 @@ disassemble (memaddr, info, insn)
 			      default: mask |= (1 << regs[ i ]); break;
 				/* xgettext:c-format */
 			      case 0:  fprintf (stderr, _("unknown pop reg: %d\n"), i ); abort();
-			      case -1: pc = true; break;
-			      case -2: sr = true; break;
+			      case -1: pc = 1; break;
+			      case -2: sr = 1; break;
 			      }
 			  }
 		      }
@@ -244,7 +244,7 @@ disassemble (memaddr, info, insn)
 			if (mask)
 			  {
 			    unsigned int bit;
-			    int          shown_one = false;
+			    int shown_one = 0;
 			    
 			    for (bit = 0; bit < 32; bit++)
 			      if (mask & (1 << bit))
@@ -255,7 +255,7 @@ disassemble (memaddr, info, insn)
 				  if (shown_one)
 				    info->fprintf_func (info->stream, ", ");
 				  else
-				    shown_one = true;
+				    shown_one = 1;
 				  
 				  info->fprintf_func (info->stream, v850_reg_names[first]);
 				  
@@ -348,8 +348,8 @@ print_insn_v850 (memaddr, info)
      bfd_vma memaddr;
      struct disassemble_info * info;
 {
-  int           status;
-  bfd_byte      buffer[ 4 ];
+  int status;
+  bfd_byte buffer[4];
   unsigned long insn = 0;
 
   /* First figure out how big the opcode is.  */

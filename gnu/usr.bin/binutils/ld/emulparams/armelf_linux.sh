@@ -10,6 +10,7 @@ GENERATE_SHLIB_SCRIPT=yes
 
 DATA_START_SYMBOLS='__data_start = . ;';
 OTHER_TEXT_SECTIONS='*(.glue_7t) *(.glue_7)'
+OTHER_READONLY_SECTIONS='.note.gnu.arm.ident : { KEEP (*(.note.gnu.arm.ident)) }'
 OTHER_BSS_SYMBOLS='__bss_start__ = .;'
 OTHER_BSS_END_SYMBOLS='_bss_end__ = . ; __bss_end__ = . ; __end__ = . ;'
 

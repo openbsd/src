@@ -1,9 +1,9 @@
 /* tc-cris.h -- Header file for tc-cris.c, the CRIS GAS port.
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
-   Updated, BFDized and GNUified by Hans-Peter Nilsson.
+   Updates, BFDizing, GNUifying and ELF by Hans-Peter Nilsson.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -75,27 +75,55 @@ extern const int md_long_jump_size;
 extern const struct relax_type md_cris_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_cris_relax_table
 
-#define TC_HANDLES_FX_DONE
+long cris_relax_frag PARAMS ((segT, fragS *, long));
 
-#define TC_FORCE_RELOCATION(fixp) md_cris_force_relocation (fixp)
+/* GAS only handles relaxations for pc-relative data targeting addresses
+   in the same segment, so we have to handle the rest on our own.  */
+#define md_relax_frag(SEG, FRAGP, STRETCH)		\
+ ((FRAGP)->fr_symbol != NULL				\
+  && S_GET_SEGMENT ((FRAGP)->fr_symbol) == (SEG)	\
+  ? relax_frag (SEG, FRAGP, STRETCH)			\
+  : cris_relax_frag (SEG, FRAGP, STRETCH))
+
+#define TC_FORCE_RELOCATION(FIX) md_cris_force_relocation (FIX)
 extern int md_cris_force_relocation PARAMS ((struct fix *));
 
-/* This is really a workaround for a bug in write.c that resolves relocs
-   for weak symbols - it should be postponed to the link stage or later.
-   */
-#define tc_fix_adjustable(X)				\
- ((! (X)->fx_addsy || ! S_IS_WEAK((X)->fx_addsy))	\
-  && (X)->fx_r_type != BFD_RELOC_VTABLE_INHERIT		\
-  && (X)->fx_r_type != BFD_RELOC_VTABLE_ENTRY)
+#define IS_CRIS_PIC_RELOC(RTYPE)			\
+  ((RTYPE) == BFD_RELOC_CRIS_16_GOT			\
+   || (RTYPE) == BFD_RELOC_CRIS_32_GOT			\
+   || (RTYPE) == BFD_RELOC_CRIS_16_GOTPLT		\
+   || (RTYPE) == BFD_RELOC_CRIS_32_GOTPLT		\
+   || (RTYPE) == BFD_RELOC_CRIS_32_GOTREL		\
+   || (RTYPE) == BFD_RELOC_CRIS_32_PLT_GOTREL		\
+   || (RTYPE) == BFD_RELOC_CRIS_32_PLT_PCREL)
+
+/* Make sure we don't resolve fixups for which we want to emit dynamic
+   relocations.  FIXME: Set fx_plt instead of using IS_CRIS_PIC_RELOC.  */
+#define TC_FORCE_RELOCATION_LOCAL(FIX)			\
+  (!(FIX)->fx_pcrel					\
+   || (FIX)->fx_plt					\
+   || IS_CRIS_PIC_RELOC ((FIX)->fx_r_type)		\
+   || TC_FORCE_RELOCATION (FIX))
+
+/* For some reloc types, don't adjust fixups by reducing to a section
+   symbol.  */
+#define tc_fix_adjustable(FIX)				\
+ ((FIX)->fx_r_type != BFD_RELOC_VTABLE_INHERIT		\
+  && (FIX)->fx_r_type != BFD_RELOC_VTABLE_ENTRY		\
+  && (! IS_CRIS_PIC_RELOC ((FIX)->fx_r_type)		\
+      || (FIX)->fx_r_type == BFD_RELOC_CRIS_32_GOTREL))
 
 /* When we have fixups against constant expressions, we get a GAS-specific
    section symbol at no extra charge for obscure reasons in
    adjust_reloc_syms.  Since ELF outputs section symbols, it gladly
-   outputs this "*ABS*" symbol in every object.  Avoid that.  */
+   outputs this "*ABS*" symbol in every object.  Avoid that.
+   Also, don't emit undefined symbols (that aren't used in relocations).
+   They pop up when tentatively parsing register names as symbols.  */
 #define tc_frob_symbol(symp, punt)			\
  do {							\
-  if (OUTPUT_FLAVOR == bfd_target_elf_flavour		\
-      && (symp) == section_symbol (absolute_section))	\
+  if ((OUTPUT_FLAVOR == bfd_target_elf_flavour		\
+       && (symp) == section_symbol (absolute_section))	\
+      || ! S_IS_DEFINED (symp))				\
     (punt) = 1;						\
  } while (0)
 

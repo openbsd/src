@@ -1,5 +1,5 @@
 /* BFD i370 CPU definition
-   Copyright 1994, 1995, 1996, 1998, 1999, 2000
+   Copyright 1994, 1995, 1996, 1998, 1999, 2000, 2002
    Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas <linas@linas.org> in 1998, 1999
@@ -24,27 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-/* The common i360/370 architecture comes in many forms  */
-
-static const bfd_arch_info_type *i370_compatible
-  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
-
-static const bfd_arch_info_type *
-i370_compatible (a, b)
-     const bfd_arch_info_type *a;
-     const bfd_arch_info_type *b;
-{
-  BFD_ASSERT (a->arch == bfd_arch_i370);
-  switch (b->arch)
-    {
-    default:
-      return NULL;
-    case bfd_arch_i370:
-      return bfd_default_compatible (a, b);
-    }
-  /*NOTREACHED*/
-}
-
 static const bfd_arch_info_type arch_info_struct[] =
 {
   /* hack alert: old old machines are really 16 and 24 bit arch ...  */
@@ -57,8 +36,8 @@ static const bfd_arch_info_type arch_info_struct[] =
     "i370",
     "i370:360",
     3,
-    false, /* not the default */
-    i370_compatible,
+    FALSE, /* not the default */
+    bfd_default_compatible,
     bfd_default_scan,
     &arch_info_struct[1]
   },
@@ -71,8 +50,8 @@ static const bfd_arch_info_type arch_info_struct[] =
     "i370",
     "i370:370",
     3,
-    false, /* not the default */
-    i370_compatible,
+    FALSE, /* not the default */
+    bfd_default_compatible,
     bfd_default_scan,
     0
   },
@@ -88,8 +67,8 @@ const bfd_arch_info_type bfd_i370_arch =
     "i370",
     "i370:common",
     3,
-    true, /* the default */
-    i370_compatible,
+    TRUE, /* the default */
+    bfd_default_compatible,
     bfd_default_scan,
     &arch_info_struct[0]
   };

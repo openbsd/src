@@ -16,26 +16,24 @@ TEXT_START_ADDR=0x80000
 
 MAXPAGESIZE=8192
 
-# FIXME: GOT, PLT...
-
 # We don't do the hoops through DEFINED to provide [_]*start, as it
 # doesn't work with --gc-sections, and the start-name is pretty fixed
 # anyway.
 TEXT_START_SYMBOLS='PROVIDE (__Stext = .);'
 
 # Smuggle an "OTHER_TEXT_END_SYMBOLS" here.
-OTHER_READONLY_SECTIONS='PROVIDE (__Etext = .);'
+OTHER_READONLY_SECTIONS="${RELOCATING+PROVIDE (__Etext = .);}"
 DATA_START_SYMBOLS='PROVIDE (__Sdata = .);'
 
 # Smuggle an "OTHER_DATA_END_SYMBOLS" here.
-OTHER_GOT_SECTIONS='PROVIDE (__Edata = .);'
+OTHER_SDATA_SECTIONS="${RELOCATING+PROVIDE (__Edata = .);}"
 OTHER_BSS_SYMBOLS='PROVIDE (__Sbss = .);'
 OTHER_BSS_END_SYMBOLS='PROVIDE (__Ebss = .);'
 
-# Smuggle an "OTHER_ALL_END_SYMBOLS" here.
 # Also add the other symbols provided for rsim/xsim and elinux.
-OTHER_RELOCATING_SECTIONS='
-PROVIDE (__Eall = .);
-PROVIDE(__Endmem = 0x10000000); 
-PROVIDE(__Stacksize = 0);
+OTHER_END_SYMBOLS='
+  PROVIDE (__Eall = .);
+  PROVIDE (__Endmem = 0x10000000); 
+  PROVIDE (__Stacksize = 0);
 '
+NO_SMALL_DATA=yes

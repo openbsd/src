@@ -1,5 +1,6 @@
 /* tc-fr30.c -- Assembler for the Fujitsu FR30.
-   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/fr30-desc.h"
@@ -66,8 +67,8 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
-     int    c;
-     char * arg;
+     int c ATTRIBUTE_UNUSED;
+     char *arg ATTRIBUTE_UNUSED;
 {
   switch (c)
     {
@@ -95,10 +96,6 @@ const pseudo_typeS md_pseudo_table[] =
 void
 md_begin ()
 {
-  flagword applicable;
-  segT     seg;
-  subsegT  subseg;
-
   /* Initialize the `cgen' interface.  */
 
   /* Set the machine number and endian.  */
@@ -114,12 +111,11 @@ md_begin ()
 
 void
 md_assemble (str)
-     char * str;
+     char *str;
 {
   static int last_insn_had_delay_slot = 0;
   fr30_insn insn;
-  char *    errmsg;
-  char *    str2 = NULL;
+  char *errmsg;
 
   /* Initialize GAS's cgen interface for a new instruction.  */
   gas_cgen_init_parse ();
@@ -172,7 +168,7 @@ md_section_align (segment, size)
 
 symbolS *
 md_undefined_symbol (name)
-  char * name;
+  char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -207,6 +203,7 @@ const relax_typeS md_relax_table[] =
   {0x2000000 - 1 - 2, -0x2000000 - 2, 4, 0 }
 };
 
+#if 0
 long
 fr30_relax_frag (segment, fragP, stretch)
      segT    segment;
@@ -248,6 +245,7 @@ fr30_relax_frag (segment, fragP, stretch)
 
   return growth;
 }
+#endif
 
 /* Return an initial guess of the length by which a fragment must grow to
    hold a branch to reach its destination.
@@ -273,7 +271,9 @@ md_estimate_size_before_relax (fragP, segment)
 
   if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
     {
+#if 0
       int    old_fr_fix = fragP->fr_fix;
+#endif
 
       /* The symbol is undefined in this segment.
 	 Change the relaxation subtype to the max allowable and leave
@@ -337,9 +337,9 @@ md_estimate_size_before_relax (fragP, segment)
 
 void
 md_convert_frag (abfd, sec, fragP)
-  bfd *   abfd;
-  segT    sec;
-  fragS * fragP;
+  bfd *abfd ATTRIBUTE_UNUSED;
+  segT sec ATTRIBUTE_UNUSED;
+  fragS *fragP ATTRIBUTE_UNUSED;
 {
 #if 0
   char * opcode;
@@ -387,7 +387,6 @@ md_convert_frag (abfd, sec, fragP)
     {
       /* Address we want to reach in file space.  */
       target_address = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
-      target_address += symbol_get_frag (fragP->fr_symbol)->fr_address;
       addend = (target_address - (opcode_address & -4)) >> 2;
     }
 
@@ -450,9 +449,9 @@ md_pcrel_from_section (fixP, sec)
 
 bfd_reloc_code_real_type
 md_cgen_lookup_reloc (insn, operand, fixP)
-     const CGEN_INSN *    insn;
-     const CGEN_OPERAND * operand;
-     fixS *               fixP;
+     const CGEN_INSN *insn ATTRIBUTE_UNUSED;
+     const CGEN_OPERAND *operand;
+     fixS *fixP;
 {
   switch (operand->type)
     {
@@ -470,21 +469,6 @@ md_cgen_lookup_reloc (insn, operand, fixP)
     }
 
   return BFD_RELOC_NONE;
-}
-
-/* See whether we need to force a relocation into the output file.
-   This is used to force out switch and PC relative relocations when
-   relaxing.  */
-
-int
-fr30_force_relocation (fix)
-     fixS * fix;
-{
-  if (   fix->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fix->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    return 1;
-
-  return 0;
 }
 
 /* Write a value out to the object file, using the appropriate endianness.  */
@@ -516,7 +500,6 @@ md_atof (type, litP, sizeP)
   int              prec;
   LITTLENUM_TYPE   words [MAX_LITTLENUMS];
   char *           t;
-  char *           atof_ieee ();
 
   switch (type)
     {
@@ -557,6 +540,8 @@ md_atof (type, litP, sizeP)
 }
 
 /* Worker function for fr30_is_colon_insn().  */
+static char restore_colon PARAMS ((int));
+
 static char
 restore_colon (advance_i_l_p_by)
      int advance_i_l_p_by;
@@ -615,7 +600,7 @@ fr30_is_colon_insn (start)
 		continue;
 
 	      while (len --)
-		if (tolower (start [len]) != insn [len])
+		if (TOLOWER (start [len]) != insn [len])
 		  break;
 
 	      if (len == -1)
@@ -642,24 +627,12 @@ fr30_is_colon_insn (start)
   return 0;
 }
 
-boolean
+bfd_boolean
 fr30_fix_adjustable (fixP)
    fixS * fixP;
 {
-  if (fixP->fx_addsy == NULL)
-    return 1;
-
-#if 0
-  /* Prevent all adjustments to global symbols.  */
-  if (S_IS_EXTERN (fixP->fx_addsy))
-    return 0;
-
-  if (S_IS_WEAK (fixP->fx_addsy))
-    return 0;
-#endif
-
   /* We need the symbol name for the VTABLE entries */
-  if (   fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
+  if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
     return 0;
 

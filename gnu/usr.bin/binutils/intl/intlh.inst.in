@@ -26,7 +26,7 @@
 #define __USE_GNU_GETTEXT 1
 
 #ifndef PARAMS
-# if __STDC__
+# if __STDC__ || defined __cplusplus
 #  define PARAMS(args) args
 # else
 #  define PARAMS(args) ()

@@ -1,22 +1,22 @@
 /* GAS interface for targets using CGEN: Cpu tools GENerator.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
-This file is part of GAS, the GNU Assembler.
+   This file is part of GAS, the GNU Assembler.
 
-GAS is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   GAS is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-GAS is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   GAS is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with GAS; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with GAS; see the file COPYING.  If not, write to the Free Software
+   Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <setjmp.h>
 #include "ansidecl.h"
@@ -28,6 +28,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "subsegs.h"
 #include "cgen.h"
 #include "dwarf2dbg.h"
+
+static void queue_fixup PARAMS ((int, int, expressionS *));
 
 /* Opcode table descriptor, must be set by md_begin.  */
 
@@ -59,7 +61,8 @@ cgen_asm_record_register (name, number)
    OPINDEX is the index in the operand table.
    OPINFO is something the caller chooses to help in reloc determination.  */
 
-struct fixup {
+struct fixup
+{
   int opindex;
   int opinfo;
   expressionS exp;
@@ -94,61 +97,119 @@ queue_fixup (opindex, opinfo, expP)
   ++ num_fixups;
 }
 
-/* The following three functions allow a backup of the fixup chain to be made,
-   and to have this backup be swapped with the current chain.  This allows
-   certain ports, eg the m32r, to swap two instructions and swap their fixups
-   at the same time.  */
-/* ??? I think with cgen_asm_finish_insn (or something else) there is no
-   more need for this.  */
+/* The following functions allow fixup chains to be stored, retrieved,
+   and swapped.  They are a generalization of a pre-existing scheme
+   for storing, restoring and swapping fixup chains that was used by
+   the m32r port.  The functionality is essentially the same, only
+   instead of only being able to store a single fixup chain, an entire
+   array of fixup chains can be stored.  It is the user's responsibility
+   to keep track of how many fixup chains have been stored and which
+   elements of the array they are in.
 
-static struct fixup saved_fixups[GAS_CGEN_MAX_FIXUPS];
-static int saved_num_fixups;
+   The algorithms used are the same as in the old scheme.  Other than the
+   "array-ness" of the whole thing, the functionality is identical to the
+   old scheme.
+
+   gas_cgen_initialize_saved_fixups_array():
+      Sets num_fixups_in_chain to 0 for each element. Call this from
+      md_begin() if you plan to use these functions and you want the
+      fixup count in each element to be set to 0 initially.  This is
+      not necessary, but it's included just in case.  It performs
+      the same function for each element in the array of fixup chains
+      that gas_init_parse() performs for the current fixups.
+
+   gas_cgen_save_fixups (element):
+      element - element number of the array you wish to store the fixups
+                to.  No mechanism is built in for tracking what element
+                was last stored to.
+
+   gas_cgen_restore_fixups (element):
+      element - element number of the array you wish to restore the fixups
+                from.
+
+   gas_cgen_swap_fixups(int element):
+       element - swap the current fixups with those in this element number.
+*/
+
+struct saved_fixups
+{
+  struct fixup fixup_chain[GAS_CGEN_MAX_FIXUPS];
+  int num_fixups_in_chain;
+};
+
+static struct saved_fixups stored_fixups[MAX_SAVED_FIXUP_CHAINS];
 
 void
-gas_cgen_save_fixups ()
+gas_cgen_initialize_saved_fixups_array ()
 {
-  saved_num_fixups = num_fixups;
+  int i = 0;
 
-  memcpy (saved_fixups, fixups, sizeof (fixups[0]) * num_fixups);
+  while (i < MAX_SAVED_FIXUP_CHAINS)
+    stored_fixups[i++].num_fixups_in_chain = 0;
+}
 
+void
+gas_cgen_save_fixups (i)
+     int i;
+{
+  if (i < 0 || i >= MAX_SAVED_FIXUP_CHAINS)
+    {
+      as_fatal ("index into stored_fixups[] out of bounds");
+      return;
+    }
+
+  stored_fixups[i].num_fixups_in_chain = num_fixups;
+  memcpy (stored_fixups[i].fixup_chain, fixups,
+	  sizeof (fixups[0]) * num_fixups);
   num_fixups = 0;
 }
 
 void
-gas_cgen_restore_fixups ()
+gas_cgen_restore_fixups (i)
+     int i;
 {
-  num_fixups = saved_num_fixups;
+  if (i < 0 || i >= MAX_SAVED_FIXUP_CHAINS)
+    {
+      as_fatal ("index into stored_fixups[] out of bounds");
+      return;
+    }
 
-  memcpy (fixups, saved_fixups, sizeof (fixups[0]) * num_fixups);
-
-  saved_num_fixups = 0;
+  num_fixups = stored_fixups[i].num_fixups_in_chain;
+  memcpy (fixups, stored_fixups[i].fixup_chain,
+	  (sizeof (stored_fixups[i].fixup_chain[0])) * num_fixups);
+  stored_fixups[i].num_fixups_in_chain = 0;
 }
 
 void
-gas_cgen_swap_fixups ()
+gas_cgen_swap_fixups (i)
+     int i;
 {
-  int tmp;
-  struct fixup tmp_fixup;
+  if (i < 0 || i >= MAX_SAVED_FIXUP_CHAINS)
+    {
+      as_fatal ("index into stored_fixups[] out of bounds");
+      return;
+    }
 
   if (num_fixups == 0)
-    {
-      gas_cgen_restore_fixups ();
-    }
-  else if (saved_num_fixups == 0)
-    {
-      gas_cgen_save_fixups ();
-    }
+    gas_cgen_restore_fixups (i);
+
+  else if (stored_fixups[i].num_fixups_in_chain == 0)
+    gas_cgen_save_fixups (i);
+
   else
     {
-      tmp = saved_num_fixups;
-      saved_num_fixups = num_fixups;
+      int tmp;
+      struct fixup tmp_fixup;
+
+      tmp = stored_fixups[i].num_fixups_in_chain;
+      stored_fixups[i].num_fixups_in_chain = num_fixups;
       num_fixups = tmp;
 
       for (tmp = GAS_CGEN_MAX_FIXUPS; tmp--;)
 	{
-	  tmp_fixup          = saved_fixups [tmp];
-	  saved_fixups [tmp] = fixups [tmp];
-	  fixups [tmp]       = tmp_fixup;
+	  tmp_fixup = stored_fixups[i].fixup_chain [tmp];
+	  stored_fixups[i].fixup_chain[tmp] = fixups [tmp];
+	  fixups [tmp] = tmp_fixup;
 	}
     }
 }
@@ -164,7 +225,7 @@ gas_cgen_swap_fixups ()
    At this point we do not use a bfd_reloc_code_real_type for
    operands residing in the insn, but instead just use the
    operand index.  This lets us easily handle fixups for any
-   operand type.  We pick a BFD reloc type in md_apply_fix.  */
+   operand type.  We pick a BFD reloc type in md_apply_fix3.  */
 
 fixS *
 gas_cgen_record_fixup (frag, where, insn, length, operand, opinfo, symbol, offset)
@@ -181,7 +242,6 @@ gas_cgen_record_fixup (frag, where, insn, length, operand, opinfo, symbol, offse
 
   /* It may seem strange to use operand->attrs and not insn->attrs here,
      but it is the operand that has a pc relative relocation.  */
-
   fixP = fix_new (frag, where, length / 8, symbol, offset,
 		  CGEN_OPERAND_ATTR_VALUE (operand, CGEN_OPERAND_PCREL_ADDR),
 		  (bfd_reloc_code_real_type)
@@ -204,7 +264,7 @@ gas_cgen_record_fixup (frag, where, insn, length, operand, opinfo, symbol, offse
    At this point we do not use a bfd_reloc_code_real_type for
    operands residing in the insn, but instead just use the
    operand index.  This lets us easily handle fixups for any
-   operand type.  We pick a BFD reloc type in md_apply_fix.  */
+   operand type.  We pick a BFD reloc type in md_apply_fix3.  */
 
 fixS *
 gas_cgen_record_fixup_exp (frag, where, insn, length, operand, opinfo, exp)
@@ -220,7 +280,6 @@ gas_cgen_record_fixup_exp (frag, where, insn, length, operand, opinfo, exp)
 
   /* It may seem strange to use operand->attrs and not insn->attrs here,
      but it is the operand that has a pc relative relocation.  */
-
   fixP = fix_new_exp (frag, where, length / 8, exp,
 		      CGEN_OPERAND_ATTR_VALUE (operand, CGEN_OPERAND_PCREL_ADDR),
 		      (bfd_reloc_code_real_type)
@@ -265,7 +324,7 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
   static char *hold;
   static enum cgen_parse_operand_result *resultP_1;
 #endif
-  const char *errmsg = NULL;
+  const char *errmsg;
   expressionS exp;
 
   if (want == CGEN_PARSE_OPERAND_INIT)
@@ -285,12 +344,13 @@ gas_cgen_parse_operand (cd, want, strP, opindex, opinfo, resultP, valueP)
       expr_jmp_buf_p = 0;
       input_line_pointer = (char *) hold;
       *resultP_1 = CGEN_PARSE_OPERAND_RESULT_ERROR;
-      return "illegal operand";
+      return _("illegal operand");
     }
 
   expr_jmp_buf_p = 1;
   expression (&exp);
   expr_jmp_buf_p = 0;
+  errmsg = NULL;
 
   *strP = input_line_pointer;
   input_line_pointer = hold;
@@ -509,50 +569,23 @@ gas_cgen_finish_insn (insn, buf, length, relax_p, result)
    handles the rest.  bfd_install_relocation (or some other bfd function)
    should handle them all.  */
 
-int
-gas_cgen_md_apply_fix3 (fixP, valueP, seg)
+void
+gas_cgen_md_apply_fix3 (fixP, valP, seg)
      fixS *   fixP;
-     valueT * valueP;
+     valueT * valP;
      segT     seg ATTRIBUTE_UNUSED;
 {
   char *where = fixP->fx_frag->fr_literal + fixP->fx_where;
-  valueT value;
+  valueT value = * valP;
   /* Canonical name, since used a lot.  */
   CGEN_CPU_DESC cd = gas_cgen_cpu_desc;
 
-  /* FIXME FIXME FIXME: The value we are passed in *valuep includes
-     the symbol values.  Since we are using BFD_ASSEMBLER, if we are
-     doing this relocation the code in write.c is going to call
-     bfd_install_relocation, which is also going to use the symbol
-     value.  That means that if the reloc is fully resolved we want to
-     use *valuep since bfd_install_relocation is not being used.
-     However, if the reloc is not fully resolved we do not want to use
-     *valuep, and must use fx_offset instead.  However, if the reloc
-     is PC relative, we do want to use *valuep since it includes the
-     result of md_pcrel_from.  This is confusing.  */
-
   if (fixP->fx_addsy == (symbolS *) NULL)
-    {
-      value = *valueP;
-      fixP->fx_done = 1;
-    }
-  else if (fixP->fx_pcrel)
-    value = *valueP;
-  else
-    {
-      value = fixP->fx_offset;
-      if (fixP->fx_subsy != (symbolS *) NULL)
-	{
-	  if (S_GET_SEGMENT (fixP->fx_subsy) == absolute_section)
-	    value -= S_GET_VALUE (fixP->fx_subsy);
-	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixP->fx_file, fixP->fx_line,
-			    _("expression too complex"));
-	    }
-	}
-    }
+    fixP->fx_done = 1;
+
+  /* We don't actually support subtracting a symbol.  */
+  if (fixP->fx_subsy != (symbolS *) NULL)
+    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
 
   if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
     {
@@ -594,7 +627,7 @@ gas_cgen_md_apply_fix3 (fixP, valueP, seg)
 	}
 
       if (fixP->fx_done)
-	return 1;
+	return;
 
       /* The operand isn't fully resolved.  Determine a BFD reloc value
 	 based on the operand information and leave it to
@@ -602,16 +635,15 @@ gas_cgen_md_apply_fix3 (fixP, valueP, seg)
 	 partial_inplace == false.  */
 
       reloc_type = md_cgen_lookup_reloc (insn, operand, fixP);
+
       if (reloc_type != BFD_RELOC_NONE)
-	{
-	  fixP->fx_r_type = reloc_type;
-	}
+	fixP->fx_r_type = reloc_type;
       else
 	{
 	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("unresolved expression that must be resolved"));
 	  fixP->fx_done = 1;
-	  return 1;
+	  return;
 	}
     }
   else if (fixP->fx_done)
@@ -639,17 +671,13 @@ gas_cgen_md_apply_fix3 (fixP, valueP, seg)
 	  break;
 	}
     }
-  else
-    {
-      /* bfd_install_relocation will be called to finish things up.  */
-    }
+  /* else
+     bfd_install_relocation will be called to finish things up.  */
 
   /* Tuck `value' away for use by tc_gen_reloc.
      See the comment describing fx_addnumber in write.h.
      This field is misnamed (or misused :-).  */
   fixP->fx_addnumber = value;
-
-  return 1;
 }
 
 /* Translate internal representation of relocation info to BFD target format.
@@ -687,4 +715,16 @@ gas_cgen_tc_gen_reloc (section, fixP)
 
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
   return reloc;
+}
+
+/* Perform any cgen specific initialisation.
+   Called after gas_cgen_cpu_desc has been created.  */
+
+void
+gas_cgen_begin ()
+{
+  if (flag_signed_overflow_ok)
+    cgen_set_signed_overflow_ok (gas_cgen_cpu_desc);
+  else
+    cgen_clear_signed_overflow_ok (gas_cgen_cpu_desc);
 }

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "dis-asm.h"
 #include "opintl.h"
-
+#include "libiberty.h"
 
 struct avr_opcodes_s
 {
@@ -31,16 +31,15 @@ struct avr_opcodes_s
   int insn_size;		/* in words */
   int isa;
   unsigned int bin_opcode;
-  unsigned int bin_mask;
 };
 
 #define AVR_INSN(NAME, CONSTR, OPCODE, SIZE, ISA, BIN) \
-{#NAME, CONSTR, OPCODE, SIZE, ISA, BIN, 0},
+{#NAME, CONSTR, OPCODE, SIZE, ISA, BIN},
 
-struct avr_opcodes_s avr_opcodes[] =
+const struct avr_opcodes_s avr_opcodes[] =
 {
   #include "opcode/avr.h"
-  {NULL, NULL, NULL, 0, 0, 0, 0}
+  {NULL, NULL, NULL, 0, 0, 0}
 };
 
 static int avr_operand PARAMS ((unsigned int, unsigned int,
@@ -257,9 +256,11 @@ print_insn_avr(addr, info)
      disassemble_info *info;
 {
   unsigned int insn, insn2;
-  struct avr_opcodes_s *opcode;
+  const struct avr_opcodes_s *opcode;
+  static unsigned int *maskptr;
   void *stream = info->stream;
   fprintf_ftype prin = info->fprintf_func;
+  static unsigned int *avr_bin_masks;
   static int initialized;
   int cmd_len = 2;
   int ok = 0;
@@ -267,9 +268,16 @@ print_insn_avr(addr, info)
 
   if (!initialized)
     {
-      initialized = 1;
+      unsigned int nopcodes;
+
+      nopcodes = sizeof (avr_opcodes) / sizeof (struct avr_opcodes_s);
       
-      for (opcode = avr_opcodes; opcode->name; opcode++)
+      avr_bin_masks = (unsigned int *)
+	xmalloc (nopcodes * sizeof (unsigned int));
+
+      for (opcode = avr_opcodes, maskptr = avr_bin_masks;
+	   opcode->name;
+	   opcode++, maskptr++)
 	{
 	  char * s;
 	  unsigned int bin = 0;
@@ -284,15 +292,19 @@ print_insn_avr(addr, info)
 	    }
 	  assert (s - opcode->opcode == 16);
 	  assert (opcode->bin_opcode == bin);
-	  opcode->bin_mask = mask;
+	  *maskptr = mask;
 	}
+
+      initialized = 1;
     }
 
   insn = avrdis_opcode (addr, info);
   
-  for (opcode = avr_opcodes; opcode->name; opcode++)
+  for (opcode = avr_opcodes, maskptr = avr_bin_masks;
+       opcode->name;
+       opcode++, maskptr++)
     {
-      if ((insn & opcode->bin_mask) == opcode->bin_opcode)
+      if ((insn & *maskptr) == opcode->bin_opcode)
 	break;
     }
   

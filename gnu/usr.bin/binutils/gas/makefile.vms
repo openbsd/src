@@ -45,8 +45,6 @@ OBJS=targ-cpu.obj,obj-format.obj,atof-targ.obj,app.obj,as.obj,atof-generic.obj,\
   literal.obj,messages.obj,output-file.obj,read.obj,subsegs.obj,symbols.obj,\
   write.obj,listing.obj,ecoff.obj,stabs.obj,sb.obj,macro.obj,ehopt.obj
 
-GASPOBJS = gasp.obj,macro.obj,sb.obj,hash.obj
-
 LIBIBERTY = [-.libiberty]libiberty.olb
 
 ifeq ($(ARCH),ALPHA)
@@ -59,20 +57,13 @@ LIBOPCODES =
 BFDDEP =
 endif
 
-all: config.status $(BFDDEP) as.exe gasp.exe
+all: config.status $(BFDDEP) as.exe
 
 as.exe: $(OBJS) $(LIBOPCODES) $(LIBBFD) $(LIBIBERTY)
 ifeq ($(ARCH),ALPHA)
 	link$(LFLAGS)/exe=$@ $(OBJS),$(LIBOPCODES)/lib,$(LIBBFD)/lib,$(LIBIBERTY)/lib$(LIBS)
 else
 	link$(LFLAGS)/exe=$@ $(OBJS),$(LIBIBERTY)/lib$(LIBS)
-endif
-
-gasp.exe: $(GASPOBJS) $(LIBBFD) $(LIBIBERTY)
-ifeq ($(ARCH),ALPHA)
-	link$(LFLAGS)/exe=$@ $(GASPOBJS),$(LIBBFD)/lib,$(LIBIBERTY)/lib$(LIBS)
-else
-	link$(LFLAGS)/exe=$@ $(GASPOBJS),$(LIBIBERTY)/lib$(LIBS)
 endif
 
 config.status:
@@ -108,7 +99,7 @@ targ-cpu.obj: targ-cpu.c targ-cpu.h [.config]atof-vax.c
 	gmake -f makefile.vms "CC=$(CC)"
 	$(CD) [-.gas]
 
-install: as.exe gasp.exe
+install: as.exe
 	$(CP) $^ GNU_ROOT\:[BIN]
 
 clean:

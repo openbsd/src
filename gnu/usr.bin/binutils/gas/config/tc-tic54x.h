@@ -83,26 +83,26 @@ extern void tic54x_cons_fix_new PARAMS((fragS *,int,int,expressionS *));
 */
 
 #define md_number_to_chars tic54x_number_to_chars
-extern void tic54x_number_to_chars PARAMS((char *, valueT, int));
+extern void tic54x_number_to_chars (char *, valueT, int);
 #define tc_adjust_symtab() tic54x_adjust_symtab()
-extern void tic54x_adjust_symtab PARAMS(());
+extern void tic54x_adjust_symtab (void);
 #define tc_unrecognized_line(ch) tic54x_unrecognized_line(ch)
-extern int tic54x_unrecognized_line PARAMS((int ch));
-#define md_parse_name(s,e) tic54x_parse_name(s,e)
-extern int tic54x_parse_name PARAMS((char *name, expressionS *e));
+extern int tic54x_unrecognized_line (int ch);
+#define md_parse_name(s,e,c) tic54x_parse_name(s,e)
+extern int tic54x_parse_name (char *name, expressionS *e);
 #define md_undefined_symbol(s) tic54x_undefined_symbol(s)
-extern symbolS *tic54x_undefined_symbol PARAMS((char *name));
+extern symbolS *tic54x_undefined_symbol (char *name);
 #define md_macro_start() tic54x_macro_start()
-extern void tic54x_macro_start ();
+extern void tic54x_macro_start (void);
 #define md_macro_end() tic54x_macro_end()
-extern void tic54x_macro_end ();
+extern void tic54x_macro_end (void);
 #define md_macro_info(args) tic54x_macro_info(args)
 extern void tic54x_macro_info PARAMS((void *macro));
 #define tc_frob_label(sym) tic54x_define_label (sym)
 extern void tic54x_define_label PARAMS((symbolS *));
 
 #define md_start_line_hook() tic54x_start_line_hook()
-extern void tic54x_start_line_hook ();
+extern void tic54x_start_line_hook (void);
 
 #define md_estimate_size_before_relax(f,s) \
 tic54x_estimate_size_before_relax(f,s)
@@ -124,5 +124,7 @@ extern void tic54x_convert_frag(bfd *, segT, fragS *);
 
 /* spruce up the listing output */
 #define LISTING_WORD_SIZE 2
+
+extern void tic54x_global (int);
 
 #endif

@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C30 architecture
-   Copyright 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2002 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This program is free software; you can redistribute it and/or modify
@@ -663,6 +663,10 @@ cnvt_tmsfloat_ieee (tmsfloat, size, ieeefloat)
      float *ieeefloat;
 {
   unsigned long exp, sign, mant;
+  union {
+    unsigned long l;
+    float f;
+  } val;
 
   if (size == 2)
     {
@@ -705,6 +709,7 @@ cnvt_tmsfloat_ieee (tmsfloat, size, ieeefloat)
   if (tmsfloat == 0x80000000)
     sign = mant = exp = 0;
   tmsfloat = sign | exp | mant;
-  *ieeefloat = *((float *) &tmsfloat);
+  val.l = tmsfloat;
+  *ieeefloat = val.f;
   return 1;
 }

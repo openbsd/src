@@ -1,5 +1,5 @@
 /* windres.h -- header file for windres program.
-   Copyright 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2000, 2002, 2003 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -19,7 +19,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-#include <ansidecl.h>
+#include "ansidecl.h"
 
 /* This is the header file for the windres program.  It defines
    structures and declares functions used within the program.  */
@@ -184,6 +184,8 @@ struct res_resource
   struct res_coff_info coff_info;
 };
 
+#define SUBLANG_SHIFT 10
+
 /* Memory flags in the memflags field of a struct res_resource.  */
 
 #define MEMFLAG_MOVEABLE	0x10
@@ -313,7 +315,9 @@ struct dialog_ex
   /* Font weight.  */
   unsigned short weight;
   /* Whether the font is italic.  */
-  unsigned short italic;
+  unsigned char italic;
+  /* Character set.  */
+  unsigned char charset;
 };
 
 /* Window style flags, from the winsup Defines.h header file.  These
@@ -517,7 +521,7 @@ struct fontdir
   short index;
   /* Length of font information.  */
   unsigned long length;
-  /* Font information. */
+  /* Font information.  */
   const unsigned char *data;
 };
 
@@ -791,6 +795,7 @@ extern int yydebug;
 extern FILE *yyin;
 extern char *rc_filename;
 extern int rc_lineno;
+
 extern int yyparse PARAMS ((void));
 extern int yylex PARAMS ((void));
 extern void yyerror PARAMS ((const char *));
@@ -809,7 +814,7 @@ extern void define_cursor
 extern void define_dialog
   PARAMS ((struct res_id, const struct res_res_info *, const struct dialog *));
 extern struct dialog_control *define_control
-  PARAMS ((const char *, unsigned long, unsigned long, unsigned long,
+  PARAMS ((struct res_id, unsigned long, unsigned long, unsigned long,
 	   unsigned long, unsigned long, unsigned long, unsigned long,
 	   unsigned long));
 extern struct dialog_control *define_icon_control
@@ -831,7 +836,8 @@ extern void define_rcdata
   PARAMS ((struct res_id, const struct res_res_info *, struct rcdata_item *));
 extern struct rcdata_item *define_rcdata_string
   PARAMS ((const char *, unsigned long));
-extern struct rcdata_item *define_rcdata_number PARAMS ((unsigned long, int));
+extern struct rcdata_item *define_rcdata_number
+  PARAMS ((unsigned long, int));
 extern void define_stringtable
   PARAMS ((const struct res_res_info *, unsigned long, const char *));
 extern void define_user_data

@@ -24,7 +24,7 @@
 @cindex options, M32R
 @cindex M32R options
 
-The Mitsubishi M32R version of @code{@value{AS}} has a few machine
+The Renease M32R version of @code{@value{AS}} has a few machine
 dependent options:
 
 @table @code
@@ -33,7 +33,7 @@ dependent options:
 @cindex architecture options, M32RX
 @cindex M32R architecture options
 @code{@value{AS}} can assemble code for several different members of the
-Mitsubishi M32R family.  Normally the default is to assemble code for
+Renesas M32R family.  Normally the default is to assemble code for
 the M32R microprocessor.  This option may be used to change the default
 to the M32RX microprocessor, which adds some more instructions to the
 basic M32R instruction set, and some additional parameters to some of

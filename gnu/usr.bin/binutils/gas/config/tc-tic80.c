@@ -1,5 +1,5 @@
 /* tc-tic80.c -- Assemble for the TI TMS320C80 (MV)
-   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,13 +19,14 @@
    02111-1307, USA.  */
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "opcode/tic80.h"
 
 #define internal_error(what) \
-  as_fatal(_("internal error:%s:%d: %s\n"), __FILE__, __LINE__, what)
+  as_fatal (_("internal error:%s:%d: %s\n"), __FILE__, __LINE__, what)
 
 #define internal_error_a(what,arg) \
-  as_fatal(_("internal error:%s:%d: %s %d\n"), __FILE__, __LINE__, what, arg)
+  as_fatal (_("internal error:%s:%d: %s %ld\n"), __FILE__, __LINE__, what, arg)
 
 /* Generic assembler global variables which must be defined by all
    targets.  */
@@ -56,8 +57,6 @@ const char FLT_CHARS[] = "fF";
    function to call to execute this pseudo-op
    integer arg to pass to the function  */
 
-extern void obj_coff_section ();
-
 const pseudo_typeS md_pseudo_table[] = {
   { "align",	s_align_bytes,		4 },	/* Do byte alignment, default is a 4 byte boundary  */
   { "word",	cons,			4 },	/* FIXME: Should this be machine independent?  */
@@ -84,8 +83,8 @@ static int tic80_relax = 0;
 
 int
 md_estimate_size_before_relax (fragP, segment_type)
-     fragS *fragP;
-     segT segment_type;
+     fragS *fragP ATTRIBUTE_UNUSED;
+     segT segment_type ATTRIBUTE_UNUSED;
 {
   internal_error (_("Relaxation is a luxury we can't afford"));
   return (-1);
@@ -95,7 +94,7 @@ md_estimate_size_before_relax (fragP, segment_type)
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -117,7 +116,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  char *atof_ieee ();
 
   switch (type)
     {
@@ -169,20 +167,21 @@ const_overflow (num, bits, flags)
   int retval = 0;
 
   /* Only need to check fields less than 32 bits wide.  */
-  if (bits < 32)
-    if (flags & TIC80_OPERAND_SIGNED)
-      {
-	max = (1 << (bits - 1)) - 1;
-	min = - (1 << (bits - 1));
-	retval = ((long) num > max) || ((long) num < min);
-      }
-    else
-      {
-	max = (1 << bits) - 1;
-	min = 0;
-	retval = (num > max) || (num < min);
-      }
-  return (retval);
+  if (bits >= 32)
+    return retval;
+
+  if (flags & TIC80_OPERAND_SIGNED)
+    {
+      max = (1 << (bits - 1)) - 1;
+      min = - (1 << (bits - 1));
+      retval = (long) num > max || (long) num < min;
+    }
+  else
+    {
+      max = (1 << bits) - 1;
+      retval = num > (unsigned long) max;
+    }
+  return retval;
 }
 
 /* get_operands () parses a string of operands and fills in a passed
@@ -200,8 +199,6 @@ get_operands (exp)
 {
   char *p = input_line_pointer;
   int numexp = 0;
-  int mflag = 0;
-  int sflag = 0;
   int parens = 0;
 
   while (*p)
@@ -425,9 +422,9 @@ find_opcode (opcode, myops)
 		 expression that supplies additional information about
 		 the operand, such as ":m" or ":s" modifiers. Check to
 		 see that the operand matches this requirement.  */
-	      if (!((num & TIC80_OPERAND_M_SI) && (flags & TIC80_OPERAND_M_SI)
-		    || (num & TIC80_OPERAND_M_LI) && (flags & TIC80_OPERAND_M_LI)
-		    || (num & TIC80_OPERAND_SCALED) && (flags & TIC80_OPERAND_SCALED)))
+	      if (!((num & flags & TIC80_OPERAND_M_SI)
+		    || (num & flags & TIC80_OPERAND_M_LI)
+		    || (num & flags & TIC80_OPERAND_SCALED)))
 		{
 		  match = 0;
 		}
@@ -464,7 +461,7 @@ find_opcode (opcode, myops)
 	    case O_logical_or:
 	    case O_max:
 	    default:
-	      internal_error_a (_("unhandled expression type"), X_op);
+	      internal_error_a (_("unhandled expression type"), (long) X_op);
 	    }
 	}
       if (!match)
@@ -708,7 +705,7 @@ build_insn (opcode, opers)
 	  else
 	    {
 	      internal_error_a (_("unhandled operand modifier"),
-				opers[expi].X_add_number);
+				(long) opers[expi].X_add_number);
 	    }
 	  break;
 	case O_big:
@@ -749,7 +746,7 @@ build_insn (opcode, opers)
 	case O_logical_or:
 	case O_max:
 	default:
-	  internal_error_a (_("unhandled expression"), X_op);
+	  internal_error_a (_("unhandled expression"), (long) X_op);
 	  break;
 	}
     }
@@ -778,18 +775,17 @@ md_assemble (str)
   unsigned char *input_line_save;
   struct tic80_opcode *opcode;
   expressionS myops[16];
-  unsigned long insn;
 
   /* Ensure there is something there to assemble.  */
   assert (str);
 
   /* Drop any leading whitespace.  */
-  while (isspace (*str))
+  while (ISSPACE (*str))
     str++;
 
   /* Isolate the mnemonic from the rest of the string by finding the first
      whitespace character and zapping it to a null byte.  */
-  for (scan = str; *scan != '\000' && !isspace (*scan); scan++)
+  for (scan = str; *scan != '\000' && !ISSPACE (*scan); scan++)
     ;
 
   if (*scan != '\000')
@@ -803,7 +799,7 @@ md_assemble (str)
     }
 
   str = scan;
-  while (isspace (*scan))
+  while (ISSPACE (*scan))
     scan++;
 
   input_line_save = input_line_pointer;
@@ -889,7 +885,8 @@ md_begin ()
 	  valu = PDS_VALUE (pdsp) & ~TIC80_OPERAND_MASK;
 	  break;
 	default:
-	  internal_error_a (_("unhandled predefined symbol bits"), symtype);
+	  internal_error_a (_("unhandled predefined symbol bits"),
+			    (long) symtype);
 	  break;
 	}
       symbol_table_insert (symbol_create (PDS_NAME (pdsp), segment, valu,
@@ -899,7 +896,7 @@ md_begin ()
 
 /* The assembler adds md_shortopts to the string passed to getopt.  */
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 
 /* The assembler adds md_longopts to the machine independent long options
    that are passed to getopt.  */
@@ -924,7 +921,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 int
 md_parse_option (c, arg)
      int c;
-     char *arg;
+     char *arg ATTRIBUTE_UNUSED;
 {
   switch (c)
     {
@@ -959,10 +956,12 @@ TIc80 options:\n\
    To indicate that a fixup has been eliminated, set fixP->fx_done.  */
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *dest = fixP->fx_frag->fr_literal + fixP->fx_where;
   int overflow;
 
@@ -997,9 +996,12 @@ md_apply_fix (fixP, val)
       break;
     default:
       internal_error_a (_("unhandled relocation type in fixup"),
-			fixP->fx_r_type);
+			(long) fixP->fx_r_type);
       break;
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Functions concerning relocs.  */
@@ -1028,9 +1030,9 @@ md_pcrel_from (fixP)
 
 void
 md_convert_frag (headers, seg, fragP)
-     object_headers *headers;
-     segT seg;
-     fragS *fragP;
+     object_headers *headers ATTRIBUTE_UNUSED;
+     segT seg ATTRIBUTE_UNUSED;
+     fragS *fragP ATTRIBUTE_UNUSED;
 {
   internal_error (_("md_convert_frag() not implemented yet"));
   abort ();
@@ -1038,7 +1040,7 @@ md_convert_frag (headers, seg, fragP)
 
 void
 tc_coff_symbol_emit_hook (ignore)
-     symbolS *ignore;
+     symbolS *ignore ATTRIBUTE_UNUSED;
 {
 }
 

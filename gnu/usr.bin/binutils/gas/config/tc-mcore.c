@@ -1,5 +1,5 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,7 +24,7 @@
 #include "subsegs.h"
 #define DEFINE_TABLE
 #include "../opcodes/mcore-opc.h"
-#include <ctype.h>
+#include "safe-ctype.h"
 #include <string.h>
 
 #ifdef OBJ_ELF
@@ -37,6 +37,7 @@
 
 /* Forward declarations for dumb compilers.  */
 static void   mcore_s_literals PARAMS ((int));
+static void   mcore_pool_count PARAMS ((void (*) (int), int));
 static void   mcore_cons PARAMS ((int));
 static void   mcore_float_cons PARAMS ((int));
 static void   mcore_stringer PARAMS ((int));
@@ -124,9 +125,9 @@ const relax_typeS md_relax_table[] = {
   {    0,     0, C32_LEN, 0 },			  /* UNDEF_WORD_DISP */
 
   /* UNCD_JUMP */
-  {    0,     0, 0,	  0 },			  /* UNDEF_DISP */     
-  { 2048, -2046, U12_LEN, C(UNCD_JUMP, DISP32) }, /* DISP12 */         
-  {    0,     0, U32_LEN, 0 },			  /* DISP32 */         
+  {    0,     0, 0,	  0 },			  /* UNDEF_DISP */
+  { 2048, -2046, U12_LEN, C(UNCD_JUMP, DISP32) }, /* DISP12 */
+  {    0,     0, U32_LEN, 0 },			  /* DISP32 */
   {    0,     0, U32_LEN, 0 }			  /* UNDEF_WORD_DISP */
 
 };
@@ -209,7 +210,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "text",      mcore_s_text,    0 },
   { "data",      mcore_s_data,    0 },
   { "bss",       mcore_s_bss,     1 },
-#ifdef OBJ_EF
+#ifdef OBJ_ELF
   { "comm",      mcore_s_comm,    0 },
 #endif
   { "section",   mcore_s_section, 0 },
@@ -222,10 +223,32 @@ const pseudo_typeS md_pseudo_table[] =
 
 static void
 mcore_s_literals (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   dump_literals (0);
   demand_empty_rest_of_line ();
+}
+
+/* Perform FUNC (ARG), and track number of bytes added to frag.  */
+
+static void
+mcore_pool_count (func, arg)
+     void (*func) PARAMS ((int));
+     int arg;
+{
+  const fragS *curr_frag = frag_now;
+  offsetT added = -frag_now_fix_octets ();
+
+  (*func) (arg);
+
+  while (curr_frag != frag_now)
+    {
+      added += curr_frag->fr_fix;
+      curr_frag = curr_frag->fr_next;
+    }
+
+  added += frag_now_fix_octets ();
+  poolspan += added;
 }
 
 static void
@@ -233,18 +256,9 @@ mcore_cons (nbytes)
      int nbytes;
 {
   if (now_seg == text_section)
-    {
-      char * ptr = input_line_pointer;
-      int    commas = 1;
-
-      /* Count the number of commas on the line.  */
-      while (! is_end_of_line [(unsigned char) * ptr])
-	commas += * ptr ++ == ',';
-
-      poolspan += nbytes * commas;
-    }
-
-  cons (nbytes);
+    mcore_pool_count (cons, nbytes);
+  else
+    cons (nbytes);
 
   /* In theory we ought to call check_literals (2,0) here in case
      we need to dump the literal table.  We cannot do this however,
@@ -258,25 +272,9 @@ mcore_float_cons (float_type)
      int float_type;
 {
   if (now_seg == text_section)
-    {
-      char * ptr = input_line_pointer;
-      int    commas = 1;
-
-#ifdef REPEAT_CONS_EXPRESSIONS
-#error REPEAT_CONS_EXPRESSIONS not handled
-#endif
-
-      /* Count the number of commas on the line.  */
-      while (! is_end_of_line [(unsigned char) * ptr])
-	commas += * ptr ++ == ',';
-
-      /* We would like to compute "hex_float (float_type) * commas"
-	 but hex_float is not exported from read.c  */
-      float_type == 'f' ? 4 : (float_type == 'd' ? 8 : 12);
-      poolspan += float_type * commas;
-    }
-
-  float_cons (float_type);
+    mcore_pool_count (float_cons, float_type);
+  else
+    float_cons (float_type);
 
   /* See the comment in mcore_cons () about calling check_literals.
      It is unlikely that a switch table will be constructed using
@@ -290,23 +288,9 @@ mcore_stringer (append_zero)
      int append_zero;
 {
   if (now_seg == text_section)
-    {
-      char * ptr = input_line_pointer;
-
-      /* In theory we should compute how many bytes are going to
-	 be occupied by the string(s) and add this to the poolspan.
-	 To keep things simple however, we just add the number of
-	 bytes left on the current line.  This will be an over-
-	 estimate, which is OK, and automatically allows for the
-	 appending a zero byte, since the real string(s) is/are
-	 required to be enclosed in double quotes.  */
-      while (! is_end_of_line [(unsigned char) * ptr])
-	ptr ++;
-
-      poolspan += ptr - input_line_pointer;
-    }
-
-  stringer (append_zero);
+    mcore_pool_count (stringer, append_zero);
+  else
+    stringer (append_zero);
 
   /* We call check_literals here in case a large number of strings are
      being placed into the text section with a sequence of stringer
@@ -321,31 +305,9 @@ mcore_fill (unused)
      int unused;
 {
   if (now_seg == text_section)
-    {
-      char * str = input_line_pointer;
-      int    size = 1;
-      int    repeat;
-
-      repeat = atoi (str);
-
-      /* Look to see if a size has been specified.  */
-      while (*str != '\n' && *str != 0 && *str != ',')
-	++ str;
-
-      if (* str == ',')
-	{
-	  size = atoi (str + 1);
-
-	  if (size > 8)
-	    size = 8;
-	  else if (size < 0)
-	    size = 0;
-	}
-
-      poolspan += size * repeat;
-    }
-
-  s_fill (unused);
+    mcore_pool_count (s_fill, unused);
+  else
+    s_fill (unused);
 
   check_literals (2, 0);
 }
@@ -390,11 +352,11 @@ mcore_s_section (ignore)
      pool.  */
   char * ilp = input_line_pointer;
 
-  while (*ilp != 0 && isspace(*ilp))
+  while (*ilp != 0 && ISSPACE (*ilp))
     ++ ilp;
 
   if (strncmp (ilp, ".line", 5) == 0
-      && (isspace (ilp[5]) || *ilp == '\n' || *ilp == '\r'))
+      && (ISSPACE (ilp[5]) || *ilp == '\n' || *ilp == '\r'))
     ;
   else
     dump_literals (0);
@@ -432,7 +394,7 @@ mcore_s_comm (needs_align)
 void
 md_begin ()
 {
-  mcore_opcode_info * opcode;
+  const mcore_opcode_info * opcode;
   char * prev_name = "";
 
   opcode_hash_control = hash_new ();
@@ -440,23 +402,13 @@ md_begin ()
   /* Insert unique names into hash table */
   for (opcode = mcore_table; opcode->name; opcode ++)
     {
-      if (streq (prev_name, opcode->name))
-	{
-	  /* Make all the opcodes with the same name point to the same
-	     string.  */
-	  opcode->name = prev_name;
-	}
-      else
+      if (! streq (prev_name, opcode->name))
 	{
 	  prev_name = opcode->name;
 	  hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
 	}
     }
 }
-
-static int reg_m;
-static int reg_n;
-static expressionS immediate;	/* absolute expression */
 
 /* Get a log2(val).  */
 static int
@@ -466,8 +418,8 @@ log2 (val)
     int log = -1;
     while (val != 0)
       {
-        log ++;
-        val >>= 1;
+	log ++;
+	val >>= 1;
       }
 
     return log;
@@ -480,10 +432,10 @@ parse_reg (s, reg)
      unsigned * reg;
 {
   /* Strip leading whitespace.  */
-  while (isspace (* s))
+  while (ISSPACE (* s))
     ++ s;
 
-  if (tolower (s[0]) == 'r')
+  if (TOLOWER (s[0]) == 'r')
     {
       if (s[1] == '1' && s[2] >= '0' && s[2] <= '5')
 	{
@@ -497,9 +449,9 @@ parse_reg (s, reg)
 	  return s + 2;
 	}
     }
-  else if (   tolower (s[0]) == 's'
-	   && tolower (s[1]) == 'p'
-	   && ! isalnum (s[2]))
+  else if (   TOLOWER (s[0]) == 's'
+	   && TOLOWER (s[1]) == 'p'
+	   && ! ISALNUM (s[2]))
     {
       * reg = 0;
       return s + 2;
@@ -540,10 +492,10 @@ parse_creg (s, reg)
   int i;
 
   /* Strip leading whitespace.  */
-  while (isspace (* s))
+  while (ISSPACE (* s))
     ++s;
 
-  if ((tolower (s[0]) == 'c' && tolower (s[1]) == 'r'))
+  if ((TOLOWER (s[0]) == 'c' && TOLOWER (s[1]) == 'r'))
     {
       if (s[2] == '3' && s[3] >= '0' && s[3] <= '1')
 	{
@@ -580,7 +532,7 @@ parse_creg (s, reg)
       length = strlen (cregs[i].name);
 
       for (j = 0; j < length; j++)
-	buf[j] = tolower (s[j]);
+	buf[j] = TOLOWER (s[j]);
 
       if (strncmp (cregs[i].name, buf, length) == 0)
 	{
@@ -615,15 +567,15 @@ parse_psrmod (s, reg)
   };
 
   for (i = 0; i < 2; i++)
-    buf[i] = isascii (s[i]) ? tolower (s[i]) : 0;
+    buf[i] = TOLOWER (s[i]);
 
   for (i = sizeof (psrmods) / sizeof (psrmods[0]); i--;)
     {
       if (! strncmp (psrmods[i].name, buf, 2))
 	{
-          * reg = psrmods[i].value;
+	  * reg = psrmods[i].value;
 
-          return s + 2;
+	  return s + 2;
 	}
     }
 
@@ -643,7 +595,7 @@ parse_exp (s, e)
   char * new;
 
   /* Skip whitespace.  */
-  while (isspace (* s))
+  while (ISSPACE (* s))
     ++ s;
 
   save = input_line_pointer;
@@ -685,9 +637,9 @@ static void
 dump_literals (isforce)
      int isforce;
 {
-  int i;
+  unsigned int i;
   struct literal * p;
-  symbolS * brarsym;
+  symbolS * brarsym = NULL;
 
   if (poolsize == 0)
     return;
@@ -722,7 +674,7 @@ dump_literals (isforce)
   for (i = 0, p = litpool; i < poolsize; i++, p++)
     emit_expr (& p->e, 4);
 
-  if (isforce)
+  if (brarsym != NULL)
     colon (S_GET_NAME (brarsym));
 
    poolsize = 0;
@@ -770,17 +722,17 @@ enter_literal (e, ispcrel)
      expressionS * e;
      int ispcrel;
 {
-  int i;
+  unsigned int i;
   struct literal * p;
 
   if (poolsize >= MAX_POOL_SIZE - 2)
     {
       /* The literal pool is as full as we can handle. We have
-         to be 2 entries shy of the 1024/4=256 entries because we
-         have to allow for the branch (2 bytes) and the alignment
-         (2 bytes before the first insn referencing the pool and
-         2 bytes before the pool itself) == 6 bytes, rounds up
-         to 2 entries.  */
+	 to be 2 entries shy of the 1024/4=256 entries because we
+	 have to allow for the branch (2 bytes) and the alignment
+	 (2 bytes before the first insn referencing the pool and
+	 2 bytes before the pool itself) == 6 bytes, rounds up
+	 to 2 entries.  */
       dump_literals (1);
     }
 
@@ -883,9 +835,9 @@ parse_imm (s, val, min, max)
     ; /* An error message has already been emitted.  */
   else if (e.X_op != O_constant)
     as_bad (_("operand must be a constant"));
-  else if (e.X_add_number < min || e.X_add_number > max)
-    as_bad (_("operand must be absolute in range %d..%d, not %d"),
-	    min, max, e.X_add_number);
+  else if ((addressT) e.X_add_number < min || (addressT) e.X_add_number > max)
+    as_bad (_("operand must be absolute in range %u..%u, not %ld"),
+	    min, max, (long) e.X_add_number);
 
   * val = e.X_add_number;
 
@@ -899,18 +851,16 @@ parse_mem (s, reg, off, siz)
      unsigned * off;
      unsigned siz;
 {
-  char * new;
-
   * off = 0;
 
-  while (isspace (* s))
+  while (ISSPACE (* s))
     ++ s;
 
   if (* s == '(')
     {
       s = parse_reg (s + 1, reg);
 
-      while (isspace (* s))
+      while (ISSPACE (* s))
 	++ s;
 
       if (* s == ',')
@@ -936,7 +886,7 @@ parse_mem (s, reg, off, siz)
 	    }
 	}
 
-      while (isspace (* s))
+      while (ISSPACE (* s))
 	++ s;
 
       if (* s == ')')
@@ -969,7 +919,7 @@ md_assemble (str)
   char name[20];
 
   /* Drop leading whitespace.  */
-  while (isspace (* str))
+  while (ISSPACE (* str))
     str ++;
 
   /* Find the op code end.  */
@@ -1022,7 +972,7 @@ md_assemble (str)
       inst |= reg;
       output = frag_more (2);
       /* In a sifilter mode, we emit this insn 2 times,
-         fixes problem of an interrupt during a jmp..  */
+	 fixes problem of an interrupt during a jmp..  */
       if (sifilter_mode)
 	{
 	  output[0] = INST_BYTE0 (inst);
@@ -1068,7 +1018,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (*op_end == ',')
@@ -1092,7 +1042,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1110,7 +1060,7 @@ md_assemble (str)
       op_end = parse_reg (op_end + 1, & reg);
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')	/* xtrb- r1,rx */
@@ -1130,7 +1080,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1150,7 +1100,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1169,7 +1119,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1188,7 +1138,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1217,7 +1167,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1244,7 +1194,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1283,7 +1233,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1316,7 +1266,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1335,7 +1285,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1354,7 +1304,7 @@ md_assemble (str)
       inst |= reg << 8;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1367,6 +1317,8 @@ md_assemble (str)
 	    size = 2;
 	  else if ((inst & 0x6000) == 0x2000)
 	    size = 1;
+	  else
+	    abort ();
 
 	  op_end = parse_mem (op_end + 1, & reg, & off, size);
 
@@ -1390,14 +1342,14 @@ md_assemble (str)
       inst |= (reg << 8);
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
 	{
 	  /* parse_rt calls frag_more() for us.  */
 	  input_line_pointer = parse_rt (op_end + 1, & output, 0, 0);
-          op_end = input_line_pointer;
+	  op_end = input_line_pointer;
 	}
       else
 	{
@@ -1421,7 +1373,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == '-')
@@ -1432,7 +1384,7 @@ md_assemble (str)
 	    as_bad (_("ending register must be r15"));
 
 	  /* Skip whitespace.  */
-	  while (isspace (* op_end))
+	  while (ISSPACE (* op_end))
 	    ++ op_end;
 	}
 
@@ -1441,7 +1393,7 @@ md_assemble (str)
 	  op_end ++;
 
 	  /* Skip whitespace.  */
-	  while (isspace (* op_end))
+	  while (ISSPACE (* op_end))
 	    ++ op_end;
 
 	  if (* op_end == '(')
@@ -1470,7 +1422,7 @@ md_assemble (str)
 	as_fatal (_("first register must be r4"));
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == '-')
@@ -1481,7 +1433,7 @@ md_assemble (str)
 	    as_fatal (_("last register must be r7"));
 
 	  /* Skip whitespace.  */
-	  while (isspace (* op_end))
+	  while (ISSPACE (* op_end))
 	    ++ op_end;
 
 	  if (* op_end == ',')
@@ -1489,7 +1441,7 @@ md_assemble (str)
 	      op_end ++;
 
 	      /* Skip whitespace.  */
-	      while (isspace (* op_end))
+	      while (ISSPACE (* op_end))
 		++ op_end;
 
 	      if (* op_end == '(')
@@ -1502,7 +1454,7 @@ md_assemble (str)
 		  inst |= reg;
 
 		  /* Skip whitespace.  */
-		  while (isspace (* op_end))
+		  while (ISSPACE (* op_end))
 		    ++ op_end;
 
 		  if (* op_end == ')')
@@ -1535,7 +1487,7 @@ md_assemble (str)
       inst |= reg << 4;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1595,7 +1547,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1617,7 +1569,7 @@ md_assemble (str)
       inst |= reg << 4;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1638,7 +1590,7 @@ md_assemble (str)
       inst |= reg;
 
       /* Skip whitespace.  */
-      while (isspace (* op_end))
+      while (ISSPACE (* op_end))
 	++ op_end;
 
       if (* op_end == ',')
@@ -1690,7 +1642,7 @@ md_assemble (str)
     }
 
   /* Drop whitespace after all the operands have been parsed.  */
-  while (isspace (* op_end))
+  while (ISSPACE (* op_end))
     op_end ++;
 
   /* Give warning message if the insn has more operands than required.  */
@@ -1705,7 +1657,7 @@ md_assemble (str)
 
 symbolS *
 md_undefined_symbol (name)
-       char * name;
+       char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -1734,7 +1686,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   int    i;
   char * t;
-  char * atof_ieee ();
 
   switch (type)
     {
@@ -1794,7 +1745,7 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-CONST char * md_shortopts = "";
+const char * md_shortopts = "";
 
 #define OPTION_JSRI2BSR_ON	(OPTION_MD_BASE + 0)
 #define OPTION_JSRI2BSR_OFF	(OPTION_MD_BASE + 1)
@@ -1823,9 +1774,6 @@ md_parse_option (c, arg)
      int c;
      char * arg;
 {
-  int i;
-  char * p;
-
   switch (c)
     {
     case OPTION_CPU:
@@ -1837,7 +1785,7 @@ md_parse_option (c, arg)
       else if (streq (arg, "340"))
 	cpu = M340;
       else
-        as_warn (_("unrecognised cpu type '%s'"), arg);
+	as_warn (_("unrecognised cpu type '%s'"), arg);
       break;
 
     case OPTION_EB: target_big_endian = 1; break;
@@ -1869,22 +1817,22 @@ int md_short_jump_size;
 
 void
 md_create_short_jump (ptr, from_Nddr, to_Nddr, frag, to_symbol)
-     char * ptr;
-     addressT from_Nddr;
-     addressT to_Nddr;
-     fragS * frag;
-     symbolS * to_symbol;
+     char * ptr ATTRIBUTE_UNUSED;
+     addressT from_Nddr ATTRIBUTE_UNUSED;
+     addressT to_Nddr ATTRIBUTE_UNUSED;
+     fragS * frag ATTRIBUTE_UNUSED;
+     symbolS * to_symbol ATTRIBUTE_UNUSED;
 {
   as_fatal (_("failed sanity check: short_jump"));
 }
 
 void
 md_create_long_jump (ptr, from_Nddr, to_Nddr, frag, to_symbol)
-     char * ptr;
-     addressT from_Nddr;
-     addressT to_Nddr;
-     fragS * frag;
-     symbolS * to_symbol;
+     char * ptr ATTRIBUTE_UNUSED;
+     addressT from_Nddr ATTRIBUTE_UNUSED;
+     addressT to_Nddr ATTRIBUTE_UNUSED;
+     fragS * frag ATTRIBUTE_UNUSED;
+     symbolS * to_symbol ATTRIBUTE_UNUSED;
 {
   as_fatal (_("failed sanity check: long_jump"));
 }
@@ -1892,15 +1840,14 @@ md_create_long_jump (ptr, from_Nddr, to_Nddr, frag, to_symbol)
 /* Called after relaxing, change the frags so they know how big they are.  */
 void
 md_convert_frag (abfd, sec, fragP)
-     bfd * abfd;
-     segT sec;
+     bfd * abfd ATTRIBUTE_UNUSED;
+     segT sec ATTRIBUTE_UNUSED;
      register fragS * fragP;
 {
   unsigned char * buffer;
   int targ_addr = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
 
   buffer = (unsigned char *) (fragP->fr_fix + fragP->fr_literal);
-  targ_addr += symbol_get_frag (fragP->fr_symbol)->fr_address;
 
   switch (fragP->fr_subtype)
     {
@@ -2089,34 +2036,30 @@ md_convert_frag (abfd, sec, fragP)
 
 /* Applies the desired value to the specified location.
    Also sets up addends for 'rela' type relocations.  */
-int
-md_apply_fix3 (fixP, valp, segment)
+
+void
+md_apply_fix3 (fixP, valP, segment)
      fixS *   fixP;
-     valueT * valp;
-     segT     segment;
+     valueT * valP;
+     segT     segment ATTRIBUTE_UNUSED;
 {
   char *       buf  = fixP->fx_where + fixP->fx_frag->fr_literal;
   char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
   const char * symname;
   /* Note: use offsetT because it is signed, valueT is unsigned.  */
-  offsetT      val  = (offsetT) * valp;
+  offsetT      val  = *valP;
 
   symname = fixP->fx_addsy ? S_GET_NAME (fixP->fx_addsy) : _("<unknown>");
   /* Save this for the addend in the relocation record.  */
   fixP->fx_addnumber = val;
 
-  /* If the fix is relative to a symbol which is not defined, or not
-     in the same segment as the fix, we cannot resolve it here.  */
-  if (fixP->fx_addsy != NULL
-      && (   ! S_IS_DEFINED (fixP->fx_addsy)
-	  || (S_GET_SEGMENT (fixP->fx_addsy) != segment)))
+  if (fixP->fx_addsy != NULL)
     {
-      fixP->fx_done = 0;
 #ifdef OBJ_ELF
       /* For ELF we can just return and let the reloc that will be generated
 	 take care of everything.  For COFF we still have to insert 'val'
 	 into the insn since the addend field will be ignored.  */
-      return 0;
+      return;
 #endif
     }
   else
@@ -2127,12 +2070,12 @@ md_apply_fix3 (fixP, valp, segment)
     case BFD_RELOC_MCORE_PCREL_IMM11BY2:     /* second byte of 2 byte opcode */
       if ((val & 1) != 0)
 	as_bad_where (file, fixP->fx_line,
-		      _("odd distance branch (0x%x bytes)"), val);
+		      _("odd distance branch (0x%lx bytes)"), (long) val);
       val /= 2;
       if (((val & ~0x3ff) != 0) && ((val | 0x3ff) != -1))
 	as_bad_where (file, fixP->fx_line,
-		      _("pcrel for branch to %s too far (0x%x)"),
-		      symname, val);
+		      _("pcrel for branch to %s too far (0x%lx)"),
+		      symname, (long) val);
       if (target_big_endian)
 	{
 	  buf[0] |= ((val >> 8) & 0x7);
@@ -2150,8 +2093,8 @@ md_apply_fix3 (fixP, valp, segment)
       val /= 4;
       if (val & ~0xff)
 	as_bad_where (file, fixP->fx_line,
-		      _("pcrel for lrw/jmpi/jsri to %s too far (0x%x)"),
-		      symname, val);
+		      _("pcrel for lrw/jmpi/jsri to %s too far (0x%lx)"),
+		      symname, (long) val);
       else if (! target_big_endian)
 	buf[0] |= (val & 0xff);
       else
@@ -2161,7 +2104,7 @@ md_apply_fix3 (fixP, valp, segment)
     case BFD_RELOC_MCORE_PCREL_IMM4BY2:	/* loopt instruction */
       if ((val < -32) || (val > -2))
 	as_bad_where (file, fixP->fx_line,
-		      _("pcrel for loopt too far (0x%x)"), val);
+		      _("pcrel for loopt too far (0x%lx)"), (long) val);
       val /= 2;
       if (! target_big_endian)
 	buf[0] |= (val & 0xf);
@@ -2172,7 +2115,7 @@ md_apply_fix3 (fixP, valp, segment)
     case BFD_RELOC_MCORE_PCREL_JSR_IMM11BY2:
       /* Conditional linker map jsri to bsr.  */
       /* If its a local target and close enough, fix it.
-         NB: >= -2k for backwards bsr; < 2k for forwards...  */
+	 NB: >= -2k for backwards bsr; < 2k for forwards...  */
       if (fixP->fx_addsy == 0 && val >= -2048  && val < 2048)
 	{
 	  long nval = (val / 2) & 0x7ff;
@@ -2215,8 +2158,6 @@ md_apply_fix3 (fixP, valp, segment)
 	}
       break;
     }
-
-  return 0; /* Return value is ignored.  */
 }
 
 void
@@ -2326,7 +2267,7 @@ md_number_to_chars (ptr, use, nbytes)
 /* Round up a section size to the appropriate boundary.  */
 valueT
 md_section_align (segment, size)
-     segT segment;
+     segT segment ATTRIBUTE_UNUSED;
      valueT size;
 {
   return size;			/* Byte alignment is fine */
@@ -2337,7 +2278,7 @@ md_section_align (segment, size)
 long
 md_pcrel_from_section (fixp, sec)
      fixS * fixp;
-     segT sec;
+     segT sec ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_ELF
   /* If the symbol is undefined or defined in another section
@@ -2362,12 +2303,11 @@ md_pcrel_from_section (fixp, sec)
 
 arelent *
 tc_gen_reloc (section, fixp)
-     asection * section;
+     asection * section ATTRIBUTE_UNUSED;
      fixS * fixp;
 {
   arelent * rel;
   bfd_reloc_code_real_type code;
-  int handled = 0;
 
   switch (fixp->fx_r_type)
     {
@@ -2384,19 +2324,19 @@ tc_gen_reloc (section, fixp)
 
     default:
       switch (F (fixp->fx_size, fixp->fx_pcrel))
-        {
-          MAP (1, 0, BFD_RELOC_8);
-          MAP (2, 0, BFD_RELOC_16);
-          MAP (4, 0, BFD_RELOC_32);
-          MAP (1, 1, BFD_RELOC_8_PCREL);
-          MAP (2, 1, BFD_RELOC_16_PCREL);
-          MAP (4, 1, BFD_RELOC_32_PCREL);
-        default:
+	{
+	  MAP (1, 0, BFD_RELOC_8);
+	  MAP (2, 0, BFD_RELOC_16);
+	  MAP (4, 0, BFD_RELOC_32);
+	  MAP (1, 1, BFD_RELOC_8_PCREL);
+	  MAP (2, 1, BFD_RELOC_16_PCREL);
+	  MAP (4, 1, BFD_RELOC_32_PCREL);
+	default:
 	  code = fixp->fx_r_type;
-          as_bad (_("Can not do %d byte %srelocation"),
+	  as_bad (_("Can not do %d byte %srelocation"),
 		  fixp->fx_size,
-	          fixp->fx_pcrel ? _("pc-relative") : "");
-        }
+		  fixp->fx_pcrel ? _("pc-relative") : "");
+	}
       break;
   }
 
@@ -2412,8 +2352,8 @@ tc_gen_reloc (section, fixp)
   if (rel->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-                    _("Cannot represent relocation type %s"),
-                    bfd_get_reloc_code_name (code));
+		    _("Cannot represent relocation type %s"),
+		    bfd_get_reloc_code_name (code));
 
       /* Set howto to a garbage value so that we can keep going.  */
       rel->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_32);
@@ -2431,23 +2371,18 @@ int
 mcore_force_relocation (fix)
      fixS * fix;
 {
-  if (   fix->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fix->fx_r_type == BFD_RELOC_VTABLE_ENTRY
-      || fix->fx_r_type == BFD_RELOC_RVA)
+  if (fix->fx_r_type == BFD_RELOC_RVA)
     return 1;
 
-  return 0;
+  return generic_force_reloc (fix);
 }
 
 /* Return true if the fix can be handled by GAS, false if it must
    be passed through to the linker.  */
-boolean
+bfd_boolean
 mcore_fix_adjustable (fixP)
    fixS * fixP;
 {
-  if (fixP->fx_addsy == NULL)
-    return 1;
-
   /* We need the symbol name for the VTABLE entries.  */
   if (   fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)

@@ -1,5 +1,5 @@
 %{ /* rcparse.y -- parser for Windows rc files
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -26,8 +26,7 @@
 #include "bucomm.h"
 #include "libiberty.h"
 #include "windres.h"
-
-#include <ctype.h>
+#include "safe-ctype.h"
 
 /* The current language.  */
 
@@ -136,11 +135,11 @@ static unsigned long class;
 %type <vervar> vertrans
 %type <res_info> suboptions memflags_move_discard memflags_move
 %type <memflags> memflag
-%type <id> id resref
+%type <id> id optresidc resref
 %type <il> exstyle parennumber
 %type <il> numexpr posnumexpr cnumexpr optcnumexpr cposnumexpr
 %type <is> acc_options acc_option menuitem_flags menuitem_flag
-%type <s> optstringc file_name resname
+%type <s> file_name resname
 %type <i> sizednumexpr sizedposnumexpr
 
 %left '|'
@@ -154,28 +153,21 @@ static unsigned long class;
 
 input:
 	  /* empty */
-	| input newcmd accelerator
-	| input newcmd bitmap
-	| input newcmd cursor
-	| input newcmd dialog
-	| input newcmd font
-	| input newcmd icon
-	| input newcmd language
-	| input newcmd menu
-	| input newcmd menuex
-	| input newcmd messagetable
-	| input newcmd rcdata
-	| input newcmd stringtable
-	| input newcmd user
-	| input newcmd versioninfo
-	| input newcmd IGNORED_TOKEN
-	;
-
-newcmd:
-	  /* empty */
-	  {
-	    rcparse_discard_strings ();
-	  }
+	| input accelerator
+	| input bitmap
+	| input cursor
+	| input dialog
+	| input font
+	| input icon
+	| input language
+	| input menu
+	| input menuex
+	| input messagetable
+	| input rcdata
+	| input stringtable
+	| input user
+	| input versioninfo
+	| input IGNORED_TOKEN
 	;
 
 /* Accelerator resources.  */
@@ -184,6 +176,9 @@ accelerator:
 	  id ACCELERATORS suboptions BEG acc_entries END
 	  {
 	    define_accelerator ($1, &$3, $5);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -224,7 +219,7 @@ acc_entry:
 	    $$.id = $2;
 	    $$.flags |= $4;
 	    if (($$.flags & ACC_VIRTKEY) == 0
-		&& ($$.flags & (ACC_SHIFT | ACC_CONTROL | ACC_ALT)) != 0)
+		&& ($$.flags & (ACC_SHIFT | ACC_CONTROL)) != 0)
 	      rcparse_warning (_("inappropriate modifiers for non-VIRTKEY"));
 	  }
 	;
@@ -245,7 +240,7 @@ acc_event:
 		$$.flags = ACC_CONTROL | ACC_VIRTKEY;
 		++s;
 		ch = *s;
-		ch = toupper ((unsigned char) ch);
+		ch = TOUPPER (ch);
 	      }
 	    $$.key = ch;
 	    if (s[1] != '\0')
@@ -310,6 +305,9 @@ bitmap:
 	  id BITMAP memflags_move file_name
 	  {
 	    define_bitmap ($1, &$3, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -319,6 +317,9 @@ cursor:
 	  id CURSOR memflags_move_discard file_name
 	  {
 	    define_cursor ($1, &$3, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -341,10 +342,14 @@ dialog:
 	      dialog.ex = NULL;
 	      dialog.controls = NULL;
 	      sub_res_info = $3;
+	      style = 0;
 	    }
 	    styles BEG controls END
 	  {
 	    define_dialog ($1, &sub_res_info, &dialog);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	| id DIALOGEX memflags_move exstyle posnumexpr cnumexpr cnumexpr
 	    cnumexpr
@@ -364,10 +369,14 @@ dialog:
 	      memset (dialog.ex, 0, sizeof (struct dialog_ex));
 	      dialog.controls = NULL;
 	      sub_res_info = $3;
+	      style = 0;
 	    }
 	    styles BEG controls END
 	  {
 	    define_dialog ($1, &sub_res_info, &dialog);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	| id DIALOGEX memflags_move exstyle posnumexpr cnumexpr cnumexpr
 	    cnumexpr cnumexpr
@@ -388,10 +397,14 @@ dialog:
 	      dialog.ex->help = $9;
 	      dialog.controls = NULL;
 	      sub_res_info = $3;
+	      style = 0;
 	    }
 	    styles BEG controls END
 	  {
 	    define_dialog ($1, &sub_res_info, &dialog);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -410,6 +423,8 @@ styles:
 	  /* empty */
 	| styles CAPTION QUOTEDSTRING
 	  {
+	    dialog.style |= WS_CAPTION;
+	    style |= WS_CAPTION;
 	    unicode_from_ascii ((int *) NULL, &dialog.caption, $3);
 	  }
 	| styles CLASS id
@@ -417,7 +432,6 @@ styles:
 	    dialog.class = $3;
 	  }
 	| styles STYLE
-	    { style = dialog.style; }
 	    styleexpr
 	  {
 	    dialog.style = style;
@@ -426,15 +440,42 @@ styles:
 	  {
 	    dialog.exstyle = $3;
 	  }
+	| styles CLASS QUOTEDSTRING
+	  {
+	    res_string_to_id (& dialog.class, $3);
+	  }
 	| styles FONT numexpr ',' QUOTEDSTRING
 	  {
 	    dialog.style |= DS_SETFONT;
+	    style |= DS_SETFONT;
 	    dialog.pointsize = $3;
 	    unicode_from_ascii ((int *) NULL, &dialog.font, $5);
+	    if (dialog.ex != NULL)
+	      {
+		dialog.ex->weight = 0;
+		dialog.ex->italic = 0;
+		dialog.ex->charset = 1;
+	      }
+	  }
+	| styles FONT numexpr ',' QUOTEDSTRING cnumexpr
+	  {
+	    dialog.style |= DS_SETFONT;
+	    style |= DS_SETFONT;
+	    dialog.pointsize = $3;
+	    unicode_from_ascii ((int *) NULL, &dialog.font, $5);
+	    if (dialog.ex == NULL)
+	      rcparse_warning (_("extended FONT requires DIALOGEX"));
+	    else
+	      {
+		dialog.ex->weight = $6;
+		dialog.ex->italic = 0;
+		dialog.ex->charset = 1;
+	      }
 	  }
 	| styles FONT numexpr ',' QUOTEDSTRING cnumexpr cnumexpr
 	  {
 	    dialog.style |= DS_SETFONT;
+	    style |= DS_SETFONT;
 	    dialog.pointsize = $3;
 	    unicode_from_ascii ((int *) NULL, &dialog.font, $5);
 	    if (dialog.ex == NULL)
@@ -443,6 +484,22 @@ styles:
 	      {
 		dialog.ex->weight = $6;
 		dialog.ex->italic = $7;
+		dialog.ex->charset = 1;
+	      }
+	  }
+	| styles FONT numexpr ',' QUOTEDSTRING cnumexpr cnumexpr cnumexpr
+	  {
+	    dialog.style |= DS_SETFONT;
+	    style |= DS_SETFONT;
+	    dialog.pointsize = $3;
+	    unicode_from_ascii ((int *) NULL, &dialog.font, $5);
+	    if (dialog.ex == NULL)
+	      rcparse_warning (_("extended FONT requires DIALOGEX"));
+	    else
+	      {
+		dialog.ex->weight = $6;
+		dialog.ex->italic = $7;
+		dialog.ex->charset = $8;
 	      }
 	  }
 	| styles MENU id
@@ -455,7 +512,7 @@ styles:
 	  }
 	| styles LANGUAGE numexpr cnumexpr
 	  {
-	    sub_res_info.language = $3 | ($4 << 8);
+	    sub_res_info.language = $3 | ($4 << SUBLANG_SHIFT);
 	  }
 	| styles VERSIONK numexpr
 	  {
@@ -516,7 +573,7 @@ control:
 	  {
 	    $$ = $3;
 	    if (dialog.ex == NULL)
-	      rcparse_warning (_("IEDIT requires DIALOGEX"));
+	      rcparse_warning (_("BEDIT requires DIALOGEX"));
 	    res_string_to_id (&$$->class, "BEDIT");
 	  }
 	| CHECKBOX
@@ -539,7 +596,7 @@ control:
 	  {
 	    $$ = $3;
 	  }
-	| CONTROL optstringc numexpr cnumexpr control_styleexpr cnumexpr
+	| CONTROL optresidc numexpr cnumexpr control_styleexpr cnumexpr
 	    cnumexpr cnumexpr cnumexpr optcnumexpr opt_control_data
 	  {
 	    $$ = define_control ($2, $3, $6, $7, $8, $9, $4, style, $10);
@@ -550,7 +607,7 @@ control:
 		$$->data = $11;
 	      }
 	  }
-	| CONTROL optstringc numexpr cnumexpr control_styleexpr cnumexpr
+	| CONTROL optresidc numexpr cnumexpr control_styleexpr cnumexpr
 	    cnumexpr cnumexpr cnumexpr cnumexpr cnumexpr opt_control_data
 	  {
 	    $$ = define_control ($2, $3, $6, $7, $8, $9, $4, style, $10);
@@ -559,7 +616,7 @@ control:
 	    $$->help = $11;
 	    $$->data = $12;
 	  }
-	| CONTROL optstringc numexpr ',' QUOTEDSTRING control_styleexpr
+	| CONTROL optresidc numexpr ',' QUOTEDSTRING control_styleexpr
 	    cnumexpr cnumexpr cnumexpr cnumexpr optcnumexpr opt_control_data
 	  {
 	    $$ = define_control ($2, $3, $7, $8, $9, $10, 0, style, $11);
@@ -570,9 +627,9 @@ control:
 		$$->data = $12;
 	      }
 	    $$->class.named = 1;
-  	    unicode_from_ascii(&$$->class.u.n.length, &$$->class.u.n.name, $5);
+  	    unicode_from_ascii (&$$->class.u.n.length, &$$->class.u.n.name, $5);
 	  }
-	| CONTROL optstringc numexpr ',' QUOTEDSTRING control_styleexpr
+	| CONTROL optresidc numexpr ',' QUOTEDSTRING control_styleexpr
 	    cnumexpr cnumexpr cnumexpr cnumexpr cnumexpr cnumexpr opt_control_data
 	  {
 	    $$ = define_control ($2, $3, $7, $8, $9, $10, 0, style, $11);
@@ -581,7 +638,7 @@ control:
 	    $$->help = $12;
 	    $$->data = $13;
 	    $$->class.named = 1;
-  	    unicode_from_ascii(&$$->class.u.n.length, &$$->class.u.n.name, $5);
+  	    unicode_from_ascii (&$$->class.u.n.length, &$$->class.u.n.name, $5);
 	  }
 	| CTEXT
 	    {
@@ -752,13 +809,13 @@ control:
 	  {
 	    $$ = $3;
 	  }
-	| USERBUTTON QUOTEDSTRING ',' numexpr ',' numexpr ',' numexpr ','
+	| USERBUTTON resref numexpr ',' numexpr ',' numexpr ','
 	    numexpr ',' numexpr ',' 
 	    { style = WS_CHILD | WS_VISIBLE; }
 	    styleexpr optcnumexpr
 	  {
-	    $$ = define_control ($2, $4, $6, $8, $10, $12, CTL_BUTTON,
-				 style, $16);
+	    $$ = define_control ($2, $3, $5, $7, $9, $11, CTL_BUTTON,
+				 style, $15);
 	  }
 	;
 
@@ -770,7 +827,7 @@ control:
    style.  CLASS is the class of the control.  */
 
 control_params:
-	  optstringc numexpr cnumexpr cnumexpr cnumexpr cnumexpr
+	  optresidc numexpr cnumexpr cnumexpr cnumexpr cnumexpr
 	    opt_control_data
 	  {
 	    $$ = define_control ($1, $2, $3, $4, $5, $6, class,
@@ -782,7 +839,7 @@ control_params:
 		$$->data = $7;
 	      }
 	  }
-	| optstringc numexpr cnumexpr cnumexpr cnumexpr cnumexpr
+	| optresidc numexpr cnumexpr cnumexpr cnumexpr cnumexpr
 	    control_params_styleexpr optcnumexpr opt_control_data
 	  {
 	    $$ = define_control ($1, $2, $3, $4, $5, $6, class, style, $8);
@@ -793,7 +850,7 @@ control_params:
 		$$->data = $9;
 	      }
 	  }
-	| optstringc numexpr cnumexpr cnumexpr cnumexpr cnumexpr
+	| optresidc numexpr cnumexpr cnumexpr cnumexpr cnumexpr
 	    control_params_styleexpr cnumexpr cnumexpr opt_control_data
 	  {
 	    $$ = define_control ($1, $2, $3, $4, $5, $6, class, style, $8);
@@ -804,18 +861,23 @@ control_params:
 	  }
 	;
 
-optstringc:
+optresidc:
 	  /* empty */
 	  {
-	    $$ = NULL;
+	    res_string_to_id (&$$, "");
+	  }
+	| posnumexpr ','
+	  {
+	    $$.named = 0;
+	    $$.u.id = $1;
 	  }
 	| QUOTEDSTRING
 	  {
-	    $$ = $1;
+	    res_string_to_id (&$$, $1);
 	  }
 	| QUOTEDSTRING ','
 	  {
-	    $$ = $1;
+	    res_string_to_id (&$$, $1);
 	  }
 	;
 
@@ -856,6 +918,9 @@ font:
 	  id FONT memflags_move_discard file_name
 	  {
 	    define_font ($1, &$3, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -865,6 +930,9 @@ icon:
 	  id ICON memflags_move_discard file_name
 	  {
 	    define_icon ($1, &$3, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -874,7 +942,7 @@ icon:
 language:
 	  LANGUAGE numexpr cnumexpr
 	  {
-	    language = $2 | ($3 << 8);
+	    language = $2 | ($3 << SUBLANG_SHIFT);
 	  }
 	;
 
@@ -884,6 +952,9 @@ menu:
 	  id MENU suboptions BEG menuitems END
 	  {
 	    define_menu ($1, &$3, $5);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -971,6 +1042,9 @@ menuex:
 	  id MENUEX suboptions BEG menuexitems END
 	  {
 	    define_menu ($1, &$3, $5);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -1037,6 +1111,9 @@ messagetable:
 	  id MESSAGETABLE memflags_move file_name
 	  {
 	    define_messagetable ($1, &$3, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -1046,6 +1123,9 @@ rcdata:
 	  id RCDATA suboptions BEG optrcdata_data END
 	  {
 	    define_rcdata ($1, &$3, $5.first);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -1125,10 +1205,16 @@ string_data:
 	| string_data numexpr QUOTEDSTRING
 	  {
 	    define_stringtable (&sub_res_info, $2, $3);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	| string_data numexpr ',' QUOTEDSTRING
 	  {
 	    define_stringtable (&sub_res_info, $2, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -1139,10 +1225,16 @@ user:
 	  id id suboptions BEG optrcdata_data END
 	  {
 	    define_user_data ($1, $2, &$3, $5.first);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	| id id suboptions file_name
 	  {
 	    define_user_file ($1, $2, &$3, $4);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -1152,6 +1244,9 @@ versioninfo:
 	  id VERSIONINFO fixedverinfo BEG verblocks END
 	  {
 	    define_versioninfo ($1, language, $3, $5);
+	    if (yychar != YYEMPTY)
+	      YYERROR;
+	    rcparse_discard_strings ();
 	  }
 	;
 
@@ -1259,8 +1354,7 @@ id:
 	    /* It seems that resource ID's are forced to upper case.  */
 	    copy = xstrdup ($1);
 	    for (s = copy; *s != '\0'; s++)
-	      if (islower ((unsigned char) *s))
-		*s = toupper ((unsigned char) *s);
+	      *s = TOUPPER (*s);
 	    res_string_to_id (&$$, copy);
 	    free (copy);
 	  }
@@ -1297,8 +1391,7 @@ resref:
 	    /* It seems that resource ID's are forced to upper case.  */
 	    copy = xstrdup ($1);
 	    for (s = copy; *s != '\0'; s++)
-	      if (islower ((unsigned char) *s))
-	        *s = toupper ((unsigned char) *s);
+	      *s = TOUPPER (*s);
 	    res_string_to_id (&$$, copy);
 	    free (copy);
 	  }
@@ -1313,7 +1406,7 @@ suboptions:
 	    memset (&$$, 0, sizeof (struct res_res_info));
 	    $$.language = language;
 	    /* FIXME: Is this the right default?  */
-	    $$.memflags = MEMFLAG_MOVEABLE;
+	    $$.memflags = MEMFLAG_MOVEABLE | MEMFLAG_PURE | MEMFLAG_DISCARDABLE;
 	  }
 	| suboptions memflag
 	  {
@@ -1329,7 +1422,7 @@ suboptions:
 	| suboptions LANGUAGE numexpr cnumexpr
 	  {
 	    $$ = $1;
-	    $$.language = $3 | ($4 << 8);
+	    $$.language = $3 | ($4 << SUBLANG_SHIFT);
 	  }
 	| suboptions VERSIONK numexpr
 	  {
@@ -1362,7 +1455,7 @@ memflags_move:
 	  {
 	    memset (&$$, 0, sizeof (struct res_res_info));
 	    $$.language = language;
-	    $$.memflags = MEMFLAG_MOVEABLE;
+	    $$.memflags = MEMFLAG_MOVEABLE | MEMFLAG_PURE | MEMFLAG_DISCARDABLE;
 	  }
 	| memflags_move memflag
 	  {

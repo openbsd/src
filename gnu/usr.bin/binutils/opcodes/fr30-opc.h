@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -77,14 +77,14 @@ typedef enum cgen_insn_type {
  , FR30_INSN_ORCCR, FR30_INSN_STILM, FR30_INSN_ADDSP, FR30_INSN_EXTSB
  , FR30_INSN_EXTUB, FR30_INSN_EXTSH, FR30_INSN_EXTUH, FR30_INSN_LDM0
  , FR30_INSN_LDM1, FR30_INSN_STM0, FR30_INSN_STM1, FR30_INSN_ENTER
- , FR30_INSN_LEAVE, FR30_INSN_XCHB, FR30_INSN_MAX
+ , FR30_INSN_LEAVE, FR30_INSN_XCHB
 } CGEN_INSN_TYPE;
 
 /* Index of `invalid' insn place holder.  */
 #define CGEN_INSN_INVALID FR30_INSN_INVALID
 
 /* Total number of insns in table.  */
-#define MAX_INSNS ((int) FR30_INSN_MAX)
+#define MAX_INSNS ((int) FR30_INSN_XCHB + 1)
 
 /* This struct records data prior to insertion or after extraction.  */
 struct cgen_fields

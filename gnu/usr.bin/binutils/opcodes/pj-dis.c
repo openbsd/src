@@ -1,5 +1,5 @@
 /* pj-dis.c -- Disassemble picoJava instructions.
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain, of Transmeta (sac@pobox.com).
 
 This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-
 #include <stdio.h>
 #include "sysdep.h"
 #include "opcode/pj.h"
@@ -24,7 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 extern const pj_opc_info_t pj_opc_info[512];
 
-static int get_int (memaddr, iptr, info)
+static int get_int PARAMS ((bfd_vma, int *, struct disassemble_info *));
+
+
+static int
+get_int (memaddr, iptr, info)
      bfd_vma memaddr;
      int *iptr;
      struct disassemble_info *info;
@@ -33,10 +36,10 @@ static int get_int (memaddr, iptr, info)
 
   int status = info->read_memory_func (memaddr, ival, 4, info);
 
-  *iptr = (ival[0] << 24) 
-    | (ival[1] << 16) 
-    | (ival[2] << 8) 
-    | (ival[3] << 0) ;
+  *iptr = (ival[0] << 24)
+    | (ival[1] << 16)
+    | (ival[2] << 8)
+    | (ival[3] << 0);
 
   return status;
 }
@@ -59,7 +62,7 @@ print_insn_pj (addr, info)
       unsigned char byte_2;
       if ((status = info->read_memory_func (addr + 1, &byte_2, 1, info)))
 	goto fail;
-      fprintf_fn (stream, "%s\t", pj_opc_info[opcode + byte_2].name);
+      fprintf_fn (stream, "%s\t", pj_opc_info[opcode + byte_2].u.name);
       return 2;
     }
   else
@@ -69,12 +72,12 @@ print_insn_pj (addr, info)
       const pj_opc_info_t *op = &pj_opc_info[opcode];
       int a;
       addr++;
-      fprintf_fn (stream, "%s", op->name);
+      fprintf_fn (stream, "%s", op->u.name);
 
       /* The tableswitch instruction is followed by the default
-	 address, low value, high value and the destinations. */
+	 address, low value, high value and the destinations.  */
 
-      if (strcmp (op->name, "tableswitch") == 0)
+      if (strcmp (op->u.name, "tableswitch") == 0)
 	{
 	  int lowval;
 	  int highval;
@@ -84,7 +87,7 @@ print_insn_pj (addr, info)
 	  if ((status = get_int (addr, &val, info)))
 	    goto fail;
 
-	  fprintf_fn (stream," default: ");
+	  fprintf_fn (stream, " default: ");
 	  (*info->print_address_func) (val + insn_start, info);
 	  addr += 4;
 
@@ -96,23 +99,24 @@ print_insn_pj (addr, info)
 	    goto fail;
 	  addr += 4;
 
-	  while (lowval <= highval) {
-	    if ((status = get_int (addr, &val, info)))
-	      goto fail;
-	    fprintf_fn (stream," %d:[", lowval);
-	    (*info->print_address_func) (val + insn_start, info);
-	    fprintf_fn (stream," ]");
-	    addr += 4;
-	    lowval++;
-	  }
+	  while (lowval <= highval)
+	    {
+	      if ((status = get_int (addr, &val, info)))
+		goto fail;
+	      fprintf_fn (stream, " %d:[", lowval);
+	      (*info->print_address_func) (val + insn_start, info);
+	      fprintf_fn (stream, " ]");
+	      addr += 4;
+	      lowval++;
+	    }
 	  return addr - insn_start;
 	}
 
       /* The lookupswitch instruction is followed by the default
 	 address, element count and pairs of values and
-	 addresses. */
-	    
-      if (strcmp (op->name, "lookupswitch") == 0)
+	 addresses.  */
+
+      if (strcmp (op->u.name, "lookupswitch") == 0)
 	{
 	  int count;
 	  int val;
@@ -122,26 +126,27 @@ print_insn_pj (addr, info)
 	    goto fail;
 	  addr += 4;
 
-	  fprintf_fn (stream," default: ");
+	  fprintf_fn (stream, " default: ");
 	  (*info->print_address_func) (val + insn_start, info);
 
 	  if ((status = get_int (addr, &count, info)))
 	    goto fail;
 	  addr += 4;
 
-	  while (count--) {
-	    if ((status = get_int (addr, &val, info)))
-	      goto fail;
-	    addr += 4;
-	    fprintf_fn (stream," %d:[", val);
+	  while (count--)
+	    {
+	      if ((status = get_int (addr, &val, info)))
+		goto fail;
+	      addr += 4;
+	      fprintf_fn (stream, " %d:[", val);
 
-	    if ((status = get_int (addr, &val, info)))
-	      goto fail;
-	    addr += 4;
+	      if ((status = get_int (addr, &val, info)))
+		goto fail;
+	      addr += 4;
 
-	    (*info->print_address_func) (val + insn_start, info);
-	    fprintf_fn (stream," ]");
-	  }
+	      (*info->print_address_func) (val + insn_start, info);
+	      fprintf_fn (stream, " ]");
+	    }
 	  return addr - insn_start;
 	}
       for (a = 0; op->arg[a]; a++)

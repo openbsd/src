@@ -1,5 +1,5 @@
 /* BFD back-end for HP/Intel IA-64 COFF files.
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -49,19 +49,23 @@ static reloc_howto_type howto_table[] =
 	    (cache_ptr)->howto = howto_table + (dst)->r_type;
 
 #ifdef COFF_WITH_PE
-/* Return true if this relocation should
+/* Return TRUE if this relocation should
    appear in the output .reloc section.  */
 
-static boolean
+static bfd_boolean in_reloc_p PARAMS ((bfd *, reloc_howto_type *));
+
+static bfd_boolean
 in_reloc_p(abfd, howto)
      bfd * abfd ATTRIBUTE_UNUSED;
      reloc_howto_type *howto ATTRIBUTE_UNUSED;
 {
-  return 0;			/* We don't do relocs for now...  */
+  return FALSE;			/* We don't do relocs for now...  */
 }
 #endif
 
 #include "coffcode.h"
+
+static const bfd_target *ia64coff_object_p PARAMS ((bfd *));
 
 static const bfd_target *
 ia64coff_object_p (abfd)
@@ -73,9 +77,9 @@ ia64coff_object_p (abfd)
     struct external_PEI_IMAGE_hdr image_hdr;
     file_ptr offset;
 
-    if (bfd_seek (abfd, 0x00, SEEK_SET) != 0
-	|| bfd_read (&dos_hdr, 1, sizeof (dos_hdr), abfd)
-	   != sizeof (dos_hdr))
+    if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
+	|| (bfd_bread (&dos_hdr, (bfd_size_type) sizeof (dos_hdr), abfd)
+	    != sizeof (dos_hdr)))
       {
 	if (bfd_get_error () != bfd_error_system_call)
 	  bfd_set_error (bfd_error_wrong_format);
@@ -92,23 +96,23 @@ ia64coff_object_p (abfd)
        this routine can only be called correctly for a PEI file, check
        the e_magic number here, and, if it doesn't match, clobber the
        f_magic number so that we don't get a false match.  */
-    if (bfd_h_get_16 (abfd, (bfd_byte *) dos_hdr.e_magic) != DOSMAGIC)
+    if (H_GET_16 (abfd, dos_hdr.e_magic) != DOSMAGIC)
       {
 	bfd_set_error (bfd_error_wrong_format);
 	return NULL;
       }
 
-    offset = bfd_h_get_32 (abfd, (bfd_byte *) dos_hdr.e_lfanew);
-    if (bfd_seek (abfd, (file_ptr) offset, SEEK_SET) != 0
-	|| bfd_read (&image_hdr, 1, sizeof (image_hdr), abfd)
-	   != sizeof (image_hdr))
+    offset = H_GET_32 (abfd, dos_hdr.e_lfanew);
+    if (bfd_seek (abfd, offset, SEEK_SET) != 0
+	|| (bfd_bread (&image_hdr, (bfd_size_type) sizeof (image_hdr), abfd)
+	    != sizeof (image_hdr)))
       {
 	if (bfd_get_error () != bfd_error_system_call)
 	  bfd_set_error (bfd_error_wrong_format);
 	return NULL;
       }
 
-    if (bfd_h_get_32 (abfd, (bfd_byte *) image_hdr.nt_signature)
+    if (H_GET_32 (abfd, image_hdr.nt_signature)
 	!= 0x4550)
       {
 	bfd_set_error (bfd_error_wrong_format);
@@ -118,10 +122,7 @@ ia64coff_object_p (abfd)
     /* Here is the hack.  coff_object_p wants to read filhsz bytes to
        pick up the COFF header for PE, see "struct external_PEI_filehdr"
        in include/coff/pe.h.  We adjust so that that will work. */
-    if (bfd_seek (abfd,
-		  (file_ptr) (offset - sizeof (dos_hdr)),
-		  SEEK_SET)
-	!= 0)
+    if (bfd_seek (abfd, offset - sizeof (dos_hdr), SEEK_SET) != 0)
       {
 	if (bfd_get_error () != bfd_error_system_call)
 	  bfd_set_error (bfd_error_wrong_format);

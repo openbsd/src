@@ -1,5 +1,5 @@
 /* BFD support for the Texas Instruments TMS320C54X architecture.
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,7 +32,7 @@ const bfd_arch_info_type bfd_tic54x_arch =
   "tic54x",
   "tms320c54x",
   1,
-  true,				/* the one and only */
+  TRUE,				/* the one and only */
   bfd_default_compatible,
   bfd_default_scan,
   0,

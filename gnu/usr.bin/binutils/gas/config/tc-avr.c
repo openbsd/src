@@ -1,6 +1,6 @@
 /* tc-avr.c -- Assembler code for the ATMEL AVR
 
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of GAS, the GNU Assembler.
@@ -21,8 +21,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 
 struct avr_opcodes_s
@@ -55,37 +55,55 @@ struct mcu_type_s
   int mach;
 };
 
+/* XXX - devices that don't seem to exist (renamed, replaced with larger
+   ones, or planned but never produced), left here for compatibility.
+   TODO: hide them in show_mcu_list output?  */
+
 static struct mcu_type_s mcu_types[] =
 {
   {"avr1",      AVR_ISA_TINY1,    bfd_mach_avr1},
   {"avr2",      AVR_ISA_2xxx,     bfd_mach_avr2},
   {"avr3",      AVR_ISA_M103,     bfd_mach_avr3},
-  {"avr4",      AVR_ISA_M83,      bfd_mach_avr4},
+  {"avr4",      AVR_ISA_M8,       bfd_mach_avr4},
   {"avr5",      AVR_ISA_ALL,      bfd_mach_avr5},
   {"at90s1200", AVR_ISA_1200,     bfd_mach_avr1},
-  {"attiny10",  AVR_ISA_TINY1,    bfd_mach_avr1},
+  {"attiny10",  AVR_ISA_TINY1,    bfd_mach_avr1}, /* XXX -> tn11 */
   {"attiny11",  AVR_ISA_TINY1,    bfd_mach_avr1},
   {"attiny12",  AVR_ISA_TINY1,    bfd_mach_avr1},
   {"attiny15",  AVR_ISA_TINY1,    bfd_mach_avr1},
   {"attiny28",  AVR_ISA_TINY1,    bfd_mach_avr1},
   {"at90s2313", AVR_ISA_2xxx,     bfd_mach_avr2},
   {"at90s2323", AVR_ISA_2xxx,     bfd_mach_avr2},
-  {"at90s2333", AVR_ISA_2xxx,     bfd_mach_avr2},
-  {"attiny22" , AVR_ISA_2xxx,     bfd_mach_avr2},
+  {"at90s2333", AVR_ISA_2xxx,     bfd_mach_avr2}, /* XXX -> 4433 */
   {"at90s2343", AVR_ISA_2xxx,     bfd_mach_avr2},
+  {"attiny22",  AVR_ISA_2xxx,     bfd_mach_avr2}, /* XXX -> 2343 */
+  {"attiny26",  AVR_ISA_2xxx,     bfd_mach_avr2},
   {"at90s4433", AVR_ISA_2xxx,     bfd_mach_avr2},
-  {"at90s4414", AVR_ISA_2xxx,     bfd_mach_avr2},
-  {"at90s4434", AVR_ISA_2xxx,     bfd_mach_avr2},
+  {"at90s4414", AVR_ISA_2xxx,     bfd_mach_avr2}, /* XXX -> 8515 */
+  {"at90s4434", AVR_ISA_2xxx,     bfd_mach_avr2}, /* XXX -> 8535 */
   {"at90s8515", AVR_ISA_2xxx,     bfd_mach_avr2},
   {"at90s8535", AVR_ISA_2xxx,     bfd_mach_avr2},
   {"at90c8534", AVR_ISA_2xxx,     bfd_mach_avr2},
-  {"atmega603", AVR_ISA_M603,     bfd_mach_avr3},
+  {"at86rf401", AVR_ISA_2xxx,     bfd_mach_avr2},
+  {"atmega603", AVR_ISA_M603,     bfd_mach_avr3}, /* XXX -> m103 */
   {"atmega103", AVR_ISA_M103,     bfd_mach_avr3},
-  {"atmega83",  AVR_ISA_M83,      bfd_mach_avr4},
-  {"atmega85",  AVR_ISA_M83,      bfd_mach_avr4},
+  {"at43usb320",AVR_ISA_M103,     bfd_mach_avr3},
+  {"at43usb355",AVR_ISA_M603,     bfd_mach_avr3},
+  {"at76c711",  AVR_ISA_M603,     bfd_mach_avr3},
+  {"atmega8",   AVR_ISA_M8,       bfd_mach_avr4},
+  {"atmega83",  AVR_ISA_M8,       bfd_mach_avr4}, /* XXX -> m8535 */
+  {"atmega85",  AVR_ISA_M8,       bfd_mach_avr4}, /* XXX -> m8 */
+  {"atmega8515",AVR_ISA_M8,       bfd_mach_avr4},
+  {"atmega8535",AVR_ISA_M8,       bfd_mach_avr4},
+  {"atmega16",  AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega161", AVR_ISA_M161,     bfd_mach_avr5},
+  {"atmega162", AVR_ISA_M323,     bfd_mach_avr5},
   {"atmega163", AVR_ISA_M161,     bfd_mach_avr5},
-  {"atmega32",  AVR_ISA_M161,     bfd_mach_avr5},
+  {"atmega169", AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega32",  AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega323", AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega64",  AVR_ISA_M323,     bfd_mach_avr5},
+  {"atmega128", AVR_ISA_M128,     bfd_mach_avr5},
   {"at94k",     AVR_ISA_94K,      bfd_mach_avr5},
   {NULL, 0, 0}
 };
@@ -298,7 +316,7 @@ md_parse_option (c, arg)
 	  char *arg1 = arg;
 
 	  do
-	    *t = tolower (*arg1++);
+	    *t = TOLOWER (*arg1++);
 	  while (*t++);
 	}
 
@@ -555,12 +573,12 @@ avr_operand (opcode, where, op, line)
 
 	  str = extract_word (str, r_name, sizeof (r_name));
 	  op_mask = 0xff;
-	  if (isdigit (r_name[1]))
+	  if (ISDIGIT (r_name[1]))
 	    {
 	      if (r_name[2] == '\0')
 		op_mask = r_name[1] - '0';
 	      else if (r_name[1] != '0'
-		       && isdigit (r_name[2])
+		       && ISDIGIT (r_name[2])
 		       && r_name[3] == '\0')
 		op_mask = (r_name[1] - '0') * 10 + r_name[2] - '0';
 	    }
@@ -613,7 +631,7 @@ avr_operand (opcode, where, op, line)
 	    str = skip_space (str + 1);
 	    op_mask = 0x1002;
 	  }
-	c = tolower (*str);
+	c = TOLOWER (*str);
 	if (c == 'x')
 	  op_mask |= 0x100c;
 	else if (c == 'y')
@@ -656,7 +674,7 @@ avr_operand (opcode, where, op, line)
 
     case 'b':
       {
-	char c = tolower (*str++);
+	char c = TOLOWER (*str++);
 
 	if (c == 'y')
 	  op_mask |= 0x8;
@@ -676,25 +694,25 @@ avr_operand (opcode, where, op, line)
     case 'h':
       str = parse_exp (str, &op_expr);
       fix_new_exp (frag_now, where, opcode->insn_size * 2,
-		   &op_expr, false, BFD_RELOC_AVR_CALL);
+		   &op_expr, FALSE, BFD_RELOC_AVR_CALL);
       break;
 
     case 'L':
       str = parse_exp (str, &op_expr);
       fix_new_exp (frag_now, where, opcode->insn_size * 2,
-		   &op_expr, true, BFD_RELOC_AVR_13_PCREL);
+		   &op_expr, TRUE, BFD_RELOC_AVR_13_PCREL);
       break;
 
     case 'l':
       str = parse_exp (str, &op_expr);
       fix_new_exp (frag_now, where, opcode->insn_size * 2,
-		   &op_expr, true, BFD_RELOC_AVR_7_PCREL);
+		   &op_expr, TRUE, BFD_RELOC_AVR_7_PCREL);
       break;
 
     case 'i':
       str = parse_exp (str, &op_expr);
       fix_new_exp (frag_now, where + 2, opcode->insn_size * 2,
-		   &op_expr, false, BFD_RELOC_16);
+		   &op_expr, FALSE, BFD_RELOC_16);
       break;
 
     case 'M':
@@ -705,7 +723,7 @@ avr_operand (opcode, where, op, line)
 	r_type = avr_ldi_expression (&op_expr);
 	str = input_line_pointer;
 	fix_new_exp (frag_now, where, 3,
-		     &op_expr, false, r_type);
+		     &op_expr, FALSE, r_type);
       }
       break;
 
@@ -807,57 +825,38 @@ md_pcrel_from_section (fixp, sec)
 /* GAS will call this for each fixup.  It should store the correct
    value in the object file.  */
 
-int
-md_apply_fix3 (fixp, valuep, seg)
-     fixS *fixp;
-     valueT *valuep;
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS *fixP;
+     valueT * valP;
      segT seg;
 {
   unsigned char *where;
   unsigned long insn;
-  long value;
+  long value = *valP;
 
-  if (fixp->fx_addsy == (symbolS *) NULL)
-    {
-      value = *valuep;
-      fixp->fx_done = 1;
-    }
-  else if (fixp->fx_pcrel)
-    {
-      segT s = S_GET_SEGMENT (fixp->fx_addsy);
+  if (fixP->fx_addsy == (symbolS *) NULL)
+    fixP->fx_done = 1;
 
-      if (fixp->fx_addsy && (s == seg || s == absolute_section))
+  else if (fixP->fx_pcrel)
+    {
+      segT s = S_GET_SEGMENT (fixP->fx_addsy);
+
+      if (s == seg || s == absolute_section)
 	{
-	  value = S_GET_VALUE (fixp->fx_addsy) + *valuep;
-	  fixp->fx_done = 1;
-	}
-      else
-	value = *valuep;
-    }
-  else
-    {
-      value = fixp->fx_offset;
-
-      if (fixp->fx_subsy != (symbolS *) NULL)
-	{
-	  if (S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
-	    {
-	      value -= S_GET_VALUE (fixp->fx_subsy);
-	      fixp->fx_done = 1;
-	    }
-	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    _("expression too complex"));
-	    }
+	  value += S_GET_VALUE (fixP->fx_addsy);
+	  fixP->fx_done = 1;
 	}
     }
 
-  switch (fixp->fx_r_type)
+  /* We don't actually support subtracting a symbol.  */
+  if (fixP->fx_subsy != (symbolS *) NULL)
+    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+
+  switch (fixP->fx_r_type)
     {
     default:
-      fixp->fx_no_overflow = 1;
+      fixP->fx_no_overflow = 1;
       break;
     case BFD_RELOC_AVR_7_PCREL:
     case BFD_RELOC_AVR_13_PCREL:
@@ -867,18 +866,18 @@ md_apply_fix3 (fixp, valuep, seg)
       break;
     }
 
-  if (fixp->fx_done)
+  if (fixP->fx_done)
     {
       /* Fetch the instruction, insert the fully resolved operand
 	 value, and stuff the instruction back again.  */
-      where = fixp->fx_frag->fr_literal + fixp->fx_where;
+      where = fixP->fx_frag->fr_literal + fixP->fx_where;
       insn = bfd_getl16 (where);
 
-      switch (fixp->fx_r_type)
+      switch (fixP->fx_r_type)
 	{
 	case BFD_RELOC_AVR_7_PCREL:
 	  if (value & 1)
-	    as_bad_where (fixp->fx_file, fixp->fx_line,
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("odd address operand: %ld"), value);
 
 	  /* Instruction addresses are always right-shifted by 1.  */
@@ -886,7 +885,7 @@ md_apply_fix3 (fixp, valuep, seg)
 	  --value;			/* Correct PC.  */
 
 	  if (value < -64 || value > 63)
-	    as_bad_where (fixp->fx_file, fixp->fx_line,
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("operand out of range: %ld"), value);
 	  value = (value << 3) & 0x3f8;
 	  bfd_putl16 ((bfd_vma) (value | insn), where);
@@ -894,7 +893,7 @@ md_apply_fix3 (fixp, valuep, seg)
 
 	case BFD_RELOC_AVR_13_PCREL:
 	  if (value & 1)
-	    as_bad_where (fixp->fx_file, fixp->fx_line,
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("odd address operand: %ld"), value);
 
 	  /* Instruction addresses are always right-shifted by 1.  */
@@ -905,7 +904,7 @@ md_apply_fix3 (fixp, valuep, seg)
 	    {
 	      /* No wrap for devices with >8K of program memory.  */
 	      if ((avr_mcu->isa & AVR_ISA_MEGA) || avr_opt.no_wrap)
-		as_bad_where (fixp->fx_file, fixp->fx_line,
+		as_bad_where (fixP->fx_file, fixP->fx_line,
 			      _("operand out of range: %ld"), value);
 	    }
 
@@ -995,7 +994,7 @@ md_apply_fix3 (fixp, valuep, seg)
 
 	    x = bfd_getl16 (where);
 	    if (value & 1)
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
+	      as_bad_where (fixP->fx_file, fixP->fx_line,
 			    _("odd address operand: %ld"), value);
 	    value >>= 1;
 	    x |= ((value & 0x10000) | ((value << 3) & 0x1f00000)) >> 16;
@@ -1006,28 +1005,26 @@ md_apply_fix3 (fixp, valuep, seg)
 
 	default:
 	  as_fatal (_("line %d: unknown relocation type: 0x%x"),
-		    fixp->fx_line, fixp->fx_r_type);
+		    fixP->fx_line, fixP->fx_r_type);
 	  break;
 	}
     }
   else
     {
-      switch (fixp->fx_r_type)
+      switch (fixP->fx_r_type)
 	{
 	case -BFD_RELOC_AVR_HI8_LDI_NEG:
 	case -BFD_RELOC_AVR_HI8_LDI:
 	case -BFD_RELOC_AVR_LO8_LDI_NEG:
 	case -BFD_RELOC_AVR_LO8_LDI:
-	  as_bad_where (fixp->fx_file, fixp->fx_line,
+	  as_bad_where (fixP->fx_file, fixP->fx_line,
 			_("only constant expression allowed"));
-	  fixp->fx_done = 1;
+	  fixP->fx_done = 1;
 	  break;
 	default:
 	  break;
 	}
-      fixp->fx_addnumber = value;
     }
-  return 0;
 }
 
 /* A `BFD_ASSEMBLER' GAS will call this to generate a reloc.  GAS
@@ -1286,16 +1283,16 @@ avr_cons_fix_new (frag, where, nbytes, exp)
   if (exp_mod_pm == 0)
     {
       if (nbytes == 2)
-	fix_new_exp (frag, where, nbytes, exp, false, BFD_RELOC_16);
+	fix_new_exp (frag, where, nbytes, exp, FALSE, BFD_RELOC_16);
       else if (nbytes == 4)
-	fix_new_exp (frag, where, nbytes, exp, false, BFD_RELOC_32);
+	fix_new_exp (frag, where, nbytes, exp, FALSE, BFD_RELOC_32);
       else
 	as_bad (_("illegal %srelocation size: %d"), "", nbytes);
     }
   else
     {
       if (nbytes == 2)
-	fix_new_exp (frag, where, nbytes, exp, false, BFD_RELOC_AVR_16_PM);
+	fix_new_exp (frag, where, nbytes, exp, FALSE, BFD_RELOC_AVR_16_PM);
       else
 	as_bad (_("illegal %srelocation size: %d"), "`pm' ", nbytes);
       exp_mod_pm = 0;

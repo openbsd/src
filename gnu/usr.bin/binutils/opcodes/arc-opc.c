@@ -17,8 +17,10 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 #include "ansidecl.h"
+#include "bfd.h"
 #include "opcode/arc.h"
 
 #define INSERT_FN(fn) \
@@ -63,6 +65,9 @@ enum operand {OP_NONE,OP_REG,OP_SHIMM,OP_LIMM};
 #define OPERANDS 3
 
 enum operand ls_operand[OPERANDS];
+
+struct arc_opcode *arc_ext_opcodes;
+struct arc_ext_operand_value *arc_ext_operands;
 
 #define LS_VALUE  0
 #define LS_DEST   0
@@ -512,7 +517,7 @@ arc_get_opcode_mach (bfd_mach, big_p)
     ARC_MACH_7,
     ARC_MACH_8
   };
-  return mach_type_map[bfd_mach] | (big_p ? ARC_MACH_BIG : 0);
+  return mach_type_map[bfd_mach - bfd_mach_arc_5] | (big_p ? ARC_MACH_BIG : 0);
 }
 
 /* Initialize any tables that need it.
@@ -1148,14 +1153,6 @@ insert_st_syntax (insn, operand, mods, reg, value, errmsg)
   if (ST_SYNTAX(OP_SHIMM,OP_LIMM,OP_NONE))
     {
       limm += arc_limm_fixup_adjust(insn);
-    }
-  if (ST_SYNTAX(OP_LIMM,OP_SHIMM,OP_SHIMM) && (shimm * 2 == limm))
-    {
-      insn &= ~C(-1);
-      limm_p = 0;
-      limm = 0;
-      insn |= C(ARC_REG_SHIMM);
-      ls_operand[LS_VALUE] = OP_SHIMM;
     }
   if (!(ST_SYNTAX(OP_REG,OP_REG,OP_NONE)
 	|| ST_SYNTAX(OP_REG,OP_LIMM,OP_NONE)

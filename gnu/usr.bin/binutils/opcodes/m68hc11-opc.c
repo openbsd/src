@@ -1,6 +1,6 @@
 /* m68hc11-opc.c -- Motorola 68HC11 & 68HC12 opcode list
-   Copyright 1999, 2000 Free Software Foundation, Inc.
-   Written by Stephane Carrez (stcarrez@worldnet.fr)
+   Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
+   Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.
 
@@ -76,6 +76,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define OP_IX           M6811_OP_IX
 #define OP_IY           M6811_OP_IY
 #define OP_IND16        M6811_OP_IND16
+#define OP_PAGE         M6812_OP_PAGE
 #define OP_IDX          M6812_OP_IDX
 #define OP_IDX_1        M6812_OP_IDX_1
 #define OP_IDX_2        M6812_OP_IDX_2
@@ -83,8 +84,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define OP_D_IDX_2      M6812_OP_D_IDX_2
 #define OP_DIRECT       M6811_OP_DIRECT
 #define OP_BITMASK      M6811_OP_BITMASK
-#define OP_JUMP_REL     M6811_OP_JUMP_REL
-#define OP_JUMP_REL16   M6812_OP_JUMP_REL16
+#define OP_BRANCH       M6811_OP_BRANCH
+#define OP_JUMP_REL     (M6811_OP_JUMP_REL|OP_BRANCH)
+#define OP_JUMP_REL16   (M6812_OP_JUMP_REL16|OP_BRANCH)
 #define OP_REG          M6812_OP_REG
 #define OP_REG_1        M6812_OP_REG
 #define OP_REG_2        M6812_OP_REG_2
@@ -325,12 +327,18 @@ const struct m68hc11_opcode m68hc11_opcodes[] = {
   { "bvc",  OP_JUMP_REL,       2, 0x28,  1,  3, CHG_NONE, cpu6811 | cpu6812 },
   { "bvs",  OP_JUMP_REL,       2, 0x29,  1,  3, CHG_NONE, cpu6811 | cpu6812 },
 
-  { "call", OP_IND16,          4, 0x4a,  8,  8,  CHG_NONE, cpu6812 },
-  { "call", OP_IDX,            3, 0x4b,  8,  8,  CHG_NONE, cpu6812 },
-  { "call", OP_IDX_1,          4, 0x4b,  8,  8,  CHG_NONE, cpu6812 },
-  { "call", OP_IDX_2,          5, 0x4b,  9,  9,  CHG_NONE, cpu6812 },
-  { "call", OP_D_IDX,          2, 0x4b, 10, 10,  CHG_NONE, cpu6812 },
-  { "call", OP_D_IDX_2,        4, 0x4b, 10, 10,  CHG_NONE, cpu6812 },
+  { "call", OP_IND16 | OP_PAGE
+          | OP_BRANCH,         4, 0x4a,  8,  8,  CHG_NONE, cpu6812 },
+  { "call", OP_IDX | OP_PAGE
+          | OP_BRANCH,         3, 0x4b,  8,  8,  CHG_NONE, cpu6812 },
+  { "call", OP_IDX_1 | OP_PAGE
+          | OP_BRANCH,         4, 0x4b,  8,  8,  CHG_NONE, cpu6812 },
+  { "call", OP_IDX_2 | OP_PAGE
+          | OP_BRANCH,         5, 0x4b,  9,  9,  CHG_NONE, cpu6812 },
+  { "call", OP_D_IDX
+          | OP_BRANCH,         2, 0x4b, 10, 10,  CHG_NONE, cpu6812 },
+  { "call", OP_D_IDX_2
+          | OP_BRANCH,         4, 0x4b, 10, 10,  CHG_NONE, cpu6812 },
 
   { "cba",  OP_NONE,           1, 0x11,  2,  2,  CHG_NZVC, cpu6811 },
   { "cba",  OP_NONE | OP_PAGE2,2, 0x17,  2,  2,  CHG_NZVC, cpu6812 },
@@ -564,22 +572,22 @@ const struct m68hc11_opcode m68hc11_opcodes[] = {
   { "iny",  OP_NONE |OP_PAGE2,     2, 0x08,  4,  4,  CHG_Z, cpu6811 },
   { "iny",  OP_NONE,               1, 0x02,  1,  1,  CHG_Z, cpu6812 },
 
-  { "jmp",  OP_IND16,              3, 0x7e,  3,  3,  CHG_NONE, cpu6811 },
+  { "jmp",  OP_IND16 | OP_BRANCH,  3, 0x7e,  3,  3,  CHG_NONE, cpu6811 },
   { "jmp",  OP_IX,                 2, 0x6e,  3,  3,  CHG_NONE, cpu6811 },
   { "jmp",  OP_IY | OP_PAGE2,      3, 0x6e,  4,  4,  CHG_NONE, cpu6811 },
-  { "jmp",  OP_IND16,              3, 0x06,  3,  3,  CHG_NONE, cpu6812 },
+  { "jmp",  OP_IND16 | OP_BRANCH,  3, 0x06,  3,  3,  CHG_NONE, cpu6812 },
   { "jmp",  OP_IDX,                2, 0x05,  3,  3,  CHG_NONE, cpu6812 },
   { "jmp",  OP_IDX_1,              3, 0x05,  3,  3,  CHG_NONE, cpu6812 },
   { "jmp",  OP_IDX_2,              4, 0x05,  4,  4,  CHG_NONE, cpu6812 },
   { "jmp",  OP_D_IDX,              2, 0x05,  6,  6,  CHG_NONE, cpu6812 },
   { "jmp",  OP_D_IDX_2,            4, 0x05,  6,  6,  CHG_NONE, cpu6812 },
 
-  { "jsr",  OP_DIRECT,             2, 0x9d,  5,  5,  CHG_NONE, cpu6811 },
-  { "jsr",  OP_IND16,              3, 0xbd,  6,  6,  CHG_NONE, cpu6811 },
+  { "jsr",  OP_DIRECT | OP_BRANCH, 2, 0x9d,  5,  5,  CHG_NONE, cpu6811 },
+  { "jsr",  OP_IND16 | OP_BRANCH,  3, 0xbd,  6,  6,  CHG_NONE, cpu6811 },
   { "jsr",  OP_IX,                 2, 0xad,  6,  6,  CHG_NONE, cpu6811 },
   { "jsr",  OP_IY | OP_PAGE2,      3, 0xad,  6,  6,  CHG_NONE, cpu6811 },
-  { "jsr",  OP_DIRECT,             2, 0x17,  4,  4,  CHG_NONE, cpu6812 },
-  { "jsr",  OP_IND16,              3, 0x16,  4,  3,  CHG_NONE, cpu6812 },
+  { "jsr",  OP_DIRECT | OP_BRANCH, 2, 0x17,  4,  4,  CHG_NONE, cpu6812 },
+  { "jsr",  OP_IND16 | OP_BRANCH,  3, 0x16,  4,  3,  CHG_NONE, cpu6812 },
   { "jsr",  OP_IDX,                2, 0x15,  4,  4,  CHG_NONE, cpu6812 },
   { "jsr",  OP_IDX_1,              3, 0x15,  4,  4,  CHG_NONE, cpu6812 },
   { "jsr",  OP_IDX_2,              4, 0x15,  5,  5,  CHG_NONE, cpu6812 },

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -40,8 +40,11 @@ static unsigned int dis_hash_insn PARAMS ((const char *, CGEN_INSN_INT));
 
 /* Instruction formats.  */
 
-#define F(f) & m32r_cgen_ifld_table[CONCAT2 (M32R_,f)]
-
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define F(f) & m32r_cgen_ifld_table[M32R_##f]
+#else
+#define F(f) & m32r_cgen_ifld_table[M32R_/**/f]
+#endif
 static const CGEN_IFMT ifmt_empty = {
   0, 0, 0x0, { { 0 } }
 };
@@ -172,9 +175,17 @@ static const CGEN_IFMT ifmt_satb = {
 
 #undef F
 
-#define A(a) (1 << CONCAT2 (CGEN_INSN_,a))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_INSN_##a)
+#else
+#define A(a) (1 << CGEN_INSN_/**/a)
+#endif
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define OPERAND(op) M32R_OPERAND_##op
+#else
+#define OPERAND(op) M32R_OPERAND_/**/op
+#endif
 #define MNEM CGEN_SYNTAX_MNEMONIC /* syntax value for mnemonic */
-#define OPERAND(op) CONCAT2 (M32R_OPERAND_,op)
 #define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
 
 /* The instruction table.  */
@@ -992,14 +1003,17 @@ static const CGEN_OPCODE m32r_cgen_insn_opcode_table[MAX_INSNS] =
 };
 
 #undef A
-#undef MNEM
 #undef OPERAND
+#undef MNEM
 #undef OP
 
 /* Formats for ALIAS macro-insns.  */
 
-#define F(f) & m32r_cgen_ifld_table[CONCAT2 (M32R_,f)]
-
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define F(f) & m32r_cgen_ifld_table[M32R_##f]
+#else
+#define F(f) & m32r_cgen_ifld_table[M32R_/**/f]
+#endif
 static const CGEN_IFMT ifmt_bc8r = {
   16, 16, 0xff00, { { F (F_OP1) }, { F (F_R1) }, { F (F_DISP8) }, { 0 } }
 };
@@ -1148,9 +1162,17 @@ static const CGEN_IFMT ifmt_push = {
 
 /* Each non-simple macro entry points to an array of expansion possibilities.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_INSN_,a))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_INSN_##a)
+#else
+#define A(a) (1 << CGEN_INSN_/**/a)
+#endif
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define OPERAND(op) M32R_OPERAND_##op
+#else
+#define OPERAND(op) M32R_OPERAND_/**/op
+#endif
 #define MNEM CGEN_SYNTAX_MNEMONIC /* syntax value for mnemonic */
-#define OPERAND(op) CONCAT2 (M32R_OPERAND_,op)
 #define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
 
 /* The macro instruction table.  */
@@ -1562,8 +1584,8 @@ static const CGEN_OPCODE m32r_cgen_macro_insn_opcode_table[] =
 };
 
 #undef A
-#undef MNEM
 #undef OPERAND
+#undef MNEM
 #undef OP
 
 #ifndef CGEN_ASM_HASH_P
@@ -1579,7 +1601,7 @@ static const CGEN_OPCODE m32r_cgen_macro_insn_opcode_table[] =
 
 static int
 asm_hash_insn_p (insn)
-     const CGEN_INSN *insn;
+     const CGEN_INSN *insn ATTRIBUTE_UNUSED;
 {
   return CGEN_ASM_HASH_P (insn);
 }
@@ -1629,11 +1651,13 @@ asm_hash_insn (mnem)
 
 static unsigned int
 dis_hash_insn (buf, value)
-     const char * buf;
-     CGEN_INSN_INT value;
+     const char * buf ATTRIBUTE_UNUSED;
+     CGEN_INSN_INT value ATTRIBUTE_UNUSED;
 {
   return CGEN_DIS_HASH (buf, value);
 }
+
+static void set_fields_bitsize PARAMS ((CGEN_FIELDS *, int));
 
 /* Set the recorded length of the insn in the CGEN_FIELDS struct.  */
 
@@ -1663,6 +1687,7 @@ m32r_cgen_init_opcode_table (cd)
     {
       insns[i].base = &ib[i];
       insns[i].opcode = &oc[i];
+      m32r_cgen_build_insn_regex (& insns[i]);
     }
   cd->macro_insn_table.init_entries = insns;
   cd->macro_insn_table.entry_size = sizeof (CGEN_IBASE);
@@ -1671,7 +1696,10 @@ m32r_cgen_init_opcode_table (cd)
   oc = & m32r_cgen_insn_opcode_table[0];
   insns = (CGEN_INSN *) cd->insn_table.init_entries;
   for (i = 0; i < MAX_INSNS; ++i)
-    insns[i].opcode = &oc[i];
+    {
+      insns[i].opcode = &oc[i];
+      m32r_cgen_build_insn_regex (& insns[i]);
+    }
 
   cd->sizeof_fields = sizeof (CGEN_FIELDS);
   cd->set_fields_bitsize = set_fields_bitsize;

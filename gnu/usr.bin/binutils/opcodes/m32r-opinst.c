@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -31,11 +31,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 /* Operand references.  */
 
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define OP_ENT(op) M32R_OPERAND_##op
+#else
+#define OP_ENT(op) M32R_OPERAND_/**/op
+#endif
 #define INPUT CGEN_OPINST_INPUT
 #define OUTPUT CGEN_OPINST_OUTPUT
 #define END CGEN_OPINST_END
 #define COND_REF CGEN_OPINST_COND_REF
-#define OP_ENT(op) CONCAT2 (M32R_OPERAND_,op)
 
 static const CGEN_OPINST sfmt_empty_ops[] = {
   { END }
@@ -133,7 +137,7 @@ static const CGEN_OPINST sfmt_beqz_ops[] = {
 static const CGEN_OPINST sfmt_bl8_ops[] = {
   { INPUT, "disp8", HW_H_IADDR, CGEN_MODE_USI, OP_ENT (DISP8), 0, 0 },
   { INPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
-  { OUTPUT, "h_gr_14", HW_H_GR, CGEN_MODE_SI, 0, 14, 0 },
+  { OUTPUT, "h_gr_SI_14", HW_H_GR, CGEN_MODE_SI, 0, 14, 0 },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
   { END }
 };
@@ -141,7 +145,7 @@ static const CGEN_OPINST sfmt_bl8_ops[] = {
 static const CGEN_OPINST sfmt_bl24_ops[] = {
   { INPUT, "disp24", HW_H_IADDR, CGEN_MODE_USI, OP_ENT (DISP24), 0, 0 },
   { INPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
-  { OUTPUT, "h_gr_14", HW_H_GR, CGEN_MODE_SI, 0, 14, 0 },
+  { OUTPUT, "h_gr_SI_14", HW_H_GR, CGEN_MODE_SI, 0, 14, 0 },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
   { END }
 };
@@ -150,7 +154,7 @@ static const CGEN_OPINST sfmt_bcl8_ops[] = {
   { INPUT, "condbit", HW_H_COND, CGEN_MODE_BI, 0, 0, 0 },
   { INPUT, "disp8", HW_H_IADDR, CGEN_MODE_USI, OP_ENT (DISP8), 0, COND_REF },
   { INPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, COND_REF },
-  { OUTPUT, "h_gr_14", HW_H_GR, CGEN_MODE_SI, 0, 14, COND_REF },
+  { OUTPUT, "h_gr_SI_14", HW_H_GR, CGEN_MODE_SI, 0, 14, COND_REF },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, COND_REF },
   { END }
 };
@@ -159,7 +163,7 @@ static const CGEN_OPINST sfmt_bcl24_ops[] = {
   { INPUT, "condbit", HW_H_COND, CGEN_MODE_BI, 0, 0, 0 },
   { INPUT, "disp24", HW_H_IADDR, CGEN_MODE_USI, OP_ENT (DISP24), 0, COND_REF },
   { INPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, COND_REF },
-  { OUTPUT, "h_gr_14", HW_H_GR, CGEN_MODE_SI, 0, 14, COND_REF },
+  { OUTPUT, "h_gr_SI_14", HW_H_GR, CGEN_MODE_SI, 0, 14, COND_REF },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, COND_REF },
   { END }
 };
@@ -213,7 +217,7 @@ static const CGEN_OPINST sfmt_jc_ops[] = {
 static const CGEN_OPINST sfmt_jl_ops[] = {
   { INPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
   { INPUT, "sr", HW_H_GR, CGEN_MODE_SI, OP_ENT (SR), 0, 0 },
-  { OUTPUT, "h_gr_14", HW_H_GR, CGEN_MODE_SI, 0, 14, 0 },
+  { OUTPUT, "h_gr_SI_14", HW_H_GR, CGEN_MODE_SI, 0, 14, 0 },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
   { END }
 };
@@ -225,14 +229,44 @@ static const CGEN_OPINST sfmt_jmp_ops[] = {
 };
 
 static const CGEN_OPINST sfmt_ld_ops[] = {
-  { INPUT, "h_memory_sr", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { INPUT, "h_memory_SI_sr", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
   { INPUT, "sr", HW_H_GR, CGEN_MODE_USI, OP_ENT (SR), 0, 0 },
   { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_ld_d_ops[] = {
-  { INPUT, "h_memory_add__DFLT_sr_slo16", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { INPUT, "h_memory_SI_add__DFLT_sr_slo16", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { INPUT, "slo16", HW_H_SLO16, CGEN_MODE_INT, OP_ENT (SLO16), 0, 0 },
+  { INPUT, "sr", HW_H_GR, CGEN_MODE_SI, OP_ENT (SR), 0, 0 },
+  { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
+  { END }
+};
+
+static const CGEN_OPINST sfmt_ldb_ops[] = {
+  { INPUT, "h_memory_QI_sr", HW_H_MEMORY, CGEN_MODE_QI, 0, 0, 0 },
+  { INPUT, "sr", HW_H_GR, CGEN_MODE_USI, OP_ENT (SR), 0, 0 },
+  { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
+  { END }
+};
+
+static const CGEN_OPINST sfmt_ldb_d_ops[] = {
+  { INPUT, "h_memory_QI_add__DFLT_sr_slo16", HW_H_MEMORY, CGEN_MODE_QI, 0, 0, 0 },
+  { INPUT, "slo16", HW_H_SLO16, CGEN_MODE_INT, OP_ENT (SLO16), 0, 0 },
+  { INPUT, "sr", HW_H_GR, CGEN_MODE_SI, OP_ENT (SR), 0, 0 },
+  { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
+  { END }
+};
+
+static const CGEN_OPINST sfmt_ldh_ops[] = {
+  { INPUT, "h_memory_HI_sr", HW_H_MEMORY, CGEN_MODE_HI, 0, 0, 0 },
+  { INPUT, "sr", HW_H_GR, CGEN_MODE_USI, OP_ENT (SR), 0, 0 },
+  { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
+  { END }
+};
+
+static const CGEN_OPINST sfmt_ldh_d_ops[] = {
+  { INPUT, "h_memory_HI_add__DFLT_sr_slo16", HW_H_MEMORY, CGEN_MODE_HI, 0, 0, 0 },
   { INPUT, "slo16", HW_H_SLO16, CGEN_MODE_INT, OP_ENT (SLO16), 0, 0 },
   { INPUT, "sr", HW_H_GR, CGEN_MODE_SI, OP_ENT (SR), 0, 0 },
   { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
@@ -240,7 +274,7 @@ static const CGEN_OPINST sfmt_ld_d_ops[] = {
 };
 
 static const CGEN_OPINST sfmt_ld_plus_ops[] = {
-  { INPUT, "h_memory_sr", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { INPUT, "h_memory_SI_sr", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
   { INPUT, "sr", HW_H_GR, CGEN_MODE_USI, OP_ENT (SR), 0, 0 },
   { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
   { OUTPUT, "sr", HW_H_GR, CGEN_MODE_SI, OP_ENT (SR), 0, 0 },
@@ -266,10 +300,10 @@ static const CGEN_OPINST sfmt_ldi16_ops[] = {
 };
 
 static const CGEN_OPINST sfmt_lock_ops[] = {
-  { INPUT, "h_memory_sr", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { INPUT, "h_memory_SI_sr", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
   { INPUT, "sr", HW_H_GR, CGEN_MODE_USI, OP_ENT (SR), 0, 0 },
   { OUTPUT, "dr", HW_H_GR, CGEN_MODE_SI, OP_ENT (DR), 0, 0 },
-  { OUTPUT, "h_lock", HW_H_LOCK, CGEN_MODE_BI, 0, 0, 0 },
+  { OUTPUT, "h_lock_BI", HW_H_LOCK, CGEN_MODE_BI, 0, 0, 0 },
   { END }
 };
 
@@ -365,13 +399,13 @@ static const CGEN_OPINST sfmt_rac_dsi_ops[] = {
 };
 
 static const CGEN_OPINST sfmt_rte_ops[] = {
-  { INPUT, "h_bbpsw", HW_H_BBPSW, CGEN_MODE_UQI, 0, 0, 0 },
-  { INPUT, "h_bpsw", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
-  { INPUT, "h_cr_14", HW_H_CR, CGEN_MODE_USI, 0, 14, 0 },
-  { INPUT, "h_cr_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
-  { OUTPUT, "h_bpsw", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
-  { OUTPUT, "h_cr_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
-  { OUTPUT, "h_psw", HW_H_PSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { INPUT, "h_bbpsw_UQI", HW_H_BBPSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { INPUT, "h_bpsw_UQI", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { INPUT, "h_cr_USI_14", HW_H_CR, CGEN_MODE_USI, 0, 14, 0 },
+  { INPUT, "h_cr_USI_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
+  { OUTPUT, "h_bpsw_UQI", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { OUTPUT, "h_cr_USI_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
+  { OUTPUT, "h_psw_UQI", HW_H_PSW, CGEN_MODE_UQI, 0, 0, 0 },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
   { END }
 };
@@ -399,7 +433,7 @@ static const CGEN_OPINST sfmt_slli_ops[] = {
 static const CGEN_OPINST sfmt_st_ops[] = {
   { INPUT, "src1", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_USI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_src2", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { OUTPUT, "h_memory_SI_src2", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
   { END }
 };
 
@@ -407,14 +441,14 @@ static const CGEN_OPINST sfmt_st_d_ops[] = {
   { INPUT, "slo16", HW_H_SLO16, CGEN_MODE_INT, OP_ENT (SLO16), 0, 0 },
   { INPUT, "src1", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_add__DFLT_src2_slo16", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { OUTPUT, "h_memory_SI_add__DFLT_src2_slo16", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_stb_ops[] = {
   { INPUT, "src1", HW_H_GR, CGEN_MODE_QI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_USI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_src2", HW_H_MEMORY, CGEN_MODE_QI, 0, 0, 0 },
+  { OUTPUT, "h_memory_QI_src2", HW_H_MEMORY, CGEN_MODE_QI, 0, 0, 0 },
   { END }
 };
 
@@ -422,14 +456,14 @@ static const CGEN_OPINST sfmt_stb_d_ops[] = {
   { INPUT, "slo16", HW_H_SLO16, CGEN_MODE_INT, OP_ENT (SLO16), 0, 0 },
   { INPUT, "src1", HW_H_GR, CGEN_MODE_QI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_add__DFLT_src2_slo16", HW_H_MEMORY, CGEN_MODE_QI, 0, 0, 0 },
+  { OUTPUT, "h_memory_QI_add__DFLT_src2_slo16", HW_H_MEMORY, CGEN_MODE_QI, 0, 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_sth_ops[] = {
   { INPUT, "src1", HW_H_GR, CGEN_MODE_HI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_USI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_src2", HW_H_MEMORY, CGEN_MODE_HI, 0, 0, 0 },
+  { OUTPUT, "h_memory_HI_src2", HW_H_MEMORY, CGEN_MODE_HI, 0, 0, 0 },
   { END }
 };
 
@@ -437,39 +471,39 @@ static const CGEN_OPINST sfmt_sth_d_ops[] = {
   { INPUT, "slo16", HW_H_SLO16, CGEN_MODE_INT, OP_ENT (SLO16), 0, 0 },
   { INPUT, "src1", HW_H_GR, CGEN_MODE_HI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_add__DFLT_src2_slo16", HW_H_MEMORY, CGEN_MODE_HI, 0, 0, 0 },
+  { OUTPUT, "h_memory_HI_add__DFLT_src2_slo16", HW_H_MEMORY, CGEN_MODE_HI, 0, 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_st_plus_ops[] = {
   { INPUT, "src1", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_memory_new_src2", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
+  { OUTPUT, "h_memory_SI_new_src2", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, 0 },
   { OUTPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_trap_ops[] = {
-  { INPUT, "h_bpsw", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
-  { INPUT, "h_cr_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
-  { INPUT, "h_psw", HW_H_PSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { INPUT, "h_bpsw_UQI", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { INPUT, "h_cr_USI_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
+  { INPUT, "h_psw_UQI", HW_H_PSW, CGEN_MODE_UQI, 0, 0, 0 },
   { INPUT, "pc", HW_H_PC, CGEN_MODE_USI, 0, 0, 0 },
   { INPUT, "uimm4", HW_H_UINT, CGEN_MODE_UINT, OP_ENT (UIMM4), 0, 0 },
-  { OUTPUT, "h_bbpsw", HW_H_BBPSW, CGEN_MODE_UQI, 0, 0, 0 },
-  { OUTPUT, "h_bpsw", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
-  { OUTPUT, "h_cr_14", HW_H_CR, CGEN_MODE_USI, 0, 14, 0 },
-  { OUTPUT, "h_cr_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
-  { OUTPUT, "h_psw", HW_H_PSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { OUTPUT, "h_bbpsw_UQI", HW_H_BBPSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { OUTPUT, "h_bpsw_UQI", HW_H_BPSW, CGEN_MODE_UQI, 0, 0, 0 },
+  { OUTPUT, "h_cr_USI_14", HW_H_CR, CGEN_MODE_USI, 0, 14, 0 },
+  { OUTPUT, "h_cr_USI_6", HW_H_CR, CGEN_MODE_USI, 0, 6, 0 },
+  { OUTPUT, "h_psw_UQI", HW_H_PSW, CGEN_MODE_UQI, 0, 0, 0 },
   { OUTPUT, "pc", HW_H_PC, CGEN_MODE_SI, 0, 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_unlock_ops[] = {
-  { INPUT, "h_lock", HW_H_LOCK, CGEN_MODE_BI, 0, 0, 0 },
+  { INPUT, "h_lock_BI", HW_H_LOCK, CGEN_MODE_BI, 0, 0, 0 },
   { INPUT, "src1", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC1), 0, COND_REF },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_USI, OP_ENT (SRC2), 0, COND_REF },
-  { OUTPUT, "h_lock", HW_H_LOCK, CGEN_MODE_BI, 0, 0, 0 },
-  { OUTPUT, "h_memory_src2", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, COND_REF },
+  { OUTPUT, "h_lock_BI", HW_H_LOCK, CGEN_MODE_BI, 0, 0, 0 },
+  { OUTPUT, "h_memory_SI_src2", HW_H_MEMORY, CGEN_MODE_SI, 0, 0, COND_REF },
   { END }
 };
 
@@ -487,24 +521,24 @@ static const CGEN_OPINST sfmt_sat_ops[] = {
 };
 
 static const CGEN_OPINST sfmt_sadd_ops[] = {
-  { INPUT, "h_accums_0", HW_H_ACCUMS, CGEN_MODE_DI, 0, 0, 0 },
-  { INPUT, "h_accums_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
-  { OUTPUT, "h_accums_0", HW_H_ACCUMS, CGEN_MODE_DI, 0, 0, 0 },
+  { INPUT, "h_accums_DI_0", HW_H_ACCUMS, CGEN_MODE_DI, 0, 0, 0 },
+  { INPUT, "h_accums_DI_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
+  { OUTPUT, "h_accums_DI_0", HW_H_ACCUMS, CGEN_MODE_DI, 0, 0, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_macwu1_ops[] = {
-  { INPUT, "h_accums_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
+  { INPUT, "h_accums_DI_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
   { INPUT, "src1", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_accums_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
+  { OUTPUT, "h_accums_DI_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
   { END }
 };
 
 static const CGEN_OPINST sfmt_mulwu1_ops[] = {
   { INPUT, "src1", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC1), 0, 0 },
   { INPUT, "src2", HW_H_GR, CGEN_MODE_SI, OP_ENT (SRC2), 0, 0 },
-  { OUTPUT, "h_accums_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
+  { OUTPUT, "h_accums_DI_1", HW_H_ACCUMS, CGEN_MODE_DI, 0, 1, 0 },
   { END }
 };
 
@@ -513,11 +547,11 @@ static const CGEN_OPINST sfmt_sc_ops[] = {
   { END }
 };
 
+#undef OP_ENT
 #undef INPUT
 #undef OUTPUT
 #undef END
 #undef COND_REF
-#undef OP_ENT
 
 /* Operand instance lookup table.  */
 
@@ -572,14 +606,14 @@ static const CGEN_OPINST *m32r_cgen_opinst_table[MAX_INSNS] = {
   & sfmt_jmp_ops[0],
   & sfmt_ld_ops[0],
   & sfmt_ld_d_ops[0],
-  & sfmt_ld_ops[0],
-  & sfmt_ld_d_ops[0],
-  & sfmt_ld_ops[0],
-  & sfmt_ld_d_ops[0],
-  & sfmt_ld_ops[0],
-  & sfmt_ld_d_ops[0],
-  & sfmt_ld_ops[0],
-  & sfmt_ld_d_ops[0],
+  & sfmt_ldb_ops[0],
+  & sfmt_ldb_d_ops[0],
+  & sfmt_ldh_ops[0],
+  & sfmt_ldh_d_ops[0],
+  & sfmt_ldb_ops[0],
+  & sfmt_ldb_d_ops[0],
+  & sfmt_ldh_ops[0],
+  & sfmt_ldh_d_ops[0],
   & sfmt_ld_plus_ops[0],
   & sfmt_ld24_ops[0],
   & sfmt_ldi8_ops[0],

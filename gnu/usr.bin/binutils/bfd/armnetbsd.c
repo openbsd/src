@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/ARM a.out-ish binaries.
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,12 +27,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define	DEFAULT_MID 		M_ARM6_NETBSD
 /*#define MACHTYPE_OK(mtype) ((mtype) == M_ARM6_NETBSD)*/
 
-#define MY(OP) 			CAT (armnetbsd_, OP)
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate
+   the tokens.  */
+#define MY(OP) 			CONCAT2 (armnetbsd_, OP)
+
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME 		"a.out-arm-netbsd"
 
 #if 0
-#define NAME(x,y) CAT3(aoutarm,_32_,y)
+#define NAME(x,y) CONCAT3 (aoutarm,_32_,y)
 
 #define aoutarm_32_get_section_contents aout_32_get_section_contents
 
@@ -40,7 +44,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bfd.h"		/* To ensure following declaration is OK */
 
-CONST struct reloc_howto_struct *
+const struct reloc_howto_struct *
 MY_bfd_reloc_type_lookup
   PARAMS ((bfd * abfd AND
 	  bfd_reloc_code_real_type code));

@@ -1,5 +1,5 @@
 /* winduni.c -- unicode support for the windres program.
-   Copyright 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2000, 2001 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -30,8 +30,7 @@
 #include "bfd.h"
 #include "bucomm.h"
 #include "winduni.h"
-
-#include <ctype.h>
+#include "safe-ctype.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -99,7 +98,7 @@ unicode_print (e, unicode, length)
 	{
 	  if (ch == '\\')
 	    fputs ("\\", e);
-	  else if (isprint (ch))
+	  else if (ISPRINT (ch))
 	    putc (ch, e);
 	  else
 	    {

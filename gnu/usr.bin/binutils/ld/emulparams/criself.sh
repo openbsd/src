@@ -15,14 +15,16 @@ TEXT_START_ADDR=0
 # Put crt0 for flash/eprom etc. in this section.
 INITIAL_READONLY_SECTIONS='.startup : { KEEP(*(.startup)) }'
 
-# TEXT_START_SYMBOLS doesn't get what we want which is the start of
-# all read-only sections; there's at least .init and .fini before it.
-# We have to resort to trickery.
-#
+# Setting __Stext to . in TEXT_START_SYMBOLS doesn't get what we want
+# most of the time, which is the start of all read-only sections;
+# there's at least .startup and .init before it.  We have to resort to
+# trickery.  Note that __Stext is always defined, not PROVIDE:d, since
+# external tools look for it.
+TEXT_START_SYMBOLS='__Stext = ADDR (.startup);'
+
 # The __start dance is to get us through assumptions about entry
 # symbols, and to clear _start for normal use with sane programs.
 EXECUTABLE_SYMBOLS='
-PROVIDE (__Stext = .);
 __start = DEFINED(__start) ? __start : 
   DEFINED(_start) ? _start : 
     DEFINED(start) ? start :
@@ -30,11 +32,11 @@ __start = DEFINED(__start) ? __start :
 '
 
 # Smuggle an "OTHER_TEXT_END_SYMBOLS" here.
-OTHER_READONLY_SECTIONS='PROVIDE (__Etext = .);'
+OTHER_READONLY_SECTIONS="${RELOCATING+PROVIDE (__Etext = .);}"
 DATA_START_SYMBOLS='PROVIDE (__Sdata = .);'
 
 # Smuggle an "OTHER_DATA_END_SYMBOLS" here.
-OTHER_GOT_SECTIONS='PROVIDE (__Edata = .);'
+OTHER_SDATA_SECTIONS="${RELOCATING+PROVIDE (__Edata = .);}"
 
 # If .bss does not immediately follow .data but has its own start
 # address, we can't get to it with OTHER_BSS_SYMBOLS, neither can we
@@ -43,7 +45,7 @@ OTHER_GOT_SECTIONS='PROVIDE (__Edata = .);'
 OTHER_BSS_END_SYMBOLS='
  PROVIDE (__Ebss = .);
  PROVIDE (__end = .);
- __Sbss = SIZEOF (.sbss) != 0 ? ADDR (.sbss) : ADDR (.bss);
+ __Sbss = ADDR (.bss);
  PROVIDE (_bss_start = __Sbss);
 '
 
@@ -93,11 +95,10 @@ CTOR_END='
  ___elf_ctors_dtors_end = .;
 '
 
-
-# Smuggle an "OTHER_ALL_END_SYMBOLS" here.
 # Also add the other symbols provided for rsim/xsim and elinux.
-OTHER_RELOCATING_SECTIONS='
-PROVIDE (__Eall = .);
-PROVIDE (__Endmem = 0x10000000); 
-PROVIDE (__Stacksize = 0);
+OTHER_END_SYMBOLS='
+  PROVIDE (__Eall = .);
+  PROVIDE (__Endmem = 0x10000000); 
+  PROVIDE (__Stacksize = 0);
 '
+NO_SMALL_DATA=yes

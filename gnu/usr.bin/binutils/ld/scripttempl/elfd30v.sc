@@ -12,14 +12,14 @@ CTOR=".ctors ${CONSTRUCTING-0} :
        doesn't matter which directory crtbegin.o
        is in.  */
 
-    KEEP (*crtbegin.o(.ctors))
+    KEEP (*crtbegin*.o(.ctors))
 
     /* We don't want to include the .ctor section from
        from the crtend.o file until after the sorted ctors.
        The .ctor section from the crtend file contains the
        end of ctors marker and it must be last */
 
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(EXCLUDE_FILE (*crtend*.o) .ctors))
     KEEP (*(SORT(.ctors.*)))
     KEEP (*(.ctors))
     ${CONSTRUCTING+ __CTOR_END__ = .; }
@@ -28,8 +28,8 @@ CTOR=".ctors ${CONSTRUCTING-0} :
 DTOR="  .dtors	${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+ __DTOR_LIST__ = .; }
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*crtbegin*.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend*.o) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
     ${CONSTRUCTING+ __DTOR_END__ = .; }
@@ -58,44 +58,44 @@ SECTIONS
   .gnu.version_d	${RELOCATING-0} : { *(.gnu.version_d) }
   .gnu.version_r	${RELOCATING-0} : { *(.gnu.version_r) }
 
+  .rel.text		${RELOCATING-0} : { *(.rel.text) *(.rel.gnu.linkonce.t*) }
   .rela.text		${RELOCATING-0} : { *(.rela.text) *(.rela.gnu.linkonce.t*) }
-  .rela.data		${RELOCATING-0} : { *(.rela.data) *(.rela.gnu.linkonce.d*) }
-  .rela.rodata		${RELOCATING-0} : { *(.rela.rodata) *(.rela.gnu.linkonce.r*) }
-  .rela.stext		${RELOCATING-0} : { *(.rela.stest) }
-  .rela.etext		${RELOCATING-0} : { *(.rela.etest) }
-  .rela.sdata		${RELOCATING-0} : { *(.rela.sdata) }
-  .rela.edata		${RELOCATING-0} : { *(.rela.edata) }
-  .rela.eit_v		${RELOCATING-0} : { *(.rela.eit_v) }
-  .rela.sbss		${RELOCATING-0} : { *(.rela.sbss) }
-  .rela.ebss		${RELOCATING-0} : { *(.rela.ebss) }
-  .rela.srodata		${RELOCATING-0} : { *(.rela.srodata) }
-  .rela.erodata		${RELOCATING-0} : { *(.rela.erodata) }
-  .rela.got		${RELOCATING-0} : { *(.rela.got) }
-  .rela.ctors		${RELOCATING-0} : { *(.rela.ctors) }
-  .rela.dtors		${RELOCATING-0} : { *(.rela.dtors) }
-  .rela.init		${RELOCATING-0} : { *(.rela.init) }
-  .rela.fini		${RELOCATING-0} : { *(.rela.fini) }
-  .rela.bss		${RELOCATING-0} : { *(.rela.bss) }
-  .rela.plt		${RELOCATING-0} : { *(.rela.plt) }
-
   .rel.data		${RELOCATING-0} : { *(.rel.data) *(.rel.gnu.linkonce.d*) }
+  .rela.data		${RELOCATING-0} : { *(.rela.data) *(.rela.gnu.linkonce.d*) }
   .rel.rodata		${RELOCATING-0} : { *(.rel.rodata) *(.rel.gnu.linkonce.r*) }
+  .rela.rodata		${RELOCATING-0} : { *(.rela.rodata) *(.rela.gnu.linkonce.r*) }
   .rel.stext		${RELOCATING-0} : { *(.rel.stest) }
+  .rela.stext		${RELOCATING-0} : { *(.rela.stest) }
   .rel.etext		${RELOCATING-0} : { *(.rel.etest) }
+  .rela.etext		${RELOCATING-0} : { *(.rela.etest) }
   .rel.sdata		${RELOCATING-0} : { *(.rel.sdata) }
+  .rela.sdata		${RELOCATING-0} : { *(.rela.sdata) }
   .rel.edata		${RELOCATING-0} : { *(.rel.edata) }
-  .rel.sbss		${RELOCATING-0} : { *(.rel.sbss) }
-  .rel.ebss		${RELOCATING-0} : { *(.rel.ebss) }
+  .rela.edata		${RELOCATING-0} : { *(.rela.edata) }
   .rel.eit_v		${RELOCATING-0} : { *(.rel.eit_v) }
+  .rela.eit_v		${RELOCATING-0} : { *(.rela.eit_v) }
+  .rel.sbss		${RELOCATING-0} : { *(.rel.sbss) }
+  .rela.sbss		${RELOCATING-0} : { *(.rela.sbss) }
+  .rel.ebss		${RELOCATING-0} : { *(.rel.ebss) }
+  .rela.ebss		${RELOCATING-0} : { *(.rela.ebss) }
   .rel.srodata		${RELOCATING-0} : { *(.rel.srodata) }
+  .rela.srodata		${RELOCATING-0} : { *(.rela.srodata) }
   .rel.erodata		${RELOCATING-0} : { *(.rel.erodata) }
+  .rela.erodata		${RELOCATING-0} : { *(.rela.erodata) }
   .rel.got		${RELOCATING-0} : { *(.rel.got) }
+  .rela.got		${RELOCATING-0} : { *(.rela.got) }
   .rel.ctors		${RELOCATING-0} : { *(.rel.ctors) }
+  .rela.ctors		${RELOCATING-0} : { *(.rela.ctors) }
   .rel.dtors		${RELOCATING-0} : { *(.rel.dtors) }
+  .rela.dtors		${RELOCATING-0} : { *(.rela.dtors) }
   .rel.init		${RELOCATING-0} : { *(.rel.init) }
+  .rela.init		${RELOCATING-0} : { *(.rela.init) }
   .rel.fini		${RELOCATING-0} : { *(.rel.fini) }
+  .rela.fini		${RELOCATING-0} : { *(.rela.fini) }
   .rel.bss		${RELOCATING-0} : { *(.rel.bss) }
+  .rela.bss		${RELOCATING-0} : { *(.rela.bss) }
   .rel.plt		${RELOCATING-0} : { *(.rel.plt) }
+  .rela.plt		${RELOCATING-0} : { *(.rela.plt) }
 
   .init			${RELOCATING-0} : { *(.init) } =${NOP-0}
   ${DATA_PLT-${PLT}}
@@ -123,6 +123,9 @@ SECTIONS
   /* C++ exception support.  */
   .eh_frame	${RELOCATING-0} : { KEEP (*(.eh_frame)) }	${RELOCATING+ > ${DATA_MEMORY}}
   .gcc_except_table ${RELOCATING-0} : { *(.gcc_except_table) }	${RELOCATING+ > ${DATA_MEMORY}}
+
+  /* Java class registration support.  */
+  .jcr		${RELOCATING-0} : { KEEP (*(.jcr)) }	${RELOCATING+ >${DATA_MEMORY}}
 
   ${RELOCATING+${CTOR}}
   ${RELOCATING+${DTOR}}

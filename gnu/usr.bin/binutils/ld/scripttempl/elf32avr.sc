@@ -5,7 +5,7 @@ OUTPUT_ARCH(${ARCH})
 MEMORY
 {
   text   (rx)   : ORIGIN = 0,    LENGTH = $TEXT_LENGTH
-  data   (rw!x) : ORIGIN = 0x800060, LENGTH = $DATA_LENGTH
+  data   (rw!x) : ORIGIN = (0x800000 + $DATA_START), LENGTH = $DATA_LENGTH
   eeprom (rw!x) : ORIGIN = 0x810000, LENGTH = $EEPROM_LENGTH
 }
 

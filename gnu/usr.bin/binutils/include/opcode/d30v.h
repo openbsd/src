@@ -32,7 +32,7 @@ struct pd_reg
 };
 
 extern const struct pd_reg pre_defined_registers[];
-int reg_name_cnt();
+int reg_name_cnt PARAMS ((void));
 
 /* the number of control registers */
 #define MAX_CONTROL_REG	64

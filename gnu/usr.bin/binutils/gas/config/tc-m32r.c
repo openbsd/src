@@ -1,5 +1,5 @@
-/* tc-m32r.c -- Assembler for the Mitsubishi M32R.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+/* tc-m32r.c -- Assembler for the Renesas M32R.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -20,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/m32r-desc.h"
@@ -146,6 +146,8 @@ struct m32r_hi_fixup
 
 static struct m32r_hi_fixup *m32r_hi_fixup_list;
 
+static void allow_m32rx PARAMS ((int));
+
 static void
 allow_m32rx (on)
      int on;
@@ -198,7 +200,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 int
 md_parse_option (c, arg)
      int c;
-     char *arg;
+     char *arg ATTRIBUTE_UNUSED;
 {
   switch (c)
     {
@@ -379,7 +381,7 @@ m32r_handle_align (fragp)
 
 static void
 fill_insn (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   frag_align_code (2, 0);
   prev_insn.insn = NULL;
@@ -394,7 +396,7 @@ fill_insn (ignore)
 
 static void
 debug_sym (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   register char *name;
   register char delim;
@@ -554,6 +556,8 @@ md_begin ()
   scom_symbol.section         = &scom_section;
 
   allow_m32rx (enable_m32rx);
+
+  gas_cgen_initialize_saved_fixups_array ();
 }
 
 #define OPERAND_IS_COND_BIT(operand, indices, index) \
@@ -565,6 +569,9 @@ md_begin ()
 /* Returns true if an output of instruction 'a' is referenced by an operand
    of instruction 'b'.  If 'check_outputs' is true then b's outputs are
    checked, otherwise its inputs are examined.  */
+
+static int first_writes_to_seconds_operands
+  PARAMS ((m32r_insn *, m32r_insn *, const int));
 
 static int
 first_writes_to_seconds_operands (a, b, check_outputs)
@@ -640,6 +647,8 @@ first_writes_to_seconds_operands (a, b, check_outputs)
 
 /* Returns true if the insn can (potentially) alter the program counter.  */
 
+static int writes_to_pc PARAMS ((m32r_insn *));
+
 static int
 writes_to_pc (a)
      m32r_insn *a;
@@ -672,6 +681,8 @@ writes_to_pc (a)
 /* Return NULL if the two 16 bit insns can be executed in parallel.
    Otherwise return a pointer to an error message explaining why not.  */
 
+static const char *can_make_parallel PARAMS ((m32r_insn *, m32r_insn *));
+
 static const char *
 can_make_parallel (a, b)
      m32r_insn *a;
@@ -685,7 +696,7 @@ can_make_parallel (a, b)
       || CGEN_FIELDS_BITSIZE (&b->fields) != 16)
     abort ();
 
-  if (first_writes_to_seconds_operands (a, b, true))
+  if (first_writes_to_seconds_operands (a, b, TRUE))
     return _("Instructions write to the same destination register.");
 
   a_pipe = CGEN_INSN_ATTR_VALUE (a->insn, CGEN_INSN_PIPE);
@@ -708,6 +719,8 @@ can_make_parallel (a, b)
 
 /* Force the top bit of the second 16-bit insn to be set.  */
 
+static void make_parallel PARAMS ((CGEN_INSN_BYTES_PTR));
+
 static void
 make_parallel (buffer)
      CGEN_INSN_BYTES_PTR buffer;
@@ -722,6 +735,8 @@ make_parallel (buffer)
 
 /* Same as make_parallel except buffer contains the bytes in target order.  */
 
+static void target_make_parallel PARAMS ((char *));
+
 static void
 target_make_parallel (buffer)
      char *buffer;
@@ -732,6 +747,8 @@ target_make_parallel (buffer)
 
 /* Assemble two instructions with an explicit parallel operation (||) or
    sequential operation (->).  */
+
+static void assemble_two_insns PARAMS ((char *, char *, int));
 
 static void
 assemble_two_insns (str, str2, parallel_p)
@@ -817,22 +834,21 @@ assemble_two_insns (str, str2, parallel_p)
   {
     char *s2 = str;
 
-    while (isspace (*s2++))
+    while (ISSPACE (*s2++))
       continue;
 
     --s2;
 
-    while (isalnum (*s2))
+    while (ISALNUM (*s2))
       {
-	if (isupper ((unsigned char) *s2))
-	  *s2 = tolower (*s2);
+	*s2 = TOLOWER (*s2);
 	s2++;
       }
   }
 
   /* Preserve any fixups that have been generated and reset the list
      to empty.  */
-  gas_cgen_save_fixups ();
+  gas_cgen_save_fixups (0);
 
   /* Get the indices of the operands of the instruction.  */
   /* FIXME: CGEN_FIELDS is already recorded, but relying on that fact
@@ -928,11 +944,11 @@ assemble_two_insns (str, str2, parallel_p)
 
   if (parallel_p && warn_explicit_parallel_conflicts)
     {
-      if (first_writes_to_seconds_operands (&first, &second, false))
+      if (first_writes_to_seconds_operands (&first, &second, FALSE))
 	/* xgettext:c-format  */
 	as_warn (_("%s: output of 1st instruction is the same as an input to 2nd instruction - is this intentional ?"), str2);
 
-      if (first_writes_to_seconds_operands (&second, &first, false))
+      if (first_writes_to_seconds_operands (&second, &first, FALSE))
 	/* xgettext:c-format  */
 	as_warn (_("%s: output of 2nd instruction is the same as an input to 1st instruction - is this intentional ?"), str2);
     }
@@ -941,7 +957,7 @@ assemble_two_insns (str, str2, parallel_p)
       || (errmsg = (char *) can_make_parallel (&first, &second)) == NULL)
     {
       /* Get the fixups for the first instruction.  */
-      gas_cgen_swap_fixups ();
+      gas_cgen_swap_fixups (0);
 
       /* Write it out.  */
       expand_debug_syms (first.debug_sym_link, 1);
@@ -953,7 +969,7 @@ assemble_two_insns (str, str2, parallel_p)
 	make_parallel (second.buffer);
 
       /* Get its fixups.  */
-      gas_cgen_restore_fixups ();
+      gas_cgen_restore_fixups (0);
 
       /* Write it out.  */
       expand_debug_syms (second.debug_sym_link, 1);
@@ -972,7 +988,7 @@ assemble_two_insns (str, str2, parallel_p)
       make_parallel (first.buffer);
 
       /* Get the fixups for the first instruction.  */
-      gas_cgen_restore_fixups ();
+      gas_cgen_restore_fixups (0);
 
       /* Write out the first instruction.  */
       expand_debug_syms (first.debug_sym_link, 1);
@@ -1062,7 +1078,7 @@ md_assemble (str)
   else
     {
       int on_32bit_boundary_p;
-      int swap = false;
+      int swap = FALSE;
 
       if (CGEN_INSN_BITSIZE (insn.insn) != 16)
 	abort ();
@@ -1110,12 +1126,12 @@ md_assemble (str)
 	  && optimize
 	  && CGEN_INSN_ATTR_VALUE (insn.orig_insn, CGEN_INSN_RELAXABLE) == 0
 	  && ! writes_to_pc (&prev_insn)
-	  && ! first_writes_to_seconds_operands (&prev_insn, &insn, false))
+	  && ! first_writes_to_seconds_operands (&prev_insn, &insn, FALSE))
 	{
 	  if (can_make_parallel (&prev_insn, &insn) == NULL)
 	    make_parallel (insn.buffer);
 	  else if (can_make_parallel (&insn, &prev_insn) == NULL)
-	    swap = true;
+	    swap = TRUE;
 	}
 
       expand_debug_syms (insn.debug_sym_link, 1);
@@ -1215,7 +1231,7 @@ md_section_align (segment, size)
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -1229,7 +1245,7 @@ md_undefined_symbol (name)
 
 static void
 m32r_scomm (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   register char *name;
   register char c;
@@ -1449,7 +1465,9 @@ md_estimate_size_before_relax (fragP, segment)
 
   if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
     {
+#if 0
       int old_fr_fix = fragP->fr_fix;
+#endif
 
       /* The symbol is undefined in this segment.
 	 Change the relaxation subtype to the max allowable and leave
@@ -1513,7 +1531,7 @@ md_estimate_size_before_relax (fragP, segment)
 
 void
 md_convert_frag (abfd, sec, fragP)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      segT sec;
      fragS *fragP;
 {
@@ -1562,7 +1580,6 @@ md_convert_frag (abfd, sec, fragP)
     {
       /* Address we want to reach in file space.  */
       target_address = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
-      target_address += symbol_get_frag (fragP->fr_symbol)->fr_address;
       addend = (target_address - (opcode_address & -4)) >> 2;
     }
 
@@ -1626,7 +1643,7 @@ md_pcrel_from_section (fixP, sec)
 
 bfd_reloc_code_real_type
 md_cgen_lookup_reloc (insn, operand, fixP)
-     const CGEN_INSN *insn;
+     const CGEN_INSN *insn ATTRIBUTE_UNUSED;
      const CGEN_OPERAND *operand;
      fixS *fixP;
 {
@@ -1652,11 +1669,13 @@ md_cgen_lookup_reloc (insn, operand, fixP)
 
 /* Record a HI16 reloc for later matching with its LO16 cousin.  */
 
+static void m32r_record_hi16 PARAMS ((int, fixS *, segT));
+
 static void
 m32r_record_hi16 (reloc_type, fixP, seg)
      int reloc_type;
      fixS *fixP;
-     segT seg;
+     segT seg ATTRIBUTE_UNUSED;
 {
   struct m32r_hi_fixup *hi_fixup;
 
@@ -1710,7 +1729,7 @@ m32r_cgen_record_fixup_exp (frag, where, insn, length, operand, opinfo, exp)
 #define FX_OPINFO_R_TYPE(f) ((f)->fx_cgen.opinfo)
 
 /* Sort any unmatched HI16 relocs so that they immediately precede
-   the corresponding LO16 reloc.  This is called before md_apply_fix and
+   the corresponding LO16 reloc.  This is called before md_apply_fix3 and
    tc_gen_reloc.  */
 
 void
@@ -1799,8 +1818,7 @@ int
 m32r_force_relocation (fix)
      fixS *fix;
 {
-  if (fix->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fix->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+  if (generic_force_reloc (fix))
     return 1;
 
   if (! m32r_relax)
@@ -1841,7 +1859,6 @@ md_atof (type, litP, sizeP)
   int prec;
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   char *t;
-  char *atof_ieee ();
 
   switch (type)
     {
@@ -1908,11 +1925,10 @@ m32r_elf_section_change_hook ()
 /* Return true if can adjust the reloc to be relative to its section
    (such as .data) instead of relative to some symbol.  */
 
-boolean
+bfd_boolean
 m32r_fix_adjustable (fixP)
    fixS *fixP;
 {
-
   bfd_reloc_code_real_type reloc_type;
 
   if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
@@ -1925,15 +1941,6 @@ m32r_fix_adjustable (fixP)
     }
   else
     reloc_type = fixP->fx_r_type;
-
-  if (fixP->fx_addsy == NULL)
-    return 1;
-
-  /* Prevent all adjustments to global symbols.  */
-  if (S_IS_EXTERN (fixP->fx_addsy))
-    return 0;
-  if (S_IS_WEAK (fixP->fx_addsy))
-    return 0;
 
   /* We need the symbol name for the VTABLE entries.  */
   if (reloc_type == BFD_RELOC_VTABLE_INHERIT

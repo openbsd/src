@@ -98,7 +98,7 @@ struct arc_opcode {
 
 /* this is an "insert at front" linked list per Metaware spec
    that new definitions override older ones.  */
-struct arc_opcode *arc_ext_opcodes;
+extern struct arc_opcode *arc_ext_opcodes;
 
 struct arc_operand_value {
   char *name;          /* eg: "eq"  */
@@ -117,7 +117,9 @@ struct arc_operand_value {
 struct arc_ext_operand_value {
   struct arc_ext_operand_value *next;
   struct arc_operand_value operand;
-} *arc_ext_operands;
+};
+
+extern struct arc_ext_operand_value *arc_ext_operands;
 
 struct arc_operand {
 /* One of the insn format chars.  */
@@ -313,3 +315,9 @@ const struct arc_operand_value *arc_opcode_lookup_suffix
   PARAMS ((const struct arc_operand *type, int value));
 int arc_opcode_supported PARAMS ((const struct arc_opcode *));
 int arc_opval_supported PARAMS ((const struct arc_operand_value *));
+int arc_limm_fixup_adjust PARAMS ((arc_insn));
+int arc_insn_is_j PARAMS ((arc_insn));
+int arc_insn_not_jl PARAMS ((arc_insn));
+int arc_operand_type PARAMS ((int));
+struct arc_operand_value *get_ext_suffix PARAMS ((char *));
+int arc_get_noshortcut_flag PARAMS ((void));

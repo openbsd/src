@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Logically, this code should be part of libopcode but since some of
    the operand insertion/extraction functions help bfd to implement
-   relocations, this code is included as part of elf64-ia64.c.  This
+   relocations, this code is included as part of cpu-ia64.c.  This
    avoids circular dependencies between libopcode and libbfd and also
    obviates the need for applications to link in libopcode when all
    they really want is libbfd.
@@ -418,6 +418,7 @@ const struct ia64_operand elf64_ia64_operands[IA64_OPND_COUNT] =
   {
     /* constants: */
     { CST, ins_const, ext_const, "NIL",		{{ 0, 0}}, 0, "<none>" },
+    { CST, ins_const, ext_const, "ar.csd",	{{ 0, 0}}, 0, "ar.csd" },
     { CST, ins_const, ext_const, "ar.ccv",	{{ 0, 0}}, 0, "ar.ccv" },
     { CST, ins_const, ext_const, "ar.pfs",	{{ 0, 0}}, 0, "ar.pfs" },
     { CST, ins_const, ext_const, "1",		{{ 0, 0}}, 0, "1" },
@@ -586,4 +587,7 @@ const struct ia64_operand elf64_ia64_operands[IA64_OPND_COUNT] =
       "a branch target" },
     { REL, ins_rsvd, ext_rsvd, 0, {{0, 0}}, 0,                  /* TGT64  */
       "a branch target" },
+
+    { ABS, ins_const, ext_const, 0, {{0, 0}}, 0,		/* LDXMOV */
+      "ldxmov target" },
   };

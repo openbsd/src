@@ -1,4 +1,4 @@
-@c Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+@c Copyright (C) 1991, 1992, 1993, 1994, 1995, 2003 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -21,8 +21,8 @@
 
 @cindex H8/300 options (none)
 @cindex options, H8/300 (none)
-@code{@value{AS}} has no additional command-line options for the Hitachi
-H8/300 family.
+@code{@value{AS}} has no additional command-line options for the
+Renesas (formerly Hitachi) H8/300 family.
 
 @node H8/300 Syntax
 @section Syntax
@@ -134,8 +134,8 @@ with other development tools.
 @cindex machine directives, H8/300 (none)
 @cindex @code{word} directive, H8/300
 @cindex @code{int} directive, H8/300
-@code{@value{AS}} has only one machine-dependent directive for the
-H8/300:
+@code{@value{AS}} has the following machine-dependent directives for
+the H8/300:
 
 @table @code
 @cindex H8/300H, assembling for
@@ -143,6 +143,21 @@ H8/300:
 Recognize and emit additional instructions for the H8/300H variant, and
 also make @code{.int} emit 32-bit numbers rather than the usual (16-bit)
 for the H8/300 family.
+
+@item .h8300s
+Recognize and emit additional instructions for the H8S variant, and
+also make @code{.int} emit 32-bit numbers rather than the usual (16-bit)
+for the H8/300 family.
+
+@item .h8300hn
+Recognize and emit additional instructions for the H8/300H variant in
+normal mode, and also make @code{.int} emit 32-bit numbers rather than 
+the usual (16-bit) for the H8/300 family.
+
+@item .h8300sn
+Recognize and emit additional instructions for the H8S variant in
+normal mode, and also make @code{.int} emit 32-bit numbers rather than 
+the usual (16-bit) for the H8/300 family.
 @end table
 
 On the H8/300 family (including the H8/300H) @samp{.word} directives
@@ -156,9 +171,8 @@ generate 16-bit numbers.
 @cindex mnemonics, H8/300
 @cindex instruction summary, H8/300
 For detailed information on the H8/300 machine instruction set, see
-@cite{H8/300 Series Programming Manual} (Hitachi ADE--602--025).  For
-information specific to the H8/300H, see @cite{H8/300H Series
-Programming Manual} (Hitachi).
+@cite{H8/300 Series Programming Manual}.  For information specific to
+the H8/300H, see @cite{H8/300H Series Programming Manual} (Renesas).
 
 @code{@value{AS}} implements all the standard H8/300 opcodes.  No additional
 pseudo-instructions are needed on this family.

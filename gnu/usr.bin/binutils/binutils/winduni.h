@@ -1,5 +1,5 @@
 /* winduni.h -- header file for unicode support for windres program.
-   Copyright 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2002 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -19,7 +19,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-#include <ansidecl.h>
+#include "ansidecl.h"
 
 /* This header file declares the types and functions we use for
    unicode support in windres.  Our unicode support is very limited at

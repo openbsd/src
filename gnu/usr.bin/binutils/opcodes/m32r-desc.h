@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -28,7 +28,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define CGEN_ARCH m32r
 
 /* Given symbol S, return m32r_cgen_<S>.  */
-#define CGEN_SYM(s) CONCAT3 (m32r,_cgen_,s)
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define CGEN_SYM(s) m32r##_cgen_##s
+#else
+#define CGEN_SYM(s) m32r/**/_cgen_/**/s
+#endif
+
 
 /* Selected cpu families.  */
 #define HAVE_CPU_M32RBF
@@ -44,8 +49,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define CGEN_INT_INSN_P 1
 
-/* Maximum nymber of syntax bytes in an instruction.  */
-#define CGEN_ACTUAL_MAX_SYNTAX_BYTES 15
+/* Maximum number of syntax elements in an instruction.  */
+#define CGEN_ACTUAL_MAX_SYNTAX_ELEMENTS 15
 
 /* CGEN_MNEMONIC_OPERANDS is defined if mnemonics have operands.
    e.g. In "b,a foo" the ",a" is an operand.  If mnemonics have operands

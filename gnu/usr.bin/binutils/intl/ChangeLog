@@ -1,3 +1,77 @@
+2002-08-05  Daniel Jacobowitz  <drow@mvista.com>
+
+	* Makefile.in (distclean): Remove config.cache, stamp-h,
+	config.status, and config.h.
+
+2002-01-21  Thomas Klausner <wiz@danbala.ifoer.tuwien.ac.at>
+
+	* linux-msg.sed: Comment typo fix.
+	* xopen-msg.sed: Likewise.
+
+1998-04-29  Ulrich Drepper  <drepper@cygnus.com>
+
+	* intl/localealias.c (read_alias_file): Use unsigned char for
+	local variables.  Remove unused variable tp.
+	* intl/l10nflist.c (_nl_normalize_codeset): Use unsigned char *
+	for type of codeset.  For loosing Solaris systems.
+	* intl/loadinfo.h: Adapt prototype of _nl_normalize_codeset.
+	* intl/bindtextdom.c (BINDTEXTDOMAIN): Don't define local variable
+	len if not needed.
+	Patches by Jim Meyering.
+
+1998-04-28  Ulrich Drepper  <drepper@cygnus.com>
+
+	* loadmsgcat.c (_nl_load_domain): Don't assign the element use_mmap if
+	mmap is not supported.
+
+	* hash-string.h: Don't include <values.h>.
+
+1998-04-27  Ulrich Drepper  <drepper@cygnus.com>
+
+	* textdomain.c: Use strdup is available.
+
+	* localealias.c: Define HAVE_MEMPCPY so that we can use this
+	function.  Define and use semapahores to protect modfication of
+	global objects when compiling for glibc.  Add code to allow
+	freeing alias table.
+
+	* l10nflist.c: Don't assume stpcpy not being a macro.
+
+	* gettextP.h: Define internal_function macri if not already done.
+	Use glibc byte-swap macros instead of defining SWAP when compiled
+	for glibc.
+	(struct loaded_domain): Add elements to allow unloading.
+
+	* Makefile.in (distclean): Don't remove libintl.h here.
+
+	* bindtextdomain.c: Carry over changes from glibc.  Use strdup if
+	available.
+
+	* dcgettext.c: Don't assume stpcpy not being a macro.  Mark internal
+	functions.  Add memory freeing code for glibc.
+
+	* dgettext.c: Update copyright.
+
+	* explodename.c: Include stdlib.h and string.h only if they exist.
+	Use strings.h eventually.
+
+	* finddomain.c: Mark internal functions.  Use strdup if available.
+	Add memory freeing code for glibc.
+
+1997-10-10 20:00  Ulrich Drepper  <drepper@cygnus.com>
+
+	* libgettext.h: Fix dummy textdomain and bindtextdomain macros.
+	They should return reasonable values.
+	Reported by Tom Tromey <tromey@cygnus.com>.
+
+1997-09-16 03:33  Ulrich Drepper  <drepper@cygnus.com>
+
+	* libgettext.h: Define PARAMS also to `args' if __cplusplus is defined.
+	* intlh.inst.in: Likewise.
+	Reported by Jean-Marc Lasgouttes <Jean-Marc.Lasgouttes@inria.fr>.
+
+	* libintl.glibc: Update from current glibc version.
+
 1997-09-06 02:10  Ulrich Drepper  <drepper@cygnus.com>
 
 	* intlh.inst.in: Reformat copyright.

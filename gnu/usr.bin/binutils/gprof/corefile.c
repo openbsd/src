@@ -1,6 +1,6 @@
 /* corefile.c
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -21,8 +21,10 @@
 
 #include "libiberty.h"
 #include "gprof.h"
-#include "corefile.h"
+#include "search_list.h"
+#include "source.h"
 #include "symtab.h"
+#include "corefile.h"
 
 bfd *core_bfd;
 int core_num_syms;
@@ -34,23 +36,24 @@ int min_insn_size;
 int offset_to_code;
 
 /* For mapping symbols to specific .o files during file ordering.  */
-struct function_map
-{
-  char *function_name;
-  char *file_name;
-};
-
 struct function_map *symbol_map;
 unsigned int symbol_map_count;
+
+static void read_function_mappings PARAMS ((const char *));
+static int core_sym_class PARAMS ((asymbol *));
+static bfd_boolean get_src_info
+  PARAMS ((bfd_vma, const char **, const char **, int *));
 
 extern void i386_find_call  PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void alpha_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void vax_find_call   PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void tahoe_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void sparc_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void mips_find_call  PARAMS ((Sym *, bfd_vma, bfd_vma));
 
 static void
-DEFUN (read_function_mappings, (filename), const char *filename)
+read_function_mappings (filename)
+     const char *filename;
 {
   FILE *file = fopen (filename, "r");
   char dummy[1024];
@@ -136,19 +139,20 @@ DEFUN (read_function_mappings, (filename), const char *filename)
 
 
 void
-DEFUN (core_init, (a_out_name), const char *a_out_name)
+core_init (aout_name)
+     const char *aout_name;
 {
-  core_bfd = bfd_openr (a_out_name, 0);
+  core_bfd = bfd_openr (aout_name, 0);
 
   if (!core_bfd)
     {
-      perror (a_out_name);
+      perror (aout_name);
       done (1);
     }
 
   if (!bfd_check_format (core_bfd, bfd_object))
     {
-      fprintf (stderr, _("%s: %s: not in a.out format\n"), whoami, a_out_name);
+      fprintf (stderr, _("%s: %s: not in a.out format\n"), whoami, aout_name);
       done (1);
     }
 
@@ -160,7 +164,7 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
       if (!core_text_sect)
 	{
 	  fprintf (stderr, _("%s: can't find .text section in %s\n"),
-		   whoami, a_out_name);
+		   whoami, aout_name);
 	  done (1);
 	}
     }
@@ -171,7 +175,7 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
   core_num_syms = bfd_get_symtab_upper_bound (core_bfd);
   if (core_num_syms < 0)
     {
-      fprintf (stderr, "%s: %s: %s\n", whoami, a_out_name,
+      fprintf (stderr, "%s: %s: %s\n", whoami, aout_name,
 	       bfd_errmsg (bfd_get_error ()));
       done (1);
     }
@@ -181,7 +185,7 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
 
   if (core_num_syms < 0)
     {
-      fprintf (stderr, "%s: %s: %s\n", whoami, a_out_name,
+      fprintf (stderr, "%s: %s: %s\n", whoami, aout_name,
 	       bfd_errmsg (bfd_get_error ()));
       done (1);
     }
@@ -211,9 +215,10 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
 /* Read in the text space of an a.out file.  */
 
 void
-DEFUN (core_get_text_space, (core_bfd), bfd * core_bfd)
+core_get_text_space (cbfd)
+     bfd *cbfd;
 {
-  core_text_space = (PTR) malloc (core_text_sect->_raw_size);
+  core_text_space = (PTR) malloc ((unsigned int) core_text_sect->_raw_size);
 
   if (!core_text_space)
     {
@@ -222,8 +227,8 @@ DEFUN (core_get_text_space, (core_bfd), bfd * core_bfd)
       done (1);
     }
 
-  if (!bfd_get_section_contents (core_bfd, core_text_sect, core_text_space,
-				 0, core_text_sect->_raw_size))
+  if (!bfd_get_section_contents (cbfd, core_text_sect, core_text_space,
+				 (bfd_vma) 0, core_text_sect->_raw_size))
     {
       bfd_perror ("bfd_get_section_contents");
       free (core_text_space);
@@ -236,8 +241,10 @@ DEFUN (core_get_text_space, (core_bfd), bfd * core_bfd)
 
 
 void
-DEFUN (find_call, (parent, p_lowpc, p_highpc),
-       Sym * parent AND bfd_vma p_lowpc AND bfd_vma p_highpc)
+find_call (parent, p_lowpc, p_highpc)
+     Sym *parent;
+     bfd_vma p_lowpc;
+     bfd_vma p_highpc;
 {
   switch (bfd_get_arch (core_bfd))
     {
@@ -261,6 +268,10 @@ DEFUN (find_call, (parent, p_lowpc, p_highpc),
       tahoe_find_call (parent, p_lowpc, p_highpc);
       break;
 
+    case bfd_arch_mips:
+      mips_find_call (parent, p_lowpc, p_highpc);
+      break;
+
     default:
       fprintf (stderr, _("%s: -c not supported on architecture %s\n"),
 	       whoami, bfd_printable_name(core_bfd));
@@ -276,7 +287,8 @@ DEFUN (find_call, (parent, p_lowpc, p_highpc),
 	't' -> symbol is a local (static) name.  */
 
 static int
-DEFUN (core_sym_class, (sym), asymbol * sym)
+core_sym_class (sym)
+     asymbol *sym;
 {
   symbol_info syminfo;
   const char *name;
@@ -358,10 +370,12 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
 
 /* Get whatever source info we can get regarding address ADDR.  */
 
-static bool
-DEFUN (get_src_info, (addr, filename, name, line_num),
-       bfd_vma addr AND const char **filename AND const char **name
-       AND int *line_num)
+static bfd_boolean
+get_src_info (addr, filename, name, line_num)
+     bfd_vma addr;
+     const char **filename;
+     const char **name;
+     int *line_num;
 {
   const char *fname = 0, *func_name = 0;
   int l = 0;
@@ -391,10 +405,11 @@ DEFUN (get_src_info, (addr, filename, name, line_num),
    One symbol per function is entered.  */
 
 void
-core_create_function_syms (core_bfd)
-     bfd *core_bfd ATTRIBUTE_UNUSED;
+core_create_function_syms (cbfd)
+     bfd *cbfd ATTRIBUTE_UNUSED;
 {
-  bfd_vma min_vma = ~0, max_vma = 0;
+  bfd_vma min_vma = ~(bfd_vma) 0;
+  bfd_vma max_vma = 0;
   int class;
   long i, found, skip;
   unsigned int j;
@@ -527,8 +542,15 @@ core_create_function_syms (core_bfd)
       if (class == 't')
 	symtab.limit->is_static = TRUE;
 
+      /* Keep track of the minimum and maximum vma addresses used by all
+	 symbols.  When computing the max_vma, use the ending address of the
+	 section containing the symbol, if available.  */
       min_vma = MIN (symtab.limit->addr, min_vma);
-      max_vma = MAX (symtab.limit->addr, max_vma);
+      if (core_syms[i]->section)
+	max_vma = MAX (core_syms[i]->section->vma
+		       + core_syms[i]->section->_cooked_size - 1, max_vma);
+      else
+	max_vma = MAX (symtab.limit->addr, max_vma);
 
       /* If we see "main" without an initial '_', we assume names
 	 are *not* prefixed by '_'.  */
@@ -553,7 +575,7 @@ core_create_function_syms (core_bfd)
   sym_init (symtab.limit);
   symtab.limit->name = "<hicore>";
   symtab.limit->addr = max_vma + 1;
-  symtab.limit->end_addr = ~0;
+  symtab.limit->end_addr = ~(bfd_vma) 0;
   ++symtab.limit;
 
   symtab.len = symtab.limit - symtab.base;
@@ -564,11 +586,12 @@ core_create_function_syms (core_bfd)
    One symbol per line of source code is entered.  */
 
 void
-DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
+core_create_line_syms (cbfd)
+     bfd *cbfd;
 {
   char *prev_name, *prev_filename;
-  int prev_name_len, prev_filename_len;
-  bfd_vma vma, min_vma = ~0, max_vma = 0;
+  unsigned int prev_name_len, prev_filename_len;
+  bfd_vma vma, min_vma = ~(bfd_vma) 0, max_vma = 0;
   bfd_vma offset;
   Sym *prev, dummy, *sentinel, *sym;
   const char *filename;
@@ -578,7 +601,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
   /* Create symbols for functions as usual.  This is necessary in
      cases where parts of a program were not compiled with -g.  For
      those parts we still want to get info at the function level.  */
-  core_create_function_syms (core_bfd);
+  core_create_function_syms (cbfd);
 
   /* Pass 1 - counter number of symbols.  */
 
@@ -598,7 +621,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 
   for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
     {
-      int len;
+      unsigned int len;
 
       vma = core_text_sect->vma + offset;
 
@@ -711,15 +734,18 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
     }
 
   /* Update sentinels.  */
-  sentinel = sym_lookup (&symtab, 0);
+  sentinel = sym_lookup (&symtab, (bfd_vma) 0);
 
-  if (strcmp (sentinel->name, "<locore>") == 0
+  if (sentinel
+      && strcmp (sentinel->name, "<locore>") == 0
       && min_vma <= sentinel->end_addr)
     sentinel->end_addr = min_vma - 1;
 
-  sentinel = sym_lookup (&symtab, ~0);
+  sentinel = sym_lookup (&symtab, ~(bfd_vma) 0);
 
-  if (strcmp (sentinel->name, "<hicore>") == 0 && max_vma >= sentinel->addr)
+  if (sentinel
+      && strcmp (sentinel->name, "<hicore>") == 0
+      && max_vma >= sentinel->addr)
     sentinel->addr = max_vma + 1;
 
   /* Copy in function symbols.  */

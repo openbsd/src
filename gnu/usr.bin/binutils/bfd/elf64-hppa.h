@@ -1,6 +1,6 @@
 /* ELF64/HPPA support
 
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "elf-bfd.h"
 #include "libhppa.h"
 #include "elf/hppa.h"
+
+elf_hppa_reloc_type elf64_hppa_reloc_final_type
+  PARAMS ((bfd *, elf_hppa_reloc_type, int, unsigned int));
 
 extern elf_hppa_reloc_type ** _bfd_elf64_hppa_gen_reloc_type
   PARAMS ((bfd *, elf_hppa_reloc_type, int, unsigned int, int, asymbol *));

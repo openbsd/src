@@ -52,10 +52,10 @@
 
 #define TC_COUNT_RELOC(fixp) ((fixp) -> fx_addsy != NULL)
 
-/* This macro translates between an internal fix and an coff reloc type */
+/* This macro translates between an internal fix and a coff reloc type. */
 
 #define TC_COFF_FIX2RTYPE(fixP) tc_coff_fix2rtype(fixP)
 
-extern short tc_coff_fix2rtype ();
+extern short tc_coff_fix2rtype PARAMS ((struct fix *));
 
 #endif	/* OBJ_COFF */

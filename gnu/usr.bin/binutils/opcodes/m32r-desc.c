@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -23,7 +23,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include "sysdep.h"
-#include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include "ansidecl.h"
@@ -33,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "m32r-opc.h"
 #include "opintl.h"
 #include "libiberty.h"
+#include "xregex.h"
 
 /* Attributes.  */
 
@@ -136,9 +136,9 @@ static const CGEN_ISA m32r_cgen_isa_table[] = {
 /* Machine variants.  */
 
 static const CGEN_MACH m32r_cgen_mach_table[] = {
-  { "m32r", "m32r", MACH_M32R },
-  { "m32rx", "m32rx", MACH_M32RX },
-  { 0, 0, 0 }
+  { "m32r", "m32r", MACH_M32R, 0 },
+  { "m32rx", "m32rx", MACH_M32RX, 0 },
+  { 0, 0, 0, 0 }
 };
 
 static CGEN_KEYWORD_ENTRY m32r_cgen_opval_gr_names_entries[] =
@@ -168,7 +168,7 @@ CGEN_KEYWORD m32r_cgen_opval_gr_names =
 {
   & m32r_cgen_opval_gr_names_entries[0],
   19,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY m32r_cgen_opval_cr_names_entries[] =
@@ -202,7 +202,7 @@ CGEN_KEYWORD m32r_cgen_opval_cr_names =
 {
   & m32r_cgen_opval_cr_names_entries[0],
   23,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY m32r_cgen_opval_h_accums_entries[] =
@@ -215,14 +215,17 @@ CGEN_KEYWORD m32r_cgen_opval_h_accums =
 {
   & m32r_cgen_opval_h_accums_entries[0],
   2,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
-
 
 
 /* The hardware table.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_HW_,a))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_HW_##a)
+#else
+#define A(a) (1 << CGEN_HW_/**/a)
+#endif
 
 const CGEN_HW_ENTRY m32r_cgen_hw_table[] =
 {
@@ -249,9 +252,14 @@ const CGEN_HW_ENTRY m32r_cgen_hw_table[] =
 
 #undef A
 
+
 /* The instruction field table.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_IFLD_,a))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_IFLD_##a)
+#else
+#define A(a) (1 << CGEN_IFLD_/**/a)
+#endif
 
 const CGEN_IFLD m32r_cgen_ifld_table[] =
 {
@@ -286,100 +294,151 @@ const CGEN_IFLD m32r_cgen_ifld_table[] =
 
 #undef A
 
+
+
+/* multi ifield declarations */
+
+
+
+/* multi ifield definitions */
+
+
 /* The operand table.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_OPERAND_,a))
-#define OPERAND(op) CONCAT2 (M32R_OPERAND_,op)
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_OPERAND_##a)
+#else
+#define A(a) (1 << CGEN_OPERAND_/**/a)
+#endif
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define OPERAND(op) M32R_OPERAND_##op
+#else
+#define OPERAND(op) M32R_OPERAND_/**/op
+#endif
 
 const CGEN_OPERAND m32r_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", M32R_OPERAND_PC, HW_H_PC, 0, 0,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_NIL] } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* sr: source register */
   { "sr", M32R_OPERAND_SR, HW_H_GR, 12, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_R2] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* dr: destination register */
   { "dr", M32R_OPERAND_DR, HW_H_GR, 4, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_R1] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* src1: source register 1 */
   { "src1", M32R_OPERAND_SRC1, HW_H_GR, 4, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_R1] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* src2: source register 2 */
   { "src2", M32R_OPERAND_SRC2, HW_H_GR, 12, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_R2] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* scr: source control register */
   { "scr", M32R_OPERAND_SCR, HW_H_CR, 12, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_R2] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* dcr: destination control register */
   { "dcr", M32R_OPERAND_DCR, HW_H_CR, 4, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_R1] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* simm8: 8 bit signed immediate */
   { "simm8", M32R_OPERAND_SIMM8, HW_H_SINT, 8, 8,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_SIMM8] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* simm16: 16 bit signed immediate */
   { "simm16", M32R_OPERAND_SIMM16, HW_H_SINT, 16, 16,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_SIMM16] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* uimm4: 4 bit trap number */
   { "uimm4", M32R_OPERAND_UIMM4, HW_H_UINT, 12, 4,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM4] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* uimm5: 5 bit shift count */
   { "uimm5", M32R_OPERAND_UIMM5, HW_H_UINT, 11, 5,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM5] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* uimm16: 16 bit unsigned immediate */
   { "uimm16", M32R_OPERAND_UIMM16, HW_H_UINT, 16, 16,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM16] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* imm1: 1 bit immediate */
   { "imm1", M32R_OPERAND_IMM1, HW_H_UINT, 15, 1,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_IMM1] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_M32RX) } }  },
 /* accd: accumulator destination register */
   { "accd", M32R_OPERAND_ACCD, HW_H_ACCUMS, 4, 2,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACCD] } }, 
     { 0, { (1<<MACH_M32RX) } }  },
 /* accs: accumulator source register */
   { "accs", M32R_OPERAND_ACCS, HW_H_ACCUMS, 12, 2,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACCS] } }, 
     { 0, { (1<<MACH_M32RX) } }  },
 /* acc: accumulator reg (d) */
   { "acc", M32R_OPERAND_ACC, HW_H_ACCUMS, 8, 1,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_ACC] } }, 
     { 0, { (1<<MACH_M32RX) } }  },
 /* hash: # prefix */
   { "hash", M32R_OPERAND_HASH, HW_H_SINT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* hi16: high 16 bit immediate, sign optional */
   { "hi16", M32R_OPERAND_HI16, HW_H_HI16, 16, 16,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_HI16] } }, 
     { 0|A(SIGN_OPT), { (1<<MACH_BASE) } }  },
 /* slo16: 16 bit signed immediate, for low() */
   { "slo16", M32R_OPERAND_SLO16, HW_H_SLO16, 16, 16,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_SIMM16] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* ulo16: 16 bit unsigned immediate, for low() */
   { "ulo16", M32R_OPERAND_ULO16, HW_H_ULO16, 16, 16,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM16] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* uimm24: 24 bit address */
   { "uimm24", M32R_OPERAND_UIMM24, HW_H_ADDR, 8, 24,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_UIMM24] } }, 
     { 0|A(HASH_PREFIX)|A(RELOC)|A(ABS_ADDR), { (1<<MACH_BASE) } }  },
 /* disp8: 8 bit displacement */
   { "disp8", M32R_OPERAND_DISP8, HW_H_IADDR, 8, 8,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_DISP8] } }, 
     { 0|A(RELAX)|A(RELOC)|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
 /* disp16: 16 bit displacement */
   { "disp16", M32R_OPERAND_DISP16, HW_H_IADDR, 16, 16,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_DISP16] } }, 
     { 0|A(RELOC)|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
 /* disp24: 24 bit displacement */
   { "disp24", M32R_OPERAND_DISP24, HW_H_IADDR, 8, 24,
+    { 0, { (const PTR) &m32r_cgen_ifld_table[M32R_F_DISP24] } }, 
     { 0|A(RELAX)|A(RELOC)|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
 /* condbit: condition bit */
   { "condbit", M32R_OPERAND_CONDBIT, HW_H_COND, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* accum: accumulator */
   { "accum", M32R_OPERAND_ACCUM, HW_H_ACCUM, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
-  { 0, 0, 0, 0, 0, {0, {0}} }
+/* sentinel */
+  { 0, 0, 0, 0, 0,
+    { 0, { (const PTR) 0 } },
+    { 0, { 0 } } }
 };
 
 #undef A
 
-#define A(a) (1 << CONCAT2 (CGEN_INSN_,a))
-#define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
 
 /* The instruction table.  */
+
+#define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_INSN_##a)
+#else
+#define A(a) (1 << CGEN_INSN_/**/a)
+#endif
 
 static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
 {
@@ -1059,16 +1118,24 @@ static const CGEN_IBASE m32r_cgen_insn_table[MAX_INSNS] =
   },
 };
 
-#undef A
-#undef MNEM
 #undef OP
+#undef A
 
 /* Initialize anything needed to be done once, before any cpu_open call.  */
+static void init_tables PARAMS ((void));
 
 static void
 init_tables ()
 {
 }
+
+static const CGEN_MACH * lookup_mach_via_bfd_name
+  PARAMS ((const CGEN_MACH *, const char *));
+static void build_hw_table  PARAMS ((CGEN_CPU_TABLE *));
+static void build_ifield_table  PARAMS ((CGEN_CPU_TABLE *));
+static void build_operand_table PARAMS ((CGEN_CPU_TABLE *));
+static void build_insn_table    PARAMS ((CGEN_CPU_TABLE *));
+static void m32r_cgen_rebuild_tables PARAMS ((CGEN_CPU_TABLE *));
 
 /* Subroutine of m32r_cgen_cpu_open to look up a mach via its bfd name.  */
 
@@ -1179,11 +1246,9 @@ static void
 m32r_cgen_rebuild_tables (cd)
      CGEN_CPU_TABLE *cd;
 {
-  int i,n_isas;
+  int i;
   unsigned int isas = cd->isas;
-#if 0
   unsigned int machs = cd->machs;
-#endif
 
   cd->int_insn_p = CGEN_INT_INSN_P;
 
@@ -1198,8 +1263,8 @@ m32r_cgen_rebuild_tables (cd)
       {
 	const CGEN_ISA *isa = & m32r_cgen_isa_table[i];
 
-	/* Default insn sizes of all selected isas must be equal or we set
-	   the result to 0, meaning "unknown".  */
+	/* Default insn sizes of all selected isas must be
+	   equal or we set the result to 0, meaning "unknown".  */
 	if (cd->default_insn_bitsize == UNSET)
 	  cd->default_insn_bitsize = isa->default_insn_bitsize;
 	else if (isa->default_insn_bitsize == cd->default_insn_bitsize)
@@ -1207,8 +1272,8 @@ m32r_cgen_rebuild_tables (cd)
 	else
 	  cd->default_insn_bitsize = CGEN_SIZE_UNKNOWN;
 
-	/* Base insn sizes of all selected isas must be equal or we set
-	   the result to 0, meaning "unknown".  */
+	/* Base insn sizes of all selected isas must be equal
+	   or we set the result to 0, meaning "unknown".  */
 	if (cd->base_insn_bitsize == UNSET)
 	  cd->base_insn_bitsize = isa->base_insn_bitsize;
 	else if (isa->base_insn_bitsize == cd->base_insn_bitsize)
@@ -1221,20 +1286,26 @@ m32r_cgen_rebuild_tables (cd)
 	  cd->min_insn_bitsize = isa->min_insn_bitsize;
 	if (isa->max_insn_bitsize > cd->max_insn_bitsize)
 	  cd->max_insn_bitsize = isa->max_insn_bitsize;
-
-	++n_isas;
       }
 
-#if 0 /* Does nothing?? */
   /* Data derived from the mach spec.  */
   for (i = 0; i < MAX_MACHS; ++i)
     if (((1 << i) & machs) != 0)
       {
 	const CGEN_MACH *mach = & m32r_cgen_mach_table[i];
 
-	++n_machs;
+	if (mach->insn_chunk_bitsize != 0)
+	{
+	  if (cd->insn_chunk_bitsize != 0 && cd->insn_chunk_bitsize != mach->insn_chunk_bitsize)
+	    {
+	      fprintf (stderr, "m32r_cgen_rebuild_tables: conflicting insn-chunk-bitsize values: `%d' vs. `%d'\n",
+		       cd->insn_chunk_bitsize, mach->insn_chunk_bitsize);
+	      abort ();
+	    }
+
+ 	  cd->insn_chunk_bitsize = mach->insn_chunk_bitsize;
+	}
       }
-#endif
 
   /* Determine which hw elements are used by MACH.  */
   build_hw_table (cd);
@@ -1303,7 +1374,7 @@ m32r_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 	    const CGEN_MACH *mach =
 	      lookup_mach_via_bfd_name (m32r_cgen_mach_table, name);
 
-	    machs |= mach->num << 1;
+	    machs |= 1 << mach->num;
 	    break;
 	  }
 	case CGEN_CPU_OPEN_ENDIAN :
@@ -1374,10 +1445,43 @@ void
 m32r_cgen_cpu_close (cd)
      CGEN_CPU_DESC cd;
 {
+  unsigned int i;
+  const CGEN_INSN *insns;
+
+  if (cd->macro_insn_table.init_entries)
+    {
+      insns = cd->macro_insn_table.init_entries;
+      for (i = 0; i < cd->macro_insn_table.num_init_entries; ++i, ++insns)
+	{
+	  if (CGEN_INSN_RX ((insns)))
+	    regfree (CGEN_INSN_RX (insns));
+	}
+    }
+
+  if (cd->insn_table.init_entries)
+    {
+      insns = cd->insn_table.init_entries;
+      for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
+	{
+	  if (CGEN_INSN_RX (insns))
+	    regfree (CGEN_INSN_RX (insns));
+	}
+    }
+
+  
+
+  if (cd->macro_insn_table.init_entries)
+    free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
+
   if (cd->insn_table.init_entries)
     free ((CGEN_INSN *) cd->insn_table.init_entries);
+
   if (cd->hw_table.entries)
     free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
+
+  if (cd->operand_table.entries)
+    free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
+
   free (cd);
 }
 

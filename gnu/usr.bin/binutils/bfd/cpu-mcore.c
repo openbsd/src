@@ -1,5 +1,5 @@
 /* BFD library support routines for Motorola's MCore architecture
-   Copyright 1993, 1999 Free Software Foundation, Inc.
+   Copyright 1993, 1999, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,7 +31,7 @@ const bfd_arch_info_type bfd_mcore_arch =
   "MCore",	  		/* Architecture name */
   "MCore",	  		/* Printable name */
   3,		  		/* Section align power */
-  true,		  		/* Is this the default architecture ? */
+  TRUE,		  		/* Is this the default architecture ? */
   bfd_default_compatible,	/* Architecture comparison function */
   bfd_default_scan,	   	/* String to architecture conversion */
   NULL			   	/* Next in list */

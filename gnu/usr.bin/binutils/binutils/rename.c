@@ -1,5 +1,5 @@
 /* rename.c -- rename a file, preserving symlinks.
-   Copyright 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -37,7 +37,8 @@
 #define O_BINARY 0
 #endif
 
-static int simple_copy PARAMS ((const char *, const char *));
+static int simple_copy
+  PARAMS ((const char *, const char *));
 
 /* The number of bytes to copy at once.  */
 #define COPY_BUF 8192
@@ -149,7 +150,7 @@ smart_rename (from, to, preserve_dates)
      const char *to;
      int preserve_dates;
 {
-  boolean exists;
+  bfd_boolean exists;
   struct stat s;
   int ret = 0;
 
@@ -165,8 +166,8 @@ smart_rename (from, to, preserve_dates)
   ret = rename (from, to);
   if (ret != 0)
     {
-      /* We have to clean up here. */
-      
+      /* We have to clean up here.  */
+
       non_fatal (_("%s: rename: %s"), to, strerror (errno));
       unlink (from);
     }
@@ -199,7 +200,7 @@ smart_rename (from, to, preserve_dates)
 	}
       else
 	{
-	  /* We have to clean up here. */
+	  /* We have to clean up here.  */
 	  non_fatal (_("%s: rename: %s"), to, strerror (errno));
 	  unlink (from);
 	}

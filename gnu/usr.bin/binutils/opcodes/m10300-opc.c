@@ -717,7 +717,7 @@ const struct mn10300_opcode mn10300_opcodes[] = {
 { "sub",	0xfd980000,  0xffff0000,  0,    FMT_D8, AM33,	{SIMM24, RN02}},
 { "sub",	0xfe980000,  0xffff0000,  0,    FMT_D9, AM33,	{IMM32_HIGH8, RN02}},
 
-{ "subc",	0xfa8c0000,  0xffff000f,  0,    FMT_D7, AM33,	{RM2, RN0, RD2}},
+{ "subc",	0xfbac0000,  0xffff000f,  0,    FMT_D7, AM33,	{RM2, RN0, RD2}},
 { "subc",	0xf180,	     0xfff0,	  0,    FMT_D0, 0,	{DM1, DN0}},
 { "subc",	0xf9a800,    0xffff00,    0,    FMT_D6, AM33,	{RM2, RN0}},
 { "subc",	0xfba80000,  0xffff0000,  0,    FMT_D7, AM33,	{SIMM8, RN02}},

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -23,7 +23,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include "sysdep.h"
-#include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include "ansidecl.h"
@@ -33,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "fr30-opc.h"
 #include "opintl.h"
 #include "libiberty.h"
+#include "xregex.h"
 
 /* Attributes.  */
 
@@ -122,8 +122,8 @@ static const CGEN_ISA fr30_cgen_isa_table[] = {
 /* Machine variants.  */
 
 static const CGEN_MACH fr30_cgen_mach_table[] = {
-  { "fr30", "fr30", MACH_FR30 },
-  { 0, 0, 0 }
+  { "fr30", "fr30", MACH_FR30, 0 },
+  { 0, 0, 0, 0 }
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_gr_names_entries[] =
@@ -153,7 +153,7 @@ CGEN_KEYWORD fr30_cgen_opval_gr_names =
 {
   & fr30_cgen_opval_gr_names_entries[0],
   19,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_cr_names_entries[] =
@@ -180,7 +180,7 @@ CGEN_KEYWORD fr30_cgen_opval_cr_names =
 {
   & fr30_cgen_opval_cr_names_entries[0],
   16,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_dr_names_entries[] =
@@ -197,7 +197,7 @@ CGEN_KEYWORD fr30_cgen_opval_dr_names =
 {
   & fr30_cgen_opval_dr_names_entries[0],
   6,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_ps_entries[] =
@@ -209,7 +209,7 @@ CGEN_KEYWORD fr30_cgen_opval_h_ps =
 {
   & fr30_cgen_opval_h_ps_entries[0],
   1,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_r13_entries[] =
@@ -221,7 +221,7 @@ CGEN_KEYWORD fr30_cgen_opval_h_r13 =
 {
   & fr30_cgen_opval_h_r13_entries[0],
   1,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_r14_entries[] =
@@ -233,7 +233,7 @@ CGEN_KEYWORD fr30_cgen_opval_h_r14 =
 {
   & fr30_cgen_opval_h_r14_entries[0],
   1,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
 
 static CGEN_KEYWORD_ENTRY fr30_cgen_opval_h_r15_entries[] =
@@ -245,14 +245,17 @@ CGEN_KEYWORD fr30_cgen_opval_h_r15 =
 {
   & fr30_cgen_opval_h_r15_entries[0],
   1,
-  0, 0, 0, 0
+  0, 0, 0, 0, ""
 };
-
 
 
 /* The hardware table.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_HW_,a))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_HW_##a)
+#else
+#define A(a) (1 << CGEN_HW_/**/a)
+#endif
 
 const CGEN_HW_ENTRY fr30_cgen_hw_table[] =
 {
@@ -286,9 +289,14 @@ const CGEN_HW_ENTRY fr30_cgen_hw_table[] =
 
 #undef A
 
+
 /* The instruction field table.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_IFLD_,a))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_IFLD_##a)
+#else
+#define A(a) (1 << CGEN_IFLD_/**/a)
+#endif
 
 const CGEN_IFLD fr30_cgen_ifld_table[] =
 {
@@ -317,6 +325,7 @@ const CGEN_IFLD fr30_cgen_ifld_table[] =
   { FR30_F_I8, "f-i8", 0, 16, 4, 8, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_I20_4, "f-i20-4", 0, 16, 8, 4, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_I20_16, "f-i20-16", 16, 16, 0, 16, { 0, { (1<<MACH_BASE) } }  },
+  { FR30_F_I20, "f-i20", 0, 0, 0, 0,{ 0|A(VIRTUAL), { (1<<MACH_BASE) } }  },
   { FR30_F_I32, "f-i32", 16, 32, 0, 32, { 0|A(SIGN_OPT), { (1<<MACH_BASE) } }  },
   { FR30_F_UDISP6, "f-udisp6", 0, 16, 8, 4, { 0, { (1<<MACH_BASE) } }  },
   { FR30_F_DISP8, "f-disp8", 0, 16, 4, 8, { 0, { (1<<MACH_BASE) } }  },
@@ -338,169 +347,250 @@ const CGEN_IFLD fr30_cgen_ifld_table[] =
 
 #undef A
 
+
+
+/* multi ifield declarations */
+
+const CGEN_MAYBE_MULTI_IFLD FR30_F_I20_MULTI_IFIELD [];
+
+
+/* multi ifield definitions */
+
+const CGEN_MAYBE_MULTI_IFLD FR30_F_I20_MULTI_IFIELD [] =
+{
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_I20_4] } },
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_I20_16] } },
+    { 0, { (const PTR) 0 } }
+};
+
 /* The operand table.  */
 
-#define A(a) (1 << CONCAT2 (CGEN_OPERAND_,a))
-#define OPERAND(op) CONCAT2 (FR30_OPERAND_,op)
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_OPERAND_##a)
+#else
+#define A(a) (1 << CGEN_OPERAND_/**/a)
+#endif
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define OPERAND(op) FR30_OPERAND_##op
+#else
+#define OPERAND(op) FR30_OPERAND_/**/op
+#endif
 
 const CGEN_OPERAND fr30_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", FR30_OPERAND_PC, HW_H_PC, 0, 0,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_NIL] } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* Ri: destination register */
   { "Ri", FR30_OPERAND_RI, HW_H_GR, 12, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_RI] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* Rj: source register */
   { "Rj", FR30_OPERAND_RJ, HW_H_GR, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_RJ] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* Ric: target register coproc insn */
   { "Ric", FR30_OPERAND_RIC, HW_H_GR, 12, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_RIC] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* Rjc: source register coproc insn */
   { "Rjc", FR30_OPERAND_RJC, HW_H_GR, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_RJC] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* CRi: coprocessor register */
   { "CRi", FR30_OPERAND_CRI, HW_H_CR, 12, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_CRI] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* CRj: coprocessor register */
   { "CRj", FR30_OPERAND_CRJ, HW_H_CR, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_CRJ] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* Rs1: dedicated register */
   { "Rs1", FR30_OPERAND_RS1, HW_H_DR, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_RS1] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* Rs2: dedicated register */
   { "Rs2", FR30_OPERAND_RS2, HW_H_DR, 12, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_RS2] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* R13: General Register 13 */
   { "R13", FR30_OPERAND_R13, HW_H_R13, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* R14: General Register 14 */
   { "R14", FR30_OPERAND_R14, HW_H_R14, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* R15: General Register 15 */
   { "R15", FR30_OPERAND_R15, HW_H_R15, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* ps: Program Status register */
   { "ps", FR30_OPERAND_PS, HW_H_PS, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* u4: 4  bit unsigned immediate */
   { "u4", FR30_OPERAND_U4, HW_H_UINT, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_U4] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* u4c: 4  bit unsigned immediate */
   { "u4c", FR30_OPERAND_U4C, HW_H_UINT, 12, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_U4C] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* u8: 8  bit unsigned immediate */
   { "u8", FR30_OPERAND_U8, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_U8] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* i8: 8  bit unsigned immediate */
   { "i8", FR30_OPERAND_I8, HW_H_UINT, 4, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_I8] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* udisp6: 6  bit unsigned immediate */
   { "udisp6", FR30_OPERAND_UDISP6, HW_H_UINT, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_UDISP6] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* disp8: 8  bit signed   immediate */
   { "disp8", FR30_OPERAND_DISP8, HW_H_SINT, 4, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_DISP8] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* disp9: 9  bit signed   immediate */
   { "disp9", FR30_OPERAND_DISP9, HW_H_SINT, 4, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_DISP9] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* disp10: 10 bit signed   immediate */
   { "disp10", FR30_OPERAND_DISP10, HW_H_SINT, 4, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_DISP10] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* s10: 10 bit signed   immediate */
   { "s10", FR30_OPERAND_S10, HW_H_SINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_S10] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* u10: 10 bit unsigned immediate */
   { "u10", FR30_OPERAND_U10, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_U10] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* i32: 32 bit immediate */
   { "i32", FR30_OPERAND_I32, HW_H_UINT, 0, 32,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_I32] } }, 
     { 0|A(HASH_PREFIX)|A(SIGN_OPT), { (1<<MACH_BASE) } }  },
 /* m4: 4  bit negative immediate */
   { "m4", FR30_OPERAND_M4, HW_H_SINT, 8, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_M4] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* i20: 20 bit immediate */
   { "i20", FR30_OPERAND_I20, HW_H_UINT, 0, 20,
+    { 2, { (const PTR) &FR30_F_I20_MULTI_IFIELD[0] } }, 
     { 0|A(HASH_PREFIX)|A(VIRTUAL), { (1<<MACH_BASE) } }  },
 /* dir8: 8  bit direct address */
   { "dir8", FR30_OPERAND_DIR8, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_DIR8] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* dir9: 9  bit direct address */
   { "dir9", FR30_OPERAND_DIR9, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_DIR9] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* dir10: 10 bit direct address */
   { "dir10", FR30_OPERAND_DIR10, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_DIR10] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* label9: 9  bit pc relative address */
   { "label9", FR30_OPERAND_LABEL9, HW_H_IADDR, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_REL9] } }, 
     { 0|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
 /* label12: 12 bit pc relative address */
   { "label12", FR30_OPERAND_LABEL12, HW_H_IADDR, 5, 11,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_REL12] } }, 
     { 0|A(PCREL_ADDR), { (1<<MACH_BASE) } }  },
 /* reglist_low_ld: 8 bit low register mask for ldm */
   { "reglist_low_ld", FR30_OPERAND_REGLIST_LOW_LD, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_REGLIST_LOW_LD] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* reglist_hi_ld: 8 bit high register mask for ldm */
   { "reglist_hi_ld", FR30_OPERAND_REGLIST_HI_LD, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_REGLIST_HI_LD] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* reglist_low_st: 8 bit low register mask for stm */
   { "reglist_low_st", FR30_OPERAND_REGLIST_LOW_ST, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_REGLIST_LOW_ST] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* reglist_hi_st: 8 bit high register mask for stm */
   { "reglist_hi_st", FR30_OPERAND_REGLIST_HI_ST, HW_H_UINT, 8, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_REGLIST_HI_ST] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* cc: condition codes */
   { "cc", FR30_OPERAND_CC, HW_H_UINT, 4, 4,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_CC] } }, 
     { 0, { (1<<MACH_BASE) } }  },
 /* ccc: coprocessor calc */
   { "ccc", FR30_OPERAND_CCC, HW_H_UINT, 0, 8,
+    { 0, { (const PTR) &fr30_cgen_ifld_table[FR30_F_CCC] } }, 
     { 0|A(HASH_PREFIX), { (1<<MACH_BASE) } }  },
 /* nbit: negative   bit */
   { "nbit", FR30_OPERAND_NBIT, HW_H_NBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* vbit: overflow   bit */
   { "vbit", FR30_OPERAND_VBIT, HW_H_VBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* zbit: zero       bit */
   { "zbit", FR30_OPERAND_ZBIT, HW_H_ZBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* cbit: carry      bit */
   { "cbit", FR30_OPERAND_CBIT, HW_H_CBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* ibit: interrupt  bit */
   { "ibit", FR30_OPERAND_IBIT, HW_H_IBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* sbit: stack      bit */
   { "sbit", FR30_OPERAND_SBIT, HW_H_SBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* tbit: trace trap bit */
   { "tbit", FR30_OPERAND_TBIT, HW_H_TBIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* d0bit: division 0 bit */
   { "d0bit", FR30_OPERAND_D0BIT, HW_H_D0BIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* d1bit: division 1 bit */
   { "d1bit", FR30_OPERAND_D1BIT, HW_H_D1BIT, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* ccr: condition code bits */
   { "ccr", FR30_OPERAND_CCR, HW_H_CCR, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* scr: system condition bits */
   { "scr", FR30_OPERAND_SCR, HW_H_SCR, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
 /* ilm: interrupt level mask */
   { "ilm", FR30_OPERAND_ILM, HW_H_ILM, 0, 0,
+    { 0, { (const PTR) 0 } }, 
     { 0|A(SEM_ONLY), { (1<<MACH_BASE) } }  },
-  { 0, 0, 0, 0, 0, {0, {0}} }
+/* sentinel */
+  { 0, 0, 0, 0, 0,
+    { 0, { (const PTR) 0 } },
+    { 0, { 0 } } }
 };
 
 #undef A
 
-#define A(a) (1 << CONCAT2 (CGEN_INSN_,a))
-#define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
 
 /* The instruction table.  */
+
+#define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define A(a) (1 << CGEN_INSN_##a)
+#else
+#define A(a) (1 << CGEN_INSN_/**/a)
+#endif
 
 static const CGEN_IBASE fr30_cgen_insn_table[MAX_INSNS] =
 {
@@ -1335,16 +1425,24 @@ static const CGEN_IBASE fr30_cgen_insn_table[MAX_INSNS] =
   },
 };
 
-#undef A
-#undef MNEM
 #undef OP
+#undef A
 
 /* Initialize anything needed to be done once, before any cpu_open call.  */
+static void init_tables PARAMS ((void));
 
 static void
 init_tables ()
 {
 }
+
+static const CGEN_MACH * lookup_mach_via_bfd_name
+  PARAMS ((const CGEN_MACH *, const char *));
+static void build_hw_table  PARAMS ((CGEN_CPU_TABLE *));
+static void build_ifield_table  PARAMS ((CGEN_CPU_TABLE *));
+static void build_operand_table PARAMS ((CGEN_CPU_TABLE *));
+static void build_insn_table    PARAMS ((CGEN_CPU_TABLE *));
+static void fr30_cgen_rebuild_tables PARAMS ((CGEN_CPU_TABLE *));
 
 /* Subroutine of fr30_cgen_cpu_open to look up a mach via its bfd name.  */
 
@@ -1455,11 +1553,9 @@ static void
 fr30_cgen_rebuild_tables (cd)
      CGEN_CPU_TABLE *cd;
 {
-  int i,n_isas;
+  int i;
   unsigned int isas = cd->isas;
-#if 0
   unsigned int machs = cd->machs;
-#endif
 
   cd->int_insn_p = CGEN_INT_INSN_P;
 
@@ -1474,8 +1570,8 @@ fr30_cgen_rebuild_tables (cd)
       {
 	const CGEN_ISA *isa = & fr30_cgen_isa_table[i];
 
-	/* Default insn sizes of all selected isas must be equal or we set
-	   the result to 0, meaning "unknown".  */
+	/* Default insn sizes of all selected isas must be
+	   equal or we set the result to 0, meaning "unknown".  */
 	if (cd->default_insn_bitsize == UNSET)
 	  cd->default_insn_bitsize = isa->default_insn_bitsize;
 	else if (isa->default_insn_bitsize == cd->default_insn_bitsize)
@@ -1483,8 +1579,8 @@ fr30_cgen_rebuild_tables (cd)
 	else
 	  cd->default_insn_bitsize = CGEN_SIZE_UNKNOWN;
 
-	/* Base insn sizes of all selected isas must be equal or we set
-	   the result to 0, meaning "unknown".  */
+	/* Base insn sizes of all selected isas must be equal
+	   or we set the result to 0, meaning "unknown".  */
 	if (cd->base_insn_bitsize == UNSET)
 	  cd->base_insn_bitsize = isa->base_insn_bitsize;
 	else if (isa->base_insn_bitsize == cd->base_insn_bitsize)
@@ -1497,20 +1593,26 @@ fr30_cgen_rebuild_tables (cd)
 	  cd->min_insn_bitsize = isa->min_insn_bitsize;
 	if (isa->max_insn_bitsize > cd->max_insn_bitsize)
 	  cd->max_insn_bitsize = isa->max_insn_bitsize;
-
-	++n_isas;
       }
 
-#if 0 /* Does nothing?? */
   /* Data derived from the mach spec.  */
   for (i = 0; i < MAX_MACHS; ++i)
     if (((1 << i) & machs) != 0)
       {
 	const CGEN_MACH *mach = & fr30_cgen_mach_table[i];
 
-	++n_machs;
+	if (mach->insn_chunk_bitsize != 0)
+	{
+	  if (cd->insn_chunk_bitsize != 0 && cd->insn_chunk_bitsize != mach->insn_chunk_bitsize)
+	    {
+	      fprintf (stderr, "fr30_cgen_rebuild_tables: conflicting insn-chunk-bitsize values: `%d' vs. `%d'\n",
+		       cd->insn_chunk_bitsize, mach->insn_chunk_bitsize);
+	      abort ();
+	    }
+
+ 	  cd->insn_chunk_bitsize = mach->insn_chunk_bitsize;
+	}
       }
-#endif
 
   /* Determine which hw elements are used by MACH.  */
   build_hw_table (cd);
@@ -1579,7 +1681,7 @@ fr30_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 	    const CGEN_MACH *mach =
 	      lookup_mach_via_bfd_name (fr30_cgen_mach_table, name);
 
-	    machs |= mach->num << 1;
+	    machs |= 1 << mach->num;
 	    break;
 	  }
 	case CGEN_CPU_OPEN_ENDIAN :
@@ -1650,10 +1752,43 @@ void
 fr30_cgen_cpu_close (cd)
      CGEN_CPU_DESC cd;
 {
+  unsigned int i;
+  const CGEN_INSN *insns;
+
+  if (cd->macro_insn_table.init_entries)
+    {
+      insns = cd->macro_insn_table.init_entries;
+      for (i = 0; i < cd->macro_insn_table.num_init_entries; ++i, ++insns)
+	{
+	  if (CGEN_INSN_RX ((insns)))
+	    regfree (CGEN_INSN_RX (insns));
+	}
+    }
+
+  if (cd->insn_table.init_entries)
+    {
+      insns = cd->insn_table.init_entries;
+      for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
+	{
+	  if (CGEN_INSN_RX (insns))
+	    regfree (CGEN_INSN_RX (insns));
+	}
+    }
+
+  
+
+  if (cd->macro_insn_table.init_entries)
+    free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
+
   if (cd->insn_table.init_entries)
     free ((CGEN_INSN *) cd->insn_table.init_entries);
+
   if (cd->hw_table.entries)
     free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
+
+  if (cd->operand_table.entries)
+    free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
+
   free (cd);
 }
 
