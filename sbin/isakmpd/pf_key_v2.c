@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.64 2001/06/07 07:45:18 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.65 2001/06/07 07:50:29 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1488,7 +1488,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   flowtype.sadb_protocol_direction
     = ingress ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
   flowtype.sadb_protocol_proto
-    = ingress ? SADB_X_FLOW_TYPE_ACQUIRE: SADB_X_FLOW_TYPE_REQUIRE;
+    = ingress ? SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE;
 
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&flowtype, 0) == -1)
     goto cleanup;
