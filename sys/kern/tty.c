@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.56 2002/12/12 04:17:14 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.57 2002/12/20 19:44:23 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1557,6 +1557,7 @@ sleep:
 		}
 		if (error && error != EWOULDBLOCK)
 			goto out;
+		error = 0;
 		goto loop;
 	}
 read:
