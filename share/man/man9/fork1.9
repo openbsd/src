@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.1 1999/09/02 17:24:35 espie Exp $
+.\"	$OpenBSD: fork1.9,v 1.2 1999/09/05 16:23:11 espie Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,9 @@ copy-on-write snapshot of the parent address space.
 .Pp
 If
 .Fa stack
-is not NULL, the area starting at
+is not 
+.Dv NULL , 
+the area starting at
 .Fa stack
 of extent
 .Fa stacksize
@@ -119,7 +121,9 @@ stack.
 .Pp
 If
 .Fa retval
-is not NULL, it will hold the following values after successful completion
+is not 
+.Dv NULL , 
+it will hold the following values after successful completion
 of the fork operation:
 .Bl -tag -width retval[0]
 .It Fa retval[0]
@@ -148,7 +152,7 @@ function semantics are specific to
 Other BSD systems have different semantics.
 .Pp
 The system never uses
-.Nm 
+.Fn fork1 
 with a non-null
 .Fa stack ,
 so that feature is not even tested.

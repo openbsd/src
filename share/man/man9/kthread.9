@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kthread.9,v 1.1 1999/09/02 17:24:35 espie Exp $
+.\"	$OpenBSD: kthread.9,v 1.2 1999/09/05 16:23:11 espie Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -59,7 +59,9 @@ with argument
 .Fa arg .
 If 
 .Fa newpp 
-is not NULL, it is filled with the address of the new process.
+is not 
+.Dv NULL , 
+it is filled with the address of the new process.
 .Fa fmt
 and the remaining arguments are used to name the process.
 .Pp

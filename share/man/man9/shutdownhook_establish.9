@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.6 1999/09/02 17:28:07 espie Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.7 1999/09/05 16:23:11 espie Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -75,7 +75,8 @@ integrity (because the system could be rebooting after a crash).
 If successful,
 .Fn shutdownhook_establish
 returns an opaque pointer describing the newly established
-shutdown hook.  Otherwise, it returns NULL.
+shutdown hook.  Otherwise, it returns 
+.Dv NULL .
 .Sh EXAMPLES
 It may be appropriate to use a shutdown hook to
 disable a device that does direct memory access, so that
