@@ -1,13 +1,11 @@
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
-./etc/afs
 ./etc/afs/CellServDB
 ./etc/afs/README
 ./etc/afs/SuidCells
 ./etc/afs/ThisCell
 ./etc/afs/afsd.conf
-./etc/amd
 ./etc/amd/master.sample
 ./etc/bootptab
 ./etc/ccd.conf
@@ -64,7 +62,6 @@
 ./etc/passwd
 ./etc/passwd.conf
 ./etc/phones
-./etc/photuris
 ./etc/photuris/attributes.conf
 ./etc/photuris/photuris.conf
 ./etc/photuris/photuris.startup
@@ -96,7 +93,6 @@
 ./etc/security
 ./etc/services
 ./etc/shells
-./etc/skel
 ./etc/skel/.cshrc
 ./etc/skel/.login
 ./etc/skel/.mailrc
@@ -108,10 +104,7 @@
 ./etc/spwd.db
 ./etc/ssh_config
 ./etc/sshd_config
-./etc/ssl
-./etc/ssl/lib
 ./etc/ssl/openssl.cnf
-./etc/ssl/private
 ./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys
@@ -142,7 +135,6 @@
 ./var/log/lpd-errs
 ./var/log/maillog
 ./var/log/messages
-./var/log/rdist
 ./var/log/secure
 ./var/log/sendmail.st
 ./var/log/wtmp
@@ -170,7 +162,6 @@
 ./var/www/htdocs/lock.gif
 ./var/www/htdocs/logo23.jpg
 ./var/www/htdocs/logo24.jpg
-./var/www/htdocs/manual
 ./var/www/htdocs/manual/LICENSE
 ./var/www/htdocs/manual/bind.html
 ./var/www/htdocs/manual/cgi_path.html
@@ -183,7 +174,6 @@
 ./var/www/htdocs/manual/footer.html
 ./var/www/htdocs/manual/handler.html
 ./var/www/htdocs/manual/header.html
-./var/www/htdocs/manual/images
 ./var/www/htdocs/manual/images/apache_pb.gif
 ./var/www/htdocs/manual/images/custom_errordocs.gif
 ./var/www/htdocs/manual/images/feather.jpg
@@ -203,7 +193,6 @@
 ./var/www/htdocs/manual/keepalive.html
 ./var/www/htdocs/manual/location.html
 ./var/www/htdocs/manual/man-template.html
-./var/www/htdocs/manual/misc
 ./var/www/htdocs/manual/misc/API.html
 ./var/www/htdocs/manual/misc/FAQ.html
 ./var/www/htdocs/manual/misc/HTTP_Features.tsv
@@ -227,7 +216,6 @@
 ./var/www/htdocs/manual/misc/security_tips.html
 ./var/www/htdocs/manual/misc/vif-info.html
 ./var/www/htdocs/manual/misc/windoz_keepalive.html
-./var/www/htdocs/manual/mod
 ./var/www/htdocs/manual/mod/core.html
 ./var/www/htdocs/manual/mod/directive-dict.html
 ./var/www/htdocs/manual/mod/directives.html
@@ -274,7 +262,6 @@
 ./var/www/htdocs/manual/mod/mod_setenvif.html
 ./var/www/htdocs/manual/mod/mod_so.html
 ./var/www/htdocs/manual/mod/mod_speling.html
-./var/www/htdocs/manual/mod/mod_ssl
 ./var/www/htdocs/manual/mod/mod_ssl/index.html
 ./var/www/htdocs/manual/mod/mod_ssl/ssl_compat.gfont000.gif
 ./var/www/htdocs/manual/mod/mod_ssl/ssl_compat.html
@@ -342,7 +329,6 @@
 ./var/www/htdocs/manual/new_features_1_3.html
 ./var/www/htdocs/manual/process-model.html
 ./var/www/htdocs/manual/readme-tpf.html
-./var/www/htdocs/manual/search
 ./var/www/htdocs/manual/search/manual-index.cgi
 ./var/www/htdocs/manual/sections.html
 ./var/www/htdocs/manual/sourcereorg.html
@@ -351,7 +337,6 @@
 ./var/www/htdocs/manual/suexec_1_2.html
 ./var/www/htdocs/manual/unixware.html
 ./var/www/htdocs/manual/upgrading_to_1_3.html
-./var/www/htdocs/manual/vhosts
 ./var/www/htdocs/manual/vhosts/details.html
 ./var/www/htdocs/manual/vhosts/details_1_2.html
 ./var/www/htdocs/manual/vhosts/examples.html
@@ -369,7 +354,6 @@
 ./var/www/htdocs/openbsd_pb.gif
 ./var/www/htdocs/openbsdpower.gif
 ./var/www/htdocs/smalltitle.gif
-./var/www/icons
 ./var/www/icons/README
 ./var/www/icons/a.gif
 ./var/www/icons/alert.black.gif
@@ -432,7 +416,6 @@
 ./var/www/icons/screw1.gif
 ./var/www/icons/screw2.gif
 ./var/www/icons/script.gif
-./var/www/icons/small
 ./var/www/icons/small/README.txt
 ./var/www/icons/small/back.gif
 ./var/www/icons/small/binary.gif

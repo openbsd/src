@@ -26,7 +26,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.7/2.95.3
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.7/2.95.3/include
 ./usr/lib/libacl.so.5.0
-./usr/lib/libc.so.25.0
+./usr/lib/libc.so.25.1
 ./usr/lib/libc_r.so.3.0
 ./usr/lib/libcrypto.so.2.4
 ./usr/lib/libcurses++.so.1.1
@@ -662,6 +662,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/brktree_reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
@@ -671,6 +672,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esovar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_devar.ph

@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.25.0
+./usr/lib/libc.so.25.1
 ./usr/lib/libcrypto.so.2.4
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.0
@@ -427,12 +427,14 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280_image.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph

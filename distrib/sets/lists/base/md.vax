@@ -10,10 +10,12 @@
 ./usr/lib/scrt0.o
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stivar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cs4280_image.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cs4280reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgavar.ph

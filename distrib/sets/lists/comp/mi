@@ -25,6 +25,7 @@
 ./usr/bin/yacc
 ./usr/include/a.out.h
 ./usr/include/ar.h
+./usr/include/arpa
 ./usr/include/arpa/ftp.h
 ./usr/include/arpa/inet.h
 ./usr/include/arpa/nameser.h
@@ -72,6 +73,7 @@
 ./usr/include/ddb/db_variables.h
 ./usr/include/ddb/db_watch.h
 ./usr/include/des.h
+./usr/include/dev
 ./usr/include/dev/ata
 ./usr/include/dev/ata/atareg.h
 ./usr/include/dev/ata/atavar.h
@@ -281,6 +283,7 @@
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
+./usr/include/dev/pci/auviavar.h
 ./usr/include/dev/pci/brktree_reg.h
 ./usr/include/dev/pci/cmpcireg.h
 ./usr/include/dev/pci/cmpcivar.h
@@ -290,6 +293,7 @@
 ./usr/include/dev/pci/cy82c693var.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
+./usr/include/dev/pci/fmsvar.h
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/if_devar.h
@@ -502,6 +506,7 @@
 ./usr/include/frame.h
 ./usr/include/fstab.h
 ./usr/include/fts.h
+./usr/include/g++
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
@@ -550,6 +555,7 @@
 ./usr/include/g++/fstream.h
 ./usr/include/g++/function.h
 ./usr/include/g++/functional
+./usr/include/g++/gen
 ./usr/include/g++/hash_map
 ./usr/include/g++/hash_map.h
 ./usr/include/g++/hash_set
@@ -682,6 +688,7 @@
 ./usr/include/isofs/cd9660/cd9660_rrip.h
 ./usr/include/isofs/cd9660/iso.h
 ./usr/include/isofs/cd9660/iso_rrip.h
+./usr/include/kerberosIV
 ./usr/include/kerberosIV/acl.h
 ./usr/include/kerberosIV/kadm.h
 ./usr/include/kerberosIV/kadm_err.h
@@ -697,6 +704,7 @@
 ./usr/include/libgen.h
 ./usr/include/limits.h
 ./usr/include/locale.h
+./usr/include/machine
 ./usr/include/malloc.h
 ./usr/include/math.h
 ./usr/include/md4.h
@@ -734,6 +742,7 @@
 ./usr/include/mpool.h
 ./usr/include/ncurses.h
 ./usr/include/ndbm.h
+./usr/include/net
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/if.h
@@ -777,6 +786,7 @@
 ./usr/include/netatalk/ddp_var.h
 ./usr/include/netatalk/endian.h
 ./usr/include/netatalk/phase2.h
+./usr/include/netccitt
 ./usr/include/netccitt/dll.h
 ./usr/include/netccitt/hd_var.h
 ./usr/include/netccitt/hdlc.h
@@ -789,6 +799,7 @@
 ./usr/include/netccitt/x25err.h
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
+./usr/include/netinet
 ./usr/include/netinet/icmp6.h
 ./usr/include/netinet/icmp_var.h
 ./usr/include/netinet/if_arc.h
@@ -855,6 +866,7 @@
 ./usr/include/netipx/spx_debug.h
 ./usr/include/netipx/spx_timer.h
 ./usr/include/netipx/spx_var.h
+./usr/include/netiso
 ./usr/include/netiso/argo_debug.h
 ./usr/include/netiso/clnl.h
 ./usr/include/netiso/clnp.h
@@ -885,6 +897,7 @@
 ./usr/include/netiso/tp_user.h
 ./usr/include/netiso/tp_var.h
 ./usr/include/netiso/tuba_table.h
+./usr/include/netns
 ./usr/include/netns/idp.h
 ./usr/include/netns/idp_var.h
 ./usr/include/netns/ns.h
@@ -897,6 +910,7 @@
 ./usr/include/netns/spp_debug.h
 ./usr/include/netns/spp_timer.h
 ./usr/include/netns/spp_var.h
+./usr/include/nfs
 ./usr/include/nfs/krpc.h
 ./usr/include/nfs/nfs.h
 ./usr/include/nfs/nfs_var.h
@@ -926,12 +940,14 @@
 ./usr/include/objc/typedstream.h
 ./usr/include/ocurses.h
 ./usr/include/olf_abi.h
+./usr/include/openssl
 ./usr/include/panel.h
 ./usr/include/paths.h
 ./usr/include/pcap-int.h
 ./usr/include/pcap-namedb.h
 ./usr/include/pcap.h
 ./usr/include/poll.h
+./usr/include/protocols
 ./usr/include/protocols/dumprestore.h
 ./usr/include/protocols/routed.h
 ./usr/include/protocols/rwhod.h
@@ -946,6 +962,7 @@
 ./usr/include/regexp.h
 ./usr/include/resolv.h
 ./usr/include/rmd160.h
+./usr/include/rpc
 ./usr/include/rpc/auth.h
 ./usr/include/rpc/auth_unix.h
 ./usr/include/rpc/clnt.h
@@ -959,6 +976,7 @@
 ./usr/include/rpc/svc_auth.h
 ./usr/include/rpc/types.h
 ./usr/include/rpc/xdr.h
+./usr/include/rpcsvc
 ./usr/include/rpcsvc/bootparam_prot.h
 ./usr/include/rpcsvc/bootparam_prot.x
 ./usr/include/rpcsvc/klm_prot.h
@@ -1021,6 +1039,7 @@
 ./usr/include/skipjack.h
 ./usr/include/soundcard.h
 ./usr/include/spinlock.h
+./usr/include/ssl
 ./usr/include/ssl/asn1.h
 ./usr/include/ssl/asn1_mac.h
 ./usr/include/ssl/bio.h
@@ -1075,12 +1094,14 @@
 ./usr/include/ssl/x509v3.h
 ./usr/include/stab.h
 ./usr/include/stdarg.h
+./usr/include/stdbool.h
 ./usr/include/stddef.h
 ./usr/include/stdio.h
 ./usr/include/stdlib.h
 ./usr/include/string.h
 ./usr/include/strings.h
 ./usr/include/struct.h
+./usr/include/sys
 ./usr/include/sys/acct.h
 ./usr/include/sys/ataio.h
 ./usr/include/sys/audioio.h
@@ -1210,18 +1231,23 @@
 ./usr/include/time.h
 ./usr/include/ttyent.h
 ./usr/include/tzfile.h
+./usr/include/ufs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ext2fs/ext2fs.h
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h
 ./usr/include/ufs/ext2fs/ext2fs_dir.h
 ./usr/include/ufs/ext2fs/ext2fs_extern.h
+./usr/include/ufs/ffs
 ./usr/include/ufs/ffs/ffs_extern.h
 ./usr/include/ufs/ffs/fs.h
 ./usr/include/ufs/ffs/softdep.h
+./usr/include/ufs/lfs
 ./usr/include/ufs/lfs/lfs.h
 ./usr/include/ufs/lfs/lfs_extern.h
+./usr/include/ufs/mfs
 ./usr/include/ufs/mfs/mfs_extern.h
 ./usr/include/ufs/mfs/mfsnode.h
+./usr/include/ufs/ufs
 ./usr/include/ufs/ufs/dinode.h
 ./usr/include/ufs/ufs/dir.h
 ./usr/include/ufs/ufs/inode.h
@@ -1261,6 +1287,7 @@
 ./usr/include/uvm/uvm_vnode.h
 ./usr/include/varargs.h
 ./usr/include/vis.h
+./usr/include/vm
 ./usr/include/vm/device_pager.h
 ./usr/include/vm/pglist.h
 ./usr/include/vm/pmap.h
@@ -2355,6 +2382,7 @@
 ./usr/share/man/cat3/dbopen.0
 ./usr/share/man/cat3/def_prog_mode.0
 ./usr/share/man/cat3/def_shell_mode.0
+./usr/share/man/cat3/default_colors.0
 ./usr/share/man/cat3/define_key.0
 ./usr/share/man/cat3/del_curterm.0
 ./usr/share/man/cat3/del_panel.0
@@ -2392,7 +2420,6 @@
 ./usr/share/man/cat3/des_string_to_2keys.0
 ./usr/share/man/cat3/des_string_to_key.0
 ./usr/share/man/cat3/devname.0
-./usr/share/man/cat3/dft_fgbg.0
 ./usr/share/man/cat3/dh.0
 ./usr/share/man/cat3/difftime.0
 ./usr/share/man/cat3/directory.0
@@ -2474,6 +2501,7 @@
 ./usr/share/man/cat3/feof.0
 ./usr/share/man/cat3/ferror.0
 ./usr/share/man/cat3/fetch.0
+./usr/share/man/cat3/fflagstostr.0
 ./usr/share/man/cat3/fflush.0
 ./usr/share/man/cat3/ffs.0
 ./usr/share/man/cat3/fgetc.0
@@ -2833,9 +2861,11 @@
 ./usr/share/man/cat3/kn_encode_base64.0
 ./usr/share/man/cat3/kn_encode_hex.0
 ./usr/share/man/cat3/kn_encode_key.0
+./usr/share/man/cat3/kn_free_key.0
 ./usr/share/man/cat3/kn_get_authorizer.0
 ./usr/share/man/cat3/kn_get_failed.0
 ./usr/share/man/cat3/kn_get_licensees.0
+./usr/share/man/cat3/kn_get_string.0
 ./usr/share/man/cat3/kn_init.0
 ./usr/share/man/cat3/kn_keycompare.0
 ./usr/share/man/cat3/kn_query.0
@@ -2949,7 +2979,7 @@
 ./usr/share/man/cat3/memory.0
 ./usr/share/man/cat3/memset.0
 ./usr/share/man/cat3/menu.0
-./usr/share/man/cat3/menu_attribs.0
+./usr/share/man/cat3/menu_attributes.0
 ./usr/share/man/cat3/menu_back.0
 ./usr/share/man/cat3/menu_cursor.0
 ./usr/share/man/cat3/menu_driver.0
@@ -3503,6 +3533,7 @@
 ./usr/share/man/cat3/strspn.0
 ./usr/share/man/cat3/strstr.0
 ./usr/share/man/cat3/strtod.0
+./usr/share/man/cat3/strtofflags.0
 ./usr/share/man/cat3/strtok.0
 ./usr/share/man/cat3/strtok_r.0
 ./usr/share/man/cat3/strtol.0

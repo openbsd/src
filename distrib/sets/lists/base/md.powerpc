@@ -612,6 +612,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/brktree_reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/cmpcivar.ph
@@ -621,6 +622,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/esovar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_devar.ph

@@ -193,6 +193,7 @@
 ./usr/share/man/cat6/wump.0
 ./var/games/atc_score
 ./var/games/battlestar.log
+./var/games/cfscores
 ./var/games/hackdir/data
 ./var/games/hackdir/help
 ./var/games/hackdir/hh
