@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.21 2000/06/30 16:00:07 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.22 2000/08/01 22:10:16 provos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.21 2000/06/30 16:00:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.22 2000/08/01 22:10:16 provos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -263,6 +263,10 @@ pw_lock(retries)
 		fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL, 0600);
 	}
 	save_errno = errno;
+	if (fd != -1 && fcntl(fd, F_SETFD, 1) == -1) {
+		close(fd);
+		fd = -1;
+	}
 	(void) umask(old_mode);
 	errno = save_errno;
 	return (fd);
