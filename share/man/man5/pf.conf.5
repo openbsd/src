@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.169 2003/01/24 20:39:54 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.170 2003/01/25 09:35:43 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -54,7 +54,7 @@ rules with large numbers of source or destination addresses.
 .It Cm Options
 Options tune the behaviour of the packet filtering engine.
 .It Cm Traffic Normalisation Li (e.g. Em scrub Ns )
-Traffic normalisation protects internal machines against inconsistencies
+Traffic normalization protects internal machines against inconsistencies
 in Internet protocols and implementations.
 .It Cm Queueing
 Queuing provides rule-based bandwidth control.
@@ -327,7 +327,7 @@ These can be combined:
 .Bd -literal -offset indent
 .Ic set limit { states 20000, frags 20000 }
 .Ed
-.It Ar set optimisation
+.It Ar set optimization
 Optimise the engine for one of the following network environments:
 .Pp
 .Bl -tag -width xxxx -compact
@@ -346,14 +346,14 @@ dropping idle connections early.
 .It Ar conservative
 Extremely conservative settings.
 Avoid dropping legitimate connections at the
-expense of greater memory utilisation (possibly much greater on a busy
-network) and slightly increased processor utilisation.
+expense of greater memory utilization (possibly much greater on a busy
+network) and slightly increased processor utilization.
 .El
 .Pp
 For example:
 .Pp
 .Bd -literal -offset indent
-.Ic set optimisation aggressive
+.Ic set optimization aggressive
 .Ed
 .It Ar set block-policy
 The
@@ -392,14 +392,14 @@ There may be non-trivial and non-obvious implications to an out of
 order ruleset. Consider carefully before disabling the order enforcement.
 .El
 .Pp
-.Sh TRAFFIC NORMALISATION
-Traffic normalisation is used to sanitise packet content in such
+.Sh TRAFFIC NORMALIZATION
+Traffic normalization is used to sanitize packet content in such
 a way that there are no ambiguities in packet interpretation on
 the receiving side.
-The normaliser does IP fragment reassembly to prevent attacks
+The normalizer does IP fragment reassembly to prevent attacks
 that confuse intrusion detection systems by sending overlapping
 IP fragments.
-Packet normalisation is invoked with the
+Packet normalization is invoked with the
 .Ar scrub
 directive.
 .Pp
@@ -417,7 +417,7 @@ Enforces a maximum mss for matching tcp packets.
 .It Ar fragment reassemble
 Using
 .Ar scrub
-rules, fragments can be reassembled by normalisation.
+rules, fragments can be reassembled by normalization.
 In this case, fragments are buffered until they form a complete
 packet, and only the completed packet is passed on to the filter.
 The advantage is that filter rules have to deal only with complete
@@ -1248,7 +1248,7 @@ intermediate
 packets.
 This will cause
 .Xr pf 4
-to synchronise to existing connections, for instance
+to synchronize to existing connections, for instance
 if one flushes the state table.
 .Pp
 For UDP, which is stateless by nature,
@@ -1728,7 +1728,7 @@ listening for outbound ftp sessions captured to port 8081.
 # use a macro for the interface name, so it can be changed easily
 .Ic ext_if = \&"kue0\&"
 .Pp
-# normalise all incoming traffic
+# normalize all incoming traffic
 .Ic scrub in on $ext_if all fragment reassemble
 .Pp
 # block and log everything by default
@@ -1803,7 +1803,7 @@ line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule
                  | antispoof-rule | altq-rule | queue-rule )
 
 option         = set ( [ timeout ( timeout | { timeout-list } ) ] |
-                 [ optimisation [ default | normal
+                 [ optimization [ default | normal
                  | high-latency | satellite
                  | aggressive | conservative ] ]
                  [ limit ( limit | { limit-list } ) ] |
