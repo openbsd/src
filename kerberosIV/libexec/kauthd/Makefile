@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2001/07/09 09:44:29 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2001/07/09 16:45:25 deraadt Exp $
 
 PROG	= kauthd
 
@@ -8,7 +8,8 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/appl/kauth
 
 CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/acl
-LDADD	+= ${LIBROKEN} -lkrb -ldes
+LDADD	+= -lkafs -lkrb5 -lkrb -lkdb -lkadm -ldes -lasn1 -lcom_err \
+	    -lacl -lcrypto ${LIBROKEN}
 
 SRCS	= kauthd.c marshall.c encdata.c
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/07/09 09:44:30 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2001/07/09 16:45:29 deraadt Exp $
 
 PROG	= kdb_destroy
 
@@ -8,7 +8,7 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/admin
 
 CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/kdb
-LDADD	+= ${LIBROKEN}
+LDADD	+= -lkafs -lkrb5 -lkrb -lkdb -ldes -lcrypto -lasn1 ${LIBROKEN}
 
 SRCS	= kdb_destroy.c
 
