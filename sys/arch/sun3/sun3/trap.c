@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1997/02/03 21:30:15 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 1997/02/03 21:46:17 kstailey Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -86,6 +86,8 @@ int  nodb_trap __P((int type, struct frame *));
 int astpending;
 int want_resched;
 
+static void userret __P((struct proc *, struct frame *, u_quad_t));
+
 char	*trap_type[] = {
 	"Bus error",
 	"Address error",
@@ -115,9 +117,10 @@ short	exframesize[] = {
 	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
 	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
-	-1,		/* type 3 - FP post-instruction (68040/060) */
-	-1, -1, -1,	/* type 4-6 - undefined */
-	-1,		/* type 7 - access error (68040) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
+	-1, -1, 	/* type 5-6 - undefined */
+	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
 	FMTASIZE,	/* type A - short bus fault (68020/030) */
@@ -139,9 +142,6 @@ int mmupid = -1;
 #define MDB_WBFAILED	4
 #define MDB_CPFAULT 	8
 #endif
-
-static void userret __P((struct proc *, struct frame *, u_quad_t));
-
 
 /*
  * trap and syscall both need the following work done before
