@@ -8,8 +8,3 @@ SUBDIR= crypto ssl
 .endif
 
 .include <bsd.subdir.mk>
-
-distribution:
-	@echo "Installing ${DESTDIR}/etc/ssl/lib/ssleay.cnf"; \
-	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-	   ${.CURDIR}/ssleay.cnf ${DESTDIR}/etc/ssl/lib/ssleay.cnf;

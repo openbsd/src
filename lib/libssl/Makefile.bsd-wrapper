@@ -1,5 +1,5 @@
 # Build wrapper for SSLeay.
-# $OpenBSD: Makefile.bsd-wrapper,v 1.8 1999/03/16 19:48:08 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.9 1999/03/17 18:25:56 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -91,6 +91,10 @@ lint:
 
 tags:
 	# Nothing here so far...
+
+distribution:
+	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+	   ${.CURDIR}/ssleay.cnf ${DESTDIR}/etc/ssl/lib/ssleay.cnf
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
