@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.31 2003/09/20 13:57:37 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.32 2003/10/15 17:22:31 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -99,11 +99,12 @@ GLOBAL(doboot)
 	br	8f
 1:
 #endif	/* MVME188 */
-	or.u	r3,r0, 0xfff4
-	ld	r4,r3, 0x0060		/* read offset (LCSR +0x60) */
-	set	r4,r4,1<23>		/* set SYSRST bit - bit 23 */
-	st	r4,r3, 0x0060		/* and store it back  */
-
+	or.u	r3, r0, 0xfff4
+	ld	r4, r3, 0x0060		/* read offset (LCSR + 0x60) */
+	bb0.n	30, r4, 1f		/* if not SYSCON, don't SYSRST */
+	 set	r4, r4, 1<23>		/* set SYSRST bit - bit 23 */
+	st	r4, r3, 0x0060		/* and store it back  */
+1:
 	/*
 	 * We will be here if the reset above failed. In this case,
 	 * we will try to return to bug.
@@ -505,13 +506,19 @@ GLOBAL(sigcode)			/* r31 points to sigframe */
 	ld	r2,  r31, 8	/* sigcontext* */
 	or	r13,  r0, SYS_sigreturn
 	tb0	0, r0, 128	/* syscall trap, calling sigreturn */
-	or	r0, r0, 0
-	or	r0, r0, 0
+	NOP			| failure return
+#if 0
+	NOP			| success return
+#endif
 	/* sigreturn will not return unless it fails */
 	or	r13, r0, SYS_exit
 	tb0	0, r0, 128	/* syscall trap, exit */
-	or	r0, r0, 0
-	or	r0, r0, 0
+	/*
+	 * this never returns, but we need to provide fetchable instructions
+	 * for the 88100 pipeline.
+	 */
+	NOP
+	NOP
 GLOBAL(esigcode)
 
 /* interrupt counters */
