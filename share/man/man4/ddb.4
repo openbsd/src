@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.8 1997/10/13 04:32:15 mickey Exp $
+.\"	$OpenBSD: ddb.4,v 1.9 1997/11/04 21:16:31 chuck Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -254,21 +254,22 @@ Search memory for a value. This command might fail in interesting
 ways if it doesn't find the searched-for value.  This is because
 ddb doesn't always recover from touching bad memory.  The optional
 count argument limits the search.
-.It ps[/m]
-A synonym for 'show all procs'.
 .It show all callout
 Display callout table contents.
-.It show all procs[/m]
+.It ps[/a][/n][/w]
+A synonym for 'show all procs'.
+.It show all procs[/a][/n][/w]
 Display all process information.
-This version of
-.Nm ddb
-prints more information than previous one.
-It shows UNIX process information like "ps".
-The UNIX process information may not be shown if it is not
-supported in the machine, or the bottom of the stack of the
-target process is not in the main memory at that time.
-The 'm' options will alter the 'ps' display to show vm_map
-addresses for the process and not show other info.
+The 'n' option (the default) shows process information in a 
+UNIX-like 'ps' format.  Information printed includes process ID, parent 
+process ID, process group, UID, process status, process flags, process
+command name, and process wait channel message.
+The 'a' option shows the kernel virtual addesses of each process'
+proc structure , u-area, and vmspace structure.   The vmspace
+address is also the address of the process' vm_map structure
+and can be used in the 'show map' command.
+The 'w' option shows each process' PID, command, system call emulation,
+wait channel addresss, and wait channel message.
 .It show breaks
 Prints the list of all breakpoints had been set.
 .It show map[/f] <addr>
