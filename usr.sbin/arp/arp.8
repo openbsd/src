@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.11 2001/06/10 17:46:20 dugsong Exp $
+.\"	$OpenBSD: arp.8,v 1.12 2002/02/13 08:33:47 mpech Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -142,14 +142,14 @@ To view the current
 .Nm
 table:
 .Pp
-.Dl arp -a
+.Dl $ arp -a
 .Pp
 To create a
 .Em permanent
 .Nm entry
 (One that cannot be overwritten by other network traffic):
 .Pp
-.Dl arp -s 10.0.0.2 00:90:27:bb:cc:dd permanent
+.Dl # arp -s 10.0.0.2 00:90:27:bb:cc:dd permanent
 .Pp
 To create
 .Em proxy arp
@@ -157,8 +157,8 @@ entries on an interface, fxp0,
 for the IP Addresses 204.1.2.3 and 204.1.2.4, do a:
 .Pp
 .Bd -unfilled -offset indent -compact
-arp -s 209.1.2.3 00:90:27:bb:cc:dd pub
-arp -s 209.1.2.4 00:90:27:bb:cc:dd pub
+# arp -s 209.1.2.3 00:90:27:bb:cc:dd pub
+# arp -s 209.1.2.4 00:90:27:bb:cc:dd pub
 .Ed
 .Pp
 (where 00:90:27:bb:cc:dd is the MAC address of fxp0)

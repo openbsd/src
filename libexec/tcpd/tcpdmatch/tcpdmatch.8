@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdmatch.8,v 1.10 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: tcpdmatch.8,v 1.11 2002/02/13 08:33:46 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -144,13 +144,13 @@ To predict how
 would handle a telnet request from the local system:
 .Pp
 .Bd -unfilled -offset indent
-tcpdmatch telnetd localhost
+$ tcpdmatch telnetd localhost
 .Ed
 .Pp
 The same request, pretending that hostname lookup failed:
 .Pp
 .Bd -unfilled -offset indent
-tcpdmatch telnetd 127.0.0.1
+$ tcpdmatch telnetd 127.0.0.1
 .Ed
 .Pp
 To predict what
@@ -158,7 +158,7 @@ To predict what
 would do when the client name does not match the client address:
 .Pp
 .Bd -unfilled -offset indent
-tcpdmatch telnetd paranoid
+$ tcpdmatch telnetd paranoid
 .Ed
 .\" .Pp
 .\" On some systems, daemon names have no `in.' prefix, or

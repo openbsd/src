@@ -1,4 +1,4 @@
-.\" $OpenBSD: file2c.1,v 1.8 2001/01/29 01:57:58 niklas Exp $
+.\" $OpenBSD: file2c.1,v 1.9 2002/02/13 08:33:47 mpech Exp $
 .\"----------------------------------------------------------------------------
 .\" "THE BEER-WARE LICENSE" (Revision 42):
 .\" <phk@freebsd.org> wrote this file.  As long as you retain this notice, you
@@ -37,7 +37,7 @@ for instance as a
 .Sh EXAMPLES
 The command:
 .Bd -literal -offset indent
-date | file2c 'const char date[] = {' ',0};'
+$ date | file2c 'const char date[] = {' ',0};'
 .Ed
 .Pp
 will produce:

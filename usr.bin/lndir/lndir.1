@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.14 2001/07/04 07:12:38 mickey Exp $
+.\" $OpenBSD: lndir.1,v 1.15 2002/02/13 08:33:47 mpech Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -196,13 +196,13 @@ from a shadow directory anyway.
 .Pp
 You need to use something like
 .Bd -unfilled -offset indent
-find todir \|\-type l \|\-print \||\| xargs rm
+$ find todir \|\-type l \|\-print \||\| xargs rm
 .Ed
 .Pp
 to clear out all files before you can relink (if fromdir moved, for instance).
 Something like
 .Bd -unfilled -offset indent
-find . \|\\! \|\-type d \|\-print
+$ find . \|\\! \|\-type d \|\-print
 .Ed
 .Pp
 will find all files that are not directories.

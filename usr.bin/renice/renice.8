@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.12 2000/11/10 05:10:39 aaron Exp $
+.\"	$OpenBSD: renice.8,v 1.13 2002/02/13 08:33:47 mpech Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,7 +90,7 @@ interpretation to be (the default) process IDs.
 .Pp
 For example,
 .Bd -literal -offset
-renice +1 987 -u daemon root -p 32
+# renice +1 987 -u daemon root -p 32
 .Ed
 .Pp
 would change the priority of process IDs 987 and 32, and

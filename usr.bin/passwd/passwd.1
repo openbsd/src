@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.21 2002/01/24 20:33:45 mickey Exp $
+.\"	$OpenBSD: passwd.1,v 1.22 2002/02/13 08:33:47 mpech Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ will wait forever trying to lock the password file.
 To determine whether a live process is actually holding the lock, the
 admin may run the following:
 .Bd -literal -offset indent
-fstat /etc/ptmp
+$ fstat /etc/ptmp
 .Ed
 .Pp
 If no process is listed, it is safe to remove the

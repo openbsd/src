@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.8 2000/11/09 17:52:20 aaron Exp $
+.\"	$OpenBSD: logger.1,v 1.9 2002/02/13 08:33:47 mpech Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -92,9 +92,9 @@ The
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
-logger System rebooted
+$ logger System rebooted
 
-logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
+$ logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
 .Ed
 .Sh SEE ALSO
 .Xr syslog 3 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsconscfg.8,v 1.10 2001/08/25 19:35:56 aaron Exp $
+.\"	$OpenBSD: wsconscfg.8,v 1.11 2002/02/13 08:33:47 mpech Exp $
 .\"	$NetBSD: wsconscfg.8,v 1.5 1999/05/15 14:45:06 drochner Exp $
 .\"
 .Dd January 12, 1999
@@ -94,7 +94,7 @@ script, controlled by the
 .Pa /etc/wscons.conf
 configuration file.
 .Sh EXAMPLES
-.Cm wsconscfg -t 80x50 -e vt100 1
+.Cm # wsconscfg -t 80x50 -e vt100 1
 .br
 .Pp
 Configure screen 1 (i.e., the second) for type
@@ -110,7 +110,7 @@ screen useful.
 See
 .Xr wsfontload 8 . )
 .Pp
-.Cm wsconscfg -k
+.Cm # wsconscfg -k
 .Pp
 Connect the first unconnected keyboard to the display.
 .\" .Sh FILES

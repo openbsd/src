@@ -27,7 +27,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: quot.8,v 1.9 2000/03/19 17:57:12 aaron Exp $
+.\"	$Id: quot.8,v 1.10 2002/02/13 08:33:47 mpech Exp $
 .\"
 .Dd February 8, 1994
 .Dt QUOT 8
@@ -69,7 +69,7 @@ in the standard input, for each file print out the owner (plus
 the remainder of the input line).
 This is traditionally used in the pipe:
 .Bd -literal -offset indent
-ncheck filesystem | sort +0n | quot -n filesystem
+# ncheck filesystem | sort +0n | quot -n filesystem
 .Ed
 .Pp
 to get a report of files and their owners.
