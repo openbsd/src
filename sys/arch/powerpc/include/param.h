@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 1997/10/14 17:11:11 pefo Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1998/08/18 21:28:21 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -111,6 +111,12 @@
  */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
+
+/*
+ * Mach derived conversion macros
+ */
+#define powerpc_btop(x)	((unsigned)(x) >> PGSHIFT)
+#define powerpc_ptob(x)	((unsigned)(x) << PGSHIFT)
 
 /*
  * Segment handling stuff
