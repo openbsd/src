@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.11 2003/12/19 21:06:46 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.12 2003/12/19 21:26:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -426,7 +426,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			if (parse_open(peer))
 				change_state(peer, STATE_IDLE, event);
 			else {
-				start_timer_keepalive(peer);
 				session_keepalive(peer);
 				change_state(peer, STATE_OPENCONFIRM, event);
 			}
@@ -460,7 +459,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_KEEPALIVE:
-			start_timer_keepalive(peer);
 			session_keepalive(peer);
 			break;
 		case EVNT_RCVD_KEEPALIVE:
@@ -502,12 +500,11 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			start_timer_holdtime(peer);
 			break;
 		case EVNT_RCVD_UPDATE:
-			/* faaaaar later */
 			start_timer_holdtime(peer);
 			if (parse_update(peer))
 				change_state(peer, STATE_IDLE, event);
 			else
-				start_timer_keepalive(peer);
+				start_timer_holdtime(peer);
 			break;
 		case EVNT_RCVD_NOTIFICATION:
 			parse_notification(peer);
