@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.16 2003/11/14 20:25:16 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.17 2003/11/17 11:12:35 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.16 2003/11/14 20:25:16 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.17 2003/11/17 11:12:35 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -71,6 +71,7 @@ static void		pop_printn(void);
 static __inline void	print_stack();
 static __inline void	dup(void);
 static void		swap(void);
+static void		drop(void);
 
 static void		get_scale(void);
 static void		set_scale(void);
@@ -179,6 +180,7 @@ static const struct jump_entry jump_table_data[] = {
 	{ 'O',	get_obase	},
 	{ 'P',	pop_print	},
 	{ 'Q',	quitN		},
+	{ 'R',	drop		},
 	{ 'S',	store_stack	},
 	{ 'X',	push_scale	},
 	{ 'Z',	num_digits	},
@@ -513,6 +515,14 @@ static void
 swap(void)
 {
 	stack_swap(&bmachine.stack);
+}
+
+static void
+drop(void)
+{
+	struct value *v = pop();
+	if (v != NULL)
+		stack_free_value(v);
 }
 
 static void
