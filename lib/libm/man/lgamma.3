@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$Id: lgamma.3,v 1.2 1995/10/28 00:56:57 deraadt Exp $
+.\"	$Id: lgamma.3,v 1.3 1997/07/28 08:15:03 deraadt Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
@@ -77,18 +77,9 @@ Only after
 .Fn lgamma
 has returned can signgam be correct.
 .Pp
-For arguments in its range,
-.Fn gamma
-is preferred, as for positive arguments
-it is accurate to within one unit in the last place.
-Exponentiation of
-.Fn lgamma
-will lose up to 10 significant bits.
 .Sh RETURN VALUES
-.Fn Gamma
-and
-.Fn lgamma
-return appropriate values unless an argument is out of range.
+.Fn Lgamma
+returns appropriate values unless an argument is out of range.
 Overflow will occur for sufficiently large positive values, and
 non-positive integers.
 On the
@@ -97,10 +88,7 @@ the reserved operator is returned,
 and
 .Va errno
 is set to
-.Er ERANGE
-For large non-integer negative values,
-.Fn gamma
-will underflow.
+.Er ERANGE .
 .Sh SEE ALSO
 .Xr math 3 ,
 .Xr infnan 3
