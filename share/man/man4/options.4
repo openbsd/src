@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.64 2001/05/16 11:35:46 art Exp $
+.\"	$OpenBSD: options.4,v 1.65 2001/05/17 17:50:56 millert Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -54,6 +54,29 @@ options are passed to the compile process as
 flags to the C compiler.
 .Ss Compatibility Options
 .Bl -ohang
+.It Cd option COMPAT_23
+Enables compatibility with
+.Ox 2.3 .
+This makes it possible to run binaries that use old versions of the
+.Xr msgctl 2 ,
+.Xr shmctl 2
+and
+.Xr __semctl
+system calls which changed semantics in
+.Ox 2.4 .
+.It Cd option COMPAT_25
+Enables compatibility with
+.Ox 2.5 .
+This makes it possible to run binaries that use old versions of the
+.Xr statfs 2 ,
+.Xr fstatfs 2
+and
+.Xr getfsstat 2
+system calls which were replaced in
+.Ox 2.6
+when
+.Li struct stat
+was expanded.
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
@@ -125,6 +148,13 @@ applications built for the same architecture.
 This option is available on the i386 architecture.
 See
 .Xr compat_ibcs2 8 .
+.It Cd option COMPAT_NETBSD
+On those architectures that support it, this enables binary
+compatibility with
+.Em NetBSD
+applications built for the same architecture.
+See
+.Xr compat_freebsd 8 .
 .It Cd option COMPAT_OSF1
 On those architectures that support it, this enables binary
 compatibility with
@@ -136,7 +166,7 @@ This option is available on the alpha architecture.
 See
 .Xr compat_osf1 8 .
 .It Cd option COMPAT_NOMID
-Enable compatibility with a.out executables that lack a machine ID.
+Enables compatibility with a.out executables that lack a machine ID.
 On the i386, this includes
 .Nx
 0.8's ZMAGIC format, 386BSD and BSDI's
@@ -504,7 +534,7 @@ This option is supported in the i386 architecture.
 .It Cd option XSERVER
 Support for X windows in the console driver.
 .It Cd option LKM
-Enable support for loadable kernel modules.
+Enables support for loadable kernel modules.
 See
 .Xr lkm 4
 for details.
