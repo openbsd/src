@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.15 2000/01/01 19:14:24 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.16 2000/01/10 22:46:12 angelos Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -174,6 +174,14 @@ is set, the interface will receive packets destined for unknown
 destinations, otherwise a frame that has a destination not found
 in the address cache is not forwarded to this interface.
 The default for newly added interfaces has both flags set.
+If the flag
+.Ar IFBIF_BLOCKNONIP
+is set, packets that are one of
+.Xr ip 4 ,
+.Xr ip6 4 ,
+.Xr arp 4 ,
+or
+Reverse ARP, will not be bridged from and to the interface.
 .It Dv SIOCBRDGGIFFLGS
 Retrieve the bridge member interface flags for the interface named in
 .Ar ifbr_ifsname
