@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2001/12/17 00:41:51 krw Exp $
+#	$OpenBSD: list,v 1.6 2002/03/23 23:29:16 krw Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -58,7 +58,7 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 # and the installation scripts
 COPY	${CURDIR}/../../miniroot/install.sub		install.sub
 COPY	${CURDIR}/../../miniroot/install.sh		install
-COPY	${CURDIR}/../../miniroot/upgrade.sh		upgrade
+# No (U)pgrade option for 3.1 on Sparc64
 SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade
 
