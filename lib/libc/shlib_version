@@ -1,2 +1,2 @@
 major=28
-minor=6 # note: remember to update minor in ../libc_r/shlib_version
+minor=7 # note: remember to update minor in ../libc_r/shlib_version
