@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.26 2001/02/12 08:16:24 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.27 2001/03/07 23:56:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -472,11 +472,10 @@ cpu_startup()
 	int base, residual;
 #if defined(UVM)
 	vaddr_t minaddr, maxaddr, uarea_pages, addr;
-	extern char   *kernel_text, *etext;
 #else
 	vm_offset_t minaddr, maxaddr, uarea_pages;
 #endif 
-	extern vm_offset_t miniroot;
+
 	/*
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in mvme_bootstrap().
@@ -799,6 +798,14 @@ cpu_startup()
 	 */
 	bzero((void *)intr_handlers, 256 * sizeof(struct intrhand *));
 	setupiackvectors();
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 }
 
@@ -1128,6 +1135,7 @@ union sigval val;
 
 /* MVME197 TODO list :-) smurph */
 
+int
 sys_sigreturn(p, v, retval)
 struct proc *p;
 void *v;
@@ -1139,7 +1147,6 @@ register_t *retval;
 	register struct sigcontext *scp;
 	register struct trapframe *tf;
 	struct sigcontext ksc;
-	int error;
 
 	scp = (struct sigcontext *)SCARG(uap, sigcntxp);
 #ifdef DEBUG
@@ -1219,6 +1226,7 @@ register_t *retval;
 	return (EJUSTRETURN);
 }
 
+void
 _doboot()
 {
 	cmmu_shutdown_now();
@@ -1287,6 +1295,7 @@ unsigned dumpmag = 0x8fca0101;	 /* magic number for savecore */
 int   dumpsize = 0;	/* also for savecore */
 long  dumplo = 0;
 
+void
 dumpconf()
 {
 	int nblks;
@@ -1312,6 +1321,7 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void
 dumpsys()
 {
 	extern int msgbufmapped;
@@ -1402,7 +1412,7 @@ setupiackvectors()
 #endif
 		break;
 #endif /* MVME197 */
-	defualt:
+	default:
 		panic("setupiackvectors: unknow cpu");
 	}
 #ifdef DEBUG
@@ -1475,14 +1485,13 @@ int
 intr_findvec(start, end)
 int start, end;
 {
-	register struct intrhand *intr;
 	int vec;
 
 	/* Sanity check! */
 	if (start < 0 || end > 255 || start > end)
 		panic("intr_findvec(): bad parameters");
 	for (vec = start; vec < end; --vec){
-		if (intr_handlers[vec] == (struct intrhand *)0)
+		if (intr_handlers[vec] == NULL)
 			return (vec);
 	}
 	printf("intr_findvec(): uh oh....\n", vec);
@@ -1507,7 +1516,7 @@ intr_establish(int vec, struct intrhand *ihand)
 		return (INTR_EST_BADVEC);
 	}
 
-	if (intr = intr_handlers[vec]) {
+	if ((intr = intr_handlers[vec]) != NULL) {
 		if (intr->ih_ipl != ihand->ih_ipl) {
 #if DIAGNOSTIC
 			panic("intr_establish: there are other handlers with vec (0x%x) at ipl %x, but you want it at %x",
@@ -1571,7 +1580,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	old_spl = m188_curspl[cpu];
 	eframe->mask = old_spl;
 
-	if (! cur_mask) {
+	if (cur_mask == 0) {
 		/*
 		 * Spurious interrupts - may be caused by debug output clearing
 		 * DUART interrupts.
@@ -1682,8 +1691,8 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		 * returns a value != 0.
 		 */
 		for (ret = 0; intr; intr = intr->ih_next) {
-			if (intr->ih_wantframe)
-				ret = (*intr->ih_fn)(intr->ih_arg, (void *)eframe);
+			if (intr->ih_wantframe != 0)
+				ret = (*intr->ih_fn)((void *)eframe);
 			else
 				ret = (*intr->ih_fn)(intr->ih_arg);
 			if (ret){
@@ -1700,7 +1709,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 #if 0
 		disable_interrupt();
 #endif 
-	} while (cur_mask = ISR_GET_CURRENT_MASK(cpu));
+	} while ((cur_mask = ISR_GET_CURRENT_MASK(cpu)) != 0);
 
 	/*
 	 * process any remaining data access exceptions before
@@ -1738,7 +1747,7 @@ out_m188:
 void
 sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 {
-	register u_char mask, level, xxxvec;
+	register u_char mask, level;
 	register struct intrhand *intr;
 	int ret;
 	u_char vec;
@@ -1787,7 +1796,6 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	asm volatile("tb1	0, r0, 0"); 
 	asm volatile("tb1	0, r0, 0"); 
 	asm volatile("tb1	0, r0, 0"); 
-	/*vec = xxxvec;*/
 
 	if (vec > 0xFF) {
 		panic("interrupt vector %x greater than 255", vec);
@@ -1813,8 +1821,8 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 */
 
 	for (ret = 0; intr; intr = intr->ih_next) {
-		if (intr->ih_wantframe)
-			ret = (*intr->ih_fn)(intr->ih_arg, (void *)eframe);
+		if (intr->ih_wantframe != 0)
+			ret = (*intr->ih_fn)((void *)eframe);
 		else
 			ret = (*intr->ih_fn)(intr->ih_arg);
 		if (ret){
@@ -1856,6 +1864,7 @@ beatit:
 }
 #endif /* defined(MVME187) || defined(MVME197) */
 
+int
 cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
@@ -1863,6 +1872,7 @@ struct exec_package *epp;
 	return ENOEXEC;
 }
 
+int
 sys_sysarch(p, v, retval)
 struct proc *p;
 void *v;
@@ -1886,6 +1896,7 @@ register_t *retval;
  * machine dependent system variables.
  */
 
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 int *name;
 u_int namelen;
@@ -2007,6 +2018,7 @@ struct proc *vp;
 
 /* dummys for now */
 
+void
 bugsyscall()
 {
 }
@@ -2015,8 +2027,8 @@ void
 myetheraddr(cp)
 u_char *cp;
 {
-	struct bugniocall niocall;
 	struct bugbrdid brdid;
+
 	bugbrdid(&brdid);
 	bcopy(&brdid.etheraddr, cp, 6);
 }
@@ -2109,7 +2121,6 @@ int
 spl0()
 {
 	int x;
-	int level = 0;
 	x = splsoftclock();
 
 	if (ssir) {
@@ -2121,11 +2132,13 @@ spl0()
 	return (x);
 }
 
+int
 badwordaddr(void *addr)
 {
 	return badaddr((vm_offset_t)addr, 4);
 }
 
+void
 MY_info(f, p, flags, s)
 struct trapframe  *f;
 caddr_t     p;
@@ -2136,6 +2149,7 @@ char        *s;
 	printf("proc %x flags %x type %s\n", p, flags, s);
 }  
 
+void
 MY_info_done(f, flags)
 struct trapframe  *f;
 int         flags;
@@ -2146,7 +2160,9 @@ int         flags;
 void
 nmihand(void *framep)
 {
+#if 0
 	struct m88100_saved_state *frame = framep;
+#endif
 
 #if DDB
 	DEBUG_MSG("Abort Pressed\n");
@@ -2156,6 +2172,7 @@ nmihand(void *framep)
 #endif /* DDB */
 }
 
+void
 regdump(struct trapframe *f)
 {
 #define R(i) f->r[i]
@@ -2263,14 +2280,10 @@ db_splx(int s)
 void
 mvme_bootstrap(void)
 {
-	extern char *edata, *end;
 	extern int cold;
-	extern unsigned number_cpus;
 	extern int kernelstart;
-	extern int lock_wait_time;
 	extern vm_offset_t size_memory(void);
 	extern struct consdev *cn_tab;
-	extern unsigned vector_list;
 	struct bugbrdid brdid;
 
 	cold = 1;  /* we are still booting */
@@ -2420,6 +2433,7 @@ bootcninit(cp)
 struct consdev *cp;
 {
 	/* Nothing to do */
+	return (1);
 }
 
 int
@@ -2434,7 +2448,6 @@ bootcnputc(dev, c)
 dev_t dev;
 char c;
 {
-	int s;
 	if (c == '\n')
 		bugoutchr('\r');
 	bugoutchr(c);
