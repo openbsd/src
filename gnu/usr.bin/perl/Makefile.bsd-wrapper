@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1998/07/05 20:20:44 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 1998/07/05 21:19:19 downsj Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -104,7 +104,6 @@ CLEANFILES=	config.sh ${MAN} ${MANALL}
 
 all:	${GENERATED}
 	(cd ${.OBJDIR}; ${MAKE})
-	(cd ${.OBJDIR}/pod; ${MAKE} man)
 
 config.sh: config.sh.OpenBSD
 	(cd ${.OBJDIR}; /bin/sh Configure -f config.sh.OpenBSD -dsE)
