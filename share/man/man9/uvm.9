@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.10 2001/12/29 17:36:41 mickey Exp $
+.\"	$OpenBSD: uvm.9,v 1.11 2002/08/24 03:36:30 wcobb Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -93,6 +93,11 @@ It initialises global state, the page, map, kernel virtual memory state,
 machine-dependent physical map, kernel memory allocator,
 pager and anonymous memory sub-systems, and then enables
 paging of kernel objects.
+.Fn uvm_init
+must be called after machine-dependent code has registered some free RAM
+with the
+.Fn uvm_page_physload
+function.
 .Pp
 .Fn uvm_init_limits
 initialises process limits for the named process.
@@ -120,7 +125,6 @@ initialises the swap sub-system.
 .Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
 .Ft int
 .Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
-
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
 .Ft void
@@ -662,24 +666,20 @@ swaps in the named process.
 .Fn uao_detach "struct uvm_object *uobj"
 .Ft void
 .Fn uao_reference "struct uvm_object *uobj"
-
 .Ft boolean_t
 .Fn uvm_chgkprot "caddr_t addr" "size_t len" "int rw"
 .Ft void
 .Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw"
 .Ft boolean_t
 .Fn uvm_useracc "caddr_t addr" "size_t len" "int rw"
-
 .Ft void
 .Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len"
 .Ft void
 .Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len"
-
 .Ft void
 .Fn uvm_meter
 .Ft int
 .Fn uvm_sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp " "size_t newlen" "struct proc *p"
-
 .Ft void
 .Fn uvm_fork "struct proc *p1" "struct proc *p2" "boolean_t shared"
 .Ft int
