@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.15 1997/04/30 18:10:07 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.16 1997/05/30 02:21:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -51,6 +51,7 @@ struct biosdisk {
 	struct disklabel disklabel;
 	dev_t	bsddev;
 	u_int8_t biosdev;
+	int edd_flags;
 };
 
 int
@@ -145,12 +146,14 @@ biosopen(struct open_file *f, ...)
 		return ENXIO;
 	}
 
+	bd->edd_flags = EDDcheck((dev_t)bd->biosdev);
 	bd->dinfo = biosdinfo((dev_t)bd->biosdev);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
-		printf("BIOS geometry: heads: %u, s/t: %u\n",
-			BIOSNHEADS(bd->dinfo), BIOSNSECTS(bd->dinfo));
+		printf("BIOS geometry: heads=%u, s/t=%u; EDD=%d\n",
+		       BIOSNHEADS(bd->dinfo), BIOSNSECTS(bd->dinfo),
+		       bd->edd_flags);
 	}
 #endif
 

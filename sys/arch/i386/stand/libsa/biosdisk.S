@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.8 1997/04/23 14:49:24 weingart Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.9 1997/05/30 02:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -37,6 +37,9 @@
 #include "debug_md.h"
 #include "biosdev.h"
 #undef	_LOCORE
+
+
+	.globl	_C_LABEL(errno)	/* XXX used for bios errors */
 
 /*
  * int biosread(dev,cyl,head,sect,nsect,buf)
@@ -84,11 +87,11 @@ ENTRY(bioswrite)
 	ret
 
 /*
-#
-# u_int16_t biosdinfo():  return a word that represents the
-#	max number of sectors and  heads and drives for this device
-#
-*/
+ *
+ * u_int16_t biosdinfo():  return a word that represents the
+ *	max number of sectors and  heads and drives for this device
+ *
+ */
 
 ENTRY(biosdinfo)
 	pushl	%ebp
@@ -115,10 +118,10 @@ ENTRY(biosdinfo)
 
 
 /*
-#
-# biosdreset(): reset disk system
-#
-*/
+ *
+ * biosdreset(): reset disk system
+ *
+ */
 
 ENTRY(biosdreset)
 	pushl	%ebx
@@ -130,5 +133,85 @@ ENTRY(biosdreset)
 
 	popl	%ecx
 	popl	%ebx
+	ret
+
+/*
+ * int EDDcheck(dev)
+ *	check the features supported by the bios for the drive
+ */
+ENTRY(EDDcheck)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ecx
+	pushl	%ebx
+
+	movb	$0x44, %ah
+	movw	$0x55aa, %bx
+	movl	8(%ebp), %edx
+	BIOSINT(0x13)
+	movl	$-1, %eax
+	jc	1f
+	cmpw	$0xaa55, %bx
+	jne	1f
+	xorl	%eax, %eax
+	movw	%cx, %ax	/* API support bitmap */
+1:
+	popl	%ebx
+	popl	%ecx
+	popl	%ebp
+	ret
+
+	.data
+
+ddp:	.byte	0x10	# size of packet
+	.byte	0	# reserved
+	.word	0	# # of blocks to transfer
+	.long	0	# address to read/write to
+	.long	0,0	# start to read here
+
+	.text
+/*
+ * int EDDread(dev,abs_sect,nsect,buf)
+ *	read nsect starting on absolute sector #abs_sect into buf
+ */
+ENTRY(EDDread)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ecx
+	pushl	%ebx
+	pushl	%esi
+
+	movl	8(%ebp), %edx	/* drive */
+	movl	ddp, %esi
+	movl	20(%ebp), %eax	/* nblks */
+	movw	%ax, 2(%esi)
+	movl	12(%ebp), %eax	/* abs starting sector */
+	movl	%eax, 8(%esi)
+	movl	16(%ebp), %eax
+	movl	%eax, 12(%esi)
+	movl	24(%ebp), %eax	/* buffer */
+	movl	%eax, 4(%esi)
+	movb	$0x42, %ah
+	BIOSINT(0x13)
+	jnc	1f
+	xorl	%eax, %eax
+
+1:	movzbl	%ah, %eax
+	movl	%eax, _C_LABEL(errno)
+	movw	2(%esi), %ax	/* return number of blocks read ok */
+
+	popl	%esi
+	popl	%ebx
+	popl	%ecx
+	popl	%ebp
+	ret
+
+/*
+ * int EDDwrite(dev,abs_sect,nsect,buf)
+ *	read nsect starting on absolute sector #abs_sect into buf
+ */
+ENTRY(EDDwrite)
+	movl	$19, _C_LABEL(errno)
+	movl	$0, %eax
 	ret
 

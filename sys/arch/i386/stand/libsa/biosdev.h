@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.8 1997/04/28 07:39:01 weingart Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.9 1997/05/30 02:21:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -50,31 +50,40 @@ int biosioctl __P((struct open_file *, u_long, void *));
 
 /* biosdisk.S */
 u_int16_t biosdinfo __P((int dev));
-int		biosdreset __P((int dev));
-int     biosread  __P((int dev, int cyl, int hd, int sect, int nsect, void *));
-int     bioswrite __P((int dev, int cyl, int hd, int sect, int nsect, void *));
+int biosdreset __P((int dev));
+int biosread  __P((int dev, int cyl, int hd, int sect, int nsect, void *));
+int bioswrite __P((int dev, int cyl, int hd, int sect, int nsect, void *));
+int EDDcheck __P((dev_t));
+int EDDread __P((dev_t, u_int64_t, u_int32_t, void *));
+int EDDwrite __P((dev_t, u_int64_t, u_int32_t, void *));
 
 /* bioskbd.S */
-int	kbd_probe __P((void));
-void	kbd_putc __P((int c));
-int	kbd_getc __P((void));
-int	kbd_ischar __P((void));
+int kbd_probe __P((void));
+void kbd_putc __P((int c));
+int kbd_getc __P((void));
+int kbd_ischar __P((void));
 
 /* bioscom.S */
-int	com_probe __P((void));
-void	com_putc __P((int c));
-int	com_getc __P((void));
-int	com_ischar __P((void));
+#define COM_PROTO(n) \
+int com##n##_probe __P((void)); \
+void com##n##_putc __P((int c)); \
+int com##n##_getc __P((void)); \
+int com##n##_ischar __P((void));
+COM_PROTO(0)
+COM_PROTO(1)
+COM_PROTO(2)
+COM_PROTO(3)
+#undef COM_PROTO
 
 /* biosmem.S */
-u_int	biosmem __P((void));
+u_int biosmem __P((void));
 
 /* time.c */
 void time_print __P((void));
 time_t getsecs __P((void));
 
 /* biostime.S */
-int	usleep __P((u_long));
+int usleep __P((u_long));
 int biostime __P((char *));
 int biosdate __P((char *));
 #endif
