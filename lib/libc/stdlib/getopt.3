@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.28 2003/09/22 23:47:26 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.29 2004/12/07 16:14:35 millert Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -95,9 +95,13 @@ and
 are both initialized to 1.
 The
 .Va optind
-variable may be set to another value before a set of calls to
+variable may be set to another value larger than 0 before a set of calls to
 .Fn getopt
 in order to skip over more or less argv entries.
+An
+.Va optind
+value of 0 is reserved for compatibility with GNU
+.Fn getopt .
 .Pp
 In order to use
 .Fn getopt
@@ -229,6 +233,20 @@ The
 variable was added to make it possible to call the
 .Fn getopt
 function multiple times.
+.It Li o
+If the
+.Va optind
+variable is set to 0,
+.Fn getopt
+will behave as if the
+.Va optreset
+variable has been set.
+This is for compatibility with
+.Tn GNU
+.Fn getopt .
+New code should use
+.Va optreset
+instead.
 .It Li o
 If the first character of
 .Fa optstring
