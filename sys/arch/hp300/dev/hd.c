@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.24 2004/02/15 02:56:13 tedu Exp $	*/
+/*	$OpenBSD: hd.c,v 1.25 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ hdident(parent, sc, ha)
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
 	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-	bzero(name, sizeof(name)); 
+	bzero(name, sizeof(name));
 	if (stat == 0) {
 		n = desc->d_name;
 		for (i = 5; i >= 0; i--) {

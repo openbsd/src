@@ -1,7 +1,7 @@
-/*	$OpenBSD: mt.c,v 1.12 2003/12/20 20:08:13 miod Exp $	*/
+/*	$OpenBSD: mt.c,v 1.13 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1992, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).

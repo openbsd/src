@@ -1,4 +1,4 @@
-/*	$OpenBSD: dioreg.h,v 1.2 1997/02/03 04:47:20 downsj Exp $	*/
+/*	$OpenBSD: dioreg.h,v 1.3 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: dioreg.h,v 1.3 1997/01/30 09:18:40 thorpej Exp $	*/
 
 /*-
@@ -68,9 +68,9 @@
  * e.g. a display framebuffer.
  *
  * DIO-II ranges from select codes 132-255 at physical addresses given by:
- *	0x1000000 + (sc - 132) * 0x400000 
+ *	0x1000000 + (sc - 132) * 0x400000
  * The address range of DIO-II space is thus [0x1000000-0x20000000).
- * 
+ *
  * DIO/DIO-II space is too large to map in its entirety, instead devices
  * are mapped into kernel virtual address space allocated from a range
  * of EIOMAPSIZE pages (vmparam.h) starting at ``extiobase''.

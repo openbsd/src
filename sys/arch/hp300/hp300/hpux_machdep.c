@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.17 2003/08/01 18:37:26 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.18 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,8 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/poll.h> 
-#include <sys/proc.h> 
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -63,7 +63,7 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
-#include <sys/wait.h> 
+#include <sys/wait.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -203,7 +203,7 @@ hpux_sys_advise(p, v, retval)
 
 	switch (SCARG(uap, arg)) {
 	case 0:
-		p->p_md.md_flags |= MDP_HPUXMMAP; 
+		p->p_md.md_flags |= MDP_HPUXMMAP;
 		break;
 
 	case 1:
@@ -228,14 +228,14 @@ hpux_sys_advise(p, v, retval)
  */
 int
 hpux_sys_getcontext(p, v, retval)
-	struct proc *p; 
+	struct proc *p;
 	void *v;
-	register_t *retval; 
+	register_t *retval;
 {
 	struct hpux_sys_getcontext_args *uap = v;
 	const char *str;
 	int l, i, error = 0;
-	int len; 
+	int len;
 
 	if (SCARG(uap, len) <= 0)
 		return (EINVAL);
@@ -265,11 +265,11 @@ hpux_sys_getcontext(p, v, retval)
  */
 int
 hpux_to_bsd_uoff(off, isps, p)
-	int *off, *isps; 
+	int *off, *isps;
 	struct proc *p;
 {
 	int *ar0 = p->p_md.md_regs;
-	struct hpux_fp *hp; 
+	struct hpux_fp *hp;
 	struct bsdfp *bp;
 	u_int raddr;
 
@@ -277,7 +277,7 @@ hpux_to_bsd_uoff(off, isps, p)
 
 	/* u_ar0 field; procxmt puts in U_ar0 */
 	if ((int)off == HPUOFF(hpuxu_ar0))
-		return(UOFF(U_ar0)); 
+		return(UOFF(U_ar0));
 
 	if (fputype) {
 		/* FP registers from PCB */
@@ -410,7 +410,7 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct hpuxsigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (unsigned)fp);
 
 #ifdef DEBUG
@@ -421,7 +421,7 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 
 	kfp = (struct hpuxsigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
 
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	kfp->hsf_signum = bsdtohpuxsig(sig);
@@ -638,7 +638,7 @@ hpux_sys_sigreturn(p, v, retval)
 	 */
 	if (flags & HSS_RTEFRAME) {
 		int sz;
-		
+
 		/* grab frame type and validate */
 		sz = tstate.hss_frame.f_format;
 		if (sz > 15 || (sz = exframesize[sz]) < 0)

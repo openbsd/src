@@ -1,9 +1,9 @@
-/*	$OpenBSD: trap.c,v 1.45 2004/12/06 20:12:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -1080,7 +1080,7 @@ syscall(code, frame)
 		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
-			 * remember that we adjusted the SP, 
+			 * remember that we adjusted the SP,
 			 * might have to undo this if the system call
 			 * returns ERESTART.
 			 */

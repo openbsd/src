@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.11 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.12 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -66,8 +66,8 @@ struct	ppi_softc {
 };
 
 /* sc_flags values */
-#define	PPIF_ALIVE	0x01	
-#define	PPIF_OPEN	0x02	
+#define	PPIF_ALIVE	0x01
+#define	PPIF_OPEN	0x02
 #define PPIF_UIO	0x04
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10

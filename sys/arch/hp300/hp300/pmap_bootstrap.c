@@ -1,7 +1,7 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.21 2005/01/03 18:45:47 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.22 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

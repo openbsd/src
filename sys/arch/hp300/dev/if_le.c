@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.16 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.17 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.43 1997/05/05 21:05:32 thorpej Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ int	leintr(void *);
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
 hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);  
+hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 
 hide void
 lewrcsr(sc, port, val)

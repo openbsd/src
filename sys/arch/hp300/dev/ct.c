@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.10 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: ct.c,v 1.11 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -344,10 +344,10 @@ ctopen(dev, flag, type, p)
 	else
 		sc->sc_soptc.opt = C_SPAR;
 
-	/* 
+	/*
 	 * Check the return of hpibsend() and hpibswait().
 	 * Drive could be loading/unloading a tape. If not checked,
-	 * driver hangs. 
+	 * driver hangs.
 	 */
 	cc = hpibsend(ctlr, slave, C_CMD, &sc->sc_soptc, sizeof(sc->sc_soptc));
 	if (cc != sizeof(sc->sc_soptc))
@@ -439,7 +439,7 @@ ctcommand(dev, cmd, cnt)
 #ifdef DEBUG
 			if (ctdebug & CT_BSF)
 				printf("%s: backup eof pos %d blk %d\n",
-				    sc->sc_dev.dv_xname, sc->sc_eofp, 
+				    sc->sc_dev.dv_xname, sc->sc_eofp,
 				    sc->sc_eofs[sc->sc_eofp]);
 #endif
 		}
@@ -582,7 +582,7 @@ mustio:
 			bp->b_resid = bp->b_bcount;
 			ctdone(sc, bp);
 			return;
-		}			
+		}
 		sc->sc_flags |= CTF_IO;
 		sc->sc_ioc.unit = C_SUNIT(sc->sc_punit);
 		sc->sc_ioc.saddr = C_SADDR;

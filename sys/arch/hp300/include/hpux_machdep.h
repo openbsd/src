@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.h,v 1.7 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: hpux_machdep.h,v 1.8 2005/01/15 21:13:09 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.h,v 1.8 1997/04/27 21:38:58 thorpej Exp $	*/
 
 /*-
@@ -40,12 +40,12 @@
 #ifndef _MACHINE_HPUX_MACHDEP_H_
 #define _MACHINE_HPUX_MACHDEP_H_
 
-/*    
+/*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
  * execution of the signal handler.  It is also made available
  * to the handler to allow it to restore state properly if
- * a non-standard exit is performed. 
+ * a non-standard exit is performed.
  */
 struct hpuxsigcontext {
 	int	hsc_syscall;		/* ??? (syscall number?) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2004/11/28 14:04:22 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2005/01/15 21:13:09 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.60 2001/07/06 05:53:35 chs Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -234,7 +234,7 @@ pagemove(from, to, size)
  * Map `size' bytes of physical memory starting at `paddr' into
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
- */ 
+ */
 void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
@@ -282,7 +282,7 @@ kvtop(addr)
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)

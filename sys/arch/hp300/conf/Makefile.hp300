@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.35 2003/11/24 16:11:25 espie Exp $
+#	$OpenBSD: Makefile.hp300,v 1.36 2005/01/15 21:13:06 miod Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -206,14 +206,14 @@ depend:: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 assym.h machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
 
 

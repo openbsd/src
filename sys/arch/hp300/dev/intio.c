@@ -1,4 +1,4 @@
-/*	$OpenBSD: intio.c,v 1.3 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: intio.c,v 1.4 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: intio.c,v 1.2 1997/01/30 09:18:54 thorpej Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
- 
+#include <sys/device.h>
+
 #include <hp300/dev/intiovar.h>
 
 int	intiomatch(struct device *, void *, void *);

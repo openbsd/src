@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.17 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.18 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -37,12 +37,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*      
+/*
  * Copyright (c) 1997 Michael Smith.  All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without  
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -53,7 +53,7 @@
  * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -99,9 +99,9 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/device.h>       
-#include <sys/timeout.h>       
-    
+#include <sys/device.h>
+#include <sys/timeout.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
@@ -368,7 +368,7 @@ apciopen(dev, flag, mode, p)
 		}
 		sc->sc_cua = 1;		/* We go into CUA mode */
 	}
-		
+
 	/* Wait for carrier if necessary. */
 	if (flag & O_NONBLOCK) {
 		if (!APCICUA(dev) && sc->sc_cua) {

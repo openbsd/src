@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.14 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.15 2005/01/15 21:13:08 miod Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ void	nhpibifc(struct nhpibdevice *);
 void	nhpibreadtimo(void *);
 int	nhpibwait(struct nhpibdevice *, int);
 
-void	nhpibreset(struct hpibbus_softc *); 
+void	nhpibreset(struct hpibbus_softc *);
 int	nhpibsend(struct hpibbus_softc *, int, int, void *, int);
 int	nhpibrecv(struct hpibbus_softc *, int, int, void *, int);
 int	nhpibppoll(struct hpibbus_softc *);
@@ -153,7 +153,7 @@ nhpibattach(parent, self, aux)
 {
 	struct nhpib_softc *sc = (struct nhpib_softc *)self;
 	struct dio_attach_args *da = aux;
-	struct hpibdev_attach_args ha; 
+	struct hpibdev_attach_args ha;
 	const char *desc;
 	int ipl, type = HPIBA;
 

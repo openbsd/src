@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2003/06/02 23:27:45 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2005/01/15 21:13:08 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -100,7 +100,7 @@ export	SSLEEP
 # PSL values
 export	PSL_S
 export	PSL_IPL7
-export	PSL_LOWIPL	
+export	PSL_LOWIPL
 export	PSL_USER
 define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
