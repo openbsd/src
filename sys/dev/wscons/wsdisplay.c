@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.23 2001/04/17 04:30:51 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.24 2001/04/17 23:24:31 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -2125,16 +2125,15 @@ mouse_moverel(char dx, char dy)
 	MOUSE = XY_TO_POS(mouse_col, mouse_row);
 	/* if we have moved */
 	if (old_mouse != MOUSE) {
-		/* hide the previous cursor, if not in a selection */
-		if (IS_MOUSE_VISIBLE(sc->sc_focus)
-		    && (!IS_SEL_IN_PROGRESS(sc->sc_focus)))
-			inverse_char(old_mouse);
 		if (IS_SEL_IN_PROGRESS(sc->sc_focus)) {
 			/* selection in progress */
 			mouse_copy_extend();
 		} else {
 			inverse_char(MOUSE);
-			MOUSE_FLAGS |= MOUSE_VISIBLE;
+			if (IS_MOUSE_VISIBLE(sc->sc_focus))
+				inverse_char(old_mouse);
+			else
+				MOUSE_FLAGS |= MOUSE_VISIBLE;
 		}
 	}
 }
