@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2004/03/10 11:38:32 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.75 2004/03/10 11:40:33 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,7 +104,7 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
-%token	ENFORCE NEIGHBORAS
+%token	ENFORCE NEIGHBORAS CAPABILITIES
 %token	DUMP TABLE IN OUT
 %token	LOG ROUTECOLL
 %token	TCP MD5SIG PASSWORD KEY
