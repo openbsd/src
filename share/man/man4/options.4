@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.90 2001/11/29 11:28:17 mpech Exp $
+.\"	$OpenBSD: options.4,v 1.91 2001/12/05 02:09:21 provos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -971,17 +971,30 @@ for exact default information.
 Increase this value if
 .Dq mclpool limit reached
 messages appear.
-.It Cd option NKMEMCLUSTERS=value
-Size of kernel malloc area in CLBYTES-sized logical pages.
+.It Cd option NKMEMPAGES=value
+.It Cd option NKMEMPAGES_MIN=value
+.It Cd option NKMEMPAGES_MAX=value
+Size of kernel malloc area in PAGE_SIZE-sized logical pages.
 This area is covered by the kernel submap
 .Em kmem_map .
+The kernel attempts to auto-size this map based on the amount of
+physical memory in the system.  Platform-specific code may place
+bounds on this computed size, which may be viewed with the
+.Xr sysctl 8
+variable
+.Em vm.nkmempages .
 See
 .Pa /usr/include/machine/param.h
-for the default value, which is port specific.
-Increase this value if
+for the default upper and lower bounds.
+The related options
+.Sq NKMEMPAGES_MIN
+and
+.Sq NKMEMPAGES_MAX
+allow the bounds to be overridden in the kernel configuration file.
+These options are provided in the event the computed value is
+insufficient resulting in an
 .Dq out of space in kmem_map
-panics happen.
-.\" , which mean the system has run out of malloc-able kernel memory.
+panic.
 .It Cd option NBUF=value
 .It Cd option BUFPAGES=value
 These options set the number of pages available for the buffer cache.
