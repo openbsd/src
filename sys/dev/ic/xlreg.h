@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.4 2000/09/05 18:18:50 aaron Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.5 2000/09/16 21:42:16 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xlreg.h,v 1.17 1999/05/30 18:09:17 wpaul Exp $
+ *	$FreeBSD: if_xlreg.h,v 1.26 2000/08/28 20:40:03 wpaul Exp $
  */
 
 #define XL_BUS_PCI	0x01
@@ -553,6 +553,12 @@ struct xl_mii_frame {
 #define XL_TYPE_905B	1
 #define XL_TYPE_90X	2
 
+#define XL_FLAG_FUNCREG			0x0001
+#define XL_FLAG_PHYOK			0x0002
+#define XL_FLAG_EEPROM_OFFSET_30	0x0004
+#define XL_FLAG_WEIRDRESET		0x0008
+#define XL_FLAG_8BITROM			0x0010
+
 struct xl_softc {
 	struct device		sc_dev;		/* generic device structure */
 	void *			xl_intrhand;	/* interrupt handler cookie */
@@ -578,6 +584,9 @@ struct xl_softc {
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
+	int			xl_flags;
+	bus_space_handle_t	xl_fhandle;
+	bus_space_tag_t		xl_ftag;
 	void (*intr_ack)	__P((struct xl_softc *));
 	void *			sc_sdhook;
 };
@@ -636,6 +645,8 @@ struct xl_stats {
  * 3Com PCI chip device IDs.
  */
 #define TC_DEVICEID_TORNADO_HOMECONNECT		0x4500
+#define TC_DEVICEID_HURRICANE_556		0x6055
+#define TC_DEVICEID_HURRICANE_556B		0x6056
 #define	TC_DEVICEID_BOOMERANG_10BT		0x9000
 #define TC_DEVICEID_BOOMERANG_10BT_COMBO	0x9001
 #define TC_DEVICEID_BOOMERANG_10_100BT		0x9050
@@ -688,6 +699,7 @@ struct xl_stats {
 #define XL_PCI_HEADER_TYPE	0x0E
 #define XL_PCI_LOIO		0x10
 #define XL_PCI_LOMEM		0x14
+#define XL_PCI_FUNCMEM		0x18
 #define XL_PCI_BIOSROM		0x30
 #define XL_PCI_INTLINE		0x3C
 #define XL_PCI_INTPIN		0x3D

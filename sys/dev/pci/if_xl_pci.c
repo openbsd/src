@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.3 2000/07/01 03:19:15 aaron Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.4 2000/09/16 21:42:17 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,6 +120,8 @@ xl_pci_match(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C980CTX:
 	case PCI_PRODUCT_3COM_3C905CTX:
 	case PCI_PRODUCT_3COM_3C450:
+	case PCI_PRODUCT_3COM_3C556:
+	case PCI_PRODUCT_3COM_3C556B:
 		return (1);
 	}
 					
@@ -145,6 +147,14 @@ xl_pci_attach(parent, self, aux)
 	sc->xl_bustype = XL_BUS_PCI;
 	sc->xl_cb_flags = 0;
 
+	sc->xl_flags = 0;
+	if (PCI_PRODUCT(pa->pa_id) == TC_DEVICEID_HURRICANE_556 ||
+	    PCI_PRODUCT(pa->pa_id) == TC_DEVICEID_HURRICANE_556B)
+		sc->xl_flags |= XL_FLAG_FUNCREG | XL_FLAG_PHYOK |
+		    XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_WEIRDRESET;
+	if (PCI_PRODUCT(pa->pa_id) == TC_DEVICEID_HURRICANE_556)
+		sc->xl_flags |= XL_FLAG_8BITROM;
+	
 	/*
 	 * If this is a 3c905B, we have to check one extra thing.
 	 * The 905B supports power management and may be placed in
@@ -232,6 +242,20 @@ xl_pci_attach(parent, self, aux)
 	}
 	sc->xl_btag = pa->pa_memt;
 #endif
+
+	if (sc->xl_flags & XL_FLAG_FUNCREG) {
+		if (pci_mem_find(pc, pa->pa_tag, XL_PCI_FUNCMEM, &iobase,
+		    &iosize, NULL)) {
+			printf(": can't find mem space\n");
+			return;
+		}
+		if (bus_space_map(pa->pa_memt, iobase, iosize, 0,
+		    &sc->xl_fhandle)) {
+			printf(": can't map mem space\n");
+			return;
+		}
+		sc->xl_ftag = pa->pa_memt;
+	}
 
 	/*
 	 * Allocate our interrupt.

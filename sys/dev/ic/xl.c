@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.6 2000/09/05 18:18:49 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.7 2000/09/16 21:42:16 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: if_xl.c,v 1.72 2000/01/09 21:12:59 wpaul Exp $
+ * $FreeBSD: if_xl.c,v 1.77 2000/08/28 20:40:03 wpaul Exp $
  */
 
 /*
@@ -54,6 +54,8 @@
  * 3Com 3c900-FL/FX	10/100Mbps/Fiber-optic
  * 3Com 3c905C-TX	10/100Mbps/RJ-45 (Tornado ASIC)
  * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
+ * 3Com 3c556		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
+ * 3Com 3c556B		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
  * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
  * 3Com 3C575TX		10/100Mbps LAN CardBus PC Card
@@ -443,7 +445,8 @@ xl_miibus_readreg(self, phy, reg)
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
 
-	if (sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
+	if (!(sc->xl_flags & XL_FLAG_PHYOK) &&
+	    sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
 		return (0);
 
 	bzero((char *)&frame, sizeof(frame));
@@ -463,7 +466,8 @@ xl_miibus_writereg(self, phy, reg, data)
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
 
-	if (sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
+	if (!(sc->xl_flags & XL_FLAG_PHYOK) &&
+	    sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
 		return;
 
 	bzero((char *)&frame, sizeof(frame));
@@ -528,21 +532,25 @@ int xl_read_eeprom(sc, dest, off, cnt, swap)
 {
 	int			err = 0, i;
 	u_int16_t		word = 0, *ptr;
-
+#define EEPROM_5BIT_OFFSET(A) ((((A) << 2) & 0x7F00) | ((A) & 0x003F))
+	/* WARNING! DANGER!
+	 * It's easy to accidentally overwrite the rom content!
+	 * Note: the 3c575 uses 8bit EEPROM offsets.
+	 */
 	XL_SEL_WIN(0);
 
 	if (xl_eeprom_wait(sc))
 		return(1);
 
+	if (sc->xl_flags & XL_FLAG_EEPROM_OFFSET_30)
+		off += 0x30;
+
 	for (i = 0; i < cnt; i++) {
-		switch (sc->xl_bustype) {
-		case XL_BUS_PCI:
-			CSR_WRITE_2(sc, XL_W0_EE_CMD, XL_EE_READ | (off + i));
-			break;
-		case XL_BUS_CARDBUS:
-			CSR_WRITE_2(sc, XL_W0_EE_CMD, 0x230 + (off + i));
-			break;
-		}
+		if (sc->xl_flags & XL_FLAG_8BITROM)
+			CSR_WRITE_2(sc, XL_W0_EE_CMD, (2<<8) | (off + i ));
+		else
+			CSR_WRITE_2(sc, XL_W0_EE_CMD,
+			    XL_EE_READ | EEPROM_5BIT_OFFSET(off + i));
 		err = xl_eeprom_wait(sc);
 		if (err)
 			break;
@@ -840,7 +848,8 @@ void xl_reset(sc, hard)
 
 	XL_SEL_WIN(0);
 	if (hard)
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET);
+		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET |
+		    ((sc->xl_flags & XL_FLAG_WEIRDRESET)?0xFF:0));
 	else
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET | 0x0010);
 	xl_wait(sc);
@@ -858,6 +867,12 @@ void xl_reset(sc, hard)
 	xl_wait(sc);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 	xl_wait(sc);
+
+	if (sc->xl_flags & XL_FLAG_WEIRDRESET) {
+		XL_SEL_WIN(2);
+		CSR_WRITE_2(sc, XL_W2_RESET_OPTIONS, CSR_READ_2(sc,
+		    XL_W2_RESET_OPTIONS) | 0x4010);
+	}
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(100000);
@@ -956,6 +971,8 @@ void xl_choose_xcvr(sc, verbose)
 			printf("xl%d: guessing 10baseFL\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10_100BT:	/* 3c905-TX */
+	case TC_DEVICEID_HURRICANE_556:		/* 3c556 */
+	case TC_DEVICEID_HURRICANE_556B:	/* 3c556B */
 		sc->xl_media = XL_MEDIAOPT_MII;
 		sc->xl_xcvr = XL_XCVR_MII;
 		if (verbose)
@@ -2028,6 +2045,8 @@ void xl_init(xsc)
 
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|XL_INTRS);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|XL_INTRS);
+	if (sc->xl_flags & XL_FLAG_FUNCREG)
+		bus_space_write_4(sc->xl_ftag, sc->xl_fhandle, 4, 0x8000);
 
 	/* Set the RX early threshold */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_THRESH|(XL_PACKET_SIZE >>2));
@@ -2354,6 +2373,8 @@ void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|XL_STAT_INTLATCH);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|0);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|0);
+	if (sc->xl_flags & XL_FLAG_FUNCREG)
+		bus_space_write_4(sc->xl_ftag, sc->xl_fhandle, 4, 0x8000);
 
 	if (sc->xl_bustype == XL_BUS_CARDBUS)
 		bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_CARDBUS_INTR,

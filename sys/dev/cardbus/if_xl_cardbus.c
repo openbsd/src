@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.7 2000/09/16 21:11:16 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.8 2000/09/16 21:42:17 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -229,6 +229,7 @@ xl_cardbus_attach(parent, self, aux)
 
 	sc->xl_bustype = XL_BUS_CARDBUS;
 	sc->xl_cb_flags = ecp->ecp_flags;
+	sc->xl_flags = XL_FLAG_EEPROM_OFFSET_30|XL_FLAG_8BITROM;
 
 	iob = adr;
 	sc->xl_bhandle = ioh;
