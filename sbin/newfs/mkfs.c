@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.36 2003/11/06 08:53:58 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.37 2003/12/05 00:40:29 mickey Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.36 2003/11/06 08:53:58 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.37 2003/12/05 00:40:29 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 		    MAP_ANON|MAP_PRIVATE, -1, 0);
 		if (membase == MAP_FAILED)
 			err(12, "mmap");
+		madvise(membase, fssize * sectorsize, MADV_RANDOM);
 	}
 	fsi = fi;
 	fso = fo;
