@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.2 2004/02/23 05:57:08 mickey Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.3 2004/02/23 06:25:14 mickey Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
  */
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
-    __asm __volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+    __asm __volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
