@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.278 2002/12/19 10:49:54 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.279 2002/12/19 11:05:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1578,9 +1578,7 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			src = &r->src;
 
 		r->evaluations++;
-		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
+		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
@@ -1613,6 +1611,9 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
 			    rs_num);
 	}
+	if (rm != NULL && (rm->action == PF_NONAT ||
+	    rm->action == PF_NORDR || rm->action == PF_NOBINAT))
+		return (NULL);
 	return (rm);
 }
 
