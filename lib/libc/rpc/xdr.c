@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr.c,v 1.4 1996/12/14 06:49:42 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr.c,v 1.5 1998/03/19 00:27:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -475,7 +475,7 @@ xdr_opaque(xdrs, cp, cnt)
 	register u_int cnt;
 {
 	register u_int rndup;
-	static crud[BYTES_PER_XDR_UNIT];
+	static int crud[BYTES_PER_XDR_UNIT];
 
 	/*
 	 * if no data we are done

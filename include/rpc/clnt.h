@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.3 1997/09/21 10:46:10 niklas Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.4 1998/03/19 00:27:17 millert Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ typedef struct __rpc_client {
  * By convention, procedure 0 takes null arguments and returns them
  */
 
-#define NULLPROC ((u_long)0)
+#define NULLPROC ((u_int)0)
 
 /*
  * Below are the client handle creation routines for the various

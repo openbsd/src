@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.7 1997/07/09 03:05:06 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.8 1998/03/19 00:27:26 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,6 +45,7 @@ static char *rcsid = "$OpenBSD: svc_udp.c,v 1.7 1997/07/09 03:05:06 deraadt Exp 
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <unistd.h>
 
 
 #define rpc_buffer(xprt) ((xprt)->xp_p1)
@@ -348,6 +349,7 @@ struct udp_cache {
  * Enable use of the cache. 
  * Note: there is no disable.
  */
+int
 svcudp_enablecache(transp, size)
 	SVCXPRT *transp;
 	u_long size;
@@ -451,7 +453,7 @@ cache_set(xprt, replylen)
  * Try to get an entry from the cache
  * return 1 if found, 0 if not found
  */
-static
+static int
 cache_get(xprt, msg, replyp, replylenp)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;

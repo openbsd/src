@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.7 1997/11/05 10:17:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.8 1998/03/19 00:27:18 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -42,6 +42,7 @@ static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.7 1997/11/05 10:17:40 deraadt Exp
  * any interference from the kernal.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <rpc/rpc.h>
 
