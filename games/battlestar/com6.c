@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.9 1998/09/13 01:30:31 pjanzen Exp $	*/
+/*	$OpenBSD: com6.c,v 1.10 1999/07/31 18:11:26 pjanzen Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: com6.c,v 1.9 1998/09/13 01:30:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com6.c,v 1.10 1999/07/31 18:11:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ ride()
 {
 	if (testbit(location[position].objects, HORSE)) {
 		puts("You climb onto the stallion and kick it in the guts.  The stupid steed launches");
-		puts("forward through bush and fern.  You are thrown and the horse gallups off.");
+		puts("forward through bush and fern.  You are thrown and the horse gallops off.");
 		clearbit(location[position].objects, HORSE);
 		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || !beenthere[position] || location[position].flyhere);
 		setbit(location[position].objects, HORSE);

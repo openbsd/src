@@ -1,4 +1,4 @@
-/*	$OpenBSD: nightfile.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $	*/
+/*	$OpenBSD: nightfile.c,v 1.5 1999/07/31 18:11:26 pjanzen Exp $	*/
 /*	$NetBSD: nightfile.c,v 1.3 1995/03/21 15:07:41 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: nightfile.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: nightfile.c,v 1.5 1999/07/31 18:11:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -613,7 +613,7 @@ leads -.  The lawn and fountain are +.**\n" },
 	{ "You are on a dirt road.",
 		{ 193, 192, 245, 103, 88, 0, 0, 0 },
 "There are many bright lights +.  The road cleaves the darkness +.\n\
-A small dirt road goes -, and a drive way peals off +.\n" },
+A small dirt road goes -, and a driveway peels off +.\n" },
 	{ "You are in a field of small shrubs.",
 		{ 184, 186, 103, 187, 88, 0, 0, 0 },
 "**Pine and other coniferous saplings are growing here.  The rich brown\n\
