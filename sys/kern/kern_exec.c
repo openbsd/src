@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.43 2000/09/26 14:01:39 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.44 2000/09/28 13:41:39 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <sys/mman.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
+#include <sys/conf.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -535,26 +536,38 @@ sys_execve(p, v, retval)
 			 * allocated.  We do not want userland to accidentally
 			 * allocate descriptors in this range which has implied
 			 * meaning to libc.
+			 *
+			 * XXX - Shouldn't the exec fail if we can't allocate
+			 *       resources here?
 			 */
 			if (fp == NULL) {
 				short flags = FREAD | (i == 0 ? 0 : FWRITE);
-				struct nameidata nd;
+				struct vnode *vp;
 				int indx;
 
 				if ((error = falloc(p, &fp, &indx)) != 0)
-					continue;
-				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-				    "/dev/null", p);
-				if ((error = vn_open(&nd, flags, 0)) != 0) {
+					break;
+#ifdef DIAGNOSTIC
+				if (indx != i)
+					panic("sys_execve: falloc indx != i");
+#endif
+				if ((error = cdevvp(getnulldev(), &vp)) != 0) {
 					ffree(fp);
 					fdremove(p->p_fd, indx);
 					break;
 				}
+				if ((error = VOP_OPEN(vp, flags, p->p_ucred, p)) != 0) {
+					ffree(fp);
+					fdremove(p->p_fd, indx);
+					vrele(vp);
+					break;
+				}
+				if (flags & FWRITE)
+					vp->v_writecount++;
 				fp->f_flag = flags;
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
-				fp->f_data = (caddr_t)nd.ni_vp;
-				VOP_UNLOCK(nd.ni_vp, 0, p);
+				fp->f_data = (caddr_t)vp;
 			}
 		}
 	} else
