@@ -321,7 +321,8 @@ static char *ap_gcvt(double number, int ndigit, char *buf, boolean_e altform)
  */
 #define FIX_PRECISION( adjust, precision, s, s_len )	\
     if ( adjust )					\
-	while ( s_len < precision )			\
+	while ( s_len < precision &&			\
+		s_len < NUM_BUF_SIZE - 1)		\
 	{						\
 	    *--s = '0' ;				\
 	    s_len++ ;					\
