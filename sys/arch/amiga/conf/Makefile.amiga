@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.27 2001/08/30 22:10:14 miod Exp $
+#	$OpenBSD: Makefile.amiga,v 1.28 2001/12/13 22:00:50 miod Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -29,6 +29,7 @@ LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
 TOUCH?=	touch -f -c
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -50,7 +51,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
 CMACHFLAGS+=	-msoft-float
 
-CFLAGS=		${DEBUG} -O2 ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
