@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.h,v 1.2 1999/02/16 00:02:43 niklas Exp $	*/
+/*	$OpenBSD: rf_engine.h,v 1.3 2002/08/05 22:11:27 tdeval Exp $	*/
 /*	$NetBSD: rf_engine.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,6 +35,8 @@
 
 #ifndef _RF__RF_ENGINE_H_
 #define _RF__RF_ENGINE_H_
+
+extern void **rf_hook_cookies;
 
 int 
 rf_ConfigureEngine(RF_ShutdownList_t ** listp,

@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.17 2002/05/28 23:38:10 tdeval Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.18 2002/08/05 22:11:27 tdeval Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@
 #include "rf_dagflags.h"
 #include "rf_desc.h"
 #include "rf_diskqueue.h"
+#include "rf_engine.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
@@ -575,6 +576,9 @@ rf_shutdown_hook(arg)
 	rs = &raid_softc[unit];
 
 	/* Shutdown the system */
+
+	if (rf_hook_cookies != NULL && rf_hook_cookies[unit] != NULL)
+		rf_hook_cookies[unit] = NULL;
 
 	rf_Shutdown(raidPtr);
 
