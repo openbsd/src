@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.19 2003/06/10 22:20:51 deraadt Exp $	*/
+/*	$OpenBSD: size.c,v 1.20 2003/09/30 19:00:14 mickey Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -40,11 +40,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.19 2003/06/10 22:20:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: size.c,v 1.20 2003/09/30 19:00:14 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
+#include <elf_abi.h>
 #include <a.out.h>
 #include <ar.h>
 #include <ranlib.h>
@@ -61,13 +62,19 @@ static char rcsid[] = "$OpenBSD: size.c,v 1.19 2003/06/10 22:20:51 deraadt Exp $
 #define MID_MACHINE MID_MACHINE_OVERRIDE
 #endif
 
+#define	STRTABMAG	"//"
+
+union hdr {
+	struct exec aout;
+	Elf_Ehdr elf;
+};
+
 unsigned long total_text, total_data, total_bss, total_total;
-int ignore_bad_archive_entries = 1;
-int print_totals = 0;
+int non_object_warning, print_totals;
 
 int	process_file(int, char *);
 int	show_archive(int, char *, FILE *);
-int	show_objfile(int, char *, FILE *);
+int	show_file(int, int, char *, FILE *, off_t, union hdr *);
 void	usage(void);
 
 int
@@ -78,7 +85,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "wt")) != -1)
 		switch(ch) {
 		case 'w':
-			ignore_bad_archive_entries = 0;
+			non_object_warning = 1;
 			break;
 		case 't':
 			print_totals = 1;
@@ -113,7 +120,7 @@ main(int argc, char *argv[])
 int
 process_file(int count, char *fname)
 {
-	struct exec exec_head;
+	union hdr exec_head;
 	FILE *fp;
 	int retval;
 	char magic[SARMAG];
@@ -135,7 +142,7 @@ process_file(int count, char *fname)
 	rewind(fp);
 
 	/* this could be an archive */
-	if (N_BADMAG(exec_head)) {
+	if (!IS_ELF(exec_head.elf) && N_BADMAG(exec_head.aout)) {
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
 			warnx("%s: not object file or archive", fname);
@@ -144,7 +151,7 @@ process_file(int count, char *fname)
 		}
 		retval = show_archive(count, fname, fp);
 	} else
-		retval = show_objfile(count, fname, fp);
+		retval = show_file(count, 1, fname, fp, 0, &exec_head);
 	(void)fclose(fp);
 	return(retval);
 }
@@ -157,10 +164,10 @@ int
 show_archive(int count, char *fname, FILE *fp)
 {
 	struct ar_hdr ar_head;
-	struct exec exec_head;
+	union hdr exec_head;
 	int i, rval;
-	long last_ar_off;
-	char *p, *name;
+	off_t last_ar_off, foff;
+	char *p, *name, *strtab;
 	int baselen, namelen;
 
 	baselen = strlen(fname) + 3;
@@ -169,22 +176,48 @@ show_archive(int count, char *fname, FILE *fp)
 		err(1, NULL);
 
 	rval = 0;
+	strtab = NULL;
 
 	/* while there are more entries in the archive */
 	while (fread((char *)&ar_head, sizeof(ar_head), (size_t)1, fp) == 1) {
 		/* bad archive entry - stop processing this archive */
 		if (strncmp(ar_head.ar_fmag, ARFMAG, sizeof(ar_head.ar_fmag))) {
 			warnx("%s: bad format archive header", fname);
-			(void)free(name);
+			free(name);
+			free(strtab);
 			return(1);
 		}
 
 		/* remember start position of current archive object */
-		last_ar_off = ftell(fp);
+		last_ar_off = ftello(fp);
 
 		/* skip ranlib entries */
 		if (!strncmp(ar_head.ar_name, RANLIBMAG, sizeof(RANLIBMAG) - 1))
 			goto skip;
+
+		/* load the Sys5 long names table */
+		if (!strncmp(ar_head.ar_name, STRTABMAG,
+		    sizeof(STRTABMAG) - 1)) {
+
+			i = atol(ar_head.ar_size);
+			if ((strtab = malloc(i)) == NULL) {
+				warn("%s: strtab", name);
+				free(name);
+				return(1);
+			}
+
+			if (fread(strtab, i, (size_t)1, fp) != 1) {
+				warnx("%s: premature EOF", name);
+				free(strtab);
+				free(name);
+				return(1);
+			}
+
+			for (p = strtab; i--; p++)
+				if (*p == '\n')
+					*p = '\0';
+			goto skip;
+		}
 
 		/*
 		 * construct a name of the form "archive.a:obj.o:" for the
@@ -196,6 +229,22 @@ show_archive(int count, char *fname, FILE *fp)
 			snprintf(name, baselen - 1, "%s:", fname);
 			p += strlen(name);
 		}
+
+		if (strtab && ar_head.ar_name[0] == '/') {
+			int len;
+
+			i = atol(&ar_head.ar_name[1]);
+			len = strlen(&strtab[i]);
+			if (len > namelen) {
+				p -= (long)name;
+				if ((name = realloc(name, baselen+len)) == NULL)
+					err(1, NULL);
+				namelen = len;
+				p += (long)name;
+			}
+			strlcpy(p, &strtab[i], len);
+			p += len;
+		} else
 #ifdef AR_EFMT1
 		/*
 		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
@@ -216,7 +265,7 @@ show_archive(int count, char *fname, FILE *fp)
 			}
 			if (fread(p, len, 1, fp) != 1) {
 				warnx("%s: premature EOF", name);
-				(void)free(name);
+				free(name);
 				return(1);
 			}
 			p += len;
@@ -225,75 +274,110 @@ show_archive(int count, char *fname, FILE *fp)
 		for (i = 0; i < sizeof(ar_head.ar_name); ++i)
 			if (ar_head.ar_name[i] && ar_head.ar_name[i] != ' ')
 				*p++ = ar_head.ar_name[i];
-		*p++ = '\0';
+		*p = '\0';
+		if (p[-1] == '/')
+			*--p = '\0';
+
+		foff = ftello(fp);
 
 		/* get and check current object's header */
 		if (fread((char *)&exec_head, sizeof(exec_head),
 		    (size_t)1, fp) != 1) {
 			warnx("%s: premature EOF", name);
-			(void)free(name);
+			free(name);
 			return(1);
 		}
 
-		if (BAD_OBJECT(exec_head)) {
-			if (!ignore_bad_archive_entries) {
-				warnx("%s: bad format", name);
-				rval = 1;
-			}
-		} else {
-			(void)fseek(fp, (long)-sizeof(exec_head),
-			    SEEK_CUR);
-			rval |= show_objfile(2, name, fp);
-		}
-
+		rval |= show_file(2, non_object_warning, name, fp, foff, &exec_head);
 		/*
 		 * skip to next archive object - it starts at the next
 	 	 * even byte boundary
 		 */
 #define even(x) (((x) + 1) & ~1)
-skip:		if (fseek(fp, last_ar_off + even(atol(ar_head.ar_size)),
+skip:		if (fseeko(fp, last_ar_off + even(atol(ar_head.ar_size)),
 		    SEEK_SET)) {
 			warn("%s", fname);
-			(void)free(name);
+			free(name);
 			return(1);
 		}
 	}
-	(void)free(name);
+	free(name);
 	return(rval);
 }
 
 int
-show_objfile(int count, char *name, FILE *fp)
+show_file(int count, int warn_fmt, char *name, FILE *fp, off_t foff, union hdr *head)
 {
 	static int first = 1;
-	struct exec head;
-	u_long total;
+	Elf_Shdr *shdr;
+	u_long text, data, bss, total;
+	int i;
 
-	if (fread((char *)&head, sizeof(head), (size_t)1, fp) != 1) {
-		warnx("%s: cannot read header", name);
-		return(1);
+	if (IS_ELF(head->elf) &&
+	    head->elf.e_ident[EI_CLASS] == ELF_TARG_CLASS &&
+	    head->elf.e_ident[EI_DATA] == ELF_TARG_DATA &&
+	    head->elf.e_ident[EI_VERSION] == ELF_TARG_VER &&
+	    head->elf.e_machine == ELF_TARG_MACH &&
+	    head->elf.e_version == ELF_TARG_VER) {
+
+		if ((shdr = malloc(head->elf.e_shentsize *
+		    head->elf.e_shnum)) == NULL) {
+			warn("%s: malloc shdr", name);
+			return (1);
+		}
+
+		if (fseeko(fp, foff + head->elf.e_shoff, SEEK_SET)) {
+			warn("%s: fseeko", name);
+			free(shdr);
+			return (1);
+		}
+
+		if (fread(shdr, head->elf.e_shentsize, head->elf.e_shnum,
+		    fp) != head->elf.e_shnum) {
+			warnx("%s: premature EOF", name);
+			free(shdr);
+			return(1);
+		}
+
+		text = data = bss = 0;
+		for (i = 0; i < head->elf.e_shnum; i++) {
+			if (!(shdr[i].sh_flags & SHF_ALLOC))
+				;
+			else if (shdr[i].sh_flags & SHF_EXECINSTR ||
+			    !(shdr[i].sh_flags & SHF_WRITE))
+				text += shdr[i].sh_size;
+			else if (shdr[i].sh_type == SHT_NOBITS)
+				bss += shdr[i].sh_size;
+			else
+				data += shdr[i].sh_size;
+		}
+		free(shdr);
+
+	} else if (BAD_OBJECT(head->aout)) {
+		if (warn_fmt)
+			warnx("%s: bad format", name);
+		return (1);
+	} else {
+		fix_header_order(&head->aout);
+
+		text = head->aout.a_text;
+		data = head->aout.a_data;
+		bss = head->aout.a_bss;
 	}
-
-	if (BAD_OBJECT(head)) {
-		warnx("%s: bad format", name);
-		return(1);
-	}
-
-	fix_header_order(&head);
 
 	if (first) {
 		first = 0;
 		(void)printf("text\tdata\tbss\tdec\thex\n");
 	}
-	total = head.a_text + head.a_data + head.a_bss;
-	(void)printf("%lu\t%lu\t%lu\t%lu\t%lx", (unsigned long)head.a_text, 
-	    (unsigned long)head.a_data, (unsigned long)head.a_bss, total, total);
+
+	total = text + data + bss;
+	(void)printf("%lu\t%lu\t%lu\t%lu\t%lx", text, data, bss, total, total);
 	if (count > 1)
 		(void)printf("\t%s", name);
 
-	total_text += head.a_text;
-	total_data += head.a_data;
-	total_bss += head.a_bss;
+	total_text += text;
+	total_data += data;
+	total_bss += bss;
 	total_total += total;
 
 	(void)printf("\n");
