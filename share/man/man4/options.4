@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.14 1998/06/29 06:57:01 angelos Exp $
+.\"	$OpenBSD: options.4,v 1.15 1998/07/03 14:49:43 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -659,7 +659,7 @@ system call.  Default value is 1024 on most ports.  See
 .Pa /usr/include/machine/vmparam.h
 for the default.
 .El
-.Ss VM Related Options
+.Ss Operation Related Options
 .Bl -ohang
 .It Cd option SWAPPAGER
 Turns on paging.  (To be specific, this enables the virtual memory
@@ -703,6 +703,9 @@ panics happen.
 These option set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
+.It Cd NTP
+Modify the scheduler code to add hooks neccessary for running an NTP
+daemon.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
