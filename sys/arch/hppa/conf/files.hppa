@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.16 1999/11/08 15:36:08 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.17 1999/11/25 19:24:38 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -202,7 +202,6 @@ file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/disksubr.c		disk
 file	arch/hppa/hppa/machdep.c
-file	arch/hppa/hppa/dma.c
 file	arch/hppa/hppa/pmap.c
 file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
