@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.20 2003/06/30 16:54:53 millert Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.21 2004/03/02 21:37:56 tedu Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -228,9 +228,9 @@ for example, a mail-forwarder may be registered for this domain.
 .It Dv NETDB_INTERNAL
 An internal error occurred.
 This may occurs when an address family other than
-.It Dv AF_INET
+.Dv AF_INET
 or
-.It Dv AF_INET6
+.Dv AF_INET6
 is specified or when a resource is unable to be allocated.
 the 
 .It Dv NETDB_SUCCESS
