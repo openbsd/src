@@ -1,0 +1,7 @@
+# standard amiga information
+#	$Id: std.mvme88k,v 1.1.1.1 1997/03/03 19:31:52 rahnds Exp $
+machine mvme88k
+
+mainbus0	at root
+#pcc0		at mainbus0
+#scsi0		at pcc0
