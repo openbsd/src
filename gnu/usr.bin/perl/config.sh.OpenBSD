@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.14 1998/05/11 20:32:10 millert Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.15 1998/05/11 20:43:31 millert Exp $
 #
 # This file was produced by running the Configure script.  It holds all
 # the definitions figured out by Configure.  Should you modify any of
@@ -150,7 +150,7 @@ d_isascii='define'
 d_killpg='define'
 d_link='define'
 d_locconv='define'
-d_lockf='undef'
+d_lockf='define'
 d_lstat='define'
 d_mblen='define'
 d_mbstowcs='define'
