@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.21 2004/07/10 18:47:49 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.22 2004/07/10 19:09:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,14 +202,14 @@ client_dispatch(struct ntp_peer *p)
 		p->trustlevel++;
 	}
 
+	client_update(p);
+
 	log_debug("reply from %s: offset %f delay %f, "
 	    "next query %ds", log_sockaddr((struct sockaddr *)&fsa),
 	    p->reply[p->shift].offset, p->reply[p->shift].delay, interval);
 
-	if (++p->shift >= OFFSET_ARRAY_SIZE) {
+	if (++p->shift >= OFFSET_ARRAY_SIZE)
 		p->shift = 0;
-		client_update(p);
-	}
 
 	return (0);
 }
@@ -243,7 +243,7 @@ client_update(struct ntp_peer *p)
 				best = i;
 	}
 
-	if (good == 0)
+	if (good < 8)
 		return (-1);
 
 	memcpy(&p->update, &p->reply[best], sizeof(p->update));
