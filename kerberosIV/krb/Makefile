@@ -32,7 +32,7 @@ CLEANFILES+=	krb_err.c krb_err.h
 
 krb_err.c krb_err.h: krb_err.et
 	test -e krb_err.et || ln -s ${.CURDIR}/krb_err.et .
-	${COMPILE_ET} krb_err.et
+	compile_et krb_err.et
 	-test -h krb_err.et && rm krb_err.et
 
 includes: krb_err.h
