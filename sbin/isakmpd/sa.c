@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.55 2002/05/23 13:58:57 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.56 2002/05/28 10:09:46 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ sa_init (void)
   bucket_mask = (1 << INITIAL_BUCKET_BITS) - 1;
   sa_tab = malloc ((bucket_mask + 1) * sizeof (struct sa_list));
   if (!sa_tab)
-    log_fatal ("sa_init: malloc (%s) failed",
+    log_fatal ("sa_init: malloc (%d) failed",
 	       (bucket_mask + 1) * sizeof (struct sa_list));
   for (i = 0; i <= bucket_mask; i++)
     {

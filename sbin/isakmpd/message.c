@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.49 2002/03/26 13:19:28 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.50 2002/05/28 10:09:46 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1655,7 +1655,7 @@ message_check_duplicate (struct message *msg)
   if (!exchange)
     return 0;
 
-  LOG_DBG ((LOG_MESSAGE, 90, "message_check_duplicate: last_received 0x%x",
+  LOG_DBG ((LOG_MESSAGE, 90, "message_check_duplicate: last_received %p",
 	    exchange->last_received));
   if (exchange->last_received)
     {

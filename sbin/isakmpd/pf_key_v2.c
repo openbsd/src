@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.99 2002/05/27 04:21:38 deraadt Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.100 2002/05/28 10:09:46 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ pf_key_v2_read (u_int32_t seq)
 	    {
 	      LOG_DBG ((LOG_SYSDEP, 90,
 			"pf_key_v2_read:"
-			"bad version (%d) or PID (%ld, mine is %d), ignored",
+			"bad version (%d) or PID (%d, mine is %ld), ignored",
 			msg->sadb_msg_version, msg->sadb_msg_pid,
 			(long)getpid ()));
 	      goto cleanup;
@@ -3129,7 +3129,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  if (!pwd)
 		    {
 		      log_error ("pf_key_v2_acquire: could not acquire "
-				 "username from provided ID %d",
+				 "username from provided ID %llu",
 				 srcident->sadb_ident_id);
 		      goto fail;
 		    }
@@ -3294,7 +3294,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  if (!pwd)
 		    {
 		      log_error ("pf_key_v2_acquire: could not acquire "
-				 "username from provided ID %d",
+				 "username from provided ID %llu",
 				 dstident->sadb_ident_id);
 		      goto fail;
 		    }
