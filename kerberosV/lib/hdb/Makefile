@@ -1,10 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2001/05/25 12:38:16 ho Exp $
+# $OpenBSD: Makefile,v 1.3 2001/06/05 10:38:33 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-INCLUDE_FILES=	${KRB5SRC}/lib/hdb/hdb.h ${KRB5SRC}/lib/hdb/hdb-protos.h \
-		${KRB5SRC}/lib/hdb/hdb-private.h \
+INCLUDE_FILES=	${KRB5SRC}/lib/hdb/{hdb.h,hdb-protos.h,hdb-private.h} \
 		hdb_err.h hdb_asn1.h
 
 includes:	hdb_err.h hdb_asn1.h

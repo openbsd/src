@@ -1,12 +1,11 @@
-# $OpenBSD: Makefile,v 1.2 2001/05/25 12:38:16 ho Exp $
+# $OpenBSD: Makefile,v 1.3 2001/06/05 10:38:34 hin Exp $
 
 LIB=	kadm5clnt
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-INCLUDE_FILES=	${KRB5SRC}/lib/kadm5/admin.h ${KRB5SRC}/lib/kadm5/private.h \
-		kadm5_err.h
+INCLUDE_FILES=	${KRB5SRC}/lib/kadm5/{admin.h,private.h} kadm5_err.h
 
 includes:	kadm5_err.h
 

@@ -1,12 +1,11 @@
-# $OpenBSD: Makefile,v 1.2 2001/05/25 12:38:15 ho Exp $
+# $OpenBSD: Makefile,v 1.3 2001/06/05 10:38:31 hin Exp $
 
 LIB=	asn1
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-INCLUDE_FILES=	${KRB5SRC}/lib/asn1/der.h ${KRB5SRC}/lib/asn1/asn1-common.h \
-		asn1.h asn1_err.h 
+INCLUDE_FILES=	asn1.h asn1_err.h ${KRB5SRC}/lib/asn1/{der.h,asn1-common.h}
 
 includes:	asn1.h asn1_err.h
 
