@@ -161,6 +161,7 @@ IDTVEC(fast/**/irq_num)							;\
 	ack(irq_num)							;\
 	addl	$4,%esp							;\
 	incl	_cnt+V_INTR		/* statistical info */		;\
+	incl	_intrcnt + (irq_num) * 4				;\
 	popl	%es							;\
 	popl	%ds							;\
 	popl	%edx							;\
@@ -218,6 +219,7 @@ _Xintr/**/irq_num/**/:							;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
 	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
 _Xresume/**/irq_num/**/:						;\
+	incl	_intrcnt + (irq_num) * 4				;\
 	movl	_cpl,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax							;\
 	orl	_intrmask + (irq_num) * 4,%eax				;\
@@ -292,6 +294,8 @@ INTR(15, IO_ICU2, ACK2)
 /*
  * These tables are used by the ISA configuration code.
  */
+	.data
+
 /* interrupt service routine entry points */
 IDTVEC(intr)
 	.long   _Xintr0, _Xintr1, _Xintr2, _Xintr3, _Xintr4, _Xintr5, _Xintr6
@@ -326,10 +330,29 @@ IDTVEC(recurse)
 	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
 
 /* Some bogus data, to keep vmstat happy, for now. */
-	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
-_intrnames:
-	.long	0
-_eintrnames:
+	.globl	_intrcnt, _eintrcnt
 _intrcnt:
-	.long	0
+	.space ICU_LEN * 4
 _eintrcnt:
+
+	.globl	_intrnames, _eintrnames
+_intrnames:
+	.asciz	"irq  0"
+	.asciz	"irq  1"
+	.asciz	"irq  2"
+	.asciz	"irq  3"
+	.asciz	"irq  4"
+	.asciz	"irq  5"
+	.asciz	"irq  6"
+	.asciz	"irq  7"
+	.asciz	"irq  8"
+	.asciz	"irq  9"
+	.asciz	"irq 10"
+	.asciz	"irq 11"
+	.asciz	"irq 12"
+	.asciz	"irq 13"
+	.asciz	"irq 14"
+	.asciz	"irq 15"
+_eintrnames:
+
+	.text
