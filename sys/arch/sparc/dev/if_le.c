@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.10 1998/09/18 20:27:15 deraadt Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.11 1998/09/19 15:11:50 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -269,7 +269,10 @@ lemediastatus(ifp, ifmr)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	if (lesc->sc_dma == NULL) {
-		ifmr->ifm_active = IFM_ETHER | IFM_10_5;
+		if (lesc->sc_lebufchild)
+			ifmr->ifm_active = IFM_ETHER | IFM_10_T;
+		else
+			ifmr->ifm_active = IFM_ETHER | IFM_10_5;
 		return;
 	}
 
@@ -420,6 +423,9 @@ leattach(parent, self, aux)
 	printf(" pri %d", pri);
 
 	sc->sc_hasifmedia = 1;
+#if defined(SUN4C) || defined(SUN4M)
+	lesc->sc_lebufchild = lebufchild;
+#endif
 
 	lesc->sc_r1 = (struct lereg1 *)
 		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct lereg1));

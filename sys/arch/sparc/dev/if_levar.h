@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.3 1997/08/08 08:25:14 downsj Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.4 1998/09/19 15:11:51 jason Exp $	*/
 /*	$NetBSD: if_levar.h,v 1.7 1997/04/04 20:29:23 pk Exp $	*/
 
 /*-
@@ -54,5 +54,6 @@ struct	le_softc {
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 	struct	dma_softc *sc_dma;	/* pointer to my dma */
+	int	sc_lebufchild;		/* child of lebuffer */
 	u_long	sc_laddr;		/* LANCE DMA address */
 };
