@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2004/01/22 20:45:20 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 2004/01/28 23:57:48 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ idle_u:			.long	0	/* fake uarea during idle after exit */
  */
 _ENTRY(_C_LABEL(kernel_text))
 _ENTRY(_ASM_LABEL(start))
-/* arguments to start 
+/* arguments to start
  * r1 - stack provided by firmware/bootloader
  * r3 - unused	(controller address for PPC1bug)
  * r4 - unused	(bootdev for PPC1bug)
@@ -78,7 +78,7 @@ start:
 #if defined(DDB) || defined(KERNFS)
 	lis	9,_C_LABEL(esym)@ha
 	stw	8,_C_LABEL(esym)@l(9)	/* save for symbol handling */
-#else 
+#else
 	lis	8,_end@ha
 	addi	8,8,_end@l
 #endif
@@ -94,17 +94,13 @@ start:
 	mr	4,1			/* end of mem reserved for kernel */
 	li	0,0
 	stwu	0,-16(1)		/* end of stack chain */
-	
+
 	lis	3,start@ha
 	addi	3,3,start@l
 	mr	5,6			/* args string */
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
-#if 0
-	b	_C_LABEL(OF_exit)
-#else
-	/* XXX bugreturn */
-#endif	
+	b	_C_LABEL(PPC1_exit)
 
 /*
  * No processes are runnable, so loop waiting for one.
@@ -121,7 +117,7 @@ _C_LABEL(idle):
 
 	or.	9,9,9
 	bne-	_C_LABEL(sw1)			/* at least one queue non-empty */
-	
+
 	ori	3,3,PSL_EE		/* reenable ints again */
 	mtmsr	3
 	isync
@@ -131,7 +127,7 @@ _C_LABEL(idle):
 	oris	3, 3, PSL_POW@h
 	mtmsr	3
 	isync
-	
+
 /* May do some power saving here? */
 
 	b	_C_LABEL(idle)
@@ -156,7 +152,7 @@ _ENTRY(_C_LABEL(switchexit))
 	/* Fall through to cpu_switch to actually select another proc */
 	li      3,0                     /* indicate exited process */
 
-	
+
 /* Fall through to cpu_switch to actually select another proc */
 
 /*
@@ -200,7 +196,7 @@ _C_LABEL(sw1):
 	addi	4,4,_C_LABEL(qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
-	
+
 	lwz	31,P_FORW(3)		/* unlink first proc from queue */
 	lwz	4,P_FORW(31)
 	stw	4,P_FORW(3)
@@ -1153,7 +1149,7 @@ _C_LABEL(intrnames):
 	.string "irq52" "irq53" "irq54" "irq55"
 	.string "irq56" "irq57" "irq58" "irq59"
 	.string "irq60" "irq61" "irq62" "irq63"
-	.string "clock" 
+	.string "clock"
 	.string	"stat"
 	.space 512
 _C_LABEL(eintrnames):
