@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.67 2000/09/07 20:27:50 deraadt Exp $");
+RCSID("$OpenBSD: channels.c,v 1.68 2000/09/07 20:40:29 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -66,12 +66,6 @@ RCSID("$OpenBSD: channels.c,v 1.67 2000/09/07 20:27:50 deraadt Exp $");
 
 /* Max len of agent socket */
 #define MAX_SOCKET_NAME 100
-
-/* default window/packet sizes for tcp/x11-fwd-channel */
-#define CHAN_TCP_WINDOW_DEFAULT	(8*1024)
-#define CHAN_TCP_PACKET_DEFAULT	(CHAN_TCP_WINDOW_DEFAULT/2)
-#define CHAN_X11_WINDOW_DEFAULT	(4*1024)
-#define CHAN_X11_PACKET_DEFAULT	(CHAN_X11_WINDOW_DEFAULT/2)
 
 /*
  * Pointer to an array containing all allocated channels.  The array is
@@ -2305,7 +2299,7 @@ channel_set_fds(int id, int rfd, int wfd, int efd, int extusage)
 	channel_register_fds(c, rfd, wfd, efd, extusage);
 	c->type = SSH_CHANNEL_OPEN;
 	/* XXX window size? */
-	c->local_window = c->local_window_max = c->local_maxpacket/2;
+	c->local_window = c->local_window_max = c->local_maxpacket * 2;
 	packet_start(SSH2_MSG_CHANNEL_WINDOW_ADJUST);
 	packet_put_int(c->remote_id);
 	packet_put_int(c->local_window);

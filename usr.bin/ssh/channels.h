@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* RCSID("$OpenBSD: channels.h,v 1.17 2000/09/07 20:27:50 deraadt Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.18 2000/09/07 20:40:29 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -96,6 +96,15 @@ struct Channel {
 #define CHAN_EXTENDED_IGNORE		0
 #define CHAN_EXTENDED_READ		1
 #define CHAN_EXTENDED_WRITE		2
+
+/* default window/packet sizes for tcp/x11-fwd-channel */
+#define CHAN_SES_WINDOW_DEFAULT	(32*1024)
+#define CHAN_SES_PACKET_DEFAULT	(CHAN_SES_WINDOW_DEFAULT/2)
+#define CHAN_TCP_WINDOW_DEFAULT	(32*1024)
+#define CHAN_TCP_PACKET_DEFAULT	(CHAN_TCP_WINDOW_DEFAULT/2)
+#define CHAN_X11_WINDOW_DEFAULT	(4*1024)
+#define CHAN_X11_PACKET_DEFAULT	(CHAN_X11_WINDOW_DEFAULT/2)
+
 
 void	channel_set_fds(int id, int rfd, int wfd, int efd, int extusage);
 void	channel_open(int id);

@@ -59,7 +59,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.33 2000/09/07 20:27:50 deraadt Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.34 2000/09/07 20:40:30 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1053,10 +1053,9 @@ client_input_channel_open(int type, int plen)
 		/* XXX move to channels.c */
 		sock = x11_connect_display();
 		if (sock >= 0) {
-/*XXX MAXPACK */
 			id = channel_new("x11", SSH_CHANNEL_X11_OPEN,
-			    sock, sock, -1, 4*1024, 32*1024, 0,
-			    xstrdup("x11"));
+			    sock, sock, -1, CHAN_X11_WINDOW_DEFAULT,
+			    CHAN_X11_PACKET_DEFAULT, 0, xstrdup("x11"));
 			c = channel_lookup(id);
 		}
 	}

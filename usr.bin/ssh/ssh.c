@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.64 2000/09/07 20:27:54 deraadt Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.65 2000/09/07 20:40:30 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -994,18 +994,16 @@ ssh_session2(void)
 		if (daemon(1, 1) < 0)
 			fatal("daemon() failed: %.200s", strerror(errno));
 
-	window = 32*1024;
-	if (tty_flag) {
-		packetmax = window/8;
-	} else {
+	window = CHAN_SES_WINDOW_DEFAULT;
+	packetmax = CHAN_SES_PACKET_DEFAULT;
+	if (!tty_flag) {
 		window *= 2;
-		packetmax = window/2;
+		packetmax *=2;
 	}
-
-/*XXX MAXPACK */
 	id = channel_new(
 	    "session", SSH_CHANNEL_OPENING, in, out, err,
-	    window, packetmax, CHAN_EXTENDED_WRITE, xstrdup("client-session"));
+	    window, packetmax, CHAN_EXTENDED_WRITE,
+	    xstrdup("client-session"));
 
 	channel_open(id);
 	channel_register_callback(id, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, client_init, (void *)0);

@@ -744,7 +744,8 @@ input_direct_tcpip(void)
 	if (sock < 0)
 		return -1;
 	return channel_new("direct-tcpip", SSH_CHANNEL_OPEN,
-	    sock, sock, -1, 4*1024, 32*1024, 0, xstrdup("direct-tcpip"));
+	    sock, sock, -1, CHAN_TCP_WINDOW_DEFAULT,
+	    CHAN_TCP_PACKET_DEFAULT, 0, xstrdup("direct-tcpip"));
 }
 
 void
@@ -777,7 +778,8 @@ server_input_channel_open(int type, int plen)
 		 * CHANNEL_REQUEST messages is registered.
 		 */
 		id = channel_new(ctype, SSH_CHANNEL_LARVAL,
-		    -1, -1, -1, 0, 32*1024, 0, xstrdup("server-session"));
+		    -1, -1, -1, 0, CHAN_SES_PACKET_DEFAULT,
+		    0, xstrdup("server-session"));
 		if (session_open(id) == 1) {
 			channel_register_callback(id, SSH2_MSG_CHANNEL_REQUEST,
 			    session_input_channel_req, (void *)0);
