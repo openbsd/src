@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.67 1998/02/26 18:50:52 millert Exp $
+#	$OpenBSD: rc,v 1.68 1998/03/11 18:08:09 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -161,7 +161,7 @@ fi
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -s /etc/exports -a \
     `cat /etc/exports | sed -e '/^#/d' | wc -l` -ne 0 ]; then
-	rm -f /var/db/mountdtab	
+	rm -f /var/db/mountdtab
 	echo -n > /var/db/mountdtab
 	echo -n ' mountd';		mountd
 	echo -n ' nfsd';		nfsd ${nfsd_flags}
@@ -234,7 +234,7 @@ if [ -f /etc/sysctl.conf ]; then
 		sysctl -w $1
 		shift 1
 	done
-)	
+)
 fi
 
 test -f /etc/rc.securelevel && . /etc/rc.securelevel
