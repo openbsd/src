@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.5 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.6 2002/05/24 13:31:11 art Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ ofdstrategy(bp)
 	int read;
 	int (*OF_io)(int, void *, int);
 	daddr_t blkno = bp->b_blkno;
+	int s;
 	
 	bp->b_resid = 0;
 	if (bp->b_bcount == 0)
@@ -272,7 +273,9 @@ ofdstrategy(bp)
 	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid);
 
 done:
-	biodone(bp);
+	s = splbio();
+	biodone(bp);'
+	splx(s);
 }
 
 static void

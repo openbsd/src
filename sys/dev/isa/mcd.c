@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.30 2002/03/14 01:26:56 millert Exp $ */
+/*	$OpenBSD: mcd.c,v 1.31 2002/05/24 13:31:11 art Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -514,7 +514,9 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 void
@@ -545,7 +547,9 @@ loop:
 		MCD_TRACE("start: drive not valid\n", 0, 0, 0, 0);
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
+		s = splbio();
 		biodone(bp);
+		splx(s);
 		goto loop;
 	}
 
