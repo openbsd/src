@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.24 1998/09/01 17:01:07 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.25 1999/02/19 17:15:44 art Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -513,6 +513,8 @@ void	vfsinit __P((void));
 #ifdef DEBUG
 void	vfs_bufstats __P((void));
 #endif
+int	vfs_register __P((struct vfsconf *));
+int	vfs_unregister __P((struct vfsconf *));
 #else /* _KERNEL */
 
 #include <sys/cdefs.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.30 1998/12/28 19:35:35 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.31 1999/02/19 17:15:45 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2070,4 +2070,75 @@ reassignbuf(bp, newvp)
 		}
 	}
 	bufinsvn(bp, listheadp);
+}
+
+int
+vfs_register(vfs)
+	struct vfsconf *vfs;
+{
+	struct vfsconf *vfsp;
+	struct vfsconf **vfspp;
+
+#ifdef DIAGNOSTIC
+	/* Paranoia? */
+	if (vfs->vfc_refcount > 0)
+		printf("vfs_register called with vfc_refcount > 0\n");
+#endif
+
+	/* Check if filesystem already known */
+	for (vfspp = &vfsconf, vfsp = vfsconf;
+	     vfsp;
+	     vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next)
+		if (strcmp(vfsp->vfc_name, vfs->vfc_name) == 0)
+			return (EEXIST);
+
+	if (vfs->vfc_typenum > maxvfsconf)
+		maxvfsconf = vfs->vfc_typenum;
+
+	vfs->vfc_next = NULL;
+
+	/* Add to the end of the list */
+	*vfspp = vfs;
+
+	/* Call vfs_init() */
+	if (vfs->vfc_vfsops->vfs_init)
+		(*(vfs->vfc_vfsops->vfs_init))(vfs);
+
+	return 0;
+}
+ 
+int
+vfs_unregister(vfs)
+	struct vfsconf *vfs;
+{
+	struct vfsconf *vfsp;
+	struct vfsconf **vfspp;
+	int maxtypenum;
+
+	/* Find our vfsconf struct */
+	for (vfspp = &vfsconf, vfsp = vfsconf;
+	     vfsp;
+	     vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next) {
+		if (strcmp(vfsp->vfc_name, vfs->vfc_name) == 0)
+			break;
+	}
+
+	if (!vfsp)                         /* Not found */
+		return (ENOENT);
+
+	if (vfsp->vfc_refcount)            /* In use */
+		return (EBUSY);
+
+	/* Remove from list and free  */
+	*vfspp = vfsp->vfc_next;
+
+	maxtypenum = 0;
+
+	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
+		if (vfsp->vfc_typenum > maxtypenum)
+			maxtypenum = vfsp->vfc_typenum;
+
+	maxvfsconf = maxtypenum;
+
+	return 0;
 }
