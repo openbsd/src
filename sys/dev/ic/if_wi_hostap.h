@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.h,v 1.6 2002/06/08 22:19:47 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.h,v 1.7 2002/12/30 03:23:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -51,7 +51,7 @@ struct hostap_sta {
 #define HOSTAP_FLAGS_AUTHEN	0x0001
 #define HOSTAP_FLAGS_ASSOC	0x0002
 #define HOSTAP_FLAGS_PERM	0x0004
-#define	HOSTAP_FLAGS_BITS	"\20\01ASSOC\02AUTH\03PERM"
+#define	HOSTAP_FLAGS_BITS	"\20\01AUTH\02ASSOC\03PERM"
 
 #define SIOCHOSTAP_GET		_IOWR('i', 210, struct ifreq)
 #define SIOCHOSTAP_ADD		_IOWR('i', 211, struct ifreq)
