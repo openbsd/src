@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: sigret.c,v 1.3 2002/01/02 23:26:57 marc Exp $
+ * $OpenBSD: sigret.c,v 1.4 2002/04/30 01:59:47 deraadt Exp $
  *
  * Public Domain
  *
@@ -153,7 +153,7 @@ main(int argc, char * argv[])
 
 	/* make sure there is no other cruft left on the command line */
 	if (optind != argc)
-		usage("unknown arguement -- %s", argv[ optind ]);
+		usage("unknown argument -- %s", argv[ optind ]);
 
 	if (altstack) {
 		if ((ss.ss_sp = malloc(SIGSTKSZ)) == NULL)

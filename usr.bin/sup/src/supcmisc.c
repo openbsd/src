@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.13 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.14 2002/04/30 01:59:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,7 +30,7 @@
  * HISTORY
  * Revision 1.5  92/08/11  12:07:22  mrt
  * 	Added release to FILEWHEN name.
- * 	Brad's changes: delinted and updated variable arguement usage.
+ * 	Brad's changes: delinted and updated variable argument usage.
  * 	[92/07/26            mrt]
  * 
  * Revision 1.3  89/08/15  15:31:28  bww

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.14 2001/11/29 18:21:23 mpech Exp $	*/
+/*	$OpenBSD: pr.c,v 1.15 2002/04/30 01:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.14 2001/11/29 18:21:23 mpech Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.15 2002/04/30 01:59:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1632,7 +1632,7 @@ prhead(buf, fname, pagcnt)
      * in the spec clearly does not limit length. No pr currently
      * restricts header length. However if we need to truncate in
      * an reasonable way, adjust the length of the printf by
-     * changing HDFMT to allow a length max as an arguement printf.
+     * changing HDFMT to allow a length max as an argument printf.
      * buf (which contains the offset spaces and time field could
      * also be trimmed
      *

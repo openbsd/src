@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_output.c,v 1.3 1996/04/21 22:29:52 deraadt Exp $	*/
+/*	$OpenBSD: tp_output.c,v 1.4 2002/04/30 01:59:47 deraadt Exp $	*/
 /*	$NetBSD: tp_output.c,v 1.12 1996/03/16 23:13:56 christos Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ SOFTWARE.
  *	using the parameters passed in via (param).
  *	(cmd) may be TP_STRICT or TP_FORCE or both.
  *  Force means it will set all the values in (tpcb) to those in
- *  the input arguements iff no errors were encountered.
+ *  the input arguments iff no errors were encountered.
  *  Strict means that no inconsistency will be tolerated.  If it's
  *  not used, checksum and tpdusize inconsistencies will be tolerated.
  *  The reason for this is that in some cases, when we're negotiating down
