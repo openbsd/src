@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.7 2003/08/29 18:43:41 david Exp $
+# $OpenBSD: pf.os,v 1.8 2003/09/05 22:14:14 frantzen Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -281,6 +281,7 @@ S17:64:1:64:N,W3,N,N,T0,N,N,S,M*:	Solaris:8:RFC1323:Solaris 8 RFC1323
 S17:64:1:48:N,N,S,M*:			Solaris:8::Solaris 8
 S34:64:1:48:M*,N,N,S:			Solaris:9::Solaris 9
 
+S23:255:1:44:M*:			Solaris:2.5:1:Solaris 2.5.1
 S17:255:1:44:M*:			Solaris:2.5-2.7::Solaris 2.5 to 7
 S6:255:1:44:M*:				Solaris:2.6-2.7::Solaris 2.6 to 7
 
