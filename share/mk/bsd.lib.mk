@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.13 1997/04/27 21:38:28 millert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.14 1997/06/12 15:06:34 grr Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -21,7 +21,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
 
 .c.o:
-	@echo "${COMPILE.c} ${.IMPSRC}"
+	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.IMPSRC}  -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
@@ -42,7 +42,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .cc.o .C.o:
-	@echo "${COMPILE.cc} ${.IMPSRC}"
+	@echo "${COMPILE.cc} ${.IMPSRC} -o ${TARGET}"
 	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
