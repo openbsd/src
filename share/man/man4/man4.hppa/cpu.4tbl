@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.8 2002/12/19 03:07:53 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.9 2003/03/05 19:50:48 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Pp
 The following table lists the
 .Tn PA-RISC
-CPU types and their characteristics, such as TLB and maximum
-cache sizes,
+CPU types and their characteristics, such as TLB, maximum
+cache sizes and
 .Tn HP9000/700
 machines they were used in (see also
 .Xr intro 4
@@ -138,10 +138,10 @@ CPU:Units:Bundles
 .TE
 .in -\n(dIu
 .Pp
-Concluding, all of the above CPUs are dual-issue, or 2-way superscalar,
+In conclusion, all of the above CPUs are dual-issue, or 2-way superscalar,
 with the exception that on CPUs with two integer ALUs only one of these
-units  is capable of doing shift, load/store and test operations.
-Additionally there are several kinds of restrictions placed upon the
+units is capable of doing shift, load/store and test operations.
+Additionally, there are several kinds of restrictions placed upon the
 superscalar execution:
 .Pp
 For the purpose of showing which instructions are allowed to proceed
@@ -193,29 +193,29 @@ The following restructions are placed upon the superscalar execution:
 .Pp
 .Bl -bullet -compact
 .It
-an instruction that modifies a register will not be bundled with another
+An instruction that modifies a register will not be bundled with another
 instruction that takes this register as operand. Exception: a flop can
-be bundled with a FP store of the flop's result register.
+be bundled with an FP store of the flop's result register.
 .It
-a FP load to one word of a doubleword register will not be bundled with
+An FP load to one word of a doubleword register will not be bundled with
 a flop that uses the other doubleword of this register.
 .It
-a flop will not be bundled with a FP load if both instructions have the
+A flop will not be bundled with an FP load if both instructions have the
 same target register.
 .It
-an instruction that could set the carry/borrow bits will not be bundled
+An instruction that could set the carry/borrow bits will not be bundled
 with an instruction that uses
 carry/borrow bits.
 .It
-an instruction which is in the delay slot of a branch is never bundled
+An instruction which is in the delay slot of a branch is never bundled
 with other instructions.
 .It
-an instruction which is at an odd word address and executed as a target
+An instruction which is at an odd word address and executed as a target
 of a taken branch is never bundled.
 .It
-an instruction which might nullify its successor is never bundled with
-this successor. Only if the successor is a flop instruction this bundle
-is allowed.
+An instruction which might nullify its successor is never bundled with
+this successor. Only if the successor is a flop instruction is this bundle
+allowed.
 .El
 .Pp
 .Sh PERFORMANCE MONITOR COPROCESSOR
@@ -236,30 +236,32 @@ The debug SFU is currently defined only for Level 0 processors.
 .Xr wax 4
 .Pp
 .Rs
-"PA-RISC 1.1 Architecture and Instruction Set Reference Manual"
-.br
-Hewlett-Packard, May 15, 1996
+.%T PA-RISC 1.1 Architecture and Instruction Set Reference Manual
+.%A Hewlett-Packard
+.%D May 15, 1996
 .Re
 .Rs
-"PA7100LC ERS"
-.br
-Hewlett-Packard, March 30 1999, Public version 1.0
+.%T PA7100LC ERS
+.%A Hewlett-Packard
+.%D March 30 1999
+.%N Public version 1.0
 .Re
 .Rs
-"Design of the PA7200 CPU"
-.br
-Hewlett-Packard Journal, February 1996
+.%T Design of the PA7200 CPU
+.%A Hewlett-Packard Journal
+.%D February 1996
 .Re
 .Rs
-"PA7300LC ERS"
-.br
-Hewlett-Packard, March 18 1996, Version 1.0
+.%T PA7300LC ERS
+.%A Hewlett-Packard
+.%D March 18 1996
+.%N Version 1.0
 .Re
 .Sh HISTORY
 The
 .Nm
 driver was written by
 .An Michael Shalayeff Aq mickey@openbsd.org
-for HPPA
+for the HPPA
 port for
 .Ox 2.5 .
