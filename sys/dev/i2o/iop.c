@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.16 2001/06/27 06:59:33 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.17 2001/06/29 05:40:32 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -271,6 +271,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	u_int32_t mask;
 	char ident[64];
 	int rv, i, nsegs;
+	int state = 0;
 
 	if (iop_ictxhashtbl == NULL)
 		iop_ictxhashtbl = hashinit(IOP_ICTXHASH_NBUCKETS,
@@ -286,48 +287,38 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		    sc->sc_dv.dv_xname);
 		return;
 	}
+	state++;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    sc->sc_scr_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
 		printf("%s: cannot alloc scratch dmamem\n",
 		    sc->sc_dv.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		goto bail_out;
 	}
+	state++;
 
 	if (bus_dmamem_map(sc->sc_dmat, sc->sc_scr_seg, nsegs, PAGE_SIZE,
 	    &sc->sc_scr, 0)) {
 		printf("%s: cannot map scratch dmamem\n", sc->sc_dv.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		goto bail_out;
 	}
+	state++;
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_scr_dmamap, sc->sc_scr,
 	    PAGE_SIZE, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: cannot load scratch dmamap\n", sc->sc_dv.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		goto bail_out;
 	}
+	state++;
 
 	if ((rv = iop_reset(sc)) != 0) {
 		printf("%s: not responding (reset)\n", sc->sc_dv.dv_xname);
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		goto bail_out;
 	}
 	if ((rv = iop_status_get(sc, 1)) != 0) {
 		printf("%s: not responding (get status)\n",
 		    sc->sc_dv.dv_xname);
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		goto bail_out;
 	}
 	sc->sc_flags |= IOP_HAVESTATUS;
 	iop_strvis(sc, sc->sc_status.productid,
@@ -359,12 +350,11 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	/* Allocate message wrappers. */
 	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT);
 	if (!im) {
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		printf("%s: couldn't allocate message", sc->sc_dv.dv_xname);
+		goto bail_out;
 	}
+	state++;
+
 	bzero(im, sizeof(*im) * sc->sc_maxib);
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
@@ -377,11 +367,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		if (rv != 0) {
 			printf("%s: couldn't create dmamap (%d)",
 			    sc->sc_dv.dv_xname, rv);
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
-			bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-			bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-			return;
+			goto bail_out;
 		}
 
 		im->im_tctx = i;
@@ -392,11 +378,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	if (iop_ofifo_init(sc) != 0) {
 		printf("%s: unable to init outbound FIFO\n",
 		    sc->sc_dv.dv_xname);
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
-		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
-		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
-		return;
+		goto bail_out;
 	}
 
 	/* Configure shutdown hook before we start any device activity. */
@@ -421,6 +403,18 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", hz * 30, 0);
 
 	kthread_create_deferred(iop_create_reconf_thread, sc);
+	return;
+
+ bail_out:
+	if (state > 3)
+		free(im, M_DEVBUF);
+	if (state > 2)
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
+	if (state > 1)
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_scr, PAGE_SIZE);
+	if (state > 0)
+		bus_dmamem_free(sc->sc_dmat, sc->sc_scr_seg, nsegs);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 }
 
 /*
