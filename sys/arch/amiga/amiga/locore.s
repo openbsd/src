@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.24 1997/09/19 17:16:12 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.25 1999/01/20 12:04:01 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -1081,20 +1081,16 @@ Lnoflush:
 
 /*
  * proc_trampoline call function in register a2 with a3 as an arg
- * and then rei.  Note we restore the stack before calling thus giving
- * "a2" more stack  (e.g. if curproc had a deeply nested call chain...)
- * cpu_fork() also depends on struct frame being a second arg to the
- * function in a2.
+ * and then rei.
  */
 	.globl	_proc_trampoline
 _proc_trampoline:
-	movl	a3@(P_MD_REGS),sp	| frame pointer of process in sp
 	movl	a3,sp@-			| push function arg (curproc)
 	jbsr	a2@			| call function
 	addql	#4,sp			| pop arg
 	movl	sp@(FR_SP),a0		| usp to a0
 	movl	a0,usp			| setup user stack pointer
-	moveml	sp@+,#0x7FFF		| restore all but sp
+	moveml	sp@+,d0-d7/a0-a6	| restore all but sp
 	addql	#8,sp			| pop sp and stack adjust
 	jra	rei			| all done
 
