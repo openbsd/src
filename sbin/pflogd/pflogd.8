@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.12 2002/02/28 22:27:33 dhartmei Exp $
+.\"	$OpenBSD: pflogd.8,v 1.13 2002/02/28 23:31:12 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -117,7 +117,6 @@ Display binary logs:
 Display the logs in real time (this does not interfere with the
 operation of pflogd):
 .Bd -literal -offset indent
-# ifconfig pflog0 up
 # tcpdump -n -e -ttt -i pflog0
 .Ed
 .Pp
