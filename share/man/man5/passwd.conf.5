@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.14 2001/09/03 19:20:24 millert Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.15 2002/05/27 21:12:54 itojun Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -56,8 +56,8 @@ If no user or group stanza to a specific option is available,
 the default stanza is used.
 .Pp
 To differentiate between user and group stanzas, groups are prefixed
-with a single dot
-.Pq Ql \&. .
+with a colon
+.Pq Ql \&: .
 .Pp
 Some fields and their possible values that can appear in this file are:
 .Bl -tag -width localcipher
@@ -109,7 +109,7 @@ The old Unix crypt is used as YP cipher:
  root:
       localcipher = blowfish,7
 
- .wheel:
+ :wheel:
       localcipher = blowfish,5
 .Ed
 .Sh FILES

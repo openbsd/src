@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.4 2001/06/18 21:09:23 millert Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.5 2002/05/27 21:12:54 itojun Exp $	*/
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -123,6 +123,14 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 
 			grp = getgrgid(pwd->pw_gid);
 			if (grp != NULL) {
+				snprintf(grpkey, LINE_MAX-1, ":%s",
+				    grp->gr_name);
+				grpkey[LINE_MAX-1] = 0;
+				pw_getconf(option, LINE_MAX, grpkey,
+				    "pwdcheck");
+			}
+			if (grp != NULL && *option == 0 &&
+			    strchr(pwd->pw_name, '.') == NULL) {
 				snprintf(grpkey, LINE_MAX-1, ".%s",
 				    grp->gr_name);
 				grpkey[LINE_MAX-1] = 0;
@@ -209,6 +217,12 @@ int pwd_gettries( struct passwd *pwd, login_cap_t *lc )
 
 		grp = getgrgid(pwd->pw_gid);
 		if (grp != NULL) {
+			snprintf(grpkey, LINE_MAX-1, ":%s", grp->gr_name);
+			grpkey[LINE_MAX-1] = 0;
+			pw_getconf(option, LINE_MAX, grpkey, "pwdtries");
+		}
+		if (grp != NULL && *option == 0 &&
+		    strchr(pwd->pw_name, '.') == NULL) {
 			snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
 			grpkey[LINE_MAX-1] = 0;
 			pw_getconf(option, LINE_MAX, grpkey, "pwdtries");

@@ -1,4 +1,4 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.12 2002/02/16 21:27:50 millert Exp $ */
+/* $OpenBSD: pwd_gensalt.c,v 1.13 2002/05/27 21:12:54 itojun Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -84,6 +84,13 @@ pwd_gensalt(salt, max, pwd, lc, type)
 
 			grp = getgrgid(pwd->pw_gid);
 			if (grp != NULL) {
+				snprintf(grpkey, LINE_MAX-1, ":%s",
+				    grp->gr_name);
+				grpkey[LINE_MAX-1] = 0;
+				pw_getconf(option, LINE_MAX, grpkey, cipher);
+			}
+			if (grp != NULL && *option == 0 &&
+			    strchr(pwd->pw_name, '.') == NULL) {
 				snprintf(grpkey, LINE_MAX-1, ".%s",
 				    grp->gr_name);
 				grpkey[LINE_MAX-1] = 0;
