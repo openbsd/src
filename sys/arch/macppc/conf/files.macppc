@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.6 2002/03/23 14:14:25 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.7 2002/04/29 00:21:26 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -20,7 +20,7 @@ file	arch/macppc/macppc/openfirm.c
 file	dev/cons.c
 file	dev/cninit.c
 file	arch/macppc/macppc/db_memrw.c			ddb
-file	arch/macppc/macppc/db_disasm.c		ddb
+file	arch/macppc/macppc/db_disasm.c			ddb
 file	arch/macppc/macppc/db_interface.c		ddb
 file	arch/macppc/macppc/db_trace.c			ddb
 file	arch/macppc/macppc/ofwreal.S
@@ -55,7 +55,7 @@ major	{ ofdisk = 4 }
 
 device	memc {}
 attach	memc at mainbus
-file	arch/macppc/dev/uni_n.c			memc
+file	arch/macppc/dev/uni_n.c				memc
 
 major	{rd = 17}
 major	{sd = 2}
@@ -69,7 +69,7 @@ include "../../../scsi/files.scsi"
 include "../../../dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
-file	arch/macppc/pci/pciide_machdep.c	pciide
+file	arch/macppc/pci/pciide_machdep.c		pciide
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
@@ -81,13 +81,6 @@ file	arch/macppc/pci/mpcpcibus.c			mpcpcibr
 #
 
 include "dev/wscons/files.wscons"
-
-
-#device	ofb: wsemuldisplaydev, wsrasteremulops
-device	ofb
-attach	ofb at pci
-file	arch/macppc/dev/ofb.c				ofb needs-flag
-
 
 #
 # mac peripheral pieces.
@@ -122,18 +115,18 @@ device	mesh: scsi
 attach	mesh at macobio
 file	arch/macppc/dev/mesh.c				mesh
 
-device	mc: ifnet, ether
-attach	mc at macobio
-file	arch/macppc/dev/if_mc.c			mc
-file	arch/macppc/dev/am79c950.c			mc
+#device	mc: ifnet, ether
+#attach	mc at macobio
+#file	arch/macppc/dev/if_mc.c				mc
+#file	arch/macppc/dev/am79c950.c			mc
 
 device	bm: ether, ifnet, ifmedia, mii, mii_bitbang
 attach	bm at macobio
-file	arch/macppc/dev/if_bm.c			bm
+file	arch/macppc/dev/if_bm.c				bm
 
 device	gm: ether, ifnet, ifmedia, mii
 attach	gm at pci
-file	arch/macppc/dev/if_gm.c			gm needs-flag
+file	arch/macppc/dev/if_gm.c				gm needs-flag
 
 device	macintr {}
 attach	macintr at macobio
@@ -166,11 +159,6 @@ device	aed
 attach	aed at adb
 file	arch/macppc/dev/aed.c				aed needs-flag
 
-#??
-#define wskbddev {[console = -1]}
-#define wsmousedev {}
-#??
-
 device	akbd: wskbddev
 attach	akbd at adb
 file	arch/macppc/dev/akbd.c				akbd needs-flag
@@ -185,11 +173,11 @@ file	arch/macppc/dev/abtn.c				abtn
 
 device	awacs: audio, auconv, mulaw
 attach	awacs at macobio
-file	arch/macppc/dev/awacs.c			awacs
+file	arch/macppc/dev/awacs.c				awacs
 
-device	nvram
-attach	nvram at macobio
-file	arch/macppc/dev/nvram.c			nvram needs-flag
+#device	nvram
+#attach	nvram at macobio
+#file	arch/macppc/dev/nvram.c				nvram needs-flag
 
 device	gpio {}
 attach	gpio at macobio with gpio_obio
@@ -202,25 +190,9 @@ file	arch/macppc/dev/wdc_obio.c			wdc_obio
 attach	wi at macobio with wi_obio
 file	arch/macppc/dev/if_wi_obio.c			wi_obio
 
-define	grfdev {}
-
-device	grfati: grfdev
-attach	grfati at pci
-file	arch/macppc/dev/grf_ati.c			grfati needs-flag
-
-device	grf {}
-attach	grf at grfdev
-file	arch/macppc/dev/grf.c				grf needs-flag
-file	arch/macppc/dev/grf_subr.c			grf
-
-device	ite: tty
-attach	ite at grf
-file	arch/macppc/dev/ite.c				ite needs-flag
-
-
 # VGA framebuffer
 device	vgafb: wsemuldisplaydev, wsrasteremulops
-file	arch/macppc/pci/vgafb.c			vgafb & vgafb_pci
+file	arch/macppc/pci/vgafb.c				vgafb & vgafb_pci
 
 # Generic VGA Framebuffer version
 attach	vgafb at pci with vgafb_pci
