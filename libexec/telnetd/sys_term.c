@@ -1653,7 +1653,7 @@ cleanup(int sig)
     chown(line, 0, 0);
 #endif
     shutdown(net, 2);
-    exit(1);
+    _exit(1);
 }
 
 #endif /* PARENT_DOES_UTMP */
