@@ -55,7 +55,7 @@
  * Receive descriptor list size.  We have one Rx buffer per incoming
  * packet, so this logic is a little simpler.
  */
-#define	GEM_NRXDESC		64
+#define	GEM_NRXDESC		128
 #define	GEM_NRXDESC_MASK	(GEM_NRXDESC - 1)
 #define	GEM_NEXTRX(x)		((x + 1) & GEM_NRXDESC_MASK)
 
@@ -194,7 +194,6 @@ struct gem_softc {
 
 	/* ========== */
 	int			sc_inited;
-	int			sc_flags;
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
 	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
@@ -204,24 +203,8 @@ struct gem_softc {
 	void	(*sc_hwinit) __P((struct gem_softc *));
 };
 
-/* sc_flags */
-#define	GEMF_WANT_SETUP		0x00000001	/* want filter setup */
-#define	GEMF_DOING_SETUP	0x00000002	/* doing multicast setup */
-#define	GEMF_HAS_MII		0x00000004	/* has media on MII */
-#define	GEMF_IC_FS		0x00000008	/* IC bit on first tx seg */
-#define	GEMF_MRL		0x00000010	/* memory read line okay */
-#define	GEMF_MRM		0x00000020	/* memory read multi okay */
-#define	GEMF_MWI		0x00000040	/* memory write inval okay */
-#define	GEMF_AUTOPOLL		0x00000080	/* chip supports auto-poll */
-#define	GEMF_LINK_UP		0x00000100	/* link is up (non-MII) */
-#define	GEMF_LINK_VALID		0x00000200	/* link state valid */
-#define	GEMF_DOINGAUTO		0x00000400	/* doing autoneg (non-MII) */
-#define	GEMF_ATTACHED		0x00000800	/* attach has succeeded */
-#define	GEMF_ENABLED		0x00001000	/* chip is enabled */
-#define	GEMF_BLE		0x00002000	/* data is big endian */
-#define	GEMF_DBO		0x00004000	/* descriptor is big endian */
-
-#define	GEM_IS_ENABLED(sc)	((sc)->sc_flags & GEMF_ENABLED)
+#define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? letoh64(v) : betoh64(v))
+#define	GEM_DMA_WRITE(sc, v)	(((sc)->sc_pci) ? htole64(v) : htobe64(v))
 
 /*
  * This macro returns the current media entry for *non-MII* media.
@@ -280,9 +263,10 @@ do {									\
 									\
 	__m->m_data = __m->m_ext.ext_buf;				\
 	__rxd->gd_addr =						\
-	    htole64(__rxs->rxs_dmamap->dm_segs[0].ds_addr);		\
+	    GEM_DMA_WRITE((sc), __rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
 	__rxd->gd_flags =						\
-	    htole64((((__m->m_ext.ext_size)<<GEM_RD_BUFSHIFT)		\
+	    GEM_DMA_WRITE((sc),						\
+		(((__m->m_ext.ext_size)<<GEM_RD_BUFSHIFT)		\
 	    & GEM_RD_BUFSIZE) | GEM_RD_OWN);				\
 	GEM_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
