@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.21 2002/05/09 14:12:17 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.22 2002/05/09 14:26:41 itojun Exp $
 .\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -239,6 +239,15 @@ the traffic will be denied.
 .\"With inetd mode,
 .\"traffic may be filtered by using access control functionality in
 .\".Xr inetd 8 .
+.Sh RETURN VALUES
+.Nm
+exits with
+.Dv EXIT_SUCCESS
+.Pq 0
+on success, and
+.Dv EXIT_FAILURE
+.Pq 1
+on error.
 .Sh EXAMPLES
 Before invoking
 .Nm Ns ,
@@ -298,15 +307,6 @@ setting.
 3ffe:501:ffff::/48 deny 127.0.0.0/8
 3ffe:501:ffff::/48 permit 0.0.0.0/0
 .Ed
-.Sh RETURN VALUES
-.Nm
-exits with
-.Dv EXIT_SUCCESS
-.Pq 0
-on success, and
-.Dv EXIT_FAILURE
-.Pq 1
-on error.
 .Sh SEE ALSO
 .Xr faith 4 ,
 .Xr route 8 ,
