@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.38 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.39 2002/03/14 04:55:20 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -248,6 +248,10 @@ int wsdisplay_switch2(void *, int, int);
 int wsdisplay_switch3(void *, int, int);
 
 int wsdisplay_clearonclose;
+
+char *Copybuffer;
+u_int Copybuffer_size;
+char Paste_avail;
 
 struct wsscreen *
 wsscreen_attach(sc, console, emul, type, cookie, ccol, crow, defattr)

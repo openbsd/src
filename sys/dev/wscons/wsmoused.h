@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.2 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.3 2002/03/14 04:55:21 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -37,6 +37,7 @@
  *
  */
 
+struct wsdisplay_softc;
 
 int wsmoused(struct wsdisplay_softc *, u_long, caddr_t, int,
 		  struct proc *p);
@@ -75,9 +76,9 @@ void allocate_copybuffer(struct wsdisplay_softc *);
 
 void sysbeep(int, int);
 
-char *Copybuffer = NULL; /* buffer that contains mouse selections */
-unsigned int Copybuffer_size = 0;
-char Paste_avail = 0; /* flag, to indicate whether a selection is in the
+extern char *Copybuffer; /* buffer that contains mouse selections */
+extern u_int Copybuffer_size;
+extern char Paste_avail; /* flag, to indicate whether a selection is in the
 			 Copy buffer */
 			      
 #define NO_BORDER 0
