@@ -129,10 +129,10 @@ struct om_vector {
  	u_long	*memorySize;		/* Usable memory in bytes */
 
 	/* Single-character input and output */
-	int	(*getChar)(void);	/* Get char from input source */
-	void	(*putChar)(int);	/* Put char to output sink */
-	int	(*mayGet)(void);	/* Maybe get char, or -1 */
-	int	(*mayPut)(int);		/* Maybe put char, or -1 */
+	int	(*getChar) __P((void));	/* Get char from input source */
+	void	(*putChar) __P((int));	/* Put char to output sink */
+	int	(*mayGet) __P((void));	/* Maybe get char, or -1 */
+	int	(*mayPut) __P((int));	/* Maybe put char, or -1 */
 	u_char	*echo;			/* Should getchar echo? */
 	u_char	*inSource;		/* Input source selector */
 	u_char	*outSink;		/* Output sink selector */
@@ -157,10 +157,10 @@ struct om_vector {
 	int	(*fbWriteChar)();	/* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
-	void	(*fbWriteStr)(char *, int); /* Quickly write string to FB */
+	void	(*fbWriteStr) __P((char *, int)); /* Quickly write string to FB */
 
 	/* Reboot interface routine -- resets and reboots system. */
-	void	(*reBoot)(char *);	/* e.g. reBoot("xy()vmunix") */
+	void	(*reBoot) __P((char *));	/* e.g. reBoot("xy()vmunix") */
 
 	/* Line input and parsing */
 	u_char	*lineBuf;		/* The line input buffer */
@@ -182,7 +182,7 @@ struct om_vector {
 
 	/* Non-maskable interrupt  (nmi) information */ 
 	int	(*nmiAddr)();		/* Addr for level 7 vector */
-	void	(*abortEntry)(void);	/* Entry for keyboard abort */
+	void	(*abortEntry) __P((void));	/* Entry for keyboard abort */
 	int	*nmiClock;		/* Counts up in msec */
 
 	/* Frame buffer type: see <machine/fbio.h> */
@@ -200,7 +200,7 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	__dead void (*exitToMon)(void);	/* Exit from user program */
+	__dead void (*exitToMon) __P((void));	/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)();	/* Set seg in any context */
 	void	(**vector_cmd)();	/* V2: Handler for 'v' cmd */
@@ -288,11 +288,11 @@ struct saioreq {
  */
 struct saif {
 	/* transmit packet, returns zero on success. */
-	int	(*sif_xmit)(void *devdata, char *buf, int len);
+	int	(*sif_xmit) __P((void *devdata, char *buf, int len));
 	/* wait for packet, zero if none arrived */
-	int	(*sif_poll)(void *devdata, char *buf);
+	int	(*sif_poll) __P((void *devdata, char *buf));
 	/* reset interface, set addresses, etc. */
-	int	(*sif_reset)(void *devdata, struct saioreq *sip);
+	int	(*sif_reset) __P((void *devdata, struct saioreq *sip));
 	/* Later (sun4 only) proms have more stuff here. */
 };
 #endif /* MACHINE_OLDMON_H */
