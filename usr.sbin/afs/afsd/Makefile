@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 1999/04/30 01:59:02 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/04/27 22:49:05 hin Exp $
 PROG	= afsd
-MAN	= afsd.8
+MAN	= afsd.8 CellServDB.5 ThisCell.5
 BINDIR	= /usr/libexec
 SRCS	= adir.c arla.c arladeb.c cmcb.c conn.c cred.c darla.c discon_log.c \
 	  fbuf.c fcache.c fprio.c inter.c kernel.c messages.c reconnect.c \
