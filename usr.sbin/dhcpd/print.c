@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 2004/05/04 20:28:40 deraadt Exp $ */
+/*	$OpenBSD: print.c,v 1.8 2004/05/04 21:25:27 deraadt Exp $ */
 
 /* Turn data structures into printable text. */
 
@@ -72,71 +72,3 @@ bad:
 	return habuf;
 
 }
-
-#ifdef DEBUG_PACKET
-void
-dump_packet(struct packet *tp)
-{
-	struct dhcp_packet *tdp = tp->raw;
-
-	debug("packet length %d", tp->packet_length);
-	debug("op = %d  htype = %d  hlen = %d  hops = %d", tdp->op, tdp->htype,
-	    tdp->hlen, tdp->hops);
-	debug("xid = %x  secs = %d  flags = %x", tdp->xid, tdp->secs,
-	    tdp->flags);
-	debug("ciaddr = %s", inet_ntoa(tdp->ciaddr));
-	debug("yiaddr = %s", inet_ntoa(tdp->yiaddr));
-	debug("siaddr = %s", inet_ntoa(tdp->siaddr));
-	debug("giaddr = %s", inet_ntoa(tdp->giaddr));
-	debug("chaddr = %02x:%02x:%02x:%02x:%02x:%02x",
-	    ((unsigned char *)(tdp->chaddr))[0],
-	    ((unsigned char *)(tdp->chaddr))[1],
-	    ((unsigned char *)(tdp->chaddr))[2],
-	    ((unsigned char *)(tdp->chaddr))[3],
-	    ((unsigned char *)(tdp->chaddr))[4],
-	    ((unsigned char *)(tdp->chaddr))[5]);
-	debug("filename = %s", tdp->file);
-	debug("server_name = %s", tdp->sname);
-	if (tp->options_valid) {
-		int	i;
-
-		for (i = 0; i < 256; i++) {
-			if (tp->options[i].data)
-				debug("  %s = %s", dhcp_options[i].name,
-				    pretty_print_option(i, tp->options[i].data,
-				    tp->options[i].len, 1, 1));
-		}
-	}
-	debug("%s", "");
-}
-
-void
-dump_raw(unsigned char *buf, int len)
-{
-	char	lbuf[80];
-	int	i, j, llen = sizeof(lbuf), lbix = 0;
-
-	lbuf[0] = 0;
-
-	for (i = 0; i < len; i++) {
-		if ((i & 15) == 0) {
-			if (lbix)
-				note("%s", lbuf);
-			j = snprintf(lbuf, llen, "%03x:", i);
-			if (j >= llen)
-				return;
-			lbix += j;
-			llen -= j;
-		} else if ((i & 7) == 0) {
-			lbuf[lbix++] = ' ';
-			len--;
-		}
-		j = snprintf(&lbuf[lbix], llen, " %02x", buf[i]);
-		if (j >= llen)
-			return;
-		lbix += j;
-		llen -= j;
-	}
-	note("%s", lbuf);
-}
-#endif /* DEBUG_PACKET */

@@ -537,13 +537,6 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	    packet->raw->chaddr), packet->raw->giaddr.s_addr ?
 	    inet_ntoa(packet->raw->giaddr) : packet->interface->name);
 
-#ifdef DEBUG_PACKET
-	dump_packet(packet);
-	dump_raw((unsigned char *)packet->raw, packet->packet_length);
-	dump_packet(&outgoing);
-	dump_raw((unsigned char *)&raw, outgoing.packet_length);
-#endif
-
 	hto.htype = packet->raw->htype;
 	hto.hlen = packet->raw->hlen;
 	memcpy(hto.haddr, packet->raw->chaddr, hto.hlen);
@@ -1082,11 +1075,6 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->tree = NULL;
 	}
 
-#ifdef DEBUG_PACKET
-	dump_packet(packet);
-	dump_raw((unsigned char *)packet->raw, packet->packet_length);
-#endif
-
 	lease->state = state;
 
 	/* If this is a DHCPOFFER, ping the lease address before actually
@@ -1216,10 +1204,6 @@ dhcp_reply(struct lease *lease)
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
-#endif
-
-#ifdef DEBUG_PACKET
-	dump_raw((unsigned char *)&raw, packet_length);
 #endif
 
 	/* Make sure outgoing packets are at least as big

@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.3 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: convert.c,v 1.4 2004/05/04 21:25:27 deraadt Exp $	*/
 
 /*
  * Safe copying of option values into and out of the option buffer,
@@ -54,17 +54,6 @@ getULong(unsigned char *buf)
 	return (ntohl(ibuf));
 }
 
-#ifdef DEBUG_PACKET
-int32_t
-getLong(unsigned char *(buf))
-{
-	int32_t ibuf;
-
-	memcpy(&ibuf, buf, sizeof(ibuf));
-	return (ntohl(ibuf));
-}
-#endif
-
 u_int16_t
 getUShort(unsigned char *buf)
 {
@@ -73,17 +62,6 @@ getUShort(unsigned char *buf)
 	memcpy(&ibuf, buf, sizeof(ibuf));
 	return (ntohs(ibuf));
 }
-
-#ifdef DEBUG_PACKET
-int16_t
-getShort(unsigned char *buf)
-{
-	int16_t ibuf;
-
-	memcpy(&ibuf, buf, sizeof(ibuf));
-	return (ntohs(ibuf));
-}
-#endif
 
 void
 putULong(unsigned char *obuf, u_int32_t val)

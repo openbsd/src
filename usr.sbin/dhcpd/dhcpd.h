@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.12 2004/05/04 20:28:40 deraadt Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.13 2004/05/04 21:25:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -701,9 +701,6 @@ void free_tree(struct tree *, char *);
 /* print.c */
 char *print_hw_addr(int, int, unsigned char *);
 void dump_raw(unsigned char *, int);
-#ifdef DEBUG_PACKET
-void dump_packet(struct packet *);
-#endif
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
