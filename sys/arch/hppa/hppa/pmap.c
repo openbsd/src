@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.72 2002/04/22 00:56:31 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.73 2002/04/30 17:26:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -621,7 +621,6 @@ pmap_destroy(pmap)
 	struct pmap *pmap;
 {
 	struct vm_page *pg;
-	pa_space_t space;
 	int refs;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p)\n", pmap));
@@ -636,7 +635,7 @@ pmap_destroy(pmap)
 	TAILQ_FOREACH(pg, &pmap->pm_obj.memq, listq) {
 #ifdef DIAGNOSTIC
 		if (pg->flags & PG_BUSY)
-			panic("pmap_release: busy page table page");
+			panic("pmap_destroy: busy page table page");
 #endif
 		pg->wire_count = 0;
 		uvm_pagefree(pg);
@@ -644,7 +643,7 @@ pmap_destroy(pmap)
 
 	uvm_pagefree(pmap->pm_pdir_pg);
 	pmap->pm_pdir_pg = NULL;	/* XXX cache it? */
-	pmap_sdir_set(space, 0);
+	pmap_sdir_set(pmap->pm_space, 0);
 	pool_put(&pmap_pmap_pool, pmap);
 }
 
