@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.15 2001/03/01 20:54:33 provos Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.16 2001/03/05 22:16:41 millert Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -524,10 +524,7 @@ wsdisplay_emul_attach(parent, self, aux)
 			if (cdevsw[maj].d_open == wsdisplayopen)
 				break;
 
-		if (maj == major(cn_tab->cn_dev)) {
-			cn_tab->cn_dev = makedev(maj,
-			    WSDISPLAYMINOR(self->dv_unit, 0));
-		}
+		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
 	}
 }
 
@@ -680,6 +677,8 @@ wsdisplay_cnattach(type, cookie, ccol, crow, defattr)
 	wsdisplay_console_conf.wsemulcookie = (*wsemul->cnattach)(type, cookie,
 								  ccol, crow,
 								  defattr);
+
+	cn_tab = &wsdisplay_cons;
 
 	wsdisplay_console_initted = 1;
 }

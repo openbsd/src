@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.65 2001/02/25 23:24:18 aaron Exp $	*/
+/*	$OpenBSD: conf.c,v 1.66 2001/03/05 22:16:42 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -508,14 +508,14 @@ cons_decl(com);
 cons_decl(ws);
 
 struct	consdev constab[] = {
+#if NCOM + NPCCOM > 0
+	cons_init(com),
+#endif
 #if NWSDISPLAY > 0
 	cons_init(ws),
 #endif
 #if NPC + NVT > 0
 	cons_init(pc),
-#endif
-#if NCOM + NPCCOM > 0
-	cons_init(com),
 #endif
 	{ 0 },
 };
