@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.64 2003/05/03 01:43:07 itojun Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.65 2003/07/04 16:40:55 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -152,10 +152,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	}
 
 	/*
-     * Find tunnel control block and (indirectly) call the appropriate
-     * kernel crypto routine. The resulting mbuf chain is a valid
-     * IP packet ready to go through input processing.
-     */
+	 * Find tunnel control block and (indirectly) call the appropriate
+	 * kernel crypto routine. The resulting mbuf chain is a valid
+	 * IP packet ready to go through input processing.
+	 */
 
 	bzero(&dst_address, sizeof(dst_address));
 	dst_address.sa.sa_family = af;
