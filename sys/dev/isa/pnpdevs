@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.70 1999/04/26 20:41:40 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.71 1999/05/22 05:45:50 downsj Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -451,3 +451,5 @@ sb		GRV0003	# UltraSound Plug & Play SB Compatible A
 wss		CSCA800	# AdLib NSC 16 PNP
 sb		@@@0001	# Avance Sound Chip
 joy		@P@0001	# Avance Sound Chip
+sb		@@@2001	# ALS120
+joy		@P@2001	# ALS120
