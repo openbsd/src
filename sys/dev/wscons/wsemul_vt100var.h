@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.4 2004/04/02 04:39:51 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.5 2004/12/23 21:47:47 miod Exp $ */
 /* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
@@ -52,6 +52,7 @@ struct wsemul_vt100_emuldata {
 #define VTFL_DECAWM	0x020	/* auto wrap */
 #define VTFL_CURSORON	0x040
 #define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
+#define VTFL_SAVEDCURS	0x100	/* we have a saved cursor state */
 	long curattr, bkgdattr;		/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 	u_int scrreg_startrow;

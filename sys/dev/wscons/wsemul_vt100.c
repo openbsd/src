@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.10 2004/12/23 21:45:51 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.11 2004/12/23 21:47:46 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -463,6 +463,7 @@ wsemul_vt100_output_esc(edp, c)
 		newstate = VT100_EMUL_STATE_CSI;
 		break;
 	    case '7': /* DECSC */
+		edp->flags |= VTFL_SAVEDCURS;
 		edp->savedcursor_row = edp->crow;
 		edp->savedcursor_col = edp->ccol;
 		edp->savedattr = edp->curattr;
@@ -476,6 +477,8 @@ wsemul_vt100_output_esc(edp, c)
 		edp->savedchartab1 = edp->chartab1;
 		break;
 	    case '8': /* DECRC */
+		if ((edp->flags & VTFL_SAVEDCURS) == 0)
+			break;
 		edp->crow = edp->savedcursor_row;
 		edp->ccol = edp->savedcursor_col;
 		edp->curattr = edp->savedattr;
