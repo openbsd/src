@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.9 2000/06/18 02:00:20 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.10 2000/06/18 17:31:14 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.112 2000/06/18 01:50:39 itojun Exp $	*/
 
 /*
@@ -150,16 +150,20 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	struct route_in6 *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	int needipsec = 0;
+#ifdef IPSEC
+	u_int8_t sproto = 0;
+	union sockaddr_union sdst;
+	u_int32_t sspi;
+	u_int8_t sa_require = 0, sa_have = 0;
+	struct inpcb *inp;
+	struct tdb *tdb;
+	int s;
+#endif /* IPSEC */
 
 #ifdef IPSEC
-	int needipsectun = 0;
-	struct socket *so;
-	struct secpolicy *sp = NULL;
-
-	/* for AH processing. stupid to have "socket" variable in IP layer... */
-	so = (struct socket *)m->m_pkthdr.rcvif;
-	m->m_pkthdr.rcvif = NULL;
-	ip6 = mtod(m, struct ip6_hdr *);
+	inp = NULL;	/*XXX*/
+	if (inp && (inp->inp_flags & INP_IPV6) == 0)
+		panic("ip6_output: IPv4 pcb is passed");
 #endif /* IPSEC */
 
 #define MAKE_EXTHDR(hp, mp)						\
@@ -184,6 +188,25 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		/* Destination options header(2nd part) */
 		MAKE_EXTHDR(opt->ip6po_dest2, &exthdrs.ip6e_dest2);
 	}
+
+#ifdef IPSEC
+	s = splnet();
+
+	/*
+	 * If the higher-level protocol has cached the SA to use, we
+	 * can avoid the routing lookup if the source address is zero.
+	 */
+	if (inp != NULL && inp->inp_tdb != NULL &&
+	    ip->ip_src.s_addr == INADDR_ANY &&
+	    tdb->tdb_dst.sa.sa_family == AF_INET &&
+	    tdb->tdb_dst.sin.sin_addr.s_addr != AF_INET) {
+	        ip->ip_src.s_addr = tdb->tdb_dst.sin.sin_addr.s_addr;
+		splx(s);
+		goto skip_routing;
+	}
+
+	splx(s);
+#endif /* IPSEC */
 
 #ifdef IPSEC
 	/* get a security policy for this packet */
@@ -335,7 +358,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		MAKE_CHAIN(exthdrs.ip6e_rthdr, mprev,
 			   nexthdrp, IPPROTO_ROUTING);
 
-#ifdef IPSEC
+#if 0 /*KAME IPSEC*/
 		if (!needipsec)
 			goto skip_ipsec2;
 
@@ -460,18 +483,10 @@ skip_ipsec2:;
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = ip6->ip6_dst;
 	}
-#ifdef IPSEC
+#if 0 /*KAME IPSEC*/
 	if (needipsec && needipsectun) {
 		struct ipsec_output_state state;
 
-		/*
-		 * All the extension headers will become inaccessible
-		 * (since they can be encrypted).
-		 * Don't panic, we need no more updates to extension headers
-		 * on inner IPv6 packet (since they are now encapsulated).
-		 *
-		 * IPv6 [ESP|AH] IPv6 [extension headers] payload
-		 */
 		bzero(&exthdrs, sizeof(exthdrs));
 		exthdrs.ip6e_ip6 = m;
 
@@ -510,6 +525,29 @@ skip_ipsec2:;
 		exthdrs.ip6e_ip6 = m;
 	}
 #endif /*IPSEC*/
+#ifdef IPSEC
+	/*
+	 * Check if the packet needs encapsulation.
+	 * ipsp_process_packet will never come back to here.
+	 */
+	if (sproto != 0) {
+	        s = splnet();
+
+		tdb = gettdb(sspi, &sdst, sproto);
+		if (tdb == NULL) {
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto done;
+		}
+
+		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
+
+		/* Callee frees mbuf */
+		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
+		splx(s);
+		return error;  /* Nothing more to be done */
+	}
+#endif /* IPSEC */
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		/* Unicast */
@@ -993,11 +1031,6 @@ done:
 		RTFREE(ro_pmtu->ro_rt);
 	}
 
-#ifdef IPSEC
-	if (sp != NULL)
-		key_freesp(sp);
-#endif /* IPSEC */
-
 	return(error);
 
 freehdrs:
@@ -1173,6 +1206,12 @@ ip6_ctloutput(op, so, level, optname, mp)
 	register struct mbuf *m = *mp;
 	int error, optval;
 	int optlen;
+#ifdef IPSEC
+	struct proc *p = curproc; /* XXX */
+	struct tdb *tdb;
+	struct tdb_ident *tdbip, tdbi;
+	int s;
+#endif
 
 	optlen = m ? m->m_len : 0;
 	error = optval = 0;
@@ -1304,7 +1343,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 # undef in6p_flags
 				break;
 
-#ifdef IPSEC
+#if 0 /*KAME IPSEC*/
 			case IPV6_IPSEC_POLICY:
 			    {
 				caddr_t req = NULL;
@@ -1331,6 +1370,77 @@ ip6_ctloutput(op, so, level, optname, mp)
 			    }
 				break;
 #endif
+			case IPSEC6_OUTSA:
+#ifndef IPSEC
+				error = EINVAL;
+#else
+				s = spltdb();
+				if (m == 0 || m->m_len != sizeof(struct tdb_ident)) {
+					error = EINVAL;
+				} else {
+					tdbip = mtod(m, struct tdb_ident *);
+					tdb = gettdb(tdbip->spi, &tdbip->dst,
+					    tdbip->proto);
+					if (tdb == NULL)
+						error = ESRCH;
+					else
+						tdb_add_inp(tdb, inp);
+				}
+				splx(s);
+#endif /* IPSEC */
+				break;
+
+			case IPV6_AUTH_LEVEL:
+			case IPV6_ESP_TRANS_LEVEL:
+			case IPV6_ESP_NETWORK_LEVEL:
+#ifndef IPSEC
+				error = EINVAL;
+#else
+				if (m == 0 || m->m_len != sizeof(int)) {
+					error = EINVAL;
+					break;
+				}
+				optval = *mtod(m, int *);
+
+				if (optval < IPSEC_LEVEL_BYPASS || 
+				    optval > IPSEC_LEVEL_UNIQUE) {
+					error = EINVAL;
+					break;
+				}
+					
+				switch (optname) {
+				case IP_AUTH_LEVEL:
+				        if (optval < ipsec_auth_default_level &&
+					    suser(p->p_ucred, &p->p_acflag)) {
+						error = EACCES;
+						break;
+					}
+					inp->inp_seclevel[SL_AUTH] = optval;
+					break;
+
+				case IP_ESP_TRANS_LEVEL:
+				        if (optval < ipsec_esp_trans_default_level &&
+					    suser(p->p_ucred, &p->p_acflag)) {
+						error = EACCES;
+						break;
+					}
+					inp->inp_seclevel[SL_ESP_TRANS] = optval;
+					break;
+
+				case IP_ESP_NETWORK_LEVEL:
+				        if (optval < ipsec_esp_network_default_level &&
+					    suser(p->p_ucred, &p->p_acflag)) {
+						error = EACCES;
+						break;
+					}
+					inp->inp_seclevel[SL_ESP_NETWORK] = optval;
+					break;
+				}
+				if (!error)
+					inp->inp_secrequire = get_sa_require(inp);
+#endif
+				break;
+
 
 			default:
 				error = ENOPROTOOPT;
@@ -1462,7 +1572,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 				error = ip6_getmoptions(optname, inp->inp_moptions6, mp);
 				break;
 
-#ifdef IPSEC
+#if 0 /*KAME IPSEC*/
 			case IPV6_IPSEC_POLICY:
 			  {
 				caddr_t req = NULL;
@@ -1490,6 +1600,53 @@ ip6_ctloutput(op, so, level, optname, mp)
 			  }
 				break;
 #endif
+
+			case IPSEC6_OUTSA:
+#ifndef IPSEC
+				error = EINVAL;
+#else
+				s = spltdb();
+				if (inp->inp_tdb == NULL) {
+					error = ENOENT;
+				} else {
+					tdbi.spi = inp->inp_tdb->tdb_spi;
+					tdbi.dst = inp->inp_tdb->tdb_dst;
+					tdbi.proto = inp->inp_tdb->tdb_sproto;
+					*mp = m = m_get(M_WAIT, MT_SOOPTS);
+					m->m_len = sizeof(tdbi);
+					bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
+					    (unsigned)m->m_len);
+				}
+				splx(s);
+#endif /* IPSEC */
+				break;
+
+			case IPV6_AUTH_LEVEL:
+			case IPV6_ESP_TRANS_LEVEL:
+			case IPV6_ESP_NETWORK_LEVEL:
+#ifndef IPSEC
+				m->m_len = sizeof(int);
+				*mtod(m, int *) = IPSEC_LEVEL_NONE;
+#else
+				m->m_len = sizeof(int);
+				switch (optname) {
+				case IP_AUTH_LEVEL:
+					optval = inp->inp_seclevel[SL_AUTH];
+					break;
+
+				case IP_ESP_TRANS_LEVEL:
+					optval =
+					    np->inp_seclevel[SL_ESP_TRANS];
+					break;
+
+				case IP_ESP_NETWORK_LEVEL:
+					optval =
+					    inp->inp_seclevel[SL_ESP_NETWORK];
+					break;
+				}
+				*mtod(m, int *) = optval;
+#endif
+				break;
 
 			default:
 				error = ENOPROTOOPT;

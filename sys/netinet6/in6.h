@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.13 2000/05/25 01:22:00 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.14 2000/06/18 17:31:11 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ struct route_in6 {
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */
 #define IPV6_BINDV6ONLY		27 /* bool; only bind INET6 at null bind */
 
-#if 1 /*IPSEC*/
+#if 0 /*KAME IPSEC*/
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
@@ -416,6 +416,12 @@ struct route_in6 {
 #define IPV6_FW_ZERO		33 /* clear single/all firewall counter(s) */
 #define IPV6_FW_GET		34 /* get entire firewall rule chain */
 #endif
+
+#define IPV6_AUTH_LEVEL		35   /* int; authentication used */
+#define IPV6_ESP_TRANS_LEVEL	36   /* int; transport encryption */
+#define IPV6_ESP_NETWORK_LEVEL	37   /* int; full-packet encryption */
+
+#define IPSEC6_OUTSA		38   /* set the outbound SA for a socket */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
 #define IPV6_RTHDR_STRICT    1 /* this hop must be a neighbor. XXX old spec */
