@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.18 2004/12/04 10:26:46 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.19 2004/12/04 12:38:44 jmc Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -78,35 +78,72 @@ To stop it, send a
 signal to the initial (parent) process.
 The PID of this process is written to a file as given in the
 configuration file.
-Alternatively
+Normally this service can be enabled for startup on
+.Ox
+by editing
+.Pa /etc/rc.conf.local .
+.Pp
+Alternatively,
 .Nm
 may be invoked by the Internet daemon
 .Xr inetd 8
 each
 time a connection to the HTTP service is made.
 .Pp
-Normally this service can be enabled for startup on
-.Ox
-by editing
-.Pa /etc/rc.conf.local .
+By default,
+.Nm
+will
+.Xr chroot 2
+to the
+.Ar serverroot
+path.
+As a result of the default secure behaviour,
+.Nm
+cannot access any objects outside
+.Va ServerRoot
+\- this security measure is taken in case
+.Nm
+is compromised.
+This is not without drawbacks, though:
+.Pp
+CGI programs may fail due to the limited environment available inside
+this chroot space.
+UserDir, of course, cannot access files outside the directory space.
+Other modules will also have issues.
+DocumentRoot directories or any other files needed must be inside
+.Va ServerRoot .
+For this to work, pathnames inside the
+.Va config
+file do not need adjustment relative to
+.Va ServerRoot .
+For this option to remain secure, it is important that no files or directories
+writable by user
+.Ar www
+or group
+.Ar www
+are created inside the
+.Va ServerRoot .
+.Pp
 The
 .Fl u
-option is of particular importance.
+option
+(see below)
+can be specified to disable
+.Xr chroot 2
+functionality.
 .Pp
 This manual page only lists the command line arguments.
 For details of the directives necessary to configure
-.Nm
-see the Apache manual,
-which is part of the Apache distribution or can be found at
-.Pa http://httpd.apache.org/docs/ ,
-or in
-.Pa /var/www/htdocs/manual .
+.Nm ,
+see the Apache manual in
+.Pa /var/www/htdocs/manual/ .
 Paths in this manual page reflect those
 compiled into
 .Nm
 by default with
 .Ox .
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl C Ar directive
 Process the configuration
@@ -182,33 +219,6 @@ The
 option disables this behaviour, and returns
 .Nm
 to the expanded "unsecure" behaviour.
-.Pp
-As a result of the default secure behaviour,
-.Nm
-cannot access any objects outside
-.Va ServerRoot
-\- this security measure is taken in case
-.Nm
-is compromised.
-This is not without drawbacks, though:
-.Pp
-CGI programs may fail due to the limited environment available inside
-this chroot space.
-UserDir, of course, cannot access files outside the directory space.
-Other modules will also have issues.
-DocumentRoot directories or any other files needed must be inside
-.Va ServerRoot .
-For this to work, pathnames inside the
-.Va config
-file do not need adjustment relative to
-.Va ServerRoot .
-For this option to remain secure, it is important that no files or directories
-writable by user
-.Ar www
-or group
-.Ar www
-are created inside the
-.Va ServerRoot .
 .It Fl V
 Print the version and build parameters of
 .Nm httpd ,
