@@ -1,7 +1,8 @@
-/*	$OpenBSD: swap.c,v 1.10 1998/11/22 23:29:37 kstailey Exp $	*/
-/*	$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $	*/
+/*	$OpenBSD: swap.c,v 1.11 1999/05/22 21:41:58 weingart Exp $	*/
+/*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
  * Copyright (c) 1980, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -38,66 +39,33 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.10 1998/11/22 23:29:37 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.11 1999/05/22 21:41:58 weingart Exp $";
 #endif /* not lint */
 
-/*
- * swapinfo - based on a program of the same name by Kevin Lahey
- */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/stat.h>
+#include <sys/swap.h>
 
-#include <kvm.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 
 #include "systat.h"
 #include "extern.h"
 
-extern char *getbsize __P((int *headerlenp, long *blocksizep));
 void showspace __P((char *header, int hlen, long blocksize));
 
-struct nlist syms[] = {
-	{ "_swapmap" },	/* list of free swap areas */
-#define VM_SWAPMAP	0
-	{ "_nswapmap" },/* size of the swap map */
-#define VM_NSWAPMAP	1
-	{ "_swdevt" },	/* list of swap devices and sizes */
-#define VM_SWDEVT	2
-	{ "_nswap" },	/* size of largest swap device */
-#define VM_NSWAP	3
-	{ "_nswdev" },	/* number of swap devices */
-#define VM_NSWDEV	4
-	{ "_dmmax" },	/* maximum size of a swap block */
-#define VM_DMMAX	5
-	{ 0 }
-};
-
-static int nswap, nswdev, dmmax, nswapmap;
-static struct swdevt *sw;
-static long *perdev, blocksize;
-static struct map *swapmap, *kswapmap;
-static struct mapent *mpp;
-static int nfree, hlen;
-
-#define	SVAR(var) __STRING(var)	/* to force expansion */
-#define	KGET(idx, var) \
-	KGET1(idx, &var, sizeof(var), SVAR(var))
-#define	KGET1(idx, p, s, msg) \
-	KGET2(syms[idx].n_value, p, s, msg)
-#define	KGET2(addr, p, s, msg) \
-	if (kvm_read(kd, addr, p, s) != s) { \
-		error("cannot read %s: %s", msg, kvm_geterr(kd)); \
-		return (0); \
-	}
+static	long blocksize;
+static	int hlen, nswap, rnswap;
+static	int first = 1;
+static	struct swapent *swap_devices;
 
 WINDOW *
 openswap()
@@ -116,154 +84,99 @@ closeswap(w)
 	delwin(w);
 }
 
+/* do nothing */
 int
 initswap()
 {
-	int i;
-	char msgbuf[BUFSIZ];
-	static int once = 0;
-
-	if (once)
-		return (1);
-	if (kvm_nlist(kd, syms)) {
-		strcpy(msgbuf, "systat: swap: cannot find");
-		for (i = 0; syms[i].n_name != NULL; i++) {
-			if (syms[i].n_value == 0) {
-				if (strlen(msgbuf) + strlen(syms[i].n_name) +2 >
-				    sizeof (msgbuf))
-					continue;
-				strcat(msgbuf, " ");
-				strcat(msgbuf, syms[i].n_name);
-			}
-		}
-		error(msgbuf);
-		return (0);
-	}
-	KGET(VM_NSWAP, nswap);
-	KGET(VM_NSWDEV, nswdev);
-	KGET(VM_DMMAX, dmmax);
-	KGET(VM_NSWAPMAP, nswapmap);
-	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
-	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
-	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
-	    (mpp = malloc(nswapmap * sizeof(*mpp))) == NULL) {
-		error("swap malloc");
-		return (0);
-	}
-	KGET1(VM_SWDEVT, sw, nswdev * sizeof(*sw), "swdevt");
-	once = 1;
 	return (1);
 }
 
 void
 fetchswap()
 {
-	struct mapent *mp;
-	int s, e, i;
+	int	update_label = 0;
 
-	s = nswapmap * sizeof(*mpp);
-	mp = mpp;
-	if (kvm_read(kd, (long)kswapmap, mp, s) != s)
-		error("cannot read swapmap: %s", kvm_geterr(kd));
+	first = 0;
+	nswap = swapctl(SWAP_NSWAP, 0, 0);
+	if (nswap < 0)
+		error("error: %s", strerror(errno));
+	if (nswap == 0)
+		return;
+	update_label = (nswap != rnswap);
 
-	/* first entry in map is `struct map'; rest are mapent's */
-	swapmap = (struct map *)mp;
-	if (nswapmap != swapmap->m_limit - (struct mapent *)kswapmap)
-		error("panic: swap: nswapmap goof");
+	if (swap_devices)
+		(void)free(swap_devices);
+	swap_devices = (struct swapent *)malloc(nswap * sizeof(*swap_devices));
+	if (swap_devices == NULL)
+		/* XXX */ ;	/* XXX systat doesn't do errors! */
 
-	/*
-	 * Count up swap space.
-	 */
-	nfree = 0;
-	bzero(perdev, nswdev * sizeof(*perdev));
-	for (mp++; mp->m_addr != 0; mp++) {
-		s = mp->m_addr;			/* start of swap region */
-		e = mp->m_addr + mp->m_size;	/* end of region */
-		nfree += mp->m_size;
-
-		/*
-		 * Swap space is split up among the configured disks.
-		 * The first dmmax blocks of swap space some from the
-		 * first disk, the next dmmax blocks from the next, 
-		 * and so on.  The list of free space joins adjacent
-		 * free blocks, ignoring device boundries.  If we want
-		 * to keep track of this information per device, we'll
-		 * just have to extract it ourselves.
-		 */
-
-		/* calculate first device on which this falls */
-		i = (s / dmmax) % nswdev;
-		while (s < e) {		/* XXX this is inefficient */
-			int bound = roundup(s + 1, dmmax);
-
-			if (bound > e)
-				bound = e;
-			perdev[i] += bound - s;
-			if (++i >= nswdev)
-				i = 0;
-			s = bound;
-		}
-	}
+	rnswap = swapctl(SWAP_STATS, (void *)swap_devices, nswap);
+	if (nswap < 0)
+		/* XXX */ ;	/* XXX systat doesn't do errors! */
+	if (nswap != rnswap)
+		/* XXX */ ;	/* XXX systat doesn't do errors! */
+	if (update_label)
+		labelswap();
 }
 
 void
 labelswap()
 {
-	char *header, *p;
-	int row, i;
+	char	*header;
+	int	row;
 
 	row = 0;
-	wmove(wnd, row, 0); wclrtobot(wnd);
+	wmove(wnd, row, 0);
+	wclrtobot(wnd);
+	if (first)
+		fetchswap();
+	if (nswap == 0) {
+		mvwprintw(wnd, row++, 0, "No swap");
+		return;
+	}
 	header = getbsize(&hlen, &blocksize);
 	mvwprintw(wnd, row++, 0, "%-5s%*s%9s  %55s",
 	    "Disk", hlen, header, "Used",
 	    "/0%  /10% /20% /30% /40% /50% /60% /70% /80% /90% /100%");
-	for (i = 0; i < nswdev; i++) {
-		p = devname(sw[i].sw_dev, S_IFBLK);
-		mvwprintw(wnd, i + 1, 0, "%-5s", p == NULL ? "??" : p);
-	}
 }
 
 void
-showswap()
-{
-	int col, div, i, j, avail, npfree, used, xsize, xfree;
+showswap() {
+	int	col, div, i, j, avail, used, xsize, free;
+	struct	swapent *sep;
+	char	*p;
 
 	div = blocksize / 512;
-	avail = npfree = 0;
-	for (i = 0; i < nswdev; i++) {
-		col = 5;
-		mvwprintw(wnd, i + 1, col, "%*d", hlen, sw[i].sw_nblks / div);
-		col += hlen;
-		/*
-		 * Don't report statistics for partitions which have not
-		 * yet been activated via swapon(8).
-		 */
-		if (!sw[i].sw_freed) {
-			mvwprintw(wnd, i + 1, col + 8,
-			    "0  *** not available for swapping ***");
+	free = avail = 0;
+	for (sep = swap_devices, i = 0; i < nswap; i++, sep++) {
+		if (sep == NULL)
 			continue;
-		}
-		xsize = sw[i].sw_nblks;
-		xfree = perdev[i];
-		used = xsize - xfree;
+
+		p = strrchr(sep->se_path, '/');
+		p = p ? p+1 : sep->se_path;
+
+		mvwprintw(wnd, i + 1, 0, "%-5s", p);
+
+		col = 5;
+		mvwprintw(wnd, i + 1, col, "%*d", hlen, sep->se_nblks / div);
+
+		col += hlen;
+		xsize = sep->se_nblks;
+		used = sep->se_inuse;
+		avail += xsize;
+		free += xsize - used;
 		mvwprintw(wnd, i + 1, col, "%9d  ", used / div);
-		wclrtoeol(wnd);
 		for (j = (100 * used / xsize + 1) / 2; j > 0; j--)
 			waddch(wnd, 'X');
-		npfree++;
-		avail += xsize;
+		wclrtoeol(wnd);
 	}
-	/* 
-	 * If only one partition has been set up via swapon(8), we don't
-	 * need to bother with totals.
-	 */
-	if (npfree > 1) {
-		used = avail - nfree;
+	/* do total if necessary */
+	if (nswap > 1) {
+		used = avail - free;
 		mvwprintw(wnd, i + 1, 0, "%-5s%*d%9d  ",
 		    "Total", hlen, avail / div, used / div);
-		wclrtoeol(wnd);
 		for (j = (100 * used / avail + 1) / 2; j > 0; j--)
 			waddch(wnd, 'X');
+		wclrtoeol(wnd);
 	}
 }
