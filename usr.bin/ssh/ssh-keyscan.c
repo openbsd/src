@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.7 2001/01/08 22:03:23 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.8 2001/01/13 18:06:54 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -27,7 +27,6 @@ static int argno = 1;		/* Number of argument currently being parsed */
 
 int family = AF_UNSPEC;		/* IPv4, IPv6 or both */
 
-#define PORT 22
 #define MAXMAXFD 256
 
 /* The number of seconds after which to give up on a TCP connection */
@@ -278,7 +277,7 @@ tcpconnect(char *host)
 	char strport[NI_MAXSERV];
 	int gaierr, s = -1;
 
-	snprintf(strport, sizeof strport, "%d", PORT);
+	snprintf(strport, sizeof strport, "%d", SSH_DEFAULT_PORT);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
