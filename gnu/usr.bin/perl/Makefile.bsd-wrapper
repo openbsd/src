@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1997/06/23 22:41:28 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1997/07/24 21:12:14 kstailey Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -21,6 +21,8 @@ MAN=		x2p/a2p.man x2p/s2p.man pod/perl.man pod/perlbook.man \
 		pod/perltie.man pod/perltoc.man pod/perltrap.man \
 		pod/perlvar.man pod/perlxs.man pod/perlxstut.man
 
+.include <bsd.own.mk>
+
 .ifndef NOMAN
 MANALL=		${MAN:S/.man$/.cat1/g}
 .else
@@ -28,6 +30,12 @@ MANALL=
 .endif
 
 MANLOCALBUILD=	yes
+
+.if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
+INST_PROG='/usr/bin/install -cs'
+.else
+INST_PROG='/usr/bin/install -c'
+.endif
 
 .SUFFIXES: .man .cat1
 
@@ -86,7 +94,8 @@ maninstall:
 .endif
 
 install: ${MANALL} maninstall
-	(cd ${.OBJDIR}; ${MAKE} install)
+	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
+	 INSTALL_STRIP=${INSTALL_STRIP} ${MAKE} install)
 	(cd ${DESTDIR}/usr/include; ${H2PH} *.h arpa/*.h machine/*.h net/*.h \
 			  protocols/*.h sys/*.h)
 	-chmod -R a+rX ${DESTDIR}/usr/lib/perl5

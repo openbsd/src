@@ -1,7 +1,7 @@
 #!./perl
-#	$OpenBSD: installperl,v 1.3 1996/08/26 14:06:20 downsj Exp $
+#	$OpenBSD: installperl,v 1.4 1996/09/06 17:35:29 downsj Exp $
 #
-# This is hacked up, in order to support DESTDIR.
+# This is hacked up, in order to support DESTDIR and INSTALL_STRIP.
 #
 
 BEGIN { @INC=('./lib', '../lib') }
@@ -123,8 +123,11 @@ if (! &samepath($installbin, '.')) {
 }
 
 if (! &samepath($installbin, 'x2p')) {
+    $installcmd = $ENV{"INSTALL"}
+	. " " . $ENV{"INSTALL_COPY"}
+	. " " . $ENV{"INSTALL_STRIP"};
     &safe_unlink("$installbin/a2p$exe_ext");
-    &cmd("cp x2p/a2p$exe_ext $installbin/a2p$exe_ext");
+    &cmd("$installcmd x2p/a2p$exe_ext $installbin");
     &chmod(0755, "$installbin/a2p$exe_ext");
 }
 
