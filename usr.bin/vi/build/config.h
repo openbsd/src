@@ -57,31 +57,31 @@
 /* #undef HAVE_BROKEN_VDISABLE */
 
 /* Define if you have a BSD version of curses. */
-#define HAVE_BSD_CURSES 1
+/* #undef HAVE_BSD_CURSES */
 
 /* Define if you have the curses(3) addnstr function. */
 #define HAVE_CURSES_ADDNSTR 1
 
 /* Define if you have the curses(3) beep function. */
-/* #undef HAVE_CURSES_BEEP */
+#define HAVE_CURSES_BEEP 1
 
 /* Define if you have the curses(3) flash function. */
-/* #undef HAVE_CURSES_FLASH */
+#define HAVE_CURSES_FLASH 1
 
 /* Define if you have the curses(3) idlok function. */
 #define HAVE_CURSES_IDLOK 1
 
 /* Define if you have the curses(3) keypad function. */
-/* #undef HAVE_CURSES_KEYPAD */
+#define HAVE_CURSES_KEYPAD 1
 
 /* Define if you have the curses(3) newterm function. */
-/* #undef HAVE_CURSES_NEWTERM */
+#define HAVE_CURSES_NEWTERM 1
 
 /* Define if you have the curses(3) setupterm function. */
-/* #undef HAVE_CURSES_SETUPTERM */
+#define HAVE_CURSES_SETUPTERM 1
 
 /* Define if you have the curses(3) tigetstr/tigetnum functions. */
-/* #undef HAVE_CURSES_TIGETSTR */
+#define HAVE_CURSES_TIGETSTR 1
 
 /* Define if you have the chsize(2) system call. */
 /* #undef HAVE_FTRUNCATE_CHSIZE */
