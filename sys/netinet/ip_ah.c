@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.36 2000/03/21 21:00:09 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.37 2000/04/25 02:53:46 jason Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -805,6 +805,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     struct mbuf *mo, *mi;
     struct cryptop *crp;
     u_int16_t iplen;
+    u_int8_t prot;
     int len, rplen;
     struct ah *ah;
 
@@ -1039,8 +1040,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     tdb->tdb_ref++;
 
     /* Update the Next Protocol field in the IP header and the saved data */
-    len = IPPROTO_AH;
-    m_copyback(m, protoff, sizeof(u_int8_t), (caddr_t) &len);
+    prot = IPPROTO_AH;
+    m_copyback(m, protoff, sizeof(u_int8_t), (caddr_t) &prot);
     ((u_int8_t *) crp->crp_opaque4)[protoff] = IPPROTO_AH;
 
     /* "Massage" the packet headers for crypto processing */

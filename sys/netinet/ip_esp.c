@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.40 2000/04/06 16:08:22 deraadt Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.41 2000/04/25 02:53:45 jason Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -670,6 +670,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     int ilen, hlen, rlen, plen, padding, blks, alen;
     struct mbuf *mi, *mo = (struct mbuf *) NULL;
     unsigned char *pad;
+    u_int8_t prot;
 
     struct cryptodesc *crde = NULL, *crda = NULL;
     struct cryptop *crp;
@@ -873,8 +874,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     m_copydata(m, protoff, sizeof(u_int8_t), pad + padding - 1);
 
     /* Fix Next Protocol in IPv4/IPv6 header */
-    ilen = IPPROTO_ESP;
-    m_copyback(m, protoff, sizeof(u_int8_t), (u_char *) &ilen);
+    prot = IPPROTO_ESP;
+    m_copyback(m, protoff, sizeof(u_int8_t), (u_char *) &prot);
 
     /* Get crypto descriptors */
     crp = crypto_getreq(esph && espx ? 2 : 1);
