@@ -1,4 +1,4 @@
-/* $Id: atr.c,v 1.5 2001/06/25 03:34:00 rees Exp $ */
+/* $Id: atr.c,v 1.6 2001/07/02 20:07:07 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000, 2001
@@ -50,7 +50,7 @@ typedef long int32_t;
 #include <sys/types.h>
 #endif
 
-#include "sectok.h"
+#include "sc7816.h"
 
 /* Global interface bytes */
 #define TA1 (tpb[0][0])

@@ -1,4 +1,4 @@
-/* $Id: scio.c,v 1.4 2001/06/08 15:04:04 rees Exp $ */
+/* $Id: scio.c,v 1.5 2001/07/02 20:07:09 rees Exp $ */
 
 /*
 copyright 1997
@@ -49,12 +49,13 @@ such damages.
 #include <termios.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <errno.h>
 
-#include "sectok.h"
+#include "sc7816.h"
 #include "todos_scrw.h"
 
-int todos_scfdopen(int ttyn, int fd, int flags, int *ep);
-int todos_sccts(int ttyn);
+static int todos_scfdopen(int ttyn, int fd, int flags, int *ep);
+static int todos_sccts(int ttyn);
 
 #ifdef __linux
 static char ttynametmpl[] = "/dev/cua%01d";
@@ -111,13 +112,15 @@ todos_scopen(int ttyn, int flags, int *ep)
 
     if ((ttyn = todos_scfdopen(ttyn, fd, flags, ep)) < 0) {
 	close(fd);
-	return -2;
+	return -1;
     }
 
     /* Figure out which reader we have */
     if (ioctl(fd, TIOCMGET, &i) < 0) {
 	close(fd);
-	return 0;
+	if (ep)
+	    *ep = SCENOTTY;
+	return -1;
     }
 #ifndef __sun
     /* Todos has RTS wired to RI, so set RTS and see if RI goes high */
@@ -136,8 +139,12 @@ todos_scopen(int ttyn, int flags, int *ep)
 
     if (flags & SCODSR) {
 	/* Wait for card present */
-	while (!todos_sccardpresent(ttyn))
+	while (!todos_sccardpresent(ttyn)) {
+	    errno = 0;
 	    sleep(1);
+	    if (errno == EINTR)
+		return -1;
+	}
     }
 
     if (flags & SCOHUP) {
@@ -219,7 +226,7 @@ todos_scsetspeed(int ttyn, int speed)
     return tcsetattr(sc[ttyn].fd, TCSADRAIN, &sc[ttyn].tio1);
 }
 
-int
+static int
 todos_scfdopen(int ttyn, int fd, int flags, int *ep)
 {
     struct termios t;
@@ -275,7 +282,7 @@ todos_scfdopen(int ttyn, int fd, int flags, int *ep)
     /* The open may or may not have reset the card.  Wait a while then flush
        anything that came in on the port. */
     scsleep(250);
-    todos_scdrain(ttyn);
+    tcflush(sc[ttyn].fd, TCIFLUSH);
 
     return ttyn;
 }
@@ -302,7 +309,7 @@ todos_scdsr(int ttyn)
     return ((i & TIOCM_DSR) ? 1 : 0);
 }
 
-int
+static int
 todos_sccts(int ttyn)
 {
     int fd = sc[ttyn].fd;
@@ -452,10 +459,4 @@ scsleep(int ms)
     tv.tv_usec = (ms % 1000) * 1000;
 
     select(0, NULL, NULL, NULL, &tv);
-}
-
-void
-todos_scdrain(int ttyn)
-{
-    tcflush(sc[ttyn].fd, TCIFLUSH);
 }

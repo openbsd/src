@@ -1,7 +1,7 @@
-/* $Id: sectok.h,v 1.10 2001/06/28 21:27:54 rees Exp $ */
+/* $Id: sectok.h,v 1.11 2001/07/02 20:07:09 rees Exp $ */
 
 /*
-copyright 1997, 2000
+copyright 2001
 the regents of the university of michigan
 all rights reserved
 
@@ -30,179 +30,71 @@ if it has been or is hereafter advised of the possibility of
 such damages.
 */
 
-/* SCPERF - performance evaluation */
-#ifdef SCPERF
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#endif /* SCPERF */
-
-/* open flags */
-#define SCODSR		0x1	/* wait for dsr */
-#define SCODCD		0x2	/* wait for dcd */
-#define SCOHUP		0x4	/* send signal on card removal */
-#define SCOXCTS		0x8	/* wait for no cts (todos reader) */
-#define SCOXDTR		0x10	/* invert dtr (todos reader) */
-#define SCOINVRT	0x20	/* inverse convention */
+/* Open flags */
+#define STONOWAIT	0x1	/* don't wait for card present */
+#define STOHUP		0x4	/* send signal on card removal */
 
 /* Reset flags */
-#define SCRV	0x1	/* be verbose */
-#define SCRLEN	0x2	/* determine length by examing atr */
-#define SCRTODOS 0x4	/* Todos reader */
-#define SCRFORCE 0x8	/* Talk to card even if atr is bad */
+#define STRLEN		0x2	/* determine length by examing atr */
+#define STRFORCE	0x8	/* Talk to card even if atr is bad */
 
-/* error codes */
-#define SCEOK		0
-#define SCENOTTY	1	/* no such tty */
-#define SCENOMEM	2	/* malloc (or similar) failed */
-#define SCTIMEO		3	/* time out */
-#define SCESLAG		4	/* slag (no atr) */
-#define SCENOSUPP	5	/* card type not supported */
-#define SCENOCARD	6	/* no card in reader */
-#define SCENOIMPL	7
-#define SCEDRVR 	8
-#define SCECOMM 	9
-#define SCECLOSED	10
-#define SCENOFILE       11      /* wrong config path or driver path */
-#define SCECNFFILES     12      /* both config path and driver path are
+/* Errors */
+#define STEOK		0x9000
+#define STENOTTY	0x0601	/* no such tty */
+#define STENOMEM	0x0602	/* malloc (or similar) failed */
+#define STTIMEO		0x0603	/* time out */
+#define STESLAG		0x0604	/* slag (no atr) */
+#define STENOSUPP	0x0605	/* card type not supported */
+#define STENOCARD	0x0606	/* no card in reader */
+#define STENOIMPL	0x0607
+#define STEDRVR 	0x0608
+#define STECOMM 	0x0609
+#define STECLOSED	0x060a
+#define STECNFFILES     0x060c      /* both config path and driver path are
 				   specified.  thus conflict. */
-#define SCEUNKNOWN	13
+#define STEUNKNOWN	0x060d
+#define STENOFILE	0x6a82
 
-/* Extra tags for things they forgot to put in the ifd interface */
-#define SCTAG_IFD_ATRLEN 0x6601
-#define SCTAG_IFD_CARDPRESENT 0x301
-#define SCTAG_OPEN_FLAGS  0x800
-#define SCTAG_RESET_FLAGS 0x801
-
-extern char *scerrtab[];
-
-extern struct scparam {
-    int t, etu, cwt, bwt, n;
-} scparam[];
+/* Useful macros */
+#define sectok_r1(sw) (((sw) >> 8) & 0xff)
+#define sectok_r2(sw) ((sw) & 0xff)
+#define sectok_mksw(r1, r2) (((r1) << 8) | (r2))
+#define sectok_swOK(sw) (sectok_r1(sw) == 0x90 || sectok_r1(sw) == 0x61)
 
 extern unsigned char root_fid[];
 
-/* forward declarations */
+/* Common card functions */
+int sectok_open(int rn, int flags, int *swp);
+int sectok_xopen(int rn, int flags, char *config_path, char *driver_path, int *swp);
+int sectok_reset(int fd, int flags, unsigned char *atr, int *swp);
+int sectok_apdu(int fd, int cla, int ins, int p1, int p2,
+		int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *swp);
+int sectok_cardpresent(int fd);
+int sectok_close(int fd);
+int sectok_selectfile(int fd, int cla, unsigned char *fid, int *swp);
 
-int scopen(int ttyn, int flags, int *ep);
-int scxopen(int ttyn, int flags, int *ep,
-	char *config_path, char *driver_path); 
-int scsetflags(int ttyn, int flags, int mask);
-int scrw(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p);
-int scread(int ttyn, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, int *sw1p, int *sw2p);
-int scwrite(int ttyn, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, int *sw1p, int *sw2p);
-int sccardpresent(int ttyn);
-int scdsr(int ttyn);
-int scclose(int ttyn);
-int screset(int ttyn, unsigned char *atr, int *ep);
-int scxreset(int ttyn, int flags, unsigned char *atr, int *ep);
-int scdtr(int ttyn, int cmd);
-int scgetc(int ttyn, unsigned char *cp, int ms);
-int scputc(int ttyn, int ic);
-int scgetblk(int ttyn, unsigned char *bp, int n, int bwt, int cwt);
-int scputblk(int ttyn, unsigned char *bp, int n);
-void scsleep(int ms);
-void scdrain(int ttyn);
-int scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p);
-int scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf);
-int scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf);
-int parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *param);
-int parse_input(char *ibuf, unsigned char *obuf, int olen);
-#ifndef __palmos__
-int get_input(FILE *f, unsigned char *obuf, int omin, int olen);
-int fdump_reply(FILE *f, unsigned char *p, int n, int r1, int r2);
-int dump_reply(unsigned char *p, int n, int r1, int r2);
-#endif
-void print_r1r2(int r1, int r2);
-char *get_r1r2s(int r1, int r2);
-char *scr1r2s(int r1, int r2);
-char *lookup_cmdname(int ins);
-
-/* Common card routines */
+/* Convenience functions */
 void sectok_fmt_fid(char *fname, int f0, int f1);
-int sectok_selectfile(int fd, int cla, unsigned char *fid, int *r1p, int *r2p);
 void sectok_parse_fname(char *buf, unsigned char *fid);
+int sectok_parse_input(char *ibuf, unsigned char *obuf, int olen);
+#ifndef __palmos__
+int sectok_get_input(FILE *f, unsigned char *obuf, int omin, int olen);
+int sectok_fdump_reply(FILE *f, unsigned char *p, int n, int sw);
+int sectok_dump_reply(unsigned char *p, int n, int sw);
+#endif
+void sectok_print_sw(int sw);
+char *sectok_get_sw(int sw);
+char *sectok_get_ins(int ins);
 
-/* Cyberflex */
-int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype,
-			  int *r1p, int *r2p);
-int cyberflex_delete_file(int fd, int cla, int f0, int f1, int *r1p, int *r2p);
+/* Cyberflex functions */
+int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype, int *swp);
+int cyberflex_delete_file(int fd, int cla, unsigned char *fid, int *swp);
 int cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
-			   int key_len, unsigned char *key_data, int *r1p, int *r2p);
+			   int key_len, unsigned char *key_data, int *swp);
 int cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
-			    int nkey_elems, int keylen, unsigned char *key_elems[],
-			    int *r1p, int *r2p);
+			    int nkey_elems, int key_len, unsigned char *key_elems[],
+			    int *swp);
 int cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len);
 int cyberflex_inq_class(int fd);
 void cyberflex_fill_key_block (unsigned char *dst, int key_num,
 			       int alg_num, unsigned char *key);
-
-/* SCPERF - performance evaluation */
-#ifdef SCPERF
-#ifdef SCPERF_FIRST_APPEARANCE
-
-#define MAX_EVENTS 1024
-
-struct timeval perf_tv[MAX_EVENTS];
-char *perf_buf[MAX_EVENTS];
-int perf_num = 0; 
-
-void print_time ()
-{
-    int i;
-
-    for (i = 0 ; i < perf_num ; i ++ ) {
-	printf ("%ld.%06ld: %s\n",
-		perf_tv[i].tv_sec, perf_tv[i].tv_usec, perf_buf[i]);
-    }
-    return; 
-}
-
-#define SetTime(x) \
-  gettimeofday(&(perf_tv[perf_num]), NULL); \
-  perf_buf[perf_num] = x; \
-  perf_num++; \
-  if (perf_num >= MAX_EVENTS) {\
-    fprintf (stderr, "SetTime overflow %d\n", MAX_EVENTS); \
-    exit (1); \
-  }
-
-#else /* !SCPERF_FIRST_APPEARANCE */
-extern struct timeval perf_tv[];
-extern char *perf_buf[];
-extern int perf_num;
-
-#define MAX_EVENTS 1024
-
-#define SetTime(x) \
-  gettimeofday(&(perf_tv[perf_num]), NULL); \
-  perf_buf[perf_num] = x; \
-  perf_num++; \
-  if (perf_num >= MAX_EVENTS) {\
-    fprintf (stderr, "SetTime overflow %d\n", MAX_EVENTS); \
-    exit (1); \
-  }
-#endif /* SCPERF_FIRST_APPEARANCE */
-void print_time (); 
-#else /* !SCPERF */
-#define SetTime(x)
-#define print_time() ;
-#endif /* SCPERF */
-
-/* macros */
-#ifdef SCFS
-#define ADEBMISC        0x00000001	/* misc debugging */
-#define MESSAGE1(x) arla_warnx (ADEBMISC,x)
-#define MESSAGE2(x,y) arla_warnx (ADEBMISC,x,y)
-#define MESSAGE3(x,y,z) arla_warnx (ADEBMISC,x,y,z)
-#define MESSAGE4(x,y,z,u) arla_warnx (ADEBMISC,x,y,z,u)
-#define MESSAGE5(x,y,z,u,v) arla_warnx (ADEBMISC,x,y,z,u,v)
-#define MESSAGE6(x,y,z,u,v,w) arla_warnx (ADEBMISC,x,y,z,u,v,w)
-#else 
-#define MESSAGE1(x) fprintf(stderr,x)
-#define MESSAGE2(x,y) fprintf(stderr,x,y)
-#define MESSAGE3(x,y,z) fprintf(stderr,x,y,z)
-#define MESSAGE4(x,y,z,u) fprintf(stderr,x,y,z,u)
-#define MESSAGE5(x,y,z,u,v) fprintf(stderr,x,y,z,u,v)
-#define MESSAGE6(x,y,z,u,v,w) fprintf(stderr,x,y,z,u,v,w)
-#endif /* SCFS */

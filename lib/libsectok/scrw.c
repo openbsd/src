@@ -1,4 +1,4 @@
-/* $Id: scrw.c,v 1.4 2001/06/08 15:04:05 rees Exp $ */
+/* $Id: scrw.c,v 1.5 2001/07/02 20:07:09 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000
@@ -51,7 +51,7 @@ such damages.
 #ifdef SCPERF
 #define SCPERF_FIRST_APPEARANCE
 #endif /* SCPERF */
-#include "sectok.h"
+#include "sc7816.h"
 #include "todos_scrw.h"
 
 /* external variable */
@@ -192,14 +192,16 @@ todos_scioT0(int ttyn, int io, int cla, int ins, int p1, int p2, int p3, unsigne
 
 	ackxins = (ack ^ ins) & 0xfe;
 	if (ackxins == 0xfe) {
-	    /* xfer next data byte */
-	    if (todos_scioproc(ttyn, io, bp++) != SCEOK) {
+	    if (n < p3) {
+		/* xfer next data byte */
+		if (todos_scioproc(ttyn, io, bp++) != SCEOK) {
 #ifdef DEBUG
-		printf("%d ms timeout reading next data byte\n", scparam[ttyn].cwt);
+		    printf("%d ms timeout reading next data byte\n", scparam[ttyn].cwt);
 #endif
-		return -1;
+		    return -1;
+		}
+		n++;
 	    }
-	    n++;
 
 	} else if (ackxins == 0) {
 	    /* xfer all remaining data bytes */

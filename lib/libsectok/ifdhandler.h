@@ -1,4 +1,4 @@
-/* $Id: ifdhandler.h,v 1.2 2001/06/08 15:04:03 rees Exp $ */
+/* $Id: ifdhandler.h,v 1.3 2001/07/02 20:07:08 rees Exp $ */
 
 /*
 copyright 2001
@@ -45,6 +45,12 @@ such damages.
 #define IFD_ICC_PRESENT 615
 #define IFD_ICC_NOT_PRESENT 616
 #define TAG_IFD_ATR 0x303
+
+/* Extra tags for things they forgot to put in the ifd interface */
+#define SCTAG_IFD_ATRLEN 0x6601
+#define SCTAG_IFD_CARDPRESENT 0x301
+#define SCTAG_OPEN_FLAGS  0x800
+#define SCTAG_RESET_FLAGS 0x801
 
 struct SCARD_IO_HEADER {
     u_long Protocol, Length;

@@ -1,4 +1,4 @@
-/* $Id: r1r2.c,v 1.3 2001/06/08 15:04:03 rees Exp $ */
+/* $Id: r1r2.c,v 1.4 2001/07/02 20:07:08 rees Exp $ */
 
 /*
 copyright 1999
@@ -43,92 +43,110 @@ such damages.
 
 #include "sectok.h"
 
-struct r1r2s {
-    int r1, r2;
+static char *scsws(int sw);
+
+static struct r1r2s {
+    int sw;
     char *s;
 } r1r2s[] = {
-    {0x90, 0x00, "ok"},
-    {0x61, 0xff, "ok; response available %x"},
-    {0x62, 0x34, "no such method"},
-    {0x62, 0x39, "out of memory"},
-    {0x62, 0x55, "null pointer"},
-    {0x62, 0x57, "array index out of bounds"},
-    {0x62, 0x58, "index out of bounds"},
-    {0x62, 0x81, "rec is corrupt"},
-    {0x62, 0x83, "invalid file"},
-    {0x63, 0x00, "auth failed"},
-    {0x63, 0x81, "invalid key"},
-    {0x67, 0xff, "invalid length; should be %x"},
-    {0x69, 0x80, "bad param"},
-    {0x69, 0x82, "unreadable"},
-    {0x69, 0x83, "auth method blocked"},
-    {0x69, 0x84, "data invalid"},
-    {0x69, 0x85, "no file selected"},
-    {0x69, 0x87, "busy/SM missing"},
-    {0x69, 0x88, "SM wrong"},
-    {0x6a, 0x80, "invalid file type"},
-    {0x6a, 0x81, "function not supported"},
-    {0x6a, 0x82, "file not found"},
-    {0x6a, 0x83, "no such rec"},
-    {0x6b, 0x00, "wrong mode"},
-    {0x6c, 0xff, "wrong length; should be %x"},
-    {0x6d, 0x00, "unknown instruction"},
-    {0x6e, 0x00, "wrong class"},
-    {0x6f, 0x14, "invalid applet state"},
-    {0x6f, 0x15, "invalid state"},
-    {0x6f, 0x19, "applet already running"},
-    {0x6f, 0xb0, "uninitialized key"},
-    {0x94, 0x81, "bad state"},
-    {0x00, 0x00, NULL}
+    {0x9000, "ok"},
+
+    /* sectok errors */
+    {0x0601, "no such tty"},
+    {0x0602, "out of memory"},
+    {0x0603, "timeout"},
+    {0x0604, "slag!"},
+    {0x0605, "card type not supported"},
+    {0x0606, "no card in reader"},
+    {0x0607, "not implemented"},
+    {0x0608, "error loading driver"},
+    {0x0609, "communications error"},
+    {0x060a, "reader not open"},
+    {0x060c, "config conflict"},
+    {0x060d, "unknown error"},
+
+    /* card errors */
+    {0x61ff, "ok; response available %x"},
+    {0x6234, "no such method"},
+    {0x6239, "out of memory"},
+    {0x6255, "null pointer"},
+    {0x6257, "array index out of bounds"},
+    {0x6258, "index out of bounds"},
+    {0x6281, "rec is corrupt"},
+    {0x6283, "invalid file"},
+    {0x6300, "auth failed"},
+    {0x6381, "invalid key"},
+    {0x67ff, "invalid length; should be %x"},
+    {0x6980, "bad param"},
+    {0x6982, "unreadable"},
+    {0x6983, "auth method blocked"},
+    {0x6984, "data invalid"},
+    {0x6985, "no file selected"},
+    {0x6987, "busy/SM missing"},
+    {0x6988, "SM wrong"},
+    {0x6a80, "invalid file type"},
+    {0x6a81, "function not supported"},
+    {0x6a82, "file not found"},
+    {0x6a83, "no such rec"},
+    {0x6b00, "wrong mode"},
+    {0x6cff, "wrong length; should be %x"},
+    {0x6d00, "unknown instruction"},
+    {0x6e00, "wrong class"},
+    {0x6f14, "invalid applet state"},
+    {0x6f15, "invalid state"},
+    {0x6f19, "applet already running"},
+    {0x6fb0, "uninitialized key"},
+    {0x9481, "bad state"},
+    {0x0000, NULL}
 };
 
 #ifdef TEST
 main(int ac, char *av[])
 {
-    int r1, r2;
+    int sw;
     char *s;
 
-    if (ac != 3) {
-	fprintf(stderr, "usage: %s sw1 sw2 (in hex, please)\n", av[0]);
+    if (ac != 2) {
+	fprintf(stderr, "usage: %s sw (in hex, please)\n", av[0]);
 	exit(1);
     }
-    sscanf(av[1], "%x", &r1);
-    sscanf(av[2], "%x", &r2);
-    print_r1r2(r1, r2);
+    sscanf(av[1], "%x", &sw);
+    sectok_print_sw(sw);
     exit(0);
 }
 #endif
 
-void
-print_r1r2(int r1, int r2)
+void sectok_print_sw(int sw)
 {
-    printf("%s\n", get_r1r2s(r1, r2));
+    printf("%s\n", sectok_get_sw(sw));
 }
 
-char *
-get_r1r2s(int r1, int r2)
+char *sectok_get_sw(int sw)
 {
     char *s;
     static char buf[64];
 
-    s = scr1r2s(r1, r2);
+    s = scsws(sw);
     if (s)
-	sprintf(buf, "%02x %02x %s", r1, r2, s);
+	sprintf(buf, "%04x %s", sw, s);
     else
-	sprintf(buf, "%02x %02x", r1, r2);
+	sprintf(buf, "%04x", sw);
     return buf;
 }
 
-char *
-scr1r2s(int r1, int r2)
+static char *scsws(int sw)
 {
-    int i;
+    int i, r1 = sectok_r1(sw), r2 = sectok_r2(sw), tr1, tr2;
     static char buf[64];
 
-    for (i = 0; r1r2s[i].s; i++)
-	if (r1r2s[i].r1 == r1 && (r1r2s[i].r2 == r2 || r1r2s[i].r2 == 0xff))
+    for (i = 0; r1r2s[i].s; i++) {
+	tr1 = sectok_r1(r1r2s[i].sw);
+	tr2 = sectok_r2(r1r2s[i].sw);
+	if (tr1 == r1 && (tr2 == r2 || tr2 == 0xff))
 	    break;
-    if (r1r2s[i].r2 != 0xff)
+    }
+
+    if (sectok_r2(r1r2s[i].sw) != 0xff)
 	return r1r2s[i].s;
     sprintf(buf, r1r2s[i].s, r2);
     return buf;
@@ -136,7 +154,7 @@ scr1r2s(int r1, int r2)
 
 #ifndef __palmos__
 int
-fdump_reply(FILE *f, unsigned char *p, int n, int r1, int r2)
+sectok_fdump_reply(FILE *f, unsigned char *p, int n, int sw)
 {
     int i;
 
@@ -144,14 +162,14 @@ fdump_reply(FILE *f, unsigned char *p, int n, int r1, int r2)
 	fprintf(f, "%d:%x ", i + 1, p[i]);
     if (n)
 	fprintf(f, "\n");
-    if (r1)
-	fprintf(f, "%s\n", get_r1r2s(r1, r2));
+    if (sw)
+	fprintf(f, "%s\n", sectok_get_sw(sw));
     return n;
 }
 
 int
-dump_reply(unsigned char *p, int n, int r1, int r2)
+sectok_dump_reply(unsigned char *p, int n, int sw)
 {
-    return fdump_reply(stdout, p, n, r1, r2);
+    return sectok_fdump_reply(stdout, p, n, sw);
 }
 #endif

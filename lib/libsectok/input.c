@@ -1,4 +1,4 @@
-/* $Id: input.c,v 1.4 2001/06/26 22:47:24 rees Exp $ */
+/* $Id: input.c,v 1.5 2001/07/02 20:07:08 rees Exp $ */
 
 /*
 copyright 2001
@@ -51,7 +51,7 @@ char *av[];
     unsigned char obuf[256];
 
     while (1) {
-	n = get_input(stdin, obuf, 1, sizeof obuf);
+	n = sectok_get_input(stdin, obuf, 1, sizeof obuf);
 	if (!n)
 	    break;
 	for (i = 0; i < n; i++)
@@ -64,19 +64,19 @@ char *av[];
 
 #ifndef __palmos__
 int
-get_input(FILE *f, unsigned char *obuf, int omin, int olen)
+sectok_get_input(FILE *f, unsigned char *obuf, int omin, int olen)
 {
     int n = 0;
     char ibuf[1024];
 
     while (n < omin && fgets(ibuf, sizeof ibuf, f) != NULL)
-	n += parse_input(ibuf, obuf + n, olen - n);
+	n += sectok_parse_input(ibuf, obuf + n, olen - n);
     return n;
 }
 #endif
 
 int
-parse_input(char *ibuf, unsigned char *obuf, int olen)
+sectok_parse_input(char *ibuf, unsigned char *obuf, int olen)
 {
     char *cp;
     unsigned char *up;
@@ -137,7 +137,7 @@ parse_input(char *ibuf, unsigned char *obuf, int olen)
 void
 sectok_parse_fname(char *buf, unsigned char *fid)
 {
-    if (buf[0] == '/' || parse_input(buf, fid, 2) < 2) {
+    if (buf[0] == '/' || sectok_parse_input(buf, fid, 2) < 2) {
 	/* root */
 	fid[0] = 0x3f;
 	fid[1] = 0;

@@ -1,4 +1,4 @@
-/* $Id: ifdhandler.c,v 1.4 2001/06/08 15:04:02 rees Exp $ */
+/* $Id: ifdhandler.c,v 1.5 2001/07/02 20:07:08 rees Exp $ */
 
 /*
 copyright 2000
@@ -41,7 +41,7 @@ such damages.
 #include <string.h>
 #include <string.h>
 
-#include "sectok.h"
+#include "sc7816.h"
 #include "todos_scrw.h"
 #include "ifdhandler.h"
 
@@ -69,7 +69,7 @@ IO_Create_Channel(u_long ChannelId)
     int i, ttyn;
 
 #ifdef DEBUG
-    fprintf (stderr, "IO_Create_Channel: ChannelId == %06x\n", ChannelId);
+    fprintf (stderr, "IO_Create_Channel: ChannelId == %06x\n", (int) ChannelId);
 #endif /* DEBUG */
 
     if ((ChannelId & 0xffff0000) != 0x10000)
@@ -161,7 +161,7 @@ IFD_Set_Capabilities(u_long Tag, u_char Value[])
 	    cap_table[i].flags = (int)*((int *)Value);
 #ifdef DEBUG
 	    fprintf (stderr, "cap_table[%x].flags = %d\n",
-		     Tag, cap_table[i].flags);
+		     (int) Tag, cap_table[i].flags);
 #endif DEBUG
 
 	    return 0; 
@@ -222,7 +222,7 @@ IFD_Transmit_to_ICC(struct SCARD_IO_HEADER SendPci,
     int n, sw1, sw2;
 
 #ifdef DEBUG
-    printf("p3 %x ilen %x *olen %x\n", ibuf[4], ilen, *olen);
+    printf("p3 %x ilen %x *olen %x\n", ibuf[4], (int) ilen, (int) *olen);
 #endif
     ilen -= 5;
 

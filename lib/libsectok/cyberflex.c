@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.6 2001/06/28 21:27:54 rees Exp $ */
+/* $Id: cyberflex.c,v 1.7 2001/07/02 20:07:07 rees Exp $ */
 
 /*
 copyright 2000
@@ -56,10 +56,10 @@ such damages.
 #define KEY_FILE_HEADER_SIZE 8
 #define BLOCK_SIZE 8
 
-int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype,
-			  int *r1p, int *r2p)
+int
+cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int ftype, int *swp)
 {
-    int i, n;
+    int i;
     unsigned char data[16];
 
     size += 16;
@@ -75,74 +75,63 @@ int cyberflex_create_file(int fd, int cla, unsigned char *fid, int size, int fty
     for (i = 9; i < 16; i++ )
 	data[i] = 0x00;		/* ACL : cannot do anything without AUT0 */
 
-    n = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, r1p, r2p);
-    if (n < 0 || (*r1p != 0x90 && *r1p != 0x61))
+    sectok_apdu(fd, cla, 0xe0, 0, 0, 0x10, data, 0, NULL, swp);
+    if (!sectok_swOK(*swp))
 	return -1;
 
-    return sectok_selectfile(fd, cla, fid, r1p, r2p);
+    return sectok_selectfile(fd, cla, fid, swp);
 }
 
 int
-cyberflex_delete_file(int fd, int cla, int f0, int f1, int *r1p, int *r2p)
+cyberflex_delete_file(int fd, int cla, unsigned char *fid, int *swp)
 {
-    int n;
-    unsigned char buf[2];
-
-    buf[0] = f0;
-    buf[1] = f1;
-
-    n = scwrite(fd, cla, 0xe4, 0, 0, 0x02, buf, r1p, r2p);
-    if (n < 0 || (*r1p != 0x90 && *r1p != 0x61)) {
-	/* error */
+    sectok_apdu(fd, cla, 0xe4, 0, 0, 0x02, fid, 0, NULL, swp);
+    if (!sectok_swOK(*swp))
 	return -1;
-    }
+
     return 0;
 }
 
 int
 cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
-		       int key_len, unsigned char *key_data, int *r1p, int *r2p)
+		       int key_len, unsigned char *key_data, int *swp)
 {
-    int rv;
-
-    if (sectok_selectfile(fd, cla, root_fid, r1p, r2p) < 0)
+    if (sectok_selectfile(fd, cla, root_fid, swp) < 0)
 	return -1;
 
-    if (sectok_selectfile(fd, cla, key_fid, r1p, r2p)) {
-	if (cyberflex_create_file(fd, cla, key_fid, key_len, 3, r1p, r2p) < 0)
+    if (sectok_selectfile(fd, cla, key_fid, swp) < 0 && *swp == STENOFILE) {
+	if (cyberflex_create_file(fd, cla, key_fid, key_len, 3, swp) < 0)
 	    return -1;
     }
 
     /* Write the key data */
-    rv = scwrite(fd, cla, 0xd6, 0, 0, key_len, key_data, r1p, r2p);
-    if (rv < 0 || (*r1p != 0x90 && *r1p != 0x61))
+    sectok_apdu(fd, cla, 0xd6, 0, 0, key_len, key_data, 0, NULL, swp);
+    if (!sectok_swOK(*swp))
 	return -1;
 
-    return rv;
+    return 0;
 }
 
 /* download RSA private key into 3f.00/00.12 */
 int
 cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 			int nkey_elems, int key_len, unsigned char *key_elems[],
-			int *r1p, int *r2p)
+			int *swp)
 {
-    int i, j, rv, offset = 0, size;
+    int i, j, offset = 0, size;
     unsigned char data[MAX_KEY_FILE_SIZE];
     static unsigned char key_file_header[KEY_FILE_HEADER_SIZE] =
     {0xC2, 0x06, 0xC1, 0x08, 0x13, 0x00, 0x00, 0x05};
     static unsigned char key_header[3] = {0xC2, 0x41, 0x00};
 
     /* select 3f.00 */
-    rv = sectok_selectfile(fd, cla, root_fid, r1p, r2p);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, root_fid, swp) < 0)
+	return -1;
 
     /* select 00.12 */
-    rv = sectok_selectfile(fd, cla, key_fid, r1p, r2p);
-    if (rv < 0) {
+    if (sectok_selectfile(fd, cla, key_fid, swp) < 0 && *swp == STENOFILE) {
 	/* rv != 0, 00.12 does not exist.  create it. */
-	printf ("private key file does not exist.  create it.\n");
-	if (cyberflex_create_file(fd, cla, key_fid, PRV_KEY_SIZE, 3, r1p, r2p) < 0)
+	if (cyberflex_create_file(fd, cla, key_fid, PRV_KEY_SIZE, 3, swp) < 0)
 	    return -1;
     }
 
@@ -175,7 +164,7 @@ cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 
     /* now send this to the card */
     /* select private key file */
-    if (sectok_selectfile(fd, cla, key_fid, r1p, r2p) < 0)
+    if (sectok_selectfile(fd, cla, key_fid, swp) < 0)
 	return -1;
 
     /* update binary */
@@ -188,32 +177,24 @@ cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 	if (size - i > MAX_APDU_SIZE) send_size = MAX_APDU_SIZE;
 	else send_size = size - i;
 
-	rv = scwrite(fd, cla, 0xd6,
-		     i / 256,	/* offset, upper byte */
-		     i % 256,	/* offset, lower byte */
-		     send_size,
-		     data + i,	/* key file */
-		     r1p, r2p);
+	sectok_apdu(fd, cla, 0xd6, i >> 8, i & 0xff, send_size, data + i, 0, NULL, swp);
 
-	if (*r1p != 0x90 && *r1p != 0x61)
+	if (!sectok_swOK(*swp))
 	    return -1;
     }
 
-    printf ("rsa key loading done! :)\n");
     return 0;
 }
 
 int
 cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len)
 {
-    int n, r1, r2;
+    int sw;
 
-    n = scwrite(fd, cla, 0x2a, 0, 0, aut0len, aut0, &r1, &r2);
-    if (n < 0 || r1 != 0x90) {
-	if (n >= 0)
-	    print_r1r2(r1, r2);
+    sectok_apdu(fd, cla, 0x2a, 0, 0, aut0len, aut0, 0, NULL, &sw);
+    if (!sectok_swOK(sw))
 	return -1;
-    }
+
     return 0;
 }
 
@@ -252,16 +233,16 @@ int
 cyberflex_inq_class(int fd)
 {
     unsigned char buf[32];
-    int n, r1, r2;
+    int n, sw;
 
-    n = scread(fd, 0x00, 0xca, 0, 1, 0x16, buf, &r1, &r2);
-    if (n >= 0 && r1 == 0x90)
+    n = sectok_apdu(fd, 0x00, 0xca, 0, 1, 0, NULL, 0x16, buf, &sw);
+    if (sectok_swOK(sw))
 	return 0x00;
 
-    if (n >= 0 && r1 == 0x6d) {
+    if (n >= 0 && sectok_r1(sw) == 0x6d) {
         /* F0 card? */
-        n = scread(fd, 0xf0, 0xca, 0, 1, 0x16, buf, &r1, &r2);
-        if (n >= 0 && r1 == 0x90)
+        sectok_apdu(fd, 0xf0, 0xca, 0, 1, 0, NULL, 0x16, buf, &sw);
+        if (sectok_swOK(sw))
 	    return 0xf0;
     }
 
