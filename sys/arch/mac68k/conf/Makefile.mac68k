@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.14 1997/04/23 00:57:15 gene Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.15 1997/05/29 00:16:05 niklas Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for OpenBSD
@@ -40,6 +40,10 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
+HOSTCC?=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
+
 ### Find out what to use for libkern.
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
@@ -67,13 +71,13 @@ LIBCOMPAT=${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
-
-HOSTED_C_C=	${NORMAL_C_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
 
 %OBJS
 
