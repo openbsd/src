@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.15 2000/04/03 21:19:36 aaron Exp $
+.\"	$OpenBSD: isapnp.4,v 1.16 2000/04/11 14:01:52 aaron Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -58,7 +58,7 @@ Adaptec AHA-1520B SCSI controller card.
 .It aha
 Adaptec AHA-154x SCSI controller card.
 .It wdc
-IDE controllers (typically found on sound cards)
+IDE controllers (typically found on sound cards).
 .El
 .Pp
 .Ss Serial and parallel interfaces
@@ -72,13 +72,13 @@ Win-modems are not supported.
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ep
-3Com 3C509B Etherlink-III Ethernet interface.
+3Com 3c509B EtherLink-III Ethernet interfaces.
 .It le
 Ethernet driver for Lance based Ethernet interfaces.
 .It ne
 NE2000-compatible Ethernet interfaces.
 .It we
-SMC EtherEZ ethernet cards
+SMC EtherEZ ethernet interfaces.
 .El
 .Ss Sound
 .Bl -tag -width speaker -offset indent -compact
@@ -105,7 +105,8 @@ device will be found which the kernel does not recognize.
 The kernel matches
 .Nm
 devices to device drivers based on identifiers which each device
-provides.  For example, this device:
+provides.
+For example, this device:
 .Pp
 joy0 at isapnp0 <Creative SB16 PnP, CTL7001, PNPB02F, Game> port 0x200/8
 .Pp
@@ -113,16 +114,17 @@ This joystick calls itself by the two names
 .Dq CTL7001
 and
 .Dq PNPB02F .
-The latter is a standard name (which the kernel automatically recognises),
+The latter is a standard name (which the kernel automatically recognizes),
 but
 .Dq CTL7001
-is a vendor-specific name which needs to be added to a table.  Unfortunately,
+is a vendor-specific name which needs to be added to a table.
+Unfortunately,
 some devices advertise only their vendor-specific name; for instance:
 .Pp
 isapnp0: <PnP Sound Chip, @P@1001, , > port 0x200/8 not configured
 .Pp
-Testing will show that this device is actually a joystick.  To resolve
-the issue, the actual name
+Testing will show that this device is actually a joystick.
+To resolve the issue, the actual name
 .Dq @P@1001
 has to be entered into the database found in
 .Pa /sys/dev/isa/pnpdevs
@@ -130,19 +132,12 @@ and a new kernel must be built.
 Then the device will probe like this:
 .Pp
 joy0 at isapnp0 <PnP Sound Chip, @P@1001, , > port 0x200/8
-.Pp
 .Sh SEE ALSO
-.Xr aha 4 ,
-.Xr aic 4 ,
-.Xr ep 4 ,
+.Xr cardbus 4 ,
 .Xr intro 4 ,
-.Xr joy 4 ,
-.Xr le 4 ,
-.Xr ne 4 ,
-.Xr pccom 4 ,
-.Xr sb 4 ,
-.Xr wss 4 ,
-.Xr ym 4
+.Xr isa 4 ,
+.Xr pci 4 ,
+.Xr usb 4
 .Sh HISTORY
 The
 .Nm

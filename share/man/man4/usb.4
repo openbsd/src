@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.4 2000/04/03 21:19:37 aaron Exp $
+.\"	$OpenBSD: usb.4,v 1.5 2000/04/11 14:01:52 aaron Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm usb
-.Nd Universal Serial Bus driver
+.Nd introduction to Universal Serial Bus support
 .Sh SYNOPSIS
 .Cd "uhci*   at pci? function ?"
 .Cd "ohci*   at pci? function ?"
@@ -52,7 +52,7 @@
 .Pp
 .Cd "#include <dev/usb/usb.h>"
 .Cd "#include <dev/usb/usbhid.h>"
-.Sh INTRODUCTION
+.Sh DESCRIPTION
 .Ox
 provides machine-independent bus support and drivers for Universal Serial Bus
 .Pq Tn USB
@@ -94,15 +94,31 @@ system.
 includes machine-independent
 .Tn USB
 drivers, sorted by driver name:
-.Bl -tag -width speaker -offset indent
+.Pp
+.Bl -tag -width speaker -offset indent -compact
+.It if_aue
+AN986 Pegasus-based Ethernet interfaces.
+.It if_cue
+CATC USB-EL1201A-based Ethernet interfaces.
+.It if_kue
+Kawasaki LSI KL5KUSB101B-based Ethernet interfaces.
 .It uaudio
-driver for audio devices.
+Audio devices.
 .It ugen
-generic driver for
+Generic driver for unknown
 .Tn USB
 devices.
 .It uhid
-generic driver for Human Interface Devices.
+Generic driver for Human Interface Devices.
+.It ulpt
+.Tn USB
+Printers.
+.It umass
+.Tn USB
+Mass Storage Devices, i.e., external disk drives.
+.It umodem
+.Tn USB
+Modems.
 .El
 .Sh INTRODUCTION TO USB
 The
@@ -146,7 +162,8 @@ and interfaces.
 Each device located on a hub has several
 .Xr config 8
 locators:
-.Bl -tag -compact -width xxxxxxx
+.Pp
+.Bl -tag -width configuration -compact
 .It Cd port
 Number of the port on closest upstream hub.
 .It Cd configuration
@@ -319,19 +336,12 @@ The include file
 similarly contains the definitions for
 Human Interface Devices
 .Pq Tn HID .
-.Sh BUGS
-There should be a serial number locator, but
-.Ox
-does not have string valued locators.
 .Sh SEE ALSO
-.\".Xr usb 3 ,
+.Xr cardbus 4 ,
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
 .Xr pci 4 ,
-.Xr uaudio 4 ,
-.Xr ugen 4 ,
-.Xr uhid 4 ,
-.\".Xr ukbd 4 ,
-.\".Xr ulpt 4 ,
-.\".Xr ums 4 ,
 .Xr usbdevs 8
 .Pp
 The
@@ -346,3 +356,7 @@ The
 driver
 appeared in
 .Ox 2.6 .
+.Sh BUGS
+There should be a serial number locator, but
+.Ox
+does not have string valued locators.
