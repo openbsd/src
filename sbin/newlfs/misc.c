@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1996/06/23 14:31:53 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1997/07/25 19:13:09 mickey Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/18 14:58:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1996/06/23 14:31:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/07/25 19:13:09 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,14 +60,14 @@ log2(num)
         return (i);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 fatal(const char *fmt, ...)
 #else
 fatal(fmt, va_alist)
@@ -76,7 +76,7 @@ fatal(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

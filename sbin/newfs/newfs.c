@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.15 1997/06/16 00:03:12 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.16 1997/07/25 19:13:07 mickey Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.15 1997/06/16 00:03:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.16 1997/07/25 19:13:07 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.15 1997/06/16 00:03:12 deraadt Exp 
 #include <unistd.h>
 #include <util.h>
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -88,7 +88,7 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-#if __STDC__
+#ifdef __STDC__
 void	fatal(const char *fmt, ...);
 #else
 void	fatal();
@@ -679,7 +679,7 @@ rewritelabel(s, fd, lp)
 
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 fatal(const char *fmt, ...)
 #else
 fatal(fmt, va_alist)
@@ -689,7 +689,7 @@ fatal(fmt, va_alist)
 {
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

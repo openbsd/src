@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/03/02 05:25:56 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1997/07/25 19:13:15 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/03/02 05:25:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/07/25 19:13:15 mickey Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/03/02 05:25:56 millert Exp $"
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -118,7 +118,7 @@ main(argc, argv)
 
 /*VARARGS*/
 int
-#if __STDC__
+#ifdef __STDC__
 ask(int def, const char *fmt, ...)
 #else
 ask(def, fmt, va_alist)
@@ -140,7 +140,7 @@ ask(def, fmt, va_alist)
 		return (def);
 	}
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.8 1997/06/22 22:19:11 downsj Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.9 1997/07/25 19:13:10 mickey Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.8 1997/06/22 22:19:11 downsj Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.9 1997/07/25 19:13:10 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -231,14 +231,14 @@ usage()
 	exit(1);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 err(const char *fmt, ...)
 #else
 err(fmt, va_alist)
@@ -247,7 +247,7 @@ err(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

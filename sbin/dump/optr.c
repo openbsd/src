@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.14 1997/07/05 05:35:57 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.15 1997/07/25 19:13:03 mickey Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.14 1997/07/05 05:35:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.15 1997/07/25 19:13:03 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ timeest()
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 msg(const char *fmt, ...)
 #else
 msg(fmt, va_alist)
@@ -244,7 +244,7 @@ msg(fmt, va_alist)
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -257,7 +257,7 @@ msg(fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 msgtail(const char *fmt, ...)
 #else
 msgtail(fmt, va_alist)
@@ -266,7 +266,7 @@ msgtail(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -276,7 +276,7 @@ msgtail(fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 quit(const char *fmt, ...)
 #else
 quit(fmt, va_alist)
@@ -290,7 +290,7 @@ quit(fmt, va_alist)
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.9 1997/07/05 20:51:26 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.10 1997/07/25 19:13:13 mickey Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -1254,14 +1254,14 @@ checksum(buf)
 }
 
 #ifdef RRESTORE
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 msg(const char *fmt, ...)
 #else
 msg(fmt, va_alist)
@@ -1270,7 +1270,7 @@ msg(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

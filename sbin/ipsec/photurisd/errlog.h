@@ -40,7 +40,7 @@
 #define EXTERN extern
 #endif
 
-#if __STDC__
+#ifdef __STDC__
 EXTERN void crit_error __P((int, char *, ...));
 EXTERN void log_error __P((int, char *, ...));
 #else

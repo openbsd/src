@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.1 1996/10/20 08:36:25 tholo Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.2 1997/07/25 19:13:18 mickey Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char rcsid[] = "$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -85,7 +85,7 @@ hotroot()
 
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 errexit(const char *fmt, ...)
 #else
 errexit(fmt, va_alist)
@@ -95,7 +95,7 @@ errexit(fmt, va_alist)
 {
 	va_list ap;
 	
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -129,7 +129,7 @@ vmsg(fatal, fmt, ap)
 
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 pfatal(const char *fmt, ...)
 #else
 pfatal(fmt, va_alist)
@@ -139,7 +139,7 @@ pfatal(fmt, va_alist)
 {
 	va_list ap;
 	
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -150,7 +150,7 @@ pfatal(fmt, va_alist)
 
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 pwarn(const char *fmt, ...)
 #else
 pwarn(fmt, va_alist)
@@ -160,7 +160,7 @@ pwarn(fmt, va_alist)
 {
 	va_list ap;
 	
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -177,7 +177,7 @@ perror(s)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 panic(const char *fmt, ...)
 #else
 panic(fmt, va_alist)
@@ -187,7 +187,7 @@ panic(fmt, va_alist)
 {
 	va_list ap;
 	
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

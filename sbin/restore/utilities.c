@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.3 1997/07/05 20:51:27 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.4 1997/07/25 19:13:12 mickey Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.3 1997/07/05 20:51:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.4 1997/07/25 19:13:12 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -403,14 +403,14 @@ reply(question)
 /*
  * handle unexpected inconsistencies
  */
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 panic(const char *fmt, ...)
 #else
 panic(fmt, va_alist)
@@ -419,7 +419,7 @@ panic(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
