@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.7 1998/10/13 23:09:49 marc Exp $	*/
+/*	$OpenBSD: extract.c,v 1.8 1999/07/26 14:40:07 aaron Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.7 1998/10/13 23:09:49 marc Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.8 1999/07/26 14:40:07 aaron Exp $";
 #endif
 
 /*
@@ -30,8 +30,8 @@ static const char *rcsid = "$OpenBSD: extract.c,v 1.7 1998/10/13 23:09:49 marc E
 
 
 #define STARTSTRING "tar cf - "
-#define TOOBIG(str) ((strlen(str) + 22 + strlen(home) + where_count > maxargs) \
-		|| (strlen(str) + 6 + strlen(home) + perm_count > maxargs))
+#define TOOBIG(str) ((strlen(str) + FILENAME_MAX + where_count > maxargs) \
+		|| (strlen(str) + FILENAME_MAX + perm_count > maxargs))
 
 #define PUSHOUT(todir) /* push out string */				\
         if (where_count > sizeof(STARTSTRING)-1) {			\
