@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.11 2004/02/02 16:04:54 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.12 2004/04/27 18:26:35 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -280,6 +280,7 @@ print_msg(struct sadb_msg *msg, int promisc)
 		printf("\terrno %u: %s\n", msg->sadb_msg_errno,
 		    strerror(msg->sadb_msg_errno));
 	for (ext = (struct sadb_ext *)(msg + 1);
+	    ext->sadb_ext_len > 0 &&
 	    (u_int8_t *)ext - (u_int8_t *)msg <
 	    msg->sadb_msg_len * PFKEY2_CHUNK;
 	    ext = (struct sadb_ext *)((u_int8_t *)ext +
