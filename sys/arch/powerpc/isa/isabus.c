@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.4 1998/08/23 22:08:50 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.5 1998/08/25 02:36:05 rahnds Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -174,7 +174,7 @@ typedef void (void_f) (void);
 extern void_f *pending_int_f;
 void isa_do_pending_int();
 
-struct evcnt evirq[ICU_LEN];
+struct evcnt evirq[ICU_LEN*2];
 void
 isabrattach(parent, self, aux)
 	struct device *parent;
@@ -209,7 +209,7 @@ isabrattach(parent, self, aux)
 	iba.iba_ic = &sc->p4e_isa_cs;
 	{
 		int i;
-		for (i = 0; i < ICU_LEN; i++) {
+		for (i = 0; i < (ICU_LEN*2); i++) {
 			evcnt_attach(self,"intr", &evirq[i]);
 			/* put one in so they always print XXX */
 			evirq[i].ev_count++;
@@ -450,7 +450,7 @@ static int processing;
 		vector = ffs(hwpend) - 1;
 		hwpend &= ~(1L << vector);
 		ih = intrhand[vector];
-		evirq[vector].ev_count++;
+		evirq[ICU_LEN+vector].ev_count++;
 		while(ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
@@ -533,6 +533,7 @@ isabr_iointr(mask, cf)
 #endif
 	if((pcpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
+		evirq[isa_vector].ev_count++;
 	}
 	else {
 		ih = intrhand[isa_vector];
@@ -559,9 +560,9 @@ isabr_iointr(mask, cf)
 	/* now ack the interrupt */
 
 	if (vector > 7) {
-		isa_outb(IO_ICU2, 0x20 | isa_vector & 0x07);
+		isa_outb(IO_ICU2, 0x60 | isa_vector & 0x07);
 	}
-	isa_outb(IO_ICU1, 0x20 | (isa_vector > 7 ? 2 : isa_vector));
+	isa_outb(IO_ICU1, 0x60 | (isa_vector > 7 ? 2 : isa_vector));
 
 	splx(pcpl);	/* Process pendings. */
 }
