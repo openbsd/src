@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.14 1999/10/20 19:15:51 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.15 1999/11/16 21:57:49 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -431,28 +431,28 @@ sput (u_char *s, U_char kernel, int len, int page)
 
 	/* char range 0x20...0xff processing depends on current state */
 
+		if(svsp->lastchar && svsp->m_awm &&
+	   	   (svsp->lastrow == svsp->row))
+		{
+			svsp->cur_offset++;
+			svsp->col = 0;
+			svsp->lastchar = 0;
+			if (check_scrollback(svsp))
+			{
+				bcopy(svsp->Crtat +
+			      	      svsp->cur_offset -
+			      	      svsp->maxcol,
+	    		      	      svsp->Scrollback +
+			      	      (svsp->scr_offset *
+			      	      svsp->maxcol),
+		      	      	      svsp->maxcol * CHR);
+			}
+			check_scroll(svsp);
+		}
+
 		switch(svsp->state)
 		{
 			case STATE_INIT:
-				if(svsp->lastchar && svsp->m_awm &&
-				   (svsp->lastrow == svsp->row))
-				{
-					svsp->cur_offset++;
-					svsp->col = 0;
-					svsp->lastchar = 0;
-					if (check_scrollback(svsp))
-					{
-						bcopy(svsp->Crtat +
-						      svsp->cur_offset -
-						      svsp->maxcol,
-		      				      svsp->Scrollback +
-						      (svsp->scr_offset *
-						      svsp->maxcol),
-		      				      svsp->maxcol * CHR);
-					}
-					check_scroll(svsp);
-				}
-
 				if(svsp->irm)
 					bcopy  ((svsp->Crtat
 						 + svsp->cur_offset),
@@ -921,6 +921,16 @@ sput (u_char *s, U_char kernel, int len, int page)
 
 					case 'r': /* set scrolling region */
 						vt_stbm(svsp);
+						svsp->state = STATE_INIT;
+						break;
+
+					case 's': /* save cursor position */
+						vt_sc(svsp);
+						svsp->state = STATE_INIT;
+						break;
+
+					case 'u': /* restore cursor position */
+						vt_rc(svsp);
 						svsp->state = STATE_INIT;
 						break;
 
