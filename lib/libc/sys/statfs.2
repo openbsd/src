@@ -73,7 +73,9 @@ struct statfs {
     long    f_ffree;	/* free file nodes in fs */
     fsid_t  f_fsid;	/* file system id (super-user only) */
     uid_t   f_owner;	/* user that mounted the file system */
-    long    f_spare[4];	/* spare for later */
+    long    f_syncwrites; /* count of sync writes since mount */
+    long    f_asyncwrites; /* count of async writes since mount */
+    long    f_spare[2];	/* spare for later */
     char    f_fstypename[MFSNAMELEN]; /* fs type name */
     char    f_mntonname[MNAMELEN];    /* directory on which mounted */
     char    f_mntfromname[MNAMELEN];  /* mounted file system */
