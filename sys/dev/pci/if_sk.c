@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.14 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.15 2001/08/15 16:50:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1543,14 +1543,16 @@ void sk_intr_xmac(sc_if)
 	sc = sc_if->sk_softc;
 	status = SK_XM_READ_2(sc_if, XM_ISR);
 
-	if (status & XM_ISR_LINKEVENT) {
-		SK_XM_SETBIT_2(sc_if, XM_IMR, XM_IMR_LINKEVENT);
-		if (sc_if->sk_link == 1)
-			sc_if->sk_link = 0;
-	}
+	if (sc_if->sk_phytype == SK_PHYTYPE_XMAC) {
+		if (status & XM_ISR_GP0_SET) {
+			SK_XM_SETBIT_2(sc_if, XM_IMR, XM_IMR_GP0_SET);
+			timeout_add(&sc_if->sk_tick_ch, hz);
+		}
 
-	if (status & XM_ISR_AUTONEG_DONE)
-		timeout_add(&sc_if->sk_tick_ch, hz);
+		if (status & XM_ISR_AUTONEG_DONE) {
+			timeout_add(&sc_if->sk_tick_ch, hz);
+		}
+	}
 
 	if (status & XM_IMR_TX_UNDERRUN)
 		SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_FLUSH_TXFIFO);
