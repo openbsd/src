@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ext2fs.8,v 1.5 1999/07/21 01:07:54 deraadt Exp $
+.\"	$OpenBSD: mount_ext2fs.8,v 1.6 2000/10/19 17:43:04 marc Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,14 @@ command attaches a ext2fs file system
 .Ar special
 device on to the file system tree at the point
 .Ar node .
+This command is invoked by
+.Xr mount 8
+when using the syntax
+.Bd -ragged -offset 4n
+.Nm mount Op options
+-t ext2fs
+.Ar special Ar node
+.Ed
 .Pp
 This command is normally executed by
 .Xr mount 8
