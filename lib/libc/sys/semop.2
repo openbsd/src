@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.12 2003/11/20 20:46:24 millert Exp $
+.\"	$OpenBSD: semop.2,v 1.13 2004/05/03 17:36:29 millert Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -41,7 +41,7 @@
 .Fd #include <sys/ipc.h>
 .Fd #include <sys/sem.h>
 .Ft int
-.Fn semop "int semid" "struct sembuf *sops" "u_int nsops"
+.Fn semop "int semid" "struct sembuf *sops" "size_t nsops"
 .Sh DESCRIPTION
 .Fn semop
 provides a number of atomic operations on a set of semaphores.
