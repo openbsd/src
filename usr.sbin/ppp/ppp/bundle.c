@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.5 1998/12/10 18:40:41 brian Exp $
+ *	$Id: bundle.c,v 1.6 1999/01/06 00:10:02 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1003,8 +1003,9 @@ bundle_SetRoute(struct bundle *bundle, int cmd, struct in_addr dst,
   cp += rtdata.sin_len;
   if (cmd == RTM_ADD) {
     if (gateway.s_addr == INADDR_ANY) {
-      log_Printf(LogERROR, "bundle_SetRoute: Cannot add a route with"
-                 " destination 0.0.0.0\n");
+      if (!ssh)
+        log_Printf(LogERROR, "bundle_SetRoute: Cannot add a route with"
+                   " destination 0.0.0.0\n");
       close(s);
       return result;
     } else {
