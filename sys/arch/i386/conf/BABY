@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.13 1997/02/08 09:23:57 deraadt Exp $
+#	$OpenBSD: BABY,v 1.14 1997/04/15 13:12:36 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -198,3 +198,4 @@ pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
 pseudo-device	ccd	4		# concatenated disk devices
+pseudo-device	rd	2		# ramdisk (don't remove ;)
