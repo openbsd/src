@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.10 2001/06/25 23:29:56 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.11 2001/06/26 18:19:43 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -144,11 +144,6 @@ u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
 int prog_switch (void *arg);
-typedef int mac_intr_handle_t;
-
-typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
-typedef void     (intr_disestablish_t) __P((void *, void *));
 
 intr_establish_t macintr_establish;
 intr_disestablish_t macintr_disestablish;

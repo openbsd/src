@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.29 2001/06/25 23:29:59 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.30 2001/06/26 18:19:43 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -1033,12 +1033,6 @@ mpc_intr_string(lcv, ih)
 	sprintf(str, "irq %d", ih);
 	return(str);
 }
-
-typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
-typedef void     (intr_disestablish_t) __P((void *, void *));
-extern intr_establish_t *intr_establish_func;
-extern intr_disestablish_t *intr_disestablish_func;
 
 void *
 mpc_intr_establish(lcv, ih, level, func, arg, name)

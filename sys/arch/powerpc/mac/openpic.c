@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.12 2001/06/25 23:29:56 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.13 2001/06/26 18:19:43 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -134,11 +134,6 @@ u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
 static int prog_switch (void *arg);
-typedef int mac_intr_handle_t;
-
-typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
-typedef void     (intr_disestablish_t) __P((void *, void *));
 
 vaddr_t openpic_base;
 void * openpic_intr_establish( void * lcv, int irq, int type, int level,
@@ -177,7 +172,7 @@ openpic_attach(parent, self, aux)
 
 #if 1
 	mac_intr_establish(parent, 0x37, IST_LEVEL,
-		IPL_HIGH, prog_switch, 0x37, "prog button");
+		IPL_HIGH, prog_switch, (void*)0x37, "prog button");
 #endif
 	ppc_intr_enable(1);
 

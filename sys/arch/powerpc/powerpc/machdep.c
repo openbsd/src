@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2001/06/26 05:17:04 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2001/06/26 18:19:43 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1053,9 +1053,6 @@ systype(char *name)
  *
  */
 #include <dev/pci/pcivar.h>
-typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
-typedef void     (intr_disestablish_t) __P((void *, void *));
 
 int ppc_configed_intr_cnt = 0;
 struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];

@@ -219,13 +219,6 @@ macobio_print(aux, macobio)
 #endif
 }
 
-typedef int mac_intr_handle_t;
-
-typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
-typedef void     (intr_disestablish_t) __P((void *, void *));
-
-
 void *
 undef_mac_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	void * lcv;

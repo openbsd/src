@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.8 2001/06/24 23:26:28 drahn Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.9 2001/06/26 18:19:43 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -100,5 +100,15 @@ void	set_iointr __P((void (*)(void *, int)));
 int	badaddr	__P((void *, u_int32_t));
 void calc_delayconst(void);
 void ofrootfound(void);
+
+typedef int mac_intr_handle_t;
+typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
+            int, int, int (*func)(void *), void *, char *));
+typedef void     (intr_disestablish_t) __P((void *, void *));
+
+intr_establish_t mac_intr_establish;
+intr_disestablish_t mac_intr_disestablish;
+extern intr_establish_t *intr_establish_func;
+extern intr_disestablish_t *intr_disestablish_func;
 
 #endif /* _MACHINE_AUTOCONF_H_ */
