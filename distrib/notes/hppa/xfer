@@ -1,7 +1,16 @@
-dnl	$OpenBSD: xfer,v 1.1 2002/12/19 01:00:13 miod Exp $
+dnl	$OpenBSD: xfer,v 1.2 2003/02/15 01:23:26 miod Exp $
+Installation is supported from several media types, including:
 
-Since there is no installation media for the MACHINE port, there is no need
-for specific media filling instructions. You will just need to be able to
-unpack the OpenBSD sets on the diskless boot server, as told in the
-``Installing the OpenBSD system'' below.
+	CD-ROM
+	FFS partitions
+	Tape
+	FTP
+	HTTP
 
+
+OpenBSDXferShortPrelude
+
+
+OpenBSDXferBareTape
+
+OpenBSDXferFFS

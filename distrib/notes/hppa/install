@@ -1,11 +1,12 @@
-dnl	$OpenBSD: install,v 1.2 2003/01/04 00:18:06 miod Exp $
-dnl lots of texts coming from {mac68k,mvme68k,vax}/install intially
+dnl	$OpenBSD: install,v 1.3 2003/02/15 01:23:26 miod Exp $
+dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
+OpenBSDInstallPrelude
 
-At the moment, the only way to install OpenBSD is to use a diskless setup.
-No installation media is provided.
+Currently, the only way to bootstrap the installation procedure is 
+to boot the miniroot over the network.
 
 
-Diskless Setup Configuration:
+Booting from Network:
 
 In order to bootstrap via the network, you must provide a second system to
 act as a boot server. It is convenient if this is a second OpenBSD machine
@@ -18,7 +19,6 @@ Your MACHINE expects to be able to download a so-called LIF (``Logical
 Interchange Format'') image, containing both the boot code and the kernel,
 via the HP rboot protocol, for older firmware, or via bootp or dhcp, for
 more recent firmware.
-
 
 Old firmware operation
 
@@ -37,12 +37,11 @@ In this case, you will need to setup rbootd on the server. Start by creating
 an /etc/rbootd.conf file on the bootserver. The format of this file is the
 ethernet address followed by the LIF filename. Here is an example:
 
-	08:00:09:70:c4:11		boot.lif
+	08:00:09:70:c4:11		lif{:--:}OSrev.fs
 
 Then start rbootd (or configure /etc/rc.conf to always start rbootd). Once
 rbootd is running, the server name will then appear on the MACHINE as part of
 the possible boot choices in a boot device search (``s'' command).
-
 
 Modern firmware operation
 
@@ -57,7 +56,7 @@ and declare an information block. Here is an example:
 
 	boron:\
 		ha=08000970c411:\
-		bf=boot.lif:\
+		bf=lif{:--:}OSrev.fs:\
 		hd=:\
 		ht=ethernet:\
 		ip=10.42.42.42:\
@@ -67,74 +66,70 @@ and declare an information block. Here is an example:
 
 Do not forget to enable bootpd, either as a standalone process, or via inetd.
 
-You will also need to enable tftpd, for the MACHINE to download its boot.lif
-(bf entry) image from the server in the /tftpboot (td entry) directory.
-
+You will also need to enable tftpd, for the MACHINE to download the
+miniroot (bf entry) from the server in the /tftpboot (td entry) directory.
 
 Common operation
 
-Next you need to export a directory for your new machine to mount over
-NFS. This is accomplished by adding an entry to /etc/exports such as:
+You are now ready to bootstrap the miniroot. On your MACHINE, escape to a
+prompt and boot from the network by entering ``boot lan isl''. On old PDC
+firmware, you will need to enter administration mode first.
 
-	/export/MACHINE -maproot=root snake
 
-where ``snake'' is the hostname of your MACHINE.
+Installing using the netboot procedure:
 
-Finally, you need to add an entry for your MACHINE in /etc/bootparams.
-For example:
+OpenBSDInstallPart2
 
-	snake		root=myserver:/export/MACHINE
+	Boot your machine from the installation media as described above.
 
-Enable rpc.bootparamd either by turning it on in /etc/rc.conf and rebooting,
-or by running it manually.
+dnl mention slow cdrom someday
+	It will take a while to load the miniroot image, especially from
+	a slow network connection, most likely more than a minute.
+	If some action doesn't eventually happen, or the spinning cursor
+	has stopped and nothing further has happened, either your boot
+	media is bad, your diskless setup is incorrect, or you may have
+	a hardware or configuration problem.
 
-Unpack at least `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' sets on the server in the
-root directory for your target machine, `/export/MACHINE' in this example. If
-you elect to use a separately NFS-mounted filesystem for `/usr' with your
-diskless setup, make sure the "./usr" base files in base{:--:}OSrev.tgz end
-up in the correct location. One way to do this is to temporarily use a
-loopback mount on the server, re-routing <root>/usr to your server's exported
-OpenBSD "/usr" directory.
+	When presented with the boot prompt, simply press enter, or wait
+	for the kernel to autoboot after 5 seconds.
 
-A few configuration files in <root>/etc need to be edited:
+OpenBSDBootMsgs
 
-	dhclient.conf
-		DHCP client information, if necessary, check dhclient.conf(5)
-		for the syntax.
-	fstab
-		Enter the entries for the remotely mounted filesystems.
-		For example:
-		  server:/export/root/client       /     nfs  rw 0 0
-		  server:/export/exec/MACHINE.OpenBSD /usr  nfs  rw 0 0
-		Be sure to add the server swap space, such as:
-		  server:/export/swap/client none swap sw,nfsmntpt=/swap 0 0
-		after creating the `<root>/swap' directory.
-	hostname.if (likely, hostname.ie0)
-		Configuration of the host adapter, check hostname.if(5)
-		for the syntax.
-	hosts
-		Add the IP addresses of both server and client.
-	mygate
-		This file contains the IP address of the default gateway.
-	myname
-		This file contains the client's hostname, with a
-		fully-qualified domain name.
-	resolv.conf
-		Name server configuration, check resolv.conf(5) for the
-		syntax.
+	You will next be asked for your terminal type.  If you are
+	installing from a non-serial console, the default of "vt100"
+	is correct.  If you are installing from a serial console
+	you should choose the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt100).
+	
+OpenBDSInstallPart3
 
-Now you must populate the `/dev' directory for your client. After
-changing your working directory to `<root>/dev', run the MAKEDEV script.
-Depending on your host operating system, you may get error messages about
-unknown users and groups. These errors are inconsequential for the purpose
-of installing OpenBSD.  However, you will want to correct them after
-booting your machine. To do so, simply re-run MAKEDEV on your OpenBSD
-machine once it has booted.
+OpenBSDInstallPart4
 
-Once these files are configured, your system should be able to behave like
-any other OpenBSD system once booted. On your MACHINE, escape to a prompt and
-boot from the network by entering ``boot lan isl''. On old PDC firmware, you
-will need to enter administration mode first.
+	Since the target disk will become the boot disk for your new
+	OpenBSD/MACHINE installation, the disklabel program will restrict
+	the available disk area to keep the first cylinder, which will
+	contain the bootblock, safe from being overwritten. If you don't
+	plan to install a bootblock on this disk, you can reclaim this
+	space with the 'b' command.
 
-dnl this is a bit hypocritical. Oh well.
+OpenBSDDInstallPart5(sd0)
+
+OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
+
+OpenBSDFTPInstall
+
+OpenBSDHTTPInstall
+
+OpenBSDTAPEInstall
+
+OpenBSDCDROMInstall
+
+OpenBSDNFSInstall
+
+OpenBSDDISKInstall({:-"hdN" or -:},{:-only -:})
+
+OpenBSDCommonFS
+
+OpenBSDCommonURL
+
 OpenBSDCongratulations
