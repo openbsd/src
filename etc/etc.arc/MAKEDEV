@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.11 1997/04/23 20:39:01 gvf Exp $
+#	$OpenBSD: MAKEDEV,v 1.12 1997/04/30 22:04:26 niklas Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -52,7 +52,7 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty00 tty01 pty0 pty1
+	sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 ss0 tty00 tty01 pty0 pty1
 	sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
 	;;
 
@@ -217,6 +217,17 @@ cd*)
 	chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 	chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	umask 77
+	;;
+
+ss*)
+	unit=`expr $i : 'ss\(.*\)'`
+	rm -f ss$unit
+	mknod ss$unit c 34 $unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
+#	backwards compatibility with older PINTs
+	rm -f scan$unit
+	ln -s ss$unit scan$unit
 	;;
 
 lpt*)
