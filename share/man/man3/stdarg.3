@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdarg.3,v 1.5 2000/03/19 19:25:25 aaron Exp $
+.\"	$OpenBSD: stdarg.3,v 1.6 2000/03/21 14:08:35 aaron Exp $
 .\"	$NetBSD: stdarg.3,v 1.3 1994/11/30 15:24:37 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -157,7 +157,7 @@ void foo(char *fmt, ...)
 
 	va_start(ap, fmt);
 	while (*fmt)
-		switch(*fmt++) {
+		switch (*fmt++) {
 		case 's':			/* string */
 			s = va_arg(ap, char *);
 			printf("string %s\en", s);
