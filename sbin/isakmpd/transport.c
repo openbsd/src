@@ -1,8 +1,8 @@
-/*	$OpenBSD: transport.c,v 1.4 1999/02/26 03:51:07 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.25 1999/02/25 11:39:24 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.5 1999/04/19 21:04:00 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.32 1999/04/13 20:00:42 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,9 +65,58 @@ transport_init (void)
 void
 transport_add (struct transport *t)
 {
+  log_debug (LOG_TRANSPORT, 70, "transport_add: adding %p", t);
   TAILQ_INIT (&t->sendq);
   LIST_INSERT_HEAD (&transport_list, t, link);
   t->flags = 0;
+  t->refcnt = 0;
+}
+
+/* Add a referer to transport T.  */
+void
+transport_reference (struct transport *t)
+{
+  t->refcnt++;
+  log_debug (LOG_TRANSPORT, 90,
+	     "transport_reference: transport %p now has %d references", t,
+	     t->refcnt);
+}
+
+/*
+ * Remove a referer from transport T, removing all of T when no referers left.
+ */
+void
+transport_release (struct transport *t)
+{
+  log_debug (LOG_TRANSPORT, 90,
+	     "transport_release: transport %p had %d references", t,
+	     t->refcnt);
+  if (--t->refcnt)
+    return;
+
+  log_debug (LOG_TRANSPORT, 70, "transport_release: freeing %p", t);
+  LIST_REMOVE (t, link);
+  t->vtbl->remove (t);
+}
+
+void
+transport_report (void)
+{
+  struct transport *t;
+  struct message *msg;
+
+  for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
+    { 
+      log_debug (LOG_REPORT, 0, 
+		 "transport_report: transport %p flags %x refcnt %d", t,
+		 t->flags, t->refcnt);
+      
+      t->vtbl->report (t);
+      
+      /* This is the reason message_dump_raw lives outside message.c.  */
+      for (msg = TAILQ_FIRST (&t->sendq); msg; msg = TAILQ_NEXT (msg, link))
+        message_dump_raw("udp_report", msg, LOG_REPORT);
+    }
 }
 
 /* Register another transport method T.  */
