@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.5 1996/10/28 14:55:32 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.6 1996/10/30 05:26:29 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.26 1996/08/05 23:20:46 briggs Exp $	*/
 
 /*-
@@ -117,7 +117,7 @@ extern romvec_t *mrg_MacOSROMVectors;
 #if defined(MRG_TEST) || defined(MRG_DEBUG)
 caddr_t ResHndls[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 #else
-caddr_t ResHndls[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+caddr_t ResHndls[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
 
 /*
@@ -286,7 +286,7 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
                             ResHndls[i] = (caddr_t)(rsrc->body + ROMBase);
                             return (caddr_t *)&ResHndls[i];
                     }
-                panic("ResHndls table to small!\n");
+                panic("ResHndls table too small!\n");
             }
         }
         rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
@@ -960,16 +960,18 @@ mrg_init()
 	printf("mrg: end init\n");
 #endif
 
-	if (current_mac_model->class == MACH_CLASSII) {
+	if (1) {
 		/*
 		 * For the bloody Mac II ROMs, we have to map this space
 		 * so that the PRam functions will work.
 		 * Gee, Apple, is that a hard-coded hardware address in
-		 * your code?  I think so! (_ReadXPRam + 0x0062)  We map
-		 * the first 
+		 * your code?  I think so! (_ReadXPRam + 0x0062 on the
+		 * II)  We map the VIAs in here.  The C610 apparently
+		 * needs it, too, which means that a bunch of 040s do, too.
+		 * Once again, I regret the mapping changes I made...  -akb
 		 */
 #ifdef DIAGNOSTIC
-		printf("mrg: I/O map kludge for old ROMs that use hardware %s",
+		printf("mrg: I/O map kludge for ROMs that use hardware %s",
 			"addresses directly.\n");
 #endif
 		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
