@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 2001/10/10 23:43:42 millert Exp $
+#	$OpenBSD: RAMDISK,v 1.21 2002/07/28 01:39:14 krw Exp $
 #	$NetBSD: RAMDISK,v 1.3.4.1 1996/08/19 23:35:10 gwr Exp $
 
 # Machine architecture; required by config(8)
@@ -20,7 +20,7 @@ option		DST=0
 
 option		DIAGNOSTIC
 option		FFS
-option		NFSCLIENT
+#option		NFSCLIENT
 #option		CD9660
 option		INET
 option		BOOT_CONFIG
