@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.89 2000/02/28 19:40:23 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.90 2000/03/06 20:29:04 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -2462,7 +2462,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 				f = popen(XAUTH_PATH " -q -", "w");
 				if (f) {
 					fprintf(f, "add %s %s %s\n", display, auth_proto, auth_data);
-					fclose(f);
+					pclose(f);
 				} else
 					fprintf(stderr, "Could not run %s -q -\n", XAUTH_PATH);
 			}
