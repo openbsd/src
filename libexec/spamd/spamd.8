@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.36 2003/08/23 21:22:34 dhartmei Exp $
+.\"	$OpenBSD: spamd.8,v 1.37 2003/09/03 21:22:19 tedu Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -36,6 +36,7 @@
 .Op Fl p Ar port
 .Op Fl r Ar reply
 .Op Fl s Ar secs
+.Op Fl w Ar window
 .Sh DESCRIPTION
 .Nm
 is a fake
@@ -79,6 +80,8 @@ This defaults to 450.
 Delay each character sent to the client by the specified
 amount of seconds.
 Defaults to 1.
+.It Fl w Ar window
+Set the socket receive buffer to this many bytes, adjusting the window size.
 .El
 .Pp
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.40 2003/08/26 18:30:03 dhartmei Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.41 2003/09/03 21:22:19 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -116,6 +116,7 @@ int maxcon = MAXCON;
 int clients;
 int debug;
 int stutter = 1;
+int window;
 #define MAXTIME 400
 
 
@@ -828,6 +829,11 @@ main(int argc, char *argv[])
 		case 'n':
 			spamd = optarg;
 			break;
+		case 'w':
+			window = atoi(optarg);
+			if (window <= 0)
+				usage();
+			break;
 		default:
 			usage();
 			break;
@@ -861,8 +867,7 @@ main(int argc, char *argv[])
 	    sizeof(one)) == -1)
 		return (-1);
 
-	one = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &one, sizeof(one)) == -1) {
+	if (window && setsockopt(s, SOL_SOCKET, SO_RCVBUF, &window, sizeof(window)) == -1) {
 		syslog(LOG_ERR, "setsockopt: %s", strerror(errno));
 		return (-1);
 	}
