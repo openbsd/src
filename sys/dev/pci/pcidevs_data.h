@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.206 1999/12/16 22:15:45 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.207 1999/12/17 11:42:06 fgsch Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1539,18 +1539,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ATM PCA-200e",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
-	    0,
-	    "AT&T/Lucent",
-	    "K56flex DSVD LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
-	    0,
-	    "AT&T/Lucent",
-	    "USB",
-	},
-	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
 	    0,
 	    "Future Domain",
@@ -2089,6 +2077,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lite-On",
 	    "PNIC-II",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
+	    0,
+	    "AT&T/Lucent",
+	    "K56flex DSVD LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTWINV90,
+	    0,
+	    "AT&T/Lucent",
+	    "Win Modem V.90",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
+	    0,
+	    "AT&T/Lucent",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_LUXSONOR, PCI_PRODUCT_LUXSONOR_LS242,
