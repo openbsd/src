@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.116 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.117 2002/04/29 15:41:21 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -826,39 +826,39 @@ hifn_ramtype(sc)
  * For sram boards, just write/read memory until it fails, also check for
  * banking.
  */
+#define	HIFN_SRAM_MAX		(32 << 20)
+#define	HIFN_SRAM_STEP_SIZE	16384
+#define	HIFN_SRAM_GRANULARITY	(HIFN_SRAM_MAX / HIFN_SRAM_STEP_SIZE)
+
 int
 hifn_sramsize(sc)
 	struct hifn_softc *sc;
 {
-	u_int32_t a = 0, end;
-	u_int8_t data[8], dataexpect[8];
+	u_int32_t a;
+	u_int8_t data[8];
+	u_int8_t dataexpect[sizeof(data)];
+	int i;
+
+	for (i = 0; i < sizeof(data); i++)
+		data[i] = dataexpect[i] = i ^ 0x5a;
 
 	for (a = 0; a < sizeof(data); a++)
 		data[a] = dataexpect[a] = 0x5a;
 
-	end = 1 << 20;	/* 1MB */
-	for (a = 0; a < end; a += 16384) {
-		if (hifn_writeramaddr(sc, a, data) < 0)
-			return (0);
+	for (i = HIFN_SRAM_GRANULARITY - 1; i >= 0; i--) {
+		a = i * HIFN_SRAM_STEP_SIZE;
+		data[0] = i;
+		hifn_writeramaddr(sc, a, data);
+	}
+
+	for (i = 0; i < HIFN_SRAM_GRANULARITY; i++) {
+		a = i * HIFN_SRAM_STEP_SIZE;
+		dataexpect[0] = i;
 		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
 		if (bcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
-		sc->sc_ramsize = a + 16384;
-	}
-
-	for (a = 0; a < sizeof(data); a++)
-		data[a] = dataexpect[a] = 0xa5;
-	if (hifn_writeramaddr(sc, 0, data) < 0)
-		return (0);
-
-	end = sc->sc_ramsize;
-	for (a = 0; a < end; a += 16384) {
-		if (hifn_readramaddr(sc, a, data) < 0)
-			return (0);
-		if (a != 0 && bcmp(data, dataexpect, sizeof(data)) == 0)
-			return (0);
-		sc->sc_ramsize = a + 16384;
+		sc->sc_ramsize = a + HIFN_SRAM_STEP_SIZE;
 	}
 
 	return (0);
@@ -970,17 +970,23 @@ hifn_writeramaddr(sc, addr, data)
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	DELAY(3000);	/* let write command execute */
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-	    0, sc->sc_dmamap->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-	if (dma->resr[resi].l & htole32(HIFN_D_VALID)) {
-		printf("\n%s: writeramaddr error -- "
-		    "result[%d](addr %d) valid still set\n",
+	for (r = 10000; r >= 0; r--) {
+		DELAY(10);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if ((dma->resr[resi].l & htole32(HIFN_D_VALID)) == 0)
+			break;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
+	if (r == 0) {
+		printf("%s: writeramaddr -- "
+		    "result[%d](addr %d) still valid\n",
 		    sc->sc_dv.dv_xname, resi, addr);
 		r = -1;
+		return (-1);
 	} else
 		r = 0;
 
@@ -1031,15 +1037,20 @@ hifn_readramaddr(sc, addr, data)
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	DELAY(3000);	/* let read command execute */
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-	    0, sc->sc_dmamap->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-	if (dma->resr[resi].l & htole32(HIFN_D_VALID)) {
-		printf("\n%s: readramaddr error -- "
-		    "result[%d](addr %d) valid still set\n",
+	for (r = 10000; r >= 0; r--) {
+		DELAY(10);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if ((dma->resr[resi].l & htole32(HIFN_D_VALID)) == 0)
+			break;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    0, sc->sc_dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
+	if (r == 0) {
+		printf("%s: readramaddr -- "
+		    "result[%d](addr %d) still valid\n",
 		    sc->sc_dv.dv_xname, resi, addr);
 		r = -1;
 	} else {
