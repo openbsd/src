@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.12 1997/05/17 21:16:46 millert Exp $
+#	$OpenBSD: install.sh,v 1.13 1997/09/23 22:39:25 niklas Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -364,7 +364,7 @@ if [ "`df /`" = "`df /mnt`" ]; then
 	# fstab.
 	(
 		while read _dev _mp; do
-			if [ "$mp" = "/" ]; then
+			if [ "$_mp" = "/" ]; then
 				echo /dev/$_dev $_mp ffs rw 1 1
 			else
 				echo /dev/$_dev $_mp ffs rw 1 2
