@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.15 1999/04/30 11:47:41 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.105 1999/04/29 12:08:47 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.16 1999/04/30 23:32:08 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.106 1999/04/30 23:25:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -256,13 +256,12 @@ ipsec_finalize_exchange (struct message *msg)
   switch (exchange->phase)
     {
     case 1:
-      isakmp_sa = msg->isakmp_sa;
-      isa = isakmp_sa->data;
-
       switch (exchange->type)
 	{
 	case ISAKMP_EXCH_ID_PROT:
 	case ISAKMP_EXCH_AGGRESSIVE:
+	  isakmp_sa = msg->isakmp_sa;
+	  isa = isakmp_sa->data;
 	  isa->hash = ie->hash->type;
 	  isa->prf_type = ie->prf_type;
 	  isa->skeyid_len = ie->skeyid_len;
@@ -270,12 +269,12 @@ ipsec_finalize_exchange (struct message *msg)
 	  isa->skeyid_a = ie->skeyid_a;
 	  /* Prevents early free of SKEYID_*.  */
 	  ie->skeyid_a = ie->skeyid_d = 0;
+
+	  /* If a lifetime was negotiated setup the expiration timers.  */
+	  if (isakmp_sa->seconds)
+	    sa_setup_expirations (isakmp_sa);
 	  break;
 	}
-
-      /* If a lifetime was negotiated setup the expiration timers.  */
-      if (isakmp_sa->seconds)
-	sa_setup_expirations (isakmp_sa);
       break;
 
     case 2:
