@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.11 2002/02/18 03:45:27 deraadt Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.12 2002/02/19 02:21:30 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -887,7 +887,8 @@ check_parity(fds, nfd, do_rewrite)
 			}
 		}
 	}
-	printf("%s: Parity Re-write complete\n", dev_name);
+	if (verbose)
+		printf("%s: Parity Re-write complete\n", dev_name);
 }
 
 
