@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.12 2005/03/01 18:49:59 jmc Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.13 2005/03/02 11:54:46 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ Dual-attached station vs. Single-attached station.
 .Sh MEDIA TYPES AND OPTIONS FOR IEEE802.11 WIRELESS LAN
 The following media types are defined for IEEE802.11 Wireless LAN:
 .Pp
-.Bl -tag -offset indent -width IFM_IEEE80211_DS11 -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_OFDM22 -compact
 .It Dv IFM_IEEE80211_FH1
 Frequency Hopping 1Mbps.
 [FH1]
@@ -240,21 +240,59 @@ Direct Sequence 5.5Mbps.
 .It Dv IFM_IEEE80211_DS11
 Direct Sequence 11Mbps.
 [DS11]
+.It Dv IFM_IEEE80211_DS22
+Direct Sequence 22Mbps.
+[DS22]
+.It Dv IFM_IEEE80211_OFDM6
+Orthogonal Frequency Division Multiplexing (OFDM) 6Mbps.
+[OFDM6]
+.It Dv IFM_IEEE80211_OFDM9
+OFDM 9Mbps.
+[OFDM9]
+.It Dv IFM_IEEE80211_OFDM12
+OFDM 12Mbps.
+[OFDM12]
+.It Dv IFM_IEEE80211_OFDM18
+OFDM 18Mbps.
+[OFDM18]
+.It Dv IFM_IEEE80211_OFDM24
+OFDM 24Mbps.
+[OFDM24]
+.It Dv IFM_IEEE80211_OFDM36
+OFDM 36Mbps.
+[OFDM36]
+.It Dv IFM_IEEE80211_OFDM48
+OFDM 48Mbps.
+[OFDM48]
+.It Dv IFM_IEEE80211_OFDM54
+OFDM 54Mbps.
+[OFDM54]
+.It Dv IFM_IEEE80211_OFDM72
+OFDM 72Mbps.
+[OFDM72]
 .El
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
 .Pp
-.Bl -tag -offset indent -width IFM_IEEE80211_HOSTAP -compact
+.Bl -tag -offset indent -width IFM_IEEE80211_IBSSMASTER -compact
 .It Dv IFM_IEEE80211_ADHOC
-adhoc mode vs. infrastructure mode [adhoc]
+Ad-hoc mode.
+[adhoc]
 .It Dv IFM_IEEE80211_HOSTAP
-Host Access Point mode, implemented for
-.Tn Prism 2
-and
-.Tn Prism 2.5
-chipset, only in
-.Xr wi 4
-driver.
+Host Access Point mode.
+[hostap]
+.It Dv IFM_IEEE80211_IBSS
+IBSS mode.
+[ibss]
+.It Dv IFM_IEEE80211_IBSSMASTER
+IBSS master mode.
+[ibssmaster]
+.It Dv IFM_IEEE80211_MONITOR
+Monitor mode.
+[monitor]
+.It Dv IFM_IEEE80211_TURBO
+Turbo mode.
+[turbo]
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,
