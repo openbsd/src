@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.2 2001/06/03 19:55:57 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.3 2001/06/24 21:18:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -286,7 +286,7 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 	auth_session_t *as;
 	login_cap_t *lc;
 	struct passwd *pwd;
-	char *dot;
+	char *sep, save;
 
 	if (strlen(name) >= sizeof(namebuf))
 		return (NULL);
@@ -300,15 +300,16 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 		*style++ = '\0';
 
 	/*
-	 * Cope with user.instance.  We are only using this to get
-	 * the class so it is okay if we strip a .root instance
+	 * Cope with user[./]instance.  We are only using this to get
+	 * the class so it is okay if we strip a root instance
 	 * The actual login script will pay attention to the instance.
 	 */
 	if ((pwd = getpwnam(name)) == NULL) {
-		if ((dot = strchr(name, '.')) != NULL) {
-			dot = '\0';
+		if ((sep = strpbrk(name, "./")) != NULL) {
+			save = *sep;
+			*sep = '\0';
 			pwd = getpwnam(name);
-			*dot = '.';
+			*sep = save;
 		}
 	}
 	if ((lc = login_getclass(pwd ? pwd->pw_class : NULL)) == NULL)
@@ -338,6 +339,7 @@ int
 auth_userokay(char *name, char *style, char *type, char *password)
 {
 	auth_session_t *as;
+
 	as = auth_usercheck(name, style, type, password);
 
 	return (as != NULL ? auth_close(as) : 0);
@@ -350,7 +352,7 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 	auth_session_t *as;
 	login_cap_t *lc;
 	struct passwd *pwd;
-	char *dot;
+	char *sep, save;
 
 	if (strlen(name) >= sizeof(namebuf))
 		return (NULL);
@@ -364,15 +366,16 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 		*style++ = '\0';
 
 	/*
-	 * Cope with user.instance.  We are only using this to get
-	 * the class so it is okay if we strip a .root instance
+	 * Cope with user[./]instance.  We are only using this to get
+	 * the class so it is okay if we strip a root instance
 	 * The actual login script will pay attention to the instance.
 	 */
 	if ((pwd = getpwnam(name)) == NULL) {
-		if ((dot = strchr(name, '.')) != NULL) {
-			dot = '\0';
+		if ((sep = strpbrk(name, "./")) != NULL) {
+			save = *sep;
+			*sep = '\0';
 			pwd = getpwnam(name);
-			*dot = '.';
+			*sep = save;
 		}
 	}
 	if ((lc = login_getclass(pwd ? pwd->pw_class : NULL)) == NULL)

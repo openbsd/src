@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.4 2000/11/23 00:38:25 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.5 2001/06/24 21:18:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -81,7 +81,7 @@ struct auth_session_t {
 	char	*challenge;		/* last challenge issued */
 	int	flags;			/* see below */
 	struct	passwd *pwd;		/* password entry for user */
-        struct timeval now;		/* time of authentication */
+        struct	timeval now;		/* time of authentication */
 
 	int	state;			/* authenticated state */
 
@@ -580,11 +580,11 @@ auth_setpwd(auth_session_t *as, struct passwd *pwd)
 		if (as->name == NULL)
 			return (0);
 		if ((pwd = getpwnam(as->name)) == NULL) {
-			instance = strchr(as->name, '.');
-			if (instance == NULL)
+			instance = strpbrk(as->name, "./");
+			if (instance++ == NULL)
 				return (as->pwd ? 0 : 1);
-			if (strcmp(instance, ".root") == 0)
-				pwd = getpwnam(instance + 1);
+			if (strcmp(instance, "root") == 0)
+				pwd = getpwnam(instance);
 			if (pwd == NULL)
 				return (as->pwd ? 0 : 1);
 		}
