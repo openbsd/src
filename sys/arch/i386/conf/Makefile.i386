@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.15 1996/10/17 21:47:11 niklas Exp $
+#	$OpenBSD: Makefile.i386,v 1.16 1996/10/25 11:14:10 deraadt Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -47,7 +47,7 @@ CMACHFLAGS=
 
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-z -Ttext F8100000 -e start
+LINKFLAGS=	-z -Ttext F0100000 -e start
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.14 1996/10/18 15:33:08 mickey Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.15 1996/10/25 11:14:13 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -226,6 +226,7 @@ pmap_bootstrap(virtual_start)
 	vm_offset_t va;
 	pt_entry_t *pte;
 #endif
+
 	/* XXX: allow for msgbuf */
 	avail_end -= i386_round_page(sizeof(struct msgbuf));
 
@@ -296,6 +297,19 @@ pmap_bootstrap(virtual_start)
 		isaphysmempgs = DMA_BOUNCE_LOW;
 	}
 #endif
+
+	/* flawed, no mappings?? */
+	if (ctob(physmem) > 31*1024*1024 && MAXKPDE != NKPDE) {
+		vm_offset_t p;
+		int i;
+
+		p = pmap_steal_memory((MAXKPDE-NKPDE+1) * NBPG);
+		bzero((void *)p, (MAXKPDE-NKPDE+1) * NBPG);
+		p = round_page(p);
+		for (i = NKPDE; i < MAXKPDE; i++, p += NBPG)
+			PTD[KPTDI+i] = (pd_entry_t)p |
+			    PG_V | PG_KW;
+	}
 
 	pmap_update();
 }
@@ -640,11 +654,12 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], NKPDE * sizeof(pd_entry_t));
+	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], MAXKPDE *
+	    sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
-	pmap->pm_pdir[PTDPTDI] =
-	    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
+	pmap->pm_pdir[PTDPTDI] = pmap_extract(pmap_kernel(),
+	    (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -784,6 +799,13 @@ pmap_remove(pmap, sva, eva)
 				pte += i386_btop(NBPD);
 				continue;
 			}
+		}
+
+		pte = pmap_pte(pmap, sva);
+		if (pte == NULL) {
+			/* We can race ahead here, to the next pde. */
+			sva = (sva & PD_MASK) + NBPD;
+			continue;
 		}
 
 		if (!pmap_pte_v(pte)) {
@@ -1107,19 +1129,19 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * educated guess as to which vm_map to use by using curproc.
 		 * this is a workaround and may not fully solve the problem?
 	 	 */
-
 		struct vm_map *vmap;
 		int rv;
 		vm_offset_t v;
 
 		if (curproc == NULL || curproc->p_vmspace == NULL ||
-		  	pmap != &curproc->p_vmspace->vm_pmap)
-				panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
+		    pmap != &curproc->p_vmspace->vm_pmap)
+			panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
 
 		/* our guess about the vm_map was good!  fault it in.  */
 
 		vmap = &curproc->p_vmspace->vm_map;
 		v = trunc_page(vtopte(va));
+		printf("faulting in a pt page map %x va %x\n", vmap, v);
 		rv = vm_fault(vmap, v, VM_PROT_READ|VM_PROT_WRITE, FALSE);
 		if (rv != KERN_SUCCESS)
 			panic("ptdi2 %x", pmap->pm_pdir[PTDPTDI]);

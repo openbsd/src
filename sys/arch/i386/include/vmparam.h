@@ -130,12 +130,12 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-/* PTDPTDI<<PDSHIFT - UPAGES*NBPG */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xf7bfe000)
+/* PTDPTDI<<PDSHIFT - USPACE */
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xefbfe000)
 /* PTDPTDI<<PDSHIFT + PTDPTDI<<PGSHIFT */
-#define VM_MAX_ADDRESS		((vm_offset_t)0xf7fdf000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0xeffdf000)
 /* KPTDI<<PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf8000000)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf0000000)
 /* APTDPTDI<<PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffc00000)
 

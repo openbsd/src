@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.h,v 1.6 1996/05/26 00:06:07 deraadt Exp $	*/
+/*	$OpenBSD: pmap.old.h,v 1.7 1996/10/25 11:14:16 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
 
 /* 
@@ -66,9 +66,10 @@
  * One page directory, shared between
  * kernel and user modes.
  */
-#define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
-#define	KPTDI		0x3e0		/* start of kernel virtual pde's */
-#define	NKPDE		31
+#define	PTDPTDI		0x3bf		/* ptd entry that points to ptd! */
+#define	KPTDI		0x3c0		/* start of kernel virtual pde's */
+#define	NKPDE		63		/* # to static alloc */
+#define	MAXKPDE		(APTDPTDI-KPTDI)
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
 
 /*
