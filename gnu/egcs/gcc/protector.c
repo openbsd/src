@@ -1559,6 +1559,29 @@ change_arg_use_in_operand (x, orig, new, size)
 	}
       break;
 
+    case SET:
+      /* Handle special case of "set (REG or MEM) (incoming_args)".
+	 It means that the the address of the 1st argument is stored. */
+      if (GET_CODE (orig) == MEM
+	  && XEXP (x, 1) == virtual_incoming_args_rtx)
+	{
+	  offset = 0;
+
+	  /* the operand related to the sweep variable */
+	  if (AUTO_OFFSET(XEXP (orig, 0)) <= offset &&
+	      offset < AUTO_OFFSET(XEXP (orig, 0)) + size) {
+
+	    offset = AUTO_OFFSET(XEXP (new, 0))
+	      + (offset - AUTO_OFFSET(XEXP (orig, 0)));
+
+	    XEXP (x, 1) = plus_constant (virtual_stack_vars_rtx, offset);
+	    XEXP (x, 1)->used = 1;
+
+	  return;
+	  }
+	}
+      break;
+
     case CALL_PLACEHOLDER:
       change_arg_use_of_insns (XEXP (x, 0), orig, new, size);
       change_arg_use_of_insns (XEXP (x, 1), orig, new, size);
