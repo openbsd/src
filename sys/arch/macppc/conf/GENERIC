@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2002/03/14 23:51:47 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.15 2002/03/22 19:19:52 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -64,6 +64,7 @@ iop*		at pci? dev ? function ?	# I2O processor
 ioprbs*		at iop? tid ?			# I2O arrays
 iopsp*		at iop? tid ?			# I2O SCSI pass-through
 
+dcphy*		at mii? phy ?			# Digital Clone PHYs
 exphy*		at mii? phy ?			# 3Com internal PHYs
 inphy*		at mii? phy ?			# Intel 82555 PHYs
 iophy*		at mii? phy ?			# Intel 82553 PHYs
@@ -71,6 +72,7 @@ icsphy*		at mii? phy ?			# ICS1890 PHYs
 lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*		at mii? phy ?			# NS83840 PHYs
 #nsphyter*	at mii? phy ?			# NS83843 PHYs
+mtdphy*		at mii? phy ?			# Myson MTD972 PHYs
 #qsphy*		at mii? phy ?			# Quality Semi QS6612 PHYs
 sqphy*		at mii? phy ?			# Seeq 8022[013] PHYs
 #tlphy*		at mii? phy ?			# ThunderLAN PHYs

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2002/03/22 16:35:34 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2002/03/22 19:19:52 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -65,6 +65,7 @@ dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 an*		at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 
 # how many of these are needed?
+dcphy*		at mii? phy ?		# Digital Clone PHYs
 exphy*		at mii? phy ?		# 3Com internal PHYs
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
@@ -72,6 +73,7 @@ icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
 #lxtphy*	at mii? phy ?		# Level One LXT-970 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 #nsphyter*	at mii? phy ?		# NS83843 PHYs
+mtdphy*		at mii? phy ?		# Myson MTD972 PHYs
 #qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
 sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
 #tlphy*		at mii? phy ?		# ThunderLAN PHYs
