@@ -1,4 +1,4 @@
-/*	$OpenBSD: disks.c,v 1.10 2001/11/23 22:20:06 deraadt Exp $	*/
+/*	$OpenBSD: disks.c,v 1.11 2001/12/07 07:57:35 pvalchev Exp $	*/
 /*	$NetBSD: disks.c,v 1.4 1996/05/10 23:16:33 thorpej Exp $	*/
 
 /*-
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: disks.c,v 1.10 2001/11/23 22:20:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disks.c,v 1.11 2001/12/07 07:57:35 pvalchev Exp $";
 #endif /* not lint */
 
 #include <string.h>
 #include <ctype.h>
-#include <signal.h>
 #include "systat.h"
 #include "extern.h"
 static void dkselect(char *args, int truefalse, int selections[]);

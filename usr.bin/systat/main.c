@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2001/11/28 20:28:08 ericj Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2001/12/07 07:57:35 pvalchev Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,11 +44,10 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/11/28 20:28:08 ericj Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2001/12/07 07:57:35 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/sysctl.h>
 
 #include <err.h>
 #include <nlist.h>
@@ -63,24 +62,32 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/11/28 20:28:08 ericj Exp $";
 #include "systat.h"
 #include "extern.h"
 
-double	dellave;
+static struct nlist namelist[] = {
+#define X_FIRST		0
+#define	X_HZ		0
+	{ "_hz" },
+#define	X_STATHZ		1
+	{ "_stathz" },
+	{ "" }
+};
+static double     dellave;
 
-kvm_t	*kd;
-char	*nlistf = NULL;
+kvm_t *kd;
 char	*memf = NULL;
+char	*nlistf = NULL;
 sig_t	sigtstpdfl;
-double	avenrun[3];
-int	col;
+double avenrun[3];
+int     col;
 int	naptime = 5;
-int	verbose = 1;		/* to report kvm read errs */
-int	hz, stathz;
+int     verbose = 1;                    /* to report kvm read errs */
+int     hz, stathz;
 char    c;
 char    *namp;
 char    hostname[MAXHOSTNAMELEN];
 WINDOW  *wnd;
 long	CMDLINE;
 
-WINDOW *wload;			/* one line window for load average */
+static	WINDOW *wload;			/* one line window for load average */
 
 static void usage __P((void));
 
@@ -89,20 +96,35 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int ch;
+	int ch, ret;
 	char errbuf[_POSIX2_LINE_MAX];
 
-	while ((ch = getopt(argc, argv, "w:")) != -1)
+	while ((ch = getopt(argc, argv, "M:N:w:")) != -1)
 		switch(ch) {
-		case 'w':
-			if ((naptime = atoi(optarg)) <= 0)
-				errx(1, "interval <= 0.");
-			break;
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
+                case 'M':
+                        memf = optarg;
+                        break;
+                case 'N':
+                        nlistf = optarg;
+                        break;
+                case 'w':
+                        if ((naptime = atoi(optarg)) <= 0)
+                                errx(1, "interval <= 0.");
+                        break;
+                case '?':
+                default:
+                        usage();
+                }
+        argc -= optind;
+        argv += optind;
+        /*
+         * Discard setgid privileges if not the running kernel so that bad
+         * guys can't print interesting stuff from kernel memory.
+         */
+        if (nlistf != NULL || memf != NULL) {
+		setegid(getgid());
+                setgid(getgid());
+	}
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
@@ -119,21 +141,24 @@ main(argc, argv)
 				errx(1, "unknown request: %s", &argv[0][0]);
 			curcmd = p;
 		}
-		argc--;
-		argv++;
+		argc--, argv++;
 	}
-	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 	if (kd == NULL) {
 		error("%s", errbuf);
 		exit(1);
 	}
 
-	signal(SIGINT, sigdie);
-	siginterrupt(SIGINT, 1);
-	signal(SIGQUIT, sigdie);
-	siginterrupt(SIGQUIT, 1);
-	signal(SIGTERM, sigdie);
-	siginterrupt(SIGTERM, 1);
+	if ((ret = kvm_nlist(kd, namelist)) == -1) 
+		errx(1, "%s", kvm_geterr(kd));
+	else if (ret)
+		nlisterr(namelist);
+
+	if (namelist[X_FIRST].n_type == 0)
+		errx(1, "couldn't read namelist");
+	signal(SIGINT, die);
+	signal(SIGQUIT, die);
+	signal(SIGTERM, die);
 
 	/*
 	 * Initialize display.  Load average appears in a one line
@@ -151,45 +176,29 @@ main(argc, argv)
 	wnd = (*curcmd->c_open)();
 	if (wnd == NULL) {
 		warnx("couldn't initialize display");
-		die();
+		die(0);
 	}
 	wload = newwin(1, 0, 3, 20);
 	if (wload == NULL) {
 		warnx("couldn't set up load average window");
-		die();
+		die(0);
 	}
 	gethostname(hostname, sizeof (hostname));
-	gethz();
+	NREAD(X_HZ, &hz, LONG);
+	NREAD(X_STATHZ, &stathz, LONG);
 	(*curcmd->c_init)();
 	curcmd->c_flags |= CF_INIT;
 	labels();
 
 	dellave = 0.0;
 
-	signal(SIGALRM, sigdisplay);
-	siginterrupt(SIGALRM, 1);
-	signal(SIGWINCH, sigwinch);
-	siginterrupt(SIGWINCH, 1);
-	gotdisplay = 1;
+	signal(SIGALRM, display);
+	signal(SIGWINCH, resize);
+	display(0);
 	noecho();
 	crmode();
 	keyboard();
 	/*NOTREACHED*/
-}
-
-void
-gethz()
-{
-	struct clockinfo cinf;
-	size_t  size = sizeof(cinf);
-	int	mib[2];
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CLOCKRATE;
-	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
-		return;
-	stathz = cinf.stathz;
-	hz = cinf.hz;
 }
 
 static void
@@ -218,14 +227,8 @@ labels()
 }
 
 void
-sigdisplay(signo)
+display(signo)
 	int signo;
-{
-	gotdisplay = 1;
-}
-
-void
-display(void)
 {
 	int i, j;
 
@@ -244,8 +247,7 @@ display(void)
 		if (dellave < 0.05)
 			c = '|';
 		dellave = avenrun[0];
-		wmove(wload, 0, 0);
-		wclrtoeol(wload);
+		wmove(wload, 0, 0); wclrtoeol(wload);
 		for (i = (j > 50) ? 50 : j; i > 0; i--)
 			waddch(wload, c);
 		if (j > 50)
@@ -270,19 +272,9 @@ load()
 	clrtoeol();
 }
 
-volatile sig_atomic_t gotdie;
-volatile sig_atomic_t gotdisplay;
-volatile sig_atomic_t gotwinch;
-
 void
-sigdie(signo)
+die(signo)
 	int signo;
-{
-	gotdie = 1;
-}
-
-void
-die()
 {
 	if (wnd) {
 		move(CMDLINE, 0);
@@ -294,10 +286,17 @@ die()
 }
 
 void
-sigwinch(signo)
+resize(signo)
 	int signo;
 {
-	gotwinch = 1;
+	sigset_t mask, oldmask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGALRM);
+	sigprocmask(SIG_BLOCK, &mask, &oldmask);
+	clearok(curscr, TRUE);
+	wrefresh(curscr);
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
 

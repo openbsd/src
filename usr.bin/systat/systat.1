@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.23 2001/11/23 22:20:06 deraadt Exp $
+.\"	$OpenBSD: systat.1,v 1.24 2001/12/07 07:57:36 pvalchev Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -42,6 +42,8 @@
 .Nd display system statistics on a crt
 .Sh SYNOPSIS
 .Nm systat
+.Op Fl M Ar core
+.Op Fl N Ar system
 .Op Fl w Ar wait
 .Op Ar display
 .Op Ar refresh-interval
@@ -86,6 +88,14 @@ This allows each display to have certain display-specific commands.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl M Ar core
+Extract values associated with the name list from
+.Ar core
+instead of the running kernel.
+.It Fl N Ar system
+Extract the name list from
+.Ar system
+instead of the running kernel.
 .It Ar display
 The
 .Ar display
@@ -354,7 +364,7 @@ target number of free pages
 target number of inactive pages
 .It wired
 wired pages
-.It pdfre
+.It pdfre 
 pages daemon freed since boot
 .It pdscn
 pages daemon scanned since boot

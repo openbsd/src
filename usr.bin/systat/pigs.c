@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.10 2001/11/23 22:20:06 deraadt Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.11 2001/12/07 07:57:35 pvalchev Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.10 2001/11/23 22:20:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.11 2001/12/07 07:57:35 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -47,7 +47,6 @@ static char rcsid[] = "$OpenBSD: pigs.c,v 1.10 2001/11/23 22:20:06 deraadt Exp $
 
 #include <sys/param.h>
 #include <sys/dkstat.h>
-#include <sys/resource.h>
 #include <sys/dir.h>
 #include <sys/time.h>
 #include <sys/proc.h>
@@ -55,6 +54,7 @@ static char rcsid[] = "$OpenBSD: pigs.c,v 1.10 2001/11/23 22:20:06 deraadt Exp $
 
 #include <curses.h>
 #include <math.h>
+#include <nlist.h>
 #include <pwd.h>
 #include <err.h>
 #include <stdlib.h>
@@ -72,6 +72,7 @@ static struct p_times {
 } *pt;
 
 static long stime[CPUSTATES];
+static int     fscale;
 static double  lccpu;
 
 WINDOW *
@@ -114,7 +115,7 @@ showpigs()
  		total = 1.0;
 	factor = 50.0/total;
 
-	qsort(pt, nproc + 1, sizeof (struct p_times), compar);
+        qsort(pt, nproc + 1, sizeof (struct p_times), compar);
 	y = 1;
 	i = nproc + 1;
 	if (i > wnd->_maxy-1)
@@ -123,7 +124,8 @@ showpigs()
 		if (pt[k].pt_kp == NULL) {
 			uname = "";
 			pname = "<idle>";
-		} else {
+		}
+		else {
 			ep = &pt[k].pt_kp->kp_eproc;
 			uname = user_from_uid(ep->e_ucred.cr_uid, 0);
 			pname = pt[k].pt_kp->kp_proc.p_comm;
@@ -140,27 +142,38 @@ showpigs()
 	wmove(wnd, y, 0); wclrtobot(wnd);
 }
 
-struct loadavg sysload;
+static struct nlist namelist[] = {
+#define X_FIRST		0
+#define X_CPTIME	0
+	{ "_cp_time" },
+#define X_CCPU          1
+	{ "_ccpu" },
+#define X_FSCALE        2
+	{ "_fscale" },
+
+	{ "" }
+};
 
 int
 initpigs()
 {
-	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
-	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
-	static int ccpu_mib[] = { CTL_KERN, KERN_CCPU };
-	size_t size;
 	fixpt_t ccpu;
+	int ret;
 
-	size = sizeof(stime);
-	(void) sysctl(cp_time_mib, 2, &stime, &size, NULL, 0);
-
-	size = sizeof(sysload);
-	(void) sysctl(sysload_mib, 2, &sysload, &size, NULL, 0);
-
-	size = sizeof(ccpu);
-	(void) sysctl(ccpu_mib, 2, &ccpu, &size, NULL, 0);
-
-	lccpu = log((double) ccpu / sysload.fscale);
+	if (namelist[X_FIRST].n_type == 0) {
+		if ((ret = kvm_nlist(kd, namelist)) == -1)
+			errx(1, "%s", kvm_geterr(kd));
+		else if (ret)
+			nlisterr(namelist);
+		if (namelist[X_FIRST].n_type == 0) {
+			error("namelist failed");
+			return(0);
+		}
+	}
+	KREAD(NPTR(X_CPTIME), stime, sizeof (stime));
+	NREAD(X_CCPU, &ccpu, LONG);
+	NREAD(X_FSCALE,  &fscale, LONG);
+	lccpu = log((double) ccpu / fscale);
 
 	return(1);
 }
@@ -168,17 +181,17 @@ initpigs()
 void
 fetchpigs()
 {
-	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
-	static int lastnproc = 0;
-	struct kinfo_proc *kpp;
-	long ctime[CPUSTATES];
-	float time;
-	double t;
 	int i;
-	size_t size;
+	float time;
 	struct proc *pp;
 	float *pctp;
+	struct kinfo_proc *kpp;
+	long ctime[CPUSTATES];
+	double t;
+	static int lastnproc = 0;
 
+	if (namelist[X_FIRST].n_type == 0)
+		return;
 	if ((kpp = kvm_getprocs(kd, KERN_PROC_KTHREAD, 0, &nproc)) == NULL) {
 		error("%s", kvm_geterr(kd));
 		if (pt)
@@ -190,7 +203,7 @@ fetchpigs()
 		if ((pt =
 		    malloc((nproc + 1) * sizeof(struct p_times))) == NULL) {
 			error("Out of memory");
-			die();
+			die(0);
 		}
 	}
 	lastnproc = nproc;
@@ -205,15 +218,13 @@ fetchpigs()
 		if (time == 0 || (pp->p_flag & P_INMEM) == 0)
 			*pctp = 0;
 		else
-			*pctp = ((double) pp->p_pctcpu /
-			    sysload.fscale) / (1.0 - exp(time * lccpu));
+			*pctp = ((double) pp->p_pctcpu / 
+					fscale) / (1.0 - exp(time * lccpu));
 	}
 	/*
 	 * and for the imaginary "idle" process
 	 */
-	size = sizeof(ctime);
-	(void) sysctl(cp_time_mib, 2, &ctime, &size, NULL, 0);
-
+	KREAD(NPTR(X_CPTIME), ctime, sizeof (ctime));
 	t = 0;
 	for (i = 0; i < CPUSTATES; i++)
 		t += ctime[i] - stime[i];
