@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.19 2001/06/23 22:57:55 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.20 2001/06/24 17:06:39 angelos Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -415,8 +415,6 @@ cryptodev_cb(void *op)
 	wakeup(cse);
 	return (0);
 }
-
-
 
 /* ARGSUSED */
 int
