@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.17 1999/07/01 13:18:59 niklas Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.18 1999/07/11 16:26:24 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.15 1999/07/01 13:18:21 niklas Exp 
+ *		OpenBSD: pcmciadevs,v 1.16 1999/07/11 16:26:07 niklas Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -52,7 +52,7 @@
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK */
-#define	PCMCIA_VENDOR_XIRCOM	0x0105	/* XIRCOM -- same as TDK */
+#define	PCMCIA_VENDOR_XIRCOM	0x0105	/* Xircom -- same as TDK */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* SMC */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics */
@@ -62,11 +62,13 @@
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
+#define	PCMCIA_VENDOR_SYMBOL	0x014d	/* Symbol -- same as Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
@@ -82,6 +84,11 @@
 #define	PCMCIA_CIS_ADAPTEC_APA1460_2	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
 #define	PCMCIA_STR_ADAPTEC_APA1460_2	"Adaptec APA-1460/B SCSI Host Adapter"
+
+/* BreezeCOM Products */
+#define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BREEZECOM_BREEZENET	0x0102
+#define	PCMCIA_STR_BREEZECOM_BREEZENET	"BreezeCOM BreezeNET IEEE 802.11 FHSS"
 
 /* 3COM Products */
 #define	PCMCIA_CIS_3COM_3CXEM556	{ NULL, NULL, NULL, NULL }
@@ -182,7 +189,7 @@
 /* Lucent technologies corporation */
 #define	PCMCIA_CIS_LUCENT_WAVELAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LUCENT_WAVELAN	0x0002
-#define	PCMCIA_STR_LUCENT_WAVELAN	"Lucent WaveLAN"
+#define	PCMCIA_STR_LUCENT_WAVELAN	"Lucent WaveLAN IEEE 802.11 DSSS"
 
 /* Megahertz Products */
 #define	PCMCIA_CIS_MEGAHERTZ_XJ4288	{ NULL, NULL, NULL, NULL }
@@ -225,6 +232,11 @@
 #define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0006
 #define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
+
+/* Symbol Products */
+#define	PCMCIA_CIS_SYMBOL_SPECTRUM24	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SYMBOL_SPECTRUM24	0x0801
+#define	PCMCIA_STR_SYMBOL_SPECTRUM24	"Spectrum24 WLAN IEEE 802.11 FHSS"
 
 /* TDK Products */
 #define	PCMCIA_CIS_TDK_LAK_CD021BX	{ NULL, NULL, NULL, NULL }
