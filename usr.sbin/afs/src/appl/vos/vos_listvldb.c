@@ -92,7 +92,7 @@ vos_listvldb_iter (const char *db_host, const char *cell, const char *volname,
     if(fileserver != NULL) {
 	he = gethostbyname(fileserver);
 	if (he == NULL) {
-	    warnx("listvldb: unknown host: %s\n", fileserver);
+	    warnx("listvldb: unknown host: %s", fileserver);
 	    return -1;
 	}
 	memcpy (&attr.server, he->h_addr_list[0], 4);

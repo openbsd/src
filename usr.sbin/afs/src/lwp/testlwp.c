@@ -310,11 +310,11 @@ int main(int argc, char **argv)
     
     printf("starting LWP support\n");
     if (LWP_InitializeProcessSupport(LWP_NORMAL_PRIORITY, &pid))
-	errx(1, "LWP_InitializeProcessSupport()\n");
+	errx(1, "LWP_InitializeProcessSupport()");
 
     printf("starting IOMGR support\n");
     if (IOMGR_Initialize())
-	errx(1, "IOMGR_Initialize()\n");
+	errx(1, "IOMGR_Initialize()");
 
     while (argv[1]) {
 	if (strcasecmp("pc", argv[1]) == 0) {

@@ -170,7 +170,7 @@ network_init (int serviceport,
 	return errno;
 
     if (rx_Init(0) != 0) 
-	errx(1, "Cant open serverport port\n") ;
+	errx(1, "Cant open serverport port") ;
     
     secObjs[0] = rxnull_NewServerSecurityObject();   /* XXX 0 */
     if (secObjs[0] == NULL ) 
