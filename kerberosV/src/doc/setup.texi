@@ -27,7 +27,7 @@ doing so.  It will make life easier for you and everyone else.
 @section Configuration file
 
 To setup a realm you will first have to create a configuration file:
-@file{/etc/krb5.conf}. The @file{krb5.conf} file can contain many
+@file{/etc/kerberosV/krb5.conf}. The @file{krb5.conf} file can contain many
 configuration options, some of which are described here.
 
 There is a sample @file{krb5.conf} supplied with the distribution.
@@ -251,7 +251,7 @@ some defense against off-line attacks).  To ensure that the users choose
 good passwords, you can enable password quality controls in
 @samp{kpasswdd}.  The controls themselves are done in a shared library
 that is used by @samp{kpasswdd}.  To configure in these controls, add
-lines similar to the following to your @file{/etc/krb5.conf}:
+lines similar to the following to your @file{/etc/kerberosV/krb5.conf}:
 
 @example
 [password_quality]
@@ -307,7 +307,7 @@ Every slave needs a keytab with a principal,
 @pindex ktutil
 @code{ktutil} command and start
 @pindex hpropd
-@code{propd}, as follows:
+@code{hpropd}, as follows:
 
 @example
 slave# ktutil get -p foo/admin host/`hostname`
@@ -337,7 +337,7 @@ automate this you will want to start
 Starting the propagation once an hour from @code{cron} is probably a
 good idea.
 
-@node Incremental propagation, Salting , Slave Servers, Setting up a realm
+f@node Incremental propagation, Salting , Slave Servers, Setting up a realm
 @section Incremental propagation
 
 There is also a newer and still somewhat experimental mechanism for
