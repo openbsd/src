@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.46 2002/06/07 20:41:06 niklas Exp $	*/
+/*	$OpenBSD: aha.c,v 1.47 2002/06/08 17:09:48 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -495,7 +495,7 @@ AGAIN:
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
 			timeout_del(&ccb->xs->stimeout);
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmam, 0,
-			ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		    ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		aha_done(sc, ccb);
 
 	next:
