@@ -31,6 +31,7 @@
  */
 
 #include <mod_ssl.h>
+#include <ap_sha1.h>
 #include <keynote.h>
 
 MODULE_VAR_EXPORT module keynote_module;
@@ -84,7 +85,6 @@ merge_keynote_dir_config(pool *p, void *basev, void *addv)
 static void
 add_action_attribute(int sessid, char *name, char *value, request_rec *r)
 {
-
     if (kn_add_action(sessid, name, value, 0) == 0)
 	return;
 
@@ -122,17 +122,58 @@ add_action_attribute(int sessid, char *name, char *value, request_rec *r)
  *  app_domain	-> apache
  *  method	-> GET, HEAD, POST, etc.
  *  uri		-> the URI that got us here
+ *  protocol	-> access protocol
+ *  GMTTimeOfDay	-> GMT time of day, in YYYYmmddHHMMSS format
+ *  LocalTimeOfDay	-> Local time of day, in YYYYmmddHHMMSS format
+ *  filename	-> last component of URI, or "" if not found
+ *  local address
+ *  remote address
+ *  remote hostname, if known/resolved
+ *  local hostname
+ *  remote username (RFC 1413)
+ *  local username (if authentication was done)
+ *  authentication type -> Basic, Digest, etc.
  *
- * XXX should probably add more stuff...
- *	cert expiration date?
- *	current time?
+ *  SSL information is set at check_keynote_assertions()
+ *
+ * XXX IPsec information (if any)
  */
 static void
 add_action_attributes(int sessid, request_rec *r)
 {
+    time_t tt;
+    char mytimeofday[15];
 
     add_action_attribute(sessid, "app_domain", "apache", r);
     add_action_attribute(sessid, "method", (char *)r->method, r);
+    add_action_attribute(sessid, "protocol", r->protocol, r);
+    add_action_attribute(sessid, "filename", r->filename, r);
+
+    tt = time((time_t) NULL);
+    strftime (mytimeofday, 14, "%Y%m%d%H%M%S", gmtime (&tt));
+    add_action_attribute(sessid, "GMTTimeOfDay", mytimeofday, r);
+
+    strftime (mytimeofday, 14, "%Y%m%d%H%M%S", localtime (&tt));
+    add_action_attribute(sessid, "LocalTimeOfDay", mytimeofday, r);
+
+    add_action_attribute(sessid, "local_address", r->connection->local_ip, r);
+    add_action_attribute(sessid, "remote_adress", r->connection->remote_ip, r);
+
+    if (r->connection->local_host != NULL)
+	add_action_attribute(sessid, "local_hostname",
+	    r->connection->local_host, r);
+
+    if (r->connection->remote_host != NULL)
+	add_action_attribute(sessid, "remote_hostname",
+	    r->connection->remote_host, r);
+
+    if (r->connection->user != NULL)
+	add_action_attribute(sessid, "local_username", r->connection->user, r);
+
+    if (r->connection->remote_logname != NULL)
+	add_action_attribute(sessid, "remote_username",
+	    r->connection->remote_logname, r);
+
     /* XXX - make the split URI components available too? */
     add_action_attribute(sessid, "uri", r->unparsed_uri, r);
 }
@@ -556,7 +597,7 @@ static int
 check_keynote_assertions(request_rec *r)
 {
     array_header *policy_asserts = (array_header *)ap_get_module_config(r->per_dir_config, &keynote_module);
-    int sessid, res, i;
+    int sessid, res, i, noclientcert = 0;
     int rval = OK;
     char **assertions;
     SSL_CTX *ctx;
@@ -566,53 +607,110 @@ check_keynote_assertions(request_rec *r)
     STACK_OF(X509_NAME) *CA_list;
     X509_NAME *issuer, *subject;
     static char *return_values[] = { "false", "true" };
+    AP_SHA1_CTX context;
+    unsigned char digest[SHA_DIGESTSIZE];
+    char *pwauth;
+    const char *sent_pw;
 
     /* If there are no KeyNote assertions we have nothing to do. */
     if (policy_asserts->nelts == 0)
 	return(DECLINED);
 
-    /* If this is not an SSL'd connection we deny them. */
-    if ((ssl = ap_ctx_get(r->connection->client->ctx, "ssl")) == NULL)
-	return(FORBIDDEN);
-    ctx = SSL_get_SSL_CTX(ssl);
-
-    /* Get client's certificate or deny them */
-    certstack = SSL_get_peer_cert_chain(ssl);
-    if ((cert = SSL_get_peer_certificate(ssl)) == NULL)
-	return(FORBIDDEN);
-
-    /* Missing or self-signed, deny them */
-    issuer = X509_get_issuer_name(cert);
-    subject = X509_get_subject_name(cert);
-    if (!issuer || !subject || X509_name_cmp(issuer, subject) == NULL)
-	return(FORBIDDEN);
-
-    /* Initialize keynote and setup our environment */
+    /* Initialize keynote session.  */
     sessid = kn_init();
-    add_action_attributes(sessid, r);
 
-    /* Build a set of fake assertions corresponding to the certificate chain. */
-    for (i = 0; i < sk_X509_num(certstack) && (icert = sk_X509_value(certstack, i)); i++) {
-	if (keynote_fake_assertion(r, sessid, cert, X509_get_pubkey(icert), X509_get_subject_name(icert)) == -1)
-	    return(FORBIDDEN);
-	cert = icert;
-    }
+    /* If this is an SSL session, see if client certs were used. */
+    if ((ssl = ap_ctx_get(r->connection->client->ctx, "ssl")) != NULL) {
+	ctx = SSL_get_SSL_CTX(ssl);
 
-    /* The issuer of the last cert in the chain should be in the CA list. */
-    issuer = X509_get_issuer_name(cert);
-    CA_list = SSL_CTX_get_client_CA_list(ctx);
-    for (i = 0; i < sk_X509_num(CA_list); i++) {
-	subject = sk_X509_NAME_value(CA_list, i);
-	if (subject && X509_NAME_cmp(issuer, subject) == 0) {
-	    /* An X509_NAME does not contain the public key */
-	    if (keynote_fake_assertion(r, sessid, cert, NULL, subject) == -1)
+	/* XXX Initialize SSL-related action attributes */
+
+	/* Get client's certificate or deny them */
+	certstack = SSL_get_peer_cert_chain(ssl);
+	if ((cert = SSL_get_peer_certificate(ssl)) != NULL) {
+	    /* Missing or self-signed, deny them */
+	    issuer = X509_get_issuer_name(cert);
+	    subject = X509_get_subject_name(cert);
+	    if (!issuer || !subject || X509_name_cmp(issuer, subject) == NULL)
 		return(FORBIDDEN);
-	    break;
+
+	    /* Build a set of fake assertions corresponding to the certificate chain. */
+	    for (i = 0; i < sk_X509_num(certstack) && (icert = sk_X509_value(certstack, i)); i++) {
+		if (keynote_fake_assertion(r, sessid, cert, X509_get_pubkey(icert), X509_get_subject_name(icert)) == -1)
+		    return(FORBIDDEN);
+		cert = icert;
+	    }
+
+	    /* The issuer of the last cert in the chain should be in the CA list. */
+	    issuer = X509_get_issuer_name(cert);
+	    CA_list = SSL_CTX_get_client_CA_list(ctx);
+	    for (i = 0; i < sk_X509_num(CA_list); i++) {
+		subject = sk_X509_NAME_value(CA_list, i);
+		if (subject && X509_NAME_cmp(issuer, subject) == 0) {
+		    /* An X509_NAME does not contain the public key. */
+		    if (keynote_fake_assertion(r, sessid, cert, NULL, subject) == -1)
+			return(FORBIDDEN);
+		    break;
+		}
+	    }
+
+	    if (i >= sk_X509_num(CA_list))
+		ap_log_error(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r->connection->server,
+		    "didn't find CA for issuer of last cert in chain");
+
+	    /* Add the user's public key as an authorizer. */
+	    if (keynote_add_authorizer(r, sessid, cert) == -1)
+		return(FORBIDDEN);
+	} else
+	    noclientcert = 1; /* No client certificates used. */
+    } else
+	noclientcert = 1; /* SSL was not used. */
+
+    /* See if we have a passphrase.  */
+    if (noclientcert == 1) {
+	if ((res = ap_get_basic_auth_pw(r, &sent_pw)) == 0) {
+	    /* Add passphrase as the authorizer. */
+	    ap_SHA1Init(&context);
+	    ap_SHA1Update(&context, sent_pw, strlen(sent_pw));
+	    ap_SHA1Final(digest, &context);
+
+	    pwauth = calloc(120, sizeof(char));
+	    if (pwauth == NULL) {
+		kn_close(sessid);
+		return(FORBIDDEN);
+	    }
+	    res = strlen("passphrase-sha1-base64:");
+	    strlcpy(pwauth, "passphrase-sha1-base64:", res + 1);
+	    ap_base64encode_binary(pwauth + strlen(pwauth), digest,
+		sizeof(digest));
+
+	    /* Add passphrase authorizer directly to the session. */
+	    kn_add_authorizer(sessid, pwauth);
+	    free(pwauth);
+
+	    /* Add username as a principal too. */
+	    if (r->connection->user != NULL) {
+		pwauth = calloc(strlen(r->connection->user) + 1 + 
+		    strlen("username:"), sizeof(char));
+		if (pwauth == NULL) {
+		    kn_close(sessid);
+		    return(FORBIDDEN);
+		}
+
+		snprintf(pwauth, strlen(r->connection->user) + 1 +
+		    strlen("username:"), "username:%s",
+		    r->connection->user);
+
+		kn_add_authorizer(sessid, pwauth);
+		free(pwauth);
+	    }
+	} else {
+	    kn_add_authorizer(sessid, "");
 	}
     }
-    if (i >= sk_X509_num(CA_list))
-	ap_log_error(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r->connection->server,
-	    "didn't find CA for issuer of last cert in chain");
+
+    /* Setup our environment.  */
+    add_action_attributes(sessid, r);
 
     /* Add our policy assertions (as specified in the config file). */
     assertions = (char **)policy_asserts->elts;
@@ -643,10 +741,6 @@ check_keynote_assertions(request_rec *r)
 	    goto done;
 	}
     }
-
-    /* Add the user's public key as an authorizer. */
-    if (keynote_add_authorizer(r, sessid, cert) == -1)
-	return(FORBIDDEN);
 
     /* Now do the actual query. */
     switch ((res = kn_do_query(sessid, return_values, 2))) {
@@ -714,10 +808,10 @@ done:
 static const char *
 store_assertion(cmd_parms *cmd, void *policy_assertsv, char *filename)
 {
-    int fd, serrno;
+    int fd, serrno, nelts = 0;
     ssize_t nread;
     struct stat sb;
-    char *assert;
+    char *assert, **asrts;
     array_header *policy_asserts = (array_header *)policy_assertsv;
 
     filename = ap_server_root_relative(cmd->pool, filename);
@@ -729,7 +823,7 @@ store_assertion(cmd_parms *cmd, void *policy_assertsv, char *filename)
 	return(ap_pstrcat(cmd->pool, "Can't fstat ", filename, ": ",
 	    strerror(errno), NULL));
     
-    assert = ap_pcalloc(cmd->pool, sb.st_size + 1);
+    assert = calloc(sb.st_size + 1, sizeof(char));
     nread = read(fd, assert, sb.st_size);
     serrno = errno;
     close(fd);
@@ -741,8 +835,19 @@ store_assertion(cmd_parms *cmd, void *policy_assertsv, char *filename)
 	    return(ap_pstrcat(cmd->pool, "Short read from", filename, NULL));
     }
 
-    /* Now store the assertion in the array */
-    *(char **)ap_push_array(policy_asserts) = assert;
+    /* Break up into constituent assertions */
+    asrts = kn_read_asserts(assert, sb.st_size, &nelts);
+    free(assert);
+
+    while (--nelts >= 0) {
+	/* Now store the individual assertions in the array */
+	 *(char **)ap_push_array(policy_asserts) = ap_pstrdup(cmd->pool, asrts[nelts]);
+	 free(asrts[nelts]);
+    }
+
+    /* We don't need this anymore */
+    if (asrts)
+	free(asrts);
 
     return(NULL);
 }
