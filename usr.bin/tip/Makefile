@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:51:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/08/20 17:06:28 downsj Exp $
 #
 # Files are:
 #	/etc/remote		remote host description file
@@ -35,9 +35,6 @@ CFLAGS+=-I${.CURDIR} -ansi -pedantic \
 	-DDEFBR=1200 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
 	-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
 .PATH:	${.CURDIR}/aculib
-BINOWN=	uucp
-BINGRP=	dialer
-BINMODE=6510
 SRCS=	acu.c acutab.c cmds.c cmdtab.c cu.c hunt.c log.c partab.c \
 	remote.c tip.c tipout.c uucplock.c value.c vars.c \
 	biz22.c courier.c df.c dn11.c hayes.c t3000.c v3451.c v831.c ventel.c

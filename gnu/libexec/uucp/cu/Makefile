@@ -1,10 +1,10 @@
 # Makefile for cu
-# $Id: Makefile,v 1.2 1996/09/03 10:59:47 deraadt Exp $
+# $Id: Makefile,v 1.3 1999/08/20 17:08:40 downsj Exp $
 
 BINDIR=		$(bindir)
-BINOWN=		$(owner)
-BINGRP=		dialer
-BINMODE=	4554
+#BINOWN=	$(owner)
+#BINGRP=	dialer
+#BINMODE=	4554
 
 PROG=		cu
 SRCS=		cu.c prot.c log.c chat.c conn.c copy.c
