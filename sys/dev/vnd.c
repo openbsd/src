@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.43 2004/02/15 02:52:10 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.44 2004/03/03 22:03:23 miod Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -100,9 +100,11 @@ int vnddebug = 0x00;
  */
 #define	vndunit(x)	DISKUNIT(makedev(major(x), minor(x) & 0x7ff))
 #define	vndsimple(x)	(minor(x) & 0x800)
-#define	MAKEVNDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
-#define	VNDLABELDEV(dev) (MAKEVNDDEV(major(dev), vndunit(dev), RAW_PART))
+/* same as MAKEDISKDEV, preserving the vndsimple() property */
+#define	VNDLABELDEV(dev)	\
+	makedev(major(dev), DISKMINOR(vndunit(dev), RAW_PART) | \
+	    (vndsimple(dev) ? 0x800 : 0))
 
 struct vndbuf {
 	struct buf	vb_buf;
