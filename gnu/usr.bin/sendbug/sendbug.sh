@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.11 1999/02/04 00:04:26 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.12 2001/11/07 16:02:51 millert Exp $
 
 # The version of this sendbug.
 VERSION=3.97
@@ -128,14 +128,9 @@ else
   fi
 fi
 
-# Make temp files safely
-TEMP=`mktemp $TMPDIR/p.XXXXXX` || exit 1
-BAD=`mktemp $TMPDIR/pbad.XXXXXX` || {
+TEMP=`mktemp $TMPDIR/p.XXXXXXXXXX` || exit 1
+REF=`mktemp $TMPDIR/pf.XXXXXXXXXX` || {
     rm -f $TEMP
-    exit 1
-}
-REF=`mktemp $TMPDIR/pf.XXXXXX` || {
-    rm -f $TEMP $BAD
     exit 1
 }
 
@@ -258,7 +253,7 @@ fi
 #  echo "$COMMAND: could not read $DATADIR/gnats/$GNATS_SITE for categories list."
 #  exit 1
 #fi
-CATEGORIES="system user library documentation ports kernel sparc i386 m68k mips ppc arm alpha ns32k vax"
+CATEGORIES="system user library documentation ports kernel sparc i386 m68k mips ppc arm alpha ns32k vax sparc64"
 
 if [ -z "$CATEGORIES" ]; then
   echo "$COMMAND: the categories list for $GNATS_SITE was empty!"
@@ -509,6 +504,7 @@ while [ -z "$REQUEST_ID" ]; do
     case "$input" in
       a*)
 	if [ -z "$BATCH" ]; then
+	  BAD=`mktemp $TMPDIR/pbad.XXXXXXXXXX` || exit 1
 	  echo "$COMMAND: the problem report remains in $BAD and is not sent."
 	  mv $TEMP $BAD
         else
@@ -553,6 +549,7 @@ if $MAIL_AGENT < $REF; then
 else
   echo "$COMMAND: mysterious mail failure."
   if [ -z "$BATCH" ]; then
+    BAD=`mktemp $TMPDIR/pbad.XXXXXXXXXX` || exit 1
     echo "$COMMAND: the problem report remains in $BAD and is not sent."
     mv $REF $BAD
   else
