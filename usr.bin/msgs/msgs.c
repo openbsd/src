@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.7 1997/04/02 08:28:01 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.8 1997/04/02 17:21:24 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.7 1997/04/02 08:28:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.8 1997/04/02 17:21:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,8 +113,8 @@ FILE	*msgsrc;
 FILE	*newmsg;
 char	*sep = "-";
 char	inbuf[BUFSIZ];
-char	fname[128];
-char	cmdbuf[128];
+char	fname[MAXPATHLEN];
+char	cmdbuf[MAXPATHLEN + MAXPATHLEN];
 char	subj[128];
 char	from[128];
 char	date[128];
@@ -822,11 +822,13 @@ FILE *infile;
 			frompos = ftell(infile);
 			ptr = from;
 			in = nxtfld(inbuf);
-			if (*in) while (*in && *in > ' ') {
-				if (*in == ':' || *in == '@' || *in == '!')
-					local = NO;
-				*ptr++ = *in++;
-				/* what about sizeof from ? */
+			if (*in) {
+				while (*in && *in > ' ' &&
+				    ptr - from < sizeof from -1) {
+					if (*in == ':' || *in == '@' || *in == '!')
+						local = NO;
+					*ptr++ = *in++;
+				}
 			}
 			*ptr = NULL;
 			if (*(in = nxtfld(in)))
