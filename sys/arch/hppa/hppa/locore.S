@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.104 2003/02/12 00:43:08 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.105 2003/02/18 21:06:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1955,7 +1955,7 @@ $intr_cont
 EXIT(TLABEL(intr))
 
 	.export	gsc_intr, entry
-ENTRY(gsc_intr,0)
+LEAF_ENTRY(gsc_intr)
 
 	ldw	8-16(r1), r9	/* arg: ioreg */
 	mtctl	r1, tr7
