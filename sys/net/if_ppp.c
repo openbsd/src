@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.27 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.28 2002/06/11 04:27:40 art Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -270,6 +270,8 @@ pppdealloc(sc)
     struct ppp_softc *sc;
 {
     struct mbuf *m;
+
+    splassert(IPL_SOFTNET);
 
     if_down(&sc->sc_if);
     sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
@@ -821,6 +823,8 @@ ppp_requeue(sc)
     enum NPmode mode;
     int error;
 
+    splassert(IPL_SOFTNET);
+
     for (mpp = &sc->sc_npqueue; (m = *mpp) != NULL; ) {
 	switch (PPP_PROTOCOL(mtod(m, u_char *))) {
 	case PPP_IP:
@@ -1031,8 +1035,10 @@ pppintr()
     int i, s, s2;
     struct mbuf *m;
 
+    splassert(IPL_SOFTNET);
+
     sc = ppp_softc;
-    s = splsoftnet();
+    s = splsoftnet();	/* XXX - what's the point of this? see comment above */
     for (i = 0; i < NPPP; ++i, ++sc) {
 	if (!(sc->sc_flags & SC_TBUSY)
 	    && (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0 || sc->sc_fastq.ifq_head)) {

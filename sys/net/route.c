@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.31 2002/06/07 18:30:11 art Exp $	*/
+/*	$OpenBSD: route.c,v 1.32 2002/06/11 04:27:40 art Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -359,6 +359,8 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	u_int32_t *stat = NULL;
 	struct rt_addrinfo info;
 	struct ifaddr *ifa;
+
+	splassert(IPL_SOFTNET);
 
 	/* verify the gateway is directly reachable */
 	if ((ifa = ifa_ifwithnet(gateway)) == NULL) {
