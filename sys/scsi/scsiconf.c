@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.36 1998/04/25 00:25:26 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.37 1998/05/05 19:07:18 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -315,6 +315,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-535  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "DEC     ", "RRD42   (C) DEC ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V"},    SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "HP      ", "C4324/C4325     ", ""},     SDEV_NOLUNS},
@@ -495,6 +497,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
 
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "ULTIMA  ", "AT3     1.60    ", ""},     SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
