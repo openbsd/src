@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.178 2003/11/06 15:02:11 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.179 2003/11/06 15:18:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1288,7 +1288,7 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 
 int
 pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor,
-    const char *ruleset) 
+    const char *ruleset)
 {
 	struct pfioc_trans_e trans;
 
@@ -1305,7 +1305,7 @@ pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor,
 
 u_int32_t
 pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor,
-    const char *ruleset) 
+    const char *ruleset)
 {
 	struct pfioc_trans_e *p;
 
