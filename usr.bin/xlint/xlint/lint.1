@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.14 2003/09/18 09:54:34 jmc Exp $
+.\"	$OpenBSD: lint.1,v 1.15 2003/09/19 10:45:08 jmc Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -122,7 +122,8 @@ and
 By default,
 .Nm
 appends the standard C lint library
-.Pq Pa llib-lstdc.ln
+.Pq Pa llib-lc.ln ,
+if it exists,
 to the end of the list of files.
 When the
 .Fl i
@@ -500,11 +501,13 @@ usually the path for temporary files can be redefined by setting
 this environment variable.
 .El
 .Sh FILES
-.Bl -tag -width /usr/libdata/lint/llib-lc.ln -compact
+.Bl -tag -width /usr/libdata/lint/llib-lposix.ln -compact
 .It Pa /usr/libexec/lint Ns Bq 12
 programs
-.It Pa /usr/libdata/lint/llib-l*.ln
-various prebuilt lint libraries
+.It Pa /usr/libdata/lint/llib-lposix.ln
+prebuilt POSIX C lint library
+.It Pa /usr/libdata/lint/llib-lstdc.ln
+prebuilt ANSI/ISO C lint library
 .It Pa /tmp/lint*
 temporaries
 .El
@@ -535,3 +538,7 @@ to be reported in error messages.
 For these reasons, it is recommended to use the
 .Fl C
 option to create lint libraries.
+.Pp
+The standard C lint library
+.Pq Pa llib-lc.ln
+does not yet exist.
