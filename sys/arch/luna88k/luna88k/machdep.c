@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.2 2004/05/04 15:27:15 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.3 2004/05/07 15:08:25 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -238,10 +238,7 @@ extern struct user *proc0paddr;
  * configure a kernel without romtty since we do not necessarily need a
  * full-blown console driver.
  */
-void romttycnprobe(struct consdev *);
-void romttycninit(struct consdev *);
-void romttycnputc(dev_t, int);
-int  romttycngetc(dev_t);
+cons_decl(romtty);
 extern void nullcnpollc(dev_t, int);
 
 struct consdev romttycons = {
@@ -261,24 +258,15 @@ struct consdev romttycons = {
 void
 consinit()
 {
-#ifdef ROM_CONSOLE
-	extern struct consdev *cn_tab;
-#endif
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-#ifdef ROM_CONSOLE
-	cn_tab = &romttycons;
-	/* cninit(); */
-#else /* from NetBSD/luna68k */
 	if (sysconsole == 0) {
                 syscnattach(0);
         } else {
                 omfb_cnattach();
                 ws_cnattach();
         }
-	/* cninit(); */	/* XXX: this should be later? */
-#endif
 
 #if defined(DDB)
 	db_machine_init();
@@ -454,7 +442,6 @@ cpu_startup()
 		int depth;
 
 		depth = *((volatile int *)0x00001114);
-		printf("frame buffer depth = %d\n", depth);
 		switch (depth) {
 		case 1:
 			hwplanemask = 0x01;
@@ -466,6 +453,9 @@ cpu_startup()
 			hwplanemask = 0xff;
 			break;
 		default:
+			printf("unexpected frame buffer depth = %d\n", depth);
+			/* FALLTHROUGH */
+		case 0:
 			hwplanemask = 0;	/* No frame buffer */
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1.1.1 2004/04/21 15:24:10 aoyama Exp $ */
+/*	$OpenBSD: mem.c,v 1.2 2004/05/07 15:08:25 aoyama Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,21 +41,17 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/board.h>
+#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;
-
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
 
 /*ARGSUSED*/
 int
