@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.16 1997/09/12 04:43:18 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.17 1997/11/05 00:09:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -239,7 +239,10 @@ toremote(targ, argc, argv)
 	int argc;
 {
 	int i, len, tos;
-	char *bp, *host, *src, *suser, *thost, *tuser;
+	char *bp, *host, *src, *suser, *thost, *tuser, *user;
+
+	if ((user = strdup(pwd->pw_name)) == NULL)
+		err(1, "malloc");
 
 	*targ++ = 0;
 	if (*targ == 0)
@@ -274,7 +277,7 @@ toremote(targ, argc, argv)
 				*host++ = 0;
 				suser = argv[i];
 				if (*suser == '\0')
-					suser = pwd->pw_name;
+					suser = user;
 				else if (!okname(suser))
 					continue;
 				(void)snprintf(bp, len,
@@ -299,14 +302,12 @@ toremote(targ, argc, argv)
 				host = thost;
 #ifdef KERBEROS
 				if (use_kerberos)
-					rem = kerberos(&host, bp,
-					    pwd->pw_name,
+					rem = kerberos(&host, bp, user,
 					    tuser ? tuser : pwd->pw_name);
 				else
 #endif
-					rem = rcmd(&host, port, pwd->pw_name,
-					    tuser ? tuser : pwd->pw_name,
-					    bp, 0);
+					rem = rcmd(&host, port, user,
+					    tuser ? tuser : user, bp, 0);
 				if (rem < 0)
 					exit(1);
 				tos = IPTOS_THROUGHPUT;
@@ -322,6 +323,7 @@ toremote(targ, argc, argv)
 			source(1, argv+i);
 		}
 	}
+	free(user);
 }
 
 void
@@ -330,7 +332,10 @@ tolocal(argc, argv)
 	char *argv[];
 {
 	int i, len, tos;
-	char *bp, *host, *src, *suser;
+	char *bp, *host, *src, *suser, *user;
+
+	if ((user = strdup(pwd->pw_name)) == NULL)
+		err(1, "malloc");
 
 	for (i = 0; i < argc - 1; i++) {
 		if (!(src = colon(argv[i]))) {		/* Local to local. */
@@ -351,12 +356,12 @@ tolocal(argc, argv)
 			src = ".";
 		if ((host = strchr(argv[i], '@')) == NULL) {
 			host = argv[i];
-			suser = pwd->pw_name;
+			suser = user;
 		} else {
 			*host++ = 0;
 			suser = argv[i];
 			if (*suser == '\0')
-				suser = pwd->pw_name;
+				suser = user;
 			else if (!okname(suser))
 				continue;
 		}
@@ -367,9 +372,9 @@ tolocal(argc, argv)
 		rem =
 #ifdef KERBEROS
 		    use_kerberos ?
-			kerberos(&host, bp, pwd->pw_name, suser) :
+			kerberos(&host, bp, user, suser) :
 #endif
-			rcmd(&host, port, pwd->pw_name, suser, bp, 0);
+			rcmd(&host, port, user, suser, bp, 0);
 		(void)free(bp);
 		if (rem < 0) {
 			++errs;
@@ -384,6 +389,7 @@ tolocal(argc, argv)
 		(void)close(rem);
 		rem = -1;
 	}
+	free(user);
 }
 
 void
