@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq.h,v 1.4 2002/02/13 08:06:13 kjc Exp $	*/
+/*	$OpenBSD: altq.h,v 1.5 2003/01/30 09:55:42 henning Exp $	*/
 /*	$KAME: altq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -26,6 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #ifndef _ALTQ_ALTQ_H_
 #define	_ALTQ_ALTQ_H_
 
@@ -39,16 +40,16 @@
 #endif
 
 /* altq discipline type */
-#define	ALTQT_NONE		0	/* reserved */
-#define	ALTQT_CBQ		1	/* cbq */
-#define	ALTQT_WFQ		2	/* wfq */
-#define	ALTQT_AFMAP		3	/* afmap */
-#define	ALTQT_FIFOQ		4	/* fifoq */
-#define	ALTQT_RED		5	/* red */
-#define	ALTQT_RIO		6	/* rio */
-#define	ALTQT_LOCALQ		7	/* local use */
-#define	ALTQT_HFSC		8	/* hfsc */
-#define	ALTQT_CDNR		9	/* traffic conditioner */
+#define	ALTQT_NONE		 0	/* reserved */
+#define	ALTQT_CBQ		 1	/* cbq */
+#define	ALTQT_WFQ		 2	/* wfq */
+#define	ALTQT_AFMAP		 3	/* afmap */
+#define	ALTQT_FIFOQ		 4	/* fifoq */
+#define	ALTQT_RED		 5	/* red */
+#define	ALTQT_RIO		 6	/* rio */
+#define	ALTQT_LOCALQ		 7	/* local use */
+#define	ALTQT_HFSC		 8	/* hfsc */
+#define	ALTQT_CDNR		 9	/* traffic conditioner */
 #define	ALTQT_BLUE		10	/* blue */
 #define	ALTQT_PRIQ		11	/* priority queue */
 #define	ALTQT_MAX		12	/* should be max discipline type + 1 */
@@ -59,12 +60,12 @@ struct	altqreq {
 };
 
 /* simple token backet meter profile */
-struct	tb_profile {
+struct tb_profile {
 	u_int	rate;	/* rate in bit-per-sec */
 	u_int	depth;	/* depth in bytes */
 };
 
-struct	tbrreq {
+struct tbrreq {
 	char	ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
 	struct	tb_profile tb_prof;	/* token bucket profile */
 };
@@ -124,7 +125,7 @@ struct flow_filter {
 		u_int8_t	mask_tos;
 		u_int8_t	_pad[3];
 	} ff_mask;
-	u_int8_t _pad2[24];	/* make the size equal to flow_filter6 */
+	u_int8_t	_pad2[24];	/* make size equal to flow_filter6 */
 };
 
 #ifdef SIN6_LEN
@@ -183,7 +184,7 @@ struct pktcntr {
 #endif
 #ifndef LIST_FOREACH
 #define	LIST_FOREACH(var, head, field)					\
-	for((var) = (head)->lh_first; (var); (var) = (var)->field.le_next)
+	for ((var) = (head)->lh_first; (var); (var) = (var)->field.le_next)
 #endif
 
 #ifdef KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.10 2003/01/07 00:29:28 cloder Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.11 2003/01/30 09:55:42 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -67,9 +67,7 @@ static void		 cbq_purge(cbq_state_t *);
  *	the class, all traffic for that class is released.
  */
 static int
-cbq_class_destroy(cbqp, cl)
-	cbq_state_t *cbqp;
-	struct rm_class *cl;
+cbq_class_destroy(cbq_state_t *cbqp, struct rm_class *cl)
 {
 	u_int32_t	chandle;
 
@@ -104,9 +102,7 @@ cbq_class_destroy(cbqp, cl)
 
 /* convert class handle to class pointer */
 static struct rm_class *
-clh_to_clp(cbqp, chandle)
-	cbq_state_t *cbqp;
-	u_int32_t chandle;
+clh_to_clp(cbq_state_t *cbqp, u_int32_t chandle)
 {
 	switch (chandle) {
 	case NULL_CLASS_HANDLE:
@@ -126,10 +122,9 @@ clh_to_clp(cbqp, chandle)
 }
 
 static int
-cbq_clear_interface(cbqp)
-	cbq_state_t *cbqp;
+cbq_clear_interface(cbq_state_t *cbqp)
 {
-	int		again, i;
+	int		 again, i;
 	struct rm_class	*cl;
 
 	/* clear out the classes now */
@@ -166,12 +161,9 @@ cbq_clear_interface(cbqp)
 }
 
 static int
-cbq_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+cbq_request(struct ifaltq *ifq, int req, void *arg)
 {
-	cbq_state_t *cbqp = (cbq_state_t *)ifq->altq_disc;
+	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
 
 	switch (req) {
 	case ALTRQ_PURGE:
@@ -219,8 +211,8 @@ get_class_stats(statsp, cl)
 int
 cbq_pfattach(struct pf_altq *a)
 {
-	struct ifnet *ifp;
-	int s, error;
+	struct ifnet	*ifp;
+	int		 s, error;
 
 	if ((ifp = ifunit(a->ifname)) == NULL || a->altq_disc == NULL)
 		return (EINVAL);
@@ -288,8 +280,8 @@ cbq_add_queue(struct pf_altq *a)
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
 	struct cbq_opts	*opts;
-	u_int32_t	chandle;
-	int		i;
+	u_int32_t	 chandle;
+	int		 i;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
@@ -310,7 +302,6 @@ cbq_add_queue(struct pf_altq *a)
 	 * A class must borrow from it's parent or it can not
 	 * borrow at all.  Hence, borrow can be null.
 	 */
-
 	if (parent == NULL && (opts->flags & CBQCLF_ROOTCLASS) == 0) {
 		printf("cbq_add_queue: no parent class!\n");
 		return (EINVAL);
@@ -448,8 +439,8 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 {
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
-	class_stats_t	stats;
-	int error = 0;
+	class_stats_t	 stats;
+	int		 error = 0;
 
 	if ((cbqp = altq_lookup(a->ifname, ALTQT_CBQ)) == NULL)
 		return (EBADF);
@@ -461,9 +452,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 		return (EINVAL);
 
 	get_class_stats(&stats, cl);
-#if 1
 	stats.handle = a->qid;
-#endif
 
 	if ((error = copyout((caddr_t)&stats, ubuf, sizeof(stats))) != 0)
 		return (error);
@@ -487,15 +476,12 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
  */
 
 static int
-cbq_enqueue(ifq, m, pktattr)
-	struct ifaltq *ifq;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
-	cbq_state_t *cbqp = (cbq_state_t *)ifq->altq_disc;
-	struct rm_class *cl;
-	struct m_tag *t;
-	int len;
+	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
+	struct rm_class	*cl;
+	struct m_tag	*t;
+	int		 len;
 
 	/* grab class set by classifier */
 	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
@@ -523,9 +509,7 @@ cbq_enqueue(ifq, m, pktattr)
 }
 
 static struct mbuf *
-cbq_dequeue(ifq, op)
-	struct ifaltq *ifq;
-	int op;
+cbq_dequeue(struct ifaltq *ifq, int op)
 {
 	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
 	struct mbuf	*m;
@@ -551,8 +535,7 @@ cbq_dequeue(ifq, op)
  */
 
 static void
-cbqrestart(ifq)
-	struct ifaltq *ifq;
+cbqrestart(struct ifaltq *ifq)
 {
 	cbq_state_t	*cbqp;
 	struct ifnet	*ifp;
@@ -560,6 +543,7 @@ cbqrestart(ifq)
 	if (!ALTQ_IS_ENABLED(ifq))
 		/* cbq must have been detached */
 		return;
+
 	if ((cbqp = (cbq_state_t *)ifq->altq_disc) == NULL)
 		/* should not happen */
 		return;
@@ -570,8 +554,7 @@ cbqrestart(ifq)
 		(*ifp->if_start)(ifp);
 }
 
-static void cbq_purge(cbqp)
-	cbq_state_t *cbqp;
+static void cbq_purge(cbq_state_t *cbqp)
 {
 	struct rm_class	*cl;
 	int		 i;
