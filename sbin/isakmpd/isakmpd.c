@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.3 1998/11/17 11:10:15 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.22 1998/10/11 16:19:12 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.4 1998/11/20 07:33:45 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.23 1998/11/20 07:13:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -34,6 +34,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
+#include <errno.h>
 #include <sys/param.h>
 #include <signal.h>
 #include <stdio.h>
@@ -199,13 +200,17 @@ main (int argc, char *argv[])
       n = select (n, &rfds, &wfds, 0, timeout);
       if (n == -1)
 	{
-	  log_error ("select");
-	  /*
-	   * In order to give the unexpected error condition time to resolve
-	   * without letting this process eat up all available CPU we sleep
-	   * for a short while.
-	   */
-	  sleep (1);
+	  if (errno != EINTR)
+	    {
+	      log_error ("select");
+
+	      /*
+	       * In order to give the unexpected error condition time to
+	       * resolve without letting this process eat up all available CPU
+	       * we sleep for a short while.
+	       */
+	      sleep (1);
+	    }
 	}
       else if (n)
 	{
