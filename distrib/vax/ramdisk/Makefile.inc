@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2001/02/24 10:55:03 hugh Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2002/02/15 01:06:21 deraadt Exp $
 
 IMAGESIZE=		4352
 GZIP?=			gzip
@@ -11,5 +11,6 @@ RAWLABEL=
 #NEWFSOPTS_RD= -t ffs -m 0 -o space -f 1024 -i 16384 -c 4 -s 8192
 HOSTCCFLAGS=		-DDEBUG -O0
 #HOSTCCFLAGS=		-DBROKEN_NMAGIC -DDEBUG
-BOOT=			${DESTDIR}/boot
 BOOTXX=			${DESTDIR}/usr/mdec/sdboot
+INSTALLBOOT=		@true --		# totally incredible
+NEWFSOPTS_RD=		${NEWFSOPTS} -i 4096 -c 64 -s ${IMAGESIZE}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2001/10/09 23:03:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2002/02/15 01:06:21 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -39,7 +39,7 @@ RAWLABEL?=	-r
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
-NEWFSOPTS_RD=	${NEWFSOPTS} -i 16384 -c 64 -s ${IMAGESIZE}
+NEWFSOPTS_RD?=	${NEWFSOPTS} -i 16384 -c 64 -s ${IMAGESIZE}
 #NEWFSOPTS_FD=	${NEWFSOPTS} -i 524288 -c 80 -s ${FLOPPYSIZE}
 NEWFSOPTS_FD=	${NEWFSOPTS} -i 1048575 -c 256 -s ${FLOPPYSIZE}
 
@@ -65,6 +65,9 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	cp bsd.gz ${MOUNT_POINT}/bsd
 	${INSTALLBOOT} -v ${BOOTIN} ${BOOTXX} \
 		`echo ${VND_RDEV} | sed -e 's/a$$/c/'`
+.if (${MACHINE_ARCH} != "vax")
+	disklabel -B -b ${BOOTXX} ${VND}
+.endif
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
