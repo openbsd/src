@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.272 2001/07/17 01:39:09 jason Exp $
+#	$OpenBSD: GENERIC,v 1.273 2001/09/01 04:03:09 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -168,6 +168,7 @@ pccom*	at puc? port ?
 # options CY_HW_RTS
 cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
 cy*	at pci?				# PCI cyclom serial card
+cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
