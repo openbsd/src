@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.31 2000/06/02 00:36:42 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.32 2000/06/16 21:43:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1257,7 +1257,7 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 		q = p;
 		p = LIST_NEXT(p, brt_next);
 
-		dir = bcmp(ea, &q->brt_addr, sizeof(q->brt_addr));
+		dir = memcmp(ea, &q->brt_addr, sizeof(q->brt_addr));
 		if (dir == 0) {
 			if (setflags) {
 				q->brt_if = ifp;
@@ -1341,7 +1341,7 @@ bridge_rtlookup(sc, ea)
 	h = bridge_hash(ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
 	while (p != NULL) {
-		dir = bcmp(ea, &p->brt_addr, sizeof(p->brt_addr));
+		dir = memcmp(ea, &p->brt_addr, sizeof(p->brt_addr));
 		if (dir == 0) {
 			splx(s);
 			return (p->brt_if);
