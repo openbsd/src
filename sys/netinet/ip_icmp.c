@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.7 1997/06/05 15:05:41 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.8 1998/01/06 01:38:36 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
  */
 
 int	icmpmaskrepl = 0;
+int	icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
@@ -328,10 +329,22 @@ icmp_input(m, va_alist)
 		break;
 
 	case ICMP_ECHO:
+		if (!icmpbmcastecho &&
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
+		    IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+			icmpstat.icps_bmcastecho++;
+			break;
+		}
 		icp->icmp_type = ICMP_ECHOREPLY;
 		goto reflect;
 
 	case ICMP_TSTAMP:
+		if (!icmpbmcastecho &&
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
+		    IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+			icmpstat.icps_bmcastecho++;
+			break;
+		}
 		if (icmplen < ICMP_TSLEN) {
 			icmpstat.icps_badlen++;
 			break;
@@ -615,6 +628,8 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case ICMPCTL_MASKREPL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
+	case ICMPCTL_BMCASTECHO:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpbmcastecho));
 	default:
 		return (ENOPROTOOPT);
 	}

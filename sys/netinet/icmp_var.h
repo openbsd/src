@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp_var.h,v 1.3 1997/08/26 20:02:30 deraadt Exp $	*/
+/*	$OpenBSD: icmp_var.h,v 1.4 1998/01/06 01:38:35 deraadt Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct	icmpstat {
 	u_long	icps_checksum;		/* bad checksum */
 	u_long	icps_badlen;		/* calculated bound mismatch */
 	u_long	icps_reflect;		/* number of responses */
+	u_long	icps_bmcastecho;	/* rejected broadcast icmps */
 	u_long	icps_inhist[ICMP_MAXTYPE + 1];
 };
 
@@ -59,11 +60,13 @@ struct	icmpstat {
  * Names for ICMP sysctl objects
  */
 #define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
-#define ICMPCTL_MAXID		2
+#define ICMPCTL_BMCASTECHO	2	/* reply to icmps to broadcast/mcast */
+#define ICMPCTL_MAXID		3
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
+	{ "bmcastecho", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
