@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.1 2001/10/09 00:01:56 drahn Exp $
+.\"	$OpenBSD: apm.4,v 1.2 2001/10/09 00:07:03 miod Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -26,9 +26,10 @@ driver provides an interface which simulates the Advanced Power Management
 functions.
 The bios functions are translated into the appropriate PowerManager requests.
 Currently only battery level, AC connection, and charging status is available
-from the apm device.
+from the
+.Nm
+device.
 Suspend/resume and other power events are
-not supported
 .Em NOT YET SUPPORTED .
 .Pp
 Configuration options:
@@ -284,4 +285,4 @@ driver source code contains these copyrights:
 .Pp
 \&...and has been hacked on by many others since.
 .Sh BUGS
-Sleep modes and power events are supported.
+Sleep modes and power events are not supported.
