@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.133 2003/12/08 11:24:27 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.134 2003/12/28 18:16:27 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -541,6 +541,9 @@ This option causes Extended Attributes to be started and enabled when each
 UFS filesystem is mounted.
 The attribute storage is expected to be (relative to mount point)
 .Pa /.attribute/{system|user}/<attrname>
+.It Cd option UFS_DIRHASH
+This option enables using an in memory hash table to speed lookups
+in large directories.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
