@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2000/12/11 21:21:18 provos Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2001/08/18 20:50:02 deraadt Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
   time_t t;
 
   len = vsnprintf (buffer, LOG_SIZE, fmt, ap);
-  if (len < LOG_SIZE - 1 && error)
+  if (len > 0 && len < LOG_SIZE - 1 && error)
     snprintf (buffer + len, LOG_SIZE - len, ": %s", strerror (errno));
   if (log_output)
     {
