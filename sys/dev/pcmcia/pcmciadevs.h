@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.108 2003/10/28 23:45:07 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.109 2003/11/17 19:48:09 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.106 2003/10/28 23:44:02 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.107 2003/11/17 19:47:43 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -572,6 +572,8 @@
 #define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_COREGA_ETHER_II_PCC_T	{ "corega K.K.", "corega EtherII PCC-T", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_COREGA_ETHER_II_PCC_TD	{ "corega K.K.", "corega EtherII PCC-TD", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX	{ "corega K.K.", "corega FastEther PCC-TX", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_COREGA_FETHER_PCC_TXD	{ "corega K.K.", "corega FEther PCC-TXD", NULL, NULL }
