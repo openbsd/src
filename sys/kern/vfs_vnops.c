@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.19 1998/12/05 17:16:54 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.20 1999/02/26 04:51:17 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -55,6 +55,10 @@
 #include <sys/tty.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_select, vn_closefile };
@@ -191,8 +195,13 @@ vn_writechk(vp)
 	 * the vnode, try to free it up once.  If
 	 * we fail, we can't allow writing.
 	 */
+#if defined(UVM)
+	if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+		return (ETXTBSY);
+#else
 	if ((vp->v_flag & VTEXT) && !vnode_pager_uncache(vp))
 		return (ETXTBSY);
+#endif
 	return (0);
 }
 
