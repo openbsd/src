@@ -30,6 +30,6 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIR=	common server dhclient relay
+SUBDIR=	common server relay
 
 .include <bsd.subdir.mk>
