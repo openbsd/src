@@ -26,39 +26,31 @@ SSLCONF=	OpenBSD-bigendian
 
 .include <bsd.own.mk>
 
-#CLEANFILES = crypto/bf/bf_locl.h crypto/bn/bn.h  crypto/des/des.h \
-#	    crypto/des/des_locl.h crypto/rc2/rc2.h crypto/md2/md2.h \
-#	    crypto/rc4/rc4.h crypto/rc4/rc4_locl.h crypto/idea/idea.h
-
 .if exists(src-patent)
 SSL_SRC=src-patent
 .else
 SSL_SRC=src
 .endif 	  
 
-.BEGIN:
-	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.ssl ${.CURDIR}; fi
-
-all: 	${SSL_SRC}/crypto/md2/md2.h 
+all: 	${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h 
 	(cd ${.OBJDIR}; ${MAKE})
 
-includes: ${SSL_SRC}/crypto/md2/md2.h
+includes: ${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h
 	(cd ${.OBJDIR}; ${MAKE} includes)
 
 install:
 	(cd ${.OBJDIR}; ${MAKE} install)
 
-${SSL_SRC}/crypto/md2/md2.h : ${SSL_SRC}/Makefile.ssl
+${.OBJDIR}/${SSL_SRC}/crypto/md2/md2.h : ${.OBJDIR}/${SSL_SRC}/Makefile.ssl
 	(cd ${.OBJDIR}/${SSL_SRC}; /usr/bin/perl Configure ${SSLCONF}) 
 
-${SSL_SRC}/Makefile.ssl: ${.CURDIR}/${SSL_SRC}/Makefile.ssl
-	(cp ${.CURDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC})
+${.OBJDIR}/${SSL_SRC}/Makefile.ssl: ${.CURDIR}/${SSL_SRC}/Makefile.ssl
+	(${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.ssl ${.CURDIR}; cp ${.CURDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC})
 
-
-clean:	
+clean:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl
 	(cd ${.OBJDIR}; ${MAKE} clean)
 
-cleandir:	
+cleandir: ${.OBJDIR}/${SSL_SRC}/Makefile.ssl
 	(cd ${.OBJDIR}; rm -f ${SSL_SRC}/crypto/md2/md2.h; ${MAKE} cleandir)
 
 test:
