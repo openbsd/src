@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ./cvs.texinfo.
+file ../../ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -675,11 +675,14 @@ File: cvs.info,  Node: Sticky tags,  Prev: Creating a branch,  Up: Branches
 Sticky tags
 ===========
 
-   The `-r release-1-0-patches' flag that was given to `checkout' is
-"sticky", that is, it will apply to subsequent commands in this
-directory.  If you commit any modifications, they are committed on the
-branch.  You can later merge the modifications into the main trunk.
-*Note Merging::.
+   The `-r release-1-0-patches' flag that was given to `checkout' in
+the previous example is "sticky", that is, it will apply to subsequent
+commands in this directory.  If you commit any modifications, they are
+committed on the branch.  You can later merge the modifications into
+the main trunk.  *Note Merging::.
+
+   You can use the `status' command to see what sticky tags or dates
+are set:
 
      $ vi driver.c   # Fix the bugs
      $ cvs commit -m "Fixed initialization bug" driver.c
@@ -702,16 +705,40 @@ branch.  You can later merge the modifications into the main trunk.
              release-1-0                     (revision: 1.7)
 
    The sticky tags will remain on your working files until you delete
-them with `cvs update -A'.  *Note update::.
+them with `cvs update -A'.  The `-A' option retrieves the version of
+the file from the head of the trunk, and forgets any sticky tags,
+dates, or options.
 
    Sticky tags are not just for branches.  If you check out a certain
 revision (such as 1.4) it will also become sticky.  Subsequent `cvs
 update' will not retrieve the latest revision until you reset the tag
-with `cvs update -A'.
+with `cvs update -A'.  Likewise, use of the `-D' option to `update' or
+`checkout' sets a "sticky date", which, similarly, causes that date to
+be used for future retrievals.
 
-   See the descriptions in Appendix A for more information about sticky
-tags.  Dates and some other options can also be sticky.  Again, see
-Appendix A for details.
+   Many times you will want to retrieve an old version of a file
+without setting a sticky tag.  The way to do that is with the `-p'
+option to `checkout' or `update', which sends the contents of the file
+to standard output.  For example, suppose you have a file named `file1'
+which existed as revision 1.1, and you then removed it (thus adding a
+dead revision 1.2).  Now suppose you want to add it again, with the same
+contents it had previously.  Here is how to do it:
+
+     $ cvs update -p -r 1.1 file1 >file1
+     ===================================================================
+     Checking out file1
+     RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
+     VERS: 1.1
+     ***************
+     $ cvs add file1
+     cvs add: version 1.2 of `file1' will be resurrected
+     cvs add: use 'cvs commit' to add this file permanently
+     $ cvs commit -m test
+     Checking in file1;
+     /tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+     new revision: 1.3; previous revision: 1.2
+     done
+     $
 
 
 File: cvs.info,  Node: Merging,  Next: Recursive behavior,  Prev: Branches,  Up: Top
@@ -972,12 +999,53 @@ able to retrieve old revisions:
    * Use `cvs commit FILENAME' to actually perform the removal of the
      file from the repository.
 
-   What happens when you commit the removal of the file is that inside
-the source repository, it is moved into a subdirectory called `Attic'.
-cVS normally doesn't look in that directory when you run e.g.
-`checkout'.  However, if you are retrieving a certain revision via e.g.
-`cvs checkout -r SOME-TAG', it will look at the files inside the
-`Attic' and include any files that contain the specified tag.
+   When you commit the removal of the file, CVS records the fact that
+the file no longer exists.  It is possible for a file to exist on only
+some branches and not on others, or to re-add another file with the same
+name later.  CVS will correctly create or not create the file, based on
+the `-r' and `-D' options specified to `checkout' or `update'.
+
+ - Command: cvs remove [`-lR'] FILES ...
+     Schedule file(s) to be removed from the repository (files which
+     have not already been removed from the working directory are not
+     processed).  This command does not actually remove the file from
+     the repository until you commit the removal.  The `-R' option (the
+     default) specifies that it will recurse into subdirectories; `-l'
+     specifies that it will not.
+
+   Here is an example of removing several files:
+
+     $ cd test
+     $ rm ?.c
+     $ cvs remove
+     cvs remove: Removing .
+     cvs remove: scheduling a.c for removal
+     cvs remove: scheduling b.c for removal
+     cvs remove: use 'cvs commit' to remove these files permanently
+     $ cvs ci -m "Removed unneeded files"
+     cvs commit: Examining .
+     cvs commit: Committing .
+
+   If you change your mind you can easily resurrect the file before you
+commit it, using the `add' command.
+
+     $ ls
+     CVS   ja.h  oj.c
+     $ rm oj.c
+     $ cvs remove oj.c
+     cvs remove: scheduling oj.c for removal
+     cvs remove: use 'cvs commit' to remove this file permanently
+     $ cvs add oj.c
+     U oj.c
+     cvs add: oj.c, version 1.1.1.1, resurrected
+
+   If you realize your mistake before you run the `remove' command you
+can use `update' to resurrect the file:
+
+     $ rm oj.c
+     $ cvs update oj.c
+     cvs update: warning: oj.c was lost
+     U oj.c
 
 
 File: cvs.info,  Node: Tracking sources,  Next: Moving files,  Prev: Removing files,  Up: Top
@@ -1256,8 +1324,8 @@ file.
 * Avoiding substitution::       Avoiding substitution
 * Substitution modes::          Substitution modes
 * Log keyword::                 Problems with the $Log: cvs.info-2,v $
-* Log keyword::                 Problems with the Revision 1.1.1.2  1996/01/30 00:41:27  tholo
-* Log keyword::                 Problems with the Missed files from 1.7.1 import
+* Log keyword::                 Problems with the Revision 1.1.1.3  1996/04/27 20:02:41  tholo
+* Log keyword::                 Problems with the Some files missed by initial import
 * Log keyword::                 Problems with the keyword.
 
 
@@ -1272,32 +1340,32 @@ RCS Keywords
 `$Author: tholo $'
      The login name of the user who checked in the revision.
 
-`$Date: 1996/01/30 00:41:27 $'
+`$Date: 1996/04/27 20:02:41 $'
      The date and time (UTC) the revision was checked in.
 
-`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $'
+`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v 1.1.1.3 1996/04/27 20:02:41 tholo Exp $'
      A standard header containing the full pathname of the RCS file,
      the revision number, the date (UTC), the author, the state, and
      the locker (if locked).  Files will normally never be locked when
      you use CVS.
 
-`$Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $'
-     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $', except that the RCS filename is without a path.
+`$Id: cvs.info-2,v 1.1.1.3 1996/04/27 20:02:41 tholo Exp $'
+     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v 1.1.1.3 1996/04/27 20:02:41 tholo Exp $', except that the RCS filename is without a path.
 
 `$Locker:  $'
      The login name of the user who locked the revision (empty if not
      locked, and thus almost always useless when you are using CVS).
 
 `$Log: cvs.info-2,v $
-`Revision 1.1.1.2  1996/01/30 00:41:27  tholo
-`Missed files from 1.7.1 import
+`Revision 1.1.1.3  1996/04/27 20:02:41  tholo
+`Some files missed by initial import
 `'
      The log message supplied during commit, preceded by a header
      containing the RCS filename, the revision number, the author, and
      the date (UTC).  Existing log messages are *not* replaced.
      Instead, the new log message is inserted after `$Log: cvs.info-2,v $
-     Instead, the new log message is inserted after `Revision 1.1.1.2  1996/01/30 00:41:27  tholo
-     Instead, the new log message is inserted after `Missed files from 1.7.1 import
+     Instead, the new log message is inserted after `Revision 1.1.1.3  1996/04/27 20:02:41  tholo
+     Instead, the new log message is inserted after `Some files missed by initial import
      Instead, the new log message is inserted after `'.  Each
      new line is prefixed with a "comment leader" which RCS guesses
      from the file name extension.  It can be changed with `cvs admin
@@ -1308,7 +1376,7 @@ RCS Keywords
 `$RCSfile: cvs.info-2,v $'
      The name of the RCS file without a path.
 
-`$Revision: 1.1.1.2 $'
+`$Revision: 1.1.1.3 $'
      The revision number assigned to the revision.
 
 `$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v $'
@@ -1317,53 +1385,4 @@ RCS Keywords
 `$State: Exp $'
      The state assigned to the revision.  States can be assigned with
      `cvs admin -s'--*Note admin options::.
-
-
-File: cvs.info,  Node: Using keywords,  Next: Avoiding substitution,  Prev: Keyword list,  Up: Keyword substitution
-
-Using keywords
-==============
-
-   To include a keyword string you simply include the relevant text
-string, such as `$Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $', inside the file, and commit the file.  CVS will
-automatically expand the string as part of the commit operation.
-
-   It is common to embed `$Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $' string in the C source code.  This
-example shows the first few lines of a typical file, after keyword
-substitution has been performed:
-
-     static char *rcsid="$Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $";
-     /* The following lines will prevent `gcc' version 2.X
-        from issuing an "unused variable" warning. */
-     #if __GNUC__ == 2
-     #define USE(var) static void * use_##var = (&use_##var, (void *) &var)
-     USE (rcsid);
-     #endif
-
-   Even though a clever optimizing compiler could remove the unused
-variable `rcsid', most compilers tend to include the string in the
-binary.  Some compilers have a `#pragma' directive to include literal
-text in the binary.
-
-   The `ident' command (which is part of the RCS package) can be used
-to extract keywords and their values from a file.  This can be handy
-for text files, but it is even more useful for extracting keywords from
-binary files.
-
-     $ ident samp.c
-     samp.c:
-          $Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $
-     $ gcc samp.c
-     $ ident a.out
-     a.out:
-          $Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $
-
-   SCCS is another popular revision control system.  It has a command,
-`what', which is very similar to `ident' and used for the same purpose.
-Many sites without RCS have SCCS.  Since `what' looks for the
-character sequence `@(#)' it is easy to include keywords that are
-detected by either command.  Simply prefix the RCS keyword with the
-magic SCCS phrase, like this:
-
-     static char *id="@(#) $Id: cvs.info-2,v 1.1.1.2 1996/01/30 00:41:27 tholo Exp $";
 

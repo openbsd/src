@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ./cvs.texinfo.
+file ../../ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -425,7 +425,7 @@ used to set up the repository.
 documented anywhere, but it is fairly easy to understand most of it.
 
 
-File: cvs.info,  Node: Setting up,  Prev: history file,  Up: Administrative files
+File: cvs.info,  Node: Setting up,  Next: Variables,  Prev: history file,  Up: Administrative files
 
 Setting up the repository
 =========================
@@ -441,6 +441,64 @@ to never overwrite any existing files in the repository, so no harm is
 done if you run `cvsinit' on an already set-up repository.  In fact,
 running it on an already set-up repository is the best way to update
 the various scripts from the `contrib' directory.)
+
+
+File: cvs.info,  Node: Variables,  Prev: Setting up,  Up: Administrative files
+
+Expansions in administrative files
+==================================
+
+   Sometimes in writing an administrative file, you might want the file
+to be able to know various things based on environment CVS is running
+in.  There are several mechanisms to do that.
+
+   To find the home directory of the user running CVS (from the `HOME'
+environment variable), use `~' followed by `/' or the end of the line.
+Likewise for the home directory of USER, use `~USER'.  These variables
+are expanded on the server machine, and don't get any resonable
+expansion if pserver (*note Password authenticated::.) is in used;
+therefore user variables (see below) may be a better choice to
+customize behavior based on the user running CVS.
+
+   One may want to know about various pieces of information internal to
+CVS.  A CVS internal variable has the syntax `${VARIABLE}', where
+VARIABLE starts with a letter and consists of alphanumberic characters
+and `_'.  If the character following VARIABLE is a non-alphanumeric
+character other than `_', the `{' and `}' can be omitted.  The CVS
+internal variables are:
+
+`CVSROOT'
+     This is the value of the CVS root in use.  *Note Repository::, for
+     a description of the various ways to specify this.
+
+`RCSBIN'
+     This is the value CVS is using for where to find RCS binaries.
+     *Note Global options::, for a description of how to specify this.
+
+`CVSEDITOR'
+`VISUAL'
+`EDITOR'
+     These all expand to the same value, which is the editor that CVS
+     is using.  *Note Global options::, for how to specify this.
+
+`USER'
+     Username of the user running CVS (on the CVS server machine).
+
+   If you want to pass a value to the administrative files which the
+user that is running CVS can specify, use a user variable.  To expand a
+user variable, the administrative file contains `${=VARIABLE}'.  To set
+a user variable, specify the global option `-s' to CVS, with argument
+`VARIABLE=VALUE'.  It may be particularly useful to specify this option
+via `.cvsrc' (*note ~/.cvsrc::.).
+
+   For example, if you want the administrative file to refer to a test
+directory you might create a user variable `TESTDIR'.  Then if CVS is
+invoked as `cvs -s TESTDIR=/work/local/tests', and the administrative
+file contains `sh ${=TESTDIR}/runtests', then that string is expanded
+to `sh /work/local/tests/runtests'.
+
+   All other strings containing `$' are reserved; there is no way to
+quote a `$' character so that `$' represents itself.
 
 
 File: cvs.info,  Node: Environment variables,  Next: Troubleshooting,  Prev: Administrative files,  Up: Top
@@ -663,8 +721,8 @@ Index
 * Cvsignore, global:                    cvsignore.
 * CVSREAD:                              Environment variables.
 * CVSREAD, overriding:                  Global options.
-* cvsroot:                              Repository.
 * CVSROOT:                              Environment variables.
+* cvsroot:                              Repository.
 * CVSROOT (file):                       Administrative files.
 * CVSROOT, environment variable:        Repository.
 * CVSROOT, module name:                 Intro administrative files.
@@ -791,7 +849,6 @@ Index
 * Merging a branch:                     Merging a branch.
 * Merging a file:                       Updating a file.
 * Merging two revisions:                Merging two revisions.
-* mkmodules:                            Intro administrative files.
 * Modifications, copying between branches: Merging.
 * Module status:                        modules.
 * Module, defining:                     Defining the module.
@@ -833,6 +890,7 @@ Index
 * RCS keywords:                         Keyword list.
 * RCS revision numbers:                 Tags.
 * RCS, CVS uses RCS:                    User modules.
+* RCS-style locking:                    admin options.
 * RCSBIN:                               Environment variables.
 * RCSBIN, overriding:                   Global options.
 * RCSfile keyword:                      Keyword list.
@@ -849,7 +907,7 @@ Index
 * Releases, revisions and versions:     Versions revisions releases.
 * Releasing your working copy:          Cleaning up.
 * Remote repositories:                  Remote repositories.
-* Remove (subcommand):                  remove.
+* Remove (subcommand):                  Removing files.
 * Removing a change:                    Merging two revisions.
 * Removing files:                       Removing files.
 * Removing your working copy:           Cleaning up.
@@ -863,8 +921,11 @@ Index
 * Repository, example:                  Repository.
 * Repository, setting up:               Setting up.
 * Repository, user parts:               User modules.
+* Reserved checkouts:                   admin options.
 * Resetting sticky tags:                Sticky tags.
 * Resolving a conflict:                 Conflicts example.
+* Restoring old version of removed file: Sticky tags.
+* Resurrecting old version of dead file: Sticky tags.
 * Retrieving an old revision using tags: Tags.
 * Revision keyword:                     Keyword list.
 * Revision management:                  Revision management.

@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ./cvs.texinfo.
+file ../../ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -762,8 +762,8 @@ when at least the `modules' file is properly set up.
    The most important of these files is the `modules' file.  It defines
 all modules in the repository.  This is a sample `modules' file.
 
-     CVSROOT         -i mkmodules CVSROOT
-     modules         -i mkmodules CVSROOT modules
+     CVSROOT         CVSROOT
+     modules         CVSROOT modules
      cvs             gnu/cvs
      rcs             gnu/rcs
      diff            gnu/diff
@@ -773,13 +773,6 @@ all modules in the repository.  This is a sample `modules' file.
 contains the name of the module, whitespace, and the directory where
 the module resides.  The directory is a path relative to `$CVSROOT'.
 The last for lines in the example above are examples of such lines.
-
-   Each module definition can contain options.  The `-i mkmodules' is
-an example of an option.  It arranges for CVS to run the `mkmodules'
-program whenever any file in the module CVSROOT is committed.  That
-program is responsible for checking out read-only copies from the RCS
-"history files" of all the administrative files.  These read-only
-copies are used internally by CVS.  You should never edit them directly.
 
    The line that defines the module called `modules' uses features that
 are not explained here.  *Note modules::, for a full explanation of all
@@ -956,12 +949,13 @@ Unix `passwd' files.
    When authenticating a password, the server first checks for the user
 in the CVS `passwd' file.  If it finds the user, it compares against
 that password.  If it does not find the user, or if the CVS `passwd'
-file does not exist, then the server tries the system's `/etc/passwd'
-file.  In either case, assuming the password is correct, the server
-switches to run as that user immediately after authentication, so that
-it will have no privileges which that user would not have.  Therefore
-it is necessary that usernames in the CVS `passwd' file be valid
-usernames on the system.
+file does not exist, then the server tries to match the password using
+the system's user-lookup routine.  When using the CVS `passwd' file,
+the server runs under as the username specified in the the third
+argument in the entry, or as the first argument if there is no third
+argument (in this way CVS allows imaginary usernames provided the CVS
+`passwd' file indicates corresponding valid system usernames).  In any
+case, CVS will have no privileges which the (valid) user would not have.
 
    Right now, the only way to put a password in the CVS `passwd' file
 is to paste it there from somewhere else.  Someday, there may be a `cvs

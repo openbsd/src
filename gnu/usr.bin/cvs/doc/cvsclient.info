@@ -1,5 +1,5 @@
 This is Info file cvsclient.info, produced by Makeinfo-1.55 from the
-input file ./cvsclient.texi.
+input file ../../ccvs/doc/cvsclient.texi.
 
 
 File: cvsclient.info,  Node: Top,  Next: Goals,  Prev: (DIR),  Up: (DIR)
@@ -129,9 +129,11 @@ horizontal tab.
 
 * Entries Lines::
 * Modes::
+* Filenames::                       Conventions regarding filenames
 * Requests::
 * Responses::
 * Example::
+* Requirements::
 
 
 File: cvsclient.info,  Node: Entries Lines,  Next: Modes,  Up: Protocol
@@ -155,7 +157,7 @@ the file, or anything else if it doesn't.  If CONFLICT does not start
 with a `+', it is silently ignored.
 
 
-File: cvsclient.info,  Node: Modes,  Next: Requests,  Prev: Entries Lines,  Up: Protocol
+File: cvsclient.info,  Node: Modes,  Next: Filenames,  Prev: Entries Lines,  Up: Protocol
 
 Modes
 =====
@@ -190,7 +192,23 @@ operating systems haven't really been worked out (e.g. should the VMS
 port use ACLs to get POSIX semantics for groups?).
 
 
-File: cvsclient.info,  Node: Requests,  Next: Responses,  Prev: Modes,  Up: Protocol
+File: cvsclient.info,  Node: Filenames,  Next: Requests,  Prev: Modes,  Up: Protocol
+
+Conventions regarding transmission of file names
+================================================
+
+   In most contexts, `/' is used to separate directory and file names
+in filenames, and any use of other conventions (for example, that the
+user might type on the command line) is converted to that form.  The
+only exceptions might be a few cases in which the server provides a
+magic cookie which the client then repeats verbatim, but as the server
+has not yet been ported beyond unix, the two rules provide the same
+answer (and what to do if future server ports are operating on a
+repository like e:/foo or CVS_ROOT:[FOO.BAR] has not been carefully
+thought out).
+
+
+File: cvsclient.info,  Node: Requests,  Next: Responses,  Prev: Filenames,  Up: Protocol
 
 Requests
 ========
@@ -348,6 +366,9 @@ compressed form) ends with a newline.
      as combining of options) are allowed.  For graceful handling of
      `valid-requests', it is probably better to make new global options
      separate requests, rather than trying to add them to this request.
+
+`Set VARIABLE=VALUE \n'
+     Set a user variable VARIABLE to VALUE.
 
 `expand-modules \n'
      Response expected: yes.  Expand the modules which are specified in
@@ -605,7 +626,7 @@ the response is over.
      The command completed successfully.
 
 
-File: cvsclient.info,  Node: Example,  Prev: Responses,  Up: Protocol
+File: cvsclient.info,  Node: Example,  Next: Requirements,  Prev: Responses,  Up: Protocol
 
 Example
 =======
@@ -657,18 +678,42 @@ of the actual exchange.
      s> M done
      s> ok
 
+
+File: cvsclient.info,  Node: Requirements,  Prev: Example,  Up: Protocol
+
+Required versus optional parts of the protocol
+==============================================
+
+   The following are part of every known implementation of the CVS
+protocol and it is considered reasonable behavior to completely fail to
+work if you are connected with an implementation which attempts to not
+support them.  Requests: Root, Valid-responses, valid-requests,
+Repository, Entry, Modified, Argument, Argumentx, ci, co, update.
+Responses: ok, error, Valid-requests, Checked-in, Updated, Merged,
+Removed, M, E.
+
+   Failure to support the Directory, UseUnchanged, and Unchanged
+requests is deprecated.  CVS 1.5 and later have supported these
+requests and in the future it will be considered reasonable behavior to
+completely fail to work with an implementation which attempts to not
+support them.  Support for the Repository and Lost requests is
+deprecated; CVS clients 1.5 and later will not use them if
+communicating with a server which supports Directory and UseUnchanged.
+
 
 
 Tag Table:
-Node: Top99
-Node: Goals659
-Node: Notes2156
-Node: Protocol Notes3400
-Node: Protocol5082
-Node: Entries Lines5381
-Node: Modes6089
-Node: Requests7611
-Node: Responses19467
-Node: Example26529
+Node: Top112
+Node: Goals672
+Node: Notes2169
+Node: Protocol Notes3413
+Node: Protocol5095
+Node: Entries Lines5479
+Node: Modes6187
+Node: Filenames7710
+Node: Requests8461
+Node: Responses20390
+Node: Example27452
+Node: Requirements29398
 
 End Tag Table
