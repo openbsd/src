@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.10 2000/03/18 22:56:05 aaron Exp $
+.\"	$OpenBSD: swapctl.8,v 1.11 2000/04/13 13:26:00 deraadt Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -171,7 +171,16 @@ disk checks of large file systems.
 .Sh SWAP OPTIONS
 When parsing the
 .Pa /etc/fstab
-file for swap devices, the following options are recognized:
+file for swap devices, lines such as the following specify additional swap
+devices:
+
+.Pp
+.Bd -literal -offset indent -compact
+ 
+/dev/sd1b none swap sw 0 0
+.Ed
+.Pp
+Additional flags include:
 .Pp
 .Bl -tag -width nfsmntpt=/path -compact
 .It priority=N
