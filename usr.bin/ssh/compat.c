@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: compat.c,v 1.6 2000/04/03 07:07:15 markus Exp $");
+RCSID("$Id: compat.c,v 1.7 2000/04/04 15:19:42 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -40,7 +40,9 @@ int datafellows = 0;
 void 
 enable_compat20(void)
 {
-	fatal("protocol 2.0 not implemented");
+	verbose("Enabling compatibility mode for protocol 2.0");
+	compat20 = 1;
+	packet_set_ssh2_format();
 }
 void 
 enable_compat13(void)
