@@ -1,5 +1,5 @@
-/*	$OpenBSD: eval.c,v 1.2 1996/03/08 22:00:58 niklas Exp $	*/
-/*	$NetBSD: eval.c,v 1.29 1996/03/06 14:49:29 pk Exp $	*/
+/*	$OpenBSD: eval.c,v 1.3 1996/06/18 10:10:06 deraadt Exp $	*/
+/*	$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.29 1996/03/06 14:49:29 pk Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -926,11 +926,8 @@ breakcmd(argc, argv)
 	int argc;
 	char **argv; 
 {
-	int n;
+	int n = argc > 1 ? number(argv[1]) : 1;
 
-	n = 1;
-	if (argc > 1)
-		n = number(argv[1]);
 	if (n > loopnest)
 		n = loopnest;
 	if (n > 0) {
@@ -950,11 +947,8 @@ returncmd(argc, argv)
 	int argc;
 	char **argv; 
 {
-	int ret;
+	int ret = argc > 1 ? number(argv[1]) : oexitstatus;
 
-	ret = exitstatus;
-	if (argc > 1)
-		ret = number(argv[1]);
 	if (funcnest) {
 		evalskip = SKIPFUNC;
 		skipcount = 1;
