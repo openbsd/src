@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.4 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.5 2005/03/08 18:09:20 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -260,13 +260,13 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ic->ic_state != IEEE80211_S_SCAN &&
 			    !IEEE80211_ADDR_EQ(wh->i_addr3,
 				ic->ic_bss->ni_bssid) &&
-			    !IEEE80211_ADDR_EQ(wh->i_addr3,
 #ifdef __OpenBSD__
-				etherbroadcastaddr
+			    !IEEE80211_ADDR_EQ(wh->i_addr3,
+				etherbroadcastaddr)) {
 #else
- 			        ifp->if_broadcastaddr
+			    !IEEE80211_ADDR_EQ(wh->i_addr3,
+ 			        ifp->if_broadcastaddr)) {
 #endif
-				    )) {
 				/* Destination is not our BSS or broadcast. */
 				IEEE80211_DPRINTF2(
 				    ("%s: discard data frame to DA %s\n",
@@ -283,13 +283,13 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ic->ic_state != IEEE80211_S_SCAN &&
 			    !IEEE80211_ADDR_EQ(wh->i_addr1,
 				ic->ic_bss->ni_bssid) &&
-			    !IEEE80211_ADDR_EQ(wh->i_addr1,
 #ifdef __OpenBSD__
-				etherbroadcastaddr
+			    !IEEE80211_ADDR_EQ(wh->i_addr1,
+				etherbroadcastaddr)) {
 #else
- 			        ifp->if_broadcastaddr
+			    !IEEE80211_ADDR_EQ(wh->i_addr1,
+ 			        ifp->if_broadcastaddr)) {
 #endif
-				    )) {
 				/* BSS is not us or broadcast. */
 				IEEE80211_DPRINTF2(
 				    ("%s: discard data frame to BSS %s\n",
