@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.6 2000/05/15 17:07:28 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -95,6 +95,19 @@
  * Diagnostic registers and bit positions
  */
 #define	DR_CPUCFG		0
+
+#define	DR0_PCXS_DHPMC		10	/* r/c D-cache error flag */
+#define	DR0_PCXS_ILPMC		14	/* r/c I-cache error flag */
+#define	DR0_PCXS_EQWSTO		16	/* r/w enable quad-word stores */
+#define	DR0_PCXS_IHE		18	/* r/w I-cache sid hash enable */
+#define	DR0_PCXS_DOMAIN		19
+#define	DR0_PCXS_DHE		20	/* r/w D-cache sid hash enable */
+
+#define	DR0_PCXT_DHPMC		10	/* r/c L1 D-cache error flag */
+#define	DR0_PCXT_ILPMC		14	/* r/c L1 I-cache error flag */
+#define	DR0_PCXT_IHE		18	/* r/w I-cache sid hash enable */
+#define	DR0_PCXT_DHE		20	/* r/w D-cache sid hash enable */
+
 #define	DR0_PCXL_L2IHPMC	6	/* r/c L2 I-cache error flag */
 #define	DR0_PCXL_L2IHPMC_DIS	7	/* r/w L2 I-cache hpmc disable mask */
 #define	DR0_PCXL_L2DHPMC	8	/* r/c L2 D-cache error flag */
@@ -135,6 +148,16 @@
 #define	DR0_PCXL2_LMIN_EN	27	/* r/w minor ill insn traps on LIH */
 #define	DR0_PCXL2_RMIN_EN	28	/* r/w major ill insn traps on RIH */
 #define	DR0_PCXL2_L1CACHE_EN	29	/* r/w L1 I-cache enable */
+
+#define	DR_DTLB			8
+
+#define	DR_ITLB			9
+
+#define	DR_ITLB_SIZE_1		24
+#define	DR_ITLB_SIZE_0		25
+
+#define	DR_DTLB_SIZE_1		26
+#define	DR_DTLB_SIZE_0		27
 
 #define CCR_MASK 0xff
 

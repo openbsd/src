@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.10 2000/01/12 00:14:19 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.11 2000/06/15 17:00:37 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -169,16 +169,6 @@ tr4	.reg	%cr28
 tr5	.reg	%cr29
 tr6	.reg	%cr30
 tr7	.reg	%cr31
-
-/*
- * CPU-secific additional control registers
- */
-#define	dtlb_reg	8
-#define	dtlb_size_even	26
-#define	dtlb_size_odd	27
-#define	itlb_reg	9
-#define	itlb_size_even	24
-#define	itlb_size_odd	25
 
 /*
  * Calling Convention
