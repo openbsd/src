@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2002/01/28 19:24:03 fgsch Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2002/01/28 22:53:54 pvalchev Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -51,13 +51,13 @@ MAN+=	\
 	pthread_sigmask.3 \
 	pthread_single_np.3 \
 	pthread_suspend_np.3 \
-	pthread_testcancel.3
+	pthread_testcancel.3 \
 	sem_destroy.3 \
 	sem_getvalue.3 \
 	sem_init.3 \
 	sem_open.3 \
 	sem_post.3 \
-	sem_wait.3 \
+	sem_wait.3
 
 MAN+=	pthreads.3 \
 	sigwait.3 \
