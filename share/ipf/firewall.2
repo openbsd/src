@@ -25,7 +25,7 @@ block in log quick on ppp0 from any to any with ipopts
 #  Block any IP spoofing atempts.  (Packets "from" our network
 #  shouldn't be coming in from outside).
 #
-block in log quick on ppp0 from 198.168.4.0/24 to any
+block in log quick on ppp0 from 192.168.4.0/24 to any
 block in log quick on ppp0 from localhost to any
 block in log quick on ppp0 from 0.0.0.0/32 to any
 block in log quick on ppp0 from 255.255.255.255/32 to any
