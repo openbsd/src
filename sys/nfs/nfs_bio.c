@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.20 2001/06/25 03:28:06 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.21 2001/06/25 05:27:54 csapuntz Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -113,6 +113,10 @@ nfs_bioread(vp, uio, ioflag, cred)
 	 * attributes this could be forced by setting n_attrstamp to 0 before
 	 * the VOP_GETATTR() call.
 	 */
+	/* 
+	 * There is no way to modify a symbolic link via NFS or via
+	 * VFS, so we don't check if the link was modified 
+	 */
 	if (vp->v_type != VLNK) {
 		if (np->n_flag & NMODIFIED) {
 			np->n_attrstamp = 0;
@@ -133,19 +137,8 @@ nfs_bioread(vp, uio, ioflag, cred)
 		}
 	}
 	do {
-	    /*
-	     * Don't cache symlinks.
-	     */
 	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
-		switch (vp->v_type) {
-		case VREG:
-			return (nfs_readrpc(vp, uio, cred));
-		case VLNK:
-			return (nfs_readlinkrpc(vp, uio, cred));
-		default:
-			printf(" NQNFSNONCACHE: type %x unexpected\n",	
-				vp->v_type);
-		};
+		    return (nfs_readlinkrpc(vp, uio, cred));
 	    }
 	    baddr = (caddr_t)0;
 	    switch (vp->v_type) {
