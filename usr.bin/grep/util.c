@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2003/07/10 17:02:48 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2003/07/10 19:16:22 dhartmei Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -169,14 +169,13 @@ static int
 procline(str_t *l, int nottext)
 {
 	regmatch_t	pmatch;
-	int		c, i, r, t;
+	int		c, i, r;
 
 	if (matchall) {
 		c = !vflag;
 		goto print;
 	}
 
-	t = vflag ? REG_NOMATCH : 0;
 	for (c = i = 0; i < patterns; i++) {
 		pmatch.rm_so = 0;
 		pmatch.rm_eo = l->len;
@@ -185,8 +184,6 @@ procline(str_t *l, int nottext)
 			    l->len, &pmatch);
 		else
 			r = regexec(&r_pattern[i], l->dat, 1, &pmatch, eflags);
-		if (r == REG_NOMATCH && t == 0)
-			continue;
 		if (r == 0) {
 			if (wflag) {
 				if ((pmatch.rm_so != 0 &&
@@ -200,11 +197,13 @@ procline(str_t *l, int nottext)
 					r = REG_NOMATCH;
 			}
 		}
-		if (r == t) {
+		if (r == 0) {
 			c++;
 			break;
 		}
 	}
+	if (vflag)
+		c = !c;
 
 print:
 	if (c && binbehave == BIN_FILE_BIN && nottext)
