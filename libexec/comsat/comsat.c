@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.6 1997/08/05 23:35:23 angelos Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.7 1997/11/20 23:31:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -222,7 +222,7 @@ notify(utp, offset)
 	(void)alarm((u_int)30);
 	if ((tp = fopen(tty, "w")) == NULL) {
 		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
-		_exit(-1);
+		_exit(1);
 	}
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
