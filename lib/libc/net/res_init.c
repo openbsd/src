@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.25 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.26 2002/06/27 10:14:02 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.25 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.26 2002/06/27 10:14:02 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -371,7 +371,7 @@ res_init()
 		    memset(&hints, 0, sizeof(hints));
 		    hints.ai_flags = AI_NUMERICHOST;
 		    hints.ai_socktype = SOCK_DGRAM;
-		    snprintf(pbuf, sizeof(pbuf), "%d", NAMESERVER_PORT);
+		    snprintf(pbuf, sizeof(pbuf), "%u", NAMESERVER_PORT);
 		    res = NULL;
 		    if (getaddrinfo(cp, pbuf, &hints, &res) == 0 &&
 			    res->ai_next == NULL) {
@@ -593,7 +593,7 @@ res_setoptions(options, source)
 					_res.ndots = RES_MAXNDOTS;
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
-					printf(";;\tndots=%d\n", _res.ndots);
+					printf(";;\tndots=%u\n", _res.ndots);
 #endif
 			}
 		} else if (!strncmp(cp, "debug", sizeof("debug") - 1)) {

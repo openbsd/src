@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.11 2002/02/19 19:39:36 millert Exp $ */
+/* $OpenBSD: res_random.c,v 1.12 2002/06/27 10:14:02 itojun Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -212,12 +212,12 @@ main(int argc, char **argv)
 
 	res_initid();
 
-	printf("Generator: %d\n", ru_g);
-	printf("Seed: %d\n", ru_seed);
+	printf("Generator: %u\n", ru_g);
+	printf("Seed: %u\n", ru_seed);
 	printf("Reseed at %ld\n", ru_reseed);
-	printf("Ru_X: %d\n", ru_x);
-	printf("Ru_A: %d\n", ru_a);
-	printf("Ru_B: %d\n", ru_b);
+	printf("Ru_X: %u\n", ru_x);
+	printf("Ru_A: %u\n", ru_a);
+	printf("Ru_B: %u\n", ru_b);
 
 	n = atoi(argv[1]);
 	for (i=0;i<n;i++) {
