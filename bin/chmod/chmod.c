@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.8 2000/06/09 16:26:51 mickey Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.9 2000/06/09 17:50:16 mickey Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.8 2000/06/09 16:26:51 mickey Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.9 2000/06/09 17:50:16 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ done:	argv += optind;
 			 * don't point to anything and ones that we found
 			 * doing a physical walk.
 			 */
-			if (chmod || !hflag)
+			if (ischmod || !hflag)
 				continue;
 		default:
 			break;
