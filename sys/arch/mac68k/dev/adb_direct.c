@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.7 1997/04/22 20:11:34 gene Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.8 1997/04/22 23:50:05 gene Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
@@ -1334,7 +1334,7 @@ void
 adb_comp_exec(void)
 {
 	if ((long) 0 != adbCompRout)	/* don't call if empty return location */
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		asm("
 		    movml #0xffff, sp@-		| save all registers
 		    movl %0, a2 		| adbCompData
@@ -1428,7 +1428,7 @@ adb_handle_unsol(u_char * in)
 	 * adb_comp_exec (above). Some day we may want to generalize it and
 	 * make it a single function. */
 	if ((long) 0 != (long) block.dbServiceRtPtr) {
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		asm("
 		    movml #0xffff, sp@-		| save all registers
 		    movl %0, a2 		| block.dbDataAreaAddr
@@ -1987,7 +1987,7 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 void 
 adb_op_comprout(void)
 {
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	asm("movw	#1,a2@			| update flag value");
 #else				/* for macos based testing */
 	asm {
