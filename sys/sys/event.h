@@ -1,3 +1,5 @@
+/*	$OpenBSD: event.h,v 1.2 2000/11/16 20:31:29 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -92,7 +94,7 @@ struct kevent {
  * This is currently visible to userland to work around broken
  * programs which pull in <sys/proc.h> or <sys/select.h>.
  */
-#include <sys/queue.h> 
+#include <sys/queue.h>
 struct knote;
 SLIST_HEAD(klist, knote);
 
@@ -118,7 +120,7 @@ struct knote {
 	SLIST_ENTRY(knote)	kn_selnext;	/* for struct selinfo */
 	TAILQ_ENTRY(knote)	kn_tqe;
 	struct			kqueue *kn_kq;	/* which queue we are on */
-	struct 			kevent kn_kevent;
+	struct			kevent kn_kevent;
 	int			kn_status;
 	int			kn_sfflags;	/* saved filter flags */
 	int			kn_sdata;	/* saved data field */
@@ -145,17 +147,17 @@ struct proc;
 extern void	knote(struct klist *list, long hint);
 extern void	knote_remove(struct proc *p, struct klist *list);
 extern void	knote_fdclose(struct proc *p, int fd);
-extern int 	kqueue_register(struct kqueue *kq,
+extern int	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
 
-#else 	/* !_KERNEL */
+#else	/* !_KERNEL */
 
 #include <sys/cdefs.h>
 struct timespec;
 
 __BEGIN_DECLS
-int     kqueue __P((void));
-int     kevent __P((int kq, const struct kevent *changelist, int nchanges,
+int	kqueue __P((void));
+int	kevent __P((int kq, const struct kevent *changelist, int nchanges,
 		    struct kevent *eventlist, int nevents,
 		    const struct timespec *timeout));
 __END_DECLS
