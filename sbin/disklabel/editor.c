@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.74 2000/10/22 23:59:40 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.75 2001/03/12 23:03:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.74 2000/10/22 23:59:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.75 2001/03/12 23:03:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -308,7 +308,7 @@ editor(lp, f, dev, fstabfile)
 		case 'n':
 			if (mountpoints == NULL) {
 				fputs("This option is not valid when run "
-				    "without the -F flag.\n", stderr);
+				    "without the -f flag.\n", stderr);
 				break;
 			}
 			mpcopy(tmpmountpoints, omountpoints);
