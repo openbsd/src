@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.36 2000/11/13 23:09:58 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.37 2000/11/20 14:24:29 deraadt Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -288,7 +288,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piix_chip_map
 	},
-	{ PCI_PRODUCT_INTEL_82801BA_IDE, /* Intel 82801BA IDE (ICH0) */
+	{ PCI_PRODUCT_INTEL_82801BA_IDE, /* Intel 82801BA IDE (ICH2) */
 	  0,
 	  piix_chip_map
 	},
@@ -755,6 +755,7 @@ pciide_mapreg_dma(sc, pa)
 	default:
 		sc->sc_dma_ok = 0;
 		printf(", (unsupported maptype 0x%x)", maptype);
+		break;
 	}
 }
 
@@ -1378,12 +1379,14 @@ piix_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		switch(sc->sc_pp->ide_product) {
+		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
+		case PCI_PRODUCT_INTEL_82801BA_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			break;
 		}
 	}
 
@@ -1391,8 +1394,15 @@ piix_chip_map(sc, pa)
 	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap =
-	    (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) ? 4 : 2;
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_INTEL_82801AA_IDE:
+	case PCI_PRODUCT_INTEL_82801BA_IDE:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	default:
+		sc->sc_wdcdev.UDMA_cap = 2;
+		break;
+	}
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
 	else
@@ -2272,6 +2282,7 @@ cmd0643_9_chip_map(sc, pa)
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
+			break;
 		}
 	}
 
