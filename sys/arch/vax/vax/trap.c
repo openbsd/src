@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2003/05/27 23:05:41 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.28 2004/03/09 22:29:01 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -93,13 +93,13 @@ int no_traps = 18;
 
 #define USERMODE(framep)   ((((framep)->psl) & (PSL_U)) == PSL_U)
 #define FAULTCHK						\
-	if (p->p_addr->u_pcb.iftrap) {				\
+	do if (p->p_addr->u_pcb.iftrap) {			\
 		frame->pc = (unsigned)p->p_addr->u_pcb.iftrap;	\
 		frame->psl &= ~PSL_FPD;				\
 		frame->r0 = EFAULT;/* for copyin/out */		\
 		frame->r1 = -1; /* for fetch/store */		\
 		return;						\
-	}
+	} while (0)
 
 /*
  * userret:
