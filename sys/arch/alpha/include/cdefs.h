@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.5 1996/10/30 22:38:56 niklas Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.6 1999/02/04 23:30:18 niklas Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
@@ -56,10 +56,14 @@
 #else /* !__ELF__ */
 
 /*
- * Very little to do if not ELF: we support neither indirect or
- * weak references, and don't do anything with warnings.
+ * We don't support indirect references and don't do anything with warnings.
  */
 
+#ifdef __STDC__
+#define	__weak_alias(alias,sym)		__asm__(".weakext " #alias ", " #sym)
+#else /* !__STDC__ */
+#define	__weak_alias(alias,sym)		__asm__(".weakext alias, sym")
+#endif /* !__STDC__ */
 #define	__warn_references(sym,msg)	/* nothing */
 
 #endif /* !__ELF__ */
