@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.h,v 1.9 2001/08/15 13:06:53 ho Exp $	*/
+/*	$OpenBSD: policy.h,v 1.10 2002/06/10 18:08:58 ho Exp $	*/
 /*	$EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
@@ -45,39 +45,7 @@
 #if defined (USE_KEYNOTE)
 #define CREDENTIAL_FILE "credentials"
 #define PRIVATE_KEY_FILE "private_key"
-
-#define LK(sym, args) sym args
-#define LKV(sym) sym
-#elif defined (HAVE_DLOPEN) && 0
-#define LK(sym, args) lk_ ## sym args
-#define LKV(sym) *lk_ ## sym
-#else
-#define LK(sym, args) !!libkeynote called but no USE_KEYNOTE nor HAVE_DLOPEN!!
-#define LKV(sym) !!libkeynote called but no USE_KEYNOTE nor HAVE_DLOPEN!!
 #endif
-
-#if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE) && 0
-struct keynote_deckey;
-
-extern void *libkeynote;
-
-/*
- * These prototypes matches OpenBSD keynote.h 1.6.  If you use
- * a different version than that, you are on your own.
- */
-extern int *lk_keynote_errno;
-extern int (*lk_kn_add_action) (int, char *, char *, int);
-extern int (*lk_kn_add_assertion) (int, char *, int, int);
-extern int (*lk_kn_add_authorizer) (int, char *);
-extern int (*lk_kn_close) (int);
-extern int (*lk_kn_do_query) (int, char **, int);
-extern char *(*lk_kn_encode_key) (struct keynote_deckey *, int, int, int);
-extern int (*lk_kn_init) (void);
-extern char **(*lk_kn_read_asserts) (char *, int, int *);
-extern int (*lk_kn_remove_authorizer) (int, char *);
-extern void (*lk_kn_free_key) (struct keynote_deckey *);
-extern void *(*lk_kn_get_authorizer) (int, int, int*);
-#endif /* HAVE_DLOPEN && !USE_KEYNOTE */
 
 extern int keynote_sessid;
 extern int keynote_policy_asserts_num;

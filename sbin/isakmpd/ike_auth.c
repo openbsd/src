@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.64 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.65 2002/06/10 18:08:58 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -194,10 +194,6 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 
     case IKE_AUTH_RSA_SIG:
 #if defined (USE_X509) || defined (USE_KEYNOTE)
-#ifdef HAVE_DLOPEN
-      if (!libcrypto)
-	return 0;
-#endif
 #if defined (USE_KEYNOTE)
       if (local_id &&
 	  (keyfile = conf_get_str ("KeyNote", "Credential-directory")) != 0)
@@ -262,7 +258,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  buf2 = kn_get_string (buf);
 	  free (buf);
 
-	  if (LK (kn_decode_key, (&dc, buf2, KEYNOTE_PRIVATE_KEY)) == -1)
+	  if (kn_decode_key (&dc, buf2, KEYNOTE_PRIVATE_KEY) == -1)
 	    {
 	      free (buf2);
 	      log_print ("ike_auth_get_key: failed decoding key in \"%s\"",
@@ -278,7 +274,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	      log_print ("ike_auth_get_key: wrong algorithm type %d in \"%s\"",
 			 dc.dec_algorithm, keyfile);
 	      free (keyfile);
-	      LK (kn_free_key, (&dc));
+	      kn_free_key (&dc);
 	      return 0;
 	    }
 
@@ -295,28 +291,28 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       if (check_file_secrecy (keyfile, 0))
 	return 0;
 
-      keyh = LC (BIO_new, (LC (BIO_s_file, ())));
+      keyh = BIO_new (BIO_s_file ());
       if (keyh == NULL)
 	{
 	  log_print ("ike_auth_get_key: "
 		     "BIO_new (BIO_s_file ()) failed");
 	  return 0;
 	}
-      if (LC (BIO_read_filename, (keyh, keyfile)) == -1)
+      if (BIO_read_filename (keyh, keyfile) == -1)
 	{
 	  log_print ("ike_auth_get_key: "
 		     "BIO_read_filename (keyh, \"%s\") failed",
 		     keyfile);
-	  LC (BIO_free, (keyh));
+	  BIO_free (keyh);
 	  return 0;
 	}
 
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
-      rsakey = LC (PEM_read_bio_RSAPrivateKey, (keyh, NULL, NULL, NULL));
+      rsakey = PEM_read_bio_RSAPrivateKey (keyh, NULL, NULL, NULL);
 #else
-      rsakey = LC (PEM_read_bio_RSAPrivateKey, (keyh, NULL, NULL));
+      rsakey = PEM_read_bio_RSAPrivateKey (keyh, NULL, NULL);
 #endif
-      LC (BIO_free, (keyh));
+      BIO_free (keyh);
       if (!rsakey)
 	{
 	  log_print ("ike_auth_get_key: PEM_read_bio_RSAPrivateKey failed");
@@ -625,7 +621,7 @@ rsa_sig_decode_hash (struct message *msg)
    * We need the policy session initialized now, so we can add
    * credentials etc.
    */
-  exchange->policy_id = LK (kn_init, ());
+  exchange->policy_id = kn_init ();
   if (exchange->policy_id == -1)
     {
       log_print ("rsa_sig_decode_hash: failed to initialize policy session");
@@ -761,11 +757,11 @@ rsa_sig_decode_hash (struct message *msg)
 	  dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
 	  dc.dec_key = key;
 
-	  pp = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
-				   KEYNOTE_PUBLIC_KEY));
+	  pp = kn_encode_key (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+			      KEYNOTE_PUBLIC_KEY);
 	  if (pp == NULL)
 	    {
-	      LK (kn_free_key, (&dc));
+	      kn_free_key (&dc);
 	      log_print ("rsa_sig_decode_hash: failed to ASCII-encode key");
 	      return -1;
 	    }
@@ -775,7 +771,7 @@ rsa_sig_decode_hash (struct message *msg)
 	  if (!exchange->keynote_key)
 	    {
 	      free (pp);
-	      LK (kn_free_key, (&dc));
+	      kn_free_key (&dc);
 	      log_print ("rsa_sig_decode_hash: failed to allocate %d bytes",
 			 dclen);
 	      return -1;
@@ -823,15 +819,15 @@ rsa_sig_decode_hash (struct message *msg)
   if (!p)
     {
       log_print ("rsa_sig_decode_hash: missing signature payload");
-      LC (RSA_free, (key));
+      RSA_free (key);
       return -1;
     }
 
   /* Check that the sig is of the correct size.  */
   len = GET_ISAKMP_GEN_LENGTH (p->p) - ISAKMP_SIG_SZ;
-  if (len != LC (RSA_size, (key)))
+  if (len != RSA_size (key))
     {
-      LC (RSA_free, (key));
+      RSA_free (key);
       log_print ("rsa_sig_decode_hash: "
 		 "SIG payload length does not match public key");
       return -1;
@@ -840,16 +836,16 @@ rsa_sig_decode_hash (struct message *msg)
   *hash_p = malloc (len);
   if (!*hash_p)
     {
-      LC (RSA_free, (key));
+      RSA_free (key);
       log_error ("rsa_sig_decode_hash: malloc (%d) failed", len);
       return -1;
     }
 
-  len = LC (RSA_public_decrypt, (len, p->p + ISAKMP_SIG_DATA_OFF, *hash_p, key,
-				 RSA_PKCS1_PADDING));
+  len = RSA_public_decrypt (len, p->p + ISAKMP_SIG_DATA_OFF, *hash_p, key,
+			    RSA_PKCS1_PADDING);
   if (len == -1)
     {
-      LC (RSA_free, (key));
+      RSA_free (key);
       log_print ("rsa_sig_decode_hash: RSA_public_decrypt () failed");
       return -1;
     }
@@ -1113,16 +1109,16 @@ rsa_sig_encode_hash (struct message *msg)
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf, hashsize));
 
-  data = malloc (LC (RSA_size, (exchange->sent_key)));
+  data = malloc (RSA_size (exchange->sent_key));
   if (!data)
     {
       log_error ("rsa_sig_encode_hash: malloc (%d) failed",
-		 LC (RSA_size, (exchange->sent_key)));
+		 RSA_size (exchange->sent_key));
       return -1;
     }
 
-  datalen = LC (RSA_private_encrypt, (hashsize, buf, data,
-				      exchange->sent_key, RSA_PKCS1_PADDING));
+  datalen = RSA_private_encrypt (hashsize, buf, data, exchange->sent_key,
+				 RSA_PKCS1_PADDING);
   if (datalen == -1)
     {
       log_print ("rsa_sig_encode_hash: RSA_private_encrypt () failed");
@@ -1230,23 +1226,23 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
   /* If the file does not exist, fail silently.  */
   if (stat (filename, &st) == 0)
     {
-      bio = LC (BIO_new, (LC (BIO_s_file, ())));
+      bio = BIO_new (BIO_s_file ());
       if (!bio)
 	{
 	  log_error ("get_raw_key_from_file: could not initialize BIO");
 	  return -1;
 	}
-      if (LC (BIO_read_filename, (bio, filename)) <= 0)
+      if (BIO_read_filename (bio, filename) <= 0)
 	{
 	  LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
 		   "BIO_read_filename(bio, \"%s\") failed", filename));
-	  LC (BIO_free, (bio));
+	  BIO_free (bio);
 	  return -1;
 	}
       LOG_DBG((LOG_NEGOTIATION, 80, "get_raw_key_from_file: reading file %s",
 	       filename));
-      *rsa = LC (PEM_read_bio_RSA_PUBKEY, (bio, NULL, NULL, NULL));
-      LC (BIO_free, (bio));
+      *rsa = PEM_read_bio_RSA_PUBKEY (bio, NULL, NULL, NULL);
+      BIO_free (bio);
     }
   else
     LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",

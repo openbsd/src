@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.70 2002/06/01 07:44:22 deraadt Exp $	*/
+/*	$OpenBSD: x509.c,v 1.71 2002/06/10 18:08:59 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 
 #include "cert.h"
 #include "conf.h"
-#include "dyn.h"
 #include "exchange.h"
 #include "hash.h"
 #include "ike_auth.h"
@@ -131,11 +130,11 @@ x509_generate_kn (int id, X509 *cert)
 	    "x509_generate_kn: generating KeyNote policy for certificate %p",
 	    cert));
 
-  issuer = LC (X509_get_issuer_name, (cert));
-  subject = LC (X509_get_subject_name, (cert));
+  issuer = X509_get_issuer_name (cert);
+  subject = X509_get_subject_name (cert);
 
   /* Missing or self-signed, ignore cert but don't report failure.  */
-  if (!issuer || !subject || !LC (X509_name_cmp, (issuer, subject)))
+  if (!issuer || !subject || !X509_name_cmp (issuer, subject))
     return 1;
 
   if (!x509_cert_get_key (cert, &key))
@@ -147,41 +146,41 @@ x509_generate_kn (int id, X509 *cert)
 
   dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
   dc.dec_key = key;
-  ikey = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
-			     KEYNOTE_PUBLIC_KEY));
-  if (LKV (keynote_errno) == ERROR_MEMORY)
+  ikey = kn_encode_key (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+			KEYNOTE_PUBLIC_KEY);
+  if (keynote_errno == ERROR_MEMORY)
     {
       log_print ("x509_generate_kn: failed to get memory for public key");
-      LC (RSA_free, (key));
+      RSA_free (key);
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get subject key"));
       return 0;
     }
   if (!ikey)
     {
-      LC (RSA_free, (key));
+      RSA_free (key);
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get subject key"));
       return 0;
     }
-  LC (RSA_free, (key));
+  RSA_free (key);
 
   /* Now find issuer's certificate so we can get the public key.  */
-  LC (X509_STORE_CTX_init, (&csc, x509_cas, cert, NULL));
-  if (LC (X509_STORE_get_by_subject, (&csc, X509_LU_X509, issuer, &obj)) !=
+  X509_STORE_CTX_init (&csc, x509_cas, cert, NULL);
+  if (X509_STORE_get_by_subject (&csc, X509_LU_X509, issuer, &obj) !=
       X509_LU_X509)
     {
-      LC (X509_STORE_CTX_cleanup, (&csc));
-      LC (X509_STORE_CTX_init, (&csc, x509_certs, cert, NULL));
-      if (LC (X509_STORE_get_by_subject, (&csc, X509_LU_X509, issuer, &obj)) !=
+      X509_STORE_CTX_cleanup (&csc);
+      X509_STORE_CTX_init (&csc, x509_certs, cert, NULL);
+      if (X509_STORE_get_by_subject (&csc, X509_LU_X509, issuer, &obj) !=
           X509_LU_X509)
 	{
-  	  LC (X509_STORE_CTX_cleanup, (&csc));
+  	  X509_STORE_CTX_cleanup (&csc);
 	  LOG_DBG ((LOG_POLICY, 30,
 		    "x509_generate_kn: no certificate found for issuer"));
 	  return 0;
 	}
     }
 
-  LC (X509_STORE_CTX_cleanup, (&csc));
+  X509_STORE_CTX_cleanup (&csc);
   icert = obj.data.x509;
 
   if (icert == NULL)
@@ -200,17 +199,17 @@ x509_generate_kn (int id, X509 *cert)
       return 0;
     }
 
-  LC (X509_OBJECT_free_contents, (&obj));
+  X509_OBJECT_free_contents (&obj);
 
   dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
   dc.dec_key = key;
-  skey = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
-			     KEYNOTE_PUBLIC_KEY));
-  if (LKV (keynote_errno) == ERROR_MEMORY)
+  skey = kn_encode_key (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+			KEYNOTE_PUBLIC_KEY);
+  if (keynote_errno == ERROR_MEMORY)
     {
       log_error ("x509_generate_kn: failed to get memory for public key");
       free (ikey);
-      LC (RSA_free, (key));
+      RSA_free (key);
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer key"));
       return 0;
     }
@@ -218,11 +217,11 @@ x509_generate_kn (int id, X509 *cert)
   if (!skey)
     {
       free (ikey);
-      LC (RSA_free, (key));
+      RSA_free (key);
       LOG_DBG ((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer key"));
       return 0;
     }
-  LC (RSA_free, (key));
+  RSA_free (key);
 
   buf_len = strlen (fmt) + strlen (ikey) + strlen (skey) + 56;
   buf = calloc (buf_len, sizeof (char));
@@ -470,8 +469,7 @@ x509_generate_kn (int id, X509 *cert)
   free (ikey);
   free (skey);
 
-  if (LK (kn_add_assertion, (id, buf, strlen (buf),
-			     ASSERT_FLAG_LOCAL)) == -1)
+  if (kn_add_assertion (id, buf, strlen (buf), ASSERT_FLAG_LOCAL) == -1)
     {
       LOG_DBG ((LOG_POLICY, 30,
 		"x509_generate_kn: failed to add new KeyNote credential"));
@@ -484,14 +482,14 @@ x509_generate_kn (int id, X509 *cert)
 
   free (buf);
 
-  if (!LC (X509_NAME_oneline, (issuer, isname, 256)))
+  if (!X509_NAME_oneline (issuer, isname, 256))
     {
       LOG_DBG ((LOG_POLICY, 50,
 		"x509_generate_kn: X509_NAME_oneline (issuer, ...) failed"));
       return 0;
     }
 
-  if (!LC (X509_NAME_oneline, (subject, subname, 256)))
+  if (!X509_NAME_oneline (subject, subname, 256))
     {
       LOG_DBG ((LOG_POLICY, 50,
 		"x509_generate_kn: X509_NAME_oneline (subject, ...) failed"));
@@ -509,8 +507,7 @@ x509_generate_kn (int id, X509 *cert)
   snprintf (buf, buf_len, fmt2, isname, subname, timecomp, before, timecomp2,
 	    after);
 
-  if (LK (kn_add_assertion, (id, buf, strlen (buf),
-			     ASSERT_FLAG_LOCAL)) == -1)
+  if (kn_add_assertion (id, buf, strlen (buf), ASSERT_FLAG_LOCAL) == -1)
     {
       LOG_DBG ((LOG_POLICY, 30,
 		"x509_generate_kn: failed to add new KeyNote credential"));
@@ -713,16 +710,16 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       LOG_DBG ((LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
 		file->d_name));
 
-      certh = LC (BIO_new, (LC (BIO_s_file, ())));
+      certh = BIO_new (BIO_s_file ());
       if (!certh)
 	{
 	  log_error ("x509_read_from_dir: BIO_new (BIO_s_file ()) failed");
 	  continue;
 	}
 
-      if (LC (BIO_read_filename, (certh, fullname)) == -1)
+      if (BIO_read_filename (certh, fullname) == -1)
 	{
-	  LC (BIO_free, (certh));
+	  BIO_free (certh);
 	  log_error ("x509_read_from_dir: "
 		     "BIO_read_filename (certh, \"%s\") failed",
 		     fullname);
@@ -730,11 +727,11 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	}
 
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
-      cert = LC (PEM_read_bio_X509, (certh, NULL, NULL, NULL));
+      cert = PEM_read_bio_X509 (certh, NULL, NULL, NULL);
 #else
-      cert = LC (PEM_read_bio_X509, (certh, NULL, NULL));
+      cert = PEM_read_bio_X509 (certh, NULL, NULL);
 #endif
-      LC (BIO_free, (certh));
+      BIO_free (certh);
       if (cert == NULL)
 	{
 	  log_print ("x509_read_from_dir: PEM_read_bio_X509 failed for %s",
@@ -742,7 +739,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	  continue;
 	}
 
-      if (!LC (X509_STORE_add_cert, (ctx, cert)))
+      if (!X509_STORE_add_cert (ctx, cert))
 	{
 	  /*
 	   * This is actually expected if we have several certificates only
@@ -783,9 +780,9 @@ x509_cert_init (void)
 
   /* Free if already initialized.  */
   if (x509_cas)
-    LC (X509_STORE_free, (x509_cas));
+    X509_STORE_free (x509_cas);
 
-  x509_cas = LC (X509_STORE_new, ());
+  x509_cas = X509_STORE_new ();
   if (!x509_cas)
     {
       log_print ("x509_cert_init: creating new X509_STORE failed");
@@ -808,9 +805,9 @@ x509_cert_init (void)
 
   /* Free if already initialized.  */
   if (x509_certs)
-    LC (X509_STORE_free, (x509_certs));
+    X509_STORE_free (x509_certs);
 
-  x509_certs = LC (X509_STORE_new, ());
+  x509_certs = X509_STORE_new ();
   if (!x509_certs)
     {
       log_print ("x509_cert_init: creating new X509_STORE failed");
@@ -829,15 +826,6 @@ x509_cert_init (void)
 void *
 x509_cert_get (u_int8_t *asn, u_int32_t len)
 {
-#ifndef USE_LIBCRYPTO
-  /*
-   * If we don't have a statically linked libcrypto, the dlopen must have
-   * succeeded for X.509 to be usable.
-   */
-  if (!libcrypto)
-    return 0;
-#endif
-
   return x509_from_asn (asn, len);
 }
 
@@ -854,10 +842,10 @@ x509_cert_validate (void *scert)
    * Validate the peer certificate by checking with the CA certificates we
    * trust.
    */
-  LC (X509_STORE_CTX_init, (&csc, x509_cas, cert, NULL));
-  res = LC (X509_verify_cert, (&csc));
+  X509_STORE_CTX_init (&csc, x509_cas, cert, NULL);
+  res = X509_verify_cert (&csc);
   err = csc.error;
-  LC (X509_STORE_CTX_cleanup, (&csc));
+  X509_STORE_CTX_cleanup (&csc);
 
   /* Return if validation succeeded or self-signed certs are not accepted.  */
   if (res)
@@ -866,17 +854,17 @@ x509_cert_validate (void *scert)
     {
       if (err)
 	log_print ("x509_cert_validate: %.100s",
-		   LC (X509_verify_cert_error_string, (err)));
+		   X509_verify_cert_error_string (err));
       return res;
     }
 
-  issuer = LC (X509_get_issuer_name, (cert));
-  subject = LC (X509_get_subject_name, (cert));
+  issuer = X509_get_issuer_name (cert);
+  subject = X509_get_subject_name (cert);
 
-  if (!issuer || !subject || LC (X509_name_cmp, (issuer, subject)))
+  if (!issuer || !subject || X509_name_cmp (issuer, subject))
     return 0;
 
-  key = LC (X509_get_pubkey, (cert));
+  key = X509_get_pubkey (cert);
   if (!key)
     {
       log_print ("x509_cert_validate: could not get public key from "
@@ -884,7 +872,7 @@ x509_cert_validate (void *scert)
       return 0;
     }
 
-  if (LC (X509_verify, (cert, key)) == -1)
+  if (X509_verify (cert, key) == -1)
     {
       log_print ("x509_cert_validate: self-signed cert is bad");
       return 0;
@@ -899,7 +887,7 @@ x509_cert_insert (int id, void *scert)
   X509 *cert;
   int res;
 
-  cert = LC (X509_dup, ((X509 *)scert));
+  cert = X509_dup ((X509 *)scert);
   if (!cert)
     {
       log_print ("x509_cert_insert: X509_dup failed");
@@ -915,14 +903,14 @@ x509_cert_insert (int id, void *scert)
       {
 	LOG_DBG ((LOG_POLICY, 50,
 		  "x509_cert_insert: x509_generate_kn failed"));
-	LC (X509_free, (cert));
+	X509_free (cert);
 	return 0;
       }
 #endif /* USE_POLICY */
 
   res = x509_hash_enter (cert);
   if (!res)
-    LC (X509_free, (cert));
+    X509_free (cert);
 
   return res;
 }
@@ -948,7 +936,7 @@ x509_cert_free (void *cert)
 
   if (certh)
     LIST_REMOVE (certh, link);
-  LC (X509_free, ((X509 *)cert));
+  X509_free ((X509 *)cert);
 }
 
 /* Validate the BER Encoding of a RDNSequence in the CERT_REQ payload.  */
@@ -1044,20 +1032,20 @@ x509_from_asn (u_char *asn, u_int len)
   BIO *certh;
   X509 *scert = 0;
 
-  certh = LC (BIO_new, (LC (BIO_s_mem, ())));
+  certh = BIO_new (BIO_s_mem ());
   if (!certh)
     {
       log_error ("x509_from_asn: BIO_new (BIO_s_mem ()) failed");
       return 0;
     }
 
-  if (LC (BIO_write, (certh, asn, len)) == -1)
+  if (BIO_write (certh, asn, len) == -1)
     {
       log_error ("x509_from_asn: BIO_write failed\n");
       goto end;
     }
 
-  scert = LC (d2i_X509_bio, (certh, NULL));
+  scert = d2i_X509_bio (certh, NULL);
   if (!scert)
     {
       log_print ("x509_from_asn: d2i_X509_bio failed\n");
@@ -1065,7 +1053,7 @@ x509_from_asn (u_char *asn, u_int len)
     }
 
  end:
-  LC (BIO_free, (certh));
+  BIO_free (certh);
   return scert;
 }
 
@@ -1110,7 +1098,7 @@ x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
   int extpos;
   int santype, sanlen;
 
-  extpos = LC (X509_get_ext_by_NID, (scert, NID_subject_alt_name, -1));
+  extpos = X509_get_ext_by_NID (scert, NID_subject_alt_name, -1);
   if (extpos == -1)
     {
       log_print ("x509_cert_subjectaltname: "
@@ -1118,7 +1106,7 @@ x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
       return 0;
     }
 
-  subjectaltname = LC (X509_get_ext, (scert, extpos));
+  subjectaltname = X509_get_ext (scert, extpos);
 
   if (!subjectaltname || !subjectaltname->value
       || !subjectaltname->value->data || subjectaltname->value->length < 4)
@@ -1184,13 +1172,13 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
     }
 
   /* Stash the subjectName into the first slot.  */
-  subject = LC (X509_get_subject_name, (cert));
+  subject = X509_get_subject_name (cert);
   if (!subject)
     goto fail;
 
 
   (*id_len)[0] =
-    ISAKMP_ID_DATA_OFF + LC (i2d_X509_NAME, (subject, NULL)) - ISAKMP_GEN_SZ;
+    ISAKMP_ID_DATA_OFF + i2d_X509_NAME (subject, NULL) - ISAKMP_GEN_SZ;
   (*id)[0] = malloc ((*id_len)[0]);
   if (!(*id)[0])
     {
@@ -1199,7 +1187,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
     }
   SET_ISAKMP_ID_TYPE ((*id)[0] - ISAKMP_GEN_SZ, IPSEC_ID_DER_ASN1_DN);
   ubuf = (*id)[0] + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
-  LC (i2d_X509_NAME, (subject, &ubuf));
+  i2d_X509_NAME (subject, &ubuf);
 
   /* Stash the subjectAltName into the second slot.  */
   type = x509_cert_subjectaltname (cert, &altname, &altlen);
@@ -1283,17 +1271,17 @@ x509_cert_get_key (void *scert, void *keyp)
   X509 *cert = scert;
   EVP_PKEY *key;
 
-  key = LC (X509_get_pubkey, (cert));
+  key = X509_get_pubkey (cert);
 
   /* Check if we got the right key type.  */
   if (key->type != EVP_PKEY_RSA)
     {
       log_print ("x509_cert_get_key: public key is not a RSA key");
-      LC (X509_free, (cert));
+      X509_free (cert);
       return 0;
     }
 
-  *(RSA **)keyp = LC (RSAPublicKey_dup, (key->pkey.rsa));
+  *(RSA **)keyp = RSAPublicKey_dup (key->pkey.rsa);
 
   return *(RSA **)keyp == NULL ? 0 : 1;
 }
@@ -1301,7 +1289,7 @@ x509_cert_get_key (void *scert, void *keyp)
 void *
 x509_cert_dup (void *scert)
 {
-  return LC (X509_dup, (scert));
+  return X509_dup (scert);
 }
 
 void
@@ -1309,7 +1297,7 @@ x509_serialize (void *scert, u_int8_t **data, u_int32_t *datalen)
 {
   u_int8_t *p;
 
-  *datalen = LC (i2d_X509, ((X509 *) scert, NULL));
+  *datalen = i2d_X509 ((X509 *) scert, NULL);
   *data = p = malloc (*datalen);
   if (!p)
     {
@@ -1317,7 +1305,7 @@ x509_serialize (void *scert, u_int8_t **data, u_int32_t *datalen)
       return;
     }
 
-  *datalen = LC (i2d_X509, ((X509 *)scert, &p));
+  *datalen = i2d_X509 ((X509 *)scert, &p);
 }
 
 /* From cert to printable */
@@ -1386,19 +1374,19 @@ x509_DN_string (u_int8_t *asn1, size_t sz)
   /* XXX Just a guess at a maximum length.  */
   char buf[256];
 
-  name = LC (d2i_X509_NAME, (NULL, &p, sz));
+  name = d2i_X509_NAME (NULL, &p, sz);
   if (!name)
     {
       log_print ("x509_DN_string: d2i_X509_NAME failed");
       return 0;
     }
-  if (!LC (X509_NAME_oneline, (name, buf, sizeof buf - 1)))
+  if (!X509_NAME_oneline (name, buf, sizeof buf - 1))
     {
       log_print ("x509_DN_string: X509_NAME_oneline failed");
-      LC (X509_NAME_free, (name));
+      X509_NAME_free (name);
       return 0;
     }
-  LC (X509_NAME_free, (name));
+  X509_NAME_free (name);
   buf[sizeof buf - 1] = '\0';
   return strdup (buf);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.2 2001/01/28 22:38:48 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.3 2002/06/10 18:08:59 ho Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -54,12 +54,6 @@ DPADD+=		${.CURDIR}/sysdep/common/libsysdep/libsysdep.a \
 CFLAGS+=	${DEBUG} -I${FREESWAN}/gmp -I${FREESWAN}/libdes \
 		-I${FREESWAN}/klips -I${FREESWAN}/lib -DUSE_OLD_SOCKADDR \
 		-I${.CURDIR}/sysdep/common
-
-# XXX Is this test correct?  Is the prefix "_" on ELF-systems too?
-HAVE_DLOPEN=	defined
-LDADD+=		-ldl
-DPADD+=		/usr/lib/libdl.a
-CFLAGS+=	-DSYMBOL_PREFIX='"_"'
 
 #USE_LIBCRYPTO=	defined
 #USE_KEYNOTE=	defined

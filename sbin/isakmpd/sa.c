@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.62 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: sa.c,v 1.63 2002/06/10 18:08:58 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -779,7 +779,7 @@ sa_release (struct sa *sa)
     free (sa->keynote_key); /* This is just a string */
 #if defined (USE_POLICY) || defined (USE_KEYNOTE)
   if (sa->policy_id != -1)
-    LK (kn_close, (sa->policy_id));
+    kn_close (sa->policy_id);
 #endif
   if (sa->name)
     free (sa->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.66 2002/06/07 19:53:19 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.67 2002/06/10 18:08:58 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1268,7 +1268,7 @@ exchange_free_aux (void *v_exch)
 
 #if defined (POLICY) || defined (KEYNOTE)
   if (exchange->policy_id != -1)
-    LK (kn_close, (exchange->policy_id));
+    kn_close (exchange->policy_id);
 #endif
 
   exchange_free_aca_list (exchange);

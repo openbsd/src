@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2002/03/05 00:10:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.46 2002/06/10 18:08:58 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -152,11 +152,6 @@ LDADD+=		-lgmp
 DPADD+=		${LIBGMP}
 .else
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
-.endif
-
-.ifdef HAVE_DLOPEN
-CFLAGS+=	-DHAVE_DLOPEN
-SRCS+=		dyn.c
 .endif
 
 .ifdef USE_KEYNOTE

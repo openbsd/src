@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.19 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.20 2002/06/10 18:08:59 ho Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -191,27 +191,19 @@ main (int argc, char *argv[])
 
   libcrypto_init ();
 
-#ifndef USE_LIBCRYPTO
-  if (!libcrypto)
-    {
-      fprintf (stderr, "I did not find the X.509 support, giving up...");
-      exit (1);
-    }
-#endif
-
   printf ("Reading private key %s\n", argv[1]);
-  keyfile = LC (BIO_new, (LC (BIO_s_file, ())));
-  if (LC (BIO_read_filename, (keyfile, argv[1])) == -1)
+  keyfile = BIO_new (BIO_s_file ());
+  if (BIO_read_filename (keyfile, argv[1]) == -1)
     {
       perror ("read");
       exit (1);
     }
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
-  priv_key = LC (PEM_read_bio_RSAPrivateKey, (keyfile, NULL, NULL, NULL));
+  priv_key = PEM_read_bio_RSAPrivateKey (keyfile, NULL, NULL, NULL);
 #else
-  priv_key = LC (PEM_read_bio_RSAPrivateKey, (keyfile, NULL, NULL));
+  priv_key = PEM_read_bio_RSAPrivateKey (keyfile, NULL, NULL);
 #endif
-  LC (BIO_free, (keyfile));
+  BIO_free (keyfile);
   if (priv_key == NULL)
     {
       printf("PEM_read_bio_RSAPrivateKey () failed\n");
@@ -220,25 +212,25 @@ main (int argc, char *argv[])
 
   /* Use a certificate created by ssleay.  */
   printf ("Reading ssleay created certificate %s\n", argv[2]);
-  certfile = LC (BIO_new, (LC (BIO_s_file, ())));
-  if (LC (BIO_read_filename, (certfile, argv[2])) == -1)
+  certfile = BIO_new (BIO_s_file ());
+  if (BIO_read_filename (certfile, argv[2]) == -1)
     {
       perror ("read");
       exit (1);
     }
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
-  cert = LC (PEM_read_bio_X509, (certfile, NULL, NULL, NULL));
+  cert = PEM_read_bio_X509 (certfile, NULL, NULL, NULL);
 #else
-  cert = LC (PEM_read_bio_X509, (certfile, NULL, NULL));
+  cert = PEM_read_bio_X509 (certfile, NULL, NULL);
 #endif
-  LC (BIO_free, (certfile));
+  BIO_free (certfile);
   if (cert == NULL)
     {
       printf("PEM_read_bio_X509 () failed\n");
       exit (1);
     }
 
-  pkey_pub = LC (X509_get_pubkey, (cert));
+  pkey_pub = X509_get_pubkey (cert);
   /* XXX Violation of the interface?  */
   pub_key = pkey_pub->pkey.rsa;
   if (pub_key == NULL)
@@ -250,12 +242,12 @@ main (int argc, char *argv[])
 
   err = 0;
   strlcpy (dec, "Eine kleine Testmeldung", 256);
-  if ((len = LC (RSA_private_encrypt, (strlen (dec), dec, enc, priv_key,
-				       RSA_PKCS1_PADDING))) == -1)
+  if ((len = RSA_private_encrypt (strlen (dec), dec, enc, priv_key,
+				  RSA_PKCS1_PADDING)) == -1)
 
     printf ("SIGN FAILED ");
   else
-    err = LC (RSA_public_decrypt, (len, enc, dec, pub_key, RSA_PKCS1_PADDING));
+    err = RSA_public_decrypt (len, enc, dec, pub_key, RSA_PKCS1_PADDING);
 
   if (err == -1 || strcmp (dec, "Eine kleine Testmeldung"))
     printf ("SIGN/VERIFY FAILED");
@@ -265,7 +257,7 @@ main (int argc, char *argv[])
 
 
   printf ("Validate SIGNED: ");
-  err = LC (X509_verify, (cert, pkey_pub));
+  err = X509_verify (cert, pkey_pub);
   printf ("X509 verify: %d ", err);
   if (err == -1)
     printf ("FAILED ");

@@ -1,4 +1,4 @@
-#	$OpenBSD: GNUmakefile.sysdep,v 1.2 2001/01/28 22:38:49 niklas Exp $
+#	$OpenBSD: GNUmakefile.sysdep,v 1.3 2002/06/10 18:08:59 ho Exp $
 
 #
 # Copyright (c) 1999 Håkan Olsson.  All rights reserved.
@@ -42,14 +42,6 @@ IPSEC_SRCS=	pf_key_v2.c
 IPSEC_CFLAGS=	-DUSE_PF_KEY_V2
 
 CFLAGS+=	-DHAVE_GETNAMEINFO
-
-# XXX This test does not work as MACHINE_ARCH does not get defined by GNU make.
-# Furthermore these defines should not happen for neither mips, powerpc nor vax
-# just like alpha.
-ifneq (${MACHINE_ARCH},alpha)
-HAVE_DLOPEN=	defined
-CFLAGS+=	-DSYMBOL_PREFIX='"_"'
-endif
 
 USE_LIBCRYPTO=	defined
 ifneq (${MACHINE_ARCH},alpha)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsakeygen.c,v 1.15 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.16 2002/06/10 18:08:59 ho Exp $	*/
 /*	$EOM: rsakeygen.c,v 1.10 2000/12/21 15:18:53 ho Exp $	*/
 
 /*
@@ -71,19 +71,11 @@ main (void)
 
   libcrypto_init ();
 
-#ifndef USE_LIBCRYPTO
-  if (!libcrypto)
-    {
-      fprintf (stderr, "I did not find the RSA support, giving up...");
-      exit (1);
-    }
-#endif
-
   log_debug_cmd (LOG_CRYPTO, 99);
   memset (dec, '\0', sizeof dec);
   strlcpy (dec, TEST_STRING, 256);
 
-  key = LC (RSA_generate_key, (1024, RSA_F4, NULL, NULL));
+  key = RSA_generate_key (1024, RSA_F4, NULL, NULL);
   if (key == NULL)
     {
       printf("Failed to generate key\n");
@@ -91,33 +83,33 @@ main (void)
     }
 
   printf ("n: 0x");
-  LC (BN_print_fp, (stdout, key->n));
+  BN_print_fp (stdout, key->n);
   printf ("\ne: 0x");
-  LC (BN_print_fp, (stdout, key->e));
+  BN_print_fp (stdout, key->e);
   printf ("\n");
 
   printf ("n: 0x");
-  LC (BN_print_fp, (stdout, key->n));
+  BN_print_fp (stdout, key->n);
   printf ("\ne: 0x");
-  LC (BN_print_fp, (stdout, key->e));
+  BN_print_fp (stdout, key->e);
   printf ("\nd: 0x");
-  LC (BN_print_fp, (stdout, key->d));
+  BN_print_fp (stdout, key->d);
   printf ("\np: 0x");
-  LC (BN_print_fp, (stdout, key->p));
+  BN_print_fp (stdout, key->p);
   printf ("\nq: 0x");
-  LC (BN_print_fp, (stdout, key->q));
+  BN_print_fp (stdout, key->q);
   printf ("\n");
 
   printf ("Testing Signing/Verifying: ");
   /* Sign with Private Key */
-  len = LC (RSA_private_encrypt, (strlen (dec) + 1, dec, enc, key,
-				  RSA_PKCS1_PADDING));
+  len = RSA_private_encrypt (strlen (dec) + 1, dec, enc, key,
+			     RSA_PKCS1_PADDING);
   if (len == -1)
     printf ("SIGN FAILED ");
   else
     {
       /* Decrypt/Verify with Public Key */
-      erg = LC (RSA_public_decrypt, (len, enc, dec, key, RSA_PKCS1_PADDING));
+      erg = RSA_public_decrypt (len, enc, dec, key, RSA_PKCS1_PADDING);
 
       if (erg == -1 || strcmp (dec, TEST_STRING))
 	printf ("VERIFY FAILED");
@@ -127,23 +119,23 @@ main (void)
 
   printf ("\n");
 
-  len = LC (i2d_RSAPublicKey, (key, NULL));
+  len = i2d_RSAPublicKey (key, NULL);
   foo = asn = malloc (len);
-  len = LC (i2d_RSAPublicKey, (key, &foo));
+  len = i2d_RSAPublicKey (key, &foo);
   fd = fopen ("isakmpd_key.pub", "w");
   fwrite (asn, len, 1, fd);
   fclose (fd);
   free (asn);
 
-  len = LC (i2d_RSAPrivateKey, (key, NULL));
+  len = i2d_RSAPrivateKey (key, NULL);
   foo = asn = malloc (len);
-  len = LC (i2d_RSAPrivateKey, (key, &foo));
+  len = i2d_RSAPrivateKey (key, &foo);
   fd = fopen ("isakmpd_key", "w");
   fwrite (asn, len, 1, fd);
   fclose (fd);
   free (asn);
 
-  LC (RSA_free, (key));
+  RSA_free (key);
 
   return 1;
 }

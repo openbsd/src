@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.53 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: policy.c,v 1.54 2002/06/10 18:08:58 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -59,7 +59,6 @@
 #include "sysdep.h"
 
 #include "conf.h"
-#include "dyn.h"
 #include "exchange.h"
 #include "ipsec.h"
 #include "isakmp_doi.h"
@@ -70,50 +69,6 @@
 #include "util.h"
 #include "policy.h"
 #include "x509.h"
-
-#if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE) && 0
-
-void *libkeynote = 0;
-
-/*
- * These prototypes matches OpenBSD keynote.h 1.6.  If you use
- * a different version than that, you are on your own.
- */
-int *lk_keynote_errno;
-int (*lk_kn_add_action) (int, char *, char *, int);
-int (*lk_kn_add_assertion) (int, char *, int, int);
-int (*lk_kn_add_authorizer) (int, char *);
-int (*lk_kn_close) (int);
-int (*lk_kn_do_query) (int, char **, int);
-char *(*lk_kn_encode_key) (struct keynote_deckey *, int, int, int);
-int (*lk_kn_init) (void);
-char **(*lk_kn_read_asserts) (char *, int, int *);
-int (*lk_kn_remove_authorizer) (int, char *);
-int (*lk_kn_get_authorizer) (int, int, int *);
-void (*lk_kn_free_key) (struct keynote_deckey *);
-struct keynote_keylist *(*lk_kn_get_licensees) (int, int);
-#define SYMENTRY(x) { SYM, SYM (x), (void **)&lk_ ## x }
-
-static struct dynload_script libkeynote_script[] = {
-  { LOAD, "libc.so", &libkeynote },
-  { LOAD, "libcrypto.so", &libkeynote },
-  { LOAD, "libm.so", &libkeynote },
-  { LOAD, "libkeynote.so", &libkeynote },
-  SYMENTRY (keynote_errno),
-  SYMENTRY (kn_add_action),
-  SYMENTRY (kn_add_assertion),
-  SYMENTRY (kn_add_authorizer),
-  SYMENTRY (kn_close),
-  SYMENTRY (kn_do_query),
-  SYMENTRY (kn_encode_key),
-  SYMENTRY (kn_init),
-  SYMENTRY (kn_read_asserts),
-  SYMENTRY (kn_remove_authorizer),
-  SYMENTRY (kn_get_licensees),
-  SYMENTRY (kn_get_authorizer),
-  { EOS }
-};
-#endif
 
 char **keynote_policy_asserts = NULL;
 int keynote_policy_asserts_num = 0;
@@ -1811,11 +1766,6 @@ policy_init (void)
 
   LOG_DBG ((LOG_POLICY, 30, "policy_init: initializing"));
 
-#if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE)
-  if (!dyn_load (libkeynote_script))
-    return;
-#endif
-
   /* Get policy file from configuration.  */
   policy_file = conf_get_str ("General", "Policy-file");
   if (!policy_file)
@@ -1849,7 +1799,7 @@ policy_init (void)
   close (fd);
 
   /* Parse buffer, break up into individual policies.  */
-  asserts = LK (kn_read_asserts, (ptr, sz, &i));
+  asserts = kn_read_asserts (ptr, sz, &i);
 
   /* Begone!  */
   free (ptr);
@@ -1905,14 +1855,13 @@ keynote_cert_validate (void *scert)
   if (scert == NULL)
     return 0;
 
-  foo = LK (kn_read_asserts, ((char *) scert, strlen ((char *) scert),
-			      &num));
+  foo = kn_read_asserts ((char *) scert, strlen ((char *) scert), &num);
   if (foo == NULL)
     return 0;
 
   for (i = 0; i < num; i++)
     {
-      if (LK (kn_verify_assertion, (scert, strlen ((char *) scert)))
+      if (kn_verify_assertion (scert, strlen ((char *) scert))
 	  != SIGRESULT_TRUE)
         {
 	  for (; i < num; i++)
@@ -1938,13 +1887,12 @@ keynote_cert_insert (int sid, void *scert)
   if (scert == NULL)
     return 0;
 
-  foo = LK (kn_read_asserts, ((char *) scert, strlen ((char *) scert),
-			      &num));
+  foo = kn_read_asserts ((char *) scert, strlen ((char *) scert), &num);
   if (foo == NULL)
     return 0;
 
   while (num--)
-    LK (kn_add_assertion, (sid, foo[num], strlen (foo[num]), 0));
+    kn_add_assertion (sid, foo[num], strlen (foo[num]), 0);
 
   return 1;
 }
@@ -1974,10 +1922,10 @@ keynote_certreq_validate (u_int8_t *data, u_int32_t len)
 
   memcpy (dat, data, len);
 
-  if (LK (kn_decode_key, (&dc, dat, KEYNOTE_PUBLIC_KEY)) != 0)
+  if (kn_decode_key (&dc, dat, KEYNOTE_PUBLIC_KEY) != 0)
     err = 0;
   else
-    LK (kn_free_key, (&dc));
+    kn_free_key (&dc);
 
   free (dat);
 
@@ -2131,14 +2079,14 @@ keynote_cert_get_key (void *scert, void *keyp)
   int sid, kid, num;
   char **foo;
 
-  foo = LK (kn_read_asserts, ((char *)scert, strlen ((char *)scert), &num));
+  foo = kn_read_asserts ((char *)scert, strlen ((char *)scert), &num);
   if (foo == NULL || num == 0)
     {
       log_print ("keynote_cert_get_key: failed to decompose credentials");
       return 0;
     }
 
-  kid = LK (kn_init, ());
+  kid = kn_init ();
   if (kid == -1)
     {
       log_print ("keynote_cert_get_key: failed to initialize new policy "
@@ -2149,8 +2097,7 @@ keynote_cert_get_key (void *scert, void *keyp)
       return 0;
     }
 
-  sid = LK (kn_add_assertion, (kid, foo[num - 1],
-			       strlen (foo[num - 1]), 0));
+  sid = kn_add_assertion (kid, foo[num - 1], strlen (foo[num - 1]), 0);
   while (num--)
     free (foo[num]);
   free (foo);
@@ -2158,26 +2105,26 @@ keynote_cert_get_key (void *scert, void *keyp)
   if (sid == -1)
     {
       log_print ("keynote_cert_get_key: failed to add assertion");
-      LK (kn_close, (kid));
+      kn_close (kid);
       return 0;
     }
 
   *(RSA **)keyp = NULL;
 
-  kl = LK (kn_get_licensees, (kid, sid));
+  kl = kn_get_licensees (kid, sid);
   while (kl)
     {
       if (kl->key_alg == KEYNOTE_ALGORITHM_RSA)
 	{
-	  *(RSA **)keyp = LC (RSAPublicKey_dup, (kl->key_key));
+	  *(RSA **)keyp = RSAPublicKey_dup (kl->key_key);
 	  break;
 	}
 
       kl = kl->key_next;
     }
 
-  LK (kn_remove_assertion, (kid, sid));
-  LK (kn_close, (kid));
+  kn_remove_assertion (kid, sid);
+  kn_close (kid);
   return *(RSA **)keyp == NULL ? 0 : 1;
 }
 

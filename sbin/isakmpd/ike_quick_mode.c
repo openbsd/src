@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.62 2002/06/07 21:59:22 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.63 2002/06/10 18:08:58 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   /* Initialize if necessary -- e.g., if pre-shared key auth was used */
   if (isakmp_sa->policy_id < 0)
     {
-      if ((isakmp_sa->policy_id = LK (kn_init, ())) == -1)
+      if ((isakmp_sa->policy_id = kn_init ()) == -1)
         {
 	  log_print ("check_policy: failed to initialize policy session");
 	  return 0;
@@ -128,15 +128,13 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     }
 
   /* Add the callback that will handle attributes.  */
-  if (LK (kn_add_action, (isakmp_sa->policy_id, ".*",
-			  (char *) policy_callback,
-			  ENVIRONMENT_FLAG_FUNC | ENVIRONMENT_FLAG_REGEX))
-      == -1)
+  if (kn_add_action (isakmp_sa->policy_id, ".*", (char *) policy_callback,
+		     ENVIRONMENT_FLAG_FUNC | ENVIRONMENT_FLAG_REGEX) == -1)
     {
       log_print ("check_policy: "
 		 "kn_add_action (%d, \".*\", %p, FUNC | REGEX) failed",
 		 isakmp_sa->policy_id, policy_callback);
-      LK (kn_close, (isakmp_sa->policy_id));
+      kn_close (isakmp_sa->policy_id);
       isakmp_sa->policy_id = -1;
       return 0;
     }
@@ -155,10 +153,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 
   /* Add the policy assertions */
   for (i = 0; i < keynote_policy_asserts_num; i++)
-    keynote_ids[i] = LK (kn_add_assertion, (isakmp_sa->policy_id,
-					    keynote_policy_asserts[i],
-					    strlen (keynote_policy_asserts[i]),
-					    ASSERT_FLAG_LOCAL));
+    keynote_ids[i] = kn_add_assertion (isakmp_sa->policy_id,
+				       keynote_policy_asserts[i],
+				       strlen (keynote_policy_asserts[i]),
+				       ASSERT_FLAG_LOCAL);
 
   /* Initialize -- we'll let the callback do all the work.  */
   policy_exchange = exchange;
@@ -275,9 +273,9 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	}
 
       dc.dec_key = isakmp_sa->recv_key;
-      principal[0] = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
-					 KEYNOTE_PUBLIC_KEY));
-      if (LKV (keynote_errno) == ERROR_MEMORY)
+      principal[0] = kn_encode_key (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+				    KEYNOTE_PUBLIC_KEY);
+      if (keynote_errno == ERROR_MEMORY)
 	{
 	  log_print ("check_policy: failed to get memory for public key");
 	  goto policydone;
@@ -304,7 +302,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal[1] = 0;
 
       /* Generate a "DN:" principal.  */
-      subject = LC (X509_get_subject_name, (isakmp_sa->recv_cert));
+      subject = X509_get_subject_name (isakmp_sa->recv_cert);
       if (subject)
 	{
           principal[1] = calloc (259, sizeof (char));
@@ -315,7 +313,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	      goto policydone;
             }
 	  strlcpy (principal[1], "DN:", 259);
-	  LC (X509_NAME_oneline, (subject, principal[1] + 3, 256));
+	  X509_NAME_oneline (subject, principal[1] + 3, 256);
 	  nprinc = 2;
 	} else {
 	  nprinc = 1;
@@ -350,29 +348,28 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       LOG_DBG ((LOG_POLICY, 40, "check_policy: adding authorizer [%s]",
 		principal[i]));
 
-      if (LK (kn_add_authorizer, (isakmp_sa->policy_id, principal[i])) == -1)
+      if (kn_add_authorizer (isakmp_sa->policy_id, principal[i]) == -1)
         {
 	  int j;
 
 	  for (j = 0; j < i; j++)
-	    LK (kn_remove_authorizer, (isakmp_sa->policy_id, principal[j]));
+	    kn_remove_authorizer (isakmp_sa->policy_id, principal[j]);
 	  log_print ("check_policy: kn_add_authorizer failed");
 	  goto policydone;
 	}
     }
 
   /* Ask policy */
-  result = LK (kn_do_query, (isakmp_sa->policy_id, return_values,
-			     RETVALUES_NUM));
+  result = kn_do_query (isakmp_sa->policy_id, return_values, RETVALUES_NUM);
   LOG_DBG ((LOG_POLICY, 40, "check_policy: kn_do_query returned %d", result));
 
   /* Cleanup environment */
-  LK (kn_cleanup_action_environment, (isakmp_sa->policy_id));
+  kn_cleanup_action_environment (isakmp_sa->policy_id);
 
   /* Remove authorizers from the session */
   for (i = 0; i < nprinc; i++)
     {
-      LK (kn_remove_authorizer, (isakmp_sa->policy_id, principal[i]));
+      kn_remove_authorizer (isakmp_sa->policy_id, principal[i]);
       free (principal[i]);
     }
 
@@ -400,7 +397,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   for (i = 0; i < keynote_policy_asserts_num; i++)
     {
       if (keynote_ids[i] != -1)
-	LK (kn_remove_assertion, (isakmp_sa->policy_id, keynote_ids[i]));
+	kn_remove_assertion (isakmp_sa->policy_id, keynote_ids[i]);
     }
 
   if (keynote_ids)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.13 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.14 2002/06/10 18:08:58 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -264,7 +264,7 @@ dns_RSA_dns_to_x509 (u_int8_t *key, int keylen, RSA **rsa_key)
       return -1;
     }
 
-  rsa = LC (RSA_new, ());
+  rsa = RSA_new ();
   if (rsa == NULL)
     {
       log_error ("dns_RSA_dns_to_x509: failed to allocate new RSA struct");
@@ -279,7 +279,7 @@ dns_RSA_dns_to_x509 (u_int8_t *key, int keylen, RSA **rsa_key)
       if (keylen < 3)
 	{
 	  log_print ("dns_RSA_dns_to_x509: invalid public key");
-	  LC (RSA_free, (rsa));
+	  RSA_free (rsa);
 	  return -1;
 	}
       e_len  = *(key + key_offset++) << 8;
@@ -289,21 +289,21 @@ dns_RSA_dns_to_x509 (u_int8_t *key, int keylen, RSA **rsa_key)
   if (e_len > (keylen - key_offset))
     {
       log_print ("dns_RSA_dns_to_x509: invalid public key");
-      LC (RSA_free, (rsa));
+      RSA_free (rsa);
       return -1;
     }
 
-  rsa->e = LC (BN_bin2bn, (key + key_offset, e_len, NULL));
+  rsa->e = BN_bin2bn (key + key_offset, e_len, NULL);
   key_offset += e_len;
 
   /* XXX if (keylen <= key_offset) -> "invalid public key" ? */
 
-  rsa->n = LC (BN_bin2bn, (key + key_offset, keylen - key_offset, NULL));
+  rsa->n = BN_bin2bn (key + key_offset, keylen - key_offset, NULL);
 
   *rsa_key = rsa;
 
   LOG_DBG ((LOG_MISC, 30, "dns_RSA_dns_to_x509: got %d bits RSA key",
-	    LC (BN_num_bits, (rsa->n))));
+	    BN_num_bits (rsa->n)));
 
   return 0;
 }
