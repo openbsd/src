@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2002/06/11 05:15:18 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 2002/07/10 22:08:47 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -97,7 +97,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "tun.h"
 
 #include "ksyms.h"
-cdev_decl(ksyms);
 
 #include "lpt.h"
 cdev_decl(lpt);

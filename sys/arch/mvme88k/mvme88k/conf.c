@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2002/05/16 21:11:16 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2002/07/10 22:08:47 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -60,7 +60,6 @@
 #cdev_decl(xfs_dev);
 #endif
 #include "ksyms.h"
-cdev_decl(ksyms);
 
 #include "sram.h"
 #include "nvram.h"

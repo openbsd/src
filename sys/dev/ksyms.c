@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.12 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.13 2002/07/10 22:08:47 mickey Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
+#include <sys/conf.h>
 
 #ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
@@ -56,9 +57,6 @@ static size_t ksym_head_size;
 static size_t ksym_syms_size;
 
 void	ksymsattach(int);
-int	ksymsopen(dev_t, int, int);
-int	ksymsclose(dev_t, int, int);
-int	ksymsread(dev_t, struct uio *, int);
 
 /*
  * We assume __LDPGSZ is a multiple of PAGE_SIZE (it is)
@@ -157,9 +155,10 @@ ksymsattach(num)
 
 /*ARGSUSED*/
 int
-ksymsopen(dev, flag, mode)
+ksymsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	/* There are no non-zero minor devices */
@@ -179,9 +178,10 @@ ksymsopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-ksymsclose(dev, flag, mode)
+ksymsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);

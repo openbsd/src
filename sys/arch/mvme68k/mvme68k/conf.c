@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2002/05/16 21:11:15 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.30 2002/07/10 22:08:47 mickey Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -150,7 +150,6 @@ cdev_decl(lptwo);
 cdev_decl(xfs_dev);
 #endif
 #include "ksyms.h"
-cdev_decl(ksyms);
 
 #ifdef notyet
 cdev_decl(xd);

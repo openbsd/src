@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.14 2002/07/09 15:27:59 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.15 2002/07/10 22:08:47 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -126,5 +126,3 @@ cdev_decl(fga);
 	(dev_type_stop((*))) nullop, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 cdev_decl(daadio);
-
-cdev_decl(ksyms);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.16 2002/06/11 05:15:18 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.17 2002/07/10 22:08:47 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ cdev_decl(view);
 
 bdev_decl(wd);
 cdev_decl(wd);
-
-cdev_decl(ksyms);
 
 cdev_decl(joy);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2002/06/24 19:00:33 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2002/07/10 22:08:47 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -116,7 +116,6 @@ cdev_decl(cy);
 cdev_decl(xfs_dev);
 #endif
 #include "ksyms.h"
-cdev_decl(ksyms);
 
 /* USB Devices */
 #include "usb.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.97 2002/07/10 21:53:26 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.98 2002/07/10 22:08:47 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -185,7 +185,6 @@ cdev_decl(bktr);
 #include "wdt.h"
 cdev_decl(wdt);
 #include "ksyms.h"
-cdev_decl(ksyms);   
 #include "usb.h"
 #include "uhid.h"
 #include "ugen.h"
