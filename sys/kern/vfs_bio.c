@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.42 2001/09/19 18:05:27 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.43 2001/09/20 08:22:26 gluk Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -544,20 +544,6 @@ brelse(bp)
 	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
 		SET(bp->b_flags, B_INVAL);
 
-	if (ISSET(bp->b_flags, B_VFLUSH)) {
-		/*
-		 * This is a delayed write buffer that was just flushed to
-		 * disk.  It is still on the DIRTY queue.  If it's become
-		 * invalid, then we need to move it to a different queue;
-		 * If buffer was redirtied (because it has dependencies),
-		 * leave it in its current position.
-		 */
-		CLR(bp->b_flags, B_VFLUSH);
-		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE))
-			goto already_queued;
-		bremfree(bp);
-	}
-
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_flags, B_INVAL)) {
 		/*
 		 * If it's invalid or empty, dissociate it from its vnode
@@ -608,7 +594,6 @@ brelse(bp)
 			binstailfree(bp, bufq);
 	}
 
-already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_BUSY | B_NOCACHE | B_DEFERRED));
 
@@ -948,7 +933,7 @@ void
 buf_daemon(struct proc *p)
 {
 	int s;
-	struct buf *bp, *nbp;
+	struct buf *bp;
 	struct timeval starttime, timediff;
 
 	flusherproc = curproc;
@@ -960,23 +945,20 @@ buf_daemon(struct proc *p)
 
 		starttime = time;
 		s = splbio();
-		for (bp = TAILQ_FIRST(&bufqueues[BQ_DIRTY]); bp; bp = nbp) {
-			nbp = TAILQ_NEXT(bp, b_freelist);
-			if (ISSET(bp->b_flags, B_VFLUSH))
-				continue;
+		while ((bp = TAILQ_FIRST(&bufqueues[BQ_DIRTY]))) {
 			bremfree(bp);
 			SET(bp->b_flags, B_BUSY);
 			splx(s);
-#ifdef DIAGNOSTIC
-			if (!ISSET(bp->b_flags, B_DELWRI))
-				panic("Clean buffer on BQ_DIRTY");
-#endif
+
 			if (ISSET(bp->b_flags, B_INVAL)) {
 				brelse(bp);
 				s = splbio();
 				continue;
 			}
-
+#ifdef DIAGNOSTIC
+			if (!ISSET(bp->b_flags, B_DELWRI))
+				panic("Clean buffer on BQ_DIRTY");
+#endif
 			if (LIST_FIRST(&bp->b_dep) != NULL &&
 			    !ISSET(bp->b_flags, B_DEFERRED) &&
 			    buf_countdeps(bp, 0, 1)) {
@@ -998,7 +980,6 @@ buf_daemon(struct proc *p)
 				break;
 
 			s = splbio();
-			nbp = TAILQ_FIRST(&bufqueues[BQ_DIRTY]);
 		}
 	}
 }

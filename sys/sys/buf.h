@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.28 2001/09/17 19:17:30 gluk Exp $	*/
+/*	$OpenBSD: buf.h,v 1.29 2001/09/20 08:22:26 gluk Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -148,9 +148,8 @@ struct buf {
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_WRITEINPROG	0x01000000	/* Write in progress. */
 #define	B_XXX		0x02000000	/* Debugging flag. */
-#define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
+#define	B_DEFERRED	0x04000000	/* Skipped over for cleaning */
 #define	B_SCANNED	0x08000000	/* Block already pushed during sync */
-#define	B_DEFERRED	0x10000000	/* Skipped over for cleaning */
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
