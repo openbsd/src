@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.70 1998/07/21 18:45:51 mickey Exp $
+$OpenBSD: pcidevs,v 1.71 1998/07/21 20:38:01 mickey Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -43,9 +43,10 @@ $OpenBSD: pcidevs,v 1.70 1998/07/21 18:45:51 mickey Exp $
  * List of known PCI vendors
  */
 
-vendor MARTINMARIETTA	0x003d	Martin-Marietta 
+vendor MARTINMARIETTA	0x003d	Lockheed Martin Corp
 vendor COMPAQ		0x0e11	Compaq
-vendor SYMBIOS		0x1000	Symbios Logic
+vendor SYMBIOS		0x1000	Symbios Logic Inc
+vendor KOLTER		0x1001	KOLTER ELECTRONIC
 vendor ATI		0x1002	ATI Technologies
 vendor ULSI		0x1003	ULSI Systems
 vendor VLSI		0x1004	VLSI Technology
@@ -327,6 +328,7 @@ vendor PDI		0x111f	Prescision Digital Images
 vendor EMC		0x1120	Emc
 vendor ZILOG		0x1121	Zilog
 vendor MULTITECH	0x1122	Multi-tech Systems
+vendor EDI		0x1123	Excellent Design, Inc.
 vendor LEUTRON		0x1124	Leutron Vision
 vendor EUROCORE		0x1125	Eurocore/Vigra
 vendor VIGRA		0x1126	Vigra
@@ -334,6 +336,7 @@ vendor FORE		0x1127	FORE Systems
 vendor FIRMWORKS	0x1129	Firmworks
 vendor HERMES		0x112a	Hermes Electronics
 vendor LINOTYPE		0x112b	Linotype
+vendor ZENITH2		0x112c	Zenith Data Systems (2nd ID)
 vendor RAVICAD		0x112d	Ravicad
 vendor INFOMEDIA	0x112e	Infomedia Microelectronics
 vendor IMAGINGTECH	0x112f	Imaging Technlogy
@@ -348,6 +351,7 @@ vendor CISCO		0x1137	Cisco Systems
 vendor ZIATECH		0x1138	Ziatech
 vendor DYNPIC		0x1139	Dynamic Pictures
 vendor FWB		0x113a	FWB
+vendor NCD		0x113b	Network Computing Devices
 vendor CYCLONE		0x113c	Cyclone Micro
 vendor LEADINGEDGE	0x113d	Leading Edge
 vendor SANYO		0x113e	Sanyo Electric
@@ -380,6 +384,7 @@ vendor VOARX		0x1158	Voarx R & D
 vendor MUTECH		0x1159	Mutech
 vendor HARLEQUIN	0x115a	Harlequin
 vendor PARALLAX		0x115b	Parallax Graphics
+vendor PHOTRON		0x115c	Photron Ltd.
 vendor XIRCOM		0x115d	Xircom
 vendor PEERPROTO	0x115e	Peer Protocols
 vendor MAXTOR		0x115f	Maxtor
@@ -395,6 +400,8 @@ vendor THINE		0x1168	Thine Electronics
 vendor CDAC		0x1169	Centre for Dev. of Advanced Computing
 vendor POLARIS		0x116a	Polaris Communications
 vendor CONNECTWARE	0x116b	Connectware
+vendor INTRES		0x116c	Intelligent Resources
+vendor E4I		0x116e	Electronics for Imaging
 vendor WSTECH		0x116f	Workstation Technology
 vendor INVENTEC		0x1170	Inventec
 vendor LOUGHSOUND	0x1171	Loughborough Sound Images
@@ -407,8 +414,11 @@ vendor SILICONENG	0x1177	Silicon Engineering
 vendor ALFA		0x1178	Alfa
 vendor TOSHIBA2		0x1179	Toshiba Info Systems (2nd ID)
 vendor ATREND		0x117a	A-Trend Technology
+vendor LGEI		0x117b	LG Electronics Inc.
 vendor ATTO		0x117c	Atto Technology
+vendor BND		0x117d	Becton & Dickinson
 vendor TR		0x117e	T/R Systems
+vendor ICS		0x117f	Integrated Circuit Systems
 vendor RICOH		0x1180	Ricoh
 vendor TELEMATICS	0x1181	Telematics International
 vendor FUJIKURA		0x1183	Fujikura
@@ -419,9 +429,11 @@ vendor ATL		0x1187	Advanced Techonoloy Labratories
 vendor SHIMA		0x1188	Shima Seiki Manufacturing
 vendor MATSUSHITA2	0x1189	Matsushita Electronics (2nd ID)
 vendor HILEVEL		0x118a	HiLevel Technology
+vendor HYPERTEC		0x118b	Hypertec Pty Ltd
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
 vendor HERMSTEDT	0x118e	Hermstedt
+vendor GREENLOGIC	0x118f	Green Logic
 vendor ARTOP		0x1191	Artop Electric
 vendor DENSAN		0x1192	Densan
 vendor ZEINET		0x1193	Zeinet
@@ -440,17 +452,19 @@ vendor BULL		0x119f	Bull Hn Information Systems
 vendor CONVEX		0x11a0	Convex Computer
 vendor HAMAMATSU	0x11a1	Hamamatsu Photonics
 vendor SIERRA2		0x11a2	Sierra Research & Technology (2nd ID)
+vendor DEURETZBACHER	0x11a3	Deuretzbacher GmbH & Co. Eng. KG
 vendor BARCO		0x11a4	Barco
 vendor MICROUNITY	0x11a5	MicroUnity Systems Engineering
 vendor PUREDATA		0x11a6 	Pure Data
 vendor POWERCC		0x11a7	Power Computing
+vendor SYSTECH		0x11a8	Systech Corp.
 vendor INNOSYS		0x11a9	InnoSys
 vendor ACTEL		0x11aa	Actel
 vendor GALILEO		0x11ab	Galileo Technology
 vendor CANNON		0x11ac	Cannon IS
 vendor LITEON		0x11ad	Lite-On
 vendor SCITEX		0x11ae	Scitex
-vendor PROLOG		0x11af	Pro-Log
+vendor AVID		0x11af	Avid Technology Inc.
 vendor V3		0x11b0	V3 Semiconductor
 vendor APRICOT		0x11b1	Apricot Computer
 vendor KODAK		0x11b2	Eastman Kodak
@@ -466,9 +480,14 @@ vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
+vendor ASTRODESIGN	0x11bf	Astrodesign Inc.
+vendor HP2		0x11c0	Hewlett-Packard (2nd ID)
+vendor ATT		0x11c1	AT&T Microelectronics
+vendor SAND		0x11c2	Sand Microelectronics
 vendor NEC2		0x11c3	NEC (2nd ID)
 vendor DOCTECH		0x11c4	Document Technologies
-vendor SHIVA		0x11c5	Shiva
+vendor SHIVA		0x11c5	Shiva Corporation
+vendor DSMFG		0x11c6	Dainippon Screen Mfg. Co
 vendor DCMDATA		0x11c7	DCM Data Systems
 vendor DOLPHIN		0x11c8	Dolphin Interconnect Solutions
 vendor MRTMAGMA		0x11c9	Mesa Ridge Technologies (MAGMA)
@@ -476,43 +495,332 @@ vendor LSISYS		0x11ca	LSI Systems
 vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
+vendor PRIMRATE		0x11ce	Primary Rate Inc
+vendor PIONEER		0x11cf	Pioneer Electronic Corporation
+vendor LORAL		0x11d0	Loral Frederal Systems - Manassas
+vendor AURAVISION	0x11d1	AuraVision Corporation
+vendor INTERCOM		0x11d2	Intercom Inc.
+vendor TRANCELL		0x11d3	Trancell Systems Inc
+vendor ANALOGDEV	0x11d4	Analog Devices
+vendor IKON		0x11d5	Ikon Corporation
+vendor TEKELEC		0x11d6	Tekelec Technologies
+vendor TRENTONTERM	0x11d7	Trenton Terminals Inc
+vendor ITD		0x11d8	Image Technologies Development
+vendor TEC		0x11d9	Tec Corporation
+vendor NOVELL		0x11da	Novell
+vendor SEGA		0x11db	Sega Enterprises Ltd
+vendor QUESTRA		0x11dc	Questra Corporation
+vendor CROSSFIELD	0x11dd	Crosfield Electronics Ltd
 vendor ZORAN		0x11de	Zoran
+vendor NEWWAVE		0x11df	New Wave Pdg
+vendor CRAYCOMM		0x11e0	Cray Communications A/S 
+vendor GPSI		0x11e1	Gec Plessey Semi Inc 
+vendor SAMSUNGISA	0x11e2	Samsung Information Systems America 
+vendor QUICKLOGIC	0x11e3	Quicklogic Corp 
+vendor 2NDWAVE		0x11e4	Second Wave Inc 
+vendor IIXC		0x11E5	IIX Consulting 
+vendor MZSR		0x11e6	Mitsui-Zosen System Research 
+vendor TOSHIB3		0x11e7	Toshiba America, Elec. Co (3rd ID)
+vendor DPS		0x11e8	Digital Processing Systems Inc 
+vendor HIGHWATER	0x11e9	Highwater Designs Ltd 
+vendor ELSAGDAILEY	0x11ea	Elsag Bailey 
+vendor FORMATION	0x11eb	Formation Inc 
+vendor CORECO		0x11ec	Coreco Inc 
+vendor MEDIAMATICS	0x11ed	Mediamatics 
+vendor DISYS		0x11ee	Dome Imaging Systems Inc 
+vendor NICOLETECH	0x11ef	Nicolet Technologies BV 
+vendor COMPUSHACK	0x11f0	Compu-Shack GmbH 
+vendor SYMBIOS2		0x11f1	Symbios Logic Inc (2nd ID)
+vendor PICTURETEL2	0x11f2	Picture Tel Japan KK (2nd ID)
+vendor KEITHLEY		0x11f3	Keithley Metrabyte 
+vendor KINETICSYS	0x11f4	Kinetic Systems Corporation 
+vendor COMPDEVS		0x11f5	Computing Devices Intl 
 vendor COMPEX		0x11f6	Compex
+vendor SCIATLANTA	0x11f7	Scientific Atlanta
 vendor PMCSIERRA	0x11f8	PMC-Sierra
+vendor ICUBE		0x11F9	I-Cube Inc 
+vendor KASAN		0x11FA	Kasan Electronics Co Ltd 
+vendor DATEL		0x11FB	Datel Inc 
+vendor SILICONMAG	0x11FC	Silicon Magic 
+vendor HIGHSTREET	0x11FD	High Street Consultants 
+vendor COMTROL		0x11FE	Comtrol Corp 
+vendor SCION		0x11FF	Scion Corp 
+vendor CSS		0x1200	CSS Corp 
+vendor VISTA		0x1201	Vista Controls Corp 
+vendor NGC		0x1202	Network General Corp 
+vendor BAYER		0x1203	Bayer Corporation, Agfa Div 
+vendor LATTICE		0x1204	Lattice Semiconductor Corp 
+vendor ARRAY		0x1205	Array Corp 
+vendor AMDAHL		0x1206	Amdahl Corp 
+vendor PARSYTEC		0x1208	Parsytec GmbH 
+vendor SCISYS		0x1209	Sci Systems Inc 
+vendor SYNAPTEL		0x120A	Synaptel 
+vendor ADAPSOL		0x120B	Adaptive Solutions 
+vendor COMPRESLABS	0x120D	Compression Labs, Inc. 
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
+vendor HPT		0x1210	Hyperparallel Technologies 
+vendor BRAINTECH	0x1211	Braintech Inc 
+vendor KINGSTON		0x1212	Kingston Technology Corp 
+vendor AISI		0x1213	Applied Intelligent Systems Inc 
+vendor PTI		0x1214	Performance Technologies Inc 
+vendor INTERWARE	0x1215	Interware Co Ltd 
+vendor PURUP		0x1216	Purup Prepress A/S 
 vendor 2MICRO		0x1217	2 Micro Inc
-vendor 3DFX		0x121a	3DFX Interactive
+vendor HYBRICON		0x1218	Hybricon Corporation
+vendor 1STVIRTUAL	0x1219	First Virtual Corporation
+vendor 3DFX		0x121a	3DFX Interactive Inc
+vendor ADM		0x121b	Advanced Telecommunications Modules
+vendor NIPPON		0x121c	Nippon Texa Co Ltd
+vendor LIPPERT		0x121d	Lippert Automationstechnik GmbH
+vendor CSPI		0x121e	CSPI
+vendor ARCUS		0x121f	Arcus Technology Inc
 vendor ARIEL		0x1220	Ariel
+vendor CONTEC		0x1221	Contec Co Ltd
+vendor ANCOR		0x1222	Ancor Communications Inc 
+vendor HEURIKON		0x1223	Heurikon/Computer Products 
+vendor IACTIMAGES	0x1224	Interactive Images 
+vendor POWERIO		0x1225	Power I/O Inc. 
+vendor TECHSRC		0x1227	Tech-Source 
+vendor NEOAS		0x1228	Norsk Elektro Optikk A/S 
+vendor DATAKINESIS	0x1229	Data Kinesis Inc. 
+vendor INTELECOM	0x122A	Integrated Telecom 
+vendor LGIS		0x122B	LG Industrial Systems Co. Ltd. 
+vendor SICAN		0x122c	Sican GmbH
 vendor AZTECH		0x122d	Aztech
+vendor XYRATEX		0x122e	Xyratex
+vendor ANDREW		0x122f	Andrew Corporation
+vendor FISHCAMP		0x1230	Fishcamp Engineering 
+vendor WOODWARD		0x1231	Woodward McCoach Inc. 
+vendor GPT		0x1232	GPT Ltd. 
+vendor BUSTECH		0x1233	Bus-Tech Inc. 
+vendor TECHNICAL	0x1234	Technical Corp 
+vendor RMSI		0x1235	Risq Modular Systems Inc. 
+vendor SIGMAD		0x1236	Sigma Designs Corp. 
+vendor ALTATECH		0x1237	Alta Technology Corp. 
+vendor ADTRAN		0x1238	Adtran 
 vendor 3DO		0x1239	The 3D0 Company
+vendor VBISICOM		0x123A	Visicom Laboratories Inc. 
+vendor SEEQTECH		0x123B	Seeq Technology Inc. 
+vendor CENTSYS		0x123C	Century Systems Inc. 
+vendor EDTI		0x123D	Engineering Design Team Inc. 
+vendor CCUBE		0x123F	C-Cube Microsystems 
+vendor MARATHONTECH	0x1240	Marathon Technologies Corp. 
+vendor DSC		0x1241	DSC Communications 
+vendor DELPHAX		0x1243	Delphax 
+vendor AVM		0x1244	AVM 
+vendor APDSA		0x1245	APD S.A. 
+vendor DIPIXTECH	0x1246	Dipix Technologies Inc 
+vendor XYLON		0x1247	Xylon Research Inc. 
+vendor CDC		0x1248	Central Data Corp. 
+vendor SAMSUNG		0x1249	Samsung Electronics Co. Ltd. 
+vendor AEG		0x124A	AEG Electrocom GmbH 
+vendor GREENSPRING	0x124B	GreenSpring Computers 
+vendor SOLITRON		0x124C	Solitron Technologies Inc. 
 vendor STALLION		0x124d	Stallion Technologies
+vendor CYLINK		0x124E	Cylink 
+vendor INFORTREND	0x124F	Infortrend Technology Inc 
+vendor HITACHIMCSYS	0x1250	Hitachi Microcomputer System Ltd. 
+vendor VLSISOL		0x1251	VLSI Solution OY 
+vendor GUZIK		0x1253	Guzik Technical Enterprises 
 vendor LINEARSYS	0x1254	Linear Systems
+vendor OPTIBASE		0x1255	Optibase Ltd. 
+vendor PSI		0x1256	Perceptive Solutions Inc. 
+vendor VERTEXNET	0x1257	Vertex Networks Inc. 
+vendor GILBARCO		0x1258	Gilbarco Inc. 
+vendor ALLIEDTEL	0x1259	Allied Telesyn International 
+vendor ABBPS		0x125a	ABB Power Systems 
+vendor ASIX		0x125b	Asix Electronics Corporation
 vendor AURORA		0x125c	Aurora Technologies
+vendor ESSTECH		0x125D	ESS Technology 
+vendor SESRL		0x125E	Specialvideo Engineering SRL 
+vendor CTI		0x125F	Concurrent Technologies Inc. 
+vendor HARRIS		0x1260	Harris Semiconductor 
+vendor MATSISHITA3	0x1261	Matsushita-Kotobuki Electronics Industr 
+vendor ESC		0x1262	ES Computer Co. Ltd. 
+vendor SONIC		0x1263	Sonic Solutions 
+vendor AVAL		0x1264	Aval Nagasaki Corp. 
+vendor CASIO		0x1265	Casio Computer Co. Ltd. 
+vendor MICRODYNE	0x1266	Microdyne Corp. 
+vendor SATC		0x1267	S.A. Telecommunications 
+vendor TEKTRONIX	0x1268	Tektronix 
+vendor THOMSON		0x1269	Thomson-CSF/TTM 
+vendor LEXMARK		0x126A	Lexmark International Inc. 
+vendor ADAX		0x126B	Adax Inc. 
+vendor NORTHTELCOM	0x126C	Northern Telecom 
+vendor SPLASHTECH	0x126D	Splash Technology Inc. 
+vendor SMI		0x126E	Sumitomo Metal Industries Ltd. 
+vendor SILICONMOTION	0x126F	Silicon Motion 
+vendor OLYMPUSOPT	0x1270	Olympus Optical Co. Ltd. 
+vendor GWI		0x1271	GW Instruments
+vendor TELEMATICS2	0x1272	Telematics International (2nd ID)
+vendor HNS		0x1273	Hughes Network Systems
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
+vendor SNTI		0x1276	Switched Network Technologies Inc.
+vendor COMSTREAM	0x1277	Comstream
+vendor TPS		0x1278	Transtech Parallel Systems
+vendor TRANSMETA	0x1279	Transmeta Corporation
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
+vendor PIXERA		0x127B	Pixera Corp 
+vendor XPTSOLUTIONS	0x127C	Crosspoint Solutions Inc. 
+vendor VELA		0x127D	Vela Research 
+vendor WINNOV		0x127E	Winnov, L.P. 
+vendor FUJIFILM		0x127F	Fujifilm 
+vendor PSG		0x1280	Photoscript Group Ltd. 
+vendor YOKOGAWA		0x1281	Yokogawa Electronic Corp. 
+vendor DAVICOM		0x1282	Davicom Semiconductor Inc. 
+vendor ITE		0x1283	Integrated Technology Express Inc. 
+vendor SAHARANET	0x1284	Sahara Networks Inc. 
+vendor PLATFORMTECH	0x1285	Platform Technologies Inc. 
+vendor MAZET		0x1286	Mazet GmbH 
+vendor LUXSONOR		0x1287	LuxSonor Inc. 
+vendor TIMESTEP		0x1288	Timestep Corp. 
+vendor AVCTECH		0x1289	AVC Technology Inc. 
+vendor ASANTECH		0x128A	Asante Technologies Inc. 
+vendor TRANSWITCH	0x128B	Transwitch Corp. 
+vendor RETIX		0x128C	Retix Corp. 
+vendor G2NETS		0x128D	G2 Networks Inc. 
+vendor SAMHO		0x128E	Samho Multi Tech Ltd. 
+vendor TATENO		0x128F	Tateno Dennou Inc. 
+vendor SORD		0x1290	Sord Computer Corp. 
+vendor NCS		0x1291	NCS Computer Italia 
 vendor TRITECH		0x1292	TriTech Microelectronics
+vendor MRT		0x1293	Media Reality Technology
+vendor RHETORES		0x1294	Rhetorex Inc.
+vendor IMAGINATION	0x1295	Imagenation Corporation
 vendor KOFAX		0x1296	Kofax Image Products
+vendor HOLCO		0x1297	Holco Enterprise 
+vendor SPELLCASTER	0x1298	Spellcaster Telecommunications Inc. 
+vendor KTLABS		0x1299	Knowledge Technology Laboratories 
+vendor VMETRO		0x129A	VMETRO 
+vendor IMAGEACCESS	0x129B	Image Access 
+vendor COMPCORE		0x129D	CompCore Multimedia Inc. 
+vendor JVC		0x129E	Victor Co. of Japan Ltd. 
+vendor OECMS		0x129F	OEC Medical Systems Inc. 
+vendor ABC		0x12A0	Allen Bradley Co. 
+vendor SIMPACT		0x12A1	Simpact Inc 
+vendor NGS		0x12A2	NewGen Systems Corp. 
+vendor LUCENT		0x12A3	Lucent Technologies 
+vendor NTT		0x12A4	NTT Electronics Technology Co. 
+vendor VDLTD		0x12A5	Vision Dynamics Ltd. 
+vendor SNETS		0x12A6	Scalable Networks Inc. 
+vendor AMO		0x12A7	AMO GmbH 
+vendor NEWSDATACOM	0x12A8	News Datacom 
+vendor XIOTECH		0x12A9	Xiotech Corp. 
+vendor SDL		0x12AA	SDL Communications Inc. 
+vendor YYECO		0x12AB	Yuan Yuan Enterprise Co. Ltd. 
+vendor MEASUREX		0x12AC	MeasureX Corp. 
+vendor MULTIDATA	0x12AD	Multidata GmbH 
+vendor ALTECON		0x12AE 	lteon Networks Inc. 
+vendor TDK		0x12AF	TDK USA Corp. 
+vendor JORGESCI		0x12B0	Jorge Scientific Corp. 
+vendor GAMMALINK	0x12B1	GammaLink 
+vendor GSNET		0x12B2	General Signal Networks 
+vendor IFACE		0x12B3	Inter-Face Co. Ltd.
+vendor FUTURETEL	0x12B4	Future Tel Inc. 
+vendor GRANITESYS	0x12B5	Granite Systems Inc. 
+vendor NATURAL		0x12B6	Natural Microsystems 
+vendor ACUMEN		0x12B7	Acumen 
+vendor KORG		0x12B8	Korg 
+vendor USR		0x12B9	US Robotics 
+vendor BITTWARE		0x12BA	Bittware Research Systems Inc 
+vendor NIPPONUS		0x12BB	Nippon Unisoft Corp. 
+vendor ARRAYMSYS	0x12BC	Array Microsystems 
+vendor COMPUTERM	0x12BD	Computerm Corp. 
+vendor ANCHOR		0x12BE	Anchor Chips Inc. 
+vendor FUJIFILMMD	0x12BF	Fujifilm Microdevices 
+vendor INFIMED		0x12C0	Infimed 
+vendor GMM		0x12C1	GMM Research Corp. 
+vendor MENTEC		0x12C2	Mentec Ltd. 
+vendor HOLTEK		0x12C3	Holtek Microelectronics Inc. 
+vendor CONNECT		0x12C4	Connect Tech Inc. 
 vendor PICTUREEL	0x12c5	Picture Elements
+vendor MITANI		0x12C6	Mitani Corp. 
+vendor DIALOGIC		0x12C7	Dialogic Corp. 
+vendor GFORCE		0x12C8	G Force Co. Ltd. 
+vendor GIGIOP		0x12C9	Gigi Operations 
+vendor ICE		0x12CA	Integrated Computing Engines, Inc.
+vendor ANTEX		0x12CB	Antex Electronics Corp. 
+vendor PLUTO		0x12CC	Pluto Technologies International 
+vendor AIMS		0x12CD	Aims Lab 
+vendor NETSPEED		0x12CE	Netspeed Inc. 
+vendor PROPHET		0x12CF	Prophet Systems Inc. 
+vendor GDESYS		0x12D0	GDE Systems Inc. 
+vendor PSITECH		0x12D1	PsiTech 
 vendor STB2		0x12d2	STB (2nd ID)
+vendor VINGMED		0x12D3 Vingmed Sound A/S 
+vendor DGMS		0x12D4 DGM & S 
+vendor EQUATOR		0x12D5 Equator Technologies 
+vendor ANALOGIC		0x12D6 Analogic Corp. 
+vendor BIOTRONIC	0x12D7 Biotronic SRL 
+vendor PERICOM		0x12D8 Pericom Semiconductor 
+vendor ACULAB		0x12D9 Aculab Plc. 
+vendor TRUETIME		0x12DA True Time 
+vendor ANNAPOLIS	0x12DB Annapolis Micro Systems Inc. 
+vendor SYMICRON		0x12DC Symicron Computer Communication Ltd. 
+vendor MGI		0x12DD Management Graphics Inc. 
+vendor RAINBOW		0x12DE Rainbow Technologies 
+vendor SBSTECH		0x12DF SBS Technologies Inc. 
+vendor CHASE		0x12E0 Chase Research PLC 
+vendor NINTENDO		0x12E1 Nintendo Co. Ltd. 
+vendor DATUM		0x12E2 Datum Inc., Bancomm-Timing Division 
+vendor IMATION		0x12E3 Imation Corp. - Medical Imaging Systems 
+vendor BROOKTROUT	0x12E4 Brooktrout Technology Inc. 
+vendor CIREL		0x12E6 Cirel Systems 
+vendor SEBRING		0x12E7 Sebring Systems Inc 
+vendor CRISC		0x12E8 CRISC Corp. 
+vendor GESN		0x12E9 GE Spacenet 
+vendor ZUKEN		0x12EA Zuken 
+vendor AUREAL		0x12EB Aureal Semiconductor 
+vendor 3AINT		0x12EC 3A International Inc. 
+vendor OPTIVISION	0x12ED Optivision Inc. 
+vendor ORANGE		0x12EE Orange Micro 
+vendor VIENNA		0x12EF Vienna Systems 
+vendor PENTEK		0x12F0 Pentek 
+vendor SORENSON		0x12F1 Sorenson Vision Inc. 
+vendor GGI		0x12F2 Gammagraphx Inc. 
+vendor MEGATEL		0x12F4 Megatel 
+vendor FORKS2		0x12F5 Forks (2nd ID)
+vendor DAWSON		0x12F6 Dawson France 
+vendor COGNEX		0x12F7 Cognex 
+vendor EDESIGN		0x12F8 Electronic-Design GmbH 
+vendor FOURFOLD		0x12F9 FourFold Technologies 
+vendor ESD		0x12FE Electronic System Design GmbH 
+vendor RADISYS		0x1331 RadiSys Corporation 
+vendor VIDEOMAIL	0x1335 Videomail Inc. 
+vendor ODETICS		0x1347 Odetics 
+vendor ABBNP		0x135D ABB Network Partner AB 
+vendor PATRIOTSCI	0x137E Patriot Scientific Corp. 
+vendor CDI		0x1390 Concept Development Inc. 
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd ID)
+vendor CHAINTECH2	0x270f	ChainTech Computer (2nd ID)
+vendor HANSOL		0x3000	Hansol Electronics Inc.
+vendor PIS		0x3142	Post Impressions Systems
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd ID)
+vendor COGETEC		0x4594	Cogetec Informatique Inc.
+vendor UMAX		0x4680	UMAX Computer Corp.
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd ID)
 vendor S3		0x5333	S3
+vendor TUB		0x5455	Technische Universtiaet Berlin
+vendor CNET		0x5519	Cnet Technoliges, Inc.
 vendor NETPOWER2	0x5700	NetPower (2nd ID)
 vendor C4T		0x6374	c't Magazin
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
 vendor TRIGEM2		0x8800	Trigem Computer (2nd ID)
+vendor SILICONMAG2	0x8888	Silicon Magic (2nd ID)
 vendor WINBOND2		0x8c4a	Winbond Electronics (2nd ID)
 vendor COMPUTONE	0x8e0e	Computone Corperation
 vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
 vendor ATRONICS		0x907f	Atronics
+vendor MOTIONENG	0xc0fe	Motion Engineering Inc.
+vendor DY4S		0xd4d4	DY4 Systems Inc.
+vendor TIGERJET		0xe159	Tiger Jet Network Inc
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
 
@@ -693,8 +1001,8 @@ product COMPAQ USB		0x7020	USB Controller
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ N10T		0xae34	Netelligent 10 T
 product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
-product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
+product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
 product COMPAQ NF3P		0xf130	NetFlex 3/P
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
