@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.108 1998/12/25 19:13:38 tholo Exp $
+$OpenBSD: pcidevs,v 1.109 1998/12/25 19:48:17 tholo Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -497,6 +497,7 @@ vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
+vencor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
@@ -893,6 +894,7 @@ product INTEL 82443LX		0x7180	82443LX PCI AGP (PAC)
 product INTEL 82443LX_AGP	0x7181	82443LX AGP Device (PAC)
 product INTEL 82443BX		0x7190	82443BX PCI AGP (PAC)
 product INTEL 82443BX_AGP	0x7191	82443BX AGP Device (PAC)
+product INTEL 82443BX_NOAGP	0x7191	82443BX Host Bridge/Controller (no AGP)
 product INTEL PCI450_PB		0x84c4	450 PCIset (Orion) Host-PCI
 product INTEL PCI450_MC		0x84c5	450 PCIset (Orion) Memory
 
