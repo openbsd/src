@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.11 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.12 2002/01/25 04:03:29 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -397,7 +397,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		 * filter attach routine is responsible for insuring that
 		 * the identifier can be attached to it.
 		 */
-		printf("unknown filter: %d\n", kev->filter);
 		return (EINVAL);
 	}
 
