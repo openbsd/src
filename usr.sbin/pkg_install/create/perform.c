@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.13 2001/11/26 05:04:33 deraadt Exp $	*/
+/*	$OpenBSD: perform.c,v 1.14 2003/04/05 18:01:54 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.13 2001/11/26 05:04:33 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.14 2003/04/05 18:01:54 avsm Exp $";
 #endif
 
 /*
@@ -226,9 +226,7 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     int current = 0;
     FILE *flist = 0;
     int nargs = 0;
-    int pipefds[2];
     int i;
-    FILE *totar;
     pid_t pid;
 
     args[nargs++] = "tar";	/* argv[0] */
@@ -254,11 +252,12 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	*/
     }
 
-    if (Verbose)
+    if (Verbose) {
         if (strchr(suffix, 'z'))
 	    printf("Creating gzip'd tar ball in '%s'\n", tball);
         else
 	    printf("Creating tar ball in '%s'\n", tball);
+    }
     args[nargs++] = CONTENTS_FNAME;
     args[nargs++] = COMMENT_FNAME;
     args[nargs++] = DESC_FNAME;
