@@ -1,4 +1,4 @@
-#	$OpenBSD: TEST.csh,v 1.2 1996/06/23 14:21:57 deraadt Exp $
+#	$OpenBSD: TEST.csh,v 1.3 1997/01/23 17:42:52 millert Exp $
 #	$NetBSD: TEST.csh,v 1.2 1995/03/21 07:03:59 cgd Exp $
 #	@(#)TEST.csh	5.2 (Berkeley) 4/30/93
 
@@ -137,3 +137,17 @@ echo 't 700 -le 1000 -a -n "1" -a "20" = "20"'
 t 700 -le 1000 -a -n "1" -a "20" = "20"
 echo 't ! \( 700 -le 1000 -a -n "1" -a "20" = "20" \)'
 t ! \( 700 -le 1000 -a -n "1" -a "20" = "20" \)
+
+echo 't -5 -eq 5'
+t -5 -eq 5
+
+
+echo 't foo -a ""'
+t foo -a ""
+echo 't "" -a foo'
+t "" -a foo
+echo 't "" -a ""'
+t "" -a ""
+echo 't "" -o ""'
+t "" -o ""
+
