@@ -1,6 +1,8 @@
 
 This is a list of things that still need to be done:
 
+* fix the signal handling re-entrancy bug that FreeBSD have left in :(
+
 * wrap vfork (basically the same as fork())
 
 * wrap itimer() syscalls so that the _ITIMER_SCHED_TIMER can't be trashed
@@ -12,6 +14,7 @@ This is a list of things that still need to be done:
 * Move to using -lpthread. Needs weak symbol support in all as and ld.so
   implementations.
   [espie@ looking at unifying toolchain]
+  [weak symbols put into libc. libpthread built. everything works on i386]
 
 * Add 
       pthread_condattr_[gs]etpshared()	-- and add warn_references
@@ -21,9 +24,8 @@ This is a list of things that still need to be done:
 
 * Add _warn_references to the schedprio stuff
 
-* Quiz jb about pthread_llist_remove.. change name to _thread_llist_remove?
-	- what pthread_setprio() and pthread_yield() for?
-	- shouldn't pthread_yield() be marked depreciated?
+* shouldn't pthread_yield() be marked depreciated?
+  [it is draft 4.]
 
 * Add thread stuff to the other archs in libc/arch/; ie change
   some usages of ENTRY to SYSENTRY in some .S files and add
@@ -34,12 +36,13 @@ This is a list of things that still need to be done:
   of whether the exe is statically linked or not.
   [problems with new egcs?]
 
-* Configure the gnu objective-C compiler to see if it can use threads.
-
 * Keep a handle on how netbsd are going with their kernel threads
+  [argumnet is that obsd is not multi-processor, so user threads will
+   retain stability and still give reasonable performance. talked to mwp@]
 
 * Look into how asynchronous I/O can help us. In particular, the
   (unimplemented) aio*() functions.
+  [doesn't help very much for 1003.1c.]
 
 * Update the libc manual pages to describe the posix re-entrant functions.
   Although this is actually trivial to do, I have to decide on a
@@ -58,9 +61,10 @@ This is a list of things that still need to be done:
 * Compare with PTL (http://www3.media.osaka-cu.ac.jp/~k-abe/PTL/)
   [snarfed some sparc md stuff]
 
-* Check that threads work with:
+* Verify that threads work with:
 	- perl (in-tree)
 	- objc (in-tree gcc)
+	- ssl (in-tree)
 	- gdb
 	- ports
 		- lang/python
@@ -69,4 +73,8 @@ This is a list of things that still need to be done:
 		- devel/glib
 		- www/squid
 
-$OpenBSD: TODO,v 1.9 1999/11/29 23:26:24 brad Exp $
+* http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
+  http://www.cs.wustl.edu/~schmidt/TSS-pattern.ps.gz
+  http://www.cs.wustl.edu/~schmidt/DC-Locking.ps.gz
+
+$OpenBSD: TODO,v 1.10 2000/01/06 06:48:06 d Exp $
