@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.40 2002/02/26 16:09:12 lebel Exp $
+#	$OpenBSD: services,v 1.41 2002/05/03 15:08:00 brad Exp $
 #
 # Network services, Internet style
 #
@@ -77,6 +77,8 @@ uucp-path	117/tcp
 nntp		119/tcp		readnews untp	# USENET News Transfer Protocol
 ntp		123/tcp
 ntp		123/udp				# Network Time Protocol
+pwdgen		129/tcp				# Password Generator Protocol
+pwdgen		129/udp				# Password Generator Protocol
 epmap		135/tcp				# DCE endpoint resolution
 epmap		135/udp
 netbios-ns	137/tcp				# NETBIOS Name Service
@@ -126,8 +128,8 @@ svrloc		427/tcp				# Server Location
 svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
-kpasswd		464/udp				# Kerberos 5 password changing
 kpasswd		464/tcp				# Kerberos 5 password changing
+kpasswd		464/udp				# Kerberos 5 password changing
 photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
 isakmp		500/udp				# ISAKMP key management
