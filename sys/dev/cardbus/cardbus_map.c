@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.3 2003/08/27 20:59:15 mickey Exp $ */
+/*	$OpenBSD: cardbus_map.c,v 1.4 2004/07/04 23:10:48 brad Exp $ */
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
  *			      cardbus_function_tag_t cf, cardbustag_t tag,
  *			      int reg, cardbusreg_t type, bus_addr_t *basep,
  *			      bus_size_t *sizep, int *flagsp)
- * This code is stallen from sys/dev/pci_map.c.
+ * This code is stolen from sys/dev/pci_map.c.
  */
 static int
 cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
@@ -142,7 +142,7 @@ cardbus_io_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
  *			       cardbus_function_tag_t cf, cardbustag_t tag,
  *			       int reg, cardbusreg_t type, bus_addr_t *basep,
  *			       bus_size_t *sizep, int *flagsp)
- * This code is stallen from sys/dev/pci_map.c.
+ * This code is stolen from sys/dev/pci_map.c.
  */
 static int
 cardbus_mem_find(cc, cf, tag, reg, type, basep, sizep, flagsp)
@@ -311,7 +311,7 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
 	}
 	cardbus_conf_write(cc, cf, tag, reg, base);
 
-	DPRINTF(("cardbus_mapreg_map: physaddr %lx\n", base));
+	DPRINTF(("cardbus_mapreg_map: physaddr %lx\n", (unsigned long)base));
 
 	if (tagp != 0) {
 		*tagp = bustag;
