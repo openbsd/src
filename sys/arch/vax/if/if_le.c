@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.3 1997/09/10 08:28:40 maja Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.4 1998/09/16 22:41:19 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.8 1997/04/21 22:04:23 ragge Exp $	*/
 
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
@@ -56,6 +56,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
+
+#include <net/if_media.h>
 
 /*
  * This would be nice, but it's not yet there...

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 1997/09/17 06:47:09 downsj Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.9 1998/09/16 22:41:18 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -58,18 +58,11 @@
 #include <sys/malloc.h>
 
 #include <net/if.h>
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
 #include <net/if_media.h>
-#endif	/* __NetBSD__ */
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__NetBSD__)
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif	/* __NetBSD__ */
 #endif
 
 #include <machine/autoconf.h>
@@ -86,12 +79,22 @@
 #include <sparc/dev/if_lereg.h>
 #include <sparc/dev/if_levar.h>
 
-#if defined(__NetBSD__)
-int	lematch __P((struct device *, struct cfdata *, void *));
-#else
 int	lematch __P((struct device *, void *, void *));
-#endif	/* __NetBSD__ */
 void	leattach __P((struct device *, struct device *, void *));
+
+/*
+ * ifmedia interfaces
+ */
+int	lemediachange __P((struct ifnet *));
+void	lemediastatus __P((struct ifnet *, struct ifmediareq *));
+
+#if defined(SUN4M)
+/*
+ * media change methods (only for sun4m)
+ */
+void	lesetutp __P((struct am7990_softc *));
+void	lesetaui __P((struct am7990_softc *));
+#endif /* SUN4M */
 
 #if defined(SUN4M)	/* XXX */
 int	myleintr __P((void *));
@@ -119,28 +122,6 @@ static int dodrain=0;
 	return (am7990_intr(arg));
 }
 #endif
-
-#if defined(SUN4M)
-#if defined(__NetBSD__)
-/*
- * Media types supported by the Sun4m.
- */
-int lemediasun4m[] = {
-	IFM_ETHER|IFM_10_T,
-	IFM_ETHER|IFM_10_5,
-	IFM_ETHER|IFM_AUTO,
-};
-#define NLEMEDIASUN4M	(sizeof(lemediasun4m) / sizeof(lemediasun4m[0]))
-#endif	/* __NetBSD__ */
-
-void	lesetutp __P((struct am7990_softc *));
-void	lesetaui __P((struct am7990_softc *));
-
-int	lemediachange __P((struct am7990_softc *));
-#if defined(__NetBSD__)
-void	lemediastatus __P((struct am7990_softc *, struct ifmediareq *));
-#endif	/* __NetBSD__ */
-#endif /* SUN4M */
 
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
@@ -194,9 +175,18 @@ lesetutp(sc)
 	struct am7990_softc *sc;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+	u_int32_t csr;
+	int tries = 5;
 
-	lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
-	delay(20000);	/* must not touch le for 20ms */
+	while (--tries) {
+		csr = lesc->sc_dma->sc_regs->csr;
+		csr |= DE_AUI_TP;
+		lesc->sc_dma->sc_regs->csr = csr;
+		delay(20000);	/* must not touch le for 20ms */
+		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
+			return;
+	}
+	printf("Setting utp: bit won't stick\n");
 }
 
 void
@@ -204,17 +194,27 @@ lesetaui(sc)
 	struct am7990_softc *sc;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+	u_int32_t csr;
+	int tries = 5;
 
-	lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
-	delay(20000);	/* must not touch le for 20ms */
+	while (--tries) {
+		csr = lesc->sc_dma->sc_regs->csr;
+		csr &= ~DE_AUI_TP;
+		lesc->sc_dma->sc_regs->csr = csr;
+		delay(20000);	/* must not touch le for 20ms */
+		if ((lesc->sc_dma->sc_regs->csr & DE_AUI_TP) == 0)
+			return;
+	}
+	printf("Setting aui: bit won't stick\n");
 }
+#endif
 
 int
-lemediachange(sc)
-	struct am7990_softc *sc;
+lemediachange(ifp)
+	struct ifnet *ifp;
 {
-#if defined(__NetBSD__)
-	struct ifmedia *ifm = &sc->sc_media;
+	struct am7990_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return (EINVAL);
@@ -226,52 +226,68 @@ lemediachange(sc)
 	 * carrier.
 	 */
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+#if defined(SUN4M)
 	case IFM_10_T:
-		lesetutp(sc);
-		break;
-
-	case IFM_10_5:
-		lesetaui(sc);
+		if (CPU_ISSUN4M)
+			lesetutp(sc);
+		else
+			return (EOPNOTSUPP);
 		break;
 
 	case IFM_AUTO:
+		if (CPU_ISSUN4M)
+			return (0);
+		else
+			return (EOPNOTSUPP);
 		break;
+#endif
+
+	case IFM_10_5:
+#if defined(SUN4M)
+		if (CPU_ISSUN4M)
+			lesetaui(sc);
+#else
+		return (0);
+#endif
+		break;
+
 
 	default:
 		return (EINVAL);
 	}
-#else
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	if (ifp->if_flags & IFF_LINK0)
-		lesetutp(sc);
-	else if (ifp->if_flags & IFF_LINK1)
-		lesetaui(sc);
-#endif	/* __NetBSD__ */
 	return (0);
 }
 
-#if defined(__NetBSD__)
 void
-lemediastatus(sc, ifmr)
-	struct am7990_softc *sc;
+lemediastatus(ifp, ifmr)
+	struct ifnet *ifp;
 	struct ifmediareq *ifmr;
 {
+#if defined(SUN4M)
+	struct am7990_softc *sc = ifp->if_softc;
 	struct le_softc *lesc = (struct le_softc *)sc;
 
-	if (lesc->sc_dma == NULL)
+	if (lesc->sc_dma == NULL) {
+		ifmr->ifm_active = IFM_ETHER | IFM_10_5;
 		return;
+	}
 
-	/*
-	 * Notify the world which media we're currently using.
-	 */
-	if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
+	if (CPU_ISSUN4M) {
+		/*
+		 * Notify the world which media we're currently using.
+		 */
+		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
+			ifmr->ifm_active = IFM_ETHER | IFM_10_T;
+		else
+			ifmr->ifm_active = IFM_ETHER | IFM_10_5;
+	}
 	else
-		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
+		ifmr->ifm_active = IFM_ETHER | IFM_10_5;
+#else
+	ifmr->ifm_active = IFM_ETHER | IFM_10_5;
+#endif
 }
-#endif	/* __NetBSD__ */
-#endif /* SUN4M */
 
 hide void
 lehwreset(sc)
@@ -301,13 +317,8 @@ lehwinit(sc)
 #if defined(SUN4M) 
 	struct le_softc *lesc = (struct le_softc *)sc;
 
-	/*
-	 * Make sure we're using the currently-enabled media type.
-	 * XXX Actually, this is probably unnecessary, now.
-	 */
 	if (CPU_ISSUN4M && lesc->sc_dma) {
-#if defined(__NetBSD__)
-		switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
+		switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_cur->ifm_media)) {
 		case IFM_10_T:
 			lesetutp(sc);
 			break;
@@ -315,15 +326,15 @@ lehwinit(sc)
 		case IFM_10_5:
 			lesetaui(sc);
 			break;
-		}
-#else
-		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-		if (ifp->if_flags & IFF_LINK0)
+		case IFM_AUTO:
 			lesetutp(sc);
-		else if (ifp->if_flags & IFF_LINK1)
-			lesetaui(sc);
-#endif	/* __NetBSD__ */
+			break;
+
+		default:	/* XXX shouldn't happen */
+			lesetutp(sc);
+			break;
+		}
 	}
 #endif
 }
@@ -334,9 +345,6 @@ lenocarrier(sc)
 {
 #if defined(SUN4M)
 	struct le_softc *lesc = (struct le_softc *)sc;
-#if !defined(__NetBSD__)
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif	/* __NetBSD__ */
 
 	if (CPU_ISSUN4M && lesc->sc_dma) {
 		/* 
@@ -346,34 +354,20 @@ lenocarrier(sc)
 		printf("%s: lost carrier on ", sc->sc_dev.dv_xname);
 		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP) {
 			printf("UTP port");
-#if defined(__NetBSD__)
-			switch (IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+			switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
 			case IFM_10_5:
 			case IFM_AUTO:
 				printf(", switching to AUI port");
 				lesetaui(sc);
 			}
-#else
-			if (!(ifp->if_flags & IFF_LINK0)) {
-				printf(", switching to AUI port");
-				lesetaui(sc);
-			}
-#endif	/* __NetBSD__ */
 		} else {
 			printf("AUI port");
-#if defined(__NetBSD__)
-			switch (IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+			switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
 			case IFM_10_T:
 			case IFM_AUTO:
 				printf(", switching to UTP port");
 				lesetutp(sc);
 			}
-#else
-			if (!(ifp->if_flags & IFF_LINK1)) {
-				printf(", switching to UTP port");
-				lesetutp(sc);
-			}
-#endif	/* __NetBSD__ */
 		}
 		printf("\n");
 	} else
@@ -382,19 +376,11 @@ lenocarrier(sc)
 }
 
 int
-#if defined(__NetBSD__)
-lematch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-#else
 lematch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
 	struct cfdata *cf = vcf;
-#endif	/* __NetBSD__ */
 	struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -432,6 +418,8 @@ leattach(parent, self, aux)
 	}
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
+
+	sc->sc_hasifmedia = 1;
 
 	lesc->sc_r1 = (struct lereg1 *)
 		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct lereg1));
@@ -519,11 +507,7 @@ leattach(parent, self, aux)
 		break;
 	}
 
-#if defined(__NetBSD__)
-	myetheraddr(sc->sc_enaddr);
-#else
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
-#endif	/* __NetBSD__ */
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
@@ -537,14 +521,21 @@ leattach(parent, self, aux)
 	sc->sc_nocarrier = lenocarrier;
 	sc->sc_hwreset = lehwreset;
 
-#if defined(SUN4M) && defined(__NetBSD__)
+	ifmedia_init(&sc->sc_ifmedia, 0, lemediachange, lemediastatus);
+#if defined(SUN4M)
 	if (CPU_ISSUN4M && lesc->sc_dma) {
-		sc->sc_mediachange = lemediachange;
-		sc->sc_mediastatus = lemediastatus;
-		sc->sc_supmedia = lemediasun4m;
-		sc->sc_nsupmedia = NLEMEDIASUN4M;
-		sc->sc_defaultmedia = IFM_ETHER|IFM_AUTO;
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
+		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO);
 	}
+	else {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
+		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5);
+	}
+#else
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5);
 #endif
 
 	am7990_config(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990var.h,v 1.7 1997/08/08 08:05:42 downsj Exp $	*/
+/*	$OpenBSD: am7990var.h,v 1.8 1998/09/16 22:41:20 jason Exp $	*/
 /*	$NetBSD: am7990var.h,v 1.8 1996/07/05 23:57:01 abrown Exp $	*/
 
 /*
@@ -88,6 +88,9 @@ struct am7990_softc {
 	void	(*sc_hwreset) __P((struct am7990_softc *));
 	void	(*sc_hwinit) __P((struct am7990_softc *));
 	void	(*sc_nocarrier) __P((struct am7990_softc *));
+
+	int	sc_hasifmedia;
+	struct	ifmedia sc_ifmedia;
 
 	void	*sc_sh;		/* shutdownhook cookie */
 

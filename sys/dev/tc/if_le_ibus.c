@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ibus.c,v 1.2 1997/11/07 08:07:48 niklas Exp $	*/
+/*	$OpenBSD: if_le_ibus.c,v 1.3 1998/09/16 22:41:21 jason Exp $	*/
 /*	$NetBSD: if_le_ibus.c,v 1.3 1996/05/20 23:19:16 jonathan Exp $	*/
 
 /*
@@ -28,6 +28,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>

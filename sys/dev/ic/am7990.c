@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.13 1998/06/24 20:05:03 deraadt Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.14 1998/09/16 22:41:20 jason Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -916,6 +917,14 @@ am7990_ioctl(ifp, cmd, data)
 			am7990_reset(sc);
 			error = 0;
 		}
+		break;
+
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		if (sc->sc_hasifmedia)
+			error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
+		else
+			error = EINVAL;
 		break;
 
 	default:
