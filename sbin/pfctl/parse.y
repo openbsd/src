@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.255 2002/12/16 22:50:11 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.256 2002/12/16 23:36:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2812,20 +2812,23 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 				printf("\n");
 			}
 
-			/* now create a root queue */
-			memset(&pb, 0, sizeof(struct pf_altq));
-			strlcpy(qname, "root_", sizeof(qname));
-			strlcat(qname, interface->ifname, sizeof(qname));
-			strlcpy(pb.qname, qname, PF_QNAME_SIZE);
-			strlcpy(pb.ifname, interface->ifname, IFNAMSIZ);
-			pb.qlimit = pa.qlimit;
-			pb.scheduler = pa.scheduler;
-			pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
-			if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
-				errs++;
-			else
-				if (pfctl_add_altq(pf, &pb))
+			if (pa.scheduler == ALTQT_CBQ) {
+				/* now create a root queue */
+				memset(&pb, 0, sizeof(struct pf_altq));
+				strlcpy(qname, "root_", sizeof(qname));
+				strlcat(qname, interface->ifname,
+				    sizeof(qname));
+				strlcpy(pb.qname, qname, PF_QNAME_SIZE);
+				strlcpy(pb.ifname, interface->ifname, IFNAMSIZ);
+				pb.qlimit = pa.qlimit;
+				pb.scheduler = pa.scheduler;
+				pb.pq_u.cbq_opts = pa.pq_u.cbq_opts;
+				if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
 					errs++;
+				else
+					if (pfctl_add_altq(pf, &pb))
+						errs++;
+			}
 
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
