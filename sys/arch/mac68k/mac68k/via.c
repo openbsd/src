@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.10 1996/10/28 14:51:52 briggs Exp $	*/
+/*	$OpenBSD: via.c,v 1.11 1996/10/30 05:36:21 briggs Exp $	*/
 /*	$NetBSD: via.c,v 1.48 1996/06/21 06:12:45 scottr Exp $	*/
 
 /*-
@@ -447,15 +447,13 @@ mac68k_register_scsi_b_irq(irq_func, client_data)
 	void	(*irq_func)(void *);
 	void	*client_data;
 {
-#if 0
 	if (irq_func) {
- 		via2itab[3] = irq_func;
-		via2iarg[3] = client_data;
+ 		via2itab[0] = irq_func;
+		via2iarg[0] = client_data;
 	} else {
- 		via2itab[3] = via2_noint;
-		via2iarg[3] = (void *) 3;
+ 		via2itab[0] = via2_noint;
+		via2iarg[0] = (void *) 0;
 	}
-#endif
 }
 
 void
