@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.8 1997/12/19 09:03:33 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.9 1997/12/19 09:22:55 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.8 1997/12/19 09:03:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.9 1997/12/19 09:22:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -435,11 +435,13 @@ inetname(in)
 				cp = hp->h_name;
 		}
 	}
-	if (in.s_addr == INADDR_ANY)
-		strcpy(line, "*");
-	else if (cp)
-		strncpy(line, cp, sizeof line);
-	else {
+	if (in.s_addr == INADDR_ANY) {
+		strncpy(line, "*", sizeof line-1);
+		line[sizeof line-1] = '\0';
+	} else if (cp) {
+		strncpy(line, cp, sizeof line-1);
+		line[sizeof line-1] = '\0';
+	} else {
 		in.s_addr = ntohl(in.s_addr);
 #define C(x)	((x) & 0xff)
 		snprintf(line, sizeof line, "%u.%u.%u.%u", C(in.s_addr >> 24),
