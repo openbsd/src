@@ -1,8 +1,8 @@
-/*	$OpenBSD: ui.c,v 1.14 2000/04/07 22:06:44 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.39 2000/04/07 19:05:01 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.15 2000/04/07 22:10:30 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.40 2000/04/07 22:05:57 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

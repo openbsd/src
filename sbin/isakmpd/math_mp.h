@@ -1,8 +1,8 @@
-/*	$OpenBSD: math_mp.h,v 1.1 2000/04/07 21:44:16 niklas Exp $	*/
-/*	$EOM: math_mp.h,v 1.1 2000/04/07 19:38:16 niklas Exp $	*/
+/*	$OpenBSD: math_mp.h,v 1.2 2000/04/07 22:10:30 niklas Exp $	*/
+/*	$EOM: math_mp.h,v 1.2 2000/04/07 22:05:57 niklas Exp $	*/
 
 /*
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
