@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_frag.h,v 1.13 2001/01/17 04:47:14 fgsch Exp $	*/
+/*	$OpenBSD: ip_frag.h,v 1.14 2001/04/07 01:06:28 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * $IPFilter: ip_frag.h,v 2.4.2.2 2000/11/10 13:10:54 darrenr Exp $
+ * $IPFilter: ip_frag.h,v 2.4.2.3 2001/04/06 12:31:20 darrenr Exp $
  */
 
 #ifndef	__IP_FRAG_H__
@@ -26,7 +26,8 @@ typedef	struct	ipfr	{
 	u_char	ipfr_p;
 	u_char	ipfr_tos;
 	u_short	ipfr_off;
-	u_short	ipfr_ttl;
+	u_char	ipfr_ttl;
+	u_char	ipfr_seen0;
 	frentry_t *ipfr_rule;
 } ipfr_t;
 
@@ -42,7 +43,8 @@ typedef	struct	ipfrstat {
 	struct	ipfr	**ifs_nattab;
 } ipfrstat_t;
 
-#define	IPFR_CMPSZ	(4 + 4 + 2 + 1 + 1)
+#define	IPFR_CMPSZ	(offsetof(ipfr_t, ipfr_off) - \
+			 offsetof(ipfr_t, ipfr_src))
 
 extern	int	fr_ipfrttl;
 extern	int	fr_frag_lock;

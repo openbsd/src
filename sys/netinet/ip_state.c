@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip_state.c,v 1.26 2001/01/30 04:23:56 kjell Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.27 2001/04/07 01:06:28 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1995-2000 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.30.2.28 2001/01/08 14:04:46 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.30.2.30 2001/04/06 12:31:21 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -142,7 +142,9 @@ u_long	fr_tcpidletimeout = FIVE_DAYS,
 	fr_tcpclosed = 120,
 	fr_tcphalfclosed = 2 * 2 * 3600,    /* 2 hours */
 	fr_udptimeout = 240,
-	fr_icmptimeout = 120;
+	fr_udpacktimeout = 24,
+	fr_icmptimeout = 120,
+	fr_icmpacktimeout = 12;
 int	fr_statemax = IPSTATE_MAX,
 	fr_statesize = IPSTATE_SIZE;
 int	fr_state_doflush = 0,
@@ -690,7 +692,7 @@ u_int flags;
 #endif
 	RWLOCK_EXIT(&ipf_state);
 	fin->fin_rev = IP6NEQ(is->is_dst, fin->fin_fi.fi_dst);
-	if (fin->fin_fi.fi_fl & FI_FRAG)
+	if ((fin->fin_fi.fi_fl & FI_FRAG) && (pass & FR_KEEPFRAG))
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
 	return is;
 }
@@ -1256,7 +1258,10 @@ fr_info_t *fin;
 			if ((is->is_p == pr) && (is->is_v == v) &&
 			    fr_matchsrcdst(is, src, dst, fin, NULL) &&
 			    fr_matchicmpqueryreply(v, is, ic)) {
-				is->is_age = fr_icmptimeout;
+				if (fin->fin_rev)
+					is->is_age = fr_icmpacktimeout;
+				else
+					is->is_age = fr_icmptimeout;
 				break;
 			}
 		}
@@ -1304,6 +1309,11 @@ retry_tcpudp:
 					if (!fr_tcpstate(is, fin, ip, tcp)) {
 						continue;
 					}
+				} if ((pr == IPPROTO_UDP)) {
+					if (fin->fin_rev)
+						is->is_age = fr_udpacktimeout;
+					else
+						is->is_age = fr_udptimeout;
 				}
 				break;
 			}
@@ -1347,7 +1357,7 @@ retry_tcpudp:
 		fr_delstate(is);
 #endif
 	RWLOCK_EXIT(&ipf_state);
-	if (fin->fin_fi.fi_fl & FI_FRAG)
+	if ((fin->fin_fi.fi_fl & FI_FRAG) && (pass & FR_KEEPFRAG))
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
 	return fr;
 }
