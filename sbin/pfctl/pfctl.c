@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.87 2002/11/22 12:24:30 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.88 2002/11/23 05:22:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,6 +62,8 @@ int	 pfctl_clear_nat(int, int);
 int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
+int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int);
+void	 pfctl_clear_pool(struct pf_pool *);
 int	 pfctl_show_rules(int, int, int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_altq(int);
@@ -72,6 +74,7 @@ int	 pfctl_show_limits(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
+int	 pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 
 char	*clearopt;
 char	*rulesopt;
@@ -290,7 +293,7 @@ pfctl_kill_states(int dev, int opts)
 	killed = sources = dests = 0;
 
 	memset(&psk, 0, sizeof(psk));
-	memset(&psk.psk_src.mask, 0xff, sizeof(psk.psk_src.mask));
+	memset(&psk.psk_src.addr.mask, 0xff, sizeof(psk.psk_src.addr.mask));
 	memset(&last_src, 0xff, sizeof(last_src));
 	memset(&last_dst, 0xff, sizeof(last_dst));
 
@@ -321,8 +324,8 @@ pfctl_kill_states(int dev, int opts)
 
 		if (state_killers > 1) {
 			dests = 0;
-			memset(&psk.psk_dst.mask, 0xff,
-			    sizeof(psk.psk_dst.mask));
+			memset(&psk.psk_dst.addr.mask, 0xff,
+			    sizeof(psk.psk_dst.addr.mask));
 			memset(&last_dst, 0xff, sizeof(last_dst));
 			if ((ret_ga = getaddrinfo(state_kill[1], NULL, NULL,
 			    &res[1]))) {
@@ -380,6 +383,52 @@ pfctl_kill_states(int dev, int opts)
 }
 
 int
+pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
+    u_int32_t ticket, int id)
+{
+	struct pfioc_pooladdr pp;
+	struct pf_pooladdr *pa;
+	u_int32_t pnr, mpnr;
+
+	pp.r_id = id;
+	pp.r_num = nr;
+	pp.ticket = ticket;
+	if (ioctl(dev, DIOCGETADDRS, &pp)) {
+		warnx("DIOCGETADDRS");
+		return (-1);
+	}
+	mpnr = pp.nr;
+	TAILQ_INIT(&pool->list);
+	for (pnr = 0; pnr < mpnr; ++pnr) {
+		pp.nr = pnr;
+		if (ioctl(dev, DIOCGETADDR, &pp)) {
+			warnx("DIOCGETADDR");
+			return (-1);
+		}
+		pa = malloc(sizeof(struct pf_pooladdr));
+		if (pa == NULL) {
+			err(1, "malloc");
+			return (-1);
+		}
+		bcopy(&pp.addr, pa, sizeof(struct pf_pooladdr));
+		TAILQ_INSERT_HEAD(&pool->list, pa, entries);
+	} 
+
+	return (0);
+}
+
+void
+pfctl_clear_pool(struct pf_pool *pool)
+{
+	struct pf_pooladdr *pa;
+
+	TAILQ_FOREACH(pa, &pool->list, entries) {
+		TAILQ_REMOVE(&pool->list, pa, entries);
+		free(pa);
+	}
+}
+
+int
 pfctl_show_rules(int dev, int opts, int format)
 {
 	struct pfioc_rule pr;
@@ -396,6 +445,11 @@ pfctl_show_rules(int dev, int opts, int format)
 			warnx("DIOCGETRULE");
 			return (-1);
 		}
+	
+		if (pfctl_get_pool(dev, &pr.rule.rt_pool,
+		    nr, pr.ticket, PF_POOL_RULE_RT) != 0)
+			return (-1);
+
 		switch (format) {
 		case 1:
 			if (pr.rule.label[0]) {
@@ -416,6 +470,7 @@ pfctl_show_rules(int dev, int opts, int format)
 				    pr.rule.evaluations, pr.rule.packets,
 				    pr.rule.bytes, pr.rule.states);
 		}
+		pfctl_clear_pool(&pr.rule.rt_pool);
 	}
 	return (0);
 }
@@ -466,7 +521,11 @@ pfctl_show_nat(int dev)
 			warnx("DIOCGETNAT");
 			return (-1);
 		}
+		if (pfctl_get_pool(dev, &pn.nat.rpool, nr,
+		    pn.ticket, PF_POOL_NAT_R) != 0)
+			return (-1);
 		print_nat(&pn.nat);
+		pfctl_clear_pool(&pn.nat.rpool);
 	}
 	if (ioctl(dev, DIOCGETRDRS, &pr)) {
 		warnx("DIOCGETRDRS");
@@ -479,7 +538,11 @@ pfctl_show_nat(int dev)
 			warnx("DIOCGETRDR");
 			return (-1);
 		}
+		if (pfctl_get_pool(dev, &pr.rdr.rpool, nr, 
+		    pr.ticket, PF_POOL_RDR_R) != 0)
+			return (-1);
 		print_rdr(&pr.rdr);
+		pfctl_clear_pool(&pr.rdr.rpool);
 	}
 	if (ioctl(dev, DIOCGETBINATS, &pb)) {
 		warnx("DIOCGETBINATS");
@@ -584,12 +647,32 @@ pfctl_show_limits(int dev)
 	return (0);
 }
 
-/* callbacks for rule/nat/rdr */
+/* callbacks for rule/nat/rdr/addr */
+int
+pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
+{
+	struct pf_pooladdr *pa;
+
+	if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+		err(1, "DIOCBEGINADDRS");
+
+	pf->paddr.af = af;
+	TAILQ_FOREACH(pa, &p->list, entries) {
+		memcpy(&pf->paddr.addr, pa, sizeof(struct pf_pooladdr)); 
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDADDR, &pf->paddr))
+				err(1, "DIOCADDADDR");
+		}
+	}
+	return (0);
+}
 
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
 	if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
+		if (pfctl_add_pool(pf, &r->rt_pool, r->af))
+			return (1);
 		memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
@@ -597,6 +680,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
 			print_rule(&pf->prule->rule);
+		pfctl_clear_pool(&pf->prule->rule.rt_pool);
 	}
 	return (0);
 }
@@ -605,6 +689,8 @@ int
 pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 {
 	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+		if (pfctl_add_pool(pf, &n->rpool, n->af))
+			return (1);
 		memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDNAT, pf->pnat))
@@ -612,6 +698,7 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
 			print_nat(&pf->pnat->nat);
+		pfctl_clear_pool(&pf->pnat->nat.rpool);
 	}
 	return (0);
 }
@@ -635,6 +722,8 @@ int
 pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 {
 	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
+		if (pfctl_add_pool(pf, &r->rpool, r->af))
+			return (1);
 		memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDRDR, pf->prdr))
@@ -642,6 +731,7 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 		}
 		if (pf->opts & PF_OPT_VERBOSE)
 			print_rdr(&pf->prdr->rdr);
+		pfctl_clear_pool(&pf->prdr->rdr.rpool);
 	}
 	return (0);
 }

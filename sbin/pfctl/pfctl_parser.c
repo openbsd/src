@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.105 2002/11/19 23:34:02 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.106 2002/11/23 05:22:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -353,22 +353,22 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
     sa_family_t af, u_int8_t proto)
 {
 	if (PF_AZERO(&src->addr.addr, AF_INET6) &&
-	    PF_AZERO(&src->mask, AF_INET6) &&
+	    PF_AZERO(&src->addr.mask, AF_INET6) &&
 	    !src->noroute && !dst->noroute &&
 	    !src->port_op && PF_AZERO(&dst->addr.addr, AF_INET6) &&
-	    PF_AZERO(&dst->mask, AF_INET6) && !dst->port_op)
+	    PF_AZERO(&dst->addr.mask, AF_INET6) && !dst->port_op)
 		printf("all ");
 	else {
 		printf("from ");
 		if (src->noroute)
 			printf("no-route ");
 		else if (PF_AZERO(&src->addr.addr, AF_INET6) &&
-		    PF_AZERO(&src->mask, AF_INET6))
+		    PF_AZERO(&src->addr.mask, AF_INET6))
 			printf("any ");
 		else {
 			if (src->not)
 				printf("! ");
-			print_addr(&src->addr, &src->mask, af);
+			print_addr(&src->addr, af);
 			printf(" ");
 		}
 		if (src->port_op)
@@ -380,18 +380,46 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 		if (dst->noroute)
 			printf("no-route ");
 		else if (PF_AZERO(&dst->addr.addr, AF_INET6) &&
-		    PF_AZERO(&dst->mask, AF_INET6))
+		    PF_AZERO(&dst->addr.mask, AF_INET6))
 			printf("any ");
 		else {
 			if (dst->not)
 				printf("! ");
-			print_addr(&dst->addr, &dst->mask, af);
+			print_addr(&dst->addr, af);
 			printf(" ");
 		}
 		if (dst->port_op)
 			print_port(dst->port_op, dst->port[0],
 			    dst->port[1],
 			    proto == IPPROTO_TCP ? "tcp" : "udp");
+	}
+}
+
+void
+print_pool(struct pf_pool *pool, int af, int id)
+{
+	struct pf_pooladdr *pooladdr;
+
+	if (TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
+		printf("{ ");
+	TAILQ_FOREACH(pooladdr, &pool->list, entries){
+		switch (id) {
+		case PF_POOL_NAT_R:
+		case PF_POOL_RDR_R:
+			print_addr(&pooladdr->addr, af);
+			break;
+		case PF_POOL_RULE_RT:	
+			printf("( %s", pooladdr->ifname);
+			if (! PF_AZERO(&pooladdr->addr.addr, af))
+				printf(" ");
+				print_addr(&pooladdr->addr, af);
+			printf(" )");
+			break;
+		}
+		if (TAILQ_NEXT(pooladdr, entries) != NULL)
+			printf(", ");
+		else if (TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
+			printf(" }");
 	}
 }
 
@@ -424,7 +452,7 @@ print_nat(struct pf_nat *n)
 	print_fromto(&n->src, &n->dst, n->af, n->proto);
 	if (!n->no) {
 		printf("-> ");
-		print_addr(&n->raddr, NULL, n->af);
+		print_pool(&n->rpool, n->af, PF_POOL_NAT_R);
 		if (n->proxy_port[0] != PF_NAT_PROXY_PORT_LOW ||
 		    n->proxy_port[1] != PF_NAT_PROXY_PORT_HIGH) {
 			if (n->proxy_port[0] == n->proxy_port[1])
@@ -433,6 +461,27 @@ print_nat(struct pf_nat *n)
 				printf(" port %u:%u", n->proxy_port[0],
 				    n->proxy_port[1]);
 		}
+		switch (n->rpool.opts & 0x0f) {
+		case PF_POOL_NONE:
+			break;
+		case PF_POOL_BITMASK:
+			printf(" bitmask");
+			break;
+		case PF_POOL_RANDOM:
+			printf(" random");
+			break;
+		case PF_POOL_SRCHASH:
+			printf(" source-hash");
+			break;
+		case PF_POOL_SRCKEYHASH:
+			printf(" source-hash key");
+			break;
+		case PF_POOL_ROUNDROBIN:
+			printf(" round-robin");
+			break;
+		}
+		if (n->rpool.opts & PF_POOL_STATICPORT)
+			printf(" static-port");
 	}
 	printf("\n");
 }
@@ -462,19 +511,20 @@ print_binat(struct pf_binat *b)
 			printf("proto %u ", b->proto);
 	}
 	printf("from ");
-	print_addr(&b->saddr, &b->smask, b->af);
+	print_addr(&b->saddr, b->af);
 	printf(" ");
 	printf("to ");
-	if (!PF_AZERO(&b->daddr.addr, b->af) || !PF_AZERO(&b->dmask, b->af)) {
+	if (!PF_AZERO(&b->daddr.addr, b->af) ||
+	    !PF_AZERO(&b->daddr.mask, b->af)) {
 		if (b->dnot)
 			printf("! ");
-		print_addr(&b->daddr, &b->dmask, b->af);
+		print_addr(&b->daddr, b->af);
 		printf(" ");
 	} else
 		printf("any ");
 	if (!b->no) {
 		printf("-> ");
-		print_addr(&b->raddr, &b->rmask, b->af);
+		print_addr(&b->raddr, b->af);
 	}
 	printf("\n");
 }
@@ -506,18 +556,20 @@ print_rdr(struct pf_rdr *r)
 			printf("proto %u ", r->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&r->saddr.addr, r->af) || !PF_AZERO(&r->smask, r->af)) {
+	if (!PF_AZERO(&r->saddr.addr, r->af) ||
+	    !PF_AZERO(&r->saddr.mask, r->af)) {
 		if (r->snot)
 			printf("! ");
-		print_addr(&r->saddr, &r->smask, r->af);
+		print_addr(&r->saddr, r->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&r->daddr.addr, r->af) || !PF_AZERO(&r->dmask, r->af)) {
+	if (!PF_AZERO(&r->daddr.addr, r->af) ||
+	    !PF_AZERO(&r->daddr.mask, r->af)) {
 		if (r->dnot)
 			printf("! ");
-		print_addr(&r->daddr, &r->dmask, r->af);
+		print_addr(&r->daddr, r->af);
 		printf(" ");
 	} else
 		printf("any ");
@@ -528,12 +580,30 @@ print_rdr(struct pf_rdr *r)
 	}
 	if (!r->no) {
 		printf(" -> ");
-		print_addr(&r->raddr, NULL, r->af);
-		printf(" ");
+		print_pool(&r->rpool, r->af, PF_POOL_RDR_R);
 		if (r->rport) {
-			printf("port %u", ntohs(r->rport));
+			printf(" port %u", ntohs(r->rport));
 			if (r->opts & PF_RPORT_RANGE)
 				printf(":*");
+		}
+		switch (r->rpool.opts & 0x0f) {
+		case PF_POOL_NONE:
+			break;
+		case PF_POOL_BITMASK:
+			printf(" bitmask");
+			break;
+		case PF_POOL_RANDOM:
+			printf(" random");
+			break;
+		case PF_POOL_SRCHASH:
+			printf(" source-hash");
+			break;
+		case PF_POOL_SRCKEYHASH:
+			printf(" source-hash key");
+			break;
+		case PF_POOL_ROUNDROBIN:
+			printf(" round-robin");
+			break;
 		}
 	}
 	printf("\n");
@@ -703,16 +773,26 @@ print_rule(struct pf_rule *r)
 			printf("dup-to ");
 		else if (r->rt == PF_FASTROUTE)
 			printf("fastroute");
-		if (r->af && !PF_AZERO(&r->rt_addr, r->af)) {
-			struct pf_addr_wrap aw;
-
-			printf("(%s ", r->rt_ifname);
-			aw.addr = r->rt_addr;
-			aw.addr_dyn = NULL;
-			print_addr(&aw, NULL, r->af);
-			printf(")");
-		} else if (r->rt_ifname[0])
-			printf("%s", r->rt_ifname);
+			print_pool(&r->rt_pool, r->af, PF_POOL_RULE_RT);
+		switch (r->rt_pool.opts & 0x0f) {
+		case PF_POOL_NONE:
+			break;
+		case PF_POOL_BITMASK:
+			printf(" bitmask");
+			break;
+		case PF_POOL_RANDOM:
+			printf(" random");
+			break;
+		case PF_POOL_SRCHASH:
+			printf(" source-hash");
+			break;
+		case PF_POOL_SRCKEYHASH:
+			printf(" source-hash key");
+			break;
+		case PF_POOL_ROUNDROBIN:
+			printf(" round-robin");
+			break;
+		}
 		printf(" ");
 	}
 	if (r->af) {

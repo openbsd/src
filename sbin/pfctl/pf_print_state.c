@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.9 2002/11/02 15:29:28 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.10 2002/11/23 05:22:24 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,7 +58,7 @@
 void	print_name(struct pf_addr *, struct pf_addr *, sa_family_t);
 
 void
-print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, sa_family_t af)
+print_addr(struct pf_addr_wrap *addr, sa_family_t af)
 {
 	char buf[48];
 
@@ -70,8 +70,8 @@ print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, sa_family_t af)
 		else
 			printf("%s", buf);
 	}
-	if (mask != NULL) {
-		int bits = unmask(mask, af);
+	if (! PF_AZERO(&addr->mask, af)) {
+		int bits = unmask(&addr->mask, af);
 
 		if (bits != (af == AF_INET ? 32 : 128))
 			printf("/%d", bits);
@@ -122,8 +122,9 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 		struct pf_addr_wrap aw;
 
 		aw.addr = h->addr;
+		memset(&aw.mask, 0xff, sizeof(aw.mask)); 
 		aw.addr_dyn = NULL;
-		print_addr(&aw, NULL, af);
+		print_addr(&aw, af);
 	}
 
 	if (p) {

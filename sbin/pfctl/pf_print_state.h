@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.h,v 1.6 2002/10/25 10:40:45 camield Exp $ */
+/*	$OpenBSD: pf_print_state.h,v 1.7 2002/11/23 05:22:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,7 +33,7 @@
 #ifndef _PF_PRINT_STATE_H_
 #define _PF_PRINT_STATE_H_
 
-void	print_addr(struct pf_addr_wrap *, struct pf_addr *, sa_family_t);
+void	print_addr(struct pf_addr_wrap *, sa_family_t);
 void	print_host(struct pf_state_host *, sa_family_t, int);
 void	print_seq(struct pf_state_peer *);
 void	print_state(struct pf_state *s, int);
