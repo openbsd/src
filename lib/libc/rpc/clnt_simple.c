@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_simple.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_simple.c,v 1.10 2001/06/27 00:58:56 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -111,8 +111,7 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		crp->valid = 1;
 		crp->oldprognum = prognum;
 		crp->oldversnum = versnum;
-		(void) strncpy(crp->oldhost, host, MAXHOSTNAMELEN-1);
-		crp->oldhost[MAXHOSTNAMELEN-1] = '\0';
+		strlcpy(crp->oldhost, host, MAXHOSTNAMELEN);
 	}
 	tottimeout.tv_sec = 25;
 	tottimeout.tv_usec = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.21 2001/06/11 10:06:00 itojun Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.22 2001/06/27 00:58:55 lebel Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.21 2001/06/11 10:06:00 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.22 2001/06/27 00:58:55 lebel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -215,8 +215,7 @@ res_init()
 
 	/* Allow user to override the local domain definition */
 	if (issetugid() == 0 && (cp = getenv("LOCALDOMAIN")) != NULL) {
-		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		strlcpy(_res.defdname, cp, sizeof(_res.defdname));
 		haveenv++;
 
 		/*
@@ -278,8 +277,7 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		    strlcpy(_res.defdname, cp, sizeof(_res.defdname));
 		    if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
@@ -321,8 +319,7 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		    strlcpy(_res.defdname, cp, sizeof(_res.defdname));
 		    if ((cp = strchr(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    /*
@@ -520,9 +517,8 @@ res_init()
 	    gethostname(buf, sizeof(_res.defdname) - 1) == 0 &&
 	    (cp = strchr(buf, '.')) != NULL)
 	{
-		strncpy(_res.defdname, cp + 1,
-		        sizeof(_res.defdname) - 1);
-		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		strlcpy(_res.defdname, cp + 1,
+		        sizeof(_res.defdname));
 	}
 
 	/* find components of local domain that might be searched */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.3 2000/11/24 08:26:47 itojun Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.4 2001/06/27 00:58:55 lebel Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -353,8 +353,7 @@ getifaddrs(struct ifaddrs **pif)
 		struct sockaddr *sa;
 
 		ift->ifa_name = names;
-		names[sizeof(ifr->ifr_name)] = 0;
-		strncpy(names, ifr->ifr_name, sizeof(ifr->ifr_name));
+		strlcpy(names, ifr->ifr_name, sizeof(ifr->ifr_name));
 		while (*names++)
 			;
 

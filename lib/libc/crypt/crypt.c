@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.13 1998/03/22 19:01:18 niklas Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.14 2001/06/27 00:58:53 lebel Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.13 1998/03/22 19:01:18 niklas Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.14 2001/06/27 00:58:53 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -650,7 +650,7 @@ crypt(key, setting)
 			if (des_setkey((u_char *) keybuf))
 				return(NULL);
 		}
-		strncpy((char *)output, setting, 9);
+		strlcpy((char *)output, setting, 10);
 
 		/*
 		 * Double check that we weren't given a short setting.
@@ -659,7 +659,6 @@ crypt(key, setting)
 		 * Just make sure the output string doesn't have an extra
 		 * NUL in it.
 		 */
-		output[9] = '\0';
 		p = output + strlen((const char *)output);
 	} else {
 		/*

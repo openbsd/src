@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.13 1999/06/04 06:38:10 niklas Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.14 2001/06/27 00:58:55 lebel Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.13 1999/06/04 06:38:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.14 2001/06/27 00:58:55 lebel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,8 +184,7 @@ getnetanswer(answer, anslen, net_i)
 			break;
 		cp += n;
 		ans[0] = '\0';
-		(void)strncpy(&ans[0], bp, sizeof ans-1);
-		ans[sizeof ans-1] = '\0';
+		strlcpy(&ans[0], bp, sizeof ans);
 		GETSHORT(type, cp);
 		GETSHORT(class, cp);
 		cp += INT32SZ;		/* TTL */
@@ -226,10 +225,9 @@ getnetanswer(answer, anslen, net_i)
 					;
 				if (nchar != 1 || *in != '0' || flag) {
 					flag = 1;
-					(void)strncpy(paux1,
-						      (i==0) ? in : in-1,
-						      (i==0) ?nchar : nchar+1);
-					paux1[(i==0) ? nchar : nchar+1] = '\0';
+					strlcpy(paux1, 
+						(i==0) ? in : in-1, 
+						(i==0) ? nchar+1 : nchar+2);
 					pauxt = paux2;
 					paux2 = strcat(paux1, paux2);
 					paux1 = pauxt;
@@ -358,8 +356,7 @@ getnetbyname(net)
 			break;
 #endif	/* YP */
 		case 'b':
-			strncpy(qbuf, net, sizeof qbuf-1);
-			qbuf[sizeof qbuf-1] = '\0';
+			strlcpy(qbuf, net, sizeof qbuf);
 			anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf,
 			    sizeof(buf));
 			if (anslen < 0) {

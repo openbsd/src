@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.6 1996/09/25 08:17:30 deraadt Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.7 2001/06/27 00:58:56 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -87,16 +87,14 @@ __strerror(num, buf)
 	errnum = num;				/* convert to unsigned */
 	if (errnum < sys_nerr) {
 #ifdef NLS
-		strncpy(buf, catgets(catd, 1, errnum,
-		    (char *)sys_errlist[errnum]), NL_TEXTMAX-1);
-		buf[NL_TEXTMAX - 1] = '\0';
+		strlcpy(buf, catgets(catd, 1, errnum,
+		    (char *)sys_errlist[errnum]), NL_TEXTMAX);
 #else
 		return(sys_errlist[errnum]);
 #endif
 	} else {
 #ifdef NLS
-		strncpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX-1);
-		buf[NL_TEXTMAX - 1] = '\0';
+		strlcpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX);
 #else
 		strcpy(buf, UPREFIX);
 #endif

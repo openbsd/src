@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getrpcent.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getrpcent.c,v 1.10 2001/06/27 00:58:56 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -165,8 +165,7 @@ interpret(val, len)
 
 	if (d == NULL)
 		return (0);
-	(void) strncpy(d->line, val, BUFSIZ);
-	d->line[BUFSIZ] = '\0';
+	strlcpy(d->line, val, sizeof(d->line));
 	p = d->line;
 	p[len] = '\n';
 	if (*p == '#')

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.10 1999/08/17 09:13:13 millert Exp $";
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.11 2001/06/27 00:58:57 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -226,8 +226,7 @@ gotdata:
 		    sizeof(ysd->dom_server_addr.sin_addr.s_addr));
 		ysd->dom_server_port = ysd->dom_server_addr.sin_port;
 		ysd->dom_vers = YPVERS;
-		(void)strncpy(ysd->dom_domain, dom, sizeof ysd->dom_domain-1);
-		ysd->dom_domain[sizeof ysd->dom_domain-1] = '\0';
+		strlcpy(ysd->dom_domain, dom, sizeof ysd->dom_domain);
 	}
 	tv.tv_sec = _yplib_timeout / 2;
 	tv.tv_usec = 0;

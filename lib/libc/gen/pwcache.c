@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pwcache.c,v 1.4 2001/01/31 17:42:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pwcache.c,v 1.5 2001/06/27 00:58:54 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,8 +72,7 @@ user_from_uid(uid, nouser)
 			return (nbuf);
 		}
 		cp->uid = uid;
-		(void)strncpy(cp->name, pw->pw_name, _PW_NAME_LEN);
-		cp->name[_PW_NAME_LEN] = '\0';
+		strlcpy(cp->name, pw->pw_name, sizeof(cp->name));
 	}
 	return (cp->name);
 }
@@ -105,8 +104,7 @@ group_from_gid(gid, nogroup)
 			return (nbuf);
 		}
 		cp->gid = gid;
-		(void)strncpy(cp->name, gr->gr_name, _PW_NAME_LEN);
-		cp->name[_PW_NAME_LEN] = '\0';
+		strlcpy(cp->name, gr->gr_name, sizeof(cp->name));
 	}
 	return (cp->name);
 }

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timezone.c,v 1.4 1997/12/19 09:43:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: timezone.c,v 1.5 2001/06/27 00:58:54 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,8 +67,7 @@ timezone(zone, dst)
 			if (dst)
 				return(++end);
 			*end = '\0';
-			(void)strncpy(czone,beg,sizeof(czone) - 1);
-			czone[sizeof(czone) - 1] = '\0';
+			strlcpy(czone,beg,sizeof(czone));
 			*end = ',';
 			return(czone);
 		}

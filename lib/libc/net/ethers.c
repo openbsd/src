@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.11 2000/08/22 19:04:41 deraadt Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.12 2001/06/27 00:58:54 lebel Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.11 2000/08/22 19:04:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.12 2001/06/27 00:58:54 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -263,8 +263,7 @@ ether_line(line, e, hostname)
 	n = strcspn(p, " \t\n");
 	if (n >= MAXHOSTNAMELEN)
 		goto bad;
-	(void)strncpy(hostname, p, n);
-	hostname[n] = '\0';
+	strlcpy(hostname, p, n + 1);
 	return (0);
 
 bad:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.6 1997/07/09 01:08:21 millert Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.7 2001/06/27 00:58:54 lebel Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.6 1997/07/09 01:08:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.7 2001/06/27 00:58:54 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -126,24 +126,20 @@ setlocale(category, locale)
 		if (!env || !*env)
 			env = "C";
 
-		(void) strncpy(new_categories[category], env, 31);
-		new_categories[category][31] = 0;
+		strlcpy(new_categories[category], env, 32);
 		if (!category) {
 			for (i = 1; i < _LC_LAST; ++i) {
 				if (!(env = getenv(categories[i])) || !*env)
 					env = new_categories[0];
-				(void)strncpy(new_categories[i], env, 31);
-				new_categories[i][31] = 0;
+				strlcpy(new_categories[i], env, 32);
 			}
 		}
 	} else if (category)  {
-		(void)strncpy(new_categories[category], locale, 31);
-		new_categories[category][31] = 0;
+		strlcpy(new_categories[category], locale, 32);
 	} else {
 		if ((r = strchr(locale, '/')) == 0) {
 			for (i = 1; i < _LC_LAST; ++i) {
-				(void)strncpy(new_categories[i], locale, 31);
-				new_categories[i][31] = 0;
+				strlcpy(new_categories[i], locale, 32);
 			}
 		} else {
 			for (i = 1; r[1] == '/'; ++r);
@@ -151,8 +147,7 @@ setlocale(category, locale)
 				return (NULL);	/* Hmm, just slashes... */
 			do {
 				len = r - locale > 31 ? 31 : r - locale;
-				(void)strncpy(new_categories[i++], locale, len);
-				new_categories[i++][len] = 0;
+				strlcpy(new_categories[i++], locale, len + 1);
 				locale = r;
 				while (*locale == '/')
 				    ++locale;

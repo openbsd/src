@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.5 1998/03/19 00:30:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: regerror.c,v 1.6 2001/06/27 00:58:55 lebel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,8 +149,7 @@ size_t errbuf_size;
 
 	len = strlen(s) + 1;
 	if (errbuf_size > 0) {
-		(void) strncpy(errbuf, s, errbuf_size-1);
-		errbuf[errbuf_size-1] = '\0';
+		strlcpy(errbuf, s, errbuf_size);
 	}
 
 	return(len);

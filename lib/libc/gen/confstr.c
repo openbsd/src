@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: confstr.c,v 1.3 1996/09/15 09:30:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: confstr.c,v 1.4 2001/06/27 00:58:54 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -73,8 +73,7 @@ confstr(name, buf, len)
 			 * POSIX 1003.2 requires partial return of
 			 * the string -- that should be *real* useful.
 			 */
-			(void)strncpy(buf, p, len - 1);
-			buf[len - 1] = '\0';
+			strlcpy(buf, p, len);
 			free(p);
 		}
 		return (tlen + 1);

@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.70";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.19 2000/04/16 16:24:03 d Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.20 2001/06/27 00:58:57 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -904,12 +904,10 @@ const int			lastditch;
 	if ((size_t) sp->charcnt > sizeof sp->chars)
 		return -1;
 	cp = sp->chars;
-	(void) strncpy(cp, stdname, stdlen);
-	cp += stdlen;
-	*cp++ = '\0';
+	strlcpy(cp, stdname, stdlen + 1);
+	cp += stdlen + 1;
 	if (dstlen != 0) {
-		(void) strncpy(cp, dstname, dstlen);
-		*(cp + dstlen) = '\0';
+		strlcpy(cp, dstname, dstlen + 1);
 	}
 	return 0;
 }

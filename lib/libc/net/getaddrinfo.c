@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.28 2001/06/11 10:05:58 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.29 2001/06/27 00:58:54 lebel Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1797,8 +1797,7 @@ res_querydomainN(name, domain, target)
 			return (-1);
 		}
 		if (n > 0 && name[--n] == '.') {
-			strncpy(nbuf, name, n);
-			nbuf[n] = '\0';
+			strlcpy(nbuf, name, n + 1);
 		} else
 			longname = name;
 	} else {

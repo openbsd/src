@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ipx_addr.c,v 1.4 2001/01/04 21:45:30 todd Exp $";
+static char rcsid[] = "$OpenBSD: ipx_addr.c,v 1.5 2001/06/27 00:58:55 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -57,8 +57,7 @@ ipx_addr(name)
 	char *hostname, *socketname, *cp;
 	char buf[50];
 
-	(void)strncpy(buf, name, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
+	strlcpy(buf, name, sizeof(buf));
 
 	/*
 	 * First, figure out what he intends as a field separtor.

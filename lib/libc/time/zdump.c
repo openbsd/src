@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zdump.c	7.29";
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.8 2001/03/26 15:25:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.9 2001/06/27 00:58:57 lebel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -229,7 +229,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		t += SECSPERHOUR * HOURSPERDAY;
 		show(argv[i], t, TRUE);
 		tm = *localtime(&t);
-		(void) strncpy(buf, abbr(&tm), (sizeof buf) - 1);
+		strlcpy(buf, abbr(&tm), (sizeof buf));
 		for ( ; ; ) {
 			if (cutoff != NULL && t >= cuttime)
 				break;
@@ -244,8 +244,8 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 				strcmp(abbr(&newtm), buf) != 0) {
 					newt = hunt(argv[i], t, newt);
 					newtm = *localtime(&newt);
-					(void) strncpy(buf, abbr(&newtm),
-						(sizeof buf) - 1);
+					strlcpy(buf, abbr(&newtm),
+						(sizeof buf));
 			}
 			t = newt;
 			tm = newtm;
@@ -285,7 +285,7 @@ time_t	hit;
 	static char	loab[MAX_STRING_LENGTH];
 
 	lotm = *localtime(&lot);
-	(void) strncpy(loab, abbr(&lotm), (sizeof loab) - 1);
+	strlcpy(loab, abbr(&lotm), (sizeof loab));
 	while ((hit - lot) >= 2) {
 		t = lot / 2 + hit / 2;
 		if (t <= lot)
