@@ -1,5 +1,4 @@
-.\"     $OpenBSD: tsc.4,v 1.2 2003/03/09 06:06:46 david Exp $
-.\"     $NetBSD$
+.\"     $OpenBSD: tsc.4,v 1.3 2004/03/09 22:15:05 miod Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 19, 2001
+.Dd March 9, 2004
 .Dt TSC 4 alpha
 .Os
 .Sh NAME
@@ -44,12 +43,18 @@
 DECchip 21272 Core Logic chipset
 .Sh SYNOPSIS
 .Cd "tsc* at mainbus?"
+.Cd "tsp* at tsc?"
+.Cd "pci* at tsp?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the DECchip 21272 Core Logic chipset
 (Tsunami) found on the 264DP OEM Board.
+The
+.Nm tsp
+driver attaches to it and provides support for the DECchip 21272
+built-in PCI controller.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr mainbus 4 ,
-.Xr tsp 4
+.Xr pci 4
