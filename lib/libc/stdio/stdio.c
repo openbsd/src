@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: stdio.c,v 1.2 1996/08/19 08:33:08 tholo Exp $";
+static char rcsid[] = "$OpenBSD: stdio.c,v 1.3 1997/11/09 23:40:41 flipk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <fcntl.h>
@@ -87,7 +87,7 @@ __sseek(cookie, offset, whence)
 	register off_t ret;
 	
 	ret = lseek(fp->_file, (off_t)offset, whence);
-	if (ret == -1L)
+	if (ret == (off_t)-1)
 		fp->_flags &= ~__SOFF;
 	else {
 		fp->_flags |= __SOFF;
