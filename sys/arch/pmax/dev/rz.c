@@ -418,9 +418,11 @@ rzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s", vid, pid, revl);
+		printf(" <%s %s rev %s>\n", vid, pid, revl);
 	}
-	printf(", %d %d byte blocks\n", sc->sc_blks, sc->sc_blksize);
+	if (sc->sc_blks) printf("rz%d: %dMB, %d %d byte blocks\n",
+		sd->sd_unit, (sc->sc_blks * sc->sc_blksize) / 1048576,
+		sc->sc_blks, sc->sc_blksize);
 	if (!inqbuf.rmb && sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
 			printf("rz%d: need %d byte blocks - drive ignored\n",
