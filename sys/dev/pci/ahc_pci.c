@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.33 2002/06/29 23:53:33 miod Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.34 2002/06/30 19:19:49 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -502,6 +502,11 @@ ahc_do_pci_config(ahc)
 	int		 opri;
 	uint8_t		 sblkctl;
 
+
+	ahc->chip |= AHC_PCI;
+#if 0
+	ahc_power_state_change(ahc, AHC_POWER_STATE_D0);
+#endif 
 	error = ahc_pci_map_registers(ahc);
 	if (error != 0)
 		return (error);
@@ -509,10 +514,14 @@ ahc_do_pci_config(ahc)
 	 * Registers are mapped. Now it is safe to use 
 	 * the ahc_inb and ahc_outb macros. 
 	 */
-	ahc->chip |= AHC_PCI; /* we are a PCI controller */
-#if 0
-	ahc_power_state_change(ahc, AHC_POWER_STATE_D0);
-#endif 
+	
+	/* 
+	 * Before we continue probing the card, ensure that
+	 * its interrupts are *disabled*.  We don't want
+	 * a misstep to hang the machine in an interrupt
+	 * storm.
+	 */
+	ahc_intr_enable(ahc, FALSE);
 
 	/*
 	 * If we need to support high memory, enable dual
@@ -1030,6 +1039,12 @@ check_extport(ahc, sxfrctl1)
 			}
 			have_seeprom = verify_cksum(&sc);
 		}
+		/*
+		 * Clear any SCB parity errors in case this data and
+		 * its associated parity was not initialized by the BIOS
+		 */
+		ahc_outb(ahc, CLRINT, CLRPARERR);
+		ahc_outb(ahc, CLRINT, CLRBRKADRINT);
 	}
 
 	if (!have_seeprom) {
@@ -1305,6 +1320,15 @@ configure_termination(struct ahc_softc *ahc,
 			       "Only two connectors on the "
 			       "adapter may be used at a "
 			       "time!\n", ahc_name(ahc));
+
+			/*
+			 * Pretend there are no cables in the hope
+			 * that having all of the termination on
+			 * gives us a more stable bus.
+			 */
+		 	internal50_present = 0;
+			internal68_present = 0;
+			externalcable_present = 0;
 		}
 
 		if ((ahc->features & AHC_WIDE) != 0
