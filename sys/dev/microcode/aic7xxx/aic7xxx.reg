@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.reg,v 1.5 2002/06/28 00:34:54 smurph Exp $ */
+/* $OpenBSD: aic7xxx.reg,v 1.6 2002/06/30 18:25:58 smurph Exp $ */
 /*
  * Aic7xxx register and scratch ram definitions.
  *
@@ -32,7 +32,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.reg,v 1.39 2001/07/18 21:39:47 gibbs Exp $
  */
 
-VERSION = "$Id: aic7xxx.reg,v 1.5 2002/06/28 00:34:54 smurph Exp $"
+VERSION = "$Id: aic7xxx.reg,v 1.6 2002/06/30 18:25:58 smurph Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -1002,7 +1002,8 @@ register SFUNCT {
  * SCB Definition (p. 5-4)
  */
 scb {
-	address			0x0a0
+	address		0x0a0
+	size		64
         SCB_CDB_PTR {
                 size    4
                 alias   SCB_RESIDUAL_DATACNT
@@ -1242,7 +1243,8 @@ register SG_CACHE_SHADOW {
  */
 
 scratch_ram {
-	address			0x020
+	address		0x020
+	size		58
 
 	/*
 	 * 1 byte per target starting at this address for configuration values
@@ -1304,7 +1306,7 @@ scratch_ram {
 		bit	SDMAENACK	0x10
 		bit	HDMAEN		0x08
 		bit	HDMAENACK	0x08
-		bit	DIRECTION	0x04
+		bit	DIRECTION	0x04	/* Set indicates PCI->SCSI */
 		bit	FIFOFLUSH	0x02
 		bit	FIFORESET	0x01
 	}
@@ -1469,13 +1471,17 @@ scratch_ram {
                 size            1
                 bit     SCB_DMA         0x01
         }
+}
+
+scratch_ram {
+	address		0x05a
+	size		6
 	/*
 	 * These are reserved registers in the card's scratch ram.  Some of
 	 * the values are specified in the AHA2742 technical reference manual
 	 * and are initialized by the BIOS at boot time.
 	 */
 	SCSICONF {
-		address		0x05a
 		size		1
 		bit	TERM_ENB	0x80
 		bit	RESET_SCSI	0x40
@@ -1500,11 +1506,16 @@ scratch_ram {
 		mask	BIOSDISABLED		0x30	
 		bit	CHANNEL_B_PRIMARY	0x08
 	}
+}
+
+scratch_ram {
+	address		0x070
+	size		16
+
 	/*
 	 * Per target SCSI offset values for Ultra2 controllers.
 	 */
 	TARG_OFFSET {
-		address		0x070
 		size		16
 	}
 }

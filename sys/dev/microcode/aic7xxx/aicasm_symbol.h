@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.h,v 1.6 2002/06/28 00:34:55 smurph Exp $ */
+/* $OpenBSD: aicasm_symbol.h,v 1.7 2002/06/30 18:25:58 smurph Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table definitions
  *
@@ -11,25 +11,33 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
  *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_symbol.h,v 1.12 2000/11/10 19:54:17 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_symbol.h,v 1.15 2002/06/05 22:51:54 gibbs Exp $
  */
 
 #include <sys/queue.h>
@@ -45,7 +53,8 @@ typedef enum {
 	CONST,
 	DOWNLOAD_CONST,
 	LABEL,
-	CONDITIONAL
+	CONDITIONAL,
+	MACRO
 }symtype;
 
 typedef enum {
@@ -55,10 +64,11 @@ typedef enum {
 }amode_t;
 
 struct reg_info {
-	u_int8_t address;
+	u_int	 address;
 	int	 size;
 	amode_t	 mode;
 	u_int8_t valid_bitmask;
+	u_int8_t modes;
 	int	 typecheck_masks;
 };
 
@@ -70,7 +80,7 @@ struct mask_info {
 };
 
 struct const_info {
-	u_int8_t value;
+	u_int	value;
 	int	 define;
 };
 
@@ -80,10 +90,24 @@ struct alias_info {
 
 struct label_info {
 	int	address;
+	int	exported;
 };
 
 struct cond_info {
 	int	func_num;
+};
+
+struct macro_arg {
+	TAILQ_ENTRY(macro_arg)	links;
+	regex_t	arg_regex;
+	char   *replacement_text;
+};
+TAILQ_HEAD(macro_arg_list, macro_arg) args;
+
+struct macro_info {
+	struct macro_arg_list args;
+	int   narg;
+	const char* body;
 };
 
 typedef struct expression_info {
@@ -101,6 +125,7 @@ typedef struct symbol {
 		struct alias_info *ainfo;
 		struct label_info *linfo;
 		struct cond_info *condinfo;
+		struct macro_info *macroinfo;
 	}info;
 } symbol_t;
 
@@ -170,4 +195,3 @@ void	symlist_free(symlist_t *symlist);
 void	symlist_merge(symlist_t *symlist_dest, symlist_t *symlist_src1,
 	    symlist_t *symlist_src2);
 void	symtable_dump(FILE *ofile);
-

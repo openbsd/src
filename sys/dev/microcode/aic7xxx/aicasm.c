@@ -1,8 +1,9 @@
-/* $OpenBSD: aicasm.c,v 1.7 2002/06/28 00:34:55 smurph Exp $ */
+/* $OpenBSD: aicasm.c,v 1.8 2002/06/30 18:25:58 smurph Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
- * Copyright (c) 1997, 1998, 2000 Justin T. Gibbs.
+ * Copyright (c) 1997, 1998, 2000, 2001 Justin T. Gibbs.
+ * Copyright (c) 2001 Adaptec Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,33 +11,43 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification, immediately at the beginning of the file.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm.c,v 1.7 2002/06/28 00:34:55 smurph Exp $
+ * $Id: aicasm.c,v 1.8 2002/06/30 18:25:58 smurph Exp $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.32 2001/07/18 21:03:32 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.34 2002/06/05 22:51:54 gibbs Exp $
  */
 #include <sys/types.h>
 #include <sys/mman.h>
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,8 +70,8 @@ TAILQ_HEAD(patch_list, patch) patches;
 
 static void usage(void);
 static void back_patch(void);
-static void output_code(FILE *ofile);
-static void output_listing(FILE *listfile, char *ifilename);
+static void output_code(void);
+static void output_listing(char *ifilename);
 static void dump_scope(scope_t *scope);
 static void emit_patch(scope_t *scope, int patch);
 static int check_patch(patch_t **start_patch, int start_instr,
@@ -75,6 +86,8 @@ char *regfilename;
 FILE *regfile;
 char *listfilename;
 FILE *listfile;
+int   src_mode;
+int   dst_mode;
 
 static TAILQ_HEAD(,instruction) seq_program;
 struct cs_tailq cs_tailq;
@@ -83,7 +96,9 @@ symlist_t patch_functions;
 
 #if DEBUG
 extern int yy_flex_debug;
+extern int mm_flex_debug;
 extern int yydebug;
+extern int mmdebug;
 #endif
 extern FILE *yyin;
 extern int yyparse(void);
@@ -116,7 +131,9 @@ main(argc, argv)
 	listfile = NULL;
 #if DEBUG
 	yy_flex_debug = 0;
+	mm_flex_debug = 0;
 	yydebug = 0;
+	mmdebug = 0;
 #endif
 	while ((ch = getopt(argc, argv, "d:l:n:o:r:I:O:")) != -1) {
 		switch(ch) {
@@ -124,8 +141,10 @@ main(argc, argv)
 #if DEBUG
 			if (strcmp(optarg, "s") == 0) {
 				yy_flex_debug = 1;
+				mm_flex_debug = 1;
 			} else if (strcmp(optarg, "p") == 0) {
 				yydebug = 1;
+				mmdebug = 1;
 			} else {
 				fprintf(stderr, "%s: -d Requires either an "
 					"'s' or 'p' argument\n", appname);
@@ -246,12 +265,12 @@ main(argc, argv)
 		back_patch();
 
 		if (ofile != NULL)
-			output_code(ofile);
+			output_code();
 		if (regfile != NULL) {
 			symtable_dump(regfile);
 		}
 		if (listfile != NULL)
-			output_listing(listfile, inputfilename);
+			output_listing(inputfilename);
 	}
 
 	stop(NULL, 0);
@@ -264,9 +283,9 @@ usage()
 {
 
 	(void)fprintf(stderr,
-"usage: %-16s [-nostdinc] [-I-] [-I directory] [-o output_file]
-			[-r register_output_file] [-l program_list_file]
-			input_file\n",
+"usage: %-16s [-nostdinc] [-I-] [-I directory] [-o output_file]\n"
+"			[-r register_output_file] [-l program_list_file]\n"
+"			input_file\n",
 			appname);
 	exit(EX_USAGE);
 }
@@ -301,8 +320,7 @@ back_patch()
 }
 
 static void
-output_code(ofile)
-	FILE *ofile;
+output_code()
 {
 	struct instruction *cur_instr;
 	patch_t *cur_patch;
@@ -312,11 +330,11 @@ output_code(ofile)
 
 	instrcount = 0;
 	fprintf(ofile,
-"/*
- * DO NOT EDIT - This file is automatically generated
- *               from the following source files:
- *
-%s */\n", versions);
+"/*\n"
+" * DO NOT EDIT - This file is automatically generated\n"
+" *		 from the following source files:\n"
+" *\n"
+"%s */\n", versions);
 
 	fprintf(ofile, "static u_int8_t seqprog[] = {\n");
 	for(cur_instr = seq_program.tqh_first;
@@ -340,6 +358,10 @@ output_code(ofile)
 	}
         fprintf(ofile, "\n};\n\n");
 
+	if (patch_arg_list == NULL)
+		stop("Patch argument list not defined",
+		     EX_DATAERR);
+
 	/*
 	 *  Output patch information.  Patch functions first.
 	 */
@@ -347,43 +369,45 @@ output_code(ofile)
 	    cur_node != NULL;
 	    cur_node = SLIST_NEXT(cur_node,links)) {
 		fprintf(ofile,
-"static int ahc_patch%d_func(struct ahc_softc *ahc);
-
-static int
-ahc_patch%d_func(struct ahc_softc *ahc)
-{
-	return (%s);
-}\n\n",
+"static int aic_patch%d_func(%s);\n"
+"\n"
+"static int\n"
+"aic_patch%d_func(%s)\n"
+"{\n"
+"	return (%s);\n"
+"}\n\n",
 			cur_node->symbol->info.condinfo->func_num,
+			patch_arg_list,
 			cur_node->symbol->info.condinfo->func_num,
+			patch_arg_list,
 			cur_node->symbol->name);
 	}
 
 	fprintf(ofile,
-"typedef int patch_func_t(struct ahc_softc *);
-struct patch {
-	patch_func_t	*patch_func;
-	u_int32_t	begin	   :10,
-			skip_instr :10,
-			skip_patch :12;
-} patches[] = {\n");
+"typedef int patch_func_t (%s);\n"
+"static struct patch {\n"
+"	patch_func_t	*patch_func;\n"
+"	uint32_t	begin	   :10,\n"
+"			skip_instr :10,\n"
+"			skip_patch :12;\n"
+"} patches[] = {\n", patch_arg_list);
 
 	for(cur_patch = TAILQ_FIRST(&patches);
 	    cur_patch != NULL;
             cur_patch = TAILQ_NEXT(cur_patch,links)) {
-                fprintf(ofile, "%s\t{ ahc_patch%d_func, %d, %d, %d }",
+		fprintf(ofile, "%s\t{ aic_patch%d_func, %d, %d, %d }",
                         cur_patch == TAILQ_FIRST(&patches) ? "" : ",\n",
 			cur_patch->patch_func, cur_patch->begin,
 			cur_patch->skip_instr, cur_patch->skip_patch);
         }
 
-        fprintf(ofile, "\n};\n");
+	fprintf(ofile, "\n};\n\n");
 
         fprintf(ofile,
-"struct cs {
-        u_int16_t       begin;
-        u_int16_t       end;
-} critical_sections[] = {\n");
+"static struct cs {\n"
+"	u_int16_t	begin;\n"
+"	u_int16_t	end;\n"
+"} critical_sections[] = {\n");
 
         for(cs = TAILQ_FIRST(&cs_tailq);
             cs != NULL;
@@ -393,11 +417,11 @@ struct patch {
                         cs->begin_addr, cs->end_addr);
 	}
 
-	fprintf(ofile, "\n};\n");
+	fprintf(ofile, "\n};\n\n");
 
         fprintf(ofile,
-"const int num_critical_sections = sizeof(critical_sections)
-                                 / sizeof(*critical_sections);\n");
+"static const int num_critical_sections = sizeof(critical_sections)\n"
+"				       / sizeof(*critical_sections);\n");
 
 	fprintf(stderr, "%s: %d instructions used\n", appname, instrcount);
 }
@@ -462,7 +486,7 @@ emit_patch(scope_t *scope, int patch)
 }
 
 void
-output_listing(FILE *listfile, char *ifilename)
+output_listing(char *ifilename)
 {
 	char buf[1024];
 	FILE *ifile;

@@ -1,15 +1,15 @@
-# $OpenBSD: Makefile,v 1.4 2002/06/28 00:34:54 smurph Exp $
+# $OpenBSD: Makefile,v 1.5 2002/06/30 18:25:58 smurph Exp $
 # $FreeBSD: src/sys/dev/aic7xxx/Makefile,v 1.6 1999/08/28 00:41:22 peter Exp $
 
 PROG=	aicasm
 
 CSRCS=	aicasm.c aicasm_symbol.c
-GENSRCS= aicasm_gram.c aicasm_scan.c
+GENSRCS= aicasm_gram.c aicasm_scan.c aicasm_macro_gram.c aicasm_macro_scan.c
 
 GENHDRS=	y.tab.h
 
 SRCS=	${GENSRCS} ${CSRCS}
-CLEANFILES+= ${GENSRCS} ${GENHDRS} y.output
+CLEANFILES+= ${GENSRCS} ${GENHDRS} y.output aic7xxxreg.h
 DPADD+=	${LIBL}
 LDADD+=	-ll
 
@@ -21,6 +21,8 @@ DEPENDFILE=
 .endif
 
 CFLAGS+= -I/usr/include -I.
+YFLAGS= ${.TARGET:M*macro*:S/$(.TARGET)/-p mm/} -d
+LFLAGS+= ${.TARGET:M*macro*:S/$(.TARGET)/-olex.yy.c/} ${.TARGET:M*macro*:S/$(.TARGET)/-Pmm/}
 NOMAN=	noman
 
 .ifdef DEBUG
