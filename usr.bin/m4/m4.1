@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.22 2001/09/27 11:40:33 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.23 2001/09/29 11:56:18 espie Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -9,6 +9,8 @@
 .Nd macro language processor
 .Sh SYNOPSIS
 .Nm m4
+.Op Fl d Ar flags
+.Op Fl t Ar name
 .Op Fl g
 .Oo
 .Fl D Ns Ar name Ns Op Ar =value
@@ -66,6 +68,36 @@ Undefine the symbol
 Add directory
 .Ar dirname
 to the include path.
+.It Fl d Ar "flags"
+Set trace flags.
+.Ar flags 
+may hold the following:
+.Bl -tag -width Ds
+.It Ar a
+print macro arguments.
+.It Ar c
+print macro expansion over several lines.
+.It Ar e
+print result of macro expansion.
+.It Ar f
+print filename location.
+.It Ar l
+print line number.
+.It Ar q
+quote arguments and expansion with the current quotes.
+.It Ar t
+start with all macros traced.
+.It Ar x
+number macro expansions.
+.It Ar V
+turn on all options.
+.El
+.Pp
+By default, trace is set to 
+.Qq eq .
+.It Fl t Ar macro
+Turn tracing on for 
+.Ar macro .
 .It Fl g
 Activate GNU-m4 compatibility mode.
 In this mode, changequote with
@@ -295,6 +327,55 @@ Returns the current file's line number.
 .It Ic __file__
 Returns the current file's name.
 .El
+.Sh COMPATIBILITY
+.Nm
+follows the Single Unix 2 specification, along with a few extensions taken
+from 
+.Nm gnu-m4 .
+.Pp
+The
+.Fl s
+option
+.Po
+.Xr cpp 1 's
+#line directives
+.Pc
+is currently not supported.
+Flags
+.Fl I ,
+.Fl d ,
+.Fl t
+are non-standard.
+.Pp
+The output format of tracing and of 
+.Ic dumpdef 
+are not specified in any standard, 
+are likely to change and should not be relied upon.
+The current format of tracing is closely modelled on 
+.Nm gnu-m4 , 
+to allow
+.Nm autoconf 
+to work.
+.Pp
+For portability, one should not use the macros
+.Ic builtin ,
+.Ic esycmd ,
+.Ic expr ,
+.Ic indir ,
+.Ic paste ,
+.Ic patsubst ,
+.Ic regexp ,
+.Ic spaste ,
+.Ic unix ,
+.Ic __line__ ,
+.Ic __file__ .
+.Pp
+All builtins do expand without arguments in many other 
+.Nm m4 .
+.Pp
+Many other
+.Nm
+have dire size limitations with respect to buffer sizes.
 .Sh AUTHORS
 Ozan Yigit <oz@sis.yorku.ca> and Richard A. O'Keefe (ok@goanna.cs.rmit.OZ.AU).
 GNU-m4 compatibility extensions by Marc Espie <espie@cvs.openbsd.org>.
