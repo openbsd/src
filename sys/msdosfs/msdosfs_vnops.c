@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.16 1998/02/23 20:10:39 niklas Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.17 1998/06/09 17:56:03 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1510,7 +1510,7 @@ msdosfs_readdir(v)
 
 	/*
 	 * msdosfs_readdir() won't operate properly on regular files since
-	 * it does i/o only with the the filesystem vnode, and hence can
+	 * it does i/o only with the filesystem vnode, and hence can
 	 * retrieve the wrong block from the buffer cache for a plain file.
 	 * So, fail attempts to readdir() on a plain file.
 	 */
