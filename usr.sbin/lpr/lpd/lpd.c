@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.20 2001/09/04 23:35:59 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.21 2001/09/05 00:22:49 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.20 2001/09/04 23:35:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.21 2001/09/05 00:22:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,6 +125,7 @@ main(argc, argv)
 {
 	int f, lfd, funix, finet, options, fromlen;
 	fd_set defreadfds;
+	int maxfd = 0;
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_in sin, frominet;
 	sigset_t mask, omask;
@@ -221,6 +222,8 @@ main(argc, argv)
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
+	if (funix > maxfd)
+		maxfd = funix;
 	listen(funix, 5);
 	finet = socket(AF_INET, SOCK_STREAM, 0);
 	if (finet >= 0) {
@@ -248,6 +251,8 @@ main(argc, argv)
 			mcleanup(0);
 		}
 		FD_SET(finet, &defreadfds);
+		if (finet > maxfd)
+			maxfd = finet;
 		listen(finet, 5);
 	}
 	/*
@@ -260,7 +265,7 @@ main(argc, argv)
 		fd_set readfds;
 
 		FD_COPY(&defreadfds, &readfds);
-		nfds = select(20, &readfds, 0, 0, 0);
+		nfds = select(maxfd + 1, &readfds, 0, 0, 0);
 		if (nfds <= 0) {
 			if (nfds < 0 && errno != EINTR)
 				syslog(LOG_WARNING, "select: %m");
