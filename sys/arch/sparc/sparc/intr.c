@@ -273,7 +273,10 @@ intr_fasttrap(level, vec)
 #ifdef DIAGNOSTIC
 	int displ;	/* suspenders, belt, and buttons too */
 #endif
-	int s;
+	int s, i;
+	int instr[3];
+	char *instrp;
+	char *tvp;
 
 	tv = &trapbase[T_L1INT - 1 + level];
 	hi22 = ((u_long)vec) >> 10;
@@ -296,13 +299,13 @@ intr_fasttrap(level, vec)
 		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
 #endif
-	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
-	    VM_PROT_READ|VM_PROT_WRITE, 1);
-	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
-	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
-	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
-	fastvec |= 1 << level;
-	splx(s);
+	
+	instr[0] = I_SETHI(I_L3, hi22);		/* sethi %hi(vec),%l3 */
+	instr[1] = I_JMPLri(I_G0, I_L3, lo10);	/* jmpl %l3+%lo(vec),%g0 */
+	instr[2] = I_RDPSR(I_L0);		/* mov %psr, %l0 */
+
+	tvp = (char *)tv->tv_instr;
+	instrp = (char *)instr;
+	for (i = 0; i < sizeof(int) * 3; i++, instrp++, tvp++)
+		pmap_writetext(tvp, *instrp);
 }
