@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.10 2000/01/06 07:18:46 d Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.11 2000/01/06 07:19:35 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1354,8 +1354,7 @@ mutex_queue_enq(pthread_mutex_t mutex, pthread_t pthread)
 	 * at the tail of the queue.
 	 */
 	if ((tid == NULL) || (pthread->active_priority <= tid->active_priority))
-		TAILQ_INSERT_TAIL(&mutex->m_queue, pthread, qe); 
-		/* (pthread)->qe.tqe_prev = ((&mutex->m_queue))->tqh_last; */
+		TAILQ_INSERT_TAIL(&mutex->m_queue, pthread, qe);
 	else {
 		tid = TAILQ_FIRST(&mutex->m_queue);
 		while (pthread->active_priority <= tid->active_priority)
