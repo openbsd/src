@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.57 1998/06/15 00:48:41 deraadt Exp $
+$OpenBSD: pcidevs,v 1.58 1998/06/23 11:42:14 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -89,7 +89,7 @@ vendor OLIVETTI		0x102e	Olivetti Advanced Technology
 vendor TOSHIBA		0x102f	Toshiba America
 vendor TMCRESEARCH	0x1030	TMC Research
 vendor MIRO		0x1031	Miro Computer Products
-vendor COMPAQ2		0x1032	Compaq (2nd PCI Vendor ID)
+vendor COMPAQ2		0x1032	Compaq (2nd ID)
 vendor NEC		0x1033	NEC
 vendor BURNDY		0x1034	Burndy
 vendor COMPCOMM		0x1035	Comp. & Comm. Research Lab
@@ -244,7 +244,7 @@ vendor MENTOR		0x10cc	Mentor ARC
 vendor ADVSYSPROD	0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
-vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd PCI Vendor ID)
+vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd ID)
 vendor FUTUREPLUS	0x10d1	Future+ Systems
 vendor MOLEX		0x10d2	Molex
 vendor JABIL		0x10d3	Jabil Circuit
@@ -261,7 +261,7 @@ vendor ES		0x10dd	Evans & Sutherland
 vendor NVIDIA		0x10de	Nvidia
 vendor EMULEX		0x10df	Emulex
 vendor IMS		0x10e0	Integrated Micro Solutions
-vendor TEKRAM		0x10e1	Tekram Technology (1st PCI Vendor ID)
+vendor TEKRAM		0x10e1	Tekram Technology (1st ID)
 vendor APTIX		0x10e2	Aptix
 vendor NEWBRIDGE	0x10e3	Newbridge Microsystems
 vendor TANDEM		0x10e4	Tandem Computers
@@ -405,7 +405,7 @@ vendor MIRTRON		0x1175	Mitron Computer
 vendor SBE		0x1176	SBE
 vendor SILICONENG	0x1177	Silicon Engineering
 vendor ALFA		0x1178	Alfa
-vendor TOSHIBA2		0x1179	Toshiba Info Systems (2nd PCI Vendor ID)
+vendor TOSHIBA2		0x1179	Toshiba Info Systems (2nd ID)
 vendor ATREND		0x117a	A-Trend Technology
 vendor ATTO		0x117c	Atto Technology
 vendor TR		0x117e	T/R Systems
@@ -417,7 +417,7 @@ vendor DATAWORLD	0x1185	Dataworld
 vendor DLINK		0x1186	D-Link Systems
 vendor ATL		0x1187	Advanced Techonoloy Labratories
 vendor SHIMA		0x1188	Shima Seiki Manufacturing
-vendor MATSUSHITA2	0x1189	Matsushita Electronics (2nd PCI Vendor ID)
+vendor MATSUSHITA2	0x1189	Matsushita Electronics (2nd ID)
 vendor HILEVEL		0x118a	HiLevel Technology
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
@@ -439,7 +439,7 @@ vendor FUJITSU3		0x119e	Fujitsu (3th PCI Vendor ID)
 vendor BULL		0x119f	Bull Hn Information Systems
 vendor CONVEX		0x11a0	Convex Computer
 vendor HAMAMATSU	0x11a1	Hamamatsu Photonics
-vendor SIERRA2		0x11a2	Sierra Research & Technology (2nd PCI Vendor ID)
+vendor SIERRA2		0x11a2	Sierra Research & Technology (2nd ID)
 vendor BARCO		0x11a4	Barco
 vendor MICROUNITY	0x11a5	MicroUnity Systems Engineering
 vendor PUREDATA		0x11a6 	Pure Data
@@ -458,7 +458,7 @@ vendor BARR		0x11b3	Barr Systems
 vendor LEITECH		0x11b4	Leitch Technology
 vendor RADSTONE		0x11b5	Radstone Technology
 vendor UNITEDVIDEO	0x11b6	United Video
-vendor MOT2		0x11b7	Motorola (2nd PCI Vendor ID)
+vendor MOT2		0x11b7	Motorola (2nd ID)
 vendor XPOINT		0x11b8	Xpoint Technologies
 vendor PATHLIGHT	0x11b9	Pathlight Technology
 vendor VIDEOTRON	0x11ba	VideoTron
@@ -466,7 +466,7 @@ vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
-vendor NEC2		0x11c3	NEC (2nd PCI Vendor ID)
+vendor NEC2		0x11c3	NEC (2nd ID)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
 vendor DCMDATA		0x11c7	DCM Data Systems
@@ -493,20 +493,20 @@ vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor PICTUREEL	0x12c5	Picture Elements
-vendor STB2		0x12d2	STB (2nd PCI Vendor ID)
-vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
-vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor STB2		0x12d2	STB (2nd ID)
+vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
+vendor TEKRAM2		0x1de1	Tekram Technology (2nd ID)
 vendor 3DLABS		0x3d3d	3D Labs
-vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
+vendor AVANCE2		0x4005	Avance Logic (2nd ID)
 vendor NETVIN		0x4a14	NetVin
-vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
+vendor BUSLOGIC2	0x4b10	Buslogic (2nd ID)
 vendor S3		0x5333	S3
-vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
+vendor NETPOWER2	0x5700	NetPower (2nd ID)
 vendor C4T		0x6374	c't Magazin
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
-vendor TRIGEM2		0x8800	Trigem Computer (2nd PCI Vendor ID)
-vendor WINBOND2		0x8c4a	Winbond Electronics (2nd PCI Vendor ID)
+vendor TRIGEM2		0x8800	Trigem Computer (2nd ID)
+vendor WINBOND2		0x8c4a	Winbond Electronics (2nd ID)
 vendor COMPUTONE	0x8e0e	Computone Corperation
 vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
@@ -843,6 +843,9 @@ product MUTECH MV1000		0x0001	MV1000
 product NS DP83810		0x0001	DP83810 10/100 Ethernet
 product NS NS87410		0xd001	NS87410
 
+/* NEC */
+product	NEC XXX			0x0035	XXX USB
+
 /* NeoMagic */
 product NEOMAGIC NM3160		0x0004	NM3160
 
@@ -879,9 +882,9 @@ product NUMBER9 I128_2		0x2339	Imagine-128 II
 product OAKTECH OTI1007		0x0107	OTI107
 
 /* Opti products */
-product OPTI 82C557		0xc557	82C557
-product OPTI 82C558		0xc558	82C558
-product OPTI 82C621		0xc621	82C621
+product OPTI 82C557		0xc557	82C557 Host Bridge
+product OPTI 82C558		0xc558	82C558 PCI-ISA Bridge
+product OPTI 82C621		0xc621	82C621 IDE
 product OPTI 82C822		0xc822	82C822
 product OPTI RM861HA		0xc861	RM861HA
 
@@ -938,7 +941,7 @@ product SGSTHOMSON 1764		0x1746	STG 1764X
 product SIGMA 64GX		0x6401	64GX
 
 /* Silicon Integrated System products */
-product SIS 86C201		0x0001	86C201
+product SIS 86C201		0x0001	86C201 Host-AGP Bridge
 product SIS 86C202		0x0002	86C202
 product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503
@@ -951,7 +954,7 @@ product SIS 5512		0x5512	5512
 product SIS 5513		0x5513	5513
 product SIS 5581		0x5581	5581
 product SIS 5582		0x5582	5582
-product SIS 5591		0x5591	5591
+product SIS 5591		0x5591	5591 Host-PCI Bridge
 product SIS 5596		0x5596	5596
 product SIS 6204		0x6204	6204
 product SIS 6205		0x6205	6205
@@ -973,15 +976,15 @@ product SYMPHONY 82C103		0x0103	82C103
 product SYMPHONY 82C105		0x0105	82C105
 product SYMPHONY2 82C101	0x0001	82C101
 
-/* Tekram Technology products (1st PCI Vendor ID)*/
+/* Tekram Technology products (1st ID)*/
 product TEKRAM 	DC290		0xdc29	DC-290(M)
 
-/* Tekram Technology products (2nd PCI Vendor ID) */
+/* Tekram Technology products (2nd ID) */
 product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
-product TI	PCI1130		0xac12	PCI1130
+product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1131		0xac15	PCI1131
 product TI	PCI2030		0xac20	PCI2030
 
