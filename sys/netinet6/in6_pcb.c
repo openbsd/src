@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.17 2000/06/18 17:56:42 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.18 2000/06/18 18:00:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -629,7 +629,6 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
 	  (!IN6_IS_ADDR_UNSPECIFIED(&laddr) && !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &laddr)) ||
 	  (fport && inp->inp_fport != fport))
 	{
-	  inp = inp->inp_queue.cqe_next;
 	  continue;
 	}
       nmatch++;
