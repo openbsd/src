@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.44 2004/06/22 07:35:20 cedric Exp $	*/
+/*	$OpenBSD: route.c,v 1.45 2004/07/20 23:40:27 art Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -996,7 +996,7 @@ rt_timer_init()
 {
 	static struct timeout rt_timer_timeout;
 
-	assert(rt_init_done == 0);
+	KASSERT(rt_init_done == 0);
 
 #if 0
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
