@@ -1,4 +1,4 @@
-#	$OpenBSD: generic.hppa,v 1.3 2000/04/18 19:31:00 mickey Exp $
+#	$OpenBSD: generic.hppa,v 1.4 2000/08/15 20:27:37 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -7,16 +7,14 @@ include	"arch/hppa/conf/std.hppa"
 include "conf/GENERIC"
 
 # Support for various CPU types
-option	HP7000_CPU	# PCX-S
-option	HP7100_CPU
-option	HP7150_CPU	# PCX-T
-option	HP7100LC_CPU	# PCX-L
-option	HP7200_CPU
-option	HP7250_CPU	# PCX-T*
-#option	HP7300LC_CPU	# PCX-L2
-#option	HP8000_CPU	# PCX-U  (in 32bit mode)
-#option	HP8200_CPU	# PCX-U+ (in 32bit mode)
-#option	HP8500_CPU	# PCX-W  (in 32bit mode)
+option	HP7000_CPU		# PCX
+option	HP7100_CPU,HP7150_CPU	# PCX-S
+option	HP7200_CPU,HP7250_CPU	# PCX-T, PCX-T'
+option	HP7100LC_CPU		# PCX-L
+option	HP7300LC_CPU		# PCX-L2
+#option	HP8000_CPU		# PCX-U  (in 32bit mode)
+#option	HP8200_CPU		# PCX-U+ (in 32bit mode)
+#option	HP8500_CPU		# PCX-W  (in 32bit mode)
 
 option		FPEMUL
 option		USELEDS		# blink 'em
