@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.28 2003/08/01 17:38:33 avsm Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.29 2004/01/21 19:50:39 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -117,6 +117,8 @@ char	*gcvt(double, int, char *);
 char	*getenv(const char *);
 long	 labs(long);
 ldiv_t	 ldiv(long, long);
+long long
+	 llabs(long long);
 void	*malloc(size_t);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
