@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.29 2003/02/07 07:45:13 jmc Exp $
+.\"	$OpenBSD: newfs.8,v 1.30 2003/03/10 19:39:36 tedu Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -51,6 +51,8 @@
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
 .Op Fl f Ar frag-size
+.Op Fl g Ar avgfilesize
+.Op Fl h Ar avgfpdir
 .Op Fl i Ar bytes
 .Op Fl k Ar skew
 .Op Fl l Ar interleave
@@ -187,6 +189,10 @@ See
 for more details on how to set this option.
 .It Fl f Ar frag-size
 The fragment size of the file system in bytes.
+.It Fl g Ar avgfilesize
+The expected average file size for the file system.
+.It Fl h Ar avgfpdir
+The expected average number of files per directory on the file system.
 .It Fl i Ar number of bytes per inode
 This specifies the density of inodes in the file system.
 The default is to create an inode for each 4096 bytes of data space.
