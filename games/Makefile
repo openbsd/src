@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2002/05/23 18:42:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2003/03/11 09:29:25 deraadt Exp $
 
 # Missing: ching dungeon warp
 # Moved: chess
@@ -6,7 +6,7 @@
 
 SUBDIR=	adventure arithmetic atc backgammon banner battlestar bcd boggle \
 	bs caesar canfield cribbage factor fish fortune gomoku grdc hack \
-	hangman hunt larn mille monop morse number phantasia pig pom ppt \
+	hangman hunt mille monop morse number phantasia pig pom ppt \
 	primes quiz rain random robots rogue sail snake tetris trek wargames \
 	worm worms wump
 

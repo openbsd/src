@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.145 2003/02/24 01:17:38 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.146 2003/03/11 09:29:27 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -931,11 +931,6 @@ fortune
 # ./usr/share/games/fortune
 ..
 
-# ./usr/share/games/larn
-larn
-# ./usr/share/games/larn
-..
-
 # ./usr/share/games/quiz.db
 quiz.db
 # ./usr/share/games/quiz.db
@@ -1853,11 +1848,6 @@ save		 uname=root gname=games mode=0770
 # ./var/games/hackdir/save		XXX
 save		uname=root gname=games mode=0775
 # ./var/games/hackdir/save		XXX
-..
-
-# ./var/games/larn
-larn             uname=root gname=games mode=0775
-# ./var/games/larn
 ..
 
 # ./var/games/phantasia
