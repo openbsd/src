@@ -1,7 +1,7 @@
-#	$OpenBSD: devlist2h.awk,v 1.2 1999/04/20 20:19:37 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.3 2000/02/09 07:23:19 mickey Exp $
 
 #
-# Copyright (c) 1998,1999 Michael Shalayeff
+# Copyright (c) 1998-2000 Michael Shalayeff
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 # INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -37,6 +37,26 @@ BEGIN	{
 	SUBSEP = "_";
 }
 
+/^[ \t]*$/	{next}
+
+/^[ \t]*\/\*/	{busted++}
+
+/^[ \t]*#/	{next}
+
+busted	{
+	cp = match($0, /\*\//);
+	if(!cp) {
+		next;
+	} else if (cp + 1 == length($0)) {
+		busted = 0;
+		next;
+	} else {
+		sub(/.*\*\//, "");
+		busted = 0;
+	}
+}
+
+# first line is rcsid, beware
 NR == 1	{
 	VERSION = $0;
 	gsub("\\$", "", VERSION);
@@ -50,12 +70,13 @@ NR == 1	{
 		> cpud;
 }
 
-$1=="type"	{
+$1 == "type"	{
 	printf("#define\tHPPA_TYPE_%s\t%s\n", toupper($2), $3) > cpuh;
 	types[tolower($2)] = toupper($2);
+	next;
 }
 
-{
+NR > 1 {
 	if (tolower($1) in types) {
 		printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
 		       toupper($2), $3) > cpuh;
@@ -63,16 +84,43 @@ $1=="type"	{
 		       toupper($1), toupper($2), $3) > cpud;
 		f = 4;
 		while (f <= NF) {
-			printf ("%s", $f) > cpud;
-			if (f < NF)
-				printf (" ") > cpud;
+			sub(/[ \t]*/, "", $f);
+			ep = match($f, /\*\//);
+			if (busted && !ep) {
+				f++;
+				continue;
+			}
+			if (match($f, /\/\*/)) {
+				if (ep) {
+					sub(/\/\*/, "", $f);
+				} else {
+					sub(/\/\*.*$/, "", $f);
+					busted++;
+				}
+			}
+			if (ep) {
+				gsub(/^.*\*\//, "", $f);
+				busted = 0;
+			}
+			if (length($f)) {
+				if (f > 4)
+					printf (" ") > cpud;
+				printf ("%s", $f) > cpud;
+			}
 			f++;
 		}
 		printf("\" },\n") > cpud;
+	} else {
+		printf("WHA at line %d\n", NR);
+		exit(1);
 	}
 }
 
 END	{
+	if (busted) {
+		print("unteminated comment at the EOF\n");
+		exit(1);
+	}
 	printf("\t{ -1 }\n};\n") > cpud;
 }
 
