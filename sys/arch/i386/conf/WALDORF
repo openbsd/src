@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.14 1997/10/20 01:40:13 todd Exp $
+#	$OpenBSD: WALDORF,v 1.15 1998/02/22 22:05:11 niklas Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -8,7 +8,7 @@ machine		i386		# architecture, used by config; REQUIRED
 
 #option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
-#option		I586_CPU
+option		I586_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommended
@@ -130,8 +130,8 @@ scsibus* at aic?
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt2	at isa? port ? irq ?
 #scsibus* at bt?
-#ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
-#scsibus* at ncr?
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
