@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_regs.c,v 1.4 1997/08/29 04:24:38 millert Exp $	*/
+/*	$OpenBSD: procfs_regs.c,v 1.5 2001/04/09 07:14:22 tholo Exp $	*/
 /*	$NetBSD: procfs_regs.c,v 1.9 1995/08/13 09:06:07 mycroft Exp $	*/
 
 /*
@@ -99,8 +99,9 @@ procfs_doregs(curp, p, pfs, uio)
 }
 
 int
-procfs_validregs(p)
+procfs_validregs(p, mp)
 	struct proc *p;
+	struct mount *mp;
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)

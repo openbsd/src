@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.6 1997/08/24 08:07:17 downsj Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.7 2001/04/09 07:14:20 tholo Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.6 1997/08/24 08:07:17 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.7 2001/04/09 07:14:20 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,10 +62,13 @@ static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.6 1997/08/24 08:07:17 downsj
 #include <stdlib.h>
 #include <string.h>
 
+#include <miscfs/procfs/procfs.h>
+
 #include "mntopts.h"
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	{ "linux", 0, PROCFSMNT_LINUXCOMPAT, 1 },
 	{ NULL }
 };
 
@@ -76,13 +79,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, mntflags;
+	int ch, mntflags, altflags;
+	struct procfs_args args;
 
-	mntflags = 0;
+	mntflags = altflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, &altflags);
 			break;
 		case '?':
 		default:
@@ -94,7 +98,10 @@ main(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_PROCFS, argv[1], mntflags, NULL)) {
+	args.version = PROCFS_ARGSVERSION;
+	args.flags = altflags;
+
+	if (mount(MOUNT_PROCFS, argv[1], mntflags, &args)) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "%s: Filesystem not supported by kernel",
 			    argv[1]);

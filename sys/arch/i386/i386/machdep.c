@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.154 2001/03/30 22:18:29 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.155 2001/04/09 07:14:15 tholo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -248,6 +248,9 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 int	cpu_class;
+int	i386_fpu_present;
+int	i386_fpu_exception;
+int	i386_fpu_fdivbug;
 
 bootarg_t *bootargp;
 vm_offset_t avail_end;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.9 2000/11/10 15:33:10 provos Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.10 2001/04/09 07:14:18 tholo Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -338,7 +338,7 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-		if (!procfs_validregs(t))
+		if (!procfs_validregs(t, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -363,7 +363,7 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-		if (!procfs_validfpregs(t))
+		if (!procfs_validfpregs(t, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.12 2001/02/20 01:50:10 assar Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.13 2001/04/09 07:14:23 tholo Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -54,7 +54,10 @@
 #include <sys/mount.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
+#include <sys/malloc.h>
+
 #include <miscfs/procfs/procfs.h>
+
 #include <vm/vm.h>			/* for PAGE_SIZE */
 
 #if defined(UVM)
@@ -81,6 +84,9 @@ procfs_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	size_t size;
+	struct procfsmount *pmnt;
+	struct procfs_args args;
+	int error;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");
@@ -90,14 +96,33 @@ procfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
+	if (data != NULL) {
+		error = copyin(data, &args, sizeof args);
+		if (error != 0)
+			return (error);
+
+		if (args.version != PROCFS_ARGSVERSION)
+			return (EINVAL);
+	} else
+		args.flags = 0;
+
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = 0;
+	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
+	    M_UFSMNT, M_WAITOK);	/* XXX need new malloc type */
+
+	mp->mnt_data = (qaddr_t)pmnt;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("procfs", mp->mnt_stat.f_mntfromname, sizeof("procfs"));
+
+#ifdef notyet
+	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
+#endif
+	pmnt->pmnt_flags = args.flags;
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.10 2000/08/15 02:44:12 ericj Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.11 2001/04/09 07:14:21 tholo Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 typedef enum {
 	Proot,		/* the filesystem root */
 	Pcurproc,	/* symbolic link for curproc */
+	Pself,		/* like curproc, but this is the Linux name */
 	Pproc,		/* a process-specific sub-directory */
 	Pfile,		/* the executable file */
 	Pmem,		/* the process's memory image */
@@ -55,7 +56,9 @@ typedef enum {
 	Pstatus,	/* process status */
 	Pnote,		/* process notifier */
 	Pnotepg,	/* process group notifier */
-	Pcmdline	/* process command line args */
+	Pcmdline,	/* process command line args */
+	Pmeminfo,	/* system memory info (if -o linux) */
+	Pcpuinfo	/* CPU info (if -o linux) */
 } pfstype;
 
 /*
@@ -74,6 +77,15 @@ struct pfsnode {
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
 
+struct procfs_args {
+	int version;
+	int flags;
+};
+
+#define PROCFS_ARGSVERSION	1
+
+#define	PROCFSMNT_LINUXCOMPAT	0x01
+
 /*
  * Kernel stuff follows
  */
@@ -86,8 +98,15 @@ struct pfsnode {
 
 #define PROCFS_FILENO(pid, type) \
 	(((type) < Pproc) ? \
-			((type) + 2) : \
-			((((pid)+1) << 4) + ((int) (type))))
+			((type) + 4) : \
+			((((pid)+1) << 5) + ((int) (type))))
+
+struct procfsmount {
+	void *pmnt_exechook;
+	int pmnt_flags;
+};
+
+#define VFSTOPROC(mp)	((struct procfsmount *)(mp)->mnt_data)
 
 /*
  * Convert between pfsnode vnode
@@ -114,17 +133,22 @@ int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *pfsp, struc
 int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
+int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
+int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
+int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio, int));
 struct vnode *procfs_findtextvp __P((struct proc *));
 int procfs_freevp __P((struct vnode *));
+int procfs_getcpuinfstr __P((char *, int *));
 
 #if !defined(UVM)
 int procfs_rwmem __P((struct proc *, struct uio *));
 #endif
 
 /* functions to check whether or not files should be displayed */
-int procfs_validfile __P((struct proc *));
-int procfs_validfpregs __P((struct proc *));
-int procfs_validregs __P((struct proc *));
+int procfs_validfile __P((struct proc *, struct mount *));
+int procfs_validfpregs __P((struct proc *, struct mount *));
+int procfs_validregs __P((struct proc *, struct mount *));
+int procfs_validmap __P((struct proc *, struct mount *));
 
 int procfs_rw __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.15 2000/08/12 04:29:24 jasoni Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.16 2001/04/09 07:14:23 tholo Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/proc.h>
+#include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
@@ -68,6 +69,7 @@
  * Vnode Operations.
  *
  */
+static int procfs_validfile_linux __P((struct proc *, struct mount *));
 
 /*
  * This is a list of the valid names in the
@@ -79,7 +81,7 @@ struct proc_target {
 	u_char	pt_namlen;
 	char	*pt_name;
 	pfstype	pt_pfstype;
-	int	(*pt_valid) __P((struct proc *p));
+	int	(*pt_valid) __P((struct proc *p, struct mount *mp));
 } proc_targets[] = {
 #define N(s) sizeof(s)-1, s
 	/*	  name		type		validp */
@@ -94,9 +96,24 @@ struct proc_target {
 	{ DT_REG, N("note"),	Pnote,		NULL },
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
+	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
+
+/*
+ * List of files in the root directory.  Note: the validate function
+ * will be called with p == NULL for these
+ */
+struct proc_target proc_root_targets[] = {
+#define N(s) sizeof(s)-1, s
+	/*	  name		type		validp */
+	{ DT_REG, N("meminfo"),	Pmeminfo,	procfs_validfile_linux },
+	{ DT_REG, N("cpuinfo"),	Pcpuinfo,	procfs_validfile_linux },
+#undef N
+};
+static int nproc_root_targets =
+    sizeof(proc_root_targets) / sizeof(proc_root_targets[0]);
 
 static pid_t atopid __P((const char *, u_int));
 
@@ -275,11 +292,14 @@ procfs_close(v)
 	case Pnote:
 	case Proot:
 	case Pcurproc:
+	case Pself:
 	case Pproc:
 	case Pfile:
 	case Pregs:
 	case Pfpregs:
 	case Pcmdline:
+	case Pmeminfo:
+	case Pcpuinfo:
 		break;
 	}
 
@@ -507,6 +527,8 @@ procfs_getattr(v)
 	switch (pfs->pfs_type) {
 	case Proot:
 	case Pcurproc:
+	case Pcpuinfo:
+	case Pmeminfo:
 		procp = 0;
 		break;
 
@@ -562,10 +584,16 @@ procfs_getattr(v)
 		vap->va_uid = procp->p_ucred->cr_uid;
 		vap->va_gid = procp->p_ucred->cr_gid;
 		break;
+	case Pmeminfo:
+	case Pcpuinfo:
+		vap->va_nlink = 1;
+		vap->va_uid = vap->va_gid = 0;
+		break;
 	case Pproc:
 	case Pfile:
 	case Proot:
 	case Pcurproc:
+	case Pself:
 		break;
 	}
 
@@ -599,6 +627,13 @@ procfs_getattr(v)
 		    sprintf(buf, "%ld", (long)curproc->p_pid);
 		break;
 	}
+
+	case Pself:
+		vap->va_nlink = 1;
+		vap->va_uid = 0;
+		vap->va_gid = 0;
+		vap->va_size = vap->va_bytes = sizeof("curproc");
+		break;
 
 	case Pproc:
 		vap->va_nlink = 2;
@@ -635,6 +670,8 @@ procfs_getattr(v)
 	case Pnote:
 	case Pnotepg:
 	case Pcmdline:
+	case Pmeminfo:
+	case Pcpuinfo:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 
@@ -719,7 +756,7 @@ procfs_lookup(v)
 	pid_t pid;
 	struct pfsnode *pfs;
 	struct proc *p;
-	int i;
+	int i, error, iscurproc = 0, isself = 0;
 
 	*vpp = NULL;
 
@@ -739,8 +776,41 @@ procfs_lookup(v)
 		if (cnp->cn_flags & ISDOTDOT)
 			return (EIO);
 
-		if (CNEQ(cnp, "curproc", 7))
-			return (procfs_allocvp(dvp->v_mount, vpp, 0, Pcurproc));
+		iscurproc = CNEQ(cnp, "curproc", 7);
+		isself = CNEQ(cnp, "self", 4);
+
+		if (iscurproc || isself) {
+			error = procfs_allocvp(dvp->v_mount, vpp, 0,
+			    iscurproc ? Pcurproc : Pself);
+#if 0
+			if ((error == 0) && (wantpunlock)) {
+				VOP_UNLOCK(dvp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
+#endif
+			return (error);
+		}
+
+		for (i = 0; i < nproc_root_targets; i++) {
+			pt = &proc_root_targets[i];
+			if (cnp->cn_namelen == pt->pt_namlen &&
+			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
+			    (pt->pt_valid == NULL ||
+			     (*pt->pt_valid)(p, dvp->v_mount)))
+				break;
+		}
+
+		if (i != nproc_root_targets) {
+			error = procfs_allocvp(dvp->v_mount, vpp, 0,
+			    pt->pt_pfstype);
+#if 0
+			if ((error == 0) && (wantpunlock)) {
+				VOP_UNLOCK(dvp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
+#endif
+			return (error);
+		}
 
 		pid = atopid(pname, cnp->cn_namelen);
 		if (pid == NO_PID)
@@ -763,7 +833,8 @@ procfs_lookup(v)
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    bcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL || (*pt->pt_valid)(p)))
+			    (pt->pt_valid == NULL ||
+			     (*pt->pt_valid)(p, dvp->v_mount)))
 				goto found;
 		}
 		break;
@@ -789,11 +860,24 @@ procfs_lookup(v)
 }
 
 int
-procfs_validfile(p)
+procfs_validfile(p, mp)
 	struct proc *p;
+	struct mount *mp;
 {
 
 	return (procfs_findtextvp(p) != NULLVP);
+}
+
+int
+procfs_validfile_linux(p, mp)
+	struct proc *p;
+	struct mount *mp;
+{
+	int flags;
+
+	flags = VFSTOPROC(mp)->pmnt_flags;
+	return ((flags & PROCFSMNT_LINUXCOMPAT) &&
+	    (p == NULL || procfs_validfile(p, mp)));
 }
 
 /*
@@ -823,10 +907,12 @@ procfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct pfsnode *pfs;
+	struct vnode *vp;
 	int i;
 	int error;
 
-	pfs = VTOPFS(ap->a_vp);
+	vp = ap->a_vp;
+	pfs = VTOPFS(vp);
 
 	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
@@ -854,7 +940,8 @@ procfs_readdir(v)
 
 		for (pt = &proc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nproc_targets; pt++, i++) {
-			if (pt->pt_valid && (*pt->pt_valid)(p) == 0)
+			if (pt->pt_valid &&
+			    (*pt->pt_valid)(p, vp->v_mount) == 0)
 				continue;
 			
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, pt->pt_pfstype);
@@ -908,6 +995,35 @@ procfs_readdir(v)
 				d.d_type = DT_LNK;
 				break;
 
+			case 3:
+				d.d_fileno = PROCFS_FILENO(0, Pself);
+				d.d_namlen = 4;
+				bcopy("self", d.d_name, 5);
+				d.d_type = DT_LNK;
+				break;
+
+			case 4:
+				if (VFSTOPROC(vp->v_mount)->pmnt_flags &
+				    PROCFSMNT_LINUXCOMPAT) {
+					d.d_fileno = PROCFS_FILENO(0, Pcpuinfo);
+					d.d_namlen = 7;
+					bcopy("cpuinfo", d.d_name, 8);
+					d.d_type = DT_REG;
+					break;
+				}
+				/* fall through */
+
+			case 5:
+				if (VFSTOPROC(vp->v_mount)->pmnt_flags &
+				    PROCFSMNT_LINUXCOMPAT) {
+					d.d_fileno = PROCFS_FILENO(0, Pmeminfo);
+					d.d_namlen = 7;
+					bcopy("meminfo", d.d_name, 8);
+					d.d_type = DT_REG;
+					break;
+				}
+				/* fall through */
+
 			default:
 				while (pcnt < i) {
 					pcnt++;
@@ -960,10 +1076,12 @@ procfs_readlink(v)
 	char buf[16];		/* should be enough */
 	int len;
 
-	if (VTOPFS(ap->a_vp)->pfs_fileno != PROCFS_FILENO(0, Pcurproc))
+	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc))
+		len = sprintf(buf, "%ld", (long)curproc->p_pid);
+	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself))
+		len = sprintf(buf, "%s", "curproc");
+	else
 		return (EINVAL);
-
-	len = sprintf(buf, "%ld", (long)curproc->p_pid);
 
 	return (uiomove((caddr_t)buf, len, ap->a_uio));
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.15 2000/11/09 17:53:01 aaron Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.16 2001/04/09 07:14:19 tholo Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -69,6 +69,11 @@ flag followed by a comma separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
+The following procfs specific option is also available:
+.Bl -tag -width indent
+.It linux
+Add Linux compatibility links and nodes to procfs.
+.El
 .El
 .Pp
 The root of the process filesystem
