@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.14 1999/04/27 21:05:18 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.103 1999/04/27 09:42:28 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.15 1999/04/30 11:47:41 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.105 1999/04/29 12:08:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -691,13 +691,12 @@ ipsec_initiator (struct message *msg)
   struct exchange *exchange = msg->exchange;
   int (**script) (struct message *msg) = 0;
 
-  /* XXX Mostly not implemented yet.  */
-  
   /* Check that the SA is coherent with the IKE rules.  */
   if ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
        && exchange->type != ISAKMP_EXCH_AGGRESSIVE
        && exchange->type != ISAKMP_EXCH_INFO)
-      || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE))
+      || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE
+	  && exchange->type != ISAKMP_EXCH_INFO))
     {
       log_print ("ipsec_initiator: unsupported exchange type %d in phase %d",
 		 exchange->type, exchange->phase);
@@ -719,8 +718,7 @@ ipsec_initiator (struct message *msg)
       script = ike_aggressive_initiator;
       break;
     case ISAKMP_EXCH_INFO:
-      message_send_info (msg);
-      break;
+      return message_send_info (msg);
     case IKE_EXCH_QUICK_MODE:
       script = ike_quick_mode_initiator;
       break;
@@ -740,6 +738,7 @@ ipsec_responder (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
   int (**script) (struct message *msg) = 0;
+  struct payload *p;
 
   /* Check that a new exchange is coherent with the IKE rules.  */
   if (exchange->step == 0
@@ -748,7 +747,7 @@ ipsec_responder (struct message *msg)
 	   && exchange->type != ISAKMP_EXCH_INFO)
 	  || (exchange->phase == 2 && exchange->type == ISAKMP_EXCH_ID_PROT)))
     {
-      message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
       return -1;
     }
     
@@ -759,7 +758,7 @@ ipsec_responder (struct message *msg)
     {
     case ISAKMP_EXCH_BASE:
     case ISAKMP_EXCH_AUTH_ONLY:
-      message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
       return -1;
 
     case ISAKMP_EXCH_ID_PROT:
@@ -771,8 +770,22 @@ ipsec_responder (struct message *msg)
       break;
 
     case ISAKMP_EXCH_INFO:
-      /* XXX Not implemented yet.  */
-      break;
+      for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
+	   p = TAILQ_NEXT (p, link))
+	{
+	  log_debug (LOG_EXCHANGE, 10,
+		     "ipsec_responder: got NOTIFY of type %s",
+		     constant_lookup (isakmp_notify_cst,
+				      GET_ISAKMP_NOTIFY_MSG_TYPE (p->p)));
+	  p->flags |= PL_MARK;
+	}
+
+      /*
+       * If any DELETEs are in here, let the logic of leftover payloads deal
+       * with them.
+       */
+
+      return 0;
 
     case IKE_EXCH_QUICK_MODE:
       script = ike_quick_mode_responder;
@@ -792,7 +805,7 @@ ipsec_responder (struct message *msg)
    */
   if (TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]))
     {
-      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
       return -1;
     }
   return 0;
@@ -1215,7 +1228,7 @@ ipsec_save_g_x (struct message *msg)
   if (ie->g_x_len != dh_getlen (ie->group))
     {
       /* XXX Is this a good notify type?  */
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.6 1999/04/27 20:57:20 niklas Exp $	*/
-/*	$EOM: isakmp_doi.c,v 1.36 1999/04/27 09:40:32 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.7 1999/04/30 11:47:41 niklas Exp $	*/
+/*	$EOM: isakmp_doi.c,v 1.38 1999/04/29 12:08:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -206,18 +206,50 @@ isakmp_validate_transform_id (u_int8_t proto, u_int8_t transform_id)
 static int
 isakmp_initiator (struct message *msg)
 {
-  /* XXX Not implemented yet.  */
-  return 0;
+  if (msg->exchange->type != ISAKMP_EXCH_INFO)
+    {
+      log_print ("isakmp_initiator: unsupported exchange type %d in phase %d",
+		 msg->exchange->type, msg->exchange->phase);
+      return -1;
+    }
+
+  return message_send_info (msg);
 }
 
 static int
 isakmp_responder (struct message *msg)
 {
-  /* XXX So far we don't accept any proposals.  */
-  if (TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]))
+  struct payload *p;
+
+  switch (msg->exchange->type)
     {
-      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 0, 0);
-      return -1;
+    case ISAKMP_EXCH_INFO:
+      for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
+	   p = TAILQ_NEXT (p, link))
+	{
+	  log_debug (LOG_EXCHANGE, 10,
+		     "isakmp_responder: got NOTIFY of type %s, ignoring",
+		     constant_lookup (isakmp_notify_cst,
+				      GET_ISAKMP_NOTIFY_MSG_TYPE (p->p)));
+	  p->flags |= PL_MARK;
+	}
+
+      for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE]); p;
+	   p = TAILQ_NEXT (p, link))
+	{
+	  log_debug (LOG_EXCHANGE, 10,
+		     "isakmp_responder: got DELETE, ignoring");
+	  p->flags |= PL_MARK;
+	}
+      return 0;
+
+    default:
+      /* XXX So far we don't accept any proposals.  */
+      if (TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]))
+	{
+	  message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+	  return -1;
+	}
     }
   return 0;
 }
