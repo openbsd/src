@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.10 1997/01/20 04:18:18 millert Exp $
+#	$OpenBSD: special,v 1.11 1997/03/30 17:52:19 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -44,7 +44,7 @@ monthly.local	type=file mode=0644 uname=root gname=wheel optional
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
-named.boot	type=file mode=0644 uname=root gname=wheel
+named.boot	type=file mode=0644 uname=root gname=wheel optional
 netstart	type=file mode=0744 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
@@ -152,7 +152,7 @@ pub		type=dir mode=0777 uname=root gname=wheel optional ignore
 ..	#var/spool/ftp
 mqueue		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/mqueue
-news		type=dir mode=0755 uname=root gname=wheel ignore
+news		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#var/spool/news
 output		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/output
