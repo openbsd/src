@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.11 2004/08/17 20:58:05 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -219,7 +219,7 @@ _mkdev(mcd, mcd*, {-dodisk2 mcd $U major_mcd_b major_mcd_c $U 0{--}ifstep(mcd)dn
 -})dnl
 __devitem(ch, {-ch*-}, SCSI media changers)dnl
 _mcdev(ch, ch*, ch, {-major_ch_c-}, 660, operator)dnl
-__devitem(uk, uk*, SCSI unknown devices)dnl
+__devitem(uk, uk*, Unknown SCSI devices)dnl
 _mcdev(uk, uk*, uk, {-major_uk_c-}, 640, operator)dnl
 __devitem(ss, ss*, SCSI scanners)dnl
 _mkdev(ss, ss*, {-M ss$U c major_ss_c Mult($U,16) 640 operator
