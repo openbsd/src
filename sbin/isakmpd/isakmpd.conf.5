@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.75 2003/03/06 20:29:24 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.76 2003/03/21 15:13:26 markus Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -657,6 +657,34 @@ The IP address of a DNS nameserver.
 .It Em WINS-server
 The IP address of a WINS server.
 .El
+.It Em <Initiator-ID>
+.Pp
+During phase 1 negotiation
+.Nm isakmpd
+looks for a pre-shared key in the <ISAKMP-peer> section.
+If no Authentication data is specified in that section, and
+.Nm isakmpd
+is not the initiator, it looks for Authentication data in a section named after
+the initiator's phase 1 ID.
+This allows mobile users with dynamic IP addresses
+to have different shared secrets.
+.Pp
+This only works for aggressive mode because in main mode the remote
+initiator ID would not yet be known.
+.Pp
+The name of the <Initiator-ID> section depends on the ID type sent by
+the initiator.
+Currently this can be:
+.Bl -tag -width 12n
+.It IPv4
+[A.B.C.D]
+.It IPv6
+[abcd:abcd::ab:cd]
+.It FQDN
+[foo.bar.org]
+.It UFQDN
+[user@foo.bar.org]
+.El
 .El
 .Sh EXAMPLES
 An example of a configuration file:
@@ -719,6 +747,10 @@ Address=		192.168.1.123
 Netmask=		255.255.255.0
 Nameserver=		192.168.1.10
 WINS-server=		192.168.1.11
+
+# pre-shared key based on initiator's phase 1 ID
+[foo.bar.org]                                                                         
+Authentication=		mekmitasdigoat
 
 #
 # #####################################################################
