@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.5 1997/09/21 00:30:11 millert Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.6 1998/06/19 16:09:35 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -293,7 +293,10 @@ main(argc, argv)
          * Formatting.
          */
         if(!quiet) {
-                printf("Processing ----------------------------------------\r");
+		for (track = 0; track < fdt.tracks * fdt.heads; track++) {
+			if ((track + 1) % tracks_per_dot)
+				putchar('-');
+		}
                 printf("Processing ");
                 fflush(stdout);
         }
