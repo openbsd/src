@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.51 2002/05/31 01:11:31 itojun Exp $	*/
+/*	$OpenBSD: ping.c,v 1.52 2002/05/31 04:53:10 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.51 2002/05/31 01:11:31 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.52 2002/05/31 04:53:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ int reset_kerninfo;
 int bufspace = IP_MAXPACKET;
 
 void fill(char *, char *);
-void catcher(), prtsig(), finish(), summary(int);
+void catcher(), prtsig(), finish(), summary(int, int);
 int in_cksum(u_short *, int);
 void pinger();
 char *pr_addr(in_addr_t);
@@ -573,7 +573,7 @@ prtsig()
 {
 	int save_errno = errno;
 
-	summary(0);
+	summary(0, 1);
 	errno = save_errno;
 }
 
@@ -589,8 +589,8 @@ void
 pinger()
 {
 	struct icmp *icp;
-	int cc;
-	int i;
+	char buf[8192];
+	int cc, i;
 	char *packet = outpack;
 
 	icp = (struct icmp *)outpack;
@@ -632,8 +632,9 @@ pinger()
 	if (i < 0 || i != cc)  {
 		if (i < 0)
 			perror("ping: sendto");
-		(void)printf("ping: wrote %s %d chars, ret=%d\n",
+		snprintf(buf, sizeof buf, "ping: wrote %s %d chars, ret=%d\n",
 		    hostname, cc, i);
+		write(STDOUT_FILENO, buf, strlen(buf));
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
@@ -901,39 +902,59 @@ in_cksum(addr, len)
 }
 
 void
-summary(header)
-	int header;
+summary(header, sig)
+	int header, sig;
 {
-	(void)putchar('\r');
-	(void)fflush(stdout);
+	char buf[8192], buft[8192];
 
-	if (header)
-		(void)printf("--- %s ping statistics ---\n", hostname);
+	buf[0] = '\0';
 
-	(void)printf("%ld packets transmitted, ", ntransmitted);
-	(void)printf("%ld packets received, ", nreceived);
-	if (nrepeats)
-		(void)printf("%ld duplicates, ", nrepeats);
+	if (!sig) {
+		(void)putchar('\r');
+		(void)fflush(stdout);
+	} else
+		strlcat(buf, "\r", sizeof buf);
+
+	if (header) {
+		snprintf(buft, sizeof buft, "--- %s ping statistics ---\n",
+		    hostname);
+		strlcat(buf, buft, sizeof buf);
+	}
+
+	snprintf(buft, sizeof buft, "%ld packets transmitted, ", ntransmitted);
+	strlcat(buf, buft, sizeof buf);
+	snprintf(buft, sizeof buft, "%ld packets received, ", nreceived);
+	strlcat(buf, buft, sizeof buf);
+
+	if (nrepeats) {
+		snprintf(buft, sizeof buft, "%ld duplicates, ", nrepeats);
+		strlcat(buf, buft, sizeof buf);
+	}
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
-			(void)printf("-- somebody's duplicating packets!");
+			snprintf(buft, sizeof buft,
+			    "-- somebody's duplicating packets!");
 		else
-			(void)printf("%d%% packet loss",
+			snprintf(buft, sizeof buft, "%d%% packet loss",
 			    (int) (((ntransmitted - nreceived) * 100) /
 			    ntransmitted));
+		strlcat(buf, buft, sizeof buf);
 	}
-	(void)putchar('\n');
+	strlcat(buf, "\n", sizeof buf);
 	if (nreceived && timing) {
 		quad_t num = nreceived + nrepeats;
 		quad_t avg = tsum / num;
 		quad_t dev = qsqrt(tsumsq / num - avg * avg);
-		(void)printf("round-trip min/avg/max/std-dev = "
+
+		snprintf(buft, sizeof buft, "round-trip min/avg/max/std-dev = "
 		    "%d.%03d/%d.%03d/%d.%03d/%d.%03d ms\n",
 		    (int)(tmin / 1000), (int)(tmin % 1000),
 		    (int)(avg  / 1000), (int)(avg  % 1000),
 		    (int)(tmax / 1000), (int)(tmax % 1000),
 		    (int)(dev  / 1000), (int)(dev  % 1000));
+		strlcat(buf, buft, sizeof buf);
 	}
+	write(STDOUT_FILENO, buf, strlen(buf));		/* XXX atomicio? */
 }
 
 quad_t
@@ -963,7 +984,7 @@ finish()
 {
 	(void)signal(SIGINT, SIG_IGN);
 
-	summary(1);
+	summary(1, 0);
 	exit(nreceived ? 0 : 1);
 }
 
