@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.42 2004/12/31 10:47:37 jaredy Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.43 2005/03/11 12:54:19 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -254,6 +254,17 @@ router-id 10.0.0.1
 .Pp
 If not given, the BGP ID is determined as the biggest IP address assigned
 to the local machine.
+.Pp
+.It Xo
+.Ic transparent-as
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+.Em AS paths
+to EBGP neighbors are not prepended with their own AS.
+The default is
+.Ic no .
 .El
 .Sh NEIGHBORS AND GROUPS
 .Xr bgpd 8
@@ -809,13 +820,18 @@ AS path attribute.
 .Pp
 .It Xo
 .Ic nexthop
-.Po Ar address Ns \&| Ns
-.Ic blackhole Ns \&| Ns Ic reject Pc
+.Sm off
+.Po Ar address \*(Ba
+.Ic blackhole \*(Ba
+.Ic reject \*(Ba
+.Ic no-modify Pc
+.Sm on
 .Xc
 Set the
 .Em NEXTHOP
 AS path attribute
-to a different nexthop address, or use blackhole or reject routes.
+to a different nexthop address, use blackhole or reject routes,
+or do not modify it.
 .Bd -literal -offset indent
 set nexthop 192.168.0.1
 set nexthop blackhole

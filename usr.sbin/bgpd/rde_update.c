@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.34 2005/02/07 05:51:52 david Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.35 2005/03/11 12:54:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -580,7 +580,12 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 
 	/* aspath */
-	path = aspath_prepend(a->aspath, rde_local_as(), peer->conf.ebgp);
+	if (!peer->conf.ebgp ||
+	    rde_decisionflags() & BGPD_FLAG_DECISION_TRANS_AS)
+		path = aspath_prepend(a->aspath, rde_local_as(), 0);
+	else
+		path = aspath_prepend(a->aspath, rde_local_as(), 1);
+
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
 	    ATTR_ASPATH, path->data, path->len)) == -1)
 		return (-1);
@@ -588,7 +593,13 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 
 	/* nexthop, already network byte order */
-	if (peer->conf.ebgp == 0) {
+	if (a->flags & F_NEXTHOP_NOMODIFY) {
+		/* no modify flag set */
+		if (a->nexthop == NULL)
+			nexthop = peer->local_v4_addr.v4.s_addr;
+		else
+			nexthop = a->nexthop->exit_nexthop.v4.s_addr;
+	} else if (!peer->conf.ebgp) {
 		/*
 		 * If directly connected use peer->local_v4_addr
 		 * this is only true for announced networks.

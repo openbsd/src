@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.62 2004/12/23 15:08:43 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.63 2005/03/11 12:54:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -131,18 +131,19 @@ struct path_table {
 
 LIST_HEAD(prefix_head, prefix);
 
-#define	F_ATTR_ORIGIN		0x001
-#define	F_ATTR_ASPATH		0x002
-#define	F_ATTR_NEXTHOP		0x004
-#define	F_ATTR_LOCALPREF	0x008
-#define	F_ATTR_MED		0x010
-#define	F_ATTR_MED_ANNOUNCE	0x020
-#define	F_ATTR_MP_REACH		0x040
-#define	F_ATTR_MP_UNREACH	0x080
-#define	F_PREFIX_ANNOUNCED	0x100
-#define	F_NEXTHOP_REJECT	0x200
-#define	F_NEXTHOP_BLACKHOLE	0x400
-#define	F_ATTR_LINKED		0x800
+#define	F_ATTR_ORIGIN		0x0001
+#define	F_ATTR_ASPATH		0x0002
+#define	F_ATTR_NEXTHOP		0x0004
+#define	F_ATTR_LOCALPREF	0x0008
+#define	F_ATTR_MED		0x0010
+#define	F_ATTR_MED_ANNOUNCE	0x0020
+#define	F_ATTR_MP_REACH		0x0040
+#define	F_ATTR_MP_UNREACH	0x0080
+#define	F_PREFIX_ANNOUNCED	0x0100
+#define	F_NEXTHOP_REJECT	0x0200
+#define	F_NEXTHOP_BLACKHOLE	0x0400
+#define	F_NEXTHOP_NOMODIFY	0x0800
+#define	F_ATTR_LINKED		0x1000
 
 #define ORIGIN_IGP		0
 #define ORIGIN_EGP		1

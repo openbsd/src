@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.149 2004/12/23 16:09:26 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.150 2005/03/11 12:54:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -145,13 +145,13 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND
 %token	DUMP IN OUT
-%token	LOG ROUTECOLL
+%token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY
 %token	ALLOW DENY MATCH
 %token	QUICK
 %token	FROM TO ANY
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
-%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE
+%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY
 %token	PREPEND_SELF PREPEND_PEER PFTABLE
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
@@ -306,6 +306,12 @@ conf_main	: AS asnumber		{
 				conf->flags |= BGPD_FLAG_NO_EVALUATE;
 			else
 				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
+		}
+		| TRANSPARENT yesno	{
+			if ($2 == 1)
+				conf->flags |= BGPD_FLAG_DECISION_TRANS_AS;
+			else
+				conf->flags &= ~BGPD_FLAG_DECISION_TRANS_AS;
 		}
 		| LOG string		{
 			if (!strcmp($2, "updates"))
@@ -1157,6 +1163,11 @@ filter_set_opt	: LOCALPREF number		{
 				fatal(NULL);
 			$$->type = ACTION_SET_NEXTHOP_REJECT;
 		}
+		| NEXTHOP NOMODIFY		{
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_NEXTHOP_NOMODIFY;
+		}
 		| PREPEND_SELF number		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -1323,6 +1334,7 @@ lookup(char *s)
 		{ "neighbor-as",	NEIGHBORAS},
 		{ "network",		NETWORK},
 		{ "nexthop",		NEXTHOP},
+		{ "no-modify",		NOMODIFY},
 		{ "on",			ON},
 		{ "out",		OUT},
 		{ "passive",		PASSIVE},
@@ -1344,7 +1356,8 @@ lookup(char *s)
 		{ "spi",		SPI},
 		{ "tcp",		TCP},
 		{ "to",			TO},
-		{ "transit-as",		TRANSITAS}
+		{ "transit-as",		TRANSITAS},
+		{ "transparent-as",	TRANSPARENT}
 	};
 	const struct keywords	*p;
 

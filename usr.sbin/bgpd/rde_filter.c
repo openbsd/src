@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.24 2005/02/24 17:14:53 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.25 2005/03/11 12:54:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -85,10 +85,11 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 	SIMPLEQ_FOREACH(set, sh, entry) {
 		/*
 		 * default outgoing overrides are only allowed to
-		 * set prepend-self
+		 * set prepend-self and set nexthop no-modify
 		 */
 		if (dir == DIR_DEFAULT_OUT &&
-		    set->type != ACTION_SET_PREPEND_SELF)
+		    set->type != ACTION_SET_PREPEND_SELF &&
+		    set->type != ACTION_SET_NEXTHOP_NOMODIFY)
 			continue;
 
 		switch (set->type) {
@@ -119,6 +120,10 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_NEXTHOP:
 		case ACTION_SET_NEXTHOP_REJECT:
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
+		case ACTION_SET_NEXTHOP_NOMODIFY:
+			if (set->type == ACTION_SET_NEXTHOP_NOMODIFY &&
+			    dir == DIR_DEFAULT_IN)
+				break;
 			nexthop_modify(asp, &set->action.nexthop, set->type,
 			    af);
 			break;

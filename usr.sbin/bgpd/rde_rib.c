@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.63 2004/11/23 13:07:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.64 2005/03/11 12:54:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -760,6 +760,10 @@ nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop,
 	}
 	if (type  == ACTION_SET_NEXTHOP_BLACKHOLE) {
 		asp->flags |= F_NEXTHOP_BLACKHOLE;
+		return;
+	}
+	if (type == ACTION_SET_NEXTHOP_NOMODIFY) {
+		asp->flags |= F_NEXTHOP_NOMODIFY;
 		return;
 	}
 	if (af != nexthop->af)
