@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.3 1997/02/11 22:23:18 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.4 1997/02/13 05:09:33 kstailey Exp $	*/
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -88,7 +88,6 @@
 #define	IPOPT_IMITD	144	/* IMITD */
 #define	IPOPT_EIP	145	/* EIP */
 #define	IPOPT_FINN	205	/* FINN */
-
 
 /*
  * Build some macros and #defines to enable the same code to compile anywhere
@@ -189,11 +188,15 @@ extern	vm_map_t	kmem_map;
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 # endif /* BSD */
-# if defined(NetBSD1_0) && (NetBSD1_0 > 1)
+# if (defined(NetBSD1_0) && (NetBSD1_0 > 1))
 #  define	SPLNET(x)	x = splsoftnet()
 # else
 #  if !SOLARIS
-#   define	SPLNET(x)	x = splnet()
+#   ifdef __OpenBSD__
+#    define	SPLNET(x)	x = splsoftnet()
+#   else
+#    define	SPLNET(x)	x = splnet()
+#   endif /* __OpenBSD__ */
 #   define	SPLX(x)		(void) splx(x)
 #  endif
 # endif
