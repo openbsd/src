@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.16 2002/03/24 01:26:05 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.17 2002/04/03 20:37:28 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -150,8 +150,11 @@ gre_input2(m , hlen, proto)
 			 *   The Internet Draft can be found if you look for
 			 *     draft-forster-wrec-wccp-v1-00.txt
 			 *
-			 *   So yes, we're doing a fall-through.
+			 *   So yes, we're doing a fall-through (unless, of course,
+			 *   net.inet.gre.wccp is 0).
 			 */
+			if (!gre_wccp)
+				return (0);
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
 			ifq = &ipintrq;          /* we are in ip_input */
 			af = AF_INET;
@@ -183,7 +186,7 @@ gre_input2(m , hlen, proto)
 		break;
 	default:
 		/* others not yet supported */
-		return(0);
+		return (0);
 	}
 		
 	m->m_data += hlen; 
@@ -245,7 +248,9 @@ gre_input(struct mbuf *m, ...)
 	/* 
  	 * ret == 0: packet not processed, but input from here
 	 * means no matching tunnel that is up is found,
-	 * so we can just free the mbuf and return
+	 * so we can just free the mbuf and return.  It is also
+	 * possible that we received a WCCPv1-style GRE packet
+	 * but we're not set to accept them.
 	 */
 	if (!ret)
 		m_freem(m);
@@ -387,6 +392,8 @@ gre_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
         switch (name[0]) {
         case GRECTL_ALLOW:
                 return (sysctl_int(oldp, oldlenp, newp, newlen, &gre_allow));
+        case GRECTL_WCCP:
+                return (sysctl_int(oldp, oldlenp, newp, newlen, &gre_wccp));
         default:
                 return (ENOPROTOOPT);
         }

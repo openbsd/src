@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.4 2002/03/24 01:26:05 angelos Exp $ */
+/*      $OpenBSD: ip_gre.h,v 1.5 2002/04/03 20:37:28 angelos Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -50,11 +50,13 @@
  * Names for GRE sysctl objects
  */
 #define GRECTL_ALLOW    1		/* accept incoming GRE packets */
-#define GRECTL_MAXID    2
+#define GRECTL_WCCP     2		/* accept WCCPv1-style GRE packets */
+#define GRECTL_MAXID    3
  
 #define GRECTL_NAMES { \
         { 0, 0 }, \
         { "allow", CTLTYPE_INT }, \
+        { "wccp", CTLTYPE_INT }, \
 } 
 
 /*
