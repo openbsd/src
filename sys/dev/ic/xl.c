@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.22 2001/03/25 06:27:44 csapuntz Exp $	*/
+/*	$OpenBSD: xl.c,v 1.23 2001/04/08 01:05:12 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1394,8 +1394,10 @@ void xl_txeoc(sc)
 		if (txstat & XL_TXSTATUS_UNDERRUN ||
 			txstat & XL_TXSTATUS_JABBER ||
 			txstat & XL_TXSTATUS_RECLAIM) {
-			printf("xl%d: transmission error: %x\n",
-						sc->xl_unit, txstat);
+			if (txstat != 0x90) {
+				printf("xl%d: transmission error: %x\n",
+				    sc->xl_unit, txstat);
+			}
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 			xl_wait(sc);
 			if (sc->xl_type == XL_TYPE_905B) {
