@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.5 1998/01/09 16:33:47 csapuntz Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.6 2000/04/21 15:47:27 millert Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -85,8 +85,10 @@
 #define	O_SHLOCK	0x0010		/* open with shared file lock */
 #define	O_EXLOCK	0x0020		/* open with exclusive file lock */
 #define	O_ASYNC		0x0040		/* signal pgrp when data ready */
-#define	O_FSYNC		0x0080		/* synchronous writes */
+#define	O_FSYNC		O_SYNC		/* backwards compatibility */
+#define	O_NOFOLLOW	0x0100		/* if path is a symlink, don't follow */
 #endif
+#define	O_SYNC		0x0080		/* synchronous writes */
 #define	O_CREAT		0x0200		/* create if nonexistant */
 #define	O_TRUNC		0x0400		/* truncate to zero length */
 #define	O_EXCL		0x0800		/* error if already exists */
@@ -94,13 +96,15 @@
 #define	FMARK		0x1000		/* mark during gc() */
 #define	FDEFER		0x2000		/* defer for next gc pass */
 #define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
-
-/* Note: The below is not a flag that can be used in the struct file. 
-   It's an option that can be passed to vn_open to make sure it doesn't
-   follow a symlink on the last lookup */
-#define FNOSYMLINK     0x10000          /* Don't follow symlink for last
-					   component */
 #endif
+
+/*
+ * POSIX 1003.1 specifies a higher granularity for syncronous operations
+ * than we support.  Since synchronicity is all or nothing in OpenBSD
+ * we just define these to be the same as O_SYNC.
+ */
+#define	O_DSYNC		O_SYNC		/* synchronous data writes */
+#define	O_RSYNC		O_SYNC		/* synchronous reads */
 
 /* defined by POSIX 1003.1; BSD default, this bit is not required */
 #define	O_NOCTTY	0x8000		/* don't assign controlling terminal */
@@ -127,7 +131,7 @@
 #ifndef _POSIX_SOURCE
 #define	FAPPEND		O_APPEND	/* kernel/compat */
 #define	FASYNC		O_ASYNC		/* kernel/compat */
-#define	FFSYNC		O_FSYNC		/* kernel */
+#define	FFSYNC		O_SYNC		/* kernel */
 #define	FNONBLOCK	O_NONBLOCK	/* kernel */
 #define	FNDELAY		O_NONBLOCK	/* compat */
 #define	O_NDELAY	O_NONBLOCK	/* compat */

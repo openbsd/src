@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.24 2000/04/19 08:34:53 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.25 2000/04/21 15:47:28 millert Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -95,8 +95,7 @@ vn_open(ndp, fmode, cmode)
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
 		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
-		if (((fmode & O_EXCL) == 0) &&
-		    ((fmode & FNOSYMLINK) == 0))
+		if ((fmode & O_EXCL) == 0 && (fmode & O_NOFOLLOW) == 0)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 		if ((error = namei(ndp)) != 0)
 			return (error);
@@ -124,23 +123,21 @@ vn_open(ndp, fmode, cmode)
 				error = EEXIST;
 				goto bad;
 			}
-			if ((ndp->ni_vp->v_type == VLNK) &&
-			    ((fmode & FNOSYMLINK) != 0)) {
-				error = EFTYPE;
-				goto bad;
-			}
-
-			fmode &= ~O_CREAT;
 		}
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF;
+		ndp->ni_cnd.cn_flags =
+		    ((fmode & O_NOFOLLOW) ? NOFOLLOW : FOLLOW) | LOCKLEAF;
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		vp = ndp->ni_vp;
 	}
 	if (vp->v_type == VSOCK) {
 		error = EOPNOTSUPP;
+		goto bad;
+	}
+	if (vp->v_type == VLNK) {
+		error = EMLINK;
 		goto bad;
 	}
 	if ((fmode & O_CREAT) == 0) {
@@ -326,7 +323,7 @@ vn_write(fp, poff, uio, cred)
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
-	if ((fp->f_flag & O_FSYNC) ||
+	if ((fp->f_flag & FFSYNC) ||
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);

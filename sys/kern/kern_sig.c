@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.36 2000/03/03 11:31:43 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.37 2000/04/21 15:47:27 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1199,7 +1199,7 @@ coredump(p)
 	sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
-	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
+	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 
 	if (error) {
 		crfree(cred);
