@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.6 1996/04/21 22:30:26 deraadt Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.7 1996/07/03 07:10:33 deraadt Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -2018,7 +2018,7 @@ nfsrv_getstream(slp, waitflag)
 			slp->ns_flag |= SLP_LASTFRAG;
 		else
 			slp->ns_flag &= ~SLP_LASTFRAG;
-		if (slp->ns_reclen < NFS_MINPACKET || slp->ns_reclen > NFS_MAXPACKET) {
+		if (slp->ns_reclen > NFS_MAXPACKET) {
 			slp->ns_flag &= ~SLP_GETSTREAM;
 			return (EPERM);
 		}
