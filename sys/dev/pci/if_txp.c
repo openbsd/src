@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.19 2001/04/15 21:17:53 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.20 2001/04/15 22:47:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -543,11 +543,20 @@ txp_intr(vsc)
 		claimed = 1;
 		WRITE_REG(sc, TXP_ISR, isr);
 
-		txp_rx_reclaim(sc, &sc->sc_rxhir);
-		txp_rx_reclaim(sc, &sc->sc_rxlor);
+		if ((*sc->sc_rxhir.r_roff) != (*sc->sc_rxhir.r_woff))
+			txp_rx_reclaim(sc, &sc->sc_rxhir);
+		if ((*sc->sc_rxlor.r_roff) != (*sc->sc_rxlor.r_woff))
+			txp_rx_reclaim(sc, &sc->sc_rxlor);
+
 		txp_rxbuf_reclaim(sc);
-		txp_tx_reclaim(sc, &sc->sc_txhir);
-		txp_tx_reclaim(sc, &sc->sc_txlor);
+
+		if (sc->sc_txhir.r_cnt && (sc->sc_txhir.r_cons !=
+		    TXP_OFFSET2IDX(*(sc->sc_txhir.r_off))))
+			txp_tx_reclaim(sc, &sc->sc_txhir);
+
+		if (sc->sc_txlor.r_cnt && (sc->sc_txlor.r_cons !=
+		    TXP_OFFSET2IDX(*(sc->sc_txlor.r_off))))
+			txp_tx_reclaim(sc, &sc->sc_txlor);
 
 		isr = READ_REG(sc, TXP_ISR);
 	}
@@ -569,14 +578,13 @@ txp_rx_reclaim(sc, r)
 	struct txp_rx_desc *rxd;
 	struct ether_header *eh;
 	struct mbuf *m;
-	u_int32_t ridx, widx;
+	u_int32_t roff, woff;
 
-	ridx = (*r->r_roff) / sizeof(struct txp_rx_desc);
-	widx = (*r->r_woff) / sizeof(struct txp_rx_desc);
+	roff = *r->r_roff;
+	woff = *r->r_woff;
+	rxd = r->r_desc + (roff / sizeof(struct txp_rx_desc));
 
-	while (ridx != widx) {
-		rxd = &r->r_desc[ridx];
-
+	while (roff != woff) {
 		if (rxd->rx_flags & RX_FLAGS_ERROR) {
 			printf("%s: error 0x%x\n", sc->sc_dev.dv_xname,
 			    rxd->rx_stat);
@@ -600,34 +608,20 @@ txp_rx_reclaim(sc, r)
 
 		m_adj(m, sizeof(struct ether_header));
 
-		if (rxd->rx_stat & RX_STAT_VLAN) {
-			printf("%s: vlan tag 0x%x\n", sc->sc_dev.dv_xname,
-			    rxd->rx_vlan);
-#if NVLAN > 0
-			if (vlan_input_tag(eh, m, rxd->rx_stat & 0xffff) < 0)
-				ifp->if_data.ifi_noproto++;
-#else
-			m_freem(m);
-#endif
-			goto next;
-		}
-
 		ether_input(ifp, eh, m);
 
 next:
 
-		if (++ridx == RX_ENTRIES)
-			ridx = 0;
-
-		widx = (*r->r_woff) / sizeof(struct txp_rx_desc);
+		roff += sizeof(struct txp_rx_desc);
+		if (roff == (RX_ENTRIES * sizeof(struct txp_rx_desc))) {
+			roff = 0;
+			rxd = r->r_desc;
+		} else
+			rxd++;
+		woff = *r->r_woff;
 	}
 
-	ridx = (*r->r_roff) / sizeof(struct txp_rx_desc);
-	while (ridx != widx) {
-		if (++ridx == RX_ENTRIES)
-			ridx = 0;
-		*r->r_roff = ridx * sizeof(struct txp_rx_desc);
-	}
+	*r->r_roff = woff;
 }
 
 void
@@ -646,9 +640,9 @@ txp_rxbuf_reclaim(sc)
 	if (++i == RXBUF_ENTRIES)
 		i = 0;
 
-	while (i != end) {
-		rbd = &sc->sc_rxbufs[i];
+	rbd = sc->sc_rxbufs + i;
 
+	while (i != end) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			break;
@@ -666,8 +660,11 @@ txp_rxbuf_reclaim(sc)
 
 		hv->hv_rx_buf_write_idx = TXP_IDX2OFFSET(i);
 
-		if (++i == RXBUF_ENTRIES)
+		if (++i == RXBUF_ENTRIES) {
 			i = 0;
+			rbd = sc->sc_rxbufs;
+		} else
+			rbd++;
 	}
 }
 
@@ -681,16 +678,13 @@ txp_tx_reclaim(sc, r)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int32_t idx = TXP_OFFSET2IDX(*(r->r_off));
-	struct txp_tx_desc *txd;
+	u_int32_t cons = r->r_cons, cnt = r->r_cnt;
+	struct txp_tx_desc *txd = r->r_desc + cons;
 	struct mbuf *m;
 
-	while (r->r_cons != idx) {
-		if (r->r_cnt == 0)
+	while (cons != idx) {
+		if (cnt == 0)
 			break;
-
-		txd = &r->r_desc[r->r_cons];
-		r->r_cons = (r->r_cons + 1) % TX_ENTRIES;
-		r->r_cnt--;
 
 		if ((txd->tx_flags & TX_FLAGS_TYPE_M) ==
 		    TX_FLAGS_TYPE_DATA) {
@@ -698,13 +692,24 @@ txp_tx_reclaim(sc, r)
 			if (m != NULL) {
 				m_freem(m);
 				txd->tx_addrlo = 0;
+				txd->tx_addrhi = 0;
 				ifp->if_opackets++;
 			}
 		}
 		ifp->if_flags &= ~IFF_OACTIVE;
+
+		if (++cons == TX_ENTRIES) {
+			txd = r->r_desc;
+			cons = 0;
+		} else
+			txd++;
+
+		cnt--;
 	}
 
-	if (r->r_cnt == 0)
+	r->r_cons = cons;
+	r->r_cnt = cnt;
+	if (cnt == 0)
 		ifp->if_timer = 0;
 }
 
@@ -1126,30 +1131,34 @@ txp_start(ifp)
 	struct txp_tx_desc *txd;
 	struct txp_frag_desc *fxd;
 	struct mbuf *m;
-	u_int32_t firstprod, firstcnt;
+	u_int32_t firstprod, firstcnt, prod, cnt;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
+	prod = r->r_prod;
+	cnt = r->r_cnt;
+
 	while (1) {
-		IF_DEQUEUE(&ifp->if_snd, m);	/* no mbufs */
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		if ((TX_ENTRIES - r->r_cnt) < 4) {
+		if ((TX_ENTRIES - cnt) < 4) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		firstprod = r->r_prod;
-		firstcnt = r->r_cnt;
+		firstprod = prod;
+		firstcnt = cnt;
 
-		txd = &r->r_desc[r->r_prod];
-		r->r_prod = (r->r_prod + 1) % TX_ENTRIES;
-		r->r_cnt++;
-		if (r->r_cnt == (TX_ENTRIES - 4)) {
+		txd = r->r_desc + prod;
+
+		if (++prod == TX_ENTRIES)
+			prod = 0;
+
+		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
-		}
 
 		txd->tx_flags = TX_FLAGS_TYPE_DATA;
 		txd->tx_numdesc = 0;
@@ -1158,19 +1167,17 @@ txp_start(ifp)
 		txd->tx_totlen = 0;
 		txd->tx_pflags = 0;
 
+		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		while (m != NULL) {
 			if (m->m_len == 0) {
 				m = m->m_next;
 				continue;
 			}
 
-			txd->tx_numdesc++;
-
-			fxd = (struct txp_frag_desc *)&r->r_desc[r->r_prod];
-			r->r_prod = (r->r_prod + 1) % TX_ENTRIES;
-			r->r_cnt++;
-			if (r->r_cnt == (TX_ENTRIES - 4))
+			if (++cnt >= (TX_ENTRIES - 4))
 				goto oactive;
+
+			txd->tx_numdesc++;
 
 			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG;
 			fxd->frag_rsvd1 = 0;
@@ -1179,12 +1186,21 @@ txp_start(ifp)
 			fxd->frag_addrhi = 0;
 			fxd->frag_rsvd2 = 0;
 			m = m->m_next;
+
+			if (++prod == TX_ENTRIES) {
+				fxd = (struct txp_frag_desc *)r->r_desc;
+				prod = 0;
+			} else
+				fxd++;
+
 		}
 
 		ifp->if_timer = 5;
-		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(r->r_prod));
+		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(prod));
 	}
 
+	r->r_prod = prod;
+	r->r_cnt = cnt;
 	return;
 
 oactive:
