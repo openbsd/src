@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.10 1999/03/31 00:52:06 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.69 1999/03/30 21:45:47 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.11 1999/03/31 20:31:05 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.70 1999/03/31 20:19:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -274,6 +274,7 @@ sa_create (struct exchange *exchange, struct transport *t)
 
   sa_enter (sa);
   TAILQ_INSERT_TAIL (&exchange->sa_list, sa, next);
+  sa_reference (sa);
 
   log_debug (LOG_MISC, 90,
 	     "sa_create: sa %p phase %d added to exchange %p (%s)", sa,
@@ -362,14 +363,32 @@ sa_free (struct sa *sa)
   sa_free_aux (sa);
 }
 
-/* Release all resources this SA is using except the death timer.  */
+/* Release all resources this SA is using except the death timers.  */
 void
 sa_free_aux (struct sa *sa)
 {
-  struct proto *proto;
-
   if (sa->last_sent_in_setup)
     message_free (sa->last_sent_in_setup);
+  LIST_REMOVE (sa, link);
+  sa_release (sa);
+}
+
+/* Raise the reference count of SA.  */
+void
+sa_reference (struct sa *sa)
+{
+  sa->refcnt++;
+}
+
+/* Release a reference to SA.  */
+void
+sa_release (struct sa *sa)
+{
+  struct proto *proto;
+
+  if (--sa->refcnt)
+    return;
+
   while ((proto = TAILQ_FIRST (&sa->protos)) != 0)
     proto_free (proto);
   if (sa->data)
@@ -378,7 +397,6 @@ sa_free_aux (struct sa *sa)
 	sa->doi->free_sa_data (sa->data);
       free (sa->data);
     }
-  LIST_REMOVE (sa, link);
   free (sa);
 }
 
@@ -509,10 +527,25 @@ sa_soft_expire (struct sa *sa)
 {
   sa->soft_death = 0;
 
-  /*
-   * XXX Start to watch the use of this SA, so a renegotiation can
-   * happen as soon as it is shown to be alive.
-   */
+  if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
+      == SA_FLAG_STAYALIVE)
+    {
+      /* If we are already renegotiating, don't start over.  */
+      if (!exchange_lookup_by_name (sa->name, 1))
+	{
+	  sa_reference (sa);
+	  exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced,
+			      sa);
+	}
+    }
+  else
+    {
+      /*
+       * Start to watch the use of this SA, so a renegotiation can
+       * happen as soon as it is shown to be alive.
+       */
+      sa->flags |= SA_FLAG_FADING;
+    }
 }
 
 /* SA has passed its best before date.  */
@@ -520,6 +553,19 @@ void
 sa_hard_expire (struct sa *sa)
 {
   sa->death = 0;
+
+  if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
+      == SA_FLAG_STAYALIVE)
+    {
+      /* If we are already renegotiating, don't start over.  */
+      if (!exchange_lookup_by_name (sa->name, 1))
+	{
+	  sa_reference (sa);
+	  exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced,
+			      sa);
+	}
+    }
+
   sa_delete (sa, 1);
 }
 
@@ -545,13 +591,6 @@ sa_flag (char *attr)
   return 0;
 }
 
-/* Is SA equal to V_SA?  */
-static int
-sa_equal (struct sa *sa, void *v_sa)
-{
-  return sa == v_sa;
-}
-
 /*
  * Mark SA as replaced.  As SA has potentially disappeared before we get
  * called, check if it still exists before marking.
@@ -559,9 +598,7 @@ sa_equal (struct sa *sa, void *v_sa)
 void
 sa_mark_replaced (struct sa *sa)
 {
-  if (sa_find (sa_equal, sa))
-    {
-      log_debug (LOG_MISC, 90, "SA %p marked as replaced", sa);
-      sa->flags |= SA_FLAG_REPLACED;
-    }
+  log_debug (LOG_MISC, 90, "SA %p marked as replaced", sa);
+  sa->flags |= SA_FLAG_REPLACED;
+  sa_release (sa);
 }
