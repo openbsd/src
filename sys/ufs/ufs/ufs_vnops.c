@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.47 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.48 2003/08/11 21:53:10 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -2143,6 +2143,7 @@ bad:
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
+	tvp->v_type = VNON;
 	vput(tvp);
 
 	return (error);
