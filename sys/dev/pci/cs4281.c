@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.7 2001/09/20 17:02:31 mpech Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.8 2001/10/03 00:59:27 kevlo Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 /*
  * Cirrus Logic CS4281 driver.
  * Data sheets can be found
- * http://www.cirrus.com/ftp/pub/4281.pdf
+ * http://www.cirrus.com/pubs/4281.pdf?DocumentID=30
  * ftp://ftp.alsa-project.org/pub/manuals/cirrus/cs4281tm.pdf
  *
  * TODO:
