@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.66 2005/02/12 07:57:18 dlg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.67 2005/02/18 06:53:10 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -146,17 +146,20 @@ Adaptec AWN-8030:Prism-2.5:PCMCIA
 Addtron AWA-100:Prism-2:PCI
 Addtron AWP-100:Prism-2:PCMCIA
 Agere ORiNOCO:Hermes:PCMCIA
+AirVast WM168b:Prism-3:USB
 Ambit WLAN:Prism-3:USB
 Apacer Wireless Steno MB112:Prism-3:USB
 Apple Airport:Hermes:macobio
 ARtem Onair:Hermes:PCMCIA
-Asus SpaceLink WL-100:Prism-2.5:PCMCIA
+ASUS SpaceLink WL-100:Prism-2.5:PCMCIA
+ASUS WL-140:Prism-3:USB
 Belkin F5D6020 (version 1 only):Prism-2:PCMCIA
 Belkin F5D6001 (version 1 only):Prism-2:PCI
 Buffalo AirStation:Prism-2:PCMCIA
 Buffalo AirStation:Prism-2:CF
 Cabletron RoamAbout:Hermes:PCMCIA
 Compaq Agency NC5004:Prism-2:PCMCIA
+Compaq W100:Prism-3:USB
 Contec FLEXLAN/FX-DS110-PCC:Prism-2:PCMCIA
 Corega PCC-11:Prism-2:PCMCIA
 Corega PCCA-11:Prism-2:PCMCIA
@@ -164,8 +167,10 @@ Corega PCCB-11:Prism-2:PCMCIA
 Corega CGWLPCIA11:Prism-2:PCI
 Corega WLUSB-11:Prism-3:USB
 Corega WLUSB-11 Key:Prism-3:USB
-Dlink DWL520 (rev A and B only):Prism-2.5:PCI
-Dlink DWL650 (rev A1-J3 only):Prism-2.5:PCMCIA
+D-Link DWL-120 (rev F):Prism-3:USB
+D-Link DWL-122:Prism-3:USB
+D-Link DWL-520 (rev A and B only):Prism-2.5:PCI
+D-Link DWL-650 (rev A1-J3 only):Prism-2.5:PCMCIA
 ELSA XI300:Prism-2:PCMCIA
 ELSA XI325:Prism-2.5:PCMCIA
 ELSA XI325H:Prism-2.5:PCMCIA
@@ -190,7 +195,9 @@ Linksys WUSB11 v3.0:Prism-3:USB
 Linksys WUSB12:Prism-3:USB
 Longshine 8301:Prism-2:PCI
 Lucent WaveLAN:Hermes:PCMCIA
+Melco WLI-USB-KB11:Prism-3:USB
 Melco WLI-USB-KS11G:Prism-3:USB
+Melco WLI-USB-S11:Prism-3:USB
 Microsoft MN510:Prism-3:USB
 Microsoft MN520:Prism-2.5:PCMCIA
 NANOSPEED ROOT-RZ2000:Prism-2:PCMCIA
@@ -207,6 +214,7 @@ Nortel E-mobility 211818-A:Spectrum24:PCI
 NTT-ME 11Mbps Wireless LAN:Prism-2:PCMCIA
 Pheenet WL-503IA:Prism-3:USB
 Planex GW-NS11H:Prism-3:PCMCIA
+Planex GW-US11H:Prism-3:USB
 Proxim Harmony:Prism-2:PCMCIA
 Proxim RangeLAN-DS:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA
@@ -219,8 +227,12 @@ Symbol Spectrum24:Spectrum24:PCMCIA
 Symbol LA4123:Spectrum24:PCI
 Syntax USB-400:Prism-3:USB
 TDK LAK-CD011WL:Prism-2:PCMCIA
+US Robotics 1120:Prism-3:USB
 US Robotics 2410:Prism-2:PCMCIA
 US Robotics 2445:Prism-2:PCMCIA
+Z-Com XI-725/726:Prism-2.5:USB
+Z-Com XI-735:Prism-3:USB
+ZyXEL ZyAIR B-200:Prism-3:USB
 .TE
 .in -\n(dIu
 .Pp

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.83 2005/02/15 12:07:08 henning Exp $
+dnl	$OpenBSD: hardware,v 1.84 2005/02/18 06:53:10 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -251,18 +251,35 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		USB Adapters
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
+		    AirVast WM168b
+		    Ambit WLAN
+		    Apacer Wireless Steno MB112
+		    ASUS WL-140
+		    Compaq W100
 		    Corega WLUSB-11
+		    Corega WLUSB-11 Key
+		    D-Link DWL-120 (rev F)
+		    D-Link DWL-122
 		    I-O DATA WN-B11/USB
 		    Intel PRO/Wireless 2011B
 		    Intersil Prism 2X
 		    JVC MP-XP7250
 		    Linksys WUSB11 v3.0
 		    Linksys WUSB12
+		    Melco WLI-USB-KB11
 		    Melco WLI-USB-KS11G
+		    Melco WLI-USB-S11
 		    Microsoft MN510
-		    Netgear MA111
+		    Netgear MA111 (version 1)
+		    Pheenet WL-503IA
+		    Planex GW-US11H
 		    Siemens SpeedStream SS1022
+		    Sitecom WL-022
 		    Syntax USB-400
+		    US Robotics 1120
+		    Z-Com XI-725/726
+		    Z-Com XI-735
+		    ZyXEL ZyAIR B-200
 
 	Universal Serial Bus (USB) Devices
 		USB Audio
