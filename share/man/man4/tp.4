@@ -637,8 +637,9 @@ because the
 call had not yet returned a
 legitimate socket descriptor when the signal was handled.
 .Dv ETIMEDOUT
-(or a some other errno value appropriate to the
-type of error) is returned if
+(or a some other
+.Va errno
+value appropriate to the type of error) is returned if
 .Dv SIGURG
 is blocked
 for the duration of the system call.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.20 2000/01/19 15:51:54 aaron Exp $
+.\" $OpenBSD: pcvt.4,v 1.21 2000/01/22 12:00:41 aaron Exp $
 .\"
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -665,7 +665,7 @@ its parameter is a pointer to an integer containing either a value of 80,
 or a value of 132. Note that setting the number of columns to 132 is
 only supported on VGA adaptors. Any unsupported numbers cause the ioctl
 to fail with
-.Em errno
+.Va errno
 .Pq see Xr intro 2
 being set to
 .Em EINVAL .

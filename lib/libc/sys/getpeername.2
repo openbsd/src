@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.12 1999/07/21 07:18:26 kjell Exp $
+.\"	$OpenBSD: getpeername.2,v 1.13 2000/01/22 12:00:42 aaron Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -97,9 +97,13 @@ If the call succeeds, a 0 is returned and
 .Fa namelen
 is set to the actual size of the socket address returned in
 .Fa name .
-Otherwise, errno is set and a value of \-1 is returned.
+Otherwise,
+.Va errno
+is set and a value of \-1 is returned.
 .Sh ERRORS
-On failure, errno is set to one of the following:
+On failure,
+.Va errno
+is set to one of the following:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The argument

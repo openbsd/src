@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.9 1999/07/04 18:59:44 aaron Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.10 2000/01/22 12:00:43 aaron Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -104,7 +104,9 @@ If the mount point is using Kerberos, then the
 .Xr mount_nfs 8
 daemon will return from
 .Fn nfssvc
-with errno set to
+with
+.Va errno
+set to
 .Er ENEEDAUTH
 whenever the client side requires an
 .Dq rcmd
@@ -160,7 +162,9 @@ Whenever an
 .Xr nfsd 8
 daemon receives a Kerberos authentication ticket, it will return from
 .Fn nfssvc
-with errno set to
+with
+.Va errno
+set to
 .Er ENEEDAUTH .
 The
 .Xr nfsd 8

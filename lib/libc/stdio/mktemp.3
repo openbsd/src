@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.18 1999/09/14 06:21:23 pjanzen Exp $
+.\"	$OpenBSD: mktemp.3,v 1.19 2000/01/22 12:00:42 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -290,8 +290,10 @@ using the flags
 .Dv O_EXCL ,
 is better, as long as the code retries a new template if
 .Xr open 2
-fails with an errno of
-.Dv EEXIST .
+fails with an
+.Va errno
+of
+.Er EEXIST .
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr getpid 2 ,
