@@ -1,5 +1,5 @@
 #
-# $OpenBSD: termcap.pcvt,v 1.1 1997/09/06 03:53:59 millert Exp $
+# $OpenBSD: termcap.pcvt,v 1.1 1999/08/06 20:49:08 deraadt Exp $
 #
 pcvtXX|pcvt vt200 emulator (DEC VT220):\
 	:am:km:mi:ms:xn:\

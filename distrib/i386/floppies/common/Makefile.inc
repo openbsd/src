@@ -1,72 +1,123 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1997/09/26 02:09:56 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1999/08/06 20:49:08 deraadt Exp $
 
-# TOP is assumed to be defined by Makefile including this one.
+TOP=		${.CURDIR}/..
 
-CBIN=		instbin
-COMMONDIR=	${TOP}/inst-common
+.include "${TOP}/Makefile.inc"
+IMAGE=		mr.fs
+CBIN?=		instbin
+.if (${KERBEROS} == "yes")
+CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
+.else
+CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}-nokrb.conf
+.endif
+LISTS=		${.CURDIR}/../common/list
 
-MOUNT_POINT?=	/mnt
+MOUNT_POINT=	/mnt
+MTREE=		${.CURDIR}/../common/mtree.conf
+
+XNAME?=		floppy
+FS?=		${XNAME}${REV}.fs
 VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-IMAGE?=		xxx${REV}.fs
+VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE=	/var/tmp/image.${PID}
-MDEC=		${DESTDIR}/usr/mdec
+REALIMAGE!=	echo /var/tmp/image.${PID}
+LISTFLOPPY=	${.CURDIR}/../common/list_floppy
+FLOPPYSIZE?=	144
+FLOPPYTYPE?=	floppy3
 
-LISTS=		${COMMONDIR}/list ${.CURDIR}/list
-.if (${KERBEROS} == "yes")
-CRUNCHCONF=	${COMMONDIR}/${CBIN}-krb.conf
-.else
-CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
-.endif
-MTREE=		${COMMONDIR}/mtree.conf
+all:	${FS}
 
-all: ${CBIN}
-.ifndef FLOPPY3
-	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
+${FS}:	bsd.gz
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy5
-	newfs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV}
-.else
-	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy3
-	newfs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV}
-.endif
+	disklabel -w -r ${VND} ${FLOPPYTYPE}
+	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
+	/usr/mdec/installboot -v -s 18 -h 2 ${MOUNT_POINT}/boot \
+	    ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
+	cp ${REALIMAGE} ${FS}
+	rm ${REALIMAGE}
+
+DISKTYPE?=       rdroot
+NBLKS?=          3510
+# minfree, opt, b/i  trks, sects, cpg
+NEWFSARGS= -m 0 -o space -c 16 -i 4096
+
+bsd.gz: bsd.rd
+	cp bsd.rd bsd.strip
+	strip bsd.strip
+	gzip -c9 bsd.strip > bsd.gz
+
+bsd.rd:	${IMAGE} bsd rdsetroot
+	cp bsd bsd.rd
+	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
+
+
+bsd:
+	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config ${RAMDISK}
+	cd ${.CURDIR}/../../../../sys/arch/i386/compile/${RAMDISK} && \
+	    make clean && COPTS=-Os make
+#	cd ${.CURDIR}/../../../../sys/arch/i386/compile/${RAMDISK} && \
+#	    make clean && make
+	cp ${.CURDIR}/../../../../sys/arch/i386/compile/${RAMDISK}/bsd bsd
+
+${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
+
+rd_setup: ${CBIN}
+	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -r ${VND} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${VND_RDEV}
+	fsck ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+
+rd_teardown:
+	@df -i ${MOUNT_POINT}
+	-umount ${MOUNT_POINT}
+	-vnconfig -u ${VND}
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
+
+rdsetroot:	${TOP}/common/rdsetroot.c
+	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}
 
+.PRECIOUS:	${IMAGE}
+
+install:
+.ifndef NOBSDRD
+	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
+.endif
+	cp ${FS} ${DESTDIR}/snapshot/${FS}
+
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -m ${CBIN}.mk -L ${DESTDIR}/usr/lib \
-		  ${CRUNCHCONF}
+	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
+	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
-.if (${KERBEROS} == "yes")
-	mv ${CBIN}-krb ${CBIN}
-.endif
 
-install:
-	cp ${IMAGE} ${DESTDIR}/snapshot/
+do_files:
+	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk \
-		${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

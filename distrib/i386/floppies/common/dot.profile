@@ -1,5 +1,7 @@
-#       $OpenBSD: dot.upgrutils,v 1.4 1996/04/25 21:28:30 niklas Exp $
+#	$OpenBSD: dot.profile,v 1.1 1999/08/06 20:49:08 deraadt Exp $
+#	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
+# Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 # 
@@ -27,32 +29,55 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-# Upgrade cleanup utilites (functions), to make sure a recently-upgraded
-# system is safely runnable.  These are meant to be invoked from the shell
-# prompt, by people installing OpenBSD.
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
 
-Cleanup()
-{
-	upgrade_dir=/
+umask 022
 
-	if [ ! -f /etc/fstab ]; then
-		upgrade_dir=/mnt
-	fi
+set -o emacs # emacs-style command line editing
 
-	echo	"Cleaning up miscellaneous files in /etc..."
-	mv $upgrade_dir/etc/rc.bak $upgrade_dir/etc/rc
-	chroot $upgrade_dir /usr/sbin/pwd_mkdb -p /etc/master.passwd
-	chroot $upgrade_dir /bin/rm /etc/sendmail.fc > /dev/null 2>&1
-	mv $upgrade_dir/.profile.bak $upgrade_dir/.profile
-	sync
-	echo	"Done."
+# XXX
+# the TERM/EDITOR stuff is really well enough parameterized to be moved
+# into install.sub where it could use the routines there and be invoked
+# from the various (semi) MI install and upgrade scripts
 
-	echo	""
-	echo	"All that's left to do now is to install a new OpenBSD kernel"
-	echo	"on your hard disk.  You should now halt your machine using"
-	echo	"the 'halt' command.  Once the machine is halted, replace the"
-	echo	"installation floppy with the kernel-copy floppy and hit any"
-	echo	"key to reboot.  Use the kernel-copy floppy to copy a kernel"
-	echo	"to your hard disk."
-}
+# editors believed to be in $EDITBIN, smart and dumb defaults
+EDITBIN=/bin
+EDITUBIN=/usr/bin
+
+if [ "X${DONEPROFILE}" = "X" ]; then
+	DONEPROFILE=YES
+
+	# mount kernfs and re-mount the boot media (perhaps r/w)
+	mount_kernfs /kern /kern
+	mount_ffs -o update /dev/rd0a /
+
+	# set up some sane defaults
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+
+	# Installing or upgrading?
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo -n '(I)nstall, (U)pgrade or (S)hell? '
+		read _forceloop
+		case "$_forceloop" in
+			i*|I*)
+				/install
+				;;
+
+			u*|U*)
+				/upgrade
+				;;
+
+			s*|S*)
+				;;
+
+			*)
+				_forceloop=""
+				;;
+		esac
+	done
+fi
