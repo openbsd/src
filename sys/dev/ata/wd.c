@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.29 2003/04/09 00:38:08 ho Exp $ */
+/*	$OpenBSD: wd.c,v 1.30 2003/05/20 03:59:35 tedu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -110,7 +110,7 @@
 
 #define	WDUNIT(dev)		DISKUNIT(dev)
 #define	WDPART(dev)		DISKPART(dev)
-#define WDMINOR(unit, part)     DISKMINOR(unit, part)
+#define WDMINOR(unit, part)	DISKMINOR(unit, part)
 #define	MAKEWDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	WDLABELDEV(dev)	(MAKEWDDEV(major(dev), WDUNIT(dev), RAW_PART))
@@ -178,8 +178,8 @@ int	wdprobe(struct device *, struct cfdata *, void *);
 int	wdprobe(struct device *, void *, void *);
 #endif
 void	wdattach(struct device *, struct device *, void *);
-int     wddetach(struct device *, int);
-int     wdactivate(struct device *, enum devact);
+int	wddetach(struct device *, int);
+int	wdactivate(struct device *, enum devact);
 void    wdzeroref(struct device *);
 int	wdprint(void *, char *);
 
@@ -393,33 +393,33 @@ wdattach(parent, self, aux)
 
 int
 wdactivate(self, act)
-        struct device *self;
-        enum devact act;
+	struct device *self;
+	enum devact act;
 {
-        int rv = 0;
+	int rv = 0;
 
-        switch (act) {
-        case DVACT_ACTIVATE:
-                break;
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
 
-        case DVACT_DEACTIVATE:
-                /*
-                 * Nothing to do; we key off the device's DVF_ACTIVATE.
-                 */
-                break;
-        }
-        return (rv);
+	case DVACT_DEACTIVATE:
+		/*
+		* Nothing to do; we key off the device's DVF_ACTIVATE.
+		*/
+		break;
+	}
+	return (rv);
 }
 
 
 int
 wddetach(self, flags)
-        struct device *self;
-        int flags;
+	struct device *self;
+	int flags;
 {
-        struct wd_softc *sc = (struct wd_softc *)self;
-        struct buf *dp, *bp;
-        int s, bmaj, cmaj, mn;
+	struct wd_softc *sc = (struct wd_softc *)self;
+	struct buf *dp, *bp;
+	int s, bmaj, cmaj, mn;
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
@@ -432,14 +432,14 @@ wddetach(self, flags)
 	}
 	splx(s);
 
-        /* locate the major number */
-        mn = WDMINOR(self->dv_unit, 0);
+	/* locate the major number */
+	mn = WDMINOR(self->dv_unit, 0);
 
-        for (bmaj = 0; bmaj < nblkdev; bmaj++)
-                if (bdevsw[bmaj].d_open == wdopen)
+	for (bmaj = 0; bmaj < nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == wdopen)
 			vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
-        for (cmaj = 0; cmaj < nchrdev; cmaj++)
-                if (cdevsw[cmaj].d_open == wdopen)
+	for (cmaj = 0; cmaj < nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == wdopen)
 			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
 
 	/* Get rid of the shutdown hook. */
@@ -447,21 +447,21 @@ wddetach(self, flags)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
 #if NRND > 0
-        /* Unhook the entropy source. */
-        rnd_detach_source(&sc->rnd_source);
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->rnd_source);
 #endif
 
-        return (0);
+	return (0);
 }
 
 void
 wdzeroref(self)
-        struct device *self;
+	struct device *self;
 {
-        struct wd_softc *sc = (struct wd_softc *)self;
+	struct wd_softc *sc = (struct wd_softc *)self;
 
-        /* Detach disk. */
-        disk_detach(&sc->sc_dk);
+	/* Detach disk. */
+	disk_detach(&sc->sc_dk);
 }
 
 /*
@@ -761,7 +761,7 @@ wdopen(dev, flag, fmt, p)
 
 			/* Load the partition info if not already loaded. */
 			wdgetdisklabel(dev, wd, wd->sc_dk.dk_label,
-				       wd->sc_dk.dk_cpulabel, 0);
+			    wd->sc_dk.dk_cpulabel, 0);
 		}
 	}
 
