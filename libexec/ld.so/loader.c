@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.68 2003/09/04 19:33:48 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.69 2003/10/03 23:03:37 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -349,6 +349,17 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Do not run init code if run from ldd.
 	 */
 	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL)) {
+		const Elf_Sym *sym;
+		Elf_Addr ooff;
+
+		sym = NULL;
+		ooff = _dl_find_symbol("environ", _dl_objects, &sym,
+		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
+		if (sym == NULL)
+			_dl_printf("cannot find environ, env will not be set up for atexit!\n");
+		else
+			*((char ***)(sym->st_value + ooff)) = envp;
+
 		_dl_objects->status |= STAT_INIT_DONE;
 		_dl_call_init(_dl_objects);
 	}
