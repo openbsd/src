@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.8 2002/06/24 17:04:46 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.9 2002/07/08 14:59:52 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -471,7 +471,7 @@
 
 04/21	Tiradentes in Brazil
 04/25	Anniversary of the Revolution in Portugal
-04/29	Emperor's Birthday in Japan
+04/29	Greenary day in Japan
 04/30	Queen's Birthday in Netherlands, Netherlands Antilles
 05/01	Boy's day in Japan
 05/02	King's Birthday in Lesotho
@@ -571,6 +571,7 @@
 12/08	Blessing of the Water in Uruguay
 12/08	Our Lady of the Cacupe in Paraguay
 12/10	Foundation of Worker's Party in Angola
+12/23	Emperor's Birthday in Japan
 12/25	Birthday of Quaid-i-Azam in Pakistan
 12/26	Feast of Our Theotokos in Greece
 12/29	His Majesty, the King's Birthday in Nepal
