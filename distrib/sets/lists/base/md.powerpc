@@ -687,6 +687,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/hifn7751var.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_levar.ph
@@ -1752,3 +1754,6 @@
 ./usr/share/info/ld.info-3
 ./usr/share/info/ld.info-4
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/kgdb.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ezload.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ugraphire_rdesc.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uyap_firmware.ph

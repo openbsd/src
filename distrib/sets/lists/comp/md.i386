@@ -36,8 +36,6 @@
 ./usr/include/i386/pcb.h
 ./usr/include/i386/pccons.h
 ./usr/include/i386/pctr.h
-./usr/include/i386/pcvt_ioctl.h
-./usr/include/i386/pcvt_mouse.h
 ./usr/include/i386/pio.h
 ./usr/include/i386/pmap.h
 ./usr/include/i386/proc.h
@@ -73,7 +71,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/cc1obj
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/cc1plus
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/collect2
-./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/cpp
+./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/f771
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/fpic
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/fpic/libgcc.a
@@ -105,9 +103,6 @@
 ./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
 ./usr/lib/libkdb_pic.a
-./usr/lib/libkeycap.a
-./usr/lib/libkeycap_p.a
-./usr/lib/libkeycap_pic.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a

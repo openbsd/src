@@ -447,3 +447,6 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/kgdb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ezload.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ugraphire_rdesc.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uyap_firmware.ph

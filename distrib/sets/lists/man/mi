@@ -302,16 +302,8 @@
 ./usr/share/man/cat1/htdigest.0
 ./usr/share/man/cat1/htpasswd.0
 ./usr/share/man/cat1/i386
-./usr/share/man/cat1/i386/cursor.0
 ./usr/share/man/cat1/i386/fdformat.0
-./usr/share/man/cat1/i386/fed.0
-./usr/share/man/cat1/i386/fontedit.0
-./usr/share/man/cat1/i386/kcon.0
-./usr/share/man/cat1/i386/loadfont.0
 ./usr/share/man/cat1/i386/pctr.0
-./usr/share/man/cat1/i386/scon.0
-./usr/share/man/cat1/i386/vt220keys.0
-./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
@@ -997,6 +989,7 @@
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/hifn.0
+./usr/share/man/cat4/ises.0
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp300/autoconf.0
 ./usr/share/man/cat4/hp300/cons.0
@@ -1040,7 +1033,6 @@
 ./usr/share/man/cat4/i386/npx.0
 ./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pctr.0
-./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/psm.0
 ./usr/share/man/cat4/i386/pss.0
@@ -1050,7 +1042,6 @@
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
-./usr/share/man/cat4/i386/vt.0
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
@@ -1374,7 +1365,6 @@
 ./usr/share/man/cat5/hp300
 ./usr/share/man/cat5/hppa
 ./usr/share/man/cat5/i386
-./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/info.0
 ./usr/share/man/cat5/inode.0
@@ -1588,7 +1578,6 @@
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/fdisk.0
 ./usr/share/man/cat8/i386/installboot.0
-./usr/share/man/cat8/i386/ispcvt.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/moused.0
@@ -2038,3 +2027,7 @@
 ./var/www/htdocs/manual/win_service.html
 ./usr/share/man/cat8/powerpc/MAKEDEV.0
 ./usr/share/man/cat8/powerpc/makedev.0
+./usr/share/man/cat8/security.0
+./usr/share/man/cat4/usscanner.0
+./usr/share/man/cat4/uyap.0
+./usr/share/man/cat4/upl.0

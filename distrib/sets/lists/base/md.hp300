@@ -698,6 +698,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751var.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_levar.ph
@@ -1767,3 +1769,6 @@
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/kgdb.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ezload.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ugraphire_rdesc.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uyap_firmware.ph

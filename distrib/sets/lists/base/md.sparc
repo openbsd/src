@@ -365,6 +365,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751var.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_levar.ph
@@ -1757,3 +1759,6 @@
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kgdb.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ezload.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ugraphire_rdesc.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uyap_firmware.ph

@@ -71,7 +71,7 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1obj
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1plus
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/collect2
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cpp
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/f771
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/ieee
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/ieee/libgcc.a

@@ -308,6 +308,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/hifn7751var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_levar.ph
@@ -1694,3 +1696,6 @@
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kgdb.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ezload.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ugraphire_rdesc.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uyap_firmware.ph

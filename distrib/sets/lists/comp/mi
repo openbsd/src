@@ -337,6 +337,8 @@
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/pci/if_wxreg.h
 ./usr/include/dev/pci/if_wxvar.h
+./usr/include/dev/pci/isesreg.h
+./usr/include/dev/pci/isesvar.h
 ./usr/include/dev/pci/maestro_reg.h
 ./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/neo-coeff.h
@@ -480,6 +482,7 @@
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/usb
+./usr/include/dev/usb/ezload.h
 ./usr/include/dev/usb/hid.h
 ./usr/include/dev/usb/if_auereg.h
 ./usr/include/dev/usb/if_cuereg.h
@@ -489,6 +492,7 @@
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h
 ./usr/include/dev/usb/ucomvar.h
+./usr/include/dev/usb/ugraphire_rdesc.h
 ./usr/include/dev/usb/uhcireg.h
 ./usr/include/dev/usb/uhcivar.h
 ./usr/include/dev/usb/ukbdvar.h
@@ -504,6 +508,7 @@
 ./usr/include/dev/usb/usbdi_util.h
 ./usr/include/dev/usb/usbdivar.h
 ./usr/include/dev/usb/usbhid.h
+./usr/include/dev/usb/uyap_firmware.h
 ./usr/include/dev/vndioctl.h
 ./usr/include/dev/wscons
 ./usr/include/dev/wscons/ascii.h
@@ -1183,6 +1188,7 @@
 ./usr/include/sys/ipc.h
 ./usr/include/sys/kcore.h
 ./usr/include/sys/kernel.h
+./usr/include/sys/kgdb.h
 ./usr/include/sys/kthread.h
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/lkm.h
@@ -2814,11 +2820,6 @@
 ./usr/share/man/cat3/i2d_Netscape_RSA.0
 ./usr/share/man/cat3/i2d_RSAPrivateKey.0
 ./usr/share/man/cat3/i2d_RSAPublicKey.0
-./usr/share/man/cat3/i386/keycap.0
-./usr/share/man/cat3/i386/kgetent.0
-./usr/share/man/cat3/i386/kgetflag.0
-./usr/share/man/cat3/i386/kgetnum.0
-./usr/share/man/cat3/i386/kgetstr.0
 ./usr/share/man/cat3/idcok.0
 ./usr/share/man/cat3/idlok.0
 ./usr/share/man/cat3/ieee.0
@@ -4063,4 +4064,3 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
-./usr/include/sys/kgdb.h
