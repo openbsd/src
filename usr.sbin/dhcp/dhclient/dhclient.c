@@ -115,6 +115,8 @@ static int ipv4addrs(char * buf);
 
 static int res_hnok(const char *dn);
 
+char *option_as_string (unsigned int code, unsigned char *data, int len);
+
 int main (argc, argv, envp)
 	int argc;
 	char **argv, **envp;
@@ -2271,11 +2273,16 @@ void write_client_pid_file ()
 
 int check_option (struct client_lease *l, int option) {
 	char *opbuf;
+	char *sbuf;
 	
 	/* we use this, since this is what gets passed to dhclient-script */
 	
-	opbuf = pretty_print_option (option, l->options[option].data,
-				     l->options[option].len, 0, 0);
+	opbuf = pretty_print_option(option, l->options[option].data,
+	    l->options[option].len, 0, 0);
+
+	sbuf = option_as_string(option, l->options[option].data,
+	    l->options[option].len);
+	
 	switch(option) {
 	case DHO_SUBNET_MASK :
 	case DHO_TIME_SERVERS :
@@ -2294,8 +2301,10 @@ int check_option (struct client_lease *l, int option) {
 	case DHO_NETBIOS_NAME_SERVERS :
 	case DHO_NETBIOS_DD_SERVER :
 	case DHO_FONT_SERVERS : 
-		/* These should be a list of one or more IP addresses, separated 
-		 * by spaces. If they aren't, this lease is not valid.
+	case DHO_DHCP_SERVER_IDENTIFIER :
+		/* These should be a list of one or more IP addresses,
+		 * separated by spaces. If they aren't, this lease is not
+		 * valid.
 		 */
 		if (!ipv4addrs(opbuf)) {
 			warn("Invalid IP address in option: %s", opbuf);
@@ -2305,11 +2314,11 @@ int check_option (struct client_lease *l, int option) {
 	case DHO_HOST_NAME :
 	case DHO_DOMAIN_NAME :
 	case DHO_NIS_DOMAIN :
-	case DHO_DHCP_SERVER_IDENTIFIER :
 		/* This has to be a valid internet domain name */
-		if (!res_hnok(opbuf)) {
-			warn("Bogus name option: %s", opbuf);
-			return(0);
+		if (!res_hnok(sbuf)) {
+			warn("Bogus Host Name option %d: %s (%s)", option,
+			    sbuf, option);
+			return(1);
 		}
 		return(1);
 	case DHO_PAD :
@@ -2407,4 +2416,50 @@ int ipv4addrs(char * buf) {
 			buf++;
 	}
 	return(0);
+}
+
+
+/* Format the specified option as a string */
+
+char *option_as_string (unsigned int code, unsigned char *data, int len)
+{
+	static char optbuf [32768]; /* XXX */
+	char *op = optbuf;
+	int opleft = sizeof(optbuf);
+	unsigned char *dp = data;
+
+	/* Code should be between 0 and 255. */
+	if (code > 255)
+		error ("option_as_string: bad code %d\n", code);
+
+	for (; dp < data + len; dp++) {
+		if (!isascii (*dp) ||
+		    !isprint (*dp)) {
+			if (dp + 1 != data + len ||
+			    *dp != 0) {
+				snprintf(op, opleft,
+				    "\\%03o", *dp);
+				op += 4;
+				opleft -= 4;
+			}
+		} else if (*dp == '"' ||
+		    *dp == '\'' ||
+		    *dp == '$' ||
+		    *dp == '`' ||
+		    *dp == '\\') {
+			*op++ = '\\';
+			*op++ = *dp;
+			opleft -= 2;
+		} else {
+			*op++ = *dp;
+			opleft--;
+		}
+	}
+	if (opleft < 1)
+		goto toobig;
+	*op = 0;
+	return optbuf;
+ toobig:
+	warn ("dhcp option too large");
+	return "<error>";			  
 }
