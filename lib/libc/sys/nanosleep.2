@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.4 1999/06/29 14:10:10 aaron Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.5 1999/08/31 16:52:35 aaron Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -50,7 +50,7 @@ suspends execution of the calling process for the time specified. An unmasked
 signal will cause it to terminate the sleep early, regardless of the
 .Dv SA_RESTART
 value on the interrupting signal.
-.Sh RETURN VALUE
+.Sh RETURN VALUES
 If the
 .Fn nanosleep
 function returns because the requested time has elapsed, the value
