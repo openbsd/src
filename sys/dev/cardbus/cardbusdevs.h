@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.6 2000/10/26 22:27:35 deraadt Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.7 2000/11/06 23:53:47 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.6 2000/10/26 22:27:28 deraadt Exp 
+ *	OpenBSD: cardbusdevs,v 1.7 2000/11/06 23:52:58 mickey Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -84,6 +84,7 @@
 #define	CARDBUS_PRODUCT_INTEL_82557	0x1229		/* 82557 */
 /* XXX product name? */
 #define	CARDBUS_PRODUCT_INTEL_MODEM56	0x1002		/* Modem */
+#define	CARDBUS_PRODUCT_INTEL_DFE660	0x7192		/* DFE-660 */
 
 /* Opti products */
 #define	CARDBUS_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
