@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.32 1998/10/04 01:37:55 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.33 1999/05/09 20:41:48 weingart Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -1084,18 +1084,29 @@ sdsize(dev)
 	dev_t dev;
 {
 	struct sd_softc *sd;
-	int part;
+	int part, unit, omask;
 	int size;
 
-	if (sdopen(dev, 0, S_IFBLK, NULL) != 0)
+	unit = SDUNIT(dev);
+	if (unit >= sd_cd.cd_ndevs)
 		return -1;
-	sd = sd_cd.cd_devs[SDUNIT(dev)];
+	sd = sd_cd.cd_devs[unit];
+	if (sd == NULL)
+		return -1;
+
 	part = SDPART(dev);
-	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	omask = sd->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0)
+		return -1;
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+		size = -1;
+	else if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = sd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (sdclose(dev, 0, S_IFBLK, NULL) != 0)
+		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
+			(sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
