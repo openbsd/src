@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.287 2003/12/31 11:18:25 cedric Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.288 2003/12/31 14:09:57 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1218,7 +1218,7 @@ Translates to the network(s) attached to the interface.
 .It Ar :broadcast
 Translates to the interface's broadcast address(es).
 .It Ar :peer
-Translatee to the point to point interface's peer address(es).
+Translates to the point to point interface's peer address(es).
 .It Ar :0
 Do not include interface aliases.
 .El
@@ -1665,13 +1665,13 @@ The default policy is specified by the
 global option, but this can be adjusted on a per-rule basis by adding one
 of the
 .Ar if-bound ,
-.Ar group-bound 
+.Ar group-bound
 or
 .Ar floating
-keyword to the
+keywords to the
 .Ar keep state
 option.
-For example, if a rule is defined as a rule as:
+For example, if a rule is defined as:
 .Bd -literal -offset indent
 pass out on ppp from any to 10.12/16 keep state (group-locked)
 .Ed
