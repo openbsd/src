@@ -1,5 +1,4 @@
 stdin:1: scrub rules do not support 'quick'
-stdin:2: scrub rules do not support '! <if>'
 stdin:3: no-df cannot be respecified
 stdin:4: min-ttl cannot be respecified
 stdin:5: illegal min-ttl value 256
@@ -9,3 +8,4 @@ stdin:8: fragcache cannot be respecified
 stdin:9: fragcache cannot be respecified
 stdin:10: fragcache cannot be respecified
 stdin:11: random-id cannot be respecified
+scrub in on ! lo0 all fragment reassemble

@@ -1,3 +1,1 @@
-stdin:1: dynamic addresses require address family (inet/inet6)
-stdin:1: skipping rule due to errors
-stdin:1: rule expands to no valid combination
+block drop in on lo0 from ! (lo0) to any

@@ -1,5 +1,1 @@
-stdin:2: unknown interface gif3
-stdin:3: queue eins has no parent
-stdin:3: errors in queue definition
-stdin:4: queue zwei has no parent
-stdin:4: errors in queue definition
+pfctl: SIOCGIFMTU: Device not configured

@@ -1,24 +1,24 @@
-@0 pass inet6 from (lo0) to ::1
-  [ Skip steps: i=end d=end f=3 p=end sa=3 sp=end dp=end ]
+@0 pass inet6 from (lo0:2) to ::1
+  [ Skip steps: i=end d=end f=3 p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass inet6 from (lo0) to ::2
-  [ Skip steps: i=end d=end f=3 p=end sa=3 sp=end dp=end ]
+@1 pass inet6 from (lo0:2) to ::2
+  [ Skip steps: i=end d=end f=3 p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass inet6 from (lo0) to ::3
-  [ Skip steps: i=end d=end p=end sp=end dp=end ]
+@2 pass inet6 from (lo0:2) to ::3
+  [ Skip steps: i=end d=end p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass inet from (lo0) to 0.0.0.1
+@3 pass inet from (lo0:1) to 0.0.0.1
   [ Skip steps: i=end d=end f=6 p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass inet from (lo0) to 0.0.0.2
+@4 pass inet from (lo0:1) to 0.0.0.2
   [ Skip steps: i=end d=end f=6 p=end sa=6 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass inet from (lo0) to 0.0.0.3
+@5 pass inet from (lo0:1) to 0.0.0.3
   [ Skip steps: i=end d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

@@ -58,11 +58,11 @@
   [ Skip steps: i=18 d=29 p=end sp=43 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 scrub in log on lo0 inet6 proto tcp from (lo1000000) to 2000::1 fragment reassemble
+@15 scrub in log on lo0 inet6 proto tcp from (lo1000000:*) to 2000::1 fragment reassemble
   [ Skip steps: i=18 d=29 f=17 p=end sp=43 da=17 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 scrub in log on lo0 inet6 proto tcp from (lo0) to 2000::1 fragment reassemble
+@16 scrub in log on lo0 inet6 proto tcp from (lo0:2) to 2000::1 fragment reassemble
   [ Skip steps: i=18 d=29 p=end sp=43 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -110,7 +110,7 @@
   [ Skip steps: i=30 d=29 p=end sp=43 da=31 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@28 scrub in on lo0 inet proto tcp from (lo0) to any fragment reassemble
+@28 scrub in on lo0 inet proto tcp from (lo0:1) to any fragment reassemble
   [ Skip steps: i=30 p=end sp=43 da=31 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -170,11 +170,11 @@
   [ Skip steps: i=46 d=62 p=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@43 scrub in log on lo0 inet6 proto tcp from (lo1000000) port = www to 2000::1 fragment reassemble
+@43 scrub in log on lo0 inet6 proto tcp from (lo1000000:*) port = www to 2000::1 fragment reassemble
   [ Skip steps: i=46 d=62 f=45 p=end sp=48 da=45 dp=49 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@44 scrub in log on lo0 inet6 proto tcp from (lo0) port = www to 2000::1 fragment reassemble
+@44 scrub in log on lo0 inet6 proto tcp from (lo0:2) port = www to 2000::1 fragment reassemble
   [ Skip steps: i=46 d=62 p=end sp=48 dp=49 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -242,7 +242,7 @@
   [ Skip steps: i=63 d=62 p=end da=63 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@61 scrub in on lo0 inet proto tcp from (lo0) port = www to any fragment reassemble
+@61 scrub in on lo0 inet proto tcp from (lo0:1) port = www to any fragment reassemble
   [ Skip steps: i=63 p=end da=63 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

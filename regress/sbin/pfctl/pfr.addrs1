@@ -7,7 +7,7 @@
 ::5 fe80::/16 2000::1
 
 # interfaces
-lo0 lo0/24 lo0:broadcast lo0:network
+lo0 lo0/24 lo0:network
 
 # name resolution
 localhost
