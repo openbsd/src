@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.8 1996/10/23 01:28:56 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.9 1996/10/31 03:22:10 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.8 1996/10/23 01:28:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.9 1996/10/31 03:22:10 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -403,6 +403,16 @@ main(argc, argv)
 	/* Destroy environment unless user has requested its preservation. */
 	if (!pflag)
 		environ = envinit;
+	else {
+		char **cpp, **cpp2;
+
+		for (cpp2 = cpp = environ; *cpp; cpp++) {
+			if (strncmp(*cpp, "LD_", 3) &&
+			    strncmp(*cpp, "IFS=", 4))
+				*cpp2++ = *cpp;
+		}
+		*cpp2 = 0;
+	}
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
 	if (term[0] == '\0')
