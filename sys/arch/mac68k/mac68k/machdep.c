@@ -76,7 +76,7 @@
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include <param.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
