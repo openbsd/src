@@ -1,4 +1,4 @@
-/* $OpenBSD: isa_machdep.c,v 1.7 2000/11/16 04:33:47 ericj Exp $ */
+/* $OpenBSD: isa_machdep.c,v 1.8 2001/08/08 15:21:28 millert Exp $ */
 /* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
@@ -44,7 +44,7 @@
 
 #include <dev/isa/isavar.h>
 
-#include "vga_isa.h"
+#include "vga.h"
 #if NVGA_ISA
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
