@@ -13,7 +13,7 @@ of the ones that have been tried and seem to work are:
 That done, use your favorite partitioning utility to make
 at least one A/UX "Root & Usr" partition and an A/UX "Swap"
 partition.  The "Root & Usr" partition should be _at least_
-50MB in size if you wish to install all the sets.  This partition
+80MB in size if you wish to install all the sets.  This partition
 will be the root partition of your OpenBSD system.
 
 Generally, you should allocate twice as much swap space as you have real
@@ -26,5 +26,12 @@ If you like, you can also create a smaller root partition
 and a larger /usr.  If you plan to use this machine as a
 server, you may also want a separate /var.  Create these
 partitions as the BSD "usr" or "User slice X" type.
+
+It is also possible to use the Mkfs utility to "convert" partitions from
+MacOS partitions to BSD partitions.  Mkfs will be discussed in more detail
+later, but it is also very possible to simply prepare your hard drive by
+partitioning it with MacOS partitions of the correct size.  If you do this,
+simply select the "Convert" button when choosing partitions to build a
+filesystem on in Mkfs (see below).
 
 You are now set to install OpenBSD on your hard drive.
