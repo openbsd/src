@@ -1,10 +1,11 @@
-/*	$OpenBSD: ike_auth.c,v 1.33 2001/01/26 19:12:38 markus Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.34 2001/01/26 21:49:37 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,6 +68,7 @@
 #include "prf.h"
 #include "transport.h"
 #include "util.h"
+#include "dnssec.h"
 
 #ifdef notyet
 static u_int8_t *enc_gen_skeyid (struct exchange *, size_t *);
@@ -545,7 +547,7 @@ rsa_sig_decode_hash (struct message *msg)
   struct payload *p;
   void *cert;
   u_int8_t *rawcert = NULL;
-  u_int32_t rawlen;
+  u_int32_t rawcertlen;
   RSA *key;
   size_t hashsize = ie->hash->hashsize;
   char header[80];
@@ -555,6 +557,10 @@ rsa_sig_decode_hash (struct message *msg)
   u_int32_t *id_cert_len;
   size_t id_len;
   int found = 0, n, i, id_found;
+#if defined(USE_DNSSEC)
+  u_int8_t *rawkey = NULL;
+  u_int32_t rawkeylen;
+#endif
 
   /* Choose the right fields to fill-in.  */
   hash_p = initiator ? &ie->hash_r : &ie->hash_i;
@@ -598,11 +604,11 @@ rsa_sig_decode_hash (struct message *msg)
 #endif /* USE_POLICY || USE_KEYNOTE */
 
   /* Obtain a certificate from our certificate storage */
-  if (handler->cert_obtain (id, id_len, 0, &rawcert, &rawlen))
+  if (handler->cert_obtain (id, id_len, 0, &rawcert, &rawcertlen))
     {
       if (handler->id == ISAKMP_CERTENC_X509_SIG)
         {
-	  cert = handler->cert_get (rawcert, rawlen);
+	  cert = handler->cert_get (rawcert, rawcertlen);
 	  if (!cert)
 	    LOG_DBG ((LOG_CRYPTO, 50,
 		      "rsa_sig_decode_hash: certificate malformed"));
@@ -748,7 +754,26 @@ rsa_sig_decode_hash (struct message *msg)
       found++;
     }
 
-  /* If no certificate provided a key, try the config file.  */
+  /* If no certificate provided a key, try to find a validated DNSSEC KEY. */
+#if defined(USE_DNSSEC)
+  if (!found)
+    {
+      rawkey = dns_get_key (IKE_AUTH_RSA_SIG, msg, &rawkeylen);
+      if (rawkey)
+	found++;
+      
+      /* We need to convert 'void *rawkey' into 'RSA *key'. */
+      if (dns_RSA_dns_to_x509 (rawkey, rawkeylen, &key) == -1)
+	{
+	  log_print ("rsa_sig_decode_hash: KEY to RSA key conversion failed");
+	  free (rawkey);
+	  return -1;
+	}
+      free (rawkey);
+    }
+#endif /* USE_DNSSEC */
+
+  /* If we still have not found a key, try the config file.  */
   if (!found)
     {
 #ifdef notyet

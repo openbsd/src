@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2000/10/16 23:28:32 niklas Exp $
+#	$OpenBSD: Makefile,v 1.30 2001/01/26 21:49:36 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -52,6 +52,7 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug gmp
+#FEATURES+=	dnssec
 FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug
 #FEATURES=
 
@@ -151,6 +152,14 @@ LDADD+=		-lgmp
 DPADD+=		${LIBGMP}
 .else
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
+.endif
+
+.if ${FEATURES:Mdnssec} == "dnssec"
+LIBLWRES=	/usr/local/lib/liblwres.a
+CFLAGS+=	-I/usr/local/include
+LDADD+=		${LIBLWRES}
+DPADD+=		${LIBLWRES}
+SRCS+=		dnssec.c
 .endif
 
 .ifdef HAVE_DLOPEN
