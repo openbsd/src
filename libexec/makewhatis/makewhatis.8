@@ -1,5 +1,5 @@
-.\"	$OpenBSD: makewhatis.8,v 1.1 1997/11/05 19:20:47 deraadt Exp $
-.\"	$NetBSD: makewhatis.8,v 1.2 1997/10/20 02:41:18 enami Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.2 1997/11/13 04:40:14 millert Exp $
+.\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -53,7 +53,8 @@ for use in
 .Xr apropos 1
 or with
 .Xr man 1 's
--k option.
+.Fl k
+option.
 If
 .Ar manpath
 is unspecified,
@@ -64,12 +65,12 @@ Man pages compressed with
 and
 .Xr gzip 1
 are uncompressed before processing, unformatted man pages
-will be formatted on the fly.
+will be processed by
+.Xr getNAME 8 .
 .Sh BUGS
 .Nm
 should find its search paths using /etc/man.conf
 .Sh SEE ALSO
 .Xr man 1 ,
-.Xr man.conf 5
-.Sh AUTHOR
-J.T. Conklin (jtc@netbsd.org)
+.Xr man.conf 5 ,
+.Xr getNAME 8
