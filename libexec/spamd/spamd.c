@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.28 2003/03/28 20:35:24 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.29 2003/03/30 01:50:21 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -72,6 +72,7 @@ struct con {
 
 	int obufalloc;
 	char *obuf;
+	char *lists;
 	size_t osize;
 	char *op;
 	int ol;
@@ -532,6 +533,10 @@ closecon(struct con *cp)
 		time(&t);
 		printf("%s connected for %d seconds.\n", cp->addr, t - cp->s);
 	}
+	if (cp->lists != NULL) {
+		free(cp->lists);	  
+		cp->lists = NULL;
+	}
 	if (cp->osize > 0 && cp->obufalloc) {
 		free(cp->obuf);
 		cp->obuf = NULL;
@@ -625,14 +630,16 @@ nextstate(struct con *cp)
 
 	spam:
 	case 50:
-		syslog_r(LOG_INFO, &sdata, "%s: %s -> %s %ldsec by lists:%s",
-		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s), doreply(cp));
+		cp->lists = strdup(doreply(cp));
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
 		cp->state = 99;
 		cp->w = t + 1;
 		break;
 	case 99:
+		syslog_r(LOG_INFO, &sdata, "%s: %s -> %s %ldsec by lists:%s",
+		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s), 
+		    (cp->lists != NULL) ? cp->lists : "");
 		closecon(cp);
 		break;
 	default:
