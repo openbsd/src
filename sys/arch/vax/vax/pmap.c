@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2000/04/27 01:10:13 bjc Exp $ */
+/*	$OpenBSD: pmap.c,v 1.12 2000/10/11 11:40:17 bjc Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -750,6 +750,7 @@ if (startpmapdebug)
 	/* No mapping change. Can this happen??? */
 	if (newpte == oldpte) {
 		RECURSEEND;
+		mtpr(0, PR_TBIA); /* Always; safety belt */
 		return;
 	}
 
@@ -787,6 +788,9 @@ if (startpmapdebug)
 	}
 	pmap->pm_stats.resident_count++;
 
+	if(wired) 
+		newpte |= PG_W;
+
 	if (access_type & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
 		newpte |= PG_V;
@@ -811,6 +815,7 @@ if (startpmapdebug)
 	if (pventries < 10)
 		more_pventries();
 
+	mtpr(0, PR_TBIA); /* Always; safety belt */
 	return;
 }
 
