@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.58 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.59 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -764,13 +764,13 @@ mi_switch()
 	/*
 	 * Compute the amount of time during which the current
 	 * process was running, and add that to its total so far.
-	 * XXX -- comparing wall time with uptime here!
+	 * XXX - use microuptime here to avoid strangeness.
 	 */
-	microtime(&tv);
+	microuptime(&tv);
 #ifdef __HAVE_CPUINFO
 	if (timercmp(&tv, &spc->spc_runtime, <)) {
 #if 0
-		printf("time is not monotonic! "
+		printf("uptime is not monotonic! "
 		    "tv=%lu.%06lu, runtime=%lu.%06lu\n",
 		    tv.tv_sec, tv.tv_usec, spc->spc_runtime.tv_sec,
 		    spc->spc_runtime.tv_usec);
@@ -782,7 +782,7 @@ mi_switch()
 #else
 	if (timercmp(&tv, &runtime, <)) {
 #if 0
-		printf("time is not monotonic! "
+		printf("uptime is not monotonic! "
 		    "tv=%lu.%06lu, runtime=%lu.%06lu\n",
 		    tv.tv_sec, tv.tv_usec, runtime.tv_sec, runtime.tv_usec);
 #endif
@@ -837,9 +837,9 @@ mi_switch()
 #ifdef __HAVE_CPUINFO
 	KDASSERT(p->p_cpu != NULL);
 	KDASSERT(p->p_cpu == curcpu());
-	microtime(&p->p_cpu->ci_schedstate.spc_runtime);
+	microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
 #else
-	microtime(&runtime);
+	microuptime(&runtime);
 #endif
 
 #if defined(MULTIPROCESSOR)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.18 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: time.h,v 1.19 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -127,6 +127,95 @@ struct timezone {
 		}							\
 	} while (0)
 
+/* Time expressed as seconds and fractions of a second + operations on it. */
+struct bintime {
+	time_t	sec;
+	uint64_t frac;
+};
+
+static __inline void
+bintime_addx(struct bintime *bt, uint64_t x)
+{
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac += x;
+	if (u > bt->frac)
+		bt->sec++;
+}
+
+static __inline void
+bintime_add(struct bintime *bt, struct bintime *bt2)
+{
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac += bt2->frac;
+	if (u > bt->frac)
+		bt->sec++;
+	bt->sec += bt2->sec;
+}
+
+static __inline void
+bintime_sub(struct bintime *bt, struct bintime *bt2)
+{
+	uint64_t u;
+
+	u = bt->frac;
+	bt->frac -= bt2->frac;
+	if (u < bt->frac)
+		bt->sec--;
+	bt->sec -= bt2->sec;
+}
+
+/*-
+ * Background information:
+ *
+ * When converting between timestamps on parallel timescales of differing
+ * resolutions it is historical and scientific practice to round down rather
+ * than doing 4/5 rounding.
+ *
+ *   The date changes at midnight, not at noon.
+ *
+ *   Even at 15:59:59.999999999 it's not four'o'clock.
+ *
+ *   time_second ticks after N.999999999 not after N.4999999999
+ */
+
+static __inline void
+bintime2timespec(struct bintime *bt, struct timespec *ts)
+{
+
+	ts->tv_sec = bt->sec;
+	ts->tv_nsec = ((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32;
+}
+
+static __inline void
+timespec2bintime(struct timespec *ts, struct bintime *bt)
+{
+
+	bt->sec = ts->tv_sec;
+	/* 18446744073 = int(2^64 / 1000000000) */
+	bt->frac = ts->tv_nsec * (uint64_t)18446744073LL; 
+}
+
+static __inline void
+bintime2timeval(struct bintime *bt, struct timeval *tv)
+{
+
+	tv->tv_sec = bt->sec;
+	tv->tv_usec = ((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32;
+}
+
+static __inline void
+timeval2bintime(struct timeval *tv, struct bintime *bt)
+{
+
+	bt->sec = tv->tv_sec;
+	/* 18446744073709 = int(2^64 / 1000000) */
+	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
+}
+
 /*
  * Names of the interval timers, and structure
  * defining a timer setting.
@@ -172,10 +261,46 @@ struct clockinfo {
 extern volatile time_t time_second;	/* Seconds since epoch, wall time. */
 extern volatile time_t time_uptime;	/* Seconds since reboot. */
 
-int	itimerfix(struct timeval *tv);
+/*
+ * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
+ *
+ * Functions without the "get" prefix returns the best timestamp
+ * we can produce in the given format.
+ *
+ * "bin"   == struct bintime  == seconds + 64 bit fraction of seconds.
+ * "nano"  == struct timespec == seconds + nanoseconds.
+ * "micro" == struct timeval  == seconds + microseconds.
+ *              
+ * Functions containing "up" returns time relative to boot and
+ * should be used for calculating time intervals.
+ *
+ * Functions without "up" returns GMT time.
+ *
+ * Functions with the "get" prefix returns a less precise result
+ * much faster than the functions without "get" prefix and should
+ * be used where a precision of 10 msec is acceptable or where
+ * performance is priority. (NB: "precision", _not_ "resolution" !) 
+ */
+
+void	bintime(struct bintime *);
+void	nanotime(struct timespec *);
+void	microtime(struct timeval *);
+
+void	getbintime(struct bintime *);
+void	getnanotime(struct timespec *);
+void	getmicrotime(struct timeval *);
+
+void	binuptime(struct bintime *);
+void	nanouptime(struct timespec *);
+void	microuptime(struct timeval *);
+
+void	getbinuptime(struct bintime *);
+void	getnanouptime(struct timespec *);
+void	getmicrouptime(struct timeval *);
+
+int	itimerfix(struct timeval *);
 int	itimerdecr(struct itimerval *itp, int usec);
-void	microtime(struct timeval *tv);
-int	settime(struct timeval *tv);
+int	settime(struct timespec *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
 #else /* !_KERNEL */

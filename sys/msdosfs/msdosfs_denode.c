@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.26 2004/05/14 04:05:05 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.27 2004/06/24 19:35:25 tholo Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -347,7 +347,7 @@ deupdat(dep, waitfor)
 
 	if (DETOV(dep)->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	DETIMES(dep, &ts, &ts, &ts);
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);

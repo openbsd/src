@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.29 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.30 2004/06/24 19:35:25 tholo Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -834,10 +834,11 @@ stripoutput(ifp, m, dst, rt)
 
 	s = splimp();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
-		struct timeval tv;
+		struct timeval tv, tm;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_lastpacket, &tv);
+		getmicrotime(&tm);
+		timersub(&tm, &sc->sc_lastpacket, &tv);
 		if (tv.tv_sec > 0) {
 			DPRINTF(("stripoutput: stalled, resetting\n"));
 			sc->sc_otimeout++;
@@ -860,7 +861,7 @@ stripoutput(ifp, m, dst, rt)
 		sc->sc_if.if_oerrors++;
 		return (error);
 	}
-	sc->sc_lastpacket = time;
+	getmicrotime(&sc->sc_lastpacket);
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0) {
 		stripstart(sc->sc_ttyp);
 	}
@@ -1002,7 +1003,7 @@ stripstart(tp)
 			bpf_tap(sc->sc_bpf, cp, len + SLIP_HDRLEN);
 		}
 #endif
-		sc->sc_lastpacket = time;
+		getmicrotime(&sc->sc_lastpacket);
 
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 		/*
@@ -1260,7 +1261,7 @@ stripinput(c, tp)
 	}
 
 	sc->sc_if.if_ipackets++;
-	sc->sc_lastpacket = time;
+	getmicrotime(&sc->sc_lastpacket);
 	s = splimp();
 	if (IF_QFULL(&ipintrq)) {
 		IF_DROP(&ipintrq);
@@ -1384,7 +1385,7 @@ strip_resetradio(sc, tp)
 	 * is so badlyhung it needs  powercycling.
 	 */
 	sc->sc_state = ST_DEAD;
-	sc->sc_lastpacket = time;
+	getmicrotime(&sc->sc_lastpacket);
 	sc->sc_statetimo = time_second + STRIP_RESET_INTERVAL;
 
 	/*

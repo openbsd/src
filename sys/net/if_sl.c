@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.28 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.29 2004/06/24 19:35:25 tholo Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -452,10 +452,11 @@ sloutput(ifp, m, dst, rtp)
 	}
 	s = splimp();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
-		struct timeval tv;
+		struct timeval tv, tm;
 
+		getmicrotime(&tm);
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_lastpacket, &tv);
+		timersub(&tm, &sc->sc_lastpacket, &tv);
 		if (tv.tv_sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);
@@ -468,7 +469,7 @@ sloutput(ifp, m, dst, rtp)
 		return (error);
 	}
 
-	sc->sc_lastpacket = time;
+	getmicrotime(&sc->sc_lastpacket);
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0)
 		slstart(sc->sc_ttyp);
 	splx(s);
@@ -585,7 +586,7 @@ slstart(tp)
 			bpf_tap(sc->sc_bpf, bpfbuf, len + SLIP_HDRLEN);
 		}
 #endif
-		sc->sc_lastpacket = time;
+		getmicrotime(&sc->sc_lastpacket);
 
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 		/*
@@ -876,7 +877,7 @@ slinput(c, tp)
 #endif
 
 		sc->sc_if.if_ipackets++;
-		sc->sc_lastpacket = time;
+		getmicrotime(&sc->sc_lastpacket);
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);

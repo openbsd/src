@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.89 2004/06/21 23:50:36 tholo Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.90 2004/06/24 19:35:25 tholo Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1382,7 +1382,7 @@ pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
 		    			src->scrub->pfss_tsval0 = ntohl(tsval);
 					src->scrub->pfss_tsval = ntohl(tsval);
 					src->scrub->pfss_tsecr = ntohl(tsecr);
-					src->scrub->pfss_last = mono_time;
+					microuptime(&src->scrub->pfss_last);
 				}
 				/* FALLTHROUGH */
 			default:
@@ -1624,7 +1624,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		 * connection limit until we can come up with a better
 		 * lowerbound to the TS echo check.
 		 */
-		struct timeval delta_ts;
+		struct timeval delta_ts, mtv;
 		int ts_fudge;
 
 
@@ -1641,7 +1641,8 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		/* Calculate max ticks since the last timestamp */
 #define TS_MAXFREQ	1100		/* RFC max TS freq of 1Khz + 10% skew */
 #define TS_MICROSECS	1000000		/* microseconds per second */
-		timersub(&mono_time, &src->scrub->pfss_last, &delta_ts);
+		microuptime(&mtv);
+		timersub(&mtv, &src->scrub->pfss_last, &delta_ts);
 		tsval_from_last = (delta_ts.tv_sec + ts_fudge) * TS_MAXFREQ;
 		tsval_from_last += delta_ts.tv_usec / (TS_MICROSECS/TS_MAXFREQ);
 
@@ -1764,7 +1765,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	 */
 	if (got_ts && src->scrub && PFSS_TIMESTAMP == (src->scrub->pfss_flags &
 	    (PFSS_PAWS_IDLED|PFSS_TIMESTAMP))) {
-		src->scrub->pfss_last = mono_time;
+		microuptime(&src->scrub->pfss_last);
 		if (SEQ_GEQ(tsval, src->scrub->pfss_tsval) ||
 		    (src->scrub->pfss_flags & PFSS_PAWS) == 0)
 			src->scrub->pfss_tsval = tsval;

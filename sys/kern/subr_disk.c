@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.25 2004/02/15 02:45:46 tedu Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.26 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -288,7 +288,6 @@ void
 disk_attach(diskp)
 	struct disk *diskp;
 {
-	int s;
 
 	if (!diskp->dk_flags & DKF_CONSTRUCTED)
 		disk_construct(diskp, diskp->dk_name);
@@ -310,9 +309,7 @@ disk_attach(diskp)
 	/*
 	 * Set the attached timestamp.
 	 */
-	s = splclock();
-	diskp->dk_attachtime = mono_time;
-	splx(s);
+	microuptime(&diskp->dk_attachtime);
 
 	/*
 	 * Link into the disklist.
@@ -353,16 +350,13 @@ void
 disk_busy(diskp)
 	struct disk *diskp;
 {
-	int s;
 
 	/*
 	 * XXX We'd like to use something as accurate as microtime(),
 	 * but that doesn't depend on the system TOD clock.
 	 */
 	if (diskp->dk_busy++ == 0) {
-		s = splclock();
-		diskp->dk_timestamp = mono_time;
-		splx(s);
+		microuptime(&diskp->dk_timestamp);
 	}
 }
 
@@ -376,15 +370,12 @@ disk_unbusy(diskp, bcount, read)
 	long bcount;
 	int read;
 {
-	int s;
 	struct timeval dv_time, diff_time;
 
 	if (diskp->dk_busy-- == 0)
 		printf("disk_unbusy: %s: dk_busy < 0\n", diskp->dk_name);
 
-	s = splclock();
-	dv_time = mono_time;
-	splx(s);
+	microuptime(&dv_time);
 
 	timersub(&dv_time, &diskp->dk_timestamp, &diff_time);
 	timeradd(&diskp->dk_time, &diff_time, &diskp->dk_time);
@@ -434,7 +425,7 @@ void
 disk_resetstat(diskp)
 	struct disk *diskp;
 {
-	int s = splbio(), t;
+	int s = splbio();
 
 	diskp->dk_rxfer = 0;
 	diskp->dk_rbytes = 0;
@@ -442,9 +433,7 @@ disk_resetstat(diskp)
 	diskp->dk_wbytes = 0;
 	diskp->dk_seek = 0;
 
-	t = splclock();
-	diskp->dk_attachtime = mono_time;
-	splx(t);
+	microuptime(&diskp->dk_attachtime);
 
 	timerclear(&diskp->dk_time);
 

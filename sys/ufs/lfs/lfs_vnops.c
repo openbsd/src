@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vnops.c,v 1.10 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: lfs_vnops.c,v 1.11 2004/06/24 19:35:27 tholo Exp $	*/
 /*	$NetBSD: lfs_vnops.c,v 1.11 1996/05/11 18:27:41 mycroft Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ lfs_fsync(v)
 	} */ *ap = v;
 	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	return (VOP_UPDATE(ap->a_vp, &ts, &ts,
 	    ap->a_waitfor == MNT_WAIT ? LFS_SYNC : 0));
 }

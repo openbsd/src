@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.34 2004/05/14 04:00:34 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.35 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -216,8 +216,10 @@ ext2fs_getattr(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	register struct vattr *vap = ap->a_vap;
+	struct timeval tv;
 
-	EXT2FS_ITIMES(ip, &time, &time);
+	getmicrotime(&tv);
+	EXT2FS_ITIMES(ip, &tv, &tv);
 	/*
 	 * Copy from inode table
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.60 2004/06/10 17:00:06 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.61 2004/06/24 19:35:25 tholo Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -467,7 +467,7 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		return;
 	}
 
-	sc->sc_ac.ac_if.if_lastchange = time;
+	getmicrotime(&sc->sc_ac.ac_if.if_lastchange);
 	sc->sc_ac.ac_if.if_ipackets++;
 	sc->sc_ac.ac_if.if_ibytes += m->m_pkthdr.len;
 
@@ -861,7 +861,7 @@ carp_send_ad(void *v)
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip));
 		m->m_data -= sizeof(*ip);
 
-		sc->sc_ac.ac_if.if_lastchange = time;
+		getmicrotime(&sc->sc_ac.ac_if.if_lastchange);
 		sc->sc_ac.ac_if.if_opackets++;
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets++;
@@ -929,7 +929,7 @@ carp_send_ad(void *v)
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip6));
 		m->m_data -= sizeof(*ip6);
 
-		sc->sc_ac.ac_if.if_lastchange = time;
+		getmicrotime(&sc->sc_ac.ac_if.if_lastchange);
 		sc->sc_ac.ac_if.if_opackets++;
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets6++;

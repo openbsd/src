@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_param.h,v 1.4 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: tp_param.h,v 1.5 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: tp_param.h,v 1.9 1996/02/13 22:11:32 christos Exp $	*/
 
 /*-
@@ -256,11 +256,13 @@ typedef unsigned short RefNum;
  * Some macros used all over, for timestamping
  *****************************************************/
 
-#define GET_CUR_TIME(tvalp) ((*tvalp) = time)
+#define GET_CUR_TIME(tvalp) getmicrotime(tvalp)
 
 #define GET_TIME_SINCE(oldtvalp, diffp) {\
-	(diffp)->tv_sec = time.tv_sec - (oldtvalp)->tv_sec;\
-	(diffp)->tv_usec = time.tv_usec - (oldtvalp)->tv_usec;\
+	struct timeval _tv;\
+	getmicrotime(&_tv);\
+	(diffp)->tv_sec = _tv.tv_sec - (oldtvalp)->tv_sec;\
+	(diffp)->tv_usec = _tv.tv_usec - (oldtvalp)->tv_usec;\
 	if( (diffp)->tv_usec <0 ) {\
 		(diffp)->tv_sec --;\
 		(diffp)->tv_usec = 1000000 - (diffp)->tv_usec;\

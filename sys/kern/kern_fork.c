@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.69 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.70 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * Make child runnable, set start time, and add to run queue.
 	 */
 	SCHED_LOCK(s);
-	p2->p_stats->p_start = time;
+ 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.9 2004/06/21 23:50:35 tholo Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.10 2004/06/24 19:35:23 tholo Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -667,10 +667,7 @@ bah_start(ifp)
 
 		sc->sc_arccom.ac_if.if_timer = ARCTIMEOUT;
 #ifdef BAHTIMINGS
-		bcopy((caddr_t)&time,
-		    (caddr_t)&(sc->sc_stats.lasttxstart_tv),
-		    sizeof(struct timeval));
-
+		getmicrotime(&sc->sc_stats.lasttxstart_tv);
 		sc->sc_stats.lasttxstart_mics = clkread();
 #endif
 	}
@@ -979,10 +976,7 @@ bah_tint(sc, isr)
 		ifp->if_timer = ARCTIMEOUT;
 
 #ifdef BAHTIMINGS
-		bcopy((caddr_t)&time,
-		    (caddr_t)&(sc->sc_stats.lasttxstart_tv),
-		    sizeof(struct timeval));
-
+		getmicrotime(&sc->sc_stats.lasttxstart_tv);
 		sc->sc_stats.lasttxstart_mics = clkread();
 #endif
  

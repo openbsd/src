@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.23 2004/04/01 00:27:51 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.24 2004/06/24 19:35:24 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -545,7 +545,7 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 {
 	struct kqueue *kq = (struct kqueue *)fp->f_data;
 	struct kevent *kevp;
-	struct timeval atv;
+	struct timeval atv, rtv, ttv;
 	struct knote *kn, marker;
 	int s, count, timeout, nkev = 0, error = 0;
 
@@ -565,10 +565,11 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 			goto done;
 		}
 
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		timeout = hzto(&atv);
-		splx(s);
+		timeout = atv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&atv);
+
+		getmicrouptime(&rtv);
+		timeradd(&atv, &rtv, &atv);
 	} else {
 		atv.tv_sec = 0;
 		atv.tv_usec = 0;
@@ -578,9 +579,13 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 
 retry:
 	if (atv.tv_sec || atv.tv_usec) {
-		timeout = hzto(&atv);
-		if (timeout <= 0)
+		getmicrouptime(&rtv);
+		if (timercmp(&rtv, &atv, >=))
 			goto done;
+		ttv = atv;
+		timersub(&ttv, &rtv, &ttv);
+		timeout = ttv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&ttv);
 	}
 
 start:

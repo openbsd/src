@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.40 2004/04/05 06:22:07 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.41 2004/06/24 19:35:24 tholo Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -586,7 +586,6 @@ wskbd_input(dev, type, value)
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
 	struct wscons_event *ev;
 	struct wseventvar *evar;
-	struct timeval xxxtime;
 #if NWSDISPLAY > 0
 	int num, i;
 #endif
@@ -649,8 +648,7 @@ wskbd_input(dev, type, value)
 	}
 	ev->type = type;
 	ev->value = value;
-	microtime(&xxxtime);
-	TIMEVAL_TO_TIMESPEC(&xxxtime, &ev->time);
+	nanotime(&ev->time);
 	evar->put = put;
 	WSEVENT_WAKEUP(evar);
 }

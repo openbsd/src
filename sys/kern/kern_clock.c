@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.45 2004/06/21 23:50:35 tholo Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.46 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -266,9 +266,9 @@ int
 hzto(tv)
 	struct timeval *tv;
 {
+	struct timeval now;
 	unsigned long ticks;
 	long sec, usec;
-	int s;
 
 	/*
 	 * If the number of usecs in the whole seconds part of the time
@@ -290,10 +290,9 @@ hzto(tv)
 	 * If ints have 32 bits, then the maximum value for any timeout in
 	 * 10ms ticks is 248 days.
 	 */
-	s = splhigh();
-	sec = tv->tv_sec - time.tv_sec;
-	usec = tv->tv_usec - time.tv_usec;
-	splx(s);
+	getmicrotime(&now);
+	sec = tv->tv_sec - now.tv_sec;
+	usec = tv->tv_usec - now.tv_usec;
 	if (usec < 0) {
 		sec--;
 		usec += 1000000;
@@ -538,4 +537,75 @@ sysctl_clockrate(where, sizep)
 	clkinfo.profhz = profhz;
 	clkinfo.stathz = stathz ? stathz : hz;
 	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
+}
+
+/*
+ * Placeholders until everyone uses the timecounters code.
+ * Won't improve anything except maybe removing a bunch of bugs in fixed code.
+ */
+
+void
+getmicrotime(struct timeval *tvp)
+{
+	int s;
+
+	s = splhigh();
+	*tvp = time;
+	splx(s);
+}
+
+void
+nanotime(struct timespec *tsp)
+{
+	struct timeval tv;
+
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, tsp);
+}
+
+void
+getnanotime(struct timespec *tsp)
+{
+	struct timeval tv;
+
+	getmicrotime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, tsp);
+}
+
+void
+nanouptime(struct timespec *tsp)
+{
+	struct timeval tv;
+
+	microuptime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, tsp);
+}
+
+
+void
+getnanouptime(struct timespec *tsp)
+{
+	struct timeval tv;
+
+	getmicrouptime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, tsp);
+}
+
+void
+microuptime(struct timeval *tvp)
+{
+	struct timeval tv;
+
+	microtime(&tv);
+	timersub(&tv, &boottime, tvp);
+}
+
+void
+getmicrouptime(struct timeval *tvp)
+{
+	int s;
+
+	s = splhigh();
+	*tvp = mono_time;
+	splx(s);
 }

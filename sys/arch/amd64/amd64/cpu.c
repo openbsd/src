@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2004/06/09 10:17:10 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2004/06/24 19:35:23 tholo Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -562,7 +562,7 @@ cpu_hatch(void *v)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
 #endif
-	microtime(&ci->ci_schedstate.spc_runtime);
+	microuptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
 

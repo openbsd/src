@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.39 2004/06/12 17:53:18 deraadt Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.40 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ kernfs_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
-	TIMEVAL_TO_TIMESPEC(&time, &vap->va_atime);
+	getnanotime(&vap->va_atime);
 	vap->va_mtime = vap->va_atime;
 	vap->va_ctime = vap->va_atime;
 	vap->va_gen = 0;

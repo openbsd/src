@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.27 2004/05/04 16:59:32 grange Exp $	*/
+/*	$OpenBSD: usb.c,v 1.28 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -720,15 +720,15 @@ usb_add_event(int type, struct usb_event *uep)
 {
 	struct usb_event_q *ueq;
 	struct usb_event ue;
-	struct timeval thetime;
+	struct timespec thetime;
 	int s;
 
-	microtime(&thetime);
+	nanotime(&thetime);
 	/* Don't want to wait here inside splusb() */
 	ueq = malloc(sizeof *ueq, M_USBDEV, M_WAITOK);
 	ueq->ue = *uep;
 	ueq->ue.ue_type = type;
-	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
+	ueq->ue.ue_time = thetime;
 
 	s = splusb();
 	if (++usb_nevents >= USB_MAX_EVENTS) {

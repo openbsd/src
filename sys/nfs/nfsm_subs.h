@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.14 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.15 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -471,8 +471,7 @@
 			fxdr_nfsv3time(tl, &(a)->va_atime); \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			(a)->va_atime.tv_sec = time.tv_sec; \
-			(a)->va_atime.tv_nsec = time.tv_usec * 1000; \
+			getnanotime(&(a)->va_atime); \
 			break; \
 		}; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
@@ -482,8 +481,7 @@
 			fxdr_nfsv3time(tl, &(a)->va_mtime); \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
-			(a)->va_mtime.tv_sec = time.tv_sec; \
-			(a)->va_mtime.tv_nsec = time.tv_usec * 1000; \
+			getnanotime(&(a)->va_mtime); \
 			break; \
 		}; }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.11 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.12 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -526,7 +526,6 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 	int s, put, get, n;
 	struct wseventvar *evar;
 	struct wscons_event *ev;
-	struct timeval xxxtime;
 	struct wsmux_device_list *l;
 
 	DPRINTF(("wsmuxdoioctl: %s: sc=%p, cmd=%08lx\n", 
@@ -551,8 +550,7 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 			put = 0;
 		ev = &evar->q[put];
 		*ev = *(struct wscons_event *)data;
-		microtime(&xxxtime);
-		TIMEVAL_TO_TIMESPEC(&xxxtime, &ev->time);
+		nanotime(&ev->time);
 		evar->put = put;
 		WSEVENT_WAKEUP(evar);
 		splx(s);

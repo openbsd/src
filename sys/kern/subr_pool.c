@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.42 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.43 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -880,7 +880,6 @@ pool_do_put(struct pool *pp, void *v)
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
 	caddr_t page;
-	int s;
 
 #ifdef MALLOC_DEBUG
 	if (pp->pr_roflags & PR_DEBUG) {
@@ -973,9 +972,7 @@ pool_do_put(struct pool *pp, void *v)
 			 * be reclaimed by the pagedaemon.  This minimizes
 			 * ping-pong'ing for memory.
 			 */
-			s = splclock();
-			ph->ph_time = mono_time;
-			splx(s);
+			microuptime(&ph->ph_time);
 		}
 		pool_update_curpage(pp);
 	}
@@ -1299,9 +1296,7 @@ pool_reclaim(struct pool *pp)
 	TAILQ_FOREACH(pc, &pp->pr_cachelist, pc_poollist)
 		pool_cache_reclaim(pc);
 
-	s = splclock();
-	curtime = mono_time;
-	splx(s);
+	microuptime(&curtime);
 
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);

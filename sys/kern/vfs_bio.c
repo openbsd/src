@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.68 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.69 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -882,9 +882,11 @@ buf_daemon(struct proc *p)
 			tsleep(&bd_req, PRIBIO - 7, "cleaner", 0);
 		}
 
-		starttime = time;
+		getmicrouptime(&starttime);
 		s = splbio();
 		while ((bp = TAILQ_FIRST(&bufqueues[BQ_DIRTY]))) {
+			struct timeval tv;
+
 			bremfree(bp);
 			SET(bp->b_flags, B_BUSY);
 			splx(s);
@@ -915,7 +917,8 @@ buf_daemon(struct proc *p)
 			if (numdirtypages < lodirtypages)
 				break;
 			/* Never allow processing to run for more than 1 sec */
-			timersub(&time, &starttime, &timediff);
+			getmicrouptime(&tv);
+			timersub(&tv, &starttime, &timediff);
 			if (timediff.tv_sec)
 				break;
 

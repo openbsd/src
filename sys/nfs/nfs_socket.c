@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.36 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.37 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -732,7 +732,7 @@ nfsmout:
 					rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
 					rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
 					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsid;
-					rt->tstamp = time;
+					getmicrotime(&rt->tstamp);
 					if (rep->r_flags & R_TIMING)
 						rt->rtt = rep->r_rtt;
 					else
@@ -1209,6 +1209,7 @@ nfs_timer(arg)
 	int s, error;
 #ifdef NFSSERVER
 	struct nfssvc_sock *slp;
+	struct timeval tv;
 	u_quad_t cur_usec;
 #endif
 
@@ -1306,7 +1307,8 @@ nfs_timer(arg)
 	 * Scan the write gathering queues for writes that need to be
 	 * completed now.
 	 */
-	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
+	getmicrotime(&tv);
+	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	for (slp = TAILQ_FIRST(&nfssvc_sockhead); slp != NULL;
 	    slp = TAILQ_NEXT(slp, ns_chain)) {
 	    if (LIST_FIRST(&slp->ns_tq) &&

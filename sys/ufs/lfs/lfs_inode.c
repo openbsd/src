@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_inode.c,v 1.9 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.10 2004/06/24 19:35:27 tholo Exp $	*/
 /*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
@@ -102,8 +102,11 @@ lfs_update(v)
 		(ip)->i_modrev++;
 	}
 	if (ip->i_flag & IN_CHANGE) {
-		ip->i_ctime = time.tv_sec;
-		ip->i_ctimensec = time.tv_usec * 1000;
+		struct timespec ts;
+
+		getnanotime(&ts);
+		ip->i_ctime = ts.tv_sec;
+		ip->i_ctimensec = ts.tv_nsec;
 	}
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);
 
@@ -172,7 +175,7 @@ lfs_truncate(v)
 	int e1, e2, depth, lastseg, num, offset, seg, freesize;
 
 	ip = VTOI(vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	if (vp->v_type == VLNK && vp->v_mount->mnt_maxsymlinklen > 0) {
 #ifdef DIAGNOSTIC
 		if (length != 0)

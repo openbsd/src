@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.26 2004/04/01 23:56:05 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.27 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -330,7 +330,6 @@ unp_attach(so)
 	struct socket *so;
 {
 	register struct unpcb *unp;
-	struct timeval tv;
 	int error;
 	
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -356,8 +355,7 @@ unp_attach(so)
 	bzero((caddr_t)unp, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &unp->unp_ctime);
+	nanotime(&unp->unp_ctime);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.56 2004/06/22 23:52:18 jfb Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.57 2004/06/24 19:35:23 tholo Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -759,7 +759,7 @@ linux_sys_times(p, v, retval)
 	struct timeval t;
 	struct linux_tms ltms;
 	struct rusage ru;
-	int error, s;
+	int error;
 
 	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
 	ltms.ltms_utime = CONVTCK(ru.ru_utime);
@@ -771,9 +771,7 @@ linux_sys_times(p, v, retval)
 	if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 		return error;
 
-	s = splclock();
-	timersub(&time, &boottime, &t);
-	splx(s);
+	microuptime(&t);
 
 	retval[0] = ((linux_clock_t)(CONVTCK(t)));
 	return 0;
@@ -840,6 +838,7 @@ linux_sys_alarm(p, v, retval)
 	} */ *uap = v;
 	int s;
 	struct itimerval *itp, it;
+	struct timeval tv;
 	int timo;
 
 	itp = &p->p_realtimer;
@@ -847,12 +846,12 @@ linux_sys_alarm(p, v, retval)
 	/*
 	 * Clear any pending timer alarms.
 	 */
-
+	getmicrouptime(&tv);
 	timeout_del(&p->p_realit_to);
 	timerclear(&itp->it_interval);
 	if (timerisset(&itp->it_value) &&
-	    timercmp(&itp->it_value, &time, >))
-		timersub(&itp->it_value, &time, &itp->it_value);
+	    timercmp(&itp->it_value, &tv, >))
+		timersub(&itp->it_value, &tv, &itp->it_value);
 	/*
 	 * Return how many seconds were left (rounded up)
 	 */
@@ -882,9 +881,7 @@ linux_sys_alarm(p, v, retval)
 
 	if (timerisset(&it.it_value)) {
 		timo = tvtohz(&it.it_value);
-		if (timo <= 0)
-			timo = 1;
-		timeradd(&it.it_value, &time, &it.it_value);
+		timeradd(&it.it_value, &tv, &it.it_value);
 		timeout_add(&p->p_realit_to, timo);
 	}
 	p->p_realtimer = it;
@@ -1442,7 +1439,7 @@ linux_sys_stime(p, v, retval)
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
 	} */ *uap = v;
-	struct timeval atv;
+	struct timespec ats;
 	linux_time_t tt;
 	int error;
 
@@ -1452,10 +1449,10 @@ linux_sys_stime(p, v, retval)
 	if ((error = copyin(SCARG(uap, t), &tt, sizeof(tt))) != 0)
 		return (error);
 
-	atv.tv_sec = tt;
-	atv.tv_usec = 0;
+	ats.tv_sec = tt;
+	ats.tv_nsec = 0;
 
-	error = settime(&atv);
+	error = settime(&ats);
 
 	return (error);
 }
@@ -1510,9 +1507,10 @@ linux_sys_sysinfo(p, v, retval)
 	struct linux_sysinfo si;
 	struct loadavg *la;
 	extern int bufpages;
+	struct timeval tv;
 
-
-	si.uptime = time.tv_sec - boottime.tv_sec;
+	getmicrouptime(&tv);
+	si.uptime = tv.tv_sec;
 	la = &averunnable;
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;

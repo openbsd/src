@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd_debug.c,v 1.4 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: hd_debug.c,v 1.5 2004/06/24 19:35:25 tholo Exp $	*/
 /*	$NetBSD: hd_debug.c,v 1.6 1996/02/13 22:04:25 christos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ hd_savetrace(hdp, dir, frame)
 	htp->ht_frame = m_copy(m, 0, m->m_len);
 	htp->ht_hdp = hdp;
 	htp->ht_dir = dir;
-	htp->ht_time = time;
+	getmicrotime(&htp->ht_time);
 }
 
 void

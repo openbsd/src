@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.14 2004/05/27 08:25:53 tedu Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.15 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ acct_process(struct proc *p)
 	struct acct acct;
 	struct rusage *r;
 	struct timeval ut, st, tmp;
-	int s, t;
+	int t;
 	struct vnode *vp;
 	struct plimit *oplim = NULL;
 	int error;
@@ -198,9 +198,8 @@ acct_process(struct proc *p)
 
 	/* (3) The elapsed time the commmand ran (and its starting time) */
 	acct.ac_btime = p->p_stats->p_start.tv_sec;
-	s = splclock();
-	timersub(&time, &p->p_stats->p_start, &tmp);
-	splx(s);
+	getmicrotime(&tmp);
+	timersub(&tmp, &p->p_stats->p_start, &tmp);
 	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_usec);
 
 	/* (4) The average amount of memory used */

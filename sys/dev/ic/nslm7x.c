@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.7 2004/05/07 07:00:46 grange Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.8 2004/06/24 19:35:23 tholo Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -376,22 +376,18 @@ lm_gtredata(sme, tred)
 	 struct envsys_tre_data *tred;
 {
 	 static const struct timeval onepointfive = { 1, 500000 };
-	 struct timeval t;
+	 struct timeval t, mtv;
 	 struct lm_softc *sc = sme->sme_cookie;
-	 int i, s;
+	 int i;
 
 	 /* read new values at most once every 1.5 seconds */
 	 timeradd(&sc->lastread, &onepointfive, &t);
-	 s = splclock();
-	 i = timercmp(&mono_time, &t, >);
+	 getmicrouptime(&mtv);
+	 i = timercmp(&mtv, &t, >);
 	 if (i) {
-		  sc->lastread.tv_sec  = mono_time.tv_sec;
-		  sc->lastread.tv_usec = mono_time.tv_usec;
-	 }
-	 splx(s);
-
-	 if (i)
+		  sc->lastread = mtv;
 		  sc->refresh_sensor_data(sc);
+	 }
 
 	 *tred = sc->sensors[tred->sensor];
 

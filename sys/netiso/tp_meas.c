@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_meas.c,v 1.4 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: tp_meas.c,v 1.5 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: tp_meas.c,v 1.7 1996/02/13 22:11:18 christos Exp $	*/
 
 /*-
@@ -69,8 +69,6 @@ SOFTWARE.
 #include <netiso/argo_debug.h>
 #include <netiso/tp_meas.h>
 
-extern struct timeval time;
-
 #ifdef TP_PERF_MEAS
 int             tp_Measn = 0;
 struct tp_Meas  tp_Meas[TPMEASN];
@@ -113,8 +111,7 @@ Tpmeas(ref, kind, timev, seq, win, size)
 	if (kind == TPtime_from_ll)
 		bcopy((caddr_t) timev, (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
 	else
-		bcopy((caddr_t) & time,
-		      (caddr_t) & tpm->tpm_time, sizeof(struct timeval));
+		getmicrotime(&tpm->tpm_time);
 	tpm->tpm_seq = seq;
 	tpm->tpm_window = win;
 	tpm->tpm_size = size;

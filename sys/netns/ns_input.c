@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: ns_input.c,v 1.6 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: ns_input.c,v 1.7 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: ns_input.c,v 1.9 1996/02/13 22:13:56 christos Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ long	ns_pexseq;
 void
 ns_init()
 {
+	struct timeval tv;
 
 	ns_broadhost = * (union ns_host *) allones;
 	ns_broadnet = * (union ns_net *) allones;
@@ -92,7 +93,8 @@ ns_init()
 	nsrawpcb.nsp_next = nsrawpcb.nsp_prev = &nsrawpcb;
 	nsintrq.ifq_maxlen = nsqmaxlen;
 	TAILQ_INIT(&ns_ifaddr);
-	ns_pexseq = time.tv_usec;
+	getmicrotime(&tv);
+	ns_pexseq = tv.tv_usec;
 	ns_netmask.sns_len = 6;
 	ns_netmask.sns_addr.x_net = ns_broadnet;
 	ns_hostmask.sns_len = 12;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_etimer.h,v 1.6 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_etimer.h,v 1.7 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: rf_etimer.h,v 1.4 1999/08/13 03:26:55 oster Exp $	*/
 
 /*
@@ -48,19 +48,13 @@ struct RF_Etimer_s {
 
 #define	RF_ETIMER_START(_t_) 						\
 	do {								\
-		int s;							\
 		bzero(&(_t_), sizeof (_t_));				\
-		s = splclock();						\
-		(_t_).st = mono_time;					\
-		splx(s);						\
+		getmicrouptime(&(_t_).st);				\
 	} while (0)
 
 #define	RF_ETIMER_STOP(_t_) 						\
 	do {								\
-		int s;							\
-		s = splclock();						\
-		(_t_).et = mono_time;					\
-		splx(s);						\
+		getmicrouptime(&(_t_).et);				\
 	} while (0)
 
 #define	RF_ETIMER_EVAL(_t_)						\

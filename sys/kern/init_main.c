@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.116 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.117 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -428,9 +428,10 @@ main(framep)
 	 */
 #ifdef __HAVE_CPUINFO
 	p->p_stats->p_start = mono_time = boottime = time;
-	p->p_cpu->ci_schedstate.spc_runtime = time;
+	microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
 #else
 	p->p_stats->p_start = runtime = mono_time = boottime = time;	
+	microuptime(&runtime);
 #endif
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 

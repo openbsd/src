@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.50 2004/05/07 01:40:16 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.51 2004/06/24 19:35:26 tholo Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -656,7 +656,7 @@ softdep_process_worklist(matchmnt)
 		wakeup_one(&proc_waiting);
 	}
 	loopcount = 1;
-	starttime = time;
+	getmicrouptime(&starttime);
 	while (num_on_worklist > 0) {
 		matchcnt += process_worklist_item(matchmnt, 0);
 
@@ -697,8 +697,10 @@ softdep_process_worklist(matchmnt)
 		 */
 		{
 			struct timeval diff;
+			struct timeval tv;
 
-			timersub(&time, &starttime, &diff);
+			getmicrouptime(&tv);
+			timersub(&tv, &starttime, &diff);
 			if (diff.tv_sec != 0 && matchmnt == NULL) {
 				matchcnt = -1;
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.48 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.49 2004/06/24 19:35:24 tholo Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
 	fd_set bits[6], *pibits[3], *pobits[3];
-	struct timeval atv;
+	struct timeval atv, rtv, ttv;
 	int s, ncoll, error = 0, timo;
 	u_int nd, ni;
 
@@ -701,11 +701,14 @@ sys_select(struct proc *p, void *v, register_t *retval)
 			error = EINVAL;
 			goto done;
 		}
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		splx(s);
-	} else
-		timo = 0;
+		getmicrouptime(&rtv);
+		timeradd(&atv, &rtv, &atv);
+	} else {
+		atv.tv_sec = 0;
+		atv.tv_usec = 0;
+	}
+	timo = 0;
+
 retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
@@ -713,12 +716,13 @@ retry:
 	if (error || *retval)
 		goto done;
 	if (SCARG(uap, tv)) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = hzto(&atv);
-		if (timo <= 0)
+		getmicrouptime(&rtv);
+		if (timercmp(&rtv, &atv, >=))
 			goto done;
+		ttv = atv;
+		timersub(&ttv, &rtv, &ttv);
+		timo = ttv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&ttv);
 	}
 	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
@@ -912,7 +916,7 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 	size_t sz;
 	struct pollfd pfds[4], *pl = pfds;
 	int msec = SCARG(uap, timeout);
-	struct timeval atv;
+	struct timeval atv, rtv, ttv;
 	int timo, ncoll, i, s, error;
 	extern int nselcoll, selwait;
 	u_int nfds = SCARG(uap, nfds);
@@ -941,11 +945,13 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 			error = EINVAL;
 			goto done;
 		}
-		s = splclock();
-		timeradd(&atv, &time, &atv);
-		splx(s);
-	} else
-		timo = 0;
+		getmicrouptime(&rtv);
+		timeradd(&atv, &rtv, &atv);
+	} else {
+		atv.tv_sec = 0;
+		atv.tv_usec = 0;
+	}
+	timo = 0;
 
 retry:
 	ncoll = nselcoll;
@@ -954,12 +960,13 @@ retry:
 	if (*retval)
 		goto done;
 	if (msec != INFTIM) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = hzto(&atv);
-		if (timo <= 0)
+		getmicrouptime(&rtv);
+		if (timercmp(&rtv, &atv, >=))
 			goto done;
+		ttv = atv;
+		timersub(&ttv, &rtv, &ttv);
+		timo = ttv.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tvtohz(&ttv);
 	}
 	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {

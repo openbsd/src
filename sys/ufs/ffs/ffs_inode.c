@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.36 2003/11/19 03:29:31 mickey Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.37 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	int error;
 	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	vp = ITOV(ip);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		ip->i_flag &=
@@ -100,8 +100,11 @@ ffs_update(struct inode *ip, struct timespec *atime,
 		ip->i_modrev++;
 	}
 	if (ip->i_flag & IN_CHANGE) {
-		ip->i_ffs_ctime = time.tv_sec;
-		ip->i_ffs_ctimensec = time.tv_usec * 1000;
+		struct timespec ts;
+
+		getnanotime(&ts);
+		ip->i_ffs_ctime = ts.tv_sec;
+		ip->i_ffs_ctimensec = ts.tv_nsec;
 	}
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	fs = ip->i_fs;

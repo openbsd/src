@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.46 2004/01/06 04:18:18 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.47 2004/06/24 19:35:24 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -217,7 +217,7 @@ pipe_create(cpipe)
 	if (error != 0)
 		return (error);
 
-	microtime(&cpipe->pipe_ctime);
+	nanotime(&cpipe->pipe_ctime);
 	cpipe->pipe_atime = cpipe->pipe_ctime;
 	cpipe->pipe_mtime = cpipe->pipe_ctime;
 	cpipe->pipe_pgid = NO_PID;
@@ -366,7 +366,7 @@ pipe_read(fp, poff, uio, cred)
 	pipeunlock(rpipe);
 
 	if (error == 0)
-		microtime(&rpipe->pipe_atime);
+		nanotime(&rpipe->pipe_atime);
 unlocked_error:
 	--rpipe->pipe_busy;
 
@@ -606,7 +606,7 @@ retrywrite:
 	}
 
 	if (error == 0)
-		microtime(&wpipe->pipe_mtime);
+		nanotime(&wpipe->pipe_mtime);
 	/*
 	 * We have something to offer, wake up select/poll.
 	 */
@@ -710,9 +710,9 @@ pipe_stat(fp, ub, p)
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size + ub->st_blksize - 1) / ub->st_blksize;
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
+	ub->st_atimespec = pipe->pipe_atime;
+	ub->st_mtimespec = pipe->pipe_mtime;
+	ub->st_ctimespec = pipe->pipe_ctime;
 	ub->st_uid = fp->f_cred->cr_uid;
 	ub->st_gid = fp->f_cred->cr_gid;
 	/*

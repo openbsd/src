@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.26 2004/06/22 23:52:17 jfb Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.27 2004/06/24 19:35:23 tholo Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -1198,18 +1198,16 @@ hpux_sys_stime_6x(p, v, retval)
 	struct hpux_sys_stime_6x_args /* {
 		syscallarg(int) time;
 	} */ *uap = v;
-	struct timeval tv;
-	int s, error;
+	struct timespec ts;
+	int error;
 
-	tv.tv_sec = SCARG(uap, time);
-	tv.tv_usec = 0;
+	ts.tv_sec = SCARG(uap, time);
+	ts.tv_nsec = 0;
 	if ((error = suser(p, 0)))
 		return (error);
 
-	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	boottime.tv_sec += tv.tv_sec - time.tv_sec;
-	s = splhigh(); time = tv; splx(s);
-	resettodr();
+	settime(&ts);
+
 	return (0);
 }
 
@@ -1223,12 +1221,11 @@ hpux_sys_ftime_6x(p, v, retval)
 		syscallarg(struct hpux_timeb *) tp;
 	} */ *uap = v;
 	struct hpux_otimeb tb;
-	int s;
+	struct timeval tv;
 
-	s = splhigh();
-	tb.time = time.tv_sec;
-	tb.millitm = time.tv_usec / 1000;
-	splx(s);
+	microtime(&tv);
+	tb.time = tv.tv_sec;
+	tb.millitm = tv.tv_usec / 1000;
 	tb.timezone = tz.tz_minuteswest;
 	tb.dstflag = tz.tz_dsttime;
 	return (copyout((caddr_t)&tb, (caddr_t)SCARG(uap, tp), sizeof (tb)));
@@ -1243,27 +1240,28 @@ hpux_sys_alarm_6x(p, v, retval)
 	struct hpux_sys_alarm_6x_args /* {
 		syscallarg(int) deltat;
 	} */ *uap = v;
-	int s = splhigh();
 	int timo;
+	struct timeval tv, atv;
 
 	timeout_del(&p->p_realit_to);
 	timerclear(&p->p_realtimer.it_interval);
 	*retval = 0;
+	getmicrouptime(&tv);
 	if (timerisset(&p->p_realtimer.it_value) &&
-	    timercmp(&p->p_realtimer.it_value, &time, >))
-		*retval = p->p_realtimer.it_value.tv_sec - time.tv_sec;
+	    timercmp(&p->p_realtimer.it_value, &tv, >))
+		*retval = p->p_realtimer.it_value.tv_sec - tv.tv_sec;
 	if (SCARG(uap, deltat) == 0) {
 		timerclear(&p->p_realtimer.it_value);
-		splx(s);
 		return (0);
 	}
-	p->p_realtimer.it_value = time;
+	atv.tv_sec = SCARG(uap, deltat);
+	atv.tv_usec = 0;
+	p->p_realtimer.it_value = tv;
 	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
-	timo = hzto(&p->p_realtimer.it_value);
+	timo = tvtohz(&atv);
 	if (timo <= 0)
 		timo = 1;
 	timeout_add(&p->p_realit_to, timo);
-	splx(s);
 	return (0);
 }
 
@@ -1304,9 +1302,11 @@ hpux_sys_times_6x(p, v, retval)
 	atms.tms_cstime = hpux_scale(&p->p_stats->p_cru.ru_stime);
 	error = copyout((caddr_t)&atms, (caddr_t)SCARG(uap, tms),
 	    sizeof (atms));
-	if (error == 0)
-		*(time_t *)retval = hpux_scale((struct timeval *)&time) -
-		    hpux_scale(&boottime);
+	if (error == 0) {
+		struct timeval tv;
+		getmicrouptime(&tv);
+		*(time_t *)retval = hpux_scale(&tv);
+	}
 	return (error);
 }
 

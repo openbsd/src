@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.24 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.25 2004/06/24 19:35:26 tholo Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ ext2fs_inactive(v)
 		if (ip->i_e2fs_size != 0) {
 			error = ext2fs_truncate(ip, (off_t)0, 0, NOCRED);
 		}
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		getnanotime(&ts);
 		ip->i_e2fs_dtime = ts.tv_sec;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		ext2fs_inode_free(ip, ip->i_number, ip->i_e2fs_mode);
@@ -129,7 +129,7 @@ ext2fs_update(struct inode *ip, struct timespec *atime, struct timespec *mtime,
 
 	if (ITOV(ip)->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	getnanotime(&ts);
 	EXT2FS_ITIMES(ip,
 	    atime ? atime : &ts,
 	    mtime ? mtime : &ts);

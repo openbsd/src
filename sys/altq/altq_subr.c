@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.17 2004/04/27 02:56:20 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.18 2004/06/24 19:35:22 tholo Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -767,6 +767,7 @@ init_machclk(void)
 	 * accessible, just use it.
 	 */
 #if defined(__i386__) && (defined(I586_CPU) || defined(I686_CPU))
+	/* XXX - this will break down with variable cpu frequency. */
 	machclk_freq = pentium_mhz * 1000000;
 #endif
 #if defined(__alpha__)
@@ -842,8 +843,8 @@ read_machclk(void)
 	} else {
 		struct timeval tv;
 
-		microtime(&tv);
-		val = (((u_int64_t)(tv.tv_sec - boottime.tv_sec) * 1000000
+		microuptime(&tv);
+		val = (((u_int64_t)(tv.tv_sec) * 1000000
 		    + tv.tv_usec) << MACHCLK_SHIFT);
 	}
 	return (val);

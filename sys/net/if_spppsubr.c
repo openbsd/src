@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.22 2004/06/22 02:02:45 tholo Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.23 2004/06/24 19:35:25 tholo Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1147,15 +1147,9 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 	struct ppp_header *h;
 	struct cisco_packet *ch;
 	struct mbuf *m;
-#if defined (__FreeBSD__)
-	struct timeval tv;
-#else
-	u_long t = (time.tv_sec - boottime.tv_sec) * 1000;
-#endif
+	struct timeval tv;	
 
-#if defined (__FreeBSD__)
 	getmicrouptime(&tv);
-#endif
 
 	MGETHDR (m, M_DONTWAIT, MT_DATA);
 	if (! m)
@@ -1174,13 +1168,8 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 	ch->par2 = htonl (par2);
 	ch->rel = -1;
 
-#if defined (__FreeBSD__)
 	ch->time0 = htons ((u_short) (tv.tv_sec >> 16));
 	ch->time1 = htons ((u_short) tv.tv_sec);
-#else
-	ch->time0 = htons ((u_short) (t >> 16));
-	ch->time1 = htons ((u_short) t);
-#endif
 
 	if (debug)
 		log(LOG_DEBUG,

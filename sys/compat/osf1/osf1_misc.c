@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_misc.c,v 1.15 2004/06/22 23:52:18 jfb Exp $ */
+/* $OpenBSD: osf1_misc.c,v 1.16 2004/06/24 19:35:23 tholo Exp $ */
 /* $NetBSD: osf1_misc.c,v 1.55 2000/06/28 15:39:33 mrg Exp $ */
 
 /*
@@ -277,7 +277,7 @@ osf1_sys_usleep_thread(p, v, retval)
 	struct osf1_timeval otv, endotv;
 	struct timeval tv, endtv;
 	u_long ticks;
-	int error, s;
+	int error;
 
 	if ((error = copyin(SCARG(uap, sleep), &otv, sizeof otv)))
 		return (error);
@@ -288,16 +288,16 @@ osf1_sys_usleep_thread(p, v, retval)
 	if (ticks == 0)
 		ticks = 1;
 
-	s = splclock();
-	tv = time;
-	splx(s);
+	getmicrotime(&tv);
 
 	tsleep(p, PUSER|PCATCH, "uslpthrd", ticks);	/* XXX */
 
 	if (SCARG(uap, slept) != NULL) {
-		s = splclock();
-		timersub(&time, &tv, &endtv);
-		splx(s);
+		struct timval tv2;
+
+		getmicrotime(&tv2);
+		timersub(&tv2, &tv, &endtv);
+
 		if (endtv.tv_sec < 0 || endtv.tv_usec < 0)
 			endtv.tv_sec = endtv.tv_usec = 0;
 

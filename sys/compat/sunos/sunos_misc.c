@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.45 2004/06/22 23:52:18 jfb Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.46 2004/06/24 19:35:23 tholo Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -1166,15 +1166,15 @@ sunos_sys_ostime(p, v, retval)
 	struct sunos_sys_ostime_args /* {
 		syscallarg(int) time;
 	} */ *uap = v;
-	struct timeval tv;
+	struct timespec ts;
 	int error;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
 
-	tv.tv_sec = SCARG(uap, time);
-	tv.tv_usec = 0;
-	error = settime(&tv);
+	ts.tv_sec = SCARG(uap, time);
+	ts.tv_nsec = 0;
+	error = settime(&ts);
 	return (error);
 }
 

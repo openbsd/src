@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.69 2004/06/21 23:50:35 tholo Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.70 2004/06/24 19:35:23 tholo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.69 2004/06/21 23:50:35 tholo Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.70 2004/06/24 19:35:23 tholo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1620,6 +1620,10 @@ static char *ncr_name (ncb_p np)
  * THESE MUST ALL BE ALIGNED TO A 4-BYTE BOUNDARY.
  */
 #ifdef __OpenBSD__
+/*
+ * XXX - set up a timer that will update a local copy or microuptime once
+ * every tick.
+ */
 static unsigned long script_kvars[] = {
 	(unsigned long)&mono_time.tv_sec,
 	(unsigned long)&mono_time,
@@ -4473,7 +4477,7 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 
 	bzero (&cp->phys.header.stamp, sizeof (struct tstamp));
 #ifdef __OpenBSD__
-	cp->phys.header.stamp.start = mono_time;
+	microuptime(&cp->phys.header.stamp.start);
 #else
 	gettime(&cp->phys.header.stamp.start);
 #endif
@@ -6092,7 +6096,7 @@ void ncr_exception (ncb_p np)
 #ifdef __OpenBSD__
 	if (time_uptime - np->regtime.tv_sec>10) {
 		int i;
-		np->regtime = mono_time;
+		microuptime(&np->regtime);
 #else
 	if (time.tv_sec - np->regtime.tv_sec>10) {
 		int i;
@@ -7707,7 +7711,7 @@ static	void ncb_profile (ncb_p np, ccb_p cp)
 	u_long diff;
 
 #ifdef __OpenBSD__
-	PROFILE.end = mono_time;
+	getmicrouptime(&PROFILE.end);
 #else
 	gettime(&PROFILE.end);
 #endif

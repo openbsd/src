@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.31 2004/05/20 18:32:38 tedu Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.32 2004/06/24 19:35:25 tholo Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -504,7 +504,6 @@ procfs_getattr(v)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
 	struct proc *procp;
-	struct timeval tv;
 	int error;
 
 	/* first check the process still exists */
@@ -543,8 +542,7 @@ procfs_getattr(v)
 	 * p_stat structure is not addressible if u. gets
 	 * swapped out for that process.
 	 */
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
+	getnanotime(&vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 
 	switch (pfs->pfs_type) {
