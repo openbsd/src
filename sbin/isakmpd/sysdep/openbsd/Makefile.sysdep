@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.5 1999/07/17 21:54:39 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.5 1999/07/17 20:44:16 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.6 1999/07/17 22:07:31 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.6 1999/07/17 22:10:49 niklas Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -34,8 +34,8 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-LDADD+=		-lgmp -ldes -lcrypto
-DPADD+=		${LIBGMP} ${LIBDES} ${LIBCRYPTO}
+LDADD+=		-lgmp -lcrypto
+DPADD+=		${LIBGMP} ${LIBCRYPTO}
 
 SRCS+=		pf_key_v2.c
 CFLAGS+=	-DUSE_PF_KEY_V2
