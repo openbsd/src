@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.14 2000/01/29 04:11:25 smurph Exp $ */
+/*	$OpenBSD: if_le.c,v 1.15 2001/12/19 04:07:09 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -308,71 +308,71 @@ void *aux;
 		bootdv = self;
 
 	switch (lebustype) {
-		case BUS_VMES:
-			/* 
-			 * get the first avaliable etherbuf.  MVME376 uses its own dual-ported 
-			 * RAM for etherbuf.  It is set by dip switches on board.  We support 
-			 * the four Motorola address locations, however, the board can be set up 
-			 * at any other address. We must map this space into the extio map. 
-			 * XXX-smurph.
-			 */
-			switch ((int)ca->ca_paddr) {
-				case 0xFFFF1200:
-					addr = (caddr_t)0xFD6C0000;
-					break;
-				case 0xFFFF1400:
-					addr = (caddr_t)0xFD700000;
-					break;
-				case 0xFFFF1600:
-					addr = (caddr_t)0xFD740000;
-					break;
-				case 0xFFFFD200:
-					addr = (caddr_t)0xFD780000;
-					break;
-				default:
-					panic("le: invalid address");
-			}
-			sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
-			if (sc->sc_mem == NULL)
-				panic("\nle: no more memory in external I/O map\n");
-			lesc->sc_r1 = (void *)ca->ca_vaddr;
-			lesc->sc_ipl = ca->ca_ipl;
-			lesc->sc_vec = ca->ca_vec;
-			sc->sc_memsize = VLEMEMSIZE;
-			sc->sc_conf3 = LE_C3_BSWP;
-			sc->sc_addr = kvtop(sc->sc_mem);
-			sc->sc_hwreset = vlereset;
-			sc->sc_rdcsr = vlerdcsr;
-			sc->sc_wrcsr = vlewrcsr;
-			sc->sc_hwinit = vleinit;
-			sc->sc_copytodesc = vle_copytobuf_contig;
-			sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-			sc->sc_copytobuf = vle_copytobuf_contig;
-			sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-			sc->sc_zerobuf = am7990_zerobuf_contig;
-			/* get ether address */
-			vleetheraddr(sc);
-			break;      
-		case BUS_PCC:
-			sc->sc_mem = etherbuf;
-			lesc->sc_r1 = (void *)ca->ca_vaddr;
-			sc->sc_conf3 = LE_C3_BSWP /*| LE_C3_ACON | LE_C3_BCON*/;
-			sc->sc_addr = kvtop(sc->sc_mem);
-			sc->sc_memsize = LEMEMSIZE;
-			sc->sc_rdcsr = lerdcsr;
-			sc->sc_wrcsr = lewrcsr;
-			sc->sc_hwreset = NULL;
-			sc->sc_hwinit = NULL;
-			sc->sc_copytodesc = am7990_copytobuf_contig;
-			sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-			sc->sc_copytobuf = am7990_copytobuf_contig;
-			sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-			sc->sc_zerobuf = am7990_zerobuf_contig;
-			/* get ether address */
-			myetheraddr(sc->sc_arpcom.ac_enaddr);
+	case BUS_VMES:
+		/* 
+		 * get the first avaliable etherbuf.  MVME376 uses its own dual-ported 
+		 * RAM for etherbuf.  It is set by dip switches on board.  We support 
+		 * the four Motorola address locations, however, the board can be set up 
+		 * at any other address. We must map this space into the extio map. 
+		 * XXX-smurph.
+		 */
+		switch ((int)ca->ca_paddr) {
+		case 0xFFFF1200:
+			addr = (caddr_t)0xFD6C0000;
+			break;
+		case 0xFFFF1400:
+			addr = (caddr_t)0xFD700000;
+			break;
+		case 0xFFFF1600:
+			addr = (caddr_t)0xFD740000;
+			break;
+		case 0xFFFFD200:
+			addr = (caddr_t)0xFD780000;
 			break;
 		default:
-			panic("\nle: unknown bus type.\n");
+			panic("le: invalid address");
+		}
+		sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
+		if (sc->sc_mem == NULL)
+			panic("\nle: no more memory in external I/O map\n");
+		lesc->sc_r1 = (void *)ca->ca_vaddr;
+		lesc->sc_ipl = ca->ca_ipl;
+		lesc->sc_vec = ca->ca_vec;
+		sc->sc_memsize = VLEMEMSIZE;
+		sc->sc_conf3 = LE_C3_BSWP;
+		sc->sc_addr = kvtop(sc->sc_mem);
+		sc->sc_hwreset = vlereset;
+		sc->sc_rdcsr = vlerdcsr;
+		sc->sc_wrcsr = vlewrcsr;
+		sc->sc_hwinit = vleinit;
+		sc->sc_copytodesc = vle_copytobuf_contig;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+		sc->sc_copytobuf = vle_copytobuf_contig;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+		sc->sc_zerobuf = am7990_zerobuf_contig;
+		/* get ether address */
+		vleetheraddr(sc);
+		break;      
+	case BUS_PCC:
+		sc->sc_mem = etherbuf;
+		lesc->sc_r1 = (void *)ca->ca_vaddr;
+		sc->sc_conf3 = LE_C3_BSWP /*| LE_C3_ACON | LE_C3_BCON*/;
+		sc->sc_addr = kvtop(sc->sc_mem);
+		sc->sc_memsize = LEMEMSIZE;
+		sc->sc_rdcsr = lerdcsr;
+		sc->sc_wrcsr = lewrcsr;
+		sc->sc_hwreset = NULL;
+		sc->sc_hwinit = NULL;
+		sc->sc_copytodesc = am7990_copytobuf_contig;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+		sc->sc_copytobuf = am7990_copytobuf_contig;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+		sc->sc_zerobuf = am7990_zerobuf_contig;
+		/* get ether address */
+		myetheraddr(sc->sc_arpcom.ac_enaddr);
+		break;
+	default:
+		panic("\nle: unknown bus type.\n");
 	}
 	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "errs", &lesc->sc_errcnt);
@@ -386,19 +386,19 @@ void *aux;
 
 	/* connect the interrupt */
 	switch (lebustype) {
-		case BUS_VMES:
-			lesc->sc_ih.ih_fn = vle_intr;
-			lesc->sc_ih.ih_arg = sc;
-			lesc->sc_ih.ih_ipl = pri;
-			vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih);
-			break;
-		case BUS_PCC:
-			lesc->sc_ih.ih_fn = am7990_intr;
-			lesc->sc_ih.ih_arg = sc;
-			lesc->sc_ih.ih_ipl = pri;
-			pccintr_establish(PCCV_LE, &lesc->sc_ih);
-			((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
-			break;
+	case BUS_VMES:
+		lesc->sc_ih.ih_fn = vle_intr;
+		lesc->sc_ih.ih_arg = sc;
+		lesc->sc_ih.ih_ipl = pri;
+		vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih);
+		break;
+	case BUS_PCC:
+		lesc->sc_ih.ih_fn = am7990_intr;
+		lesc->sc_ih.ih_arg = sc;
+		lesc->sc_ih.ih_ipl = pri;
+		pccintr_establish(PCCV_LE, &lesc->sc_ih);
+		((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
+		break;
 	}
 }
 
