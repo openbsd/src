@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.2 1996/06/18 10:09:20 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.3 1996/07/27 07:26:39 joshd Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -902,6 +902,20 @@ dataconn(name, size, mode)
 			pdata = -1;
 			return (NULL);
 		}
+		if (ntohs(from.sin_port) < IPPORT_RESERVED) {
+			perror_reply(425, "Can't build data connection");
+			(void) close(pdata);
+			(void) close(s);
+			pdata = -1;
+			return (NULL);
+		}
+		if (from.sin_addr.s_addr != his_addr.sin_addr.s_addr) {
+			perror_reply(435, "Can't build data connection"); 
+			(void) close(pdata);
+			(void) close(s);
+			pdata = -1;
+			return (NULL);
+		}
 		(void) close(pdata);
 		pdata = s;
 #ifdef IP_TOS
@@ -930,6 +944,23 @@ dataconn(name, size, mode)
 		return (NULL);
 	}
 	data = fileno(file);
+
+	/*
+	 * attempt to connect to reserved port on client machine;
+	 * this looks like an attack
+	 */
+	if (ntohs(data_dest.sin_port) < IPPORT_RESERVED) {
+		perror_reply(425, "Can't build data connection");
+		(void) fclose(file);
+		data = -1;
+		return NULL;
+	}
+	if (data_dest.sin_addr.s_addr != his_addr.sin_addr.s_addr) {
+		perror_reply(435, "Can't build data connection");
+		(void) fclose(file);
+		data = -1;
+		return NULL;
+	}
 	while (connect(data, (struct sockaddr *)&data_dest,
 	    sizeof(data_dest)) < 0) {
 		if (errno == EADDRINUSE && retry < swaitmax) {
