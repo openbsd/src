@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getifaddrs.3,v 1.2 2000/02/23 15:39:53 itojun Exp $
+.\"	$OpenBSD: getifaddrs.3,v 1.3 2000/02/23 17:04:32 aaron Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -58,66 +58,57 @@ structure contains at least the following entries:
     void             *ifa_data;		/* Address specific data */
 .Ed
 .Pp
-The
-.Li ifa_next
-field contains a pointer to the next structure on the list.
-This field is
+.Bl -tag -width Ds
+.It Fa ifa_next
+Contains a pointer to the next structure on the list.
+This field is set to
 .Dv NULL
 in last structure on the list.
-.Pp
-The
-.Li ifa_name
-field contains the interface name.
-.Pp
-The
-.Li ifa_flags
-field contains the interface flags, as set by
-.Xr ifconfig 8
-utility.
-.Pp
-The
-.Li ifa_addr
-field references either the address of the interface or the link level
-address of the interface, if one exists, otherwise it is NULL.
+.It Fa ifa_name
+Contains the interface name.
+.It Fa ifa_flags
+Contains the interface flags, as set by
+.Xr ifconfig 8 .
+.It Fa ifa_addr
+References either the address of the interface or the link level
+address of the interface, if one exists, otherwise it is
+.Dv NULL .
 (The
-.Li sa_family
+.Fa sa_family
 field of the
-.Li ifa_addr 
+.Fa ifa_addr 
 field should be consulted to determine the format of the
-.Li ifa_addr
+.Fa ifa_addr
 address.)
-.Pp
-The
-.Li ifa_netmask
-field references the netmask associated with
-.Li ifa_addr ,
-if one is set, otherwise it is NULL.
-.Pp
-The
-.Li ifa_broadaddr
-field,
-which should only be referenced for non-P2P interfaces,
+.It Fa ifa_netmask
+References the netmask associated with
+.Fa ifa_addr ,
+if one is set, otherwise it is
+.Dv NULL .
+.It Fa ifa_broadaddr
+This field, which should only be referenced for non-P2P interfaces,
 references the broadcast address associated with
-.Li ifa_addr ,
-if one exists, otherwise it is NULL.
-.Pp
-The
-.Li ifa_dstaddr
-field references the destination address on a P2P interface,
-if one exists, otherwise it is NULL.
-.Pp
-The
-.Li ifa_data
-field references address family specific data.  For 
+.Fa ifa_addr ,
+if one exists, otherwise it is
+.Dv NULL .
+.It Fa ifa_dstaddr
+References the destination address on a P2P interface,
+if one exists, otherwise it is
+.Dv NULL .
+.It Fa ifa_data
+References address family specific data.  For 
 .Dv AF_LINK
 addresses it contains a pointer to the
-.Fa struct if_data
-.Pq as defined in include file Aq Pa net/if.h
+.Li struct if_data
+(as defined in include file
+.Aq Pa net/if.h )
 which contains various interface attributes and statistics.
 For all other address families, it contains a pointer to the
-.Fa struct ifa_data
-.Pq as defined in include file Aq Pa net/if.h
+.Li struct ifa_data
+(as defined in include file
+.Aq Pa net/if.h )
 which contains per-address interface statistics.
+.El
 .Pp
 The data returned by
 .Fn getifaddrs
@@ -126,7 +117,7 @@ is dynamically allocated and should be freed using
 when no longer needed.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -137,7 +128,7 @@ may fail and set
 for any of the errors specified for the library routines
 .Xr ioctl 2 ,
 .Xr socket 2 ,
-.Xr malloc 3
+.Xr malloc 3 ,
 or
 .Xr sysctl 3 .
 .Sh BUGS
@@ -158,5 +149,7 @@ be included before
 .Xr ifconfig 8
 .Sh HISTORY
 The
-.Nm
-implementation first appeared in BSDI BSD/OS.
+.Fn getifaddrs
+function first appeared in BSDI BSD/OS.
+This implementation first appeared in
+.Ox 2.7 .
