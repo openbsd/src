@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2001/06/26 21:57:52 smurph Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2001/06/27 06:21:55 angelos Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -146,11 +146,6 @@ cdev_decl(xfs_dev);
  
 cdev_decl(lkm);
 
-#ifdef IPFILTER
-#define NIPF 1
-#else   
-#define NIPF 0
-#endif  
 #include "ksyms.h"
 cdev_decl(ksyms);
 
@@ -198,7 +193,7 @@ struct cdevsw cdevsw[] = {
         cdev_lkm_dummy(),               /* 36 */
         cdev_lkm_dummy(),               /* 37 */
         cdev_lkm_dummy(),               /* 38 */
-        cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
+        cdev_gen_ipf(NIPF,pf),          /* 39: packet filter */
         cdev_random_init(1,random),     /* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */

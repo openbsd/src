@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.10 1999/07/23 19:11:27 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.11 2001/06/27 06:23:28 angelos Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -75,13 +75,6 @@ cdev_decl(cgeight);
 cdev_decl(tcx);
 
 cdev_decl(cgfourteen);
-
-cdev_decl(ipl);
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
 
 bdev_decl(xd);
 cdev_decl(xd);
