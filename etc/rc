@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.195 2002/05/23 20:47:57 dhartmei Exp $
+#	$OpenBSD: rc,v 1.196 2002/06/07 08:54:48 beck Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -180,6 +180,8 @@ rm -f /etc/nologin
 rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { test -r dhclient.pid && dhclient_pid=`cat dhclient.pid`; rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; test -n "$dhclient_pid" && echo "$dhclient_pid" > dhclient.pid; })
+(cd /var/authpf && rm -rf -- *)
+
 
 # save a copy of the boot messages
 dmesg >/var/run/dmesg.boot
