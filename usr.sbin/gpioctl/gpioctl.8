@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.1 2004/06/03 19:13:24 grange Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.2 2004/06/04 14:00:00 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -25,7 +25,7 @@
 .Op Fl hq
 .Op Fl d Ar device
 .Op Ar pin
-.Op Ar 0 | Ar 1 | Ar 2
+.Op Ar 0 | 1 | 2
 .Nm gpioctl
 .Op Fl hq
 .Op Fl d Ar device
@@ -35,68 +35,72 @@
 .Sh DESCRIPTION
 The
 .Nm
-program allows to manipulate
+program allows manipulation of
 .Tn GPIO
-(General Purpose Input/Output) devices pins.
+(General Purpose Input/Output) device pins.
 Such devices can be either part of the chipset or embedded
 .Tn CPU ,
-or the separate chip.
+or a separate chip.
 The usual way of using
 .Tn GPIO
-is to connect some simple devices such as leds, 1-wire termal sensors,
-etc to its pins.
+is to connect some simple devices such as LEDs, 1-wire termal sensors,
+etc., to its pins.
 .Pp
 Each
 .Tn GPIO
-device has associated device file in the
+device has an associated device file in the
 .Pa /dev
 directory.
 By default
 .Nm
-uses file
-.Pa /dev/gpio0
+uses
+.Pa /dev/gpio0 ,
 which corresponds to the first found
 .Tn GPIO
 device in the system.
 If more than one
 .Tn GPIO
-devices present alternative device file can be specified with the
+device is present, an alternative device file can be specified with the
 .Fl d
 option
-in order to access particular
+in order to access a particular
 .Tn GPIO
 device.
 .Pp
-When executed without any arguments
+When executed without any arguments,
 .Nm
-program reads information about the
+reads information about the
 .Tn GPIO
 device and displays it.
 .Pp
 .Tn GPIO
-pins can be either ``read'' or ``written'' with the values of
-logical 0 or 1.
-If only
+pins can be either
+.Dq read
+or
+.Dq written
+with the values of logical 0 or 1.
+If only a
 .Ar pin
-number is specified in the command line pin state will be read
+number is specified on the command line, the pin state will be read
 from the
 .Tn GPIO
-controller and dispalyed.
-To write to a pin a value must be specified after the
+controller and displayed.
+To write to a pin, a value must be specified after the
 .Ar pin
 number.
 Values can be either 0 or 1.
-Value of 2 has a special meaning to ``toggle'' the pin, i.e. change its
-state to the opposite.
+A value of 2 has a special meaning: it
+.Dq toggles
+the pin, i.e. changes its state to the opposite.
 .Pp
-Each pin can be configured with the different flags with the
+Each pin can be configured with different flags with the
 .Fl c
 option.
 The following configuration flags are supported by the
 .Tn GPIO
 framework:
 .Pp
-.Bl -tag -width XXXXX -compact
+.Bl -tag -width XXXXXXX -offset indent -compact
 .It in
 input direction
 .It out
@@ -118,14 +122,14 @@ Note that not all the flags can be supported by the particular
 controller.
 The list of supported flags is always displayed when executing
 .Nm
-program with the
+with the
 .Fl c
 option.
-If only
+If only a
 .Ar pin
-number is specified in the command line current pin flags will be
-dispalyed.
-To change pin flags new flags set separated with the spaces must be
+number is specified on the command line, the current pin flags will be
+displayed.
+To change pin flags, a new flags set separated by spaces must be
 specified after the
 .Ar pin
 number.
@@ -137,13 +141,13 @@ GPIO device unit
 file.
 .El
 .Sh EXAMPLES
-.Li # gpioctl -c 20 out pp
+Configure pin 20 to have push-pull output:
 .Pp
-Configures pin 20 to have push-pull output.
+.Dl # gpioctl -c 20 out pp
 .Pp
-.Li # gpioctl 20 1
+Write logical 1 to pin 20:
 .Pp
-Writes logical 1 to the pin 20.
+.Dl # gpioctl 20 1
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr gscpcib 4 ,
