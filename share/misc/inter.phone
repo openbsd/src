@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.28 2002/06/06 04:18:30 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.29 2002/06/06 16:07:26 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -9834,7 +9834,7 @@
 359:2:Shoumen:Bulgaria
 359:2:Sofia:Bulgaria
 359:52:Varna:Bulgaria
-370:1:Shauliai:Lithuania
+370:1:Sauliai:Lithuania
 370:2:Vilnius:Lithuania
 370:6:Klaipeda:Lithuania
 370:7:Kaunas:Lithuania
@@ -9856,7 +9856,7 @@
 370:37:Elektrienai:Lithuania
 370:38:Trakai:Lithuania
 370:39:Utena:Lithuania
-370:40:Gargzdei:Lithuania
+370:40:Gargzdai:Lithuania
 370:41:Silute:Lithuania
 370:42:Vilkaviskis:Lithuania
 370:43:Marijampole:Lithuania
@@ -9872,11 +9872,10 @@
 370:58:Kretinga:Lithuania
 370:59:Nida:Lithuania
 370:60:Varena:Lithuania
-370:610:cellular mobile (GSM-1, Omnitel):Lithuania
-370:611:cellular mobile (GSM-1, Omnitel):Lithuania
-370:650:cellular mobile (GSM-2, Bite):Lithuania
-370:670:cellular mobile (GSM-3, Tele2):Lithuania
+370:61:cellular mobile (GSM-1, Omnitel):Lithuania
+370:65:cellular mobile (GSM-2, Bite):Lithuania
 370:66:Snieckus, Visaginas:Lithuania
+370:67:cellular mobile (GSM-3, Tele2):Lithuania
 370:68:Lazdijai:Lithuania
 370:69:Silale:Lithuania
 370:70:Zarasai:Lithuania
