@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.13 2002/08/27 23:56:44 wcobb Exp $
+.\"	$OpenBSD: uvm.9,v 1.14 2002/09/02 04:12:04 wcobb Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -1031,9 +1031,6 @@ development stages.
 They will be renamed to
 .Dq uvm_ .
 .Pp
-The
-.Xr pmap 9
-manual page is not yet written.
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).
@@ -1082,4 +1079,5 @@ function should be able to fail in low memory conditions.
 .Xr kvm 3 ,
 .Xr sysctl 3 ,
 .Xr ddb 4 ,
-.Xr options 4
+.Xr options 4 ,
+.Xr pmap 9
