@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.477 2005/02/07 18:18:14 david Exp $	*/
+/*	$OpenBSD: parse.y,v 1.478 2005/02/26 15:14:58 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -924,6 +924,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					if (strlcpy(h->addr.v.ifname, i->ifname,
 					    sizeof(h->addr.v.ifname)) >=
 					    sizeof(h->addr.v.ifname)) {
+						free(h);
 						yyerror(
 						    "interface name too long");
 						YYERROR;
@@ -1919,11 +1920,13 @@ filter_opt	: USER uids {
 			}
 			if (*e) {
 				yyerror("invalid probability: %s", $2);
+				free($2);
 				YYERROR;
 			}
 			p = floor(p * (UINT_MAX+1.0) + 0.5);
 			if (p < 1.0 || p >= (UINT_MAX+1.0)) {
 				yyerror("invalid probability: %s", $2);
+				free($2);
 				YYERROR;
 			}
 			filter_opts.prob = (u_int32_t)p;
