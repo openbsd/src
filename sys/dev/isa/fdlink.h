@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdlink.h,v 1.4 1998/08/08 23:01:16 downsj Exp $	*/
+/*	$OpenBSD: fdlink.h,v 1.5 2001/03/06 13:55:02 ho Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -103,6 +103,7 @@ struct fdc_softc {
 	} sc_link;
 	enum fdc_state sc_state;
 	int sc_errors;			/* number of retries so far */
+	struct timeout fdcpseudointr_to;
 	u_char sc_status[7];		/* copy of registers */
 };
 

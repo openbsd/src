@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.13 2000/07/18 01:28:12 deraadt Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.14 2001/03/06 13:55:02 ho Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -61,6 +61,7 @@
 #include <sys/mtio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -182,6 +183,8 @@ fdcattach(parent, self, aux)
 	else
 #endif
 		type = -1;
+
+	timeout_set(&fdc->fdcpseudointr_to, fdcpseudointr, fdc);
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {

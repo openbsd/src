@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.41 1999/10/07 18:47:19 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.42 2001/03/06 13:55:02 ho Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -126,6 +127,9 @@ struct fd_softc {
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
+	struct timeout fd_motor_on_to;
+	struct timeout fd_motor_off_to;
+	struct timeout fdtimeout_to;
 };
 
 /* floppy driver configuration */
@@ -276,6 +280,11 @@ fdattach(parent, self, aux)
 	dk_establish(&fd->sc_dk, &fd->sc_dev);
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+
+	/* Setup timeout structures */
+	timeout_set(&fd->fd_motor_on_to, fd_motor_on, fd);
+	timeout_set(&fd->fd_motor_off_to, fd_motor_off, fd);
+	timeout_set(&fd->fdtimeout_to, fdtimeout, fd);
 }
 
 /*
@@ -372,7 +381,7 @@ fdstrategy(bp)
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort(&fd->sc_q, bp);
-	untimeout(fd_motor_off, fd); /* a good idea */
+	timeout_del(&fd->fd_motor_off_to); /* a good idea */
 	if (!fd->sc_q.b_active)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
@@ -439,7 +448,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout(fd_motor_off, fd, 5 * hz);
+	timeout_add(&fd->fd_motor_off_to, 5 * hz);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -627,7 +636,7 @@ loop:
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
 		fd->sc_blkno = bp->b_blkno / (fd_bsize / DEV_BSIZE);
-		untimeout(fd_motor_off, fd);
+		timeout_del(&fd->fd_motor_off_to);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
 			return 1;
@@ -637,14 +646,14 @@ loop:
 			struct fd_softc *ofd =
 				fdc->sc_link.fdlink.sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
-				untimeout(fd_motor_off, ofd);
+				timeout_del(&ofd->fd_motor_off_to);
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* Allow .25s for motor to stabilize. */
-			timeout(fd_motor_on, fd, hz / 4);
+			timeout_add(&fd->fd_motor_on_to, hz / 4);
 			return 1;
 		}
 		/* Make sure the right drive is selected. */
@@ -670,7 +679,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 		disk_busy(&fd->sc_dk);
 
-		timeout(fdtimeout, fd, 4 * hz);
+		timeout_add(&fd->fdtimeout_to, 4 * hz);
 		return 1;
 
 	case DOIO:
@@ -737,14 +746,14 @@ loop:
 		disk_busy(&fd->sc_dk);
 
 		/* allow 2 seconds for operation */
-		timeout(fdtimeout, fd, 2 * hz);
+		timeout_add(&fd->fdtimeout_to, 2 * hz);
 		return 1;				/* will return later */
 
 	case SEEKWAIT:
-		untimeout(fdtimeout, fd);
+		timeout_del(&fd->fdtimeout_to);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
-		timeout(fdcpseudointr, fdc, hz / 50);
+		timeout_add(&fdc->fdcpseudointr_to, hz / 50);
 		return 1;
 
 	case SEEKCOMPLETE:
@@ -772,7 +781,7 @@ loop:
 		goto loop;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
-		untimeout(fdtimeout, fd);
+		timeout_del(&fd->fdtimeout_to);
 
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
@@ -811,11 +820,11 @@ loop:
 		delay(100);
 		fd_set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
-		timeout(fdtimeout, fd, hz / 2);
+		timeout_add(&fd->fdtimeout_to, hz / 2);
 		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
-		untimeout(fdtimeout, fd);
+		timeout_del(&fd->fdtimeout_to);
 		/* clear the controller output buffer */
 		for (i = 0; i < 4; i++) {
 			out_fdc(iot, ioh, NE7CMD_SENSEI);
@@ -827,14 +836,14 @@ loop:
 		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recal function */
 		out_fdc(iot, ioh, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
-		timeout(fdtimeout, fd, 5 * hz);
+		timeout_add(&fd->fdtimeout_to, 5 * hz);
 		return 1;			/* will return later */
 
 	case RECALWAIT:
-		untimeout(fdtimeout, fd);
+		timeout_del(&fd->fdtimeout_to);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
-		timeout(fdcpseudointr, fdc, hz / 30);
+		timeout_add(&fdc->fdcpseudointr_to, hz / 30);
 		return 1;			/* will return later */
 
 	case RECALCOMPLETE:
