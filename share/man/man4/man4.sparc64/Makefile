@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2003/02/10 22:40:55 jason Exp $
+#	$OpenBSD: Makefile,v 1.31 2003/06/19 09:00:39 deraadt Exp $
 
 # TODO: auxio.4 clock.4 timer.4
 MAN=	apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 be.4 beeper.4 bwtwo.4 \
@@ -9,8 +9,7 @@ MAN=	apio.4 asio.4 audioce.4 audiocs.4 autoconf.4 be.4 beeper.4 bwtwo.4 \
 MLINKS=	le.4 lebuffer.4 le.4 ledma.4 \
 	mem.4 kmem.4 \
 	sab.4 sabtty.4 \
-	zs.4 zstty.4 \
-	zs.4 zskbd.4
+	zs.4 zstty.4 zs.4 zskbd.4
 MANSUBDIR=sparc64
 
 .include <bsd.prog.mk>
