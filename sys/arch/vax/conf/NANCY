@@ -1,4 +1,4 @@
-#	$OpenBSD: NANCY,v 1.1 1997/08/30 09:25:53 maja Exp $
+#	$OpenBSD: NANCY,v 1.2 1997/08/30 22:51:55 maja Exp $
 #
 # NANCY MV3600 configuration file.
 #
@@ -50,10 +50,6 @@ option		FIFO
 #option		SYSVMSG
 #option		SYSVSEM
 #option		SYSVSHM
-
-# What executables to look for.
-option		EXEC_AOUT
-option		EXEC_SCRIPT
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with

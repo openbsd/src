@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 1997/05/28 23:09:37 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.9 1997/08/30 22:51:54 maja Exp $
 #	$NetBSD: GENERIC,v 1.19 1997/01/11 11:15:38 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
@@ -51,10 +51,6 @@ option		UNION
 option		SYSVMSG
 option		SYSVSEM
 option		SYSVSHM
-
-# What executables to look for.
-option		EXEC_AOUT
-option		EXEC_SCRIPT
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
