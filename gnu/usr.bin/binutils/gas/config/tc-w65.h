@@ -1,6 +1,5 @@
 /* This file is tc-w65.h
-
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,11 +14,14 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 
 #define TC_W65
+
+#define TARGET_BYTES_BIG_ENDIAN 0
 
 /* This macro translates between an internal fix and an coff reloc type */
 #define TC_COFF_FIX2RTYPE(fixP) tc_coff_fix2rtype(fixP)
@@ -32,7 +34,6 @@
 #define TC_RELOC_MANGLE(s,a,b,c) tc_reloc_mangle(a,b,c)
 
 #define DO_NOT_STRIP 0
-#define DO_STRIP 0
 #define LISTING_HEADER "W65816 GAS "
 #define NEED_FX_R_TYPE 1
 #define RELOC_32 1234

@@ -1,3 +1,7 @@
+Tue Nov 26 12:34:12 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* g-mpw-make.sed: Fix some comments.
+
 Mon Sep 16 14:42:52 1996  Stan Shebs  <shebs@andros.cygnus.com>
 
 	* g-mpw-make.sed (HLDENV): Edit out all references.

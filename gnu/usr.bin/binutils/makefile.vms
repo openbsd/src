@@ -1,0 +1,37 @@
+#
+# makefile for bfd, binutils and gas
+#
+# Created by Klaus K"ampf (kkaempf@progis.de)
+#
+# You must use Version 3.75p (proGIS enhanced) of GNU Make
+#
+#
+CC = gcc
+
+all:
+	$$ @setup
+	$(CD) [.bfd]
+	gmake "CC=$(CC)"
+	$(CD) [-.opcodes]
+	gmake "CC=$(CC)"
+	$(CD) [-.libiberty]
+	gmake "CC=$(CC)"
+	$(CD) [-.binutils]
+	gmake "CC=$(CC)"
+	$(CD) [-.gas]
+	gmake "CC=$(CC)"
+	$(CD) [-]
+
+clean:
+	$(CD) [.bfd]
+	gmake clean
+	$(CD) [-.opcodes]
+	gmake clean
+	$(CD) [-.libiberty]
+	gmake clean
+	$(CD) [-.binutils]
+	gmake clean
+	$(CD) [-.gas]
+	gmake clean
+	$(CD) [-]
+

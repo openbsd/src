@@ -39,7 +39,7 @@ if ![ld_simple_link $ld tmpdir/phdrs "-T $srcdir/$subdir/phdrs.t tmpdir/phdrs.o"
 
     verbose -log "$objdump --private tmpdir/phdrs"
     catch "exec $objdump --private tmpdir/phdrs" exec_output
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+    set exec_output [prune_warnings $exec_output]
     verbose -log $exec_output
 
     if [regexp $phdrs_regexp $exec_output] {

@@ -53,12 +53,16 @@ long i00afunc ();
 #endif
 
 #if __STDC__
+#include <stddef.h>
 typedef void *pointer;
 #else
 typedef char *pointer;
+typedef unsigned size_t;
 #endif
 
+#ifndef NULL
 #define	NULL	0
+#endif
 
 /* Different portions of Emacs need to call different versions of
    malloc.  The Emacs executable needs alloca to call xmalloc, because
@@ -152,7 +156,7 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
 
 pointer
 alloca (size)
-     unsigned size;
+     size_t size;
 {
   auto char probe;		/* Probes stack depth: */
   register char *depth = ADDRESS_FUNCTION (probe);

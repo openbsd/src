@@ -118,3 +118,7 @@ data_label:
 	s.s	$f4,0
 	swl	$4,0
 	swr	$4,0
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop
+	nop

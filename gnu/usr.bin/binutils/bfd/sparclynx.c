@@ -1,5 +1,5 @@
 /* BFD support for Sparc binaries under LynxOS.
-   Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -228,7 +228,7 @@ sparclynx_set_sizes (abfd)
 
 static CONST struct aout_backend_data sparclynx_aout_backend =
 {
-  0, 1, 1, 0, sparclynx_set_sizes, 0,
+  0, 1, 0, 1, 0, sparclynx_set_sizes, 0,
   0,				/* add_dynamic_symbols */
   0,				/* add_one_symbol */
   0,				/* link_dynamic_object */

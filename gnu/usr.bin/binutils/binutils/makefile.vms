@@ -1,21 +1,25 @@
 #
-# Makefile for binutils under openVMS/AXP
+# Makefile for binutils under openVMS/Alpha
 #
 # For use with gnu-make for vms
 #
-# Created by Klaus Kämpf, kkaempf@progis.de
+# Created by Klaus K"ampf, kkaempf@progis.de
 #
 #
 
-CC=gcc
+# Distribution version, filled in by configure.com
+VERSION=
+
+TARGET=""evax-alpha""
 
 ifeq ($(CC),gcc)
 CFLAGS=/include=([],[-.include],[-.bfd])$(DEFS)
-DEFS=/define=("unlink=remove")
-LIBS=,GNU_CC:[000000]LIBGCC2/lib,GNU_CC:[000000]LIBGCCLIB/lib,sys$$library:vaxcrtl.olb/lib,GNU_CC:[000000]crt0.obj
+DEFS=/define=("TARGET=$(TARGET)")
+LIBS=,GNU:[000000]libgcc/lib,sys$$library:vaxcrtl.olb/lib,GNU:[000000]crt0.obj
 else
 CFLAGS=/noopt/debug/include=([],[-.include],[-.bfd])$(DEFS)/warnings=disable=(missingreturn,implicitfunc)
-DEFS=/define=("const=","unlink=remove",\
+DEFS=/define=("TARGET=$(TARGET)",\
+"const=","unlink=remove",\
 "_bfd_generic_get_section_contents_in_window"="_bfd_generic_get_win_section_cont",\
 "_bfd_elf_section_from_bfd_section"="_bfd_elf_sec_from_bfd_sec")
 LIBS=,sys$$library:vaxcrtl.olb/lib
@@ -61,7 +65,29 @@ objdump.exe: $(OBJDUMPOBJS)
 
 
 version.obj: version.c
-	$(CC) $(CFLAGS)/define=(VERSION="""960814""") $<
+	$(CC) $(CFLAGS)/define=(VERSION="""$(VERSION)""") $<
 
-config.h: config.h-vms
-	$(CP) $< $@
+config.h:
+	$$ @configure
+	$(MAKE) -f makefile.vms
+
+[-.bfd]libbfd.olb:
+	$(CD) [-.bfd]
+	$(MAKE) -f makefile.vms
+	$(CD) [-.binutils]
+
+[-.libiberty]libiberty.olb:
+	$(CD) [-.libiberty]
+	$(MAKE) -f makefile.vms
+	$(CD) [-.binutils]
+
+[-.opcodes]libopcodes.olb:
+	$(CD) [-.opcodes]
+	$(MAKE) -f makefile.vms
+	$(CD) [-.binutils]
+
+clean:
+	$$ purge
+	$(RM) *.obj;
+	$(RM) *.exe;
+	$(RM) config.h;

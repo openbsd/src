@@ -1,0 +1,8 @@
+Version References:
+  required from tmpdir/vers1.so:
+    0x0a7927b1 0x00 04 VERS_1.1
+  required from tmpdir/vers1.so:
+    0x0a7927b2 0x00 03 VERS_1.2
+  required from tmpdir/vers1.so:
+    0x0a7922b0 0x00 02 VERS_2.0
+

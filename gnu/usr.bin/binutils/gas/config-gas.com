@@ -3,15 +3,23 @@ $! This file sets things up to build gas on a VMS system to generate object
 $! files for a VMS system.  We do not use the configure script, since we
 $! do not have /bin/sh to execute it.
 $!
-$! If you are running this file, then obviously the host is vax-dec-vms.
-$! [That's no longer obvious, but there's not much we can do about alpha yet.]
 $!
 $gas_host="vms"
 $!
+$arch_indx = 1 + ((f$getsyi("CPU").ge.128).and.1)      ! vax==1, alpha==2
+$arch = f$element(arch_indx,"|","|VAX|Alpha|")
+$if arch .eqs. "VAX"
+$then
 $cpu_type="vax"
-$emulation="generic"
 $obj_format="vms"
 $atof="vax"
+$else
+$ cpu_type="alpha"
+$ obj_format="evax"
+$ atof="ieee"
+$endif
+$
+$emulation="generic"
 $!
 $	DELETE	= "delete/noConfirm"
 $	ECHO	= "write sys$output"
@@ -60,7 +68,12 @@ $write ifile$ "#ifndef GAS_VERSION"
 $write ifile$ "#define GAS_VERSION      """,line,""""
 $write ifile$ "#endif"
 $write ifile$ "/*--*/"
+$if arch .eqs. "VAX"
+$then
 $append [.config]vms-conf.h ifile$:
+$else
+$ append [.config]vms-a-conf.h ifile$:
+$endif
 $close ifile$
 $ECHO "Created config.h."
 $!
@@ -155,9 +168,10 @@ $!
 $! Done
 $!
 $ if f$search("config.status") .nes. "" then DELETE config.status;*
-$ create config.status
-Links are now set up for use with a vax running VMS.
-$ type config.status
+$ open/write cfile []config.status
+$ write cfile "Links are now set up for use with a "+arch+" running VMS."
+$ close cfile
+$ type []config.status
 $exit
 $!
 $!

@@ -3,7 +3,7 @@
 
 set testname "script"
 
-if ![ld_assemble $as $srcdir$subdir/script.s tmpdir/script.o] { 
+if ![ld_assemble $as $srcdir/$subdir/script.s tmpdir/script.o] { 
     unresolved $testname
     return
 }
@@ -49,7 +49,7 @@ proc check_script { } {
     }
 }
 
-if ![ld_simple_link $ld tmpdir/script "-T $srcdir$subdir/script.t tmpdir/script.o"] {
+if ![ld_simple_link $ld tmpdir/script "-T $srcdir/$subdir/script.t tmpdir/script.o"] {
     fail $testname
 } else {
     check_script
@@ -57,7 +57,7 @@ if ![ld_simple_link $ld tmpdir/script "-T $srcdir$subdir/script.t tmpdir/script.
 
 set testname "MRI script"
 
-if ![ld_simple_link $ld tmpdir/script "-c $srcdir$subdir/scriptm.t"] {
+if ![ld_simple_link $ld tmpdir/script "-c $srcdir/$subdir/scriptm.t"] {
     fail $testname
 } else {
     check_script

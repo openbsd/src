@@ -25,7 +25,7 @@ PTR malloc PARAMS ((size_t));
 static void xatexit_cleanup PARAMS ((void));
 
 /* Pointer to function run by xexit.  */
-extern void (*_xexit_cleanup) ();
+extern void (*_xexit_cleanup) PARAMS ((void));
 
 #define	XATEXIT_SIZE 32
 

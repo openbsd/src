@@ -1,5 +1,6 @@
 /* Print Motorola 68k instructions.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright 1986, 87, 89, 91, 92, 93, 94, 95, 96, 1997
+   Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,10 +18,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "dis-asm.h"
 #include "floatformat.h"
+#include <libiberty.h>
 
 #include "opcode/m68k.h"
 
 /* Local function prototypes */
+
+static int
+fetch_data PARAMS ((struct disassemble_info *, bfd_byte *));
+
+static void
+dummy_print_address PARAMS ((bfd_vma, struct disassemble_info *));
 
 static int
 fetch_arg PARAMS ((unsigned char *, int, int, disassemble_info *));
@@ -66,30 +74,20 @@ static char *const reg_names[] = {
   (p += 4, FETCH_DATA (info, p), \
    (COERCE32 ((((((p[-4] << 8) + p[-3]) << 8) + p[-2]) << 8) + p[-1])))
 
-/* NEXTSINGLE and NEXTDOUBLE handle alignment problems, but not
- * byte-swapping or other float format differences.  FIXME! */
-
-union number {
-    double d;
-    float f;
-    char c[10];
-};
-
+/* Get a single precision float.  */
 #define NEXTSINGLE(val, p) \
-  { unsigned int i; union number u;\
-    FETCH_DATA (info, p + sizeof (float));\
-    for (i = 0; i < sizeof(float); i++) u.c[i] = *p++; \
-    val = u.f; }
+  (p += 4, FETCH_DATA (info, p), \
+   floatformat_to_double (&floatformat_ieee_single_big, (char *) p - 4, &val))
 
+/* Get a double precision float.  */
 #define NEXTDOUBLE(val, p) \
-  { unsigned int i; union number u;\
-    FETCH_DATA (info, p + sizeof (double));\
-    for (i = 0; i < sizeof(double); i++) u.c[i] = *p++; \
-    val = u.d; }
+  (p += 8, FETCH_DATA (info, p), \
+   floatformat_to_double (&floatformat_ieee_double_big, (char *) p - 8, &val))
 
-/* Need a function to convert from extended to double precision... */
-#define NEXTEXTEND(p) \
-  (p += 12, FETCH_DATA (info, p), 0.0)
+/* Get an extended precision float.  */
+#define NEXTEXTEND(val, p) \
+  (p += 12, FETCH_DATA (info, p), \
+   floatformat_to_double (&floatformat_m68881_ext, (char *) p - 12, &val))
 
 /* Need a function to convert from packed to double
    precision.   Actually, it's easier to print a
@@ -152,7 +150,7 @@ dummy_printer (file) FILE *file;
 #endif
  { return 0; }
 
-void
+static void
 dummy_print_address (vma, info)
      bfd_vma vma;
      struct disassemble_info *info;
@@ -178,8 +176,43 @@ print_insn_m68k (memaddr, info)
   fprintf_ftype save_printer = info->fprintf_func;
   void (*save_print_address) PARAMS((bfd_vma, struct disassemble_info*))
     = info->print_address_func;
+  int major_opcode;
+  static int numopcodes[16];
+  static const struct m68k_opcode **opcodes[16];
+
+  if (!opcodes[0])
+    {
+      /* Speed up the matching by sorting the opcode table on the upper
+	 four bits of the opcode.  */
+      const struct m68k_opcode **opc_pointer[16];
+
+      /* First count how many opcodes are in each of the sixteen buckets.  */
+      for (i = 0; i < m68k_numopcodes; i++)
+	numopcodes[(m68k_opcodes[i].opcode >> 28) & 15]++;
+
+      /* Then create a sorted table of pointers that point into the
+	 unsorted table.  */
+      opc_pointer[0] = ((const struct m68k_opcode **)
+			xmalloc (sizeof (struct m68k_opcode *)
+				 * m68k_numopcodes));
+      opcodes[0] = opc_pointer[0];
+      for (i = 1; i < 16; i++)
+	{
+	  opc_pointer[i] = opc_pointer[i - 1] + numopcodes[i - 1];
+	  opcodes[i] = opc_pointer[i];
+	}
+
+      for (i = 0; i < m68k_numopcodes; i++)
+	*opc_pointer[(m68k_opcodes[i].opcode >> 28) & 15]++ = &m68k_opcodes[i];
+
+    }
 
   info->private_data = (PTR) &priv;
+  /* Tell objdump to use two bytes per chunk and six bytes per line for
+     displaying raw data.  */
+  info->bytes_per_chunk = 2;
+  info->bytes_per_line = 6;
+  info->display_endian = BFD_ENDIAN_BIG;
   priv.max_fetched = priv.the_buffer;
   priv.insn_start = memaddr;
   if (setjmp (priv.bailout) != 0)
@@ -188,9 +221,10 @@ print_insn_m68k (memaddr, info)
 
   bestmask = 0;
   FETCH_DATA (info, buffer + 2);
-  for (i = 0; i < m68k_numopcodes; i++)
+  major_opcode = (buffer[0] >> 4) & 15;
+  for (i = 0; i < numopcodes[major_opcode]; i++)
     {
-      const struct m68k_opcode *opc = &m68k_opcodes[i];
+      const struct m68k_opcode *opc = opcodes[major_opcode][i];
       unsigned long opcode = opc->opcode;
       unsigned long match = opc->match;
 
@@ -418,7 +452,7 @@ print_insn_arg (d, buffer, p0, addr, info)
 	     {"%tc",  0x003}, {"%itt0",0x004}, {"%itt1", 0x005},
              {"%dtt0",0x006}, {"%dtt1",0x007}, {"%buscr",0x008},
 	     {"%usp", 0x800}, {"%vbr", 0x801}, {"%caar", 0x802},
-	     {"%msp", 0x803}, {"%ibsp", 0x804},
+	     {"%msp", 0x803}, {"%isp", 0x804},
 
 	     /* Should we be calling this psr like we do in case 'Y'?  */
 	     {"%mmusr",0x805},
@@ -580,7 +614,7 @@ print_insn_arg (d, buffer, p0, addr, info)
       val = NEXTWORD (p);
       (*info->fprintf_func)
 	(info->stream, "%s@(%d)",
-	 reg_names[fetch_arg (buffer, place, 3, info)], val);
+	 reg_names[fetch_arg (buffer, place, 3, info) + 8], val);
       break;
 
     case 's':
@@ -608,6 +642,8 @@ print_insn_arg (d, buffer, p0, addr, info)
     case '&':
     case '`':
     case '|':
+    case '<':
+    case '>':
 
       if (place == 'd')
 	{
@@ -701,10 +737,7 @@ print_insn_arg (d, buffer, p0, addr, info)
 		  break;
 
 		case 'x':
-		  FETCH_DATA (info, p + 12);
-		  floatformat_to_double (&floatformat_m68881_ext,
-					 (char *) p, &flval);
-		  p += 12;
+		  NEXTEXTEND(flval, p);
 		  break;
 
 		case 'p':

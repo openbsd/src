@@ -1,7 +1,7 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
-/* Copyright (C) 1991, 1993 Free Software Foundation, Inc.
+/* Copyright (C) 1991, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -16,14 +16,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GLD; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+along with GLD; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 /* 
  * emulate the Intels port of  gld
  */
 
 
+#include <ctype.h>
 #include "bfd.h"
 #include "sysdep.h"
 #include "libiberty.h"
@@ -78,7 +80,20 @@ static void gld960_before_parse()
 static void
 gld960_set_output_arch()
 {
-  bfd_set_arch_mach(output_bfd, ldfile_output_architecture, bfd_mach_i960_core);
+  if (ldfile_output_machine_name != NULL
+      && *ldfile_output_machine_name != '\0')
+    {
+      char *s, *s1;
+
+      s = concat ("i960:", ldfile_output_machine_name, (char *) NULL);
+      for (s1 = s; *s1 != '\0'; s1++)
+	if (isupper ((unsigned char) *s1))
+	  *s1 = tolower ((unsigned char) *s1);
+      ldfile_set_output_arch (s);
+      free (s);
+    }
+
+  set_output_arch_default ();
 }
 
 static char *

@@ -1,10 +1,10 @@
-/* evax-egsd.c -- BFD back-end for ALPHA EVAX (openVMS/AXP) files.
-   Copyright 1996 Free Software Foundation Inc.
+/* evax-egsd.c -- BFD back-end for ALPHA EVAX (openVMS/Alpha) files.
+   Copyright 1996, 1997 Free Software Foundation Inc.
 
    go and read the openVMS linker manual (esp. appendix B)
    if you don't know what's going on here :-)
 
-   Written by Klaus Kämpf (kkaempf@progis.de)
+   Written by Klaus K"ampf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define EVAX_BSS_NAME		"$BSS$"
 #define EVAX_READONLY_NAME	"$READONLY$"
 #define EVAX_LITERAL_NAME	"$LITERAL$"
+#define EVAX_COMMON_NAME	"$COMMON$"
+#define EVAX_LOCAL_NAME		"$LOCAL$"
 
 struct sec_flags_struct {
   char *name;			/* name of section */
@@ -463,6 +465,10 @@ _bfd_evax_write_egsd (abfd)
 	    sname = EVAX_READONLY_NAME;
 	  else if ((*sname == 'l') && (strcmp (sname, "literal") == 0))
 	    sname = EVAX_LITERAL_NAME;
+	  else if ((*sname == 'c') && (strcmp (sname, "comm") == 0))
+	    sname = EVAX_COMMON_NAME;
+	  else if ((*sname == 'l') && (strcmp (sname, "lcomm") == 0))
+	    sname = EVAX_LOCAL_NAME;
 	}
 
       _bfd_evax_output_begin (abfd, EGSD_S_C_PSC, -1);
@@ -496,6 +502,11 @@ _bfd_evax_write_egsd (abfd)
 	    bfd_set_start_address (abfd, (bfd_vma)symbol->value);
 	}
       old_flags = symbol->flags;
+
+      if ((*(symbol->section->name+1) == 'c')
+	 && (strcmp (symbol->section->name+1, "comm") == 0)
+	 && (strcmp (symbol->name, ".comm") != 0))
+	old_flags |= BSF_GLOBAL;
 
       if (old_flags & BSF_FILE)
 	continue;
@@ -555,7 +566,7 @@ _bfd_evax_write_egsd (abfd)
 	      _bfd_evax_output_long (abfd, symbol->section->index);/* L_PSINDX, FIXME */
 	    }
 	}
-      _bfd_evax_output_counted (abfd, _bfd_evax_case_hack_symbol (abfd, symbol->name));
+      _bfd_evax_output_counted (abfd, _bfd_evax_length_hash_symbol (abfd, symbol->name));
 
       _bfd_evax_output_flush (abfd);
 

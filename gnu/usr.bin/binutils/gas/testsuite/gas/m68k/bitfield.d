@@ -1,4 +1,4 @@
-#objdump: -d
+#objdump: -d --prefix-addresses
 #name: bitfield
 
 # Test handling of bitfield instruction operands.

@@ -28,14 +28,14 @@ if [istarget a29k*-*-*] {
 
 # hppa-elf needs a definition for $global$.
 if [istarget hppa*-*-*] {
-    set flags "$flags --defsym '$global$'=0
+    set flags "$flags --defsym '\$global\$'=0
 }
 
 verbose -log "$ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o"
 
 catch "exec $ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o" exec_output
 
-set exec_output [prune_system_crud $host_triplet $exec_output]
+set exec_output [prune_warnings $exec_output]
 
 regsub -all "(^|\n)($ld: warning: cannot find entry symbol\[^\n\]*\n?)" $exec_output "\\1" exec_output
 
@@ -61,7 +61,7 @@ verbose -log "$ld $flags -o tmpdir/cross2 -T $srcdir/$subdir/cross2.t tmpdir/cro
 
 catch "exec $ld $flags -o tmpdir/cross2 -T $srcdir/$subdir/cross2.t tmpdir/cross3.o" exec_output
 
-set exec_output [prune_system_crud $host_triplet $exec_output]
+set exec_output [prune_warnings $exec_output]
 
 regsub -all "(^|\n)($ld: warning: cannot find entry symbol\[^\n\]*\n?)" $exec_output "\\1" exec_output
 

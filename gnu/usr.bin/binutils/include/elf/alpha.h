@@ -64,10 +64,14 @@ typedef struct
 #define R_ALPHA_SREL16		9	/* PC relative 16 bit */
 #define R_ALPHA_SREL32		10	/* PC relative 32 bit */
 #define R_ALPHA_SREL64		11	/* PC relative 64 bit */
+
+/* Inherited these from ECOFF, but they are not particularly useful
+   and are depreciated.  And not implemented in the BFD, btw.  */
 #define R_ALPHA_OP_PUSH		12	/* OP stack push */
 #define R_ALPHA_OP_STORE	13	/* OP stack pop and store */
 #define R_ALPHA_OP_PSUB		14	/* OP stack subtract */
 #define R_ALPHA_OP_PRSHIFT	15	/* OP stack right shift */
+
 #define R_ALPHA_GPVALUE		16
 #define R_ALPHA_GPRELHIGH	17
 #define R_ALPHA_GPRELLOW	18
@@ -76,6 +80,8 @@ typedef struct
 #define R_ALPHA_IMMED_SCN_HI32	21
 #define R_ALPHA_IMMED_BR_HI32	22
 #define R_ALPHA_IMMED_LO32	23
+
+/* These relocations are specific to shared libraries.  */
 #define R_ALPHA_COPY		24	/* Copy symbol at runtime */
 #define R_ALPHA_GLOB_DAT	25	/* Create GOT entry */
 #define R_ALPHA_JMP_SLOT	26	/* Create PLT entry */

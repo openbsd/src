@@ -1,11 +1,11 @@
-/* evax-emh.c -- BFD back-end for ALPHA EVAX (openVMS/AXP) files.
-   Copyright 1996 Free Software Foundation, Inc.
+/* evax-emh.c -- BFD back-end for ALPHA EVAX (openVMS/Alpha) files.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
 
    EMH record handling functions
    and
    EEOM record handling functions
 
-   Written by Klaus Kämpf (kkaempf@progis.de)
+   Written by Klaus K"ampf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
 This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
+#include <ctype.h>
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -196,7 +197,45 @@ _bfd_evax_write_emh (abfd)
   _bfd_evax_output_long (abfd, MAX_OUTREC_SIZE);
 
   if (bfd_get_filename (abfd) != 0)
-    _bfd_evax_output_counted (abfd, bfd_get_filename (abfd));
+    {
+      /* strip path and suffix information */
+
+      char *fname, *fout, *fptr;
+
+      fname = strdup (bfd_get_filename (abfd));
+      if (fname == 0)
+	{
+	  bfd_set_error (bfd_error_no_memory);
+	  return -1;
+	}
+      fout = strrchr (fname, ']');
+      if (fout == 0)
+	fout = strchr (fname, ':');
+      if (fout != 0)
+	fout++;
+      else
+	fout = fname;
+
+      /* strip .obj suffix  */
+
+      fptr = strrchr (fname, '.');
+      if ((fptr != 0)
+	  && (strcasecmp (fptr, ".OBJ") == 0))
+	*fptr = 0;
+
+      fptr = fout;
+      while (*fptr != 0)
+	{
+	  if (islower (*fptr))
+	    *fptr = toupper (*fptr);
+	  fptr++;
+	  if ((*fptr == ';')
+	     || ((fptr - fout) > 31))
+	    *fptr = 0;
+	}
+      _bfd_evax_output_counted (abfd, fout);
+      free (fname);
+    }
   else
     _bfd_evax_output_counted (abfd, "NONAME");
 
@@ -227,8 +266,6 @@ _bfd_evax_write_emh (abfd)
 	    {
 	      PRIV(flag_hash_long_names) = symbol->name[6] - '0';
 	      PRIV(flag_show_after_trunc) = symbol->name[7] - '0';
-	      PRIV(flag_no_hash_mixed_case) = symbol->name[8] - '0';
-	      PRIV(vms_name_mapping) = symbol->name[9] - '0';
 
 	      if (had_file)
 		break;

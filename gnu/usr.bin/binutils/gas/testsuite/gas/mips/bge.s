@@ -23,3 +23,9 @@ text_label:
 	.set	mips2
 	bgel	$4,$5,text_label
 	bgtl	$4,$5,text_label
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop
+	nop
+	nop
+	nop

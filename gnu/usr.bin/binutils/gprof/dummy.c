@@ -13,4 +13,7 @@ DEFUN (find_call, (parent, p_lowpc, p_highpc),
 {
   fprintf (stderr, "%s: -c not supported on this machine architecture\n",
 	   whoami);
+
+  /* Don't give the error more than once.  */
+  ignore_direct_calls = FALSE;
 }

@@ -40,6 +40,15 @@ BUGS
 #include "ansidecl.h"
 #include "libiberty.h"
 
+#if VMS
+#include <stdlib.h>
+#include <unixlib.h>
+#else
+/* For systems with larger pointers than ints, these must be declared.  */
+extern PTR malloc PARAMS ((size_t));
+extern void free PARAMS ((PTR));
+#endif
+
 const char *
 spaces (count)
   int count;
@@ -47,8 +56,6 @@ spaces (count)
   register char *t;
   static char *buf;
   static int maxsize;
-  extern char *malloc ();
-  extern void free ();
 
   if (count > maxsize)
     {

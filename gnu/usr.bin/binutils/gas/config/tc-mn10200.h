@@ -1,5 +1,5 @@
 /* tc-mn10200.h -- Header file for tc-mn10200.c.
-   Copyright (C) 1996 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,10 +14,13 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 #define TC_MN10200
+
+#define TARGET_BYTES_BIG_ENDIAN 0
 
 #ifndef BFD_ASSEMBLER
  #error MN10200 support requires BFD_ASSEMBLER
@@ -34,15 +37,15 @@
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1
 
-#define LOCAL_LABEL(name) ((name[0] == '.' \
-			    && (name[1] == 'L' || name[1] == '.')) \
-			   || (name[0] == '_' && name[1] == '.' && name[2] == 'L' \
-			       && name[3] == '_'))
-
-#define FAKE_LABEL_NAME ".L0\001"
-#define DIFF_EXPR_OK		/* .-foo gets turned into PC relative relocs */
-
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
 
 #define md_number_to_chars number_to_chars_littleendian
+
+/* Don't bother to adjust relocs.  */
+#define tc_fix_adjustable(FIX) 0
+
+/* We do relaxing in the assembler as well as the linker.  */
+extern const struct relax_type md_relax_table[];
+#define TC_GENERIC_RELAX_TABLE md_relax_table
+

@@ -1,13 +1,11 @@
 #
-# Makefile for libopcodes under openVMS/AXP
+# Makefile for libopcodes under openVMS/Alpha
 #
 # For use with gnu-make for vms
 #
-# Created by Klaus Kaempf, kkaempf@progis.de
+# Created by Klaus K"ampf, kkaempf@progis.de
 #
 #
-CC=gcc
-
 OBJS=alpha-dis.obj,alpha-opc.obj,dis-buf.obj,disassemble.obj
 
 ifeq ($(CC),gcc)
@@ -29,3 +27,9 @@ alpha-dis.obj: alpha-dis.c
 
 sysdep.h: [-.bfd.hosts]alphavms.h
 	$(CP) $< $@
+
+clean:
+	$$ purge
+	$(RM) *.obj;
+	$(RM) sysdep.h;
+	$(RM) libopcodes.olb;

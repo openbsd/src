@@ -4,8 +4,8 @@
 struct emulation {
   void (*match) PARAMS ((const char *));
   const char *name;
-  void (*init) ();
-  const char *(*bfd_name) ();
+  void (*init) PARAMS ((void));
+  const char *(*bfd_name) PARAMS ((void));
   unsigned local_labels_fb : 1;
   unsigned local_labels_dollar : 1;
   unsigned leading_underscore : 2;
@@ -17,7 +17,7 @@ struct emulation {
 
 COMMON struct emulation *this_emulation;
 
-extern const char *default_emul_bfd_name ();
-extern void common_emul_init ();
+extern const char *default_emul_bfd_name PARAMS ((void));
+extern void common_emul_init PARAMS ((void));
 
 #endif

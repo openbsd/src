@@ -1,22 +1,20 @@
 #
 # makefile for gas
 #
-# Created by Klaus Kämpf, kkaempf@progis.de
+# Created by Klaus K"ampf, kkaempf@progis.de
 #
-
-CC=gcc
 
 ifeq ($(CC),gcc)
 DEFS=
 CFLAGS=/include=([],[-.bfd],[.config],[-.include],[-])$(DEFS)
 LFLAGS=
-LIBS=,GNU_CC:[000000]LIBGCC2/lib,GNU_CC:[000000]LIBGCCLIB/lib,\
-	sys$$library:vaxcrtl.olb/lib,GNU_CC:[000000]crt0.obj
+LIBS=,GNU:[000000]libgcc/lib,sys$$library:vaxcrtl.olb/lib,GNU:[000000]crt0.obj
 else
 DEFS=/define=("table_size_of_flonum_powers_of_ten"="tabsiz_flonum_powers_of_ten",\
 "_bfd_generic_get_section_contents_in_window"="_bfd_generic_get_win_section_cont",\
 "_elf_section_from_bfd_section"="_bfd_elf_sec_from_bfd_sec","const=")
-CFLAGS=/noopt/debug/include=([],[-.bfd],[.config],[-.include],[-])$(DEFS)
+CFLAGS=/noopt/debug/include=([],[-.bfd],[.config],[-.include],[-])$(DEFS)\
+/warnings=disable=(missingreturn,implicitfunc,ptrmismatch,undefescap,longextern,duptypespec)
 LFLAGS=
 LIBS=
 endif
@@ -27,16 +25,22 @@ OBJS=targ-cpu.obj,obj-format.obj,atof-targ.obj,app.obj,as.obj,atof-generic.obj,\
   literal.obj,messages.obj,output-file.obj,read.obj,subsegs.obj,symbols.obj,\
   write.obj,listing.obj,ecoff.obj,stabs.obj,sb.obj,macro.obj
 
+GASPOBJS = gasp.obj,macro.obj,sb.obj,hash.obj
+
 LIBIBERTY = [-.libiberty]libiberty.olb
 LIBBFD = [-.bfd]libbfd.olb
 LIBOPCODES = [-.opcodes]libopcodes.olb
 
+all: config.status [-.bfd]bfd.h as.exe gasp.exe
 
 as.exe: $(OBJS) $(LIBOPCODES) $(LIBBFD) $(LIBIBERTY)
 	link$(LFLAGS)/exe=$@ $(OBJS),$(LIBOPCODES)/lib,$(LIBBFD)/lib,$(LIBIBERTY)/lib$(LIBS)
 
-gasp.exe: gasp.obj $(LIBBFD) $(LIBIBERTY)
-	link$(LFLAGS)/exe=$@ gasp.obj,$(LIBBFD)/lib,$(LIBIBERTY)/lib$(LIBS)
+gasp.exe: $(GASPOBJS) $(LIBBFD) $(LIBIBERTY)
+	link$(LFLAGS)/exe=$@ $(GASPOBJS),$(LIBBFD)/lib,$(LIBIBERTY)/lib$(LIBS)
+
+config.status:
+	$$ @config-gas
 
 targ-cpu.c: [.config]tc-alpha.c
 	copy $< $@
@@ -52,3 +56,20 @@ atof-targ.c: [.config]atof-ieee.c
 	copy $< $@
 
 targ-cpu.obj: targ-cpu.c targ-cpu.h [.config]atof-vax.c
+
+[-.bfd]bfd.h:
+	$(CD) [-.bfd]
+	gmake -f makefile.vms
+	$(CD) [-.gas]
+
+clean:
+	$$ purge
+	$(RM) *.obj;
+	$(RM) *.exe;
+	$(RM) atof-targ.c;
+	$(RM) obj-format.c;
+	$(RM) obj-format.h;
+	$(RM) targ-env.h;
+	$(RM) targ-cpu.h;
+	$(RM) targ-cpu.c;
+	$(RM) config.status;

@@ -1,6 +1,7 @@
-/* evax-misc.c -- Miscellaneous functions for ALPHA EVAX (openVMS/AXP) files.
-   Copyright 1996 Free Software Foundation, Inc.
-   Written by Klaus Kämpf (kkaempf@progis.de)
+/* evax-misc.c -- Miscellaneous functions for ALPHA EVAX (openVMS/Alpha) files.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
+
+   Written by Klaus K"ampf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
 This program is free software; you can redistribute it and/or modify
@@ -971,172 +972,59 @@ hash_string (ptr)
   return hash;
 }
 
-/* Generate a Case-Hacked VMS symbol name (limited to 64 chars).  */
+/* Generate a length-hashed VMS symbol name (limited to 64 chars).  */
+
 char *
-_bfd_evax_case_hack_symbol (abfd, in)
+_bfd_evax_length_hash_symbol (abfd, in)
      bfd *abfd;
      const char *in;
 {
   long int init;
   long int result;
+  int in_len;
   char *pnt = 0;
   char *new_name;
   const char *old_name;
   int i;
-  int destructor = 0;		/*hack to allow for case sens in a destructor*/
-  int truncate = 0;
-  int case_hack_bits = 0;
-  int saw_dollar = 0;
-  static char hex_table[16] =
-  {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-
   static char outbuf[65];
   char *out = outbuf;
 
 #if EVAX_DEBUG
-  evax_debug(4, "_bfd_evax_case_hack_symbol \"%s\"\n", in);
-#endif
-
-#if 0
-  /* Kill any leading "_".  */	/* Why ? FIXME ! */
-
-  if ((in[0] == '_') && ((in[1] > '9') || (in[1] < '0')))
-    in++;
+  evax_debug(4, "_bfd_evax_length_hash_symbol \"%s\"\n", in);
 #endif
 
   new_name = out;		/* save this for later.  */
 
   /* We may need to truncate the symbol, save the hash for later.  */
 
-  result = (strlen (in) > 56) ? hash_string (in) : 0;
+  in_len = strlen (in);
+
+  result = (in_len > 64) ? hash_string (in) : 0;
 
   old_name = in;
 
-  /* Do the case conversion.  */
+  /* Do the length checking.  */
 
-  i = 56;			/* Maximum of 56 chars */
-
-  while (*in && (--i >= 0))
-    {
-      case_hack_bits <<= 1;
-      if (*in == '$')
-	saw_dollar = 1;
-      if ((destructor == 1) && (i == 54))
-	saw_dollar = 0;
-      switch (PRIV(vms_name_mapping))
-	{
-	case 0:
-	  if (isupper (*in)) {
-	    *out++ = *in++;
-	    case_hack_bits |= 1;
-	  } else {
-	    *out++ = islower (*in) ? toupper (*in++) : *in++;
-	  }
-	  break;
-	case 3: *out++ = *in++;
-	  break;
-	case 2:
-	  if (islower (*in)) {
-	    *out++ = *in++;
-	  } else {
-	    *out++ = isupper (*in) ? tolower (*in++) : *in++;
-	  }
-	  break;
-	}
-    }
-
-  /* if we saw a dollar sign, we don't do case hacking.  */
-
-  if (PRIV(flag_no_hash_mixed_case) || saw_dollar)
-    case_hack_bits = 0;
-
-  /* if we have more than 56 characters and everything is lowercase
-     we can insert the full 64 characters.  */
-
-  if (*in)
-    {
-      /* We have more than 56 characters
-	 If we must add the case hack, then we have truncated the str.  */
-      pnt = out;
-      truncate = 1;
-      if (case_hack_bits == 0)
-	{
-	  /* And so far they are all lower case:
-	       Check up to 8 more characters
-	       and ensure that they are lowercase.  */
-
-	  for (i = 0; (in[i] != 0) && (i < 8); i++)
-	    if (isupper (in[i]) && !saw_dollar && !PRIV(flag_no_hash_mixed_case))
-	      break;
-
-	  if (in[i] == 0)
-	    truncate = 0;
-
-	  if ((i == 8) || (in[i] == 0))
-	    {
-	      /* They are:  Copy up to 64 characters
-			    to the output string.  */
-
-	      i = 8;
-	      while ((--i >= 0) && (*in))
-		{
-		  switch (PRIV(vms_name_mapping))
-		    {
-		      case 0:
-			*out++ = islower (*in) ? toupper (*in++) : *in++;
-			break;
-		      case 3:
-			*out++ = *in++;
-			break;
-		      case 2:
-			*out++ = isupper (*in) ? tolower (*in++) : *in++;
-			break;
-		    }
-		}
-	    }
-	}
-}
-
-  /* If there were any uppercase characters in the name we
-     take on the case hacking string.  */
-
-  /* Old behavior for regular GNU-C compiler */
-
-  if (!PRIV(flag_hash_long_names))
-    truncate = 0;
-
-  if ((case_hack_bits != 0) || (truncate == 1))
-    {
-      if (truncate == 0)
-	{
-	  *out++ = '_';
-	  for (i = 0; i < 6; i++)
-	    {
-	      *out++ = hex_table[case_hack_bits & 0xf];
-	      case_hack_bits >>= 4;
-	    }
-	  *out++ = 'X';
-	}
+  if (in_len <= 64)
+    i = in_len;
       else
-	{
-	  out = pnt;		/* Cut back to 56 characters maximum */
-	  *out++ = '_';
-	  for (i = 0; i < 7; i++)
-	    {
-	      init = result & 0x01f;
-	      *out++ = (init < 10) ? ('0' + init) : ('A' + init - 10);
-	      result = result >> 5;
-	    }
-	}
-    }
+    i = 55;
 
+  strncpy (out, in, i);
+  in += i;
+  out += i;
+
+  if ((in_len > 64)
+      && PRIV(flag_hash_long_names))
+    sprintf (out, "_%08x", result);
+  else
   *out = 0;
 
 #if EVAX_DEBUG
   evax_debug(4, "--> [%d]\"%s\"\n", strlen (outbuf), outbuf);
 #endif
 
-  if (truncate == 1
+  if (in_len > 64
 	&& PRIV(flag_hash_long_names)
 	&& PRIV(flag_show_after_trunc))
     printf ("Symbol %s replaced by %s\n", old_name, new_name);

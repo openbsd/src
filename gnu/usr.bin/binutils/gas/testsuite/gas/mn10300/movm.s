@@ -1,5 +1,5 @@
 	.text
-	movm (sp),0
-	movm (sp),11
-	movm 0,(sp)
-	movm 11,(sp)
+	movm (sp),[a2,a3]
+	movm (sp),[d2,d3,a2,a3,other]
+	movm [a2,a3],(sp)
+	movm [d2,d3,a2,a3,other],(sp)

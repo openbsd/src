@@ -1,5 +1,5 @@
 # Expect script for ld-versados tests
-#   Copyright (C) 1995 Free Software Foundation
+#   Copyright (C) 1995, 1996, 1997 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,8 +50,8 @@ proc inspect { whichone } {
 	return 0
     }
 
-    send_log "$objdump -s $srcdir$subdir/$whichone.ook >tmpdir/$whichone.dok\n"
-    catch "exec $objdump -s $srcdir$subdir/$whichone.ook | grep -v srec >tmpdir/$whichone.dok" exec_output
+    send_log "$objdump -s $srcdir/$subdir/$whichone.ook >tmpdir/$whichone.dok\n"
+    catch "exec $objdump -s $srcdir/$subdir/$whichone.ook | grep -v srec >tmpdir/$whichone.dok" exec_output
 
     if ![string match "" $exec_output] {
 	send_log "$exec_output\n"
@@ -73,7 +73,7 @@ proc inspect { whichone } {
 }
 
 if ![ld_simple_link $ld tmpdir/t1.out \
-	" -T $srcdir$subdir/t1.ld $srcdir$subdir/t1-1.ro  $srcdir$subdir/t1-2.ro"] {
+	" -T $srcdir/$subdir/t1.ld $srcdir/$subdir/t1-1.ro  $srcdir/$subdir/t1-2.ro"] {
     fail $testname
     return
 } else {
@@ -85,8 +85,8 @@ if ![ld_simple_link $ld tmpdir/t1.out \
 
 
 if ![ld_simple_link $ld  tmpdir/t2.out \
-	" -T $srcdir$subdir/t2.ld $srcdir$subdir/t2-2.ro \
-	$srcdir$subdir/t2-1.ro  $srcdir$subdir/t2-3.ro"] {
+	" -T $srcdir/$subdir/t2.ld $srcdir/$subdir/t2-2.ro \
+	$srcdir/$subdir/t2-1.ro  $srcdir/$subdir/t2-3.ro"] {
     fail $testname
     return
 } else {

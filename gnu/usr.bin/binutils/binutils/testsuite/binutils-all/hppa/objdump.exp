@@ -1,4 +1,4 @@
-#   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+#   Copyright (C) 1993, 1994, 1996, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if {[which $OBJDUMP] == 0} then {
 
 send_user "Version [binutil_version $OBJDUMP]"
 
-if {![binutils_assemble $AS $srcdir$subdir/addendbug.s tmpdir/addendbug.o]} then {
+if {![binutils_assemble $AS $srcdir/$subdir/addendbug.s tmpdir/addendbug.o]} then {
     return
 }
 

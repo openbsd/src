@@ -4,7 +4,7 @@ Things that still need to be done: -*- Text -*-
      is in a single bfd_target structure.  Hence all the code for
      *writing* object files is still pulled into all the applications
      that only care about *reading* (gdb, nm, objdump), while gas has
-     to carry along all the unneded baggage for reading objects.  And
+     to carry along all the unneeded baggage for reading objects.  And
      so on.  This would be a substantial change, and the payoff would
      not all that great (essentially none if bfd is used as a shared
      library).

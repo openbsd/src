@@ -1,6 +1,5 @@
-/* tc-hppa.h -- Header file for the PA */
-
-/* Copyright (C) 1989, 1993 Free Software Foundation, Inc.
+/* tc-hppa.h -- Header file for the PA
+   Copyright (C) 1989, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 
 /* HP PA-RISC support was contributed by the Center for Software Science
@@ -39,8 +39,9 @@
 #define TC_HPPA	1
 #endif
 
-#define TARGET_ARCH bfd_arch_hppa
 #define TARGET_BYTES_BIG_ENDIAN 1
+
+#define TARGET_ARCH bfd_arch_hppa
 
 /* FIXME.  The lack of a place to put things which are both target cpu
    and target format dependent makes hacks like this necessary.  */
@@ -60,9 +61,6 @@
 #define TRUE    (!FALSE)
 #endif
 
-/* Local labels have an "L$" prefix.  */
-#define LOCAL_LABEL(name) ((name)[0] == 'L' && (name)[1] == '$')
-#define FAKE_LABEL_NAME "L$0\001"
 #define ASEC_NULL (asection *)0
 
 /* Labels are not required to have a colon for a suffix.  */
@@ -114,7 +112,7 @@ void elf_hppa_final_processing PARAMS ((void));
 /* Similarly for an exclamation point.  It is used in FP comparison
    instructions and as an end of line marker.  When used in an instruction
    it will always follow a comma.  */
-#define TC_EOL_IN_INSN(PTR)	(is_end_of_line[*(PTR)] && (PTR)[-1] == ',')
+#define TC_EOL_IN_INSN(PTR)	(*(PTR) == '!' && (PTR)[-1] == ',')
 
 #define tc_fix_adjustable hppa_fix_adjustable
 
@@ -145,14 +143,8 @@ void elf_hppa_final_processing PARAMS ((void));
 #endif
 
 #ifdef OBJ_ELF
-/* Arggg.  The generic BFD ELF code always adds in the section->vma
-   to non-common symbols.  This is a lose on the PA.   To make matters
-   worse, the generic ELF code already defined obj_frob_symbol.  */
 #define tc_frob_symbol(sym,punt) \
   { \
-    if (S_GET_SEGMENT (sym) != &bfd_com_section \
-	&& S_GET_SEGMENT (sym) != &bfd_und_section) \
-      S_SET_VALUE ((sym), (S_GET_VALUE (sym) - (sym)->bsym->section->vma)); \
     if ((S_GET_SEGMENT (sym) == &bfd_und_section && sym->sy_used == 0) \
 	|| (S_GET_SEGMENT (sym) == &bfd_abs_section \
 	    && (sym->bsym->flags & BSF_EXPORT) == 0)) \

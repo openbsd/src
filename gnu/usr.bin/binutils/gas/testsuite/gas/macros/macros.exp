@@ -13,3 +13,7 @@ run_dump_test irp
 run_dump_test rept
 
 gas_test_error "err.s" "" "macro infinite recursion"
+
+if ![istarget hppa*-*-*] {
+    run_dump_test semi
+}

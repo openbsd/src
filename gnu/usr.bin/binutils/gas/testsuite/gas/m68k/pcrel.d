@@ -1,5 +1,5 @@
 #name: pcrel
-#objdump: -drs -j .text
+#objdump: -drs -j .text --prefix-addresses
 
 .*:     file format .*
 
@@ -45,7 +45,7 @@ Disassembly of section \.text:
 0+0058 <lbl_b\+56> bsrs 0+00a6 <lbl_a>
 0+005a <lbl_b\+58> nop
 0+005c <lbl_b\+5a> lea (0+00a6 <lbl_a>|0+0 <.*>),%a0
-		RELOC: 0+005e (32 \.text|R_68K_32 \.text\+0x0+00a6)
+			5e: (32	\.text|R_68K_32	\.text\+0xa6)
 0+0062 <lbl_b\+60> lea 0+00a6 <lbl_a>,%a0
 0+0066 <lbl_b\+64> lea 0+0126 <.*>,%a0
 0+006a <lbl_b\+68> lea %pc@\(0+a6 <lbl_a>,%d0:l\),%a0
@@ -78,11 +78,11 @@ Disassembly of section \.text:
 0+00f0 <lbl_a\+4a> lea %pc@\(0+80f2 <.*>\),%a0
 0+00f8 <lbl_a\+52> nop
 0+00fa <lbl_a\+54> lea %pc@\((0+0 <.*>|0+0fc <lbl_a\+56>)\),%a0
-		RELOC: 0+00fe (DISP32 undef|R_68K_PC32 undef\+0x0+02)
+			fe: (DISP32	undef|R_68K_PC32	undef\+0x2)
 0+0102 <lbl_a\+5c> lea %pc@\((0+0 <.*>|0+0104 <lbl_a\+5e>),%d0:l\),%a0
-		RELOC: 0+0106 (DISP32 undef|R_68K_PC32 undef\+0x0+02)
+			106: (DISP32	undef|R_68K_PC32	undef\+0x2)
 0+010a <lbl_a\+64> nop
 0+010c <lbl_a\+66> lea 0+0 <.*>,%a0
-		RELOC: 0+010e (R_68K_)?32 undef
+			10e: (R_68K_)?32	undef
 0+0112 <lbl_a\+6c> nop
-\.\.\.
+0+0114 <lbl_a\+6e> orib #0,%d0

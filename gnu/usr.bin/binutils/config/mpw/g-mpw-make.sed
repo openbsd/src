@@ -57,13 +57,13 @@
 /CC_LD/s/^CC_LD *=/#CC_LD =/
 /LDFLAGS/s/^LDFLAGS *=/#LDFLAGS =/
 
-# Change -I usages. (not for GCC)
+# Change -I usages.
 /-I/s/-I\./-i :/g
 /-I/s/-I::bfd/-i ::bfd:/g
 /-I/s/-I::include/-i ::include:/g
 /-I/s/-I/-i /g
 
-# Change -D usage. (not for GCC)
+# Change -D usage.
 /-D/s/\([ =]\)-D\([^ ]*\)/\1-d \2/g
 
 # Change continuation char.

@@ -1,5 +1,5 @@
 /* tc-ns32k.h -- Opcode table for National Semi 32k processor
-   Copyright (C) 1987, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,10 +14,13 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #define TC_NS32K
+
+#define TARGET_BYTES_BIG_ENDIAN	0
 
 #define TC_PCREL_ADJUST(F) md_pcrel_adjust(F)
 
@@ -25,7 +28,6 @@
 #define NO_RELOC BFD_RELOC_NONE
 
 #define TARGET_ARCH		bfd_arch_ns32k
-#define TARGET_BYTES_BIG_ENDIAN	0
 
 #ifndef TARGET_FORMAT
 #define TARGET_FORMAT		"a.out-pc532-mach"

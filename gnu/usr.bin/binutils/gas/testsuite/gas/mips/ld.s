@@ -139,3 +139,6 @@ data_label:
 	.set	mips3
 	ld	$4,big_local_common+0x1a5a5($5)
 	sd	$4,small_local_common+0x1a5a5($5)
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop

@@ -1,5 +1,5 @@
 # Basic expect script for LD Regression Tests
-#   Copyright (C) 1993,1994 Free Software Foundation
+#   Copyright (C) 1993, 1994, 1995, 1997 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #
 
 if ![info exists ld] then {
-    set ld [findfile $objdir/ld.new $objdir/ld.new [transform ld]]
+    set ld [findfile $base_dir/ld.new $base_dir/ld.new [transform ld]]
 }
 
 if ![info exists as] then {
@@ -36,6 +36,14 @@ if ![info exists objdump] then {
 
 if ![info exists objcopy] then {
     set objcopy [findfile $base_dir/../binutils/objcopy]
+}
+
+if ![info exists ar] then {
+    set ar [findfile $base_dir/../binutils/ar]
+}
+
+if ![info exists strip] then {
+    set strip [findfile $base_dir/../binutils/strip.new $base_dir/../binutils/strip.new [transform strip]]
 }
 
 if ![file isdirectory tmpdir] {catch "exec mkdir tmpdir" status}

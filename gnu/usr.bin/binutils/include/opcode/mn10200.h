@@ -1,5 +1,5 @@
 /* mn10200.h -- Header file for Matsushita 10200 opcode table
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
    Written by Jeff Law, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -38,6 +38,9 @@ struct mn10200_opcode
      match (and are presumably filled in by operands).  */
   unsigned long mask;
 
+  /* The format of this opcode.  */
+  unsigned char format;
+
   /* An array of operand codes.  Each code is an index into the
      operand table.  They appear in the order which the operands must
      appear in assembly code, and are terminated by a zero.  */
@@ -51,7 +54,7 @@ extern const struct mn10200_opcode mn10200_opcodes[];
 extern const int mn10200_num_opcodes;
 
 
-/* The operands table is an array of struct powerpc_operand.  */
+/* The operands table is an array of struct mn10200_operand.  */
 
 struct mn10200_operand
 {
@@ -71,5 +74,37 @@ struct mn10200_operand
 extern const struct mn10200_operand mn10200_operands[];
 
 /* Values defined for the flags field of a struct mn10200_operand.  */
+#define MN10200_OPERAND_DREG 0x1
 
+#define MN10200_OPERAND_AREG 0x2
+
+#define MN10200_OPERAND_PSW 0x4
+
+#define MN10200_OPERAND_MDR 0x8
+
+#define MN10200_OPERAND_SIGNED 0x10
+
+#define MN10200_OPERAND_PROMOTE 0x20
+
+#define MN10200_OPERAND_PAREN 0x40
+
+#define MN10200_OPERAND_REPEATED 0x80
+
+#define MN10200_OPERAND_EXTENDED 0x100
+
+#define MN10200_OPERAND_NOCHECK 0x200
+
+#define MN10200_OPERAND_PCREL 0x400
+
+#define MN10200_OPERAND_MEMADDR 0x800
+
+#define MN10200_OPERAND_RELAX 0x1000
+
+#define FMT_1 1
+#define FMT_2 2
+#define FMT_3 3
+#define FMT_4 4
+#define FMT_5 5
+#define FMT_6 6
+#define FMT_7 7
 #endif /* MN10200_H */

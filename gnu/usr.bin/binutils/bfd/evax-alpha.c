@@ -1,6 +1,6 @@
-/* evax-alpha.c -- BFD back-end for ALPHA EVAX (openVMS/AXP) files.
-   Copyright 1996 Free Software Foundation, Inc.
-   Written by Klaus Kämpf (kkaempf@progis.de)
+/* evax-alpha.c -- BFD back-end for ALPHA EVAX (openVMS/Alpha) files.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
+   Written by Klaus K"ampf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
 This program is free software; you can redistribute it and/or modify
@@ -78,7 +78,7 @@ static void evax_print_symbol
   PARAMS ((bfd *abfd, PTR file, asymbol *symbol, bfd_print_symbol_type how));
 static void evax_get_symbol_info
   PARAMS ((bfd *abfd, asymbol *symbol, symbol_info *ret));
-static boolean evax_bfd_is_local_label PARAMS ((bfd *abfd, asymbol *symbol));
+static boolean evax_bfd_is_local_label_name PARAMS ((bfd *abfd, const char *));
 static alent *evax_get_lineno PARAMS ((bfd *abfd, asymbol *symbol));
 static boolean evax_find_nearest_line
   PARAMS ((bfd *abfd, asection *section, asymbol **symbols, bfd_vma offset,
@@ -1136,14 +1136,14 @@ evax_get_symbol_info (abfd, symbol, ret)
    a compiler generated local label, else return false.  */
 
 static boolean
-evax_bfd_is_local_label (abfd, symbol)
+evax_bfd_is_local_label_name (abfd, name)
      bfd *abfd;
-     asymbol *symbol;
+     const char *name;
 {
 #if EVAX_DEBUG
-  evax_debug (1, "evax_bfd_is_local_label(%p, %p)\n", abfd, symbol);
+  evax_debug (1, "evax_bfd_is_local_label_name(%p, %s)\n", abfd, name);
 #endif
-  return false;
+  return name[0] == '$';
 }
 
 
@@ -1506,6 +1506,21 @@ static reloc_howto_type alpha_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
+  /* A 64 bit reference to a procedure, written as 32 bit value.  */
+  HOWTO (ALPHA_R_CODEADDR,	/* type */
+	 0,			/* rightshift */
+	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 64,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed,/* complain_on_overflow */
+	 reloc_nil,		/* special_function */
+	 "CODEADDR",		/* name */
+	 false,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
 };
 
 /* Return a pointer to a howto structure which, when invoked, will perform
@@ -1534,13 +1549,7 @@ evax_bfd_reloc_type_lookup (abfd, code)
       case BFD_RELOC_32_PCREL:		alpha_type = ALPHA_R_SREL32;	break;
       case BFD_RELOC_64_PCREL:		alpha_type = ALPHA_R_SREL64;	break;
       case BFD_RELOC_ALPHA_LINKAGE:	alpha_type = ALPHA_R_LINKAGE;	break;
-#if 0
-      case ???:				alpha_type = ALPHA_R_OP_PUSH;	break;
-      case ???:				alpha_type = ALPHA_R_OP_STORE;	break;
-      case ???:				alpha_type = ALPHA_R_OP_PSUB;	break;
-      case ???:				alpha_type = ALPHA_R_OP_PRSHIFT;break;
-      case ???:				alpha_type = ALPHA_R_GPVALUE;	break;
-#endif
+      case BFD_RELOC_ALPHA_CODEADDR:	alpha_type = ALPHA_R_CODEADDR;	break;
       default:
 	(*_bfd_error_handler) ("reloc (%d) is *UNKNOWN*", code);
 	return (const struct reloc_howto_struct *) NULL;

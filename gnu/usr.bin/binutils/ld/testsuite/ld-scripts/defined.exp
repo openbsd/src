@@ -4,12 +4,12 @@
 set testname "DEFINED"
 set prms_id 5699
 
-if ![ld_assemble $as $srcdir$subdir/defined.s tmpdir/def.o] {
+if ![ld_assemble $as $srcdir/$subdir/defined.s tmpdir/def.o] {
     unresolved $testname
     return
 }
 
-if ![ld_simple_link $ld tmpdir/def "-T $srcdir$subdir/defined.t tmpdir/def.o"] {
+if ![ld_simple_link $ld tmpdir/def "-T $srcdir/$subdir/defined.t tmpdir/def.o"] {
     fail $testname
 } else {
     if ![ld_nm $nm tmpdir/def] {

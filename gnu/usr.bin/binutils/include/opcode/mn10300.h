@@ -1,5 +1,5 @@
 /* mn10300.h -- Header file for Matsushita 10300 opcode table
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
    Written by Jeff Law, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -54,7 +54,7 @@ extern const struct mn10300_opcode mn10300_opcodes[];
 extern const int mn10300_num_opcodes;
 
 
-/* The operands table is an array of struct powerpc_operand.  */
+/* The operands table is an array of struct mn10300_operand.  */
 
 struct mn10300_operand
 {
@@ -95,6 +95,14 @@ extern const struct mn10300_operand mn10300_operands[];
 #define MN10300_OPERAND_EXTENDED 0x200
 
 #define MN10300_OPERAND_SPLIT 0x400
+
+#define MN10300_OPERAND_REG_LIST 0x800
+
+#define MN10300_OPERAND_PCREL 0x1000
+
+#define MN10300_OPERAND_MEMADDR 0x2000
+
+#define MN10300_OPERAND_RELAX 0x4000
 
 /* Opcode Formats.  */
 #define FMT_S0 1

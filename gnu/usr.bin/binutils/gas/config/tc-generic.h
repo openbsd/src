@@ -1,7 +1,6 @@
-
 /* This file is tc-generic.h
 
-   Copyright (C) 1987-1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 95, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,9 +14,9 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License along
+   with GAS; see the file COPYING.  If not, write to the Free Software
+   Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /*
  * This file is tc-generic.h and is intended to be a template for target cpu
@@ -27,6 +26,8 @@
  */
 
 #define TC_GENERIC 1
+
+#define TARGET_BYTES_BIG_ENDIAN 0
 
 /*
  * Local Variables:

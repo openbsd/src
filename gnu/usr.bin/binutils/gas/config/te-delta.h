@@ -3,6 +3,7 @@
 #include "obj-format.h"
 
 #define COFF_NOLOAD_PROBLEM	1
+#define COFF_COMMON_ADDEND	1
 
 /* Added these, because if we don't know what we're targetting we may
    need an assembler version of libgcc, and that will use local

@@ -60,3 +60,6 @@ data_label:
 	ush	$4,small_external_common+0x1a5a5
 	ush	$4,big_local_common+0x1a5a5
 	ush	$4,small_local_common+0x1a5a5
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop

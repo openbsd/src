@@ -12,3 +12,9 @@ text_label:
 	
 # Test j as well	
 	j	text_label
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop
+	nop
+	nop
+	nop

@@ -1,5 +1,5 @@
 /* obj-format for ieee-695 records.
-   Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 
 /*
@@ -76,7 +77,15 @@ DEFUN (size_section, (abfd, idx),
 	  size += frag->fr_offset * frag->fr_var;
 	  break;
 	case rs_align:
-	  size += relax_align (size, frag->fr_offset);
+	case rs_align_code:
+	  {
+	    addressT off;
+
+	    off = relax_align (size, frag->fr_offset);
+	    if (frag->fr_subtype != 0 && off > frag->fr_subtype)
+	      off = 0;
+	    size += off;
+	  }
 	}
       frag = frag->fr_next;
     }
@@ -406,11 +415,13 @@ S_IS_DEBUG (x)
   abort ();
 }
 
+#ifndef segment_name
 char *
 segment_name ()
 {
   abort ();
 }
+#endif
 
 void
 obj_read_begin_hook ()
@@ -529,7 +540,7 @@ DEFUN_VOID (write_object_file)
 #ifndef SUB_SEGMENT_ALIGN
 #define SUB_SEGMENT_ALIGN(SEG) 2
 #endif
-      frag_align (SUB_SEGMENT_ALIGN (now_seg), 0);
+      frag_align (SUB_SEGMENT_ALIGN (now_seg), 0, 0);
       frag_wane (frag_now);
       frag_now->fr_fix = 0;
       know (frag_now->fr_next == NULL);

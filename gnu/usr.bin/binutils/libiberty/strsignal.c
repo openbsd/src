@@ -7,9 +7,16 @@
 
 #include "config.h"
 
-#ifdef LOSING_SYS_SIGLIST
+/* We need to declare sys_siglist, because even if the system provides
+   it we can't assume that it is declared in <signal.h> (for example,
+   SunOS provides sys_siglist, but it does not declare it in any
+   header file).  fHowever, we can't declare sys_siglist portably,
+   because on some systems it is declared with const and on some
+   systems it is declared without const.  If we were using autoconf,
+   we could work out the right declaration.  Until, then we just
+   ignore any declaration in the system header files, and always
+   declare it ourselves.  With luck, this will always work.  */
 #define sys_siglist no_such_symbol
-#endif
 
 #include <stdio.h>
 #include <signal.h>
@@ -25,10 +32,9 @@ extern char *malloc ();		/* Standard memory allocater */
 extern char *memset ();
 #endif	/* __STDC__ */
 
-#ifdef LOSING_SYS_SIGLIST
+/* Undefine the macro we used to hide the definition of sys_siglist
+   found in the system header files.  */
 #undef sys_siglist
-#endif
-
 
 #ifndef NULL
 #  ifdef __STDC__
@@ -41,6 +47,8 @@ extern char *memset ();
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
+
+static void init_signal_tables PARAMS ((void));
 
 /* Translation table for signal values.
 
@@ -400,6 +408,8 @@ DESCRIPTION
 
 */
 
+#ifdef NEED_strsignal
+
 const char *
 strsignal (signo)
   int signo;
@@ -436,6 +446,7 @@ strsignal (signo)
   return (msg);
 }
 
+#endif /* NEED_strsignal */
 
 /*
 

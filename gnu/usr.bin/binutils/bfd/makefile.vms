@@ -1,12 +1,11 @@
 #
-# Makefile for bfd library under openVMS/AXP
+# Makefile for bfd library under openVMS/Alpha
 #
 # For use with gnu-make for vms
 #
-# Created by Klaus Kaempf, kkaempf@progis.de
+# Created by Klaus K"ampf, kkaempf@progis.de
 #
 #
-CC=gcc
 
 OBJS=archive.obj,archures.obj,bfd.obj,cache.obj,coffgen.obj,corefile.obj,format.obj,\
   init.obj,libbfd.obj,opncls.obj,reloc.obj,section.obj,syms.obj,targets.obj,\
@@ -15,7 +14,8 @@ OBJS=archive.obj,archures.obj,bfd.obj,cache.obj,coffgen.obj,corefile.obj,format.
   cpu-alpha.obj
 
 ifeq ($(CC),gcc)
-DEFS=/define=(SELECT_VECS="&evax_alpha_vec",SELECT_ARCHITECTURES="&bfd_alpha_arch","unlink=remove")
+DEFS=/define=(SELECT_VECS="&evax_alpha_vec",SELECT_ARCHITECTURES="&bfd_alpha_arch",\
+"HAVE_evax_alpha_vec=1")
 CFLAGS=/include=([],[-.include])$(DEFS)
 else
 DEFS=/define=(DEFAULT_VECTOR="evax_alpha_vec",SELECT_VECS="&evax_alpha_vec",\
@@ -33,14 +33,25 @@ libbfd.olb: sysdep.h bfd.h $(OBJS)
 sysdep.h: [.hosts]alphavms.h config.h
 	$(CP) $< $@
 
-bfd.h: bfd.h-vms
-	$(CP) $< $@
+bfd.h: bfd-in2.h
+	$$ @configure
 
-config.h: config.h-vms
-	$(CP) $< $@
+targmatch.h: bfd.h
+config.h: bfd.h
 
 evax-alpha.c: evax.h
 evax-emh.c: evax.h
 evax-egsd.c: evax.h
 evax-etir.c: evax.h
 evax-misc.c: evax.h
+targets.c: targmatch.h
+
+
+clean:
+	$$ purge
+	$(RM) libbfd.olb;
+	$(RM) sysdep.h;
+	$(RM) bfd.h;
+	$(RM) targmatch.h;
+	$(RM) config.h;
+	$(RM) *.obj;

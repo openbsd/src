@@ -118,3 +118,8 @@ data_label:
 	lwc1	$4,0
 	lwc2	$4,0
 	lwc3	$4,0
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop
+	nop
+	nop

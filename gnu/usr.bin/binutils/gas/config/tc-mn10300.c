@@ -1,6 +1,6 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
 
-   Copyright (C) 1996 Free Software Foundation.
+   Copyright (C) 1996, 1997 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -53,14 +53,44 @@ const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "dD";
 
 
+const relax_typeS md_relax_table[] = {
+  /* bCC relaxing */
+  {0x7f, -0x80, 2, 1},
+  {0x7fff, -0x8000, 5, 2},
+  {0x7fffffff, -0x80000000, 7, 0},
+
+  /* bCC relaxing (uncommon cases) */
+  {0x7f, -0x80, 3, 4},
+  {0x7fff, -0x8000, 6, 5},
+  {0x7fffffff, -0x80000000, 8, 0},
+
+  /* call relaxing */
+  {0x7fff, -0x8000, 5, 7},
+  {0x7fffffff, -0x80000000, 7, 0},
+
+  /* calls relaxing */
+  {0x7fff, -0x8000, 4, 9},
+  {0x7fffffff, -0x80000000, 6, 0},
+
+  /* jmp relaxing */
+  {0x7f, -0x80, 2, 11},
+  {0x7fff, -0x8000, 3, 12},
+  {0x7fffffff, -0x80000000, 5, 0},
+
+};
+
 /* local functions */
-static unsigned long mn10300
-  PARAMS ((unsigned long insn, const struct mn10300_operand *operand,
-	   offsetT val, char *file, unsigned int line));
+static void mn10300_insert_operand PARAMS ((unsigned long *, unsigned long *,
+					    const struct mn10300_operand *,
+					    offsetT, char *, unsigned,
+					    unsigned));
+static unsigned long check_operand PARAMS ((unsigned long,
+					    const struct mn10300_operand *,
+					    offsetT));
 static int reg_name_search PARAMS ((const struct reg_name *, int, const char *));
-static boolean register_name PARAMS ((expressionS *expressionP));
-static boolean system_register_name PARAMS ((expressionS *expressionP));
-static boolean cc_name PARAMS ((expressionS *expressionP));
+static boolean data_register_name PARAMS ((expressionS *expressionP));
+static boolean address_register_name PARAMS ((expressionS *expressionP));
+static boolean other_register_name PARAMS ((expressionS *expressionP));
 
 
 /* fixups */
@@ -357,8 +387,285 @@ md_convert_frag (abfd, sec, fragP)
   asection *sec;
   fragS *fragP;
 {
-  /* printf ("call to md_convert_frag \n"); */
-  abort ();
+  static unsigned long label_count = 0;
+  char buf[40];
+
+  subseg_change (sec, 0);
+  if (fragP->fr_subtype == 0)
+    {
+      fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 2;
+    }
+  else if (fragP->fr_subtype == 1)
+    {
+      /* Reverse the condition of the first branch.  */
+      int offset = fragP->fr_fix;
+      int opcode = fragP->fr_literal[offset] & 0xff;
+
+      switch (opcode)
+	{
+	case 0xc8:
+	  opcode = 0xc9;
+	  break;
+	case 0xc9:
+	  opcode = 0xc8;
+	  break;
+	case 0xc0:
+	  opcode = 0xc2;
+	  break;
+	case 0xc2:
+	  opcode = 0xc0;
+	  break;
+	case 0xc3:
+	  opcode = 0xc1;
+	  break;
+	case 0xc1:
+	  opcode = 0xc3;
+	  break;
+	case 0xc4:
+	  opcode = 0xc6;
+	  break;
+	case 0xc6:
+	  opcode = 0xc4;
+	  break;
+	case 0xc7:
+	  opcode = 0xc5;
+	  break;
+	case 0xc5:
+	  opcode = 0xc7;
+	  break;
+	default:
+	  abort ();
+	}
+      fragP->fr_literal[offset] = opcode;
+
+      /* Create a fixup for the reversed conditional branch.  */
+      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      fix_new (fragP, fragP->fr_fix + 1, 1,
+	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+
+      /* Now create the unconditional branch + fixup to the
+	 final target.  */
+      fragP->fr_literal[offset + 2] = 0xcc;
+      fix_new (fragP, fragP->fr_fix + 3, 2, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 5;
+    }
+  else if (fragP->fr_subtype == 2)
+    {
+      /* Reverse the condition of the first branch.  */
+      int offset = fragP->fr_fix;
+      int opcode = fragP->fr_literal[offset] & 0xff;
+
+      switch (opcode)
+	{
+	case 0xc8:
+	  opcode = 0xc9;
+	  break;
+	case 0xc9:
+	  opcode = 0xc8;
+	  break;
+	case 0xc0:
+	  opcode = 0xc2;
+	  break;
+	case 0xc2:
+	  opcode = 0xc0;
+	  break;
+	case 0xc3:
+	  opcode = 0xc1;
+	  break;
+	case 0xc1:
+	  opcode = 0xc3;
+	  break;
+	case 0xc4:
+	  opcode = 0xc6;
+	  break;
+	case 0xc6:
+	  opcode = 0xc4;
+	  break;
+	case 0xc7:
+	  opcode = 0xc5;
+	  break;
+	case 0xc5:
+	  opcode = 0xc7;
+	  break;
+	default:
+	  abort ();
+	}
+      fragP->fr_literal[offset] = opcode;
+
+      /* Create a fixup for the reversed conditional branch.  */
+      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      fix_new (fragP, fragP->fr_fix + 1, 1,
+	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+
+      /* Now create the unconditional branch + fixup to the
+	 final target.  */
+      fragP->fr_literal[offset + 2] = 0xdc;
+      fix_new (fragP, fragP->fr_fix + 3, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_32_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 7;
+    }
+  else if (fragP->fr_subtype == 3)
+    {
+      fix_new (fragP, fragP->fr_fix + 2, 1, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 3;
+    }
+  else if (fragP->fr_subtype == 4)
+    {
+      /* Reverse the condition of the first branch.  */
+      int offset = fragP->fr_fix;
+      int opcode = fragP->fr_literal[offset + 1] & 0xff;
+
+      switch (opcode)
+	{
+	case 0xe8:
+	  opcode = 0xe9;
+	  break;
+	case 0xe9:
+	  opcode = 0xe8;
+	  break;
+	case 0xea:
+	  opcode = 0xeb;
+	  break;
+	case 0xeb:
+	  opcode = 0xea;
+	  break;
+	default:
+	  abort ();
+	}
+      fragP->fr_literal[offset + 1] = opcode;
+
+      /* Create a fixup for the reversed conditional branch.  */
+      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      fix_new (fragP, fragP->fr_fix + 2, 1,
+	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+
+      /* Now create the unconditional branch + fixup to the
+	 final target.  */
+      fragP->fr_literal[offset + 3] = 0xcc;
+      fix_new (fragP, fragP->fr_fix + 4, 2, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 6;
+    }
+  else if (fragP->fr_subtype == 5)
+    {
+      /* Reverse the condition of the first branch.  */
+      int offset = fragP->fr_fix;
+      int opcode = fragP->fr_literal[offset + 1] & 0xff;
+
+      switch (opcode)
+	{
+	case 0xe8:
+	  opcode = 0xe9;
+	  break;
+	case 0xea:
+	  opcode = 0xeb;
+	  break;
+	case 0xeb:
+	  opcode = 0xea;
+	  break;
+	default:
+	  abort ();
+	}
+      fragP->fr_literal[offset + 1] = opcode;
+
+      /* Create a fixup for the reversed conditional branch.  */
+      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      fix_new (fragP, fragP->fr_fix + 2, 1,
+	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+
+      /* Now create the unconditional branch + fixup to the
+	 final target.  */
+      fragP->fr_literal[offset + 3] = 0xdc;
+      fix_new (fragP, fragP->fr_fix + 4, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_32_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 8;
+    }
+  else if (fragP->fr_subtype == 6)
+    {
+      int offset = fragP->fr_fix;
+      fragP->fr_literal[offset] = 0xcd;
+      fix_new (fragP, fragP->fr_fix + 1, 2, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 5;
+    }
+  else if (fragP->fr_subtype == 7)
+    {
+      int offset = fragP->fr_fix;
+      fragP->fr_literal[offset] = 0xdd;
+      fragP->fr_literal[offset + 5] = fragP->fr_literal[offset + 3];
+      fragP->fr_literal[offset + 6] = fragP->fr_literal[offset + 4];
+
+      fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_32_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 7;
+    }
+  else if (fragP->fr_subtype == 8)
+    {
+      int offset = fragP->fr_fix;
+      fragP->fr_literal[offset] = 0xfa;
+      fragP->fr_literal[offset + 1] = 0xff;
+      fix_new (fragP, fragP->fr_fix + 2, 2, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_16_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 4;
+    }
+  else if (fragP->fr_subtype == 9)
+    {
+      int offset = fragP->fr_fix;
+      fragP->fr_literal[offset] = 0xfc;
+      fragP->fr_literal[offset + 1] = 0xff;
+
+      fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 2, 1, BFD_RELOC_32_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 6;
+    }
+  else if (fragP->fr_subtype == 10)
+    {
+      fragP->fr_literal[fragP->fr_fix] = 0xca;
+      fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 2;
+    }
+  else if (fragP->fr_subtype == 11)
+    {
+      int offset = fragP->fr_fix;
+      fragP->fr_literal[offset] = 0xcc;
+
+      fix_new (fragP, fragP->fr_fix + 1, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 3;
+    }
+  else if (fragP->fr_subtype == 12)
+    {
+      int offset = fragP->fr_fix;
+      fragP->fr_literal[offset] = 0xdc;
+
+      fix_new (fragP, fragP->fr_fix + 1, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_32_PCREL);
+      fragP->fr_var = 0;
+      fragP->fr_fix += 5;
+    }
+  else
+    abort ();
 }
 
 valueT
@@ -383,7 +690,7 @@ md_begin ()
      on the operands.  This hash table then provides a quick index to
      the first opcode with a particular name in the opcode table.  */
 
-  op     = mn10300_opcodes;
+  op = mn10300_opcodes;
   while (op->name)
     {
       if (strcmp (prev_name, op->name)) 
@@ -393,6 +700,11 @@ md_begin ()
 	}
       op++;
     }
+
+  /* This is both a simplification (we don't have to write md_apply_fix)
+     and support for future optimizations (branch shortening and similar
+     stuff in the linker.  */
+  linkrelax = 1;
 }
 
 void
@@ -403,12 +715,11 @@ md_assemble (str)
   struct mn10300_opcode *opcode;
   struct mn10300_opcode *next_opcode;
   const unsigned char *opindex_ptr;
-  int next_opindex;
-  unsigned long insn, extension, size;
+  int next_opindex, relaxable;
+  unsigned long insn, extension, size = 0;
   char *f;
   int i;
   int match;
-  bfd_reloc_code_real_type reloc;
 
   /* Get the opcode.  */
   for (s = str; *s != '\0' && ! isspace (*s); s++)
@@ -437,6 +748,7 @@ md_assemble (str)
       char *hold;
       int extra_shift = 0;
 
+      relaxable = 0;
       fc = 0;
       match = 0;
       next_opindex = 0;
@@ -461,8 +773,11 @@ md_assemble (str)
 
 	  errmsg = NULL;
 
-	  while (*str == ' ' || *str == ',' || *str == '[' || *str == ']')
+	  while (*str == ' ' || *str == ',')
 	    ++str;
+
+	  if (operand->flags & MN10300_OPERAND_RELAX)
+	    relaxable = 1;
 
 	  /* Gather the operand. */
 	  hold = input_line_pointer;
@@ -543,6 +858,76 @@ md_assemble (str)
 	      *input_line_pointer = c;
 	      goto keep_going;
 	    }
+	  else if (operand->flags & MN10300_OPERAND_REG_LIST)
+	    {
+	      unsigned int value = 0;
+	      if (*input_line_pointer != '[')
+		{
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+
+	      /* Eat the '['.  */
+	      input_line_pointer++;
+	     
+	      /* A null register list can not be specified.  */
+	      if (*input_line_pointer == ']')
+		{
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+
+	      while (*input_line_pointer != ']')
+		{
+		  char *start;
+		  char c;
+
+		  if (*input_line_pointer == ',')
+		    input_line_pointer++;
+
+		  start = input_line_pointer;
+		  c = get_symbol_end ();
+
+		  if (strcmp (start, "d2") == 0)
+		    {
+		      value |= 0x80;
+		      *input_line_pointer = c;
+		    }
+		  else if (strcmp (start, "d3") == 0)
+		    {
+		      value |= 0x40;
+		      *input_line_pointer = c;
+		    }
+		  else if (strcmp (start, "a2") == 0)
+		    {
+		      value |= 0x20;
+		      *input_line_pointer = c;
+		    }
+		  else if (strcmp (start, "a3") == 0)
+		    {
+		      value |= 0x10;
+		      *input_line_pointer = c;
+		    }
+		  else if (strcmp (start, "other") == 0)
+		    {
+		      value |= 0x08;
+		      *input_line_pointer = c;
+		    }
+		  else
+		    {
+		      input_line_pointer = hold;
+		      str = hold;
+		      goto error;
+		    }
+		}
+	      input_line_pointer++;
+              mn10300_insert_operand (&insn, &extension, operand,
+                                      value, (char *) NULL, 0, 0);
+	      goto keep_going;
+
+	    }
 	  else if (data_register_name (&ex))
 	    {
 	      input_line_pointer = hold;
@@ -581,8 +966,8 @@ md_assemble (str)
 	      errmsg = "missing operand";
 	      goto error;
 	    case O_register:
-	      if (operand->flags & (MN10300_OPERAND_DREG 
-				    | MN10300_OPERAND_AREG) == 0)
+	      if ((operand->flags
+                   & (MN10300_OPERAND_DREG | MN10300_OPERAND_AREG)) == 0)
 		{
 		  input_line_pointer = hold;
 		  str = hold;
@@ -608,7 +993,8 @@ md_assemble (str)
 	      /* If this operand can be promoted, and it doesn't
 		 fit into the allocated bitfield for this insn,
 		 then promote it (ie this opcode does not match).  */
-	      if (operand->flags & MN10300_OPERAND_PROMOTE
+	      if (operand->flags
+		  & (MN10300_OPERAND_PROMOTE | MN10300_OPERAND_RELAX)
 		  && ! check_operand (insn, operand, ex.X_add_number))
 		{
 		  input_line_pointer = hold;
@@ -645,7 +1031,7 @@ keep_going:
 	  str = input_line_pointer;
 	  input_line_pointer = hold;
 
-	  while (*str == ' ' || *str == ',' || *str == '[' || *str == ']')
+	  while (*str == ' ' || *str == ',')
 	    ++str;
 
 	}
@@ -658,7 +1044,7 @@ keep_going:
       if (match == 0)
         {
 	  next_opcode = opcode + 1;
-	  if (next_opcode->opcode != 0 && !strcmp(next_opcode->name, opcode->name))
+	  if (!strcmp(next_opcode->name, opcode->name))
 	    {
 	      opcode = next_opcode;
 	      continue;
@@ -700,12 +1086,246 @@ keep_going:
   if (opcode->format == FMT_D4)
     size = 6;
 
-  /* Write out the instruction.  */
+  if (relaxable && fc > 0)
+    {
+      int type;
 
-  f = frag_more (size);
-  number_to_chars_bigendian (f, insn, size > 4 ? 4 : size);
-  if (size > 4)
-    number_to_chars_bigendian (f + 4, extension, size - 4);
+      /* bCC */
+      if (size == 2)
+	type = 0;
+      /* call */
+      else if (size == 5)
+        type = 6;
+      /* calls */
+      else if (size == 4)
+	type = 8;
+      /* jmp */
+      else if (size == 3 && opcode->opcode == 0xcc0000)
+	type = 10;
+      /* bCC (uncommon cases) */
+      else
+	type = 3;
+
+      f = frag_var (rs_machine_dependent, 8, 8 - size, type,
+		    fixups[0].exp.X_add_symbol,
+		    fixups[0].exp.X_add_number,
+		    (char *)fixups[0].opindex);
+      
+      /* This is pretty hokey.  We basically just care about the
+	 opcode, so we have to write out the first word big endian.
+
+	 The exception is "call", which has two operands that we
+	 care about.
+
+	 The first operand (the register list) happens to be in the
+	 first instruction word, and will be in the right place if
+	 we output the first word in big endian mode.
+
+	 The second operand (stack size) is in the extension word,
+	 and we want it to appear as the first character in the extension
+	 word (as it appears in memory).  Luckily, writing the extension
+	 word in big endian format will do what we want.  */
+      number_to_chars_bigendian (f, insn, size > 4 ? 4 : size);
+      if (size > 8)
+	{
+	  number_to_chars_bigendian (f + 4, extension, 4);
+	  number_to_chars_bigendian (f + 8, 0, size - 8);
+	}
+      else if (size > 4)
+	number_to_chars_bigendian (f + 4, extension, size - 4);
+    }
+  else
+    {
+      /* Allocate space for the instruction.  */
+      f = frag_more (size);
+
+      /* Fill in bytes for the instruction.  Note that opcode fields
+	 are written big-endian, 16 & 32bit immediates are written
+	 little endian.  Egad.  */
+      if (opcode->format == FMT_S0
+	  || opcode->format == FMT_S1
+	  || opcode->format == FMT_D0
+	  || opcode->format == FMT_D1)
+	{
+	  number_to_chars_bigendian (f, insn, size);
+	}
+      else if (opcode->format == FMT_S2
+	       && opcode->opcode != 0xdf0000
+	       && opcode->opcode != 0xde0000)
+	{
+	  /* A format S2 instruction that is _not_ "ret" and "retf".  */
+	  number_to_chars_bigendian (f, (insn >> 16) & 0xff, 1);
+	  number_to_chars_littleendian (f + 1, insn & 0xffff, 2);
+	}
+      else if (opcode->format == FMT_S2)
+	{
+	  /* This must be a ret or retf, which is written entirely in
+	     big-endian format.  */
+	  number_to_chars_bigendian (f, insn, 3);
+	}
+      else if (opcode->format == FMT_S4
+	       && opcode->opcode != 0xdc000000)
+	{
+	  /* This must be a format S4 "call" instruction.  What a pain.  */
+	  unsigned long temp = (insn >> 8) & 0xffff;
+	  number_to_chars_bigendian (f, (insn >> 24) & 0xff, 1);
+	  number_to_chars_littleendian (f + 1, temp, 2);
+	  number_to_chars_bigendian (f + 3, insn & 0xff, 1);
+	  number_to_chars_bigendian (f + 4, extension & 0xff, 1);
+	}
+      else if (opcode->format == FMT_S4)
+	{
+	  /* This must be a format S4 "jmp" instruction.  */
+	  unsigned long temp = ((insn & 0xffffff) << 8) | (extension & 0xff);
+	  number_to_chars_bigendian (f, (insn >> 24) & 0xff, 1);
+	  number_to_chars_littleendian (f + 1, temp, 4);
+	}
+      else if (opcode->format == FMT_S6)
+	{
+	  unsigned long temp = ((insn & 0xffffff) << 8)
+	    | ((extension >> 16) & 0xff);
+	  number_to_chars_bigendian (f, (insn >> 24) & 0xff, 1);
+	  number_to_chars_littleendian (f + 1, temp, 4);
+	  number_to_chars_bigendian (f + 5, (extension >> 8) & 0xff, 1);
+	  number_to_chars_bigendian (f + 6, extension & 0xff, 1);
+	}
+      else if (opcode->format == FMT_D2
+	       && opcode->opcode != 0xfaf80000
+	       && opcode->opcode != 0xfaf00000
+	       && opcode->opcode != 0xfaf40000)
+	{
+	  /* A format D2 instruction where the 16bit immediate is
+	     really a single 16bit value, not two 8bit values.  */
+	  number_to_chars_bigendian (f, (insn >> 16) & 0xffff, 2);
+	  number_to_chars_littleendian (f + 2, insn & 0xffff, 2);
+	}
+      else if (opcode->format == FMT_D2)
+	{
+	  /* A format D2 instruction where the 16bit immediate
+	     is really two 8bit immediates.  */
+	  number_to_chars_bigendian (f, insn, 4);
+	}
+      else if (opcode->format == FMT_D4)
+	{
+	  unsigned long temp = ((insn & 0xffff) << 16) | (extension & 0xffff);
+	  number_to_chars_bigendian (f, (insn >> 16) & 0xffff, 2);
+	  number_to_chars_littleendian (f + 2, temp, 4);
+	}
+      else if (opcode->format == FMT_D5)
+	{
+	  unsigned long temp = ((insn & 0xffff) << 16)
+	    			| ((extension >> 8) & 0xffff);
+	  number_to_chars_bigendian (f, (insn >> 16) & 0xffff, 2);
+	  number_to_chars_littleendian (f + 2, temp, 4);
+	  number_to_chars_bigendian (f + 6, extension & 0xff, 1);
+	}
+
+      /* Create any fixups.  */
+      for (i = 0; i < fc; i++)
+	{
+	  const struct mn10300_operand *operand;
+
+	  operand = &mn10300_operands[fixups[i].opindex];
+	  if (fixups[i].reloc != BFD_RELOC_UNUSED)
+	    {
+	      reloc_howto_type *reloc_howto;
+	      int size;
+	      int offset;
+	      fixS *fixP;
+
+	      reloc_howto = bfd_reloc_type_lookup (stdoutput, fixups[i].reloc);
+
+	      if (!reloc_howto)
+		abort();
+	  
+	      size = bfd_get_reloc_size (reloc_howto);
+
+	      if (size < 1 || size > 4)
+		abort();
+
+	      offset = 4 - size;
+	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
+				  size, &fixups[i].exp,
+				  reloc_howto->pc_relative,
+				  fixups[i].reloc);
+	    }
+	  else
+	    {
+	      int reloc, pcrel, reloc_size, offset;
+	      fixS *fixP;
+
+	      reloc = BFD_RELOC_NONE;
+	      /* How big is the reloc?  Remember SPLIT relocs are
+		 implicitly 32bits.  */
+	      if ((operand->flags & MN10300_OPERAND_SPLIT) != 0)
+		reloc_size = 32;
+	      else
+		reloc_size = operand->bits;
+
+	      /* Is the reloc pc-relative?  */
+	      pcrel = (operand->flags & MN10300_OPERAND_PCREL) != 0;
+
+	      /* Gross.  This disgusting hack is to make sure we
+		 get the right offset for the 16/32 bit reloc in 
+		 "call" instructions.  Basically they're a pain
+		 because the reloc isn't at the end of the instruction.  */
+	      if ((size == 5 || size == 7)
+		  && (((insn >> 24) & 0xff) == 0xcd
+		      || ((insn >> 24) & 0xff) == 0xdd))
+		size -= 2;
+
+	      /* Similarly for certain bit instructions which don't
+		 hav their 32bit reloc at the tail of the instruction.  */
+	      if (size == 7
+		  && (((insn >> 16) & 0xffff) == 0xfe00
+		      || ((insn >> 16) & 0xffff) == 0xfe01
+		      || ((insn >> 16) & 0xffff) == 0xfe02))
+		size -= 1;
+	
+	      offset = size - reloc_size / 8;
+
+	      /* Choose a proper BFD relocation type.  */
+	      if (pcrel)
+		{
+		  if (reloc_size == 32)
+		    reloc = BFD_RELOC_32_PCREL;
+		  else if (reloc_size == 16)
+		    reloc = BFD_RELOC_16_PCREL;
+		  else if (reloc_size == 8)
+		    reloc = BFD_RELOC_8_PCREL;
+		  else
+		    abort ();
+		}
+	      else
+		{
+		  if (reloc_size == 32)
+		    reloc = BFD_RELOC_32;
+		  else if (reloc_size == 16)
+		    reloc = BFD_RELOC_16;
+		  else if (reloc_size == 8)
+		    reloc = BFD_RELOC_8;
+		  else
+		    abort ();
+		}
+
+	      /* Convert the size of the reloc into what fix_new_exp wants.  */
+	      reloc_size = reloc_size / 8;
+	      if (reloc_size == 8)
+		reloc_size = 0;
+	      else if (reloc_size == 16)
+		reloc_size = 1;
+	      else if (reloc_size == 32)
+		reloc_size = 2;
+
+	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
+				  reloc_size, &fixups[i].exp, pcrel,
+				  ((bfd_reloc_code_real_type) reloc));
+
+	      if (pcrel)
+		fixP->fx_offset += offset;
+	    }
+	}
+    }
 }
 
 
@@ -718,18 +1338,29 @@ tc_gen_reloc (seg, fixp)
      fixS *fixp;
 {
   arelent *reloc;
-  reloc = (arelent *) bfd_alloc_by_size_t (stdoutput, sizeof (arelent));
-  reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
-  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc = (arelent *) xmalloc (sizeof (arelent));
+
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-                    "reloc %d not supported by object file format", (int)fixp->fx_r_type);
+                    "reloc %d not supported by object file format",
+		    (int)fixp->fx_r_type);
       return NULL;
     }
-  reloc->addend = fixp->fx_addnumber;
-  /*  printf("tc_gen_reloc: addr=%x  addend=%x\n", reloc->address, reloc->addend); */
+  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+
+  if (fixp->fx_addsy && fixp->fx_subsy)
+    {
+      reloc->sym_ptr_ptr = &bfd_abs_symbol;
+      reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
+		       - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
+    }
+  else 
+    {
+      reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
+      reloc->addend = fixp->fx_offset;
+    }
   return reloc;
 }
 
@@ -738,19 +1369,58 @@ md_estimate_size_before_relax (fragp, seg)
      fragS *fragp;
      asection *seg;
 {
-  return 0;
+  if (fragp->fr_subtype == 0)
+    return 2;
+  if (fragp->fr_subtype == 3)
+    return 3;
+  if (fragp->fr_subtype == 6)
+    {
+      if (!S_IS_DEFINED (fragp->fr_symbol)
+	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
+	{
+	  fragp->fr_subtype = 7;
+	  return 7;
+	}
+      else
+	return 5;
+    }
+  if (fragp->fr_subtype == 8)
+    {
+      if (!S_IS_DEFINED (fragp->fr_symbol)
+	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
+	{
+	  fragp->fr_subtype = 9;
+	  return 6;
+	}
+      else
+	return 4;
+    }
+  if (fragp->fr_subtype == 10)
+    {
+      if (!S_IS_DEFINED (fragp->fr_symbol)
+	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
+	{
+	  fragp->fr_subtype = 12;
+	  return 5;
+	}
+      else
+	return 2;
+    }
 } 
 
 long
 md_pcrel_from (fixp)
      fixS *fixp;
 {
+  return fixp->fx_frag->fr_address;
+#if 0
   if (fixp->fx_addsy != (symbolS *) NULL && ! S_IS_DEFINED (fixp->fx_addsy))
     {
       /* The symbol is undefined.  Let the linker figure it out.  */
       return 0;
     }
   return fixp->fx_frag->fr_address + fixp->fx_where;
+#endif
 }
 
 int
@@ -759,91 +1429,10 @@ md_apply_fix3 (fixp, valuep, seg)
      valueT *valuep;
      segT seg;
 {
-  valueT value;
-  char *where;
-
+  /* We shouldn't ever get here because linkrelax is nonzero.  */
+  abort ();
   fixp->fx_done = 1;
   return 0;
-
-  if (fixp->fx_addsy == (symbolS *) NULL)
-    {
-      value = *valuep;
-      fixp->fx_done = 1;
-    }
-  else if (fixp->fx_pcrel)
-    value = *valuep;
-  else
-    {
-      value = fixp->fx_offset;
-      if (fixp->fx_subsy != (symbolS *) NULL)
-	{
-	  if (S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
-	    value -= S_GET_VALUE (fixp->fx_subsy);
-	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    "expression too complex");
-	    }
-	}
-    }
-
-  /* printf("md_apply_fix: value=0x%x  type=%d\n",  value, fixp->fx_r_type); */
-
-  if ((int) fixp->fx_r_type >= (int) BFD_RELOC_UNUSED)
-    {
-      int opindex;
-      const struct mn10300_operand *operand;
-      char *where;
-      unsigned long insn, extension;
-
-      opindex = (int) fixp->fx_r_type - (int) BFD_RELOC_UNUSED;
-      operand = &mn10300_operands[opindex];
-
-      /* Fetch the instruction, insert the fully resolved operand
-         value, and stuff the instruction back again.
-
-	 Note the instruction has been stored in little endian
-	 format!  */
-      where = fixp->fx_frag->fr_literal + fixp->fx_where;
-
-      insn = bfd_getl32((unsigned char *) where);
-      extension = 0;
-      mn10300_insert_operand (&insn, &extension, operand,
-			      (offsetT) value, fixp->fx_file,
-			      fixp->fx_line, 0);
-      bfd_putl32((bfd_vma) insn, (unsigned char *) where);
-
-      if (fixp->fx_done)
-	{
-	  /* Nothing else to do here. */
-	  return 1;
-	}
-
-      /* Determine a BFD reloc value based on the operand information.  
-	 We are only prepared to turn a few of the operands into relocs. */
-
-	{
-	  as_bad_where(fixp->fx_file, fixp->fx_line,
-		       "unresolved expression that must be resolved");
-	  fixp->fx_done = 1;
-	  return 1;
-	}
-    }
-  else if (fixp->fx_done)
-    {
-      /* We still have to insert the value into memory!  */
-      where = fixp->fx_frag->fr_literal + fixp->fx_where;
-      if (fixp->fx_size == 1)
-	*where = value & 0xff;
-      if (fixp->fx_size == 2)
-	bfd_putl16(value & 0xffff, (unsigned char *) where);
-      if (fixp->fx_size == 4)
-	bfd_putl32(value, (unsigned char *) where);
-    }
-
-  fixp->fx_addnumber = value;
-  return 1;
 }
 
 /* Insert an operand value into an instruction.  */
@@ -896,7 +1485,7 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
 
   if ((operand->flags & MN10300_OPERAND_SPLIT) != 0)
     {
-      *insnp |= (val >> 32 - operand->bits) & ((1 << operand->bits) - 1);
+      *insnp |= (val >> (32 - operand->bits)) & ((1 << operand->bits) - 1);
       *extensionp |= ((val & ((1 << (32 - operand->bits)) - 1))
 		      << operand->shift);
     }

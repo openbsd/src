@@ -1,5 +1,5 @@
 /* ldlex.h -
-   Copyright 1991, 1992 Free Software Foundation, Inc.
+   Copyright 1991, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
 
@@ -27,6 +27,7 @@ typedef enum input_enum {
   input_selected,		/* We've set the initial state.  */
   input_script,
   input_mri_script,
+  input_version_script,
   input_defsym
 } input_type;
 
@@ -42,6 +43,8 @@ extern void lex_push_file PARAMS ((FILE *, const char *));
 extern void lex_redirect PARAMS ((const char *));
 extern void ldlex_script PARAMS ((void));
 extern void ldlex_mri_script PARAMS ((void));
+extern void ldlex_version_script PARAMS ((void));
+extern void ldlex_version_file PARAMS ((void));
 extern void ldlex_defsym PARAMS ((void));
 extern void ldlex_expression PARAMS ((void));
 extern void ldlex_both PARAMS ((void));

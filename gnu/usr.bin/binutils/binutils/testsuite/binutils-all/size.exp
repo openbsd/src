@@ -1,4 +1,4 @@
-#   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+#   Copyright (C) 1993, 1994, 1996, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if {[which $SIZE] == 0} then {
 send_user "Version [binutil_version $SIZE]"
 
 
-if {![binutils_assemble $AS $srcdir$subdir/bintest.s tmpdir/bintest.o]} then {
+if {![binutils_assemble $AS $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
     return
 }
 

@@ -1,5 +1,5 @@
 /* BFD internal declarations for Oasys file format handling.
-   Copyright (C) 1990, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
    Scrawled by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -70,7 +70,6 @@ typedef struct _oasys_ar_data {
 } oasys_ar_data_type;
 
 typedef struct _oasys_data {
-  struct obstack oasys_obstack;
   char *strings;
   asymbol *symbols;
   unsigned int symbol_string_length;

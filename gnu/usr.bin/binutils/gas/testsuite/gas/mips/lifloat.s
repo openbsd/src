@@ -6,3 +6,8 @@ foo:
 	
 	li.s	$4,1.0
 	li.s	$f4,1.0
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	.ifndef	EMPIC
+	nop
+	.endif

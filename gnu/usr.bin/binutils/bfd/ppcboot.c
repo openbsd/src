@@ -1,5 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1997 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -85,6 +85,8 @@ typedef struct ppcboot_data {
 
 static boolean ppcboot_mkobject PARAMS ((bfd *));
 static const bfd_target *ppcboot_object_p PARAMS ((bfd *));
+static boolean ppcboot_set_arch_mach
+  PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 static boolean ppcboot_get_section_contents
   PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
 static long ppcboot_get_symtab_upper_bound PARAMS ((bfd *));
@@ -95,6 +97,7 @@ static void ppcboot_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
 static boolean ppcboot_set_section_contents
   PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
 static int ppcboot_sizeof_headers PARAMS ((bfd *, boolean));
+static boolean ppcboot_bfd_print_private_bfd_data PARAMS ((bfd *, PTR));
 
 #define ppcboot_set_tdata(abfd, ptr) ((abfd)->tdata.any = (PTR) (ptr))
 #define ppcboot_get_tdata(abfd) ((ppcboot_data_t *) ((abfd)->tdata.any))
@@ -113,7 +116,7 @@ ppcboot_mkobject (abfd)
 
 
 /* Set the architecture to PowerPC */
-boolean
+static boolean
 ppcboot_set_arch_mach (abfd, arch, machine)
      bfd *abfd;
      enum bfd_architecture arch;
@@ -344,7 +347,7 @@ ppcboot_get_symbol_info (ignore_abfd, symbol, ret)
   bfd_symbol_info (symbol, ret);
 }
 
-#define ppcboot_bfd_is_local_label bfd_generic_is_local_label
+#define ppcboot_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define ppcboot_get_lineno _bfd_nosymbols_get_lineno
 #define ppcboot_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define ppcboot_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
@@ -356,10 +359,6 @@ ppcboot_get_symbol_info (ignore_abfd, symbol, ret)
 #define ppcboot_canonicalize_reloc \
   ((long (*) PARAMS ((bfd *, asection *, arelent **, asymbol **))) bfd_0l)
 #define ppcboot_bfd_reloc_type_lookup _bfd_norelocs_bfd_reloc_type_lookup
-
-/* Set the architecture of a ppcboot file.  */
-#define ppcboot_set_arch_mach ppcboot_set_arch_mach
-
 
 /* Write section contents of a ppcboot file.  */
 
@@ -405,15 +404,15 @@ ppcboot_sizeof_headers (abfd, exec)
 
 /* Print out the program headers.  */
 
-boolean
+static boolean
 ppcboot_bfd_print_private_bfd_data (abfd, farg)
      bfd *abfd;
      PTR farg;
 {
   FILE *f = (FILE *)farg;
   ppcboot_data_t *tdata = ppcboot_get_tdata (abfd);
-  long entry_offset = bfd_getl_signed_32 ((PTR) &tdata->header.entry_offset);
-  long length = bfd_getl_signed_32 ((PTR) &tdata->header.length);
+  long entry_offset = bfd_getl_signed_32 ((PTR) tdata->header.entry_offset);
+  long length = bfd_getl_signed_32 ((PTR) tdata->header.length);
   int i;
 
   fprintf (f, "\nppcboot header:\n");
@@ -431,8 +430,8 @@ ppcboot_bfd_print_private_bfd_data (abfd, farg)
 
   for (i = 0; i < 4; i++)
     {
-      long sector_begin  = bfd_getl_signed_32 ((PTR) &tdata->header.partition[i].sector_begin);
-      long sector_length = bfd_getl_signed_32 ((PTR) &tdata->header.partition[i].sector_length);
+      long sector_begin  = bfd_getl_signed_32 ((PTR) tdata->header.partition[i].sector_begin);
+      long sector_length = bfd_getl_signed_32 ((PTR) tdata->header.partition[i].sector_length);
 
       /* Skip all 0 entries */
       if (!tdata->header.partition[i].partition_begin.ind

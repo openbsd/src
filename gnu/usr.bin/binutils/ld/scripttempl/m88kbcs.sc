@@ -21,11 +21,11 @@ SECTIONS
       ${RELOCATING+ *(.tdesc)}
       ${RELOCATING+ __.text_end = .}	;
       ${RELOCATING+ __.initp.start = .};
-      ${RELOCATING+ __.initp.end =.};
+      ${RELOCATING+ __.initp.end = .};
       ${RELOCATING+ __.fini_start = .};
       ${RELOCATING+ *(.fini) }
       ${RELOCATING+ __.fini_end = .};
-      ${RELOCATING+_etext =.};
+      ${RELOCATING+_etext = .};
     }  					
   .data ${RELOCATING+ NEXT (0x400000) + ((SIZEOF(.text) + ADDR(.text)) % 0x2000)} :
     { 					

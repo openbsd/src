@@ -1,5 +1,5 @@
 /* filemode.c -- make a string describing file modes
-   Copyright (C) 1985, 1990, 1991 Free Software Foundation, Inc.
+   Copyright (C) 1985, 90, 91, 94, 95, 1997 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,9 +13,11 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #include "bfd.h"
+#include "bucomm.h"
 
 static char ftypelet PARAMS ((unsigned long));
 static void setst PARAMS ((unsigned long, char *));

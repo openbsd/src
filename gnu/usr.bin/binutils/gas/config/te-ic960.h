@@ -1,6 +1,5 @@
-/* This file is twe-ic960.h
-
-   Copyright (C) 1987-1992 Free Software Foundation, Inc.
+/* This file is te-ic960.h
+   Copyright (C) 1987-1992, 94, 95, 1997 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /*
  * This file is te-ic960.h and is intended to define ic960 environment
@@ -24,11 +24,15 @@
  */
 
 #define OBJ_COFF_OMIT_OPTIONAL_HEADER
+
+#ifndef BFD_ASSEMBLER
 #define LOCAL_LABEL(name) ((name[0] =='L') \
 			   || (name[0] =='.' \
 			       && (name[1]=='C' \
 				   || name[1]=='I' \
 				   || name[1]=='.')))
+#endif
+
 #include "obj-format.h"
 
 /* end of te-ic960.h */

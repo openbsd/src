@@ -8,7 +8,7 @@ proc gasp_test { filename testname opt }  {
     send_log "$srcdir/lib/run $GASP -I$srcdir/gasp -s $opt $filename.asm -o gasp.out\n"
     catch "exec $srcdir/lib/run $GASP -I$srcdir/gasp -s $opt $filename.asm -o gasp.out" errs
     catch "exec diff gasp.out $filename.out" diffs
-    set diffs [prune_system_crud $host_triplet $diffs]
+    set diffs [prune_warnings $diffs]
     if ![string match "" $diffs] {
 	send_log "$diffs\n"
 	verbose $diffs

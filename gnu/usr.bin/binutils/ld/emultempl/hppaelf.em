@@ -2,7 +2,7 @@
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
 /* An emulation for HP PA-RISC ELF linkers.
-   Copyright (C) 1991, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1991, 93, 94, 95, 1997 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
 This file is part of GLD, the Gnu Linker.
@@ -48,9 +48,6 @@ extern lang_statement_list_type file_chain;
 static void
 hppaelf_before_parse ()
 {
-  link_info.lprefix = "L$";
-  link_info.lprefix_len = 2;
-
   ldfile_output_architecture = bfd_arch_hppa;
 }
 
