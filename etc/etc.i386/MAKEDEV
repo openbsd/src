@@ -71,6 +71,7 @@
 #	lkm	loadable kernel modules interface
 #	audio	audio device
 #	tun*	network tunnel driver
+#	pcmcia*	PCMCIA card drivers
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -330,6 +331,27 @@ audio*)
 	mknod mixer c 42 16
 	chown root.wheel audio sound mixer
 	chmod 666 audio sound mixer
+	;;
+	
+pcmcia*)
+	rm -rf pcmcia
+	mkdir pcmcia
+	mknod pcmcia/bus c 26 32
+	mknod pcmcia/chip0 c 26 16
+	mknod pcmcia/chip1 c 26 17
+	mknod pcmcia/chip2 c 26 18
+	mknod pcmcia/chip3 c 26 19
+	mknod pcmcia/slot0 c 26 0
+	mknod pcmcia/slot1 c 26 1
+	mknod pcmcia/slot2 c 26 2
+	mknod pcmcia/slot3 c 26 3
+	mknod pcmcia/slot4 c 26 4
+	mknod pcmcia/slot5 c 26 5
+	mknod pcmcia/slot6 c 26 6
+	mknod pcmcia/slot7 c 26 7
+	chown -R root.wheel pcmcia
+	chmod 700 pcmcia
+	chmod 600 pcmcia/*
 	;;
 	
 local)
