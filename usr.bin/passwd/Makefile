@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2002/05/06 22:23:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2002/05/08 19:41:53 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -19,16 +19,16 @@ CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp
 .if (${KERBEROS5:L} == "yes")
 SRCS+= krb5_passwd.c
 CFLAGS+= -DKRB5
-DPADD+=	${LIBKRB5} ${LIBCRYPTO}
-LDADD+=	-lkrb5 -lcrypto -lasn1
+DPADD+=	${LIBKRB5} ${LIBASN1}
+LDADD+=	-lkrb5 -lasn1
 .endif
 
 .if (${KERBEROS:L} == "yes")
 .PATH:  ${.CURDIR}/../rsh
 SRCS+= new_pwd.c krb_passwd.c des_rw.c
 CFLAGS+= -DKERBEROS
-DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+=	-lkadm -lkrb -ldes -lcom_err -lkafs
+DPADD+=	${LIBKADM} ${LIBKRB} ${LIBDES} ${LIBCOMERR} ${LIBKAFS} ${LIBCRYPTO}
+LDADD+=	-lkadm -lkrb -ldes -lcom_err -lkafs -lcrypto
 .endif
 
 BINMODE=4555
