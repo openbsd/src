@@ -89,23 +89,25 @@ doexec(int argc, char **argv)
 static RETSIGTYPE
 renew(int sig)
 {
+    int save_errno = errno;
     int code;
 
     signal(SIGALRM, renew);
 
+    /* XXX signal race */
     code = krb_get_svc_in_tkt(princ.name, princ.instance, princ.realm,
-			      KRB_TICKET_GRANTING_TICKET,
-			      princ.realm, lifetime, srvtab);
+	KRB_TICKET_GRANTING_TICKET, princ.realm, lifetime, srvtab);
     if (code)
 	warnx ("%s", krb_get_err_text(code));
-    else if (k_hasafs())
-	{
-	    if ((code = krb_afslog(cell, NULL)) != 0 && code != KDC_PR_UNKNOWN) {
-		warnx ("%s", krb_get_err_text(code));
-	    }
+    else if (k_hasafs()) {
+	/* XXX signal race */
+	if ((code = krb_afslog(cell, NULL)) != 0 && code != KDC_PR_UNKNOWN) {
+	    warnx ("%s", krb_get_err_text(code));
 	}
+    }
 
     alarm(krb_life_to_time(0, lifetime)/2 - 60);
+    errno = save_errno;
     SIGRETURN(0);
 }
 
