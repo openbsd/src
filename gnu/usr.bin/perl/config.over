@@ -10,23 +10,25 @@ myarchname="$archname"
 prefix='/usr'
 prefixexp='/usr'
 
-installarchlib="/usr/lib/perl5/${archname}/${version}"
-archlib="${installarchlib}:/usr/local/lib/perl5/${archname}/${version}"
+installarchlib="/usr/libdata/perl5/${archname}/${version}"
+archlib="${installarchlib}:/usr/local/libdata/perl5/${archname}/${version}"
 archlibexp="${archlib}"
 
-installprivlib="/usr/lib/perl5"
-privlib="${installprivlib}:/usr/local/lib/perl5"
+installprivlib="/usr/libdata/perl5"
+privlib="${installprivlib}:/usr/local/libdata/perl5"
 privlibexp="${privlib}"
 
-installsitearch="/usr/lib/perl5/site_perl/${archname}"
-sitearch="${installsitearch}:/usr/local/lib/perl5/site_perl/${archname}"
+# NOTE: primary dir for sitearch lives in /usr/local
+installsitearch="/usr/local/libdata/perl5/site_perl/${archname}"
+sitearch="${installsitearch}:/usr/libdata/perl5/site_perl/${archname}"
 sitearchexp="${sitearch}"
 
-installsitelib="/usr/lib/perl5/site_perl"
-sitelib="${installsitelib}:/usr/local/lib/perl5/site_perl"
+# NOTE: primary dir for sitelib lives in /usr/local
+installsitelib="/usr/local/libdata/perl5/site_perl"
+sitelib="${installsitelib}:/usr/libdata/perl5/site_perl"
 sitelibexp="${sitelib}"
 
-# We install the man oages ourselves until installman gets smarter
+# We install the man pages ourselves until installman gets smarter
 man1dir=''
 man1direxp=''
 installman1dir=''
