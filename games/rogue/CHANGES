@@ -19,7 +19,7 @@ There are no dark rooms.
 ROGUEOPTS of flush,terse,seefloor,askme,inventory are ignored.
 	'askquit' is added to prevent ^\ from terminating the game accidentally.
 	If 'noaskquit' is
-	found in the ROGUEOPTS string, the the ^\ kills the game, otherwise,
+	found in the ROGUEOPTS string, the ^\ kills the game, otherwise,
 	the player is asked if he really wants to quit.  In either case, no
 	score file processing is attempted.
 The score is keyed to winning scores, and no player may appear twice.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemove.c,v 1.2 1996/12/21 21:17:51 tholo Exp $	*/
+/*	$OpenBSD: makemove.c,v 1.3 1997/04/09 02:02:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ int	weight[5] = { 0, 1, 7, 22, 100 };
  *	MOVEOK	everything is OK.
  *	RESIGN	Player resigned.
  *	ILLEGAL	Illegal move.
- *	WIN	The the winning move was just played.
+ *	WIN	The winning move was just played.
  *	TIE	The game is a tie.
  */
 int

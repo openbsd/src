@@ -58,7 +58,7 @@ static int	get_maxlen __P((char *[], int, int (*)(char **, int)));
  *	length  - address of the routine to call to determine the length
  *		  of string to be printed 
  *
- * prtable and length are called with the the address of the base and
+ * prtable and length are called with the address of the base and
  * an index
  */
 void

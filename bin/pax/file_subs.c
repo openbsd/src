@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.7 1997/03/05 05:53:22 tholo Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.8 1997/04/09 01:59:00 deraadt Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.7 1997/03/05 05:53:22 tholo Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.8 1997/04/09 01:59:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -696,7 +696,7 @@ chk_path(name, st_uid, st_gid)
 /*
  * set_ftime()
  *	Set the access time and modification time for a named file. If frc is
- *	non-zero we force these times to be set even if the the user did not
+ *	non-zero we force these times to be set even if the user did not
  *	request access and/or modification time preservation (this is also
  *	used by -t to reset access times).
  *	When ign is zero, only those times the user has asked for are set, the
