@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.33 2002/01/24 21:42:24 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.34 2002/01/25 02:30:26 millert Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -559,22 +559,6 @@ STATIC int stat_indir_blk_ptrs;	/* bufs redirtied as indir ptrs not written */
 STATIC int stat_inode_bitmap;	/* bufs redirtied as inode bitmap not written */
 STATIC int stat_direct_blk_ptrs;/* bufs redirtied as direct ptrs not written */
 STATIC int stat_dir_entry;	/* bufs redirtied as dir entry cannot write */
-#ifdef DEBUG
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
-struct ctldebug debug20 = { "max_softdeps", &max_softdeps };
-struct ctldebug debug21 = { "tickdelay", &tickdelay };
-struct ctldebug debug22 = { "worklist_push", &stat_worklist_push };
-struct ctldebug debug23 = { "blk_limit_push", &stat_blk_limit_push };
-struct ctldebug debug24 = { "ino_limit_push", &stat_ino_limit_push };
-struct ctldebug debug25 = { "blk_limit_hit", &stat_blk_limit_hit };
-struct ctldebug debug26 = { "ino_limit_hit", &stat_ino_limit_hit };
-struct ctldebug debug27 = { "sync_limit_hit", &stat_sync_limit_hit }; 
-struct ctldebug debug28 = { "indir_blk_ptrs", &stat_indir_blk_ptrs };
-struct ctldebug debug29 = { "inode_bitmap", &stat_inode_bitmap };
-struct ctldebug debug30 = { "direct_blk_ptrs", &stat_direct_blk_ptrs };
-struct ctldebug debug31 = { "dir_entry", &stat_dir_entry };
-#endif /* DEBUG */
 
 /*
  * Add an item to the end of the work queue.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.49 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.50 2002/01/25 02:30:27 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1344,6 +1344,12 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	extern int doclusterread, doclusterwrite, doreallocblks, doasyncfree;
+#ifdef FFS_SOFTUPDATES
+	extern int max_softdeps, tickdelay, stat_worklist_push;
+	extern int stat_blk_limit_push, stat_ino_limit_push, stat_blk_limit_hit;
+	extern int stat_ino_limit_hit, stat_sync_limit_hit, stat_indir_blk_ptrs;
+	extern int stat_inode_bitmap, stat_direct_blk_ptrs, stat_dir_entry;
+#endif
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1361,6 +1367,32 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    &doreallocblks));
 	case FFS_ASYNCFREE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
+#ifdef FFS_SOFTUPDATES
+	case FFS_MAX_SOFTDEPS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &max_softdeps));
+	case FFS_SD_TICKDELAY:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &tickdelay));
+	case FFS_SD_WORKLIST_PUSH:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_worklist_push));
+	case FFS_SD_BLK_LIMIT_PUSH:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_blk_limit_push));
+	case FFS_SD_INO_LIMIT_PUSH:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_ino_limit_push));
+	case FFS_SD_BLK_LIMIT_HIT:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_blk_limit_hit));
+	case FFS_SD_INO_LIMIT_HIT:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_ino_limit_hit));
+	case FFS_SD_SYNC_LIMIT_HIT:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_sync_limit_hit));
+	case FFS_SD_INDIR_BLK_PTRS:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_indir_blk_ptrs));
+	case FFS_SD_INODE_BITMAP:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_inode_bitmap));
+	case FFS_SD_DIRECT_BLK_PTRS:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_direct_blk_ptrs));
+	case FFS_SD_DIR_ENTRY:
+		return (sysctl_rdint(oldp, oldlenp, newp, stat_dir_entry));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
