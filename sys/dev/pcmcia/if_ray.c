@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.23 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.24 2004/06/05 20:23:00 mcbride Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -1007,15 +1007,16 @@ ray_ioctl(ifp, cmd, data)
 			ray_disable(sc);
 		break;
 	case SIOCADDMULTI:
-		RAY_DPRINTF(("%s: ioctl: cmd SIOCADDMULTI\n", ifp->if_xname));
 	case SIOCDELMULTI:
-		if (cmd == SIOCDELMULTI)
+		if (cmd == SIOCADDMULTI) {
+			RAY_DPRINTF(("%s: ioctl: cmd SIOCADDMULTI\n",
+			    ifp->if_xname));
+			error = ether_addmulti(ifr, &sc->sc_ec);
+		} else {
 			RAY_DPRINTF(("%s: ioctl: cmd SIOCDELMULTI\n",
 			    ifp->if_xname));
-		if (cmd == SIOCADDMULTI)
-			error = ether_addmulti(ifr, &sc->sc_ec);
-		else
 			error = ether_delmulti(ifr, &sc->sc_ec);
+		}
 		if (error == ENETRESET) {
 			error = 0;
 			ray_update_mcast(sc);
