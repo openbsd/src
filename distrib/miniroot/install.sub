@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.238 2002/07/04 17:23:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.239 2002/07/04 21:51:16 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -837,6 +837,13 @@ enable_network() {
 get_selection() {
 	local _next=done _f _sets=$1
 
+	cat << __EOT
+
+The following sets are available. Enter a filename, 'all' to select
+all the sets, or 'done'. You may de-select a set by prepending a '-'
+to its name.
+
+__EOT
 	for _f in $_sets ; do
 		if isin $_f $_get_files ; then
 			echo -n "	[X] "
@@ -900,38 +907,6 @@ __EOT
 	fi
 }
 
-display_failure_msg() {
-		cat << __EOT
-
-The following files failed to extract correctly.
-Choose which one(s) to retry or 'done' to exit selector.
-You may de-select a file by prepending a '-' to its name.
-
-__EOT
-}
-
-display_selection_msg() {
-	cat << __EOT
-
-The following sets are available. Enter a filename, 'all' to select
-all the sets, or 'done'. You may de-select a set by prepending a '-'
-to its name.
-
-__EOT
-}
-
-display_extract_msg() {
-
-	cat << __EOT
-
-You will now be asked which sets to ${MODE}. Some of these sets are required
-for your ${MODE} and some are optional. You will want at least the
-base and bsd sets. Consult the installation notes if you are not sure
-which sets are required!
-__EOT
-
-}
-
 # Set global _sets to either
 #     1) a list of sets found in both $1 and $THESETS, where
 #        $2 is the location that generated the list of files in $1.
@@ -991,6 +966,13 @@ get_get_files_list () {
 
 	_get_files=
 
+	cat << __EOT
+
+You will now be asked which sets to ${MODE}. Some of these sets are required
+for your ${MODE} and some are optional. You will want at least the
+base and bsd sets. Consult the installation notes if you are not sure
+which sets are required!
+__EOT
 	# Set the default list of files
 	for _f in $_sets ; do
 		# $_sets contains only .tgz and .tar.gz file names and 'bsd'.
@@ -1005,8 +987,6 @@ get_get_files_list () {
 
 	# Allow the user to select/de-select additional sets
 	while : ; do
-
-		display_selection_msg
 
 		get_selection "$_sets"
 
@@ -1228,8 +1208,6 @@ __EOT
 
 	[ "$_sets" ] || return
 
-	display_extract_msg
-
 	get_get_files_list "`eval echo \\$_${_url_type}_server_dir`"
 
 	# User may have selected no files
@@ -1258,8 +1236,6 @@ install_mounted_fs() {
 	get_sets_list "$_file_list" "$local_sets_dir"
 
 	[ "$_sets" ] || return
-
-	display_extract_msg
 
 	get_get_files_list "$local_sets_dir"
 
