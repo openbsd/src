@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.3,v 1.14 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: ethers.3,v 1.15 2005/03/28 06:21:48 tedu Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -18,13 +18,13 @@
 .Ft char *
 .Fn ether_ntoa "struct ether_addr *e"
 .Ft struct ether_addr *
-.Fn ether_aton "char *s"
+.Fn ether_aton "const char *s"
 .Ft int
 .Fn ether_ntohost "char *hostname" "struct ether_addr *e"
 .Ft int
-.Fn ether_hostton "char *hostname" "struct ether_addr *e"
+.Fn ether_hostton "const char *hostname" "struct ether_addr *e"
 .Ft int
-.Fn ether_line "char *l" "struct ether_addr *e" "char *hostname"
+.Fn ether_line "const char *l" "struct ether_addr *e" "char *hostname"
 .Sh DESCRIPTION
 Ethernet addresses are represented by the
 following structure:
