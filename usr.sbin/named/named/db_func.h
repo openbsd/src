@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_func.h,v 1.3 1998/05/22 00:47:32 millert Exp $	*/
+/*	$OpenBSD: db_func.h,v 1.4 1998/05/23 19:24:48 millert Exp $	*/
 
 /* db_proc.h - prototypes for functions in db_*.c
  *
@@ -17,7 +17,7 @@ extern void		fixttl __P((struct databuf *dp));
 /* --from db_update.c-- */
 
 /* ++from db_reload.c++ */
-extern void		db_reload __P((void));
+extern void		db_reload __P((int));
 /* --from db_reload.c-- */
 
 /* ++from db_save.c++ */

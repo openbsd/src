@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_glob.h,v 1.3 1998/05/22 00:47:39 millert Exp $	*/
+/*	$OpenBSD: ns_glob.h,v 1.4 1998/05/23 19:24:50 millert Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
@@ -196,6 +196,9 @@ DECL	char			*debugfile	INIT(DEBUGFILE);
 #else
 DECL	char			*debugfile	INIT(_PATH_DEBUG);
 #endif
+
+	/* default path to named-xfer */
+DECL	char			*NamedXfer	INIT(_PATH_XFER);
 
 #ifdef WANT_PIDFILE
 	/* file to store current named PID */

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.13 1998/05/22 19:34:44 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.14 1998/05/23 19:24:51 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.13 1998/05/22 19:34:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.14 1998/05/23 19:24:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,6 +397,25 @@ main(argc, argv, envp)
 				strerror(errno));
 			exit(1);
 		}
+		/*
+		 * Paths to boot file, pid file and named-xfer need to
+		 * be relative if their parent dirs do not exist.  This
+		 * is to allow chroot'ing to the named homedir.
+		 */
+		p = dirname(bootfile);
+		if ((stat(bootfile, &sb) != 0 || !S_ISDIR(sb.st_mode)) &&
+		    (p = strrchr(bootfile, '/')))
+			bootfile = p + 1;
+
+		p = dirname(PidFile);
+		if ((stat(PidFile, &sb) != 0 || !S_ISDIR(sb.st_mode)) &&
+		    (p = strrchr(PidFile, '/')))
+			PidFile = p + 1;
+
+		p = dirname(NamedXfer);
+		if ((stat(NamedXfer, &sb) != 0 || !S_ISDIR(sb.st_mode)) &&
+		    (p = strrchr(NamedXfer, '/')))
+			NamedXfer = p + 1;
 	}
 
 	n = 0;
@@ -739,7 +758,7 @@ main(argc, argv, envp)
 #endif /* XSTATS */
 		if (needreload) {
 			needreload = 0;
-			db_reload();
+			db_reload((user_name == NULL));
 		}
 		if (needStatsDump) {
 			needStatsDump = 0;
@@ -1229,6 +1248,7 @@ getnetconf()
 		dqp->dq_addr = ((struct sockaddr_in *)
 				&ifreq.ifr_addr)->sin_addr;
 		dqp->dq_gen = my_generation;
+		/* XXX - this will fail on reload if we run as non-root */
 		opensocket(dqp);
 		dprintf(1, (ddt, "listening [%s]\n",
 			    inet_ntoa(((struct sockaddr_in *)

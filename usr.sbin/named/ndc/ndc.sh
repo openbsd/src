@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.7 1998/05/23 18:51:27 millert Exp $
+#	$OpenBSD: ndc.sh,v 1.8 1998/05/23 19:24:56 millert Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -8,27 +8,37 @@ USAGE='echo \
 	"; exit 1'
 
 PATH=%DESTSBIN%:/bin:/usr/bin:/usr/ucb:$PATH
-PIDFILE=%PIDDIR%/named.pid
+CHROOTDIR=%CHROOTDIR%
+PIDFILE=${CHROOTDIR}/named.pid
 NAMED_CMD=named
 RUNNING=0
 
-if [ -f $PIDFILE ]
-then
+#
+# Pid file may live in chroot dir, check there first.
+#
+if [ -f $PIDFILE ]; then
 	PID=`sed 1q $PIDFILE`
 	NAMED_CMD=`tail -1 $PIDFILE`
 	case "`kill -0 $PID 2>&1`" in
 		""|*"not permitted"*)	RUNNING=1;;
 	esac
+fi
+if [ ${RUNNING} -eq 0 -a -f %PIDDIR%/named.pid ]; then
+	PIDFILE=%PIDDIR%/named.pid
+	PID=`sed 1q $PIDFILE`
+	NAMED_CMD=`tail -1 $PIDFILE`
+	case "`kill -0 $PID 2>&1`" in
+		""|*"not permitted"*)	RUNNING=1;;
+	esac
+fi
+
+if [ ${RUNNING} -eq 1 ]; then
 	PS=`%PS% $PID | tail -1 | grep $PID`
 	[ `echo $PS | wc -w` -ne 0 ] || {
-		if [ $RUNNING -eq 1 ]; then
-			PS="named (pid $PID) can't get name list"
-		else
-			PS="named (pid $PID?) not running"
-		fi
+		PS="named (pid $PID) can't get name list"
 	}
 else
-	PS="named (no pid file) not running"
+	PS="named not running"
 fi
 
 for ARG

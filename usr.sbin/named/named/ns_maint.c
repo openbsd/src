@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_maint.c,v 1.2 1997/03/12 10:42:31 downsj Exp $	*/
+/*	$OpenBSD: ns_maint.c,v 1.3 1998/05/23 19:24:52 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: ns_maint.c,v 8.18 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.2 1997/03/12 10:42:31 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.3 1998/05/23 19:24:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -407,7 +407,7 @@ startxfer(zp)
 
 	dprintf(1, (ddt, "startxfer() %s\n", zp->z_origin));
 
-	argv[argc++] = _PATH_XFER;
+	argv[argc++] = NamedXfer;
 	argv[argc++] = "-z";
 	argv[argc++] = zp->z_origin;
 	argv[argc++] = "-f";
@@ -495,8 +495,8 @@ startxfer(zp)
 
 	if (pid == 0) {
 		/* Child. */
-		execv(_PATH_XFER, argv);
-		syslog(LOG_ERR, "can't exec %s: %m", _PATH_XFER);
+		execv(NamedXfer, argv);
+		syslog(LOG_ERR, "can't exec %s: %m", NamedXfer);
 		_exit(XFER_FAIL);	/* Avoid duplicate buffer flushes. */
 	}
 	/* Parent. */

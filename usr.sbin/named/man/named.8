@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named.8,v 1.4 1998/05/22 07:09:12 millert Exp $
+.\"	$OpenBSD: named.8,v 1.5 1998/05/23 19:24:46 millert Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -130,6 +130,12 @@ specified may be either a username or a numeric user id.  If the
 flag is not specified, then the group id used will be the primary group of
 the user specified (initgroups() is called, so all of the user's groups will
 be available to the server).
+.br
+\fINote:\fP normally, \fInamed\fP will rescan the active ethernet
+interfaces when it receives SIGHUP.  Use of the
+.B \-u
+option makes this impossible since the default port that named listens
+on is a reserved port that only the superuser may bind to.
 .TP
 .B \-g
 Specifies the group the server should run as after it initializes.  The value

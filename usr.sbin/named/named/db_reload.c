@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_reload.c,v 1.2 1997/03/12 10:42:25 downsj Exp $	*/
+/*	$OpenBSD: db_reload.c,v 1.3 1998/05/23 19:24:49 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_reload.c	4.22 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: db_reload.c,v 8.3 1996/08/27 08:33:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_reload.c,v 1.2 1997/03/12 10:42:25 downsj Exp $";
+static char rcsid[] = "$OpenBSD: db_reload.c,v 1.3 1998/05/23 19:24:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,14 +78,16 @@ static char rcsid[] = "$OpenBSD: db_reload.c,v 1.2 1997/03/12 10:42:25 downsj Ex
  * Flush and reload data base.
  */
 void
-db_reload()
+db_reload(reloadnets)
+	int reloadnets;
 {
 	dprintf(3, (ddt, "reload()\n"));
 	syslog(LOG_NOTICE, "reloading nameserver\n");
 
 	qflush();
 	sqflush(NULL);
-	getnetconf();
+	if (reloadnets)
+		getnetconf();
 #ifdef FORCED_RELOAD
 	reloading = 1;     /* to force transfer if secondary and backing up */
 #endif
