@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.84 2003/11/08 06:11:11 nordin Exp $ */
+/* $OpenBSD: machdep.c,v 1.85 2004/01/22 17:47:27 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -2133,25 +2133,3 @@ alpha_XXX_dmamap(v)						/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */
 }								/* XXX */
 /* XXX XXX END XXX XXX */
-
-char *
-dot_conv(x)
-	unsigned long x;
-{
-	int i;
-	char *xc;
-	static int next;
-	static char space[2][20];
-
-	xc = space[next ^= 1] + sizeof space[0];
-	*--xc = '\0';
-	for (i = 0;; ++i) {
-		if (i && (i & 3) == 0)
-			*--xc = '.';
-		*--xc = "0123456789abcdef"[x & 0xf];
-		x >>= 4;
-		if (x == 0)
-			break;
-	}
-	return xc;
-}
