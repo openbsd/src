@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.13 1997/04/05 21:13:17 millert Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.14 1997/04/13 21:30:43 provos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.13 1997/04/05 21:13:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.14 1997/04/13 21:30:43 provos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,13 +184,6 @@ res_init()
 		_res.retry = 4;
 	if (!(_res.options & RES_INIT))
 		_res.options = RES_DEFAULT;
-
-	/*
-	 * This one used to initialize implicitly to zero, so unless the app
-	 * has set it to something in particular, we can randomize it now.
-	 */
-	if (!_res.id)
-		_res.id = res_randomid();
 
 #ifdef USELOOPBACK
 	_res.nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
@@ -510,9 +503,3 @@ net_mask(in)		/* XXX - should really use system's version of this */
 	return (htonl(IN_CLASSC_NET));
 }
 #endif
-
-u_int
-res_randomid()
-{
-	return (0xffff & arc4random());
-}
