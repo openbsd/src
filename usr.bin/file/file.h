@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.10 2002/06/05 13:46:44 itojun Exp $	*/
+/*	$OpenBSD: file.h,v 1.11 2003/03/03 22:24:08 ian Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -29,6 +29,18 @@
 
 #ifndef __file_h__
 #define __file_h__
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <errno.h>
+#include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#endif
 
 #ifndef HOWMANY
 # define HOWMANY 8192		/* how much of the file to look at */
@@ -91,7 +103,7 @@ extern int   zmagic(unsigned char *, int);
 extern void  ckfprintf(FILE *, const char *, ...);
 extern uint32_t signextend(struct magic *, uint32_t);
 extern int internatmagic(unsigned char *, int);
-extern void tryelf(int, char *, int);
+extern void tryelf(int, unsigned char *, int);
 
 
 extern int errno;		/* Some unixes don't define this..	*/

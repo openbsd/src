@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.8 2003/03/03 22:24:08 ian Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -38,7 +38,7 @@
 #include "file.h"
 
 #ifndef lint
-static char *moduleid = "$OpenBSD: print.c,v 1.7 2002/02/19 19:39:38 millert Exp $";
+static char *moduleid = "$OpenBSD: print.c,v 1.8 2003/03/03 22:24:08 ian Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -103,6 +103,17 @@ struct magic *m;
 	    }
 	}
 	(void) fprintf(stderr, ",\"%s\"]\n", m->desc);
+}
+
+/*
+ * This "error" is here so we don't have to change all occurrences of
+ * error() to err(1,...) when importing new versions from Christos.
+ */
+void error(const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	verr(1, fmt, va);
 }
 
 /*
