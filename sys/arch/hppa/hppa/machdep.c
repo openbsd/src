@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2000/08/15 20:12:14 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2000/08/15 20:21:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -154,7 +154,9 @@ int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
  */
 int (*cpu_desidhash) __P((void));
 int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
-int (*cpu_btlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+int (*cpu_ibtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot));
+int (*cpu_dbtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 	    vsize_t sz, u_int prot));
 
 dev_t	bootdev;
@@ -198,7 +200,9 @@ extern u_int itlb_x[], dtlb_x[], tlbd_x[];
 extern u_int itlb_s[], dtlb_s[], tlbd_s[];
 extern u_int itlb_t[], dtlb_t[], tlbd_t[];
 extern u_int itlb_l[], dtlb_l[], tlbd_l[];
-int ibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+int iibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot));
+int idbtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
     vsize_t sz, u_int prot));
 int ibtlb_t __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
     vsize_t sz, u_int prot));
@@ -221,44 +225,46 @@ const struct hppa_cpu_typed {
 	int  features;
 	int (*desidhash) __P((void));
 	u_int *itlbh, *dtlbh, *tlbdh;
-	int (*btlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	int (*dbtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot));
+	int (*ibtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 	    vsize_t sz, u_int prot));
 	int (*btlbprg) __P((int i));
 	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
 } cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PCX",   hpcx,  0x10, 0,
-	    desidhash_x, itlb_x, dtlb_x, tlbd_x, ibtlb_g, pbtlb_g},
+	    desidhash_x, itlb_x, dtlb_x, tlbd_x, ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7100_CPU
 	{ "PCXS",  hpcxs, 0x11, HPPA_FTRS_BTLBS,
-	    desidhash_s, itlb_s, dtlb_s, tlbd_s, ibtlb_g, pbtlb_g},
+	    desidhash_s, itlb_s, dtlb_s, tlbd_s, ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7200_CPU
 	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
-	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, pbtlb_g},
+	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, NULL, pbtlb_g},
 /* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
-	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, pbtlb_g}, */
+	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, NULL, pbtlb_g}, */
 #endif
 #ifdef HP7100LC_CPU
 	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g},
+	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP7300LC_CPU
 /* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g}, */
+	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g},
+	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8200_CPU
 /* HOW?	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g}, */
+	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8500_CPU
 /* HOW?	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, pbtlb_g, hpti_g}, */
+	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 	{ "", 0 }
 };
@@ -395,7 +401,8 @@ hppa_init(start)
 
 			cpu_type      = p->type;
 			cpu_typename  = p->name;
-			cpu_btlb_ins  = p->btlbins;
+			cpu_ibtlb_ins = p->ibtlbins;
+			cpu_dbtlb_ins = p->dbtlbins;
 			cpu_hpt_init  = p->hptinit;
 			cpu_desidhash = p->desidhash;
 
@@ -878,7 +885,7 @@ btlb_insert(space, va, pa, lenp, prot)
 #ifdef BTLBDEBUG
 	printf("btlb_insert(%d): %x:%x=%x[%x,%x]\n", i, space, va, pa, len, prot);
 #endif
-	if ((error = (*cpu_btlb_ins)(i, space, va, pa, len, prot)) < 0)
+	if ((error = (*cpu_dbtlb_ins)(i, space, va, pa, len, prot)) < 0)
 		return -(EINVAL);
 	*lenp = len << PGSHIFT;
 
