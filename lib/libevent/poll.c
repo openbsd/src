@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.1 2003/09/23 08:52:04 markus Exp $	*/
+/*	$OpenBSD: poll.c,v 1.2 2003/10/01 09:10:30 markus Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -193,10 +193,13 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 	for (i = 0; i < nfds; i++) {
 		res = 0;
+		/* If the file gets closed notify */
+		if (pop->event_set[i].revents & POLLHUP)
+			pop->event_set[i].revents = POLLIN|POLLOUT;
 		if (pop->event_set[i].revents & POLLIN)
-			res = EV_READ;
-		else if (pop->event_set[i].revents & POLLOUT)
-			res = EV_WRITE;
+			res |= EV_READ;
+		if (pop->event_set[i].revents & POLLOUT)
+			res |= EV_WRITE;
 		if (res == 0)
 			continue;
 
