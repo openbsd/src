@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.7 1998/12/21 01:02:22 niklas Exp $
-#	$EOM: Makefile,v 1.34 1998/12/18 12:57:27 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 1998/12/22 02:03:32 niklas Exp $
+#	$EOM: Makefile,v 1.35 1998/12/22 02:02:19 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -44,6 +44,7 @@ SRCS=		app.c asn.c asn_useful.c attribute.c cert.c constants.c \
 		message.c math_2n.c math_ec2n.c math_group.c pf_encap.c \
 		pkcs.c prf.c sa.c sysdep.c timer.c transport.c udp.c ui.c \
 		util.c x509.c
+OBJS=		ipsec_fld.h ipsec_num.h isakmp_fld.h isakmp_num.h
 CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_num.c isakmp_num.h ipsec_fld.c ipsec_fld.h \
 		isakmp_fld.c isakmp_fld.h
@@ -83,7 +84,7 @@ isakmp_fld.c isakmp_fld.h: genfields.sh isakmp_fld.fld
 isakmp_num.c isakmp_num.h: genconstants.sh isakmp_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/isakmp_num
 
-beforedepend:	ipsec_fld.h ipsec_num.h isakmp_fld.h isakmp_num.h
+beforedepend: ipsec_fld.h ipsec_num.h isakmp_fld.h isakmp_num.h
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
