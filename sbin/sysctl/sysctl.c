@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.29 1997/10/15 19:30:55 kstailey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.30 1997/10/22 23:40:35 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.29 1997/10/15 19:30:55 kstailey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.30 1997/10/22 23:40:35 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -405,7 +405,7 @@ parse(string, flags)
 #ifdef CPU_BIOS
 		if (mib[1] == CPU_BIOS) {
 			len = sysctl_bios(string, &bufp, mib, flags, &type);
-			if (mib[2] == BIOS_GEOMETRY)
+			if (mib[2] == BIOS_DISKINFO)
 				special |= BIOSGEO;
 			if (mib[2] == BIOS_DEV)
 				special |= BIOSDEV;
@@ -502,12 +502,12 @@ parse(string, flags)
 	}
 #ifdef CPU_BIOS
 	if (special & BIOSGEO) {
-		u_int geo = *(int *)buf;
+		bios_diskinfo_t di = *(bios_diskinfo_t *)buf;
 
 		if (!nflag)
 			(void)printf("%s = ", string);
 		printf("Cylinders=%d Tracks=%d Sectors=%d (%08x)\n",
-		    BIOSNTRACKS(geo), BIOSNHEADS(geo), BIOSNSECTS(geo), geo);
+		       di.bios_cylinders, di.bios_heads, di.bios_sectors);
 		return;
 	}
 	if (special & BIOSDEV) {
