@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.26 1998/03/27 03:30:43 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.27 1998/04/05 04:20:38 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -51,11 +51,14 @@ OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 # MASTER_SITE_BACKUP - Backup location(s) for distribution files and patch
 #				  files if not found locally and ${MASTER_SITES}/${PATCH_SITES}
 #				  (default:
+#				  ftp://ftp.openbsd.org/pub/OpenBSD/distfiles/${DIST_SUBDIR}/
 #				  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
 # MASTER_SITE_OVERRIDE - If set, override the MASTER_SITES setting with this
 #				  value.
-# MASTER_SITE_FREEBSD - If set, only use ${MASTER_SITE_BACKUP} for
-#				  MASTER_SITES.
+# MASTER_SITE_OPENBSD - If set, only use ftp.openbsd.org as the
+#				  MASTER_SITE_OVERRIDE.
+# MASTER_SITE_FREEBSD - If set, only use ftp.freebsd.org as the
+#				  MASTER_SITE_OVERRIDE.
 # PACKAGES		- A top level directory where all packages go (rather than
 #				  going locally to each port). (default: ${PORTSDIR}/packages).
 # GMAKE			- Set to path of GNU make if not in $PATH (default: gmake).
@@ -275,19 +278,7 @@ OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
-# Get the operating system type
-OPSYS!=	uname -s
-
-.if defined(COMES_WITH)
-OS_VER!=	uname -r
-.if ( ${OS_VER} >= ${COMES_WITH} )
-__NOT_NEEDED!= basename ${.CURDIR}
-.endif
-.endif
-.if defined(__NOT_NEEDED)
-fetch fetch-list extract patch clean clean-depends configure build install reinstall package describe checkpatch checksum makesum all:
-	@echo "${__NOT_NEEDED} comes with ${OPSYS} as of release ${COMES_WITH}
-.elif defined(ONLY_FOR_ARCHS)
+.if defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
 .if ${MACHINE} == "${__ARCH}"
 __ARCH_OK=	1
@@ -304,6 +295,9 @@ fetch fetch-list extract patch clean clean-depends configure build install reins
 	@echo "This port is only for ${ONLY_FOR_ARCHS},"
 	@echo "and you are running ${MACHINE}."
 .else
+
+# Get the operating system type
+OPSYS!=	uname -s
 
 # Get the architecture
 ARCH!=	uname -m
@@ -639,16 +633,36 @@ PATCH_SITES?=
 MASTER_SITES:=	${MASTER_SITES:S/%SUBDIR%/${MASTER_SITE_SUBDIR}/}
 PATCH_SITES:=	${PATCH_SITES:S/%SUBDIR%/${PATCH_SITE_SUBDIR}/}
 
-# The primary backup site.
-MASTER_SITE_BACKUP?=	\
+# Two backup master sites, First one at ftp.openbsd.org
+#
+_MASTER_SITE_OPENBSD?=	\
+	ftp://ftp.openbsd.org/pub/OpenBSD/distfiles/${DIST_SUBDIR}/
+
+# The second backup master site is ftp.freebsd.org
+#
+_MASTER_SITE_FREEBSD?=	\
 	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 
+# set the backup master sites.
+#
+MASTER_SITE_BACKUP?=	\
+	${_MASTER_SITE_OPENBSD} ${_MASTER_SITE_FREEBSD}
+
+# If the user has this set, go to the OpenBSD repository for everything.
+#
+.if defined(MASTER_SITE_OPENBSD)
+MASTER_SITE_OVERRIDE=  ${_MASTER_SITE_OPENBSD}
+.endif
+
 # If the user has this set, go to the FreeBSD repository for everything.
+#
 .if defined(MASTER_SITE_FREEBSD)
-MASTER_SITE_OVERRIDE=  ${MASTER_SITE_BACKUP}
+MASTER_SITE_OVERRIDE=  ${_MASTER_SITE_FREEBSD}
 .endif
 
 # Where to put distfiles that don't have any other master site
+# ;;; This is referenced in a few Makefiles -- I'd like to get rid of it
+#
 MASTER_SITE_LOCAL?= \
 	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/LOCAL_PORTS/
 
@@ -798,6 +812,8 @@ _MANPAGES:=	${_MANPAGES:S/$/.gz/}
 # into that.
 #
 # Don't build a port if it's broken.
+#
+# Don't build a port if it comes with the base system.
 ################################################################
 
 .if !defined(NO_IGNORE)
@@ -817,6 +833,11 @@ IGNORE=	"is restricted: ${RESTRICTED}"
 IGNORE=	"uses X11, but ${X11BASE} not found"
 .elif defined(BROKEN)
 IGNORE=	"is marked as broken: ${BROKEN}"
+.elif defined(COMES_WITH)
+OS_VER!=	uname -r
+.if ( ${OS_VER} >= ${COMES_WITH} )
+IGNORE= "comes with ${OPSYS} as of release ${COMES_WITH}"
+.endif
 .endif
 
 .if defined(IGNORE)
