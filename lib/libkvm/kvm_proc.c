@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.5 1999/06/22 12:54:45 art Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.6 2000/06/18 17:59:54 niklas Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.5 1999/06/22 12:54:45 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.6 2000/06/18 17:59:54 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -464,6 +464,11 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 
 		case KERN_PROC_RUID:
 			if (eproc.e_pcred.p_ruid != (uid_t)arg)
+				continue;
+			break;
+
+		case KERN_PROC_ALL:
+			if (proc.p_flag & P_SYSTEM)
 				continue;
 			break;
 		}

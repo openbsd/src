@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.29 2000/02/22 19:28:05 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.30 2000/06/18 17:59:55 niklas Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -199,13 +199,14 @@ struct ctlname {
 /*
  * KERN_PROC subtypes
  */
-#define KERN_PROC_ALL		0	/* everything */
+#define KERN_PROC_ALL		0	/* everything but kernel threads */
 #define	KERN_PROC_PID		1	/* by process id */
 #define	KERN_PROC_PGRP		2	/* by process group id */
 #define	KERN_PROC_SESSION	3	/* by session of pid */
 #define	KERN_PROC_TTY		4	/* by controlling tty */
 #define	KERN_PROC_UID		5	/* by effective uid */
 #define	KERN_PROC_RUID		6	/* by real uid */
+#define KERN_PROC_KTHREAD	7	/* also return kernel threads */
 
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:

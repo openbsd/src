@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.18 1999/11/14 09:03:46 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.19 2000/06/18 17:59:56 niklas Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -351,7 +351,7 @@ int (*compare) __P((const void *, const void *));
     int show_command;
 
     
-    if ((pbase = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc)) == NULL) {
+    if ((pbase = kvm_getprocs(kd, KERN_PROC_KTHREAD, 0, &nproc)) == NULL) {
 	warnx("%s", kvm_geterr(kd));
 	quit(23);
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.35 2000/06/05 11:02:51 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.36 2000/06/18 17:59:55 niklas Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -715,7 +715,8 @@ sysctl_doproc(name, namelen, where, sizep)
 	struct eproc eproc;
 	int error = 0;
 
-	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
+	if (namelen != 2 && !(namelen == 1 &&
+	    (name[0] == KERN_PROC_ALL || name[0] == KERN_PROC_KTHREAD)))
 		return (EINVAL);
 	p = LIST_FIRST(&allproc);
 	doingzomb = 0;
@@ -758,6 +759,11 @@ again:
 
 		case KERN_PROC_RUID:
 			if (p->p_cred->p_ruid != (uid_t)name[1])
+				continue;
+			break;
+
+		case KERN_PROC_ALL:
+			if (p->p_flag & P_SYSTEM)
 				continue;
 			break;
 		}

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.35 1999/12/12 00:52:21 hugh Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.36 2000/06/18 17:59:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -655,6 +655,8 @@ doforkst()
 	    fks.cntvfork, fks.sizvfork, (double)fks.sizvfork / (fks.cntvfork ? fks.cntvfork : 1));
 	(void)printf("%d rforks, %d pages, average %.2f\n",
 	    fks.cntrfork, fks.sizrfork, (double)fks.sizrfork / (fks.cntrfork ? fks.cntrfork : 1));
+	(void)printf("%d kthread creations, %d pages, average %.2f\n",
+	    fks.cntkthread, fks.sizkthread, (double)fks.sizkthread / (fks.cntkthread ? fks.cntkthread : 1));
 }
 
 void

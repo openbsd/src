@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.13 2000/04/16 02:19:55 ericj Exp $	*/
+/*	$OpenBSD: ps.c,v 1.14 2000/06/18 17:59:54 niklas Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.13 2000/04/16 02:19:55 ericj Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.14 2000/06/18 17:59:54 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ main(argc, argv)
 	pid_t pid;
 	uid_t uid;
 	int all, ch, flag, i, fmt, lineno, nentries;
-	int prtheader, wflag, what, xflg;
+	int prtheader, wflag, kflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
@@ -130,13 +130,13 @@ main(argc, argv)
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	all = fmt = prtheader = wflag = xflg = 0;
+	all = fmt = prtheader = wflag = kflag = xflg = 0;
 	pid = -1;
 	uid = (uid_t) -1;
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "acCeghjLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
+	    "acCeghjkLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch((char)ch) {
 		case 'a':
 			all = 1;
@@ -159,6 +159,9 @@ main(argc, argv)
 			parsefmt(jfmt);
 			fmt = 1;
 			jfmt[0] = '\0';
+			break;
+		case 'k':
+			kflag++;
 			break;
 		case 'L':
 			showkey();
@@ -310,6 +313,9 @@ main(argc, argv)
 	} else if (pid != -1) {
 		what = KERN_PROC_PID;
 		flag = pid;
+	} else if (kflag) {
+		what = KERN_PROC_KTHREAD;
+		flag = 0;
 	} else {
 		what = KERN_PROC_ALL;
 		flag = 0;

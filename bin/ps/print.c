@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.15 2000/05/04 17:26:25 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.16 2000/06/18 17:59:53 niklas Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.15 2000/05/04 17:26:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.16 2000/06/18 17:59:53 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -242,9 +242,13 @@ state(k, ve)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
+	if (flag & P_SYSTEM)
+		*cp++ = 'K';
+	/* XXX Since P_SYSTEM now shows a K, should L just be for holdcnt? */
 	if ((flag & P_SYSTEM) || p->p_holdcnt)
 		*cp++ = 'L';
-	if (KI_EPROC(k)->e_maxrss / 1024 < pgtok(KI_EPROC(k)->e_vm.vm_rssize))
+	if ((flag & P_SYSTEM) == 0 &&
+	    KI_EPROC(k)->e_maxrss / 1024 < pgtok(KI_EPROC(k)->e_vm.vm_rssize))
 		*cp++ = '>';
 	if (KI_EPROC(k)->e_flag & EPROC_SLEADER)
 		*cp++ = 's';
@@ -470,7 +474,8 @@ rssize(k, ve)
 
 	v = ve->var;
 	/* XXX don't have info about shared */
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_rssize));
+	(void)printf("%*d", v->width, (KI_PROC(k)->p_flag & P_SYSTEM) ? 0 :
+	    pgtok(KI_EPROC(k)->e_vm.vm_rssize));
 }
 
 void
@@ -481,7 +486,8 @@ p_rssize(k, ve)		/* doesn't account for text */
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_rssize));
+	(void)printf("%*d", v->width, (KI_PROC(k)->p_flag & P_SYSTEM) ? 0 :
+	    pgtok(KI_EPROC(k)->e_vm.vm_rssize));
 }
 
 void
@@ -583,7 +589,7 @@ getpmem(k)
 
 	p = KI_PROC(k);
 	e = KI_EPROC(k);
-	if ((p->p_flag & P_INMEM) == 0)
+	if ((p->p_flag & P_INMEM) == 0 || (p->p_flag & P_SYSTEM))
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
