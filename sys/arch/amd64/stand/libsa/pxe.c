@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.c,v 1.1 2004/03/21 21:37:41 tom Exp $ */
+/*	$OpenBSD: pxe.c,v 1.2 2005/03/13 22:21:26 tom Exp $ */
 /*	$NetBSD: pxe.c,v 1.5 2003/03/11 18:29:00 drochner Exp $	*/
 
 /*
@@ -375,8 +375,7 @@ pxe_init(int quiet)
 		/* assert(pxe != NULL); */
 
 		printf(quiet ? " pxe!" : "PXE present\n");
-	}
-	else {				/* pxenv != NULL */
+	} else {				/* pxenv != NULL */
 		int bang = 0;
 
 		if (pxenv->Version >= 0x0201 && pxe != NULL) {
@@ -389,8 +388,7 @@ pxe_init(int quiet)
 			    (bang ? '!' : '+'),
 			    (pxenv->Version >> 8) & 0xff,
 			     pxenv->Version & 0xff);
-		}
-		else {
+		} else {
 			printf("PXE BIOS Version %d.%d\n",
 			    (pxenv->Version >> 8) & 0xff,
 			     pxenv->Version & 0xff);
