@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.10 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.11 2004/02/03 17:17:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -176,12 +176,12 @@ nofn_attach(parent, self, aux)
 		break;
 	}
 
-	printf(": %s", intrstr);
+	printf(":");
 	if (sc->sc_flags & NOFN_FLAGS_PK)
-		printf(", pk");
+		printf(" PK");
 	if (sc->sc_flags & NOFN_FLAGS_RNG)
-		printf(", rng");
-	printf("\n");
+		printf(" RNG");
+	printf(", %s\n", intrstr);
 
 	REG_WRITE_4(sc, NOFN_PCI_INT_MASK, sc->sc_intrmask);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.14 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: noct.c,v 1.15 2004/02/03 17:17:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -189,11 +189,13 @@ noct_attach(parent, self, aux)
 	if (noct_ram_size(sc))
 		goto fail;
 
-	printf(": %s, %uMB\n", intrstr, sc->sc_ramsize);
+	printf(":");
 
 	noct_rng_init(sc);
 	noct_pkh_init(sc);
 	noct_ea_init(sc);
+
+	printf(", %uMB, %s\n", sc->sc_ramsize, intrstr);
 
 	return;
 
@@ -444,6 +446,7 @@ noct_pkh_init(sc)
 	 * XXX actually register.
 	 */
 	crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, noct_kprocess);
+	printf(" PK");
 #endif
 
 	return;
@@ -638,6 +641,8 @@ noct_rng_init(sc)
 
 	noct_rng_disable(sc);
 	noct_rng_enable(sc);
+
+	printf(" RNG");
 
 	if (hz > 100)
 		sc->sc_rngtick = hz/100;
@@ -845,6 +850,7 @@ noct_ea_init(sc)
 
 	crypto_register(sc->sc_cid, algs, 
 	    noct_newsession, noct_freesession, noct_process);
+	printf(" MD5 SHA1 3DES");
 
 	kthread_create_deferred(noct_ea_create_thread, sc);
 

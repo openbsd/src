@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.146 2004/01/20 21:01:55 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.147 2004/02/03 17:17:33 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -696,19 +696,26 @@ report:
 
 	switch (encl) {
 	case HIFN_PUSTAT_ENA_0:
-		offtbl = "LZS-only";
+		offtbl = "LZS";
 		break;
 	case HIFN_PUSTAT_ENA_1:
-		offtbl = "DES";
+		offtbl = "LZS DES";
 		break;
 	case HIFN_PUSTAT_ENA_2:
-		offtbl = "3DES";
+		offtbl = "LZS 3DES ARC4 MD5 SHA1";
 		break;
 	default:
 		offtbl = "disabled";
 		break;
 	}
-	printf(": %s, ", offtbl);
+	printf(": %s", offtbl);
+	if (sc->sc_flags & HIFN_HAS_RNG)
+		printf(" RNG");
+	if (sc->sc_flags & HIFN_HAS_AES)
+		printf(" AES");
+	if (sc->sc_flags & HIFN_HAS_PUBLIC)
+		printf(" PK");
+	printf(", ");
 
 	return (0);
 }
