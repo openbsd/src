@@ -1,3 +1,4 @@
+LINK	instbin					bin/dd
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/dhclient
 SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
