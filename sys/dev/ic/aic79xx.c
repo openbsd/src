@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.8 2004/09/18 19:54:52 mickey Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.9 2004/09/24 14:56:56 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -6282,7 +6282,7 @@ ahd_init(struct ahd_softc *ahd)
 		}
 	}
 	if (i == 0) {
-		printf("%s: Timedout during current-sensing test\n",
+		printf("%s: Timeout during current-sensing test\n",
 		       ahd_name(ahd));
 		goto init_done;
 	}
@@ -9055,14 +9055,14 @@ ahd_timeout(void *arg)
 
 	if ((scb->flags & SCB_ACTIVE) == 0) {
 		/*
-		 * The timedout commands have already
+		 * The timed out commands have already
 		 * completed.  This typically means
 		 * that either the timeout value was on
 		 * the hairy edge of what the device
 		 * requires or - more likely - interrupts
 		 * are not happening.
 		 */
-		printf("%s: Timedout SCBs already complete. "
+		printf("%s: Timed out SCBs already complete. "
 		       "Interrupts may not be functioning.\n", ahd_name(ahd));
 		ahd_unpause(ahd);
 		ahd_unlock(ahd, &s);

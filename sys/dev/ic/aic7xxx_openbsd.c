@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.23 2004/08/13 23:38:54 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.24 2004/09/24 14:56:56 henning Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ ahc_timeout(void *arg)
 
 	if ((scb->flags & SCB_ACTIVE) == 0) {
 		/* Previous timeout took care of me already */
-		printf("%s: Timedout SCB already complete. "
+		printf("%s: Timed out SCB already complete. "
 		       "Interrupts may not be functioning.\n", ahc_name(ahc));
 		ahc_unpause(ahc);
 		ahc_unlock(ahc, &s);
