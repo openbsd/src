@@ -78,7 +78,6 @@
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
-./usr/lib/scrt0.o
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/hppaobsd.x
 ./usr/libdata/ldscripts/hppaobsd.xbn
