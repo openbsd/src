@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.3 1998/12/21 07:58:45 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.4 1999/03/10 09:45:40 d Exp $	*/
 /*
  * Atomic lock for i386
  */
@@ -15,13 +15,10 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 * a local variable containg the locked state.
 	 */
 	old = _SPINLOCK_LOCKED;
-	__asm__("xchg %0, %1"
-		: "=r" (old), "=m" (*lock) : "0"(old), "1" (*lock)  );
-	/*
-	 * So now LOCKED is in *lock and 'old' contains what
-	 * used to be in *lock. We return 0 if the lock was acquired,
-	 * (ie its old value was UNLOCKED) or 1 otherwise.
-	 */
+	__asm__("xchg %0,%1"
+		: "=r" (old), "=m" (*lock)
+		: "0"  (old), "1"  (*lock));
+
 	return (old != _SPINLOCK_UNLOCKED);
 }
 
