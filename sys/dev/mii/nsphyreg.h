@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyreg.h,v 1.2 1999/03/09 00:02:45 jason Exp $	*/
+/*	$OpenBSD: nsphyreg.h,v 1.3 2000/01/18 04:20:49 jason Exp $	*/
 /*	$NetBSD: nsphyreg.h,v 1.1 1998/08/10 23:58:39 thorpej Exp $	*/
 
 /*-
@@ -61,6 +61,8 @@
 #define	PCR_DESCRTODIS		0x2000	/* descrambler t/o disable */
 #define	PCR_REPEATER		0x1000	/* repeater mode */
 #define	PCR_ENCSEL		0x0800	/* encoder mode select */
+#define	PCR_TXREADYSEL		0x0400	/* use internal txrdy signal */
+#define	PCR_CONGCTRL		0x0100	/* congestion control */
 #define	PCR_CLK25MDIS		0x0080	/* CLK25M disable */
 #define	PCR_FLINK100		0x0040	/* force good link in 100mbps */
 #define	PCR_CIMDIS		0x0020	/* carrier integrity monitor disable */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.7 1999/12/07 22:01:32 jason Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.8 2000/01/18 04:20:49 jason Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.18 1999/07/14 23:57:36 thorpej Exp $	*/
 
 /*-
@@ -208,20 +208,17 @@ nsphy_service(sc, mii, cmd)
 		 */
 		reg |= PCR_FLINK100;
 
-#if 0
 		/*
 		 * Mystery bits which are supposedly `reserved',
 		 * but we seem to need to set them when the PHY
 		 * is connected to some interfaces!
 		 */
-		reg |= 0x0100 | 0x0400;
-#endif
+		reg |= PCR_CONGCTRL | PCR_TXREADYSEL;
 
 		PHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-			nsphy_reset(sc);
 			/*
 			 * If we're already in auto mode, just return.
 			 */
