@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka780.c,v 1.4 1997/09/10 12:04:48 maja Exp $	*/
-/*	$NetBSD: ka780.c,v 1.7 1997/02/19 10:04:18 ragge Exp $	*/
+/*	$OpenBSD: ka780.c,v 1.5 2000/04/27 01:10:12 bjc Exp $	*/
+/*	$NetBSD: ka780.c,v 1.14 1999/08/07 10:36:49 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -40,45 +40,78 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
-#include <machine/pte.h>
-#include <machine/clock.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
-#include <machine/scb.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
+#include <machine/cpu.h>
+#include <machine/clock.h>
 
-#include <vax/uba/ubavar.h>
-#include <vax/uba/ubareg.h>
-
-static	void	ka780_conf __P((struct device *, struct device *, void *));
-void	ka780_memenable __P((struct sbi_attach_args *, void *));
 static	void	ka780_memerr __P((void));
 static	int	ka780_mchk __P((caddr_t));
-static	void	ka780_steal_pages __P((void));
+static	void	ka780_conf __P((void));
+static	int mem_sbi_match __P((struct device *, struct cfdata *, void *));
+static	void mem_sbi_attach __P((struct device *, struct device *, void*));
+
+struct	cfattach mem_sbi_ca = {
+	sizeof(struct mem_softc), mem_sbi_match, mem_sbi_attach
+};
+
+int	
+mem_sbi_match(parent, cf, aux)
+	struct	device	*parent;
+	struct cfdata *cf;
+	void	*aux;
+{
+	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+
+	if (cf->cf_loc[SBICF_TR] != sa->nexnum && cf->cf_loc[SBICF_TR] > -1)
+		return 0;
+
+	switch (sa->type) {
+	case NEX_MEM4:
+	case NEX_MEM4I:
+	case NEX_MEM16:
+	case NEX_MEM16I:
+		sa->nexinfo = M780C;
+		break;
+
+	case NEX_MEM64I:
+	case NEX_MEM64L:
+	case NEX_MEM64LI:
+	case NEX_MEM256I:
+	case NEX_MEM256L:
+	case NEX_MEM256LI:
+		sa->nexinfo = M780EL;
+		break;
+
+	case NEX_MEM64U:
+	case NEX_MEM64UI:
+	case NEX_MEM256U:
+	case NEX_MEM256UI:
+		sa->nexinfo = M780EU;
+		break;
+ 
+	default:
+		return 0;
+	}
+	return 1;
+}
+
 
 /*
  * Declaration of 780-specific calls.
  */
 struct	cpu_dep ka780_calls = {
-	ka780_steal_pages,
-	generic_clock,
+	0,
 	ka780_mchk,
 	ka780_memerr,
 	ka780_conf,
 	generic_clkread,
 	generic_clkwrite,
 	2,	/* ~VUPS */
-	0,	/* Used by vaxstation */
-	0,	/* Used by vaxstation */
-	0,	/* Used by vaxstation */
+	5,	/* SCB pages */
 };
 
 /*
@@ -130,12 +163,17 @@ struct	mcr780 {
 
 /* enable crd interrrupts */
 void
-ka780_memenable(sa, osc)
-	struct	sbi_attach_args *sa;
-	void *osc;
+mem_sbi_attach(parent, self, aux)
+	struct	device	*parent, *self;
+	void	*aux;
 {
-	struct	mem_softc *sc = osc;
-	register struct mcr780 *mcr = (void *)sc->sc_memaddr;
+	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	mem_softc *sc = (void *)self;
+	struct mcr780 *mcr = (void *)sa->nexaddr;
+
+	sc->sc_memaddr = sa->nexaddr;
+	sc->sc_memtype = sa->nexinfo;
+	sc->sc_memnr = sa->type;
 
 	printf(": ");
 	switch (sc->sc_memtype) {
@@ -163,7 +201,7 @@ ka780_memenable(sa, osc)
 void
 ka780_memerr()
 {
-	extern	struct cfdriver mem_cd;
+	extern struct cfdriver mem_cd;
 	struct	mem_softc *sc;
 	register struct mcr780 *mcr;
 	register int m;
@@ -314,9 +352,7 @@ struct ka78x {
 };
 
 void
-ka780_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka780_conf()
 {
 	extern	char cpu_model[];
 	struct	ka78x *ka78 = (void *)&vax_cpudata;
@@ -324,29 +360,12 @@ ka780_conf(parent, self, aux)
 	/* Enable cache */
 	mtpr(0x200000, PR_SBIMT);
 
-	strcpy(cpu_model,"VAX 11/780");
-	if (ka78->v785)
-		cpu_model[9] = '5';
-	printf(": %s, serial number %d(%d), hardware ECO level %d(%d)\n",
+	printf("cpu: %s, serial number %d(%d), hardware ECO level %d(%d)\n",
 	    &cpu_model[4], ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
-	printf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
-		printf("FPA present, enabling.\n");
+		printf("cpu: FPA present, enabling.\n");
 		mtpr(0x8000, PR_ACCS);
 	} else
-		printf("no FPA\n");
+		printf("cpu: no FPA\n");
 
-}
-
-void
-ka780_steal_pages()
-{
-	extern	vm_offset_t avail_start, virtual_avail;
-	extern	struct nexus *nexus;
-	int	junk;
-
-	MAPPHYS(junk, 4, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, btoc(8192*16));
-	pmap_map((vm_offset_t)nexus, 0x20000000, 0x20020000,
-	    VM_PROT_READ|VM_PROT_WRITE);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.9 2000/04/11 02:44:32 pjanzen Exp $	 */
-/*	$NetBSD: clock.c,v 1.20 1997/04/18 18:49:37 ragge Exp $	 */
+/*	$OpenBSD: clock.c,v 1.10 2000/04/27 01:10:11 bjc Exp $	 */
+/*	$NetBSD: clock.c,v 1.28 1999/05/01 16:13:43 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,9 +42,10 @@
 #include <machine/sid.h>
 #include <machine/clock.h>
 #include <machine/cpu.h>
+#include <machine/uvax.h>
 
-static unsigned long year;     /*  start of current year in seconds */
-static unsigned long year_len; /* length of current year in 100th of seconds */
+int	yeartonum __P((int));
+int	numtoyear __P((int));
 
 /*
  * microtime() should return number of usecs in struct timeval.
@@ -55,19 +56,26 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	u_int int_time, tmp_year;
 	int s, i;
 	static struct timeval lasttime;
 
 	s = splhigh();
-	int_time = mfpr(PR_TODR);
+	bcopy((caddr_t)&time, tvp, sizeof(struct timeval));
 
-	asm ("movc3 %0,(%1),(%2)" 
-		:
-		: "r" (sizeof(struct timeval)),"r" (&time),"r"(tvp)
-		:"r0","r1","r2","r3","r4","r5"); 
-
-	i = mfpr(PR_ICR) + tick; /* Get current interval count */
+	switch (vax_boardtype) {
+#ifdef VAX46
+	case VAX_BTYP_46: {
+		extern struct vs_cpu *ka46_cpu;
+		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
+		i = (i >> 16) * 1024 + (i & 0x3ff);
+		break;
+		}
+#endif
+	default:
+		i = mfpr(PR_ICR);
+		break;
+	}
+	i += tick; /* Get current interval count */
 	tvp->tv_usec += i;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
@@ -80,13 +88,6 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	bcopy(tvp, &lasttime, sizeof(struct timeval));
-	if (int_time > year_len) {
-		mtpr(mfpr(PR_TODR) - year_len, PR_TODR);
-		year += year_len / 100;
-		tmp_year = year / SEC_PER_DAY / 365 + 2;
-		year_len = 100 * SEC_PER_DAY *
-		    ((tmp_year % 4 && tmp_year != 32) ? 365 : 366);
-	}
 	splx(s);
 }
 
@@ -118,11 +119,11 @@ inittodr(fs_time)
 
 	default: /* System clock OK, no warning if we don't want to. */
 		if (time.tv_sec > fs_time + 3 * SEC_PER_DAY) {
-			printf("Clock has gained %d days",
+			printf("Clock has gained %ld days",
 			    (time.tv_sec - fs_time) / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		} else if (time.tv_sec + SEC_PER_DAY < fs_time) {
-			printf("Clock has lost %d day(s)",
+			printf("Clock has lost %ld day(s)",
 			    (fs_time - time.tv_sec) / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		}
@@ -153,29 +154,17 @@ delay(i)
 	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
-#if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800
 /*
- * On most VAXen there are a microsecond clock that should
- * be used for interval interrupts. Have a generic version here.
+ * On all VAXen there are a microsecond clock that should
+ * be used for interval interrupts. Some CPUs don't use the ICR interval
+ * register but it doesn't hurt to load it anyway.
  */
 void
-generic_clock()
+cpu_initclocks()
 {
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
 }
-#endif
-
-#if VAX650 || VAX630 || VAX410 || VAX43
-/*
- * Most microvaxen don't have a interval count register.
- */
-void
-no_nicr_clock()
-{
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-}
-#endif
 
 /*
  * There are two types of real-time battery-backed up clocks on
@@ -253,7 +242,7 @@ generic_clkwrite()
 }
 #endif
 
-#if VAX630 || VAX410 || VAX43 || VAX8200
+#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46
 
 volatile short *clk_page;	/* where the chip is mapped in virtual memory */
 int	clk_adrshift;	/* how much to multiply the in-page address with */
@@ -285,7 +274,7 @@ chip_clkread(base)
 		}
 
 	s = splhigh();
-	c.dt_year = REGPEEK(YR_OFF) + 1970;
+	c.dt_year = ((u_char)REGPEEK(YR_OFF)) + 1970;
 	c.dt_mon = REGPEEK(MON_OFF);
 	c.dt_day = REGPEEK(DAY_OFF);
 	c.dt_wday = REGPEEK(WDAY_OFF);
@@ -312,7 +301,7 @@ chip_clkwrite()
 
 	clock_secs_to_ymdhms(time.tv_sec, &c);
 
-	REGPOKE(YR_OFF, c.dt_year - 1970);
+	REGPOKE(YR_OFF, ((u_char)(c.dt_year - 1970)));
 	REGPOKE(MON_OFF, c.dt_mon);
 	REGPOKE(DAY_OFF, c.dt_day);
 	REGPOKE(WDAY_OFF, c.dt_wday);

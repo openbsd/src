@@ -1,0 +1,117 @@
+#	$OpenBSD: genassym.cf,v 1.1 2000/04/27 01:10:11 bjc Exp $
+#	$NetBSD: genassym.cf,v 1.10 1999/11/19 22:09:55 ragge Exp $
+#
+# Copyright (c) 1997 Ludd, University of Lule}, Sweden.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#      This product includes software developed at Ludd, University of 
+#      Lule}, Sweden and its contributors.
+# 4. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+
+include	<sys/param.h>
+include	<sys/proc.h>
+include	<sys/errno.h>
+include	<sys/syscall.h>
+
+include	<net/netisr.h>
+
+include	<machine/mtpr.h>
+include	<machine/pcb.h>
+include	<machine/sid.h>
+include	<machine/trap.h>
+include	<machine/cpu.h>
+
+define	P_PRIORITY	offsetof(struct proc, p_priority)
+define	P_ADDR		offsetof(struct proc, p_addr)
+define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+
+define	P0BR		offsetof(struct pcb, P0BR)
+define	P0LR		offsetof(struct pcb, P0LR)
+define	P1BR		offsetof(struct pcb, P1BR)
+define	P1LR		offsetof(struct pcb, P1LR)
+define	IFTRAP		offsetof(struct pcb, iftrap)
+
+define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
+define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
+
+define	KERNBASE	KERNBASE
+
+# mtpr register numbers
+define	PR_KSP		PR_KSP
+define	PR_USP		PR_USP
+define	PR_ICCS		PR_ICCS
+define	PR_PCBB		PR_PCBB
+define	PR_IPL		PR_IPL
+define	PR_SBIFS	PR_SBIFS
+define	PR_EHSR		PR_EHSR
+define	PR_MCESR	PR_MCESR
+define	PR_P0BR		PR_P0BR
+define	PR_P1BR		PR_P1BR
+define	PR_P0LR		PR_P0LR
+define	PR_P1LR		PR_P1LR
+define	PR_SCBB		PR_SCBB
+
+# trap numbering
+define	T_KSPNOTVAL	T_KSPNOTVAL
+define	T_PRIVINFLT	T_PRIVINFLT
+define	T_XFCFLT	T_XFCFLT
+define	T_RESOPFLT	T_RESOPFLT
+define	T_RESADFLT	T_RESADFLT
+define	T_TRANSFLT	T_TRANSFLT
+define	T_PTEFETCH	T_PTEFETCH
+define	T_WRITE		T_WRITE
+define	T_ACCFLT	T_ACCFLT
+define	T_PTELEN	T_PTELEN
+define	T_TRCTRAP	T_TRCTRAP
+define	T_BPTFLT	T_BPTFLT
+define	T_ARITHFLT	T_ARITHFLT
+define	T_SYSCALL	T_SYSCALL
+define	T_ASTFLT	T_ASTFLT
+define	T_KDBTRAP	T_KDBTRAP
+
+# software net interrupts
+define	NETISR_IP	NETISR_IP
+define	NETISR_ARP	NETISR_ARP
+define	NETISR_NS	NETISR_NS
+define	NETISR_ATALK	NETISR_ATALK
+define	NETISR_ISO	NETISR_ISO
+define	NETISR_CCITT	NETISR_CCITT
+define	NETISR_PPP	NETISR_PPP
+define	NETISR_IPV6	NETISR_IPV6
+define 	NETISR_BRIDGE	NETISR_BRIDGE
+
+define	USPACE		USPACE
+
+define	ENAMETOOLONG	ENAMETOOLONG
+
+define	SYS_sigreturn	SYS_sigreturn	
+define	SYS_exit	SYS_exit
+
+define	VAX_TYP_UV2	VAX_TYP_UV2
+define	VAX_TYP_8SS	VAX_TYP_8SS
+define	VAX_BTYP_46	VAX_BTYP_46
+define	VAX_BTYP_48	VAX_BTYP_48

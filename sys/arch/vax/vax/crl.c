@@ -1,5 +1,5 @@
-/*	$OpenBSD: crl.c,v 1.3 1997/05/29 00:05:13 niklas Exp $	*/
-/*	$NetBSD: crl.c,v 1.5 1996/10/13 03:35:35 christos Exp $	*/
+/*	$OpenBSD: crl.c,v 1.4 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$NetBSD: crl.c,v 1.6 2000/01/24 02:40:33 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -67,7 +67,7 @@ struct {
 	int	crl_ds;		/* saved drive status */
 } crlstat;
 
-void	crlintr __P((int));
+void	crlintr __P((void *));
 void	crlattach __P((void));
 static	void crlstart __P((void));
 
@@ -81,11 +81,9 @@ struct	ivec_dsp crl_intr;
 void
 crlattach()
 {
-	extern	struct ivec_dsp idsptch;
-
-	bcopy(&idsptch, &crl_intr, sizeof(struct ivec_dsp));
-	scb->scb_csrint = &crl_intr;
+	crl_intr = idsptch;
 	crl_intr.hoppaddr = crlintr;
+	scb->scb_csrint = &crl_intr;
 }	
 
 /*ARGSUSED*/
@@ -192,13 +190,13 @@ crlstart()
 		mtpr(bp->b_blkno<<8 | STXCS_IE | CRL_F_WRITE, PR_STXCS);
 	}
 #ifdef lint
-	crlintr();
+	crlintr(NULL);
 #endif
 }
 
 void
 crlintr(arg)
-	int arg;
+	void *arg;
 {
 	register struct buf *bp;
 	int i;

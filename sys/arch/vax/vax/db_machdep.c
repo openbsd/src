@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_machdep.c,v 1.7 1997/10/06 15:12:58 niklas Exp $	*/
-/*	$NetBSD: db_machdep.c,v 1.8 1996/10/13 03:35:39 christos Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.8 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -12,7 +12,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
@@ -27,6 +27,9 @@
  * rights to redistribute these changes.
  *
  *	db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
+ *
+ * VAX enhancements by cmcmanis@mcmanis.com no rights reserved :-)
+ *
  */
 
 /*
@@ -35,14 +38,18 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
 
 #include <vm/vm.h>
 
+#include <dev/cons.h>
+
 #include <machine/db_machdep.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/cpu.h>
 #include <machine/../vax/gencons.h>
 
@@ -59,6 +66,28 @@ extern	label_t	*db_recover;
 void	kdbprinttrap __P((int, int));
 
 int	db_active = 0;
+
+extern int qdpolling;
+static	int splsave; /* IPL before entering debugger */
+
+/*
+ * VAX Call frame on the stack, this from
+ * "Computer Programming and Architecture, The VAX-11"
+ *		Henry Levy & Richard Eckhouse Jr.
+ *			ISBN 0-932376-07-X
+ */
+typedef struct __vax_frame {
+	u_int	vax_cond;				/* condition handler               */
+	u_int	vax_psw:16;				/* 16 bit processor status word    */
+	u_int	vax_regs:12;			/* Register save mask.             */
+	u_int	vax_zero:1;				/* Always zero                     */
+	u_int	vax_calls:1;			/* True if CALLS, false if CALLG   */
+	u_int	vax_spa:2;				/* Stack pointer alignment         */
+	u_int	*vax_ap;				/* argument pointer                */
+	struct __vax_frame	*vax_fp;	/* frame pointer of previous frame */
+	u_int	vax_pc;					/* program counter                 */
+	u_int	vax_args[1];			/* 0 or more arguments             */
+} VAX_CALLFRAME;
 
 /*
  * DDB is called by either <ESC> - D on keyboard, via a TRACE or
@@ -77,6 +106,7 @@ kdb_trap(frame)
 	case T_TRCTRAP:	/* single_step */
 		break;
 
+	/* XXX todo: should be migrated to use VAX_CALLFRAME at some point */
 	case T_KDBTRAP:
 		if (panicstr) {
 			struct	callsframe *pf, *df;
@@ -88,8 +118,9 @@ kdb_trap(frame)
 			ddb_regs.pc = pf->ca_pc;
 			ddb_regs.ap = pf->ca_ap;
 			ddb_regs.sp = (unsigned)pf;
-			ddb_regs.psl = frame->psl & ~0xffe0;
-			ddb_regs.psl = pf->ca_maskpsw & 0xffe0;
+			ddb_regs.psl = frame->psl & ~0x1fffe0;
+			ddb_regs.psl |= pf->ca_maskpsw & 0xffe0;
+			ddb_regs.psl |= (splsave << 16);
 		}
 		break;
 
@@ -109,14 +140,12 @@ kdb_trap(frame)
 
 	/* XXX Should switch to interrupt stack here, if needed. */
 
-	s = splddb();
-	mtpr(0, PR_RXCS);
-	mtpr(0, PR_TXCS);
+	s = splimp();
 	db_active++;
+	cnpollc(TRUE);
 	db_trap(frame->trap, frame->code);
+	cnpollc(FALSE);
 	db_active--;
-	mtpr(GC_RIE, PR_RXCS);
-	mtpr(GC_TIE, PR_TXCS);
 	splx(s);
 
 	if (!panicstr)
@@ -150,15 +179,10 @@ kdbprinttrap(type, code)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	size_t		size;
-	char	       *data;
+	size_t	size;
+	char	*data;
 {
-	char   *src;
-	size_t	i;
-
-	src = (char *)addr;
-	for (i = 0; i < size; i++)
-		*data++ = *src++;
+	bcopy((caddr_t)addr, data, size);
 }
 
 /*
@@ -167,23 +191,18 @@ db_read_bytes(addr, size, data)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	size_t		size;
-	char	       *data;
+	size_t	size;
+	char	*data;
 {
-	char   *dst;
-	size_t	i;
-
-	dst = (char *)addr;
-	for (i = 0; i < size; i++)
-		*dst++ = *data++;
+	memcpy((caddr_t)addr, data, size);
 }
 
 void
 Debugger()
 {
-	int s = splx(0xe); /* Is this good? We must lower anyway... */
+	splsave = splx(0xe);
 	mtpr(0xf, PR_SIRR); /* beg for debugger */
-	splx(s);
+	splx(splsave);
 }
 
 /*
@@ -210,14 +229,273 @@ struct db_variable db_regs[] = {
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
+#define IN_USERLAND(x)	(((u_int)(x) & 0x80000000) == 0)
+
+/*
+ * Dump a stack traceback. Takes two arguments:
+ *	fp - CALL FRAME pointer
+ *	stackbase - Lowest stack value
+ */
+static void
+db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase) {
+	u_int nargs, arg_base, regs;
+	VAX_CALLFRAME *tmp_frame;
+	db_expr_t	diff;
+	db_sym_t	sym;
+	char		*symname;
+
+	db_printf("Stack traceback : \n");
+	if (IN_USERLAND(fp)) {
+		db_printf("  Process is executing in user space.\n");
+		return;
+	}
+
+	while (((u_int)(fp->vax_fp) > stackbase) && 
+			((u_int)(fp->vax_fp) < (stackbase + USPACE))) {
+
+		diff = INT_MAX;
+		symname = NULL;
+		sym = db_search_symbol(fp->vax_pc, DB_STGY_ANY, &diff);
+		db_symbol_values(sym, &symname, 0);
+		db_printf("%s+0x%lx(", symname, diff);
+
+		/*
+		 * Figure out the arguments by using a bit of subtlety.
+		 * As the argument pointer may have been used as a temporary
+		 * by the callee ... recreate what it would have pointed to
+		 * as follows:
+		 *  The vax_regs value has a 12 bit bitmask of the registers
+		 *    that were saved on the stack.
+		 *	Store that in 'regs' and then for every bit that is
+		 *    on (indicates the register contents are on the stack)
+		 *    increment the argument base (arg_base) by one.
+		 *  When that is done, args[arg_base] points to the longword
+		 *    that identifies the number of arguments.
+		 *	arg_base+1 - arg_base+n are the argument pointers/contents.
+		 */
+
+		/* First get the frame that called this function ... */
+		tmp_frame = fp->vax_fp;
+
+		/* Isolate the saved register bits, and count them */
+		regs = tmp_frame->vax_regs;
+		for (arg_base = 0; regs != 0; regs >>= 1) {
+			if (regs & 1)
+				arg_base++;
+		}
+
+		/* number of arguments is then pointed to by vax_args[arg_base] */
+		nargs = tmp_frame->vax_args[arg_base];
+		if (nargs) {
+			nargs--; /* reduce by one for formatting niceties */
+			arg_base++; /* skip past the actual number of arguments */
+			while (nargs--)
+				db_printf("0x%x,", tmp_frame->vax_args[arg_base++]);
+
+			/* now print out the last arg with closing brace and \n */
+			db_printf("0x%x)\n", tmp_frame->vax_args[++arg_base]);
+		} else
+			db_printf("void)\n");
+		/* move to the next frame */
+		fp = fp->vax_fp;
+	}
+}
+
+/*
+ * Implement the trace command which has the form:
+ *
+ *	trace				<-- Trace panic (same as before)
+ *	trace	0x88888 	<-- Trace process whose address is 888888
+ *	trace/t				<-- Trace current process (0 if no current proc)
+ *	trace/t	0tnn		<-- Trace process nn (0t for decimal)
+ */
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
-        db_expr_t       addr;
-        boolean_t       have_addr;
-        db_expr_t       count;
-        char            *modif;
+        db_expr_t       addr;		/* Address parameter */
+        boolean_t       have_addr;	/* True if addr is valid */
+        db_expr_t       count;		/* Optional count */
+        char            *modif;		/* pointer to flag modifier 't' */
 {
-	printf("db_stack_trace_cmd - addr %x, have_addr %x, count %x, modif %x\n",addr, have_addr, count, (int)modif);
+	extern vaddr_t 	proc0paddr;
+	struct proc	*p = curproc;
+	struct user	*uarea;
+	int		trace_proc;
+	pid_t	curpid;
+	char	*s;
+ 
+	/* Check to see if we're tracing a process */
+	trace_proc = 0;
+	s = modif;
+	while (!trace_proc && *s) {
+		if (*s++ == 't')
+			trace_proc++;	/* why yes we are */
+	}
+
+	/* Trace a panic */
+	if (! trace_proc) {
+		if (! panicstr) {
+			db_printf("Not a panic, use trace/t to trace a process.\n");
+			return;
+		}
+		db_printf("panic: %s\n", panicstr);
+		/* xxx ? where did we panic and whose stack are we using? */
+		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.sp), ddb_regs.ap);
+		return;
+	}
+
+	/* 
+	 * If user typed an address its either a PID, or a Frame 
+	 * if no address then either current proc or panic
+	 */
+	if (have_addr) {
+		if (trace_proc) {
+			p = pfind((int)addr);
+			/* Try to be helpful by looking at it as if it were decimal */
+			if (p == NULL) {
+				u_int	tpid = 0;
+				u_int	foo = addr;
+
+				while (foo != 0) {
+					int digit = (foo >> 28) & 0xf;
+					if (digit > 9) {
+						db_printf("  No such process.\n");
+						return;
+					}
+					tpid = tpid * 10 + digit;
+					foo = foo << 4;
+				}
+				p = pfind(tpid);
+				if (p == NULL) {
+					db_printf("  No such process.\n");
+					return;
+				}
+			}
+		} else {
+			p = (struct proc *)(addr);
+			if (pfind(p->p_pid) != p) {
+				db_printf("  This address does not point to a valid process.\n");
+				return;
+			}
+		}
+	} else {
+		if (trace_proc) {
+			p = curproc;
+			if (p == NULL) {
+				db_printf("trace: no current process! (ignored)\n");
+				return;
+			}
+		} else {
+			if (! panicstr) {
+				db_printf("Not a panic, no active process, ignored.\n");
+				return;
+			}
+		}
+	}
+	if (p == NULL) {
+		uarea = (struct user *)proc0paddr;
+		curpid = 0;
+	} else {
+		uarea = p->p_addr;
+		curpid = p->p_pid;
+	}
+	db_printf("Process %d\n", curpid);
+	db_printf("  PCB contents:\n");
+	db_printf("	KSP = 0x%x\n", (unsigned int)(uarea->u_pcb.KSP));
+	db_printf("	ESP = 0x%x\n", (unsigned int)(uarea->u_pcb.ESP));
+	db_printf("	SSP = 0x%x\n", (unsigned int)(uarea->u_pcb.SSP));
+	db_printf("	USP = 0x%x\n", (unsigned int)(uarea->u_pcb.USP));
+	db_printf("	R[00] = 0x%08x    R[06] = 0x%08x\n", 
+		(unsigned int)(uarea->u_pcb.R[0]), (unsigned int)(uarea->u_pcb.R[6]));
+	db_printf("	R[01] = 0x%08x    R[07] = 0x%08x\n", 
+		(unsigned int)(uarea->u_pcb.R[1]), (unsigned int)(uarea->u_pcb.R[7]));
+	db_printf("	R[02] = 0x%08x    R[08] = 0x%08x\n", 
+		(unsigned int)(uarea->u_pcb.R[2]), (unsigned int)(uarea->u_pcb.R[8]));
+	db_printf("	R[03] = 0x%08x    R[09] = 0x%08x\n", 
+		(unsigned int)(uarea->u_pcb.R[3]), (unsigned int)(uarea->u_pcb.R[9]));
+	db_printf("	R[04] = 0x%08x    R[10] = 0x%08x\n", 
+		(unsigned int)(uarea->u_pcb.R[4]), (unsigned int)(uarea->u_pcb.R[10]));
+	db_printf("	R[05] = 0x%08x    R[11] = 0x%08x\n", 
+		(unsigned int)(uarea->u_pcb.R[5]), (unsigned int)(uarea->u_pcb.R[11]));
+	db_printf("	AP = 0x%x\n", (unsigned int)(uarea->u_pcb.AP));
+	db_printf("	FP = 0x%x\n", (unsigned int)(uarea->u_pcb.FP));
+	db_printf("	PC = 0x%x\n", (unsigned int)(uarea->u_pcb.PC));
+	db_printf("	PSL = 0x%x\n", (unsigned int)(uarea->u_pcb.PSL));
+	db_printf("	Trap frame pointer: 0x%x\n", 
+							(unsigned int)(uarea->u_pcb.framep));
+	db_dump_stack((VAX_CALLFRAME *)(uarea->u_pcb.FP), (u_int) uarea->u_pcb.KSP);
+	return;
+#if 0
+	while (((u_int)(cur_frame->vax_fp) > stackbase) && 
+			((u_int)(cur_frame->vax_fp) < (stackbase + USPACE))) {
+		u_int nargs;
+		VAX_CALLFRAME *tmp_frame;
+
+		diff = INT_MAX;
+		symname = NULL;
+		sym = db_search_symbol(cur_frame->vax_pc, DB_STGY_ANY, &diff);
+		db_symbol_values(sym, &symname, 0);
+		db_printf("%s+0x%lx(", symname, diff);
+
+		/*
+		 * Figure out the arguments by using a bit of subterfuge
+		 * since the argument pointer may have been used as a temporary
+		 * by the callee ... recreate what it would have pointed to
+		 * as follows:
+		 *  The vax_regs value has a 12 bit bitmask of the registers
+		 *    that were saved on the stack.
+		 *	Store that in 'regs' and then for every bit that is
+		 *    on (indicates the register contents are on the stack)
+		 *    increment the argument base (arg_base) by one.
+		 *  When that is done, args[arg_base] points to the longword
+		 *    that identifies the number of arguments.
+		 *	arg_base+1 - arg_base+n are the argument pointers/contents.
+		 */
+
+		/* First get the frame that called this function ... */
+		tmp_frame = cur_frame->vax_fp;
+
+		/* Isolate the saved register bits, and count them */
+		regs = tmp_frame->vax_regs;
+		for (arg_base = 0; regs != 0; regs >>= 1) {
+			if (regs & 1)
+				arg_base++;
+		}
+
+		/* number of arguments is then pointed to by vax_args[arg_base] */
+		nargs = tmp_frame->vax_args[arg_base];
+		if (nargs) {
+			nargs--; /* reduce by one for formatting niceties */
+			arg_base++; /* skip past the actual number of arguments */
+			while (nargs--)
+				db_printf("0x%x,", tmp_frame->vax_args[arg_base++]);
+
+			/* now print out the last arg with closing brace and \n */
+			db_printf("0x%x)\n", tmp_frame->vax_args[++arg_base]);
+		} else
+			db_printf("void)\n");
+		/* move to the next frame */
+		cur_frame = cur_frame->vax_fp;
+	}
+
+	/*
+	 * DEAD CODE, previous panic tracing code.
+	 */
+	if (! have_addr) {
+		printf("Trace default\n");
+		if (panicstr) {
+			cf = (int *)ddb_regs.sp;
+		} else {
+			printf("Don't know what to do without panic\n");
+			return;
+		}
+		if (p)
+			paddr = (u_int)p->p_addr;
+		else
+			paddr = proc0paddr;
+
+		stackbase = (ddb_regs.psl & PSL_IS ? istack : paddr);
+ 	}
+#endif
 }
 
 static int ddbescape = 0;
@@ -246,3 +524,4 @@ kdbrint(tkn)
 	ddbescape = 0;
 	return 0;
 }
+

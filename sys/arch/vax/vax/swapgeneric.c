@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.6 1998/05/11 21:35:31 niklas Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.7 2000/04/27 01:10:13 bjc Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.13 1996/10/13 03:36:01 christos Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ struct	swdevt swdevt[] = {
 long	dumplo;
 int	dmmin, dmmax, dmtext;
 
-int (*mountroot) __P((void)) = dk_mountroot;
+int (*mountroot) __P((void)) = NULL;
 
 extern	struct cfdriver hp_cd;
 extern	struct cfdriver ra_cd;

@@ -1,5 +1,5 @@
-/*      $OpenBSD: vm_machdep.c,v 1.15 1999/08/17 10:32:18 niklas Exp $       */
-/*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
+/*	$OpenBSD: vm_machdep.c,v 1.16 2000/04/27 01:10:14 bjc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 2000/01/20 22:19:00 sommerfeld Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,8 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,17 +76,29 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 
-	stor = (size >> PGSHIFT) * sizeof(struct pte);
+	stor = (size >> VAX_PGSHIFT) * sizeof(struct pte);
 	bcopy(fpte, tpte, stor);
 	bzero(fpte, stor);
 	mtpr(0, PR_TBIA);
 }
 
-#define VIRT2PHYS(x) \
-	(((*(int *)((((((int)x) & 0x7fffffff) >> 9) * 4) + \
-		(unsigned int)Sysmap)) & 0x1fffff) << 9)
-
 /*
+ * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
+ *
  * cpu_fork() copies parent process trapframe directly into child PCB
  * so that when we swtch() to the child process it will go directly
  * back to user mode without any need to jump back through kernel.
@@ -103,36 +113,35 @@ cpu_fork(p1, p2, stack, stacksize)
 	void *stack;
 	size_t stacksize;
 {
+	struct pte *pt;
 	struct pcb *nyproc;
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
 
+#ifdef DIAGNOSTIC
+	/*
+	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
+
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
-	opmap = &p1->p_vmspace->vm_pmap;
-	pmap = &p2->p_vmspace->vm_pmap;
-	pmap->pm_pcb = nyproc;
+	opmap = p1->p_vmspace->vm_map.pmap;
+	pmap = p2->p_vmspace->vm_map.pmap;
 
-#ifdef notyet
 	/* Mark page invalid */
-	p2pte = kvtopte((u_int *)p2->p_addr + 2 * NBPG);
-	*p2pte = 0; 
-#endif
+	pt = kvtopte((u_int)p2->p_addr + REDZONEADDR);
+	pt->pg_v = 0; 
 
-#ifdef notyet
-	/* Set up internal defs in PCB, and alloc PTEs. */
-	nyproc->P0BR = kmem_alloc_wait(pte_map,
-	    (opmap->pm_pcb->P0LR & ~AST_MASK) * 4);
-	nyproc->P1BR = kmem_alloc_wait(pte_map,
-	    (0x800000 - (pmap->pm_pcb->P1LR * 4))) - 0x800000;
-	nyproc->P0LR = opmap->pm_pcb->P0LR;
-	nyproc->P1LR = opmap->pm_pcb->P1LR;
-#else
-	nyproc->P0BR = (void *)0x80000000;
-	nyproc->P1BR = (void *)0x80000000;
-	nyproc->P0LR = AST_PCB;
-	nyproc->P1LR = 0x200000;
-#endif
+	/*
+	 * Activate address space for the new process.	The PTEs have
+	 * already been allocated by way of pmap_create().
+	 */
+	pmap_activate(p2);
+
+	/* Set up internal defs in PCB. */
 	nyproc->iftrap = NULL;
 	nyproc->KSP = (u_int)p2->p_addr + USPACE;
 
@@ -155,7 +164,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	nyproc->R[1] = 1;
 
 	return; /* Child is ready. Parent, return! */
-
 }
 
 /*
@@ -186,7 +194,7 @@ cpu_set_kpc(p, pc, arg)
 	kc->cf.ca_pc = (unsigned)&sret;
 	kc->cf.ca_argno = 1;
 	kc->cf.ca_arg1 = (unsigned)arg;
-	kc->tf.r11 = boothowto;	/* If we have old init */
+	kc->tf.r11 = boothowto; /* If we have old init */
 	kc->tf.psl = 0x3c00000;
 
 	nyproc->framep = (void *)&kc->tf;
@@ -195,200 +203,12 @@ cpu_set_kpc(p, pc, arg)
 	nyproc->PC = (unsigned)pc + 2;
 }
 
-/*
- * Put in a process on the correct run queue based on it's priority
- * and set the bit corresponding to the run queue.
- */
-void 
-setrunqueue(p)
-	struct proc *p;
-{
-	struct	prochd *q;
-	int	knummer;
-
-	if (p->p_back) 
-		panic("sket sig i setrunqueue");
-
-	knummer = (p->p_priority >> 2);
-	bitset(knummer, whichqs);
-	q = &qs[knummer];
-
-	_insque(p, q);
-
-	return;
-}
-
-/*
- * Remove a process from the run queue. If this is the last process
- * on that queue, clear the queue bit in whichqs.
- */
-void
-remrunqueue(p)
-	struct proc *p;
-{
-	struct	proc *qp;
-	int	bitnr;
-
-	bitnr = (p->p_priority >> 2);
-	if (bitisclear(bitnr, whichqs))
-		panic("remrunqueue: Process not in queue");
-
-	_remque(p);
-
-	qp = (struct proc *)&qs[bitnr];
-	if (qp->p_forw == qp)
-		bitclear(bitnr, whichqs);
-}
-
-volatile caddr_t curpcb, nypcb;
-
-/*
- * Machine dependent part of switch function. Find the next process 
- * with the highest priority to run. If the process queues are empty,
- * sleep waiting for something to happen. The idle loop resides here.
- */
-void
-cpu_switch(pp)
-	struct proc *pp;
-{
-	int	i,s;
-	struct	proc *p, *q;
-	extern	unsigned int scratch;
-
-again:	
-	/* First: Search for a queue. */
-	s = splhigh();
-	if ((i = ffs(whichqs) - 1) < 0)
-		goto idle;
-
-	/*
-	 * A queue with runnable processes found.
-	 * Get first process from queue. 
-	 */
-	asm(".data;savpsl:	.long	0;.text;movpsl savpsl");
-	q = (struct proc *)&qs[i];
-	if (q->p_forw == q)
-		panic("swtch: no process queued");
-
-	/* Remove process from queue */
-	bitclear(i, whichqs);
-	p = q->p_forw;
-	_remque(p);
-
-	if (q->p_forw != q)
-		bitset(i, whichqs);
-	if (curproc)
-		(u_int)curpcb = VIRT2PHYS(&curproc->p_addr->u_pcb);
-	else
-		(u_int)curpcb = scratch & 0x7fffffff;
-	(u_int)nypcb = VIRT2PHYS(&p->p_addr->u_pcb);
-
-	if (p == 0)
-		panic("switch: null proc pointer");
-	want_resched = 0;
-	curproc = p;
-
-	/* Don't change process if it's the same that we'r already running */
-	if (curpcb == nypcb)
-		return;
-
-	asm("pushl savpsl");
-	asm("jsb _loswtch");
-
-	return; /* New process! */
-
-idle:	
-	p = curproc;
-	curproc = NULL;		/* This is nice. /BQT */
-	spl0();
-	while (whichqs == 0)
-		;
-	curproc = p;
-	goto again;
-}
-
-/* Should check that values is in bounds XXX */
-int
-copyinstr(from, to, maxlen, lencopied)
-	const void *from;
-	void *to;
-	size_t *lencopied;
-	size_t maxlen;
-{
-	u_int i;
-	void *addr=&curproc->p_addr->u_pcb.iftrap;
-	const char *gfrom = from;
-	char *gto = to;
-
-	asm("movl $Lstr,(%0)":: "r"(addr));
-	for(i=0;i<maxlen;i++){
-		*(gto +i )=*(gfrom + i);
-		if(!(*(gto+i))) goto ok;
-	}
-
-	return(ENAMETOOLONG);
-ok:
-	if(lencopied) *lencopied=i+1;
-	return(0);
-}
-
-asm("Lstr:	ret");
-
-/* Should check that values is in bounds XXX */
-int
-copyoutstr(from, to, maxlen, lencopied)
-	const	void *from;
-	void	*to;
-	size_t	*lencopied;
-	size_t	maxlen;
-{
-	u_int i;
-	const char *gfrom=from;
-	char *gto=to;
-        void *addr=&curproc->p_addr->u_pcb.iftrap;
-
-        asm("movl $Lstr,(%0)":: "r"(addr));
-	for(i=0;i<maxlen;i++){
-		*(gto+i)=*(gfrom+i);
-		if(!(*(gto+i))) goto ok;
-	}
-
-	return(ENAMETOOLONG);
-ok:
-	if(lencopied) *lencopied=i+1;
-	return 0;
-}
-
-int	reno_zmagic __P((struct proc *, struct exec_package *));
-
-
 int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	int error;
-	struct exec *ep;
-	/*
-	 * Compatibility with reno programs.
-	 */
-	ep=epp->ep_hdr;
-	switch (ep->a_midmag) {
-	case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
-		error = reno_zmagic(p, epp);
-		break;
-	case 0x108:
-printf("Warning: reno_nmagic\n");
-		error = exec_aout_prep_nmagic(p, epp);
-		break;
-	case 0x107:
-printf("Warning: reno_omagic\n");
-		error = exec_aout_prep_omagic(p, epp);
-		break;
-	default:
-		error = ENOEXEC;
-	}
-	return(error);
+	return ENOEXEC;
 }
 
 int
@@ -400,91 +220,6 @@ sys_sysarch(p, v, retval)
 
 	return (ENOSYS);
 };
-
-#ifdef COMPAT_ULTRIX
-extern struct emul emul_ultrix;
-#endif
-/*
- * 4.3BSD Reno programs have an 1K header first in the executable
- * file, containing a.out header. Otherwise programs are identical.
- *
- *      from: exec_aout.c,v 1.9 1994/01/28 23:46:59 jtc Exp $
- */
-
-int
-reno_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	struct exec *execp = epp->ep_hdr;
-
-	epp->ep_taddr = 0;
-	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = epp->ep_taddr + execp->a_text;
-	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_entry = execp->a_entry;
-
-#ifdef COMPAT_ULTRIX
-	epp->ep_emul = &emul_ultrix;
-#endif
-
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, 0x400, VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, execp->a_text+0x400,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return exec_setup_stack(p, epp);
-}
-
-void
-cpu_exit(p)
-	struct	proc *p;
-{
-	extern	unsigned int scratch;
-
-	if (p == 0)
-		panic("cpu_exit from null process");
-	vmspace_free(p->p_vmspace);
-
-	(void) splimp();
-	/* Must change kernel stack before freeing */
-	mtpr(scratch + NBPG, PR_KSP);
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	cpu_switch(0);
-	/* NOTREACHED */
-}
-
-int
-suword(ptr, val)
-	void *ptr;
-	long val;
-{
-        void *addr=&curproc->p_addr->u_pcb.iftrap;
-
-        asm("movl $Lstr,(%0)":: "r"(addr));
-	*(int *)ptr=val;
-	return 0;
-}
 
 /*
  * Dump the machine specific header information at the start of a core dump.
@@ -504,14 +239,14 @@ cpu_coredump(p, vp, cred, chdr)
 	int error;
 
 	tf = p->p_addr->u_pcb.framep;
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_VAX, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = sizeof(struct core);
 	chdr->c_seghdrsize = sizeof(struct coreseg);
 	chdr->c_cpusize = sizeof(struct md_coredump);
 
 	bcopy(tf, &state, sizeof(struct md_coredump));
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_VAX, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
@@ -521,127 +256,54 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-        error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
-            (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-            IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 
-        if (!error)
-                chdr->c_nseg++;
+	if (!error)
+		chdr->c_nseg++;
 
-        return error;
-}
-
-int	locopyout __P((const void *, void *, size_t, void *));
-int	locopyin __P((const void *, void *, size_t, void *));
-
-int
-copyout(from, to, len)
-	const	void *from;
-	void	*to;
-	size_t	len;
-{
-	void *addr=&curproc->p_addr->u_pcb.iftrap;
-
-	return locopyout(from, to, len, addr);
-}
-
-int
-copyin(from, to, len)
-	const	void *from;
-	void	*to;
-	size_t	len;
-{
-	void *addr = &curproc->p_addr->u_pcb.iftrap;
-
-	return locopyin(from, to, len, addr);
+	return error;
 }
 
 /*
- * cpu_swapin() is called just before a process shall be swapped in.
- * Kernel stack and pcb must be mapped when we swtch() to this new
- * process, to guarantee that we frob all pages here to ensure that
- * they actually are in-core. Kernel stack red zone is also updated
- * here.
+ * Kernel stack red zone need to be set when a process is swapped in.
  */
 void
 cpu_swapin(p)
 	struct proc *p;
 {
-	u_int uarea, i, *j, rv;
-
-	uarea = (u_int)p->p_addr;
-
-	for (i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
-		j = (u_int *)kvtopte(i);
-		if ((*j & PG_V) == 0) {
-			rv = vm_fault(kernel_map, i,
-			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
-			if (rv != KERN_SUCCESS)
-				panic("cpu_swapin: rv %d",rv);
-		}
-	}
-#ifdef notyet
-	j = (u_int *)kvtopte(uarea + 2 * NBPG);
-	*j = 0; /* Set kernel stack red zone */
-#endif
-}
-
-#if VAX410 || VAX43
-/*
- * vmapbuf()/vunmapbuf() only used on some vaxstations without
- * any busadapter with MMU.
- * XXX - This must be reworked to be effective.
- */
-void
-vmapbuf(bp, len)
-        struct buf *bp;
-        vm_size_t len;
-{
-        vm_offset_t faddr, taddr, off, pa;
-        pmap_t fmap, tmap;
-
-	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
-		return;
-        faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-        off = (vm_offset_t)bp->b_data - faddr;
-        len = round_page(off + len);
-        taddr = kmem_alloc_wait(phys_map, len);
-        bp->b_data = (caddr_t)(taddr + off);
-        fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-        tmap = vm_map_pmap(phys_map);
-        len = len >> PGSHIFT;
-        while (len--) {
-		volatile int i = *(int *)faddr;
-
-                pa = pmap_extract(fmap, faddr);
-                if (pa == 0)
-                       	panic("vmapbuf: null page frame for %x", faddr);
-
-                pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
-                           VM_PROT_READ|VM_PROT_WRITE, TRUE);
-                faddr += NBPG;
-                taddr += NBPG;
-        }
+	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Map in a bunch of pages read/writeable for the kernel.
  */
 void
-vunmapbuf(bp, len)
-        struct buf *bp;
-        vm_size_t len;
+ioaccess(vaddr, paddr, npgs)
+	vaddr_t vaddr;
+	paddr_t paddr;
+	int npgs;
 {
-        vm_offset_t addr, off;
+	u_int *pte = (u_int *)kvtopte(vaddr);
+	int i;
 
-	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
-		return;
-        addr = trunc_page(bp->b_data);
-        off = (vm_offset_t)bp->b_data - addr;
-        len = round_page(off + len);
-        kmem_free_wakeup(phys_map, addr, len);
-        bp->b_data = bp->b_saveaddr;
-        bp->b_saveaddr = 0;
+	for (i = 0; i < npgs; i++)
+		pte[i] = PG_V | PG_KW | (PG_PFNUM(paddr) + i);
 }
-#endif
+
+/*
+ * Opposite to the above: just forget their mapping.
+ */
+void
+iounaccess(vaddr, npgs)
+	vaddr_t vaddr;
+	int npgs;
+{
+	u_int *pte = (u_int *)kvtopte(vaddr);
+	int i;
+
+	for (i = 0; i < npgs; i++)
+		pte[i] = 0;
+	mtpr(0, PR_TBIA);
+}

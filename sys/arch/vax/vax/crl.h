@@ -1,5 +1,5 @@
-/*	$OpenBSD: crl.h,v 1.2 1997/05/29 00:05:14 niklas Exp $	*/
-/*	$NetBSD: crl.h,v 1.1 1996/03/08 12:32:53 ragge Exp $	*/
+/*	$OpenBSD: crl.h,v 1.3 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$NetBSD: crl.h,v 1.2 1999/04/12 20:57:52 pk Exp $	*/
 /* 
  * @(#)crl.h	7.1 (Berkeley) 6/5/86
  */
@@ -22,8 +22,8 @@
  *                                                              *
  *        If the Regents of the University of California or its *
  *   licensees modify the software in a manner creating         *
- *   diriviative copyright rights, appropriate copyright        *
- *   legends may be placed on  the drivative work in addition   *
+ *   derivative copyright rights, appropriate copyright         *
+ *   legends may be placed on  the derivative work in addition  *
  *   to that set forth above.                                   *
  ****************************************************************/
 

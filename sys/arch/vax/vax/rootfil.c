@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.7 1997/09/27 17:04:11 niklas Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.8 2000/04/27 01:10:13 bjc Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -56,11 +56,13 @@
 #include <machine/macros.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
+#include <machine/disklabel.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
 #include "hp.h"
 #include "ra.h"
+#include "sd.h"
 
 #define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 #ifdef MAJA
@@ -79,17 +81,17 @@ extern dev_t rootdev, dumpdev;
 void
 setroot()
 {
-        int  majdev, mindev, unit, part, controller, adaptor;
-        dev_t temp = 0, orootdev;
-        struct swdevt *swp;
+	int  majdev, mindev, unit, part, controller, adaptor;
+	dev_t temp = 0, orootdev;
+	struct swdevt *swp;
 	extern int boothowto;
 	char *uname;
 
         if (boothowto & RB_DFLTROOT ||
             (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
                 return;
-        majdev = B_TYPE(bootdev);
-        if (majdev >= nblkdev)
+        majdev = bdevtomaj(B_TYPE(bootdev));
+        if (majdev >= nblkdev || majdev == -1)
                 return;
         adaptor = B_ADAPTOR(bootdev);
         controller = B_CONTROLLER(bootdev);
@@ -111,11 +113,17 @@ setroot()
 			return;
 		break;
 
+	case 20:	/* SCSI disk */
+#if NSD
+		if((mindev = sd_getdev(adaptor, controller, part, unit, &uname)) < 0) 
+#endif
+			return;
+		break;
+
 	default:
 		return;
 	}
 
-        mindev = (mindev << PARTITIONSHIFT) + part;
         orootdev = rootdev;
         rootdev = makedev(majdev, mindev);
         /*

@@ -1,7 +1,6 @@
-/*	$OpenBSD: ka410.c,v 1.6 2000/04/27 01:10:12 bjc Exp $ */
-/*	$NetBSD: ka410.c,v 1.21 1999/09/06 19:52:53 ragge Exp $ */
+/*	$OpenBSD: ka48.c,v 1.1 2000/04/27 01:10:10 bjc Exp $	*/
 /*
- * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * This code is derived from software contributed to Ludd by Bertram Barth.
@@ -33,6 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*** needs to be completed MK-990306 ***/
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -51,122 +52,115 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
+#include <machine/ka48.h>
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
-static	void	ka410_conf __P((void));
-static	void	ka410_memerr __P((void));
-static	int	ka410_mchk __P((caddr_t));
-static	void	ka410_halt __P((void));
-static	void	ka410_reboot __P((int));
-static	void	ka41_cache_enable __P((void));
-static	void	ka410_clrf __P((void));
+static	void	ka48_conf __P((void));
+static	void	ka48_steal_pages __P((void));
+static	void	ka48_memerr __P((void));
+static	int	ka48_mchk __P((caddr_t));
+static	void	ka48_halt __P((void));
+static	void	ka48_reboot __P((int));
+static	void	ka48_cache_enable __P((void));
 
-static	caddr_t	l2cache;	/* mapped in address */
-static	long 	*cacr;		/* l2csche ctlr reg */
+struct	vs_cpu *ka48_cpu;
 
 /* 
- * Declaration of 410-specific calls.
+ * Declaration of 48-specific calls.
  */
-struct	cpu_dep ka410_calls = {
-	0,
-	ka410_mchk,
-	ka410_memerr, 
-	ka410_conf,
+struct	cpu_dep ka48_calls = {
+	ka48_steal_pages,
+	ka48_mchk,
+	ka48_memerr, 
+	ka48_conf,
 	chip_clkread,
 	chip_clkwrite,
-	1,      /* ~VUPS */
+	6,      /* ~VUPS */
 	2,	/* SCB pages */
-	ka410_halt,
-	ka410_reboot,
-	ka410_clrf,
+	ka48_halt,
+	ka48_reboot,
 };
 
 
 void
-ka410_conf()
+ka48_conf()
 {
-	struct vs_cpu *ka410_cpu;
-
-	ka410_cpu = (struct vs_cpu *)vax_map_physmem(VS_REGS, 1);
-
-	switch (vax_cputype) {
-	case VAX_TYP_UV2:
-		ka410_cpu->vc_410mser = 1;
-		printf("cpu: KA410\n");
-		break;
-
-	case VAX_TYP_CVAX:
-		printf("cpu: KA41/42\n");
-		ka410_cpu->vc_vdcorg = 0; /* XXX */
-		ka410_cpu->vc_parctl = PARCTL_CPEN | PARCTL_DPEN ;
-		printf("cpu: Enabling primary cache, ");
-		mtpr(KA420_CADR_S2E|KA420_CADR_S1E|KA420_CADR_ISE|KA420_CADR_DSE, 
-			PR_CADR);
-		if (vax_confdata & KA420_CFG_CACHPR) {
-			l2cache = (void *)vax_map_physmem(KA420_CH2_BASE,
-			    (KA420_CH2_SIZE / VAX_NBPG));
-			cacr = (void *)vax_map_physmem(KA420_CACR, 1);
-			printf("secondary cache\n");
-			ka41_cache_enable();
-		} else
-			printf("no secondary cache present\n");
-	}
-	/* Done with ka410_cpu - release it */
-	vax_unmap_physmem((vaddr_t)ka410_cpu, 1);
+	printf("cpu: KA48\n");
+	ka48_cpu = (void *)vax_map_physmem(VS_REGS, 1);
+	printf("cpu: turning on floating point chip\n");
+	mtpr(2, PR_ACCS); /* Enable floating points */
 	/*
 	 * Setup parameters necessary to read time from clock chip.
 	 */
 	clk_adrshift = 1;       /* Addressed at long's... */
 	clk_tweak = 2;          /* ...and shift two */
-	clk_page = (short *)vax_map_physmem(KA420_WAT_BASE, 1);
+	clk_page = (short *)vax_map_physmem(VS_CLOCK, 1);
 }
 
 void
-ka41_cache_enable()
+ka48_cache_enable()
 {
-	*cacr = KA420_CACR_TPE; 	/* Clear any error, disable cache */
-	bzero(l2cache, KA420_CH2_SIZE); /* Clear whole cache */
-	*cacr = KA420_CACR_CEN;		/* Enable cache */
+	int i, *tmp;
+	return; /*** not yet MK-990306 ***/
+
+	/* Disable caches */
+	*(int *)KA48_CCR &= ~CCR_SPECIO;/* secondary */
+	mtpr(PCSTS_FLUSH, PR_PCSTS);	/* primary */
+	*(int *)KA48_BWF0 &= ~BWF0_FEN; /* invalidate filter */
+
+	/* Clear caches */
+	tmp = (void *)KA48_INVFLT;	/* inv filter */
+	for (i = 0; i < 32768; i++)
+		tmp[i] = 0;
+
+	/* Write valid parity to all primary cache entries */
+	for (i = 0; i < 256; i++) {
+		mtpr(i << 3, PR_PCIDX);
+		mtpr(PCTAG_PARITY, PR_PCTAG);
+	}
+
+	/* Secondary cache */
+	tmp = (void *)KA48_TAGST;
+	for (i = 0; i < KA48_TAGSZ*2; i+=2)
+		tmp[i] = 0;
+
+	/* Enable cache */
+	*(int *)KA48_BWF0 |= BWF0_FEN; /* invalidate filter */
+	mtpr(PCSTS_ENABLE, PR_PCSTS);
+	*(int *)KA48_CCR = CCR_SPECIO | CCR_CENA;
 }
 
 void
-ka410_memerr()
+ka48_memerr()
 {
 	printf("Memory err!\n");
 }
 
 int
-ka410_mchk(addr)
+ka48_mchk(addr)
 	caddr_t addr;
 {
 	panic("Machine check");
 	return 0;
 }
 
-static void
-ka410_halt()
+void
+ka48_steal_pages()
 {
-	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+	/* Turn on caches (to speed up execution a bit) */
+	ka48_cache_enable();
+}
+
+static void
+ka48_halt()
+{
 	asm("halt");
 }
 
 static void
-ka410_reboot(arg)
+ka48_reboot(arg)
 	int arg;
 {
-	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
 	asm("halt");
-}
-
-static void
-ka410_clrf()
-{
-	struct ka410_clock *clk = (void *)clk_page;
-
-	/*
-	 * Clear restart and boot in progress flags
-	 * in the CPMBX. (ie. clear bits 4 and 5)
-	 */
-	clk->cpmbx = (clk->cpmbx & ~0x30);
 }

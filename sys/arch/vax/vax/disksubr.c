@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1999/01/08 04:29:10 millert Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.13 1997/07/06 22:38:26 ragge Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,6 +43,7 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -50,10 +51,9 @@
 #include <machine/macros.h>
 #include <machine/pte.h>
 #include <machine/pcb.h>
+#include <machine/cpu.h>
 
-#include <arch/vax/mscp/mscp.h> /* For disk encoding scheme */
-
-#define b_cylin b_resid
+#include <vax/mscp/mscp.h> /* For disk encoding scheme */
 
 /*
  * Determine the size of the transfer, and make sure it is
@@ -67,11 +67,10 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct	cpu_disklabel *osdep;
 	int	wlabel;
 {
-#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = blockpersec(lp->d_partitions[2].p_offset, lp) +
-	    LABELSECTOR;
-	int sz = howmany(bp->b_bcount, DEV_BSIZE);
+	int labelsect = lp->d_partitions[2].p_offset;
+	int maxsz = p->p_size,
+		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* avoid division by zero */
 	if (lp->d_secpercyl == 0) {
@@ -80,34 +79,30 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* overwriting disk label ? */
-	if (bp->b_blkno + p->p_offset <= labelsect &&
-#if LABELSECTOR != 0
-	    bp->b_blkno + p->p_offset + sz > labelsect &&
-#endif
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
-		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
-		if (sz == 0) {
-			/* if exactly at end of disk, return an EOF */
+	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
+		/* if exactly at end of disk, return an EOF */
+		if (bp->b_blkno == maxsz) {
 			bp->b_resid = bp->b_bcount;
 			return(0);
 		}
-		if (sz < 0) {
+		/* or truncate if part of it fits */
+		sz = maxsz - bp->b_blkno;
+		if (sz <= 0) {
 			bp->b_error = EINVAL;
 			goto bad;
 		}
-		/* or truncate if part of it fits */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
-	    lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;	
 	return(1);
 
 bad:
@@ -151,32 +146,31 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+	} else {
+		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL) {
-#if defined(CD9660)
-				if (iso_disklabelspoof(dev, strat, lp) != 0)
-#endif
-					msg = "no disk label";
-			}
+			msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
+		    dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
 			*lp = *dlp;
-			msg = NULL;
-			break;
 		}
 	}
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
+}
+
+void 
+dk_establish(p, q)
+	struct disk *p;
+	struct device *q;
+{
 }
 
 /*
@@ -189,7 +183,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	register i;
+	register int i;
 	register struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
@@ -263,10 +257,10 @@ void
 disk_printtype(unit, type)
 	int unit, type;
 {
-	printf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
-	    MSCP_MID_CHAR(1, type));
+	printf(" drive %d: %c%c", unit, (int)MSCP_MID_CHAR(2, type),
+	    (int)MSCP_MID_CHAR(1, type));
 	if (MSCP_MID_ECH(0, type))
-		printf("%c", MSCP_MID_CHAR(0, type));
+		printf("%c", (int)MSCP_MID_CHAR(0, type));
 	printf("%d\n", MSCP_MID_NUM(type));
 }
 
@@ -281,15 +275,17 @@ disk_reallymapin(bp, map, reg, flag)
 	struct pte *map;
 	int reg, flag;
 {
+	struct proc *p;
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	struct pcb *pcb;
 	int pfnum, npf, o, i;
 	caddr_t addr;
 
-	o = (int)bp->b_un.b_addr & PGOFSET;
-	npf = btoc(bp->b_bcount + o) + 1;
+	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	npf = vax_btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
+	p = bp->b_proc;
 
 	/*
 	 * Get a pointer to the pte pointing out the first virtual address.
@@ -297,8 +293,10 @@ disk_reallymapin(bp, map, reg, flag)
 	 */
 	if ((bp->b_flags & B_PHYS) == 0) {
 		pte = kvtopte(addr);
+		if (p == 0)
+			p = &proc0;
 	} else {
-		pcb = bp->b_proc->p_vmspace->vm_pmap.pm_pcb;
+		pcb = &p->p_addr->u_pcb;
 		pte = uvtopte(addr, pcb);
 	}
 
@@ -310,9 +308,9 @@ disk_reallymapin(bp, map, reg, flag)
 	for (i = 0; i < (npf - 1); i++) {
 		if ((pte + i)->pg_pfn == 0) {
 			int rv;
-			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
-			    (unsigned)addr + i * NBPG,
-			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+			rv = uvm_fault(&p->p_vmspace->vm_map,
+			    (unsigned)addr + i * VAX_NBPG, 0,
+			    VM_PROT_READ|VM_PROT_WRITE);
 			if (rv)
 				panic("DMA to nonexistent page, %d", rv);
 		}

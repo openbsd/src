@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka630.c,v 1.4 1997/09/12 09:30:55 maja Exp $	*/
-/*	$NetBSD: ka630.c,v 1.7 1997/07/26 10:12:46 ragge Exp $	*/
+/*	$OpenBSD: ka630.c,v 1.5 2000/04/27 01:10:12 bjc Exp $	*/
+/*	$NetBSD: ka630.c,v 1.17 1999/09/06 19:52:52 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,61 +40,57 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
-#include <machine/sid.h>
 #include <machine/pmap.h>
-#include <machine/nexus.h>
-#include <machine/uvax.h>
 #include <machine/ka630.h>
 #include <machine/clock.h>
-#include <vax/vax/gencons.h>
+#include <machine/vsbus.h>
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
-static void ka630_conf __P((struct device *, struct device *, void *));
+static void ka630_conf __P((void));
 static void ka630_memerr __P((void));
 static int ka630_mchk __P((caddr_t));
-static void ka630_steal_pages __P((void));
 static void ka630_halt __P((void));
 static void ka630_reboot __P((int));
-
-extern	short *clk_page;
+static void ka630_clrf __P((void));
 
 struct	cpu_dep ka630_calls = {
-	ka630_steal_pages,
-	no_nicr_clock,
+	0,
 	ka630_mchk,
 	ka630_memerr,
 	ka630_conf,
 	chip_clkread,
 	chip_clkwrite,
 	1,      /* ~VUPS */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,
+	2,	/* SCB pages */
 	ka630_halt,
 	ka630_reboot,
+	ka630_clrf,
 };
 
 /*
  * uvaxII_conf() is called by cpu_attach to do the cpu_specific setup.
  */
 void
-ka630_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka630_conf()
 {
-	extern char cpu_model[];
+	clk_adrshift = 0;	/* Addressed at short's... */
+	clk_tweak = 0;		/* ...and no shifting */
+	clk_page = (short *)vax_map_physmem((paddr_t)KA630CLK, 1);
 
-	strcpy(cpu_model,"MicroVAX II");
-	printf(": %s\n", cpu_model);
+	uvaxIIcpu_ptr = (void *)vax_map_physmem(VS_REGS, 1);
+
+	/*
+	 * Enable memory parity error detection and clear error bits.
+	 */
+	uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
+	    UVAXIIMSER_LEB);
 }
 
 /* log crd errors */
@@ -120,6 +116,7 @@ struct mc78032frame {
 	int	mc63_psl;		/* trapped psl */
 };
 
+int
 ka630_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -133,55 +130,14 @@ ka630_mchk(cmcf)
 	    mcf->mc63_mrvaddr, mcf->mc63_istate,
 	    mcf->mc63_pc, mcf->mc63_psl);
 	if (uvaxIIcpu_ptr && uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_MERR) {
-		printf("\tmser=0x%x ", uvaxIIcpu_ptr->uvaxII_mser);
+		printf("\tmser=0x%lx ", uvaxIIcpu_ptr->uvaxII_mser);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_CPUE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_cear);
+			printf("page=%ld", uvaxIIcpu_ptr->uvaxII_cear);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_DQPE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_dear);
+			printf("page=%ld", uvaxIIcpu_ptr->uvaxII_dear);
 		printf("\n");
 	}
 	return (-1);
-}
-
-void
-ka630_steal_pages()
-{
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
-	extern	int clk_adrshift, clk_tweak;
-	int	junk;
-
-	/*
-	 * MicroVAX II: get 10 pages from top of memory,
-	 * map in Qbus map registers, cpu and clock registers.
-	 */
-	avail_end -= 10;
-
-	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, btoc(0x400000));
-	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
-	    VM_PROT_READ|VM_PROT_WRITE);
-
-	MAPVIRT(uvaxIIcpu_ptr, 1);
-	pmap_map((vm_offset_t)uvaxIIcpu_ptr, (vm_offset_t)UVAXIICPU,
-	    (vm_offset_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	clk_adrshift = 0;	/* Addressed at short's... */
-	clk_tweak = 0;		/* ...and no shifting */
-	MAPVIRT(clk_page, 1);
-	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA630CLK,
-	    (vm_offset_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
-
-	/*
-	 * Clear restart and boot in progress flags in the CPMBX.
-	 * Note: We are not running virtual yet.
-	 */
-	KA630CLK->cpmbx = (KA630CLK->cpmbx & KA630CLK_LANG);
-
-	/*
-	 * Enable memory parity error detection and clear error bits.
-	 */
-	UVAXIICPU->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
-	    UVAXIIMSER_LEB);
 }
 
 static void
@@ -197,6 +153,15 @@ ka630_reboot(arg)
 {
 	((struct ka630clock *)clk_page)->cpmbx =
 	    KA630CLK_DOTHIS | KA630CLK_REBOOT;
-	mtpr(GC_BOOT, PR_TXDB);
-	asm("movl %0,r5;halt"::"g"(arg));
+}
+
+/*
+ * Clear restart and boot in progress flags in the CPMBX.
+ */
+static void
+ka630_clrf()
+{
+	short i = ((struct ka630clock *)clk_page)->cpmbx;
+
+	((struct ka630clock *)clk_page)->cpmbx = i & KA630CLK_LANG;
 }

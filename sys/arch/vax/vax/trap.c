@@ -1,6 +1,5 @@
-/*      $OpenBSD: trap.c,v 1.11 1999/01/11 05:12:08 millert Exp $     */
-/*      $NetBSD: trap.c,v 1.28 1997/07/28 21:48:33 ragge Exp $     */
-
+/*	$OpenBSD: trap.c,v 1.12 2000/04/27 01:10:14 bjc Exp $     */
+/*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,9 +31,6 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
-
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +49,7 @@
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+#include <machine/cpu.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -62,48 +59,12 @@
 #include <sys/ktrace.h>
 #endif
 
-extern 	int want_resched,whichqs;
 #ifdef TRAPDEBUG
-volatile int startsysc=0,faultdebug=0;
+volatile int startsysc = 0, faultdebug = 0;
 #endif
 
-static	void userret __P((struct proc *, u_int, u_int));
 void	arithflt __P((struct trapframe *));
 void	syscall __P((struct trapframe *));
-void	showregs __P((struct trapframe *));
-void	showstate __P((struct proc *));
-void	stray __P((int, int));
-void	printstack __P((u_int *, u_int *));
-
-void
-userret(p, pc, psl)
-	struct proc *p;
-	u_int pc, psl;
-{
-	int s,sig;
-
-        while ((sig = CURSIG(p)) !=0)
-                postsig(sig);
-        p->p_priority = p->p_usrpri;
-        if (want_resched) {
-                /*
-                 * Since we are curproc, clock will normally just change
-                 * our priority without moving us from one queue to another
-                 * (since the running process is not on a queue.)
-                 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
-                 * our priority.
-                 */
-                s=splstatclock();
-                setrunqueue(curproc);
-                mi_switch();
-                splx(s);
-                while ((sig = CURSIG(curproc)) != 0)
-                        postsig(sig);
-        }
-
-        curpriority = curproc->p_priority;
-}
 
 char *traptypes[]={
 	"reserved addressing",
@@ -127,298 +88,242 @@ char *traptypes[]={
 };
 int no_traps = 18;
 
+#define USERMODE(framep)   ((((framep)->psl) & (PSL_U)) == PSL_U)
+#define FAULTCHK						\
+	if (p->p_addr->u_pcb.iftrap) {				\
+		frame->pc = (unsigned)p->p_addr->u_pcb.iftrap;	\
+		frame->psl &= ~PSL_FPD;				\
+		frame->r0 = EFAULT;/* for copyin/out */		\
+		frame->r1 = -1; /* for fetch/store */		\
+		return;						\
+	}
+
 void
 arithflt(frame)
 	struct trapframe *frame;
 {
-	u_int	sig, type = frame->trap, trapsig=1, s;
-	u_int	rv, addr;
+	u_int	sig = 0, type = frame->trap, trapsig = 1;
+	u_int	rv, addr, umode;
 	struct	proc *p = curproc;
-	struct	pmap *pm;
+	u_quad_t oticks = 0;
 	vm_map_t map;
 	vm_prot_t ftype;
-	extern vm_map_t	pte_map;
-	int	typ;
-	caddr_t	v;
+	int typ;
 	union sigval sv;
-
-	if ((frame->psl & PSL_U) == PSL_U) {
+	
+	uvmexp.traps++;
+	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
+		oticks = p->p_sticks;
 		p->p_addr->u_pcb.framep = frame; 
 	}
 
-	type &= ~(T_WRITE|T_PTEFETCH);
+	type&=~(T_WRITE|T_PTEFETCH);
 
 
 #ifdef TRAPDEBUG
-	if (frame->trap == 7)
-		goto fram;
-	if (faultdebug)
-		printf("Trap: type %x, code %x, pc %x, psl %x\n",
-		    frame->trap, frame->code, frame->pc, frame->psl);
+if(frame->trap==7) goto fram;
+if(faultdebug)printf("Trap: type %lx, code %lx, pc %lx, psl %lx\n",
+		frame->trap, frame->code, frame->pc, frame->psl);
 fram:
 #endif
-	switch (type) {
+	switch(type){
 
 	default:
-faulter:
 #ifdef DDB
 		kdb_trap(frame);
 #endif
 		printf("Trap: type %x, code %x, pc %x, psl %x\n",
-		    frame->trap, frame->code, frame->pc, frame->psl);
-		showregs(frame);
-		panic("trap: adr %x", frame->code);
+		    (u_int)frame->trap, (u_int)frame->code,
+		    (u_int)frame->pc, (u_int)frame->psl);
+		panic("trap");
+
 	case T_KSPNOTVAL:
-		goto faulter;
+		panic("kernel stack invalid");
 
 	case T_TRANSFLT|T_USER:
-	case T_TRANSFLT: /* Translation invalid - may be simul page ref */
-		if (frame->trap & T_PTEFETCH) {
-			u_int	*ptep, *pte, *pte1;
-
-			if (frame->code < 0x40000000)
-				ptep = (u_int *)p->p_addr->u_pcb.P0BR;
-			else
-				ptep = (u_int *)p->p_addr->u_pcb.P1BR;
-			pte1 = (u_int *)trunc_page(&ptep[(frame->code &
-			    0x3fffffff) >> PGSHIFT]);
-			pte = (u_int*)&Sysmap[((u_int)pte1 & 0x3fffffff) >>
-			    PGSHIFT];	
-			if (*pte & PG_SREF) { /* Yes, simulated */
-				s = splhigh();
-
-				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF; pte++;
-				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF;
-				mtpr(0, PR_TBIA);
-				splx(s);
-				goto uret;
-			}
-		} else {
-			u_int   *ptep, *pte;
-
-			frame->code = trunc_page(frame->code);
-			if (frame->code < 0x40000000) {
-				ptep = (u_int *)p->p_addr->u_pcb.P0BR;
-				pte = &ptep[(frame->code >> PGSHIFT)];
-			} else if (frame->code > 0x7fffffff) {
-				pte = (u_int *)&Sysmap[((u_int)frame->code &
-				    0x3fffffff) >> PGSHIFT];
-			} else {
-				ptep = (u_int *)p->p_addr->u_pcb.P1BR;
-				pte = &ptep[(frame->code & 0x3fffffff) >>
-				    PGSHIFT];
-			}
-			if (*pte & PG_SREF) {
-				s = splhigh();
-				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF; pte++;
-				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF;
-			/*	mtpr(frame->code, PR_TBIS); */
-			/*	mtpr(frame->code + NBPG, PR_TBIS); */
-				mtpr(0, PR_TBIA);
-				splx(s);
-				goto uret;
-			}
-		}
-		/* Fall into... */
-	case T_ACCFLT:
-	case T_ACCFLT|T_USER:
-#ifdef TRAPDEBUG
-		if (faultdebug)
-			printf("trap accflt type %x, code %x, pc %x, psl %x\n",
-                            frame->trap, frame->code, frame->pc, frame->psl);
+	case T_TRANSFLT:
+		/*
+		 * BUG! BUG! BUG! BUG! BUG!
+		 * Due to a hardware bug (at in least KA65x CPUs) a double
+		 * page table fetch trap will cause a translation fault
+		 * even if access in the SPT PTE entry specifies 'no access'.
+		 * In for example section 6.4.2 in VAX Architecture 
+		 * Reference Manual it states that if a page both are invalid
+		 * and have no access set, a 'access violation fault' occurs.
+		 * Therefore, we must fall through here...
+		 */
+#ifdef nohwbug
+		panic("translation fault");
 #endif
-		if (!p)
-			panic("trap: access fault without process");
-		pm = &p->p_vmspace->vm_pmap;
-		if (frame->trap&T_PTEFETCH) {
-			u_int faultaddr;
-			u_int testaddr = (u_int)frame->code & 0x3fffffff;
-			int P0 = 0, P1 = 0, SYS = 0;
-
-			if (frame->code == testaddr)
-				P0++;
-			else if (frame->code > 0x7fffffff)
-				SYS++;
-			else
-				P1++;
-
-			if (P0) {
-				faultaddr = (u_int)pm->pm_pcb->P0BR +
-				    ((testaddr >> PGSHIFT) << 2);
-			} else if (P1) {
-				faultaddr = (u_int)pm->pm_pcb->P1BR +
-				    ((testaddr >> PGSHIFT) << 2);
-			} else
-				panic("pageflt: PTE fault in SPT");
-
-			rv = vm_fault(pte_map, faultaddr & ~PAGE_MASK, 
-			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
-			if (rv != KERN_SUCCESS) {
-				typ = SEGV_MAPERR;
-				v = (caddr_t)faultaddr;
-				sig = SIGSEGV;
-				goto bad;
-			} else
-				trapsig = 0;
+	case T_ACCFLT|T_USER:
+		if (frame->code < 0) { /* Check for kernel space */
+			sig = SIGSEGV;
+			typ = SEGV_ACCERR;
+			break;
 		}
-		addr = (frame->code & ~PAGE_MASK);
-		if ((frame->pc >= (u_int)KERNBASE) &&
-		    (frame->code >= (u_int)KERNBASE)) {
+	case T_ACCFLT:
+#ifdef TRAPDEBUG
+if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
+			frame->trap, frame->code, frame->pc, frame->psl);
+#endif
+#ifdef DIAGNOSTIC
+		if (p == 0)
+			panic("trap: access fault: addr %lx code %lx",
+			    frame->pc, frame->code);
+#endif
+
+		/*
+		 * Page tables are allocated in pmap_enter(). We get 
+		 * info from below if it is a page table fault, but
+		 * UVM may want to map in pages without faults, so
+		 * because we must check for PTE pages anyway we don't
+		 * bother doing it here.
+		 */
+		addr = trunc_page(frame->code);
+		if ((umode == 0) && (frame->code < 0))
 			map = kernel_map;
-		} else {
+		else
 			map = &p->p_vmspace->vm_map;
-		}
+
 		if (frame->trap & T_WRITE)
 			ftype = VM_PROT_WRITE|VM_PROT_READ;
 		else
 			ftype = VM_PROT_READ;
 
-		rv = vm_fault(map, addr, ftype, FALSE);
+		rv = uvm_fault(map, addr, 0, ftype);
 		if (rv != KERN_SUCCESS) {
-			if (frame->pc >= (u_int)KERNBASE) {
-				if (p->p_addr->u_pcb.iftrap) {
-					frame->pc =
-					    (int)p->p_addr->u_pcb.iftrap;
-					return;
-				}
-				printf("Segv in kernel mode: rv %d\n", rv);
-				goto faulter;
+			if (umode == 0) {
+				FAULTCHK;
+				panic("Segv in kernel mode: pc %x addr %x",
+				    (u_int)frame->pc, (u_int)frame->code);
 			}
-			typ = SEGV_MAPERR;
-			v = (caddr_t)frame->code;
-			sig = SIGSEGV;
+			if (rv == KERN_RESOURCE_SHORTAGE) {
+				printf("UVM: pid %d (%s), uid %d killed: "
+				       "out of swap\n",
+				       p->p_pid, p->p_comm,
+				       p->p_cred && p->p_ucred ?
+				       p->p_ucred->cr_uid : -1);
+				sig = SIGKILL;
+				typ = 0; 		/* XXX what goes here? (does it matter?) */
+			} else {
+				sig = SIGSEGV;
+				typ = SEGV_MAPERR;
+			}
 		} else
-			trapsig=0;
+			trapsig = 0;
 		break;
 
 	case T_PTELEN:
+		if (p && p->p_addr)
+			FAULTCHK;
+		panic("ptelen fault in system space: addr %lx pc %lx",
+		    frame->code, frame->pc);
+
 	case T_PTELEN|T_USER:	/* Page table length exceeded */
-		pm = &p->p_vmspace->vm_pmap;
-#ifdef TRAPDEBUG
-		if (faultdebug)
-			printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
-                            frame->trap, frame->code, frame->pc, frame->psl);
-#endif
-		if (frame->code < 0x40000000) { /* P0 */
-			int i;
-
-			if (p->p_vmspace == 0) {
-				printf("no vmspace in fault\n");
-				goto faulter;
-			}
-			i = p->p_vmspace->vm_tsize + p->p_vmspace->vm_dsize;
-			if (i > (frame->code >> PAGE_SHIFT)) {
-				pmap_expandp0(pm, i << 1);
-				trapsig = 0;
-			} else {
-				typ = SEGV_MAPERR;
-				v = (caddr_t)0xdeadbeef;	/* XXX */
-				sig = SIGSEGV;
-			}
-		} else if (frame->code > 0x7fffffff) { /* System, segv */
-			typ = SEGV_MAPERR;
-			v = (caddr_t)0xdeadbeef;		/* XXX */
-			sig = SIGSEGV;
-		} else { /* P1 */
-			int i;
-
-			i = (u_int)(p->p_vmspace->vm_maxsaddr);
-			if (frame->code < i) {
-				typ = SEGV_MAPERR;
-				v = (caddr_t)0xdeadbeef;	/* XXX */
-				sig = SIGSEGV;
-			} else {
-				pmap_expandp1(pm);
-				trapsig = 0;
-			}
-		}
+		sig = SIGSEGV;
+		typ = SEGV_MAPERR;
 		break;
 
 	case T_BPTFLT|T_USER:
-	case T_TRCTRAP|T_USER:
 		typ = TRAP_BRKPT;
-		v = (caddr_t)0xdeadbeef;		/* XXX */
+		sig = SIGTRAP;
+		frame->psl &= ~PSL_T;
+		break;
+
+	case T_TRCTRAP|T_USER:
+		typ = TRAP_TRACE;
 		sig = SIGTRAP;
 		frame->psl &= ~PSL_T;
 		break;
 
 	case T_PRIVINFLT|T_USER:
-	case T_RESADFLT|T_USER:
 	case T_RESOPFLT|T_USER:
 		typ = ILL_ILLOPC;
-		v = (caddr_t)0xdeadbeef;		/* XXX */
+		sig = SIGILL;
+		break;
+
+	case T_RESADFLT|T_USER:
+		typ = ILL_ILLADR;
 		sig = SIGILL;
 		break;
 
 	case T_XFCFLT|T_USER:
-		typ = 0; 				/* XXX/MAJA */
-		v = (caddr_t)0;				/* XXX/MAJA */
+		typ = ILL_ILLOPC;		/* XXX hmm */
 		sig = SIGEMT;
 		break;
 
 	case T_ARITHFLT|T_USER:
-		typ = FPE_FLTINV;			/* XXX? */
-		v = (caddr_t)0;
+		typ = 0;				/* XXX */
 		sig = SIGFPE;
 		break;
 
 	case T_ASTFLT|T_USER:
-		mtpr(AST_NO, PR_ASTLVL);
+		mtpr(AST_NO,PR_ASTLVL);
 		trapsig = 0;
 		break;
 
 #ifdef DDB
+	case T_BPTFLT: /* Kernel breakpoint */
 	case T_KDBTRAP:
+	case T_KDBTRAP|T_USER:
+	case T_TRCTRAP:
 		kdb_trap(frame);
 		return;
 #endif
 	}
-bad:
-	if (trapsig) {
-		sv.sival_ptr = v;
-		trapsignal(curproc, sig, frame->code, typ, sv);
-	}
-uret:
-	userret(curproc, frame->pc, frame->psl);
-};
 
-void
-showstate(p)
-	struct proc *p;
-{
-if(p){
-	printf("\npid %d, command %s\n",p->p_pid, p->p_comm);
-	printf("text size %x, data size %x, stack size %x\n",
-		p->p_vmspace->vm_tsize, p->p_vmspace->vm_dsize,p->p_vmspace->
-		vm_ssize);
-	printf("virt text %x, virt data %x, max stack %x\n",
-		(u_int)p->p_vmspace->vm_taddr, (u_int)p->p_vmspace->vm_daddr,
-		(u_int)p->p_vmspace->vm_maxsaddr);
-	printf("kernel uarea %x, end uarea %x\n",(u_int)p->p_addr, 
-		(u_int)p->p_addr + USPACE);
-} else {
-	printf("No process\n");
-}
-	printf("kernel stack: %x, interrupt stack %x\n",
-		mfpr(PR_KSP),mfpr(PR_ISP));
-	printf("P0BR %x, P0LR %x, P1BR %x, P1LR %x\n",
-		mfpr(PR_P0BR),mfpr(PR_P0LR),mfpr(PR_P1BR),mfpr(PR_P1LR));
+	if (trapsig) { 
+		sv.sival_ptr = (caddr_t)frame->pc;		
+		trapsignal(p, sig, frame->code, typ, sv);
+	}
+
+	if (umode == 0)
+		return;
+
+	while ((sig = CURSIG(p)) !=0)
+		postsig(sig);
+	p->p_priority = p->p_usrpri;
+	if (want_resched) {
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we setrunqueue ourselves but before
+		 * we swtch()'ed, we might not be on the queue indicated by
+		 * our priority.
+		 */
+		splstatclock();
+		setrunqueue(p);
+		mi_switch();
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
+	if (p->p_flag & P_PROFIL) { 
+		extern int psratio;
+		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
+	}
+	curpriority = p->p_priority;
 }
 
 void
 setregs(p, pack, stack, retval)
-        struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
-        u_long stack;
-        register_t retval[2];
+	u_long stack;
+	register_t *retval;
 {
 	struct trapframe *exptr;
 
 	exptr = p->p_addr->u_pcb.framep;
 	exptr->pc = pack->ep_entry + 2;
 	exptr->sp = stack;
-	retval[0] = retval[1] = 0;
+	exptr->r6 = stack;			/* for ELF */
+	exptr->r7 = 0;				/* for ELF */
+	exptr->r8 = 0;				/* for ELF */
+	exptr->r9 = (u_long) PS_STRINGS;	/* for ELF */
+
+	retval[1] = 0;
 }
 
 void
@@ -426,38 +331,41 @@ syscall(frame)
 	struct	trapframe *frame;
 {
 	struct sysent *callp;
-	int nsys;
+	u_quad_t oticks;
+	int nsys, sig;
 	int err, rval[2], args[8];
 	struct trapframe *exptr;
 	struct proc *p = curproc;
 
 #ifdef TRAPDEBUG
-if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
-               syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
+if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
+	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
 #endif
-
+	uvmexp.syscalls++;
+ 
 	exptr = p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
+	oticks = p->p_sticks;
 
 	if(frame->code == SYS___syscall){
 		int g = *(int *)(frame->ap);
 
-		frame->code=*(int *)(frame->ap+4);
-		frame->ap+=8;
-		*(int *)(frame->ap)=g-2;
+		frame->code = *(int *)(frame->ap + 4);
+		frame->ap += 8;
+		*(int *)(frame->ap) = g - 2;
 	}
 
-	if(frame->code<0||frame->code>=nsys)
+	if(frame->code < 0 || frame->code >= nsys)
 		callp += p->p_emul->e_nosys;
 	else
 		callp += frame->code;
 
-	rval[0]=0;
-	rval[1]=frame->r1;
+	rval[0] = 0;
+	rval[1] = frame->r1;
 	if(callp->sy_narg) {
-		err = copyin((char*)frame->ap+4, args, callp->sy_argsize);
+		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
 		if (err) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))
@@ -467,18 +375,40 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 			goto bad;
 		}
 	}
+	/*
+	 * XXX ***TAKE THIS OUT SOON***
+	 * this is an evil hack to get around incongruities in (some) syscall 
+	 * argument types
+	 */ 
+	switch(frame->code) {
+		case SYS_open:
+			args[2] &= 0xffff;
+			break;
+
+		case SYS_mkdir:
+		case SYS_chmod:
+		case SYS_fchmod:
+		case SYS_mkfifo:
+		case SYS_mknod:
+			args[1] &= 0xffff;
+			break;
+
+		case SYS_umask:
+			args[0] &= 0xffff;
+	}
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, frame->code, callp->sy_argsize, args);
 #endif
-	err=(*callp->sy_call)(curproc,args,rval);
+	err = (*callp->sy_call)(curproc, args, rval);
 	exptr = curproc->p_addr->u_pcb.framep;
 
 #ifdef TRAPDEBUG
 if(startsysc)
-	printf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
-               syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
-                curproc->p_pid,err,rval[0],rval[1],exptr);
+	printf("retur %s pc %lx, psl %lx, sp %lx, pid %d, v{rde %d r0 %d, r1 %d, frame %p\n",
+	       syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
+		curproc->p_pid,err,rval[0],rval[1],exptr);
 #endif
 
 bad:
@@ -493,7 +423,7 @@ bad:
 		return;
 
 	case ERESTART:
-		exptr->pc = exptr->pc-2;
+		exptr->pc -= (exptr->code > 63 ? 4 : 2);
 		break;
 
 	default:
@@ -501,47 +431,31 @@ bad:
 		exptr->psl |= PSL_C;
 		break;
 	}
-	userret(curproc, exptr->pc, exptr->psl);
+	p = curproc;
+	while ((sig = CURSIG(p)) !=0)
+		postsig(sig);
+	p->p_priority = p->p_usrpri;
+	if (want_resched) {
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we setrunqueue ourselves but before
+		 * we swtch()'ed, we might not be on the queue indicated by
+		 * our priority.
+		 */
+		splstatclock();
+		setrunqueue(p);
+		mi_switch();
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
+	if (p->p_flag & P_PROFIL) { 
+		extern int psratio;
+		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
+	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, frame->code, err, rval[0]);
 #endif
-}
-
-void
-stray(scb, vec)
-	int scb, vec;
-{
-	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
-}
-
-void
-printstack(loaddr, highaddr)
-	u_int *loaddr, *highaddr;
-{
-	u_int *tmp;
-
-	(u_int)tmp = 0xfffffffc & (u_int)loaddr; /* Easy align */
-
-	for (;tmp < highaddr;tmp += 4)
-		printf("%8x:  %8x  %8x  %8x  %8x\n",
-		    (int)tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
-}
-
-void
-showregs(frame)
-	struct trapframe *frame;
-{
-	printf("P0BR %8x   P1BR %8x   P0LR %8x   P1LR %8x\n",
-	    mfpr(PR_P0BR), mfpr(PR_P1BR), mfpr(PR_P0LR), mfpr(PR_P1LR));
-	printf("KSP  %8x   ISP  %8x   USP  %8x\n",
-	    mfpr(PR_KSP), mfpr(PR_ISP), mfpr(PR_USP));
-	printf("R0   %8x   R1   %8x   R2   %8x   R3   %8x\n",
-	    frame->r0, frame->r1, frame->r2, frame->r3);
-	printf("R4   %8x   R5   %8x   R6   %8x   R7   %8x\n",
-	    frame->r4, frame->r5, frame->r6, frame->r7);
-	printf("R8   %8x   R9   %8x   R10  %8x   R11  %8x\n",
-	    frame->r8, frame->r9, frame->r10, frame->r11);
-	printf("FP   %8x   AP   %8x   PC   %8x   PSL  %8x\n",
-	    frame->fp, frame->ap, frame->pc, frame->psl);
 }

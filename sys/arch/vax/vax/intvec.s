@@ -1,8 +1,8 @@
-/*	$OpenBSD: intvec.s,v 1.11 1998/05/11 16:24:43 niklas Exp $   */
-/*	$NetBSD: intvec.s,v 1.23 1997/07/28 21:48:35 ragge Exp $   */
+/*	$OpenBSD: intvec.s,v 1.12 2000/04/27 01:10:12 bjc Exp $   */
+/*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,13 +31,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
 
+#include "assym.h"
 
-#include <machine/mtpr.h>
-#include <machine/pte.h>
-#include <machine/trap.h>
+#include "ppp.h"
+#include "bridge.h"
 
 #define ENTRY(name) \
 	.text			; \
@@ -63,23 +61,18 @@ ENTRY(namn)			; \
 	popr $0x3f		; \
 	rei
 
-#define STRAY(scbnr, vecnr) \
-ENTRY(stray/**/vecnr)		; \
-	pushr $0x3f		; \
-	pushl $/**/0x/**/vecnr	; \
-	pushl $scbnr		; \
-	calls $2,_stray		; \
-	popr $0x3f		; \
-	rei
+#define	PUSHR	pushr	$0x3f
+#define	POPR	popr	$0x3f
 
 #define KSTACK 0
 #define ISTACK 1
+#define	NOVEC	.long 0
 #define INTVEC(label,stack)	\
 	.long	label+stack;
 		.text
 
-	.globl	_kernel_text, _kernbase, _rpb
-_kernel_text:
+	.globl	_kernbase, _rpb, _kernel_text
+	.set	_kernel_text,KERNBASE
 _kernbase:
 _rpb:	
 /*
@@ -89,80 +82,73 @@ _rpb:
  * and move the SCB later to somewhere else.
  */
 
-	INTVEC(stray00, ISTACK) # Unused., 0
+	NOVEC;				# Unused, 0
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
-	INTVEC(invkstk, ISTACK) # Kernel Stack Invalid., 8
-	INTVEC(stray0C, ISTACK) # Power Failed., C
+	INTVEC(invkstk, ISTACK) 	# Kernel Stack Invalid., 8
+	NOVEC;			 	# Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
 	INTVEC(xfcflt, KSTACK)		# Customer Reserved Instruction, 14
 	INTVEC(resopflt, KSTACK)	# Reserved Operand/Boot Vector(?), 18
-	INTVEC(resadflt, KSTACK)	# # Reserved Address Mode., 1C
+	INTVEC(resadflt, KSTACK)	# Reserved Address Mode., 1C
 	INTVEC(access_v, KSTACK)	# Access Control Violation, 20
 	INTVEC(transl_v, KSTACK)	# Translation Invalid, 24
-	INTVEC(tracep, KSTACK)	# Trace Pending, 28
-	INTVEC(breakp, KSTACK)	# Breakpoint Instruction, 2C
-	INTVEC(stray30, ISTACK) # Compatibility Exception, 30
+	INTVEC(tracep, KSTACK)		# Trace Pending, 28
+	INTVEC(breakp, KSTACK)		# Breakpoint Instruction, 2C
+	NOVEC;			 	# Compatibility Exception, 30
 	INTVEC(arithflt, KSTACK)	# Arithmetic Fault, 34
-	INTVEC(stray38, ISTACK) # Unused, 38
-	INTVEC(stray3C, ISTACK) # Unused, 3C
+	NOVEC;			 	# Unused, 38
+	NOVEC;			 	# Unused, 3C
 	INTVEC(syscall, KSTACK)		# main syscall trap, chmk, 40
 	INTVEC(resopflt, KSTACK)	# chme, 44
 	INTVEC(resopflt, KSTACK)	# chms, 48
 	INTVEC(resopflt, KSTACK)	# chmu, 4C
-	INTVEC(sbiexc, ISTACK)	# System Backplane Exception/BIerror, 50
-	INTVEC(cmrerr, ISTACK)	# Corrected Memory Read, 54
-	INTVEC(rxcs, ISTACK)	# System Backplane Alert/RXCD, 58
-	INTVEC(sbiflt, ISTACK)	# System Backplane Fault, 5C
-	INTVEC(stray60, ISTACK) # Memory Write Timeout, 60
-	INTVEC(stray64, ISTACK) # Unused, 64
-	INTVEC(stray68, ISTACK) # Unused, 68
-	INTVEC(stray6C, ISTACK) # Unused, 6C
-	INTVEC(stray70, ISTACK) # Unused, 70
-	INTVEC(stray74, ISTACK) # Unused, 74
-	INTVEC(stray78, ISTACK) # Unused, 78
-	INTVEC(stray7C, ISTACK) # Unused, 7C
-	INTVEC(stray80, ISTACK) # Unused, 80
-	INTVEC(stray84, ISTACK) # Unused, 84
-	INTVEC(astintr,	 KSTACK)	# Asynchronous Sustem Trap, AST
-	INTVEC(stray8C, ISTACK) # Unused, 8C
-	INTVEC(stray90, ISTACK) # Unused, 90
-	INTVEC(stray94, ISTACK) # Unused, 94
-	INTVEC(stray98, ISTACK) # Unused, 98
-	INTVEC(stray9C, ISTACK) # Unused, 9C
+	NOVEC;				# System Backplane Exception/BIerror, 50
+	INTVEC(cmrerr, ISTACK)		# Corrected Memory Read, 54
+	NOVEC;				# System Backplane Alert/RXCD, 58
+	INTVEC(sbiflt, ISTACK)		# System Backplane Fault, 5C
+	NOVEC;				# Memory Write Timeout, 60
+	NOVEC;				# Unused, 64
+	NOVEC;				# Unused, 68
+	NOVEC;				# Unused, 6C
+	NOVEC;				# Unused, 70
+	NOVEC;				# Unused, 74
+	NOVEC;				# Unused, 78
+	NOVEC;				# Unused, 7C
+	NOVEC;				# Unused, 80
+	NOVEC;				# Unused, 84
+	INTVEC(astintr,	KSTACK)		# Asynchronous Sustem Trap, AST
+	NOVEC;				# Unused, 8C
+	NOVEC;				# Unused, 90
+	NOVEC;				# Unused, 94
+	NOVEC;				# Unused, 98
+	NOVEC;				# Unused, 9C
 	INTVEC(softclock,ISTACK)	# Software clock interrupt
-	INTVEC(strayA4, ISTACK) # Unused, A4
-	INTVEC(strayA8, ISTACK) # Unused, A8
-	INTVEC(strayAC, ISTACK) # Unused, AC
-	INTVEC(netint,	 ISTACK)	# Network interrupt
-	INTVEC(strayB4, ISTACK) # Unused, B4
-	INTVEC(strayB8, ISTACK) # Unused, B8
-	INTVEC(ddbtrap, ISTACK) # Kernel debugger trap, BC
+	NOVEC;				# Unused, A4
+	NOVEC;				# Unused, A8
+	NOVEC;				# Unused, AC
+	INTVEC(netint,	ISTACK)		# Network interrupt
+	NOVEC;				# Unused, B4
+	NOVEC;				# Unused, B8
+	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC
 	INTVEC(hardclock,ISTACK)	# Interval Timer
-	INTVEC(strayC4, ISTACK) # Unused, C4
-	INTVEC(emulate, KSTACK) # Subset instruction emulation
-	INTVEC(strayCC, ISTACK) # Unused, CC
-	INTVEC(strayD0, ISTACK) # Unused, D0
-	INTVEC(strayD4, ISTACK) # Unused, D4
-	INTVEC(strayD8, ISTACK) # Unused, D8
-	INTVEC(strayDC, ISTACK) # Unused, DC
-	INTVEC(strayE0, ISTACK) # Unused, E0
-	INTVEC(strayE4, ISTACK) # Unused, E4
-	INTVEC(strayE8, ISTACK) # Unused, E8
-	INTVEC(strayEC, ISTACK) # Unused, EC
-	INTVEC(strayF0, ISTACK)
-	INTVEC(strayF4, ISTACK)
-#if VAX8600 || VAX8200 || VAX750 || VAX780 || VAX630 || VAX650
-	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
-	INTVEC(constint, ISTACK)	# Console Terminal Transmit Interrupt
-#else
-	INTVEC(strayF8, ISTACK)
-	INTVEC(strayFC, ISTACK)
-#endif
+	NOVEC;				# Unused, C4
+	INTVEC(emulate, KSTACK)		# Subset instruction emulation, C8
+	NOVEC;				# Unused, CC
+	NOVEC;				# Unused, D0
+	NOVEC;				# Unused, D4
+	NOVEC;				# Unused, D8
+	NOVEC;				# Unused, DC
+	NOVEC;				# Unused, E0
+	NOVEC;				# Unused, E4
+	NOVEC;				# Unused, E8
+	NOVEC;				# Unused, EC
+	NOVEC;		
+	NOVEC;		
+	NOVEC;		
+	NOVEC;		
 
 	/* space for adapter vectors */
 	.space 0x100
-
-	STRAY(0,00)
 
 		.align 2
 #
@@ -175,10 +161,17 @@ mcheck: .globl	mcheck
 	tstl	_cold		# Ar we still in coldstart?
 	bneq	L4		# Yes.
 
-	pushr	$0x3f
+	pushr	$0x7f
 	pushab	24(sp)
-	calls	$1, _machinecheck
-	popr	$0x3f
+	movl	_dep_call,r6	# CPU dependent mchk handling
+	calls	$1,*MCHK(r6)
+	tstl	r0		# If not machine check, try memory error
+	beql	1f
+	calls	$0,*MEMERR(r6)
+	pushab	2f
+	calls	$1,_panic
+2:	.asciz	"mchk"
+1:	popr	$0x7f
 	addl2	(sp)+,sp
 
 	rei
@@ -201,50 +194,54 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)
-	STRAY(0,0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
 	TRAPCALL(xfcflt, T_XFCFLT);
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
 
+/*
+ * Translation fault, used only when simulating page reference bit.
+ * Therefore it is done a fast revalidation of the page if it is
+ * referenced. Trouble here is the hardware bug on KA650 CPUs that
+ * put in a need for an extra check when the fault is gotten during
+ * PTE reference. Handled in pmap.c.
+ */
 		.align	2
-transl_v:	.globl	transl_v	# Translation violation, 20
-	pushl	$T_TRANSFLT
-L3:	bbc	$1,4(sp),L1
-	bisl2	$T_PTEFETCH, (sp)
-L1:	bbc	$2,4(sp),L2
-	bisl2	$T_WRITE, (sp)
-L2:	movl	(sp), 4(sp)
-	addl2	$4, sp
-	jbr	trap
-
+transl_v: .globl transl_v	# Translation violation, 20
+	pushr	$0x3f
+	pushl	28(sp)
+	pushl	28(sp)
+	calls	$2,_pmap_simulref
+	tstl	r0
+	bneq	1f
+	popr	$0x3f
+	addl2	$8,sp
+	rei
+1:	popr	$0x3f
+	brb	access_v
 
 		.align	2
 access_v:.globl access_v	# Access cntrl viol fault,	24
 	blbs	(sp), ptelen
 	pushl	$T_ACCFLT
-	jbr	L3
+	bbc	$1,4(sp),1f
+	bisl2	$T_PTEFETCH,(sp)
+1:	bbc	$2,4(sp),2f
+	bisl2	$T_WRITE,(sp)
+2:	movl	(sp), 4(sp)
+	addl2	$4, sp
+	jbr	trap
 
 ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	jbr trap;
 
 	TRAPCALL(tracep, T_TRCTRAP)
 	TRAPCALL(breakp, T_BPTFLT)
-	STRAY(0,30)
 
 	TRAPARGC(arithflt, T_ARITHFLT)
 
-	STRAY(0,38)
-	STRAY(0,3C)
-
-
-
-
-
-	.align 2		# Main system call 
-	.globl	syscall
-syscall:
+ENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
 	pushr	$0xfff
 	mfpr	$PR_USP, -(sp)
@@ -260,100 +257,69 @@ syscall:
 	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
 
-	STRAY(0,44)
-	STRAY(0,48)
-	STRAY(0,4C)
 
-ENTRY(sbiexc)
-	tstl	_cold	/* Is it ok to get errs during boot??? */
-	bneq	1f
-	pushr	$0x3f
-	pushl	$0x50
-	pushl	$0
-	calls	$2,_stray
-	popr	$0x3f
-1:	rei
-
-	FASTINTR(cmrerr,cmrerr)
-
-ENTRY(rxcs);	/* console interrupt from some other processor */
-	pushr	$0x3f
-#if VAX8200
-	cmpl	$5,_vax_cputype
-	bneq	1f
-	calls	$0,_rxcdintr
-	brb	2f
-#endif
-1:	pushl	$0x58
-	pushl	$0
-	calls	$2,_stray
-2:	popr	$0x3f
+ENTRY(cmrerr)
+	PUSHR
+	movl	_dep_call,r0
+	calls	$0,*MEMERR(r0)
+	POPR
 	rei
 
-	ENTRY(sbiflt);
-	moval	sbifltmsg, -(sp)
+ENTRY(sbiflt);
+	movab	sbifltmsg, -(sp)
 	calls	$1, _panic
-
-	STRAY(0,60)
-	STRAY(0,64)
-	STRAY(0,68)
-	STRAY(0,6C)
-	STRAY(0,70)
-	STRAY(0,74)
-	STRAY(0,78)
-	STRAY(0,7C)
-	STRAY(0,80)
-	STRAY(0,84)
 
 	TRAPCALL(astintr, T_ASTFLT)
 
-	STRAY(0,8C)
-	STRAY(0,90)
-	STRAY(0,94)
-	STRAY(0,98)
-	STRAY(0,9C)
-
 	FASTINTR(softclock,softclock)
 
-	STRAY(0,A4)
-	STRAY(0,A8)
-	STRAY(0,AC)
+ENTRY(netint)
+	PUSHR
+#ifdef INET
+	bbcc	$NETISR_ARP,_netisr,1f; calls $0,_arpintr; 1:
+	bbcc	$NETISR_IP,_netisr,1f; calls $0,_ipintr; 1:
+#endif
+#ifdef INET6
+	bbcc	$NETISR_IPV6,_netisr,1f; calls $0,_ip6intr; 1:
+#endif
+#ifdef NETATALK
+	bbcc	$NETISR_ATALK,_netisr,1f; calls $0,_atintr; 1:
+#endif
+#ifdef NS
+	bbcc	$NETISR_NS,_netisr,1f; calls $0,_nsintr; 1:
+#endif
+#ifdef ISO
+	bbcc	$NETISR_ISO,_netisr,1f; calls $0,_clnlintr; 1:
+#endif
+#ifdef CCITT
+	bbcc	$NETISR_CCITT,_netisr,1f; calls $0,_ccittintr; 1:
+#endif
+#if NPPP > 0
+	bbcc	$NETISR_PPP,_netisr,1f; calls $0,_pppintr; 1:
+#endif
+#if NBRIDGE > 0
+	bbcc	$NETISR_BRIDGE,_netisr,1f; calls $0, _bridgeintr; 1:
+#endif
+	POPR
+	rei
 
-	FASTINTR(netint,netintr)	#network packet interrupt
-
-	STRAY(0,B4)
-	STRAY(0,B8)
 	TRAPCALL(ddbtrap, T_KDBTRAP)
 
 		.align	2
 		.globl	hardclock
 hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		pushr	$0x3f
-		pushl	sp
+#ifdef VAX46
+		cmpl	_vax_boardtype,$VAX_BTYP_46
+		bneq	1f
+		movl	_ka46_cpu,r0
+		clrl	0x1c(r0)
+#endif
+1:		pushl	sp
 		addl2	$24,(sp)
 		calls	$1,_hardclock
 		popr	$0x3f
 		rei
-
-	STRAY(0,C4)
-	STRAY(0,CC)
-	STRAY(0,D0)
-	STRAY(0,D4)
-	STRAY(0,D8)
-	STRAY(0,DC)
-	STRAY(0,E0)
-	STRAY(0,E4)
-	STRAY(0,E8)
-	STRAY(0,EC)
-	STRAY(0,F0)
-	STRAY(0,F4)
-#if VAX8600 || VAX8200 || VAX750 || VAX780 || VAX630 || VAX650
-	FASTINTR(consrint,gencnrint)
-	FASTINTR(constint,gencntint)
-#else
-	STRAY(0,F8)
-	STRAY(0,FC)
-#endif
 
 /*
  * Main routine for traps; all go through this.
@@ -378,7 +344,7 @@ _sret:	movl	(sp)+, fp
 	rei
 
 sbifltmsg:
-	.asciz	"SBI fault",0
+	.asciz	"SBI fault"
 
 #if VAX630 || VAX650 || VAX410
 /*

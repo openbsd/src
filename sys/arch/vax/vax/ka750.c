@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka750.c,v 1.7 1997/09/10 12:04:48 maja Exp $ */
-/*	$NetBSD: ka750.c,v 1.18 1997/02/19 10:04:17 ragge Exp $ */
+/*	$OpenBSD: ka750.c,v 1.8 2000/04/27 01:10:12 bjc Exp $ */
+/*	$NetBSD: ka750.c,v 1.30 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -38,90 +38,83 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <machine/ka750.h>
-#include <machine/clock.h>
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <machine/sid.h>
 #include <machine/mtpr.h>
-#include <machine/scb.h>
+#include <machine/cpu.h>
+#include <machine/clock.h>
+#include <machine/sid.h>
 
-#include <vax/uba/ubavar.h>
-#include <vax/uba/ubareg.h>
+#include <vax/vax/gencons.h>
 
 void	ctuattach __P((void));
+static	void	ka750_clrf __P((void));
+static	void	ka750_conf __P((void));
+static	void    ka750_memerr __P((void));
+static	int     ka750_mchk __P((caddr_t));
 
-struct	cpu_dep	ka750_calls = {
-	ka750_steal_pages,
-	generic_clock,
+
+struct	cpu_dep ka750_calls = {
+	0,
 	ka750_mchk,
 	ka750_memerr,
 	ka750_conf,
 	generic_clkread,
 	generic_clkwrite,
-	1,      /* ~VUPS */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-
+	1,	/* ~VUPS */
+	4,	/* SCB pages */
+	0,	/* halt call */
+	0,	/* Reboot call */
+	ka750_clrf,
 };
 
-/*
- * ka750_conf() is called by cpu_attach to do the cpu_specific setup.
- */
-void
-ka750_conf(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	extern	char cpu_model[];
+static	caddr_t mcraddr[4];	/* XXX */
 
-	strcpy(cpu_model,"VAX 11/750");
-	printf(": 11/750, hardware rev %d, ucode rev %d\n",
+void
+ka750_conf()
+{
+	printf("cpu0: KA750, hardware rev %d, ucode rev %d, ",
 	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
-	printf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
 		printf("FPA present, enabling.\n");
 		mtpr(0x8000, PR_ACCS);
 	} else
 		printf("no FPA\n");
 
+	if (mfpr(PR_TODR) == 0) { /* Check for failing battery */
+		mtpr(1, PR_TODR);
+		printf("WARNING: TODR battery broken\n");
+	}
+
 	/* Call ctuattach() here so it can setup its vectors. */
 	ctuattach();
 }
 
-int ka750_memmatch __P((struct  device  *, void  *, void *));
-void ka750_memenable __P((struct  device  *, struct  device  *, void *));
+int ka750_memmatch __P((struct  device  *, struct cfdata	 *, void *));
+void ka750_memenable __P((struct	 device	 *, struct  device  *, void *));
 
-struct  cfattach mem_cmi_ca = {
-        sizeof(struct device), ka750_memmatch, ka750_memenable
+struct	cfattach mem_cmi_ca = {
+	sizeof(struct device), ka750_memmatch, ka750_memenable
 };
 
 int
-ka750_memmatch(parent, gcf, aux)
-        struct  device  *parent;
-        void    *gcf, *aux;
+ka750_memmatch(parent, cf, aux)
+	struct	device	*parent;
+	struct cfdata *cf;
+	void	*aux;
 {
-	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct  cfdata  *cf = gcf;
+	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-        if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
-                return 0;
+	if (cf->cf_loc[CMICF_TR] != sa->nexnum && cf->cf_loc[CMICF_TR] > -1)
+		return 0;
 
 	if (sa->type != NEX_MEM16)
 		return 0;
 
 	return 1;
 }
-
-extern volatile caddr_t mcraddr[];
 
 struct	mcr750 {
 	int	mc_err;			/* error bits */
@@ -144,10 +137,10 @@ struct	mcr750 {
 /* enable crd interrupts */
 void
 ka750_memenable(parent, self, aux)
-        struct  device  *parent, *self;
-        void    *aux;
+	struct	device	*parent, *self;
+	void	*aux;
 {
-	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct mcr750 *mcr = (struct mcr750 *)sa->nexaddr;
 	int k, l, m, cardinfo;
 	
@@ -259,103 +252,19 @@ ka750_mchk(cmcf)
 }
 
 void
-ka750_steal_pages()
+ka750_clrf()
 {
-	extern	vm_offset_t avail_start, virtual_avail;
-	int	junk;
+	int s = splhigh();
 
-	/*
-	 * We take away the pages we need, one for SCB and the rest
-	 * for UBA vectors == 1 + 2 will alloc all needed space.
-	 * We also set up virtual area for SBI.
-	 */
-	MAPPHYS(junk, V750PGS, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, btoc(NEX750SZ));
-	pmap_map((vm_offset_t)nexus, NEX750, NEX750 + NEX750SZ,
-	    VM_PROT_READ|VM_PROT_WRITE);
-}
+#define WAIT	while ((mfpr(PR_TXCS) & GC_RDY) == 0) ;
 
-static  int cmi_print __P((void *, const char *));
-static  int cmi_match __P((struct device *, void *, void *));
-static  void cmi_attach __P((struct device *, struct device *, void*));
+	WAIT;
 
-struct  cfdriver cmi_cd = {
-        NULL, "cmi", DV_DULL
-};      
+	mtpr(GC_CWFL|GC_CONS, PR_TXDB);
 
-struct  cfattach cmi_ca = {
-        sizeof(struct device), cmi_match, cmi_attach
-};
+	WAIT;
+	mtpr(GC_CCFL|GC_CONS, PR_TXDB);
 
-int
-cmi_print(aux, name)
-        void *aux;
-        const char *name;
-{
-        struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-
-        if (name)
-		printf("unknown device 0x%x at %s", sa->type, name);
-
-        printf(" tr%d", sa->nexnum);
-        return (UNCONF);
-}
-
-
-int
-cmi_match(parent, cf, aux)
-        struct  device  *parent;
-        void    *cf, *aux;
-{
-        struct bp_conf *bp = aux;
-
-        if (strcmp(bp->type, "cmi"))
-                return 0;
-        return 1;
-}
-
-void
-cmi_attach(parent, self, aux)
-        struct  device  *parent, *self;
-        void    *aux;
-{
-        u_int   nexnum, maxnex, minnex;
-        struct  sbi_attach_args sa;
-
-	printf("I\n");
-	/*
-	 * Probe for memory, can be in the first 4 slots.
-	 */
-	for (sa.nexnum = 0; sa.nexnum < 4; sa.nexnum++) {
-		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
-			continue;
-
-		sa.nexaddr = nexus + sa.nexnum;
-		sa.type = NEX_MEM16;
-		config_found(self, (void*)&sa, cmi_print);
-	}
-
-	/*
-	 * Probe for mba's, can be in slot 4 - 7.
-	 */
-	for (sa.nexnum = 4; sa.nexnum < 7; sa.nexnum++) {
-		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
-			continue;
-
-		sa.nexaddr = nexus + sa.nexnum;
-		sa.type = NEX_MBA;
-		config_found(self, (void*)&sa, cmi_print);
-	}
-
-	/*
-	 * There are always one generic UBA, and maybe an optional.
-	 */
-	sa.nexnum = 8;
-	sa.nexaddr = nexus + sa.nexnum;
-	sa.type = NEX_UBA0;
-	config_found(self, (void*)&sa, cmi_print);
-	sa.type = NEX_UBA1;
-	if (badaddr((caddr_t)&nexus[++sa.nexnum], 4) == 0)
-		config_found(self, (void*)&sa, cmi_print);
-
+	WAIT;
+	splx(s);
 }

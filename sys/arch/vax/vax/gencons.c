@@ -1,5 +1,5 @@
-/*	$OpenBSD: gencons.c,v 1.6 1997/09/10 12:04:45 maja Exp $	*/
-/*	$NetBSD: gencons.c,v 1.13 1997/03/15 16:36:19 ragge Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.7 2000/04/27 01:10:12 bjc Exp $	*/
+/*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,26 +51,30 @@
 #include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/cpu.h>
+#include <machine/scb.h>
 #include <machine/../vax/gencons.h>
 
-struct	tty *gencn_tty[1];
+static	struct tty *gencn_tty[4];
 
-int	consinied = 0;
+static	int consopened = 0;
+static	int maxttys = 1;
 
-int	gencnparam __P((struct tty *, struct termios *));
-void	gencnstart __P((struct tty *));
-int	gencnopen __P((dev_t, int, int, struct proc *));
-int	gencnclose __P((dev_t, int, int, struct proc *));
-int	gencnread __P((dev_t, struct uio *, int));
-int	gencnwrite __P((dev_t, struct uio *, int));
-int	gencnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	gencngetc __P((dev_t));
-void	gencnprobe __P((struct consdev *));
-void	gencninit __P((struct consdev *));
-struct tty *gencntty __P((dev_t));
-void	gencnrint __P((void));
-void	gencntint __P((void));
-void	gencnstop __P((struct tty *, int));
+static	int pr_txcs[4] = {PR_TXCS, PR_TXCS1, PR_TXCS2, PR_TXCS3};
+static	int pr_rxcs[4] = {PR_RXCS, PR_RXCS1, PR_RXCS2, PR_RXCS3};
+static	int pr_txdb[4] = {PR_TXDB, PR_TXDB1, PR_TXDB2, PR_TXDB3};
+static	int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
+
+cons_decl(gen);
+#ifdef DYNAMIC_DEVSW
+bcdev_decl(gencn);
+#else
+cdev_decl(gencn);
+#endif
+
+static	int gencnparam __P((struct tty *, struct termios *));
+static	void gencnstart __P((struct tty *));
+void	gencnrint __P((void *));
+void	gencntint __P((void *));
 
 int
 gencnopen(dev, flag, mode, p)
@@ -82,19 +86,18 @@ gencnopen(dev, flag, mode, p)
         struct tty *tp;
 
         unit = minor(dev);
-        if (unit)
+        if (unit >= maxttys)
 		return ENXIO;
 
-	if (gencn_tty[0] == NULL)
-		gencn_tty[0] = ttymalloc();
+	if (gencn_tty[unit] == NULL)
+		gencn_tty[unit] = ttymalloc();
 
-	tp = gencn_tty[0];
+	tp = gencn_tty[unit];
 
         tp->t_oproc = gencnstart;
         tp->t_param = gencnparam;
         tp->t_dev = dev;
         if ((tp->t_state & TS_ISOPEN) == 0) {
-                tp->t_state |= TS_WOPEN;
                 ttychars(tp);
                 tp->t_iflag = TTYDEF_IFLAG;
                 tp->t_oflag = TTYDEF_OFLAG;
@@ -106,8 +109,10 @@ gencnopen(dev, flag, mode, p)
         } else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
                 return EBUSY;
         tp->t_state |= TS_CARR_ON;
-	mtpr(GC_RIE, PR_RXCS); /* Turn on interrupts */
-	mtpr(GC_TIE, PR_TXCS);
+	if (unit == 0)
+		consopened = 1;
+	mtpr(GC_RIE, pr_rxcs[unit]); /* Turn on interrupts */
+	mtpr(GC_TIE, pr_txcs[unit]);
 
         return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
@@ -118,8 +123,10 @@ gencnclose(dev, flag, mode, p)
         int flag, mode;
         struct proc *p;
 {
-        struct tty *tp = gencn_tty[0];
+        struct tty *tp = gencn_tty[minor(dev)];
 
+	if (minor(dev) == 0)
+		consopened = 0;
         (*linesw[tp->t_line].l_close)(tp, flag);
         ttyclose(tp);
         return (0);
@@ -129,7 +136,7 @@ struct tty *
 gencntty(dev)
 	dev_t dev;
 {
-	return gencn_tty[0]; /* XXX */
+	return gencn_tty[minor(dev)];
 }
 
 int
@@ -138,7 +145,7 @@ gencnread(dev, uio, flag)
         struct uio *uio;
         int flag;
 {
-        struct tty *tp = gencn_tty[0];
+        struct tty *tp = gencn_tty[minor(dev)];
 
         return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -149,7 +156,8 @@ gencnwrite(dev, uio, flag)
         struct uio *uio;
         int flag;
 {
-        struct tty *tp = gencn_tty[0];
+        struct tty *tp = gencn_tty[minor(dev)];
+
         return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -161,14 +169,15 @@ gencnioctl(dev, cmd, data, flag, p)
         int flag;
         struct proc *p;
 {
+        struct tty *tp = gencn_tty[minor(dev)];
         int error;
-        struct tty *tp = gencn_tty[0];
 
         error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
         if (error >= 0)
                 return error;
         error = ttioctl(tp, cmd, data, flag, p);
-        if (error >= 0) return error;
+        if (error >= 0)
+		return error;
  
 	return ENOTTY;
 }
@@ -188,7 +197,7 @@ gencnstart(tp)
 	if(cl->c_cc){
         	tp->t_state |= TS_BUSY;
 		ch = getc(cl);
-		mtpr(ch, PR_TXDB);
+		mtpr(ch, pr_txdb[minor(tp->t_dev)]);
 	} else {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
@@ -201,29 +210,32 @@ out:	splx(s);
 }
 
 void
-gencnrint()
+gencnrint(arg)
+	void *arg;
 {
-	struct tty *tp;
-	int i, j;
+	struct tty *tp = *(struct tty **) arg;
+	int unit = (struct tty **) arg - gencn_tty;
+	int i;
 
-	tp = gencn_tty[0];
-	i = mfpr(PR_RXDB) & 0377; /* Mask status flags etc... */
+	i = mfpr(pr_rxdb[unit]) & 0377; /* Mask status flags etc... */
 
 #ifdef DDB
-	j = kdbrint(i);
+	if (tp->t_dev == cn_tab->cn_dev) {
+		int j = kdbrint(i);
 
-	if (j == 1)	/* Escape received, just return */
-		return;
+		if (j == 1)	/* Escape received, just return */
+			return;
 
-	if (j == 2)	/* Second char wasn't 'D' */
-		(*linesw[tp->t_line].l_rint)(27, tp);
+		if (j == 2)	/* Second char wasn't 'D' */
+			(*linesw[tp->t_line].l_rint)(27, tp);
+	}
 #endif
 
-	(*linesw[tp->t_line].l_rint)(i,tp);
+	(*linesw[tp->t_line].l_rint)(i, tp);
 	return;
 }
 
-void
+int
 gencnstop(tp, flag)
         struct tty *tp;
         int flag;
@@ -231,11 +243,11 @@ gencnstop(tp, flag)
 }
 
 void
-gencntint()
+gencntint(arg)
+	void *arg;
 {
-	struct tty *tp;
+	struct tty *tp = *(struct tty **) arg;
 
-	tp = gencn_tty[0];
 	tp->t_state &= ~TS_BUSY;
 
 	gencnstart(tp);
@@ -257,10 +269,9 @@ void
 gencnprobe(cndev)
 	struct	consdev *cndev;
 {
-	int i;
-
 	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
 	    (vax_boardtype == VAX_BTYP_630) ||
+	    (vax_boardtype == VAX_BTYP_670) ||
 	    (vax_boardtype == VAX_BTYP_650)) {
 		cndev->cn_dev = makedev(25, 0);
 		cndev->cn_pri = CN_NORMAL;
@@ -272,6 +283,23 @@ void
 gencninit(cndev)
 	struct	consdev *cndev;
 {
+
+	/* Allocate interrupt vectors */
+	scb_vecalloc(SCB_G0R, gencnrint, &gencn_tty[0], SCB_ISTACK);
+	scb_vecalloc(SCB_G0T, gencntint, &gencn_tty[0], SCB_ISTACK);
+
+	if (vax_cputype == VAX_TYP_8SS) {
+		maxttys = 4;
+		scb_vecalloc(SCB_G1R, gencnrint, &gencn_tty[1], SCB_ISTACK);
+		scb_vecalloc(SCB_G1T, gencntint, &gencn_tty[1], SCB_ISTACK);
+
+		scb_vecalloc(SCB_G2R, gencnrint, &gencn_tty[2], SCB_ISTACK);
+		scb_vecalloc(SCB_G2T, gencntint, &gencn_tty[2], SCB_ISTACK);
+
+		scb_vecalloc(SCB_G3R, gencnrint, &gencn_tty[3], SCB_ISTACK);
+		scb_vecalloc(SCB_G3T, gencntint, &gencn_tty[3], SCB_ISTACK);
+	}
+	mtpr(0, PR_TBIA); /* ??? */
 }
 
 void
@@ -299,4 +327,18 @@ gencngetc(dev)
 	if (i == 13)
 		i = 10;
 	return i;
+}
+
+void 
+gencnpollc(dev, pollflag)
+        dev_t dev;
+        int pollflag;
+{
+        if (pollflag)  {
+                mtpr(0, PR_RXCS);
+	        mtpr(0, PR_TXCS); 
+	} else if (consopened) {
+	        mtpr(GC_RIE, PR_RXCS);
+	        mtpr(GC_TIE, PR_TXCS);
+	}
 }

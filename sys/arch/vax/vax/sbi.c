@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbi.c,v 1.7 1997/05/29 00:05:24 niklas Exp $ */
-/*	$NetBSD: sbi.c,v 1.14 1996/10/13 03:36:00 christos Exp $ */
+/*	$OpenBSD: sbi.c,v 1.8 2000/04/27 01:10:13 bjc Exp $ */
+/*	$NetBSD: sbi.c,v 1.20 1999/08/07 10:36:50 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,6 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Still to do: Write all SBI error handling.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,7 +44,7 @@
 #include <machine/nexus.h>
 
 static	int sbi_print __P((void *, const char *));
-static	int sbi_match __P((struct device *, void *, void *));
+static	int sbi_match __P((struct device *, struct cfdata *, void *));
 static	void sbi_attach __P((struct device *, struct device *, void*));
 
 int
@@ -50,12 +54,11 @@ sbi_print(aux, name)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	int unsupp = 0;
-	extern int nmba;
 
 	if (name) {
 		switch (sa->type) {
 		case NEX_MBA:
-			printf("mba%d at %s",nmba++, name);
+			printf("mba at %s", name);
 			break;
 		default:
 			printf("unknown device 0x%x at %s", sa->type, name);
@@ -68,14 +71,13 @@ sbi_print(aux, name)
 
 int
 sbi_match(parent, cf, aux)
-	struct	device	*parent;
-	void	*cf, *aux;
+	struct device	*parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct bp_conf *bp = aux;
-
-	if (strcmp(bp->type, "sbi"))
-		return 0;
-	return 1;
+	if (vax_bustype == VAX_SBIBUS)
+		return 1;
+	return 0;
 }
 
 void
@@ -83,37 +85,36 @@ sbi_attach(parent, self, aux)
 	struct	device	*parent, *self;
 	void	*aux;
 {
-	u_int	nexnum, maxnex, minnex;
+	u_int	nexnum, minnex;
 	struct	sbi_attach_args sa;
 
 	printf("\n");
 
-	/*
-	 * Now a problem: on different machines with SBI units identifies
-	 * in different ways (if they identifies themselves at all).
-	 * We have to fake identifying depending on different CPUs.
-	 */
+#define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	minnex = self->dv_unit * NNEXSBI;
 	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
+		struct	nexus *nexusP = 0;
 		volatile int tmp;
 
-		if (badaddr((caddr_t)&nexus[nexnum], 4))
-			continue;
+		nexusP = (struct nexus *)vax_map_physmem((paddr_t)NEXA8600 +
+		    sizeof(struct nexus) * nexnum, NEXPAGES);
+		if (badaddr((caddr_t)nexusP, 4)) {
+			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		} else {
+			tmp = nexusP->nexcsr.nex_csr; /* no byte reads */
+			sa.type = tmp & 255;
 
-		tmp = nexus[nexnum].nexcsr.nex_csr; /* no byte reads */
-		sa.type = tmp & 255;
-
-		sa.nexnum = nexnum;
-		sa.nexaddr = nexus + nexnum;
-		config_found(self, (void*)&sa, sbi_print);
+			sa.nexnum = nexnum;
+			sa.nexaddr = nexusP;
+			config_found(self, (void*)&sa, sbi_print);
+		}
 	}
 }
 
-struct	cfdriver sbi_cd = {
-	NULL, "sbi", DV_DULL
-};
-
-struct	cfattach sbi_ca = {
+struct	cfattach sbi_mainbus_ca = {
 	sizeof(struct device), sbi_match, sbi_attach
 };
-	
+
+struct	cfattach sbi_abus_ca = {
+	sizeof(struct device), sbi_match, sbi_attach
+};
