@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.15 2003/06/17 21:56:26 millert Exp $	*/
+/*	$OpenBSD: tput.c,v 1.16 2004/10/05 14:46:11 jaredy Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -54,7 +54,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.15 2003/06/17 21:56:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.16 2004/10/05 14:46:11 jaredy Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -135,14 +135,14 @@ main(int argc, char *argv[])
 			if (str[len-1] != '\n')
 				errx(1, "premature EOF");
 			str[len-1] = '\0';
-			/* grow av as needed */
-			if (argc + 1 >= n) {
-				n += 64;
-				av = (char **)realloc(av, sizeof(char *) * n);
-				if (av == NULL)
-					errx(1, "out of memory");
-			}
 			while ((p = strsep(&str, " \t")) != NULL) {
+				/* grow av as needed */
+				if (argc + 1 >= n) {
+					n += 64;
+					av = (char **)realloc(av, sizeof(char *) * n);
+					if (av == NULL)
+						errx(1, "out of memory");
+				}
 				if (*p != '\0' &&
 				    (av[argc++] = strdup(p)) == NULL)
 					errx(1, "out of memory");
