@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.97 2004/12/11 15:55:57 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.98 2004/12/11 15:59:00 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2122,9 +2122,8 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	export_lifetime(&p, sa, 2);
 
 	headers[type] = p;
-	type = (SADB_EXT_LIFETIME_SOFT ? PFKEYV2_LIFETIME_SOFT :
-	    PFKEYV2_LIFETIME_HARD);
-	export_lifetime(&p, sa, type);
+	export_lifetime(&p, sa, type == SADB_EXT_LIFETIME_SOFT ?
+	    PFKEYV2_LIFETIME_SOFT : PFKEYV2_LIFETIME_HARD);
 
 	headers[SADB_EXT_ADDRESS_SRC] = p;
 	export_address(&p, (struct sockaddr *) &sa->tdb_src);
