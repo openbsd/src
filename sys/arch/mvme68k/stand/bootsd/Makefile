@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.3 1996/04/28 10:48:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/05/07 03:21:07 rahnds Exp $
 
 RELOC=0x3F0000 
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 DEFS= -DSTANDALONE -DCOMPAT_NOLABEL # -DROMPRF
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
-CLEANFILES+=sdboot bootsd bootsd.bug
+CLEANFILES+=sdboot bootsd bootsd.bug bootsd.bin
 
 #.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 #.PATH: ${S}/lib/libsa
