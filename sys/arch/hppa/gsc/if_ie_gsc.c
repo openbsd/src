@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.7 2002/02/03 01:46:46 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.8 2002/02/06 19:07:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -108,7 +108,7 @@ ie_gsc_reset(sc, what)
 {
 	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 	register int i;
-	
+
 	switch (what) {
 	case IE_CHIP_PROBE:
 		r->ie_reset = 0;
@@ -231,7 +231,7 @@ ie_gsc_read16(sc, offset)
 
 void
 ie_gsc_write16(sc, offset, v)
-	struct ie_softc *sc;	
+	struct ie_softc *sc;
 	int offset;
 	u_int16_t v;
 {
@@ -241,7 +241,7 @@ ie_gsc_write16(sc, offset, v)
 
 void
 ie_gsc_write24(sc, offset, addr)
-	struct ie_softc *sc;	
+	struct ie_softc *sc;
 	int offset;
 	int addr;
 {
