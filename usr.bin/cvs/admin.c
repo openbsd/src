@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.4 2005/03/08 00:20:39 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.5 2005/03/11 16:23:34 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -62,17 +62,16 @@ cvs_admin(int argc, char **argv)
 {
 	int i, ch, flags;
 	int runflags, kflag, lockrev, strictlock;
-	char *q;
-	char *comment, *replace_msg;
+	char *q, *Ntag, *ntag, *comment, *replace_msg;
 	char *alist, *subst, *lockrev_arg, *unlockrev_arg;
-	char *userfile, *branch_arg, *elist;
+	char *state, *userfile, *branch_arg, *elist, *range;
 	struct cvsroot *root;
 	RCSNUM *rcs;
 
 	runflags = strictlock = lockrev = 0;
-	comment = replace_msg = NULL;
-	alist = subst = elist = lockrev_arg = NULL;
-	userfile = branch_arg = unlockrev_arg = NULL;
+	Ntag = ntag = comment = replace_msg = NULL;
+	state = alist = subst = elist = lockrev_arg = NULL;
+	range = userfile = branch_arg = unlockrev_arg = NULL;
 	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
 
 	/* option-o-rama ! */
@@ -123,15 +122,19 @@ cvs_admin(int argc, char **argv)
 			replace_msg = optarg;
 			break;
 		case 'n':
+			ntag = optarg;
 			break;
 		case 'N':
+			Ntag = optarg;
 			break;
 		case 'o':
+			range = optarg;
 			break;
 		case 'q':
 			runflags |= FLAG_QUIET;
 			break;
 		case 's':
+			state = optarg;
 			break;
 		case 't':
 			break;
@@ -262,6 +265,22 @@ cvs_admin(int argc, char **argv)
 
 		if ((replace_msg != NULL) && ((cvs_sendarg(root, "-m", 0) < 0)
 		    || (cvs_sendarg(root, replace_msg, 0) < 0)))
+			return (EX_PROTOCOL);
+
+		if ((ntag != NULL) && ((cvs_sendarg(root, "-n", 0) < 0) ||
+		    (cvs_sendarg(root, ntag, 0) < 0)))
+			return (EX_PROTOCOL);
+
+		if ((Ntag != NULL) && ((cvs_sendarg(root, "-N", 0) < 0) ||
+		    (cvs_sendarg(root, Ntag, 0) < 0)))
+			return (EX_PROTOCOL);
+
+		if ((range != NULL) && ((cvs_sendarg(root, "-o", 0) < 0) ||
+		    (cvs_sendarg(root, range, 0) < 0)))
+			return (EX_PROTOCOL);
+
+		if ((state != NULL) && ((cvs_sendarg(root, "-s", 0) < 0) ||
+		    (cvs_sendarg(root, state, 0) < 0)))
 			return (EX_PROTOCOL);
 
 		if (lockrev & LOCK_REMOVE) {
