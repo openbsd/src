@@ -40,23 +40,26 @@
 .Nm intro
 .Nd miscellaneous information pages
 .Sh DESCRIPTION
-This section contains miscellaneous documentation, mostly
-in the area of text processing macro packages for
-.Xr troff  1  .
+This section contains miscellaneous documentation.
 .Pp
-.Ds I
-.Cw mailaddr
-.Cl ascii	map of ASCII character set
-.Cl environ	user environment
-.Cl eqnchar	special character definitions for eqn
-.Cl hier	file system hierarchy
-.Cl mailaddr	mail addressing description
-.Cl man	macros to typeset manual pages
-.Cl \&me	macros for formatting papers
-.Cl \&ms	macros for formatting manuscripts
-.Cl term	conventional names for terminals
-.Cw
-.De
+.Bl -tag -width "mdoc.samples(7) " -compact
+.It Xr ascii
+map of ASCII character set
+.It Xr environ
+user environment
+.It Xr hier
+file system hierarchy
+.It Xr hostname
+hostname resolution rules
+.It Xr mailaddr
+mail addressing description
+.It Xr mdoc
+macros to typeset manual pages
+.It Xr mdoc.samples
+guide to writing manual pages
+.It Xr operator
+C operator precedence
+.El
 .Sh HISTORY
 .Nm intro
 appeared in 4.2 BSD.
