@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.56 1999/12/08 12:10:25 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.57 1999/12/10 08:55:23 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -85,13 +85,7 @@
 
 extern u_int8_t get_sa_require  __P((struct inpcb *));
 
-#endif
-
-#if 0 /*KAME IPSEC*/
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#include <netkey/key_debug.h>
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
@@ -147,8 +141,12 @@ ip_output(m0, va_alist)
 	struct sockaddr_encap *ddst, *gw;
 	u_int8_t sa_require, sa_have = 0;
 	struct tdb *tdb, *t;
-	int s;
-#endif
+	int s, ip6flag;
+
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif /* INET6 */
+#endif /* IPSEC */
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -157,14 +155,8 @@ ip_output(m0, va_alist)
 	imo = va_arg(ap, struct ip_moptions *);
 #ifdef IPSEC
 	inp = va_arg(ap, struct inpcb *);
-#endif
+#endif /* IPSEC */
 	va_end(ap);
-
-
-
-#if 0 /*KAME IPSEC*/
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -446,19 +438,6 @@ sendit:
 
 		gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
 
-		/*
-		 * There might be a specific route, that tells us to avoid
-		 * doing IPsec; this is useful for specific routes that we
-		 * don't want to have IPsec applied on, like the key
-		 * management ports.
-		 */
-
-		if ((gw != NULL) && (gw->sen_ipsp_dst.s_addr == 0) &&
-		    (gw->sen_ipsp_sproto == 0) && (gw->sen_ipsp_spi == 0)) {
-			splx(s);
-			goto no_encap;
-		}
-
 		/* Sanity check */
 		if (gw == NULL || ((gw->sen_type != SENT_IPSP) &&
 				   (gw->sen_type != SENT_IPSP6))) {
@@ -472,6 +451,29 @@ sendit:
 			goto done;
 		}
 
+		/*
+		 * There might be a specific route, that tells us to avoid
+		 * doing IPsec; this is useful for specific routes that we
+		 * don't want to have IPsec applied on, like the key
+		 * management ports.
+		 */
+
+		if ((gw != NULL) && (gw->sen_ipsp_sproto == 0) &&
+		    (gw->sen_ipsp_spi == 0)) {
+		    if ((gw->sen_family == AF_INET) &&
+			(gw->sen_ipsp_dst.s_addr == 0)) {
+			splx(s);
+			goto no_encap;
+		    }
+
+#ifdef INET6
+		    if ((gw->sen_family == AF_INET6) &&
+			IN6_IS_ADDR_UNSPECIFIED(&gw->sen_ipsp6_dst)) {
+			splx(s);
+			goto no_encap;
+		    }
+#endif /* INET6 */
+		}
 
 		/*
 		 * At this point we have an IPSP "gateway" (tunnel) spec.
@@ -488,7 +490,7 @@ sendit:
 		    sunion.sin.sin_addr = gw->sen_ipsp_dst;
 		}
 #ifdef INET6
-		else {
+		if (gw->sen_type == SENT_IPSP6) {
 		    sunion.sin6.sin6_family = AF_INET6;
 		    sunion.sin6.sin6_len = sizeof(struct sockaddr_in6);
 		    sunion.sin6.sin6_addr = gw->sen_ipsp6_dst;
@@ -526,7 +528,8 @@ sendit:
 
 		    /* PF_KEYv2 notification message */
 		    if (tdb && tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
-		      pfkeyv2_acquire(tdb, 0); /* XXX Check for errors */
+		            if ((error = pfkeyv2_acquire(tdb, 0)) != 0)
+			            return error;
 
 		    splx(s);
 
@@ -539,8 +542,8 @@ sendit:
 
 	     have_tdb:
 
-		ip->ip_len = htons((u_short)ip->ip_len);
-		ip->ip_off = htons((u_short)ip->ip_off);
+		ip->ip_len = htons((u_short) ip->ip_len);
+		ip->ip_off = htons((u_short) ip->ip_off);
 		ip->ip_sum = 0;
 
 		/*
@@ -556,7 +559,7 @@ sendit:
 			splx(s);
 			if (gw->sen_type == SENT_IPSP)
 			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
-#if INET6
+#ifdef INET6
 			else
 			  DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi), gw->sen_ipsp6_sproto));
 #endif /* INET6 */	  
@@ -591,6 +594,7 @@ sendit:
 				return ENXIO;
 			}
 
+#ifndef INET6
 			/* Sanity check */
 			if (tdb->tdb_dst.sa.sa_family != AF_INET) {
 			    splx(s);
@@ -600,7 +604,8 @@ sendit:
 					RTFREE(re->re_rt);
 				return ENXIO;
 			}
-    
+#endif /* INET6 */
+
 			/* Register first use, setup expiration timer */
 			if (tdb->tdb_first_use == 0) {
 				tdb->tdb_first_use = time.tv_sec;
@@ -613,6 +618,7 @@ sendit:
 			      INADDR_ANY) &&
 			     (tdb->tdb_dst.sin.sin_addr.s_addr !=
 			      ip->ip_dst.s_addr)) ||
+			    (tdb->tdb_dst.sa.sa_family == AF_INET6) ||
 			    ((tdb->tdb_flags & TDBF_TUNNELING) &&
 			     (tdb->tdb_xform->xf_type != XF_IP4))) {
 			        /* Fix length and checksum */
@@ -629,17 +635,42 @@ sendit:
 						RTFREE(re->re_rt);
 					return error;
 				}
+				if (tdb->tdb_dst.sa.sa_family == AF_INET)
+				        ip6flag = 0;
+#ifdef INET6
+				if (tdb->tdb_dst.sa.sa_family == AF_INET6)
+				        ip6flag = 1;
+#endif /* INET6 */
 				m = mp;
 				mp = NULL;
 			}
 
-			if (tdb->tdb_xform->xf_type == XF_IP4) {
+			if ((tdb->tdb_xform->xf_type == XF_IP4) &&
+			    (tdb->tdb_dst.sa.sa_family == AF_INET)) {
 			        ip = mtod(m, struct ip *);
 				ip->ip_len = htons(m->m_pkthdr.len);
 				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 			}
 
-			error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp, ip->ip_hl << 2, offsetof(struct ip, ip_p));
+#ifdef INET6
+			if ((tdb->tdb_xform->xf_type == XF_IP4) &&
+			    (tdb->tdb_dst.sa.sa_family == AF_INET6)) {
+			    ip6 = mtod(m, struct ip6_hdr *);
+			    ip6->ip6_plen = htons(m->m_pkthdr.len);
+			}
+#endif /* INET6 */
+
+#ifdef INET6
+			/*
+			 * This assumes that there is only just an IPv6
+			 * header prepended.
+			 */
+			if (ip6flag)
+			  error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp, sizeof(struct ip6_hdr), offsetof(struct ip6_hdr, ip6_nxt));
+#endif /* INET6 */
+
+			if (!ip6flag)
+			  error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp, ip->ip_hl << 2, offsetof(struct ip, ip_p));
 			if (!error && mp == NULL)
 				error = EFAULT;
 			if (error) {
@@ -653,14 +684,24 @@ sendit:
 
 			m = mp;
 			mp = NULL;
-			ip = mtod(m, struct ip *);
-			ip->ip_len = htons(m->m_pkthdr.len);
 
+			if (!ip6flag) {
+			    ip = mtod(m, struct ip *);
+			    ip->ip_len = htons(m->m_pkthdr.len);
+			}
+
+#ifdef INET6
+			if (ip6flag) {
+			    ip6 = mtod(m, struct ip6_hdr *);
+			    ip6->ip6_plen = htons(m->m_pkthdr.len);
+			}
+#endif /* INET6 */
 			tdb = tdb->tdb_onext;
 		}
 		splx(s);
 
-		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+		if (!ip6flag)
+		  ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 
 		/*
 		 * At this point, m is pointing to an mbuf chain with the
@@ -669,11 +710,28 @@ sendit:
 		 */
 		if (re->re_rt)
 			RTFREE(re->re_rt);
-		ip = mtod(m, struct ip *);
-		NTOHS(ip->ip_len);
-		NTOHS(ip->ip_off);
-		return ip_output(m, NULL, NULL,
-				 IP_ENCAPSULATED | IP_RAWOUTPUT, NULL, NULL);
+
+		if (!ip6flag) {
+		    ip = mtod(m, struct ip *);
+		    NTOHS(ip->ip_len);
+		    NTOHS(ip->ip_off);
+
+		    return ip_output(m, NULL, NULL,
+				     IP_ENCAPSULATED | IP_RAWOUTPUT,
+				     NULL, NULL);
+		}
+
+#ifdef INET6
+		if (ip6flag) {
+		    ip6 = mtod(m, struct ip6_hdr *);
+		    NTOHS(ip6->ip6_plen);
+
+		    /* Naturally, ip6_output() has to honor those two flags */
+		    return ip6_output(m, NULL, NULL,
+				     IP_ENCAPSULATED | IP_RAWOUTPUT,
+				     NULL, NULL);
+		}
+#endif /* INET6 */
 
 no_encap:
 		/* This is for possible future use, don't move or delete */
@@ -1090,30 +1148,6 @@ ip_ctloutput(op, so, level, optname, mp)
 #endif
 			break;
 
-#if 0 /*KAME IPSEC*/
-		case IP_IPSEC_POLICY:
-		    {
-			caddr_t req = NULL;
-			int len = 0;
-			int priv = 0;
-#ifdef __NetBSD__
-			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
-				priv = 0;
-			else
-				priv = 1;
-#else
-			priv = (in6p->in6p_socket->so_state & SS_PRIV);
-#endif
-			if (m != 0) {
-				req = mtod(m, caddr_t);
-				len = m->m_len;
-			}
-			error = ipsec_set_policy(&inp->inp_sp,
-			                         optname, req, len, priv);
-			break;
-		    }
-#endif /*IPSEC*/
-
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1168,12 +1202,6 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			*mtod(m, int *) = optval;
 			break;
-
-#if 0 /*KAME IPSEC*/
-		case IP_IPSEC_POLICY:
-			error = ipsec_get_policy(inp->inp_sp, mp);
-			break;
-#endif /*IPSEC*/
 
 		case IP_MULTICAST_IF:
 		case IP_MULTICAST_TTL:
