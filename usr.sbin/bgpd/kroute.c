@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.39 2003/12/27 01:30:00 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.40 2003/12/27 14:24:42 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,14 @@
 #include <unistd.h>
 
 #include "bgpd.h"
+
+struct {
+	u_int32_t		rtseq;
+	pid_t			pid;
+	int			fib_sync;
+	int			fd;
+} kr_state;
+	
 
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
@@ -70,10 +78,6 @@ RB_HEAD(knexthop_tree, knexthop_node)	knexthop_tree, knt;
 RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare);
 RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare);
 
-u_int32_t		rtseq = 1;
-pid_t			pid;
-int			fib_sync;
-
 #define	F_BGPD_INSERTED		0x0001
 #define	F_KERNEL		0x0002
 #define	F_CONNECTED		0x0004
@@ -82,20 +86,22 @@ int			fib_sync;
 int
 kroute_init(int fs)
 {
-	int s, opt;
+	int opt;
 
-	fib_sync = fs;
+	kr_state.fib_sync = fs;
 
-	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
+	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
 		log_err("kroute_init: socket");
 		return (-1);
 	}
 
 	/* not intrested in my own messages */
-	if (setsockopt(s, SOL_SOCKET, SO_USELOOPBACK, &opt, sizeof(opt)) == -1)
+	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
+	    &opt, sizeof(opt)) == -1)
 		log_err("kroute_init: setsockopt");	/* not fatal */
 
-	pid = getpid();
+	kr_state.pid = getpid();
+	kr_state.rtseq = 1;
 
 	RB_INIT(&krt);
 	RB_INIT(&knt);
@@ -106,7 +112,7 @@ kroute_init(int fs)
 	if (kroute_protect_lo() == -1)
 		return (-1);
 
-	return (s);
+	return (kr_state.fd);
 }
 
 int
@@ -141,7 +147,7 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 	} r;
 	ssize_t	n;
 
-	if (fib_sync == 0)
+	if (kr_state.fib_sync == 0)
 		return (0);
 
 	bzero(&r, sizeof(r));
@@ -149,7 +155,7 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 	r.hdr.rtm_version = RTM_VERSION;
 	r.hdr.rtm_type = action;
 	r.hdr.rtm_flags = RTF_GATEWAY|RTF_PROTO1;
-	r.hdr.rtm_seq = rtseq++;	/* overflow doesn't matter */
+	r.hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	r.hdr.rtm_addrs = RTA_DST|RTA_GATEWAY|RTA_NETMASK;
 	r.prefix.sin_len = sizeof(r.prefix);
 	r.prefix.sin_family = AF_INET;
@@ -195,7 +201,7 @@ retry:
 }
 
 int
-kroute_change(int fd, struct kroute *kroute)
+kroute_change(struct kroute *kroute)
 {
 	struct kroute_node	*kr, s;
 	int			 action = RTM_ADD;
@@ -210,7 +216,7 @@ kroute_change(int fd, struct kroute *kroute)
 			return (0);
 	}
 
-	if (kroute_msg(fd, action, kroute) == -1)
+	if (kroute_msg(kr_state.fd, action, kroute) == -1)
 		return (-1);
 
 	if (action == RTM_ADD) {
@@ -266,7 +272,7 @@ kroute_insert(struct kroute_node *kr)
 }
 
 int
-kroute_delete(int fd, struct kroute *kroute)
+kroute_delete(struct kroute *kroute)
 {
 	struct kroute_node	*kr, s;
 
@@ -279,7 +285,7 @@ kroute_delete(int fd, struct kroute *kroute)
 	if (!(kr->flags & F_BGPD_INSERTED))
 		return (0);
 
-	if (kroute_msg(fd, RTM_DELETE, kroute) == -1)
+	if (kroute_msg(kr_state.fd, RTM_DELETE, kroute) == -1)
 		return (-1);
 
 	RB_REMOVE(kroute_tree, &krt, kr);
@@ -303,33 +309,33 @@ kroute_compare(struct kroute_node *a, struct kroute_node *b)
 }
 
 void
-kroute_shutdown(int fd)
+kroute_shutdown(void)
 {
-	kroute_fib_decouple(fd);
+	kroute_fib_decouple();
 }
 
 void
-kroute_fib_couple(int fd)
+kroute_fib_couple(void)
 {
 	struct kroute_node	*kr;
 
-	fib_sync = 1;
+	kr_state.fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
 		if ((kr->flags & F_BGPD_INSERTED))
-			kroute_msg(fd, RTM_ADD, &kr->r);
+			kroute_msg(kr_state.fd, RTM_ADD, &kr->r);
 }
 
 void
-kroute_fib_decouple(int fd)
+kroute_fib_decouple(void)
 {
 	struct kroute_node	*kr;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
 		if ((kr->flags & F_BGPD_INSERTED))
-			kroute_msg(fd, RTM_DELETE, &kr->r);
+			kroute_msg(kr_state.fd, RTM_DELETE, &kr->r);
 
-	fib_sync = 0;
+	kr_state.fib_sync = 0;
 }
 
 #define	ROUNDUP(a, size)	\
@@ -451,7 +457,7 @@ kroute_fetchtable(void)
 }
 
 int
-kroute_dispatch_msg(int fd)
+kroute_dispatch_msg(void)
 {
 	char			 buf[RT_BUF_SIZE];
 	ssize_t			 n;
@@ -463,7 +469,7 @@ kroute_dispatch_msg(int fd)
 	in_addr_t		 nexthop;
 	int			 flags;
 
-	if ((n = read(fd, &buf, sizeof(buf))) == -1) {
+	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		log_err("kroute_dispatch_msg: read error");
 		return (-1);
 	}
@@ -487,7 +493,7 @@ kroute_dispatch_msg(int fd)
 		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 			continue;
 
-		if (rtm->rtm_pid == pid)		/* cause by us */
+		if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
 			continue;
 
 		if (rtm->rtm_errno)			/* failed attempts... */

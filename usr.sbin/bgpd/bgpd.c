@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.43 2003/12/27 01:31:49 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.44 2003/12/27 14:24:42 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
 			nfds--;
-			if (kroute_dispatch_msg(rfd) == -1)
+			if (kroute_dispatch_msg() == -1)
 				quit = 1;
 		}
 
@@ -289,7 +289,7 @@ main(int argc, char *argv[])
 		i = waitpid(-1, NULL, WNOHANG);
 	} while (i > 0 || (i == -1 && errno == EINTR));
 
-	kroute_shutdown(rfd);
+	kroute_shutdown();
 
 	logit(LOG_CRIT, "Terminating");
 	return (0);
@@ -309,9 +309,9 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
 	}
 	if (fib_synced != !(conf->flags & BGPD_FLAG_NO_FIB_UPDATE)) {
 		if (!(conf->flags & BGPD_FLAG_NO_FIB_UPDATE))
-			kroute_fib_couple(rfd);
+			kroute_fib_couple();
 		else
-			kroute_fib_decouple(rfd);
+			kroute_fib_decouple();
 	}
 
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_CONF, 0,
@@ -376,13 +376,13 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
 				logit(LOG_CRIT, "route request not from RDE");
-			else if (kroute_change(rfd, imsg.data))
+			else if (kroute_change(imsg.data))
 				return (-1);
 			break;
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
 				logit(LOG_CRIT, "route request not from RDE");
-			else if (kroute_delete(rfd, imsg.data))
+			else if (kroute_delete(imsg.data))
 				return (-1);
 			break;
 		case IMSG_NEXTHOP_ADD:
