@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2001/11/26 16:50:25 jasoni Exp $	*/
+/*	$OpenBSD: parse.y,v 1.45 2001/12/03 21:52:08 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -768,31 +768,26 @@ natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 				nat.proto = $3->proto;
 				free($3);
 			}
-			if ($5 != NULL && $7 != NULL) {
-				if ($5->af && $7->af && $5->af != $7->af) {
-					yyerror("nat ip versions must match");
-					YYERROR;
-				} else {
-					if ($5->af)
-						nat.af = $5->af;
-					else if ($7->af)
-						nat.af = $7->af;
-				}
+			if ($5 != NULL && $7 != NULL && $5->af != $7->af) {
+				yyerror("nat ip versions must match");
+				YYERROR;
 			}
 			if ($5 != NULL) {
+				nat.af = $5->af;
 				memcpy(&nat.saddr, &$5->addr,
 				    sizeof(nat.saddr));
 				memcpy(&nat.smask, &$5->mask,
 				    sizeof(nat.smask));
-				nat.snot  = $5->not;
+				nat.snot = $5->not;
 				free($5);
 			}
 			if ($7 != NULL) {
+				nat.af = $7->af;
 				memcpy(&nat.daddr, &$7->addr,
 				    sizeof(nat.daddr));
 				memcpy(&nat.dmask, &$7->mask,
 				    sizeof(nat.dmask));
-				nat.dnot  = $7->not;
+				nat.dnot = $7->not;
 				free($7);
 			}
 
@@ -804,8 +799,8 @@ natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 			if (nat.af && $9->af != nat.af) {
 				yyerror("nat ip versions must match");
 				YYERROR;
-			} else
-				nat.af = $9->af;
+			}
+			nat.af = $9->af;
 			memcpy(&nat.raddr, &$9->addr, sizeof(nat.raddr));
 			free($9);
 			pfctl_add_nat(pf, &nat);
@@ -830,23 +825,18 @@ binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 				binat.proto = $3->proto;
 				free($3);
 			}
-			if ($5 != NULL && $7 != NULL) {
-				if ($5->af && $7->af && $5->af != $7->af) {
-					yyerror("binat ip versions must match");
-					YYERROR;
-				} else {
-					if ($5->af)
-						binat.af = $5->af;
-					else if ($7->af)
-						binat.af = $7->af;
-				}
+			if ($5 != NULL && $7 != NULL && $5->af != $7->af) {
+				yyerror("binat ip versions must match");
+				YYERROR;
 			}
 			if ($5 != NULL) {
+				binat.af = $5->af;
 				memcpy(&binat.saddr, &$5->addr,
 				    sizeof(binat.saddr));
 				free($5);
 			}
 			if ($7 != NULL) {
+				binat.af = $7->af;
 				memcpy(&binat.daddr, &$7->addr,
 				    sizeof(binat.daddr));
 				memcpy(&binat.dmask, &$7->mask,
@@ -863,8 +853,8 @@ binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 			if (binat.af && $9->af != binat.af) {
 				yyerror("binat ip versions must match");
 				YYERROR;
-			} else
-				binat.af = $9->af;
+			}
+			binat.af = $9->af;
 			memcpy(&binat.raddr, &$9->addr, sizeof(binat.raddr));
 			free($9);
 			pfctl_add_binat(pf, &binat);
@@ -889,18 +879,12 @@ rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 				rdr.proto = $3->proto;
 				free($3);
 			}
-			if ($5 != NULL && $7 != NULL) {
-				if ($5->af && $7->af && $5->af != $7->af) {
-					yyerror("rdr ip versions must match");
-					YYERROR; 
-				} else {
-					if ($5->af)
-						rdr.af = $5->af;
-					else if ($7->af)
-						rdr.af = $7->af;
-				}
+			if ($5 != NULL && $7 != NULL && $5->af != $7->af) {
+				yyerror("rdr ip versions must match");
+				YYERROR;
 			}
 			if ($5 != NULL) {
+				rdr.af = $5->af;
 				memcpy(&rdr.saddr, &$5->addr,
 				    sizeof(rdr.saddr));
 				memcpy(&rdr.smask, &$5->mask,
@@ -909,6 +893,7 @@ rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 				free($5);
 			}
 			if ($7 != NULL) {
+				rdr.af = $7->af;
 				memcpy(&rdr.daddr, &$7->addr,
 				    sizeof(rdr.daddr));
 				memcpy(&rdr.dmask, &$7->mask,
@@ -928,8 +913,8 @@ rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 			if (rdr.af && $10->af != rdr.af) {
 				yyerror("rdr ip versions must match");
 				YYERROR;
-			} else 
-				rdr.af = $10->af;
+			}
+			rdr.af = $10->af;
 			memcpy(&rdr.raddr, &$10->addr, sizeof(rdr.raddr));
 			free($10);
 
