@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.154 2004/02/10 10:30:24 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.155 2004/02/11 20:12:33 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3260,7 +3260,7 @@ tcp_newreno(tp, th)
 static int
 tcp_mss_adv(struct ifnet *ifp, int af)
 {
-	u_int16_t mss = 0;
+	int mss = 0;
 	int iphlen;
 
 	switch (af) {
