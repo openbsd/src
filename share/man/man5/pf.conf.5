@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.89 2002/09/30 23:41:46 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.90 2002/10/04 10:15:37 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -745,12 +745,12 @@ expands to
 .Ed
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
-the maximum transmission unit (MTU) of the network.  In cases when it is
-necessary or more effecient to send such large packets, the large packet
-will be fragmented into many smaller packets that will each fit onto the
-wire.  Unfortunately for a firewalling device, only the first logical
-fragment will contain the necessary header information for the
-subprotocol that allows
+the maximum transmission unit (MTU) of the network.
+In cases when it is necessary or more effecient to send such large packets,
+the large packet will be fragmented into many smaller packets that will each 
+fit onto the wire.
+Unfortunately for a firewalling device, only the first logical fragment will
+contain the necessary header information for the subprotocol that allows
 .Em pf
 to filter on things such as TCP ports or to perform NAT.
 .Pp
@@ -760,9 +760,9 @@ Using scrub rules, fragments can be reassembled by normalization.
 In this case, fragments are buffered until they form a complete
 packet, and only the completed packet is passed on to the filter.
 The advantage is that filter rules have to deal only with complete
-packets, and can ignore fragments.  The drawback of caching fragments
-is the additional memory cost.  But the full reassembly method is the
-only method that currently works with NAT.
+packets, and can ignore fragments.
+The drawback of caching fragments is the additional memory cost.
+But the full reassembly method is the only method that currently works with NAT.
 Full reassembly is triggered by the
 .Pa fragment reassemble
 modifier on a
@@ -772,21 +772,25 @@ rule.  This is the default behavior of a
 rule if no fragmentation modifier is supplied.
 .Pp
 Scrub also has two additional methods to track fragments without the
-high memory cost of full reassembly.  The first is enabled via the
+high memory cost of full reassembly.
+The first is enabled via the
 .Pa fragment crop
 modifier.
 .Em pf
-will track the fragments and cache a small range descriptor.  Duplicate
-fragments are dropped and overlaps are cropped.  Thus data will only
-occur once on the wire with ambiguities resolving to the first occurance.
+will track the fragments and cache a small range descriptor.
+Duplicate fragments are dropped and overlaps are cropped.
+Thus data will only occur once on the wire with ambiguities resolving to
+the first occurance.
 Unlike the
 .Pa fragment reassemble
 modifier, fragments are not buffered, they are passed as soon as they
-are received.  This reassembly mechanism does not yet work with NAT.
+are received.
+This reassembly mechanism does not yet work with NAT.
 .Pp
 Scrub's other method is the
 .Pa fragment drop-ovl
-modifier.  It is almost identical to the
+modifier.
+It is almost identical to the
 .Pa fragment crop
 modifier except that all overlapping or duplicate fragments will be
 dropped and will cause the following corresponding fragments to be
