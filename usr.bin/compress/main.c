@@ -1,47 +1,42 @@
-/*	$OpenBSD: main.c,v 1.17 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2002/12/08 16:07:54 mickey Exp $	*/
 
-/*-
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n"
+"Copyright (c) 1997-2002 Michael Shalayeff\n";
+
+static const char license[] =
+"\n"
+" Redistribution and use in source and binary forms, with or without\n"
+" modification, are permitted provided that the following conditions\n"
+" are met:\n"
+" 1. Redistributions of source code must retain the above copyright\n"
+"    notice, this list of conditions and the following disclaimer.\n"
+" 2. Redistributions in binary form must reproduce the above copyright\n"
+"    notice, this list of conditions and the following disclaimer in the\n"
+"    documentation and/or other materials provided with the distribution.\n"
+" 3. All advertising materials mentioning features or use of this software\n"
+"    must display the following acknowledgement:\n"
+"      This product includes software developed by the University of\n"
+"      California, Berkeley and its contributors.\n"
+"\n"
+" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR\n"
+" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES\n"
+" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.\n"
+" IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,\n"
+" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n"
+" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n"
+" SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)\n"
+" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,\n"
+" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING\n"
+" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF\n"
+" THE POSSIBILITY OF SUCH DAMAGE.\n";
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.17 2002/02/16 21:27:45 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.18 2002/12/08 16:07:54 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +44,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.17 2002/02/16 21:27:45 millert Exp $
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#include <getopt.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -61,10 +57,12 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.17 2002/02/16 21:27:45 millert Exp $
 
 #define min(a,b) ((a) < (b)? (a) : (b))
 
-int pipin = 0, force = 0, verbose = 0, testmode = 0, list = 0, nosave = 0;
+int pipin, force, verbose, testmode, list, nosave;
+int savename, recurse;
+int bits, cat, decomp;
 extern char *__progname;
 
-struct compressor {
+const struct compressor {
 	char *name;
 	char *suffix;
 	int (*check_header)(int, struct stat *, const char *);
@@ -77,36 +75,64 @@ struct compressor {
   { "compress", ".Z", z_check_header,  z_open,  zread,   zwrite,   zclose },
 #define M_DEFLATE (&c_table[1])
   { "deflate", ".gz", gz_check_header, gz_open, gz_read, gz_write, gz_close },
+#if 0
+#define M_LZH (&c_table[2])
+  { "lzh", ".lzh", lzh_check_header, lzh_open, lzh_read, lzh_write, lzh_close },
+#define M_ZIP (&c_table[3])
+  { "zip", ".zip", zip_check_header, zip_open, zip_read, zip_write, zip_close },
+#define M_PACK (&c_table[4])
+  { "pack", ".pak",pak_check_header, pak_open, pak_read, pak_write, pak_close },
+#endif
   { NULL }
 };
 
-int permission(char *);
-void setfile(char *, struct stat *);
+int permission(const char *);
+void setfile(const char *, struct stat *);
 void usage(void);
-int compress
-(const char *, const char *, struct compressor *, int);
-int decompress
-(const char *, const char *, struct compressor *, int);
-struct compressor *check_method(int, const char *);
+int compress(const char *, const char *, const struct compressor *, int, struct stat *);
+int decompress(const char *, const char *, const struct compressor *, int, struct stat *);
+const struct compressor *check_method(int, struct stat *, const char *);
 
-struct stat sb, osb;
+#define	OPTSTRING	"123456789ab:cdfhlLnNqrS:tvV"
+const struct option longopts[] = {
+	{ "ascii",	no_argument,		0, 'a' },
+	{ "stdout",	no_argument,		0, 'c' },
+	{ "to-stdout",	no_argument,		0, 'c' },
+	{ "decompress",	no_argument,		0, 'd' },
+	{ "uncompress",	no_argument,		0, 'd' },
+	{ "force",	no_argument,		0, 'f' },
+	{ "help",	no_argument,		0, 'h' },
+	{ "list",	no_argument,		0, 'l' },
+	{ "license",	no_argument,		0, 'L' },
+	{ "no-name",	no_argument,		0, 'n' },
+	{ "name",	no_argument,		0, 'N' },
+	{ "quiet",	no_argument,		0, 'q' },
+	{ "recursive",	no_argument,		0, 'r' },
+	{ "suffix",	required_argument,	0, 'S' },
+	{ "test",	no_argument,		0, 't' },
+	{ "verbose",	no_argument,		0, 'v' },
+	{ "version",	no_argument,		0, 'V' },
+	{ "fast",	no_argument,		0, '1' },
+	{ "best",	no_argument,		0, '9' },
+	{ NULL }
+};
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, bits, cat, decomp, error;
-	struct compressor *method;
-	int exists, isreg, oreg;
-	char *infile, outfile[MAXPATHLEN+4], suffix[16];
-	char *p;
-	int rc = 0;
+	struct stat sb, osb;
+	const struct compressor *method;
+	char *p, *s, *infile, outfile[MAXPATHLEN], suffix[16];
+	char *nargv[512];	/* some estimate based on ARG_MAX */
+	int exists, isreg, oreg, ch, error, i, rc = 0;
 
 	bits = cat = decomp = 0;
 	p = __progname;
 	if (p[0] == 'g') {
 		method = M_DEFLATE;
+		bits = 6;
 		p++;
 	} else
 		method = M_COMPRESS;
@@ -126,10 +152,28 @@ main(argc, argv)
 			errx(1, "unknown program name");
 	}
 
+	strlcpy(suffix, method->suffix, sizeof(suffix));
 	outfile[0] = '\0';
-	while ((ch = getopt(argc, argv, "0123456789b:cdfghlnOo:qS:tv")) != -1)
+
+	if ((s = getenv("GZIP")) != NULL) {
+		char *last;
+
+		nargv[0] = *argv++;
+		for (i = 1, (p = strtok_r(s, " ", &last)); p;
+		    (p = strtok_r(NULL, " ", &last)), i++)
+			if (i < sizeof(nargv)/sizeof(nargv[1]) - argc - 1)
+				nargv[i] = p;
+			else {
+				errx(1, "GZIP is too long");
+			}
+		argc += i - 1;
+		while ((nargv[i++] = *argv++))
+			;
+		argv = nargv;
+	}
+
+	while ((ch = getopt_long(argc, argv, OPTSTRING, longopts, NULL)) != -1)
 		switch(ch) {
-		case '0':
 		case '1':
 		case '2':
 		case '3':
@@ -140,7 +184,11 @@ main(argc, argv)
 		case '8':
 		case '9':
 			method = M_DEFLATE;
+			strlcpy(suffix, method->suffix, sizeof(suffix));
 			bits = ch - '0';
+			break;
+		case 'a':
+			warnx("option -a is ignored on this system");
 			break;
 		case 'b':
 			bits = strtol(optarg, &p, 10);
@@ -163,24 +211,26 @@ main(argc, argv)
 			break;
 		case 'g':
 			method = M_DEFLATE;
+			strlcpy(suffix, method->suffix, sizeof(suffix));
+			bits = 6;
 			break;
 		case 'l':
 			list++;
 			break;
-		case 'L':
-			fputs(copyright, stderr);
 		case 'n':
 			nosave++;
 			break;
 		case 'N':
-			nosave = 0;
+			nosave = 0;	/* XXX not yet */
 			break;
 		case 'O':
 			method = M_COMPRESS;
+			strlcpy(suffix, method->suffix, sizeof(suffix));
 			break;
 		case 'o':
-			strncpy(outfile, optarg, sizeof(outfile)-1);
-			outfile[sizeof(outfile)-1] = '\0';
+			if (strlcpy(outfile, optarg,
+			    sizeof(outfile)) >= sizeof(outfile))
+				errx(1, "-o argument is too long");
 			break;
 		case 'q':
 			verbose = -1;
@@ -189,14 +239,27 @@ main(argc, argv)
 			p = suffix;
 			if (optarg[0] != '.')
 				*p++ = '.';
-			strncpy(p, optarg, sizeof(suffix) - (p - suffix) - 1);
+			strlcpy(p, optarg, sizeof(suffix) - (p - suffix));
+			p = optarg;
 			break;
 		case 't':
 			testmode++;
 			break;
+		case 'V':
+			printf("%s\n%s\n%s\n", main_rcsid,
+			    z_rcsid, gz_rcsid);
+			return (0);
 		case 'v':
 			verbose++;
 			break;
+		case 'L':
+			fputs(copyright, stderr);
+			fputs(license, stderr);
+			return (0);
+		case 'r':
+			recurse++; /* XXX not yet */
+			break;
+
 		case 'h':
 		case '?':
 		default:
@@ -209,26 +272,20 @@ main(argc, argv)
 		if (*argv != NULL) {
 			infile = *argv;
 			if (outfile[0] == '\0') {
-				if (!decomp && !cat && outfile[0] == '\0') {
+				if (!decomp && !cat) {
 					int len;
 					char *p;
 
-					snprintf(outfile, sizeof(outfile),
-						"%s%s", infile,
-						method->suffix);
+					if (snprintf(outfile, sizeof(outfile),
+					    "%s%s", infile, suffix) >= sizeof(outfile))
+						errx(1, "out file name is too long");
 
-					len = strlen(outfile);
-					if (len > MAXPATHLEN) {
-						errx(1, "pathname%s too long",
-							method->suffix);
-					}
-					
 					p = strrchr(outfile, '/');
 					if (p == NULL) p = outfile;
 					len = strlen(p);
 					if (len > NAME_MAX) {
 						errx(1, "filename%s too long",
-							method->suffix);
+							suffix);
 					}
 				} else if (decomp && !cat) {
 					char *p = strrchr(infile, '.');
@@ -238,14 +295,12 @@ main(argc, argv)
 							!strcmp(p, method->suffix);
 						     method++)
 							;
-					if (method->name != NULL) {
-						int l =	min(sizeof(outfile),
-							    (p - infile));
-						strncpy(outfile, infile, l);
-						outfile[l] = '\0';
-					}
+					if (method->name != NULL)
+						strlcpy(outfile, infile,
+						    min(sizeof(outfile),
+							(p - infile) + 1));
 				}
-			}			
+			}
 		} else {
 			infile = "/dev/stdin";
 			pipin++;
@@ -261,13 +316,13 @@ main(argc, argv)
 		exists = !stat(outfile, &sb);
 		if (!force && exists && S_ISREG(sb.st_mode) &&
 		    !permission(outfile)) {
-		    	argv++;
+			argv++;
 			continue;
 		}
 		isreg = oreg = !exists || S_ISREG(sb.st_mode);
 
 		if (stat(infile, &sb) != 0 && verbose >= 0)
-			err(1, "%s", infile);
+			err(1, "input: %s", infile);
 
 		if (!S_ISREG(sb.st_mode))
 			isreg = 0;
@@ -276,7 +331,7 @@ main(argc, argv)
 			fprintf(stderr, "%s:\t", infile);
 
 		error = (decomp? decompress: compress)
-			(infile, outfile, method, bits);
+			(infile, outfile, method, bits, &sb);
 
 		if (!error && isreg && stat(outfile, &osb) == 0) {
 
@@ -285,13 +340,13 @@ main(argc, argv)
 					fprintf(stderr, "file would grow; "
 						     "left unmodified\n");
 				error = 1;
-				rc = 2;
+				rc = rc? rc : 2;
 			} else {
 
 				setfile(outfile, &sb);
 
 				if (unlink(infile) && verbose >= 0)
-					warn("%s", infile);
+					warn("input: %s", infile);
 
 				if (verbose > 0) {
 					u_int ratio;
@@ -307,9 +362,13 @@ main(argc, argv)
 		}
 
 		if (error && oreg && unlink(outfile) && errno != ENOENT &&
-		    verbose >= 0)
-			warn("%s", outfile);
-		else if (!error && verbose > 0)
+		    verbose >= 0) {
+			if (force) {
+				warn("output: %s", outfile);
+				rc = 1;
+			} else
+				err(1, "output: %s", outfile);
+		} else if (!error && verbose > 0)
 			fputs("OK\n", stderr);
 
 		outfile[0] = '\0';
@@ -318,22 +377,21 @@ main(argc, argv)
 
 	} while (*argv != NULL);
 
-	return (rc);
+	exit(rc);
 }
 
 int
-compress(in, out, method, bits)
+compress(in, out, method, bits, sb)
 	const char *in;
 	const char *out;
-	struct compressor *method;
+	const struct compressor *method;
 	int bits;
+	struct stat *sb;
 {
-	int ifd;
-	int ofd;
+	u_char buf[Z_BUFSIZE];
+	int error, ifd, ofd;
 	void *cookie;
 	ssize_t nr;
-	u_char buf[Z_BUFSIZE];
-	int error;
 
 	error = 0;
 	cookie  = NULL;
@@ -351,8 +409,13 @@ compress(in, out, method, bits)
 		return -1;
 	}
 
-	if ((ifd = open(in, O_RDONLY)) >= 0 &&
-	    (cookie = (*method->open)(ofd, "w", bits)) != NULL) {
+	if ((ifd = open(in, O_RDONLY)) < 0) {
+		if (verbose >= 0)
+			warn("%s", out);
+		return -1;
+	}
+
+	if ((cookie = (*method->open)(ofd, "w", bits)) != NULL) {
 
 		while ((nr = read(ifd, buf, sizeof(buf))) > 0)
 			if ((method->write)(cookie, buf, nr) != nr) {
@@ -363,7 +426,7 @@ compress(in, out, method, bits)
 			}
 	}
 
-	if (ifd < 0 || close(ifd) || nr < 0) {
+	if (cookie == NULL || nr < 0) {
 		if (!error && verbose >= 0)
 			warn("%s", in);
 		error++;
@@ -376,19 +439,25 @@ compress(in, out, method, bits)
 		(void) close(ofd);
 	}
 
+	if (close(ifd)) {
+		if (!error && verbose >= 0)
+			warn("%s", out);
+		error++;
+	}
+
 	return error? -1 : 0;
 }
 
-struct compressor *
-check_method(fd, out)
+const struct compressor *
+check_method(fd, sb, out)
 	int fd;
+	struct stat *sb;
 	const char *out;
 {
-	struct compressor *method;
+	const struct compressor *method;
 
 	for (method = &c_table[0];
-	     method->name != NULL &&
-		     !(*method->check_header)(fd, &sb, out);
+	     method->name != NULL && !(*method->check_header)(fd, sb, out);
 	     method++)
 		;
 
@@ -399,18 +468,17 @@ check_method(fd, out)
 }
 
 int
-decompress(in, out, method, bits)
+decompress(in, out, method, bits, sb)
 	const char *in;
 	const char *out;
-	struct compressor *method;
+	const struct compressor *method;
 	int bits;
+	struct stat *sb;
 {
-	int ifd;
-	int ofd;
+	u_char buf[Z_BUFSIZE];
+	int error, ifd, ofd;
 	void *cookie;
 	ssize_t nr;
-	u_char buf[Z_BUFSIZE];
-	int error;
 
 	error = 0;
 	cookie = NULL;
@@ -429,15 +497,20 @@ decompress(in, out, method, bits)
 		return -1;
 	}
 
-	if (!pipin && (method = check_method(ifd, out)) == NULL) {
+	if (!pipin && (method = check_method(ifd, sb, out)) == NULL) {
 		if (verbose >= 0)
 			warnx("%s: unrecognized file format", in);
 		close (ifd);
 		return -1;
 	}
 
-	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) >= 0 &&
-	    (cookie = (*method->open)(ifd, "r", bits)) != NULL) {
+	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) < 0) {
+		if (verbose >= 0)
+			warn("%s", in);
+		return -1;
+	}
+
+	if ((cookie = (*method->open)(ifd, "r", bits)) != NULL) {
 
 		while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
 			if (write(ofd, buf, nr) != nr) {
@@ -448,17 +521,17 @@ decompress(in, out, method, bits)
 			}
 	}
 
-	if (ofd < 0 || close(ofd)) {
-		if (!error && verbose >= 0)
-			warn("%s", out);
-		error++;
-	}
-
 	if (cookie == NULL || (method->close)(cookie) || nr < 0) {
 		if (!error && verbose >= 0)
 			warn("%s", in);
 		error++;
-		(void) close (ifd);
+		close (ifd);
+	}
+
+	if (close(ofd)) {
+		if (!error && verbose >= 0)
+			warn("%s", out);
+		error++;
 	}
 
 	return error;
@@ -466,10 +539,10 @@ decompress(in, out, method, bits)
 
 void
 setfile(name, fs)
-	char *name;
+	const char *name;
 	struct stat *fs;
 {
-	static struct timeval tv[2];
+	struct timeval tv[2];
 
 	fs->st_mode &= S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO;
 
@@ -498,7 +571,7 @@ setfile(name, fs)
 
 int
 permission(fname)
-	char *fname;
+	const char *fname;
 {
 	int ch, first;
 
@@ -515,8 +588,8 @@ void
 usage()
 {
 	fprintf(stderr,
-		"usage: %s [-cdfghlnOtqv] [-b <bits>] [-[0-9]] [file ...]\n",
-		__progname);
+	    "usage: %s [-cdfghlnLOqrStvV] [-b <bits>] [-[0-9]] [file ...]\n",
+	    __progname);
 	exit(1);
 }
 

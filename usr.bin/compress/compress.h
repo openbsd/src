@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.2 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: compress.h,v 1.3 2002/12/08 16:07:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -18,8 +18,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -32,7 +32,14 @@
  *
  */
 
+/*
+ * making it any bigger does not affect perfomance very much.
+ * actually this value is just a little bit better than 8192.
+ */
 #define Z_BUFSIZE 16384
+
+extern const char main_rcsid[], z_rcsid[], gz_rcsid[], pkzip_rcsid[],
+    pack_rcsid[], lzh_rcsid[];
 
 extern int z_check_header(int, struct stat *, const char *);
 extern void *z_open(int, const char *, int);
@@ -40,9 +47,17 @@ extern FILE *zopen(const char *, const char *,int);
 extern int zread(void *, char *, int);
 extern int zwrite(void *, const char *, int);
 extern int zclose(void *);
+
 extern int gz_check_header(int, struct stat *, const char *);
 extern void *gz_open(int, const char *, int);
 extern int gz_read(void *, char *, int);
 extern int gz_write(void *, const char *, int);
 extern int gz_close(void *);
 extern int gz_flush(void *, int);
+
+extern int lzh_check_header(int, struct stat *, const char *);
+extern void *lzh_open(int, const char *, int);
+extern int lzh_read(void *, char *, int);
+extern int lzh_write(void *, const char *, int);
+extern int lzh_close(void *);
+extern int lzh_flush(void *, int);

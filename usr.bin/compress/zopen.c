@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.8 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.9 2002/12/08 16:07:54 mickey Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -36,15 +36,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	From: @(#)zopen.c	8.1 (Berkeley) 6/27/93
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$OpenBSD: zopen.c,v 1.8 2002/02/16 21:27:45 millert Exp $";
+const char z_rcsid[] =
+	"$OpenBSD: zopen.c,v 1.9 2002/12/08 16:07:54 mickey Exp $";
 #endif
-#endif /* LIBC_SCCS and not lint */
 
 /*-
  * fcompress.c - File compression ala IEEE Computer, June 1984.
@@ -89,7 +90,7 @@ static char rcsid[] = "$OpenBSD: zopen.c,v 1.8 2002/02/16 21:27:45 millert Exp $
 typedef long code_int;
 typedef long count_int;
 
-static u_char z_magic[] =
+static const u_char z_magic[] =
 	{'\037', '\235'};		/* 1F 9D */
 
 #define	BIT_MASK	0x1f		/* Defines for third byte of header. */
@@ -186,7 +187,7 @@ struct s_zstate {
 #define	CLEAR	256		/* Table clear output code. */
 
 static int	cl_block(struct s_zstate *);
-static void	cl_hash(struct s_zstate *, register count_int);
+static void	cl_hash(struct s_zstate *, count_int);
 static code_int	getcode(struct s_zstate *);
 static int	output(struct s_zstate *, code_int);
 
@@ -195,7 +196,7 @@ static int	output(struct s_zstate *, code_int);
  * Terry A. Welch, IEEE Computer Vol 17, No 6 (June 1984), pp 8-19.
  *
  * Algorithm:
- * 	Modified Lempel-Ziv method (LZW).  Basically finds common
+ *	Modified Lempel-Ziv method (LZW).  Basically finds common
  * substrings and replaces them with a variable size code.  This is
  * deterministic, and can be done on the fly.  Thus, the decompression
  * procedure needs no input table, but tracks the way the table was built.
@@ -279,7 +280,7 @@ zwrite(cookie, wbp, num)
 					      zs->zs_ent);
 			/* Xor hashing. */
 			i = ((c << zs->zs_hshift) ^ zs->zs_ent);
-	
+
 			if (htabof(i) == zs->zs_fcode) {
 				zs->zs_ent = codetabof(i);
 				continue;
@@ -345,14 +346,14 @@ zclose(cookie)
 /*-
  * Output the given code.
  * Inputs:
- * 	code:	A n_bits-bit integer.  If == -1, then EOF.  This assumes
+ *	code:	A n_bits-bit integer.  If == -1, then EOF.  This assumes
  *		that n_bits =< (long)wordsize - 1.
  * Outputs:
- * 	Outputs code to the file.
+ *	Outputs code to the file.
  * Assumptions:
  *	Chars are 8 bits long.
  * Algorithm:
- * 	Maintain a BITS character long buffer (so that 8 codes will
+ *	Maintain a BITS character long buffer (so that 8 codes will
  * fit in it exactly).  Use the VAX insv instruction to insert each
  * code in turn.  When the buffer fills up empty it and start over.
  */
@@ -568,9 +569,9 @@ eof:	return (num - count);
 /*-
  * Read one code from the standard input.  If EOF, return -1.
  * Inputs:
- * 	stdin
+ *	stdin
  * Outputs:
- * 	code or -1 is returned.
+ *	code or -1 is returned.
  */
 static code_int
 getcode(zs)

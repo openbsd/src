@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.4 2002/08/12 00:42:56 aaron Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.5 2002/12/08 16:07:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -18,8 +18,8 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -63,6 +63,9 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
+const char gz_rcsid[] =
+    "$OpenBSD: gzopen.c,v 1.5 2002/12/08 16:07:54 mickey Exp $";
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -94,7 +97,7 @@ struct gz_stream {
 
 } gz_stream;
 
-static u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
+static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
 static int put_int32(gz_stream *, u_int32_t);
 static u_int32_t get_int32(gz_stream *);
@@ -285,7 +288,7 @@ get_byte(s)
 {
 	if (s->z_eof)
 		return EOF;
-	
+
 	if (s->z_stream.avail_in == 0) {
 		errno = 0;
 		s->z_stream.avail_in = read(s->z_fd, s->z_buf, Z_BUFSIZE);
@@ -299,7 +302,7 @@ get_byte(s)
 	return *s->z_stream.next_in++;
 }
 
-static u_int32_t 
+static u_int32_t
 get_int32 (s)
 	gz_stream *s;
 {

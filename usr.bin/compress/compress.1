@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.13 2002/05/30 20:34:57 mickey Exp $
+.\"	$OpenBSD: compress.1,v 1.14 2002/12/08 16:07:54 mickey Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -47,12 +47,14 @@
 .Nd compress and expand data
 .Sh SYNOPSIS
 .Nm compress
-.Op Fl cdftgOqv
+.Op Fl LV
+.Nm compress
+.Op Fl cdfgOqtv123456789
 .Op Fl b Ar bits
 .Op Fl o Ar filename
 .Op Ar
 .Nm uncompress
-.Op Fl cftoqv
+.Op Fl cfoqtv
 .Op Fl o Ar filename
 .Op Ar
 .Nm zcat
@@ -66,19 +68,26 @@ reduces the size of the named files using adaptive Lempel-Ziv coding.
 Each
 .Ar file
 is renamed to the same name plus the extension
-.Dq .Z .
+.Dq .Z , 
+or
+.Dq .gz 
+(in deflate mode).
 As many of the modification time, access time, file flags, file mode,
 user ID, and group ID as allowed by permissions are retained in the
 new file.
 If compression would not reduce the size of a
 .Ar file ,
-the file is ignored.
+the file is ignored (unless 
+.Fl f
+is used).
 .Pp
 The
 .Nm uncompress
 utility restores compressed files to their original form, renaming the
 files by removing the
 .Dq .Z
+or
+.Dq .gz
 extension.
 .Pp
 The
@@ -101,34 +110,49 @@ not removed, and the attributes of the input file are not retained.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl L
+Display the source code license and exit.
+.It Fl V
+Display the program version (RCS Ids of the source files) and exit.
 .It Fl b Ar bits
 Specify the
 .Ar bits
 code limit (see below).
 .It Fl c
 Compressed or uncompressed output is written to the standard output.
-No files are modified.
+No files are modified (force 
+.Nm zcat
+mode).
 .It Fl d
-Decompress the source files instead of compressing them.
+Decompress the source files instead of compressing them (force
+.Nm uncompress
+mode).
 .It Fl f
 Force compression of
 .Ar file ,
 even if it is not actually reduced in size.
 Additionally, files are overwritten without prompting for confirmation.
 .It Fl g
-Use deflate scheme which reportedly provides better compression rates.
+Use deflate scheme which reportedly provides better compression rates (force
+.Nm gzip 
+mode).
+.It Fl 1...9
+Use deflate scheme with compression factor of one to nine.
 .It Fl O
-Use old compression method (default is based on the program name).
+Use old compression method.
 .It Fl o Ar filename
 Set the output file name.
+.It Fl S Ar suffix
+Set suffix for compressed files.
 .It Fl t
 Test the integrity of each file leaving any files intact.
 .It Fl q
-Be quiet, suppress any messages.
+Be quiet, suppress all messages.
 .It Fl v
-Print the percentage reduction of each file.
+Print the percentage reduction of each file and other information.
 .El
 .Pp
+In normal mode,
 .Nm
 uses a modified Lempel-Ziv algorithm.
 Common substrings in the file are first replaced by 9-bit codes 257 and up.
@@ -181,7 +205,7 @@ time to compute.
 .Pp
 The
 .Nm
-utility exits 0 on success, 1 if an error occurred, or 2 if one or
+utility exits with 0 on success, 1 if an error occurred, or 2 if one or
 more files were not compressed because they would have grown in
 size (and
 .Fl f
