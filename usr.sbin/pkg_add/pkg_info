@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.25 2004/12/16 11:07:33 espie Exp $
+# $OpenBSD: pkg_info,v 1.26 2004/12/22 12:56:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -109,30 +109,32 @@ sub filter_files
 	return @result;
 }
 
-my $all_plists;
+my $path_info;
 
 sub find_by_path
 {
 	my $pat = shift;
 
-	if (!defined $all_plists) {
+	if (!defined $path_info) {
 		require OpenBSD::PackingOld;
 		require OpenBSD::PackingList;
 
-		$all_plists = [];
-		for my $pkg (installed_packages()) {
-			push(@$all_plists, 
+		$path_info = {};
+		for my $pkg (installed_packages(1)) {
+			my $plist =
 				OpenBSD::PackingList->from_installation($pkg,
-				    \&OpenBSD::PackingList::ExtraInfoOnly));
+				    \&OpenBSD::PackingList::ExtraInfoOnly);
+			my $path = $plist->{extrainfo}->{subdir};
+			$path_info->{$path} = [] unless 
+			    defined $path_info->{$path};
+			push(@{$path_info->{$path}}, $plist->pkgname());
 		}
 	}
-	my @result = ();
-	for my $plist (@$all_plists) {
-		if ($plist->{extrainfo}->{subdir} eq $pat) {
-			push(@result, $plist->pkgname());
-		}
+	if (defined $path_info->{$pat}) {
+		return @{$path_info->{$pat}};
+	} else {
+		return ();
 	}
-	return @result;
 }
 
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L, 
