@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.19 2002/06/07 20:56:38 drahn Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.20 2002/06/11 15:33:27 matthieu Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/types.h>
 #include <sys/ioccom.h>
 #include <dev/wscons/wsksymvar.h>
+#include <sys/pciio.h>
 
 #define	WSSCREEN_NAME_SIZE	16
 #define	WSEMUL_NAME_SIZE	16
@@ -380,7 +381,6 @@ struct wsdisplay_delscreendata {
 /* Display information: number of bytes per row, may be same as pixels */
 #define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)
 
-
 /* Replaced by WSMUX_{ADD,REMOVE}_DEVICE */
 struct wsdisplay_kbddata {
 	int op;
@@ -427,5 +427,7 @@ struct wsmux_device_list {
 	struct wsmux_device devices[WSMUX_MAXDEV];
 };
 #define WSMUX_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
+
+#define WSDISPLAYIO_GPCIID	_IOR('W', 91, struct pci_sel)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.18 2002/06/04 21:50:07 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.19 2002/06/11 15:33:27 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -65,6 +65,7 @@ struct vgafb_softc {
 	int sc_node, sc_ofhandle;
 	bus_space_tag_t sc_mem_t;
 	bus_space_tag_t sc_io_t;
+	pcitag_t pcitag;
 	bus_space_handle_t sc_mem_h, sc_io_h, sc_mmio_h;
 	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr, sc_rom_addr;
 	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size, sc_rom_size;
@@ -168,6 +169,7 @@ vgafbattach(parent, self, aux)
 	sc->sc_mem_t = pa->pa_memt;
 	sc->sc_io_t = pa->pa_iot;
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
+	sc->sc_pcitag = pa->pa_tag;
 
 	sc->sc_depth = getpropint(sc->sc_node, "depth", -1);
 	if (sc->sc_depth == -1)
@@ -266,6 +268,7 @@ vgafb_ioctl(v, cmd, data, flags, p)
 {
 	struct vgafb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
+	struct pcisel *sel;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -284,7 +287,7 @@ vgafb_ioctl(v, cmd, data, flags, p)
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_rasops.ri_stride;
 		break;
-
+		
 	case WSDISPLAYIO_GETCMAP:
 		if (sc->sc_console == 0)
 			return (EINVAL);
@@ -293,6 +296,13 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		if (sc->sc_console == 0)
 			return (EINVAL);
 		return vgafb_putcmap(sc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_GPCIID:
+		sel = (struct pcisel *)data;
+		sel->pc_bus = PCITAG_BUS(sc->sc_pcitag);
+		sel->pc_dev = PCITAG_DEV(sc->sc_pcitag);
+		sel->pc_func = PCITAG_FUNC(sc->sc_pcitag);
+		break;
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
