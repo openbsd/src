@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.8 1999/07/09 13:35:16 aaron Exp $
+.\"	$OpenBSD: err.3,v 1.9 1999/10/06 02:30:43 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,14 +72,11 @@ error output.
 In all cases, the last component of the program name, followed by
 a colon
 .Pq Sq \&:
-character and a space, are output, provided
-that
-.Fa fmt
-is not
-.Dv NULL .
+character and a space, are output.
+The text that follows depends on the function being called.
 The
 .Fa fmt
-argument (and associated arguments) may be any format allowed by
+specification (and associated arguments) may be any format allowed by
 .Xr printf 3
 or a simple string.
 .Pp
@@ -92,7 +89,24 @@ and
 functions only, the error message string affiliated with the current value of
 the global variable
 .Va errno
-is output.
+is output (see
+.Xr strerror 3 ) ;
+that is, the output is as follows:
+.Bd -literal -offset indent
+progname: fmt: error message string
+.Ed
+.Pp
+The counterpart functions,
+.Fn errx ,
+.Fn verrx ,
+.Fn warnx ,
+and
+.Fn vwarnx ,
+do not output the error message string, so the output looks like the following:
+.Bd -literal -offset indent
+progname: fmt
+.Ed
+.Pp
 In all cases, the output is followed by a newline character.
 .Pp
 The
