@@ -2,7 +2,7 @@
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
-.\"	$Id: identd.8,v 1.1.1.1 1995/10/18 08:43:18 deraadt Exp $
+.\"	$Id: identd.8,v 1.2 1996/05/22 12:10:38 deraadt Exp $
 .\"
 .TH IDENTD 8 "27 May 1992"
 .SH NAME
@@ -228,6 +228,16 @@ defaults to the normally running kernel file.
 defaults to the memory space of the normally running kernel.
 .SH SEE ALSO
 .BR inetd.conf (5)
+.SH NOTES
+.B Identd
+uses the 
+.I LOG_DAEMON
+syslogd(8) facility to log messages. This is the correct thing to do
+since
+.I LOG_AUTH
+is supposed to be used by authorization related programs, not authentication
+related ones such as
+.B identd.
 .SH BUGS
 The handling of fatal errors could be better.
 .PP
