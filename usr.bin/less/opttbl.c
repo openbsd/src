@@ -97,8 +97,8 @@ static struct option option[] =
 	},
 #else
 	{ 'd', BOOL, OPT_OFF, &be_helpful, NULL,
-		"Be helpful in prompts",
 		"Be less helpful in prompts",
+		"Be helpful in prompts",
 		NULL,
 	},
 #endif
