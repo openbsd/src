@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.30 2002/01/16 21:51:16 ericj Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.31 2002/04/29 07:36:32 deraadt Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2404,6 +2404,8 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
@@ -2662,6 +2664,8 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	xfer = NFS_SRVMAXDATA(nfsd);
 	if (siz > xfer)
 		siz = xfer;
+	if (cnt > xfer)
+		cnt = xfer;
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
