@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.31 2001/06/28 02:58:57 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 2001/07/13 00:06:30 miod Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -91,7 +91,7 @@ ramdisk)
 	;;
 
 std)
-	rm -f console drum floppy crl csa1 csa2 tu0 tu1 g0 g1 g2 g3
+	rm -f console drum floppy crl csa1 csa2 tu0 tu1
 	rm -f kUmem kmem mem null zero tty klog ttyg[0-3]
 	rm -f stdin stdout stderr ksyms
 	mknod console		c 0 0
@@ -283,7 +283,7 @@ vnd*)
 		vnd) off=0;;
 		svnd) off=128;;
 		esac
-		rm -f {r,}${name}${unit}?
+		rm -f {r,}${name}${unit}[a-p]
 		minor=$(($unit * 16 + $off))
 		for slice in a b c d e f g h i j k l m n o p
 		do
@@ -315,7 +315,7 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|hd*|sd*|rx*|raid*)
 	case $unit in
 	[0-9]|[12][0-9]|3[01])
 		minor=$(($unit * 16))
-		rm -f ${name}${unit}[a-p] r${name}${unit}[a-p]
+		rm -f {r,}${name}${unit}[a-p]
 		for slice in a b c d e f g h i j k l m n o p
 		do
 			mknod ${name}${unit}${slice}  b $blk $minor
@@ -336,7 +336,7 @@ cd*)
 	case $i in
 	cd*) name=cd;   unit=${i#cd};   chr=61; blk=22;;
 	esac
-	rm -f {r,}${name}${unit}?
+	rm -f {r,}${name}${unit}{a,c}
 	mknod ${name}${unit}a   b $blk $(($unit * 16 + 0))
 	mknod ${name}${unit}c   b $blk $(($unit * 16 + 2))
 	mknod r${name}${unit}a  c $chr $(($unit * 16 + 0))
@@ -370,7 +370,7 @@ ch*|uk*)
 
 rd*)
 	unit=${i#rd}; blk=23; chr=62;
-	rm -f rd${unit}? rrd${unit}?
+	rm -f rd${unit}{a,c} #rrd${unit}{a,c}
 	mknod rd${unit}a  b $blk $(($unit * 16 + 0)) 
 	mknod rd${unit}c  b $blk $(($unit * 16 + 2)) 
 #	mknod rrd${unit}a c $chr $(($unit * 16 + 0)) 
@@ -384,6 +384,7 @@ uu*)
 	name=uu; blk=13;
 	case $unit in
 	[0-3])
+		rm -f ${name}${unit}{,a}
 		mknod ${name}${unit}	b $blk $(($unit * 2 + 0))
 		mknod ${name}${unit}a	b $blk $(($unit * 2 + 1))
 		;;
@@ -403,6 +404,7 @@ dz*)
 			if [ $no -lt 10 ]; then
 				no="0${no}"
 			fi
+			rm -f tty${no}
 			mknod tty${no} c 1 $no
 			i=$(($i + 1))
 		done
@@ -453,6 +455,7 @@ dhu*|dh*|dmf*|dmz*|vt*)
 	while [ $i -lt $count ]; do
 		let=${cnvtbl[$i]}
 		if [ -n "$let" ] ;then
+			rm -f tty${ch}${let}
 			mknod tty${ch}${let} c $major $(($unit * $count + $i))
 		else
 			echo bad count for ${name}: $unit, $count, $i
@@ -467,6 +470,7 @@ dl*)
 	major=66
 	let=${cnvtbl[$unit]}
 	if [ -n "$let" ] ;then
+		rm -f ttyJ${let}
 		mknod ttyJ${let} c $major $unit
 	else
 		echo bad number for ${name}: $unit
@@ -481,6 +485,7 @@ lp*|va*|vp*)
 	esac
 	case $unit in
 	[0-7])
+		rm -f $i
 		mknod $i c $major $unit;
 		chmod 666 $i
 		;;
@@ -568,6 +573,7 @@ dn*|ik*|ps*|ad*|ct*)
 	case $unit in
 	[0-7])
 		umask 0
+		rm -f ${name}${unit}
 		mknod ${name}${unit} c ${chr} ${unit}
 		umask 77
 		;;
@@ -587,7 +593,7 @@ bpf*)
 
 qd*)
 	unit=${i#qd}
-	rm -f qd$unit
+	rm -f q{c,d}$unit
 	mknod qc$unit c 40 $(($unit * 4))
 	mknod qd$unit c 40 $(($unit * 4 + 2))
 	;;
@@ -615,6 +621,7 @@ lkm)
 	;;
 
 qv0)
+	rm -f qv0 qvcons mouse
 	mknod qv0 c 40 0
 	mknod qvcons c 40 1
 	mknod mouse c 40 2
