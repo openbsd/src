@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.39 2003/03/30 20:55:03 henning Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.40 2003/04/15 08:06:31 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -156,11 +156,8 @@ verify_entry(const char *entry, char *filename)
 	char *s;
 
 	memset(names, 0, sizeof(names));
-	len = strlen(entry) + 2;
-	s = malloc(len);
-	if (s == NULL)
+	if (asprintf(&s, "_%s", entry) == -1)
 		err(1, "malloc");
-	snprintf(s, len, "_%s", entry);
 #ifdef	_AOUT_INCLUDE_
 	names[0].n_un.n_name = s;
 #else
@@ -452,7 +449,7 @@ main(int argc, char *argv[])
 	if (post) {
 		struct lmc_stat sbuf;
 		char name[MAXLKMNAME] = "";
-		char id[16], type[16], offset[16];
+		char id[16], type[32], offset[32];
 
 		sbuf.id = resrv.slot;
 		sbuf.name = name;
