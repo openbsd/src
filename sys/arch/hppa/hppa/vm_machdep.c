@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.31 2002/02/01 21:03:20 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.32 2002/02/11 21:16:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -121,11 +121,15 @@ cpu_swapin(p)
 	struct proc *p;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	paddr_t pa;
 
 	/*
 	 * Stash the physical for the pcb of U for later perusal
 	 */
-	tf->tf_cr30 = kvtop((caddr_t)p->p_addr);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)p->p_addr, &pa))
+		panic("pmap_extract(p_addr) failed");
+
+	tf->tf_cr30 = pa;
 }
 
 void
@@ -133,14 +137,9 @@ cpu_swapout(p)
 	struct proc *p;
 {
 	extern paddr_t fpu_curpcb;
-	paddr_t q = fpu_curpcb;
+	struct trapframe *tf = p->p_md.md_regs;
 
-	fpu_curpcb = 0;
-
-	/*
-	 * TODO: determine if we have an fpu
-	 */
-	if (kvtop((caddr_t)&p->p_addr->u_pcb) == q) {
+	if (tf->tf_cr30 == fpu_curpcb) {
 		__asm __volatile(
 		    "fstds,ma %%fr0 , 8(%0)\n\t"
 		    "fstds,ma %%fr1 , 8(%0)\n\t"
@@ -174,7 +173,8 @@ cpu_swapout(p)
 		    "fstds,ma %%fr29, 8(%0)\n\t"
 		    "fstds,ma %%fr30, 8(%0)\n\t"
 		    "fstds    %%fr31, 0(%0)\n\t"
-		    : "+r" (q) :: "memory");
+		    : "+r" (fpu_curpcb) :: "memory");
+		fpu_curpcb = 0;
 	}
 }
 
@@ -261,12 +261,13 @@ cpu_exit(p)
 	struct proc *p;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
+	struct trapframe *tf = p->p_md.md_regs;
 
 	uvmexp.swtch++;
 
 	splhigh();
 	curproc = NULL;
-	if (fpu_curpcb == (paddr_t)&p->p_addr->u_pcb)
+	if (fpu_curpcb == tf->tf_cr30)
 		fpu_curpcb = 0;
 
 	switch_exit(p);
