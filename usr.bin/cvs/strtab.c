@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.c,v 1.3 2005/03/29 15:04:45 joris Exp $	*/
+/*	$OpenBSD: strtab.c,v 1.4 2005/04/06 03:27:54 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -75,10 +75,12 @@ cvs_strdup(const char *s)
 {
 	struct cvs_str *csp;
 
-	if ((csp = cvs_strtab_lookup(s)) == NULL)
-		csp = cvs_strtab_insert(s);
-	else
+	if ((csp = cvs_strtab_lookup(s)) == NULL) {
+		if ((csp = cvs_strtab_insert(s)) == NULL)
+			return (NULL);
+	} else {
 		csp->cs_ref++;
+	}
 
 	return (csp->cs_str);
 }
