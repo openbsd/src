@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.3 1997/04/09 08:39:29 mickey Exp $	*/
+/*	$OpenBSD: debug.c,v 1.4 1997/07/17 22:50:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -32,14 +32,14 @@
  *
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #include <debug.h>
 
-const char *reg_names[] = { REG_NAMES };
+char *const reg_names[] = { REG_NAMES };
 const int nreg = NENTS(reg_names);
 struct reg reg;
-const u_int32_t *reg_values[] = { REG_VALUES(reg) };
-const char *trap_names[] = { TRAP_NAMES };
+u_int32_t *const reg_values[] = { REG_VALUES(reg) };
+char *const trap_names[] = { TRAP_NAMES };
 
 int
 debug_init()
