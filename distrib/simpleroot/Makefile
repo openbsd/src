@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/05/14 18:39:05 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/05/15 12:33:06 graichen Exp $
 
 # Revision is 2.1
 REV=		21
@@ -47,6 +47,8 @@ all:
 	sed "/^VERSION=/s/=.*/=${REV}/" < ${.CURDIR}/install.sub \
 	  > ${MOUNT_POINT}/install.sub
 	cp ${.CURDIR}/../${MACHINE}/install.md ${MOUNT_POINT}/install.md
+	mkdir -p ${MOUNT_POINT}/kern
+	mkdir -p ${MOUNT_POINT}/mnt2
 .if exists(/sbin/ldconfig)
 	/usr/sbin/chroot ${MOUNT_POINT} /sbin/ldconfig
 .endif
