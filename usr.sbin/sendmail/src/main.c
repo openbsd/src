@@ -515,7 +515,7 @@ main(argc, argv, envp)
 		OpMode = MD_PURGESTAT;
 
 	optind = 1;
-	while ((j = getopt(argc, argv, OPTIONS)) != EOF)
+	while ((j = getopt(argc, argv, OPTIONS)) != -1)
 	{
 		switch (j)
 		{
