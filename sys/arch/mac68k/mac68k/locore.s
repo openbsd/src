@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.34 2004/05/20 09:20:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.35 2004/07/02 17:33:43 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1174,6 +1174,7 @@ Lswnofpsave:
 	cmpb	#SRUN,a0@(P_STAT)
 	jne	Lbadsw
 #endif
+	movb	#SONPROC,a0@(P_STAT)
 	clrl	a0@(P_BACK)		| clear back link
 	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr

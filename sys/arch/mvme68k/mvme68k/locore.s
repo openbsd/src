@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.41 2004/05/20 09:20:42 kettenis Exp $ */
+/*	$OpenBSD: locore.s,v 1.42 2004/07/02 17:33:43 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1331,6 +1331,7 @@ Lswnofpsave:
 	cmpb	#SRUN,a0@(P_STAT)
 	jne	Lbadsw
 #endif
+	movb	#SONPROC,a0@(P_STAT)
 	clrl	a0@(P_BACK)		| clear back link
 	| low byte of p_md.md_flags
 	movb	a0@(P_MD_FLAGS+3),_ASM_LABEL(mdpflag)
