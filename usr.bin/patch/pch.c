@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.25 2003/07/28 18:35:36 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.26 2003/07/28 19:15:34 deraadt Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.25 2003/07/28 18:35:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.26 2003/07/28 19:15:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -256,8 +256,7 @@ intuit_diff_type(void)
 		else if (strnEQ(s, "--- ", 4))
 			newtmp = savestr(s + 4);
 		else if (strnEQ(s, "+++ ", 4))
-			oldtmp = savestr(s + 4);	/* pretend it is the old
-							 * name */
+			oldtmp = savestr(s + 4); /* pretend it is the old name */
 		else if (strnEQ(s, "Index:", 6))
 			indtmp = savestr(s + 6);
 		else if (strnEQ(s, "Prereq:", 7)) {
@@ -549,8 +548,9 @@ another_hunk(void)
 					p_ptrn_lines = 0;
 					p_first = 1;
 				}
-				p_max = p_ptrn_lines + 6;	/* we need this much at
-								 * least */
+
+				/* we need this much at least */
+				p_max = p_ptrn_lines + 6;
 				while (p_max >= hunkmax)
 					grow_hunkmax();
 				p_max = hunkmax;
@@ -742,8 +742,7 @@ hunk_done:
 				filldst++;
 			}
 #if 0
-			repl_beginning--;	/* this doesn't need to be
-						 * fixed */
+			repl_beginning--;	/* this doesn't need to be fixed */
 #endif
 			p_end--;
 			p_first++;	/* do append rather than insert */
@@ -761,8 +760,7 @@ hunk_done:
 		}
 		/* if there were omitted context lines, fill them in now */
 		if (fillcnt) {
-			p_bfake = filldst;	/* remember where not to
-						 * free() */
+			p_bfake = filldst;	/* remember where not to free() */
 			p_efake = filldst + fillcnt - 1;
 			while (fillcnt-- > 0) {
 				while (fillsrc <= p_end && p_char[fillsrc] != ' ')
@@ -843,7 +841,7 @@ hunk_done:
 		filldst = fillsrc + p_ptrn_lines;
 		p_end = filldst + p_repl_lines;
 		snprintf(buf, sizeof buf, "*** %ld,%ld ****\n", p_first,
-			 p_first + p_ptrn_lines - 1);
+		    p_first + p_ptrn_lines - 1);
 		p_line[0] = savestr(buf);
 		if (out_of_mem) {
 			p_end = -1;
@@ -851,7 +849,7 @@ hunk_done:
 		}
 		p_char[0] = '*';
 		snprintf(buf, sizeof buf, "--- %ld,%ld ----\n", p_newfirst,
-			 p_newfirst + p_repl_lines - 1);
+		    p_newfirst + p_repl_lines - 1);
 		p_line[filldst] = savestr(buf);
 		if (out_of_mem) {
 			p_end = 0;
@@ -997,7 +995,7 @@ hunk_done:
 		p_newfirst = min;
 		p_repl_lines = max - min + 1;
 		snprintf(buf, sizeof buf, "*** %ld,%ld\n", p_first,
-			 p_first + p_ptrn_lines - 1);
+		    p_first + p_ptrn_lines - 1);
 		p_line[0] = savestr(buf);
 		if (out_of_mem) {
 			p_end = -1;

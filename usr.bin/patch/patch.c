@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.29 2003/07/28 18:28:52 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.30 2003/07/28 19:15:34 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.29 2003/07/28 18:28:52 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.30 2003/07/28 19:15:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,7 +48,7 @@ static const char rcsid[] = "$OpenBSD: patch.c,v 1.29 2003/07/28 18:28:52 otto E
 #include "inp.h"
 #include "backupfile.h"
 
-int 		filemode = 0644;
+int		filemode = 0644;
 
 char		buf[MAXLINELEN];	/* general purpose buffer */
 
@@ -69,7 +69,7 @@ bool		toutkeep = FALSE;
 bool		trejkeep = FALSE;
 
 #ifdef DEBUGGING
-int 		debug = 0;
+int		debug = 0;
 #endif
 
 bool		force = FALSE;
@@ -288,7 +288,7 @@ main(int argc, char *argv[])
 						}
 					}
 				} while (!skip_rest_of_patch && where == 0 &&
-					 ++fuzz <= mymaxfuzz);
+				    ++fuzz <= mymaxfuzz);
 
 				if (skip_rest_of_patch) {	/* just got decided */
 					fclose(ofp);
@@ -862,7 +862,7 @@ dump_line(LINENUM line)
 	s = ifetch(line, 0);
 	if (s == NULL)
 		return;
-	/* Note: string is not null terminated. */
+	/* Note: string is not NUL terminated. */
 	for (; putc(*s, ofp) != '\n'; s++)
 		;
 }
@@ -877,8 +877,8 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 	LINENUM		iline;
 	LINENUM		pat_lines = pch_ptrn_lines() - fuzz;
 	const char	*ilineptr;
-	const char 	*plineptr;
-	short 		plinelen;
+	const char	*plineptr;
+	short		plinelen;
 
 	for (iline = base + offset + fuzz; pline <= pat_lines; pline++, iline++) {
 		ilineptr = ifetch(iline, offset >= 0);

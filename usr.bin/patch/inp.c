@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.19 2003/07/28 18:35:36 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.20 2003/07/28 19:15:34 deraadt Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.19 2003/07/28 18:35:36 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.20 2003/07/28 19:15:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ plan_a(const char *filename)
 	int		ifd, statfailed;
 	char		*s, lbuf[MAXLINELEN];
 	LINENUM		iline;
-	struct stat 	filestat;
+	struct stat	filestat;
 
 	if (filename == NULL || *filename == '\0')
 		return FALSE;
@@ -220,8 +220,7 @@ plan_a(const char *filename)
 	i_ptr[iline] = i_womp;
 	for (s = i_womp; *s; s++) {
 		if (*s == '\n')
-			i_ptr[++iline] = s + 1;	/* these are NOT null
-						 * terminated */
+			i_ptr[++iline] = s + 1;	/* these are NOT NUL terminated */
 	}
 	input_lines = iline - 1;
 
