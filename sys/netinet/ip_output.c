@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.147 2002/05/31 20:58:25 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.148 2002/06/04 21:48:14 jasoni Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -171,10 +171,10 @@ ip_output(struct mbuf *m0, ...)
 	 * though (e.g., traceroute) have a source address of zeroes.
 	 */
 	if (ip->ip_src.s_addr == INADDR_ANY) {
-	        donerouting = 1;
+		donerouting = 1;
 
-	        if (ro == 0) {
-		        ro = &iproute;
+		if (ro == 0) {
+			ro = &iproute;
 			bzero((caddr_t)ro, sizeof (*ro));
 		}
 
@@ -186,12 +186,12 @@ ip_output(struct mbuf *m0, ...)
 		 */
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
-		        RTFREE(ro->ro_rt);
+			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
 
 		if (ro->ro_rt == 0) {
-		        dst->sin_family = AF_INET;
+			dst->sin_family = AF_INET;
 			dst->sin_len = sizeof(*dst);
 			dst->sin_addr = ip->ip_dst;
 		}
@@ -200,7 +200,7 @@ ip_output(struct mbuf *m0, ...)
 		 * If routing to interface only, short-circuit routing lookup.
 		 */
 		if (flags & IP_ROUTETOIF) {
-		        if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
+			if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
 			    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
 			    ipstat.ips_noroute++;
 			    error = ENETUNREACH;
@@ -211,11 +211,11 @@ ip_output(struct mbuf *m0, ...)
 			mtu = ifp->if_mtu;
 			ip->ip_ttl = 1;
 		} else {
-		        if (ro->ro_rt == 0)
-			        rtalloc(ro);
+			if (ro->ro_rt == 0)
+				rtalloc(ro);
 
 			if (ro->ro_rt == 0) {
-			        ipstat.ips_noroute++;
+				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
 			}
@@ -227,12 +227,12 @@ ip_output(struct mbuf *m0, ...)
 			ro->ro_rt->rt_use++;
 
 			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			        dst = satosin(ro->ro_rt->rt_gateway);
+				dst = satosin(ro->ro_rt->rt_gateway);
 		}
 
 		/* Set the source IP address */
-                if (!IN_MULTICAST(ip->ip_dst.s_addr))
-		        ip->ip_src = ia->ia_addr.sin_addr;
+		if (!IN_MULTICAST(ip->ip_dst.s_addr))
+			ip->ip_src = ia->ia_addr.sin_addr;
 	}
 
 #ifdef IPSEC
@@ -261,23 +261,23 @@ ip_output(struct mbuf *m0, ...)
 		    IPSP_DIRECTION_OUT, NULL, inp);
 
 	if (tdb == NULL) {
-	        splx(s);
+		splx(s);
 
 		if (error == 0) {
-		        /*
+			/*
 			 * No IPsec processing required, we'll just send the
 			 * packet out.
 			 */
-		        sproto = 0;
+			sproto = 0;
 
 			/* Fall through to routing/multicast handling */
 		} else {
-		        /*
+			/*
 			 * -EINVAL is used to indicate that the packet should
 			 * be silently dropped, typically because we've asked
 			 * key management for an SA.
 			 */
-		        if (error == -EINVAL) /* Should silently drop packet */
+			if (error == -EINVAL) /* Should silently drop packet */
 			  error = 0;
 
 			m_freem(m);
@@ -302,8 +302,8 @@ ip_output(struct mbuf *m0, ...)
 			}
 		}
 
-	        /* We need to do IPsec */
-	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
+		/* We need to do IPsec */
+		bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
 		splx(s);
@@ -316,7 +316,7 @@ ip_output(struct mbuf *m0, ...)
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum &=
 			    ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
-		}	
+		}
 
 		/* If it's not a multicast packet, try to fast-path */
 		if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
@@ -329,8 +329,8 @@ ip_output(struct mbuf *m0, ...)
 #endif /* IPSEC */
 
 	if (donerouting == 0) {
-	        if (ro == 0) {
-		        ro = &iproute;
+		if (ro == 0) {
+			ro = &iproute;
 			bzero((caddr_t)ro, sizeof (*ro));
 		}
 
@@ -342,12 +342,12 @@ ip_output(struct mbuf *m0, ...)
 		 */
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
-		        RTFREE(ro->ro_rt);
+			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
 
 		if (ro->ro_rt == 0) {
-		        dst->sin_family = AF_INET;
+			dst->sin_family = AF_INET;
 			dst->sin_len = sizeof(*dst);
 			dst->sin_addr = ip->ip_dst;
 		}
@@ -356,7 +356,7 @@ ip_output(struct mbuf *m0, ...)
 		 * If routing to interface only, short-circuit routing lookup.
 		 */
 		if (flags & IP_ROUTETOIF) {
-		        if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
+			if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(dst)))) == 0 &&
 			    (ia = ifatoia(ifa_ifwithnet(sintosa(dst)))) == 0) {
 			    ipstat.ips_noroute++;
 			    error = ENETUNREACH;
@@ -367,11 +367,11 @@ ip_output(struct mbuf *m0, ...)
 			mtu = ifp->if_mtu;
 			ip->ip_ttl = 1;
 		} else {
-		        if (ro->ro_rt == 0)
-			        rtalloc(ro);
+			if (ro->ro_rt == 0)
+				rtalloc(ro);
 
 			if (ro->ro_rt == 0) {
-			        ipstat.ips_noroute++;
+				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
 			}
@@ -383,7 +383,7 @@ ip_output(struct mbuf *m0, ...)
 			ro->ro_rt->rt_use++;
 
 			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			        dst = satosin(ro->ro_rt->rt_gateway);
+				dst = satosin(ro->ro_rt->rt_gateway);
 		}
 
 		/* Set the source IP address */
@@ -424,7 +424,7 @@ ip_output(struct mbuf *m0, ...)
 		 */
 		if ((((m->m_flags & M_MCAST) &&
 		      (ifp->if_flags & IFF_MULTICAST) == 0) ||
-		     ((m->m_flags & M_BCAST) && 
+		     ((m->m_flags & M_BCAST) &&
 		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (sproto == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
@@ -530,20 +530,20 @@ ip_output(struct mbuf *m0, ...)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
-        /*
-         * If we're doing Path MTU discovery, we need to set DF unless
-         * the route's MTU is locked.
+	/*
+	 * If we're doing Path MTU discovery, we need to set DF unless
+	 * the route's MTU is locked.
 	 */
 	if ((flags & IP_MTUDISC) && ro && ro->ro_rt &&
 	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= IP_DF;
-		
+
 #ifdef IPSEC
 	/*
 	 * Check if the packet needs encapsulation.
 	 */
 	if (sproto != 0) {
-	        s = splnet();
+		s = splnet();
 
 		/*
 		 * Packet filter
@@ -578,7 +578,7 @@ sendit:
 		    (u_int16_t)ip->ip_len > tdb->tdb_mtu &&
 		    tdb->tdb_mtutimeout > time.tv_sec) {
 			struct rtentry *rt = NULL;
-			
+
 			icmp_mtu = tdb->tdb_mtu;
 			splx(s);
 
@@ -1060,7 +1060,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			optval = *mtod(m, int *);
 
-			if (optval < IPSEC_LEVEL_BYPASS || 
+			if (optval < IPSEC_LEVEL_BYPASS ||
 			    optval > IPSEC_LEVEL_UNIQUE) {
 				error = EINVAL;
 				break;
@@ -1083,7 +1083,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			switch (optname) {
 			case IP_AUTH_LEVEL:
-			        if (optval < ipsec_auth_default_level &&
+				if (optval < ipsec_auth_default_level &&
 				    suser(p->p_ucred, &p->p_acflag)) {
 					error = EACCES;
 					break;
@@ -1092,7 +1092,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 
 			case IP_ESP_TRANS_LEVEL:
-			        if (optval < ipsec_esp_trans_default_level &&
+				if (optval < ipsec_esp_trans_default_level &&
 				    suser(p->p_ucred, &p->p_acflag)) {
 					error = EACCES;
 					break;
@@ -1101,7 +1101,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 
 			case IP_ESP_NETWORK_LEVEL:
-			        if (optval < ipsec_esp_network_default_level &&
+				if (optval < ipsec_esp_network_default_level &&
 				    suser(p->p_ucred, &p->p_acflag)) {
 					error = EACCES;
 					break;
@@ -1109,9 +1109,9 @@ ip_ctloutput(op, so, level, optname, mp)
 				inp->inp_seclevel[SL_ESP_NETWORK] = optval;
 				break;
 			case IP_IPCOMP_LEVEL:
-			        if (optval < ipsec_ipcomp_default_level &&
+				if (optval < ipsec_ipcomp_default_level &&
 				    suser(p->p_ucred, &p->p_acflag)) {
-				        error = EACCES;
+					error = EACCES;
 					break;
 				}
 				inp->inp_seclevel[SL_IPCOMP] = optval;
@@ -1378,7 +1378,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				optval = inp->inp_seclevel[SL_ESP_NETWORK];
 				break;
 			case IP_IPCOMP_LEVEL:
-			        optval = inp->inp_seclevel[SL_IPCOMP];
+				optval = inp->inp_seclevel[SL_IPCOMP];
 				break;
 			}
 			*mtod(m, int *) = optval;
