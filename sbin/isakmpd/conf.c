@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.74 2004/12/14 10:17:28 mcbride Exp $	 */
+/* $OpenBSD: conf.c,v 1.75 2005/03/10 17:30:31 cloder Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -708,7 +708,7 @@ conf_get_list(char *section, char *tag)
 {
 	char	*liststr = 0, *p, *field, *t;
 	struct conf_list *list = 0;
-	struct conf_list_node *node;
+	struct conf_list_node *node = 0;
 
 	list = malloc(sizeof *list);
 	if (!list)
@@ -747,6 +747,8 @@ conf_get_list(char *section, char *tag)
 	return list;
 
 cleanup:
+	if (node)
+		free(node);
 	if (list)
 		conf_free_list(list);
 	if (liststr)
@@ -758,7 +760,7 @@ struct conf_list *
 conf_get_tag_list(char *section)
 {
 	struct conf_list *list = 0;
-	struct conf_list_node *node;
+	struct conf_list_node *node = 0;
 	struct conf_binding *cb;
 
 	list = malloc(sizeof *list);
@@ -781,6 +783,8 @@ conf_get_tag_list(char *section)
 	return list;
 
 cleanup:
+	if (node)
+		free(node);
 	if (list)
 		conf_free_list(list);
 	return 0;
