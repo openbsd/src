@@ -1,3 +1,4 @@
+|	$OpenBSD: oc_cksum.s,v 1.2 1996/05/29 21:05:52 niklas Exp $
 |	$NetBSD: oc_cksum.s,v 1.4 1994/10/26 07:51:13 cgd Exp $
 
 | Copyright (c) 1988 Regents of the University of California.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fpu_trig.c,v 1.2 1996/05/29 21:05:17 niklas Exp $	*/
 /*	$NetBSD: fpu_trig.c,v 1.1 1995/11/03 04:47:20 briggs Exp $	*/
 
 /*

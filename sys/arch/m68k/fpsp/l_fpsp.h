@@ -1,3 +1,4 @@
+*	$OpenBSD: l_fpsp.h,v 1.2 1996/05/29 21:05:30 niklas Exp $
 *	$NetBSD: l_fpsp.h,v 1.2 1994/10/26 07:49:14 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
