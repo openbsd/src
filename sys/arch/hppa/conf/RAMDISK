@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.30 2004/04/06 18:24:07 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.31 2004/04/23 05:51:39 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -42,11 +42,11 @@ option		RAMDISK_HOOKS
 option		MINIROOTSIZE=5120
 config	bsd	root on rd0a swap on rd0b # and sd0b
 
-mainbus0 at root		# root "bus"
+mainbus0 at root		# root bus
 
 mem*	at mainbus0 flags 0x0000	# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
-power0	at mainbus0		# power/fail manager (iv 2)
+power0	at mainbus0		# power/fail manager (iv 30)
 cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
 #pmu*	at mainbus0 irq 29	# HP PA-RISC perfomance monitor unit
@@ -63,8 +63,8 @@ mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 dino*	at phantomas? irq 26	# PCI bus bridge
 pci*	at dino?
 option	PCIVERBOSE
-#pckbc0	at dino? irq 23
-#com3	at dino? irq 21
+#pckbc0	at dino? irq 9
+com1	at dino? irq 11
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
