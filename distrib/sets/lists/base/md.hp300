@@ -2212,3 +2212,4 @@
 ./usr/mdec/rbootd/SYS_UBOOT
 ./usr/mdec/sdboot
 ./usr/mdec/uboot.lif
+./usr/sbin/wsconscfg
