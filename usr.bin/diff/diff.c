@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.24 2003/07/06 22:02:36 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.25 2003/07/06 22:17:21 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.24 2003/07/06 22:02:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.25 2003/07/06 22:17:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,7 @@ char	*start, *ifdefname, *diffargs;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 
-#define	OPTIONS	"abC:cD:efhinNPrS:stU:uwX:x:"
+#define	OPTIONS	"abC:cD:efhinNPqrS:stU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
@@ -56,6 +56,7 @@ static struct option longopts[] = {
 	{ "new-file",			no_argument,		0,	'N' },
 	{ "rcs",			no_argument,		0,	'n' },
 	{ "unidirectional-new-file",	no_argument,		0,	'P' },
+	{ "brief",			no_argument,		0,	'q' },
 	{ "recursive",			no_argument,		0,	'r' },
 	{ "report-identical-files",	no_argument,		0,	's' },
 	{ "starting-file",		required_argument,	0,	'S' },
@@ -127,6 +128,9 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			rflag = 1;
+			break;
+		case 'q':
+			format = D_BRIEF;
 			break;
 		case 'S':
 			start = optarg;
@@ -314,11 +318,11 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-bitw] [-c | -e | -f | -n | -u ] file1 file2\n"
-	    "       diff [-bitw] -C number file1 file2\n"
-	    "       diff [-bitw] -D string file1 file2\n"
-	    "       diff [-bitw] -U number file1 file2\n"
-	    "       diff [-biNPwt] [-c | -e | -f | -n | -u ] [-r] [-s] [-S name]"
+	    "usage: diff [-biqtw] [-c | -e | -f | -n | -u ] file1 file2\n"
+	    "       diff [-biqtw] -C number file1 file2\n"
+	    "       diff [-biqtw] -D string file1 file2\n"
+	    "       diff [-biqtw] -U number file1 file2\n"
+	    "       diff [-biNPqwt] [-c | -e | -f | -n | -u ] [-r] [-s] [-S name]"
 	    " [-X file]\n            [-x pattern] dir1 dir2\n");
 
 	exit(2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.16 2003/07/06 22:02:36 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.17 2003/07/06 22:17:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,6 +42,7 @@
 #define	D_IFDEF		4	/* Diff with merged #ifdef's */
 #define	D_NREVERSE	5	/* Reverse ed script with numbered
 				   lines and no trailing . */
+#define	D_BRIEF		6	/* Say if the files differ */
 
 /*
  * Output flags

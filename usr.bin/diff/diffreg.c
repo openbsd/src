@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.27 2003/07/06 20:48:59 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.28 2003/07/06 22:17:21 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.27 2003/07/06 20:48:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.28 2003/07/06 22:17:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -340,6 +340,10 @@ notsame:
 	 * Files certainly differ at this point; set status accordingly
 	 */
 	status |= 1;
+	if (format == D_BRIEF) {
+		printf("Files %s and %s differ\n", file1, file2);
+		goto closem;
+	}
 	if (flags & D_HEADER) {
 		if (format == D_EDIT)
 			printf("ed - %s << '-*-END-*-'\n", basename(file1));

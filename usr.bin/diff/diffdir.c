@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.20 2003/07/06 22:02:36 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.21 2003/07/06 22:17:21 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.20 2003/07/06 22:02:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.21 2003/07/06 22:17:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -114,7 +114,7 @@ diffdir(char *p1, char *p2)
 			if (Nflag)
 				diffit(dent1, path1, dirlen1, path2, dirlen2);
 			else if (format == D_NORMAL || format == D_CONTEXT ||
-			    format == D_UNIFIED)
+			    format == D_UNIFIED || format == D_BRIEF)
 				/* XXX GNU diff always prints this XXX */
 				printf("Only in %.*s: %s\n", (int)(dirlen1 - 1),
 				    path1, dent1->d_name);
@@ -124,7 +124,7 @@ diffdir(char *p1, char *p2)
 			if (Nflag || Pflag)
 				diffit(dent2, path1, dirlen1, path2, dirlen2);
 			else if (format == D_NORMAL || format == D_CONTEXT ||
-			    format == D_UNIFIED)
+			    format == D_UNIFIED || format == D_BRIEF)
 				/* XXX GNU diff always prints this XXX */
 				printf("Only in %.*s: %s\n", (int)(dirlen2 - 1),
 				    path2, dent2->d_name);
