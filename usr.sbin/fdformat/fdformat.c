@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.1 1996/06/20 08:22:46 downsj Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.2 1996/06/28 00:53:38 downsj Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -46,15 +46,19 @@
 #include <fcntl.h>
 #include <strings.h>
 #include <ctype.h>
+#include <err.h>
 
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <machine/ioctl_fd.h>
 
+extern const char *__progname;
+
 static void
-format_track(int fd, int cyl, int secs, int head, int rate,
-             int gaplen, int secsize, int fill,int interleave)
+format_track(fd, cyl, secs, head, rate, gaplen, secsize, fill, interleave)
+	int fd, cyl, secs, head, rate, gaplen, secsize;
+	int fill, interleave;
 {
         struct fd_formb f;
         register int i,j;
@@ -82,21 +86,20 @@ format_track(int fd, int cyl, int secs, int head, int rate,
                 f.fd_formb_secno(i) = il[i+1];
                 f.fd_formb_secsize(i) = secsize;
         }
-        if(ioctl(fd, FD_FORM, (caddr_t)&f) < 0) {
-                perror("\nfdformat: ioctl(FD_FORM)");
-                exit(1);
-        }
+        if(ioctl(fd, FD_FORM, (caddr_t)&f) < 0)
+		err(1, "FD_FORM");
 }
 
 static int
-verify_track(int fd, int track, int tracksize)
+verify_track(fd, track, tracksize)
+	int fd, track, tracksize;
 {
         static char *buf = 0;
         static int bufsz = 0;
         int fdopts = -1, ofdopts, rv = 0;
 
         if (ioctl(fd, FD_GOPTS, &fdopts) < 0)
-                perror("warning: ioctl(FD_GOPTS)");
+		warn("FD_GOPTS");
         else {
                 ofdopts = fdopts;
                 fdopts |= FDOPT_NORETRY;
@@ -126,31 +129,16 @@ verify_track(int fd, int track, int tracksize)
         return (rv);
 }
 
-static const char *
-makename(const char *arg)
-{
-        static char namebuff[20];       /* big enough for "/dev/rfd0a"... */
-
-        memset(namebuff, 0, 20);
-        if(*arg == '\0') /* ??? */
-                return arg;
-        if(*arg == '/')  /* do not convert absolute pathnames */
-                return arg;
-        strcpy(namebuff, "/dev/r");
-        strncat(namebuff, arg, 3);
-        return namebuff;
-}
-
 static void
-usage (void)
+usage ()
 {
-        printf("Usage:\n\tfdformat [-q] [-n | -v] [-f #] [-c #] [-s #] [-h #]\n");
+        printf("Usage:\n\t%s [-q] [-n | -v] [-c #] [-s #] [-h #]\n",
+		__progname);
         printf("\t\t [-r #] [-g #] [-i #] [-S #] [-F #] [-t #] devname\n");
         printf("Options:\n");
         printf("\t-q\tsupress any normal output, don't ask for confirmation\n");
         printf("\t-n\tdon't verify floppy after formatting\n");
         printf("\t-v\tdon't format, verify only\n");
-        printf("\t-f #\tspecify desired floppy capacity, in kilobytes;\n");
         printf("\t\tvalid choices are 360, 720, 800, 820, 1200, 1440, 1480, 1720\n");
         printf("\tdevname\tthe full name of floppy device or in short form fd0, fd1\n");
         printf("Obscure options:\n");
@@ -163,11 +151,11 @@ usage (void)
         printf("\t-S #\tspecify sector size, 0=128, 1=256, 2=512 bytes\n");
         printf("\t-F #\tspecify fill byte\n");
         printf("\t-t #\tnumber of steps per track\n");
-        exit(2);
+        exit(1);
 }
 
 static int
-yes (void)
+yes ()
 {
         char reply [256], *p;
 
@@ -187,13 +175,15 @@ yes (void)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
         int cyls = -1, secs = -1, heads = -1, intleave = -1;
         int rate = -1, gaplen = -1, secsize = -1, steps = -1;
         int fill = 0xf6, quiet = 0, verify = 1, verify_only = 0;
         int fd, c, track, error, tracks_per_dot, bytes_per_track, errs;
-        const char *devname;
+        char *devname;
         struct fd_type fdt;
 
         while((c = getopt(argc, argv, "c:s:h:r:g:S:F:t:i:qvn")) != -1)
@@ -254,17 +244,12 @@ main(int argc, char **argv)
         if(optind != argc - 1)
                 usage();
 
-        devname = makename(argv[optind]);
+	fd = opendev(argv[optind], O_RDWR, 0, &devname);
+	if (fd < 0)
+		err(1, devname);
 
-        if((fd = open(devname, O_RDWR)) < 0) {
-                perror(devname);
-                exit(1);
-        }
-
-        if(ioctl(fd, FD_GTYPE, &fdt) < 0) {
-                fprintf(stderr, "fdformat: not a floppy disk: %s\n", devname);
-                exit(1);
-        }
+        if(ioctl(fd, FD_GTYPE, &fdt) < 0)
+		errx(1, "not a floppy disk: %s", devname);
 
         switch(rate) {
         case -1:  break;
@@ -272,16 +257,14 @@ main(int argc, char **argv)
         case 300: fdt.rate = FDC_300KBPS; break;
         case 500: fdt.rate = FDC_500KBPS; break;
         default:
-                fprintf(stderr, "fdformat: invalid transfer rate: %d\n", rate);
-                exit(2);
+		errx(1, "invalid transfer rate: %d", rate);
         }
 
         if (cyls >= 0)    fdt.tracks = cyls;
         if (secs >= 0)    fdt.sectrac = secs;
-        if (fdt.sectrac > FD_MAX_NSEC) {
-                fprintf(stderr, "fdformat: too many sectors per track, max value is %d\n", FD_MAX_NSEC);
-                exit(2);
-        }
+        if (fdt.sectrac > FD_MAX_NSEC)
+		errx(1, "too many sectors per track, max value is %d",
+			FD_MAX_NSEC);
         if (heads >= 0)   fdt.heads = heads;
         if (gaplen >= 0)  fdt.gap2 = gaplen;
         if (secsize >= 0) fdt.secsize = secsize;
@@ -302,7 +285,7 @@ main(int argc, char **argv)
                         devname);
                 if(! yes ()) {
                         printf("Not confirmed.\n");
-                        return 0;
+                        exit(0);
                 }
         }
 
@@ -347,20 +330,5 @@ main(int argc, char **argv)
         if(!quiet)
                 printf(" done.\n");
 
-        return errs;
+        exit(errs);
 }
-/*
- * Local Variables:
- *  c-indent-level:               8
- *  c-continued-statement-offset: 8
- *  c-continued-brace-offset:     0
- *  c-brace-offset:              -8
- *  c-brace-imaginary-offset:     0
- *  c-argdecl-indent:             8
- *  c-label-offset:              -8
- *  c++-hanging-braces:           1
- *  c++-access-specifier-offset: -8
- *  c++-empty-arglist-indent:     8
- *  c++-friend-offset:            0
- * End:
- */
