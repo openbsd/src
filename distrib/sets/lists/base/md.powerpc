@@ -3,9 +3,9 @@
 ./sbin/fdisk
 ./usr/include/powerpc
 ./usr/include/readline
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.7
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.7/2.95.3
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.7/2.95.3/include
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.8
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.8/2.95.3
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.8/2.95.3/include
 ./usr/libdata/perl5/powerpc-openbsd
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/.packlist
@@ -1644,10 +1644,10 @@
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
-./usr/powerpc-unknown-openbsd2.7
-./usr/powerpc-unknown-openbsd2.7/bin
-./usr/powerpc-unknown-openbsd2.7/lib
-./usr/powerpc-unknown-openbsd2.7/lib/ldscripts
+./usr/powerpc-unknown-openbsd2.8
+./usr/powerpc-unknown-openbsd2.8/bin
+./usr/powerpc-unknown-openbsd2.8/lib
+./usr/powerpc-unknown-openbsd2.8/lib/ldscripts
 ./usr/share/info/as.info
 ./usr/share/info/as.info-1
 ./usr/share/info/as.info-2
