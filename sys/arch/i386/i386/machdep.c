@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.286 2004/03/17 00:59:54 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.287 2004/03/26 04:00:59 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3503,22 +3503,26 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	bus_size_t map_size;
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
-	if (endpa <= pa)
+	if (endpa <= pa && endpa != 0)
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_valloc(kernel_map, endpa - pa);
+	map_size = endpa - pa;
+
+	va = uvm_km_valloc(kernel_map, map_size);
 	if (va == 0)
 		return (ENOMEM);
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
-	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+	for (; map_size > 0;
+	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/*
