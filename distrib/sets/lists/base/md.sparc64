@@ -30,7 +30,7 @@
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd3.3/2.95.3/include
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd3.3/2.95.3/specs
 ./usr/lib/libasn1.so.13.0
-./usr/lib/libc.so.30.0
+./usr/lib/libc.so.30.1
 ./usr/lib/libcom_err.so.13.0
 ./usr/lib/libcrypto.so.10.0
 ./usr/lib/libcurses++.so.2.0
@@ -54,7 +54,7 @@
 ./usr/lib/libpanel.so.2.0
 ./usr/lib/libpcap.so.2.0
 ./usr/lib/libperl.so.8.0
-./usr/lib/libpthread.so.2.0
+./usr/lib/libpthread.so.2.1
 ./usr/lib/libreadline.so.1.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
@@ -761,6 +761,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/frame.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/fts.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ftw.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/PlotFile.ph

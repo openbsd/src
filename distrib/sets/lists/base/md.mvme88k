@@ -1037,6 +1037,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/frame.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/fts.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ftw.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/PlotFile.ph

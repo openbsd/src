@@ -703,6 +703,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/frame.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/fts.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ftw.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/PlotFile.ph

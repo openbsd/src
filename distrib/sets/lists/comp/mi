@@ -721,6 +721,7 @@
 ./usr/include/frame.h
 ./usr/include/fstab.h
 ./usr/include/fts.h
+./usr/include/ftw.h
 ./usr/include/g++
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/PlotFile.h
@@ -3284,6 +3285,7 @@
 ./usr/share/man/cat3/fts_open.0
 ./usr/share/man/cat3/fts_read.0
 ./usr/share/man/cat3/fts_set.0
+./usr/share/man/cat3/ftw.0
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/funopen.0
 ./usr/share/man/cat3/fwopen.0
@@ -3729,6 +3731,7 @@
 ./usr/share/man/cat3/link_field.0
 ./usr/share/man/cat3/link_fieldtype.0
 ./usr/share/man/cat3/link_ntoa.0
+./usr/share/man/cat3/llabs.0
 ./usr/share/man/cat3/localeconv.0
 ./usr/share/man/cat3/localtime.0
 ./usr/share/man/cat3/localtime_r.0
@@ -3901,6 +3904,7 @@
 ./usr/share/man/cat3/nextafter.0
 ./usr/share/man/cat3/nextafterf.0
 ./usr/share/man/cat3/nextkey.0
+./usr/share/man/cat3/nftw.0
 ./usr/share/man/cat3/nice.0
 ./usr/share/man/cat3/nl.0
 ./usr/share/man/cat3/nl_langinfo.0
@@ -4716,6 +4720,7 @@
 ./usr/share/man/cat9/FRELE.0
 ./usr/share/man/cat9/KASSERT.0
 ./usr/share/man/cat9/KDASSERT.0
+./usr/share/man/cat9/KNOTE.0
 ./usr/share/man/cat9/MALLOC.0
 ./usr/share/man/cat9/MCHTYPE.0
 ./usr/share/man/cat9/MCLGET.0
@@ -4921,6 +4926,7 @@
 ./usr/share/man/cat9/inittodr.0
 ./usr/share/man/cat9/intro.0
 ./usr/share/man/cat9/kern.0
+./usr/share/man/cat9/knote.0
 ./usr/share/man/cat9/kthread.0
 ./usr/share/man/cat9/kthread_create.0
 ./usr/share/man/cat9/kthread_create_deferred.0

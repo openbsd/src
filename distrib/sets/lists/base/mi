@@ -390,7 +390,6 @@
 ./usr/bin/s2p
 ./usr/bin/scp
 ./usr/bin/script
-./usr/bin/sdiff
 ./usr/bin/sectok
 ./usr/bin/sed
 ./usr/bin/sendbug
@@ -1442,6 +1441,7 @@
 ./usr/libexec/cvs/contrib/rcs2log
 ./usr/libexec/cvs/contrib/rcslock
 ./usr/libexec/cvs/contrib/sccs2rcs
+./usr/libexec/diff3prog
 ./usr/libexec/fingerd
 ./usr/libexec/ftp-proxy
 ./usr/libexec/ftpd
