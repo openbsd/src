@@ -748,7 +748,7 @@ if (gem_opdebug) printf("in init\n");
 
 	/* step 4. TX MAC registers & counters */
 	gem_init_regs(sc);
-	v = ETHERMTU + sizeof(struct ether_header) +
+	v = ETHERMTU + sizeof(struct ether_header) + 50 +
 #if NVLAN > 0
 	    EVL_ENCAPLEN +
 #endif
@@ -876,9 +876,9 @@ ether_cmp(a, b)
 void
 gem_init_regs(struct gem_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h;
+	u_int32_t v;
 
 	/* These regs are not cleared on reset */
 	sc->sc_inited = 0;
@@ -891,8 +891,12 @@ gem_init_regs(struct gem_softc *sc)
 
 		bus_space_write_4(t, h, GEM_MAC_MAC_MIN_FRAME, ETHER_MIN_LEN);
 		/* Max frame and max burst size */
-		bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME,
-			(ifp->if_mtu+18) | (0x2000<<16)/* Burst size */);
+		v = ((ETHERMTU + sizeof(struct ether_header) + 50 +
+#if NVLAN > 0
+		    EVL_ENCAPLEN +
+#endif
+		    0) | (0x2000<<16) /* Burst size */);
+		bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, v);
 		bus_space_write_4(t, h, GEM_MAC_PREAMBLE_LEN, 0x7);
 		bus_space_write_4(t, h, GEM_MAC_JAM_SIZE, 0x4);
 		bus_space_write_4(t, h, GEM_MAC_ATTEMPT_LIMIT, 0x10);
