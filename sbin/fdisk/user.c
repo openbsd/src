@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.7 1997/10/16 01:47:13 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.8 1997/10/16 10:35:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,6 +50,7 @@
 /* Our command table */
 static cmd_table_t cmd_table[] = {
 	{"help",   Xhelp,	"Command help list"},
+	{"manual", Xmanual,	"Show entire OpenBSD man page for fdisk"},
 	{"reinit", Xreinit,	"Re-initialize loaded MBR (to defaults)"},
 	{"disk",   Xdisk,	"Edit current drive stats"},
 	{"edit",   Xedit,	"Edit given table entry"},

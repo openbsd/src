@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.6 1997/10/16 01:47:08 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.7 1997/10/16 10:35:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -373,3 +373,22 @@ Xflag(cmd, disk, mbr, tt, offset)
 	return(CMD_DIRTY);
 }
 
+int
+Xmanual(cmd, disk, mbr, tt, offset)
+	cmd_t *cmd;
+	disk_t *disk;
+	mbr_t *mbr;
+	mbr_t *tt;
+	int offset;
+{
+	extern char manpage[];
+	FILE *f;
+
+	f = popen("/usr/bin/less", "w");
+	if (f) {
+		(void) fwrite(manpage, strlen(manpage), 1, f);
+		pclose(f);
+	}
+
+	return (CMD_CONT);
+}

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.6 1997/10/16 01:47:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/10/16 10:35:05 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -31,9 +31,14 @@
 #
 
 PROG=	fdisk 
-SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c
+SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	fdisk.8
+
+manual.c:	${.OBJDIR}/fdisk.cat8
+	(echo 'char manpage[] = "\\'; \
+	sed -e 's/$$/\\n\\/' ${.OBJDIR}/fdisk.cat8; \
+	echo '";' ) > manual.c
 
 .include <bsd.prog.mk>
