@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.624 2003/05/14 15:34:34 maja Exp 
+ *		OpenBSD: pcidevs,v 1.625 2003/05/17 21:36:24 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -818,6 +818,10 @@
 #define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 */
 
 /* AMD products */
+#define	PCI_PRODUCT_AMD_AMD64_HT	0x1100		/* AMD64 HyperTransport */
+#define	PCI_PRODUCT_AMD_AMD64_ADDR	0x1101		/* AMD64 Address Map */
+#define	PCI_PRODUCT_AMD_AMD64_DRAM	0x1102		/* AMD64 DRAM Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_MISC	0x1103		/* AMD64 Misc Cfg */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE */
 #define	PCI_PRODUCT_AMD_PCHOME_PCI	0x2001		/* 79c978 PChome-PCI LANCE */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */
@@ -854,6 +858,7 @@
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* 768 USB */
 #define	PCI_PRODUCT_AMD_8111_IDE	0x7469		/* 8111 IDE */
 #define	PCI_PRODUCT_AMD_8111_ACA	0x746d		/* 8111 AC97 Audio */
+#define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC */
 
 /* AMI */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */

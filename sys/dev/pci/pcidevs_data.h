@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.624 2003/05/14 15:34:34 maja Exp 
+ *		OpenBSD: pcidevs,v 1.625 2003/05/17 21:36:24 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -707,6 +707,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AC9100",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_HT,
+	    "AMD64 HyperTransport",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_ADDR,
+	    "AMD64 Address Map",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_DRAM,
+	    "AMD64 DRAM Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_MISC,
+	    "AMD64 Misc Cfg",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    "79c970 PCnet-PCI LANCE",
 	},
@@ -837,6 +853,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_ACA,
 	    "8111 AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_LPC,
+	    "AMD8111 LPC",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
