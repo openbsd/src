@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.88 2004/05/20 23:23:46 marco Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.89 2004/08/03 09:30:11 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.88 2004/05/20 23:23:46 marco Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.89 2004/08/03 09:30:11 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.88 2004/05/20 23:23:46 ma
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
@@ -301,6 +302,8 @@ main(int argc, char *argv[])
 			err(4, "%s", argv[1]);
 		if (getasciilabel(t, lp))
 			error = writelabel(f, bootarea, lp);
+		else
+			error = 1;
 		break;
 	case SETWRITEABLE:
 		if (!donothing) {
@@ -621,7 +624,7 @@ readmbr(int f)
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
-			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
+			    "type %02X off %u (0x%x) size %u (0x%x)\n", part,
 			    dp[part].dp_typ,
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
@@ -631,7 +634,7 @@ readmbr(int f)
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_FREEBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
-			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
+			    "type %02X off %u (0x%x) size %u (0x%x)\n", part,
 			    dp[part].dp_typ,
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
@@ -641,7 +644,7 @@ readmbr(int f)
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_NETBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
-			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
+			    "type %02X off %u (0x%x) size %u (0x%x)\n", part,
 			    dp[part].dp_typ,
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
@@ -907,19 +910,19 @@ makedisktab(FILE *f, struct disklabel *lp)
 	(void)fprintf(f, "su#%u:", lp->d_secperunit);
 
 	if (lp->d_rpm != 3600) {
-		(void)fprintf(f, "%srm#%d:", did, lp->d_rpm);
+		(void)fprintf(f, "%srm#%hu:", did, lp->d_rpm);
 		did = "";
 	}
 	if (lp->d_interleave != 1) {
-		(void)fprintf(f, "%sil#%d:", did, lp->d_interleave);
+		(void)fprintf(f, "%sil#%hu:", did, lp->d_interleave);
 		did = "";
 	}
 	if (lp->d_trackskew != 0) {
-		(void)fprintf(f, "%ssk#%d:", did, lp->d_trackskew);
+		(void)fprintf(f, "%ssk#%hu:", did, lp->d_trackskew);
 		did = "";
 	}
 	if (lp->d_cylskew != 0) {
-		(void)fprintf(f, "%scs#%d:", did, lp->d_cylskew);
+		(void)fprintf(f, "%scs#%hu:", did, lp->d_cylskew);
 		did = "";
 	}
 	if (lp->d_headswitch != 0) {
@@ -1036,12 +1039,12 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 		switch (pp->p_fstype) {
 
 		case FS_UNUSED:				/* XXX */
-			fprintf(f, "    %5d %5d %5.5s ",
+			fprintf(f, "    %5u %5u %5.5s ",
 			    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
 			break;
 
 		case FS_BSDFFS:
-			fprintf(f, "    %5d %5d %5d ",
+			fprintf(f, "    %5u %5u %5hu ",
 			    pp->p_fsize, pp->p_fsize * pp->p_frag,
 			    pp->p_cpg);
 			break;
@@ -1054,7 +1057,7 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 			if (mp[i] != NULL)
 				fprintf(f, " # %s", mp[i]);
 		} else if (lp->d_secpercyl) {
-			fprintf(f, "\t# (Cyl. %4d",
+			fprintf(f, "\t# (Cyl. %4u",
 			    pp->p_offset / lp->d_secpercyl);
 			if (pp->p_offset % lp->d_secpercyl)
 				putc('*', f);
@@ -1093,20 +1096,19 @@ display(FILE *f, struct disklabel *lp, char unit)
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
 	putc('\n', f);
-	fprintf(f, "bytes/sector: %ld\n", (long)lp->d_secsize);
-	fprintf(f, "sectors/track: %ld\n", (long)lp->d_nsectors);
-	fprintf(f, "tracks/cylinder: %ld\n", (long)lp->d_ntracks);
-	fprintf(f, "sectors/cylinder: %ld\n", (long)lp->d_secpercyl);
-	fprintf(f, "cylinders: %ld\n", (long)lp->d_ncylinders);
-	fprintf(f, "total sectors: %ld\n", (long)lp->d_secperunit);
-	fprintf(f, "rpm: %ld\n", (long)lp->d_rpm);
-	fprintf(f, "interleave: %ld\n", (long)lp->d_interleave);
-	fprintf(f, "trackskew: %ld\n", (long)lp->d_trackskew);
-	fprintf(f, "cylinderskew: %ld\n", (long)lp->d_cylskew);
-	fprintf(f, "headswitch: %ld\t\t# microseconds\n",
-	    (long)lp->d_headswitch);
-	fprintf(f, "track-to-track seek: %ld\t# microseconds\n",
-	    (long)lp->d_trkseek);
+	fprintf(f, "bytes/sector: %u\n", lp->d_secsize);
+	fprintf(f, "sectors/track: %u\n", lp->d_nsectors);
+	fprintf(f, "tracks/cylinder: %u\n", lp->d_ntracks);
+	fprintf(f, "sectors/cylinder: %u\n", lp->d_secpercyl);
+	fprintf(f, "cylinders: %u\n", lp->d_ncylinders);
+	fprintf(f, "total sectors: %u\n", lp->d_secperunit);
+	fprintf(f, "rpm: %hu\n", lp->d_rpm);
+	fprintf(f, "interleave: %hu\n", lp->d_interleave);
+	fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
+	fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
+	fprintf(f, "headswitch: %u\t\t# microseconds\n", lp->d_headswitch);
+	fprintf(f, "track-to-track seek: %u\t# microseconds\n",
+	    lp->d_trkseek);
 	fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
 		if (lp->d_drivedata[i])
@@ -1115,7 +1117,7 @@ display(FILE *f, struct disklabel *lp, char unit)
 		i = 0;
 	for (j = 0; j <= i; j++)
 		fprintf(f, "%d ", lp->d_drivedata[j]);
-	fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
+	fprintf(f, "\n\n%hu partitions:\n", lp->d_npartitions);
 	width = width_partition(lp, 0);
 	fprintf(f,
 	    "#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
@@ -1259,6 +1261,27 @@ word(char *cp)
 	return (cp);
 }
 
+/* Base the max value on the sizeof of the value we are reading */
+#define GETNUM(field, nptr, min, errstr) 				\
+	    getnum((nptr), (min),					\
+		sizeof(field) == 4 ? UINT_MAX : 			\
+		(sizeof(field) == 2 ? USHRT_MAX : UCHAR_MAX),  (errstr))
+
+u_int32_t
+getnum(char *nptr, u_int32_t min, u_int32_t max, const char **errstr)
+{
+	char *p, c;
+	u_int32_t ret;
+
+	for (p = nptr; *p != '\0' && !isspace(*p); p++)
+		;
+	c = *p;
+	*p = '\0';
+	ret = strtonum(nptr, min, max, errstr);
+	*p = c;
+	return (ret);
+}
+
 /*
  * Read an ascii label in from fd f,
  * in the same format as that put out by display(),
@@ -1268,9 +1291,11 @@ int
 getasciilabel(FILE *f, struct disklabel *lp)
 {
 	char **cpp, *cp;
+	const char *errstr;
 	struct partition *pp;
 	char *tp, *s, line[BUFSIZ];
-	int v, lineno = 0, errors = 0;
+	int lineno = 0, errors = 0;
+	u_int32_t v;
 
 	lp->d_bbsize = BBSIZE;				/* XXX */
 	lp->d_sbsize = SBSIZE;				/* XXX */
@@ -1299,8 +1324,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 					lp->d_type = cpp - dktypenames;
 					goto next;
 				}
-			v = atoi(tp);
-			if ((unsigned)v >= DKMAXTYPES)
+			v = GETNUM(lp->d_type, tp, 0, &errstr);
+			if (errstr || v >= DKMAXTYPES)
 				warnx("line %d: warning, unknown disk type: %s",
 				    lineno, tp);
 			lp->d_type = v;
@@ -1328,13 +1353,17 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			int i;
 
 			for (i = 0; (cp = tp) && *cp != '\0' && i < NDDATA;) {
-				lp->d_drivedata[i++] = atoi(cp);
+				v = GETNUM(lp->d_drivedata[i], cp, 0, &errstr);
+				if (errstr) 
+					warnx("line %d: bad drivedata %s",
+					   lineno, cp);
+				lp->d_drivedata[i++] = v;
 				tp = word(cp);
 			}
 			continue;
 		}
 		if (sscanf(cp, "%d partitions", &v) == 1) {
-			if (v == 0 || (unsigned)v > MAXPARTITIONS) {
+			if (v == 0 || v > MAXPARTITIONS) {
 				warnx("line %d: bad # of partitions", lineno);
 				lp->d_npartitions = MAXPARTITIONS;
 				errors++;
@@ -1353,8 +1382,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "bytes/sector")) {
-			v = atoi(tp);
-			if (v <= 0 || (v % 512) != 0) {
+			v = GETNUM(lp->d_secsize, tp, 1, &errstr);
+			if (errstr || (v % 512) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1362,8 +1391,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "sectors/track")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_nsectors, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1371,8 +1400,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "sectors/cylinder")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_secpercyl, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1380,8 +1409,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "tracks/cylinder")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_ntracks, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1389,8 +1418,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "cylinders")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_ncylinders, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1398,8 +1427,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "total sectors")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_secperunit, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1407,8 +1436,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "rpm")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_rpm, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1416,8 +1445,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "interleave")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			v = GETNUM(lp->d_interleave, tp, 1, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1425,8 +1454,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "trackskew")) {
-			v = atoi(tp);
-			if (v < 0) {
+			v = GETNUM(lp->d_trackskew, tp, 0, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1434,8 +1463,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "cylinderskew")) {
-			v = atoi(tp);
-			if (v < 0) {
+			v = GETNUM(lp->d_cylskew, tp, 0, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1443,8 +1472,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "headswitch")) {
-			v = atoi(tp);
-			if (v < 0) {
+			v = GETNUM(lp->d_headswitch, tp, 0, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1452,8 +1481,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "track-to-track seek")) {
-			v = atoi(tp);
-			if (v < 0) {
+			v = GETNUM(lp->d_trkseek, tp, 0, &errstr);
+			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1474,23 +1503,23 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				}
 			}
 			pp = &lp->d_partitions[part];
-#define NXTNUM(n) { \
+#define NXTNUM(n, field, errstr) { \
 	if (tp == NULL) {					\
 		warnx("line %d: too few fields", lineno);	\
 		errors++;					\
 		break;						\
 	} else							\
-		cp = tp, tp = word(cp), (n) = atoi(cp);		\
+		cp = tp, tp = word(cp), (n) = GETNUM(field, cp, 0, errstr); \
 }
-			NXTNUM(v);
-			if (v < 0) {
+			NXTNUM(v, pp->p_size, &errstr);
+			if (errstr) {
 				warnx("line %d: bad partition size: %s",
 				    lineno, cp);
 				errors++;
 			} else
 				pp->p_size = v;
-			NXTNUM(v);
-			if (v < 0) {
+			NXTNUM(v, pp->p_offset, &errstr);
+			if (errstr) {
 				warnx("line %d: bad partition offset: %s",
 				    lineno, cp);
 				errors++;
@@ -1508,10 +1537,10 @@ getasciilabel(FILE *f, struct disklabel *lp)
 					goto gottype;
 				}
 			if (isdigit(*cp))
-				v = atoi(cp);
+				v = GETNUM(pp->p_fstype, cp, 0, &errstr);
 			else
 				v = FSMAXTYPES;
-			if ((unsigned)v >= FSMAXTYPES) {
+			if (errstr || v >= FSMAXTYPES) {
 				warnx("line %d: warning, unknown filesystem type: %s",
 				    lineno, cp);
 				v = FS_UNUSED;
@@ -1523,20 +1552,20 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			case FS_UNUSED:				/* XXX */
 				if (tp == NULL)	/* ok to skip fsize/bsize */
 					break;
-				NXTNUM(pp->p_fsize);
+				NXTNUM(pp->p_fsize, pp->p_fsize, &errstr);
 				if (pp->p_fsize == 0)
 					break;
-				NXTNUM(v);
+				NXTNUM(v, v, &errstr);
 				pp->p_frag = v / pp->p_fsize;
 				break;
 
 			case FS_BSDFFS:
-				NXTNUM(pp->p_fsize);
+				NXTNUM(pp->p_fsize, pp->p_fsize, &errstr);
 				if (pp->p_fsize == 0)
 					break;
-				NXTNUM(v);
+				NXTNUM(v, v, &errstr);
 				pp->p_frag = v / pp->p_fsize;
-				NXTNUM(pp->p_cpg);
+				NXTNUM(pp->p_cpg, pp->p_cpg, &errstr);
 				break;
 
 			default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.93 2003/12/29 19:51:34 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.94 2004/08/03 09:30:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.93 2003/12/29 19:51:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.94 2004/08/03 09:30:12 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -809,15 +809,15 @@ editor_display(struct disklabel *lp, char **mp, u_int32_t *freep, char unit)
 	printf("type: %s\n", dktypenames[lp->d_type]);
 	printf("disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
 	printf("label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
-	printf("bytes/sector: %ld\n", (long)lp->d_secsize);
-	printf("sectors/track: %ld\n", (long)lp->d_nsectors);
-	printf("tracks/cylinder: %ld\n", (long)lp->d_ntracks);
-	printf("sectors/cylinder: %ld\n", (long)lp->d_secpercyl);
-	printf("cylinders: %ld\n", (long)lp->d_ncylinders);
-	printf("total sectors: %ld\n", (long)lp->d_secperunit);
+	printf("bytes/sector: %u\n", lp->d_secsize);
+	printf("sectors/track: %u\n", lp->d_nsectors);
+	printf("tracks/cylinder: %u\n", lp->d_ntracks);
+	printf("sectors/cylinder: %u\n", lp->d_secpercyl);
+	printf("cylinders: %u\n", lp->d_ncylinders);
+	printf("total sectors: %u\n", lp->d_secperunit);
 	printf("free sectors: %u\n", *freep);
-	printf("rpm: %ld\n", (long)lp->d_rpm);
-	printf("\n%d partitions:\n", lp->d_npartitions);
+	printf("rpm: %hu\n", lp->d_rpm);
+	printf("\n%hu partitions:\n", lp->d_npartitions);
 	width = width_partition(lp, unit);
 	printf("#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
 		width, width, "size", width, width, "offset");
