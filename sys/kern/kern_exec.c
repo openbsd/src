@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.76 2003/03/09 01:27:50 millert Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.77 2003/04/14 04:53:50 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -732,7 +732,7 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 	}
 
 	/* Just a hint to uvm_mmap where to put it. */
-	p->p_sigcode = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	p->p_sigcode = uvm_map_hint(p, VM_PROT_READ|VM_PROT_EXECUTE);
 	uao_reference(e->e_sigobject);
 	if (uvm_map(&p->p_vmspace->vm_map, &p->p_sigcode, round_page(sz),
 	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,

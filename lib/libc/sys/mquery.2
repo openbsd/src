@@ -1,0 +1,127 @@
+.\"	$OpenBSD: mquery.2,v 1.1 2003/04/14 04:53:50 art Exp $
+.\"
+.\" Copyright (c) 2003 Artur Grabowski <art@openbsd.org>
+.\" All rights reserved. 
+.\"
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+.\"
+.Dd April 2, 2003
+.Dt MQUERY 2
+.Os
+.Sh NAME
+.Nm mquery
+.Nd provide mapping hints to applications
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/mman.h>
+.Ft int
+.Fn mquery "int flags" "void **addr" "size_t size" "int fd" "off_t off"
+.Sh DESCRIPTION
+The
+.Nm mqeury
+system call checks the existing memory mappings of a process and returns
+hints to the caller about where to put a memory mapping.
+This hint can be later used when performing memory mappings with the
+.Fn mmap
+system call with
+.Dv MAP_FIXED
+in the flags.
+The
+.Fa addr
+argument should point to a memory location that stores a pointer
+which is used both as an input argument where the caller specifies the
+preferred address and as an output of the resulting hint.
+The
+.Fa size
+argument specifies the requested size of the memory area the caller
+is looking for.
+The
+.Fa fd
+and
+.Fa off
+arguments specify the file that will be mapped and the offset in it,
+this is the same as the corresponding arguments to
+.Fn mmap .
+.Pp
+The behavior of the function depends on the
+.Fa flags
+argument.
+If set to
+.Dv MAP_FIXED
+the pointer
+.Fa *addr
+is used as a fixed hint and
+.Fn mquery
+will return \-1 and set
+.Va errno
+to
+.Dv ENOMEM
+if there is not
+.Fa size
+bytes free after that address.
+Otherwise it will return 0 and
+.Fa *addr
+will not be changed.
+If no flags are set
+.Fn mquery
+will use
+.Fa *addr
+as a starting point in memory and will search forward to find
+a memory area with
+.Fa size
+bytes free and that will be suitable for creating a mapping for the
+file and offset specified in the
+.Fa fd
+and
+.Fa off
+arguments.
+When no such area can be found
+.Fn mquery
+will return \-1 and set
+.Va errno
+to
+.Dv ENOMEM .
+.Sh RETURN VALUES
+When a memory range satisfying the request is found
+.Fn mquery
+returns 0.
+Otherwise, \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn mquery
+will fail if:
+.Bl -tag -width ENOMEM
+.It Bq Er ENOMEM
+.Dv MAP_FIXED
+was specified and the requested memory area is unavailable.
+.It Bq Er ENOMEM
+There was not enough memory left after the hint specified.
+.It Bq Er EBADF
+.Fa fd
+is not a valid open file descriptor.
+.Sh SEE ALSO
+.Xr mmap 2
+.Sh HISTORY
+The
+.Fn mquery
+function first appeared in
+.Ox 3.4 .

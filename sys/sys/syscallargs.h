@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.60 2003/01/30 03:32:44 millert Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.61 2003/04/14 04:53:50 art Exp $	*/
 
 /*
  * System call argument lists.
@@ -1203,6 +1203,14 @@ struct sys_setresgid_args {
 	syscallarg(gid_t) sgid;
 };
 
+struct sys_mquery_args {
+	syscallarg(int) flags;
+	syscallarg(void **) addr;
+	syscallarg(size_t) size;
+	syscallarg(int) fd;
+	syscallarg(off_t) off;
+};
+
 /*
  * System call prototypes.
  */
@@ -1492,3 +1500,4 @@ int	sys_getresuid(struct proc *, void *, register_t *);
 int	sys_setresuid(struct proc *, void *, register_t *);
 int	sys_getresgid(struct proc *, void *, register_t *);
 int	sys_setresgid(struct proc *, void *, register_t *);
+int	sys_mquery(struct proc *, void *, register_t *);

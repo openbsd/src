@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.58 2003/01/30 03:32:44 millert Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.59 2003/04/14 04:53:50 art Exp $	*/
 
 /*
  * System call numbers.
@@ -668,4 +668,7 @@
 /* syscall: "setresgid" ret: "int" args: "gid_t" "gid_t" "gid_t" */
 #define	SYS_setresgid	284
 
-#define	SYS_MAXSYSCALL	285
+/* syscall: "mquery" ret: "int" args: "int" "void **" "size_t" "int" "off_t" */
+#define	SYS_mquery	285
+
+#define	SYS_MAXSYSCALL	286

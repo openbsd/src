@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.59 2003/01/30 03:32:44 millert Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.60 2003/04/14 04:53:50 art Exp $	*/
 
 /*
  * System call names.
@@ -380,4 +380,5 @@ char *syscallnames[] = {
 	"setresuid",			/* 282 = setresuid */
 	"getresgid",			/* 283 = getresgid */
 	"setresgid",			/* 284 = setresgid */
+	"mquery",			/* 285 = mquery */
 };

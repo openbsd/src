@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.59 2003/01/30 15:32:44 millert Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.60 2003/04/14 04:53:50 art Exp $	*/
 
 /*
  * System call switch table.
@@ -746,5 +746,7 @@ struct sysent sysent[] = {
 	    sys_getresgid },			/* 283 = getresgid */
 	{ 3, s(struct sys_setresgid_args),
 	    sys_setresgid },			/* 284 = setresgid */
+	{ 5, s(struct sys_mquery_args),
+	    sys_mquery },			/* 285 = mquery */
 };
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.64 2003/01/31 21:47:46 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.65 2003/04/14 04:53:50 art Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -21,7 +21,7 @@ DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mmap.c ptrace.c semctl.c truncate.c \
+SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
 	timer_settime.c pread.c preadv.c pwrite.c pwritev.c
 
@@ -216,8 +216,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 issetugid.2 ioctl.2 \
 	kill.2 kqueue.2 ktrace.2 link.2 \
-	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
-	minherit.2 mlock.2 mlockall.2 \
+	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 \
+	mquery.2 mincore.2 minherit.2 mlock.2 mlockall.2 \
 	mmap.2 mount.2 mprotect.2 msync.2 munmap.2 nanosleep.2 \
 	nfssvc.2 open.2 pathconf.2 \
 	pipe.2 profil.2 poll.2 ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 \

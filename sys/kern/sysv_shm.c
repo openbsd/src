@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.33 2003/01/07 00:34:41 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.34 2003/04/14 04:53:50 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -273,8 +273,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 	} else {
 		/* This is just a hint to uvm_map() about where to put it. */
-		attach_va = round_page((vaddr_t)p->p_vmspace->vm_taddr +
-		    MAXTSIZ + MAXDSIZ);
+		attach_va = uvm_map_hint(p, prot);
 	}
 	shm_handle = shmseg->shm_internal;
 	uao_reference(shm_handle->shm_object);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.56 2002/12/09 02:35:21 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.57 2003/04/14 04:53:51 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1069,6 +1069,16 @@ uvm_map_spacefits(vm_map_t map, vaddr_t *phint, vsize_t length,
 		return (FALSE);
 	
 	return (TRUE);
+}
+
+/*
+ * uvm_map_hint: return the beginning of the best area suitable for
+ * creating a new mapping with "prot" protection.
+ */
+vaddr_t
+uvm_map_hint(struct proc *p, vm_prot_t prot)
+{
+	return (round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ));
 }
 
 /*
@@ -3587,7 +3597,6 @@ uvmspace_fork(vm1)
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 	return(vm2);    
 }
-
 
 #if defined(DDB)
 

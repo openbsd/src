@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.52 2003/01/30 03:29:49 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.53 2003/04/14 04:53:50 art Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -570,3 +570,5 @@
 			    gid_t *sgid); }
 284	STD		{ int sys_setresgid(gid_t rgid, gid_t egid, \
 			    gid_t sgid); }
+285	STD		{ int sys_mquery(int flags, void **addr, size_t size, \
+			    int fd, off_t off); }

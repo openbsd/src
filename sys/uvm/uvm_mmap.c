@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.39 2003/04/07 14:47:08 mpech Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.40 2003/04/14 04:53:51 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -114,6 +114,68 @@ sys_sstk(p, v, retval)
 #endif
 
 	return (ENOSYS);
+}
+
+/*
+ * sys_mquery: provide mapping hints to applications that do fixed mappings
+ *
+ * flags: 0 or MAP_FIXED (MAP_FIXED - means that we insist on this addr and
+ *	don't care about PMAP_PREFER or such)
+ * addr: hint where we'd like to place the mapping.
+ * size: size of the mapping
+ * fd: fd of the file we want to map
+ * off: offset within the file
+ */
+
+/* ARGSUSED */
+int
+sys_mquery(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_mquery_args /* {
+		syscallarg(int) flags;
+		syscallarg(void **) addr;
+		syscallarg(size_t) size;
+		syscallarg(int) fd;
+		syscallarg(off_t) off;
+	} */ *uap = v;
+	struct file *fp;
+	struct uvm_object *uobj;
+	voff_t uoff;
+	int error;
+	vaddr_t vaddr;
+	int flags = 0;
+	vm_prot_t prot = SCARG(uap, flags) & VM_PROT_ALL;
+
+	if (SCARG(uap, flags) & MAP_FIXED)
+		flags |= UVM_FLAG_FIXED;
+
+	if ((error = copyin(SCARG(uap, addr), &vaddr, sizeof(void *))) != 0)
+		return (error);
+
+	if (SCARG(uap, fd) >= 0) {
+		if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+			return (error);
+		uobj = &((struct vnode *)fp->f_data)->v_uvm.u_obj;
+		uoff = SCARG(uap, off);
+	} else {
+		fp = NULL;
+		uobj = NULL;
+		uoff = 0;
+	}
+
+	if (vaddr == 0)
+		vaddr = uvm_map_hint(p, prot);
+
+	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, SCARG(uap, size),
+	    &vaddr, uobj, uoff, 0, flags) == NULL) {
+		error = ENOMEM;
+	} else {
+		error = copyout(&vaddr, SCARG(uap, addr), sizeof(void *));
+	}
+
+	if (fp != NULL)
+		FRELE(fp);
+	return (error);
 }
 
 /*
@@ -350,10 +412,8 @@ sys_mmap(p, v, retval)
 		 * we will refine our guess later (e.g. to account for VAC, etc)
 		 */
 
-		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr +
-		    MAXDSIZ))
-			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
-			    MAXDSIZ);
+		if (addr < uvm_map_hint(p, prot))
+			addr = uvm_map_hint(p, prot);
 	}
 
 	/*
