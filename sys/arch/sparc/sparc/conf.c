@@ -62,6 +62,7 @@
 #include "ccd.h"
 #include "ch.h"
 #include "ss.h"
+#include "uk.h"
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
@@ -228,6 +229,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 117 */
 	cdev_lkm_dummy(),		/* 118 */
 	cdev_random_init(1,random),	/* 119: random generator */
+	cdev_uk_init(NUK,uk),		/* 120: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 121: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -217,6 +217,8 @@ sd*	at scsibus? target ? lun ?		# SCSI disks
 st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
+ss*	at scsibus? target ? lun ?		# SCSI scanners
+uk*	at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Floppy controller and drive found on SPARCstations.
 fdc0	at mainbus0				# sun4c controller
