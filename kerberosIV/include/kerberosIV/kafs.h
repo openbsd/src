@@ -1,4 +1,4 @@
-/*	$OpenBSD: kafs.h,v 1.4 1998/02/18 11:53:41 art Exp $	*/
+/*	$OpenBSD: kafs.h,v 1.5 1998/03/24 02:55:14 art Exp $	*/
 /* $KTH: kafs.h,v 1.24 1997/10/14 23:00:16 joda Exp $ */
 
 /*
@@ -146,5 +146,10 @@ krb5_error_code krb5_afslog __P((krb5_context, krb5_ccache,
 #define _PATH_THISCELL 		_PATH_VICE "ThisCell"
 #define _PATH_CELLSERVDB 	_PATH_VICE "CellServDB"
 #define _PATH_THESECELLS	_PATH_VICE "TheseCells"
+
+#define _PATH_ARLA_VICE		"/usr/arla/etc/"
+#define _PATH_ARLA_THISCELL	_PATH_ARLA_VICE "ThisCell"
+#define _PATH_ARLA_CELLSERVDB 	_PATH_ARLA_VICE "CellServDB"
+#define _PATH_ARLA_THESECELLS	_PATH_ARLA_VICE "TheseCells"
 
 #endif /* __KAFS_H */
