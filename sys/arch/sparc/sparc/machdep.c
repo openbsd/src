@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.83 2002/06/14 04:16:06 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -500,6 +500,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (EOPNOTSUPP);
 #endif
+	case CPU_CPUTYPE:
+		return (sysctl_rdint(oldp, oldlenp, newp, cputyp));
 	default:
 		return (EOPNOTSUPP);
 	}
