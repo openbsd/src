@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.13 1996/09/30 23:53:04 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.14 1996/10/07 18:48:23 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -322,8 +322,8 @@ while [ $part_used -lt $partition ]; do
 		echo	""
 		echo -n	"$units_left $sizeunit remaining in OpenBSD portion of "
 		echo	"the disk"
-		echo -n "Next partition size (in $sizeunit) [$partition] ? "
-		getresp "$partition"
+		echo -n "Next partition size (in $sizeunit) [$units_left] ? "
+		getresp "$units_left"
 		case $resp in
 		[1-9]*)
 			total=`expr $part_used + $resp`
