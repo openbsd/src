@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.15 1998/03/22 23:33:06 millert Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.16 1998/04/26 10:19:12 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -691,7 +691,7 @@ linux_sys_utime(p, v, retval)
 	else
 		SCARG(&ua, tptr) = NULL;
 
-	return sys_utimes(p, uap, retval);
+	return sys_utimes(p, &ua, retval);
 }
 
 /*
