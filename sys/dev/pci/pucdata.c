@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.29 2003/08/02 17:15:01 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.30 2003/08/06 22:07:37 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -841,7 +841,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* US Robotics (3Com) PCI Modems */
-	{   /* "US Robotics (3Com) 3CP5609 PCI 16550 Modem", */
+	{   /* "US Robotics (3Com) 3CP5610 PCI 16550 Modem", */
 	    {	PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
