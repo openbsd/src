@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.16 2003/03/16 10:18:44 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.17 2003/04/01 08:55:39 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -127,13 +127,13 @@ Configuration example:
 .Bd -literal
 
 
-Host X-- Host A  ----------------tunnel---------- cisco D------Host E
+Host X-- Host A  ----------------tunnel---------- Cisco D------Host E
           \\                                          |
            \\                                        /
              +------Host B----------Host C----------+
 
 .Ed
-   On host A (OpenBSD):
+   On Host A (OpenBSD):
 
    # route add default B
    # ifconfig greN A D netmask 0xffffffff linkX up
@@ -161,7 +161,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
 To reach Host A over the tunnel (from host D), there has to be an
 alias on Host A for the Ethernet interface:
      ifconfig <etherif> alias Y
- and on the cisco
+ and on the Cisco
      ip route Y mask tunnelX
 .Sh NOTE
 For correct operation, the
