@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa.c,v 1.6 2003/01/16 00:02:46 mickey Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.7 2003/03/14 22:18:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Michael Shalayeff
@@ -33,14 +33,14 @@
 #include "pmdb.h"
 
 static const char *md_reg_names[] = {
-	"%pc", "%npc",
 	"%sar", "%r1",  "%rp",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
 	"%r8",  "%r9",  "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
 	"%r16", "%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23",
-	"%r24", "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31"
+	"%r24", "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
+	"%pc", "%npc"
 };
 
-struct md_def md_def = { md_reg_names, 34, 0 };
+struct md_def md_def = { md_reg_names, 34, 32 };
 
 void
 md_def_init(void)
@@ -51,7 +51,7 @@ md_def_init(void)
 int
 md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 {
-	reg fr[32];
+	reg fr[16];
 	struct reg r;
 	reg fp, pc, rp;
 	int i;
@@ -59,19 +59,16 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	if (process_getregs(ps, &r))
 		return (-1);
 
-	if (frame == 0) {
-		fram->pc = r.r_pc;
-		fram->fp = r.r_regs[3];
-		return (0);
-	}
-
 	rp = r.r_regs[2];
 	fp = r.r_regs[3];
 	pc = r.r_pc;
 
-	for (i = 1; i < frame; i++) {
+	for (i = 0; i < frame; i++) {
 
-		if (process_read(ps, fp-60, &fr, sizeof(fr)) < 0)
+		if (!fp)
+			return (-1);
+
+		if (process_read(ps, fp-15*4, &fr, sizeof(fr)) < 0)
 			return (-1);
 
 		pc = rp;
@@ -81,11 +78,13 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fram->pc = pc;
 	fram->fp = fp;
 
-	fram->nargs = 4;		/* XXX real number is in the symtab */
-	fram->args[3] = fr[23];
-	fram->args[2] = fr[24];
-	fram->args[1] = fr[25];
-	fram->args[0] = fr[26];
+	if (frame != 0) {
+		fram->nargs = 4;	/* XXX real number is in the symtab */
+		fram->args[3] = fr[3];
+		fram->args[2] = fr[4];
+		fram->args[1] = fr[5];
+		fram->args[0] = fr[6];
+	}
 
 	return (0);
 }
@@ -99,11 +98,7 @@ md_getregs(struct pstate *ps, reg *regs)
 	if (process_getregs(ps, &r))
 		return (-1);
 
-	regs[0] = r.r_pc;
-	regs[1] = r.r_npc;
-
-	for (i = 0; i < 32; i++)
-		regs[2 + i] = r.r_regs[i];
+	memcpy(regs, &r, sizeof(r));
 
 	return (0);
 }
