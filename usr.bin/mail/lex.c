@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.11 1997/07/24 16:23:38 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.12 1997/07/24 17:27:11 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.11 1997/07/24 16:23:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.12 1997/07/24 17:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ setfile(name)
 	struct stat stb;
 	char isedit = *name != '%';
 	char *who = name[1] ? name + 1 : myname;
-	char tempname[MAXPATHLEN];
+	char tempname[PATHSIZE];
 	static int shudclob;
 
 	if ((name = expand(name)) == NULL)
@@ -146,7 +146,7 @@ setfile(name)
 	if ((itf = fopen(tempname, "r")) == NULL)
 		err(1, tempname);
 	(void)fcntl(fileno(itf), F_SETFD, 1);
-	rm(tempname);
+	(void)rm(tempname);
 	setptr(ibuf, 0);
 	setmsize(msgCount);
 	/*
@@ -660,7 +660,7 @@ newfileinfo(omsgCount)
 	if (getfold(fname, sizeof(fname)) >= 0) {
 		strncat(fname, "/", sizeof(fname) - strlen(fname) - 1);
 		if (strncmp(fname, mailname, strlen(fname)) == 0) {
-			snprintf(zname, sizeof(zname), "+%s",
+			(void)snprintf(zname, sizeof(zname), "+%s",
 			    mailname + strlen(fname));
 			ename = zname;
 		}

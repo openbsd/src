@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.7 1997/07/22 18:54:41 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.8 1997/07/24 17:27:13 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.7 1997/07/22 18:54:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.8 1997/07/24 17:27:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -431,20 +431,24 @@ infix(hp, fi)
 	struct header *hp;
 	FILE *fi;
 {
-	extern char *tempMail;
 	register FILE *nfo, *nfi;
-	register int c;
+	int c, fd;
+	char tempname[PATHSIZE];
 
-	if ((nfo = Fopen(tempMail, "w")) == NULL) {
-		warn(tempMail);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.RsXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (nfo = Fdopen(fd, "w")) == NULL) {
+		warn(tempname);
 		return(fi);
 	}
-	if ((nfi = Fopen(tempMail, "r")) == NULL) {
-		warn(tempMail);
+	if ((nfi = Fopen(tempname, "r")) == NULL) {
+		warn(tempname);
 		(void)Fclose(nfo);
+		(void)rm(tempname);
 		return(fi);
 	}
-	(void)rm(tempMail);
+	(void)rm(tempname);
 	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GNL|GCOMMA);
 	c = getc(fi);
 	while (c != EOF) {
@@ -458,7 +462,7 @@ infix(hp, fi)
 	}
 	(void)fflush(nfo);
 	if (ferror(nfo)) {
-		warn(tempMail);
+		warn(tempname);
 		(void)Fclose(nfo);
 		(void)Fclose(nfi);
 		rewind(fi);

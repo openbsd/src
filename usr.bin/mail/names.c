@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.6 1997/07/14 00:24:29 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.7 1997/07/24 17:27:12 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.6 1997/07/14 00:24:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.7 1997/07/24 17:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,6 @@ outof(names, fo, hp)
 	char *date, *fname;
 	FILE *fout, *fin;
 	int ispipe;
-	extern char *tempEdit;
 
 	top = names;
 	np = names;
@@ -253,15 +252,21 @@ outof(names, fo, hp)
 		 */
 
 		if (image < 0) {
-			if ((fout = Fopen(tempEdit, "a")) == NULL) {
-				warn(tempEdit);
+			int fd;
+			char tempname[PATHSIZE];
+
+			(void)snprintf(tempname, sizeof(tempname),
+			    "%s/mail.ReXXXXXXXXXX", tmpdir);
+			if ((fd = mkstemp(tempname)) == -1 ||
+			    (fout = Fdopen(fd, "a")) == NULL) {
+				warn(tempname);
 				senderr++;
 				goto cant;
 			}
-			image = open(tempEdit, 2);
-			(void)unlink(tempEdit);
+			image = open(tempname, O_RDWR);
+			(void)rm(tempname);
 			if (image < 0) {
-				warn(tempEdit);
+				warn(tempname);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
@@ -275,7 +280,7 @@ outof(names, fo, hp)
 			(void)putc('\n', fout);
 			(void)fflush(fout);
 			if (ferror(fout))
-				warn(tempEdit);
+				warn(tempname);
 			(void)Fclose(fout);
 		}
 

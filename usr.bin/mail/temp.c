@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.8 1997/07/24 16:23:39 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.9 1997/07/24 17:27:13 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.8 1997/07/24 16:23:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: temp.c,v 1.9 1997/07/24 17:27:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,6 @@ static char rcsid[] = "$OpenBSD: temp.c,v 1.8 1997/07/24 16:23:39 millert Exp $"
  * Give names to all the temporary files that we will need.
  */
 
-char	*tempMail;
-char	*tempEdit;
 char	*tmpdir;
 
 void
@@ -71,9 +69,6 @@ tinit()
 		*cp = '\0';
 		cp--;
 	}
-
-	tempMail  = tempnam(tmpdir, "Rs");
-	tempEdit  = tempnam(tmpdir, "Re");
 
 	/*
 	 * It's okay to call savestr in here because main will

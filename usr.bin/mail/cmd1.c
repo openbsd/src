@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.9 1997/07/22 18:54:34 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.10 1997/07/24 17:27:09 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.9 1997/07/22 18:54:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.10 1997/07/24 17:27:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,8 @@ printhead(mesg)
 	if (mp->m_flag & MBOX)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
-	snprintf(wcount, sizeof(wcount), "%3d/%-5d", mp->m_lines, mp->m_size);
+	(void)snprintf(wcount, sizeof(wcount), "%3d/%-5d", mp->m_lines,
+	    mp->m_size);
 	subjlen = screenwidth - 50 - strlen(wcount);
 	name = value("show-rcpt") != NULL ?
 		skin(hfield("to", mp)) : nameof(mp, 0);

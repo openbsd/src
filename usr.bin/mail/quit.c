@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.7 1997/07/24 16:23:39 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.8 1997/07/24 17:27:12 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.7 1997/07/24 16:23:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.8 1997/07/24 17:27:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ quit()
 	register struct message *mp;
 	int c, fd;
 	struct stat minfo;
-	char *mbox, tempname[MAXPATHLEN];
+	char *mbox, tempname[PATHSIZE];
 
 	/*
 	 * If we are read only, we can't do anything,
@@ -144,7 +144,7 @@ quit()
 		(void)Fclose(rbuf);
 		if ((rbuf = Fopen(tempname, "r")) == NULL)
 			goto newmail;
-		rm(tempname);
+		(void)rm(tempname);
 	}
 
 	/*
@@ -228,13 +228,13 @@ quit()
 		}
 		if ((ibuf = Fopen(tempname, "r")) == NULL) {
 			warn(tempname);
-			rm(tempname);
+			(void)rm(tempname);
 			(void)Fclose(obuf);
 			(void)Fclose(fbuf);
 			spool_unlock();
 			return;
 		}
-		rm(tempname);
+		(void)rm(tempname);
 		if ((abuf = Fopen(mbox, "r")) != NULL) {
 			while ((c = getc(abuf)) != EOF)
 				(void)putc(c, obuf);
@@ -422,7 +422,7 @@ edstop()
 	register struct message *mp;
 	FILE *obuf, *ibuf, *readstat = NULL;
 	struct stat statb;
-	char tempname[MAXPATHLEN];
+	char tempname[PATHSIZE];
 
 	if (readonly)
 		return;
@@ -453,7 +453,7 @@ edstop()
 	if (stat(mailname, &statb) >= 0 && statb.st_size > mailsize) {
 		int fd;
 
-		snprintf(tempname, sizeof(tempname), "%s/mbox.XXXXXXXXXX",
+		(void)snprintf(tempname, sizeof(tempname), "%s/mbox.XXXXXXXXXX",
 		    tmpdir);
 		if ((fd = mkstemp(tempname)) == -1 ||
 		    (obuf = Fdopen(fd, "w")) == NULL) {
@@ -464,7 +464,7 @@ edstop()
 		if ((ibuf = Fopen(mailname, "r")) == NULL) {
 			warn(mailname);
 			(void)Fclose(obuf);
-			rm(tempname);
+			(void)rm(tempname);
 			relsesigs();
 			reset(0);
 		}
@@ -475,11 +475,11 @@ edstop()
 		(void)Fclose(obuf);
 		if ((ibuf = Fopen(tempname, "r")) == NULL) {
 			warn(tempname);
-			rm(tempname);
+			(void)rm(tempname);
 			relsesigs();
 			reset(0);
 		}
-		rm(tempname);
+		(void)rm(tempname);
 	}
 	printf("\"%s\" ", mailname);
 	fflush(stdout);
@@ -514,7 +514,7 @@ edstop()
 	}
 	(void)Fclose(obuf);
 	if (gotcha) {
-		rm(mailname);
+		(void)rm(mailname);
 		puts("removed");
 	} else
 		puts("complete");

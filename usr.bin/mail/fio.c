@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.9 1997/07/24 16:23:37 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.10 1997/07/24 17:27:11 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.9 1997/07/24 16:23:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.10 1997/07/24 17:27:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ setptr(ibuf, offset)
 	(void)snprintf(pathbuf, sizeof(pathbuf), "%s/mail.XXXXXXXXXX", tmpdir);
 	if ((c = mkstemp(pathbuf)) == -1 || (mestmp = Fdopen(c, "r+")) == NULL)
 		err(1, "can't open %s", pathbuf);
-	(void)unlink(pathbuf);
+	(void)rm(pathbuf);
 
 	if (offset == 0) {
 		msgCount = 0;
@@ -368,12 +368,12 @@ expand(name)
 		/* fall through */
 	}
 	if (name[0] == '+' && getfold(cmdbuf, sizeof(cmdbuf)) >= 0) {
-		snprintf(xname, sizeof(xname), "%s/%s", cmdbuf, name + 1);
+		(void)snprintf(xname, sizeof(xname), "%s/%s", cmdbuf, name + 1);
 		name = savestr(xname);
 	}
 	/* catch the most common shell meta character */
 	if (name[0] == '~' && (name[1] == '/' || name[1] == '\0')) {
-		snprintf(xname, sizeof(xname), "%s%s", homedir, name + 1);
+		(void)snprintf(xname, sizeof(xname), "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
 	if (!anyof(name, "~{[*?$`'\"\\"))
@@ -382,7 +382,7 @@ expand(name)
 		warn("pipe");
 		return(name);
 	}
-	snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
+	(void)snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
 	if ((shell = value("SHELL")) == NULL)
 		shell = _PATH_CSHELL;
 	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NULL);
@@ -437,7 +437,7 @@ getfold(name, namelen)
 		strncpy(name, folder, namelen-1);
 		name[namelen-1] = '\0';
 	} else
-		snprintf(name, namelen, "%s/%s", homedir, folder);
+		(void)snprintf(name, namelen, "%s/%s", homedir, folder);
 	return(0);
 }
 

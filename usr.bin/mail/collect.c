@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.11 1997/07/22 18:54:36 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.12 1997/07/24 17:27:10 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.11 1997/07/22 18:54:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.12 1997/07/24 17:27:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,10 +81,9 @@ collect(hp, printheaders)
 	int printheaders;
 {
 	FILE *fbuf;
-	int lc, cc, escape, eofcount;
+	int lc, cc, escape, eofcount, fd;
 	register int c, t;
-	char linebuf[LINESIZE], *cp;
-	extern char *tempMail;
+	char linebuf[LINESIZE], tempname[PATHSIZE], *cp;
 	char getsub;
 	sigset_t oset, nset;
 	int longline, lastlong, rc;	/* Can deal with lines > LINESIZE */
@@ -114,7 +113,7 @@ collect(hp, printheaders)
 	savettou = signal(SIGTTOU, collstop);
 	savettin = signal(SIGTTIN, collstop);
 	if (sigsetjmp(collabort, 1) || sigsetjmp(colljmp, 1)) {
-		rm(tempMail);
+		(void)rm(tempname);
 		goto err;
 	}
 	sigdelset(&oset, SIGINT);
@@ -122,11 +121,14 @@ collect(hp, printheaders)
 	sigprocmask(SIG_SETMASK, &oset, NULL);
 
 	noreset++;
-	if ((collf = Fopen(tempMail, "w+")) == NULL) {
-		warn(tempMail);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.RsXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (collf = Fdopen(fd, "w+")) == NULL) {
+		warn(tempname);
 		goto err;
 	}
-	unlink(tempMail);
+	(void)rm(tempname);
 
 	/*
 	 * If we are going to prompt for a subject,
@@ -350,7 +352,7 @@ cont:
 			 * standard list processing garbage.
 			 * If ~f is given, we don't shift over.
 			 */
-			if (forward(linebuf + 2, collf, c) < 0)
+			if (forward(linebuf + 2, collf, tempname, c) < 0)
 				goto err;
 			goto cont;
 		case '?':
@@ -507,15 +509,18 @@ mespipe(fp, cmd)
 	char cmd[];
 {
 	FILE *nf;
+	int fd;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	extern char *tempEdit;
-	char *shell;
+	char *shell, tempname[PATHSIZE];
 
-	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
-		warn(tempEdit);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.ReXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (nf = Fdopen(fd, "w+")) == NULL) {
+		warn(tempname);
 		goto out;
 	}
-	(void)unlink(tempEdit);
+	(void)rm(tempname);
 	/*
 	 * stdin = current message.
 	 * stdout = new message.
@@ -551,13 +556,13 @@ out:
  * should shift over and 'f' if not.
  */
 int
-forward(ms, fp, f)
+forward(ms, fp, fn, f)
 	char ms[];
 	FILE *fp;
+	char *fn;
 	int f;
 {
 	register int *msgvec;
-	extern char *tempMail;
 	struct ignoretab *ig;
 	char *tabst;
 
@@ -586,7 +591,7 @@ forward(ms, fp, f)
 		touch(mp);
 		printf(" %d", *msgvec);
 		if (send(mp, fp, ig, tabst) < 0) {
-			warn(tempMail);
+			warn(fn);
 			return(-1);
 		}
 	}
