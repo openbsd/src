@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.58 2002/07/07 18:20:02 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.59 2002/07/07 22:06:33 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -141,8 +141,8 @@ struct ctlname {
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
 #define	KERN_RAWPARTITION	24	/* int: raw partition number */
-#define	KERN_NTPTIME		25	/* struct: extended-precision time */
-#define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
+/*define gap			25	*/
+/*define gap			26	*/
 #define	KERN_OSVERSION		27	/* string: kernel build version */
 #define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
 #define	KERN_SOMINCONN		29	/* int: half-open controllable param */
