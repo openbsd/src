@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.9 2000/09/16 21:50:56 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.10 2000/09/29 05:28:28 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -54,6 +54,7 @@
  * 3Com 3c900-FL/FX	10/100Mbps/Fiber-optic
  * 3Com 3c905C-TX	10/100Mbps/RJ-45 (Tornado ASIC)
  * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
+ * 3Com 3c555		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
  * 3Com 3c556		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
  * 3Com 3c556B		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
@@ -446,8 +447,7 @@ xl_miibus_readreg(self, phy, reg)
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
 
-	if (!(sc->xl_flags & XL_FLAG_PHYOK) &&
-	    sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
+	if (!(sc->xl_flags & XL_FLAG_PHYOK) && phy != 24)
 		return (0);
 
 	bzero((char *)&frame, sizeof(frame));
@@ -467,8 +467,7 @@ xl_miibus_writereg(self, phy, reg, data)
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
 
-	if (!(sc->xl_flags & XL_FLAG_PHYOK) &&
-	    sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
+	if (!(sc->xl_flags & XL_FLAG_PHYOK) && phy != 24)
 		return;
 
 	bzero((char *)&frame, sizeof(frame));
@@ -1459,9 +1458,8 @@ int xl_intr(arg)
 		CSR_WRITE_2(sc, XL_COMMAND,
 		    XL_CMD_INTR_ACK|(status & XL_INTRS));
 
-		if (sc->xl_bustype == XL_BUS_CARDBUS)
-			bus_space_write_4(sc->xl_funct,sc->xl_funch,
-			    XL_CARDBUS_INTR, XL_CARDBUS_INTR_ACK);
+		if (sc->intr_ack)
+			(*sc->intr_ack)(sc);
 
 		if (status & XL_STAT_UP_COMPLETE) {
 			int curpkts;
@@ -2040,14 +2038,11 @@ void xl_init(xsc)
 	 */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|0xFF);
 
-	if (sc->xl_bustype == XL_BUS_CARDBUS)
-		bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_CARDBUS_INTR,
-		    XL_CARDBUS_INTR_ACK);
+	if (sc->intr_ack)
+		(*sc->intr_ack)(sc);
 
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|XL_INTRS);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|XL_INTRS);
-	if (sc->xl_flags & XL_FLAG_FUNCREG)
-		bus_space_write_4(sc->xl_ftag, sc->xl_fhandle, 4, 0x8000);
 
 	/* Set the RX early threshold */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_THRESH|(XL_PACKET_SIZE >>2));
@@ -2374,12 +2369,12 @@ void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|XL_STAT_INTLATCH);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|0);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|0);
-	if (sc->xl_flags & XL_FLAG_FUNCREG)
-		bus_space_write_4(sc->xl_ftag, sc->xl_fhandle, 4, 0x8000);
 
+#if 0
 	if (sc->xl_bustype == XL_BUS_CARDBUS)
 		bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_CARDBUS_INTR,
 		    XL_CARDBUS_INTR_ACK);
+#endif
 
 	/* Stop the stats updater. */
 	untimeout(xl_stats_update, sc);
@@ -2417,16 +2412,16 @@ xl_attach(sc)
 
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
-	if (sc->xl_bustype == XL_BUS_CARDBUS) {
+	if (sc->xl_flags & (XL_FLAG_INVERT_LED_PWR|XL_FLAG_INVERT_MII_PWR)) {
 		u_int16_t n;
 
 		XL_SEL_WIN(2);
 		n = CSR_READ_2(sc, 12);
 
-		if (sc->xl_cb_flags & XL_CARDBUS_INVERT_LED_PWR)
+		if (sc->xl_flags & XL_FLAG_INVERT_LED_PWR)
 			n |= 0x0010;
 
-		if (sc->xl_cb_flags & XL_CARDBUS_INVERT_MII_PWR)
+		if (sc->xl_flags & XL_FLAG_INVERT_MII_PWR)
 			n |= 0x4000;
 
 		CSR_WRITE_2(sc, 12, n);
@@ -2492,11 +2487,9 @@ xl_attach(sc)
 
 	xl_mediacheck(sc);
 
-	if (sc->xl_bustype == XL_BUS_CARDBUS) {
-		if (sc->xl_cb_flags & XL_CARDBUS_INVERT_MII_PWR) {
-			XL_SEL_WIN(2);
-			CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
-		}
+	if (sc->xl_flags & XL_FLAG_INVERT_MII_PWR) {
+		XL_SEL_WIN(2);
+		CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
 	}
 
 	DELAY(100000);

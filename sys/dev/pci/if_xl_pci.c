@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.4 2000/09/16 21:42:17 aaron Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.5 2000/09/29 05:28:29 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -86,10 +86,20 @@
  */
 #define XL_USEIOSPACE
 
+#define XL_PCI_FUNCMEM		0x0018
+#define XL_PCI_INTRACK		0x8000
+
 #include <dev/ic/xlreg.h>
 
-int xl_pci_match __P((struct device *, void *, void *));
-void xl_pci_attach __P((struct device *, struct device *, void *));
+struct xl_pci_softc {
+	struct xl_softc sc_xl;
+	pci_chipset_tag_t sc_chiptag;
+	pcitag_t sc_pcitag;
+};
+
+int xl_pci_match	__P((struct device *, void *, void *));
+void xl_pci_attach	__P((struct device *, struct device *, void *));
+void xl_pci_intr_ack	__P((struct xl_softc *));
 
 int
 xl_pci_match(parent, match, aux)
@@ -120,6 +130,7 @@ xl_pci_match(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C980CTX:
 	case PCI_PRODUCT_3COM_3C905CTX:
 	case PCI_PRODUCT_3COM_3C450:
+	case PCI_PRODUCT_3COM_3C555:
 	case PCI_PRODUCT_3COM_3C556:
 	case PCI_PRODUCT_3COM_3C556B:
 		return (1);
@@ -135,6 +146,7 @@ xl_pci_attach(parent, self, aux)
 {
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct pci_attach_args *pa = aux;
+	struct xl_pci_softc *psc = (void *)self;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
@@ -144,17 +156,26 @@ xl_pci_attach(parent, self, aux)
 
 	sc->xl_unit = sc->sc_dev.dv_unit;
 
-	sc->xl_bustype = XL_BUS_PCI;
-	sc->xl_cb_flags = 0;
-
 	sc->xl_flags = 0;
-	if (PCI_PRODUCT(pa->pa_id) == TC_DEVICEID_HURRICANE_556 ||
-	    PCI_PRODUCT(pa->pa_id) == TC_DEVICEID_HURRICANE_556B)
+
+	/* set flags required for 3Com MiniPCI adapters */
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case TC_DEVICEID_HURRICANE_555:
+		sc->xl_flags |= XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM;
+		break;
+	case TC_DEVICEID_HURRICANE_556:
 		sc->xl_flags |= XL_FLAG_FUNCREG | XL_FLAG_PHYOK |
 		    XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_WEIRDRESET;
-	if (PCI_PRODUCT(pa->pa_id) == TC_DEVICEID_HURRICANE_556)
 		sc->xl_flags |= XL_FLAG_8BITROM;
-	
+		break;
+	case TC_DEVICEID_HURRICANE_556B:
+		sc->xl_flags |= XL_FLAG_FUNCREG | XL_FLAG_PHYOK |
+		    XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_WEIRDRESET;
+		break;
+	default:
+		break;
+	}
+
 	/*
 	 * If this is a 3c905B, we have to check one extra thing.
 	 * The 905B supports power management and may be placed in
@@ -244,17 +265,9 @@ xl_pci_attach(parent, self, aux)
 #endif
 
 	if (sc->xl_flags & XL_FLAG_FUNCREG) {
-		if (pci_mem_find(pc, pa->pa_tag, XL_PCI_FUNCMEM, &iobase,
-		    &iosize, NULL)) {
-			printf(": can't find mem space\n");
-			return;
-		}
-		if (bus_space_map(pa->pa_memt, iobase, iosize, 0,
-		    &sc->xl_fhandle)) {
-			printf(": can't map mem space\n");
-			return;
-		}
-		sc->xl_ftag = pa->pa_memt;
+		sc->intr_ack = xl_pci_intr_ack;
+		psc->sc_chiptag = pa->pa_pc;
+		psc->sc_pcitag = pa->pa_tag;
 	}
 
 	/*
@@ -280,6 +293,17 @@ xl_pci_attach(parent, self, aux)
 	xl_attach(sc);
 }
 
+
+void            
+xl_pci_intr_ack(sc)
+	struct xl_softc *sc;
+{
+	struct xl_pci_softc *psc = (struct xl_pci_softc *)sc;
+
+	pci_conf_write(psc->sc_chiptag, psc->sc_pcitag, XL_PCI_FUNCMEM + 4,
+	    XL_PCI_INTRACK);
+}
+
 struct cfattach xl_pci_ca = {
-	sizeof(struct xl_softc), xl_pci_match, xl_pci_attach,
+	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach,
 };

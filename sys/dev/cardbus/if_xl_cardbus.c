@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.8 2000/09/16 21:42:17 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.9 2000/09/29 05:28:28 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -82,12 +82,16 @@
 
 #define CARDBUS_3C575BTX_FUNCSTAT_PCIREG  CARDBUS_BASE2_REG  /* means 0x18 */
 
-int xl_cardbus_match __P((struct device *, void *, void *));
-void xl_cardbus_attach __P((struct device *, struct device *,void *));
-int xl_cardbus_detach __P((struct device *, int));
+int xl_cardbus_match		__P((struct device *, void *, void *));
+void xl_cardbus_attach		__P((struct device *, struct device *,void *));
+int xl_cardbus_detach		__P((struct device *, int));
+void xl_cardbus_intr_ack	__P((struct xl_softc *));
 
-#define XL_CB_BOOMERANG	0x01
-#define XL_CB_CYCLONE	0x02
+#define XL_CARDBUS_BOOMERANG	0x0001
+#define XL_CARDBUS_CYCLONE	0x0002
+
+#define XL_CARDBUS_INTR		0x0004
+#define XL_CARDBUS_INTR_ACK	0x8000
 
 struct xl_cardbus_softc {
 	struct xl_softc sc_softc;
@@ -118,44 +122,49 @@ const struct xl_cardbus_product {
 	const char	*ecp_name;	/* device name */
 } xl_cardbus_products[] = {
 	{ CARDBUS_PRODUCT_3COM_3C575,
-	  0,
+	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CB_BOOMERANG,
+	  XL_CARDBUS_BOOMERANG,
 	  "3c575-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFE575BT,
-	  XL_CARDBUS_INVERT_LED_PWR,
+	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
+	      XL_FLAG_INVERT_LED_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CB_CYCLONE,
+	  XL_CARDBUS_CYCLONE,
 	  "3c575B-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFE575CT,
-	  XL_CARDBUS_INVERT_MII_PWR,
+	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
+	      XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CB_CYCLONE,
+	  XL_CARDBUS_CYCLONE,
 	  "3c575C-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFEM656,
-	  XL_CARDBUS_INVERT_LED_PWR | XL_CARDBUS_INVERT_MII_PWR,
+	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
+	      XL_FLAG_INVERT_LED_PWR | XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CB_CYCLONE,
+	  XL_CARDBUS_CYCLONE,
 	  "3c656-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFEM656B,
-	  XL_CARDBUS_INVERT_LED_PWR | XL_CARDBUS_INVERT_MII_PWR,
+	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
+	      XL_FLAG_INVERT_LED_PWR | XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CB_CYCLONE,
+	  XL_CARDBUS_CYCLONE,
 	  "3c656B-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFEM656C,
-	  XL_CARDBUS_INVERT_MII_PWR,
+	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
+	      XL_FLAG_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_CB_CYCLONE,
+	  XL_CARDBUS_CYCLONE,
 	  "3c656C-TX Ethernet" },
 
 	{ 0,
@@ -227,9 +236,7 @@ xl_cardbus_attach(parent, self, aux)
 
 	printf(": 3Com %s", ecp->ecp_name);
 
-	sc->xl_bustype = XL_BUS_CARDBUS;
-	sc->xl_cb_flags = ecp->ecp_flags;
-	sc->xl_flags = XL_FLAG_EEPROM_OFFSET_30|XL_FLAG_8BITROM;
+	sc->xl_flags = ecp->ecp_flags;
 
 	iob = adr;
 	sc->xl_bhandle = ioh;
@@ -245,7 +252,7 @@ xl_cardbus_attach(parent, self, aux)
 	command |= ecp->ecp_csr;
 	csc->sc_cardtype = ecp->ecp_cardtype;
 
-	if (csc->sc_cardtype == XL_CB_CYCLONE) {
+	if (csc->sc_cardtype == XL_CARDBUS_CYCLONE) {
 		/* map CardBus function status window */
 		if (Cardbus_mapreg_map(ct, CARDBUS_BASE2_REG,
 		    CARDBUS_MAPREG_TYPE_MEM, 0, &csc->sc_funct,
@@ -296,9 +303,11 @@ xl_cardbus_attach(parent, self, aux)
 	}
 	printf(": irq %d", ca->ca_intrline);
 
+	sc->intr_ack = xl_cardbus_intr_ack;
+
 	xl_attach(sc);
 
-	if (csc->sc_cardtype == XL_CB_CYCLONE)
+	if (csc->sc_cardtype == XL_CARDBUS_CYCLONE)
 		bus_space_write_4(csc->sc_funct, csc->sc_funch,
 		    XL_CARDBUS_INTR, XL_CARDBUS_INTR_ACK);
 
@@ -328,7 +337,7 @@ xl_cardbus_detach(self, arg)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf,
 		    sc->xl_intrhand);
 
-		if (csc->sc_cardtype == XL_CB_CYCLONE) {
+		if (csc->sc_cardtype == XL_CARDBUS_CYCLONE) {
 			Cardbus_mapreg_unmap(ct, CARDBUS_BASE2_REG,
 			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
 		}
@@ -339,3 +348,12 @@ xl_cardbus_detach(self, arg)
 	return (rv);
 }
 
+void
+xl_cardbus_intr_ack(sc)
+	struct xl_softc *sc;
+{
+	struct xl_cardbus_softc *csc = (struct xl_cardbus_softc *)sc;
+
+	bus_space_write_4(csc->sc_funct, csc->sc_funch, XL_CARDBUS_INTR,
+	    XL_CARDBUS_INTR_ACK);
+}

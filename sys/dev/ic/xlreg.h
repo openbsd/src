@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.5 2000/09/16 21:42:16 aaron Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.6 2000/09/29 05:28:29 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -33,9 +33,6 @@
  *
  *	$FreeBSD: if_xlreg.h,v 1.26 2000/08/28 20:40:03 wpaul Exp $
  */
-
-#define XL_BUS_PCI	0x01
-#define XL_BUS_CARDBUS	0x02
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
 #define XL_EE_WRITE	0x0040	/* write, 5 bit address */
@@ -558,6 +555,8 @@ struct xl_mii_frame {
 #define XL_FLAG_EEPROM_OFFSET_30	0x0004
 #define XL_FLAG_WEIRDRESET		0x0008
 #define XL_FLAG_8BITROM			0x0010
+#define XL_FLAG_INVERT_LED_PWR		0x0020
+#define XL_FLAG_INVERT_MII_PWR		0x0040
 
 struct xl_softc {
 	struct device		sc_dev;		/* generic device structure */
@@ -578,15 +577,11 @@ struct xl_softc {
 	u_int16_t		xl_caps;
 	u_int8_t		xl_stats_no_timeout;
 	u_int16_t		xl_tx_thresh;
-	u_int8_t		xl_bustype;	/* PCI or CardBus? */
-	int			xl_cb_flags;	/* CardBus flags */
 	int			xl_if_flags;
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
 	int			xl_flags;
-	bus_space_handle_t	xl_fhandle;
-	bus_space_tag_t		xl_ftag;
 	void (*intr_ack)	__P((struct xl_softc *));
 	void *			sc_sdhook;
 };
@@ -645,6 +640,7 @@ struct xl_stats {
  * 3Com PCI chip device IDs.
  */
 #define TC_DEVICEID_TORNADO_HOMECONNECT		0x4500
+#define TC_DEVICEID_HURRICANE_555		0x5055
 #define TC_DEVICEID_HURRICANE_556		0x6055
 #define TC_DEVICEID_HURRICANE_556B		0x6056
 #define	TC_DEVICEID_BOOMERANG_10BT		0x9000
@@ -681,9 +677,6 @@ struct xl_stats {
 #define XL_CARDBUS_INTR				0x0004
 #define XL_CARDBUS_INTR_ACK			0x8000
 
-#define XL_CARDBUS_INVERT_LED_PWR		0x0001
-#define XL_CARDBUS_INVERT_MII_PWR		0x0002
-
 /*
  * PCI low memory base and low I/O base register, and
  * other PCI registers. Note: some are only available on
@@ -699,7 +692,6 @@ struct xl_stats {
 #define XL_PCI_HEADER_TYPE	0x0E
 #define XL_PCI_LOIO		0x10
 #define XL_PCI_LOMEM		0x14
-#define XL_PCI_FUNCMEM		0x18
 #define XL_PCI_BIOSROM		0x30
 #define XL_PCI_INTLINE		0x3C
 #define XL_PCI_INTPIN		0x3D
