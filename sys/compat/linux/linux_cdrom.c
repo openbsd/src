@@ -1,4 +1,5 @@
-/*	$OpenBSD: linux_cdrom.c,v 1.3 1997/12/20 22:51:53 deraadt Exp $	*/
+
+/*	$OpenBSD: linux_cdrom.c,v 1.4 1998/01/23 11:30:06 provos Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -77,7 +78,7 @@ linux_ioctl_cdrom(p, uap, retval)
 	register struct file *fp;
 	register struct filedesc *fdp;
 	caddr_t sg;
-	u_long com;
+	u_long com, arg;
 	struct sys_ioctl_args ia;
 	int error;
 
@@ -89,13 +90,19 @@ linux_ioctl_cdrom(p, uap, retval)
 	        struct ioc_toc_header th;
 	        struct ioc_read_toc_entry tes;
 	        struct ioc_play_track ti;
+		struct ioc_play_msf msf;
+		struct ioc_play_blocks blk;
 	        struct ioc_read_subchannel sc;
+		struct ioc_vol vol;
 	} tmpb;
 	union {
 	        struct linux_cdrom_tochdr th;
 	        struct linux_cdrom_tocentry te;
 	        struct linux_cdrom_ti ti;
+		struct linux_cdrom_msf msf;
+		struct linux_cdrom_blk blk;
 	        struct linux_cdrom_subchnl sc;
+		struct linux_cdrom_volctrl vol;
 	} tmpl;
 
 
@@ -118,10 +125,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		        return error;
 		tmpl.th.cdth_trk0 = tmpb.th.starting_track;
 		tmpl.th.cdth_trk1 = tmpb.th.ending_track;
-		error = copyout(&tmpl, SCARG(uap, data), sizeof tmpl.th);
-		if (error)
-			return error;
-		return 0;
+		return copyout(&tmpl, SCARG(uap, data), sizeof tmpl.th);
 	case LINUX_CDROMREADTOCENTRY:
 		error = copyin(SCARG(uap, data), &tmpl.te, sizeof tmpl.te);
 		if (error)
@@ -149,10 +153,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		tmpl.te.cdte_datamode = CD_TRACK_INFO;
 		bsd_addr_to_linux_addr(&data.te.addr, &tmpl.te.cdte_addr, 
 		    tmpb.tes.address_format);
-		error = copyout(&tmpl, SCARG(uap, data), sizeof tmpl.te);
-		if (error)
-			return error;
-		return 0;
+		return copyout(&tmpl, SCARG(uap, data), sizeof tmpl.te);
 	case LINUX_CDROMSUBCHNL:
 		error = copyin(SCARG(uap, data), &tmpl.sc, sizeof tmpl.sc);
 		if (error)
@@ -186,10 +187,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		    &tmpl.sc.cdsc_reladdr, 
 		    tmpb.sc.address_format);
 
-		error = copyout(&tmpl, SCARG(uap, data), sizeof tmpl.sc);
-		if (error)
-			return error;
-		return 0;
+		return copyout(&tmpl, SCARG(uap, data), sizeof tmpl.sc);
 	case LINUX_CDROMPLAYTRKIND:
 		error = copyin(SCARG(uap, data), &tmpl.ti, sizeof tmpl.ti);
 		if (error)
@@ -199,11 +197,52 @@ linux_ioctl_cdrom(p, uap, retval)
 		tmpb.ti.start_index = tmpl.ti.cdti_ind0;
 		tmpb.ti.end_track = tmpl.ti.cdti_trk1;
 		tmpb.ti.end_index = tmpl.ti.cdti_ind1;
-	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOCPLAYTRACKS,
-		    (caddr_t)&tmpb.ti, p);
-	        if (error)
+	        return (*fp->f_ops->fo_ioctl)(fp, CDIOCPLAYTRACKS,
+					      (caddr_t)&tmpb.ti, p);
+	case LINUX_CDROMPLAYMSF:
+		error = copyin(SCARG(uap, data), &tmpl.msf, sizeof tmpl.msf);
+		if (error)
 		        return error;
-		return 0;
+
+		tmpb.msf.start_m = tmpl.msf.cdmsf_min0;
+		tmpb.msf.start_s = tmpl.msf.cdmsf_sec0;
+		tmpb.msf.start_f = tmpl.msf.cdmsf_frame0;
+		tmpb.msf.end_m = tmpl.msf.cdmsf_min1;
+		tmpb.msf.end_s = tmpl.msf.cdmsf_sec1;
+		tmpb.msf.end_f = tmpl.msf.cdmsf_frame1;
+
+		return (*fp->f_ops->fo_ioctl)(fp, CDIOCPLAYMSF, (caddr_t)&tmpb.msf, p);
+	case LINUX_CDROMPLAYBLK:
+		error = copyin(SCARG(uap, data), &tmpl.blk, sizeof tmpl.blk);
+		if (error)
+		        return error;
+
+		tmpb.blk.blk = tmpl.blk.from;
+		tmpb.blk.len = tmpl.blk.len;
+
+		return (*fp->f_ops->fo_ioctl)(fp, CDIOCPLAYBLOCKS, (caddr_t)&tmpb.blk, p);
+	case LINUX_CDROMVOLCTRL:
+		error = copyin(SCARG(uap, data), &tmpl.vol, sizeof tmpl.vol);
+		if (error)
+		        return error;
+
+		tmpb.vol.vol[0] = tmpl.vol.channel0;
+		tmpb.vol.vol[1] = tmpl.vol.channel1;
+		tmpb.vol.vol[2] = tmpl.vol.channel2;
+		tmpb.vol.vol[3] = tmpl.vol.channel3;
+
+		return (*fp->f_ops->fo_ioctl)(fp, CDIOCSETVOL, (caddr_t)&tmpb.vol, p);
+	case LINUX_CDROMVOLREAD:
+		error = (*fp->f_ops->fo_ioctl)(fp, CDIOCGETVOL, (caddr_t)&tmpb.vol, p);
+		if (error)
+			return error;
+
+		tmpl.vol.channel0 = tmpb.vol.vol[0];
+		tmpl.vol.channel1 = tmpb.vol.vol[1];
+		tmpl.vol.channel2 = tmpb.vol.vol[2];
+		tmpl.vol.channel3 = tmpb.vol.vol[3];
+
+		return copyout(&tmpl.vol, SCARG(uap, data), sizeof tmpl.vol);
 	case LINUX_CDROMPAUSE:
 		SCARG(&ia, com) = CDIOCPAUSE;
 		break;
@@ -216,8 +255,17 @@ linux_ioctl_cdrom(p, uap, retval)
 	case LINUX_CDROMSTART:
 		SCARG(&ia, com) = CDIOCSTART;
 		break;
+	case LINUX_CDROMEJECT_SW:
+		error = copyin(SCARG(uap, data), &arg, sizeof arg);
+		if (error)
+		        return error;
+		SCARG(&ia, com) = arg ? CDIOCALLOW : CDIOCPREVENT;
+		break;
 	case LINUX_CDROMEJECT:
 		SCARG(&ia, com) = CDIOCEJECT;
+		break;
+	case LINUX_CDROMRESET:
+		SCARG(&ia, com) = CDIOCRESET;
 		break;
 	default:
 	        printf("linux_ioctl_cdrom: invalid ioctl %08lx\n", com);
