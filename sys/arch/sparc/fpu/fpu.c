@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.7 1997/08/08 08:25:46 downsj Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.8 1998/01/13 22:54:36 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.6 1997/07/29 10:09:51 fair Exp $	*/
 
 /*
@@ -117,7 +117,14 @@ fpu_cleanup(p, fs)
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 
 	case FSR_TT_NONE:
-		panic("fpu_cleanup 1");	/* ??? */
+#if 0
+		/* XXX I'm not sure how we get here, but ignoring the trap */
+		/* XXX seems to work in my limited tests		   */
+		/* XXX More research to be done =)			   */
+		panic("fpu_cleanup 1"); /* ??? */
+#else
+		printf("fpu_cleanup 1\n");
+#endif
 		break;
 
 	case FSR_TT_IEEE:
