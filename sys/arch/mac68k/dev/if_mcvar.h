@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcvar.h,v 1.2 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: if_mcvar.h,v 1.3 2002/04/20 00:17:05 miod Exp $	*/
 /*	$NetBSD: if_mcvar.h,v 1.3 1997/12/07 17:47:48 scottr Exp $	*/
 
 /*-
@@ -25,14 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
 
 #define	MC_REGSPACING	16
 #define	MC_REGSIZE	MACE_NREGS * MC_REGSPACING

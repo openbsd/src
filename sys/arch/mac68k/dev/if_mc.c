@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.6 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.7 2002/04/20 00:17:05 miod Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
@@ -86,17 +86,17 @@ struct cfdriver mc_cd = {
 	NULL, "mc", DV_IFNET
 };
 
-hide void	mcwatchdog(struct ifnet *);
-hide int	mcinit(struct mc_softc *sc);
-hide int	mcstop(struct mc_softc *sc);
-hide int	mcioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
-hide void	mcstart(struct ifnet *ifp);
-hide void	mcreset(struct mc_softc *sc);
+void	mcwatchdog(struct ifnet *);
+int	mcinit(struct mc_softc *sc);
+int	mcstop(struct mc_softc *sc);
+int	mcioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+void	mcstart(struct ifnet *ifp);
+void	mcreset(struct mc_softc *sc);
 
-integrate u_int	maceput(struct mc_softc *sc, struct mbuf *m0);
-integrate void	mc_tint(struct mc_softc *sc);
-integrate void	mace_read(struct mc_softc *, caddr_t, int);
-integrate struct mbuf *mace_get(struct mc_softc *, caddr_t, int);
+u_int	maceput(struct mc_softc *sc, struct mbuf *m0);
+void	mc_tint(struct mc_softc *sc);
+void	mace_read(struct mc_softc *, caddr_t, int);
+struct mbuf *mace_get(struct mc_softc *, caddr_t, int);
 static void mace_calcladrf(struct arpcom *ac, u_int8_t *af);
 static inline u_int16_t ether_cmp(void *, void *);
 
@@ -179,7 +179,7 @@ mcsetup(sc, lladdr)
 	return (0);
 }
 
-hide int
+int
 mcioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
@@ -284,7 +284,7 @@ mcioctl(ifp, cmd, data)
 /*
  * Encapsulate a packet of type family for the local net.
  */
-hide void
+void
 mcstart(ifp)
 	struct ifnet *ifp;
 {
@@ -325,7 +325,7 @@ mcstart(ifp)
  * reset and restart the MACE.  Called in case of fatal
  * hardware/software errors.
  */
-hide void
+void
 mcreset(sc)
 	struct mc_softc *sc;
 {
@@ -333,7 +333,7 @@ mcreset(sc)
 	mcinit(sc);
 }
 
-hide int
+int
 mcinit(sc)
 	struct mc_softc *sc;
 {
@@ -407,7 +407,7 @@ mcinit(sc)
  * Called on final close of device, or if mcinit() fails
  * part way through.
  */
-hide int
+int
 mcstop(sc)
 	struct mc_softc *sc;
 {
@@ -428,7 +428,7 @@ mcstop(sc)
  * In all cases we just reset the chip, and any retransmission
  * will be handled by higher level protocol timeouts.
  */
-hide void
+void
 mcwatchdog(ifp)
 	struct ifnet *ifp;
 {
@@ -444,7 +444,7 @@ mcwatchdog(ifp)
 /*
  * stuff packet into MACE (at splnet)
  */
-integrate u_int
+u_int
 maceput(sc, m)
 	struct mc_softc *sc;
 	struct mbuf *m;
@@ -521,7 +521,7 @@ struct mc_softc *sc = arg;
 		mc_rint(sc);
 }
 
-integrate void
+void
 mc_tint(sc)
 	struct mc_softc *sc;
 {
@@ -566,7 +566,7 @@ mc_tint(sc)
 	mcstart(&sc->sc_if);
 }
 
-integrate void
+void
 mc_rint(sc)
 	struct mc_softc *sc;
 {
@@ -611,7 +611,7 @@ mc_rint(sc)
 #undef	rxf
 }
 
-integrate void
+void
 mace_read(sc, pkt, len)
 	struct mc_softc *sc;
 	caddr_t pkt;
@@ -656,7 +656,7 @@ mace_read(sc, pkt, len)
  * We copy the data into mbufs.  When full cluster sized units are present
  * we copy into clusters.
  */
-integrate struct mbuf *
+struct mbuf *
 mace_get(sc, pkt, totlen)
 	struct mc_softc *sc;
 	caddr_t pkt;
