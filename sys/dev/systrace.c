@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.32 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.33 2003/10/08 16:30:01 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/poll.h>
 
 #include <compat/common/compat_util.h>
@@ -104,6 +105,8 @@ struct str_process {
 	struct str_policy *policy;
 
 	struct systrace_replace *replace;
+	char *fname[SYSTR_MAXFNAME];
+	size_t nfname;
 
 	int flags;
 	short answer;
@@ -118,8 +121,19 @@ struct str_process {
 	struct str_message msg;
 };
 
-void systrace_lock(void);
-void systrace_unlock(void);
+struct lock systrace_lck;
+
+static __inline void
+systrace_lock(void)
+{
+	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curproc);
+}
+
+static __inline void
+systrace_unlock(void)
+{
+	lockmgr(&systrace_lck, LK_RELEASE, NULL, curproc);
+}
 
 /* Needs to be called with fst locked */
 
@@ -131,6 +145,8 @@ int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
 int	systrace_replace(struct str_process *, size_t, register_t []);
 int	systrace_getcwd(struct fsystrace *, struct str_process *);
+int	systrace_fname(struct str_process *, caddr_t, size_t);
+void	systrace_replacefree(struct str_process *);
 
 int	systrace_processready(struct str_process *);
 struct proc *systrace_find(struct str_process *);
@@ -163,7 +179,6 @@ struct pool systr_proc_pl;
 struct pool systr_policy_pl;
 
 int systrace_debug = 0;
-struct lock systrace_lck;
 
 #define DPRINTF(y)	if (systrace_debug) printf y;
 
@@ -453,18 +468,6 @@ systracef_close(fp, p)
 }
 
 void
-systrace_lock(void)
-{
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curproc);
-}
-
-void
-systrace_unlock(void)
-{
-	lockmgr(&systrace_lck, LK_RELEASE, NULL, curproc);
-}
-
-void
 systraceattach(int n)
 {
 	pool_init(&systr_proc_pl, sizeof(struct str_process), 0, 0, 0,
@@ -721,52 +724,57 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	}
 
 	callp = p->p_emul->e_sysent + code;
-	switch (policy) {
-	case SYSTR_POLICY_PERMIT:
-		break;
-	case SYSTR_POLICY_ASK:
-		/* Puts the current process to sleep, return unlocked */
-		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 
-		/* lock has been released in systrace_msg_ask() */
-		fst = NULL;
-		/* We might have detached by now for some reason */
-		if (!error && (strp = p->p_systrace) != NULL) {
-			/* XXX - do I need to lock here? */
-			if (strp->answer == SYSTR_POLICY_NEVER) {
-				error = strp->error;
-				if (strp->replace != NULL) {
-					free(strp->replace, M_XDATA);
-					strp->replace = NULL;
-				}
-			} else {
-				if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
-					CLR(strp->flags, STR_PROC_SYSCALLRES);
-					report = 1;
-				}
-				/* Replace the arguments if necessary */
-				if (strp->replace != NULL) {
-					error = systrace_replace(strp, callp->sy_argsize, v);
-				}
-			}
+	/* Fast-path */
+	if (policy != SYSTR_POLICY_ASK) {
+		if (policy != SYSTR_POLICY_PERMIT) {
+			if (policy > 0)
+				error = policy;
+			else
+				error = EPERM;
 		}
-		break;
-	default:
-		if (policy > 0)
-			error = policy;
-		else
-			error = EPERM;
-		break;
-	}
-
-	if (fst) {
+		systrace_replacefree(strp);
 		lockmgr(&fst->lock, LK_RELEASE, NULL, p);
-		fst = NULL;
+		if (policy == SYSTR_POLICY_PERMIT)
+			error = (*callp->sy_call)(p, v, retval);
+		return (error);
 	}
 
+	/* Puts the current process to sleep, return unlocked */
+	error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
+	/* lock has been released in systrace_msg_ask() */
 
 	if (error)
 		return (error);
+
+	/* We might have detached by now for some reason */
+	systrace_lock();
+	if ((strp = p->p_systrace) == NULL) {
+		systrace_unlock();
+		return (error);
+	}
+
+	fst = strp->parent;
+	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+	systrace_unlock();
+
+	if (strp->answer == SYSTR_POLICY_NEVER) {
+		error = strp->error;
+		systrace_replacefree(strp);
+		goto out_unlock;
+	}
+
+	if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
+		CLR(strp->flags, STR_PROC_SYSCALLRES);
+		report = 1;
+	}
+
+	/* Replace the arguments if necessary */
+	if (strp->replace != NULL) {
+		error = systrace_replace(strp, callp->sy_argsize, v);
+		if (error)
+			goto out_unlock;
+	}
 
 	oldemul = p->p_emul;
 	pc = p->p_cred;
@@ -774,17 +782,15 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	oldgid = pc->p_rgid;
 		
 	/* Elevate privileges as desired */
-	systrace_lock();
-	if ((strp = p->p_systrace) != NULL) {
-		if (issuser) {
-			if (ISSET(strp->flags, STR_PROC_SETEUID))
-				strp->saveuid = systrace_seteuid(p, strp->seteuid);
-			if (ISSET(strp->flags, STR_PROC_SETEGID))
-				strp->savegid = systrace_setegid(p, strp->setegid);
-		} else
-			CLR(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID);
-	}
-	systrace_unlock();
+	if (issuser) {
+		if (ISSET(strp->flags, STR_PROC_SETEUID))
+			strp->saveuid = systrace_seteuid(p, strp->seteuid);
+		if (ISSET(strp->flags, STR_PROC_SETEGID))
+			strp->savegid = systrace_setegid(p, strp->setegid);
+	} else
+		CLR(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID);
+
+	lockmgr(&fst->lock, LK_RELEASE, NULL, curproc);
 				
 	error = (*callp->sy_call)(p, v, retval);
 
@@ -807,6 +813,8 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 			CLR(strp->flags, STR_PROC_SETEGID);
 		}
 	}
+
+	systrace_replacefree(strp);
 
 	if (p->p_flag & P_SUGID) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
@@ -856,6 +864,7 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		goto out;
 	}
 
+ out_unlock:
 	lockmgr(&fst->lock, LK_RELEASE, NULL, curproc);
  out:
 	return (error);
@@ -988,6 +997,10 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		if (strp->policy)
 			systrace_closepolicy(fst, strp->policy);
 		strp->policy = strpol;
+
+		/* LRU for policy use */
+		TAILQ_REMOVE(&fst->policies, strpol, next);
+		TAILQ_INSERT_TAIL(&fst->policies, strpol, next);
 		strpol->refcount++;
 
 		/* Record emulation for this policy */
@@ -1238,9 +1251,10 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 int
 systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 {
-	struct proc *p = strp->proc;
 	struct systrace_replace *repl = strp->replace;
-	caddr_t sg, kdata, udata, kbase, ubase;
+	caddr_t kdata, kbase;
+	struct proc *p = strp->proc;
+	caddr_t sg, udata, ubase;
 	int i, maxarg, ind, ret = 0;
 
 	maxarg = argsize/sizeof(register_t);
@@ -1259,6 +1273,11 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 			continue;
 		}
 		kdata = kbase + repl->strr_off[i];
+		if (repl->strr_flags[i] & SYSTR_NOLINKS) {
+			ret = systrace_fname(strp, kdata, repl->strr_offlen[i]);
+			if (ret != 0)
+				goto out;
+		}
 		udata = ubase + repl->strr_off[i];
 		if (copyout(kdata, udata, repl->strr_offlen[i])) {
 			ret = EINVAL;
@@ -1270,9 +1289,63 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 	}
 
  out:
-	free(repl, M_XDATA);
-	strp->replace = NULL;
 	return (ret);
+}
+
+int
+systrace_fname(struct str_process *strp, caddr_t kdata, size_t len)
+{
+
+	if (strp->nfname >= SYSTR_MAXFNAME || len < 2)
+		return EINVAL;
+
+	strp->fname[strp->nfname] = kdata;
+	strp->fname[strp->nfname][len - 1] = '\0';
+	strp->nfname++;
+
+	return 0;
+}
+
+void
+systrace_replacefree(struct str_process *strp)
+{
+	if (strp->replace != NULL) {
+		free(strp->replace, M_XDATA);
+		strp->replace = NULL;
+	}
+	while (strp->nfname > 0) {
+		strp->nfname--;
+		strp->fname[strp->nfname] = NULL;
+	}
+}
+
+void
+systrace_namei(struct nameidata *ndp)
+{
+	struct str_process *strp;
+	struct fsystrace *fst;
+	struct componentname *cnp = &ndp->ni_cnd;
+	size_t i;
+
+	systrace_lock();
+	strp = cnp->cn_proc->p_systrace;
+	if (strp != NULL) {
+		fst = strp->parent;
+		lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, curproc);
+		systrace_unlock();
+
+		for (i = 0; i < strp->nfname; i++) {
+			if (strcmp(cnp->cn_pnbuf, strp->fname[i]) == 0) {
+				/* ELOOP if namei() tries to readlink */
+				ndp->ni_loopcnt = MAXSYMLINKS;
+				cnp->cn_flags &= ~FOLLOW;
+				cnp->cn_flags |= NOFOLLOW;
+				break;
+			}
+		}
+		lockmgr(&fst->lock, LK_RELEASE, NULL, curproc);
+	} else
+		systrace_unlock();
 }
 
 struct str_process *
@@ -1324,8 +1397,7 @@ systrace_detach(struct str_process *strp)
 
 	if (strp->policy)
 		systrace_closepolicy(fst, strp->policy);
-	if (strp->replace)
-		free(strp->replace, M_XDATA);
+	systrace_replacefree(strp);
 	pool_put(&systr_proc_pl, strp);
 
 	return (error);

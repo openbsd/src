@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.14 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.15 2003/10/08 16:30:01 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -47,6 +47,7 @@ struct str_msg_ugid {
 
 #define SYSTR_MAX_POLICIES	64
 #define SYSTR_MAXARGS		64
+#define SYSTR_MAXFNAME		8
 
 struct str_msg_ask {
 	int code;
@@ -130,14 +131,19 @@ struct systrace_policy {
 #define strp_code	strp_data.assign.code
 #define strp_policy	strp_data.assign.policy
 
+#define	SYSTR_NOLINKS	1
+
 struct systrace_replace {
 	pid_t strr_pid;
+	u_int16_t strr_seqnr;
+	int16_t reserved;
 	int strr_nrepl;
 	caddr_t	strr_base;	/* Base memory */
 	size_t strr_len;	/* Length of memory */
 	int strr_argind[SYSTR_MAXARGS];
 	size_t strr_off[SYSTR_MAXARGS];
 	size_t strr_offlen[SYSTR_MAXARGS];
+	int32_t strr_flags[SYSTR_MAXARGS];
 };
 
 #define STRIOCCLONE	_IOR('s', 100, int)
@@ -161,6 +167,8 @@ struct systrace_replace {
 #define SYSTR_FLAGS_SETEGID	0x004
 
 #ifdef _KERNEL
+#include <sys/namei.h>
+
 struct str_process;
 struct fsystrace {
 	struct lock lock;
@@ -188,6 +196,7 @@ struct fsystrace {
 
 /* Internal prototypes */
 
+void systrace_namei(struct nameidata *);
 int systrace_redirect(int, struct proc *, void *, register_t *);
 void systrace_exit(struct proc *);
 void systrace_fork(struct proc *, struct proc *);
