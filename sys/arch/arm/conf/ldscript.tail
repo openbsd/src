@@ -1,0 +1,52 @@
+  } =0
+  PROVIDE (__etext = .);
+  PROVIDE (_etext = .);
+  PROVIDE (etext = .);
+  /* Adjust the address for the data segment to start on the next page
+     boundary.  */
+  . = ALIGN(0x8000);
+  .data    :
+  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
+  {
+    __data_start = . ;
+    *(.data)
+    *(.data.*)
+  }
+  .sdata     : 
+  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
+  {
+    *(.sdata) 
+    *(.sdata.*)
+  }
+  _edata = .;
+  PROVIDE (edata = .);
+  __bss_start = .;
+  __bss_start__ = .;
+  .sbss      :
+  {
+    PROVIDE (__sbss_start = .);
+    PROVIDE (___sbss_start = .);
+    *(.dynsbss)
+    *(.sbss)
+    *(.sbss.*)
+    *(.scommon)
+    PROVIDE (__sbss_end = .);
+    PROVIDE (___sbss_end = .);
+  }
+  .bss       :
+  {
+   *(.dynbss)
+   *(.bss)
+   *(.bss.*)
+   *(COMMON)
+   /* Align here to ensure that the .bss section occupies space up to
+      _end.  Align after .bss to ensure correct alignment even if the
+      .bss section disappears because there are no input sections.  */
+   . = ALIGN(32 / 8);
+  }
+  . = ALIGN(32 / 8);
+  _end = .;
+  _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
+  PROVIDE (end = .);
+}
+

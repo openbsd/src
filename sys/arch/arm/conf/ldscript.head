@@ -1,0 +1,25 @@
+/*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        
+*/
+
+OUTPUT_ARCH(arm)
+ENTRY(KERNEL_BASE_phys)
+SECTIONS
+{
+  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
+  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
+
+  /* Kernel start: */
+  .start (KERNEL_BASE_phys) :
+  {
+  *(.start)
+  } =0
+
+  /* Read-only sections, merged into text segment: */
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+    *(.text.*)
+    *(.stub)
+    *(.glue_7t) *(.glue_7)
+    *(.rodata) *(.rodata.*)
