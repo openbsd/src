@@ -1,6 +1,6 @@
-# $OpenBSD: README,v 1.6 1999/10/26 22:31:37 angelos Exp $
+# $OpenBSD: README,v 1.7 1999/11/03 19:52:21 angelos Exp $
 
-This is release 2.1 of the KeyNote trust management library reference
+This is release 2.2 of the KeyNote trust management library reference
 implementation (in case you are wondering, there was never an official 1.0
 release).
 

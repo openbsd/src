@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.6 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.7 1999/11/03 19:52:22 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -376,7 +376,7 @@ whichkeyword(char *start, char *end)
 struct assertion *
 keynote_parse_assertion(char *buf, int len, int assertion_flags)
 {
-    int i, j, seen_field = 0, ver = 0, end_of_assertion = 0;
+    int k, i, j, seen_field = 0, ver = 0, end_of_assertion = 0;
     char *ks, *ke, *ts, *te = (char *) NULL;
     struct assertion *as;
 
@@ -596,7 +596,24 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 
 	seen_field = 1;
 	if (end_of_assertion == 1)
-	  break;
+	{
+	    /* End of buffer, good termination */
+	    if ((te == as->as_buf + len) || (te + 1 == as->as_buf + len) ||
+		(*(te) == '\0') || (*(te + 1) == '\0'))
+	      break;
+
+	    /* Check whether there's something else following */
+	    for (k = 1; te + k < as->as_buf + len && *(te + k) != '\n'; k++)   
+	      if (!isspace(*(te + k)))
+	      {
+		  printf("here %c\n", *(te + k));
+		  keynote_free_assertion(as);
+		  keynote_errno = ERROR_SYNTAX;
+		  return (struct assertion *) NULL;
+	      }
+
+	    break; /* Assertion is "properly" terminated */
+	}
     }
 
     /* Check that the basic fields are there */

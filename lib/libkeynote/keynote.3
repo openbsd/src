@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.16 1999/10/11 04:39:00 angelos Exp $
+.\" $OpenBSD: keynote.3,v 1.17 1999/11/03 19:52:22 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -443,8 +443,13 @@ parses the string
 .Fa array
 of length
 .Fa arraylen
-and returns an array of strings containing the assertions found in
+and returns an array of pointers to strings containing copies of
+the assertions found in
 .Fa array .
+Both the array of pointers and the strings are allocated by
+.Fn kn_read_asserts
+dynamically, and thus should be freed by the programmer when they are
+no longer needed.
 .Fa numassertions
 contains the number of assertions (and thus strings in the returned
 array) found in

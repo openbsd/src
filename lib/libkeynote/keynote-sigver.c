@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.8 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.9 1999/11/03 19:52:22 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -56,9 +56,9 @@ sigverusage(void)
 void
 keynote_sigver(int argc, char *argv[])
 {
+    char *buf, **assertlist;
+    int fd, i, n, j;
     struct stat sb;
-    int fd, i;
-    char *buf;
 
     if (argc != 2)
     {
@@ -101,41 +101,61 @@ keynote_sigver(int argc, char *argv[])
 
     close(fd);
 
-    i = kn_verify_assertion(buf, sb.st_size);
-    if (i == -1)
+    assertlist = kn_read_asserts(buf, sb.st_size, &n);
+    if ((assertlist == NULL) || (n == 0))
     {
-	switch (keynote_errno)
-	{
-	    case ERROR_MEMORY:
-		fprintf(stderr,
-			"Out of memory while parsing the assertion.\n");
-		break;
-
-	    case ERROR_SYNTAX:
-		fprintf(stderr,
-			"Syntax error while parsing the assertion.\n");
-		break;
-
-	    default:
-		fprintf(stderr,
-			"Unknown error while parsing the assertion.\n");
-	}
-
+	if (keynote_errno == ERROR_MEMORY)
+	  fprintf(stderr, "Out of memory while allocating memory for "
+		  "assertions.\n");
+	else
+	  fprintf(stderr, "No assertions found.\n");
 	exit(-1);
     }
 
     free(buf);
 
-    if (i == SIGRESULT_TRUE)
-      fprintf(stdout, "Signature verified.\n");
-    else
+    for (j = 0; j < n; j++)
     {
-	if (keynote_errno != 0)
-	  fprintf(stdout, "Signature could not be verified "
-		  "(keynote_errno = %d).\n", keynote_errno);
+	i = kn_verify_assertion(assertlist[j], strlen(assertlist[j]));
+	if (i == -1)
+	{
+	    switch (keynote_errno)
+	    {
+		case ERROR_MEMORY:
+		    fprintf(stderr,
+			    "Out of memory while parsing assertion %d.\n", j);
+		    break;
+
+		case ERROR_SYNTAX:
+		    fprintf(stderr,
+			    "Syntax error while parsing assertion %d.\n", j);
+		    break;
+
+		default:
+		    fprintf(stderr,
+			    "Unknown error while parsing assertion %d.\n", j);
+	    }
+	}
 	else
-	  fprintf(stdout, "Signature did not verify!\n");
+	{
+	    if (i == SIGRESULT_TRUE)
+	      fprintf(stdout, "Signature on assertion %d verified.\n", j);
+	    else
+	    {
+		if (keynote_errno != 0)
+		  fprintf(stdout,
+			  "Signature on assertion %d could not be verified "
+			  "(keynote_errno = %d).\n", j, keynote_errno);
+		else
+		  fprintf(stdout,
+			  "Signature on assertion %d did not verify!\n", j);
+	    }
+	}
+
+	free(assertlist[j]);
     }
+
+    free(assertlist);
 
     exit(0);
 }
