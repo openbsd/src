@@ -58,6 +58,9 @@ struct name {								\
 	struct type *sph_root; /* root of the tree */			\
 }
 
+#define SPLAY_INITIALIZER(root)						\
+	{ NULL }
+
 #define SPLAY_INIT(root) do {						\
 	(root)->sph_root = NULL;					\
 } while (0)
@@ -71,6 +74,7 @@ struct {								\
 #define SPLAY_LEFT(elm, field)		(elm)->field.spe_left
 #define SPLAY_RIGHT(elm, field)		(elm)->field.spe_right
 #define SPLAY_ROOT(head)		(head)->sph_root
+#define SPLAY_EMPTY(head)		(SPLAY_ROOT(head) == NULL)
 
 /* SPLAY_ROTATE_{LEFT,RIGHT} expect that tmp hold SPLAY_{RIGHT,LEFT} */
 #define SPLAY_ROTATE_RIGHT(head, tmp, field) do {			\
@@ -113,7 +117,7 @@ void name##_SPLAY_MINMAX(struct name *, int);				\
 static __inline void							\
 name##_SPLAY_INSERT(struct name *head, struct type *elm)		\
 {									\
-    if ((head)->sph_root == NULL) {					\
+    if (SPLAY_EMPTY(head)) {						\
 	    SPLAY_LEFT(elm, field) = SPLAY_RIGHT(elm, field) = NULL;	\
     } else {								\
 	    int __comp;							\
@@ -137,7 +141,7 @@ static __inline void							\
 name##_SPLAY_REMOVE(struct name *head, struct type *elm)		\
 {									\
 	struct type *__tmp;						\
-	if ((head)->sph_root == NULL)					\
+	if (SPLAY_EMPTY(head))						\
 		return;							\
 	name##_SPLAY(head, elm);					\
 	if ((cmp)(elm, (head)->sph_root) == 0) {			\
@@ -156,7 +160,7 @@ name##_SPLAY_REMOVE(struct name *head, struct type *elm)		\
 static __inline struct type *						\
 name##_SPLAY_FIND(struct name *head, struct type *elm)			\
 {									\
-	if ((head)->sph_root == NULL)					\
+	if (SPLAY_EMPTY(head))						\
 		return(NULL);						\
 	name##_SPLAY(head, elm);					\
 	if ((cmp)(elm, (head)->sph_root) == 0)				\
@@ -266,9 +270,9 @@ void name##_SPLAY_MINMAX(struct name *head, int __comp) \
 #define SPLAY_REMOVE(name, x, y)	name##_SPLAY_REMOVE(x, y)
 #define SPLAY_FIND(name, x, y)		name##_SPLAY_FIND(x, y)
 #define SPLAY_NEXT(name, x, y)		name##_SPLAY_NEXT(x, y)
-#define SPLAY_MIN(name, x)		((x)->sph_root == NULL ? NULL	\
+#define SPLAY_MIN(name, x)		(SPLAY_EMPTY(x) ? NULL	\
 					: name##_SPLAY_MIN_MAX(x, SPLAY_NEGINF))
-#define SPLAY_MAX(name, x)		((x)->sph_root == NULL ? NULL	\
+#define SPLAY_MAX(name, x)		(SPLAY_EMPTY(x) ? NULL	\
 					: name##_SPLAY_MIN_MAX(x, SPLAY_INF))
 
 #define SPLAY_FOREACH(x, name, head)					\
@@ -281,6 +285,9 @@ void name##_SPLAY_MINMAX(struct name *head, int __comp) \
 struct name {								\
 	struct type *rbh_root; /* root of the tree */			\
 }
+
+#define RB_INITIALIZER(root)						\
+	{ NULL }
 
 #define RB_INIT(root) do {						\
 	(root)->rbh_root = NULL;					\
@@ -301,6 +308,7 @@ struct {								\
 #define RB_PARENT(elm, field)		(elm)->field.rbe_parent
 #define RB_COLOR(elm, field)		(elm)->field.rbe_color
 #define RB_ROOT(head)			(head)->rbh_root
+#define RB_EMPTY(head)			(RB_ROOT(head) == NULL)
 
 #define RB_SET(elm, parent, field) do {					\
 	RB_PARENT(elm, field) = parent;					\
