@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.4 1999/01/11 01:28:03 millert Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.5 1999/08/15 22:34:17 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -101,53 +101,47 @@ const struct ne_pci_product {
 	void (*npp_init_card) __P((struct dp8390_softc *));
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,
 	    int *, int *));
-	const char *npp_name;
-} ne_pci_products[] = {
+} ne_pci_prod[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
 	  rtl80x9_mediachange,		rtl80x9_mediastatus,
 	  rtl80x9_init_card,		rtl80x9_init_media,
-	  "RealTek 8029" },
+	  /* RealTek 8029 */ },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "Winbond 89C940F" },
+	  /* Winbond 89C940F */ },
 
 	{ PCI_VENDOR_VIATECH,		PCI_PRODUCT_VIATECH_VT86C926,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "VIA Technologies VT86C926" },
+	  /* VIA Technologies VT86C926 */ },
 
 	{ PCI_VENDOR_SURECOM,		PCI_PRODUCT_SURECOM_NE34,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "Surecom NE-34" },
+	  /* Surecom NE-34 */ },
 
 	{ PCI_VENDOR_NETVIN,		PCI_PRODUCT_NETVIN_NV5000,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "NetVin 5000" },
+	  /* NetVin 5000 */ },
 
 	/* XXX The following entries need sanity checking in pcidevs */
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_COMPEXE,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "Compex" },
+	  /* Compex */ },
 
 	{ PCI_VENDOR_WINBOND2,		PCI_PRODUCT_WINBOND2_W89C940,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "ProLAN" },
+	  /* ProLAN */ },
 
 	{ PCI_VENDOR_KTI,		PCI_PRODUCT_KTI_KTIE,
 	  NULL,				NULL,
 	  NULL,				NULL,
-	  "KTI" },
-
-	{ 0,				0,
-	  NULL,				NULL,
-	  NULL,				NULL,
-	  NULL },
+	  /* KTI */ },
 };
 
 const struct ne_pci_product *ne_pci_lookup __P((struct pci_attach_args *));
@@ -158,7 +152,9 @@ ne_pci_lookup(pa)
 {
 	const struct ne_pci_product *npp;
 
-	for (npp = ne_pci_products; npp->npp_name != NULL; npp++) {
+	for (npp = ne_pci_prod;
+	    npp < &ne_pci_prod[sizeof(ne_pci_prod)/sizeof(ne_pci_prod[0])];
+	    npp++) {
 		if (PCI_VENDOR(pa->pa_id) == npp->npp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == npp->npp_product)
 			return (npp);
@@ -210,10 +206,10 @@ ne_pci_attach(parent, self, aux)
 	int *media, nmedia, defmedia;
 
 	npp = ne_pci_lookup(pa);
-	if (npp == NULL)
-		panic("\nne_pci_attach: impossible");
-
-	printf(": %s Ethernet\n", npp->npp_name);
+	if (npp == NULL) {
+		printf("\n");
+		panic("ne_pci_attach: impossible");
+	}
 
 #ifdef __NetBSD__
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
@@ -241,6 +237,8 @@ ne_pci_attach(parent, self, aux)
 		printf(": can't subregion i/o space\n");
 		return;
 	}
+
+	printf("\n");
 
 	dsc->sc_regt = nict;
 	dsc->sc_regh = nich;
