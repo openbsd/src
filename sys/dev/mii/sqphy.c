@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.5 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.6 2001/05/30 21:41:14 deraadt Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -116,6 +116,10 @@ sqphymatch(parent, match, aux)
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80220)
 		return (10);
 
+   	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_84220)
+		return (10);
+
 	return (0);
 }
 
@@ -128,8 +132,17 @@ sqphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80220,
-	    MII_REV(ma->mii_id2));
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80220)
+           printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80220,
+	            MII_REV(ma->mii_id2));
+		
+
+   	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_84220)
+           printf(": %s, rev. %d\n", MII_STR_xxSEEQ_84220,
+	            MII_REV(ma->mii_id2));
+		
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
