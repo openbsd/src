@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.6 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: server.c,v 1.7 2005/03/28 23:08:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,6 @@
 
 #include "cvs.h"
 #include "log.h"
-#include "sock.h"
 #include "proto.h"
 
 
@@ -71,12 +70,6 @@ cvs_server(int argc, char **argv)
 	(void)setvbuf(stdin, NULL, _IOLBF, 0);
 	(void)setvbuf(stdout, NULL, _IOLBF, 0);
 
-	if (cvs_sock_connect(CVSD_SOCK_PATH) < 0) {
-		cvs_log(LP_ERR, "failed to connect to CVS server socket");
-		return (-1);
-	}
-
-
 	for (;;) {
 		if (fgets(reqbuf, sizeof(reqbuf), stdin) == NULL) {
 			if (feof(stdin))
@@ -98,8 +91,6 @@ cvs_server(int argc, char **argv)
 
 
 	}
-
-	cvs_sock_disconnect();
 
 	return (0);
 }
