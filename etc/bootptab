@@ -1,6 +1,6 @@
-#	$OpenBSD: bootptab,v 1.4 1997/06/16 18:28:09 kstailey Exp $
+#	$OpenBSD: bootptab,v 1.5 2002/06/06 15:23:31 mpech Exp $
 #
-# /etc/bootptab: database for bootp server (/etc/bootpd)
+# /etc/bootptab: database for bootp server (/usr/sbin/bootpd)
 # Last update Mon 11/7/88 18:03
 # Blank lines and lines beginning with '#' are ignored.
 #
