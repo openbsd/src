@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.16 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: syslog.3,v 1.17 2002/07/01 04:47:12 deraadt Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -363,6 +363,7 @@ syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
 .Pp
 .Ed
 For the reentrant functions:
+.Pp
 .Bd -literal -offset indent -compact
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 
