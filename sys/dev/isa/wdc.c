@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.4 1996/08/12 05:21:20 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.5 1996/08/17 06:24:54 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -728,7 +728,7 @@ wdc_ata_intr(wdc,xfer)
 #endif
 
 		wdcunwedge(wdc);
-		if (++wdc->sc_errors < WDIORETRIES)
+		if (wdc->sc_errors < WDIORETRIES)
 			return 1;
 
 		wderror(d_link, xfer->c_bp, "hard error");
