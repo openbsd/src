@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2000/11/05 22:16:03 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.7 2001/03/04 05:10:57 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -43,7 +43,6 @@
 
 char cpu_model[80];
 char machine[] = "powerpc";	/* cpu architecture */
-
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, void *, void *);
@@ -143,12 +142,12 @@ cpuattach(parent, dev, aux)
 	}
 
 	if (clock_freq != 0) {
-		/* Openfirmware  stores clock in HZ, not Mhz */
+		/* Openfirmware stores clock in HZ, not Mhz */
 		clock_freq /= 1000000;
 		printf(": %d Mhz", clock_freq);
 
 	}
-	/* if processor is G3 org G4, configure l2 cache */ 
+	/* if processor is G3 or G4, configure l2 cache */ 
 	if  ( (cpu == 8) || (cpu == 12) ) {
 		config_l2cr();
 	}
@@ -265,4 +264,3 @@ config_l2cr()
 		printf(": L2 cache not enabled");
 		
 }
-
