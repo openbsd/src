@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.5 1997/02/14 23:27:28 provos Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.6 1997/02/16 20:08:56 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.5 1997/02/14 23:27:28 provos Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.6 1997/02/16 20:08:56 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -108,7 +108,7 @@ getnewpasswd(pw)
 	register char *p, *t;
 	int tries;
 	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN], *crypt(), *getpass();
-	void pwd_gensalt __P(( char *, int, struct passwd *, char));
+	int pwd_gensalt __P(( char *, int, struct passwd *, char));
 
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
@@ -139,20 +139,9 @@ getnewpasswd(pw)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	pwd_gensalt( salt, _PASSWORD_LEN, pw, 'l' );
-	return(crypt(buf, salt));
-}
-
-static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-to64(s, v, n)
-	register char *s;
-	register long v;
-	register int n;
-{
-	while (--n >= 0) {
-		*s++ = itoa64[v&0x3f];
-		v >>= 6;
+	if( !pwd_gensalt( salt, _PASSWORD_LEN, pw, 'l' )) {
+		(void)printf("Couldn't generate salt.\n");
+		pw_error(NULL, 0, 0);
 	}
+	return(crypt(buf, salt));
 }

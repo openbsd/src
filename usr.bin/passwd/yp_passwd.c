@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.5 1997/02/14 23:27:31 provos Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.6 1997/02/16 20:09:00 provos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.5 1997/02/14 23:27:31 provos Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.6 1997/02/16 20:09:00 provos Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -192,7 +192,7 @@ getnewpasswd(pw, old_pass)
 	register char *p, *t;
 	int tries;
 	char salt[_PASSWORD_LEN], *crypt(), *getpass();
-	void pwd_gensalt __P(( char *, int, struct passwd *, char));
+	int pwd_gensalt __P(( char *, int, struct passwd *, char));
 	
 	printf("Changing YP password for %s.\n", pw->pw_name);
 
@@ -231,7 +231,10 @@ getnewpasswd(pw, old_pass)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	pwd_gensalt( salt, _PASSWORD_LEN, pw, 'y' );
+        if( !pwd_gensalt( salt, _PASSWORD_LEN, pw, 'y' )) {
+                (void)printf("Couldn't generate salt.\n");
+                pw_error(NULL, 0, 0);
+        }
 	return(strdup(crypt(buf, salt)));
 }
 
