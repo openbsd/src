@@ -24,11 +24,13 @@
 #include "identd.h"
 #include "error.h"
 
+#define IO_TIMEOUT	30	/* Timeout I/O operations after N seconds */
+
 /*
  * A small routine to check for the existance of the ".noident"
  * file in a users home directory.
  */
-static int 
+static int
 check_noident(homedir)
 	char   *homedir;
 {
@@ -44,7 +46,57 @@ check_noident(homedir)
 	return 0;
 }
 
-int 
+/*
+ * Returns 0 on timeout, -1 on error, #bytes read on success.
+ */
+ssize_t
+timed_read(fd, buf, siz, timeout)
+	int fd;
+	void *buf;
+	size_t siz;
+	time_t timeout;
+{
+	int error;
+	fd_set readfds;
+	struct timeval tv;
+
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+
+	if ((error = select(fd + 1, &readfds, 0, 0, &tv)) <= 0)
+		return error;
+	return(read(fd, buf, siz));
+}
+
+/*
+ * Returns 0 on timeout, -1 on error, #bytes read on success.
+ */
+ssize_t
+timed_write(fd, buf, siz, timeout)
+	int fd;
+	const void *buf;
+	size_t siz;
+	time_t timeout;
+{
+	int error;
+	fd_set writeds;
+	struct timeval tv;
+
+	FD_ZERO(&writeds);
+	FD_SET(fd, &writeds);
+
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+
+	if ((error = select(fd + 1, 0, &writeds, 0, &tv)) <= 0)
+		return error;
+	return(write(fd, buf, siz));
+}
+
+int
 parse(fd, laddr, faddr)
 	int fd;
 	struct in_addr *laddr, *faddr;
@@ -59,18 +111,18 @@ parse(fd, laddr, faddr)
 		syslog(LOG_DEBUG, "In function parse()");
 
 	if (debug_flag && syslog_flag)
-		syslog(LOG_DEBUG, "  Before fscanf()");
+		syslog(LOG_DEBUG, "  Before read from remote host");
 	faddr2 = *faddr;
 	laddr2 = *laddr;
 	lport = fport = 0;
 
 	/* Read query from client */
-	if ((n = read(fd, buf, sizeof(buf) - 1)) <= 0) {
+	if ((n = timed_read(fd, buf, sizeof(buf) - 1, IO_TIMEOUT)) <= 0) {
 		if (syslog_flag)
 			syslog(LOG_NOTICE, "read from %s: %m", gethost(faddr));
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
-		if (write(fd, buf, n) != n && syslog_flag) {
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
 		}
@@ -95,7 +147,7 @@ parse(fd, laddr, faddr)
 			    lport, fport, gethost(faddr));
 		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
 		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
-		if (write(fd, buf, n) != n && syslog_flag) {
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
 		}
@@ -127,7 +179,7 @@ parse(fd, laddr, faddr)
 			    lport, fport);
 		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
 		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
-		if (write(fd, buf, n) != n && syslog_flag) {
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
 		}
@@ -149,7 +201,7 @@ parse(fd, laddr, faddr)
 		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
 		    lport, fport, charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
-		if (write(fd, buf, n) != n && syslog_flag) {
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
 		}
@@ -167,7 +219,7 @@ parse(fd, laddr, faddr)
 			    pw->pw_name, gethost(faddr), lport, fport);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
-		if (write(fd, buf, n) != n && syslog_flag) {
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
 		}
@@ -179,7 +231,7 @@ parse(fd, laddr, faddr)
 		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
 		    lport, fport, charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
-		if (write(fd, buf, n) != n && syslog_flag) {
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 			return 1;
 		}
@@ -189,7 +241,7 @@ parse(fd, laddr, faddr)
 	    lport, fport, other_flag ? "OTHER" : "UNIX",
 	    charset_name ? " , " : "",
 	    charset_name ? charset_name : "", pw->pw_name);
-	if (write(fd, buf, n) != n && syslog_flag) {
+	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 		syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
 		return 1;
 	}
