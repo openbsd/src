@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2001/05/07 22:55:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.37 2001/05/21 11:19:22 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -55,7 +55,7 @@ OS=		openbsd
 #FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug gmp
 #FEATURES+=	dnssec
 FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug
-#FEATURES=
+#FEATURES+=
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
@@ -155,14 +155,6 @@ DPADD+=		${LIBGMP}
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 .endif
 
-.if ${FEATURES:Mdnssec} == "dnssec"
-LIBLWRES=	/usr/local/lib/liblwres.a
-CFLAGS+=	-I/usr/local/include
-LDADD+=		${LIBLWRES}
-DPADD+=		${LIBLWRES}
-SRCS+=		dnssec.c
-.endif
-
 .ifdef HAVE_DLOPEN
 CFLAGS+=	-DHAVE_DLOPEN
 SRCS+=		dyn.c
@@ -181,11 +173,11 @@ LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 .endif
 
-SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE}
-CFLAGS+=	${IPSEC_CFLAGS}
+SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC}
+CFLAGS+=	${IPSEC_CFLAGS} ${DNSSEC_CFLAGS}
 
-LDADD+=		${DESLIB}
-DPADD+=		${DESLIBDEP}
+LDADD+=		${DESLIB} ${LWRESLIB}
+DPADD+=		${DESLIBDEP} ${LWRESLIB}
 
 exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num
