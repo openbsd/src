@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.106 2002/06/24 10:55:08 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.107 2002/06/25 08:13:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -57,8 +57,9 @@ static int lineno = 1;
 static int errors = 0;
 static int rulestate = 0;
 
-enum {PFCTL_STATE_NONE=0, PFCTL_STATE_SCRUB=1,
-      PFCTL_STATE_NAT=2, PFCTL_STATE_FILTER=3};
+enum {PFCTL_STATE_NONE=0, PFCTL_STATE_OPTION=1,
+      PFCTL_STATE_SCRUB=2, PFCTL_STATE_NAT=3,
+      PFCTL_STATE_FILTER=4};
  
 struct node_if {
 	char			 ifname[IFNAMSIZ];
@@ -141,6 +142,7 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
     struct node_host *, struct node_port *, struct node_host *,
     struct node_port *, struct node_uid *, struct node_gid *,
     struct node_icmp *);
+int	check_rulestate(int);
 
 struct sym {
 	struct sym *next;
@@ -209,6 +211,7 @@ typedef struct {
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
 %token	FRAGNORM FRAGDROP FRAGCROP
+%token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -230,10 +233,13 @@ typedef struct {
 %type	<v.string>	label
 %type	<v.keep_state>	keep
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
+%type	<v.timeout_spec>	timeout_spec timeout_list
+%type	<v.limit_spec>	limit_spec limit_list
 %%
 
 ruleset		: /* empty */
 		| ruleset '\n'
+		| ruleset option '\n'
 		| ruleset scrubrule '\n'
 		| ruleset natrule '\n'
 		| ruleset binatrule '\n'
@@ -241,6 +247,34 @@ ruleset		: /* empty */
 		| ruleset pfrule '\n'
 		| ruleset varset '\n'
 		| ruleset error '\n'		{ errors++; }
+		;
+
+option		: SET OPTIMIZATION STRING
+		{
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set optimization %s\n", $3);
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			if (pfctl_set_optimization(pf, $3) != 0) {
+				yyerror("unknown optimization %s", $3);
+				YYERROR;
+			}
+		}
+		| SET TIMEOUT timeout_spec
+		| SET TIMEOUT '{' timeout_list '}'
+		| SET LIMIT limit_spec
+		| SET LIMIT '{' limit_list '}'
+		| SET LOGINTERFACE STRING
+		{
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set loginterface %s\n", $3);
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			if (pfctl_set_logif(pf, $3) != 0) {
+				yyerror("error setting loginterface %s", $3);
+				YYERROR;
+			}
+		}		
 		;
 
 varset		: STRING PORTUNARY STRING
@@ -258,12 +292,8 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 		{
 			struct pf_rule r;
 			
-			if (rulestate > PFCTL_STATE_SCRUB) {
-				yyerror("Rules must be in order: "
-				    "scrub, nat, filter");
+			if (check_rulestate(PFCTL_STATE_SCRUB))
 				YYERROR;
-			}
-			rulestate = PFCTL_STATE_SCRUB;
 
 			memset(&r, 0, sizeof(r));
 
@@ -289,7 +319,6 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 				r.min_ttl = $6;
 			if ($7)
 				r.max_mss = $7;
-
 			if ($8)
 				r.rule_flag |= $8;
 
@@ -305,12 +334,8 @@ pfrule		: action dir log quick interface route af proto fromto
 			struct pf_rule r;
 			struct node_state_opt *o;
 
-			if (rulestate > PFCTL_STATE_FILTER) {
-				yyerror("Rules must be in order: "
-				    "scrub, nat, filter");
+			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
-			}
-			rulestate = PFCTL_STATE_FILTER;
 			
 			memset(&r, 0, sizeof(r));
 
@@ -403,7 +428,7 @@ action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		;
 
 blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
-		| RETURNRST		{ $$.b2 = 1; $$.w = 0;}
+		| RETURNRST		{ $$.b2 = 1; $$.w = 0; }
 		| RETURNRST '(' TTL NUMBER ')'	{
 			$$.w = $4;
 			$$.b2 = 1;
@@ -1228,12 +1253,8 @@ natrule		: no NAT interface af proto fromto redirection
 		{
 			struct pf_nat nat;
 
-			if (rulestate > PFCTL_STATE_NAT) {
-				yyerror("Rules must be in order: "
-				    "scrub, nat, filter");
+			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			}
-			rulestate = PFCTL_STATE_NAT;
 			
 			memset(&nat, 0, sizeof(nat));
 
@@ -1296,12 +1317,8 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 		{
 			struct pf_binat binat;
 
-			if (rulestate > PFCTL_STATE_NAT) {
-				yyerror("Rules must be in order: "
-				    "scrub, nat, filter");
+			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			}
-			rulestate = PFCTL_STATE_NAT;
 			
 			memset(&binat, 0, sizeof(binat));
 
@@ -1406,12 +1423,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 		{
 			struct pf_rdr rdr;
 
-			if (rulestate > PFCTL_STATE_NAT) {
-				yyerror("Rules must be in order: "
-				    "scrub, nat, filter");
+			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			}
-			rulestate = PFCTL_STATE_NAT;
 			
 			memset(&rdr, 0, sizeof(rdr));
 
@@ -1583,6 +1596,40 @@ route		: /* empty */			{
 			$$.addr = NULL;
 		}
 		;
+
+timeout_spec	: STRING NUMBER
+		{
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set timeout %s %us\n", $1, $2);
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			if (pfctl_set_timeout(pf, $1, $2) != 0) {
+				yyerror("unknown timeout %s", $1);
+				YYERROR;
+			}
+		}
+		;
+
+timeout_list	: timeout_list ',' timeout_spec
+		| timeout_spec
+		;
+
+limit_spec	: STRING NUMBER
+		{
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set limit %s %u\n", $1, $2);
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			if (pfctl_set_limit(pf, $1, $2) != 0) {
+				yyerror("unable to set limit %s %u", $1, $2);
+				YYERROR;
+			}
+		}
+
+limit_list	: limit_list ',' limit_spec
+		| limit_spec
+		;
+
 %%
 
 int
@@ -2056,6 +2103,17 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 #undef LOOP_THROUGH
 
 int
+check_rulestate(int desired_state)
+{
+	if (rulestate > desired_state) {
+		yyerror("Rules must be in order: options, scrub, nat, filter");
+		return (1);
+	}
+	rulestate = desired_state;
+	return (0);
+}
+
+int
 kw_cmp(k, e)
 	const void *k, *e;
 {
@@ -2088,8 +2146,10 @@ lookup(char *s)
 		{ "ipv6-icmp-type", ICMP6TYPE},
 		{ "keep",	KEEP},
 		{ "label",	LABEL},
+		{ "limit",	LIMIT},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
+		{ "loginterface", LOGINTERFACE},
 		{ "max",	MAXIMUM},
 		{ "max-mss",	MAXMSS},
 		{ "min-ttl",	MINTTL},
@@ -2099,6 +2159,7 @@ lookup(char *s)
 		{ "no-df",	NODF},
 		{ "no-route",	NOROUTE},
 		{ "on",		ON},
+		{ "optimization", OPTIMIZATION},
 		{ "out",	OUT},
 		{ "pass",	PASS},
 		{ "port",	PORT},
@@ -2112,7 +2173,9 @@ lookup(char *s)
 		{ "return-rst",	RETURNRST},
 		{ "route-to",	ROUTETO},
 		{ "scrub",	SCRUB},
+		{ "set",	SET},
 		{ "state",	STATE},
+		{ "timeout",	TIMEOUT},
 		{ "to",		TO},
 		{ "ttl",	TTL},
 		{ "user",	USER},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.80 2002/06/14 17:31:30 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.81 2002/06/25 08:13:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,30 +60,20 @@ int	 pfctl_clear_rules(int, int);
 int	 pfctl_clear_nat(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
-int	 pfctl_hint(int, const char *, int);
 int	 pfctl_show_rules(int, int, int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
+int	 pfctl_show_timeouts(int);
+int	 pfctl_show_limits(int);
 int	 pfctl_rules(int, char *, int);
-int	 pfctl_log(int, char *, int);
-int	 pfctl_timeout(int, char *);
-int	 pfctl_gettimeout(int, const char *);
-int	 pfctl_settimeout(int, const char *, int);
-int	 pfctl_limit(int, char *, int);
-int	 pfctl_getlimit(int, const char *);
-int	 pfctl_setlimit(int, const char *, unsigned int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 
 int	 opts = 0;
 char	*clearopt;
-char	*hintopt;
-char	*logopt;
 char	*rulesopt;
 char	*showopt;
-char	*timeoutopt;
-char	*limitopt;
 char	*debugopt;
 int	 state_killers;
 char	*state_kill[2];
@@ -159,11 +149,10 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-deqhnrvz] [-f file] ", __progname);
-	fprintf(stderr, "[-F modifier] [-k host] [-l interface]\n");
+	fprintf(stderr, "usage: %s [-deqhnNrROvz] [-f file] ", __progname);
+	fprintf(stderr, "[-F modifier] [-k host]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-m modifier] [-O level] [-s modifier] ");
-	fprintf(stderr, "[-t modifier] [-x level]\n");
+	fprintf(stderr, "[-s modifier] [-x level]\n");
 	exit(1);
 }
 
@@ -496,6 +485,41 @@ pfctl_show_status(int dev)
 	return (0);
 }
 
+int
+pfctl_show_timeouts(int dev)
+{
+	struct pfioc_tm pt;
+	int i;
+
+	for (i = 0; pf_timeouts[i].name; i++) {
+		pt.timeout = pf_timeouts[i].timeout;
+		if (ioctl(dev, DIOCGETTIMEOUT, &pt))
+			err(1, "DIOCGETTIMEOUT");
+		printf("%-20s %10ds\n", pf_timeouts[i].name, pt.seconds);
+	}
+	return (0);
+
+}
+
+int
+pfctl_show_limits(int dev)
+{
+	struct pfioc_limit pl;
+	int i;
+
+	for (i = 0; pf_limits[i].name; i++) {
+		pl.index = i;
+		if (ioctl(dev, DIOCGETLIMIT, &pl))
+			err(1, "DIOCGETLIMIT");
+		printf("%-10s ", pf_limits[i].name);
+		if (pl.limit == UINT_MAX)
+			printf("unlimited\n");
+		else
+			printf("hard limit %6u\n", pl.limit);
+	}
+	return (0);
+}
+
 /* callbacks for rule/nat/rdr */
 
 int
@@ -629,214 +653,104 @@ pfctl_rules(int dev, char *filename, int opts)
 }
 
 int
-pfctl_log(int dev, char *ifname, int opts)
+pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 {
-	struct pfioc_if pi;
+	struct pfioc_limit pl;
+	int i;
 
-	strlcpy(pi.ifname, ifname, sizeof(pi.ifname));
-	if (ioctl(dev, DIOCSETSTATUSIF, &pi))
-		err(1, "DIOCSETSTATUSIF");
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "now logging %s\n", pi.ifname);
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
+		for (i = 0; pf_limits[i].name; i++) {
+			if (strcasecmp(opt, pf_limits[i].name) == 0) {
+				pl.index = i;
+				pl.limit = limit;
+				if ((pf->opts & PF_OPT_NOACTION) == 0) {
+					if (ioctl(pf->dev, DIOCSETLIMIT, &pl)) {
+						if (errno == EBUSY) {
+							warnx("Current pool "
+							    "size exceeds "
+							    "exceeds requested "
+							    " hard limit");
+							return (1);
+						} else
+							err(1, "DIOCSETLIMIT");
+					}
+				}
+				break;
+			}
+		}
+		if (pf_limits[i].name == NULL) {
+			warnx("Bad pool name.");
+			return (1);
+		}
+	}
 	return (0);
 }
 
 int
-pfctl_hint(int dev, const char *opt, int opts)
+pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds)
+{
+	struct pfioc_tm pt;
+	int i;
+
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
+		for (i = 0; pf_timeouts[i].name; i++) {
+			if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
+				pt.timeout = pf_timeouts[i].timeout;
+				break;
+			}
+		}
+
+		if (pf_timeouts[i].name == NULL) {
+			warnx("Bad timeout name.");
+			return (1);
+		}
+
+		pt.seconds = seconds;
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCSETTIMEOUT, &pt))
+				err(1, "DIOCSETTIMEOUT");
+		}
+	}
+	return (0);
+}
+
+int
+pfctl_set_optimization(struct pfctl *pf, const char *opt)
 {
 	const struct pf_hint *hint;
 	int i, r;
 
-	for (i = 0; pf_hints[i].name; i++)
-		if (strcasecmp(opt, pf_hints[i].name) == 0)
-			break;
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
+		for (i = 0; pf_hints[i].name; i++)
+			if (strcasecmp(opt, pf_hints[i].name) == 0)
+				break;
 
-	hint = pf_hints[i].hint;
-	if (hint == NULL) {
-		warnx("Bad hint name.  Format -O hint");
-		return (1);
-	}
-
-	for (i = 0; hint[i].name; i++)
-		if ((r = pfctl_settimeout(dev, hint[i].name, hint[i].timeout)))
-			return (r);
-	return (0);
-}
-
-int
-pfctl_limit(int dev, char *opt, int opts)
-{
-	char *arg, *serr = NULL;
-	unsigned int limit;
-
-	arg = strchr(opt, '=');
-	if (arg == NULL)
-		return pfctl_getlimit(dev, opt);
-	else {
-		if (*arg)
-			*arg++ = 0;
-		if (strcasecmp(arg, "inf") == 0)
-			limit = UINT_MAX;
-		else {
-			limit = strtol(arg, &serr, 10);
-			if (*serr || !*arg) {
-				warnx("Bad limit argument.  "
-				    "Format -m name=limit");
-				return (1);
-			}
-		}
-		return pfctl_setlimit(dev, opt, limit);
-	}
-}
-
-int
-pfctl_getlimit(int dev, const char *opt)
-{
-	struct pfioc_limit pl;
-	int i, found = 0;
-
-	for (i = 0; pf_limits[i].name; i++) {
-		if (strcmp(opt, "all") == 0 ||
-		    strcasecmp(opt, pf_limits[i].name) == 0) {
-			found = 1;
-			pl.index = i;
-			if (ioctl(dev, DIOCGETLIMIT, &pl))
-				err(1, "DIOCGETLIMIT");
-			printf("%-10s ", pf_limits[i].name);
-			if (pl.limit == UINT_MAX)
-				printf("unlimited\n");
-			else
-				printf("hard limit %6u\n", pl.limit);
-		}
-	}
-	if (found == 0) {
-		warnx("Bad pool name.  Format -m name[=<limit>]");
-		return (1);
-	}
-	return (0);
-}
-
-int
-pfctl_setlimit(int dev, const char *opt, unsigned int limit)
-{
-	struct pfioc_limit pl;
-	int i;
-
-	for (i = 0; pf_limits[i].name; i++) {
-		if (strcasecmp(opt, pf_limits[i].name) == 0) {
-			pl.index = i;
-			pl.limit = limit;
-			if (ioctl(dev, DIOCSETLIMIT, &pl)) {
-				if (errno == EBUSY) {
-					warnx("Current pool size exceeds "
-					    "requested hard limit");
-					return (1);
-				} else
-					err(1, "DIOCSETLIMIT");
-			}
-			if ((opts & PF_OPT_QUIET) == 0) {
-				printf("%s ", pf_limits[i].name);
-				if (pl.limit == UINT_MAX)
-					printf("unlimited");
-				else
-					printf("hard limit %u", pl.limit);
-				printf(" -> ");
-				if (limit == UINT_MAX)
-					printf("unlimited");
-				else
-					printf("hard limit %u", limit);
-				printf("\n");
-			}
-			break;
-		}
-	}
-	if (pf_limits[i].name == NULL) {
-		warnx("Bad pool name.  Format -m name[=<limit>]");
-		return (1);
-	}
-	return (0);
-}
-
-int
-pfctl_timeout(int dev, char *opt)
-{
-	char *seconds, *serr = NULL;
-	int setval;
-
-	seconds = strchr(opt, '=');
-	if (seconds == NULL)
-		return pfctl_gettimeout(dev, opt);
-	else {
-		/* Set the timeout value */
-		if (*seconds != '\0')
-			*seconds++ = '\0';	/* Eat '=' */
-		setval = strtol(seconds, &serr, 10);
-		if (*serr != '\0' || *seconds == '\0' || setval < 0) {
-			warnx("Bad timeout argument.  Format -t name=seconds");
+		hint = pf_hints[i].hint;
+		if (hint == NULL) {
+			warnx("Bad hint name.");
 			return (1);
 		}
-		return pfctl_settimeout(dev, opt, setval);
+
+		for (i = 0; hint[i].name; i++)
+			if ((r = pfctl_set_timeout(pf, hint[i].name, 
+			    hint[i].timeout)))
+				return (r);
 	}
-}
-
-int
-pfctl_gettimeout(int dev, const char *opt)
-{
-	struct pfioc_tm pt;
-	int i;
-
-	for (i = 0; pf_timeouts[i].name; i++) {
-		if (strcmp(opt, "all") == 0) {
-			/* Need to dump all of the values */
-			pt.timeout = pf_timeouts[i].timeout;
-			if (ioctl(dev, DIOCGETTIMEOUT, &pt))
-				err(1, "DIOCGETTIMEOUT");
-			printf("%-20s %ds\n", pf_timeouts[i].name, pt.seconds);
-		} else if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
-			pt.timeout = pf_timeouts[i].timeout;
-			break;
-		}
-	}
-	if (strcmp(opt, "all") == 0)
-		return (0);
-
-	if (pf_timeouts[i].name == NULL) {
-		warnx("Bad timeout name.  Format -t name[=<seconds>]");
-		return (1);
-	}
-
-	if (ioctl(dev, DIOCGETTIMEOUT, &pt))
-		err(1, "DIOCGETTIMEOUT");
-	if ((opts & PF_OPT_QUIET) == 0)
-		printf("%s timeout %ds\n", pf_timeouts[i].name,
-		    pt.seconds);
 	return (0);
 }
 
 int
-pfctl_settimeout(int dev, const char *opt, int seconds)
+pfctl_set_logif(struct pfctl *pf, char *ifname)
 {
-	struct pfioc_tm pt;
-	int i;
+	struct pfioc_if pi;
 
-	for (i = 0; pf_timeouts[i].name; i++) {
-		if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
-			pt.timeout = pf_timeouts[i].timeout;
-			break;
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			strlcpy(pi.ifname, ifname, sizeof(pi.ifname));
+			if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi))
+				return (1);
 		}
 	}
-
-	if (pf_timeouts[i].name == NULL) {
-		warnx("Bad timeout name.  Format -t name[=<seconds>]");
-		return (1);
-	}
-
-	pt.seconds = seconds;
-	if (ioctl(dev, DIOCSETTIMEOUT, &pt))
-		err(1, "DIOCSETTIMEOUT");
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "%s timeout %ds -> %ds\n", pf_timeouts[i].name,
-		    pt.seconds, seconds);
 	return (0);
 }
 
@@ -887,7 +801,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqf:F:hk:l:m:nNO:rRs:St:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "deqf:F:hk:nNOrRs:Svx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -913,25 +827,12 @@ main(int argc, char *argv[])
 			state_kill[state_killers++] = optarg;
 			mode = O_RDWR;
 			break;
-		case 'l':
-			logopt = optarg;
-			mode = O_RDWR;
-			break;
-		case 'm':
-			limitopt = optarg;
-			if (strchr(limitopt, '=') != NULL)
-				mode = O_RDWR;
-			break;
 		case 'n':
 			opts |= PF_OPT_NOACTION;
 			break;
 		case 'N':
 			loadopt &= ~PFCTL_FLAG_ALL;
 			loadopt |= PFCTL_FLAG_NAT;
-			break;
-		case 'O':
-			hintopt = optarg;
-			mode = O_RDWR;
 			break;
 		case 'r':
 			opts |= PF_OPT_USEDNS;
@@ -944,13 +845,12 @@ main(int argc, char *argv[])
 			loadopt &= ~PFCTL_FLAG_ALL;
 			loadopt |= PFCTL_FLAG_FILTER;
 			break;
+		case 'O':
+			loadopt &= ~PFCTL_FLAG_ALL;
+			loadopt |= PFCTL_FLAG_OPTION;
+			break;
 		case 's':
 			showopt = optarg;
-			break;
-		case 't':
-			timeoutopt = optarg;
-			if (strchr(timeoutopt, '=') != NULL)
-				mode = O_RDWR;
 			break;
 		case 'v':
 			opts |= PF_OPT_VERBOSE;
@@ -986,7 +886,7 @@ main(int argc, char *argv[])
 	} else {
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
-		clearopt = logopt = showopt = debugopt = NULL;
+		clearopt = showopt = debugopt = NULL;
 	}
 
 	if (opts & PF_OPT_DISABLE)
@@ -1042,34 +942,26 @@ main(int argc, char *argv[])
 		case 'i':
 			pfctl_show_status(dev);
 			break;
+		case 't':
+			pfctl_show_timeouts(dev);
+			break;
+		case 'm':
+			pfctl_show_limits(dev);
+			break;
 		case 'a':
 			pfctl_show_rules(dev, opts, 0);
 			pfctl_show_nat(dev);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
 			pfctl_show_rules(dev, opts, 1);
+			pfctl_show_timeouts(dev);
+			pfctl_show_limits(dev);
 			break;
 		default:
 			warnx("Unknown show modifier '%s'", showopt);
 			error = 1;
 		}
 	}
-
-	if (logopt != NULL)
-		if (pfctl_log(dev, logopt, opts))
-			error = 1;
-
-	if (hintopt != NULL)
-		if (pfctl_hint(dev, hintopt, opts))
-			error = 1;
-
-	if (timeoutopt != NULL)
-		if (pfctl_timeout(dev, timeoutopt))
-			error = 1;
-
-	if (limitopt != NULL)
-		if (pfctl_limit(dev, limitopt, opts))
-			error = 1;
 
 	if (opts & PF_OPT_ENABLE)
 		if (pfctl_enable(dev, opts))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.24 2002/06/11 06:12:15 kjell Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.25 2002/06/25 08:13:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -68,6 +68,11 @@ int	 pfctl_add_nat(struct pfctl *, struct pf_nat *);
 int	 pfctl_add_binat(struct pfctl *, struct pf_binat *);
 int	 pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
 
+int	 pfctl_set_timeout(struct pfctl *, const char *, int);
+int	 pfctl_set_optimization(struct pfctl *, const char *);
+int	 pfctl_set_limit(struct pfctl *, const char *, unsigned int);
+int	 pfctl_set_logif(struct pfctl *, char *);
+
 int	 parse_rules(FILE *, struct pfctl *);
 int	 parse_flags(char *);
 
@@ -103,6 +108,7 @@ struct pf_timeout {
 #define PFCTL_FLAG_ALL		0x01
 #define PFCTL_FLAG_FILTER	0x02
 #define PFCTL_FLAG_NAT		0x04
+#define PFCTL_FLAG_OPTION	0x08
 
 extern const struct pf_timeout pf_timeouts[];
 
