@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymvar.h,v 1.2 2000/08/01 13:51:18 mickey Exp $	*/
+/*	$OpenBSD: wsksymvar.h,v 1.3 2001/03/08 07:42:20 maja Exp $	*/
 /*	$NetBSD: wsksymvar.h,v 1.8.4.1 2000/07/07 09:50:21 hannken Exp $ */
 
 /*-
@@ -53,7 +53,6 @@ struct wscons_keymap {
 	keysym_t group2[2];
 };
 
-#ifdef _KERNEL
 struct wscons_keydesc {
 	kbd_t	name;				/* name of this map */
 	kbd_t	base;				/* map this one is based on */
@@ -61,6 +60,7 @@ struct wscons_keydesc {
 	const keysym_t *map;			/* the map itself */
 };
 
+#ifdef _KERNEL
 struct wskbd_mapdata {
 	const struct wscons_keydesc *keydesc;
 	kbd_t layout;
