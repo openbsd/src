@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1 1995/10/08 23:38:44 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.1.2.1 1995/11/18 07:16:14 gwr Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -13,15 +13,17 @@ include "std.sun3"
 # Machines to be supported by this kernel
 options 	HAVECACHE		# Sun3/260 VAC
 
-# Enable the hooks used for initializing the ram-disk.
-options 	RAMDISK_HOOKS
-options 	MINIROOTSIZE=512	# 256K
-
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	2
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+#makeoptions	DEBUG="-g"			# symbols for kgdb + nm
+#options 	DDB
+
+# Enable the hooks used for initializing the ram-disk.
+options 	RAMDISK_HOOKS
+options 	MINIROOTSIZE=512	# 256K
 
 # Filesystem options
 # May need NFSCLIENT to get miniroot image
@@ -32,8 +34,6 @@ options		FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
 options		INET				# IP prototol stack support
-# XXX - Work-around for slow SunOS/Sun3 servers (sigh...)
-options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options (XXX - Need these?)
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
@@ -43,28 +43,51 @@ options 	COMPAT_43	# and 4.3BSD
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 # Sun3-specific debugging options
-# options 	DDB
 options 	DIAGNOSTIC
 
 # The config program assumes all devices have partions...
 # Is it OK to put swap on a non-existent partition?
 config		netbsd root on rd0a swap on rd0b
 
-# Devices
+#
+# Network devices
+#
 
-# RAM Disk (root for install tape)
-rd0 at mainbus?
-
-# No frame-buffer devices.
-
+# Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr ? level ?
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
 
+# Lance Ethernet (only onboard)
 le0 at obio0 addr ? level ?
 
-si0 at obio0 addr ? level ?
-si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+#
+# Disk and tape devices
+#
 
+# Sun3 "si" SCSI controller (NCR 5380)
+ncr_si0 at obio0 addr ? level ?
+ncr_si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+ncr_si1 at vmes0 addr 0xff204000 level 2 vect 0x41
+
+# Xylogics 7053 controllers
+# xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
+# xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
+# xd* at xdc? drive ?
+
+# Xylogics 450/451 controllers
+# xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
+# xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
+# xy* at xyc? drive ?
+
+# Xylogics 472 tape controllers?
+
+#
+# Frame buffer devices
+# (Not needed for the RAMDISK installation kernel)
+
+#
+# SCSI infrastructure
+#
 scsibus* at scsi?
 
 # Sun compatible scsi device mappings
@@ -83,5 +106,12 @@ cd* at scsibus? target ? lun ?
 
 #ch* at scsibus? target ? lun ?
 
+
+# RAM Disk (root for install tape)
+rd0 at mainbus?
+
+# Misc.
 pseudo-device	loop	1		# network loopback
+pseudo-device	sl	2		# CSLIP
+pseudo-device	ppp	2		# PPP
 

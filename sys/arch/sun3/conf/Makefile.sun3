@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.34 1995/09/19 23:54:29 thorpej Exp $
+#	$NetBSD: Makefile.sun3,v 1.34.2.1 1995/11/18 07:16:06 gwr Exp $
 
 #
 # Makefile for NetBSD
@@ -6,11 +6,11 @@
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/conf/``machineid''
+#	/sys/arch/sun3/conf/``machineid''
 # after which you should do
 #	 config machineid
 # Machine generic makefile changes should be made in
-#	/sys/conf/Makefile.``machinetype''
+#	/sys/arch/sun3/conf/Makefile.sun3
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -111,7 +111,7 @@ clean::
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
 	    ${SUN3}/sun3/Locore.c ${CFILES} ${SUN3}/sun3/swapgeneric.c \
-	    ioconf.c param.c| \
+	    ioconf.c param.c | \
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
@@ -119,19 +119,14 @@ locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
 	  ${SUN3}/include/trap.h $S/arch/m68k/include/trap.h
 	${CPP} -DLOCORE ${COPTS} ${SUN3}/sun3/locore.s | ${AS} -o locore.o
 
-# the following is necessary because autoconf.o depends on #if GENERIC
-autoconf.o: Makefile
+# depends on root or device configuration
+autoconf.o conf.o : Makefile
 
-# depends on device configuration
-conf.o : Makefile
+# depends on the supported CPU types
+locore.o sun3_startup.o pmap.o trap.o : Makefile
 
 # depends on network or filesystem configuration
-uipc_proto.o vfs_conf.o : Makefile
-
-# depends on value of SYMTAB_SPACE
-db_aout.o : Makefile
-
-sun3_startup.o pmap.o kern_xxx.o: Makefile
+uipc_proto.o vfs_conf.o kern_xxx.o : Makefile
 
 # depend on maxusers
 assym.s: Makefile
