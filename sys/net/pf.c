@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.57 2001/06/26 19:09:43 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.58 2001/06/26 19:43:14 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -674,6 +674,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t *ticket = (u_int32_t *)addr;
 		struct pf_rulequeue *old_rules;
 		struct pf_rule *rule;
+		struct pf_state *state;
 
 		if (*ticket != ticket_rules_inactive) {
 			error = EBUSY;
@@ -682,6 +683,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		/* Swap rules, keep the old. */
 		s = splsoftnet();
+		/* Rules are about to get freed, clear rule pointers in states */
+		TAILQ_FOREACH(state, &pf_states, entries) state->rule = NULL;
 		old_rules = pf_rules_active;
 		pf_rules_active = pf_rules_inactive;
 		pf_rules_inactive = old_rules;
@@ -1307,6 +1310,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (s == NULL) {
 			return (PF_DROP);
 		}
+		s->rule		= rm;
+		s->log		= rm && (rm->log & 2);
 		s->proto	= IPPROTO_TCP;
 		s->direction	= direction;
 		if (direction == PF_OUT) {
@@ -1434,6 +1439,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (s == NULL) {
 			return (PF_DROP);
 		}
+		s->rule		= rm;
+		s->log		= rm && (rm->log & 2);
 		s->proto	= IPPROTO_UDP;
 		s->direction	= direction;
 		if (direction == PF_OUT) {
@@ -1544,6 +1551,8 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (s == NULL) {
 			return (PF_DROP);
 		}
+		s->rule		= rm;
+		s->log		= rm && (rm->log & 2);
 		s->proto	= IPPROTO_ICMP;
 		s->direction	= direction;
 		if (direction == PF_OUT) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.16 2001/06/26 19:01:55 provos Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.17 2001/06/26 19:43:14 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -87,12 +87,14 @@ struct pf_state {
 	struct pf_state_host ext;
 	struct pf_state_peer src;
 	struct pf_state_peer dst;
+	struct pf_rule	*rule;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	u_int32_t	 packets;
 	u_int32_t	 bytes;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
+	u_int8_t	 log;
 };
 
 struct pf_nat {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.12 2001/06/26 18:18:58 kjell Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.13 2001/06/26 19:43:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -397,8 +397,10 @@ print_rule(struct pf_rule *r)
 		printf("in ");
 	else
 		printf("out ");
-	if (r->log)
+	if (r->log == 1)
 		printf("log ");
+	else if (r->log == 2)
+		printf("log-all ");
 	if (r->quick)
 		printf("quick ");
 	if (r->ifname[0])
@@ -624,6 +626,9 @@ parse_rule(int n, char *l, struct pf_rule *r)
 	/* log */
 	if (!strcmp(w, "log")) {
 		r->log = 1;
+		w = next_word(&l);
+	} else if (!strcmp(w, "log-all")) {
+		r->log = 2;
 		w = next_word(&l);
 	}
 
