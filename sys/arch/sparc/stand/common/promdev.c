@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.2 1999/01/11 05:12:00 millert Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.3 2001/01/29 03:59:05 jason Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -136,12 +136,15 @@ prom_init()
 		case 'a':
 			prom_boothow |= RB_ASKNAME;
 			break;
-		case 's':
-			prom_boothow |= RB_SINGLE;
+		case 'c':
+			prom_boothow |= RB_CONFIG;
 			break;
 		case 'd':
 			prom_boothow |= RB_KDB;
 			debug = 1;
+			break;
+		case 's':
+			prom_boothow |= RB_SINGLE;
 			break;
 		}
 	}

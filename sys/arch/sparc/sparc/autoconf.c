@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2000/07/25 18:03:03 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2001/01/29 03:59:05 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -457,6 +457,10 @@ bootpath_build()
 			boothowto |= RB_DFLTROOT;
 			break;
 
+		case 'c':
+			boothowto |= RB_CONFIG;
+			break;
+
 		case 'd':	/* kgdb - always on zs	XXX */
 #ifdef KGDB
 			boothowto |= RB_KDB;	/* XXX unused */
@@ -793,6 +797,14 @@ configure()
 
 	/* build the bootpath */
 	bootpath_build();
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
