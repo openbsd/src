@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 1998/05/17 23:07:46 millert Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1998/05/22 08:04:50 graichen Exp $	*/
 /*	$NetBSD: bus.h,v 1.4 1997/11/28 00:33:53 jonathan Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #ifndef _PMAX_BUS_H_
 #define _PMAX_BUS_H_
 
-#include <pmax/locore.h>			/* wbflush() */
+#include <machine/locore.h>			/* wbflush() */
 
 
 /*
