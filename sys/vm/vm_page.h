@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.5 1998/03/01 00:38:20 niklas Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.6 1998/03/20 15:40:38 niklas Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -333,6 +333,7 @@ int		 vm_page_alloc_memory __P((vm_size_t size, vm_offset_t low,
 void		 vm_page_free_memory __P((struct pglist *list));
 #if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 void		 vm_page_bootstrap __P((vm_offset_t *, vm_offset_t *));
+vm_offset_t	 vm_bootstrap_steal_memory __P((vm_size_t));
 #endif
 void		 vm_page_copy __P((vm_page_t, vm_page_t));
 void		 vm_page_deactivate __P((vm_page_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 1998/03/02 17:07:12 niklas Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 1998/03/20 15:40:34 niklas Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -206,9 +206,5 @@ void		 pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
 __END_DECLS
 #endif	/* kernel*/
 #endif  /* PMAP_EXCLUDE_DECLS */
-
-/* XXX these are about to disappear real soon */
-void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
-vm_offset_t	 pmap_steal_memory __P((vm_size_t));
 
 #endif /* _PMAP_VM_ */
