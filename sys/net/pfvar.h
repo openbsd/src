@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.15 2001/06/26 18:17:53 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.16 2001/06/26 19:01:55 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -189,6 +189,9 @@ struct pfioc_if {
 
 /* Reasons code for passing/dropping a packet */
 #define PFRES_MATCH	0		/* Explicit match of a rule */
+#define PFRES_BADOFF	1		/* Bad offset for pull_hdr */
+#define PFRES_FRAG	2		/* Dropping following fragment */
+#define PFRES_SHORT	3		/* Dropping short packet */
 
 #ifdef _KERNEL
 

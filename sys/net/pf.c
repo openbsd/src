@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.55 2001/06/26 18:17:53 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.56 2001/06/26 19:01:55 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -161,8 +161,8 @@ struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf *,
 struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf *,
 		    int, int, struct ip *, struct icmp *);
 void		*pull_hdr(struct ifnet *, struct mbuf *, int, int, void *, int,
-		    struct ip *, int *);
-int		 pflog_packet(struct mbuf *, int, u_short, u_short, u_short,
+		    struct ip *, u_short *, u_short *);
+int		 pflog_packet(struct mbuf *, int, u_short, u_short, short,
 		    struct pf_rule *);
 
 #if NPFLOG > 0
@@ -356,7 +356,7 @@ tree_remove(struct pf_tree_node **p, struct pf_tree_key *key)
 
 int
 pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
-    u_short nr, struct pf_rule *rm)
+    short nr, struct pf_rule *rm)
 {
 #if NBPFILTER > 0
         struct ifnet *ifn, *ifp = NULL;
@@ -1863,10 +1863,10 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		struct ip h2;
 		int ipoff2;
 		int off2;
-		int dummy;
 
 		ipoff2 = off + 8;	/* offset of h2 in mbuf chain */
-		if (!pull_hdr(ifp, m, 0, ipoff2, &h2, sizeof(h2), h, &dummy)) {
+		if (!pull_hdr(ifp, m, 0, ipoff2, &h2, sizeof(h2), h,
+			      NULL, NULL)) {
 			printf("pf: ICMP error message too short\n");
 			return (NULL);
 		}
@@ -1884,7 +1884,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			int ackskew;
 
 			if (!pull_hdr(ifp, m, ipoff2, off2, &th, sizeof(th),
-			    &h2, &dummy)) {
+			    &h2, NULL, NULL)) {
 				printf("pf: "
 				    "ICMP error message too short\n");
 				return NULL;
@@ -1963,7 +1963,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			struct pf_tree_key key;
 
 			if (!pull_hdr(ifp, m, ipoff2, off2, &uh, sizeof(uh),
-			    &h2, &dummy)) {
+			    &h2, NULL, NULL)) {
 				printf("pf: ICMP error message too short\n");
 				return NULL;
 			}
@@ -2021,46 +2021,46 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	}
 }
 
+#define SAVE_SET(a,x)	do { if ((a) != NULL) *(a) = (x); } while (0)
+
 /*
  * ipoff and off are measured from the start of the mbuf chain.
  * h must be at "ipoff" on the mbuf chain.
  */
 void *
 pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
-    int len, struct ip *h, int *action)
+    int len, struct ip *h, u_short *action, u_short *reason)
 {
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 
 	/* sanity check */
 	if (ipoff > off) {
-		printf("pf: assumption failed on header location");
-		*action = PF_DROP;
+		SAVE_SET(action, PF_DROP);
+		SAVE_SET(reason, PFRES_BADOFF);
 		return NULL;
 	}
 	if (fragoff) {
 		if (fragoff >= len)
-			*action = PF_PASS;
+			SAVE_SET(action, PF_PASS);
 		else {
-			*action = PF_DROP;
-			printf("pf: dropping following fragment");
-			print_ip(ifp, h);
+			SAVE_SET(action, PF_DROP);
+			SAVE_SET(reason, PFRES_FRAG);
 		}
 		return (NULL);
 	}
 	if (m->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
-		*action = PF_DROP;
-		printf("pf: dropping short packet");
-		print_ip(ifp, h);
+		SAVE_SET(action, PF_DROP);
+		SAVE_SET(reason, PFRES_SHORT);
 		return (NULL);
 	}
 	m_copydata(m, off, len, p);
-	return p;
+	return (p);
 }
 
 int
 pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 {
-	int action;
+	u_short action, reason = 0, log = 0;
 	struct ip *h;
 	int off;
 
@@ -2093,8 +2093,11 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 	case IPPROTO_TCP: {
 		struct tcphdr th;
 
-		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), h,
+		      &action, &reason)) {
+			log = 1;
 			goto done;
+		}
 		if (pf_test_state_tcp(direction, ifp, m, 0, off, h, &th))
 			action = PF_PASS;
 		else
@@ -2106,8 +2109,11 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 	case IPPROTO_UDP: {
 		struct udphdr uh;
 
-		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), h,
+		      &action, &reason)) {
+			log = 1;
 			goto done;
+		}
 		if (pf_test_state_udp(direction, ifp, m, 0, off, h, &uh))
 			action = PF_PASS;
 		else
@@ -2119,8 +2125,11 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 	case IPPROTO_ICMP: {
 		struct icmp ih;
 
-		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), h,
+		      &action, &reason)) {
+			log = 1;
 			goto done;
+		}
 		if (pf_test_state_icmp(direction, ifp, m, 0, off, h, &ih))
 			action = PF_PASS;
 		else
@@ -2138,6 +2147,13 @@ done:
 	if (ifp == status_ifp) {
 		pf_status.bytes[direction] += h->ip_len;
 		pf_status.packets[direction][action]++;
+	}
+	if (log && action != PF_PASS) {
+		struct pf_rule r;
+
+		r.ifp = ifp;
+		r.action = action;
+		PFLOG_PACKET(h, m, AF_INET, direction, reason, -1, &r);
 	}
 	return (action);
 }
