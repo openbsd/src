@@ -152,9 +152,11 @@
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
 ./usr/include/dev/ic/aic7xxx.h
+./usr/include/dev/ic/aic7xxx_cam.h
 ./usr/include/dev/ic/aic7xxx_inline.h
 ./usr/include/dev/ic/aic7xxx_openbsd.h
 ./usr/include/dev/ic/aic7xxxreg.h
+./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
@@ -4099,6 +4101,7 @@
 ./usr/share/man/cat3/pthread_detach.0
 ./usr/share/man/cat3/pthread_equal.0
 ./usr/share/man/cat3/pthread_exit.0
+./usr/share/man/cat3/pthread_getconcurrency.0
 ./usr/share/man/cat3/pthread_getschedparam.0
 ./usr/share/man/cat3/pthread_getspecific.0
 ./usr/share/man/cat3/pthread_join.0
@@ -4141,6 +4144,7 @@
 ./usr/share/man/cat3/pthread_set_name_np.0
 ./usr/share/man/cat3/pthread_setcancelstate.0
 ./usr/share/man/cat3/pthread_setcanceltype.0
+./usr/share/man/cat3/pthread_setconcurrency.0
 ./usr/share/man/cat3/pthread_setschedparam.0
 ./usr/share/man/cat3/pthread_setspecific.0
 ./usr/share/man/cat3/pthread_sigmask.0
