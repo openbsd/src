@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.48 2000/12/15 02:54:08 provos Exp $
+.\" $OpenBSD: vpn.8,v 1.49 2001/01/04 22:43:49 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -196,7 +196,7 @@ On the security gateway of subnet A:
 	    -addr B_EXTERNAL_IP 255.255.255.255
 	          A_EXTERNAL_IP 255.255.255.255 
 	    -require -in -src A_EXTERNAL_IP
-	# ipsecadm flow -dst A_EXTERNAL_IP -proto esp
+	# ipsecadm flow -dst B_EXTERNAL_IP -proto esp
 	    -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
 	          A_INTERNAL_NETWORK A_INTERNAL_NETMASK
 	    -require -in -src A_EXTERNAL_IP
@@ -204,7 +204,7 @@ On the security gateway of subnet A:
 	    -addr B_EXTERNAL_IP 255.255.255.255
 	          A_INTERNAL_NETWORK A_INTERNAL_NETMASK
 	    -require -in -src A_EXTERNAL_IP
-	# ipsecadm flow -dst A_EXTERNAL_IP -proto esp
+	# ipsecadm flow -dst B_EXTERNAL_IP -proto esp
 	    -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
 	          A_EXTERNAL_IP 255.255.255.255
 	    -require -in -src A_EXTERNAL_IP
