@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.h,v 1.7 1997/08/08 08:26:14 downsj Exp $	*/
+/*	$OpenBSD: eeprom.h,v 1.8 1997/11/11 12:50:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -131,8 +131,8 @@ struct eeprom {
 		char	eed_diagpath[40]; /* 0x028: boot path of diagnostic */
 #define EED_TERM_34x80	00
 #define EED_TERM_48x120	0x12		/* for large scrn size 1600x1280 */
-		char	eed_colsize;	/* 0x050: number of columns */
-		char	eed_rowsize;	/* 0x051: number of rows */
+		u_char	eed_colsize;	/* 0x050: number of columns */
+		u_char	eed_rowsize;	/* 0x051: number of rows */
 
 		char	eed_nu5[6];
 
