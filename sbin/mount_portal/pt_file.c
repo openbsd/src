@@ -1,9 +1,10 @@
-/*	$OpenBSD: pt_file.c,v 1.3 1997/03/23 03:04:30 millert Exp $	*/
+/*	$OpenBSD: pt_file.c,v 1.4 1997/03/23 03:52:16 millert Exp $	*/
 /*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -37,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: pt_file.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	@(#)pt_file.c	8.2 (Berkeley) 3/27/94
+ *	@(#)pt_file.c	8.3 (Berkeley) 7/3/94
  */
 
 #include <stdio.h>
@@ -52,22 +53,24 @@
 
 #include "portald.h"
 
-int portal_file(pcr, key, v, so, fdp)
-struct portal_cred *pcr;
-char *key;
-char **v;
-int so;
-int *fdp;
+int
+portal_file(pcr, key, v, so, fdp)
+	struct portal_cred *pcr;
+	char *key;
+	char **v;
+	int so;
+	int *fdp;
 {
 	int fd;
 	char pbuf[MAXPATHLEN];
 	int error;
 
 	pbuf[0] = '/';
-	strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));
+	(void)strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));
 
 #ifdef DEBUG
-	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid, pcr->pcr_gid);
+	(void)printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid,
+	    pcr->pcr_gid);
 #endif
 
 	if (setegid(pcr->pcr_gid) < 0 ||
@@ -85,9 +88,9 @@ int *fdp;
 
 	if (seteuid((uid_t) 0) < 0) {	/* XXX - should reset gidset too */
 		error = errno;
-		syslog(LOG_ERR, "setcred: %s", strerror(error));
+		syslog(LOG_ERR, "setcred: %m");
 		if (fd >= 0) {
-			(void) close(fd);
+			(void)close(fd);
 			fd = -1;
 		}
 	}
@@ -96,7 +99,8 @@ int *fdp;
 		*fdp = fd;
 
 #ifdef DEBUG
-	fprintf(stderr, "pt_file returns *fdp = %d, error = %d\n", *fdp, error);
+	(void)fprintf(stderr, "pt_file returns *fdp = %d, error = %d\n",
+	    *fdp, error);
 #endif
 
 	return (error);

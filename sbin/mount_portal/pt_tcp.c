@@ -1,9 +1,10 @@
-/*	$OpenBSD: pt_tcp.c,v 1.2 1996/06/23 14:31:36 deraadt Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.3 1997/03/23 03:52:17 millert Exp $	*/
 /*	$NetBSD: pt_tcp.c,v 1.9 1995/05/21 15:33:22 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -37,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	@(#)pt_tcp.c	8.3 (Berkeley) 3/27/94
+ *	@(#)pt_tcp.c	8.5 (Berkeley) 4/28/95
  */
 
 #include <stdio.h>
@@ -62,12 +63,13 @@
  * Some trailing suffix values have special meanings.
  * An unrecognised suffix is an error.
  */
-int portal_tcp(pcr, key, v, kso, fdp)
-struct portal_cred *pcr;
-char *key;
-char **v;
-int kso;
-int *fdp;
+int
+portal_tcp(pcr, key, v, kso, fdp)
+	struct portal_cred *pcr;
+	char *key;
+	char **v;
+	int kso;
+	int *fdp;
 {
 	char host[MAXHOSTNAMELEN];
 	char port[MAXHOSTNAMELEN];
@@ -86,7 +88,7 @@ int *fdp;
 	if (q == 0 || q - p >= sizeof(host))
 		return (EINVAL);
 	*q = '\0';
-	strcpy(host, p);
+	(void)strcpy(host, p);
 	p = q + 1;
 
 	q = strchr(p, '/');
@@ -94,7 +96,7 @@ int *fdp;
 		*q = '\0';
 	if (strlen(p) >= sizeof(port))
 		return (EINVAL);
-	strcpy(port, p);
+	(void)strcpy(port, p);
 	if (q) {
 		p = q + 1;
 		if (strcmp(p, "priv") == 0) {
@@ -111,7 +113,7 @@ int *fdp;
 		hp = gethostbyname(host);
 		if (hp == 0)
 			return (EINVAL);
-		ipp = (struct in_addr **) hp->h_addr_list;
+		ipp = (struct in_addr **)hp->h_addr_list;
 	} else {
 		ip[0] = &ina;
 		ip[1] = 0;
@@ -122,12 +124,13 @@ int *fdp;
 	if (sp != 0)
 		s_port = sp->s_port;
 	else {
-		s_port = htons(atoi(port));
-		if (s_port == 0)
+		s_port = strtoul(port, &p, 0);
+		if (s_port == 0 || *p != '\0')
 			return (EINVAL);
+		s_port = htons(s_port);
 	}
 
-	memset(&sain, 0, sizeof(sain));
+	(void)memset(&sain, 0, sizeof(sain));
 	sain.sin_len = sizeof(sain);
 	sain.sin_family = AF_INET;
 	sain.sin_port = s_port;
@@ -149,7 +152,7 @@ int *fdp;
 			*fdp = so;
 			return (0);
 		}
-		(void) close(so);
+		(void)close(so);
 
 		ipp++;
 	}

@@ -1,9 +1,10 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1997/03/23 03:04:29 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1997/03/23 03:52:15 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1995/04/23 10:33:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.

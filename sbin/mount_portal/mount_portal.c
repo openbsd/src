@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.6 1997/03/23 03:04:29 millert Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.7 1997/03/23 03:52:14 millert Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -45,9 +45,9 @@ char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.6 1997/03/23 03:04:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.7 1997/03/23 03:52:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.6 1997/03/23 03:04:29 miller
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/syslog.h>
-#include <sys/stat.h>
 #include <sys/mount.h>
 
 #include <err.h>
@@ -93,7 +92,7 @@ sigchld(sig)
 	while ((pid = waitpid((pid_t) -1, (int *) 0, WNOHANG)) > 0)
 		;
 	if (pid < 0 && errno != ECHILD)
-		syslog(LOG_WARNING, "waitpid: %s", strerror(errno));
+		syslog(LOG_WARNING, "waitpid: %m");
 }
 
 static void
@@ -110,8 +109,8 @@ sigterm(sig)
 {
 
 	if (unmount(mountpt, MNT_FORCE) < 0)
-		syslog(LOG_WARNING, "sigterm: unmounting %s failed: %s",
-		       mountpt, strerror(errno));
+		syslog(LOG_WARNING, "sigterm: unmounting %s failed: %m",
+		       mountpt);
 }
 
 int
@@ -124,7 +123,6 @@ main(argc, argv)
 	char *conf;
 	int mntflags = 0;
 	char tag[32];
-	mode_t um;
 
 	qelem q;
 	int rc;
@@ -165,7 +163,7 @@ main(argc, argv)
 	un.sun_family = AF_UNIX;
 	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path))
 		errx(1, "portal socket name too long");
-	strcpy(un.sun_path, _PATH_TMPPORTAL);
+	(void)strcpy(un.sun_path, _PATH_TMPPORTAL);
 	so = mkstemp(un.sun_path);
 	if (so < 0)
 		err(1, "can't create portal socket name: %s", un.sun_path);
@@ -176,17 +174,15 @@ main(argc, argv)
 	if (so < 0)
 		err(1, "socket(2)");
 
-	um = umask(077);
 	(void)unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
 		err(1, "bind(2)");
 	(void)unlink(un.sun_path);
-	(void)umask(um);
 
 	(void)listen(so, 5);
 
 	args.pa_socket = so;
-	(void)sprintf(tag, "portal:%d", getpid() + 1);
+	(void)snprintf(tag, sizeof(tag), "portal:%d", getpid() + 1);
 	args.pa_config = tag;
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
@@ -242,7 +238,7 @@ main(argc, argv)
 		if (rc < 0) {
 			if (errno == EINTR)
 				continue;
-			syslog(LOG_ERR, "select: %s", strerror(errno));
+			syslog(LOG_ERR, "select: %m");
 			exit(1);
 		}
 		if (rc == 0)
@@ -256,7 +252,7 @@ main(argc, argv)
 			if (errno == ECONNABORTED)
 				break;
 			if (errno != EINTR) {
-				syslog(LOG_ERR, "accept: %s", strerror(errno));
+				syslog(LOG_ERR, "accept: %m");
 				exit(1);
 			}
 			continue;
@@ -272,7 +268,7 @@ main(argc, argv)
 				sleep(1);
 				goto eagain;
 			}
-			syslog(LOG_ERR, "fork: %s", strerror(errno));
+			syslog(LOG_ERR, "fork: %m");
 			break;
 		case 0:
 			(void)close(so);
