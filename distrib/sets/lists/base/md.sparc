@@ -1,5 +1,6 @@
 ./sbin/kbd
 ./sbin/ldconfig
+./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/ldd
 ./usr/lib/apache/modules/libproxy.so
