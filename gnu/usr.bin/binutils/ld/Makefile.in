@@ -213,7 +213,6 @@ ALL_EMULATIONS = \
 	edelta68.o \
 	eebmon29k.o \
 	eelf32_sparc.o \
-	eelf32arc.o \
 	eelf32b4300.o \
 	eelf32bmip.o \
 	eelf32ebmip.o \
@@ -263,6 +262,8 @@ ALL_EMULATIONS = \
 	em88kbcs.o \
 	emipsbig.o \
 	emipsbsd.o \
+	emipsel_obsd.o \
+	emipseb_obsd.o \
 	emipsidt.o \
 	emipsidtl.o \
 	emipslit.o \
@@ -397,9 +398,6 @@ eebmon29k.c: $(srcdir)/emulparams/ebmon29k.sh \
 eelf32_sparc.c: $(srcdir)/emulparams/elf32_sparc.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32_sparc "$(tdir_elf32_sparc)"
-eelf32arc.c: $(srcdir)/emulparams/elf32arc.sh \
-  $(srcdir)/emultempl/elfarc.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
-	${GENSCRIPTS} elf32arc "$(tdir_elf32arc)"
 eelf32b4300.c: $(srcdir)/emulparams/elf32b4300.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32b4300 "$(tdir_elf32b4300)"
@@ -550,6 +548,12 @@ emipsbig.c:  $(srcdir)/emulparams/mipsbig.sh \
 emipsbsd.c: $(srcdir)/emulparams/mipsbsd.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/mipsbsd.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} mipsbsd
+emipsel_obsd.c: $(srcdir)/emulparams/mipsel_obsd.sh \
+  $(srcdir)/emultempl/elfobsd.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} mipsel_obsd "$(tdir_mipsel_obsd)"
+emipseb_obsd.c: $(srcdir)/emulparams/mipseb_obsd.sh \
+  $(srcdir)/emultempl/elfarc.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} mipseb_obsd "$(tdir_mipseb_obsd)"
 emipsidt.c: $(srcdir)/emulparams/mipsidt.sh \
   $(srcdir)/emultempl/mipsecoff.em $(srcdir)/scripttempl/mips.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} mipsidt "$(tdir_mipsidt)"
