@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.97 2002/11/20 14:58:53 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.98 2003/02/26 18:57:31 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -89,6 +89,7 @@ vendor NEWMEDIA2		0x10cd	NewMedia
 vendor ACTIONTEC		0x1668	ACTIONTEC
 vendor LASAT			0x3401	Lasat
 vendor LEXARMEDIA		0x4e01	Lexar Media
+vendor AIRVAST			0x50c2	AirVast Technology
 vendor ARCHOS			0x5241	Archos
 vendor DUAL			0x890f	Dual
 vendor COMPEX			0x8a01	Compex
@@ -130,6 +131,9 @@ product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B
 product AIRONET PC4500		0x0005 Aironet PC4500
 product AIRONET PC4800		0x0007 Aironet PC4800
 product AIRONET 350		0x000a Aironet 350
+
+/* AirVast */
+product AIRVAST WN_100		0x7300 AirVast WN-100 
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
