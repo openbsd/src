@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.c,v 1.8 1999/04/30 22:33:09 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.39 1999/04/30 11:59:39 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.9 1999/05/01 20:43:45 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.40 1999/05/01 20:21:17 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -256,7 +256,7 @@ transport_send_messages (fd_set *fds)
 	  if ((msg->flags & MSG_LAST) == 0)
 	    {
 	      if (msg->xmits > conf_get_num ("General", "retransmits",
-					       RETRANSMIT_DEFAULT))
+					     RETRANSMIT_DEFAULT))
 		{
 		  log_print ("transport_send_messages: "
 			     "giving up on message %p",

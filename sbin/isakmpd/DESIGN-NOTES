@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.9 1999/04/27 21:13:28 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.41 1999/04/27 09:39:07 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.10 1999/05/01 20:43:41 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.42 1999/05/01 20:21:04 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -35,6 +35,7 @@ asn_useful.c	ASN.1. useful structure defintions.
 cert.c		Dispatching certificate related functions to the according
 		module based on the encoding.
 conf.c		Interface to isakmpd configuration.
+connection.c	Handle the high-level connection concept.
 constants.c	Value to name map of constants..
 cookie.c	Cookie generation.
 crypto.c	Generic cryptography.
@@ -88,6 +89,7 @@ x509.c		Encoding/Decoding X509 Certificates and related structures.
 Central datatypes
 -----------------
 
+struct connection	Persistent connections.
 struct constant_map	A map from constants to their ASCII names.
 struct crypto_xf	A crypto class
 struct doi		The DOI function switch
@@ -207,10 +209,11 @@ In order to control the daemon you send commands through a FIFO called
 isakmpd.fifo.  The commands are one-letter codes followed by arguments.
 For now, only three commands are planned:
 
-c	connect		Establish a named SA with a peer
-d	delete		Delete a SA
+c	connect		Establish a connection with a peer
+d	delete		Delete an SA given cookies and message-IDs
 D	debug		Toggle some debug flag
 r	report		Report status information of the daemon
+t	teardown	Teardown a connection
 
 For example you can do:
 

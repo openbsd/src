@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.h,v 1.6 1999/04/19 19:54:54 niklas Exp $	*/
-/*	$EOM: sysdep.h,v 1.15 1999/04/02 00:58:08 niklas Exp $	*/
+/*	$OpenBSD: sysdep.h,v 1.7 1999/05/01 20:43:45 niklas Exp $	*/
+/*	$EOM: sysdep.h,v 1.16 1999/05/01 20:21:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -47,8 +47,8 @@ struct sockaddr;
 
 extern void sysdep_app_handler (int);
 extern int sysdep_app_open (void);
-extern void sysdep_conf_init_hook (void);
 extern int sysdep_cleartext (int);
+extern void sysdep_connection_check (char *);
 extern int sysdep_ipsec_delete_spi (struct sa *, struct proto *, int);
 extern int sysdep_ipsec_enable_sa (struct sa *);
 extern u_int8_t *sysdep_ipsec_get_spi (size_t *, u_int8_t, struct sockaddr *,

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.12 1999/04/19 21:07:42 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.63 1999/04/15 19:03:04 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.13 1999/05/01 20:43:43 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.64 1999/05/01 20:21:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -889,31 +889,40 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   return -1;
 }
 
-int
-pf_encap_connection (char *conn)
+/* Check that the CONN connection has SPI 1 routes in-place.  */
+void
+pf_encap_connection_check (char *conn)
 {
   char *conf, *doi_str, *local_id, *remote_id, *peer, *address;
   struct in_addr laddr, lmask, raddr, rmask, gwaddr;
   int lid, rid, err;
 
+  if (sa_lookup_by_name (conn, 2))
+    {
+      log_debug (LOG_SYSDEP, 70,
+		 "pf_key_v2_connection_check: SA for %s exists", conn);
+      return;
+    }
+
   /* Figure out the DOI.  We only handle IPsec so far.  */
   conf = conf_get_str (conn, "Configuration");
   if (!conf)
     {
-      log_print ("pf_encap_connection: no \"Configuration\" specified for %s",
+      log_print ("pf_encap_connection_check: "
+		 "no \"Configuration\" specified for %s",
 		 conn);
-      return -1;
+      return;
     }
   doi_str = conf_get_str (conf, "DOI");
   if (!doi_str)
     {
-      log_print ("sysdep_conf_init_hook: No DOI specified for %s", conf);
-      return -1;
+      log_print ("pf_encap_connection_check: No DOI specified for %s", conf);
+      return;
     }
   if (strcasecmp (doi_str, "IPSEC") != 0)
     {
-      log_print ("sysdep_conf_init_hook: DOI \"%s\" unsupported", doi_str);
-      return -1;
+      log_print ("pf_encap_connection_check: DOI \"%s\" unsupported", doi_str);
+      return;
     }
 
   local_id = conf_get_str (conn, "Local-ID");
@@ -922,47 +931,60 @@ pf_encap_connection (char *conn)
   /* At the moment I only do on-demand keying for modes with client IDs.  */
   if (!local_id || !remote_id)
     {
-      log_print ("sysdep_conf_init_hook: "
+      log_print ("pf_encap_connection_check: "
 		 "both Local-ID and Remote-ID required for %s", conn);
-      return -1;
+      return;
     }
 
   if (ipsec_get_id (local_id, &lid, &laddr, &lmask))
-    return -1;
+    return;
   if (ipsec_get_id (remote_id, &rid, &raddr, &rmask))
-    return -1;
+    return;
 
   peer = conf_get_str (conn, "ISAKMP-peer");
   if (!peer)
     {
-      log_print ("sysdep_conf_init_hook: "
+      log_print ("pf_encap_connection_check: "
 		 "section %s has no \"ISAKMP-peer\" tag", conn);
-	  return -1;
+      return;
     }
   address = conf_get_str (peer, "Address");
   if (!address)
     {
-      log_print ("sysdep_conf_init_hook: section %s has no \"Address\" tag",
+      log_print ("pf_encap_connection_check: "
+		 "section %s has no \"Address\" tag",
 		 peer);
-      return -1;
+      return;
     }
   if (!inet_aton (address, &gwaddr))
     {
-      log_print ("sysdep_conf_init_hook: invalid adress %s in section %s",
+      log_print ("pf_encap_connection_check: invalid adress %s in section %s",
 		 address, peer);
-      return -1;
+      return;
     }
 
   err = pf_encap_register_on_demand_connection (gwaddr.s_addr, conn);
   if (err)
-    return -1;
+    return;
 
   if (pf_encap_route (laddr.s_addr, lmask.s_addr, raddr.s_addr, rmask.s_addr,
 		      gwaddr.s_addr))
     {
       pf_encap_deregister_on_demand_connection (conn);
-      return -1;
+      return;
     }
+}
+
+/* Lookup an on-demand connection from its name: CONN.  */
+static struct on_demand_connection *
+pf_encap_lookup_on_demand_connection (char *conn)
+{
+  struct on_demand_connection *node;
+
+  for (node = LIST_FIRST (&on_demand_connections); node;
+       node = LIST_NEXT (node, link))
+    if (strcasecmp (conn, node->conn) == 0)
+      return node;
   return 0;
 }
 
@@ -974,16 +996,29 @@ pf_encap_register_on_demand_connection (in_addr_t dst, char *conn)
 {
   struct on_demand_connection *node;
 
+  /* Don't add duplicates.  */
+  if (pf_encap_lookup_on_demand_connection (conn))
+    return 0;
+
   node = malloc (sizeof *node);
   if (!node)
-    return -1;
+    {
+      log_error ("pf_encap_register_on_demand_connection: malloc (%d) failed",
+		 sizeof *node);
+      return -1;
+    }
+
   node->dst = dst;
   node->conn = strdup (conn);
   if (!node->conn)
     {
+      log_error ("pf_encap_register_on_demand_connection: "
+		 "strdup (\"%s\") failed",
+		 conn);
       free (node);
       return -1;
     }
+
   LIST_INSERT_HEAD (&on_demand_connections, node, link);
   return 0;
 }
@@ -996,13 +1031,11 @@ pf_encap_deregister_on_demand_connection (char *conn)
 {
   struct on_demand_connection *node;
 
-  for (node = LIST_FIRST (&on_demand_connections); node;
-       node = LIST_NEXT (node, link))
-    if (strcasecmp (conn, node->conn) == 0)
-      {
-	LIST_REMOVE (node, link);
-	free (node->conn);
-	free (node);
-	break;
-      }
+  node = pf_encap_lookup_on_demand_connection (conn);
+  if (node)
+    {
+      LIST_REMOVE (node, link);
+      free (node->conn);
+      free (node);
+    }
 }

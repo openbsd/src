@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.15 1999/04/27 20:55:52 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.18 1999/04/16 21:35:34 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.16 1999/05/01 20:43:43 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.19 1999/05/01 20:21:10 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -80,6 +80,8 @@ Generic global configuration parameters
 .Bl -tag -width 12n
 .It Em Retransmits
 How many times should a message be retransmitted before giving up.
+.It Em Check-interval
+The interval between watchdog checks of connections we want up at all times.
 .It Em Exchange-max-time
 How many seconds should an exchange maximally take to setup
 before we give up.
@@ -147,6 +149,9 @@ handling of the IPSec SA.  Currently only one flag is defined:
 .Dv Stayalive ,
 which means that after the expiration of an ISAKMP SA, the initiator
 side will automatically renegotiate for a new SA of the same name.
+.It Em Next-hop
+A Linux FreeS/WAN specific value which should be the IP address of the
+next hop along the path to reach the peer, usually a router.
 .El
 .It Em <ISAKMP-configuration>
 .Bl -tag -width 12n

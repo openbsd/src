@@ -1,5 +1,5 @@
-/*	$OpenBSD: app.c,v 1.5 1999/04/19 19:54:53 niklas Exp $	*/
-/*	$EOM: app.c,v 1.5 1999/04/02 00:57:54 niklas Exp $	*/
+/*	$OpenBSD: app.c,v 1.6 1999/05/01 20:43:42 niklas Exp $	*/
+/*	$EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -50,20 +50,7 @@ int app_socket;
 /* Set this to not get any applications setup.  */
 int app_none = 0;
 
-/* Called after conf_init () meat has been ran.  */
-void
-app_conf_init_hook ()
-{
-  if (app_none)
-    return;
-
-  /*
-   * XXX I do not like the layering here.  I will probably redo this once
-   * I figure out how other applications will use ISAKMP.
-   */
-  sysdep_conf_init_hook ();
-}
-
+/* Initialize applications.  */
 void
 app_init ()
 {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.6 1999/04/19 19:54:53 niklas Exp $	*/
-/*	$EOM: init.c,v 1.13 1999/04/02 00:57:47 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 1999/05/01 20:43:43 niklas Exp $	*/
+/*	$EOM: init.c,v 1.14 1999/05/01 20:21:09 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,7 @@
 
 #include "app.h"
 #include "conf.h"
+#include "connection.h"
 #include "cookie.h"
 #include "doi.h"
 #include "exchange.h"
@@ -66,6 +67,7 @@ init ()
 
   /* The following group are depending on timer_init having run.  */
   conf_init ();
+  connection_init ();
   cookie_init ();
 
   sa_init ();

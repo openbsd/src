@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.7 1999/04/19 21:10:21 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.31 1999/04/11 22:35:53 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.8 1999/05/01 20:43:46 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.32 1999/05/01 20:21:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -44,6 +44,7 @@
 #include "sysdep.h"
 
 #include "conf.h"
+#include "connection.h"
 #include "doi.h"
 #include "exchange.h"
 #include "isakmp.h"
@@ -80,7 +81,10 @@ ui_init ()
     }
 }
 
-/* New style connect.  */
+/*
+ * Setup a phase 2 connection.
+ * XXX Maybe phase 1 works too, but teardown won't work then, fix?
+ */
 static void
 ui_connect (char *cmd)
 {
@@ -91,7 +95,24 @@ ui_connect (char *cmd)
       log_print ("ui_connect: command \"%s\" malformed", cmd);
       return;
     }
-  exchange_establish (name, 0, 0);
+  connection_setup (name);
+}
+
+/* Tear down a phase 2 connection.  */
+static void
+ui_teardown (char *cmd)
+{
+  char name[81];
+  struct sa *sa;
+
+  if (sscanf (cmd, "t %80s", name) != 1)
+    {
+      log_print ("ui_teardown: command \"%s\" malformed", cmd);
+      return;
+    }
+  connection_teardown (name);
+  while ((sa = sa_lookup_by_name (name, 2)) != 0)
+    sa_delete (sa, 1);
 }
 
 static void
@@ -178,6 +199,10 @@ ui_handle_command (char *line)
 
     case 'r':
       ui_report (line);
+      break;
+
+    case 't':
+      ui_teardown (line);
       break;
 
     default:

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.c,v 1.4 1999/04/05 20:57:35 niklas Exp $	*/
-/*	$EOM: sysdep.c,v 1.6 1999/04/05 18:27:42 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.5 1999/05/01 20:43:40 niklas Exp $	*/
+/*	$EOM: sysdep.c,v 1.7 1999/05/01 20:21:23 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -110,28 +110,11 @@ sysdep_app_handler (int fd)
   KEY_API (handler) (fd);
 }
 
-/*
- * This is where we try to set up routes that make the IP-stack request
- * SAs from us on demand. 
- */
+/* Check that the connection named NAME is active, or else make it active.  */
 void
-sysdep_conf_init_hook ()
+sysdep_connection_check (char *name)
 {
-  struct conf_list *conns;
-  struct conf_list_node *conn;
-
-  conns = conf_get_list ("Phase 2", "Connections");
-  if (conns)
-    {
-      for (conn = TAILQ_FIRST (&conns->fields); conn;
-	   conn = TAILQ_NEXT (conn, link))
-	{
-	  if (KEY_API(connection) (conn->field))
-	    /* XXX What else?  */
-	    continue;
-	}
-      conf_free_list (conns);
-    }
+  KEY_API (connection_check) (name);
 }
 
 /*
