@@ -97,13 +97,22 @@ int RAND_load_file(const char *file, long bytes)
 	if (file == NULL) return(0);
 
 	i=stat(file,&sb);
-	/* If the state fails, put some crap in anyway */
-	RAND_add(&sb,sizeof(sb),0);
-	if (i < 0) return(0);
+	if (i < 0) { 
+	  /* If the state fails, put some crap in anyway */
+	  RAND_add(&sb,sizeof(sb),0);
+	  return(0);
+	}
 	if (bytes == 0) return(ret);
-
 	in=fopen(file,"rb");
 	if (in == NULL) goto err;
+	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
+	  /* this file is a device. we don't want read an infinite number
+	   * of bytes from a random device, nor do we want to use buffered
+	   * I/O because we will waste system entropy. 
+	   */
+	  bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
+	  setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
+	}
 	for (;;)
 		{
 		if (bytes > 0)
@@ -118,7 +127,7 @@ int RAND_load_file(const char *file, long bytes)
 		if (bytes > 0)
 			{
 			bytes-=n;
-			if (bytes == 0) break;
+			if (bytes <= 0) break;
 			}
 		}
 	fclose(in);
