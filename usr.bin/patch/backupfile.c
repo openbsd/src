@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.17 2003/08/01 20:30:48 otto Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.18 2004/08/05 21:47:24 deraadt Exp $	*/
 
 /*
  * backupfile.c -- make Emacs style backup file names Copyright (C) 1990 Free
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: backupfile.c,v 1.17 2003/08/01 20:30:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: backupfile.c,v 1.18 2004/08/05 21:47:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -40,14 +40,14 @@ enum backup_type backup_type = none;
  * The extension added to file names to produce a simple (as opposed to
  * numbered) backup file name.
  */
-char           *simple_backup_suffix = "~";
+char		*simple_backup_suffix = "~";
 
-static char    *concat(const char *, const char *);
-static char    *make_version_name(const char *, int);
-static int      max_backup_version(const char *, const char *);
-static int      version_number(const char *, const char *, int);
-static int      argmatch(const char *, const char **);
-static void     invalid_arg(const char *, const char *, int);
+static char	*concat(const char *, const char *);
+static char	*make_version_name(const char *, int);
+static int	max_backup_version(const char *, const char *);
+static int	version_number(const char *, const char *, int);
+static int	argmatch(const char *, const char **);
+static void	invalid_arg(const char *, const char *, int);
 
 /*
  * Return the name of the new backup file for file FILE, allocated with

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.28 2004/05/07 14:51:42 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.29 2004/08/05 21:47:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -449,7 +449,7 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	
+
 	if (lbflag)
 		setlinebuf(stdout);
 

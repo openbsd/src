@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.31 2003/12/08 22:44:18 mickey Exp $	*/
+/*	$OpenBSD: inp.c,v 1.32 2004/08/05 21:47:24 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.31 2003/12/08 22:44:18 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: inp.c,v 1.32 2004/08/05 21:47:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -265,7 +265,7 @@ plan_a(const char *filename)
 	if (lines_allocated < 100)
 		lines_allocated = 100;
 
-	if (!reallocate_lines(&lines_allocated)) 
+	if (!reallocate_lines(&lines_allocated))
 		return false;
 
 	/* now scan the buffer and build pointer array */
@@ -358,7 +358,7 @@ plan_b(const char *filename)
 	last_line_missing_eol = i > 0 && buf[i - 1] != '\n';
 	if (last_line_missing_eol && maxlen == i)
 		maxlen++;
-		
+
 	if (revision != NULL) {
 		if (!found_revision) {
 			if (force) {

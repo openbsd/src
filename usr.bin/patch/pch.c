@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.34 2004/07/09 19:13:46 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.35 2004/08/05 21:47:24 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.34 2004/07/09 19:13:46 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.35 2004/08/05 21:47:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,7 +143,7 @@ static void
 grow_hunkmax(void)
 {
 	int		new_hunkmax;
-	char 		**new_p_line;
+	char		**new_p_line;
 	short		*new_p_len;
 	char		*new_p_char;
 
