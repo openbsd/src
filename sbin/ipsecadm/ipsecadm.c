@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.46 2000/10/16 23:00:40 niklas Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.47 2000/10/18 00:42:30 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -1450,10 +1450,7 @@ main(int argc, char **argv)
 	exit(1);
     } 
 
-    if (!dstset && !iscmd(mode, FLUSH) &&
-	(!iscmd(mode, FLOW) || (iscmd(mode, FLOW) &&
-			        (smsg.sadb_msg_type != SADB_X_DELFLOW) &&
-                                 !deny && !bypass && !ipsec)))
+    if (!dstset && !iscmd(mode, FLUSH) && !iscmd(mode, FLOW))
     {
 	fprintf(stderr, "%s: no destination address for the SA specified\n", 
 		argv[0]);
