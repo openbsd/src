@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1997/02/20 06:42:59 tholo Exp $
+#	$Id: Makefile,v 1.3 1999/11/30 07:39:26 art Exp $
 
 PROG =	rpc.rstatd
 .PATH: ${.CURDIR}/../../usr.bin/vmstat
@@ -12,3 +12,8 @@ DPADD=	${LIBRPCSVC} ${LIBKVM}
 LDADD=	-lrpcsvc -lkvm
 
 .include <bsd.prog.mk>
+
+.if (${UVM} == "yes")
+CFLAGS+=-DUVM
+.endif
+

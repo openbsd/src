@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.10 1998/07/10 08:06:10 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.11 1999/11/30 07:39:26 art Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.10 1998/07/10 08:06:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.11 1999/11/30 07:39:26 art Exp $";
 #endif
 
 /*
@@ -62,6 +62,12 @@ static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.10 1998/07/10 08:06:10 deraadt
 #endif
 #include <net/if.h>
 
+#if defined(UVM)
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+#include <uvm/uvm_extern.h>
+#endif
+
 #undef FSHIFT			 /* Use protocol's shift and scale values */
 #undef FSCALE
 #undef DK_NDRIVE
@@ -79,19 +85,24 @@ int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
 #endif
 
 struct nlist nl[] = {
-#define	X_CNT		0
-	{ "_cnt" },
-#define	X_IFNET		1
+#define	X_IFNET		0
 	{ "_ifnet" },
-#define	X_BOOTTIME	2
+#define	X_BOOTTIME	1
 	{ "_boottime" },
 #ifndef BSD
-#define	X_HZ		3
+#define	X_HZ		2
 	{ "_hz" },
-#define	X_CPTIME	4
+#define	X_CPTIME	3
 	{ "_cp_time" },
-#define	X_DKXFER	5
+#define	X_DKXFER	4
 	{ "_dk_xfer" },
+#define	X_CNT		5
+	{ "_cnt" },
+#else
+#ifndef UVM
+#define	X_CNT		2
+	{ "_cnt" },
+#endif
 #endif
 	{ NULL },
 };
@@ -203,7 +214,12 @@ updatestat()
 {
 	long off;
 	int i, save_errno = errno;
+#ifdef UVM
+	struct uvmexp uvmexp;
+	int mib[2], len;
+#else
 	struct vmmeter cnt;
+#endif
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
@@ -274,6 +290,24 @@ updatestat()
 	    stats_all.s1.cp_time[3]);
 #endif
 
+#ifdef UVM
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+	len = sizeof(uvmexp);
+	if (sysctl(mib, 2, &uvmexp, &len, NULL, 0) < 0) {
+		syslog(LOG_ERR, "can't sysctl vm.uvmexp");
+		exit(1);
+	}
+	stats_all.s1.v_pgpgin = uvmexp.fltanget;
+	stats_all.s1.v_pgpgout = uvmexp.pdpageouts;
+	stats_all.s1.v_pswpin = uvmexp.swapins;
+	stats_all.s1.v_pswpout = uvmexp.swapouts;
+	stats_all.s1.v_intr = uvmexp.intrs;
+	stats_all.s2.v_swtch = uvmexp.swtch;
+	gettimeofday(&tm, (struct timezone *) 0);
+	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
+	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
+#else
  	if (kvm_read(kfd, (long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) !=
 	    sizeof cnt) {
 		syslog(LOG_ERR, "can't read cnt from kmem");
@@ -288,6 +322,7 @@ updatestat()
 	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
 	stats_all.s2.v_swtch = cnt.v_swtch;
+#endif
 
 #ifndef BSD
  	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
