@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.2 1997/09/21 10:45:49 niklas Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.3 1998/03/23 12:49:28 janjaap Exp $	*/
 
 /********************************************************************\
  *
@@ -27,7 +27,8 @@
 typedef struct {
 	u_int32_t state[5];	/* state (ABCDE) */
 	u_int32_t length[2];	/* number of bits */
-	u_int32_t buffer[16];	/* input buffer */
+	u_char	bbuffer[64];    /* overflow buffer */
+	u_int32_t buflen;	/* number of chars in bbuffer */
 } RMD160_CTX;
 
 /********************************************************************/

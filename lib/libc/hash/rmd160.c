@@ -109,6 +109,7 @@ void RMD160Init(context)
 	context->state[3] = 0x10325476U;
 	context->state[4] = 0xc3d2e1f0U;
 	context->length[0] = context->length[1] = 0;
+	context->buflen = 0;
 }
 
 /********************************************************************/
@@ -319,38 +320,48 @@ void RMD160Update(context, data, nbytes)
 	u_int32_t nbytes;
 {
 	u_int32_t X[16];
+	u_int32_t ofs = 0;
 	u_int32_t i;
 #if BYTE_ORDER != LITTLE_ENDIAN
 	u_int32_t j;
 #endif
-	(void)memset(X, 0, sizeof(X));
-
-	/* process all complete blocks */
-	for (i = 0; i < (nbytes >> 6); i++) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		(void)memcpy(X, data, sizeof(X));
-#else
-		for (j=0; j < 16; j++)
-			X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j));
-#endif
-		RMD160Transform(context->state, X);
-	}
 
 	/* update length[] */
 	if (context->length[0] + nbytes < context->length[0])
 		context->length[1]++;		/* overflow to msb of length */
 	context->length[0] += nbytes;
 
+	(void)memset(X, 0, sizeof(X));
+
+	if (context->buflen > 0) {
+		ofs = 64 - context->buflen;
+		(void)memcpy(context->bbuffer + context->buflen, data, ofs);
+#if BYTE_ORDER == LITTLE_ENDIAN
+		(void)memcpy(X, context->bbuffer, sizeof(X));
+#else
+		for (j=0; j < 16; j++)
+			X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
+#endif
+		RMD160Transform(context->state, X);
+		nbytes -= ofs;
+	}
+
+	/* process all complete blocks */
+	for (i = 0; i < (nbytes >> 6); i++) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		(void)memcpy(X, data + (64 * i) + ofs, sizeof(X));
+#else
+		for (j=0; j < 16; j++)
+			X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j) + ofs);
+#endif
+		RMD160Transform(context->state, X);
+	}
+
 	/*
 	 * Put bytes from data into context's buffer
 	 */
-	(void)memset(context->buffer, 0, 16 * sizeof(u_int32_t));
-	/* extract bytes 6 to 10 inclusive */
-	data += (context->length[0] & 0x3C0);
-	for (i = 0; i < (context->length[0] & 63); i++) {
-		/* byte i goes into word buffer[i div 4] at pos.  8*(i mod 4) */
-		context->buffer[i>>2] ^= (u_int32_t) *data++ << (8 * (i & 3));
-	}
+	context->buflen = nbytes & 63;
+	memcpy(context->bbuffer, data + (64 * i) + ofs, context->buflen);
 }
 
 /********************************************************************/
@@ -360,22 +371,33 @@ void RMD160Final(digest, context)
 	RMD160_CTX *context;
 {
 	u_int32_t i;
+	u_int32_t X[16];
+#if BYTE_ORDER != LITTLE_ENDIAN
+	u_int32_t j;
+#endif
 
 	/* append the bit m_n == 1 */
-	context->buffer[(context->length[0] >> 2) & 15] ^=
-	    1U << (8 * (context->length[0] & 3) + 7);
+	context->bbuffer[context->buflen] = '\200';
 
-	if ((context->length[0] & 63) > 55) {
+	(void)memset(context->bbuffer + context->buflen + 1, 0,
+		63 - context->buflen);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	(void)memcpy(X, context->bbuffer, sizeof(X));
+#else
+	for (j=0; j < 16; j++)
+		X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
+#endif
+	if ((context->buflen) > 55) {
 		/* length goes to next block */
-		RMD160Transform(context->state, context->buffer);
-		(void)memset(context->buffer, 0, 16 * sizeof(u_int32_t));
+		RMD160Transform(context->state, X);
+		(void)memset(X, 0, sizeof(X));
 	}
 
 	/* append length in bits */
-	context->buffer[14] = context->length[0] << 3;
-	context->buffer[15] = (context->length[0] >> 29) |
+	X[14] = context->length[0] << 3;
+	X[15] = (context->length[0] >> 29) |
 	    (context->length[1] << 3);
-	RMD160Transform(context->state, context->buffer);
+	RMD160Transform(context->state, X);
 
 	if (digest != NULL) {
 		for (i = 0; i < 20; i += 4) {
