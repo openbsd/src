@@ -1,4 +1,4 @@
-.\" $Id: ppp.8,v 1.28 1999/03/11 01:35:07 pjanzen Exp $
+.\" $Id: ppp.8,v 1.29 1999/03/17 00:25:43 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Os FreeBSD
@@ -16,7 +16,8 @@
 .Fl dedicated
 .Oc
 .Op Fl alias
-.Op Ar system ...
+.Op Ar system Ns
+.No ...
 .Sh DESCRIPTION
 This is a user process
 .Em PPP
@@ -446,7 +447,7 @@ and have not authenticated yourself using the correct password.
 .Pp
 You can start by specifying the device name and speed:
 .Bd -literal -offset indent
-ppp ON awfulhak> set line /dev/cuaa0
+ppp ON awfulhak> set device /dev/cuaa0
 ppp ON awfulhak> set speed 38400
 .Ed
 .Pp
@@ -1341,16 +1342,16 @@ set filter
 .Ar name
 .Ar rule-no
 .Ar action
-.Op Ar src_addr Ns Op / Ns Ar width
+.Oo
+.Ar src_addr Ns Op / Ns Ar width
 .Op Ar dst_addr Ns Op / Ns Ar width
-[
-.Ar proto
-.Op src Op Ar cmp No Ar port
-.Op dst Op Ar cmp No Ar port
+.Oc
+.Oo Ar proto Op src Ar cmp port
+.Op dst Ar cmp port
 .Op estab
 .Op syn
 .Op finrst
-]
+.Oc
 .Bl -enum
 .It
 .Ar Name
@@ -1732,12 +1733,12 @@ for the first time,
 so that you can see if your script is behaving as you expect.
 .It
 Use
-.Dq set line
+.Dq set device
 and
 .Dq set speed
 to specify your serial line and speed, for example:
 .Bd -literal -offset indent
-set line /dev/cuaa0
+set device /dev/cuaa0
 set speed 115200
 .Ed
 .Pp
@@ -2153,7 +2154,7 @@ may be one of the following:
 Default: Enabled and Accepted.  ACFComp stands for Address and Control
 Field Compression.  Non LCP packets usually have very similar address
 and control fields - making them easily compressible.
-.It chap[05]
+.It chap Ns Op \&05
 Default: Disabled and Accepted.  CHAP stands for Challenge Handshake
 Authentication Protocol.  Only one of CHAP and PAP (below) may be
 negotiated.  With CHAP, the authenticator sends a "challenge" message
@@ -2510,7 +2511,12 @@ will also disable
 .Sq iface-alias .
 .El
 .Pp
-.It add[!] Ar dest[/nn] [mask] gateway
+.It add Ns Xo
+.Op \&!
+.Ar dest Ns Op / Ns Ar nn
+.Op Ar mask
+.Op Ar gateway
+.Xc
 .Ar Dest
 is the destination IP address.  The netmask is specified either as a
 number of bits with
@@ -2588,7 +2594,10 @@ mode.
 .Pp
 User id 0 is immune to these commands.
 .Bl -tag -width XX
-.It allow user[s] Ar logname...
+.It allow user Ns Xo
+.Op s
+.Ar logname Ns No ...
+.Xc
 By default, only user id 0 is allowed access to
 .Nm ppp .
 If this command is used, all of the listed users are allowed access to
@@ -2607,16 +2616,20 @@ section, and then specifying a new user list for that label.
 If user
 .Sq *
 is specified, access is allowed to all users.
-.It allow mode[s] Ar modelist...
+.It allow mode Ns Xo
+.Op s
+.Ar mode Ns No ...
+.Xc
 By default, access using any
 .Nm
 mode is possible.  If this command is used, it restricts the access
-mode allowed to load the label under which this command is specified.
+.Ar modes
+allowed to load the label under which this command is specified.
 Again, as with the
 .Dq allow users
 command, each
 .Dq allow modes
-command overrides the previous, and the
+command overrides any previous settings, and the
 .Sq default
 section is always checked first.
 .Pp
@@ -2642,7 +2655,7 @@ facilities that are built into
 If aliasing is enabled on your system (it may be omitted at compile time),
 the following commands are possible:
 .Bl -tag -width XX
-.It alias enable [yes|no]
+.It alias enable Op yes|no
 This command either switches aliasing on or turns it off.
 The
 .Fl alias
@@ -2655,16 +2668,21 @@ to be redirected to
 .Ar addr_local .
 It is useful if you own a small number of real IP numbers that
 you wish to map to specific machines behind your gateway.
-.It alias deny_incoming [yes|no]
+.It alias deny_incoming Op yes|no
 If set to yes, this command will refuse all incoming connections
 by dropping the packets in much the same way as a firewall would.
 .It alias help|?
 This command gives a summary of available alias commands.
-.It alias log [yes|no]
+.It alias log Op yes|no
 This option causes various aliasing statistics and information to
 be logged to the file
 .Pa /var/log/alias.log .
-.It alias port Op Ar proto targetIP:targetPORT [aliasIP:]aliasPORT
+.It alias port Xo
+.Op Ar proto
+.Ar targetIP Ns No \&: Ns Ar targetPORT
+.Op Ar aliasIP Ns No \&: Ns
+.Ar aliasPORT
+.Xc
 This command allows us to redirect connections arriving at
 .Ar aliasPORT
 for machine
@@ -2673,6 +2691,8 @@ to
 .Ar targetPORT
 on
 .Ar targetIP .
+.Ar AliasIP
+defaults to the current interface address.
 .Ar Proto
 may be either
 .Sq tcp
@@ -2713,16 +2733,16 @@ to the description of
 in
 .Xr libalias 3
 for details of the available commands.
-.It alias same_ports [yes|no]
+.It alias same_ports Op yes|no
 When enabled, this command will tell the alias library attempt to
 avoid changing the port number on outgoing packets.  This is useful
 if you want to support protocols such as RPC and LPD which require
 connections to come from a well known port.
-.It alias use_sockets [yes|no]
+.It alias use_sockets Op yes|no
 When enabled, this option tells the alias library to create a
 socket so that it can guarantee a correct incoming ftp data or
 IRC connection.
-.It alias unregistered_only [yes|no]
+.It alias unregistered_only Op yes|no
 Only alter outgoing packets with an unregistered source ad-
 dress.  According to RFC 1918, unregistered source addresses
 are 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16.
@@ -2732,7 +2752,9 @@ These commands are also discussed in the file
 .Pa README.alias
 which comes with the source distribution.
 .Pp
-.It [!]bg Ar command
+.It Op \&! Ns Xo
+.No bg Ar command
+.Xc
 The given
 .Ar command
 is executed in the background with the following words replaced:
@@ -2794,7 +2816,10 @@ is specified, context must be given (see the
 .Dq link
 command below).  If no second argument is given, all values are
 cleared.
-.It clone Ar name[,name]...
+.It clone Ar name Ns Xo
+.Op \&, Ns Ar name Ns
+.No ...
+.Xc
 Clone the specified link, creating one or more new links according to the
 .Ar name
 argument(s).  This command must be used from the
@@ -2806,7 +2831,7 @@ command below.
 .Pp
 The default link name is
 .Dq deflink .
-.It close Op lcp|ccp[!]
+.It close Op lcp|ccp Ns Op \&!
 If no arguments are given, the relevant protocol layers will be brought
 down and the link will be closed.  If
 .Dq lcp
@@ -2831,7 +2856,10 @@ or exit
 See the
 .Dq quit
 command below.
-.It delete[!] Ar dest
+.It delete Ns Xo
+.Op \&!
+.Ar dest
+.Xc
 This command deletes the route with the given
 .Ar dest
 IP address.  If
@@ -2884,7 +2912,17 @@ This command is used to control the interface used by
 .Ar Command
 may be one of the following:
 .Bl -tag -width XX
-.It iface add[!] Ar addr[[/bits| mask] peer]
+.It iface add Ns Xo
+.Op \&!
+.Ar addr Ns Op / Ns Ar bits
+.Op Ar peer
+.Xc
+.It iface add Ns Xo
+.Op \&!
+.Ar addr
+.Ar mask
+.Ar peer
+.Xc
 Add the given
 .Ar addr mask peer
 combination to the interface.  Instead of specifying
@@ -2922,7 +2960,11 @@ is not in the OPENED state and is not in
 .Fl auto
 mode, all interface addresses are deleted.
 .Pp
-.It iface delete[!]|rm[!] Ar addr
+.It iface delete Ns Xo
+.Op \&! Ns
+.No |rm Ns Op \&!
+.Ar addr
+.Xc
 This command deletes the given
 .Ar addr
 from the interface.  If the
@@ -2942,7 +2984,11 @@ sub-commands and a brief synopsis for each.  When invoked with
 .Ar sub-command ,
 only the synopsis for the given sub-command is shown.
 .El
-.It [data]link Ar name[,name...] command Op Ar args
+.It Op data Ns Xo
+.No link
+.Ar name Ns Op , Ns Ar name Ns
+.No ... Ar command Op Ar args
+.Xc
 This command may prefix any other command if the user wishes to
 specify which link the command should affect.  This is only
 applicable after multiple links have been created in Multi-link
@@ -2961,7 +3007,9 @@ is
 .Dq * ,
 .Ar command
 is executed on all links.
-.It load Op Ar label ...
+.It load Op Ar label Ns Xo
+.No ...
+.Xc
 Load the given
 .Ar label(s)
 from the
@@ -3024,7 +3072,7 @@ is not logged when
 logging is active, instead, the literal string
 .Sq ********
 is logged.
-.It quit|bye [all]
+.It quit|bye Op all
 If
 .Dq quit
 is executed from the controlling connection or from a command file,
@@ -3060,7 +3108,10 @@ or
 may make the log file more readable.
 .It save
 This option is not (yet) implemented.
-.It set[up] Ar var value
+.It set Ns Xo
+.No Op up
+.Ar var value
+.Xc
 This option allows the setting of any of the following variables:
 .Bl -tag -width XX
 .It set accmap Ar hex-value
@@ -3071,7 +3122,9 @@ certain characters from end to end (such as XON/XOFF etc).
 .Pp
 For the XON/XOFF scenario, use
 .Dq set accmap 000a0000 .
-.It set authkey|key Ar value
+.It set Op auth Ns Xo
+.No key Ar value
+.Xc
 This sets the authentication key (or password) used in client mode
 PAP or CHAP negotiation to the given value.  It also specifies the
 password to be used in the dial or login scripts in place of the
