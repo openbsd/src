@@ -38,6 +38,7 @@
 ./usr/include/hp300/types.h
 ./usr/include/hp300/varargs.h
 ./usr/include/hp300/vmparam.h
+./usr/include/ieeefp.h
 ./usr/include/link.h
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h

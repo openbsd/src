@@ -705,7 +705,6 @@
 ./usr/include/glob.h
 ./usr/include/grp.h
 ./usr/include/histedit.h
-./usr/include/ieeefp.h
 ./usr/include/ifaddrs.h
 ./usr/include/inttypes.h
 ./usr/include/iso646.h

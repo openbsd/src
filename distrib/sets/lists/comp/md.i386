@@ -62,6 +62,7 @@
 ./usr/include/i386/varargs.h
 ./usr/include/i386/vm86.h
 ./usr/include/i386/vmparam.h
+./usr/include/ieeefp.h
 ./usr/include/link.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h

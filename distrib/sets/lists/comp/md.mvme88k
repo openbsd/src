@@ -3,6 +3,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
+./usr/include/ieeefp.h
 ./usr/include/link.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h

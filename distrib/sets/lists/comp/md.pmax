@@ -8,6 +8,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
+./usr/include/ieeefp.h
 ./usr/include/link.h
 ./usr/include/mips/ansi.h
 ./usr/include/mips/archtype.h
