@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.21 1999/10/16 20:47:14 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.22 1999/10/16 23:11:29 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -916,7 +916,11 @@ void ssh_exchange_identification()
   debug("Remote protocol version %d.%d, remote software version %.100s",
 	remote_major, remote_minor, remote_version);
 
+  /* Check if the remote protocol version is too old. */
+  if (remote_major == 1 && remote_minor < 3)
+    fatal("Remote machine has too old SSH software version.");
 
+  /* We speak 1.3, too. */
   if (remote_major == 1 && remote_minor == 3) {
     enable_compat13();
     if (options.forward_agent && strcmp(remote_version, SSH_VERSION) != 0) {
@@ -932,10 +936,6 @@ void ssh_exchange_identification()
     fatal("Protocol major versions differ: %d vs. %d",
 	  PROTOCOL_MAJOR, remote_major);
 #endif
-
-  /* Check if the remote protocol version is too old. */
-  if (remote_major == 1 && remote_minor == 0)
-    fatal("Remote machine has too old SSH software version.");
 
   /* Send our own protocol version identification. */
   snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", 
