@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.179 2003/02/10 11:26:30 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.180 2003/02/12 13:27:20 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1855,8 +1855,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  label string | queue string
 
 nat-rule       = [ no ] nat [ on ifspec ] [ af ] [ protospec ]
-                 from ipspec to ipspec [ portspec ]
-                 [ -> ( redirhost | { redirhost-list } )
+                 hosts [ -> ( redirhost | { redirhost-list } )
                  [ portspec ] ] [ pooltype ] [ static-port ]
 
 binat-rule     = [ no ] binat [ on interface-name ] [ af ]
@@ -1865,8 +1864,7 @@ binat-rule     = [ no ] binat [ on interface-name ] [ af ]
                  [ -> address [ / mask-bits ] ]
 
 rdr-rule       = [ no ] rdr [ on ifspec ] [ af ] [ protospec ]
-                 from ipspec to ipspec [ portspec ]
-                 [ -> ( redirhost | { redirhost-list } )
+                 hosts [ -> ( redirhost | { redirhost-list } )
                  [ portspec ] ] [ pooltype ]
 
 antispoof-rule = antispoof [ log ] [ quick ]
@@ -1933,7 +1931,7 @@ group          = group ( unary-op | binary-op | { op-list } )
 
 unary-op       = [ = | != | < | <= | > | >= ]
                  ( name | number )
-binary-op      = number ( <> | >< ) number
+binary-op      = number ( <> | >< | : ) number
 op-list        = ( unary-op | binary-op ) [ [ , ] op-list ]
 
 flags          = flags ( flag-set / flag-set | / flag-set )
