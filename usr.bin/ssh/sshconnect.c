@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.52 2000/01/16 23:53:02 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.53 2000/01/18 09:42:17 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -985,9 +985,8 @@ ssh_exchange_identification()
 	/* We speak 1.3, too. */
 	if (remote_major == 1 && remote_minor == 3) {
 		enable_compat13();
-		if (options.forward_agent && strcmp(remote_version, "OpenSSH-1.1") != 0) {
-			log("Agent forwarding disabled, remote version '%s' is not compatible.",
-			    remote_version);
+		if (options.forward_agent) {
+			log("Agent forwarding disabled for protocol 1.3");
 			options.forward_agent = 0;
 		}
 	}

@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.77 2000/01/16 23:03:10 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.78 2000/01/18 09:42:18 markus Exp $");
 
 #include <poll.h>
 
@@ -830,11 +830,8 @@ main(int ac, char **av)
 		packet_disconnect("Your ssh version is too old and is no longer supported.  Please install a newer version.");
 
 	if (remote_major == 1 && remote_minor == 3) {
+		/* note that this disables agent-forwarding */
 		enable_compat13();
-		if (strcmp(remote_version, "OpenSSH-1.1") != 0) {
-			debug("Agent forwarding disabled, remote version is not compatible.");
-			no_agent_forwarding_flag = 1;
-		}
 	}
 	/*
 	 * Check that the connection comes from a privileged port.  Rhosts-
@@ -1730,7 +1727,7 @@ do_authenticated(struct passwd * pw)
 #endif /* XAUTH_PATH */
 
 		case SSH_CMSG_AGENT_REQUEST_FORWARDING:
-			if (no_agent_forwarding_flag) {
+			if (no_agent_forwarding_flag || compat13) {
 				debug("Authentication agent forwarding not permitted for this authentication.");
 				goto fail;
 			}
