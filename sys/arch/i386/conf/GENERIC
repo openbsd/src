@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.213 2000/11/10 09:39:37 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.214 2000/11/16 19:40:16 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -117,6 +117,9 @@ urio*	at uhub? port ?
 # Handspring Visor
 uvisor*	at uhub? port ? configuration ?
 ucom*	at uvisor?
+
+# USB Scanners
+uscanner* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
