@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.13 1999/06/30 20:47:14 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.14 1999/07/02 19:16:32 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -512,12 +512,21 @@ svr4_sys_systeminfo(p, v, retval)
 		return ENOSYS;
 	}
 
-	len = strlen(str) + 1;
-	if (len > rlen)
-		len = rlen;
-
 	/* on success, sysinfo() returns byte count including \0 */
+	/* result is not diminished if user buffer was too small */
+	len = strlen(str) + 1;
 	*retval = len;
+
+	/* nothing to copy if user buffer is empty */
+	if (rlen == 0)
+		return 0;
+
+	if (len > rlen) {
+		/* if str overruns buffer, put NUL in last place */
+		len = rlen - 1;
+		if (subyte(SCARG(uap, buf) + len, 0) < 0)
+			return EFAULT;
+	}
 
 	return copyout(str, SCARG(uap, buf), len);
 }
