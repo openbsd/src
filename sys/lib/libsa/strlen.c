@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.c,v 1.1 1997/03/31 23:29:53 mickey Exp $	*/
+/*	$OpenBSD: strlen.c,v 1.2 1997/07/14 22:03:10 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 /*static char *sccsid = "from: @(#)strlen.c	5.5 (Berkeley) 1/26/91";*/
 #endif /* LIBC_SCCS and not lint */
 
-#include <stand.h>
+#include "stand.h"
 
 size_t
 strlen(str)

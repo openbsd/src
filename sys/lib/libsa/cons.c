@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.3 1997/04/26 17:50:08 mickey Exp $	*/
+/*	$OpenBSD: cons.c,v 1.4 1997/07/14 22:03:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,7 +32,7 @@
  *
  */
 
-#include <stand.h>
+#include "stand.h"
 
 static struct consw *console = &consw[0];
 
