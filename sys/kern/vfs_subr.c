@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.85 2002/06/08 18:36:45 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.86 2002/06/16 16:54:25 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1433,10 +1433,8 @@ sysctl_vnode(where, sizep, p)
 	char *ewhere;
 	int error;
 
-#define VPTRSZ	sizeof (struct vnode *)
-#define VNODESZ	sizeof (struct vnode)
 	if (where == NULL) {
-		*sizep = (numvnodes + KINFO_VNODESLOP) * (VPTRSZ + VNODESZ);
+		*sizep = (numvnodes + KINFO_VNODESLOP) * sizeof(struct e_vnode);
 		return (0);
 	}
 	ewhere = where + *sizep;
@@ -1465,15 +1463,19 @@ again:
 				goto again;
 			}
 			nvp = vp->v_mntvnodes.le_next;
-			if (bp + VPTRSZ + VNODESZ > ewhere) {
+			if (bp + sizeof(struct e_vnode) > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
 				return (ENOMEM);
 			}
-			if ((error = copyout((caddr_t)&vp, bp, VPTRSZ)) ||
-			   (error = copyout((caddr_t)vp, bp + VPTRSZ, VNODESZ)))
+			if ((error = copyout((caddr_t)&vp,
+			    &((struct e_vnode *)bp)->vptr,
+			    sizeof(struct vnode *))) ||
+			   (error = copyout((caddr_t)vp,
+			    &((struct e_vnode *)bp)->vnode,
+			    sizeof(struct vnode))))
 				return (error);
-			bp += VPTRSZ + VNODESZ;
+			bp += sizeof(struct e_vnode);
 			simple_lock(&mntvnode_slock);
 		}
 

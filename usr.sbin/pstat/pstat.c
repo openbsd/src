@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.33 2002/06/08 23:41:42 angelos Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.34 2002/06/16 16:54:29 miod Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.33 2002/06/08 23:41:42 angelos Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.34 2002/06/16 16:54:29 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -222,11 +222,6 @@ main(argc, argv)
 	exit (0);
 }
 
-struct e_vnode {
-	struct vnode *avnode;
-	struct vnode vnode;
-};
-
 void
 vnodemode()
 {
@@ -269,7 +264,7 @@ vnodemode()
 			}
 			(void)printf("\n");
 		}
-		vnode_print(evp->avnode, vp);
+		vnode_print(evp->vptr, vp);
 		if (!strncmp(ST.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 		    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 			ufs_print(vp);
