@@ -62,7 +62,8 @@ static const char *talk[] = {
 	"Stop slacking you lazy bum!",
 	"slacker slacker lazy bum bum bum slacker!",
 	"I could search... but I'm a lazy bum ;)",
-	"sshutup sshithead, ssharpsshooting susshi sshplats ssharking assholes."
+	"sshutup sshithead, ssharpsshooting susshi sshplats ssharking assholes.",
+	"Lazy bums slacking on your asses."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
