@@ -1,13 +1,8 @@
-/*	$OpenBSD: pcb.h,v 1.6 2003/10/09 21:48:48 miod Exp $ */
+/*	$OpenBSD: proc.h,v 1.1 2003/10/09 21:48:47 miod Exp $ */
 
 /*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990, 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,9 +28,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: pcb.h 1.14 91/03/25$
- *
- *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
+ *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <m68k/pcb.h>
+#ifndef _M68K_PROC_H_
+#define _M68K_PROC_H_
+
+/*
+ * Machine-dependent part of the proc structure for m68k.
+ */
+struct mdproc {
+	int	*md_regs;		/* registers on current frame */
+	int	md_flags;		/* machine-dependent flags */
+};
+
+/* md_flags */
+#define MDP_STACKADJ	0x0002	/* frame SP adjusted; undo when syscall does ERESTART */
+#define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
+#define	MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
+#define	MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
+#define MDP_UNCACHE_WX	0x0040	/* The process might modify code, so
+				   don't cache writeable executable pages.  */
+
+#endif	/* _M68K_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2003/10/09 21:48:45 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.8 1995/05/12 12:55:17 mycroft Exp $	*/
 
 /*
@@ -39,31 +39,4 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _HP300_PCB_H_
-#define _HP300_PCB_H_
-
-#include <machine/frame.h>
-
-/*
- * HP300 process control block
- */
-struct pcb {
-	short	pcb_flags;	/* misc. process flags */
-	short	pcb_ps; 	/* processor status word */
-	int	pcb_ustp;	/* user segment table pointer */
-	int	pcb_usp;	/* user stack pointer */
-	int	pcb_regs[12];	/* D2-D7, A2-A7 */
-	caddr_t	pcb_onfault;	/* for copyin/out faults */
-	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
-};
-
-/*
- * The pcb is augmented with machine-dependent additional data for
- * core dumps. For the hp300, this includes an HP-UX exec header
- * which is dumped for HP-UX processes.
- */
-struct md_coredump {
-	int	md_exec[16];	/* exec structure for HP-UX core dumps */
-};
-
-#endif /* _HP300_PCB_H_ */
+#include <m68k/pcb.h>

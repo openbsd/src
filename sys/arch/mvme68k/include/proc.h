@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.6 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: proc.h,v 1.7 2003/10/09 21:48:48 miod Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -31,23 +31,4 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MVME68K_PROC_H_
-#define _MVME68K_PROC_H_
-
-/*
- * Machine-dependent part of the proc structure for mvme68k.
- */
-struct mdproc {
-	int	*md_regs;		/* registers on current frame */
-	int	md_flags;		/* machine-dependent flags */
-};
-
-/* md_flags */
-#define MDP_STACKADJ	0x0002	/* frame SP adjusted; undo when syscall does ERESTART */
-#define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
-#define	MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
-#define	MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
-#define MDP_UNCACHE_WX	0x0040	/* The process might modify code, so
-				   don't cache writeable executable pages.  */
-
-#endif
+#include <m68k/proc.h>
