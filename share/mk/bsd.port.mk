@@ -1,10 +1,10 @@
 # -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.6 1996/08/23 11:37:41 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.7 1996/10/22 14:01:19 niklas Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
 #
-# FreeBSD Id: bsd.port.mk,v 1.221 1996/08/18 10:53:16 asami Exp $
+# FreeBSD Id: bsd.port.mk,v 1.226 1996/09/24 06:48:22 asami Exp $
 #
 # Please view me with 4 column tabs!
 
@@ -113,23 +113,25 @@
 #				  during a build.  User can then decide to skip this port by
 #				  setting ${BATCH}, or compiling only the interactive ports
 #				  by setting ${INTERACTIVE}.
-# FETCH_DEPENDS - A list of "prog:dir" pairs of other ports this
-#				  package depends in the "fetch" stage.  "prog" is the
-#				  name of an executable.  make will search your $PATH
-#				  for it and go into "dir" to do a "make all install"
-#				  if it's not found.
-# BUILD_DEPENDS - A list of "prog:dir" pairs of other ports this
-#				  package depends to build (between the "extract"
-#				  and "build" stages, inclusive).  "prog" is the name
-#				  of an executable.  make will search your $PATH for
-#				  it and go into "dir" to do a "make all install" if
-#				  it's not found.
-# RUN_DEPENDS	- A list of "prog:dir" pairs of other ports this package
-#				  depends to run.  "prog" is the name of an
-#				  executable.  make will search your $PATH for it and
-#				  go into "dir" to do a "make all install" if it's not
-#				  found.  This will be build during the "install" stage
-#				  and its name will be put into the package as well.
+# FETCH_DEPENDS - A list of "path:dir" pairs of other ports this
+#				  package depends in the "fetch" stage.  "path" is the
+#				  name of a file if it starts with a slash (/), an
+#				  executable otherwise.  make will test for the
+#				  existence (if it is a full pathname) or search for
+#				  it in your $PATH (if it is an executable) and go
+#				  into "dir" to do a "make all install" if it's not
+#				  found.
+# BUILD_DEPENDS - A list of "path:dir" pairs of other ports this
+#				  package depends to build (between the "extract" and
+#				  "build" stages, inclusive).  The test done to
+#				  determine the existence of the dependency is the
+#				  same as FETCH_DEPENDS.
+# RUN_DEPENDS	- A list of "path:dir" pairs of other ports this
+#				  package depends to run.  The test done to determine
+#				  the existence of the dependency is the same as
+#				  FETCH_DEPENDS.  This will be checked during the
+#				  "install" stage and the name of the dependency will
+#				  be put into the package as well.
 # LIB_DEPENDS	- A list of "lib:dir" pairs of other ports this package
 #				  depends on.  "lib" is the name of a shared library.
 #				  make will use "ldconfig -r" to search for the
@@ -405,15 +407,27 @@ INSTALL_TARGET?=	install
 MASTER_SITE_OVERRIDE=  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 .endif
 
+# Empty declaration to avoid "variable MASTER_SITES recursive" error
+MASTER_SITES?=
+PATCH_SITES?=
 # I guess we're in the master distribution business! :)  As we gain mirror
 # sites for distfiles, add them to this list.
 .if !defined(MASTER_SITE_OVERRIDE)
 MASTER_SITES+=	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 PATCH_SITES+=	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 .else
-MASTER_SITES?=	# to avoid "variable MASTER_SITES recursive" error
 MASTER_SITES:=	${MASTER_SITE_OVERRIDE} ${MASTER_SITES}
 PATCH_SITES:=	${MASTER_SITE_OVERRIDE} ${PATCH_SITES}
+.endif
+
+# Search CDROM first if mounted, symlink instead of copy if
+# FETCH_SYMLINK_DISTFILES is set
+.if exists(/cdrom/ports/distfiles)
+MASTER_SITES:=	file:/cdrom/ports/distfiles/${DIST_SUBDIR}/ ${MASTER_SITES}
+PATCH_SITES:=	file:/cdrom/ports/distfiles/${DIST_SUBDIR}/ ${PATCH_SITES}
+.if defined(FETCH_SYMLINK_DISTFILES)
+FETCH_BEFORE_ARGS+=	-l
+.endif
 .endif
 
 # Derived names so that they're easily overridable.
@@ -696,12 +710,12 @@ do-patch:
 
 .if !target(do-configure)
 do-configure:
-	@if [ -f ${SCRIPTDIR}/${CONFIGURE_SCRIPT} ]; then \
+	@if [ -f ${SCRIPTDIR}/configure ]; then \
 		cd ${.CURDIR} && ${SETENV} CURDIR=${.CURDIR} DISTDIR=${DISTDIR}\
 		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
 		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
 		  PORTSDIR=${PORTSDIR} PREFIX=${PREFIX} DEPENDS="${DEPENDS}" \
-		  X11BASE=${X11BASE} /bin/sh ${SCRIPTDIR}/${CONFIGURE_SCRIPT}; \
+		  X11BASE=${X11BASE} /bin/sh ${SCRIPTDIR}/configure; \
 	fi
 .if defined(HAS_CONFIGURE)
 	@(cd ${WRKSRC} && CC="${CC}" ac_cv_path_CC="${CC}" CFLAGS="${CFLAGS}" \
@@ -1210,7 +1224,7 @@ misc-depends:
 .if !target(depends-list)
 depends-list:
 	@for i in ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS} ${DEPENDS}; do \
-		dir=`/bin/echo $$i | /usr/bin/sed -e 's/.*://'`; \
+		dir=`${ECHO} $$i | ${SED} -e 's/.*://'`; \
 		(cd $$dir ; ${MAKE} package-name depends-list); \
 	done
 .endif
