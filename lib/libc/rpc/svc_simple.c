@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_simple.c,v 1.6 1998/11/22 07:38:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_simple.c,v 1.7 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -69,7 +69,7 @@ registerrpc(prognum, versnum, procnum, progname, inproc, outproc)
 		    "can't reassign procedure number %u\n", NULLPROC);
 		return (-1);
 	}
-	if (transp == 0) {
+	if (transp == NULL) {
 		transp = svcudp_create(RPC_ANYSOCK);
 		if (transp == NULL) {
 			(void) fprintf(stderr, "couldn't create an rpc server\n");

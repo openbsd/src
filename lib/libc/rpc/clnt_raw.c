@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.8 1998/03/19 00:27:18 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -90,10 +90,10 @@ clntraw_create(prog, vers)
 	XDR *xdrs = &clp->xdr_stream;
 	CLIENT	*client = &clp->client_object;
 
-	if (clp == 0) {
+	if (clp == NULL) {
 		clp = (struct clntraw_private *)calloc(1, sizeof (*clp));
-		if (clp == 0)
-			return (0);
+		if (clp == NULL)
+			return (NULL);
 		clntraw_private = clp;
 	}
 	/*
@@ -140,7 +140,7 @@ clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	enum clnt_stat status;
 	struct rpc_err error;
 
-	if (clp == 0)
+	if (clp == NULL)
 		return (RPC_FAILED);
 call_again:
 	/*
@@ -221,8 +221,7 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	register XDR *xdrs = &clp->xdr_stream;
 	bool_t rval;
 
-	if (clp == 0)
-	{
+	if (clp == NULL) {
 		rval = (bool_t) RPC_FAILED;
 		return (rval);
 	}

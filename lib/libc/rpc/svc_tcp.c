@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.18 1998/05/22 04:23:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.19 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -179,7 +179,13 @@ svctcp_create(sock, sendsize, recvsize)
 	xprt->xp_ops = &svctcp_rendezvous_op;
 	xprt->xp_port = ntohs(addr.sin_port);
 	xprt->xp_sock = sock;
-	xprt_register(xprt);
+	if (__xprt_register(xprt) == 0) {
+		if (madesock)
+			(void)close(sock);
+		free(r);
+		free(xprt);
+		return (NULL);
+	}
 	return (xprt);
 }
 
@@ -228,7 +234,11 @@ makefd_xprt(fd, sendsize, recvsize)
 	xprt->xp_ops = &svctcp_op;  /* truely deals with calls */
 	xprt->xp_port = 0;  /* this is a connection, not a rendezvouser */
 	xprt->xp_sock = fd;
-	xprt_register(xprt);
+	if (__xprt_register(xprt) == 0) {
+		free(xprt);
+		free(cd);
+		return (NULL);
+	}
     done:
 	return (xprt);
 }

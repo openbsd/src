@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.8 1998/03/19 00:27:26 millert Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -157,7 +157,14 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	xprt->xp_ops = &svcudp_op;
 	xprt->xp_port = ntohs(addr.sin_port);
 	xprt->xp_sock = sock;
-	xprt_register(xprt);
+	if (__xprt_register(xprt) == 0) {
+		if (madesock)
+			(void)close(sock);
+		free(xprt);
+		free(rpc_buffer(xprt));
+		free(su);
+		return (NULL);
+	}
 	return (xprt);
 }
 
@@ -371,12 +378,15 @@ svcudp_enablecache(transp, size)
 	uc->uc_entries = ALLOC(cache_ptr, size * SPARSENESS);
 	if (uc->uc_entries == NULL) {
 		CACHE_PERROR("enablecache: could not allocate cache data");
+		free(uc);
 		return(0);
 	}
 	BZERO(uc->uc_entries, cache_ptr, size * SPARSENESS);
 	uc->uc_fifo = ALLOC(cache_ptr, size);
 	if (uc->uc_fifo == NULL) {
 		CACHE_PERROR("enablecache: could not allocate cache fifo");
+		free(uc->uc_entries);
+		free(uc);
 		return(0);
 	}
 	BZERO(uc->uc_fifo, cache_ptr, size);
@@ -426,6 +436,7 @@ cache_set(xprt, replylen)
 		newbuf = mem_alloc(su->su_iosz);
 		if (newbuf == NULL) {
 			CACHE_PERROR("cache_set: could not allocate new rpc_buffer");
+			free(victim);
 			return;
 		}
 	}

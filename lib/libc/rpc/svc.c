@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.12 1999/11/23 22:37:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.13 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -83,6 +83,17 @@ void
 xprt_register(xprt)
 	SVCXPRT *xprt;
 {
+	/* ignore failure conditions */
+	(void) __xprt_register(xprt);
+}
+
+/*
+ * Activate a transport handle.
+ */
+int
+__xprt_register(xprt)
+	SVCXPRT *xprt;
+{
 	register int sock = xprt->xp_sock;
 
 	if (sock+1 > __svc_fdsetsize) {
@@ -90,7 +101,8 @@ xprt_register(xprt)
 		fd_set *fds;
 
 		fds = (fd_set *)malloc(bytes);
-		/* XXX */
+		if (fds == NULL)
+			return (0);
 		memset(fds, 0, bytes);
 		if (__svc_fdset) {
 			memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize,
@@ -112,7 +124,8 @@ xprt_register(xprt)
 		if (sock+1 > size)
 			size = sock+1;
 		xp = (SVCXPRT **)mem_alloc(size * sizeof(SVCXPRT *));
-		/* XXX */
+		if (xp == NULL)
+			return (0);
 		memset(xp, 0, size * sizeof(SVCXPRT *));
 		if (xports) {
 			memcpy(xp, xports, xportssize * sizeof(SVCXPRT *));
@@ -123,6 +136,7 @@ xprt_register(xprt)
 	}
 	xports[sock] = xprt;
 	svc_maxfd = max(svc_maxfd, sock);
+	return (1);
 }
 
 /*

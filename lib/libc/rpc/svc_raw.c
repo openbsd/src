@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_raw.c,v 1.4 1996/09/15 09:31:39 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc_raw.c,v 1.5 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -75,10 +75,10 @@ svcraw_create()
 {
 	register struct svcraw_private *srp = svcraw_private;
 
-	if (srp == 0) {
+	if (srp == NULL) {
 		srp = (struct svcraw_private *)calloc(1, sizeof (*srp));
-		if (srp == 0)
-			return (0);
+		if (srp == NULL)
+			return (NULL);
 	}
 	srp->server.xp_sock = 0;
 	srp->server.xp_port = 0;
@@ -104,7 +104,7 @@ svcraw_recv(xprt, msg)
 	register struct svcraw_private *srp = svcraw_private;
 	register XDR *xdrs;
 
-	if (srp == 0)
+	if (srp == NULL)
 		return (0);
 	xdrs = &srp->xdr_stream;
 	xdrs->x_op = XDR_DECODE;
@@ -123,7 +123,7 @@ svcraw_reply(xprt, msg)
 	register struct svcraw_private *srp = svcraw_private;
 	register XDR *xdrs;
 
-	if (srp == 0)
+	if (srp == NULL)
 		return (FALSE);
 	xdrs = &srp->xdr_stream;
 	xdrs->x_op = XDR_ENCODE;
@@ -143,7 +143,7 @@ svcraw_getargs(xprt, xdr_args, args_ptr)
 {
 	register struct svcraw_private *srp = svcraw_private;
 
-	if (srp == 0)
+	if (srp == NULL)
 		return (FALSE);
 	return ((*xdr_args)(&srp->xdr_stream, args_ptr));
 }
@@ -158,7 +158,7 @@ svcraw_freeargs(xprt, xdr_args, args_ptr)
 	register struct svcraw_private *srp = svcraw_private;
 	register XDR *xdrs;
 
-	if (srp == 0)
+	if (srp == NULL)
 		return (FALSE);
 	xdrs = &srp->xdr_stream;
 	xdrs->x_op = XDR_FREE;

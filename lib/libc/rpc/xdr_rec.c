@@ -27,7 +27,7 @@
  * Mountain View, California  94043
  */
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.6 1998/05/20 23:50:02 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.7 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -159,6 +159,7 @@ xdrrec_create(xdrs, sendsize, recvsize, tcp_handle, readit, writeit)
 	rstrm->the_buffer = mem_alloc(sendsize + recvsize + BYTES_PER_XDR_UNIT);
 	if (rstrm->the_buffer == NULL) {
 		(void)fprintf(stderr, "xdrrec_create: out of memory\n");
+		free(rstrm);
 		return;
 	}
 	for (rstrm->out_base = rstrm->the_buffer;

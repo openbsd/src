@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.3 2000/08/22 18:44:48 deraadt Exp $	*/
+/*	$OpenBSD: svc.h,v 1.4 2001/03/03 06:50:27 deraadt Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -193,6 +193,7 @@ __END_DECLS
  */
 __BEGIN_DECLS
 extern void	xprt_register	__P((SVCXPRT *));
+extern int	__xprt_register	__P((SVCXPRT *));
 __END_DECLS
 
 /*

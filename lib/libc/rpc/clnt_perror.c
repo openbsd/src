@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.10 1998/12/30 22:26:18 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.11 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,7 +54,7 @@ static char *
 _buf()
 {
 
-	if (buf == 0)
+	if (buf == NULL)
 		buf = (char *)malloc(CLNT_PERROR_BUFLEN);
 	return (buf);
 }
@@ -73,7 +73,7 @@ clnt_sperror(rpch, s)
 	char *strstart = str;
 	int ret;
 
-	if (str == 0)
+	if (str == NULL)
 		return (0);
 	CLNT_GETERR(rpch, &e);
 
@@ -208,7 +208,7 @@ clnt_spcreateerror(s)
 {
 	char *str = _buf();
 
-	if (str == 0)
+	if (str == NULL)
 		return (0);
 
 	switch (rpc_createerr.cf_stat) {

@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_simple.c,v 1.8 1998/03/19 00:27:20 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_simple.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -61,20 +61,26 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	xdrproc_t inproc, outproc;
 	char *in, *out;
 {
-	register struct callrpc_private *crp = callrpc_private;
+	struct callrpc_private *save_callrpc_private = callrpc_private;
+	struct callrpc_private *crp = callrpc_private;
 	struct sockaddr_in server_addr;
 	enum clnt_stat clnt_stat;
 	struct hostent *hp;
 	struct timeval timeout, tottimeout;
 
-	if (crp == 0) {
+	if (crp == NULL) {
 		crp = (struct callrpc_private *)calloc(1, sizeof (*crp));
-		if (crp == 0)
+		if (crp == NULL)
 			return (0);
 		callrpc_private = crp;
 	}
 	if (crp->oldhost == NULL) {
 		crp->oldhost = malloc(MAXHOSTNAMELEN);
+		if (crp->oldhost == NULL) {
+			free(crp);
+			callrpc_private = save_callrpc_private;
+			return (0);
+		}
 		crp->oldhost[0] = 0;
 		crp->socket = RPC_ANYSOCK;
 	}
