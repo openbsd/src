@@ -77,6 +77,7 @@
 #	tun*	network tunnel driver
 #	joy*	joystick driver
 #	pcmcia*	PCMCIA card drivers
+#	*rnd	inkernel random number generator
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -91,6 +92,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
+	sh MAKEDEV rnd
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -390,6 +392,16 @@ apm*)
 	mknod apmctl c 21 8
 	chown root.wheel apm apmctl
 	chmod 644 apm apmctl
+	;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 45 0
+	mknod srnd c 45 1
+	mknod urnd c 45 2
+	mknod prnd c 45 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
 	;;
 
 pcmcia*)
