@@ -1199,6 +1199,19 @@ main(argc, argv, envp)
 	setclass('b', "application/octet-stream");
 #endif
 
+
+	/* MIME headers which have fields to check for overflow */
+	setclass(macid("{checkMIMEFieldHeaders}", NULL), "content-disposition");
+	setclass(macid("{checkMIMEFieldHeaders}", NULL), "content-type");
+
+	/* MIME headers to check for overflow */
+	setclass(macid("{checkMIMEHeaders}", NULL), "content-description");
+	setclass(macid("{checkMIMEHeaders}", NULL), "content-disposition");
+	setclass(macid("{checkMIMEHeaders}", NULL), "content-id");
+	setclass(macid("{checkMIMEHeaders}", NULL), "content-transfer-encoding");
+	setclass(macid("{checkMIMEHeaders}", NULL), "content-type");
+	setclass(macid("{checkMIMEHeaders}", NULL), "mime-version");
+
 	/* operate in queue directory */
 	if (QueueDir == NULL)
 	{

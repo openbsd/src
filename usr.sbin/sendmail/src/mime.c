@@ -225,7 +225,8 @@ mime8to7(mci, header, e, boundaries, flags)
 	**	Do a recursive descent into the message.
 	*/
 
-	if (strcasecmp(type, "multipart") == 0 && !bitset(M87F_NO8BIT, flags))
+	if (strcasecmp(type, "multipart") == 0 &&
+	    (!bitset(M87F_NO8BIT, flags) || bitset(M87F_NO8TO7, flags)))
 	{
 		int blen;
 
@@ -379,7 +380,7 @@ mime8to7(mci, header, e, boundaries, flags)
 	*/
 
 	sectionsize = sectionhighbits = 0;
-	if (!bitset(M87F_NO8BIT, flags))
+	if (!bitset(M87F_NO8BIT|M87F_NO8TO7, flags))
 	{
 		/* remember where we were */
 		offset = ftell(e->e_dfp);

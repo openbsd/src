@@ -1519,6 +1519,10 @@ struct optioninfo
 #define O_TRUSTFILEOWN	0xa7
 	{ "TrustedFileOwner",		O_TRUSTFILEOWN,	FALSE	},
 #endif
+#if _FFR_MAX_MIME_HEADER_LENGTH
+#define O_MAXMIMEHDRLEN	0xa8
+	{ "MaxMimeHeaderLength",	O_MAXMIMEHDRLEN,	FALSE	},
+#endif
 
 	{ NULL,				'\0',		FALSE	}
 };
@@ -2425,6 +2429,29 @@ setoption(opt, val, safe, sticky, e)
 			TrustedFileUid = 0;
 		}
 #endif
+		break;
+#endif
+
+#if _FFR_MAX_MIME_HEADER_LENGTH
+	  case O_MAXMIMEHDRLEN:
+		p = strchr(val, '/');
+		if (p != NULL)
+			*p++ = '\0';
+		MaxMimeHeaderLength = atoi(val);
+		if (p != NULL && *p != '\0')
+			MaxMimeFieldLength = atoi(p);
+		else
+			MaxMimeFieldLength = MaxMimeHeaderLength / 2;
+
+		if (MaxMimeHeaderLength < 0)
+			MaxMimeHeaderLength = 0;
+		else if (MaxMimeHeaderLength < 128)
+			printf("Warning: MaxMimeHeaderLength: header length limit set lower than 128\n");
+
+		if (MaxMimeFieldLength < 0)
+			MaxMimeFieldLength = 0;
+		else if (MaxMimeFieldLength < 40)
+			printf("Warning: MaxMimeHeaderLength: field length limit set lower than 40\n");
 		break;
 #endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 1998/07/12 19:44:15 millert Exp $
+#	$OpenBSD: Makefile,v 1.19 1998/08/14 00:55:52 millert Exp $
 #
 #  OpenBSD Makefile
 #
@@ -8,28 +8,29 @@
 
 PROG=	sendmail
 
-# define the database format to use for aliases et al.  Can be -DNEWDB (for
-# the new BSD database package -- this is preferred) or -DNDBM for the NDBM
-# database package.  The old putrescent V7 DBM package is no longer
-# supported.
-# You can define both NEWDB and NDBM during a transition period; old
-# databases are read, but the new format will be used on any rebuilds.  On
-# really gnarly systems, you can set this to null; it will crawl like a high
-# spiral snail, but it will work.
+# define the database mechanisms available for map & alias lookups:
+#	-DNDBM -- use new DBM
+#	-DNEWDB -- use new Berkeley DB
+#	-DNIS -- include NIS support
+# The really old (V7) DBM library is no longer supported.
+# See README for a description of how these flags interact.
+#
 MAPDEF=	-DNEWDB -DMAP_REGEX
 
 .if (${YP} == "yes")
 MAPDEF+=-DNIS
 .endif
 
-CFLAGS+=-I${.CURDIR} ${MAPDEF} -DNETISO
+# environment definitions (e.g., -DNETISO)
+ENVDEF= -DNETISO -D_FFR_MAX_MIME_HEADER_LENGTH=1
 
 .if (${TCP_WRAPPERS} == "yes")
-CFLAGS+=-DTCPWRAPPERS
-
+ENVDEF+=-DTCPWRAPPERS
 DPADD=	${LIBWRAP}
 LDADD=	-lwrap
 .endif
+
+CFLAGS+=-I${.CURDIR} ${MAPDEF} ${ENVDEF}
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \

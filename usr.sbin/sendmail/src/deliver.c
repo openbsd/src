@@ -2882,6 +2882,7 @@ putbody(mci, e, separator)
 	char *separator;
 {
 	char buf[MAXLINE];
+	char *boundaries[MAXMIMENESTING + 1];
 
 	/*
 	**  Output the body of the message
@@ -2923,8 +2924,6 @@ putbody(mci, e, separator)
 #if MIME8TO7
 	if (bitset(MCIF_CVT8TO7, mci->mci_flags))
 	{
-		char *boundaries[MAXMIMENESTING + 1];
-
 		/*
 		**  Do 8 to 7 bit MIME conversion.
 		*/
@@ -2952,6 +2951,13 @@ putbody(mci, e, separator)
 		mime7to8(mci, e->e_header, e);
 	}
 # endif
+	else if (MaxMimeHeaderLength > 0 || MaxMimeFieldLength > 0)
+	{
+		/* Use mime8to7 to check multipart for MIME header overflows */
+		boundaries[0] = NULL;
+		mci->mci_flags |= MCIF_INHEADER;
+		mime8to7(mci, e->e_header, e, boundaries, M87F_OUTER|M87F_NO8TO7);
+	}
 	else
 #endif
 	{
@@ -2966,7 +2972,6 @@ putbody(mci, e, separator)
 		size_t eol_len;
 		char peekbuf[10];
 
-		/* we can pass it through unmodified */
 		if (bitset(MCIF_INHEADER, mci->mci_flags))
 		{
 			putline("", mci);

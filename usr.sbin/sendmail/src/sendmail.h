@@ -1008,6 +1008,7 @@ extern bool	filechanged __P((char *, int, struct stat *));
 #define M87F_OUTER		0	/* outer context */
 #define M87F_NO8BIT		0x0001	/* can't have 8-bit in this section */
 #define M87F_DIGEST		0x0002	/* processing multipart/digest */
+#define M87F_NO8TO7		0x0004	/* don't do 8->7 bit conversions */
 
 
 /*
@@ -1285,6 +1286,9 @@ EXTERN char	*DoubleBounceAddr;	/* where to send double bounces */
 EXTERN char	**ExternalEnviron;	/* input environment */
 EXTERN char	*UserEnviron[MAXUSERENVIRON + 1];
 					/* saved user environment */
+EXTERN int	MaxMimeHeaderLength;	/* maximum MIME header length */
+EXTERN int	MaxMimeFieldLength;	/* maximum MIME field length */
+
 extern int	errno;
 
 /*

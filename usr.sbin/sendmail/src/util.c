@@ -174,6 +174,182 @@ rfc822_string(s)
 		return TRUE;
 }
 /*
+**  SHORTEN_RFC822_STRING -- Truncate and rebalance an RFC822 string
+**
+**	Arbitratily shorten (in place) an RFC822 string and rebalance
+**	comments and quotes.
+**
+**	Parameters:
+**		string -- the string to shorten
+**		length -- the maximum size, 0 if no maximum
+**
+**	Returns:
+**		TRUE if string is changed, FALSE otherwise
+**
+**	Side Effects:
+**		Changes string in place, possibly resulting
+**		in a shorter string.
+*/
+
+bool
+shorten_rfc822_string(string, length)
+	char *string;
+	size_t length;
+{
+	bool backslash = FALSE;
+	bool modified = FALSE;
+	bool quoted = FALSE;
+	size_t slen;
+	int parencount = 0;
+	char *ptr = string;
+	
+	/*
+	** If have to rebalance an already short enough string,
+	** need to do it within allocated space.
+	*/
+	slen = strlen(string);
+	if (length == 0 || slen < length)
+		length = slen;
+
+	while (*ptr != '\0')
+	{
+		if (backslash)
+		{
+			backslash = FALSE;
+			goto increment;
+		}
+
+		if (*ptr == '\\')
+			backslash = TRUE;
+		else if (*ptr == '(')
+		{
+			if (!quoted)
+				parencount++;
+		}
+		else if (*ptr == ')')
+		{
+			if (--parencount < 0)
+				parencount = 0;
+		}
+		
+		/* Inside a comment, quotes don't matter */
+		if (parencount <= 0 && *ptr == '"')
+			quoted = !quoted;
+
+increment:
+		/* Check for sufficient space for next character */
+		if (length - (ptr - string) <= ((backslash ? 1 : 0) +
+						parencount +
+						(quoted ? 1 : 0)))
+		{
+			/* Not enough, backtrack */
+			if (*ptr == '\\')
+				backslash = FALSE;
+			else if (*ptr == '(' && !quoted)
+				parencount--;
+			else if (*ptr == '"' && !backslash && parencount == 0)
+				quoted = FALSE;
+			break;
+		}
+		ptr++;
+	}
+
+	/* Rebalance */
+	while (parencount-- > 0)
+	{
+		if (*ptr != ')')
+		{
+			modified = TRUE;
+			*ptr = ')';
+		}
+		ptr++;
+	}
+	if (quoted)
+	{
+		if (*ptr != '"')
+		{
+			modified = TRUE;
+			*ptr = '"';
+		}
+		ptr++;
+	}
+	if (*ptr != '\0')
+	{
+		modified = TRUE;
+		*ptr = '\0';
+	}
+	return modified;
+}
+/*
+**  FIND_CHARACTER -- find an unquoted character in an RFC822 string
+**
+**	Find an unquoted, non-commented character in an RFC822
+**	string and return a pointer to its location in the
+**	string.
+**
+**	Parameters:
+**		string -- the string to search
+**		character -- the character to find
+**
+**	Returns:
+**		pointer to the character, or
+**		a pointer to the end of the line if character is not found
+*/
+
+char *
+find_character(string, character)
+	char *string;
+	char character;
+{
+	bool backslash = FALSE;
+	bool quoted = FALSE;
+	int parencount = 0;
+		
+	while (string != NULL && *string != '\0')
+	{
+		if (backslash)
+		{
+			backslash = FALSE;
+			if (!quoted && character == '\\' && *string == '\\')
+				break;
+			string++;
+			continue;
+		}
+		switch (*string)
+		{
+		  case '\\':
+			backslash = TRUE;
+			break;
+			
+		  case '(':
+			if (!quoted)
+				parencount++;
+			break;
+			
+		  case ')':
+			if (--parencount < 0)
+				parencount = 0;
+			break;
+		}
+		
+		/* Inside a comment, nothing matters */
+		if (parencount > 0)
+		{
+			string++;
+			continue;
+		}
+		
+		if (*string == '"')
+			quoted = !quoted;
+		else if (*string == character && !quoted)
+			break;
+		string++;
+	}
+
+	/* Return pointer to the character */
+	return string;
+}
+/*
 **  XALLOC -- Allocate memory and bitch wildly on failure.
 **
 **	THIS IS A CLUDGE.  This should be made to give a proper
