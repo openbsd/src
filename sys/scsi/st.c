@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.25 1998/07/23 09:11:09 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.26 1999/07/25 07:09:20 csapuntz Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -671,8 +671,11 @@ st_mount_tape(dev, flags)
 	 * Load the physical device parameters
 	 * loads: blkmin, blkmax
 	 */
-	if ((error = st_read_block_limits(st, 0)) != 0)
+	if (!(sc_link->flags & SDEV_ATAPI) &&
+	    (error = st_read_block_limits(st, 0)) != 0) {
 		return error;
+	}
+
 	/*
 	 * Load the media dependent parameters
 	 * includes: media_blksize,media_density,numblks
@@ -1488,6 +1491,9 @@ st_mode_select(st, flags)
 		return 0;
 	}
 
+	if (sc_link->flags & SDEV_ATAPI)
+		return 0;
+
 	/*
 	 * Set up for a mode select
 	 */
@@ -1794,7 +1800,7 @@ st_interpret_sense(xs)
 	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
-		return -1;	/* let the generic code handle it */
+		return SCSIRET_CONTINUE; /* let the generic code handle it */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {
@@ -1899,7 +1905,7 @@ st_interpret_sense(xs)
 			return 0;
 		}
 	}
-	return -1;		/* let the default/generic handler handle it */
+	return SCSIRET_CONTINUE;
 }
 
 /*

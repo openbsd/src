@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.24 1999/04/20 19:04:34 weingart Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.25 1999/07/25 07:09:19 csapuntz Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -531,6 +531,7 @@ sc_err1(xs, async)
 		break;
 
 	case XS_SENSE:
+	case XS_SHORTSENSE:
 		if ((error = scsi_interpret_sense(xs)) == ERESTART) {
 			if (xs->error == XS_BUSY) {
 				xs->error = XS_SENSE;
@@ -572,6 +573,15 @@ sc_err1(xs, async)
 		/* XXX Disable device? */
 		error = EIO;
 		break;
+
+        case XS_RESET:
+                if (xs->retries) {
+                        SC_DEBUG(xs->sc_link, SDEV_DB3,
+                            ("restarting command destroyed by reset\n"));
+                        goto retry;
+                }
+                error = EIO;
+                break;
 
 	default:
 		sc_print_addr(xs->sc_link);
@@ -632,7 +642,7 @@ scsi_interpret_sense(xs)
 	if (sc_link->device->err_handler) {
 		SC_DEBUG(sc_link, SDEV_DB2, ("calling private err_handler()\n"));
 		error = (*sc_link->device->err_handler) (xs);
-		if (error != -1)
+		if (error != SCSIRET_CONTINUE)
 			return error;		/* error >= 0  better ? */
 	}
 	/* otherwise use the default */
@@ -653,14 +663,14 @@ scsi_interpret_sense(xs)
 		key = sense->flags & SSD_KEY;
 
 		switch (key) {
-		case 0x0:	/* NO SENSE */
-		case 0x1:	/* RECOVERED ERROR */
+		case SKEY_NO_SENSE:
+		case SKEY_RECOVERED_ERROR:
 			if (xs->resid == xs->datalen)
 				xs->resid = 0;	/* not short read */
-		case 0xc:	/* EQUAL */
+		case SKEY_EQUAL:
 			error = 0;
 			break;
-		case 0x2:	/* NOT READY */
+		case SKEY_NOT_READY:
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
@@ -678,14 +688,17 @@ scsi_interpret_sense(xs)
 				return EIO;
 			error = EIO;
 			break;
-		case 0x5:	/* ILLEGAL REQUEST */
+		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
 				return 0;
 			if ((xs->flags & SCSI_SILENT) != 0)
 				return EIO;
 			error = EINVAL;
 			break;
-		case 0x6:	/* UNIT ATTENTION */
+		case SKEY_UNIT_ATTENTION:
+			if (sense->add_sense_code == 0x29 &&
+                            sense->add_sense_code_qual == 0x00)
+                                return (ERESTART); /* device or bus reset */
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
@@ -696,23 +709,25 @@ scsi_interpret_sense(xs)
 				return EIO;
 			error = EIO;
 			break;
-		case 0x7:	/* DATA PROTECT */
+		case SKEY_WRITE_PROTECT:
 			error = EROFS;
 			break;
-		case 0x8:	/* BLANK CHECK */
+		case SKEY_BLANK_CHECK:
 			error = 0;
 			break;
-		case 0xb:	/* COMMAND ABORTED */
+		case SKEY_ABORTED_COMMAND:
 			error = ERESTART;
 			break;
-		case 0xd:	/* VOLUME OVERFLOW */
+		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;
 			break;
 		default:
 			error = EIO;
 			break;
 		}
-		scsi_print_sense(xs, 0);
+
+		if ((xs->flags & SCSI_SILENT) == 0)
+			scsi_print_sense(xs, 0);
 
 		return error;
 
@@ -721,7 +736,7 @@ scsi_interpret_sense(xs)
 	 */
 	default:
 		sc_print_addr(sc_link);
-		printf("error code %d",
+		printf("Sense Error Code %d",
 		    sense->error_code & SSD_ERRCODE);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsi_sense_data_unextended *usense =

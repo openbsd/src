@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.7 1999/07/23 16:23:39 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.8 1999/07/25 07:09:19 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -110,8 +110,6 @@ static void atapiscsi_attach __P((struct device *, struct device *, void *));
 int	wdc_atapi_get_params __P((struct atapiscsi_softc *, u_int8_t, int,
 	    struct ataparams *)); 
 
-#define XS_SHORTSENSE XS_SENSE
-#define XS_RESET XS_DRIVER_STUFFUP
 #define ATAPI_TO_SCSI_SENSE(sc, atapi_error) \
    (sc)->error_code = XS_SHORTSENSE; (sc)->flags = (atapi_error) >> 4; 
 

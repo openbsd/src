@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.6 1997/04/14 04:09:09 downsj Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.7 1999/07/25 07:09:19 csapuntz Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -57,10 +57,102 @@
 #ifndef	_SCSI_SCSI_DISK_H
 #define _SCSI_SCSI_DISK_H 1
 
+/*
+ * XXX Is this also used by ATAPI?
+ */
+#define	FORMAT_UNIT		0x04
+struct scsi_format_unit {
+	u_int8_t opcode;
+	u_int8_t flags;
+#define	SFU_DLF_MASK	0x07
+#define	SFU_CMPLST	0x08
+#define	SFU_FMTDATA	0x10
+	u_int8_t vendor_specific;
+	u_int8_t interleave[2];
+	u_int8_t control;
+};
+
+/*
+ * If the FmtData bit is set, a FORMAT UNIT parameter list is transfered
+ * to the target during the DATA OUT phase.  The parameter list includes
+ *
+ *	Defect list header
+ *	Initialization pattern descriptor (if any)
+ *	Defect descriptor(s) (if any)
+ */
+
+struct scsi_format_unit_defect_list_header {
+	u_int8_t reserved;
+	u_int8_t flags;
+#define	DLH_VS		0x01		/* vendor specific */
+#define	DLH_IMMED	0x02		/* immediate return */
+#define	DLH_DSP		0x04		/* disable saving parameters */
+#define	DLH_IP		0x08		/* initialization pattern */
+#define	DLH_STPF	0x10		/* stop format */
+#define	DLH_DCRT	0x20		/* disable certification */
+#define	DLH_DPRY	0x40		/* disable primary */
+#define	DLH_FOV		0x80		/* format options valid */
+	u_int8_t defect_lst_len[2];
+};
+
+/*
+ * See Table 117 of the SCSI-2 specification for a description of
+ * the IP modifier.
+ */
+struct scsi_initialization_pattern_descriptor {
+	u_int8_t ip_modifier;
+	u_int8_t pattern_type;
+#define	IP_TYPE_DEFAULT		0x01
+#define	IP_TYPE_REPEAT		0x01
+				/* 0x02 -> 0x7f: reserved */
+				/* 0x80 -> 0xff: vendor-specific */
+	u_int8_t pattern_length[2];
+#if 0
+	u_int8_t pattern[...];
+#endif
+};
+
+/*
+ * Defect desciptors.  These are used as the defect lists in the FORMAT UNIT
+ * and READ DEFECT DATA commands, and as the translate page of the
+ * SEND DIAGNOSTIC and RECEIVE DIAGNOSTIC RESULTS commands.
+ */
+
+/* Block format */
+struct scsi_defect_descriptor_bf {
+	u_int8_t block_address[4];
+};
+
+/* Bytes from index format */
+struct scsi_defect_descriptor_bfif {
+	u_int8_t cylinder[2];
+	u_int8_t head;
+	u_int8_t bytes_from_index[2];
+};
+
+/* Physical sector format */
+struct scsi_defect_descriptor_psf {
+	u_int8_t cylinder[2];
+	u_int8_t head;
+	u_int8_t sector[2];
+};
+
+
 struct scsi_reassign_blocks {
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t unused[3];
+	u_int8_t control;
+};
+
+/*
+ * XXX Is this also used by ATAPI?
+ */
+#define	REZERO_UNIT		0x01
+struct scsi_rezero_unit {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved[3];
 	u_int8_t control;
 };
 
@@ -102,21 +194,37 @@ struct scsi_start_stop {
 };
 
 
+/*
+ * XXX Does ATAPI have an equivalent?
+ */
+#define	SYNCHRONIZE_CACHE		0x35
+struct scsi_synchronize_cache {
+	u_int8_t opcode;
+	u_int8_t flags;
+#define	SSC_RELADR	0x01
+#define	SSC_IMMED	0x02
+	u_int8_t addr[4];
+	u_int8_t reserved;
+	u_int8_t length[2];
+	u_int8_t control;
+};
+
+
 
 /*
  * Opcodes
  */
-
 #define	REASSIGN_BLOCKS		0x07
 #define	READ_COMMAND		0x08
-#define WRITE_COMMAND		0x0a
-#define MODE_SELECT		0x15
+#define WRITE_COMMAND	        0x0a
+#define MODE_SELECT	        0x15
 #define MODE_SENSE		0x1a
 #define START_STOP		0x1b
-#define PREVENT_ALLOW		0x1e
-#define	READ_CAPACITY		0x25
+#define PREVENT_ALLOW	        0x1e
+#define	READ_CAPACITY	        0x25
 #define	READ_BIG		0x28
 #define WRITE_BIG		0x2a
+#define	SYNCHRONIZE_CACHE	0x35
 
 
 struct scsi_read_cap_data {
@@ -132,7 +240,7 @@ struct scsi_reassign_blocks_data {
 	} defect_descriptor[1];
 };
 
-union disk_pages {
+union scsi_disk_pages {
 #define	DISK_PGCODE	0x3F	/* only 6 bits valid */
 	struct page_disk_format {
 		u_int8_t pg_code;	/* page code (should be 3) */

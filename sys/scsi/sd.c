@@ -1,8 +1,12 @@
-/*	$OpenBSD: sd.c,v 1.35 1999/07/23 06:17:09 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.36 1999/07/25 07:09:19 csapuntz Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
-/*
- * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,20 +18,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -69,50 +76,17 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+#include <scsi/sdvar.h>
 
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #define	SDOUTSTANDING	4
-#define	SDRETRIES	4
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
 #define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
-
-struct sd_softc {
-	struct device sc_dev;
-	struct disk sc_dk;
-
-	int flags;
-#define	SDF_LOCKED	0x01
-#define	SDF_WANTED	0x02
-#define	SDF_WLABEL	0x04		/* label is writable */
-#define	SDF_LABELLING	0x08		/* writing label */
-#define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
-	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
-	struct disk_parms {
-		u_char heads;		/* number of heads */
-		u_short cyls;		/* number of cylinders */
-		u_char sectors;		/* number of sectors/track */
-		int blksize;		/* number of bytes/sector */
-		u_long disksize;	/* total number sectors */
-	} params;
-	struct disk_name {
-		char vendor[9];		/* disk vendor/manufacturer */
-		char product[17];	/* disk product model */
-		char revision[5];	/* drive/firmware revision */
-	} name;
-	struct buf buf_queue;
-	u_int8_t type;
-};
-
-struct scsi_mode_sense_data {
-	struct scsi_mode_header header;
-	struct scsi_blk_desc blk_desc;
-	union disk_pages pages;
-};
 
 int	sdmatch __P((struct device *, void *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
@@ -123,11 +97,10 @@ void	sdgetdisklabel __P((dev_t, struct sd_softc *, struct disklabel *,
 			    struct cpu_disklabel *, int));
 void	sdstart __P((void *));
 void	sddone __P((struct scsi_xfer *));
+void    sd_shutdown __P((void *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
-int	sd_get_optparms __P((struct sd_softc *, int, struct disk_parms *));
-int	sd_get_parms __P((struct sd_softc *, int));
-static	int sd_mode_sense __P((struct sd_softc *, struct scsi_mode_sense_data *,
-			      int, int));
+int	sd_interpret_sense __P((struct scsi_xfer *));
+
 void	viscpy __P((u_char *, u_char *, int));
 
 struct cfattach sd_ca = {
@@ -141,7 +114,7 @@ struct cfdriver sd_cd = {
 struct dkdriver sddkdriver = { sdstrategy };
 
 struct scsi_device sd_switch = {
-	NULL,			/* Use default error handler */
+	sd_interpret_sense,	/* check out error handler first */
 	sdstart,		/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	sddone,			/* deal with stats at interrupt time */
@@ -157,6 +130,9 @@ struct scsi_inquiry_pattern sd_patterns[] = {
 	{T_OPTICAL, T_REMOV,
 	 "",         "",                 ""},
 };
+
+extern struct sd_ops sd_scsibus_ops;
+extern struct sd_ops sd_atapibus_ops;
 
 int
 sdmatch(parent, match, aux)
@@ -181,7 +157,7 @@ sdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int error;
+	int error, result;
 	struct sd_softc *sd = (void *)self;
 	struct disk_parms *dp = &sd->params;
 	struct scsibus_attach_args *sa = aux;
@@ -208,10 +184,17 @@ sdattach(parent, self, aux)
 
 	dk_establish(&sd->sc_dk, &sd->sc_dev);
 
+	if (sc_link->flags & SDEV_ATAPI) {
+		sd->sc_ops = &sd_atapibus_ops;
+	} else {
+		sd->sc_ops = &sd_scsibus_ops;
+	}
+
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if ((sa->sa_inqbuf->version & SID_ANSII) == 0)
+	if (!(sc_link->flags & SDEV_ATAPI) && 
+	    (sa->sa_inqbuf->version & SID_ANSII) == 0)
 		sd->flags |= SDF_ANCIENT;
 
 	/*
@@ -234,18 +217,51 @@ sdattach(parent, self, aux)
 	viscpy(sd->name.product, sa->sa_inqbuf->product, 16);
 	viscpy(sd->name.revision, sa->sa_inqbuf->revision, 4);
 
-	if (error || sd_get_parms(sd, SCSI_AUTOCONF) != 0)
-		printf("drive offline\n");
-	else {
-	        printf("%ld", dp->disksize / (1048576 / dp->blksize));
-		if (dp->disksize < 11520)
-		        printf(".%2ld",
-			    dp->disksize / (1024*10 / dp->blksize) -
-			    dp->disksize / (1048576 / dp->blksize) * 100);
-		printf("MB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total\n",
-		    dp->cyls,
-		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+	if (error)
+		result = SDGP_RESULT_OFFLINE;
+	else
+		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
+		    SCSI_AUTOCONF);
+
+	switch (result) {
+	case SDGP_RESULT_OK:
+                printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec to
+tal\n",
+                    dp->disksize / (1048576 / dp->blksize), dp->cyls,
+                    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+
+		break;
+
+	case SDGP_RESULT_OFFLINE:
+		printf("drive offline");
+		break;
+
+	case SDGP_RESULT_UNFORMATTED:
+		printf("unformatted media");
+		break;
+
+#ifdef DIAGNOSTIC
+	default:
+		panic("sdattach: unknown result from get_parms");
+		break;
+#endif
 	}
+	printf("\n");
+
+#ifdef notyet
+	/*
+	 * Establish a shutdown hook so that we can ensure that
+	 * our data has actually made it onto the platter at
+	 * shutdown time.  Note that this relies on the fact
+	 * that the shutdown hook code puts us at the head of
+	 * the list (thus guaranteeing that our hook runs before
+	 * our ancestors').
+	 */
+	if ((sd->sc_sdhook =
+	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sd->sc_dev.dv_xname);
+#endif
 }
 
 /*
@@ -309,7 +325,7 @@ sdopen(dev, flag, fmt, p)
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sd_cd.cd_ndevs, SDPART(dev)));
+	    sd_cd.cd_ndevs, part));
 
 	if ((error = sdlock(sd)) != 0)
 		return error;
@@ -355,7 +371,8 @@ sdopen(dev, flag, fmt, p)
 			sc_link->flags |= SDEV_MEDIA_LOADED;
 
 			/* Load the physical device parameters. */
-			if (sd_get_parms(sd, 0) != 0) {
+			if ((*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
+			    0) == SDGP_RESULT_OFFLINE) {
 				error = ENXIO;
 				goto bad2;
 			}
@@ -436,7 +453,9 @@ sdclose(dev, flag, fmt, p)
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
-		/* XXX Must wait for I/O to complete! */
+		if ((sd->flags & SDF_DIRTY) != 0 &&
+		    sd->sc_ops->sdo_flush != NULL)
+			(*sd->sc_ops->sdo_flush)(sd, 0);
 
 		scsi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
@@ -479,7 +498,10 @@ sdstrategy(bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		bp->b_error = EIO;
+		if (sd->sc_link->flags & SDEV_OPEN)
+			bp->b_error = EIO;
+		else
+			bp->b_error = ENODEV;
 		goto bad;
 	}
 	/*
@@ -639,6 +661,14 @@ sdstart(v)
 		disk_busy(&sd->sc_dk);
 
 		/*
+		 * Mark the disk dirty so that the cache will be
+		 * flushed on close.
+		 */
+		if ((bp->b_flags & B_READ) == 0)
+			sd->flags |= SDF_DIRTY;
+
+
+		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
@@ -659,6 +689,11 @@ sddone(xs)
 	struct scsi_xfer *xs;
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
+
+	if (sd->flags & SDF_FLUSHING) {
+		/* Flush completed, no longer dirty. */
+		sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+	}
 
 	if (xs->bp != NULL)
 		disk_unbusy(&sd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
@@ -726,14 +761,31 @@ sdioctl(dev, cmd, addr, flag, p)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	int error;
+	int part = SDPART(dev);
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
 
 	/*
 	 * If the device is not valid.. abandon ship
 	 */
-	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
-		return EIO;
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		switch (cmd) {
+		case DIOCWLABEL:
+		case DIOCLOCK:
+		case DIOCEJECT:
+		case SCIOCIDENTIFY:
+		case SCIOCCOMMAND:
+		case SCIOCDEBUG:
+			if (part == RAW_PART)
+				break;
+		/* FALLTHROUGH */
+		default:
+			if ((sd->sc_link->flags & SDEV_OPEN) == 0)
+				return (ENODEV);
+			else
+				return (EIO);
+		}
+	}
 
 	switch (cmd) {
 	case DIOCGPDINFO: {
@@ -807,7 +859,7 @@ sdioctl(dev, cmd, addr, flag, p)
 		return error;
 
 	default:
-		if (SDPART(dev) != RAW_PART)
+		if (part != RAW_PART)
 			return ENOTTY;
 		return scsi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p);
 	}
@@ -889,6 +941,22 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	}
 }
 
+
+void
+sd_shutdown(arg)
+	void *arg;
+{
+	struct sd_softc *sd = arg;
+
+	/*
+	 * If the disk cache needs to be flushed, and the disk supports
+	 * it, flush it.  We're cold at this point, so we poll for
+	 * completion.
+	 */
+	if ((sd->flags & SDF_DIRTY) != 0 && sd->sc_ops->sdo_flush != NULL)
+		(*sd->sc_ops->sdo_flush)(sd, SCSI_AUTOCONF);
+}
+
 /*
  * Tell the device to map out a defective block
  */
@@ -912,178 +980,68 @@ sd_reassign_blocks(sd, blkno)
 	    5000, NULL, SCSI_DATA_OUT);
 }
 
-
-static int
-sd_mode_sense(sd, scsi_sense, page, flags)
-	struct sd_softc *sd;
-	struct scsi_mode_sense_data *scsi_sense;
-	int page, flags;
-{
-	struct scsi_mode_sense scsi_cmd;
-
-	/*
-	 * Make sure the sense buffer is clean before we do
-	 * the mode sense, so that checks for bogus values of
-	 * 0 will work in case the mode sense fails.
-	 */
-	bzero(scsi_sense, sizeof(*scsi_sense));
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = page;
-	scsi_cmd.length = 0x20;
-	/*
-	 * If the command worked, use the results to fill out
-	 * the parameter structure
-	 */
-	return scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)scsi_sense, sizeof(*scsi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT);
-}
-
-int
-sd_get_optparms(sd, flags, dp)
-	struct sd_softc *sd;
-	int flags;
-	struct disk_parms *dp;
-{
-	struct scsi_mode_sense scsi_cmd;
-	struct scsi_mode_sense_data {
-		struct scsi_mode_header header;
-		struct scsi_blk_desc blk_desc;
-		union disk_pages pages;
-	} scsi_sense;
-	u_long sectors;
-	int error;
-
-	dp->blksize = DEV_BSIZE;
-	if ((sectors = scsi_size(sd->sc_link, flags)) == 0)
-		return 1;
-
-	/* XXX
-	 * It is better to get the following params from the
-	 * mode sense page 6 only (optical device parameter page).
-	 * However, there are stupid optical devices which does NOT
-	 * support the page 6. Ghaa....
-	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = 0x3f;	/* all pages */
-	scsi_cmd.length = sizeof(struct scsi_mode_header) +
-	    sizeof(struct scsi_blk_desc);
-
-	if ((error = scsi_scsi_cmd(sd->sc_link,  
-	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),  
-	    (u_char *)&scsi_sense, sizeof(scsi_sense), SDRETRIES,
-	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
-		return error;
-
-	dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
-	if (dp->blksize == 0) 
-		dp->blksize = DEV_BSIZE;
-
-	/*
-	 * Create a pseudo-geometry.
-	 */
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = sectors / (dp->heads * dp->sectors);
-	dp->disksize = sectors;
-
-	return 0;
-}
-
 /*
- * Get the scsi driver to send a full inquiry to the * device and use the
- * results to fill out the disk parameter structure.
+ * Check Errors
  */
 int
-sd_get_parms(sd, flags)
-	struct sd_softc *sd;
-	int flags;
+sd_interpret_sense(xs)
+	struct scsi_xfer *xs;
 {
-	struct disk_parms *dp = &sd->params;
-	struct scsi_mode_sense_data scsi_sense;
-	u_long sectors;
-	int page;
-	int error;
+	struct scsi_link *sc_link = xs->sc_link;
+	struct scsi_sense_data *sense = &xs->sense;
+	struct sd_softc *sd = sc_link->device_softc;
+	int retval = SCSIRET_CONTINUE;
 
-	if (sd->type == T_OPTICAL) {
-		if ((error = sd_get_optparms(sd, flags, dp)) != 0)
-			sd->sc_link->flags &= ~SDEV_MEDIA_LOADED;
-		return error;
-	}
-
-	if ((error = sd_mode_sense(sd, &scsi_sense, page = 4, flags)) == 0) {
-		SC_DEBUG(sd->sc_link, SDEV_DB3,
-		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(scsi_sense.pages.rigid_geometry.ncyl),
-		    scsi_sense.pages.rigid_geometry.nheads,
-		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
-		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
-		    _2btol(scsi_sense.pages.rigid_geometry.land_zone)));
-
-		/*
-		 * KLUDGE!! (for zone recorded disks)
-		 * give a number of sectors so that sec * trks * cyls
-		 * is <= disk_size
-		 * can lead to wasted space! THINK ABOUT THIS !
-		 */
-		dp->heads = scsi_sense.pages.rigid_geometry.nheads;
-		dp->cyls = _3btol(scsi_sense.pages.rigid_geometry.ncyl);
-		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
-
-		if (dp->heads == 0 || dp->cyls == 0)
-			goto fake_it;
-
-		if (dp->blksize == 0)
-			dp->blksize = DEV_BSIZE;
-
-		sectors = scsi_size(sd->sc_link, flags);
-		dp->disksize = sectors;
-		sectors /= (dp->heads * dp->cyls);
-		dp->sectors = sectors;	/* XXX dubious on SCSI */
-
-		return 0;
-	}
-
-	if ((error = sd_mode_sense(sd, &scsi_sense, page = 5, flags)) == 0) {
-		dp->heads = scsi_sense.pages.flex_geometry.nheads;
-		dp->cyls = _2btol(scsi_sense.pages.flex_geometry.ncyl);
-		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
-		dp->sectors = scsi_sense.pages.flex_geometry.ph_sec_tr;
-		dp->disksize = dp->heads * dp->cyls * dp->sectors;
-		if (dp->disksize == 0)
-			goto fake_it;
-
-		if (dp->blksize == 0)
-			dp->blksize = DEV_BSIZE;
-
-		return 0;
-	}
-
-fake_it:
-	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
-		if (error == 0)
-			printf("%s: mode sense (%d) returned nonsense",
-			    sd->sc_dev.dv_xname, page);
-		else
-			printf("%s: could not mode sense (4/5)",
-			    sd->sc_dev.dv_xname);
-		printf("; using fictitious geometry\n");
-	}
 	/*
-	 * use adaptec standard fictitious geometry
-	 * this depends on which controller (e.g. 1542C is
-	 * different. but we have to put SOMETHING here..)
+	 * If the device is not open yet, let the generic code handle it.
 	 */
-	sectors = scsi_size(sd->sc_link, flags);
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = sectors / (64 * 32);
-	dp->blksize = DEV_BSIZE;
-	dp->disksize = sectors;
-	return 0;
+	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		return (retval);
+	}
+
+	/*
+	 * If it isn't a extended or extended/deferred error, let
+	 * the generic code handle it.
+	 */
+	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
+	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
+		return (retval);
+	}
+
+	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
+	    sense->add_sense_code == 0x4) {
+		if (sense->add_sense_code_qual == 0x01)	{
+			printf("%s: ..is spinning up...waiting\n",
+			    sd->sc_dev.dv_xname);
+			/*
+			 * I really need a sdrestart function I can call here.
+			 */
+			delay(1000000 * 5);	/* 5 seconds */
+			retval = SCSIRET_RETRY;
+		} else if ((sense->add_sense_code_qual == 0x2) &&
+		    (sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
+			if (sd->sc_link->flags & SDEV_REMOVABLE) {
+				printf(
+				"%s: removable disk stopped - not restarting\n",
+				    sd->sc_dev.dv_xname);
+				retval = EIO;
+			} else {
+				printf("%s: respinning up disk\n",
+				    sd->sc_dev.dv_xname);
+				retval = scsi_start(sd->sc_link, SSS_START,
+				    SCSI_URGENT | SCSI_NOSLEEP);
+				if (retval != 0) {
+					printf(
+					    "%s: respin of disk failed - %d\n",
+					    sd->sc_dev.dv_xname, retval);
+					retval = EIO;
+				} else {
+					retval = SCSIRET_RETRY;
+				}
+			}
+		}
+	}
+	return (retval);
 }
 
 int
