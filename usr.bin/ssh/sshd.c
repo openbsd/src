@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.140 2000/12/19 23:17:59 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.141 2000/12/20 19:32:08 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -679,6 +679,8 @@ main(int ac, char **av)
 
 	/* load private host keys */
 	sensitive_data.host_keys = xmalloc(options.num_host_key_files*sizeof(Key*));
+	for(i = 0; i < options.num_host_key_files; i++)
+		sensitive_data.host_keys[i] = NULL;
 	sensitive_data.server_key = NULL;
 	sensitive_data.ssh1_host_key = NULL;
 	sensitive_data.have_ssh1_key = 0;
