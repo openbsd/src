@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.2 1998/07/04 07:07:22 deraadt Exp $	*/
+/*	$OpenBSD: qecreg.h,v 1.1 1998/07/04 07:07:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -26,13 +26,31 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct qec_softc {
-	struct device sc_dev;		/* us as a device */
-	struct sbusdev sc_sd;		/* sbus device */
-	struct	qecregs *sc_regs;	/* QEC registers */
-	int	sc_node;		/* PROM node ID */
-	int	sc_burst;		/* DVMA burst size in effect */
-	caddr_t	sc_buffer;		/* VA of the buffer we provide */
-	int	sc_bufsiz;		/* Size of buffer */
-	int	nattached;		/* number of attached devices */
+/* QEC registers */
+struct qecregs {
+	volatile u_int32_t ctrl;		/* control */
+	volatile u_int32_t stat;		/* status */
+	volatile u_int32_t psize;		/* packet size */
+	volatile u_int32_t msize;		/* local-mem size (64K) */
+	volatile u_int32_t rsize;		/* receive partition size */
+	volatile u_int32_t tsize;		/* transmit partition size */
 };
+
+#define QEC_CTRL_MMODE		0x40000000	/* MACE qec mode */
+#define QEC_CTRL_BMODE		0x10000000	/* BE qec mode */
+#define QEC_CTRL_EPAR		0x00000020	/* enable parity */
+#define QEC_CTRL_ACNTRL		0x00000018	/* sbus arbitration control */
+#define QEC_CTRL_B64		0x00000004	/* 64 byte dvma bursts */
+#define QEC_CTRL_B32		0x00000002	/* 32 byte dvma bursts */
+#define QEC_CTRL_B16		0x00000000	/* 16 byte dvma bursts */
+#define QEC_CTRL_RESET		0x00000001	/* reset the qec */
+
+#define QEC_STAT_TX		0x00000008	/* bigmac transmit irq */
+#define QEC_STAT_RX		0x00000004	/* bigmac receive irq */
+#define QEC_STAT_BM		0x00000002	/* bigmac qec irq */
+#define QEC_STAT_ER		0x00000001	/* bigmac error irq */
+
+#define QEC_PSIZE_2048		0x00		/* 2k packet size */
+#define QEC_PSIZE_4096		0x01		/* 4k packet size */
+#define QEC_PSIZE_6144		0x10		/* 6k packet size */
+#define QEC_PSIZE_8192		0x11		/* 8k packet size */

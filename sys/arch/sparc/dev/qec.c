@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.1 1998/07/04 01:27:55 deraadt Exp $	*/
+/*	$OpenBSD: qec.c,v 1.2 1998/07/04 07:07:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -43,6 +43,7 @@
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
+#include <sparc/dev/qecreg.h>
 #include <sparc/dev/qecvar.h>
 
 int	qecprint __P((void *, const char *));
