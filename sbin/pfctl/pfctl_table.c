@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.20 2003/01/14 10:42:32 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.21 2003/01/14 21:58:12 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -57,7 +57,7 @@
 
 #define BUF_SIZE 256
 
-extern void	 usage(void);
+extern void	usage(void);
 static int	pfctl_table(int, char *[], char *, char *, char *, int);
 static void	grow_buffer(int, int);
 static void	print_table(struct pfr_table *, int);
@@ -445,74 +445,57 @@ next_token(char buf[BUF_SIZE], FILE *fp)
 void
 append_addr(char *s, int test)
 {
-	char		 buf[BUF_SIZE], *p, *q, *r;
-	struct addrinfo *res, *ai, hints;
-	int		 not = 0, net = -1, rv;
-	struct in_addr	 ina;
+	char			 buf[BUF_SIZE], *r;
+	int			 not = 0;
+	struct node_host	*n, *h;
 
 	for (r = s; *r == '!'; r++)
 		not = !not;
 	if (strlcpy(buf, r, sizeof(buf)) >= sizeof(buf))
 		errx(1, "address too long");
-	p = strrchr(buf, '/');
-	if (test && (not || p))
-		errx(1, "illegal test address");
 
-	memset(&ina, 0, sizeof(struct in_addr));
-	if ((net = inet_net_pton(AF_INET, buf, &ina, sizeof(&ina))) > -1) {
-		if (test && net != 32)
-			errx(1, "illegal test address");
+	if ((n = host(buf, -1)) == NULL)
+		exit (1);
+
+	do {
 		if (size >= msize)
 			grow_buffer(sizeof(struct pfr_addr), 0);
-		buffer.addrs[size].pfra_ip4addr.s_addr = ina.s_addr;
 		buffer.addrs[size].pfra_not = not;
-		buffer.addrs[size].pfra_net = net;
-		buffer.addrs[size].pfra_af = AF_INET;
-		size++;
-		return;
-	}
-
-	if (p) {
-		net = strtol(p+1, &q, 0);
-		if (!q || *q)
-			errx(1, "illegal network: \"%s\"", p+1);
-		*p++ = '\0';
-	}
-
-	bzero(&hints, sizeof(hints));
-	hints.ai_socktype = SOCK_DGRAM;
-	rv = getaddrinfo(buf, NULL, &hints, &res);
-	if (rv)
-		errx(1, "illegal address: \"%s\"", buf);
-	for (ai = res; ai; ai = ai->ai_next) {
-		switch (ai->ai_family) {
+		switch (n->af) {
 		case AF_INET:
-			if (net > 32)
-				errx(1, "illegal netmask: \"%d\"", net);
-			if (size >= msize)
-				grow_buffer(sizeof(struct pfr_addr), 0);
-			buffer.addrs[size].pfra_ip4addr =
-			    ((struct sockaddr_in *)ai->ai_addr)->sin_addr;
-			buffer.addrs[size].pfra_not = not;
-			buffer.addrs[size].pfra_net = (net >= 0) ? net : 32;
 			buffer.addrs[size].pfra_af = AF_INET;
-			size++;
+			buffer.addrs[size].pfra_ip4addr.s_addr =
+			    n->addr.v.a.addr.addr32[0];
+			buffer.addrs[size].pfra_net =
+			    unmask(&n->addr.v.a.mask, AF_INET);
+			if (test && (not || buffer.addrs[size].pfra_net != 32))
+				errx(1, "illegal test address");
+			if (buffer.addrs[size].pfra_net > 32)
+				errx(1, "illegal netmask %d",
+				    buffer.addrs[size].pfra_net);
 			break;
 		case AF_INET6:
-			if (net > 128)
-				errx(1, "illegal netmask: \"%d\"", net);
-			if (size >= msize)
-				grow_buffer(sizeof(struct pfr_addr), 0);
-			buffer.addrs[size].pfra_ip6addr =
-				((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr;
-			buffer.addrs[size].pfra_not = not;
-			buffer.addrs[size].pfra_net = (net >= 0) ? net : 128;
 			buffer.addrs[size].pfra_af = AF_INET6;
-			size++;
+			memcpy(&buffer.addrs[size].pfra_ip6addr,
+			    &n->addr.v.a.addr.v6, sizeof(struct in6_addr));
+			buffer.addrs[size].pfra_net =
+			    unmask(&n->addr.v.a.mask, AF_INET6);
+			if (test && (not || buffer.addrs[size].pfra_net != 128))
+				errx(1, "illegal test address");
+			if (buffer.addrs[size].pfra_net > 128)
+				errx(1, "illegal netmask %d",
+				    buffer.addrs[size].pfra_net);
+			break;
+			break;
+		default:
+			errx(1, "unknown address family %d", n->af);
 			break;
 		}
-	}
-	freeaddrinfo(res);
+		size++;
+		h = n;
+		n = n->next;
+		free(h);
+	} while (n != NULL);
 }
 
 void
