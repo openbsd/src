@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.12 2001/10/24 08:16:42 jjbg Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.13 2001/10/31 14:24:11 fgsch Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -192,25 +192,29 @@ vsyslog_r(pri, data, fmt, ap)
 
 	saved_errno = errno;
 
+	/* Set default facility if none specified. */
+	if ((pri & LOG_FACMASK) == 0)
+		pri |= data->log_fac;
+
 	/* If we have been called through syslog(), no need for reentrancy. */
 	if (data == &sdata)
 		(void)time(&now);
 
-        p = tbuf;  
-        tbuf_left = TBUF_LEN;
-        
-#define	DEC()   \
-        do {                                    \
-                if (prlen < 0)			\
-                        prlen = 0;		\
-                if (prlen >= tbuf_left)         \
-                        prlen = tbuf_left - 1;  \
-                p += prlen;                     \
-                tbuf_left -= prlen;             \
-        } while (0)
+	p = tbuf;
+	tbuf_left = TBUF_LEN;
 
-        prlen = snprintf(p, tbuf_left, "<%d>", pri);
-        DEC();
+#define	DEC()	\
+	do {					\
+		if (prlen < 0)			\
+			prlen = 0;		\
+		if (prlen >= tbuf_left)		\
+			prlen = tbuf_left - 1;	\
+		p += prlen;			\
+		tbuf_left -= prlen;		\
+	} while (0)
+
+	prlen = snprintf(p, tbuf_left, "<%d>", pri);
+	DEC();
 
 	/* 
 	 * syslogd will expand time automagically for reentrant case, and
