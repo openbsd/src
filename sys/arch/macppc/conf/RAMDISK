@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.39 2005/02/16 20:07:24 martin Exp $
+#	$OpenBSD: RAMDISK,v 1.40 2005/02/17 14:40:29 dlg Exp $
 #
 # PPC GENERIC config file
 #
@@ -138,11 +138,11 @@ scsibus*	at atapiscsi?
 # USB Controllers
 ohci*		at pci?		# Open Host Controller
 ohci*		at cardbus?	# Open Host Controller
-ehci*		at pci?	disable	# Enhanced Host Controller
-ehci*		at cardbus? disable # Enhanced Host Controller
+ehci*		at pci?		# Enhanced Host Controller
+ehci*		at cardbus?	# Enhanced Host Controller
 
 # USB bus support
-usb*		at ohci?	flags 0x1
+usb*		at ohci?
 usb*		at ehci?
 uhub*		at usb?
 uhub*		at uhub?
