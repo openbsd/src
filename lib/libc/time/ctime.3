@@ -1,14 +1,15 @@
-.\"	$OpenBSD: ctime.3,v 1.6 1997/01/14 03:16:43 millert Exp $
+.\"	$OpenBSD: ctime.3,v 1.7 1997/04/18 20:34:26 deraadt Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
 .SH SYNOPSIS
 .nf
+.B #include <sys/types.h>
+.B #include <time.h>
+.PP
 .B extern char *tzname[2];
 .PP
 .B void tzset()
-.PP
-.B #include <sys/types.h>
 .PP
 .B char *ctime(clock)
 .B const time_t *clock;
@@ -16,8 +17,6 @@ asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to 
 .B double difftime(time1, time0)
 .B time_t time1;
 .B time_t time0;
-.PP
-.B #include <time.h>
 .PP
 .B char *asctime(tm)
 .B const struct tm *tm;
