@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.320 2004/12/22 17:17:56 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.321 2004/12/23 20:33:03 jaredy Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1458,9 +1458,18 @@ All of SYN, FIN, RST and ACK must be unset.
 .It Ar icmp6-type <type> code <code>
 This rule only applies to ICMP or ICMPv6 packets with the specified type
 and code.
+Text names for ICMP types and codes are listed in
+.Xr icmp 4
+and
+.Xr icmp6 4 .
 This parameter is only valid for rules that cover protocols ICMP or
 ICMP6.
-The protocol and the ICMP type indicator (icmp-type or icmp6-type)
+The protocol and the ICMP type indicator
+.Po
+.Ar icmp-type
+or
+.Ar icmp6-type
+.Pc
 must match.
 .It Ar allow-opts
 By default, packets which contain IP options are blocked.
