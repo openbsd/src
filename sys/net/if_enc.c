@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.16 2000/01/02 09:22:58 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.17 2000/01/07 20:14:51 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -143,6 +143,7 @@ struct ifnet *ifp;
     for (;;)
     {
         s = splimp();
+	IF_DROP(&ifp->if_snd);
         IF_DEQUEUE(&ifp->if_snd, m);
         splx(s);
 
@@ -167,6 +168,7 @@ struct ifnet *ifp;
 	for (;;)
 	{
 	    s = splimp();
+            IF_DROP(&ifp->if_snd);
 	    IF_DEQUEUE(&ifp->if_snd, m);
 	    splx(s);
 	    if (m == NULL)
@@ -188,6 +190,7 @@ struct ifnet *ifp;
 	for (;;)
 	{
 	    s = splimp();
+            IF_DROP(&ifp->if_snd);
 	    IF_DEQUEUE(&ifp->if_snd, m);
 	    splx(s);
 	    if (m == NULL)
@@ -214,6 +217,7 @@ struct ifnet *ifp;
 	for (;;)
 	{
 	    s = splimp();
+            IF_DROP(&ifp->if_snd);
 	    IF_DEQUEUE(&ifp->if_snd, m);
 	    splx(s);
 	    if (m == NULL)
@@ -241,6 +245,7 @@ struct ifnet *ifp;
 	if ((mp == NULL) || err)
 	{
 	    /* Just skip this frame */
+            IF_DROP(&ifp->if_snd);
 	    if (mp)
 	      m_freem(mp);
 	    continue;
@@ -257,6 +262,7 @@ struct ifnet *ifp;
 	err = ipsp_process_packet(m, &mp, tdb, &protoflag, 1);
 	if ((mp == NULL) || err)
 	{
+            IF_DROP(&ifp->if_snd);
 	    if (mp)
 	      m_freem(mp);
 	    continue;
