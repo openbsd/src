@@ -1,3 +1,5 @@
+/*	$OpenBSD: menu.priv.h,v 1.3 1997/12/03 05:31:28 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -97,3 +99,4 @@ extern bool _nc_Connect_Items(MENU *, ITEM **);
 extern void _nc_Disconnect_Items(MENU *);
 extern void _nc_New_TopRow_and_CurrentItem(MENU *,int, ITEM *);
 extern void _nc_Link_Items(MENU *);
+extern int  _nc_Match_Next_Character_In_Item_Name(MENU*,int,ITEM**);

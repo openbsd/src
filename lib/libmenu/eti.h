@@ -1,3 +1,5 @@
+/*	$OpenBSD: eti.h,v 1.3 1997/12/03 05:31:16 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |   The ncurses Extended Terminal Interface (ETI) is Copyright (C) 1995-1997   |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |

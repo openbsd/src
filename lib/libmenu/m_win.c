@@ -1,3 +1,5 @@
+/*	$OpenBSD: m_win.c,v 1.3 1997/12/03 05:31:28 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -21,13 +23,13 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module menu_win                                                          *
-* Menus window and subwindow association routines                          *
+* Module m_win                                                             *
+* Menus window association routines                                        *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_win.c,v 1.5 1997/05/01 16:47:26 juergen Exp $")
+MODULE_ID("Id: m_win.c,v 1.6 1997/10/21 08:44:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -65,72 +67,6 @@ WINDOW *menu_win(const MENU *menu)
 {
   const MENU* m = Normalize_Menu(menu);
   return (m->userwin ? m->userwin : stdscr);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int set_menu_sub(MENU *menu, WINDOW *win)
-|   
-|   Description   :  Sets the subwindow of the menu.
-|
-|   Return Values :  E_OK           - success
-|                    E_POSTED       - menu is already posted
-+--------------------------------------------------------------------------*/
-int set_menu_sub(MENU *menu, WINDOW *win)
-{
-  if (menu)
-    {
-      if ( menu->status & _POSTED )
-	RETURN(E_POSTED);
-      menu->usersub = win;
-      _nc_Calculate_Item_Length_and_Width(menu);
-    }
-  else
-    _nc_Default_Menu.usersub = win;
-  
-  RETURN(E_OK);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  WINDOW *menu_sub(const MENU *menu)
-|   
-|   Description   :  Returns a pointer to the subwindow of the menu
-|
-|   Return Values :  NULL on error, otherwise a pointer to the window
-+--------------------------------------------------------------------------*/
-WINDOW *menu_sub(const MENU * menu)
-{
-  const MENU* m = Normalize_Menu(menu);
-  return Get_Menu_Window(m);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int scale_menu(const MENU *menu)
-|   
-|   Description   :  Returns the minimum window size necessary for the
-|                    subwindow of menu.  
-|
-|   Return Values :  E_OK                  - success
-|                    E_BAD_ARGUMENT        - invalid menu pointer
-|                    E_NOT_CONNECTED       - no items are connected to menu
-+--------------------------------------------------------------------------*/
-int scale_menu(const MENU *menu, int *rows, int *cols)
-{
-  if (!menu) 
-    RETURN( E_BAD_ARGUMENT );
-  
-  if (menu->items && *(menu->items))
-    {
-      if (rows)
-	*rows = menu->height;
-      if (cols)
-	*cols = menu->width;
-      RETURN(E_OK);
-    }
-  else
-    RETURN( E_NOT_CONNECTED );
 }
 
 /* m_win.c ends here */

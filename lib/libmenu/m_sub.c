@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_format.c,v 1.3 1997/12/03 05:31:18 millert Exp $	*/
+/*	$OpenBSD: m_sub.c,v 1.1 1997/12/03 05:31:27 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
@@ -23,95 +23,50 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module m_format                                                          *
-* Set and get maximum numbers of rows and columns in menus                 *
+* Module m_sub                                                             *
+* Menus subwindow association routines                                     *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_format.c,v 1.6 1997/10/21 08:44:31 juergen Exp $")
-
-#define minimum(a,b) ((a)<(b) ? (a): (b))
+MODULE_ID("Id: m_sub.c,v 1.1 1997/10/21 08:44:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  int set_menu_format(MENU *menu, int rows, int cols)
+|   Function      :  int set_menu_sub(MENU *menu, WINDOW *win)
 |   
-|   Description   :  Sets the maximum number of rows and columns of items
-|                    that may be displayed at one time on a menu. If the
-|                    menu contains more items than can be displayed at
-|                    once, the menu will be scrollable.
+|   Description   :  Sets the subwindow of the menu.
 |
-|   Return Values :  E_OK                   - success
-|                    E_BAD_ARGUMENT         - invalid values passed
-|                    E_NOT_CONNECTED        - there are no items connected
-|                    E_POSTED               - the menu is already posted
+|   Return Values :  E_OK           - success
+|                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
-int set_menu_format(MENU *menu, int rows, int cols)
+int set_menu_sub(MENU *menu, WINDOW *win)
 {
-  int total_rows, total_cols;
-  
-  if (rows<0 || cols<0) 
-    RETURN(E_BAD_ARGUMENT);
-  
   if (menu)
     {
       if ( menu->status & _POSTED )
 	RETURN(E_POSTED);
-      
-      if (!(menu->items))
-	RETURN(E_NOT_CONNECTED);
-      
-      if (rows==0) 
-	rows = menu->frows;
-      if (cols==0) 
-	cols = menu->fcols;
-      
-      if (menu->pattern)
-	Reset_Pattern(menu);
-      
-      menu->frows = rows;
-      menu->fcols = cols;
-      
-      assert(rows>0 && cols>0);
-      total_rows = (menu->nitems - 1)/cols + 1;
-      total_cols = (menu->status & O_ROWMAJOR) ? 
-	minimum(menu->nitems,cols) :
-	  (menu->nitems-1)/total_rows + 1;
-      
-      menu->rows    = total_rows;
-      menu->cols    = total_cols;
-      menu->arows   = minimum(total_rows,rows); 
-      menu->toprow  = 0;	
-      menu->curitem = *(menu->items);
-      assert(menu->curitem);
-      menu->status |= _LINK_NEEDED;
+      menu->usersub = win;
       _nc_Calculate_Item_Length_and_Width(menu);
     }
   else
-    {
-      if (rows>0) _nc_Default_Menu.frows = rows;
-      if (cols>0) _nc_Default_Menu.fcols = cols;
-    }
+    _nc_Default_Menu.usersub = win;
   
   RETURN(E_OK);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  void menu_format(const MENU *menu, int *rows, int *cols)
+|   Function      :  WINDOW *menu_sub(const MENU *menu)
 |   
-|   Description   :  Returns the maximum number of rows and columns that may
-|                    be displayed at one time on menu.
+|   Description   :  Returns a pointer to the subwindow of the menu
 |
-|   Return Values :  -
+|   Return Values :  NULL on error, otherwise a pointer to the window
 +--------------------------------------------------------------------------*/
-void menu_format(const MENU *menu, int *rows, int *cols)
+WINDOW *menu_sub(const MENU * menu)
 {
-  if (rows)
-    *rows = Normalize_Menu(menu)->frows;
-  if (cols)
-    *cols = Normalize_Menu(menu)->fcols;
+  const MENU* m = Normalize_Menu(menu);
+  return Get_Menu_Window(m);
 }
 
-/* m_format.c ends here */
+/* m_sub.c ends here */

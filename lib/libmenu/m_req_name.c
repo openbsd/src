@@ -1,3 +1,5 @@
+/*	$OpenBSD: m_req_name.c,v 1.2 1997/12/03 05:31:25 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -21,13 +23,13 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module menu_request_name                                                 *
+* Module m_request_name                                                    *
 * Routines to handle external names of menu requests                       *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_req_name.c,v 1.8 1997/05/01 16:47:26 juergen Exp $")
+MODULE_ID("Id: m_req_name.c,v 1.9 1997/10/21 08:44:31 juergen Exp $")
 
 static const char *request_names[ MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1 ] = {
   "LEFT_ITEM"    ,

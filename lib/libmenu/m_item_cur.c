@@ -1,3 +1,5 @@
+/*	$OpenBSD: m_item_cur.c,v 1.3 1997/12/03 05:31:19 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -21,13 +23,13 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module menu_item_cur                                                     *
+* Module m_item_cur                                                        *
 * Set and get current menus item                                           *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_item_cur.c,v 1.7 1997/05/01 16:47:26 juergen Exp $")
+MODULE_ID("Id: m_item_cur.c,v 1.8 1997/10/21 08:44:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -91,66 +93,6 @@ ITEM *current_item(const MENU * menu)
 int item_index(const ITEM *item)
 {
   return (item && item->imenu) ? item->index : ERR;
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int set_top_row(MENU *menu, int row)
-|   
-|   Description   :  Makes the speified row the top row in the menu
-|
-|   Return Values :  E_OK             - success
-|                    E_BAD_ARGUMENT   - not a menu pointer or invalid row
-|                    E_NOT_CONNECTED  - there are no items for the menu
-+--------------------------------------------------------------------------*/
-int set_top_row(MENU * menu, int row)
-{
-  ITEM *item;
-  
-  if (menu)
-    {
-      if ( menu->status & _IN_DRIVER )
-	RETURN(E_BAD_STATE);
-      if (menu->items == (ITEM **)0)
-	RETURN(E_NOT_CONNECTED);
-      
-      if ((row<0) || (row > (menu->rows - menu->arows)))
-	RETURN(E_BAD_ARGUMENT);
-    }
-  else
-    RETURN(E_BAD_ARGUMENT);
-  
-  if (row != menu->toprow)
-    {
-      if (menu->status & _LINK_NEEDED) 
-	_nc_Link_Items(menu);
-      
-      item = menu->items[ (menu->opt&O_ROWMAJOR) ? (row*menu->cols) : row ];
-      assert(menu->pattern);
-      Reset_Pattern(menu);
-      _nc_New_TopRow_and_CurrentItem(menu, row, item);
-    }
-  
-    RETURN(E_OK);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int top_row(const MENU *)
-|   
-|   Description   :  Return the top row of the menu
-|
-|   Return Values :  The row number or ERR if there is no row
-+--------------------------------------------------------------------------*/
-int top_row(const MENU * menu)
-{
-  if (menu && menu->items && *(menu->items))
-    {
-      assert( (menu->toprow>=0) && (menu->toprow < menu->rows) );
-      return menu->toprow;
-    }
-  else
-    return(ERR);
 }
 
 /* m_item_cur.c ends here */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: m_userptr.c,v 1.3 1997/12/03 05:31:27 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -21,24 +23,24 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module menu_userptr                                                      *
+* Module m_userptr                                                         *
 * Associate application data with menus                                    *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_userptr.c,v 1.5 1997/05/01 16:47:26 juergen Exp $")
+MODULE_ID("Id: m_userptr.c,v 1.7 1997/10/21 08:44:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  int set_menu_userptr(MENU *menu, const void *userptr)
+|   Function      :  int set_menu_userptr(MENU *menu, void *userptr)
 |   
 |   Description   :  Set the pointer that is reserved in any menu to store
 |                    application relevant informations.
 |
 |   Return Values :  E_OK         - success
 +--------------------------------------------------------------------------*/
-int set_menu_userptr(MENU * menu, const void * userptr)
+int set_menu_userptr(MENU * menu, void * userptr)
 {
   Normalize_Menu(menu)->userptr = userptr;
   RETURN( E_OK );
@@ -46,7 +48,7 @@ int set_menu_userptr(MENU * menu, const void * userptr)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  char *menu_userptr(const MENU *menu)
+|   Function      :  void *menu_userptr(const MENU *menu)
 |   
 |   Description   :  Return the pointer that is reserved in any menu to
 |                    store application relevant informations.
@@ -54,7 +56,7 @@ int set_menu_userptr(MENU * menu, const void * userptr)
 |   Return Values :  Value of the pointer. If no such pointer has been set,
 |                    NULL is returned
 +--------------------------------------------------------------------------*/
-const void *menu_userptr(const MENU * menu)
+void *menu_userptr(const MENU * menu)
 {
   return( Normalize_Menu(menu)->userptr);
 }

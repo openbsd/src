@@ -1,3 +1,5 @@
+/*	$OpenBSD: m_item_use.c,v 1.3 1997/12/03 05:31:22 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -21,24 +23,24 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module menu_item_use                                                     *
+* Module m_item_use                                                        *
 * Associate application data with menu items                               *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_item_use.c,v 1.5 1997/05/01 16:47:26 juergen Exp $")
+MODULE_ID("Id: m_item_use.c,v 1.7 1997/10/21 08:44:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  int set_item_userptr(ITEM *item, const void *userptr)
+|   Function      :  int set_item_userptr(ITEM *item, void *userptr)
 |   
 |   Description   :  Set the pointer that is reserved in any item to store
 |                    application relevant informations.  
 |
 |   Return Values :  E_OK               - success
 +--------------------------------------------------------------------------*/
-int set_item_userptr(ITEM * item, const void * userptr)
+int set_item_userptr(ITEM * item, void * userptr)
 {
   Normalize_Item(item)->userptr = userptr;
   RETURN( E_OK );
@@ -46,7 +48,7 @@ int set_item_userptr(ITEM * item, const void * userptr)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  const void *item_userptr(const ITEM *item)
+|   Function      :  void *item_userptr(const ITEM *item)
 |   
 |   Description   :  Return the pointer that is reserved in any item to store
 |                    application relevant informations.
@@ -54,7 +56,7 @@ int set_item_userptr(ITEM * item, const void * userptr)
 |   Return Values :  Value of the pointer. If no such pointer has been set,
 |                    NULL is returned.
 +--------------------------------------------------------------------------*/
-const void *item_userptr(const ITEM * item)
+void *item_userptr(const ITEM * item)
 {
   return Normalize_Item(item)->userptr;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_item_val.c,v 1.3 1997/12/03 05:31:22 millert Exp $	*/
+/*	$OpenBSD: m_scale.c,v 1.1 1997/12/03 05:31:26 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
@@ -23,70 +23,41 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module m_item_val                                                        *
-* Set and get menus item values                                            *
+* Module m_scale                                                           *
+* Menu scaling routine                                                     *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_item_val.c,v 1.5 1997/10/21 08:44:31 juergen Exp $")
+MODULE_ID("Id: m_scale.c,v 1.1 1997/10/21 08:44:31 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  int set_item_value(ITEM *item, int value)
+|   Function      :  int scale_menu(const MENU *menu)
 |   
-|   Description   :  Programmatically set the items selection value. This is
-|                    only allowed if the item is selectable at all and if
-|                    it is not connected to a single-valued menu.
-|                    If the item is connected to a posted menu, the menu
-|                    will be redisplayed.  
+|   Description   :  Returns the minimum window size necessary for the
+|                    subwindow of menu.  
 |
-|   Return Values :  E_OK              - success
-|                    E_REQUEST_DENIED  - not selectable or single valued menu
+|   Return Values :  E_OK                  - success
+|                    E_BAD_ARGUMENT        - invalid menu pointer
+|                    E_NOT_CONNECTED       - no items are connected to menu
 +--------------------------------------------------------------------------*/
-int set_item_value(ITEM *item, bool value)
+int scale_menu(const MENU *menu, int *rows, int *cols)
 {
-  MENU *menu;
+  if (!menu) 
+    RETURN( E_BAD_ARGUMENT );
   
-  if (item)
+  if (menu->items && *(menu->items))
     {
-      menu = item->imenu;
-      
-      if ((!(item->opt & O_SELECTABLE)) ||
-	  (menu && (menu->opt & O_ONEVALUE))) 
-	RETURN(E_REQUEST_DENIED);
-      
-      if (item->value ^ value)
-	{
-	  item->value = value ? TRUE : FALSE;
-	  if (menu)
-	    {
-	      if (menu->status & _POSTED)
-		{
-		  Move_And_Post_Item(menu,item);
-		  _nc_Show_Menu(menu);
-		}
-	    }
-	}
+      if (rows)
+	*rows = menu->height;
+      if (cols)
+	*cols = menu->width;
+      RETURN(E_OK);
     }
   else
-    _nc_Default_Item.value = value;
-  
-  RETURN(E_OK);
+    RETURN( E_NOT_CONNECTED );
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  bool item_value(const ITEM *item)
-|   
-|   Description   :  Return the selection value of the item
-|
-|   Return Values :  TRUE   - if item is selected
-|                    FALSE  - if item is not selected
-+--------------------------------------------------------------------------*/
-bool item_value(const ITEM *item)
-{
-  return ((Normalize_Item(item)->value) ? TRUE : FALSE);
-}
+/* m_scale.c ends here */
 
-/* m_item_val.c ends here */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: m_attribs.c,v 1.3 1997/12/03 05:31:16 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -21,13 +23,13 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module menu_attribs                                                      *
+* Module m_attribs                                                         *
 * Control menus display attributes                                         *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_attribs.c,v 1.4 1997/05/01 16:47:26 juergen Exp $")
+MODULE_ID("Id: m_attribs.c,v 1.5 1997/10/21 08:44:31 juergen Exp $")
 
 /* Macro to redraw menu if it is posted and changed */
 #define Refresh_Menu(menu) \
@@ -128,45 +130,4 @@ GEN_MENU_ATTR_SET_FCT( grey )
 |   Return Values :  Attribute value
 +--------------------------------------------------------------------------*/
 GEN_MENU_ATTR_GET_FCT( grey )
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int set_menu_pad(MENU *menu, int pad)
-|   
-|   Description   :  Set the character to be used to separate the item name
-|                    from its description. This must be a printable 
-|                    character.
-|
-|   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - an invalid value has been passed
-+--------------------------------------------------------------------------*/
-int set_menu_pad(MENU *menu, int pad)
-{
-  bool do_refresh = !(menu);
-
-  if (!isprint((unsigned char)pad))
-    RETURN(E_BAD_ARGUMENT);
-  
-  Normalize_Menu( menu );
-  menu->pad = pad;
-  
-  if (do_refresh)
-      Refresh_Menu( menu );
-
-  RETURN(E_OK);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int menu_pad(const MENU *menu)
-|   
-|   Description   :  Return the value of the padding character
-|
-|   Return Values :  The pad character
-+--------------------------------------------------------------------------*/
-int menu_pad(const MENU * menu)
-{
-  return (Normalize_Menu( menu ) -> pad);
-}
-
 /* m_attribs.c ends here */

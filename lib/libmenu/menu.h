@@ -1,3 +1,5 @@
+/*	$OpenBSD: menu.h,v 1.3 1997/12/03 05:31:28 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -46,7 +48,7 @@ typedef int Item_Options;
 
 typedef struct
 {
-  char*    str;
+  const char* str;
   unsigned short length;
 } TEXT;
 
@@ -55,7 +57,7 @@ typedef struct tagITEM
   TEXT           name;        /* name of menu item                         */
   TEXT           description; /* description of item, optional in display  */ 
   struct tagMENU *imenu;      /* Pointer to parent menu                    */
-  const void     *userptr;    /* Pointer to user defined per item data     */ 
+  void           *userptr;    /* Pointer to user defined per item data     */ 
   Item_Options   opt;         /* Item options                              */ 
   short          index;       /* Item number if connected to a menu        */
   short          y;           /* y and x location of item in menu          */
@@ -107,7 +109,7 @@ typedef struct tagMENU
   Menu_Hook      iteminit;
   Menu_Hook      itemterm;
 
-  const void    *userptr;               /* Pointer to menus user data      */
+  void          *userptr;               /* Pointer to menus user data      */
   char          *mark;                  /* Pointer to marker string        */
 
   Menu_Options   opt;                   /* Menu options                    */
@@ -178,10 +180,10 @@ extern const char *item_description(const ITEM *),
                   *menu_mark(const MENU *),
                   *menu_request_name(int);
 
-extern char       *menu_pattern(const MENU *);
+extern char     *menu_pattern(const MENU *);
 
-extern const void *menu_userptr(const MENU *),
-                  *item_userptr(const ITEM *);
+extern void     *menu_userptr(const MENU *),
+                *item_userptr(const ITEM *);
 
 extern chtype   menu_back(const MENU *),
                 menu_fore(const MENU *),
@@ -204,7 +206,7 @@ extern int      free_item(ITEM *),
                 set_item_init(MENU *,void(*)(MENU *)),
                 set_item_opts(ITEM *,Item_Options),
                 set_item_term(MENU *,void(*)(MENU *)),
-                set_item_userptr(ITEM *, const void *),
+                set_item_userptr(ITEM *, void *),
                 set_item_value(ITEM *,bool),
                 set_menu_back(MENU *,chtype),
                 set_menu_fore(MENU *,chtype),
@@ -218,7 +220,7 @@ extern int      free_item(ITEM *),
                 set_menu_pattern(MENU *,const char *),
                 set_menu_sub(MENU *,WINDOW *),
                 set_menu_term(MENU *,void(*)(MENU *)),
-                set_menu_userptr(MENU *,const void *),
+                set_menu_userptr(MENU *,void *),
                 set_menu_win(MENU *,WINDOW *),
                 set_top_row(MENU *,int),
                 top_row(const MENU *),

@@ -1,3 +1,5 @@
+/*	$OpenBSD: mf_common.h,v 1.3 1997/12/03 05:31:29 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -31,13 +33,10 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-
-#if !HAVE_EXTERN_ERRNO
-extern int errno;
-#endif
-
-#if HAVE_EXTERN_ERRNO
 #include <errno.h>
+
+#if DECL_ERRNO
+extern int errno;
 #endif
 
 /* in case of debug version we ignore the suppression of assertions */
@@ -60,6 +59,7 @@ extern int errno;
 #define MAX_REGULAR_CHARACTER (0xff)
 
 #define SET_ERROR(code) (errno=(code))
+#define GET_ERROR() (errno)
 #define RETURN(code) return( SET_ERROR(code) )
 
 /* The few common values in the status fields for menus and forms */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_item_val.c,v 1.3 1997/12/03 05:31:22 millert Exp $	*/
+/*	$OpenBSD: m_pad.c,v 1.1 1997/12/03 05:31:24 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses menu library is  Copyright (C) 1995-1997               |
@@ -23,70 +23,60 @@
 +-----------------------------------------------------------------------------*/
 
 /***************************************************************************
-* Module m_item_val                                                        *
-* Set and get menus item values                                            *
+* Module m_pad                                                             *
+* Control menus padding character                                          *
 ***************************************************************************/
 
 #include "menu.priv.h"
 
-MODULE_ID("Id: m_item_val.c,v 1.5 1997/10/21 08:44:31 juergen Exp $")
+MODULE_ID("Id: m_pad.c,v 1.1 1997/10/21 08:48:28 juergen Exp $")
+
+/* Macro to redraw menu if it is posted and changed */
+#define Refresh_Menu(menu) \
+   if ( (menu) && ((menu)->status & _POSTED) )\
+   {\
+      _nc_Draw_Menu( menu );\
+      _nc_Show_Menu( menu );\
+   }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  int set_item_value(ITEM *item, int value)
+|   Function      :  int set_menu_pad(MENU *menu, int pad)
 |   
-|   Description   :  Programmatically set the items selection value. This is
-|                    only allowed if the item is selectable at all and if
-|                    it is not connected to a single-valued menu.
-|                    If the item is connected to a posted menu, the menu
-|                    will be redisplayed.  
+|   Description   :  Set the character to be used to separate the item name
+|                    from its description. This must be a printable 
+|                    character.
 |
 |   Return Values :  E_OK              - success
-|                    E_REQUEST_DENIED  - not selectable or single valued menu
+|                    E_BAD_ARGUMENT    - an invalid value has been passed
 +--------------------------------------------------------------------------*/
-int set_item_value(ITEM *item, bool value)
+int set_menu_pad(MENU *menu, int pad)
 {
-  MENU *menu;
+  bool do_refresh = (menu != (MENU*)0);
+
+  if (!isprint((unsigned char)pad))
+    RETURN(E_BAD_ARGUMENT);
   
-  if (item)
-    {
-      menu = item->imenu;
-      
-      if ((!(item->opt & O_SELECTABLE)) ||
-	  (menu && (menu->opt & O_ONEVALUE))) 
-	RETURN(E_REQUEST_DENIED);
-      
-      if (item->value ^ value)
-	{
-	  item->value = value ? TRUE : FALSE;
-	  if (menu)
-	    {
-	      if (menu->status & _POSTED)
-		{
-		  Move_And_Post_Item(menu,item);
-		  _nc_Show_Menu(menu);
-		}
-	    }
-	}
-    }
-  else
-    _nc_Default_Item.value = value;
+  Normalize_Menu( menu );
+  menu->pad = pad;
   
+  if (do_refresh)
+      Refresh_Menu( menu );
+
   RETURN(E_OK);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
-|   Function      :  bool item_value(const ITEM *item)
+|   Function      :  int menu_pad(const MENU *menu)
 |   
-|   Description   :  Return the selection value of the item
+|   Description   :  Return the value of the padding character
 |
-|   Return Values :  TRUE   - if item is selected
-|                    FALSE  - if item is not selected
+|   Return Values :  The pad character
 +--------------------------------------------------------------------------*/
-bool item_value(const ITEM *item)
+int menu_pad(const MENU * menu)
 {
-  return ((Normalize_Item(item)->value) ? TRUE : FALSE);
+  return (Normalize_Menu( menu ) -> pad);
 }
 
-/* m_item_val.c ends here */
+/* m_pad.c ends here */
