@@ -69,7 +69,12 @@ static const char *talk[] = {
 	"I need a vax!",
 	"Now you don't love me anymore",
 	"I'll let you know when I need to floss my teeth",
-	"If you can't figure out yourself, you're lacking some mental faculties"
+	"If you can't figure out yourself, you're lacking some mental faculties",
+	"I am just stating a fact",
+	"blah blah",
+	"i'd love to hack, but i can't",
+	"Wait, yes, I am on drugs",
+	"during release it is a constant.  almost noone helps."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
