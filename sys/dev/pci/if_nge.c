@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.5 2001/07/06 01:55:25 angelos Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.6 2001/07/06 06:18:43 angelos Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -903,7 +903,8 @@ void nge_attach(parent, self, aux)
 	ifp->if_watchdog = nge_watchdog;
 	ifp->if_baudrate = 1000000000;
 	ifp->if_snd.ifq_maxlen = NGE_TX_LIST_CNT - 1;
-	ifp->if_capabilities =  IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities =
+	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1279,21 +1280,24 @@ void nge_rxeof(sc)
 #endif
 
 		/* Do IP checksum checking. */
-		if (extsts & NGE_RXEXTSTS_IPPKT && 
-		    !(extsts & NGE_RXEXTSTS_IPCSUMERR))
-			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
-		else if (extsts & NGE_RXEXTSTS_IPCSUMERR)
-			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_BAD;
-		if (extsts & NGE_RXEXTSTS_TCPPKT &&
-		    !(extsts & NGE_RXEXTSTS_TCPCSUMERR)) 
-			m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK;
-		else if (extsts & NGE_RXEXTSTS_TCPCSUMERR)
-			m->m_pkthdr.csum |= M_TCP_CSUM_IN_BAD;
-		if (extsts & NGE_RXEXTSTS_UDPPKT &&
-		    !(extsts & NGE_RXEXTSTS_UDPCSUMERR))
-			m->m_pkthdr.csum |= M_UDP_CSUM_IN_OK;
-		else if (extsts & NGE_RXEXTSTS_UDPCSUMERR)
-			m->m_pkthdr.csum |= M_UDP_CSUM_IN_BAD;
+		if (extsts & NGE_RXEXTSTS_IPPKT) {
+			if (extsts & NGE_RXEXTSTS_IPCSUMERR)
+				m->m_pkthdr.csum |= M_IPV4_CSUM_IN_BAD;
+			else
+				m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+		}
+		if (extsts & NGE_RXEXTSTS_TCPPKT) {
+			if (extsts & NGE_RXEXTSTS_TCPCSUMERR)
+				m->m_pkthdr.csum |= M_TCP_CSUM_IN_BAD;
+			else
+				m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK;
+		}
+		if (extsts & NGE_RXEXTSTS_UDPPKT) {
+			if (extsts & NGE_RXEXTSTS_UDPCSUMERR)
+				m->m_pkthdr.csum |= M_UDP_CSUM_IN_BAD;
+			else
+				m->m_pkthdr.csum |= M_UDP_CSUM_IN_OK;
+		}
 
 #if NVLAN > 0
 		/*
@@ -1870,7 +1874,8 @@ int nge_ioctl(ifp, command, data)
 			 * checksumming.
 			 */
 			if (ifr->ifr_mtu >= 8152) 
-				ifp->if_capabilities = 0;
+				ifp->if_capabilities &= ~(IFCAP_CSUM_IPv4 |
+				    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4);
 			else
 				ifp->if_capabilities = IFCAP_CSUM_IPv4 | 
 					IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
