@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.6 1998/03/06 01:53:23 brian Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.7 1998/03/06 02:01:38 brian Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -255,6 +255,7 @@ openlog(ident, logstat, logfac)
 		SyslogAddr.sun_family = AF_UNIX;
 		(void)strncpy(SyslogAddr.sun_path, _PATH_LOG,
 		    sizeof(SyslogAddr.sun_path) - 1);
+		SyslogAddr.sun_path[sizeof(SyslogAddr.sun_path) - 1] = '\0';
 		if (LogStat & LOG_NDELAY) {
 			if ((LogFile = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1)
 				return;
