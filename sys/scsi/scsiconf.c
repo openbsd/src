@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.17 1996/11/25 00:31:14 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.18 1996/11/25 04:49:23 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -362,9 +362,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
-	/* Letting the motor run kills floppy drives and disks quit fast. */
-	{{T_DIRECT, T_REMOV,
-	 "TEAC", "FC-1",                 ""},     SDEV_NOSTARTUNIT},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
