@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.16 1997/04/03 05:52:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.17 1997/04/03 05:53:23 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -669,7 +669,7 @@ gethostbyaddr(addr, len, af)
 				if (_res.options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
-				return (NULL);
+				break;
 			}
 			if (!(hp = getanswer(&buf, n, qbuf, T_PTR)))
 				return (NULL);	/* h_errno was set by getanswer() */
