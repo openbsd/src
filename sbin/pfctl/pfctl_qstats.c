@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.9 2003/01/24 10:22:11 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.10 2003/01/24 11:11:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -91,7 +91,7 @@ double	calc_rate(u_int64_t, u_int64_t, double);
 double	calc_pps(u_int64_t, u_int64_t, double);
 
 int
-pfctl_show_altq(int dev, int verbose)
+pfctl_show_altq(int dev, int verbose, int verbose2)
 {
 	struct pf_altq_node	*root = NULL, *node;
 
@@ -100,6 +100,15 @@ pfctl_show_altq(int dev, int verbose)
 
 	for (node = root; node != NULL; node = node->next)
 		pfctl_print_altq_node(dev, node, 0, verbose);
+
+	while (verbose2) {
+		printf("\n");
+		sleep(5);
+		if (pfctl_update_qstats(dev, &root))
+			return (-1);
+		for (node = root; node != NULL; node = node->next)
+			pfctl_print_altq_node(dev, node, 0, verbose);
+	}
 	pfctl_free_altq_node(root);
 	return (0);
 }
@@ -260,6 +269,8 @@ pfctl_print_altq_nodestat(int dev, const struct pf_altq_node *a)
 void
 print_cbqstats(struct queue_stats cur, struct queue_stats last)
 {
+	double	interval;
+
 	printf("[ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.cbq_stats.xmit_cnt.packets,
@@ -269,6 +280,16 @@ print_cbqstats(struct queue_stats cur, struct queue_stats last)
 	printf("[ qlength: %3d/%3d  borrows: %6u  suspends: %6u ]\n",
 	    cur.data.cbq_stats.qcnt, cur.data.cbq_stats.qmax,
 	    cur.data.cbq_stats.borrows, cur.data.cbq_stats.delays);
+
+	if (!last.valid)
+		return;
+
+	interval = calc_interval(&cur.timestamp, &last.timestamp);
+	printf("[ measured: %7.1f packets/s, %s/s ]\n",
+	    calc_pps(cur.data.cbq_stats.xmit_cnt.packets,
+		last.data.cbq_stats.xmit_cnt.packets, interval),
+	    rate2str(calc_rate(cur.data.cbq_stats.xmit_cnt.bytes,
+		last.data.cbq_stats.xmit_cnt.bytes, interval)));
 }
 
 void
