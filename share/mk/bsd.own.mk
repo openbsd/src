@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.18 1997/04/29 22:04:20 tholo Exp $
+#	$OpenBSD: bsd.own.mk,v 1.19 1997/06/01 05:25:28 downsj Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -14,8 +14,11 @@ SKEY?=		yes
 KERBEROS?=	yes
 # Set `KERBEROS5' to `yes' to build with support for Kerberos5 authentication.
 KERBEROS5?=	no
-# Set 'YP' to `yes' to build with support for NIS/YP.
+# Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
+# Set `TCP_WRAPPERS' to `yes' to build certain networking daemons with
+# integrated support for libwrap.
+TCP_WRAPPERS?=	yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
