@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.23 2000/03/24 01:28:07 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.24 2000/03/24 03:38:22 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -2267,7 +2267,7 @@ the indent (display) of one line of text.
 Its default font is set to
 constant width (literal) however
 it is parsed and will recognize other macros.
-It is not callable however.
+It is not callable.
 .Pp
 .Dl % ls -ldg /usr/local/bin
 .Pp
@@ -2632,13 +2632,13 @@ was produced by:
 .Bd -literal -offset indent
 \&.Bl -column "String" "Nroff" "Troff" -offset indent
 \&.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
-\&.It Li "<=" Ta \\&<\\&= Ta \\*(<=
-\&.It Li ">=" Ta \\&>\\&= Ta \\*(>=
+\&.It Li "<=" Ta \e&<\e&= Ta \e*(<=
+\&.It Li ">=" Ta \e&>\e&= Ta \e*(>=
 \&.El
 .Ed
 .Sh PREDEFINED STRINGS
 The following strings are predefined and may be used by
-preceding with the
+preceding them with the
 .Xr troff
 string interpreting sequence
 .Ql \&\e*(xx
