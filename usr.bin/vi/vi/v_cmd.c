@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_cmd.c,v 1.2 2001/01/29 01:58:50 niklas Exp $	*/
+/*	$OpenBSD: v_cmd.c,v 1.3 2004/11/29 21:51:08 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -332,7 +332,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 /* 125   U */
 	{v_Undo,	VM_RCM_SET,
 	    "U",
-	    " U Restore the current line"},
+	    " U restore the current line"},
 /* 126   V */
 	{NULL},
 /* 127   W */
