@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.710 2004/02/23 23:57:43 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.711 2004/02/24 00:17:28 avsm Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1704,6 +1704,16 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PPB2	0x006d		/* nForce2 PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_FW	0x006e		/* nForce2 FireWire */
 #define	PCI_PRODUCT_NVIDIA_ITNT2	0x00a0		/* Aladdin TNT2 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_ISA	0x00d0		/* nForce3 ISA */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 PCI Host */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB2	0x00d2		/* nForce3 PCI-PCI */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_SMB	0x00d4		/* nForce3 SMBus */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_IDE	0x00d5		/* nForce3 IDE */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_LAN	0x00d6		/* nForce3 LAN */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_USB	0x00d7		/* nForce3 USB */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_USB2	0x00d8		/* nForce3 USB2 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_ACA	0x00da		/* nForce3 AC-97 Audio */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB	0x00dd		/* nForce3 PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce256 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256_DDR	0x0101		/* GeForce256 DDR */
 #define	PCI_PRODUCT_NVIDIA_QUADOR	0x0103		/* Quadro */
