@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2000/09/14 18:26:52 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2001/01/24 21:17:25 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -138,12 +138,6 @@
 /*
  * Some system constants
  */
-/* do not define HTABENTS, allow system size to determine # entries */
-#if 0
-#ifndef	HTABENTS
-#define	HTABENTS	1024	/* Number of hashslots in HTAB */
-#endif
-#endif
 #ifndef	NPMAPS
 #define	NPMAPS		32768	/* Number of pmaps in system */
 #endif
