@@ -43,7 +43,6 @@
 ./usr/include/alpha/proc.h
 ./usr/include/alpha/profile.h
 ./usr/include/alpha/prom.h
-./usr/include/alpha/psl.h
 ./usr/include/alpha/pte.h
 ./usr/include/alpha/ptrace.h
 ./usr/include/alpha/reg.h

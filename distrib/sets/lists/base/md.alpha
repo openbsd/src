@@ -434,7 +434,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/proc.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/profile.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/prom.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/psl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/pte.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ptrace.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/reg.ph
