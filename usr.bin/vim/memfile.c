@@ -1,4 +1,4 @@
-/*	$OpenBSD: memfile.c,v 1.3 1996/10/14 03:55:15 downsj Exp $	*/
+/*	$OpenBSD: memfile.c,v 1.4 1996/10/15 08:07:56 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -1103,7 +1103,7 @@ mf_need_trans(mfp)
 	return (mfp->mf_fname != NULL && mfp->mf_neg_count > 0);
 }
 
-#if 1			/* included for beta release, TODO: remove later */
+#if 0			/* included for beta testing only */
 /*
  * print statistics for a memfile (for debugging)
  */

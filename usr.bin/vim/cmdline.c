@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdline.c,v 1.5 1996/10/14 03:55:08 downsj Exp $	*/
+/*	$OpenBSD: cmdline.c,v 1.6 1996/10/15 08:07:49 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -2529,9 +2529,11 @@ donextfile:		if (i < 0 || i >= arg_count)
 					msg(p);
 				break;
 
+#if 0
 		case CMD_mfstat:		/* print memfile statistics, for debugging */
 				mf_statistics();
 				break;
+#endif
 
 		case CMD_read:
 				if (usefilter)					/* :r!cmd */

@@ -3160,8 +3160,8 @@ option.  This works almost like typing
 
 {makeprg} is the string given with the 'makeprg' option.  Any command can be
 used, not just "make".  Characters '%' and '#' are expanded as usual on a
-command line.  You can use "#<" to insert the current filename without
-extension, for example ":set makeprg=make\ #<.o".
+command line.  You can use "%<" to insert the current filename without
+extension, for example ":set makeprg=make\ %<.o".
 
 [arguments] is anything that is typed after ":make".
 {shellpipe} is the 'shellpipe' option.

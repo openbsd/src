@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.3 1996/10/14 03:55:34 downsj Exp $	*/
+/*	$OpenBSD: version.c,v 1.4 1996/10/15 08:08:00 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  * vi:set comments=sbl\:*\ -,mb\:*,el\:*\ -,sr\:/\*,mb\:*,el\:*\/,fb\:- :
  *
@@ -46,6 +46,14 @@
  * - Fixed: a ":global" that requires input, could not be broken with CTRL-C.
  * - Fixed: "1H" and "1L" were off by one line.
  * - Included version 1.5 of ctags.
+ * Last minute fixes:
+ * - Fixed: When using ^X^C in insert mode and then entering insert mode
+ *   again, the ^X mode message is shown when it shouldn't.
+ * - Fixed: In GUI, when reading the output from an external command, there
+ *   was no check for an error, which could result in an endless loop.
+ * - Small correction in src/ctags/ctags.c for MS-DOS.
+ * - Fixed for Unix: Would never detect a triple signal.
+ * - Removed ":mfstat" command, it's for debugging only.
  *
  * Changes between version 4.3 BETA and 4.4 BETA:
  * - Moved outputting newline from getout() to mch_windexit().  Helps when
@@ -330,9 +338,9 @@
 
 char		   *Version = "VIM 4.5";
 #ifdef HAVE_DATE_TIME
-char		   *longVersion = "VIM - Vi IMproved 4.5 (1996 Oct 7, compiled " __DATE__ " " __TIME__ ")";
+char		   *longVersion = "VIM - Vi IMproved 4.5 (1996 Oct 12, compiled " __DATE__ " " __TIME__ ")";
 #else
-char		   *longVersion = "VIM - Vi IMproved 4.5 (1996 Oct 7)";
+char		   *longVersion = "VIM - Vi IMproved 4.5 (1996 Oct 12)";
 #endif
 
 static void version_msg __ARGS((char *s));

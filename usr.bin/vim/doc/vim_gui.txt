@@ -1,4 +1,4 @@
-*vim_gui.txt*   For Vim version 4.5.  Last modification: 1996 Oct 5
+*vim_gui.txt*   For Vim version 4.5.  Last modification: 1996 Oct 12
 
 
 		       Vim's Graphical User Interface
@@ -102,7 +102,7 @@ Vim*useEnhancedFSB:		true
 Vim.foreground:			Black
 Vim.background:			Wheat
 Vim.boldColor:			Blue
-Vim.italColor:			Cyan
+Vim.italicColor:		Magenta
 Vim.underlineColor:		Brown
 Vim.cursorColor:		DarkGreen
 Vim*menuBar*font:		7x13

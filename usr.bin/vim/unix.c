@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.3 1996/10/14 03:55:32 downsj Exp $	*/
+/*	$OpenBSD: unix.c,v 1.4 1996/10/15 08:07:58 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -413,13 +413,12 @@ deathtrap SIGDEFARG(sigarg)
 		may_core_dump();
 		exit(7);
 	}
-	if (entered)
+	if (entered++)
 	{
 		OUTSTR("Vim: Double signal, exiting\n");
 		flushbuf();
 		getout(1);
 	}
-	++entered;
 
 	sprintf((char *)IObuff, "Vim: Caught %s %s\n",
 #ifdef SIGHASARG
@@ -2125,8 +2124,8 @@ call_shell(cmd, options)
 							 RealWaitForChar(fromshell_fd, 10); ++read_count)
 					{
 						len = read(fromshell_fd, (char *)buffer,
-															  (size_t)BUFLEN);
-						if (len == 0)				/* end of file */
+														(size_t)(BUFLEN - 1));
+						if (len <= 0)				/* end of file or error */
 							goto finished;
 						buffer[len] = NUL;
 						msg_outstr(buffer);

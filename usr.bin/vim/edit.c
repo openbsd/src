@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.4 1996/10/14 03:55:10 downsj Exp $	*/
+/*	$OpenBSD: edit.c,v 1.5 1996/10/15 08:07:54 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -359,6 +359,7 @@ edit(initstr, startln, count)
 					break;
 				default:
 					ctrl_x_mode = 0;
+					edit_submode = NULL;
 					break;
 			}
 			showmode();
