@@ -29,6 +29,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcskeys.c,v $
+ * Revision 1.2  1996/08/12 20:20:04  millert
+ * fixes core dump if RCSLOCALID not set--oops.
+ *
  * Revision 1.1  1996/08/12 04:08:22  millert
  * rcs 5.7 + OpenBSD changes
  *
@@ -67,7 +70,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.1 1996/08/12 04:08:22 millert Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.2 1996/08/12 20:20:04 millert Exp $")
 
 
 char const *Keyword[] = {
@@ -90,7 +93,8 @@ trymatch(string)
 	register char const *p, *s;
 	for (j = sizeof(Keyword)/sizeof(*Keyword);  (--j);  ) {
 		/* try next keyword */
-		p = Keyword[j];
+		if ((p = Keyword[j]) == NULL)
+			continue;
 		s = string;
 		while (*p++ == *s++) {
 			if (!*p)
