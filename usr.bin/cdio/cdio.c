@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.5 1997/02/26 02:08:44 angelos Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.6 1997/03/09 01:34:27 angelos Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -61,6 +61,7 @@
 #define CMD_STATUS      14
 #define CMD_NEXT	15
 #define CMD_PREV	16
+#define CMD_REPLAY	17
 
 struct cmdtab {
 	int command;
@@ -84,6 +85,7 @@ struct cmdtab {
 { CMD_QUIT,     "quit",         1, "" },
 { CMD_RESET,    "reset",        4, "" },
 { CMD_RESUME,   "resume",       1, "" },
+{ CMD_REPLAY,	"replay",	3, "" },
 { CMD_SET,      "set",          2, "msf | lba" },
 { CMD_STATUS,   "status",       1, "" },
 { CMD_STOP,     "stop",         3, "" },
@@ -112,6 +114,7 @@ int             info __P((char *arg));
 int             pstatus __P((char *arg));
 int		play_next __P((char *arg));
 int		play_prev __P((char *arg));
+int		play_same __P((char *arg));
 char            *input __P((int *));
 void            prtrack __P((struct cd_toc_entry *e, int lastflag));
 void            lba2msf __P((unsigned long lba,
@@ -405,6 +408,11 @@ int run (cmd, arg)
 
                 return play_prev (arg);
 
+	case CMD_REPLAY:
+		if (fd < 0 && ! open_cd ())
+			return 0;
+
+		return play_same (arg);
 	default:
 	case CMD_HELP:
 		help ();
@@ -721,6 +729,27 @@ int play_prev (arg)
                 if (trk < h.starting_track)
                   return play_track (h.starting_track, 1, 
 				     h.starting_track + 1, 1);
+
+                return play_track (trk, 1, trk + 1, 1);
+        }
+
+        return (0);
+}
+
+int play_same (arg)
+	char *arg;
+{
+        int trk, min, sec, frm, rc;
+        struct ioc_toc_header h;
+
+        if (status (&trk, &min, &sec, &frm) >= 0)
+        {
+                rc = ioctl (fd, CDIOREADTOCHEADER, &h);
+                if (rc < 0)
+                {
+                        perror ("getting toc header");
+                        return (rc);
+                }
 
                 return play_track (trk, 1, trk + 1, 1);
         }
