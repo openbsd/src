@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.4 2000/04/03 21:19:36 aaron Exp $
+.\" $OpenBSD: gre.4,v 1.5 2000/10/18 16:32:11 aaron Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    # ifconfig greN D A
 .Pp
 To reach Host A over the tunnel (from host D), there has to be an
-alias on Host A for the ethernet interface:
+alias on Host A for the Ethernet interface:
      ifconfig <etherif> alias Y
  and on the cisco
      ip route Y mask tunnelX

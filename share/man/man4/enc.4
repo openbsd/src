@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.6 2000/04/08 18:49:28 angelos Exp $
+.\"	$OpenBSD: enc.4,v 1.7 2000/10/18 16:32:11 aaron Exp $
 .Dd October 7, 1999
 .Dt ENC 4
 .Os
@@ -19,7 +19,7 @@ The
 .Xr vpn 8
 manpage shows an example of such a setup.
 .Pp
-Another use is to allow the creation of virtual-ethernets, using
+Another use is to allow the creation of virtual-Ethernets, using
 .Xr ipsec 4 .
 See
 .Xr bridge 4
@@ -28,10 +28,10 @@ and
 for more details. Briefly,
 .Nm
 interfaces can be part of a bridge configuration.
-Such interfaces are treated as ethernet interfaces; packets
+Such interfaces are treated as Ethernet interfaces; packets
 sent to them by the bridge are IPsec-processed and sent to the
 remote bridge (which reverses the process and injects the original
-ethernet frames in the local ethernet segments).
+Ethernet frames in the local Ethernet segments).
 Packets received with the appropriate IPsec SA are made to appear as if
 they arrived over the corresponding
 .Nm

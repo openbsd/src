@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.6 2000/10/18 02:38:24 aaron Exp $
+.\"	$OpenBSD: ti.4,v 1.7 2000/10/18 16:32:12 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -43,15 +43,15 @@
 .Sh DESCRIPTION
 The
 .Nm ti
-driver provides support for PCI gigabit ethernet adapters based on
-the Alteon Networks Tigon gigabit ethernet controller chip. The Tigon
+driver provides support for PCI Gigabit Ethernet adapters based on
+the Alteon Networks Tigon Gigabit Ethernet controller chip. The Tigon
 contains an embedded R4000 CPU, gigabit MAC, dual DMA channels and
 a PCI interface unit. The Tigon II contains two R4000 CPUs and other
 refinements. Either chip can be used in either a 32-bit or 64-bit PCI
 slot. Communication with the chip is achieved via PCI shared memory
 and bus master DMA. The Tigon I and II support hardware multicast
 address filtering, VLAN tag extraction and insertion, and jumbo
-ethernet frames sizes up to 9000 bytes. Note that the Tigon I chipset
+Ethernet frames sizes up to 9000 bytes. Note that the Tigon I chipset
 is no longer in active production: all new adapters should come equipped
 with Tigon II chipsets.
 .Pp
@@ -110,7 +110,7 @@ option can also be used to select either
 or
 .Ar half-duplex modes.
 .It 100baseTX
-Set 100Mbps (fast ethernet) operation. The
+Set 100Mbps (Fast Ethernet) operation. The
 .Ar mediaopt
 option can also be used to select either
 .Ar full-duplex
@@ -118,7 +118,7 @@ or
 .Ar half-duplex
 modes.
 .It 1000baseSX
-Set 1000Mbps (gigabit ethernet) operation. Only
+Set 1000Mbps (Gigabit Ethernet) operation. Only
 .Ar full-duplex
 mode is supported at this speed.
 .El
