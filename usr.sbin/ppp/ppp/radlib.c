@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.c,v 1.3 2000/08/13 22:05:47 brian Exp $
+ *	$OpenBSD: radlib.c,v 1.4 2000/09/02 22:13:09 brian Exp $
  */
 
 #include <sys/types.h>
@@ -306,7 +306,7 @@ rad_config(struct rad_handle *h, const char *path)
 		int nfields;
 		char msg[ERRSIZE];
 		char *type;
-		char *host;
+		char *host, *res;
 		char *port_str;
 		char *secret;
 		char *timeout_str;
@@ -379,8 +379,9 @@ rad_config(struct rad_handle *h, const char *path)
 			continue;
 
 		/* Parse and validate the fields. */
-		host = strtok(host, ":");
-		port_str = strtok(NULL, ":");
+		res = host;
+		host = strsep(&res, ":");
+		port_str = strsep(&res, ":");
 		if (port_str != NULL) {
 			port = strtoul(port_str, &end, 10);
 			if (*end != '\0') {
