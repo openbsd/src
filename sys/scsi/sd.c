@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.42 2000/04/08 19:19:33 csapuntz Exp $	*/
+/*	$OpenBSD: sd.c,v 1.43 2000/04/18 05:53:17 csapuntz Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -80,9 +80,12 @@
 
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
+#include <sys/vnode.h>
+
 #define	SDOUTSTANDING	4
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
+#define SDMINOR(unit, part)             DISKMINOR(unit, part)
 #define	SDPART(dev)			DISKPART(dev)
 #define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
@@ -90,8 +93,10 @@
 
 int	sdmatch __P((struct device *, void *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
-int	sdlock __P((struct sd_softc *));
-void	sdunlock __P((struct sd_softc *));
+int     sdactivate __P((struct device *, enum devact));
+int     sddetach __P((struct device *, int));
+void    sdzeroref __P((struct device *));
+
 void	sdminphys __P((struct buf *));
 void	sdgetdisklabel __P((dev_t, struct sd_softc *, struct disklabel *,
 			    struct cpu_disklabel *, int));
@@ -104,7 +109,8 @@ int	sd_interpret_sense __P((struct scsi_xfer *));
 void	viscpy __P((u_char *, u_char *, int));
 
 struct cfattach sd_ca = {
-	sizeof(struct sd_softc), sdmatch, sdattach
+	sizeof(struct sd_softc), sdmatch, sdattach,
+	sddetach, sdactivate, sdzeroref
 };
 
 struct cfdriver sd_cd = {
@@ -133,6 +139,10 @@ struct scsi_inquiry_pattern sd_patterns[] = {
 
 extern struct sd_ops sd_scsibus_ops;
 extern struct sd_ops sd_atapibus_ops;
+
+#define sdlock(softc)   disk_lock(&(softc)->sc_dk)
+#define sdunlock(softc) disk_unlock(&(softc)->sc_dk)
+#define sdlookup(unit) (struct sd_softc *)device_lookup(&sd_cd, (unit))
 
 int
 sdmatch(parent, match, aux)
@@ -247,7 +257,6 @@ sdattach(parent, self, aux)
 	}
 	printf("\n");
 
-#ifdef notyet
 	/*
 	 * Establish a shutdown hook so that we can ensure that
 	 * our data has actually made it onto the platter at
@@ -260,43 +269,79 @@ sdattach(parent, self, aux)
 	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sd->sc_dev.dv_xname);
-#endif
 }
 
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
 int
-sdlock(sd)
-	struct sd_softc *sd;
+sdactivate(self, act)
+        struct device *self;
+        enum devact act;
 {
-	int error;
+        int rv = 0;
 
-	while ((sd->flags & SDF_LOCKED) != 0) {
-		sd->flags |= SDF_WANTED;
-		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdlck", 0)) != 0)
-			return error;
-	}
-	sd->flags |= SDF_LOCKED;
-	return 0;
+        switch (act) {
+        case DVACT_ACTIVATE:
+                break;
+
+        case DVACT_DEACTIVATE:
+                /*
+                 * Nothing to do; we key off the device's DVF_ACTIVATE.
+                 */
+                break;
+        }
+        return (rv);
 }
 
-/*
- * Unlock and wake up any waiters.
- */
-void
-sdunlock(sd)
-	struct sd_softc *sd;
-{
 
-	sd->flags &= ~SDF_LOCKED;
-	if ((sd->flags & SDF_WANTED) != 0) {
-		sd->flags &= ~SDF_WANTED;
-		wakeup(sd);
+int
+sddetach(self, flags)
+        struct device *self;
+        int flags;
+{
+        struct sd_softc *sc = (struct sd_softc *)self;
+        struct buf *dp, *bp;
+        int s, bmaj, cmaj, mn;
+
+	/* Remove unprocessed buffers from queue */
+	s = splbio();
+	for (dp = &sc->buf_queue; (bp = dp->b_actf) != NULL; ) {
+		dp->b_actf = bp->b_actf;
+		
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
 	}
+	splx(s);
+
+        /* locate the major number */
+        mn = SDMINOR(self->dv_unit, 0);
+
+        for (bmaj = 0; bmaj < nblkdev; bmaj++)
+                if (bdevsw[bmaj].d_open == sdopen)
+			vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
+        for (cmaj = 0; cmaj < nchrdev; cmaj++)
+                if (cdevsw[cmaj].d_open == sdopen)
+			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+
+	/* Get rid of the shutdown hook. */
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+
+#if NRND > 0
+        /* Unhook the entropy source. */
+        rnd_detach_source(&sc->rnd_source);
+#endif
+
+        return (0);
+}
+
+void
+sdzeroref(self)
+        struct device *self;
+{
+        struct sd_softc *sd = (struct sd_softc *)self;
+
+        /* Detach disk. */
+        disk_detach(&sd->sc_dk);
 }
 
 /*
@@ -314,10 +359,8 @@ sdopen(dev, flag, fmt, p)
 	int error;
 
 	unit = SDUNIT(dev);
-	if (unit >= sd_cd.cd_ndevs)
-		return ENXIO;
-	sd = sd_cd.cd_devs[unit];
-	if (!sd)
+	sd = sdlookup(unit);
+	if (sd == NULL)
 		return ENXIO;
 
 	sc_link = sd->sc_link;
@@ -326,8 +369,10 @@ sdopen(dev, flag, fmt, p)
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
-	if ((error = sdlock(sd)) != 0)
+	if ((error = sdlock(sd)) != 0) {
+		device_unref(&sd->sc_dev);
 		return error;
+	}
 
 	if (sd->sc_dk.dk_openmask != 0) {
 		/*
@@ -407,6 +452,7 @@ sdopen(dev, flag, fmt, p)
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sdunlock(sd);
+	device_unref(&sd->sc_dev);
 	return 0;
 
 bad2:
@@ -421,6 +467,7 @@ bad:
 
 bad3:
 	sdunlock(sd);
+	device_unref(&sd->sc_dev);
 	return error;
 }
 
@@ -434,9 +481,13 @@ sdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd;
 	int part = SDPART(dev);
 	int error;
+
+	sd = sdlookup(SDUNIT(dev));
+	if (sd == NULL)
+		return ENXIO;
 
 	if ((error = sdlock(sd)) != 0)
 		return error;
@@ -468,6 +519,7 @@ sdclose(dev, flag, fmt, p)
 	}
 
 	sdunlock(sd);
+	device_unref(&sd->sc_dev);
 	return 0;
 }
 
@@ -480,8 +532,14 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd;
 	int s;
+
+	sd = sdlookup(SDUNIT(bp->b_dev));
+	if (sd == NULL) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_link, SDEV_DB1,
@@ -533,6 +591,8 @@ sdstrategy(bp)
 	sdstart(sd);
 
 	splx(s);
+
+	device_unref(&sd->sc_dev);
 	return;
 
 bad:
@@ -543,6 +603,9 @@ done:
 	 */
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+
+	if (sd != NULL)
+		device_unref(&sd->sc_dev);
 }
 
 /*
@@ -702,8 +765,12 @@ void
 sdminphys(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd;
 	long max;
+
+	sd = sdlookup(SDUNIT(bp->b_dev));
+	if (sd == NULL)
+		return;  /* XXX - right way to fail this? */
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -724,6 +791,8 @@ sdminphys(bp)
 	}
 
 	(*sd->sc_link->adapter->scsi_minphys)(bp);
+
+	device_unref(&sd->sc_dev);
 }
 
 int
@@ -758,9 +827,13 @@ sdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
-	int error;
+	struct sd_softc *sd;
+	int error = 0;
 	int part = SDPART(dev);
+
+	sd = sdlookup(SDUNIT(dev));
+	if (sd == NULL)
+		return ENXIO;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
 
@@ -780,10 +853,13 @@ sdioctl(dev, cmd, addr, flag, p)
 				break;
 		/* FALLTHROUGH */
 		default:
-			if ((sd->sc_link->flags & SDEV_OPEN) == 0)
-				return (ENODEV);
-			else
-				return (EIO);
+			if ((sd->sc_link->flags & SDEV_OPEN) == 0) {
+				error = ENODEV;
+				goto exit;
+			} else {
+				error = EIO;
+				goto exit;
+			}
 		}
 	}
 
@@ -791,32 +867,34 @@ sdioctl(dev, cmd, addr, flag, p)
 	case DIOCRLDINFO:
 		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
 		    sd->sc_dk.dk_cpulabel, 0);
-		return 0;
+		goto exit;
 	case DIOCGPDINFO: {
 			struct cpu_disklabel osdep;
 
 			sdgetdisklabel(dev, sd, (struct disklabel *)addr,
 			    &osdep, 1);
-			return 0;
+			goto exit;
 		}
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
-		return 0;
+		goto exit;
 
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
 		    &sd->sc_dk.dk_label->d_partitions[SDPART(dev)];
-		return 0;
+		goto exit;
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			goto exit;
+		}
 
 		if ((error = sdlock(sd)) != 0)
-			return error;
+			goto exit;
 		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sd->sc_dk.dk_label,
@@ -831,46 +909,57 @@ sdioctl(dev, cmd, addr, flag, p)
 
 		sd->flags &= ~SDF_LABELLING;
 		sdunlock(sd);
-		return error;
+		goto exit;
 
 	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			goto exit;
+		}
 		if (*(int *)addr)
 			sd->flags |= SDF_WLABEL;
 		else
 			sd->flags &= ~SDF_WLABEL;
-		return 0;
+		goto exit;
 
 	case DIOCLOCK:
-		return scsi_prevent(sd->sc_link,
+		error = scsi_prevent(sd->sc_link,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
+		goto exit;
 
 	case MTIOCTOP:
-		if (((struct mtop *)addr)->mt_op != MTOFFL)
-			return EIO;
+		if (((struct mtop *)addr)->mt_op != MTOFFL) {
+			error = EIO;
+			goto exit;
+		}
 		/* FALLTHROUGH */
 	case DIOCEJECT:
-		if ((sd->sc_link->flags & SDEV_REMOVABLE) == 0)
-			return ENOTTY;
+		if ((sd->sc_link->flags & SDEV_REMOVABLE) == 0) {
+			error = ENOTTY;
+			goto exit;
+		}
 		sd->sc_link->flags |= SDEV_EJECTING;
-		return 0;
+		goto exit;
 
 	case SCIOCREASSIGN:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			goto exit;
+		}
 		error = sd_reassign_blocks(sd, (*(int *)addr));
-		return error;
+		goto exit;
 
 	default:
-		if (part != RAW_PART)
-			return ENOTTY;
-		return scsi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p);
+		if (part != RAW_PART) {
+			error = ENOTTY;
+			goto exit;
+		}
+		error = scsi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p);
 	}
 
-#ifdef DIAGNOSTIC
-	panic("sdioctl: impossible");
-#endif
+ exit:
+	device_unref(&sd->sc_dev);
+	return (error);
 }
 
 /*
@@ -1053,21 +1142,20 @@ sdsize(dev)
 	dev_t dev;
 {
 	struct sd_softc *sd;
-	int part, unit, omask;
+	int part, omask;
 	int size;
 
-	unit = SDUNIT(dev);
-	if (unit >= sd_cd.cd_ndevs)
-		return -1;
-	sd = sd_cd.cd_devs[unit];
+	sd = sdlookup(SDUNIT(dev));
 	if (sd == NULL)
 		return -1;
 
 	part = SDPART(dev);
 	omask = sd->sc_dk.dk_openmask & (1 << part);
 
-	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
+	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0) {
+		size = -1;
+		goto exit;
+	}
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 		size = -1;
 	else if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
@@ -1076,7 +1164,10 @@ sdsize(dev)
 		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
 			(sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
+		size = -1;
+
+ exit:
+	device_unref(&sd->sc_dev);
 	return size;
 }
 

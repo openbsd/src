@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.51 2000/04/08 19:19:33 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.52 2000/04/18 05:53:17 csapuntz Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -86,10 +86,17 @@ struct scsi_device probe_switch = {
 
 int scsibusmatch __P((struct device *, void *, void *));
 void scsibusattach __P((struct device *, struct device *, void *));
+int  scsibusactivate __P((struct device *, enum devact));
+int  scsibusdetach __P((struct device *, int));
+void scsibuszeroref __P((struct device *));
+
 int scsibussubmatch __P((struct device *, void *, void *));
 
+
+
 struct cfattach scsibus_ca = {
-	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach
+	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach,
+	scsibusdetach, scsibusactivate, scsibuszeroref
 };
 
 struct cfdriver scsibus_cd = {
@@ -183,6 +190,40 @@ scsibusattach(parent, self, aux)
 
 	scsi_probe_bus(sb->sc_dev.dv_unit, -1, -1);
 }
+
+
+int
+scsibusactivate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	return (config_activate_children(dev, act));
+}
+
+int  
+scsibusdetach (dev, type)
+	struct device *dev;
+	int type;
+{
+	return (config_detach_children(dev, type));
+}
+
+void
+scsibuszeroref(dev)
+	struct device *dev;
+{
+	struct scsibus_softc *sb = (struct scsibus_softc *)dev;
+	int i;
+
+	for (i = 0; i < sb->sc_buswidth; i++) {
+		if (sb->sc_link[i] != NULL)
+			free(sb->sc_link[i], M_DEVBUF);
+	}
+	
+	free(sb->sc_link, M_DEVBUF);
+}
+
+
 
 int
 scsibussubmatch(parent, match, aux)

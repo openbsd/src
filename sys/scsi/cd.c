@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.52 2000/04/09 07:09:03 csapuntz Exp $	*/
+/*	$OpenBSD: cd.c,v 1.53 2000/04/18 05:53:17 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -110,8 +110,6 @@ struct cd_toc {
 
 int	cdmatch __P((struct device *, void *, void *));
 void	cdattach __P((struct device *, struct device *, void *));
-int	cdlock __P((struct cd_softc *));
-void	cdunlock __P((struct cd_softc *));
 void	cdstart __P((void *));
 void	cdminphys __P((struct buf *));
 void	cdgetdisklabel __P((dev_t, struct cd_softc *, struct disklabel *,
@@ -172,6 +170,9 @@ struct scsi_inquiry_pattern cd_patterns[] = {
 
 extern struct cd_ops cd_atapibus_ops;
 extern struct cd_ops cd_scsibus_ops;
+
+#define cdlock(softc)   disk_lock(&(softc)->sc_dk)
+#define cdunlock(softc) disk_unlock(&(softc)->sc_dk)
 
 int
 cdmatch(parent, match, aux)
@@ -234,42 +235,6 @@ cdattach(parent, self, aux)
 	}
 
 	printf("\n");
-}
-
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-int
-cdlock(cd)
-	struct cd_softc *cd;
-{
-	int error;
-
-	while ((cd->flags & CDF_LOCKED) != 0) {
-		cd->flags |= CDF_WANTED;
-		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdlck", 0)) != 0)
-			return error;
-	}
-	cd->flags |= CDF_LOCKED;
-	return 0;
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-void
-cdunlock(cd)
-	struct cd_softc *cd;
-{
-
-	cd->flags &= ~CDF_LOCKED;
-	if ((cd->flags & CDF_WANTED) != 0) {
-		cd->flags &= ~CDF_WANTED;
-		wakeup(cd);
-	}
 }
 
 /*
