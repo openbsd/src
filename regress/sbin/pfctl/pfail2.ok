@@ -1,4 +1,7 @@
-stdin:1: icmp version does not match address family
-stdin:1: skipping rule due to errors
-stdin:1: rule expands to no valid combination
+stdin:3: proto icmp doesn't match address family inet6
+stdin:3: skipping rule due to errors
+stdin:3: rule expands to no valid combination
+stdin:4: proto icmp6 doesn't match address family inet
+stdin:4: skipping rule due to errors
+stdin:4: rule expands to no valid combination
 pfctl: Syntax error in file: pf rules not loaded
