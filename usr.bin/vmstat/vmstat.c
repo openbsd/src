@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.62 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.63 2002/01/15 22:40:38 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1116,6 +1116,7 @@ dopool(void)
 void
 dopool_sysctl(void)
 {
+	long total = 0, inuse = 0;
 	struct pool pool;
 	size_t size;
 	int mib[4];
@@ -1154,7 +1155,15 @@ dopool_sysctl(void)
 			return;
 		}
 		print_pool(&pool, name);
+
+		inuse += (pool.pr_nget - pool.pr_nput) * pool.pr_size;
+		total += pool.pr_npages * getpagesize();	/* XXX */
 	}
+
+	inuse /= 1024;
+	total /= 1024;
+	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
+	    inuse, total, (double)(100 * inuse) / total);
 }
 
 void
@@ -1189,7 +1198,7 @@ dopool_kvm(void)
 		print_pool(pp, name);
 
 		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
-		total += pp->pr_npages * pp->pr_pagesz;
+		total += pp->pr_npages * getpagesize();	/* XXX */
 
 		addr = (long)TAILQ_NEXT(pp, pr_poollist);
 	}
