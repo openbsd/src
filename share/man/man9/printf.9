@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.8 2003/06/11 17:28:51 tedu Exp $
+.\"	$OpenBSD: printf.9,v 1.9 2003/06/11 18:07:23 tedu Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 .Nm printf ,
 .Nm snprintf ,
 .Nm vprintf ,
+.Nm vsnprintf ,
 .Nm uprintf ,
 .Nm ttyprintf ,
 .Nm db_printf
@@ -56,14 +57,21 @@
 .Fc
 .Ft int
 .Fo "snprintf"
-.Fa "size_t len"
 .Fa "char *buf"
+.Fa "size_t size"
 .Fa "const char *format"
 .Fa "..."
 .Fc
 .Ft void
 .Fo "vprintf"
 .Fa "const char *format"
+.Fa "va_list ap"
+.Fc
+.Ft int
+.Fo "vsnprintf"
+.Fa "char *buf"
+.Fa "size_t size"
+.Fa "const char *fmt"
 .Fa "va_list ap"
 .Fc
 .Ft void
@@ -84,6 +92,7 @@ The
 .Fn printf ,
 .Fn snprintf ,
 .Fn vprintf ,
+.Fn vsnprintf ,
 .Fn uprintf ,
 .Fn ttyprintf ,
 and
@@ -187,7 +196,9 @@ This format specifier is only available to
 .Sh RETURN VALUES
 The
 .Fn snprintf
-function returns the number of characters it placed in the buffer
+and
+.Fn vsnprintf
+functions return the number of characters they placed in the buffer
 .Fa buf .
 .Sh EXAMPLES
 Use of the
