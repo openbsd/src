@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.28 2004/06/12 09:40:49 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.29 2004/06/15 16:55:38 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.28 2004/06/12 09:40:49 claudio Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.29 2004/06/15 16:55:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -654,11 +654,11 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
-		    ((struct sockaddr_in *)mask)->sin_addr.s_addr);
+		    mask ? ((struct sockaddr_in *)mask)->sin_addr.s_addr : NULL);
 #ifdef INET6
 	case AF_INET6:
 		return netname6((struct sockaddr_in6 *)sa,
-		    (struct sockaddr_in6 *)mask);
+		    mask ? (struct sockaddr_in6 *)mask : NULL);
 #endif
 
 	case AF_NS:
