@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2001/08/23 14:01:03 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2001/08/27 21:15:17 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -89,7 +89,6 @@ struct pmap *curpm;
 struct proc *fpuproc;
 
 extern struct user *proc0paddr;
-extern int cold;
 
 /* 
  *  XXX this is to fake out the console routines, while 
