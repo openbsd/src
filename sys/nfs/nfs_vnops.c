@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.51 1995/10/09 11:25:30 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.51.2.1 1995/10/17 15:36:26 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1583,15 +1583,9 @@ nfs_readdir(ap)
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 	register struct uio *uio = ap->a_uio;
+	char *base = uio->uio_iov->iov_base;
 	int tresid, error;
 	struct vattr vattr;
-
-	/*
-	 * XXX
-	 * We don't support cookies here, yet.
-	 */
-	if (ap->a_ncookies)
-		return (EINVAL);
 
 	if (vp->v_type != VDIR)
 		return (EPERM);
@@ -1620,6 +1614,33 @@ nfs_readdir(ap)
 
 	if (!error && uio->uio_resid == tresid)
 		nfsstats.direofcache_misses++;
+
+	if (!error && ap->a_cookies) {
+		struct dirent *dp;
+		u_long *cptr, *cookies = ap->a_cookies;
+		int ncookies = ap->a_ncookies;
+
+		/*
+		 * Only the NFS server and emulations use cookies, and they
+		 * load the directory block into system space, so we can
+		 * just look at it directly.
+		 */
+		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
+			panic("ufs_readdir: lost in space");
+		while (ncookies-- && base < uio->uio_iov->iov_base) {
+			dp = (struct dirent *) base;
+			if (dp->d_reclen == 0)
+				break;
+			cptr = (u_long *)((caddr_t)dp + dp->d_reclen -
+					  sizeof(u_long));
+			*(cookies++) = *cptr;
+			base += dp->d_reclen;
+		}
+		uio->uio_resid += (uio->uio_iov->iov_base - base);
+		uio->uio_iov->iov_len += (uio->uio_iov->iov_base - base);
+		uio->uio_iov->iov_base = base;
+	}
+
 	return (error);
 }
 
@@ -1713,6 +1734,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			off = fxdr_unsigned(u_long, *tl);
 			*tl++ = 0;	/* Ensures null termination of name */
 			more_dirs = fxdr_unsigned(int, *tl);
+			*tl = off;	/* Store offset for cookie retrieval */
 			dp->d_reclen = len + 4 * NFSX_UNSIGNED;
 			siz += dp->d_reclen;
 		}
@@ -1760,6 +1782,8 @@ nfs_readdirrpc(vp, uiop, cred)
 			dp = (struct dirent *)
 				(uiop->uio_iov->iov_base - lastlen);
 			dp->d_reclen += len;
+			*(u_long *)((caddr_t)dp + dp->d_reclen -
+				    sizeof(u_long)) = off;
 			uiop->uio_iov->iov_base += len;
 			uiop->uio_iov->iov_len -= len;
 			uiop->uio_resid -= len;
@@ -1905,6 +1929,7 @@ nfs_readdirlookrpc(vp, uiop, cred)
 			else
 				endoff = fxdr_unsigned(u_long, *tl++);
 			more_dirs = fxdr_unsigned(int, *tl);
+			*tl = endoff;	/* Store offset for cookies. */
 		}
 		/*
 		 * If at end of rpc data, get the eof boolean
@@ -1933,6 +1958,8 @@ nfs_readdirlookrpc(vp, uiop, cred)
 		len = uiop->uio_resid & (NFS_DIRBLKSIZ - 1);
 		if (len > 0) {
 			dp->d_reclen += len;
+			*(u_long *)((caddr_t)dp + dp->d_reclen -
+				    sizeof(u_long)) = off;
 			uiop->uio_iov->iov_base += len;
 			uiop->uio_iov->iov_len -= len;
 			uiop->uio_resid -= len;
