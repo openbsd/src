@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.76 1998/03/15 03:53:48 millert Exp $
+#	$OpenBSD: files,v 1.77 1998/03/24 03:26:03 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -42,6 +42,10 @@ file	dev/ic/aic7xxx.c	ahc
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 device	bha: scsi
 file	dev/ic/bha.c		bha
+
+# Qlogic ISP 10x0 SCSI Controllers
+device	isp: scsi
+file	dev/ic/isp.c			isp
 
 # UltraStor SCSI controllers
 device	uha: scsi
