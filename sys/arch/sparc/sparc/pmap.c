@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2000/01/26 15:54:30 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.62 2000/01/26 23:30:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4731,7 +4731,7 @@ pmap_page_protect4m(pa, prot)
 	struct pvlist *pv, *pv0, *npv;
 	struct pmap *pm;
 	int va, vr, vs, tpte;
-	int flags, nleft, s, ctx;
+	int flags, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
 #ifdef PMAP_NEW
@@ -4771,21 +4771,25 @@ pmap_page_protect4m(pa, prot)
 	}
 	ctx = getcontext4m();
 	pv0 = pv;
-	flags = pv->pv_flags /*| PV_C4M*/;	/* %%%: ???? */
-	for (;; pm = pv->pv_pmap) {
+	flags = pv->pv_flags;
+	while (pv != NULL) {
+		pm = pv->pv_pmap;
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
+#ifdef DIAGNOSTIC
 		if (rp->rg_nsegmap == 0)
-			panic("pmap_remove_all: empty vreg");
+			panic("pmap_page_protect4m: empty vreg");
+#endif
 		sp = &rp->rg_segmap[vs];
-		if ((nleft = sp->sg_npte) == 0)
-			panic("pmap_remove_all: empty vseg");
-		nleft--;
-		sp->sg_npte = nleft;
+#ifdef DIAGNOSTIC
+		if (sp->sg_npte == 0)
+			panic("pmap_page_protect4m: empty vseg");
+#endif
+		sp->sg_npte--;
 
-		/* Invalidate PTE in MMU pagetables. Flush cache if necessary */
+		/* Invalidate PTE in pagetables. Flush cache if necessary */
 		if (pm->pm_ctx) {
 			setcontext4m(pm->pm_ctxnum);
 			cache_flush_page(va);
@@ -4794,36 +4798,17 @@ pmap_page_protect4m(pa, prot)
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 
+#ifdef DIAGNOSTIC
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
-			panic("pmap_page_protect !PG_V");
+			panic("pmap_page_protect4m: !TEPTE");
+#endif
 
 		flags |= MR4M(tpte);
 
-		if (nleft) {
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
-			goto nextpv;
-		}
+		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
 
 		/* Entire segment is gone */
-		if (pm == pmap_kernel()) {
-			tlb_flush_segment(vr, vs); /* Paranoid? */
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
-			if (va < virtual_avail) {
-#ifdef DEBUG
-				printf(
-				 "pmap_page_protect: attempt to free"
-				 " base kernel allocation\n");
-#endif
-				goto nextpv;
-			}
-#if 0 /* no need for this */
-			/* no need to free the table; it is static */
-			qzero(sp->sg_pte, SRMMU_L3SIZE * sizeof(int));
-#endif
-
-			/* if we're done with a region, leave it */
-
-		} else { 	/* User mode mapping */
+		if (sp->sg_npte == 0 && pm != pmap_kernel()) {
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
 			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
@@ -4840,16 +4825,14 @@ pmap_page_protect4m(pa, prot)
 			}
 		}
 
-	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
 			pvfree(pv);
-		if ((pv = npv) == NULL)
-			break;
+		pv = npv;
 	}
 	pv0->pv_pmap = NULL;
-	pv0->pv_next = NULL; /* ? */
-	pv0->pv_flags = flags;
+	pv0->pv_next = NULL;
+	pv0->pv_flags = (flags | PV_C4M) & ~PV_ANC;
 	setcontext4m(ctx);
 	splx(s);
 }
