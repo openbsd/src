@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: disktab,v 1.5 1996/10/10 06:26:39 niklas Exp $
+#	$OpenBSD: disktab,v 1.6 1997/05/02 13:26:43 niklas Exp $
 #	$NetBSD: disktab,v 1.4 1995/11/28 05:40:23 jtc Exp $
 #
 # Disk geometry and partition layout tables. 
@@ -46,8 +46,8 @@ floppyhd|floppy3hd|3inhd|Amiga 3.5in High Density Floppy:\
 	:pc#3520:oc#0:
 
 miniroot:\
-	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#64:\
+	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#80:\
 	:ts=3500:\
-	:pa#8192:oa#0:ba#4096:fa#512:\
+	:pa#10240:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#0:ob#0:\
-	:pc#8192:oc#0:
+	:pc#10240:oc#0:
