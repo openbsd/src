@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.38 2001/07/04 23:14:51 espie Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.39 2001/07/23 14:28:46 jason Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -856,12 +856,6 @@ comopen(dev, flag, mode, p)
 
 		s = spltty();
 
-		sc->sc_initialize = 1;
-		comparam(tp, &tp->t_termios);
-		ttsetwater(tp);
-
-		sc->sc_rxput = sc->sc_rxget = sc->sc_tbc = 0;
-
 		iot = sc->sc_iot;
 		ioh = sc->sc_ioh;
 
@@ -882,6 +876,12 @@ comopen(dev, flag, mode, p)
 			bus_space_write_1(iot, ioh, com_ier, 0);
 			break;
 		}
+
+		sc->sc_initialize = 1;
+		comparam(tp, &tp->t_termios);
+		ttsetwater(tp);
+
+		sc->sc_rxput = sc->sc_rxget = sc->sc_tbc = 0;
 
 #ifdef COM_HAYESP
 		/* Setup the ESP board */
