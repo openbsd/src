@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.96 2004/11/09 09:32:17 espie Exp $
+# $OpenBSD: pkg_add,v 1.97 2004/11/09 10:17:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -87,6 +87,7 @@ sub can_install($$)
 
 	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
 	if ($plist) {
+		$plist->{dir} = installed_info($l[0]);
 		return $plist;
 	} else {
 		print "Can't update $l[0] into $pkgname\n";
@@ -389,6 +390,7 @@ sub validate_plist($$)
 sub do_script
 {
 	my ($plist, $name, $state, $args) = @_;
+	$state->{dir} = $plist->{dir};
 	return unless $plist->has($name);
 	$plist->get($name)->run($state, $args);
 }
@@ -419,7 +421,7 @@ sub really_add($$)
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
 	$state->{archive} = $handle;
-	$state->{dir} = $dir;
+	$plist->{dir} = $dir;
 	$state->set_pkgname($pkgname);
 	if (defined $plist->{replacing}) {
 		$state->{replacing} = 1;
@@ -459,11 +461,18 @@ sub really_add($$)
 	if (defined $plist->{replacing}) {
 		require OpenBSD::Update;
 
+		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
 		OpenBSD::Update::save_old_libraries($plist, $state);
-		$plist->visit('extract', $state);
-		
+		$state->{totsize} = $totsize;
+		$state->{donesize} = 0;
+		$plist->visit('extract_with_pm', $state);
+		OpenBSD::ProgressMeter::next();
+
+		OpenBSD::ProgressMeter::set_header($plist->{replacing}->pkgname()." (deleting)");
 		require OpenBSD::Delete;
 		OpenBSD::Delete::delete_plist($plist->{replacing}, $state);
+
+		OpenBSD::ProgressMeter::set_header("$pkgname (installing)");
 	}
 
 	do_script($plist, REQUIRE, $state, "INSTALL");

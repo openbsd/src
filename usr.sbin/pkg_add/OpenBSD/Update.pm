@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.15 2004/11/09 09:58:56 espie Exp $
+# $OpenBSD: Update.pm,v 1.16 2004/11/09 10:17:52 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -46,6 +46,19 @@ sub mark_lib
 
 sub unmark_lib
 {
+}
+
+sub extract_with_pm
+{
+	require OpenBSD::ProgressMeter;
+
+	my ($self, $state) = @_;
+
+	$self->extract($state);
+	if (defined $self->{size}) {
+		$state->{donesize} += $self->{size};
+		OpenBSD::ProgressMeter::show($state->{donesize}, $state->{totsize});
+	}
 }
 
 package OpenBSD::PackingElement::FileBase;
