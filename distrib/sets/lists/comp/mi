@@ -138,6 +138,10 @@
 ./usr/include/dev/ic/adwlib.h
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
+./usr/include/dev/ic/aic7xxx.h
+./usr/include/dev/ic/aic7xxx_93cx6.h
+./usr/include/dev/ic/aic7xxx_inline.h
+./usr/include/dev/ic/aic7xxx_openbsd.h
 ./usr/include/dev/ic/aic7xxxreg.h
 ./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
