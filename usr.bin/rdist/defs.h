@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.6 1997/04/27 13:01:28 downsj Exp $	*/
+/*	$OpenBSD: defs.h,v 1.7 1997/10/15 16:58:17 millert Exp $	*/
 #ifndef __DEFS_H__
 #define __DEFS_H__
 /*
@@ -35,7 +35,7 @@
  */
 
 /*
- * $Id: defs.h,v 1.6 1997/04/27 13:01:28 downsj Exp $
+ * $Id: defs.h,v 1.7 1997/10/15 16:58:17 millert Exp $
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
@@ -312,7 +312,6 @@ struct linkbuf {
 
 extern char	       *optarg;		/* Option argument */
 extern char	       *path_remsh;	/* Remote shell command */
-extern char 		buf[];		/* General purpose buffer */
 extern char 		host[];		/* Host name of master copy */
 extern char 	       *currenthost;	/* Name of current host */
 extern char 	       *progname;	/* Name of this program */
