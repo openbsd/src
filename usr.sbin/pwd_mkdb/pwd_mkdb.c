@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.10 1997/01/16 03:58:23 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.11 1997/09/15 10:15:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.10 1997/01/16 03:58:23 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.11 1997/09/15 10:15:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,8 @@ main(argc, argv)
 
 	/* Set master.passwd permissions, in case caller forgot. */
 	(void)fchmod(fileno(fp), S_IRUSR|S_IWUSR);
-	(void)fclose(fp);
+	if (fclose(fp) != 0)
+		error("fclose");
 
 	/* Install as the real password files. */
 	(void)snprintf(buf, sizeof(buf), "%s.tmp",
