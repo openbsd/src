@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.21 1999/08/15 13:14:12 deraadt Exp $
+.\"	$OpenBSD: recv.2,v 1.22 1999/09/26 14:16:31 espie Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -274,7 +274,7 @@ In addition,
 .Fn recv
 and
 .Fn recvfrom
-may return following error:
+may return the following error:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa len
@@ -284,7 +284,7 @@ was larger than
 .Pp
 Also,
 .Fn recvmsg
-may return following errors:
+may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The sum of the
