@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1997/07/25 21:05:44 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1997/08/25 19:05:26 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/07/25 21:05:44 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 1997/08/25 19:05:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -273,10 +273,12 @@ void
 die(signo)
 	int signo;
 {
-	move(CMDLINE, 0);
-	clrtoeol();
-	refresh();
-	endwin();
+	if (wnd) {
+		move(CMDLINE, 0);
+		clrtoeol();
+		refresh();
+		endwin();
+	}
 	exit(0);
 }
 
