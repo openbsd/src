@@ -449,6 +449,7 @@ case "$GUESSOS" in
   *86*-*-openbsd) OUT="OpenBSD-x86" ;;
   alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
   pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
+  vax*-*-openbsd) OUT="OpenBSD-vax" ;;
   *-*-openbsd) OUT="OpenBSD" ;;
   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
   *-*-osf) OUT="alpha-cc" ;;

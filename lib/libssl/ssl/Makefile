@@ -12,6 +12,9 @@ CFLAGS+= -DL_ENDIAN -DBN_ASM
 .if ${MACHINE_ARCH} == "mips"
 CFLAGS+= -DL_ENDIAN
 .else
+.if ${MACHINE_ARCH} == "vax"
+CFLAGS+= -DL_ENDIAN
+.else
 .if ${MACHINE_ARCH} == "alpha"
 # no ENDIAN stuff defined for alpha
 .else
@@ -19,6 +22,7 @@ CFLAGS+= -DB_ENDIAN
 .endif
 .endif
 .endif 
+.endif
 
 CFLAGS+= -DNO_IDEA -DTERMIOS -DANSI_SOURCE 
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}/include
