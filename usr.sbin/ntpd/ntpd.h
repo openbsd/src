@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.22 2004/07/10 22:24:20 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.23 2004/07/10 23:12:57 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,7 +199,7 @@ int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
 /* server.c */
 int	setup_listeners(struct servent *, struct ntpd_conf *, u_int *);
 int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
-int	server_dispatch(int fd);
+int	server_dispatch(int);
 
 /* client.c */
 int	client_peer_init(struct ntp_peer *);
@@ -208,9 +208,9 @@ int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *);
 
 /* util.c */
-double	gettime(void);
-void	d_to_tv(double, struct timeval *);
-double	lfp_to_d(struct l_fixedpt);
-struct	l_fixedpt d_to_lfp(double);
-double	sfp_to_d(struct s_fixedpt);
-struct	s_fixedpt d_to_sfp(double);
+double			gettime(void);
+void			d_to_tv(double, struct timeval *);
+double			lfp_to_d(struct l_fixedpt);
+struct l_fixedpt	d_to_lfp(double);
+double			sfp_to_d(struct s_fixedpt);
+struct s_fixedpt	d_to_sfp(double);
