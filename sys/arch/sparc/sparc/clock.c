@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 1997/11/11 10:03:03 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 1998/03/04 19:19:28 johns Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -612,6 +612,10 @@ cpu_initclocks()
 	if (oldclk) {
 		int dummy;
 
+		if (hz != 100) {
+			printf("oclock0: cannot get %d Hz clock; using 100 Hz\n", hz);
+		}
+
 		profhz = hz = 100;
 		tick = 1000000 / hz;
 
@@ -628,14 +632,14 @@ cpu_initclocks()
 #endif /* SUN4 */
 
 	if (1000000 % hz) {
-		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
+		printf("clock0: cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
 	}
 	if (stathz == 0)
 		stathz = hz;
 	if (1000000 % stathz) {
-		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		printf("clock0: cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
 	profhz = stathz;		/* always */
