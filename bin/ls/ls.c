@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.21 2003/08/06 19:09:09 tedu Exp $	*/
+/*	$OpenBSD: ls.c,v 1.22 2004/04/02 07:31:06 otto Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.21 2003/08/06 19:09:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.22 2004/04/02 07:31:06 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$OpenBSD: ls.c,v 1.21 2003/08/06 19:09:09 tedu Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "ls.h"
 #include "extern.h"
@@ -539,8 +540,11 @@ display(FTSENT *p, FTSENT *list)
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%lu", maxnlink);
 		d.s_nlink = strlen(buf);
-		(void)snprintf(buf, sizeof(buf), "%qu", maxsize);
-		d.s_size = strlen(buf);
+		if (!f_humanval) {
+			(void)snprintf(buf, sizeof(buf), "%qu", maxsize);
+			d.s_size = strlen(buf);
+		} else
+			d.s_size = FMT_SCALED_STRSIZE-2; /* no - or '\0' */
 		d.s_user = maxuser;
 	}
 
