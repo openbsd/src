@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.34 2000/11/16 20:02:19 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.35 2001/02/09 00:04:16 itojun Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -211,8 +211,8 @@ sys_accept(p, v, retval)
 	fp->f_ops = &socketops;
 	fp->f_data = (caddr_t)so;
 	nam = m_get(M_WAIT, MT_SONAME);
-	(void) soaccept(so, nam);
-	if (SCARG(uap, name)) {
+	error = soaccept(so, nam);
+	if (!error && SCARG(uap, name)) {
 		if (namelen > nam->m_len)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
@@ -221,6 +221,11 @@ sys_accept(p, v, retval)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof (*SCARG(uap, anamelen)));
+	}
+	/* if an error occured, free the file descriptor */
+	if (error) {
+		fdremove(p->p_fd, tmpfd);
+		ffree(fp);
 	}
 	m_freem(nam);
 	splx(s);
