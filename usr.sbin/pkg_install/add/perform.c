@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.11 1999/11/03 17:23:48 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.12 2000/03/27 17:14:59 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.11 1999/11/03 17:23:48 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2000/03/27 17:14:59 espie Exp $";
 #endif
 
 /*
@@ -268,8 +268,12 @@ pkg_do(char *pkg)
 
             if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
 		warnx("other version '%s' already installed", installed);
-		code = 1;
-		goto success;	/* close enough for government work */
+	    	if (find_plist_option(&Plist, "no-default-conflict") != NULL) {
+		    warnx("proceeding with installation anyway");
+		} else {
+		    code = 1;
+		    goto success;	/* close enough for government work */
+		}
 	    }
 	}	
     }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.13 2000/03/27 17:09:02 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.14 2000/03/27 17:15:00 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -437,10 +437,20 @@ package must
 be installed if
 .Ar pkgname
 package gets installed cause they install the same files and thus conflict.
+.Ar pkgcflname
+may use 
+.Xr fnmatch 3
+wildcards.
 .It Cm @option Ar name
 Effects vary depending on 
 .Ar name .
-No options are documented yet.
+Some options are not documented yet.
+.Bl -tag -width indent
+.It Ar no-default-conflict
+By default, a package conflicts with other versions of the same package. 
+With this option, the older package version will still be noticed, but the
+installation will proceed anyway.
+.El
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
