@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.6 2004/08/13 13:27:52 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.7 2004/09/23 15:35:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -308,6 +308,7 @@ cvs_resp_ok(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_error(struct cvsroot *root, int type, char *line)
 {
+	fprintf(stderr, "%s\n", line);
 	return (1);
 }
 
