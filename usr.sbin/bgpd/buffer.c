@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.19 2004/06/20 17:49:46 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.20 2004/06/20 18:03:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -184,10 +184,8 @@ msgbuf_write(struct msgbuf *msgbuf)
 		return (-2);
 	}
 
-	if (buf != NULL && buf->fd != -1) {
-		shutdown(buf->fd, SHUT_RDWR);
+	if (buf != NULL && buf->fd != -1)
 		close(buf->fd);
-	}
 
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
