@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.5 2004/03/30 15:35:51 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.6 2004/05/04 23:07:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -54,6 +54,7 @@
 #endif
 
 #define	ELF_SBSS	".sbss"
+#define	ELF_PLT		".plt"
 
 int
 elf_fix_header(Elf_Ehdr *eh)
@@ -149,14 +150,19 @@ elf_fix_sym(Elf_Ehdr *eh, Elf_Sym *sym)
 int
 elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist *np)
 {
-	/* extern char *stab; */
 	const char *sn;
 
 	if (sym->st_shndx < eh->e_shnum)
 		sn = shstr + shdr[sym->st_shndx].sh_name;
 	else
 		sn = "";
-
+#if 0
+	{
+		extern char *stab;
+		printf("%d:%s %d %s\n", sym->st_shndx, sn,
+		    ELF_ST_TYPE(sym->st_info), stab + sym->st_name);
+	}
+#endif
 	switch(ELF_ST_TYPE(sym->st_info)) {
 	case STT_NOTYPE:
 		switch (sym->st_shndx) {
@@ -179,6 +185,10 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 				np->n_other = 'r';
 			} else if (!strcmp(sn, ELF_DATA))
 				np->n_type = N_DATA;
+			else if (!strncmp(sn, ELF_GOT, sizeof(ELF_GOT) - 1))
+				np->n_type = N_DATA;
+			else if (!strncmp(sn, ELF_PLT, sizeof(ELF_PLT) - 1))
+				np->n_type = N_DATA;
 			else if (!strcmp(sn, ELF_BSS))
 				np->n_type = N_BSS;
 			else if (!strcmp(sn, ELF_SBSS))
@@ -196,7 +206,9 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 			np->n_other = 'W';
 		} else if (sym->st_shndx == SHN_UNDEF)
 			np->n_type = N_UNDF | N_EXT;
-		else if (strcmp(sn, ELF_TEXT))	/* XXX GNU compat */
+		else if (strcmp(sn, ELF_INIT) &&
+		    strcmp(sn, ELF_TEXT) &&
+		    strcmp(sn, ELF_FINI))	/* XXX GNU compat */
 			np->n_other = '?';
 		break;
 
