@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.4 1996/07/20 06:12:25 deraadt Exp $	*/
+/*	$OpenBSD: clnt_udp.c,v 1.5 1996/08/15 07:27:48 deraadt Exp $	*/
 /*	$NetBSD: clnt_udp.c,v 1.4 1995/02/25 03:01:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.4 1996/07/20 06:12:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.5 1996/08/15 07:27:48 deraadt Exp $";
 #endif
 
 /*
@@ -224,24 +224,31 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	register int outlen;
 	register int inlen;
 	int fromlen;
-	fd_set readfds;
-	fd_set mask;
+	fd_set *fds, readfds;
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
-	struct timeval time_waited;
+	struct timeval time_waited, start, after, tmp1, tmp2;
 	bool_t ok;
 	int nrefreshes = 2;	/* number of times to refresh cred */
 	struct timeval timeout;
 
-	if (cu->cu_total.tv_usec == -1) {
+	if (cu->cu_total.tv_usec == -1)
 		timeout = utimeout;     /* use supplied timeout */
-	} else {
+	else
 		timeout = cu->cu_total; /* use default timeout */
+
+	if (cu->cu_sock+1 > FD_SETSIZE) {
+		fds = (fd_set *)malloc(howmany(cu->cu_sock+1, NBBY));
+		if (fds == NULL)
+			return (cu->cu_error.re_status = RPC_CANTSEND);
+		memset(fds, '\0', howmany(cu->cu_sock+1, NBBY));
+	} else {
+		fds = &readfds;
+		FD_ZERO(fds);
 	}
 
-	time_waited.tv_sec = 0;
-	time_waited.tv_usec = 0;
+	timerclear(&time_waited);
 call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
@@ -250,26 +257,33 @@ call_again:
 	 * the transaction is the first thing in the out buffer
 	 */
 	(*(u_short *)(cu->cu_outbuf))++;
-	if ((! XDR_PUTLONG(xdrs, (long *)&proc)) ||
-	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
-	    (! (*xargs)(xdrs, argsp)))
+	if (!XDR_PUTLONG(xdrs, (long *)&proc) ||
+	    !AUTH_MARSHALL(cl->cl_auth, xdrs) ||
+	    !(*xargs)(xdrs, argsp)) {
+		if (fds != &readfds)
+			free(fds);
 		return (cu->cu_error.re_status = RPC_CANTENCODEARGS);
+	}
 	outlen = (int)XDR_GETPOS(xdrs);
 
 send_again:
 	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
-	    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen)
-	    != outlen) {
+	    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen) != outlen) {
 		cu->cu_error.re_errno = errno;
+		if (fds != &readfds)
+			free(fds);
 		return (cu->cu_error.re_status = RPC_CANTSEND);
 	}
 
 	/*
 	 * Hack to provide rpc-based message passing
 	 */
-	if (timeout.tv_sec == 0 && timeout.tv_usec == 0) {
+	if (!timerisset(&timeout)) {
+		if (fds != &readfds)
+			free(fds);
 		return (cu->cu_error.re_status = RPC_TIMEDOUT);
 	}
+
 	/*
 	 * sub-optimal code appears here because we have
 	 * some clock time to spare while the packets are in flight.
@@ -278,46 +292,50 @@ send_again:
 	reply_msg.acpted_rply.ar_verf = _null_auth;
 	reply_msg.acpted_rply.ar_results.where = resultsp;
 	reply_msg.acpted_rply.ar_results.proc = xresults;
-	FD_ZERO(&mask);
-	FD_SET(cu->cu_sock, &mask);
+
+	gettimeofday(&start, NULL);
 	for (;;) {
-		readfds = mask;
-		switch (select(cu->cu_sock+1, &readfds, NULL, 
-			       NULL, &(cu->cu_wait))) {
-
+		/* XXX we know the other bits are still clear */
+		FD_SET(cu->cu_sock, fds);
+		switch (select(cu->cu_sock+1, fds, NULL, NULL, &cu->cu_wait)) {
 		case 0:
-			time_waited.tv_sec += cu->cu_wait.tv_sec;
-			time_waited.tv_usec += cu->cu_wait.tv_usec;
-			while (time_waited.tv_usec >= 1000000) {
-				time_waited.tv_sec++;
-				time_waited.tv_usec -= 1000000;
-			}
-			if ((time_waited.tv_sec < timeout.tv_sec) ||
-				((time_waited.tv_sec == timeout.tv_sec) &&
-				(time_waited.tv_usec < timeout.tv_usec)))
-				goto send_again;	
+			timeradd(&time_waited, &cu->cu_wait, &tmp1);
+			time_waited = tmp1;
+			if (timercmp(&time_waited, &timeout, <))
+				goto send_again;
+			if (fds != &readfds)
+				free(fds);
 			return (cu->cu_error.re_status = RPC_TIMEDOUT);
-
-		/*
-		 * buggy in other cases because time_waited is not being
-		 * updated.
-		 */
 		case -1:
-			if (errno == EINTR)
-				continue;	
+			if (errno == EINTR) {
+				gettimeofday(&after, NULL);
+				timersub(&after, &start, &tmp1);
+				timeradd(&time_waited, &tmp1, &tmp2);
+				time_waited = tmp2;
+				if (timercmp(&time_waited, &timeout, <))
+					continue;
+				if (fds != &readfds)
+					free(fds);
+				return (cu->cu_error.re_status = RPC_TIMEDOUT);
+			}
 			cu->cu_error.re_errno = errno;
+			if (fds != &readfds)
+				free(fds);
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
+
 		do {
 			fromlen = sizeof(struct sockaddr);
 			inlen = recvfrom(cu->cu_sock, cu->cu_inbuf, 
-				(int) cu->cu_recvsz, 0,
-				(struct sockaddr *)&from, &fromlen);
+			    (int) cu->cu_recvsz, 0,
+			    (struct sockaddr *)&from, &fromlen);
 		} while (inlen < 0 && errno == EINTR);
 		if (inlen < 0) {
 			if (errno == EWOULDBLOCK)
-				continue;	
+				continue;
 			cu->cu_error.re_errno = errno;
+			if (fds != &readfds)
+				free(fds);
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
 		if (inlen < sizeof(u_int32_t))
@@ -339,7 +357,7 @@ send_again:
 		_seterr_reply(&reply_msg, &(cu->cu_error));
 		if (cu->cu_error.re_status == RPC_SUCCESS) {
 			if (! AUTH_VALIDATE(cl->cl_auth,
-				&reply_msg.acpted_rply.ar_verf)) {
+			    &reply_msg.acpted_rply.ar_verf)) {
 				cu->cu_error.re_status = RPC_AUTHERROR;
 				cu->cu_error.re_why = AUTH_INVALIDRESP;
 			}
@@ -348,18 +366,18 @@ send_again:
 				(void)xdr_opaque_auth(xdrs,
 				    &(reply_msg.acpted_rply.ar_verf));
 			} 
-		}  /* end successful completion */
-		else {
+		} else {
 			/* maybe our credentials need to be refreshed ... */
 			if (nrefreshes > 0 && AUTH_REFRESH(cl->cl_auth)) {
 				nrefreshes--;
 				goto call_again;
 			}
-		}  /* end of unsuccessful completion */
-	}  /* end of valid reply message */
-	else {
+		}
+	} else
 		cu->cu_error.re_status = RPC_CANTDECODERES;
-	}
+
+	if (fds != &readfds)
+		free(fds);
 	return (cu->cu_error.re_status);
 }
 

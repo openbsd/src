@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.4 1996/07/20 06:12:24 deraadt Exp $	*/
+/*	$OpenBSD: clnt_tcp.c,v 1.5 1996/08/15 07:27:47 deraadt Exp $	*/
 /*	$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.4 1996/07/20 06:12:24 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.5 1996/08/15 07:27:47 deraadt Exp $";
 #endif
  
 /*
@@ -404,39 +404,65 @@ readtcp(ct, buf, len)
 	caddr_t buf;
 	register int len;
 {
-	fd_set mask;
-	fd_set readfds;
+	fd_set *fds, readfds;
+	struct timeval start, after, duration, delta, tmp;
+	int r, save_errno;
 
 	if (len == 0)
 		return (0);
-	FD_ZERO(&mask);
-	FD_SET(ct->ct_sock, &mask);
+
+	if (ct->ct_sock+1 > FD_SETSIZE) {
+		fds = (fd_set *)malloc(howmany(ct->ct_sock+1, NBBY));
+		if (fds == NULL)
+			return (-1);
+		memset(fds, '\0', howmany(ct->ct_sock+1, NBBY));
+	} else {
+		fds = &readfds;
+		FD_ZERO(fds);
+	}
+
+	gettimeofday(&start, NULL);
+	delta = ct->ct_wait;
 	while (TRUE) {
-		readfds = mask;
-		switch (select(ct->ct_sock+1, &readfds, NULL, NULL,
-			       &(ct->ct_wait))) {
+		/* XXX we know the other bits are still clear */
+		FD_SET(ct->ct_sock, fds);
+		r = select(ct->ct_sock+1, fds, NULL, NULL, &delta);
+		save_errno = errno;
+
+		gettimeofday(&after, NULL);
+		timersub(&start, &after, &duration);
+		timersub(&delta, &duration, &tmp);
+		delta = tmp;
+		if (delta.tv_sec < 0 || !timerisset(&delta))
+			r = 0;
+
+		switch (r) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
+			if (fds != &readfds)
+				free(fds);
 			return (-1);
-
 		case -1:
-			if (errno == EINTR)
+			if (errno == EINTR);
 				continue;
 			ct->ct_error.re_status = RPC_CANTRECV;
-			ct->ct_error.re_errno = errno;
+			ct->ct_error.re_errno = save_errno;
+			if (fds != &readfds)
+				free(fds);
 			return (-1);
 		}
 		break;
 	}
-	switch (len = read(ct->ct_sock, buf, len)) {
+	if (fds != &readfds)
+		free(fds);
 
+	switch (len = read(ct->ct_sock, buf, len)) {
 	case 0:
 		/* premature eof */
 		ct->ct_error.re_errno = ECONNRESET;
 		ct->ct_error.re_status = RPC_CANTRECV;
 		len = -1;  /* it's really an error */
 		break;
-
 	case -1:
 		ct->ct_error.re_errno = errno;
 		ct->ct_error.re_status = RPC_CANTRECV;

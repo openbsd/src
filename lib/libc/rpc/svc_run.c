@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_run.c,v 1.3 1996/07/20 06:12:43 deraadt Exp $	*/
+/*	$OpenBSD: svc_run.c,v 1.4 1996/08/15 07:27:50 deraadt Exp $	*/
 /*	$NetBSD: svc_run.c,v 1.6 1995/02/25 03:02:00 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: svc_run.c,v 1.3 1996/07/20 06:12:43 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_run.c,v 1.4 1996/08/15 07:27:50 deraadt Exp $";
 #endif
 
 /*
@@ -44,25 +44,32 @@ static char *rcsid = "$OpenBSD: svc_run.c,v 1.3 1996/07/20 06:12:43 deraadt Exp 
 #include <sys/errno.h>
 #include <unistd.h>
 
+extern int __svc_fdsetsize;
+extern fd_set *__svc_fdset;
+
 void
 svc_run()
 {
-	fd_set readfds;
+	fd_set *fds;
 
 	for (;;) {
-		readfds = svc_fdset;
-		switch (select(svc_maxfd+1, &readfds, 0, 0,
-			       (struct timeval *)0)) {
+		fds = (fd_set *)malloc(howmany(__svc_fdsetsize, NBBY));
+		memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize, NBBY));
+		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
 		case -1:
 			if (errno == EINTR) {
+				free(fds);
 				continue;
 			}
 			perror("svc_run: - select failed");
+			free(fds);
 			return;
 		case 0:
+			free(fds);
 			continue;
 		default:
-			svc_getreqset(&readfds);
+			svc_getreqset2(fds, svc_maxfd+1);
+			free(fds);
 		}
 	}
 }

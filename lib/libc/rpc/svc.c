@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.4 1996/07/20 06:12:40 deraadt Exp $	*/
+/*	$OpenBSD: svc.c,v 1.5 1996/08/15 07:27:49 deraadt Exp $	*/
 /*	$NetBSD: svc.c,v 1.9 1996/05/17 00:32:22 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc.c	2.4 88/08/11 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: svc.c,v 1.4 1996/07/20 06:12:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.5 1996/08/15 07:27:49 deraadt Exp $";
 #endif
 
 /*
@@ -75,6 +75,9 @@ static struct svc_callout {
 
 static struct svc_callout *svc_find();
 
+int __svc_fdsetsize;
+fd_set *__svc_fdset;
+
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
@@ -87,15 +90,30 @@ xprt_register(xprt)
 	register int sock = xprt->xp_sock;
 
 	if (xports == NULL) {
-		xports = (SVCXPRT **)
-			mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-		memset(xports, 0, FD_SETSIZE * sizeof(SVCXPRT *));
+		xports = (SVCXPRT **)mem_alloc(FD_SETSIZE *
+		    sizeof(SVCXPRT *));
+		memset(xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
 	}
-	if (sock < FD_SETSIZE) {
-		xports[sock] = xprt;
+
+	if (sock+1 > __svc_fdsetsize) {
+		fd_set *fds;
+
+		fds = (fd_set *)malloc(howmany(sock+1, NBBY));
+		memset(fds, '\0', howmany(sock+1, NBBY));
+		if (__svc_fdset) {
+			memcpy(fds, __svc_fdset,
+			    howmany(__svc_fdsetsize, NBBY));
+			free(__svc_fdset);
+		}
+		__svc_fdset = fds;
+		__svc_fdsetsize = sock+1;
+	}
+
+	if (sock < FD_SETSIZE)
 		FD_SET(sock, &svc_fdset);
-		svc_maxfd = max(svc_maxfd, sock);
-	}
+	FD_SET(sock, __svc_fdset);
+	xports[sock] = xprt;
+	svc_maxfd = max(svc_maxfd, sock);
 }
 
 /*
@@ -107,14 +125,20 @@ xprt_unregister(xprt)
 { 
 	register int sock = xprt->xp_sock;
 
-	if ((sock < FD_SETSIZE) && (xports[sock] == xprt)) {
+	if (xports[sock] == xprt) {
 		xports[sock] = (SVCXPRT *)0;
-		FD_CLR(sock, &svc_fdset);
+		if (sock < FD_SETSIZE)
+			FD_CLR(sock, &svc_fdset);
+		FD_CLR(sock, __svc_fdset);
 		if (sock == svc_maxfd) {
 			for (svc_maxfd--; svc_maxfd>=0; svc_maxfd--)
 				if (xports[svc_maxfd])
 					break;
 		}
+		/*
+		 * XXX could use svc_maxfd as a hint to
+		 * decrease the size of __svc_fdset
+		 */
 	}
 }
 
@@ -369,9 +393,19 @@ svc_getreq(rdfds)
 	svc_getreqset(&readfds);
 }
 
+void	svc_getreqset2 __P((fd_set *, int));
+
 void
 svc_getreqset(readfds)
 	fd_set *readfds;
+{
+	svc_getreqset2(readfds, FD_SETSIZE);
+}
+
+void
+svc_getreqset2(readfds, width)
+	fd_set *readfds;
+	int width;
 {
 	enum xprt_stat stat;
 	struct rpc_msg msg;
@@ -388,9 +422,8 @@ svc_getreqset(readfds)
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
-
 	maskp = readfds->fds_bits;
-	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {
+	for (sock = 0; sock < width; sock += NFDBITS) {
 	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
 		xprt = xports[sock + bit - 1];
