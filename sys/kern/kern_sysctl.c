@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.103 2004/02/27 21:46:44 grange Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.104 2004/02/29 12:14:05 weingart Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -578,6 +578,8 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (0);
 		if (perflevel > 100)
 			perflevel = 100;
+		if (perflevel < 0)
+			perflevel = 0;
 		return (cpu_setperf(perflevel));
 	default:
 		return (EOPNOTSUPP);
