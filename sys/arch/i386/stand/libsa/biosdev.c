@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.23 1997/08/12 19:24:57 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.24 1997/08/12 19:30:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -94,7 +94,7 @@ biosdreset(dev)
 	return rv;
 }
 
-static int
+static __inline int
 biosd_rw(rw, dev, cyl, head, sect, nsect, buf)
 	u_int8_t dev;
 	int cyl, head, sect, nsect;
