@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.2 2001/06/28 21:29:44 rees Exp $ */
+/* $Id: cmds.c,v 1.3 2001/07/02 20:15:06 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -41,6 +41,7 @@ such damages.
 #include <signal.h>
 #include <string.h>
 #include <sectok.h>
+#include <sc7816.h>
 
 #include "sc.h"
 
@@ -61,12 +62,15 @@ struct {
     /* 7816-4 commands */
     { "apdu", apdu },
     { "fid", selfid },
+    { "isearch", isearch },
     { "class", class },
     { "read", dread },
     { "write", dwrite },
 
     /* Cyberflex commands */
     { "ls", ls },
+    { "create", jcreate },
+    { "delete", jdelete },
     { "jdefault", jdefault },
     { "jatr", jatr },
     { "jdata", jdata },
@@ -115,8 +119,9 @@ int help(int ac, char *av[])
 
 int reset(int ac, char *av[])
 {
-    int i, n, port = 0, oflags = SCODSR, rflags = 0, err;
-    unsigned char buf[34];
+    int i, n, oflags = 0, rflags = 0, vflag = 0, sw;
+    unsigned char atr[34];
+    struct scparam param;
 
     optind = optreset = 1;
 
@@ -129,10 +134,10 @@ int reset(int ac, char *av[])
 	    port = i - '1';
 	    break;
 	case 'i':
-	    oflags &= ~SCODSR;
+	    oflags |= STONOWAIT;
 	    break;
 	case 'v':
-	    rflags |= SCRV;
+	    vflag = 1;
 	    break;
 	case 'f':
 	    rflags |= SCRFORCE;
@@ -141,20 +146,22 @@ int reset(int ac, char *av[])
     }
 
     if (fd < 0) {
-	fd = scopen(0, oflags, &err);
+	fd = sectok_open(port, oflags, &sw);
 	if (fd < 0) {
-	    printf("%s\n", scerrtab[err]);
+	    sectok_print_sw(sw);
 	    return -1;
 	}
     }
 
-    n = scxreset(fd, rflags, buf, &err);
-    if (n && !(rflags & SCRV)) {
+    n = scxreset(fd, rflags, atr, &sw);
+    if (n && !vflag) {
 	printf("atr ");
-	dump_reply(buf, n, 0, 0);
+	dump_reply(atr, n, 0, 0);
     }
-    if (err != SCEOK) {
-	printf("%s\n", scerrtab[err]);
+    if (vflag)
+	parse_atr(fd, SCRV, atr, n, &param);
+    if (sw != SCEOK) {
+	printf("%s\n", scerrtab[sw]);
 	return -1;
     }
 
@@ -228,7 +235,7 @@ int apdu(int ac, char *av[])
 int selfid(int ac, char *av[])
 {
     unsigned char fid[2];
-    int r1, r2;
+    int sw;
 
     if (ac != 2) {
 	printf("usage: f fid\n");
@@ -239,11 +246,27 @@ int selfid(int ac, char *av[])
 	reset(0, NULL);
 
     sectok_parse_fname(av[1], fid);
-    if (sectok_selectfile(fd, cla, fid, &r1, &r2) < 0) {
-	printf("selectfile: %s\n", get_r1r2s(r1, r2));
+    if (sectok_selectfile(fd, cla, fid, &sw) < 0) {
+	printf("selectfile: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 
+    return 0;
+}
+
+int isearch(int ac, char *av[])
+{
+    int i, r1, r2;
+    unsigned char buf[256];
+
+    if (fd < 0)
+	reset(0, NULL);
+
+    /* find instructions */
+    for (i = 0; i < 0xff; i += 2)
+	if (scread(fd, cla, i, 0, 0, 0, buf, &r1, &r2) == 0
+	    && r1 != 0x6d && r1 != 0x6e)
+	    printf("%02x %s %s\n", i, lookup_cmdname(i), get_r1r2s(r1, r2));
     return 0;
 }
 

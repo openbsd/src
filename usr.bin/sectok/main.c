@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.1 2001/06/27 19:41:45 rees Exp $ */
+/* $Id: main.c,v 1.2 2001/07/02 20:15:07 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -40,12 +40,15 @@ such damages.
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
 #include <sectok.h>
 
 #include "sc.h"
 
 #define MAXTOKENS 300
 #define CARDIOSIZE 200
+
+void onintr(int sigraised);
 
 const char usage[] =
 "Usage: sectok [-1234hHf:s:]\n"
@@ -55,7 +58,7 @@ const char usage[] =
 "    h             : this message\n"
 ;
 
-int fd = -1, cla, sleepytime;
+int port, fd = -1, cla, sleepytime, interrupted;
 FILE *cmdf;
 
 int
@@ -63,7 +66,7 @@ main(ac, av)
 int ac;
 char *av[];
 {
-    int i, port, tc;
+    int i, tc;
     char buf[256], *scriptfile = NULL, *tp, *tv[MAXTOKENS];
 
     while ((i = getopt(ac, av, "1234c:d:f:Hhs:")) != -1) {
@@ -105,9 +108,12 @@ char *av[];
 
     /* Interactive mode, or script file */
 
+    signal(SIGINT, onintr);
+
     /* The Main Loop */
     while (1) {
 	fflush(stdout);
+	interrupted = 0;
 	if (sleepytime)
 	    usleep(sleepytime * 1000);
 	if (cmdf == stdin) {
@@ -115,8 +121,12 @@ char *av[];
 	    fflush(stderr);
 	}
 
-	if (!fgets(buf, sizeof buf, cmdf))
-	    break;
+	if (!fgets(buf, sizeof buf, cmdf)) {
+	    if (interrupted)
+		continue;
+	    else
+		break;
+	}
 	if (cmdf != stdin)
 	    printf("sectok> %s", buf);
 
@@ -130,4 +140,9 @@ char *av[];
     }
 
     exit(0);
+}
+
+void onintr(int sigraised)
+{
+    interrupted++;
 }

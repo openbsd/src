@@ -1,4 +1,4 @@
-/* $Id: sc.h,v 1.1 2001/06/27 19:41:46 rees Exp $ */
+/* $Id: sc.h,v 1.2 2001/07/02 20:15:07 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -35,7 +35,7 @@ if it has been or is hereafter advised of the possibility of
 such damages.
 */
 
-extern int fd, cla;
+extern int port, fd, cla;
 extern FILE *cmdf;
 
 int dispatch(int ac, char *av[]);
@@ -45,10 +45,13 @@ int dclose(int ac, char *av[]);
 int quit(int ac, char *av[]);
 int apdu(int ac, char *av[]);
 int selfid(int ac, char *av[]);
+int isearch(int ac, char *av[]);
 int class(int ac, char *av[]);
 int dread(int ac, char *av[]);
 int dwrite(int ac, char *av[]);
 int ls(int ac, char *av[]);
+int jcreate(int ac, char *av[]);
+int jdelete(int ac, char *av[]);
 int jdefault(int ac, char *av[]);
 int jatr(int ac, char *av[]);
 int jdata(int ac, char *av[]);

@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.2 2001/06/28 21:29:45 rees Exp $ */
+/* $Id: cyberflex.c,v 1.3 2001/07/02 20:15:06 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -42,6 +42,7 @@ such damages.
 #include <des.h>
 #endif
 #include <sectok.h>
+#include <sc7816.h>
 
 #include "sc.h"
 
@@ -206,6 +207,53 @@ int ls(int ac, char *av[])
     return 0;
 }
 
+int jcreate(int ac, char *av[])
+{
+    unsigned char fid[2];
+    int sw, fsize;
+
+    if (ac != 3) {
+	printf("usage: create fid size\n");
+	return -1;
+    }
+
+    sectok_parse_fname(av[1], fid);
+    sscanf(av[2], "%d", &fsize);
+
+    if (fd < 0)
+	reset(0, NULL);
+
+    if (cyberflex_create_file(fd, cla, fid, fsize, 3, &sw) < 0) {
+	printf("create_file: %s\n", sectok_get_sw(sw));
+	return -1;
+    }
+
+    return 0;
+}
+
+int jdelete(int ac, char *av[])
+{
+    unsigned char fid[2];
+    int sw;
+
+    if (ac != 2) {
+	printf("usage: delete fid\n");
+	return -1;
+    }
+
+    sectok_parse_fname(av[1], fid);
+
+    if (fd < 0)
+	reset(0, NULL);
+
+    if (cyberflex_delete_file(fd, cla, fid, &sw) < 0) {
+	printf("delete_file: %s\n", sectok_get_sw(sw));
+	return -1;
+    }
+
+    return 0;
+}
+
 int jaut(int ac, char *av[])
 {
     if (fd < 0)
@@ -283,7 +331,7 @@ int jload(int ac, char *av[])
     char progname[5], contname[5];
     unsigned char app_data[MAX_APP_SIZE],
     data[MAX_BUF_SIZE];
-    int i, j, fd_app, size, rv, r1, r2;
+    int i, j, fd_app, size, rv, sw, r1, r2;
     des_cblock tmp;
     des_key_schedule schedule;
 
@@ -367,13 +415,13 @@ int jload(int ac, char *av[])
     }
 
     /* select 3f.00 (root) */
-    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+    if (sectok_selectfile(fd, cla, root_fid, &sw) < 0)
 	return -1;
 
     /* create program file */
-    if (cyberflex_create_file(fd, cla, progID, size, 3, &r1, &r2) < 0) {
+    if (cyberflex_create_file(fd, cla, progID, size, 3, &sw) < 0) {
 	/* error */
-	printf("can't create %s: %s\n", progname, get_r1r2s(r1, r2));
+	printf("can't create %s: %s\n", progname, sectok_get_sw(sw));
 	return -1;
     }
 
@@ -455,7 +503,7 @@ int jload(int ac, char *av[])
 int junload(int ac, char *av[])
 {
     char progname[5], contname[5];
-    int r1, r2, rv;
+    int sw, r1, r2, rv;
 
     if (analyze_load_options(ac, av) < 0)
 	return -1;
@@ -477,11 +525,13 @@ int junload(int ac, char *av[])
     /*printf ("unload applet\n");*/
 
     /* select 3f.00 (root) */
-    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+    if (sectok_selectfile(fd, cla, root_fid, &sw) < 0) {
+	printf("can't select root: %s\n", sectok_get_sw(sw));
 	return -1;
+    }
 
     /* select program file */
-    if (sectok_selectfile(fd, cla, progID, &r1, &r2) >= 0) {
+    if (sectok_selectfile(fd, cla, progID, &sw) >= 0) {
 
 	/* manage program -- reset */
 	rv = scwrite(fd, cla, 0x0a, 02, 0, 0x0, NULL, &r1, &r2);
@@ -491,14 +541,14 @@ int junload(int ac, char *av[])
 	}
 
 	/* delete program file */
-	if (cyberflex_delete_file(fd, cla, progID[0], progID[1], &r1, &r2) < 0)
-	    printf("delete_file %s: %s\n", progname, get_r1r2s(r1, r2));
+	if (cyberflex_delete_file(fd, cla, progID, &sw) < 0)
+	    printf("delete_file %s: %s\n", progname, sectok_get_sw(sw));
     } else
 	printf ("no program file... proceed to delete data container\n");
 
     /* delete data container */
-    if (cyberflex_delete_file(fd, cla, contID[0], contID[1], &r1, &r2) < 0)
-	printf("delete_file %s: %s\n", contname, get_r1r2s(r1, r2));
+    if (cyberflex_delete_file(fd, cla, contID, &sw) < 0)
+	printf("delete_file %s: %s\n", contname, sectok_get_sw(sw));
 
     return 0;
 }
@@ -521,12 +571,6 @@ int jselect(int ac, char *av[])
     for (i = 0 ; i < aid_len ; i ++ )
 	printf ("%02x", (unsigned char)aid[i]);
     printf ("\n");
-
-    /* select data container (77.78) */
-    /*rv = sectok_selectfile (fd, cla, root_fid, 0);
-      if (rv < 0) return rv;
-      rv = sectok_selectfile (fd, cla, contID, 0);
-      if (rv < 0) return rv;*/
 
     /* select the cardlet (7777777777) */
     for (i = 0; i < aid_len; i++) data[i] = (unsigned char)aid[i];
@@ -551,16 +595,15 @@ int jselect(int ac, char *av[])
 
 int jdeselect(int ac, char *av[])
 {
-    int r1, r2, rv;
+    int sw;
 
     if (fd < 0)
 	reset(0, NULL);
 
-    rv = scwrite(fd, cla, 0xa4, 0x04, 0, 0x00, NULL, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    sectok_apdu(fd, cla, 0xa4, 0x04, 0, 0, NULL, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf ("selecting the default loader: ");
-	print_r1r2 (r1, r2);
+	printf("selecting default loader: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 
@@ -573,7 +616,7 @@ int jdeselect(int ac, char *av[])
 /* download DES keys into 3f.00/00.11 */
 int cyberflex_load_key (int fd, unsigned char *buf)
 {
-    int r1, r2, rv, argc = 0, i, j, tmp;
+    int sw, r1, r2, rv, argc = 0, i, j, tmp;
     unsigned char *token;
     unsigned char data[MAX_BUF_SIZE];
     unsigned char key[BLOCK_SIZE];
@@ -636,12 +679,16 @@ int cyberflex_load_key (int fd, unsigned char *buf)
     printf ("\n");
 
     /* select 3f.00 (root) */
-    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+    if (sectok_selectfile(fd, cla, root_fid, &sw) < 0) {
+	printf("select root: %s\n", sectok_get_sw(sw));
 	return -1;
+    }
 
     /* select 00.11 (key file) */
-    if (sectok_selectfile(fd, cla, key_fid, &r1, &r2) < 0)
+    if (sectok_selectfile(fd, cla, key_fid, &sw) < 0) {
+	printf("select key file: %s\n", sectok_get_sw(sw));
 	return -1;
+    }
 
     /* all righty, now let's send it to the card! :) */
     rv = scwrite(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE * (argc + 2) + 2,
@@ -658,7 +705,7 @@ int cyberflex_load_key (int fd, unsigned char *buf)
 /* download AUT0 key into 3f.00/00.11 */
 int load_AUT0(int fd, unsigned char *buf)
 {
-    int r1, r2, rv, i, tmp;
+    int sw, r1, r2, rv, i, tmp;
     unsigned char data[MAX_BUF_SIZE];
     unsigned char key[BLOCK_SIZE];
 
@@ -687,11 +734,11 @@ int load_AUT0(int fd, unsigned char *buf)
     printf ("\n");
 
     /* select 3f.00 (root) */
-    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+    if (sectok_selectfile(fd, cla, root_fid, &sw) < 0)
 	return -1;
 
     /* select 00.11 (key file) */
-    if (sectok_selectfile(fd, cla, key_fid, &r1, &r2) < 0)
+    if (sectok_selectfile(fd, cla, key_fid, &sw) < 0)
 	return -1;
 
     /* all righty, now let's send it to the card! :) */
@@ -709,7 +756,7 @@ int load_AUT0(int fd, unsigned char *buf)
 /* download RSA private key into 3f.00/00.12 */
 int cyberflex_load_rsa(int fd, unsigned char *buf)
 {
-    int rv, r1, r2, i, j, tmp;
+    int rv, sw, i, j, tmp;
     static unsigned char key_fid[] = {0x00, 0x12};
     static char *key_names[NUM_RSA_KEY_ELEMENTS]= {"p", "q", "1/p mod q",
 						       "d mod (p-1)", "d mod (q-1)"};
@@ -739,10 +786,10 @@ int cyberflex_load_rsa(int fd, unsigned char *buf)
 #endif
 
     rv = cyberflex_load_rsa_priv(fd, cla, key_fid, NUM_RSA_KEY_ELEMENTS, RSA_BIT_LEN,
-				 key_elements, &r1, &r2);
+				 key_elements, &sw);
 
     if (rv < 0)
-	printf("load_rsa_priv: %s\n", get_r1r2s(r1, r2));
+	printf("load_rsa_priv: %s\n", sectok_get_sw(sw));
 
     for (i = 0; i < NUM_RSA_KEY_ELEMENTS; i++)
 	free(key_elements[i]);
