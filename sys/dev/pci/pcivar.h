@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcivar.h,v 1.9 1996/11/28 23:28:14 niklas Exp $	*/
-/*	$NetBSD: pcivar.h,v 1.16 1996/10/21 22:56:57 thorpej Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.10 1997/01/24 19:34:16 niklas Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.18 1996/12/01 21:02:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,11 +54,14 @@ struct pcibus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (alpha + i386 != 1)
+#if (alpha + atari + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if alpha
 #include <alpha/pci/pci_machdep.h>
+#endif
+#if atari
+#include <atari/pci/pci_machdep.h>
 #endif
 #if i386
 #include <i386/pci/pci_machdep.h>
@@ -138,5 +141,6 @@ int	pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
  * Helper functions for autoconfiguration.
  */
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
+void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */
