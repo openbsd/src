@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.5 2003/08/14 07:46:40 mickey Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.6 2004/12/09 22:58:57 pat Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -497,7 +497,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	struct proc *p;
 {
 	struct buf *bp;
-	struct ntfsmount *ntmp;
+	struct ntfsmount *ntmp = NULL;
 	dev_t dev = devvp->v_rdev;
 	int error, ronly, ncount, i;
 	struct vnode *vp;
@@ -528,10 +528,10 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, &bp);
 	if (error)
 		goto out;
-	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK );
-	bzero( ntmp, sizeof *ntmp );
-	bcopy( bp->b_data, &ntmp->ntm_bootfile, sizeof(struct bootfile) );
-	brelse( bp );
+	ntmp = malloc(sizeof *ntmp, M_NTFSMNT, M_WAITOK);
+	bzero(ntmp, sizeof *ntmp);
+	bcopy(bp->b_data, &ntmp->ntm_bootfile, sizeof(struct bootfile));
+	brelse(bp);
 	bp = NULL;
 
 	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
@@ -672,8 +672,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	return (0);
 
 out1:
-	for(i=0;i<NTFS_SYSNODESNUM;i++)
-		if(ntmp->ntm_sysvn[i]) vrele(ntmp->ntm_sysvn[i]);
+	for (i = 0; i < NTFS_SYSNODESNUM; i++)
+		if (ntmp->ntm_sysvn[i])
+			vrele(ntmp->ntm_sysvn[i]);
 
 	if (vflush(mp,NULLVP,0))
 		dprintf(("ntfs_mountfs: vflush failed\n"));
@@ -682,6 +683,13 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	if (ntmp != NULL) {
+		if (ntmp->ntm_ad != NULL)
+			free(ntmp->ntm_ad, M_NTFSMNT);
+		free(ntmp, M_NTFSMNT);
+		mp->mnt_data = NULL;
+	}
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
