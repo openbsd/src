@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.101 2004/01/05 15:26:18 markus Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.102 2004/01/09 02:46:04 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.101 2004/01/05 15:26:18 markus Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.102 2004/01/09 02:46:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -395,6 +395,7 @@ parse(char *string, int flags)
 			warnx("use pstat to view %s information", string);
 			return;
 		case KERN_PROC:
+		case KERN_PROC2:
 			if (flags == 0)
 				return;
 			warnx("use ps to view %s information", string);
