@@ -58,13 +58,3 @@ bcopy(s1, s2, n)
 		while (n-- > 0)
 			*t++ = *f++;
 }
-
-void *
-memcpy(s1, s2, n)
-	void *s1;
-	const void *s2;
-	size_t n;
-{
-	bcopy(s2, s1, n);
-	return s1;
-}
