@@ -1,3 +1,5 @@
+/*	$OpenBSD: read.c,v 1.2 1997/01/16 05:18:42 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,9 +37,13 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
-
+#else
+static char rcsid[] = "$OpenBSD: read.c,v 1.2 1997/01/16 05:18:42 millert Exp $";
+#endif
 #endif /* not lint && not SCCSID */
+
 /*
  * read.c: Clean this junk up! This is horrible code.
  *	   Terminal read functions
@@ -378,6 +384,11 @@ el_gets(el, nread)
 	    el->el_state.doingarg = 0;
 	    re_refresh_cursor(el);
 	    break;
+
+	case CC_REDISPLAY:
+	    re_clear_lines(el);
+	    re_clear_display(el);
+		/* FALLTHROUGH */
 
 	case CC_REFRESH:
 	    el->el_state.argument = 1;

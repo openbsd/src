@@ -1,3 +1,5 @@
+/*	$OpenBSD: el.c,v 1.4 1997/01/16 05:18:31 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
+#else
+static char rcsid[] = "$OpenBSD: el.c,v 1.4 1997/01/16 05:18:31 millert Exp $";
+#endif
 #endif /* not lint && not SCCSID */
 
 /*
@@ -52,6 +58,7 @@ static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
 # include <varargs.h>
 #endif
+#include <unistd.h>
 #include "el.h"
 
 /* el_init():
@@ -293,9 +300,9 @@ el_source(el, fname)
 	if ((fp = fopen(fname, "r")) == NULL) {
 	    if (issetugid() != 0 || (ptr = getenv("HOME")) == NULL) 
 		return -1;
-	    fname = strncpy(path, ptr, MAXPATHLEN);
-	    path[MAXPATHLEN-1] = '\0';
-	    (void) strncat(path, elpath, MAXPATHLEN - strlen(path));
+	    fname = strncpy(path, ptr, sizeof(path) - 1);
+	    path[sizeof(path) - 1] = '\0';
+	    (void) strncat(path, elpath, sizeof(path) - strlen(path));
 	}
     }
 

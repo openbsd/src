@@ -1,3 +1,5 @@
+/*	$OpenBSD: parse.c,v 1.2 1997/01/16 05:18:39 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$OpenBSD: parse.c,v 1.2 1997/01/16 05:18:39 millert Exp $";
+#endif
 #endif /* not lint && not SCCSID */
 
 /*
@@ -45,8 +51,10 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
  *
  *	bind
  *	echotc
- *	settc
  *	gettc
+ *	history
+ *	settc
+ *	setty
  */
 #include "sys.h"
 #include "el.h"
@@ -97,12 +105,12 @@ el_parse(el, argc, argv)
     char *ptr;
     int i;
 
-    for (ptr = argv[0]; *ptr && *ptr != ':'; ptr++)
-	continue;
-
-    if (*ptr == ':') {
-	*ptr = '\0';
-	if (el_match(el->el_prog, ptr))
+    if (argc < 1)
+	return -1;
+    ptr = strchr(argv[0], ':');
+    if (ptr != NULL) {
+	*ptr++ = '\0';
+	if (! el_match(el->el_prog, argv[0]))
 	    return 0;
     }
     else
@@ -190,7 +198,7 @@ parse__escape(ptr)
 	    break;
 	}
     }
-    else if (*p == '^' && isalpha((unsigned char) *p)) {
+    else if (*p == '^' && isalpha((unsigned char) p[1])) {
 	p++;
 	c = (*p == '?') ? '\177' : (*p & 0237);
     }

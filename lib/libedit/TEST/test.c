@@ -1,3 +1,5 @@
+/*	$OpenBSD: test.c,v 1.3 1997/01/16 05:18:55 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$OpenBSD: test.c,v 1.3 1997/01/16 05:18:55 millert Exp $";
+#endif
 #endif /* not lint && not SCCSID */
 
 /*

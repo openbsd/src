@@ -1,3 +1,5 @@
+/*	$OpenBSD: common.c,v 1.2 1997/01/16 05:18:30 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$OpenBSD: common.c,v 1.2 1997/01/16 05:18:30 millert Exp $";
+#endif
 #endif /* not lint && not SCCSID */
 
 /*
@@ -651,9 +657,7 @@ ed_redisplay(el, c)
     EditLine *el;
     int c;
 {
-    re_clear_lines(el);
-    re_clear_display(el);
-    return CC_REFRESH;
+    return CC_REDISPLAY;
 }
 
 
@@ -702,7 +706,8 @@ ed_prev_history(el, c)
     *el->el_line.lastchar = '\0';		/* just in case */
 
     if (el->el_history.eventno == 0) {	/* save the current buffer away */
-	(void) strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ);
+	(void) strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ - 1);
+	el->el_history.buf[EL_BUFSIZ - 1] = '\0';
 	el->el_history.last = el->el_history.buf + 
 		(el->el_line.lastchar - el->el_line.buffer);
     }
@@ -773,7 +778,8 @@ ed_search_prev_history(el, c)
     }
 
     if (el->el_history.eventno == 0) {
-	(void) strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ);
+	(void) strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ - 1);
+	el->el_history.buf[EL_BUFSIZ - 1] = '\0';
 	el->el_history.last = el->el_history.buf + 
 		(el->el_line.lastchar - el->el_line.buffer);
     }

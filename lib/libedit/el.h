@@ -1,3 +1,5 @@
+/*	$OpenBSD: el.h,v 1.2 1997/01/16 05:18:32 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

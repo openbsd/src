@@ -1,3 +1,5 @@
+/*	$OpenBSD: histedit.h,v 1.3 1997/01/16 05:18:34 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,6 +74,7 @@ typedef struct lineinfo {
 #define	CC_CURSOR	5
 #define	CC_ERROR	6
 #define CC_FATAL	7
+#define CC_REDISPLAY	8
 
 /*
  * Initialization, cleanup, and resetting
