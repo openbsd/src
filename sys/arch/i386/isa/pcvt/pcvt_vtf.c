@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.13 2000/03/14 16:26:23 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.14 2000/03/30 21:02:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -503,7 +503,6 @@ vt_str(struct video_state *svsp)
 	clr_parms(svsp);			/* escape parameter init */
 	svsp->state = STATE_INIT;		/* initial state */
 
-	svsp->dis_fnc = 0;			/* display functions reset */
 	svsp->sc_flag = 0;			/* save cursor position */
 	svsp->transparent = 0;			/* enable ctrl code processing*/
 	svsp->C1_ctls = 0;			/* but only for C0 codes */
@@ -540,17 +539,15 @@ vt_str(struct video_state *svsp)
 		svsp->G1 = cse_ascii;		/* G1 = ascii	*/
 		svsp->G2 = cse_supplemental;	/* G2 = supplemental */
 		svsp->G3 = cse_supplemental;	/* G3 = supplemental */
-		svsp->GL = svsp->G0;		/* GL = G0 */
-		svsp->GR = svsp->G2;		/* GR = G2 */
 	}
 	else {
 		svsp->G0 = csd_ascii;		/* G0 = ascii	*/
 		svsp->G1 = csd_ascii;		/* G1 = ascii	*/
 		svsp->G2 = csd_supplemental;	/* G2 = supplemental */
 		svsp->G3 = csd_supplemental;	/* G3 = supplemental */
-		svsp->GL = svsp->G0;		/* GL = G0 */
-		svsp->GR = svsp->G2;		/* GR = G2 */
 	}
+	svsp->GL = svsp->G0;			/* GL = G0 */
+	svsp->GR = svsp->G2;			/* GR = G2 */
 
 	svsp->vtsgr = VT_NORMAL;		/* no attributes */
 	svsp->c_attr = user_attr;		/* reset sgr to normal */

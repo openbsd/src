@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.34 2000/03/23 17:09:48 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.35 2000/03/30 21:02:08 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -612,7 +612,6 @@ typedef struct video_state {
 	u_short	cur_offset;		/* current cursor position offset */
 	u_char	bell_on;		/* flag, bell enabled */
 	u_char	sevenbit;		/* flag, data path 7 bits wide */
-	u_char	dis_fnc;		/* flag, display functions enable */
 	u_char	transparent;		/* flag, mk path tmp trnsprnt for ctls*/
 	u_char	C1_ctls;		/* flag, process C1 ctls */
 	u_char	scrr_beg;		/* scrolling region, begin */
@@ -1001,7 +1000,6 @@ void	sw_cursor ( int onoff );
 void	toggl_awm ( struct video_state *svsp );
 void	toggl_bell ( struct video_state *svsp );
 void	toggl_columns ( struct video_state *svsp );
-void	toggl_dspf ( struct video_state *svsp );
 void	toggl_sevenbit ( struct video_state *svsp );
 void	update_led ( void );
 void	vga10_vga10 ( u_char *invga, u_char *outvga );
