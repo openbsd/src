@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.27 2000/06/20 05:55:27 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.28 2000/09/19 08:38:28 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.41 2000/06/20 03:35:01 itojun Exp $	*/
 
 /*
@@ -2022,7 +2022,6 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
       log_print ("pf_key_v2_group_spis: invalid proto %d", proto2->proto);
       goto cleanup;
     }
-  protocol.sadb_protocol_reserved1 = 0;
   protocol.sadb_protocol_reserved2 = 0;
   if (pf_key_v2_msg_add (grpspis, (struct sadb_ext *)&protocol, 0) == -1)
     goto cleanup;
