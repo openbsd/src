@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2004/06/25 09:49:12 pvalchev Exp $g
+#	$OpenBSD: GENERIC,v 1.57 2004/07/20 20:41:49 dhartmei Exp $g
 #
 # PPC GENERIC config file
 #
@@ -209,6 +209,7 @@ aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub? port ?			# CDC Ethernet
 upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 url*	at uhub? port ?			# Realtek RTL8150L based adapters
 wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
