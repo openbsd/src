@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.145 2002/12/09 09:44:30 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.146 2002/12/09 22:09:21 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -766,6 +766,8 @@ The host and port specifications are optional, as in the following examples:
     pass in proto tcp from 10.0.0.0/8 port > 1024 to \\
 	! 10.1.2.3 port != 22
 .Ed
+.It Pa all
+is the short form for "from any to any".
 .It Pa user <user> group <group>
 The rule only applies to packets of sockets owned by the specified user
 and group.
