@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.24 1997/01/15 23:43:59 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.25 1997/02/24 12:48:06 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.24 1997/01/15 23:43:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.25 1997/02/24 12:48:06 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -408,8 +408,7 @@ main(argc, argv, envp)
 				continue;
 			}
 			if (ntohs(peer.sin_port) == 20) {
-				syslog(LOG_INFO, "Connect to %s from port %d",
-				    sep->se_service, ntohs(peer.sin_port));
+				/* XXX ftp bounce */
 				close(ctrl);
 				continue;
 			}
@@ -544,8 +543,6 @@ dg_badinput(sin)
 	struct sockaddr_in *sin;
 {
 	if (ntohs(sin->sin_port) < IPPORT_RESERVED)
-		return (1);
-	if (ntohs(sin->sin_port) == 6667)	/* XXX IRC version */
 		return (1);
 	if (sin->sin_addr.s_addr == htonl(INADDR_BROADCAST))
 		return (1);
