@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.100 2001/06/01 00:09:24 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.101 2001/06/01 07:56:46 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -613,5 +613,6 @@ extern int ipsp_is_unspecified(union sockaddr_union);
 extern void ipsp_reffree(struct ipsec_ref *);
 extern void ipsp_skipcrypto_unmark(struct tdb_ident *);
 extern void ipsp_skipcrypto_mark(struct tdb_ident *);
+extern struct m_tag *ipsp_parse_headers(struct mbuf *, int, u_int8_t);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

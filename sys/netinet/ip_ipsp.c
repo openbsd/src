@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.122 2001/05/30 16:43:11 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.123 2001/06/01 07:56:46 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1312,4 +1312,224 @@ ipsp_skipcrypto_unmark(struct tdb_ident *tdbi)
 	tdb->tdb_last_marked = time.tv_sec;
     }
     splx(s);
+}
+
+/*
+ * Go down a chain of IPv4/IPv6/ESP/AH/IPiP chains creating an tag for each
+ * IPsec header encountered. The offset where the first header, as well
+ * as its type are given to us.
+ */
+struct m_tag *
+ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
+{
+    int ipv4sa = 0, s, esphlen = 0, trail = 0, i;
+    LIST_HEAD(packet_tags, m_tag) tags;
+    unsigned char lasteight[8];
+    struct tdb_ident *tdbi;
+    struct m_tag *mtag;
+    struct tdb *tdb;
+
+#ifdef INET
+    struct ip iph;
+#endif /* INET */
+
+#ifdef INET6
+    struct in6_addr ip6_dst;
+#endif /* INET6 */
+
+    /* We have to start with a known network protocol */
+    if (proto != IPPROTO_IPV4 && proto != IPPROTO_IPV6)
+      return NULL;
+
+    LIST_INIT(&tags);
+
+    while (1)
+    {
+	switch (proto)
+	{
+#ifdef INET
+	    case IPPROTO_IPV4: /* Also IPPROTO_IPIP */
+	    {
+		/* Save the IP header (we need both the address and ip_hl) */
+		m_copydata(m, off, sizeof(struct ip), (caddr_t) &iph);
+		ipv4sa = 1;
+		proto = iph.ip_p;
+		off += iph.ip_hl << 2;
+		break;
+	    }
+#endif /* INET */
+
+#ifdef INET6
+	    case IPPROTO_IPV6:
+	    {
+		int nxtp, l;
+
+		/* Copy the IPv6 address */
+		m_copydata(m, off + offsetof(struct ip6_hdr, ip6_dst),
+			   sizeof(struct ip6_hdr), (caddr_t) &ip6_dst);
+		ipv4sa = 0;
+
+		/*
+		 * Go down the chain of headers until we encounter a
+		 * non-option.
+		 */
+		for (l = ip6_nexthdr(m, off, proto, &nxtp); l != -1;
+		     l = ip6_nexthdr(m, off, proto, &nxtp))
+		{
+		    off += l;
+		    proto = nxtp;
+
+		    /* Construct a tag */
+		    if (nxtp == IPPROTO_AH)
+		    {
+			mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
+					 sizeof(struct tdb_ident), M_NOWAIT);
+			if (mtag == NULL)
+			  return tags.lh_first;
+
+			tdbi = (struct tdb_ident *) (mtag + 1);
+			bzero(tdbi, sizeof(struct tdb_ident));
+			m_copydata(m, off + sizeof(u_int32_t),
+				   sizeof(u_int32_t), (caddr_t) &tdbi->spi);
+			tdbi->proto = IPPROTO_AH;
+			tdbi->dst.sin6.sin6_family = AF_INET6;
+			tdbi->dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
+			tdbi->dst.sin6.sin6_addr = ip6_dst;
+			LIST_INSERT_HEAD(&tags, mtag, m_tag_link);
+		    }
+		    else
+		      if (nxtp == IPPROTO_IPV6)
+			m_copydata(m, off + offsetof(struct ip6_hdr, ip6_dst),
+				   sizeof(struct ip6_hdr), (caddr_t) &ip6_dst);
+		}
+		break;
+	    }
+#endif /* INET6 */
+
+	    case IPPROTO_ESP:
+		/* Verify that this has been decrypted */
+		{
+		    union sockaddr_union su;
+		    u_int32_t spi;
+
+		    m_copydata(m, off, sizeof(u_int32_t), (caddr_t) &spi);
+		    bzero(&su, sizeof(union sockaddr_union));
+
+		    s = spltdb();
+
+#ifdef INET
+		    if (ipv4sa)
+		    {
+			su.sin.sin_family = AF_INET;
+			su.sin.sin_len = sizeof(struct sockaddr_in);
+			su.sin.sin_addr = iph.ip_dst;
+		    }
+#endif /* INET */
+
+#ifdef INET6
+		    if (!ipv4sa)
+		    {
+			su.sin6.sin6_family = AF_INET6;
+			su.sin6.sin6_len = sizeof(struct sockaddr_in6);
+			su.sin6.sin6_addr = ip6_dst;
+		    }
+#endif /* INET6 */
+
+		    tdb = gettdb(spi, &su, IPPROTO_ESP);
+		    if (tdb == NULL)
+		    {
+			splx(s);
+			return tags.lh_first;
+		    }
+
+		    /* How large is the ESP header ? We use this later */
+		    if (tdb->tdb_flags & TDBF_NOREPLAY)
+		      esphlen = sizeof(u_int32_t) + tdb->tdb_ivlen;
+		    else
+		      esphlen = 2 * sizeof(u_int32_t) + tdb->tdb_ivlen;
+
+		    /*
+		     * Verify decryption. If the SA is using random padding
+		     * (as the "old" ESP SAs were bound to do, there's nothing
+		     * we can do to see if the payload has been decrypted.
+		     */
+		    if (tdb->tdb_flags & TDBF_RANDOMPADDING)
+		    {
+			splx(s);
+			return tags.lh_first;
+		    }
+
+		    /* Update the length of trailing ESP authenticators */
+		    if (tdb->tdb_authalgxform)
+		      trail += AH_HMAC_HASHLEN;
+
+		    splx(s);
+
+		    /* Copy the last 10 bytes */
+		    m_copydata(m, m->m_pkthdr.len - trail - 8, 8, lasteight);
+
+		    /* Verify the self-describing padding values */
+		    for (i = 5; lasteight[i + 1] != 0 && i >= 0; i--)
+		      if (lasteight[i + 1] != lasteight[i] + 1)
+			return tags.lh_first;
+		}
+		/* Fall through */
+	    case IPPROTO_AH:
+		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_CRYPTO_DONE,
+				 sizeof(struct tdb_ident), M_NOWAIT);
+		if (mtag == NULL)
+		  return tags.lh_first;
+
+		tdbi = (struct tdb_ident *) (mtag + 1);
+		bzero(tdbi, sizeof(struct tdb_ident));
+
+		if (proto == IPPROTO_AH)
+		  m_copydata(m, off + sizeof(u_int32_t), sizeof(u_int32_t),
+			     (caddr_t) &tdbi->spi);
+		else /* IPPROTO_ESP */
+		  m_copydata(m, off, sizeof(u_int32_t), (caddr_t) &tdbi->spi);
+
+		tdbi->proto = proto; /* We can get here for AH or ESP */
+
+#ifdef INET
+		/* Last network header was IPv4 */
+		if (ipv4sa)
+		{
+		    tdbi->dst.sin.sin_family = AF_INET;
+		    tdbi->dst.sin.sin_len = sizeof(struct sockaddr_in);
+		    tdbi->dst.sin.sin_addr = iph.ip_dst;
+		}
+#endif /* INET */
+
+#ifdef INET6
+		/* Last network header was IPv6 */
+		if (!ipv4sa)
+		{
+		    tdbi->dst.sin6.sin6_family = AF_INET6;
+		    tdbi->dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		    tdbi->dst.sin6.sin6_addr = ip6_dst;
+		}
+#endif /* INET6 */
+
+		LIST_INSERT_HEAD(&tags, mtag, m_tag_link);
+
+		/* Update next protocol/header and header offset */
+		if (proto == IPPROTO_AH)
+		{
+		    m_copydata(m, off, sizeof(u_int8_t), (caddr_t) &proto);
+		    m_copydata(m, off + sizeof(u_int8_t), sizeof(u_int8_t),
+			       (caddr_t) &s);
+		    off += (s + 2) << 2;
+		}
+		else /* IPPROTO_ESP */
+		{
+		    off += esphlen;
+		    proto = lasteight[7];
+		}
+		break;
+
+	    default:
+		return tags.lh_first; /* done */
+	}
+    }
 }
