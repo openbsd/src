@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2004/12/29 14:44:09 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.47 2004/12/30 17:56:16 pvalchev Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -222,8 +222,8 @@ scsibus* at ami?
 #scsibus* at siop?
 #adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI
 #scsibus* at adv?
-#adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
-#scsibus* at adw?
+adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
+scsibus* at adw?
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
