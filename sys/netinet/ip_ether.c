@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.32 2001/06/25 05:11:58 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.33 2001/06/26 04:29:05 angelos Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -125,7 +125,8 @@ etherip_input(m, va_alist)
 	/* Verify EtherIP version number */
 	m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
 	if ((eip.eip_ver & ETHERIP_VER_VERS_MASK) != ETHERIP_VERSION) {
-		DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xff));
+		DPRINTF(("etherip_input(): received EtherIP version number "
+		    "%d not suppoorted\n", (v >> 4) & 0xff));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
@@ -137,7 +138,8 @@ etherip_input(m, va_alist)
 	 * zero; this is also invalid protocol behaviour.
 	 */
 	if (eip.eip_ver & ETHERIP_VER_RSVD_MASK) {
-		DPRINTF(("etherip_input(): received EtherIP invalid EtherIP header (reserved field non-zero\n"));
+		DPRINTF(("etherip_input(): received EtherIP invalid EtherIP "
+		    "header (reserved field non-zero\n"));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
@@ -145,7 +147,8 @@ etherip_input(m, va_alist)
 
 	/* Finally, the pad value must be zero. */
 	if (eip.eip_pad) {
-		DPRINTF(("etherip_input(): received EtherIP invalid pad value\n"));
+		DPRINTF(("etherip_input(): received EtherIP invalid "
+		    "pad value\n"));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
@@ -163,7 +166,7 @@ etherip_input(m, va_alist)
 		}
 	}
 
-	/* Copy the addresses for use later */
+	/* Copy the addresses for use later. */
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&sdst, sizeof(sdst));
 
@@ -173,9 +176,11 @@ etherip_input(m, va_alist)
 	case 4:
 		ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in);
 		ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET;
-		m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
+		m_copydata(m, offsetof(struct ip, ip_src),
+		    sizeof(struct in_addr),
 		    (caddr_t) &ssrc.sin.sin_addr);
-		m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
+		m_copydata(m, offsetof(struct ip, ip_dst),
+		    sizeof(struct in_addr),
 		    (caddr_t) &sdst.sin.sin_addr);
 		break;
 #endif /* INET */
@@ -217,7 +222,7 @@ etherip_input(m, va_alist)
 			m->m_flags |= M_MCAST;
 	}
 
-	/* Trim the beginning of the mbuf, to remove the ethernet header */
+	/* Trim the beginning of the mbuf, to remove the ethernet header. */
 	m_adj(m, sizeof(struct ether_header));
 
 #if NGIF > 0
@@ -233,7 +238,7 @@ etherip_input(m, va_alist)
 			break;
 	}
 
-	/* None found */
+	/* None found. */
 	if (i >= ngif) {
 		DPRINTF(("etherip_input(): no interface found\n"));
 		etheripstat.etherip_noifdrops++;
@@ -281,12 +286,12 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct mbuf *m0;
 	ushort hlen;
 
-	/* Some address family sanity checks */
+	/* Some address family sanity checks. */
 	if ((tdb->tdb_src.sa.sa_family != 0) &&
 	    (tdb->tdb_src.sa.sa_family != AF_INET) &&
 	    (tdb->tdb_src.sa.sa_family != AF_INET6)) {
-		DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting",
-		    tdb->tdb_src.sa.sa_family));
+		DPRINTF(("etherip_output(): IP in protocol-family <%d> "
+		    "attempted, aborting", tdb->tdb_src.sa.sa_family));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return EINVAL;
@@ -294,15 +299,16 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	if ((tdb->tdb_dst.sa.sa_family != AF_INET) &&
 	    (tdb->tdb_dst.sa.sa_family != AF_INET6)) {
-		DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting",
-		    tdb->tdb_dst.sa.sa_family));
+		DPRINTF(("etherip_output(): IP in protocol-family <%d> "
+		    "attempted, aborting", tdb->tdb_dst.sa.sa_family));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return EINVAL;
 	}
 
 	if (tdb->tdb_dst.sa.sa_family != tdb->tdb_src.sa.sa_family) {
-		DPRINTF(("etherip_output(): mismatch in tunnel source and destination address protocol families (%d/%d), aborting",
+		DPRINTF(("etherip_output(): mismatch in tunnel source and "
+		    "destination address protocol families (%d/%d), aborting",
 		    tdb->tdb_src.sa.sa_family, tdb->tdb_dst.sa.sa_family));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
@@ -321,14 +327,14 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		break;
 #endif /* INET6 */
 	default:
-		DPRINTF(("etherip_output(): unsupported tunnel protocol family <%d>, aborting",
-		    tdb->tdb_dst.sa.sa_family));
+		DPRINTF(("etherip_output(): unsupported tunnel protocol "
+		    "family <%d>, aborting", tdb->tdb_dst.sa.sa_family));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return EINVAL;
 	}
 
-	/* Don't forget the EtherIP header */
+	/* Don't forget the EtherIP header. */
 	hlen += sizeof(struct etherip_header);
 
 	if (!(m->m_flags & M_PKTHDR)) {
@@ -418,7 +424,8 @@ etherip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow));
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &etherip_allow));
 	default:
 		return (ENOPROTOOPT);
 	}
