@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.3,v 1.5 2000/04/15 02:15:28 aaron Exp $
+.\"	$OpenBSD: scsi.3,v 1.6 2000/11/10 00:06:27 deraadt Exp $
 .\" Copyright (c) 1994 HD Associates (hd@world.std.com)
 .\" All rights reserved.
 .\"
@@ -53,7 +53,7 @@
 .Ft int
 .Fn scsireq_buff_decode "u_char *ptr, size_t len, char *fmt, ..."
 .Ft struct scsireq *
-.Fn scsireq_build "struct scsireq *s, u_long len, caddr_t buf, u_long flags, char *fmt, ..."
+.Fn scsireq_build "struct scsireq *, u_long len, caddr_t buf, u_long flags, char *fmt, ..."
 .Ft int
 .Fn scsireq_decode "struct scsireq *, char *fmt, ..."
 .Ft int
