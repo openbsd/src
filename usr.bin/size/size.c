@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.11 1999/05/10 16:14:07 espie Exp $	*/
+/*	$OpenBSD: size.c,v 1.12 2001/05/31 16:26:59 smart Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.11 1999/05/10 16:14:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.12 2001/05/31 16:26:59 smart Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,9 +72,6 @@ int print_totals = 0;
 int	process_file __P((int, char *));
 int	show_archive __P((int, char *, FILE *));
 int	show_objfile __P((int, char *, FILE *));
-int	show_object __P((int, char *, FILE *));
-void	*emalloc __P((size_t));
-void	*erealloc __P((void *, size_t));
 void	usage __P((void));
 
 int
@@ -179,7 +176,8 @@ show_archive(count, fname, fp)
 
 	baselen = strlen(fname) + 3;
 	namelen = sizeof(ar_head.ar_name);
-	name = emalloc(baselen + namelen);
+	if ((name = malloc(baselen + namelen)) == NULL)
+		err(1, NULL);
 
 	rval = 0;
 
@@ -220,15 +218,15 @@ show_archive(count, fname, fp)
 			int len = atoi(&ar_head.ar_name[3]);
 			if (len > namelen) {
 				p -= (long)name;
-				name = (char *)erealloc(name, baselen+len);
+				if ((name = realloc(name, baselen+len)) == NULL)
+					err(1, NULL);
 				namelen = len;
 				p += (long)name;
 			}
 			if (fread(p, len, 1, fp) != 1) {
-				(void)fprintf(stderr,
-				    "nm: %s: premature EOF.\n", name);
+				warnx("%s: premature EOF", name);
 				(void)free(name);
-				return 1;
+				return(1);
 			}
 			p += len;
 		} else
@@ -312,29 +310,6 @@ show_objfile(count, name, fp)
 
 	(void)printf("\n");
 	return (0);
-}
-
-void *
-emalloc(size)
-	size_t size;
-{
-	char *p;
-
-	/* NOSTRICT */
-	if ((p = malloc(size)))
-		return(p);
-	err(1, NULL);
-}
-
-void *
-erealloc(p, size)
-	void   *p;
-	size_t size;
-{
-	/* NOSTRICT */
-	if ((p = realloc(p, size)))
-		return(p);
-	err(1, NULL);
 }
 
 void
