@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.9 1999/09/29 18:16:20 dugsong Exp $");
+RCSID("$Id: ssh.c,v 1.10 1999/09/29 18:27:23 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -75,6 +75,8 @@ int host_private_key_loaded = 0;
 /* Host private key. */
 RSA *host_private_key = NULL;
 
+/* Original real UID. */
+uid_t original_real_uid;
 
 /* Prints a help message to the user.  This function never returns. */
 
@@ -179,7 +181,6 @@ main(int ac, char **av)
   struct stat st;
   struct passwd *pw, pwcopy;
   int interactive = 0, dummy;
-  static uid_t original_real_uid;
   uid_t original_effective_uid;
   int plen;
 
