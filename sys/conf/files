@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.258 2002/11/29 18:25:23 mickey Exp $
+#	$OpenBSD: files,v 1.259 2002/12/13 02:59:20 tdeval Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -310,8 +310,8 @@ file	dev/std/ieee1212.c		ieee1212
 
 #
 # SBP2 routines for IEEE 1394
-#define	sbp2
-#file	dev/ieee1394/sbp2.c		sbp2
+define	sbp2
+file	dev/std/sbp2.c			sbp2
 
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
