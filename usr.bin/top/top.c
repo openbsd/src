@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.15 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.16 2002/04/21 18:52:33 hugh Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -117,7 +117,7 @@ char *argv[];
     static char tempbuf2[50];
     sigset_t mask, oldmask;
     int topn = Default_TOPN;
-    int delay = Default_DELAY;
+    double delay = Default_DELAY;
     int displays = 0;		/* indicates unspecified */
     time_t curr_time;
     char *(*get_userid)() = username;
@@ -279,11 +279,12 @@ char *argv[];
 		{
 		  char *endp;
 
-		  delay = strtoul(optarg, &endp, 10);
-		  if (delay < 0 || *endp != '\0')
+		  delay = strtod(optarg, &endp);
+
+		  if (delay < 0 || delay >= 1000000 || *endp != '\0')
 		  {
 		    fprintf(stderr,
-			"%s: warning: seconds delay should be non-negative -- using default\n",
+			"%s: warning: delay should be a non-negative number -- using default\n",
 			myname);
 		    delay = Default_DELAY;
 		    warnings++;
@@ -611,8 +612,8 @@ restart:
 		/* set up arguments for select with timeout */
 		FD_ZERO(&readfds);
 		FD_SET(STDIN_FILENO, &readfds);	/* for standard input */
-		timeout.tv_sec  = delay;
-		timeout.tv_usec = 0;
+		timeout.tv_sec  = (long)delay;
+		timeout.tv_usec = (long)((delay - timeout.tv_sec) * 1000000);
 
 		if (leaveflag) {
 		    end_screen();
@@ -775,9 +776,14 @@ restart:
 	    
 			    case CMD_delay:	/* new seconds delay */
 				new_message(MT_standout, "Seconds to delay: ");
-				if ((i = readline(tempbuf1, 8, Yes)) > -1)
+				if (readline(tempbuf2, sizeof(tempbuf2), No) > 0)
 				{
-				    delay = i;
+				    char *endp;
+				    double newdelay = strtod(tempbuf2, &endp);
+				    if (newdelay >= 0 && newdelay < 1000000 && *endp == '\0')
+				    {
+					delay = newdelay;
+				    }
 				}
 				clear_message();
 				break;
