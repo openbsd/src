@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.72 2004/08/03 11:23:11 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.73 2004/09/07 10:14:43 markus Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.72 2004/08/03 11:23:11 henning Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.73 2004/09/07 10:14:43 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -553,6 +553,8 @@ newroute(int argc, char **argv)
 		ishost = 1;
 	if (forcenet)
 		ishost = 0;
+	if (forcenet && !(rtm_addrs & RTA_NETMASK))
+		errx(1, "netmask missing");
 	flags |= RTF_UP;
 	if (mpath)
 		flags |= RTF_MPATH;
@@ -866,11 +868,8 @@ getaddr(int which, char *s, struct hostent **hpp)
 		if ((which == RTA_DST || which == RTA_SRC) && !forcehost) {
 			bits = inet_net_pton(AF_INET, s, &su->sin.sin_addr,
 			    sizeof(su->sin.sin_addr));
-			if (bits == 32) {
-				if (forcenet)
-					errx(1, "%s: not a network", s);
+			if (bits == 32)
 				return (1);
-			}
 			if (bits >= 0) {
 				inet_makenetandmask(ntohl(
 				    su->sin.sin_addr.s_addr),
