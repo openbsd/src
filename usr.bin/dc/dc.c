@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.1 2003/09/19 17:58:25 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: dc.c,v 1.1 2003/09/19 17:58:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dc.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -28,7 +28,7 @@ static const char rcsid[] = "$OpenBSD: dc.c,v 1.1 2003/09/19 17:58:25 otto Exp $
 
 static __dead void	usage(void);
 
-extern char 		*__progname;
+extern char		*__progname;
 
 static __dead void
 usage(void)

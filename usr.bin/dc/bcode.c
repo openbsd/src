@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.1 2003/09/19 17:58:25 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.1 2003/09/19 17:58:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -42,7 +42,7 @@ struct bmachine {
 	u_int			ibase;
 	int			readsp;
 	struct stack		reg[UCHAR_MAX];
-	struct source		readstack[MAX_RECURSION];	
+	struct source		readstack[MAX_RECURSION];
 };
 
 static struct bmachine	bmachine;
@@ -1024,7 +1024,7 @@ bexp(void)
 		if (scale > m || b == BN_MASK2)
 			scale = m;
 	}
-		
+
 	if (BN_is_zero(p->number)) {
 		r = new_number();
 		bn_check(BN_one(r->number));
@@ -1159,7 +1159,7 @@ not_compare(void)
 	case '=':
 		not_equal();
 		break;
-	default: 
+	default:
 		unreadch();
 		bexec(readline());
 		break;
@@ -1219,19 +1219,19 @@ compare(enum bcode_compare type)
 
 	ok = false;
 	switch (type) {
-	case BCODE_EQUAL: 
+	case BCODE_EQUAL:
 		ok = cmp == 0;
 		break;
-	case BCODE_NOT_EQUAL: 
+	case BCODE_NOT_EQUAL:
 		ok = cmp != 0;
 		break;
-	case BCODE_LESS: 
+	case BCODE_LESS:
 		ok = cmp < 0;
 		break;
-	case BCODE_NOT_LESS: 
+	case BCODE_NOT_LESS:
 		ok = cmp >= 0;
 		break;
-	case BCODE_GREATER: 
+	case BCODE_GREATER:
 		ok = cmp > 0;
 		break;
 	case BCODE_NOT_GREATER:
@@ -1266,10 +1266,10 @@ nop(void)
 {
 }
 
-static void 
+static void
 quit(void)
 {
-	if (bmachine.readsp < 2) 
+	if (bmachine.readsp < 2)
 		exit(0);
 	src_free();
 	bmachine.readsp--;
