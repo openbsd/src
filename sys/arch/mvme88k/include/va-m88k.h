@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.6 2002/03/23 23:27:13 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.7 2002/03/25 19:40:30 miod Exp $	*/
 
 /* This file has local changes by MOTOROLA
 Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
@@ -28,14 +28,14 @@ typedef __va_list __gnuc_va_list;
 #if defined (_STDARG_H) || defined (_VARARGS_H)
 
 #define __va_start_common(AP,FAKE) \
-    (AP) = *(__gnuc_va_list *)__builtin_saveregs();
+    (AP) = *(__gnuc_va_list *)__builtin_saveregs()
 
 #ifdef _STDARG_H /* stdarg.h support */
 
 /* Calling __builtin_next_arg gives the proper error message if LASTARG is
    not indeed the last argument.  */
 #define va_start(AP,LASTARG) \
-  (__builtin_next_arg (LASTARG), __va_start_common(AP, 0))
+  (__builtin_next_arg (LASTARG), __va_start_common (AP, 0))
 
 #else /* varargs.h support */
 
