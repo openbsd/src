@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.69 2000/09/05 21:57:41 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.70 2000/09/18 22:06:38 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2743,13 +2743,14 @@ tcp_xmit_timer(tp, rtt)
 int
 tcp_mss(tp, offer)
 	register struct tcpcb *tp;
-	u_int offer;
+	int offer;
 {
 	struct route *ro;
 	register struct rtentry *rt;
 	struct ifnet *ifp;
-	register int rtt, mss;
+	register int rtt, mss, mssopt;
 	u_long bufsize;
+	int iphlen, is_ipv6 = 0;
 	struct inpcb *inp;
 	struct socket *so;
 
@@ -2796,6 +2797,23 @@ tcp_mss(tp, offer)
 	}
 	ifp = rt->rt_ifp;
 
+	mssopt = mss = tcp_mssdflt;
+
+	switch (tp->pf) {
+#ifdef INET6
+	case AF_INET6:
+		iphlen = sizeof(struct ip6_hdr);
+		is_ipv6 = 1;
+		break;
+#endif
+	case AF_INET:
+		iphlen = sizeof(struct ip);
+		break;
+	default:
+		/* the family does not support path MTU discovery */
+		goto out;
+	}
+
 #ifdef RTV_MTU	/* if route characteristics exist ... */
 	/*
 	 * While we're here, check if there's an initial rtt
@@ -2823,58 +2841,52 @@ tcp_mss(tp, offer)
 		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1,
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
+
 	/*
 	 * if there's an mtu associated with the route and we support
 	 * path MTU discovery for the underlying protocol family, use it.
-	 */
-	/*
-	 * XXX It's wrong to use PMTU values to determine the MSS we
-	 * are going to advertise; we should only use the input interface's
-	 * MTU instead (see draft-ietf-tcpimpl-pmtud-03.txt). tcp_mss()
-	 * should be changed to be aware whether it's called for input or
-	 * output MSS calculation, and act accordingly.
 	 */
 	if (rt->rt_rmx.rmx_mtu) {
 		/*
 		 * One may wish to lower MSS to take into account options,
 		 * especially security-related options.
 		 */
-		mss = rt->rt_rmx.rmx_mtu - sizeof(struct tcphdr);
-		switch (tp->pf) {
-#ifdef INET6
-		case AF_INET6:
-			mss -= sizeof(struct ip6_hdr);
-			break;
-#endif
-#ifdef notdef	/* no IPv4 path MTU discovery yet */
-		case AF_INET:
-			mss -= sizeof(struct ip);
-			break;
-#endif
-		default:
-			/* the family does not support path MTU discovery */
-			mss = 0;
-			break;
-		}
+		mss = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
 	} else
-		mss = 0;
-#else
-	mss = 0;
 #endif /* RTV_MTU */
-	if (mss == 0) {
+	if (!ifp)
 		/*
 		 * ifp may be null and rmx_mtu may be zero in certain
 		 * v6 cases (e.g., if ND wasn't able to resolve the 
 		 * destination host.
 		 */
-		mss = ifp ? ifp->if_mtu - sizeof(struct tcpiphdr) : 0;
-		switch (tp->pf) {
-		case AF_INET:
-			if (!in_localaddr(inp->inp_faddr))
-				mss = min(mss, tcp_mssdflt);
-			break;
+		goto out;
+	else if (ip_mtudisc || ifp->if_flags & IFF_LOOPBACK)
+		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+#ifdef INET6
+	else if (is_ipv6) {
+		if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
+			/* mapped addr case */
+			struct in_addr d;
+			bcopy(&inp->inp_faddr6.s6_addr32[3], &d, sizeof(d));
+			if (in_localaddr(d))
+				mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		} else {
+			if (in6_localaddr(&inp->inp_faddr6))
+				mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		}
 	}
+#endif /* INET6 */
+	else if (inp && in_localaddr(inp->inp_faddr))
+		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+
+	/* Calculate the value that we offer in TCPOPT_MAXSEG */
+	if (offer != -1) {
+		mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		mssopt = max(tcp_mssdflt, mssopt);
+	}
+
+ out:
 	/*
 	 * The current mss, t_maxseg, is initialized to the default value.
 	 * If we compute a smaller value, reduce the current mss.
@@ -2883,7 +2895,7 @@ tcp_mss(tp, offer)
 	 * unless we received an offer at least that large from peer.
 	 * However, do not accept offers under 32 bytes.
 	 */
-	if (offer)
+	if (offer && offer != -1)
 		mss = min(mss, offer);
 	mss = max(mss, 64);		/* sanity - at least max opt. space */
 	/*
@@ -2953,7 +2965,8 @@ tcp_mss(tp, offer)
 		tp->snd_ssthresh = max(2 * mss, rt->rt_rmx.rmx_ssthresh);
 	}
 #endif /* RTV_MTU */
-	return (mss);
+
+	return (offer != -1 ? mssopt : mss);
 }
 #endif /* TUBA_INCLUDE */
 

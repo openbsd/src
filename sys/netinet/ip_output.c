@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.79 2000/07/29 22:51:22 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.80 2000/09/18 22:06:37 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -545,6 +545,14 @@ ip_output(m0, va_alist)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
+        /*
+         * If we're doing Path MTU discovery, we need to set DF unless
+         * the route's MTU is locked.
+	 */
+	if ((flags & IP_MTUDISC) && ro->ro_rt &&
+	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+		ip->ip_off |= IP_DF;
+		
 #ifdef IPSEC
 	/*
 	 * Check if the packet needs encapsulation.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.40 2000/06/18 07:06:13 itojun Exp $	*/
+/*	$OpenBSD: in.h,v 1.41 2000/09/18 22:06:36 provos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -447,7 +447,9 @@ struct ip_mreq {
 #define IPCTL_IPSEC_FIRSTUSE    24
 #define IPCTL_IPSEC_ENC_ALGORITHM 25
 #define IPCTL_IPSEC_AUTH_ALGORITHM 26
-#define	IPCTL_MAXID		27
+#define	IPCTL_MTUDISC		27	/* allow path MTU discovery */
+#define	IPCTL_MTUDISCTIMEOUT	28	/* allow path MTU discovery */
+#define	IPCTL_MAXID		29
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -477,6 +479,8 @@ struct ip_mreq {
 	{ "ipsec-firstuse", CTLTYPE_INT }, \
 	{ "ipsec-enc-alg", CTLTYPE_STRING }, \
 	{ "ipsec-auth-alg", CTLTYPE_STRING }, \
+	{ "mtudisc", CTLTYPE_INT }, \
+	{ "mtudisctimeout", CTLTYPE_INT }, \
 }
 
 /* INET6 stuff */

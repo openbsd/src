@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.30 2000/07/11 19:18:17 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.31 2000/09/18 22:06:38 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -406,7 +406,8 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		th->th_sum = in_cksum(m, tlen);
 		((struct ip *)ti)->ip_len = tlen;
 		((struct ip *)ti)->ip_ttl = ip_defttl;
-		ip_output(m, NULL, ro, 0, NULL, tp ? tp->t_inpcb : NULL);
+		ip_output(m, NULL, ro, ip_mtudisc ? IP_MTUDISC : 0, NULL,
+			  tp ? tp->t_inpcb : NULL);
 	}
 }
 
@@ -729,10 +730,8 @@ tcp6_ctlinput(cmd, sa, d)
 		return;
 	if (cmd == PRC_QUENCH)
 		notify = tcp_quench;
-#if 0
 	else if (cmd == PRC_MSGSIZE)
 		notify = tcp_mtudisc;
-#endif
 	else if (!PRC_IS_REDIRECT(cmd) &&
 		 ((unsigned)cmd > PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
 		return;
@@ -809,6 +808,8 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
+	else if (cmd == PRC_MSGSIZE && ip_mtudisc)
+		notify = tcp_mtudisc, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
@@ -837,6 +838,52 @@ tcp_quench(inp, errno)
 
 	if (tp)
 		tp->snd_cwnd = tp->t_maxseg;
+}
+
+/*
+ * On receipt of path MTU corrections, flush old route and replace it
+ * with the new one.  Retransmit all unacknowledged packets, to ensure
+ * that all packets will be received.
+ */
+void
+tcp_mtudisc(inp, errno)
+	struct inpcb *inp;
+	int errno;
+{
+	struct tcpcb *tp = intotcpcb(inp);
+	struct rtentry *rt = in_pcbrtentry(inp);
+
+	if (tp != 0) {
+		if (rt != 0) {
+			/*
+			 * If this was not a host route, remove and realloc.
+			 */
+			if ((rt->rt_flags & RTF_HOST) == 0) {
+				in_rtchange(inp, errno);
+				if ((rt = in_pcbrtentry(inp)) == 0)
+					return;
+			}
+
+			/*
+			 * Slow start out of the error condition.  We
+			 * use the MTU because we know it's smaller
+			 * than the previously transmitted segment.
+			 *
+			 * Note: This is more conservative than the
+			 * suggestion in RFC 2414
+			 */
+			if (rt->rt_rmx.rmx_mtu != 0) {
+				tcp_mss(tp, -1);
+				tp->snd_cwnd = rt->rt_rmx.rmx_mtu;
+			}
+		}
+	    
+		/*
+		 * Resend unacknowledged packets.
+		 */
+		tp->snd_nxt = tp->snd_una;
+		tcp_output(tp);
+	}
 }
 
 #ifdef TCP_SIGNATURE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.56 2000/05/15 11:07:33 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.57 2000/09/18 22:06:37 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -76,6 +76,12 @@
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
+#ifndef IPMTUDISC
+#define IPMTUDISC	0
+#endif
+#ifndef IPMTUDISCTIMEOUT
+#define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
+#endif
 
 int encdebug = 0;
 int ipsec_acl = 1;
@@ -107,10 +113,14 @@ int	ipforwarding = IPFORWARDING;
 int	ipsendredirects = IPSENDREDIRECTS;
 int	ip_dosourceroute = 0;	/* no src-routing unless sysctl'd to enable */
 int	ip_defttl = IPDEFTTL;
+int	ip_mtudisc = IPMTUDISC;
+u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+
+struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 int	ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
 int	ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
@@ -224,6 +234,9 @@ ip_init()
 	LIST_INIT(&ipq);
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
+	if (ip_mtudisc != 0)
+		ip_mtudisc_timeout_q = 
+		    rt_timer_queue_create(ip_mtudisc_timeout);
 
 	/* Fill in list of ports not to allocate dynamically. */
 	bzero((void *)&baddynamicports, sizeof(baddynamicports));
@@ -1469,6 +1482,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -1496,6 +1511,24 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_DIRECTEDBCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_directedbcast));
+	case IPCTL_MTUDISC:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_mtudisc);
+		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
+			ip_mtudisc_timeout_q = 
+			    rt_timer_queue_create(ip_mtudisc_timeout);
+		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
+			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
+			ip_mtudisc_timeout_q = NULL;
+		}
+		return error;
+	case IPCTL_MTUDISCTIMEOUT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		   &ip_mtudisc_timeout);
+		if (ip_mtudisc_timeout_q != NULL)
+			rt_timer_queue_change(ip_mtudisc_timeout_q, 
+					      ip_mtudisc_timeout);
+		return (error);
 	case IPCTL_IPPORT_FIRSTAUTO:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ipport_firstauto));

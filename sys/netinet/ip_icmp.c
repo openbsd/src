@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.21 2000/05/15 11:07:32 itojun Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.22 2000/09/18 22:06:37 provos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -91,6 +91,9 @@ static int	ip_next_mtu __P((int, int));
 #else
 /*static*/ int	ip_next_mtu __P((int, int));
 #endif
+
+void icmp_mtudisc __P((struct icmp *));
+void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 
 extern	struct protosw inetsw[];
 
@@ -391,6 +394,8 @@ icmp_input(m, va_alist)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+		if (code == PRC_MSGSIZE && ip_mtudisc)
+			icmp_mtudisc(icp);
 		/*
 		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
 		 * notification to TCP layer.
@@ -711,4 +716,148 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
+}
+
+void
+icmp_mtudisc(icp)
+	struct icmp *icp;
+{
+	struct rtentry *rt;
+	struct sockaddr *dst = sintosa(&icmpsrc);
+	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
+	int    error;
+
+	/* Table of common MTUs: */
+
+	static u_short mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
+				      4352, 2002, 1492, 1006, 508, 296, 68, 0};
+    
+	rt = rtalloc1(dst, 1);
+	if (rt == 0)
+		return;
+    
+	/* If we didn't get a host route, allocate one */
+    
+	if ((rt->rt_flags & RTF_HOST) == 0) {
+		struct rtentry *nrt;
+
+		error = rtrequest((int) RTM_ADD, dst, 
+		    (struct sockaddr *) rt->rt_gateway,
+		    (struct sockaddr *) 0, 
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		if (error) {
+			rtfree(rt);
+			rtfree(nrt);
+			return;
+		}
+		nrt->rt_rmx = rt->rt_rmx;
+		rtfree(rt);
+		rt = nrt;
+	}
+	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
+	if (error) {
+		rtfree(rt);
+		return;
+	}
+
+	if (mtu == 0) {
+		int i = 0;
+
+		mtu = icp->icmp_ip.ip_len; /* NTOHS happened in deliver: */
+		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
+		if (mtu > rt->rt_rmx.rmx_mtu && rt->rt_rmx.rmx_mtu != 0)
+			mtu -= (icp->icmp_ip.ip_hl << 2);
+
+		/* If we still can't guess a value, try the route */
+
+		if (mtu == 0) {
+			mtu = rt->rt_rmx.rmx_mtu;
+
+			/* If no route mtu, default to the interface mtu */
+
+			if (mtu == 0)
+				mtu = rt->rt_ifp->if_mtu;
+		}
+
+		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
+			if (mtu > mtu_table[i]) {
+				mtu = mtu_table[i];
+				break;
+			}
+	}
+
+	/*
+	 * XXX:   RTV_MTU is overloaded, since the admin can set it
+	 *	  to turn off PMTU for a route, and the kernel can
+	 *	  set it to indicate a serious problem with PMTU
+	 *	  on a route.  We should be using a separate flag
+	 *	  for the kernel to indicate this.
+	 */
+
+	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+		if (mtu < 296 || mtu > rt->rt_ifp->if_mtu)
+			rt->rt_rmx.rmx_locks |= RTV_MTU;
+		else if (rt->rt_rmx.rmx_mtu > mtu || 
+			 rt->rt_rmx.rmx_mtu == 0)
+			rt->rt_rmx.rmx_mtu = mtu;
+	}
+
+	if (rt)
+		rtfree(rt);
+}
+
+/*
+ * Return the next larger or smaller MTU plateau (table from RFC 1191)
+ * given current value MTU.  If DIR is less than zero, a larger plateau
+ * is returned; otherwise, a smaller value is returned.
+ */
+int
+ip_next_mtu(mtu, dir)	/* XXX */
+	int mtu;
+	int dir;
+{
+	static u_short mtutab[] = {
+		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
+		68, 0
+	};
+	int i;
+
+	for (i = 0; i < (sizeof mtutab) / (sizeof mtutab[0]); i++) {
+		if (mtu >= mtutab[i])
+			break;
+	}
+
+	if (dir < 0) {
+		if (i == 0) {
+			return 0;
+		} else {
+			return mtutab[i - 1];
+		}
+	} else {
+		if (mtutab[i] == 0) {
+			return 0;
+		} else if(mtu > mtutab[i]) {
+			return mtutab[i];
+		} else {
+			return mtutab[i + 1];
+		}
+	}
+}
+
+void
+icmp_mtudisc_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp_mtudisc_timeout:  bad route to timeout");
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	    (RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+	} else {
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+			rt->rt_rmx.rmx_mtu = 0;
+		}
+	}
 }

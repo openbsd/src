@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.42 2000/04/27 09:23:21 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.43 2000/09/18 22:06:37 provos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -857,6 +857,43 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 		}
 	}
 	return (match);
+}
+
+struct rtentry *
+in_pcbrtentry(inp)
+	struct inpcb *inp;
+{
+	struct route *ro;
+
+	ro = &inp->inp_route;
+
+	/*
+	 * No route yet, so try to acquire one.
+	 */
+	if (ro->ro_rt == NULL) {
+		switch(sotopf(inp->inp_socket)) {
+#ifdef INET6
+		case PF_INET6:
+			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+				break;
+			ro->ro_dst.sa_family = AF_INET6;
+			ro->ro_dst.sa_len = sizeof(struct sockaddr_in6);
+			((struct sockaddr_in6 *) &ro->ro_dst)->sin6_addr =
+			    inp->inp_faddr6;
+			rtalloc(ro);
+			break;
+#endif /* INET6 */
+		case PF_INET:
+			if (inp->inp_faddr.s_addr != INADDR_ANY)
+				break;
+			ro->ro_dst.sa_family = AF_INET;
+			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
+			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
+			rtalloc(ro);
+			break;
+		}
+	}
+	return (ro->ro_rt);
 }
 
 struct sockaddr_in *

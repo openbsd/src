@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.31 2000/09/05 21:57:41 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.32 2000/09/18 22:06:38 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1033,7 +1033,9 @@ send:
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
 		}
 		error = ip_output(m, tp->t_inpcb->inp_options,
-			&tp->t_inpcb->inp_route, so->so_options & SO_DONTROUTE,
+			&tp->t_inpcb->inp_route,
+			(ip_mtudisc ? IP_MTUDISC : 0) |
+				  (so->so_options & SO_DONTROUTE),
 			0, tp->t_inpcb);
 		break;
 #endif /* INET */

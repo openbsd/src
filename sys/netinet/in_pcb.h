@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.25 2000/06/18 17:32:48 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.26 2000/09/18 22:06:37 provos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -260,6 +260,8 @@ void	 in_setsockaddr __P((struct inpcb *, struct mbuf *));
 int	 in_baddynamic __P((u_int16_t, u_int16_t));
 extern struct sockaddr_in *in_selectsrc __P((struct sockaddr_in *,
 	struct route *, int, struct ip_moptions *, int *));
+struct rtentry *
+	in_pcbrtentry __P((struct inpcb *));
 
 /* INET6 stuff */
 int	in6_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
