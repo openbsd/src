@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:44:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/04/11 09:46:40 deraadt Exp $
 
+LDSTATIC=	${STATIC}
 PROG=	pwd_mkdb
 SRCS=	pwd_mkdb.c getpwent.c
 MAN=	pwd_mkdb.8
