@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.h,v 1.2 1999/08/26 22:28:33 niklas Exp $	*/
-/*	$EOM: policy.h,v 1.4 1999/08/26 11:36:47 niklas Exp $ */
+/*	$OpenBSD: policy.h,v 1.3 2000/02/20 16:30:20 niklas Exp $	*/
+/*	$EOM: policy.h,v 1.5 2000/02/19 07:46:33 niklas Exp $ */
 
 /*
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
@@ -68,6 +68,8 @@ extern int (*lk_kn_init) (void);
 extern char **(*lk_kn_read_asserts) (char *, int, int *);
 extern int (*lk_kn_remove_authorizer) (int, char *);
 #endif /* HAVE_DLOPEN && !USE_KEYNOTE */
+
+extern int keynote_sessid;
 
 extern void policy_init (void);
 
