@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.38 2000/06/26 06:14:49 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.39 2000/07/22 02:58:18 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -66,6 +66,7 @@ vendor DAYNA			0x0194	Dayna
 vendor RAYTHEON			0x01a6	Raytheon
 vendor BAY			0x01eb	Bay Networks
 vendor IODATA			0x01bf	I-O DATA
+vendor FARALLON			0x0200	Farallon Communications
 vendor NOKIA			0x023d	Nokia Communications
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -128,6 +129,9 @@ product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
 /* Dual */
 product DUAL NE2000		0x0100 Dual NE2000
+
+/* Farallon Communications */
+product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 
 /* Fujitsu */
 product FUJITSU SCSI600		0x0401 Fujitsu 600
