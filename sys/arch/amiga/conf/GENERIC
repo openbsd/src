@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2000/09/02 13:45:39 espie Exp $
+#	$OpenBSD: GENERIC,v 1.33 2000/11/08 11:53:53 art Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -34,7 +34,7 @@ option		M68030		# support for 030
 option		M68020		# support for 020/851
 option		FPU_EMULATE	# FPU emulation
 
-#option		UVM		# use the UVM virtual memory system
+option		UVM		# use the UVM virtual memory system
 
 #
 # File systems
