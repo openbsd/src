@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ioctl.c,v 1.6 1996/08/01 00:50:52 niklas Exp $	 */
+/*	$OpenBSD: svr4_ioctl.c,v 1.7 1997/11/04 07:45:34 niklas Exp $	 */
 /*	$NetBSD: svr4_ioctl.c,v 1.16 1996/04/11 12:54:41 christos Exp $	 */
 
 /*
@@ -50,6 +50,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ioctl.h>
+#include <compat/svr4/svr4_jioctl.h>
 #include <compat/svr4/svr4_termios.h>
 #include <compat/svr4/svr4_ttold.h>
 #include <compat/svr4/svr4_filio.h>
@@ -137,13 +138,17 @@ svr4_sys_ioctl(p, v, retval)
 		fun = svr4_sock_ioctl;
 		break;
 
+	case SVR4_jIOC:
+		fun = svr4_jerq_ioctl;
+		break;
+
 	case SVR4_XIOC:
 		/* We do not support those */
-		return EINVAL;
+		return (EINVAL);
 
 	default:
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
-		return 0;	/* XXX: really ENOSYS */
+		return (0);	/* XXX: really ENOSYS */
 	}
 	return (*fun)(fp, p, retval, SCARG(uap, fd), cmd, SCARG(uap, data));
 }

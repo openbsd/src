@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ioctl.h,v 1.3 1996/08/01 00:50:52 niklas Exp $	*/
+/*	$OpenBSD: svr4_ioctl.h,v 1.4 1997/11/04 07:45:35 niklas Exp $	*/
 /*	$NetBSD: svr4_ioctl.h,v 1.5 1996/04/11 12:54:43 christos Exp $	 */
 
 /*
@@ -57,6 +57,8 @@ int	svr4_ttold_ioctl     __P((struct file *, struct proc *, register_t *,
 int	svr4_fil_ioctl	     __P((struct file *, struct proc *, register_t *,
 				  int, u_long, caddr_t));
 int	svr4_sock_ioctl	     __P((struct file *, struct proc *, register_t *,
+				  int, u_long, caddr_t));
+int	svr4_jerq_ioctl	     __P((struct file *, struct proc *, register_t *,
 				  int, u_long, caddr_t));
 
 #endif /* !_SVR4_IOCTL_H_ */
