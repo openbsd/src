@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.24 1999/05/07 21:24:33 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.25 1999/06/29 17:14:35 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.35 1999/05/04 20:52:30 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.40 1999/06/01 19:04:23 wpaul Exp $
  */
 
 /*
@@ -51,6 +51,7 @@
  * 3Com 3c900B-FL	10Mbps/Fiber-optic
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
  * 3Com 3c900-FL	10Mbps FL Fiber-optic
+ * 3Com 3c905C-TX	10/100Mbs/RJ45
  * 3Com 3c980-TX	10/100Mbps server adapter
  * 3Com 3c905B-FX	100Mbs FX Fiber-optic
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45
@@ -154,13 +155,6 @@
 #include <pci/pcivar.h>
 #endif
 
-#ifdef __OpenBSD__
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
-#endif
-#endif
-
 /*
  * The following #define causes the code to use PIO to access the
  * chip's registers instead of memory mapped mode. The reason PIO mode
@@ -201,7 +195,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.35 1999/05/04 20:52:30 wpaul Exp $";
+	"$FreeBSD: if_xl.c,v 1.40 1999/06/01 19:04:23 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -233,6 +227,8 @@ static struct xl_type xl_devs[] = {
 		"3Com 3c905B-FX/SC Fast Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100_COMBO,
 		"3Com 3c905B-COMBO Fast Etherlink XL" },
+	{ TC_VENDORID, TC_DEVICEID_TORNADO_10_100BT,
+	        "3Com 3c905C-TX Fast Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_HURRICANE_10_100BT_SERV,
 		"3Com 3c980 Fast Etherlink XL" },
 	{ TC_VENDORID, TC_DEVICEID_HURRICANE_SOHO100TX,
@@ -1409,7 +1405,8 @@ static void xl_mediacheck(sc)
 		break;
 	case TC_DEVICEID_HURRICANE_10_100BT:	/* 3c905B-TX */
 	case TC_DEVICEID_HURRICANE_10_100BT_SERV:/* 3c980-TX */
-	case TC_DEVICEID_HURRICANE_SOHO100TX:	/* 3c980-TX */
+	case TC_DEVICEID_HURRICANE_SOHO100TX:	/* 3cSOHO100-TX */
+	case TC_DEVICEID_TORNADO_10_100BT:	/* 3c905C-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
 		sc->xl_xcvr = XL_XCVR_AUTO;
 		printf("xl%d: guessing 10/100 internal\n", sc->xl_unit);
@@ -1522,9 +1519,9 @@ xl_attach(config_id, unit)
 	if (!pci_map_port(config_id, XL_PCI_LOIO,
 				(u_short *)&(sc->xl_bhandle))) {
 		printf ("xl%d: couldn't map port\n", unit);
-		printf ("xl%d: WARNING: this shouldn't happen! "
-		    "Possible PCI support code bug!", unit);
-		printf ("xl%d: attempting to map iobase manually", unit);
+		printf ("xl%d: WARNING: check your BIOS and "
+		    "set 'Plug & Play OS' to 'no'\n", unit);
+		printf ("xl%d: attempting to map iobase manually\n", unit);
 		sc->xl_bhandle =
 		    pci_conf_read(config_id, XL_PCI_LOIO) & 0xFFFFFFE0;
 		/*goto fail;*/
@@ -3014,11 +3011,7 @@ static struct pci_device xl_device = {
 	&xl_count,
 	NULL
 };
-#ifdef COMPAT_PCI_DRIVER
 COMPAT_PCI_DRIVER(xl, xl_device);
-#else
-DATA_SET(pcidevice_set, xl_device);
-#endif /* COMPAT_PCI_DRIVER */
 #endif
 
 #ifdef __OpenBSD__
@@ -3048,6 +3041,7 @@ xl_probe(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C905BCOMBO:
 	case PCI_PRODUCT_3COM_3C905BFX:
 	case PCI_PRODUCT_3COM_3C980TX:
+	case PCI_PRODUCT_3COM_3C905CTX:
 		return (1);
 	}
 					

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.11 1999/05/07 21:24:34 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.12 1999/06/29 17:14:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xlreg.h,v 1.14 1999/04/30 16:15:43 wpaul Exp $
+ *	$FreeBSD: if_xlreg.h,v 1.17 1999/05/30 18:09:17 wpaul Exp $
  */
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
@@ -559,6 +559,7 @@ struct xl_softc {
 	u_int8_t		xl_want_auto;
 	u_int8_t		xl_autoneg;
 	u_int8_t		xl_stats_no_timeout;
+	u_int16_t		xl_tx_thresh;
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
@@ -632,6 +633,7 @@ struct xl_stats {
 #define TC_DEVICEID_CYCLONE_10_100BT4		0x9056
 #define TC_DEVICEID_CYCLONE_10_100_COMBO	0x9058
 #define TC_DEVICEID_CYCLONE_10_100FX		0x905A
+#define TC_DEVICEID_TORNADO_10_100BT		0x9200
 #define TC_DEVICEID_HURRICANE_10_100BT_SERV	0x9800
 #define TC_DEVICEID_HURRICANE_SOHO100TX		0x7646
 
@@ -816,3 +818,8 @@ struct xl_stats {
 #define PHY_BMSR_LINKSTAT		0x0004
 #define PHY_BMSR_JABBER			0x0002
 #define PHY_BMSR_EXTENDED		0x0001
+
+#ifdef __alpha__
+#undef vtophys
+#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
+#endif
