@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2003/03/10 03:48:16 david Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2003/04/04 23:12:02 deraadt Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -829,7 +829,7 @@ remove_temps(tp)
 				    APERM);
 				memset(t, 0, sizeof(struct temp));
 				t->name = (char *) &t[1];
-				strcpy(t->name, tp->name);
+				strlcpy(t->name, tp->name, strlen(tp->name) + 1);
 				t->next = delayed_remove;
 				delayed_remove = t;
 			}

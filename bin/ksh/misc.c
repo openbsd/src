@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.14 2003/03/13 09:03:07 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.15 2003/04/04 23:12:02 deraadt Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -83,7 +83,17 @@ str_save(s, ap)
 	register const char *s;
 	Area *ap;
 {
-	return s ? strcpy((char*) alloc((size_t)strlen(s)+1, ap), s) : NULL;
+	size_t len;
+	char *p;
+
+	if (!s)
+		return NULL;
+	len = strlen(s)+1;
+	p = alloc(len, ap);
+	if (!p)
+		return NULL;
+	strlcpy(p, s, len+1);
+	return (p);
 }
 
 /* Allocate a string of size n+1 and copy upto n characters from the possibly
