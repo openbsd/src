@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.3 1998/11/15 00:59:11 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.4 1998/11/15 01:09:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -57,9 +57,7 @@ static u_int8_t *pre_shared_gen_skeyid (struct exchange *, size_t *);
 static u_int8_t *sig_gen_skeyid (struct exchange *, size_t *);
 
 static int pre_shared_decode_hash (struct message *);
-static int rsa_sig_decode_hash (struct message *);
 static int pre_shared_encode_hash (struct message *);
-static int rsa_sig_encode_hash (struct message *);
 
 static int ike_auth_hash (struct exchange *, u_int8_t *);
 
@@ -147,42 +145,6 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
 
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
-  prf->Final (skeyid, prf->prfctx);
-  prf_free (prf);
-
-  return skeyid;
-}
-
-/*
- * Both standard and revised RSA encryption authentication uses this SKEYID
- * computation.
- */
-static u_int8_t *
-enc_gen_skeyid (struct exchange *exchange, size_t *sz)
-{
-  struct prf *prf;
-  struct ipsec_exch *ie = exchange->data;
-  struct hash *hash = ie->hash;
-  u_int8_t *skeyid;
-
-  hash->Init (hash->ctx);
-  hash->Update (hash->ctx, exchange->nonce_i, exchange->nonce_i_len);
-  hash->Update (hash->ctx, exchange->nonce_r, exchange->nonce_r_len);
-  hash->Final (hash->digest, hash->ctx);
-  prf = prf_alloc (ie->prf_type, hash->type, hash->digest, *sz);
-  if (!prf)
-    return 0;
-
-  *sz = prf->blocksize;
-  skeyid = malloc (*sz);
-  if (!skeyid)
-    {
-      prf_free (prf);
-      return 0;
-    }
-
-  prf->Init (prf->prfctx);
-  prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
   prf->Final (skeyid, prf->prfctx);
   prf_free (prf);
 
