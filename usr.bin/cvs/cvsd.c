@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.15 2004/12/09 22:07:40 xsa Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.16 2004/12/14 19:53:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -132,7 +132,7 @@ usage(void)
 	    "\t-p\t\tPerform repository sanity check on startup\n"
 	    "\t-r root\t\tUse <root> as the root directory of the repository\n"
 	    "\t-s path\t\tUse <path> as the path for the CVS server socket\n"
-	    "\t-u user\tUse user <user> for privilege revocation\n"
+	    "\t-u user\t\tUse user <user> for privilege revocation\n"
 	    "\t-v\t\tBe verbose\n",
 	    __progname);
 }
