@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.15 1998/04/27 02:02:57 mickey Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.16 1999/01/04 03:00:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.15 1998/04/27 02:02:57 mickey Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.16 1999/01/04 03:00:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -572,7 +572,8 @@ callit(rqstp, xprt)
 	struct pmaplist *pml;
 	u_short port;
 	struct sockaddr_in me;
-	int pid, so = -1, dontblock = 1;
+	pid_t pid;
+	int so = -1, dontblock = 1;
 	CLIENT *client;
 	struct authunix_parms *au = (struct authunix_parms *)rqstp->rq_clntcred;
 	struct timeval timeout;
