@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.2 2004/02/11 07:09:22 deraadt Exp $	*/
 /*	$NetBSD: syscall.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -44,7 +44,8 @@
 #include "SYS.h"
 
 SYSENTRY(syscall)
-	movl	%edi,%eax
+	movq	$0,%rax
+	movq	%rcx,%r10
 	syscall
 	jc	err
 	ret
