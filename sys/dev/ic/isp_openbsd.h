@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.20 2002/03/06 16:42:43 jason Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.21 2002/05/17 01:33:24 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -113,7 +113,7 @@ struct isposinfo {
 
 #define	INLINE			inline
 
-#define	ISP2100_SCRLEN		0x400
+#define	ISP2100_SCRLEN		0x800
 
 #define	MEMZERO			bzero
 #define	MEMCPY(dst, src, amt)	bcopy((src), (dst), (amt))
@@ -184,6 +184,9 @@ default:							\
 	isp->isp_mboxbsy = 0
 
 #define	MBOX_RELEASE(isp)
+
+#define	FC_SCRATCH_ACQUIRE(isp)
+#define	FC_SCRATCH_RELEASE(isp)
 
 #ifndef	SCSI_GOOD
 #define	SCSI_GOOD	0x0
@@ -303,10 +306,10 @@ default:							\
 void isp_attach(struct ispsoftc *);
 void isp_uninit(struct ispsoftc *);
 
-static inline void isp_lock(struct ispsoftc *);
-static inline void isp_unlock(struct ispsoftc *);
-static inline char *strncat(char *, const char *, size_t);
-static inline u_int64_t
+static INLINE void isp_lock(struct ispsoftc *);
+static INLINE void isp_unlock(struct ispsoftc *);
+static INLINE char *strncat(char *, const char *, size_t);
+static INLINE u_int64_t
 isp_microtime_sub(struct timeval *, struct timeval *);
 static void isp_wait_complete(struct ispsoftc *);
 
@@ -342,9 +345,9 @@ static void isp_wait_complete(struct ispsoftc *);
 #define	XS_CMD_S_CLEAR(xs)	(xs)->flags &= ~XS_PSTS_ALL
 
 /*
- * Platform specific 'inline' or support functions
+ * Platform specific 'INLINE' or support functions
  */
-static inline void
+static INLINE void
 isp_lock(struct ispsoftc *isp)
 {
 	int s = splbio();
@@ -355,7 +358,7 @@ isp_lock(struct ispsoftc *isp)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unlock(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.islocked-- <= 1) {
@@ -364,7 +367,7 @@ isp_unlock(struct ispsoftc *isp)
 	}
 }
 
-static inline char *
+static INLINE char *
 strncat(char *d, const char *s, size_t c)
 {
         char *t = d;
@@ -382,7 +385,7 @@ strncat(char *d, const char *s, size_t c)
         return (t);
 }
 
-static inline u_int64_t
+static INLINE u_int64_t
 isp_microtime_sub(struct timeval *b, struct timeval *a)
 {
 	struct timeval x;
@@ -394,12 +397,18 @@ isp_microtime_sub(struct timeval *b, struct timeval *a)
 	return (elapsed);
 }
 
-static inline void
+static INLINE void
 isp_wait_complete(struct ispsoftc *isp)
 {
+	int delaytime;
+	if (isp->isp_mbxwrk0)
+		delaytime = 60;
+	else
+		delaytime = 5;
 	if (MUST_POLL(isp)) {
 		int usecs = 0;
-		while (usecs < 5 * 1000000) {
+		delaytime *= 1000000;	/* convert to usecs */
+		while (usecs < delaytime) {
 			u_int16_t isr, sema, mbox;
 			if (isp->isp_mboxbsy == 0) {
 				break;
@@ -423,7 +432,7 @@ isp_wait_complete(struct ispsoftc *isp)
                 isp->isp_osinfo.mboxwaiting = 1;
                 while (isp->isp_osinfo.mboxwaiting && rv == 0) {
 			rv = tsleep(&isp->isp_osinfo.mboxwaiting,
-			    PRIBIO, "isp_mboxcmd", 5 * hz);
+			    PRIBIO, "isp_mboxcmd", delaytime * hz);
 		}
 		if (rv == EWOULDBLOCK) {
 			isp->isp_mboxbsy = 0;
@@ -436,7 +445,7 @@ isp_wait_complete(struct ispsoftc *isp)
 }
 
 /*
- * Common inline functions
+ * Common INLINE functions
  */
 #include <dev/ic/isp_inline.h>
 
