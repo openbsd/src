@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.17 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.18 2004/10/31 06:59:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -102,7 +102,8 @@ brgphy_probe(struct device *parent, void *match, void *aux)
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5703 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5704 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5705))
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5705 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5750))
 		return(10);
 
 	return(0);
@@ -133,6 +134,8 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 		model = MII_STR_xxBROADCOM_BCM5704;
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5705)
 		model = MII_STR_xxBROADCOM_BCM5705;
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5750)
+		model = MII_STR_xxBROADCOM_BCM5750;
 
 	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
@@ -238,23 +241,6 @@ setit:
 
 			if (sc->mii_model != MII_MODEL_xxBROADCOM_BCM5701)
  				break;
-
-			/*
-			 * On IFM_1000_X only,
-			 * when setting the link manually, one side must
-			 * be the master and the other the slave. However
-			 * ifmedia doesn't give us a good way to specify
-			 * this, so we fake it by using one of the LINK
-			 * flags. If LINK0 is set, we program the PHY to
-			 * be a master, otherwise it's a slave.
-			 */
-			if ((mii->mii_ifp->if_flags & IFF_LINK0)) {
-				PHY_WRITE(sc, BRGPHY_MII_1000CTL,
-				    gig|BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC);
-			} else {
-				PHY_WRITE(sc, BRGPHY_MII_1000CTL,
-				    gig|BRGPHY_1000CTL_MSE);
-			}
 			break;
 		default:
 			return (EINVAL);
@@ -504,6 +490,18 @@ static const struct bcm_dspcode bcm5704_dspcode[] = {
 	{ 0,				0 },
 };
 
+static const struct bcm_dspcode bcm5750_dspcode[] = {
+	{ 0x18,				0x0c00 },
+	{ 0x17,				0x000a },
+	{ 0x15,				0x310b },
+	{ 0x17,				0x201f },
+	{ 0x15,				0x9506 },
+	{ 0x17,				0x401f },
+	{ 0x15,				0x14e2 },
+	{ 0x18,				0x0400 },
+	{ 0,				0 },
+};
+
 void
 brgphy_load_dspcode(struct mii_softc *sc)
 {
@@ -529,6 +527,9 @@ brgphy_load_dspcode(struct mii_softc *sc)
 		break;
 	case MII_MODEL_xxBROADCOM_BCM5704:
 		dsp = bcm5704_dspcode;
+		break;
+	case MII_MODEL_xxBROADCOM_BCM5750:
+		dsp = bcm5750_dspcode;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.11 2004/09/28 04:37:32 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.12 2004/10/31 06:59:25 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -170,6 +170,10 @@
 #define BGE_PCI_MSI_ADDR_LO		0x60
 #define BGE_PCI_MSI_DATA		0x64
 
+/* PCI MSI. ??? */
+#define BGE_PCIE_CAPID_REG		0xD0
+#define BGE_PCIE_CAPID			0x10
+
 /*
  * PCI registers specific to the BCM570x family.
  */
@@ -235,6 +239,8 @@
 #define BGE_CHIPID_BCM5705_A1		0x30010000
 #define BGE_CHIPID_BCM5705_A2		0x30020000
 #define BGE_CHIPID_BCM5705_A3		0x30030000
+#define BGE_CHIPID_BCM5750_A0		0x40000000
+#define BGE_CHIPID_BCM5750_A1		0x40010000
 
 /* shorthand one */
 #define BGE_ASICREV(x)			((x) >> 28)
@@ -243,6 +249,7 @@
 #define BGE_ASICREV_BCM5703		0x01
 #define BGE_ASICREV_BCM5704		0x02
 #define BGE_ASICREV_BCM5705		0x03
+#define BGE_ASICREV_BCM5750		0x04
 
 /* chip revisions */
 #define BGE_CHIPREV(x)			((x) >> 24)
@@ -2199,6 +2206,7 @@ struct bge_softc {
 	u_int8_t		bge_asicrev;
 	u_int8_t		bge_chiprev;
 	u_int8_t		bge_no_3_led;
+	u_int8_t		bge_pcie;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
