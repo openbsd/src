@@ -18,8 +18,17 @@ divert(-1)
 
 divert(0)dnl
 include(`../m4/cf.m4')
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.2 $')
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.3 $')
 OSTYPE(openbsd)
 FEATURE(nouucp)
 MAILER(local)
 MAILER(smtp)
+dnl
+dnl Enforce valid Message-Id to help stop spammers
+dnl
+LOCAL_RULESETS
+HMessage-Id: $>CheckMessageId
+
+SCheckMessageId
+R< $+ @ $+ >		$@ OK
+R$*			$#error $: 553 Header Error
