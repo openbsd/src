@@ -1,6 +1,6 @@
 <CHRP-BOOT>
 <LICENSE>
-/*      $OpenBSD: bsd.tbxi,v 1.9 2003/08/11 14:52:43 deraadt Exp $      */
+/*      $OpenBSD: bsd.tbxi,v 1.10 2003/08/27 03:10:17 drahn Exp $      */
 /*
  * Copyright (c) 2001 Dale Rahn.
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 </LICENSE>
 <COMPATIBLE>
-MacRISC
+MacRISC MacRISC3
 </COMPATIBLE>
 <DESCRIPTION>
 OpenBSD/macppc bootloader
