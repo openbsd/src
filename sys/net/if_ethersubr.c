@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.57 2001/09/20 18:55:55 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.58 2001/10/03 11:34:38 art Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -382,11 +382,12 @@ ether_output(ifp, m0, dst, rt0)
 		 * passed to us by value, we m_copy() the first mbuf,
 		 * and use it for our llc header.
 		 */
-		if ( aa->aa_flags & AFA_PHASE2 ) {
+		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
 
-			/* XXX Really this should use netisr too */
-			M_PREPEND(m, AT_LLC_SIZE, M_WAIT);
+			M_PREPEND(m, AT_LLC_SIZE, M_DONTWAIT);
+			if (m == NULL)
+				return (0);
 			/*
 			 * FreeBSD doesn't count the LLC len in
 			 * ifp->obytes, so they increment a length
