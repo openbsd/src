@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.17 2000/01/13 06:42:26 angelos Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.18 2000/01/13 22:55:48 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.19 1999/07/16 00:29:11 niklas Exp $	*/
 
 /*
@@ -1167,11 +1167,13 @@ int
 pf_key_v2_enable_sa (struct sa *sa)
 {
   struct ipsec_sa *isa = sa->data;
-  struct sockaddr *dst;
+  struct sockaddr *dst, *src;
   int dstlen, error;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
+  in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  sa->transport->vtbl->get_src (sa->transport, &src, &dstlen);
 
   error = pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
 			  isa->dst_mask, proto->spi[0], proto->proto,
@@ -1182,13 +1184,21 @@ pf_key_v2_enable_sa (struct sa *sa)
 
   /* Ingress flow */
   while (TAILQ_NEXT(proto, link))
-    proto = TAILQ_NEXT(proto, link);
-
-  sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+  {
+      error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			     hostmask,
+			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			     hostmask, proto->spi[1], proto->proto,
+			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			     0, 1);
+      if (error)
+	return error;
+      proto = TAILQ_NEXT(proto, link);
+  }
 
   return pf_key_v2_flow(isa->dst_net, isa->dst_mask, isa->src_net,
 			isa->src_mask, proto->spi[1], proto->proto,
-			((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
+			((struct sockaddr_in *)src)->sin_addr.s_addr, 0, 1);
 }
 
 /* Disable a flow given a SA.  */
@@ -1196,11 +1206,13 @@ static int
 pf_key_v2_disable_sa (struct sa *sa)
 {
   struct ipsec_sa *isa = sa->data;
-  struct sockaddr *dst;
+  struct sockaddr *dst, *src;
   int dstlen, error;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
+  in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  sa->transport->vtbl->get_src (sa->transport, &src, &dstlen);
 
   error = pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
 			  isa->dst_mask, proto->spi[0], proto->proto,
@@ -1210,13 +1222,21 @@ pf_key_v2_disable_sa (struct sa *sa)
 
   /* Ingress flow */
   while (TAILQ_NEXT(proto, link))
-    proto = TAILQ_NEXT(proto, link);
-
-  sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+  {
+      error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			     hostmask,
+			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			     hostmask, proto->spi[1], proto->proto,
+			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			     1, 1);
+      if (error)
+	return error;
+      proto = TAILQ_NEXT(proto, link);
+  }
 
   return pf_key_v2_flow(isa->dst_net, isa->dst_mask, isa->src_net,
 			isa->src_mask, proto->spi[1], proto->proto,
-			((struct sockaddr_in *)dst)->sin_addr.s_addr, 1, 1);
+			((struct sockaddr_in *)src)->sin_addr.s_addr, 1, 1);
 }
 
 /*
