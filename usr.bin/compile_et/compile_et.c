@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.7 2000/12/24 11:48:57 aaron Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.8 2000/12/24 11:52:12 aaron Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -80,7 +80,7 @@ generate_c(void)
 
 	fprintf(c_file, "/* Generated from %s */\n", filename);
 	if (id_str) 
-		frintf(c_file, "/* %s */\n", id_str);
+		fprintf(c_file, "/* %s */\n", id_str);
 
 	fprintf(c_file, "\n");
 	fprintf(c_file, "#include <stddef.h>\n");
