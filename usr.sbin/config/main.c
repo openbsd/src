@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2002/06/14 21:35:01 todd Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2002/07/14 02:59:41 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -211,13 +211,15 @@ main(argc, argv)
 	last_component = strrchr(conffile, '/');
 	last_component = (last_component) ? last_component + 1 : conffile;
 	if (pflag) {
-		p  = emalloc(strlen(last_component) + 17);
-		(void)sprintf(p, "../compile/%s.PROF", last_component);
+		int len = strlen(last_component) + 17;
+		p  = emalloc(len);
+		(void)snprintf(p, len, "../compile/%s.PROF", last_component);
 		(void)addmkoption(intern("PROF"), "-pg");
 		(void)addoption(intern("GPROF"), NULL);
 	} else {
-		p = emalloc(strlen(last_component) + 13);
-		(void)sprintf(p, "../compile/%s", last_component);
+		int len = strlen(last_component) + 13;
+		p = emalloc(len);
+		(void)snprintf(p, len, "../compile/%s", last_component);
 	}
 	defbuilddir = (argc == 0) ? "." : p;
 

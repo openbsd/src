@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.2 2002/07/14 02:59:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: misc.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.2 2002/07/14 02:59:41 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -59,9 +59,9 @@ ask_cmd(cmd)
 	buf = &buf[strspn(buf, " \t")];
 	cp = &buf[strcspn(buf, " \t")];
 	*cp++ = '\0';
-	strncpy(cmd->cmd, buf, 10);
+	strlcpy(cmd->cmd, buf, sizeof cmd->cmd);
 	buf = &cp[strspn(cp, " \t")];
-	strncpy(cmd->args, buf, 100);
+	strlcpy(cmd->args, buf, sizeof cmd->args);
 
 	return (0);
 }

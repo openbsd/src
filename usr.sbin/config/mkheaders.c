@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkheaders.c,v 1.13 2002/05/29 09:45:39 deraadt Exp $	*/
+/*	$OpenBSD: mkheaders.c,v 1.14 2002/07/14 02:59:41 deraadt Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
@@ -132,22 +132,31 @@ emitopt(nv)
 {
 	struct nvlist *option;
 	char new_contents[BUFSIZ], buf[BUFSIZ];
-	char fname[BUFSIZ], *p;
+	char fname[BUFSIZ], totlen;
 	int nlines;
 	FILE *fp;
 
 	/*
 	 * Generate the new contents of the file.
 	 */
-	p = new_contents;
 	if ((option = ht_lookup(opttab, nv->nv_str)) == NULL)
-		p += sprintf(p, "/* option `%s' not defined */\n",
+		totlen = snprintf(new_contents, sizeof new_contents,
+		    "/* option `%s' not defined */\n",
 		    nv->nv_str);
 	else {
-		p += sprintf(p, "#define\t%s", option->nv_name);
 		if (option->nv_str != NULL)
-			p += sprintf(p, "\t%s", option->nv_str);
-		p += sprintf(p, "\n");
+			totlen = snprintf(new_contents, sizeof new_contents,
+			    "#define\t%s\t%s\n",
+			    option->nv_name, option->nv_str);
+		else
+			totlen = snprintf(new_contents, sizeof new_contents,
+			    "#define\t%s\n",
+			    option->nv_name);
+	}
+
+	if (totlen >= sizeof new_contents) {
+		fprintf(stderr, "config: string too long\n");
+		return (1);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.10 2002/05/02 12:59:54 miod Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.11 2002/07/14 02:59:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.10 2002/05/02 12:59:54 miod Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.11 2002/07/14 02:59:41 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -1355,7 +1355,7 @@ again:
 			printf("Invalid command '%s'.  Try 'help'.\n", cmd.cmd);
 			continue;
 		} else
-			strcpy(cmd.cmd, cmd_table[i].cmd);
+			strlcpy(cmd.cmd, cmd_table[i].cmd, sizeof cmd.cmd);
 
 		/* Call function */
 		st = cmd_table[i].fcn(&cmd);

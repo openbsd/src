@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2002/07/14 02:59:41 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -101,9 +101,10 @@ sourcepath(file)
 	const char *file;
 {
 	char *cp;
+	int len = strlen(srcdir) + 1 + strlen(file) + 1;
 
-	cp = emalloc(strlen(srcdir) + 1 + strlen(file) + 1);
-	(void)sprintf(cp, "%s/%s", srcdir, file);
+	cp = emalloc(len);
+	(void)snprintf(cp, len, "%s/%s", srcdir, file);
 	return (cp);
 }
 
