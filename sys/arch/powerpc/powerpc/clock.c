@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 1998/08/25 07:46:58 pefo Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #include <sys/kernel.h>
 
 #include <machine/pio.h>
+
+#include <powerpc/pci/mpc106reg.h>
 
 void resettodr();
 /*
@@ -330,7 +332,7 @@ power4e_getclock(sec, min, hour, day, mon, year)
 	int *mon;
 	int *year;
 {
-	int clkbase = 0xc00f1ff8;
+	int clkbase = MPC106_V_PCI_MEM_SPACE + 0x000f1ff8;
 
 	outb(clkbase, inb(clkbase) | 0x40);	/* stop update */
 	*sec = inb(clkbase + 1);
