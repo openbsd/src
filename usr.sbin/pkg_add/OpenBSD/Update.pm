@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.44 2004/12/19 20:25:17 espie Exp $
+# $OpenBSD: Update.pm,v 1.45 2004/12/20 12:16:51 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -70,7 +70,7 @@ sub extract
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
-		print "extracting tempfile under $d\n";
+		print "extracting tempfile under $d\n" if $state->{very_verbose};
 	} else {
 		if (!-e _) {
 			File::Path::mkpath($d);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.17 2004/12/16 11:07:33 espie Exp $
+# $OpenBSD: Delete.pm,v 1.18 2004/12/20 12:16:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -32,7 +32,7 @@ sub manpages_unindex
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
-			print "Removing manpages in $destdir$k: ", join(@l), "\n";
+			print "Removing manpages in $destdir$k: ", join(@l), "\n" if $state->{verbose};
 		} else {
 			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
 			if ($@) {
@@ -213,7 +213,7 @@ sub delete
 
 	my $name = $self->fullname();
 
-	if ($state->{beverbose}) {
+	if ($state->{very_verbose}) {
 		print "dirrm: $name\n";
 	}
 
@@ -249,7 +249,7 @@ sub delete
 	}
 	my $realname = $state->{destdir}.$name;
 	if (-l $realname) {
-		if ($state->{beverbose}) {
+		if ($state->{very_verbose}) {
 			print "deleting symlink: $realname\n";
 		}
 	} else {
@@ -272,7 +272,7 @@ sub delete
 				return;
 			}
 		}
-		if ($state->{beverbose}) {
+		if ($state->{very_verbose}) {
 			print "deleting: $realname\n";
 		}
 	}
