@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.9 2004/01/18 19:55:52 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.10 2004/01/22 09:25:25 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -88,8 +88,9 @@ struct pfsync_state_upd {
 	struct pfsync_state_peer	dst;
 	u_int32_t		creatorid;
 	u_int32_t		expire;
+	u_int8_t		timeout;
 	u_int8_t		updates;
-	u_int8_t		pad[7];
+	u_int8_t		pad[6];
 } __packed;
 
 struct pfsync_state_del {

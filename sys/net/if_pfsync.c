@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.18 2004/01/20 17:40:31 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.19 2004/01/22 09:25:25 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -149,7 +149,6 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	struct pf_state	*st = NULL;
 	struct pf_rule *r = NULL;
 	struct pfi_kif	*kif;
-	u_long secs;
 
 	if (sp->creatorid == 0 && pf_status.debug >= PF_DEBUG_MISC) {
 		printf("pfsync_insert_net_state: invalid creator id:"
@@ -193,23 +192,20 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
 
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
-	secs = time.tv_sec;
-	st->creation = ntohl(sp->creation) + secs;
+	st->creation = ntohl(sp->creation) + time.tv_sec;
+	st->expire = ntohl(sp->expire) + time.tv_sec;
 
 	st->af = sp->af;
 	st->proto = sp->proto;
 	st->direction = sp->direction;
 	st->log = sp->log;
+	st->timeout = sp->timeout;
 	st->allow_opts = sp->allow_opts;
 
 	st->id = sp->id;
 	st->creatorid = sp->creatorid;
 	st->sync_flags = sp->sync_flags | PFSTATE_FROMSYNC;
 
-	if (sp->expire)
-		st->expire = ntohl(sp->expire) + secs;
-	else
-		st->expire = 0;
 
 	if (pf_insert_state(kif, st)) {
 		pfi_maybe_destroy(kif);
@@ -235,7 +231,6 @@ pfsync_input(struct mbuf *m, ...)
 	struct in_addr src;
 	struct mbuf *mp;
 	int iplen, action, error, i, s, count, offp;
-	u_long secs;
 
 	pfsyncstats.pfsyncs_ipackets++;
 
@@ -346,17 +341,14 @@ pfsync_input(struct mbuf *m, ...)
 			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				/* insert the update */
-				if (pfsync_insert_net_state(sp)) 
+				if (pfsync_insert_net_state(sp))
 					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
 			pf_state_peer_ntoh(&sp->src, &st->src);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
-			secs = time.tv_sec;
-			if (sp->expire)
-				st->expire = 0;
-			else
-				st->expire = ntohl(sp->expire) + secs;
+			st->expire = ntohl(sp->expire) + time.tv_sec;
+			st->timeout = sp->timeout;
 
 		}
 		splx(s);
@@ -419,12 +411,8 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			pf_state_peer_ntoh(&up->src, &st->src);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
-			secs = time.tv_sec;
-			if (up->expire)
-				st->expire = 0;
-			else
-				st->expire = ntohl(up->expire) + secs;
-
+			st->expire = ntohl(up->expire) + time.tv_sec;
+			st->timeout = up->timeout;
 		}
 		if (update_requested)
 			pfsync_sendout(sc);
@@ -473,7 +461,7 @@ pfsync_input(struct mbuf *m, ...)
 
 		s = splsoftnet();
 
-		/* XXX send existing. pfsync_pack_state should handle this. */ 
+		/* XXX send existing. pfsync_pack_state should handle this. */
 		if (sc->sc_mbuf != NULL)
 			pfsync_sendout(sc);
 		for (i = 0, rup = (void *)((char *)mp->m_data +
@@ -650,24 +638,24 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 
 	switch (action) {
 	case PFSYNC_ACT_UPD_C:
-		len = (sc->sc_maxcount * sizeof(struct pfsync_state_upd))
-		    + sizeof(struct pfsync_header);
+		len = (sc->sc_maxcount * sizeof(struct pfsync_state_upd)) +
+		    sizeof(struct pfsync_header);
 		break;
 	case PFSYNC_ACT_DEL_C:
-		len = (sc->sc_maxcount * sizeof(struct pfsync_state_del))
-		    + sizeof(struct pfsync_header);
+		len = (sc->sc_maxcount * sizeof(struct pfsync_state_del)) +
+		    sizeof(struct pfsync_header);
 		break;
 	case PFSYNC_ACT_CLR:
 		len = sizeof(struct pfsync_header) +
-		     sizeof(struct pfsync_state_clr);
+		    sizeof(struct pfsync_state_clr);
 		break;
 	case PFSYNC_ACT_UREQ:
 		len = sizeof(struct pfsync_header) +
-		     sizeof(struct pfsync_state_upd_req);
+		    sizeof(struct pfsync_state_upd_req);
 		break;
 	default:
-		len = (sc->sc_maxcount * sizeof(struct pfsync_state))
-		    + sizeof(struct pfsync_header);
+		len = (sc->sc_maxcount * sizeof(struct pfsync_state)) +
+		    sizeof(struct pfsync_header);
 		break;
 	}
 
@@ -721,7 +709,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 			sc->sc_statep.s = NULL;
 		}
 		return (0);
-	} 
+	}
 
 	if (action >= PFSYNC_ACT_MAX)
 		return (EINVAL);
@@ -770,6 +758,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 
 	if (sp == NULL) {
 		/* not a "duplicate" update */
+		i = 255;
 		sp = sc->sc_statep.s++;
 		sc->sc_mbuf->m_pkthdr.len =
 		    sc->sc_mbuf->m_len += sizeof(struct pfsync_state);
@@ -804,6 +793,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		sp->direction = st->direction;
 		sp->log = st->log;
 		sp->allow_opts = st->allow_opts;
+		sp->timeout = st->timeout;
 
 		sp->sync_flags = st->sync_flags & PFSTATE_NOSYNC;
 	}
@@ -843,7 +833,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 
 		switch (newaction) {
 		case PFSYNC_ACT_UPD_C:
-			if (i < h->count) {
+			if (i != 255) {
 				up = (void *)((char *)h_net +
 				    PFSYNC_HDRLEN + (i * sizeof(*up)));
 				up->updates++;
@@ -857,6 +847,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 				up->id = st->id;
 				up->creatorid = st->creatorid;
 			}
+			up->timeout = st->timeout;
 			up->expire = sp->expire;
 			up->src = sp->src;
 			up->dst = sp->dst;
