@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.32 1998/08/07 16:48:16 pefo Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.33 1998/08/28 06:31:23 rahnds Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -3194,7 +3194,10 @@ tulip_reset(
 		    (4 << 2)	/* Descriptor skip length */
 		    |TULIP_BUSMODE_CACHE_ALIGN8
 		    |TULIP_BUSMODE_READMULTIPLE
-		    |(BYTE_ORDER != LITTLE_ENDIAN ? (TULIP_BUSMODE_DESC_BIGENDIAN) : 0));
+		    /*
+		    |(BYTE_ORDER != LITTLE_ENDIAN ? (TULIP_BUSMODE_DESC_BIGENDIAN) : 0)
+		    */
+		    );
 #else
     TULIP_CSR_WRITE(sc, csr_busmode,
 		    (1 << (TULIP_BURSTSIZE(sc->tulip_unit) + 8))
@@ -3220,7 +3223,7 @@ tulip_reset(
     ri->ri_nextin = ri->ri_nextout = ri->ri_first;
     ri->ri_free = ri->ri_max;
     for (di = ri->ri_first; di < ri->ri_last; di++)
-	di->d_status = 0;
+	di->d_status = 0; /* no swabbing necessary -dsr */
 
     /*
      * We need to collect all the mbufs were on the 
@@ -3232,9 +3235,17 @@ tulip_reset(
     ri->ri_nextin = ri->ri_nextout = ri->ri_first;
     ri->ri_free = ri->ri_max;
     for (di = ri->ri_first; di < ri->ri_last; di++) {
-	di->d_status = 0;
-	di->d_length1 = 0; di->d_addr1 = 0;
-	di->d_length2 = 0; di->d_addr2 = 0;
+	di->d_status = 0; /* no swabbing necessary -dsr */
+	{ 
+	    tulip_desc_bitfield_t u;
+
+	    u.f = DESC_BO(di->u.f); /* copy the bitfields */
+	    u.bd_length1 = 0;
+	    u.bd_length2 = 0;
+	    di->u.f = DESC_BO(u.f);
+	}
+	di->d_addr1 = 0; /* no swabbing necessary -dsr */
+	di->d_addr2 = 0; /* no swabbing necessary -dsr */
     }
     for (;;) {
 	struct mbuf *m;
@@ -3352,14 +3363,14 @@ tulip_rx_intr(
 	 * 90% of the packets will fit in one descriptor.  So we optimize
 	 * for that case.
 	 */
-	if ((((volatile tulip_desc_t *) eop)->d_status & (TULIP_DSTS_OWNER|TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) == (TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) {
+	if ((DESC_BO(((volatile tulip_desc_t *) eop)->d_status) & (TULIP_DSTS_OWNER|TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) == (TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) {
 	    IF_DEQUEUE(&sc->tulip_rxq, ms);
 	    me = ms;
 	} else {
 	    /*
 	     * If still owned by the TULIP, don't touch it.
 	     */
-	    if (((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_OWNER)
+	    if (DESC_BO(((volatile tulip_desc_t *) eop)->d_status) & TULIP_DSTS_OWNER)
 		break;
 
 	    /*
@@ -3367,10 +3378,10 @@ tulip_rx_intr(
 	     * is enabled or MCLBYTES < 1518) for a received packet to cross
 	     * more than one receive descriptor.  
 	     */
-	    while ((((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_RxLASTDESC) == 0) {
+	    while ((DESC_BO(((volatile tulip_desc_t *) eop)->d_status) & TULIP_DSTS_RxLASTDESC) == 0) {
 		if (++eop == ri->ri_last)
 		    eop = ri->ri_first;
-		if (eop == ri->ri_nextout || ((((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_OWNER))) {
+		if (eop == ri->ri_nextout || (DESC_BO(((volatile tulip_desc_t *) eop)->d_status) & TULIP_DSTS_OWNER)) {
 #if defined(TULIP_DEBUG)
 		    sc->tulip_dbg.dbg_rxintrs++;
 		    sc->tulip_dbg.dbg_rxpktsperintr[cnt]++;
@@ -3402,12 +3413,12 @@ tulip_rx_intr(
 	/*
 	 *  Now get the size of received packet (minus the CRC).
 	 */
-	total_len = ((eop->d_status >> 16) & 0x7FFF) - 4;
+	total_len = ((DESC_BO(eop->d_status) >> 16) & 0x7FFF) - 4;
 	if ((sc->tulip_flags & TULIP_RXIGNORE) == 0
-		&& ((eop->d_status & TULIP_DSTS_ERRSUM) == 0
+		&& ((DESC_BO(eop->d_status) & TULIP_DSTS_ERRSUM) == 0
 #ifdef BIG_PACKET
 		     || (total_len <= sc->tulip_if.if_mtu + sizeof(struct ether_header) && 
-			 (eop->d_status & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxRUNT|
+			 (DESC_BO(eop->d_status) & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxRUNT|
 					  TULIP_DSTS_RxCOLLSEEN|TULIP_DSTS_RxBADCRC|
 					  TULIP_DSTS_RxOVERFLOW)) == 0)
 #endif
@@ -3431,16 +3442,16 @@ tulip_rx_intr(
 	    total_len -= sizeof(struct ether_header);
 	} else {
 	    ifp->if_ierrors++;
-	    if (eop->d_status & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxOVERFLOW|TULIP_DSTS_RxWATCHDOG)) {
+	    if (DESC_BO(eop->d_status) & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxOVERFLOW|TULIP_DSTS_RxWATCHDOG)) {
 		sc->tulip_dot3stats.dot3StatsInternalMacReceiveErrors++;
 	    } else {
 		const char *error = NULL;
-		if (eop->d_status & TULIP_DSTS_RxTOOLONG) {
+		if (DESC_BO(eop->d_status) & TULIP_DSTS_RxTOOLONG) {
 		    sc->tulip_dot3stats.dot3StatsFrameTooLongs++;
 		    error = "frame too long";
 		}
-		if (eop->d_status & TULIP_DSTS_RxBADCRC) {
-		    if (eop->d_status & TULIP_DSTS_RxDRBBLBIT) {
+		if (DESC_BO(eop->d_status) & TULIP_DSTS_RxBADCRC) {
+		    if (DESC_BO(eop->d_status) & TULIP_DSTS_RxDRBBLBIT) {
 			sc->tulip_dot3stats.dot3StatsAlignmentErrors++;
 			error = "alignment error";
 		    } else {
@@ -3543,9 +3554,14 @@ tulip_rx_intr(
 	 * receive queue.
 	 */
 	do {
-	    ri->ri_nextout->d_length1 = TULIP_RX_BUFLEN;
-	    ri->ri_nextout->d_addr1 = TULIP_KVATOPHYS(sc, mtod(ms, caddr_t));
-	    ri->ri_nextout->d_status = TULIP_DSTS_OWNER;
+	    tulip_desc_bitfield_t u;
+	    u.f = DESC_BO ( ri->ri_nextout->u.f );
+	    u.bd_length1 = TULIP_RX_BUFLEN;
+	    ri->ri_nextout->u.f = DESC_BO ( u.f );
+
+	    ri->ri_nextout->d_addr1 =
+		    DESC_BO(TULIP_KVATOPHYS(sc, mtod(ms, caddr_t)));
+	    ri->ri_nextout->d_status = DESC_BO(TULIP_DSTS_OWNER);
 #if defined(__mips__)
 	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)mtod(ms, caddr_t),TULIP_RX_BUFLEN);
 #endif
@@ -3578,10 +3594,15 @@ tulip_tx_intr(
 
     while (ri->ri_free < ri->ri_max) {
 	u_int32_t d_flag;
-	if (((volatile tulip_desc_t *) ri->ri_nextin)->d_status & TULIP_DSTS_OWNER)
+	if (DESC_BO(((volatile tulip_desc_t *) ri->ri_nextin)->d_status) & TULIP_DSTS_OWNER)
 	    break;
 
-	d_flag = ri->ri_nextin->d_flag;
+	{
+		tulip_desc_bitfield_t u;
+
+		u.f = DESC_BO(ri->ri_nextin->u.f); /* copy the bitfields */
+		d_flag = u.bd_flag;
+	}
 	if (d_flag & TULIP_DFLAG_TxLASTSEG) {
 	    if (d_flag & TULIP_DFLAG_TxSETUPPKT) {
 		/*
@@ -3592,7 +3613,7 @@ tulip_tx_intr(
 		 * an abormal interrupt indication.
 		 */
 		sc->tulip_flags &= ~(TULIP_DOINGSETUP|TULIP_HASHONLY);
-		if (ri->ri_nextin->d_flag & TULIP_DFLAG_TxINVRSFILT)
+		if (d_flag & TULIP_DFLAG_TxINVRSFILT)
 		    sc->tulip_flags |= TULIP_HASHONLY;
 		if ((sc->tulip_flags & (TULIP_WANTSETUP|TULIP_TXPROBE_ACTIVE)) == 0) {
 		    tulip_rx_intr(sc);
@@ -3603,7 +3624,7 @@ tulip_tx_intr(
 		    TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode);
 		}
 	    } else {
-		const u_int32_t d_status = ri->ri_nextin->d_status;
+		const u_int32_t d_status = DESC_BO(ri->ri_nextin->d_status);
 		IF_DEQUEUE(&sc->tulip_txq, m);
 		if (m != NULL) {
 #if NBPFILTER > 0
@@ -4123,21 +4144,32 @@ tulip_txput(
 		eop = nextout;
 		if (++nextout == ri->ri_last)
 		    nextout = ri->ri_first;
-		eop->d_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
-		eop->d_status = d_status;
-		eop->d_addr1 = TULIP_KVATOPHYS(sc, addr);
-		eop->d_length1 = slen;
+		{
+		    tulip_desc_bitfield_t u;
+		    u.f = DESC_BO(eop->u.f); /* copy the bitfields */
+		    u.bd_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
+		    u.bd_length1 = slen;
+
+		    eop->d_status = DESC_BO(d_status);
+		    eop->d_addr1 = DESC_BO( TULIP_KVATOPHYS(sc, addr) );
+		    eop->u.f = DESC_BO(u.f); /* copy the bitfields */
+		}
 	    } else {
 		/*
 		 *  Fill in second half of descriptor
 		 */
-		eop->d_addr2 = TULIP_KVATOPHYS(sc, addr);
-		eop->d_length2 = slen;
+		eop->d_addr2 = DESC_BO(TULIP_KVATOPHYS(sc, addr));
+		{
+		    tulip_desc_bitfield_t u;
+		    u.f = DESC_BO(eop->u.f); /* copy the bitfields */
+		    u.bd_length2 = slen;
+		    eop->u.f = DESC_BO(u.f); /* copy the bitfields */
+		}
 	    }
 #if defined(__mips__)
 	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)addr, slen);
 #endif
-	    d_status = TULIP_DSTS_OWNER;
+	    d_status = DESC_BO(TULIP_DSTS_OWNER);
 	    len -= slen;
 	    addr += slen;
 #ifdef BIG_PACKET
@@ -4161,30 +4193,45 @@ tulip_txput(
      * by us since it may have been set up above if we ran out
      * of room in the ring.
      */
-    nextout->d_status = 0;
+    nextout->d_status = 0; /* doesn't need swab - dsr */
 
     /*
      * If we only used the first segment of the last descriptor,
      * make sure the second segment will not be used.
      */
     if (segcnt & 1) {
-	eop->d_addr2 = 0;
-	eop->d_length2 = 0;
+	tulip_desc_bitfield_t u;
+	u.f = DESC_BO(eop->u.f); /* copy the bitfields */
+	u.bd_length2 = 0;
+	eop->d_addr2 = 0; /* no swab necessary - dsr */
+	eop->u.f = DESC_BO(u.f);
     }
 
     /*
      * Mark the last and first segments, indicate we want a transmit
      * complete interrupt, and tell it to transmit!
      */
-    eop->d_flag |= TULIP_DFLAG_TxLASTSEG|TULIP_DFLAG_TxWANTINTR;
+    { 
+	tulip_desc_bitfield_t u;
+
+	u.f = DESC_BO(eop->u.f); /* copy the bitfields */
+	u.bd_flag |= TULIP_DFLAG_TxLASTSEG|TULIP_DFLAG_TxWANTINTR;
+	eop->u.f = DESC_BO(u.f);
+    }
 
     /*
      * Note that ri->ri_nextout is still the start of the packet
      * and until we set the OWNER bit, we can still back out of
      * everything we have done.
      */
-    ri->ri_nextout->d_flag |= TULIP_DFLAG_TxFIRSTSEG;
-    ri->ri_nextout->d_status = TULIP_DSTS_OWNER;
+    {
+	tulip_desc_bitfield_t u;
+
+	u.f = DESC_BO(ri->ri_nextout->u.f); /* copy the bitfields */
+	u.bd_flag |= TULIP_DFLAG_TxFIRSTSEG;
+	ri->ri_nextout->u.f = DESC_BO(u.f);
+	ri->ri_nextout->d_status = DESC_BO(TULIP_DSTS_OWNER);
+    }
 
     TULIP_CSR_WRITE(sc, csr_txpoll, 1);
 
@@ -4279,18 +4326,30 @@ tulip_txput_setup(
     pci_sync_cache(sc->tulip_pc, (vm_offset_t)sc->tulip_setupbuf, sizeof(sc->tulip_setupbuf));
 #endif
     nextout = ri->ri_nextout;
-    nextout->d_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
-    nextout->d_flag |= TULIP_DFLAG_TxFIRSTSEG|TULIP_DFLAG_TxLASTSEG
-	|TULIP_DFLAG_TxSETUPPKT|TULIP_DFLAG_TxWANTINTR;
-    if (sc->tulip_flags & TULIP_WANTHASHPERFECT)
-	nextout->d_flag |= TULIP_DFLAG_TxHASHFILT;
-    else if (sc->tulip_flags & TULIP_WANTHASHONLY)
-	nextout->d_flag |= TULIP_DFLAG_TxHASHFILT|TULIP_DFLAG_TxINVRSFILT;
+    {
+	u_int32_t d_flag;
+	tulip_desc_bitfield_t u;
 
-    nextout->d_length1 = sizeof(sc->tulip_setupbuf);
-    nextout->d_addr1 = TULIP_KVATOPHYS(sc, sc->tulip_setupbuf);
-    nextout->d_length2 = 0;
-    nextout->d_addr2 = 0;
+	u.f = DESC_BO(nextout->u.f); /* copy the bitfields */
+	d_flag = u.bd_flag;
+
+	d_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
+	d_flag |= TULIP_DFLAG_TxFIRSTSEG|TULIP_DFLAG_TxLASTSEG
+	    |TULIP_DFLAG_TxSETUPPKT|TULIP_DFLAG_TxWANTINTR;
+	if (sc->tulip_flags & TULIP_WANTHASHPERFECT)
+	    d_flag |= TULIP_DFLAG_TxHASHFILT;
+	else if (sc->tulip_flags & TULIP_WANTHASHONLY)
+	    d_flag |= TULIP_DFLAG_TxHASHFILT|TULIP_DFLAG_TxINVRSFILT;
+
+
+	u.bd_flag = d_flag;
+	u.bd_length1 = sizeof(sc->tulip_setupbuf);
+	u.bd_length2 = 0;
+
+	nextout->u.f = DESC_BO(u.f);
+	nextout->d_addr1 = DESC_BO(TULIP_KVATOPHYS(sc, sc->tulip_setupbuf));
+	nextout->d_addr2 = 0; /* no need to swab */
+    }
 
     /*
      * Advance the ring for the next transmit packet.
@@ -4303,8 +4362,8 @@ tulip_txput_setup(
      * may have been set up above if we ran out of room in the
      * ring.
      */
-    ri->ri_nextout->d_status = 0;
-    nextout->d_status = TULIP_DSTS_OWNER;
+    ri->ri_nextout->d_status = 0; /* doesn't need swab - dsr */
+    nextout->d_status = DESC_BO(TULIP_DSTS_OWNER);
     TULIP_CSR_WRITE(sc, csr_txpoll, 1);
     if ((sc->tulip_intrmask & TULIP_STS_TXINTR) == 0) {
 	sc->tulip_intrmask |= TULIP_STS_TXINTR;
@@ -4809,7 +4868,13 @@ tulip_initring(
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
     bzero((caddr_t) ri->ri_first, sizeof(ri->ri_first[0]) * ri->ri_max);
-    ri->ri_last[-1].d_flag = TULIP_DFLAG_ENDRING;
+    {
+	tulip_desc_bitfield_t u;
+		
+	u.f = DESC_BO( ri->ri_last[-1].u.f );
+	u.bd_flag = TULIP_DFLAG_ENDRING;
+	ri->ri_last[-1].u.f = DESC_BO(u.f);
+    }
 }
 
 /*

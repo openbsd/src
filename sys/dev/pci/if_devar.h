@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.6 1998/08/07 16:48:18 pefo Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.7 1998/08/28 06:31:25 rahnds Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -97,8 +97,7 @@ FILT_BO(x)
 {
 	u_int32_t s;
 
-	s = x;
-	s = s << 16;
+	s = (x & 0xffff) << 16 | ((x & 0xff) << 8) | ((x & 0xff00) >> 8);
 	return s;
 }
 
