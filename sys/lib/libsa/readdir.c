@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.2 1997/04/02 05:20:02 mickey Exp $	*/
+/*	$OpenBSD: readdir.c,v 1.3 1997/07/21 15:37:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,6 +35,7 @@
 #ifndef NO_READDIR
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #define _KERNEL
 #include <sys/fcntl.h>
 #undef _KERNEL
@@ -46,16 +47,22 @@ opendir(name)
 	char *name;
 {
 	int fd;
+	struct stat sb;
 
+	if (stat(name, &sb) < 0)
+		return -1;
+
+	if (!S_ISDIR(sb.st_mode)) {
+		errno = ENOTDIR;
+		return -1;
+	}
+
+	/* XXX rewind needed for some dirs */
 #ifdef __INTERNAL_LIBSA_CREAD
 	if ((fd = oopen(name, O_RDONLY)) >= 0)
-#else
-	if ((fd = open(name, O_RDONLY)) >= 0)
-#endif
-		/* XXX   it's needed for some dirs */
-#ifdef __INTERNAL_LIBSA_CREAD
 		olseek(fd, 0, 0);
 #else
+	if ((fd = open(name, O_RDONLY)) >= 0)
 		lseek(fd, 0, 0);
 #endif
 
