@@ -773,8 +773,10 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     /* Update the counters */
     tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ip->ip_len - (ip->ip_hl << 2) - AH_OLD_FLENGTH - alen;
-    ahstat.ahs_obytes += ip->ip_len - (ip->ip_hl << 2) - AH_OLD_FLENGTH - alen;
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) -
+			  AH_OLD_FLENGTH - alen;
+    ahstat.ahs_obytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) -
+			 AH_OLD_FLENGTH - alen;
 
     return 0;
 }
