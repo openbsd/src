@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2003/11/09 23:00:04 millert Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2004/09/15 22:20:03 deraadt Exp $	*/
 /*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: config.c,v 1.5 2003/11/09 23:00:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.6 2004/09/15 22:20:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,18 +160,4 @@ getlist(char *name)
 		if (!strcmp(name, tp->s))
 			return (tp);
 	return (NULL);
-}
-
-void
-debug(char *l)
-{
-	TAG *tp;
-	ENTRY *ep;
-
-	(void)printf("%s ===============\n", l);
-	for (tp = head.tqh_first; tp != NULL; tp = tp->q.tqe_next) {
-		printf("%s\n", tp->s);
-		for (ep = tp->list.tqh_first; ep != NULL; ep = ep->q.tqe_next)
-			printf("\t%s\n", ep->s);
-	}
 }

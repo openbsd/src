@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.4 2003/06/04 16:08:08 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 2004/09/15 22:20:03 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.2 1995/09/28 06:05:28 tls Exp $	*/
 
 /*-
@@ -52,5 +52,4 @@ extern struct _head head;
 
 TAG	*addlist(char *);
 void	 config(char *);
-void	 debug(char *);
 TAG	*getlist(char *);
