@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.28 2002/05/17 01:22:38 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.29 2002/08/17 17:35:48 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -613,6 +613,9 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_2300(isp)) {	/* per QLogic errata */
 		data &= ~PCI_COMMAND_PARITY_ENABLE;
 	}
+	if (IS_23XX(isp)) {
+		isp->isp_touched = 1;
+	}
 	data |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_INVALIDATE_ENABLE;
 
 	/*
@@ -782,11 +785,23 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, u_int16_t *isrp,
 	case ISPR2HST_MBX_OK:
 	case ISPR2HST_MBX_FAIL:
 	case ISPR2HST_ASYNC_EVENT:
-	case ISPR2HST_RIO_16:
-	case ISPR2HST_FPOST:
-	case ISPR2HST_FPOST_CTIO:
 		*isrp = r2hisr & 0xffff;
 		*mbox0p = (r2hisr >> 16);
+		*semap = 1;
+		return (1);
+	case ISPR2HST_RIO_16:
+		*isrp = r2hisr & 0xffff;
+		*mbox0p = ASYNC_RIO1;
+		*semap = 1;
+		return (1);
+	case ISPR2HST_FPOST:
+		*isrp = r2hisr & 0xffff;
+		*mbox0p = ASYNC_CMD_CMPLT;
+		*semap = 1;
+		return (1);
+	case ISPR2HST_FPOST_CTIO:
+		*isrp = r2hisr & 0xffff;
+		*mbox0p = ASYNC_CTIO_DONE;
 		*semap = 1;
 		return (1);
 	case ISPR2HST_RSPQ_UPDATE:
