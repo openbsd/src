@@ -1,7 +1,7 @@
-/*	$OpenBSD: locore.S,v 1.26 2000/01/12 05:55:56 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.27 2000/01/25 22:11:38 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -143,14 +143,14 @@ ENTRY($start)
 	 * disable interrupts and turn off all bits in the psw so that
 	 * we start in a known state.
 	 */
-	rsm	RESET_PSW,r0
+	rsm	RESET_PSW, r0
 
 	/*
 	 * to keep the spl() routines consistent we need to put the correct
 	 * spl level into eiem
 	 */
-	ldi	IPL_NONE,r1
-	mtctl	r1,eiem
+	ldi	IPL_NONE, r1
+	mtctl	r1, eiem
 
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
@@ -159,12 +159,12 @@ ENTRY($start)
 	ldo	R%$global$(dp),dp
 
 	/* zero fake trapframe and proc0 u-area */
-	ldo	NBPG+TF_SIZE(arg3), t1
 	copy	arg3, t2
+	ldi	NBPG+TF_SIZE, t1
 $start_zero_tf
 	stw	r0, 0(t2)
 	stw	r0, 4(t2)
-	comb,<,n t2, t1, $start_zero_tf
+	addib,>= -8, t1, $start_zero_tf
 	ldo	8(t2), t2
 
 	/*
@@ -172,7 +172,7 @@ $start_zero_tf
 	 * initialize the pcb
 	 * arg0 will be available space for hppa_init()
 	 */
-	ldo	NBPG(arg3), sp
+	ldo	NBPG+TF_SIZE(arg3), sp
 	mtctl	arg3, cr30
 	stw	r0, u_pcb+pcb_onfault(arg3)
 	stw	r0, u_pcb+pcb_space(arg3)	/* XXX HPPA_SID_KERNEL == 0 */
@@ -184,11 +184,9 @@ $start_zero_tf
 	ldil	L%proc0, t2
 	stw	arg3, R%proc0+p_addr(t2)
 
-	/* create a fake trapframe */
 	ldil	L%TFF_LAST, t1
-	stw	t1, TF_FLAGS(sp)
-	/* accomodate the trapframe, once we created one */
-	ldo	TF_SIZE(sp), sp
+	stw	t1, TF_FLAGS-TF_SIZE(sp)
+	stw	arg3, TF_CR30-TF_SIZE(sp)
 
 	/*
 	 * We need to set the Q bit so that we can take TLB misses after we
@@ -208,7 +206,7 @@ $start_zero_tf
 
 $qisnowon
 	
-	/* 
+	/*
 	 * Initialize the external interrupt request register
 	 */
 	/* ldi    	-1,r1 */
@@ -309,7 +307,7 @@ $noddb
 	ldo	R%main(r1), r1
 $callmain
 	.call
-	blr     r0, rp
+	blr	r0, rp
 	bv,n    (r1)
 	nop
 
@@ -398,7 +396,7 @@ pdc_call_unmapped1
 pdc_call_unmapped2
 	copy	ret1, sp
 	.call
-	blr     r0, rp
+	blr	r0, rp
 	bv,n    (r31)
 	nop
 
@@ -456,7 +454,7 @@ EXIT(pdc_call)
 	.export	gateway_page, entry
 gateway_page
 	nop				/* @ 0.C0000000 (Nothing)  */
-	gate,n	$bsd_syscall,r0         /* @ 0.C0000004 (HPUX/BSD) */
+	gate,n	$bsd_syscall,r0		/* @ 0.C0000004 (HPUX/BSD) */
 #ifdef COMPAT_OSF1
 	bl,n	$osf_syscall,r0
 	bl,n	$osf_syscall,r0
@@ -491,9 +489,11 @@ $osf_syscall
 
 $bsd_syscall
 	/*
-	 * set up a space register and a protection id so that 
+	 * set up a space register and a protection id so that
 	 * we can access kernel memory
 	 */
+	mfctl	eiem, r1
+	mtctl	r0, eiem
 	mtsp	r0, sr1
 	mfctl	pidr1, r28
 	ldi	HPPA_PID_KERNEL, t2
@@ -512,11 +512,11 @@ $bsd_syscall
 	.export	gateway_page_end, entry
 gateway_page_end
 
-$trap_tmp_save
+$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
 	.block	TF_PHYS		/* XXX must be aligned to 64 */
+	.align	64
 
-	.import	syscall,code
-        .export $syscall,entry
+	.export $syscall,entry
 	.proc
 	.callinfo calls
 	.entry
@@ -527,6 +527,11 @@ $syscall
 	 * t2:	user
 	 * t3:	args
 	 * t4:	user stack
+	 *
+	 * N.B. we are trying to rely on the fact that bottom of kernel
+	 *	stack contains a print of some past trapframe, so
+	 *	we do not save hard to get information, but do restore
+	 *	the whole context later on return anyway.
 	 */
 	ldil	L%curproc, t3
 	ldw	R%curproc(sr1, t3), t3
@@ -534,34 +539,33 @@ $syscall
 
 	/* calculate kernel sp, load, create kernel stack frame */
 	copy	sp, t4
-	ldo	NBPG(t2), t2	
-	ldo	TF_SIZE(t2), sp
-	stw	t1, TF_R22 (sr1, t2)
-	stw	t4, TF_R30 (sr1, t2)
+	ldo	NBPG+TF_SIZE(t2), t3	
+	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
+	stw	t1, TF_R22 -TF_SIZE(sr1, t3)	/* syscall # */
+	stw	t4, TF_R30 -TF_SIZE(sr1, t3)	/* user stack */
+	stw	r1, TF_CR15-TF_SIZE(sr1, t3)	/* eiem */
+	mtctl	r1, eiem
 
-	stw	r2 , TF_R2 (sr1, t2)
-	stw	r3 , TF_R3 (sr1, t2)
-	stw	r4 , TF_R4 (sr1, t2)
-	stw	r5 , TF_R5 (sr1, t2)
-	stw	r6 , TF_R6 (sr1, t2)
-	stw	r7 , TF_R7 (sr1, t2)
-	stw	r8 , TF_R8 (sr1, t2)
-	stw	r9 , TF_R9 (sr1, t2)
-	stw	r10, TF_R10(sr1, t2)
-	stw	r11, TF_R11(sr1, t2)
-	stw	r12, TF_R12(sr1, t2)
-	stw	r13, TF_R13(sr1, t2)
-	stw	r14, TF_R14(sr1, t2)
-	stw	r15, TF_R15(sr1, t2)
-	stw	r16, TF_R16(sr1, t2)
-	stw	r17, TF_R17(sr1, t2)
-	stw	r18, TF_R18(sr1, t2)
-	stw	r27, TF_R27(sr1, t2)	/* dp */
+	stw	r2 , TF_R2 -TF_SIZE(sr1, t3)
+	stw	r3 , TF_R3 -TF_SIZE(sr1, t3)
+	stw	r4 , TF_R4 -TF_SIZE(sr1, t3)
+	stw	r5 , TF_R5 -TF_SIZE(sr1, t3)
+	stw	r6 , TF_R6 -TF_SIZE(sr1, t3)
+	stw	r7 , TF_R7 -TF_SIZE(sr1, t3)
+	stw	r8 , TF_R8 -TF_SIZE(sr1, t3)
+	stw	r9 , TF_R9 -TF_SIZE(sr1, t3)
+	stw	r10, TF_R10-TF_SIZE(sr1, t3)
+	stw	r11, TF_R11-TF_SIZE(sr1, t3)
+	stw	r12, TF_R12-TF_SIZE(sr1, t3)
+	stw	r13, TF_R13-TF_SIZE(sr1, t3)
+	stw	r14, TF_R14-TF_SIZE(sr1, t3)
+	stw	r15, TF_R15-TF_SIZE(sr1, t3)
+	stw	r16, TF_R16-TF_SIZE(sr1, t3)
+	stw	r17, TF_R17-TF_SIZE(sr1, t3)
+	stw	r18, TF_R18-TF_SIZE(sr1, t3)
+	stw	r27, TF_R27-TF_SIZE(sr1, t3)	/* dp */
 
 	/* copy arguments */
-	ldo	0(sp), t3
-	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(sp), sp
-	copy	t3, r1
 	stw	arg0,  0(sr1, t3)
 	stw	arg1,  4(sr1, t3)
 	stw	arg2,  8(sr1, t3)
@@ -587,56 +591,50 @@ $syscall
 	 * Save the rest of the CPU context
 	 */
 	
-	ldo	-4(r31), arg1
-	stw	r31, TF_IIOQH(sr1, t2)
-	stw	arg1, TF_IIOQT(sr1, t2)
+	ldo	4(r31), arg1
+	stw	r31, TF_IIOQH-TF_SIZE(sr1, t3)
+	stw	arg1, TF_IIOQT-TF_SIZE(sr1, t3)
 
 	mfsp	sr0, arg0
-	mfsp	sr0, arg1
-	stw	arg0, TF_IISQH(sr1, t2)
-	stw	arg1, TF_IISQT(sr1, t2)
+	stw	arg0, TF_IISQH-TF_SIZE(sr1, t3)
+	stw	arg0, TF_IISQT-TF_SIZE(sr1, t3)
 
-	mfctl	eiem, arg0
-	mfctl	ipsw, arg1
-	stw	arg0, TF_CR15(sr1, t2)
-	stw	arg1, TF_CR22(sr1, t2)
+	stw	arg0, TF_CR20-TF_SIZE(sr1, t3)
+	stw	r31, TF_CR21-TF_SIZE(sr1, t3)
 
 	mfsp	sr3, arg0
-	copy	r28, arg1
-	stw	arg0, TF_SR3(sr1, t2)
-	stw	arg1, TF_CR8(sr1, t2)
+	stw	arg0, TF_SR3-TF_SIZE(sr1, t3)
+	stw	r28, TF_CR8-TF_SIZE(sr1, t3)	/* pidr1 */
 	
-	mfctl	isr, arg0
-	mfctl	ior, arg1
-	stw	arg0, TF_CR20(sr1, t2)
-	stw	arg1, TF_CR21(sr1, t2)
-
-	mfctl	iir, arg0
-	stw	arg0, TF_CR19(sr1, t2)
-	stw	arg1, TF_FLAGS(sr1, t2)
+	mfctl	iir, arg0	/* XXX bogus */
+	ldil	TFF_LAST|TFF_SYS, arg1
+	stw	arg0, TF_CR19-TF_SIZE(sr1, t3)
+	stw	arg1, TF_FLAGS-TF_SIZE(sr1, t3)
 
 	mfsp	sr0, arg0
 	mfsp	sr0, arg1
 	mfsp	sr2, arg2
 	mfsp	sr4, arg3
-	stw	arg0, TF_SR0(sr1, t2)
-	stw	arg1, TF_SR1(sr1, t2)
-	stw	arg2, TF_SR2(sr1, t2)
-	stw	arg3, TF_SR4(sr1, t2)
+	stw	arg0, TF_SR0-TF_SIZE(sr1, t3)
+	stw	arg1, TF_SR1-TF_SIZE(sr1, t3)
+	stw	arg2, TF_SR2-TF_SIZE(sr1, t3)
+	stw	arg3, TF_SR4-TF_SIZE(sr1, t3)
 
 	mfsp	sr5, arg0
 	mfsp	sr6, arg1
 	mfsp	sr7, arg2
 	mfctl	pidr2, arg3
-	stw	arg0, TF_SR5(sr1, t2)
-	stw	arg1, TF_SR6(sr1, t2)
-	stw	arg2, TF_SR7(sr1, t2)
-	stw	arg3, TF_CR9 (sr1, t2)
+	stw	arg0, TF_SR5-TF_SIZE(sr1, t3)
+	stw	arg1, TF_SR6-TF_SIZE(sr1, t3)
+	stw	arg2, TF_SR7-TF_SIZE(sr1, t3)
+	stw	arg3, TF_CR9-TF_SIZE(sr1, t3)
 
+#if pbably_not_worth_it
 	mfctl	pidr3, arg2
 	mfctl	pidr4, arg3
-	stw	arg2, TF_CR12(sr1, t2)
-	stw	arg3, TF_CR13(sr1, t2)
+	stw	arg2, TF_CR12-TF_SIZE(sr1, t3)
+	stw	arg3, TF_CR13-TF_SIZE(sr1, t3)
+#endif
 
 #ifdef DDB
 	/*
@@ -644,13 +642,13 @@ $syscall
 	 */
 	mfctl	eirr, arg0
 	mfctl	hptmask, arg1
-	stw	arg0, TF_CR23(sr1, t2)
-	stw	arg1, TF_CR24(sr1, t2)
+	stw	arg0, TF_CR23-TF_SIZE(sr1, t3)
+	stw	arg1, TF_CR24-TF_SIZE(sr1, t3)
 
 	mfctl	vtop, arg0
 	mfctl	cr28, arg1
-	stw	arg0, TF_CR25(sr1, t2)
-	stw	arg1, TF_CR28(sr1, t2)
+	stw	arg0, TF_CR25-TF_SIZE(sr1, t3)
+	stw	arg1, TF_CR28-TF_SIZE(sr1, t3)
 #endif
 
 	/* setup kernel context */
@@ -667,13 +665,14 @@ $syscall
 	stw	r0, HPPA_FRAME_PSP(sp)
 	stw	r0, HPPA_FRAME_CRP(sp)
 
-	copy	t2, arg0
-	copy	r1, arg1
+	ldo	-TF_SIZE(t3), arg0
+	copy	t3, arg1
 
 	ldil	L%$global$,dp
 	ldo	R%$global$(dp),dp
 
 	/* do a syscall */
+	.import	syscall,code
 	ldil	L%syscall, r1
 	ldo	R%syscall(r1), r1
 	.call
@@ -696,22 +695,24 @@ $syscall_return
 	/* t3 == VA trapframe */
 	/* check for AST ? XXX */
 
-	/*
-	 * Copy partially saved state from the store into the frame
-	 */
-	ldi	$trap_tmp_save, arg1
-	copy	t3, arg0
-	ldo	TF_PHYS(arg0), arg2
-$syscall_return_copy_loop
-	ldw	0(arg0), t1
-	ldw	4(arg0), t2
-	stw	t1, 0(arg1)
-	stw	t2, 4(arg1)
-	ldo	8(arg0), arg0
-	comb,<,n arg0, arg2, $syscall_return_copy_loop
-	ldo	8(arg1), arg1
+	/* splhigh(), just in case */
+	mtctl	r0, eiem
 
-	/* 1. restore most of the general registers */
+	/*
+	 * 1a. Copy a `phys' part of the frame into temp store
+	 *	(see a note for trapall)
+	 *	hopefully no page fault would happen on or after the copy,
+	 *	and interrupts are disabled.
+	 */
+	copy	t3, arg0
+	ldil	$trap_tmp_save, arg1
+	ldi	TF_PHYS, arg2
+$syscall_return_copy_loop
+	ldwm	4(arg0), t1
+	addib,>= -4, arg2, $syscall_return_copy_loop
+	stwm	t1, 4(arg1)
+
+	/* 1b. restore most of the general registers */
 	ldw	TF_CR11(t3), t1
 	ldw	TF_R1(t3), r1
 	mtctl	t1, sar
@@ -756,12 +757,12 @@ $syscall_return_copy_loop
 	ldw	TF_SR4(sr3, t3), t2
 	mtsp	t1, sr2
 	mtsp	t2, sr4
-       
+
 	ldw	TF_SR5(sr3, t3), t1
 	ldw	TF_SR6(sr3, t3), t2
 	mtsp	t1, sr5
 	mtsp	t2, sr6
-       
+
 	ldw	TF_SR7(sr3, t3), t1
 	ldw	TF_CR9(sr3, t3), t2
 	mtsp	t1, sr7
@@ -783,10 +784,10 @@ $syscall_return_copy_loop
 	 * since we don't use it anyway.
 	 */
 	rsm	RESET_PSW, r0
-	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
+	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop	/* XXX really? */
 $syscall_return_phys
 	
-	ldi	$trap_tmp_save, t3
+	ldil	$trap_tmp_save, t3
 
 	/* finally we can restore the space and offset queues and the ipsw */
 	ldw	TF_IISQH(t3), t1
@@ -858,12 +859,15 @@ $syscall_end
 	mfctl	isr, r8		/* Space  */			! \
 	depi    0,31,PGSHIFT,r9	/* align offset to page */	! \
 	LDCR28
+#define	HPMCPRE	nop
 
 	.align NBPG
 	.export $ivaaddr, entry
+	.export hpmc_v, entry
 $ivaaddr
 	ATRAP(null,T_NONEXIST)		/*  0. invalid interrupt vector */
-	CTRAP(hpmc,T_HPMC,)		/*  1. high priority machine check */
+hpmc_v
+	CTRAP(hpmc,T_HPMC,HPMCPRE)	/*  1. high priority machine check */
 	ATRAP(power,T_POWERFAIL)	/*  2. power failure */
 	ATRAP(recnt,T_RECOVERY)		/*  3. recovery counter trap */
 	ATRAP(intr,T_INTERRUPT)		/*  4. external interrupt */
@@ -935,7 +939,22 @@ $ivaaddr
 
 	.export	TLABEL(hpmc), entry
 TLABEL(hpmc)
-	break	0, 0
+	/* TODO: save cpu context */
+	/* TODO: save PIM info */
+	/* TODO: call pdc appropriately */
+
+	.import	hpmc_dump, code
+	ldil	L%hpmc_dump, t1
+	ldo	R%hpmc_dump(t1), t1
+	.call
+	blr	r0, rp
+	bv,n	0(t1)
+	nop
+
+	/* never returns, but still */
+hpmc_never_dies
+	b	hpmc_never_dies
+	nop
 
 	.export TLABEL(emu), entry
 TLABEL(emu)
@@ -1144,7 +1163,7 @@ $sfu_emu
 	/* Compute the hpt entry ptr */
 #define	HPTENT \
 	extru	r9, 23, 24, r16  	/* r17 = (offset >> 8) */	! \
-	zdep	r8, 26, 16, r24	     	/* r24 = (space << 5) */	! \
+	zdep	r8, 26, 16, r24		/* r24 = (space << 5) */	! \
 	mfctl	hptmask, r17		/* r17 = sizeof(HPT)-1 */	! \
 	xor	r16, r24, r24		/* r24 ^= r16 */		! \
 	and	r17, r24, r24		/* r24 &= r17 */		! \
@@ -1173,8 +1192,8 @@ TLABEL(tlbd)
 	ldw	hpt_entry(r24), r24
 $hash_loop_tlbd
 	comb,=,n r0, r24, TLABEL(all)
-	ldw     pv_va(r24), r25
-	ldw     pv_space(r24), r17
+	ldw	pv_va(r24), r25
+	ldw	pv_space(r24), r17
 	comb,<>,n r9, r25, $hash_loop_tlbd
 	ldw	pv_hash(r24), r24
 	comb,<>,n r8, r17, $hash_loop_tlbd
@@ -1230,8 +1249,8 @@ $tlb_gottalook
 	ldw	hpt_entry(r24),r24
 $hash_loop
 	comb,=,n r0, r24, TLABEL(all)
-	ldw     pv_va(r24),r25
-	ldw     pv_space(r24),r17
+	ldw	pv_va(r24),r25
+	ldw	pv_space(r24),r17
 	comb,<>,n r9,r25,$hash_loop
 	ldw	pv_hash(r24),r24
 	comb,<>,n r8,r17,$hash_loop
@@ -1379,7 +1398,7 @@ $trap_make_frame
 	/* t3 is va, t1 is pa of (struct trapframe *) */
 	mfctl	tr3, t2
 	mtctl	t3, tr3
-	ldi	$trap_tmp_save, t3	/* we know it's in the low mem XXX */
+	ldil	$trap_tmp_save, t3	/* we know it's in the low mem XXX */
 	mfctl	tr2, t1
 	stw	t1, TF_R22(t3)
 	stw	t2, TF_R21(t3)
@@ -1553,18 +1572,15 @@ $trapnowvirt
 
 	/*
 	 * Copy partially saved state from the store into the frame
+	 * N.B. we are not doing any bundeling since it's only 16 words
 	 */
-	ldi	$trap_tmp_save, arg0
+	ldil	$trap_tmp_save, arg0
 	copy	t3, arg1
-	ldo	TF_PHYS(arg0), arg2
+	ldi	TF_PHYS, arg2
 $trap_copy_loop
-	ldw	0(arg0), t1
-	ldw	4(arg0), t2
-	ldo	8(arg0), arg0
-	stw	t1, 0(arg1)
-	stw	t2, 4(arg1)
-	comb,<,n arg0, arg2, $trap_copy_loop
-	ldo	8(arg1), arg1
+	ldwm	4(arg0), t1
+	addib,>= -4, arg2, $trap_copy_loop
+	stwm	t1, 4(arg1)
 
 	/*
 	 * Save the necessary control registers that were not already saved.
@@ -1910,10 +1926,10 @@ Lremrunqueue_panic
 	copy	t1, arg2
 	ldil    L%panic, r1
 	ldil	L%Lrrqpstr, arg0
-	ldo     R%panic(r1), r1
+	ldo	R%panic(r1), r1
 	ldo	R%Lrrqpstr(arg0), arg0
 	.call
-	blr     %r0, rp
+	blr	%r0, rp
 	bv,n    %r0(r1)
 
 Lrrqpstr
@@ -1998,10 +2014,10 @@ switch_error
 	copy	t2, arg2
 	ldil    L%panic, r1
 	ldil	L%Lcspstr, arg0
-	ldo     R%panic(r1), r1
+	ldo	R%panic(r1), r1
 	ldo	R%Lcspstr(arg0), arg0
 	.call
-	blr     %r0, rp
+	blr	%r0, rp
 	bv,n    %r0(r1)
 	nop
 Lcspstr
@@ -2126,13 +2142,6 @@ EXIT(cpu_switch)
 	.import	uvm_km_free, code
 ENTRY(switch_exit)
 
-	ldil	L%proc0, t2
-	ldo	R%proc0(t2), t2
-
-	ldw	p_md(t2), t1
-	ldw	TF_CR30(t1), t1
-	mtctl	t1, cr30
-
 	/* setup kernel context */
 	mtctl	r0, sr0
 	mtctl	r0, sr1
@@ -2143,20 +2152,20 @@ ENTRY(switch_exit)
 	mtctl	r0, sr6
 	mtctl	r0, sr7
 
-	/* leave pidr2 in user space so copy* work */
 	ldi	HPPA_PID_KERNEL, t4
-	mtctl	t4, pidr1
+	mtctl	t4, pidr2
+
+	/* XXX we need to switch to some stupid stack here */
 
 	b	switch_search
 	nop
 EXIT(switch_exit)
 
 ENTRY(switch_trampoline)
-	/* XXX load curproc here? */
 	ldw	HPPA_FRAME_ARG(1)(sp), t1
 	ldw	HPPA_FRAME_ARG(2)(sp), arg0
 	.call
-	blr     %r0, rp
+	blr	%r0, rp
 	bv,n    %r0(t1)
 	nop
 	ldil	L%curproc, t1

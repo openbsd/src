@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2000/01/17 20:18:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2000/01/25 22:11:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -158,6 +158,7 @@ vm_map_t phys_map = NULL;
 void delay_init __P((void));
 static __inline void fall __P((int, int, int, int, int));
 void dumpsys __P((void));
+void hpmc_dump __P((void));
 
 /*
  * wide used hardware params
@@ -210,6 +211,17 @@ hppa_init(start)
 	    pdc_coherence.ia_cst, pdc_coherence.da_cst,
 	    pdc_coherence.ita_cst, pdc_coherence.dta_cst, error);
 #endif
+
+	/* setup hpmc handler */
+	{
+		extern u_int hpmc_v;	/* from locore.s */
+		register u_int *p = &hpmc_v;
+
+		if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
+			*p = 0;	/* XXX nop is more appropriate? */
+
+		p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
+	}
 
 	/* BTLB params */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
@@ -769,6 +781,15 @@ cpu_dumpsize()
 	return 1;
 }
 
+/*
+ * Called from HPMC handler in locore
+ */
+void
+hpmc_dump()
+{
+
+}
+
 int
 cpu_dump()
 {
@@ -952,17 +973,15 @@ setregs(p, pack, stack, retval)
 	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
 #endif
 
-	/* tf->tf_r?? = PS_STRINGS */
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
-	tf->tf_arg0 = stack;
+	tf->tf_arg0 = (u_long)PS_STRINGS;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* setup terminal stack frame */
 	stack += HPPA_FRAME_SIZE;
-	copyout(&tf->tf_rp, (caddr_t)(stack + HPPA_FRAME_PSP),
-	    sizeof(tf->tf_rp));
+	suword((caddr_t)(stack + HPPA_FRAME_PSP), 0);
 	tf->tf_sp = stack;
 
 	retval[1] = 0;
