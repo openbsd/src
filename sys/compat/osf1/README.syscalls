@@ -1,3 +1,4 @@
+$OpenBSD: README.syscalls,v 1.4 2001/07/09 05:15:23 fgsch Exp $
 $NetBSD: README.syscalls,v 1.2 1999/04/27 16:09:28 cgd Exp $
 
 XXX this file should be gutted.  functions' comments should go with

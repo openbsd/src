@@ -1,5 +1,5 @@
-/* $OpenBSD */
-/* $NetBSD: osf1.h,v 1.20 1999/05/10 21:41:07 cgd Exp $ */
+/*	$OpenBSD: osf1.h,v 1.2 2001/07/09 05:15:24 fgsch Exp $	*/
+/*	$NetBSD: osf1.h,v 1.20 1999/05/10 21:41:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,5 @@
-/* $NetBSD: osf1_time.c,v 1.1 1999/05/01 05:25:37 cgd Exp $ */
+/*	$OpenBSD: osf1_time.c,v 1.2 2001/07/09 05:15:24 fgsch Exp $	*/
+/*	$NetBSD: osf1_time.c,v 1.1 1999/05/01 05:25:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
