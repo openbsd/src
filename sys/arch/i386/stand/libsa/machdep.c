@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1997/08/31 07:54:17 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1997/09/02 19:17:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -87,7 +87,8 @@ apm_check()
 			 : "%ecx", "cc");
 	if (f || BIOS_regs.biosr_bx != 0x504d /* "PM" */ ) {
 #ifdef DEBUG
-		printf("apm_init: %x, %x, %x\n", f, BIOS_regs.biosr_bx, detail);
+		printf("apm_check: %x, %x, %x\n",
+		       f, BIOS_regs.biosr_bx, detail);
 #endif
 		return 0;
 	} else
