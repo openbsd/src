@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.10 2000/03/31 22:11:37 aaron Exp $ */
 /*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -186,6 +186,21 @@ __CONCAT(dname,_detach)(self, flags) \
 #endif
 
 #define Static
+
+#define XS_STS_DONE		ITSDONE
+#define XS_CTL_POLL		SCSI_POLL
+#define XS_CTL_DATA_IN		SCSI_DATA_IN
+#define XS_CTL_DATA_OUT		SCSI_DATA_OUT
+#define scsipi_adapter		scsi_adapter
+#define scsipi_cmd		scsi_cmd
+#define scsipi_device		scsi_device
+#define scsipi_done		scsi_done
+#define scsipi_link		scsi_link
+#define scsipi_minphys		scsi_minphys
+#define scsipi_sense		scsi_sense
+#define scsipi_xfer		scsi_xfer
+#define xs_control		flags
+#define xs_status		status
 
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
