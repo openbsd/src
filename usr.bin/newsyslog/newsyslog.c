@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.30 1999/11/11 22:24:14 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.31 2000/06/10 02:49:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.30 1999/11/11 22:24:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.31 2000/06/10 02:49:41 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -229,6 +229,7 @@ main(argc, argv)
 					pl->file = q->pidfile;
 					pl->signal = q->signal;
 				}
+				pl++;
 			}
 		}
                 q = q->next;
