@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.314 2002/07/20 15:54:37 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.315 2002/07/24 22:47:11 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -100,9 +100,9 @@ ucom*	at uvisor?
 uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
-ucom*   at uplcom? portno ? 
-#umct*   at uhub? port ?			# MCT USB-RS232 serial adapter
-#ucom*   at umct? portno ? 
+ucom*	at uplcom? portno ?
+#umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
 #umidi* at uhub? port ? configuration ?
 ulpt*	at uhub? port ? configuration ? # USB Printers
@@ -462,8 +462,8 @@ bktr0	at pci? dev ? function ?
 # FM-Radio devices
 #gtp*	at pci? dev ? function ? # Gemtek/Guillemot Radio PCI Radio Card
 #sfr0	at isa? port 0x384	# SoundForte RadioLink SF16-FMR FM Radio Card
-#sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
-#az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
+#sf2r0	at isa? port 0x384	# SoundForte RadioLink SF16-FMR2 FM Radio Card
+#az0	at isa? port 0x350	# Aztech/PackardBell FM Radio Card
 #rt0	at isa? port 0x30c	# AIMS Lab Radiotrack FM Radio Card
 #rtii0	at isa? port 0x30c	# AIMS Lab Radiotrack II FM Radio Card
 
