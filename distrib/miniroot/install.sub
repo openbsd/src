@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.202 2002/04/10 19:29:15 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.203 2002/04/13 00:46:46 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1974,7 +1974,6 @@ cleanup_on_exit() {
 
 	if [ -f /etc/fstab ]; then
 		umount -av
-		check_fs
 	elif [ ! "`df /`" = "`df /mnt`" ]; then
 		umount -v /mnt
 	fi
