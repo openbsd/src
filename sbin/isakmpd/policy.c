@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.35 2001/07/01 05:42:05 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.36 2001/07/01 18:57:33 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -151,6 +151,23 @@ my_inet_ntop4 (const in_addr_t *src, char *dst, size_t size, int normalize)
 
   if (sprintf (tmp, fmt, ((u_int8_t *) &src2)[0], ((u_int8_t *) &src2)[1],
 	       ((u_int8_t *) &src2)[2], ((u_int8_t *) &src2)[3]) > size)
+    {
+      errno = ENOSPC;
+      return 0;
+    }
+  strcpy (dst, tmp);
+  return dst;
+}
+
+static const char *
+my_inet_ntop6 (const unsigned char *src, char *dst, size_t size)
+{
+  static const char fmt[] = "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x";
+  char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
+
+  if (sprintf (tmp, fmt, src[0], src[1], src[2], src[3], src[4], src[5],
+               src[6], src[7], src[8], src[9], src[10], src[11], src[12],
+               src[13], src[14], src[15]) > size)
     {
       errno = ENOSPC;
       return 0;
@@ -744,8 +761,17 @@ policy_callback (char *name)
 	  break;
 
 	case IPSEC_ID_IPV6_ADDR:
-	  /* XXX Not yet implemented.  */
 	  remote_id_type = "IPv6 address";
+	  my_inet_ntop6 (id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+	                 remote_id_addr_upper, sizeof remote_id_addr_upper);
+	  strcpy (remote_id_addr_lower, remote_id_addr_upper);
+	  remote_id = strdup (remote_id_addr_upper);
+	  if (!remote_id)
+  	    {
+	      log_error ("policy_callback: strdup (\"%s\") failed",
+			 remote_id_addr_upper);
+	      goto bad;
+	    }
 	  break;
 
 	case IPSEC_ID_IPV6_RANGE:
@@ -941,8 +967,18 @@ policy_callback (char *name)
 	      break;
 
 	    case IPSEC_ID_IPV6_ADDR:
-	      /* XXX Not yet implemented.  */
 	      remote_filter_type = "IPv6 address";
+	      my_inet_ntop6 (idremote + ISAKMP_ID_DATA_OFF,
+			     remote_filter_addr_upper,
+			     sizeof remote_filter_addr_upper - 1);
+	      strcpy (remote_filter_addr_lower, remote_filter_addr_upper);
+	      remote_filter = strdup (remote_filter_addr_upper);
+	      if (!remote_filter)
+	        {
+		  log_error ("policy_callback: strdup (\"%s\") failed",
+			     remote_filter_addr_upper);
+		  goto bad;
+		}
 	      break;
 
 	    case IPSEC_ID_IPV6_RANGE:
@@ -952,7 +988,7 @@ policy_callback (char *name)
 
 	    case IPSEC_ID_IPV6_ADDR_SUBNET:
 	      /* XXX Not yet implemented.  */
-	      remote_filter_type = "IPv6 address";
+	      remote_filter_type = "IPv6 subnet";
 	      break;
 
 	    case IPSEC_ID_FQDN:
@@ -1157,8 +1193,18 @@ policy_callback (char *name)
 	      break;
 
 	    case IPSEC_ID_IPV6_ADDR:
-	      /* XXX Not yet implemented.  */
 	      local_filter_type = "IPv6 address";
+	      my_inet_ntop6 (idlocal + ISAKMP_ID_DATA_OFF,
+			     local_filter_addr_upper,
+			     sizeof local_filter_addr_upper - 1);
+	      strcpy (local_filter_addr_lower, local_filter_addr_upper);
+	      local_filter = strdup (local_filter_addr_upper);
+	      if (!local_filter)
+	        {
+		  log_error ("policy_callback: strdup (\"%s\") failed",
+			     local_filter_addr_upper);
+		  goto bad;
+		}
 	      break;
 
 	    case IPSEC_ID_IPV6_RANGE:
@@ -1168,7 +1214,7 @@ policy_callback (char *name)
 
 	    case IPSEC_ID_IPV6_ADDR_SUBNET:
 	      /* XXX Not yet implemented.  */
-	      local_filter_type = "IPv6 address";
+	      local_filter_type = "IPv6 subnet";
 	      break;
 
 	    case IPSEC_ID_FQDN:
