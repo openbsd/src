@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.6 1997/02/02 10:16:58 tholo Exp $	*/
+/*	$OpenBSD: mv.c,v 1.7 1997/03/01 20:43:51 millert Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.6 1997/02/02 10:16:58 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.7 1997/03/01 20:43:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: mv.c,v 1.6 1997/02/02 10:16:58 tholo Exp $";
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 
 #include <err.h>
 #include <errno.h>
@@ -199,7 +200,20 @@ do_move(from, to)
 	if (!rename(from, to))
 		return (0);
 
-	if (errno != EXDEV) {
+	if (errno == EXDEV) {
+		struct statfs sfs;
+		char path[MAXPATHLEN];
+
+		/* Can't mv(1) a mount point. */
+		if (realpath(from, path) == NULL) {
+			warnx("cannot resolve %s: %s", from, path);
+			return (1);
+		}
+		if (!statfs(path, &sfs) && !strcmp(path, sfs.f_mntonname)) {
+			warnx("cannot rename a mount point");
+			return (1);
+		}
+	} else {
 		warn("rename %s to %s", from, to);
 		return (1);
 	}
