@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.232 2001/01/29 08:46:58 ho Exp $
+#	$OpenBSD: GENERIC,v 1.233 2001/01/30 00:01:21 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -96,7 +96,11 @@ uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
 uaudio* at uhub? port ? configuration ?	# USB Audio
 ulpt*	at uhub? port ? configuration ? # USB Printers
+ukbd*	at uhub? port ? configuration ?	# USB Keyboards
+wskbd*	at ukbd? console ? mux 1
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+ums*	at uhub? port ? configuration ?	# USB Mice
+wsmouse* at ums? mux 0
 scsibus* at umass?
 aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
@@ -115,8 +119,27 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 isapnp0	at isa?
 
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
-vt0	at isa? port 0x60 irq 1
+option	WSEMUL_VT100			# VT100 / VT220 emulation
+option	WS_KERNEL_FG=WSCOL_WHITE
+option	WS_KERNEL_BG=WSCOL_BLUE
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+option	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+option	WSDISPLAY_COMPAT_USL		# VT handling
+option	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+option	WSDISPLAY_DEFAULTSCREENS=4	
+
+pckbc0		at isa?			# PC keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
+vga0		at isa?
+vga*		at pci? dev ? function ?
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at vga? console ?
+wsdisplay*	at pcdisplay? console ?
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
+wsmouse*	at pmsi? mux 0
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
@@ -153,7 +176,16 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+#pms0  at pckbcport? irq 12		# PS/2 auxiliary port mouse
+
+wsmouse*	at lms? mux 0
+wsmouse*	at mms? mux 0
+# backwards compatible versions
+#olms0  at isa? port 0x23c irq 5	# Logitech bus mouse
+#olms1  at isa? port 0x238 irq 5
+#omms0  at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#omms1  at isa? port 0x238 irq 5
+#opms0  at pc? irq 12			# PS/2 auxiliary port mouse
 
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -402,5 +434,8 @@ pseudo-device	sequencer	1
 # for IPv6
 pseudo-device	gif		4
 #pseudo-device	faith		1
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
 
 #option DEBUG_ISAPNP
