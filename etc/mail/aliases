@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.15 2003/07/27 20:58:22 david Exp $
+#	$OpenBSD: aliases,v 1.1 2003/09/23 21:37:11 millert Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.

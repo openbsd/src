@@ -1,0 +1,20 @@
+# $OpenBSD: virtusertable,v 1.1 2003/09/23 21:37:11 millert Exp $
+#
+# sendmail(8) virtual user table.  Rebuild by running as root:
+#   makemap hash /etc/mail/access < /etc/mail/access
+#
+# This file contains the mapping of virtual to local addresses.
+# Each line denotes a transform of:
+#   virtual_address	local_address
+#
+# E.g.
+#   info@foo.com	foo-info
+#   info@bar.com	bar-info
+#   @baz.org		jane@example.net
+#
+# It is also possible to map all users from one domain to another, e.g.
+#   @foo.org		%1@example.com
+#
+# See the "virtusertable" section of /usr/share/sendmail/README for
+# more information.
+#

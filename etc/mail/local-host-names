@@ -1,0 +1,9 @@
+# $OpenBSD: local-host-names,v 1.1 2003/09/23 21:37:11 millert Exp $
+#
+# List additional hostnames that should be considered local (one per line).
+# I.e., any hostname for which you wish mail to be accepted (and delivered).
+# You do not need to include the system hostname, localhost, the name(s)
+# associated with any active network interface or a CNAME that points to one
+# of those names.
+# This file is read only at startup or when sendmail(8) is sent SIGHUP.
+#

@@ -1,0 +1,8 @@
+# $OpenBSD: access,v 1.1 2003/09/23 21:37:11 millert Exp $
+#
+# sendmail(8) access database.  Rebuild by running as root:
+#   makemap hash /etc/mail/access < /etc/mail/access
+#
+# See /usr/share/sendmail/README for a description of this file
+# under the "access_db" feature.
+#

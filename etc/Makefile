@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.184 2003/08/21 19:10:19 frantzen Exp $
+#	$OpenBSD: Makefile,v 1.185 2003/09/23 21:37:11 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -230,11 +230,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ../lib/libssl && exec ${MAKE} distribution
 	cd ../gnu/usr.bin/lynx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../usr.bin/mail && exec ${MAKE} distribution
-	${INSTALL} -c -o root -g ${BINGRP} -m 644 aliases \
-	    ${DESTDIR}/etc/mail/aliases
-	/usr/libexec/sendmail/sendmail -C${DESTDIR}/etc/mail/sendmail.cf \
-	    -bi -O AliasFile=${DESTDIR}/etc/mail/aliases \
-	    -O DontBlameSendmail=mapinunsafedirpath
+	cd mail && exec ${MAKE} distribution
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
 		${DESTDIR}/var/mail/root
 	${INSTALL} -c -o root -g wheel -m 440 ../usr.bin/sudo/sudoers \

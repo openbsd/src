@@ -1,0 +1,58 @@
+$OpenBSD: README,v 1.1 2003/09/23 21:37:11 millert Exp $
+
+This directory contains the configuration files for sendmail(8).
+The source for the .cf files lives in /usr/share/sendmail/cf.
+You should make changes in the corresponding .mc file and not edit
+the .cf files directly.  Useful information may be found in
+/usr/share/sendmail/README, /usr/share/sendmail/TUNING, and
+/usr/share/doc/smm/08.sendmailop/op.me.
+
+Sendmail configuration files:
+    submit.cf		Built from /usr/share/sendmail/cf/submit.mc.
+			Used when sendmail is invoked directly from
+			the command line to send mail (for instance,
+			when called by mail(1)).
+
+    localhost.cf	Built from /usr/share/sendmail/cf/openbsd-localhost.mc.
+			Only allows connections from the local host, not
+			the network at large.  This is the default
+			configuration file used on OpenBSD.  See afterboot(8)
+			for more information.
+
+    sendmail.cf		Built from /usr/share/sendmail/cf/openbsd-proto.mc.
+			A more full-featured configuration file that
+			allows SMTP connections from the internet.
+
+
+Other files used by sendmail(8) in this directory include:
+
+    access		Access database (blacklist, whitelist, etc).
+
+    aliases		System aliases database.
+
+    helpfile		Help file for sendmail(8).
+
+    local-host-names	List of other hostnames to treat as local.
+			You do not need to list the system hostname,
+			the name(s) associated with any active network
+			interface or a CNAME that points to one of
+			those names.  This file is read only at startup
+			or when sendmail(8) is sent SIGHUP.
+
+    mailertable		Used to override routing for particular (non-local)
+			domains.
+
+    relay-domains	List of other domains to relay mail for.
+			By default, sendmail(8) will not relay for
+			foriegn domains--if the mail is not destined
+			for (or sent by) a user in the local domain it
+			will be rejected.  This file is read only at
+			startup or when sendmail(8) is sent SIGHUP.
+
+    virtusertable	Virtual user table; maps incoming mail addresses
+			to alternate local usernames or aliases.
+
+Note that by default, only sendmail.cf will use the access, local-host-names,
+mailertable, relay-domains, userdb, and virtusertable files.
+These files are not used by the default localhost.cf or submit.cf
+since they are generally not needed for localhost-only configs.

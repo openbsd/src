@@ -1,0 +1,14 @@
+# $OpenBSD: mailertable,v 1.1 2003/09/23 21:37:11 millert Exp $
+#
+# The sendmail(8) mailer table is used to override routing for particular
+# non-local hostnames and domains (i.e., names other the local hostname
+# or names listed in local-host-names).
+#
+# Rebuild by running as root:
+#   makemap hash /etc/mail/mailertable < /etc/mail/mailertable
+#
+# Each line is of the form "mailer:domain" (without the quotes)
+# where "mailer" is the internal mailer name, and "domain" is
+# where to send the message.  See /usr/share/sendmail/README for
+# more information.
+#

@@ -1,0 +1,10 @@
+# $OpenBSD: relay-domains,v 1.1 2003/09/23 21:37:11 millert Exp $
+#
+# List of other domains to relay mail for here (one per line).
+# By default, sendmail(8) will not relay for foriegn domains.  If the mail
+# is not destined for (or sent by) a user in the local domain the message
+# will be rejected.  Alternately, domains may be listed in /etc/mail/access
+# with the RELAY attribute instead of being enumerated here.
+#
+# This file is read only at startup or when sendmail(8) is sent SIGHUP.
+#
