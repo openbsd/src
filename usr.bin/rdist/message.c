@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.5 1996/07/25 05:31:02 millert Exp $	*/
+/*	$OpenBSD: message.c,v 1.6 1996/07/29 17:50:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.5 1996/07/25 05:31:02 millert Exp $";
+"$OpenBSD: message.c,v 1.6 1996/07/29 17:50:09 millert Exp $";
 
 static char sccsid[] = "@(#)common.c";
 
@@ -449,8 +449,6 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 	int flags;
 	char *msgbuf;
 {
-	int fd;
-
 	if (IS_ON(flags, MT_DEBUG))
 		return;
 
@@ -460,6 +458,7 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 	if (!msgfac->mf_fptr) {
 		register char *cp;
 		char *getenv();
+		int fd;
 
 		/*
 		 * Create and open a new temporary file
@@ -472,7 +471,7 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 
 		msgfac->mf_filename = tempfile;
 		if ((fd = mkstemp(msgfac->mf_filename)) == -1 ||
-		    (msgfac->mf_fptr = fdopen(fd, "w"))==NULL) {
+		    (msgfac->mf_fptr = fdopen(fd, "w")) == NULL) {
 			if (fd != -1)
 				close(fd);
 			fatalerr("Cannot open notify file for writing: %s: %s.",
