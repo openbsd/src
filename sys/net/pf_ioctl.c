@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.32 2002/12/27 15:20:30 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.33 2002/12/27 21:45:14 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -571,11 +571,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		if (pf_dynaddr_setup(&rule->dst.addr, rule->af))
 			error = EINVAL;
+
+		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
+		if (((((rule->action == PF_NAT) || (rule->action == PF_RDR) ||
+		    (rule->action == PF_BINAT)) && !rule->anchorname[0]) ||
+		    (rule->rt > PF_FASTROUTE)) &&
+		    (TAILQ_FIRST(&rule->rpool.list) == NULL))
+			error = EINVAL;
+
 		if (error) {
 			pf_rm_rule(NULL, rule);
 			break;
 		}
-		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		rule->rpool.cur = TAILQ_FIRST(&rule->rpool.list);
 		rule->evaluations = rule->packets = rule->bytes = 0;
 		TAILQ_INSERT_TAIL(ruleset->rules[rs_num].inactive.ptr,
@@ -766,11 +773,21 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 			if (pf_dynaddr_setup(&newrule->dst.addr, newrule->af))
 				error = EINVAL;
+
+			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
+			if (((((newrule->action == PF_NAT) ||
+			    (newrule->action == PF_RDR) ||
+		 	    (newrule->action == PF_BINAT) || 
+			    (newrule->rt > PF_FASTROUTE)) &&
+			    !newrule->anchorname[0])) &&
+			    (TAILQ_FIRST(&newrule->rpool.list) == NULL))
+				error = EINVAL;
+
 			if (error) {
 				pf_rm_rule(NULL, newrule);
 				break;
 			}
-			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
+			newrule->rpool.cur = TAILQ_FIRST(&newrule->rpool.list);
 			newrule->evaluations = newrule->packets = 0;
 			newrule->bytes = 0;
 		}
