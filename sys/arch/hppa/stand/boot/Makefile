@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1999/07/08 20:11:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 1999/12/23 02:42:23 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
@@ -11,7 +11,7 @@ MANSUBDIR=/hppa
 MLINKS=	boot.8 boot.conf.8
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
-CLEANFILES+=	boot.lif bsd
+CLEANFILES+=	boot.gdb boot.map boot.lif bsd
 
 LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
