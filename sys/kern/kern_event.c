@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.2 2000/11/16 20:24:35 mickey Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.3 2000/11/17 05:18:44 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -550,7 +550,7 @@ retry:
 		if (timercmp(&time, &atv, >=))
 			goto done;
 		ttv = atv;
-		timersub(&ttv, &ttv, &time);
+		timersub(&ttv, &time, &ttv);
 		timeout = ttv.tv_sec > 24 * 60 * 60 ?
 			24 * 60 * 60 * hz : hzto(&ttv);
 	}
