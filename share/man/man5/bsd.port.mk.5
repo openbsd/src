@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.78 2002/11/25 10:18:24 avsm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.79 2002/12/30 02:41:33 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -255,6 +255,36 @@ testing, define a
 Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrong.
+.It Ar update-plist
+Update the packing lists for a port, using the fake installation and the
+existing packing lists.
+.Ar update-plist
+should produce mostly correct 
+.Pa PLIST ,
+.Pa PFRAG.shared
+and
+.Pa PFRAG.no-shared
+files, handling shared libraries, GNU
+.Xr info 1
+files, setuid files, and empty directories.
+It moves existing files to
+.Pa PLIST.orig, 
+.Pa PFRAG.shared.orig
+and
+.Pa PFRAG.no-shared.orig .
+If the generated lists include files and directories that shouldn't be
+included, comment these like this:
+.Bd -literal
+@comment unwanted-file
+@comment @dirrm unwanted-dir
+.Ed
+.Pp
+Subsequent calls to
+.Ar update-plist
+will automatically recognize and handle such lines correctly.
+.Pp
+.Ar update-plist
+does not handle multi-packages nor flavor situations yet, so beware.
 .El
 .Sh VARIABLES
 .Bl -tag -width MASTER_SITES
