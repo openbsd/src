@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 1999/11/25 17:34:32 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 1999/11/25 17:39:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -588,13 +588,16 @@ pmap_clear_pv(paddr_t pa, struct pv_entry *cpv)
 		printf("pmap_clear_pv(%x,%p)\n", pa, cpv);
 #endif
 
-	if (!(pv = pmap_find_pv(pa)))
+	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap)
 		return;
 
 	s = splimp();
 	for (; pv; pv = pv->pv_next) {
 		if (pv == cpv)
 			continue;
+#ifdef PMAPDEBUG
+		printf("pmap_clear_pv: %x:%x\n", pv->pv_space, pv->pv_va);
+#endif
 		/*
 		 * have to clear the icache first since fic uses the dtlb.
 		 */
@@ -1142,7 +1145,12 @@ pmap_page_protect(pg, prot)
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 		s = splimp();
-		for (pv = pmap_find_pv(pa); pv; pv = pv->pv_next) {
+		if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
+			splx(s);
+			break;
+		}
+
+		for ( ; pv; pv = pv->pv_next) {
 			/*
 			 * Compare new protection with old to see if
 			 * anything needs to be changed.
@@ -1413,7 +1421,7 @@ pmap_clear_modify(pg)
 #endif
 
 	s = splimp();
-	if (!(pv = pmap_find_pv(pa))) {
+	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
 		splx(s);
 		return FALSE;
 	}
@@ -1447,7 +1455,12 @@ pmap_is_modified(pg)
 		printf("pmap_is_modified(%x)\n", pa);
 #endif
 	s = splhigh();
-	for (pv = pmap_find_pv(pa); pv && !(pv->pv_tlbprot & TLB_DIRTY);)
+	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
+		splx(s);
+		return FALSE;
+	}
+
+	for (; pv && !(pv->pv_tlbprot & TLB_DIRTY);)
 		pv = pv->pv_next;
 	splx(s);
 
@@ -1511,7 +1524,12 @@ pmap_is_referenced(pg)
 #endif
 
 	s = splhigh();
-	for (pv = pmap_find_pv(pa); pv && !(pv->pv_tlbprot & TLB_REF);)
+	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
+		splx(s);
+		return FALSE;
+	}
+
+	for (; pv && !(pv->pv_tlbprot & TLB_REF);)
 		pv = pv->pv_next;
 	splx(s);
 
@@ -1526,9 +1544,12 @@ pmap_changebit(pa, set, reset)
 	register struct pv_entry *pv;
 	int s;
 
-	pv = pmap_find_pv(pa);
-
 	s = splimp();
+	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
+		splx(s);
+		return;
+	}
+
 	while (pv) {
 		pv->pv_tlbprot |= set;
 		pv->pv_tlbprot &= ~reset;
