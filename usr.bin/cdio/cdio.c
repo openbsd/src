@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.22 2002/03/21 17:43:48 espie Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.23 2002/03/22 03:43:37 espie Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -127,6 +127,9 @@ unsigned int    msf2lba(u_char m, u_char s, u_char f);
 int             play_blocks(int blk, int len);
 int             run(int cmd, char *arg);
 char            *parse(char *buf, int *cmd);
+void 		help(void);
+void		usage(void);
+char 		*strstatus(int);
 
 void
 help()
@@ -918,10 +921,7 @@ lba2msf(lba, m, s, f)
 }
 
 unsigned int
-msf2lba(m, s, f)
-	u_char m;
-	u_char s;
-	u_char f;
+msf2lba(u_char m, u_char s, u_char f)
 {
 	return (((m * 60) + s) * 75 + f) - 150;
 }
