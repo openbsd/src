@@ -1,13 +1,11 @@
-#	$OpenBSD: RAMDISK,v 1.11 1997/07/10 17:30:40 millert Exp $
+#	$OpenBSD: RAMDISK,v 1.12 1997/09/05 16:13:18 millert Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-machine	alpha
-option		SWAPPAGER, DEVPAGER
-maxusers 8
+machine	alpha			# architecture, used by config; REQUIRED
 
-# CPU Support
+# CPU Support; at least one is REQUIRED
 option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
@@ -25,6 +23,11 @@ option		TIMEZONE="7*60"		# Minutes west of GMT (for param.c)
 option		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
+maxusers	8			# estimated number of users
+
+option		SWAPPAGER		# paging; REQUIRED
+option		DEVPAGER		# mmap() of devices
+
 #option		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 #option		KTRACE			# System call tracing support
 
@@ -62,6 +65,7 @@ option		INET		# Internet protocol suite
 #option		EISAVERBOSE		# recognize "unknown" EISA devices
 #option		PCIVERBOSE		# recognize "unknown" PCI devices
 #option		TCVERBOSE		# recognize "unknown" TC devices
+option		SCSITERSE		# less verbose scsi error messages
 
 config		bsd	swap generic
 #config		bsd	root on sd0 swap on sd0
