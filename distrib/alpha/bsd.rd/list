@@ -1,0 +1,1 @@
+LINK   sbin/mount_ffs		sbin/mount_cd9660
