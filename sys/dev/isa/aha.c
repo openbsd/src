@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.44 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: aha.c,v 1.45 2002/06/07 01:25:07 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1093,6 +1093,7 @@ aha_init(sc)
 	 * XXX - this vm juggling is so wrong. use bus_dma instead!
 	 */
 	size = round_page(sizeof(struct aha_mbx));
+	TAILQ_INIT(&pglist);
 	if (uvm_pglistalloc(size, 0, 0xffffff, PAGE_SIZE, 0, &pglist, 1, 0) ||
 	    uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
@@ -1100,7 +1101,8 @@ aha_init(sc)
 		panic("aha_init: could not allocate mailbox");
 
 	wmbx = (struct aha_mbx *)va;
-	for (pg = TAILQ_FIRST(&pglist); pg != NULL;pg = TAILQ_NEXT(pg, pageq)) {
+	for (pg = TAILQ_FIRST(&pglist); pg != NULL;
+	    pg = TAILQ_NEXT(pg, pageq)) {
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 			VM_PROT_READ|VM_PROT_WRITE);
 		va += PAGE_SIZE;
