@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.36 2002/01/30 17:14:29 mpech Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.37 2002/01/30 18:01:46 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.36 2002/01/30 17:14:29 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.37 2002/01/30 18:01:46 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,9 +113,8 @@ char	*fromname;
 %token
 	A	B	C	E	F	I
 	L	N	P	R	S	T
-	ALL
 
-	SP	CRLF	COMMA
+	SP	CRLF	COMMA	ALL
 
 	USER	PASS	ACCT	REIN	QUIT	PORT
 	PASV	TYPE	STRU	MODE	RETR	STOR
@@ -132,7 +131,6 @@ char	*fromname;
 	LEXERR
 
 %token	<s> STRING
-%token	<s> ALL
 %token	<i> NUMBER
 
 %type	<i> check_login check_login_epsvall octal_number byte_size
@@ -1330,7 +1328,6 @@ yylex()
 			}
 			if (strncasecmp(&cbuf[cpos], "ALL", 3) == 0
 			 && !isalnum(cbuf[cpos + 3])) {
-				yylval.s = strdup("ALL");
 				cpos += 3;
 				return ALL;
 			}
