@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awi.4,v 1.14 2003/09/18 09:49:43 jmc Exp $
+.\"	$OpenBSD: awi.4,v 1.15 2004/03/20 20:19:12 miod Exp $
 .\"     $NetBSD: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 31, 1999
+.Dd March 20, 2004
 .Dt AWI 4
 .Os
 .Sh NAME
@@ -46,10 +46,22 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Bay Networks BayStack 650 IEEE 802.11
-Frequency Hopping PCCARD adapters.
+driver provides support for wireless adapters based upon the AMD 802.11
+PCnet Mobile firmware.
+This includes the following adapters:
 .Pp
-The BayStack 650 is based on an AMD 79c930 controller, which provides
+.Bl -tag -width Ds -offset indent -compact
+.It Bay Networks BayStack 650
+.It Bay Networks BayStack 660
+.It Bay Network AirSurfer Pro
+.It AMD Am79C930
+.It Icom SL-200
+.It Nokia C020
+.It Farallon Communications SkyLINE Wireless
+.It Zoom Air-4000
+.El
+.Pp
+The PCnet Mobile design is based on an AMD 79c930 controller, which provides
 access to 32kb of memory shared between the controller and the host.
 All host/device interaction is via this shared memory, which can be
 accessed either via PCMCIA memory space or I/O space.
@@ -69,10 +81,7 @@ When using
 to automatically configure an address on this card, it may be
 advisable to delay the invocation of dhclient for about 10 seconds
 after the card is brought up using
-.Xr ifconfig 8
-.Pp
-For more information on configuring this device, see
-.Xr ifconfig 8
+.Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "awi0: unable to allocate memory space; using i/o only"
@@ -117,7 +126,6 @@ forgotten about us.
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pcmcia 4 ,
-.Xr ray 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs

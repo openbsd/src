@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aue.4,v 1.17 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: aue.4,v 1.18 2004/03/20 20:19:12 miod Exp $
 .\"	$NetBSD: aue.4,v 1.9 2002/07/11 00:23:31 rh Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
@@ -57,19 +57,28 @@ This includes the following adapters:
 .It Tn Accton SpeedStream Ethernet
 .It Tn Admtek Pegasus
 .It Tn Admtek Pegasus II
+.It Tn Belkin USB to LAN
 .It Tn Billionton Systems USB100
+.It Tn Billionton Systems USB100EL
+.It Tn Billionton Systems USB100LP
+.It Tn Billionton Systems USBE100
 .It Tn Corega FEther USB-TX
+.It Tn Corega FEther USB-TXS
 .It Tn D-Link DSB-650
 .It Tn D-Link DSB-650TX
 .It Tn D-Link DSB-650TX-PNA
-.It Tn Elecom LD-USB
+.It Tn Elecom LD-USB/TX
+.It Tn Elecom LD-USBL/TX
 .It Tn Elsa Microlink USB2Ethernet
 .It Tn I/O DATA USB ETTX
 .It Tn Kingston KNU101TX
 .It Tn LinkSys USB100TX
 .It Tn LinkSys USB100H1
+.It Tn LinkSys USB10T
 .It Tn LinkSys USB10TA
+.It Tn LinkSys USB10TX
 .It Tn Melco Inc. LUA-TX
+.It Tn Melco Inc. LUA2-TX
 .It Tn Netgear FA101
 .It Tn Siemens SpeedStream USB
 .It Tn Smartbridges smartNIC 2
@@ -97,7 +106,7 @@ received and transmitted over separate USB bulk transfer endpoints.
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width tenletters
 .It autoselect
 Enable autoselection of the media type and options.
 The user can manually override
@@ -135,7 +144,7 @@ mode.
 The
 .Nm
 driver supports the following media options:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width tenletters
 .It full-duplex
 Force full duplex operation.
 The interface will operate in
