@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.11 1997/07/18 00:49:43 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.12 1997/08/12 19:05:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -73,7 +73,3 @@ u_int biosmem __P((void));
 /* time.c */
 void time_print __P((void));
 time_t getsecs __P((void));
-
-/* biostime.S */
-int biostime __P((char *));
-int biosdate __P((char *));
