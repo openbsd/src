@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.43 2001/12/07 19:57:08 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.44 2002/01/23 20:06:38 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4042,12 +4042,12 @@ ENTRY(copyinstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
 	mov	%o1, %o5		! save = toaddr;
 	tst	%o2			! maxlen == 0?
-	beq,a	Lcstoolong		! yes, return ENAMETOOLONG
+	beq,a	Lcstoolong0		! yes, return ENAMETOOLONG
 	 sethi	%hi(_cpcb), %o4
 
 	set	KERNBASE, %o4
 	cmp	%o0, %o4		! fromaddr < KERNBASE?
-	blu	Lcsdocopy		! yes, go do it
+	blu	Lcsdocopyi		! yes, go do it
 	 sethi	%hi(_cpcb), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
@@ -4063,21 +4063,28 @@ ENTRY(copyoutstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
 	mov	%o1, %o5		! save = toaddr;
 	tst	%o2			! maxlen == 0?
-	beq,a	Lcstoolong		! yes, return ENAMETOOLONG
+	beq,a	Lcstoolong0		! yes, return ENAMETOOLONG
 	 sethi	%hi(_cpcb), %o4
 
 	set	KERNBASE, %o4
 	cmp	%o1, %o4		! toaddr < KERNBASE?
-	blu	Lcsdocopy		! yes, go do it
+	blu	Lcsdocopyo		! yes, go do it
 	 sethi	%hi(_cpcb), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
 
-Lcsdocopy:
+Lcsdocopyi:
 !	sethi	%hi(_cpcb), %o4		! (done earlier)
 	ld	[%o4 + %lo(_cpcb)], %o4	! catch faults
-	set	Lcsfault, %g1
+	set	Lcsfaulti, %g1
+	b	0f
+	 st	%g1, [%o4 + PCB_ONFAULT]
+
+Lcsdocopyo:
+!	sethi	%hi(_cpcb), %o4		! (done earlier)
+	ld	[%o4 + %lo(_cpcb)], %o4	! catch faults
+	set	Lcsfaulto, %g1
 	st	%g1, [%o4 + PCB_ONFAULT]
 
 ! XXX should do this in bigger chunks when possible
@@ -4092,6 +4099,9 @@ Lcsdocopy:
 	 inc	%o0			!		goto loop;
 					!	}
 Lcstoolong:				!
+	deccc	%o1
+	stb	%g0, [%o1]		!	*--toaddr = '\0';
+Lcstoolong0:				!
 	b	Lcsdone			!	error = ENAMETOOLONG;
 	 mov	ENAMETOOLONG, %o0	!	goto done;
 1:					! ok:
@@ -4105,7 +4115,21 @@ Lcsdone:				! done:
 	retl				! cpcb->pcb_onfault = 0;
 	 st	%g0, [%o4 + PCB_ONFAULT]! return (error);
 
-Lcsfault:
+Lcsfaulti:
+	cmp	%o1, %o5		! did we write to the string?
+	be,a	1f
+	 deccc	%o1	
+1:
+	stb	%g0, [%o1]		! *--toaddr = '\0';
+	b	Lcsdone			! error = EFAULT;
+	 mov	EFAULT, %o0		! goto ret;
+
+Lcsfaulto:
+	cmp	%o1, %o5		! did we write to the string?
+	be,a	1f
+	 deccc	%o1	
+	stb	%g0, [%o1]		! *--toaddr = '\0';
+1:
 	b	Lcsdone			! error = EFAULT;
 	 mov	EFAULT, %o0		! goto ret;
 
