@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.92 2005/03/18 22:39:59 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.93 2005/03/30 07:42:13 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -28,6 +28,7 @@ option		EXT2FS		# Linux ext2fs
 #option		NFSCLIENT	# Network File System client
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
+option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 

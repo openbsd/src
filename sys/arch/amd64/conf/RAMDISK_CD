@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.28 2005/03/13 17:24:12 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.29 2005/03/30 07:42:13 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -18,6 +18,7 @@ option		FFS		# UFS
 #option		NFSCLIENT	# Network File System client
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
+option		UDF
 option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 
