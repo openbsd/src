@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.25 2000/12/25 19:44:43 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.26 2000/12/29 17:00:54 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -152,11 +152,12 @@ pchbattach(parent, self, aux)
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct pcibus_attach_args pba;
+	struct timeval tv1, tv2;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
 	int neednl = 1;
-	int i;
+	int i, r;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -290,55 +291,47 @@ pchbattach(parent, self, aux)
 				break;
 
 			/* probe and init rng */
-			if (bus_space_read_1(sc->bt, sc->bh,
-			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT) {
-				int r;
+			if (!(bus_space_read_1(sc->bt, sc->bh,
+			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT))
+				break;
 
-				/* enable RNG */
-				bus_space_write_1(sc->bt, sc->bh,
-						I82802_RNG_HWST,
-				    bus_space_read_1(sc->bt, sc->bh,
-						I82802_RNG_HWST) |
-				    I82802_RNG_HWST_ENABLE);
+			/* enable RNG */
+			bus_space_write_1(sc->bt, sc->bh, I82802_RNG_HWST,
+			    bus_space_read_1(sc->bt, sc->bh, I82802_RNG_HWST) |
+			    I82802_RNG_HWST_ENABLE);
 
-				/*
-				 * see if we can read anything,
-				 * and it passed the test
-				 */
-				for (i = 1000; i-- &&
-		    !(bus_space_read_1(sc->bt, sc->bh, I82802_RNG_RNGST) &
-		      I82802_RNG_RNGST_DATAV); DELAY(10));
+			/* see if we can read anything */
+			for (i = 1000; i-- &&
+			    !(bus_space_read_1(sc->bt,sc->bh,I82802_RNG_RNGST)&
+			      I82802_RNG_RNGST_DATAV);
+			    DELAY(10));
 
-				if (bus_space_read_1(sc->bt, sc->bh,
-				    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV
-				    && (r = bus_space_read_1(sc->bt, sc->bh,
-					I82802_RNG_DATA)) != 0
-				    /*&& runfipstest()>=0*/) {
-					struct timeval tv1, tv2;
+			if (!(bus_space_read_1(sc->bt, sc->bh,
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV))
+				break;
 
-					/* benchmark the RNG */
-					microtime(&tv1);
-					for (i = 8 * 1024; i--; ) {
-						while(!(bus_space_read_1(sc->bt,
-						    sc->bh, I82802_RNG_RNGST) &
-						    I82802_RNG_RNGST_DATAV));
-						(void)bus_space_read_1(sc->bt,
-						    sc->bh, I82802_RNG_DATA);
-					}
-					microtime(&tv2);
+			r = bus_space_read_1(sc->bt, sc->bh, I82802_RNG_DATA);
 
-					timersub(&tv2, &tv1, &tv1);
-					if (tv1.tv_sec)
-						tv1.tv_usec +=
-						    1000000 * tv1.tv_sec;
-					printf(": rng active, %dKb/sec",
-					    8 * 1000000 / tv1.tv_usec);
-
-					timeout_set(&sc->sc_tmo, pchb_rnd, sc);
-					sc->i = 4;
-					pchb_rnd(sc);
-				}
+			/* benchmark the RNG */
+			microtime(&tv1);
+			for (i = 8 * 1024; i--; ) {
+				while(!(bus_space_read_1(sc->bt, sc->bh,
+				    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV))
+					;
+				r = bus_space_read_1(sc->bt, sc->bh,
+				    I82802_RNG_DATA);
 			}
+			microtime(&tv2);
+
+			timersub(&tv2, &tv1, &tv1);
+			if (tv1.tv_sec)
+				tv1.tv_usec += 1000000 * tv1.tv_sec;
+			printf(": rng active, %dKb/sec",
+			    8 * 1000000 / tv1.tv_usec);
+
+			timeout_set(&sc->sc_tmo, pchb_rnd, sc);
+			sc->i = 4;
+			pchb_rnd(sc);
 			break;
 		default:
 			break;
