@@ -1,13 +1,11 @@
-#	$OpenBSD: inter.phone,v 1.14 2001/07/13 23:03:48 pvalchev Exp $
+#	$OpenBSD: inter.phone,v 1.15 2001/07/13 23:49:38 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
 # Country Code : City Code : City : Country
+1:718:Brooklyn:USA
 7:095:Moscow:Russia
 7:::Kazakhstan
-7:::Kirgizstan
-7:::Tadzhikistan
-7:::Uzbekistan
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
 20:66:Port Said:Egypt, Arab Rep. of
@@ -69,6 +67,517 @@
 34:71:Palma de Mallorca:Spain
 34:76:Zaragoza:Spain
 36:1:Budapest:Hungary
+36:1:Pilisborosjeno:Hungary
+36:1:Torokbalint:Hungary
+36:1:Urom:Hungary
+36:20:Cegled:Hungary
+36:22:Szekesfehervar (Stuhlwessenburg):Hungary
+36:24:Alcsutdoboz:Hungary
+36:24:Alsoorspuszta (Many):Hungary
+36:24:Banyatelep (Gant):Hungary
+36:24:Obarok (Bicske):Hungary
+36:24:Odonmajor (Etyek):Hungary
+36:24:Szar:Hungary
+36:24:Szunyogpuszta (Felcsut):Hungary
+36:24:Tabajd:Hungary
+36:24:Tukrospuszta (Bicske):Hungary
+36:24:Ujbarok:Hungary
+36:24:Val:Hungary
+36:24:Vertesacsa:Hungary
+36:24:Vertesboglar:Hungary
+36:24:Verteskozma (Gant):Hungary
+36:26:Alsomajor (Biatorbagy):Hungary
+36:26:Alsonemedi:Hungary
+36:26:Anasztaziapuszta (Tarnok):Hungary
+36:26:Erd:Hungary
+36:26:Ocsa:Hungary
+36:26:Paty:Hungary
+36:26:Perbal:Hungary
+36:26:Piliscsaba:Hungary
+36:26:Pilisszanto:Hungary
+36:26:Pilisszentivan:Hungary
+36:26:Pilisszentkereszt:Hungary
+36:26:Pilisszentlaszlo:Hungary
+36:26:Pilisvorosvar:Hungary
+36:26:Pocsmegyer:Hungary
+36:26:Pomaz:Hungary
+36:26:Pusztazamor:Hungary
+36:26:Rackeve:Hungary
+36:26:Simonpuszta (Erd):Hungary
+36:26:Solymar:Hungary
+36:26:Soskut:Hungary
+36:26:Surany (Pocsmegyer):Hungary
+36:26:Szabadsagforras (Szentendre):Hungary
+36:26:Szabotanya (Telki):Hungary
+36:26:Szazhalombatta:Hungary
+36:26:Szentendre:Hungary
+36:26:Szentetanya (Pomaz):Hungary
+36:26:Szentgyorgypuszta (Visegrad):Hungary
+36:26:Szentistvantelep (Budakalasz):Hungary
+36:26:Szigetbecse:Hungary
+36:26:Szigetcsep:Hungary
+36:26:Szigethalom:Hungary
+36:26:Szigetmonostor:Hungary
+36:26:Szigetszentmarton:Hungary
+36:26:Szigetszentmiklos:Hungary
+36:26:Szigetujfalu:Hungary
+36:26:Tahi (Tahitotfalu):Hungary
+36:26:Tahitotfalu:Hungary
+36:26:Taksony:Hungary
+36:26:Tarnok:Hungary
+36:26:Telki:Hungary
+36:26:Tinnye:Hungary
+36:26:Tok:Hungary
+36:26:Tokol:Hungary
+36:26:Visegrad:Hungary
+36:26:Zsambek:Hungary
+36:27:Alagimajor (Dunakeszi):Hungary
+36:27:Alsogod:Hungary
+36:27:Paphegy (Szokolya):Hungary
+36:27:Perocseny:Hungary
+36:27:Sikatorpuszta (Fot):Hungary
+36:27:Szalacsipuszta (Szodliget):Hungary
+36:27:Szod:Hungary
+36:27:Szodliget:Hungary
+36:27:Szokolya:Hungary
+36:27:Teglahazdulo (Vac):Hungary
+36:27:Tesa:Hungary
+36:27:Vac:Hungary
+36:27:Vamosmikola:Hungary
+36:28:Babatpuszta (Godollo):Hungary
+36:28:Szaritopuszta (Godollo):Hungary
+36:32:Baglyasaja (Salgotarjan):Hungary
+36:32:Salgotarjan:Hungary
+36:32:Somoskoujfalu:Hungary
+36:32:Vizslas:Hungary
+36:32:Zagyvapalfalva (Salgotarjan):Hungary
+36:32:Zagyvarona (Salgotarjan):Hungary
+36:34:Agostvan:Hungary
+36:34:Almasneszmely:Hungary
+36:34:Almaspuszta (Naszaly):Hungary
+36:34:Baj:Hungary
+36:34:Banhida (Tatabanya):Hungary
+36:34:Oroszlany:Hungary
+36:34:Paulamajor (Tata):Hungary
+36:34:Sikvolgypuszta (Tatabanya):Hungary
+36:34:Szakszend:Hungary
+36:34:Szomod:Hungary
+36:34:Szolohegy (Baj):Hungary
+36:34:Tatabanya:Hungary
+36:34:Tardosbanya:Hungary
+36:34:Tarjan:Hungary
+36:34:Tata:Hungary
+36:34:Tatabanya:Hungary
+36:34:Tornyo:Hungary
+36:34:Vargesztes:Hungary
+36:34:Vertessomlo:Hungary
+36:34:Vertesszolos:Hungary
+36:34:Vertestolna:Hungary
+36:36:Almar (Eger):Hungary
+36:36:Andornaktalya:Hungary
+36:36:Eger:Hungary
+36:36:Maklar:Hungary
+36:36:Szilvasvarad:Hungary
+36:37:Abasar:Hungary
+36:37:Atkar:Hungary
+36:37:Bagolyirtas (Matraszentimre):Hungary
+36:37:Gyongyos (Gyo:ngyo:s):Hungary
+36:37:Szucsi:Hungary
+36:37:Vamosgyork:Hungary
+36:37:Visonta:Hungary
+36:38:Petofibanyatelep (Lorinci):Hungary
+36:38:Selyp (Lorinci):Hungary
+36:42:Nyiregyhaza:Hungary
+36:42:Nyiregyhaza:Hungary
+36:42:Nyirszollos (Nyiregyhaza):Hungary
+36:42:Sostogyogyfurdo (Nyiregyhaza):Hungary
+36:42:Sostohegy (Nyiregyhaza):Hungary
+36:42:Zahony:Hungary
+36:42:Zsurk:Hungary
+36:46:Alsozsolca:Hungary
+36:46:Bankut (Nagyvisnyo):Hungary
+36:46:Kisgyor:Hungary
+36:46:Lillafured (Miskolc):Hungary
+36:46:Lyukobanya (Miskolc):Hungary
+36:46:Miskolc:Hungary
+36:46:Miskolctapolca (Miskolc):Hungary
+36:46:Nyekladhaza:Hungary
+36:46:Omassa:Hungary
+36:46:Pereces (Miskolc):Hungary
+36:46:Szakald:Hungary
+36:46:Szirma (Miskolc):Hungary
+36:46:Tapolcafurdo (Miskolc):Hungary
+36:47:Ozd:Hungary
+36:47:Sajonemeti:Hungary
+36:47:Sajovarkony:Hungary
+36:47:Somsalybanya (Hodoscsepany):Hungary
+36:47:Uraj:Hungary
+36:48:Alacska:Hungary
+36:48:Rudolftelep (Izsofalva):Hungary
+36:48:Sajoszentpeter:Hungary
+36:48:Szuhakallo:Hungary
+36:49:Sajoors:Hungary
+36:49:Tiszapalkonya:Hungary
+36:52:Balmazujvaros:Hungary
+36:52:Debrecen:Hungary
+36:52:Hajduszobsszio:Hungary
+36:52:Hortobagy:Hungary
+36:52:Hortobagyi-halasto (Hortobagy):Hungary
+36:52:Kaposvar:Hungary
+36:56:Alcsisziget (Szolnok):Hungary
+36:56:Szandaszolos (Szolnok):Hungary
+36:56:Szolnok:Hungary
+36:62:Algyo (Szeged):Hungary
+36:62:Asotthalom:Hungary
+36:62:Balastya:Hungary
+36:62:Kiskundorozsma (Szeged):Hungary
+36:62:Kistelek:Hungary
+36:62:Morahalom:Hungary
+36:62:Roszke:Hungary
+36:62:Sandorfalva:Hungary
+36:62:Szatymaz:Hungary
+36:62:Szeged:Hungary
+36:62:Szentmihalytelek (Szeged):Hungary
+36:62:Szoreg (Szeged):Hungary
+36:62:Tape (Szeged):Hungary
+36:62:Tarjan (Szeged):Hungary
+36:62:Ulles:Hungary
+36:62:Zakanyszek:Hungary
+36:66:Bekescsaba:Hungary
+36:66:Szabadkigyos:Hungary
+36:66:Tarhos:Hungary
+36:66:Telekgerendas:Hungary
+36:66:Ujkigyos:Hungary
+36:66:Vizesfas (Tarhos):Hungary
+36:72:Abaliget:Hungary
+36:72:Aranyhegy (Pecs):Hungary
+36:72:Aranyosgadany:Hungary
+36:72:Arpadteto (Pecs):Hungary
+36:72:Ata:Hungary
+36:72:Babarcszolos:Hungary
+36:72:Baksa:Hungary
+36:72:Baliks (Pecs):Hungary
+36:72:Banos:Hungary
+36:72:Baranyajeno:Hungary
+36:72:Basamalomdulo (Pecs):Hungary
+36:72:Hetvehely:Hungary
+36:72:Hird (Pecs):Hungary
+36:72:Husztot:Hungary
+36:72:Ipacsia:Hungary
+36:72:Istenaldasvolgy (Pecs):Hungary
+36:72:Istvanakna (Pecs):Hungary
+36:72:Kacsota (Szentlorinc):Hungary
+36:72:Karacodfa (Szentkatalin):Hungary
+36:72:Keresztespuszta (Gorcsony):Hungary
+36:72:Keszu:Hungary
+36:72:Kisder:Hungary
+36:72:Kisherend (Egerag):Hungary
+36:72:Kiskassa:Hungary
+36:72:Kispiricsizmadulo (Pecs):Hungary
+36:72:Kisszkokoteto (Pecs):Hungary
+36:72:Kistotfalu (Ujpetre):Hungary
+36:72:Kokeny (Pogany):Hungary
+36:72:Komlo:Hungary
+36:72:Kovacsszenaja:Hungary
+36:72:Kozar (Pecs):Hungary
+36:72:Kozarmisleny:Hungary
+36:72:Kozepdeindol (Pecs):Hungary
+36:72:Lampasvolgy (Pecs):Hungary
+36:72:Lothard:Hungary
+36:72:Malom (Pecs):Hungary
+36:72:Marfa:Hungary
+36:72:Mecsekalja (Pecs):Hungary
+36:72:Mecsekrakos (Orfu):Hungary
+36:72:Mecsekszakai (Orfu):Hungary
+36:72:Mecsekszentkut (Pecs):Hungary
+36:72:Misinateto:Hungary
+36:72:Nemeti:Hungary
+36:72:Nyugati kohiddulo (Pecs):Hungary
+36:72:Ocsard:Hungary
+36:72:Okorvolgy:Hungary
+36:72:Orfu:Hungary
+36:72:Patacsiujhegy (Pecs):Hungary
+36:72:Pecs:Hungary
+36:72:Pecsbagota:Hungary
+36:72:Pecsbanyatelep (Pecs):Hungary
+36:72:Pecsdevecser:Hungary
+36:72:Pecsszabolcs (Pecs):Hungary
+36:72:Pecsudvard:Hungary
+36:72:Pellerd:Hungary
+36:72:Peterd:Hungary
+36:72:Peterpuszta (Pecs):Hungary
+36:72:Pogany:Hungary
+36:72:Postavolgy (Pecs):Hungary
+36:72:Puspokszentlaszlo (Hosszuheteny):Hungary
+36:72:Regenye:Hungary
+36:72:Remenypuszta (Pecs):Hungary
+36:72:Rigoderdulo (Pecs):Hungary
+36:72:Sasd:Hungary
+36:72:Siklosbodony:Hungary
+36:72:Sikonda (Komlo):Hungary
+36:72:Szabadszentkiraly:Hungary
+36:72:Szalanta:Hungary
+36:72:Szava:Hungary
+36:72:Szemely:Hungary
+36:72:Szentdomjanpuszta (Bukkosd):Hungary
+36:72:Szentkatalin:Hungary
+36:72:Szentkut (Pecs):Hungary
+36:72:Szentlorinc:Hungary
+36:72:Szentpalpuszta (Szoke):Hungary
+36:72:Szilvas:Hungary
+36:72:Szoke:Hungary
+36:72:Szoked:Hungary
+36:72:Tarcsapuszta (Szentlorinc):Hungary
+36:72:Tekeres:Hungary
+36:72:Tengeri:Hungary
+36:72:Terehegy (Harkany):Hungary
+36:72:Teseny:Hungary
+36:72:Ujhegy (Pecs):Hungary
+36:72:Ujpetre:Hungary
+36:72:Uszogpuszta:Hungary
+36:72:Vasas (Pecs):Hungary
+36:72:Vekeny:Hungary
+36:72:Veleny:Hungary
+36:72:Vokany:Hungary
+36:72:Zobakpuszta (Komlo):Hungary
+36:72:Zok:Hungary
+36:74:Alsoapati (Szedres):Hungary
+36:74:Alsohidveg (Alsotengelic):Hungary
+36:74:Alsopatlan (Zomba):Hungary
+36:74:Alsotengelic (Tengelic):Hungary
+36:74:Alsovarszeg (Fadd):Hungary
+36:74:Andormajor (Zomba):Hungary
+36:74:Apatipuszta (Szedres):Hungary
+36:74:Attala:Hungary
+36:74:Bakta (Szekszard):Hungary
+36:74:Ozsakpuszta (Szekszard):Hungary
+36:74:Ocsenyi szolohegy:Hungary
+36:74:Palank:Hungary
+36:74:Palanki hegy (Szekszard):Hungary
+36:74:Paradicsompuszta (Zomba):Hungary
+36:74:Regoly:Hungary
+36:74:Rozsamaj:Hungary
+36:74:Simontornya:Hungary
+36:74:Sioagard:Hungary
+36:74:Szakadat:Hungary
+36:74:Szakaly:Hungary
+36:74:Szakcs:Hungary
+36:74:Szalka:Hungary
+36:74:Szarazd:Hungary
+36:74:Szedres:Hungary
+36:74:Szekszard:Hungary
+36:74:Szentgalpuszta (Zomba):Hungary
+36:74:Szolohegy (Tengelic):Hungary
+36:74:Tamasi:Hungary
+36:74:Tengelic:Hungary
+36:74:Tengelicszolohegy:Hungary
+36:74:Tolna:Hungary
+36:74:Udvari:Hungary
+36:74:Zomba:Hungary
+36:75:Alsocsampapuszta (Paks):Hungary
+36:75:Alsoracegres (Sarszentlorinc):Hungary
+36:75:Andraspuszta (Bolcske):Hungary
+36:75:Nemetker:Hungary
+36:75:Paks:Hungary
+36:75:Palfa:Hungary
+36:75:Pusztahencse:Hungary
+36:75:Sarszentlorinc:Hungary
+36:75:Uzd (Sarszentlorinc):Hungary
+36:75:Vetlepuszta (Dunaszentgyorgy):Hungary
+36:76:Kecskemet:Hungary
+36:76:Kerekegyhaza:Hungary
+36:76:Kiskunfelegyhaza:Hungary
+36:76:Lakitelek:Hungary
+36:76:Laszlofalva:Hungary
+36:76:Nyarlorinc:Hungary
+36:76:Tiszaalpar:Hungary
+36:76:Tiszabog:Hungary
+36:76:Tiszakecske:Hungary
+36:76:Varosfold:Hungary
+36:80:Balatonakarattya (Balatonkenese):Hungary
+36:80:Balatonalmadi:Hungary
+36:80:Balatonfokajar:Hungary
+36:80:Balatonfuzfo:Hungary
+36:80:Balatonkenese:Hungary
+36:80:Balatonkenese-Udulotelep:Hungary
+36:80:Balatonszolos:Hungary
+36:80:Barnag:Hungary
+36:80:Nemesvamos:Hungary
+36:80:Osi:Hungary
+36:80:Osku:Hungary
+36:80:Papkeszi:Hungary
+36:80:Peremarton gyartelep (Berhida):Hungary
+36:80:Petfurdo (Varpalota):Hungary
+36:80:Pula:Hungary
+36:80:Soly:Hungary
+36:80:Szentkiralyszabadja:Hungary
+36:80:Totvazsony:Hungary
+36:80:Varpalota:Hungary
+36:80:Vaszoly:Hungary
+36:80:Veszprem:Hungary
+36:80:Veszpremfajsz:Hungary
+36:80:Vilonya:Hungary
+36:80:Vorosbereny (Balatonalmadi):Hungary
+36:80:Vorosto:Hungary
+36:82:Kaposuari:Hungary
+36:82:Repaspuszta (Kaposvar):Hungary
+36:82:Toponar (Kaposvar):Hungary
+36:82:Zaranypuszta (Kaposvar):Hungary
+36:84:Adand:Hungary
+36:84:Alsobelatelep (Fonyod):Hungary
+36:84:Babonymegyer:Hungary
+36:84:Bagohegy (Balvanyos):Hungary
+36:84:Balatonaliga (Balatonvilagos):Hungary
+36:84:Balatonbereny:Hungary
+36:84:Balatonendred:Hungary
+36:84:Balatonfenyves:Hungary
+36:84:Balatonfoldvar:Hungary
+36:84:Balatonkeresztur (Balatonmariafurdo):Hungary
+36:84:Balatonkiliti (Siofok):Hungary
+36:84:Balatonmariafurdo:Hungary
+36:84:Balatonoszod:Hungary
+36:84:Balatonszabadi:Hungary
+36:84:Balatonszabadi-furdo (Siofok):Hungary
+36:84:Balatonszabadi-sosto (Siofok):Hungary
+36:84:Balatonszarszo:Hungary
+36:84:Balatonszemes:Hungary
+36:84:Balatonszentgyorgy:Hungary
+36:84:Balatonszeplak (Siofok):Hungary
+36:84:Balatonujhely (Siofok):Hungary
+36:84:Balatonvilagos:Hungary
+36:84:Balvanyos:Hungary
+36:84:Hollad:Hungary
+36:84:Jabapuszta:Hungary
+36:84:Kereki:Hungary
+36:84:Koroshegy:Hungary
+36:84:Kotcse:Hungary
+36:84:Lulla:Hungary
+36:84:Neszde (Szolad):Hungary
+36:84:Nyim:Hungary
+36:84:Papkutapuszta (Siofok):Hungary
+36:84:Pusztaszemes:Hungary
+36:84:Sagvar:Hungary
+36:84:Sersekszolos:Hungary
+36:84:Siofok (-furdo, -susto):Hungary
+36:84:Siojut:Hungary
+36:84:Som:Hungary
+36:84:Somostelep (Koroshegy):Hungary
+36:84:Szantod (Zamardi):Hungary
+36:84:Szantod-furdotelep (Zamardi):Hungary
+36:84:Szantodpuszta (Zamardi):Hungary
+36:84:Szegerdo (Vors):Hungary
+36:84:Szolad:Hungary
+36:84:Tab:Hungary
+36:84:Teleki:Hungary
+36:84:Tikos (Hollad):Hungary
+36:84:Tokozpuszta (Zamardi):Hungary
+36:84:Torvaj:Hungary
+36:84:Totokilap (Balatonfured):Hungary
+36:84:Vors:Hungary
+36:84:Zala:Hungary
+36:84:Zamardi:Hungary
+36:86:Alsoors:Hungary
+36:86:Aszofo:Hungary
+36:86:Balatonakali:Hungary
+36:86:Balatonalmadi:Hungary
+36:86:Balatonaracs (Balatonfured):Hungary
+36:86:Balatonfured (Balatonfu:red):Hungary
+36:86:Balatonudvari:Hungary
+36:86:Csopak:Hungary
+36:86:Kaptalanfured (Balatonalmadi):Hungary
+36:86:Orvenyes:Hungary
+36:86:Kilantelep (Balatonudvari):Hungary
+36:86:Lovas:Hungary
+36:86:Paloznak:Hungary
+36:86:Pecsely:Hungary
+36:86:Tihany:Hungary
+36:87:Abrahamhegy (Balatonrendes):Hungary
+36:87:Badacsony (Badacsonytomaj):Hungary
+36:87:Badacsonylabdihegy (Badacsonytomaj):Hungary
+36:87:Badacsonyors (Badacsonytomaj):Hungary
+36:87:Badacsonytomaj:Hungary
+36:87:Badacsonytordemic:Hungary
+36:87:Balatoncsicso:Hungary
+36:87:Balatonrendes:Hungary
+36:87:Balatonszepezd:Hungary
+36:87:Obudavar:Hungary
+36:87:Raposka(Tapolca):Hungary
+36:87:Revfulop:Hungary
+36:87:Salfold:Hungary
+36:87:Szentjakabfa:Hungary
+36:87:Szentantalfa:Hungary
+36:87:Szigliget:Hungary
+36:87:Tagyon:Hungary
+36:87:Tapolca:Hungary
+36:87:Zanka:Hungary
+36:87:Zanka-Uttorovaros:Hungary
+36:89:Papa:Hungary
+36:92:Alsoerdeiut (Zalaegerszeg):Hungary
+36:92:Andrashida (Zalaegerszeg):Hungary
+36:92:Neszele (Zalaegerszeg):Hungary
+36:92:Pozva (Zalaegerszeg):Hungary
+36:92:Sagod (Zalaegerszeg):Hungary
+36:92:Szenterzsebethegy (Zalaegerszeg):Hungary
+36:92:Szivhegy (Zalaegerszeg):Hungary
+36:92:Zalaegerszeg:Hungary
+36:92:Zalakaros:Hungary
+36:93:Bagola (Nagykanizsa):Hungary
+36:93:Bajcsa (Nagykanizsa):Hungary
+36:93:Szabadhegy (Nagykanizsa):Hungary
+36:94:Szombathely (Steinamanger):Hungary
+36:96:Abda:Hungary
+36:96:Bacsa (Gyor):Hungary
+36:96:Gyor (Raab):Hungary
+36:96:Ikreny:Hungary
+36:96:Nyalka:Hungary
+36:96:Nyul:Hungary
+36:96:Janoshazapuszta (Lebenymiklos):Hungary
+36:96:Kisbajcs:Hungary
+36:96:Kismegyer (Gyor):Hungary
+36:96:Koronco:Hungary
+36:96:Kunsziget:Hungary
+36:96:Lebenymiklos:Hungary
+36:96:Menfocsanak (Gyor):Hungary
+36:96:Mindszentpuszta (Mezoors):Hungary
+36:96:Mosonszentmiklos (Lebenymiklos):Hungary
+36:96:Nagybajcs (Kisbajcs):Hungary
+36:96:Otteveny:Hungary
+36:96:Pannonhalma:Hungary
+36:96:Pazmandfalu:Hungary
+36:96:Per:Hungary
+36:96:Pinnyed (Gyor):Hungary
+36:96:Rabapatona:Hungary
+36:96:Ravazd:Hungary
+36:96:Sokoropatka:Hungary
+36:96:Tap:Hungary
+36:96:Tapszentmiklos:Hungary
+36:96:Tarjanpuszta:Hungary
+36:96:Tenyo:Hungary
+36:96:Toltestava:Hungary
+36:96:Vamosszabadi:Hungary
+36:96:Venek:Hungary
+36:97:Babot:Hungary
+36:97:Osli:Hungary
+36:97:Ontesmajor(Kapuvar):Hungary
+36:97:Szarfold:Hungary
+36:97:Veszkeny:Hungary
+36:97:Vitnyed:Hungary
+36:98:Rajka:Hungary
+36:99:Agfalva:Hungary
+36:98:Agyagosszergeny:Hungary
+36:98:Balf:Hungary
+36:98:Pereszteg:Hungary
+36:98:Petohaza:Hungary
+36:98:Pinnye:Hungary
+36:99:Rojtokmuzsaj:Hungary
+36:99:Sarrod:Hungary
+36:99:Sopron(Odenburg):Hungary
+36:99:Sopronhorpacs:Hungary
+36:99:Sopronkohida:Hungary
+36:99:Sopronkovesd:Hungary
+36:99:Sopronpuszta(Sopron):Hungary
+36:99:Tozeggyarmajor(Fertod):Hungary
+36:99:Und:Hungary
 39:10:Genoa:Italy
 39:11:Turin:Italy
 39:2:Milan:Italy
@@ -333,6 +842,7 @@
 256:42:Entebbe:Uganda
 257:::Burundi
 258:::Mozambique
+259:::Zanzibar
 260:1:Lusaka:Zambia
 262:::Reunion
 263:4:Harare:Zimbabwe
@@ -834,9 +1344,11 @@
 975:::Bhutan
 976:::Mongolia
 977:::Nepal
+992:::Tajikistan
 993:12:Ashgabat:Turkmenistan
 993:422:Charjou:Turkmenistan
 993:522:Mary:Turkmenistan
-358:28::Aaland Islands
 994:::Azerbaijan
 995:::Georgia
+996:::Kyrghyzstan
+998:::Uzbekistan
