@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.4 2003/09/26 11:21:26 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.5 2003/09/26 13:47:16 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm bc
 .Op Fl cl
-.Ar
+.Op Ar file ...
 .Sh DESCRIPTION
 .Nm
 is an interactive processor for a language which resembles
@@ -121,6 +121,7 @@ for ( E ; E ; E ) S
 null statement
 break
 quit
+a string of letters, enclosed in double quotes
 .Ed
 .Pp
 Function definitions
@@ -131,6 +132,11 @@ define L ( L ,..., L ) {
 	return ( E )
 }
 .Ed
+.Pp
+The sequence
+.Sq \e\<newline><whitespace>
+is ignored within numbers.
+The newline character may be part part of a string.
 .Pp
 Functions in
 .Fl lm
