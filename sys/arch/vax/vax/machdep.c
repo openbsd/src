@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.32 2001/05/17 18:41:50 provos Exp $ */
+/* $OpenBSD: machdep.c,v 1.33 2001/06/11 01:33:48 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -538,8 +538,13 @@ boot(howto)
 		");
 #endif
 
+		/* If rebooting and a dump is requested, do it. */
 		if (showto & RB_DUMP)
 			dumpsys();
+
+		/* Run any shutdown hooks. */
+		doshutdownhooks();
+
 		if (dep_call->cpu_reboot)
 			(*dep_call->cpu_reboot)(showto);
 
