@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.428 2003/12/15 09:12:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.429 2003/12/16 01:10:21 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1472,6 +1472,11 @@ pfrule		: action dir logquick interface route af proto fromto
 						    "multiple definitions");
 						YYERROR;
 					}
+					if (o->data.max_src_nodes == 0) {
+						yyerror("'max-src-states' must "
+						    "be > 0");
+						YYERROR;
+					}
 					r.max_src_states =
 					    o->data.max_src_states;
 					r.rule_flag |= PFRULE_SRCTRACK;
@@ -1481,6 +1486,11 @@ pfrule		: action dir logquick interface route af proto fromto
 						yyerror("state option "
 						    "'max-src-nodes' "
 						    "multiple definitions");
+						YYERROR;
+					}
+					if (o->data.max_src_nodes == 0) {
+						yyerror("'max-src-nodes' must "
+						    "be > 0");
 						YYERROR;
 					}
 					r.max_src_nodes =
