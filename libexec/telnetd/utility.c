@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.11 1998/03/25 18:43:50 art Exp $	*/
+/*	$OpenBSD: utility.c,v 1.12 1998/04/25 04:43:05 millert Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.11 1998/03/25 18:43:50 art Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.12 1998/04/25 04:43:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ stilloob(s)
     do {
 	FD_ZERO(&excepts);
 	FD_SET(s, &excepts);
-	memset((char *)&timeout, 0, sizeof timeout);
+	memset((void *)&timeout, 0, sizeof timeout);
 	value = select(s+1, (fd_set *)0, (fd_set *)0, &excepts, &timeout);
     } while ((value == -1) && (errno == EINTR));
 
@@ -235,7 +235,7 @@ netclear()
 		next = nextitem(next);
 	    } while (wewant(next) && (nfrontp > next));
 	    length = next-thisitem;
-	    memmove(good, thisitem, length);
+	    memmove((void *)good, (void *)thisitem, length);
 	    good += length;
 	    thisitem = next;
 	} else {
@@ -342,7 +342,7 @@ writenet(ptr, len)
 		netflush();
 	}
 
-	memmove(nfrontp, ptr, len);
+	memmove((void *)nfrontp, (void *)ptr, len);
 	nfrontp += len;
 
 }  /* end of writenet */

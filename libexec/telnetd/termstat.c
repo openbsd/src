@@ -1,4 +1,4 @@
-/*	$OpenBSD: termstat.c,v 1.3 1996/12/23 13:12:54 robin Exp $	*/
+/*	$OpenBSD: termstat.c,v 1.4 1998/04/25 04:43:04 millert Exp $	*/
 /*	$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: termstat.c,v 1.3 1996/12/23 13:12:54 robin Exp $";
+static char rcsid[] = "$OpenBSD: termstat.c,v 1.4 1998/04/25 04:43:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -621,7 +621,7 @@ defer_terminit()
 	if (def_col || def_row) {
 		struct winsize ws;
 
-		memset((char *)&ws, 0, sizeof(ws));
+		memset((void *)&ws, 0, sizeof(ws));
 		ws.ws_col = def_col;
 		ws.ws_row = def_row;
 		(void) ioctl(pty, TIOCSWINSZ, (char *)&ws);

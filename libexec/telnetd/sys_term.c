@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.11 1998/04/01 08:28:19 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.12 1998/04/25 04:43:02 millert Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.11 1998/04/01 08:28:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.12 1998/04/25 04:43:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ copy_termbuf(cp, len)
 {
 	if (len > sizeof(termbuf))
 		len = sizeof(termbuf);
-	memmove((char *)&termbuf, cp, len);
+	memmove((void *)&termbuf, cp, len);
 	termbuf2 = termbuf;
 }
 #endif	/* defined(LINEMODE) && defined(TIOCPKT_IOCTL) */
@@ -237,19 +237,19 @@ set_termbuf()
 	 * Only make the necessary changes.
 	 */
 #ifndef	USE_TERMIO
-	if (memcmp((char *)&termbuf.sg, (char *)&termbuf2.sg,
+	if (memcmp((void *)&termbuf.sg, (void *)&termbuf2.sg,
 							sizeof(termbuf.sg)))
 		(void) ioctl(pty, TIOCSETN, (char *)&termbuf.sg);
-	if (memcmp((char *)&termbuf.tc, (char *)&termbuf2.tc,
+	if (memcmp((void *)&termbuf.tc, (void *)&termbuf2.tc,
 							sizeof(termbuf.tc)))
 		(void) ioctl(pty, TIOCSETC, (char *)&termbuf.tc);
-	if (memcmp((char *)&termbuf.ltc, (char *)&termbuf2.ltc,
+	if (memcmp((void *)&termbuf.ltc, (void *)&termbuf2.ltc,
 							sizeof(termbuf.ltc)))
 		(void) ioctl(pty, TIOCSLTC, (char *)&termbuf.ltc);
 	if (termbuf.lflags != termbuf2.lflags)
 		(void) ioctl(pty, TIOCLSET, (char *)&termbuf.lflags);
 #else	/* USE_TERMIO */
-	if (memcmp((char *)&termbuf, (char *)&termbuf2, sizeof(termbuf)))
+	if (memcmp((void *)&termbuf, (void *)&termbuf2, sizeof(termbuf)))
 # ifdef  STREAMSPTY
 		(void) tcsetattr(ttyfd, TCSANOW, &termbuf);
 # else
@@ -1150,7 +1150,7 @@ getptyslave()
 	init_termbuf();
 # ifdef	TIOCGWINSZ
 	if (def_row || def_col) {
-		memset((char *)&ws, 0, sizeof(ws));
+		memset((void *)&ws, 0, sizeof(ws));
 		ws.ws_col = def_col;
 		ws.ws_row = def_row;
 		(void)ioctl(t, TIOCSWINSZ, (char *)&ws);
@@ -1475,7 +1475,7 @@ startslave(host, autologin, autoname)
 		(void) sprintf(tbuf, "Can't open %s\n", INIT_FIFO);
 		fatalperror(net, tbuf);
 	}
-	memset((char *)&request, 0, sizeof(request));
+	memset((void *)&request, 0, sizeof(request));
 	request.magic = INIT_MAGIC;
 	SCPYN(request.gen_id, gen_id);
 	SCPYN(request.tty_id, &line[8]);
@@ -1579,7 +1579,7 @@ start_login(host, autologin, name)
 	 * Create utmp entry for child
 	 */
 
-	memset(&utmpx, 0, sizeof(utmpx));
+	memset((void *)&utmpx, 0, sizeof(utmpx));
 	SCPYN(utmpx.ut_user, ".telnet");
 	SCPYN(utmpx.ut_line, line + sizeof("/dev/") - 1);
 	utmpx.ut_pid = pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.9 1998/03/25 18:43:49 art Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.10 1998/04/25 04:43:03 millert Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.9 1998/03/25 18:43:49 art Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.10 1998/04/25 04:43:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -467,7 +467,7 @@ main(argc, argv)
 		int szi = sizeof(int);
 #endif /* SO_SEC_MULTI */
 
-		memset((char *)&dv, 0, sizeof(dv));
+		memset((void *)&dv, 0, sizeof(dv));
 
 		if (getsysv(&sysv, sizeof(struct sysv)) != 0) {
 			perror("getsysv");
@@ -655,7 +655,7 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_TSPEED, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
+	memmove((void *)nfrontp, (void *)sb, sizeof sb);
 	nfrontp += sizeof sb;
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
@@ -663,7 +663,7 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_XDISPLOC, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
+	memmove((void *)nfrontp, (void *)sb, sizeof sb);
 	nfrontp += sizeof sb;
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
@@ -671,7 +671,7 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
+	memmove((void *)nfrontp, (void *)sb, sizeof sb);
 	nfrontp += sizeof sb;
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
@@ -679,13 +679,13 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_OLD_ENVIRON, TELQUAL_SEND, IAC, SE };
 
-	memmove(nfrontp, sb, sizeof sb);
+	memmove((void *)nfrontp, (void *)sb, sizeof sb);
 	nfrontp += sizeof sb;
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     if (his_state_is_will(TELOPT_TTYPE)) {
 
-	memmove(nfrontp, ttytype_sbbuf, sizeof ttytype_sbbuf);
+	memmove((void *)nfrontp, (void *)ttytype_sbbuf, sizeof ttytype_sbbuf);
 	nfrontp += sizeof ttytype_sbbuf;
 	DIAG(TD_OPTIONS, printsub('>', ttytype_sbbuf + 2,
 					sizeof ttytype_sbbuf - 2););
@@ -765,7 +765,7 @@ _gettermname()
     if (his_state_is_wont(TELOPT_TTYPE))
 	return;
     settimer(baseline);
-    memmove(nfrontp, ttytype_sbbuf, sizeof ttytype_sbbuf);
+    memmove((void *)nfrontp, (void *)ttytype_sbbuf, sizeof ttytype_sbbuf);
     nfrontp += sizeof ttytype_sbbuf;
     DIAG(TD_OPTIONS, printsub('>', ttytype_sbbuf + 2,
 					sizeof ttytype_sbbuf - 2););
