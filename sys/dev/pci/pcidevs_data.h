@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.314 2000/09/14 11:04:51 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.315 2000/09/14 11:21:36 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2113,6 +2113,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM,
+	    0,
+	    "Intel",
+	    "i960 RM PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RN,
+	    0,
+	    "Intel",
+	    "i960 RN PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
