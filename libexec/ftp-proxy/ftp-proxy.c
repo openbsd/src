@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.16 2001/09/21 18:06:25 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.17 2001/10/10 15:32:39 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -844,6 +844,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 {
 	int code, i, j, rv;
 	struct in_addr *iap;
+	static int continuing = 0;
 	char tbuf[100], *sendbuf, *p;
 
 	log_control_command((char *)server->line_buffer, 0);
@@ -863,13 +864,21 @@ do_server_reply(struct csiob *server, struct csiob *client)
 	 */
 	code = strtol((char *)server->line_buffer, &p, 10);
 	if (!*(server->line_buffer) || (*p != ' ' && *p != '-')) {
+		if (continuing)
+			goto sendit;
 		syslog(LOG_INFO, "malformed control reply");
 		exit(EX_DATAERR);
 	}
 	if (code <= 0 || code > 999) {
+		if (continuing)
+			goto sendit;
 		syslog(LOG_INFO, "invalid server reply code %d", code);
 		exit(EX_DATAERR);
 	}
+	if (*p == '-')
+		continuing = 1;
+	else 
+		continuing = 0;	  
 	if (code == 227 && !NatMode) {
 		unsigned int values[6];
 		u_char *tailptr;
@@ -928,8 +937,10 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		    ((u_char *)&client_listen_sa.sin_port)[1]);
 		debuglog(1, "to client(modified):  %s\n", tbuf);
 		sendbuf = tbuf;
-	} else
+	} else {
+ sendit:
 		sendbuf = server->line_buffer;
+	}
 
 	/*
 	 * send our (possibly modified) control command in sendbuf
