@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2001/08/25 16:15:15 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2001/09/14 06:04:58 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	u_int faultaddr;
 	int fromtrap;
 {
-	int sig, s;
+	int sig;
 #ifdef M68040
 	union sigval sv;
 	int beenhere = 0;
@@ -230,18 +230,9 @@ again:
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we mi_switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We're being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
