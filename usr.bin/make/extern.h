@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.25 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.26 2000/06/23 16:23:26 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ Boolean Make_Run __P((Lst));
 void Parse_Error __P((int, char *, ...));
 Boolean Parse_AnyExport __P((void));
 Boolean Parse_IsVar __P((char *));
-void Parse_DoVar __P((char *, SymTable *));
+void Parse_DoVar __P((char *, GSymT *));
 void Parse_AddIncludeDir __P((char *));
 void Parse_File __P((char *, FILE *));
 void Parse_Init __P((void));
@@ -142,21 +142,22 @@ void Targ_PrintType __P((int));
 void Targ_PrintGraph __P((int));
 
 /* var.c */
-void Var_Delete __P((char *, SymTable *));
-void Var_Set __P((char *, char *, SymTable *));
+void Var_Delete __P((char *, GSymT *));
+void Var_Set __P((char *, char *, GSymT *));
 void Varq_Set __P((int, char *, GNode *));
-void Var_Append __P((char *, char *, SymTable *));
+void Var_Append __P((char *, char *, GSymT *));
 void Varq_Append __P((int, char *, GNode *));
-Boolean Var_Exists __P((char *, SymTable *));
+Boolean Var_Exists __P((char *, GSymT *));
 Boolean Varq_Exists __P((int, GNode *));
-char *Var_Value __P((char *, SymTable *));
+char *Var_Value __P((char *, GSymT *));
 char *Varq_Value __P((int,  GNode *));
 char *Var_Parse __P((char *, SymTable *, Boolean, size_t *, Boolean *));
 char *Var_Subst __P((char *, SymTable *, Boolean));
-void Var_SubstVar __P((Buffer, char *, const char *, SymTable *));
+void Var_SubstVar __P((Buffer, char *, const char *, GSymT *));
 char *Var_GetTail __P((char *));
 char *Var_GetHead __P((char *));
 void Var_Init __P((void));
 void Var_End __P((void));
-void Var_Dump __P((SymTable *));
+void Var_Dump __P((GSymT *));
 void SymTable_Init __P((SymTable *));
+void SymTable_Destroy __P((SymTable *));

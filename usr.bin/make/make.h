@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.22 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.23 2000/06/23 16:23:26 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -94,6 +94,17 @@
 #define PREFIX_INDEX	4
 #define ARCHIVE_INDEX   5
 #define MEMBER_INDEX    6
+
+#define LOCAL_SIZE	7
+
+/* SymTable is private to var.c, but is declared here to allow for
+   local declaration of context tables
+ */
+typedef struct {
+	struct Var_ *locals[LOCAL_SIZE];
+} SymTable;
+
+typedef LIST GSymT;
 /*-
  * The structure for an individual graph node. Each node has several
  * pieces of data associated with it.
@@ -122,8 +133,6 @@
  *	17) a Lst of strings that are commands to be given to a shell
  *	   to create this target.
  */
-typedef LIST SymTable;
-
 typedef struct GNode {
     char            *name;     	/* The target's name */
     char    	    *path;     	/* The full pathname of the file */
@@ -345,9 +354,9 @@ extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
 
 extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 
-extern SymTable *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
+extern GSymT	*VAR_GLOBAL;   	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
-extern SymTable *VAR_CMD;    	/* Variables defined on the command line */
+extern GSymT	*VAR_CMD;    	/* Variables defined on the command line */
 extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
 				 * is encountered. It actually points to
 				 * an empty string, so naive callers needn't

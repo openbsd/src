@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.24 2000/06/23 16:21:43 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.25 2000/06/23 16:23:26 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.24 2000/06/23 16:21:43 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.25 2000/06/23 16:23:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ Targ_NewGN (name)
     Lst_Init(&gn->children);
     Lst_Init(&gn->successors);
     Lst_Init(&gn->preds);
-    Lst_Init(&gn->context);
+    SymTable_Init(&gn->context);
     gn->lineno = 0;
     gn->fname = NULL;
     Lst_Init(&gn->commands);
@@ -230,7 +230,7 @@ TargFreeGN(gnp)
     Lst_Destroy(&gn->children, NOFREE);
     Lst_Destroy(&gn->successors, NOFREE);
     Lst_Destroy(&gn->preds, NOFREE);
-    Lst_Destroy(&gn->context, NOFREE);
+    SymTable_Destroy(&gn->context);
     Lst_Destroy(&gn->commands, NOFREE);
     free(gn);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.48 2000/06/23 16:21:43 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.49 2000/06/23 16:23:26 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.48 2000/06/23 16:21:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.49 2000/06/23 16:23:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1407,7 +1407,7 @@ void
 Parse_DoVar (line, ctxt)
     char            *line;	/* a line guaranteed to be a variable
 				 * assignment. This reduces error checks */
-    SymTable   	    *ctxt;    	/* Context in which to do the assignment */
+    GSymT   	    *ctxt;    	/* Context in which to do the assignment */
 {
     char	   *cp;	/* pointer into line */
     enum {
@@ -1510,7 +1510,7 @@ Parse_DoVar (line, ctxt)
 	Boolean	  oldOldVars = oldVars;
 
 	oldVars = FALSE;
-	cp = Var_Subst(cp, ctxt, FALSE);
+	cp = Var_Subst(cp, (SymTable *)ctxt, FALSE);
 	oldVars = oldOldVars;
 
 	Var_Set(line, cp, ctxt);

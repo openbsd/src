@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.36 2000/06/23 16:21:44 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.37 2000/06/23 16:23:26 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.36 2000/06/23 16:21:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.37 2000/06/23 16:23:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,9 +126,9 @@ static char rcsid[] = "$OpenBSD: var.c,v 1.36 2000/06/23 16:21:44 espie Exp $";
 #include    "make.h"
 #include    "buf.h"
 
-/* `Quick' index variants.  For now, these are stubs which call the `real'
- * slow function.
- */
+static SymTable *CTXT_GLOBAL, *CTXT_CMD, *CTXT_ENV;
+
+/* `Quick' index variants.  */
 static char *varnames[] = {
     TARGET,
     OODATE,
@@ -137,40 +137,6 @@ static char *varnames[] = {
     PREFIX,
     ARCHIVE,
     MEMBER };
-
-void 
-Varq_Set(idx, val, gn)
-    int 	idx;
-    char 	*val;
-    GNode 	*gn;
-{
-    Var_Set(varnames[idx], val, &gn->context);
-}
-
-void 
-Varq_Append(idx, val, gn)
-    int		idx;
-    char	*val;
-    GNode	*gn;
-{
-    Var_Append(varnames[idx], val, &gn->context);
-}
-
-char *
-Varq_Value(idx, gn)
-    int		idx;
-    GNode	*gn;
-{
-    return Var_Value(varnames[idx], &gn->context);
-}
-
-Boolean
-Varq_Exists(idx, gn)
-    int		idx;
-    GNode	*gn;
-{
-    return Var_Exists(varnames[idx], &gn->context);
-}
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
@@ -202,17 +168,15 @@ static char	varNoError[] = "";
  * The four contexts are searched in the reverse order from which they are
  * listed.
  */
-SymTable	*VAR_GLOBAL;	/* variables from the makefile */
-SymTable	*VAR_CMD;	/* variables defined on the command-line */
-static SymTable	*VAR_ENV;	/* variables read from env */
-
-static LIST	allVars;      /* List of all variables */
+GSymT		*VAR_GLOBAL;	/* variables from the makefile */
+GSymT		*VAR_CMD;	/* variables defined on the command-line */
+static GSymT	*VAR_ENV;	/* variables read from env */
 
 #define FIND_CMD	0x1   /* look in VAR_CMD when searching */
 #define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
 #define FIND_ENV  	0x4   /* look in the environment also */
 
-typedef struct Var {
+typedef struct Var_ {
     char          *name;	/* the variable's name */
     BUFFER	  val;	    	/* its value */
     int	    	  flags;    	/* miscellaneous status flags */
@@ -252,7 +216,7 @@ typedef struct {
 #define VarValue(v)	Buf_Retrieve(&((v)->val))
 static int VarCmp __P((void *, void *));
 static Var *VarFind __P((char *, SymTable *, int));
-static Var *VarAdd __P((char *, char *, SymTable *));
+static Var *VarAdd __P((char *, char *, GSymT *));
 static void VarDelete __P((void *));
 static Boolean VarHead __P((char *, Boolean, Buffer, void *));
 static Boolean VarTail __P((char *, Boolean, Buffer, void *));
@@ -273,40 +237,133 @@ static char *VarGetPattern __P((SymTable *, int, char **, int, int *, size_t *,
 static char *VarQuote __P((char *));
 static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer, void *), void *));
 static void VarPrintVar __P((void *));
-static Boolean VarUppercase __P((char *word, Boolean addSpace, Buffer buf, void *dummy));
-static Boolean VarLowercase __P((char *word, Boolean addSpace, Buffer buf, void *dummy));
-static char *context_name __P((SymTable *));
+static Boolean VarUppercase __P((char *, Boolean, Buffer, void *));
+static Boolean VarLowercase __P((char *, Boolean, Buffer, void *));
+static char *context_name __P((GSymT *));
+static Var *new_var __P((char *, char *));
+static Var *getvar __P((Lst, char *));
+
+void
+SymTable_Init(ctxt)
+    SymTable	*ctxt;
+{
+    static SymTable sym_template;
+    memcpy(ctxt, &sym_template, sizeof(*ctxt));
+}
+
+void
+SymTable_Destroy(ctxt)
+    SymTable	*ctxt;
+{
+    int i;
+
+    for (i = 0; i < LOCAL_SIZE; i++)
+	if (ctxt->locals[i] != NULL)
+	    VarDelete(ctxt->locals[i]);
+}
+
+
+void 
+Varq_Set(idx, val, gn)
+    int 	idx;
+    char 	*val;
+    GNode 	*gn;
+{
+    Var *v = gn->context.locals[idx];
+
+    if (v == NULL) {
+    	v = new_var(varnames[idx], val);
+	v->flags = 0;
+	gn->context.locals[idx] = v;
+    } else {
+	Buf_Reset(&(v->val));
+	Buf_AddString(&(v->val), val);
+
+    }
+    if (DEBUG(VAR))
+	printf("%s:%s = %s\n", gn->name, varnames[idx], val);
+}
+
+void 
+Varq_Append(idx, val, gn)
+    int		idx;
+    char	*val;
+    GNode	*gn;
+{
+    Var *v = gn->context.locals[idx];
+
+    if (v == NULL) {
+    	v = new_var(varnames[idx], val);
+	v->flags = 0;
+	gn->context.locals[idx] = v;
+    } else {
+	Buf_AddSpace(&(v->val));
+	Buf_AddString(&(v->val), val);
+    }
+    if (DEBUG(VAR))
+	printf("%s:%s = %s\n", gn->name, varnames[idx], VarValue(v));
+}
+
+char *
+Varq_Value(idx, gn)
+    int		idx;
+    GNode	*gn;
+{
+    Var *v = gn->context.locals[idx];
+
+    if (v != NULL)
+    	return VarValue(v);
+    else
+    	return NULL;
+}
+
+Boolean
+Varq_Exists(idx, gn)
+    int		idx;
+    GNode	*gn;
+{
+    return gn->context.locals[idx] != NULL;
+}
 
 
 static char *
 context_name(ctxt)
-    SymTable *ctxt;
+    GSymT *ctxt;
 {
-    GNode *g;
-
-    /* specific handling for GLOBAL, CMD, ENV contexts, which are not
-       owned by a GNode */
     if (ctxt == VAR_GLOBAL)
     	return "Global";
-    if (ctxt == VAR_CMD)
+    else if (ctxt == VAR_CMD)
     	return "Command";
-    if (ctxt == VAR_ENV)
+    else
     	return "Environment";
-    g = (GNode *)((char *)ctxt - offsetof(GNode, context));
-    return g->name;
 }
     
+/* Create a variable, to pass to VarAdd.  */
+static Var *
+new_var(name, val)
+    char *name;
+    char *val;
+{
+    Var *v;
+
+    v = (Var *)emalloc(sizeof(Var));
+
+    v->name = estrdup(name);
+
+    if (val != NULL) {
+    	size_t len = strlen(val);
+	Buf_Init(&(v->val), len+1);
+	Buf_AddChars(&(v->val), len, val);
+    } else
+    	Buf_Init(&(v->val), 1);
+
+    return v;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * VarCmp  --
- *	See if the given variable matches the named one. Called from
- *	Lst_Find when searching for a variable of a given name.
- *
- * Results:
- *	0 if they match. non-zero otherwise.
- *
- * Side Effects:
- *	none
+ *	See if the given variable matches the named one. Used by getvar.
  *-----------------------------------------------------------------------
  */
 static int
@@ -315,6 +372,20 @@ VarCmp(v, name)
     void *name;		/* name to look for */
 {
     return strcmp((char *)name, ((Var *)v)->name);
+}
+
+static Var *
+getvar(l, n)
+    Lst 	l;
+    char 	*n;
+{
+    LstNode ln;
+
+    ln = Lst_Find(l, VarCmp, n);
+    if (ln != NULL)
+    	return (Var *)Lst_Datum(ln);
+    else
+    	return NULL;
 }
 
 /*-
@@ -342,7 +413,6 @@ VarFind(name, ctxt, flags)
 				 * FIND_ENV set means to look in the
 				 * environment/VAR_ENV context.  */
 {
-    LstNode         	var;
     Var		  	*v;
 
 	/*
@@ -385,33 +455,66 @@ VarFind(name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    if (ctxt != NULL)
-	var = Lst_Find(ctxt, VarCmp, name);
-    else
-    	var = NULL;
-
-    if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
-	var = Lst_Find(VAR_CMD, VarCmp, name);
-    if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
-	(ctxt != VAR_GLOBAL)) {
-	var = Lst_Find(VAR_GLOBAL, VarCmp, name);
+    if (ctxt == NULL)
+    	v = NULL;
+    else if (ctxt == CTXT_GLOBAL || ctxt == CTXT_CMD || ctxt == CTXT_ENV)
+	v = getvar((Lst)ctxt, name);
+    else {
+    	v = NULL;
+    	if (name[1] == '\0')
+	    switch(name[0]) {
+	    	case '@':
+		    v = ctxt->locals[TARGET_INDEX];
+		    break;
+		case '?':
+		    v = ctxt->locals[OODATE_INDEX];
+		    break;
+		case '>':
+		    v = ctxt->locals[ALLSRC_INDEX];
+		    break;
+		case '<':
+		    v = ctxt->locals[IMPSRC_INDEX];
+		    break;
+		case '*':
+		    v = ctxt->locals[PREFIX_INDEX];
+		    break;
+		case '!':
+		    v = ctxt->locals[ARCHIVE_INDEX];
+		    break;
+		case '%':
+		    v = ctxt->locals[MEMBER_INDEX];
+		    break;
+		default:
+		    break;
+		}
     }
-    if ((var == NULL) && (flags & FIND_ENV)) {
-    	var = Lst_Find(VAR_ENV, VarCmp, name);
-	if (var == NULL) {
-	    char *env;
+    if (v != NULL)
+    	return v;
+	    
+    if ((flags & FIND_CMD) && ctxt != CTXT_CMD)
+	v = getvar(VAR_CMD, name);
+    if (v != NULL)
+    	return v;
 
-	    if ((env = getenv(name)) != NULL)
-	    	return VarAdd(name, env, VAR_ENV);
-	}
+    if (!checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != CTXT_GLOBAL)
+	v = getvar(VAR_GLOBAL, name);
+    if (v != NULL)
+    	return v;
+
+    if ((flags & FIND_ENV)) {
+	char *env;
+
+    	v = getvar(VAR_ENV, name);
+	if (v != NULL)
+	    return v;
+
+	if ((env = getenv(name)) != NULL)
+	    return VarAdd(name, env, VAR_ENV);
     }
-    if (var == NULL && checkEnvFirst && (flags & FIND_GLOBAL) &&
-		   (ctxt != VAR_GLOBAL)) 
-	    var = Lst_Find(VAR_GLOBAL, VarCmp, name);
-    if (var == NULL)
-	return NULL;
-    else 
-	return (Var *)Lst_Datum(var);
+
+    if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != CTXT_GLOBAL) 
+	v = getvar(VAR_GLOBAL, name);
+    return v;
 }
 
 /*-
@@ -430,28 +533,17 @@ VarFind(name, ctxt, flags)
  */
 static Var *
 VarAdd(name, val, ctxt)
-    char           *name;	/* name of variable to add */
-    char           *val;	/* value to set it to */
-    SymTable       *ctxt;	/* context in which to set it */
+    char	*name;	/* name of variable to add */
+    char	*val;	/* value to set it to */
+    GSymT	*ctxt;	/* context in which to set it */
 {
-    register Var   *v;
-    int	    	  len;
+    Var   *v;
 
-    v = (Var *) emalloc(sizeof(Var));
-
-    v->name = estrdup(name);
-
-    len = val ? strlen(val) : 0;
-    Buf_Init(&(v->val), len+1);
-    Buf_AddChars(&(v->val), len, val);
+    v = new_var(name, val);
 
     v->flags = 0;
 
     Lst_AtFront(ctxt, v);
-    Lst_AtEnd(&allVars, v);
-    if (DEBUG(VAR)) {
-	printf("%s:%s = %s\n", context_name(ctxt), name, val);
-    }
     return v;
 }
 
@@ -496,21 +588,19 @@ VarDelete(vp)
 void
 Var_Delete(name, ctxt)
     char    	  *name;
-    SymTable	  *ctxt;
+    GSymT	  *ctxt;
 {
     LstNode 	  ln;
 
-    if (DEBUG(VAR)) {
+    if (DEBUG(VAR))
 	printf("%s:delete %s\n", context_name(ctxt), name);
-    }
+
     ln = Lst_Find(ctxt, VarCmp, name);
     if (ln != NULL) {
 	register Var 	  *v;
 
 	v = (Var *)Lst_Datum(ln);
 	Lst_Remove(ctxt, ln);
-	ln = Lst_Member(&allVars, v);
-	Lst_Remove(&allVars, ln);
 	VarDelete(v);
     }
 }
@@ -538,9 +628,9 @@ Var_Delete(name, ctxt)
  */
 void
 Var_Set(name, val, ctxt)
-    char           *name;	/* name of variable to set */
-    char           *val;	/* value to give to the variable */
-    SymTable       *ctxt;	/* context in which to set it */
+    char	*name;	/* name of variable to set */
+    char	*val;	/* value to give to the variable */
+    GSymT       *ctxt;	/* context in which to set it */
 {
     register Var   *v;
 
@@ -549,17 +639,16 @@ Var_Set(name, val, ctxt)
      * here will override anything in a lower context, so there's not much
      * point in searching them all just to save a bit of memory...
      */
-    v = VarFind(name, ctxt, 0);
+    v = VarFind(name, (SymTable *)ctxt, 0);
     if (v == NULL) {
 	(void)VarAdd(name, val, ctxt);
     } else {
 	Buf_Reset(&(v->val));
 	Buf_AddString(&(v->val), val);
 
-	if (DEBUG(VAR)) {
-	    printf("%s:%s = %s\n", context_name(ctxt), name, val);
-	}
     }
+    if (DEBUG(VAR))
+	printf("%s:%s = %s\n", context_name(ctxt), name, val);
     /*
      * Any variables given on the command line are automatically exported
      * to the environment (as per POSIX standard).  
@@ -597,13 +686,13 @@ Var_Set(name, val, ctxt)
  */
 void
 Var_Append(name, val, ctxt)
-    char           *name;	/* Name of variable to modify */
-    char           *val;	/* String to append to it */
-    SymTable       *ctxt;	/* Context in which this should occur */
+    char	*name;	/* Name of variable to modify */
+    char	*val;	/* String to append to it */
+    GSymT	*ctxt;	/* Context in which this should occur */
 {
     register Var   *v;
 
-    v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
+    v = VarFind(name, (SymTable *)ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
     if (v == NULL) {
 	(void)VarAdd(name, val, ctxt);
@@ -611,11 +700,10 @@ Var_Append(name, val, ctxt)
 	Buf_AddSpace(&(v->val));
 	Buf_AddString(&(v->val), val);
 
-	if (DEBUG(VAR)) {
-	    printf("%s:%s = %s\n", context_name(ctxt), name, VarValue(v));
-	}
 
     }
+    if (DEBUG(VAR))
+	printf("%s:%s = %s\n", context_name(ctxt), name, VarValue(v));
 }
 
 /*-
@@ -633,12 +721,12 @@ Var_Append(name, val, ctxt)
  */
 Boolean
 Var_Exists(name, ctxt)
-    char	  *name;    	/* Variable to find */
-    SymTable	  *ctxt;    	/* Context in which to start search */
+    char	*name;    	/* Variable to find */
+    GSymT	*ctxt;    	/* Context in which to start search */
 {
     Var	    	  *v;
 
-    v = VarFind(name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
+    v = VarFind(name, (SymTable *)ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
 
     if (v == NULL)
 	return FALSE;
@@ -660,12 +748,12 @@ Var_Exists(name, ctxt)
  */
 char *
 Var_Value(name, ctxt)
-    char           *name;	/* name to find */
-    SymTable       *ctxt;	/* context in which to search for it */
+    char	*name;	/* name to find */
+    GSymT	*ctxt;	/* context in which to search for it */
 {
     Var            *v;
 
-    v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+    v = VarFind(name, (SymTable *)ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
     if (v != NULL) 
 	return VarValue(v);
     else
@@ -1544,7 +1632,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	if (v == NULL) {
 	    *lengthPtr = 2;
 
-	    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL || ctxt == NULL) {
+	    if (ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL || ctxt == NULL) {
 		/*
 		 * If substituting a local variable in a non-local context,
 		 * assume it's for dynamic source stuff. We have to handle
@@ -1603,7 +1691,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	*tstr = '\0';
 
 	v = VarFind (str + 2, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if (v == NULL && ctxt != VAR_CMD && ctxt != VAR_GLOBAL &&
+	if (v == NULL && ctxt != CTXT_CMD && ctxt != CTXT_GLOBAL && 
 	    ctxt != NULL &&
 	    (tstr-str) == 4 && (str[3] == 'F' || str[3] == 'D'))
 	{
@@ -1660,7 +1748,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	    if ((tstr-str == 3 ||
 		 ((tstr-str == 4 && (str[3] == 'F' ||
 					 str[3] == 'D')))) &&
-		(ctxt == VAR_CMD || ctxt == VAR_GLOBAL || ctxt == NULL))
+		(ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL || ctxt == NULL))
 	    {
 		/*
 		 * If substituting a local variable in a non-local context,
@@ -1681,7 +1769,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 		}
 	    } else if (((tstr-str) > 4) && (str[2] == '.') &&
 		       isupper((unsigned char) str[3]) &&
-		       (ctxt == VAR_CMD || ctxt == VAR_GLOBAL || ctxt == NULL))
+		       (ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL || ctxt == NULL))
 	    {
 		int	len;
 
@@ -1716,9 +1804,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 		 * Still need to get to the end of the variable specification,
 		 * so kludge up a Var structure for the modifications
 		 */
-		v = (Var *) emalloc(sizeof(Var));
-		v->name = &str[1];
-		Buf_Init(&(v->val), 1);
+		v = new_var(str+1, NULL);	/* junk has name, for error reports */
 		v->flags = VAR_JUNK;
 	    }
 	}
@@ -2256,7 +2342,7 @@ Var_SubstVar(buf, str, var, ctxt)
     Buffer	buf;		/* Where to store the result */
     char	*str;	        /* The string in which to substitute */
     const char	*var;		/* Named variable */
-    SymTable	*ctxt;		/* The context wherein to find variables */
+    GSymT	*ctxt;		/* The context wherein to find variables */
 {
     char	*val;		/* Value substituted for a variable */
     size_t	length;		/* Length of the variable invocation */
@@ -2312,7 +2398,7 @@ Var_SubstVar(buf, str, var, ctxt)
 	    } 
 	}
 	/* okay, so we've found the variable we want to expand.  */
-	val = Var_Parse(str, ctxt, FALSE, &length, &doFree);
+	val = Var_Parse(str, (SymTable *)ctxt, FALSE, &length, &doFree);
 	/* We've now got a variable structure to store in. But first,
 	 * advance the string pointer.  */
 	str += length;
@@ -2380,7 +2466,7 @@ Var_GetHead(file)
 void
 Var_Init()
 {
-    static SymTable global_vars, cmd_vars, env_vars;
+    static GSymT global_vars, cmd_vars, env_vars;
 
     VAR_GLOBAL = &global_vars;
     VAR_CMD = &cmd_vars;
@@ -2388,15 +2474,20 @@ Var_Init()
     Lst_Init(VAR_GLOBAL);
     Lst_Init(VAR_CMD);
     Lst_Init(VAR_ENV);
-    Lst_Init(&allVars);
-
+    CTXT_GLOBAL = (SymTable *)VAR_GLOBAL;
+    CTXT_CMD = (SymTable *)VAR_CMD;
+    CTXT_ENV = (SymTable *)VAR_ENV;
 }
 
 
 void
 Var_End()
 {
-    Lst_Destroy(&allVars, VarDelete);
+#ifdef CLEANUP
+    Lst_Destroy(VAR_GLOBAL, VarDelete);
+    Lst_Destroy(VAR_CMD, VarDelete);
+    Lst_Destroy(VAR_END, VarDelete);
+#endif
 }
 
 
@@ -2418,7 +2509,8 @@ VarPrintVar(vp)
  */
 void
 Var_Dump(ctxt)
-    SymTable          *ctxt;
+   GSymT	*ctxt;
 {
     Lst_Every(ctxt, VarPrintVar);
 }
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2000/06/23 16:15:49 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2000/06/23 16:23:26 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.35 2000/06/23 16:15:49 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.36 2000/06/23 16:23:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -759,7 +759,7 @@ main(argc, argv)
 		 */
 		static char VPATH[] = "${VPATH}";
 
-		vpath = Var_Subst(VPATH, VAR_CMD, FALSE);
+		vpath = Var_Subst(VPATH, (SymTable *)VAR_CMD, FALSE);
 		path = vpath;
 		do {
 			/* skip to end of directory */
