@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2002/02/02 21:06:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2002/02/02 21:10:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -488,8 +488,8 @@ hptsize=256;	/* XXX one page for now */
 	bzero ((void *)vstart, (v - vstart));
 	vstart = v;
 
+	/* sets physmem */
 	pmap_bootstrap(&vstart, &vend);
-	physmem = totalphysmem - btoc(vstart);
 
 	/* alloc msgbuf */
 	if (!(msgbufp = (void *)pmap_steal_memory(MSGBUFSIZE, NULL, NULL)))
@@ -1016,7 +1016,7 @@ dumpsys()
 
 	if (!(error = cpu_dump())) {
 
-		bytes = ctob(physmem);
+		bytes = ctob(totalphysmem);
 		maddr = NULL;
 		blkno = dumplo + cpu_dumpsize();
 		dump = bdevsw[major(dumpdev)].d_dump;
