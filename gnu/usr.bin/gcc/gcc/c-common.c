@@ -769,6 +769,8 @@ static tree handle_bounded_attribute    PARAMS ((tree *, tree, tree, int,
 						  bool *));
 static tree handle_nonnull_attribute	PARAMS ((tree *, tree, tree, int,
 						 bool *));
+static tree handle_sentinel_attribute	PARAMS ((tree *, tree, tree, int,
+						 bool *));
 static tree handle_nothrow_attribute	PARAMS ((tree *, tree, tree, int,
 						 bool *));
 static tree handle_cleanup_attribute	PARAMS ((tree *, tree, tree, int,
@@ -860,6 +862,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_tls_model_attribute },
   { "nonnull",                0, -1, false, true, true,
 			      handle_nonnull_attribute },
+  { "sentinel",               0, 0, false, true, true,
+			      handle_sentinel_attribute },
   { "nothrow",                0, 0, true,  false, false,
 			      handle_nothrow_attribute },
   { "may_alias",	      0, 0, false, true, false, NULL },
@@ -6395,11 +6399,27 @@ handle_bounded_attribute (node, name, args, flags, no_add_attrs)
      tree name ATTRIBUTE_UNUSED;
      tree args ATTRIBUTE_UNUSED;
      int flags ATTRIBUTE_UNUSED;
-     bool *no_add_attrs ATTRIBUTE_UNUSED;
+     bool *no_add_attrs;
 {
+  *no_add_attrs = true;
   return NULL_TREE;
 }
  
+/* Handle a "sentinel" attribute.
+   Just a stub for now. */
+
+static tree
+handle_sentinel_attribute (node, name, args, flags, no_add_attrs)
+     tree *node;
+     tree name ATTRIBUTE_UNUSED;
+     tree args;
+     int flags ATTRIBUTE_UNUSED;
+     bool *no_add_attrs;
+{
+      *no_add_attrs = true;
+      return NULL_TREE;
+}
+
 /* Handle the "nonnull" attribute.  */
 static tree
 handle_nonnull_attribute (node, name, args, flags, no_add_attrs)
