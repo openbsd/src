@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.25 2005/01/23 16:53:19 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.26 2005/02/27 22:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -224,11 +224,12 @@ sti_sgc_attach(parent, self, aux)
 		}
 	}
 
-	/* PCXL2: enale accel i/o for this space */
+	/* PCXL2: enable accel i/o for this space */
 	if (cpu_type == hpcxl2)
 		eaio_l2(0x8 >> (((ca->ca_hpa >> 25) & 3) - 2));
 
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
 		sc->sc_flags |= STI_CONSOLE;
 	sti_attach_common(sc, STI_CODEBASE_PA);
+	startuphook_establish(sti_end_attach, sc);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.41 2005/01/24 19:20:04 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.42 2005/02/27 22:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -111,19 +111,42 @@ enum sti_bmove_funcs {
 	bmf_clear, bmf_copy, bmf_invert, bmf_underline
 };
 
-int sti_init(struct sti_softc *sc, int mode);
-int sti_inqcfg(struct sti_softc *sc, struct sti_inqconfout *out);
-void sti_bmove(struct sti_softc *sc, int, int, int, int, int, int,
+int sti_init(struct sti_screen *scr, int mode);
+int sti_inqcfg(struct sti_screen *scr, struct sti_inqconfout *out);
+void sti_bmove(struct sti_screen *scr, int, int, int, int, int, int,
     enum sti_bmove_funcs);
-int sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b);
-int sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg,
+int sti_setcment(struct sti_screen *scr, u_int i, u_char r, u_char g, u_char b);
+int sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
     u_int32_t addr);
-void sti_attach_deferred(void *);
+void sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
+    bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t base,
+    u_int codebase);
 
 void
 sti_attach_common(sc, codebase)
 	struct sti_softc *sc;
 	u_int codebase;
+{
+	struct sti_screen *scr;
+
+	scr = malloc(sizeof(struct sti_screen), M_DEVBUF, M_NOWAIT);
+	if (scr == NULL) {
+		printf("cannot allocate screen data\n");
+		return;
+	}
+
+	bzero(scr, sizeof(struct sti_screen));
+	sc->sc_scr = scr;
+
+	sti_screen_setup(scr, sc->iot, sc->memt, sc->romh, sc->base,
+	    codebase);
+	sti_describe(sc);
+}
+
+void
+sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
+    bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t base,
+    u_int codebase)
 {
 	struct sti_inqconfout cfg;
 	struct sti_einqconfout ecfg;
@@ -133,24 +156,27 @@ sti_attach_common(sc, codebase)
 	int error, size, i;
 	int geometry_kluge = 0;
 
-	sc->sc_devtype = bus_space_read_1(sc->memt, sc->romh, 3);
+	scr->iot = iot;
+	scr->memt = memt;
+	scr->romh = romh;
+	scr->scr_devtype = bus_space_read_1(memt, romh, 3);
 
 	/* { extern int pmapdebug; pmapdebug = 0xfffff; } */
-	dd = &sc->sc_dd;
-	if (sc->sc_devtype == STI_DEVTYPE1) {
+	dd = &scr->scr_dd;
+	if (scr->scr_devtype == STI_DEVTYPE1) {
 #define	parseshort(o) \
-	((bus_space_read_1(sc->memt, sc->romh, (o) + 3) <<  8) | \
-	 (bus_space_read_1(sc->memt, sc->romh, (o) + 7)))
+	((bus_space_read_1(memt, romh, (o) + 3) <<  8) | \
+	 (bus_space_read_1(memt, romh, (o) + 7)))
 #define	parseword(o) \
-	((bus_space_read_1(sc->memt, sc->romh, (o) +  3) << 24) | \
-	 (bus_space_read_1(sc->memt, sc->romh, (o) +  7) << 16) | \
-	 (bus_space_read_1(sc->memt, sc->romh, (o) + 11) <<  8) | \
-	 (bus_space_read_1(sc->memt, sc->romh, (o) + 15)))
+	((bus_space_read_1(memt, romh, (o) +  3) << 24) | \
+	 (bus_space_read_1(memt, romh, (o) +  7) << 16) | \
+	 (bus_space_read_1(memt, romh, (o) + 11) <<  8) | \
+	 (bus_space_read_1(memt, romh, (o) + 15)))
 
-		dd->dd_type  = bus_space_read_1(sc->memt, sc->romh, 0x03);
-		dd->dd_nmon  = bus_space_read_1(sc->memt, sc->romh, 0x07);
-		dd->dd_grrev = bus_space_read_1(sc->memt, sc->romh, 0x0b);
-		dd->dd_lrrev = bus_space_read_1(sc->memt, sc->romh, 0x0f);
+		dd->dd_type  = bus_space_read_1(memt, romh, 0x03);
+		dd->dd_nmon  = bus_space_read_1(memt, romh, 0x07);
+		dd->dd_grrev = bus_space_read_1(memt, romh, 0x0b);
+		dd->dd_lrrev = bus_space_read_1(memt, romh, 0x0f);
 		dd->dd_grid[0] = parseword(0x10);
 		dd->dd_grid[1] = parseword(0x20);
 		dd->dd_fntaddr = parseword(0x30) & ~3;
@@ -164,12 +190,12 @@ sti_attach_common(sc, codebase)
 		dd->dd_stimemreq=parseword(0xa0);
 		dd->dd_udsize  = parseword(0xb0);
 		dd->dd_pwruse  = parseshort(0xc0);
-		dd->dd_bussup  = bus_space_read_1(sc->memt, sc->romh, 0xcb);
-		dd->dd_ebussup = bus_space_read_1(sc->memt, sc->romh, 0xcf);
-		dd->dd_altcodet= bus_space_read_1(sc->memt, sc->romh, 0xd3);
-		dd->dd_eddst[0]= bus_space_read_1(sc->memt, sc->romh, 0xd7);
-		dd->dd_eddst[1]= bus_space_read_1(sc->memt, sc->romh, 0xdb);
-		dd->dd_eddst[2]= bus_space_read_1(sc->memt, sc->romh, 0xdf);
+		dd->dd_bussup  = bus_space_read_1(memt, romh, 0xcb);
+		dd->dd_ebussup = bus_space_read_1(memt, romh, 0xcf);
+		dd->dd_altcodet= bus_space_read_1(memt, romh, 0xd3);
+		dd->dd_eddst[0]= bus_space_read_1(memt, romh, 0xd7);
+		dd->dd_eddst[1]= bus_space_read_1(memt, romh, 0xdb);
+		dd->dd_eddst[2]= bus_space_read_1(memt, romh, 0xdf);
 		dd->dd_cfbaddr = parseword(0xe0) & ~3;
 
 		codebase <<= 2;
@@ -190,10 +216,10 @@ sti_attach_common(sc, codebase)
 		dd->dd_pacode[0xe] = parseword(codebase + 0x0e0) & ~3;
 		dd->dd_pacode[0xf] = parseword(codebase + 0x0f0) & ~3;
 	} else {	/* STI_DEVTYPE4 */
-		bus_space_read_region_4(sc->memt, sc->romh, 0, (u_int32_t *)dd,
+		bus_space_read_region_4(memt, romh, 0, (u_int32_t *)dd,
 		    sizeof(*dd) / 4);
 		/* fix pacode... */
-		bus_space_read_region_4(sc->memt, sc->romh, codebase,
+		bus_space_read_region_4(memt, romh, codebase,
 		    (u_int32_t *)dd->dd_pacode, sizeof(dd->dd_pacode) / 4);
 	}
 
@@ -219,72 +245,74 @@ sti_attach_common(sc, codebase)
 	/* divise code size, could be less than STI_END entries */
 	for (i = STI_END; !dd->dd_pacode[i]; i--);
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
-	if (sc->sc_devtype == STI_DEVTYPE1)
+	if (scr->scr_devtype == STI_DEVTYPE1)
 		size = (size + 3) / 4;
-	if (!(sc->sc_code = uvm_km_alloc1(kernel_map, round_page(size), 0))) {
+	if (!(scr->scr_code = uvm_km_alloc1(kernel_map, round_page(size), 0))) {
 		printf(": cannot allocate %u bytes for code\n", size);
 		return;
 	}
 #ifdef STIDEBUG
-	printf("code=0x%x[%x]\n", sc->sc_code, size);
+	printf("code=0x%x[%x]\n", scr->scr_code, size);
 #endif
 
 	/* copy code into memory */
-	if (sc->sc_devtype == STI_DEVTYPE1) {
-		u_int8_t *p = (u_int8_t *)sc->sc_code;
+	if (scr->scr_devtype == STI_DEVTYPE1) {
+		u_int8_t *p = (u_int8_t *)scr->scr_code;
 		u_int32_t addr, eaddr;
 
 		for (addr = dd->dd_pacode[STI_BEGIN], eaddr = addr + size * 4;
 		    addr < eaddr; addr += 4 )
-			*p++ = bus_space_read_4(sc->memt, sc->romh, addr) & 0xff;
+			*p++ = bus_space_read_4(memt, romh, addr) & 0xff;
 
 	} else	/* STI_DEVTYPE4 */
-		bus_space_read_region_4(sc->memt, sc->romh,
-		    dd->dd_pacode[STI_BEGIN], (u_int32_t *)sc->sc_code,
+		bus_space_read_region_4(memt, romh,
+		    dd->dd_pacode[STI_BEGIN], (u_int32_t *)scr->scr_code,
 		    size / 4);
 
-#define	O(i)	(dd->dd_pacode[(i)]? (sc->sc_code + \
+#define	O(i)	(dd->dd_pacode[(i)]? (scr->scr_code + \
 	(dd->dd_pacode[(i)] - dd->dd_pacode[0]) / \
-	(sc->sc_devtype == STI_DEVTYPE1? 4 : 1)) : NULL)
-	sc->init	= (sti_init_t)	O(STI_INIT_GRAPH);
-	sc->mgmt	= (sti_mgmt_t)	O(STI_STATE_MGMT);
-	sc->unpmv	= (sti_unpmv_t)	O(STI_FONT_UNPMV);
-	sc->blkmv	= (sti_blkmv_t)	O(STI_BLOCK_MOVE);
-	sc->test	= (sti_test_t)	O(STI_SELF_TEST);
-	sc->exhdl	= (sti_exhdl_t)	O(STI_EXCEP_HDLR);
-	sc->inqconf	= (sti_inqconf_t)O(STI_INQ_CONF);
-	sc->scment	= (sti_scment_t)O(STI_SCM_ENT);
-	sc->dmac	= (sti_dmac_t)	O(STI_DMA_CTRL);
-	sc->flowc	= (sti_flowc_t)	O(STI_FLOW_CTRL);
-	sc->utiming	= (sti_utiming_t)O(STI_UTIMING);
-	sc->pmgr	= (sti_pmgr_t)	O(STI_PROC_MGR);
-	sc->util	= (sti_util_t)	O(STI_UTIL);
+	(scr->scr_devtype == STI_DEVTYPE1? 4 : 1)) : NULL)
+	scr->init	= (sti_init_t)	O(STI_INIT_GRAPH);
+	scr->mgmt	= (sti_mgmt_t)	O(STI_STATE_MGMT);
+	scr->unpmv	= (sti_unpmv_t)	O(STI_FONT_UNPMV);
+	scr->blkmv	= (sti_blkmv_t)	O(STI_BLOCK_MOVE);
+	scr->test	= (sti_test_t)	O(STI_SELF_TEST);
+	scr->exhdl	= (sti_exhdl_t)	O(STI_EXCEP_HDLR);
+	scr->inqconf	= (sti_inqconf_t)O(STI_INQ_CONF);
+	scr->scment	= (sti_scment_t)O(STI_SCM_ENT);
+	scr->dmac	= (sti_dmac_t)	O(STI_DMA_CTRL);
+	scr->flowc	= (sti_flowc_t)	O(STI_FLOW_CTRL);
+	scr->utiming	= (sti_utiming_t)O(STI_UTIMING);
+	scr->pmgr	= (sti_pmgr_t)	O(STI_PROC_MGR);
+	scr->util	= (sti_util_t)	O(STI_UTIL);
 
 	/*
 	 * Set colormap entry is not implemented until 8.04, so force
 	 * a NULL pointer here.
 	 */
 	if (dd->dd_grrev < STI_REVISION(8,4)) {
-		sc->scment = NULL;
+		scr->scment = NULL;
 	}
 
-	if ((error = uvm_map_protect(kernel_map, sc->sc_code,
-	    sc->sc_code + round_page(size), UVM_PROT_RX, FALSE))) {
+	if ((error = uvm_map_protect(kernel_map, scr->scr_code,
+	    scr->scr_code + round_page(size), UVM_PROT_RX, FALSE))) {
 		printf(": uvm_map_protect failed (%d)\n", error);
-		uvm_km_free(kernel_map, sc->sc_code, round_page(size));
+		uvm_km_free(kernel_map, scr->scr_code, round_page(size));
 		return;
 	}
 
-	cc = &sc->sc_cfg;
+	cc = &scr->scr_cfg;
 	bzero(cc, sizeof (*cc));
-	cc->ext_cfg = &sc->sc_ecfg;
+	cc->ext_cfg = &scr->scr_ecfg;
 	bzero(&cc->ext_cfg, sizeof(*cc->ext_cfg));
 	if (dd->dd_stimemreq) {
-		sc->sc_ecfg.addr = malloc(dd->dd_stimemreq, M_DEVBUF, M_NOWAIT);
-		if (!sc->sc_ecfg.addr) {
+		scr->scr_ecfg.addr =
+		    malloc(dd->dd_stimemreq, M_DEVBUF, M_NOWAIT);
+		if (!scr->scr_ecfg.addr) {
 			printf("cannot allocate %d bytes for STI\n",
 			    dd->dd_stimemreq);
-			uvm_km_free(kernel_map, sc->sc_code, round_page(size));
+			uvm_km_free(kernel_map, scr->scr_code,
+			    round_page(size));
 			return;
 		}
 	}
@@ -300,12 +328,12 @@ sti_attach_common(sc, codebase)
 		for (p = cc->regions; !r.last &&
 		     p < &cc->regions[STI_REGION_MAX]; p++) {
 
-			if (sc->sc_devtype == STI_DEVTYPE1)
+			if (scr->scr_devtype == STI_DEVTYPE1)
 				*(u_int *)&r = parseword(i), i+= 16;
 			else
-				*(u_int *)&r = bus_space_read_4(sc->memt, sc->romh, i), i += 4;
+				*(u_int *)&r = bus_space_read_4(memt, romh, i), i += 4;
 
-			*p = (p == cc->regions? sc->romh : sc->base) +
+			*p = (p == cc->regions? romh : base) +
 			    (r.offset << PGSHIFT);
 #ifdef STIDEBUG
 			printf("%x @ 0x%x%s%s%s%s\n",
@@ -316,7 +344,7 @@ sti_attach_common(sc, codebase)
 
 			/* rom has already been mapped */
 			if (p != cc->regions) {
-				if (bus_space_map(sc->memt, *p,
+				if (bus_space_map(memt, *p,
 				    r.length << PGSHIFT,
 				    r.cache ? BUS_SPACE_MAP_CACHEABLE : 0,
 				    &fbh)) {
@@ -325,8 +353,8 @@ sti_attach_common(sc, codebase)
 #endif
 				} else {
 					if (p - cc->regions == 1) {
-						sc->fbaddr = *p;
-						sc->fblen = r.length << PGSHIFT;
+						scr->fbaddr = *p;
+						scr->fblen = r.length << PGSHIFT;
 					}
 					*p = fbh;
 				}
@@ -334,7 +362,7 @@ sti_attach_common(sc, codebase)
 		}
 	}
 
-	if ((error = sti_init(sc, 0))) {
+	if ((error = sti_init(scr, 0))) {
 		printf(": can not initialize (%d)\n", error);
 		return;
 	}
@@ -342,7 +370,7 @@ sti_attach_common(sc, codebase)
 	bzero(&cfg, sizeof(cfg));
 	bzero(&ecfg, sizeof(ecfg));
 	cfg.ext = &ecfg;
-	if ((error = sti_inqcfg(sc, &cfg))) {
+	if ((error = sti_inqcfg(scr, &cfg))) {
 		printf(": error %d inquiring config\n", error);
 		return;
 	}
@@ -357,13 +385,22 @@ sti_attach_common(sc, codebase)
 		geometry_kluge = 1;
 
 	if (geometry_kluge) {
-		sc->sc_cfg.oscr_width = cfg.owidth =
+		scr->scr_cfg.oscr_width = cfg.owidth =
 		    cfg.fbwidth - cfg.width;
-		sc->sc_cfg.oscr_height = cfg.oheight =
+		scr->scr_cfg.oscr_height = cfg.oheight =
 		    cfg.fbheight - cfg.height;
 	}
 
-	if ((error = sti_init(sc, STI_TEXTMODE))) {
+	/*
+	 * Save a few fields for sti_describe() later
+	 */
+	scr->fbheight = cfg.fbheight;
+	scr->fbwidth = cfg.fbwidth;
+	scr->oheight = cfg.oheight;
+	scr->owidth = cfg.owidth;
+	bcopy(cfg.name, scr->name, sizeof(scr->name));
+
+	if ((error = sti_init(scr, STI_TEXTMODE))) {
 		printf(": can not initialize (%d)\n", error);
 		return;
 	}
@@ -375,18 +412,10 @@ sti_attach_common(sc, codebase)
 	    ecfg.crt_config[0], ecfg.crt_config[1], ecfg.crt_config[2],
 	    ecfg.crt_hw[0], ecfg.crt_hw[1], ecfg.crt_hw[2]);
 #endif
-	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
-	sc->sc_bpp = cfg.bppu;
-	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
-	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
-	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
-	    *(u_int64_t *)dd->dd_grid,
-	    sc->sc_dev.dv_xname, cfg.fbwidth, cfg.fbheight,
-	    cfg.width, cfg.height, cfg.bppu, cfg.owidth, cfg.oheight);
+	scr->scr_bpp = cfg.bppu;
 
-	if ((error = sti_fetchfonts(sc, &cfg, dd->dd_fntaddr))) {
-		printf("%s: cannot fetch fonts (%d)\n",
-		    sc->sc_dev.dv_xname, error);
+	if ((error = sti_fetchfonts(scr, &cfg, dd->dd_fntaddr))) {
+		printf(": cannot fetch fonts (%d)\n", error);
 		return;
 	}
 
@@ -397,46 +426,69 @@ sti_attach_common(sc, codebase)
 	 *	calculate dimensions.
 	 */
 
-	sti_default_screen.ncols = cfg.width / sc->sc_curfont.width;
-	sti_default_screen.nrows = cfg.height / sc->sc_curfont.height;
-	sti_default_screen.fontwidth = sc->sc_curfont.width;
-	sti_default_screen.fontheight = sc->sc_curfont.height;
-
-#if NWSDISPLAY > 0
-	startuphook_establish(sti_attach_deferred, sc);
-#endif
+	sti_default_screen.ncols = cfg.width / scr->scr_curfont.width;
+	sti_default_screen.nrows = cfg.height / scr->scr_curfont.height;
+	sti_default_screen.fontwidth = scr->scr_curfont.width;
+	sti_default_screen.fontheight = scr->scr_curfont.height;
 
 	/* { extern int pmapdebug; pmapdebug = 0; } */
 }
 
 void
-sti_attach_deferred(void *v)
+sti_describe(struct sti_softc *sc)
+{
+	struct sti_screen *scr = sc->sc_scr;
+	struct sti_dd *dd = &scr->scr_dd;
+	struct sti_font *fp = &scr->scr_curfont;
+
+	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n",
+	    scr->name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf,
+	    dd->dd_lrrev, *(u_int64_t *)dd->dd_grid);
+
+	printf("%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
+	    sc->sc_dev.dv_xname, scr->fbwidth, scr->fbheight,
+	    scr->scr_cfg.scr_width, scr->scr_cfg.scr_height, scr->scr_bpp,
+	    scr->owidth, scr->oheight);
+
+	printf("%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
+	    sc->sc_dev.dv_xname, fp->width, fp->height,
+	    fp->type, fp->bpc, fp->first, fp->last);
+}
+
+void
+sti_end_attach(void *v)
 {
 	struct sti_softc *sc = v;
 	struct wsemuldisplaydev_attach_args waa;
 
-	waa.console = sc->sc_flags & STI_CONSOLE? 1 : 0;
+	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
+
+	waa.console = sc->sc_flags & STI_CONSOLE ? 1 : 0;
 	waa.scrdata = &sti_default_screenlist;
 	waa.accessops = &sti_accessops;
 	waa.accesscookie = sc;
 
 	/* attach as console if required */
-	if (waa.console) {
+	if (waa.console && !ISSET(sc->sc_flags, STI_ATTACHED)) {
 		long defattr;
 
 		sti_alloc_attr(sc, 0, 0, 0, &defattr);
-		wsdisplay_cnattach(&sti_default_screen, sc,
+		wsdisplay_cnattach(&sti_default_screen, sc->sc_scr,
 		    0, sti_default_screen.nrows - 1, defattr);
+		sc->sc_flags |= STI_ATTACHED;
 	}
 
 	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
 }
 
 int
-sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
+sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
+    u_int32_t addr)
 {
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_font *fp = &scr->scr_curfont;
 	int size;
+	bus_space_tag_t memt;
+	bus_space_handle_t romh;
 #ifdef notyet
 	int uc;
 	struct {
@@ -446,44 +498,43 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 	} a;
 #endif
 
+	memt = scr->memt;
+	romh = scr->romh;
+
 	/*
 	 * Get the first PROM font in memory
 	 */
 	do {
-		if (sc->sc_devtype == STI_DEVTYPE1) {
+		if (scr->scr_devtype == STI_DEVTYPE1) {
 			fp->first  = parseshort(addr + 0x00);
 			fp->last   = parseshort(addr + 0x08);
-			fp->width  = bus_space_read_1(sc->memt, sc->romh,
+			fp->width  = bus_space_read_1(memt, romh,
 			    addr + 0x13);
-			fp->height = bus_space_read_1(sc->memt, sc->romh,
+			fp->height = bus_space_read_1(memt, romh,
 			    addr + 0x17);
-			fp->type   = bus_space_read_1(sc->memt, sc->romh,
+			fp->type   = bus_space_read_1(memt, romh,
 			    addr + 0x1b);
-			fp->bpc    = bus_space_read_1(sc->memt, sc->romh,
+			fp->bpc    = bus_space_read_1(memt, romh,
 			    addr + 0x1f);
 			fp->next   = parseword(addr + 0x23);
-			fp->uheight= bus_space_read_1(sc->memt, sc->romh,
+			fp->uheight= bus_space_read_1(memt, romh,
 			    addr + 0x33);
-			fp->uoffset= bus_space_read_1(sc->memt, sc->romh,
+			fp->uoffset= bus_space_read_1(memt, romh,
 			    addr + 0x37);
 		} else	/* STI_DEVTYPE4 */
-			bus_space_read_region_4(sc->memt, sc->romh, addr,
+			bus_space_read_region_4(memt, romh, addr,
 			    (u_int32_t *)fp, sizeof(struct sti_font) / 4);
-
-		printf("%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
-		    sc->sc_dev.dv_xname, fp->width, fp->height,
-		    fp->type,  fp->bpc, fp->first, fp->last);
 
 		size = sizeof(struct sti_font) +
 		    (fp->last - fp->first + 1) * fp->bpc;
-		if (sc->sc_devtype == STI_DEVTYPE1)
+		if (scr->scr_devtype == STI_DEVTYPE1)
 			size *= 4;
-		sc->sc_romfont = malloc(size, M_DEVBUF, M_NOWAIT);
-		if (sc->sc_romfont == NULL)
+		scr->scr_romfont = malloc(size, M_DEVBUF, M_NOWAIT);
+		if (scr->scr_romfont == NULL)
 			return (ENOMEM);
 
-		bus_space_read_region_4(sc->memt, sc->romh, addr,
-		    (u_int32_t *)sc->sc_romfont, size / 4);
+		bus_space_read_region_4(memt, romh, addr,
+		    (u_int32_t *)scr->scr_romfont, size / 4);
 
 		addr = NULL; /* fp->next */
 	} while (addr);
@@ -500,27 +551,29 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 		a.flags.flags = STI_UNPMVF_WAIT;
 		a.in.fg_colour = STI_COLOUR_WHITE;
 		a.in.bg_colour = STI_COLOUR_BLACK;
-		a.in.font_addr = sc->sc_romfont;
+		a.in.font_addr = scr->scr_romfont;
 
-		sc->sc_fontmaxcol = cfg->fbheight / fp->height;
-		sc->sc_fontbase = cfg->width + cfg->owidth;
+		scr->scr_fontmaxcol = cfg->fbheight / fp->height;
+		scr->scr_fontbase = cfg->width + cfg->owidth;
 		for (uc = fp->first; uc <= fp->last; uc++) {
-			a.in.x = ((uc - fp->first) / sc->sc_fontmaxcol) *
-			    fp->width + sc->sc_fontbase;
-			a.in.y = ((uc - fp->first) % sc->sc_fontmaxcol) *
+			a.in.x = ((uc - fp->first) / scr->scr_fontmaxcol) *
+			    fp->width + scr->scr_fontbase;
+			a.in.y = ((uc - fp->first) % scr->scr_fontmaxcol) *
 			    fp->height;
 			a.in.index = uc;
 
-			(*sc->unpmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+			(*scr->unpmv)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 			if (a.out.errno) {
-				printf("%s: unpmv %d returned %d\n",
-				    sc->sc_dev.dv_xname, uc, a.out.errno);
+#ifdef STIDEBUG
+				printf("sti_unpmv %d returned %d\n",
+				    uc, a.out.errno);
+#endif
 				return (0);
 			}
 		}
 
-		free(sc->sc_romfont, M_DEVBUF);
-		sc->sc_romfont = NULL;
+		free(scr->scr_romfont, M_DEVBUF);
+		scr->scr_romfont = NULL;
 	}
 #endif
 
@@ -528,8 +581,8 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 }
 
 int
-sti_init(sc, mode)
-	struct sti_softc *sc;
+sti_init(scr, mode)
+	struct sti_screen *scr;
 	int mode;
 {
 	struct {
@@ -538,41 +591,39 @@ sti_init(sc, mode)
 		struct sti_initout out;
 	} a;
 
-	bzero(&a,  sizeof(a));
+	bzero(&a, sizeof(a));
 
 	a.flags.flags = STI_INITF_WAIT | STI_INITF_CMB | STI_INITF_EBET |
 	    (mode & STI_TEXTMODE? STI_INITF_TEXT | STI_INITF_PBET |
 	     STI_INITF_PBETI | STI_INITF_ICMT : 0);
 	a.in.text_planes = 1;
 #ifdef STIDEBUG
-	printf("%s: init,%p(%x, %p, %p, %p)\n", sc->sc_dev.dv_xname,
-	    sc->init, a.flags.flags, &a.in, &a.out, &sc->sc_cfg);
+	printf("sti_init,%p(%x, %p, %p, %p)\n",
+	    scr->init, a.flags.flags, &a.in, &a.out, &scr->scr_cfg);
 #endif
-	(*sc->init)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+	(*scr->init)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 	return (a.out.text_planes != a.in.text_planes || a.out.errno);
 }
 
 int
-sti_inqcfg(sc, out)
-	struct sti_softc *sc;
-	struct sti_inqconfout *out;
+sti_inqcfg(struct sti_screen *scr, struct sti_inqconfout *out)
 {
 	struct {
 		struct sti_inqconfflags flags;
 		struct sti_inqconfin in;
 	} a;
 
-	bzero(&a,  sizeof(a));
+	bzero(&a, sizeof(a));
 
 	a.flags.flags = STI_INQCONFF_WAIT;
-	(*sc->inqconf)(&a.flags, &a.in, out, &sc->sc_cfg);
+	(*scr->inqconf)(&a.flags, &a.in, out, &scr->scr_cfg);
 
 	return out->errno;
 }
 
 void
-sti_bmove(sc, x1, y1, x2, y2, h, w, f)
-	struct sti_softc *sc;
+sti_bmove(scr, x1, y1, x2, y2, h, w, f)
+	struct sti_screen *scr;
 	int x1, y1, x2, y2, h, w;
 	enum sti_bmove_funcs f;
 {
@@ -608,16 +659,15 @@ sti_bmove(sc, x1, y1, x2, y2, h, w, f)
 	a.in.height = h;
 	a.in.width = w;
 
-	(*sc->blkmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+	(*scr->blkmv)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 #ifdef STIDEBUG
 	if (a.out.errno)
-		printf("%s: blkmv returned %d\n",
-		    sc->sc_dev.dv_xname, a.out.errno);
+		printf("sti_blkmv returned %d\n", a.out.errno);
 #endif
 }
 
 int
-sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b)
+sti_setcment(struct sti_screen *scr, u_int i, u_char r, u_char g, u_char b)
 {
 	struct {
 		struct sti_scmentflags flags;
@@ -631,7 +681,7 @@ sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b)
 	a.in.entry = i;
 	a.in.value = (r << 16) | (g << 8) | b;
 
-	(*sc->scment)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+	(*scr->scment)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 
 	return a.out.errno;
 }
@@ -645,6 +695,7 @@ sti_ioctl(v, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct sti_softc *sc = v;
+	struct sti_screen *scr = sc->sc_scr;
 	struct wsdisplay_fbinfo *wdf;
 	struct wsdisplay_cmap *cmapp;
 	u_int mode, idx, count;
@@ -660,10 +711,10 @@ sti_ioctl(v, cmd, data, flag, p)
 		mode = *(u_int *)data;
 		if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL &&
 		    mode == WSDISPLAYIO_MODE_DUMBFB)
-			ret = sti_init(sc, 0);
+			ret = sti_init(scr, 0);
 		else if (sc->sc_wsmode == WSDISPLAYIO_MODE_DUMBFB &&
 		    mode == WSDISPLAYIO_MODE_EMUL)
-			ret = sti_init(sc, STI_TEXTMODE);
+			ret = sti_init(scr, STI_TEXTMODE);
 		sc->sc_wsmode = mode;
 		break;
 
@@ -673,58 +724,58 @@ sti_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->height = sc->sc_cfg.scr_height;
-		wdf->width  = sc->sc_cfg.scr_width;
-		wdf->depth  = sc->sc_bpp;
-		if (sc->scment == NULL)
+		wdf->height = scr->scr_cfg.scr_height;
+		wdf->width  = scr->scr_cfg.scr_width;
+		wdf->depth  = scr->scr_bpp;
+		if (scr->scment == NULL)
 			wdf->cmsize = 0;
 		else
 			wdf->cmsize = STI_NCMAP;
 		break;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_cfg.fb_width;
+		*(u_int *)data = scr->scr_cfg.fb_width;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		if (sc->scment == NULL)
+		if (scr->scment == NULL)
 			return ENODEV;
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
 		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
 			return EINVAL;
-		if ((ret = copyout(&sc->sc_rcmap[idx], cmapp->red, count)))
+		if ((ret = copyout(&scr->scr_rcmap[idx], cmapp->red, count)))
 			break;
-		if ((ret = copyout(&sc->sc_gcmap[idx], cmapp->green, count)))
+		if ((ret = copyout(&scr->scr_gcmap[idx], cmapp->green, count)))
 			break;
-		if ((ret = copyout(&sc->sc_bcmap[idx], cmapp->blue, count)))
+		if ((ret = copyout(&scr->scr_bcmap[idx], cmapp->blue, count)))
 			break;
 		break;
 
 	case WSDISPLAYIO_PUTCMAP:
-		if (sc->scment == NULL)
+		if (scr->scment == NULL)
 			return ENODEV;
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
 		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
 			return EINVAL;
-		if ((ret = copyin(cmapp->red, &sc->sc_rcmap[idx], count)))
+		if ((ret = copyin(cmapp->red, &scr->scr_rcmap[idx], count)))
 			break;
-		if ((ret = copyin(cmapp->green, &sc->sc_gcmap[idx], count)))
+		if ((ret = copyin(cmapp->green, &scr->scr_gcmap[idx], count)))
 			break;
-		if ((ret = copyin(cmapp->blue, &sc->sc_bcmap[idx], count)))
+		if ((ret = copyin(cmapp->blue, &scr->scr_bcmap[idx], count)))
 			break;
 		for (i = idx + count - 1; i >= idx; i--)
-			if ((ret = sti_setcment(sc, i, sc->sc_rcmap[i],
-			    sc->sc_gcmap[i], sc->sc_bcmap[i]))) {
+			if ((ret = sti_setcment(scr, i, scr->scr_rcmap[i],
+			    scr->scr_gcmap[i], scr->scr_bcmap[i]))) {
 #ifdef STIDEBUG
 				printf("sti_ioctl: "
 				    "sti_setcment(%d, %u, %u, %u): %d\n", i,
-				    (u_int)sc->sc_rcmap[i],
-				    (u_int)sc->sc_gcmap[i],
-				    (u_int)sc->sc_bcmap[i]);
+				    (u_int)scr->scr_rcmap[i],
+				    (u_int)scr->scr_gcmap[i],
+				    (u_int)scr->scr_bcmap[i]);
 #endif
 				ret = EINVAL;
 				break;
@@ -770,7 +821,7 @@ sti_alloc_screen(v, type, cookiep, cxp, cyp, defattr)
 	if (sc->sc_nscreens > 0)
 		return ENOMEM;
 
-	*cookiep = sc;
+	*cookiep = sc->sc_scr;
 	*cxp = 0;
 	*cyp = 0;
 	sti_alloc_attr(sc, 0, 0, 0, defattr);
@@ -813,10 +864,10 @@ sti_cursor(v, on, row, col)
 	void *v;
 	int on, row, col;
 {
-	struct sti_softc *sc = v;
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_screen *scr = v;
+	struct sti_font *fp = &scr->scr_curfont;
 
-	sti_bmove(sc,
+	sti_bmove(scr,
 	    col * fp->width, row * fp->height,
 	    col * fp->width, row * fp->height,
 	    fp->height, fp->width, bmf_invert);
@@ -841,10 +892,10 @@ sti_putchar(v, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	struct sti_softc *sc = v;
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_screen *scr = v;
+	struct sti_font *fp = &scr->scr_curfont;
 
-	if (sc->sc_romfont != NULL) {
+	if (scr->scr_romfont != NULL) {
 		/*
 		 * Font is in memory, use unpmv
 		 */
@@ -862,10 +913,10 @@ sti_putchar(v, row, col, uc, attr)
 		a.in.bg_colour = STI_COLOUR_BLACK;
 		a.in.x = col * fp->width;
 		a.in.y = row * fp->height;
-		a.in.font_addr = sc->sc_romfont;
+		a.in.font_addr = scr->scr_romfont;
 		a.in.index = uc;
 
-		(*sc->unpmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+		(*scr->unpmv)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 	} else {
 		/*
 		 * Font is in frame buffer, use blkmv
@@ -883,16 +934,16 @@ sti_putchar(v, row, col, uc, attr)
 		a.in.fg_colour = STI_COLOUR_WHITE;
 		a.in.bg_colour = STI_COLOUR_BLACK;
 
-		a.in.srcx = ((uc - fp->first) / sc->sc_fontmaxcol) *
-		    fp->width + sc->sc_fontbase;
-		a.in.srcy = ((uc - fp->first) % sc->sc_fontmaxcol) *
+		a.in.srcx = ((uc - fp->first) / scr->scr_fontmaxcol) *
+		    fp->width + scr->scr_fontbase;
+		a.in.srcy = ((uc - fp->first) % scr->scr_fontmaxcol) *
 		    fp->height;
 		a.in.dstx = col * fp->width;
 		a.in.dsty = row * fp->height;
 		a.in.height = fp->height;
 		a.in.width = fp->width;
 
-		(*sc->blkmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+		(*scr->blkmv)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 	}
 }
 
@@ -901,10 +952,10 @@ sti_copycols(v, row, srccol, dstcol, ncols)
 	void *v;
 	int row, srccol, dstcol, ncols;
 {
-	struct sti_softc *sc = v;
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_screen *scr = v;
+	struct sti_font *fp = &scr->scr_curfont;
 
-	sti_bmove(sc,
+	sti_bmove(scr,
 	    srccol * fp->width, row * fp->height,
 	    dstcol * fp->width, row * fp->height,
 	    fp->height, ncols * fp->width, bmf_copy);
@@ -916,10 +967,10 @@ sti_erasecols(v, row, startcol, ncols, attr)
 	int row, startcol, ncols;
 	long attr;
 {
-	struct sti_softc *sc = v;
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_screen *scr = v;
+	struct sti_font *fp = &scr->scr_curfont;
 
-	sti_bmove(sc,
+	sti_bmove(scr,
 	    startcol * fp->width, row * fp->height,
 	    startcol * fp->width, row * fp->height,
 	    fp->height, ncols * fp->width, bmf_clear);
@@ -930,11 +981,11 @@ sti_copyrows(v, srcrow, dstrow, nrows)
 	void *v;
 	int srcrow, dstrow, nrows;
 {
-	struct sti_softc *sc = v;
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_screen *scr = v;
+	struct sti_font *fp = &scr->scr_curfont;
 
-	sti_bmove(sc, 0, srcrow * fp->height, 0, dstrow * fp->height,
-	    nrows * fp->height, sc->sc_cfg.scr_width, bmf_copy);
+	sti_bmove(scr, 0, srcrow * fp->height, 0, dstrow * fp->height,
+	    nrows * fp->height, scr->scr_cfg.scr_width, bmf_copy);
 }
 
 void
@@ -943,11 +994,11 @@ sti_eraserows(v, srcrow, nrows, attr)
 	int srcrow, nrows;
 	long attr;
 {
-	struct sti_softc *sc = v;
-	struct sti_font *fp = &sc->sc_curfont;
+	struct sti_screen *scr = v;
+	struct sti_font *fp = &scr->scr_curfont;
 
-	sti_bmove(sc, 0, srcrow * fp->height, 0, srcrow * fp->height,
-	    nrows * fp->height, sc->sc_cfg.scr_width, bmf_clear);
+	sti_bmove(scr, 0, srcrow * fp->height, 0, srcrow * fp->height,
+	    nrows * fp->height, scr->scr_cfg.scr_width, bmf_clear);
 }
 
 int
@@ -956,9 +1007,54 @@ sti_alloc_attr(v, fg, bg, flags, pattr)
 	int fg, bg, flags;
 	long *pattr;
 {
-	/* struct sti_softc *sc = v; */
+	/* struct sti_screen *scr = v; */
 
 	*pattr = 0;
 
 	return 0;
+}
+
+/*
+ * Console support
+ */
+
+int
+sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
+    u_int codebase)
+{
+	bus_space_handle_t ioh;
+	int devtype;
+	u_int32_t romend;
+	int error;
+	long defattr;
+
+	if ((error = bus_space_map(iot, base, PAGE_SIZE, 0, &ioh)) != 0)
+		return (error);
+
+	/*
+	 * Compute real PROM size
+	 */
+	devtype = bus_space_read_1(iot, ioh, 3);
+	if (devtype == STI_DEVTYPE4) {
+		romend = bus_space_read_4(iot, ioh, 0x18);
+	} else {
+		romend =
+		    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
+		    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
+		    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
+		    (bus_space_read_1(iot, ioh, 0x50 + 15));
+	}
+
+	bus_space_unmap(iot, ioh, PAGE_SIZE);
+
+	romend = round_page(romend);
+	if ((error = bus_space_map(iot, base, romend, 0, &ioh)) != 0)
+		return (error);
+
+	sti_screen_setup(scr, iot, iot, ioh, base, codebase);
+
+	sti_alloc_attr(scr, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&sti_default_screen, scr, 0, 0, defattr);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.2 2005/01/17 22:31:34 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.3 2005/02/27 22:10:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -63,14 +63,12 @@ sti_sgc_match(struct device *parent, void *match, void *aux)
 	bus_space_handle_t ioh;
 	int devtype;
 
-#ifdef SGC_CONSOLE
 	/*
 	 * If we already probed it succesfully as a console device, go ahead,
 	 * since we will not be able to bus_space_map() again.
 	 */
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode)
 		return (1);
-#endif
 
 	iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
 
@@ -104,42 +102,55 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	int devtype;
 	u_int32_t romend;
 
-	iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
-	sc->base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
-
-	if (bus_space_map(iot, sc->base, PAGE_SIZE, 0, &ioh)) {
-		printf(": can't map frame buffer");
-		return;
-	}
-
 	/*
-	 * Compute real PROM size
+	 * If we already probed it succesfully as a console device, go ahead,
+	 * since we will not be able to bus_space_map() again.
 	 */
-	devtype = bus_space_read_1(iot, ioh, 3);
-	if (devtype == STI_DEVTYPE4) {
-		romend = bus_space_read_4(iot, ioh, 0x18);
+	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode) {
+		extern struct sti_screen stifb_cn;
+
+		sc->sc_flags |= STI_CONSOLE | STI_ATTACHED;
+		sc->sc_scr = &stifb_cn;
+
+		sti_describe(sc);
 	} else {
-		romend =
-		    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
-		    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
-		    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
-		    (bus_space_read_1(iot, ioh, 0x50 + 15));
+		iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
+		sc->base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
+
+		if (bus_space_map(iot, sc->base, PAGE_SIZE, 0, &ioh)) {
+			printf(": can't map frame buffer");
+			return;
+		}
+
+		/*
+		 * Compute real PROM size
+		 */
+		devtype = bus_space_read_1(iot, ioh, 3);
+		if (devtype == STI_DEVTYPE4) {
+			romend = bus_space_read_4(iot, ioh, 0x18);
+		} else {
+			romend =
+			    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
+			    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
+			    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
+			    (bus_space_read_1(iot, ioh, 0x50 + 15));
+		}
+
+		bus_space_unmap(iot, ioh, PAGE_SIZE);
+
+		if (bus_space_map(iot, sc->base, round_page(romend), 0,
+		    &ioh)) {
+			printf(": can't map frame buffer");
+			return;
+		}
+
+		sc->memt = sc->iot = iot;
+		sc->romh = ioh;
+
+		sti_attach_common(sc, STI_CODEBASE_M68K);
 	}
 
-	bus_space_unmap(iot, ioh, PAGE_SIZE);
-
-	if (bus_space_map(iot, sc->base, round_page(romend), 0, &ioh)) {
-		printf(": can't map frame buffer");
-		return;
-	}
-
-	sc->memt = sc->iot = iot;
-	sc->romh = ioh;
-
-	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode)
-		sc->sc_flags |= STI_CONSOLE;
-
-	sti_attach_common(sc, STI_CODEBASE_M68K);
+	sti_end_attach(sc);
 }
 
 /*
@@ -152,7 +163,6 @@ cons_decl(sti);
 int
 sti_console_scan(int slot, caddr_t va, void *arg)
 {
-#ifdef SGC_CONSOLE
 	struct consdev *cp = arg;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -199,10 +209,6 @@ sti_console_scan(int slot, caddr_t va, void *arg)
 	}
 
 	return (0);
-#else
-	/* Do not allow console to be on an SGC device (yet). */
-	return (0);
-#endif
 }
 
 void
@@ -232,12 +238,24 @@ sticnprobe(struct consdev *cp)
 void
 sticninit(struct consdev *cp)
 {
+	extern struct sti_screen stifb_cn;
+	bus_space_tag_t iot;
+	bus_addr_t base;
+
 	/*
-	 * We should theoretically initialize the sti driver here.
-	 * However, since it relies upon the vm system being initialized,
-	 * which is not the case at this point, postpone the initialization.
-	 *
-	 * We can't even use the PROM output services, since they are not
-	 * available AT ALL when we are running virtual.
+	 * We are not interested by the *first* console pass.
 	 */
+	if (consolepass == 0)
+		return;
+
+	iot = HP300_BUS_TAG(HP300_BUS_SGC, CONSCODE_TO_SGC_SLOT(conscode));
+	base = (bus_addr_t)sgc_slottopa(CONSCODE_TO_SGC_SLOT(conscode));
+
+	sti_cnattach(&stifb_cn, iot, base, STI_CODEBASE_M68K);
+
+	/*
+	 * Since the copyright notice could not be displayed before,
+	 * display it again now.
+	 */
+	printf("%s\n", copyright);
 }

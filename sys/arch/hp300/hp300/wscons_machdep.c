@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.3 2005/02/27 22:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -52,7 +52,17 @@
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
 
+#include "sti.h"
+#if NSTI > 0
+#include <machine/bus.h>
+#include <dev/ic/stireg.h>
+#include <dev/ic/stivar.h>
+#endif
+
 struct diofb diofb_cn;
+#if NSTI > 0
+struct sti_screen stifb_cn;
+#endif
 
 cons_decl(ws);
 
