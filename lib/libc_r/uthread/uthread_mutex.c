@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_mutex.c,v 1.6 1999/01/06 05:29:25 d Exp $
+ *
  */
 #include <stdlib.h>
 #include <errno.h>
@@ -98,8 +100,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 					pmutex->m_flags |= MUTEX_FLAGS_INITED;
 					pmutex->m_owner = NULL;
 					pmutex->m_type = type;
-					memset(&pmutex->lock, 0,
-					    sizeof(pmutex->lock));
+					_SPINUNLOCK(&pmutex->lock);
 					*mutex = pmutex;
 				} else {
 					free(pmutex);
@@ -248,6 +249,7 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 		case PTHREAD_MUTEX_NORMAL:
 			if ((*mutex)->m_owner == _thread_run) {
 				/* Intentionally deadlock: */
+				_thread_run->data.mutex = mutex;
 				for (;;)
 					_thread_kern_sched_state(PS_MUTEX_WAIT, __FILE__, __LINE__);
 			}
@@ -278,6 +280,7 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 					 * the mutex: 
 					 */
 					_thread_queue_enq(&(*mutex)->m_queue, _thread_run);
+					_thread_run->data.mutex = mutex;
 
 					/* Wait for the mutex: */
 					_thread_kern_sched_state_unlock(
@@ -310,6 +313,7 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 					 * the mutex: 
 					 */
 					_thread_queue_enq(&(*mutex)->m_queue, _thread_run);
+					_thread_run->data.mutex = mutex;
 
 					/* Wait for the mutex: */
 					_thread_kern_sched_state_unlock(

@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_condattr_init.c,v 1.2 1999/01/06 05:29:22 d Exp $
  */
 #include <string.h>
 #include <stdlib.h>

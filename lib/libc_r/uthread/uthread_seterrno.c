@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_seterrno.c,v 1.2 1999/01/06 05:29:26 d Exp $
  */
 #ifdef _THREAD_SAFE
 #include <pthread.h>

@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_spec.c,v 1.4 1999/01/06 05:29:29 d Exp $
  */
 #include <signal.h>
 #include <stdlib.h>

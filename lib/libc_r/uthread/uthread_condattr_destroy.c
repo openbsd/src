@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_condattr_destroy.c,v 1.2 1999/01/06 05:29:22 d Exp $
  */
 #include <stdlib.h>
 #include <errno.h>

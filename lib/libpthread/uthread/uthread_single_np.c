@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_single_np.c,v 1.2 1999/01/06 05:29:28 d Exp $
  */
 #include <string.h>
 #ifdef _THREAD_SAFE

@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_create.c,v 1.5 1999/01/06 05:29:22 d Exp $
  */
 #include <errno.h>
 #include <stdlib.h>
@@ -90,6 +91,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->arg = arg;
 			timerclear(&new_thread->ru_utime);
 			timerclear(&new_thread->ru_stime);
+			_SPINUNLOCK(&new_thread->lock);
 
 			/*
 			 * Write a magic value to the thread structure

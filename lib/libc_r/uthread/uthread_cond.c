@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_cond.c,v 1.4 1999/01/06 05:29:22 d Exp $
  */
 #include <stdlib.h>
 #include <errno.h>
@@ -86,7 +87,7 @@ pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * cond_attr)
 				_thread_queue_init(&pcond->c_queue);
 				pcond->c_flags |= COND_FLAGS_INITED;
 				pcond->c_type = type;
-				memset(&pcond->lock,0,sizeof(pcond->lock));
+				_SPINUNLOCK(&pcond->lock);
 				*cond = pcond;
 			}
 		}
@@ -151,6 +152,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 			 * variable:
 			 */
 			_thread_queue_enq(&(*cond)->c_queue, _thread_run);
+			_thread_run->data.cond = cond;
 
 			/* Unlock the mutex: */
 			if ((rval = pthread_mutex_unlock(mutex)) != 0) {
@@ -223,6 +225,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 			 * variable:
 			 */
 			_thread_queue_enq(&(*cond)->c_queue, _thread_run);
+			_thread_run->data.cond = cond;
 
 			/* Unlock the mutex: */
 			if ((rval = pthread_mutex_unlock(mutex)) != 0) {

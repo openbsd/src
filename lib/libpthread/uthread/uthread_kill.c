@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_kill.c,v 1.5 1999/01/06 05:29:24 d Exp $
  */
 #include <errno.h>
 #include <signal.h>

@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_nanosleep.c,v 1.2 1999/01/06 05:29:25 d Exp $
  */
 #include <stdio.h>
 #include <errno.h>
@@ -41,31 +42,27 @@ nanosleep(const struct timespec * time_to_sleep,
 		  struct timespec * time_remaining)
 {
 	int             ret = 0;
+	struct timespec start_time;
+	struct timespec wakeup_time;
 	struct timespec current_time;
-	struct timespec current_time1;
 	struct timespec remaining_time;
 	struct timeval  tv;
 
 	/* Check if the time to sleep is legal: */
-	if (time_to_sleep == NULL || time_to_sleep->tv_nsec < 0 || time_to_sleep->tv_nsec > 1000000000) {
+	if (time_to_sleep == NULL || time_to_sleep->tv_nsec < 0 || time_to_sleep->tv_nsec > 1000000000 || time_to_sleep->tv_sec < 0) {
 		/* Return an EINVAL error : */
 		errno = EINVAL;
 		ret = -1;
 	} else {
 		/* Get the current time: */
 		gettimeofday(&tv, NULL);
-		TIMEVAL_TO_TIMESPEC(&tv, &current_time);
+		TIMEVAL_TO_TIMESPEC(&tv, &start_time);
 
 		/* Calculate the time for the current thread to wake up: */
-		_thread_run->wakeup_time.tv_sec = current_time.tv_sec + time_to_sleep->tv_sec;
-		_thread_run->wakeup_time.tv_nsec = current_time.tv_nsec + time_to_sleep->tv_nsec;
+		timespecadd(time_to_sleep, &start_time, &wakeup_time);
 
-		/* Check if the nanosecond field has overflowed: */
-		if (_thread_run->wakeup_time.tv_nsec >= 1000000000) {
-			/* Wrap the nanosecond field: */
-			_thread_run->wakeup_time.tv_sec += 1;
-			_thread_run->wakeup_time.tv_nsec -= 1000000000;
-		}
+		_thread_run->wakeup_time.tv_sec = wakeup_time.tv_sec;
+		_thread_run->wakeup_time.tv_nsec = wakeup_time.tv_nsec;
 		_thread_run->interrupted = 0;
 
 		/* Reschedule the current thread to sleep: */
@@ -73,31 +70,15 @@ nanosleep(const struct timespec * time_to_sleep,
 
 		/* Get the current time: */
 		gettimeofday(&tv, NULL);
-		TIMEVAL_TO_TIMESPEC(&tv, &current_time1);
+		TIMEVAL_TO_TIMESPEC(&tv, &current_time);
 
 		/* Calculate the remaining time to sleep: */
-		remaining_time.tv_sec = time_to_sleep->tv_sec + current_time.tv_sec - current_time1.tv_sec;
-		remaining_time.tv_nsec = time_to_sleep->tv_nsec + current_time.tv_nsec - current_time1.tv_nsec;
-
-		/* Check if the nanosecond field has underflowed: */
-		if (remaining_time.tv_nsec < 0) {
-			/* Handle the underflow: */
-			remaining_time.tv_sec -= 1;
-			remaining_time.tv_nsec += 1000000000;
-		}
-
-		/* Check if the nanosecond field has overflowed: */
-		if (remaining_time.tv_nsec >= 1000000000) {
-			/* Handle the overflow: */
-			remaining_time.tv_sec += 1;
-			remaining_time.tv_nsec -= 1000000000;
-		}
+		timespecsub(&wakeup_time, &current_time, &remaining_time);
 
 		/* Check if the sleep was longer than the required time: */
 		if (remaining_time.tv_sec < 0) {
 			/* Reset the time left: */
-			remaining_time.tv_sec = 0;
-			remaining_time.tv_nsec = 0;
+			timespecclear(&remaining_time);
 		}
 
 		/* Check if the time remaining is to be returned: */

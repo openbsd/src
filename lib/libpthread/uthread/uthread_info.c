@@ -29,12 +29,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_info.c,v 1.5 1999/01/06 05:29:24 d Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stddef.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
@@ -67,6 +69,8 @@ static const struct s_thread_info thread_info[] = {
 	{PS_DEAD	, "dead"},
 	{PS_STATE_MAX	, "xxx"}
 };
+
+const static char info_lead[] = "               -";
 
 /* Determine a filename for display purposes: */
 static const char *
@@ -115,7 +119,7 @@ _thread_dump_info(void)
 		char location[30];
 
 		/* Find last known file:line checkpoint: */
-		if (pthread->fname)
+		if (pthread->fname && pthread->state != PS_RUNNING)
 			snprintf(location, sizeof location, "%s:%d",
 			    truncname(pthread->fname, 21), pthread->lineno);
 		else
@@ -157,30 +161,84 @@ _thread_dump_info(void)
 		case PS_FDR_WAIT:
 		case PS_FDW_WAIT:
 			/* Write the lock details: */
-			snprintf(s, sizeof(s), "      - fd %d [%s:%d]\n",
+			snprintf(s, sizeof(s), "%s fd %d [%s:%d]\n",
+			    info_lead,
 			    pthread->data.fd.fd, 
 			    truncname(pthread->data.fd.fname, 32),
 			    pthread->data.fd.branch);
 			_thread_sys_write(fd, s, strlen(s));
 			s[0] = 0;
-			snprintf(s, sizeof(s), "      - owner %pr/%pw\n",
+			snprintf(s, sizeof(s), "%s owner %pr/%pw\n",
+			    info_lead,
 			    _thread_fd_table[pthread->data.fd.fd]->r_owner,
 			    _thread_fd_table[pthread->data.fd.fd]->w_owner);
 			_thread_sys_write(fd, s, strlen(s));
 			break;
 		case PS_SIGWAIT:
-			snprintf(s, sizeof(s), "      - sigmask 0x%08lx\n",
+			snprintf(s, sizeof(s), "%s sigmask 0x%08lx\n",
+			    info_lead,
 			    (unsigned long)pthread->sigmask);
 			_thread_sys_write(fd, s, strlen(s));
 			break;
+		case PS_MUTEX_WAIT:
+			snprintf(s, sizeof(s), 
+			    "%s mutex %p\n",
+			    info_lead,
+			    pthread->data.mutex);
+			_thread_sys_write(fd, s, strlen(s));
+			if (pthread->data.mutex) {
+				snprintf(s, sizeof(s), 
+				    "%s owner %p\n",
+				    info_lead,
+				    (*pthread->data.mutex)->m_owner);
+				_thread_sys_write(fd, s, strlen(s));
+			}
+			break;
+		case PS_COND_WAIT:
+			snprintf(s, sizeof(s), 
+			    "%s cond %p\n",
+			    info_lead,
+			    pthread->data.cond);
+			_thread_sys_write(fd, s, strlen(s));
+			break;
+		case PS_JOIN:
+			if (pthread->queue) {
+				struct pthread *t;
 
-			/*
-			 * Trap other states that are not explicitly
-			 * coded to dump information: 
-			 */
-			default:
-				/* Nothing to do here. */
-				break;
+				/* Locate the thread through its queue: */
+				t = (struct pthread*)((
+				    (char *)pthread->queue) -
+				    offsetof(struct pthread, join_queue));
+				snprintf(s, sizeof(s), 
+				    "%s thread %p\n", info_lead, t);
+				_thread_sys_write(fd, s, strlen(s));
+			}
+			break;
+		case PS_SLEEP_WAIT:
+			{
+				struct timeval tv;
+				struct timespec current_time;
+				struct timespec remaining_time;
+				double remain;
+
+				gettimeofday(&tv, NULL);
+				TIMEVAL_TO_TIMESPEC(&tv, &current_time);
+				timespecsub(&pthread->wakeup_time, 
+				    &current_time, &remaining_time);
+				remain = remaining_time.tv_sec
+					+ (double)remaining_time.tv_nsec / 1e9;
+				snprintf(s, sizeof(s), 
+				    "%s wake in %f sec\n", 
+				    info_lead, remain);
+				_thread_sys_write(fd, s, strlen(s));
+			}
+			break;
+		case PS_SELECT_WAIT:
+			/* XXX information in pthread->data.select_data */
+			break;
+		default:
+			/* Nothing to do here. */
+			break;
 		}
 	}
 

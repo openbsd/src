@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_find_thread.c,v 1.3 1999/01/06 05:29:23 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
