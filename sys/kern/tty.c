@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.29 1997/10/06 20:20:04 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.30 1997/10/21 07:22:13 niklas Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@
 
 static int ttnread __P((struct tty *));
 static void ttyblock __P((struct tty *));
+void ttyunblock __P((struct tty *));
 static void ttyecho __P((int, struct tty *));
 static void ttyrubo __P((struct tty *, int));
 static int proc_compare __P((struct proc *, struct proc *));
@@ -1121,6 +1122,7 @@ ttyflush(tp, rw)
 		tp->t_rocount = 0;
 		tp->t_rocol = 0;
 		CLR(tp->t_state, TS_LOCAL);
+		ttyunblock(tp);
 		ttwakeup(tp);
 	}
 	if (rw & FWRITE) {
@@ -1498,7 +1500,20 @@ read:
 	 * the input queue has gone down.
 	 */
 	s = spltty();
-	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG/5) {
+	if (tp->t_rawq.c_cc < TTYHOG/5)
+		ttyunblock(tp);
+	splx(s);
+	return (error);
+}
+
+/* Call at spltty */
+void
+ttyunblock(tp)
+	struct tty *tp;
+{
+	u_char *cc = tp->t_cc;
+
+	if (ISSET(tp->t_state, TS_TBLOCK)) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    cc[VSTART] != _POSIX_VDISABLE &&
 		    putc(cc[VSTART], &tp->t_outq) == 0) {
@@ -1510,8 +1525,6 @@ read:
 		    (*tp->t_hwiflow)(tp, 0) != 0)
 			CLR(tp->t_state, TS_TBLOCK);
 	}
-	splx(s);
-	return (error);
 }
 
 /*
