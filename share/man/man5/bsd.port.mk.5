@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.131 2004/02/07 22:05:53 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.132 2004/02/07 22:43:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -566,6 +566,9 @@ If set to
 successful package builds and installations will clean
 their working directories, after invoking
 any targets mentioned in BULK_TARGETS.
+Can be set on a per-${PKGPATH} basis.
+For instance, setting BULK_misc/screen=No
+will override any BULK=Yes passed on the command line.
 See
 .Ev BULK_COOKIES_DIR ,
 .Ev BIN_PACKAGES ,
@@ -581,6 +584,8 @@ Flags to pass to build each target in
 Targets to run after each bulk package build before cleaning up the
 working directory.
 Empty defaults.
+Can be set on a per-${PKGPATH} basis, e.g.,
+BULK_TARGETS_${PKGPATH}=...
 .It Ev BZIP2
 Name of the bzip2 binary.
 .It Ev CATEGORIES
@@ -630,6 +635,8 @@ If set to
 .Sq Yes ,
 .Sq make clean
 will also clean dependencies.
+Can be overridden on a per-${PKGPATH} basis,
+by setting CLEANDEPENDS_${PKGPATH}.
 .It Ev COMMENT
 Comment used for the package, and in the INDEX.
 .It Ev COMMENT-foo
@@ -857,8 +864,11 @@ By default, ${DESTDIRNAME}=${WRKINST}.
 Target build by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
 .It Ev FAKEOBJDIR
-If defined, used as a base for the fake area.
+If non empty, used as a base for the fake area.
 The real fake directory ${WRKINST} is created there.
+Can be set on a per-${PKGPATH} basis.
+For instance, setting FAKEOBJDIR_www/mozilla=/tmp/obj
+will affect only the mozilla port.
 .It Ev FETCH_CMD
 Command used to fetch distribution files for this port.
 Defaults to
@@ -1481,8 +1491,11 @@ Subdirectory of ${WRKDIR} where port normally installs (see
 .Ar fake
 target).
 .It Ev WRKOBJDIR
-If defined, used as a base for the actual port working directory.
+If non empty, used as a base for the actual port working directory.
 The real working directory ${WRKDIR} is created there.
+Can be set on a per-${PKGPATH} basis.
+For instance, setting WRKOBJDIR_www/mozilla=/tmp/obj
+will affect only the mozilla port.
 .It Ev X11BASE
 Where X11 has been installed (default: /usr/X11R6).
 .It Ev USE_GMAKE
