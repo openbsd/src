@@ -1,5 +1,8 @@
-/*	$OpenBSD: grdc.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.12 2002/07/26 20:32:38 pjanzen Exp $	*/
 /*
+ *
+ * Copyright 2002 Amos Shapir.  Public domain.
+ *
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
  * Flags: -s: scroll
