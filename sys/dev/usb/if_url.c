@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.7 2002/07/25 02:18:10 nate Exp $ */
+/*	$OpenBSD: if_url.c,v 1.8 2002/09/29 22:49:10 jason Exp $ */
 /*	$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -995,7 +995,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ifp->if_opackets++;
 
-	m_free(c->url_mbuf);
+	m_freem(c->url_mbuf);
 	c->url_mbuf = NULL;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
