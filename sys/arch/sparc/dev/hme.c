@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.33 2001/07/30 21:50:06 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.34 2001/08/24 05:14:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -160,6 +160,7 @@ hmeattach(parent, self, aux)
 	struct hme_softc *sc = (struct hme_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int pri;
+	struct bootpath *bp;
 	/* XXX the following declaration should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
@@ -252,6 +253,13 @@ hmeattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	bp = ca->ca_ra.ra_bp;
+	if (bp != NULL && sc->sc_dev.dv_unit == bp->val[1] &&
+	    ((strcmp(bp->name, hme_cd.cd_name) == 0) ||
+	     (strcmp(bp->name, "qfe") == 0) ||
+	     (strcmp(bp->name, "SUNW,hme") == 0)))
+		bp->dev = &sc->sc_dev;
 }
 
 /*
