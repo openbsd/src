@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.24 2003/01/04 13:40:08 maja Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.25 2004/03/16 07:50:28 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -51,7 +51,6 @@
  *
  * and don't modify the border comments.
  */
-
 
 /*BEGINKEYSYMDECL*/
 
@@ -360,21 +359,34 @@
  */
 
 #define KS_L2_Aogonek		0xa1
+#define KS_L2_breve		0xa2
 #define KS_L2_Lstroke		0xa3
 #define KS_L2_Sacute		0xa6
+#define KS_L2_Scaron		0xa9
 #define KS_L2_Zacute		0xac
+#define KS_L2_Zcaron		0xae
 #define KS_L2_Zdotabove		0xaf
 #define KS_L2_aogonek		0xb1
+#define KS_L2_ogonek		0xb2
 #define KS_L2_lstroke		0xb3
 #define KS_L2_sacute		0xb6
+#define KS_L2_caron		0xb7
+#define KS_L2_scaron		0xb9
 #define KS_L2_zacute		0xbc
+#define KS_L2_dblacute		0xbd
+#define KS_L2_zcaron		0xbe
 #define KS_L2_zdotabove		0xbf
 #define KS_L2_Cacute		0xc6
+#define KS_L2_Ccaron		0xc8
 #define KS_L2_Eogonek		0xca
+#define KS_L2_Dstroke		0xd0
 #define KS_L2_Nacute		0xd1
 #define KS_L2_cacute		0xe6
+#define KS_L2_ccaron		0xe8
 #define KS_L2_eogonek		0xea
+#define KS_L2_dstroke		0xf0
 #define KS_L2_nacute		0xf1
+#define KS_L2_dotabove		0xff
 
 /*
  * Group Latin-5 (iso8859-9)
@@ -685,6 +697,7 @@
 #define KB_NL			0x1600
 #define KB_TR			0x1700
 #define KB_PL			0x1800
+#define KB_SI			0x1900
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -719,7 +732,8 @@
 	{ KB_BR,	"br" },	\
 	{ KB_NL,	"nl" }, \
 	{ KB_TR,	"tr" }, \
-	{ KB_PL,	"pl" }
+	{ KB_PL,	"pl" }, \
+	{ KB_SI,	"si" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \

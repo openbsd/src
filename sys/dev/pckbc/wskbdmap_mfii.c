@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.22 2003/09/25 23:38:23 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.23 2004/03/16 07:50:26 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -833,6 +833,46 @@ static const keysym_t pckbd_keydesc_hu[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_si[]=
+{
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_1,		KS_exclam,	KS_asciitilde,
+    KC(3),   KS_2,		KS_quotedbl,	KS_L2_caron,
+    KC(4),   KS_3,		KS_numbersign,	KS_asciicircum,
+    KC(5),   KS_4,		KS_dollar,	KS_L2_breve,
+    KC(6),   KS_5,		KS_percent,	KS_degree,
+    KC(7),   KS_6,		KS_ampersand,	KS_L2_ogonek,
+    KC(8),   KS_7,		KS_slash,	KS_grave,
+    KC(9),   KS_8,		KS_parenleft,	KS_L2_dotabove,
+    KC(10),  KS_9,		KS_parenright,	KS_acute,
+    KC(11),  KS_0,		KS_equal,	KS_L2_dblacute,
+    KC(12),  KS_apostrophe,	KS_question,	KS_diaeresis,
+    KC(13),  KS_plus,		KS_asterisk,	KS_cedilla,
+    KC(16),  KS_q,		KS_Q,		KS_backslash,
+    KC(17),  KS_w,		KS_W,		KS_bar,
+    KC(21),  KS_z,		KS_Z,
+    KC(26),  KS_L2_scaron,	KS_L2_Scaron,	KS_division,
+    KC(27),  KS_L2_dstroke,	KS_L2_Dstroke,	KS_multiply,
+    KC(33),  KS_f,		KS_F,		KS_bracketleft,
+    KC(34),  KS_g,		KS_G,		KS_bracketright,
+    KC(37),  KS_k,		KS_K,		KS_L2_lstroke,
+    KC(38),  KS_l,		KS_L,		KS_L2_Lstroke,
+    KC(39),  KS_L2_ccaron,	KS_L2_Ccaron,	
+    KC(40),  KS_L2_cacute,	KS_L2_Cacute,	KS_ssharp,
+    KC(41),  KS_cedilla,	KS_diaeresis,
+    KC(43),  KS_L2_zcaron,	KS_L2_Zcaron,	KS_currency,
+    KC(44),  KS_y,		KS_Y,
+    KC(47),  KS_v,		KS_V,		KS_at,
+    KC(48),  KS_b,		KS_B,		KS_braceleft,
+    KC(49),  KS_n,		KS_N,		KS_braceright,
+    KC(50),  KS_m,		KS_M,		KS_section,
+    KC(51),  KS_comma,		KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_minus,		KS_underscore,
+    KC(86),  KS_less,		KS_greater,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -840,7 +880,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	pckbd_keydesc_us),
 	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
-	KBD_MAP(KB_FR,			KB_US,  pckbd_keydesc_fr),
+	KBD_MAP(KB_FR,			KB_US,	pckbd_keydesc_fr),
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
@@ -853,10 +893,10 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	pckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER, KB_US,	pckbd_keydesc_iopener),
-	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP, pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_BE | KB_SWAPCTRLCAPS, KB_BE, pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	pckbd_keydesc_iopener),
+	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP,	pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR,	pckbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_BE | KB_SWAPCTRLCAPS, KB_BE,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
@@ -877,6 +917,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	pckbd_keydesc_tr_nodead),
 	KBD_MAP(KB_PL,			KB_US,	pckbd_keydesc_pl),
 	KBD_MAP(KB_HU,			KB_US,	pckbd_keydesc_hu),
+	KBD_MAP(KB_SI,			KB_US,	pckbd_keydesc_si),
 	{0, 0, 0, 0}
 };
 
