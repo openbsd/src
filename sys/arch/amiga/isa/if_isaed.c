@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.14 1996/11/28 23:33:09 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.15 1997/02/21 10:52:11 niklas Exp $	*/
 
 /*
  *	Derived from sys/dev/isa/if_ed.c:
@@ -1932,7 +1932,6 @@ ed_rint(sc)
 	u_int16_t len;
 	u_int8_t nlen;
 	u_int8_t next_packet;		/* pointer to next packet */
-	u_int8_t rsr;			/* receiver status */
 	u_int16_t count;		/* bytes in packet (length + 4) */
 	u_int8_t packet_hdr[ED_RING_HDRSZ];
 	int packet_ptr;
@@ -1973,7 +1972,6 @@ loop:
 		else
 			ed_pio_readmem(sc, (long)packet_ptr, packet_hdr,
 			    sizeof(packet_hdr));
-		rsr = packet_hdr[ED_RING_RSR];
 		next_packet = packet_hdr[ED_RING_NEXT_PACKET];
 		len = count = packet_hdr[ED_RING_COUNT] +
 		    256 * packet_hdr[ED_RING_COUNT + 1];

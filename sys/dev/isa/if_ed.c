@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.25 1996/11/29 22:54:58 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.26 1997/02/21 10:52:09 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -1924,7 +1924,6 @@ ed_rint(sc)
 	u_int16_t len;
 	u_int8_t nlen;
 	u_int8_t next_packet;		/* pointer to next packet */
-	u_int8_t rsr;			/* receiver status */
 	u_int16_t count;		/* bytes in packet (length + 4) */
 	u_int8_t packet_hdr[ED_RING_HDRSZ];
 	int packet_ptr;
@@ -1965,7 +1964,6 @@ loop:
 		else
 			ed_pio_readmem(sc, (long)packet_ptr, packet_hdr,
 			    sizeof(packet_hdr));
-		rsr = packet_hdr[ED_RING_RSR];
 		next_packet = packet_hdr[ED_RING_NEXT_PACKET];
 		len = count = packet_hdr[ED_RING_COUNT] +
 		    256 * packet_hdr[ED_RING_COUNT + 1];
