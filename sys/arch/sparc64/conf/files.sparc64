@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.50 2004/09/22 21:48:18 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.51 2004/09/23 18:00:58 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -165,7 +165,8 @@ attach lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 
 device zs {[channel = -1]}
-attach zs at mainbus, sbus
+attach zs at sbus with zs_sbus
+attach zs at fhc with zs_fhc
 file	arch/sparc64/dev/zs.c			zs needs-flag
 file	arch/sparc64/dev/z8530sc.c		zs
 
