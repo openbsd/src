@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 2004/02/25 00:16:41 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2004/02/28 18:12:21 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -277,6 +277,7 @@ void	cc_microset(struct cpu_info *);
 /* identcpu.c */
 
 void	identifycpu(struct cpu_info *);
+int	cpu_amd64speed(int *);
 void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */

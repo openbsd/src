@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.3 2004/02/27 21:21:44 grange Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.4 2004/02/28 18:12:21 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -36,13 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 
 /* sysctl wants this. */
 char cpu_model[48];
+int cpuspeed;
 
 const struct {
 	u_int32_t	bit;
@@ -87,6 +92,13 @@ const struct {
 	{ CPUID_3DNOW2,	"3DNOW2" },
 	{ CPUID_3DNOW,	"3DNOW" }
 };
+
+int
+cpu_amd64speed(int *freq)
+{
+	*freq = cpuspeed;
+	return (0);
+}
 
 void
 identifycpu(struct cpu_info *ci)
@@ -135,6 +147,8 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_tsc_freq != 0)
 		printf(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	cpuspeed = (ci->ci_tsc_freq + 4999) / 1000000;
+	cpu_cpuspeed = cpu_amd64speed;
 
 	printf("\n%s: ", ci->ci_dev->dv_xname);
 
