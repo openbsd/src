@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.14 2001/11/01 12:13:45 art Exp $ */
+/* $OpenBSD: mem.c,v 1.15 2001/11/01 14:32:01 art Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -213,7 +213,7 @@ mmmmap(dev, off, prot)
 	/*
 	 * Allow access only in RAM.
 	 */
-	if ((prot & alpha_pa_access(atop((paddr_t)off))) != prot)
+	if ((prot & alpha_pa_access(atop(off))) != prot)
 		return (-1);
 	return (alpha_btop(off));
 }
