@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.7 2000/06/20 03:24:21 aaron Exp $	*/
+/*	$OpenBSD: an.c,v 1.8 2000/06/20 19:39:36 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -554,7 +554,8 @@ an_cmd(sc, cmd, val)
  * most reliable method I've found to really kick the NIC in the
  * head and force it to reboot correctly.
  */
-void an_reset(sc)
+void
+an_reset(sc)
 	struct an_softc		*sc;
 {
 	if (sc->an_gone)
@@ -577,7 +578,8 @@ void an_reset(sc)
 /*
  * Read an LTV record from the NIC.
  */
-int an_read_record(sc, ltv)
+int
+an_read_record(sc, ltv)
 	struct an_softc		*sc;
 	struct an_ltv_gen	*ltv;
 {
@@ -624,7 +626,8 @@ int an_read_record(sc, ltv)
 /*
  * Same as read, except we inject data instead of reading it.
  */
-int an_write_record(sc, ltv)
+int
+an_write_record(sc, ltv)
 	struct an_softc		*sc;
 	struct an_ltv_gen	*ltv;
 {
@@ -649,7 +652,8 @@ int an_write_record(sc, ltv)
 	return(0);
 }
 
-int an_seek(sc, id, off, chan)
+int
+an_seek(sc, id, off, chan)
 	struct an_softc		*sc;
 	int			id, off, chan;
 {
@@ -685,7 +689,8 @@ int an_seek(sc, id, off, chan)
 	return(0);
 }
 
-int an_read_data(sc, id, off, buf, len)
+int
+an_read_data(sc, id, off, buf, len)
 	struct an_softc		*sc;
 	int			id, off;
 	caddr_t			buf;
@@ -712,7 +717,8 @@ int an_read_data(sc, id, off, buf, len)
 	return(0);
 }
 
-int an_write_data(sc, id, off, buf, len)
+int
+an_write_data(sc, id, off, buf, len)
 	struct an_softc		*sc;
 	int			id, off;
 	caddr_t			buf;
@@ -743,7 +749,8 @@ int an_write_data(sc, id, off, buf, len)
  * Allocate a region of memory inside the NIC and zero
  * it out.
  */
-int an_alloc_nicmem(sc, len, id)
+int
+an_alloc_nicmem(sc, len, id)
 	struct an_softc		*sc;
 	int			len;
 	int			*id;
@@ -837,7 +844,8 @@ an_setdef(sc, areq)
  * so in order to turn on RX monitor mode, we have to turn the MAC
  * off first.
  */
-void an_promisc(sc, promisc)
+void
+an_promisc(sc, promisc)
 	struct an_softc		*sc;
 	int			promisc;
 {
@@ -869,7 +877,8 @@ void an_promisc(sc, promisc)
 	return;
 }
 
-int an_ioctl(ifp, command, data)
+int
+an_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -1100,7 +1109,8 @@ an_init(sc)
 	return;
 }
 
-void an_start(ifp)
+void
+an_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct an_softc		*sc;
@@ -1190,7 +1200,8 @@ void an_start(ifp)
 	return;
 }
 
-void an_stop(sc)
+void
+an_stop(sc)
 	struct an_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -1215,7 +1226,8 @@ void an_stop(sc)
 	return;
 }
 
-void an_watchdog(ifp)
+void
+an_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct an_softc		*sc;
