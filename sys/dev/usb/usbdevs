@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.112 2004/10/17 22:29:48 deraadt Exp $
+$OpenBSD: usbdevs,v 1.113 2004/10/18 12:52:13 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -630,6 +630,7 @@ product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
 /* Creative Labs products */
 product CREATIVE NOMAD_II	0x1002	Nomad II
 product CREATIVE NOMAD_IIMG	0x4004	Nomad II MG
+product CREATIVE NOMAD		0x4106	Nomad
 product CREATIVE2 VOIP_BLASTER	0x0258	Voip Blaster
 
 /* Cambridge Silicon Radio products */
