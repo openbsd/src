@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.4 1997/04/03 05:31:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.5 1998/03/10 20:27:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -62,8 +62,14 @@ tmpfile()
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 
 	fd = mkstemp(buf);
-	if (fd != -1)
+	if (fd != -1) {
+		mode_t u;
+
 		(void)unlink(buf);
+		u = umask(0);
+		(void)umask(u);
+		(void)fchmod(fd, 0666 & ~u);
+	}
 
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 
