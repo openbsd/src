@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.c,v 1.1.1.1 2004/04/21 15:23:56 aoyama Exp $ */
+/* $OpenBSD: timekeeper.c,v 1.2 2004/05/07 14:11:05 aoyama Exp $ */
 /* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -42,22 +42,22 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 
+#include <machine/autoconf.h>
 #include <machine/board.h>	/* machtype value */
 #include <machine/cpu.h>
 
 #include <dev/clock_subr.h>
+
 #include <luna88k/luna88k/clockvar.h>
 #include <luna88k/dev/timekeeper.h>
-#include <machine/autoconf.h>
 
-#define	MK_YEAR0	1970	/* year offset of MK*/
-#define	DS_YEAR0	1990	/* year offset of DS*/
+#define	MK_YEAR0	1970	/* year offset of MK */
+#define	DS_YEAR0	1990	/* year offset of DS */
 
 struct timekeeper_softc {
 	struct device sc_dev;
 	void *sc_clock, *sc_nvram;
 	int sc_nvramsize;
-	u_int8_t sc_image[2040];
 };
 
 /*
@@ -131,7 +131,6 @@ clock_attach(parent, self, aux)
 		break;
 	}
 	clockattach(&sc->sc_dev, clockwork);
-	memcpy(sc->sc_image, sc->sc_nvram, sc->sc_nvramsize);
 }
 
 /*
@@ -160,8 +159,8 @@ mkclock_get(dev, base, dt)
 	splx(s);
 #ifdef TIMEKEEPER_DEBUG
 	printf("get %d/%d/%d %d:%d:%d\n",
-	dt->dt_year, dt->dt_mon, dt->dt_day,
-	dt->dt_hour, dt->dt_min, dt->dt_sec);
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec);
 #endif
 }
 
@@ -191,8 +190,8 @@ mkclock_set(dev, dt)
 	splx(s);
 #ifdef TIMEKEEPER_DEBUG
 	printf("set %d/%d/%d %d:%d:%d\n",
-	dt->dt_year, dt->dt_mon, dt->dt_day,
-	dt->dt_hour, dt->dt_min, dt->dt_sec);
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec);
 #endif
 
 	stamp[0] = 'R'; stamp[1] = 'T'; stamp[2] = 'C'; stamp[3] = '\0';
@@ -255,8 +254,8 @@ dsclock_get(dev, base, dt)
 
 #ifdef TIMEKEEPER_DEBUG
 	printf("get %d/%d/%d %d:%d:%d\n",
-	dt->dt_year, dt->dt_mon, dt->dt_day,
-	dt->dt_hour, dt->dt_min, dt->dt_sec);
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec);
 #endif
 }
 
@@ -297,7 +296,7 @@ dsclock_set(dev, dt)
 
 #ifdef TIMEKEEPER_DEBUG
 	printf("set %d/%d/%d %d:%d:%d\n",
-	dt->dt_year, dt->dt_mon, dt->dt_day,
-	dt->dt_hour, dt->dt_min, dt->dt_sec);
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec);
 #endif
 }
