@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.64 1999/12/27 21:42:40 fgsch Exp $
+#	$OpenBSD: files.isa,v 1.65 2001/01/30 00:00:33 aaron Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -62,9 +62,23 @@ attach	com at commulti with com_commulti
 attach	cy at isa with cy_isa
 file	dev/isa/cy_isa.c		cy_isa
 
-# Generic VGA
+# ISA PC keyboard controller
+attach	pckbc at isa with pckbc_isa
+file	dev/isa/pckbc_isa.c		pckbc	needs-flag
+
+# Generic ISA VGA
 attach	vga at isa with vga_isa
 file	dev/isa/vga_isa.c		vga_isa	needs-flag
+
+# Generic EGA
+device	ega: wsemuldisplaydev, pcdisplayops
+attach	ega at isa
+file	dev/isa/ega.c			ega	needs-flag
+
+# Generic PC graphics adapter (MGA, CGA, ...)
+device	pcdisplay: wsemuldisplaydev, pcdisplayops
+attach	pcdisplay at isa
+file	dev/isa/pcdisplay.c	pcdisplay	needs-flag
 
 #
 # SCSI host adapters

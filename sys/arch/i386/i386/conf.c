@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.62 2000/09/26 14:03:53 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.63 2001/01/30 00:00:31 aaron Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ cdev_decl(spkr);
 cdev_decl(mms);
 #include "lms.h"
 cdev_decl(lms);
-#include "pms.h"
+#include "opms.h"
 cdev_decl(pms);
 #include "cy.h"
 cdev_decl(cy);
@@ -221,6 +221,11 @@ cdev_decl(ucom);
 #error vt and pc are mutually exclusive.  Sorry.
 #endif
 
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
+cdev_decl(wsmux);
 
 struct cdevsw	cdevsw[] =
 {
@@ -240,7 +245,11 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
+#if 0
 	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
+#endif
+	cdev_wsdisplay_init(NWSDISPLAY,	/* 12: frame buffers, etc. */
+	    wsdisplay),
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -269,7 +278,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 34 */
 	cdev_mouse_init(NMMS,mms),	/* 35: Microsoft mouse */
 	cdev_mouse_init(NLMS,lms),	/* 36: Logitech mouse */
-	cdev_mousewr_init(NPMS,pms),    /* 37: Extended PS/2 mouse */
+	cdev_mousewr_init(NOPMS,pms),	/* 37: Extended PS/2 mouse */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
 	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */
@@ -309,6 +318,10 @@ struct cdevsw	cdevsw[] =
 	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
 	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 67: keyboards */
+	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
+	    wsmouse),
+	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

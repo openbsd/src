@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.73 2001/01/24 09:38:00 hugh Exp $
+#	$OpenBSD: files.i386,v 1.74 2001/01/30 00:00:29 aaron Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -126,7 +126,7 @@ include "../../../gnu/arch/i386/fpemul/files.fpemul"
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
-define pckbd { [irq = -1], [port = -1] }
+define pckbcport { [irq = -1], [port = -1] }
 
 # 8250/16[45]50-based "com" ports, optimized for the i386 interrupt system
 device	pccom: tty
@@ -135,12 +135,14 @@ attach	pccom at commulti with pccom_commulti
 file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_cardbus | pccom_puc) needs-flag
 
 # PC console support a la "pccons"
-device	pc: tty, pckbd
+device	pc: tty, pckbcport
 attach	pc at isa
-file	arch/i386/isa/pccons.c		pc needs-flag
+device	pcconskbd
+attach	pcconskbd at pckbc
+file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC console support a la "pcvt"
-device	vt: tty, pckbd
+device	vt: tty, pckbcport
 attach	vt at isa
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
@@ -151,15 +153,19 @@ file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
-device	lms
+device	lms: wsmousedev
 attach	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
-device	mms
+device	mms: wsmousedev
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms needs-flag
-device	pms
-attach	pms at pckbd
-file	arch/i386/isa/pms.c		pms needs-flag
+device	opms
+attach	opms at pckbcport with opms_hack
+attach	opms at pckbc with opms_pckbc
+file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
+
+include	"dev/wscons/files.wscons"
+include	"dev/pckbc/files.pckbc"
 
 device sysbeep
 attach sysbeep at pcppi

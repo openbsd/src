@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.146 2001/01/25 18:49:33 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.147 2001/01/30 00:00:31 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -170,6 +170,37 @@
 #include "npx.h"
 #if NNPX > 0
 extern struct proc *npxproc;
+#endif
+
+#include "vga.h"
+#include "ega.h"
+#include "pcdisplay.h"
+#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#if (NVGA > 0)
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
+#if (NEGA > 0)
+#include <dev/isa/egavar.h>
+#endif
+#if (NPCDISPLAY > 0)
+#include <dev/isa/pcdisplayvar.h>
+#endif
+#endif
+
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
+#endif
+#include "pckbd.h"	/* for pckbc_machdep_cnattach */
+
+#include "pc.h"
+#if (NPC > 0)
+#include <machine/pccons.h>
 #endif
 
 #include "bios.h"
@@ -2067,9 +2098,6 @@ init386(first_avail)
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-			/* XXX here, until we can use bios for printfs */
-
 	/* make gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GICODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
@@ -2120,6 +2148,9 @@ init386(first_avail)
 #if NISA > 0
 	isa_defaultirq();
 #endif
+
+	consinit();	/* XXX SHOULD NOT BE DONE HERE */
+			/* XXX here, until we can use bios for printfs */
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
@@ -2359,8 +2390,51 @@ consinit()
 	if (initted)
 		return;
 	initted = 1;
+#if 0
 	cninit();
+#endif
+
+#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#if (NVGA > 0)
+	if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM, -1, 1))
+		goto dokbd;
+#endif
+#if (NEGA > 0)
+	if (!ega_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
+		goto dokbd;
+#endif
+#if (NPCDISPLAY > 0)
+	if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
+		goto dokbd;
+#endif
+#if (NPC > 0)
+	pccnattach();
+#endif
+	if (0) goto dokbd;	/* XXX stupid gcc */
+dokbd:
+#if (NPCKBC > 0)
+	pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+#endif	/* PC | VT | VGA | PCDISPLAY */
 }
+
+#if (NPCKBC > 0) && (NPCKBD == 0)
+/*
+ * glue code to support old console code with the
+ * mi keyboard controller driver
+ */
+int
+pckbc_machdep_cnattach(kbctag, kbcslot)
+	pckbc_tag_t kbctag;
+	pckbc_slot_t kbcslot;
+{
+#if (NPC > 0) && (NPCCONSKBD > 0)
+	return (pcconskbd_cnattach(kbctag, kbcslot));
+#else
+	return (ENXIO);
+#endif
+}
+#endif
+#endif
 
 #ifdef KGDB
 void
