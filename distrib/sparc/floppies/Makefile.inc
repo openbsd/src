@@ -1,3 +1,5 @@
-#	$Id: Makefile.inc,v 1.2 1996/10/08 19:39:49 deraadt Exp $
+#	$Id: Makefile.inc,v 1.3 1997/02/09 16:49:57 deraadt Exp $
 
 REV=	20
+
+.include <bsd.own.mk>
