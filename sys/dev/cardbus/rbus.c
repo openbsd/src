@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.6 2003/06/26 00:58:38 mickey Exp $ */
+/*	$OpenBSD: rbus.c,v 1.7 2003/10/21 10:07:33 jmc Exp $ */
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -235,7 +235,7 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
   /* sanity check */
   if (parent != NULL) {
     if (start < parent->rb_start || end > parent->rb_end) {
-      /* out of range: [start, size] should be containd in parent space */
+      /* out of range: [start, size] should be contained in parent space */
       return 0;
       /* Should I invoke panic? */
     }
@@ -359,7 +359,7 @@ rbus_new_root_share(bt, ex, start, size, offset)
 {
   /* sanity check */
   if (start < ex->ex_start || start + size > ex->ex_end) {
-    /* out of range: [start, size] should be containd in parent space */
+    /* out of range: [start, size] should be contained in parent space */
     return 0;
     /* Should I invoke panic? */
   }

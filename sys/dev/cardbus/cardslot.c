@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.2 2002/03/14 01:26:53 millert Exp $ */
+/*	$OpenBSD: cardslot.c,v 1.3 2003/10/21 10:07:33 jmc Exp $ */
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ cardslotattach(parent, self, aux)
       }
       CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_CB);
     } else {
-      /* attach deffered */
+      /* attach deferred */
       cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_CB);
     }
   }
@@ -173,7 +173,7 @@ cardslotattach(parent, self, aux)
       pcmcia_card_attach((struct device *)sc->sc_16_softc);
       CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_16);
     } else {
-      /* attach deffered */
+      /* attach deferred */
       cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
     }
   }
@@ -318,7 +318,7 @@ cardslot_event_thread(arg)
     splx(s);
 
     if (IS_CARDSLOT_INSERT_REMOVE_EV(ce->ce_type)) {
-      /* Chattering supression */
+      /* Chattering suppression */
       s = spltty();
       while (1) {
 	struct cardslot_event *ce1, *ce2;
