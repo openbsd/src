@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.35 2001/03/16 08:49:08 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.36 2001/05/11 06:36:59 angelos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -154,7 +154,10 @@ struct ctlname {
 #define	KERN_MSGBUFSIZE		38	/* int: size of message buffer */
 #define KERN_MALLOCSTATS	39	/* node: malloc statistics */
 #define KERN_CPTIME		40	/* array: cp_time */
-#define	KERN_MAXID		41	/* number of valid kern ids */
+#define KERN_NCHSTATS		41	/* struct: vfs cache statistics */
+#define KERN_FORKSTAT		42	/* struct: fork statistics */
+#define KERN_NSELCOLL		43	/* int: select(2) collisions */
+#define	KERN_MAXID		44	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -198,6 +201,9 @@ struct ctlname {
 	{ "msgbufsize", CTLTYPE_INT }, \
 	{ "malloc", CTLTYPE_NODE }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
+	{ "nchstats", CTLTYPE_STRUCT }, \
+	{ "forkstat", CTLTYPE_STRUCT }, \
+	{ "nselcoll", CTLTYPE_INT }, \
 }
 
 /*

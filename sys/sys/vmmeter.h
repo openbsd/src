@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.9 2000/06/18 17:59:55 niklas Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.10 2001/05/11 06:36:59 angelos Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -129,4 +129,26 @@ struct  forkstat
 	int	sizkthread;	/* VM pages affected by kernel threads */
 };
 
+/* These sysctl names are only really used by sysctl(8) */
+#define KERN_FORKSTAT_FORK		1
+#define KERN_FORKSTAT_VFORK		2
+#define KERN_FORKSTAT_RFORK		3
+#define KERN_FORKSTAT_KTHREAD		4
+#define KERN_FORKSTAT_SIZFORK		5
+#define KERN_FORKSTAT_SIZVFORK		6
+#define KERN_FORKSTAT_SIZRFORK		7
+#define KERN_FORKSTAT_SIZKTHREAD	8
+#define KERN_FORKSTAT_MAXID		9
+
+#define CTL_KERN_FORKSTAT_NAMES { \
+	{ 0, 0 }, \
+	{ "forks", CTLTYPE_INT }, \
+	{ "vforks", CTLTYPE_INT }, \
+	{ "rforks", CTLTYPE_INT }, \
+	{ "kthreads", CTLTYPE_INT }, \
+	{ "fork_pages", CTLTYPE_INT }, \
+	{ "vfork_pages", CTLTYPE_INT }, \
+	{ "rfork_pages", CTLTYPE_INT }, \
+	{ "kthread_pages", CTLTYPE_INT }, \
+}
 #endif /* __VMMETER_H__ */

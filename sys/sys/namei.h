@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.6 1998/01/09 20:16:48 csapuntz Exp $	*/
+/*	$OpenBSD: namei.h,v 1.7 2001/05/11 06:36:59 angelos Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -201,4 +201,27 @@ struct	nchstats {
 	long	ncs_pass2;		/* names found with passes == 2 */
 	long	ncs_2passes;		/* number of times we attempt it */
 };
+
+/* These sysctl names are only really used by sysctl(8) */
+#define KERN_NCHSTATS_GOODHITS		1
+#define KERN_NCHSTATS_NEGHITS		2
+#define KERN_NCHSTATS_BADHITS		3
+#define KERN_NCHSTATS_FALSEHITS		4
+#define KERN_NCHSTATS_MISS		5
+#define KERN_NCHSTATS_LONG		6
+#define KERN_NCHSTATS_PASS2		7
+#define KERN_NCHSTATS_2PASSES		8
+#define KERN_NCHSTATS_MAXID		9
+
+#define CTL_KERN_NCHSTATS_NAMES { \
+	{ 0, 0 }, \
+	{ "good_hits", CTLTYPE_INT }, \
+	{ "negative_hits", CTLTYPE_INT }, \
+	{ "bad_hits", CTLTYPE_INT }, \
+	{ "false_hits", CTLTYPE_INT }, \
+	{ "misses", CTLTYPE_INT }, \
+	{ "long_names", CTLTYPE_INT }, \
+	{ "pass2", CTLTYPE_INT }, \
+	{ "2passes", CTLTYPE_INT }, \
+}
 #endif /* !_SYS_NAMEI_H_ */

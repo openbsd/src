@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.39 2001/05/05 20:57:02 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.40 2001/05/11 06:36:59 angelos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -39,14 +39,18 @@
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
 
-#define KERN_MALLOC_BUCKETS   1
-#define KERN_MALLOC_BUCKET    2
-#define KERN_MALLOC_MAXID     3
+#define KERN_MALLOC_BUCKETS	1
+#define KERN_MALLOC_BUCKET	2
+#define KERN_MALLOC_KMEMNAMES	3
+#define KERN_MALLOC_KMEMSTATS	4
+#define KERN_MALLOC_MAXID	5
 
 #define CTL_KERN_MALLOC_NAMES { \
-           {0, 0 }, \
-           { "buckets", CTLTYPE_STRING }, \
-           { "bucket", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ "buckets", CTLTYPE_STRING }, \
+	{ "bucket", CTLTYPE_NODE }, \
+	{ "kmemnames", CTLTYPE_STRING }, \
+	{ "kmemstat", CTLTYPE_NODE }, \
 }
 
 /*
@@ -136,7 +140,6 @@
 #define	M_TDB		75	/* Transforms database */
 #define	M_XDATA		76	/* IPsec data */
 #define M_VFS           77      /* VFS file systems */
-
 #define	M_PAGEDEP	78	/* File page dependencies */
 #define	M_INODEDEP	79	/* Inode dependencies */
 #define	M_NEWBLK	80	/* New block allocation */
@@ -154,23 +157,16 @@
 #define M_VMSWAP	92	/* VM swap structures */
 
 #define	M_RAIDFRAME	97	/* Raidframe data */
-
 #define M_UVMAMAP	98	/* UVM amap and realted */
 #define M_UVMAOBJ	99	/* UVM aobj and realted */
 #define M_POOL		100	/* Pool memory */
-
 #define	M_USB		101	/* USB general */
 #define	M_USBDEV	102	/* USB device driver */
 #define	M_USBHC		103	/* USB host controller */
-
 #define M_PIPE		104	/* Pipe structures */
-
 #define M_MEMDESC	105	/* Memory range */
-
 #define M_DEBUG		106	/* MALLOC_DEBUG structures */
-
 #define M_KNOTE		107	/* kernel event queue */  
-
 #define M_CRYPTO_DATA   108	/* Crypto framework data buffers (keys etc.) */
 #define M_IPSEC_POLICY  109	/* IPsec SPD structures */
 #define M_CREDENTIALS   110	/* IPsec-related credentials and ID info */
@@ -182,7 +178,6 @@
 #define	M_IP6NDP	124	/* IPv6 Neighbour Discovery */
 #define	M_IP6RR		125	/* IPv6 Router Renumbering Prefix */
 #define	M_RR_ADDR	126	/* IPv6 Router Renumbering Ifid */
-
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
 
