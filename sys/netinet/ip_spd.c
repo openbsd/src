@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.37 2001/08/06 18:46:16 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.38 2001/08/15 09:50:12 niklas Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -284,7 +284,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	case AF_INET6:
 		if ((IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr)) ||
 		    (bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
-			sizeof(in6mask128))))
+			sizeof(in6mask128)) == 0))
 			dignore = 1;
 		break;
 #endif /* INET6 */
