@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2001/07/17 23:52:29 mickey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2001/07/18 00:41:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -257,6 +257,10 @@ host:		address		{
 		}
 		|
 		address '/' NUMBER	{
+			if ($3 < 0 || $3 > 32) {
+				warnx("illegal netmask value %d", $3);
+				YYERROR;
+			}
 			$$ = new_addr();
 			$$->addr = $1;
 			$$->mask = ipmask($3);
@@ -276,6 +280,12 @@ address:	STRING {
 			}
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
+			if ($1 < 0 || $3 < 0 || $5 < 0 || $7 < 0 ||
+			    $1 > 255 || $3 > 255 || $5 > 255 || $7 > 255) {
+				warnx("illegal ip address %d.%d.%d.%d",
+				    $1, $3, $5, $7);
+				YYERROR;
+			}
 			$$ = (htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7));
 		}
 		;
@@ -294,7 +304,13 @@ portspec:	PORT PORTUNARY port	{
 		}
 		;
 
-port:		NUMBER			{ $$ = htons($1); }
+port:		NUMBER			{
+			if (0 > $1 || $1 > 65535) {
+				warnx("illegal port value %d", $1);
+				YYERROR;
+			}
+			$$ = htons($1);
+		}
 		| STRING		{
 			struct servent *s = NULL;
 
@@ -344,6 +360,10 @@ flags:					{ $$.b1 = 0; $$.b2 = 0; }
 icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
 		| ICMPTYPE icmptype	{ $$.b1 = $2; $$.b2 = 0; }
 		| ICMPTYPE icmptype CODE NUMBER	{
+			if ($4 < 0 || $4 > 255) {
+				warnx("illegal icmp code %d", $4);
+				YYERROR;
+			}
 			$$.b1 = $2;
 			$$.b2 = $4 + 1;
 		}
@@ -370,7 +390,13 @@ icmptype:	STRING			{
 			}
 			$$ = p->type + 1;
 		}
-		| NUMBER		{ $$ = $1 + 1; }
+		| NUMBER		{
+			if ($1 < 0 || $1 > 255) {
+				warnx("illegal icmp type %d", $1);
+				YYERROR;
+			}
+			$$ = $1 + 1;
+		}
 		;
 
 
@@ -379,7 +405,13 @@ keep:					{ $$ = 0; }
 		;
 
 minttl:					{ $$ = 0; }
-		| MINTTL NUMBER		{ $$ = $2; }
+		| MINTTL NUMBER		{
+			if ($2 < 0 || $2 > 255) {
+				warnx("illegal min-ttl value %d", $2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
 		;
 
 nodf:					{ $$ = 0; }
