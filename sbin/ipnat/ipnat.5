@@ -1,75 +1,148 @@
-.\"      $OpenBSD: ipnat.5,v 1.6 1998/09/15 09:57:29 pattonme Exp $
-.TH IPNAT 5
-.SH NAME
-ipnat \- IP NAT file format
-.SH DESCRIPTION
-The format for files accepted by ipnat is described by the following grammar:
-.LP
-.nf
-ipmap :: = mapit ifname ipmask "->" ipmask [ mapport ] .
+.\"      $OpenBSD: ipnat.5,v 1.7 1999/06/18 01:44:19 aaron Exp $
+.Dd 5 June, 1999
+.Os
+.Dt IPNAT 5
+.Sh NAME
+.Nm ipnat
+.Nd IP NAT file format
+.Sh DESCRIPTION
+Files processed by
+.Xr ipnat 8
+are normal text files containing either a valid NAT rule or a comment on each
+non-blank line. Comment lines begin with a
+.Ql #
+and are ignored, as are blank lines. Valid NAT rules
+are described by the following grammar:
+.Bd -literal -offset indent
+natrule     ::= maprule | rdrrule | bimaprule
 
-mapit ::= "map" | "rdr" .
-ipmask ::= ip "/" bits | ip "/" mask | ip "netmask" mask .
-mapport ::= "portmap" tcpudp portnumber ":" portnumber .
+maprule     ::= "map" ifname source "->" destination [mapoption]
+rdrrule     ::= "rdr" ifname destination port "->" target
+bimaprule   ::= "bimap" ifname source "->" destination
 
-tcpudp ::= "tcp" | "udp" | "tcp/udp" .
-portnumber ::= number { numbers } .
-ifname ::= 'A' - 'Z' { 'A' - 'Z' } numbers .
+source      ::= destination
+destination ::= host "/" mask
+target      ::= host "port" port porttype
 
-numbers ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' .
-.fi
-.PP
-For standard NAT functionality, a rule should start with \fBmap\fP and then
-proceeds to specify the interface for which outgoing packets will have their
-source address rewritten.
-.PP
-Packets which will be rewritten can only be selected by matching the original
-source address.  A netmask must be specified with the IP address.
-.PP
-The address selected for replacing the original is chosen from an IP#/netmask
-pair.  A netmask of all 1's indicating a hostname is valid.  A netmask of
-31 1's (255.255.255.254) is considered invalid as there is no space for
-allocating host IP#'s after consideration for broadcast and network
-addresses.
-.PP
-When remapping TCP and UDP packets, it is also possible to change the source
-port number.  Either TCP or UDP or both can be selected by each rule, with a
-range of port numbers to remap into given as \fBport-number:port-number\fP.
-.SH Examples
-.PP
-To change IP numbers used internally from network 10 into an ISP provided 8 bit
-subnet at 209.1.2.0 through the ppp0 interface, the following would be used:
-.LP
-.nf
+portrange   ::= port ":" port
+portmap     ::= "portmap" porttype portrange
+proxy       ::= "proxy port" port [ "/" protocol ]
+mapoption   ::= proxy | portmap
+
+porttype    ::= "tcp" | "udp" | "tcpudp" | "tcp/udp"
+
+protocol    ::= <name from /etc/protocols> | <# from /etc/protocols>
+port        ::= <unsigned 16 bit value> | <name from /etc/services>
+host        ::= 'any' | <IP addr> | <interface name> | <host name>
+mask        ::= <non-numeric> | <IP addr> | <hex value> | <bit count>
+ifname      ::= <interface name>
+.Ed
+.Pp
+Elements in a rule are usually separated by whitespace (blanks or tabs).
+In the case of the 
+.Ql \&/
+in
+.Fa host
+rule or the 
+.Ql \&:
+in the
+.Fa portrange
+rule, there must be no whitespace before or after it. In the case
+of the 
+.Ql \&/
+in the
+.Fa proxy
+rule there must be whitespace before but no whitespace after.
+.Pp
+In the
+.Fa host
+and 
+.Fa mask
+rules, the alternatives are evaluated in the order given.
+.Pp
+For the
+.Fa mask
+rule, if the element begins with a non-digit the mask is taken to be all zeros.
+A
+.Ql \&.
+in the element causes the element to be interpreted as a numeric IP
+address of the form 1.2.3.4. An 
+.Ql x
+in the element causes the element to be interpreted as a 32 bit hex value. If all
+else fails the element is interpreted as the number of sequential 1's to place
+as the most significant bits in the 32 bit network mask. 
+Whatever the interpretation method, a result network mask of all 1's, indicating a
+hostname, is valid.  A network mask of 31 1's (255.255.255.254)
+is considered invalid as there is no space for allocating host
+.Tn IP Ns #\&'s
+after consideration for broadcast and network addresses.
+.Sh EXAMPLES
+To change
+.Tn IP
+numbers used internally from network 10 into an ISP provided 8-bit
+subnet at 209.1.2.0 through the ppp0 interface,
+the following would be used:
+.Bd -literal -offset indent
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24
-.fi
-.PP
-The obvious problem here is we're trying to squeeze over 16,000,000 IP
-addresses into a 254 address space.  To increase the scope, remapping for TCP
-and/or UDP, port remapping can be used;
-.LP
-.nf
+.Ed
+.Pp
+The obvious problem here is we're trying to squeeze over 16,000,000
+.Tn IP
+addresses into a 254 address space. To increase the scope, remapping for
+.Tn TCP
+and/or
+.Tn UDP ,
+port remapping can be used:
+.Bd -literal -offset indent
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
-.fi
-.PP
-which falls only 527,566 `addresses' short of the space available in network
+.Ed
+.Pp
+which falls only 527,566
+.Sq addresses
+short of the space available in network
 10.  If we were to combine these rules, they would need to be specified as
 follows:
-.LP
-.nf
+.Bd -literal -offset indent
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24
-.fi
-.PP
-so that all TCP/UDP packets were port mapped and only other protocols, such as
-ICMP, only have their IP# changed.
-.SH FILES
-/etc/services
-.br
-/etc/hosts
-.br
-/dev/ipnat
-.SH SEE ALSO
-ipf(1), ipftest(1), ipnat(1), ipf(4), ipl(4), ipnat(4), ipf(5), ipfstat(8), ipmon(8)
-.br
+.Ed
+.Pp
+so that all
+.Tn TCP Ns / Tn UDP
+packets were port mapped and other protocols, such as
+.Tn ICMP ,
+have only their
+.Tn IP Ns #
+changed.
+.Pp
+Further examples can be found in the file
+.Pa \&/use\&/share\&/ipf\&/nat\&.1
+.Sh FILES
+.Bl -tag -width "/usr/share/ipf/nat.1" -compact
+.It Pa /dev/ipnat
+.It Pa /etc/services
+.It Pa /etc/protocols
+.It Pa /etc/hosts
+.It Pa /usr/share/ipf/nat.1
+example rules
+.It Pa /usr/share/ipf/nat.2
+system requirements for use of NAT
+.It Pa /etc/ipnat.rules
+actual rule list
+.El
+.Sh SEE ALSO
+.Xr ipf 1 ,
+.Xr ipftest 1 ,
+.Xr ipf 4 ,
+.Xr ipl 4 ,
+.Xr ipnat 4 ,
+.Xr hosts 5 ,
+.Xr ipf 5 ,
+.Xr services 5
+.Xr protocols 5
+.Xr ipfstat 8 ,
+.Xr ipmon 8 ,
+.Xr ipnat 8
+.Pp
 http://coombs.anu.edu.au/ipfilter/
+
