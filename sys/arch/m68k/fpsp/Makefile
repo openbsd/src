@@ -336,6 +336,8 @@ clean cleandir:
 
 _SUBDIRUSE:
 
+all:
+
 depend:
 
 install:
