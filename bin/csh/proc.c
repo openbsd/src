@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.9 1998/05/17 19:13:44 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.10 1998/12/21 05:44:32 deraadt Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.9 1998/05/17 19:13:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.10 1998/12/21 05:44:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1021,8 +1021,10 @@ dokill(v, t)
 	    }
 
 	    for (signum = 1; signum < NSIG; signum++)
-		if (!strcasecmp(sys_signame[signum], name))
-		    break;
+		if (!strcasecmp(sys_signame[signum], name) ||
+		    (!strncasecmp("SIG", name, 3) &&    /* skip "SIG" prefix */
+		     !strcasecmp(sys_signame[signum], name + 3)))
+			break;
 
 	    if (signum == NSIG) {
 		if (name[0] == '0')
