@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.28 1998/02/23 20:15:54 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.29 1998/03/01 00:38:05 niklas Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -441,7 +441,7 @@ loop:
 		    p->p_pid, p->p_comm, cnt.v_free_count);
 #endif
 	(void)splhigh();
-	VM_WAIT;
+	vm_wait("fLowmem");
 	(void)spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -556,79 +556,4 @@ swapout(p)
 	splx(s);
 	p->p_swtime = 0;
 	++cnt.v_swpout;
-}
-
-/*
- * The rest of these routines fake thread handling
- */
-
-void
-assert_wait(event, ruptible)
-	void *event;
-	boolean_t ruptible;
-{
-#ifdef lint
-	ruptible++;
-#endif
-	curproc->p_thread = event;
-}
-
-void
-thread_block()
-{
-	int s = splhigh();
-
-	if (curproc->p_thread)
-		tsleep(curproc->p_thread, PVM, "thrd_block", 0);
-	splx(s);
-}
-
-void
-thread_sleep_msg(event, lock, ruptible, msg)
-	void *event;
-	simple_lock_t lock;
-	boolean_t ruptible;
-	char *msg;
-{
-	int s = splhigh();
-
-#ifdef lint
-	ruptible++;
-#endif
-	curproc->p_thread = event;
-	simple_unlock(lock);
-	if (curproc->p_thread)
-		tsleep(event, PVM, msg, 0);
-	splx(s);
-}
-
-/*
- * DEBUG stuff
- */
-
-int indent = 0;
-
-#include <machine/stdarg.h>		/* see subr_prf.c */
-
-/*ARGSUSED2*/
-void
-#if __STDC__
-iprintf(int (*pr)(const char *, ...), const char *fmt, ...)
-#else
-iprintf(pr, fmt /* , va_alist */)
-	void (*pr)();
-	char *fmt;
-	/* va_dcl */
-#endif
-{
-	register int i;
-	va_list ap;
-
-	for (i = indent; i >= 8; i -= 8)
-		(*pr)("\t");
-	while (--i >= 0)
-		(*pr)(" ");
-	va_start(ap, fmt);
-	(*pr)("%:", fmt, ap);
-	va_end(ap);
 }

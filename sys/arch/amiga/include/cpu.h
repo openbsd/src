@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 1997/09/19 17:16:18 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 1998/03/01 00:37:22 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.36 1996/09/11 00:11:42 thorpej Exp $	*/
 
 /*
@@ -251,6 +251,7 @@ void	setconf __P((void));
  * Prototypes from pmap.c:
  */
 void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif /* _KERNEL */
 

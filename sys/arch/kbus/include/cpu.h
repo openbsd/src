@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpu.h,v 1.2 1998/03/01 00:37:34 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.12 1995/06/28 02:55:56 cgd Exp $	*/
 
 /*-
@@ -238,6 +239,9 @@ void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
+/* pmap.c */
+void	pmap_bootstrap __P((vm_offset_t));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 /* vm_machdep.c */
 void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 /* iommu.c */

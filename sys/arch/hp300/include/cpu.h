@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 1997/07/06 08:02:11 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 1998/03/01 00:37:31 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.25 1997/04/27 20:37:07 thorpej Exp $	*/
 
 /*
@@ -180,6 +180,9 @@ int	badbaddr __P((caddr_t));
 void	regdump __P((struct frame *, int));
 void	dumpconf __P((void));
 
+/* pmap.c functions */
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+
 /* sys_machdep.c functions */
 int	cachectl __P((int, caddr_t, int));
 
@@ -191,7 +194,7 @@ int	kvtop __P((caddr_t));
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()
 
-#endif
+#endif /* _KERNEL */
 
 /* physical memory sections */
 #define	ROMBASE		(0x00000000)

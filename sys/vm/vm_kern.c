@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_kern.c,v 1.9 1998/02/23 20:22:17 niklas Exp $	*/
+/*	$OpenBSD: vm_kern.c,v 1.10 1998/03/01 00:38:08 niklas Exp $	*/
 /*	$NetBSD: vm_kern.c,v 1.17.6.1 1996/06/13 17:21:28 cgd Exp $	*/
 
 /* 
@@ -177,7 +177,7 @@ kmem_alloc(map, size)
 		while ((mem = vm_page_alloc(kernel_object, offset + i)) ==
 		    NULL) {
 			vm_object_unlock(kernel_object);
-			VM_WAIT;
+			vm_wait("fKmwire");
 			vm_object_lock(kernel_object);
 		}
 		vm_page_zero_fill(mem);
@@ -241,7 +241,7 @@ kmem_suballoc(parent, min, max, size, pageable)
 
 	size = round_page(size);
 
-	*min = (vm_offset_t) vm_map_min(parent);
+	*min = (vm_offset_t)vm_map_min(parent);
 	ret = vm_map_find(parent, NULL, (vm_offset_t)0, min, size, TRUE);
 	if (ret != KERN_SUCCESS) {
 		printf("kmem_suballoc: bad status return of %d.\n", ret);
@@ -417,7 +417,7 @@ kmem_alloc_wait(map, size)
 		}
 		assert_wait(map, TRUE);
 		vm_map_unlock(map);
-		thread_block();
+		thread_block("mKmwait");
 	}
 	vm_map_insert(map, NULL, (vm_offset_t)0, addr, addr + size);
 	vm_map_unlock(map);

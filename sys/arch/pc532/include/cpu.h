@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpu.h,v 1.2 1998/03/01 00:37:46 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.12 1995/06/28 02:55:56 cgd Exp $	*/
 
 /*-
@@ -115,5 +116,15 @@ int	want_resched;	/* resched() was called */
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#ifdef _KERNEL
+
+/*
+ * Prototypes from pmap.c:
+ */
+void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+
+#endif /* _KERNEL */
 
 #endif

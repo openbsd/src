@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.2 1997/01/24 19:56:41 niklas Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.3 1998/03/01 00:37:20 niklas Exp $	*/
 /*	$NetBSD: pmap.old.c,v 1.14 1996/11/13 21:13:10 cgd Exp $	*/
 
 /* 
@@ -542,6 +542,7 @@ pmap_init(phys_start, phys_end)
 	pmap_initialized = TRUE;
 }
 
+#if 0
 /*
  *	Used to map a range of physical addresses into kernel
  *	virtual address space.
@@ -567,6 +568,7 @@ pmap_map(virt, start, end, prot)
 	}
 	return(virt);
 }
+#endif
 
 /*
  *	Create and return a physical map.

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.6 1997/09/12 09:21:22 maja Exp $     */
+/*      $OpenBSD: pmap.h,v 1.7 1998/03/01 00:37:49 niklas Exp $     */
 /*      $NetBSD: pmap.h,v 1.19 1997/07/06 22:38:29 ragge Exp $     */
 
 /* 
@@ -121,6 +121,7 @@ extern	struct pmap kernel_pmap_store;
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 void	pmap_expandp0 __P((struct pmap *, int));
 void	pmap_expandp1 __P((struct pmap *));
 #endif PMAP_H

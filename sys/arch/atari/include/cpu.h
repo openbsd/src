@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpu.h,v 1.4 1998/03/01 00:37:29 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.10 1996/01/19 13:46:56 leo Exp $	*/
 
 /*
@@ -199,5 +200,15 @@ extern int machineid, mmutype, cpu040, fputype;
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#ifdef _KERNEL
+
+/*
+ * Prototypes from pmap.c:
+ */
+void	pmap_bootstrap __P((vm_offset_t));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+
+#endif /* _KERNEL */
 
 #endif /* !_MACHINE_CPU_H_ */

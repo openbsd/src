@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.30 1998/02/20 13:41:33 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.31 1998/03/01 00:37:54 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -196,6 +196,9 @@ main(framep)
 
 	vm_mem_init();
 	kmeminit();
+#if defined(MACHINE_NEW_NONCONTIG)
+	vm_page_physrehash();
+#endif
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty's */
 	cpu_startup();

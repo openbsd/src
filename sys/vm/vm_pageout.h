@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_pageout.h,v 1.5 1997/11/06 05:59:37 csapuntz Exp $	*/
-/*	$NetBSD: vm_pageout.h,v 1.11 1995/03/26 20:39:14 jtc Exp $	*/
+/*	$OpenBSD: vm_pageout.h,v 1.6 1998/03/01 00:38:22 niklas Exp $	*/
+/*	$NetBSD: vm_pageout.h,v 1.14 1998/02/10 14:09:04 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -76,6 +76,9 @@
 extern int	vm_pages_needed;	/* should be some "event" structure */
 simple_lock_data_t	vm_pages_needed_lock;
 
+struct proc	*pageout_daemon;	/* watch for this in vm_fault()!! */
+u_int32_t	vm_pages_reserved;	/* i.e., reserved for pageout_daemon */
+
 
 /*
  *	Exported routines.
@@ -85,15 +88,12 @@ simple_lock_data_t	vm_pages_needed_lock;
  *	Signal pageout-daemon and wait for it.
  */
 
-#define	VM_WAIT		{ \
-			simple_lock(&vm_pages_needed_lock); \
-			thread_wakeup(&vm_pages_needed); \
-			thread_sleep(&cnt.v_free_count, \
-				&vm_pages_needed_lock, FALSE); \
-			}
+#if !defined(UVM)
 #ifdef _KERNEL
+void		 vm_wait __P((char *));
 void		 vm_pageout __P((void));
 void		 vm_pageout_scan __P((void));
 void		 vm_pageout_page __P((vm_page_t, vm_object_t));
 void		 vm_pageout_cluster __P((vm_page_t, vm_object_t));
+#endif
 #endif

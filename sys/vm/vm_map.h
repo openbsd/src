@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.7 1997/11/11 20:16:41 millert Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.8 1998/03/01 00:38:12 niklas Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -72,6 +72,10 @@
 #ifndef	_VM_MAP_
 #define	_VM_MAP_
 
+#ifdef UVM
+#include <uvm/uvm_anon.h>
+#endif
+
 /*
  *	Types defined:
  *
@@ -84,12 +88,17 @@
  *	Objects which live in maps may be either VM objects, or
  *	another map (called a "sharing map") which denotes read-write
  *	sharing with other maps.
+ *
+ * XXXCDC: private pager data goes here now
  */
 
 union vm_map_object {
 	struct vm_object	*vm_object;	/* object object */
 	struct vm_map		*share_map;	/* share map */
 	struct vm_map		*sub_map;	/* belongs to another map */
+#ifdef UVM
+	struct uvm_object	*uvm_obj;	/* UVM OBJECT */
+#endif /* UVM */
 };
 
 /*
@@ -105,16 +114,30 @@ struct vm_map_entry {
 	vm_offset_t		end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
 	vm_offset_t		offset;		/* offset into object */
+#if defined(UVM)
+	/* etype is a bitmap that replaces the following 4 items */
+	int			etype;		/* entry type */
+#else
 	boolean_t		is_a_map;	/* Is "object" a map? */
 	boolean_t		is_sub_map;	/* Is "object" a submap? */
 		/* Only in sharing maps: */
 	boolean_t		copy_on_write;	/* is data copy-on-write */
 	boolean_t		needs_copy;	/* does object need to be copied */
+#endif
 		/* Only in task maps: */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
 	int			wired_count;	/* can be paged if = 0 */
+#ifdef UVM
+	struct vm_aref		aref;		/* anonymous overlay */
+	int			advice;		/* madvise advice */
+#define uvm_map_entry_stop_copy flags
+	u_int8_t		flags;		/* flags */
+
+#define UVM_MAP_STATIC		0x01		/* static map entry */
+
+#endif /* UVM */
 };
 
 /*
@@ -198,6 +221,22 @@ typedef struct {
 	(map)->lk_flags &= ~LK_CANRECURSE; \
 	simple_unlock(&(map)->lk_interlock); \
 }
+#if defined(UVM) && defined(_KERNEL)
+/* XXX: clean up later */
+static boolean_t vm_map_lock_try __P((vm_map_t));
+
+static __inline boolean_t vm_map_lock_try(map)
+
+vm_map_t map;
+
+{
+  if (lockmgr(&(map)->lock, LK_EXCLUSIVE|LK_NOWAIT, (void *)0, curproc) != 0)
+    return(FALSE);
+  map->timestamp++;
+  return(TRUE);
+}
+#endif
+
 /*
  *	Functions implemented as macros
  */

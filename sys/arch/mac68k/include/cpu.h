@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.17 1997/11/30 06:12:24 gene Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.18 1998/03/01 00:37:36 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -198,6 +198,9 @@ void	DCFL __P((vm_offset_t));
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	proc_trampoline __P((void));
+
+/* pmap.c */
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 /* trap.c */
 void	child_return __P((struct proc *, struct frame));

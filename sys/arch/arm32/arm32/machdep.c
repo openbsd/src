@@ -1,4 +1,5 @@
-/* $NetBSD: machdep.c,v 1.6 1996/03/13 21:32:39 mark Exp $ */
+/*	$OpenBSD: machdep.c,v 1.3 1998/03/01 00:37:27 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1996/03/13 21:32:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -215,7 +216,6 @@ void map_pagetable	__P((vm_offset_t, vm_offset_t, vm_offset_t));
 void map_entry		__P((vm_offset_t, vm_offset_t va, vm_offset_t));
 void map_entry_ro	__P((vm_offset_t, vm_offset_t, vm_offset_t));
 
-void pmap_bootstrap		__P((vm_offset_t /*kernel_l1pt*/));
 void process_kernel_args	__P((void));
 u_long strtoul			__P((const char */*s*/, char **/*ptr*/, int /*base*/));
 caddr_t allocsys		__P((caddr_t /*v*/));

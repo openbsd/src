@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_kern.h,v 1.3 1998/03/01 00:38:09 niklas Exp $	*/
-/*	$NetBSD: vm_kern.h,v 1.11 1998/02/10 14:08:58 mrg Exp $	*/
+/*	$OpenBSD: kern_fthread.c,v 1.1 1998/03/01 00:37:56 niklas Exp $	*/
+/*	$NetBSD: kern_fthread.c,v 1.3 1998/02/07 16:23:35 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_kern.h	8.1 (Berkeley) 6/11/93
+ *	@(#)kern_lock.c	8.1 (Berkeley) 6/11/93
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -65,20 +65,103 @@
  * rights to redistribute these changes.
  */
 
-/* Kernel memory management definitions. */
+/*
+ *	Locking primitives implementation
+ */
 
-#if defined(UVM)
-extern vm_map_t	buffer_map;
-extern vm_map_t	exec_map;
-extern vm_map_t	kernel_map;
-extern vm_map_t	kmem_map;
-extern vm_map_t	mb_map;
-extern vm_map_t	phys_map;
-#else
-vm_map_t	buffer_map;
-vm_map_t	exec_map;
-vm_map_t	kernel_map;
-vm_map_t	kmem_map;
-vm_map_t	mb_map;
-vm_map_t	phys_map;
+#include <sys/param.h>
+#include <sys/systm.h>
+
+#include <vm/vm.h>
+
+/*
+ * these routines fake thread handling
+ */
+
+#if !defined(UVM)
+
+void
+assert_wait(event, ruptible)
+	void *event;
+	boolean_t ruptible;
+{
+#ifdef lint
+	ruptible++;
 #endif
+	curproc->p_thread = event;
+}
+
+void
+thread_block(msg)
+char *msg;
+{
+	int s = splhigh();
+
+	if (curproc->p_thread)
+		tsleep(curproc->p_thread, PVM, msg, 0);
+	splx(s);
+}
+
+#endif
+
+void
+thread_sleep_msg(event, lock, ruptible, msg, timo)
+	void *event;
+	simple_lock_t lock;
+	boolean_t ruptible;
+	char *msg;
+	int timo;
+{
+	int s = splhigh();
+
+#ifdef lint
+	ruptible++;
+#endif
+	curproc->p_thread = event;
+	simple_unlock(lock);
+	if (curproc->p_thread)
+		tsleep(event, PVM, msg, timo);
+	splx(s);
+}
+
+/*
+ * DEBUG stuff
+ */
+
+int indent = 0;
+
+/*
+ * Note that stdarg.h and the ANSI style va_start macro is used for both
+ * ANSI and traditional C compilers.  (Same as subr_prf.c does.)
+ * XXX: This requires that stdarg.h defines: va_alist, va_dcl
+ */
+#include <machine/stdarg.h>
+
+/*ARGSUSED2*/
+void
+#ifdef	__STDC__
+iprintf(int (*pr)(const char *, ...), const char *fmt, ...)
+#else
+iprintf(pr, fmt, va_alist)
+	void (*pr)();
+	const char *fmt;
+	va_dcl
+#endif
+{
+	register int i;
+	va_list ap;
+
+	va_start(ap, fmt);
+	for (i = indent; i >= 8; i -= 8)
+		(*pr)("\t");
+	while (--i >= 0)
+		(*pr)(" ");
+#ifdef __powerpc__				/* XXX */
+	if (pr != printf)			/* XXX */
+		panic("iprintf");		/* XXX */
+	vprintf(fmt, ap);			/* XXX */
+#else						/* XXX */
+	(*pr)("%:", fmt, ap);			/* XXX */
+#endif /* __powerpc__ */			/* XXX */
+	va_end(ap);
+}

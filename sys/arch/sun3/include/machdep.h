@@ -1,4 +1,5 @@
-/*	$OpenBSD: machdep.h,v 1.7 1997/04/05 20:22:02 kstailey Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.8 1998/03/01 00:37:48 niklas Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -124,6 +125,7 @@ void	proc_do_uret __P((void));
 void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((void));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 int 	pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
 void	pmap_get_ksegmap __P((u_char *));
 void	pmap_get_pagemap __P((int *pt, int off));

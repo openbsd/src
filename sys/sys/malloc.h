@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.13 1997/11/06 05:59:08 csapuntz Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.14 1998/03/01 00:37:56 niklas Exp $	*/
 /*	$NetBSD: malloc.h,v 1.23 1996/04/05 04:52:52 mhitch Exp $	*/
 
 /*
@@ -144,6 +144,8 @@
 #define	M_MKDIR		89	/* New directory */
 #define	M_DIRREM	90	/* Directory entry deleted */
 
+#define M_VMPBUCKET	91	/* VM page buckets */
+
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
 
@@ -240,6 +242,7 @@
  	"diradd",	/* 88 M_DIRADD */ \
  	"mkdir",	/* 89 M_MKDIR */ \
  	"dirrem",	/* 90 M_DIRREM */ \
+ 	"VM page bucket", /* 91 M_VMPBUCKET */ \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
@@ -247,7 +250,6 @@
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
-	NULL,                         \
 	"temp",		/* 127 M_TEMP */ \
 }
 

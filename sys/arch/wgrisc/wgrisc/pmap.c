@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.2 1998/03/01 00:37:51 niklas Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $
+ *      $Id: pmap.c,v 1.2 1998/03/01 00:37:51 niklas Exp $
  */
 
 /*
@@ -474,8 +474,9 @@ pmap_pinit(pmap)
 		do {
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
-				VM_WAIT;	/* XXX What else can we do */
-			}			/* XXX Deadlock situations? */
+				/* XXX What else can we do?  Deadlocks?  */
+				vm_wait("ppinit");
+			}
 		} while (mem == NULL);
 
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
@@ -1216,8 +1217,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 		do {
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
-				VM_WAIT;	/* XXX What else can we do */
-			}			/* XXX Deadlock situations? */
+				/* XXX What else can we do?  Deadlocks?  */
+				vm_wait("penter");
+			}
 		} while (mem == NULL);
 
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));

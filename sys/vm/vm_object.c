@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.20 1997/11/06 05:59:35 csapuntz Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.21 1998/03/01 00:38:15 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.46 1997/03/30 20:56:12 mycroft Exp $	*/
 
 /*-
@@ -391,7 +391,7 @@ vm_object_terminate(object)
 	 * Wait until the pageout daemon is through with the object or a
 	 * potential collapse operation is finished.
 	 */
-	vm_object_paging_wait(object);
+	vm_object_paging_wait(object,"vmterm");
 
 	/*
 	 * Detach the object from its shadow if we are the shadow's
@@ -507,7 +507,7 @@ again:
 	/*
 	 * Wait until the pageout daemon is through with the object.
 	 */
-	vm_object_paging_wait(object);
+	vm_object_paging_wait(object,"vclean");
 
 	/*
 	 * Loop through the object page list cleaning as necessary.
@@ -1201,7 +1201,7 @@ vm_object_overlay(object)
 
 	vm_object_unlock(object);
 retry:
-	vm_object_paging_wait(backing_object);
+	vm_object_paging_wait(backing_object,"vpagew");
 
 	/*
 	 * While we were asleep, the parent object might have been deleted.  If
@@ -1318,7 +1318,7 @@ retry:
 			    paged_offset);
 			if (backing_page == NULL) {
 				vm_object_unlock(backing_object);
-				VM_WAIT;
+				vm_wait("fVmcollapse");
 				vm_object_lock(backing_object);
 				goto retry;
 			}

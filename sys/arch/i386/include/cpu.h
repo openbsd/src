@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 1998/02/17 23:49:31 matthieu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 1998/03/01 00:37:33 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -208,6 +208,10 @@ int	i386_set_ldt __P((struct proc *, char *, register_t *));
 /* isa_machdep.c */
 void	isa_defaultirq __P((void));
 int	isa_nmi __P((void));
+
+/* pmap.c */
+void	pmap_bootstrap __P((vm_offset_t));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 /* vm_machdep.c */
 int	kvtop __P((caddr_t));
