@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.5 1999/12/07 22:01:32 jason Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.16.6.1 1999/04/23 15:40:13 perry Exp $	*/
 
 /*-
@@ -78,24 +78,12 @@
 #include <sys/socket.h>
 #include <sys/errno.h>
 
-#ifdef __NetBSD__
-#include <machine/bus.h>
-#endif
-
 #include <net/if.h>
 #include <net/if_media.h>
-
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-
-#ifdef __NetBSD__
-#include <dev/i2c/i2c_bus.h>
-#endif
 
 #include <dev/mii/tlphyreg.h>
 #include <dev/mii/tlphyvar.h>
@@ -109,18 +97,12 @@ struct tlphy_softc {
 	int sc_need_acomp;
 };
 
-#ifdef __NetBSD__
-int	tlphymatch __P((struct device *, struct cfdata *, void *));
-#else
 int	tlphymatch __P((struct device *, void *, void *));
-#endif
 void	tlphyattach __P((struct device *, struct device *, void *));
 
-#ifdef __OpenBSD__
 struct cfdriver tlphy_cd = {
 	NULL, "tlphy", DV_DULL
 };
-#endif
 
 struct cfattach tlphy_ca = {
 	sizeof(struct tlphy_softc), tlphymatch, tlphyattach
@@ -134,17 +116,13 @@ void	tlphy_status __P((struct tlphy_softc *));
 int
 tlphymatch(parent, match, aux)
 	struct device *parent;
-#ifdef __NetBSD__
-	struct cfdata *match;
-#else
 	void *match;
-#endif
 	void *aux;
 {
 	struct mii_attach_args *ma = aux;       
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_TI_TLAN10T)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxTI &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxTI_TLAN10T)
 		return (10);
 
 	return (0);
@@ -160,7 +138,7 @@ tlphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_TI_TLAN10T,
+	printf(": %s, rev. %d\n", MII_STR_xxTI_TLAN10T,
 	    MII_REV(ma->mii_id2));
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
@@ -184,29 +162,10 @@ tlphyattach(parent, self, aux)
 	else
 		sc->sc_mii.mii_capabilities = 0;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->sc_mii.mii_inst),
-	    BMCR_ISO);
-
-	if ((sc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
-		    sc->sc_mii.mii_inst), BMCR_LOOP);
-
-	if (sc->sc_tlphycap) {
-		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
-			    sc->sc_mii.mii_inst), 0);
-		} else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5) {
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0,
-			    sc->sc_mii.mii_inst), 0);
-		}
-	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
 		mii_add_media(mii, sc->sc_mii.mii_capabilities,
 		    sc->sc_mii.mii_inst);
 	}
-#undef ADD
 }
 
 int
@@ -266,9 +225,7 @@ tlphy_service(self, mii, cmd)
 		default:
 			PHY_WRITE(&sc->sc_mii, MII_TLPHY_CTRL, 0);
 			delay(100000);
-			PHY_WRITE(&sc->sc_mii, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
+			mii_phy_setmedia(&sc->sc_mii);
 		}
 		break;
 
@@ -314,6 +271,10 @@ tlphy_service(self, mii, cmd)
 		if (tlphy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.5 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: mii.c,v 1.6 1999/12/07 22:01:31 jason Exp $	*/
 /*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -56,16 +56,10 @@
 #include <dev/mii/miivar.h>
 
 int	mii_print __P((void *, const char *));
-#ifdef __NetBSD__
-int	mii_submatch __P((struct device *, struct cfdata *, void *));
-#else
 int	mii_submatch __P((struct device *, void *, void *));
-#endif
 
-#ifdef __OpenBSD__
 #define MIICF_PHY		0	/* cf_loc index */
 #define MIICF_PHY_DEFAULT	(-1)	/* default phy device */
-#endif
 
 /*
  * Helper function used by network interface drivers, attaches PHYs
@@ -139,21 +133,12 @@ mii_print(aux, pnp)
 	return (UNCONF);
 }
 
-#ifdef __NetBSD__
-int
-mii_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-#else
 int
 mii_submatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-#endif
 	struct mii_attach_args *ma = aux;
 
 	if (ma->mii_phyno != cf->cf_loc[MIICF_PHY] &&
@@ -161,58 +146,6 @@ mii_submatch(parent, match, aux)
 		return (0);
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
-}
-
-/*
- * Given an ifmedia word, return the corresponding ANAR value.
- */
-int
-mii_anar(media)
-	int media;
-{
-	int rv;
-
-	switch (media & (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
-	case IFM_ETHER|IFM_10_T:
-		rv = ANAR_10|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_10_T|IFM_FDX:
-		rv = ANAR_10_FD|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_100_TX:
-		rv = ANAR_TX|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_100_TX|IFM_FDX:
-		rv = ANAR_TX_FD|ANAR_CSMA;
-		break;
-	case IFM_ETHER|IFM_100_T4:
-		rv = ANAR_T4|ANAR_CSMA;
-		break;
-	default:
-		rv = 0;
-		break;
-	}
-
-	return (rv);
-}
-
-/*
- * Given a BMCR value, return the corresponding ifmedia word.
- */
-int
-mii_media_from_bmcr(bmcr)
-	int bmcr;
-{
-	int rv = IFM_ETHER;
-
-	if (bmcr & BMCR_S100)
-		rv |= IFM_100_TX;
-	else
-		rv |= IFM_10_T;
-	if (bmcr & BMCR_FDX)
-		rv |= IFM_FDX;
-
-	return (rv);
 }
 
 /*
@@ -269,40 +202,15 @@ mii_pollstat(mii)
 }
 
 /*
- * Initialize generic PHY media based on BMSR, called when a PHY is
- * attached.  We expect to be set up to print a comma-separated list
- * of media names.  Does not print a newline.
+ * Inform the PHYs that the interface is down.
  */
 void
-mii_add_media(mii, bmsr, instance)
+mii_down(mii)
 	struct mii_data *mii;
-	int bmsr, instance;
-{
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	if (bmsr & BMSR_10THDX)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, instance), 0);
-	if (bmsr & BMSR_10TFDX)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, instance),
-		    BMCR_FDX);
-	if (bmsr & BMSR_100TXHDX)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, instance),
-		    BMCR_S100);
-	if (bmsr & BMSR_100TXFDX)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, instance),
-		    BMCR_S100|BMCR_FDX);
-	if (bmsr & BMSR_100T4) {
-		/*
-		 * XXX How do you enable 100baseT4?  I assume we set
-		 * XXX BMCR_S100 and then assume the PHYs will take
-		 * XXX watever action is necessary to switch themselves
-		 * XXX into T4 mode.
-		 */
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, instance),
-		    BMCR_S100);
-	}
-	if (bmsr & BMSR_ANEG)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, instance),
-		    BMCR_AUTOEN);
-#undef ADD
-}
+{ 
+	struct mii_softc *child;
+ 
+	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
+	     child = LIST_NEXT(child, mii_list))
+		(void) (*child->mii_service)(child, mii, MII_DOWN);
+}  

@@ -1,7 +1,7 @@
-/*	$OpenBSD: sqphy.c,v 1.4 1999/12/07 22:01:32 jason Exp $	*/
-/*	$NetBSD: sqphy.c,v 1.8.6.1 1999/04/23 15:41:25 perry Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.1 1999/12/07 22:01:33 jason Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.4 1999/11/12 18:13:01 thorpej Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -37,7 +37,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *
@@ -68,8 +68,9 @@
  */
 
 /*
- * driver for Seeq 80220/80221 and 80223 10/100 ethernet PHYs
- * datasheet from www.seeq.com
+ * TDK TSC78Q2120 PHY driver
+ *
+ * Documentation available at http://www.tsc.tdk.com/lan/78Q2120.pdf .
  */
 
 #include <sys/param.h>
@@ -78,7 +79,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -87,39 +87,42 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-#include <dev/mii/sqphyreg.h>
+#include <dev/mii/tqphyreg.h>
 
-int	sqphymatch __P((struct device *, void *, void *));
-void	sqphyattach __P((struct device *, struct device *, void *));
+int	tqphymatch __P((struct device *, void *, void *));
+void	tqphyattach __P((struct device *, struct device *, void *));
 
-struct cfattach sqphy_ca = {
-	sizeof(struct mii_softc), sqphymatch, sqphyattach
+struct cfattach tqphy_ca = {
+	sizeof(struct mii_softc), tqphymatch, tqphyattach
 };
 
-struct cfdriver sqphy_cd = {
-	NULL, "sqphy", DV_DULL
+struct cfdriver tqphy_cd = {
+	NULL, "tqphy", DV_DULL
 };
 
-int	sqphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	sqphy_status __P((struct mii_softc *));
+int	tqphy_service __P((struct mii_softc *, struct mii_data *, int));
+void	tqphy_status __P((struct mii_softc *));
 
 int
-sqphymatch(parent, match, aux)
+tqphymatch(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80220)
-		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TSC)
+		switch MII_MODEL(ma->mii_id2) {
+		case MII_MODEL_TSC_78Q2120:
+		/* case MII_MODEL_TSC_78Q2121: */
+			return (10);
+	}
 
 	return (0);
 }
 
 void
-sqphyattach(parent, self, aux)
+tqphyattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -127,24 +130,33 @@ sqphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80220,
+	printf(": %s, rev. %d\n", MII_STR_TSC_78Q2120,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = sqphy_service;
+	sc->mii_service = tqphy_service;
 	sc->mii_pdata = mii;
+
+	/*
+	 * Apparently, we can't do loopback on this PHY.
+	 */
+	sc->mii_flags |= MIIF_NOLOOP;
 
 	mii_phy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_MEDIAMASK)
+	printf("%s: ", sc->mii_dev.dv_xname);
+	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
+		printf("no media present");
+	else
 		mii_add_media(sc);
+	printf("\n");
 }
 
 int
-sqphy_service(sc, mii, cmd)
+tqphy_service(sc, mii, cmd)
 	struct mii_softc *sc;
 	struct mii_data *mii;
 	int cmd;
@@ -239,7 +251,7 @@ sqphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	sqphy_status(sc);
+	tqphy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
@@ -250,12 +262,12 @@ sqphy_service(sc, mii, cmd)
 }
 
 void
-sqphy_status(sc)
+tqphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int bmsr, bmcr, status;
+	int bmsr, bmcr, diag;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -264,30 +276,30 @@ sqphy_status(sc)
 	    PHY_READ(sc, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
-
+ 
 	bmcr = PHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
 		return;
 	}
-
+ 
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
-
+ 
 	if (bmcr & BMCR_AUTOEN) {
-		if ((bmsr & BMSR_ACOMP) == 0) {
+		if ((bmsr & BMSR_ACOMP) == 0) { 
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-		status = PHY_READ(sc, MII_SQPHY_STATUS);
-		if (status & STATUS_SPD_DET)
+		diag = PHY_READ(sc, MII_TQPHY_DIAG);
+		if (diag & DIAG_RATE)
 			mii->mii_media_active |= IFM_100_TX;
 		else
 			mii->mii_media_active |= IFM_10_T;
-		if (status & STATUS_DPLX_DET)
+		if (diag & DIAG_DPLX)
 			mii->mii_media_active |= IFM_FDX;
-	} else
+	} else 
 		mii->mii_media_active = ife->ifm_media;
 }

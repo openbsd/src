@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.3 1999/07/16 14:59:07 jason Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.4 1999/12/07 22:01:31 jason Exp $	*/
 /*	$NetBSD: miivar.h,v 1.7.6.1 1999/04/23 15:40:35 perry Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ typedef	int (*mii_downcall_t) __P((struct mii_softc *, struct mii_data *, int));
 #define	MII_TICK	1	/* once-per-second tick */
 #define	MII_MEDIACHG	2	/* user changed media; perform the switch */
 #define	MII_POLLSTAT	3	/* user requested media status; fill it in */
+#define	MII_DOWN	4	/* interface is down */
 
 /*
  * Each PHY driver's softc has one of these as the first member.
@@ -128,8 +129,12 @@ struct mii_softc {
 typedef struct mii_softc mii_softc_t;
 
 /* mii_flags */
-#define	MIIF_NOISOLATE	0x0001		/* do not isolate the PHY */
-#define	MIIF_DOINGAUTO	0x0002		/* doing autonegotiation */
+#define	MIIF_INITDONE	0x0001		/* has been initialized (mii_data) */
+#define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
+#define	MIIF_NOLOOP	0x0004		/* no loopback capability */
+#define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
+
+#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
 
 /*
  * Used to attach a PHY to a parent.
@@ -143,6 +148,22 @@ struct mii_attach_args {
 };
 typedef struct mii_attach_args mii_attach_args_t;
 
+/*
+ * An array of these structures map MII media types to BMCR/ANAR settings.
+ */
+struct mii_media {
+	int	mm_bmcr;	/* BMCR settings for this media */
+	int	mm_anar;	/* ANAR settings for this media */
+};
+
+#define	MII_MEDIA_NONE		0
+#define	MII_MEDIA_10_T		1
+#define	MII_MEDIA_10_T_FDX	2
+#define	MII_MEDIA_100_T4	3
+#define	MII_MEDIA_100_TX	4
+#define	MII_MEDIA_100_TX_FDX	5
+#define	MII_NMEDIA		6
+
 #ifdef _KERNEL
 
 #define	PHY_READ(p, r) \
@@ -153,17 +174,17 @@ typedef struct mii_attach_args mii_attach_args_t;
 	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
 	    (p)->mii_phy, (r), (v))
 
-int	mii_anar __P((int));
 int	mii_mediachg __P((struct mii_data *));
 void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
+void	mii_down __P((struct mii_data *));
 void	mii_phy_probe __P((struct device *, struct mii_data *, int));
-void	mii_add_media __P((struct mii_data *, int, int));
+void	mii_add_media __P((struct mii_softc *));
 
-int	mii_media_from_bmcr __P((int));
-
+void	mii_phy_setmedia __P((struct mii_softc *));
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
+void	mii_phy_down __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */

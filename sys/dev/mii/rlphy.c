@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.5 1999/12/07 22:01:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -104,20 +104,12 @@ rlphyattach(parent, self, aux)
 	sc->mii_service = rlphy_service;
 	sc->mii_pdata = mii;
 
-	ifmedia_add(&mii->mii_media,
-	    IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO, NULL);
-	ifmedia_add(&mii->mii_media,
-	    IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP | BMCR_S100, NULL);
-
 	rlphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
+		mii_add_media(sc);
 }
 
 int
@@ -154,18 +146,8 @@ rlphy_service(sc, mii, cmd)
 				return (0);
 			(void) mii_phy_auto(sc, 1);
 			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
 		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			mii_phy_setmedia(sc);
 		}
 		break;
 
@@ -187,6 +169,10 @@ rlphy_service(sc, mii, cmd)
 		 * kicked; it continues in the background.
 		 */
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */

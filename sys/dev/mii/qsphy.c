@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.5 1999/12/07 22:01:32 jason Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.11.6.1 1999/04/23 15:39:21 perry Exp $	*/
 
 /*-
@@ -88,22 +88,16 @@
 
 #include <dev/mii/qsphyreg.h>
 
-#ifdef __NetBSD__
-int	qsphymatch __P((struct device *, struct cfdata *, void *));
-#else
 int	qsphymatch __P((struct device *, void *, void *));
-#endif
 void	qsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach qsphy_ca = {
 	sizeof(struct mii_softc), qsphymatch, qsphyattach
 };
 
-#ifdef __OpenBSD__
 struct cfdriver qsphy_cd = {
 	NULL, "qsphy", DV_DULL
 };
-#endif
 
 int	qsphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	qsphy_reset __P((struct mii_softc *));
@@ -112,11 +106,7 @@ void	qsphy_status __P((struct mii_softc *));
 int
 qsphymatch(parent, match, aux)
 	struct device *parent;
-#ifdef __NetBSD__
-	struct cfdata *match;
-#else
 	void *match;
-#endif
 	void *aux;
 {
 	struct mii_attach_args *ma = aux;
@@ -145,21 +135,12 @@ qsphyattach(parent, self, aux)
 	sc->mii_service = qsphy_service;
 	sc->mii_pdata = mii;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP|BMCR_S100);
-
 	qsphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
-#undef ADD
+		mii_add_media(sc);
 }
 
 int
@@ -206,18 +187,8 @@ qsphy_service(sc, mii, cmd)
 				return (0);
 			(void) mii_phy_auto(sc, 1);
 			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
 		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			mii_phy_setmedia(sc);
 		}
 		break;
 
@@ -245,6 +216,10 @@ qsphy_service(sc, mii, cmd)
 		 * kicked; it continues in the background.
 		 */
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
@@ -263,6 +238,7 @@ qsphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, pctl;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -313,7 +289,7 @@ qsphy_status(sc)
 			break;
 		}
 	} else
-		mii->mii_media_active = mii_media_from_bmcr(bmcr);
+		mii->mii_media_active = ife->ifm_media;
 }
 
 void

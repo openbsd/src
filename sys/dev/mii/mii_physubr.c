@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.2 1999/07/16 14:59:07 jason Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.3 1999/12/07 22:01:31 jason Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.2.6.1 1999/04/23 15:40:26 perry Exp $	*/
 
 /*-
@@ -55,7 +55,46 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+/*
+ * Media to register setting conversion table.  Order matters.
+ */
+const struct mii_media mii_media_table[] = {
+	{ BMCR_ISO,		ANAR_CSMA },		/* None */
+	{ 0,			ANAR_CSMA|ANAR_10 },	/* 10baseT */
+	{ BMCR_FDX,		ANAR_CSMA|ANAR_10_FD },	/* 10baseT-FDX */
+	{ BMCR_S100,		ANAR_CSMA|ANAR_T4 },	/* 100baseT4 */
+	{ BMCR_S100,		ANAR_CSMA|ANAR_TX },	/* 100baseTX */
+	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA|ANAR_TX_FD }, /* 100baseTX-FDX */
+};
+
 void	mii_phy_auto_timeout __P((void *));
+
+void
+mii_phy_setmedia(sc)
+	struct mii_softc *sc;
+{
+	struct mii_data*mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, anar;
+
+	/*
+	 * Table index is stored in the media entry.
+	 */
+
+#ifdef DIAGNOSTIC
+	if (ife->ifm_data < 0 || ife->ifm_data >= MII_NMEDIA)
+		panic("mii_phy_setmedia");
+#endif
+
+	anar = mii_media_table[ife->ifm_data].mm_anar;
+	bmcr = mii_media_table[ife->ifm_data].mm_bmcr;
+
+	if (ife->ifm_media & IFM_LOOP)
+		bmcr |= BMCR_LOOP;
+
+	PHY_WRITE(sc, MII_ANAR, anar);
+	PHY_WRITE(sc, MII_BMCR, bmcr);
+}
 
 int
 mii_phy_auto(mii, waitfor)
@@ -112,11 +151,6 @@ mii_phy_auto_timeout(arg)
 	s = splnet();
 	mii->mii_flags &= ~MIIF_DOINGAUTO;
 	bmsr = PHY_READ(mii, MII_BMSR);
-#if 0
-	if ((bmsr & BMSR_ACOMP) == 0)
-		printf("%s: autonegotiation failed to complete\n",
-		    sc->sc_dev.dv_xname);
-#endif
 
 	/* Update the media status. */
 	(void) (*mii->mii_service)(mii, mii->mii_pdata, MII_POLLSTAT);
@@ -145,4 +179,70 @@ mii_phy_reset(mii)
 
 	if (mii->mii_inst != 0 && ((mii->mii_flags & MIIF_NOISOLATE) == 0))
 		PHY_WRITE(mii, MII_BMCR, reg | BMCR_ISO);
+}
+void
+mii_phy_down(sc)
+	struct mii_softc *sc;
+{
+	if (sc->mii_flags & MIIF_DOINGAUTO) {
+		sc->mii_flags &= ~MIIF_DOINGAUTO;
+		untimeout(mii_phy_auto_timeout, sc);
+	}
+}
+
+/*
+ * Initialize generic PHY media based on BMSR, called when a PHY is
+ * attached.  We expect to be set up to print a comma-separated list
+ * of media names.  Does not print a newline.
+ */
+void
+mii_add_media(sc)
+	struct mii_softc *sc;
+{
+	struct mii_data *mii = sc->mii_pdata;
+
+#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+
+	if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
+		    MII_MEDIA_NONE);
+
+	if (sc->mii_capabilities & BMSR_10THDX) {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
+		    MII_MEDIA_10_T);
+#if 0
+		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
+			    sc->mii_inst), MII_MEDIA_10_T);
+#endif
+	}
+
+	if (sc->mii_capabilities & BMSR_10TFDX)
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
+		    MII_MEDIA_10_T_FDX);
+	if (sc->mii_capabilities & BMSR_100TXHDX) {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
+		    MII_MEDIA_100_TX);
+#if 0
+		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, IFM_LOOP,
+			    sc->mii_inst), MII_MEDIA_100_T4);
+#endif
+	}
+	if (sc->mii_capabilities & BMSR_100TXFDX)
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
+		    MII_MEDIA_100_TX_FDX);
+	if (sc->mii_capabilities & BMSR_100T4) {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, sc->mii_inst),
+		    MII_MEDIA_100_T4);
+#if 0
+		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, IFM_LOOP,
+			    sc->mii_inst), MII_MEDIA_100_T4);
+#endif
+	}
+	if (sc->mii_capabilities & BMSR_ANEG)
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
+		    MII_NMEDIA);	/* intentionally invalid index */
+#undef ADD
 }

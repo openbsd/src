@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.5 1999/09/17 01:38:56 jason Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.6 1999/12/07 22:01:33 jason Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.1.6.1 1999/04/23 15:39:00 perry Exp $	*/
 
 /*-
@@ -85,33 +85,23 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#ifdef __NetBSD__
-int	ukphymatch __P((struct device *, struct cfdata *, void *));
-#else
 int	ukphymatch __P((struct device *, void *, void *));
-#endif
 void	ukphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach ukphy_ca = {
 	sizeof(struct mii_softc), ukphymatch, ukphyattach
 };
 
-#ifdef __OpenBSD__
 struct cfdriver ukphy_cd = {
 	NULL, "ukphy", DV_DULL
 };
-#endif
 
 int	ukphy_service __P((struct mii_softc *, struct mii_data *, int));
 
 int
 ukphymatch(parent, match, aux)
 	struct device *parent;
-#ifdef __NetBSD__
-	struct cfdata *match;
-#else
 	void *match;
-#endif
 	void *aux;
 {
 
@@ -140,23 +130,12 @@ ukphyattach(parent, self, aux)
 	sc->mii_service = ukphy_service;
 	sc->mii_pdata = mii;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-#if 0
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP|BMCR_S100);
-#endif
-
 	mii_phy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
-#undef ADD
+		mii_add_media(sc);
 }
 
 int
@@ -203,18 +182,8 @@ ukphy_service(sc, mii, cmd)
 				return (0);
 			(void) mii_phy_auto(sc, 1);
 			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
 		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
+			mii_phy_setmedia(sc);
 		}
 		break;
 
@@ -258,6 +227,10 @@ ukphy_service(sc, mii, cmd)
 		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
