@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.13 2002/04/24 23:03:56 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.14 2002/05/16 09:18:55 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -97,7 +97,6 @@ static void	terminator(int s);
 static __dead void	go_away(void);
 
 /*
- * authpf:
  * User shell for authenticating gateways. sole purpose is to allow
  * a user to ssh to a gateway, and have the gateway modify packet
  * filters to allow access, then remove access when the user finishes
@@ -129,7 +128,7 @@ main(int argc, char *argv[])
 	}
 
 	strlcpy(luser, pwp->pw_name, sizeof(luser));
-	
+
 	if ((foo = getenv("SSH_CLIENT")) != NULL) {
 		struct in_addr jnk;
 		strlcpy(ipsrc, foo, sizeof(ipsrc));
@@ -160,7 +159,6 @@ main(int argc, char *argv[])
 	 * make ourselves an entry in /var/run as /var/run/authpf-ipaddr,
 	 * so that things may find us easily to kill us if necessary.
 	 */
-
 	if (snprintf(pidfile, sizeof pidfile, "%s-%s", PATH_PIDFILE, ipsrc) >=
 	    sizeof pidfile) {
 		fprintf(stderr, "Sorry, host too long for me to handle..\n");
@@ -190,7 +188,6 @@ main(int argc, char *argv[])
 	 * tell them to log out before switching users it is an invitation
 	 * for abuse.
 	 */
-
 	while (flock(pidfd, LOCK_EX|LOCK_NB) == -1 && errno != EBADF) {
 		int otherpid = -1;
 		int save_errno = errno;
@@ -213,11 +210,11 @@ main(int argc, char *argv[])
 			}
 		}
 
-		/* we try to kill the previous process and aquire the lock
+		/*
+		 * we try to kill the previous process and aquire the lock
 		 * for 10 seconds, trying once a second. if we can't after
 		 * 10 attempts we log an error and give up
 		 */
-
 		if (lockcnt > 10) {
 			syslog(LOG_ERR, "Can't kill previous authpf (pid %d)",
 			    otherpid);
@@ -233,7 +230,6 @@ main(int argc, char *argv[])
 	(void) ftruncate(fileno(fp), ftell(fp));
 
 	/* open the pf device */
-
 	dev = open (PATH_DEVFILE, O_RDWR);
 	if (dev == -1) {
 		syslog(LOG_ERR, "Can't open filter device (%m)");
@@ -246,7 +242,6 @@ main(int argc, char *argv[])
 	 * for the ipaddress in that directory, and retrieving the username
 	 * from it.
 	 */
-
 	snprintf(userfile, sizeof(userfile), "%s/%s", PATH_USERFILE, ipsrc);
 	if ((ufd = open(userfile, O_CREAT|O_WRONLY, 0640)) == -1) {
 		syslog(LOG_ERR, "Can't open \"%s\" ! (%m)", userfile);
@@ -293,10 +288,9 @@ main(int argc, char *argv[])
 	exit(1);
 }
 
-/* read_config:
+/*
  * reads config file in PATH_CONFFILE to set optional behaviours up
  */
-
 static void
 read_config(void)
 {
@@ -309,7 +303,7 @@ read_config(void)
 		exit(1); /* exit silently if we have no config file */
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
-	
+
 	do {
 		char **ap, *pair[4], *cp, *tp;
 		int len;
@@ -379,7 +373,6 @@ read_config(void)
 
 
 /*
- * print_message:
  * splatter a file to stdout - max line length of 1024,
  * used for spitting message files at users to tell them
  * they've been bad or we're unavailable.
@@ -405,7 +398,6 @@ print_message(char *filename)
 }
 
 /*
- * allowed_luser:
  * allowed_luser checks to see if user "luser" is allowed to
  * use this gateway by virtue of being listed in an allowed
  * users file, namely /etc/authpf.allow .
@@ -450,7 +442,6 @@ allowed_luser(char *luser)
 		 * "public" gateway, such as it is, so let
 		 * everyone use it.
 		 */
-
 		lbuf = NULL;
 		while ((buf = fgetln(f, &len))) {
 			if (buf[len - 1] == '\n')
@@ -485,7 +476,6 @@ allowed_luser(char *luser)
 }
 
 /*
- * check_luser:
  * check_luser checks to see if user "luser" has been banned
  * from using us by virtue of having an file of the same name
  * in the "luserdir" directory.
@@ -529,7 +519,6 @@ check_luser(char *luserdir, char *luser)
 		 * luser is banned - spit the file at them to
 		 * tell what they can do and where they can go.
 		 */
-
 		syslog(LOG_INFO, "Denied access to %s: %s exists",
 		    luser, tmp);
 
@@ -549,7 +538,6 @@ check_luser(char *luserdir, char *luser)
 
 
 /*
- * changefilter:
  * Add/remove filter entries for user "luser" from ip "ipsrc"
  */
 static int
@@ -574,7 +562,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	    add ? "Adding" : "Removing", ipsrc, luser);
 
 	/* add filter rules */
-
 	if (add)
 		Delete_Rules = 0;
 	else
@@ -594,7 +581,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	}
 
 	/* write the variable to the start of the file */
-
 	fprintf(fin, "user_ip = \"%s\"\n", ipsrc);
 
 	fflush(fin);
@@ -611,7 +597,7 @@ changefilter(int add, char *luser, char *ipsrc)
 			if (unlink(template) == -1)
 				syslog(LOG_ERR, "can't unlink %s", template);
 			goto error;
-		}			
+		}
 	}
 	if (from_fd == -1) {
 		snprintf(rulesfile, sizeof rulesfile, PATH_PFRULES);
@@ -750,8 +736,8 @@ changefilter(int add, char *luser, char *ipsrc)
 		syslog(LOG_INFO, "can't unlink %s (%m)", template2);
 		goto error;
 	}
-	/* add/delete rules, using parse_nat */
 
+	/* add/delete rules, using parse_nat */
 	memset(&pf, 0, sizeof(pf));
 	pf.dev = dev;
 	pf.pnat = &pn;
@@ -785,7 +771,6 @@ changefilter(int add, char *luser, char *ipsrc)
 }
 
 /*
- * authpf_kill_states:
  * This is to kill off states that would otherwise be left behind stateful
  * rules. This means we don't need to allow in more traffic than we really
  * want to, since we don't have to worry about any luser sessions lasting
@@ -825,7 +810,6 @@ terminator(int s)
 }
 
 /*
- * go_away:
  * function that removes our stuff when we go away.
  */
 static __dead void
@@ -847,7 +831,6 @@ go_away(void)
 }
 
 /*
- * pfctl_add_rules:
  * callback for rule add, used by parser in parse_rules
  */
 int
@@ -872,7 +855,6 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 }
 
 /*
- * pfctl_add_nat:
  * callback for nat add, used by parser in parse_nat
  */
 int
@@ -896,7 +878,6 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 }
 
 /*
- * pfctl_add_rdr:
  * callback for rdr add, used by parser in parse_nat
  */
 int
@@ -920,7 +901,6 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 }
 
 /*
- * pfctl_add_binat:
  * We don't support adding binat's, since pf doesn't,
  * and I can't for the life of me think of a sane situation where it
  * might be useful.  This is here only because the pfctl parse
