@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.17 2000/07/07 13:28:58 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.18 2000/07/08 19:36:01 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -340,6 +340,7 @@ mpcpcibrattach(parent, self, aux)
 			u_int32_t data_offset;
 			int i;
 			int len;
+			int rangelen;
 
 			struct ranges_new {
 				u_int32_t flags;
@@ -360,12 +361,15 @@ mpcpcibrattach(parent, self, aux)
 			}
 			compat[len] = 0; 
 
-			if (OF_getprop(ca->ca_node, "ranges", range_store,
-				sizeof (range_store)) <= 0)
+			if ((rangelen = OF_getprop(ca->ca_node, "ranges",
+				range_store,
+				sizeof (range_store))) <= 0)
 			{
 				printf("range lookup failed, node %x\n",
 				ca->ca_node);
 			}
+			/* translate byte(s) into item count/*/
+			rangelen /= sizeof(struct ranges_new);
 
 			lcp = sc->sc_pcibr = &sc->pcibr_config;
 
@@ -381,7 +385,8 @@ mpcpcibrattach(parent, self, aux)
 
 				/* find io(config) base, flag == 0x01000000 */
 				found = 0;
-				for (i = 0; prange[i].flags != 0; i++) {
+				for (i = 0; i < rangelen ; i++)
+				{
 					if (prange[i].flags == 0x01000000) {
 						/* find last? */
 						found = i;
@@ -395,7 +400,8 @@ mpcpcibrattach(parent, self, aux)
 
 				found = 0;
 				/* find mem base, flag == 0x02000000 */
-				for (i = 0; prange[i].flags != 0; i++) {
+				for (i = 0; i < rangelen ; i++)
+				{
 					if (prange[i].flags == 0x02000000) {
 						/* find last? */
 						found = i;
@@ -405,6 +411,7 @@ mpcpcibrattach(parent, self, aux)
 				if (prange[found].flags == 0x02000000) {
 					sc->sc_membus_space.bus_base =
 						prange[found].base;
+
 				}
 				if ( (sc->sc_iobus_space.bus_base == 0) ||
 					(sc->sc_membus_space.bus_base == 0)) {
@@ -435,7 +442,7 @@ mpcpcibrattach(parent, self, aux)
 				return;
 			}
 #if 0
-			printf("found  mem base %x io base %x config addr %x"
+			printf(" mem base %x io base %x config addr %x"
 				" config data %x\n",
 				sc->sc_membus_space.bus_base,
 				sc->sc_iobus_space.bus_base,
