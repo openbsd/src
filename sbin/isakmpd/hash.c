@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.7 2001/06/29 20:38:15 angelos Exp $	*/
+/*	$OpenBSD: hash.c,v 1.8 2001/08/17 14:12:54 niklas Exp $	*/
 /*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ hmac_init (struct hash *hash, unsigned char *okey, int len)
   int i, blocklen = HMAC_BLOCKLEN;
   unsigned char key[HMAC_BLOCKLEN];
 
+  memset (key, 0, blocklen);
   if (len > blocklen) 
     {
       /* Truncate key down to blocklen */
@@ -109,7 +110,6 @@ hmac_init (struct hash *hash, unsigned char *okey, int len)
     }
   else
     {
-      memset (key, 0, blocklen);
       memcpy (key, okey, len);
     }
 
