@@ -787,6 +787,17 @@
 ./usr/libdata/perl5/Net/netent.pm
 ./usr/libdata/perl5/Net/protoent.pm
 ./usr/libdata/perl5/Net/servent.pm
+./usr/libdata/perl5/OpenBSD
+./usr/libdata/perl5/OpenBSD/PackageInfo.pm
+./usr/libdata/perl5/OpenBSD/PackageLocator.pm
+./usr/libdata/perl5/OpenBSD/PackageName.pm
+./usr/libdata/perl5/OpenBSD/PackingElement.pm
+./usr/libdata/perl5/OpenBSD/PackingList.pm
+./usr/libdata/perl5/OpenBSD/PkgCfl.pm
+./usr/libdata/perl5/OpenBSD/RequiredBy.pm
+./usr/libdata/perl5/OpenBSD/Temp.pm
+./usr/libdata/perl5/OpenBSD/Ustar.pm
+./usr/libdata/perl5/OpenBSD/md5.pm
 ./usr/libdata/perl5/PerlIO
 ./usr/libdata/perl5/PerlIO.pm
 ./usr/libdata/perl5/PerlIO/via
@@ -892,6 +903,9 @@
 ./usr/libdata/perl5/abbrev.pl
 ./usr/libdata/perl5/assert.pl
 ./usr/libdata/perl5/attributes.pm
+./usr/libdata/perl5/auto
+./usr/libdata/perl5/auto/OpenBSD
+./usr/libdata/perl5/auto/OpenBSD/.packlist
 ./usr/libdata/perl5/autouse.pm
 ./usr/libdata/perl5/base.pm
 ./usr/libdata/perl5/bigfloat.pl
