@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.h,v 1.2 1999/02/01 06:53:56 d Exp $	*/
+/*	$OpenBSD: server.h,v 1.3 1999/05/30 02:47:13 pjanzen Exp $	*/
 /*	$NetBSD: hunt.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
@@ -9,6 +9,10 @@
 
 #include <stdio.h>
 #include <sys/socket.h>
+
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
 
 /*
  * Choose MAXPL and MAXMON carefully.  The screen is assumed to be

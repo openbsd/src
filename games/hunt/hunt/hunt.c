@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.5 1999/03/14 02:07:30 pjanzen Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.6 1999/05/30 02:47:13 pjanzen Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -28,6 +28,9 @@
 #include "display.h"
 #include "client.h"
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
 
 FLAG	Am_monitor = FALSE;
 int	Socket;
