@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.4 1999/12/09 13:59:57 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.5 1999/12/30 17:28:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -193,7 +193,7 @@ ip6_init2(dummy)
 	/* get EUI64 from somewhere */
 	ret = in6_ifattach_getifid(NULL);
 
-#if 0
+#if 1
 	/*
 	 * to route local address of p2p link to loopback,
 	 * assign loopback address first. 
