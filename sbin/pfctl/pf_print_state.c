@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.20 2003/01/20 18:37:52 camield Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.21 2003/01/21 22:23:49 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -199,8 +199,14 @@ print_state(struct pf_state *s, int opts)
 		if (opts & PF_OPT_VERBOSE) {
 			printf("   ");
 			print_seq(src);
+			if (src->wscale && dst->wscale)
+				printf(" wscale %u",
+				    src->wscale & PF_WSCALE_MASK);
 			printf("  ");
 			print_seq(dst);
+			if (src->wscale && dst->wscale)
+				printf(" wscale %u",
+				    dst->wscale & PF_WSCALE_MASK);
 			printf("\n");
 		}
 	} else if (s->proto == IPPROTO_UDP && src->state < PFUDPS_NSTATES &&

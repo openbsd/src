@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.305 2003/01/19 13:52:18 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.306 2003/01/21 22:23:49 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -232,6 +232,8 @@ void			 pf_route6(struct mbuf **, struct pf_rule *, int,
 			    struct ifnet *, struct pf_state *);
 int			 pf_socket_lookup(uid_t *, gid_t *, int, sa_family_t,
 			    int, struct pf_pdesc *);
+u_int8_t		 pf_get_wscale(struct mbuf *, int, struct tcphdr *,
+			    sa_family_t);
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
     { { &pf_state_pl, PFSTATE_HIWAT }, { &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
@@ -720,10 +722,16 @@ pf_print_state(struct pf_state *s)
 	pf_print_host(&s->gwy.addr, s->gwy.port, s->af);
 	printf(" ");
 	pf_print_host(&s->ext.addr, s->ext.port, s->af);
-	printf(" [lo=%u high=%u win=%u modulator=%u]", s->src.seqlo,
+	printf(" [lo=%u high=%u win=%u modulator=%u", s->src.seqlo,
 	    s->src.seqhi, s->src.max_win, s->src.seqdiff);
-	printf(" [lo=%u high=%u win=%u modulator=%u]", s->dst.seqlo,
+	if (s->src.wscale && s->dst.wscale)
+		printf(" wscale=%u", s->src.wscale & PF_WSCALE_MASK);
+	printf("]");
+	printf(" [lo=%u high=%u win=%u modulator=%u", s->dst.seqlo,
 	    s->dst.seqhi, s->dst.max_win, s->dst.seqdiff);
+	if (s->src.wscale && s->dst.wscale)
+		printf(" wscale=%u", s->dst.wscale & PF_WSCALE_MASK);
+	printf("]");
 	printf(" %u:%u", s->src.state, s->dst.state);
 }
 
@@ -1811,6 +1819,44 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
 	return (1);
 }
 
+u_int8_t
+pf_get_wscale(struct mbuf *m, int off, struct tcphdr *th, sa_family_t af)
+{
+	int		 hlen;
+	u_int8_t	*opt, optlen;
+	u_int8_t	 wscale = 0;
+
+	hlen = th->th_off * 4;
+	if (hlen <= sizeof(*th))
+		return (0);
+	if (!pf_pull_hdr(m, off, th, hlen, NULL, NULL, af))
+		return (0);
+	opt = (u_int8_t *)(th + 1);
+	hlen -= sizeof(*th);
+	while (hlen >= 3) {
+		switch (*opt) {
+		case TCPOPT_EOL:
+		case TCPOPT_NOP:
+			++opt;
+			--hlen;
+			break;
+		case TCPOPT_WINDOW:
+			wscale = opt[2];
+			if (wscale > TCP_MAX_WINSHIFT)
+				wscale = TCP_MAX_WINSHIFT;
+			wscale |= PF_WSCALE_FLAG;
+			/* fallthrough */
+		default:
+			optlen = opt[1];
+			if (optlen < 2)
+				optlen = 2;
+			hlen -= optlen;
+			opt += optlen;
+		}
+	}
+	return (wscale);
+}
+
 int
 pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
     struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
@@ -2027,8 +2073,10 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			rewrite = 1;
 		} else
 			s->src.seqdiff = 0;
-		if (th->th_flags & TH_SYN)
+		if (th->th_flags & TH_SYN) {
 			s->src.seqhi++;
+			s->src.wscale = pf_get_wscale(m, off, th, af);
+		}
 		if (th->th_flags & TH_FIN)
 			s->src.seqhi++;
 		s->src.max_win = MAX(ntohs(th->th_win), 1);
@@ -2766,7 +2814,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 {
 	struct pf_tree_node	 key;
 	struct tcphdr		*th = pd->hdr.tcp;
-	u_int16_t		 win = ntohs(th->th_win);
+	u_int32_t		 win = ntohs(th->th_win);
 	u_int32_t		 ack, end, seq;
 	int			 ackskew;
 	struct pf_state_peer	*src, *dst;
@@ -2811,8 +2859,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		}
 
 		end = seq + pd->p_len;
-		if (th->th_flags & TH_SYN)
+		if (th->th_flags & TH_SYN) {
 			end++;
+			src->wscale = pf_get_wscale(m, off, th, pd->af);
+		}
 		if (th->th_flags & TH_FIN)
 			end++;
 
@@ -2845,6 +2895,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (th->th_flags & TH_FIN)
 			end++;
 	}
+
+	if (src->wscale && dst->wscale && !(th->th_flags & TH_SYN))
+		win <<= src->wscale & PF_WSCALE_MASK;
 
 	if ((th->th_flags & TH_ACK) == 0) {
 		/* Let it pass through the ack skew check */

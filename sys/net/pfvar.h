@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.133 2003/01/15 16:28:56 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.134 2003/01/21 22:23:49 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -66,6 +66,8 @@ enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 	  PF_ADDR_TABLE };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STATICPORT	0x10
+#define	PF_WSCALE_FLAG		0x80
+#define	PF_WSCALE_MASK		0x0f
 
 struct pf_addr {
 	union {
@@ -406,7 +408,7 @@ struct pf_state_peer {
 	u_int32_t	seqdiff;	/* Sequence number modulator	*/
 	u_int16_t	max_win;
 	u_int8_t	state;
-	u_int8_t	pad;
+	u_int8_t	wscale;
 };
 
 struct pf_state {
