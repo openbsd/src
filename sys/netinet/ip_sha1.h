@@ -1,10 +1,13 @@
-/*	$OpenBSD: ip_sha1.h,v 1.3 1997/06/21 00:09:20 deraadt Exp $	*/
+/*	$OpenBSD: ip_sha1.h,v 1.4 1997/07/11 23:38:00 provos Exp $	*/
 
 /*
 SHA-1 in C
 By Steve Reid <steve@edmweb.com>
 100% Public Domain
 */
+
+#ifndef _SHA1_H_
+#define _SHA1_H_
 
 typedef struct {
     u_int32_t state[5];
@@ -16,3 +19,5 @@ void SHA1Transform(u_int32_t state[5], unsigned char buffer[64]);
 void SHA1Init(SHA1_CTX* context);
 void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len);
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context);
+
+#endif /* _SHA1_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.15 1997/07/01 22:12:53 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.16 1997/07/11 23:37:59 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
+#include <sys/syslog.h>
 #endif
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
@@ -153,8 +154,8 @@ ip_output(m0, va_alist)
 		struct sockaddr_encap *dst, *gw;
 		struct tdb *tdb;
 
-		bzero((caddr_t)re, sizeof (*re));
-		dst = (struct sockaddr_encap *)&re->re_dst;
+		bzero((caddr_t) re, sizeof(*re));
+		dst = (struct sockaddr_encap *) &re->re_dst;
 		dst->sen_family = AF_ENCAP;
 		dst->sen_len = SENT_IP4_LEN;
 		dst->sen_type = SENT_IP4;
@@ -174,24 +175,27 @@ ip_output(m0, va_alist)
 			dst->sen_sport = ntohs(udp->uh_sport);
 			dst->sen_dport = ntohs(udp->uh_dport);
 			break;
+
 		case IPPROTO_TCP:
 			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
 			dst->sen_sport = ntohs(tcp->th_sport);
 			dst->sen_dport = ntohs(tcp->th_dport);
 			break;
+
 		default:
 			dst->sen_sport = 0;
 			dst->sen_dport = 0;
 		}
-		rtalloc((struct route *)re);
+
+		rtalloc((struct route *) re);
 		if (re->re_rt == NULL)
 			goto no_encap;
 
-		gw = (struct sockaddr_encap *)(re->re_rt->rt_gateway);
+		gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
 		if (gw == NULL || gw->sen_type != SENT_IPSP) {
 #ifdef ENCDEBUG
 			if (encdebug)
-				printf("ip_output: no gw or gw data not IPSP\n");
+				printf("ip_output(): no gw or gw data not IPSP\n");
 #endif /* ENCDEBUG */
 			m_freem(m);
 			RTFREE(re->re_rt);
@@ -210,45 +214,27 @@ ip_output(m0, va_alist)
 		 * to the appropriate transformation.
 		 */
 
-		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst);
+		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst,
+					    gw->sen_ipsp_sproto);
 
 		/* Fix the ip_src field if necessary */
 		if ((ip->ip_src.s_addr == INADDR_ANY) && tdb)
 		 	ip->ip_src = tdb->tdb_src;
-
-		/* 
-		 * If we're doing IP-in-IP first, let the options be.
-		 * Otherwise, get rid of them.
-  		 * XXX This means we don't send packets with IP options
-		 * XXX unless they're encapsulated (and, presumably,
-		 * XXX subsequently authenticated).
-		 */
-		if (tdb && tdb->tdb_xform)
-		    if ((tdb->tdb_xform->xf_type != XF_IP4) ||
-			(tdb->tdb_flags & TDBF_TUNNELING))
-		          if (hlen > sizeof (struct ip)) {	/* XXX IPOPT */
-			          ip_stripoptions(m, (struct mbuf *)0);
-				  hlen = sizeof (struct ip);
-			  }
 
 		/* Now fix the checksum */
 		ip->ip_sum = in_cksum(m, hlen);
 
 #ifdef ENCDEBUG
 		if (encdebug)
-			printf("ip_output: tdb=0x%x, tdb->tdb_xform=0x%x, tdb->tdb_xform->xf_output=%x\n", tdb, tdb->tdb_xform, tdb->tdb_xform->xf_output);
+			printf("ip_output(): tdb=%08x, tdb->tdb_xform=0x%x, tdb->tdb_xform->xf_output=%x, sproto=%x\n", tdb, tdb->tdb_xform, tdb->tdb_xform->xf_output, tdb->tdb_sproto);
 #endif /* ENCDEBUG */
 
 		while (tdb && tdb->tdb_xform) {
 			m0 = NULL;
 
 			/* Check if the SPI is invalid */
-			if (tdb->tdb_flags & TDBF_INVALID)
-			{
-#ifdef ENCDEBUG
-				if (encdebug)
-					printf("ip_output: attempt to use invalid SPI %08x", tdb->tdb_spi);
-#endif /* ENCDEBUG */
+			if (tdb->tdb_flags & TDBF_INVALID) {
+				log(LOG_ALERT, "ip_output(): attempt to use invalid SA %x/%08x/%x", tdb->tdb_dst, tdb->tdb_spi, tdb->tdb_sproto);
 				m_freem(m);
 				RTFREE(re->re_rt);
 				return ENXIO;
@@ -258,7 +244,7 @@ ip_output(m0, va_alist)
 			if (tdb->tdb_flags & TDBF_TUNNELING) {
 #ifdef ENCDEBUG
 			        if (encdebug)
-			                printf("ip_output: doing tunneling\n");
+			                printf("ip_output(): tunneling\n");
 #endif /* ENCDEBUG */
 
 				/* Register first use */
@@ -277,8 +263,8 @@ ip_output(m0, va_alist)
 
 #ifdef ENCDEBUG
 			if (encdebug)
-				printf("ip_output: calling %s\n",
-				    tdb->tdb_xform->xf_name);
+				printf("ip_output(): calling %s\n",
+				       tdb->tdb_xform->xf_name);
 #endif /* ENCDEBUG */
 
 			/* Register first use */
@@ -308,7 +294,8 @@ ip_output(m0, va_alist)
 		NTOHS(ip->ip_len);
 		NTOHS(ip->ip_off);
 
-		return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT, NULL);
+		return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
+				 NULL);
 
 no_encap:
 		/* This is for possible future use, don't move or delete */

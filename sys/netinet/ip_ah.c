@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.7 1997/07/01 22:12:41 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.8 1997/07/11 23:37:54 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -59,6 +59,8 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 
+#include <sys/syslog.h>
+
 void	ah_input __P((struct mbuf *, int));
 
 /*
@@ -68,42 +70,35 @@ void	ah_input __P((struct mbuf *, int));
 void
 ah_input(register struct mbuf *m, int iphlen)
 {
-    struct ip *ipo;
-    struct ah *ahp;
-    struct tdb *tdbp;
     struct ifqueue *ifq = NULL;
+    struct ip *ipo, ipn;
+    struct ah_old *ahp, ahn;
+    struct tdb *tdbp;
     int s;
 	
     ahstat.ahs_input++;
 
-#if 0	/* We need them to verify the packet */
-    /*
-     * Strip IP options, if any.
-     */
-
-    if (iphlen > sizeof (struct ip))
-    {
-	ip_stripoptions(m, (struct mbuf *)0);
-	iphlen = sizeof (struct ip);
-    }
-#endif
-	
     /*
      * Make sure that at least the fixed part of the AH header is
      * in the first mbuf.
      */
 
     ipo = mtod(m, struct ip *);
-    if (m->m_len < iphlen + AH_FLENGTH)
+    if (m->m_len < iphlen + AH_OLD_FLENGTH)
     {
-	if ((m = m_pullup(m, iphlen + AH_FLENGTH)) == 0)
+	if ((m = m_pullup(m, iphlen + AH_OLD_FLENGTH)) == 0)
 	{
+#ifdef ENCDEBUG
+	    if (encdebug)
+	      printf("ah_input(): (possibly too short) packet from %x to %x dropped\n", ipo->ip_src, ipo->ip_dst);
+#endif /* ENCDEBUG */
 	    ahstat.ahs_hdrops++;
 	    return;
 	}
 	ipo = mtod(m, struct ip *);
     }
-    ahp = (struct ah *)((caddr_t)ipo + iphlen);
+
+    ahp = (struct ah_old *) ((caddr_t) ipo + iphlen);
 
     /*
      * Find tunnel control block and (indirectly) call the appropriate
@@ -111,13 +106,10 @@ ah_input(register struct mbuf *m, int iphlen)
      * IP packet ready to go through input processing.
      */
 
-    tdbp = gettdb(ahp->ah_spi, ipo->ip_dst);
+    tdbp = gettdb(ahp->ah_spi, ipo->ip_dst, IPPROTO_AH);
     if (tdbp == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_input: no tdb for spi=%x\n", ahp->ah_spi);
-#endif ENCDEBUG
+	log(LOG_ERR, "ah_input(): could not find SA for AH packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, ahp->ah_spi);
 	m_freem(m);
 	ahstat.ahs_notdb++;
 	return;
@@ -125,10 +117,9 @@ ah_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_input: spi=%x is no longer/yet valid\n", ahp->ah_spi);
-#endif /* ENCDEBUG */
+	log(LOG_ALERT,
+	    "ah_input(): attempted to use invalid AH SA %08x, packet %x->%x",
+	    ahp->ah_spi, ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	ahstat.ahs_invalid++;
 	return;
@@ -136,10 +127,7 @@ ah_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_input: no xform for spi=%x\n", ahp->ah_spi);
-#endif ENCDEBUG
+	log(LOG_ALERT, "ah_input(): attempted to use uninitialized AH SA %08x, packet from %x to %x", ahp->ah_spi, ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	ahstat.ahs_noxform++;
 	return;
@@ -151,10 +139,13 @@ ah_input(register struct mbuf *m, int iphlen)
     if (tdbp->tdb_first_use == 0)
       tdbp->tdb_first_use = time.tv_sec;
 
+    ipn = *ipo;
+    ahn = *ahp;
+
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
-	
     if (m == NULL)
     {
+	log(LOG_ALERT, "ah_input(): authentication failed for AH packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, ahn.ah_spi);
 	ahstat.ahs_badkcr++;
 	return;
     }
@@ -173,8 +164,13 @@ ah_input(register struct mbuf *m, int iphlen)
 	m_freem(m);
 	ahstat.ahs_qfull++;
 	splx(s);
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("ah_input(): dropped packet because of full IP queue\n");
+#endif /* ENCDEBUG */
 	return;
     }
+
     IF_ENQUEUE(ifq, m);
     schednetisr(NETISR_IP);
     splx(s);

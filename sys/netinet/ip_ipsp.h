@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.10 1997/07/02 06:58:43 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.11 1997/07/11 23:37:59 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -26,6 +26,21 @@
 /*
  * IPSP global definitions.
  */
+
+struct flow
+{
+    struct flow     *flow_next;		/* Next in flow chain */
+    struct flow     *flow_prev;		/* Previous in flow chain */
+    struct tdb      *flow_sa;		/* Pointer to the SA */
+    struct in_addr   flow_src;   	/* Source address */
+    struct in_addr   flow_srcmask;	/* Source netmask */
+    struct in_addr   flow_dst;		/* Destination address */
+    struct in_addr   flow_dstmask;	/* Destination netmask */
+    u_int16_t	     flow_sport;	/* Source port, if applicable */
+    u_int16_t	     flow_dport;	/* Destination port, if applicable */
+    u_int8_t	     flow_proto;	/* Transport protocol, if applicable */
+    u_int8_t	     foo[3];		/* Alignment */
+};
 
 struct tdb				/* tunnel descriptor block */
 {
@@ -73,12 +88,10 @@ struct tdb				/* tunnel descriptor block */
 					 * of outter IP header if we're doing
 					 * tunneling */
     caddr_t	    tdb_xdata;	        /* transformation data (opaque) */
-    u_int16_t	    tdb_sport;		/* Source port, if applicable */
-    u_int16_t       tdb_dport;		/* Destination port, if applicable */
-
+    struct flow	   *tdb_flow; 		/* Which flows use this SA */
     u_int8_t	    tdb_ttl;		/* TTL used in tunneling */
-    u_int8_t	    tdb_proto;		/* Protocol carried */
-    u_int16_t	    tdb_foo;		/* alignment */
+    u_int8_t	    tdb_sproto;		/* IPsec protocol */
+    u_int8_t        tdb_foo[2];		/* Alignment */
 };
 
 #define TDB_HASHMOD	257
@@ -96,16 +109,18 @@ struct xformsw
 };
 
 #define XF_IP4		1		/* IP inside IP */
-#define XF_AHMD5	2		/* AH MD5 */
-#define XF_AHSHA1	3		/* AH SHA */
-#define XF_ESPDES	4		/* ESP DES-CBC */
-#define XF_ESP3DES	5		/* ESP DES3-CBC */
-#define XF_AHHMACMD5	6		/* AH-HMAC-MD5 with opt replay prot */
-#define XF_AHHMACSHA1	7		/* AH-HMAC-SHA1 with opt replay prot */
-#define XF_ESPDESMD5	8		/* ESP DES-CBC + MD5 */
-#define XF_ESP3DESMD5	9		/* ESP 3DES-CBC + MD5 */
-#define XF_NEWESP       10		/* The new ESP transforms */
-#define XF_NEWAH        11		/* The new AH transforms */
+#define XF_OLD_AH	2		/* RFCs 1828 & 1852 */
+#define XF_OLD_ESP	3		/* RFCs 1829 & 1851 */
+#define XF_NEW_AH	4		/* AH HMAC 96bits */
+#define XF_NEW_ESP	5		/* ESP + auth 96bits + replay counter */
+
+/* Supported key hash algorithms */
+#define ALG_AUTH_MD5	1
+#define ALG_AUTH_SHA1	2
+
+/* Supported encryption algorithms */
+#define ALG_ENC_DES	1
+#define ALG_ENC_3DES	2
 
 #define XFT_AUTH	0x0001
 #define XFT_CONF	0x0100
@@ -136,55 +151,84 @@ htonq(u_int64_t q)
 
 extern unsigned char ipseczeroes[];
 
+/*
+ * Names for IPsec sysctl objects
+ */
+#define IPSECCTL_ENCDEBUG		1	/* turn debugging on/off */
+#define IPSECCTL_MAXID			2
+
+#define IPSECCTL_NAMES {\
+	{ 0, 0 }, \
+	{ "encdebug", CTLTYPE_INT }, \
+}
+
 #ifdef _KERNEL
-#undef ENCDEBUG	
 extern int encdebug;
 
 struct tdb *tdbh[TDB_HASHMOD];
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 
-extern u_int32_t reserve_spi(u_int32_t, struct in_addr, int *);
-extern struct tdb *gettdb(u_int32_t, struct in_addr);
+/* TDB management routines */
+extern u_int32_t reserve_spi(u_int32_t, struct in_addr, u_int8_t, int *);
+extern struct tdb *gettdb(u_int32_t, struct in_addr, u_int8_t);
 extern void puttdb(struct tdb *);
 extern int tdb_delete(struct tdb *, int);
 
-extern int ipe4_attach(void), ipe4_init(struct tdb *, struct xformsw *, struct mbuf *), ipe4_zeroize(struct tdb *);
-extern int ipe4_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
+/* Flow management routines */
+extern struct flow *get_flow(void);
+extern void put_flow(struct flow *, struct tdb *);
+extern void delete_flow(struct flow *, struct tdb *);
+extern struct flow *find_flow(struct in_addr, struct in_addr, struct in_addr,
+			      struct in_addr, u_int8_t, u_int16_t, u_int16_t,
+			      struct tdb *);
+extern struct flow *find_global_flow(struct in_addr, struct in_addr,
+				     struct in_addr, struct in_addr, u_int8_t,
+				     u_int16_t, u_int16_t);
+
+/* XF_IP4 */
+extern int ipe4_attach(void);
+extern int ipe4_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int ipe4_zeroize(struct tdb *);
+extern int ipe4_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
+		       struct mbuf **);
 extern void ipe4_input __P((struct mbuf *, ...));
 
-extern int ahmd5_attach(void), ahmd5_init(struct tdb *, struct xformsw *, struct mbuf *), ahmd5_zeroize(struct tdb *);
-extern int ahmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *ahmd5_input(struct mbuf *, struct tdb *);
+/* XF_OLD_AH */
+extern int ah_old_attach(void);
+extern int ah_old_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int ah_old_zeroize(struct tdb *);
+extern int ah_old_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
+			 struct mbuf **);
+extern struct mbuf *ah_old_input(struct mbuf *, struct tdb *);
 
-extern int ahsha1_attach(void), ahsha1_init(struct tdb *, struct xformsw *, struct mbuf *), ahsha1_zeroize(struct tdb *);
-extern int ahsha1_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *ahsha1_input(struct mbuf *, struct tdb *);
+/* XF_NEW_AH */
+extern int ah_new_attach(void);
+extern int ah_new_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int ah_new_zeroize(struct tdb *);
+extern int ah_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
+			 struct mbuf **);
+extern struct mbuf *ah_new_input(struct mbuf *, struct tdb *);
 
-extern int ahhmacmd5_attach(void), ahhmacmd5_init(struct tdb *, struct xformsw *, struct mbuf *), ahhmacmd5_zeroize(struct tdb *);
-extern int ahhmacmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *ahhmacmd5_input(struct mbuf *, struct tdb *);
+/* XF_OLD_ESP */
+extern int esp_old_attach(void);
+extern int esp_old_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int esp_old_zeroize(struct tdb *);
+extern int esp_old_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
+			  struct mbuf **);
+extern struct mbuf *esp_old_input(struct mbuf *, struct tdb *);
 
-extern int ahhmacsha1_attach(void), ahhmacsha1_init(struct tdb *, struct xformsw *, struct mbuf *), ahhmacsha1_zeroize(struct tdb *);
-extern int ahhmacsha1_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *ahhmacsha1_input(struct mbuf *, struct tdb *);
+/* XF_NEW_ESP */
+extern int esp_new_attach(void);
+extern int esp_new_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int esp_new_zeroize(struct tdb *);
+extern int esp_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
+			  struct mbuf **);
+extern struct mbuf *esp_new_input(struct mbuf *, struct tdb *);
 
-extern int espdes_attach(void), espdes_init(struct tdb *, struct xformsw *, struct mbuf *), espdes_zeroize(struct tdb *);
-extern int espdes_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *espdes_input(struct mbuf *, struct tdb *);
-
-extern int esp3des_attach(void), esp3des_init(struct tdb *, struct xformsw *, struct mbuf *), esp3des_zeroize(struct tdb *);
-extern int esp3des_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *esp3des_input(struct mbuf *, struct tdb *);
-
-extern int espdesmd5_attach(void), espdesmd5_init(struct tdb *, struct xformsw *, struct mbuf *), espdesmd5_zeroize(struct tdb *);
-extern int espdesmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *espdesmd5_input(struct mbuf *, struct tdb *);
-
-extern int esp3desmd5_attach(void), esp3desmd5_init(struct tdb *, struct xformsw *, struct mbuf *), esp3desmd5_zeroize(struct tdb *);
-extern int esp3desmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
-extern struct mbuf *esp3desmd5_input(struct mbuf *, struct tdb *);
-
+/* Padding */
 extern caddr_t m_pad(struct mbuf *, int);
-extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t, u_int32_t *);
-extern int checkreplaywindow64(u_int64_t, u_int64_t *, u_int64_t, u_int64_t *);
+
+/* Replay window */
+extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
+			       u_int32_t *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.7 1997/07/02 06:58:40 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.8 1997/07/11 23:37:51 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -32,6 +32,8 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/ioctl.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -46,14 +48,13 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ip4.h>
 
-extern struct ifnet loif;
-
-extern int ipspkernfs_dirty;
+#include <sys/syslog.h>
 
 void encap_init(void);
 int encap_output __P((struct mbuf *, ...));
 int encap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, 
 		 struct mbuf *);
+int encap_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 extern int tdb_init(struct tdb *, struct mbuf *);
 
@@ -68,14 +69,37 @@ struct protosw encapsw[] = {
       raw_input,	encap_output,	raw_ctlinput,	0,
       encap_usrreq,
       encap_init,	0,		0,		0,
+      encap_sysctl
     },
 };
 
 struct domain encapdomain =
 { AF_ENCAP, "encapsulation", 0, 0, 0, 
-  encapsw, &encapsw[sizeof(encapsw)/sizeof(encapsw[0])], 0,
+  encapsw, &encapsw[sizeof(encapsw) / sizeof(encapsw[0])], 0,
   rn_inithead, 16, sizeof(struct sockaddr_encap)};
 
+
+/*
+ * Sysctl for encap variables
+ */
+int
+encap_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplenp, 
+	     void *newp, size_t newlen)
+{
+    /* All sysctl names at this level are terminal */
+    if (namelen != 1)
+      return ENOTDIR;
+
+    switch (name[0]) 
+    {
+        case IPSECCTL_ENCDEBUG:
+	    return (sysctl_int(oldp, oldplenp, newp, newlen, &encdebug));
+
+	default:
+	    return ENOPROTOOPT;
+    }
+    /* Not reached */
+}
 
 void
 encap_init()
@@ -84,7 +108,7 @@ encap_init()
     
     for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
     {
-	printf("encap_init: attaching <%s>\n", xsp->xf_name);
+	log(LOG_INFO, "encap_init(): attaching <%s>\n", xsp->xf_name);
 	(*(xsp->xf_attach))();
     }
 }
@@ -101,7 +125,10 @@ encap_usrreq(register struct socket *so, int req, struct mbuf *m,
     if (req == PRU_ATTACH)
     {
 	MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-	if ((so->so_pcb = (caddr_t)rp))
+        if (rp == (struct rawcb *) NULL)
+	  return ENOBUFS;
+
+	if ((so->so_pcb = (caddr_t) rp))
 	  bzero(so->so_pcb, sizeof(*rp));
     }
 
@@ -114,7 +141,7 @@ encap_usrreq(register struct socket *so, int req, struct mbuf *m,
 	
 	if (error)
 	{
-	    free((caddr_t)rp, M_PCB);
+	    free((caddr_t) rp, M_PCB);
 	    splx(s);
 	    return error;
 	}
@@ -136,14 +163,16 @@ va_dcl
 #endif
 {
 #define SENDERR(e) do { error = e; goto flush;} while (0)
+    struct sockaddr_encap encapdst, encapgw, encapnetmask;
     int len, emlen, error = 0;
     struct encap_msghdr *emp;
     struct tdb *tdbp, *tdbp2;
     caddr_t buffer = 0;
     struct socket *so;
+    struct flow *flow;
     u_int32_t spi;
     va_list ap;
-    
+
     va_start(ap, m);
     so = va_arg(ap, struct socket *);
     va_end(ap);
@@ -153,7 +182,7 @@ va_dcl
       return ENOBUFS;
 
     if ((m->m_flags & M_PKTHDR) == 0)
-      panic("encap_output");
+      panic("encap_output()");
 
     len = m->m_pkthdr.len; 
 
@@ -191,28 +220,24 @@ va_dcl
 		(emp->em_odst.s_addr != 0))
 	      SENDERR(EINVAL);	    
 
-	    tdbp = gettdb(emp->em_spi, emp->em_dst);
+	    tdbp = gettdb(emp->em_spi, emp->em_dst, emp->em_sproto);
 	    if (tdbp == NULL)
 	    {
-		MALLOC(tdbp, struct tdb *, sizeof (*tdbp), M_TDB, M_WAITOK);
+		MALLOC(tdbp, struct tdb *, sizeof(*tdbp), M_TDB, M_WAITOK);
 		if (tdbp == NULL)
 		  SENDERR(ENOBUFS);
 		
-		bzero((caddr_t)tdbp, sizeof(*tdbp));
+		bzero((caddr_t) tdbp, sizeof(*tdbp));
 		
 		tdbp->tdb_spi = emp->em_spi;
 		tdbp->tdb_dst = emp->em_dst;
-
+		tdbp->tdb_sproto = emp->em_sproto;
 		puttdb(tdbp);
 	    }
 	    else
 	      if (tdbp->tdb_xform)
 	        (*tdbp->tdb_xform->xf_zeroize)(tdbp);
 	    
-	    tdbp->tdb_proto = emp->em_proto;
-	    tdbp->tdb_sport = emp->em_sport;
-	    tdbp->tdb_dport = emp->em_dport;
-
 	    tdbp->tdb_src = emp->em_src;
 
 	    /* Check if this is an encapsulating SPI */
@@ -308,15 +333,13 @@ va_dcl
 	    if (error)
 	      SENDERR(EINVAL);
 	    
-	    ipspkernfs_dirty = 1;
-
 	    break;
 		
 	case EMT_DELSPI:
 	    if (emlen != EMT_DELSPI_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst, emp->em_gen_sproto);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 	    
@@ -330,7 +353,7 @@ va_dcl
 	    if (emlen != EMT_DELSPICHAIN_FLEN)
 	      SENDERR(EINVAL);
 
-	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst, emp->em_gen_sproto);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 	    
@@ -344,26 +367,28 @@ va_dcl
 	    if (emlen != EMT_GRPSPIS_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    tdbp = gettdb(emp->em_rel_spi, emp->em_rel_dst);
+	    tdbp = gettdb(emp->em_rel_spi, emp->em_rel_dst, emp->em_rel_sproto);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 
-	    tdbp2 = gettdb(emp->em_rel_spi2, emp->em_rel_dst2);
+	    tdbp2 = gettdb(emp->em_rel_spi2, emp->em_rel_dst2,
+			   emp->em_rel_sproto2);
 	    if (tdbp2 == NULL)
 	      SENDERR(ENOENT);
 	    
 	    tdbp->tdb_onext = tdbp2;
 	    tdbp2->tdb_inext = tdbp;
 	    
-	    ipspkernfs_dirty = 1;
 	    error = 0;
+
 	    break;
 
 	case EMT_RESERVESPI:
 	    if (emlen != EMT_RESERVESPI_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    spi = reserve_spi(emp->em_gen_spi, emp->em_gen_dst, &error);
+	    spi = reserve_spi(emp->em_gen_spi, emp->em_gen_dst, 
+			      emp->em_gen_sproto, &error);
 	    if (spi == 0)
 	      SENDERR(error);
 
@@ -384,38 +409,172 @@ va_dcl
 	    
 	    break;
 	    
-	case EMT_ENABLESPI:
-	    if (emlen != EMT_ENABLESPI_FLEN)
+	case EMT_VALIDATE:
+	    if (emlen != EMT_VALIDATE_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst, emp->em_gen_sproto);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 
 	    /* Clear the INVALID flag */
 	    tdbp->tdb_flags &= (~TDBF_INVALID);
 
-	    /* XXX Install a routing entry */
-
 	    error = 0;
 
 	    break;
 	    
-	case EMT_DISABLESPI:
-	    if (emlen != EMT_DISABLESPI_FLEN)
+	case EMT_INVALIDATE:
+	    if (emlen != EMT_INVALIDATE_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst, emp->em_gen_sproto);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 	    
 	    /* Set the INVALID flag */
 	    tdbp->tdb_flags |= TDBF_INVALID;
 
-	    /* XXX Delete a routing entry, if on exists */
-
 	    error = 0;
 	    
+	    break;
+
+	case EMT_ENABLESPI:
+	    if (emlen != EMT_ENABLESPI_FLEN)
+	      SENDERR(EINVAL);
+
+            tdbp = gettdb(emp->em_ena_spi, emp->em_ena_dst, emp->em_ena_sproto);
+            if (tdbp == NULL)
+              SENDERR(ENOENT);
+
+	    flow = find_flow(emp->em_ena_isrc, emp->em_ena_ismask,
+			     emp->em_ena_idst, emp->em_ena_idmask,
+			     emp->em_ena_protocol, emp->em_ena_sport,
+			     emp->em_ena_dport, tdbp);
+	    if (flow != (struct flow *) NULL)
+	      SENDERR(EEXIST);
+
+	    flow = get_flow();
+	    if (flow == (struct flow *) NULL)
+	      SENDERR(ENOBUFS);
+
+	    flow->flow_src.s_addr = emp->em_ena_isrc.s_addr;
+	    flow->flow_dst.s_addr = emp->em_ena_idst.s_addr;
+	    flow->flow_srcmask.s_addr = emp->em_ena_ismask.s_addr;
+	    flow->flow_dstmask.s_addr = emp->em_ena_idmask.s_addr;
+	    flow->flow_proto = emp->em_ena_protocol;
+	    flow->flow_sport = emp->em_ena_sport;
+	    flow->flow_dport = emp->em_ena_dport;
+
+	    put_flow(flow, tdbp);
+
+	    /* Setup the encap fields */
+	    encapdst.sen_len = SENT_IP4_LEN;
+	    encapdst.sen_family = AF_ENCAP;
+	    encapdst.sen_type = SENT_IP4;
+	    encapdst.sen_ip_src.s_addr = flow->flow_src.s_addr;
+	    encapdst.sen_ip_dst.s_addr = flow->flow_dst.s_addr;
+	    encapdst.sen_proto = flow->flow_proto;
+	    encapdst.sen_sport = flow->flow_sport;
+	    encapdst.sen_dport = flow->flow_dport;
+
+	    encapgw.sen_len = SENT_IPSP_LEN;
+	    encapgw.sen_family = AF_ENCAP;
+	    encapgw.sen_type = SENT_IPSP;
+	    encapgw.sen_ipsp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    encapgw.sen_ipsp_spi = tdbp->tdb_spi;
+
+	    encapnetmask.sen_len = SENT_IP4_LEN;
+	    encapnetmask.sen_family = AF_ENCAP;
+	    encapnetmask.sen_type = SENT_IP4;
+	    encapnetmask.sen_ip_src.s_addr = flow->flow_srcmask.s_addr;
+	    encapnetmask.sen_ip_dst.s_addr = flow->flow_dstmask.s_addr;
+
+	    if (flow->flow_proto)
+	    {
+	        encapnetmask.sen_proto = 0xff;
+
+	    	if (flow->flow_sport)
+	      	  encapnetmask.sen_sport = 0xffff;
+
+	    	if (flow->flow_dport)
+	      	  encapnetmask.sen_dport = 0xffff;
+	    }
+
+	    /* Add the entry in the routing table */
+	    error = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
+			      (struct sockaddr *) &encapgw,
+			      (struct sockaddr *) &encapnetmask,
+			      RTF_UP | RTF_GATEWAY | RTF_STATIC,
+			      (struct rtentry **) 0);
+	    
+	    if (error)
+	    {
+		delete_flow(flow, tdbp);
+		SENDERR(error);
+	    }
+
+	    error = 0;
+
+	    break;
+
+	case EMT_DISABLESPI:
+	    if (emlen != EMT_DISABLESPI_FLEN)
+	      SENDERR(EINVAL);
+
+            tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst, emp->em_gen_sproto);
+            if (tdbp == NULL)
+              SENDERR(ENOENT);
+
+	    flow = find_flow(emp->em_ena_isrc, emp->em_ena_ismask,
+			     emp->em_ena_idst, emp->em_ena_idmask,
+			     emp->em_ena_protocol, emp->em_ena_sport,
+			     emp->em_ena_dport, tdbp);
+	    if (flow == (struct flow *) NULL)
+	      SENDERR(ENOENT);
+
+            /* Setup the encap fields */
+            encapdst.sen_len = SENT_IP4_LEN;
+            encapdst.sen_family = AF_ENCAP;
+            encapdst.sen_type = SENT_IP4;
+            encapdst.sen_ip_src.s_addr = flow->flow_src.s_addr;
+            encapdst.sen_ip_dst.s_addr = flow->flow_dst.s_addr;
+            encapdst.sen_proto = flow->flow_proto;
+            encapdst.sen_sport = flow->flow_sport;
+            encapdst.sen_dport = flow->flow_dport;
+
+            encapgw.sen_len = SENT_IPSP_LEN;
+            encapgw.sen_family = AF_ENCAP;
+            encapgw.sen_type = SENT_IPSP;
+            encapgw.sen_ipsp_dst.s_addr = tdbp->tdb_dst.s_addr;
+            encapgw.sen_ipsp_spi = tdbp->tdb_spi;
+
+            encapnetmask.sen_len = SENT_IP4_LEN;
+            encapnetmask.sen_family = AF_ENCAP;
+            encapnetmask.sen_type = SENT_IP4;
+            encapnetmask.sen_ip_src.s_addr = flow->flow_srcmask.s_addr;
+            encapnetmask.sen_ip_dst.s_addr = flow->flow_dstmask.s_addr;
+
+            if (flow->flow_proto)
+            {
+                encapnetmask.sen_proto = 0xff;
+
+                if (flow->flow_sport)
+                  encapnetmask.sen_sport = 0xffff;
+
+                if (flow->flow_dport)
+                  encapnetmask.sen_dport = 0xffff;
+            }
+
+            /* Add the entry in the routing table */
+            error = rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
+			      (struct sockaddr *) &encapgw,
+			      (struct sockaddr *) &encapnetmask,
+                              RTF_UP | RTF_GATEWAY | RTF_STATIC,
+                              (struct rtentry **) 0);
+
+	    delete_flow(flow, tdbp);
+
 	    break;
 
 	case EMT_NOTIFY:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.7 1997/06/25 07:53:21 provos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.8 1997/07/11 23:37:54 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -31,16 +31,22 @@
 #include <sys/md5k.h>
 #include <netinet/ip_sha1.h>
 
-struct ah
+struct ah_old
 {
     u_int8_t	ah_nh;			/* Next header (protocol) */
     u_int8_t	ah_hl;			/* AH length, in 32-bit words */
     u_int16_t	ah_rv;			/* reserved, must be 0 */
     u_int32_t	ah_spi;			/* Security Parameters Index */
-    u_int8_t	ah_data[1];		/* More, really*/
+    u_int8_t	ah_data[1];		/* More, really */
 };
 
-#define AH_FLENGTH	8		/* size of fixed part */
+#define AH_OLD_FLENGTH		8	/* size of fixed part */
+
+/* Authenticator lengths */
+#define AH_MD5_ALEN		16
+#define AH_SHA1_ALEN		20
+
+#define AH_ALEN_MAX		AH_SHA1_ALEN 	/* Keep this updated */
 
 struct ahstat
 {
@@ -58,130 +64,92 @@ struct ahstat
     u_int32_t   ahs_invalid;    /* Trying to use an invalid TDB */
 };
 
-#define AHHMACMD5_KMAX  64              /* max 512 bits key */
-#define AHHMACMD5_AMAX  64              /* up to 512 bits of authenticator */
-#define AHHMACMD5_RPLS  2               /* 64 bits of replay counter */
+#define AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
+#define AH_HMAC_RPLENGTH        4	/* 32 bits of replay counter */
+#define AH_HMAC_INITIAL_RPL	1	/* Replay counter initial value */
 
-#define HMACMD5_HASHLEN         16
-#define HMACMD5_RPLENGTH        8
+#define HMAC_IPAD_VAL           0x36
+#define HMAC_OPAD_VAL           0x5C
+#define HMAC_BLOCK_LEN		64
 
-#define HMACMD5_IPAD_VAL        0x36
-#define HMACMD5_OPAD_VAL        0x5C
-
-#define AHHMACMD5_KMAX  64              /* max 512 bits key */
-#define AHHMACMD5_AMAX  64              /* up to 512 bits of authenticator */
-#define AHHMACMD5_RPLS  2               /* 64 bits of replay counter */
-
-#define HMACMD5_HASHLEN         16
-#define HMACMD5_RPLENGTH        8
-
-#define HMACMD5_IPAD_VAL        0x36
-#define HMACMD5_OPAD_VAL        0x5C
-
-struct ahhmacmd5
+struct ah_new
 {
     u_int8_t        ah_nh;                  /* Next header (protocol) */
     u_int8_t        ah_hl;                  /* AH length, in 32-bit words */
     u_int16_t       ah_rv;                  /* reserved, must be 0 */
     u_int32_t       ah_spi;                 /* Security Parameters Index */
-    u_int64_t       ah_rpl;                 /* Replay prevention */
-    u_int8_t        ah_data[AHHMACMD5_AMAX];/* Authenticator */
+    u_int32_t       ah_rpl;                 /* Replay prevention */
+    u_int8_t        ah_data[AH_HMAC_HASHLEN];/* Authenticator */
 };
 
-struct ahhmacmd5_xencap
+#define AH_NEW_FLENGTH		(sizeof(struct ah_new))
+
+struct ah_new_xencap
 {
-    u_int16_t       amx_alen;
-    u_int16_t       amx_rpl;
+    u_int32_t       amx_hash_algorithm;
     int32_t         amx_wnd;
-    u_int8_t        amx_key[AHHMACMD5_KMAX];
+    u_int32_t       amx_keylen;
+    u_int8_t        amx_key[1];
 };
 
-struct ahhmacmd5_xdata
+#define AH_NEW_XENCAP_LEN	(3 * sizeof(u_int32_t))
+
+struct ah_new_xdata
 {
-    u_int32_t       amx_alen;               /* authenticator length */
+    u_int32_t       amx_hash_algorithm;
     int32_t         amx_wnd;
-    u_int64_t       amx_rpl;                /* Replay counter */
-    u_int64_t       amx_bitmap;
-    MD5_CTX         amx_ictx;               /* Internal key+padding */
-    MD5_CTX         amx_octx;               /* External key+padding */
+    u_int32_t       amx_rpl;                /* Replay counter */
+    u_int32_t       amx_bitmap;
+    union
+    {
+	struct 
+	{
+            MD5_CTX         amx_ictx;       /* Internal key+padding */
+            MD5_CTX         amx_octx;       /* External key+padding */
+        } MD5stuff;
+
+	struct
+	{
+	    SHA1_CTX	    amx_ictx;
+	    SHA1_CTX	    amx_octx;
+	} SHA1stuff;
+    } Hashes;
 };
 
-#define AHHMACSHA1_KMAX 64              /* max 512 bits key */
-#define AHHMACSHA1_AMAX 64              /* up to 512 bits of authenticator */
-#define AHHMACSHA1_RPLS 2               /* 64 bits of replay counter */
-
-#define HMACSHA1_HASHLEN                20
-#define HMACSHA1_RPLENGTH       8
-
-#define HMACSHA1_IPAD_VAL       0x36
-#define HMACSHA1_OPAD_VAL       0x5C
-
-struct ahhmacsha1
-{
-    u_int8_t        ah_nh;                 /* Next header (protocol) */
-    u_int8_t        ah_hl;                 /* AH length, in 32-bit words */
-    u_int16_t       ah_rv;                 /* reserved, must be 0 */
-    u_int32_t       ah_spi;                /* Security Parameters Index */
-    u_int64_t       ah_rpl;                /* Replay prevention */
-    u_int8_t        ah_data[AHHMACSHA1_AMAX];/* Authenticator */
-};
-
-struct ahhmacsha1_xencap
-{
-    u_int32_t       amx_alen;
-    int32_t         amx_wnd;
-    u_int8_t        amx_key[AHHMACSHA1_KMAX];
-};
-
-struct ahhmacsha1_xdata
-{
-    u_int32_t       amx_alen;               /* authenticator length */
-    int32_t         amx_wnd;
-    u_int64_t       amx_rpl;                /* Replay counter */
-    u_int64_t       amx_bitmap;
-    SHA1_CTX        amx_ictx;               /* Internal key+padding */
-    SHA1_CTX        amx_octx;               /* External key+padding */
-};
-
-#define AHMD5_KMAX      32              /* max 256 bits key */
-#define AHMD5_AMAX      64              /* up to 512 bits of authenticator */
-#define AHSHA1_KMAX     32
-#define AHSHA1_AMAX     64
-
-struct ahmd5
-{
-    u_int8_t        ah_nh;                  /* Next header (protocol) */
-    u_int8_t        ah_hl; 		    /* AH length, in 32-bit words */
-    u_int16_t       ah_rv;                  /* reserved, must be 0 */
-    u_int32_t       ah_spi;                 /* Security Parameters Index */
-    u_int8_t        ah_data[AHMD5_AMAX];    /*  */
-};
-
-struct ahsha1
-{
-    u_int8_t        ah_nh;                  /* Next header (protocol) */
-    u_int8_t        ah_hl; 		    /* AH length, in 32-bit words */
-    u_int16_t       ah_rv;                  /* reserved, must be 0 */
-    u_int32_t       ah_spi;                 /* Security Parameters Index */
-    u_int8_t        ah_data[AHSHA1_AMAX];   /*  */
-};
+#define amx_md5_ictx	Hashes.MD5stuff.amx_ictx
+#define amx_md5_octx	Hashes.MD5stuff.amx_octx
+#define amx_sha1_ictx	Hashes.SHA1stuff.amx_ictx
+#define amx_sha1_octx	Hashes.SHA1stuff.amx_octx
 
 #define AHMD5_ALEN      16		/* Size of MD5 digest */
 #define AHSHA1_ALEN     20		/* Size of SHA-1 digest */
 
-struct ahmd5_xdata
+struct ah_old_xdata
 {
-    u_int16_t       amx_klen;               /* Key material length */
-    u_int16_t       amx_alen;               /* authenticator length */
-    u_int8_t        amx_key[AHMD5_KMAX];    /* Key material */
+    u_int32_t       amx_hash_algorithm;
+    u_int32_t       amx_keylen;             /* Key material length */
+    union
+    {
+	MD5_CTX	    amx_MD5_ctx;
+	SHA1_CTX    amx_SHA1_ctx;
+    } Hashes;
+    u_int8_t        amx_key[1];             /* Key material */
 };
 
-struct ahsha1_xdata
+#define amx_md5_ctx	Hashes.amx_MD5_ctx
+#define amx_sha1_ctx 	Hashes.amx_SHA1_ctx
+
+struct ah_old_xencap
 {
-    u_int16_t       amx_klen;               /* Key material length */
-    u_int16_t       amx_alen;               /* authenticator length */
-    u_int8_t        amx_key[AHSHA1_KMAX];   /* Key material */
+    u_int32_t       amx_hash_algorithm;
+    u_int32_t       amx_keylen;
+    u_int8_t        amx_key[1];
 };
+
+#define AH_OLD_XENCAP_LEN	(2 * sizeof(u_int32_t))
+
+#define AH_HMAC_IPAD_VAL	0x36
+#define AH_HMAC_OPAD_VAL	0x5C
 
 #ifdef _KERNEL
 struct ahstat ahstat;

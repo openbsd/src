@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.6 1997/07/02 06:58:40 provos Exp $	*/
+/*	$OpenBSD: encap.h,v 1.7 1997/07/11 23:37:52 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -69,7 +69,8 @@ struct sockaddr_encap
 	{
 	    struct in_addr Dst;
 	    u_int32_t Spi;
-	    u_int8_t Filler[8];
+	    u_int8_t Sproto;
+	    u_int8_t Filler[7];
 	} Sipsp;
     } Sen;
 };
@@ -85,6 +86,7 @@ struct sockaddr_encap
 #define sen_dport	Sen.Sip4.Dport
 #define sen_ipsp_dst	Sen.Sipsp.Dst
 #define sen_ipsp_spi	Sen.Sipsp.Spi
+#define sen_ipsp_sproto	Sen.Sipsp.Sproto
 
 /*
  * The "type" is really part of the address as far as the routing
@@ -136,12 +138,11 @@ struct encap_msghdr
 	    int32_t        Alg;		/* Algorithm to use */
 	    struct in_addr Dst;		/* Destination address */
 	    struct in_addr Src;		/* This is used to set our source
-					 * address when doing tunneling and
-					 * the outgoing packet does not
-					 * have a source address (is zero) */
-	    struct in_addr oSrc;	/* Source... */
-	    struct in_addr oDst;	/* ...and destination in outter IP
-					 * header, if we're doing IP-in-IP */
+					 * address when the outgoing packet
+				         * does not have a source address 
+					 * (is zero). */
+	    struct in_addr oSrc;	 /* Outter header source address */
+	    struct in_addr oDst;	 /* Same, for destination address */
 	    u_int64_t      Relative_Hard; /* Expire relative to creation */
 	    u_int64_t      Relative_Soft;
 	    u_int64_t      First_Use_Hard; /* Expire relative to first use */
@@ -159,24 +160,24 @@ struct encap_msghdr
 					 * the system default TTL will be used.
 					 * If set to anything else, then the
 					 * ttl used will be TTL % 256 */
-	    u_int16_t	   Sport; 	/* Source port, if applicable */
-	    u_int16_t	   Dport;	/* Destination port, if applicable */
-  	    u_int8_t	   Proto;	/* Protocol, if applicable */
-	    u_int8_t	   foo[3];	/* Alignment */
+	    u_int8_t       Sproto;	/* ESP or AH */
+	    u_int8_t	   Foo[3];	/* Alignment */
 	    u_int8_t       Dat[1];	/* Data */
 	} Xfm;
 
 	/*
  	 * For expiration notifications, the kernel fills in
-	 * Notification_Type, Spi and Dst. No direct response is expected.
+	 * Notification_Type, Spi, Dst and Sproto. 
+  	 * No direct response is expected.
 	 *
  	 * For SA Requests, the kernel fills in
-	 * Notification_Type, MsgID, Spi, Seclevel, Dst (and optionally
+	 * Notification_Type, MsgID, Seclevel, Dst, SAType, (and optionally
 	 * Protocol, Src, Sport, Dport and UserID).
  	 *
 	 * The response should have the same values in all the fields
 	 * and:
-	 * Spi/Spi2/Spi3 will hold the SPIs for the three seclevels
+	 * Spi will hold the SPI for the three seclevels
+	 * Sproto will hold the IPsec protocol used (AH/ESP)
 	 * UserID can optionally hold the peer's UserID (if applicable)
 	 */
 	struct				/* kernel->userland notifications */
@@ -184,60 +185,93 @@ struct encap_msghdr
 	    u_int32_t      Notification_Type;
 	    u_int32_t      MsgID;	/* Request ID */
 	    u_int32_t      Spi;		
-	    u_int32_t      Spi2;
-	    u_int32_t      Spi3;
-	    u_int8_t       Seclevel[3];	/* see netinet/in_pcb.h */
-	    u_int8_t       Protocol;	/* Transport mode for which protocol */
+	    u_int32_t      SAType;	/* What do we want for this SA */
 	    struct in_addr Dst;		/* Peer */
 	    struct in_addr Src;		/* Might have our local address */
 	    u_int16_t      Sport;	/* Source port */
             u_int16_t      Dport;	/* Destination port */
+	    u_int8_t       Protocol;	/* Transport protocol */
+	    u_int8_t       Sproto;	/* IPsec protocol */
+	    u_int8_t       Foo[2];	/* Alignment */
 	    u_int8_t       UserID[1];	/* Might be used to indicate user */
 	} Notify;
 
 	/* Link two SPIs */
 	struct
 	{
-	    u_int32_t        emr_spi;	/* SPI */
-	    u_int32_t        emr_spi2;
-	    struct in_addr   emr_dst;	/* Dest */
-	    struct in_addr   emr_dst2;
+	    u_int32_t        Spi;	/* SPI */
+	    u_int32_t        Spi2;
+	    struct in_addr   Dst;	/* Dest */
+	    struct in_addr   Dst2;
+	    u_int8_t	     Sproto; 	/* IPsec protocol */
+	    u_int8_t	     Sproto2;
+	    u_int16_t	     Foo;
 	} Rel;
 
-	/* For general use */
+	/* Enable/disable an SA for a session */
+	struct
+	{
+	    u_int32_t      Spi;
+	    struct in_addr Dst;
+	    struct in_addr iSrc;	/* Source... */
+	    struct in_addr iDst;	/* ...and destination in inner IP */
+	    struct in_addr iSmask;	/* Source netmask */
+	    struct in_addr iDmask;	/* Destination netmask */
+	    u_int16_t	   Sport; 	/* Source port, if applicable */
+	    u_int16_t	   Dport;	/* Destination port, if applicable */
+	    u_int8_t       Protocol;	/* Transport mode for which protocol */
+	    u_int8_t 	   Sproto;	/* IPsec protocol */
+	    u_int8_t       Foo[2];	/* Alignment */
+	} Ena;
+
+	/* For general use: (in)validate, delete (chain), reserve */
 	struct 
 	{
-	    u_int32_t       emg_spi;
-	    struct in_addr  emg_dst;
+	    u_int32_t       Spi;
+	    struct in_addr  Dst;
+	    u_int8_t	    Sproto;
+   	    u_int8_t	    Foo[3];
 	} Gen;
     } Eu;
 };
 
-#define  NOTIFY_SOFT_EXPIRE     0	/* Soft expiration of SA */
-#define  NOTIFY_HARD_EXPIRE     1	/* Hard expiration of SA */
-#define  NOTIFY_REQUEST_SA      2	/* Establish an SA */
+#define ENCAP_MSG_FIXED_LEN    (2 * sizeof(u_int32_t))
 
-#define em_gen_spi        Eu.Gen.emg_spi
-#define em_gen_dst        Eu.Gen.emg_dst
+#define NOTIFY_SOFT_EXPIRE     0	/* Soft expiration of SA */
+#define NOTIFY_HARD_EXPIRE     1	/* Hard expiration of SA */
+#define NOTIFY_REQUEST_SA      2	/* Establish an SA */
+
+#define em_ena_spi	  Eu.Ena.Spi
+#define em_ena_dst	  Eu.Ena.Dst
+#define em_ena_isrc	  Eu.Ena.iSrc
+#define em_ena_idst	  Eu.Ena.iDst
+#define em_ena_ismask	  Eu.Ena.iSmask
+#define em_ena_idmask	  Eu.Ena.iDmask
+#define em_ena_sport	  Eu.Ena.Sport
+#define em_ena_dport	  Eu.Ena.Dport
+#define em_ena_protocol   Eu.Ena.Protocol
+#define em_ena_sproto	  Eu.Ena.Sproto
+
+#define em_gen_spi        Eu.Gen.Spi
+#define em_gen_dst        Eu.Gen.Dst
+#define em_gen_sproto	  Eu.Gen.Sproto
 
 #define em_not_type       Eu.Notify.Notification_Type
 #define em_not_spi        Eu.Notify.Spi
-#define em_not_spi2       Eu.Notify.Spi2
-#define em_not_spi3       Eu.Notify.Spi3
 #define em_not_dst        Eu.Notify.Dst
-#define em_not_seclevel   Eu.Notify.Seclevel
+#define em_not_satype     Eu.Notify.SAType
 #define em_not_userid     Eu.Notify.UserID
 #define em_not_msgid      Eu.Notify.MsgID
 #define em_not_sport      Eu.Notify.Sport
 #define em_not_dport      Eu.Notify.Dport
 #define em_not_protocol   Eu.Notify.Protocol
+#define em_not_sproto	  Eu.Notify.Sproto
 
 #define em_spi	          Eu.Xfm.Spi
 #define em_dst	          Eu.Xfm.Dst
 #define em_src	          Eu.Xfm.Src
-#define em_osrc           Eu.Xfm.oSrc
-#define em_odst           Eu.Xfm.oDst
-#define em_if	          Eu.Xfm.If
+#define em_osrc	          Eu.Xfm.oSrc
+#define em_odst	          Eu.Xfm.oDst
 #define em_alg	          Eu.Xfm.Alg
 #define em_dat	          Eu.Xfm.Dat
 #define em_relative_hard  Eu.Xfm.Relative_Hard
@@ -251,34 +285,38 @@ struct encap_msghdr
 #define em_packets_hard   Eu.Xfm.Packets_Hard
 #define em_packets_soft   Eu.Xfm.Packets_Soft
 #define em_ttl		  Eu.Xfm.TTL
-#define em_proto	  Eu.Xfm.Proto
-#define em_sport	  Eu.Xfm.Sport
-#define em_dport	  Eu.Xfm.Dport
+#define em_sproto	  Eu.Xfm.Sproto
 
-#define em_rel_spi	  Eu.Rel.emr_spi
-#define em_rel_spi2	  Eu.Rel.emr_spi2
-#define em_rel_dst	  Eu.Rel.emr_dst
-#define em_rel_dst2	  Eu.Rel.emr_dst2
+#define em_rel_spi	  Eu.Rel.Spi
+#define em_rel_spi2	  Eu.Rel.Spi2
+#define em_rel_dst	  Eu.Rel.Dst
+#define em_rel_dst2	  Eu.Rel.Dst2
+#define em_rel_sproto	  Eu.Rel.Sproto
+#define em_rel_sproto2	  Eu.Rel.Sproto2
 
 #define EMT_SETSPI	1		/* Set SPI properties */
-#define EMT_GRPSPIS	2		/* Group SPIs (output order)  */
+#define EMT_GRPSPIS	2		/* Group SPIs */
 #define EMT_DELSPI	3		/* delete an SPI */
 #define EMT_DELSPICHAIN 4		/* delete an SPI chain starting from */
 #define EMT_RESERVESPI  5		/* Give us an SPI */
 #define EMT_ENABLESPI   6		/* Enable an SA */
 #define EMT_DISABLESPI  7		/* Disable an SA */
 #define EMT_NOTIFY      8		/* kernel->userland key mgmt not. */
+#define EMT_VALIDATE    9		/* Make an SPI valid for use */
+#define EMT_INVALIDATE  10		/* Make an SPI invalid for use */
 
 /* Total packet lengths */
-#define EMT_SETSPI_FLEN	      124
-#define EMT_GRPSPIS_FLEN      24
-#define EMT_GENLEN            16
+#define EMT_SETSPI_FLEN	      120
+#define EMT_GRPSPIS_FLEN      28
+#define EMT_GENLEN            20
 #define EMT_DELSPI_FLEN       EMT_GENLEN
 #define EMT_DELSPICHAIN_FLEN  EMT_GENLEN
-#define EMT_ENABLESPI_FLEN    EMT_GENLEN
-#define EMT_DISABLESPI_FLEN   EMT_GENLEN
 #define EMT_RESERVESPI_FLEN   EMT_GENLEN
-#define EMT_NOTIFY_FLEN       44
+#define EMT_VALIDATE_FLEN     EMT_GENLEN
+#define EMT_INVALIDATE_FLEN   EMT_GENLEN
+#define EMT_NOTIFY_FLEN       40
+#define EMT_ENABLESPI_FLEN    40
+#define EMT_DISABLESPI_FLEN   EMT_ENABLESPI_FLEN
 
 #ifdef _KERNEL
 extern struct ifaddr *encap_findgwifa(struct sockaddr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.7 1997/07/01 22:12:45 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.8 1997/07/11 23:37:56 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -58,6 +58,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
+#include <sys/syslog.h>
 
 void	esp_input __P((struct mbuf *, int));
 
@@ -68,39 +69,35 @@ void	esp_input __P((struct mbuf *, int));
 void
 esp_input(register struct mbuf *m, int iphlen)
 {
-    struct ip *ipo;
     struct ifqueue *ifq = NULL;
-    int s;
-    u_int32_t spi;
+    struct ip *ipo, ipn;
     struct tdb *tdbp;
+    u_int32_t spi;
+    int s;
 	
     espstat.esps_input++;
 
-    /*
-     * Strip IP options, if any.
-     */
-
-    if (iphlen > sizeof (struct ip))
-    {
-	ip_stripoptions(m, (struct mbuf *)0);
-	iphlen = sizeof (struct ip);
-    }
-	
     /*
      * Make sure that at least the SPI is in the same mbuf
      */
 
     ipo = mtod(m, struct ip *);
-    if (m->m_len < iphlen + ESP_FLENGTH)
+    if (m->m_len < iphlen + sizeof(u_int32_t))
     {
-	if ((m = m_pullup(m, iphlen + ESP_FLENGTH)) == 0)
+	if ((m = m_pullup(m, iphlen + sizeof(u_int32_t))) == 0)
 	{
+#ifdef ENCDEBUG
+            if (encdebug)
+              printf("esp_input(): (possibly too short) packet from %x to %x dropped\n", ipo->ip_src, ipo->ip_dst);
+#endif /* ENCDEBUG */
 	    espstat.esps_hdrops++;
 	    return;
 	}
+
 	ipo = mtod(m, struct ip *);
     }
-    spi = *((u_int32_t *)((caddr_t)ipo + iphlen));
+
+    spi = *((u_int32_t *) ((caddr_t) ipo + iphlen));
 
     /*
      * Find tunnel control block and (indirectly) call the appropriate
@@ -108,13 +105,10 @@ esp_input(register struct mbuf *m, int iphlen)
      * IP packet ready to go through input processing.
      */
 
-    tdbp = gettdb(spi, ipo->ip_dst);
+    tdbp = gettdb(spi, ipo->ip_dst, IPPROTO_ESP);
     if (tdbp == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_input: no tdb for spi=%x\n", spi);
-#endif ENCDEBUG
+	log(LOG_ERR, "esp_input(): could not find SA for ESP packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, spi);
 	m_freem(m);
 	espstat.esps_notdb++;
 	return;
@@ -122,10 +116,9 @@ esp_input(register struct mbuf *m, int iphlen)
 	
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
-#ifdef ENCDEBUG
-	if (encdebug);
-	  printf("esp_input: spi=%x is not longer/yet valid\n", spi);
-#endif
+        log(LOG_ALERT,
+            "esp_input(): attempted to use invalid ESP SA %08x, packet %x->%x",
+            spi, ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	espstat.esps_invalid++;
 	return;
@@ -133,10 +126,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_input: no xform for spi=%x\n", spi);
-#endif ENCDEBUG
+        log(LOG_ALERT, "esp_input(): attempted to use uninitialized ESP SA %08x, packet from %x to %x", spi, ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	espstat.esps_noxform++;
 	return;
@@ -148,11 +138,13 @@ esp_input(register struct mbuf *m, int iphlen)
     if (tdbp->tdb_first_use == 0)
       tdbp->tdb_first_use = time.tv_sec;
 
+    ipn = *ipo;
 
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
 
     if (m == NULL)
     {
+	log(LOG_ALERT, "esp_input(): processing failed for ESP packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, spi);
 	espstat.esps_badkcr++;
 	return;
     }
@@ -171,8 +163,13 @@ esp_input(register struct mbuf *m, int iphlen)
 	m_freem(m);
 	espstat.esps_qfull++;
 	splx(s);
+#ifdef ENCDEBUG
+        if (encdebug)
+          printf("esp_input(): dropped packet because of full IP queue\n");
+#endif /* ENCDEBUG */
 	return;
     }
+
     IF_ENQUEUE(ifq, m);
     schednetisr(NETISR_IP);
     splx(s);

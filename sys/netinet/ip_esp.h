@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.7 1997/06/25 07:53:24 provos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.8 1997/07/11 23:37:56 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -32,39 +32,24 @@
 #include <sys/md5k.h>
 #endif
 
-#define ESPDESMD5_KEYSZ		64
-#define ESPDESMD5_IVS		8
-#define ESPDESMD5_ALEN		16
-#define ESPDESMD5_IPAD_VAL	0x36
-#define	ESPDESMD5_OPAD_VAL	0x5C
-#define ESPDESMD5_DESBLK	8
-#define ESPDESMD5_RPLENGTH	4
-#define ESPDESMD5_DPADI		0x5C
-#define ESPDESMD5_DPADR		0x3A
-#define ESPDESMD5_IPADI		0xAC
-#define ESPDESMD5_IPADR		0x55
-#define ESPDESMD5_HPADI		0x53
-#define ESPDESMD5_HPADR		0x3C
-#define ESPDESMD5_RPADI		0x35
-#define ESPDESMD5_RPADR		0xCC
+#include <netinet/ip_sha1.h>
 
-#define ESP3DESMD5_KEYSZ		64
-#define ESP3DESMD5_IVS	        	8
-#define ESP3DESMD5_ALEN		        16
-#define ESP3DESMD5_IPAD_VAL	        0x36
-#define	ESP3DESMD5_OPAD_VAL	        0x5C
-#define ESP3DESMD5_DESBLK	        8
-#define ESP3DESMD5_RPLENGTH	        4
-#define ESP3DESMD5_DPADI		0x5C
-#define ESP3DESMD5_DPADR		0x3A
-#define ESP3DESMD5_IPADI		0xAC
-#define ESP3DESMD5_IPADR		0x55
-#define ESP3DESMD5_HPADI		0x53
-#define ESP3DESMD5_HPADR		0x3C
-#define ESP3DESMD5_RPADI		0x35
-#define ESP3DESMD5_RPADR		0xCC
+/* IV lengths */
+#define ESP_DES_IVS		8
+#define ESP_3DES_IVS		8
 
-struct esp
+#define ESP_MAX_IVS		ESP_3DES_IVS
+
+/* Block sizes -- it is assumed that they're powers of 2 */
+#define ESP_DES_BLKS		8
+#define ESP_3DES_BLKS		8
+
+/* Various defines for the "new" ESP */
+#define ESP_NEW_ALEN		12	/* 96bits authenticator */
+#define ESP_NEW_IPAD_VAL	0x36
+#define	ESP_NEW_OPAD_VAL	0x5C
+
+struct esp_old
 {
     u_int32_t	esp_spi;	/* Security Parameters Index */
     u_int8_t	esp_iv[8];	/* iv[4] may actually be data! */
@@ -86,33 +71,13 @@ struct espstat
     u_int32_t	esps_invalid;   /* Trying to use an invalid TDB */
 };
 
-struct espdes_xdata
+struct esp_old_xdata
 {
-    int32_t     edx_ivlen;              /* 4 or 8 */
+    u_int32_t   edx_enc_algorithm;
+    int32_t     edx_ivlen;      /* 4 or 8 */
     union
     {
-	u_int8_t  Iv[8];        /* that's enough space */
-	u_int32_t Ivl;      	/* make sure this is 4 bytes */
-	u_int64_t Ivq; 		/* make sure this is 8 bytes! */
-    }Iu;
-#define edx_iv  Iu.Iv
-#define edx_ivl Iu.Ivl
-#define edx_ivq Iu.Ivq
-    union
-    {
-	u_int8_t  Rk[8];
-	u_int32_t Eks[16][2];
-    }Xu;
-#define edx_rk  Xu.Rk
-#define edx_eks Xu.Eks
-};
-
-struct esp3des_xdata
-{
-    int32_t     edx_ivlen;              /* 4 or 8 */
-    union
-    {
-	u_int8_t  Iv[8];        /* that's enough space */
+	u_int8_t  Iv[ESP_3DES_IVS]; /* that's enough space */
 	u_int32_t Ivl;      	/* make sure this is 4 bytes */
 	u_int64_t Ivq; 		/* make sure this is 8 bytes! */
     }Iu;
@@ -128,61 +93,43 @@ struct esp3des_xdata
 #define edx_eks Xu.Eks
 };
 
-struct esp3desmd5_xencap
+struct esp_old_xencap
 {
-    int8_t		edx_ivlen;		/* 0 or 8 */
-    int8_t		edx_initiator;		/* 1 if setting an I key */
-    u_int16_t	edx_keylen;
-    u_int32_t	edx_wnd;
-    u_int8_t	edx_ivv[ESP3DESMD5_IVS];
-    u_int8_t	edx_key[ESP3DESMD5_KEYSZ];
+    u_int32_t   edx_enc_algorithm;
+    u_int32_t	edx_ivlen;
+    u_int32_t	edx_keylen;
+    u_int8_t	edx_data[1];	/* IV + key material */
 };
 
-struct espdesmd5_xencap
+#define ESP_OLD_XENCAP_LEN	(3 * sizeof(u_int32_t))
+
+struct esp_new_xencap
 {
-    int8_t		edx_ivlen;		/* 0 or 8 */
-    int8_t		edx_initiator;		/* 1 if setting an I key */
-    u_int16_t	edx_keylen;
+    u_int32_t   edx_enc_algorithm;
+    u_int32_t   edx_hash_algorithm;
+    int32_t	edx_ivlen;	/* 0 or 8 */
+    u_int32_t	edx_keylen;
     u_int32_t	edx_wnd;
-    u_int8_t	edx_ivv[ESPDESMD5_IVS];
-    u_int8_t	edx_key[ESPDESMD5_KEYSZ];
+    u_int32_t   edx_flags;
+    u_int8_t	edx_data[1];	/* IV + key material */
 };
 
-#define ESPDESMD5_ULENGTH 8+ESPDESMD5_IVS+ESPDESMD5_KEYSZ
-#define ESP3DESMD5_ULENGTH 8+ESP3DESMD5_IVS+ESP3DESMD5_KEYSZ
+#define ESP_NEW_XENCAP_LEN	(6 * sizeof(u_int32_t))
 
-struct espdesmd5_xdata
+#define ESP_NEW_FLAG_AUTH	0x00000001	/* Doing authentication too */
+struct esp_new_xdata
 {
-    int32_t     edx_ivlen;          /* 0 or 8 */
-    u_int32_t   edx_rpl;		/* Replay counter */
-    u_int32_t   edx_wnd;		/* Replay window */
+    u_int32_t   edx_enc_algorithm;
+    u_int32_t   edx_hash_algorithm;
+    int32_t     edx_ivlen;      /* 0 or 8 */
+    u_int32_t   edx_rpl;	/* Replay counter */
+    u_int32_t   edx_wnd;	/* Replay window */
     u_int32_t   edx_bitmap;
+    u_int32_t   edx_flags;
     u_int32_t   edx_initial;	/* initial replay value */
     union
     {
-	u_int8_t  Iv[8];        /* that's enough space */
-	u_int32_t Ivl;      	/* make sure this is 4 bytes */
-	u_int64_t Ivq; 		/* make sure this is 8 bytes! */
-    }Iu;
-    union
-    {
-	u_int8_t  Rk[8];
-	u_int32_t Eks[16][2];
-    }Xu;
-    MD5_CTX	    edx_ictx;
-    MD5_CTX	    edx_octx;
-};
-
-struct esp3desmd5_xdata
-{
-    int32_t     edx_ivlen;          /* 0 or 4 or 8 */
-    u_int32_t   edx_rpl;		/* Replay counter */
-    u_int32_t   edx_wnd;		/* Replay window */
-    u_int32_t   edx_bitmap;
-    u_int32_t   edx_initial;
-    union
-    {
-	u_int8_t  Iv[8];        /* that's enough space */
+	u_int8_t  Iv[ESP_MAX_IVS]; /* that's enough space */
 	u_int32_t Ivl;      	/* make sure this is 4 bytes */
 	u_int64_t Ivq; 		/* make sure this is 8 bytes! */
     }Iu;
@@ -191,15 +138,28 @@ struct esp3desmd5_xdata
 	u_int8_t  Rk[3][8];
 	u_int32_t Eks[3][16][2];
     }Xu;
-    MD5_CTX		edx_ictx;
-    MD5_CTX		edx_octx;
+    union
+    {
+	struct
+	{
+    	    MD5_CTX	edx_ictx;
+    	    MD5_CTX	edx_octx;
+	} MD5stuff;
+	struct
+	{
+	    SHA1_CTX	edx_ictx;
+	    SHA1_CTX 	edx_octx;
+	} SHA1stuff;   
+    } Hashes;
 };
 
-#define ESP_FLENGTH	12
-#define ESP_ULENGTH	20		/* coming from user mode */
+#define edx_md5_ictx	Hashes.MD5stuff.edx_ictx
+#define edx_md5_octx	Hashes.MD5stuff.edx_octx
+#define edx_sha1_ictx	Hashes.SHA1stuff.edx_ictx
+#define edx_sha1_octx	Hashes.SHA1stuff.edx_octx
+
+#define ESP_OLD_FLENGTH		12
 
 #ifdef _KERNEL
-
 struct espstat espstat;
-
 #endif

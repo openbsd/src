@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.4 1997/07/01 22:12:39 provos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.5 1997/07/11 23:37:53 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -66,7 +66,7 @@ struct ifnet enc_softc;
 
 void	encattach __P((int));
 int	encoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *));
+	    	       struct rtentry *));
 int	encioctl __P((struct ifnet *, u_long, caddr_t));
 void	encrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
@@ -98,10 +98,10 @@ encattach(int nenc)
 #endif
 
     /* Just a bogus entry */
-    ifa = (struct ifaddr *)malloc(sizeof(struct ifaddr) + 
-			sizeof(struct sockaddr), M_IFADDR, M_WAITOK);
+    ifa = (struct ifaddr *) malloc(sizeof(struct ifaddr) + 
+			           sizeof(struct sockaddr), M_IFADDR, M_WAITOK);
     bzero(ifa, sizeof(struct ifaddr) + sizeof(struct sockaddr));
-    ifa->ifa_addr = ifa->ifa_dstaddr = (struct sockaddr *)(ifa + 1);
+    ifa->ifa_addr = ifa->ifa_dstaddr = (struct sockaddr *) (ifa + 1);
     ifa->ifa_ifp = &enc_softc;
     TAILQ_INSERT_HEAD(&(enc_softc.if_addrlist), ifa, ifa_list);
 }
@@ -120,7 +120,7 @@ register struct rtentry *rt;
     int s, isr;
 
     if ((m->m_flags & M_PKTHDR) == 0)
-      panic("encoutput no HDR");
+      panic("encoutput(): no HDR");
 
     ifp->if_lastchange = time;
 
@@ -139,7 +139,7 @@ register struct rtentry *rt;
 
 	m0.m_next = m;
 	m0.m_len = 4;
-	m0.m_data = (char *)&af;
+	m0.m_data = (char *) &af;
 	
 	bpf_mtap(ifp->if_bpf, &m0);
     }
@@ -239,7 +239,7 @@ caddr_t data;
 	     */
 
 	    ifp->if_flags |= IFF_UP;
-	    ifa = (struct ifaddr *)data;
+	    ifa = (struct ifaddr *) data;
 
 	    break;
 

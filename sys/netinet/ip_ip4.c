@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.10 1997/07/01 22:12:49 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.11 1997/07/11 23:37:58 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -59,6 +59,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ip4.h>
 #include <dev/rndvar.h>
+#include <sys/syslog.h>
 
 void	ip4_input __P((struct mbuf *, int));
 
@@ -81,10 +82,15 @@ ip4_input(register struct mbuf *m, int iphlen)
     /*
      * Strip IP options, if any.
      */
-    if (iphlen > sizeof (struct ip))
+    if (iphlen > sizeof(struct ip))
     {
-	ip_stripoptions(m, (struct mbuf *)0);
-	iphlen = sizeof (struct ip);
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("ip4_input(): stripping options\n");
+#endif /* ENCDEBUG */
+
+	ip_stripoptions(m, (struct mbuf *) 0);
+	iphlen = sizeof(struct ip);
     }
 	
     /*
@@ -97,24 +103,35 @@ ip4_input(register struct mbuf *m, int iphlen)
 
     ipo = mtod(m, struct ip *);
 
-    if (m->m_len < iphlen + sizeof (struct ip))
+    if (m->m_len < iphlen + sizeof(struct ip))
     {
-	if ((m = m_pullup(m, iphlen + sizeof (struct ip))) == 0)
+	if ((m = m_pullup(m, iphlen + sizeof(struct ip))) == 0)
 	{
+#ifdef ENCDEBUG
+	    if (encdebug)
+	      printf("ip4_input(): m_pullup() failed\n");
+#endif /* ENCDEBUG */
+
 	    ip4stat.ip4s_hdrops++;
 	    return;
 	}
+
 	ipo = mtod(m, struct ip *);
     }
-    ipi = (struct ip *)((caddr_t)ipo + iphlen);
+
+    ipi = (struct ip *) ((caddr_t) ipo + iphlen);
 	
     /*
      * RFC 1853 specifies that the inner TTL should not be touched on
-     * decapsulation.
+     * decapsulation. There's no reason this comment should be here, but
+     * this is as good as any a position.
      */
 
     if (ipi->ip_v != IPVERSION)
     {
+	log(LOG_WARNING,
+	    "ip4_input(): wrong version %d on IP packet from %x to %x (%x->%x)",
+	    ipi->ip_v, ipo->ip_src, ipo->ip_dst, ipi->ip_src, ipi->ip_dst);
 	ip4stat.ip4s_notip4++;
 	return;
     }
@@ -145,8 +162,13 @@ ip4_input(register struct mbuf *m, int iphlen)
 	m_freem(m);
 	ip4stat.ip4s_qfull++;
 	splx(s);
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("ip4_input(): packet dropped because of full queue\n");
+#endif /* ENCDEBUG */
 	return;
     }
+
     IF_ENQUEUE(ifq, m);
     schednetisr(NETISR_IP);
     splx(s);
@@ -165,18 +187,24 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipi = mtod(m, struct ip *);
     ilen = ntohs(ipi->ip_len);
 
-    M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
+    M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
     if (m == 0)
-      return ENOBUFS;
+    {
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("ipe4_output(): M_PREPEND failed\n");
+#endif /* ENCDEBUG */
+      	return ENOBUFS;
+    }
 
     ipo = mtod(m, struct ip *);
 	
     ipo->ip_v = IPVERSION;
     ipo->ip_hl = 5;
     ipo->ip_tos = ipi->ip_tos;
-    ipo->ip_len = htons(ilen + sizeof (struct ip));
-    /* ipo->ip_id = htons(ip_id++); */
-    get_random_bytes((void *)&(ipo->ip_id), sizeof(ipo->ip_id));
+    ipo->ip_len = htons(ilen + sizeof(struct ip));
+/*  ipo->ip_id = htons(ip_id++); */
+    get_random_bytes((void *) &(ipo->ip_id), sizeof(ipo->ip_id));
     ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* keep C and DF */
 
     if (tdb->tdb_flags & TDBF_SAME_TTL)
@@ -212,12 +240,16 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     return 0;
 
-/*	return ip_output(m, NULL, NULL, IP_ENCAPSULATED, NULL);*/
+/*  return ip_output(m, NULL, NULL, IP_ENCAPSULATED, NULL); */
 }
 
 int
 ipe4_attach()
 {
+#ifdef ENCDEBUG
+    if (encdebug)
+      printf("ipe4_attach(): setting up\n");
+#endif /* ENCDEBUG */
     return 0;
 }
 
@@ -226,8 +258,8 @@ ipe4_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 {
 #ifdef ENCDEBUG
     if (encdebug)
-      printf("ipe4_init: setting up\n");
-#endif
+      printf("ipe4_init(): setting up\n");
+#endif /* ENCDEBUG */
     tdbp->tdb_xform = xsp;
     return 0;
 }
@@ -235,15 +267,17 @@ ipe4_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 int
 ipe4_zeroize(struct tdb *tdbp)
 {
+#ifdef ENCDEBUG
+    if (encdebug)
+      printf("ipe4_zeroize(): nothing to do really...\n");
+#endif /* ENCDEBUG */
     return 0;
 }
-
-
 
 void
 ipe4_input(struct mbuf *m, ...)
 {
-    printf("ipe4_input: should never be called\n");
+    log(LOG_ALERT, "ipe4_input(): should never be called");
     if (m)
       m_freem(m);
 }

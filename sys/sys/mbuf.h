@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.4 1997/06/08 18:17:14 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.5 1997/07/11 23:37:50 provos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -123,9 +123,12 @@ struct mbuf {
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_BCAST		0x0100	/* send/received as link-level broadcast */
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
+#define M_CONF		0x0400  /* packet was encrypted (ESP-transport) */
+#define M_AUTH		0x0800  /* packet was authenticated (AH) */
+#define M_CTUN		0x1000  /* packet was encrypted (ESP-tunnel) */
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_CTUN)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
