@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:51:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/07/24 00:11:08 millert Exp $
 
 PROG=	ul
-DPADD=	${LIBTERMCAP}
-LDADD=	-ltermcap
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 
 .include <bsd.prog.mk>

@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.11 1998/03/23 21:18:22 pefo Exp $
+#	$OpenBSD: Makefile,v 1.12 1998/07/24 00:11:02 millert Exp $
 
 .include "../../Makefile.inc"
 
 CFLAGS += -I${.CURDIR} -I.
 CFLAGS +=-I${.CURDIR}/../../../lib
 CFLAGS +=-I${.CURDIR}/../../telnet
-LDADD += -locurses -ltermcap -ltelnet
-DPADD += ${LIBOLDCURSES} ${LIBTERMCAP} ${LIBTELNET}
+LDADD += -locurses -ltelnet
+DPADD += ${LIBOLDCURSES} ${LIBTELNET}
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
 SRCS += disp_asc.c ebc_disp.c

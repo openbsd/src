@@ -4,8 +4,8 @@
 PROG=	snake
 SRCS=	snake.c move.c
 MAN=	snake.6
-DPADD=	${LIBM} ${LIBTERMCAP} ${LIBCOMPAT}
-LDADD=	-lm -ltermcap -lcompat
+DPADD=	${LIBM} ${LIBCURSES} ${LIBCOMPAT}
+LDADD=	-lm -lcurses -lcompat
 HIDEGAME=hidegame
 
 .include "../../Makefile.inc"

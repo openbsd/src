@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:36:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/07/24 00:10:28 millert Exp $
 
 PROG=	grdc
 MAN=	grdc.6
-DPADD=	${LIBCURSES} ${LIBTERMLIB}
-LDADD=	-lcurses -ltermlib
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 
 .include <bsd.prog.mk>

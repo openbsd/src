@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:37:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/07/24 00:10:46 millert Exp $
 
 PROG=	worm
 MAN=	worm.6
-DPADD=	${LIBCURSES} ${LIBTERMLIB}
-LDADD=	-lcurses -ltermlib
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 HIDEGAME=hidegame
 
 .include <bsd.prog.mk>

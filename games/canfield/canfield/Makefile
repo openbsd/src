@@ -3,8 +3,8 @@
 
 PROG=	canfield
 MAN=	canfield.6
-DPADD=	${LIBCURSES} ${LIBTERMLIB}
-LDADD=	-lcurses -ltermlib
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 HIDEGAME=hidegame
 
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/06/29 23:40:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1998/07/24 00:10:48 millert Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -57,7 +57,7 @@ all: vi.h emacs.h common.h fcns.h help.h help.c
 
 
 test:	libedit.a test.o 
-	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
+	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -lcurses
 
 includes:
 	-cd ${.CURDIR}; cmp -s histedit.h ${DESTDIR}/usr/include/histedit.h > \

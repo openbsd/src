@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:35:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1998/07/24 00:10:19 millert Exp $
 
 PROG=	battlestar
 SRCS=	battlestar.c com1.c com2.c com3.c com4.c com5.c com6.c com7.c \
 	init.c cypher.c getcom.c parse.c room.c save.c fly.c misc.c \
 	globals.c dayfile.c nightfile.c dayobjs.c nightobjs.c words.c
 MAN=	battlestar.6
-DPADD=	${LIBCURSES} ${LIBTERMLIB}
-LDADD=	-lcurses -ltermlib
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 HIDEGAME=hidegame
 BINGRP=	games
 

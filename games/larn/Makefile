@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:36:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1998/07/24 00:10:33 millert Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -57,8 +57,8 @@ CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
-DPADD=	${LIBTERMCAP} ${LIBCOMPAT}
-LDADD=	-ltermcap -lcompat
+DPADD=	${LIBCURSES} ${LIBCOMPAT}
+LDADD=	-lcurses -lcompat
 HIDEGAME=hidegame
 
 beforeinstall:
