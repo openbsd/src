@@ -1,5 +1,5 @@
-/*	$OpenBSD: ext2fs_dir.h,v 1.4 2000/04/26 23:24:40 jasoni Exp $	*/
-/*	$NetBSD: ext2fs_dir.h,v 1.1 1997/06/11 09:33:50 bouyer Exp $	*/
+/*	$OpenBSD: ext2fs_dir.h,v 1.5 2001/09/18 00:25:59 art Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -50,7 +50,7 @@
  * Theoretically, directories can be more than 2Gb in length, however, in
  * practice this seems unlikely. So, we define the type doff_t as a 32-bit
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
-*/
+ */
 #define	doff_t		int32_t
 #define	EXT2FS_MAXDIRSIZE	(0x7fffffff)
 
@@ -76,6 +76,9 @@
  * a directory block is free, then its dp->e2d_ino is set to 0.
  * Entries other than the first in a directory do not normally have
  * dp->e2d_ino set to 0.
+ * Ext2 rev 0 has a 16 bits e2d_namlen. For Ext2 vev 1 this has been split
+ * into a 8 bits e2d_namlen and 8 bits e2d_type (looks like ffs, isnt't it ? :)
+ * It's safe to use this for rev 0 as well because all ext2 are little-endian.
  */
 
 #define	EXT2FS_MAXNAMLEN	255
@@ -97,6 +100,7 @@ struct	ext2fs_direct {
 #define EXT2_FT_FIFO            5
 #define EXT2_FT_SOCK            6
 #define EXT2_FT_SYMLINK         7
+
 #define EXT2_FT_MAX             8
 
 #define E2IFTODT(mode)    (((mode) & 0170000) >> 12)
