@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.2 1999/11/26 17:45:57 mickey Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.3 2001/01/12 22:56:03 mickey Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
  * This sun version based on i386 version 1.30.
  */
 
-/* #define I82596_DEBUG */
+/* #define I82596_DEBUG*/
 
 /* Debug elements */
 #define	IED_RINT	0x01
