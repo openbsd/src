@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.115 2002/09/22 22:42:25 krw Exp $
+#	$OpenBSD: install.sh,v 1.116 2002/09/24 01:26:15 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -94,6 +94,7 @@ if [ ! -f /etc/fstab ]; then
 
 	while : ; do
 		_DKDEVS=`rmel "$DISK" $_DKDEVS`
+		_DKDEVS=${_DKDEVS% }
 		[ "$_DKDEVS" ] || break
 
 		# Always do ROOTDISK first, and repeat until
@@ -103,7 +104,7 @@ if [ ! -f /etc/fstab ]; then
 			rm -f /tmp/fstab
 			rm -f $FILESYSTEMS
 		else
-			ask_fordev "Which disk do you wish to initialize?" "$_DKDEVS"
+			ask_which "disk" "do you wish to initialize?" "$_DKDEVS"
 			[ "$resp" = "done" ] && break
 		fi
 
