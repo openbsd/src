@@ -1,3 +1,4 @@
+/*	$OpenBSD: glob.h,v 1.2 1997/09/01 18:40:35 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -65,6 +66,7 @@ typedef struct {
 	int (*gl_stat) __P((const char *, struct stat *));
 } glob_t;
 
+/* Flags */
 #define	GLOB_APPEND	0x0001	/* Append to output from previous call. */
 #define	GLOB_DOOFFS	0x0002	/* Use gl_offs. */
 #define	GLOB_ERR	0x0004	/* Return on error. */
@@ -81,8 +83,11 @@ typedef struct {
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
 #endif
 
+/* Error values returned by glob(3) */
 #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
-#define	GLOB_ABEND	(-2)	/* Unignored error. */
+#define	GLOB_ABORTED	(-2)	/* Unignored error. */
+#define	GLOB_NOMATCH	(-3)	/* No match and GLOB_NOCHECK not set. */
+#define	GLOB_NOSYS	(-4)	/* Function not supported. */
 
 __BEGIN_DECLS
 int	glob __P((const char *, int, int (*)(const char *, int), glob_t *));

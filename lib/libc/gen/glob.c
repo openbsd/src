@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.5 1997/04/12 19:05:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.6 1997/09/01 18:40:33 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -194,9 +194,9 @@ glob(pattern, flags, errfunc, pglob)
 	*bufnext = EOS;
 
 	if (flags & GLOB_BRACE)
-	    return globexp1(patbuf, pglob);
+		return globexp1(patbuf, pglob);
 	else
-	    return glob0(patbuf, pglob);
+		return glob0(patbuf, pglob);
 }
 
 /*
@@ -473,12 +473,15 @@ glob0(pattern, pglob)
 	 * and the pattern did not contain any magic characters
 	 * GLOB_NOMAGIC is there just for compatibility with csh.
 	 */
-	if (pglob->gl_pathc == oldpathc &&
-	    ((pglob->gl_flags & GLOB_NOCHECK) ||
-	      ((pglob->gl_flags & GLOB_NOMAGIC) &&
-	       !(pglob->gl_flags & GLOB_MAGCHAR))))
-		return(globextend(pattern, pglob));
-	else if (!(pglob->gl_flags & GLOB_NOSORT))
+	if (pglob->gl_pathc == oldpathc) {
+		if ((pglob->gl_flags & GLOB_NOCHECK) ||
+		    ((pglob->gl_flags & GLOB_NOMAGIC) &&
+		    !(pglob->gl_flags & GLOB_MAGCHAR)))
+			return(globextend(pattern, pglob));
+		else
+			return(GLOB_NOMATCH);
+	}
+	if (!(pglob->gl_flags & GLOB_NOSORT))
 		qsort(pglob->gl_pathv + pglob->gl_offs + oldpathc,
 		    pglob->gl_pathc - oldpathc, sizeof(char *), compare);
 	return(0);
@@ -587,7 +590,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 			g_Ctoc(pathbuf, buf);
 			if (pglob->gl_errfunc(buf, errno) ||
 			    pglob->gl_flags & GLOB_ERR)
-				return (GLOB_ABEND);
+				return (GLOB_ABORTED);
 		}
 		return(0);
 	}
@@ -675,6 +678,7 @@ globextend(path, pglob)
 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
 	return(copy == NULL ? GLOB_NOSPACE : 0);
 }
+
 
 /*
  * pattern matching function for filenames.  Each occurrence of the *
