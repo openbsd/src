@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.6 2000/03/18 22:56:03 aaron Exp $
+.\"	$OpenBSD: ping6.8,v 1.7 2000/03/23 11:26:17 hugh Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -142,9 +142,10 @@ or link-local/site-local unicast address.
 .It Fl i Ar wait
 Wait
 .Ar wait
-seconds
-.Em between sending each packet .
+seconds between sending each packet.
 The default is to wait for one second between each packet.
+The wait time may be fractional, but only the super-user may specify
+a value less than one second.
 This option is incompatible with the
 .Fl f
 option.

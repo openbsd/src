@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.4 2000/02/28 14:06:39 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.5 2000/03/23 11:26:18 hugh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -121,6 +121,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -206,7 +207,7 @@ long npackets;			/* max packets to transmit */
 long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
-int interval = 1;		/* interval between packets */
+double interval = 1;		/* interval between packets */
 int hoplimit = -1;		/* hoplimit */
 
 /* timing */
@@ -214,6 +215,7 @@ int timing;			/* flag to do timing */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
+double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
 
 /* for node addresses */
 u_short naflags;
@@ -367,10 +369,18 @@ main(argc, argv)
 #endif
 			break;
 		case 'i':		/* wait between sending packets */
-			interval = strtol(optarg, &e, 10);
-			if (interval <= 0 || *optarg == '\0' || *e != '\0')
-				errx(1,
-				    "illegal timing interval -- %s", optarg);
+			interval = strtod(optarg, NULL);
+
+			if (interval <= 0 || interval >= INT_MAX)
+				errx(1, "bad timing interval: %s", optarg);
+
+			if (interval < 1)
+				if (getuid())
+					errx(1, "%s: only root may use interval < 1s", strerror(EPERM));
+
+			if (interval < 0.01)
+				interval = 0.01;
+
 			options |= F_INTERVAL;
 			break;
 		case 'l':
@@ -831,8 +841,9 @@ main(argc, argv)
 
 	if ((options & F_FLOOD) == 0) {
 		(void)signal(SIGALRM, onalrm);
-		itimer.it_interval.tv_sec = interval;
-		itimer.it_interval.tv_usec = 0;
+		itimer.it_interval.tv_sec = (long)interval;
+		itimer.it_interval.tv_usec =
+		    (long)((interval - itimer.it_interval.tv_sec) * 1000000);
 		itimer.it_value.tv_sec = 0;
 		itimer.it_value.tv_usec = 1;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
@@ -1047,6 +1058,7 @@ pr_pack(buf, cc, mhdr)
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
+			tsumsq += triptime * triptime;
 			if (triptime < tmin)
 				tmin = triptime;
 			if (triptime > tmax)
@@ -1450,9 +1462,12 @@ summary()
 	(void)putchar('\n');
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
-		i = 1000.0 * tsum / (nreceived + nrepeats);
-		(void)printf("round-trip min/avg/max = %g/%g/%g ms\n",
-		    tmin, ((double)i) / 1000.0, tmax);
+		double num = nreceived + nrepeats;
+		double avg = tsum / num;
+		double dev = sqrt(tsumsq / num - avg * avg);
+		(void)printf(
+		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax, dev);
 		(void)fflush(stdout);
 	}
 }
