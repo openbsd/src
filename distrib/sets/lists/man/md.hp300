@@ -5,3 +5,7 @@
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/ldconfig.0
+./usr/share/info/as.info-1
+./usr/share/info/bfd.info-1
+./usr/share/info/binutils.info-1
+./usr/share/info/ld.info-1

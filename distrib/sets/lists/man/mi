@@ -3,9 +3,6 @@
 ./usr/share/info/amdref.info-1
 ./usr/share/info/amdref.info-2
 ./usr/share/info/amdref.info-3
-./usr/share/info/as.info-1
-./usr/share/info/bfd.info-1
-./usr/share/info/binutils.info-1
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
 ./usr/share/info/cpp.info-2
@@ -118,7 +115,6 @@
 ./usr/share/info/info-stnd.info-2
 ./usr/share/info/info-stnd.info-3
 ./usr/share/info/info.info
-./usr/share/info/ld.info-1
 ./usr/share/info/libiberty.info
 ./usr/share/info/readline.info
 ./usr/share/info/stabs.info-1
