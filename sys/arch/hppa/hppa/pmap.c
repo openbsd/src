@@ -1,7 +1,7 @@
-/*	$OpenBSD: pmap.c,v 1.16 1999/06/30 18:59:06 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 1999/07/21 07:37:20 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,6 +119,12 @@
  *		improvement may be achieved should we use smth else
  *	protection id (pid) allocation should be done in a pid_t fashion
  */
+/*
+ * References:
+ * 1. PA7100LC ERS, Hewlett-Packard, March 30 1999, Public version 1.0
+ * 2. PA7300LC ERS, Hewlett-Packard, March 18 1996, Version 1.0
+ *
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +166,7 @@ int pmapdebug = 0
 	| PDB_FOLLOW
 /*	| PDB_VA */
 /*	| PDB_PV */
-/* 	| PDB_INIT */
+/*	| PDB_INIT */
 /*	| PDB_ENTER */
 /*	| PDB_REMOVE */
 /*	| PDB_STEAL */
@@ -174,13 +180,6 @@ long equiv_end = 0;
 struct pmap	kernel_pmap_store;
 pmap_t		kernel_pmap;
 boolean_t	pmap_initialized = FALSE;
-
-/*
- * Hashed (Hardware) Page Table, for use as a software cache, or as a
- * hardware accessible cache on machines with hardware TLB walkers.
- */
-struct hpt_entry *hpt_table;
-u_int hpt_hashsize;
 
 TAILQ_HEAD(, pmap)	pmap_freelist;	/* list of free pmaps */
 u_int pmap_nfree;
@@ -219,13 +218,33 @@ u_int	kern_prot[8], user_prot[8];
 #define	pmap_sid(pmap, va) \
 	(((va & 0xc0000000) != 0xc0000000)? pmap->pmap_space : HPPA_SID_KERNEL)
 
+/*
+ * This hash function is the one used by the hardware TLB walker on the 7100LC.
+ */
+static __inline__ struct hpt_entry *
+pmap_hash(pa_space_t sp, vaddr_t va)
+{
+	register struct hpt_entry *hpt;
+	__asm __volatile (
+		"extru	%2, 23, 20, %%r22\n\t"	/* r22 = (va >> 8) */
+		"zdep	%1, 26, 16, %%r23\n\t"	/* r23 = (sp << 5) */
+		"dep	%%r0, 31, 4, %%r22\n\t"	/* r22 &= ~0xf */
+		"xor	%%r22,%%r23, %%r23\n\t"	/* r23 ^= r22 */
+		"mfctl	%%cr24, %%r22\n\t"	/* r22 = sizeof(HPT)-1 */
+		"and	%%r22,%%r23, %%r23\n\t"	/* r23 &= r22 */
+		"mfctl	%%cr25, %%r22\n\t"	/* r22 = addr of HPT table */
+		"or	%%r23, %%r22, %0"	/* %0 = HPT entry */
+		: "=r" (hpt) : "r" (sp), "r" (va) : "r22", "r23");
+	return hpt;
+}
+
 static __inline void
 pmap_enter_va(space, va, pv)
 	pa_space_t space;
 	vaddr_t va;
 	struct pv_entry *pv;
 {
-	register struct hpt_entry *hpt = &hpt_table[pmap_hash(space, va)];
+	register struct hpt_entry *hpt = pmap_hash(space, va);
 #if defined(PMAPDEBUG) || defined(DIAGNOSTIC)
 	register struct pv_entry *pvp =	hpt->hpt_entry;
 #endif
@@ -251,8 +270,7 @@ pmap_find_va(space, va)
 	pa_space_t space;
 	vaddr_t va;
 {
-	register struct pv_entry *pvp =
-		hpt_table[pmap_hash(space, va)].hpt_entry;
+	register struct pv_entry *pvp =	pmap_hash(space, va)->hpt_entry;
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW && pmapdebug & PDB_VA)
@@ -269,8 +287,7 @@ static __inline void
 pmap_remove_va(pv)
 	struct pv_entry *pv;
 {
-	register struct hpt_entry *hpt =
-		&hpt_table[pmap_hash(pv->pv_space, pv->pv_va)];
+	register struct hpt_entry *hpt = pmap_hash(pv->pv_space, pv->pv_va);
 	register struct pv_entry **pvp = (struct pv_entry **)&hpt->hpt_entry;
 
 #ifdef PMAPDEBUG
@@ -305,10 +322,10 @@ pmap_clear_va(space, va)
 	pa_space_t space;
 	vaddr_t va;
 {
-	register int hash = pmap_hash(space, va);
+	register struct hpt_entry *hpt = pmap_hash(space, va);
 
-	hpt_table[hash].hpt_valid = 0;
-	hpt_table[hash].hpt_space = -1;
+	hpt->hpt_valid = 0;
+	hpt->hpt_space = -1;
 }
 
 static __inline void
@@ -630,6 +647,7 @@ pmap_bootstrap(vstart, vend)
 	vaddr_t addr;
 	vm_size_t size;
 	struct pv_page *pvp;
+	struct hpt_entry *hptp;
 	int i;
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -679,39 +697,39 @@ pmap_bootstrap(vstart, vend)
 	/*
 	 * Allocate various tables and structures.
 	 */
-	addr = *vstart;
+	addr = hppa_round_page(*vstart);
 	virtual_end = *vend;
-	pvp = (struct pv_page *)cache_align(addr);
+	pvp = (struct pv_page *)addr;
 
-	size = sizeof(struct hpt_entry) * hpt_hashsize;
-	addr = (addr + size-1) & ~(size-1); /* !!! hpt_hashsize is 2^n */
-	TAILQ_INIT(&pv_page_freelist);
+	mfctl(CR_HPTMASK, size);
+	addr = (addr + size) & ~(size);
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_bootstrap: allocating %d pv_pages\n",
 		       (struct pv_page *)addr - pvp);
 #endif
+	TAILQ_INIT(&pv_page_freelist);
 	for (; pvp + 1 <= (struct pv_page *)addr; pvp++)
 		pmap_insert_pvp(pvp, 1);
 
 	/* Allocate the HPT */
-	hpt_table = (struct hpt_entry *) addr;
-	for (i = 0; i < hpt_hashsize; i++) {
-		hpt_table[i].hpt_valid   = 0;
-		hpt_table[i].hpt_vpn     = 0;
-		hpt_table[i].hpt_space   = -1;
-		hpt_table[i].hpt_tlbpage = 0;
-		hpt_table[i].hpt_tlbprot = 0;
-		hpt_table[i].hpt_entry   = NULL;
+	for (hptp = (struct hpt_entry *)addr;
+	     ((u_int)hptp - addr) <= size; hptp++) {
+		hptp->hpt_valid   = 0;
+		hptp->hpt_vpn     = 0;
+		hptp->hpt_space   = -1;
+		hptp->hpt_tlbpage = 0;
+		hptp->hpt_tlbprot = 0;
+		hptp->hpt_entry   = NULL;
 	}
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_INIT)
-		printf("hpt_table: 0x%x @ %p\n", size, addr);
+		printf("hpt_table: 0x%x @ %p\n", size + 1, addr);
 #endif
-	addr += size;
 	/* load cr25 with the address of the HPT table
 	   NB: It sez CR_VTOP, but we (and the TLB handlers) know better ... */
-	mtctl(hpt_table, CR_VTOP);
+	mtctl(addr, CR_VTOP);
+	addr += size + 1;
 
 	/*
 	 * we know that btlb_insert() will round it up to the next
@@ -1558,20 +1576,24 @@ kvtop(va)
 void
 pmap_hptdump()
 {
-	register struct hpt_entry *hpt;
+	register struct hpt_entry *hpt, *ehpt;
 	register struct pv_entry *pv;
 
-	printf("HPT dump\n");
-	for (hpt = hpt_table; hpt < &hpt_table[hpt_hashsize]; hpt++)
+	mfctl(CR_HPTMASK, ehpt);
+	mfctl(CR_VTOP, hpt);
+	ehpt = (struct hpt_entry *)((int)hpt + (int)ehpt + 1);
+	printf("HPT dump %p-%p:\n", hpt, ehpt);
+	for (; hpt < ehpt; hpt++)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
 			printf("hpt@%p: %x{%svalid,v=%x:%x}, prot=%x, pa=%x\n",
 			       hpt, *(u_int *)hpt, (hpt->hpt_valid?"":"in"),
 			       hpt->hpt_space, hpt->hpt_vpn,
 			       hpt->hpt_tlbprot, hpt->hpt_tlbpage);
 			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
-				printf("    pv={%p,%x:%x,%x,%x}\n",
+				printf("    pv={%p,%x:%x,%x,%x}->%p\n",
 				       pv->pv_pmap, pv->pv_space, pv->pv_va,
-				       pv->pv_tlbprot, pv->pv_tlbpage);
+				       pv->pv_tlbprot, pv->pv_tlbpage,
+				       pv->pv_hash);
 		}
 }
 #endif

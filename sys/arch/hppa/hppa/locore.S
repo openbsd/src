@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 1999/07/18 04:42:28 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 1999/07/21 07:37:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -72,6 +72,11 @@
 #endif
 #include "assym.h"
 
+
+	/* this macro determines when to use cr28 (ie HVT works) */
+#define	USECR28	((defined(HP7100LC_CPU) || defined(HP7300LC_CPU)) && \
+	!(defined(HP71000_CPU) || defined(HP7200_CPU) || defined(HP7300_CPU)))
+
 	.import	$global$, data
 	.import pdc, data
 	.import	boothowto, data
@@ -105,8 +110,7 @@ intr_stack_red
 
 
 /*
-
-	 * This is the starting location for the kernel
+ * This is the starting location for the kernel
  */
 ENTRY($start)
 /*
@@ -799,167 +803,160 @@ $sfu_emu
 	ldo	1(r0), ret0	/* none supported by now */
 
 	/* Compute the hpt entry ptr */
-#if 1
 #define	HPTENT ! \
-	extru	r9,19,20,r16  		/* r16 = (offset >> 12) */	! \
-	zdep	r8,26,16,r24	     	/* r24 = (space << 5) */	! \
-	mfctl	hptmask,r17		/* r17 = sizeof(HPT)-1 */	! \
-	xor	r16,r24,r24		/* r24 ^= r16 */		! \
-	and	r17,r24,r24		/* r24 &= r17 */		! \
-	mfctl	vtop,r16		/* r16 = address of HPT table */! \
-	zdep	r24,27,28,r17		/* r24 <<= 4 */			! \
-	add	r17,r16,r24		/* r24 = HPT entry */
-#else
-#define	HPTENT ! \
-	mfctl	cr28, r24
-#endif
+	extru	r9, 23, 24, r16  	/* r17 = (offset >> 8) */	! \
+	zdep	r8, 26, 16, r24	     	/* r24 = (space << 5) */	! \
+	mfctl	hptmask, r17		/* r17 = sizeof(HPT)-1 */	! \
+	xor	r16, r24, r24		/* r24 ^= r16 */		! \
+	and	r17, r24, r24		/* r24 &= r17 */		! \
+	mfctl	vtop, r16		/* r16 = address of HPT table */! \
+	or	r16, r24, r24		/* r24 = HPT entry */		! \
+	mtctl	r24, cr28
 
+	/* Construct the virtual address tag. */
+#define	VTAG ! \
+	extru	r9,14,15,r16		   /* r16 = off[0..14] */	! \
+	zdep	r16,15,15,r16		   /* r16 = tag[1..15] */	! \
+	dep	r8,31,16,r16		   /* put in the space id */	! \
+	depi	1,0,1,r16		   /* and set the valid bit */
+
+
+	.align	64
 	.export	TLABEL(tlbd), code
 TLABEL(tlbd)
 	mfctl	ior, r9		/* Offset */
 	mfctl	isr, r8		/* Space  */
+	depi    0, 31, 12, r9	/* Clear the byte offset into the page */
 
-	mfsp	sr1, r25	/* Need a space reg, so save it in a shadow */
-	mtsp	r8, sr1		/* Put the space id where we can use it */
-
-	depi    0,31,12,r9	/* Clear the byte offset into the page */
-
-	HPTENT
-
-	/* Construct the virtual address tag. */
-	extru	r9,14,15,r16		   /* r16 = off[0..14] */
-	zdep	r16,15,15,r16		   /* r16 = tag[1..15] */
-	or	r16,r8,r16		   /* or in the space id */
-	depi	1,0,1,r16		   /* and set the valid bit */
-
-	mtctl	r16, tr6
-	mtctl	r24, tr5
+#if USECR28
+	mfctl	cr28, r24
+#else
+	HPTENT	/* will update cr28 */
+#endif
 	
 	/*
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
 	 */
-	ldw	hpt_entry(r24),r24
+	ldw	hpt_entry(r24), r24
 $hash_loop_tlbd
-	comb,=	r0, r24, TLABEL(all)
-	mtsp	r25, sr1
-	ldw     pv_va(r24),r16
-	comb,<>,n r9,r16,$hash_loop_tlbd
-	ldw	pv_hash(r24),r24
-	ldw     pv_space(r24),r16
-	comb,<>,n r8,r16,$hash_loop_tlbd
-	ldw	pv_hash(r24),r24
+	comb,=,n r0, r24, TLABEL(all)
+	ldw     pv_va(r24), r25
+	ldw     pv_space(r24), r17
+	comb,<>,n r9, r25, $hash_loop_tlbd
+	ldw	pv_hash(r24), r24
+	comb,<>,n r8, r17, $hash_loop_tlbd
+	ldw	pv_hash(r24), r24
 
-	/*
-	 * Set the dirty bit for this physical page.
-	 */
-	ldw	pv_tlbprot(r24), r16
+#if ! USECR28
+	VTAG	/* (r8,r9) -> r16 */
+#endif
+	/* Set the dirty bit for this physical page. */
 	ldw	pv_tlbpage(r24), r17
-	depi	1,TLB_DIRTY_POS,1, r16
-
+	ldw	pv_tlbprot(r24), r25
 	b	$tlb_inshpt
-	stw	r16, pv_tlbprot(r24)
+	depi	1, TLB_DIRTY_POS, 1, r25
 	
-
+	.align	32
 	.export	TLABEL(itlb), code
 TLABEL(itlb)
 	mfctl	pcoq,r9		/* Offset */
-	b	$tlbmiss
 	mfctl	pcsq,r8		/* Space  */
+	depi    0,31,12,r9	/* Clear the byte offset into the page */
 
+#if USECR28
+	HPTENT	/* will update cr28 */
+#endif
+	b,n	$tlbmiss
+
+	.align	32
 	.export	TLABEL(dtlb), code
 TLABEL(dtlb)
 	mfctl	ior, r9		/* Offset */
 	mfctl	isr, r8		/* Space  */
+	depi    0,31,12,r9	/* Clear the byte offset into the page */
+
+#if USECR28
+	mfctl	cr28, r24
+#endif
 	/* FALL THROUGH */
 
 $tlbmiss
 	/* r1 is the trap type
 	 * r8 is the space of the address that had the TLB miss
 	 * r9 is the offset of the address that had the TLB miss
+	 * r24 is the correspondent HPT entry pointer
 	 */
 
-	mfsp	sr1, r25	/* Need a space reg, so save it in a shadow */
-	mtsp	r8, sr1		/* Put the space id where we can use it */
-
-	depi    0,31,12,r9	/* Clear the byte offset into the page */
-
-	HPTENT
-
-	/* Construct the virtual address tag. */
-	extru	r9,14,15,r16		   /* r16 = off[0..14] */
-	zdep	r16,15,15,r16		   /* r16 = tag[1..15] */
-	or	r16,r8,r16		   /* or in the space id */
-	depi	1,0,1,r16		   /* and set the valid bit */
+#if ! USECR28
+	HPTENT	/* will update cr28 */
+	
+	ldw	hpt_tag(r24),r17
+	VTAG	/* (r8,r9) -> r16 */
 
 	/* Compare the tag against the HPT entry.
 	   If it matches, then do the TLB insertion. */
-	ldw	hpt_tag(r24),r17
-	comb,=,n r16,r17,$tlb_gothpt
+	comb,<>,n r16, r17, $tlb_gottalook
 
-	/*
-	 * Okay, so we missed in the HPT cache. Stash away the HPT entry
-	 * pointer and the virtual tag for later ...
-	 *
-	 * Switch r24 to point to the corresponding VTOP table entry so
-	 * we can move onto chasing the hash chain.
-	 */
-	mtctl	r16, tr6
-	mtctl	r24, tr5
+	ldw	hpt_tlbpage(r24), r17
+	b	$tlb_gothpt
+	ldw	hpt_tlbprot(r24), r25
 
+$tlb_gottalook
+#endif
 	/*
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
 	 */
 	ldw	hpt_entry(r24),r24
 $hash_loop
-	comb,=	r0, r24, TLABEL(all)
-	mtsp	r25, sr1
-	ldw     pv_va(r24),r16
-	comb,<>,n r9,r16,$hash_loop
+	comb,=,n r0, r24, TLABEL(all)
+	ldw     pv_va(r24),r25
+	ldw     pv_space(r24),r17
+	comb,<>,n r9,r25,$hash_loop
 	ldw	pv_hash(r24),r24
-	ldw     pv_space(r24),r16
-	comb,<>,n r8,r16,$hash_loop
+	comb,<>,n r8,r17,$hash_loop
 	ldw	pv_hash(r24),r24
 
 	/* Now set things up to enter the real mapping that we want */
-	ldw	pv_tlbprot(r24),r16
-	depi	1,TLB_REF_POS,1,r16
-	stw	r16, pv_tlbprot(r24)
 	ldw	pv_tlbpage(r24),r17
+	ldw	pv_tlbprot(r24),r25
+	depi	1, TLB_REF_POS, 1, r25
 
 	/*
 	 * Load the HPT cache with the miss information for the next time.
-	 * The HTP entry address and virtual tag were saved above in
-	 * control registers.
+	 * The HPT entry address was saved by the HPTENT
 	 */
 $tlb_inshpt
-	mfctl	tr6, r8
-	mfctl	tr5, r24
+	stw	r25, pv_tlbprot(r24)
+#if USECR28
+	VTAG	/* (r8,r9) -> r16 */
+#endif
+	mfctl	cr28, r24
 
-	stw	r16,hpt_tlbprot(r24)
-	stw	r17,hpt_tlbpage(r24)
-	b	$tlb_gothptld
-	stw	r8,hpt_tag(r24)
+	stw	r16, hpt_tag(r24)
+	stw	r25, hpt_tlbprot(r24)
+	stw	r17, hpt_tlbpage(r24)
 
 $tlb_gothpt
-	ldw	hpt_tlbpage(r24),r17
-	ldw	hpt_tlbprot(r24),r16
+	mfsp	sr1, r16
+	mtsp	r8, sr1
+	
+	comib,=,n T_ITLBMISS, r1, $itlb
 
-$tlb_gothptld
-	comib,=,n T_ITLBMISS,r1,$itlb
 	idtlba	r17,(sr1, r9)
 	b	$tlbret
-	idtlbp	r16,(sr1, r9)
+	idtlbp	r25,(sr1, r9)
 $itlb
 	iitlba	r17,(sr1, r9)
-	iitlbp	r16,(sr1, r9)
+	iitlbp	r25,(sr1, r9)
 
 	/* And return ... */
 $tlbret
-	mtsp	r25, sr1
+	mtsp	r16, sr1
 	rfir
-	mfctl	tr7, r1
+	nop
+$tlb_missend
 
 	.export	TLABEL(ibreak), code
 TLABEL(ibreak)
@@ -1031,7 +1028,7 @@ TLABEL(all)
 	 *	trap number in r1 (old r1 is saved in tr7)
 	 */
 
-	mtctl	sp, tr4
+	mtctl	sp, tr3	/* do not overwrite cr28 */
 	mtctl	t1, tr5
 	mtctl	t2, tr6
 
@@ -1064,7 +1061,7 @@ $trap_trap
 	copy	r1, arg0
 	mfctl	tr7, r1
 
-	mfctl	tr4,t1
+	mfctl	tr3,t1
 	stw	t1,TF_R30(t2)
 
 	mfctl	tr5,t1
@@ -1285,6 +1282,9 @@ $trapnowvirt
 
 	mfctl	vtop, t1
 	stw	t1, TF_CR25(t2)
+
+	mfctl	cr28, t1
+	stw	t1, TF_CR28(t2)
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 1999/07/12 18:16:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 1999/07/21 07:37:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -78,6 +78,8 @@
  *
  * 	Utah $Hdr: model_dep.c 1.34 94/12/14$
  */
+
+#undef	BTLBDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,6 +222,7 @@ int bus_mem_add_mapping __P((bus_addr_t bpa, bus_size_t size, int cacheable,
 /* wide used hardware params */
 struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
 struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
+struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 
 void
 hppa_init(start)
@@ -251,6 +254,18 @@ hppa_init(start)
 	dcache_size = pdc_cache.dc_size;
 	dcache_stride = pdc_cache.dc_stride;
 	icache_stride = pdc_cache.ic_stride;
+
+	/*
+	 * get cache coherence parameters
+	 */
+	pdcerr = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_SETCS,
+			  &pdc_coherence, 1, 1, 1, 1);
+#ifdef DEBUG
+	printf ("PDC_CACHE_SETCS: %d, %d, %d, %d (%d)\n",
+		pdc_coherence.ia_cst, pdc_coherence.da_cst,
+		pdc_coherence.ita_cst, pdc_coherence.dta_cst,
+		pdcerr);
+#endif
 
 	/*
 	 * Fetch BTLB params
@@ -306,8 +321,8 @@ hppa_init(start)
 	}
 
 	/* calculate HPT size */
-	hpt_hashsize = totalphysmem;
-	mtctl(hpt_hashsize - 1, CR_HPTMASK);
+	for (usehpt = 1; usehpt < totalphysmem; usehpt *= 2);
+	mtctl(usehpt - 1, CR_HPTMASK);
 
 	/*
 	 * If we want to use the HW TLB support, ensure that it exists.
@@ -317,19 +332,18 @@ hppa_init(start)
 		printf("WARNING: no HW tlb walker\n");
 		usehpt = 0;
 	} else {
-		usehpt = 1;
 #ifdef PMAPDEBUG
 		printf("hwtlb: %u-%u, %u/",
-		       pdc_hwtlb.min_size, pdc_hwtlb.max_size, hpt_hashsize);
+		       pdc_hwtlb.min_size, pdc_hwtlb.max_size, usehpt);
 #endif
-		if (hpt_hashsize > pdc_hwtlb.max_size)
-			hpt_hashsize = pdc_hwtlb.max_size;
-		else if (hpt_hashsize < pdc_hwtlb.min_size)
-			hpt_hashsize = pdc_hwtlb.min_size;
+		if (usehpt > pdc_hwtlb.max_size)
+			usehpt = pdc_hwtlb.max_size;
+		else if (usehpt < pdc_hwtlb.min_size)
+			usehpt = pdc_hwtlb.min_size;
 #ifdef PMAPDEBUG
-		printf("%u (0x%x)\n", hpt_hashsize,
-		       hpt_hashsize * sizeof(struct hpt_entry));
+		printf("%u\n", usehpt);
 #endif
+		mtctl(usehpt - 1, CR_HPTMASK);
 	}
 	
 	vstart = hppa_round_page(start);
@@ -387,16 +401,18 @@ hppa_init(start)
 #endif
 	/* Turn on the HW TLB assist */
 	if (usehpt) {
+		int hpt, hptsize;
+		mfctl(CR_VTOP, hpt);
+		mfctl(CR_HPTMASK, hptsize);
+		hptsize++;
 		if ((pdcerr = pdc_call((iodcio_t)pdc, 0, PDC_TLB,
-				       PDC_TLB_CONFIG, &pdc_hwtlb, hpt_table,
-				       sizeof(struct hpt_entry) * hpt_hashsize,
-				       PDC_TLB_WORD3)) < 0) {
+				       PDC_TLB_CONFIG, &pdc_hwtlb, hpt,
+				       hptsize, PDC_TLB_CURRPDE)) < 0) {
 			printf("Warning: HW TLB init failed (%d), disabled\n",
 			       pdcerr);
-			usehpt = 0;
 		} else
 			printf("HW TLB(%d entries at 0x%x) initialized (%d)\n",
-			       hpt_hashsize, hpt_table, pdcerr);
+			       hptsize / sizeof(struct hpt_entry), hpt, pdcerr);
 	}
 
         /*
@@ -906,7 +922,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 					    	pmap_prot(kernel_pmap,
 							  VM_PROT_ALL)) < 0)
 					return -1;
-				pa = spa += len - 1;
+				pa = spa + len - 1;
 #ifdef BTLBDEBUG
 				printf ("------ %d/%d, %qx, %qx-%qx",
 					flex, HPPA_FLEX(pa), pa, spa, epa);
@@ -918,6 +934,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 #endif
 					bmm[flex / 8] |= (1 << (flex & 3));
 				}
+				spa = pa;
 			}
 #ifdef BTLBDEBUG
 			printf ("\n");
