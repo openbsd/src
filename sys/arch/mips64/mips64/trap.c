@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2004/11/09 19:06:18 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2004/11/11 19:00:37 kettenis Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -586,6 +586,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		struct uio uio;
 		struct iovec iov;
 		struct trap_frame *locr0 = p->p_md.md_regs;
+		int error;
 
 		/* compute address of break instruction */
 		va = (caddr_t)trapframe->pc;
@@ -636,10 +637,10 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 				uio.uio_segflg = UIO_SYSSPACE;
 				uio.uio_rw = UIO_WRITE;
 				uio.uio_procp = curproc;
-				i = procfs_domem(p, p, NULL, &uio);
+				error = procfs_domem(p, p, NULL, &uio);
 				Mips_SyncCache();
 
-				if (i < 0)
+				if (error)
 					printf("Warning: can't restore instruction at %x: %x\n",
 					    p->p_md.md_ss_addr,
 					    p->p_md.md_ss_instr);
@@ -1051,7 +1052,7 @@ cpu_singlestep(p)
 {
 	vaddr_t va;
 	struct trap_frame *locr0 = p->p_md.md_regs;
-	int i;
+	int error;
 	int bpinstr = BREAK_SSTEP;
 	int curinstr;
 	struct uio uio;
@@ -1083,7 +1084,7 @@ cpu_singlestep(p)
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
 		return (EFAULT);
 	}
-	p->p_md.md_ss_addr = va;
+
 	/*
 	 * Fetch what's at the current location.
 	 */
@@ -1110,11 +1111,12 @@ cpu_singlestep(p)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
-	i = procfs_domem(curproc, p, NULL, &uio);
+	error = procfs_domem(curproc, p, NULL, &uio);
 	Mips_SyncCache();
-
-	if (i < 0)
+	if (error)
 		return (EFAULT);
+
+	p->p_md.md_ss_addr = va;
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
