@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.24 2002/04/24 18:10:25 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.25 2002/05/06 15:49:54 jasoni Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -334,7 +334,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	}
 
  insert:
-	/* Update maxmimum data size */
+	/* Update maximum data size */
 	if (frag->fr_max < max)
 		frag->fr_max = max;
 	/* This is the last segment */
