@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sb.4,v 1.8 2000/07/05 13:46:53 aaron Exp $
+.\"	$OpenBSD: sb.4,v 1.9 2001/08/03 14:30:26 mpech Exp $
 .\"	$NetBSD: sb.4,v 1.13 1997/10/31 15:02:33 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,8 +40,7 @@
 .Os
 .Sh NAME
 .Nm sb
-.Nd
-SoundBlaster family (and compatibles) audio device driver
+.Nd SoundBlaster family (and compatibles) audio device driver
 .Sh SYNOPSIS
 .Cd "sb0 at isa? port 0x220 irq 5 drq 1 drq2 5"
 .Cd "sb1 at isa? port 0x240 irq 7 drq 1 flags 1"
@@ -49,7 +48,7 @@ SoundBlaster family (and compatibles) audio device driver
 .Cd "audio* at sb?"
 .Sh DESCRIPTION
 The
-.Nm sb
+.Nm
 SoundBlaster 16, Jazz 16, SoundBlaster AWE 32, SoundBlaster AWE 64,
 and hardware register-level compatible audio cards.
 .Pp
@@ -79,7 +78,7 @@ Jazz 16 because it requires use of extra I/O ports not in the base port range.
 .Xr joy 4
 .Sh HISTORY
 The
-.Nm sb
+.Nm
 device driver appeared in
 .Nx 1.0 .
 .Sh BUGS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpt.4,v 1.7 2001/06/23 07:04:14 pjanzen Exp $
+.\"	$OpenBSD: lpt.4,v 1.8 2001/08/03 14:30:26 mpech Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -33,8 +33,7 @@
 .Os
 .Sh NAME
 .Nm lpt
-.Nd
-parallel port driver
+.Nd parallel port driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "lpt0 at isa? port" \&"IO_LPT1\&" irq 7
@@ -49,7 +48,7 @@ not available at attach time, only the polling device may be used.
 .Pp
 The next lower bit (bit 6, or add 64) indicates the driver should
 avoid initializing the printer.
-.P.
+.Pp
 The next lower bit (bit 5, or add 32) requests that the driver do
 automatic LF generation when printing CRs.
 .Sh FILES

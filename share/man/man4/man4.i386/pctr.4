@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.14 2001/06/23 07:04:15 pjanzen Exp $
+.\"	$OpenBSD: pctr.4,v 1.15 2001/08/03 14:30:26 mpech Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -37,7 +37,7 @@ All require the following includes:
 #include <machine/cpu.h>
 #include <machine/pctr.h>
 .Ed
-
+.Pp
 The current state of all counters can be read with the
 .Dv PCIOCRD
 .Em ioctl ,
@@ -52,7 +52,7 @@ struct pctrst {
 	pctrval pctr_idl;
 };
 .Ed
-
+.Pp
 In this structure,
 .Dv ctr_fn
 contains the functions of the two counters, as previously set by the
@@ -67,7 +67,7 @@ is a free-running, 64-bit cycle counter.
 Finally,
 .Dv pctr_idl
 is a 64-bit count of idle-loop iterations.
-
+.Pp
 The functions of the two counters can be programmed with ioctls
 .Dv PCIOCS0
 and
