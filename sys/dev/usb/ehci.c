@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.25 2004/10/27 12:07:48 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.26 2004/10/31 08:09:16 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -753,9 +753,10 @@ ehci_idone(struct ehci_xfer *ex)
 {
 	usbd_xfer_handle xfer = &ex->xfer;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
-	ehci_soft_qtd_t *sqtd;
-	u_int32_t status = 0, nstatus;
+	ehci_soft_qtd_t *sqtd, *lsqtd;
+	u_int32_t status = 0, nstatus = 0;
 	int actlen;
+	uint pkts_left;
 
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
 #ifdef DIAGNOSTIC
@@ -789,8 +790,10 @@ ehci_idone(struct ehci_xfer *ex)
 #endif
 
 	/* The transfer is done, compute actual length and status. */
+	lsqtd = ex->sqtdend;
 	actlen = 0;
-	for (sqtd = ex->sqtdstart; sqtd != NULL; sqtd = sqtd->nextqtd) {
+	for (sqtd = ex->sqtdstart; sqtd != lsqtd->nextqtd;
+	    sqtd = sqtd->nextqtd) {
 		nstatus = le32toh(sqtd->qtd.qtd_status);
 		if (nstatus & EHCI_QTD_ACTIVE)
 			break;
@@ -805,11 +808,19 @@ ehci_idone(struct ehci_xfer *ex)
 	}
 
 	/* If there are left over TDs we need to update the toggle. */
-	if (sqtd != NULL) {
+	if (sqtd != lsqtd->nextqtd &&
+	    xfer->pipe->device->default_pipe != xfer->pipe) {
 		DPRINTF(("ehci_idone: need toggle update status=%08x "
 		    "nstatus=%08x\n", status, nstatus));
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
+
+	/* For a short transfer we need to update teh toggle for the missing
+	 * packets within the qTD.
+	 */
+	pkts_left = EHCI_QTD_GET_BYTES(status) /
+	    UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
+	epipe->nexttoggle ^= pkts_left % 2;
 
 	status &= EHCI_QTD_STATERRS;
 	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
