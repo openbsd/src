@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.4 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.5 2002/04/02 15:14:23 jason Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -181,6 +181,12 @@
 
 #define	PHYS_ASI(x)	(((x) | 0x08) == 0x1c)
 #define	LITTLE_ASI(x)	((x) & ASI_LITTLE)
+
+/*
+ * %tick: cpu cycle counter
+ */
+#define	TICK_NPT	0x8000000000000000	/* trap on non priv access */
+#define	TICK_TICKS	0x7fffffffffffffff	/* counter bits */
 
 /* 
  * The following are 4u control registers
