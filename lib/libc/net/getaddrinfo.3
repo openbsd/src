@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.26 2004/03/01 20:25:44 deraadt Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.27 2004/04/14 07:06:15 itojun Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -245,6 +245,21 @@ Otherwise an error of
 .Dv EAI_NONAME
 is returned.
 This flag prevents any type of name resolution service (e.g., the DNS)
+from being called.
+.Pp
+If the
+.Dv AI_NUMERICSERV
+bit is set in the
+.Fa ai_flags
+member of the
+.Fa hints
+structure, then a non-null
+.Fa servname
+string must be a numeric port string.
+Otherwise an error of
+.Dv EAI_NONAME
+is returned.
+This flag prevents any type of name resolution service (e.g., the NIS)
 from being called.
 .Pp
 The arguments to
@@ -544,6 +559,16 @@ indicate an unknown error.
 .%T Basic Socket Interface Extensions for IPv6
 .%R RFC 2553
 .%D March 1999
+.Re
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A J. McCann
+.%A W. Stevens
+.%T Basic Socket Interface Extensions for IPv6
+.%R RFC 3493
+.%D February 2003
 .Re
 .Rs
 .%A Tatsuya Jinmei

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.18 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.19 2004/04/14 07:06:15 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -155,10 +155,12 @@ struct	protoent {
 /* Values for getaddrinfo() and getnameinfo() */
 #define AI_PASSIVE	1	/* socket address is intended for bind() */
 #define AI_CANONNAME	2	/* request for canonical name */
-#define AI_NUMERICHOST	4	/* don't ever try nameservice */
+#define AI_NUMERICHOST	4	/* don't ever try hostname lookup */
 #define AI_EXT		8	/* enable non-portable extensions */
+#define AI_NUMERICSERV	16	/* don't ever try servname lookup */
 /* valid flags for addrinfo */
-#define AI_MASK		(AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
+#define AI_MASK \
+    (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV)
 
 #define NI_NUMERICHOST	1	/* return the host address, not the name */
 #define NI_NUMERICSERV	2	/* return the service address, not the name */

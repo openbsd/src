@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.48 2003/07/21 23:17:53 marc Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.49 2004/04/14 07:06:15 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ struct res_target {
 	int n;			/* result length */
 };
 
-static int str_isnumber(const char *);
+static int str2number(const char *);
 static int explore_fqdn(const struct addrinfo *, const char *,
 	const char *, struct addrinfo **);
 static int explore_null(const struct addrinfo *,
@@ -213,9 +213,6 @@ static struct addrinfo *get_ai(const struct addrinfo *,
 static int get_portmatch(const struct addrinfo *, const char *);
 static int get_port(struct addrinfo *, const char *, int);
 static const struct afd *find_afd(int);
-#if 0
-static int addrconfig(const struct addrinfo *);
-#endif
 #ifdef INET6
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
@@ -282,20 +279,21 @@ do { \
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
 
 static int
-str_isnumber(p)
+str2number(p)
 	const char *p;
 {
 	char *ep;
+	unsigned long v;
 
 	if (*p == '\0')
-		return NO;
+		return -1;
 	ep = NULL;
 	errno = 0;
-	(void)strtoul(p, &ep, 10);
-	if (errno == 0 && ep && *ep == '\0')
-		return YES;
+	v = strtoul(p, &ep, 10);
+	if (errno == 0 && ep && *ep == '\0' && v <= UINT_MAX)
+		return v;
 	else
-		return NO;
+		return -1;
 }
 
 int
@@ -516,17 +514,6 @@ explore_fqdn(pai, hostname, servname, res)
 	_THREAD_PRIVATE_MUTEX(_explore_mutex);
 
 	result = NULL;
-
-#if 0
-	/*
-	 * If AI_ADDRCONFIG is specified, check if we are expected to
-	 * return the address family or not.
-	 * XXX does not handle PF_UNSPEC case, should filter final result
-	 */
-	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai)) {
-		return 0;
-	}
-#endif
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
@@ -914,14 +901,17 @@ get_port(ai, servname, matchonly)
 		return EAI_SOCKTYPE;
 	}
 
-	if (str_isnumber(servname)) {
+	port = str2number(servname);
+	if (port >= 0) {
 		if (!allownumeric)
 			return EAI_SERVICE;
-		port = atoi(servname);
 		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
 		port = htons(port);
 	} else {
+		if (ai->ai_flags & AI_NUMERICSERV)
+			return EAI_NONAME;
+
 		switch (ai->ai_socktype) {
 		case SOCK_DGRAM:
 			proto = "udp";
@@ -974,28 +964,6 @@ find_afd(af)
 	}
 	return NULL;
 }
-
-#if 0
-/*
- * post-2553: AI_ADDRCONFIG check.  if we use getipnodeby* as backend, backend
- * will take care of it.
- * the semantics of AI_ADDRCONFIG is not defined well.  we are not sure
- * if the code is right or not.
- */
-static int
-addrconfig(pai)
-	const struct addrinfo *pai;
-{
-	int s;
-
-	/* XXX errno */
-	s = socket(pai->ai_family, SOCK_DGRAM, 0);
-	if (s < 0)
-		return 0;
-	close(s);
-	return 1;
-}
-#endif
 
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
