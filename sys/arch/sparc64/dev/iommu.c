@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.15 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.16 2002/03/26 18:13:11 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -798,7 +798,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 				/* We can re-use this mapping */
 #ifdef DEBUG
 if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
-    dvmaddr, prev_va, pa prev_pa);
+    dvmaddr, prev_va, pa, prev_pa);
 #endif
 				dvmaddr = prev_va; 
 			}
@@ -812,7 +812,7 @@ if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
 #ifdef DEBUG
 if (iommudebug & 0x10) {
 printf("appending offset %x pa %lx, prev %lx dva %lx prev %lx\n",
-    offset, pa, prev_pa,l dvmaddr, prev_va);
+    offset, pa, prev_pa, dvmaddr, prev_va);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.7 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.8 2002/03/26 18:13:11 jason Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ pci_conf_read(pc, tag, reg)
 	}
 #ifdef DEBUG
 	else DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
-	    (int)PCITAG_OFFSET(tag));
+	    (int)PCITAG_OFFSET(tag)));
 #endif
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
