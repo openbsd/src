@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.8 2004/01/04 02:13:52 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.9 2004/01/04 02:51:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -28,9 +28,10 @@
 #include "session.h"
 #include "log.h"
 
-int	main(int, char *[]);
-void	summary_head(void);
-int	summary_msg(struct imsg *);
+int		 main(int, char *[]);
+void		 summary_head(void);
+int		 summary_msg(struct imsg *);
+static char	*fmt_timeframe(time_t t);
 
 struct imsgbuf	ibuf;
 
@@ -94,8 +95,8 @@ main(int argc, char *argv[])
 void
 summary_head(void)
 {
-	printf("%-15s %-5s %-10s %-10s %s\n", "Neighbor", "AS", "MsgRcvd",
-	    "MsgSent", "State");
+	printf("%-15s %-5s %-10s %-10s %-8s %s\n", "Neighbor", "AS", "MsgRcvd",
+	    "MsgSent", "Up/Down", "State");
 }
 
 int
@@ -106,10 +107,11 @@ summary_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		printf("%-15s %5u %10llu %10llu %s\n",
+		printf("%-15s %5u %10llu %10llu %8s %s\n",
 		    inet_ntoa(p->conf.remote_addr.sin_addr),
 		    p->conf.remote_as, p->stats.msg_rcvd,
-		    p->stats.msg_send, statenames[p->state]);
+		    p->stats.msg_send, fmt_timeframe(p->stats.last_updown),
+		    statenames[p->state]);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -119,4 +121,45 @@ summary_msg(struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+#define TF_BUFS	8
+#define TF_LEN	9
+
+static char *
+fmt_timeframe(time_t t)
+{
+	char		*buf;
+	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
+	static int	 idx = 0;
+	unsigned	 sec, min, hrs, day, week;
+
+	buf = tfbuf[idx++];
+	if (idx == TF_BUFS)
+		idx = 0;
+
+	if (t == 0) {
+		snprintf(buf, TF_LEN, "%-8s", "Never");
+		return (buf);
+	}
+
+	week = time(NULL) - t;
+
+	sec = week % 60;
+	week /= 60;
+	min = week % 60;
+	week /= 60;
+	hrs = week % 24;
+	week /= 24;
+	day = week % 7;
+	week /= 7;
+
+	if (week > 0)
+		snprintf(buf, TF_LEN, "%02uw%01ud%02uh", week, day, hrs);
+	else if (day > 0)
+		snprintf(buf, TF_LEN, "%01ud%02uh%02um", day, hrs, min);
+	else
+		snprintf(buf, TF_LEN, "%02u:%02u:%02u", hrs, min, sec);
+
+	return (buf);
 }
