@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.8 2000/12/30 19:03:44 angelos Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.9 2000/12/30 21:51:00 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -137,6 +137,10 @@ in6_gif_output(ifp, family, m, rt)
 		break;
 	    }
 #endif
+#if NBRIDGE > 0
+	case AF_LINK:
+		break;
+#endif /* NBRIDGE */
 	default:
 #ifdef DEBUG
 		printf("in6_gif_output: warning: unknown family %d passed\n",
