@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.29 2002/01/08 01:52:00 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.30 2002/01/08 01:55:27 millert Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.29 2002/01/08 01:52:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.30 2002/01/08 01:55:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,10 @@ cmd_list
 	: /* empty */
 	| cmd_list cmd
 		{
-			fromname = (char *) 0;
+			if (fromname) {
+				free(fromname);
+				fromname = NULL;
+			}
 			restart_point = (off_t) 0;
 		}
 	| cmd_list rcmd
@@ -647,24 +650,25 @@ cmd
 rcmd
 	: RNFR check_login SP pathname CRLF
 		{
-			char *renamefrom();
-
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
+				if (fromname)  
+					free(fromname);
 				fromname = renamefrom($4);
-				if (fromname == NULL && $4) {
+				if (fromname == NULL)
 					free($4);
-				}
-			} else {
-				if ($4)
-					free ($4);
+			} else if ($4) {
+				free ($4);
 			}
 		}
 
 	| REST check_login SP byte_size CRLF
 		{
 			if ($2) {
-			    fromname = NULL;
+			    if (fromname) {
+				    free(fromname);
+				    fromname = NULL;
+			    }
 			    restart_point = $4;	/* XXX $4 is only "int" */
 			    reply(350, "Restarting at %qd. %s", restart_point,
 			       "Send STORE or RETRIEVE to initiate transfer.");
