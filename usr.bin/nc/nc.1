@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.4 1998/09/27 22:24:56 deraadt Exp $
+.\"	$OpenBSD: nc.1,v 1.5 1998/09/28 06:57:35 millert Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm nc
-.Nd arbitrary TCP and UDP connections and listens
+.Nd "arbitrary TCP and UDP connections and listens"
 .Sh SYNOPSIS
 .Nm nc
 .Op Fl e Ar command
@@ -44,7 +44,6 @@
 .Op Fl w Ar timeout 
 .Op Ar hostname
 .Op Ar port[s...]
-.Pp
 .Sh DESCRIPTION
 The
 .Nm nc
@@ -62,7 +61,7 @@ of sending them to standard output, as
 does with some.  
 .Pp
 Destination ports can be single integers, names as listed in
-.Xr /etc/services 5 ,
+.Xr services 5 ,
 or ranges.  Ranges are in the form nn-mm, and several separate ports and/or
 ranges may be specified on the command line.
 .Pp
