@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.23 1999/09/08 12:56:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.24 1999/09/28 20:36:04 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1084,6 +1084,7 @@ void	set_2ndcharset ( void );
 void	set_charset ( struct video_state *svsp, int curvgacs );
 void	set_emulation_mode ( struct video_state *svsp, int mode );
 void	set_screen_size ( struct video_state *svsp, int size );
+void	reallocate_scrollbuffer ( struct video_state *svsp, int pages );
 u_char *sgetc ( int noblock );
 void	sixel_vga ( struct sixels *charsixel, u_char *charvga );
 void	sput ( u_char *s, U_char attrib, int len, int page );

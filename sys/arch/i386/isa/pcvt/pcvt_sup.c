@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.8 1999/09/18 22:54:48 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.9 1999/09/28 20:36:05 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -422,7 +422,6 @@ vgasetfontattr(struct vgafontattr *data)
 	int lines_per_character;
 	int totscanlines;
 	int size;
-	int charset_flag = 0;
 
 	vga_character_set = data->character_set;
 	vga_character_set = (vga_character_set < 0) ? 0 :
@@ -521,34 +520,7 @@ vgasetfontattr(struct vgafontattr *data)
 	for (i = 0;i < PCVT_NSCREENS;i++)
 	{
 		if(vga_character_set == vs[i].vga_charset)
-		{
 			set_charset(&(vs[i]),vga_character_set);
-			charset_flag = i;
-		}
-	}
-	if (charset_flag && Scrollbuffer)
-	{
-		free(Scrollbuffer, M_DEVBUF);
-		if ((Scrollbuffer = (u_short *)malloc(vs[i].maxcol *
-		     vs[i].screen_rowsize  * SCROLLBACK_PAGES * CHR * 2,
-		     M_DEVBUF, M_NOWAIT)) == NULL)
-		{
-			printf("pcvt: scrollback memory malloc failed\n");
-		}
-		else
-		{
-			for (i = 0; i < PCVT_NSCREENS; i++)
-			{
-				vs[i].Scrollback = Scrollbuffer;
-				vs[i].scr_offset = 0;
-				vs[i].scrolling = 0;
-				vs[i].max_off = vs[i].screen_rowsize *
-						SCROLLBACK_PAGES - 1;
-			}
-			bcopy(vsp->Crtat, vsp->Scrollback, vsp->screen_rows *
-			      vsp->maxcol * CHR);
-			vsp->scr_offset = vsp->row;
-		}
 	}
 	switch_screen(current_video_screen, 0, 0);
 }
@@ -767,9 +739,44 @@ set_screen_size(struct video_state *svsp, int size)
 				pgsignal(svsp->vs_tty->t_pgrp, SIGWINCH, 1);
 #endif /* PCVT_SIGWINCH */
 
+			reallocate_scrollbuffer(svsp, SCROLLBACK_PAGES);
 			break;
 		}
  	}
+}
+
+/*---------------------------------------------------------------------------*
+ *	resize the scrollback buffer to the specified number of "pages"
+ *---------------------------------------------------------------------------*/
+void
+reallocate_scrollbuffer(struct video_state *svsp, int pages)
+{
+	int i, s;
+
+	s = splhigh();
+	if (Scrollbuffer)
+		free(Scrollbuffer, M_DEVBUF);
+
+	if ((Scrollbuffer = (u_short *)malloc(svsp->maxcol *
+	     	svsp->screen_rows * pages * CHR, M_DEVBUF, M_NOWAIT)) == NULL)
+	{
+		printf("pcvt: scrollback memory malloc
+			failed\n");
+	}
+	else
+	{
+ 		for (i = 0; i < PCVT_NSCREENS; i++)
+		{
+			vs[i].Scrollback = Scrollbuffer;
+			vs[i].scr_offset = 0;
+			vs[i].scrolling = 0;
+			vs[i].max_off = svsp->screen_rows * pages - 1;
+		}
+		bcopy(svsp->Crtat, svsp->Scrollback, svsp->screen_rows *
+		      svsp->maxcol * CHR);
+		svsp->scr_offset = svsp->row;
+	}
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.9 1999/09/08 12:56:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.10 1999/09/28 20:36:05 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1393,7 +1393,7 @@ vt_coldmalloc(void)
 	}
 
 	if ((Scrollbuffer = (u_short *)malloc(vs[0].maxcol *
-	     vs[0].screen_rowsize * SCROLLBACK_PAGES * CHR * 2, M_DEVBUF,
+	     vs[0].screen_rows * SCROLLBACK_PAGES * CHR, M_DEVBUF,
 	     M_WAITOK)) == NULL)
 	{
 		printf("pcvt: scrollback memory malloc failed\n");
