@@ -1609,6 +1609,7 @@
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/compat_bsdos.0
 ./usr/share/man/cat8/compat_freebsd.0
+./usr/share/man/cat8/compat_hpux.0
 ./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_osf1.0
