@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.1 2000/04/26 21:35:40 jakob Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.2 2001/06/04 03:51:53 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -499,7 +499,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 			printf("%u", (u_int32_t)ntohl(opp->nd_opt_pi_valid_time));
 		}
 		printf(", ");
-		printf("preffered_ltime=");
+		printf("preferred_ltime=");
 		if ((u_int32_t)ntohl(opp->nd_opt_pi_preferred_time) == ~0U)
 			printf("infinity");
 		else {
