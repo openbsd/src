@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.28 1997/02/17 16:30:25 imp Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.29 1997/04/10 22:26:13 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.28 1997/02/17 16:30:25 imp Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.29 1997/04/10 22:26:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1402,6 +1402,10 @@ checklabel(lp)
 		if (pp->p_offset + pp->p_size > lp->d_secperunit) {
 			warnx("partition %c: partition extends past end of unit",
 			    part);
+			errors++;
+		}
+		if (pp->p_frag == 0 && pp->p_fsize != 0) {
+			warnx("partition %c: block size < fragment size", part);
 			errors++;
 		}
 	}
