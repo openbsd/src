@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.55 2002/09/19 20:58:50 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.56 2002/09/19 21:22:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.55 2002/09/19 20:58:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.56 2002/09/19 21:22:59 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -271,10 +271,12 @@ main(int argc, char **argv)
 
 	/* Step 3, send a signal or run a command */
 	for (pl = pidlist; pl->file; pl++) {
-		if (pl->signal == -1)
-			run_command(pl->file);
-		else
-			send_signal(pl->file, pl->signal);
+		if (pl->file != NULL) {
+			if (pl->signal == -1)
+				run_command(pl->file);
+			else
+				send_signal(pl->file, pl->signal);
+		}
 	}
 	if (!noaction)
 		sleep(5);
@@ -618,9 +620,11 @@ parse_file(int *nentries)
 					err(1, "strdup");
 			} else if (*q == '"' && (tmp = strchr(q + 1, '"'))) {
 				*(parse = tmp) = '\0';
-				working->runcmd = strdup(++q);
-				if (working->runcmd == NULL)
-					err(1, "strdup");
+				if (*++q != '\0') {
+					working->runcmd = strdup(q);
+					if (working->runcmd == NULL)
+						err(1, "strdup");
+				}
 				working->pidfile = NULL;
 				working->signal = -1;
 			} else if (strncmp(q, "SIG", 3) == 0) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.28 2002/09/17 20:44:38 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.29 2002/09/19 21:22:59 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -266,6 +266,11 @@ and be the signal name, not the number, e.g.,
 Specify a command to run instead of sending a signal to the process.
 The command must be enclosed in double quotes
 .Pq Ql \&" ) .
+The empty string,
+.Ql \&"\&" ,
+can use used to prevent
+.Nm
+from sending a signal or running a command.
 You cannot specify both a command and a PID file.
 .Em NOTE:
 If you specify a command to be run,
