@@ -61,7 +61,7 @@ FILE *current_infile;
 FILE *objfile;
 FILE *listfile;
 
-char in_name[PATH_MAX + 1];
+char in_name[PATH_MAX];
 
 struct input {
 	FILE	*fp;
@@ -107,8 +107,7 @@ main(int argc, char **argv)
 		infile = stdin;
 		strcpy(in_name, "<stdin>");
 	} else if (argc == 1) {
-		strncpy(in_name, *argv, PATH_MAX);
-		in_name[PATH_MAX] = 0;
+		strlcpy(in_name, *argv, sizeof(in_name));
 		if ((infile = fopen(in_name, "r")) == NULL)
 			err(1, "fopen");
 	} else 
