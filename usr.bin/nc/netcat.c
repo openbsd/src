@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.67 2004/02/20 10:53:10 jmc Exp $ */
+/* $OpenBSD: netcat.c,v 1.68 2004/03/01 00:37:08 tedu Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -60,6 +60,7 @@
 #define PORT_MAX_LEN	6
 
 /* Command Line Options */
+int	dflag;					/* detached, no stdin */
 int	iflag;					/* Interval Flag */
 int	kflag;					/* More than one connect */
 int	lflag;					/* Bind to local port */
@@ -113,7 +114,7 @@ main(int argc, char *argv[])
 	endp = NULL;
 	sv = NULL;
 
-	while ((ch = getopt(argc, argv, "46UX:hi:klnp:rs:tuvw:x:zS")) != -1) {
+	while ((ch = getopt(argc, argv, "46UX:dhi:klnp:rs:tuvw:x:zS")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -128,6 +129,9 @@ main(int argc, char *argv[])
 			socksv = (int)strtoul(optarg, &endp, 10);
 			if ((socksv != 4 && socksv != 5) || *endp != '\0')
 				errx(1, "only SOCKS version 4 and 5 supported");
+			break;
+		case 'd':
+			dflag = 1;
 			break;
 		case 'h':
 			help();
@@ -578,7 +582,7 @@ readwrite(int nfd)
 		if (iflag)
 			sleep(iflag);
 
-		if ((n = poll(pfd, 2, timeout)) < 0) {
+		if ((n = poll(pfd, 2 - dflag, timeout)) < 0) {
 			close(nfd);
 			err(1, "Polling Error");
 		}
@@ -603,7 +607,7 @@ readwrite(int nfd)
 			}
 		}
 
-		if (pfd[1].revents & POLLIN) {
+		if (!dflag && pfd[1].revents & POLLIN) {
 			if ((n = read(wfd, buf, sizeof(buf))) < 0)
 				return;
 			else if (n == 0) {
