@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.39 2003/09/07 01:49:16 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.40 2003/09/08 20:44:52 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1862,10 +1862,15 @@ ASLOCAL(fpu_enable)
 	bb1.n	eq,   r3,   8f
 #endif
 
-	/* service any outstanding data pipeline stuff */
+	/* enable interrupts */
+	 ldcr	r2,   PSR
+	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2,   PSR
+	FLUSH_PIPELINE
 
-	 ld	r3,   r30,  REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r3, 7f
+	/* service any outstanding data pipeline stuff */
+	ld	r3,   r30,  REG_OFF(EF_DMT0)
+	bb0	DMT_VALID_BIT, r3, 8f
 
 	/*
 	 * r30 can be clobbered by calls. So stuff its value into a preserved
@@ -1874,13 +1879,6 @@ ASLOCAL(fpu_enable)
 	or	r15,  r0,   r30
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r15)
 	or	r30,  r0,   r15
-
-7:
-	/* enable interrupts */
-	ldcr	r2,   PSR
-	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2,   PSR
-	FLUSH_PIPELINE
 
 8:
 	jmp	r14	/* loaded above */
@@ -1954,6 +1952,23 @@ ASLOCAL(return_from_exception_handler)
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
+
+	/*
+	 * If it'not the interrupt exception, and interrupts were
+	 * initially disabled, enable interrupts again.
+	 */
+	ld	r2, FPTR, REG_OFF(EF_VECTOR)
+	cmp	r2, r2, 1	/* is an interrupt? */
+	bb1	ne, r2, 1f	/* if not so, skip */
+
+	/* if EPSR has interrupts disabled, skip also */
+	ld	r2, FPTR, REG_OFF(EF_EPSR)
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, 1f
+	ldcr	r2, PSR
+	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2, PSR
+	FLUSH_PIPELINE
+1:
 
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r30)
 	br	_ASM_LABEL(check_ast)

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.109 2003/09/06 15:07:43 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.110 2003/09/08 20:44:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1641,14 +1641,6 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 		setipl(level);
 	  
-		/*
-		 * Contrary to other traps, we have not checked for the
-		 * data pipeline status yet.
-		 * Do it now, before we reenable interrupts.
-		 */
-		if (eframe->dmt0 & DMT_VALID)
-			m88100_trap(T_DATAFLT, eframe);
-
 		enable_interrupt();
 		
 		/* generate IACK and get the vector */
@@ -1737,10 +1729,17 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	} while ((cur_mask = ISR_GET_CURRENT_MASK(cpu)) != 0);
 
 	/*
+	 * process any remaining data access exceptions before
+	 * returning to assembler
+	 */
+	disable_interrupt();
+	if (eframe->dmt0 & DMT_VALID)
+		m88100_trap(T_DATAFLT, eframe);
+
+	/*
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	disable_interrupt();
 	setipl(eframe->mask);
 	flush_pipeline();
 }
@@ -1805,14 +1804,6 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	flush_pipeline();
 	flush_pipeline();
 
-	/*
-	 * Contrary to other traps, we have not checked for the
-	 * data pipeline status yet.
-	 * Do it now, before we reenable interrupts.
-	 */
-	if (eframe->dmt0 & DMT_VALID)
-		m88100_trap(T_DATAFLT, eframe);
-
 	enable_interrupt();
 
 	if ((intr = intr_handlers[vec]) == NULL) {
@@ -1852,10 +1843,17 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	}
 
 	/*
+	 * process any remaining data access exceptions before
+	 * returning to assembler
+	 */
+	disable_interrupt();
+	if (eframe->dmt0 & DMT_VALID)
+		m88100_trap(T_DATAFLT, eframe);
+
+	/*
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	disable_interrupt();
 	setipl(eframe->mask);
 }
 #endif /* MVME187 */
