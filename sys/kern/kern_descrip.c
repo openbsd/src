@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.14 1997/08/31 20:42:15 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.15 1998/03/01 19:34:12 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -353,6 +353,8 @@ finishdup(fdp, old, new, retval)
 	register struct file *fp;
 
 	fp = fdp->fd_ofiles[old];
+	if (fp->f_count == LONG_MAX-2)
+		return (EDEADLK);
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
 	fp->f_count++;
@@ -745,8 +747,17 @@ fdcopy(p)
 	bcopy(fdp->fd_ofileflags, newfdp->fd_ofileflags, i * sizeof(char));
 	fpp = newfdp->fd_ofiles;
 	for (i = newfdp->fd_lastfile; i >= 0; i--, fpp++)
-		if (*fpp != NULL)
-			(*fpp)->f_count++;
+		if (*fpp != NULL) {
+			/*
+			 * XXX Gruesome hack. If count gets too high, fail
+			 * to copy an fd, since fdcopy()'s callers do not
+			 * permit it to indicate failure yet.
+			 */
+			if ((*fpp)->f_count == LONG_MAX-2)
+				*fpp = NULL;
+			else
+				(*fpp)->f_count++;
+		}
 	return (newfdp);
 }
 
@@ -956,6 +967,8 @@ dupfdopen(fdp, indx, dfd, mode, error)
 		 */
 		if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag)
 			return (EACCES);
+		if (wfp->f_count == LONG_MAX-2)
+			return (EDEADLK);
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		wfp->f_count++;

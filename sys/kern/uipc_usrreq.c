@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.8 1997/11/17 18:09:15 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.9 1998/03/01 19:34:15 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -661,6 +661,9 @@ unp_internalize(control, p)
 		if ((unsigned)fd >= fdp->fd_nfiles ||
 		    fdp->fd_ofiles[fd] == NULL)
 			return (EBADF);
+		if (fdp->fd_ofiles[fd]->f_count == LONG_MAX-2 ||
+		    fdp->fd_ofiles[fd]->f_msgcount == LONG_MAX-2)
+			return (EDEADLK);
 	}
 	ip = (int *)(cm + 1);
 	if (sizeof(int) != sizeof(struct file *)) {
@@ -747,7 +750,7 @@ unp_gc()
 	 * that are not otherwise accessible and then free the rights
 	 * that are stored in messages on them.
 	 *
-	 * The bug in the orginal code is a little tricky, so I'll describe
+	 * The bug in the original code is a little tricky, so I'll describe
 	 * what's wrong with it here.
 	 *
 	 * It is incorrect to simply unp_discard each entry for f_msgcount
