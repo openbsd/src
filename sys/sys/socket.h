@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.47 2004/02/24 21:43:56 tedu Exp $	*/
+/*	$OpenBSD: socket.h,v 1.48 2004/11/26 13:07:52 markus Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -303,6 +303,17 @@ struct sockcred {
 }
 
 /*
+ * PF_KEY - Key Management
+ */
+#define NET_KEY_SADB_DUMP	1	/* return SADB */
+#define NET_KEY_MAXID		2
+
+#define CTL_NET_KEY_NAMES { \
+	{ 0, 0 }, \
+	{ "sadb_dump", CTLTYPE_STRUCT }, \
+}
+
+/*
  * PF_BPF  not really a family, but connected under CTL_NET
  */
 #define NET_BPF_BUFSIZE		1		/* default buffer size */
@@ -314,7 +325,6 @@ struct sockcred {
 	{ "bufsize", CTLTYPE_INT }, \
 	{ "maxbufsize", CTLTYPE_INT }, \
 }
-
 
 /*
  * Maximum queue length specifiable by listen(2).
