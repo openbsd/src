@@ -152,6 +152,9 @@
 ./usr/include/dev/ic/adwlib.h
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
+./usr/include/dev/ic/aic79xx.h
+./usr/include/dev/ic/aic79xx_inline.h
+./usr/include/dev/ic/aic79xx_openbsd.h
 ./usr/include/dev/ic/aic7xxx.h
 ./usr/include/dev/ic/aic7xxx_cam.h
 ./usr/include/dev/ic/aic7xxx_inline.h
@@ -730,6 +733,7 @@
 ./usr/include/dev/wsfont/vt220l8x8.h
 ./usr/include/dev/wsfont/wsfont.h
 ./usr/include/dirent.h
+./usr/include/dis-asm.h
 ./usr/include/disktab.h
 ./usr/include/dlfcn.h
 ./usr/include/elf_abi.h

@@ -1,4 +1,3 @@
-
 ./usr/bin/addr2line
 ./usr/bin/objcopy
 ./usr/bin/readelf

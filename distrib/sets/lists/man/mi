@@ -116,6 +116,7 @@
 ./usr/share/info/info.info
 ./usr/share/info/libiberty.info
 ./usr/share/info/readline.info
+./usr/share/info/stabs.info
 ./usr/share/info/texinfo
 ./usr/share/info/texinfo-1
 ./usr/share/info/texinfo-10

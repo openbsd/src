@@ -800,6 +800,9 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/adwlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic6360reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic6360var.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic79xx.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic79xx_inline.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic79xx_openbsd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic7xxx.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic7xxx_cam.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic7xxx_inline.ph
@@ -1378,6 +1381,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dirent.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dis-asm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/elf_abi.ph
