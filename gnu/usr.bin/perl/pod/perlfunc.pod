@@ -834,7 +834,7 @@ their own password:
 Of course, typing in your own password to whoever asks you
 for it is unwise.
 
-The L<crypt> function is unsuitable for encrypting large quantities
+The C<crypt> function is unsuitable for encrypting large quantities
 of data, not least of all because you can't get the information
 back.  Look at the F<by-module/Crypt> and F<by-module/PGP> directories
 on your favorite CPAN mirror for a slew of potentially useful
@@ -2592,7 +2592,7 @@ C<redo> work.
 
 =item no Module LIST
 
-See the L</use> function, which C<no> is the opposite of.
+See the C<use> function, which C<no> is the opposite of.
 
 =item oct EXPR
 
