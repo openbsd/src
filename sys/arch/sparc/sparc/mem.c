@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.12 2000/03/04 16:42:15 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.13 2001/01/31 16:11:34 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -235,7 +235,7 @@ mmmmap(dev, off, prot)
         int off, prot;
 {
 
-	return (EOPNOTSUPP);
+	return (-1);
 }
 
 /*ARGSUSED*/
