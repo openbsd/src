@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2003/04/05 17:18:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2003/04/06 04:15:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.16 2003/04/05 17:18:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.17 2003/04/06 04:15:31 millert Exp $";
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -56,7 +56,7 @@ static char *rcsid = "$OpenBSD: main.c,v 1.16 2003/04/05 17:18:26 deraadt Exp $"
 
 char	*distfile = NULL;
 #define _RDIST_TMP	"rdistXXXXXXXXXX"
-char	tempfile[sizeof _PATH_TMP + sizeof _RDIST_TMP + 1];
+char	tempfile[sizeof _PATH_TMP + sizeof _RDIST_TMP - 1];
 char	*tempname;
 
 int	debug;		/* debugging flag */
@@ -67,10 +67,10 @@ int	iamremote;	/* act as remote server for transfering files */
 
 FILE	*fin = NULL;	/* input file pointer */
 int	rem = -1;	/* file descriptor to remote source/sink process */
-char	host[32];	/* host name */
+char	host[MAXHOSTNAMELEN]; /* host name */
 int	nerrs;		/* number of errors while sending/receiving */
-char	user[40];	/* user's name */
-char	homedir[128];	/* user's home directory */
+char	user[MAXLOGNAME]; /* user's name */
+char	homedir[MAXPATHLEN]; /* user's home directory */
 uid_t	userid;		/* user's user ID */
 gid_t	groupid;	/* user's group ID */
 
