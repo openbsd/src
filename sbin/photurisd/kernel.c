@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.6 2000/01/27 08:06:38 angelos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.7 2000/08/25 05:16:46 angelos Exp $";
 #endif
 
 #include <time.h>
@@ -782,6 +782,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 int
 kernel_group_spi(char *address, u_int8_t *spi)
 {
+#ifndef OPENBSD_IPSEC_API_VERSION
      struct sadb_msg smsg;
      struct sadb_sa sa, sa2;
      struct sadb_address sad1, sad2;
@@ -864,6 +865,7 @@ kernel_group_spi(char *address, u_int8_t *spi)
 	  log_error(1, "kernel_xf_set() in kernel_group_spi()");
 	  return -1;
      }
+#endif
 
      return 1;
 }
@@ -871,6 +873,7 @@ kernel_group_spi(char *address, u_int8_t *spi)
 int
 kernel_bind_spis(struct spiob *spi1, struct spiob *spi2)
 {
+#ifndef OPENBSD_IPSEC_API_VERSION
      struct sadb_msg smsg;
      struct sadb_sa sa, sa2;
      struct sadb_address sad1, sad2;
@@ -955,6 +958,7 @@ kernel_bind_spis(struct spiob *spi1, struct spiob *spi2)
 	  log_error(1, "kernel_xf_set() in kernel_bind_spi()");
 	  return -1;
      }
+#endif
 
      return 1;
 }
@@ -964,6 +968,7 @@ kernel_enable_spi(in_addr_t isrc, in_addr_t ismask,
 		  in_addr_t idst, in_addr_t idmask, 
 		  char *address, u_int8_t *spi, int proto, int flags)
 {
+#ifndef OPENBSD_IPSEC_API_VERSION
      struct sadb_msg smsg;
      struct sadb_sa sa;
      struct sadb_address sad, sad1, sad2, sad3, sad4;
@@ -1065,6 +1070,7 @@ kernel_enable_spi(in_addr_t isrc, in_addr_t ismask,
 	  log_error(1, "kernel_xf_set() in kernel_enable_spi()");
 	  return -1;
      }
+#endif
 
      return 1;
 }
@@ -1074,6 +1080,7 @@ kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
 		   in_addr_t idst, in_addr_t idmask, 
 		   char *address, u_int8_t *spi, int proto, int flags)
 {
+#ifndef OPENBSD_IPSEC_API_VERSION
      struct sadb_msg smsg;
      struct sadb_sa sa;
      struct sadb_address sad1, sad2, sad3, sad4;
@@ -1161,6 +1168,7 @@ kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
 	  log_error(1, "kernel_xf_set() in kernel_disable_spi()");
 	  return -1;
      }
+#endif
 
      return 1;
 }
@@ -1347,12 +1355,18 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	  SPI->flags &= ~SPI_ESP;
      }
 
+#if OPENBSD_IPSEC_API_VERSION == 1
+    /* 
+     * Inform the kernel that we obtained the requested SA
+     */
+     kernel_notify_result(st, SPI, proto);
+#else
      /* Group the SPIs for User */
      if (!(SPI->flags & SPI_OWNER) && ah != NULL && esp != NULL) {
 	  if (kernel_group_spi(SPI->address, spi) == -1)
 	       log_error(0, "kernel_group_spi() in kernel_insert_spi()");
      }
-     
+
      if (!(SPI->flags & SPI_OWNER)) {
 	  if (!(SPI->flags & SPI_NOTIFY) || vpn_mode) {
 	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
@@ -1365,10 +1379,11 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       /* 
 		* Inform the kernel that we obtained the requested SA
 		*/
-		    kernel_notify_result(st, SPI, proto);
+	       kernel_notify_result(st, SPI, proto);
 	  }
      }
-	  
+#endif
+
      /* Is this what people call perfect forward security ? */
      bzero(SPI->sessionkey, SPI->sessionkeysize);
      free(SPI->sessionkey);
