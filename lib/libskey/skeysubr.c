@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.10 1996/10/14 03:09:13 millert Exp $
+ * $Id: skeysubr.c,v 1.11 1996/10/22 01:37:54 millert Exp $
  */
 
 #include <stdio.h>
@@ -293,9 +293,6 @@ readskey(buf, n)
 {
 	(void)fgets(buf, n, stdin);
 	rip(buf);
-
-	(void)putc('\n', stderr);
-	(void)fflush(stderr);
 
 	sevenbit (buf);
 
