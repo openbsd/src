@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.248 2003/05/30 20:06:48 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.249 2003/06/02 20:05:49 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2066,171 +2066,174 @@ Syntax for
 .Nm
 in BNF:
 .Bd -literal
-line           = ( OPTION | PF-RULE | NAT-RULE | BINAT-RULE | RDR-RULE
-                 | ANTISPOOF-RULE | ALTQ-RULE | QUEUE-RULE | ANCHOR-RULE
-                 | TRANS-ANCHORS | LOAD-ANCHORS )
+line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule |
+                 antispoof-rule | altq-rule | queue-rule | anchor-rule |
+                 trans-anchors | load-anchors )
 
-option         = set ( [ TIMEOUT ( TIMEOUT | '{' TIMEOUT-LIST '}' ) ] |
-                 [ optimization [ default | normal
-                 | high-latency | satellite
-                 | aggressive | conservative ] ]
-                 [ limit LIMIT-LIST ] |
-                 [ loginterface ( INTERFACE-NAME | none ) ] |
-                 [ block-policy ( drop | return ) ] |
-                 [ require-order ( yes | no ) ] )
+option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
+                 [ "optimization" [ "default" | "normal" |
+                 "high-latency" | "satellite" |
+                 "aggressive" | "conservative" ] ]
+                 [ "limit" ( limit-item | "{" limit-list "}" ) ] |
+                 [ "loginterface" ( interface-name | "none" ) ] |
+                 [ "block-policy" ( "drop" | "return" ) ] |
+                 [ "require-order" ( "yes" | "no" ) ] )
 
-pf-rule        = ACTION [ ( in | out ) ]
-                 [ log | log-all ] [ quick ]
-                 [ on IFSPEC ] [ ROUTE ] [ AF ] [ PROTOSPEC ]
-                 HOSTS [ FILTEROPT-LIST ]
+pf-rule        = action [ ( "in" | "out" ) ]
+                 [ "log" | "log-all" ] [ "quick" ]
+                 [ "on" ifspec ] [ route ] [ af ] [ protospec ]
+                 hosts [ filteropt-list ]
 
-filteropt-list = FILTEROPT-LIST FILTEROPT | FILTEROPT
-filteropt      = USER | GROUP | FLAGS | ICMP-TYPE | ICMP6-TYPE | TOS |
-                 ( keep | modulate ) state [ '(' STATE-OPTS ')' ] |
-                 fragment | no-df | min-ttl NUMBER | max-mss NUMBER |
-                 random-id | reassemble tcp | FRAGMENTATION | allow-opts |
-                 label STRING | tag STRING | tagged STRING
-		 queue '(' STRING | ( STRING [ [ ',' ] STRING ] ) ')'
+filteropt-list = filteropt-list filteropt | filteropt
+filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
+                 ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] |
+                 "fragment" | "no-df" | "min-ttl" number |
+                 "max-mss" number | "random-id" | "reassemble tcp" |
+                 fragmentation | "allow-opts" |
+                 "label" string | "tag" string | "tagged" string
+                 "queue" "(" string | ( string [ [ "," ] string ] ) ")"
 
-nat-rule       = [ no ] nat [ on IFSPEC ] [ AF ] [ PROTOSPEC ]
-                 HOSTS [ '->' ( REDIRHOST | '{' REDIRHOST-LIST '}' )
-                 [ PORTSPEC ] [ POOLTYPE ] [ static-port ] ]
+nat-rule       = [ "no" ] "nat" [ "on" ifspec ] [ af ] [ protospec ]
+                 hosts [ "->" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] [ pooltype ] [ "static-port" ] ]
 
-binat-rule     = [ no ] binat [ on INTERFACE-NAME ] [ AF ]
-                 [ proto ( PROTO-NAME | PROTO-NUMBER ) ]
-                 from ADDRESS [ '/' MASK-BITS ] to IPSPEC
-                 [ '->' ADDRESS [ '/' MASK-BITS ] ]
+binat-rule     = [ "no" ] "binat" [ "on" interface-name ] [ af ]
+                 [ "proto" ( proto-name | proto-number ) ]
+                 "from" address [ "/" mask-bits ] "to" ipspec
+                 [ "->" address [ "/" mask-bits ] ]
 
-rdr-rule       = [ no ] rdr [ on IFSPEC ] [ AF ] [ PROTOSPEC ]
-                 HOSTS [ '->' ( REDIRHOST | '{' REDIRHOST-LIST '}' )
-                 [ PORTSPEC ] [ POOLTYPE ] ]
+rdr-rule       = [ "no" ] "rdr" [ "on" ifspec ] [ af ] [ protospec ]
+                 hosts [ "->" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] [ pooltype ] ]
 
-antispoof-rule = antispoof [ log ] [ quick ]
-                 for ( INTERFACE-NAME | '{' INTERFACE-LIST '}' )
-                 [ AF ] [ label STRING ]
+antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
+                 "for" ( interface-name | "{" interface-list "}" )
+                 [ af ] [ "label" string ]
 
-table-rule     = table '<' STRING '>' [ TABLEOPTS-LIST ]
-tableopts-list = TABLEOPTS-LIST TABLEOPTS | TABLEOPTS
-tableopts      = persist | const | file STRING | '{' [ TABLEADDR-LIST ] '}'
-tableaddr-list = TABLEADDR-LIST [ ',' ] TABLEADDR-SPEC | TABLEADDR-SPEC
-tableaddr-spec = [ '!' ] TABLEADDR [ '/' MASK-BITS ]
-tableaddr      = HOSTNAME | IPV4-DOTTED-QUAD | IPV6-COLONED-HEX |
-                 INTERFACE-NAME | self
+table-rule     = "table" "<" string ">" [ tableopts-list ]
+tableopts-list = tableopts-list tableopts | tableopts
+tableopts      = "persist" | "const" | "file" string |
+                 "{" [ tableaddr-list ] "}"
+tableaddr-list = tableaddr-list [ "," ] tableaddr-spec | tableaddr-spec
+tableaddr-spec = [ "!" ] tableaddr [ "/" mask-bits ]
+tableaddr      = hostname | ipv4-dotted-quad | ipv6-coloned-hex |
+                 interface-name | "self"
 
-altq-rule      = altq on INTERFACE-NAME QUEUEOPTS-LIST
-                 queue QUEUE-LIST
-queue-rule     = queue STRING [ on INTERFACE-NAME ] QUEUEOPTS-LIST
-                 QUEUE-LIST
+altq-rule      = "altq on" interface-name queueopts-list
+                 "queue" queue-list
+queue-rule     = "queue" string [ "on" interface-name ] queueopts-list
+                 queue-list
 
-anchor-rule    = anchor STRING [ ( in | out ) ] [ on IFSPEC ] [ AF ]
-                 [ proto ] [ PROTOSPEC ] [ HOSTS ]
+anchor-rule    = "anchor" string [ ( "in" | "out" ) ] [ "on" ifspec ]
+                 [ af ] [ "proto" ] [ protospec ] [ hosts ]
 
-trans-anchors  = ( nat-anchor | rdr-anchor | binat-anchor ) STRING
-                 [ on IFSPEC ] [ AF ] [ proto ] [ PROTOSPEC ] [ HOSTS ]
+trans-anchors  = ( "nat-anchor" | "rdr-anchor" | "binat-anchor" ) string
+                 [ "on" ifspec ] [ af ] [ "proto" ] [ protospec ] [ hosts ]
 
-load-anchor    = load anchorname:rulesetname from filename
+load-anchor    = "load" anchorname:rulesetname "from" filename
 
-queueopts-list = QUEUEOPTS-LIST QUEUEOPTS | QUEUEOPTS
-queueopts      = [ bandwidth BANDWIDTH-SPEC ] |
-                 [ qlimit NUMBER ] | [ tbrsize NUMBER ] |
-                 [ priority NUMBER ] | [ SCHEDULERS ] |
-                 [ qlimit NUMBER ]
-schedulers     = ( CBQ-DEF | PRIQ-DEF | HFSC-DEF )
-bandwidth-spec = number ( b | Kb | Mb | Gb | '%' )
+queueopts-list = queueopts-list queueopts | queueopts
+queueopts      = [ "bandwidth" bandwidth-spec ] |
+                 [ "qlimit" number ] | [ "tbrsize" number ] |
+                 [ "priority" number ] | [ schedulers ] |
+                 [ "qlimit" number ]
+schedulers     = ( cbq-def | priq-def | hfsc-def )
+bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
-action         = pass | block [ return ] | scrub
-return         = drop | return | return-rst [ '(' ttl NUMBER ')' ]
-                 | return-icmp [ '(' ICMPCODE [',' ICMP6CODE ] ')' ]
-                 | return-icmp6 [ '(' ICMP6CODE ')' ]
-icmpcode       = ( ICMP-CODE-NAME | ICMP-CODE-NUMBER )
-icmp6code      = ( ICMP6-CODE-NAME | ICMP6-CODE-NUMBER )
+action         = "pass" | "block" [ "return" ] | "scrub"
+return         = "drop" | "return" | "return-rst" [ "( ttl" number ")" ] |
+                 "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
+                 "return-icmp6" [ "(" icmp6code ")" ]
+icmpcode       = ( icmp-code-name | icmp-code-number )
+icmp6code      = ( icmp6-code-name | icmp6-code-number )
 
-ifspec         = ( [ '!' ] INTERFACE-NAME ) | '{' INTERFACE-LIST '}'
-interface-list = [ '!' ] INTERFACE-NAME [ [ ',' ] INTERFACE-LIST ]
-route          = fastroute |
-                 ( route-to | reply-to | dup-to )
-                 ( ROUTEHOST | '{' ROUTEHOST-LIST '}' )
-                 [ POOLTYPE ]
-af             = inet | inet6
+ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
+interface-list = [ "!" ] interface-name [ [ "," ] interface-list ]
+route          = "fastroute" |
+                 ( "route-to" | "reply-to" | "dup-to" )
+                 ( routehost | "{" routehost-list "}" )
+                 [ pooltype ]
+af             = "inet" | "inet6"
 
-protospec      = proto ( PROTO-NAME | PROTO-NUMBER |
-                 '{' PROTO-LIST '}' )
-proto-list     = ( PROTO-NAME | PROTO-NUMBER ) [ [ ',' ] PROTO-LIST ]
+protospec      = "proto" ( proto-name | proto-number |
+                 "{" proto-list "}" )
+proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ]
 
-hosts          = all |
-                 from ( any | no-route | self | HOST |
-                 '{' HOST-LIST '}' ) [ PORT ]
-                 to   ( any | no-route | self | HOST |
-                 '{' HOST-LIST '}' ) [ PORT ]
+hosts          = "all" |
+                 "from" ( "any" | "no-route" | "self" | host |
+                 "{" host-list "}" ) [ port ]
+                 "to"   ( "any" | "no-route" | "self" | host |
+                 "{" host-list "}" ) [ port ]
 
-ipspec         = any | HOST | '{' HOST-LIST '}'
-host           = [ '!' ] ( ADDRESS [ '/' MASK-BITS ] | '<' STRING '>' )
-redirhost      = ADDRESS [ '/' MASK-BITS ]
-routehost      = ( INTERFACE-NAME [ ADDRESS [ '/' MASK-BITS ] ] )
-address        = ( INTERFACE-NAME | '(' INTERFACE-NAME ')' | HOSTNAME
-                 | IPV4-DOTTED-QUAD | IPV6-COLONED-HEX )
-host-list      = HOST [ [ ',' ] HOST-LIST ]
-redirhost-list = REDIRHOST [ [ ',' ] REDIRHOST-LIST ]
-routehost-list = ROUTEHOST [ [ ',' ] ROUTEHOST-LIST ]
+ipspec         = "any" | host | "{" host-list "}"
+host           = [ "!" ] ( address [ "/" mask-bits ] | "<" string ">" )
+redirhost      = address [ "/" mask-bits ]
+routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
+address        = ( interface-name | "(" interface-name ")" | hostname |
+                 ipv4-dotted-quad | ipv6-coloned-hex )
+host-list      = host [ [ "," ] host-list ]
+redirhost-list = redirhost [ [ "," ] redirhost-list ]
+routehost-list = routehost [ [ "," ] routehost-list ]
 
-port           = port ( UNARY-OP | BINARY-OP | '{' OP-LIST '}' )
-portspec       = port ( NUMBER | NAME ) [ ':' ( '*' | NUMBER | NAME ) ]
-user           = user ( UNARY-OP | BINARY-OP | '{' OP-LIST '}' )
-group          = group ( UNARY-OP | BINARY-OP | '{' OP-LIST '}' )
+port           = "port" ( unary-op | binary-op | "{" op-list "}" )
+portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ]
+user           = "user" ( unary-op | binary-op | "{" op-list "}" )
+group          = "group" ( unary-op | binary-op | "{" op-list "}" )
 
-unary-op       = [ '=' | '!=' | '<' | '<=' | '>' | '>=' ]
-                 ( NAME | NUMBER )
-binary-op      = NUMBER ( '<>' | '><' | ':' ) NUMBER
-op-list        = ( UNARY-OP | BINARY-OP ) [ [ ',' ] OP-LIST ]
+unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
+                 ( name | number )
+binary-op      = number ( "<>" | "><" | ":" ) number
+op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ]
 
-flags          = flags [ FLAG-SET ] '/' FLAG-SET
-flag-set       = [ F ] [ S ] [ R ] [ P ] [ A ] [ U ] [ E ] [ W ]
+flags          = "flags" [ flag-set ] "/" flag-set
+flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
+                 [ "W" ]
 
-icmp-type      = icmp-type ( ICMP-TYPE-CODE | '{' ICMP-LIST '}' )
-icmp6-type     = icmp6-type ( ICMP-TYPE-CODE | '{' ICMP-LIST '}')
-icmp-type-code = ( ICMP-TYPE-NAME | ICMP-TYPE-NUMBER )
-                 [ code ( ICMP-CODE-NAME | ICMP-CODE-NUMBER ) ]
-icmp-list      = ICMP-TYPE-CODE [ [ ',' ] ICMP-LIST ]
+icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" )
+icmp6-type     = "icmp6-type" ( icmp-type-code | "{" icmp-list "}" )
+icmp-type-code = ( icmp-type-name | icmp-type-number )
+                 [ "code" ( icmp-code-name | icmp-code-number ) ]
+icmp-list      = icmp-type-code [ [ "," ] icmp-list ]
 
-tos            = tos ( lowdelay | throughput | reliability |
-                 [ 0x ] NUMBER )
+tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
+                 [ "0x" ] number )
 
-state-opts     = STATE-OPT [ [ ',' ] STATE-OPTS ]
-state-opt      = ( max NUMBER ) | ( timeout SECONDS )
+state-opts     = state-opt [ [ "," ] state-opts ]
+state-opt      = ( "max" number ) | ( timeout seconds )
 
-fragmentation  = [ fragment reassemble | fragment crop
-                 | fragment drop-ovl ]
+fragmentation  = [ "fragment reassemble" | "fragment crop" |
+                 "fragment drop-ovl" ]
 
-timeout-list   = TIMEOUT [ [ ',' ] TIMEOUT-LIST ]
-timeout        = ( tcp.first | tcp.opening | tcp.established
-                 | tcp.closing | tcp.finwait | tcp.closed
-                 | udp.first | udp.single | udp.multiple
-                 | icmp.first | icmp.error
-                 | other.first | other.single | other.multiple )
-                 SECONDS
-seconds        = NUMBER
+timeout-list   = timeout [ [ "," ] timeout-list ]
+timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
+                 "tcp.closing" | "tcp.finwait" | "tcp.closed" |
+                 "udp.first" | "udp.single" | "udp.multiple" |
+                 "icmp.first" | "icmp.error" |
+                 "other.first" | "other.single" | "other.multiple" )
+                 seconds
+seconds        = number
 
-limit-list     = LIMIT-ITEM [ [ ',' ] LIMIT-LIST ]
-limit-item     = ( states | frags ) NUMBER
+limit-list     = limit-item [ [ "," ] limit-list ]
+limit-item     = ( "states" | "frags" ) number
 
-pooltype       = ( bitmask | random
-                 | source-hash [ ( hex-key | string-key ) ]
-                 | round-robin )
+pooltype       = ( "bitmask" | "random" |
+                 "source-hash" [ ( hex-key | string-key ) ] |
+                 "round-robin" )
 
-subqueue       = STRING | '{' QUEUE-LIST '}'
-queue-list     = STRING [ [ ',' ] STRING ]
-cbq-def        = cbq [ '(' CBQ-OPT [ [ ',' ] CBQ-OPT ] ')' ]
-priq-def       = priq [ '(' PRIQ-OPT [ [ ',' ] PRIQ-OPT ] ')' ]
-hfsc-def       = hfsc [ '(' HFSC-OPT [ [ ',' ] HFSC-OPT ] ')' ]
-cbq-opt        = ( default | borrow | red | ecn | rio )
-priq-opt       = ( default | red | ecn | rio )
-hfsc-opt       = ( default | red | ecn | rio
-                 | LINKSHARE-SC | REALTIME-SC | UPPERLIMIT-SC )
-linkshare-sc   = linkshare SC-SPEC
-realtime-sc    = realtime SC-SPEC
-upperlimit-sc  = upperlimit SC-SPEC
-sc-spec        = ( BANDWIDTH-SPEC
-                 | '(' BANDWIDTH-SPEC NUMBER BANDWIDTH-SPEC ')' )
+subqueue       = string | "{" queue-list "}"
+queue-list     = string [ [ "," ] string ]
+cbq-def        = "cbq" [ "(" cbq-opt [ [ "," ] cbq-opt ] ")" ]
+priq-def       = "priq" [ "(" priq-opt [ [ "," ] priq-opt ] ")" ]
+hfsc-def       = "hfsc" [ "(" hfsc-opt [ [ "," ] hfsc-opt ] ")" ]
+cbq-opt        = ( "default" | "borrow" | "red" | "ecn" | "rio" )
+priq-opt       = ( "default" | "red" | "ecn" | "rio" )
+hfsc-opt       = ( "default" | "red" | "ecn" | "rio" |
+                 linkshare-sc | realtime-sc | upperlimit-sc )
+linkshare-sc   = "linkshare" sc-spec
+realtime-sc    = "realtime" sc-spec
+upperlimit-sc  = "upperlimit" sc-spec
+sc-spec        = ( bandwidth-spec |
+                 "(" bandwidth-spec number bandwidth-spec ")" )
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/protocols" -compact
