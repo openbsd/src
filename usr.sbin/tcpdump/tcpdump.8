@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.46 2004/05/06 11:25:11 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.47 2004/06/23 06:12:07 markus Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,6 +193,8 @@ Do not print a timestamp on each dump line.
 Print an unformatted timestamp on each dump line.
 .It Fl ttt
 Print day and month in timestamp.
+.It Fl tttt
+Print timestamp difference between packets.
 .It Fl T Ar type
 Force packets selected by
 .Ar expression
