@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 1998/10/10 06:31:30 rahnds Exp $
+#	$OpenBSD: GENERIC,v 1.9 1998/10/11 20:51:39 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -19,6 +19,27 @@ include "../../../conf/GENERIC"
 config		bsd	swap generic
 
 
+#
+#  Now the Machine specification
+#
+mainbus0	at root
+cpu*		at mainbus0
+
+ofroot*		at mainbus0
+mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+isabr*		at pci?		# ISA dev bridge.
+mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+isabr*		at mainbus0	# ISA dev bridge.
+
+#### PCI Bus devices.
+
+pci*		at mpcpcibr?
+ncr*		at pci? dev ? function ?
+scsibus*	at ncr?
+de*		at pci? dev ? function ?
+#vme*		at pci? dev ? function ?
+vga*		at pci? dev ? function ?	# PCI VGA graphics 
+vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
 
 #### ISA Bus devices.
 
