@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.28 2002/02/22 21:01:47 deraadt Exp $
+.\"	$OpenBSD: dump.8,v 1.29 2003/02/01 16:29:53 jmc Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -161,7 +161,7 @@ or
 Multiple file names may be given as a single argument separated by commas.
 Each file will be used for one dump volume in the order listed;
 if the dump requires more volumes than the number of names given,
-the last file name will used for all remaining volumes after prompting
+the last file name will be used for all remaining volumes after prompting
 for media changes.
 If the name of the file is of the form
 .Dq host:file
@@ -217,7 +217,7 @@ Update the file
 after a successful dump.
 The format of
 .Pa /etc/dumpdates
-is readable by people, consisting of one
+is human readable, consisting of one
 free format record per line:
 filesystem name,
 increment level

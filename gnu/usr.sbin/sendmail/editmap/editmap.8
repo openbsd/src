@@ -13,18 +13,20 @@
 .Os
 .Sh NAME
 .Nm editmap
-.Nd query and edit single records in database maps for sendmail
+.Nd query and edit records in database maps for sendmail
 .Sh SYNOPSIS
 .Nm editmap
+.Bk -words
 .Op Fl C Ar file
 .Op Fl N
 .Op Fl f
 .Op Fl q | Fl u | Fl x
 maptype mapname key
 .Op Dq value ...
+.Ek
 .Sh DESCRIPTION
 .Nm editmap
-queries or edits one record in a database maps used by the keyed map lookups in
+queries or edits one record in database maps used by the keyed map lookups in
 .Xr sendmail 8 .
 Arguments are passed on the command line and output (for queries) is
 directed to standard output.

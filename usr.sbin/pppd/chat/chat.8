@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" $OpenBSD: chat.8,v 1.11 2002/10/25 05:19:35 jason Exp $
+.\" $OpenBSD: chat.8,v 1.12 2003/02/01 16:29:52 jmc Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
@@ -19,7 +19,7 @@ chat \- Automated conversational script with a modem
 .SH DESCRIPTION
 .LP
 The \fIchat\fR program defines a conversational exchange between the
-computer and the modem. Its primary purpose is to establish the
+computer and the modem. Its primary purpose is to establish a
 connection between the Point-to-Point Protocol Daemon (\fIpppd\fR) and
 the remote's \fIpppd\fR process.
 .SH OPTIONS
@@ -159,8 +159,8 @@ Many modems will report the status of the call as a string. These
 strings may be \fBCONNECTED\fR or \fBNO CARRIER\fR or \fBBUSY\fR. It
 is often desirable to terminate the script should the modem fail to
 connect to the remote. The difficulty is that a script would not know
-exactly which modem string it may receive. On one attempt, it may
-receive \fBBUSY\fR while the next time it may receive \fBNO CARRIER\fR.
+exactly which modem string it may receive. On one attempt it may
+receive \fBBUSY\fR, while the next time it may receive \fBNO CARRIER\fR.
 .LP
 These "abort" strings may be specified in the script using the \fIABORT\fR
 sequence. It is written in the script as in the following example:
@@ -244,7 +244,7 @@ other string processing such as looking for the expect string. The use
 of the same string for a report and abort sequence is probably not
 very useful; however, it is possible.
 .LP
-The report strings to no change the completion code of the program.
+The report strings do not change the completion code of the program.
 .LP
 These "report" strings may be specified in the script using the \fIREPORT\fR
 sequence. It is written in the script as in the following example:
@@ -375,7 +375,7 @@ send the return character. This sequence may either be a pair of apostrophe
 or quote characters.
 .TP
 .B \\\\b
-represents a backspace character.
+Represents a backspace character.
 .TP
 .B \\\\c
 Suppresses the newline at the end of the reply string. This is the only
@@ -414,7 +414,7 @@ Send or expect a carriage return.
 .TP
 .B \\\\s
 Represents a space character in the string. This may be used when it
-is not desirable to quote the strings which contains spaces. The
+is not desirable to quote the strings which contain spaces. The
 sequence 'HI\ TIM' and HI\\sTIM are the same.
 .TP
 .B \\\\t
@@ -442,7 +442,7 @@ was executed without error to the normal conclusion.
 .TP
 .B 1
 One or more of the parameters are invalid or an expect string was too
-large for the internal buffers. This indicates that the program as not
+large for the internal buffers. This indicates that the program was not
 properly executed.
 .TP
 .B 2
@@ -482,7 +482,7 @@ Additional information about \fIchat\fR scripts may be found with UUCP
 documentation. The \fIchat\fR script was taken from the ideas proposed
 by the scripts used by the \fIuucico\fR program.
 .LP
-uucico(1), uucp(1)
+uucp(1)
 .SH COPYRIGHT
 The \fIchat\fR program is in public domain. This is not the GNU public
 license. If it breaks then you get to keep both pieces.

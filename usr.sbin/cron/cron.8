@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: cron.8,v 1.16 2002/07/15 19:13:29 millert Exp $
+.\" $OpenBSD: cron.8,v 1.17 2003/02/01 16:29:52 jmc Exp $
 .\"
 .Dd July 6, 2002
 .Dt CRON 8
@@ -79,7 +79,7 @@ and the at spool
 once a minute.
 If the modification time has changed, the affected files are reloaded.
 .Pp
-Any output produced by a command is sent to the used specified in the
+Any output produced by a command is sent to the user specified in the
 .Ev MAILTO
 environment variable as set in the
 .Xr crontab 5
@@ -91,7 +91,7 @@ or
 .Xr batch 1
 job), to the job's owner.
 If a command produces no output, no mail will be sent.
-The exception to this are
+The exception to this is
 .Xr at 1
 or
 .Xr batch 1
@@ -153,8 +153,8 @@ show misc other debugging information
 test mode; don't actually execute commands
 .El
 .Pp
-Multiple flags may be specified, sepatated by a comma
-.Pq So , Sc
+Multiple flags may be specified, separated by a comma
+.Pq So , Sc .
 Regardless of which flags were specified, the
 .Fl x
 flag will cause

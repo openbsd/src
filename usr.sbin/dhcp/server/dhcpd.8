@@ -144,7 +144,7 @@ they can be better spent elsewhere.   So please don't complain about
 this on the mailing list unless you're prepared to fund a project to
 implement this feature, or prepared to do it yourself.
 .PP
-DHCP traffic always bypass IPsec, otherwise there can come up situations
+DHCP traffic always bypasses IPsec, otherwise there could be situations
 when a server has an IPsec SA for the client, and sends replies over that,
 which a potentially newly booted client cannot grasp.
 .SH COMMAND LINE
@@ -260,7 +260,7 @@ to the subnet command:
 	  range 239.252.197.10 239.252.197.107;
 	  default-lease-time 600;
 	  max-lease-time 7200;
-	|
+	}
 .fi
 .PP
 This particular subnet declaration specifies a default lease time of

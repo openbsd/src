@@ -1,4 +1,4 @@
-.\"	$OpenBSD: drtest.8,v 1.10 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: drtest.8,v 1.11 2003/02/01 16:29:52 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -44,14 +44,14 @@
 is a standalone program used to read a disk
 track by track.
 It was primarily intended as a test program
-for new standalone drivers, but has shown
+for new standalone drivers, but has proved
 useful in other contexts as well, such as
 verifying disks and running speed
 tests.
 For example, when a disk has been formatted (by
 .Xr format 8 ) ,
 you can check that
-hard errors has been taken care of by running
+hard errors have been taken care of by running
 .Nm drtest .
 No hard errors should be found, but in many cases
 quite a few soft
