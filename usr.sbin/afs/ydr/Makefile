@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1999/05/26 13:52:58 espie Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/05/15 09:02:03 deraadt Exp $
 SRCS		+= main.c output.c symbol.c types.c lex.c parse.c
 CLEANFILES	+= lex.c parse.c parse.h y.tab.h
 CFLAGS		+= -I. -I${.CURDIR}/../src/util -I${.CURDIR}/../src/lib/roken \
@@ -15,7 +15,7 @@ DPADD		+= ../libroken/libroken.a
 beforedepend: parse.h
 
 parse.h: y.tab.h
-	-@ln -s y.tab.h parse.h
+	-@ln -fs y.tab.h parse.h
 
 y.tab.h: parse.c
 
