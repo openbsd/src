@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.17 2001/08/16 16:14:35 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.18 2001/08/16 18:29:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.17 2001/08/16 16:14:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.18 2001/08/16 18:29:27 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -150,9 +150,9 @@ local_passwd(uname, authenticated)
 	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
-	/* Update master.passwd file and build .db version. */
+	/* Update master.passwd file and rebuild spwd.db. */
 	pw_copy(pfd, tfd, pw);
-	if (pw_mkdb(uname) < 0)
+	if (pw_mkdb(uname, 1) < 0)
 		pw_error((char *)NULL, 0, 1);
 
 	return(0);
