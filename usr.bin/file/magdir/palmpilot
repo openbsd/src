@@ -1,7 +1,6 @@
 # start kpilot.magic
 # This must go at the end of $(kde_mimedir)/magic
 # PalmPilot Files
-0       string           >\0    
 >0x20   beshort&0xffe7   0              palmpilot/database
 >0x20   beshort&0xffe7   1      
 >>0x3c  string           appl           palmpilot/application
