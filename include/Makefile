@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.64 1999/05/09 00:21:13 millert Exp $
+#	$OpenBSD: Makefile,v 1.65 1999/05/18 15:43:58 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -123,13 +123,12 @@ copies:
 	pax -rw -pa -L \
 	    `find ${LDIRS} -follow -type f -name '*.h' '!' -path \
 	    'netiso/xebec/*' -print` ${DESTDIR}/usr/include
-	rm -rf ${DESTDIR}/usr/include/machine
+	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-		${DESTDIR}/usr/include/machine
+		${DESTDIR}/usr/include/${MACHINE}
 	pax -rw -pa -s "|\.\./sys/arch/${MACHINE}/include||" \
 	    ../sys/arch/${MACHINE}/include/*.h \
-	    ${DESTDIR}/usr/include/machine   
-	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
+	    ${DESTDIR}/usr/include/${MACHINE}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d ../sys/arch/${MACHINE_ARCH}/include; then \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
@@ -137,9 +136,8 @@ copies:
 		pax -rw -pa -s "|\.\./sys/arch/${MACHINE_ARCH}/include||" \
 		    ../sys/arch/${MACHINE_ARCH}/include/*.h \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
-	else \
-		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	fi
+	ln -sf ${MACHINE} ${DESTDIR}/usr/include/machine; \
 
 symlinks:
 	@echo symlinks: ${LDIRS}
@@ -147,16 +145,15 @@ symlinks:
 		rm -rf ${DESTDIR}/usr/include/$$i; \
 		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
 	done
-	rm -rf ${DESTDIR}/usr/include/machine
-	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/machine
+	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
+	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/${MACHINE}
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d ../sys/arch/${MACHINE_ARCH}/include ; then \
 		ln -s /sys/arch/${MACHINE_ARCH}/include \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
-	else \
-		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 	fi
+	ln -sf ${MACHINE} ${DESTDIR}/usr/include/machine ; \
 
 includes: ${SYS_INCLUDE}
 
