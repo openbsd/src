@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 1999/05/21 17:56:05 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 1999/05/23 19:11:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -314,8 +314,6 @@ hppa_init()
 	valloc(cfree, struct cblock, nclist);
 #endif
 	valloc(callout, struct callout, ncallout);
-	nswapmap = maxproc * 2;
-	valloc(swapmap, struct map, nswapmap);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
