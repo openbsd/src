@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.11 1999/02/05 01:57:32 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.12 1999/02/24 22:35:23 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif
 
 #ifdef IPSEC
-#include <net/encap.h>
+#include <netinet/ip_ipsp.h>
+
+extern struct ifnet enc_softc; 
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
@@ -79,6 +81,12 @@ int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
 static int okaytoclone __P((u_int, int));
+
+static struct ifaddr *
+encap_findgwifa(struct sockaddr *gw)
+{
+    return enc_softc.if_addrlist.tqh_first;
+}
 
 void
 rtable_init(table)
@@ -204,14 +212,14 @@ rtalloc1(dst, report)
 		} else
 			rt->rt_refcnt++;
 	} else {
-		if (dst->sa_family != AF_ENCAP)
+		if (dst->sa_family != PF_KEY)
 		        rtstat.rts_unreach++;
 	/*
 	 * IP encapsulation does lots of lookups where we don't need nor want
 	 * the RTM_MISSes that would be generated.  It causes RTM_MISS storms
 	 * sent upward breaking user-level routing queries.
 	 */
-	miss:	if (report && dst->sa_family != AF_ENCAP) {
+	miss:	if (report && dst->sa_family != PF_KEY) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, err);
@@ -375,12 +383,12 @@ ifa_ifwithroute(flags, dst, gateway)
 
 #ifdef IPSEC
 	/*
-	 * If the destination is a AF_ENCAP address, we'll look
+	 * If the destination is a PF_KEY address, we'll look
 	 * for the existence of a encap interface number or address
 	 * in the options list of the gateway. By default, we'll return
 	 * encap0.
 	 */
-	if (dst && (dst->sa_family == AF_ENCAP))
+	if (dst && (dst->sa_family == PF_KEY))
 		return encap_findgwifa(gateway);
 #endif
 
