@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.4 2003/09/04 21:09:08 jmc Exp $
+.\"	$OpenBSD: ld.so.1,v 1.5 2003/09/26 21:42:20 jmc Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -81,66 +81,73 @@ looked up by hashing on the 3-tuple
 .Nm
 recognises a number of environment variables that can be used to modify
 its behaviour as follows:
-.Bl -tag -width "LD_TRACE_LOADED_OBJECTS_PROGNAME"
+.Pp
+.Bl -tag -width Ds -compact
 .It Ev LD_LIBRARY_PATH
 A colon separated list of directories, overriding the default search path
 for shared libraries.
 This variable is ignored for set-user-ID and set-group-ID executables.
+.Pp
 .It Ev LD_PRELOAD
 A colon separate list of library names to load before any of the regular
 libraries are loaded.
 This variable is ignored for set-user-ID and set-group-ID executables.
+.Pp
 .It Ev LD_BIND_NOW
 Specifies that the dynamic linker should process all relocations before
 transferring control to the program.
 Normally, the procedure linkage table entries are handled lazily,
 avoiding symbol lookup and relocation for unused functions.
 This variable is ignored for set-user-ID and set-group-ID executables.
+.Pp
 .It Ev LD_WARN_NON_PURE_CODE
 When set, issue a warning whenever a link-editing operation requires
 modification of the text segment of some loaded object.
 This is usually indicative of an incorrectly built library.
-<not yet supported>
+.Aq not yet supported
+.Pp
 .It Ev LD_SUPPRESS_WARNINGS
 When set, no warning messages of any kind are issued.
 Normally, a warning is given if a satisfactorily versioned library
 could not be found.
-<not yet supported>
+.Aq not yet supported
+.Pp
 .It Ev LD_TRACE_LOADED_OBJECTS
 When set, causes
 .Nm
 to exit after loading the shared objects and printing a summary which includes
 the absolute pathnames of all objects, to standard output.
+.Pp
 .It Ev LD_TRACE_LOADED_OBJECTS_FMT1
 .It Ev LD_TRACE_LOADED_OBJECTS_FMT2
 When set, these variables are interpreted as format strings a la
 .Xr printf 3
 to customize the trace output and are used by
-.Xr ldd 1 Ns 's
+.Xr ldd 1 's
 .Fl f
 option and allows
 .Xr ldd 1
 to be operated as a filter more conveniently.
 The following conversions can be used:
 .Bl -tag -width "xxxx"
-.It \&%a
+.It %a
 The main program's name
 .Pq also known as Dq __progname .
 .It \&%A
 The value of the environment variable
 .Ev LD_TRACE_LOADED_OBJECTS_PROGNAME .
-<not yet supported>
-.It \&%o
+.Aq not yet supported
+.It %o
 The library name.
-.It \&%m
+.It %m
 The library's major version number.
-.It \&%n
+.It %n
 The library's minor version number.
-.It \&%p
+.It %p
 The full pathname as determined by
 .Nm ld.so Ns 's
 library search rules.
-.It \&%x
+.It %x
 The library's load address.
 .El
 .Pp
@@ -149,19 +156,22 @@ Additionally,
 and
 .Sy \et
 are recognised and have their usual meaning.
-<not yet supported>
+.Aq not yet supported
+.Pp
 .It Ev LD_NO_INTERN_SEARCH
 When set,
 .Nm
 does not process any internal search paths that were recorded in the
 executable.
-<not yet supported>
+.Aq not yet supported
+.Pp
 .It Ev LD_NORANDOM
 When set, do not load shared objects or libraries dependent objects in
 random order.
 This variable is ignored for set-user-ID and set-group-ID executables.
+.Pp
 .It Ev LD_NOSTD_PATH
-<not yet supported>
+.Aq not yet supported
 When set, do not include a set of built-in standard directory paths for
 searching.
 This might be useful when running on a system with a completely
