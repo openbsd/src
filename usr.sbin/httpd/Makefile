@@ -135,7 +135,7 @@ MANUALFILES= \
 	manual/vhosts/ip-based.html \
 	manual/vhosts/name-based.html \
 	manual/vhosts/vhosts-in-depth.html \
-	manual/vhosts/virtual-host.html
+	manual/vhosts/virtual-host.html \
 	manual/mod/mod_ssl/index.html \
 	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
 	manual/mod/mod_ssl/ssl_compat.html \
@@ -192,7 +192,6 @@ MANUALFILES= \
 	manual/mod/mod_ssl/ssl_template.title-ref.gif \
 	manual/mod/mod_ssl/ssl_template.title-toc.gif \
 	manual/mod/mod_ssl/ssl_template.title-tutor.gif
-
 
 ICONFILES= \
 	icons/README icons/c.gif icons/hand.right.gif icons/pie2.gif	\
