@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 1996/05/07 07:21:59 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 1996/10/16 23:12:06 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -185,7 +185,9 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
+#ifdef USER_LDT
 	struct pcb *pcb;
+#endif
 	struct vmspace *vm;
 
 #if NNPX > 0
