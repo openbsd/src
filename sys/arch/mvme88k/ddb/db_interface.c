@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.40 2004/01/13 18:40:47 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.41 2004/01/14 20:45:59 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -44,7 +44,10 @@
 #include <machine/bugio.h>		/* bug routines		*/
 #include <machine/locore.h>
 #include <machine/cpu_number.h>
+#ifdef M88100
 #include <machine/m88100.h>
+#include <machine/m8820x.h>
+#endif
 
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
@@ -181,7 +184,9 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	struct trapframe *s = (struct trapframe *)addr;
 	char *name;
 	db_expr_t offset;
+#ifdef M88100
 	int suppress1 = 0, suppress2 = 0;
+#endif
 	int c, force = 0, help = 0;
 
 	if (!have_addr) {
@@ -326,8 +331,8 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 				}
 			}
 
-			db_printf("fault code %d dpfsr %x\n",
-			    (s->tf_dpfsr >> 16) & 0x07, s->tf_dpfsr);
+			db_printf("fault code %d\n",
+			    CMMU_PFSR_FAULT(s->tf_dpfsr));
 		}
 	}
 #endif	/* M88100 */

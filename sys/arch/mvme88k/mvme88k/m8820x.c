@@ -1,4 +1,28 @@
-/*	$OpenBSD: m8820x.c,v 1.28 2004/01/09 00:23:08 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.29 2004/01/14 20:46:02 miod Exp $	*/
+/*
+ * Copyright (c) 2004, Miodrag Vallat.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -30,7 +54,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -59,7 +82,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
 
@@ -86,11 +108,10 @@
 #undef	SHADOW_BATC		/* don't use BATCs for now XXX nivas */
 
 #ifdef DEBUG
-#define DB_CMMU	0x4000	/* MMU debug */
-unsigned int m8820x_debuglevel = 0;
+unsigned int m8820x_debuglevel;
 #define dprintf(_X_) \
 	do { \
-		if (m8820x_debuglevel & DB_CMMU) { \
+		if (m8820x_debuglevel != 0) { \
 			unsigned int psr = disable_interrupts_return_psr(); \
 			printf("%d: ", cpu_number()); \
 			printf _X_;  \
@@ -152,43 +173,46 @@ struct cmmu_p cmmu8820x = {
 #endif
 };
 
-struct cmmu_regs {
-   /* base + $000 */volatile unsigned idr;
-   /* base + $004 */volatile unsigned scr;
-   /* base + $008 */volatile unsigned ssr;
-   /* base + $00C */volatile unsigned sar;
-   /*             */unsigned padding1[0x3D];
-   /* base + $104 */volatile unsigned sctr;
-   /* base + $108 */volatile unsigned pfSTATUSr;
-   /* base + $10C */volatile unsigned pfADDRr;
-   /*             */unsigned padding2[0x3C];
-   /* base + $200 */volatile unsigned sapr;
-   /* base + $204 */volatile unsigned uapr;
-   /*             */unsigned padding3[0x7E];
-   /* base + $400 */volatile unsigned bwp[8];
-   /*             */unsigned padding4[0xF8];
-   /* base + $800 */volatile unsigned cdp[4];
-   /*             */unsigned padding5[0x0C];
-   /* base + $840 */volatile unsigned ctp[4];
-   /*             */unsigned padding6[0x0C];
-   /* base + $880 */volatile unsigned cssp;
+/*
+ * This code was initially designed for the Omron Luna 88K layout consisting
+ * of up to 4 CPUs with 2 CMMUs each, one for data and one for instructions.
+ *
+ * Trying to support a few more board configurations for the
+ * Motorola MVME188, we have the following layouts:
+ *
+ *  - config 0: 4 CPUs, 8 CMMUs
+ *  - config 1: 2 CPUs, 8 CMMUs
+ *  - config 2: 1 CPUs, 8 CMMUs
+ *  - config 5: 2 CPUs, 4 CMMUs
+ *  - config 6: 1 CPU,  4 CMMUs
+ *  - config A: 1 CPU,  2 CMMUs
+ *
+ * We use these splitup schemes:
+ *  - split between data and instructions (always enabled)
+ *  - split between user/spv (and A14 in config 2)
+ *  - split because of A12 (and A14 in config 2)
+ *  - one SRAM supervisor, other rest
+ *  - one whole SRAM, other rest
+ *
+ * The main problem is to find the right suited CMMU for a given
+ * CPU number at those configurations.
+ *                                         em, 10.5.94
+ */
 
-   /* The rest for the 88204 */
-#define cssp0 cssp
-   /*             */ unsigned padding7[0x03];
-   /* base + $890 */volatile unsigned cssp1;
-   /*             */unsigned padding8[0x03];
-   /* base + $8A0 */volatile unsigned cssp2;
-   /*             */unsigned padding9[0x03];
-   /* base + $8B0 */volatile unsigned cssp3;
-};
-
+/*
+ * CMMU kernel information
+ */
 struct m8820x_cmmu {
-	struct cmmu_regs *cmmu_regs;	/* CMMU "base" area */
-	unsigned char	cmmu_cpu;	/* cpu number it is attached to */
-	unsigned char	which;		/* either INST_CMMU || DATA_CMMU */
-	unsigned char	cmmu_access;	/* either CMMU_ACS_{SUPER,USER,BOTH} */
-	unsigned char	cmmu_alive;
+	unsigned *volatile cmmu_regs;	/* CMMU "base" area */
+	unsigned int	cmmu_cpu;	/* cpu number it is attached to */
+	unsigned int	cmmu_type;
+#define	INST_CMMU	0
+#define	DATA_CMMU	1
+	unsigned int	cmmu_access;
+#define	CMMU_ACS_USER	0
+#define	CMMU_ACS_SUPER	1
+#define	CMMU_ACS_BOTH	2
+	unsigned int	cmmu_alive;
 #define CMMU_DEAD	0		/* This cmmu is not there */
 #define CMMU_AVAILABLE	1		/* It's there, but which cpu's? */
 #define CMMU_MARRIED	2		/* Know which cpu it belongs to. */
@@ -200,20 +224,85 @@ struct m8820x_cmmu {
 #endif
 };
 
-/*
- * We rely upon and use INST_CMMU == 0 and DATA_CMMU == 1
- */
-#if INST_CMMU != 0 || DATA_CMMU != 1
-error("ack gag barf!");
-#endif
-
 #ifdef SHADOW_BATC
 /* CMMU(cpu,data) is the cmmu struct for the named cpu's indicated cmmu.  */
-#define CMMU(cpu, data) cpu_cmmu[(cpu)].pair[(data)?DATA_CMMU:INST_CMMU]
+#define CMMU(cpu, data) cpu_cmmu[(cpu)].pair[(data) ? DATA_CMMU : INST_CMMU]
+#endif
+
+/*
+ * Structure for accessing MMUS properly
+ */
+
+struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS] =
+{
+	/* address, cpu, mode, access, alive, addr, mask */
+	{(unsigned *volatile)VME_CMMU_I0, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_D0, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_I1, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_D1, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_I2, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_D2, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_I3, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
+	{(unsigned *volatile)VME_CMMU_D3, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0}
+};
+
+struct cpu_cmmu {
+	struct m8820x_cmmu *pair[2];
+} cpu_cmmu[MAX_CPUS];
+
+/*
+ * CMMU per CPU split strategies
+ */
+
+#define	CMMU_SPLIT_ADDRESS	0x00
+#define	CMMU_SPLIT_SPV		0x01
+#define	CMMU_SPLIT_SRAM_SPV	0x02
+#define	CMMU_SPLIT_SRAM_ALL	0x03
+
+#define	CMMU_SPLIT_MASK		0x03
+
+struct cmmu_strategy {
+	int inst;
+	int data;
+} cpu_cmmu_strategy[] = {
+	/*     inst                 data */
+	{ CMMU_SPLIT_SPV,      CMMU_SPLIT_SPV}, 	/* CPU 0 */
+	{ CMMU_SPLIT_SPV,      CMMU_SPLIT_SPV}, 	/* CPU 1 */
+	{ CMMU_SPLIT_ADDRESS,  CMMU_SPLIT_ADDRESS},	/* CPU 2 */
+	{ CMMU_SPLIT_ADDRESS,  CMMU_SPLIT_ADDRESS}	/* CPU 3 */
+};
+
+#ifdef MVME188
+/*
+ * The following list describes the different MVME188 configurations
+ * which are supported by this code.
+ */
+const struct board_config {
+	int ncpus;
+	int ncmmus;
+} bd_config[] = {
+	{ 4, 8 },	/* 4P128 - 4P512 */
+	{ 2, 8 },	/* 2P128 - 2P512 */
+	{ 1, 8 },	/* 1P128 - 1P512 */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 2, 4 },	/* 2P64  - 2P256 */
+	{ 1, 4 },	/* 1P64  - 1P256 */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 1, 2 },	/* 1P32  - 1P128 */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 }
+};
 #endif
 
 /* local prototypes */
 void m8820x_cmmu_set(int, unsigned, int, int, int, int, vaddr_t);
+void m8820x_cmmu_wait(int);
 void m8820x_cmmu_sync_cache(paddr_t, psize_t);
 void m8820x_cmmu_sync_inval_cache(paddr_t, psize_t);
 void m8820x_cmmu_inval_cache(paddr_t, psize_t);
@@ -222,16 +311,6 @@ void m8820x_cmmu_inval_cache(paddr_t, psize_t);
 #define MODE_VAL		0x01
 #define ACCESS_VAL		0x02
 #define ADDR_VAL		0x04
-
-#define	m8820x_cmmu_store(mmu, reg, val) \
-	*(unsigned *volatile)((reg) + (char *)(m8820x_cmmu[(mmu)].cmmu_regs)) =\
-	    (val)
-
-#define m8820x_cmmu_get(mmu, reg) \
-	*(unsigned *volatile)(reg + (char *)(m8820x_cmmu[mmu].cmmu_regs))
-
-#define m8820x_cmmu_alive(mmu) \
-	(m8820x_cmmu[mmu].cmmu_alive != CMMU_DEAD)
 
 #ifdef DEBUG
 void
@@ -251,105 +330,6 @@ m8820x_show_apr(value)
 }
 #endif
 
-/*----------------------------------------------------------------
- * The cmmu.c module was initially designed for the Omron Luna 88K
- * layout consisting of 4 CPUs with 2 CMMUs each, one for data
- * and one for instructions.
- *
- * Trying to support a few more board configurations for the
- * Motorola MVME188 we have these layouts:
- *
- *  - config 0: 4 CPUs, 8 CMMUs
- *  - config 1: 2 CPUs, 8 CMMUs
- *  - config 2: 1 CPUs, 8 CMMUs
- *  - config 5: 2 CPUs, 4 CMMUs
- *  - config 6: 1 CPU,  4 CMMUs
- *  - config A: 1 CPU,  2 CMMUs
- *
- * We use these splitup schemas:
- *  - split between data and instructions (always enabled)
- *  - split between user/spv (and A14 in config 2)
- *  - split because of A12 (and A14 in config 2)
- *  - one SRAM supervisor, other rest
- *  - one whole SRAM, other rest
- *
- * The main problem is to find the right suited CMMU for a given
- * CPU number at those configurations.
- *                                         em, 10.5.94
- *
- * WARNING: the code was never tested on a uniprocessor
- * system. All effort was made to support these configuration
- * but the kernel never ran on such a system.
- *
- *					   em, 12.7.94
- */
-
-/*
- * This structure describes the CMMU per CPU split strategies
- * used for data and instruction CMMUs.
- */
-struct cmmu_strategy {
-	int inst;
-	int data;
-} cpu_cmmu_strategy[] = {
-	/*     inst                 data */
-	{ CMMU_SPLIT_SPV,      CMMU_SPLIT_SPV},	 /* CPU 0 */
-	{ CMMU_SPLIT_SPV,      CMMU_SPLIT_SPV},	 /* CPU 1 */
-	{ CMMU_SPLIT_ADDRESS,  CMMU_SPLIT_ADDRESS}, /* CPU 2 */
-	{ CMMU_SPLIT_ADDRESS,  CMMU_SPLIT_ADDRESS}  /* CPU 3 */
-};
-
-#ifdef MVME188
-/*
- * The following list of structs describe the different
- * MVME188 configurations which are supported by this module.
- */
-const struct board_config {
-	int supported;
-	int ncpus;
-	int ncmmus;
-} bd_config[] = {
-	/* sup, CPU MMU */
-	{  1,  4,  8}, /* 4P128 - 4P512 */
-	{  1,  2,  8}, /* 2P128 - 2P512 */
-	{  1,  1,  8}, /* 1P128 - 1P512 */
-	{  0, -1, -1},
-	{  0, -1, -1},
-	{  1,  2,  4}, /* 2P64  - 2P256 */
-	{  1,  1,  4}, /* 1P64  - 1P256 */
-	{  0, -1, -1},
-	{  0, -1, -1},
-	{  0, -1, -1},
-	{  1,  1,  2}, /* 1P32  - 1P128 */
-	{  0, -1, -1},
-	{  0, -1, -1},
-	{  0, -1, -1},
-	{  0, -1, -1},
-	{  0, -1, -1}
-};
-#endif
-
-/*
- * Structure for accessing MMUS properly.
- */
-
-struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS] =
-{
-	/* address, cpu, mode, access, alive, addr, mask */
-	{(struct cmmu_regs *)VME_CMMU_I0, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_D0, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_I1, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_D1, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_I2, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_D2, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_I3, -1, INST_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0},
-	{(struct cmmu_regs *)VME_CMMU_D3, -1, DATA_CMMU, CMMU_ACS_BOTH, CMMU_DEAD, 0, 0}
-};
-
-struct cpu_cmmu {
-	struct m8820x_cmmu *pair[2];
-} cpu_cmmu[MAX_CPUS];
-
 /*
  * This routine sets up the CPU/CMMU configuration.
  */
@@ -358,7 +338,7 @@ m8820x_setup_board_config()
 {
 	int num, cmmu_num;
 	int vme188_config;
-	struct cmmu_regs *cr;
+	unsigned *volatile cr;
 #ifdef MVME188
 	int val1, val2;
 	u_int32_t *volatile whoami;
@@ -402,7 +382,7 @@ m8820x_setup_board_config()
 	cpu_cmmu_ratio = max_cmmus / max_cpus;
 
 #ifdef MVME188
-	if (bd_config[vme188_config].supported) {
+	if (bd_config[vme188_config].ncpus > 0) {
 		/* 187 has a fixed configuration, no need to print it */
 		if (brdtyp == BRD_188) {
 			printf("MVME188 board configuration #%X "
@@ -421,10 +401,10 @@ m8820x_setup_board_config()
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		cr = m8820x_cmmu[cmmu_num].cmmu_regs;
-		if (!badwordaddr((vaddr_t)cr)) {
+		if (badwordaddr((vaddr_t)cr) == 0) {
 			int type;
 
-			type = CMMU_TYPE(cr->idr);
+			type = CMMU_TYPE(cr[CMMU_IDR]);
 #ifdef DIAGNOSTIC
 			if (type != M88200_ID && type != M88204_ID) {
 				printf("WARNING: non M8820x circuit found "
@@ -449,7 +429,7 @@ m8820x_setup_board_config()
 			dprintf(("cmmu_init: testing CMMU %d for CPU %d\n",
 			    num * cpu_cmmu_ratio + i, num));
 #ifdef DIAGNOSTIC
-			if (!m8820x_cmmu_alive(num * cpu_cmmu_ratio + i)) {
+			if (m8820x_cmmu[num * cpu_cmmu_ratio + i].cmmu_alive == CMMU_DEAD) {
 				printf("CMMU %d attached to CPU %d is not working\n",
 				    num * cpu_cmmu_ratio + i, num);
 				continue;	/* will probably die quickly */
@@ -458,7 +438,7 @@ m8820x_setup_board_config()
 		}
 		cpu_sets[num] = 1;   /* This cpu installed... */
 		type = CMMU_TYPE(m8820x_cmmu[num * cpu_cmmu_ratio].
-		    cmmu_regs->idr);
+		    cmmu_regs[CMMU_IDR]);
 
 		printf("CPU%d is attached with %d MC%x CMMUs\n",
 		    num, cpu_cmmu_ratio, type == M88204_ID ? 0x88204 : 0x88200);
@@ -468,7 +448,7 @@ m8820x_setup_board_config()
 		cpu_cmmu_strategy[num].inst &= CMMU_SPLIT_MASK;
 		cpu_cmmu_strategy[num].data &= CMMU_SPLIT_MASK;
 		dprintf(("m8820x_setup_cmmu_config: CPU %d inst strat %d data strat %d\n",
-				 num, cpu_cmmu_strategy[num].inst, cpu_cmmu_strategy[num].data));
+		    num, cpu_cmmu_strategy[num].inst, cpu_cmmu_strategy[num].data));
 	}
 
 	switch (vme188_config) {
@@ -476,10 +456,10 @@ m8820x_setup_board_config()
 	 * These configurations have hardwired CPU/CMMU configurations.
 	 */
 #ifdef MVME188
-	case CONFIG_0:
-	case CONFIG_5:
+	case 0x00:
+	case 0x05:
 #endif
-	case CONFIG_A:
+	case 0x0a:
 		dprintf(("m8820x_setup_cmmu_config: resetting strategies\n"));
 		for (num = 0; num < max_cpus; num++)
 			cpu_cmmu_strategy[num].inst = CMMU_SPLIT_ADDRESS;
@@ -489,7 +469,7 @@ m8820x_setup_board_config()
 	/*
 	 * Configure CPU/CMMU strategy into PCNFA and PCNFB board registers.
 	 */
-	case CONFIG_1:
+	case 0x01:
 		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
 		pcnfb = (unsigned long *volatile)MVME188_PCNFB;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) |
@@ -500,7 +480,7 @@ m8820x_setup_board_config()
 		*pcnfb = val2;
 		dprintf(("m8820x_setup_cmmu_config: 2P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
 		break;
-	case CONFIG_2:
+	case 0x02:
 		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
 		pcnfb = (unsigned long *volatile)MVME188_PCNFB;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) |
@@ -511,7 +491,7 @@ m8820x_setup_board_config()
 		*pcnfb = val2;
 		dprintf(("m8820x_setup_cmmu_config: 1P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
 		break;
-	case CONFIG_6:
+	case 0x06:
 		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) |
 		    cpu_cmmu_strategy[0].data;
@@ -533,7 +513,7 @@ m8820x_setup_board_config()
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		m8820x_cmmu[cmmu_num].cmmu_cpu =
-		(cmmu_num * max_cpus) / max_cmmus;
+		    (cmmu_num * max_cpus) / max_cmmus;
 		dprintf(("m8820x_setup_cmmu_config: CMMU %d connected with CPU %d\n",
 		    cmmu_num, m8820x_cmmu[cmmu_num].cmmu_cpu));
 	}
@@ -557,7 +537,7 @@ m8820x_setup_board_config()
 		 * First we set the address/mask pairs for the exact address
 		 * matches.
 		 */
-		switch ((m8820x_cmmu[cmmu_num].which == INST_CMMU) ?
+		switch ((m8820x_cmmu[cmmu_num].cmmu_type == INST_CMMU) ?
 		    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].inst :
 		    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].data) {
 		case CMMU_SPLIT_ADDRESS:
@@ -593,10 +573,8 @@ m8820x_setup_board_config()
 		/*
 		 * For MVME188 single processors, we've got to look at A14.
 		 * This bit splits the CMMUs independent of the enabled strategy
-		 *
-		 * NOT TESTED!!! - em
 		 */
-		if (cpu_cmmu_ratio > 4) {	/* XXX only handles 1P128!!! */
+		if (cpu_cmmu_ratio >= 4) {	/* XXX only handles 1P128!!! */
 			m8820x_cmmu[cmmu_num].cmmu_addr |=
 			    ((cmmu_num & 0x4) ^ 0x4) << 12;
 			m8820x_cmmu[cmmu_num].cmmu_addr_mask |= CMMU_A14_MASK;
@@ -605,16 +583,16 @@ m8820x_setup_board_config()
 		/*
 		 * Next we cope with the various access modes.
 		 */
-		switch ((m8820x_cmmu[cmmu_num].which == INST_CMMU) ?
+		switch ((m8820x_cmmu[cmmu_num].cmmu_type == INST_CMMU) ?
 		    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].inst :
 		    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].data) {
 		case CMMU_SPLIT_SPV:
 			m8820x_cmmu[cmmu_num].cmmu_access =
-			    (cmmu_num & 0x2 ) ? CMMU_ACS_USER : CMMU_ACS_SUPER;
+			    (cmmu_num & 0x2) ? CMMU_ACS_USER : CMMU_ACS_SUPER;
 			break;
 		case CMMU_SPLIT_SRAM_SPV:
 			m8820x_cmmu[cmmu_num].cmmu_access =
-			    (cmmu_num & 0x2 ) ? CMMU_ACS_SUPER : CMMU_ACS_BOTH;
+			    (cmmu_num & 0x2) ? CMMU_ACS_SUPER : CMMU_ACS_BOTH;
 			break;
 		default:
 			m8820x_cmmu[cmmu_num].cmmu_access = CMMU_ACS_BOTH;
@@ -655,9 +633,9 @@ m8820x_cmmu_dump_config()
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		db_printf("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08lx mask 0x%08lx match %s\n",
 		  cmmu_num,
-		  (m8820x_cmmu[cmmu_num].which == INST_CMMU) ? "inst" : "data",
+		  (m8820x_cmmu[cmmu_num].cmmu_type == INST_CMMU) ? "inst" : "data",
 		  m8820x_cmmu[cmmu_num].cmmu_cpu,
-		  cmmu_strat_string[(m8820x_cmmu[cmmu_num].which == INST_CMMU) ?
+		  cmmu_strat_string[(m8820x_cmmu[cmmu_num].cmmu_type == INST_CMMU) ?
 		    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].inst :
 		    cpu_cmmu_strategy[m8820x_cmmu[cmmu_num].cmmu_cpu].data],
 		  (m8820x_cmmu[cmmu_num].cmmu_access == CMMU_ACS_BOTH) ?   "User and spv" :
@@ -691,7 +669,7 @@ m8820x_cmmu_set(reg, val, flags, num, mode, access, addr)
 	for (mmu = num * cpu_cmmu_ratio;
 	    mmu < (num + 1) * cpu_cmmu_ratio; mmu++) {
 		if (((flags & MODE_VAL)) &&
-		    (m8820x_cmmu[mmu].which != mode))
+		    (m8820x_cmmu[mmu].cmmu_type != mode))
 			continue;
 		if (((flags & ACCESS_VAL)) &&
 		    (m8820x_cmmu[mmu].cmmu_access != access) &&
@@ -703,7 +681,34 @@ m8820x_cmmu_set(reg, val, flags, num, mode, access, addr)
 				continue;
 			}
 		}
-		m8820x_cmmu_store(mmu, reg, val);
+		m8820x_cmmu[mmu].cmmu_regs[reg] = val;
+	}
+}
+
+/*
+ * Force a read from the CMMU status register, thereby forcing execution to
+ * stop until all pending CMMU operations are finished.
+ * This is used by the various cache invalidation functions.
+ */
+void
+m8820x_cmmu_wait(int cpu)
+{
+	int mmu;
+
+	/*
+	 * We scan all related CMMUs and read their status register.
+	 */
+	for (mmu = cpu * cpu_cmmu_ratio;
+	    mmu < (cpu + 1) * cpu_cmmu_ratio; mmu++) {
+#ifdef DEBUG
+		if (m8820x_cmmu[mmu].cmmu_regs[CMMU_SSR] & CMMU_SSR_BE) {
+			panic("cache flush failed!");
+		}
+#else
+		/* force the read access, but do not issue this statement... */
+		__asm__ __volatile__ ("|or r0, r0, %0" ::
+		    "r" (m8820x_cmmu[mmu].cmmu_regs[CMMU_SSR]));
+#endif
 	}
 }
 
@@ -757,7 +762,7 @@ m8820x_cpu_configuration_print(master)
 
 	for (mmu = cpu * cpu_cmmu_ratio; mmu < (cpu + 1) * cpu_cmmu_ratio;
 	    mmu++) {
-		int idr = m8820x_cmmu_get(mmu, CMMU_IDR);
+		int idr = m8820x_cmmu[mmu].cmmu_regs[CMMU_IDR];
 		int mmuid = CMMU_TYPE(idr);
 		int access = m8820x_cmmu[mmu].cmmu_access;
 
@@ -771,10 +776,10 @@ m8820x_cpu_configuration_print(master)
 		else
 			printf("%s", mmutypes[mmuid]);
 		printf(" rev 0x%x, %s %scache",
-		    (idr & 0x1f0000) >> 16,
+		    CMMU_VERSION(idr),
 		    access == CMMU_ACS_BOTH ? "global" :
 		    (access == CMMU_ACS_USER ? "user" : "sup"),
-		    m8820x_cmmu[mmu].which == INST_CMMU ? "I" : "D");
+		    m8820x_cmmu[mmu].cmmu_type == INST_CMMU ? "I" : "D");
 	}
 	printf("\n");
 
@@ -800,9 +805,10 @@ m8820x_cpu_configuration_print(master)
 void
 m8820x_cmmu_init()
 {
-	unsigned tmp, cmmu_num;
-	int cpu, type;
-	struct cmmu_regs *cr;
+	unsigned int line, cmmu_num;
+	int cssp, cpu, type;
+	u_int32_t apr;
+	unsigned *volatile cr;
 
 	for (cpu = 0; cpu < max_cpus; cpu++) {
 		cpu_cmmu[cpu].pair[INST_CMMU] = 0;
@@ -810,44 +816,38 @@ m8820x_cmmu_init()
 	}
 
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
-		if (m8820x_cmmu_alive(cmmu_num)) {
+		if (m8820x_cmmu[cmmu_num].cmmu_alive != CMMU_DEAD) {
 			cr = m8820x_cmmu[cmmu_num].cmmu_regs;
-			type = CMMU_TYPE(cr->idr);
+			type = CMMU_TYPE(cr[CMMU_IDR]);
 
-			cpu_cmmu[m8820x_cmmu[cmmu_num].cmmu_cpu].pair[m8820x_cmmu[cmmu_num].which] =
+			cpu_cmmu[m8820x_cmmu[cmmu_num].cmmu_cpu].
+			  pair[m8820x_cmmu[cmmu_num].cmmu_type] =
 			    &m8820x_cmmu[cmmu_num];
 
 			/*
-			 * Reset cache data....
-			 * as per M88200 Manual (2nd Ed.) section 3.11.
+			 * Reset cache
 			 */
-			for (tmp = 0; tmp < 255; tmp++) {
-				cr->sar = tmp << 4;
-				cr->cssp = 0x3f0ff000;
-			}
-
-			/* 88204 has additional cache to clear */
-			if (type == M88204_ID) {
-				for (tmp = 0; tmp < 255; tmp++) {
-					cr->sar = tmp << 4;
-					cr->cssp1 = 0x3f0ff000;
+			for (cssp = type == M88204_ID ? 3 : 0;
+			    cssp >= 0; cssp--)
+				for (line = 0; line <= 255; line++) {
+					cr[CMMU_SAR] =
+					    line << MC88200_CACHE_SHIFT;
+					cr[CMMU_CSSP(cssp)] =
+					    CMMU_CSSP_L5 | CMMU_CSSP_L4 |
+					    CMMU_CSSP_L3 | CMMU_CSSP_L2 |
+					    CMMU_CSSP_L1 | CMMU_CSSP_L0 |
+					    CMMU_CSSP_VV(3, CMMU_VV_INVALID) |
+					    CMMU_CSSP_VV(2, CMMU_VV_INVALID) |
+					    CMMU_CSSP_VV(1, CMMU_VV_INVALID) |
+					    CMMU_CSSP_VV(0, CMMU_VV_INVALID);
 				}
-				for (tmp = 0; tmp < 255; tmp++) {
-					cr->sar = tmp << 4;
-					cr->cssp2 = 0x3f0ff000;
-				}
-				for (tmp = 0; tmp < 255; tmp++) {
-					cr->sar = tmp << 4;
-					cr->cssp3 = 0x3f0ff000;
-				}
-			}
 
 			/*
 			 * Set the SCTR, SAPR, and UAPR to some known state
 			 */
-			cr->sctr &=
+			cr[CMMU_SCTR] &=
 			    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
-			cr->sapr = cr->uapr =
+			cr[CMMU_SAPR] = cr[CMMU_UAPR] =
 			    ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL |
 			    CACHE_INH) & ~APR_V;
 
@@ -861,23 +861,27 @@ m8820x_cmmu_init()
 			m8820x_cmmu[cmmu_num].batc[6] =
 			m8820x_cmmu[cmmu_num].batc[7] = 0;
 #endif
-			cr->bwp[0] = cr->bwp[1] = cr->bwp[2] = cr->bwp[3] =
-			cr->bwp[4] = cr->bwp[5] = cr->bwp[6] = cr->bwp[7] = 0;
-			cr->scr = CMMU_FLUSH_CACHE_INV_ALL;
-			cr->scr = CMMU_FLUSH_SUPER_ALL;
-			cr->scr = CMMU_FLUSH_USER_ALL;
+			cr[CMMU_BWP0] = cr[CMMU_BWP1] =
+			cr[CMMU_BWP2] = cr[CMMU_BWP3] =
+			cr[CMMU_BWP4] = cr[CMMU_BWP5] =
+			cr[CMMU_BWP6] = cr[CMMU_BWP7] = 0;
+			cr[CMMU_SCR] = CMMU_FLUSH_CACHE_INV_ALL;
+			__asm__ __volatile__ ("|or r0, r0, %0" ::
+			    "r" (cr[CMMU_SSR]));
+			cr[CMMU_SCR] = CMMU_FLUSH_SUPER_ALL;
+			cr[CMMU_SCR] = CMMU_FLUSH_USER_ALL;
 		}
 	}
 
-#ifdef MVME188
 	/*
 	 * Enable snooping on MVME188 only.
 	 * Snooping is enabled for instruction cmmus as well so that
 	 * we can have breakpoints, modify code, etc.
 	 */
+#ifdef MVME188
 	if (brdtyp == BRD_188) {
 		for (cpu = 0; cpu < max_cpus; cpu++) {
-			if (!cpu_sets[cpu])
+			if (cpu_sets[cpu] == 0)
 				continue;
 
 			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, 0, cpu,
@@ -887,6 +891,7 @@ m8820x_cmmu_init()
 
 			m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL,
 			    ACCESS_VAL, cpu, DATA_CMMU, CMMU_ACS_SUPER, 0);
+			m8820x_cmmu_wait(cpu);
 			/* Icache gets flushed just below */
 		}
 	}
@@ -899,15 +904,16 @@ m8820x_cmmu_init()
 	 * set up yet.
 	 */
 	for (cpu = 0; cpu < max_cpus; cpu++) {
-		if (!cpu_sets[cpu])
+		if (cpu_sets[cpu] == 0)
 			continue;
 
-		tmp = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL)
+		apr = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL)
 		    & ~(CACHE_INH | APR_V);
 
-		m8820x_cmmu_set(CMMU_SAPR, tmp, MODE_VAL, cpu, INST_CMMU, 0, 0);
+		m8820x_cmmu_set(CMMU_SAPR, apr, MODE_VAL, cpu, INST_CMMU, 0, 0);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL,
 		    ACCESS_VAL, cpu, 0, CMMU_ACS_SUPER, 0);
+		m8820x_cmmu_wait(cpu);
 	}
 }
 
@@ -918,16 +924,16 @@ void
 m8820x_cmmu_shutdown_now()
 {
 	unsigned cmmu_num;
-	struct cmmu_regs *cr;
+	unsigned *volatile cr;
 
 	CMMU_LOCK;
 	for (cmmu_num = 0; cmmu_num < MAX_CMMUS; cmmu_num++)
-		if (m8820x_cmmu_alive(cmmu_num)) {
+		if (m8820x_cmmu[cmmu_num].cmmu_alive != CMMU_DEAD) {
 			cr = m8820x_cmmu[cmmu_num].cmmu_regs;
 
-			cr->sctr &=
+			cr[CMMU_SCTR] &=
 			    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
-			cr->sapr = cr->uapr =
+			cr[CMMU_SAPR] = cr[CMMU_UAPR] =
 			    ((0x00000 << PG_BITS) | CACHE_INH) &
 			    ~(CACHE_WT | CACHE_GLOBAL | APR_V);
 		}
@@ -941,15 +947,14 @@ void
 m8820x_cmmu_parity_enable()
 {
 	unsigned cmmu_num;
-	struct cmmu_regs *cr;
+	unsigned *volatile cr;
 
 	CMMU_LOCK;
 
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++)
-		if (m8820x_cmmu_alive(cmmu_num)) {
+		if (m8820x_cmmu[cmmu_num].cmmu_alive != CMMU_DEAD) {
 			cr = m8820x_cmmu[cmmu_num].cmmu_regs;
-
-			cr->sctr |= CMMU_SCTR_PE;
+			cr[CMMU_SCTR] |= CMMU_SCTR_PE;
 		}
 
 	CMMU_UNLOCK;
@@ -960,7 +965,7 @@ m8820x_cmmu_parity_enable()
  * Better be at splhigh, or even better, with interrupts
  * disabled.
  */
-#define ILLADDRESS	0x0F000000 	/* any faulty address */
+#define ILLADDRESS	0x0f000000 	/* any faulty address */
 
 unsigned
 m8820x_cmmu_cpu_number()
@@ -974,8 +979,8 @@ m8820x_cmmu_cpu_number()
 		/* clear CMMU p-bus status registers */
 		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
 			if (m8820x_cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
-			    m8820x_cmmu[cmmu_no].which == DATA_CMMU)
-				m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr = 0;
+			    m8820x_cmmu[cmmu_no].cmmu_type == DATA_CMMU)
+				m8820x_cmmu[cmmu_no].cmmu_regs[CMMU_PFSR] = 0;
 		}
 
 		/* access faulting address */
@@ -984,11 +989,11 @@ m8820x_cmmu_cpu_number()
 		/* check which CMMU reporting the fault  */
 		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
 			if (m8820x_cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
-			    m8820x_cmmu[cmmu_no].which == DATA_CMMU &&
-			    ((m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr >> 16) &
-			    0x7) != 0) {
+			    m8820x_cmmu[cmmu_no].cmmu_type == DATA_CMMU &&
+			    CMMU_PFSR_FAULT(m8820x_cmmu[cmmu_no].
+			      cmmu_regs[CMMU_PFSR]) != CMMU_PFSR_SUCCESS) {
 				/* clean register, just in case... */
-				m8820x_cmmu[cmmu_no].cmmu_regs->pfSTATUSr = 0;
+				m8820x_cmmu[cmmu_no].cmmu_regs[CMMU_PFSR] = 0;
 				m8820x_cmmu[cmmu_no].cmmu_alive = CMMU_MARRIED;
 				cpu = m8820x_cmmu[cmmu_no].cmmu_cpu;
 				CMMU_UNLOCK;
@@ -1165,7 +1170,7 @@ m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0,
 		    cpu, 0, 0, 0);
-	} else if (size <= 16) {
+	} else if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr, ADDR_VAL,
 		    cpu, 0, 0, (unsigned)physaddr);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE, ADDR_VAL,
@@ -1186,6 +1191,8 @@ m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 	    cpu, 0, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
 
+	m8820x_cmmu_wait(cpu);
+
 	CMMU_UNLOCK;
 	splx(s);
 }
@@ -1203,7 +1210,7 @@ m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		    cpu, INST_CMMU, 0, 0);
-	} else if (size <= 16) {
+	} else if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr,
 		    MODE_VAL | ADDR_VAL, cpu, INST_CMMU, 0, (unsigned)physaddr);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE,
@@ -1224,6 +1231,8 @@ m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 	    cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
 
+	m8820x_cmmu_wait(cpu);
+
 	CMMU_UNLOCK;
 	splx(s);
 }
@@ -1238,7 +1247,7 @@ m8820x_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		    cpu, DATA_CMMU, 0, 0);
-	} else if (size <= 16) {
+	} else if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr,
 		    MODE_VAL | ADDR_VAL, cpu, DATA_CMMU, 0, (unsigned)physaddr);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_LINE,
@@ -1258,6 +1267,8 @@ m8820x_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 	    cpu, DATA_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+
+	m8820x_cmmu_wait(cpu);
 
 	CMMU_UNLOCK;
 	splx(s);
@@ -1280,7 +1291,7 @@ m8820x_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 		    cpu, DATA_CMMU, 0, 0);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
 		    cpu, INST_CMMU, 0, 0);
-	} else if (size <= 16) {
+	} else if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr,
 		    MODE_VAL | ADDR_VAL, cpu, INST_CMMU, 0, (unsigned)physaddr);
 		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CB_LINE,
@@ -1314,6 +1325,8 @@ m8820x_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
 	    cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+
+	m8820x_cmmu_wait(cpu);
 
 	CMMU_UNLOCK;
 	splx(s);
@@ -1333,7 +1346,7 @@ m8820x_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 		    cpu, DATA_CMMU, 0, 0);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		    cpu, INST_CMMU, 0, 0);
-	} else if (size <= 16) {
+	} else if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr,
 		    MODE_VAL | ADDR_VAL, cpu, INST_CMMU, 0, (unsigned)physaddr);
 		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_CBI_LINE,
@@ -1367,6 +1380,8 @@ m8820x_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 	    cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+
+	m8820x_cmmu_wait(cpu);
 
 	CMMU_UNLOCK;
 	splx(s);
@@ -1386,7 +1401,7 @@ m8820x_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 		    cpu, DATA_CMMU, 0, 0);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 		    cpu, INST_CMMU, 0, 0);
-	} else if (size <= 16) {
+	} else if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set(CMMU_SAR, (unsigned)physaddr,
 		    MODE_VAL | ADDR_VAL, cpu, INST_CMMU, 0, (unsigned)physaddr);
 		m8820x_cmmu_set(CMMU_SAR, CMMU_FLUSH_CACHE_INV_LINE,
@@ -1420,6 +1435,8 @@ m8820x_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 	    cpu, INST_CMMU, 0, 0);
 #endif /* !BROKEN_MMU_MASK */
+
+	m8820x_cmmu_wait(cpu);
 
 	CMMU_UNLOCK;
 	splx(s);
@@ -1591,7 +1608,7 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 		return;
 	}
 
-	if (m8820x_cmmu[cmmu_num].cmmu_alive == 0) {
+	if (m8820x_cmmu[cmmu_num].cmmu_alive == CMMU_DEAD) {
 		db_printf("warning: cmmu %d is not alive.\n", cmmu_num);
 #if 0
 		return;
@@ -1599,24 +1616,24 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 	}
 
 	if (!verbose_flag) {
-		if (!(m8820x_cmmu[cmmu_num].cmmu_regs->sctr & CMMU_SCTR_SE))
+		if (!(m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_SCTR] & CMMU_SCTR_SE))
 			db_printf("WARNING: snooping not enabled for CMMU#%d.\n",
 				  cmmu_num);
 	} else {
 		int i;
-		for (i=0; i<MAX_CMMUS; i++)
-			if ((i == cmmu_num || m8820x_cmmu[i].cmmu_alive) &&
-			    (verbose_flag>1 || !(m8820x_cmmu[i].cmmu_regs->sctr&CMMU_SCTR_SE))) {
+		for (i = 0; i < MAX_CMMUS; i++)
+			if ((i == cmmu_num || m8820x_cmmu[i].cmmu_alive != CMMU_DEAD) &&
+			    (verbose_flag > 1 || !(m8820x_cmmu[i].cmmu_regs[CMMU_SCTR] & CMMU_SCTR_SE))) {
 				db_printf("CMMU#%d (cpu %d %s) snooping %s\n", i,
-					  m8820x_cmmu[i].cmmu_cpu, m8820x_cmmu[i].which ? "data" : "inst",
-					  (m8820x_cmmu[i].cmmu_regs->sctr & CMMU_SCTR_SE) ? "on":"OFF");
+					  m8820x_cmmu[i].cmmu_cpu, m8820x_cmmu[i].cmmu_type ? "data" : "inst",
+					  (m8820x_cmmu[i].cmmu_regs[CMMU_SCTR] & CMMU_SCTR_SE) ? "on":"OFF");
 			}
 	}
 
 	if (supervisor_flag)
-		value = m8820x_cmmu[cmmu_num].cmmu_regs->sapr;
+		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_SAPR];
 	else
-		value = m8820x_cmmu[cmmu_num].cmmu_regs->uapr;
+		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_UAPR];
 
 #ifdef SHADOW_BATC
 	{
@@ -1643,18 +1660,18 @@ m8820x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 	/******* SEE WHAT A PROBE SAYS (if not a thread) ***********/
 	{
 		union ssr ssr;
-		struct cmmu_regs *cmmu_regs = m8820x_cmmu[cmmu_num].cmmu_regs;
-		cmmu_regs->sar = address;
-		cmmu_regs->scr = supervisor_flag ? CMMU_PROBE_SUPER : CMMU_PROBE_USER;
-		ssr.bits = cmmu_regs->ssr;
+		unsigned *volatile cmmu_regs = m8820x_cmmu[cmmu_num].cmmu_regs;
+		cmmu_regs[CMMU_SAR] = address;
+		cmmu_regs[CMMU_SCR] = supervisor_flag ? CMMU_PROBE_SUPER : CMMU_PROBE_USER;
+		ssr.bits = cmmu_regs[CMMU_SSR];
 		if (verbose_flag > 1)
 			db_printf("probe of 0x%08x returns ssr=0x%08x\n",
 				  address, ssr.bits);
 		if (ssr.field.v)
 			db_printf("PROBE of 0x%08x returns phys=0x%x",
-				  address, cmmu_regs->sar);
+				  address, cmmu_regs[CMMU_SAR]);
 		else
-			db_printf("PROBE fault at 0x%x", cmmu_regs->pfADDRr);
+			db_printf("PROBE fault at 0x%x", cmmu_regs[CMMU_PFAR]);
 		if (ssr.field.ce) db_printf(", copyback err");
 		if (ssr.field.be) db_printf(", bus err");
 		if (ssr.field.wt) db_printf(", writethrough");

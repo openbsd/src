@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2004/01/12 21:33:15 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2004/01/14 20:46:02 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -167,13 +167,15 @@ panictrap(int type, struct trapframe *frame)
 				/* instruction exception */
 				db_printf("\nInstr access fault (%s) v = %x, "
 				    "frame %p\n",
-				    pbus_exception_type[(frame->tf_ipfsr >> 16) & 0x7],
+				    pbus_exception_type[
+				      CMMU_PFSR_FAULT(frame->tf_ipfsr)],
 				    frame->tf_sxip & XIP_ADDR, frame);
 			} else if (type == 3) {
 				/* data access exception */
 				db_printf("\nData access fault (%s) v = %x, "
 				    "frame %p\n",
-				    pbus_exception_type[(frame->tf_dpfsr >> 16) & 0x7],
+				    pbus_exception_type[
+				      CMMU_PFSR_FAULT(frame->tf_dpfsr)],
 				    frame->tf_sxip & XIP_ADDR, frame);
 			} else
 				db_printf("\nTrap type %d, v = %x, frame %p\n",
@@ -310,7 +312,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		vm = p->p_vmspace;
 		map = kernel_map;
 
-		pbus_type = (frame->tf_dpfsr >> 16) & 0x07;
+		pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
 #ifdef DEBUG
 		printf("Kernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
 		       pbus_type, pbus_exception_type[pbus_type],
@@ -384,10 +386,10 @@ m88100_trap(unsigned type, struct trapframe *frame)
 	case T_DATAFLT+T_USER:
 user_fault:
 		if (type == T_INSTFLT + T_USER) {
-			pbus_type = (frame->tf_ipfsr >> 16) & 0x07;
+			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
 		} else {
 			fault_addr = frame->tf_dma0;
-			pbus_type = (frame->tf_dpfsr >> 16) & 0x07;
+			pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
 		}
 #ifdef DEBUG
 		printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
