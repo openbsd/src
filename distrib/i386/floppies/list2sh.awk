@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.4 1997/05/08 04:56:00 tholo Exp $
+#	$OpenBSD: list2sh.awk,v 1.5 1997/05/08 15:50:29 tholo Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -16,14 +16,18 @@ $1 == "COPY" {
 }
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
-	printf("rm -f ${TARGDIR}/%s\n", $3);
-	printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $3);
+	for (i = 3; i <= NF; i++) {
+		printf("rm -f ${TARGDIR}/%s\n", $i);
+		printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $i);
+	}
 	next;
 }
 $1 == "SYMLINK" {
 	printf("echo '%s'\n", $0);
-	printf("rm -f ${TARGDIR}/%s\n", $3);
-	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
+	for (i = 3; i <= NF; i++) {
+		printf("rm -f ${TARGDIR}/%s\n", $i);
+		printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $i);
+	}
 	next;
 }
 $1 == "ARGVLINK" {
