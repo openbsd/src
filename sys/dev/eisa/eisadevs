@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.14 2000/03/13 20:32:15 maja Exp $
+$OpenBSD: eisadevs,v 1.15 2001/01/26 22:29:17 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -72,7 +72,8 @@ product AMI 4801	Series 48 SCSI
 /* BusLogic products */
 product BUS 4201	Bt74xB SCSI
 product BUS 4202	Bt74xC SCSI
-product BUS 6301	Bt763E Ethernet
+product BUS 6001	Bt760 Ethernet
+product BUS 6301	Bt763E 82596-based Ethernet
 
 /* Compaq products */
 product CPQ 6101	NetFlex-2 ENET-TR
