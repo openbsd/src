@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.37 2001/05/28 05:27:30 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.38 2001/05/28 05:28:22 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -198,10 +198,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	}
 
 #ifdef IPSEC
-	/* This is kept mostly for historical reasons */
-	if (flags & IPV6_ENCAPSULATED)
-		goto done_spd;
-
 	/*
 	 * splnet is chosen over spltdb because we are not allowed to
 	 * lower the level, and udp6_output calls us in splnet(). XXX check
