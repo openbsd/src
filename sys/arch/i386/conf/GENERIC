@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.207 2000/09/15 17:27:35 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.208 2000/09/17 05:11:47 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -274,6 +274,7 @@ le*	at pci? dev ? function ?		# PCnet-PCI based ethernet
 le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
+fxp*	at cardbus? dev ? function ?		# Intel PRO/100 ethernet
 ne*	at pci? dev ? function ?		# NE2000-compat ethernet
 ep0	at pci? dev ? function ?		# 3C59x ethernet
 ep*	at pci? dev ? function ?		# 3C59x ethernet
@@ -282,8 +283,8 @@ ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
 sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 xe*	at pcmcia? function ?			# Xircom ethernet
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
-xl*	at pci? dev ? function ?		# 3c9xx ethernet
-xl*	at cardbus? dev ? function ?		# 3c575 ethernet
+xl*	at pci? dev ? function ?		# 3C9xx ethernet
+xl*	at cardbus? dev ? function ?		# 3C575/3C656 ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
