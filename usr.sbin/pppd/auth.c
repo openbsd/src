@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.7 1997/01/02 10:50:18 mickey Exp $	*/
+/*	$OpenBSD: auth.c,v 1.8 1997/04/06 19:17:06 millert Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: auth.c,v 1.7 1997/01/02 10:50:18 mickey Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.8 1997/04/06 19:17:06 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -1131,7 +1131,7 @@ ip_addr_check(addr, addrs)
 	} else {
 	    np = getnetbyname (ptr_word);
 	    if (np != NULL && np->n_addrtype == AF_INET)
-		ina.s_addr = htonl (*(u_int32_t *)np->n_net);
+		ina.s_addr = htonl (np->n_net);
 	    else
 		r = inet_aton (ptr_word, &ina);
 	    if (ptr_mask == NULL) {
