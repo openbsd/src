@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/07/08 17:36:43 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1997/07/08 18:56:27 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/08 17:36:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/07/08 18:56:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/08 17:36:43 millert Exp $"
 #include <ctype.h>
 #include <setjmp.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include "ed.h"
 
@@ -94,6 +95,7 @@ int red = 0;			/* if set, restrict shell/directory access */
 int scripted = 0;		/* if set, suppress diagnostics */
 int sigflags = 0;		/* if set, signals received while mutex set */
 int sigactive = 0;		/* if set, signal handlers are enabled */
+int interactive = 0;		/* if set, we are in interactive mode */
 
 char old_filename[MAXPATHLEN + 1] = "";	/* default filename */
 long current_addr;		/* current address in editor buffer */
@@ -149,13 +151,21 @@ top:
 		argv++;
 		argc--;
 	}
+
+	if (!(interactive = isatty(0))) {
+		/* not seekable so default to interactive */
+		if (lseek(0, 0, SEEK_CUR)) {
+			interactive = 1;
+			setlinebuf(stdout);
+		}
+	}
+
 	/* assert: reliable signals! */
 #ifdef SIGWINCH
 	handle_winch(SIGWINCH);
-	if (isatty(0)) signal(SIGWINCH, handle_winch);
+	if (isatty(0))
+		signal(SIGWINCH, handle_winch);
 #endif
-	if (!isatty(0))
-		setlinebuf(stdout);
 	signal(SIGHUP, signal_hup);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, signal_int);
@@ -171,7 +181,7 @@ top:
 		init_buffers();
 		sigactive = 1;			/* enable signal handlers */
 		if (argc && **argv && is_legal_filename(*argv)) {
-			if (read_file(*argv, 0) < 0 && !isatty(0))
+			if (read_file(*argv, 0) < 0 && !interactive)
 				quit(2);
 			else if (**argv != '!')
 				strcpy(old_filename, *argv);
@@ -179,7 +189,7 @@ top:
 			fputs("?\n", stderr);
 			if (**argv == '\0')
 				strcpy(errmsg, "invalid filename");
-			if (!isatty(0))
+			if (!interactive)
 				quit(2);
 		}
 	}
@@ -197,7 +207,7 @@ top:
 			if (modified && !scripted) {
 				fputs("?\n", stderr);
 				strcpy(errmsg, "warning: file modified");
-				if (!isatty(0)) {
+				if (!interactive) {
 					fprintf(stderr, garrulous ? 
 					    "script, line %d: %s\n" :
 					    "", lineno, errmsg);
@@ -230,7 +240,7 @@ top:
 			modified = 0;
 			fputs("?\n", stderr);		/* give warning */
 			strcpy(errmsg, "warning: file modified");
-			if (!isatty(0)) {
+			if (!interactive) {
 				fprintf(stderr, garrulous ? 
 				    "script, line %d: %s\n" : 
 				    "", lineno, errmsg);
@@ -238,7 +248,7 @@ top:
 			}
 			break;
 		case FATAL:
-			if (!isatty(0))
+			if (!interactive)
 				fprintf(stderr, garrulous ? 
 				    "script, line %d: %s\n" : "", 
 				    lineno, errmsg);
@@ -248,7 +258,7 @@ top:
 			quit(3);
 		default:
 			fputs("?\n", stderr);
-			if (!isatty(0)) {
+			if (!interactive) {
 				fprintf(stderr, garrulous ? 
 				    "script, line %d: %s\n" : "",
 				    lineno, errmsg);
