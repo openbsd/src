@@ -163,7 +163,6 @@ static struct of_dev ofdev = {
 };
 
 char opened_name[256];
-int floppyboot;
 
 static u_long
 get_long(p)
@@ -281,7 +280,6 @@ devopen(of, name, file)
 		return ENOENT;
 	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
 		return ENXIO;
-	floppyboot = !strcmp(buf, "floppy");
 	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
 	if (!strcmp(buf, "block"))

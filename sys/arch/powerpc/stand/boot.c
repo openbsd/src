@@ -205,13 +205,6 @@ loadfile(fd, args)
 
 	close(fd);
 
-	/* XXX this should be replaced w/ a mountroothook. */
-	if (floppyboot) {
-		printf("Please insert root disk and press ENTER ");
-		getchar();
-		printf("\n");
-	}
-
 	chain((void *)entry, args, esym);
 	/* NOTREACHED */
 

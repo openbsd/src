@@ -51,6 +51,5 @@ struct of_dev {
 #endif
 
 extern char opened_name[];
-extern int floppyboot;
 
 #endif
