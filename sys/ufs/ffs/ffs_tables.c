@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_tables.c,v 1.2 1997/02/24 14:27:12 niklas Exp $	*/
+/*	$OpenBSD: ffs_tables.c,v 1.3 2001/03/20 19:57:42 art Exp $	*/
 /*	$NetBSD: ffs_tables.c,v 1.2 1994/06/29 06:46:35 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ int inside[9] = {
 
 /*
  * Given a block map bit pattern, the frag tables tell whether a
- * particular size fragment is available. 
+ * particular size fragment is available.
  *
  * used as:
  * if ((1 << (size - 1)) & fragtbl[fs->fs_frag][map] {
