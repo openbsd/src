@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.45 2002/04/16 19:37:16 espie Exp $
+.\"	$OpenBSD: make.1,v 1.46 2002/06/08 00:14:09 espie Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -798,6 +798,9 @@ is the substring of
 to be replaced in
 .Ar new_string
 .El
+All modifiers are BSD extensions,  except for the standard
+.At V
+style variable substitution.
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
 Makefile inclusion, conditional structures and for loops reminiscent
 of the C programming language are provided in
@@ -806,6 +809,15 @@ All such structures are identified by a line beginning with a single
 dot
 .Pq Ql \&.
 character.
+Whitespace characters may follow this dot, e.g.,
+.Bd -literal
+    \&.include <file>
+.Ed
+and
+.Bd -literal
+    \&.   include <file>
+.Ed
+are identical constructs.
 Files are included with either
 .Ql .include <file>
 or
@@ -918,7 +930,7 @@ logical OR
 Logical
 .Tn AND ;
 of higher precedence than
-.Dq .
+.Dq \&|\&| .
 .El
 .Pp
 As in C,
