@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.11 2003/08/12 13:14:08 hin Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.12 2004/03/10 21:30:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -197,8 +197,10 @@ yp_chpass(char *username)
 	}
 	if (pw == NULL) {
 		char *p = getpass("Old password:");
-		crypt(p, "xx");
-		memset(p, 0, strlen(p));
+		if (p != NULL) {
+			crypt(p, "xx");
+			memset(p, 0, strlen(p));
+		}
 		warnx("YP passwd database unchanged.");
 		exit(1);
 	}

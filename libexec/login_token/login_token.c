@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.7 2002/09/06 18:19:14 deraadt Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.8 2004/03/10 21:30:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -156,12 +156,16 @@ main(int argc, char *argv[])
 		}
 
 		pp = readpassphrase(challenge, response, sizeof(response), 0);
-		if (!pp || *pp == '\0') {
+		if (pp == NULL)
+			exit(1);
+		if (*pp == '\0') {
 			char buf[64];
 			snprintf(buf, sizeof(buf), "%s Response [echo on]: ",
 			    tt->proper);
 			pp = readpassphrase(buf, response, sizeof(response),
 			    RPP_ECHO_ON);
+			if (pp == NULL)
+				exit(1);
 		}
 	}
 

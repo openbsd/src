@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.11 2002/10/15 20:56:02 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.12 2004/03/10 21:30:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -125,7 +125,8 @@ main(int argc, char *argv[])
 	(void)setpriority(PRIO_PROCESS, 0, -4);
 
 	(void)printf("Changing local password for %s.\n", username);
-	p = getpass("Old Password:");
+	if ((p = getpass("Old Password:")) == NULL)
+		exit(1);
 
 	salt = crypt(p, salt);
 	memset(p, 0, strlen(p));
