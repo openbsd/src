@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.4 2004/06/22 03:44:55 ho Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.5 2004/07/08 19:53:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -242,13 +242,16 @@ virtual_bind(const struct sockaddr *addr)
 	if (*ep != '\0' || lport < 0 || lport > USHRT_MAX) {
 		log_print("virtual_bind: "
 		    "port string \"%s\" not convertible to in_port_t", port);
+		free(v);
 		return 0;
 	}
 
 	sockaddr_set_port((struct sockaddr *)&tmp_sa, (in_port_t)lport);
 	v->main = udp_bind((struct sockaddr *)&tmp_sa);
-	if (!v->main)
+	if (!v->main) {
+		free(v);
 		return 0;
+	}
 	((struct transport *)v->main)->virtual = (struct transport *)v;
 
 #if defined (USE_NAT_TRAVERSAL)
@@ -264,13 +267,18 @@ virtual_bind(const struct sockaddr *addr)
 	if (*ep != '\0' || lport < 0 || lport > USHRT_MAX) {
 		log_print("virtual_bind: "
 		    "port string \"%s\" not convertible to in_port_t", port);
+		transport_release(v->main);
+		free(v);
 		return 0;
 	}
 
 	sockaddr_set_port((struct sockaddr *)&tmp_sa, (in_port_t)lport);
 	v->encap = udp_encap_bind((struct sockaddr *)&tmp_sa);
-	if (!v->encap)
+	if (!v->encap) {
+		transport_release(v->main);
+		free(v);
 		return 0;
+	}
 	((struct transport *)v->encap)->virtual = (struct transport *)v;
 #endif
 	v->encap_is_active = 0;
@@ -407,6 +415,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&flags_ifr) == -1) {
 		log_error("virtual_bind_if: "
 		    "ioctl (%d, SIOCGIFFLAGS, ...) failed", s);
+		close(s);
 		return -1;
 	}
 	close(s);
