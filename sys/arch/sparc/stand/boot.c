@@ -69,7 +69,7 @@ main()
 
 	prom_init();
 
-	printf(">> NetBSD BOOT [%s]\n", version);
+	printf(">> OpenBSD BOOT [%s]\n", version);
 
 	file = prom_bootfile;
 	if (file == 0 || *file == 0)
