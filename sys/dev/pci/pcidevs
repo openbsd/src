@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.404 2001/06/13 04:58:35 mickey Exp $
+	$OpenBSD: pcidevs,v 1.405 2001/06/16 20:17:40 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1046,6 +1046,8 @@ product DIAMOND VIPER		0x9001	Viper/PCI
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID		0xa400	SmartCache/Raid
+product DPT RAID_I2O		0xa501	SmartRAID (I2O)
+product DPT MEMCTLR		0x1012	Memory Controller
 
 /* Dolphin products */
 product DOLPHIN PCISCI		0x0658	PCI-SCI
@@ -1564,7 +1566,8 @@ product PLATFORM ES1849		0x0100	ES1849
 
 /* PLX products */
 product PLX	1076		0x1076	I/O
-product PLX	9050		0x9050	I/O
+product PLX	9050		0x9050	I/O 9050
+product PLX	9080		0x9080	I/O 9080
 
 /* Promise products */
 product PROMISE DC5030		0x5300	DC5030
