@@ -690,6 +690,7 @@ case "${target}" in
   hppa*-*-*elf* | \
   hppa*-*-linux-gnu* | \
   hppa*-*-lites* | \
+  hppa*-*-openbsd* | \
   hppa*64*-*-*)
     # Do configure ld/binutils/gas for this case.
     ;;

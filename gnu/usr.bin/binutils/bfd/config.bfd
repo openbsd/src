@@ -277,7 +277,7 @@ case "${targ}" in
     targ_defvec=bfd_elf32_hppa_linux_vec
     targ_selvecs=bfd_elf32_hppa_vec
     ;;
-  hppa*-*-*elf* | hppa*-*-lites* | hppa*-*-sysv4* | hppa*-*-rtems*)
+  hppa*-*-*elf* | hppa*-*-lites* | hppa*-*-openbsd* | hppa*-*-sysv4* | hppa*-*-rtems*)
     targ_defvec=bfd_elf32_hppa_vec
     targ_selvecs=bfd_elf32_hppa_linux_vec
     ;;

@@ -251,6 +251,7 @@ hppa*64*-*)		targ_emul=elf64hppa ;;
 hppa*-*-linux-gnu*)	targ_emul=hppalinux ;;
 hppa*-*-*elf*)		targ_emul=hppaelf ;;
 hppa*-*-lites*)		targ_emul=hppaelf ;;
+hppa*-*-openbsd*)	targ_emul=hppaobsd ;;
 hppa*-*-rtems*)		targ_emul=hppaelf ;;
 vax-dec-ultrix* | vax-dec-bsd*) targ_emul=vax ;;
 mips*-*-pe)		targ_emul=mipspe ;

@@ -216,6 +216,7 @@ changequote([,])dnl
 			    esac ;;
       hppa-*-*elf*)         fmt=elf em=hppa ;;
       hppa-*-lites*)        fmt=elf em=hppa ;;
+      hppa-*-openbsd*)      fmt=elf em=hppa ;;
       hppa-*-osf*)          fmt=som em=hppa ;;
       hppa-*-rtems*)        fmt=elf em=hppa ;;
       hppa-*-hpux11*)	    case ${cpu} in
