@@ -1069,6 +1069,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/float.ph

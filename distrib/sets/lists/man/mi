@@ -991,6 +991,7 @@
 ./usr/share/man/cat4/gdt.0
 ./usr/share/man/cat4/gem.0
 ./usr/share/man/cat4/gif.0
+./usr/share/man/cat4/gpr.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gtp.0
 ./usr/share/man/cat4/gx.0
@@ -1488,7 +1489,6 @@
 ./usr/share/man/cat5/mvme68k
 ./usr/share/man/cat5/mvme88k
 ./usr/share/man/cat5/mvmeppc
-./usr/share/man/cat5/nat.conf.0
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0

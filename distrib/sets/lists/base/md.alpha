@@ -1126,6 +1126,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/float.ph

@@ -62,7 +62,6 @@
 ./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
 ./etc/myname
-./etc/nat.conf
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf

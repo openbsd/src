@@ -1064,6 +1064,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/float.ph

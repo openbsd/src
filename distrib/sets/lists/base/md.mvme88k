@@ -533,6 +533,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/vt220l8x10.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/wsfont.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV

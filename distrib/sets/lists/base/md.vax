@@ -665,6 +665,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/float.ph

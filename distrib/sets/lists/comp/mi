@@ -678,6 +678,7 @@
 ./usr/include/err.h
 ./usr/include/errno.h
 ./usr/include/eti.h
+./usr/include/event.h
 ./usr/include/f2c.h
 ./usr/include/fcntl.h
 ./usr/include/float.h
@@ -1621,6 +1622,8 @@
 ./usr/lib/libdes_p.a
 ./usr/lib/libedit.a
 ./usr/lib/libedit_p.a
+./usr/lib/libevent.a
+./usr/lib/libevent_p.a
 ./usr/lib/libfl.a
 ./usr/lib/libfl_p.a
 ./usr/lib/libform.a
@@ -3068,6 +3071,15 @@
 ./usr/share/man/cat3/ether_ntohost.0
 ./usr/share/man/cat3/ethers.0
 ./usr/share/man/cat3/etob.0
+./usr/share/man/cat3/event.0
+./usr/share/man/cat3/event_add.0
+./usr/share/man/cat3/event_del.0
+./usr/share/man/cat3/event_dispatch.0
+./usr/share/man/cat3/event_init.0
+./usr/share/man/cat3/event_initialized.0
+./usr/share/man/cat3/event_loop.0
+./usr/share/man/cat3/event_pending.0
+./usr/share/man/cat3/event_set.0
 ./usr/share/man/cat3/exec.0
 ./usr/share/man/cat3/execl.0
 ./usr/share/man/cat3/execle.0
@@ -4267,6 +4279,11 @@
 ./usr/share/man/cat3/siglongjmp.0
 ./usr/share/man/cat3/sigmask.0
 ./usr/share/man/cat3/signal.0
+./usr/share/man/cat3/signal_add.0
+./usr/share/man/cat3/signal_del.0
+./usr/share/man/cat3/signal_initalized.0
+./usr/share/man/cat3/signal_pending.0
+./usr/share/man/cat3/signal_set.0
 ./usr/share/man/cat3/significand.0
 ./usr/share/man/cat3/significandf.0
 ./usr/share/man/cat3/sigpause.0
@@ -4445,6 +4462,11 @@
 ./usr/share/man/cat3/timegm.0
 ./usr/share/man/cat3/timelocal.0
 ./usr/share/man/cat3/timeout.0
+./usr/share/man/cat3/timeout_add.0
+./usr/share/man/cat3/timeout_del.0
+./usr/share/man/cat3/timeout_initialized.0
+./usr/share/man/cat3/timeout_pending.0
+./usr/share/man/cat3/timeout_set.0
 ./usr/share/man/cat3/timeradd.0
 ./usr/share/man/cat3/timerclear.0
 ./usr/share/man/cat3/timercmp.0

@@ -1071,6 +1071,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/event.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/float.ph
