@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.12 2000/11/16 19:31:10 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.13 2000/11/17 17:38:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -734,11 +734,12 @@ qeinit(sc)
 	cr->rxwbufptr = cr->rxrbufptr = sc->sc_channel * qec->sc_msize;
 	cr->txwbufptr = cr->txrbufptr = cr->rxrbufptr + qec->sc_rsize;
 
-	for (i = 500; i > 0; i--) {
-		if ((mr->biucc & QE_MR_BIUCC_SWRST) == 0)
-			break;
-		DELAY(10);
-	}
+	/*
+	 * When switching from mace<->qec always guarantee an sbus
+	 * turnaround (if last op was read, perform a dummy write, and
+	 * vice versa).
+	 */
+	i = cr->qmask;		/* dummy */
 
 	mr->biucc = QE_MR_BIUCC_BSWAP | QE_MR_BIUCC_64TS;
 	mr->fifofc = QE_MR_FIFOCC_TXF16 | QE_MR_FIFOCC_RXF32 |
@@ -766,7 +767,7 @@ qeinit(sc)
 	qe_mcreset(sc);
 	mr->iac = 0;
 
-	i = mr->mpc;
+	i = mr->mpc;	/* cleared on read */
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
