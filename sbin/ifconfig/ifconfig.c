@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.18 1998/07/09 06:12:09 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.19 1998/09/03 06:24:18 jason Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -34,6 +34,43 @@
  * SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef lint
 static char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
@@ -44,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.18 1998/07/09 06:12:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.19 1998/09/03 06:24:18 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +90,8 @@ static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.18 1998/07/09 06:12:09 deraadt E
 #include <sys/ioctl.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_media.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -113,53 +152,84 @@ void	setipxframetype __P((char *, int));
 void    setatrange __P((char *, int));
 void    setatphase __P((char *, int));  
 void    checkatrange __P ((struct sockaddr_at *));
+void	setmedia __P((char *, int));
+void	setmediaopt __P((char *, int));
+void	unsetmediaopt __P((char *, int));
+void	setmediainst __P((char *, int));
+void	fixnsel __P((struct sockaddr_iso *));
+int	main __P((int, char *[]));
+
+/*
+ * Media stuff.  Whenever a media command is first performed, the
+ * currently select media is grabbed for this interface.  If `media'
+ * is given, the current media word is modifed.  `mediaopt' commands
+ * only modify the set and clear words.  They then operate on the   
+ * current media word later.
+ */
+int	media_current;
+int	mediaopt_set;
+int	mediaopt_clear;
+
+int	actions;			/* Actions performed */
+
+#define	A_MEDIA		0x0001		/* media command */
+#define	A_MEDIAOPTSET	0x0002		/* mediaopt command */
+#define	A_MEDIAOPTCLR	0x0004		/* -mediaopt command */
+#define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
+#define	A_MEDIAINST	0x0008		/* instance or inst command */
 
 #define	NEXTARG		0xffffff
 
 struct	cmd {
 	char	*c_name;
 	int	c_parameter;		/* NEXTARG means next argv */
+	int	c_action;		/* defered action */
 	void	(*c_func)();
 } cmds[] = {
-	{ "up",		IFF_UP,		setifflags } ,
-	{ "down",	-IFF_UP,	setifflags },
-	{ "trailers",	-1,		notrailers },
-	{ "-trailers",	1,		notrailers },
-	{ "arp",	-IFF_NOARP,	setifflags },
-	{ "-arp",	IFF_NOARP,	setifflags },
-	{ "debug",	IFF_DEBUG,	setifflags },
-	{ "-debug",	-IFF_DEBUG,	setifflags },
-	{ "alias",	IFF_UP,		notealias },
-	{ "-alias",	-IFF_UP,	notealias },
-	{ "delete",	-IFF_UP,	notealias },
+	{ "up",		IFF_UP,		0,		setifflags } ,
+	{ "down",	-IFF_UP,	0,		setifflags },
+	{ "trailers",	-1,		0,		notrailers },
+	{ "-trailers",	1,		0,		notrailers },
+	{ "arp",	-IFF_NOARP,	0,		setifflags },
+	{ "-arp",	IFF_NOARP,	0,		setifflags },
+	{ "debug",	IFF_DEBUG,	0,		setifflags },
+	{ "-debug",	-IFF_DEBUG,	0,		setifflags },
+	{ "alias",	IFF_UP,		0,		notealias },
+	{ "-alias",	-IFF_UP,	0,		notealias },
+	{ "delete",	-IFF_UP,	0,		notealias },
 #ifdef notdef
 #define	EN_SWABIPS	0x1000
-	{ "swabips",	EN_SWABIPS,	setifflags },
-	{ "-swabips",	-EN_SWABIPS,	setifflags },
+	{ "swabips",	EN_SWABIPS,	0,		setifflags },
+	{ "-swabips",	-EN_SWABIPS,	0,		setifflags },
 #endif
-	{ "netmask",	NEXTARG,	setifnetmask },
-	{ "metric",	NEXTARG,	setifmetric },
-	{ "broadcast",	NEXTARG,	setifbroadaddr },
-	{ "ipdst",	NEXTARG,	setifipdst },
+	{ "netmask",	NEXTARG,	0,		setifnetmask },
+	{ "metric",	NEXTARG,	0,		setifmetric },
+	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
+	{ "ipdst",	NEXTARG,	0,		setifipdst },
 #ifndef INET_ONLY
-	{ "range",	NEXTARG,	setatrange },
-	{ "phase",	NEXTARG,	setatphase },
-	{ "snpaoffset",	NEXTARG,	setsnpaoffset },
-	{ "nsellength",	NEXTARG,	setnsellength },
-	{ "802.2",	ETHERTYPE_8022,	setipxframetype },
-	{ "802.2tr",	ETHERTYPE_8022TR, setipxframetype },
-	{ "802.3",	ETHERTYPE_8023,	setipxframetype },
-	{ "snap",	ETHERTYPE_SNAP,	setipxframetype },
-	{ "EtherII",	ETHERTYPE_II,	setipxframetype },
+	{ "range",	NEXTARG,	0,		setatrange },
+	{ "phase",	NEXTARG,	0,		setatphase },
+	{ "snpaoffset",	NEXTARG,	0,		setsnpaoffset },
+	{ "nsellength",	NEXTARG,	0,		setnsellength },
+	{ "802.2",	ETHERTYPE_8022,	0,		setipxframetype },
+	{ "802.2tr",	ETHERTYPE_8022TR, 0,		setipxframetype },
+	{ "802.3",	ETHERTYPE_8023,	0,		setipxframetype },
+	{ "snap",	ETHERTYPE_SNAP,	0,		setipxframetype },
+	{ "EtherII",	ETHERTYPE_II,	0,		setipxframetype },
 #endif	/* INET_ONLY */
-	{ "link0",	IFF_LINK0,	setifflags } ,
-	{ "-link0",	-IFF_LINK0,	setifflags } ,
-	{ "link1",	IFF_LINK1,	setifflags } ,
-	{ "-link1",	-IFF_LINK1,	setifflags } ,
-	{ "link2",	IFF_LINK2,	setifflags } ,
-	{ "-link2",	-IFF_LINK2,	setifflags } ,
-	{ 0,		0,		setifaddr },
-	{ 0,		0,		setifdstaddr },
+	{ "link0",	IFF_LINK0,	0,		setifflags } ,
+	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
+	{ "link1",	IFF_LINK1,	0,		setifflags } ,
+	{ "-link1",	-IFF_LINK1,	0,		setifflags } ,
+	{ "link2",	IFF_LINK2,	0,		setifflags } ,
+	{ "-link2",	-IFF_LINK2,	0,		setifflags } ,
+	{ "media",	NEXTARG,	A_MEDIA,	setmedia },
+	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
+	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
+	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ 0,		0,		0,		setifaddr },
+	{ 0,		0,		0,		setifdstaddr },
 };
 
 void 	adjust_nsellength();
@@ -169,6 +239,16 @@ void	printif __P((struct ifreq *, int));
 void 	printb __P((char *, unsigned short, char *));
 void 	status __P((int));
 void 	usage();
+
+const char *get_media_type_string __P((int));
+const char *get_media_subtype_string __P((int));
+int	get_media_subtype __P((int, const char *));
+int	get_media_options __P((int, const char *));
+int	lookup_media_word __P((struct ifmedia_description *, int,
+	    const char *));
+void	print_media_word __P((int, int, int));
+void	process_media_commands __P((void));
+void	init_current_media __P((void));
 
 /*
  * XNS support liberally adapted from code written at the University of
@@ -231,8 +311,24 @@ main(argc, argv)
 	else if (!strcmp(*argv, "-A")) {
 		aflag = 1;
 		ifaliases = 1;
+	}
+	else if (!strcmp(*argv, "-ma") || !strcmp(*argv, "-am")) {
+		aflag = 1;
+		mflag = 1;
+	}
+	else if (!strcmp(*argv, "-mA") || !strcmp(*argv, "-Am")) {
+		aflag = 1;
+		ifaliases = 1;
+		mflag = 1;
+	}
+	else if (!strcmp(*argv, "-m")) {
+		mflag = 1;
+		argc--, argv++;
+		if (argc < 1)
+			usage();
+		strncpy(name, *argv, sizeof(name) - 1);
 	} else
-		strncpy(name, *argv, sizeof(name));
+		strncpy(name, *argv, sizeof(name) - 1);
 	argc--, argv++;
 	if (argc > 0) {
 		for (afp = rafp = afs; rafp->af_name; rafp++)
@@ -249,7 +345,7 @@ main(argc, argv)
 		printif(NULL, ifaliases);
 		exit(0);
 	}
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	if (argc == 0) {
 		printif(&ifr, 1);
 		exit(0);
@@ -274,9 +370,13 @@ main(argc, argv)
 				argc--, argv++;
 			} else
 				(*p->c_func)(*argv, p->c_parameter);
+			actions |= p->c_action;
 		}
 		argc--, argv++;
 	}
+
+	/* Process any media commands that may have been issued. */
+	process_media_commands();
 
 #ifndef INET_ONLY
 
@@ -552,6 +652,296 @@ setifmetric(val)
 		warn("SIOCSIFMETRIC");
 }
 
+void
+init_current_media()
+{
+	struct ifmediareq ifmr;
+
+	/*
+	 * If we have not yet done so, grab the currently-selected
+	 * media.
+	 */
+	if ((actions & (A_MEDIA|A_MEDIAOPT)) == 0) {
+		(void) memset(&ifmr, 0, sizeof(ifmr));
+		(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+		if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+			/*
+			 * If we get E2BIG, the kernel is telling us
+			 * that there are more, so we can ignore it.
+			 */
+			if (errno != E2BIG)
+				err(1, "SGIOCGIFMEDIA");
+		}
+
+		media_current = ifmr.ifm_current;
+	}
+
+	/* Sanity. */
+	if (IFM_TYPE(media_current) == 0)
+		errx(1, "%s: no link type?", name);
+}
+
+void
+process_media_commands()
+{
+
+	if ((actions & (A_MEDIA|A_MEDIAOPT)) == 0) {
+		/* Nothing to do. */
+		return;
+	}
+
+	/*
+	 * Media already set up, and commands sanity-checked.  Set/clear
+	 * any options, and we're ready to go.
+	 */
+	media_current |= mediaopt_set;
+	media_current &= ~mediaopt_clear;
+
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_media = media_current;
+
+	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
+		err(1, "SIOCSIFMEDIA");
+}
+
+void
+setmedia(val, d)
+	char *val;
+	int d;
+{
+	int type, subtype, inst;
+
+	init_current_media();
+
+	/* Only one media command may be given. */
+	if (actions & A_MEDIA)
+		errx(1, "only one `media' command may be issued");
+
+	/* Must not come after mediaopt commands */
+	if (actions & A_MEDIAOPT)
+		errx(1, "may not issue `media' after `mediaopt' commands");
+
+	/*
+	 * No need to check if `instance' has been issued; setmediainst()
+	 * craps out if `media' has not been specified.
+	 */
+
+	type = IFM_TYPE(media_current);
+	inst = IFM_INST(media_current);
+
+	/* Look up the subtype. */
+	subtype = get_media_subtype(type, val);
+
+	/* Build the new current media word. */
+	media_current = IFM_MAKEWORD(type, subtype, 0, inst);
+
+	/* Media will be set after other processing is complete. */
+}
+
+void
+setmediaopt(val, d)
+	char *val;
+	int d;
+{
+
+	init_current_media();
+
+	/* Can only issue `mediaopt' once. */
+	if (actions & A_MEDIAOPTSET)
+		errx(1, "only one `mediaopt' command may be issued");
+
+	/* Can't issue `mediaopt' if `instance' has already been issued. */
+	if (actions & A_MEDIAINST)
+		errx(1, "may not issue `mediaopt' after `instance'");
+
+	mediaopt_set = get_media_options(IFM_TYPE(media_current), val);
+
+	/* Media will be set after other processing is complete. */
+}
+
+void
+unsetmediaopt(val, d)
+	char *val;
+	int d;
+{
+
+	init_current_media();
+
+	/* Can only issue `-mediaopt' once. */
+	if (actions & A_MEDIAOPTCLR)
+		errx(1, "only one `-mediaopt' command may be issued");
+
+	/* May not issue `media' and `-mediaopt'. */
+	if (actions & A_MEDIA)
+		errx(1, "may not issue both `media' and `-mediaopt'");
+
+	/*
+	 * No need to check for A_MEDIAINST, since the test for A_MEDIA
+	 * implicitly checks for A_MEDIAINST.
+	 */
+
+	mediaopt_clear = get_media_options(IFM_TYPE(media_current), val);
+
+	/* Media will be set after other processing is complete. */
+}
+
+void
+setmediainst(val, d)
+	char *val;
+	int d;
+{
+	int type, subtype, options, inst;
+
+	init_current_media();
+
+	/* Can only issue `instance' once. */
+	if (actions & A_MEDIAINST)
+		errx(1, "only one `instance' command may be issued");
+
+	/* Must have already specified `media' */
+	if ((actions & A_MEDIA) == 0)
+		errx(1, "must specify `media' before `instance'");
+
+	type = IFM_TYPE(media_current);
+	subtype = IFM_SUBTYPE(media_current);
+	options = IFM_OPTIONS(media_current);
+
+	inst = atoi(val);
+	if (inst < 0 || inst > IFM_INST_MAX)
+		errx(1, "invalid media instance: %s", val);
+
+	media_current = IFM_MAKEWORD(type, subtype, options, inst);
+
+	/* Media will be set after other processing is complete. */
+}
+
+struct ifmedia_description ifm_type_descriptions[] =
+    IFM_TYPE_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_descriptions[] =
+    IFM_SUBTYPE_DESCRIPTIONS;
+
+struct ifmedia_description ifm_option_descriptions[] =
+    IFM_OPTION_DESCRIPTIONS;
+
+const char *
+get_media_type_string(mword)
+	int mword;
+{
+	struct ifmedia_description *desc;
+
+	for (desc = ifm_type_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE(mword) == desc->ifmt_word)
+			return (desc->ifmt_string);
+	}
+	return ("<unknown type>");
+}
+
+const char *
+get_media_subtype_string(mword)
+	int mword;
+{
+	struct ifmedia_description *desc;
+
+	for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, mword) &&
+		    IFM_SUBTYPE(desc->ifmt_word) == IFM_SUBTYPE(mword))
+			return (desc->ifmt_string);
+	}
+	return ("<unknown subtype>");
+}
+
+int
+get_media_subtype(type, val)
+	int type;
+	const char *val;
+{
+	int rval;
+
+	rval = lookup_media_word(ifm_subtype_descriptions, type, val);
+	if (rval == -1)
+		errx(1, "unknown %s media subtype: %s",
+		    get_media_type_string(type), val);
+
+	return (rval);
+}
+
+int
+get_media_options(type, val)
+	int type;
+	const char *val;
+{
+	char *optlist, *str;
+	int option, rval = 0;
+
+	/* We muck with the string, so copy it. */
+	optlist = strdup(val);
+	if (optlist == NULL)
+		err(1, "strdup");
+	str = optlist;
+
+	/*
+	 * Look up the options in the user-provided comma-separated list.
+	 */
+	for (; (str = strtok(str, ",")) != NULL; str = NULL) {
+		option = lookup_media_word(ifm_option_descriptions, type, str);
+		if (option == -1)
+			errx(1, "unknown %s media option: %s",
+			    get_media_type_string(type), str);
+		rval |= option;
+	}
+
+	free(optlist);
+	return (rval);
+}
+
+int
+lookup_media_word(desc, type, val)
+	struct ifmedia_description *desc;
+	int type;
+	const char *val;
+{
+
+	for (; desc->ifmt_string != NULL; desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, type) &&
+		    strcasecmp(desc->ifmt_string, val) == 0)
+			return (desc->ifmt_word);
+	}
+	return (-1);
+}
+
+void
+print_media_word(ifmw, print_type, as_syntax)
+	int ifmw, print_type, as_syntax;
+{
+	struct ifmedia_description *desc;
+	int seen_option = 0;
+
+	if (print_type)
+		printf("%s ", get_media_type_string(ifmw));
+	printf("%s%s", as_syntax ? "media " : "",
+	    get_media_subtype_string(ifmw));
+
+	/* Find options. */
+	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
+	     desc++) {
+		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
+		    (ifmw & desc->ifmt_word) != 0 &&
+		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
+			if (seen_option == 0)
+				printf(" %s", as_syntax ? "mediaopt " : "");
+			printf("%s%s", seen_option ? "," : "",
+			    desc->ifmt_string);
+			seen_option |= IFM_OPTIONS(desc->ifmt_word);
+		}
+	}
+	if (IFM_INST(ifmw) != 0)
+		printf(" instance %d", IFM_INST(ifmw));
+}
+
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
@@ -565,12 +955,86 @@ status(link)
 	int link;
 {
 	register struct afswtch *p = afp;
+	struct ifmediareq ifmr;
+	int *media_list, i;
 
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
 	if (metric)
 		printf(" metric %d", metric);
 	putchar('\n');
+
+	(void) memset(&ifmr, 0, sizeof(ifmr));
+	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+		/*
+		 * Interface doesn't support SIOC{G,S}IFMEDIA.
+		 */
+		goto proto_status;
+	}
+
+	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
+	if (media_list == NULL)
+		err(1, "malloc");
+	ifmr.ifm_ulist = media_list;
+
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
+		err(1, "SIOCGIFMEDIA");
+	printf("\tmedia: ");
+	print_media_word(ifmr.ifm_current, 1, 0);
+	if (ifmr.ifm_active != ifmr.ifm_current) {
+		putchar(' ');
+		putchar('(');
+		print_media_word(ifmr.ifm_active, 0, 0);
+		putchar(')');
+	}
+	putchar('\n');
+
+	if (ifmr.ifm_status & IFM_AVALID) {
+		printf("\tstatus: ");
+		switch (IFM_TYPE(ifmr.ifm_active)) {
+		case IFM_ETHER:
+			if (ifmr.ifm_status & IFM_ACTIVE)
+				printf("active");
+			else
+				printf("no carrier");
+			break;
+
+		case IFM_FDDI:
+		case IFM_TOKEN:
+			if (ifmr.ifm_status & IFM_ACTIVE)
+				printf("inserted");
+			else
+				printf("no ring");
+			break;
+		default:
+			printf("unknown");
+		}
+		putchar('\n');
+	}
+
+	if (mflag) {
+		int type, printed_type = 0;
+
+		for (type = IFM_NMIN; type <= IFM_NMAX; type += IFM_NMIN) {
+			for (i = 0, printed_type = 0; i < ifmr.ifm_count; i++) {
+				if (IFM_TYPE(media_list[i]) == type) {
+					if (printed_type == 0) {
+					    printf("\tsupported media:\n");
+					    printed_type = 1;
+					}
+					printf("\t\t");
+					print_media_word(media_list[i], 0, 1);
+					printf("\n");
+				}
+			}
+		}
+	}
+
+	free(media_list);
+
+ proto_status:
 	if (link == 0) {
 		if ((p = afp) != NULL) {
 			(*p->af_status)(1);

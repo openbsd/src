@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.7 1996/07/02 06:52:04 niklas Exp $	*/
+/*	$OpenBSD: if.h,v 1.8 1998/09/03 06:24:20 jason Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -291,6 +291,7 @@ struct	ifreq {
 #define	ifr_broadaddr	ifr_ifru.ifru_broadaddr	/* broadcast address */
 #define	ifr_flags	ifr_ifru.ifru_flags	/* flags */
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
+#define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 };
 
@@ -300,6 +301,17 @@ struct ifaliasreq {
 	struct	sockaddr ifra_dstaddr;
 #define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr ifra_mask;
+};
+
+struct ifmediareq {
+	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	int	ifm_current;			/* current media options */
+	int	ifm_mask;			/* don't care mask */
+	int	ifm_status;			/* media status */
+	int	ifm_active;			/* active options */ 
+	int	ifm_count;			/* # entries in ifm_ulist
+							array */
+	int	*ifm_ulist;			/* media words */
 };
 
 /*
