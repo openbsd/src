@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.5 1996/10/15 08:24:06 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.6 1996/10/25 23:37:01 imp Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -68,6 +68,9 @@ static char rcsid[] = "$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $";
 static int *pids;
 static int fds;
 
+#define MAX_ARGV	100
+#define MAX_GARGV	1000
+
 FILE *
 ftpd_popen(program, type)
 	char *program, *type;
@@ -75,7 +78,7 @@ ftpd_popen(program, type)
 	char *cp;
 	FILE *iop;
 	int argc, gargc, pdes[2], pid;
-	char **pop, *argv[100], *gargv[1000];
+	char **pop, *argv[MAX_ARGV], *gargv[MAX_GARGV];
 
 	if (*type != 'r' && *type != 'w' || type[1])
 		return (NULL);
@@ -91,9 +94,10 @@ ftpd_popen(program, type)
 		return (NULL);
 
 	/* break up string into pieces */
-	for (argc = 0, cp = program;argc < 100; cp = NULL)
+	for (argc = 0, cp = program;argc < MAX_ARGV - 1; cp = NULL)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
+	argv[ MAX_ARGV - 1 ] = NULL;
 
 	/* glob each piece */
 	gargv[0] = argv[0];
@@ -103,10 +107,10 @@ ftpd_popen(program, type)
 
 		memset(&gl, 0, sizeof(gl));
 		if (glob(argv[argc], flags, NULL, &gl)) {
-			if (gargc < 1000)
+			if (gargc < MAX_GARGV - 1)
 				gargv[gargc++] = strdup(argv[argc]);
 		} else
-			for (pop = gl.gl_pathv; *pop && gargc < 1000; pop++)
+			for (pop = gl.gl_pathv; *pop && gargc < MAX_GARGV - 1; pop++)
 				gargv[gargc++] = strdup(*pop);
 		globfree(&gl);
 	}
