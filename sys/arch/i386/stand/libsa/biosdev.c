@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.65 2003/09/19 04:17:00 fgsch Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.66 2003/09/20 05:23:42 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -114,6 +114,12 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	if (rv & 0xff)
 		return (1);
 
+	/* Fix up info */
+	pdi->bios_number = dev;
+	pdi->bios_heads++;
+	pdi->bios_cylinders &= 0x3ff;
+	pdi->bios_cylinders++;
+
 	/* Sanity check */
 	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
 		return(1);
@@ -121,12 +127,6 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	/* CD-ROMs sometimes return heads == 1 */
 	if (pdi->bios_heads < 2)
 		return(1);
-
-	/* Fix up info */
-	pdi->bios_number = dev;
-	pdi->bios_heads++;
-	pdi->bios_cylinders &= 0x3ff;
-	pdi->bios_cylinders++;
 
 	/* NOTE:
 	 * This currently hangs/reboots some machines
