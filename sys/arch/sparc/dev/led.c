@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.2 1998/03/26 07:04:30 jason Exp $	*/
+/*	$OpenBSD: led.c,v 1.3 1998/05/22 03:10:31 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -90,6 +90,10 @@ ledattach(parent, self, aux)
 {
 	led_attached = 1;
 	printf("\n");
+
+	/* In case it's initialized to true... */
+	if (sparc_led_blink)
+		led_blink((caddr_t)0);
 }
 
 /*
