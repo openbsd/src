@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.28 2002/12/10 23:21:16 fgsch Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.29 2003/01/21 08:05:11 niklas Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -102,13 +102,13 @@ int linux_getsockopt(struct proc *, void *, register_t *);
 int linux_recvmsg(struct proc *, void *, register_t *);
 int linux_sendmsg(struct proc *, void *, register_t *);
 
-int linux_check_hdrincl(struct proc *, int, register_t *);
+int linux_check_hdrincl(struct proc *, int, register_t *, caddr_t *);
 int linux_sendto_hdrincl(struct proc *, struct sys_sendto_args *,
-    register_t *);
+    register_t *, caddr_t *);
 
-int linux_sa_get(struct proc *, caddr_t *sgp, struct sockaddr **sap,
-    const struct osockaddr *osa, int *osalen);
-int linux_sa_put(struct osockaddr *osa);
+int linux_sa_get(struct proc *, caddr_t *, struct sockaddr **,
+    const struct osockaddr *, int *);
+int linux_sa_put(struct osockaddr *);
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	AF_UNSPEC,
@@ -298,7 +298,6 @@ linux_connect(p, v, retval)
 #endif
 		void *status, *statusl;
 		int stat, statl = sizeof stat;
-		caddr_t sg;
 
 #if 0
 		SCARG(&fca, fd) = lca.s;
@@ -309,7 +308,6 @@ linux_connect(p, v, retval)
 			return error;
 #endif
 
-		sg = stackgap_init(p->p_emul);
 		status = stackgap_alloc(&sg, sizeof stat);
 		statusl = stackgap_alloc(&sg, sizeof statusl);
 
@@ -543,10 +541,11 @@ linux_recv(p, v, retval)
 }
 
 int
-linux_check_hdrincl(p, fd, retval)
+linux_check_hdrincl(p, fd, retval, sgp)
 	struct proc *p;
 	int fd;
 	register_t *retval;
+	caddr_t *sgp;
 {
 	struct sys_getsockopt_args /* {
 		int s;
@@ -556,14 +555,13 @@ linux_check_hdrincl(p, fd, retval)
 		int *avalsize;
 	} */ gsa;
 	int error;
-	caddr_t sg, val;
+	caddr_t val;
 	int *valsize;
 	int size_val = sizeof val;
 	int optval;
 
-	sg = stackgap_init(p->p_emul);
-	val = stackgap_alloc(&sg, sizeof(optval));
-	valsize = stackgap_alloc(&sg, sizeof(size_val));
+	val = stackgap_alloc(sgp, sizeof(optval));
+	valsize = stackgap_alloc(sgp, sizeof(size_val));
 
 	if ((error = copyout(&size_val, valsize, sizeof(size_val))))
 		return (error);
@@ -589,12 +587,12 @@ linux_check_hdrincl(p, fd, retval)
 #define linux_ip_copysize      8
 
 int
-linux_sendto_hdrincl(p, bsa, retval)
+linux_sendto_hdrincl(p, bsa, retval, sgp)
 	struct proc *p;
 	struct sys_sendto_args *bsa;
 	register_t *retval;
+	caddr_t *sgp;
 {
-	caddr_t sg;
 	struct sys_sendmsg_args ssa;
 	struct ip *packet, rpacket;
 	struct msghdr *msg, rmsg;
@@ -611,10 +609,9 @@ linux_sendto_hdrincl(p, bsa, retval)
 	 * then use an iovec to glue it to the rest of the user packet
 	 * when calling sendmsg().
 	 */
-	sg = stackgap_init(p->p_emul);
-	packet = (struct ip *)stackgap_alloc(&sg, linux_ip_copysize);
-	msg = (struct msghdr *)stackgap_alloc(&sg, sizeof(*msg));
-	iov = (struct iovec *)stackgap_alloc(&sg, sizeof(*iov)*2);
+	packet = (struct ip *)stackgap_alloc(sgp, linux_ip_copysize);
+	msg = (struct msghdr *)stackgap_alloc(sgp, sizeof(*msg));
+	iov = (struct iovec *)stackgap_alloc(sgp, sizeof(*iov)*2);
 
 	/* Make a copy of the beginning of the packet to be sent */
 	if ((error = copyin(SCARG(bsa, buf), (caddr_t)&rpacket,
@@ -673,6 +670,7 @@ linux_sendto(p, v, retval)
 	struct sys_sendto_args bsa;
 	int error;
 	int tolen;
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
@@ -684,7 +682,6 @@ linux_sendto(p, v, retval)
 	tolen = lsa.tolen;
 	if (lsa.to) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(p->p_emul);
 
 		if ((error = linux_sa_get(p, &sg, &sa, lsa.to, &tolen)))
 			return (error);
@@ -693,8 +690,8 @@ linux_sendto(p, v, retval)
 		SCARG(&bsa, to) = NULL;
 	SCARG(&bsa, tolen) = tolen;
 
-	if (linux_check_hdrincl(p, lsa.s, retval) == 0)
-		return linux_sendto_hdrincl(p, &bsa, retval);
+	if (linux_check_hdrincl(p, lsa.s, retval, &sg) == 0)
+		return linux_sendto_hdrincl(p, &bsa, retval, &sg);
 	return sys_sendto(p, &bsa, retval);
 }
 
@@ -1117,7 +1114,7 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 {
 	int error=0, bdom;
 	struct sockaddr *sa, *usa;
-	struct osockaddr *kosa = (struct osockaddr *) &sa;
+	struct osockaddr *kosa;
 	int alloclen;
 #ifdef INET6
 	int oldv6size;
