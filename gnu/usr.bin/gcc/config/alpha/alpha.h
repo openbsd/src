@@ -2094,6 +2094,9 @@ do {							\
 /* The system headers under OSF/1 are C++-aware.  */
 #define NO_IMPLICIT_EXTERN_C
 
+/* Also define __LANGUAGE_C__ when running fix-header. */
+#define FIXPROTO_INIT(CPPFILE)  cpp_define (CPPFILE, "__LANGUAGE_C__")
+
 /* The linker will stick __main into the .init section.  */
 #define HAS_INIT_SECTION
 #define LD_INIT_SWITCH "-init"

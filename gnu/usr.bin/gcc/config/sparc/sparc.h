@@ -621,18 +621,10 @@ do								\
 	for (regno = 32; regno < FIRST_PSEUDO_REGISTER; regno++) \
 	  fixed_regs[regno] = 1;				\
       }								\
-    if (! TARGET_APP_REGS)					\
-      {								\
-	fixed_regs[2] = 1;					\
-	fixed_regs[3] = 1;					\
-	fixed_regs[4] = 1;					\
-      }								\
-    else							\
-      {								\
-	fixed_regs[2] = 0;					\
-	fixed_regs[3] = 0;					\
-	fixed_regs[4] = TARGET_MEDANY != 0;			\
-      }								\
+    /* Don't unfix g2-g4 if they were fixed with -ffixed-.  */	\
+    fixed_regs[2] |= ! TARGET_APP_REGS;				\
+    fixed_regs[3] |= ! TARGET_APP_REGS;				\
+    fixed_regs[4] |= ! TARGET_APP_REGS || TARGET_MEDANY;	\
     if (TARGET_FLAT)						\
       {								\
 	/* Let the compiler believe the frame pointer is still	\

@@ -1164,6 +1164,7 @@ expand_block_move_mem (mode, addr, orig_mem)
      rtx orig_mem;
 {
   rtx mem = gen_rtx (MEM, mode, addr);
+  RTX_UNCHANGING_P (mem) = RTX_UNCHANGING_P (orig_mem);
   MEM_VOLATILE_P (mem) = MEM_VOLATILE_P (orig_mem);
   MEM_IN_STRUCT_P (mem) = MEM_IN_STRUCT_P (orig_mem);
   return mem;
@@ -1183,6 +1184,8 @@ int
 expand_block_move (operands)
      rtx operands[];
 {
+  rtx orig_dest = operands[0];
+  rtx orig_src	= operands[1];
   rtx bytes_rtx	= operands[2];
   rtx align_rtx = operands[3];
   int constp	= (GET_CODE (bytes_rtx) == CONST_INT);
@@ -1224,8 +1227,8 @@ expand_block_move (operands)
     return 0;
 
   /* Move the address into scratch registers.  */
-  dest_reg = copy_addr_to_reg (XEXP (operands[0], 0));
-  src_reg  = copy_addr_to_reg (XEXP (operands[1], 0));
+  dest_reg = copy_addr_to_reg (XEXP (orig_dest, 0));
+  src_reg  = copy_addr_to_reg (XEXP (orig_src,  0));
 
   if (TARGET_STRING)	/* string instructions are available */
     {
@@ -1242,8 +1245,8 @@ expand_block_move (operands)
 	      && !fixed_regs[12])
 	    {
 	      move_bytes = (bytes > 32) ? 32 : bytes;
-	      emit_insn (gen_movstrsi_8reg (dest_reg,
-					    src_reg,
+	      emit_insn (gen_movstrsi_8reg (expand_block_move_mem (BLKmode, dest_reg, orig_dest),
+					    expand_block_move_mem (BLKmode, src_reg, orig_src),
 					    GEN_INT ((move_bytes == 32) ? 0 : move_bytes),
 					    align_rtx));
 	    }
@@ -1256,8 +1259,8 @@ expand_block_move (operands)
 		   && !fixed_regs[12])
 	    {
 	      move_bytes = (bytes > 24) ? 24 : bytes;
-	      emit_insn (gen_movstrsi_6reg (dest_reg,
-					    src_reg,
+	      emit_insn (gen_movstrsi_6reg (expand_block_move_mem (BLKmode, dest_reg, orig_dest),
+					    expand_block_move_mem (BLKmode, src_reg, orig_src),
 					    GEN_INT (move_bytes),
 					    align_rtx));
 	    }
@@ -1268,16 +1271,16 @@ expand_block_move (operands)
 		   && !fixed_regs[12])
 	    {
 	      move_bytes = (bytes > 16) ? 16 : bytes;
-	      emit_insn (gen_movstrsi_4reg (dest_reg,
-					    src_reg,
+	      emit_insn (gen_movstrsi_4reg (expand_block_move_mem (BLKmode, dest_reg, orig_dest),
+					    expand_block_move_mem (BLKmode, src_reg, orig_src),
 					    GEN_INT (move_bytes),
 					    align_rtx));
 	    }
 	  else if (bytes > 4 && !TARGET_64BIT)
 	    {			/* move up to 8 bytes at a time */
 	      move_bytes = (bytes > 8) ? 8 : bytes;
-	      emit_insn (gen_movstrsi_2reg (dest_reg,
-					    src_reg,
+	      emit_insn (gen_movstrsi_2reg (expand_block_move_mem (BLKmode, dest_reg, orig_dest),
+					    expand_block_move_mem (BLKmode, src_reg, orig_src),
 					    GEN_INT (move_bytes),
 					    align_rtx));
 	    }
@@ -1285,28 +1288,28 @@ expand_block_move (operands)
 	    {			/* move 4 bytes */
 	      move_bytes = 4;
 	      tmp_reg = gen_reg_rtx (SImode);
-	      emit_move_insn (tmp_reg, gen_rtx (MEM, SImode, src_reg));
-	      emit_move_insn (gen_rtx (MEM, SImode, dest_reg), tmp_reg);
+	      emit_move_insn (tmp_reg, expand_block_move_mem (SImode, src_reg, orig_src));
+	      emit_move_insn (expand_block_move_mem (SImode, dest_reg, orig_dest), tmp_reg);
 	    }
 	  else if (bytes == 2 && (align >= 2 || !STRICT_ALIGNMENT))
 	    {			/* move 2 bytes */
 	      move_bytes = 2;
 	      tmp_reg = gen_reg_rtx (HImode);
-	      emit_move_insn (tmp_reg, gen_rtx (MEM, HImode, src_reg));
-	      emit_move_insn (gen_rtx (MEM, HImode, dest_reg), tmp_reg);
+	      emit_move_insn (tmp_reg, expand_block_move_mem (HImode, src_reg, orig_src));
+	      emit_move_insn (expand_block_move_mem (HImode, dest_reg, orig_dest), tmp_reg);
 	    }
 	  else if (bytes == 1)	/* move 1 byte */
 	    {
 	      move_bytes = 1;
 	      tmp_reg = gen_reg_rtx (QImode);
-	      emit_move_insn (tmp_reg, gen_rtx (MEM, QImode, src_reg));
-	      emit_move_insn (gen_rtx (MEM, QImode, dest_reg), tmp_reg);
+	      emit_move_insn (tmp_reg, expand_block_move_mem (QImode, src_reg, orig_src));
+	      emit_move_insn (expand_block_move_mem (QImode, dest_reg, orig_dest), tmp_reg);
 	    }
 	  else
 	    {			/* move up to 4 bytes at a time */
 	      move_bytes = (bytes > 4) ? 4 : bytes;
-	      emit_insn (gen_movstrsi_1reg (dest_reg,
-					    src_reg,
+	      emit_insn (gen_movstrsi_1reg (expand_block_move_mem (BLKmode, dest_reg, orig_dest),
+					    expand_block_move_mem (BLKmode, src_reg, orig_src),
 					    GEN_INT (move_bytes),
 					    align_rtx));
 	    }
@@ -1337,26 +1340,33 @@ expand_block_move (operands)
 	    }
 
 	  /* Generate the appropriate load and store, saving the stores for later */
-	  if (bytes >= 4 && (align >= 4 || !STRICT_ALIGNMENT))
+	  if (bytes >= 8 && TARGET_64BIT && (align >= 8 || !STRICT_ALIGNMENT))
+	    {
+	      move_bytes = 8;
+	      tmp_reg = gen_reg_rtx (DImode);
+	      emit_insn (gen_movdi (tmp_reg, expand_block_move_mem (DImode, src_addr, orig_src)));
+	      stores[ num_reg++ ] = gen_movdi (expand_block_move_mem (DImode, dest_addr, orig_dest), tmp_reg);
+	    }
+	  else if (bytes >= 4 && (align >= 4 || !STRICT_ALIGNMENT))
 	    {
 	      move_bytes = 4;
 	      tmp_reg = gen_reg_rtx (SImode);
-	      emit_insn (gen_movsi (tmp_reg, gen_rtx (MEM, SImode, src_addr)));
-	      stores[ num_reg++ ] = gen_movsi (gen_rtx (MEM, SImode, dest_addr), tmp_reg);
+	      emit_insn (gen_movsi (tmp_reg, expand_block_move_mem (SImode, src_addr, orig_src)));
+	      stores[ num_reg++ ] = gen_movsi (expand_block_move_mem (SImode, dest_addr, orig_dest), tmp_reg);
 	    }
 	  else if (bytes >= 2 && (align >= 2 || !STRICT_ALIGNMENT))
 	    {
 	      move_bytes = 2;
 	      tmp_reg = gen_reg_rtx (HImode);
-	      emit_insn (gen_movhi (tmp_reg, gen_rtx (MEM, HImode, src_addr)));
-	      stores[ num_reg++ ] = gen_movhi (gen_rtx (MEM, HImode, dest_addr), tmp_reg);
+	      emit_insn (gen_movsi (tmp_reg, expand_block_move_mem (HImode, src_addr, orig_src)));
+	      stores[ num_reg++ ] = gen_movhi (expand_block_move_mem (HImode, dest_addr, orig_dest), tmp_reg);
 	    }
 	  else
 	    {
 	      move_bytes = 1;
 	      tmp_reg = gen_reg_rtx (QImode);
-	      emit_insn (gen_movqi (tmp_reg, gen_rtx (MEM, QImode, src_addr)));
-	      stores[ num_reg++ ] = gen_movqi (gen_rtx (MEM, QImode, dest_addr), tmp_reg);
+	      emit_insn (gen_movsi (tmp_reg, expand_block_move_mem (QImode, src_addr, orig_src)));
+	      stores[ num_reg++ ] = gen_movqi (expand_block_move_mem (QImode, dest_addr, orig_dest), tmp_reg);
 	    }
 
 	  if (num_reg >= MAX_MOVE_REG)
@@ -1367,11 +1377,8 @@ expand_block_move (operands)
 	    }
 	}
 
-      if (num_reg > 0)
-	{
-	  for (i = 0; i < num_reg; i++)
-	    emit_insn (stores[i]);
-	}
+      for (i = 0; i < num_reg; i++)
+	emit_insn (stores[i]);
     }
 
   return 1;
@@ -2611,6 +2618,9 @@ output_prolog (file, size)
 {
   rs6000_stack_t *info = rs6000_stack_info ();
   char *store_reg = (TARGET_64BIT) ? "\tstd %s,%d(%s)" : "\t{st|stw} %s,%d(%s)\n";
+  int reg_size = info->reg_size;
+  int sp_reg = 1;
+  int sp_offset = 0;
 
   if (TARGET_DEBUG_STACK)
     debug_stack_info (info);
@@ -2644,12 +2654,38 @@ output_prolog (file, size)
       common_mode_defined = 1;
     }
 
+  /* For V.4, update stack before we do any saving and set back pointer.  */
+#ifdef USING_SVR4_H
+  if (info->push_p && TARGET_V4_CALLS)
+    {
+      if (info->total_size < 32767)
+	{
+	  asm_fprintf (file,
+		       (!TARGET_64BIT) ? "\t{stu|stwu} %s,%d(%s)\n" : "\tstdu %s,%d(%s)\n",
+		       reg_names[1], - info->total_size, reg_names[1]);
+	  sp_offset = info->total_size;
+	}
+      else
+	{
+	  int neg_size = - info->total_size;
+	  sp_reg = 12;
+	  asm_fprintf (file, "\tmr %s,%s\n", reg_names[12], reg_names[1]);
+	  asm_fprintf (file, "\t{liu|lis} %s,%d\n\t{oril|ori} %s,%s,%d\n",
+		       reg_names[0], (neg_size >> 16) & 0xffff,
+		       reg_names[0], reg_names[0], neg_size & 0xffff);
+	  asm_fprintf (file,
+		       (!TARGET_64BIT) ? "\t{stux|stwux} %s,%s,%s\n" : "\tstdux %s,%s,%s\n",
+		       reg_names[1], reg_names[1], reg_names[0]);
+	}
+    }
+#endif
+
   /* If we use the link register, get it into r0.  */
   if (info->lr_save_p)
     asm_fprintf (file, "\tmflr %s\n", reg_names[0]);
 
   /* If we need to save CR, put it into r12.  */
-  if (info->cr_save_p)
+  if (info->cr_save_p && sp_reg != 12)
     asm_fprintf (file, "\tmfcr %s\n", reg_names[12]);
 
   /* Do any required saving of fpr's.  If only one or two to save, do it
@@ -2658,10 +2694,10 @@ output_prolog (file, size)
   if (FP_SAVE_INLINE (info->first_fp_reg_save))
     {
       int regno = info->first_fp_reg_save;
-      int loc   = info->fp_save_offset;
+      int loc   = info->fp_save_offset + sp_offset;
 
       for ( ; regno < 64; regno++, loc += 8)
-	asm_fprintf (file, "\tstfd %s,%d(%s)\n", reg_names[regno], loc, reg_names[1]);
+	asm_fprintf (file, "\tstfd %s,%d(%s)\n", reg_names[regno], loc, reg_names[sp_reg]);
     }
   else if (info->first_fp_reg_save != 64)
     asm_fprintf (file, "\tbl %s%d%s\n", SAVE_FP_PREFIX,
@@ -2671,29 +2707,44 @@ output_prolog (file, size)
   if (! TARGET_MULTIPLE || info->first_gp_reg_save == 31 || TARGET_64BIT)
     {
       int regno    = info->first_gp_reg_save;
-      int loc      = info->gp_save_offset;
-      int reg_size = (TARGET_64BIT) ? 8 : 4;
+      int loc      = info->gp_save_offset + sp_offset;
 
       for ( ; regno < 32; regno++, loc += reg_size)
-	asm_fprintf (file, store_reg, reg_names[regno], loc, reg_names[1]);
+	asm_fprintf (file, store_reg, reg_names[regno], loc, reg_names[sp_reg]);
     }
 
   else if (info->first_gp_reg_save != 32)
     asm_fprintf (file, "\t{stm|stmw} %s,%d(%s)\n",
 		 reg_names[info->first_gp_reg_save],
-		 info->gp_save_offset,
-		 reg_names[1]);
+		 info->gp_save_offset + sp_offset,
+		 reg_names[sp_reg]);
 
   /* Save lr if we used it.  */
   if (info->lr_save_p)
-    asm_fprintf (file, store_reg, reg_names[0], info->lr_save_offset, reg_names[1]);
+    asm_fprintf (file, store_reg, reg_names[0], info->lr_save_offset + sp_offset,
+		 reg_names[sp_reg]);
 
   /* Save CR if we use any that must be preserved.  */
   if (info->cr_save_p)
-    asm_fprintf (file, store_reg, reg_names[12], info->cr_save_offset, reg_names[1]);
+    {
+      if (sp_reg == 12)	/* If r12 is used to hold the original sp, copy cr now */
+	{
+	  asm_fprintf (file, "\tmfcr %s\n", reg_names[0]);
+	  asm_fprintf (file, store_reg, reg_names[0],
+		       info->cr_save_offset + sp_offset,
+		       reg_names[sp_reg]);
+	}
+      else
+	asm_fprintf (file, store_reg, reg_names[12], info->cr_save_offset + sp_offset,
+		     reg_names[sp_reg]);
+    }
 
-  /* Update stack and set back pointer.  */
-  if (info->push_p)
+  /* Update stack and set back pointer and we have already done so for V.4.  */
+  if (info->push_p
+#ifdef USING_SVR4_H
+      && TARGET_AIX_CALLS
+#endif
+      )
     {
       if (info->total_size < 32767)
 	asm_fprintf (file,
@@ -2791,6 +2842,8 @@ output_epilog (file, size)
   rs6000_stack_t *info = rs6000_stack_info ();
   char *load_reg = (TARGET_64BIT) ? "\tld %s,%d(%s)" : "\t{l|lwz} %s,%d(%s)\n";
   rtx insn = get_last_insn ();
+  int sp_reg = 1;
+  int sp_offset = 0;
   int i;
 
   /* Forget about any temporaries created */
@@ -2808,9 +2861,23 @@ output_epilog (file, size)
 	 we know what size to update it with.  */
       if (frame_pointer_needed || current_function_calls_alloca
 	  || info->total_size > 32767)
-	asm_fprintf (file, load_reg, reg_names[1], 0, reg_names[1]);
+	{
+	  /* Under V.4, don't reset the stack pointer until after we're done
+	     loading the saved registers.  */
+#ifdef USING_SVR4_H
+	  if (TARGET_V4_CALLS)
+	    sp_reg = 11;
+#endif
+
+	  asm_fprintf (file, load_reg, reg_names[sp_reg], 0, reg_names[1]);
+	}
       else if (info->push_p)
 	{
+#ifdef USING_SVR4_H
+	  if (TARGET_V4_CALLS)
+	    sp_offset = info->total_size;
+	  else
+#endif
 	  if (TARGET_NEW_MNEMONICS)
 	    asm_fprintf (file, "\taddi %s,%s,%d\n", reg_names[1], reg_names[1], info->total_size);
 	  else
@@ -2819,11 +2886,11 @@ output_epilog (file, size)
 
       /* Get the old lr if we saved it.  */
       if (info->lr_save_p)
-	asm_fprintf (file, load_reg, reg_names[0], info->lr_save_offset, reg_names[1]);
+	asm_fprintf (file, load_reg, reg_names[0], info->lr_save_offset + sp_offset, reg_names[sp_reg]);
 
       /* Get the old cr if we saved it.  */
       if (info->cr_save_p)
-	asm_fprintf (file, load_reg, reg_names[12], info->cr_save_offset, reg_names[1]);
+	asm_fprintf (file, load_reg, reg_names[12], info->cr_save_offset + sp_offset, reg_names[sp_reg]);
 
       /* Set LR here to try to overlap restores below.  */
       if (info->lr_save_p)
@@ -2833,27 +2900,27 @@ output_epilog (file, size)
       if (! TARGET_MULTIPLE || info->first_gp_reg_save == 31 || TARGET_64BIT)
 	{
 	  int regno    = info->first_gp_reg_save;
-	  int loc      = info->gp_save_offset;
+	  int loc      = info->gp_save_offset + sp_offset;
 	  int reg_size = (TARGET_64BIT) ? 8 : 4;
 
 	  for ( ; regno < 32; regno++, loc += reg_size)
-	    asm_fprintf (file, load_reg, reg_names[regno], loc, reg_names[1]);
+	    asm_fprintf (file, load_reg, reg_names[regno], loc, reg_names[sp_reg]);
 	}
 
       else if (info->first_gp_reg_save != 32)
 	asm_fprintf (file, "\t{lm|lmw} %s,%d(%s)\n",
 		     reg_names[info->first_gp_reg_save],
-		     info->gp_save_offset,
-		     reg_names[1]);
+		     info->gp_save_offset + sp_offset,
+		     reg_names[sp_reg]);
 
       /* Restore fpr's if we can do it without calling a function.  */
       if (FP_SAVE_INLINE (info->first_fp_reg_save))
 	{
 	  int regno = info->first_fp_reg_save;
-	  int loc   = info->fp_save_offset;
+	  int loc   = info->fp_save_offset + sp_offset;
 
 	  for ( ; regno < 64; regno++, loc += 8)
-	    asm_fprintf (file, "\tlfd %s,%d(%s)\n", reg_names[regno], loc, reg_names[1]);
+	    asm_fprintf (file, "\tlfd %s,%d(%s)\n", reg_names[regno], loc, reg_names[sp_reg]);
 	}
 
       /* If we saved cr, restore it here.  Just those of cr2, cr3, and cr4
@@ -2863,6 +2930,19 @@ output_epilog (file, size)
 		     (regs_ever_live[70] != 0) * 0x20
 		     + (regs_ever_live[71] != 0) * 0x10
 		     + (regs_ever_live[72] != 0) * 0x8, reg_names[12]);
+
+      /* If this is V.4, unwind the stack pointer after all of the loads have been done */
+#ifdef USING_SVR4_H
+      if (sp_offset)
+	{
+	  if (TARGET_NEW_MNEMONICS)
+	    asm_fprintf (file, "\taddi %s,%s,%d\n", reg_names[1], reg_names[1], sp_offset);
+	  else
+	    asm_fprintf (file, "\tcal %s,%d(%s)\n", reg_names[1], sp_offset, reg_names[1]);
+	}
+      else if (sp_reg != 1)
+	asm_fprintf (file, "\tmr %s,%s\n", reg_names[1], reg_names[sp_reg]);
+#endif
 
       /* If we have to restore more than two FP registers, branch to the
 	 restore function.  It will return to our caller.  */

@@ -3316,9 +3316,9 @@
 
 (define_expand "movsicc"
   [(set (match_operand:SI 0 "register_operand" "")
-	(if_then_else (match_operand 1 "comparison_operator" "")
-		      (match_operand:SI 2 "arm_not_operand" "")
-		      (match_operand:SI 3 "register_operand" "")))]
+	(if_then_else:SI (match_operand 1 "comparison_operator" "")
+			 (match_operand:SI 2 "arm_not_operand" "")
+			 (match_operand:SI 3 "register_operand" "")))]
   ""
   "
 {
@@ -3331,9 +3331,9 @@
 
 (define_expand "movsfcc"
   [(set (match_operand:SF 0 "register_operand" "")
-	(if_then_else (match_operand 1 "comparison_operator" "")
-		      (match_operand:SF 2 "nonmemory_operand" "")
-		      (match_operand:SF 3 "register_operand" "")))]
+	(if_then_else:SF (match_operand 1 "comparison_operator" "")
+			 (match_operand:SF 2 "nonmemory_operand" "")
+			 (match_operand:SF 3 "register_operand" "")))]
   ""
   "
 {
@@ -3346,9 +3346,9 @@
 
 (define_expand "movdfcc"
   [(set (match_operand:DF 0 "register_operand" "")
-	(if_then_else (match_operand 1 "comparison_operator" "")
-		      (match_operand:DF 2 "nonmemory_operand" "")
-		      (match_operand:DF 3 "register_operand" "")))]
+	(if_then_else:DF (match_operand 1 "comparison_operator" "")
+			 (match_operand:DF 2 "nonmemory_operand" "")
+			 (match_operand:DF 3 "register_operand" "")))]
   "TARGET_HARD_FLOAT"
   "
 {
@@ -3361,10 +3361,10 @@
 
 (define_insn "*movsicc_insn"
   [(set (match_operand:SI 0 "register_operand" "=r,r")
-	(if_then_else (match_operator 1 "comparison_operator" 
-		       [(reg 24) (const_int 0)])
-		      (match_operand:SI 2 "arm_not_operand" "rI,K")
-		      (match_operand:SI 3 "register_operand" "0,0")))]
+	(if_then_else:SI (match_operator 1 "comparison_operator" 
+		          [(reg 24) (const_int 0)])
+			 (match_operand:SI 2 "arm_not_operand" "rI,K")
+			 (match_operand:SI 3 "register_operand" "0,0")))]
   ""
   "@
    mov%d1\\t%0, %2
@@ -3374,10 +3374,10 @@
 
 (define_insn "*movsfcc_hard_insn"
   [(set (match_operand:SF 0 "register_operand" "=f")
-	(if_then_else (match_operator 1 "comparison_operator" 
-		       [(reg 24) (const_int 0)])
-		      (match_operand:SF 2 "register_operand" "f")
-		      (match_operand:SF 3 "register_operand" "0")))]
+	(if_then_else:SF (match_operator 1 "comparison_operator" 
+			  [(reg 24) (const_int 0)])
+			 (match_operand:SF 2 "register_operand" "f")
+			 (match_operand:SF 3 "register_operand" "0")))]
   "TARGET_HARD_FLOAT"
   "mvf%d1s\\t%0, %2"
   [(set_attr "type" "ffarith")
@@ -3385,10 +3385,10 @@
 
 (define_insn "*movsfcc_soft_insn"
   [(set (match_operand:SF 0 "register_operand" "=r")
-	(if_then_else (match_operator 1 "comparison_operator"
-		       [(reg 24) (const_int 0)])
-		      (match_operand:SF 2 "register_operand" "r")
-		      (match_operand:SF 3 "register_operand" "0")))]
+	(if_then_else:SF (match_operator 1 "comparison_operator"
+			  [(reg 24) (const_int 0)])
+			 (match_operand:SF 2 "register_operand" "r")
+			 (match_operand:SF 3 "register_operand" "0")))]
   "TARGET_SOFT_FLOAT"
   "mov%d1\\t%0, %2"
   [(set_attr "type" "*")
@@ -3396,10 +3396,10 @@
 
 (define_insn "*movdfcc_insn"
   [(set (match_operand:DF 0 "register_operand" "=f")
-	(if_then_else (match_operator 1 "comparison_operator"
-		       [(reg 24) (const_int 0)])
-		      (match_operand:DF 2 "register_operand" "f")
-		      (match_operand:DF 3 "register_operand" "0")))]
+	(if_then_else:DF (match_operator 1 "comparison_operator"
+			  [(reg 24) (const_int 0)])
+			 (match_operand:DF 2 "register_operand" "f")
+			 (match_operand:DF 3 "register_operand" "0")))]
   "TARGET_HARD_FLOAT"
   "mvf%d1d\\t%0, %2"
   [(set_attr "type" "ffarith")
