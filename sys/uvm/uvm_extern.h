@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.46 2002/10/29 18:30:21 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.47 2003/03/28 10:16:29 jmc Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ typedef int		vm_prot_t;
  * flags for uvm_pagealloc_strat()
  */
 #define UVM_PGA_USERESERVE	0x0001	/* ok to use reserve pages */
-#define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
+#define	UVM_PGA_ZERO		0x0002	/* returned page must be zeroed */
 
 /*
  * lockflags that control the locking behavior of various functions.
