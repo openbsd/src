@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1996/06/02 07:28:42 tholo Exp $
+#	$OpenBSD: Makefile,v 1.10 1996/06/02 21:49:01 tholo Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -28,8 +28,8 @@ LFILES=	errno.h fcntl.h syslog.h termios.h
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm ddb
 
-RDIRS=	../lib/libcurses ../lib/libocurses ../lib/libcurses ../lib/librpcsvc \
-	../lib/libtermlib
+RDIRS=	../lib/libcurses ../lib/libform ../libmenu ../lib/libocurses \
+	../lib/libpanel ../lib/librpcsvc ../lib/libtermlib
 
 NOOBJ=	noobj
 
