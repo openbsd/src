@@ -1,5 +1,5 @@
-/* $OpenBSD: db_instruction.h,v 1.3 2001/08/12 12:03:02 heko Exp $ */
-/* $NetBSD: db_instruction.h,v 1.6 2000/03/20 02:54:45 thorpej Exp $ */
+/* $OpenBSD: db_instruction.h,v 1.4 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $NetBSD: db_instruction.h,v 1.7 2001/04/26 03:10:44 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -185,6 +185,16 @@ typedef union {
 				opcode : 6;
 	} float_format;
 
+	struct {
+		unsigned	fc : 5,
+				opclass : 4,
+				src : 2,
+				rnd : 2,
+				trp : 3,
+				fb : 5,
+				fa : 5,
+				opcode : 6;
+	} float_detail;
 
 	/*
 	 *	PAL instructions just define the major opcode
@@ -223,6 +233,7 @@ typedef union {
 #define	op_bit		0x12		/* see BIT sub-table */
 #define	op_mul		0x13		/* see MUL sub-table */
 					/* reserved */
+#define	op_fix_float	0x14		/* if ALPHA_AMASK_FIX */
 #define	op_vax_float	0x15		/* see FLOAT sub-table */
 #define	op_ieee_float	0x16		/* see FLOAT sub-table */
 #define	op_any_float	0x17		/* see FLOAT sub-table */
@@ -412,6 +423,12 @@ typedef union {
  *	Load and store operations use opcodes op_ldf..op_stt
  */
 
+		/* src encoding from function, 9..10 */
+#define	op_src_sf	0
+#define op_src_xd	1
+#define op_src_tg	2
+#define op_src_qq	3
+
 		/* any FLOAT, "function" opcodes (bits 5..11)  */
 
 #define	op_cvtlq	0x010
@@ -428,7 +445,7 @@ typedef union {
 #define	op_fcmovgt	0x02f
 #define	op_cvtql	0x030
 #define	op_cvtql_v	0x130
-#define	op_cvtql_sv	0x330
+#define	op_cvtql_sv	0x530
 
 
 		/* ieee FLOAT, "function" opcodes (bits 5..11)  */
@@ -521,6 +538,7 @@ typedef union {
 #define	op_mult_ud	0x1e2
 #define	op_divt_ud	0x1e3
 #define	op_cvtts_ud	0x1ec
+#define	op_cvtst	0x2ac
 #define	op_adds_suc	0x500
 #define	op_subs_suc	0x501
 #define	op_muls_suc	0x502
@@ -563,6 +581,7 @@ typedef union {
 #define	op_mult_sud	0x5e2
 #define	op_divt_sud	0x5e3
 #define	op_cvtts_sud	0x5ec
+#define	op_cvtst_u	0x6ac
 #define	op_adds_suic	0x700
 #define	op_subs_suic	0x701
 #define	op_muls_suic	0x702

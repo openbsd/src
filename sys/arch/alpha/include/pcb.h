@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.5 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.6 2002/04/28 20:55:14 pvalchev Exp $	*/
 /*	$NetBSD: pcb.h,v 1.5 1996/11/13 22:21:00 cgd Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct pcb {
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
 	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
+	struct cpu_info *__volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
 };
 
 /*

@@ -1,5 +1,5 @@
-/* $OpenBSD: locore.s,v 1.17 2001/09/30 13:08:45 art Exp $ */
-/* $NetBSD: locore.s,v 1.80 2000/09/04 00:31:59 thorpej Exp $ */
+/* $OpenBSD: locore.s,v 1.18 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1905,6 +1905,63 @@ longjmp_botchmsg:
 	.asciz	"longjmp botch from %p"
 	.text
 END(longjmp)
+
+/*
+ * void sts(int rn, u_int32_t *rval);
+ * void stt(int rn, u_int64_t *rval);
+ * void lds(int rn, u_int32_t *rval);
+ * void ldt(int rn, u_int64_t *rval);
+ */
+
+#ifndef NO_IEEE
+.macro make_freg_util name, op
+	LEAF(alpha_\name, 2)
+	and	a0, 0x1f, a0
+	s8addq	a0, pv, pv
+	addq	pv, 1f - alpha_\name, pv
+	jmp	(pv)
+1:
+	rn = 0
+	.rept   32
+	\op     $f0 + rn, 0(a1)
+	RET
+	rn = rn + 1
+	.endr
+	END(alpha_\name)
+.endm
+/*
+LEAF(alpha_sts, 2)
+LEAF(alpha_stt, 2)
+LEAF(alpha_lds, 2)
+LEAF(alpha_ldt, 2)
+ */
+	make_freg_util sts, sts
+	make_freg_util stt, stt
+	make_freg_util lds, lds
+	make_freg_util ldt, ldt
+
+LEAF(alpha_read_fpcr, 0); f30save = 0; rettmp = 8; framesz = 16
+	lda	sp, -framesz(sp)
+	stt	$f30, f30save(sp)
+	mf_fpcr	$f30
+	stt	$f30, rettmp(sp)
+	ldt	$f30, f30save(sp)
+	ldq	v0, rettmp(sp)
+	lda	sp, framesz(sp)
+	RET
+END(alpha_read_fpcr)
+
+LEAF(alpha_write_fpcr, 1); f30save = 0; fpcrtmp = 8; framesz = 16
+	lda	sp, -framesz(sp)
+	stq	a0, fpcrtmp(sp)
+	stt	$f30, f30save(sp)
+	ldt	$f30, fpcrtmp(sp)
+	mt_fpcr	$f30
+	ldt	$f30, f30save(sp)
+	lda	sp, framesz(sp)
+	RET
+END(alpha_write_fpcr)
+#endif
 
 #if 0
 NESTED(transfer_check,0,0,ra,0,0)

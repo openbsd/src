@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.55 2002/03/30 20:21:25 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.56 2002/04/28 20:55:14 pvalchev Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -20,6 +20,8 @@ option		DEC_550		# Miata:	Digital Personal Workstation
 # Enable the hooks used for initializing the ram-disk.
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=5744	# 4 Megabytes!
+
+option		NO_IEEE		# Disable IEEE math
 
 # Standard system options
 maxusers	8			# estimated number of users

@@ -1,5 +1,41 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 1997/01/24 19:56:44 niklas Exp $	*/
-/*	$NetBSD: sys_machdep.c,v 1.5 1996/11/13 22:20:57 cgd Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14 2002/01/14 00:53:16 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,22 +66,92 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#ifndef NO_IEEE
+#include <sys/device.h>
+#include <sys/proc.h>
+#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#ifndef NO_IEEE
+#include <machine/fpu.h>
+#include <machine/sysarch.h>
+
+#include <dev/pci/pcivar.h>
+
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
-#if 0
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
-		syscallarg(char *) parms;
+		syscallarg(void *) parms;
 	} */ *uap = v;
-#endif
+	int error = 0;
 
+	switch(SCARG(uap, op)) {
+	case ALPHA_FPGETMASK:
+		*retval = FP_C_TO_OPENBSD_MASK(p->p_md.md_flags);
+		break;
+	case ALPHA_FPGETSTICKY:
+		*retval = FP_C_TO_OPENBSD_FLAG(p->p_md.md_flags);
+		break;
+	case ALPHA_FPSETMASK:
+	case ALPHA_FPSETSTICKY:
+	    {
+		fp_except m;
+		u_int64_t md_flags;
+		struct alpha_fp_except_args args;
+
+		error = copyin(SCARG(uap, parms), &args, sizeof args);
+		if (error)
+			return error;
+		m = args.mask;
+		md_flags = p->p_md.md_flags;
+		switch (SCARG(uap, op)) {
+		case ALPHA_FPSETMASK:
+			*retval = FP_C_TO_OPENBSD_MASK(md_flags);
+			md_flags = SET_FP_C_MASK(md_flags, m);
+			break;
+		case ALPHA_FPSETSTICKY:
+			*retval = FP_C_TO_OPENBSD_FLAG(md_flags);
+			md_flags = SET_FP_C_FLAG(md_flags, m);
+			break;
+		}
+		alpha_write_fp_c(p, md_flags);
+		break;
+	    }
+	case ALPHA_GET_FP_C:
+	    {
+		struct alpha_fp_c_args args;
+
+		args.fp_c = alpha_read_fp_c(p);
+		error = copyout(&args, SCARG(uap, parms), sizeof args);
+		break;
+	    }
+	case ALPHA_SET_FP_C:
+	    {
+		struct alpha_fp_c_args args;
+
+		error = copyin(SCARG(uap, parms), &args, sizeof args);
+		if (error)
+			return (error);
+		if ((args.fp_c >> 63) != 0)
+			args.fp_c |= IEEE_INHERIT;
+		alpha_write_fp_c(p, args.fp_c);
+		break;
+	    }
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return (error);
+}
+#else
+int sys_sysarch(struct proc *p, void *v, register_t *retval)
+{
 	return (ENOSYS);
 }
+#endif

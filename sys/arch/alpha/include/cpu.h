@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.15 2001/11/06 18:41:09 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.16 2002/04/28 20:55:14 pvalchev Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -83,6 +83,22 @@
 #ifndef _ALPHA_CPU_H_
 #define _ALPHA_CPU_H_
 
+#ifndef NO_IEEE
+typedef union alpha_s_float {
+	u_int32_t i;
+	u_int32_t frac: 23,
+		exp:   8,
+		sign:  1;
+} s_float;
+
+typedef union alpha_t_float {
+	u_int64_t i;
+	u_int64_t frac: 52,
+		exp:  11,
+		sign:  1;
+} t_float;
+#endif
+
 /*
  * Exported definitions unique to Alpha cpu support.
  */
@@ -100,7 +116,11 @@ struct reg;
 struct rpb;
 struct trapframe;
 
+extern u_long cpu_implver;		/* from IMPLVER instruction */
+extern u_long cpu_amask;		/* from AMASK instruction */
 extern int bootdev_debug;
+extern int alpha_fp_sync_complete;
+extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
 
 void	XentArith(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
 void	XentIF(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
@@ -195,6 +215,11 @@ struct cpu_info {
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
+#define	CPUF_PAUSED	0x08		/* CPU is paused */
+#define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
+
+void	fpusave_cpu(struct cpu_info *, int);
+void	fpusave_proc(struct proc *, int);
 
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;
@@ -217,9 +242,6 @@ extern	struct cpu_info cpu_info_store;
 #define	curproc		curcpu()->ci_curproc
 #define	fpcurproc	curcpu()->ci_fpcurproc
 #define	curpcb		curcpu()->ci_curpcb
-
-extern	u_long cpu_implver;		/* from IMPLVER instruction */
-extern	u_long cpu_amask;		/* from AMASK instruction */
 
 /*
  * definitions of cpu-dependent requirements
@@ -309,8 +331,9 @@ do {									\
 #define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
-#define CPU_CHIPSET		7	/* chipset information */
-#define	CPU_MAXID		8	/* 6 valid machdep IDs */
+#define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
+#define	CPU_MAXID		8	/* 7 valid machdep IDs */
+#define CPU_CHIPSET		9	/* chipset information */
 
 #define CPU_CHIPSET_MEM		1	/* PCI memory address */
 #define CPU_CHIPSET_BWX		2	/* PCI supports BWX */
@@ -328,6 +351,7 @@ do {									\
 	{ "unaligned_sigbus", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "chipset", CTLTYPE_NODE }, \
+	{ "fp_sync_complete", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -337,6 +361,24 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
+
+/* IEEE and VAX FP completion */
+
+#ifndef NO_IEEE
+void alpha_sts(int, s_float *);					/* MAGIC */
+void alpha_stt(int, t_float *);					/* MAGIC */
+void alpha_lds(int, s_float *);					/* MAGIC */
+void alpha_ldt(int, t_float *);					/* MAGIC */
+
+uint64_t alpha_read_fpcr(void);					/* MAGIC */
+void alpha_write_fpcr(u_int64_t);				/* MAGIC */
+
+u_int64_t alpha_read_fp_c(struct proc *);
+void alpha_write_fp_c(struct proc *, u_int64_t);
+
+void alpha_enable_fp(struct proc *, int);
+int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
+#endif
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */

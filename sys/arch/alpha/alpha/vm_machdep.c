@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.27 2001/12/08 02:24:05 art Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.28 2002/04/28 20:55:14 pvalchev Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -68,12 +68,9 @@ cpu_coredump(p, vp, cred, chdr)
 	cpustate.md_tf = *p->p_md.md_tf;
 	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
 	if (p->p_md.md_flags & MDP_FPUSED) {
-		if (p == fpcurproc) {
-			alpha_pal_wrfen(1);
-			savefpstate(&cpustate.md_fpstate);
-			alpha_pal_wrfen(0);
-		} else
-			cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
+		if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+			fpusave_proc(p, 1);
+		cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
 	} else
 		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
 
@@ -108,8 +105,8 @@ cpu_exit(p)
 	struct proc *p;
 {
 
-	if (p == fpcurproc)
-		fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 0);
 
 	/*
 	 * Deactivate the exiting address space before the vmspace
@@ -150,7 +147,12 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct user *up = p2->p_addr;
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
+
+#ifndef NO_IEEE
+	p2->p_md.md_flags = p1->p_md.md_flags & (MDP_FPUSED | MDP_FP_C);
+#else
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
+#endif
 
 	/*
 	 * Cache the physical address of the pcb, so we can
@@ -162,11 +164,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Copy floating point state from the FP chip to the PCB
 	 * if this process has state stored there.
 	 */
-	if (p1 == fpcurproc) {
-		alpha_pal_wrfen(1);
-		savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-		alpha_pal_wrfen(0);
-	}
+	if (p1->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p1, 1);
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2.
@@ -265,13 +264,8 @@ cpu_swapout(p)
 	struct proc *p;
 {
 
-	if (p != fpcurproc)
-		return;
-
-	alpha_pal_wrfen(1);
-	savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-	alpha_pal_wrfen(0);
-	fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.70 2002/04/25 00:53:58 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.71 2002/04/28 20:55:14 pvalchev Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -90,6 +90,9 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
+#ifndef NO_IEEE
+#include <machine/fpu.h>
+#endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -113,6 +116,9 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/cpuconf.h>
+#ifndef NO_IEEE
+#include <machine/ieeefp.h>
+#endif
 
 #include <dev/pci/pcivar.h>
 
@@ -201,6 +207,9 @@ struct platform platform;
 int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 1;	/* SIGBUS on fixed-up accesses */
+#ifndef NO_IEEE
+int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
+#endif
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!
@@ -1597,19 +1606,18 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.sc_regs[R_SP] = alpha_pal_rdusp();
 
 	/* save the floating-point state, if necessary, then copy it. */
-	if (p == fpcurproc) {
-		alpha_pal_wrfen(1);
-		savefpstate(&p->p_addr->u_pcb.pcb_fp);
-		alpha_pal_wrfen(0);
-		fpcurproc = NULL;
-	}
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 1);
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
-	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
+	memcpy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
-	ksc.sc_fp_control = 0;					/* XXX ? */
-	bzero(ksc.sc_reserved, sizeof ksc.sc_reserved);		/* XXX */
-	bzero(ksc.sc_xxx, sizeof ksc.sc_xxx);			/* XXX */
-
+#ifndef NO_IEEE
+	ksc.sc_fp_control = alpha_read_fp_c(p);
+#else
+	ksc.sc_fp_control = 0;
+#endif
+	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
+	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
 #ifdef COMPAT_OSF1
 	/*
@@ -1713,11 +1721,14 @@ sys_sigreturn(p, v, retval)
 	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
 	/* XXX ksc.sc_ownedfp ? */
-	if (p == fpcurproc)
-		fpcurproc = NULL;
-	bcopy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 0);
+	memcpy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
-	/* XXX ksc.sc_fp_control ? */
+#ifndef NO_IEEE
+	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
+	p->p_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
+#endif
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -1772,10 +1783,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_BOOTED_KERNEL:
 		return (sysctl_rdstring(oldp, oldlenp, newp,
 		    bootinfo.booted_kernel));
-
+	
 	case CPU_CHIPSET:
 		return (alpha_sysctl_chipset(name + 1, namelen - 1, oldp,
 		    oldlenp));
+
+#ifndef NO_IEEE
+	case CPU_FP_SYNC_COMPLETE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &alpha_fp_sync_complete));
+#endif
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1812,8 +1830,6 @@ setregs(p, pack, stack, retval)
 	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
 	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
-#define FP_RN 2 /* XXX */
-	p->p_addr->u_pcb.pcb_fp.fpr_cr = (long)FP_RN << 58;
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
@@ -1823,10 +1839,96 @@ setregs(p, pack, stack, retval)
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (fpcurproc == p)
-		fpcurproc = NULL;
+#ifndef NO_IEEE
+	if (__predict_true((p->p_md.md_flags & IEEE_INHERIT) == 0)) {
+		p->p_md.md_flags &= ~MDP_FP_C;
+		p->p_addr->u_pcb.pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
+	}
+#endif
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 0);
+}
 
-	retval[0] = retval[1] = 0;
+/*
+ * Release the FPU.
+ */
+void
+fpusave_cpu(struct cpu_info *ci, int save)
+{
+	struct proc *p;
+#if defined(MULTIPROCESSOR)
+	int s;
+#endif
+
+	KDASSERT(ci == curcpu());
+
+#if defined(MULTIPROCESSOR)
+	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
+#endif
+
+	p = ci->ci_fpcurproc;
+	if (p == NULL)
+		goto out;
+
+	if (save) {
+		alpha_pal_wrfen(1);
+		savefpstate(&p->p_addr->u_pcb.pcb_fp);
+	}
+
+	alpha_pal_wrfen(0);
+
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	ci->ci_fpcurproc = NULL;
+
+out:
+#if defined(MULTIPROCESSOR)
+	atomic_clearbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
+#endif
+	return;
+}
+
+/*
+ * Synchronize FP state for this process.
+ */
+void
+fpusave_proc(struct proc *p, int save)
+{
+	struct cpu_info *ci = curcpu();
+	struct cpu_info *oci;
+#if defined(MULTIPROCESSOR)
+	u_long ipi = save ? ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU;
+	int s, spincount;
+#endif
+
+	KDASSERT(p->p_addr != NULL);
+	KDASSERT(p->p_flag & P_INMEM);
+
+	oci = p->p_addr->u_pcb.pcb_fpcpu;
+	if (oci == NULL) {
+		return;
+	}
+
+#if defined(MULTIPROCESSOR)
+	if (oci == ci) {
+		KASSERT(ci->ci_fpcurproc == p);
+		fpusave_cpu(ci, save);
+		return;
+	}
+
+	KASSERT(oci->ci_fpcurproc == p);
+	alpha_send_ipi(oci->ci_cpuid, ipi);
+
+	spincount = 0;
+	while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
+		spincount++;
+		delay(1000);    /* XXX */
+		if (spincount > 10000)
+			panic("fpsave ipi didn't");
+	}
+#else
+	KASSERT(ci->ci_fpcurproc == p);
+	fpusave_cpu(ci, save);
+#endif /* MULTIPROCESSOR */
 }
 
 int
