@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.275 2003/07/24 08:03:19 itojun Exp $
+#	$OpenBSD: files,v 1.276 2003/08/12 11:05:47 hin Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -832,6 +832,7 @@ file xfs/xfs_deb.c			xfs
 file xfs/xfs_dev-bsd.c			xfs
 file xfs/xfs_dev-common.c		xfs
 file xfs/xfs_message.c			xfs
+file xfs/xfs_node.c			xfs
 file xfs/xfs_node-bsd.c			xfs
 file xfs/xfs_syscalls-common.c		xfs
 file xfs/xfs_vfsops-bsd.c		xfs
