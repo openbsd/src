@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.174 2003/02/02 22:47:18 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.175 2003/02/02 23:38:31 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1632,7 +1632,7 @@ spam are only evaluated for
 packets with destination port 25.
 Hence,
 .Bd -literal -offset indent
-.Xo Ic # echo "block in quick from 1.2.3.4\ 
+.Xo Ic # echo \&"block in quick from 1.2.3.4\ 
 .Ic to any" \&|
 .Xc
 .Ic \  \  pfctl -a spam:manual -f -
