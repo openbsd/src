@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.113 1998/12/19 18:31:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.114 1999/03/23 02:30:31 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1837,7 +1837,7 @@ while [ X"${resp}" = X ]; do
 	# If _yup is not FALSE, it means that we extracted sets above.
 	# If that's the case, bypass the menu the first time.
 	if [ X"$_yup" = X"FALSE" ]; then
-		echo -n	"Install from (f)tp, h(ttp), (t)ape, (C)D-ROM,"
+		echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM,"
 		echo -n " (N)FS or local (d)isk? "
 		getresp ""
 		case "$resp" in
