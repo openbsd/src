@@ -86,6 +86,11 @@ will fork and run in background
 listening on socket 25 for incoming
 .Tn SMTP
 connections.
+By default,
+.Nm Sendmail
+will also listen on socket 587 for
+.Tn RFC2476
+message submission.
 This is normally run from
 .Pa /etc/rc .
 .It Fl bD
