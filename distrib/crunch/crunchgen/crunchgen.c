@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.15 1999/12/06 01:47:58 deraadt Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.16 2000/06/23 21:43:54 mickey Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -822,8 +822,8 @@ void top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "%s: %s.o $(CRUNCHED_OBJS)\n", 
 	    execfname, execfname);
-    fprintf(outmk, "\t$(CC) -static -o %s %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
-	    execfname, execfname);
+    fprintf(outmk, "\t$(CC) -static -nostdlib -o %s %s.o %s/scrt0.o $(CRUNCHED_OBJS) $(LIBS) -lgcc -lc -lgcc\n",
+	    execfname, execfname, libdir);
     fprintf(outmk, "\t$(STRIP) %s\n", execfname);
     fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
