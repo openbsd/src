@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.25 1999/01/10 13:34:16 niklas Exp $	*/
+/*	$OpenBSD: systm.h,v 1.26 1999/02/26 03:16:47 millert Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -140,6 +140,7 @@ void vfs_op_init __P((void));
 
 int	seltrue __P((dev_t dev, int which, struct proc *));
 void	*hashinit __P((int, int, u_long *));
+void	*newhashinit __P((int, int, int, u_long *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 void	panic __P((const char *, ...))
