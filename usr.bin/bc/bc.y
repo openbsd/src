@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.1 2003/09/25 19:32:44 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.2 2003/09/26 07:23:06 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.1 2003/09/25 19:32:44 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.2 2003/09/26 07:23:06 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -607,6 +607,8 @@ as(const char *str)
 	grow();
 	instructions[current].index = ALLOC_STRING;
 	instructions[current].u.astr = strdup(str);
+	if (instructions[current].u.astr == NULL)
+		err(1, "cannot allocate string");
 	return current++;
 }
 
