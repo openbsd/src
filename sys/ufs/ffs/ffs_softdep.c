@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.46 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.47 2003/11/19 02:52:13 tedu Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -3110,7 +3110,7 @@ softdep_disk_io_initiation(bp)
 			/*
 			 * Replace up-to-date version with safe version.
 			 */
-			MALLOC(indirdep->ir_saveddata, caddr_t, bp->b_bcount,
+			indirdep->ir_saveddata = malloc(bp->b_bcount,
 			    M_INDIRDEP, M_WAITOK);
 			ACQUIRE_LOCK(&lk);
 			indirdep->ir_state &= ~ATTACHED;
