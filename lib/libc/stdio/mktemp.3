@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.11 1998/06/30 23:03:11 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.12 1998/12/15 19:19:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -206,6 +206,69 @@ and
 .Fn mkstemps
 functions are nonstandard and should not be used if portability
 is required.
+.Sh EXAMPLES
+Quite often a programmer will want to replace a use of
+.Fn mktemp
+with
+.Fn mkstemp ,
+usually to avoid the problems described above.
+Doing this correctly requires a good understanding of the
+code in question.
+.Pp
+For instance code of this form
+.Bd -literal -offset indent
+char sfn[15] = "";
+FILE *sfp;
+
+strcpy(sfn, "/tmp/ed.XXXXXX");
+if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
+        fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
+        return (NULL);
+}
+return (sfp);
+.Ed
+.Pp
+should be rewritten like this:
+.Bd -literal -offset indent
+char sfn[15] = "";
+FILE *sfp;
+int fd = -1;
+ 
+strcpy(sfn, "/tmp/ed.XXXXXX");
+if ((fd = mkstemp(sfn)) == -1 ||
+    (sfp = fdopen(fd, "w+")) == NULL) {
+        if (fd != -1) {
+                unlink(sfn);
+                close(fd);
+        }
+        fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
+        return (NULL);
+}
+return (sfp);
+.Ed
+.Pp
+Often one will find code which uses
+.Fn mktemp
+very early on, perhaps to globally initialize the template nicely, but the
+code which calls
+.Xr open 2
+or
+.Xr fopen 3
+on that filename will occur much later.  Modifying such code for
+.Fn mkstemp
+can be difficult.
+(In almost all cases, the use of of
+.Xr fopen 3
+will mean that the flags
+.Dv O_CREAT | O_EXCL
+are not open, and thus a symbolic link race becomes possible; hence making
+neccessary the use of
+.Xr fdopen 3
+as seen above).
+Furthermore, one must be careful about code which opens, closes, and then
+re-opens the file in question.
+Finally, one must ensure that upon error the temporary file is
+removed correctly.
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr getpid 2 ,
