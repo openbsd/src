@@ -599,6 +599,19 @@ int warn_multichar = 1;
 #endif
 int dollars_in_ident = DOLLARS_IN_IDENTIFIERS;
 
+
+/* Linked list of disabled built-in functions.  */
+
+typedef struct disabled_builtin
+{
+  const char *name;
+  struct disabled_builtin *next;
+} disabled_builtin;
+static disabled_builtin *disabled_builtins = NULL;
+
+static int builtin_function_disabled_p PROTO ((const char *));
+void disable_builtin_function PROTO ((const char *));
+
 /* Decode the string P as a language-specific option for C.
    Return the number of strings consumed.  */
    
@@ -741,6 +754,8 @@ c_decode_option (argc, argv)
     flag_no_builtin = 0;
   else if (!strcmp (p, "-fno-builtin"))
     flag_no_builtin = 1;
+  else if (!strncmp (p, "-fno-builtin-", strlen ("-fno-builtin-")))
+    disable_builtin_function (p + strlen ("-fno-builtin-"));
   else if (!strcmp (p, "-ansi"))
     goto iso_1990;
   else if (!strcmp (p, "-Werror-implicit-function-declaration"))
@@ -3411,16 +3426,20 @@ init_decl_processing ()
 							       endlink)),
 			       BUILT_IN_ALLOCA, NULL_PTR);
       /* Suppress error if redefined as a non-function.  */
-      DECL_BUILT_IN_NONANSI (temp) = 1;
+      if (temp)
+	  DECL_BUILT_IN_NONANSI (temp) = 1;
       temp = builtin_function ("ffs", int_ftype_int, BUILT_IN_FFS, NULL_PTR);
       /* Suppress error if redefined as a non-function.  */
-      DECL_BUILT_IN_NONANSI (temp) = 1;
+      if (temp)
+	  DECL_BUILT_IN_NONANSI (temp) = 1;
       temp = builtin_function ("_exit", void_ftype_any, NOT_BUILT_IN,
 			       NULL_PTR);
-      TREE_THIS_VOLATILE (temp) = 1;
-      TREE_SIDE_EFFECTS (temp) = 1;
-      /* Suppress error if redefined as a non-function.  */
-      DECL_BUILT_IN_NONANSI (temp) = 1;
+      if (temp) {
+	  TREE_THIS_VOLATILE (temp) = 1;
+	  TREE_SIDE_EFFECTS (temp) = 1;
+	  /* Suppress error if redefined as a non-function.  */
+	  DECL_BUILT_IN_NONANSI (temp) = 1;
+      }
     }
 
   builtin_function ("__builtin_abs", int_ftype_int, BUILT_IN_ABS, NULL_PTR);
@@ -3610,6 +3629,38 @@ init_decl_processing ()
   lang_get_alias_set = c_get_alias_set;
 }
 
+/* Disable a built-in function specified by -fno-builtin-NAME.  If NAME
+   begins with "__builtin_", give an error.  */
+
+void
+disable_builtin_function (name)
+     const char *name;
+{
+  if (strncmp (name, "__builtin_", strlen ("__builtin_")) == 0)
+    error ("cannot disable built-in function `%s'", name);
+  else
+    {
+      disabled_builtin *new = xmalloc (sizeof (disabled_builtin));
+      new->name = name;
+      new->next = disabled_builtins;
+      disabled_builtins = new;
+    }
+}
+
+
+static int
+builtin_function_disabled_p (name)
+     const char *name;
+{
+  disabled_builtin *p;
+  for (p = disabled_builtins; p != NULL; p = p->next)
+    {
+      if (strcmp (name, p->name) == 0)
+	return 1;
+    }
+  return 0;
+}
+
 /* Return a definition for a builtin function named NAME and whose data type
    is TYPE.  TYPE should be a function type with argument types.
    FUNCTION_CODE tells later passes how to compile calls to this function.
@@ -3625,7 +3676,10 @@ builtin_function (name, type, function_code, library_name)
      enum built_in_function function_code;
      const char *library_name;
 {
-  tree decl = build_decl (FUNCTION_DECL, get_identifier (name), type);
+  tree decl;
+  if (builtin_function_disabled_p (name))
+    	return NULL;
+  decl = build_decl (FUNCTION_DECL, get_identifier (name), type);
   DECL_EXTERNAL (decl) = 1;
   TREE_PUBLIC (decl) = 1;
   /* If -traditional, permit redefining a builtin function any way you like.
