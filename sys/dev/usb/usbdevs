@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.126 2004/11/29 09:41:59 grange Exp $
+$OpenBSD: usbdevs,v 1.127 2004/12/08 02:31:43 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -370,6 +370,7 @@ vendor MSI		0x0db0	Micro Star International
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
+vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
 vendor QUALCOMM2	0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
@@ -799,6 +800,9 @@ product ETEK 1COM		0x8007	Serial
 
 /* Extended Systems products */
 product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
+
+/* Falcom Wireless Communications GmbH products */
+product FALCOM TWIST		0x0001	Falcom Twist USB
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
