@@ -1,5 +1,5 @@
-/*	$OpenBSD: prefix.c,v 1.6 2002/09/08 01:20:15 itojun Exp $	*/
-/*	$KAME: prefix.c,v 1.12 2002/09/08 01:14:46 itojun Exp $	*/
+/*	$OpenBSD: prefix.c,v 1.7 2003/09/02 23:27:55 itojun Exp $	*/
+/*	$KAME: prefix.c,v 1.13 2003/09/02 22:50:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -279,6 +279,7 @@ config_load(const char *configfile)
 		return -1;
 
 	p = &sentinel;
+	sentinel.next = NULL;
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		conf = config_load1(buf);
 		if (conf) {
