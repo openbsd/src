@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.13 2000/04/30 15:27:57 miod Exp $
+#	$OpenBSD: DISKLESS,v 1.14 2000/05/23 23:09:29 miod Exp $
 #	$NetBSD: DISKLESS,v 1.12.4.1 1996/08/19 23:35:03 gwr Exp $
 
 #
@@ -20,10 +20,10 @@ maxusers	4
 option	 	KTRACE				# system call tracing support
 
 # Debugging options.  Uncomment either this:
-#option 	DDB
+option 	DDB
 # ... or these two: (for KGDB on another machine)
-makeoptions DEBUG="-g"			# symbols for kgdb + nm
-option	 	KGDB
+#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+#option	 	KGDB
 
 # Filesystem options
 option	 	NFSCLIENT	# nfs client support
