@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.7 2001/08/31 23:05:22 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.8 2001/09/04 08:55:37 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -105,7 +105,7 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			NTOHS((x)->ip_off); \
 		} while (0)
 #else
-#define		 PFLOG_PACKET
+#define		 PFLOG_PACKET(x,a,b,c,d,e)	((void)0)
 #endif
 
 /* Globals */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.142 2001/08/31 23:05:22 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.143 2001/09/04 08:55:37 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -221,7 +221,7 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 		NTOHS((x)->ip_off); \
 	} while (0)
 #else
-#define	PFLOG_PACKET
+#define	PFLOG_PACKET(x,a,b,c,d,e)	((void)0)
 #endif
 
 #define	STATE_TRANSLATE(s) \
