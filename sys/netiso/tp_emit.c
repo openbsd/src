@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_emit.c,v 1.3 1996/04/21 22:29:43 deraadt Exp $	*/
+/*	$OpenBSD: tp_emit.c,v 1.4 2000/02/25 04:26:11 itojun Exp $	*/
 /*	$NetBSD: tp_emit.c,v 1.8 1996/03/16 23:13:48 christos Exp $	*/
 
 /*-
@@ -199,6 +199,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			m->m_nextpkt = MNULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
+			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
 		}
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
