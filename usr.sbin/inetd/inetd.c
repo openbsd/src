@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.22 1996/12/11 09:05:05 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.23 1996/12/14 19:19:09 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.22 1996/12/11 09:05:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.23 1996/12/14 19:19:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -319,6 +319,14 @@ main(argc, argv, envp)
 		if (uid == 0)
 			(void) setlogin("");
 	}
+
+	if (uid == 0) {
+		gid_t gid = getgid();
+
+		/* If run by hand, ensure groups vector gets trashed */
+		setgroups(1, &gid);
+	}
+
 	openlog(progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	logpid();
 
@@ -494,7 +502,8 @@ main(argc, argv, envp)
 					initgroups(pwd->pw_name, pwd->pw_gid);
 					(void) setuid((uid_t)pwd->pw_uid);
 				} else if (sep->se_group) {
-					(void) setgid((gid_t)grp->gr_gid);
+					(void) setgid(grp->gr_gid);
+					(void) setgroups(1, &grp->gr_gid);
 				}
 				if (debug)
 					fprintf(stderr, "%d execl %s\n",
