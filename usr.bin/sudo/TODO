@@ -41,88 +41,86 @@ TODO list (most will be addressed in sudo 2.0)
 
 15) Add test for how to read ether interfaces in configure script
 
-16) Add configure check for $(CC) -R and use it in addition to -L
-
-17) An option to make "sudo -s" use the target user's shell might be nice
+16) An option to make "sudo -s" use the target user's shell might be nice
     (and more like su).  Overlaps with the upcoming -i option.
 
-18) Add configure option to enable old behavior of visudo (O_EXCL)?
+17) Add configure option to enable old behavior of visudo (O_EXCL)?
     --without-sudoers-lock?
 
-19) Profile sudo again (is the yacc grammar optimal?)
+18) Profile sudo again (is the yacc grammar optimal?)
 
-20) Zero out encrypted passwords after use.  Use an Exit function or
+19) Zero out encrypted passwords after use.  Use an Exit function or
     some such (have to hook in to emalloc() and friends).
     Hard (impossible?) to be thorough w/ atexit/on_exit.
 
-21) Make 'sudo -l user' if run as root do a "sudo -l" output for the specified
+20) Make 'sudo -l user' if run as root do a "sudo -l" output for the specified
     user.
 
-22) Use strtol() and strtoul(), not atoi()
+21) Use strtol() and strtoul(), not atoi()
 
-24) Look into %e, %p, %k in parse.lex
+23) Look into %e, %p, %k in parse.lex
 
-24) Make syslog stuff work on vanilla ultrix
+23) Make syslog stuff work on vanilla ultrix
 
-25) Implement date_format and log_format options.
+24) Implement date_format and log_format options.
 
-26) Add support for: Default:user@host
+25) Add support for: Default:user@host
 
-27) Do login-style -sh hack for sudo -s? (new option or do it always?)
+26) Do login-style -sh hack for sudo -s? (new option or do it always?)
 
-28) Make visudo rcs-aware
+27) Make visudo rcs-aware
 
-29) Add support for parsing multiple sudoers files.  Basically make
+28) Add support for parsing multiple sudoers files.  Basically make
     _PATH_SUDOERS be a colon-separated list of pathname like EDITOR.
     Requires _PATH_SUDOERS_TMP chages (perhaps "%s.tmp").
 
-30) Add -i (simulate initial login) option as per 946 +sudo
+29) Add -i (simulate initial login) option as per 946 +sudo
     (requires two-pass parser).  Also add "default_path" Defaults option
     to go with it.  (See MINUS_I.patch)
 
-31) Some people want to be able to specify a special password in sudoers
+30) Some people want to be able to specify a special password in sudoers
     in addition or instead of the normal one.  The best argument for
     this so far is to be able to use separate passwords for the
     target users that are not the passwd file ones.
 
-32) Add support for trusted users.  E.g. allow user to run a certain
+31) Add support for trusted users.  E.g. allow user to run a certain
     command regardless of what dir it is in if it is owned by the
     trusted user.
 
-33) Add mechanism to choose logfile based on RunasUser
+32) Add mechanism to choose logfile based on RunasUser
 
-34) Split the parser into two stages.  The first parse checks for
+33) Split the parser into two stages.  The first parse checks for
     syntax and sets the Defaults options and sets up the
     data structures to check a user.  The second stage does
     the actual user check.
 
-35) Add a flag similar to '-l' but that spits out sudo commands in
+34) Add a flag similar to '-l' but that spits out sudo commands in
     a format suitable for cut & paste (requires parser overhaul first).
 
-36) Someone wants a recursive version of the dir specifier.  Ie:
+35) Someone wants a recursive version of the dir specifier.  Ie:
     SOME_MODIFIER:/usr/local/ to allow anything under /usr/local to be run.
 
-37) An option to set the shell to the target user would make sense.
+36) An option to set the shell to the target user would make sense.
     See other target user-related issues above.
 
-38) Add an option (-D) to dump the defaults after the sudoers file
+37) Add an option (-D) to dump the defaults after the sudoers file
     has been parsed.  Should only be available to root and should
     allow a -u user modifier.
 
-39) For sudo 1.7 wipe out the environment by default.
+38) For sudo 1.7 wipe out the environment by default.
 
-40) Allow /etc/sudoers to be a symlink but require the parent dir to
+39) Allow /etc/sudoers to be a symlink but require the parent dir to
     be root-owned and not writable by anything else.  Should really
     traverse the tree to the root doing this.
 
-41) Improve interfaces.c STREAMS code (see ntpd's ntp_io.c for hints)
+40) Improve interfaces.c STREAMS code (see ntpd's ntp_io.c for hints)
 
-42) Wildcard support for user and group names? (netgroup too?)
+41) Wildcard support for user and group names? (netgroup too?)
 
-43) If root_sudo is off, still allow sudo -u to non-root users?
+42) If root_sudo is off, still allow sudo -u to non-root users?
 
-44) Add configure option to id user based on euid not ruid?
+43) Add configure option to id user based on euid not ruid?
 
-45) Split $EDITOR/$VISUAL in visudo into an argument vector based on whitespace
+44) Split $EDITOR/$VISUAL in visudo into an argument vector based on whitespace
 
-46) Make Kerberos paths and libs situation as sane as possible
+45) Use proper links in .pod files

@@ -329,6 +329,20 @@ AC_TRY_LINK(, [long long foo = 1000; foo /= 10;], AC_DEFINE(HAVE_LONG_LONG, 1, [
 AC_MSG_RESULT(yes), AC_MSG_RESULT(no))])
 
 dnl
+dnl append a libpath to an LDFLAGS style variable
+dnl
+AC_DEFUN(SUDO_APPEND_LIBPATH, [
+    if test X"$with_rpath" = X"yes"; then
+	$1="${$1} -L$2 -R$2"
+    else
+	$1="${$1} -L$2"
+    fi
+    if test X"$blibpath" != X"" -a "$1" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:$2"
+    fi
+])
+
+dnl
 dnl private versions of AC_DEFINE and AC_DEFINE_UNQUOTED that don't support
 dnl tracing that we use to define paths for pathnames.h so autoheader doesn't
 dnl put them in config.h.in.  An awful hack.

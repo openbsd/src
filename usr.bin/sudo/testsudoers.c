@@ -82,7 +82,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.79 2003/03/15 20:31:02 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.80 2003/04/01 15:02:49 millert Exp $";
 #endif /* lint */
 
 
@@ -385,7 +385,7 @@ main(argc, argv)
 	user_args = (char *) emalloc(size);
 	for (to = user_args, from = NewArgv + 1; *from; from++) {
 	    n = strlcpy(to, *from, size - (to - user_args));
-	    if (n >= size) {
+	    if (n >= size - (to - user_args)) {
 		(void) fprintf(stderr,
 		    "%s: internal error, init_vars() overflow\n", Argv[0]);
 		exit(1);

@@ -1,6 +1,9 @@
-Systems that Sudo is known to run on.
-Just because a specific version of your OS is not listed with
-the current version of sudo does not mean it won't work...
+Systems that Sudo has been reported to run on.
+
+Just because a specific version of your OS is not listed with the
+current version of Sudo does not mean it won't work.  If an older
+version of Sudo ran on your OS, chances are that the latest version
+does as well.
 
  Op. System	CPU	Compilers	Sudo	Reported	 Special
 Name	Rev	Arch	Used		Version	By		 Options
@@ -26,8 +29,8 @@ Solaris	7	sparc	SC4.2		1.6.6	Todd Miller	 none
 Solaris	7	sun4u	Workshop 6.2	1.6.3p7	Donna Dickerson	 none
 Solaris	7	sparc	gcc2.95.2	1.6.6	Todd Miller	 --with-skey
 Solaris	2.6	sun4u	egcs 1.1.2	1.5.9p4	Scott Kinnane	 none
-Solaris	8	sparc	gcc2.95.2	1.6.6	Todd Miller	 --with-skey
-Solaris	8	sparc	SC4.2		1.6.6	Todd Miller	 none
+Solaris	8	sparc	gcc2.95.2	1.6.7	Todd Miller	 --with-skey
+Solaris	8	sparc	SC4.2		1.6.7	Todd Miller	 none
 Solaris	8	sun4u	Workshop 6.2	1.6.3p7	Donna Dickerson	 none
 Solaris	8	sun4u	gcc2.95.3	1.6.6	Banu Yobas	 none
 ISC	4.0	i386	bundled cc	1.4	Andy Smith	 none
@@ -41,9 +44,9 @@ HP-UX	9.05	hp700	gcc2.7.2.1	1.5.3	Todd Miller	 none
 HP-UX	9.05	hp700	gcc2.7.2.1	1.5.3	Todd Miller	 --with-kerb4
 HP-UX	9.07	hp700	unbundled cc	1.5	Alek Komarnitsky --with-C2
 HP-UX	9.05	hp700	unbundled cc	1.4	Todd Miller	 none
-HP-UX	10.10	hp700	unbundled cc	1.6.6	Todd Miller	 --with-skey
-HP-UX	10.20	hp700	gcc2.9.5.2	1.6.6	Todd Miller	 --with-skey
-HP-UX	10.20	hp700	bundled cc	1.6.6	Todd Miller	 none
+HP-UX	10.10	hp700	unbundled cc	1.6.7	Todd Miller	 --with-skey
+HP-UX	10.20	hp700	gcc2.9.5.2	1.6.7	Todd Miller	 --with-skey
+HP-UX	10.20	hp700	bundled cc	1.6.7	Todd Miller	 none
 HP-UX	10.20	hp700	gcc 2.95.2	1.6.2	Jeff Earickson 	 --with-DCE
 HP-UX	11.00	hp700	ansi-c		1.5.5b1	Alek Komarnitsky --with-C2
 HP-UX	11.00	hp700	bundled cc	1.6.7	Todd Miller 	 none
@@ -80,11 +83,11 @@ NEXTSTEP 3.2	i386	bundled cc	1.3.2	Jonathan Adams	 none
 NEXTSTEP 3.3	i386	bundled cc	1.4	Jonathan Adams	 none
 NEXTSTEP 3.3	sparc	bundled cc	1.5.3	Mike Kienenberger none
 DEC UNIX 3.2c	alpha	bundled cc	1.5.3	Todd Miller	 none
-DEC UNIX 4.0D	alpha	bundled cc	1.6.6	Todd Miller	 --with-skey
+DEC UNIX 4.0D	alpha	bundled cc	1.6.7	Todd Miller	 --with-skey
 DEC UNIX 4.0	alpha	gcc-2.7.2.1	1.5.3	Todd Miller	 --with-kerb4
 DEC UNIX 4.0D	alpha	bundled cc	1.5.3	Randall R. Cable --with-C2
 DEC UNIX 4.0E	alpha	bundled cc	1.5.9p2	Vangelis Haniotakis none
-Tru64	5.1	alpha	bundled cc	1.6.6	Todd Miller	 none
+Tru64	5.1	alpha	bundled cc	1.6.7	Todd Miller	 none
 AIX	3.2.X	rs6000	bundled cc	1.4	Todd Miller	 none
 AIX	4.1.3	PowerPC	gcc-2.7.0	1.4	Bob Shair	 none
 AIX	4.1.4	rs6000	gcc-2.8.1	1.6.2p2	Todd Miller	 none
@@ -101,8 +104,8 @@ AIX	5.1	PowerPC	gcc-3.2.1	1.6.6	Neil MacGregor	 none
 ConvexOS 9.1	convex	bundled cc	1.3.6	Todd Miller	 none
 ConvexOS 9.1	convex	gcc2.4.5	1.3.6	Todd Miller	 none
 BSD/OS	4.1	i386	cc		1.6.3	Todd Miller	 --with-skey
-OpenBSD	2.X	all	gcc-2.95.2	1.6.6	Todd Miller	 none
-OpenBSD	3.0	all	gcc-2.95.3	1.6.6	Todd Miller	 none
+OpenBSD	3.X	all	gcc-2.95.3	1.6.7	Todd Miller	 none
+OpenBSD	3.X	all	gcc-2.95.3	1.6.7	Todd Miller	 --with-bsdauth
 FreeBSD	1.1	i386	gcc		1.3.2	Dworkin Muller	 none
 FreeBSD	2.0.5	i386	gcc		1.3.4	Dworkin Muller	 none
 FreeBSD	3.2	i386	gcc 2.7.2.1	1.6	Brian Jackson	 none
@@ -150,7 +153,7 @@ Dynix/ptx 4.4.6	Sequent	bundled cc	1.6	Larry Mascarenhase none
 Dynix/ptx 4.4.7	Sequent	bundled cc	1.6.2p1	Dana Kaempen	 --with-CC=cc
 DC-OSx	1.1-9x	mips	PyrC 4.0A20	1.5.6p2	Brian Jackson	 none
 HI-UX/MPP 02-03	sr2201	bundled cc	1.5.4	Ben Edgington	 none
-SVR4	4.4	m88k	bundled gcc	1.6rc1	Gerry Belanger	 CFLAGS=
+SVR4	4.4	m88k	bundled gcc	1.6.7	Gerry Belanger	 none
 NonStop-UX B32	CO-1475	cc		1.5.9p3	Andrei Panfilenko none
 MacOS	X	ppc	bundled cc	1.6.3p7	Gary Danko	 none
 

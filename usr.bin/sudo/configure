@@ -865,6 +865,8 @@ Optional Packages:
   --with-otp-only         deprecated
   --with-alertmail        deprecated
   --with-CC               C compiler to use
+  --with-rpath            pass -R flag in addition to -L for lib paths
+  --with-blibpath=PATH  pass -blibpath flag to ld for additional lib paths
   --with-incpath          additional places to look for include files
   --with-libpath          additional places to look for libraries
   --with-libraries        additional libraries to link with
@@ -872,13 +874,13 @@ Optional Packages:
   --with-efence           link with -lefence for malloc() debugging
   --with-csops            add CSOps standard options
   --without-passwd        don't use passwd/shadow file for authentication
-  --with-skey             enable S/Key support
-  --with-opie             enable OPIE support
+  --with-skey=DIR       enable S/Key support
+  --with-opie=DIR       enable OPIE support
   --with-long-otp-prompt  use a two line OTP (skey/opie) prompt
-  --with-SecurID          enable SecurID support
-  --with-fwtk             enable FWTK AuthSRV support
-  --with-kerb4            enable kerberos v4 support
-  --with-kerb5            enable kerberos v5 support
+  --with-SecurID[=DIR]    enable SecurID support
+  --with-fwtk[=DIR]       enable FWTK AuthSRV support
+  --with-kerb4[=DIR]      enable Kerberos IV support
+  --with-kerb5[=DIR]      enable Kerberos V support
   --with-authenticate     enable AIX general authentication support
   --with-pam              enable PAM support
   --with-AFS              enable AFS support
@@ -1355,7 +1357,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
                     ac_config_headers="$ac_config_headers config.h pathnames.h"
 
-echo "Configuring Sudo version 1.6.7"
+{ echo "$as_me:$LINENO: Configuring Sudo version 1.6.7" >&5
+echo "$as_me: Configuring Sudo version 1.6.7" >&6;}
 
 
 
@@ -1434,8 +1437,8 @@ cat >>confdefs.h <<\_ACEOF
 #define WITHOUT_PASSWD 1
 _ACEOF
 
-		{ echo "$as_me:$LINENO: WARNING: --with-otp-only option deprecated, treating as --without-passwd" >&5
-echo "$as_me: WARNING: --with-otp-only option deprecated, treating as --without-passwd" >&2;}
+		{ echo "$as_me:$LINENO: --with-otp-only option deprecated, treating as --without-passwd" >&5
+echo "$as_me: --with-otp-only option deprecated, treating as --without-passwd" >&6;}
 		;;
 esac
 fi;
@@ -1446,8 +1449,8 @@ if test "${with_alertmail+set}" = set; then
   withval="$with_alertmail"
   case $with_alertmail in
     *)		with_mailto="$with_alertmail"
-		{ echo "$as_me:$LINENO: WARNING: --with-alertmail option deprecated, treating as --mailto" >&5
-echo "$as_me: WARNING: --with-alertmail option deprecated, treating as --mailto" >&2;}
+		{ echo "$as_me:$LINENO: --with-alertmail option deprecated, treating as --mailto" >&5
+echo "$as_me: --with-alertmail option deprecated, treating as --mailto" >&6;}
 		;;
 esac
 fi;
@@ -1472,6 +1475,33 @@ esac
 fi;
 
 
+# Check whether --with-rpath or --without-rpath was given.
+if test "${with_rpath+set}" = set; then
+  withval="$with_rpath"
+  case $with_rpath in
+    yes)	;;
+    no)		;;
+    *)		{ { echo "$as_me:$LINENO: error: \"--with-rpath does not take an argument.\"" >&5
+echo "$as_me: error: \"--with-rpath does not take an argument.\"" >&2;}
+   { (exit 1); exit 1; }; }
+		;;
+esac
+fi;
+
+
+# Check whether --with-blibpath or --without-blibpath was given.
+if test "${with_blibpath+set}" = set; then
+  withval="$with_blibpath"
+  case $with_blibpath in
+    yes)	;;
+    no)		;;
+    *)		{ echo "$as_me:$LINENO: will pass -blibpath:${with_blibpath} to the loader." >&5
+echo "$as_me: will pass -blibpath:${with_blibpath} to the loader." >&6;}
+		;;
+esac
+fi;
+
+
 # Check whether --with-incpath or --without-incpath was given.
 if test "${with_incpath+set}" = set; then
   withval="$with_incpath"
@@ -1484,7 +1514,8 @@ echo "$as_me: error: \"must give --with-incpath an argument.\"" >&2;}
 echo "$as_me: error: \"--without-incpath not supported.\"" >&2;}
    { (exit 1); exit 1; }; }
 		;;
-    *)		echo "Adding ${with_incpath} to CPPFLAGS"
+    *)		{ echo "$as_me:$LINENO: Adding ${with_incpath} to CPPFLAGS" >&5
+echo "$as_me: Adding ${with_incpath} to CPPFLAGS" >&6;}
 		for i in ${with_incpath}; do
 		    CPPFLAGS="${CPPFLAGS} -I${i}"
 		done
@@ -1505,10 +1536,8 @@ echo "$as_me: error: \"must give --with-libpath an argument.\"" >&2;}
 echo "$as_me: error: \"--without-libpath not supported.\"" >&2;}
    { (exit 1); exit 1; }; }
 		;;
-    *)		echo "Adding ${with_libpath} to LDFLAGS"
-		for i in ${with_libpath}; do
-		    LDFLAGS="${LDFLAGS} -L${i}"
-		done
+    *)		{ echo "$as_me:$LINENO: Adding ${with_libpath} to LDFLAGS" >&5
+echo "$as_me: Adding ${with_libpath} to LDFLAGS" >&6;}
 		;;
 esac
 fi;
@@ -1526,16 +1555,8 @@ echo "$as_me: error: \"must give --with-libraries an argument.\"" >&2;}
 echo "$as_me: error: \"--without-libraries not supported.\"" >&2;}
    { (exit 1); exit 1; }; }
 		;;
-    *)		echo "Adding ${with_libraries} to LIBS"
-		for i in ${with_libraries}; do
-		    case $i in
-			-l*)	;;
-			*.a)	;;
-			*.o)	;;
-			*)	i="-l${i}";;
-		    esac
-		    LIBS="${LIBS} ${i}"
-		done
+    *)		{ echo "$as_me:$LINENO: Adding ${with_libraries} to LIBS" >&5
+echo "$as_me: Adding ${with_libraries} to LIBS" >&6;}
 		;;
 esac
 fi;
@@ -1545,13 +1566,15 @@ fi;
 if test "${with_devel+set}" = set; then
   withval="$with_devel"
   case $with_devel in
-    yes)	echo 'Setting up for development: -Wall, flex, yacc'
+    yes)	{ echo "$as_me:$LINENO: Setting up for development: -Wall, flex, yacc" >&5
+echo "$as_me: Setting up for development: -Wall, flex, yacc" >&6;}
 		PROGS="${PROGS} testsudoers"
 		OSDEFS="${OSDEFS} -DSUDO_DEVEL"
 		DEV=""
 		;;
     no)		;;
-    *)		echo "Ignoring unknown argument to --with-devel: $with_devel"
+    *)		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --with-devel: $with_devel" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --with-devel: $with_devel" >&2;}
 		;;
 esac
 fi;
@@ -1561,14 +1584,16 @@ fi;
 if test "${with_efence+set}" = set; then
   withval="$with_efence"
   case $with_efence in
-    yes)	echo 'Sudo will link with -lefence (Electric Fence)'
+    yes)	{ echo "$as_me:$LINENO: Sudo will link with -lefence (Electric Fence)" >&5
+echo "$as_me: Sudo will link with -lefence (Electric Fence)" >&6;}
 		LIBS="${LIBS} -lefence"
 		if test -f /usr/local/lib/libefence.a; then
-		    LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+		    with_libpath="${with_libpath} /usr/local/lib"
 		fi
 		;;
     no)		;;
-    *)		echo "Ignoring unknown argument to --with-efence: $with_efence"
+    *)		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --with-efence: $with_efence" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --with-efence: $with_efence" >&2;}
 		;;
 esac
 fi;
@@ -1578,16 +1603,20 @@ fi;
 if test "${with_csops+set}" = set; then
   withval="$with_csops"
   case $with_csops in
-    yes)	echo 'Adding CSOps standard options'
+    yes)	{ echo "$as_me:$LINENO: Adding CSOps standard options" >&5
+echo "$as_me: Adding CSOps standard options" >&6;}
 		CHECKSIA=false
 		with_ignore_dot=yes
 		insults=on
 		with_classic_insults=yes
 		with_csops_insults=yes
 		with_env_editor=yes
+		test -n "$mansectsu" || mansectsu=8
+		test -n "$mansectform" || mansectform=5
 		;;
     no)		;;
-    *)		echo "Ignoring unknown argument to --with-csops: $with_csops"
+    *)		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --with-csops: $with_csops" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --with-csops: $with_csops" >&2;}
 		;;
 esac
 fi;
@@ -1619,7 +1648,8 @@ fi;
 if test "${with_skey+set}" = set; then
   withval="$with_skey"
   case $with_skey in
-    yes)	if test -n "$with_opie"; then
+    no)		with_skey="";;
+    *)		if test -n "$with_opie"; then
 		    { { echo "$as_me:$LINENO: error: \"cannot use both S/Key and OPIE\"" >&5
 echo "$as_me: error: \"cannot use both S/Key and OPIE\"" >&2;}
    { (exit 1); exit 1; }; }
@@ -1635,9 +1665,6 @@ echo $ECHO_N "checking whether to try S/Key authentication... $ECHO_C" >&6
 echo "${ECHO_T}yes" >&6
 		AUTH_OBJS="${AUTH_OBJS} rfc1938.o"
 		;;
-    no)		;;
-    *)		echo "Ignoring unknown argument to --with-skey: $with_skey"
-		;;
 esac
 fi;
 
@@ -1646,7 +1673,8 @@ fi;
 if test "${with_opie+set}" = set; then
   withval="$with_opie"
   case $with_opie in
-    yes)	if test -n "$with_skey"; then
+    no)		with_opie="";;
+    *)		if test -n "$with_skey"; then
 		    { { echo "$as_me:$LINENO: error: \"cannot use both S/Key and OPIE\"" >&5
 echo "$as_me: error: \"cannot use both S/Key and OPIE\"" >&2;}
    { (exit 1); exit 1; }; }
@@ -1661,9 +1689,6 @@ echo $ECHO_N "checking whether to try NRL OPIE authentication... $ECHO_C" >&6
 		echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 		AUTH_OBJS="${AUTH_OBJS} rfc1938.o"
-		;;
-    no)		;;
-    *)		echo "Ignoring unknown argument to --with-opie: $with_opie"
 		;;
 esac
 fi;
@@ -1698,7 +1723,7 @@ fi;
 if test "${with_SecurID+set}" = set; then
   withval="$with_SecurID"
   case $with_SecurID in
-    no)		;;
+    no)		with_SecurID="";;
     *)
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_SECURID 1
@@ -1718,7 +1743,7 @@ fi;
 if test "${with_fwtk+set}" = set; then
   withval="$with_fwtk"
   case $with_fwtk in
-    no)		;;
+    no)		with_fwtk="";;
     *)
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_FWTK 1
@@ -1730,11 +1755,6 @@ echo $ECHO_N "checking whether to use FWTK AuthSRV for authentication... $ECHO_C
 echo "${ECHO_T}yes" >&6
 		with_passwd=no
 		AUTH_OBJS="fwtk.o"
-		if test "$with_fwtk" != "yes"; then
-		    SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_fwtk}"
-		    CPPFLAGS="${CPPFLAGS} -I${with_fwtk}"
-		    with_fwtk=yes
-		fi
 		;;
 esac
 fi;
@@ -1744,15 +1764,11 @@ fi;
 if test "${with_kerb4+set}" = set; then
   withval="$with_kerb4"
   case $with_kerb4 in
-    yes)	echo "$as_me:$LINENO: checking whether to try Kerberos 4 authentication" >&5
-echo $ECHO_N "checking whether to try Kerberos 4 authentication... $ECHO_C" >&6
+    no)		with_kerb4="";;
+    *)		echo "$as_me:$LINENO: checking whether to try kerberos IV authentication" >&5
+echo $ECHO_N "checking whether to try kerberos IV authentication... $ECHO_C" >&6
 		echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-		;;
-    no)		;;
-    *)		{ { echo "$as_me:$LINENO: error: \"--with-kerb4 does not take an argument.\"" >&5
-echo "$as_me: error: \"--with-kerb4 does not take an argument.\"" >&2;}
-   { (exit 1); exit 1; }; }
 		;;
 esac
 fi;
@@ -1762,15 +1778,11 @@ fi;
 if test "${with_kerb5+set}" = set; then
   withval="$with_kerb5"
   case $with_kerb5 in
-    yes)	echo "$as_me:$LINENO: checking whether to try Kerberos 5 authentication" >&5
-echo $ECHO_N "checking whether to try Kerberos 5 authentication... $ECHO_C" >&6
+    no)		with_kerb5="";;
+    *)		echo "$as_me:$LINENO: checking whether to try Kerberos V authentication" >&5
+echo $ECHO_N "checking whether to try Kerberos V authentication... $ECHO_C" >&6
 		echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-		;;
-    no)		;;
-    *)		{ { echo "$as_me:$LINENO: error: \"--with-kerb5 does not take an argument.\"" >&5
-echo "$as_me: error: \"--with-kerb5 does not take an argument.\"" >&2;}
-   { (exit 1); exit 1; }; }
 		;;
 esac
 fi;
@@ -2279,7 +2291,8 @@ if test "${with_mailsubject+set}" = set; then
 echo "$as_me: error: \"must give --with-mailsubject an argument.\"" >&2;}
    { (exit 1); exit 1; }; }
 		;;
-    no)		echo "Sorry, --without-mailsubject not supported."
+    no)		{ echo "$as_me:$LINENO: WARNING: Sorry, --without-mailsubject not supported." >&5
+echo "$as_me: WARNING: Sorry, --without-mailsubject not supported." >&2;}
 		;;
     *)		mailsub="$with_mailsubject"
 		echo "$as_me:$LINENO: checking sudo mail subject" >&5
@@ -2306,7 +2319,8 @@ if test "${with_passprompt+set}" = set; then
 echo "$as_me: error: \"must give --with-passprompt an argument.\"" >&2;}
    { (exit 1); exit 1; }; }
 		;;
-    no)		echo "Sorry, --without-passprompt not supported."
+    no)		{ echo "$as_me:$LINENO: WARNING: Sorry, --without-passprompt not supported." >&5
+echo "$as_me: WARNING: Sorry, --without-passprompt not supported." >&2;}
 		;;
     *)		passprompt="$with_passprompt"
 esac
@@ -2330,7 +2344,8 @@ if test "${with_badpass_message+set}" = set; then
 echo "$as_me: error: \"Must give --with-badpass-message an argument.\"" >&2;}
    { (exit 1); exit 1; }; }
 		;;
-    no)		echo "Sorry, --without-badpass-message not supported."
+    no)		{ echo "$as_me:$LINENO: WARNING: Sorry, --without-badpass-message not supported." >&5
+echo "$as_me: WARNING: Sorry, --without-badpass-message not supported." >&2;}
 		;;
     *)		badpass_message="$with_badpass_message"
 		;;
@@ -3001,7 +3016,8 @@ _ACEOF
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-authentication: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-authentication: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-authentication: $enableval" >&2;}
 		;;
   esac
 
@@ -3029,7 +3045,8 @@ _ACEOF
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-root-mailer: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-root-mailer: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-root-mailer: $enableval" >&2;}
 		;;
   esac
 
@@ -3079,7 +3096,8 @@ _ACEOF
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-saved-ids: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-saved-ids: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-saved-ids: $enableval" >&2;}
 		;;
   esac
 
@@ -3103,7 +3121,8 @@ echo "${ECHO_T}yes" >&6
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-shadow: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-shadow: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-shadow: $enableval" >&2;}
 		;;
   esac
 
@@ -3159,7 +3178,8 @@ echo "${ECHO_T}no" >&6
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-log-host: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-log-host: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-log-host: $enableval" >&2;}
 		;;
   esac
 
@@ -3187,7 +3207,8 @@ echo "${ECHO_T}no" >&6
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-noargs-shell: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-noargs-shell: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-noargs-shell: $enableval" >&2;}
 		;;
   esac
 
@@ -3215,7 +3236,8 @@ echo "${ECHO_T}no" >&6
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    		echo "Ignoring unknown argument to --enable-shell-sets-home: $enableval"
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-shell-sets-home: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-shell-sets-home: $enableval" >&2;}
 		;;
   esac
 
@@ -3243,7 +3265,8 @@ _ACEOF
 		;;
     *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-		echo "Ignoring unknown argument to --enable-path-info: $enableval"
+		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-path-info: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-path-info: $enableval" >&2;}
 		;;
   esac
 
@@ -3288,8 +3311,9 @@ echo "${ECHO_T}no" >&6
 fi
 
 if test -z "$EGREPPROG"; then
-    echo "Sorry, configure requires egrep to run."
-    exit
+    { { echo "$as_me:$LINENO: error: Sorry, configure requires egrep to run." >&5
+echo "$as_me: error: Sorry, configure requires egrep to run." >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 if test "$with_devel" != "yes"; then
@@ -4741,11 +4765,9 @@ host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 
 if test -n "$sudo_cv_prev_host"; then
     if test "$sudo_cv_prev_host" != "$host"; then
-	echo ""
-	echo "Fatal Error: config.cache exists from another platform!"
-	echo "Please remove it and re-run configure."
-	echo ""
-	exit 1
+	{ { echo "$as_me:$LINENO: error: config.cache was created on a different host; remove it and re-run configure." >&5
+echo "$as_me: error: config.cache was created on a different host; remove it and re-run configure." >&2;}
+   { (exit 1); exit 1; }; }
     else
 	echo "$as_me:$LINENO: checking previous host type" >&5
 echo $ECHO_N "checking previous host type... $ECHO_C" >&6
@@ -4755,7 +4777,8 @@ else
   sudo_cv_prev_host="$host"
 fi
 
-	echo $sudo_cv_prev_host
+	echo "$as_me:$LINENO: result: $sudo_cv_prev_host" >&5
+echo "${ECHO_T}$sudo_cv_prev_host" >&6
     fi
 else
     # this will produce no output since there is no cached value
@@ -4890,6 +4913,7 @@ done
 		fi
 		test -n "$mansectsu" || mansectsu=1m
 		test -n "$mansectform" || mansectform=4
+		test -n "$with_rpath" || with_rpath=yes
 		;;
     *-*-aix*)
 		# To get all prototypes (so we pass -Wall)
@@ -4899,6 +4923,60 @@ done
 EOF
 
 		SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-bI:\$(srcdir)/aixcrypt.exp"
+		if test X"$with_blibpath" != X"no"; then
+		    echo "$as_me:$LINENO: checking if linker accepts -Wl,-blibpath" >&5
+echo $ECHO_N "checking if linker accepts -Wl,-blibpath... $ECHO_C" >&6
+		    O_LDFLAGS="$LDFLAGS"
+		    LDFLAGS="$LDFLAGS -Wl,-blibpath:/usr/lib:/lib"
+		    cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+			if test -n "$with_blibpath" -a "$with_blibpath" != "yes"; then
+			    blibpath="$with_blibpath"
+			elif test -n "$GCC"; then
+			    blibpath="/usr/lib:/lib:/usr/local/lib"
+			else
+			    blibpath="/usr/lib:/lib"
+			fi
+			echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+		fi
+		LDFLAGS="$O_LDFLAGS"
 		;;
     *-*-hiuxmpp*)
 		if test "$CHECKSHADOW" = "true"; then
@@ -5315,7 +5393,8 @@ echo "${ECHO_T}yes" >&6
 				;;
 		    *)		echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-				echo "Ignoring unknown argument to --enable-sia: $enableval"
+				{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-sia: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-sia: $enableval" >&2;}
 				;;
 		  esac
 
@@ -6512,6 +6591,7 @@ fi
 		fi
 		test -n "$mansectsu" || mansectsu=1m
 		test -n "$mansectform" || mansectform=4
+		test -n "$with_rpath" || with_rpath=yes
 		;;
     *-ncr-sysv4*|*-ncr-sysvr4*)
 		echo "$as_me:$LINENO: checking for strcasecmp in -lc89" >&5
@@ -6577,19 +6657,22 @@ fi
 
 		test -n "$mansectsu" || mansectsu=1m
 		test -n "$mansectform" || mansectform=4
+		test -n "$with_rpath" || with_rpath=yes
 		;;
     *-ccur-sysv4*|*-ccur-sysvr4*)
 		LIBS="${LIBS} -lgen"
 		SUDO_LIBS="${SUDO_LIBS} -lgen"
 		test -n "$mansectsu" || mansectsu=1m
 		test -n "$mansectform" || mansectform=4
+		test -n "$with_rpath" || with_rpath=yes
 		;;
     *-*-bsdi*)
 		SKIP_SETREUID=yes
 		# Use shlicc for BSD/OS [23].x unless asked to do otherwise
 		if test "${with_CC+set}" != set -a "$ac_cv_prog_CC" = gcc; then
 		    case "$OSREV" in
-			2|3)	echo 'using shlicc as CC'
+			2|3)	{ echo "$as_me:$LINENO: using shlicc as CC" >&5
+echo "$as_me: using shlicc as CC" >&6;}
 				ac_cv_prog_CC=shlicc
 				CC="$ac_cv_prog_CC"
 				;;
@@ -6641,6 +6724,11 @@ fi
 		ac_cv_func_lockf=no
 		ac_cv_func_flock=yes
 		;;
+    *-*-*sysv4*)
+		test -n "$mansectsu" || mansectsu=1m
+		test -n "$mansectform" || mansectform=4
+		test -n "$with_rpath" || with_rpath=yes
+		;;
     *-*-sysv*)
 		test -n "$mansectsu" || mansectsu=1m
 		test -n "$mansectform" || mansectform=4
@@ -6649,6 +6737,32 @@ esac
 
 test -n "$mansectsu" || mansectsu=8
 test -n "$mansectform" || mansectform=5
+
+if test -n "$with_libpath"; then
+    for i in ${with_libpath}; do
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L$i -R$i"
+    else
+	LDFLAGS="${LDFLAGS} -L$i"
+    fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:$i"
+    fi
+
+    done
+fi
+if test -n "$with_libraries"; then
+    for i in ${with_libraries}; do
+	case $i in
+	    -l*)	;;
+	    *.a)	;;
+	    *.o)	;;
+	    *)	i="-l${i}";;
+	esac
+	LIBS="${LIBS} ${i}"
+    done
+fi
 
 if test "$CHECKSHADOW" = "true"; then
 
@@ -12374,37 +12488,708 @@ fi
 
 fi
 
-if test "$with_kerb5" = "yes"; then
+if test -n "$with_kerb4"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_KERB4 1
+_ACEOF
+
+                O_LDFLAGS="$LDFLAGS"
+    if test "$with_kerb4" = "yes"; then
+	found=no
+	O_CPPFLAGS="$CPPFLAGS"
+	for dir in "" "kerberosIV/" "krb4/" "kerberos4/" "kerberosv4/"; do
+	    CPPFLAGS="$O_CPPFLAGS -I/usr/include/${dir}"
+	    cat >conftest.$ac_ext <<_ACEOF
+#include <krb.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  found=yes; break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+rm -f conftest.err conftest.$ac_ext
+	done
+	test X"$found" = X"no" && CPPFLAGS="$O_CPPFLAGS"
+    else
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L${with_kerb4}/lib -R${with_kerb4}/lib"
+    else
+	LDFLAGS="${LDFLAGS} -L${with_kerb4}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_kerb4}/lib"
+    fi
+
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_kerb4}/lib -R${with_kerb4}/lib"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_kerb4}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_kerb4}/lib"
+    fi
+
+	CPPFLAGS="$CPPFLAGS -I${with_kerb4}/include"
+	if test "${ac_cv_header_krb_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for krb.h" >&5
+echo $ECHO_N "checking for krb.h... $ECHO_C" >&6
+if test "${ac_cv_header_krb_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_krb_h" >&5
+echo "${ECHO_T}$ac_cv_header_krb_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking krb.h usability" >&5
+echo $ECHO_N "checking krb.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <krb.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking krb.h presence" >&5
+echo $ECHO_N "checking krb.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <krb.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc in
+  yes:no )
+    { echo "$as_me:$LINENO: WARNING: krb.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: krb.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: krb.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: krb.h: proceeding with the preprocessor's result" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to bug-autoconf@gnu.org. ##
+## ------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+  no:yes )
+    { echo "$as_me:$LINENO: WARNING: krb.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: krb.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: krb.h: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: krb.h: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: krb.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: krb.h: proceeding with the preprocessor's result" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to bug-autoconf@gnu.org. ##
+## ------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for krb.h" >&5
+echo $ECHO_N "checking for krb.h... $ECHO_C" >&6
+if test "${ac_cv_header_krb_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_krb_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_krb_h" >&5
+echo "${ECHO_T}$ac_cv_header_krb_h" >&6
+
+fi
+if test $ac_cv_header_krb_h = yes; then
+  found=yes
+else
+  found=no
+fi
+
+
+    fi
+    if test X"$found" = X"no"; then
+	{ echo "$as_me:$LINENO: WARNING: Unable to locate Kerberos IV include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS" >&5
+echo "$as_me: WARNING: Unable to locate Kerberos IV include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS" >&2;}
+    fi
+
+                echo "$as_me:$LINENO: checking for des_cbc_encrypt in -ldes" >&5
+echo $ECHO_N "checking for des_cbc_encrypt in -ldes... $ECHO_C" >&6
+if test "${ac_cv_lib_des_des_cbc_encrypt+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldes  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char des_cbc_encrypt ();
+int
+main ()
+{
+des_cbc_encrypt ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_des_des_cbc_encrypt=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_des_des_cbc_encrypt=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_des_des_cbc_encrypt" >&5
+echo "${ECHO_T}$ac_cv_lib_des_des_cbc_encrypt" >&6
+if test $ac_cv_lib_des_des_cbc_encrypt = yes; then
+  K4LIBS="-ldes"
+else
+
+	echo "$as_me:$LINENO: checking for des_cbc_encrypt in -ldes425" >&5
+echo $ECHO_N "checking for des_cbc_encrypt in -ldes425... $ECHO_C" >&6
+if test "${ac_cv_lib_des425_des_cbc_encrypt+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ldes425  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char des_cbc_encrypt ();
+int
+main ()
+{
+des_cbc_encrypt ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_des425_des_cbc_encrypt=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_des425_des_cbc_encrypt=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_des425_des_cbc_encrypt" >&5
+echo "${ECHO_T}$ac_cv_lib_des425_des_cbc_encrypt" >&6
+if test $ac_cv_lib_des425_des_cbc_encrypt = yes; then
+  K4LIBS="-ldes425"
+else
+  K4LIBS=""
+fi
+
+
+fi
+
+                echo "$as_me:$LINENO: checking whether we are using KTH Kerberos IV" >&5
+echo $ECHO_N "checking whether we are using KTH Kerberos IV... $ECHO_C" >&6
+    cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <krb.h>
+int
+main ()
+{
+const char *tmp = krb4_version;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+	    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	    K4LIBS="${K4LIBS} -lcom_err"
+	    echo "$as_me:$LINENO: checking for main in -lroken" >&5
+echo $ECHO_N "checking for main in -lroken... $ECHO_C" >&6
+if test "${ac_cv_lib_roken_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lroken  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_roken_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_roken_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_roken_main" >&5
+echo "${ECHO_T}$ac_cv_lib_roken_main" >&6
+if test $ac_cv_lib_roken_main = yes; then
+  K4LIBS="${K4LIBS} -lroken"
+fi
+
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+	    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+
+
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+                as_ac_Lib=`echo "ac_cv_lib_krb_main$K4LIBS" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for main in -lkrb" >&5
+echo $ECHO_N "checking for main in -lkrb... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lkrb $K4LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Lib=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Lib=no"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
+  K4LIBS="-lkrb $K4LIBS"
+else
+
+	as_ac_Lib=`echo "ac_cv_lib_krb4_main$K4LIBS" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for main in -lkrb4" >&5
+echo $ECHO_N "checking for main in -lkrb4... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Lib+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lkrb4 $K4LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Lib=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Lib=no"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Lib'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Lib'}'`" >&6
+if test `eval echo '${'$as_ac_Lib'}'` = yes; then
+  K4LIBS="-lkrb4 $K4LIBS"
+else
+  K4LIBS="-lkrb $K4LIBS"
+	    { echo "$as_me:$LINENO: WARNING: Unable to locate Kerberos IV libraries, you will have to edit the Makefile and add -L/path/to/krb/libs to SUDO_LDFLAGS and possibly add Kerberos libs to SUDO_LIBS" >&5
+echo "$as_me: WARNING: Unable to locate Kerberos IV libraries, you will have to edit the Makefile and add -L/path/to/krb/libs to SUDO_LDFLAGS and possibly add Kerberos libs to SUDO_LIBS" >&2;}
+
+fi
+
+
+fi
+
+    LDFLAGS="$O_LDFLAGS"
+    SUDO_LIBS="${SUDO_LIBS} $K4LIBS"
+    AUTH_OBJS="${AUTH_OBJS} kerb4.o"
+fi
+
+if test -n "$with_kerb5"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_KERB5 1
 _ACEOF
 
-    if test -f "/usr/local/include/krb5.h"; then
-	CPPFLAGS="$CPPFLAGS -I/usr/local/include"
-    elif test -f "/usr/local/kerberos/include/krb5.h"; then
-	CPPFLAGS="$CPPFLAGS -I/usr/local/kerberos/include"
-    elif test -f "/usr/krb5/include/krb5.h"; then
-	CPPFLAGS="$CPPFLAGS -I/usr/krb5/include"
-    elif test -f "/usr/local/krb5/include/krb5.h"; then
-	CPPFLAGS="$CPPFLAGS -I/usr/local/krb5/include"
+                if test "$with_kerb5" = "yes"; then
+	found=no
+	O_CPPFLAGS="$CPPFLAGS"
+	for dir in "" "kerberosV/" "krb5/" "kerberos5/" "kerberosv5/"; do
+	    CPPFLAGS="$O_CPPFLAGS -I/usr/include/${dir}"
+	    cat >conftest.$ac_ext <<_ACEOF
+#include <krb5.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  found=yes; break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+rm -f conftest.err conftest.$ac_ext
+	done
+	if test X"$found" = X"no"; then
+	    CPPFLAGS="$O_CPPFLAGS"
+	    { echo "$as_me:$LINENO: WARNING: Unable to locate Kerberos V include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS" >&5
+echo "$as_me: WARNING: Unable to locate Kerberos V include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS" >&2;}
+	fi
     else
-	echo 'Unable to locate kerberos 5 include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS'
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_kerb5}/lib -R${with_kerb5}/lib"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_kerb5}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_kerb5}/lib"
     fi
 
-    if test -f "/usr/local/lib/libkrb5.a"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
-    elif test -f "/usr/local/kerberos/lib/libkrb5.a"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/kerberos/lib"
-    elif test -f "/usr/krb5/lib/libkrb5.a"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/krb5/lib"
-    elif test -f "/usr/local/krb5/lib/libkrb5.a"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/krb5/lib"
-    else
-	echo 'Unable to locate kerberos 5 libraries, you will have to edit the Makefile and add -L/path/to/krb/libs to SUDO_LDFLAGS'
+	CPPFLAGS="$CPPFLAGS -I${with_kerb5}/include"
     fi
 
-    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
+                echo "$as_me:$LINENO: checking whether we are using Heimdal" >&5
+echo $ECHO_N "checking whether we are using Heimdal... $ECHO_C" >&6
+    cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <krb5.h>
+int
+main ()
+{
+const char *tmp = heimdal_version;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+	    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -ldes -lcom_err -lasn1"
+	    echo "$as_me:$LINENO: checking for main in -lroken" >&5
+echo $ECHO_N "checking for main in -lroken... $ECHO_C" >&6
+if test "${ac_cv_lib_roken_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lroken  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_roken_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_roken_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_roken_main" >&5
+echo "${ECHO_T}$ac_cv_lib_roken_main" >&6
+if test $ac_cv_lib_roken_main = yes; then
+  SUDO_LIBS="${SUDO_LIBS} -lroken"
+fi
+
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+	    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
+
+
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
     AUTH_OBJS="${AUTH_OBJS} kerb5.o"
 fi
 
@@ -12466,41 +13251,186 @@ ac_cv_lib_dl=ac_cv_lib_dl_main
 
 fi
 
-if test "$with_kerb4" = "yes"; then
+if test "$with_AFS" = "yes"; then
 
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_KERB4 1
-_ACEOF
+    # looks like the "standard" place for AFS libs is /usr/afsws/lib
+    AFSLIBDIRS="/usr/lib/afs /usr/afsws/lib /usr/afsws/lib/afs"
+    for i in $AFSLIBDIRS; do
+	if test -d ${i}; then
 
-    if test -f "/usr/include/kerberosIV/krb.h"; then
-	CPPFLAGS="${CPPFLAGS} -I/usr/include/kerberosIV"
-    elif test -f "/usr/local/include/kerberosIV/krb.h"; then
-	CPPFLAGS="${CPPFLAGS} -I/usr/local/include/kerberosIV"
-    elif test -f "/usr/kerberos/include/krb.h"; then
-	CPPFLAGS="${CPPFLAGS} -I/usr/kerberos/include"
-    elif test -f "/usr/local/kerberos/include/krb.h"; then
-	CPPFLAGS="${CPPFLAGS} -I/usr/local/kerberos/include"
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L$i -R$i"
     else
-	echo 'Unable to locate kerberos 4 include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS'
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L$i"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:$i"
     fi
 
-    if test -d "/usr/kerberos/lib"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/kerberos/lib"
-    elif test -d "/usr/lib/kerberos"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/lib/kerberos"
-    elif test -f "/usr/local/lib/libkrb.a"; then
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
-    elif test ! -f "/usr/lib/libkrb.a"; then
-	echo 'Unable to locate kerberos 4 libraries, you will have to edit the Makefile and add -L/path/to/krb/libs to SUDO_LDFLAGS'
+	    FOUND_AFSLIBDIR=true
+	fi
+    done
+    if test -z "$FOUND_AFSLIBDIR"; then
+	{ echo "$as_me:$LINENO: WARNING: Unable to locate AFS libraries, you will have to edit the Makefile and add -L/path/to/afs/libs to SUDO_LDFLAGS or rerun configure with the --with-libpath options." >&5
+echo "$as_me: WARNING: Unable to locate AFS libraries, you will have to edit the Makefile and add -L/path/to/afs/libs to SUDO_LDFLAGS or rerun configure with the --with-libpath options." >&2;}
     fi
 
-    echo "$as_me:$LINENO: checking for main in -ldes" >&5
-echo $ECHO_N "checking for main in -ldes... $ECHO_C" >&6
-if test "${ac_cv_lib_des_main+set}" = set; then
+    # Order is important here.  Note that we build AFS_LIBS from right to left
+    # since AFS_LIBS may be initialized with BSD compat libs that must go last
+    AFS_LIBS="-laudit ${AFS_LIBS}"
+    for i in $AFSLIBDIRS; do
+	if test -f ${i}/util.a; then
+	    AFS_LIBS="${i}/util.a ${AFS_LIBS}"
+	    FOUND_UTIL_A=true
+	    break;
+	fi
+    done
+    if test -z "$FOUND_UTIL_A"; then
+	AFS_LIBS="-lutil ${AFS_LIBS}"
+    fi
+    AFS_LIBS="-lkauth -lprot -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcom_err ${AFS_LIBS}"
+
+    # AFS includes may live in /usr/include on some machines...
+    for i in /usr/afsws/include; do
+	if test -d ${i}; then
+	    CPPFLAGS="${CPPFLAGS} -I${i}"
+	    FOUND_AFSINCDIR=true
+	fi
+    done
+
+    if test -z "$FOUND_AFSLIBDIR"; then
+	{ echo "$as_me:$LINENO: WARNING: Unable to locate AFS include dir, you may have to edit the Makefile and add -I/path/to/afs/includes to CPPFLAGS or rerun configure with the --with-incpath options." >&5
+echo "$as_me: WARNING: Unable to locate AFS include dir, you may have to edit the Makefile and add -I/path/to/afs/includes to CPPFLAGS or rerun configure with the --with-incpath options." >&2;}
+    fi
+fi
+
+if test "$with_DCE" = "yes"; then
+    DCE_OBJS="${DCE_OBJS} dce_pwent.o"
+    SUDO_LIBS="${SUDO_LIBS} -ldce"
+fi
+
+if test -n "$with_skey"; then
+    O_LDFLAGS="$LDFLAGS"
+    if test "$with_skey" != "yes"; then
+	CPPFLAGS="${CPPFLAGS} -I${with_skey}/include"
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L${with_skey}/lib -R${with_skey}/lib"
+    else
+	LDFLAGS="${LDFLAGS} -L${with_skey}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_skey}/lib"
+    fi
+
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_skey}/lib -R${with_skey}/lib"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_skey}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_skey}/lib"
+    fi
+
+	cat >conftest.$ac_ext <<_ACEOF
+#include <skey.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  found=no
+fi
+rm -f conftest.err conftest.$ac_ext
+    else
+	found=no
+	O_CPPFLAGS="$CPPFLAGS"
+	for dir in "" "/usr/local" "/usr/contrib"; do
+	    test -n "$dir" && CPPFLAGS="$O_CPPFLAGS -I${dir}/include"
+	    cat >conftest.$ac_ext <<_ACEOF
+#include <skey.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  found=yes; break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+rm -f conftest.err conftest.$ac_ext
+	done
+	if test "$found" = "no" -o -z "$dir"; then
+	    CPPFLAGS="$O_CPPFLAGS"
+	else
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L${dir}/lib -R${dir}/lib"
+    else
+	LDFLAGS="${LDFLAGS} -L${dir}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${dir}/lib"
+    fi
+
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${dir}/lib -R${dir}/lib"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${dir}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${dir}/lib"
+    fi
+
+	fi
+    fi
+    if test "$found" = "no"; then
+	{ echo "$as_me:$LINENO: WARNING: Unable to locate skey.h, you will have to edit the Makefile and add -I/path/to/skey/includes to CPPFLAGS" >&5
+echo "$as_me: WARNING: Unable to locate skey.h, you will have to edit the Makefile and add -I/path/to/skey/includes to CPPFLAGS" >&2;}
+    fi
+    echo "$as_me:$LINENO: checking for main in -lskey" >&5
+echo $ECHO_N "checking for main in -lskey... $ECHO_C" >&6
+if test "${ac_cv_lib_skey_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ldes  $LIBS"
+LIBS="-lskey  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -12530,88 +13460,25 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_des_main=yes
+  ac_cv_lib_skey_main=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_des_main=no
+ac_cv_lib_skey_main=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_des_main" >&5
-echo "${ECHO_T}$ac_cv_lib_des_main" >&6
-if test $ac_cv_lib_des_main = yes; then
-  SUDO_LIBS="${SUDO_LIBS} -lkrb -ldes"
+echo "$as_me:$LINENO: result: $ac_cv_lib_skey_main" >&5
+echo "${ECHO_T}$ac_cv_lib_skey_main" >&6
+if test $ac_cv_lib_skey_main = yes; then
+  found=yes
 else
-  SUDO_LIBS="${SUDO_LIBS} -lkrb"
-fi
-ac_cv_lib_des=ac_cv_lib_des_main
-
-    AUTH_OBJS="${AUTH_OBJS} kerb4.o"
+  { echo "$as_me:$LINENO: WARNING: Unable to locate libskey.a, you will have to edit the Makefile and add -L/path/to/skey/lib to SUDO_LDFLAGS" >&5
+echo "$as_me: WARNING: Unable to locate libskey.a, you will have to edit the Makefile and add -L/path/to/skey/lib to SUDO_LDFLAGS" >&2;}
 fi
 
-if test "$with_AFS" = "yes"; then
-
-    # looks like the "standard" place for AFS libs is /usr/afsws/lib
-    AFSLIBDIRS="/usr/lib/afs /usr/afsws/lib /usr/afsws/lib/afs"
-    for i in $AFSLIBDIRS; do
-	if test -d ${i}; then
-	    SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${i}"
-	    FOUND_AFSLIBDIR=true
-	fi
-    done
-    if test -z "$FOUND_AFSLIBDIR"; then
-	echo 'Unable to locate AFS libraries, you will have to edit the Makefile and add -L/path/to/afs/libs to SUDO_LDFLAGS or rerun configure with the --with-libpath options.'
-    fi
-
-    # Order is important here.  Note that we build AFS_LIBS from right to left
-    # since AFS_LIBS may be initialized with BSD compat libs that must go last
-    AFS_LIBS="-laudit ${AFS_LIBS}"
-    for i in $AFSLIBDIRS; do
-	if test -f ${i}/util.a; then
-	    AFS_LIBS="${i}/util.a ${AFS_LIBS}"
-	    FOUND_UTIL_A=true
-	    break;
-	fi
-    done
-    if test -z "$FOUND_UTIL_A"; then
-	AFS_LIBS="-lutil ${AFS_LIBS}"
-    fi
-    AFS_LIBS="-lkauth -lprot -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcom_err ${AFS_LIBS}"
-
-    # AFS includes may live in /usr/include on some machines...
-    for i in /usr/afsws/include; do
-	if test -d ${i}; then
-	    CPPFLAGS="${CPPFLAGS} -I${i}"
-	    FOUND_AFSINCDIR=true
-	fi
-    done
-
-    if test -z "$FOUND_AFSLIBDIR"; then
-	echo 'Unable to locate AFS include dir, you may have to edit the Makefile and add -I/path/to/afs/includes to CPPFLAGS or rerun configure with the --with-incpath options.'
-    fi
-fi
-
-if test "$with_DCE" = "yes"; then
-    DCE_OBJS="${DCE_OBJS} dce_pwent.o"
-    SUDO_LIBS="${SUDO_LIBS} -ldce"
-fi
-
-if test "$with_skey" = "yes"; then
-    SUDO_LIBS="${SUDO_LIBS} -lskey"
-    if test -f /usr/include/skey.h -a -f /usr/lib/libskey.a; then
-	:
-    elif test -f /usr/local/include/skey.h; then
-	CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
-    elif test "$with_csops" = "yes" -a -f /tools/cs/skey/include/skey.h -a -f /tools/cs/skey/lib/libskey.a; then
-	CPPFLAGS="${CPPFLAGS} -I/tools/cs/skey/include"
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/tools/cs/skey/lib"
-    else
-	echo 'Unable to locate libskey.a and/or skey.h, you will have to edit the Makefile and add -L/path/to/skey/lib to SUDO_LDFLAGS and/or -I/path/to/skey.h to CPPFLAGS'
-    fi
     echo "$as_me:$LINENO: checking for skeyaccess in -lskey" >&5
 echo $ECHO_N "checking for skeyaccess in -lskey... $ECHO_C" >&6
 if test "${ac_cv_lib_skey_skeyaccess+set}" = set; then
@@ -12674,18 +13541,182 @@ _ACEOF
 
 fi
 
+    LDFLAGS="$O_LDFLAGS"
+    SUDO_LIBS="${SUDO_LIBS} -lskey"
 fi
 
-if test "$with_opie" = "yes"; then
-    SUDO_LIBS="${SUDO_LIBS} -lopie"
-    if test -f /usr/include/opie.h -a -f /usr/lib/libopie.a; then
-	:
-    elif test -f /usr/local/include/opie.h; then
-	CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
-	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
+if test -n "$with_opie"; then
+    O_LDFLAGS="$LDFLAGS"
+    if test "$with_opie" != "yes"; then
+	CPPFLAGS="${CPPFLAGS} -I${with_opie}/include"
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L${with_opie}/lib -R${with_opie}/lib"
     else
-	echo 'Unable to locate libopie.a and/or opie.h, you will have to edit the Makefile and add -L/path/to/opie/lib to SUDO_LDFLAGS and/or -I/path/to/opie.h to CPPFLAGS'
+	LDFLAGS="${LDFLAGS} -L${with_opie}/lib"
     fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_opie}/lib"
+    fi
+
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_opie}/lib -R${with_opie}/lib"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_opie}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_opie}/lib"
+    fi
+
+	cat >conftest.$ac_ext <<_ACEOF
+#include <opie.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  found=no
+fi
+rm -f conftest.err conftest.$ac_ext
+    else
+	found=no
+	O_CPPFLAGS="$CPPFLAGS"
+	for dir in "" "/usr/local" "/usr/contrib"; do
+	    test -n "$dir" && CPPFLAGS="$O_CPPFLAGS -I${dir}/include"
+	    cat >conftest.$ac_ext <<_ACEOF
+#include <opie.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  found=yes; break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+rm -f conftest.err conftest.$ac_ext
+	done
+	if test "$found" = "no" -o -z "$dir"; then
+	    CPPFLAGS="$O_CPPFLAGS"
+	else
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L${dir}/lib -R${dir}/lib"
+    else
+	LDFLAGS="${LDFLAGS} -L${dir}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${dir}/lib"
+    fi
+
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${dir}/lib -R${dir}/lib"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${dir}/lib"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${dir}/lib"
+    fi
+
+	fi
+    fi
+    if test "$found" = "no"; then
+	{ echo "$as_me:$LINENO: WARNING: Unable to locate opie.h, you will have to edit the Makefile and add -I/path/to/opie/includes to CPPFLAGS" >&5
+echo "$as_me: WARNING: Unable to locate opie.h, you will have to edit the Makefile and add -I/path/to/opie/includes to CPPFLAGS" >&2;}
+    fi
+    echo "$as_me:$LINENO: checking for main in -lopie" >&5
+echo $ECHO_N "checking for main in -lopie... $ECHO_C" >&6
+if test "${ac_cv_lib_opie_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lopie  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_opie_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_opie_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_opie_main" >&5
+echo "${ECHO_T}$ac_cv_lib_opie_main" >&6
+if test $ac_cv_lib_opie_main = yes; then
+  found=yes
+else
+  { echo "$as_me:$LINENO: WARNING: Unable to locate libopie.a, you will have to edit the Makefile and add -L/path/to/opie/lib to SUDO_LDFLAGS" >&5
+echo "$as_me: WARNING: Unable to locate libopie.a, you will have to edit the Makefile and add -L/path/to/opie/lib to SUDO_LDFLAGS" >&2;}
+fi
+
+    LDFLAGS="$O_LDFLAGS"
+    SUDO_LIBS="${SUDO_LIBS} -lopie"
 fi
 
 if test -n "$with_SecurID" -a "$with_SecurID" != "no"; then
@@ -12698,17 +13729,29 @@ if test -n "$with_SecurID" -a "$with_SecurID" != "no"; then
     fi
     CPPFLAGS="${CPPFLAGS} -I${with_SecurID}"
     _LDFLAGS="${LDFLAGS}"
-    LDFLAGS="${LDFLAGS} -L${with_SecurID}"
+
+    if test X"$with_rpath" = X"yes"; then
+	LDFLAGS="${LDFLAGS} -L${with_SecurID} -R${with_SecurID}"
+    else
+	LDFLAGS="${LDFLAGS} -L${with_SecurID}"
+    fi
+    if test X"$blibpath" != X"" -a "LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_SecurID}"
+    fi
+
     #
     # Determine whether to use the new or old SecurID API
     #
     echo "$as_me:$LINENO: checking for SD_Init in -laceclnt" >&5
 echo $ECHO_N "checking for SD_Init in -laceclnt... $ECHO_C" >&6
-if test "${ac_cv_lib_aceclnt_SD_Init_lpthread+set}" = set; then
+if test "${ac_cv_lib_aceclnt_SD_Init_______lpthread_______+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-laceclnt -lpthread $LIBS"
+LIBS="-laceclnt
+	    -lpthread
+
+     $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -12744,33 +13787,73 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_aceclnt_SD_Init_lpthread=yes
+  ac_cv_lib_aceclnt_SD_Init_______lpthread_______=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_aceclnt_SD_Init_lpthread=no
+ac_cv_lib_aceclnt_SD_Init_______lpthread_______=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_aceclnt_SD_Init_lpthread" >&5
-echo "${ECHO_T}$ac_cv_lib_aceclnt_SD_Init_lpthread" >&6
-if test $ac_cv_lib_aceclnt_SD_Init_lpthread = yes; then
-  AUTH_OBJS="securid5.o"; SUDO_LIBS="${SUDO_LIBS} -laceclnt -lpthread"; SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_SecurID}"
+echo "$as_me:$LINENO: result: $ac_cv_lib_aceclnt_SD_Init_______lpthread_______" >&5
+echo "${ECHO_T}$ac_cv_lib_aceclnt_SD_Init_______lpthread_______" >&6
+if test $ac_cv_lib_aceclnt_SD_Init_______lpthread_______ = yes; then
+
+	    AUTH_OBJS="securid5.o"
+	    SUDO_LIBS="${SUDO_LIBS} -laceclnt -lpthread"
+
+
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_SecurID} -R${with_SecurID}"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_SecurID}"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_SecurID}"
+    fi
+
+
 else
-  AUTH_OBJS="securid.o"; SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
+
+	    AUTH_OBJS="securid.o"
+	    SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
+
 fi
 
     LDFLAGS="${_LDFLAGS}"
 fi
 
-if test "$with_fwtk" = "yes"; then
+if test -n "$with_fwtk"; then
+    if test "$with_fwtk" != "yes"; then
+
+    if test X"$with_rpath" = X"yes"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_fwtk} -R${with_fwtk}"
+    else
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_fwtk}"
+    fi
+    if test X"$blibpath" != X"" -a "SUDO_LDFLAGS" = "SUDO_LDFLAGS"; then
+	blibpath_add="${blibpath_add}:${with_fwtk}"
+    fi
+
+	CPPFLAGS="${CPPFLAGS} -I${with_fwtk}"
+	with_fwtk=yes
+    fi
     SUDO_LIBS="${SUDO_LIBS} -lauth -lfwall"
 fi
 
 if test "$with_authenticate" = "yes"; then
     SUDO_LIBS="${SUDO_LIBS} -ls"
+fi
+
+if test -n "$blibpath"; then
+    if test -n "$blibpath_add"; then
+    	SUDO_LDFLAGS="$SUDO_LDFLAGS -Wl,-blibpath:${blibpath}${blibpath_add}"
+    elif test -n "$with_blibpath" -a "$with_blibpath" != "yes"; then
+    	SUDO_LDFLAGS="$SUDO_LDFLAGS -Wl,-blibpath:${blibpath}"
+    fi
 fi
 
 echo "$as_me:$LINENO: checking for log file location" >&5
@@ -14003,13 +15086,12 @@ fi
 
 
 if test "$with_pam" = "yes"; then
-    echo ""
     case $host in
 	*-*-linux*)
-	    echo "You will need to customize sample.pam and install it as /etc/pam.d/sudo"
+	    { echo "$as_me:$LINENO: You will need to customize sample.pam and install it as /etc/pam.d/sudo" >&5
+echo "$as_me: You will need to customize sample.pam and install it as /etc/pam.d/sudo" >&6;}
 	    ;;
     esac
-    echo ""
 fi
 
 

@@ -1530,7 +1530,7 @@ Sudo 1.6.5p2 released.
 
 Sudo 1.6.6 released.
 
-478) Wildcards now work correctly in the env_keep Defaults directive>
+478) Wildcards now work correctly in the env_keep Defaults directive.
 
 479) Added support for non-root timestamp dirs.  This allows the timestamp
      dir to be shared via NFS (though this is not recommended).
@@ -1574,7 +1574,8 @@ Sudo 1.6.6 released.
 494) Sudo is now careful to avoid interger overflow when allocating
      memory.  This is one of those "should not happen" situations.
 
-495) A new option, --with-stow can be used to package sudo with GNU stow.
+495) Added a configure option (--with-stow) to make sudo compatible
+     with GNU stow.
 
 496) auth/kerb5.c now compiles under Heimdal.
 
@@ -1582,4 +1583,25 @@ Sudo 1.6.6 released.
      from optimizing away memory zeroing.  Unfortunately, this results
      in some warnings from gcc.
 
+498) Better Kerberos IV/V support in the configure script.
+
+499) Fixed a logic thinko in the SIGCHLD handler that caused problems
+     with rlogin on HP-UX.
+
+500) configure now adds -R to LDFLAGS when it adds -L for Solaris and
+     SVR4.  There is a configure option, --with-rpath, to control this.
+
+501) On AIX, configure will pass extra directory paths to the linker
+     via the -blibpath ld option.  This is only active when additional
+     library paths are used.  It may be disabled via the
+     --without-blibpath configure option.
+
+502) The --with-skey and --with-opie configure options now take
+     an optional directory argument that should have an include and
+     lib dir for the skey/opie include file and library respectively.
+
 Sudo 1.6.7 released.
+
+503) Fixed false positives in the overflow detection of expand_prompt().
+
+Sudo 1.6.7p1 released.

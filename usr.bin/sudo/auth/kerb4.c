@@ -62,7 +62,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: kerb4.c,v 1.8 2003/03/16 02:18:57 millert Exp $";
+static const char rcsid[] = "$Sudo: kerb4.c,v 1.9 2003/03/20 04:49:58 millert Exp $";
 #endif /* lint */
 
 int
@@ -101,7 +101,7 @@ kerb4_verify(pw, pass, auth)
      * Set the ticket file to be in sudo sudo timedir so we don't
      * wipe out other (real) kerberos tickets.
      */
-    (void) snprintf(tkfile, sizoef(tkfile), "%s/tkt%lu",
+    (void) snprintf(tkfile, sizeof(tkfile), "%s/tkt%lu",
 	_PATH_SUDO_TIMEDIR, (unsigned long) pw->pw_uid);
     (void) krb_set_tkt_string(tkfile);
 

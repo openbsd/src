@@ -98,7 +98,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.333 2003/03/15 20:31:01 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.334 2003/04/01 15:02:49 millert Exp $";
 #endif /* lint */
 
 /*
@@ -613,7 +613,7 @@ init_vars(sudo_mode)
 	    user_args = (char *) emalloc(size);
 	    for (to = user_args, from = NewArgv + 1; *from; from++) {
 		n = strlcpy(to, *from, size - (to - user_args));
-		if (n >= size) {
+		if (n >= size - (to - user_args)) {
 		    (void) fprintf(stderr,
 			"%s: internal error, init_vars() overflow\n", Argv[0]);
 		    exit(1);

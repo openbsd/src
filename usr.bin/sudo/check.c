@@ -67,7 +67,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.210 2003/03/15 20:31:01 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.211 2003/04/01 14:58:55 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -216,32 +216,35 @@ expand_prompt(old_prompt, user, host)
 
     if (subst) {
 	new_prompt = (char *) emalloc(++len);
-	*new_prompt = '\0';
-	endp = new_prompt + len - 1;
+	endp = new_prompt + len;
 	for (p = old_prompt, np = new_prompt; *p; p++) {
 	    if (p[0] =='%') {
 		switch (p[1]) {
 		    case 'h':
 			p++;
-			if ((n = strlcat(new_prompt, user_shost, len)) >= len)
+			n = strlcpy(np, user_shost, np - endp);
+			if (n >= np - endp)
 			    goto oflow;
 			np += n;
 			continue;
 		    case 'H':
 			p++;
-			if ((n = strlcat(new_prompt, user_host, len)) >= len)
+			n = strlcpy(np, user_host, np - endp);
+			if (n >= np - endp)
 			    goto oflow;
 			np += n;
 			continue;
 		    case 'u':
 			p++;
-			if ((n = strlcat(new_prompt, user_name, len)) >= len)
+			n = strlcpy(np, user_name, np - endp);
+			if (n >= np - endp)
 			    goto oflow;
 			np += n;
 			continue;
 		    case 'U':
 			p++;
-			if ((n = strlcat(new_prompt, *user_runas, len)) >= len)
+			n = strlcpy(np,  *user_runas, np - endp);
+			if (n >= np - endp)
 			    goto oflow;
 			np += n;
 			continue;
@@ -254,9 +257,9 @@ expand_prompt(old_prompt, user, host)
 			break;
 		}
 	    }
+	    *np++ = *p;
 	    if (np >= endp)
 		goto oflow;
-	    *np++ = *p;
 	}
 	*np = '\0';
     } else

@@ -116,10 +116,22 @@ Special features/options:
 	Eg: --with-incpath="/usr/local/include /opt/include"
 
   --with-libpath=DIR
-        Adds the specified directory (or directories_ to SUDO_LDFLAGS
-        and VISUDO_LDFLAGS so configure and the compiler will look
-        there for libraries.  Multiple directories may be specified
-        as with --with-incpath.
+        Adds the specified directory (or directories) to LDFLAGS
+        so configure and the compiler will look there for libraries.
+        Multiple directories may be specified as with --with-incpath.
+
+  --with-rpath
+	Tells configure to use -Rpath in addition to -Lpath when
+	passing library paths to the loader.  This option is on
+	by default for Solaris and SVR4.
+
+  --with-blibpath[=PATH]
+        Tells configure to construct a -blibpath argument to the
+        loader.  If a PATH is specified, it will be used as the
+        base.  Otherwise, "/usr/lib:/lib:/usr/local/lib" will be
+        used for gcc and "/usr/lib:/lib" for non-gcc.  Additional
+        library paths will be appended as needed by configure.
+	This option is only valid for AIX where it is on by default.
 
   --with-libraries=LIBRARY
         Adds the specified library (or libaries) to SUDO_LIBS and
@@ -131,11 +143,15 @@ Special features/options:
   --with-csops
 	Add CSOps standard options.  You probably aren't interested in this.
 
-  --with-skey
-	Enable S/Key OTP (One Time Password) support.
+  --with-skey[=DIR]
+        Enable S/Key OTP (One Time Password) support.  If specified,
+        DIR should contain include and lib directories with skey.h
+        and libskey.a respectively.
 
-  --with-opie
-	Enable NRL OPIE OTP (One Time Password) support.
+  --with-opie[=DIR]
+	Enable NRL OPIE OTP (One Time Password) support.  If specified,
+	DIR should contain include and lib directories with opie.h
+	and libopie.a respectively.
 
   --with-SecurID[=DIR]
 	Enable SecurID support.  If specified, DIR is directory containing
@@ -146,17 +162,18 @@ Special features/options:
 	DIR is the base directory containing the compiled FWTK package
 	(or at least the library and header files).
 
-  --with-kerb4
-	Enable Kerberos IV support.  Tested only with the Cygnus Network
-	Security package (CNS).  This uses Kerberos passphrases for
-	authentication but does not use the Kerberos cookie scheme.
+  --with-kerb4[=DIR]
+        Enable Kerberos IV support.  If specified, DIR is the base
+        directory containing the Kerberos IV include and lib dirs.
+        This uses Kerberos passphrases for authentication but does
+        not use the Kerberos cookie scheme.
 
-  --with-kerb5
-	Enable Kerberos V support.  Tested against MIT Kerberos V,
-	release 1.1, although also expected to work against CNS.  This
-	This uses Kerberos passphrases for authentication but does not
-	use the Kerberos cookie scheme.  Will not work for Kerberos V
-	older than version 1.1.
+  --with-kerb5[=DIR]
+        Enable Kerberos V support.  If specified, DIR is the base
+        directory containing the Kerberos V include and lib dirs.
+        This This uses Kerberos passphrases for authentication but
+        does not use the Kerberos cookie scheme.  Will not work for
+        Kerberos V older than version 1.1.
 
   --with-authenticate
 	Enable support for the AIX 4.x general authentication function.
