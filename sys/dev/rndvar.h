@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.3 1996/08/11 07:31:32 dm Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.4 1996/09/06 08:36:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -54,7 +54,7 @@ extern void add_blkdev_randomness __P((dev_t));
 extern void add_tty_randomness __P((dev_t, int));
 
 extern void get_random_bytes __P((void *, size_t));
-extern unsigned long arc4random __P((void));
+extern u_int32_t arc4random __P((void));
 
 #endif /* _KERNEL */
 
