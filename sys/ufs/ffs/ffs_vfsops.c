@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.67 2004/07/14 18:48:43 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.68 2004/08/12 07:48:53 otto Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -551,8 +551,9 @@ ffs_reload(mountp, cred, p)
 	if (error)
 		return (error);
 	newfs = (struct fs *)bp->b_data;
-	if (newfs->fs_magic != FS_MAGIC || newfs->fs_bsize > MAXBSIZE ||
-	    newfs->fs_bsize < sizeof(struct fs)) {
+	if (newfs->fs_magic != FS_MAGIC || (u_int)newfs->fs_bsize > MAXBSIZE ||
+	    newfs->fs_bsize < sizeof(struct fs) ||
+	    (u_int)newfs->fs_sbsize > SBSIZE) {
 		brelse(bp);
 		return (EIO);		/* XXX needs translation */
 	}
@@ -664,8 +665,9 @@ ffs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	fs = (struct fs *)bp->b_data;
-	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
-	    fs->fs_bsize < sizeof(struct fs)) {
+	if (fs->fs_magic != FS_UFS1_MAGIC || (u_int)fs->fs_bsize > MAXBSIZE ||
+	    fs->fs_bsize < sizeof(struct fs) ||
+	    (u_int)fs->fs_sbsize > SBSIZE) {
 		if (fs->fs_magic == FS_UFS2_MAGIC)
 			printf("no UFS2 support\n");
 		error = EFTYPE;		/* Inappropriate format */
