@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.27 2001/09/30 00:57:07 art Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.28 2001/09/30 01:19:58 art Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ void	comstart	__P((struct tty *));
 void	compoll		__P((void *));
 
 struct consdev;
-void	comcnprobe	__P((struct consdev *));
 int	comcnattach	__P((bus_space_tag_t, int, int, int, tcflag_t));
 void	comcninit	__P((struct consdev *));
 int	comcngetc	__P((dev_t));

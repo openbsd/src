@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.71 2001/09/30 00:57:07 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.72 2001/09/30 01:19:58 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -113,15 +113,10 @@ struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
 
-#ifndef CONSPEED
-#define	CONSPEED B9600
-#endif
-
 int	comdefaultrate = TTYDEF_SPEED;
 int	comconsaddr;
 int	comconsinit;
 int	comconsattached;
-int	comconsrate;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
@@ -1309,31 +1304,16 @@ comintr(arg)
 	struct timeval tv;
 	long usec;
 #endif /* PPS_SYNC */
-#ifdef COM_DEBUG
-	int n;
-	struct {
-		u_char iir, lsr, msr;
-	} iter[32];
-#endif
 
 	if (!sc->sc_tty)
 		return (0);		/* can't do squat. */
 
-#ifdef COM_DEBUG
-	n = 0;
-	if (ISSET(iter[n].iir = bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
-		return (0);
-#else
 	if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
 		return (0);
-#endif
 
 	tp = sc->sc_tty;
 
 	for (;;) {
-#ifdef COM_DEBUG
-		iter[n].lsr =
-#endif
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 
 		if (ISSET(lsr, LSR_RXRDY)) {
@@ -1345,11 +1325,6 @@ comintr(arg)
 			do {
 				data = bus_space_read_1(iot, ioh, com_data);
 				if (ISSET(lsr, LSR_BI)) {
-#ifdef notdef
-					printf("break %02x %02x %02x %02x\n",
-					    sc->sc_msr, sc->sc_mcr, sc->sc_lcr,
-					    sc->sc_dtr);
-#endif
 #ifdef DDB
 					if (ISSET(sc->sc_hwflags,
 					    COM_HW_CONSOLE)) {
@@ -1378,24 +1353,11 @@ comintr(arg)
 #ifdef DDB
 			next:
 #endif
-#ifdef COM_DEBUG
-				if (++n >= 32)
-					goto ohfudge;
-				iter[n].lsr =
-#endif
 				lsr = bus_space_read_1(iot, ioh, com_lsr);
 			} while (ISSET(lsr, LSR_RXRDY));
 
 			sc->sc_ibufp = p;
 		}
-#ifdef COM_DEBUG
-		else if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-			printf("weird lsr %02x\n", lsr);
-#endif
-
-#ifdef COM_DEBUG
-		iter[n].msr =
-#endif
 		msr = bus_space_read_1(iot, ioh, com_msr);
 
 		if (msr != sc->sc_msr) {
@@ -1435,30 +1397,9 @@ comintr(arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 
-#ifdef COM_DEBUG
-		if (++n >= 32)
-			goto ohfudge;
-		if (ISSET(iter[n].iir = bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
-			return (1);
-#else
 		if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
 			return (1);
-#endif
 	}
-#ifdef COM_DEBUG
-ohfudge:
-	printf("comintr: too many iterations");
-	for (n = 0; n < 32; n++) {
-		if ((n % 4) == 0)
-			printf("\ncomintr: iter[%02d]", n);
-		printf("  %02x %02x %02x", iter[n].iir, iter[n].lsr, iter[n].msr);
-	}
-	printf("\n");
-	printf("comintr: msr %02x mcr %02x lcr %02x ier %02x\n",
-	    sc->sc_msr, sc->sc_mcr, sc->sc_lcr, sc->sc_ier);
-	printf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
-	    sc->sc_tty->t_outq.c_cc);
-#endif
 }
 
 /*
@@ -1469,50 +1410,6 @@ ohfudge:
 #undef CONADDR
 	extern int CONADDR;
 #endif
-
-void
-comcnprobe(cp)
-	struct consdev *cp;
-{
-	/* XXX NEEDS TO BE FIXED XXX */
-#if defined(arc)
-	bus_space_tag_t iot = &arc_bus_io;
-#elif defined(powerpc)
-	bus_space_tag_t iot = &ppc_isa_io;
-#elif defined(hppa)
-	bus_space_tag_t iot = &hppa_bustag;
-#else
-	bus_space_tag_t iot = 0;
-#endif
-	bus_space_handle_t ioh;
-	int found;
-
-	if(CONADDR == 0) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
-	comconsiot = iot;
-	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-	found = comprobe1(iot, ioh);
-	bus_space_unmap(iot, ioh, COM_NPORTS);
-	if (!found) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
-	/* locate the major number */
-	for (commajor = 0; commajor < nchrdev; commajor++)
-		if (cdevsw[commajor].d_open == comopen)
-			break;
-
-	/* initialize required fields */
-	cp->cn_dev = makedev(commajor, CONUNIT);
-	cp->cn_pri = CN_NORMAL;
-}
 
 /*
  * The following functions are polled getc and putc routines, shared
@@ -1565,21 +1462,6 @@ com_common_putc(iot, ioh, c)
 /*
  * Following are all routines needed for COM to act as console
  */
-
-void
-comcninit(cp)
-	struct consdev *cp;
-{
-
-	comconsaddr = CONADDR;
-
-	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
-		panic("comcninit: mapping failed");
-
-	cominit(comconsiot, comconsioh, comdefaultrate);
-	comconsinit = 0;
-}
-
 void
 cominit(iot, ioh, rate)
 	bus_space_tag_t iot;
