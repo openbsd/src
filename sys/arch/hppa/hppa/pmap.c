@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2002/10/17 02:21:08 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2002/10/28 20:49:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -147,40 +147,31 @@ pmap_hash(pa_space_t sp, vaddr_t va)
 #endif
 
 static __inline void
-pmap_sdir_set(pa_space_t space, paddr_t pa)
+pmap_sdir_set(pa_space_t space, u_int32_t *pd)
 {
-	paddr_t vtop;
+	u_int32_t *vtop;
 
 	mfctl(CR_VTOP, vtop);
 #ifdef PMAPDEBUG
 	if (!vtop)
 		panic("pmap_sdir_set: zero vtop");
 #endif
-	asm("stws	%0, 0(%1)\n\tsync"
-	    :: "r" (pa), "r" (vtop + (space << 2)));
+	vtop[space] = (u_int32_t)pd;
 }
 
-static __inline paddr_t
+static __inline u_int32_t *
 pmap_sdir_get(pa_space_t space)
 {
-	paddr_t vtop, pa;
+	u_int32_t *vtop;
 
 	mfctl(CR_VTOP, vtop);
-	asm("ldwx,s	%2(%1), %0\n\tsync"
-	    : "=&r" (pa) : "r" (vtop), "r" (space));
-
-	return (pa);
+	return ((u_int32_t *)vtop[space]);
 }
 
 static __inline pt_entry_t *
-pmap_pde_get(paddr_t pa, vaddr_t va)
+pmap_pde_get(u_int32_t *pd, vaddr_t va)
 {
-	pt_entry_t *pde;
-
-	asm("ldwx,s	%2(%1), %0\n\tsync"
-	    : "=&r" (pde) : "r" (pa), "r" (va >> 22));
-
-	return (pde);
+	return ((pt_entry_t *)pd[va >> 22]);
 }
 
 static __inline void
@@ -193,8 +184,7 @@ pmap_pde_set(struct pmap *pm, vaddr_t va, paddr_t ptp)
 	DPRINTF(PDB_FOLLOW|PDB_VP,
 	    ("pmap_pde_set(%p, 0x%x, 0x%x)\n", pm, va, ptp));
 
-	asm("stws	%0, 0(%1)\n\tsync"
-	    :: "r" (ptp), "r" ((paddr_t)pm->pm_pdir + ((va >> 20) & 0xffc)));
+	pm->pm_pdir[va >> 22] = ptp;
 }
 
 static __inline pt_entry_t *
@@ -244,31 +234,24 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 	DPRINTF(PDB_FOLLOW|PDB_PV,
 	    ("pmap_pde_release(%p, 0x%x, %p)\n", pmap, va, ptp));
 
-	ptp->wire_count--;
-	if (ptp->wire_count <= 1 && pmap != pmap_kernel()) {
+	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
 		    ("pmap_pde_release: disposing ptp %p\n", ptp));
-
-		if (pmap->pm_ptphint == ptp)
-			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
-#if 0
+#if 1
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		ptp->wire_count = 0;
 		uvm_pagefree(ptp);
 #endif
+		if (pmap->pm_ptphint == ptp)
+			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
 	}
 }
 
 static __inline pt_entry_t
 pmap_pte_get(pt_entry_t *pde, vaddr_t va)
 {
-	pt_entry_t pte;
-
-	asm("ldwx,s	%2(%1),%0"
-	    : "=&r" (pte) : "r" (pde),  "r" ((va >> 12) & 0x3ff));
-
-	return (pte);
+	return (pde[(va >> 12) & 0x3ff]);
 }
 
 static __inline void
@@ -294,8 +277,8 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	if ((paddr_t)pde & PGOFSET)
 		panic("pmap_pte_set, unaligned pde %p", pde);
 #endif
-	asm("stws	%0, 0(%1)"
-	    :: "r" (pte), "r" ((paddr_t)pde + ((va >> 10) & 0xffc)));
+
+	pde[(va >> 12) & 0x3ff] = pte;
 }
 
 static __inline pt_entry_t
@@ -316,19 +299,19 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 	pa_space_t sp;
 
 	for (sp = 0; sp <= hppa_sid_max; sp++) {
-		paddr_t pa;
+		u_int32_t *pd;
 		pt_entry_t *pde, pte;
 		vaddr_t va, pdemask = 1;
 
 		if (((int)space >= 0 && sp != space) ||
-		    !(pa = pmap_sdir_get(sp)))
+		    !(pd = pmap_sdir_get(sp)))
 			continue;
 
 		for (va = sva? sva : 0; va < VM_MAX_KERNEL_ADDRESS;
 		    va += PAGE_SIZE) {
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
-				if (!(pde = pmap_pde_get(pa, va))) {
+				if (!(pde = pmap_pde_get(pd, va))) {
 					va += ~PDE_MASK + 1 - PAGE_SIZE;
 					continue;
 				}
@@ -369,7 +352,7 @@ pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 		pte |= pmap_vp_find(pve->pv_pmap, pve->pv_va);
 		if ((va & HPPA_PGAOFF) != (pve->pv_va & HPPA_PGAOFF) &&
 		    (pte & PTE_PROT(TLB_WRITE))) {
-			printf("pmap_pv_enter: "
+			printf("pmap_check_alias: "
 			    "aliased writable mapping 0x%x:0x%x\n",
 			    pve->pv_pmap->pm_space, pve->pv_va);
 			ret++;
@@ -485,7 +468,7 @@ pmap_bootstrap(vstart)
 	kpm->pm_space = HPPA_SID_KERNEL;
 	kpm->pm_pid = HPPA_PID_KERNEL;
 	kpm->pm_pdir_pg = NULL;
-	kpm->pm_pdir = addr;
+	kpm->pm_pdir = (u_int32_t *)addr;
 	bzero((void *)addr, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, addr, PAGE_SIZE);
 	addr += PAGE_SIZE;
@@ -647,14 +630,13 @@ pmap_create()
 	pmap->pm_obj.uo_npages = 0;
 	pmap->pm_obj.uo_refs = 1;
 
-	do
-		space = 1 + (arc4random() % hppa_sid_max);
-	while (pmap_sdir_get(space));
+	for (space = 1 + (arc4random() % hppa_sid_max);
+	    pmap_sdir_get(space); space = (space + 1) % hppa_sid_max);
 
 	if ((pmap->pm_pdir_pg = pmap_pagealloc(NULL, 0)) == NULL)
 		panic("pmap_create: no pages");
 	pmap->pm_ptphint = NULL;
-	pmap->pm_pdir = VM_PAGE_TO_PHYS(pmap->pm_pdir_pg);
+	pmap->pm_pdir = (u_int32_t *)VM_PAGE_TO_PHYS(pmap->pm_pdir_pg);
 	pmap_sdir_set(space, pmap->pm_pdir);
 
 	pmap->pm_space = space;
@@ -682,18 +664,19 @@ pmap_destroy(pmap)
 	if (refs > 0)
 		return;
 
-	TAILQ_FOREACH(pg, &pmap->pm_obj.memq, listq) {
 #ifdef DIAGNOSTIC
+	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq))) {
+		printf("pmap_destroy: unaccounted ptp 0x%x\n",
+		    VM_PAGE_TO_PHYS(pg));
 		if (pg->flags & PG_BUSY)
 			panic("pmap_destroy: busy page table page");
-#endif
 		pg->wire_count = 0;
 		uvm_pagefree(pg);
 	}
-
-	uvm_pagefree(pmap->pm_pdir_pg);
-	pmap->pm_pdir_pg = NULL;	/* XXX cache it? */
+#endif
 	pmap_sdir_set(pmap->pm_space, 0);
+	uvm_pagefree(pmap->pm_pdir_pg);
+	pmap->pm_pdir_pg = NULL;
 	pool_put(&pmap_pmap_pool, pmap);
 }
 

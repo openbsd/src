@@ -30,7 +30,6 @@ boots (sys/arch/hppa/stand/*):				mickey@ miod@
 # booting from tape
 
 kernel (sys/arch/hppa/*):				mickey@
-* broken ptp accounting
 * arc4random() gets initialized from the same unticking prom clock value
   might be that either the inittodr() is broken or nfs boot pinches it
   too early before anything happens
@@ -59,7 +58,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.23 2002/09/05 06:15:40 mickey Exp $
+$OpenBSD: TODO,v 1.24 2002/10/28 20:49:16 mickey Exp $
 
 --
 	paranoic mickey
