@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.8 1996/08/31 01:55:33 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.9 1996/08/31 13:35:23 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.8 1996/08/31 01:55:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.9 1996/08/31 13:35:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ verify(tempname, pw)
 	char *p;
 	struct stat sb;
 	FILE *fp;
-	int len;
+	int len, alen;
 	static char buf[LINE_MAX];
 
 	if (!(fp = fopen(tempname, "r")))
@@ -203,6 +203,9 @@ bad:					(void)fclose(fp);
 	/* Build the gecos field. */
 	len = strlen(list[E_NAME].save) + strlen(list[E_BPHONE].save) +
 	    strlen(list[E_HPHONE].save) + strlen(list[E_LOCATE].save) + 4;
+	for (alen = 0, p = list[E_NAME].save; *p; p++)
+		if (*p == '&')
+			alen = alen + strlen(pw->pw_name) - 1;
 	if (!(p = malloc(len)))
 		err(1, NULL);
 	(void)sprintf(pw->pw_gecos = p, "%s,%s,%s,%s", list[E_NAME].save,
@@ -212,10 +215,13 @@ bad:					(void)fclose(fp);
 	    "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s",
 	    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid, pw->pw_class,
 	    pw->pw_change, pw->pw_expire, pw->pw_gecos, pw->pw_dir,
-	    pw->pw_shell) >= sizeof(buf)) {
+	    pw->pw_shell) >= sizeof(buf) ||
+	    strlen(buf) + alen >= sizeof(buf) -1) {
 		warnx("entries too long");
+		free(p);
 		return (0);
 	}
-	/* must leave p allocated */
+	free(p);
+
 	return (pw_scan(buf, pw, (int *)NULL));
 }
