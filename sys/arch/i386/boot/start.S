@@ -55,16 +55,16 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
 
-BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
-BOOTSTACK	=	0xfffc	# boot stack
-SIGNATURE	=	0xaa55
-LOADSZ		=	15	# size of unix boot
-PARTSTART	=	0x1be	# starting address of partition table
-NUMPART		=	4	# number of partitions in partition table
-PARTSZ		=	16	# each partition table entry is 16 bytes
-BSDPART		=	0xA6	# OpenBSD partition identification
-OLDBSDPART	=	0xA5	# 386/Net/FreeBSD partition identification
-BOOTABLE	=	0x80	# value of boot_ind, means bootable partition
+#define BOOTSEG		0x0100	/* boot will be loaded here (below 640K) */
+#define BOOTSTACK	0xfffc	/* boot stack */
+#define SIGNATURE	0xaa55	/* MBR signature */
+#define LOADSZ		15	/* size of unix boot */
+#define PARTSTART	0x1be	/* starting address of partition table */
+#define NUMPART		4	/* number of partitions in partition table */
+#define PARTSZ		16	/* each partition table entry is 16 bytes */
+#define BSDPART		0xA6	/* OpenBSD partition identification */
+#define OLDBSDPART	0xA5	/* 386/Net/FreeBSD partition identification */
+#define BOOTABLE	0x80	/* value of boot_ind, means bootable partition */
 
 	.text	
 	.globl	start
@@ -321,9 +321,9 @@ done:
 
 
 /* Conventional GDT indexes. */
-BOOT_CS_INDEX	=	3
-BOOT_CS16_INDEX	=	5
-BOOT_DS_INDEX	=	4
+#define BOOT_CS_INDEX	3
+#define BOOT_CS16_INDEX	5
+#define BOOT_DS_INDEX	4
 
 ENTRY(boot2)
 	data32
