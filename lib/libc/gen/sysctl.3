@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.63 2001/02/08 16:07:58 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.64 2001/02/28 01:24:09 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -757,7 +757,10 @@ When the route times out, the Path MTU Discovery engine will attempt
 to probe a larger path MTU.
 .It Li ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
-If set to any other value, processing will occur.
+If set to any other value, processing will occur; furthermore, if set
+to 2, no checks for spoofing of loopback addresses will be done.
+This is useful only for debugging purposes, and should never be used
+in production systems.
 .It Li gre.allow
 If set to 0, incoming GRE packets will not be processed.
 If set to any other value, processing will occur.
