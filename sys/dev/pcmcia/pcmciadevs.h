@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.83 2002/01/04 16:26:24 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.84 2002/01/04 17:42:10 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.82 2002/01/04 16:26:04 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.83 2002/01/04 17:41:44 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -87,6 +87,7 @@
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
+#define	PCMCIA_VENDOR_NWN	0x0602	/* No Wires Needed */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat */
@@ -343,6 +344,12 @@
 /* Nokia */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NOKIA_C020_WLAN	0x20c0
+
+/* No Wires Needed */
+#define	PCMCIA_CIS_NWN_WLAN_550	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NWN_WLAN_550	0x0002
+#define	PCMCIA_CIS_NWN_WLAN_1148	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NWN_WLAN_1148	0x0003
 
 /* Panasonic */
 #define	PCMCIA_CIS_PANASONIC_KXLC002	{ NULL, NULL, NULL, NULL }
