@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.97 2002/02/09 07:08:30 ericj Exp $
+#	$OpenBSD: GENERIC,v 1.98 2002/03/04 22:48:26 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -149,6 +149,7 @@ scsibus*	at twe?
 
 # PCI Network devices
 de*	at pci? dev ? function ?	# 21x4[012]-based Ethernet
+dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 ne*	at pci? dev ? function ?	# NE2000-compat ethernet cards
 fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
 ep*	at pci? dev ? function ?	# 3COM 3c59x
@@ -170,7 +171,6 @@ wb*	at pci? dev ? function ?	# Winbond W89C840F ethernet
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 ethernet
 sis*	at pci? dev ? function ?	# SiS 900/7016 ethernet
 ste*	at pci? dev ? function ?	# Sundance ST201 ethernet
-dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?	# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
