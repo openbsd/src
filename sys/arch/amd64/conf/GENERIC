@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2004/10/11 17:40:09 brad Exp $
+#	$OpenBSD: GENERIC,v 1.32 2004/10/13 03:58:07 brad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -146,6 +146,8 @@ ugen*	at uhub?		# USB Generic driver
 #option	FWSCSI_DEBUG
 
 puc*	at pci?				# PCI "universal" communication device
+
+#isadma0	at isa?
 
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
