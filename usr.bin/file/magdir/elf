@@ -1,4 +1,4 @@
-#	$OpenBSD: elf,v 1.13 2004/10/27 15:59:16 pefo Exp $
+#	$OpenBSD: elf,v 1.14 2004/10/27 18:12:44 pefo Exp $
 
 #------------------------------------------------------------------------------
 # elf:  file(1) magic for ELF executables
@@ -78,7 +78,6 @@
 >>16	beshort		1		relocatable,
 >>16	beshort		2		executable,
 >>16	beshort		3		shared object,
->>16	beshort		4		core file,
 # only for MIPS
 >>18	beshort		8
 # only for 32-bit
@@ -103,6 +102,7 @@
 >>>>48	belong&0xf0000000	0x70000000	MIPS64 ,
 >>>>48	belong&0xf0000000	0x80000000	MIPS32 rel2,
 >>>>48	belong&0xf0000000	0x90000000	MIPS64 rel2,
+>>16	beshort		4		core file,
 >>>400	lelong		>0		(signal %d),
 >>16	beshort		&0xff00		processor-specific,
 >>18	beshort		0		no machine,
