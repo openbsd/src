@@ -58,6 +58,13 @@ struct	env87 {
 	long	en_fos;		/* floating operand segment selector */
 };
 
+#define EN_SW_IE	0x0001	/* invalid operation */
+#define EN_SW_DE	0x0002	/* denormal */
+#define EN_SW_ZE	0x0004	/* divide by zero */
+#define EN_SW_OE	0x0008	/* overflow */
+#define EN_SW_UE	0x0010	/* underflow */
+#define EN_SW_PE	0x0020	/* loss of precision */
+
 /* Contents of each floating point accumulator */
 struct	fpacc87 {
 #ifdef dontdef	/* too unportable */
