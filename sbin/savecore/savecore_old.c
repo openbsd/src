@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.11 1998/09/24 06:24:20 millert Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.12 1998/10/04 16:36:13 millert Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.11 1998/09/24 06:24:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.12 1998/10/04 16:36:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,9 @@ static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.11 1998/09/24 06:24:20 mille
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/syslog.h>
+#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -139,9 +141,17 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct rlimit rl;
 	int ch;
 
 	openlog("savecore", LOG_PERROR, LOG_DAEMON);
+
+	/* Increase our data size to the max if we can. */
+	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+		rl.rlim_cur = rl.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+			syslog(LOG_WARNING, "can't set rlimit data size: %m");
+	}
 
 	while ((ch = getopt(argc, argv, "cdfN:vz")) != -1)
 		switch(ch) {
