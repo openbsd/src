@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.7 1997/10/13 13:49:57 pefo Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.8 1997/10/14 17:11:10 pefo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,24 +39,26 @@
 #define	RAW_PART	2		/* raw partition: ie. rsd0c */
 
 /* MBR partition table */
-#define	MBRSECTOR	0		/* MBR sector number */
-#define	MBRPARTOFF	446		/* Offset of MBR partition table */
-#define	NMBRPART	4		/* # of partitions in MBR */
-#define	MBRMAGICOFF	510		/* Offset of magic number */
-#define	MBRMAGIC	0xaa55		/* Actual magic number */
+#define	DOSBBSECTOR	0		/* MBR sector number */
+#define	DOSPARTOFF	446		/* Offset of MBR partition table */
+#define	NDOSPART	4		/* # of partitions in MBR */
+#define	DOSMAGICOFF	510		/* Offset of magic number */
+#define	DOSMAGIC	0xaa55		/* Actual magic number */
+#define	MBRMAGIC	DOSMAGIC
 #define DOSMBR_SIGNATURE MBRMAGIC
+#define	DOSACTIVE	0x80
 
-struct mbr_partition {
-	unsigned char	mbr_flag;	/* default boot flag */
-	unsigned char	mbr_shd;	/* start head, IsN't Always Meaningful */
-	unsigned char	mbr_ssect;	/* start sector, INAM */
-	unsigned char	mbr_scyl;	/* start cylinder, INAM */
-	unsigned char	mbr_type;	/* partition type */
-	unsigned char	mbr_ehd;	/* end head, INAM */
-	unsigned char	mbr_esect;	/* end sector, INAM */
-	unsigned char	mbr_ecyl;	/* end cylinder, INAM */
-	unsigned long	mbr_start;	/* absolute start sector number */
-	unsigned long	mbr_size;	/* partition size in sectors */
+struct dos_partition {
+	unsigned char	dp_flag;	/* default boot flag */
+	unsigned char	dp_shd;	/* start head, IsN't Always Meaningful */
+	unsigned char	dp_ssect;	/* start sector, INAM */
+	unsigned char	dp_scyl;	/* start cylinder, INAM */
+	unsigned char	dp_typ;		/* partition type */
+	unsigned char	dp_ehd;	/* end head, INAM */
+	unsigned char	dp_esect;	/* end sector, INAM */
+	unsigned char	dp_ecyl;	/* end cylinder, INAM */
+	unsigned long	dp_start;	/* absolute start sector number */
+	unsigned long	dp_size;	/* partition size in sectors */
 };
 
 /* Known DOS partition types. */
@@ -74,7 +76,7 @@ struct mbr_partition {
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct mbr_partition dosparts[NMBRPART];
+	struct dos_partition dosparts[NDOSPART];
 	struct dkbad bad;
 };
 

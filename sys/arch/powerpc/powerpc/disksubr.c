@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 1997/10/13 13:42:57 pefo Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 1997/10/14 17:11:12 pefo Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #define	b_cylin	b_resid
 
 #define BOOT_MAGIC 0xAA55
-#define BOOT_MAGIC_OFF (MBRPARTOFF+NMBRPART*sizeof(struct mbr_partition))
+#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
 
 void
 dk_establish(dk, dev)
@@ -66,7 +66,7 @@ dk_establish(dk, dev)
  * must be filled in before calling us.
  *
  * If dos partition table requested, attempt to load it and
- * find disklabel inside a MBR partition. Also, if bad block
+ * find disklabel inside a DOS partition. Also, if bad block
  * table needed, attempt to extract it as well. Return buffer
  * for use in signalling errors if requested.
  *
@@ -83,7 +83,7 @@ readdisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct mbr_partition *dp = osdep->dosparts, *dp2;
+	struct dos_partition *dp = osdep->dosparts, *dp2;
 	struct dkbad *bdp = &DKBAD(osdep);
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -112,7 +112,7 @@ readdisklabel(dev, strat, lp, osdep)
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
-	        daddr_t part_blkno = MBRSECTOR;
+	        daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
 		int wander = 1, n = 0, loop = 0;
 
@@ -136,38 +136,38 @@ readdisklabel(dev, strat, lp, osdep)
 				msg = "dos partition I/O error";
 				goto done;
 			}
-			bcopy(bp->b_data + MBRPARTOFF, dp, NMBRPART * sizeof(*dp));
+			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 
 			if (ourpart == -1) {
-				/* Search for our MBR partition */
-				for (dp2=dp, i=0; i < NMBRPART && ourpart == -1;
+				/* Search for our DOS partition */
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 				    i++, dp2++)
-					if (get_le(&dp2->mbr_size) &&
-					    dp2->mbr_type == DOSPTYP_OPENBSD)
+					if (get_le(&dp2->dp_size) &&
+					    dp2->dp_typ == DOSPTYP_OPENBSD)
 						ourpart = i;
-				for (dp2=dp, i=0; i < NMBRPART && ourpart == -1;
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 				    i++, dp2++)
-					if (get_le(&dp2->mbr_size) &&
-					    dp2->mbr_type == DOSPTYP_386BSD)
+					if (get_le(&dp2->dp_size) &&
+					    dp2->dp_typ == DOSPTYP_386BSD)
 						ourpart = i;
 				if (ourpart == -1)
 					goto donot;
 				/*
-				 * This is our MBR partition. need sector address
+				 * This is our DOS partition. need sector address
 				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
 				 */
 				dp2 = &dp[ourpart];
-				dospartoff = get_le(&dp2->mbr_start) + part_blkno;
-				cyl = DPCYL(dp2->mbr_scyl, dp2->mbr_ssect);
+				dospartoff = get_le(&dp2->dp_start) + part_blkno;
+				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 				/* XXX build a temporary disklabel */
-				lp->d_partitions[0].p_size = get_le(&dp2->mbr_size);
+				lp->d_partitions[0].p_size = get_le(&dp2->dp_size);
 				lp->d_partitions[0].p_offset =
-					get_le(&dp2->mbr_start) + part_blkno;
+					get_le(&dp2->dp_start) + part_blkno;
 				if (lp->d_ntracks == 0)
-					lp->d_ntracks = dp2->mbr_ehd + 1;
+					lp->d_ntracks = dp2->dp_ehd + 1;
 				if (lp->d_nsectors == 0)
-					lp->d_nsectors = DPSECT(dp2->mbr_esect);
+					lp->d_nsectors = DPSECT(dp2->dp_esect);
 				if (lp->d_secpercyl == 0)
 					lp->d_secpercyl = lp->d_ntracks *
 					    lp->d_nsectors;
@@ -177,16 +177,16 @@ donot:
 			 * In case the disklabel read below fails, we want to
 			 * provide a fake label in i-p.
 			 */
-			for (dp2=dp, i=0; i < NMBRPART && n < 8; i++, dp2++) {
+			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 				struct partition *pp = &lp->d_partitions[8+n];
 
-				if (get_le(&dp2->mbr_size))
-					pp->p_size = get_le(&dp2->mbr_size);
-				if (get_le(&dp2->mbr_start))
+				if (get_le(&dp2->dp_size))
+					pp->p_size = get_le(&dp2->dp_size);
+				if (get_le(&dp2->dp_start))
 					pp->p_offset =
-					    get_le(&dp2->mbr_start) + part_blkno;
+					    get_le(&dp2->dp_start) + part_blkno;
 
-				switch (dp2->mbr_type) {
+				switch (dp2->dp_typ) {
 				case DOSPTYP_UNUSED:
 					for (cp = (char *)dp2;
 					    cp < (char *)(dp2 + 1); cp++)
@@ -216,9 +216,9 @@ donot:
 					n++;
 					break;
 				case DOSPTYP_EXTEND:
-					part_blkno = get_le(&dp2->mbr_start) + extoff;
+					part_blkno = get_le(&dp2->dp_start) + extoff;
 					if (!extoff)
-						extoff = get_le(&dp2->mbr_start);
+						extoff = get_le(&dp2->dp_start);
 					wander = 1;
 					break;
 				default:
@@ -379,7 +379,7 @@ writedisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct mbr_partition *dp = osdep->dosparts, *dp2;
+	struct dos_partition *dp = osdep->dosparts, *dp2;
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, dospartoff, cyl, i;
@@ -394,24 +394,24 @@ writedisklabel(dev, strat, lp, osdep)
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
 		/* read master boot record */
-		bp->b_blkno = MBRSECTOR;
+		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = MBRSECTOR / lp->d_secpercyl;
+		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if ((error = biowait(bp)) != 0)
 			goto done;
 
 		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + MBRPARTOFF, dp,
-		    NMBRPART * sizeof(*dp));
+		bcopy(bp->b_data + DOSPARTOFF, dp,
+		    NDOSPART * sizeof(*dp));
 
-		for (dp2=dp, i=0; i < NMBRPART && ourpart == -1; i++, dp2++)
-			if (get_le(&dp2->mbr_size) && dp2->mbr_type == DOSPTYP_OPENBSD)
+		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_OPENBSD)
 				ourpart = i;
-		for (dp2=dp, i=0; i < NMBRPART && ourpart == -1; i++, dp2++)
-			if (get_le(&dp2->mbr_size) && dp2->mbr_type == DOSPTYP_386BSD)
+		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_386BSD)
 				ourpart = i;
 
 		if (ourpart != -1) {
@@ -421,8 +421,8 @@ writedisklabel(dev, strat, lp, osdep)
 			 * need sector address for SCSI/IDE,
 			 * cylinder for ESDI/ST506/RLL
 			 */
-			dospartoff = get_le(&dp2->mbr_start);
-			cyl = DPCYL(dp2->mbr_scyl, dp2->mbr_ssect);
+			dospartoff = get_le(&dp2->dp_start);
+			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 		}
 	}
 
