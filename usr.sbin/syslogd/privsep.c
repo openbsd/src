@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.16 2004/03/14 19:17:05 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.17 2004/04/02 21:44:50 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -208,10 +208,11 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			path[path_len - 1] = '\0';
 			check_tty_name(path, path_len);
 			fd = open(path, O_WRONLY|O_NONBLOCK, 0);
+			send_fd(socks[0], fd);
 			if (fd < 0)
 				warnx("priv_open_tty failed");
-			send_fd(socks[0], fd);
-			close(fd);
+			else
+				close(fd);
 			break;
 
 		case PRIV_OPEN_LOG:
@@ -224,29 +225,32 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			path[path_len - 1] = '\0';
 			check_log_name(path, path_len);
 			fd = open(path, O_WRONLY|O_APPEND|O_NONBLOCK, 0);
+			send_fd(socks[0], fd);
 			if (fd < 0)
 				warnx("priv_open_log failed");
-			send_fd(socks[0], fd);
-			close(fd);
+			else
+				close(fd);
 			break;
 
 		case PRIV_OPEN_UTMP:
 			dprintf("[priv]: msg PRIV_OPEN_UTMP received\n");
 			fd = open(_PATH_UTMP, O_RDONLY|O_NONBLOCK, 0);
+			send_fd(socks[0], fd);
 			if (fd < 0)
 				warnx("priv_open_utmp failed");
-			send_fd(socks[0], fd);
-			close(fd);
+			else
+				close(fd);
 			break;
 
 		case PRIV_OPEN_CONFIG:
 			dprintf("[priv]: msg PRIV_OPEN_CONFIG received\n");
 			stat(config_file, &cf_info);
 			fd = open(config_file, O_RDONLY|O_NONBLOCK, 0);
+			send_fd(socks[0], fd);
 			if (fd < 0)
 				warnx("priv_open_config failed");
-			send_fd(socks[0], fd);
-			close(fd);
+			else
+				close(fd);
 			break;
 
 		case PRIV_CONFIG_MODIFIED:
