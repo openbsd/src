@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/09/01 16:47:03 drahn Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/09/02 04:54:40 drahn Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -39,11 +39,11 @@ ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 
 cd: ${BSD_RD}
 	-rm -rf ${.OBJDIR}/cd-dir/
-	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/powerpc/
-	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd
-	strip ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd
-	gzip -9 ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd
-	mv ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd
+	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/macppc/
+	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
+	strip ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
+	gzip -9 ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
+	mv ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
 	mkhybrid -r -part -hfs -o ${.OBJDIR}/cd${OSrev}.fs ${.OBJDIR}/cd-dir
 
@@ -53,10 +53,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/powerpc/conf && config RAMDISK
-	cd ${TOP}/../../sys/arch/powerpc/compile/RAMDISK && \
+	cd ${TOP}/../../sys/arch/macppc/conf && config RAMDISK
+	cd ${TOP}/../../sys/arch/macppc/compile/RAMDISK && \
 	    make clean && make depend && make
-	cp ${TOP}/../../sys/arch/powerpc/compile/RAMDISK/bsd bsd
+	cp ${TOP}/../../sys/arch/macppc/compile/RAMDISK/bsd bsd
 
 rd_setup: 
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
