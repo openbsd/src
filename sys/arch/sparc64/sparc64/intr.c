@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2001/09/21 02:02:22 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2001/11/28 05:32:11 jason Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -247,8 +247,9 @@ intr_establish(level, ih)
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
-		;
+		continue;
 	*p = ih;
+
 	/*
 	 * Store in fast lookup table
 	 */
@@ -259,44 +260,50 @@ intr_establish(level, ih)
 		Debugger();
 	}
 #endif
-	if (ih->ih_number < MAXINTNUM && ih->ih_number >= 0) {
-		if ((q = intrlev[ih->ih_number])) {
-			struct intrhand *nih;
-			/*
-			 * Interrupt is already there.  We need to create a
-			 * new interrupt handler and interpose it.
-			 */
+
+	if (ih->ih_number <= 0 || ih->ih_number > MAXINTNUM)
+		panic("intr_establish: bad intr number %x", ih->ih_number);
+
+	q = intrlev[ih->ih_number];
+	if (q == NULL) {
+		/* No interrupt already there, just put handler in place. */
+		intrlev[ih->ih_number] = ih;
+	} else {
+		struct intrhand *nih;
+
+		/*
+		 * Interrupt is already there.  We need to create a
+		 * new interrupt handler and interpose it.
+		 */
 #ifdef DEBUG
-			printf("intr_establish: intr reused %x\n", 
-				ih->ih_number);
+		printf("intr_establish: intr reused %x\n", ih->ih_number);
 #endif
 
-			if (q->ih_fun != intr_list_handler) {
-				nih = (struct intrhand *)
-					malloc(sizeof(struct intrhand),
-						M_DEVBUF, M_NOWAIT);
-				/* Point the old IH at the new handler */
-				*nih = *q;
-				q->ih_fun = intr_list_handler;
-				q->ih_arg = (void *)nih;
-				nih->ih_next = NULL;
-			}
-			/* Add the ih to the head of the list */
-			ih->ih_next = (struct intrhand *)q->ih_arg;
-			q->ih_arg = (void *)ih;
+		if (q->ih_fun != intr_list_handler) {
+			nih = (struct intrhand *)malloc(sizeof(struct intrhand),
+			    M_DEVBUF, M_NOWAIT);
+			/* Point the old IH at the new handler */
+			*nih = *q;
+			q->ih_fun = intr_list_handler;
+			q->ih_arg = (void *)nih;
+			nih->ih_next = NULL;
 		}
-		else
-			intrlev[ih->ih_number] = ih;
+		nih = (struct intrhand *)malloc(sizeof(struct intrhand),
+		    M_DEVBUF, M_NOWAIT);
+		*nih = *ih;
+		/* Add the ih to the head of the list */
+		nih->ih_next = (struct intrhand *)q->ih_arg;
+		q->ih_arg = (void *)nih;
+	}
+
 #ifdef NOT_DEBUG
-		printf("\nintr_establish: vector %x pil %x mapintr %p "
-			"clrintr %p fun %p arg %p\n",
-			ih->ih_number, ih->ih_pil, (void *)ih->ih_map,
-			(void *)ih->ih_clr, (void *)ih->ih_fun,
-			(void *)ih->ih_arg);
-		/*Debugger();*/
+	printf("\nintr_establish: vector %x pil %x mapintr %p "
+	    "clrintr %p fun %p arg %p\n",
+	    ih->ih_number, ih->ih_pil, (void *)ih->ih_map,
+	    (void *)ih->ih_clr, (void *)ih->ih_fun,
+	    (void *)ih->ih_arg);
 #endif
-	} else
-		panic("intr_establish: bad intr number %x", ih->ih_number);
+
 	splx(s);
 }
 
