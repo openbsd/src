@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.22 2005/01/07 18:45:13 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.23 2005/01/13 00:03:28 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -139,7 +139,10 @@ Aliases:
 .Ic adm ,
 .Ic rcs .
 .It Ic annotate
-Show last revision where each line was modified.
+For each line of any files specified, show information about its
+last revision.
+The information given is the last revision when a modification occurred,
+the author's name, and the date of the revision.
 .Pp
 Aliases:
 .Ic ann .
