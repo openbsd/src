@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.47 1998/04/25 00:15:21 deraadt Exp $
+$OpenBSD: pcidevs,v 1.48 1998/04/25 20:31:05 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -892,6 +892,7 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Realtek (Creative Labs?) products */
 product	REALTEK	RT8029		0x8029	Ethernet
+product	REALTEK	RT8139		0x8139	100Mb Ethernet
 
 /* S3 products */
 product S3 VIRGE		0x5631	ViRGE
