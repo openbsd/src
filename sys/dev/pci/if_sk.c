@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.33 2003/08/12 05:23:06 nate Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.34 2003/10/13 21:22:19 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -107,10 +107,13 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
 #include <netinet/if_ether.h>
 #endif
 
 #include <net/if_media.h>
+#include <net/if_vlan_var.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -158,8 +161,7 @@ int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int sk_init_rx_ring(struct sk_if_softc *);
 int sk_init_tx_ring(struct sk_if_softc *);
 u_int8_t sk_vpd_readbyte(struct sk_softc *, int);
-void sk_vpd_read_res(struct sk_softc *,
-					struct vpd_res *, int);
+void sk_vpd_read_res(struct sk_softc *, struct vpd_res *, int);
 void sk_vpd_read(struct sk_softc *);
 
 int sk_xmac_miibus_readreg(struct device *, int, int);
@@ -174,6 +176,7 @@ u_int32_t sk_calchash(caddr_t);
 void sk_setfilt(struct sk_if_softc *, caddr_t, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
+void sk_rxcsum(struct ifnet *, struct mbuf *, const u_int16_t, const u_int16_t);
 
 #ifdef SK_DEBUG
 #define DPRINTF(x)	if (skdebug) printf x
@@ -652,6 +655,9 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[i + 1];
 			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if,i+1);
 		}
+		rd->sk_rx_ring[i].sk_csum1_start = ETHER_HDR_LEN;
+		rd->sk_rx_ring[i].sk_csum2_start = ETHER_HDR_LEN +
+		    sizeof(struct ip);
 	}
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -1262,11 +1268,6 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE |
-	    PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_SCHNEIDERKOCH_GE:
@@ -1589,6 +1590,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	int			i, cur, total_len = 0;
 	u_int32_t		rxstat;
 	bus_dmamap_t		dmamap;
+	u_int16_t		csum1, csum2;
 
 	DPRINTFN(2, ("sk_rxeof\n"));
 
@@ -1606,6 +1608,9 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
 		sc_if->sk_cdata.sk_rx_map[cur] = 0;
+
+		csum1 = sc_if->sk_rdata->sk_rx_ring[i].sk_csum1;
+		csum2 = sc_if->sk_rdata->sk_rx_ring[i].sk_csum2;
 
 		SK_INC(i, SK_RX_RING_CNT);
 
@@ -1643,15 +1648,109 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		ifp->if_ipackets++;
 
+		sk_rxcsum(ifp, m, csum1, csum2);
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
+
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
 	}
 
 	sc_if->sk_cdata.sk_rx_prod = i;
+}
+
+void
+sk_rxcsum(struct ifnet *ifp, struct mbuf *m, const u_int16_t csum1, const u_int16_t csum2)
+{
+	struct ether_header *eh;
+	struct ip *ip;
+	u_int8_t *pp;
+	int hlen, len, plen;
+	u_int16_t iph_csum, ipo_csum, ipd_csum, csum;
+
+	pp = mtod(m, u_int8_t *);
+	plen = m->m_pkthdr.len;
+	if (plen < sizeof(*eh))
+		return;
+	eh = (struct ether_header *)pp;
+	iph_csum = in_cksum_addword(csum1, (~csum2 & 0xffff));
+
+	if (eh->ether_type == htons(ETHERTYPE_VLAN)) {
+		u_int16_t *xp = (u_int16_t *)pp;
+
+		xp = (u_int16_t *)pp;
+		if (xp[1] != htons(ETHERTYPE_IP))
+			return;
+		iph_csum = in_cksum_addword(iph_csum, (~xp[0] & 0xffff));
+		iph_csum = in_cksum_addword(iph_csum, (~xp[1] & 0xffff));
+		xp = (u_int16_t *)(pp + sizeof(struct ip));
+		iph_csum = in_cksum_addword(iph_csum, xp[0]);
+		iph_csum = in_cksum_addword(iph_csum, xp[1]);
+		pp += EVL_ENCAPLEN;
+	} else if (eh->ether_type != htons(ETHERTYPE_IP))
+		return;
+
+	pp += sizeof(*eh);
+	plen -= sizeof(*eh);
+
+	ip = (struct ip *)pp;
+
+	if (ip->ip_v != IPVERSION)
+		return;
+
+	hlen = ip->ip_hl << 2;
+	if (hlen < sizeof(struct ip))
+		return;
+	if (hlen > ntohs(ip->ip_len))
+		return;
+
+	/* Don't deal with truncated or padded packets. */
+	if (plen != ntohs(ip->ip_len))
+		return;
+
+	len = hlen - sizeof(struct ip);
+	if (len > 0) {
+		u_int16_t *p;
+
+		p = (u_int16_t *)(ip + 1);
+		ipo_csum = 0;
+		for (ipo_csum = 0; len > 0; len -= sizeof(*p), p++)
+			ipo_csum = in_cksum_addword(ipo_csum, *p);
+		iph_csum = in_cksum_addword(iph_csum, ipo_csum);
+		ipd_csum = in_cksum_addword(csum2, (~ipo_csum & 0xffff));
+	} else
+		ipd_csum = csum2;
+
+	if (iph_csum != 0xffff) {
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+		return;
+	}
+	m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+
+	if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
+		return;                 /* ip frag, we're done for now */
+
+	pp += hlen;
+
+	/* Only know checksum protocol for udp/tcp */
+	if (ip->ip_p == IPPROTO_UDP) {
+		struct udphdr *uh = (struct udphdr *)pp;
+
+		if (uh->uh_sum == 0)    /* udp with no checksum */
+			return;
+	} else if (ip->ip_p != IPPROTO_TCP)
+		return;
+
+	csum = in_cksum_phdr(ip->ip_src.s_addr, ip->ip_dst.s_addr,
+	    htonl(ntohs(ip->ip_len) - hlen + ip->ip_p) + ipd_csum);
+	if (csum == 0xffff) {
+		m->m_pkthdr.csum |= (ip->ip_p == IPPROTO_TCP) ?
+		    M_TCP_CSUM_IN_OK : M_UDP_CSUM_IN_OK;
+	}
 }
 
 void
