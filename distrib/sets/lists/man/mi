@@ -1036,6 +1036,10 @@
 ./usr/share/man/cat4/alpha/tsc.0
 ./usr/share/man/cat4/alpha/tsp.0
 ./usr/share/man/cat4/amd64
+./usr/share/man/cat4/amd64/autoconf.0
+./usr/share/man/cat4/amd64/intro.0
+./usr/share/man/cat4/amd64/kmem.0
+./usr/share/man/cat4/amd64/mem.0
 ./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amphy.0
@@ -1066,6 +1070,12 @@
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/carp.0
 ./usr/share/man/cat4/cats
+./usr/share/man/cat4/cats/autoconf.0
+./usr/share/man/cat4/cats/fcom.0
+./usr/share/man/cat4/cats/footbridge.0
+./usr/share/man/cat4/cats/intro.0
+./usr/share/man/cat4/cats/kmem.0
+./usr/share/man/cat4/cats/mem.0
 ./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
