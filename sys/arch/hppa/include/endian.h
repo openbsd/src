@@ -1,7 +1,7 @@
-/*	$OpenBSD: endian.h,v 1.6 2001/06/29 06:13:14 mickey Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2000 Michael Shalayeff
+ * Copyright (c) 1998-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,15 +63,22 @@
  */
 #define	__swap16md(x)	__swap16gen(x)
 #else
-#define	__swap16md(x) ({			\
-	register u_int16_t __swap16md_x;	\
-						\
-	__asm  ("extru	%1,23,8,%0\n\t"		\
-		"dep	%1,23,8,%0"		\
-	       : "=&r" (__swap16md_x) : "r" (x));\
-	__swap16md_x;				\
+#define	__swap16md(x) ({						\
+	register u_int16_t __swap16md_x;				\
+									\
+	__asm  ("extru	%1,23,8,%0\n\t"					\
+		"dep	%1,23,8,%0"					\
+	       : "=&r" (__swap16md_x) : "r" (x));			\
+	__swap16md_x;							\
 })
 #endif
+
+#define __swap64md(x) ({						\
+	u_int64_t __swap64md_x = (x);					\
+									\
+	(u_int64_t)__swap32md(__swap64md_x >> 32) |			\
+	    (u_int64_t)__swap32md(__swap64md_x & 0xffffffff) << 32;	\
+})
 
 /* Tell sys/endian.h we have MD variants of the swap macros.  */
 #define MD_SWAP
