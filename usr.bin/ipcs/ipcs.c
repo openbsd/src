@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.10 1995/04/15 02:22:40 cgd Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -30,27 +30,32 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <nlist.h>
-#include <kvm.h>
-#include <err.h>
-
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/proc.h>
 #define _KERNEL
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
+#undef _KERNEL
 
-int	semconfig __P((int,...));
+#include <err.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
+#include <nlist.h>
+#include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+int	semconfig __P((int, ...));
 void	usage __P((void));
+
+extern	char *__progname;		/* from crt0.o */
 
 static struct nlist symbols[] = {
 	{"_sema"},
@@ -129,6 +134,7 @@ main(argc, argv)
 	int     display = SHMINFO | MSGINFO | SEMINFO;
 	int     option = 0;
 	char   *core = NULL, *namelist = NULL;
+	char	errbuf[_POSIX2_LINE_MAX];
 	int     i;
 
 	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != EOF)
@@ -207,7 +213,8 @@ main(argc, argv)
 	}
 
 	if ((display & (MSGINFO | MSGTOTAL)) &&
-	    kvm_read(kd, symbols[X_MSGINFO].n_value, &msginfo, sizeof(msginfo))) {
+	    (kvm_read(kd, symbols[X_MSGINFO].n_value,
+	     &msginfo, sizeof(msginfo)) == sizeof(msginfo))) {
 
 		if (display & MSGTOTAL) {
 			printf("msginfo:\n");
@@ -227,9 +234,19 @@ main(argc, argv)
 		if (display & MSGINFO) {
 			struct msqid_ds *xmsqids;
 
-			kvm_read(kd, symbols[X_MSQIDS].n_value, &msqids, sizeof(msqids));
-			xmsqids = malloc(sizeof(struct msqid_ds) * msginfo.msgmni);
-			kvm_read(kd, (u_long) msqids, xmsqids, sizeof(struct msqid_ds) * msginfo.msgmni);
+			if (kvm_read(kd, symbols[X_MSQIDS].n_value,
+			    &msqids, sizeof(msqids)) != sizeof(msqids))
+				errx(1, "kvm_read (%s): %s",
+				    symbols[X_MSQIDS].n_name, kvm_geterr(kd));
+
+			xmsqids = malloc(sizeof(struct msqid_ds) *
+			    msginfo.msgmni);
+
+			if (kvm_read(kd, (u_long)msqids, xmsqids,
+			    sizeof(struct msqid_ds) * msginfo.msgmni) !=
+			    sizeof(struct msqid_ds) * msginfo.msgmni)
+				errx(1, "kvm_read (msqids): %s",
+				    kvm_geterr(kd));
 
 			printf("Message Queues:\n");
 			printf("T     ID     KEY        MODE       OWNER    GROUP");
@@ -297,7 +314,9 @@ main(argc, argv)
 			    "SVID messages facility not configured in the system\n");
 		}
 	if ((display & (SHMINFO | SHMTOTAL)) &&
-	    kvm_read(kd, symbols[X_SHMINFO].n_value, &shminfo, sizeof(shminfo))) {
+	    (kvm_read(kd, symbols[X_SHMINFO].n_value, &shminfo,
+	     sizeof(shminfo)) == sizeof(shminfo))) {
+
 		if (display & SHMTOTAL) {
 			printf("shminfo:\n");
 			printf("\tshmmax: %7d\t(max shared memory segment size)\n",
@@ -314,10 +333,19 @@ main(argc, argv)
 		if (display & SHMINFO) {
 			struct shmid_ds *xshmids;
 
-			kvm_read(kd, symbols[X_SHMSEGS].n_value, &shmsegs, sizeof(shmsegs));
-			xshmids = malloc(sizeof(struct shmid_ds) * msginfo.msgmni);
-			kvm_read(kd, (u_long) shmsegs, xshmids, sizeof(struct shmid_ds) *
-			    shminfo.shmmni);
+			if (kvm_read(kd, symbols[X_SHMSEGS].n_value, &shmsegs,
+			    sizeof(shmsegs)) != sizeof(shmsegs))
+				errx(1, "kvm_read (%s): %s",
+				    symbols[X_SHMSEGS].n_name, kvm_geterr(kd));
+
+			xshmids = malloc(sizeof(struct shmid_ds) *
+			    msginfo.msgmni);
+
+			if (kvm_read(kd, (u_long)shmsegs, xshmids,
+			    sizeof(struct shmid_ds) * shminfo.shmmni) !=
+			    sizeof(struct shmid_ds) * shminfo.shmmni)
+				errx(1, "kvm_read (shmsegs): %s",
+				    kvm_geterr(kd));
 
 			printf("Shared Memory:\n");
 			printf("T     ID     KEY        MODE       OWNER    GROUP");
@@ -384,7 +412,8 @@ main(argc, argv)
 			    "SVID shared memory facility not configured in the system\n");
 		}
 	if ((display & (SEMINFO | SEMTOTAL)) &&
-	    kvm_read(kd, symbols[X_SEMINFO].n_value, &seminfo, sizeof(seminfo))) {
+	    (kvm_read(kd, symbols[X_SEMINFO].n_value, &seminfo,
+	     sizeof(seminfo)) == sizeof(seminfo))) {
 		struct semid_ds *xsema;
 
 		if (display & SEMTOTAL) {
@@ -416,9 +445,19 @@ main(argc, argv)
 				fprintf(stderr,
 				    "Can't lock semaphore facility - winging it...\n");
 			}
-			kvm_read(kd, symbols[X_SEMA].n_value, &sema, sizeof(sema));
-			xsema = malloc(sizeof(struct semid_ds) * seminfo.semmni);
-			kvm_read(kd, (u_long) sema, xsema, sizeof(struct semid_ds) * seminfo.semmni);
+			if (kvm_read(kd, symbols[X_SEMA].n_value, &sema,
+			    sizeof(sema)) != sizeof(sema))
+				errx(1, "kvm_read (%s): %s",
+				    symbols[X_SEMA].n_name, kvm_geterr(kd));
+
+			xsema = malloc(sizeof(struct semid_ds) *
+			    seminfo.semmni);
+
+			if (kvm_read(kd, (u_long)sema, xsema,
+			    sizeof(struct semid_ds) * seminfo.semmni) !=
+			    sizeof(struct semid_ds) * seminfo.semmni)
+				errx(1, "kvm_read (sema): %s",
+				    kvm_geterr(kd));
 
 			printf("Semaphores:\n");
 			printf("T     ID     KEY        MODE       OWNER    GROUP");
@@ -482,6 +521,7 @@ usage()
 {
 
 	fprintf(stderr,
-	    "usage: ipcs [-abcmopqst] [-C corefile] [-N namelist]\n");
+	    "usage: %s [-abcmopqst] [-C corefile] [-N namelist]\n",
+	    __progname);
 	exit(1);
 }
