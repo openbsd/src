@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.11 2003/11/03 07:06:17 david Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.12 2005/02/17 23:49:25 miod Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -1058,11 +1058,11 @@ hdc_rxselect(sc, unit)
 	 */
 	error = hdc_command (sc, DKC_CMD_DRSEL_RX33 | unit);
 
-	if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
+	if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 0)) {
 		printf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
 		p->udc_rtcnt &= ~UDC_RC_INVRDY;	/* clear INVRDY-flag */
 		error = hdc_command(sc, DKC_CMD_DRSEL_RX33 | unit);
-		if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
+		if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 0)) {
 			printf("diskette not ready(1): %x/%x\n", error,
 			    q->udc_dstat);
 			printf("floppy-drive offline?\n");
@@ -1076,7 +1076,7 @@ hdc_rxselect(sc, unit)
 	  		error = hdc_command(sc, DKC_CMD_STEPOUT_FDD);
 								/* step out */
 
-		if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 1)) {
+		if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 1)) {
 			printf("diskette not ready(2): %x/%x\n", error,
 			    q->udc_dstat);
 			printf("No floppy inserted or drive offline\n");
@@ -1085,7 +1085,7 @@ hdc_rxselect(sc, unit)
 
 		p->udc_rtcnt |= UDC_RC_INVRDY;
 		error = hdc_command(sc, DKC_CMD_DRSEL_RX33 | unit);
-		if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
+		if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 0)) {
 			printf("diskette not ready(3): %x/%x\n", error,
 			    q->udc_dstat);
 			printf("no floppy inserted or floppy-door open\n");
