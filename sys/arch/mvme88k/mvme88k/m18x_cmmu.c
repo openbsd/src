@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.13 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.14 2001/08/31 01:52:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -2319,8 +2319,6 @@ m18x_cmmu_cache_state(addr, supervisor_flag)
 
 }
 
-#endif /* DDB */
-
 void
 m18x_show_cmmu_info(addr)
 	unsigned addr;
@@ -2336,3 +2334,5 @@ m18x_show_cmmu_info(addr)
 			m18x_cmmu_show_translation(addr, 1, 0, cmmu_num);
 		}
 }
+
+#endif /* DDB */

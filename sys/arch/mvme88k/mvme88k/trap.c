@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2001/08/31 01:06:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2001/08/31 01:52:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -410,7 +410,9 @@ trap18x(unsigned type, struct m88100_saved_state *frame)
 		 */
 		if ((unsigned)map & 3) {
 			printf("map is not word aligned! 0x%x\n", map);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 		if ((frame->dpfsr >> 16 & 0x7) == 0x4	     /* seg fault  */
 		    || (frame->dpfsr >> 16 & 0x7) == 0x5) {  /* page fault */
@@ -493,7 +495,9 @@ outtahere:
 		map = &vm->vm_map;
 		if ((unsigned)map & 3) {
 			printf("map is not word aligned! 0x%x\n", map);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 		/* Call vm_fault() to resolve non-bus error faults */
 		if ((frame->ipfsr >> 16 & 0x7) != 0x3 &&

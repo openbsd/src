@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.8 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.9 2001/08/31 01:52:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -71,8 +71,6 @@
 #include <ddb/db_output.h>
 #endif
 
-#define CMMU_DEBUG 1
-
 #ifdef DEBUG
 #define DB_CMMU		0x4000	/* MMU debug */
 unsigned int debuglevel = 0;
@@ -92,13 +90,7 @@ unsigned int debuglevel = 0;
 #define REGS(cpu, data) (*CMMU(cpu, data)->cmmu_regs)
 
 /* prototypes */
-#ifdef CMMU_DEBUG
-void m197_show_apr __P((unsigned));
-void m197_show_sctr __P((unsigned));
-#endif
 void m197_cmmu_store __P((int, int, unsigned));
-void m197_setup_cmmu_config __P((void));
-void m197_setup_board_config __P((void));
 int m197_cmmu_alive __P((int));
 unsigned m197_cmmu_get __P((int, int));
 void m197_cmmu_set __P((int, unsigned, int, int, int, int, vm_offset_t));
@@ -106,9 +98,6 @@ int probe_mmu __P((vm_offset_t, int));
 void m197_cmmu_sync_cache __P((vm_offset_t, int));
 void m197_cmmu_sync_inval_cache __P((vm_offset_t, int));
 void m197_cmmu_inval_cache __P((vm_offset_t, int));
-void m197_cmmu_show_translation __P((unsigned, unsigned, unsigned, int));
-void m197_show_cmmu_info __P((unsigned));
-void m197_cmmu_cache_state __P((unsigned, unsigned));
 
 /* 
  * This lock protects the cmmu SAR and SCR's; other ports 
