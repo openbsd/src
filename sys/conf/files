@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.253 2002/06/09 22:03:43 niklas Exp $
+#	$OpenBSD: files,v 1.254 2002/06/26 00:14:38 itojun Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -51,6 +51,7 @@ define	crypto
 define	systrace
 define	ether
 define	fddi
+define	ieee1394
 define	sppp
 define	token
 
@@ -283,6 +284,7 @@ define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 define	usbus { }			# USB attachment
+define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
@@ -299,6 +301,22 @@ file	dev/usb/ohci.c			ohci	needs-flag
 device	radio
 attach	radio at radiobus
 file dev/radio.c			radio	needs-flag
+
+#
+# IEEE 1212 routines
+define	ieee1212
+file	dev/std/ieee1212.c		ieee1212
+
+#
+# SBP2 routines for IEEE 1394
+#define	sbp2
+#file	dev/ieee1394/sbp2.c		sbp2
+
+# IEEE 1394 controllers
+# (These need to be here since it will have both PCI and CardBus attachments)
+#
+device	fwlynx: fwbus
+device	fwohci: fwbus
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
@@ -628,6 +646,7 @@ file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			enc			needs-count
 file net/if_pflog.c			pflog			needs-count
 file net/if_gre.c			gre			needs-count
+#file net/if_ieee1394subr.c		ieee1394
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
@@ -649,6 +668,7 @@ file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
 file netinet/if_atm.c			atm
 file netinet/if_ether.c			ether
+#file netinet/if_ieee1394arp.c		ieee1394 & inet
 file netinet/in4_cksum.c		inet
 file netinet/igmp.c			inet
 file netinet/in.c			inet
