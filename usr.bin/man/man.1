@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.5 1998/07/20 00:19:10 art Exp $
+.\"	$OpenBSD: man.1,v 1.6 1998/07/20 01:15:24 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,7 @@
 .Ar name Ar ...
 .Nm man
 .Fl k Ar keyword
+.Fl f Ar filename
 .Sh DESCRIPTION
 The
 .Nm man
@@ -133,8 +134,19 @@ and
 .Ar name
 combination.
 .It Fl k
-Locate commands matching
+Locate manpages matching
 .Ar keyword
+in much the same way as
+.Xr apropos 1
+works (in fact, it runs
+.Xr apropos 1
+for you).
+.It Fl f
+Locate manpages matching the
+.Ar command
+in much the same way
+.Xr whatis 1
+works.
 .El
 .Pp
 The optional
