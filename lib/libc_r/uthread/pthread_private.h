@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.24 2001/08/26 00:49:03 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.25 2001/08/29 18:33:54 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -37,6 +37,15 @@
 
 #ifndef _PTHREAD_PRIVATE_H
 #define _PTHREAD_PRIVATE_H
+
+/*
+ * Evaluate the storage class specifier.
+ */
+#ifdef GLOBAL_PTHREAD_PRIVATE
+#define SCLASS
+#else
+#define SCLASS extern
+#endif
 
 /*
  * Include files.
@@ -783,94 +792,229 @@ void _thread_machdep_restore_float_state(struct _machdep_state* statep);
  */
 
 /* Kernel thread structure used when there are no running threads: */
-extern struct pthread   _thread_kern_thread;
+SCLASS struct pthread	_thread_kern_thread;
 
 /* Ptr to the thread structure for the running thread: */
-extern struct pthread   * volatile _thread_run;
+SCLASS struct pthread	* volatile _thread_run
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= &_thread_kern_thread;
+#else
+;
+#endif
 
 /* Ptr to the thread structure for the last user thread to run: */
-extern struct pthread   * volatile _last_user_thread;
+SCLASS struct pthread	* volatile _last_user_thread
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= &_thread_kern_thread;
+#else
+;
+#endif
 
 /*
  * Ptr to the thread running in single-threaded mode or NULL if
  * running multi-threaded (default POSIX behaviour).
  */
-extern struct pthread   * volatile _thread_single;
+SCLASS struct pthread	* volatile _thread_single
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL;
+#else
+;
+#endif
 
-extern _thread_list_t		_thread_list;
+SCLASS _thread_list_t		_thread_list
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= TAILQ_HEAD_INITIALIZER(_thread_list);
+#else
+;
+#endif
 
 /*
  * Array of kernel pipe file descriptors that are used to ensure that
  * no signals are missed in calls to _select.
  */
-extern int		_thread_kern_pipe[2];
-extern volatile int	_queue_signals;
-extern volatile int	_thread_kern_in_sched;
+SCLASS int		_thread_kern_pipe[2]
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= {
+	-1,
+	-1
+};
+#else
+;
+#endif
+SCLASS int		volatile _queue_signals
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
+SCLASS int		volatile _thread_kern_in_sched
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
+
+SCLASS int		_sig_in_handler
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
+
+/* Time of day at last scheduling timer signal: */
+SCLASS struct timeval volatile	_sched_tod
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= { 0, 0 };
+#else
+;
+#endif
+
+/*
+ * Current scheduling timer ticks; used as resource usage.
+ */
+SCLASS unsigned int volatile	_sched_ticks
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
 
 /* Last time that an incremental priority update was performed: */
 extern struct timeval   kern_inc_prio_time;
 
 /* Dead threads: */
-extern _thread_list_t		_dead_list;
+SCLASS _thread_list_t		_dead_list
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= TAILQ_HEAD_INITIALIZER(_dead_list);
+#else
+;
+#endif
 
 /* Initial thread: */
-extern struct pthread *_thread_initial;
+SCLASS struct pthread *_thread_initial
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL;
+#else
+;
+#endif
 
 /* Default thread attributes: */
-extern struct pthread_attr pthread_attr_default;
+SCLASS struct pthread_attr pthread_attr_default
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= { SCHED_RR, 0, TIMESLICE_USEC, PTHREAD_DEFAULT_PRIORITY,
+	PTHREAD_CREATE_RUNNING, PTHREAD_CREATE_JOINABLE, NULL, NULL, NULL,
+	PTHREAD_STACK_DEFAULT };
+#else
+;
+#endif
 
 /* Default mutex attributes: */
-extern struct pthread_mutex_attr pthread_mutexattr_default;
+SCLASS struct pthread_mutex_attr pthread_mutexattr_default
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= { PTHREAD_MUTEX_DEFAULT, PTHREAD_PRIO_NONE, 0, 0 };
+#else
+;
+#endif
 
 /* Default condition variable attributes: */
-extern struct pthread_cond_attr pthread_condattr_default;
+SCLASS struct pthread_cond_attr pthread_condattr_default
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= { COND_TYPE_FAST, 0 };
+#else
+;
+#endif
 
 /*
  * Standard I/O file descriptors need special flag treatment since
  * setting one to non-blocking does all on *BSD. Sigh. This array
  * is used to store the initial flag settings.
  */
-extern int	_pthread_stdio_flags[3];
+SCLASS int	_pthread_stdio_flags[3];
 
 /* File table information: */
-extern struct fd_table_entry **_thread_fd_table;
+SCLASS struct fd_table_entry **_thread_fd_table
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL;
+#else
+;
+#endif
 
 /* Table for polling file descriptors: */
-extern struct pollfd *_thread_pfd_table;
+SCLASS struct pollfd *_thread_pfd_table
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL;
+#else
+;
+#endif
 
-extern const int dtablecount;
-extern int    _thread_dtablesize;       /* Descriptor table size.           */
+SCLASS const int dtablecount
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 4096/sizeof(struct fd_table_entry);
+#else
+;
+#endif
+SCLASS int    _thread_dtablesize	/* Descriptor table size.	*/
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
 
-extern int    _clock_res_nsec;		/* Clock resolution in nsec.	*/
+SCLASS int    _clock_res_nsec		/* Clock resolution in nsec.	*/
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= CLOCK_RES_NSEC;
+#else
+;
+#endif
 
 /* Garbage collector mutex and condition variable. */
-extern	pthread_mutex_t _gc_mutex;
-extern	pthread_cond_t  _gc_cond;
+SCLASS	pthread_mutex_t _gc_mutex
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL
+#endif
+;
+SCLASS	pthread_cond_t  _gc_cond
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL
+#endif
+;
 
 /*
  * Array of signal actions for this process.
  */
-extern struct  sigaction _thread_sigact[NSIG];
+SCLASS struct  sigaction _thread_sigact[NSIG];
 
 /*
  * Scheduling queues:
  */
-extern pq_queue_t		_readyq;
-extern _thread_list_t		_waitingq;
+SCLASS pq_queue_t		_readyq;
+SCLASS _thread_list_t		_waitingq;
 
 /*
  * Work queue:
  */
-extern _thread_list_t		_workq;
+SCLASS _thread_list_t		_workq;
 
 /* Tracks the number of threads blocked while waiting for a spinlock. */
-extern	volatile int	_spinblock_count;
+SCLASS volatile int	_spinblock_count
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0
+#endif
+;
 
 /* Indicates that the signal queue needs to be checked. */
-extern	volatile int	_sigq_check_reqd;
+SCLASS volatile int	_sigq_check_reqd
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0
+#endif
+;
 
 /* Thread switch hook. */
-extern	pthread_switch_routine_t _sched_switch_hook;
+SCLASS pthread_switch_routine_t _sched_switch_hook
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= NULL
+#endif
+;
 
 /*
  * Spare stack queue.  Stacks of default size are cached in order to reduce
@@ -881,7 +1025,15 @@ typedef SLIST_HEAD(, stack)	_stack_list_t;
 extern _stack_list_t		_stackq;
 
 /* Used for _PTHREADS_INVARIANTS checking. */
-extern int	_thread_kern_new_state;
+SCLASS int	_thread_kern_new_state
+#ifdef GLOBAL_PTHREAD_PRIVATE 
+= 0;
+#else
+;
+#endif
+
+/* Undefine the storage class specifier: */
+#undef SCLASS
 
 /*
  * Function prototype definitions.
