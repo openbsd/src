@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.24 2001/03/25 02:44:42 csapuntz Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.25 2001/04/04 02:39:17 jason Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ bpf_detachd(d)
 
 		d->bd_promisc = 0;
 		error = ifpromisc(bp->bif_ifp, 0);
-		if (error && error != EINVAL)
+		if (error && !(error == EINVAL || error == ENODEV))
 			/*
 			 * Something is really wrong if we were able to put
 			 * the driver into promiscuous mode, but can't
