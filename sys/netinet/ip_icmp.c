@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.11 1998/12/31 11:50:13 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.12 1998/12/31 12:27:11 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -149,7 +149,8 @@ icmp_error(n, type, code, dest, destifp)
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
 	nip->ip_len = htons((u_int16_t)(nip->ip_len + oiplen));
-
+	/* XXX should correct nip->ip_sum */
+	
 	/*
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
