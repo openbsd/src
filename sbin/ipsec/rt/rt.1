@@ -1,4 +1,4 @@
-.\" $OpenBSD: rt.1,v 1.1 1997/09/05 10:07:25 provos Exp $
+.\" $OpenBSD: rt.1,v 1.2 1998/03/05 09:30:52 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -52,7 +52,7 @@ The
 .Nm rt
 utility creates a routing entry for IPSec. A Security association
 must already be established with either
-.Xr photurisd 1
+.Xr photurisd 8
 or
 .Xr ipsecadm 1 .
 The arguments are: 
@@ -104,4 +104,4 @@ rt localip 255.255.255.255 remote 255.255.255.255 -1 -1 -1 remote SPI 1
 .Sh SEE ALSO
 .Xr ipsecadm 1 ,
 .Xr netstat 1 , 
-.Xr photurisd 1 .
+.Xr photurisd 8 .
