@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.5 2002/06/07 03:32:04 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.17 2003/05/26 10:05:07 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-static char rcsid[] = "$OpenBSD: socket.c,v 1.5 2002/06/07 03:32:04 itojun Exp $";
+static char rcsid[] = "$OpenBSD: socket.c,v 1.6 2003/05/27 02:19:44 itojun Exp $";
 #endif
 #endif
 
@@ -173,6 +173,27 @@ struct host_info *host;
     }
     if (getnameinfo(sa, sa->sa_len, host->name, sizeof(host->name), NULL, 0,
         NI_NAMEREQD) == 0) {
+	/*
+	 * if reverse lookup result looks like a numeric hostname,
+	 * someone is trying to trick us by PTR record like following:
+	 *	1.1.1.10.in-addr.arpa.  IN PTR  2.3.4.5
+	 */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+#ifdef APPEND_DOT
+	if (getaddrinfo(append_dot(host->name), "0", &hints, &res0) == 0)
+#else
+	if (getaddrinfo(host->name, "0", &hints, &res0) == 0)
+#endif
+	{
+	    tcpd_warn("Nasty PTR record is configured");
+	    freeaddrinfo(res0);
+	    /* name is bad, clobber it */
+	    (void)strlcpy(host->name, paranoid, sizeof(host->name));
+	    return;
+	}
+	 
 	/*
 	 * Verify that the address is a member of the address list returned
 	 * by getaddrinfo(hostname).
