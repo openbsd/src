@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.16 2003/02/05 19:24:13 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.17 2003/03/12 09:06:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -160,38 +160,55 @@ harmony_attach(parent, self, aux)
 		return;
 	}
 
+	cntl = READ_REG(sc, HARMONY_ID);
+	switch ((cntl & ID_REV_MASK)) {
+	case ID_REV_TS:
+		sc->sc_teleshare = 1;
+	case ID_REV_NOTS:
+		break;
+	default:
+		printf(": unknown id == 0x%02x\n",
+		    (cntl & ID_REV_MASK) >> ID_REV_SHIFT);
+		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
+		return;
+	}
+
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct harmony_empty),
 	    PAGE_SIZE, 0, &sc->sc_empty_seg, 1, &sc->sc_empty_rseg,
 	    BUS_DMA_NOWAIT) != 0) {
-		printf(": couldn't alloc empty memory\n");
+		printf(": couldn't alloc DMA memory\n");
+		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_empty_seg, 1,
 	    sizeof(struct harmony_empty), (caddr_t *)&sc->sc_empty_kva,
 	    BUS_DMA_NOWAIT) != 0) {
-		printf(": couldn't map empty memory\n");
+		printf(": couldn't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
 		    sc->sc_empty_rseg);
+		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
 		return;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct harmony_empty), 1,
 	    sizeof(struct harmony_empty), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_empty_map) != 0) {
-		printf(": can't create empty dmamap\n");
+		printf(": can't create DMA map\n");
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_empty_kva,
 		    sizeof(struct harmony_empty));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
 		    sc->sc_empty_rseg);
+		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
 		return;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_empty_map, sc->sc_empty_kva,
 	    sizeof(struct harmony_empty), NULL, BUS_DMA_NOWAIT) != 0) {
-		printf(": can't load empty dmamap\n");
+		printf(": can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_empty_map);
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_empty_kva,
 		    sizeof(struct harmony_empty));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
 		    sc->sc_empty_rseg);
+		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
 		return;
 	}
 
@@ -227,7 +244,11 @@ harmony_attach(parent, self, aux)
 
 	cntl = READ_REG(sc, HARMONY_CNTL);
 	rev = (cntl & CNTL_CODEC_REV_MASK) >> CNTL_CODEC_REV_SHIFT;
-	printf(": rev %u\n", rev);
+	printf(": rev %u", rev);
+
+	if (sc->sc_teleshare)
+		printf(", teleshare");
+	printf("\n");
 
 	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
 		sc->sc_hasulinear8 = 1;
@@ -311,6 +332,12 @@ harmony_intr(vsc)
 		if (sc->sc_capturing && c->c_intr != NULL)
 			(*c->c_intr)(c->c_intrarg);
 	}
+
+	if (READ_REG(sc, HARMONY_OV) & OV_OV) {
+		sc->sc_ov = 1;
+		WRITE_REG(sc, HARMONY_OV, 0);
+	} else
+		sc->sc_ov = 0;
 
 	harmony_intr_enable(sc);
 
@@ -728,6 +755,12 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 			break;
 		err = 0;
 		break;
+	case HARMONY_PORT_INPUT_OV:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
+		cp->un.ord = sc->sc_ov ? 1 : 0;
+		err = 0;
+		break;
 	case HARMONY_PORT_OUTPUT_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
@@ -787,6 +820,17 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 		strcpy(dip->label.name, AudioNinput);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+	case HARMONY_PORT_INPUT_OV:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = HARMONY_PORT_INPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, "overrange");
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
 		break;
 	case HARMONY_PORT_OUTPUT_LVL:
 		dip->type = AUDIO_MIXER_VALUE;

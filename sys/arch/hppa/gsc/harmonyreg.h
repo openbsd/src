@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmonyreg.h,v 1.3 2003/02/05 08:47:05 jason Exp $	*/
+/*	$OpenBSD: harmonyreg.h,v 1.4 2003/03/12 09:06:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -56,9 +56,11 @@
 
 /* HARMONY_ID */
 #define	ID_REV_MASK		0x00ff0000	/* revision mask: */
+#define	ID_REV_SHIFT		16
 #define	ID_REV_TS		0x00150000	/*  teleshare installed */
 #define	ID_REV_NOTS		0x00140000	/*  teleshare not installed */
 #define	ID_CHIID		0x0000f000	/* CHI identification */
+#define	ID_CHIID_SHIFT		12
 
 /* HARMONY_RESET */
 #define	RESET_RST		0x00000001	/* reset codec */
