@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.4 2001/06/24 23:24:15 provos Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.5 2001/06/25 05:00:58 smart Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -296,7 +296,8 @@ print_rule(struct rule *r)
 		}
 		if (r->src.port_op)
 			print_port(r->src.port_op, r->src.port[0],
-			    r->src.port[1], r->proto == 6 ? "tcp" : "udp");
+			    r->src.port[1],
+			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
 
 		printf("to ");
 		if (!r->dst.addr)
@@ -313,7 +314,8 @@ print_rule(struct rule *r)
 		}
 		if (r->dst.port_op)
 			print_port(r->dst.port_op, r->dst.port[0],
-			    r->dst.port[1], r->proto == 6 ? "tcp" : "udp");
+			    r->dst.port[1],
+			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
 	}
 	if (r->flags || r->flagset) {
 		printf("flags ");
@@ -406,7 +408,7 @@ rule_port(char *w, u_int8_t p)
 	struct servent *s;
 	if (isdigit(*w))
 		return (htons(atoi(w)));
-	s = getservbyname(w, p == 6 ? "tcp" : "udp");
+	s = getservbyname(w, p == IPPROTO_TCP ? "tcp" : "udp");
 	if (s == NULL)
 		return (0);
 	return (s->s_port);
@@ -519,7 +521,8 @@ parse_rule(int n, char *l, struct rule *r)
 		}
 
 		/* source port */
-		if (((r->proto == 6) || (r->proto == 17)) && !strcmp(w, "port")) {
+		if (((r->proto == IPPROTO_TCP) || (r->proto == IPPROTO_UDP)) &&
+		    !strcmp(w, "port")) {
 			w = next_word(&l);
 			if (!strcmp(w, "=" ))
 				r->src.port_op = 2;
@@ -577,7 +580,8 @@ parse_rule(int n, char *l, struct rule *r)
 		}
 
 		/* destination port */
-		if (((r->proto == 6) || (r->proto == 17)) && !strcmp(w, "port")) {
+		if (((r->proto == IPPROTO_TCP) || (r->proto == IPPROTO_UDP)) &&
+		    !strcmp(w, "port")) {
 			w = next_word(&l);
 			if (!strcmp(w, "=" ))
 				r->dst.port_op = 2;
@@ -617,7 +621,7 @@ parse_rule(int n, char *l, struct rule *r)
 
 	/* flags */
 	if (!strcmp(w, "flags")) {
-		if (r->proto != 6) {
+		if (r->proto != IPPROTO_TCP) {
 			fprintf(stderr, "error on line %i: flags only valid for proto tcp\n", n);
 			return (0);
 		}
@@ -631,7 +635,7 @@ parse_rule(int n, char *l, struct rule *r)
 
 	/* icmp type/code */
 	if (!strcmp(w, "icmp-type")) {
-		if (r->proto != 1) {
+		if (r->proto != IPPROTO_ICMP) {
 			fprintf(stderr, "error on line %i: icmp-type only valid for proto icmp\n", n);
 			return (0);
 		}
