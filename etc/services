@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.54 2003/12/16 13:44:49 jakob Exp $
+#	$OpenBSD: services,v 1.55 2003/12/16 13:46:34 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -145,6 +145,8 @@ afpovertcp	548/udp				# AFP over TCP
 rtsp		554/tcp				# Real Time Stream Control Proto
 rtsp		554/udp				# Real Time Stream Control Proto
 submission	587/tcp		msa		# mail message submission
+ipp		631/tcp				# Internet Printing Protocol
+ipp		631/udp				# Internet Printing Protocol
 ldaps		636/tcp				# LDAP over SSL
 ldaps		636/udp
 submission	587/udp		msa		# mail message submission
