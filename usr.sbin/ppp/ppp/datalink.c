@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.31 2000/06/13 09:57:51 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.32 2000/07/19 11:06:32 brian Exp $
  */
 
 #include <sys/param.h>
@@ -45,10 +45,10 @@
 #include "defs.h"
 #include "timer.h"
 #include "fsm.h"
-#include "lcp.h"
 #include "descriptor.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "async.h"
 #include "throughput.h"
 #include "ccp.h"

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: deflate.c,v 1.9 2000/02/27 01:38:25 brian Exp $
+ *	$OpenBSD: deflate.c,v 1.10 2000/07/19 11:06:33 brian Exp $
  */
 
 #include <sys/types.h>
@@ -38,6 +38,8 @@
 #include "log.h"
 #include "timer.h"
 #include "fsm.h"
+#include "lqr.h"
+#include "hdlc.h"
 #include "lcp.h"
 #include "ccp.h"
 #include "deflate.h"

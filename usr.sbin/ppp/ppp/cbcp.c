@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: cbcp.c,v 1.13 2000/02/27 01:38:24 brian Exp $
+ *	$OpenBSD: cbcp.c,v 1.14 2000/07/19 11:06:31 brian Exp $
  */
 
 #include <sys/param.h>
@@ -41,9 +41,9 @@
 #include "lqr.h"
 #include "mbuf.h"
 #include "fsm.h"
-#include "lcp.h"
 #include "throughput.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "ccp.h"
 #include "link.h"
 #include "async.h"

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: lqr.c,v 1.10 2000/06/20 09:13:31 brian Exp $
+ * $OpenBSD: lqr.c,v 1.11 2000/07/19 11:06:35 brian Exp $
  *
  *	o LQR based on RFC1333
  *
@@ -40,9 +40,9 @@
 #include "fsm.h"
 #include "acf.h"
 #include "proto.h"
-#include "lcp.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "async.h"
 #include "throughput.h"
 #include "ccp.h"

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: prompt.c,v 1.7 2000/02/27 01:38:28 brian Exp $
+ *	$OpenBSD: prompt.c,v 1.8 2000/07/19 11:06:37 brian Exp $
  */
 
 #include <sys/param.h>
@@ -49,7 +49,6 @@
 #include "descriptor.h"
 #include "prompt.h"
 #include "fsm.h"
-#include "lcp.h"
 #include "auth.h"
 #include "iplist.h"
 #include "throughput.h"
@@ -57,6 +56,7 @@
 #include "mbuf.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "async.h"

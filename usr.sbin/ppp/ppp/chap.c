@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap.c,v 1.20 2000/02/27 01:38:25 brian Exp $
+ * $OpenBSD: chap.c,v 1.21 2000/07/19 11:06:31 brian Exp $
  *
  *	TODO:
  */
@@ -49,9 +49,9 @@
 #include "timer.h"
 #include "fsm.h"
 #include "proto.h"
-#include "lcp.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "auth.h"
 #include "async.h"
 #include "throughput.h"

@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: pap.c,v 1.13 2000/02/27 01:38:27 brian Exp $
+ * $OpenBSD: pap.c,v 1.14 2000/07/19 11:06:35 brian Exp $
  *
  *	TODO:
  */
@@ -38,11 +38,11 @@
 #include "defs.h"
 #include "timer.h"
 #include "fsm.h"
-#include "lcp.h"
 #include "auth.h"
 #include "pap.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "proto.h"
 #include "async.h"
 #include "throughput.h"

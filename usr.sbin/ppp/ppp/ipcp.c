@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.c,v 1.24 2000/06/13 09:57:51 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.25 2000/07/19 11:06:34 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -59,12 +59,12 @@
 #include "timer.h"
 #include "fsm.h"
 #include "proto.h"
-#include "lcp.h"
 #include "iplist.h"
 #include "throughput.h"
 #include "slcompress.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "lcp.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"
