@@ -17,7 +17,7 @@ OpenBSD again from scratch.
 But if you don't have a second disk or plan to do an installation via
 netbooting you don't have any choice about the partition sizes (at
 least not for the root and the swap partitions) because they are set
-in the simpleroot image to to 32M for root and 64M for swap. About the
+in the simpleroot image to 40M for root and 64M for swap. About the
 rest of your disk you can still decide yourself.
 
 Assuming a classic partition scheme with root (`/') and /usr filesystems,
