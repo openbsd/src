@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.23 2003/07/30 15:47:54 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2003/07/31 20:51:43 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.23 2003/07/30 15:47:54 millert Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.24 2003/07/31 20:51:43 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -307,6 +307,7 @@ char *
 fetchname(const char *at, int strip_leading, int assume_exists)
 {
 	char		*fullname, *name, *t, tmpbuf[200];
+	int		sleading;
 	struct stat	filestat;
 
 	if (at == NULL || *at == '\0')
@@ -323,9 +324,9 @@ fetchname(const char *at, int strip_leading, int assume_exists)
 	name = fullname = t = savestr(at);
 
 	/* Strip off up to `strip_leading' path components and NUL terminate. */
-	for (; *t != '\0' && !isspace(*t); t++) {
+	for (sleading = strip_leading; *t != '\0' && !isspace(*t); t++) {
 		if (t[0] == '/' && t[1] != '/' && t[1] != '\0')
-			if (--strip_leading >= 0)
+			if (--sleading >= 0)
 				name = t + 1;
 	}
 	*t = '\0';
