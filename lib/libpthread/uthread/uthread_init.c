@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.28 2003/02/04 22:14:27 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.29 2003/05/13 16:49:32 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 
+#include <dlfcn.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -361,7 +362,12 @@ _thread_init(void)
 	/* Initialise the garbage collector mutex and condition variable. */
 	if (pthread_mutex_init(&_gc_mutex,NULL) != 0 ||
 	    pthread_cond_init(&_gc_cond,NULL) != 0)
-		PANIC("Failed to initialise garbage collector mutex or condvar");
+		PANIC("Failed to initialise garbage collector mutex or cond");
+
+#if defined(__ELF__)
+	/* Register with dlctl for thread safe dlopen */
+	dlctl(NULL, DL_SETTHREADLCK, _thread_kern_lock);
+#endif
 	_thread_autoinit_dummy_decl = 0;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.26 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.27 2003/05/13 16:49:32 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -939,6 +939,22 @@ _thread_kern_set_timeout(const struct timespec * timeout)
 		}
 	}
 }
+
+/*
+ * Function registered with dlctl to lock/unlock the kernel for
+ * threade safe dlopen calls.
+ *	which == 0:	defer signals (stops scheduler)
+ *	which != 0:	undefer signals and process any queued sigs
+ */
+void
+_thread_kern_lock(int which)
+{
+	if (which == 0)
+		_thread_kern_sig_defer();
+	else
+		_thread_kern_sig_undefer();
+}
+
 
 void
 _thread_kern_sig_defer(void)
