@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.205 2003/03/04 22:18:43 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.206 2003/03/04 22:38:22 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1430,7 +1430,7 @@ For instance:
 .Ic from any to any\ 
 .Ic flags S/SA keep state
 .Xc
-.Xo Ic pass in proto tcp \
+.Xo Ic pass in proto tcp \ 
 .Ic from any to any\ 
 .Ic port 25 flags\ 
 .Ic S/SA keep state
@@ -1890,7 +1890,7 @@ rule excludes protocol AH from being translated.
 .Xo Ic no nat on fxp1 proto ah\ 
 .Ic from 144.19.74.0/24 to any
 .Xc
-.Xo Ic nat on fxp1 from 144.19.74.0/24\  
+.Xo Ic nat on fxp1 from 144.19.74.0/24\ 
 .Ic to any -> 204.92.77.100
 .Xc
 .Ed
@@ -1981,7 +1981,7 @@ listening for outbound ftp sessions captured to port 8081.
 .Xc
 .Pp
 # normalize all incoming traffic
-.Xo Ic scrub in on $ext_if\
+.Xo Ic scrub in on $ext_if\ 
 .Ic all fragment reassemble
 .Xc
 .Pp
