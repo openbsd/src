@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 1995/08/18 15:28:25 chopps Exp $	*/
+/*	$NetBSD: param.h,v 1.26 1996/01/28 19:12:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,8 +111,6 @@
 #ifndef NKMEMCLUSTERS
 #define	NKMEMCLUSTERS	(3072*1024/CLBYTES)
 #endif
-
-#define MAXPARTITIONS	16
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
