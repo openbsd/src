@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.35 1998/10/05 00:39:27 millert Exp $	*/
+/*	$OpenBSD: cd.c,v 1.36 1999/04/01 01:46:51 millert Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -115,7 +115,6 @@ void	cdminphys __P((struct buf *));
 void	cdgetdisklabel __P((dev_t, struct cd_softc *, struct disklabel *,
 			    struct cpu_disklabel *, int));
 void	cddone __P((struct scsi_xfer *));
-u_long	cd_size __P((struct cd_softc *, int));
 int	cd_get_mode __P((struct cd_softc *, struct cd_mode_data *, int));
 int	cd_set_mode __P((struct cd_softc *, struct cd_mode_data *));
 int	cd_play_big __P((struct cd_softc *, int, int ));
@@ -1113,48 +1112,6 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 }
 
 /*
- * Find out from the device what it's capacity is
- */
-u_long
-cd_size(cd, flags)
-	struct cd_softc *cd;
-	int flags;
-{
-	struct scsi_read_cd_cap_data rdcap;
-	struct scsi_read_cd_capacity scsi_cmd;
-	int blksize;
-	u_long size;
-
-	/*
-	 * make up a scsi command and ask the scsi driver to do
-	 * it for you.
-	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_CD_CAPACITY;
-
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks and a blocksize
-	 */
-	if (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), CDRETRIES,
-	    20000, NULL, flags | SCSI_DATA_IN) != 0)
-		return 0;
-
-	blksize = _4btol(rdcap.length);
-	if (blksize < 512 || blksize > 2048)
-		blksize = 2048;	/* some drives lie ! */
-	cd->params.blksize = blksize;
-
-	size = _4btol(rdcap.addr) + 1;
-	if (size < 100)
-		size = 400000;	/* ditto */
-	cd->params.disksize = size;
-
-	return size;
-}
-
-/*
  * Get the requested page into the buffer given
  */
 int
@@ -1344,13 +1301,47 @@ cd_get_parms(cd, flags)
 	struct cd_softc *cd;
 	int flags;
 {
+	struct scsi_read_cd_cap_data rdcap;
+	struct scsi_read_cd_capacity scsi_cmd;
+	int blksize;
+	u_long size;
 
 	/*
-	 * give a number of sectors so that sec * trks * cyls
-	 * is <= disk_size
+	 * make up a scsi command and ask the scsi driver to do
+	 * it for you.
 	 */
-	if (cd_size(cd, flags) == 0)
-		return ENXIO;
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.opcode = READ_CD_CAPACITY;
+
+	/*
+	 * If the command works, interpret the result as a 4 byte
+	 * number of blocks and a blocksize
+	 */
+	if (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), CDRETRIES,
+	    20000, NULL, flags | SCSI_DATA_IN) != 0) {
+		/*
+		 * Some CD-R devices and such will fail READ_CD_CAPACITY
+		 * when blank media is loaded.  We still want to be able
+		 * to open them, however.
+		 *
+		 * scsi_scsi_cmd() will log failure of the command; just use
+		 * the defaults.
+		 */
+		cd->params.blksize = 2048;
+		cd->params.disksize = 400000;
+		return 0;
+	}
+
+	blksize = _4btol(rdcap.length);
+	if (blksize < 512 || blksize > 2048)
+		blksize = 2048;	/* some drives lie ! */
+	cd->params.blksize = blksize;
+
+	size = _4btol(rdcap.addr) + 1;
+	if (size < 100)
+		size = 400000;	/* ditto */
+	cd->params.disksize = size;
 
 	return 0;
 }
