@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 2002 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: make_crypto.c,v 1.4 2003/01/12 18:54:46 nectar Exp $");
+RCSID("$KTH: make_crypto.c,v 1.4.2.1 2003/05/05 20:10:27 joda Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -66,6 +66,9 @@ main(int argc, char **argv)
     fputs("#include <openssl/md4.h>\n", f);
     fputs("#include <openssl/md5.h>\n", f);
     fputs("#include <openssl/sha.h>\n", f);
+#if ENABLE_AES
+    fputs("#include <openssl/aes.h>\n", f);
+#endif    
 #else
     fputs("#include <des.h>\n", f);
     fputs("#include <md4.h>\n", f);

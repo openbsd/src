@@ -1,3 +1,40 @@
+2003-05-08  Johan Danielsson  <joda@ratatosk.pdc.kth.se>
+
+	* Release 0.6
+
+2003-05-08  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* kuser/klist.c: 1.68->1.69: print tokens even if there isn't v4
+	support
+
+	* kuser/kdestroy.c: 1.14->1.15: destroy tokens even if there isn't
+	v4 support
+
+	* kuser/kinit.c: 1.90->1.91: print tokens even if there isn't v4
+	support
+
+2003-05-06  Johan Danielsson  <joda@pdc.kth.se>
+
+	* lib/krb5/name-45-test.c: need to use empty krb5.conf for some
+	tests
+
+	* lib/asn1/check-gen.c: there is no \e escape sequence; replace
+	everything with hex-codes, and cast to unsigned char* to make some
+	compilers happy
+
+2003-05-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* lib/krb5/get_in_tkt.c (make_pa_enc_timestamp): make sure first
+	argument to krb5_us_timeofday have correct type
+	
+2003-05-05  Assar Westerlund  <assar@kth.se>
+
+	* include/make_crypto.c (main): include aes.h if ENABLE_AES
+
+2003-05-05  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* NEWS: 1.108->1.110: fix text about gssapi compat
+	
 2003-04-28  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* kdc/v4_dump.c: 1.4->1.5: (v4_prop_dump): limit strings length,

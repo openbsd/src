@@ -1,4 +1,4 @@
-This is heimdal.info, produced by makeinfo version 4.5 from
+This is heimdal.info, produced by makeinfo version 4.0 from
 heimdal.texi.
 
 INFO-DIR-SECTION Heimdal
@@ -9,7 +9,7 @@ END-INFO-DIR-ENTRY
 
 Indirect:
 heimdal.info-1: 210
-heimdal.info-2: 47805
+heimdal.info-2: 47804
 
 Tag Table:
 (Indirect)
@@ -17,37 +17,37 @@ Node: Top210
 Node: Introduction565
 Node: What is Kerberos?3443
 Node: Building and Installing8517
-Node: Setting up a realm12130
-Node: Configuration file12827
-Node: Creating the database15517
-Node: keytabs18020
-Node: Serving Kerberos 4/524/kaserver18864
-Node: Remote administration20312
-Node: Password changing22238
-Node: Testing clients and servers24047
-Node: Slave Servers24367
-Node: Incremental propagation26000
-Node: Salting28528
-Node: Things in search for a better place30242
-Node: Kerberos 4 issues35254
-Node: Principal conversion issues35756
-Ref: Principal conversion issues-Footnote-137979
-Ref: Principal conversion issues-Footnote-238047
-Node: Converting a version 4 database38100
-Node: kaserver43128
-Node: Windows 2000 compatability44867
-Node: Configuring Windows 2000 to use a Heimdal KDC46053
-Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC47805
-Node: Create account mappings50253
-Node: Encryption types50843
-Node: Authorization data51584
-Node: Quirks of Windows 2000 KDC52728
-Node: Useful links when reading about the Windows 200053969
-Node: Programming with Kerberos56003
-Node: Kerberos 5 API Overview56416
-Node: Walkthru a sample Kerberos 5 client57970
-Node: Validating a password in a server application65786
-Node: Migration66067
-Node: Acknowledgments67321
+Node: Setting up a realm12129
+Node: Configuration file12826
+Node: Creating the database15516
+Node: keytabs18019
+Node: Serving Kerberos 4/524/kaserver18863
+Node: Remote administration20311
+Node: Password changing22237
+Node: Testing clients and servers24046
+Node: Slave Servers24366
+Node: Incremental propagation25999
+Node: Salting28527
+Node: Things in search for a better place30241
+Node: Kerberos 4 issues35253
+Node: Principal conversion issues35755
+Ref: Principal conversion issues-Footnote-137978
+Ref: Principal conversion issues-Footnote-238046
+Node: Converting a version 4 database38099
+Node: kaserver43127
+Node: Windows 2000 compatability44866
+Node: Configuring Windows 2000 to use a Heimdal KDC46052
+Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC47804
+Node: Create account mappings50252
+Node: Encryption types50842
+Node: Authorization data51583
+Node: Quirks of Windows 2000 KDC52727
+Node: Useful links when reading about the Windows 200053968
+Node: Programming with Kerberos56002
+Node: Kerberos 5 API Overview56415
+Node: Walkthru a sample Kerberos 5 client57969
+Node: Validating a password in a server application65785
+Node: Migration66066
+Node: Acknowledgments67320
 
 End Tag Table

@@ -1,4 +1,4 @@
-This is heimdal.info, produced by makeinfo version 4.5 from
+This is heimdal.info, produced by makeinfo version 4.0 from
 heimdal.texi.
 
 INFO-DIR-SECTION Heimdal
@@ -345,7 +345,6 @@ following options:
      Do not use the mmap system call.  Normally, configure detects if
      there is a working mmap and it is only used if there is one.  Only
      try this option if it fails to work anyhow.
-
 
 
 File: heimdal.info,  Node: Setting up a realm,  Next: Things in search for a better place,  Prev: Building and Installing,  Up: Top

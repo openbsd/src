@@ -1,9 +1,23 @@
+2003-05-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* gssapi.h: 1.27->1.28:
+	if __cplusplus, wrap the extern variable (just to be safe) and
+	functions in extern "C" { }
+
+2003-04-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* gssapi.3: more about the des3 mic mess
+	
+	* verify_mic.c 1.19->1.20 : (verify_mic_des3): always check if the
+	mic is the correct mic or the mic that old heimdal would have
+	generated
+	
 2003-04-29  Jacques Vidrine  <nectar@kth.se>
 
 	* verify_mic.c: 1.18->1.19: verify_mic_des3: If MIC verification
 	fails, retry using the `old' MIC computation (with zero IV).
 	
-2003-04-28  Love  <lha@stacken.kth.se>
+2003-04-28  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* compat.c (_gss_DES3_get_mic_compat): default to use compat
 	

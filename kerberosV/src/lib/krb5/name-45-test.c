@@ -32,7 +32,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: name-45-test.c,v 1.3 2003/04/17 05:44:40 lha Exp $");
+RCSID("$KTH: name-45-test.c,v 1.3.2.1 2003/05/06 16:49:14 joda Exp $");
 
 enum { MAX_COMPONENTS = 3 };
 
@@ -96,7 +96,7 @@ static struct testcase {
      0, 0},
 
     {"pop", "mail0", "NADA.KTH.SE", "NADA.KTH.SE", 2,
-     {"pop", "mail0.nada.kth.se"}, NULL, HEIM_ERR_V4_PRINC_NO_CONV, 0},
+     {"pop", "mail0.nada.kth.se"}, "", HEIM_ERR_V4_PRINC_NO_CONV, 0},
     {"pop", "mail0", "NADA.KTH.SE", "NADA.KTH.SE", 2,
      {"pop", "mail0.nada.kth.se"},
      "[realms]\n"
@@ -111,7 +111,7 @@ static struct testcase {
      HEIM_ERR_V4_PRINC_NO_CONV, 0},
 
     {"rcmd", "hokkigai", "NADA.KTH.SE", "NADA.KTH.SE", 2,
-     {"host", "hokkigai.pdc.kth.se"}, NULL, HEIM_ERR_V4_PRINC_NO_CONV, 0},
+     {"host", "hokkigai.pdc.kth.se"}, "", HEIM_ERR_V4_PRINC_NO_CONV, 0},
     {"rcmd", "hokkigai", "NADA.KTH.SE", "NADA.KTH.SE", 2,
      {"host", "hokkigai.pdc.kth.se"},
      "[libdefaults]\n"
@@ -143,7 +143,7 @@ static struct testcase {
 	 "012345678901234567890123456789012345678"}, NULL,
      0, 0},
 
-    {NULL, NULL, NULL, NULL, 0, {}, NULL, 0}
+    {NULL, NULL, NULL, NULL, 0, {NULL}, NULL, 0}
 };
 
 int
@@ -199,10 +199,13 @@ main(int argc, char **argv)
 	    }
 	} else {
 	    if (t->ret) {
+		char *s;
+		krb5_unparse_name(context, princ, &s);
 		krb5_warnx (context,
 			    "krb5_425_conv_principal %s.%s@%s "
-			    "passed unexpected",
-			    t->v4_name, t->v4_inst, t->v4_realm);
+			    "passed unexpected: %s",
+			    t->v4_name, t->v4_inst, t->v4_realm, s);
+		free(s);
 		val = 1;
 		continue;
 	    }

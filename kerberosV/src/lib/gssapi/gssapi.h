@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gssapi.h,v 1.1.1.3 2003/05/11 02:15:40 hin Exp $ */
+/* $KTH: gssapi.h,v 1.26.2.2 2003/05/07 11:12:21 lha Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -212,6 +212,10 @@ typedef OM_uint32 gss_qop_t;
  * credential or security context
  */
 #define GSS_C_INDEFINITE 0xfffffffful
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * The implementation must reserve static storage for a
@@ -776,5 +780,9 @@ OM_uint32 gss_krb5_copy_ccache
 
 OM_uint32
 gss_krb5_compat_des3_mic(OM_uint32 *, gss_ctx_id_t, int);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GSSAPI_H_ */

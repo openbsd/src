@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: verify_mic.c,v 1.1.1.4 2003/05/11 02:15:41 hin Exp $");
+RCSID("$KTH: verify_mic.c,v 1.18.2.2 2003/05/05 18:59:42 lha Exp $");
 
 static OM_uint32
 verify_mic_des
@@ -173,7 +173,7 @@ verify_mic_des3
   }
 
   /* verify sequence number */
-  docompat = (context_handle->more_flags & COMPAT_OLD_DES3);
+  docompat = 0;
 retry:
   if (docompat)
       memset(ivec, 0, 8);
