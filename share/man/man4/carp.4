@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.14 2004/11/15 20:28:09 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.15 2004/12/07 21:22:26 mcbride Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -65,6 +65,13 @@ which are used to control how frequently the host sends advertisements when it
 is the master for a virtual host, and
 .Cm pass
 which is used to authenticate carp advertisements.
+Finally
+.Cm carpdev
+is used to specify which interface the
+.Nm
+device attaches to.
+If unspecified, the kernel attempts to set carpdev by looking for
+an other interface with the same subnet.
 These configurations can be done using
 .Xr ifconfig 8 ,
 or through the
