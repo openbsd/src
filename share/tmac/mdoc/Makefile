@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2000/04/11 20:08:37 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2003/04/08 01:44:59 millert Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 MSRCS=	doc doc-ditroff doc-common doc-nroff doc-syms
@@ -13,7 +13,7 @@ all clean cleandir depend lint tags:
 beforeinstall:
 	for i in ${MSRCS}; do \
 		sed -f ${STRIP_SED} < $$i > ${DESTDIR}${BINDIR}/$$i; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}${BINDIR}/$$i; \
+		chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/$$i; \
 		chmod 444 ${DESTDIR}${BINDIR}/$$i; \
 	done
 
