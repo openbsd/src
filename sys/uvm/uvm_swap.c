@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.51 2002/03/14 01:27:19 millert Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.52 2002/05/24 08:58:41 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1227,7 +1227,9 @@ swstrategy(bp)
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
+		s = splbio();
 		biodone(bp);
+		splx(s);
 		UVMHIST_LOG(pdhist, "  failed to get swap device", 0, 0, 0, 0);
 		return;
 	}
