@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.10 1999/11/19 23:06:20 brad Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.11 2000/01/04 17:43:12 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -469,8 +469,8 @@ install: maninstall
 	@-for i in ${SBINFILES}; do \
 		j=`basename $$i`; \
 		echo "Installing ${DESTDIR}${HTTPD_SBINDIR}/$$j"; \
-		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
-		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_SBINDIR}; \
+		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -g ${BINGRP} \
+		    -m 555 ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_SBINDIR}; \
 	done
 	@-for i in ${INSTALL_MODULES}; do \
 		j=`basename $$i`; \
