@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.16 1998/10/04 16:36:13 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.17 1999/02/23 07:40:29 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.16 1998/10/04 16:36:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.17 1999/02/23 07:40:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ static char rcsid[] = "$OpenBSD: savecore.c,v 1.16 1998/10/04 16:36:13 millert E
 #include <unistd.h>
 #include <limits.h>
 #include <kvm.h>
+#include <vis.h>
 
 extern FILE *zopen __P((const char *fname, const char *mode, int bits));
 
@@ -315,19 +316,37 @@ check_kmem()
 	}
 	core_vers[sizeof(core_vers) - 1] = '\0';
 
-	if (strcmp(vers, core_vers) && kernel == 0)
+	if (strcmp(vers, core_vers) && kernel == 0) {
+		char *p;
+
+		p = strchr(vers, '\n');
+		if (p)
+			*p = '\0';
+		p = strchr(core_vers, '\n');
+		if (p)
+			*p = '\0';
 		syslog(LOG_WARNING,
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
 		    _PATH_UNIX, vers, core_vers);
+	}
 
 	KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr);
 	if (panicstr) {
+		char	c, visout[5];
+
 		cp       = panic_mesg;
 		panicloc = panicstr;
 		do {
-			KREAD(kd_dump, panicloc, cp);
+			KREAD(kd_dump, panicloc, &c);
 			panicloc++;
-		} while (*cp++ && cp < &panic_mesg[sizeof(panic_mesg)]);
+
+			vis(visout, c, VIS_SAFE|VIS_NOSLASH, 0);
+			if (c && cp + strlen(visout) <
+			    &panic_mesg[sizeof(panic_mesg)]) {
+				strcat(cp, visout);
+				cp += strlen(visout);
+			}
+		} while (c && cp < &panic_mesg[sizeof(panic_mesg)]);
 	}
 }
 

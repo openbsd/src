@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.13 1998/12/30 18:11:54 millert Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.14 1999/02/23 07:40:29 deraadt Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.13 1998/12/30 18:11:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.14 1999/02/23 07:40:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.13 1998/12/30 18:11:54 mille
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <vis.h>
 
 extern FILE *zopen __P((const char *fname, const char *mode, int bits));
 
@@ -304,19 +305,39 @@ check_kmem()
 	}
 	fseek(fp, (off_t)(dumplo + ok(dump_nl[X_VERSION].n_value)), SEEK_SET);
 	fgets(core_vers, sizeof(core_vers), fp);
-	if (strcmp(vers, core_vers) && kernel == 0)
+
+	if (strcmp(vers, core_vers) && kernel == 0) {
+		char *p;
+
+		p = strchr(vers, '\n');
+		if (p)
+			*p = '\0';
+		p = strchr(core_vers, '\n');
+		if (p)
+			*p = '\0';
 		syslog(LOG_WARNING,
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
 		    _PATH_UNIX, vers, core_vers);
+	}
+
 	(void)fseek(fp,
 	    (off_t)(dumplo + ok(dump_nl[X_PANICSTR].n_value)), SEEK_SET);
 	(void)fread(&panicstr, sizeof(panicstr), 1, fp);
 	if (panicstr) {
+		char	c, visout[5];
+
+		cp       = panic_mesg;
 		(void)fseek(fp, dumplo + ok(panicstr), SEEK_SET);
 		cp = panic_mesg;
-		do
-			*cp = getc(fp);
-		while (*cp++ && cp < &panic_mesg[sizeof(panic_mesg)]);
+		do {
+			c = getc(fp);
+			vis(visout, c, VIS_SAFE|VIS_NOSLASH, 0);
+			if (c && cp + strlen(visout) <
+			    &panic_mesg[sizeof(panic_mesg)]) {
+				strcat(cp, visout);
+				cp += strlen(visout);
+			}
+		} while (c && cp < &panic_mesg[sizeof(panic_mesg)]);
 	}
 	/* Don't fclose(fp), we use dumpfd later. */
 }
