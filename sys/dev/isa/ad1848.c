@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.11 1998/05/08 18:37:18 csapuntz Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.12 1998/07/15 22:18:22 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -996,7 +996,7 @@ ad1848_query_encoding(addr, fp)
 	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	break;
     case 7:
-	strcpy(fp->name, AudioEulinear_le);
+	strcpy(fp->name, AudioEulinear_be);
 	fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 	fp->precision = 16;
 	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
