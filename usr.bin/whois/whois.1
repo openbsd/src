@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.6 1999/10/03 00:42:34 deraadt Exp $
+.\"	$OpenBSD: whois.1,v 1.7 1999/10/04 16:44:09 deraadt Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -84,7 +84,17 @@ Construct the name of a whois server to use from the top-level domain
 .Pq Tn TLD
 of the supplied (single) argument, and appending ".whois-servers.net".
 This effectively allows a suitable whois server to be selected
-automatically for a large number of TLDs.
+automatically for a large number of TLDs, ie. all of the following will
+.Ql just work :
+.Pp
+.Bd -literal -offset indent -compact
+  whois -q patho.gen.nz
+  whois -q microsoft.com
+  whois -q nasa.gov
+  whois -q nic.fr
+  whois -q demon.co.uk
+.Ed
+.Pp
 .It Fl r
 Use the R\(aaeseaux IP Europ\(aaeens
 .Pq Tn RIPE
