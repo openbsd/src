@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.147 1999/06/01 17:09:09 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.148 1999/06/03 16:13:05 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2597,19 +2597,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
 	    0,
-	    "Standard Microsystems",
+	    "SMC",
 	    "FDC 37C665",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C922,
 	    0,
-	    "Standard Microsystems",
+	    "SMC",
 	    "FDC 37C922",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    0,
-	    "Standard Microsystems",
+	    "SMC",
 	    "83C170 (EPIC/100)",
 	},
 	{
@@ -4391,7 +4391,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SMC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Standard Microsystems",
+	    "SMC",
 	    NULL,
 	},
 	{

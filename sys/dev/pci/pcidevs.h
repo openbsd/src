@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.147 1999/06/01 17:09:09 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.148 1999/06/03 16:13:05 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -225,7 +225,7 @@
 #define	PCI_VENDOR_PLX	0x10b5		/* PLX Technology */
 #define	PCI_VENDOR_MADGE	0x10b6		/* Madge Networks */
 #define	PCI_VENDOR_3COM	0x10B7		/* 3Com */
-#define	PCI_VENDOR_SMC	0x10b8		/* Standard Microsystems */
+#define	PCI_VENDOR_SMC	0x10b8		/* SMC */
 #define	PCI_VENDOR_ALI	0x10b9		/* Acer Labs */
 #define	PCI_VENDOR_MITSUBISHIELEC	0x10ba		/* Mitsubishi Electronics */
 #define	PCI_VENDOR_DAPHA	0x10bb		/* Dapha Electronics */
