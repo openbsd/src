@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.34 1999/07/18 17:05:13 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.35 1999/11/05 01:18:01 mickey Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1255,7 +1255,11 @@ coredump(p)
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp,
+#ifdef MACHINE_STACK_GROWS_UP
+		    (caddr_t) USRSTACK,
+#else
 		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
+#endif
 		    core.c_ssize,
 		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);

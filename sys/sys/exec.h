@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.7 1999/09/25 10:59:24 kstailey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.8 1999/11/05 01:18:01 mickey Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -64,8 +64,12 @@ struct ps_strings {
 /*
  * Address of ps_strings structure (in user space).
  */
+#ifdef MACHINE_STACK_GROWS_UP
+#define	PS_STRINGS	((struct ps_strings *)(USRSTACK))
+#else
 #define	PS_STRINGS \
 	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
+#endif
 
 /*
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
@@ -79,10 +83,15 @@ struct ps_strings {
 #else
 #define	STACKGAPLEN	0
 #endif
+#ifdef MACHINE_STACK_GROWS_UP
+#define	STACKGAPBASE_UNALIGNED	\
+	((caddr_t)PS_STRINGS + sizeof(struct ps_strings) + (u_long)szsigcode)
+#else
 #define	STACKGAPBASE_UNALIGNED	\
 	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
+#endif
 #define	STACKGAPBASE		\
-	((caddr_t)(((unsigned long) STACKGAPBASE_UNALIGNED) & ~ALIGNBYTES))
+	((caddr_t)ALIGN(STACKGAPBASE_UNALIGNED))
 
 /*
  * the following structures allow execve() to put together processes

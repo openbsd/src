@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.9 1999/07/15 14:07:41 art Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.10 1999/11/05 01:18:01 mickey Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -282,11 +282,19 @@ dosetrlimit(p, which, limp)
 			if (limp->rlim_cur > alimp->rlim_cur) {
 				prot = VM_PROT_ALL;
 				size = limp->rlim_cur - alimp->rlim_cur;
+#ifdef MACHINE_STACK_GROWS_UP
+				addr = USRSTACK + alimp->rlim_cur;
+#else
 				addr = USRSTACK - limp->rlim_cur;
+#endif
 			} else {
 				prot = VM_PROT_NONE;
 				size = alimp->rlim_cur - limp->rlim_cur;
+#ifdef MACHINE_STACK_GROWS_UP
+				addr = USRSTACK + limp->rlim_cur;
+#else
 				addr = USRSTACK - alimp->rlim_cur;
+#endif
 			}
 			addr = trunc_page(addr);
 			size = round_page(size);

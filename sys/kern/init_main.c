@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.41 1999/09/12 19:44:04 weingart Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.42 1999/11/05 01:18:01 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -510,7 +510,11 @@ start_init(arg)
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
 	 */
+#ifdef MACHINE_STACK_GROWS_UP
+	addr = USRSTACK;
+#else
 	addr = USRSTACK - PAGE_SIZE;
+#endif
 #if defined(UVM)
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
                     NULL, UVM_UNKNOWN_OFFSET, 
@@ -524,7 +528,11 @@ start_init(arg)
 	    FALSE) != 0)
 		panic("init: couldn't allocate argument space");
 #endif
+#ifdef MACHINE_STACK_GROWS_UP
+	p->p_vmspace->vm_maxsaddr = (caddr_t)addr + PAGE_SIZE;
+#else
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
+#endif
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
 		ucp = (char *)(addr + PAGE_SIZE);

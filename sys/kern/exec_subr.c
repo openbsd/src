@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.6 1999/02/26 05:14:27 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.7 1999/11/05 01:18:01 mickey Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -315,7 +315,11 @@ exec_setup_stack(p, epp)
 	struct exec_package *epp;
 {
 
+#ifdef MACHINE_STACK_GROWS_UP
+	epp->ep_maxsaddr = USRSTACK + MAXSSIZ;
+#else
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+#endif
 	epp->ep_minsaddr = USRSTACK;
 	epp->ep_ssize = round_page(p->p_rlimit[RLIMIT_STACK].rlim_cur);
 
@@ -330,12 +334,21 @@ exec_setup_stack(p, epp)
 	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
 	 * <stack> ep_minsaddr
 	 */
+#ifdef MACHINE_STACK_GROWS_UP
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
+	    (epp->ep_maxsaddr - (epp->ep_minsaddr + epp->ep_ssize)),
+	    epp->ep_minsaddr + epp->ep_ssize, NULLVP, 0, VM_PROT_NONE);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_minsaddr, NULLVP, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+#else
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
 	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+#endif
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.33 1999/08/09 12:19:07 millert Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.34 1999/11/05 01:18:01 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -425,7 +425,11 @@ sys_execve(p, v, retval)
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
+#ifdef MACHINE_STACK_GROWS_UP
+	stack = (char *)USRSTACK;
+#else
 	stack = (char *)(USRSTACK - len);
+#endif
 	/* Now copy argc, args & environ to new stack */
 	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
 		goto exec_abort;
@@ -434,10 +438,16 @@ sys_execve(p, v, retval)
 	if (copyout(&arginfo, (char *)PS_STRINGS, sizeof(arginfo)))
 		goto exec_abort;
 
-	/* copy out the process's signal trapoline code */
+	/* copy out the process's signal trampoline code */
+#ifdef MACHINE_STACK_GROWS_UP
+	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
+	    ((char *)PS_STRINGS) + sizeof(struct ps_strings), szsigcode))
+		goto exec_abort;
+#else
 	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
 	    ((char *)PS_STRINGS) - szsigcode, szsigcode))
 		goto exec_abort;
+#endif
 
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
@@ -563,7 +573,11 @@ sys_execve(p, v, retval)
 		if((*pack.ep_emul->e_fixup)(p, &pack) != 0)
 			goto free_pack_abort;
 	}
+#ifdef MACHINE_STACK_GROWS_UP
+	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack + len, retval);
+#else
 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack, retval);
+#endif
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
