@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.226 2000/03/21 21:59:18 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.227 2000/03/21 22:01:06 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -567,7 +567,8 @@ product 3COM 3C905BCOMBO	0x9058	3c905B 10/100Mbps-Combo
 product 3COM 3C905BFX		0x905a	3c905B 100Base-FX
 product 3COM 3C905CTX		0x9200	3c905C 100Base-TX
 product 3COM 3C980TX		0x9800	3c980 100Base-TX
-product	3COM 3C980CTX		0x9805	3c980C 100Base-TX
+product 3COM 3C980CTX		0x9805	3c980C 100Base-TX
+product 3COM 3CR990		0x9903	3cr990 TX-97
 product 3COM 3C985		0x0001	3c985
 
 /* 3DFX Interactive */
