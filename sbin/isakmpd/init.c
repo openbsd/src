@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.28 2004/04/08 10:05:54 hshoexer Exp $	*/
-/*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
+/* $OpenBSD: init.c,v 1.29 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -59,85 +59,85 @@
 #endif
 
 void
-init (void)
+init(void)
 {
-  app_init ();
-  doi_init ();
-  exchange_init ();
-  group_init ();
-  ipsec_init ();
-  isakmp_doi_init ();
-  libcrypto_init ();
+	app_init();
+	doi_init();
+	exchange_init();
+	group_init();
+	ipsec_init();
+	isakmp_doi_init();
+	libcrypto_init();
 
-  timer_init ();
+	timer_init();
 
-  /* The following group are depending on timer_init having run.  */
-  conf_init ();
-  connection_init ();
+	/* The following group are depending on timer_init having run.  */
+	conf_init();
+	connection_init();
 
-   /* This depends on conf_init, thus check as soon as possible. */
-  log_reinit ();
+	/* This depends on conf_init, thus check as soon as possible. */
+	log_reinit();
 
 #ifdef USE_POLICY
-  /* policy_init depends on conf_init having run.  */
-  policy_init ();
+	/* policy_init depends on conf_init having run.  */
+	policy_init();
 #endif
 
-  /* Depends on conf_init and policy_init having run */
-  cert_init ();
-  crl_init ();
+	/* Depends on conf_init and policy_init having run */
+	cert_init();
+	crl_init();
 
-  sa_init ();
-  transport_init ();
-  udp_init ();
-  ui_init ();
+	sa_init();
+	transport_init();
+	udp_init();
+	ui_init();
 }
 
 /* Reinitialize, either after a SIGHUP reception or by FIFO UI cmd.  */
 void
-reinit (void)
+reinit(void)
 {
-  log_print ("isakmpd: reinitializing daemon");
+	log_print("isakmpd: reinitializing daemon");
 
-  /*
-   * XXX Remove all(/some?) pending exchange timers? - they may not be
-   *     possible to complete after we've re-read the config file.
-   *     User-initiated SIGHUP's maybe "authorizes" a wait until
-   *     next connection-check.
-   * XXX This means we discard exchange->last_msg, is this really ok?
-   */
+	/*
+	 * XXX Remove all(/some?) pending exchange timers? - they may not be
+	 *     possible to complete after we've re-read the config file.
+	 *     User-initiated SIGHUP's maybe "authorizes" a wait until
+	 *     next connection-check.
+	 * XXX This means we discard exchange->last_msg, is this really ok?
+         */
 
-  /* Reinitialize PRNG if we are in deterministic mode.  */
-  if (regrand)
-    srandom (seed);
+	/* Reinitialize PRNG if we are in deterministic mode.  */
+	if (regrand)
+		srandom(seed);
 
-  /* Reread config file.  */
-  conf_reinit ();
+	/* Reread config file.  */
+	conf_reinit();
 
-  log_reinit ();
+	log_reinit();
 
 #ifdef USE_POLICY
-  /* Reread the policies.  */
-  policy_init ();
+	/* Reread the policies.  */
+	policy_init();
 #endif
 
-  /* Reinitialize certificates */
-  cert_init ();
-  crl_init ();
+	/* Reinitialize certificates */
+	cert_init();
+	crl_init();
 
-  /* Reinitialize our connection list.  */
-  connection_reinit ();
+	/* Reinitialize our connection list.  */
+	connection_reinit();
 
-  /*
-   * Rescan interfaces.
-   */
-  transport_reinit ();
+	/*
+	 * Rescan interfaces.
+         */
+	transport_reinit();
 
-  /*
-   * XXX "These" (non-existent) reinitializations should not be done.
-   *   cookie_reinit ();
-   *   ui_reinit ();
-   */
+	/*
+	 * XXX "These" (non-existent) reinitializations should not be done.
+	 * cookie_reinit ();
+	 * ui_reinit ();
+         */
 
-  sa_reinit ();
+	sa_reinit();
 }

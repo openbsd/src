@@ -1,4 +1,4 @@
-/*	$OpenBSD: keynote_compat.c,v 1.5 2003/06/03 14:53:11 ho Exp $	*/
+/*	$OpenBSD: keynote_compat.c,v 1.6 2004/04/15 18:39:30 deraadt Exp $	*/
 /*	$EOM: keynote_compat.c,v 1.1 2000/10/15 19:18:26 niklas Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * in April-May 1998
  *
  * Copyright (C) 1998, 1999 by Angelos D. Keromytis.
- *	
+ *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
@@ -60,23 +60,23 @@
 #include <keynote.h>
 
 extern void keynote_free_key(void *, int);
-extern char *keynote_get_private_key (char *);
+extern char *keynote_get_private_key(char *);
 
 /*
  * Exportable front-end to keynote_get_private_key().
  */
 char *
-_kn_get_string (char *buf)
+_kn_get_string(char *buf)
 {
-  return keynote_get_private_key (buf);
+	return keynote_get_private_key(buf);
 }
 
 /*
  * Free a key.
  */
 void
-_kn_free_key (struct keynote_deckey *dc)
+_kn_free_key(struct keynote_deckey *dc)
 {
-  if (dc)
-    keynote_free_key (dc->dec_key, dc->dec_algorithm);
+	if (dc)
+		keynote_free_key(dc->dec_key, dc->dec_algorithm);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: gmp_util.c,v 1.10 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: gmp_util.c,v 1.7 2000/09/18 00:01:47 ho Exp $	*/
+/* $OpenBSD: gmp_util.c,v 1.11 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: gmp_util.c,v 1.7 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -41,67 +41,65 @@
 /* Various utility functions for gmp, used in more than one module */
 
 u_int32_t
-mpz_sizeinoctets (math_mp_t a)
+mpz_sizeinoctets(math_mp_t a)
 {
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-  return (7 + mpz_sizeinbase (a, 2)) >> 3;
+	return (7 + mpz_sizeinbase(a, 2)) >> 3;
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-  return BN_num_bytes (a);
+	return BN_num_bytes(a);
 #endif
 }
 
 void
-mpz_getraw (u_int8_t *raw, math_mp_t v, u_int32_t len)
+mpz_getraw(u_int8_t *raw, math_mp_t v, u_int32_t len)
 {
-  math_mp_t a;
+	math_mp_t       a;
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-  math_mp_t tmp;
+	math_mp_t       tmp;
 
-  /* XXX  mpz_get_str (raw, BASE, v); ? */
-  mpz_init_set (a, v);
-  mpz_init (tmp);
+	/* XXX  mpz_get_str (raw, BASE, v); ? */
+	mpz_init_set(a, v);
+	mpz_init(tmp);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-  /* XXX bn2bin?  */
-  a = BN_dup (v);
+	/* XXX bn2bin?  */
+	a = BN_dup(v);
 #endif
 
-  while (len-- > 0)
+	while (len-- > 0)
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-      raw[len] = mpz_fdiv_qr_ui (a, tmp, a, 256);
+		raw[len] = mpz_fdiv_qr_ui(a, tmp, a, 256);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-      raw[len] = BN_div_word (a, 256);
+	raw[len] = BN_div_word(a, 256);
 #endif
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-  mpz_clear (a);
-  mpz_clear (tmp);
+	mpz_clear(a);
+	mpz_clear(tmp);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-  BN_clear_free (a);
+	BN_clear_free(a);
 #endif
 }
 
 void
-mpz_setraw (math_mp_t d, u_int8_t *s, u_int32_t l)
+mpz_setraw(math_mp_t d, u_int8_t *s, u_int32_t l)
 {
-  u_int32_t i;
+	u_int32_t       i;
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-  /* XXX mpz_set_str (d, s, 0);  */
-  mpz_set_si (d, 0);
+	/* XXX mpz_set_str (d, s, 0);  */
+	mpz_set_si(d, 0);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-  /* XXX bin2bn?  */
-  BN_set_word (d, 0);
+	/* XXX bin2bn?  */
+	BN_set_word(d, 0);
 #endif
-  for (i = 0; i < l; i++)
-    {
+	for (i = 0; i < l; i++) {
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
-      mpz_mul_ui (d, d, 256);
-      mpz_add_ui (d, d, s[i]);
+		mpz_mul_ui(d, d, 256);
+		mpz_add_ui(d, d, s[i]);
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-      BN_mul_word (d, 256);
-      BN_add_word (d, s[i]);
+		BN_mul_word(d, 256);
+		BN_add_word(d, s[i]);
 #endif
-    }
+	}
 }
-

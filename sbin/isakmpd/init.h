@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: init.h,v 1.2 1998/07/07 23:36:00 niklas Exp $	*/
+/* $OpenBSD: init.h,v 1.6 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: init.h,v 1.2 1998/07/07 23:36:00 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef _INIT_H_
 #define _INIT_H_
 
-extern void init (void);
-extern void reinit (void);
+extern void     init(void);
+extern void     reinit(void);
 
-#endif /* _INIT_H_ */
+#endif				/* _INIT_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: field.c,v 1.13 2003/11/06 16:12:07 ho Exp $	*/
-/*	$EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	*/
+/* $OpenBSD: field.c,v 1.14 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,19 +40,19 @@
 #include "log.h"
 #include "util.h"
 
-static char *field_debug_raw (u_int8_t *, size_t, struct constant_map **);
-static char *field_debug_num (u_int8_t *, size_t, struct constant_map **);
-static char *field_debug_mask (u_int8_t *, size_t, struct constant_map **);
-static char *field_debug_ign (u_int8_t *, size_t, struct constant_map **);
-static char *field_debug_cst (u_int8_t *, size_t, struct constant_map **);
+static char    *field_debug_raw(u_int8_t *, size_t, struct constant_map **);
+static char    *field_debug_num(u_int8_t *, size_t, struct constant_map **);
+static char    *field_debug_mask(u_int8_t *, size_t, struct constant_map **);
+static char    *field_debug_ign(u_int8_t *, size_t, struct constant_map **);
+static char    *field_debug_cst(u_int8_t *, size_t, struct constant_map **);
 
 /* Contents must match the enum in struct field.  */
-static char *(*decode_field[]) (u_int8_t *, size_t, struct constant_map **) = {
-  field_debug_raw,
-  field_debug_num,
-  field_debug_mask,
-  field_debug_ign,
-  field_debug_cst
+static char    *(*decode_field[]) (u_int8_t *, size_t, struct constant_map **) = {
+	field_debug_raw,
+	field_debug_num,
+	field_debug_mask,
+	field_debug_ign,
+	field_debug_cst
 };
 
 /*
@@ -60,23 +60,22 @@ static char *(*decode_field[]) (u_int8_t *, size_t, struct constant_map **) = {
  * BUF.  MAPS should be zero and is only here because the API requires it.
  */
 static char *
-field_debug_raw (u_int8_t *buf, size_t len, struct constant_map **maps)
+field_debug_raw(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-  char *retval, *p;
+	char           *retval, *p;
 
-  if (len == 0)
-    return 0;
-  retval = malloc (3 + len * 2);
-  if (!retval)
-    return 0;
-  strlcpy (retval, "0x", 3 + len * 2);
-  p = retval + 2;
-  for (; len > 0; len--)
-    {
-      snprintf (p, 1 + len * 2, "%02x", *buf++);
-      p += 2;
-    }
-  return retval;
+	if (len == 0)
+		return 0;
+	retval = malloc(3 + len * 2);
+	if (!retval)
+		return 0;
+	strlcpy(retval, "0x", 3 + len * 2);
+	p = retval + 2;
+	for (; len > 0; len--) {
+		snprintf(p, 1 + len * 2, "%02x", *buf++);
+		p += 2;
+	}
+	return retval;
 }
 
 /*
@@ -84,23 +83,22 @@ field_debug_raw (u_int8_t *buf, size_t len, struct constant_map **maps)
  * 32-bit unsigned integer of host byteorder pointed to by VAL.
  */
 static int
-extract_val (u_int8_t *buf, size_t len, u_int32_t *val)
+extract_val(u_int8_t *buf, size_t len, u_int32_t *val)
 {
-  switch (len)
-    {
-    case 1:
-      *val = *buf;
-      break;
-    case 2:
-      *val = decode_16 (buf);
-      break;
-    case 4:
-      *val = decode_32 (buf);
-      break;
-    default:
-      return -1;
-    }
-  return 0;
+	switch (len) {
+	case 1:
+		*val = *buf;
+		break;
+	case 2:
+		*val = decode_16(buf);
+		break;
+	case 4:
+		*val = decode_32(buf);
+		break;
+	default:
+		return -1;
+	}
+	return 0;
 }
 
 /*
@@ -109,17 +107,17 @@ extract_val (u_int8_t *buf, size_t len, u_int32_t *val)
  * the API requires it.
  */
 static char *
-field_debug_num (u_int8_t *buf, size_t len, struct constant_map **maps)
+field_debug_num(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-  char *retval;
-  u_int32_t val;
+	char           *retval;
+	u_int32_t       val;
 
-  if (extract_val (buf, len, &val))
-    return 0;
-  /* 3 decimal digits are enough to represent each byte.  */
-  retval = malloc (3 * len);
-  snprintf (retval, 3 * len, "%u", val);
-  return retval;
+	if (extract_val(buf, len, &val))
+		return 0;
+	/* 3 decimal digits are enough to represent each byte.  */
+	retval = malloc(3 * len);
+	snprintf(retval, 3 * len, "%u", val);
+	return retval;
 }
 
 /*
@@ -127,42 +125,39 @@ field_debug_num (u_int8_t *buf, size_t len, struct constant_map **maps)
  * octets long, using the constant maps MAPS.
  */
 static char *
-field_debug_mask (u_int8_t *buf, size_t len, struct constant_map **maps)
+field_debug_mask(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-  u_int32_t val;
-  u_int32_t bit;
-  char *retval, *new_buf, *name;
-  size_t buf_sz;
+	u_int32_t       val;
+	u_int32_t       bit;
+	char           *retval, *new_buf, *name;
+	size_t          buf_sz;
 
-  if (extract_val (buf, len, &val))
-    return 0;
+	if (extract_val(buf, len, &val))
+		return 0;
 
-  /* Size for brackets, two spaces and a NUL terminator.  */
-  buf_sz = 4;
-  retval = malloc (buf_sz);
-  if (!retval)
-    return 0;
+	/* Size for brackets, two spaces and a NUL terminator.  */
+	buf_sz = 4;
+	retval = malloc(buf_sz);
+	if (!retval)
+		return 0;
 
-  strlcpy (retval, "[ ", buf_sz);
-  for (bit = 1; bit; bit <<= 1)
-    {
-      if (val & bit)
-	{
-	  name = constant_name_maps (maps, bit);
-	  buf_sz += strlen (name) + 1;
-	  new_buf = realloc (retval, buf_sz);
-	  if (!new_buf)
-	    {
-	      free (retval);
-	      return 0;
-	    }
-	  retval = new_buf;
-	  strlcat (retval, name, buf_sz);
-	  strlcat (retval, " ", buf_sz);
+	strlcpy(retval, "[ ", buf_sz);
+	for (bit = 1; bit; bit <<= 1) {
+		if (val & bit) {
+			name = constant_name_maps(maps, bit);
+			buf_sz += strlen(name) + 1;
+			new_buf = realloc(retval, buf_sz);
+			if (!new_buf) {
+				free(retval);
+				return 0;
+			}
+			retval = new_buf;
+			strlcat(retval, name, buf_sz);
+			strlcat(retval, " ", buf_sz);
+		}
 	}
-    }
-  strlcat (retval, "]", buf_sz);
-  return retval;
+	strlcat(retval, "]", buf_sz);
+	return retval;
 }
 
 /*
@@ -170,9 +165,9 @@ field_debug_mask (u_int8_t *buf, size_t len, struct constant_map **maps)
  * should be zero and is only here because the API requires it.
  */
 static char *
-field_debug_ign (u_int8_t *buf, size_t len, struct constant_map **maps)
+field_debug_ign(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-  return 0;
+	return 0;
 }
 
 /*
@@ -180,79 +175,77 @@ field_debug_ign (u_int8_t *buf, size_t len, struct constant_map **maps)
  * octets long, using the constant maps MAPS.
  */
 static char *
-field_debug_cst (u_int8_t *buf, size_t len, struct constant_map **maps)
+field_debug_cst(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-  u_int32_t val;
+	u_int32_t       val;
 
-  if (extract_val (buf, len, &val))
-    return 0;
+	if (extract_val(buf, len, &val))
+		return 0;
 
-  return strdup (constant_name_maps (maps, val));
+	return strdup(constant_name_maps(maps, val));
 }
 
 /* Pretty-print a field from BUF as described by F.  */
 void
-field_dump_field (struct field *f, u_int8_t *buf)
+field_dump_field(struct field *f, u_int8_t *buf)
 {
-  char *value;
+	char           *value;
 
-  value = decode_field[(int)f->type] (buf + f->offset, f->len, f->maps);
-  if (value)
-    {
-      LOG_DBG ((LOG_MESSAGE, 70, "%s: %s", f->name, value));
-      free (value);
-    }
+	value = decode_field[(int) f->type] (buf + f->offset, f->len, f->maps);
+	if (value) {
+		LOG_DBG((LOG_MESSAGE, 70, "%s: %s", f->name, value));
+		free(value);
+	}
 }
 
 /* Pretty-print all the fields of BUF as described in FIELDS.  */
 void
-field_dump_payload (struct field *fields, u_int8_t *buf)
+field_dump_payload(struct field *fields, u_int8_t *buf)
 {
-  struct field *field;
+	struct field   *field;
 
-  for (field = fields; field->name; field++)
-    field_dump_field (field, buf);
+	for (field = fields; field->name; field++)
+		field_dump_field(field, buf);
 }
 
 /* Return the numeric value of the field F of BUF.  */
 u_int32_t
-field_get_num (struct field *f, u_int8_t *buf)
+field_get_num(struct field *f, u_int8_t *buf)
 {
-  u_int32_t val;
+	u_int32_t       val;
 
-  if (extract_val (buf + f->offset, f->len, &val))
-    return 0;
-  return val;
+	if (extract_val(buf + f->offset, f->len, &val))
+		return 0;
+	return val;
 }
 
 /* Stash the number VAL into BUF's field F.  */
 void
-field_set_num (struct field *f, u_int8_t *buf, u_int32_t val)
+field_set_num(struct field *f, u_int8_t *buf, u_int32_t val)
 {
-  switch (f->len)
-    {
-    case 1:
-      buf[f->offset] = val;
-      break;
-    case 2:
-      encode_16 (buf + f->offset, val);
-      break;
-    case 4:
-      encode_32 (buf + f->offset, val);
-      break;
-    }
+	switch (f->len) {
+	case 1:
+		buf[f->offset] = val;
+		break;
+	case 2:
+		encode_16(buf + f->offset, val);
+		break;
+	case 4:
+		encode_32(buf + f->offset, val);
+		break;
+	}
 }
 
 /* Stash BUF's raw field F into VAL.  */
 void
-field_get_raw (struct field *f, u_int8_t *buf, u_int8_t *val)
+field_get_raw(struct field * f, u_int8_t * buf, u_int8_t * val)
 {
-  memcpy (val, buf + f->offset, f->len);
+	memcpy(val, buf + f->offset, f->len);
 }
 
 /* Stash the buffer VAL into BUF's field F.  */
 void
-field_set_raw (struct field *f, u_int8_t *buf, u_int8_t *val)
+field_set_raw(struct field * f, u_int8_t * buf, u_int8_t * val)
 {
-  memcpy (buf + f->offset, val, f->len);
+	memcpy(buf + f->offset, val, f->len);
 }

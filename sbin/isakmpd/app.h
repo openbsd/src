@@ -1,5 +1,5 @@
-/*	$OpenBSD: app.h,v 1.6 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: app.h,v 1.4 1999/04/02 00:58:16 niklas Exp $	*/
+/* $OpenBSD: app.h,v 1.7 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: app.h,v 1.4 1999/04/02 00:58:16 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -32,11 +32,11 @@
 #ifndef _APP_H_
 #define _APP_H_
 
-extern int app_socket;
-extern int app_none;
+extern int      app_socket;
+extern int      app_none;
 
-extern void app_conf_init_hook (void);
-extern void app_handler (void);
-extern void app_init (void);
+extern void     app_conf_init_hook(void);
+extern void     app_handler(void);
+extern void     app_init(void);
 
-#endif /* _APP_H_ */
+#endif				/* _APP_H_ */

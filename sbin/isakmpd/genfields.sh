@@ -1,4 +1,4 @@
-#	$OpenBSD: genfields.sh,v 1.8 2003/06/03 14:28:16 ho Exp $
+#	$OpenBSD: genfields.sh,v 1.9 2004/04/15 18:39:25 deraadt Exp $
 #	$EOM: genfields.sh,v 1.5 1999/04/02 01:15:55 niklas Exp $
 
 #
@@ -138,13 +138,13 @@ BEGIN {
 }
 
 /^\./ {
-  print "  { 0, 0, 0, 0, 0 }\n};\n"
+  print "	{ 0, 0, 0, 0, 0 }\n};\n"
   size[prefix] = off
   for (map in maps)
     {
-      printf ("struct constant_map *%s_%s_maps[] = { ", locase(prefix),
+      printf ("struct constant_map *%s_%s_maps[] = {\n", locase(prefix),
              locase(map))
-      printf ("%s,0 };\n", maps[map])
+      printf ("	%s, 0\n};\n", maps[map])
     }
   next
 }
@@ -174,7 +174,7 @@ BEGIN {
     {
       maps_name = "0"
     }
-  printf ("  { \"%s\", %d, %d, %s, %s }, \n", $1, off, $3, $2, maps_name)
+  printf ("	{ \"%s\", %d, %d, %s, %s },\n", $1, off, $3, $2, maps_name)
   off += $3
   next
 }

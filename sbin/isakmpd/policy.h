@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.h,v 1.12 2003/06/04 07:31:17 ho Exp $	*/
-/*	$EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
+/* $OpenBSD: policy.h,v 1.13 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -38,33 +38,35 @@
 #define PRIVATE_KEY_FILE "private_key"
 #endif
 
-extern int keynote_sessid;
-extern int keynote_policy_asserts_num;
-extern int x509_policy_asserts_num;
-extern int x509_policy_asserts_num_alloc;
-extern char **keynote_policy_asserts;
-extern char **x509_policy_asserts;
+extern int      keynote_sessid;
+extern int      keynote_policy_asserts_num;
+extern int      x509_policy_asserts_num;
+extern int      x509_policy_asserts_num_alloc;
+extern char   **keynote_policy_asserts;
+extern char   **x509_policy_asserts;
 extern struct exchange *policy_exchange;
 extern struct sa *policy_sa;
 extern struct sa *policy_isakmp_sa;
 
-extern void policy_init (void);
-extern char *policy_callback (char *);
-extern int keynote_cert_init (void);
-extern void *keynote_cert_get (u_int8_t *, u_int32_t);
-extern int keynote_cert_validate (void *);
-extern int keynote_cert_insert (int, void *);
-extern void keynote_cert_free (void *);
-extern int keynote_certreq_validate (u_int8_t *, u_int32_t);
-extern void *keynote_certreq_decode (u_int8_t *, u_int32_t);
-extern void keynote_free_aca (void *);
-extern int keynote_cert_obtain (u_int8_t *, size_t, void *,
-				u_int8_t **, u_int32_t *);
-extern int keynote_cert_get_subjects (void *, int *, u_int8_t ***,
-				      u_int32_t **);
-extern int keynote_cert_get_key (void *, void *);
-extern void *keynote_cert_dup (void *);
-extern void keynote_serialize (void *, u_int8_t **, u_int32_t *);
-extern char *keynote_printable (void *);
-extern void *keynote_from_printable (char *);
-#endif /* _POLICY_H_ */
+extern void     policy_init(void);
+extern char    *policy_callback(char *);
+extern int      keynote_cert_init(void);
+extern void    *keynote_cert_get(u_int8_t *, u_int32_t);
+extern int      keynote_cert_validate(void *);
+extern int      keynote_cert_insert(int, void *);
+extern void     keynote_cert_free(void *);
+extern int      keynote_certreq_validate(u_int8_t *, u_int32_t);
+extern void    *keynote_certreq_decode(u_int8_t *, u_int32_t);
+extern void     keynote_free_aca(void *);
+extern int
+keynote_cert_obtain(u_int8_t *, size_t, void *,
+		    u_int8_t **, u_int32_t *);
+extern int
+keynote_cert_get_subjects(void *, int *, u_int8_t ***,
+			  u_int32_t **);
+extern int      keynote_cert_get_key(void *, void *);
+extern void    *keynote_cert_dup(void *);
+extern void     keynote_serialize(void *, u_int8_t **, u_int32_t *);
+extern char    *keynote_printable(void *);
+extern void    *keynote_from_printable(char *);
+#endif				/* _POLICY_H_ */

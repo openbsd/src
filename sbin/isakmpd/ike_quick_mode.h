@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: ike_quick_mode.h,v 1.1 1998/08/02 20:22:44 niklas Exp $	*/
+/* $OpenBSD: ike_quick_mode.h,v 1.6 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: ike_quick_mode.h,v 1.1 1998/08/02 20:22:44 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 2001 Niklas Hallqvist.  All rights reserved.
@@ -34,7 +34,7 @@
 
 struct message;
 
-extern int (*ike_quick_mode_initiator[]) (struct message *);
-extern int (*ike_quick_mode_responder[]) (struct message *);
+extern int      (*ike_quick_mode_initiator[]) (struct message *);
+extern int      (*ike_quick_mode_responder[]) (struct message *);
 
-#endif /* _IKE_QUICK_MODE_H_ */
+#endif				/* _IKE_QUICK_MODE_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.h,v 1.19 2003/11/06 16:12:08 ho Exp $	*/
-/*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
+/* $OpenBSD: x509.h,v 1.20 2004/04/15 18:39:27 deraadt Exp $	 */
+/* $EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -41,8 +41,8 @@
 #define X509v3_IP_ADDR		7
 
 struct x509_attribval {
-  char *type;
-  char *val;
+	char           *type;
+	char           *val;
 };
 
 /*
@@ -51,8 +51,8 @@ struct x509_attribval {
  * be dynamic but we don't care for now.
  */
 struct x509_aca {
-  struct x509_attribval name1;
-  struct x509_attribval name2;
+	struct x509_attribval name1;
+	struct x509_attribval name2;
 };
 
 struct X509;
@@ -60,30 +60,30 @@ struct X509_STORE;
 
 /* Functions provided by cert handler.  */
 
-int x509_certreq_validate (u_int8_t *, u_int32_t);
-void *x509_certreq_decode (u_int8_t *, u_int32_t);
-void x509_cert_free (void *);
-void *x509_cert_get (u_int8_t *, u_int32_t);
-int x509_cert_get_key (void *, void *);
-int x509_cert_get_subjects (void *, int *, u_int8_t ***, u_int32_t **);
-int x509_cert_init (void);
-int x509_crl_init (void);
-int x509_cert_obtain (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
-int x509_cert_validate (void *);
-void x509_free_aca (void *);
-void *x509_cert_dup (void *);
-void x509_serialize (void *, u_int8_t **, u_int32_t *);
-char *x509_printable (void *);
-void *x509_from_printable (char *);
+int             x509_certreq_validate(u_int8_t *, u_int32_t);
+void           *x509_certreq_decode(u_int8_t *, u_int32_t);
+void            x509_cert_free(void *);
+void           *x509_cert_get(u_int8_t *, u_int32_t);
+int             x509_cert_get_key(void *, void *);
+int             x509_cert_get_subjects(void *, int *, u_int8_t ***, u_int32_t **);
+int             x509_cert_init(void);
+int             x509_crl_init(void);
+int             x509_cert_obtain(u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
+int             x509_cert_validate(void *);
+void            x509_free_aca(void *);
+void           *x509_cert_dup(void *);
+void            x509_serialize(void *, u_int8_t **, u_int32_t *);
+char           *x509_printable(void *);
+void           *x509_from_printable(char *);
 
 /* Misc. X509 certificate functions.  */
 
-char *x509_DN_string (u_int8_t *, size_t);
-int x509_cert_insert (int, void *);
-int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
-X509 *x509_from_asn (u_char *, u_int);
-int x509_generate_kn (int, X509 *);
-int x509_read_from_dir (X509_STORE *, char *, int);
-int x509_read_crls_from_dir (X509_STORE *, char *);
+char           *x509_DN_string(u_int8_t *, size_t);
+int             x509_cert_insert(int, void *);
+int             x509_cert_subjectaltname(X509 * cert, u_char **, u_int *);
+X509           *x509_from_asn(u_char *, u_int);
+int             x509_generate_kn(int, X509 *);
+int             x509_read_from_dir(X509_STORE *, char *, int);
+int             x509_read_crls_from_dir(X509_STORE *, char *);
 
-#endif /* _X509_H_ */
+#endif				/* _X509_H_ */

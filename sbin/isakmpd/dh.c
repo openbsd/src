@@ -1,5 +1,5 @@
-/*	$OpenBSD: dh.c,v 1.8 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: dh.c,v 1.5 1999/04/17 23:20:22 niklas Exp $	*/
+/* $OpenBSD: dh.c,v 1.9 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: dh.c,v 1.5 1999/04/17 23:20:22 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -43,9 +43,9 @@
  */
 
 int
-dh_getlen (struct group *group)
+dh_getlen(struct group *group)
 {
-  return group->getlen (group);
+	return group->getlen(group);
 }
 
 /*
@@ -55,14 +55,14 @@ dh_getlen (struct group *group)
  * dh_create_exchange should only be called once.
  */
 int
-dh_create_exchange (struct group *group, u_int8_t *buf)
+dh_create_exchange(struct group *group, u_int8_t *buf)
 {
-  if (group->setrandom (group, group->c))
-    return -1;
-  if (group->operation (group, group->a, group->gen, group->c))
-    return -1;
-  group->getraw (group, group->a, buf);
-  return 0;
+	if (group->setrandom(group, group->c))
+		return -1;
+	if (group->operation(group, group->a, group->gen, group->c))
+		return -1;
+	group->getraw(group, group->a, buf);
+	return 0;
 }
 
 /*
@@ -71,12 +71,12 @@ dh_create_exchange (struct group *group, u_int8_t *buf)
  * is done for the value, the application has to do that.
  */
 int
-dh_create_shared (struct group *group, u_int8_t *secret, u_int8_t *exchange)
+dh_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 {
-  if (group->setraw (group, group->b, exchange, group->getlen (group)))
-    return -1;
-  if (group->operation (group, group->a, group->b, group->c))
-    return -1;
-  group->getraw (group, group->a, secret);
-  return 0;
+	if (group->setraw(group, group->b, exchange, group->getlen(group)))
+		return -1;
+	if (group->operation(group, group->a, group->b, group->c))
+		return -1;
+	group->getraw(group, group->a, secret);
+	return 0;
 }

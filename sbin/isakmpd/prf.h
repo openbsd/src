@@ -1,5 +1,5 @@
-/*	$OpenBSD: prf.h,v 1.9 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: prf.h,v 1.1 1998/07/11 20:06:22 provos Exp $	*/
+/* $OpenBSD: prf.h,v 1.10 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: prf.h,v 1.1 1998/07/11 20:06:22 provos Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -35,24 +35,24 @@
 
 /* Enumeration of possible PRF - Pseudo-Random Functions.  */
 enum prfs {
-  PRF_HMAC = 0			/* No PRFs in drafts, this is the default */
+	PRF_HMAC = 0		/* No PRFs in drafts, this is the default */
 };
 
 struct prf {
-  enum prfs type;		/* Type of PRF */
-  void *prfctx;			/* Context for PRF */
-  u_int8_t blocksize;		/* The blocksize of PRF */
-  void (*Init) (void *);
-  void (*Update) (void *, unsigned char *, unsigned int);
-  void (*Final) (unsigned char *, void *);
+	enum prfs       type;	/* Type of PRF */
+	void           *prfctx;	/* Context for PRF */
+	u_int8_t        blocksize;	/* The blocksize of PRF */
+	void            (*Init) (void *);
+	void            (*Update) (void *, unsigned char *, unsigned int);
+	void            (*Final) (unsigned char *, void *);
 };
 
 struct prf_hash_ctx {
-  struct hash *hash;		/* Hash type to use */
-  void *ctx, *ctx2;		/* Contexts we need for later */
+	struct hash    *hash;	/* Hash type to use */
+	void           *ctx, *ctx2;	/* Contexts we need for later */
 };
 
-struct prf *prf_alloc (enum prfs, int, unsigned char *, unsigned int);
-void prf_free (struct prf *);
+struct prf     *prf_alloc(enum prfs, int, unsigned char *, unsigned int);
+void            prf_free(struct prf *);
 
-#endif /* _PRF_H_ */
+#endif				/* _PRF_H_ */

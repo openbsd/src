@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.h,v 1.19 2004/02/25 16:01:28 hshoexer Exp $	*/
-/*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
+/* $OpenBSD: log.h,v 1.20 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -38,7 +38,7 @@
 #include <sys/uio.h>
 #include <stdio.h>
 
-extern int verbose_logging;
+extern int      verbose_logging;
 
 /*
  * We cannot do the log strings dynamically sizeable as out of memory is one
@@ -47,8 +47,8 @@ extern int verbose_logging;
 #define LOG_SIZE	200
 
 enum log_classes {
-  LOG_MISC, LOG_TRANSPORT, LOG_MESSAGE, LOG_CRYPTO, LOG_TIMER, LOG_SYSDEP,
-  LOG_SA, LOG_EXCHANGE, LOG_NEGOTIATION, LOG_POLICY, LOG_UI, LOG_ENDCLASS
+	LOG_MISC, LOG_TRANSPORT, LOG_MESSAGE, LOG_CRYPTO, LOG_TIMER, LOG_SYSDEP,
+	LOG_SA, LOG_EXCHANGE, LOG_NEGOTIATION, LOG_POLICY, LOG_UI, LOG_ENDCLASS
 };
 #define LOG_CLASSES_TEXT \
   { "Misc", "Trpt", "Mesg", "Cryp", "Timr", "Sdep", "SA  ", "Exch", "Negt", \
@@ -66,37 +66,39 @@ enum log_classes {
 #define LOG_DBG(x)	log_debug x
 #define LOG_DBG_BUF(x)	log_debug_buf x
 
-extern void log_debug (int, int, const char *, ...)
-     __attribute__ ((__format__ (__printf__, 3, 4)));
-extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
-extern void log_debug_cmd (int, int);
-extern void log_debug_toggle (void);
+extern void
+log_debug(int, int, const char *,...)
+__attribute__((__format__(__printf__, 3, 4)));
+	extern void     log_debug_buf(int, int, const char *, const u_int8_t *, size_t);
+	extern void     log_debug_cmd(int, int);
+	extern void     log_debug_toggle(void);
 
 #define PCAP_FILE_DEFAULT "/var/run/isakmpd.pcap"
-extern void log_packet_init (char *);
-extern void log_packet_iov (struct sockaddr *, struct sockaddr *,
-			    struct iovec *, int);
-extern void log_packet_restart (char *);
-extern void log_packet_stop (void);
+	extern void     log_packet_init(char *);
+	extern void     log_packet_iov(struct sockaddr *, struct sockaddr *,
+				                       struct iovec *, int);
+	extern void     log_packet_restart(char *);
+	extern void     log_packet_stop(void);
 
-#else /* !USE_DEBUG */
+#else				/* !USE_DEBUG */
 
 #define LOG_DBG(x)
 #define LOG_DBG_BUF(x)
 
-#endif /* USE_DEBUG */
+#endif				/* USE_DEBUG */
 
-extern FILE *log_current (void);
-extern void log_error (const char *, ...)
-     __attribute__ ((__format__ (__printf__, 1, 2)));
-extern void log_fatal (const char *, ...)
-     __attribute__ ((__format__ (__printf__, 1, 2)));
-extern void log_print (const char *, ...)
-     __attribute__ ((__format__ (__printf__, 1, 2)));
-extern void log_verbose (const char *, ...)
-     __attribute__ ((__format__ (__printf__, 1, 2)));
-extern void log_to (FILE *);
-extern void log_init (int);
-extern void log_reinit (void);
+extern FILE    *log_current(void);
+extern void
+log_error(const char *,...)
+__attribute__((__format__(__printf__, 1, 2)));
+	extern void     log_fatal(const char *,...)
+                __attribute__((__format__(__printf__, 1, 2)));
+	extern void     log_print(const char *,...)
+                __attribute__((__format__(__printf__, 1, 2)));
+	extern void     log_verbose(const char *,...)
+                __attribute__((__format__(__printf__, 1, 2)));
+	extern void     log_to(FILE *);
+	extern void     log_init(int);
+	extern void     log_reinit(void);
 
-#endif /* _LOG_H_ */
+#endif				/* _LOG_H_ */

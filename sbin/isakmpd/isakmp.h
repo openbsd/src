@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: isakmp.h,v 1.11 2000/07/05 10:48:43 ho Exp $	*/
+/* $OpenBSD: isakmp.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: isakmp.h,v 1.11 2000/07/05 10:48:43 ho Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -56,4 +56,4 @@
 #define ISAKMP_VERSION_MINOR(x)		((x) & 0xf)
 #define ISAKMP_VERSION_MAKE(maj, min)	((maj) << 4 | (min))
 
-#endif /* _ISAKMP_H_ */
+#endif				/* _ISAKMP_H_ */

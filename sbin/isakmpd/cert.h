@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.h,v 1.12 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	*/
+/* $OpenBSD: cert.h,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -55,40 +55,42 @@
  */
 
 struct cert_handler {
-  u_int16_t id;				/* ISAKMP Cert Encoding ID */
-  int (*cert_init) (void);
-  int (*crl_init) (void);
-  void *(*cert_get) (u_int8_t *, u_int32_t);
-  int (*cert_validate) (void *);
-  int (*cert_insert) (int, void *);
-  void (*cert_free) (void *);
-  int (*certreq_validate) (u_int8_t *, u_int32_t);
-  void *(*certreq_decode) (u_int8_t *, u_int32_t);
-  void (*free_aca) (void *);
-  int (*cert_obtain) (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
-  int (*cert_get_key) (void *, void *);
-  int (*cert_get_subjects) (void *, int *, u_int8_t ***, u_int32_t **);
-  void *(*cert_dup) (void *);
-  void (*cert_serialize) (void *, u_int8_t **, u_int32_t *);
-  char *(*cert_printable) (void *);
-  void *(*cert_from_printable) (char *);
+	u_int16_t id;	/* ISAKMP Cert Encoding ID */
+	int	(*cert_init) (void);
+	int	(*crl_init) (void);
+	void	*(*cert_get) (u_int8_t *, u_int32_t);
+	int	(*cert_validate) (void *);
+	int	(*cert_insert) (int, void *);
+	void	(*cert_free) (void *);
+	int	(*certreq_validate) (u_int8_t *, u_int32_t);
+	void	*(*certreq_decode) (u_int8_t *, u_int32_t);
+	void	(*free_aca) (void *);
+	int	(*cert_obtain) (u_int8_t *, size_t, void *,
+		    u_int8_t **, u_int32_t *);
+	int	(*cert_get_key) (void *, void *);
+	int	(*cert_get_subjects) (void *, int *, u_int8_t ***,
+		    u_int32_t **);
+	void	*(*cert_dup) (void *);
+	void	(*cert_serialize) (void *, u_int8_t **, u_int32_t *);
+	char	*(*cert_printable) (void *);
+	void	*(*cert_from_printable) (char *);
 };
 
 /* The acceptable authority of cert request.  */
 struct certreq_aca {
-  TAILQ_ENTRY (certreq_aca) link;
+	TAILQ_ENTRY(certreq_aca) link;
 
-  u_int16_t id;
-  struct cert_handler *handler;
+	u_int16_t id;
+	struct cert_handler *handler;
 
-  /* If data is a null pointer, everything is acceptable.  */
-  void *data;
+	/* If data is a null pointer, everything is acceptable.  */
+	void	*data;
 };
 
-struct certreq_aca *certreq_decode (u_int16_t, u_int8_t *, u_int32_t);
-void cert_free_subjects (int, u_int8_t **, u_int32_t *);
-struct cert_handler *cert_get (u_int16_t);
-int cert_init (void);
-int crl_init (void);
+struct certreq_aca *certreq_decode(u_int16_t, u_int8_t *, u_int32_t);
+void	cert_free_subjects(int, u_int8_t **, u_int32_t *);
+struct cert_handler *cert_get(u_int16_t);
+int	cert_init(void);
+int	crl_init(void);
 
-#endif /* _CERT_H_ */
+#endif				/* _CERT_H_ */

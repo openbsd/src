@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.c,v 1.15 2003/06/04 07:31:17 ho Exp $	*/
-/*	$EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	*/
+/* $OpenBSD: libcrypto.c,v 1.16 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
@@ -34,17 +34,16 @@
 #include "libcrypto.h"
 
 void
-libcrypto_init (void)
+libcrypto_init(void)
 {
 #if defined (USE_X509) && defined (USE_LIBCRYPTO)
 
-  /* Add all algorithms known by SSL */
+	/* Add all algorithms known by SSL */
 #if OPENSSL_VERSION_NUMBER >= 0x00905100L
-  OpenSSL_add_all_algorithms ();
+	OpenSSL_add_all_algorithms();
 #else
-  SSLeay_add_all_algorithms ();
+	SSLeay_add_all_algorithms();
 #endif
 
 #endif /* USE_X509 && USE_LIBCRYPTO */
 }
-

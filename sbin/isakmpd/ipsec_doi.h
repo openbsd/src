@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec_doi.h,v 1.7 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: ipsec_doi.h,v 1.10 1999/04/02 00:57:51 niklas Exp $	*/
+/* $OpenBSD: ipsec_doi.h,v 1.8 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: ipsec_doi.h,v 1.10 1999/04/02 00:57:51 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -41,4 +41,4 @@
 /* The low limit if valid SPI values.  */
 #define IPSEC_SPI_LOW 0x100
 
-#endif /* _IPSEC_DOI_H_ */
+#endif				/* _IPSEC_DOI_H_ */

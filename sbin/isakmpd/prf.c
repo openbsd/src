@@ -1,5 +1,5 @@
-/*	$OpenBSD: prf.c,v 1.12 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	*/
+/* $OpenBSD: prf.c,v 1.13 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -40,30 +40,30 @@
 #include "log.h"
 #include "prf.h"
 
-void prf_hash_init (struct prf_hash_ctx *);
-void prf_hash_update (struct prf_hash_ctx *, unsigned char *, unsigned int);
-void prf_hash_final (unsigned char *, struct prf_hash_ctx *);
+void            prf_hash_init(struct prf_hash_ctx *);
+void            prf_hash_update(struct prf_hash_ctx *, unsigned char *, unsigned int);
+void            prf_hash_final(unsigned char *, struct prf_hash_ctx *);
 
 /* PRF behaves likes a hash */
 
 void
-prf_hash_init (struct prf_hash_ctx *ctx)
+prf_hash_init(struct prf_hash_ctx *ctx)
 {
-  memcpy (ctx->hash->ctx, ctx->ctx, ctx->hash->ctxsize);
-  memcpy (ctx->hash->ctx2, ctx->ctx2, ctx->hash->ctxsize);
+	memcpy(ctx->hash->ctx, ctx->ctx, ctx->hash->ctxsize);
+	memcpy(ctx->hash->ctx2, ctx->ctx2, ctx->hash->ctxsize);
 }
 
 void
-prf_hash_update (struct prf_hash_ctx *ctx, unsigned char *data,
-		 unsigned int len)
+prf_hash_update(struct prf_hash_ctx *ctx, unsigned char *data,
+    unsigned int len)
 {
-  ctx->hash->Update (ctx->hash->ctx, data, len);
+	ctx->hash->Update(ctx->hash->ctx, data, len);
 }
 
 void
-prf_hash_final (unsigned char *digest, struct prf_hash_ctx *ctx)
+prf_hash_final(unsigned char *digest, struct prf_hash_ctx *ctx)
 {
-  ctx->hash->HMACFinal (digest, ctx->hash);
+	ctx->hash->HMACFinal(digest, ctx->hash);
 }
 
 /*
@@ -71,99 +71,89 @@ prf_hash_final (unsigned char *digest, struct prf_hash_ctx *ctx)
  * the HMAC version of a hash. See RFC-2104 for reference.
  */
 struct prf *
-prf_alloc (enum prfs type, int subtype, unsigned char *shared,
-	   unsigned int sharedsize)
+prf_alloc(enum prfs type, int subtype, unsigned char *shared,
+    unsigned int sharedsize)
 {
-  struct hash *hash;
-  struct prf *prf;
-  struct prf_hash_ctx *prfctx;
+	struct hash    *hash;
+	struct prf     *prf;
+	struct prf_hash_ctx *prfctx;
 
-  switch (type)
-    {
-    case PRF_HMAC:
-      hash = hash_get (subtype);
-      if (!hash)
-	{
-	  log_print ("prf_alloc: unknown hash type %d", subtype);
-	  return 0;
-	}
-      break;
-    default:
-      log_print ("prf_alloc: unknown PRF type %d", type);
-      return 0;
-    }
-
-  prf = malloc (sizeof *prf);
-  if (!prf)
-    {
-      log_error ("prf_alloc: malloc (%lu) failed", (unsigned long)sizeof *prf);
-      return 0;
-    }
-
-  if (type == PRF_HMAC)
-    {
-      /* Obtain needed memory.  */
-      prfctx = malloc (sizeof *prfctx);
-      if (!prfctx)
-	{
-	  log_error ("prf_alloc: malloc (%lu) failed",
-		     (unsigned long)sizeof *prfctx);
-	  goto cleanprf;
-	}
-      prf->prfctx = prfctx;
-
-      prfctx->ctx = malloc (hash->ctxsize);
-      if (!prfctx->ctx)
-	{
-	  log_error ("prf_alloc: malloc (%d) failed", hash->ctxsize);
-	  goto cleanprfctx;
+	switch (type) {
+	case PRF_HMAC:
+		hash = hash_get(subtype);
+		if (!hash) {
+			log_print("prf_alloc: unknown hash type %d", subtype);
+			return 0;
+		}
+		break;
+	default:
+		log_print("prf_alloc: unknown PRF type %d", type);
+		return 0;
 	}
 
-      prfctx->ctx2 = malloc (hash->ctxsize);
-      if (!prfctx->ctx2)
-	{
-	  log_error ("prf_alloc: malloc (%d) failed", hash->ctxsize);
-	  free (prfctx->ctx);
-	  goto cleanprfctx;
+	prf = malloc(sizeof *prf);
+	if (!prf) {
+		log_error("prf_alloc: malloc (%lu) failed",
+		    (unsigned long) sizeof *prf);
+		return 0;
 	}
-      prf->type = PRF_HMAC;
-      prf->blocksize = hash->hashsize;
-      prfctx->hash = hash;
+	if (type == PRF_HMAC) {
+		/* Obtain needed memory.  */
+		prfctx = malloc(sizeof *prfctx);
+		if (!prfctx) {
+			log_error("prf_alloc: malloc (%lu) failed",
+			    (unsigned long) sizeof *prfctx);
+			goto cleanprf;
+		}
+		prf->prfctx = prfctx;
 
-      /* Use the correct function pointers.  */
-      prf->Init = (void (*) (void *))prf_hash_init;
-      prf->Update
-	= (void (*) (void *, unsigned char *, unsigned int))prf_hash_update;
-      prf->Final = (void (*) (unsigned char *, void *))prf_hash_final;
+		prfctx->ctx = malloc(hash->ctxsize);
+		if (!prfctx->ctx) {
+			log_error("prf_alloc: malloc (%d) failed", hash->ctxsize);
+			goto cleanprfctx;
+		}
+		prfctx->ctx2 = malloc(hash->ctxsize);
+		if (!prfctx->ctx2) {
+			log_error("prf_alloc: malloc (%d) failed", hash->ctxsize);
+			free(prfctx->ctx);
+			goto cleanprfctx;
+		}
+		prf->type = PRF_HMAC;
+		prf->blocksize = hash->hashsize;
+		prfctx->hash = hash;
 
-      /* Init HMAC contexts.  */
-      hash->HMACInit (hash, shared, sharedsize);
+		/* Use the correct function pointers.  */
+		prf->Init = (void (*) (void *)) prf_hash_init;
+		prf->Update = (void (*) (void *, unsigned char *,
+		    unsigned int)) prf_hash_update;
+		prf->Final = (void (*) (unsigned char *, void *)) prf_hash_final;
 
-      /* Save contexts.  */
-      memcpy (prfctx->ctx, hash->ctx, hash->ctxsize);
-      memcpy (prfctx->ctx2, hash->ctx2, hash->ctxsize);
-    }
+		/* Init HMAC contexts.  */
+		hash->HMACInit(hash, shared, sharedsize);
 
-  return prf;
+		/* Save contexts.  */
+		memcpy(prfctx->ctx, hash->ctx, hash->ctxsize);
+		memcpy(prfctx->ctx2, hash->ctx2, hash->ctxsize);
+	}
+	return prf;
 
- cleanprfctx:
-  free (prf->prfctx);
- cleanprf:
-  free (prf);
-  return 0;
+cleanprfctx:
+	free(prf->prfctx);
+cleanprf:
+	free(prf);
+	return 0;
 }
 
 /* Deallocate the PRF pointed to by PRF.  */
 void
-prf_free (struct prf *prf)
+prf_free(struct prf *prf)
 {
-  struct prf_hash_ctx *prfctx = prf->prfctx;
+	struct prf_hash_ctx *prfctx = prf->prfctx;
 
-  if (prf->type == PRF_HMAC)
-    {
-      free (prfctx->ctx2);
-      free (prfctx->ctx);
-    }
-  free (prf->prfctx);
-  free (prf);
+	if (prf->type == PRF_HMAC) {
+		free(prfctx->ctx2);
+		free(prfctx->ctx);
+	}
+	free(prf->prfctx);
+	free(prf);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.h,v 1.17 2003/11/06 16:12:07 ho Exp $	*/
-/*	$EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	*/
+/* $OpenBSD: message.h,v 1.18 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -48,19 +48,19 @@ struct sa;
 struct transport;
 
 struct payload {
-  /* Link all payloads of the same type through here.  */
-  TAILQ_ENTRY (payload) link;
+	/* Link all payloads of the same type through here.  */
+	TAILQ_ENTRY(payload) link;
 
-  /* The pointer to the actual payload data.  */
-  u_int8_t *p;
+	/* The pointer to the actual payload data.  */
+	u_int8_t       *p;
 
-  /*
-   * A pointer to the parent payload, used for proposal and transform payloads.
-   */
-  struct payload *context;
+	/*
+	 * A pointer to the parent payload, used for proposal and transform payloads.
+         */
+	struct payload *context;
 
-  /* Payload flags described below.  */
-  int flags;
+	/* Payload flags described below.  */
+	int             flags;
 };
 
 /* Payload flags.  */
@@ -73,73 +73,73 @@ struct payload {
 
 /* A post-send chain of functions to be called.  */
 struct post_send {
-  /* Link to the next function in the chain.  */
-  TAILQ_ENTRY (post_send) link;
+	/* Link to the next function in the chain.  */
+	TAILQ_ENTRY(post_send) link;
 
-  /* The actual function.  */
-  void (*func) (struct message *);
+	/* The actual function.  */
+	void            (*func) (struct message *);
 };
 
 struct message {
-  /* Link message in send queues via this link.  */
-  TAILQ_ENTRY (message) link;
+	/* Link message in send queues via this link.  */
+	TAILQ_ENTRY(message) link;
 
-  /* Message flags described below.  */
-  u_int flags;
+	/* Message flags described below.  */
+	u_int           flags;
 
-  /*
-   * This is the transport the message either arrived on or will be sent to.
-   */
-  struct transport *transport;
+	/*
+	 * This is the transport the message either arrived on or will be sent to.
+         */
+	struct transport *transport;
 
-  /*
-   * This is the ISAKMP SA protecting this message.
-   * XXX Needs to be redone to some keystate pointer or something.
-   */
-  struct sa *isakmp_sa;
+	/*
+	 * This is the ISAKMP SA protecting this message.
+	 * XXX Needs to be redone to some keystate pointer or something.
+         */
+	struct sa      *isakmp_sa;
 
-  /* This is the exchange where this message appears.  */
-  struct exchange *exchange;
+	/* This is the exchange where this message appears.  */
+	struct exchange *exchange;
 
-  /*
-   * A segmented buffer structure holding the messages raw contents.  On input
-   * only segment 0 will be filled, holding all of the message.  On output, as
-   * long as the message body is unencrypted each segment will be one payload,
-   * after encryption segment 0 will be the unencrypted header, and segment 1
-   * will be the encrypted payloads, all of them.
-   */
-  struct iovec *iov;
+	/*
+	 * A segmented buffer structure holding the messages raw contents.  On input
+	 * only segment 0 will be filled, holding all of the message.  On output, as
+	 * long as the message body is unencrypted each segment will be one payload,
+	 * after encryption segment 0 will be the unencrypted header, and segment 1
+	 * will be the encrypted payloads, all of them.
+         */
+	struct iovec   *iov;
 
-  /* The segment count.  */
-  u_int iovlen;
+	/* The segment count.  */
+	u_int           iovlen;
 
-  /* Pointer to the last "next payload" field.  */
-  u_int8_t *nextp;
+	/* Pointer to the last "next payload" field.  */
+	u_int8_t       *nextp;
 
-  /* "Smart" pointers to each payload, sorted by type.  */
-  TAILQ_HEAD (payload_head, payload) payload[ISAKMP_PAYLOAD_RESERVED_MIN];
+	/* "Smart" pointers to each payload, sorted by type.  */
+	                TAILQ_HEAD(payload_head, payload) payload[ISAKMP_PAYLOAD_RESERVED_MIN];
 
-  /* Number of times this message has been sent.  */
-  int xmits;
+	/* Number of times this message has been sent.  */
+	int             xmits;
 
-  /* The timeout event causing retransmission of this message.  */
-  struct event *retrans;
+	/* The timeout event causing retransmission of this message.  */
+	struct event   *retrans;
 
-  /* The (possibly encrypted) message text, used for duplicate testing.  */
-  u_int8_t *orig;
-  size_t orig_sz;
+	/* The (possibly encrypted) message text, used for duplicate testing.  */
+	u_int8_t       *orig;
+	size_t          orig_sz;
 
-  /*
-   * Extra baggage needed to travel with the message.  Used transiently
-   * in context sensitive ways.
-   */
-  void *extra;
+	/*
+	 * Extra baggage needed to travel with the message.  Used transiently
+	 * in context sensitive ways.
+         */
+	void           *extra;
 
-  /*
-   * Hooks for stuff needed to be done after the message has gone out to
-   * the wire.
-   */
-  TAILQ_HEAD (post_send_head, post_send) post_send;
+	/*
+	 * Hooks for stuff needed to be done after the message has gone out to
+	 * the wire.
+         */
+	                TAILQ_HEAD(post_send_head, post_send) post_send;
 };
 
 /* Message flags.  */
@@ -160,31 +160,33 @@ struct message {
 /* This message should be kept on the prioritized sendq.  */
 #define MSG_PRIORITIZED	8
 
-TAILQ_HEAD (msg_head, message);
+TAILQ_HEAD(msg_head, message);
 
-extern int message_add_payload (struct message *, u_int8_t, u_int8_t *,
-				size_t, int);
-extern int message_add_sa_payload (struct message *);
-extern struct message *message_alloc (struct transport *, u_int8_t *, size_t);
-extern struct message *message_alloc_reply (struct message *);
-extern u_int8_t *message_copy (struct message *, size_t, size_t *);
-extern void message_drop (struct message *, int, struct proto *, int, int);
-extern void message_dump_raw (char *, struct message *, int);
-extern void message_free (struct message *);
-extern int message_negotiate_sa (struct message *,
-				 int (*) (struct exchange *, struct sa *,
-					  struct sa *));
-extern int message_recv (struct message *);
-extern int message_register_post_send (struct message *,
-				       void (*) (struct message *));
-extern void message_post_send (struct message *);
-extern void message_send (struct message *);
-extern void message_send_expire (struct message *);
-extern void message_send_delete (struct sa *);
-extern int message_send_info (struct message *);
-extern void message_send_notification (struct message *, struct sa *,
-				       u_int16_t, struct proto *, int);
-extern void message_setup_header (struct message *, u_int8_t, u_int8_t,
-				  u_int8_t *);
+extern int
+message_add_payload(struct message *, u_int8_t, u_int8_t *,
+		    size_t, int);
+extern int      message_add_sa_payload(struct message *);
+extern struct message *message_alloc(struct transport *, u_int8_t *, size_t);
+extern struct message *message_alloc_reply(struct message *);
+extern u_int8_t *message_copy(struct message *, size_t, size_t *);
+extern void     message_drop(struct message *, int, struct proto *, int, int);
+extern void     message_dump_raw(char *, struct message *, int);
+extern void     message_free(struct message *);
+extern int
+message_negotiate_sa(struct message *,
+		     int (*) (struct exchange *, struct sa *,
+			      struct sa *));
+	extern int      message_recv(struct message *);
+	extern int      message_register_post_send(struct message *,
+			                       void (*) (struct message *));
+	extern void     message_post_send(struct message *);
+	extern void     message_send(struct message *);
+	extern void     message_send_expire(struct message *);
+	extern void     message_send_delete(struct sa *);
+	extern int      message_send_info(struct message *);
+	extern void     message_send_notification(struct message *, struct sa *,
+			                    u_int16_t, struct proto *, int);
+	extern void     message_setup_header(struct message *, u_int8_t, u_int8_t,
+					                     u_int8_t *);
 
-#endif /* _MESSAGE_H_ */
+#endif				/* _MESSAGE_H_ */

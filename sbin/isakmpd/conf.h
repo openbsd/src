@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.26 2004/04/07 22:45:49 ho Exp $	*/
-/*	$EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	*/
+/* $OpenBSD: conf.h,v 1.27 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -70,32 +70,32 @@
 #define CONF_DFLT_PHASE1_TRANSFORMS    "3DES-SHA-RSA_SIG"
 
 struct conf_list_node {
-  TAILQ_ENTRY (conf_list_node) link;
-  char *field;
+	TAILQ_ENTRY(conf_list_node) link;
+	char           *field;
 };
 
 struct conf_list {
-  size_t cnt;
-  TAILQ_HEAD (conf_list_fields_head, conf_list_node) fields;
+	size_t          cnt;
+	                TAILQ_HEAD(conf_list_fields_head, conf_list_node) fields;
 };
 
-extern char *conf_path;
+extern char    *conf_path;
 
-extern int conf_begin (void);
-extern int conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf);
-extern int conf_end (int, int);
-extern void conf_free_list (struct conf_list *);
-extern struct sockaddr *conf_get_address (char *, char *);
-extern struct conf_list *conf_get_list (char *, char *);
-extern struct conf_list *conf_get_tag_list (char *);
-extern int conf_get_num (char *, char *, int);
-extern char *conf_get_str (char *, char *);
-extern void conf_init (void);
-extern int conf_match_num (char *, char *, int);
-extern void conf_reinit (void);
-extern int conf_remove (int, char *, char *);
-extern int conf_remove_section (int, char *);
-extern int conf_set (int, char *, char *, char *, int, int);
-extern void conf_report (void);
+extern int      conf_begin(void);
+extern int      conf_decode_base64(u_int8_t * out, u_int32_t * len, u_char * buf);
+extern int      conf_end(int, int);
+extern void     conf_free_list(struct conf_list *);
+extern struct sockaddr *conf_get_address(char *, char *);
+extern struct conf_list *conf_get_list(char *, char *);
+extern struct conf_list *conf_get_tag_list(char *);
+extern int      conf_get_num(char *, char *, int);
+extern char    *conf_get_str(char *, char *);
+extern void     conf_init(void);
+extern int      conf_match_num(char *, char *, int);
+extern void     conf_reinit(void);
+extern int      conf_remove(int, char *, char *);
+extern int      conf_remove_section(int, char *);
+extern int      conf_set(int, char *, char *, char *, int, int);
+extern void     conf_report(void);
 
-#endif /* _CONF_H_ */
+#endif				/* _CONF_H_ */

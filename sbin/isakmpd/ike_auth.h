@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.h,v 1.4 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: ike_auth.h,v 1.5 1998/08/16 19:55:24 provos Exp $	*/
+/* $OpenBSD: ike_auth.h,v 1.5 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: ike_auth.h,v 1.5 1998/08/16 19:55:24 provos Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,12 +37,12 @@
 struct exchange;
 
 struct ike_auth {
-  u_int16_t id;
-  u_int8_t *(*gen_skeyid) (struct exchange *, size_t *);
-  int (*decode_hash) (struct message *);
-  int (*encode_hash) (struct message *);
+	u_int16_t       id;
+	u_int8_t       *(*gen_skeyid) (struct exchange *, size_t *);
+	int             (*decode_hash) (struct message *);
+	int             (*encode_hash) (struct message *);
 };
 
-extern struct ike_auth *ike_auth_get (u_int16_t);
+extern struct ike_auth *ike_auth_get(u_int16_t);
 
-#endif /* _IKE_AUTH_H_ */
+#endif				/* _IKE_AUTH_H_ */

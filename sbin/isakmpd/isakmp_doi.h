@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.h,v 1.4 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: isakmp_doi.h,v 1.1 1998/07/07 23:20:29 niklas Exp $	*/
+/* $OpenBSD: isakmp_doi.h,v 1.5 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: isakmp_doi.h,v 1.1 1998/07/07 23:20:29 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -32,6 +32,6 @@
 #ifndef _ISAKMP_DOI_H_
 #define _ISAKMP_DOI_H_
 
-extern void isakmp_doi_init (void);
+extern void     isakmp_doi_init(void);
 
-#endif /* _ISAKMP_DOI_H_ */
+#endif				/* _ISAKMP_DOI_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.12 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	*/
+/* $OpenBSD: ike_main_mode.c,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -58,68 +58,68 @@
 #include "transport.h"
 #include "util.h"
 
-static int initiator_send_ID_AUTH (struct message *);
-static int responder_send_ID_AUTH (struct message *);
-static int responder_send_KE_NONCE (struct message *);
+static int      initiator_send_ID_AUTH(struct message *);
+static int      responder_send_ID_AUTH(struct message *);
+static int      responder_send_KE_NONCE(struct message *);
 
-int (*ike_main_mode_initiator[]) (struct message *) = {
-  ike_phase_1_initiator_send_SA,
-  ike_phase_1_initiator_recv_SA,
-  ike_phase_1_initiator_send_KE_NONCE,
-  ike_phase_1_initiator_recv_KE_NONCE,
-  initiator_send_ID_AUTH,
-  ike_phase_1_recv_ID_AUTH
+int             (*ike_main_mode_initiator[]) (struct message *) = {
+	ike_phase_1_initiator_send_SA,
+	ike_phase_1_initiator_recv_SA,
+	ike_phase_1_initiator_send_KE_NONCE,
+	ike_phase_1_initiator_recv_KE_NONCE,
+	initiator_send_ID_AUTH,
+	ike_phase_1_recv_ID_AUTH
 };
 
-int (*ike_main_mode_responder[]) (struct message *) = {
-  ike_phase_1_responder_recv_SA,
-  ike_phase_1_responder_send_SA,
-  ike_phase_1_recv_KE_NONCE,
-  responder_send_KE_NONCE,
-  ike_phase_1_recv_ID_AUTH,
-  responder_send_ID_AUTH
+int             (*ike_main_mode_responder[]) (struct message *) = {
+	ike_phase_1_responder_recv_SA,
+	ike_phase_1_responder_send_SA,
+	ike_phase_1_recv_KE_NONCE,
+	responder_send_KE_NONCE,
+	ike_phase_1_recv_ID_AUTH,
+	responder_send_ID_AUTH
 };
 
 static int
-initiator_send_ID_AUTH (struct message *msg)
+initiator_send_ID_AUTH(struct message * msg)
 {
-  msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
+	msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 
-  if (ike_phase_1_send_ID (msg))
-    return -1;
+	if (ike_phase_1_send_ID(msg))
+		return -1;
 
-  if (ike_phase_1_send_AUTH (msg))
-    return -1;
+	if (ike_phase_1_send_AUTH(msg))
+		return -1;
 
-  return ipsec_initial_contact (msg);
+	return ipsec_initial_contact(msg);
 }
 
 /* Send our public DH value and a nonce to the initiator.  */
 int
-responder_send_KE_NONCE (struct message *msg)
+responder_send_KE_NONCE(struct message * msg)
 {
-  /* XXX Should we really just use the initiator's nonce size?  */
-  if (ike_phase_1_send_KE_NONCE (msg, msg->exchange->nonce_i_len))
-    return -1;
+	/* XXX Should we really just use the initiator's nonce size?  */
+	if (ike_phase_1_send_KE_NONCE(msg, msg->exchange->nonce_i_len))
+		return -1;
 
-  /*
-   * Calculate DH values & key material in parallel with the message going
-   * on a roundtrip over the wire.
-   */
-  message_register_post_send (msg,
-			      (void (*) (struct message *))
-			      ike_phase_1_post_exchange_KE_NONCE);
+	/*
+	 * Calculate DH values & key material in parallel with the message going
+	 * on a roundtrip over the wire.
+         */
+	message_register_post_send(msg,
+				   (void (*) (struct message *))
+				   ike_phase_1_post_exchange_KE_NONCE);
 
-  return 0;
+	return 0;
 }
 
 static int
-responder_send_ID_AUTH (struct message *msg)
+responder_send_ID_AUTH(struct message * msg)
 {
-  msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
+	msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 
-  if (ike_phase_1_responder_send_ID_AUTH (msg))
-    return -1;
+	if (ike_phase_1_responder_send_ID_AUTH(msg))
+		return -1;
 
-  return ipsec_initial_contact (msg);
+	return ipsec_initial_contact(msg);
 }

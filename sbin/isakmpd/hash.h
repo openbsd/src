@@ -1,5 +1,5 @@
-/*	$OpenBSD: hash.h,v 1.6 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: hash.h,v 1.6 1998/07/25 22:04:36 niklas Exp $	*/
+/* $OpenBSD: hash.h,v 1.7 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: hash.h,v 1.6 1998/07/25 22:04:36 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -39,23 +39,23 @@
 #define HASH_MAX	SHA1_SIZE
 
 enum hashes {
-  HASH_MD5 = 0,
-  HASH_SHA1
+	HASH_MD5 = 0,
+	HASH_SHA1
 };
 
 struct hash {
-  enum hashes type;
-  int id;			/* ISAKMP/Oakley ID */
-  u_int8_t hashsize;		/* Size of the hash */
-  void *ctx;			/* Pointer to a context, for HMAC ictx */
-  unsigned char *digest;	/* Pointer to a digest */
-  int ctxsize;
-  void *ctx2;			/* Pointer to a 2nd context, for HMAC octx */
-  void (*Init) (void *);
-  void (*Update) (void *, unsigned char *, unsigned int);
-  void (*Final) (unsigned char *, void *);
-  void (*HMACInit) (struct hash *, unsigned char *, unsigned int);
-  void (*HMACFinal) (unsigned char *, struct hash *);
+	enum hashes     type;
+	int             id;	/* ISAKMP/Oakley ID */
+	u_int8_t        hashsize;	/* Size of the hash */
+	void           *ctx;	/* Pointer to a context, for HMAC ictx */
+	unsigned char  *digest;	/* Pointer to a digest */
+	int             ctxsize;
+	void           *ctx2;	/* Pointer to a 2nd context, for HMAC octx */
+	void            (*Init) (void *);
+	void            (*Update) (void *, unsigned char *, unsigned int);
+	void            (*Final) (unsigned char *, void *);
+	void            (*HMACInit) (struct hash *, unsigned char *, unsigned int);
+	void            (*HMACFinal) (unsigned char *, struct hash *);
 };
 
 /* HMAC Hash Encapsulation */
@@ -64,7 +64,7 @@ struct hash {
 #define HMAC_OPAD_VAL	0x5C
 #define HMAC_BLOCKLEN	64
 
-extern struct hash *hash_get (enum hashes);
-extern void hmac_init (struct hash *, unsigned char *, unsigned int);
+extern struct hash *hash_get(enum hashes);
+extern void     hmac_init(struct hash *, unsigned char *, unsigned int);
 
-#endif /* _HASH_H_ */
+#endif				/* _HASH_H_ */

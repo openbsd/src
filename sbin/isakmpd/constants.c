@@ -1,5 +1,5 @@
-/*	$OpenBSD: constants.c,v 1.8 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: constants.c,v 1.7 1999/04/02 00:57:31 niklas Exp $	*/
+/* $OpenBSD: constants.c,v 1.9 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: constants.c,v 1.7 1999/04/02 00:57:31 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,65 +37,63 @@
 #include "constants.h"
 
 int
-constant_value (struct constant_map *map, char *name)
+constant_value(struct constant_map *map, char *name)
 {
-  struct constant_map *entry = map;
+	struct constant_map *entry = map;
 
-  for (entry = map; entry->name; entry++)
-    if (strcasecmp (entry->name, name) == 0)
-      return entry->value;
-  return 0;
+	for (entry = map; entry->name; entry++)
+		if (strcasecmp(entry->name, name) == 0)
+			return entry->value;
+	return 0;
 }
 
 char *
-constant_lookup (struct constant_map *map, int value)
+constant_lookup(struct constant_map *map, int value)
 {
-  struct constant_map *entry = map;
+	struct constant_map *entry = map;
 
-  for (entry = map; entry->name; entry++)
-    if (entry->value == value)
-      return entry->name;
-  return 0;
+	for (entry = map; entry->name; entry++)
+		if (entry->value == value)
+			return entry->name;
+	return 0;
 }
 
 struct constant_map *
-constant_link_lookup (struct constant_map *map, int value)
+constant_link_lookup(struct constant_map *map, int value)
 {
-  struct constant_map *entry = map;
+	struct constant_map *entry = map;
 
-  for (entry = map; entry->name; entry++)
-    if (entry->value == value)
-      return entry->link;
-  return 0;
+	for (entry = map; entry->name; entry++)
+		if (entry->value == value)
+			return entry->link;
+	return 0;
 }
 
 char *
-constant_name (struct constant_map *map, int value)
+constant_name(struct constant_map *map, int value)
 {
-  static char tmp[32];		/* XXX Ugly, I know.  */
-  char *retval = constant_lookup (map, value);
+	static char     tmp[32];/* XXX Ugly, I know.  */
+	char           *retval = constant_lookup(map, value);
 
-  if (!retval)
-    {
-      snprintf (tmp, sizeof tmp, "<Unknown %d>", value);
-      return tmp;
-    }
-  return retval;
-}
-
-char *
-constant_name_maps (struct constant_map **maps, int value)
-{
-  static char tmp[32];		/* XXX Ugly, I know.  */
-  char *retval;
-  struct constant_map **map;
-
-  for (map = maps; *map; map++)
-    {
-      retval = constant_lookup (*map, value);
-      if (retval)
+	if (!retval) {
+		snprintf(tmp, sizeof tmp, "<Unknown %d>", value);
+		return tmp;
+	}
 	return retval;
-    }
-  snprintf (tmp, sizeof tmp, "<Unknown %d>", value);
-  return tmp;
+}
+
+char *
+constant_name_maps(struct constant_map **maps, int value)
+{
+	static char     tmp[32];/* XXX Ugly, I know.  */
+	char           *retval;
+	struct constant_map **map;
+
+	for (map = maps; *map; map++) {
+		retval = constant_lookup(*map, value);
+		if (retval)
+			return retval;
+	}
+	snprintf(tmp, sizeof tmp, "<Unknown %d>", value);
+	return tmp;
 }

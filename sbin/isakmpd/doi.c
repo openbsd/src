@@ -1,5 +1,5 @@
-/*	$OpenBSD: doi.c,v 1.6 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: doi.c,v 1.4 1999/04/02 00:57:36 niklas Exp $	*/
+/* $OpenBSD: doi.c,v 1.7 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: doi.c,v 1.4 1999/04/02 00:57:36 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -35,28 +35,27 @@
 
 #include "doi.h"
 
-static LIST_HEAD (doi_list, doi) doi_tab;
+static
+LIST_HEAD(doi_list, doi) doi_tab;
+
+	void
+	                doi_init()
+{
+	LIST_INIT(&doi_tab);
+}
+
+struct doi     *
+doi_lookup(u_int8_t doi_id)
+{
+	struct doi     *doi;
+
+	for (doi = LIST_FIRST(&doi_tab); doi && doi->id != doi_id;
+	     doi = LIST_NEXT(doi, link));
+	return doi;
+}
 
 void
-doi_init ()
+doi_register(struct doi * doi)
 {
-  LIST_INIT (&doi_tab);
+	LIST_INSERT_HEAD(&doi_tab, doi, link);
 }
-
-struct doi *
-doi_lookup (u_int8_t doi_id)
-{
-  struct doi *doi;
-
-  for (doi = LIST_FIRST (&doi_tab); doi && doi->id != doi_id;
-       doi = LIST_NEXT (doi, link))
-    ;
-  return doi;
-}
-
-void
-doi_register (struct doi *doi)
-{
-  LIST_INSERT_HEAD (&doi_tab, doi, link);
-}
-

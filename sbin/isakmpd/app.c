@@ -1,5 +1,5 @@
-/*	$OpenBSD: app.c,v 1.8 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	*/
+/* $OpenBSD: app.c,v 1.9 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -47,17 +47,17 @@ int app_none = 0;
 
 /* Initialize applications.  */
 void
-app_init (void)
+app_init(void)
 {
-  if (app_none)
-    return;
-  app_socket = sysdep_app_open ();
-  if (app_socket == -1)
-    log_fatal ("app_init: cannot open connection to application");
+	if (app_none)
+		return;
+	app_socket = sysdep_app_open();
+	if (app_socket == -1)
+		log_fatal("app_init: cannot open connection to application");
 }
 
 void
-app_handler (void)
+app_handler(void)
 {
-  sysdep_app_handler (app_socket);
+	sysdep_app_handler(app_socket);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cookie.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: cookie.h,v 1.5 1998/08/05 09:21:43 niklas Exp $	*/
+/* $OpenBSD: cookie.h,v 1.6 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: cookie.h,v 1.5 1998/08/05 09:21:43 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -38,7 +38,8 @@
 struct exchange;
 struct transport;
 
-extern void cookie_gen (struct transport *, struct exchange *, u_int8_t *,
-			size_t);
+extern void
+cookie_gen(struct transport *, struct exchange *, u_int8_t *,
+	   size_t);
 
-#endif /* _COOKIE_H_ */
+#endif				/* _COOKIE_H_ */

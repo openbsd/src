@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.18 2004/03/10 23:08:49 hshoexer Exp $	*/
-/*	$EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	*/
+/* $OpenBSD: isakmp_doi.c,v 1.19 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -50,219 +50,215 @@
 #include "util.h"
 
 #ifdef USE_DEBUG
-static int isakmp_debug_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
+static int      isakmp_debug_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
 #endif
-static void isakmp_finalize_exchange (struct message *);
-static struct keystate *isakmp_get_keystate (struct message *);
-static int isakmp_initiator (struct message *);
-static int isakmp_responder (struct message *);
-static void isakmp_setup_situation (u_int8_t *);
-static size_t isakmp_situation_size (void);
-static u_int8_t isakmp_spi_size (u_int8_t);
-static int isakmp_validate_attribute (u_int16_t, u_int8_t *, u_int16_t,
-				      void *);
-static int isakmp_validate_exchange (u_int8_t);
-static int isakmp_validate_id_information (u_int8_t, u_int8_t *, u_int8_t *,
-					   size_t, struct exchange *);
-static int isakmp_validate_key_information (u_int8_t *, size_t);
-static int isakmp_validate_notification (u_int16_t);
-static int isakmp_validate_proto (u_int8_t);
-static int isakmp_validate_situation (u_int8_t *, size_t *, size_t);
-static int isakmp_validate_transform_id (u_int8_t, u_int8_t);
+static void     isakmp_finalize_exchange(struct message *);
+static struct keystate *isakmp_get_keystate(struct message *);
+static int      isakmp_initiator(struct message *);
+static int      isakmp_responder(struct message *);
+static void     isakmp_setup_situation(u_int8_t *);
+static size_t   isakmp_situation_size(void);
+static u_int8_t isakmp_spi_size(u_int8_t);
+static int
+isakmp_validate_attribute(u_int16_t, u_int8_t *, u_int16_t,
+			  void *);
+static int      isakmp_validate_exchange(u_int8_t);
+static int
+isakmp_validate_id_information(u_int8_t, u_int8_t *, u_int8_t *,
+			       size_t, struct exchange *);
+static int      isakmp_validate_key_information(u_int8_t *, size_t);
+static int      isakmp_validate_notification(u_int16_t);
+static int      isakmp_validate_proto(u_int8_t);
+static int      isakmp_validate_situation(u_int8_t *, size_t *, size_t);
+static int      isakmp_validate_transform_id(u_int8_t, u_int8_t);
 
 static struct doi isakmp_doi = {
-  { 0 }, ISAKMP_DOI_ISAKMP, 0, 0, 0,
+	{0}, ISAKMP_DOI_ISAKMP, 0, 0, 0,
 #ifdef USE_DEBUG
-  isakmp_debug_attribute,
+	isakmp_debug_attribute,
 #endif
-  0,				/* delete_spi not needed.  */
-  0,				/* exchange_script not needed.  */
-  isakmp_finalize_exchange,
-  0,				/* free_exchange_data not needed.  */
-  0,				/* free_proto_data not needed.  */
-  0,				/* free_sa_data not needed.  */
-  isakmp_get_keystate,
-  0,				/* get_spi not needed.  */
-  0,				/* handle_leftover_payload not needed.  */
-  0,				/* informational_post_hook not needed.  */
-  0,				/* informational_pre_hook not needed.  */
-  0,				/* XXX need maybe be filled-in.  */
-  0,				/* proto_init not needed.  */
-  isakmp_setup_situation,
-  isakmp_situation_size,
-  isakmp_spi_size,
-  isakmp_validate_attribute,
-  isakmp_validate_exchange,
-  isakmp_validate_id_information,
-  isakmp_validate_key_information,
-  isakmp_validate_notification,
-  isakmp_validate_proto,
-  isakmp_validate_situation,
-  isakmp_validate_transform_id,
-  isakmp_initiator,
-  isakmp_responder,
+	0,			/* delete_spi not needed.  */
+	0,			/* exchange_script not needed.  */
+	isakmp_finalize_exchange,
+	0,			/* free_exchange_data not needed.  */
+	0,			/* free_proto_data not needed.  */
+	0,			/* free_sa_data not needed.  */
+	isakmp_get_keystate,
+	0,			/* get_spi not needed.  */
+	0,			/* handle_leftover_payload not needed.  */
+	0,			/* informational_post_hook not needed.  */
+	0,			/* informational_pre_hook not needed.  */
+	0,			/* XXX need maybe be filled-in.  */
+	0,			/* proto_init not needed.  */
+	isakmp_setup_situation,
+	isakmp_situation_size,
+	isakmp_spi_size,
+	isakmp_validate_attribute,
+	isakmp_validate_exchange,
+	isakmp_validate_id_information,
+	isakmp_validate_key_information,
+	isakmp_validate_notification,
+	isakmp_validate_proto,
+	isakmp_validate_situation,
+	isakmp_validate_transform_id,
+	isakmp_initiator,
+	isakmp_responder,
 #ifdef USE_DEBUG
-  ipsec_decode_ids
+	ipsec_decode_ids
 #endif
 };
 
 /* Requires doi_init to already have been called.  */
 void
-isakmp_doi_init (void)
+isakmp_doi_init(void)
 {
-  doi_register (&isakmp_doi);
+	doi_register(&isakmp_doi);
 }
 
 #ifdef USE_DEBUG
 int
-isakmp_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
-			void *vmsg)
+isakmp_debug_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
+		       void *vmsg)
 {
-  /* XXX Not implemented yet.  */
-  return 0;
+	/* XXX Not implemented yet.  */
+	return 0;
 }
-#endif /* USE_DEBUG */
+#endif				/* USE_DEBUG */
 
 static void
-isakmp_finalize_exchange (struct message *msg)
+isakmp_finalize_exchange(struct message * msg)
 {
 }
 
 static struct keystate *
-isakmp_get_keystate (struct message *msg)
+isakmp_get_keystate(struct message * msg)
 {
-  return 0;
+	return 0;
 }
 
 static void
-isakmp_setup_situation (u_int8_t *buf)
+isakmp_setup_situation(u_int8_t * buf)
 {
-  /* Nothing to do.  */
+	/* Nothing to do.  */
 }
 
 static size_t
-isakmp_situation_size (void)
+isakmp_situation_size(void)
 {
-  return 0;
+	return 0;
 }
 
 static u_int8_t
-isakmp_spi_size (u_int8_t proto)
+isakmp_spi_size(u_int8_t proto)
 {
-  /* One way to specify ISAKMP SPIs is to say they're zero-sized.  */
-  return 0;
+	/* One way to specify ISAKMP SPIs is to say they're zero-sized.  */
+	return 0;
 }
 
 static int
-isakmp_validate_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
-			   void *vmsg)
+isakmp_validate_attribute(u_int16_t type, u_int8_t *value, u_int16_t len,
+    void *vmsg)
 {
-  /* XXX Not implemented yet.  */
-  return -1;
+	/* XXX Not implemented yet.  */
+	return -1;
 }
 
 static int
-isakmp_validate_exchange (u_int8_t exch)
+isakmp_validate_exchange(u_int8_t exch)
 {
-  /* If we get here the exchange is invalid.  */
-  return -1;
+	/* If we get here the exchange is invalid.  */
+	return -1;
 }
 
 static int
-isakmp_validate_id_information (u_int8_t type, u_int8_t *extra, u_int8_t *buf,
-				size_t sz, struct exchange *exchange)
+isakmp_validate_id_information(u_int8_t type, u_int8_t *extra, u_int8_t *buf,
+    size_t sz, struct exchange *exchange)
 {
-  return zero_test (extra, ISAKMP_ID_DOI_DATA_LEN);
+	return zero_test(extra, ISAKMP_ID_DOI_DATA_LEN);
 }
 
 static int
-isakmp_validate_key_information (u_int8_t *buf, size_t sz)
+isakmp_validate_key_information(u_int8_t *buf, size_t sz)
 {
-  /* Nothing to do.  */
-  return 0;
+	/* Nothing to do.  */
+	return 0;
 }
 
 static int
-isakmp_validate_notification (u_int16_t type)
+isakmp_validate_notification(u_int16_t type)
 {
-  /* If we get here the message type is invalid.  */
-  return -1;
+	/* If we get here the message type is invalid.  */
+	return -1;
 }
 
 static int
-isakmp_validate_proto (u_int8_t proto)
+isakmp_validate_proto(u_int8_t proto)
 {
-  /* If we get here the protocol is invalid.  */
-  return -1;
+	/* If we get here the protocol is invalid.  */
+	return -1;
 }
 
 static int
-isakmp_validate_situation (u_int8_t *buf, size_t *sz, size_t len)
+isakmp_validate_situation(u_int8_t *buf, size_t *sz, size_t len)
 {
-  /* There are no situations in the ISAKMP DOI.  */
-  *sz = 0;
-  return 0;
+	/* There are no situations in the ISAKMP DOI.  */
+	*sz = 0;
+	return 0;
 }
 
 static int
-isakmp_validate_transform_id (u_int8_t proto, u_int8_t transform_id)
+isakmp_validate_transform_id(u_int8_t proto, u_int8_t transform_id)
 {
-  /* XXX Not yet implemented.  */
-  return -1;
+	/* XXX Not yet implemented.  */
+	return -1;
 }
 
 static int
-isakmp_initiator (struct message *msg)
+isakmp_initiator(struct message *msg)
 {
-  if (msg->exchange->type != ISAKMP_EXCH_INFO)
-    {
-      log_print ("isakmp_initiator: unsupported exchange type %d in phase %d",
-		 msg->exchange->type, msg->exchange->phase);
-      return -1;
-    }
-
-  return message_send_info (msg);
-}
-
-static int
-isakmp_responder (struct message *msg)
-{
-  struct payload *p;
-
-  switch (msg->exchange->type)
-    {
-    case ISAKMP_EXCH_INFO:
-      for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
-	   p = TAILQ_NEXT (p, link))
-	{
-	  LOG_DBG ((LOG_EXCHANGE, 10,
-		    "isakmp_responder: got NOTIFY of type %s, ignoring",
-		    constant_name (isakmp_notify_cst,
-				   GET_ISAKMP_NOTIFY_MSG_TYPE (p->p))));
-	  p->flags |= PL_MARK;
+	if (msg->exchange->type != ISAKMP_EXCH_INFO) {
+		log_print("isakmp_initiator: unsupported exchange type %d in phase %d",
+		    msg->exchange->type, msg->exchange->phase);
+		return -1;
 	}
+	return message_send_info(msg);
+}
 
-      for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE]); p;
-	   p = TAILQ_NEXT (p, link))
-	{
-	  LOG_DBG ((LOG_EXCHANGE, 10,
-		    "isakmp_responder: got DELETE, ignoring"));
-	  p->flags |= PL_MARK;
-	}
-      return 0;
+static int
+isakmp_responder(struct message * msg)
+{
+	struct payload *p;
+
+	switch (msg->exchange->type) {
+	case ISAKMP_EXCH_INFO:
+		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
+		    p = TAILQ_NEXT(p, link)) {
+			LOG_DBG((LOG_EXCHANGE, 10,
+			    "isakmp_responder: got NOTIFY of type %s, ignoring",
+			    constant_name(isakmp_notify_cst,
+			    GET_ISAKMP_NOTIFY_MSG_TYPE(p->p))));
+			p->flags |= PL_MARK;
+		}
+
+		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_DELETE]); p;
+		    p = TAILQ_NEXT(p, link)) {
+			LOG_DBG((LOG_EXCHANGE, 10,
+			    "isakmp_responder: got DELETE, ignoring"));
+			p->flags |= PL_MARK;
+		}
+		return 0;
 
 #ifdef USE_ISAKMP_CFG
-    case ISAKMP_EXCH_TRANSACTION:
-      /* return 0 isakmp_cfg_responder (msg); */
+	case ISAKMP_EXCH_TRANSACTION:
+		/* return 0 isakmp_cfg_responder (msg); */
 #endif /* USE_ISAKMP_CFG */
 
-    default:
-      /* XXX So far we don't accept any proposals.  */
-      if (TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]))
-	{
-	  message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
-	  return -1;
+	default:
+		/* XXX So far we don't accept any proposals.  */
+		if (TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA])) {
+			message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+			return -1;
+		}
 	}
-    }
-  return 0;
+	return 0;
 }

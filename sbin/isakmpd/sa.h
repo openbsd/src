@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.34 2004/02/27 10:16:26 ho Exp $	*/
-/*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
+/* $OpenBSD: sa.h,v 1.35 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -57,142 +57,151 @@ struct transport;
 
 /* A protection suite consists of a set of protocol descriptions like this.  */
 struct proto {
-  /* Link to the next protocol in the suite.  */
-  TAILQ_ENTRY (proto) link;
+	/* Link to the next protocol in the suite.  */
+	TAILQ_ENTRY(proto) link;
 
-  /* The SA we belong to.  */
-  struct sa *sa;
+	/* The SA we belong to.  */
+	struct sa      *sa;
 
-  /* The protocol number as found in the proposal payload.  */
-  u_int8_t no;
+	/* The protocol number as found in the proposal payload.  */
+	u_int8_t        no;
 
-  /* The protocol this SA is for.  */
-  u_int8_t proto;
+	/* The protocol this SA is for.  */
+	u_int8_t        proto;
 
-  /* Security parameter index info.  Element 0 - outgoing, 1 - incoming.  */
-  u_int8_t spi_sz[2];
-  u_int8_t *spi[2];
+	/*
+	 * Security parameter index info.  Element 0 - outgoing, 1 -
+	 * incoming.
+	 */
+	u_int8_t        spi_sz[2];
+	u_int8_t       *spi[2];
 
-  /*
-   * The chosen transform, only valid while the incoming SA payload that held
-   * it is available for duplicate testing.
-   */
-  struct payload *chosen;
+	/*
+	 * The chosen transform, only valid while the incoming SA payload that held
+	 * it is available for duplicate testing.
+         */
+	struct payload *chosen;
 
-  /* The chosen transform's ID.  */
-  u_int8_t id;
+	/* The chosen transform's ID.  */
+	u_int8_t        id;
 
-  /* DOI-specific data.  */
-  void *data;
+	/* DOI-specific data.  */
+	void           *data;
 
-  /* Proposal transforms data, for validating the responders selection.  */
-  TAILQ_HEAD (proto_attr_head, proto_attr) xfs;
-  size_t xf_cnt;
+	/* Proposal transforms data, for validating the responders selection.  */
+	                TAILQ_HEAD(proto_attr_head, proto_attr) xfs;
+	size_t          xf_cnt;
 };
 
 struct proto_attr {
-  /* Link to next transform.  */
-  TAILQ_ENTRY (proto_attr) next;
+	/* Link to next transform.  */
+	TAILQ_ENTRY(proto_attr) next;
 
-  /* Transform attribute data and size, suitable for attribute_map().  */
-  u_int8_t *attrs;
-  size_t len;
+	/* Transform attribute data and size, suitable for attribute_map().  */
+	u_int8_t       *attrs;
+	size_t          len;
 };
 
 struct sa {
-  /* Link to SAs with the same hash value.  */
-  LIST_ENTRY (sa) link;
+	/* Link to SAs with the same hash value.  */
+	LIST_ENTRY(sa) link;
 
-  /*
-   * When several SA's are being negotiated in one message we connect them
-   * through this link.
-   */
-  TAILQ_ENTRY (sa) next;
+	/*
+	 * When several SA's are being negotiated in one message we connect them
+	 * through this link.
+         */
+	TAILQ_ENTRY(sa) next;
 
-  /* A name of the major policy deciding offers and acceptable proposals.  */
-  char *name;
+	/*
+	 * A name of the major policy deciding offers and acceptable
+	 * proposals.
+	 */
+	char           *name;
 
-  /* The transport this SA got negotiated over.  */
-  struct transport *transport;
+	/* The transport this SA got negotiated over.  */
+	struct transport *transport;
 
-  /* Both initiator and responder cookies.  */
-  u_int8_t cookies[ISAKMP_HDR_COOKIES_LEN];
+	/* Both initiator and responder cookies.  */
+	u_int8_t        cookies[ISAKMP_HDR_COOKIES_LEN];
 
-  /* The message ID signifying non-ISAKMP SAs.  */
-  u_int8_t message_id[ISAKMP_HDR_MESSAGE_ID_LEN];
+	/* The message ID signifying non-ISAKMP SAs.  */
+	u_int8_t        message_id[ISAKMP_HDR_MESSAGE_ID_LEN];
 
-  /* The protection suite chosen.  */
-  TAILQ_HEAD (proto_head, proto) protos;
+	/* The protection suite chosen.  */
+	                TAILQ_HEAD(proto_head, proto) protos;
 
-  /* The exchange type we should use when rekeying.  */
-  u_int8_t exch_type;
+	/* The exchange type we should use when rekeying.  */
+	u_int8_t        exch_type;
 
-  /* Phase is 1 for ISAKMP SAs, and 2 for application ones.  */
-  u_int8_t phase;
+	/* Phase is 1 for ISAKMP SAs, and 2 for application ones.  */
+	u_int8_t        phase;
 
-  /* A reference counter for this structure.  */
-  u_int16_t refcnt;
+	/* A reference counter for this structure.  */
+	u_int16_t       refcnt;
 
-  /* Various flags, look below for descriptions.  */
-  u_int32_t flags;
+	/* Various flags, look below for descriptions.  */
+	u_int32_t       flags;
 
-  /* The DOI that is to handle DOI-specific issues for this SA.  */
-  struct doi *doi;
+	/* The DOI that is to handle DOI-specific issues for this SA.  */
+	struct doi     *doi;
 
-  /* Crypto info needed to encrypt/decrypt packets protected by this SA.  */
-  struct crypto_xf *crypto;
-  int key_length;
-  struct keystate *keystate;
+	/*
+	 * Crypto info needed to encrypt/decrypt packets protected by this
+	 * SA.
+	 */
+	struct crypto_xf *crypto;
+	int             key_length;
+	struct keystate *keystate;
 
-  /* IDs from Phase 1 */
-  u_int8_t *id_i;
-  size_t id_i_len;
-  u_int8_t *id_r;
-  size_t id_r_len;
+	/* IDs from Phase 1 */
+	u_int8_t       *id_i;
+	size_t          id_i_len;
+	u_int8_t       *id_r;
+	size_t          id_r_len;
 
-  /* Set if we were the initiator of the SA/exchange in Phase 1 */
-  int initiator;
+	/* Set if we were the initiator of the SA/exchange in Phase 1 */
+	int             initiator;
 
-  /* Policy session ID, where applicable, copied over from the exchange */
-  int policy_id;
+	/* Policy session ID, where applicable, copied over from the exchange */
+	int             policy_id;
 
-  /*
-   * The key used to authenticate phase 1, in printable format, used only by
-   * KeyNote.
-   */
-  char *keynote_key;
+	/*
+	 * The key used to authenticate phase 1, in printable format, used only by
+	 * KeyNote.
+         */
+	char           *keynote_key;
 
-  /*
-   * Certificates or other information from Phase 1; these are copied from the
-   * exchange, so look at exchange.h for an explanation of their use.
-   */
-  int recv_certtype, recv_keytype;
-  /* Certificate received from peer, native format.  */
-  void *recv_cert;
-  /* Key peer used to authenticate, native format.  */
-  void *recv_key;
+	/*
+	 * Certificates or other information from Phase 1; these are copied from the
+	 * exchange, so look at exchange.h for an explanation of their use.
+         */
+	int             recv_certtype, recv_keytype;
+	/* Certificate received from peer, native format.  */
+	void           *recv_cert;
+	/* Key peer used to authenticate, native format.  */
+	void           *recv_key;
 
-  /*
-   * Certificates or other information we used to authenticate to the peer,
-   * Phase 1.
-   */
-  int sent_certtype;
-  /* Certificate (to be) sent to peer, native format.  */
-  void *sent_cert;
+	/*
+	 * Certificates or other information we used to authenticate to the peer,
+	 * Phase 1.
+         */
+	int             sent_certtype;
+	/* Certificate (to be) sent to peer, native format.  */
+	void           *sent_cert;
 
-  /* DOI-specific opaque data.  */
-  void *data;
+	/* DOI-specific opaque data.  */
+	void           *data;
 
-  /* Lifetime data.  */
-  u_int64_t seconds;
-  u_int64_t kilobytes;
+	/* Lifetime data.  */
+	u_int64_t       seconds;
+	u_int64_t       kilobytes;
 
-  /* ACQUIRE sequence number */
-  u_int32_t seq;
+	/* ACQUIRE sequence number */
+	u_int32_t       seq;
 
-  /* The events that will occur when an SA has timed out.  */
-  struct event *soft_death;
-  struct event *death;
+	/* The events that will occur when an SA has timed out.  */
+	struct event   *soft_death;
+	struct event   *death;
 };
 
 /* This SA is alive.  */
@@ -219,32 +228,33 @@ struct sa {
 /* Outfile for detailed SA information. */
 #define SA_FILE "/var/run/isakmpd_sa"
 
-extern void proto_free (struct proto *proto);
-extern int sa_add_transform (struct sa *, struct payload *, int,
-			     struct proto **);
-extern int sa_create (struct exchange *, struct transport *);
-extern int sa_enter (struct sa *);
-extern void sa_delete (struct sa *, int);
-extern void sa_teardown_all (void);
-extern struct sa *sa_find (int (*) (struct sa *, void *), void *);
-extern int sa_flag (char *);
-extern void sa_free (struct sa *);
-extern void sa_init (void);
-extern void sa_reinit (void);
-extern struct sa *sa_isakmp_lookup_by_peer (struct sockaddr *, socklen_t);
-extern void sa_isakmp_upgrade (struct message *);
-extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
-extern struct sa *sa_lookup_by_peer (struct sockaddr *, socklen_t);
-extern struct sa *sa_lookup_by_header (u_int8_t *, int);
-extern struct sa *sa_lookup_by_name (char *, int);
-extern struct sa *sa_lookup_from_icookie (u_int8_t *);
-extern struct sa *sa_lookup_isakmp_sa (struct sockaddr *, u_int8_t *);
-extern void sa_mark_replaced (struct sa *);
-extern void sa_reference (struct sa *);
-extern void sa_release (struct sa *);
-extern void sa_remove (struct sa *);
-extern void sa_report (void);
-extern void sa_dump (int, int, char *, struct sa *);
-extern void sa_report_all (void);
-extern int sa_setup_expirations (struct sa *);
-#endif /* _SA_H_ */
+extern void     proto_free(struct proto * proto);
+extern int
+sa_add_transform(struct sa *, struct payload *, int,
+		 struct proto **);
+extern int      sa_create(struct exchange *, struct transport *);
+extern int      sa_enter(struct sa *);
+extern void     sa_delete(struct sa *, int);
+extern void     sa_teardown_all(void);
+extern struct sa *sa_find(int (*) (struct sa *, void *), void *);
+extern int      sa_flag(char *);
+extern void     sa_free(struct sa *);
+extern void     sa_init(void);
+extern void     sa_reinit(void);
+extern struct sa *sa_isakmp_lookup_by_peer(struct sockaddr *, socklen_t);
+extern void     sa_isakmp_upgrade(struct message *);
+extern struct sa *sa_lookup(u_int8_t *, u_int8_t *);
+extern struct sa *sa_lookup_by_peer(struct sockaddr *, socklen_t);
+extern struct sa *sa_lookup_by_header(u_int8_t *, int);
+extern struct sa *sa_lookup_by_name(char *, int);
+extern struct sa *sa_lookup_from_icookie(u_int8_t *);
+extern struct sa *sa_lookup_isakmp_sa(struct sockaddr *, u_int8_t *);
+extern void     sa_mark_replaced(struct sa *);
+extern void     sa_reference(struct sa *);
+extern void     sa_release(struct sa *);
+extern void     sa_remove(struct sa *);
+extern void     sa_report(void);
+extern void     sa_dump(int, int, char *, struct sa *);
+extern void     sa_report_all(void);
+extern int      sa_setup_expirations(struct sa *);
+#endif				/* _SA_H_ */

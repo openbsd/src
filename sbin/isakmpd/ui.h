@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: ui.h,v 1.5 1998/12/01 10:20:12 niklas Exp $	*/
+/* $OpenBSD: ui.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: ui.h,v 1.5 1998/12/01 10:20:12 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -34,11 +34,11 @@
 
 #define FIFO "/var/run/isakmpd.fifo"
 
-extern char *ui_fifo;
-extern int ui_socket;
+extern char    *ui_fifo;
+extern int      ui_socket;
 
-extern void ui_handler (void);
-extern void ui_init (void);
-extern void ui_report (char *);
+extern void     ui_handler(void);
+extern void     ui_init(void);
+extern void     ui_report(char *);
 
-#endif /* _UI_H_ */
+#endif				/* _UI_H_ */

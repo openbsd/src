@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.h,v 1.3 2003/06/03 14:28:16 ho Exp $	*/
+/* $OpenBSD: ike_phase_1.h,v 1.4 2004/04/15 18:39:25 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -33,21 +33,21 @@
 
 struct message;
 
-extern int ike_phase_1_initiator_recv_KE_NONCE (struct message *);
-extern int ike_phase_1_initiator_recv_SA (struct message *);
-extern int ike_phase_1_initiator_send_KE_NONCE (struct message *);
-extern int ike_phase_1_initiator_send_SA (struct message *);
-extern int ike_phase_1_post_exchange_KE_NONCE (struct message *);
-extern int ike_phase_1_recv_AUTH (struct message *);
-extern int ike_phase_1_recv_ID (struct message *);
-extern int ike_phase_1_recv_ID_AUTH (struct message *);
-extern int ike_phase_1_recv_KE_NONCE (struct message *);
-extern int ike_phase_1_responder_recv_SA (struct message *);
-extern int ike_phase_1_responder_send_SA (struct message *);
-extern int ike_phase_1_responder_send_ID_AUTH (struct message *);
-extern int ike_phase_1_send_AUTH (struct message *);
-extern int ike_phase_1_send_ID (struct message *);
-extern int ike_phase_1_send_ID_AUTH (struct message *);
-extern int ike_phase_1_send_KE_NONCE (struct message *, size_t);
+extern int      ike_phase_1_initiator_recv_KE_NONCE(struct message *);
+extern int      ike_phase_1_initiator_recv_SA(struct message *);
+extern int      ike_phase_1_initiator_send_KE_NONCE(struct message *);
+extern int      ike_phase_1_initiator_send_SA(struct message *);
+extern int      ike_phase_1_post_exchange_KE_NONCE(struct message *);
+extern int      ike_phase_1_recv_AUTH(struct message *);
+extern int      ike_phase_1_recv_ID(struct message *);
+extern int      ike_phase_1_recv_ID_AUTH(struct message *);
+extern int      ike_phase_1_recv_KE_NONCE(struct message *);
+extern int      ike_phase_1_responder_recv_SA(struct message *);
+extern int      ike_phase_1_responder_send_SA(struct message *);
+extern int      ike_phase_1_responder_send_ID_AUTH(struct message *);
+extern int      ike_phase_1_send_AUTH(struct message *);
+extern int      ike_phase_1_send_ID(struct message *);
+extern int      ike_phase_1_send_ID_AUTH(struct message *);
+extern int      ike_phase_1_send_KE_NONCE(struct message *, size_t);
 
-#endif /* _IKE_PHASE_1_H_ */
+#endif				/* _IKE_PHASE_1_H_ */

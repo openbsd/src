@@ -1,5 +1,5 @@
-/*	$OpenBSD: field.h,v 1.4 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: field.h,v 1.3 1998/08/02 20:25:01 niklas Exp $	*/
+/* $OpenBSD: field.h,v 1.5 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: field.h,v 1.3 1998/08/02 20:25:01 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,18 +35,20 @@
 #include <sys/types.h>
 
 struct field {
-  char *name;
-  int offset;
-  size_t len;
-  enum { raw, num, mask, ign, cst } type;
-  struct constant_map **maps;
+	char           *name;
+	int             offset;
+	size_t          len;
+	enum {
+		raw, num, mask, ign, cst
+	}               type;
+	struct constant_map **maps;
 };
 
-extern void field_dump_field (struct field *, u_int8_t *);
-extern void field_dump_payload (struct field *, u_int8_t *);
-extern u_int32_t field_get_num (struct field *, u_int8_t *);
-extern void field_get_raw (struct field *, u_int8_t *, u_int8_t *);
-extern void field_set_num (struct field *, u_int8_t *, u_int32_t);
-extern void field_set_raw (struct field *, u_int8_t *, u_int8_t *);
+extern void     field_dump_field(struct field *, u_int8_t *);
+extern void     field_dump_payload(struct field *, u_int8_t *);
+extern u_int32_t field_get_num(struct field *, u_int8_t *);
+extern void     field_get_raw(struct field *, u_int8_t *, u_int8_t *);
+extern void     field_set_num(struct field *, u_int8_t *, u_int32_t);
+extern void     field_set_raw(struct field *, u_int8_t *, u_int8_t *);
 
-#endif /* _FIELD_H_ */
+#endif				/* _FIELD_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: attribute.h,v 1.4 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: attribute.h,v 1.2 1998/09/29 21:51:07 niklas Exp $	*/
+/* $OpenBSD: attribute.h,v 1.5 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: attribute.h,v 1.2 1998/09/29 21:51:07 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -36,13 +36,14 @@
 
 struct constant_map;
 
-extern int attribute_map (u_int8_t *, size_t,
-			  int (*) (u_int16_t, u_int8_t *, u_int16_t, void *),
-			  void *);
-extern u_int8_t *attribute_set_basic (u_int8_t *, u_int16_t, u_int16_t);
-extern int attribute_set_constant (char *, char *, struct constant_map *,
-				   int, u_int8_t **);
-extern u_int8_t *attribute_set_var (u_int8_t *, u_int16_t, u_int8_t *,
-				    u_int16_t);
+extern int
+attribute_map(u_int8_t *, size_t,
+	      int (*) (u_int16_t, u_int8_t *, u_int16_t, void *),
+	      void *);
+	extern u_int8_t *attribute_set_basic(u_int8_t *, u_int16_t, u_int16_t);
+	extern int      attribute_set_constant(char *, char *, struct constant_map *,
+					                  int, u_int8_t **);
+	extern u_int8_t *attribute_set_var(u_int8_t *, u_int16_t, u_int8_t *,
+					                   u_int16_t);
 
-#endif /* _ATTRIBUTE_H_ */
+#endif				/* _ATTRIBUTE_H_ */

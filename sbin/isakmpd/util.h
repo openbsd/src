@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.h,v 1.17 2004/03/10 23:08:49 hshoexer Exp $	*/
-/*	$EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	*/
+/* $OpenBSD: util.h,v 1.18 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,35 +35,35 @@
 
 #include <sys/types.h>
 
-extern int allow_name_lookups;
-extern int regrand;
+extern int      allow_name_lookups;
+extern int      regrand;
 extern unsigned long seed;
 
 struct message;
 struct sockaddr;
 
-extern int check_file_secrecy (char *, size_t *);
-extern u_int16_t decode_16 (u_int8_t *);
-extern u_int32_t decode_32 (u_int8_t *);
-extern u_int64_t decode_64 (u_int8_t *);
+extern int      check_file_secrecy(char *, size_t *);
+extern u_int16_t decode_16(u_int8_t *);
+extern u_int32_t decode_32(u_int8_t *);
+extern u_int64_t decode_64(u_int8_t *);
 #if 0
-extern void decode_128 (u_int8_t *, u_int8_t *);
+extern void     decode_128(u_int8_t *, u_int8_t *);
 #endif
-extern void encode_16 (u_int8_t *, u_int16_t);
-extern void encode_32 (u_int8_t *, u_int32_t);
-extern void encode_64 (u_int8_t *, u_int64_t);
+extern void     encode_16(u_int8_t *, u_int16_t);
+extern void     encode_32(u_int8_t *, u_int32_t);
+extern void     encode_64(u_int8_t *, u_int64_t);
 #if 0
-extern void encode_128 (u_int8_t *, u_int8_t *);
+extern void     encode_128(u_int8_t *, u_int8_t *);
 #endif
-extern u_int8_t *getrandom (u_int8_t *, size_t);
-extern int hex2raw (char *, u_int8_t *, size_t);
-extern int ones_test (const u_int8_t *, size_t);
-extern int sockaddr2text (struct sockaddr *, char **, int);
-extern u_int8_t *sockaddr_addrdata (struct sockaddr *);
-extern int sockaddr_addrlen (struct sockaddr *);
-extern in_port_t sockaddr_port (struct sockaddr *);
-extern int text2sockaddr (char *, char *, struct sockaddr **);
-extern void util_ntoa (char **, int, u_int8_t *);
-extern int zero_test (const u_int8_t *, size_t);
+extern u_int8_t *getrandom(u_int8_t *, size_t);
+extern int      hex2raw(char *, u_int8_t *, size_t);
+extern int      ones_test(const u_int8_t *, size_t);
+extern int      sockaddr2text(struct sockaddr *, char **, int);
+extern u_int8_t *sockaddr_addrdata(struct sockaddr *);
+extern int      sockaddr_addrlen(struct sockaddr *);
+extern in_port_t sockaddr_port(struct sockaddr *);
+extern int      text2sockaddr(char *, char *, struct sockaddr **);
+extern void     util_ntoa(char **, int, u_int8_t *);
+extern int      zero_test(const u_int8_t *, size_t);
 
-#endif /* _UTIL_H_ */
+#endif				/* _UTIL_H_ */

@@ -1,4 +1,4 @@
-#	$OpenBSD: genconstants.sh,v 1.11 2003/06/03 14:28:16 ho Exp $
+#	$OpenBSD: genconstants.sh,v 1.12 2004/04/15 18:39:25 deraadt Exp $
 #	$EOM: genconstants.sh,v 1.6 1999/04/02 01:15:53 niklas Exp $
 
 #
@@ -92,7 +92,7 @@ BEGIN {
 }
 
 /^\./ {
-  print "  { 0, 0 }\n};\n"
+  print "	{ 0, 0 }\n};\n"
   next
 }
 
@@ -103,7 +103,7 @@ BEGIN {
 }
 
 /^[ 	]/ && $1 {
-  printf ("  { %s_%s, \"%s\", %s }, \n", prefix, $1, $1,
+  printf ("	{ %s_%s, \"%s\", %s },\n", prefix, $1, $1,
     ($3 && substr($3,1,1) != "#") ? $3 : 0)
   next
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.25 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
+/* $OpenBSD: connection.c,v 1.26 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
@@ -53,143 +53,137 @@
 /* How often should we check that connections we require to be up, are up?  */
 #define CHECK_INTERVAL 60
 
-static void connection_passive_teardown (char *);
+static void     connection_passive_teardown(char *);
 
-struct connection
-{
-  TAILQ_ENTRY (connection) link;
-  char *name;
-  struct event *ev;
+struct connection {
+	TAILQ_ENTRY(connection) link;
+	char           *name;
+	struct event   *ev;
 };
 
-struct connection_passive
-{
-  TAILQ_ENTRY (connection_passive) link;
-  char *name;
-  u_int8_t *local_id, *remote_id;
-  size_t local_sz, remote_sz;
+struct connection_passive {
+	TAILQ_ENTRY(connection_passive) link;
+	char           *name;
+	u_int8_t       *local_id, *remote_id;
+	size_t          local_sz, remote_sz;
 
 #if 0
-  /* XXX Potential additions to 'connection_passive'.  */
-  char *isakmp_peer;
-  struct sa *sa;                /* XXX "Soft" ref to active sa?  */
-  struct timeval sa_expiration; /* XXX *sa may expire.  */
+	/* XXX Potential additions to 'connection_passive'.  */
+	char           *isakmp_peer;
+	struct sa      *sa;	/* XXX "Soft" ref to active sa?  */
+	struct timeval  sa_expiration;	/* XXX *sa may expire.  */
 #endif
 };
 
-TAILQ_HEAD (connection_head, connection) connections;
-TAILQ_HEAD (passive_head, connection_passive) connections_passive;
+TAILQ_HEAD(connection_head, connection) connections;
+TAILQ_HEAD(passive_head, connection_passive) connections_passive;
 
 /*
  * This is where we setup all the connections we want there right from the
  * start.
  */
 void
-connection_init (void)
+connection_init(void)
 {
-  struct conf_list *conns, *attrs;
-  struct conf_list_node *conn, *attr = NULL;
+	struct conf_list *conns, *attrs;
+	struct conf_list_node *conn, *attr = NULL;
 
-  /*
-   * Passive connections normally include: all "active" connections that
-   * are not flagged "Active-Only", plus all connections listed in
-   * the 'Passive-Connections' list.
-   */
+	/*
+	 * Passive connections normally include: all "active" connections that
+	 * are not flagged "Active-Only", plus all connections listed in
+	 * the 'Passive-Connections' list.
+         */
+	TAILQ_INIT(&connections);
+	TAILQ_INIT(&connections_passive);
 
-  TAILQ_INIT (&connections);
-  TAILQ_INIT (&connections_passive);
+	conns = conf_get_list("Phase 2", "Connections");
+	if (conns) {
+		for (conn = TAILQ_FIRST(&conns->fields); conn;
+		    conn = TAILQ_NEXT(conn, link)) {
+			if (connection_setup(conn->field))
+				log_print("connection_init: could not setup \"%s\"",
+				    conn->field);
 
-  conns = conf_get_list ("Phase 2", "Connections");
-  if (conns)
-    {
-      for (conn = TAILQ_FIRST (&conns->fields); conn;
-	   conn = TAILQ_NEXT (conn, link))
-	{
-	  if (connection_setup (conn->field))
-	    log_print ("connection_init: could not setup \"%s\"", conn->field);
+			/* XXX Break/abort here if connection_setup failed?  */
 
-	  /* XXX Break/abort here if connection_setup failed?  */
+			/*
+			 * XXX This code (i.e. the attribute lookup) seems like a
+			 * likely candidate for factoring out into a function of its
+			 * own.
+		         */
+			attrs = conf_get_list(conn->field, "Flags");
+			if (attrs)
+				for (attr = TAILQ_FIRST(&attrs->fields); attr;
+				    attr = TAILQ_NEXT(attr, link))
+					if (strcasecmp("active-only", attr->field) == 0)
+						break;
+			if (!attrs || (attrs && !attr))
+				if (connection_record_passive(conn->field))
+					log_print("connection_init: could not record "
+					    "connection \"%s\"", conn->field);
+			if (attrs)
+				conf_free_list(attrs);
 
-	  /*
-	   * XXX This code (i.e. the attribute lookup) seems like a
-	   * likely candidate for factoring out into a function of its
-	   * own.
-	   */
-	  attrs = conf_get_list (conn->field, "Flags");
-	  if (attrs)
-	    for (attr = TAILQ_FIRST (&attrs->fields); attr;
-		 attr = TAILQ_NEXT (attr, link))
-	      if (strcasecmp ("active-only", attr->field) == 0)
-		break;
-	  if (!attrs || (attrs && !attr))
-	    if (connection_record_passive (conn->field))
-	      log_print ("connection_init: could not record "
-			 "connection \"%s\"", conn->field);
-	  if (attrs)
-	    conf_free_list (attrs);
-
+		}
+		conf_free_list(conns);
 	}
-      conf_free_list (conns);
-    }
-
-  conns = conf_get_list ("Phase 2", "Passive-Connections");
-  if (conns)
-    {
-      for (conn = TAILQ_FIRST (&conns->fields); conn;
-	   conn = TAILQ_NEXT (conn, link))
-	if (connection_record_passive (conn->field))
-	  log_print ("connection_init: could not record passive "
-		     "connection \"%s\"", conn->field);
-      conf_free_list (conns);
-    }
+	conns = conf_get_list("Phase 2", "Passive-Connections");
+	if (conns) {
+		for (conn = TAILQ_FIRST(&conns->fields); conn;
+		    conn = TAILQ_NEXT(conn, link))
+			if (connection_record_passive(conn->field))
+				log_print("connection_init: could not record passive "
+				    "connection \"%s\"", conn->field);
+		conf_free_list(conns);
+	}
 }
 
 /* Check the connection in VCONN and schedule another check later.  */
 static void
-connection_checker (void *vconn)
+connection_checker(void *vconn)
 {
-  struct timeval now;
-  struct connection *conn = vconn;
+	struct timeval  now;
+	struct connection *conn = vconn;
 
-  gettimeofday (&now, 0);
-  now.tv_sec += conf_get_num ("General", "check-interval", CHECK_INTERVAL);
-  conn->ev
-    = timer_add_event ("connection_checker", connection_checker, conn, &now);
-  if (!conn->ev)
-    log_print ("connection_checker: could not add timer event");
-  sysdep_connection_check (conn->name);
+	gettimeofday(&now, 0);
+	now.tv_sec += conf_get_num("General", "check-interval", CHECK_INTERVAL);
+	conn->ev = timer_add_event("connection_checker",
+	    connection_checker, conn, &now);
+	if (!conn->ev)
+		log_print("connection_checker: could not add timer event");
+	sysdep_connection_check(conn->name);
 }
 
 /* Find the connection named NAME.  */
 static struct connection *
-connection_lookup (char *name)
+connection_lookup(char *name)
 {
-  struct connection *conn;
+	struct connection *conn;
 
-  for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
-    if (strcasecmp (conn->name, name) == 0)
-      return conn;
-  return 0;
+	for (conn = TAILQ_FIRST(&connections); conn; conn = TAILQ_NEXT(conn, link))
+		if (strcasecmp(conn->name, name) == 0)
+			return conn;
+	return 0;
 }
 
 /* Does the connection named NAME exist?  */
 int
-connection_exist (char *name)
+connection_exist(char *name)
 {
-  return (connection_lookup (name) != 0);
+	return (connection_lookup(name) != 0);
 }
 
 /* Find the passive connection named NAME.  */
 static struct connection_passive *
-connection_passive_lookup_by_name (char *name)
+connection_passive_lookup_by_name(char *name)
 {
-  struct connection_passive *conn;
+	struct connection_passive *conn;
 
-  for (conn = TAILQ_FIRST (&connections_passive); conn;
-       conn = TAILQ_NEXT (conn, link))
-    if (strcasecmp (conn->name, name) == 0)
-      return conn;
-  return 0;
+	for (conn = TAILQ_FIRST(&connections_passive); conn;
+	    conn = TAILQ_NEXT(conn, link))
+		if (strcasecmp(conn->name, name) == 0)
+			return conn;
+	return 0;
 }
 
 /*
@@ -197,67 +191,63 @@ connection_passive_lookup_by_name (char *name)
  * XXX Rename to ipsec_compare_id, and move to ipsec.c ?
  */
 static int
-compare_ids (u_int8_t *id1, u_int8_t *id2, size_t idlen)
+compare_ids(u_int8_t *id1, u_int8_t *id2, size_t idlen)
 {
-  int id1_type, id2_type;
+	int	id1_type, id2_type;
 
-  id1_type = GET_ISAKMP_ID_TYPE (id1);
-  id2_type = GET_ISAKMP_ID_TYPE (id2);
+	id1_type = GET_ISAKMP_ID_TYPE(id1);
+	id2_type = GET_ISAKMP_ID_TYPE(id2);
 
-  return id1_type == id2_type
-    ? memcmp (id1 + ISAKMP_ID_DATA_OFF, id2 + ISAKMP_ID_DATA_OFF,
-	      idlen - ISAKMP_ID_DATA_OFF) : -1;
+	return id1_type == id2_type ? memcmp(id1 + ISAKMP_ID_DATA_OFF,
+	    id2 + ISAKMP_ID_DATA_OFF, idlen - ISAKMP_ID_DATA_OFF) : -1;
 }
 
 /* Find the connection named with matching IDs.  */
 char *
-connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
+connection_passive_lookup_by_ids(u_int8_t *id1, u_int8_t *id2)
 {
-  struct connection_passive *conn;
+	struct connection_passive *conn;
 
-  for (conn = TAILQ_FIRST (&connections_passive); conn;
-       conn = TAILQ_NEXT (conn, link))
-    {
-      if (!conn->remote_id)
-	continue;
+	for (conn = TAILQ_FIRST(&connections_passive); conn;
+	    conn = TAILQ_NEXT(conn, link)) {
+		if (!conn->remote_id)
+			continue;
 
-      /*
-       * If both IDs match what we have saved, return the name.  Don't bother
-       * in which order they are.
-       */
-      if ((compare_ids (id1, conn->local_id, conn->local_sz) == 0
-	   && compare_ids (id2, conn->remote_id, conn->remote_sz) == 0)
-	  || (compare_ids (id1, conn->remote_id, conn->remote_sz) == 0
-	      && compare_ids (id2, conn->local_id, conn->local_sz) == 0))
-	{
-	  LOG_DBG ((LOG_MISC, 60,
-		    "connection_passive_lookup_by_ids: returned \"%s\"",
-		    conn->name));
-	  return conn->name;
+		/*
+		 * If both IDs match what we have saved, return the name.  Don't bother
+		 * in which order they are.
+	         */
+		if ((compare_ids(id1, conn->local_id, conn->local_sz) == 0 &&
+		    compare_ids(id2, conn->remote_id, conn->remote_sz) == 0) ||
+		    (compare_ids(id1, conn->remote_id, conn->remote_sz) == 0 &&
+		    compare_ids(id2, conn->local_id, conn->local_sz) == 0)) {
+			LOG_DBG((LOG_MISC, 60,
+			    "connection_passive_lookup_by_ids: returned \"%s\"",
+			    conn->name));
+			return conn->name;
+		}
 	}
-    }
 
-  /* In the road warrior case, we do not know the remote ID. In that
-   * case we will just match against the local ID.
-   */
-  for (conn = TAILQ_FIRST (&connections_passive); conn;
-       conn = TAILQ_NEXT (conn, link))
-    {
-      if (!conn->remote_id)
-	continue;
+	/*
+	 * In the road warrior case, we do not know the remote ID. In that
+	 * case we will just match against the local ID.
+	 */
+	for (conn = TAILQ_FIRST(&connections_passive); conn;
+	    conn = TAILQ_NEXT(conn, link)) {
+		if (!conn->remote_id)
+			continue;
 
-      if (compare_ids (id1, conn->local_id, conn->local_sz) == 0
-	  || compare_ids (id2, conn->local_id, conn->local_sz) == 0)
-	{
-	  LOG_DBG ((LOG_MISC, 60,
-		    "connection passive_lookup_by_ids: returned \"%s\""
-		    " only matched local id", conn->name));
-	  return conn->name;
+		if (compare_ids(id1, conn->local_id, conn->local_sz) == 0 ||
+		    compare_ids(id2, conn->local_id, conn->local_sz) == 0) {
+			LOG_DBG((LOG_MISC, 60,
+			    "connection passive_lookup_by_ids: returned \"%s\""
+			    " only matched local id", conn->name));
+			return conn->name;
+		}
 	}
-    }
-  LOG_DBG ((LOG_MISC, 60,
+	LOG_DBG((LOG_MISC, 60,
 	    "connection_passive_lookup_by_ids: no match"));
-  return 0;
+	return 0;
 }
 
 /*
@@ -266,210 +256,188 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
  * again.
  */
 int
-connection_setup (char *name)
+connection_setup(char *name)
 {
-  struct connection *conn = 0;
-  struct timeval now;
+	struct connection *conn = 0;
+	struct timeval  now;
 
-  /* Check for trials to add duplicate connections.  */
-  if (connection_lookup (name))
-    {
-      LOG_DBG ((LOG_MISC, 10, "connection_setup: cannot add \"%s\" twice",
-		name));
-      return 0;
-    }
+	/* Check for trials to add duplicate connections.  */
+	if (connection_lookup(name)) {
+		LOG_DBG((LOG_MISC, 10, "connection_setup: cannot add \"%s\" twice",
+		    name));
+		return 0;
+	}
+	conn = calloc(1, sizeof *conn);
+	if (!conn) {
+		log_error("connection_setup: calloc (1, %lu) failed",
+		    (unsigned long) sizeof *conn);
+		goto fail;
+	}
+	conn->name = strdup(name);
+	if (!conn->name) {
+		log_error("connection_setup: strdup (\"%s\") failed", name);
+		goto fail;
+	}
+	gettimeofday(&now, 0);
+	conn->ev = timer_add_event("connection_checker",
+	    connection_checker, conn, &now);
+	if (!conn->ev) {
+		log_print("connection_setup: could not add timer event");
+		goto fail;
+	}
+	TAILQ_INSERT_TAIL(&connections, conn, link);
+	return 0;
 
-  conn = calloc (1, sizeof *conn);
-  if (!conn)
-    {
-      log_error ("connection_setup: calloc (1, %lu) failed",
-		 (unsigned long)sizeof *conn);
-      goto fail;
-    }
-
-  conn->name = strdup (name);
-  if (!conn->name)
-    {
-      log_error ("connection_setup: strdup (\"%s\") failed", name);
-      goto fail;
-    }
-
-  gettimeofday (&now, 0);
-  conn->ev
-    = timer_add_event ("connection_checker", connection_checker, conn, &now);
-  if (!conn->ev)
-    {
-      log_print ("connection_setup: could not add timer event");
-      goto fail;
-    }
-
-  TAILQ_INSERT_TAIL (&connections, conn, link);
-  return 0;
-
- fail:
-  if (conn)
-    {
-      if (conn->name)
-	free (conn->name);
-      free (conn);
-    }
-  return -1;
+fail:
+	if (conn) {
+		if (conn->name)
+			free(conn->name);
+		free(conn);
+	}
+	return -1;
 }
 
 int
-connection_record_passive (char *name)
+connection_record_passive(char *name)
 {
-  struct connection_passive *conn;
-  char *local_id, *remote_id;
+	struct connection_passive *conn;
+	char           *local_id, *remote_id;
 
-  if (connection_passive_lookup_by_name (name))
-    {
-      LOG_DBG ((LOG_MISC, 10,
-		"connection_record_passive: cannot add \"%s\" twice",
-		name));
-      return 0;
-    }
+	if (connection_passive_lookup_by_name(name)) {
+		LOG_DBG((LOG_MISC, 10,
+		    "connection_record_passive: cannot add \"%s\" twice",
+		    name));
+		return 0;
+	}
+	local_id = conf_get_str(name, "Local-ID");
+	if (!local_id) {
+		log_print("connection_record_passive: "
+		    "\"Local-ID\" is missing from section [%s]", name);
+		return -1;
+	}
+	/* If the remote id lookup fails we defer it to later */
+	remote_id = conf_get_str(name, "Remote-ID");
 
-  local_id = conf_get_str (name, "Local-ID");
-  if (!local_id)
-    {
-      log_print ("connection_record_passive: "
-		 "\"Local-ID\" is missing from section [%s]",
-		 name);
-      return -1;
-    }
+	conn = calloc(1, sizeof *conn);
+	if (!conn) {
+		log_error("connection_record_passive: calloc (1, %lu) failed",
+		    (unsigned long) sizeof *conn);
+		return -1;
+	}
+	conn->name = strdup(name);
+	if (!conn->name) {
+		log_error("connection_record_passive: strdup (\"%s\") failed", name);
+		goto fail;
+	}
+	/* XXX IPsec DOI-specific.  */
+	conn->local_id = ipsec_build_id(local_id, &conn->local_sz);
+	if (!conn->local_id)
+		goto fail;
 
-  /* If the remote id lookup fails we defer it to later */
-  remote_id = conf_get_str (name, "Remote-ID");
+	if (remote_id) {
+		conn->remote_id = ipsec_build_id(remote_id, &conn->remote_sz);
+		if (!conn->remote_id)
+			goto fail;
+	} else
+		conn->remote_id = 0;
 
-  conn = calloc (1, sizeof *conn);
-  if (!conn)
-    {
-      log_error ("connection_record_passive: calloc (1, %lu) failed",
-		 (unsigned long)sizeof *conn);
-      return -1;
-    }
+	TAILQ_INSERT_TAIL(&connections_passive, conn, link);
 
-  conn->name = strdup (name);
-  if (!conn->name)
-    {
-      log_error ("connection_record_passive: strdup (\"%s\") failed", name);
-      goto fail;
-    }
+	LOG_DBG((LOG_MISC, 60,
+	    "connection_record_passive: passive connection \"%s\" added",
+	    conn->name));
+	return 0;
 
-  /* XXX IPsec DOI-specific.  */
-  conn->local_id = ipsec_build_id (local_id, &conn->local_sz);
-  if (!conn->local_id)
-    goto fail;
-
-  if (remote_id)
-    {
-      conn->remote_id = ipsec_build_id (remote_id, &conn->remote_sz);
-      if (!conn->remote_id)
-	goto fail;
-    }
-  else
-    conn->remote_id = 0;
-
-  TAILQ_INSERT_TAIL (&connections_passive, conn, link);
-
-  LOG_DBG ((LOG_MISC, 60,
-	    "connection_record_passive: passive connection \"%s\" "
-	    "added", conn->name));
-  return 0;
-
- fail:
-  if (conn->local_id)
-    free (conn->local_id);
-  if (conn->name)
-    free (conn->name);
-  free (conn);
-  return -1;
+fail:
+	if (conn->local_id)
+		free(conn->local_id);
+	if (conn->name)
+		free(conn->name);
+	free(conn);
+	return -1;
 }
 
 /* Remove the connection named NAME.  */
 void
-connection_teardown (char *name)
+connection_teardown(char *name)
 {
-  struct connection *conn;
+	struct connection *conn;
 
-  conn = connection_lookup (name);
-  if (!conn)
-    return;
+	conn = connection_lookup(name);
+	if (!conn)
+		return;
 
-  TAILQ_REMOVE (&connections, conn, link);
-  timer_remove_event (conn->ev);
-  free (conn->name);
-  free (conn);
+	TAILQ_REMOVE(&connections, conn, link);
+	timer_remove_event(conn->ev);
+	free(conn->name);
+	free(conn);
 }
 
 /* Remove the passive connection named NAME.  */
 static void
-connection_passive_teardown (char *name)
+connection_passive_teardown(char *name)
 {
-  struct connection_passive *conn;
+	struct connection_passive *conn;
 
-  conn = connection_passive_lookup_by_name (name);
-  if (!conn)
-    return;
+	conn = connection_passive_lookup_by_name(name);
+	if (!conn)
+		return;
 
-  TAILQ_REMOVE (&connections_passive, conn, link);
-  free (conn->name);
-  free (conn->local_id);
-  free (conn->remote_id);
-  free (conn);
+	TAILQ_REMOVE(&connections_passive, conn, link);
+	free(conn->name);
+	free(conn->local_id);
+	free(conn->remote_id);
+	free(conn);
 }
 
 void
-connection_report (void)
+connection_report(void)
 {
-  struct connection *conn;
-  struct timeval now;
+	struct connection *conn;
+	struct timeval  now;
 #ifdef USE_DEBUG
-  struct connection_passive *pconn;
-  struct doi *doi = doi_lookup (ISAKMP_DOI_ISAKMP);
+	struct connection_passive *pconn;
+	struct doi     *doi = doi_lookup(ISAKMP_DOI_ISAKMP);
 #endif
 
-  gettimeofday (&now, 0);
-  for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
-    LOG_DBG ((LOG_REPORT, 0,
-	      "connection_report: connection %s next check %ld seconds",
-	      (conn->name ? conn->name : "<unnamed>"),
-	      conn->ev->expiration.tv_sec - now.tv_sec));
+	gettimeofday(&now, 0);
+	for (conn = TAILQ_FIRST(&connections); conn; conn = TAILQ_NEXT(conn, link))
+		LOG_DBG((LOG_REPORT, 0,
+		    "connection_report: connection %s next check %ld seconds",
+		    (conn->name ? conn->name : "<unnamed>"),
+		    conn->ev->expiration.tv_sec - now.tv_sec));
 #ifdef USE_DEBUG
-  for (pconn = TAILQ_FIRST (&connections_passive); pconn;
-       pconn = TAILQ_NEXT (pconn, link))
-    LOG_DBG ((LOG_REPORT, 0,
-	      "connection_report: passive connection %s %s", pconn->name,
-	      doi->decode_ids ("local_id: %s, remote_id: %s",
-			       pconn->local_id, pconn->local_sz,
-			       pconn->remote_id, pconn->remote_sz, 1)));
+	for (pconn = TAILQ_FIRST(&connections_passive); pconn;
+	    pconn = TAILQ_NEXT(pconn, link))
+		LOG_DBG((LOG_REPORT, 0,
+		    "connection_report: passive connection %s %s", pconn->name,
+		    doi->decode_ids("local_id: %s, remote_id: %s",
+		    pconn->local_id, pconn->local_sz,
+		    pconn->remote_id, pconn->remote_sz, 1)));
 #endif
 }
 
 /* Reinitialize all connections (SIGHUP handling).  */
 void
-connection_reinit (void)
+connection_reinit(void)
 {
-  struct connection *conn, *next;
-  struct connection_passive *pconn, *pnext;
+	struct connection *conn, *next;
+	struct connection_passive *pconn, *pnext;
 
-  LOG_DBG ((LOG_MISC, 30,
+	LOG_DBG((LOG_MISC, 30,
 	    "connection_reinit: reinitializing connection list"));
 
-  /* Remove all present connections.  */
-  for (conn = TAILQ_FIRST (&connections); conn; conn = next)
-    {
-      next = TAILQ_NEXT (conn, link);
-      connection_teardown (conn->name);
-    }
+	/* Remove all present connections.  */
+	for (conn = TAILQ_FIRST(&connections); conn; conn = next) {
+		next = TAILQ_NEXT(conn, link);
+		connection_teardown(conn->name);
+	}
 
-  for (pconn = TAILQ_FIRST (&connections_passive); pconn; pconn = pnext)
-    {
-      pnext = TAILQ_NEXT (pconn, link);
-      connection_passive_teardown (pconn->name);
-    }
+	for (pconn = TAILQ_FIRST(&connections_passive); pconn; pconn = pnext) {
+		pnext = TAILQ_NEXT(pconn, link);
+		connection_passive_teardown(pconn->name);
+	}
 
-  /* Setup new connections, as the (new) config directs.  */
-  connection_init ();
+	/* Setup new connections, as the (new) config directs.  */
+	connection_init();
 }

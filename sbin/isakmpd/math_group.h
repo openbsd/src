@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.h,v 1.9 2004/04/07 22:45:49 ho Exp $	*/
-/*	$EOM: math_group.h,v 1.7 1999/04/17 23:20:40 niklas Exp $	*/
+/* $OpenBSD: math_group.h,v 1.10 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: math_group.h,v 1.7 1999/04/17 23:20:40 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -34,10 +34,10 @@
 #define _MATH_GROUP_H_
 
 enum groups {
-  MODP,				/* F_p, Z modulo a prime */
-  EC2N,				/* Elliptic Curve over the Field GF(2**N) */
-  ECP,				/* Elliptic Curve over the Field Z_p */
-  NOTYET			/* Not yet assigned */
+	MODP,			/* F_p, Z modulo a prime */
+	EC2N,			/* Elliptic Curve over the Field GF(2**N) */
+	ECP,			/* Elliptic Curve over the Field Z_p */
+	NOTYET			/* Not yet assigned */
 };
 
 /*
@@ -45,50 +45,50 @@ enum groups {
  */
 
 struct group {
-  enum groups type;
-  int id;			/* Group ID */
-  int bits;			/* Number of key bits provided by this group */
-  void *group;
-  void *a, *b, *c, *d;
-  void *gen;			/* Group Generator */
-  int (*getlen) (struct group *);
-  void (*getraw) (struct group *, void *, u_int8_t *);
-  int (*setraw) (struct group *, void *, u_int8_t *, int);
-  int (*setrandom) (struct group *, void *);
-  int (*operation) (struct group *, void *, void *, void *);
+	enum groups     type;
+	int             id;	/* Group ID */
+	int             bits;	/* Number of key bits provided by this group */
+	void           *group;
+	void           *a, *b, *c, *d;
+	void           *gen;	/* Group Generator */
+	int             (*getlen) (struct group *);
+	void            (*getraw) (struct group *, void *, u_int8_t *);
+	int             (*setraw) (struct group *, void *, u_int8_t *, int);
+	int             (*setrandom) (struct group *, void *);
+	int             (*operation) (struct group *, void *, void *, void *);
 };
 
 /* Description of an Elliptic Group over GF(2**n) for Boot-Strapping */
 
 struct ec2n_dscr {
-  int id;
-  int bits;				/* Key Bits provided by this group */
-  char *polynomial;			/* Irreduceable polynomial */
-  char *gen_x;				/* X - Coord. of Generator */
-  char *a, *b;				/* Curve Parameters */
+	int             id;
+	int             bits;	/* Key Bits provided by this group */
+	char           *polynomial;	/* Irreduceable polynomial */
+	char           *gen_x;	/* X - Coord. of Generator */
+	char           *a, *b;	/* Curve Parameters */
 };
 
 /* Description of F_p for Boot-Strapping */
 
 struct modp_dscr {
-  int id;
-  int bits;				/* Key Bits provided by this group */
-  char *prime;				/* Prime */
-  char *gen;				/* Generator */
+	int             id;
+	int             bits;	/* Key Bits provided by this group */
+	char           *prime;	/* Prime */
+	char           *gen;	/* Generator */
 };
 
 /* Prototypes */
 
-void group_init (void);
-void group_free (struct group *);
-struct group *group_get (u_int32_t);
+void            group_init(void);
+void            group_free(struct group *);
+struct group   *group_get(u_int32_t);
 
-void ec2n_free (struct group *);
-struct group *ec2n_clone (struct group *, struct group *);
-void ec2n_init (struct group *);
+void            ec2n_free(struct group *);
+struct group   *ec2n_clone(struct group *, struct group *);
+void            ec2n_init(struct group *);
 
-void modp_free (struct group *);
-struct group *modp_clone (struct group *, struct group *);
-void modp_init (struct group *);
+void            modp_free(struct group *);
+struct group   *modp_clone(struct group *, struct group *);
+void            modp_init(struct group *);
 
-#endif /* _MATH_GROUP_H_ */
+#endif				/* _MATH_GROUP_H_ */

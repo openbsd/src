@@ -1,5 +1,5 @@
-/*	$OpenBSD: dh.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: dh.h,v 1.4 1999/04/17 23:20:24 niklas Exp $	*/
+/* $OpenBSD: dh.h,v 1.6 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: dh.h,v 1.4 1999/04/17 23:20:24 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -36,8 +36,8 @@
 
 struct group;
 
-int dh_getlen (struct group *);
-int dh_create_exchange (struct group *, u_int8_t *);
-int dh_create_shared (struct group *, u_int8_t *, u_int8_t *);
+int             dh_getlen(struct group *);
+int             dh_create_exchange(struct group *, u_int8_t *);
+int             dh_create_shared(struct group *, u_int8_t *, u_int8_t *);
 
-#endif /* _DH_H_ */
+#endif				/* _DH_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.h,v 1.13 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
+/* $OpenBSD: transport.h,v 1.14 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -49,79 +49,79 @@ struct transport;
 
 /* This describes a tranport "method" like UDP or similar.  */
 struct transport_vtbl {
-  /* All transport methods are linked together.  */
-  LIST_ENTRY (transport_vtbl) link;
+	/* All transport methods are linked together.  */
+	LIST_ENTRY(transport_vtbl) link;
 
-  /* A textual name of the transport method.  */
-  char *name;
+	/* A textual name of the transport method.  */
+	char           *name;
 
-  /* Create a transport instance of this method.  */
-  struct transport *(*create) (char *);
+	/* Create a transport instance of this method.  */
+	struct transport *(*create) (char *);
 
-  /* Reinitialize specific transport.  */
-  void (*reinit) (void);
+	/* Reinitialize specific transport.  */
+	void            (*reinit) (void);
 
-  /* Remove a transport instance of this method.  */
-  void (*remove) (struct transport *);
+	/* Remove a transport instance of this method.  */
+	void            (*remove) (struct transport *);
 
-  /* Report status of given transport */
-  void (*report) (struct transport *);
+	/* Report status of given transport */
+	void            (*report) (struct transport *);
 
-  /* Let the given transport set it's bit in the fd_set passed in.  */
-  int (*fd_set) (struct transport *, fd_set *, int);
+	/* Let the given transport set it's bit in the fd_set passed in.  */
+	int             (*fd_set) (struct transport *, fd_set *, int);
 
-  /* Is the given transport ready for I/O?  */
-  int (*fd_isset) (struct transport *, fd_set *);
+	/* Is the given transport ready for I/O?  */
+	int             (*fd_isset) (struct transport *, fd_set *);
 
-  /*
-   * Read a message from the transport's incoming pipe and start
-   * handling it.
-   */
-  void (*handle_message) (struct transport *);
+	/*
+	 * Read a message from the transport's incoming pipe and start
+	 * handling it.
+         */
+	void            (*handle_message) (struct transport *);
 
-  /* Send a message through the outgoing pipe.  */
-  int (*send_message) (struct message *);
+	/* Send a message through the outgoing pipe.  */
+	int             (*send_message) (struct message *);
 
-  /*
-   * Fill out a sockaddr structure with the transport's destination end's
-   * address info.
-   */
-  void (*get_dst) (struct transport *, struct sockaddr **);
+	/*
+	 * Fill out a sockaddr structure with the transport's destination end's
+	 * address info.
+         */
+	void            (*get_dst) (struct transport *, struct sockaddr **);
 
-  /*
-   * Fill out a sockaddr structure with the transport's source end's
-   * address info.
-   */
-  void (*get_src) (struct transport *, struct sockaddr **);
+	/*
+	 * Fill out a sockaddr structure with the transport's source end's
+	 * address info.
+         */
+	void            (*get_src) (struct transport *, struct sockaddr **);
 
-  /*
-   * Return a string with decoded src and dst information
-   */
-  char *(*decode_ids) (struct transport *);
+	/*
+	 * Return a string with decoded src and dst information
+         */
+	char           *(*decode_ids) (struct transport *);
 };
 
 struct transport {
-  /* All transports used are linked together.  */
-  LIST_ENTRY (transport) link;
+	/* All transports used are linked together.  */
+	LIST_ENTRY(transport) link;
 
-  /* What transport method is this an instance of?  */
-  struct transport_vtbl *vtbl;
+	/* What transport method is this an instance of?  */
+	struct transport_vtbl *vtbl;
 
-  /* The queue holding messages to send on this transport.  */
-  struct msg_head sendq;
+	/* The queue holding messages to send on this transport.  */
+	struct msg_head sendq;
 
-  /*
-   * Prioritized send queue.  Messages in this queue will be transmitted
-   * before the normal sendq, they will also all be transmitted prior
-   * to a daemon shutdown.  Currently only used for DELETE notifications.
-   */
-  struct msg_head prio_sendq;
+	/*
+	 * Prioritized send queue.  Messages in this queue will be transmitted
+	 * before the normal sendq, they will also all be transmitted prior
+	 * to a daemon shutdown.  Currently only used for DELETE notifications.
+         */
+	struct msg_head prio_sendq;
 
-  /* Flags describing the transport.  */
-  int flags;
+	/* Flags describing the transport.  */
+	int             flags;
 
-  /* References counter.  */
-  int refcnt;
+	/* References counter.  */
+	int             refcnt;
 };
 
 /* Set if this is a transport we want to listen on.  */
@@ -129,18 +129,18 @@ struct transport {
 /* Used for mark-and-sweep-type garbage collection of transports */
 #define TRANSPORT_MARK		2
 
-extern void transport_add (struct transport *);
-extern struct transport *transport_create (char *, char *);
-extern int transport_fd_set (fd_set *);
-extern void transport_handle_messages (fd_set *);
-extern void transport_init (void);
-extern void transport_map (void (*) (struct transport *));
-extern void transport_method_add (struct transport_vtbl *);
-extern int transport_pending_wfd_set (fd_set *);
-extern void transport_reference (struct transport *);
-extern void transport_release (struct transport *);
-extern void transport_report (void);
-extern void transport_send_messages (fd_set *);
-extern void transport_reinit (void);
-extern int transport_prio_sendqs_empty (void);
-#endif /* _TRANSPORT_H_ */
+extern void     transport_add(struct transport *);
+extern struct transport *transport_create(char *, char *);
+extern int      transport_fd_set(fd_set *);
+extern void     transport_handle_messages(fd_set *);
+extern void     transport_init(void);
+extern void     transport_map(void (*) (struct transport *));
+extern void     transport_method_add(struct transport_vtbl *);
+extern int      transport_pending_wfd_set(fd_set *);
+extern void     transport_reference(struct transport *);
+extern void     transport_release(struct transport *);
+extern void     transport_report(void);
+extern void     transport_send_messages(fd_set *);
+extern void     transport_reinit(void);
+extern int      transport_prio_sendqs_empty(void);
+#endif				/* _TRANSPORT_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.42 2004/04/07 22:45:49 ho Exp $	*/
-/*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
+/* $OpenBSD: log.c,v 1.43 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -50,7 +50,7 @@
 #include "sysdep/common/pcap.h"
 #endif
 
-#endif /* USE_DEBUG */
+#endif				/* USE_DEBUG */
 
 #include <errno.h>
 #include <stdio.h>
@@ -66,654 +66,616 @@
 #include "monitor.h"
 #include "util.h"
 
-static void _log_print (int, int, const char *, va_list, int, int);
+static void	_log_print(int, int, const char *, va_list, int, int);
 
-static FILE *log_output;
+static FILE	*log_output;
 
-int verbose_logging = 0;
+int		verbose_logging = 0;
 #if defined (USE_DEBUG)
-static int log_level[LOG_ENDCLASS];
+static int	log_level[LOG_ENDCLASS];
 
 #define TCPDUMP_MAGIC	0xa1b2c3d4
 #define SNAPLEN		(64 * 1024)
 
 struct packhdr {
-  struct pcap_pkthdr pcap;		/* pcap file packet header */
-  u_int32_t sa_family;			/* address family */
-  union {
-    struct ip ip4;			/* IPv4 header (w/o options) */
-    struct ip6_hdr ip6;			/* IPv6 header */
-  } ip;
+	struct pcap_pkthdr pcap;/* pcap file packet header */
+	u_int32_t sa_family;	/* address family */
+	union {
+		struct ip       ip4;	/* IPv4 header (w/o options) */
+		struct ip6_hdr  ip6;	/* IPv6 header */
+	} ip;
 };
 
 struct isakmp_hdr {
-  u_int8_t icookie[8], rcookie[8];
-  u_int8_t next, ver, type, flags;
-  u_int32_t msgid, len;
+	u_int8_t        icookie[8], rcookie[8];
+	u_int8_t        next, ver, type, flags;
+	u_int32_t       msgid, len;
 };
 
-static char *pcaplog_file = NULL;
-static FILE *packet_log;
+static char    *pcaplog_file = NULL;
+static FILE    *packet_log;
 static u_int8_t *packet_buf = NULL;
 
-static int udp_cksum (struct packhdr *, const struct udphdr *, u_int16_t *);
-static u_int16_t in_cksum (const u_int16_t *, int);
-#endif /* USE_DEBUG */
+static int      udp_cksum(struct packhdr *, const struct udphdr *, u_int16_t *);
+static u_int16_t in_cksum(const u_int16_t *, int);
+#endif				/* USE_DEBUG */
 
 void
-log_init (int debug)
+log_init(int debug)
 {
-  if (debug)
-    log_output = stderr;
-  else
-    log_to (0); /* syslog */
+	if (debug)
+		log_output = stderr;
+	else
+		log_to(0);	/* syslog */
 }
 
 void
-log_reinit (void)
+log_reinit(void)
 {
-  struct conf_list *logging;
+	struct conf_list *logging;
 #ifdef USE_DEBUG
-  struct conf_list_node *logclass;
-  int class, level;
-#endif  /* USE_DEBUG */
+	struct conf_list_node *logclass;
+	int		class, level;
+#endif				/* USE_DEBUG */
 
-  logging = conf_get_list ("General", "Logverbose");
-  if (logging)
-    {
-      verbose_logging = 1;
-      conf_free_list (logging);
-    }
-
-
-#ifdef USE_DEBUG
-  logging = conf_get_list ("General", "Loglevel");
-  if (logging)
-    {
-      for (logclass = TAILQ_FIRST (&logging->fields); logclass;
-	   logclass = TAILQ_NEXT (logclass, link))
-	{
-	  if (sscanf (logclass->field, "%d=%d", &class, &level) != 2)
-	    {
-	      if (sscanf (logclass->field, "A=%d", &level) == 1)
-		  for (class = 0; class < LOG_ENDCLASS; class++)
-		    log_debug_cmd (class, level);
-	      else
-		{
-		  log_print ("init: invalid logging class or level: %s",
-			     logclass->field);
-		  continue;
-		}
-	    }
-	  else
-	    log_debug_cmd (class, level);
+	logging = conf_get_list("General", "Logverbose");
+	if (logging) {
+		verbose_logging = 1;
+		conf_free_list(logging);
 	}
-      conf_free_list (logging);
-    }
-#endif /* USE_DEBUG */
+#ifdef USE_DEBUG
+	logging = conf_get_list("General", "Loglevel");
+	if (!logging)
+		return;
+
+	for (logclass = TAILQ_FIRST(&logging->fields); logclass;
+	    logclass = TAILQ_NEXT(logclass, link)) {
+		if (sscanf(logclass->field, "%d=%d", &class, &level) != 2) {
+			if (sscanf(logclass->field, "A=%d", &level) == 1)
+				for (class = 0; class < LOG_ENDCLASS; class++)
+					log_debug_cmd(class, level);
+			else {
+				log_print("init: invalid logging class or level: %s",
+				    logclass->field);
+				continue;
+			}
+		} else
+			log_debug_cmd(class, level);
+	}
+	conf_free_list(logging);
+#endif				/* USE_DEBUG */
 }
 
 void
-log_to (FILE *f)
+log_to(FILE *f)
 {
-  if (!log_output && f)
-    closelog ();
-  log_output = f;
-  if (!f)
-    openlog ("isakmpd", LOG_PID | LOG_CONS, LOG_DAEMON);
+	if (!log_output && f)
+		closelog();
+	log_output = f;
+	if (!f)
+		openlog("isakmpd", LOG_PID | LOG_CONS, LOG_DAEMON);
 }
 
 FILE *
-log_current (void)
+log_current(void)
 {
-  return log_output;
+	return log_output;
 }
 
 static char *
-_log_get_class (int error_class)
+_log_get_class(int error_class)
 {
-  /* XXX For test purposes. To be removed later on?  */
-  static char *class_text[] = LOG_CLASSES_TEXT;
+	/* XXX For test purposes. To be removed later on?  */
+	static char	*class_text[] = LOG_CLASSES_TEXT;
 
-  if (error_class < 0)
-    return "Dflt";
-  else if (error_class >= LOG_ENDCLASS)
-    return "Unkn";
-  else
-    return class_text[error_class];
+	if (error_class < 0)
+		return "Dflt";
+	else if (error_class >= LOG_ENDCLASS)
+		return "Unkn";
+	else
+		return class_text[error_class];
 }
 
 static void
-_log_print (int error, int syslog_level, const char *fmt, va_list ap,
-	    int class, int level)
+_log_print(int error, int syslog_level, const char *fmt, va_list ap,
+    int class, int level)
 {
-  char buffer[LOG_SIZE], nbuf[LOG_SIZE + 32];
-  static const char fallback_msg[] =
-    "write to log file failed (errno %d), redirecting output to syslog";
-  int len;
-  struct tm *tm;
-  struct timeval now;
-  time_t t;
+	char		buffer[LOG_SIZE], nbuf[LOG_SIZE + 32];
+	static const char fallback_msg[] =
+	    "write to log file failed (errno %d), redirecting output to syslog";
+	int		len;
+	struct tm      *tm;
+	struct timeval  now;
+	time_t          t;
 
-  len = vsnprintf (buffer, sizeof buffer, fmt, ap);
-  if (len > 0 && len < (int)sizeof buffer - 1 && error)
-    snprintf (buffer + len, sizeof buffer - len, ": %s", strerror (errno));
-  if (log_output)
-    {
-      gettimeofday (&now, 0);
-      t = now.tv_sec;
-      tm = localtime (&t);
-      if (class >= 0)
-	snprintf (nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s %02d ",
-		  tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
-		  _log_get_class (class), level);
-      else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
-	snprintf (nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s ", tm->tm_hour,
-		  tm->tm_min, tm->tm_sec, now.tv_usec,
-		  class == LOG_PRINT ? "Default" : "Report>");
-      strlcat (nbuf, buffer, sizeof nbuf);
+	len = vsnprintf(buffer, sizeof buffer, fmt, ap);
+	if (len > 0 && len < (int) sizeof buffer - 1 && error)
+		snprintf(buffer + len, sizeof buffer - len, ": %s", strerror(errno));
+	if (log_output) {
+		gettimeofday(&now, 0);
+		t = now.tv_sec;
+		tm = localtime(&t);
+		if (class >= 0)
+			snprintf(nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s %02d ",
+			    tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
+			    _log_get_class(class), level);
+		else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
+			snprintf(nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s ",
+			    tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
+			    class == LOG_PRINT ? "Default" : "Report>");
+		strlcat(nbuf, buffer, sizeof nbuf);
 #if defined (USE_PRIVSEP)
-      strlcat (nbuf, getuid () ? "" : " [priv]", LOG_SIZE + 32);
+		strlcat(nbuf, getuid() ? "" : " [priv]", LOG_SIZE + 32);
 #endif
-      strlcat (nbuf, "\n", sizeof nbuf);
+		strlcat(nbuf, "\n", sizeof nbuf);
 
-      if (fwrite (nbuf, strlen (nbuf), 1, log_output) == 0)
-	{
-	  /* Report fallback.  */
-	  syslog (LOG_ALERT, fallback_msg, errno);
-	  fprintf (log_output, fallback_msg, errno);
+		if (fwrite(nbuf, strlen(nbuf), 1, log_output) == 0) {
+			/* Report fallback.  */
+			syslog(LOG_ALERT, fallback_msg, errno);
+			fprintf(log_output, fallback_msg, errno);
 
-	  /*
-	   * Close log_output to prevent isakmpd from locking the file.
-	   * We may need to explicitly close stdout to do this properly.
-	   * XXX - Figure out how to match two FILE *'s and rewrite.
-	   */
-	  if (fileno (log_output) != -1
-	      && fileno (stdout) == fileno (log_output))
-	    fclose (stdout);
-	  fclose (log_output);
+			/*
+			 * Close log_output to prevent isakmpd from locking the file.
+			 * We may need to explicitly close stdout to do this properly.
+			 * XXX - Figure out how to match two FILE *'s and rewrite.
+			 */
+			if (fileno(log_output) != -1 &&
+			    fileno(stdout) == fileno(log_output))
+				fclose(stdout);
+			fclose(log_output);
 
-	  /* Fallback to syslog.  */
-	  log_to (0);
+			/* Fallback to syslog.  */
+			log_to(0);
 
-	  /* (Re)send current message to syslog().  */
-	  syslog (class == LOG_REPORT ? LOG_ALERT
-		  : syslog_level, "%s", buffer);
+			/* (Re)send current message to syslog().  */
+			syslog(class == LOG_REPORT ? LOG_ALERT :
+			    syslog_level, "%s", buffer);
+		}
+	} else
+		syslog(class == LOG_REPORT ? LOG_ALERT : syslog_level,
+		    "%s", buffer);
+}
+
+#ifdef USE_DEBUG
+void
+log_debug(int cls, int level, const char *fmt, ...)
+{
+	va_list         ap;
+
+	/*
+	 * If we are not debugging this class, or the level is too low, just return.
+         */
+	if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
+		return;
+	va_start(ap, fmt);
+	_log_print(0, LOG_INFO, fmt, ap, cls, level);
+	va_end(ap);
+}
+
+void
+log_debug_buf(int cls, int level, const char *header, const u_int8_t *buf,
+    size_t sz)
+{
+	size_t	i, j;
+	char	s[73];
+
+	/*
+	 * If we are not debugging this class, or the level is too low, just return.
+         */
+	if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
+		return;
+
+	log_debug(cls, level, "%s:", header);
+	for (i = j = 0; i < sz;) {
+		snprintf(s + j, sizeof s - j, "%02x", buf[i++]);
+		j += 2;
+		if (i % 4 == 0) {
+			if (i % 32 == 0) {
+				s[j] = '\0';
+				log_debug(cls, level, "%s", s);
+				j = 0;
+			} else
+				s[j++] = ' ';
+		}
 	}
-    }
-  else
-    syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, "%s", buffer);
-}
-
-#ifdef USE_DEBUG
-void
-log_debug (int cls, int level, const char *fmt, ...)
-{
-  va_list ap;
-
-  /*
-   * If we are not debugging this class, or the level is too low, just return.
-   */
-  if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
-    return;
-  va_start (ap, fmt);
-  _log_print (0, LOG_INFO, fmt, ap, cls, level);
-  va_end (ap);
-}
-
-void
-log_debug_buf (int cls, int level, const char *header, const u_int8_t *buf,
-	       size_t sz)
-{
-  char s[73];
-  size_t i, j;
-
-  /*
-   * If we are not debugging this class, or the level is too low, just return.
-   */
-  if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
-    return;
-
-  log_debug (cls, level, "%s:", header);
-  for (i = j = 0; i < sz;)
-    {
-      snprintf (s + j, sizeof s - j, "%02x", buf[i++]);
-      j += 2;
-      if (i % 4 == 0)
-	{
-	  if (i % 32 == 0)
-	    {
-	      s[j] = '\0';
-	      log_debug (cls, level, "%s", s);
-	      j = 0;
-	    }
-	  else
-	    s[j++] = ' ';
+	if (j) {
+		s[j] = '\0';
+		log_debug(cls, level, "%s", s);
 	}
-    }
-  if (j)
-    {
-      s[j] = '\0';
-      log_debug (cls, level, "%s", s);
-    }
 }
 
 void
-log_debug_cmd (int cls, int level)
+log_debug_cmd(int cls, int level)
 {
-  if (cls < 0 || cls >= LOG_ENDCLASS)
-    {
-      log_print ("log_debug_cmd: invalid debugging class %d", cls);
-      return;
-    }
-
-  if (level < 0)
-    {
-      log_print ("log_debug_cmd: invalid debugging level %d for class %d",
-		 level, cls);
-      return;
-    }
-
-  if (level == log_level[cls])
-    log_print ("log_debug_cmd: log level unchanged for class %d", cls);
-  else
-    {
-      log_print ("log_debug_cmd: log level changed from %d to %d for class %d",
-		 log_level[cls], level, cls);
-      log_level[cls] = level;
-    }
+	if (cls < 0 || cls >= LOG_ENDCLASS) {
+		log_print("log_debug_cmd: invalid debugging class %d", cls);
+		return;
+	}
+	if (level < 0) {
+		log_print("log_debug_cmd: invalid debugging level %d for class %d",
+		    level, cls);
+		return;
+	}
+	if (level == log_level[cls])
+		log_print("log_debug_cmd: log level unchanged for class %d", cls);
+	else {
+		log_print("log_debug_cmd: log level changed from %d to %d for class %d",
+		    log_level[cls], level, cls);
+		log_level[cls] = level;
+	}
 }
 
 void
-log_debug_toggle (void)
+log_debug_toggle(void)
 {
-  static int log_level_copy[LOG_ENDCLASS], toggle = 0;
+	static int	log_level_copy[LOG_ENDCLASS], toggle = 0;
 
-  if (!toggle)
-    {
-      LOG_DBG ((LOG_MISC, 50, "log_debug_toggle: debug levels cleared"));
-      memcpy (&log_level_copy, &log_level, sizeof log_level);
-      memset (&log_level, 0, sizeof log_level);
-    }
-  else
-    {
-      memcpy (&log_level, &log_level_copy, sizeof log_level);
-      LOG_DBG ((LOG_MISC, 50, "log_debug_toggle: debug levels restored"));
-    }
-  toggle = !toggle;
+	if (!toggle) {
+		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: debug levels cleared"));
+		memcpy(&log_level_copy, &log_level, sizeof log_level);
+		memset(&log_level, 0, sizeof log_level);
+	} else {
+		memcpy(&log_level, &log_level_copy, sizeof log_level);
+		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: debug levels restored"));
+	}
+	toggle = !toggle;
 }
-#endif /* USE_DEBUG */
+#endif				/* USE_DEBUG */
 
 void
-log_print (const char *fmt, ...)
+log_print(const char *fmt, ...)
 {
-  va_list ap;
+	va_list         ap;
 
-  va_start (ap, fmt);
-  _log_print (0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
-  va_end (ap);
+	va_start(ap, fmt);
+	_log_print(0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
+	va_end(ap);
 }
 
 void
-log_verbose (const char *fmt, ...)
+log_verbose(const char *fmt, ...)
 {
-  va_list ap;
+	va_list         ap;
 #ifdef USE_DEBUG
-  int i;
-#endif /* USE_DEBUG */
+	int             i;
+#endif				/* USE_DEBUG */
 
-  if (verbose_logging == 0)
-    return;
+	if (verbose_logging == 0)
+		return;
 
 #ifdef USE_DEBUG
-  for (i = 0; i < LOG_ENDCLASS; i++)
-    if (log_level[i] > 0)
-      return;
+	for (i = 0; i < LOG_ENDCLASS; i++)
+		if (log_level[i] > 0)
+			return;
 #endif
 
-  va_start (ap, fmt);
-  _log_print (0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
-  va_end (ap);
+	va_start(ap, fmt);
+	_log_print(0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
+	va_end(ap);
 }
 
 void
-log_error (const char *fmt, ...)
+log_error(const char *fmt, ...)
 {
-  va_list ap;
+	va_list         ap;
 
-  va_start (ap, fmt);
-  _log_print (1, LOG_ERR, fmt, ap, LOG_PRINT, 0);
-  va_end (ap);
+	va_start(ap, fmt);
+	_log_print(1, LOG_ERR, fmt, ap, LOG_PRINT, 0);
+	va_end(ap);
 }
 
 void
-log_fatal (const char *fmt, ...)
+log_fatal(const char *fmt, ...)
 {
-  va_list ap;
+	va_list         ap;
 
-  va_start (ap, fmt);
-  _log_print (1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
-  va_end (ap);
-  exit (1);
+	va_start(ap, fmt);
+	_log_print(1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
+	va_end(ap);
+	exit(1);
 }
 
 #ifdef USE_DEBUG
 void
-log_packet_init (char *newname)
+log_packet_init(char *newname)
 {
-  struct pcap_file_header sf_hdr;
-  struct stat st;
-  mode_t old_umask;
-  char *mode;
+	struct pcap_file_header sf_hdr;
+	struct stat     st;
+	mode_t          old_umask;
+	char           *mode;
 
-  /* Allocate packet buffer first time through.  */
-  if (!packet_buf)
-    packet_buf = malloc (SNAPLEN);
+	/* Allocate packet buffer first time through.  */
+	if (!packet_buf)
+		packet_buf = malloc(SNAPLEN);
 
-  if (!packet_buf)
-    {
-      log_error ("log_packet_init: malloc (%d) failed", SNAPLEN);
-      return;
-    }
+	if (!packet_buf) {
+		log_error("log_packet_init: malloc (%d) failed", SNAPLEN);
+		return;
+	}
+	if (pcaplog_file && strcmp(pcaplog_file, PCAP_FILE_DEFAULT) != 0)
+		free(pcaplog_file);
 
-  if (pcaplog_file && strcmp (pcaplog_file, PCAP_FILE_DEFAULT) != 0)
-    free (pcaplog_file);
-
-  pcaplog_file = strdup (newname);
-  if (!pcaplog_file)
-    {
-      log_error ("log_packet_init: strdup (\"%s\") failed", newname);
-      return;
-    }
-
-  /* Does the file already exist?  XXX lstat() or stat()?  */
+	pcaplog_file = strdup(newname);
+	if (!pcaplog_file) {
+		log_error("log_packet_init: strdup (\"%s\") failed", newname);
+		return;
+	}
+	/* Does the file already exist?  XXX lstat() or stat()?  */
 #if defined (USE_PRIVSEP)
-  /* XXX This is a fstat! */
-  if (monitor_stat (pcaplog_file, &st) == 0)
+	/* XXX This is a fstat! */
+	if (monitor_stat(pcaplog_file, &st) == 0) {
 #else
-  if (lstat (pcaplog_file, &st) == 0)
+	if (lstat(pcaplog_file, &st) == 0) {
 #endif
-    {
-      /* Sanity checks.  */
-      if ((st.st_mode & S_IFMT) != S_IFREG)
-	{
-	  log_print ("log_packet_init: existing capture file is "
-		     "not a regular file");
-	  return;
+		/* Sanity checks.  */
+		if ((st.st_mode & S_IFMT) != S_IFREG) {
+			log_print("log_packet_init: existing capture file is "
+			     "not a regular file");
+			return;
+		}
+		if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
+			log_print("log_packet_init: existing capture "
+			    "file has bad modes");
+			return;
+		}
+		/*
+		 * XXX It would be nice to check if it actually is a pcap
+		 * file...
+		 */
+
+		mode = "a";
+	} else
+		mode = "w";
+
+	old_umask = umask(S_IRWXG | S_IRWXO);
+	packet_log = monitor_fopen(pcaplog_file, mode);
+	umask(old_umask);
+
+	if (!packet_log) {
+		log_error("log_packet_init: fopen (\"%s\", \"%s\") failed",
+		    pcaplog_file, mode);
+		return;
+	}
+	log_print("log_packet_init: starting IKE packet capture to file \"%s\"",
+	    pcaplog_file);
+
+	/* If this is a new file, we need to write a PCAP header to it.  */
+	if (*mode == 'w') {
+		sf_hdr.magic = TCPDUMP_MAGIC;
+		sf_hdr.version_major = PCAP_VERSION_MAJOR;
+		sf_hdr.version_minor = PCAP_VERSION_MINOR;
+		sf_hdr.thiszone = 0;
+		sf_hdr.snaplen = SNAPLEN;
+		sf_hdr.sigfigs = 0;
+		sf_hdr.linktype = DLT_LOOP;
+
+		fwrite((char *) &sf_hdr, sizeof sf_hdr, 1, packet_log);
+		fflush(packet_log);
+	}
+}
+
+void
+log_packet_restart(char *newname)
+{
+	if (packet_log) {
+		log_print("log_packet_restart: capture already active on file \"%s\"",
+		    pcaplog_file);
+		return;
+	}
+	if (newname)
+		log_packet_init(newname);
+	else if (!pcaplog_file)
+		log_packet_init(PCAP_FILE_DEFAULT);
+	else
+		log_packet_init(pcaplog_file);
+}
+
+void
+log_packet_stop(void)
+{
+	/* Stop capture.  */
+	if (packet_log) {
+		fclose(packet_log);
+		log_print("log_packet_stop: stopped capture");
+	}
+	packet_log = 0;
+}
+
+void
+log_packet_iov(struct sockaddr * src, struct sockaddr * dst, struct iovec * iov,
+    int iovcnt)
+{
+	struct isakmp_hdr *isakmphdr;
+	struct packhdr  hdr;
+	struct udphdr   udp;
+	int             off, datalen, hdrlen, i;
+	struct timeval  tv;
+
+	for (i = 0, datalen = 0; i < iovcnt; i++)
+		datalen += iov[i].iov_len;
+
+	if (!packet_log || datalen > SNAPLEN)
+		return;
+
+	/* copy packet into buffer */
+	for (i = 0, off = 0; i < iovcnt; i++) {
+		memcpy(packet_buf + off, iov[i].iov_base, iov[i].iov_len);
+		off += iov[i].iov_len;
 	}
 
-      if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
-	{
-	  log_print ("log_packet_init: existing capture file has bad modes");
-	  return;
+	memset(&hdr, 0, sizeof hdr);
+	memset(&udp, 0, sizeof udp);
+
+	/* isakmp - turn off the encryption bit in the isakmp hdr */
+	isakmphdr = (struct isakmp_hdr *) packet_buf;
+	isakmphdr->flags &= ~(ISAKMP_FLAGS_ENC);
+
+	/* udp */
+	udp.uh_sport = sockaddr_port(src);
+	udp.uh_dport = sockaddr_port(dst);
+	datalen += sizeof udp;
+	udp.uh_ulen = htons(datalen);
+
+	/* ip */
+	hdr.sa_family = htonl(src->sa_family);
+	switch (src->sa_family) {
+	default:
+		/* Assume IPv4. XXX Can 'default' ever happen here?  */
+		hdr.sa_family = htonl(AF_INET);
+		hdr.ip.ip4.ip_src.s_addr = 0x02020202;
+		hdr.ip.ip4.ip_dst.s_addr = 0x01010101;
+		/* The rest of the setup is common to AF_INET.  */
+		goto setup_ip4;
+
+	case AF_INET:
+		hdr.ip.ip4.ip_src.s_addr = ((struct sockaddr_in *) src)->sin_addr.s_addr;
+		hdr.ip.ip4.ip_dst.s_addr = ((struct sockaddr_in *) dst)->sin_addr.s_addr;
+
+setup_ip4:
+		hdrlen = sizeof hdr.ip.ip4;
+		hdr.ip.ip4.ip_v = 0x4;
+		hdr.ip.ip4.ip_hl = 0x5;
+		hdr.ip.ip4.ip_p = IPPROTO_UDP;
+		hdr.ip.ip4.ip_len = htons(datalen + hdrlen);
+		/* Let's use the IP ID as a "packet counter".  */
+		i = ntohs(hdr.ip.ip4.ip_id) + 1;
+		hdr.ip.ip4.ip_id = htons(i);
+		/* Calculate IP header checksum. */
+		hdr.ip.ip4.ip_sum = in_cksum((u_int16_t *) & hdr.ip.ip4,
+		    hdr.ip.ip4.ip_hl << 2);
+		break;
+
+	case AF_INET6:
+		hdrlen = sizeof(hdr.ip.ip6);
+		hdr.ip.ip6.ip6_vfc = IPV6_VERSION;
+		hdr.ip.ip6.ip6_nxt = IPPROTO_UDP;
+		hdr.ip.ip6.ip6_plen = udp.uh_ulen;
+		memcpy(&hdr.ip.ip6.ip6_src, &((struct sockaddr_in6 *) src)->sin6_addr,
+		    sizeof hdr.ip.ip6.ip6_src);
+		memcpy(&hdr.ip.ip6.ip6_dst, &((struct sockaddr_in6 *) dst)->sin6_addr,
+		    sizeof hdr.ip.ip6.ip6_dst);
+		break;
 	}
 
-      /* XXX It would be nice to check if it actually is a pcap file... */
+	/* Calculate UDP checksum.  */
+	udp.uh_sum = udp_cksum(&hdr, &udp, (u_int16_t *) packet_buf);
+	hdrlen += sizeof hdr.sa_family;
 
-      mode = "a";
-    }
-  else
-    mode = "w";
+	/* pcap file packet header */
+	gettimeofday(&tv, 0);
+	hdr.pcap.ts.tv_sec = tv.tv_sec;
+	hdr.pcap.ts.tv_usec = tv.tv_usec;
+	hdr.pcap.caplen = datalen + hdrlen;
+	hdr.pcap.len = datalen + hdrlen;
 
-  old_umask = umask (S_IRWXG | S_IRWXO);
-  packet_log = monitor_fopen (pcaplog_file, mode);
-  umask (old_umask);
+	hdrlen += sizeof(struct pcap_pkthdr);
+	datalen -= sizeof(struct udphdr);
 
-  if (!packet_log)
-    {
-      log_error ("log_packet_init: fopen (\"%s\", \"%s\") failed",
-		 pcaplog_file, mode);
-      return;
-    }
-
-  log_print ("log_packet_init: starting IKE packet capture to file \"%s\"",
-	     pcaplog_file);
-
-  /* If this is a new file, we need to write a PCAP header to it.  */
-  if (*mode == 'w')
-    {
-      sf_hdr.magic = TCPDUMP_MAGIC;
-      sf_hdr.version_major = PCAP_VERSION_MAJOR;
-      sf_hdr.version_minor = PCAP_VERSION_MINOR;
-      sf_hdr.thiszone = 0;
-      sf_hdr.snaplen = SNAPLEN;
-      sf_hdr.sigfigs = 0;
-      sf_hdr.linktype = DLT_LOOP;
-
-      fwrite ((char *)&sf_hdr, sizeof sf_hdr, 1, packet_log);
-      fflush (packet_log);
-    }
-}
-
-void
-log_packet_restart (char *newname)
-{
-  if (packet_log)
-    {
-      log_print ("log_packet_restart: capture already active on file \"%s\"",
-		 pcaplog_file);
-      return;
-    }
-
-  if (newname)
-    log_packet_init (newname);
-  else if (!pcaplog_file)
-    log_packet_init (PCAP_FILE_DEFAULT);
-  else
-    log_packet_init (pcaplog_file);
-}
-
-void
-log_packet_stop (void)
-{
-  /* Stop capture.  */
-  if (packet_log)
-    {
-      fclose (packet_log);
-      log_print ("log_packet_stop: stopped capture");
-    }
-  packet_log = 0;
-}
-
-void
-log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
-		int iovcnt)
-{
-  struct isakmp_hdr *isakmphdr;
-  struct packhdr hdr;
-  struct udphdr udp;
-  int off, datalen, hdrlen, i;
-  struct timeval tv;
-
-  for (i = 0, datalen = 0; i < iovcnt; i++)
-    datalen += iov[i].iov_len;
-
-  if (!packet_log || datalen > SNAPLEN)
-    return;
-
-  /* copy packet into buffer */
-  for (i = 0, off = 0; i < iovcnt; i++)
-    {
-      memcpy (packet_buf + off, iov[i].iov_base, iov[i].iov_len);
-      off += iov[i].iov_len;
-    }
-
-  memset (&hdr, 0, sizeof hdr);
-  memset (&udp, 0, sizeof udp);
-
-  /* isakmp - turn off the encryption bit in the isakmp hdr */
-  isakmphdr = (struct isakmp_hdr *)packet_buf;
-  isakmphdr->flags &= ~(ISAKMP_FLAGS_ENC);
-
-  /* udp */
-  udp.uh_sport = sockaddr_port (src);
-  udp.uh_dport = sockaddr_port (dst);
-  datalen += sizeof udp;
-  udp.uh_ulen = htons (datalen);
-
-  /* ip */
-  hdr.sa_family = htonl (src->sa_family);
-  switch (src->sa_family)
-    {
-    default:
-      /* Assume IPv4. XXX Can 'default' ever happen here?  */
-      hdr.sa_family = htonl (AF_INET);
-      hdr.ip.ip4.ip_src.s_addr = 0x02020202;
-      hdr.ip.ip4.ip_dst.s_addr = 0x01010101;
-      /* The rest of the setup is common to AF_INET.  */
-      goto setup_ip4;
-
-    case AF_INET:
-      hdr.ip.ip4.ip_src.s_addr = ((struct sockaddr_in *)src)->sin_addr.s_addr;
-      hdr.ip.ip4.ip_dst.s_addr = ((struct sockaddr_in *)dst)->sin_addr.s_addr;
-
-    setup_ip4:
-      hdrlen = sizeof hdr.ip.ip4;
-      hdr.ip.ip4.ip_v = 0x4;
-      hdr.ip.ip4.ip_hl = 0x5;
-      hdr.ip.ip4.ip_p = IPPROTO_UDP;
-      hdr.ip.ip4.ip_len = htons (datalen + hdrlen);
-      /* Let's use the IP ID as a "packet counter".  */
-      i = ntohs (hdr.ip.ip4.ip_id) + 1;
-      hdr.ip.ip4.ip_id = htons (i);
-      /* Calculate IP header checksum. */
-      hdr.ip.ip4.ip_sum = in_cksum ((u_int16_t *)&hdr.ip.ip4,
-				    hdr.ip.ip4.ip_hl << 2);
-      break;
-
-    case AF_INET6:
-      hdrlen = sizeof (hdr.ip.ip6);
-      hdr.ip.ip6.ip6_vfc = IPV6_VERSION;
-      hdr.ip.ip6.ip6_nxt = IPPROTO_UDP;
-      hdr.ip.ip6.ip6_plen = udp.uh_ulen;
-      memcpy (&hdr.ip.ip6.ip6_src, &((struct sockaddr_in6 *)src)->sin6_addr,
-	      sizeof hdr.ip.ip6.ip6_src);
-      memcpy (&hdr.ip.ip6.ip6_dst, &((struct sockaddr_in6 *)dst)->sin6_addr,
-	      sizeof hdr.ip.ip6.ip6_dst);
-      break;
-   }
-
-  /* Calculate UDP checksum.  */
-  udp.uh_sum = udp_cksum (&hdr, &udp, (u_int16_t *)packet_buf);
-  hdrlen += sizeof hdr.sa_family;
-
-  /* pcap file packet header */
-  gettimeofday (&tv, 0);
-  hdr.pcap.ts.tv_sec = tv.tv_sec;
-  hdr.pcap.ts.tv_usec = tv.tv_usec;
-  hdr.pcap.caplen = datalen + hdrlen;
-  hdr.pcap.len = datalen + hdrlen;
-
-  hdrlen += sizeof (struct pcap_pkthdr);
-  datalen -= sizeof (struct udphdr);
-
-  /* Write to pcap file.  */
-  fwrite (&hdr, hdrlen, 1, packet_log);			/* pcap + IP */
-  fwrite (&udp, sizeof (struct udphdr), 1, packet_log);	/* UDP */
-  fwrite (packet_buf, datalen, 1, packet_log);		/* IKE-data */
-  fflush (packet_log);
-  return;
+	/* Write to pcap file.  */
+	fwrite(&hdr, hdrlen, 1, packet_log);	/* pcap + IP */
+	fwrite(&udp, sizeof(struct udphdr), 1, packet_log);	/* UDP */
+	fwrite(packet_buf, datalen, 1, packet_log);	/* IKE-data */
+	fflush(packet_log);
 }
 
 /* Copied from tcpdump/print-udp.c, mostly rewritten.  */
 static int
-udp_cksum (struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
+udp_cksum(struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 {
-  int i, hdrlen, tlen = ntohs (u->uh_ulen) - sizeof (struct udphdr);
-  struct ip *ip4;
-  struct ip6_hdr *ip6;
+	struct ip	*ip4;
+	struct ip6_hdr	*ip6;
+	int	i, hdrlen, tlen = ntohs(u->uh_ulen) - sizeof(struct udphdr);
 
-  union phu {
-    struct ip4pseudo {
-      struct in_addr src;
-      struct in_addr dst;
-      u_int8_t z;
-      u_int8_t proto;
-      u_int16_t len;
-    } ip4p;
-    struct ip6pseudo {
-      struct in6_addr src;
-      struct in6_addr dst;
-      u_int32_t plen;
-      u_int16_t z0;
-      u_int8_t z1;
-      u_int8_t nxt;
-    } ip6p;
-    u_int16_t pa[20];
-  } phu;
-  const u_int16_t *sp;
-  u_int32_t sum;
+	union phu {
+		struct ip4pseudo {
+			struct in_addr  src;
+			struct in_addr  dst;
+			u_int8_t        z;
+			u_int8_t        proto;
+			u_int16_t       len;
+		} ip4p;
+		struct ip6pseudo {
+			struct in6_addr src;
+			struct in6_addr dst;
+			u_int32_t       plen;
+			u_int16_t       z0;
+			u_int8_t        z1;
+			u_int8_t        nxt;
+		} ip6p;
+		u_int16_t       pa[20];
+	} phu;
+	const u_int16_t *sp;
+	u_int32_t       sum;
 
-  /* Setup pseudoheader.  */
-  memset (phu.pa, 0, sizeof phu);
-  switch (ntohl (hdr->sa_family))
-    {
-    case AF_INET:
-      ip4 = &hdr->ip.ip4;
-      memcpy (&phu.ip4p.src, &ip4->ip_src, sizeof (struct in_addr));
-      memcpy (&phu.ip4p.dst, &ip4->ip_dst, sizeof (struct in_addr));
-      phu.ip4p.proto = ip4->ip_p;
-      phu.ip4p.len = u->uh_ulen;
-      hdrlen = sizeof phu.ip4p;
-      break;
+	/* Setup pseudoheader.  */
+	memset(phu.pa, 0, sizeof phu);
+	switch (ntohl(hdr->sa_family)) {
+	case AF_INET:
+		ip4 = &hdr->ip.ip4;
+		memcpy(&phu.ip4p.src, &ip4->ip_src, sizeof(struct in_addr));
+		memcpy(&phu.ip4p.dst, &ip4->ip_dst, sizeof(struct in_addr));
+		phu.ip4p.proto = ip4->ip_p;
+		phu.ip4p.len = u->uh_ulen;
+		hdrlen = sizeof phu.ip4p;
+		break;
 
-    case AF_INET6:
-      ip6 = &hdr->ip.ip6;
-      memcpy (&phu.ip6p.src, &ip6->ip6_src, sizeof (phu.ip6p.src));
-      memcpy (&phu.ip6p.dst, &ip6->ip6_dst, sizeof (phu.ip6p.dst));
-      phu.ip6p.plen = u->uh_ulen;
-      phu.ip6p.nxt = ip6->ip6_nxt;
-      hdrlen = sizeof phu.ip6p;
-      break;
+	case AF_INET6:
+		ip6 = &hdr->ip.ip6;
+		memcpy(&phu.ip6p.src, &ip6->ip6_src, sizeof(phu.ip6p.src));
+		memcpy(&phu.ip6p.dst, &ip6->ip6_dst, sizeof(phu.ip6p.dst));
+		phu.ip6p.plen = u->uh_ulen;
+		phu.ip6p.nxt = ip6->ip6_nxt;
+		hdrlen = sizeof phu.ip6p;
+		break;
 
-    default:
-      return 0;
-    }
+	default:
+		return 0;
+	}
 
-  /* IPv6 wants a 0xFFFF checksum "on error", not 0x0.  */
-  if (tlen < 0)
-    return (ntohl (hdr->sa_family) == AF_INET ? 0 : 0xFFFF);
+	/* IPv6 wants a 0xFFFF checksum "on error", not 0x0.  */
+	if (tlen < 0)
+		return (ntohl(hdr->sa_family) == AF_INET ? 0 : 0xFFFF);
 
-  sum = 0;
-  for (i = 0; i < hdrlen; i += 2)
-    sum += phu.pa[i/2];
+	sum = 0;
+	for (i = 0; i < hdrlen; i += 2)
+		sum += phu.pa[i / 2];
 
-  sp = (u_int16_t *)u;
-  for (i = 0; i < (int)sizeof (struct udphdr); i += 2)
-    sum += *sp++;
+	sp = (u_int16_t *) u;
+	for (i = 0; i < (int) sizeof(struct udphdr); i += 2)
+		sum += *sp++;
 
-  sp = d;
-  for (i = 0; i < (tlen&~1); i += 2)
-    sum += *sp++;
+	sp = d;
+	for (i = 0; i < (tlen & ~1); i += 2)
+		sum += *sp++;
 
-  if (tlen & 1)
-    sum += htons ((*(const char *)sp) << 8);
+	if (tlen & 1)
+		sum += htons((*(const char *) sp) << 8);
 
-  while (sum > 0xffff)
-    sum = (sum & 0xffff) + (sum >> 16);
-  sum = ~sum & 0xffff;
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum = ~sum & 0xffff;
 
-  return sum;
+	return sum;
 }
 
 /* Copied from tcpdump/print-ip.c, modified.  */
 static u_int16_t
-in_cksum (const u_int16_t *w, int len)
+in_cksum(const u_int16_t *w, int len)
 {
-  int nleft = len, sum = 0;
-  u_int16_t answer;
+	int             nleft = len, sum = 0;
+	u_int16_t       answer;
 
-  while (nleft > 1)  {
-    sum += *w++;
-    nleft -= 2;
-  }
-  if (nleft == 1)
-    sum += htons (*(u_char *)w << 8);
+	while (nleft > 1) {
+		sum += *w++;
+		nleft -= 2;
+	}
+	if (nleft == 1)
+		sum += htons(*(u_char *) w << 8);
 
-  sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
-  sum += (sum >> 16);                     /* add carry */
-  answer = ~sum;                          /* truncate to 16 bits */
-  return answer;
+	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
+	sum += (sum >> 16);	/* add carry */
+	answer = ~sum;		/* truncate to 16 bits */
+	return answer;
 }
 
-#endif /* USE_DEBUG */
+#endif				/* USE_DEBUG */

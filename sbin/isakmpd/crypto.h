@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.h,v 1.12 2003/12/22 18:13:58 markus Exp $	*/
-/*	$EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	*/
+/* $OpenBSD: crypto.h,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -52,7 +52,7 @@
 #include <cast.h>
 #endif
 
-#endif /* __APPLE__ */
+#endif				/* __APPLE__ */
 
 #ifdef USE_AES
 #include <openssl/aes.h>
@@ -80,7 +80,7 @@
 #define SET64(x,y) SET8(x,y,0); SET8(x,y,1); SET8(x,y,2); SET8(x,y,3); \
    SET8(x,y,4); SET8(x,y,5); SET8(x,y,6); SET8(x,y,7);
 
-#endif /* USE_64BIT */
+#endif				/* USE_64BIT */
 
 #define SET_32BIT_BIG(x,y) (x)[3]= (y); (x)[2]= (y) >> 8; \
     (x)[1] = (y) >> 16; (x)[0]= (y) >> 24;
@@ -100,25 +100,25 @@
 #endif
 
 struct keystate {
-  struct crypto_xf *xf;			/* Back pointer */
-  u_int16_t	ebytes;			/* Number of encrypted bytes */
-  u_int16_t	dbytes;			/* Number of decrypted bytes */
-  time_t	life;			/* Creation time */
-  u_int8_t	iv[MAXBLK];		/* Next IV to use */
-  u_int8_t	iv2[MAXBLK];
-  u_int8_t	*riv, *liv;
-  union {
-    des_key_schedule desks[3];
+	struct crypto_xf *xf;	/* Back pointer */
+	u_int16_t       ebytes;	/* Number of encrypted bytes */
+	u_int16_t       dbytes;	/* Number of decrypted bytes */
+	time_t          life;	/* Creation time */
+	u_int8_t        iv[MAXBLK];	/* Next IV to use */
+	u_int8_t        iv2[MAXBLK];
+	u_int8_t       *riv, *liv;
+	union {
+		des_key_schedule desks[3];
 #ifdef USE_BLOWFISH
-    blf_ctx blfks;
+		blf_ctx         blfks;
 #endif
 #ifdef USE_CAST
-    cast_key castks;
+		cast_key        castks;
 #endif
 #ifdef USE_AES
-    AES_KEY aesks[2];
+		AES_KEY         aesks[2];
 #endif
-  } keydata;
+	}               keydata;
 };
 
 #define ks_des	keydata.desks
@@ -136,40 +136,41 @@ struct keystate {
  * only anyhow, and we already have defines for that in ipsec_doi.h.
  */
 enum transform {
-  DES_CBC=1,			/* This is a MUST */
-  IDEA_CBC=2,			/* Licensed, DONT use */
-  BLOWFISH_CBC=3,
-  RC5_R16_B64_CBC=4,		/* Licensed, DONT use */
-  TRIPLEDES_CBC=5,			/* This is a SHOULD */
-  CAST_CBC=6,
-  AES_CBC=7
+	DES_CBC = 1,		/* This is a MUST */
+	IDEA_CBC = 2,		/* Licensed, DONT use */
+	BLOWFISH_CBC = 3,
+	RC5_R16_B64_CBC = 4,	/* Licensed, DONT use */
+	TRIPLEDES_CBC = 5,	/* This is a SHOULD */
+	CAST_CBC = 6,
+	AES_CBC = 7
 };
 
 enum cryptoerr {
-  EOKAY,			/* No error */
-  ENOCRYPTO,			/* A none crypto related error, see errno */
-  EWEAKKEY,			/* A weak key was found in key setup */
-  EKEYLEN			/* The key length was invalid for the cipher */
+	EOKAY,			/* No error */
+	ENOCRYPTO,		/* A none crypto related error, see errno */
+	EWEAKKEY,		/* A weak key was found in key setup */
+	EKEYLEN			/* The key length was invalid for the cipher */
 };
 
 struct crypto_xf {
-  enum transform id;		/* Oakley ID */
-  char *name;			/* Transform Name */
-  u_int16_t keymin, keymax;	/* Possible Keying Bytes */
-  u_int16_t blocksize;		/* Need to keep IV in the state */
-  struct keystate *state;	/* Key information, can also be passed sep. */
-  enum cryptoerr (*init) (struct keystate *, u_int8_t *, u_int16_t);
-  void (*encrypt) (struct keystate *, u_int8_t *, u_int16_t);
-  void (*decrypt) (struct keystate *, u_int8_t *, u_int16_t);
+	enum transform  id;	/* Oakley ID */
+	char           *name;	/* Transform Name */
+	u_int16_t       keymin, keymax;	/* Possible Keying Bytes */
+	u_int16_t       blocksize;	/* Need to keep IV in the state */
+	struct keystate *state;	/* Key information, can also be passed sep. */
+	enum cryptoerr  (*init) (struct keystate *, u_int8_t *, u_int16_t);
+	void            (*encrypt) (struct keystate *, u_int8_t *, u_int16_t);
+	void            (*decrypt) (struct keystate *, u_int8_t *, u_int16_t);
 };
 
-extern struct keystate *crypto_clone_keystate (struct keystate *);
-extern void crypto_decrypt (struct keystate *, u_int8_t *, u_int16_t);
-extern void crypto_encrypt (struct keystate *, u_int8_t *, u_int16_t);
-extern struct crypto_xf *crypto_get (enum transform);
-extern struct keystate *crypto_init (struct crypto_xf *, u_int8_t *,
-				     u_int16_t, enum cryptoerr *);
-extern void crypto_init_iv (struct keystate *, u_int8_t *, size_t);
-extern void crypto_update_iv (struct keystate *);
+extern struct keystate *crypto_clone_keystate(struct keystate *);
+extern void     crypto_decrypt(struct keystate *, u_int8_t *, u_int16_t);
+extern void     crypto_encrypt(struct keystate *, u_int8_t *, u_int16_t);
+extern struct crypto_xf *crypto_get(enum transform);
+extern struct keystate *
+crypto_init(struct crypto_xf *, u_int8_t *,
+	    u_int16_t, enum cryptoerr *);
+extern void     crypto_init_iv(struct keystate *, u_int8_t *, size_t);
+extern void     crypto_update_iv(struct keystate *);
 
-#endif /* _CRYPTO_H_ */
+#endif				/* _CRYPTO_H_ */

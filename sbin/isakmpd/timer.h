@@ -1,5 +1,5 @@
-/*	$OpenBSD: timer.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: timer.h,v 1.6 1999/04/11 22:35:55 ho Exp $	*/
+/* $OpenBSD: timer.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: timer.h,v 1.6 1999/04/11 22:35:55 ho Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,19 +37,19 @@
 #include <sys/time.h>
 
 struct event {
-  TAILQ_ENTRY (event) link;
-  char *name;
-  void (*func) (void *);
-  void *arg;
-  struct timeval expiration;
+	TAILQ_ENTRY(event) link;
+	char           *name;
+	void            (*func) (void *);
+	void           *arg;
+	struct timeval  expiration;
 };
 
-extern void timer_init (void);
-extern void timer_next_event (struct timeval **);
-extern void timer_handle_expirations (void);
-extern struct event *timer_add_event (char *, void (*) (void *), void *,
-				      struct timeval *);
-extern void timer_remove_event (struct event *);
-extern void timer_report (void);
+extern void     timer_init(void);
+extern void     timer_next_event(struct timeval **);
+extern void     timer_handle_expirations(void);
+extern struct event *timer_add_event(char *, void (*) (void *), void *,
+				                     struct timeval *);
+extern void     timer_remove_event(struct event *);
+extern void     timer_report(void);
 
-#endif /* _TIMER_H_ */
+#endif				/* _TIMER_H_ */

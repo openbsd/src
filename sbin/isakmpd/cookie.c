@@ -1,5 +1,5 @@
-/*	$OpenBSD: cookie.c,v 1.12 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	*/
+/* $OpenBSD: cookie.c,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -52,23 +52,23 @@
  * EXCHANGE.
  */
 void
-cookie_gen (struct transport *t, struct exchange *exchange, u_int8_t *buf,
-	    size_t len)
+cookie_gen(struct transport *t, struct exchange *exchange, u_int8_t *buf,
+    size_t len)
 {
-  struct hash* hash = hash_get (HASH_SHA1);
-  struct sockaddr *name;
-  u_int8_t tmpsecret[COOKIE_SECRET_SIZE];
+	struct hash    *hash = hash_get(HASH_SHA1);
+	u_int8_t        tmpsecret[COOKIE_SECRET_SIZE];
+	struct sockaddr *name;
 
-  hash->Init (hash->ctx);
-  (*t->vtbl->get_dst) (t, &name);
-  hash->Update (hash->ctx, (u_int8_t *)name, sysdep_sa_len (name));
-  (*t->vtbl->get_src) (t, &name);
-  hash->Update (hash->ctx, (u_int8_t *)name, sysdep_sa_len (name));
-  if (exchange->initiator == 0)
-    hash->Update (hash->ctx, exchange->cookies + ISAKMP_HDR_ICOOKIE_OFF,
-		  ISAKMP_HDR_ICOOKIE_LEN);
-  getrandom (tmpsecret, COOKIE_SECRET_SIZE);
-  hash->Update (hash->ctx, tmpsecret, COOKIE_SECRET_SIZE);
-  hash->Final (hash->digest, hash->ctx);
-  memcpy (buf, hash->digest, len);
+	hash->Init(hash->ctx);
+	(*t->vtbl->get_dst) (t, &name);
+	hash->Update(hash->ctx, (u_int8_t *) name, sysdep_sa_len(name));
+	(*t->vtbl->get_src) (t, &name);
+	hash->Update(hash->ctx, (u_int8_t *) name, sysdep_sa_len(name));
+	if (exchange->initiator == 0)
+		hash->Update(hash->ctx, exchange->cookies + ISAKMP_HDR_ICOOKIE_OFF,
+		    ISAKMP_HDR_ICOOKIE_LEN);
+	getrandom(tmpsecret, COOKIE_SECRET_SIZE);
+	hash->Update(hash->ctx, tmpsecret, COOKIE_SECRET_SIZE);
+	hash->Final(hash->digest, hash->ctx);
+	memcpy(buf, hash->digest, len);
 }

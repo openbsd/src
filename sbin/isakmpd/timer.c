@@ -1,5 +1,5 @@
-/*	$OpenBSD: timer.c,v 1.11 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	*/
+/* $OpenBSD: timer.c,v 1.12 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -38,106 +38,100 @@
 #include "log.h"
 #include "timer.h"
 
-static TAILQ_HEAD (event_list, event) events;
+static	TAILQ_HEAD(event_list, event) events;
 
 void
-timer_init (void)
+timer_init(void)
 {
-  TAILQ_INIT (&events);
+	TAILQ_INIT(&events);
 }
 
 void
-timer_next_event (struct timeval **timeout)
+timer_next_event(struct timeval **timeout)
 {
-  struct timeval now;
+	struct timeval  now;
 
-  if (TAILQ_FIRST (&events))
-    {
-      gettimeofday (&now, 0);
-      if (timercmp (&now, &TAILQ_FIRST (&events)->expiration, >=))
-	timerclear (*timeout);
-      else
-	timersub (&TAILQ_FIRST (&events)->expiration, &now, *timeout);
-    }
-  else
-    *timeout = 0;
+	if (TAILQ_FIRST(&events)) {
+		gettimeofday(&now, 0);
+		if (timercmp(&now, &TAILQ_FIRST(&events)->expiration, >=))
+			timerclear(*timeout);
+		else
+			timersub(&TAILQ_FIRST(&events)->expiration, &now, *timeout);
+	} else
+		*timeout = 0;
 }
 
 void
-timer_handle_expirations (void)
+timer_handle_expirations(void)
 {
-  struct timeval now;
-  struct event *n;
+	struct timeval  now;
+	struct event   *n;
 
-  gettimeofday (&now, 0);
-  for (n = TAILQ_FIRST (&events); n && timercmp (&now, &n->expiration, >=);
-       n = TAILQ_FIRST (&events))
-    {
-      LOG_DBG ((LOG_TIMER, 10,
-		"timer_handle_expirations: event %s(%p)", n->name, n->arg));
-      TAILQ_REMOVE (&events, n, link);
-      (*n->func) (n->arg);
-      free (n);
-    }
+	gettimeofday(&now, 0);
+	for (n = TAILQ_FIRST(&events); n && timercmp(&now, &n->expiration, >=);
+	    n = TAILQ_FIRST(&events)) {
+		LOG_DBG((LOG_TIMER, 10,
+		    "timer_handle_expirations: event %s(%p)", n->name, n->arg));
+		TAILQ_REMOVE(&events, n, link);
+		(*n->func)(n->arg);
+		free(n);
+	}
 }
 
 struct event *
-timer_add_event (char *name, void (*func) (void *), void *arg,
-		 struct timeval *expiration)
+timer_add_event(char *name, void (*func)(void *), void *arg,
+    struct timeval *expiration)
 {
-  struct event *ev = (struct event *)malloc (sizeof *ev);
-  struct event *n;
-  struct timeval now;
+	struct event   *ev = (struct event *) malloc(sizeof *ev);
+	struct event   *n;
+	struct timeval  now;
 
-  if (!ev)
-    return 0;
-  ev->name = name;
-  ev->func = func;
-  ev->arg = arg;
-  gettimeofday (&now, 0);
-  memcpy (&ev->expiration, expiration, sizeof *expiration);
-  for (n = TAILQ_FIRST (&events);
-       n && timercmp (expiration, &n->expiration, >=);
-       n = TAILQ_NEXT (n, link))
-    ;
-  if (n)
-    {
-      LOG_DBG ((LOG_TIMER, 10,
-		"timer_add_event: event %s(%p) added before %s(%p), "
-		"expiration in %lds", name,
-		arg, n->name, n->arg, expiration->tv_sec - now.tv_sec));
-      TAILQ_INSERT_BEFORE (n, ev, link);
-    }
-  else
-    {
-      LOG_DBG ((LOG_TIMER, 10, "timer_add_event: event %s(%p) added last, "
-		"expiration in %lds", name, arg,
-		expiration->tv_sec - now.tv_sec));
-      TAILQ_INSERT_TAIL (&events, ev, link);
-    }
-  return ev;
+	if (!ev)
+		return 0;
+	ev->name = name;
+	ev->func = func;
+	ev->arg = arg;
+	gettimeofday(&now, 0);
+	memcpy(&ev->expiration, expiration, sizeof *expiration);
+	for (n = TAILQ_FIRST(&events);
+	    n && timercmp(expiration, &n->expiration, >=);
+	    n = TAILQ_NEXT(n, link))
+		;
+	if (n) {
+		LOG_DBG((LOG_TIMER, 10,
+		    "timer_add_event: event %s(%p) added before %s(%p), "
+		    "expiration in %lds", name,
+		    arg, n->name, n->arg, expiration->tv_sec - now.tv_sec));
+		TAILQ_INSERT_BEFORE(n, ev, link);
+	} else {
+		LOG_DBG((LOG_TIMER, 10, "timer_add_event: event %s(%p) added last, "
+		    "expiration in %lds", name, arg,
+		    expiration->tv_sec - now.tv_sec));
+		TAILQ_INSERT_TAIL(&events, ev, link);
+	}
+	return ev;
 }
 
 void
-timer_remove_event (struct event *ev)
+timer_remove_event(struct event *ev)
 {
-  LOG_DBG ((LOG_TIMER, 10, "timer_remove_event: removing event %s(%p)",
+	LOG_DBG((LOG_TIMER, 10, "timer_remove_event: removing event %s(%p)",
 	    ev->name, ev->arg));
-  TAILQ_REMOVE (&events, ev, link);
-  free (ev);
+	TAILQ_REMOVE(&events, ev, link);
+	free(ev);
 }
 
 void
-timer_report (void)
+timer_report(void)
 {
-  struct event *ev;
-  struct timeval now;
+	struct event   *ev;
+	struct timeval  now;
 
-  gettimeofday (&now, 0);
+	gettimeofday(&now, 0);
 
-  for (ev = TAILQ_FIRST (&events); ev; ev = TAILQ_NEXT (ev, link))
-    LOG_DBG ((LOG_REPORT, 0,
-	      "timer_report: event %s(%p) scheduled in %d seconds",
-	      (ev->name ? ev->name : "<unknown>"), ev,
-	      (int)(ev->expiration.tv_sec - now.tv_sec)));
+	for (ev = TAILQ_FIRST(&events); ev; ev = TAILQ_NEXT(ev, link))
+		LOG_DBG((LOG_REPORT, 0,
+		    "timer_report: event %s(%p) scheduled in %d seconds",
+		    (ev->name ? ev->name : "<unknown>"), ev,
+		    (int) (ev->expiration.tv_sec - now.tv_sec)));
 }

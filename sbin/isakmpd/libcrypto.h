@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.h,v 1.15 2003/06/04 07:31:17 ho Exp $	*/
-/*	$EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	*/
+/* $OpenBSD: libcrypto.h,v 1.16 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -45,8 +45,8 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509.h>
 
-#endif /* USE_X509 */
+#endif				/* USE_X509 */
 
-extern void libcrypto_init (void);
+extern void     libcrypto_init(void);
 
-#endif /* _LIBCRYPTO_H_ */
+#endif				/* _LIBCRYPTO_H_ */

@@ -32,81 +32,73 @@
 #include "monitor.h"
 
 int
-mm_send_fd (int socket, int fd)
+mm_send_fd(int socket, int fd)
 {
-  struct msghdr msg;
-  char tmp[CMSG_SPACE (sizeof (int))];
-  struct cmsghdr *cmsg;
-  struct iovec vec;
-  char ch = '\0';
-  ssize_t n;
+	struct msghdr   msg;
+	char            tmp[CMSG_SPACE(sizeof(int))], ch = '\0';
+	struct cmsghdr *cmsg;
+	struct iovec    vec;
+	ssize_t         n;
 
-  memset (&msg, 0, sizeof msg);
-  msg.msg_control = (caddr_t)tmp;
-  msg.msg_controllen = CMSG_LEN (sizeof (int));
-  cmsg = CMSG_FIRSTHDR (&msg);
-  cmsg->cmsg_len = CMSG_LEN (sizeof (int));
-  cmsg->cmsg_level = SOL_SOCKET;
-  cmsg->cmsg_type = SCM_RIGHTS;
-  *(int *)CMSG_DATA (cmsg) = fd;
+	memset(&msg, 0, sizeof msg);
+	msg.msg_control = (caddr_t) tmp;
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	*(int *) CMSG_DATA(cmsg) = fd;
 
-  vec.iov_base = &ch;
-  vec.iov_len = 1;
-  msg.msg_iov = &vec;
-  msg.msg_iovlen = 1;
+	vec.iov_base = &ch;
+	vec.iov_len = 1;
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
 
-  if ((n = sendmsg (socket, &msg, 0)) == -1)
-    {
-      log_error ("%s: sendmsg(%d)", __func__, fd);
-      return -1;
-    }
-  if (n != 1)
-    {
-      log_error ("%s: sendmsg: expected sent 1 got %ld", __func__, (long)n);
-      return -1;
-    }
-  return 0;
+	if ((n = sendmsg(socket, &msg, 0)) == -1) {
+		log_error("%s: sendmsg(%d)", __func__, fd);
+		return -1;
+	}
+	if (n != 1) {
+		log_error("%s: sendmsg: expected sent 1 got %ld",
+		    __func__, (long) n);
+		return -1;
+	}
+	return 0;
 }
 
 int
-mm_receive_fd (int socket)
+mm_receive_fd(int socket)
 {
-  struct msghdr msg;
-  char tmp[CMSG_SPACE (sizeof (int))];
-  struct cmsghdr *cmsg;
-  struct iovec vec;
-  ssize_t n;
-  char ch;
-  int fd;
+	struct msghdr   msg;
+	char            tmp[CMSG_SPACE(sizeof(int))], ch;
+	struct cmsghdr *cmsg;
+	struct iovec    vec;
+	ssize_t         n;
+	int             fd;
 
-  memset (&msg, 0, sizeof msg);
-  vec.iov_base = &ch;
-  vec.iov_len = 1;
-  msg.msg_iov = &vec;
-  msg.msg_iovlen = 1;
-  msg.msg_control = tmp;
-  msg.msg_controllen = sizeof tmp;
+	memset(&msg, 0, sizeof msg);
+	vec.iov_base = &ch;
+	vec.iov_len = 1;
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = tmp;
+	msg.msg_controllen = sizeof tmp;
 
-  if ((n = recvmsg (socket, &msg, 0)) == -1)
-    {
-      log_error ("%s: recvmsg", __func__);
-      return -1;
-    }
-  if (n != 1)
-    {
-      log_error ("%s: recvmsg: expected received 1 got %ld", __func__,
-		 (long)n);
-      return -1;
-    }
-
-  cmsg = CMSG_FIRSTHDR (&msg);
-  if (cmsg->cmsg_type != SCM_RIGHTS)
-    {
-      log_error ("%s: expected type %d got %d", __func__, SCM_RIGHTS,
-		 cmsg->cmsg_type);
-      return -1;
-    }
-  fd = (*(int *)CMSG_DATA (cmsg));
-
-  return fd;
+	if ((n = recvmsg(socket, &msg, 0)) == -1) {
+		log_error("%s: recvmsg", __func__);
+		return -1;
+	}
+	if (n != 1) {
+		log_error("%s: recvmsg: expected received 1 got %ld", __func__,
+		    (long) n);
+		return -1;
+	}
+	cmsg = CMSG_FIRSTHDR(&msg);
+	if (cmsg->cmsg_type != SCM_RIGHTS) {
+		log_error("%s: expected type %d got %d", __func__, SCM_RIGHTS,
+		    cmsg->cmsg_type);
+		return -1;
+	}
+	fd = (*(int *) CMSG_DATA(cmsg));
+	return fd;
 }

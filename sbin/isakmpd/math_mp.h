@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_mp.h,v 1.5 2003/06/03 14:28:16 ho Exp $	*/
-/*	$EOM: math_mp.h,v 1.4 2000/09/16 09:41:43 ho Exp $	*/
+/* $OpenBSD: math_mp.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $EOM: math_mp.h,v 1.4 2000/09/16 09:41:43 ho Exp $	 */
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -53,4 +53,4 @@ typedef BIGNUM *math_mp_t;
 
 #endif
 
-#endif /* _MATH_MP_H_ */
+#endif				/* _MATH_MP_H_ */
