@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2001/08/24 22:53:14 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2001/08/31 01:41:33 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -152,8 +152,6 @@ GLOBAL(start_text)	/* This is the *real* start upon poweron or reset */
 	or.u	r13, r0,  hi16(_esym)
 	st	r4,  r13, lo16(_esym)
 #endif
-	or.u	r13, r0,  hi16(_miniroot)
-	st	r5,  r13, lo16(_miniroot)
 	or.u	r13, r0,  hi16(_bootdev)
 	st	r7,  r13, lo16(_bootdev)
 	or.u	r13, r0,  hi16(_cputyp)
