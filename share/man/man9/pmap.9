@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.7 2003/07/11 13:47:41 jmc Exp $
+.\"	$OpenBSD: pmap.9,v 1.8 2004/11/22 21:31:51 hshoexer Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -201,6 +201,8 @@ operation to remove low-level machine dependent mappings.
 The
 .Fn pmap_kremove
 function removes an unmanaged mapping at virtual address
+.Fa va
+of size
 .Fa size .
 .Pp
 A call to
