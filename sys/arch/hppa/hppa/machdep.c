@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1999/12/31 09:07:13 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2000/01/11 20:27:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -147,7 +147,6 @@ int	totalphysmem, resvmem, physmem, esym;
  * Things for MI glue to stick on.
  */
 struct user *proc0paddr;
-struct proc *fpu_curproc;
 long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct extent *hppa_ex;
 

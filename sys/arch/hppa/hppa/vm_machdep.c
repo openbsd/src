@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 1999/12/31 09:07:13 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2000/01/11 20:27:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -135,17 +135,49 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-	extern struct proc *fpu_curproc;
-	struct proc *q = fpu_curproc;
+	extern paddr_t fpu_curpcb;
+	paddr_t q = fpu_curpcb;
 
-	fpu_curproc = NULL;
+	fpu_curpcb = 0;
 
 	/*
-	 * TODO: explicit FPU save state if we own the FPU,
-	 * since user area might get swapped out as well,
-	 * and we won't be able to save it no more
+	 * TODO: determine if we have an fpu
 	 */
-	if (p == q) {
+	if (kvtop((caddr_t)&p->p_addr->u_pcb) == q) {
+		__asm __volatile(
+		    "fstds,ma %%fr0 , 8(%0)\n\t"
+		    "fstds,ma %%fr1 , 8(%0)\n\t"
+		    "fstds,ma %%fr2 , 8(%0)\n\t"
+		    "fstds,ma %%fr3 , 8(%0)\n\t"
+		    "fstds,ma %%fr4 , 8(%0)\n\t"
+		    "fstds,ma %%fr5 , 8(%0)\n\t"
+		    "fstds,ma %%fr6 , 8(%0)\n\t"
+		    "fstds,ma %%fr7 , 8(%0)\n\t"
+		    "fstds,ma %%fr8 , 8(%0)\n\t"
+		    "fstds,ma %%fr9 , 8(%0)\n\t"
+		    "fstds,ma %%fr10, 8(%0)\n\t"
+		    "fstds,ma %%fr11, 8(%0)\n\t"
+		    "fstds,ma %%fr12, 8(%0)\n\t"
+		    "fstds,ma %%fr13, 8(%0)\n\t"
+		    "fstds,ma %%fr14, 8(%0)\n\t"
+		    "fstds,ma %%fr15, 8(%0)\n\t"
+		    "fstds,ma %%fr16, 8(%0)\n\t"
+		    "fstds,ma %%fr17, 8(%0)\n\t"
+		    "fstds,ma %%fr18, 8(%0)\n\t"
+		    "fstds,ma %%fr19, 8(%0)\n\t"
+		    "fstds,ma %%fr20, 8(%0)\n\t"
+		    "fstds,ma %%fr21, 8(%0)\n\t"
+		    "fstds,ma %%fr22, 8(%0)\n\t"
+		    "fstds,ma %%fr23, 8(%0)\n\t"
+		    "fstds,ma %%fr24, 8(%0)\n\t"
+		    "fstds,ma %%fr25, 8(%0)\n\t"
+		    "fstds,ma %%fr26, 8(%0)\n\t"
+		    "fstds,ma %%fr27, 8(%0)\n\t"
+		    "fstds,ma %%fr28, 8(%0)\n\t"
+		    "fstds,ma %%fr29, 8(%0)\n\t"
+		    "fstds,ma %%fr30, 8(%0)\n\t"
+		    "fstds    %%fr31, 0(%0)\n\t"
+		    : "+r" (q) :: "memory");
 	}
 }
 
@@ -226,13 +258,13 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern struct proc *fpu_curproc;	/* from machdep.c */
+	extern paddr_t fpu_curpcb;	/* from locore.S */
 
 	uvmexp.swtch++;
 
 	splhigh();
 	curproc = NULL;
-	fpu_curproc = NULL;
+	fpu_curpcb = 0;
 	uvmspace_free(p->p_vmspace);
 
 	/* XXX should be in the locore? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 1999/12/31 09:07:10 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2000/01/11 20:27:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -86,7 +86,6 @@
 	.import	bootdev, data
 	.import	esym, data
 	.import	curproc, data
-	.import	fpu_curproc, data
 	.import	want_resched, data
 	.import virtual_avail, data
 	.import	proc0, data
@@ -100,6 +99,12 @@
 pdc_stack
 	.block	3*NBPG
 kernelmapped			/* set when kernel is mapped */
+	.block	4
+	.export fpu_csw, data
+fpu_csw
+	.block	4
+	.export	fpu_curpcb, data
+fpu_curpcb
 	.block	4
 
 /*
@@ -700,9 +705,9 @@ $syscall_return
 $syscall_return_copy_loop
 	ldw	0(arg0), t1
 	ldw	4(arg0), t2
-	ldo	8(arg0), arg0
 	stw	t1, 0(arg1)
 	stw	t2, 4(arg1)
+	ldo	8(arg0), arg0
 	comb,<,n arg0, arg2, $syscall_return_copy_loop
 	ldo	8(arg1), arg1
 
@@ -871,7 +876,7 @@ $ivaaddr
 	ATRAP(privr,T_PRIV_REG)		/* 11. privileged register trap */
 	ATRAP(ovrfl,T_OVERFLOW)		/* 12. overflow trap */
 	ATRAP(cond,T_CONDITION)		/* 13. conditional trap */
-#ifdef FPEMUL_notyet
+#ifdef FPEMUL
 	CTRAP(excpt,T_EXCEPTION,)	/* 14. assist exception trap */
 #else
 	ATRAP(excpt,T_EXCEPTION)
@@ -952,14 +957,12 @@ TLABEL(emu)
 	mtctl	t2, tr3
 	mtctl	t3, tr5
 
-	ldil	L%fpu_curproc, t1
-	ldw	R%fpu_curproc(t1), t1
+	ldil	L%fpu_curpcb, t1
+	ldw	R%fpu_curpcb(t1), t1
 
 	mfctl	ccr, t3
-
-	ldil	L%curproc, t2
-	ldw	R%curproc(t2), t2
-
+	mfctl	cr30, t2
+	
 	/* enable coprocessor */
 	depi	3, 25, 2, t3
 	mtctl	t3, ccr
@@ -967,8 +970,7 @@ TLABEL(emu)
 	comb,=,n t1, t2, $fpusw_done
 	comb,=,n r0, t1, $fpusw_nosave
 
-	ldw	p_addr(t1), t3
-	ldo	pcb_fpregs+u_pcb(t3), t3
+	/* ldo	pcb_fpregs+u_pcb(t1), t1 */
 
 	fstds,ma fr0 , 8(t3)	/* fr0 must be saved first */
 	fstds,ma fr1 , 8(t3)
@@ -1001,12 +1003,17 @@ TLABEL(emu)
 	fstds,ma fr28, 8(t3)
 	fstds,ma fr29, 8(t3)
 	fstds,ma fr30, 8(t3)
-	fstds    fr31, 8(t3)
+	fstds    fr31, 0(t3)
 
 $fpusw_nosave
 
-	ldw	p_addr(t2), t3
-	ldo	31*8+pcb_fpregs+u_pcb(t3), t3
+	/* count switches */
+	ldil	L%fpu_csw, t1
+	ldw	R%fpu_csw(t1), t3
+	ldo	1(t3), t3
+	stw	t3, R%fpu_csw(t1)
+
+	ldo	31*8+pcb_fpregs+u_pcb(t2), t3
 
 	fldds,ma -8(t3), fr31
 	fldds,ma -8(t3), fr30
@@ -1041,8 +1048,8 @@ $fpusw_nosave
 	fldds,ma -8(t3), fr1
 	fldds     0(t3), fr0	/* fr0 must be restored last */
 
-	ldil	L%fpu_curproc, t1
-	stw	t2, R%fpu_curproc(t1)
+	ldil	L%fpu_curpcb, t1
+	stw	t2, R%fpu_curpcb(t1)
 
 $fpusw_done
 	mfctl	tr5, t3
@@ -1051,7 +1058,7 @@ $fpusw_done
 	rfi
 	nop
 
-#ifdef notyet
+#ifdef FPEMUL
 	.export TLABEL(excpt), entry
 	/*
 	 * Emulate FPU/SFU if none/disabled
@@ -1062,7 +1069,7 @@ TLABEL(excpt)
 	mtctl	sp, tr3
 	mtctl	r31, tr2
 
-	.import	$fpemu_stack
+	.import	$fpemu_stack, data
 	ldil	L%$fpemu_stack, r31
 	ldo	R%$fpemu_stack(r31), r31
 	ldo	R%TF_SIZE+HPPA_FRAME_SIZE(r31), sp
@@ -1093,6 +1100,7 @@ TLABEL(excpt)
 	ldil	L%fpu_emulate,t1
 	ldo	R%fpu_emulate(t1),t1
 	mfctl	iir, arg0
+	/* arg3 -- regs */
 	.call
 	blr	r0,rp
 	bv,n	0(t1)
@@ -1125,13 +1133,13 @@ TLABEL(excpt)
 	mfctl	tr7, r1
 	rfi
 	nop
-#endif
 	
 	.export	$sfu_emu, entry
 $sfu_emu
+	bv	r0(rp)
 	ldo	1(r0), ret0	/* none supported by now */
-	rfi
-	nop
+
+#endif /* FPEMUL */
 
 	/* Compute the hpt entry ptr */
 #define	HPTENT \
