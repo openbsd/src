@@ -1,5 +1,5 @@
-/*	$OpenBSD: dlreg.h,v 1.2 1998/05/11 14:59:06 niklas Exp $	*/
-/*	$NetBSD: dlreg.h,v 1.1 1997/02/04 19:13:19 ragge Exp $	*/
+/*	$OpenBSD: dlreg.h,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$NetBSD: dlreg.h,v 1.3 1999/05/27 16:02:04 ragge Exp $	*/
 /*
  * Copyright (c) 1997  Ben Harris.  All rights reserved.
  *
@@ -37,6 +37,7 @@
  * Style in imitation of dzreg.h.
  */
 
+#ifdef notdef
 union w_b
 {
 	u_short word;
@@ -56,6 +57,12 @@ struct DLregs
 };
 
 typedef struct DLregs dlregs;
+#endif
+
+#define	DL_UBA_RCSR	0
+#define	DL_UBA_RBUF	2
+#define	DL_UBA_XCSR	4
+#define	DL_UBA_XBUFL	6
 
 /* RCSR bits */
 

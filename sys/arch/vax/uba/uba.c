@@ -1,5 +1,5 @@
-/*	$OpenBSD: uba.c,v 1.8 1997/05/29 00:05:09 niklas Exp $	   */
-/*	$NetBSD: uba.c,v 1.29 1996/10/13 03:35:24 christos Exp $	   */
+/*	$OpenBSD: uba.c,v 1.9 2000/04/27 03:14:51 bjc Exp $	   */
+/*	$NetBSD: uba.c,v 1.42 1999/02/02 18:37:20 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -67,33 +67,30 @@
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
-volatile int rbr, rcvec, svec;
+volatile int /* rbr, rcvec,*/ svec;
 
-static	void ubascan __P((struct device *, void *));
+static	int ubasearch __P((struct device *, struct cfdata *, void *));
 static	int ubaprint __P((void *, const char *));
+#if 0
 static	void ubastray __P((int));
+#endif
 static	void ubainitmaps __P((struct uba_softc *));
-static	void uba_attach __P((struct uba_softc *, unsigned long));
-static	int ubasetup __P((struct uba_softc *, struct buf *, int));
 
-
-struct	cfdriver uba_cd = {
-	NULL, "uba", DV_DULL, 1
-};
+extern struct cfdriver uba_cd;
 
 #define spluba	spl7
 
 #if defined(DW780) || defined(DW750)
 
-int	dw_match __P((struct device *, void *, void *));
+int	dw_match __P((struct device *, struct cfdata *, void *));
 
 int
-dw_match(parent, vcf, aux)
+dw_match(parent, cf, aux)
 	struct	device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct cfdata *cf = vcf;
 
 	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
 		return 0;
@@ -136,6 +133,7 @@ dw780_attach(parent, self, aux)
 	struct uba_softc *sc = (void *)self;
 	struct sbi_attach_args *sa = aux;
 	int ubaddr = sa->type & 3;
+	int i;
 
 	printf(": DW780\n");
 
@@ -152,18 +150,15 @@ dw780_attach(parent, self, aux)
 	sc->uh_ubainit = dw780_init;
 	sc->uh_type = DW780;
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)scb + NBPG + ubaddr * NBPG;
+	sc->uh_ibase = VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uh_mr = sc->uh_uba->uba_map;
 
-	bcopy(&idsptch, &sc->uh_dw780, sizeof(struct ivec_dsp));
-	sc->uh_dw780.pushlarg = sc->uh_dev.dv_unit;
-	sc->uh_dw780.hoppaddr = uba_dw780int;
-	scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum]
-	    = scb->scb_nexvec[2][sa->nexnum]
-	    = scb->scb_nexvec[3][sa->nexnum] = &sc->uh_dw780;
+	for (i = 0; i < 4; i++)
+		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
+		    sc->uh_dev.dv_unit, SCB_ISTACK);
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
-	    UMEMA8600(ubaddr)) + (UBAPAGES * NBPG));
+	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
 }
 
 void
@@ -172,20 +167,17 @@ dw780_beforescan(sc)
 {
 	volatile int *hej = &sc->uh_uba->uba_sr;
 
-	if (sc->uh_type == DW780) {
-		*hej = *hej;
-		sc->uh_uba->uba_cr = UBACR_IFS|UBACR_BRIE;
-	}
+	*hej = *hej;
+	sc->uh_uba->uba_cr = UBACR_IFS|UBACR_BRIE;
 }
 
 void
 dw780_afterscan(sc)
 	struct uba_softc *sc;
 {
-	if (sc->uh_type == DW780)
-		sc->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
-		    UBACR_USEFIE | UBACR_SUEFIE |
-		    (sc->uh_uba->uba_cr & 0x7c000000);
+	sc->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
+	    UBACR_USEFIE | UBACR_SUEFIE |
+	    (sc->uh_uba->uba_cr & 0x7c000000);
 }
 
 /*
@@ -198,7 +190,7 @@ dw780_errchk(sc)
 {
 	volatile int *hej = &sc->uh_uba->uba_sr;
 
-	if (sc->uh_type == DW780 && *hej) {
+	if (*hej) {
 		*hej = *hej;
 		return 1;
 	}
@@ -215,18 +207,20 @@ uba_dw780int(uba)
 	void	(*func) __P((int));
 
 	br = mfpr(PR_IPL);
-	svec = ur->uba_brrvr[br - 0x14];
-	if (svec <= 0) {
-		ubaerror(sc, &br, (int *)&svec);
+	vec = ur->uba_brrvr[br - 0x14];
+	if (vec <= 0) {
+		ubaerror(sc, &br, (int *)&vec);
 		if (svec == 0)
 			return;
 	}
-	vec = svec >> 2;
 	if (cold)
-		rcvec = vec;
-	func = sc->uh_idsp[vec].hoppaddr;
-	arg = sc->uh_idsp[vec].pushlarg;
-	(*func)(arg);
+		scb_fake(vec + sc->uh_ibase, br);
+	else {
+		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512);
+		func = scb_vec[vec/4].hoppaddr;
+		arg = scb_vec[vec/4].pushlarg;
+		(*func)(arg);
+	}
 }
 
 void
@@ -266,7 +260,7 @@ ubaerror(uh, ipl, uvec)
 	int *ipl, *uvec;
 {
 	struct	uba_regs *uba = uh->uh_uba;
-	register sr, s;
+	register int sr, s;
 
 	if (*uvec == 0) {
 		/*
@@ -356,10 +350,9 @@ dw750_attach(parent, self, aux)
 	sc->uh_ubainit = dw750_init;
 	sc->uh_type = DW750;
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)scb + NBPG + ubaddr * NBPG;
 	sc->uh_mr = sc->uh_uba->uba_map;
 
-	uba_attach(sc, UMEM750(ubaddr) + (UBAPAGES * NBPG));
+	uba_attach(sc, UMEM750(ubaddr) + (UBAPAGES * VAX_NBPG));
 }
 
 void
@@ -387,19 +380,20 @@ dw750_purge(sc, bdp)
  * This driver can only handle map registers up to 1MB due to map info
  * storage, but that should be enough for normal purposes.
  */
-int	qba_match __P((struct device *, void *, void *));
+int	qba_match __P((struct device *, struct cfdata *, void *));
 void	qba_attach __P((struct device *, struct device *, void *));
 void	qba_beforescan __P((struct uba_softc*));
 void	qba_init __P((struct uba_softc*));
 
-struct	cfattach uba_backplane_ca = {
+struct	cfattach uba_mainbus_ca = {
 	sizeof(struct uba_softc), qba_match, qba_attach
 };
 
 int
 qba_match(parent, vcf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *vcf;
+	void *aux;
 {
 	struct	bp_conf *bp = aux;
 
@@ -415,11 +409,8 @@ qba_attach(parent, self, aux)
 	void *aux;
 {
 	struct uba_softc *sc = (void *)self;
-	vm_offset_t mini, maxi;
 
 	printf(": Q22\n");
-
-
 	/*
 	 * Fill in bus specific data.
 	 */
@@ -432,16 +423,12 @@ qba_attach(parent, self, aux)
 	sc->uh_ubainit = qba_init;
 	sc->uh_type = QBA;
 	sc->uh_memsize = QBAPAGES;
-	sc->uh_iarea = (void *)scb + NBPG;
 	/*
 	 * Map in the UBA page map into kernel space. On other UBAs,
 	 * the map registers are in the bus IO space.
 	 */
-	(void)kmem_suballoc(kernel_map, &mini, &maxi,
-	    QBAPAGES * sizeof(struct pte), FALSE);
-	pmap_map(mini,	QBAMAP, QBAMAP + QBAPAGES * sizeof(struct pte),
-	    VM_PROT_READ | VM_PROT_WRITE);
-	sc->uh_mr = (void *)mini;
+	sc->uh_mr = (void *)vax_map_physmem(QBAMAP,
+	    (QBAPAGES * sizeof(struct pte)) / VAX_NBPG);
 
 	uba_attach(sc, QIOPAGE);
 }
@@ -466,36 +453,12 @@ qba_init(sc)
 	qba_beforescan(sc);
 }
 #endif
-#ifdef DWBUA
-int	bua_match __P((struct device *, void *, void *));
-void	bua_attach __P((struct device *, struct device *, void *));
-
-struct	cfattach uba_bi_ca = {
-	sizeof(struct uba_softc), bua_match, bua_attach
-};
-
-bua_beforescan(sc)
-	struct uba_softc *sc;
-{
-	if (sc->uh_type == DWBUA)
-		BUA(ubar)->bua_offset = (int)sc->uh_vec - (int)&scb[0];
-}
-
-void
-bua_init(sc)
-	struct uba_softc *sc;
-{
-	BUA(uba)->bua_csr |= BUACSR_UPI;
-	/* give devices time to recover from power fail */
-	DELAY(500000);
-	break;
-}
-#endif
 #ifdef DW730
 struct	cfattach uba_dw730_ca = {
 	sizeof(struct uba_softc), dw730_match, dw730_attach
 };
 #endif
+#if 0
 /* 
  * Stray interrupt vector handler, used when nowhere else to go to.
  */
@@ -524,7 +487,7 @@ ubastray(arg)
 		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
 		    arg, svec, rbr);
 }
-
+#endif
 /*
  * Do transfer on device argument.  The controller
  * and uba involved are implied by the device.
@@ -623,8 +586,8 @@ ubasetup(uh, bp, flags)
 	if (uh->uh_nbdp == 0)
 		flags &= ~UBA_NEEDBDP;
 
-	o = (int)bp->b_un.b_addr & PGOFSET;
-	npf = btoc(bp->b_bcount + o) + 1;
+	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	npf = vax_btoc(bp->b_bcount + o) + 1;
 	if (npf > UBA_MAXNMR)
 		panic("uba xfer too big");
 	a = spluba();
@@ -831,10 +794,8 @@ qbgetpri()
 void
 uba_attach(sc, iopagephys)
 	struct uba_softc *sc;
-	unsigned long iopagephys;
+	paddr_t iopagephys;
 {
-	vm_offset_t	mini, maxi;
-	extern	struct	ivec_dsp idsptch;
 
 	/*
 	 * Set last free interrupt vector for devices with
@@ -845,34 +806,11 @@ uba_attach(sc, iopagephys)
 	SIMPLEQ_INIT(&sc->uh_resq);
 
 	/*
-	 * Create interrupt dispatchers for this uba.
-	 */
-#define NO_IVEC 128
-	{
-		vm_offset_t	iarea;
-		int	i;
-
-		iarea = kmem_alloc(kernel_map,
-		    NO_IVEC * sizeof(struct ivec_dsp));
-		sc->uh_idsp = (struct ivec_dsp *)iarea;
-
-		for (i = 0; i < NO_IVEC; i++) {
-			bcopy(&idsptch, &sc->uh_idsp[i],
-			    sizeof(struct ivec_dsp));
-			sc->uh_idsp[i].pushlarg = sc->uh_dev.dv_unit;
-			sc->uh_idsp[i].hoppaddr = ubastray;
-			sc->uh_iarea[i] = (unsigned int)&sc->uh_idsp[i];
-		}
-	}
-	/*
 	 * Allocate place for unibus memory in virtual space.
-	 * This is done with kmem_suballoc() but after that
-	 * never used in the vm system. Is it OK to do so?
 	 */
-	(void)kmem_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * NBPG, FALSE);
-	pmap_map(mini, iopagephys, iopagephys + UBAIOPAGES * NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE);
-	sc->uh_iopage = (void *)mini;
+	sc->uh_iopage = (caddr_t)vax_map_physmem(iopagephys, UBAIOPAGES);
+	if (sc->uh_iopage == 0)
+		return;	/* vax_map_physmem() will complain for us */
 	/*
 	 * Initialize the UNIBUS, by freeing the map
 	 * registers and the buffered data path registers
@@ -893,22 +831,21 @@ uba_attach(sc, iopagephys)
 	/*
 	 * Now start searching for devices.
 	 */
-	config_scan(ubascan,(struct device *)sc);
+	config_search(ubasearch,(struct device *)sc, NULL);
 
 	if (sc->uh_afterscan)
 		(*sc->uh_afterscan)(sc);
 }
 
-void
-ubascan(parent, match)
+int
+ubasearch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct	device *dev = match;
-	struct	cfdata *cf = dev->dv_cfdata;
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
-	int	i;
+	int	i, vec, br;
 
 	ua.ua_addr = (caddr_t)((int)sc->uh_iopage + ubdevreg(cf->cf_loc[0]));
 	ua.ua_reset = NULL;
@@ -916,8 +853,8 @@ ubascan(parent, match)
 	if (badaddr(ua.ua_addr, 2) || (sc->uh_errchk ? (*sc->uh_errchk)(sc):0))
 		goto forgetit;
 
-	rcvec = 0x200;
-	i = (*cf->cf_attach->ca_match) (parent, dev, &ua);
+	scb_vecref(0, 0); /* Clear vector ref */
+	i = (*cf->cf_attach->ca_match) (parent, cf, &ua);
 
 	if (sc->uh_errchk)
 		if ((*sc->uh_errchk)(sc))
@@ -925,58 +862,44 @@ ubascan(parent, match)
 	if (i == 0)
 		goto forgetit;
 
-	if (rcvec == 0 || rcvec == 0x200)
+	i = scb_vecref(&vec, &br);
+	if (i == 0)
+		goto fail;
+	if (vec == 0)
 		goto fail;
 		
-	sc->uh_idsp[rcvec].hoppaddr = ua.ua_ivec;
-	sc->uh_idsp[rcvec].pushlarg = dev->dv_unit;
-	if (ua.ua_reset) { /* device wants ubraeset */
+	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
+	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);
 			sc->uh_resarg = (int *)sc->uh_reset + 128;
 		}
 #ifdef DIAGNOSTIC
 		if (sc->uh_resno > 127) {
-			printf("%s: Expand reset table, skipping reset %s\n",
-			    sc->uh_dev.dv_xname, dev->dv_xname);
+			printf("%s: Expand reset table, skipping reset %s%d\n",
+			    sc->uh_dev.dv_xname, cf->cf_driver->cd_name,
+			    cf->cf_unit);
 		} else
 #endif
 		{
-			sc->uh_resarg[sc->uh_resno] = dev->dv_unit;
+			sc->uh_resarg[sc->uh_resno] = cf->cf_unit;
 			sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
 		}
 	}
-	ua.ua_br = rbr;
-	ua.ua_cvec = rcvec;
-	ua.ua_iaddr = dev->dv_cfdata->cf_loc[0];
+	ua.ua_br = br;
+	ua.ua_cvec = vec;
+	ua.ua_iaddr = cf->cf_loc[0];
 
-	config_attach(parent, dev, &ua, ubaprint);
-	return;
+	config_attach(parent, cf, &ua, ubaprint);
+	return 0;
 
 fail:
-	printf("%s at %s csr %o %s\n", dev->dv_cfdata->cf_driver->cd_name, 
-	    parent->dv_xname, dev->dv_cfdata->cf_loc[0], 
-	    rcvec ? "didn't interrupt\n" : "zero vector\n");
+	printf("%s%d at %s csr %o %s\n",
+	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 
 forgetit:
-	free(dev, M_DEVBUF);
-}
-
-/*
- * Called when a device needs more than one interrupt vector.
- * (Like DHU11, DMF32). Argument is the device's softc, vector
- * number and a function pointer to the interrupt catcher.
- */
-void
-ubasetvec(dev, vec, func)
-	struct	device *dev;
-	int	vec;
-	void	(*func) __P((int));
-{
-	struct	uba_softc *sc = (void *)dev->dv_parent;
-
-	sc->uh_idsp[vec].hoppaddr = func;
-	sc->uh_idsp[vec].pushlarg = dev->dv_unit;
+	return 0;
 }
 
 /*
@@ -990,6 +913,6 @@ ubaprint(aux, uba)
 	struct uba_attach_args *ua = aux;
 
 	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
-	    ua->ua_cvec << 2, ua->ua_br);
+	    ua->ua_cvec & 511, ua->ua_br);
 	return UNCONF;
 }

@@ -1,12 +1,12 @@
-/*	$OpenBSD: udareg.h,v 1.3 1997/05/29 00:05:11 niklas Exp $	*/
-/*	$NetBSD: udareg.h,v 1.3 1996/07/01 21:24:50 ragge Exp $	*/
-
+/*	$OpenBSD: dzvar.h,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.6 2000/01/24 02:40:29 matt Exp $	*/
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Chris Torek.
+ * Ralph Campbell and Rick Macklem.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,30 +35,39 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)udareg.h	7.3 (Berkeley) 5/8/91
  */
 
-/*
- * UDA50 registers and structures
- */
+/* A DZ-11 has 8 ports while a DZV/DZQ-11 has only 4. We use 8 by default */
 
-/*
- * Writing any value to udaip starts initialisation.  Reading from it
- * when the UDA is running makes the UDA look through the command ring
- * to find any new commands.  Reading udasa gives status; writing it
- * during initialisation sets things up.
- */
-struct udadevice {
-	u_short	udaip;		/* initialisation and polling */
-	u_short	udasa;		/* status and address */
+#define	NDZLINE 	8
+
+#define	DZ_DZ		8
+#define	DZ_DZV		4
+#define	DZ_DC		4
+
+#define DZ_C2I(c)	((c)<<3)	/* convert controller # to index */
+#define DZ_I2C(c)	((c)>>3)	/* convert minor to controller # */
+#define DZ_PORT(u)	((u)&07)	/* extract the port # */
+
+struct	dz_softc {
+	struct	device	sc_dev;		/* Autoconf blaha */
+	struct	dz_regs	sc_dr;		/* reg pointers */
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
+	int		sc_type;	/* DZ11 or DZV11? */
+	int		sc_rxint;	/* Receive interrupt count XXX */
+	u_char		sc_brk;		/* Break asserted on some lines */
+	u_char		sc_dsr;		/* DSR set bits if no mdm ctrl */
+	int		(*sc_catch) __P((int, int)); /* Fast catch recv */
+	struct {
+		struct	tty *	dz_tty;		/* what we work on */
+#ifdef notyet
+		caddr_t		dz_mem;		/* pointers to clist output */
+		caddr_t		dz_end;		/*   allowing pdma action */
+#endif
+	} sc_dz[NDZLINE];
 };
 
-/*
- * Bits in UDA status register after initialisation
- */
-#define	UDA_GO		0x0001	/* run */
-
-#define	UDASR_BITS \
-"\20\20ERR\17STEP4\16STEP3\15STEP2\14STEP1\13NV\12QB\11DI\10IE\1GO"
-
+void	dzattach __P((struct dz_softc *));
+void	dzrint __P((void *));
+void	dzxint __P((void *));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp.c,v 1.3 1997/09/12 09:25:47 maja Exp $	*/
-/*	$NetBSD: mscp.c,v 1.6 1997/07/04 11:58:20 ragge Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.4 2000/04/27 03:14:45 bjc Exp $	*/
+/*	$NetBSD: mscp.c,v 1.11 1999/06/06 19:16:18 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -48,16 +48,16 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <vax/mscp/mscp.h>
-#include <vax/mscp/mscpvar.h>
+#include <machine/bus.h>
 
-#define	PCMD	PSWP		/* priority for command packet waits */
+#include <arch/vax/mscp/mscp.h>
+#include <arch/vax/mscp/mscpreg.h>
+#include <arch/vax/mscp/mscpvar.h>
 
-/*
- * During transfers, mapping info is saved in the buffer's b_resid.
- */
-#define	b_info b_resid
+#define PCMD	PSWP		/* priority for command packet waits */
 
 /*
  * Get a command packet.  Second argument is true iff we are
@@ -69,10 +69,10 @@ mscp_getcp(mi, canwait)
 	register struct mscp_softc *mi;
 	int canwait;
 {
-#define	mri	(&mi->mi_cmd)
+#define mri	(&mi->mi_cmd)
 	register struct mscp *mp;
 	register int i;
-	int s = splbio();
+	int s = splimp();
 
 again:
 	/*
@@ -115,8 +115,8 @@ again:
 	mp->mscp_seq.seq_bytecount = 0;
 	mp->mscp_seq.seq_buffer = 0;
 	mp->mscp_seq.seq_mapbase = 0;
-/*???*/	mp->mscp_sccc.sccc_errlgfl = 0;
-/*???*/	mp->mscp_sccc.sccc_copyspd = 0;
+/*???*/ mp->mscp_sccc.sccc_errlgfl = 0;
+/*???*/ mp->mscp_sccc.sccc_copyspd = 0;
 	return (mp);
 #undef	mri
 }
@@ -135,10 +135,11 @@ mscp_dorsp(mi)
 	struct device *drive;
 	struct mscp_device *me = mi->mi_me;
 	struct mscp_ctlr *mc = mi->mi_mc;
-	register struct buf *bp;
-	register struct mscp *mp;
-	register int nextrsp;
-	int st, error, info;
+	struct buf *bp;
+	struct mscp *mp;
+	struct mscp_xi *mxi;
+	int nextrsp;
+	int st, error;
 	extern int cold;
 	extern struct mscp slavereply;
 
@@ -239,7 +240,7 @@ loop:
 
 	case M_OP_ONLINE | M_OP_END:
 		/*
-		 * Finished an ON LINE request.  Call the driver to
+		 * Finished an ON LINE request.	 Call the driver to
 		 * find out whether it succeeded.  If so, mark it on
 		 * line.
 		 */
@@ -291,6 +292,7 @@ loop:
 
 	case M_OP_POS | M_OP_END:
 	case M_OP_WRITM | M_OP_END:
+	case M_OP_AVAILABLE | M_OP_END:
 		/*
 		 * A non-data transfer operation completed.
 		 */
@@ -300,33 +302,36 @@ loop:
 	case M_OP_READ | M_OP_END:
 	case M_OP_WRITE | M_OP_END:
 		/*
-		 * A transfer finished.  Get the buffer, and release its
-		 * map registers via ubadone().  If the command finished
+		 * A transfer finished.	 Get the buffer, and release its
+		 * map registers via ubadone().	 If the command finished
 		 * with an off line or available status, the drive went
 		 * off line (the idiot controller does not tell us until
 		 * it comes back *on* line, or until we try to use it).
 		 */
 rwend:
 #ifdef DIAGNOSTIC
-		if (mp->mscp_cmdref == 0) {
+		if (mp->mscp_cmdref >= NCMD) {
 			/*
 			 * No buffer means there is a bug somewhere!
 			 */
-			printf("%s: io done, but no buffer?\n",
+			printf("%s: io done, but bad xfer number?\n",
 			    drive->dv_xname);
 			mscp_hexdump(mp);
 			break;
 		}
 #endif
-		bp = (struct buf *) mp->mscp_cmdref;
 
 		if (mp->mscp_cmdref == -1) {
 			(*me->me_cmddone)(drive, mp);
 			break;
 		}
+		mxi = &mi->mi_xi[mp->mscp_cmdref];
+		if (mxi->mxi_inuse == 0)
+			panic("mxi not inuse");
+		bp = mxi->mxi_bp;
 		/*
 		 * Mark any error-due-to-bad-LBN (via `goto rwend').
-		 * WHAT STATUS WILL THESE HAVE?  IT SURE WOULD BE NICE
+		 * WHAT STATUS WILL THESE HAVE?	 IT SURE WOULD BE NICE
 		 * IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
 		 */
 		if (error) {
@@ -338,11 +343,6 @@ rwend:
 			(*md->md_offline)(ui, mp);
 #endif
 		}
-
-		/*
-		 * Unlink the transfer from the wait queue.
-		 */
-		_remque(&bp->b_actf);
 
 		/*
 		 * If the transfer has something to do with bad
@@ -379,12 +379,14 @@ rwend:
 		 * done.  If the I/O wait queue is now empty, release
 		 * the shared BDP, if any.
 		 */
-		info = bp->b_info;	/* we are about to clobber it */
 		bp->b_resid = bp->b_bcount - mp->mscp_seq.seq_bytecount;
+		bus_dmamap_unload(mi->mi_dmat, mxi->mxi_dmam);
 
-		(*mc->mc_ctlrdone)(mi->mi_dev.dv_parent, info);
+		(*mc->mc_ctlrdone)(mi->mi_dev.dv_parent);
 		(*me->me_iodone)(drive, bp);
 out:
+		mxi->mxi_inuse = 0;
+		mi->mi_mxiuse |= (1 << mp->mscp_cmdref);
 		break;
 		
 	case M_OP_REPLACE | M_OP_END:
@@ -414,18 +416,13 @@ unknown:
 
 	/*
 	 * If the drive needs to be put back in the controller queue,
-	 * do that now.  (`bp' below ought to be `dp', but they are all
+	 * do that now.	 (`bp' below ought to be `dp', but they are all
 	 * struct buf *.)  Note that b_active was cleared in the driver;
 	 * we presume that there is something to be done, hence reassert it.
 	 */
 #ifdef notyet /* XXX */
 	if (ui->ui_flags & UNIT_REQUEUE) {
-		bp = &md->md_utab[ui->ui_unit];
-		if (bp->b_active) panic("mscp_dorsp requeue");
-		MSCP_APPEND(bp, mi->mi_XXXtab, b_hash.le_next);
-/* Was:		MSCP_APPEND(bp, mi->mi_XXXtab, b_forw); */
-		bp->b_active = 1;
-		ui->ui_flags &= ~UNIT_REQUEUE;
+		...
 	}
 #endif
 done:
@@ -447,67 +444,6 @@ void
 mscp_requeue(mi)
 	struct mscp_softc *mi;
 {
-	register struct mscp_device *me = mi->mi_me;
-	register struct buf *bp, *dp;
-	register int unit;
-	struct buf *nextbp;
-
-panic("mscp_requeue");
-	/*
-	 * Clear the controller chain.  Mark everything un-busy; we
-	 * will soon fix any that are in fact busy.
-	 */
-#ifdef notyet /* XXX */
-	mi->mi_XXXtab->b_actf = NULL;
-	mi->mi_XXXtab->b_active = 0;
-	for (unit = 0, dp = md->md_utab; unit < md->md_nunits; unit++, dp++) {
-		ui = md->md_dinfo[unit];
-		if (ui == NULL || !ui->ui_alive || ui->ui_ctlr != mi->mi_ctlr)
-			continue;	/* not ours */
-		dp->b_hash.le_next = NULL;
-		dp->b_active = 0;
-	}
-	/*
-	 * Scan the wait queue, linking buffers onto drive queues.
-	 * Note that these must be put at the front of the drive queue,
-	 * lest we reorder I/O operations.
-	 */
-	for (bp = *mi->mi_XXXwtab.b_actb; bp != &mi->mi_XXXwtab; bp = nextbp) {
-		nextbp = *bp->b_actb;
-		dp = &md->md_utab[minor(bp->b_dev) >> md->md_unitshift];
-		bp->b_actf = dp->b_actf;
-		if (dp->b_actf == NULL)
-			dp->b_actb = (void *)bp;
-		dp->b_actf = bp;
-	}
-	mi->mi_XXXwtab.b_actf = *mi->mi_XXXwtab.b_actb = &mi->mi_XXXwtab;
-
-	/*
-	 * Scan for drives waiting for on line or status responses,
-	 * and for drives with pending transfers.  Put these on the
-	 * controller queue, and mark the controller busy.
-	 */
-	for (unit = 0, dp = md->md_utab; unit < md->md_nunits; unit++, dp++) {
-		ui = md->md_dinfo[unit];
-		if (ui == NULL || !ui->ui_alive || ui->ui_ctlr != mi->mi_ctlr)
-			continue;
-		ui->ui_flags &= ~(UNIT_HAVESTATUS | UNIT_ONLINE);
-		if ((ui->ui_flags & UNIT_REQUEUE) == 0 && dp->b_actf == NULL)
-			continue;
-		ui->ui_flags &= ~UNIT_REQUEUE;
-		MSCP_APPEND(dp, mi->mi_XXXtab, b_hash.le_next);
-
-		dp->b_active = 1;
-		mi->mi_XXXtab->b_active = 1;
-	}
-
-#endif
-#ifdef AVOID_EMULEX_BUG
-	/*
-	 * ... and clear the index-to-buffer table.
-	 */
-	for (unit = 0; unit < AEB_MAX_BP; unit++)
-		mi->mi_bp[unit] = 0;
-#endif
+	panic("mscp_requeue");
 }
 

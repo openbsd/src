@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_qereg.h,v 1.3 1997/09/10 08:28:42 maja Exp $ */
-/*	$NetBSD: if_qereg.h,v 1.2 1997/05/15 20:10:23 ragge Exp $ */
+/*	$OpenBSD: if_qereg.h,v 1.4 2000/04/27 03:14:43 bjc Exp $ */
+/*	$NetBSD: if_qereg.h,v 1.5 1999/06/20 00:04:47 ragge Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -58,8 +58,8 @@
  *								*
  *        If the Regents of the University of California or its *
  *   licensees modify the software in a manner creating  	*
- *   diriviative copyright rights, appropriate copyright  	*
- *   legends may be placed on  the drivative work in addition   *
+ *   derivative copyright rights, appropriate copyright  	*
+ *   legends may be placed on  the derivative work in addition  *
  *   to that set forth above. 					*
  *								*
  ****************************************************************/
@@ -76,6 +76,7 @@
 /*
  * Digital Q-BUS to NI Adapter 
  */
+#ifdef notdef
 struct qedevice {
 	u_short	qe_sta_addr[2]; 	/* Station address (actually 6 	*/
 	u_short	qe_rcvlist_lo; 		/* Receive list lo address 	*/
@@ -85,6 +86,19 @@ struct qedevice {
 	u_short	qe_vector;		/* Interrupt vector 		*/
 	u_short	qe_csr;			/* Command and Status Register 	*/
 };
+#endif
+
+/*
+ * Register offsets in register space.
+ */
+#define	QE_CSR_ADDR1	0
+#define	QE_CSR_ADDR2	2
+#define	QE_CSR_RCLL	4
+#define	QE_CSR_RCLH	6
+#define	QE_CSR_XMTL	8
+#define	QE_CSR_XMTH	10
+#define	QE_CSR_VECTOR	12
+#define	QE_CSR_CSR	14
  
 /*
  * Command and status bits (csr)
@@ -117,19 +131,22 @@ struct qedevice {
  */
 struct qe_ring	{
 	u_short qe_flag;		/* Buffer utilization flags	*/
-	u_short qe_addr_hi:6,		/* Hi order bits of buffer addr	*/
-	      qe_odd_begin:1,		/* Odd byte begin and end (xmit)*/
-	      qe_odd_end:1,
-	      qe_fill1:4,
-	      qe_setup:1,		/* Setup packet			*/
-	      qe_eomsg:1,		/* End of message flag		*/
-	      qe_chain:1,		/* Chain address instead of buf */
-	      qe_valid:1;		/* Address field is valid	*/
+	u_short qe_addr_hi;
 	u_short qe_addr_lo;		/* Low order bits of address	*/
 	short qe_buf_len;		/* Negative buffer length	*/
 	u_short qe_status1;		/* Status word one		*/
 	u_short qe_status2;		/* Status word two		*/
 };
+
+/*
+ * High word address control bits.
+ */
+#define	QE_VALID		0x8000
+#define	QE_CHAIN		0x4000
+#define	QE_EOMSG		0x2000
+#define	QE_SETUP		0x1000
+#define	QE_ODDEND		0x0080
+#define	QE_ODDBEGIN		0x0040
  
 /*
  * Status word definations (receive)
@@ -175,6 +192,6 @@ struct qe_ring	{
 /*
  * Values for the length of the setup packet that control reception filter.
  */
-#define QE_SOMEMULTI		128	/* Receive up to 12 multicasts	*/
-#define QE_ALLMULTI		129	/* Receive all multicasts	*/
-#define QE_PROMISC		130	/* Receive all packets		*/
+#define	QE_SETUPLEN		128	/* Size of setup packet		*/
+#define QE_ALLMULTI		1	/* Receive all multicasts	*/
+#define QE_PROMISC		2	/* Receive all packets		*/

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ubareg.h,v 1.7 1997/05/29 00:05:10 niklas Exp $ */
-/*	$NetBSD: ubareg.h,v 1.9 1996/08/20 13:38:02 ragge Exp $ */
+/*	$OpenBSD: ubareg.h,v 1.8 2000/04/27 03:14:51 bjc Exp $ */
+/*	$NetBSD: ubareg.h,v 1.10 1998/10/18 18:51:30 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -71,10 +71,6 @@
 #define QBA	4		/* 22-bit Q-bus, no adaptor regs: uVAX II */
 #endif
 
-#if 0 /* XXX  VAX8200 || VAX8500 || VAX8800 */
-#define DWBUA	5		/* BI UNIBUS adaptor: 8200/8500/8800 */
-#endif
-
 /*
  * Size of unibus memory address space in pages
  * (also number of map registers).
@@ -93,57 +89,6 @@
 #define UBAIOPAGES	16
 
 #ifndef _LOCORE
-/*
- * DWBUA hardware registers.
- */
-struct dwbua_regs {
-	int	pad1[456];		/* actually bii regs + pad */
-	int	bua_csr;		/* control and status register */
-	int	bua_offset;		/* vector offset register */
-	int	bua_fubar;		/* failed UNIBUS address register */
-	int	bua_bifar;		/* BI failed address register */
-	int	bua_udiag[5];		/* micro diagnostics (R/O) */
-	int	pad2[3];
-/* dpr[0] is for DDP; dpr's 1 through 5 are for BPD's 1 through 5 */
-	int	bua_dpr[6];		/* data path registers */
-	int	pad3[10];
-	int	bua_bdps[20];		/* buffered data path space *//*???*/
-	int	pad4[8];
-	struct pte bua_map[UBAPAGES];	/* unibus map registers */
-	int	pad5[UBAIOPAGES];	/* no maps for device address space */
-};
-
-#ifdef DWBUA
-/* bua_csr */
-#define BUACSR_ERR	0x80000000	/* composite error */
-#define BUACSR_BIF	0x10000000	/* BI failure */
-#define BUACSR_SSYNTO	0x08000000	/* slave sync timeout */
-#define BUACSR_UIE	0x04000000	/* unibus interlock error */
-#define BUACSR_IVMR	0x02000000	/* invalid map register */
-#define BUACSR_BADBDP	0x01000000	/* bad BDP select */
-#define BUACSR_BUAEIE	0x00100000	/* bua error interrupt enable (?) */
-#define BUACSR_UPI	0x00020000	/* unibus power init */
-#define BUACSR_UREGDUMP 0x00010000	/* microdiag register dump */
-#define BUACSR_IERRNO	0x000000ff	/* mask for internal errror number */
-
-/* bua_offset */
-#define BUAOFFSET_MASK	0x00003e00	/* hence max offset = 15872 */
-
-/* bua_dpr */
-#define BUADPR_DPSEL	0x00e00000	/* data path select (?) */
-#define BUADPR_PURGE	0x00000001	/* purge bdp */
-
-/* bua_map -- in particular, those bits that are not in DW780s & DW750s */
-#define BUAMR_IOADR	0x40000000	/* I/O address space */
-#define BUAMR_LAE	0x04000000	/* longword access enable */
-	/* I see no reason to use either one, though ... act 6 Aug 1987 */
-
-#define UBA_PURGEBUA(uba, bdp) \
-	(((struct dwbua_regs *)(uba))->bua_dpr[bdp] |= BUADPR_PURGE)
-#else
-#define UBA_PURGEBUA(uba, bdp)
-#endif
-
 /*
  * DW780/DW750 hardware registers
  */

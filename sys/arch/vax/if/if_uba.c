@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_uba.c,v 1.5 1997/05/29 00:04:33 niklas Exp $	*/
-/*	$NetBSD: if_uba.c,v 1.12 1996/08/20 14:07:46 ragge Exp $	*/
+/*	$OpenBSD: if_uba.c,v 1.6 2000/04/27 03:14:43 bjc Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.15 1999/01/01 21:43:18 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -91,7 +91,7 @@ if_ubaminit(ifu, uh, hlen, nmr, ifr, nr, ifw, nw)
 		off = MCLBYTES - hlen;
 	else
 		off = 0;
-	nclbytes = roundup(nmr * NBPG, MCLBYTES);
+	nclbytes = roundup(nmr * VAX_NBPG, MCLBYTES);
 	if (hlen)
 		nclbytes += MCLBYTES;
 	if (ifr[0].ifrw_addr)
@@ -159,7 +159,7 @@ if_ubaalloc(ifu, ifrw, nmr)
 	register int info;
 
 	info =
-	    uballoc(ifu->iff_softc, ifrw->ifrw_addr, nmr*NBPG + ifu->iff_hlen,
+	    uballoc(ifu->iff_softc, ifrw->ifrw_addr, nmr*VAX_NBPG + ifu->iff_hlen,
 	        ifu->iff_flags);
 	if (info == 0)
 		return (0);
@@ -238,16 +238,16 @@ if_ubaget(ifu, ifr, totlen, ifp)
 			pp = mtod(m, char *);
 			cpte = (struct pte *)kvtopte(cp);
 			ppte = (struct pte *)kvtopte(pp);
-			x = btop(cp - ifr->ifrw_addr);
+			x = vax_btop(cp - ifr->ifrw_addr);
 			ip = (int *)&ifr->ifrw_mr[x];
-			for (i = 0; i < MCLBYTES/NBPG; i++) {
+			for (i = 0; i < MCLBYTES/VAX_NBPG; i++) {
 				struct pte t;
 				t = *ppte; *ppte++ = *cpte; *cpte = t;
 				*ip++ = cpte++->pg_pfn|ifr->ifrw_proto;
 				mtpr(cp,PR_TBIS);
-				cp += NBPG;
+				cp += VAX_NBPG;
 				mtpr((caddr_t)pp,PR_TBIS);
-				pp += NBPG;
+				pp += VAX_NBPG;
 			}
 			goto nocopy;
 		}
@@ -290,7 +290,7 @@ rcv_xmtbuf(ifw)
 {
 	register struct mbuf *m;
 	struct mbuf **mprev;
-	register i;
+	register int i;
 	char *cp;
 
 	while ((i = ffs((long)ifw->ifw_xswapd)) != 0) {
@@ -319,7 +319,7 @@ static void
 restor_xmtbuf(ifw)
 	register struct ifxmt *ifw;
 {
-	register i;
+	register int i;
 
 	for (i = 0; i < ifw->ifw_nmr; i++)
 		ifw->ifw_wmap[i] = ifw->ifw_mr[i];
@@ -353,11 +353,11 @@ if_ubaput(ifu, ifw, m)
 			int *ip;
 
 			pte = (struct pte *)kvtopte(dp);
-			x = btop(cp - ifw->ifw_addr);
+			x = vax_btop(cp - ifw->ifw_addr);
 			ip = (int *)&ifw->ifw_mr[x];
-			for (i = 0; i < MCLBYTES/NBPG; i++)
+			for (i = 0; i < MCLBYTES/VAX_NBPG; i++)
 				*ip++ = ifw->ifw_proto | pte++->pg_pfn;
-			xswapd |= 1 << (x>>(MCLSHIFT-PGSHIFT));
+			xswapd |= 1 << (x>>(MCLSHIFT-VAX_PGSHIFT));
 			mp = m->m_next;
 			m->m_next = ifw->ifw_xtofree;
 			ifw->ifw_xtofree = m;
@@ -385,8 +385,8 @@ if_ubaput(ifu, ifw, m)
 		if (i >= x)
 			break;
 		ifw->ifw_xswapd &= ~(1<<i);
-		i *= MCLBYTES/NBPG;
-		for (t = 0; t < MCLBYTES/NBPG; t++) {
+		i *= MCLBYTES/VAX_NBPG;
+		for (t = 0; t < MCLBYTES/VAX_NBPG; t++) {
 			ifw->ifw_mr[i] = ifw->ifw_wmap[i];
 			i++;
 		}

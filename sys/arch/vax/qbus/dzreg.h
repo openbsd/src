@@ -1,5 +1,5 @@
-/*	$OpenBSD: dzreg.h,v 1.2 1997/05/29 00:05:06 niklas Exp $	*/
-/*	$NetBSD: dzreg.h,v 1.1 1996/04/08 17:22:21 ragge Exp $	*/
+/*	$OpenBSD: dzreg.h,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$NetBSD: dzreg.h,v 1.4 1999/05/27 16:03:13 ragge Exp $ */
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
@@ -8,28 +8,19 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 union w_b
@@ -59,6 +50,43 @@ struct DZregs
 #define dz_break	u_tdr.bytes.byte_hi	/* BREAK set/clr bits */
 
 typedef struct DZregs dzregs;
+
+#if 0
+struct	dz_regs	{
+	volatile unsigned short *dr_csr;
+	volatile unsigned short *dr_rbuf;
+#define dr_lpr		 	dr_rbuf
+	volatile unsigned char *dr_dtr;
+	volatile unsigned char *dr_break;
+	volatile unsigned char *dr_tbuf;
+	volatile unsigned char *dr_tcr;
+	volatile unsigned short *dr_tcrw;
+	volatile unsigned char *dr_ring;
+	volatile unsigned char *dr_dcd;
+};
+#else
+struct	dz_regs	{
+	bus_addr_t dr_csr;
+	bus_addr_t dr_rbuf;
+#define dr_lpr	   dr_rbuf
+	bus_addr_t dr_dtr;
+	bus_addr_t dr_break;
+	bus_addr_t dr_tbuf;
+	bus_addr_t dr_tcr;
+	bus_addr_t dr_tcrw;
+	bus_addr_t dr_ring;
+	bus_addr_t dr_dcd;
+};
+#define	DZ_UBA_CSR	0
+#define	DZ_UBA_RBUF	2
+#define	DZ_UBA_DTR	5
+#define	DZ_UBA_BREAK	7
+#define	DZ_UBA_TBUF	6
+#define	DZ_UBA_TCR	4
+#define	DZ_UBA_DCD	7
+#define	DZ_UBA_RING	6
+
+#endif
 
 /* CSR bits */
 
@@ -103,7 +131,7 @@ typedef struct DZregs dzregs;
 #define DZ_LPR_B4800		0xC
 #define DZ_LPR_B7200		0xD
 #define DZ_LPR_B9600		0xE
-#define DZ_LPR_ILLEGAL		0xF
+#define DZ_LPR_B19200		0xF
 
 #define DZ_LPR_OPAR		0000200
 #define DZ_LPR_PARENB		0000100

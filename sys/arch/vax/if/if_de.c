@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.10 1997/09/10 08:28:39 maja Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.11 2000/04/27 03:14:42 bjc Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -61,8 +61,7 @@
 #include <machine/sid.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_dl.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -112,8 +111,7 @@ struct	de_softc {
 	struct	device ds_dev;	/* Configuration common part */
 	struct	arpcom ds_ac;		/* Ethernet common part */
 	struct	dedevice *ds_vaddr;	/* Virtual address of this interface */
-#define	ds_if	ds_ac.ac_if		/* network-visible interface */
-#define	ds_addr	ds_ac.ac_enaddr		/* hardware Ethernet address */
+#define 	ds_if	ds_ac.ac_if	/* network-visible interface */
 	int	ds_flags;
 #define	DSF_RUNNING	2		/* board is enabled */
 #define	DSF_SETADDR	4		/* physical address is changed */
@@ -177,6 +175,7 @@ deattach(parent, self, aux)
 	struct dedevice *addr;
 	char *c;
 	int csr1;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	addr = (struct dedevice *)ua->ua_addr;
 	ds->ds_vaddr = addr;
@@ -219,10 +218,9 @@ deattach(parent, self, aux)
 	(void)dewait(ds, "read addr ");
 
 	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
- 	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, (caddr_t)ds->ds_addr,
-	    sizeof (ds->ds_addr));
+	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
 	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
-		ether_sprintf(ds->ds_addr));
+		ether_sprintf(myaddr));
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
 	ds->ds_deuba.iff_flags = UBA_CANTWAIT;
@@ -275,7 +273,7 @@ deinit(ds)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		if (if_ubaminit(&ds->ds_deuba, (void *)ds->ds_dev.dv_parent,
-		    sizeof (struct ether_header), (int)btoc(ETHERMTU),
+		    sizeof (struct ether_header), (int)vax_btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
 			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
@@ -347,7 +345,7 @@ deinit(ds)
 	destart(&ds->ds_if);		/* queue output packets */
 	ds->ds_flags |= DSF_RUNNING;		/* need before de_setaddr */
 	if (ds->ds_flags & DSF_SETADDR)
-		de_setaddr(ds->ds_addr, ds);
+		de_setaddr(ds->ds_ac.ac_enaddr, ds);
 	addr->pclow = CMD_START | PCSR0_INTE;
 	splx(s);
 }
@@ -608,7 +606,8 @@ deioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 			
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(ds->ds_addr);
+				ina->x_host = 
+					*(union ns_host *)ds->ds_ac.ac_enaddr;
 			else
 				de_setaddr(ina->x_host.c_host, ds);
 			break;
@@ -655,7 +654,7 @@ de_setaddr(physaddr, ds)
 	addr->pclow = PCSR0_INTE|CMD_GETCMD;
 	if (dewait(ds, "address change") == 0) {
 		ds->ds_flags |= DSF_SETADDR;
-		bcopy((caddr_t) physaddr, (caddr_t) ds->ds_addr, 6);
+		bcopy((caddr_t) physaddr, ds->ds_ac.ac_enaddr, 6);
 	}
 }
 
@@ -669,7 +668,7 @@ dewait(ds, fn)
 	char *fn;
 {
 	volatile struct dedevice *addr = ds->ds_vaddr;
-	register csr0;
+	register int csr0;
 
 	while ((addr->pcsr0 & PCSR0_INTR) == 0)
 		;
@@ -684,9 +683,9 @@ dewait(ds, fn)
 }
 
 int
-dematch(parent, match, aux)
+dematch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	void	*cf, *aux;
 {
 	struct	uba_attach_args *ua = aux;
 	volatile struct dedevice *addr = (struct dedevice *)ua->ua_addr;

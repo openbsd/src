@@ -1,5 +1,5 @@
-/*	$OpenBSD: mba.c,v 1.5 1997/05/29 00:04:59 niklas Exp $ */
-/*	$NetBSD: mba.c,v 1.10 1996/10/13 03:35:00 christos Exp $ */
+/*	$OpenBSD: mba.c,v 1.6 2000/04/27 03:14:45 bjc Exp $ */
+/*	$NetBSD: mba.c,v 1.18 2000/01/24 02:40:36 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,6 +54,7 @@
 #include <machine/pte.h>
 #include <machine/pcb.h>
 #include <machine/sid.h>
+#include <machine/cpu.h>
 
 #include <vax/mba/mbareg.h>
 #include <vax/mba/mbavar.h>
@@ -70,17 +71,13 @@ struct	mbaunit mbaunit[] = {
 	{0,		0,	0}
 };
 
-int	mbamatch __P((struct device *, void *, void *));
+int	mbamatch __P((struct device *, struct cfdata *, void *));
 void	mbaattach __P((struct device *, struct device *, void *));
-void	mbaintr __P((int));
+void	mbaintr __P((void *));
 int	mbaprint __P((void *, const char *));
 void	mbaqueue __P((struct mba_device *));
 void	mbastart __P((struct mba_softc *));
 void	mbamapregs __P((struct mba_softc *));
-
-struct	cfdriver mba_cd = {
-	NULL, "mba", DV_DULL
-};
 
 struct	cfattach mba_cmi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
@@ -90,16 +87,18 @@ struct	cfattach mba_sbi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 
+extern	struct cfdriver mba_cd;
+
 /*
  * Look if this is a massbuss adapter.
  */
 int
-mbamatch(parent, match, aux)
+mbamatch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct  cfdata *cf;
+	void	*aux;
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct	cfdata *cf = match;
 
 	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
 		return 0;
@@ -123,22 +122,21 @@ mbaattach(parent, self, aux)
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	volatile struct	mba_regs *mbar = (struct mba_regs *)sa->nexaddr;
 	struct	mba_attach_args ma;
-	extern  struct  ivec_dsp idsptch;
 	int	i, j;
 
 	printf("\n");
 	/*
 	 * Set up interrupt vectors for this MBA.
 	 */
-	bcopy(&idsptch, &sc->sc_dsp, sizeof(struct ivec_dsp));
+	sc->sc_dsp = idsptch;
+	sc->sc_dsp.pushlarg = sc;
+	sc->sc_dsp.hoppaddr = mbaintr;
 	scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum] =
 	    scb->scb_nexvec[2][sa->nexnum] = scb->scb_nexvec[3][sa->nexnum] =
 	    &sc->sc_dsp;
-	sc->sc_dsp.pushlarg = sc->sc_dev.dv_unit;
-	sc->sc_dsp.hoppaddr = mbaintr;
 
 	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
-#ifdef VAX750
+#if VAX750
 	if (vax_cputype == VAX_750)
 		sc->sc_physnr += 4;	/* ...but not on 11/750 */
 #endif
@@ -171,9 +169,9 @@ mbaattach(parent, self, aux)
  */
 void
 mbaintr(mba)
-	int	mba;
+	void	*mba;
 {
-	struct	mba_softc *sc = mba_cd.cd_devs[mba];
+	struct	mba_softc *sc = mba;
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	mba_device *md;
 	struct	buf *bp;
@@ -189,7 +187,7 @@ mbaintr(mba)
 		return;	/* During autoconfig */
 
 	md = sc->sc_first;
-	bp = md->md_q.b_actf;
+	bp = BUFQ_FIRST(&md->md_q);
 	/*
 	 * A data-transfer interrupt. Current operation is finished,
 	 * call that device's finish routine to see what to do next.
@@ -206,13 +204,13 @@ mbaintr(mba)
 			 * If more to transfer, start the adapter again
 			 * by calling mbastart().
 			 */
-			md->md_q.b_actf = bp->b_actf;
+			BUFQ_REMOVE(&md->md_q, bp);
 			sc->sc_first = md->md_back;
 			md->md_back = 0;
 			if (sc->sc_first == 0)
 				sc->sc_last = (void *)&sc->sc_first;
 
-			if (md->md_q.b_actf) {
+			if (BUFQ_FIRST(&md->md_q) != NULL) {
 				sc->sc_last->md_back = md;
 				sc->sc_last = md;
 			}
@@ -287,12 +285,13 @@ mbastart(sc)
 {
 	struct	mba_device *md = sc->sc_first;
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
-	struct	buf *bp = md->md_q.b_actf;
+	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 
-	disk_reallymapin(md->md_q.b_actf, sc->sc_mbareg->mba_map, 0, PG_V);
+	disk_reallymapin(BUFQ_FIRST(&md->md_q), sc->sc_mbareg->mba_map,
+	    0, PG_V);
 
 	sc->sc_state = SC_ACTIVE;
-	mr->mba_var = ((u_int)bp->b_un.b_addr & PGOFSET);
+	mr->mba_var = ((u_int)bp->b_un.b_addr & VAX_PGOFSET);
 	mr->mba_bc = (~bp->b_bcount) + 1;
 	(*md->md_start)(md);		/* machine-dependent start */
 }

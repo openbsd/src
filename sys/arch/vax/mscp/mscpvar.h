@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscpvar.h,v 1.2 1997/05/29 00:05:04 niklas Exp $	*/
-/*	$NetBSD: mscpvar.h,v 1.4 1997/01/11 11:20:36 ragge Exp $	*/
+/*	$OpenBSD: mscpvar.h,v 1.3 2000/04/27 03:14:46 bjc Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.7 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -70,11 +70,21 @@ struct mscp_ri {
 	struct	mscp *mri_ring;		/* base address of packets */
 };
 
+/*
+ * Transfer info, one per command packet.
+ */
+struct mscp_xi {
+	bus_dmamap_t	mxi_dmam;	/* Allocated DMA map for this entry */
+	struct buf *	mxi_bp;		/* Buffer used in this command */
+	struct mscp *	mxi_mp;		/* Packet used in this command */
+	int		mxi_inuse;
+};
+
 struct	mscp_ctlr {
 	void	(*mc_ctlrdone)		/* controller operation complete */
-	    __P((struct device *, int));
-	int	(*mc_go)		/* device-specific start routine */
-	    __P((struct device *, struct buf *));
+	    __P((struct device *));
+	void	(*mc_go)		/* device-specific start routine */
+	    __P((struct device *, struct mscp_xi *));
 	void	(*mc_saerror)		/* ctlr error handling */
 	    __P((struct device *, int));
 };
@@ -88,7 +98,7 @@ struct	mscp_device {
 	    __P((struct device *, struct buf *));
 	int	(*me_online)	/* drive on line */
 	    __P((struct device *, struct mscp *));
-	int	(*me_gotstatus)	/* got unit status */
+	int	(*me_gotstatus) /* got unit status */
 	    __P((struct device *, struct mscp *));
 	void	(*me_replace)	/* replace done */
 	    __P((struct device *, struct mscp *));
@@ -109,20 +119,22 @@ struct	mscp_attach_args {
 	struct	mscp_ctlr *ma_mc;	/* Pointer to ctlr's mscp_ctlr */
 	int	ma_type;		/* disk/tape bus type */
 	struct	mscp_pack *ma_uda;	/* comm area virtual */
-	struct	mscp_pack *ma_uuda;	/* comm area on bus */
 	struct	mscp_softc **ma_softc;	/* backpointer to bus softc */
-	short	*ma_ip;			/* initialisation and polling */
-	short	*ma_sa;			/* status & address (read part) */
-	short	*ma_sw;			/* status & address (write part) */
+	bus_dmamap_t	   ma_dmam;	/* This comm area dma info */
+	bus_dma_tag_t	   ma_dmat;
+	bus_space_tag_t	   ma_iot;
+	bus_space_handle_t ma_iph;	/* initialisation and polling */
+	bus_space_handle_t ma_sah;	/* status & address (read part) */
+	bus_space_handle_t ma_swh;	/* status & address (write part) */
 	short	ma_ivec;		/* Interrupt vector to use */
 	char	ma_ctlrnr;		/* Phys ctlr nr */
 	char	ma_adapnr;		/* Phys adapter nr */
 };
 #define MSCPBUS_DISK	001	/* Bus is used for disk mounts */
 #define MSCPBUS_TAPE	002	/* Bus is used for tape mounts */
-#define	MSCPBUS_UDA	004	/* ctlr is disk on unibus/qbus */
-#define	MSCPBUS_KDB	010	/* ctlr is disk on BI */
-#define	MSCPBUS_KLE	020	/* ctlr is tape on unibus/qbus */
+#define MSCPBUS_UDA	004	/* ctlr is disk on unibus/qbus */
+#define MSCPBUS_KDB	010	/* ctlr is disk on BI */
+#define MSCPBUS_KLE	020	/* ctlr is tape on unibus/qbus */
 
 /*
  * Used when going for child devices.
@@ -158,11 +170,13 @@ struct mscp_softc {
 	struct	device mi_dev;		/* Autoconf stuff */
 	struct	mscp_ri mi_cmd;		/* MSCP command ring info */
 	struct	mscp_ri mi_rsp;		/* MSCP response ring info */
+	bus_dma_tag_t	mi_dmat;
+	bus_dmamap_t	mi_dmam;
+	struct	mscp_xi mi_xi[NCMD];
+	int	mi_mxiuse;		/* Bitfield of inuse mxi packets */
 	short	mi_credits;		/* transfer credits */
 	char	mi_wantcmd;		/* waiting for command packet */
 	char	mi_wantcredits;		/* waiting for transfer credits */
-	struct	buf *mi_actf;		/* Pointer to buffers in */
-	struct	buf *mi_actb;		/*  circular wait queue */
 	struct	mscp_ctlr *mi_mc;	/* Pointer to parent's mscp_ctlr */
 	struct	mscp_device *mi_me;	/* Pointer to child's mscp_device */
 	struct	device **mi_dp;		/* array of backpointers */
@@ -171,21 +185,21 @@ struct mscp_softc {
 	char	mi_adapnr;		/* Phys adapter nr */
 	int	mi_flags;
 	struct	mscp_pack *mi_uda;	/* virtual address */
-	struct	mscp_pack *mi_uuda;	/* (device-specific) address */
 	int	mi_type;
 	short	mi_ivec;		/* Interrupt vector to use */
 	short	mi_ierr;		/* Init err counter */
-	volatile short *mi_ip;        	/* initialisation and polling */
-	volatile short *mi_sa;        	/* status & address (read part) */
-	volatile short *mi_sw;        	/* status & address (write part) */
-	struct	buf *mi_w;		/* While waiting for packets */
+	bus_space_tag_t	   mi_iot;
+	bus_space_handle_t mi_iph;	/* initialisation and polling */
+	bus_space_handle_t mi_sah;	/* status & address (read part) */
+	bus_space_handle_t mi_swh;	/* status & address (write part) */
+	SIMPLEQ_HEAD(, buf) mi_resq;	/* While waiting for packets */
 };
 
 /* mi_flags */
-#define	MSC_STARTPOLL	1
-#define	MSC_INSTART	2
-#define	MSC_IGNOREINTR	4
-#define	MSC_READY	8
+#define MSC_STARTPOLL	1
+#define MSC_INSTART	2
+#define MSC_IGNOREINTR	4
+#define MSC_READY	8
 
 /*
  * We have run out of credits when mi_credits is <= MSCP_MINCREDITS.
@@ -221,24 +235,6 @@ struct mscp_softc {
 	} \
 }
 
-/*
- * The following macro appends a buffer to a drive queue or a drive to
- * a controller queue, given the name of the forward link.  Use as
- * `APPEND(dp, &um->um_tab, b_forw)' or `APPEND(bp, dp, av_forw)',
- * where `bp' is a transfer request, `dp' is a drive queue, and `um_tab'
- * is a controller queue.  (That is, the forward link for controller
- * queues is `b_forw'; for drive queues, it is `av_forw'.)
- */
-
-#define	MSCP_APPEND(bp, queue, link) {			\
-	(bp)->link = NULL;				\
-	if ((queue)->link == NULL)			\
-		(queue)->link = (bp);			\
-	else						\
-		*(queue)->b_actb = (bp);		\
-	(queue)->b_actb = &(bp)->link;			\
-}
-
 /* Prototypes */
 struct	mscp *mscp_getcp __P((struct mscp_softc *, int));
 void	mscp_printevent __P((struct mscp *));
@@ -251,5 +247,5 @@ void	mscp_hexdump __P((struct mscp *));
 void	mscp_strategy __P((struct buf *, struct device *));
 void	mscp_printtype __P((int, int));
 int	mscp_waitstep __P((struct mscp_softc *, int, int));
-void	mscp_dgo __P((struct mscp_softc *, long, long, struct buf *));
+void	mscp_dgo __P((struct mscp_softc *, struct mscp_xi *));
 void	mscp_intr __P((struct mscp_softc *));
