@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.10 1997/02/01 21:53:26 deraadt Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.11 1997/02/05 15:50:18 deraadt Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -223,84 +223,81 @@ svr4_getsiginfo(si, sig, code, type, addr)
 	si->svr4_si_errno = 0;
 	si->svr4_si_addr  = addr;
 
-	switch (code) {
-	case T_PRIVINFLT:
-		si->svr4_si_code = SVR4_ILL_PRVOPC;
-		si->svr4_si_trap = SVR4_T_PRIVINFLT;
-		break;
+	si->svr4_si_code = 0;
+	si->svr4_si_trap = 0;
 
-	case T_BPTFLT:
-		si->svr4_si_code = SVR4_TRAP_BRKPT;
-		si->svr4_si_trap = SVR4_T_BPTFLT;
+	switch (sig) {
+	case SIGSEGV:
+		switch (type) {
+		case SEGV_ACCERR:
+			si->svr4_si_code = SVR4_SEGV_ACCERR;
+			si->svr4_si_trap = SVR4_T_PROTFLT;
+			break;
+		case SEGV_MAPERR:
+			si->svr4_si_code = SVR4_SEGV_MAPERR;
+			si->svr4_si_trap = SVR4_T_SEGNPFLT;
+			break;
+		}
 		break;
-
-	case T_ARITHTRAP:
-		si->svr4_si_code = SVR4_FPE_INTOVF;
-		si->svr4_si_trap = SVR4_T_DIVIDE;
+	case SIGBUS:
+		switch (type) {
+		case BUS_ADRALN:
+			si->svr4_si_code = SVR4_BUS_ADRALN;
+			si->svr4_si_trap = SVR4_T_ALIGNFLT;
+			break;
+		}
 		break;
-
-	case T_PROTFLT:
-		si->svr4_si_code = SVR4_SEGV_ACCERR;
-		si->svr4_si_trap = SVR4_T_PROTFLT;
+	case SIGTRAP:
+		switch (type) {
+		case TRAP_BRKPT:
+			si->svr4_si_code = SVR4_TRAP_BRKPT;
+			si->svr4_si_trap = SVR4_T_BPTFLT;
+			break;
+		case TRAP_TRACE:
+			si->svr4_si_code = SVR4_TRAP_TRACE;
+			si->svr4_si_trap = SVR4_T_TRCTRAP;
+			break;
+		}
 		break;
-
-	case T_TRCTRAP:
-		si->svr4_si_code = SVR4_TRAP_TRACE;
-		si->svr4_si_trap = SVR4_T_TRCTRAP;
+	case SIGEMT:
+		switch (type) {
+		}
 		break;
-
-	case T_PAGEFLT:
-		si->svr4_si_code = SVR4_SEGV_ACCERR;
-		si->svr4_si_trap = SVR4_T_PAGEFLT;
+	case SIGILL:
+		switch (type) {
+		case ILL_PRVOPC:
+			si->svr4_si_code = SVR4_ILL_PRVOPC;
+			si->svr4_si_trap = SVR4_T_PRIVINFLT;
+			break;
+		case ILL_BADSTK:
+			si->svr4_si_code = SVR4_ILL_BADSTK;
+			si->svr4_si_trap = SVR4_T_STKFLT;
+			break;
+		}
 		break;
-
-	case T_ALIGNFLT:
-		si->svr4_si_code = SVR4_BUS_ADRALN;
-		si->svr4_si_trap = SVR4_T_ALIGNFLT;
-		break;
-
-	case T_DIVIDE:
-		si->svr4_si_code = SVR4_FPE_FLTDIV;
-		si->svr4_si_trap = SVR4_T_DIVIDE;
-		break;
-
-	case T_OFLOW:
-		si->svr4_si_code = SVR4_FPE_FLTOVF;
-		si->svr4_si_trap = SVR4_T_DIVIDE;
-		break;
-
-	case T_BOUND:
-		si->svr4_si_code = SVR4_FPE_FLTSUB;
-		si->svr4_si_trap = SVR4_T_BOUND;
-		break;
-
-	case T_DNA:
-		si->svr4_si_code = SVR4_FPE_FLTINV;
-		si->svr4_si_trap = SVR4_T_DNA;
-		break;
-
-	case T_FPOPFLT:
-		si->svr4_si_code = SVR4_FPE_FLTINV;
-		si->svr4_si_trap = SVR4_T_FPOPFLT;
-		break;
-
-	case T_SEGNPFLT:
-		si->svr4_si_code = SVR4_SEGV_MAPERR;
-		si->svr4_si_trap = SVR4_T_SEGNPFLT;
-		break;
-
-	case T_STKFLT:
-		si->svr4_si_code = SVR4_ILL_BADSTK;
-		si->svr4_si_trap = SVR4_T_STKFLT;
-		break;
-
-	default:
-		si->svr4_si_code = 0;
-		si->svr4_si_trap = 0;
-#ifdef DIAGNOSTIC
-		printf("sig %d code %ld\n", sig, code);
-		panic("svr4_getsiginfo");
-#endif
+	case SIGFPE:
+		switch (type) {
+		case T_ARITHTRAP:
+			si->svr4_si_code = SVR4_FPE_INTOVF;
+			si->svr4_si_trap = SVR4_T_DIVIDE;
+			break;
+		case FPE_FLTDIV:
+			si->svr4_si_code = SVR4_FPE_FLTDIV;
+			si->svr4_si_trap = SVR4_T_DIVIDE;
+			break;
+		case FPE_FLTOVF:
+			si->svr4_si_code = SVR4_FPE_FLTOVF;
+			si->svr4_si_trap = SVR4_T_DIVIDE;
+			break;
+		case FPE_FLTSUB:
+			si->svr4_si_code = SVR4_FPE_FLTSUB;
+			si->svr4_si_trap = SVR4_T_BOUND;
+			break;
+		case FPE_FLTINV:
+			si->svr4_si_code = SVR4_FPE_FLTINV;
+			si->svr4_si_trap = SVR4_T_FPOPFLT;
+			break;
+		}
 		break;
 	}
 }
