@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.9 2002/12/18 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.10 2003/02/18 09:40:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -177,8 +177,10 @@ aspattach(parent, self, aux)
 	sc->sc_trs = (struct asp_trs *)ASP_CHPA;
 	sc->sc_hw = (struct asp_hwr *)ca->ca_hpa;
 
+#ifdef USELEDS
 	machine_ledaddr = &sc->sc_trs->asp_cled;
 	machine_ledword = asp_spus[sc->sc_trs->asp_spu].ledword;
+#endif
 
 	/* reset ASP */
 	/* sc->sc_hw->asp_reset = 1; */

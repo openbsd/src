@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.98 2003/02/05 18:54:22 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.99 2003/02/18 09:40:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -655,7 +655,9 @@ void
 pmap_destroy(pmap)
 	struct pmap *pmap;
 {
+#ifdef DIAGNOSTIC
 	struct vm_page *pg;
+#endif
 	int refs;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p)\n", pmap));
