@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.30 1999/11/25 21:00:36 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.31 1999/12/01 09:59:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1014,7 +1014,6 @@ int	vga_col ( struct video_state *svsp, int cols );
 void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
 void	vga_screen_off ( void );
 void	vga_screen_on ( void );
-char   *vga_string ( int number );
 int	vga_test ( void );
 int	vgaioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
 void	vgapaletteio ( unsigned idx, struct rgb *val, int writeit );

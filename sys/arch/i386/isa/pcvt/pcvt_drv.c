@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.28 1999/11/26 23:06:29 aaron Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.29 1999/12/01 09:59:59 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -132,11 +132,10 @@ pcattach(struct device *parent, struct device *self, void *aux)
 			printf("ega");
 			break;
 		case VGA_ADAPTOR:
-			printf("%s, ", (char *)vga_string(vga_type));
+			printf("vga 80");
 			if(can_do_132col)
-				printf("80/132 col");
-			else
-				printf("80 col");
+				printf("/132");
+			printf(" col");
 			vgapelinit();
 			break;
 		default:
