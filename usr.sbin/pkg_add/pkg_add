@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.128 2004/11/22 01:56:13 espie Exp $
+# $OpenBSD: pkg_add,v 1.129 2004/11/23 22:58:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -573,7 +573,7 @@ sub install_package
 		for my $spec (split(/,/, $dep->{libspec})) {
 		    if (!lookup_library($state, $spec, $plist,
 			$handle->{solved_dependencies}, 0)) {
-			    Warn "Can't install $pkg: lib not found spec\n";
+			    Warn "Can't install $pkg: lib not found $spec\n";
 			    return () unless $forced{libdepends};
 		    }
 		}
