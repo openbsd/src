@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.8 2003/01/27 23:12:41 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.9 2003/01/28 04:20:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -56,80 +56,7 @@
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
 #include <hppa/gsc/harmonyreg.h>
-
-#define HARMONY_PORT_INPUT_LVL		0
-#define	HARMONY_PORT_OUTPUT_LVL		1
-#define	HARMONY_PORT_MONITOR_LVL	2
-#define	HARMONY_PORT_RECORD_SOURCE	3
-#define	HARMONY_PORT_INPUT_CLASS	4
-#define	HARMONY_PORT_OUTPUT_CLASS	5
-#define	HARMONY_PORT_MONITOR_CLASS	6
-#define	HARMONY_PORT_RECORD_CLASS	7
-
-#define	HARMONY_IN_MIC			0
-#define	HARMONY_IN_LINE			1
-
-#define	PLAYBACK_EMPTYS			3	/* playback empty buffers */
-#define	CAPTURE_EMPTYS			3	/* capture empty buffers */
-#define	HARMONY_BUFSIZE			4096
-
-struct harmony_volume {
-	u_char left, right;
-};
-
-struct harmony_empty {
-	u_int8_t	playback[PLAYBACK_EMPTYS][HARMONY_BUFSIZE];
-	u_int8_t	capture[CAPTURE_EMPTYS][HARMONY_BUFSIZE];
-};
-
-struct harmony_dma {
-	struct harmony_dma *d_next;
-	bus_dmamap_t d_map;
-	bus_dma_segment_t d_seg;
-	caddr_t d_kva;
-	size_t d_size;
-};
-
-struct harmony_channel {
-	struct harmony_dma *c_current;
-	bus_size_t c_segsz;
-	bus_size_t c_cnt;
-	bus_size_t c_blksz;
-	bus_addr_t c_lastaddr;
-	void (*c_intr)(void *);
-	void *c_intrarg;
-};
-
-struct harmony_softc {
-	struct device sc_dv;
-	bus_dma_tag_t sc_dmat;
-	bus_space_tag_t sc_bt;
-	bus_space_handle_t sc_bh;
-	int sc_open;
-	u_int32_t sc_cntlbits;
-	int sc_need_commit;
-	int sc_playback_empty;
-	bus_addr_t sc_playback_paddrs[PLAYBACK_EMPTYS];
-	int sc_capture_empty;
-	bus_addr_t sc_capture_paddrs[CAPTURE_EMPTYS];
-	bus_dmamap_t sc_empty_map;
-	bus_dma_segment_t sc_empty_seg;
-	int sc_empty_rseg;
-	struct harmony_empty *sc_empty_kva;
-	struct harmony_dma *sc_dmas;
-	int sc_playing, sc_capturing;
-	struct harmony_channel sc_playback, sc_capture;
-	struct harmony_volume sc_monitor_lvl, sc_input_lvl, sc_output_lvl;
-	int sc_in_port;
-};
-
-#define	READ_REG(sc, reg)		\
-    bus_space_read_4((sc)->sc_bt, (sc)->sc_bh, (reg))
-#define	WRITE_REG(sc, reg, val)		\
-    bus_space_write_4((sc)->sc_bt, (sc)->sc_bh, (reg), (val))
-#define	SYNC_REG(sc, reg, flags)	\
-    bus_space_barrier((sc)->sc_bt, (sc)->sc_bh, (reg), sizeof(u_int32_t), \
-	(flags))
+#include <hppa/gsc/harmonyvar.h>
 
 int     harmony_open(void *, int);
 void    harmony_close(void *);
@@ -290,6 +217,7 @@ harmony_attach(parent, self, aux)
 
 	/* set defaults */
 	sc->sc_in_port = HARMONY_IN_LINE;
+	sc->sc_out_port = HARMONY_OUT_SPEAKER;
 	sc->sc_input_lvl.left = sc->sc_input_lvl.right = 240;
 	sc->sc_output_lvl.left = sc->sc_output_lvl.right = 244;
 	sc->sc_monitor_lvl.left = sc->sc_monitor_lvl.right = 208;
@@ -653,6 +581,17 @@ harmony_set_port(void *vsc, mixer_ctrl_t *cp)
 		err = 0;
 		sc->sc_need_commit = 1;
 		break;
+	case HARMONY_PORT_OUTPUT_SOURCE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
+		if (cp->un.ord != HARMONY_OUT_LINE &&
+		    cp->un.ord != HARMONY_OUT_SPEAKER &&
+		    cp->un.ord != HARMONY_OUT_HEADPHONE)
+			break;
+		sc->sc_out_port = cp->un.ord;
+		err = 0;
+		sc->sc_need_commit = 1;
+		break;
 	}
 
 	return (err);
@@ -710,6 +649,12 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 		cp->un.ord = sc->sc_in_port;
 		err = 0;
 		break;
+	case HARMONY_PORT_OUTPUT_SOURCE:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
+		cp->un.ord = sc->sc_out_port;
+		err = 0;
+		break;
 	}
 	return (0);
 }
@@ -740,7 +685,7 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = HARMONY_PORT_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strcpy(dip->label.name, AudioNmonitor);
 		dip->un.v.num_channels = 1;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
@@ -754,6 +699,19 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 		dip->un.e.member[0].ord = HARMONY_IN_MIC;
 		strcpy(dip->un.e.member[1].label.name, AudioNline);
 		dip->un.e.member[1].ord = HARMONY_IN_LINE;
+		break;
+	case HARMONY_PORT_OUTPUT_SOURCE:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = HARMONY_PORT_MONITOR_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNoutput);
+		dip->un.e.num_mem = 3;
+		strcpy(dip->un.e.member[0].label.name, AudioNline);
+		dip->un.e.member[0].ord = HARMONY_OUT_LINE;
+		strcpy(dip->un.e.member[1].label.name, AudioNspeaker);
+		dip->un.e.member[1].ord = HARMONY_OUT_SPEAKER;
+		strcpy(dip->un.e.member[2].label.name, AudioNheadphone);
+		dip->un.e.member[2].ord = HARMONY_OUT_HEADPHONE;
 		break;
 	case HARMONY_PORT_INPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
@@ -962,9 +920,7 @@ harmony_start_cp(struct harmony_softc *sc)
 		    c->c_blksz, BUS_DMASYNC_PREWRITE);
 
 		WRITE_REG(sc, HARMONY_RNXTADD, nextaddr);
-		bus_space_barrier(sc->sc_bt, sc->sc_bh,
-		    HARMONY_RNXTADD, sizeof(u_int32_t),
-		    BUS_SPACE_BARRIER_WRITE);
+		SYNC_REG(sc, HARMONY_RNXTADD, BUS_SPACE_BARRIER_WRITE);
 		c->c_lastaddr = nextaddr + togo;
 	}
 }
@@ -1062,7 +1018,7 @@ harmony_set_gainctl(struct harmony_softc *sc)
 	u_int32_t bits, mask, val;
 
 	/* XXX leave these bits alone or the chip will not come out of CNTL */
-	bits = GAINCTL_HE | GAINCTL_LE | GAINCTL_SE | GAINCTL_IS_MASK;
+	bits = GAINCTL_LE | GAINCTL_HE | GAINCTL_SE | GAINCTL_IS_MASK;
 
 	/* input level */
 	bits |= ((sc->sc_input_lvl.left >> (8 - GAINCTL_INPUT_BITS)) <<
@@ -1081,6 +1037,25 @@ harmony_set_gainctl(struct harmony_softc *sc)
 	mask = (1 << GAINCTL_MONITOR_BITS) - 1;
 	val = mask - (sc->sc_monitor_lvl.left >> (8 - GAINCTL_MONITOR_BITS));
 	bits |= (val << GAINCTL_MONITOR_S) & GAINCTL_MONITOR_M;
+
+#if 0
+	/* XXX messing with these causes CNTL_C to get stuck... grr. */
+	bits &= ~GAINCTL_IS_MASK;
+	if (sc->sc_in_port == HARMONY_IN_MIC)
+		bits |= GAINCTL_IS_LINE;
+	else
+		bits |= GAINCTL_IS_MIC;
+
+	/* XXX messing with these causes CNTL_C to get stuck... grr. */
+	bits = ~(GAINCTL_LE | GAINCTL_HE | GAINCTL_SE);
+	if (sc->sc_out_port == HARMONY_OUT_LINE)
+		bits |= GAINCTL_LE;
+	else if (sc->sc_out_port == HARMONY_OUT_SPEAKER)
+		bits |= GAINCTL_SE;
+	else
+		bits |= GAINCTL_HE;
+
+#endif
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_GAINCTL, bits);
 }
