@@ -4878,8 +4878,32 @@ server_cleanup (sig)
     int sig;
 {
     /* Do "rm -rf" on the temp directory.  */
+    static int called = 0;
     int status;
     int save_noexec;
+
+    if (called++)
+	return;
+
+    /* already processing cleanup, do not want recursion */
+#ifdef SIGABRT
+    (void) SIG_deregister (SIGABRT, server_cleanup);
+#endif
+#ifdef SIGHUP
+    (void) SIG_deregister (SIGHUP, server_cleanup);
+#endif
+#ifdef SIGINT
+    (void) SIG_deregister (SIGINT, server_cleanup);
+#endif
+#ifdef SIGQUIT
+    (void) SIG_deregister (SIGQUIT, server_cleanup);
+#endif
+#ifdef SIGPIPE
+    (void) SIG_deregister (SIGPIPE, server_cleanup);
+#endif
+#ifdef SIGTERM
+    (void) SIG_deregister (SIGTERM, server_cleanup);
+#endif
 
     if (buf_to_net != NULL)
     {
