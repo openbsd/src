@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.18 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.19 2005/03/31 15:10:51 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,7 @@
 #include "proto.h"
 
 
-static int cvs_commit_prepare(CVSFILE *, void *);
+int cvs_commit_prepare(CVSFILE *, void *);
 int cvs_commit_file(CVSFILE *, void *);
 int cvs_commit_options(char *, int, char **, int *);
 int cvs_commit_helper(void);
