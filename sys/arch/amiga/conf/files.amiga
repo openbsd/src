@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.25 1998/01/07 00:33:44 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.26 1998/01/07 00:34:57 niklas Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -349,6 +349,10 @@ file	arch/amiga/isa/isadma.c		isadma needs-flag
 device	isaed: ifnet, ether
 attach	isaed at isa with isaed_isa
 file	arch/amiga/isa/if_isaed.c	isaed & isaed_isa needs-flag
+
+# ISA PnP
+include "../../../dev/isa/files.isapnp"
+file	arch/amiga/isa/isapnp_machdep.c	isapnp
 
 # DraCo serial port
 attach	com at supio with com_supio
