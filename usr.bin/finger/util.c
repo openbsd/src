@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 1997/06/02 21:33:28 kstailey Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 1997/06/17 21:00:01 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.6 1997/06/02 21:33:28 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.7 1997/06/17 21:00:01 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ match(pw, user)
 	if (!(p = strtok(p, ",")))
 		return(0);
 	expandusername(p, pw->pw_name, name, sizeof(name));
-	for (t = name; (p = strtok(t, "\t ")) != NULL; t = (char *)NULL)
+	for (t = name; (p = strtok(t, "\t ")) != NULL; t = NULL)
 		if (!strcasecmp(p, user))
 			return(1);
 	return(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.2 1996/06/26 05:32:45 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.3 1997/06/17 20:56:40 kstailey Exp $	*/
 /*	$NetBSD: subr.c,v 1.4 1995/09/10 15:55:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: subr.c,v 1.2 1996/06/26 05:32:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.3 1997/06/17 20:56:40 kstailey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -91,7 +91,7 @@ char *Calloc(nelements, size)
 	int	size;
 {
 	char	*back;
-	if ( (back = (char *)calloc(nelements, size)) == (char *)NULL){
+	if ( (back = (char *)calloc(nelements, size)) == NULL) {
 		error("Ran out of memory.\n");
 		exit(1);
 	}
