@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.11 2000/01/06 07:06:00 d Exp $
+ * $OpenBSD: pthread.h,v 1.12 2000/12/06 17:18:47 deraadt Exp $
  *
  * $FreeBSD: pthread.h,v 1.13 1999/07/31 08:36:07 rse Exp $
  */
@@ -237,7 +237,7 @@ int		pthread_create __P((pthread_t *, const pthread_attr_t *,
 			void *(*start_routine) (void *), void *));
 int		pthread_detach __P((pthread_t));
 int		pthread_equal __P((pthread_t, pthread_t));
-__dead void	pthread_exit __P((void *)) __attribute__((noreturn));
+__dead void	pthread_exit __P((void *)) __attribute__((__noreturn__));
 void		*pthread_getspecific __P((pthread_key_t));
 int		pthread_join __P((pthread_t, void **));
 int		pthread_key_create __P((pthread_key_t *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oldmon.h,v 1.4 1997/08/08 08:26:32 downsj Exp $	*/
+/*	$OpenBSD: oldmon.h,v 1.5 2000/12/06 17:19:00 deraadt Exp $	*/
 /*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
 
 /*
@@ -235,7 +235,7 @@ struct om_vector {
 					/* Really struct pgmapent *  */
 
 	__dead void (*exitToMon)
-	    __P((void)) __attribute__((noreturn));/* Exit from user program */
+	    __P((void)) __attribute__((__noreturn__));/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
 		    __P((int, caddr_t, int));

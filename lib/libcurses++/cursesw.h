@@ -867,7 +867,7 @@ public:
     // Perform a scanw function from the window. This only works if you're
     // using the GNU C++ compiler.
 #if __GNUG__ >= 2
-    __attribute__ ((format (scanf, 2, 3)));
+    __attribute__ ((__format__ (scanf, 2, 3)));
 #else
   ;
 #endif
@@ -876,7 +876,7 @@ public:
     // Move the cursor to the requested position and then perform a scanw
     // from the window. This nly works if you're using the GNU C++ compiler.
 #if __GNUG__ >= 2
-    __attribute__ ((format (scanf, 4, 5)));
+    __attribute__ ((__format__ (scanf, 4, 5)));
 #else
   ;
 #endif
@@ -908,7 +908,7 @@ public:
   int            printw(const char* fmt, ...)
     // Do a formatted print to the window.
 #if __GNUG__ >= 2
-    __attribute__ ((format (printf, 2, 3)));
+    __attribute__ ((__format__ (printf, 2, 3)));
 #else
   ;
 #endif
@@ -916,7 +916,7 @@ public:
   int            printw(int y, int x, const char * fmt, ...)
     // Move the cursor and then do a formatted print to the window.
 #if __GNUG__ >= 2
-    __attribute__ ((format (printf, 4, 5)));
+    __attribute__ ((__format__ (printf, 4, 5)));
 #else
   ;
 #endif

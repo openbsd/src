@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.33 2000/09/12 17:30:45 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.34 2000/12/06 17:18:43 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@
 #endif
 
 __BEGIN_DECLS
-__dead void	 _exit __P((int)) __attribute__((noreturn));
+__dead void	 _exit __P((int)) __attribute__((__noreturn__));
 int	 access __P((const char *, int));
 unsigned int alarm __P((unsigned int));
 int	 chdir __P((const char *));

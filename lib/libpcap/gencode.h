@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.7 2000/04/26 21:25:52 jakob Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.8 2000/12/06 17:18:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.7 2000/04/26 21:25:52 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.8 2000/12/06 17:18:52 deraadt Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -179,7 +179,7 @@ struct block *gen_inbound(int);
 void bpf_optimize(struct block **);
 #ifdef __STDC__
 __dead void bpf_error(const char *, ...)
-    __attribute__((volatile, format (printf, 1, 2)));
+    __attribute__((volatile, __format__ (printf, 1, 2)));
 #endif
 
 void finish_parse(struct block *);

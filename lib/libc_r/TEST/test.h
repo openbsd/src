@@ -9,12 +9,12 @@
 #include <stdarg.h>
 
 int	_thread_sys_write __P((int, const char*, size_t));
-__dead void _thread_sys__exit __P((int)) __attribute__((noreturn));
+__dead void _thread_sys__exit __P((int)) __attribute__((__noreturn__));
 
 static __dead void __vpanic __P((const char *, const char *, const char *, 
-	int, const char *, va_list)) __attribute__((noreturn));
+	int, const char *, va_list)) __attribute__((__noreturn__));
 static __dead void __panic __P((const char *, const char *, const char *,
-	int, const char *, ...)) __attribute__((noreturn));
+	int, const char *, ...)) __attribute__((__noreturn__));
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <pthread.h>

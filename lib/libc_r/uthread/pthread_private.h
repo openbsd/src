@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.20 2000/10/04 05:55:35 d Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.21 2000/12/06 17:18:47 deraadt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -823,7 +823,7 @@ void	_waitq_remove(pthread_t pthread);
 void	_waitq_setactive(void);
 void	_waitq_clearactive(void);
 #endif
-__dead void _thread_exit(const char *, int, const char *) __attribute__((noreturn));
+__dead void _thread_exit(const char *, int, const char *) __attribute__((__noreturn__));
 void    *_thread_cleanup(pthread_t);
 void    _thread_cleanupspecific(void);
 void    _thread_dump_info(void);
@@ -986,7 +986,7 @@ pid_t   _thread_sys_fork(void);
 pid_t   _thread_sys_tcgetpgrp(int);
 ssize_t _thread_sys_read(int, void *, size_t);
 ssize_t _thread_sys_write(int, const void *, size_t);
-__dead void	_thread_sys__exit(int) __attribute__((noreturn));
+__dead void	_thread_sys__exit(int) __attribute__((__noreturn__));
 #endif
 
 /* #include <fcntl.h> */

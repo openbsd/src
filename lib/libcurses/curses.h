@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.55 2000/10/22 18:27:19 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.56 2000/12/06 17:18:49 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -360,13 +360,13 @@ extern int wresize (WINDOW *, int, int);
  * passed (that's non-portable).
  */
 #ifdef	GCC_PRINTF
-#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
+#define GCC_PRINTFLIKE(fmt,var) __attribute__((__format__(printf,fmt,var)))
 #else
 #define GCC_PRINTFLIKE(fmt,var) /*nothing*/
 #endif
 
 #ifdef	GCC_SCANF
-#define GCC_SCANFLIKE(fmt,var)  __attribute__((format(scanf,fmt,var)))
+#define GCC_SCANFLIKE(fmt,var)  __attribute__((__format__(scanf,fmt,var)))
 #else
 #define GCC_SCANFLIKE(fmt,var)  /*nothing*/
 #endif

@@ -51,10 +51,10 @@
 #define CC_HAS_PROTOS 1
 #define CPP_HAS_PARAM_INIT 1
 #define ETIP_NEEDS_MATH_H 1
-#define GCC_NORETURN __attribute__((noreturn))
+#define GCC_NORETURN __attribute__((__noreturn__))
 #define GCC_PRINTF 1
 #define GCC_SCANF 1
-#define GCC_UNUSED __attribute__((unused))
+#define GCC_UNUSED __attribute__((__unused__))
 #define HAVE_BIG_CORE 1
 #define HAVE_BSD_CGETENT 1
 #define HAVE_CURSES_VERSION 1

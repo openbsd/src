@@ -279,7 +279,7 @@ void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 void			uvm_exit __P((struct proc *));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
-__dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
+__dead void		uvm_scheduler __P((void)) __attribute__((__noreturn__));
 void			uvm_swapin __P((struct proc *));
 boolean_t		uvm_useracc __P((caddr_t, size_t, int));
 void			uvm_vslock __P((struct proc *, caddr_t, size_t,
