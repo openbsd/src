@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.3 2004/09/24 20:50:49 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.4 2004/09/24 21:29:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -227,6 +227,7 @@ fhc_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	struct fhc_softc *sc = t->cookie;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	struct intrhand *ih;
+	long vec;
 
 	if (level == IPL_NONE)
 		level = INTLEV(ihandle);
@@ -248,10 +249,12 @@ fhc_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		intrregs = bus_space_vaddr(sc->sc_bt, *hp);
 		intrmapptr = &intrregs->imap;
 		intrclrptr = &intrregs->iclr;
-	}
+		vec = INTVEC(*intrmapptr);
+	} else
+		vec = INTVEC(ihandle);
 
-	ih = bus_intr_allocate(t0, handler, arg, INTINO(ihandle), level,
-	    intrmapptr, intrclrptr, what);
+	ih = bus_intr_allocate(t0, handler, arg, vec, level, intrmapptr,
+	    intrclrptr, what);
 	if (ih == NULL)
 		return (NULL);
 
