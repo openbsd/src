@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.15 2003/06/03 13:16:09 jmc Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.16 2003/11/07 09:00:43 jmc Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Print all device variables and their current values.
+.It Fl n
+Suppress printing of the variable name in the output.
 .It Fl w Ar name=value
 Attempt to set the specified variable
 .Ar name
@@ -82,8 +84,6 @@ symbol.
 See the
 .Sx EXAMPLES
 section for more details.
-.It Fl n
-Suppress printing of the variable name in the output.
 .El
 .Pp
 The
@@ -110,28 +110,31 @@ Use the
 .Xr kbd 8
 utility to determine which keyboard encodings are available for your
 country.
+.Pp
+A keyboard mapping can also be specified in
+.Pa /etc/kbdtype .
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
+.It Pa /dev/ttyC0
+display control device
 .It Pa /dev/wskbd0
 keyboard control device
 .It Pa /dev/wsmouse0
 mouse control device
-.It Pa /dev/ttyC0
-display control device
-.It Pa /usr/include/dev/wscons/wsconsio.h
-keyboard/mouse/display definitions
+.It Pa /etc/kbdtype
+default keyboard mapping
 .It Pa /etc/wsconsctl.conf
 a list of parameters that get set at system startup time from
 .Xr rc 8
+.It Pa /usr/include/dev/wscons/wsconsio.h
+keyboard/mouse/display definitions
 .El
 .Sh EXAMPLES
-.Li # wsconsctl -w keyboard.encoding=uk
+Set a UK keyboard encoding:
 .Pp
-Sets a UK keyboard encoding.
+.Dl # wsconsctl -w keyboard.encoding=uk
 .Pp
-.Li # wsconsctl -w keyboard.map+="keysym Caps_Lock = Control_L"
-.Pp
-Modifies the current keyboard encoding so that, when the
+Modify the current keyboard encoding so that, when the
 .Ar Caps Lock
 key is pressed, the same encoding sequence as
 .Ar Left Control
@@ -141,18 +144,17 @@ to the
 .Ar /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
-.Li # wsconsctl -w keyboard.map+="keycode 184=Mode_switch"
+.Dl # wsconsctl -w keyboard.map+="keysym Caps_Lock = Control_L"
 .Pp
-Assigns the
+Assign the
 .Ar Right Alt
-key to be the group modifier (layout is changed while the key is pressed).
+key to be the group modifier (layout is changed while the key is pressed):
 .Pp
-.Li # wsconsctl -w keyboard.map+="keycode 157=Mode_Lock"
+.Dl # wsconsctl -w keyboard.map+="keycode 184=Mode_switch"
 .Pp
-Assigns the
+Assign the
 .Ar Right Control
 key to be the lock for the group modifier.
-.Pp
 The effect of
 .Ar Mode_Lock
 and
@@ -163,9 +165,9 @@ and
 .Ar Shift
 behaviour.
 .Pp
-.Li # wsconsctl -w keyboard.encoding=us.swapctrlcaps
+.Dl # wsconsctl -w keyboard.map+="keycode 157=Mode_Lock"
 .Pp
-Sets a US keyboard encoding, with the
+Set a US keyboard encoding, with the
 .Ar Caps Lock
 and
 .Ar Left Control
@@ -176,15 +178,17 @@ encoding does not work for all national keyboard encodings.
 For most purposes, the ability to set the value returned
 by the
 .Ar Caps Lock
-key is enough - see the previous example for details.
+key is enough \- see the previous example for details.
 .Pp
-.Li # wsconsctl -w keyboard.bell.pitch=1200
+.Dl # wsconsctl -w keyboard.encoding=us.swapctrlcaps
 .Pp
-Sets the bell pitch to be 1200.
+Set the bell pitch to be 1200:
 .Pp
-.Li # wsconsctl -w keyboard.bell.pitch+=200
+.Dl # wsconsctl -w keyboard.bell.pitch=1200
 .Pp
-Adds 200 to the current pitch of the bell.
+Add 200 to the current pitch of the bell:
+.Pp
+.Dl # wsconsctl -w keyboard.bell.pitch+=200
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
