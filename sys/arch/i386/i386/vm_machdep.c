@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 1995/12/09 04:37:44 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 1995/12/24 01:07:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -154,6 +154,20 @@ cpu_set_kpc(p, pc)
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
 
 	sf->sf_esi = pc;
+}
+
+void
+cpu_swapout(p)
+	struct proc *p;
+{
+
+#if NNPX > 0
+	/*
+	 * Make sure we save the FP state before the user area vanishes.
+	 */
+	if (npxproc == p)
+		npxsave();
+#endif
 }
 
 /*
