@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.307 2003/01/23 13:36:17 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.308 2003/01/24 11:30:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2817,8 +2817,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 {
 	struct pf_tree_node	 key;
 	struct tcphdr		*th = pd->hdr.tcp;
-	u_int32_t		 win = ntohs(th->th_win);
+	u_int16_t		 win = ntohs(th->th_win);
 	u_int32_t		 ack, end, seq;
+	u_int8_t		 sws, dws;
 	int			 ackskew;
 	struct pf_state_peer	*src, *dst;
 
@@ -2838,6 +2839,12 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		src = &(*state)->dst;
 		dst = &(*state)->src;
 	}
+
+	if (src->wscale && dst->wscale && !(th->th_flags & TH_SYN)) {
+		sws = src->wscale & PF_WSCALE_MASK;
+		dws = dst->wscale & PF_WSCALE_MASK;
+	} else
+		sws = dws = 0;
 
 	/*
 	 * Sequence tracking algorithm from Guido van Rooij's paper:
@@ -2879,8 +2886,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 * after establishment)
 		 */
 		if (src->seqhi == 1 ||
-		    SEQ_GEQ(end + MAX(1, dst->max_win), src->seqhi))
-			src->seqhi = end + MAX(1, dst->max_win);
+		    SEQ_GEQ(end + MAX(1, dst->max_win << dws), src->seqhi))
+			src->seqhi = end + MAX(1, dst->max_win << dws);
 		if (win > src->max_win)
 			src->max_win = win;
 
@@ -2898,9 +2905,6 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (th->th_flags & TH_FIN)
 			end++;
 	}
-
-	if (src->wscale && dst->wscale && !(th->th_flags & TH_SYN))
-		win <<= src->wscale & PF_WSCALE_MASK;
 
 	if ((th->th_flags & TH_ACK) == 0) {
 		/* Let it pass through the ack skew check */
@@ -2927,7 +2931,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 #define MAXACKWINDOW (0xffff + 1500)	/* 1500 is an arbitrary fudge factor */
 	if (SEQ_GEQ(src->seqhi, end) &&
 	    /* Last octet inside other's window space */
-	    SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
+	    SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)) &&
 	    /* Retrans: not more than one window back */
 	    (ackskew >= -MAXACKWINDOW) &&
 	    /* Acking not more than one window back */
@@ -2944,8 +2948,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (SEQ_GT(end, src->seqlo))
 			src->seqlo = end;
 		/* slide the window of what the other end can send */
-		if (SEQ_GEQ(ack + win, dst->seqhi))
-			dst->seqhi = ack + MAX(win, 1);
+		if (SEQ_GEQ(ack + (win << sws), dst->seqhi))
+			dst->seqhi = ack + MAX((win << sws), 1);
 
 
 		/* update states */
@@ -3034,8 +3038,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (SEQ_GT(end, src->seqlo))
 			src->seqlo = end;
 		/* slide the window of what the other end can send */
-		if (SEQ_GEQ(ack + win, dst->seqhi))
-			dst->seqhi = ack + MAX(win, 1);
+		if (SEQ_GEQ(ack + (win << sws), dst->seqhi))
+			dst->seqhi = ack + MAX((win << sws), 1);
 
 		/*
 		 * Cannot set dst->seqhi here since this could be a shotgunned
@@ -3062,7 +3066,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    direction == (*state)->direction ? "fwd" : "rev");
 			printf("pf: State failure on: %c %c %c %c | %c %c\n",
 			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
-			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
+			    SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)) ?
+			    ' ': '2',
 			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
 			    (ackskew <= MAXACKWINDOW) ? ' ' : '4',
 			    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) ?' ' :'5',
@@ -3379,6 +3384,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			u_int32_t		 seq;
 			struct pf_tree_node	 key;
 			struct pf_state_peer	*src, *dst;
+			u_int8_t		 dws;
 
 			/*
 			 * Only the first 8 bytes of the TCP header can be
@@ -3409,6 +3415,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				dst = &(*state)->dst;
 			}
 
+			if (src->wscale && dst->wscale && !(th.th_flags & TH_SYN))
+				dws = dst->wscale & PF_WSCALE_MASK;
+			else
+				dws = 0;
+
 			/* Demodulate sequence number */
 			seq = ntohl(th.th_seq) - src->seqdiff;
 			if (src->seqdiff)
@@ -3416,7 +3427,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				    htonl(seq), 0);
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
-			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
+			    !SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws))) {
 				if (pf_status.debug >= PF_DEBUG_MISC) {
 					printf("pf: BAD ICMP state: ");
 					pf_print_state(*state);
