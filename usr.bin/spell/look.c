@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.1 2002/03/01 22:01:11 millert Exp $	*/
+/*	$OpenBSD: look.c,v 1.2 2002/06/03 17:53:32 kjell Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static const char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static const char rcsid[] = "$OpenBSD: look.c,v 1.1 2002/03/01 22:01:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: look.c,v 1.2 2002/06/03 17:53:32 kjell Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -155,9 +155,9 @@ linear_search(u_char *string, u_char *front, u_char *back)
 	while (front < back) {
 		result = compare(string, front, back);
 		if (result == 0)
-			return(front);	/* found it */
+			return (front);	/* found it */
 		if (result < 0)
-			return(NULL);	/* not there */
+			return (NULL);	/* not there */
 
 		SKIP_PAST_NEWLINE(front, back);
 	}
@@ -178,8 +178,8 @@ compare(u_char *s1, u_char *s2, u_char *back)
 		else
 			ch = *s2;
 		if (*s1 != ch)
-			return(*s1 - ch);
+			return (*s1 - ch);
 		if (ch == '\0')
-			return(0);
+			return (0);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.2 2002/03/02 16:20:33 millert Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.3 2002/06/03 17:53:32 kjell Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)spell.c	8.1 (Berkeley) 6/6/93";
 #else
 #endif
-static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.2 2002/03/02 16:20:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.3 2002/06/03 17:53:32 kjell Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -396,31 +396,31 @@ suffix(char *ep, int lev)
 		for (sp = cp; --sp >= word && !vowel(*sp);)
 			;	/* nothing */
 		if (sp < word)
-			return(0);
+			return (0);
 		if ((*t->p1)(ep-t->n1, t->d1, t->a1, lev+1))
-			return(1);
+			return (1);
 		if (t->p2 != NULL) {
 			deriv[lev] = deriv[lev+1] = '\0';
-			return((*t->p2)(ep-t->n2, t->d2, t->a2, lev));
+			return ((*t->p2)(ep-t->n2, t->d2, t->a2, lev));
 		}
-		return(0);
+		return (0);
 next:		;
 	}
-	return(0);
+	return (0);
 }
 
 int
 nop(void)
 {
 
-	return(0);
+	return (0);
 }
 
 int
 strip(char *ep, char *d, char *a, int lev)
 {
 
-	return(trypref(ep, a, lev) || suffix(ep, lev));
+	return (trypref(ep, a, lev) || suffix(ep, lev));
 }
 
 int
@@ -428,10 +428,10 @@ s(char *ep, char *d, char *a, int lev)
 {
 
 	if (lev > DLEV + 1)
-		return(0);
+		return (0);
 	if (*ep == 's' && ep[-1] == 's')
-		return(0);
-	return(strip(ep, d, a, lev));
+		return (0);
+	return (strip(ep, d, a, lev));
 }
 
 int
@@ -439,8 +439,8 @@ an(char *ep, char *d, char *a, int lev)
 {
 
 	if (!isupper(*word))	/* must be proper name */
-		return(0);
-	return(trypref(ep,a,lev));
+		return (0);
+	return (trypref(ep,a,lev));
 }
 
 int
@@ -448,7 +448,7 @@ ize(char *ep, char *d, char *a, int lev)
 {
 
 	*ep++ = 'e';
-	return(strip(ep ,"", d, lev));
+	return (strip(ep ,"", d, lev));
 }
 
 int
@@ -468,9 +468,9 @@ ily(char *ep, char *d, char *a, int lev)
 {
 
 	if (ep[-1] == 'i')
-		return(i_to_y(ep, d, a, lev));
+		return (i_to_y(ep, d, a, lev));
 	else
-		return(strip(ep, d, a, lev));
+		return (strip(ep, d, a, lev));
 }
 
 int
@@ -478,9 +478,9 @@ ncy(char *ep, char *d, char *a, int lev)
 {
 
 	if (skipv(skipv(ep-1)) < word)
-		return(0);
+		return (0);
 	ep[-1] = 't';
-	return(strip(ep, d, a, lev));
+	return (strip(ep, d, a, lev));
 }
 
 int
@@ -488,7 +488,7 @@ bility(char *ep, char *d, char *a, int lev)
 {
 
 	*ep++ = 'l';
-	return(y_to_e(ep, d, a, lev));
+	return (y_to_e(ep, d, a, lev));
 }
 
 int
@@ -499,7 +499,7 @@ i_to_y(char *ep, char *d, char *a, int lev)
 		ep[-1] = 'y';
 		a = d;
 	}
-	return(strip(ep, "", a, lev));
+	return (strip(ep, "", a, lev));
 }
 
 int
@@ -507,18 +507,18 @@ es(char *ep, char *d, char *a, int lev)
 {
 
 	if (lev > DLEV)
-		return(0);
+		return (0);
 
 	switch (ep[-1]) {
 	default:
-		return(0);
+		return (0);
 	case 'i':
-		return(i_to_y(ep, d, a, lev));
+		return (i_to_y(ep, d, a, lev));
 	case 's':
 	case 'h':
 	case 'z':
 	case 'x':
-		return(strip(ep, d, a, lev));
+		return (strip(ep, d, a, lev));
 	}
 }
 
@@ -528,7 +528,7 @@ metry(char *ep, char *d, char *a, int lev)
 
 	ep[-2] = 'e';
 	ep[-1] = 'r';
-	return(strip(ep, d, a, lev));
+	return (strip(ep, d, a, lev));
 }
 
 int
@@ -538,11 +538,11 @@ tion(char *ep, char *d, char *a, int lev)
 	switch (ep[-2]) {
 	case 'c':
 	case 'r':
-		return(trypref(ep, a, lev));
+		return (trypref(ep, a, lev));
 	case 'a':
-		return(y_to_e(ep, d, a, lev));
+		return (y_to_e(ep, d, a, lev));
 	}
-	return(0);
+	return (0);
 }
 
 /*
@@ -562,7 +562,7 @@ CCe(char *ep, char *d, char *a, int lev)
 		case 'w':
 			break;
 		default:
-			return(y_to_e(ep, d, a, lev));
+			return (y_to_e(ep, d, a, lev));
 		}
 		break;
 	case 's':
@@ -571,18 +571,18 @@ CCe(char *ep, char *d, char *a, int lev)
 	case 'c':
 	case 'g':
 		if (*ep == 'a')
-			return(0);
+			return (0);
 	case 'v':
 	case 'z':
 		if (vowel(ep[-2]))
 			break;
 	case 'u':
 		if (y_to_e(ep, d, a, lev))
-			return(1);
+			return (1);
 		if (!(ep[-2] == 'n' && ep[-1] == 'g'))
-			return(0);
+			return (0);
 	}
-	return(VCe(ep, d, a, lev));
+	return (VCe(ep, d, a, lev));
 }
 
 /*
@@ -595,16 +595,16 @@ VCe(char *ep, char *d, char *a, int lev)
 
 	c = ep[-1];
 	if (c == 'e')
-		return(0);
+		return (0);
 	if (!vowel(c) && vowel(ep[-2])) {
 		c = *ep;
 		*ep++ = 'e';
 		if (trypref(ep, d, lev) || suffix(ep, lev))
-			return(1);
+			return (1);
 		ep--;
 		*ep = c;
 	}
-	return(strip(ep, d, a, lev));
+	return (strip(ep, d, a, lev));
 }
 
 char *
@@ -622,12 +622,12 @@ lookuppref(char **wp, char *ep)
 		for (cp = bp; cp < ep; cp++) {
 			if (vowel(*cp)) {
 				*wp = bp;
-				return(*sp);
+				return (*sp);
 			}
 		}
 next:		;
 	}
-	return(0);
+	return (0);
 }
 
 /*
@@ -645,7 +645,7 @@ trypref(char *ep, char *a, int lev)
 
 	deriv[lev] = a;
 	if (tryword(word, ep, lev))
-		return(1);
+		return (1);
 	bp = word;
 	pp = space;
 	deriv[lev+1] = pp;
@@ -658,10 +658,10 @@ trypref(char *ep, char *a, int lev)
 			break;
 		}
 		if (pp - space >= sizeof(space))
-			return(0);
+			return (0);
 	}
 	deriv[lev+1] = deriv[lev+2] = '\0';
-	return(val);
+	return (val);
 }
 
 int
@@ -671,9 +671,9 @@ tryword(char *bp, char *ep, int lev)
 	char duple[3];
 
 	if (ep-bp <= 1)
-		return(0);
+		return (0);
 	if (vowel(*ep) && monosyl(bp, ep))
-		return(0);
+		return (0);
 
 	i = dict(bp, ep);
 	if (i == 0 && vowel(*ep) && ep[-1] == ep[-2] && monosyl(bp, ep-1)) {
@@ -685,14 +685,14 @@ tryword(char *bp, char *ep, int lev)
 		i = dict(bp, ep);
 	}
 	if (vflag == 0 || i == 0)
-		return(i);
+		return (i);
 
 	/* Also tack on possible derivations. (XXX - warn on truncation?) */
 	for (j = lev; j > 0; j--) {
 		if (deriv[j])
 			strlcat(affix, deriv[j], sizeof(affix));
 	}
-	return(i);
+	return (i);
 }
 
 int
@@ -700,13 +700,13 @@ monosyl(char *bp, char *ep)
 {
 
 	if (ep < bp + 2)
-		return(0);
+		return (0);
 	if (vowel(*--ep) || !vowel(*--ep) || ep[1] == 'x' || ep[1] == 'w')
-		return(0);
+		return (0);
 	while (--ep >= bp)
 		if (vowel(*ep))
-			return(0);
-	return(1);
+			return (0);
+	return (1);
 }
 
 char *
@@ -717,7 +717,7 @@ skipv(char *s)
 		s--;
 	while (s >= word && !vowel(*s))
 		s--;
-	return(s);
+	return (s);
 }
 
 int
@@ -731,9 +731,9 @@ vowel(int c)
 	case 'o':
 	case 'u':
 	case 'y':
-		return(1);
+		return (1);
 	}
-	return(0);
+	return (0);
 }
 
 /*
@@ -777,7 +777,7 @@ estrdup(const char *s)
 
 	if ((d = strdup(s)) == NULL)
 		err(1, "strdup");
-	return(d);
+	return (d);
 }
 
 /*
@@ -800,7 +800,7 @@ dict(char *bp, char *ep)
 			break;
 	}
 	*ep = c;
-	return(rval);
+	return (rval);
 }
 
 __dead void
