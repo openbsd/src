@@ -442,15 +442,15 @@ sub next_line
                 $in =~ s/\?\?</{/g;                         # | ??<|  {|
                 $in =~ s/\?\?>/}/g;                         # | ??>|  }|
             }
-	    if ($in =~ /^\#ifdef __LANGUAGE_PASCAL__/) {
+	    if ($in =~ s/^\#ifdef __LANGUAGE_PASCAL__//) {
                 # Tru64 disassembler.h evilness: mixed C and Pascal.
 		while (<IN>) {
 		    last if /^\#endif/; 
 		}
 		next READ;
 	    }
-	    if ($in =~ /^extern inline / && # Inlined assembler.
-		$^O eq 'linux' && $file =~ m!(?:^|/)asm/[^/]+\.h$!) {
+	    # Skip inlined functions in headers
+	    if ($in =~ s/^(extern|static) (__inline__|inline) .*[^;]\s*$//) {
  		while (<IN>) {
 		    last if /^}/; 
 		}
