@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.3 2001/06/24 21:32:17 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.4 2001/06/24 21:50:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -38,84 +38,93 @@
 enum	{ PF_IN=0, PF_OUT=1 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2 };
 
+struct rule_addr {
+	u_int32_t	addr;
+	u_int32_t	mask;
+	u_int16_t	port[2];
+	u_int8_t	not;
+	u_int8_t	port_op;
+};
+
 struct rule {
+	char		 ifname[IFNAMSIZ];
+	struct ifnet	*ifp;
+	struct rule_addr src;
+	struct rule_addr dst;
+	struct rule	*next;
+
 	u_int8_t	 action;
 	u_int8_t	 direction;
 	u_int8_t	 log;
 	u_int8_t	 quick;
+
 	u_int8_t	 keep_state;
-	char		 ifname[16];
-	struct ifnet	*ifp;
 	u_int8_t	 proto;
-	struct {
-		u_int8_t	not;
-		u_int32_t	addr,
-				mask;
-		u_int8_t	port_op;
-		u_int16_t	port[2];
-	}		 src,
-			 dst;
-	u_int8_t	 type,
-			 code;
-	u_int8_t	 flags,
-			 flagset;
-	struct rule	*next;
+	u_int8_t	 type;
+	u_int8_t	 code;
+
+	u_int8_t	 flags;
+	u_int8_t	 flagset;
+};
+
+struct state_host {
+	u_int32_t	addr;
+	u_int16_t	port;
+};
+
+struct state_peer {
+	u_int32_t	seqlo;
+	u_int32_t	seqhi;
+	u_int8_t	state;
 };
 
 struct state {
+	struct state	*next;
+	struct state_host lan;
+	struct state_host gwy;
+	struct state_host ext;
+	struct state_peer src;
+	struct state_peer dst;
+	u_int32_t	 creation;
+	u_int32_t	 expire;
+	u_int32_t	 packets;
+	u_int32_t	 bytes;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
-	struct host {
-		u_int32_t	addr;
-		u_int16_t	port;
-	}		 lan,
-			 gwy,
-			 ext;
-	struct peer {
-		u_int32_t	seqlo,
-				seqhi;
-		u_int8_t	state;
-	}		 src,
-			 dst;
-	u_int32_t	 creation,
-			 expire;
-	u_int32_t	 packets,
-			 bytes;
-	struct state	*next;
 };
 
 struct nat {
-	char		 ifname[16];
+	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
+	struct nat	*next;
+	u_int32_t	 saddr;
+	u_int32_t	 smask;
+	u_int32_t	 daddr;
 	u_int8_t	 proto;
 	u_int8_t	 not;
-	u_int32_t	 saddr,
-			 smask,
-			 daddr;
-	struct nat	*next;
 };
 
 struct rdr {
-	char		 ifname[16];
+	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
+	struct rdr	*next;
+	u_int32_t	 daddr;
+	u_int32_t	 dmask;
+	u_int32_t	 raddr;
+	u_int16_t	 dport;
+	u_int16_t	 rport;
 	u_int8_t	 proto;
 	u_int8_t	 not;
-	u_int32_t	 daddr,
-			 dmask,
-			 raddr;
-	u_int16_t	 dport,
-			 rport;
-	struct rdr	*next;
 };
 
 struct status {
-	u_int8_t	running;
+	u_int32_t	running;
 	u_int32_t	bytes[2];
 	u_int32_t	packets[2][2];
-	u_int32_t	states,
-			state_inserts,
-			state_removals,
-			state_searches;
+	u_int32_t	states;
+	u_int32_t	state_inserts;
+	u_int32_t	state_removals;
+	u_int32_t	state_searches;
 	u_int32_t	since;
 };
 
@@ -163,7 +172,7 @@ enum error_msg {
 
 #ifdef _KERNEL
 
-int pf_test (int, struct ifnet *, struct mbuf **);
+int	pf_test(int, struct ifnet *, struct mbuf **);
 
 #endif /* _KERNEL */
 

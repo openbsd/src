@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.7 2001/06/24 21:29:29 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.8 2001/06/24 21:50:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -147,16 +147,26 @@ tree_key_compare(struct tree_key *a, struct tree_key *b)
 	 * could use memcmp(), but with the best manual order, we can
 	 * minimize the number of average compares. what is faster?
 	 */
-	if (a->proto   < b->proto  ) return -1;
-	if (a->proto   > b->proto  ) return  1;
-	if (a->addr[0] < b->addr[0]) return -1;
-	if (a->addr[0] > b->addr[0]) return  1;
-	if (a->addr[1] < b->addr[1]) return -1;
-	if (a->addr[1] > b->addr[1]) return  1;
-	if (a->port[0] < b->port[0]) return -1;
-	if (a->port[0] > b->port[0]) return  1;
-	if (a->port[1] < b->port[1]) return -1;
-	if (a->port[1] > b->port[1]) return  1;
+	if (a->proto   < b->proto  )
+		return -1;
+	if (a->proto   > b->proto  )
+		return  1;
+	if (a->addr[0] < b->addr[0])
+		return -1;
+	if (a->addr[0] > b->addr[0])
+		return  1;
+	if (a->addr[1] < b->addr[1])
+		return -1;
+	if (a->addr[1] > b->addr[1])
+		return  1;
+	if (a->port[0] < b->port[0])
+		return -1;
+	if (a->port[0] > b->port[0])
+		return  1;
+	if (a->port[1] < b->port[1])
+		return -1;
+	if (a->port[1] > b->port[1])
+		return  1;
 	return 0;
 }
 
@@ -304,6 +314,7 @@ inline struct state *
 find_state(struct tree_node *p, struct tree_key *key)
 {
 	signed char c;
+
 	while ((p != NULL) && (c = tree_key_compare(&p->key, key)))
 		p = (c > 0) ? p->left : p->right;
 	status.state_searches++;
@@ -878,13 +889,20 @@ inline int
 match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 {
 	switch (op) {
-		case 1: return (p >= a1) && (p <= a2);
-		case 2: return p == a1;
-		case 3: return p != a1;
-		case 4: return p <  a1;
-		case 5: return p <= a1;
-		case 6: return p >  a1;
-		case 7: return p >= a1;
+	case 1:
+		return (p >= a1) && (p <= a2);
+	case 2:
+		return p == a1;
+	case 3:
+		return p != a1;
+	case 4:
+		return p <  a1;
+	case 5:
+		return p <= a1;
+	case 6:
+		return p >  a1;
+	case 7:
+		return p >= a1;
 	}
 	return 0; /* never reached */
 }
@@ -1290,11 +1308,10 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 
 	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext, &key);
 	if (s != NULL) {
-
 		u_int16_t len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
 		u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
+		struct state_peer *src, *dst;
 
-		struct peer *src, *dst;
 		if (direction == s->direction) {
 			src = &s->src;
 			dst = &s->dst;
@@ -1398,7 +1415,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr 
 
 		u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
 
-		struct peer *src, *dst;
+		struct state_peer *src, *dst;
 		if (direction == s->direction) {
 			src = &s->src;
 			dst = &s->dst;
@@ -1505,7 +1522,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 			u_int32_t seq = ntohl(th->th_seq);
 			struct state *s;
 			struct tree_key key;
-			struct peer *src;
+			struct state_peer *src;
 
 			key.proto   = IPPROTO_TCP;
 			key.addr[0] = h2->ip_dst.s_addr;
