@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.69 2004/08/06 22:39:14 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.70 2004/12/30 08:28:39 niklas Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -709,6 +709,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
 	int advice = UVM_ADVICE(flags);
+	int error;
 	UVMHIST_FUNC("uvm_map");
 	UVMHIST_CALLED(maphist);
 
@@ -823,7 +824,16 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 			goto step3;
 		}
 
-		/* got it! */
+		if (prev_entry->aref.ar_amap) {
+			error = amap_extend(prev_entry, size);
+			if (error) {
+				vm_map_unlock(map);
+				if (new_entry) {
+					uvm_mapent_free(new_entry);
+				}
+				return (error);
+			}
+		}
 
 		UVMCNT_INCR(map_backmerge);
 		UVMHIST_LOG(maphist,"  starting back merge", 0, 0, 0, 0);
@@ -832,12 +842,9 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		 * drop our reference to uobj since we are extending a reference
 		 * that we already have (the ref count can not drop to zero).
 		 */
+
 		if (uobj && uobj->pgops->pgo_detach)
 			uobj->pgops->pgo_detach(uobj);
-
-		if (prev_entry->aref.ar_amap) {
-			amap_extend(prev_entry, size);
-		}
 
 		prev_entry->end += size;
 		uvm_rb_fixup(map, prev_entry);

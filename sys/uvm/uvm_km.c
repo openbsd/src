@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.44 2004/08/24 07:16:12 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.45 2004/12/30 08:28:39 niklas Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -537,10 +537,12 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		 */
 
 		if (__predict_false(pg == NULL)) {
-			if (flags & UVM_KMF_NOWAIT) {
+			if ((flags & UVM_KMF_NOWAIT) ||
+			    ((flags & UVM_KMF_CANFAIL) &&
+			    uvmexp.swpgonly == uvmexp.swpages)) {
 				/* free everything! */
 				uvm_unmap(map, kva, kva + size);
-				return(0);
+				return (0);
 			} else {
 				uvm_wait("km_getwait2");	/* sleep here */
 				continue;

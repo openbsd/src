@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.53 2004/05/27 04:55:28 tedu Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.54 2004/12/30 08:28:39 niklas Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -203,6 +203,7 @@ typedef int		vm_prot_t;
  */
 #define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
 #define UVM_KMF_VALLOC	0x2			/* allocate VA only */
+#define UVM_KMF_CANFAIL	0x4			/* caller handles failure */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 
 /*
