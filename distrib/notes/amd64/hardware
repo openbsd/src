@@ -1,9 +1,10 @@
-dnl	$OpenBSD: hardware,v 1.14 2004/04/19 22:54:06 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.15 2004/08/11 01:30:32 nick Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
-OpenBSD does not currently support multiple processors (SMP), but will
-run using one processor on a multi-processor system board.
+OpenBSD/MACHINE OSREV supports most SMP (Symmetrical MultiProcessor)
+systems.  To support SMP operation, a separate SMP kernel (bsd.mp)
+is included with the installation file sets.
 
 Supported hardware {:-include-:}:
 	Processors
@@ -51,8 +52,6 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
 		and AIC-7899 based host adapters (ahc) [*] including the
 		Adaptec cards
-			AHA-274X[W,T]
-			AHA-284X
 			AHA-2910, AHA-2915
 			AHA-2920
 			AHA-2930[C,U2]
