@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.3 2000/07/19 13:53:30 art Exp $	*/
+/*	$OpenBSD: dc.c,v 1.4 2001/08/19 23:54:22 miod Exp $	*/
 /*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/timeout.h>
 
 /*
  * bertram 17-apr-1996: we could use most of the include files directly
@@ -170,6 +171,7 @@ char	dcsoftCAR[NDC];		/* mask of dc's with carrier on (DSR) */
  * we have to use a timer to watch it.
  */
 int	dc_timer;		/* true if timer started */
+struct	timeout dc_timeout;
 
 /*
  * Pdma structures for fast output code
@@ -278,7 +280,7 @@ raster_console()
 
 /*
  * DC7085 (dz-11) probe routine from old-style config.
- * This is only here out of intertia.
+ * This is only here out of inertia.
  */
 int
 dc_doprobe(addr, unit, flags, priority)
@@ -325,7 +327,8 @@ dc_doprobe(addr, unit, flags, priority)
 
 	if (dc_timer == 0) {
 		dc_timer = 1;
-		timeout(dcscan, (void *)0, hz);
+		timeout_set(&dc_timeout, dcscan, NULL);
+		timeout_add(&dc_timeout, hz);
 	}
 
 	/*
@@ -895,7 +898,7 @@ dcscan(arg)
 	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0)
 		dcaddr->dc_tcr &= ~bit;
 	splx(s);
-	timeout(dcscan, (void *)0, hz);
+	timeout_add(&dc_timeout, hz);
 }
 
 /*

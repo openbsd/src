@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.4 2001/06/15 22:45:33 miod Exp $	*/
+/*	$OpenBSD: dz.c,v 1.5 2001/08/19 23:54:27 miod Exp $	*/
 /*	$NetBSD: dz.c,v 1.19 2000/01/24 02:40:29 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #ifdef DDB
 #include <dev/cons.h>
@@ -126,6 +127,8 @@ cdev_decl(dz);
  */
 int	dz_timer = 0;	/* true if timer started */
 
+struct timeout dz_timeout;
+
 #define DZ_DZ	8		/* Unibus DZ-11 board linecount */
 #define DZ_DZV	4		/* Q-bus DZV-11 or DZQ-11 */
 
@@ -151,7 +154,8 @@ dzattach(sc)
 
 	if (dz_timer == 0) {
 		dz_timer = 1;
-		timeout(dzscan, (void *)0, hz);
+		timeout_set(&dz_timeout, dzscan, NULL);
+		timeout_add(&dz_timeout, hz);
 	}
 	printf("\n");
 	return;
@@ -721,6 +725,6 @@ dzscan(arg)
 		sc->sc_rxint = 0;
 	}
 	(void) splx(s);
-	timeout(dzscan, (void *)0, hz);
+	timeout_add(&dz_timeout, hz);
 	return;
 }

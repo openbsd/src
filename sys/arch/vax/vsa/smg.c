@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.4 2001/06/15 22:45:34 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.5 2001/08/19 23:54:22 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <machine/vsbus.h>
 #include <machine/sid.h>
@@ -198,6 +199,8 @@ struct	smg_screen {
 static	struct smg_screen smg_conscreen;
 static	struct smg_screen *curscr;
 
+static	struct timeout smg_blink_timeout;
+
 extern int getmajor __P((void *));	/* conf.c */
 
 int
@@ -247,7 +250,8 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 	aa.console = !(vax_confdata & 0x20);
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
-	timeout(smg_crsr_blink, 0, hz/2);
+	timeout_set(&smg_blink_timeout, smg_crsr_blink, NULL);
+	timeout_add(&smg_blink_timeout, hz / 2);
 	curcmd = CUR_CMD_HSHI;
 	WRITECUR(CUR_CMD, curcmd);
 	qf = qvss8x15.data;
@@ -263,7 +267,7 @@ smg_crsr_blink(void *arg)
 {
 	if (cur_on)
 		*cursor ^= 255;
-	timeout(smg_crsr_blink, 0, hz/2);
+	timeout_add(&smg_blink_timeout, hz / 2);
 }
 
 void
