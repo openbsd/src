@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.23 1999/06/08 16:05:23 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.24 1999/06/14 06:47:54 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -639,6 +639,7 @@ linux_sys_pipe(p, v, retval)
 		syscallarg(int *) pfds;
 	} */ *uap = v;
 	int error;
+	int pfds[2];
 #ifdef __i386__
 	int reg_edx = retval[1];
 #endif /* __i386__ */
@@ -652,7 +653,9 @@ linux_sys_pipe(p, v, retval)
 
 	/* Assumes register_t is an int */
 
-	if ((error = copyout(retval, SCARG(uap, pfds), 2 * sizeof (int)))) {
+	pfds[0] = retval[0];
+	pfds[1] = retval[1];
+	if ((error = copyout(pfds, SCARG(uap, pfds), 2 * sizeof (int)))) {
 #ifdef __i386__
 		retval[1] = reg_edx;
 #endif /* __i386__ */
