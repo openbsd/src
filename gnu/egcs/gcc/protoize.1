@@ -1,0 +1,366 @@
+.\" Copyright (c) 1991, 1992, 1993, 1994 Free Software Foundation
+.\" See section COPYING for conditions for redistribution
+.\"
+.\" $OpenBSD: protoize.1,v 1.1 2003/01/18 23:49:52 deraadt Exp $
+.Dd January 14, 2003
+.Dt PROTOIZE 1 
+.Os
+.Sh NAME
+.Nm protoize, unprotoize
+.Nd automatically add or remove function prototypes
+.Sh SYNOPSIS
+.Nm protoize
+.Bk -words
+.Op Fl CfgklNnqv
+.Op Fl B Ar directory
+.Op Fl c Ar COMPILATION-OPTIONS
+.Op Fl d Ar directory ...
+.Op Fl i Ar string
+.Op Fl p Ar program
+.Op Fl x Ar 
+.Ar
+.Ek
+.Nm unprotoize
+.Bk -words
+.Op Fl fkNnqv
+.Op Fl c Ar COMPILATION-OPTIONS
+.Op Fl d Ar directory ...
+.Op Fl i Ar string
+.Op Fl p Ar program
+.Op Fl x Ar
+.Ar
+.Ek
+.Sh DESCRIPTION
+.Nm protoize
+is an optional part of GNU C.  You can use it
+to add prototypes to a program, thus converting the program to ANSI C
+in one respect.  The companion program
+.Nm unprotoize
+does the reverse: it removes argument types from any 
+prototypes that are found.
+.Pp
+When you run these programs, you must specify a set of source files
+as command line arguments.  The conversion programs start out by
+compiling these files to see what functions they define.  The
+information gathered about a file 
+.Ar FOO 
+is saved in a file named
+.Ar FOO.X .
+.Pp
+After scanning comes the actual conversion.  The specified files are all
+eligible to be converted; any files they include (whether sources or
+just headers) are eligible as well.
+.Pp
+But not all the eligible files are converted.  By default,
+.Nm protoize
+and
+.Nm unprotoize
+convert only source and header files in the
+current directory.  You can specify additional directories whose files
+should be converted with the 
+.Sq Fl d Ar directory ...
+option.  You can also
+specify particular files to exclude with the
+.Sq Fl x Ar
+option.  A file
+is converted if it is eligible, its directory name matches one of the
+specified directory names, and its name within the directory has not
+been excluded.
+.Pp
+Basic conversion with
+.Nm protoize
+consists of rewriting most function
+definitions and function declarations to specify the types of the
+arguments.  The only ones not rewritten are those for varargs functions.
+.Pp
+.Nm protoize
+optionally inserts prototype declarations at the
+beginning of the source file, to make them available for any calls that
+precede the function's definition.  Or it can insert prototype
+declarations with block scope in the blocks where undeclared functions
+are called.
+.Pp
+Basic conversion with
+.Nm unprotoize
+consists of rewriting most
+function declarations to remove any argument types, and rewriting
+function definitions to the old-style pre-ANSI form.
+.Pp
+Both conversion programs print a warning for any function
+declaration or definition that they can't convert.  You can suppress
+these warnings with the
+.Fl q
+option.
+.Pp
+The output from
+.Nm protoize
+or
+.Nm unprotoize
+replaces the original
+source file.  The original file is renamed to a name ending with
+`.save'.  If the `.save' file already exists, then the source file is
+simply discarded.
+.Pp
+.Nm protoize
+and
+.Nm unprotoize
+both depend on
+.Xr gcc 1
+to scan the
+program and collect information about the functions it uses.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl B Ar directory
+Look for the file `SYSCALLS.c.X' in
+.Ar directory ,
+instead of the
+usual directory
+.Pq normally Pa /usr/local/lib .
+This file contains
+prototype information about standard system functions.  This option
+applies only to
+.Nm protoize .
+.It Fl C
+Rename files to end in `.C' instead of `.c'.  This is convenient
+if you are converting a C program to C++.  This option applies
+only to
+.Nm protoize .
+.It Fl c Ar COMPILATION-OPTIONS
+Use
+.Ar COMPILATION-OPTIONS
+as the options when running `gcc' to
+produce the `.X' files.  The special option
+.Fl aux-info
+is always
+passed in addition, to tell `gcc' to write a `.X' file.
+.Pp
+Note that the compilation options must be given as a single
+argument to
+.Nm protoize
+or
+.Nm unprotoize .
+If you want to specify
+several `gcc' options, you must quote the entire set of
+compilation options to make them a single word in the shell.
+.Pp
+There are certain `gcc' arguments that you cannot use, because they
+would produce the wrong kind of output.  These include
+.Fl g ,
+.Fl O ,
+.Fl c ,
+.Fl S ,
+and
+.Fl o .
+If you include these in the
+.Ar COMPILATION-OPTIONS ,
+they are ignored.
+.It Fl d Ar directory
+Specify additional directories whose files should be converted.
+.It Fl g
+Add explicit global declarations.  This means inserting explicit
+declarations at the beginning of each source file for each function
+that is called in the file and was not declared.  These
+declarations precede the first function definition that contains a
+call to an undeclared function.  This option applies only to
+.Nm protoize .
+.It Fl i Ar string
+Indent old-style parameter declarations with the string
+.Ar string .
+This option applies only to
+.Nm protoize .
+.Pp
+.Nm unprotoize
+converts prototyped function definitions to old-style
+function definitions, where the arguments are declared between the
+argument list and the initial `{'.  By default,
+.Nm unprotoize
+uses
+five spaces as the indentation.  If you want to indent with just
+one space instead, use
+.Fl i
+" ".
+.It Fl k
+Keep the `.X' files.  Normally, they are deleted after conversion
+is finished.
+.It Fl l
+Add explicit local declarations.
+.Nm protoize
+with
+.Fl l
+inserts a
+prototype declaration for each function in each block which calls
+the function without any declaration.  This option applies only to
+.Nm protoize .
+.It Fl N
+Make no `.save' files.  The original files are simply deleted.
+Use this option with caution.
+.It Fl n
+Make no real changes.  This mode just prints information about the
+conversions that would have been done without
+.Fl n .
+.It Fl p Ar program
+Use the program
+.Ar program
+as the compiler.  Normally, the name `gcc' is used.
+.It Fl q
+Work quietly.  Most warnings are suppressed.
+.It Fl v
+Print the version number, just like
+.Fl v
+for `gcc'.
+.It Fl x Ar
+List of files to exclude from the conversion process.
+.El
+.Pp
+If you need special compiler options to compile one of your program's
+source files, then you should generate that file's `.X' file specially,
+by running `gcc' on that source file with the appropriate options and
+the option
+.Fl aux-info .
+Then run
+.Nm protoize
+on the entire set of
+files.
+.Nm protoize
+will use the existing `.X' file because it is newer
+than the source file.  For example:
+.Pp
+.Cm $ gcc -Dfoo=bar file1.c -aux-info
+.br
+.Cm $ protoize *.c
+.Pp
+You need to include the special files along with the rest in the
+.Nm protoize
+command, even though their `.X' files already exist, because
+otherwise they won't get converted.
+.Pp
+.Sy "Note: most of this information is out of date and superceded by the"
+.Sy "EGCS install procedures.  It is provided for historical reference only."
+.Sh SEE ALSO
+.Xr gcc 1
+.Sh AUTHORS
+See the GNU CC manual for the contributors to GNU CC.
+.Sh HISTORY
+Ron Guilmette implemented the
+.Nm protoize
+and
+.Nm unprotoize
+tools.
+.Sh BUGS
+For instructions on reporting bugs, see the GCC manual.
+.Sh CAVEATS
+The conversion programs
+.Nm protoize
+and
+.Nm unprotoize
+can sometimes
+change a source file in a way that won't work unless you rearrange it.
+.Pp
+.Nm protoize
+can insert references to a type name or type tag before
+the definition, or in a file where they are not defined.
+.Pp
+If this happens, compiler error messages should indicate where the
+new references are, so fixing the file by hand is straightforward.
+.Pp
+There are some C constructs which
+.Nm protoize
+cannot figure out.
+For example, it can't determine argument types for declaring a
+pointer-to-function variable; this must be done by hand.
+.Nm protoize
+inserts a comment containing `???' each time it finds such a
+variable; all such variables can be found by searching for this
+string.  ANSI C does not require declaring the argument types of
+pointer-to-function types.
+.Pp
+Using
+.Nm unprotoize
+can easily introduce bugs.  If the program
+relied on prototypes to bring about conversion of arguments, these
+conversions will not take place in the program without prototypes.
+One case in which you can be sure
+.Nm unprotoize
+is safe is when you
+are removing prototypes that were made with
+.Nm protoize ;
+if the
+program worked before without any prototypes, it will work again
+without them.
+.Pp
+You can find all the places where this problem might occur by
+compiling the program with the
+.Fl Ar Wconversion
+option.  It prints a
+warning whenever an argument is converted.
+.Pp
+Both conversion programs can be confused if there are macro calls
+in and around the text to be converted.  In other words, the
+standard syntax for a declaration or definition must not result
+from expanding a macro.  This problem is inherent in the design of
+C and cannot be fixed.  If only a few functions have confusing
+macro calls, you can easily convert them manually.
+.Pp
+.Nm protoize
+cannot get the argument types for a function whose
+definition was not actually compiled due to preprocessing
+conditionals.  When this happens,
+.Nm protoize
+changes nothing in
+regard to such a function.
+.Nm protoize
+tries to detect such
+instances and warn about them.
+.Pp
+You can generally work around this problem by using
+.Nm protoize
+step
+by step, each time specifying a different set of
+.Fl D
+options for
+compilation, until all of the functions have been converted.
+There is no automatic way to verify that you have got them all,
+however.
+.Pp
+Confusion may result if there is an occasion to convert a function
+declaration or definition in a region of source code where there
+is more than one formal parameter list present.  Thus, attempts to
+convert code containing multiple (conditionally compiled) versions
+of a single function header (in the same vicinity) may not produce
+the desired (or expected) results.
+.Pp
+If you plan on converting source files which contain such code, it
+is recommended that you first make sure that each conditionally
+compiled region of source code which contains an alternative
+function header also contains at least one additional follower
+token (past the final right parenthesis of the function header).
+This should circumvent the problem.
+.Pp
+.Nm unprotoize
+can become confused when trying to convert a function
+definition or declaration which contains a declaration for a
+pointer-to-function formal argument which has the same name as the
+function being defined or declared.  We recommand you avoid such
+choices of formal parameter names.
+.Pp
+It might ne necessary to correct some of the indentation by hand and
+break long lines.  (The conversion programs don't write lines
+longer than eighty characters in any case.)
+.Sh COPYING
+Copyright 1991, 1992, 1993 Free Software Foundation, Inc.
+.Pp
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+.Pp
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+.Pp
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
