@@ -116,6 +116,9 @@ Boston, MA 02111-1307, USA.  */
 
 #define OBSD_HAS_CORRECT_SPECS
 
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION (flag_pic)
+
 /* pick up defines for mprotect (used in TRANSFER_FROM_TRANPOLINE) */
 #include <sys/types.h>
 #include <sys/mman.h>
