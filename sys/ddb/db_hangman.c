@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.24 2003/06/02 19:27:14 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.25 2005/01/08 19:36:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -48,8 +48,9 @@ struct _abc {
 	char	abc[26+2];	/* for int32 alignment */
 };
 
-#define	TOLOWER(c)	(('A'<=(c)&&(c)<='Z')?(c)-'A'+'a':(c))
-#define	ISALPHA(c)	(('a'<=(c)&&(c)<='z')||('A'<=(c)&&(c)<='Z'))
+#define	TOLOWER(c)	((c)|0x20)
+#define	ISLOWALPHA(c)	('a'<=(c) && (c)<='z')
+#define	ISALPHA(c)	ISLOWALPHA(TOLOWER(c))
 
 void	 db_hang(int, char *, struct _abc *);
 
@@ -158,8 +159,10 @@ db_hang(tries, word, sabc)
 		cnputc((*p >= '0' && *p <= '9') ? ((tries <= (*p) - '0') ?
 		    substchar[(*p) - '0'] : ' ') : *p);
 
-	for (p = word; (c = TOLOWER(*p)); p++)
-		cnputc(ISALPHA(c) && ABC_ISCLR(c) ? '-' : *p);
+	for (p = word; *p; p++) {
+		c = TOLOWER(*p);
+		cnputc(ISLOWALPHA(c) && ABC_ISCLR(c) ? '-' : *p);
+	}
 
 #ifdef ABC_WRONGSTR
 	db_printf(" (%s)\r", ABC_WRONGSTR);
@@ -218,7 +221,7 @@ db_hangman(addr, haddr, count, modif)
 			c = cngetc();
 			c = TOLOWER(c);
 
-			if (ISALPHA(c) && ABC_ISCLR(c)) {
+			if (ISLOWALPHA(c) && ABC_ISCLR(c)) {
 				register char	*p;
 				register size_t	n;
 
