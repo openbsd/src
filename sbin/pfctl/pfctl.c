@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.66 2002/05/23 09:47:20 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.67 2002/06/03 16:13:17 kjell Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1090,6 +1090,7 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
+			pfctl_show_rules(dev, opts, 1);
 			break;
 		default:
 			warnx("Unknown show modifier '%s'", showopt);
