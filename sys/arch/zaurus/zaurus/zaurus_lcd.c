@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.5 2005/01/05 19:12:48 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.6 2005/01/05 23:28:54 drahn Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -146,7 +146,7 @@ static const struct lcd_panel_geometry sharp_zaurus_C3000 =
     1,				/* clock divider */
     0,				/* AC bias pin freq */
 
-    0x27,			/* horizontal sync pulse width */
+    0x28,			/* horizontal sync pulse width */
     0x2e,			/* BLW */
     0x7d,			/* ELW */
 
