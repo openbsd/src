@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_hpux.8,v 1.1 2002/05/22 07:35:31 miod Exp $
+.\"	$OpenBSD: compat_hpux.8,v 1.2 2002/05/22 08:46:05 mpech Exp $
 .\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
@@ -67,7 +67,8 @@ This directory is named
 .Pa /emul/hpux .
 Any file operations done by HP-UX programs run under
 .Ox
-will look in this directory first. So, if a HP-UX program opens, for example,
+will look in this directory first.
+So, if a HP-UX program opens, for example,
 .Pa /etc/passwd ,
 .Ox
 will first try to open
