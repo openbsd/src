@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.6 1997/11/08 17:21:06 niklas Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.7 1997/12/02 17:47:38 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -423,10 +423,10 @@ found:
 	 * it's a relocated directory.
 	 */
 	if (flags & ISDOTDOT) {
+		brelse(bp);
 		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
-		brelse(bp);
+					     dp->i_ino != ino, NULL);
 		if (error) {
 			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
 			return (error);
