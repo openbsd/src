@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.18 1997/05/01 17:49:45 niklas Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.19 1997/05/01 22:14:48 niklas Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.18 1997/05/01 17:49:45 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.19 1997/05/01 22:14:48 niklas Exp $";
 #endif
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ int
 get_local_ordernum(domain, map, lordernum)
 char *domain;
 char *map;
-int *lordernum;
+u_int32_t *lordernum;
 {
 	char map_path[MAXPATHLEN];
 	char order_key[] = YP_LAST_KEY;
@@ -147,7 +147,7 @@ int *lordernum;
 		} else {
 	        	strncpy(order, v.dptr, sizeof order-1);
 			order[sizeof order-1] = '\0';
-			*lordernum = atoi((char *)&order);
+			*lordernum = (u_int32_t)atol(order);
 		}
 	}
 
@@ -165,8 +165,8 @@ get_remote_ordernum(client, domain, map, lordernum, rordernum)
 CLIENT *client;
 char *domain;
 char *map;
-int lordernum;
-int *rordernum;
+u_int32_t lordernum;
+u_int32_t *rordernum;
 {
 	int status;
 
@@ -221,14 +221,14 @@ char *temp_map;
 int
 add_order(db, ordernum)
 DBM *db;
-int ordernum;
+u_int32_t ordernum;
 {
 	char	datestr[11];
 	datum	key,val;
 	char	keystr[] = YP_LAST_KEY;
 	int	status;
 
-	sprintf(datestr, "%010d", ordernum);
+	sprintf(datestr, "%010u", ordernum);
 
 	key.dptr = keystr;
 	key.dsize = strlen(keystr);
@@ -430,7 +430,7 @@ char *argv[];
 	char	 *ipadd = NULL;
 	char	 *port = NULL;
 	char	 *map = NULL;
-	int	 ordernum, new_ordernum;
+	u_int32_t ordernum, new_ordernum;
 	struct	 ypall_callback callback;
 	CLIENT   *client;
 	int	 status,xfr_status;

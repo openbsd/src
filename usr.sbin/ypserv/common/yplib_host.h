@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.h,v 1.3 1996/05/30 09:53:03 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.h,v 1.4 1997/05/01 22:14:45 niklas Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -46,7 +46,7 @@ int	yp_next_host	__P((CLIENT *client, char *indomain, char *inmap,
 int	yp_master_host	__P((CLIENT *client,
 			    char *indomain, char *inmap, char **outname));
 int	yp_order_host	__P((CLIENT *client,
-			    char *indomain, char *inmap, int *outorder));
+			    char *indomain, char *inmap, u_int32_t *outorder));
 int	yp_all_host	__P((CLIENT *client, char *indomain, char *inmap,
 			    struct ypall_callback *incallback));
 int	yp_maplist_host	__P((CLIENT *client, char *indomain,

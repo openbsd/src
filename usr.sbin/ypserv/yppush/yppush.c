@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.6 1997/03/15 00:08:58 gene Exp $ */
+/*	$OpenBSD: yppush.c,v 1.7 1997/05/01 22:14:46 niklas Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.6 1997/03/15 00:08:58 gene Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.7 1997/05/01 22:14:46 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: yppush.c,v 1.6 1997/03/15 00:08:58 gene Exp $";
 
 int  Verbose = 0;
 char Domain[MAXHOSTNAMELEN], Map[255];
-u_long OrderNum;
+u_int32_t OrderNum;
 char *master;
 
 extern void yppush_xfrrespprog_1(struct svc_req *request, SVCXPRT *xprt);
@@ -124,7 +124,7 @@ CLIENT *client;
 	request.port=transp->xp_port;
 
 	if (Verbose)
-		printf("%d: %s(%d@%s) -> %s@%s\n",
+		printf("%d: %s(%u@%s) -> %s@%s\n",
 		       request.transid,
 		       request.map_parms.map,
 		       request.map_parms.ordernum,
