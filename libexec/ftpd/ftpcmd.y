@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.34 2002/01/25 06:40:14 mpech Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.35 2002/01/25 06:43:37 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.34 2002/01/25 06:40:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.35 2002/01/25 06:43:37 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -1438,7 +1438,7 @@ help(ctab, s)
 		NCMDS++;
 	}
 	width = (width + 8) &~ 7;
-	if (s == 0) {
+	if (s == NULL) {
 		int i, j, w;
 		int columns, lines;
 
