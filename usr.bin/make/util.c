@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.20 2003/06/25 13:40:27 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2003/06/25 15:11:06 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ getwd(pathname)
 		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
 		    continue;
 		(void)strlcpy(cur_name_add, d->d_name, 
-		    2 * MAXPATHLEN - (MAXPATHLEN - 1));
+		    sizeof(nextpathbuf) MAXPATHLEN - (MAXPATHLEN - 1));
 		if (lstat(nextpathptr, &st_next) == -1) {
 		    (void)snprintf(pathname, MAXPATHLEN,
 			"getwd: Cannot stat \"%s\" (%s)",
