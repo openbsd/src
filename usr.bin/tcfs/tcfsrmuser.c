@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"
@@ -28,8 +29,8 @@ Remove an user entry from the TCFS dabatase.
 int 
 rmuser_main (int argn, char *argv[])
 {
-	int have_user=FALSE;
-	int be_verbose=FALSE;
+	int have_user = FALSE;
+	int be_verbose = FALSE;
 	char *user, *passwd;
 	tcfspwdb *user_info;
 	int val;
@@ -38,14 +39,14 @@ rmuser_main (int argn, char *argv[])
 	 * Going to check the arguments
 	 */
 
-	 user=(char *) malloc(20);
+	 if ((user = (char *) malloc(LOGIN_NAME_MAX + 1)) == NULL)
+		 err(1, NULL);
 
 	 while ((val=getopt (argn, argv, "l:hv"))!=EOF)
-                switch (val)
-		{
+		 switch (val) {
 			case 'l':
-				strncpy (user, optarg, 9);
-				have_user=TRUE;
+				strlcpy (user, optarg, LOGIN_NAME_MAX + 1);
+				have_user = TRUE;
 				break;
 
 			case 'h':
@@ -54,7 +55,7 @@ rmuser_main (int argn, char *argv[])
 				break;
 	
 			case 'v':
-				be_verbose=TRUE;
+				be_verbose = TRUE;
 				break;
 	
 			default:
@@ -71,11 +72,15 @@ rmuser_main (int argn, char *argv[])
 	 * should run us.
 	 * However we can do better. Maybe in next versions.
 	 */
-	if (!have_user)
-	{
+	if (!have_user) {
+		int len;
+
 		printf ("Username to remove from TCFS database: ");
-		fgets (user,9,stdin);
-		user[strlen(user)-1]='\0';
+		fgets (user, LOGIN_NAME_MAX + 1, stdin);
+		len = strlen(user) - 2;
+		if (len < 0)
+			exit (1);
+		user[len] = user[len] == '\n' ? 0 : user[len];
 	}
 
 	if (be_verbose)
