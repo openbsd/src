@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.18 2004/12/31 21:26:40 jaredy Exp $
+.\"	$OpenBSD: ip6.4,v 1.19 2005/01/01 03:35:53 jmc Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -628,12 +628,6 @@ An unknown socket option name was given.
 .It Bq Er EINVAL
 An ancillary data object was improperly formed.
 .El
-.Sh STANDARDS
-Most of the socket options are defined in RFC 2292 and RFC 2553.
-The
-.Dv IPV6_PORTRANGE
-socket option and the conflict resolution rule are not defined in the
-RFCs and should be considered implementation dependent.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr recv 2 ,
@@ -678,3 +672,9 @@ RFCs and should be considered implementation dependent.
 .%A A. Rudoff
 .%T UNIX Network Programming, third edition
 .Re
+.Sh STANDARDS
+Most of the socket options are defined in RFC 2292 and RFC 2553.
+The
+.Dv IPV6_PORTRANGE
+socket option and the conflict resolution rule are not defined in the
+RFCs and should be considered implementation dependent.
