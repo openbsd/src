@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.14 2001/11/27 05:27:12 art Exp 
+ *	OpenBSD: vnode_if.src,v 1.15 2001/11/28 16:24:26 art Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
