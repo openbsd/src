@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.7 2000/12/11 02:22:53 provos Exp $
-#	$NetBSD: Makefile,v 1.7 1995/04/23 07:50:21 cgd Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/03/18 17:39:55 millert Exp $
 
-SUBDIR+=../egcs
+SUBDIR+=../egcs libreadline
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2001/01/16 20:22:31 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2001/03/18 17:39:55 millert Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa
 
@@ -17,7 +17,7 @@ MANDIR=${PREFIX}/share/man/cat
 MAN=		binutils/objdump.1
 
 .if ${MACHINE_ARCH} != "unknown"
-SUBDIRS+=	gdb mmalloc readline 
+SUBDIRS+=	gdb mmalloc
 MAN+=		gdb/gdb.1
 ALL_X11_MODULES+=all-gdb
 INSTALL_X11_MODULES+=install-gdb

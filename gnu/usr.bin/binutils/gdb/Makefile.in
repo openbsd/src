@@ -109,10 +109,12 @@ BFD_SRC = $(srcdir)/$(BFD_DIR)
 BFD_CFLAGS = -I$(BFD_DIR) -I$(BFD_SRC)
 
 # Where is the READLINE library?  Typically in ../readline.
-READLINE_DIR = ../readline
-READLINE = $(READLINE_DIR)/libreadline.a
-READLINE_SRC = $(srcdir)/$(READLINE_DIR)
-READLINE_CFLAGS = -I$(READLINE_SRC)
+#READLINE_DIR = ../readline
+#READLINE = $(READLINE_DIR)/libreadline.a
+#READLINE_SRC = $(srcdir)/$(READLINE_DIR)
+#READLINE_CFLAGS = -I$(READLINE_SRC)
+READLINE = -lreadline
+READLINE_CFLAGS = -I$(DESTDIR)/usr/include/readline
 
 # Opcodes currently live in one of two places.  Either they are in the
 # opcode library, typically ../opcodes, or they are in a header file
@@ -386,11 +388,11 @@ dis-asm_h =	$(INCLUDE_DIR)/dis-asm.h
 dcache_h = dcache.h
 remote_utils_h = $(dcache_h) serial.h target.h remote-utils.h remote-sim.h
 
-readline_headers = \
-	$(READLINE_SRC)/chardefs.h \
-	$(READLINE_SRC)/history.h \
-	$(READLINE_SRC)/keymaps.h \
-	$(READLINE_SRC)/readline.h
+#readline_headers = \
+#	$(READLINE_SRC)/chardefs.h \
+#	$(READLINE_SRC)/history.h \
+#	$(READLINE_SRC)/keymaps.h \
+#	$(READLINE_SRC)/readline.h
 
 udiheaders = \
 	$(srcdir)/29k-share/udi/udiproc.h \
