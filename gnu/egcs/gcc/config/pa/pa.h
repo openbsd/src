@@ -1395,7 +1395,7 @@ extern union tree_node *current_function_decl;
   end_addr = force_reg (SImode, plus_constant (start_addr, 32));	\
   emit_insn (gen_icacheflush (start_addr, end_addr, start_addr,		\
 			      gen_reg_rtx (SImode), gen_reg_rtx (SImode)));\
-  FINALIZE_TRAMPOLINE(TRAMP);
+  FINALIZE_TRAMPOLINE(TRAMP);						\
 }
 
 /* Emit code for a call to builtin_saveregs.  We must emit USE insns which
