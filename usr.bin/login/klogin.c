@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.5 1997/06/29 11:10:33 provos Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.6 1998/03/26 20:28:09 art Exp $	*/
 /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.5 1997/06/29 11:10:33 provos Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.6 1998/03/26 20:28:09 art Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: klogin.c,v 1.5 1997/06/29 11:10:33 provos Exp $
 #include <sys/syslog.h>
 #include <des.h>
 #include <kerberosIV/krb.h>
+#include <kerberosIV/kafs.h>
 
 #include <err.h>
 #include <netdb.h>
@@ -226,6 +227,21 @@ klogin(pw, instance, localhost, password)
 }
 
 void
+kgettokens(homedir)
+	char *homedir;
+{
+	/* buy AFS-tokens for homedir */
+	if (k_hasafs()) { 
+		char cell[128];
+		k_setpag();
+		if (k_afs_cell_of_file(homedir, 
+				       cell, sizeof(cell)) == 0)
+			krb_afslog(cell, 0);
+		krb_afslog(0, 0);
+	}
+}
+
+void
 kdestroy()
 {
         char *file = krbtkfile_env;
@@ -236,6 +252,9 @@ kdestroy()
 #ifdef TKT_SHMEM
 	char shmidname[MAXPATHLEN];
 #endif /* TKT_SHMEM */
+
+	if (k_hasafs())
+	    k_unlog();
 
 	if (krbtkfile_env == NULL)
 	    return;

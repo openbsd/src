@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.23 1997/11/04 19:01:05 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.24 1998/03/26 20:28:11 art Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.23 1997/11/04 19:01:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.24 1998/03/26 20:28:11 art Exp $";
 #endif /* not lint */
 
 /*
@@ -75,6 +75,7 @@ static char rcsid[] = "$OpenBSD: login.c,v 1.23 1997/11/04 19:01:05 millert Exp 
 #include <unistd.h>
 #include <utmp.h>
 #include <util.h>
+#include <skey.h>
 
 #include "pathnames.h"
 
@@ -94,6 +95,7 @@ int	 pwcheck __P((char *, char *, char *, char *));
 int	 klogin __P((struct passwd *, char *, char *, char *));
 void	 kdestroy __P((void));
 void	 dofork __P((void));
+void	 kgettokens __P((char *));
 #endif
 
 extern void login __P((struct utmp *));
@@ -388,7 +390,7 @@ main(argc, argv)
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
-	if (pwd->pw_change)
+	if (pwd->pw_change) {
 		if (tp.tv_sec >= pwd->pw_change) {
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
@@ -396,7 +398,8 @@ main(argc, argv)
 		    2 * DAYSPERWEEK * SECSPERDAY && !quietlog)
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
-	if (pwd->pw_expire)
+	}
+	if (pwd->pw_expire) {
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
@@ -404,6 +407,7 @@ main(argc, argv)
 		    2 * DAYSPERWEEK * SECSPERDAY && !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
+	}
 
 	/* Nothing else left to fail -- really log in. */
 	(void)signal(SIGHUP, SIG_DFL);
@@ -437,10 +441,10 @@ main(argc, argv)
 		pwd->pw_shell = _PATH_BSHELL;
 
 	/* Destroy environment unless user has requested its preservation. */
-	if (!pflag)
+	if (!pflag) {
 		if ((environ = calloc(1, sizeof (char *))) == NULL)
 			err(1, "calloc");
-	else {
+	} else {
 		char **cpp, **cpp2;
 
 		for (cpp2 = cpp = environ; *cpp; cpp++) {
@@ -472,13 +476,14 @@ main(argc, argv)
 #endif
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
-	if (rootlogin && fflag == 0)
+	if (rootlogin && fflag == 0) {
 		if (hostname)
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s FROM %s%s%s",
 			    username, tty, rusername ? rusername : "",
 			    rusername ? "@" : "", hostname);
 		else
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s", username, tty);
+	}
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 	if (!quietlog && notickets == 1)
@@ -520,6 +525,9 @@ main(argc, argv)
 		(void) seteuid(pwd->pw_uid);
 		(void) setuid(pwd->pw_uid);
 	}
+#ifdef KERBEROS
+	kgettokens(pwd->pw_dir);
+#endif
 
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);
@@ -589,7 +597,7 @@ getloginname()
 			if (p < nbuf + (NBUFSIZ - 1))
 				*p++ = ch;
 		}
-		if (p > nbuf)
+		if (p > nbuf) {
 			if (nbuf[0] == '-')
 				(void)fprintf(stderr,
 				    "login names may not start with '-'.\n");
@@ -598,6 +606,7 @@ getloginname()
 				username = nbuf;
 				break;
 			}
+		}
 	}
 }
 
