@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_vmes.c,v 1.5 1997/01/16 04:03:48 kstailey Exp $	*/
+/*	$OpenBSD: if_ie_vmes.c,v 1.6 2000/08/28 21:59:35 miod Exp $	*/
 /*	$NetBSD: if_ie_vmes.c,v 1.5 1996/11/20 18:56:51 gwr Exp $	*/
 
 /*-
@@ -62,9 +62,9 @@
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
 
-#include "i82586.h"
-#include "if_iereg.h"
-#include "if_ievar.h"
+#include <sparc/dev/i82586.h>
+#include <sun3/dev/if_iereg.h>
+#include <sun3/dev/if_ievar.h>
 
 static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));

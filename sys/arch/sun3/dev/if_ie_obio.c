@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_obio.c,v 1.5 1997/01/16 04:03:47 kstailey Exp $	*/
+/*	$OpenBSD: if_ie_obio.c,v 1.6 2000/08/28 21:59:34 miod Exp $	*/
 /*	$NetBSD: if_ie_obio.c,v 1.6 1996/11/20 18:56:51 gwr Exp $	*/
 
 /*-
@@ -63,9 +63,9 @@
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
 
-#include "i82586.h"
-#include "if_iereg.h"
-#include "if_ievar.h"
+#include <sparc/dev/i82586.h>
+#include <sun3/dev/if_iereg.h>
+#include <sun3/dev/if_ievar.h>
 
 static void ie_obreset __P((struct ie_softc *));
 static void ie_obattend __P((struct ie_softc *));
@@ -125,7 +125,7 @@ ie_obio_attach(parent, self, args)
 	sc->sc_msize = 0x8000; /* MEMSIZE 32K */
 
 	/* Map in the control registers. */
-	sc->sc_reg = obio_alloc(ca->ca_paddr, OBIO_INTEL_ETHER_SIZE);
+	sc->sc_reg = obio_alloc(ca->ca_paddr, sizeof(struct ieob));
 
 	/* Allocate "shared" memory (in DVMA space). */
 	sc->sc_maddr = dvma_malloc(sc->sc_msize);
