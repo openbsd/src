@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.27 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.28 2003/08/14 21:02:09 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.27 2003/06/10 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.28 2003/08/14 21:02:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ void	 wtmp(void);
 void	 checkargs(void);
 void	 usage(void);
 
-#define NAME_WIDTH	8
+#define NAME_WIDTH	9
 #define HOST_WIDTH	24
 
 int
@@ -288,7 +288,7 @@ wtmp(void)
 						    bp->ut_host, (long)bp->ut_time);
 					} else {
 						ct = ctime(&bp->ut_time);
-						printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
+						printf("%-*.*s %-*.*s %-*.*s %10.10s %*.*s \n",
 						    NAME_WIDTH, UT_NAMESIZE,
 						    bp->ut_name, UT_LINESIZE,
 						    UT_LINESIZE, bp->ut_line,
@@ -309,18 +309,18 @@ wtmp(void)
 			    && !bp->ut_line[1]) {
 				if (want(bp, NO)) {
 					if (seconds) {
-				printf("%-*.*s %-*.*s %-*.*s %ld \n",
-					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					(long)bp->ut_time);
+						printf("%-*.*s %-*.*s %-*.*s %ld \n",
+						    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+						    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+						    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+						    (long)bp->ut_time);
 					} else {
 						ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
-					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					ct, timesize, timesize, ct + 11);
+						printf("%-*.*s %-*.*s %-*.*s %10.10s %*.*s \n",
+						    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+						    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+						    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+						    ct, timesize, timesize, ct + 11);
 					}
 					if (maxrec && !--maxrec)
 						return;
@@ -342,24 +342,23 @@ wtmp(void)
 			 * or in snapshot mode and in snapshot range
 			 */
 			if (bp->ut_name[0] &&
-			    ((want(bp, YES)) ||
-			     (bp->ut_time < snaptime &&
-			      (T->logout > snaptime || !T->logout ||
-			       T->logout < 0)))) {
+			    ((want(bp, YES)) || (bp->ut_time < snaptime &&
+			    (T->logout > snaptime || !T->logout ||
+			    T->logout < 0)))) {
 				snapfound = 1;
 				if (seconds) {
-				printf("%-*.*s %-*.*s %-*.*s %ld ",
-					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					(long)bp->ut_time);
+					printf("%-*.*s %-*.*s %-*.*s %ld ",
+					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+					    (long)bp->ut_time);
 				} else {
 					ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s ",
-					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					ct, timesize, timesize, ct + 11);
+					printf("%-*.*s %-*.*s %-*.*s %10.10s %*.*s ",
+					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+					    ct, timesize, timesize, ct + 11);
 				}
 				if (!T->logout)
 					puts("  still logged in");
@@ -405,12 +404,12 @@ wtmp(void)
 			total -= (days * SECSPERDAY);
 
 			printf("\nTotal time: %d days, %*.*s\n",
-				days, timesize, timesize,
-				asctime(gmtime(&total))+11);
+			    days, timesize, timesize,
+			    asctime(gmtime(&total))+11);
 		} else
 			printf("\nTotal time: %*.*s\n",
-				timesize, timesize,
-				asctime(gmtime(&total))+11);
+			    timesize, timesize,
+			    asctime(gmtime(&total))+11);
 	}
 	ct = ctime(&buf[0].ut_time);
 	printf("\nwtmp begins %10.10s %*.*s %4.4s\n", ct, timesize, timesize,
@@ -599,7 +598,7 @@ dateconv(char *arg)
 			else
 				t->tm_year = yearset + 1900;
 		}
-		t->tm_year -= 1900;     /* Convert to UNIX time. */
+		t->tm_year -= 1900;	/* Convert to UNIX time. */
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
 		t->tm_mon = ATOI2(arg);
@@ -618,8 +617,8 @@ dateconv(char *arg)
 	t->tm_isdst = -1;		/* Figure out DST. */
 	timet = mktime(t);
 	if (timet == -1)
-terr:	   errx(1,
-	"out of range or illegal time specification: [[[CC]YY]MMDD]hhmm[.SS]");
+terr:		errx(1, "out of range or illegal time specification: "
+		    "[[[CC]YY]MMDD]hhmm[.SS]");
 	return (timet);
 }
 
