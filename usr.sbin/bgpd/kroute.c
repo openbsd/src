@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.89 2004/03/04 11:26:36 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.90 2004/03/10 12:55:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -533,16 +533,11 @@ knexthop_remove(struct knexthop_node *kn)
 struct kif_node *
 kif_find(int ifindex)
 {
-	struct kif_node	*kif, s;
+	struct kif_node	s;
 
 	bzero(&s, sizeof(s));
 	s.k.ifindex = ifindex;
 
-	if ((kif = RB_FIND(kif_tree, &kit, &s)) != NULL)
-		return (kif);
-
-	/* check wether the interface showed up now */
-	fetchifs(ifindex);
 	return (RB_FIND(kif_tree, &kit, &s));
 }
 
