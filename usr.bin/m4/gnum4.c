@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.27 2003/11/22 11:51:52 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.28 2004/11/07 10:26:18 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -384,6 +384,14 @@ do_regexpindex(const char *string, regex_t *re, regmatch_t *pm)
 static char *
 twiddle(const char *p)
 {
+	/* + at start of regexp is a normal character for Gnu m4 */
+	if (*p == '^') {
+		addchar(*p);
+		p++;
+	}
+	if (*p == '+') {
+		addchar('\\');
+	}
 	/* This could use strcspn for speed... */
 	while (*p != '\0') {
 		if (*p == '\\') {
