@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.15 2003/06/28 12:26:22 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.16 2003/06/30 20:02:46 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -41,6 +41,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 #include <err.h>
 
 #include "pfctl.h"
@@ -445,6 +447,114 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (naddr != NULL)
 		*naddr = io.pfrio_naddr;
 	return (0);
+}
+
+/* buffer managment code */
+
+size_t buf_esize[PFRB_MAX] = { 0, 
+	sizeof(struct pfr_table), sizeof(struct pfr_tstats),
+	sizeof(struct pfr_addr), sizeof(struct pfr_astats),
+};
+
+/*
+ * add one element to the buffer
+ */
+int
+pfr_buf_add(struct pfr_buffer *b, const void *e)
+{
+	size_t bs;
+
+	if (b == NULL || b->pfrb_type <= 0 || b->pfrb_type >= PFRB_MAX ||
+	    e == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
+	bs = buf_esize[b->pfrb_type];
+	if (b->pfrb_size == b->pfrb_msize)
+		if (pfr_buf_grow(b, 0))
+			return (-1);
+	memcpy(b->pfrb_caddr + bs * b->pfrb_size, e, bs);
+	b->pfrb_size++;
+	return (0);
+}
+
+/*
+ * return next element of the buffer (or first one if prev is NULL)
+ * see PFRB_FOREACH macro
+ */
+void *
+pfr_buf_next(struct pfr_buffer *b, const void *prev)
+{
+	size_t bs;
+
+	if (b == NULL || b->pfrb_type <= 0 || b->pfrb_type >= PFRB_MAX)
+		return (NULL);
+	if (b->pfrb_size == 0)
+		return (NULL);
+	if (prev == NULL)
+		return (b->pfrb_caddr);
+	bs = buf_esize[b->pfrb_type];
+	if ((((caddr_t)prev) - b->pfrb_caddr) / bs >= b->pfrb_size - 1)
+		return (NULL); 
+	return (((caddr_t)prev) + bs);
+}
+
+/*
+ * minsize:
+ *    0: make the buffer somewhat bigger
+ *    n: make room for "n" entries in the buffer
+ */
+int
+pfr_buf_grow(struct pfr_buffer *b, int minsize)
+{
+	size_t bs;
+
+	if (b == NULL || b->pfrb_type <= 0 || b->pfrb_type >= PFRB_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	if (minsize != 0 && minsize <= b->pfrb_msize)
+		return (0);
+	bs = buf_esize[b->pfrb_type];
+	if (!b->pfrb_msize) {
+		b->pfrb_msize = minsize;
+		if (b->pfrb_msize < 64)
+			b->pfrb_msize = 64;
+		b->pfrb_caddr = calloc(bs, b->pfrb_msize);
+		if (b->pfrb_caddr == NULL)
+			return (-1);
+	} else {
+		int omsize = b->pfrb_msize;
+
+		if (minsize == 0)
+			b->pfrb_msize *= 2;
+		else
+			b->pfrb_msize = minsize;
+		if (b->pfrb_msize < 0 || b->pfrb_msize >= SIZE_T_MAX / bs) {
+			/* msize overflow */
+			errno = ENOMEM;
+			return (-1);
+		}
+		b->pfrb_caddr = realloc(b->pfrb_caddr, b->pfrb_msize * bs);
+		if (b->pfrb_caddr == NULL)
+			return (-1);
+		bzero(b->pfrb_caddr + omsize * bs, (b->pfrb_msize-omsize) * bs);
+	}
+	return (0);
+}
+
+/*
+ * reset buffer and free memory.
+ */
+void
+pfr_buf_clear(struct pfr_buffer *b) 
+{
+	if (b == NULL)
+		return;
+	if (b->pfrb_caddr != NULL)
+		free(b->pfrb_caddr);
+	b->pfrb_caddr = NULL;
+	b->pfrb_size = b->pfrb_msize = 0;
 }
 
 void
