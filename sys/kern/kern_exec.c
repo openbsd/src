@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.10 1997/06/04 14:34:17 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.11 1997/06/05 08:05:54 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -480,10 +480,16 @@ sys_execve(p, v, retval)
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
 	if (p->p_flag & P_SUGIDEXEC) {
-		int s = splclock();
+		int i, s = splclock();
+
 		untimeout(realitexpire, (void *)p);
 		timerclear(&p->p_realtimer.it_interval);
 		timerclear(&p->p_realtimer.it_value);
+		for (i = 0; i < sizeof(p->p_stats->p_timer) /
+		    sizeof(p->p_stats->p_timer[0]); i++) {
+			timerclear(&p->p_stats->p_timer[i].it_interval);
+			timerclear(&p->p_stats->p_timer[i].it_value);
+		}
 		splx(s);
 	}
 
