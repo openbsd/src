@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.49 2000/09/19 03:20:58 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.50 2000/10/09 22:20:40 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -120,6 +120,10 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 	    case SADB_EALG_3DESCBC:
 		txform = &enc_xform_3des;
+		break;
+
+	    case SADB_X_EALG_AES:
+		txform = &enc_xform_rijndael128;
 		break;
 
 	    case SADB_X_EALG_BLF:

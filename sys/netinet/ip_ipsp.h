@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.72 2000/09/20 19:13:17 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.73 2000/10/09 22:20:41 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -86,7 +86,7 @@ union sockaddr_union
 #define IPSEC_DEFAULT_EXP_TIMEOUT               86400
 #define IPSEC_DEFAULT_SOFT_FIRST_USE            3600
 #define IPSEC_DEFAULT_EXP_FIRST_USE             7200
-#define IPSEC_DEFAULT_DEF_ENC                   "3des"
+#define IPSEC_DEFAULT_DEF_ENC                   "aes"
 #define IPSEC_DEFAULT_DEF_AUTH                   "hmac-sha1"
 #define IPSEC_DEFAULT_EXPIRE_ACQUIRE            30
 
