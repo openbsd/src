@@ -1328,7 +1328,7 @@ been executed.
 While the Readline library does not have a full set of @code{vi}
 editing functions, it does contain enough to allow simple editing
 of the line.  The Readline @code{vi} mode behaves as specified in
-the @sc{POSIX} 1003.2 standard.
+the @sc{posix} 1003.2 standard.
 
 @ifset BashFeatures
 In order to switch interactively between @code{emacs} and @code{vi}

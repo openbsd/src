@@ -4019,7 +4019,7 @@ and string constants.  It unfortunately does not include symbols defined
 by preprocessor @code{#define} commands.
 
 @value{GDBN} now supports array constants in expressions input by
-the user.  The syntax is @var{@{element, element@dots{}@}}.  For example,
+the user.  The syntax is @samp{@{ELEMENT, ELEMENT@dots{}@}}.  For example,
 you can now use the command @code{print @{1, 2, 3@}} to build up an array in 
 memory that is malloc'd in the target program.
 
@@ -4652,7 +4652,7 @@ If the number is 0, then the printing is unlimited.
 @kindex set print null-stop
 @item set print null-stop
 Cause @value{GDBN} to stop printing the characters of an array when the first
-@sc{NULL} is encountered.  This is useful when large arrays actually
+@sc{null} is encountered.  This is useful when large arrays actually
 contain only short strings.
 
 @kindex set print pretty
@@ -5767,7 +5767,7 @@ following ways:
 @node C Constants
 @section C constants
 
-@value{GDBN} allows you to express the constants of C in the
+@value{gdbn} allows you to express the constants of C in the
 following ways:
 @end ifset
 
@@ -5793,7 +5793,7 @@ integral equivalents.
 @item
 Character constants are a single character surrounded by single quotes
 (@code{'}), or a number---the ordinal value of the corresponding character
-(usually its @sc{ASCII} value).  Within quotes, the single character may
+(usually its @sc{ascii} value).  Within quotes, the single character may
 be represented by a letter or by @dfn{escape sequences}, which are of
 the form @samp{\@var{nnn}}, where @var{nnn} is the octal representation
 of the character's ordinal value; or of the form @samp{\@var{x}}, where

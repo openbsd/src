@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename gdbint.info
-@c $Id: gdbint.texinfo,v 1.2 1996/11/23 03:45:39 niklas Exp $
+@c $Id: gdbint.texinfo,v 1.3 2002/05/28 09:01:16 mpech Exp $
 
 @ifinfo
 @format
@@ -42,7 +42,7 @@ regarded as a program in the language TeX).
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.2 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.3 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -1557,7 +1557,7 @@ infcmd.c
 Define this if the system declares @code{fclose} in the headers included in
 @code{defs.h}.  This isn't needed unless your compiler is unusually anal.
 
-@sc{ANSI} definition.
+@sc{ansi} definition.
 
 @item FILES_INFO_HOOK
 target.c
