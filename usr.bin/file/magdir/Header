@@ -1,5 +1,5 @@
-#! Magic
-#	$OpenBSD: Header,v 1.4 1997/04/03 17:35:47 kstailey Exp $
+# Magic
+#	$OpenBSD: Header,v 1.5 1997/04/03 17:39:38 kstailey Exp $
 
 # Magic data for file(1) command.
 # Machine-genererated from src/usr.bin/file/magdir/*; edit there only!
