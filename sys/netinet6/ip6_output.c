@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.11 2000/06/19 03:43:17 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.12 2000/06/20 01:27:24 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.112 2000/06/18 01:50:39 itojun Exp $	*/
 
 /*
@@ -294,6 +294,13 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			error = EHOSTUNREACH;
 			goto freehdrs;
 		}
+
+		/* scoped address is not supported */
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) || 
+		    IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
+			error = EHOSTUNREACH;
+			goto freehdrs;
+		}
 #endif
 	}
 
@@ -580,6 +587,24 @@ skip_ipsec2:;
 	 */
 	if (sproto != 0) {
 	        s = splnet();
+
+		/* fill in IPv6 header which would be filled later */
+		if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+			if (opt && opt->ip6po_hlim != -1)
+				ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
+		} else {
+			if (im6o != NULL)
+				ip6->ip6_hlim = im6o->im6o_multicast_hlim;
+			else
+				ip6->ip6_hlim = ip6_defmcasthlim;
+			if (opt && opt->ip6po_hlim != -1)
+				ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
+
+			/*
+			 * XXX what should we do if ip6_hlim == 0 and the packet
+			 * gets tunnelled?
+			 */
+		}
 
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
