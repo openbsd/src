@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.2 2004/10/20 22:21:13 fgsch Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.3 2004/12/23 11:54:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -56,6 +56,8 @@ struct ieee80211_plcp_hdr {
 
 #define IEEE80211_PLCP_SFD      0xF3A0
 #define IEEE80211_PLCP_SERVICE  0x00
+#define IEEE80211_PLCP_SERVICE_PBCC  0x08	/* PBCC encoded */
+#define IEEE80211_PLCP_SERVICE_LENEXT  0x80	/* length extension bit */
 
 /*
  * generic definitions for IEEE 802.11 frames
@@ -503,12 +505,16 @@ enum {
 };
 
 #define	IEEE80211_WEP_KEYLEN			5	/* 40bit */
+#define	IEEE80211_WEP_NKID			4	/* number of key ids */
+
+/* WEP header constants */
 #define	IEEE80211_WEP_IVLEN			3	/* 24bit */
 #define	IEEE80211_WEP_KIDLEN			1	/* 1 octet */
 #define	IEEE80211_WEP_CRCLEN			4	/* CRC-32 */
-#define	IEEE80211_WEP_NKID			4	/* number of key ids */
-
 #define	IEEE80211_CRC_LEN			4
+#define	IEEE80211_WEP_TOTLEN		(IEEE80211_WEP_IVLEN + \
+					 IEEE80211_WEP_KIDLEN + \
+					 IEEE80211_WEP_CRCLEN)
 
 /*
  * Maximum acceptable MTU is:
@@ -541,6 +547,40 @@ enum {
 #define	IEEE80211_RTS_DEFAULT			512
 #define	IEEE80211_RTS_MIN			1
 #define	IEEE80211_RTS_MAX			IEEE80211_MAX_LEN
+
+/*
+ * 802.11 frame duration definitions.
+ */
+
+struct ieee80211_duration {
+	uint16_t	d_rts_dur;
+	uint16_t	d_data_dur;
+	uint16_t	d_plcp_len;
+	uint8_t		d_plcp_svc;
+};
+
+/* One Time Unit (TU) is 1Kus = 1024 microseconds. */
+#define IEEE80211_DUR_TU		1024
+
+/* IEEE 802.11b durations for DSSS PHY in microseconds */
+#define IEEE80211_DUR_DS_LONG_PREAMBLE	144
+#define IEEE80211_DUR_DS_SHORT_PREAMBLE	72
+#define IEEE80211_DUR_DS_FAST_PLCPHDR	24
+#define IEEE80211_DUR_DS_SLOW_PLCPHDR	48
+#define IEEE80211_DUR_DS_SLOW_ACK	112
+#define IEEE80211_DUR_DS_FAST_ACK	56
+#define IEEE80211_DUR_DS_SLOW_CTS	112
+#define IEEE80211_DUR_DS_FAST_CTS	56
+#define IEEE80211_DUR_DS_SLOT		20
+#define IEEE80211_DUR_DS_SIFS		10
+#define IEEE80211_DUR_DS_PIFS	(IEEE80211_DUR_DS_SIFS + IEEE80211_DUR_DS_SLOT)
+#define IEEE80211_DUR_DS_DIFS	(IEEE80211_DUR_DS_SIFS + \
+				 2 * IEEE80211_DUR_DS_SLOT)
+#define IEEE80211_DUR_DS_EIFS	(IEEE80211_DUR_DS_SIFS + \
+				 IEEE80211_DUR_DS_SLOW_ACK + \
+				 IEEE80211_DUR_DS_LONG_PREAMBLE + \
+				 IEEE80211_DUR_DS_SLOW_PLCPHDR + \
+				 IEEE80211_DUR_DIFS)
 
 enum {
 	IEEE80211_AUTH_NONE	= 0,
