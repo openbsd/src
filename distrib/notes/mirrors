@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.47 2003/09/06 21:19:17 miod Exp $
+dnl	$OpenBSD: mirrors,v 1.48 2003/09/17 17:20:10 millert Exp $
 This is a list of currently known ftp servers as the time of the OSREV release.
 For a more recent list, please refer to http://www.OpenBSD.org/ftp.html
 
@@ -128,7 +128,6 @@ United Kingdom:
     ftp://ftp.plig.org/pub/OpenBSD (London)
 
 USA:
-    ftp://ftp5.usa.openbsd.org/pub/OpenBSD (Redwood City, CA)
     ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
     ftp://reflection.ncsa.uiuc.edu/pub/OpenBSD (Champaign, IL)
     ftp://ftp.src.uchicago.edu/pub/openbsd (Chicago, IL)
