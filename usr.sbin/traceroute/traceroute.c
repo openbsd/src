@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.38 2001/06/10 01:24:01 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.39 2001/06/10 05:49:23 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.38 2001/06/10 01:24:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.39 2001/06/10 05:49:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -341,8 +341,8 @@ main(argc, argv)
 				errx(1, "min ttl must be 1 to %d.", max_ttl);
 			break;
 		case 'c':
-		        incflag = 0;
-		        break;
+			incflag = 0;
+			break;
 		case 'd':
 			options |= SO_DEBUG;
 			break;
@@ -372,7 +372,7 @@ main(argc, argv)
 			max_ttl = atoi(optarg);
 			if (max_ttl < first_ttl || max_ttl > MAXTTL)
 				errx(1, "max ttl must be %d to %d.", first_ttl,
-				     MAXTTL);
+				    MAXTTL);
 			break;
 		case 'n':
 			nflag++;
@@ -507,12 +507,12 @@ main(argc, argv)
 				  (char *)&on, sizeof(on));
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-		       sizeof(datalen)) < 0)
+	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
 #endif SO_SNDBUF
 #ifdef IP_HDRINCL
 	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
-		       sizeof(on)) < 0)
+	    sizeof(on)) < 0)
 		err(6, "IP_HDRINCL");
 #endif IP_HDRINCL
 	if (options & SO_DEBUG)
@@ -565,7 +565,7 @@ main(argc, argv)
 
 			(void) gettimeofday(&t1, &tz);
 			send_probe(++seq, ttl, incflag, &to);
-			while (cc = wait_for_reply(s, &from, &t1)) {
+			while ((cc = wait_for_reply(s, &from, &t1))) {
 				(void) gettimeofday(&t2, &tz);
 				if (t2.tv_sec - t1.tv_sec > waittime) {
 					cc = 0;
@@ -671,8 +671,9 @@ main(argc, argv)
 			Printf(" (%d%% loss)", (loss * 100) / nprobes);
 		putchar('\n');
 		if (got_there || (unreachable && (unreachable + timeout) >= nprobes))
-			exit(0);
+			break;
 	}
+	exit(0);
 }
 
 int
@@ -706,7 +707,7 @@ wait_for_reply(sock, from, sent)
 			    (struct sockaddr *)from, &fromlen);
 
 	free(fdsp);
-	return(cc);
+	return (cc);
 }
 
 void
@@ -752,11 +753,11 @@ send_probe(seq, ttl, iflag, to)
 	   case IPPROTO_UDP:
 		up->uh_sport = htons(ident);
 		if (iflag)
-		        up->uh_dport = htons(port+seq);
+			up->uh_dport = htons(port+seq);
 		else
-		        up->uh_dport = htons(port);
-		up->uh_ulen =
-		    htons((u_short)(datalen - sizeof(struct ip) - lsrrlen));
+			up->uh_dport = htons(port);
+		up->uh_ulen = htons((u_short)(datalen - sizeof(struct ip) -
+		    lsrrlen));
 		up->uh_sum = 0;
 		op = (struct packetdata *)(up + 1);
 		break;
@@ -821,9 +822,9 @@ pr_type(t)
 	};
 
 	if (t > 18)
-		return("OUT-OF-RANGE");
+		return ("OUT-OF-RANGE");
 
-	return(ttab[t]);
+	return (ttab[t]);
 }
 
 
@@ -871,7 +872,7 @@ packet_ok(buf, cc, from, seq, iflag)
 			    type == ICMP_ECHOREPLY &&
 			    icp->icmp_id == htons(ident) &&
 			    icp->icmp_seq == htons(seq))
-			        return(-2); /* we got there */
+				return (-2); /* we got there */
 
 			icmpp = (struct icmp *)((u_char *)hip + hlen);
 			if (hlen + 8 <= cc && hip->ip_p == IPPROTO_ICMP &&
@@ -885,14 +886,14 @@ packet_ok(buf, cc, from, seq, iflag)
 			if (hlen + 12 <= cc && hip->ip_p == proto &&
 			    up->uh_sport == htons(ident) &&
 			    ((iflag && up->uh_dport == htons(port + seq)) ||
-			     (!iflag && up->uh_dport == htons(port))))
+			    (!iflag && up->uh_dport == htons(port))))
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
 			break;
 		default:
 			/* this is some odd, user specified proto,
 			 * how do we check it?
 			 */
-			if(hip->ip_p == proto)
+			if (hip->ip_p == proto)
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
 		}
 	}
@@ -904,12 +905,12 @@ packet_ok(buf, cc, from, seq, iflag)
 		Printf("\n%d bytes from %s", cc, inet_ntoa(from->sin_addr));
 		Printf(" to %s", inet_ntoa(ip->ip_dst));
 		Printf(": icmp type %d (%s) code %d\n", type, pr_type(type),
-		       icp->icmp_code);
+		    icp->icmp_code);
 		for (i = 4; i < cc ; i += sizeof(in_addr_t))
-			Printf("%2d: x%8.8lx\n", i, *lp++);
+			Printf("%2d: x%8.8lx\n", i, (unsigned long)*lp++);
 	}
 #endif ARCHAIC
-	return(0);
+	return (0);
 }
 
 
@@ -930,10 +931,10 @@ print(buf, cc, from)
 		Printf(" %s", inet_ntoa(from->sin_addr));
 	else
 		Printf(" %s (%s)", inetname(from->sin_addr),
-		       inet_ntoa(from->sin_addr));
+		    inet_ntoa(from->sin_addr));
 
 	if (verbose)
-		Printf (" %d bytes to %s", cc, inet_ntoa (ip->ip_dst));
+		Printf(" %d bytes to %s", cc, inet_ntoa (ip->ip_dst));
 }
 
 
