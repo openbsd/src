@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.11 1997/02/26 03:08:43 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.12 1997/02/27 01:48:26 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.11 1997/02/26 03:08:43 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.12 1997/02/27 01:48:26 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -630,6 +630,8 @@ esp_stats(off, name)
 #define p(f, m) if (espstat.f || sflag <= 1) \
     printf(m, espstat.f, plural(espstat.f))
 
+	p(esps_input, "\t%u input ESP packets\n");
+	p(esps_output, "\t%u output ESP packets\n");
         p(esps_hdrops, "\t%u packet%s shorter than header shows\n");
         p(esps_notdb, "\t%u packet%s for which no TDB was found\n");
         p(esps_badkcr, "\t%u input packet%s that failed to be processed\n");
