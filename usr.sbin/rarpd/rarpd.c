@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.26 1999/08/09 16:55:57 niklas Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.27 1999/10/29 07:27:40 niklas Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.26 1999/08/09 16:55:57 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.27 1999/10/29 07:27:40 niklas Exp $";
 #endif
 
 
@@ -66,14 +66,19 @@ static char rcsid[] = "$OpenBSD: rarpd.c,v 1.26 1999/08/09 16:55:57 niklas Exp $
 #define NONFATAL	0	/* non fatal error occurred */
 
 /*
- * The structure for each interface.
+ * The structures for each interface.
  */
+struct if_addr {
+	in_addr_t ia_ipaddr;		/* IP address of this interface */
+	in_addr_t ia_netmask;		/* subnet or net mask */
+	struct if_addr *ia_next;
+};
+
 struct if_info {
 	int     ii_fd;			/* BPF file descriptor */
 	char	ii_name[IFNAMSIZ];	/* if name, e.g. "en0" */
-	u_char  ii_eaddr[6];		/* Ethernet address of this interface */
-	u_int32_t ii_ipaddr;		/* IP address of this interface */
-	u_int32_t ii_netmask;		/* subnet or net mask */
+	u_char  ii_eaddr[6];		/* Ethernet address of this iface */
+	struct if_addr *ii_addrs;	/* Networks this interface is on */
 	struct if_info *ii_next;
 };
 /*
@@ -86,12 +91,11 @@ int    rarp_open     __P((char *));
 void   init_one      __P((char *));
 void   init_all      __P((void));
 void   rarp_loop     __P((void));
-void   lookup_eaddr  __P((char *, u_char *));
-void   lookup_ipaddr __P((char *, u_int32_t *, u_int32_t *));
+void   lookup_addrs  __P((char *, struct if_info *));
 void   usage         __P((void));
 void   rarp_process  __P((struct if_info *, u_char *));
-void   rarp_reply    __P((struct if_info *, struct ether_header *, u_int32_t,
-	struct hostent *));
+void   rarp_reply    __P((struct if_info *, struct if_addr *,
+	struct ether_header *, u_int32_t, struct hostent *));
 void   update_arptab __P((u_char *, u_int32_t));
 void   err           __P((int, const char *,...));
 void   debug         __P((const char *,...));
@@ -209,7 +213,7 @@ init_one(ifname)
 	int fd;
 
 	/* first check to see if this "if" was already opened? */
-	for(p = iflist; p; p = p->ii_next)
+	for (p = iflist; p; p = p->ii_next)
 		if (!strncmp(p->ii_name, ifname, IFNAMSIZ))
 			return;
 
@@ -228,8 +232,8 @@ init_one(ifname)
 
 	p->ii_fd = fd;
 	strncpy(p->ii_name, ifname, IFNAMSIZ);
-	lookup_eaddr(ifname, p->ii_eaddr);
-	lookup_ipaddr(ifname, &p->ii_ipaddr, &p->ii_netmask);
+	p->ii_addrs = NULL;
+	lookup_addrs(ifname, p);
 }
 /*
  * Initialize all "candidate" interfaces that are in the system
@@ -597,6 +601,7 @@ rarp_process(ii, pkt)
 	u_int32_t  target_ipaddr;
 	char    ename[MAXHOSTNAMELEN];
 	struct	in_addr in;
+	struct if_addr *ia;
 
 	ep = (struct ether_header *) pkt;
 	ea = (struct ether_addr *) &ep->ether_shost;
@@ -616,36 +621,44 @@ rarp_process(ii, pkt)
 		err(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
-	target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
-	    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
+	for (target_ipaddr = 0, ia = ii->ii_addrs; target_ipaddr == 0 && ia;
+	     ia = ia->ia_next)
+		target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
+		    ia->ia_ipaddr & ia->ia_netmask, ia->ia_netmask);
 
 	if (target_ipaddr == 0) {
-		in.s_addr = ii->ii_ipaddr & ii->ii_netmask;
-		err(NONFATAL, "cannot find %s on net %s",
-		    ename, inet_ntoa(in));
+		for (ia = ii->ii_addrs; ia; ia = ia->ia_next) {
+			in.s_addr = ia->ia_ipaddr & ia->ia_netmask;
+			err(NONFATAL, "cannot find %s on net %s",
+			    ename, inet_ntoa(in));
+		}
 		return;
 	}
 #ifdef REQUIRE_TFTPBOOT
 	if (rarp_bootable(htonl(target_ipaddr)))
 #endif
-		rarp_reply(ii, ep, target_ipaddr, hp);
+		rarp_reply(ii, ia, ep, target_ipaddr, hp);
 	debug("reply sent");
 }
+
 /*
  * Lookup the ethernet address of the interface attached to the BPF
  * file descriptor 'fd'; return it in 'eaddr'.
  */
 void
-lookup_eaddr(ifname, eaddr)
+lookup_addrs(ifname, p)
 	char *ifname;
-	u_char *eaddr;
+	struct if_info *p;
 {
+	u_char *eaddr = p->ii_eaddr;
+	struct if_addr *ia, **iap = &p->ii_addrs;
 	char *inbuf = NULL, *ninbuf;
 	struct ifconf ifc;
-	struct ifreq *ifr;
+	struct ifreq *ifr, ifr_mask;
+	struct in_addr in;
 	struct sockaddr_dl *sdl;
 	int fd;
-	int i, len, inlen = 8192;
+	int i, len, inlen = 8192, found = 0;
 
 	/* We cannot use SIOCGIFADDR on the BPF descriptor.
 	   We must instead get all the interfaces with SIOCGIFCONF
@@ -664,14 +677,14 @@ lookup_eaddr(ifname, eaddr)
 			if (inbuf)
 				free(inbuf);
 			close(fd);
-			err(FATAL, "lookup_eaddr: malloc: %s",
+			err(FATAL, "lookup_addrs: malloc: %s",
 			    strerror(errno));
 		}
 		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(fd);
 			free(inbuf);
-			err(FATAL, "lookup_eaddr: SIOCGIFCONF: %s",
+			err(FATAL, "lookup_addrs: SIOCGIFCONF: %s",
 			    strerror(errno));
 			/* NOTREACHED */
 		}
@@ -686,59 +699,56 @@ lookup_eaddr(ifname, eaddr)
 		len = sizeof(ifr->ifr_name) +
 		      (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
 		       ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
-		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
-		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
-		    sdl->sdl_alen != 6)
-			continue;
 		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
-			memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
-			if (dflag)
-				fprintf(stderr, "%s: %x:%x:%x:%x:%x:%x\n",
-				    ifr->ifr_name, eaddr[0], eaddr[1],
-				    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
-			free(inbuf);
-			return;
+			sdl = (struct sockaddr_dl *) & ifr->ifr_addr;
+			if (sdl->sdl_family == AF_LINK &&
+			    sdl->sdl_type == IFT_ETHER && sdl->sdl_alen == 6) {
+				memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl),
+				    6);
+				if (dflag)
+					fprintf(stderr,
+					    "%s: %x:%x:%x:%x:%x:%x\n",
+					    ifr->ifr_name,
+					    eaddr[0], eaddr[1], eaddr[2],
+					    eaddr[3], eaddr[4], eaddr[5]);
+				found = 1;
+			} else if (sdl->sdl_family == AF_INET) {
+				ia = malloc (sizeof (struct if_addr));
+				if (ia == NULL)
+					err(FATAL, "lookup_addrs: malloc: %s",
+					    strerror(errno));
+				ia->ia_next = NULL;
+				ia->ia_ipaddr =
+				    ((struct sockaddr_in *) sdl)->
+				    sin_addr.s_addr;
+				memcpy(&ifr_mask, ifr, sizeof(*ifr));
+				if (ioctl(fd, SIOCGIFNETMASK,
+				    (char *) &ifr_mask) < 0)
+					err(FATAL, "SIOCGIFNETMASK: %s",
+					    strerror(errno));
+				ia->ia_netmask =
+				    ((struct sockaddr_in *)
+				    & ifr_mask.ifr_addr)->sin_addr.s_addr;
+				/* If SIOCGIFNETMASK didn't work,
+				   figure out a mask from the IP
+				   address class. */
+				if (ia->ia_netmask == 0)
+					ia->ia_netmask =
+					    ipaddrtonetmask(ia->ia_ipaddr);
+				if (dflag) {
+					in.s_addr = ia->ia_ipaddr;
+					fprintf(stderr, "\t%s\n",
+					    inet_ntoa(in));
+				}
+				*iap = ia;
+				iap = &ia->ia_next;
+			}
 		}
 	}
 
 	free(inbuf);
-	err(FATAL, "lookup_eaddr: Never saw interface `%s'!", ifname);
-}
-/*
- * Lookup the IP address and network mask of the interface named 'ifname'.
- */
-void
-lookup_ipaddr(ifname, addrp, netmaskp)
-	char   *ifname;
-	u_int32_t *addrp;
-	u_int32_t *netmaskp;
-{
-	int     fd;
-	struct ifreq ifr;
-
-	/* Use datagram socket to get IP address. */
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		err(FATAL, "socket: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-	(void) strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
-	if (ioctl(fd, SIOCGIFADDR, (char *) &ifr) < 0) {
-		err(FATAL, "SIOCGIFADDR: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-	*addrp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
-	if (ioctl(fd, SIOCGIFNETMASK, (char *) &ifr) < 0) {
-		perror("SIOCGIFNETMASK");
-		unlink(_PATH_RARPDPID);
-		exit(1);
-	}
-	*netmaskp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
-	/* If SIOCGIFNETMASK didn't work, figure out a mask from the IP
-	 * address class. */
-	if (*netmaskp == 0)
-		*netmaskp = ipaddrtonetmask(*addrp);
-
-	(void) close(fd);
+	if (!found)
+		err(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
 }
 
 int arptab_set __P((u_char *eaddr, u_int32_t host));
@@ -821,8 +831,9 @@ update_arptab(ep, ipaddr)
  * ARP request.
  */
 void
-rarp_reply(ii, ep, ipaddr, hp)
+rarp_reply(ii, ia, ep, ipaddr, hp)
 	struct if_info *ii;
+	struct if_addr *ia;
 	struct ether_header *ep;
 	u_int32_t  ipaddr;
 	struct hostent *hp;
@@ -845,7 +856,7 @@ rarp_reply(ii, ep, ipaddr, hp)
 
 	memcpy((char *) ap->arp_tpa, (char *) &ipaddr, 4);
 	/* Target hardware is unchanged. */
-	memcpy((char *) ap->arp_spa, (char *) &ii->ii_ipaddr, 4);
+	memcpy((char *) ap->arp_spa, (char *) &ia->ia_ipaddr, 4);
 
 	if (lflag) {
 		struct ether_addr ea;		
