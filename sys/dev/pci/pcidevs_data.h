@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.258 2000/05/15 21:51:00 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.260 2000/05/30 00:49:08 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -315,6 +315,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M1543 Host-PCI",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1621,
+	    0,
+	    "Acer Labs",
+	    "M1621 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
 	    0,
 	    "Acer Labs",
@@ -349,6 +355,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M5237 USB",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5247,
+	    0,
+	    "Acer Labs",
+	    "M5247 AGP/PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
@@ -4117,6 +4129,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "UMC",
 	    "UM9017F",
+	},
+	{
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886F,
+	    0,
+	    "UMC",
+	    "PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886N,
