@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 1997/05/03 22:27:09 niklas Exp $
+#	$OpenBSD: install.md,v 1.2 1997/05/13 16:04:06 niklas Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,7 +42,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="xbin xman xinc xcon"
+MDSETS=
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -55,22 +55,7 @@ md_set_term() {
 }
 
 md_makerootwritable() {
-	# Was: do_mfs_mount "/tmp" "2048"
-	# /tmp is the mount point
-	# 2048 is the size in DEV_BIZE blocks
-
-	umount /tmp > /dev/null 2>&1
-	if ! mount_mfs -s 2048 swap /tmp ; then
-		cat << \__mfs_failed_1
-
-FATAL ERROR: Can't mount the memory filesystem.
-
-__mfs_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
+	# This is done in .profile now
 }
 
 md_get_diskdevs() {
@@ -94,7 +79,7 @@ md_get_partition_range() {
 }
 
 md_installboot() {
-#	echo "Installing boot block..."
+	# Nothing needed
 }
 
 md_native_fstype() {
@@ -136,7 +121,7 @@ md_prep_disklabel()
 	2)
 		echo "WARNING: Label on disk $_disk is corrupted.  Maybe"
 		echo "you should interrupt the install process and recheck"
-		echo "your disk partitioning in AmigaOS?""
+		echo "your disk partitioning in AmigaOS?"
 		;;
 	esac
 }
