@@ -27,5 +27,5 @@ minfd.h: gen_minfd
 
 .include <bsd.prog.mk>
 
-LDADD+=	-ldes -lutil -lz -lcrypto
-DPADD+=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lutil -lz -lcrypto
+DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}

@@ -4,7 +4,7 @@ PROG=	ssh-add
 BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/bin
-LDADD=	-lcrypto -ldes -lutil -lz
+LDADD=	-lcrypto -lutil -lz
 DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh-add.1
 
