@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.7 2000/06/12 17:24:27 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.8 2000/06/20 20:00:03 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.55 2000/06/12 16:18:32 itojun Exp $	*/
 
 /*
@@ -292,12 +292,12 @@ main(argc, argv)
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 #ifndef IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwW")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwW")) != -1)
 #else
 #ifdef IPSEC_POLICY_IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwWP:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwWP:")) != -1)
 #else
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwWAE")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwWAE")) != -1)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	{
