@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.46 2002/12/17 21:54:25 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.47 2003/01/01 10:03:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -259,46 +259,39 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	struct proc *p = bp->b_proc;
-	struct vm_map *map = &p->p_vmspace->vm_map;
-	vaddr_t addr, kva;
+	struct pmap *pm = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	vaddr_t kva, uva;
 	vsize_t size, off;
-	paddr_t pa;
-	int npf;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 #endif
-	addr = (vaddr_t)(bp->b_saveaddr = bp->b_data);
-	off = addr & PGOFSET;
-	size = round_page(bp->b_bcount + off);
+	bp->b_saveaddr = bp->b_data;
+	uva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	size = round_page(off + len);
 
 	/*
-	 * Note that this is an expanded version of:
-	 *   kva = uvm_km_valloc_wait(kernel_map, size);
 	 * We do it on our own here to be able to specify an offset to uvm_map
 	 * so that we can get all benefits of PMAP_PREFER.
 	 * - art@
 	 */
-	while (1) {
-		kva = vm_map_min(phys_map);
-		if (uvm_map(phys_map, &kva, size, NULL, addr, 0,
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0) {
-			bp->b_data = (caddr_t)(kva + off);
-			break;
-		}
-		tsleep(phys_map, PVM, "vallocwait", 0);
-	}
+	kva = uvm_km_valloc_prefer_wait(kernel_map, size, uva);
+	fdcache(pm->pm_space, uva, size);
+	bp->b_data = (caddr_t)(kva + off);
+	while (size > 0) {
+		paddr_t pa;
 
-	fdcache(vm_map_pmap(map)->pm_space, addr, size);
-	for (npf = btoc(size), addr = trunc_page(addr); npf--;
-	     addr += PAGE_SIZE, kva += PAGE_SIZE)
-		if (pmap_extract(vm_map_pmap(map), addr, &pa) == FALSE)
+		if (pmap_extract(pm, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		else
 			pmap_kenter_pa(kva, pa, UVM_PROT_RW);
+		uva += PAGE_SIZE;
+		kva += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -318,7 +311,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free_wakeup(kernel_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
