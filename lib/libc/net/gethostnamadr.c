@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.35 1999/06/04 06:38:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.36 1999/07/03 18:07:53 jakob Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -249,6 +249,11 @@ getanswer(answer, anslen, qname, qtype)
  		cp += INT16SZ + INT32SZ;	/* class, TTL */
 		n = _getshort(cp);
 		cp += INT16SZ;			/* len */
+		if (type == T_SIG) {
+			/* XXX - ignore signatures as we don't use them yet */
+			cp += n;
+			continue;
+		}
 		if (class != C_IN) {
 			/* XXX - debug? syslog? */
 			cp += n;
