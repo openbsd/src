@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.14 1999/04/20 20:06:11 niklas Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.15 1999/10/28 03:21:51 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ void	iplinit __P((void));
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ip4.h>
+#include <netinet/ip_ether.h>
 #endif
 
 extern	struct domain inetdomain;
@@ -197,6 +198,11 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,          0,              0,              0,		esp_sysctl
 },
+{ SOCK_RAW,   &inetdomain,    IPPROTO_ETHERIP, PR_ATOMIC|PR_ADDR,
+  etherip_input,  rip_output, 0,              rip_ctloutput,
+  rip_usrreq,
+  0,          0,              0,              0,		etherip_sysctl
+},
 #endif
 #ifdef INET6
 /* IPv6 in IPv4 tunneled packets... */
@@ -205,12 +211,14 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,          0,              0,              0
 },
+#if 0
 /* IPv4 in IPv4 tunneled packets... */
 { SOCK_RAW,   &inetdomain,    IPPROTO_IPV4,   PR_ATOMIC|PR_ADDR,
   ipv4_input, 0,              0,              0,
   0,
   0,          0,              0,              0
 },
+#endif /* 0 */
 #endif /* defined(INET6) */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
