@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.11 2002/02/17 19:42:37 millert Exp $";
+    "@(#) $Id: mtrace.c,v 1.12 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 #include <netdb.h>
@@ -63,11 +63,7 @@ static char rcsid[] =
 #include <sys/ioctl.h>
 #include "defs.h"
 #include <arpa/inet.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #ifdef SUNOS5
 #include <sys/systeminfo.h>
 #endif
@@ -1675,27 +1671,11 @@ check_vif_state()
  * of the message and the current debug level.  For errors of severity
  * LOG_ERR or worse, terminate the program.
  */
-#ifdef __STDC__
 void
 log(int severity, int syserr, char *format, ...)
 {
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap, format);
-#else
-/*VARARGS3*/
-void 
-log(severity, syserr, format, va_alist)
-	int     severity, syserr;
-	char   *format;
-	va_dcl
-{
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap);
-#endif
+    va_list ap;
+    char    fmt[100];
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
@@ -1705,6 +1685,7 @@ log(severity, syserr, format, va_alist)
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
 	    strncat(fmt, format, 80);
+	    va_start(ap, format);
 	    vfprintf(stderr, fmt, ap);
 	    va_end(ap);
 	    if (syserr == 0)

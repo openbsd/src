@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.12 2002/02/17 19:42:38 millert Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.13 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -29,19 +29,11 @@
 #define __PPPD_H__
 
 #include <stdio.h>		/* for FILE */
+#include <stdarg.h>
 #include <sys/param.h>		/* for MAXPATHLEN and BSD4_4, if defined */
 #include <sys/types.h>		/* for u_int32_t, if defined */
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#define __V(x)        x
-#else
-#include <varargs.h>
-#define __V(x)        (va_alist) va_dcl
-#define const
-#endif
 
 /*
  * Limits.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.15 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.16 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.15 2002/02/16 21:28:03 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.16 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static const char rcsid[] = "$OpenBSD: common.c,v 1.15 2002/02/16 21:28:03 mille
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "lp.h"
 #include "pathnames.h"
 
@@ -405,28 +406,13 @@ delay(n)
 	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 fatal(const char *msg, ...)
-#else
-fatal(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	extern char *__progname;
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 	if (from != host)
 		(void)printf("%s: ", host);
 	(void)printf("%s: ", __progname);

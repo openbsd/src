@@ -1,4 +1,4 @@
-/*	$OpenBSD: libc.h,v 1.7 2001/05/04 22:16:15 millert Exp $	*/
+/*	$OpenBSD: libc.h,v 1.8 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -98,19 +98,12 @@
 #endif	/* _TIME_H_ */
 
 /*  CMU stdio additions */
-#if defined(__STDC__)
 extern FILE *fopenp(const char*, const char*, char*, char*);
 extern FILE *fwantread(const char*, const char*, const char*, const char*);
 extern FILE *fwantwrite(const char*, const char*, const char*, const char*,
 			int);
-#else	/* __STDC__ */
-extern FILE *fopenp();
-extern FILE *fwantread();
-extern FILE *fwantwrite();
-#endif	/* __STDC__ */
 
 /* CMU string routines */
-#if defined(__STDC__)
 extern char* foldup(char*, const char*);
 extern char* folddown(char*, const char*);
 extern char* sindex(const char*, const char*);
@@ -146,41 +139,17 @@ extern unsigned int hexarg(const char**, const char*, const char*,
 			   unsigned int, unsigned int, unsigned int);
 extern unsigned int atoh(const char*);
 extern char *concat(const char*, int, ...);
-#else	/* __STDC__ */
-extern char *foldup(), *folddown();
-extern char *sindex(), *skipto(), *skipover(), *nxtarg();
-extern char *getstr(), *strarg();
-extern long getlong(), longarg();
-extern short getshort(), shortarg();
-extern float getfloat(), floatarg();
-extern double getdouble(), doublearg();
-extern unsigned int getoct(), octarg(), gethex(), hexarg();
-extern unsigned int atoo(), atoh();
-extern char *concat();
-#endif	/* __STDC__ */
 
 /* CMU library routines */
-#if defined(__STDC__)
 extern char *getname(int);
 extern char *pathof(char *);
 extern const char *errmsg(int);
-#else	/* __STDC__ */
-extern char *getname();
-extern char *pathof();
-extern const char *errmsg();
-#endif	/* __STDC__ */
 
 /*  CMU time additions */
-#if defined(__STDC__)
 extern long gtime(const struct tm*);
 extern long atot(const char*);
-#else	/* __STDC__ */
-extern long gtime();
-extern long atot();
-#endif	/* __STDC__ */
 
 /* 4.3 BSD standard library routines; taken from man(3) */
-#if defined(__STDC__)
 #if 0
 typedef int (*PFI)();
 #endif
@@ -260,28 +229,4 @@ extern int ttyslot(void);
 extern unsigned ualarm(unsigned, unsigned);
 extern void usleep(unsigned);
 #endif
-#else	/* __STDC__ */
-extern double atof();
-extern long atol();
-extern char *crypt();
-extern char *ecvt();
-extern char *fcvt();
-extern char *gcvt();
-extern char *getenv();
-extern char *getlogin();
-extern char *getpass();
-extern char *getusershell();
-extern char *getwd();
-extern char *malloc();
-extern char *realloc();
-extern char *calloc();
-extern char *alloca();
-extern char *mktemp();
-extern long random();
-extern char *initstate();
-extern char *setstate();
-extern char *re_comp();
-extern char *ttyname();
-extern unsigned ualarm();
-#endif	/* __STDC__ */
 #endif	/* not _LIBC_H_ */

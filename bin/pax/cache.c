@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.9 2001/06/26 14:19:33 lebel Exp $	*/
+/*	$OpenBSD: cache.c,v 1.10 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.9 2001/06/26 14:19:33 lebel Exp $";
+static char rcsid[] = "$OpenBSD: cache.c,v 1.10 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,13 +81,8 @@ static GIDC **grptb = NULL;	/* group name to gid cache */
  *	0 if ok, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 uidtb_start(void)
-#else
-int
-uidtb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -110,13 +105,8 @@ uidtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 gidtb_start(void)
-#else
-int
-gidtb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -139,13 +129,8 @@ gidtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 usrtb_start(void)
-#else
-int
-usrtb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -168,13 +153,8 @@ usrtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 grptb_start(void)
-#else
-int
-grptb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -198,15 +178,8 @@ grptb_start()
  *	Pointer to stored name (or a empty string)
  */
 
-#ifdef __STDC__
 char *
 name_uid(uid_t uid, int frc)
-#else
-char *
-name_uid(uid, frc)
-	uid_t uid;
-	int frc;
-#endif
 {
 	register struct passwd *pw;
 	register UIDC *ptr;
@@ -271,15 +244,8 @@ name_uid(uid, frc)
  *	Pointer to stored name (or a empty string)
  */
 
-#ifdef __STDC__
 char *
 name_gid(gid_t gid, int frc)
-#else
-char *
-name_gid(gid, frc)
-	gid_t gid;
-	int frc;
-#endif
 {
 	register struct group *gr;
 	register GIDC *ptr;
@@ -343,15 +309,8 @@ name_gid(gid, frc)
  *	the uid (if any) for a user name, or a -1 if no match can be found
  */
 
-#ifdef __STDC__
 int
 uid_name(char *name, uid_t *uid)
-#else
-int
-uid_name(name, uid)
-	char *name;
-	uid_t *uid;
-#endif
 {
 	register struct passwd *pw;
 	register UIDC *ptr;
@@ -413,15 +372,8 @@ uid_name(name, uid)
  *	the gid (if any) for a group name, or a -1 if no match can be found
  */
 
-#ifdef __STDC__
 int
 gid_name(char *name, gid_t *gid)
-#else
-int
-gid_name(name, gid)
-	char *name;
-	gid_t *gid;
-#endif
 {
 	register struct group *gr;
 	register GIDC *ptr;

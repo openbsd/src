@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.16 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.17 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.16 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.17 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,14 +96,8 @@ static int resub(regex_t *, regmatch_t *, char *, char *, char *, char *);
  *	the list of replacement patterns; -1 otherwise.
  */
 
-#ifdef __STDC__
 int
 rep_add(register char *str)
-#else
-int
-rep_add(str)
-	register char *str;
-#endif
 {
 	register char *pt1;
 	register char *pt2;
@@ -226,15 +220,8 @@ rep_add(str)
  *	0 if the pattern was added to the list, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 pat_add(char *str, char *chdname)
-#else
-int
-pat_add(str, chdname)
-	char *str;
-	char *chdname;
-#endif
 {
 	register PATTERN *pt;
 
@@ -278,13 +265,8 @@ pat_add(str, chdname)
  *	a selected archive member.
  */
 
-#ifdef __STDC__
 void
 pat_chk(void)
-#else
-void
-pat_chk()
-#endif
 {
 	register PATTERN *pt;
 	register int wban = 0;
@@ -320,14 +302,8 @@ pat_chk()
  *	match, -1 otherwise.
  */
 
-#ifdef __STDC__
 int
 pat_sel(register ARCHD *arcn)
-#else
-int
-pat_sel(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register PATTERN *pt;
 	register PATTERN **ppt;
@@ -445,14 +421,8 @@ pat_sel(arcn)
  *	looking for more members)
  */
 
-#ifdef __STDC__
 int
 pat_match(register ARCHD *arcn)
-#else
-int
-pat_match(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register PATTERN *pt;
 
@@ -523,16 +493,8 @@ pat_match(arcn)
  *	Note: *pend may be changed to show where the prefix ends.
  */
 
-#ifdef __STDC__
 static int
 fn_match(register char *pattern, register char *string, char **pend)
-#else
-static int
-fn_match(pattern, string, pend)
-	register char *pattern;
-	register char *string;
-	char **pend;
-#endif
 {
 	register char c;
 	char test;
@@ -604,15 +566,8 @@ fn_match(pattern, string, pend)
 	/* NOTREACHED */
 }
 
-#ifdef __STDC__
 static char *
 range_match(register char *pattern, register int test)
-#else
-static char *
-range_match(pattern, test)
-	register char *pattern;
-	register int test;
-#endif
 {
 	register char c;
 	register char c2;
@@ -654,14 +609,8 @@ range_match(pattern, test)
  *	0 continue to  process file, 1 skip this file, -1 pax is finished
  */
 
-#ifdef __STDC__
 int
 mod_name(register ARCHD *arcn)
-#else
-int
-mod_name(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register int res = 0;
 
@@ -753,14 +702,8 @@ mod_name(arcn)
  *	0 process this file, 1 skip this file, -1 we need to exit pax
  */
 
-#ifdef __STDC__
 static int
 tty_rename(register ARCHD *arcn)
-#else
-static int
-tty_rename(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	char tmpname[PAXPATHLEN+2];
 	int res;
@@ -824,16 +767,8 @@ tty_rename(arcn)
  *	0 if ok, -1 if failure (name too long)
  */
 
-#ifdef __STDC__
 int
 set_dest(register ARCHD *arcn, char *dest_dir, int dir_len)
-#else
-int
-set_dest(arcn, dest_dir, dir_len)
-	register ARCHD *arcn;
-	char *dest_dir;
-	int dir_len;
-#endif
 {
 	if (fix_path(arcn->name, &(arcn->nlen), dest_dir, dir_len) < 0)
 		return(-1);
@@ -859,17 +794,8 @@ set_dest(arcn, dest_dir, dir_len)
  *	0 if ok, -1 if the final name is too long
  */
 
-#ifdef __STDC__
 static int
 fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
-#else
-static int
-fix_path(or_name, or_len, dir_name, dir_len)
-	char *or_name;
-	int *or_len;
-	char *dir_name;
-	int dir_len;
-#endif
 {
 	register char *src;
 	register char *dest;
@@ -931,16 +857,8 @@ fix_path(or_name, or_len, dir_name, dir_len)
  *	ended up empty)
  */
 
-#ifdef __STDC__
 static int
 rep_name(char *name, int *nlen, int prnt)
-#else
-static int
-rep_name(name, nlen, prnt)
-	char *name;
-	int *nlen;
-	int prnt;
-#endif
 {
 	register REPLACE *pt;
 	register char *inpt;
@@ -1085,20 +1003,9 @@ rep_name(name, nlen, prnt)
  *	-1 if error, or the number of characters added to the destination.
  */
 
-#ifdef __STDC__
 static int
 resub(regex_t *rp, register regmatch_t *pm, char *src, char *inpt, char *dest,
 	register char *destend)
-#else
-static int
-resub(rp, pm, src, inpt, dest, destend)
-	regex_t *rp;
-	register regmatch_t *pm;
-	char *src;
-	char *inpt;
-	char *dest;
-	register char *destend;
-#endif
 {
 	register char *spt;
 	register char *dpt;

@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_atanhf.c,v 1.3 1995/05/10 20:48:45 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float atanhf(float x)		/* wrapper atanhf */
-#else
-	float atanhf(x)			/* wrapper atanhf */
-	float x;
-#endif
+float
+atanhf(float x)		/* wrapper atanhf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_atanhf(x);

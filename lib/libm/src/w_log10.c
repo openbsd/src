@@ -21,13 +21,8 @@ static char rcsid[] = "$NetBSD: w_log10.c,v 1.6 1995/05/10 20:49:35 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	double log10(double x)		/* wrapper log10 */
-#else
-	double log10(x)			/* wrapper log10 */
-	double x;
-#endif
+double
+log10(double x)		/* wrapper log10 */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_log10(x);

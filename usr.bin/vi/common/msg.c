@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.9 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.10 2002/02/19 19:39:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -26,16 +26,11 @@ static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "common.h"
 #include "../vi/vi.h"
@@ -47,15 +42,7 @@ static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
  * PUBLIC: void msgq(SCR *, mtype_t, const char *, ...);
  */
 void
-#ifdef __STDC__
 msgq(SCR *sp, mtype_t mt, const char *fmt, ...)
-#else
-msgq(sp, mt, fmt, va_alist)
-	SCR *sp;
-	mtype_t mt;
-        const char *fmt;
-        va_dcl
-#endif
 {
 #ifndef NL_ARGMAX
 #define	__NL_ARGMAX	20		/* Set to 9 by System V. */
@@ -275,11 +262,7 @@ retry:		FREE_SPACE(sp, bp, blen);
 #endif
 
 format:	/* Format the arguments into the string. */
-#ifdef __STDC__
         va_start(ap, fmt);
-#else
-        va_start(ap);
-#endif
 	len = vsnprintf(mp, REM, fmt, ap);
 	va_end(ap);
 	if (len >= nlen)

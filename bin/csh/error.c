@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.3 2000/08/30 01:46:34 mickey Exp $	*/
+/*	$OpenBSD: error.c,v 1.4 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -38,18 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.3 2000/08/30 01:46:34 mickey Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.4 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -293,23 +289,13 @@ static char *errorlist[] =
  * e.g. in process.
  */
 void
-#ifdef __STDC__
 seterror(int id, ...)
-#else
-seterror(id, va_alist)
-     int id;
-     va_dcl
-#endif
 {
     if (seterr == 0) {
 	char    berr[BUFSIZ];
 	va_list va;
 
-#ifdef __STDC__
 	va_start(va, id);
-#else
-	va_start(va);
-#endif
 	if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
 	    id = ERR_INVALID;
 	vsnprintf(berr, sizeof(berr), errorlist[id], va);
@@ -338,13 +324,7 @@ seterror(id, va_alist)
  * place error unwinds are ever caught.
  */
 void
-#ifdef __STDC__
 stderror(int id, ...)
-#else
-stderror(id, va_alist)
-    int     id;
-    va_dcl
-#endif
 {
     va_list va;
     register Char **v;
@@ -371,11 +351,7 @@ stderror(id, va_alist)
 	    /* Old error. */
 	    (void) fprintf(csherr, "%s.\n", seterr);
 	else {
-#ifdef __STDC__
 	    va_start(va, id);
-#else
-	    va_start(va);
-#endif
 	    (void) vfprintf(csherr, errorlist[id], va);
 	    va_end(va);
 	    (void) fprintf(csherr, ".\n");

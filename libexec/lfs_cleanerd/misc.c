@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/07/25 19:41:17 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 2002/02/19 19:39:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/07/25 19:41:17 mickey Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2002/02/19 19:39:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,30 +45,16 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/07/25 19:41:17 mickey Exp $";
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 extern char *special;
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 err(const int fatal, const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "%s: ", special);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);

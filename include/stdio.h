@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.21 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.22 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -366,7 +366,7 @@ __END_DECLS
  * define function versions in the C library.
  */
 #define	__sgetc(p) (--(p)->_r < 0 ? __srget(p) : (int)(*(p)->_p++))
-#if defined(__GNUC__) && defined(__STDC__)
+#if defined(__GNUC__)
 static __inline int __sputc(int _c, FILE *_p) {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
 		return (*_p->_p++ = _c);

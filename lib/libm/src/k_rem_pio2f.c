@@ -23,17 +23,9 @@ static char rcsid[] = "$NetBSD: k_rem_pio2f.c,v 1.4 1995/05/10 20:46:28 jtc Exp 
 /* In the float version, the input parameter x contains 8 bit
    integers, not 24 bit integers.  113 bit precision is not supported.  */
 
-#ifdef __STDC__
 static const int init_jk[] = {4,7,9}; /* initial value for jk */
-#else
-static int init_jk[] = {4,7,9}; 
-#endif
 
-#ifdef __STDC__
 static const float PIo2[] = {
-#else
-static float PIo2[] = {
-#endif
   1.5703125000e+00, /* 0x3fc90000 */
   4.5776367188e-04, /* 0x39f00000 */
   2.5987625122e-05, /* 0x37da0000 */
@@ -47,22 +39,15 @@ static float PIo2[] = {
   6.3331015649e-25, /* 0x17440000 */
 };
 
-#ifdef __STDC__
 static const float			
-#else
-static float			
-#endif
 zero   = 0.0,
 one    = 1.0,
 two8   =  2.5600000000e+02, /* 0x43800000 */
 twon8  =  3.9062500000e-03; /* 0x3b800000 */
 
-#ifdef __STDC__
-	int __kernel_rem_pio2f(float *x, float *y, int e0, int nx, int prec, const int32_t *ipio2) 
-#else
-	int __kernel_rem_pio2f(x,y,e0,nx,prec,ipio2) 	
-	float x[], y[]; int e0,nx,prec; int32_t ipio2[];
-#endif
+int
+__kernel_rem_pio2f(float *x, float *y, int e0, int nx, int prec,
+    const int32_t *ipio2) 
 {
 	int32_t jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
 	float z,fw,f[20],fq[20],q[20];

@@ -21,12 +21,8 @@ static char rcsid[] = "$NetBSD: s_fabs.c,v 1.7 1995/05/10 20:47:13 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double fabs(double x)
-#else
-	double fabs(x)
-	double x;
-#endif
+double
+fabs(double x)
 {
 	u_int32_t high;
 	GET_HIGH_WORD(high,x);

@@ -25,19 +25,11 @@ static char rcsid[] = "$NetBSD: w_scalb.c,v 1.6 1995/05/10 20:49:48 jtc Exp $";
 
 #include <errno.h>
 
-#ifdef __STDC__
+double
 #ifdef _SCALB_INT
-	double scalb(double x, int fn)		/* wrapper scalb */
+scalb(double x, int fn)		/* wrapper scalb */
 #else
-	double scalb(double x, double fn)	/* wrapper scalb */
-#endif
-#else
-	double scalb(x,fn)			/* wrapper scalb */
-#ifdef _SCALB_INT
-	double x; int fn;
-#else
-	double x,fn;
-#endif
+scalb(double x, double fn)	/* wrapper scalb */
 #endif
 {
 #ifdef _IEEE_LIBM

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.7 2001/09/05 22:32:27 deraadt Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.8 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.7 2001/09/05 22:32:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.8 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,11 +58,7 @@ static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.7 2001/09/05 22:32:27 deraadt Ex
 #include <string.h>
 #include "pax.h"
 #include "extern.h"
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 /*
  * routines that deal with I/O to and from the user
@@ -78,13 +74,8 @@ static FILE *ttyinf = NULL;		/* input pointing at control tty */
  *	open fails, future ops that require user input will get an EOF
  */
 
-#ifdef __STDC__
 int
 tty_init(void)
-#else
-int
-tty_init()
-#endif
 {
 	int ttyfd;
 
@@ -110,22 +101,12 @@ tty_init()
  *	if there is no controlling terminal, just return.
  */
 
-#ifdef __STDC__
 void
 tty_prnt(char *fmt, ...)
-#else
-void
-tty_prnt(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#	ifdef __STDC__
+
 	va_start(ap, fmt);
-#	else
-	va_start(ap);
-#	endif
 	if (ttyoutf == NULL) {
 		va_end(ap);
 		return;
@@ -143,15 +124,8 @@ tty_prnt(fmt, va_alist)
  *	0 if data was read, -1 otherwise.
  */
 
-#ifdef __STDC__
 int
 tty_read(char *str, int len)
-#else
-int
-tty_read(str, len)
-	char *str;
-	int len;
-#endif
 {
 	register char *pt;
 
@@ -173,23 +147,12 @@ tty_read(str, len)
  *	will be non-zero.
  */
 
-#ifdef __STDC__
 void
 paxwarn(int set, char *fmt, ...)
-#else
-void
-paxwarn(set, fmt, va_alist)
-	int set;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#	ifdef __STDC__
+
 	va_start(ap, fmt);
-#	else
-	va_start(ap);
-#	endif
 	if (set)
 		exit_val = 1;
 	/*
@@ -213,24 +176,12 @@ paxwarn(set, fmt, va_alist)
  *	will be non-zero.
  */
 
-#ifdef __STDC__
 void
 syswarn(int set, int errnum, char *fmt, ...)
-#else
-void
-syswarn(set, errnum, fmt, va_alist)
-	int set;
-	int errnum;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#	ifdef __STDC__
+
 	va_start(ap, fmt);
-#	else
-	va_start(ap);
-#	endif
 	if (set)
 		exit_val = 1;
 	/*

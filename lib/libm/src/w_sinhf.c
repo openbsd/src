@@ -24,12 +24,8 @@ static char rcsid[] = "$NetBSD: w_sinhf.c,v 1.3 1995/05/10 20:49:54 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float sinhf(float x)		/* wrapper sinhf */
-#else
-	float sinhf(x)			/* wrapper sinhf */
-	float x;
-#endif
+float
+sinhf(float x)		/* wrapper sinhf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_sinhf(x);

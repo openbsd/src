@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.24 2002/02/17 19:42:39 millert Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.25 2002/02/19 19:39:40 millert Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.24 2002/02/17 19:42:39 millert Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.25 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -41,11 +41,7 @@ static char _rcsid[] = "$OpenBSD: route6d.c,v 1.24 2002/02/17 19:42:39 millert E
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <syslog.h>
 #include <stddef.h>
 #include <errno.h>
@@ -3301,22 +3297,12 @@ ripsuptrig()
 }
 
 void
-#ifdef __STDC__
 fatal(const char *fmt, ...)
-#else
-fatal(fmt, va_alist)
-	char	*fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char buf[1024];
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	perror(buf);
 	syslog(LOG_ERR, "%s: %s", buf, strerror(errno));
@@ -3325,33 +3311,18 @@ fatal(fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 tracet(int level, const char *fmt, ...)
-#else
-tracet(level, fmt, va_alist)
-	int level;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
 	if (level <= dflag) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		fprintf(stderr, "%s: ", hms());
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
 	}
 	if (dflag) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		if (level > 0)
 			vsyslog(LOG_DEBUG, fmt, ap);
 		else
@@ -3361,32 +3332,17 @@ tracet(level, fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 trace(int level, const char *fmt, ...)
-#else
-trace(level, fmt, va_alist)
-	int level;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
 	if (level <= dflag) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
 	}
 	if (dflag) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		if (level > 0)
 			vsyslog(LOG_DEBUG, fmt, ap);
 		else

@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_acosf.c,v 1.3 1995/05/10 20:48:29 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float acosf(float x)		/* wrapper acosf */
-#else
-	float acosf(x)			/* wrapper acosf */
-	float x;
-#endif
+float
+acosf(float x)		/* wrapper acosf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_acosf(x);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.43 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.44 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.43 2002/02/16 21:27:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.44 2002/02/19 19:39:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,7 @@ static const char rcsid[] = "$OpenBSD: su.c,v 1.43 2002/02/16 21:27:54 millert E
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <bsd_auth.h>
 
 char   *ontty(void);
@@ -349,52 +345,20 @@ usage()
 }
 
 void
-#ifdef __STDC__
 auth_err(auth_session_t *as, int eval, const char *fmt, ...)
-#else
-auth_err(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	auth_session_t *as;
-	int eval;
-	const char *fmt;
-
-	va_start(ap);
-	as = va_arg(ap, auth_session_t *);
-	eval = va_arg(ap, int);
-	fmt = va_arg(ap, const char *);
-#endif
 	verr(eval, fmt, ap);
 	auth_close(as);
 	va_end(ap);
 }
 
 void
-#ifdef __STDC__
 auth_errx(auth_session_t *as, int eval, const char *fmt, ...)
-#else
-auth_errx(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	auth_session_t *as;
-	int eval;
-	const char *fmt;
-
-	va_start(ap);
-	as = va_arg(ap, auth_session_t *);
-	eval = va_arg(ap, int);
-	fmt = va_arg(ap, const char *);
-#endif
 	verrx(eval, fmt, ap);
 	auth_close(as);
 	va_end(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.4 2002/02/17 19:42:26 millert Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,11 +60,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "syscall.h"
 
 static void kprintn(void (*)(int), u_long, int);

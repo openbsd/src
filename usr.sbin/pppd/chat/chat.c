@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.15 2002/02/17 19:42:38 millert Exp $	*/
+/*	$OpenBSD: chat.c,v 1.16 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.15 2002/02/17 19:42:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.16 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif
 
@@ -99,6 +99,7 @@ static char rcsid[] = "$OpenBSD: chat.c,v 1.15 2002/02/17 19:42:38 millert Exp $
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <syslog.h>
+#include <stdarg.h>
 
 #ifndef TERMIO
 #undef	TERMIOS
@@ -116,17 +117,6 @@ static char rcsid[] = "$OpenBSD: chat.c,v 1.15 2002/02/17 19:42:38 millert Exp $
 
 #ifndef SIGTYPE
 #define SIGTYPE void
-#endif
-
-#undef __V
-
-#ifdef __STDC__
-#include <stdarg.h>
-#define __V(x)	x
-#else
-#include <varargs.h>
-#define __V(x)	(va_alist) va_dcl
-#define const
 #endif
 
 #ifndef O_NONBLOCK
@@ -446,18 +436,11 @@ char line[1024];
 /*
  * Send a message to syslog and/or stderr.
  */
-void logf __V((const char *fmt, ...))
+void logf(const char *fmt, ...)
 {
     va_list args;
 
-#ifdef __STDC__
     va_start(args, fmt);
-#else
-    char *fmt;
-    va_start(args);
-    fmt = va_arg(args, char *);
-#endif
-
     vfmtmsg(line, sizeof(line), fmt, args);
     va_end(args);
     if (to_log)
@@ -470,20 +453,11 @@ void logf __V((const char *fmt, ...))
  *	Print an error message and terminate.
  */
 
-void fatal __V((int code, const char *fmt, ...))
+void fatal(int code, const char *fmt, ...)
 {
     va_list args;
 
-#ifdef __STDC__
     va_start(args, fmt);
-#else
-    int code;
-    char *fmt;
-    va_start(args);
-    code = va_arg(args, int);
-    fmt = va_arg(args, char *);
-#endif
-
     vfmtmsg(line, sizeof(line), fmt, args);
     if (to_log)
 	syslog(LOG_ERR, "%s", line);

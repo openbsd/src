@@ -22,12 +22,8 @@ static char rcsid[] = "$NetBSD: w_fmod.c,v 1.6 1995/05/10 20:48:55 jtc Exp $";
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	double fmod(double x, double y)	/* wrapper fmod */
-#else
-	double fmod(x,y)		/* wrapper fmod */
-	double x,y;
-#endif
+double
+fmod(double x, double y)	/* wrapper fmod */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_fmod(x,y);

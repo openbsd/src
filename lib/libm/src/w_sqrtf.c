@@ -24,12 +24,8 @@ static char rcsid[] = "$NetBSD: w_sqrtf.c,v 1.3 1995/05/10 20:49:59 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float sqrtf(float x)		/* wrapper sqrtf */
-#else
-	float sqrt(x)			/* wrapper sqrtf */
-	float x;
-#endif
+float
+sqrtf(float x)		/* wrapper sqrtf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_sqrtf(x);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: read.c,v 1.5 2002/02/19 19:39:39 millert Exp $	*/
 /*	$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.4 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.5 2002/02/19 19:39:39 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -900,11 +900,7 @@ inpqstrg(src, epp)
 				c = '\t';
 				break;
 			case 'v':
-#ifdef __STDC__
 				c = '\v';
-#else
-				c = '\013';
-#endif
 				break;
 			case 'b':
 				c = '\b';
@@ -916,11 +912,7 @@ inpqstrg(src, epp)
 				c = '\f';
 				break;
 			case 'a':
-#ifdef __STDC__
 				c = '\a';
-#else
-				c = '\007';
-#endif
 				break;
 			case '\\':
 				c = '\\';

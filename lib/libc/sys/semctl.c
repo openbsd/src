@@ -30,36 +30,22 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: semctl.c,v 1.5 1998/06/10 08:46:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: semctl.c,v 1.6 2002/02/19 19:39:37 millert Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <stdlib.h>
 
-#if __STDC__
 int semctl(int semid, int semnum, int cmd, ...)
-#else
-int semctl(semid, semnum, cmd, va_alist)
-	int semid, semnum;
-	int cmd;
-	va_dcl
-#endif
 {
 	va_list ap;
 	union semun semun;
 	union semun *semun_ptr = NULL;
-#if __STDC__
+
 	va_start(ap, cmd);
-#else
-	va_start(ap);
-#endif
 	if (cmd == IPC_SET || cmd == IPC_STAT || cmd == GETALL ||
 	    cmd == SETVAL || cmd == SETALL) {
 		semun = va_arg(ap, union semun);

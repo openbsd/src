@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.18 2001/11/06 03:11:40 deraadt Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.19 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,17 +25,15 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.18 2001/11/06 03:11:40 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.19 2002/02/19 19:39:40 millert Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: waitpid.c,v 1.3 1997/07/25 20:30:06 mickey Exp $";
+static char rcsid[] = "$OpenBSD: waitpid.c,v 1.4 2002/02/19 19:39:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,14 +41,7 @@ static char rcsid[] = "$OpenBSD: waitpid.c,v 1.3 1997/07/25 20:30:06 mickey Exp 
 #include <sys/resource.h>
 
 pid_t
-#ifdef __STDC__
 waitpid(pid_t pid, int *istat, int options)
-#else
-waitpid(pid, istat, options)
-	pid_t pid;
-	int *istat;
-	int options;
-#endif
 {
 	return (wait4(pid, istat, options, (struct rusage *)0));
 }

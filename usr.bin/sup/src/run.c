@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.11 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.12 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -95,12 +95,6 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-#ifndef __STDC__
-#ifndef const
-#define const
-#endif
-#endif
-
 static int dorun(char *, char **, int);
 static char **makearglist(va_list);
 
@@ -126,24 +120,12 @@ makearglist(ap)
 }
 
 int
-#ifdef __STDC__
 run(char *name, ...)
-#else
-run(va_alist)
-va_dcl
-#endif
 {
 	int val;
 	va_list ap;
 	char **argv;
-#ifdef __STDC__
 	va_start(ap, name);
-#else
-	char *name;
-
-	va_start(ap);
-	name = va_arg(ap, char *);
-#endif
 
 	if ((argv = makearglist(ap)) == NULL)
 		return -1;
@@ -159,25 +141,13 @@ char *name,**argv;
 }
 
 int
-#ifdef __STDC__
 runp(char *name, ...)
-#else
-runp (va_alist)
-va_dcl
-#endif
 {
 	int val;
 	va_list ap;
 	char **argv;
-#ifdef __STDC__
+
 	va_start(ap, name);
-#else
-	char *name;
-
-	va_start(ap);
-	name = va_arg(ap, char *);
-#endif
-
 	if ((argv = makearglist(ap)) == NULL)
 		return -1;
 	val = runvp (name, argv);

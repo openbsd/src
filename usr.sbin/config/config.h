@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.17 2002/02/17 19:42:35 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.18 2002/02/19 19:39:40 millert Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -57,10 +57,8 @@
 #include <paths.h>
 #endif /* ...BSD */
 
-#ifdef __STDC__
 #include <stdlib.h>
 #include <unistd.h>
-#endif
 
 /* These are really for MAKE_BOOTSTRAP but harmless. */
 #ifndef __dead

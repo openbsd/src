@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_logf.c,v 1.3 1995/05/10 20:49:40 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float logf(float x)		/* wrapper logf */
-#else
-	float logf(x)			/* wrapper logf */
-	float x;
-#endif
+float
+logf(float x)		/* wrapper logf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_logf(x);

@@ -41,18 +41,10 @@ static char rcsid[] = "$NetBSD: s_tanh.c,v 1.7 1995/05/10 20:48:22 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double one=1.0, two=2.0, tiny = 1.0e-300;
-#else
-static double one=1.0, two=2.0, tiny = 1.0e-300;
-#endif
 
-#ifdef __STDC__
-	double tanh(double x)
-#else
-	double tanh(x)
-	double x;
-#endif
+double
+tanh(double x)
 {
 	double t,z;
 	int32_t jx,ix;

@@ -22,12 +22,8 @@ static char rcsid[] = "$NetBSD: s_isnan.c,v 1.8 1995/05/10 20:47:36 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int isnan(double x)
-#else
-	int isnan(x)
-	double x;
-#endif
+int
+isnan(double x)
 {
 	int32_t hx,lx;
 	EXTRACT_WORDS(hx,lx,x);

@@ -22,13 +22,8 @@ static char rcsid[] = "$NetBSD: w_asin.c,v 1.6 1995/05/10 20:48:35 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	double asin(double x)		/* wrapper asin */
-#else
-	double asin(x)			/* wrapper asin */
-	double x;
-#endif
+double
+asin(double x)		/* wrapper asin */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_asin(x);

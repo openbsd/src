@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2002/02/19 19:39:40 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <fts.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -100,27 +101,12 @@ keycompare(a, b)
 	return (strcmp(((KEY *)a)->name, ((KEY *)b)->name));
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fflush(NULL);
 	(void)fprintf(stderr, "\nmtree: ");
 	(void)vfprintf(stderr, fmt, ap);

@@ -27,19 +27,11 @@ static char rcsid[] = "$NetBSD: s_frexp.c,v 1.9 1995/05/10 20:47:24 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 
-#ifdef __STDC__
-	double frexp(double x, int *eptr)
-#else
-	double frexp(x, eptr)
-	double x; int *eptr;
-#endif
+double
+frexp(double x, int *eptr)
 {
 	int32_t hx, ix, lx;
 	EXTRACT_WORDS(hx,lx,x);

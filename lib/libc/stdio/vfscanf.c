@@ -35,17 +35,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.7 2001/07/09 06:57:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.8 2002/02/19 19:39:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "local.h"
 
 #ifdef FLOATING_POINT

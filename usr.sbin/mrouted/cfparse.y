@@ -23,12 +23,8 @@
  * THE USE OF THIS SOFTWARE.
  */
 #include <stdio.h>
-#ifdef __STDC__
-#include <stdarg.h>
-#else
 #include <string.h>
-#include <varargs.h>
-#endif
+#include <stdarg.h>
 #include "defs.h"
 #include <netdb.h>
 
@@ -395,7 +391,6 @@ addrmask	: ADDRMASK	{ $$ = $1; }
 	| ADDR			{ $$.addr = $1; $$.mask = 0; }
 	;
 %%
-#ifdef __STDC__
 static void
 fatal(char *fmt, ...)
 {
@@ -403,25 +398,12 @@ fatal(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-#else
-/*VARARGS1*/
-static void
-fatal(fmt, va_alist)
-char *fmt;
-va_dcl
-{
-	va_list ap;
-	char buf[200];
-
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
 	log(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
 }
 
-#ifdef __STDC__
 static void
 warn(char *fmt, ...)
 {
@@ -429,18 +411,6 @@ warn(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-#else
-/*VARARGS1*/
-static void
-warn(fmt, va_alist)
-char *fmt;
-va_dcl
-{
-	va_list ap;
-	char buf[200];
-
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 

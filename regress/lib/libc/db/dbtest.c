@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.8 2002/02/18 21:40:46 millert Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.9 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$OpenBSD: dbtest.c,v 1.8 2002/02/18 21:40:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: dbtest.c,v 1.9 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: dbtest.c,v 1.8 2002/02/18 21:40:46 millert Exp 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 
 #include <db.h>
@@ -737,27 +738,12 @@ usage()
 	exit(1);
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 dberr(const char *fmt, ...)
-#else
-dberr(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "dbtest: ");
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);

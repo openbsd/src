@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.14 2001/12/17 22:29:47 dugsong Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.15 2002/02/19 19:39:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -22,17 +22,15 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.14 2001/12/17 22:29:47 dugsong Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.15 2002/02/19 19:39:37 millert Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 
 #include <net/if.h>
 
@@ -43,11 +41,7 @@ struct rtentry;
 #include <stdlib.h>
 #include <memory.h>
 #include <setjmp.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "pcap-int.h"
 
@@ -79,21 +73,11 @@ int	pcap_fddipad;
 
 /* VARARGS */
 __dead void
-#ifdef __STDC__
 bpf_error(const char *fmt, ...)
-#else
-bpf_error(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (bpf_pcap != NULL)
 		(void)vsnprintf(pcap_geterr(bpf_pcap), PCAP_ERRBUF_SIZE,
 		    fmt, ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdr.h,v 1.8 2001/08/06 22:59:05 pjanzen Exp $	*/
+/*	$OpenBSD: hdr.h,v 1.9 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
 
 /*-
@@ -163,8 +163,4 @@ int	turns, lmwarn, iwest, knfloc, detail,   /* various flags & counters */
 int	demo, newloc, limit;
 
 /* We need to get a little tricky to avoid strings */
-#ifdef __STDC__
 #define DECR(a,b,c,d,e) decr(*#a+'+',*#b+'-',*#c+'#',*#d+'&',*#e+'%')
-#else
-#define DECR(a,b,c,d,e) decr('a'+'+','b'+'-','c'+'#','d'+'&','e'+'%')
-#endif

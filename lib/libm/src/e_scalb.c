@@ -24,24 +24,17 @@ static char rcsid[] = "$NetBSD: e_scalb.c,v 1.6 1995/05/10 20:46:09 jtc Exp $";
 #include "math_private.h"
 
 #ifdef _SCALB_INT
-#ifdef __STDC__
-	double __ieee754_scalb(double x, int fn)
-#else
-	double __ieee754_scalb(x,fn)
-	double x; int fn;
-#endif
-#else
-#ifdef __STDC__
-	double __ieee754_scalb(double x, double fn)
-#else
-	double __ieee754_scalb(x,fn)
-	double x, fn;
-#endif
-#endif
+double
+__ieee754_scalb(double x, int fn)
 {
-#ifdef _SCALB_INT
-	return scalbn(x,fn);
+	return scalbn(x, fn);
+}
+
 #else
+
+double
+__ieee754_scalb(double x, double fn)
+{
 	if (isnan(x)||isnan(fn)) return x*fn;
 	if (!finite(fn)) {
 	    if(fn>0.0) return x*fn;
@@ -51,5 +44,5 @@ static char rcsid[] = "$NetBSD: e_scalb.c,v 1.6 1995/05/10 20:46:09 jtc Exp $";
 	if ( fn > 65000.0) return scalbn(x, 65000);
 	if (-fn > 65000.0) return scalbn(x,-65000);
 	return scalbn(x,(int)fn);
-#endif
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.42 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.43 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.42 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.43 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,11 +91,7 @@ static char rcsid[] = "$OpenBSD: ftp.c,v 1.42 2002/02/16 21:27:46 millert Exp $"
 #include <string.h>
 #include <unistd.h>
 #include <utime.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "ftp_var.h"
 
@@ -292,29 +288,16 @@ cmdabort(notused)
 
 /*VARARGS*/
 int
-#ifdef __STDC__
 command(const char *fmt, ...)
-#else
-command(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 	int r;
 	sig_t oldintr;
-#ifndef __STDC__
-	const char *fmt;
-#endif
 
 	abrtflag = 0;
 	if (debug) {
 		fputs("---> ", ttyout);
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-		fmt = va_arg(ap, const char *);
-#endif
 		if (strncmp("PASS ", fmt, 5) == 0)
 			fputs("PASS XXXX", ttyout);
 		else if (strncmp("ACCT ", fmt, 5) == 0)
@@ -331,12 +314,7 @@ command(va_alist)
 		return (0);
 	}
 	oldintr = signal(SIGINT, cmdabort);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
 	vfprintf(cout, fmt, ap);
 	va_end(ap);
 	fputs("\r\n", cout);

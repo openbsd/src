@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.6 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.7 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.6 2002/02/16 21:27:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.7 2002/02/19 19:39:39 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -78,31 +78,16 @@ static char  **gargv;
 #ifdef SHELL
 #define main printfcmd
 #include "../../bin/sh/bltin/bltin.h"
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <vararg.h>
-#endif
 
 static void 
-#ifdef __STDC__
 warnx(const char *fmt, ...)
-#else
-warnx(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	
 	char buf[64];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
@@ -369,11 +354,7 @@ print_escape(str)
 		break;
 
 	case 'a':			/* alert */
-#ifdef __STDC__
 		putchar('\a');
-#else
-		putchar(007);
-#endif
 		break;
 
 	case 'b':			/* backspace */

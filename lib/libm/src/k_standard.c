@@ -26,11 +26,7 @@ static char rcsid[] = "$NetBSD: k_standard.c,v 1.6 1995/05/10 20:46:35 jtc Exp $
 #define	WRITE2(u,v)	write(2, u, v)
 #endif	/* !defined(_USE_WRITE) */
 
-#ifdef __STDC__
 static const double zero = 0.0;	/* used as const */
-#else
-static double zero = 0.0;	/* used as const */
-#endif
 
 /* 
  * Standard conformance (non-IEEE) on exception cases.
@@ -80,12 +76,8 @@ static double zero = 0.0;	/* used as const */
  */
 
 
-#ifdef __STDC__
-	double __kernel_standard(double x, double y, int type) 
-#else
-	double __kernel_standard(x,y,type) 
-	double x,y; int type;
-#endif
+double
+__kernel_standard(double x, double y, int type) 
 {
 	struct exception exc;
 #ifndef HUGE_VAL	/* this is the only routine that uses HUGE_VAL */ 

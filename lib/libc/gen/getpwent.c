@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.23 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.24 2002/02/19 19:39:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -746,12 +746,7 @@ pwnam_netgrp:
 }
 
 struct passwd *
-#ifdef __STDC__
 getpwuid(uid_t uid)
-#else
-getpwuid(uid)
-	uid_t uid;
-#endif
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];

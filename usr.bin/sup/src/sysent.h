@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysent.h,v 1.6 2001/07/25 16:54:11 deraadt Exp $	*/
+/*	$OpenBSD: sysent.h,v 1.7 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -47,7 +47,6 @@
 #ifndef _SYSENT_H_
 #define _SYSENT_H_ 1
 
-#if defined(__STDC__)
 #if 0
 #include <sys/types.h>
 #include <sys/time.h>
@@ -133,12 +132,4 @@ extern int iwrite(int, int, int, int, void *, int);
 extern int pioctl(const char *, unsigned long, struct ViceIoctl *, int);
 extern int setpag(void);
 #endif
-#else	/* defined(__STDC__) */
-extern gid_t getgid();
-extern gid_t getegid();
-extern long gethostid();
-extern uid_t getuid();
-extern uid_t geteuid();
-extern off_t lseek();
-#endif	/* __STDC__ */
 #endif	/* not _SYSENT_H_ */

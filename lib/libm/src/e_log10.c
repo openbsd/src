@@ -50,28 +50,16 @@ static char rcsid[] = "$NetBSD: e_log10.c,v 1.9 1995/05/10 20:45:51 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 two54      =  1.80143985094819840000e+16, /* 0x43500000, 0x00000000 */
 ivln10     =  4.34294481903251816668e-01, /* 0x3FDBCB7B, 0x1526E50E */
 log10_2hi  =  3.01029995663611771306e-01, /* 0x3FD34413, 0x509F6000 */
 log10_2lo  =  3.69423907715893078616e-13; /* 0x3D59FEF3, 0x11F12B36 */
 
-#ifdef __STDC__
 static const double zero   =  0.0;
-#else
-static double zero   =  0.0;
-#endif
 
-#ifdef __STDC__
-	double __ieee754_log10(double x)
-#else
-	double __ieee754_log10(x)
-	double x;
-#endif
+double
+__ieee754_log10(double x)
 {
 	double y,z;
 	int32_t i,k,hx;

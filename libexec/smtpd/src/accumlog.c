@@ -1,4 +1,4 @@
-/* $OpenBSD: accumlog.c,v 1.2 2001/01/28 19:34:34 niklas Exp $*/
+/* $OpenBSD: accumlog.c,v 1.3 2002/02/19 19:39:38 millert Exp $*/
 
 /*
  * 
@@ -73,18 +73,14 @@
 # include "config.h"
 #endif
 
-#include	<stdio.h>
-#if defined(__STDC__) || defined(__cplusplus)
+#include <stdio.h>
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include	<syslog.h>
-#include	<sys/types.h>
-#include	<string.h>
+#include <syslog.h>
+#include <sys/types.h>
+#include <string.h>
 #include <sysexits.h>  /* exit codes so smtpd/smtpfwdd can exit properly -BB */
 #ifdef HAVE_MALLOC_H
-# include	<malloc.h>
+# include <malloc.h>
 #else
 extern char *malloc(), *realloc();
 #endif
@@ -101,28 +97,15 @@ extern char *malloc(), *realloc();
 #endif
 
 int
-#ifdef __STDC__
-accumlog(int level, const char *fmt, ...) {
-#else
-accumlog(va_alist)
-	va_dcl	
+accumlog(int level, const char *fmt, ...)
 {
-	int level;
-	char *fmt;
-#endif
         va_list va;
 	static char *log = 0;
 	static int lsz = 0;
 	static int lx = 0;
 	int i, x, space = 0;
 		
-#ifdef __STDC__
         va_start(va, fmt);
-#else
-        va_start(va);
-        level = va_arg(va, int);
-        fmt = va_arg(va, char *);
-#endif
 	if (log == 0) {
 		lsz = 2 * LOG_HUNK;
 		if ((log = (char *) malloc(lsz)) == 0) {

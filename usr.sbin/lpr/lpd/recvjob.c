@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.18 2002/02/16 21:28:04 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.19 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.18 2002/02/16 21:28:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.19 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.18 2002/02/16 21:28:04 mill
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "lp.h"
 #include "lp.local.h"
 #include "extern.h"
@@ -343,28 +344,13 @@ rcleanup(signo)
 	errno = save_errno;
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 static void
-#ifdef __STDC__
 frecverr(const char *msg, ...)
-#else
-frecverr(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	extern char fromb[];
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 	rcleanup(0);
 	syslog(LOG_ERR, "%s", fromb);
 	vsyslog(LOG_ERR, msg, ap);

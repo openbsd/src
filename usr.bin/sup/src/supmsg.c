@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.9 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.10 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -571,27 +571,13 @@ writeone(t, v)
 }
 
 
-#ifdef __STDC__
 int
 msgrecv(int (*xferfile)(TREE *, va_list),...)
-#else
-/*VARARGS*//*ARGSUSED*/
-int
-msgrecv(va_alist)
-va_dcl
-#endif
 {
 	va_list args;
 	int x;
 	TREE *t = upgradeT;
-#ifdef __STDC__
 	va_start(args,xferfile);
-#else
-	int (*xferfile)(TREE *, void *);
-
-	va_start(args);
-	xferfile = va_arg(args, int (*)(TREE *, void *));
-#endif
 	if (server) {
 		x = writemsg (MSGRECV);
 		if (t == NULL) {

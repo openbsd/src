@@ -34,15 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: snprintf.c,v 1.1 1997/10/11 23:35:44 beck Exp $";
+static char rcsid[] = "$OpenBSD: snprintf.c,v 1.2 2002/02/19 19:39:39 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef _IOSTRG
 #define STRFLAG		(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
@@ -51,15 +47,7 @@ static char rcsid[] = "$OpenBSD: snprintf.c,v 1.1 1997/10/11 23:35:44 beck Exp $
 #endif
 
 #ifdef NEED_SNPRINTF
-#ifdef __STDC__
 snprintf(char *str, size_t n, char const *fmt, ...)
-#else
-snprintf(str, n, fmt, va_alist)
-	char *str;
-	size_t n;
-	char *fmt;
-	va_dcl
-#endif
 {
 	int ret;
 	va_list ap;
@@ -67,11 +55,7 @@ snprintf(str, n, fmt, va_alist)
 
 	if ((int)n < 1)
 		return (EOF);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	f._flag = STRFLAG;
 	f._base = f._ptr = str;
 	f._cnt = n-1;

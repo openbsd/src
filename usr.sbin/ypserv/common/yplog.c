@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplog.c,v 1.5 1997/08/09 22:44:04 maja Exp $ */
+/*	$OpenBSD: yplog.c,v 1.6 2002/02/19 19:39:41 millert Exp $ */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -40,11 +40,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "yplog.h"
 
 static FILE	*logfp = NULL;		/* the log file */
@@ -55,21 +51,11 @@ static FILE	*logfp = NULL;		/* the log file */
  */
 
 void
-#ifdef __STDC__
 yplog(const char *fmt, ...)
-#else
-yplog(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vyplog(fmt, ap);
 	va_end(ap);
 }

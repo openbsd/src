@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.9 2001/11/12 18:04:08 deraadt Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.10 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,18 +29,15 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.9 2001/11/12 18:04:08 deraadt Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.10 2002/02/19 19:39:40 millert Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
-
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

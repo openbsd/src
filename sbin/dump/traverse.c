@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.8 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.9 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: traverse.c,v 1.8 2002/02/16 21:27:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: traverse.c,v 1.9 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,10 +63,8 @@ static char rcsid[] = "$OpenBSD: traverse.c,v 1.8 2002/02/16 21:27:33 millert Ex
 #include <errno.h>
 #include <fts.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <string.h>
 #include <unistd.h>
-#endif
 
 #include "dump.h"
 

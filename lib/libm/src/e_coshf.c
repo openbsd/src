@@ -20,19 +20,11 @@ static char rcsid[] = "$NetBSD: e_coshf.c,v 1.5 1995/05/10 20:45:01 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const volatile float huge = 1.0e30;
 static const float one = 1.0, half=0.5;
-#else
-static float one = 1.0, half=0.5, huge = 1.0e30;
-#endif
 
-#ifdef __STDC__
-	float __ieee754_coshf(float x)
-#else
-	float __ieee754_coshf(x)
-	float x;
-#endif
+float
+__ieee754_coshf(float x)
 {	
 	float t,w;
 	int32_t ix;

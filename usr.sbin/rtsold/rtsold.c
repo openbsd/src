@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.16 2002/02/17 19:42:39 millert Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.17 2002/02/19 19:39:40 millert Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -716,15 +716,7 @@ usage(char *progname)
 }
 
 void
-#if __STDC__
 warnmsg(int priority, const char *func, const char *msg, ...)
-#else
-warnmsg(priority, func, msg, va_alist)
-	int priority;
-	const char *func;
-	const char *msg;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char buf[BUFSIZ];

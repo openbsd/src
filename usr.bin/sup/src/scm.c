@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.14 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: scm.c,v 1.15 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -177,11 +177,7 @@
 #include <net/if.h>
 #include <netdb.h>
 #include <syslog.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "supcdefs.h"
 #include "supextern.h"
 
@@ -627,26 +623,11 @@ matchhost(name)		/* is this name of remote host? */
 	return (0);
 }
 
-#ifdef __STDC__
 int scmerr(int error,char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-int scmerr(va_alist)
-va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap,fmt);
-#else
-	int error;
-	char *fmt;
-
-	va_start(ap);
-	error = va_arg(ap,int);
-	fmt = va_arg(ap,char *);
-#endif
-
 	(void) fflush(stdout);
 	if (progpid > 0)
 		fprintf(stderr, "%s %d: ", program, progpid);

@@ -37,12 +37,7 @@ static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 
 #ifdef DEBUG
 #include <stdio.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifndef TFILE
 #define	TFILE	"__curses.out"
@@ -51,20 +46,11 @@ static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 static FILE *tracefp;			/* Curses debugging file descriptor. */
 
 void
-#ifdef __STDC__
 __CTRACE(const char *fmt, ...)
-#else
-__CTRACE(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (tracefp == NULL)
 		tracefp = fopen(TFILE, "w");
 	if (tracefp == NULL) {

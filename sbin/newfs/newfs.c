@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.31 2002/02/18 21:57:56 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.32 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.31 2002/02/18 21:57:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.32 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.31 2002/02/18 21:57:56 millert Exp 
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,12 +73,6 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.31 2002/02/18 21:57:56 millert Exp 
 #include <unistd.h>
 #include <util.h>
 #include <err.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "mntopts.h"
 #include "pathnames.h"
@@ -698,21 +693,11 @@ rewritelabel(s, fd, lp)
 
 /*VARARGS*/
 void
-#ifdef __STDC__
 fatal(const char *fmt, ...)
-#else
-fatal(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (fcntl(STDERR_FILENO, F_GETFL) < 0) {
 		openlog(__progname, LOG_CONS, LOG_DAEMON);
 		vsyslog(LOG_ERR, fmt, ap);

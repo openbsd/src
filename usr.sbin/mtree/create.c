@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.14 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.15 2002/02/19 19:39:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.14 2002/02/16 21:28:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.15 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static const char rcsid[] = "$OpenBSD: create.c,v 1.14 2002/02/16 21:28:05 mille
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <md5.h>
 #include <sha1.h>
 #include <rmd160.h>
@@ -354,30 +355,13 @@ dsort(a, b)
 	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 output(int indent, int *offset, const char *fmt, ...)
-#else
-output(indent, offset, fmt, va_alist)
-	int indent;
-	int *offset;
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
 	char buf[1024];
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 

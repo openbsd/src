@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.4 2002/02/19 19:39:39 millert Exp $	*/
 /*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
 
 /*
@@ -33,17 +33,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: msg.c,v 1.3 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: msg.c,v 1.4 2002/02/19 19:39:39 millert Exp $";
 #endif
 
 #include <string.h>
 
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "lint2.h"
 
@@ -71,25 +67,12 @@ static	const	char *msgs[] = {
 
 static	const	char *basename(const char *);
 
-#ifdef __STDC__
 void
 msg(int n, ...)
 {
-#else
-void
-msg(va_alist)
-	va_dcl
-	int	n;
-{
-#endif
 	va_list	ap;
 
-#ifdef __STDC__
 	va_start(ap, n);
-#else
-	va_start(ap);
-	n = va_arg(ap, int);
-#endif
 
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");

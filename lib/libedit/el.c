@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.8 2001/04/13 20:35:19 millert Exp $	*/
+/*	$OpenBSD: el.c,v 1.9 2002/02/19 19:39:37 millert Exp $	*/
 /*	$NetBSD: el.c,v 1.6 1997/04/24 18:54:16 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-static char rcsid[] = "$OpenBSD: el.c,v 1.8 2001/04/13 20:35:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: el.c,v 1.9 2002/02/19 19:39:37 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,11 +54,7 @@ static char rcsid[] = "$OpenBSD: el.c,v 1.8 2001/04/13 20:35:19 millert Exp $";
 #include <sys/param.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>
 #include <unistd.h>
 #include "el.h"
 
@@ -159,26 +155,13 @@ el_reset(el)
  *	set the editline parameters
  */
 public int
-#ifdef __STDC__
 el_set(EditLine *el, int op, ...)
-#else
-el_set(va_alist)
-    va_dcl
-#endif
 {
     va_list va;
     int rv;
-#ifdef __STDC__
-    va_start(va, op);
-#else
-    EditLine *el;
-    int op;
-
-    va_start(va);
-    el = va_arg(va, EditLine *);
-    op = va_arg(va, int);
-#endif
     
+    va_start(va, op);
+
     switch (op) {
     case EL_PROMPT:
 	rv = prompt_set(el, va_arg(va, el_pfunc_t));

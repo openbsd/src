@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_fmodf.c,v 1.3 1995/05/10 20:48:57 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float fmodf(float x, float y)	/* wrapper fmodf */
-#else
-	float fmodf(x,y)		/* wrapper fmodf */
-	float x,y;
-#endif
+float
+fmodf(float x, float y)	/* wrapper fmodf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_fmodf(x,y);

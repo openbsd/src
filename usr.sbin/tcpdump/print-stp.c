@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.1 2000/10/19 16:31:42 jason Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.2 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -41,10 +41,8 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

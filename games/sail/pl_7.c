@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_7.c,v 1.4 2001/09/05 22:32:28 deraadt Exp $	*/
+/*	$OpenBSD: pl_7.c,v 1.5 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
 
 /*
@@ -38,17 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_7.c,v 1.4 2001/09/05 22:32:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pl_7.c,v 1.5 2002/02/19 19:39:36 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/ttydefaults.h>
 #include "player.h"
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <unistd.h>
 #include <err.h>
 
@@ -168,25 +164,12 @@ newturn(n)
 
 /*VARARGS2*/
 void
-#ifdef __STDC__
 Signal(char *fmt, struct ship *ship, ...)
-#else
-Signal(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 	char format[BUFSIZ];
-#ifndef __STDC__
-	char *fmt;
-	struct ship *ship;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-	ship = va_arg(ap, struct ship *);
-#else
 	va_start(ap, ship);
-#endif
 	if (!done_curses) {
 		va_end(va);
 		return;
@@ -194,33 +177,18 @@ Signal(va_alist)
 	if (*fmt == '\7')
 		putchar(*fmt++);
 	fmtship(format, sizeof(format), fmt, ship);
-#ifdef __STDC__
 	(void) vw_printw(scroll_w, format, ap);
-#else
-	(void) vwprintw(scroll_w, format, ap);
-#endif
 	va_end(ap);
 	Scroll();
 }
 
 /*VARARGS2*/
 void
-#ifdef __STDC__
 Msg(char *fmt, ...)
-#else
-Msg(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 
 	if (!done_curses) {
 		va_end(ap);
@@ -228,11 +196,7 @@ Msg(va_alist)
 	}
 	if (*fmt == '\7')
 		putchar(*fmt++);
-#ifdef __STDC__
 	(void) vw_printw(scroll_w, fmt, ap);
-#else
-	(void) vwprintw(scroll_w, fmt, ap);
-#endif
 	va_end(ap);
 	Scroll();
 }

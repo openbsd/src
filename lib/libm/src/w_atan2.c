@@ -21,13 +21,8 @@ static char rcsid[] = "$NetBSD: w_atan2.c,v 1.6 1995/05/10 20:48:39 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	double atan2(double y, double x)	/* wrapper atan2 */
-#else
-	double atan2(y,x)			/* wrapper atan2 */
-	double y,x;
-#endif
+double
+atan2(double y, double x)	/* wrapper atan2 */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_atan2(y,x);

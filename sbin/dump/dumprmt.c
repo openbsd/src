@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.16 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.17 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -67,11 +67,9 @@ static char rcsid[] = "$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp 
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#endif
 
 #include "pathnames.h"
 #include "dump.h"

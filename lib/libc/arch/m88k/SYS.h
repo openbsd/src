@@ -1,4 +1,4 @@
-/* *	$OpenBSD: SYS.h,v 1.3 2001/09/20 20:52:09 millert Exp $*/
+/* *	$OpenBSD: SYS.h,v 1.4 2002/02/19 19:39:36 millert Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -41,8 +41,6 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#ifdef __STDC__
-
 #define	_SYSCALL(x,y)	align 8; \
 			ENTRY(x); \
 			ld r10,r31,32; \
@@ -59,26 +57,6 @@
 #define	PSEUDO_NOERROR(x,y)	ENTRY(x); ;\
 			or r13,r0, SYS_ ## y; \
 			tb0 0,r0,128; or r0,r0,r0;jmp r1
-
-#else /* !__STDC__ */
-
-#define	_SYSCALL(x,y)	align 8; \
-			ENTRY(x); \
-			ld r10,r31,32; \
-			ld r11,r31,36; \
-			ld r12,r31,40; \
-			or r13,r0, SYS_/**/y; \
-			tb0 0, r0, 128; \
-			br cerror
-#define	SYSCALL(x)	_SYSCALL(x,x)
-#define	RSYSCALL(x)	SYSCALL(x); \
-			jmp r1
-#define	PSEUDO(x,y)	_SYSCALL(x,y); \
-			jmp r1
-#define	PSEUDO_NOERROR(x,y)	ENTRY(x); \
-			or r13,r0, SYS_/**/y; \
-			tb0 0,r0,128; or r0,r0,r0; jmp r1
-#endif /* !__STDC__ */
 
 #define	ASMSTR		.asciz
 

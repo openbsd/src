@@ -23,12 +23,8 @@ static char rcsid[] = "$NetBSD: s_significand.c,v 1.6 1995/05/10 20:48:11 jtc Ex
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double significand(double x)
-#else
-	double significand(x)
-	double x;
-#endif
+double
+significand(double x)
 {
 	return __ieee754_scalb(x,(double) -ilogb(x));
 }

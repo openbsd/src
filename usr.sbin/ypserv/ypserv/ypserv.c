@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.20 2002/02/18 22:20:55 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.21 2002/02/19 19:39:41 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.20 2002/02/18 22:20:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.21 2002/02/19 19:39:41 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -62,10 +62,6 @@ static char rcsid[] = "$OpenBSD: ypserv.c,v 1.20 2002/02/18 22:20:55 deraadt Exp
 #include "yplog.h"
 #include "ypdef.h"
 #include <sys/wait.h>
-
-#ifdef __STDC__
-#define SIG_PF void(*)(int)
-#endif
 
 #ifdef DEBUG
 #define RPC_SVC_FG
@@ -102,7 +98,7 @@ void _msgout(char* msg)
 }
 
 static void
-closedown(void)
+closedown(int sig)
 {
 	int save_errno = errno;
 
@@ -551,7 +547,7 @@ main(argc, argv)
 		exit(1);
 	}
 	if (_rpcpmstart) {
-		(void) signal(SIGALRM, (SIG_PF) closedown);
+		(void) signal(SIGALRM, closedown);
 		(void) alarm(_RPCSVC_CLOSEDOWN);
 	}
 	my_svc_run();

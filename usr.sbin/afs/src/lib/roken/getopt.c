@@ -35,9 +35,6 @@
 static char sccsid[] = "@(#)getopt.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef __STDC__
-#define const
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

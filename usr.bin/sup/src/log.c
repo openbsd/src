@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2001/05/04 22:16:15 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -65,27 +65,12 @@ logopen(program)
 }
 
 void
-#ifdef __STDC__
 logquit(int retval, char *fmt, ...)
-#else
-/*VARARGS*//*ARGSUSED*/
-logquit(va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap,fmt);
-#else
-	int retval;
-	char *fmt;
-
-	va_start(ap);
-	retval = va_arg(ap,int);
-	fmt = va_arg(ap,char *);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
@@ -97,25 +82,12 @@ va_dcl
 }
 
 void
-#ifdef __STDC__
 logerr(char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-logerr(va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap,fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap,char *);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
@@ -127,25 +99,12 @@ va_dcl
 }
 
 void
-#ifdef __STDC__
 loginfo(char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-loginfo(va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap,fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap,char *);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
@@ -174,25 +133,12 @@ int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
 int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 
 void
-#ifdef __STDC__
 logdeny(char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-logdeny(va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap,fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
@@ -204,25 +150,12 @@ va_dcl
 }
 
 void
-#ifdef __STDC__
 logallow(char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-logallow(va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap,fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap,char *);
-#endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {

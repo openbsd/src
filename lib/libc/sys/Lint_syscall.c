@@ -1,4 +1,4 @@
-/*	$OpenBSD: Lint_syscall.c,v 1.1 1998/02/08 22:45:14 tholo Exp $	*/
+/*	$OpenBSD: Lint_syscall.c,v 1.2 2002/02/19 19:39:37 millert Exp $	*/
 /*	$NetBSD: Lint_syscall.c,v 1.1 1997/11/06 00:53:22 cgd Exp $	*/
 
 /*
@@ -7,21 +7,11 @@
  */
 
 #include <unistd.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 /*ARGSUSED*/
 int
-#ifdef __STDC__
 syscall(int arg1, ...)
-#else
-syscall(arg1, va_alist)
-        int arg1;
-        va_dcl
-#endif
 {
 	return (0);
 }

@@ -22,12 +22,8 @@ static char rcsid[] = "$NetBSD: w_lgammaf.c,v 1.3 1995/05/10 20:49:30 jtc Exp $"
 
 extern int signgam;
 
-#ifdef __STDC__
-	float lgammaf(float x)
-#else
-	float lgammaf(x)
-	float x;
-#endif
+float
+lgammaf(float x)
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_lgammaf_r(x,&signgam);

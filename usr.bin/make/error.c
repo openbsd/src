@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: error.c,v 1.9 2001/09/05 22:32:41 deraadt Exp $ */
+/*	$OpenBSD: error.c,v 1.10 2002/02/19 19:39:38 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -25,14 +25,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "config.h"
 #include "defines.h"
@@ -50,22 +46,11 @@ static void ParseVErrorInternal(const char *, unsigned long, int, const char *, 
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Error(char *fmt, ...)
-#else
-Error(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
+	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -81,22 +66,11 @@ Error(va_alist)
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Fatal(char *fmt, ...)
-#else
-Fatal(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
+	va_start(ap, fmt);
 	Job_Wait();
 
 	(void)vfprintf(stderr, fmt, ap);
@@ -118,23 +92,11 @@ Fatal(va_alist)
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Punt(char *fmt, ...)
-#else
-Punt(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
-
 	(void)fprintf(stderr, "make: ");
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -186,13 +148,8 @@ Finish(errors)
  */
 /* VARARGS */
 static void
-#ifdef __STDC__
 ParseVErrorInternal(const char *cfname, unsigned long clineno, int type, 
 	const char *fmt, va_list ap)
-#else
-ParseVErrorInternal(va_alist)
-	va_dcl
-#endif
 {
 	if (cfname)
 	    (void)fprintf(stderr, "\"%s\", line %lu: ", cfname, clineno);
@@ -212,25 +169,11 @@ ParseVErrorInternal(va_alist)
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Parse_Error(int type, const char *fmt, ...)
-#else
-Parse_Error(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	int type;		/* Error type (PARSE_WARNING, PARSE_FATAL) */
-	char *fmt;
-
-	va_start(ap);
-	type = va_arg(ap, int);
-	fmt = va_arg(ap, char *);
-#endif
-
 	ParseVErrorInternal(Parse_Getfilename(), Parse_Getlineno(), type, fmt, ap);
 	va_end(va);
 }

@@ -20,18 +20,10 @@ static char rcsid[] = "$NetBSD: s_modff.c,v 1.4 1995/05/10 20:47:56 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float one = 1.0;
-#else
-static float one = 1.0;
-#endif
 
-#ifdef __STDC__
-	float modff(float x, float *iptr)
-#else
-	float modff(x, iptr)
-	float x,*iptr;
-#endif
+float
+modff(float x, float *iptr)
 {
 	int32_t i0,j0;
 	u_int32_t i;

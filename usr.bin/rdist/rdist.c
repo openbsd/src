@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.11 2001/12/29 23:16:10 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.12 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.11 2001/12/29 23:16:10 millert Exp $";
+"$OpenBSD: rdist.c,v 1.12 2002/02/19 19:39:39 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -59,13 +59,8 @@ static char copyright[] =
  * Remote distribution program.
  */
 
-#ifdef __STDC__
 void		docmdargs(int, char **);
 void		usage(void);
-#else
-void		docmdargs();
-void		usage();
-#endif
 
 char   	       *distfile = NULL;		/* Name of distfile to use */
 int     	maxchildren = MAXCHILDREN;	/* Max no of concurrent PIDs */

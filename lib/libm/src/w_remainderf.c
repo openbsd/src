@@ -24,12 +24,8 @@ static char rcsid[] = "$NetBSD: w_remainderf.c,v 1.3 1995/05/10 20:49:46 jtc Exp
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float remainderf(float x, float y)	/* wrapper remainder */
-#else
-	float remainderf(x,y)			/* wrapper remainder */
-	float x,y;
-#endif
+float
+remainderf(float x, float y)	/* wrapper remainder */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_remainderf(x,y);

@@ -38,11 +38,7 @@
 #include <errno.h>
 #include <string.h>
 #include <syslog.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "altq_qop.h"
 
@@ -62,11 +58,7 @@ log_write(int severity, int syserr, const char *format, ...)
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, format);
-#else
-	va_start(ap);
-#endif
 
 	if (severity <= l_debug) {
 		if (!daemonize) {

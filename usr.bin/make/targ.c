@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.34 2001/05/29 12:53:43 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.35 2002/02/19 19:39:38 millert Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -447,13 +447,8 @@ Targ_PrintType(type)
 {
     int    tbit;
 
-#ifdef __STDC__
 #define PRINTBIT(attr)	case CONCAT(OP_,attr): printf("." #attr " "); break
 #define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG)) printf("." #attr " "); break
-#else
-#define PRINTBIT(attr)	case CONCAT(OP_,attr): printf(".attr "); break
-#define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG)) printf(".attr "); break
-#endif /* __STDC__ */
 
     type &= ~OP_OPMASK;
 

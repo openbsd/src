@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.27 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.28 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -222,11 +222,7 @@
 #include <grp.h>
 #include <fcntl.h>
 #include <limits.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -1873,25 +1869,12 @@ changeuid(namep, passwordp, fileuid, filegid)
 }
 
 void
-#ifdef __STDC__
 goaway(char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-goaway(va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
 	(void) netcrypt(NULL);
 
 	vsnprintf(buf, sizeof(buf), fmt, ap);

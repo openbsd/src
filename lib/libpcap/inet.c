@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.13 2000/04/26 21:25:53 jakob Exp $	*/
+/*	$OpenBSD: inet.c,v 1.14 2002/02/19 19:39:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.13 2000/04/26 21:25:53 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.14 2002/02/19 19:39:37 millert Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -47,10 +47,8 @@ static const char rcsid[] =
 #endif
 #include <sys/time.h>				/* concession to AIX */
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 
 #include <net/if.h>
 #include <netinet/in.h>

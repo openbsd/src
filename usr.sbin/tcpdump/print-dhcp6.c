@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.4 2002/02/16 21:28:09 millert Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.5 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.4 2002/02/16 21:28:09 millert Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.5 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 #ifdef INET6
@@ -40,10 +40,8 @@ static const char rcsid[] =
 #include <sys/time.h>
 #include <sys/socket.h>
 
-#if __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

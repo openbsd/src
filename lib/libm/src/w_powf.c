@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_powf.c,v 1.3 1995/05/10 20:49:41 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float powf(float x, float y)	/* wrapper powf */
-#else
-	float powf(x,y)			/* wrapper powf */
-	float x,y;
-#endif
+float
+powf(float x, float y)	/* wrapper powf */
 {
 #ifdef _IEEE_LIBM
 	return  __ieee754_powf(x,y);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diag.c,v 1.1 1997/02/26 03:06:50 downsj Exp $	*/
+/*	$OpenBSD: diag.c,v 1.2 2002/02/19 19:39:37 millert Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-static char rcsid[] = "$OpenBSD: diag.c,v 1.1 1997/02/26 03:06:50 downsj Exp $";
+static char rcsid[] = "$OpenBSD: diag.c,v 1.2 2002/02/19 19:39:37 millert Exp $";
 #endif
 #endif
 
@@ -53,23 +53,23 @@ va_list ap;
 
 /* tcpd_warn - report problem of some sort and proceed */
 
-void    VARARGS(tcpd_warn, char *, format)
+void	tcpd_warn(char *format, ...)
 {
     va_list ap;
 
-    VASTART(ap, char *, format);
+    va_start(ap, format);
     tcpd_diag(LOG_ERR, "warning", format, ap);
-    VAEND(ap);
+    va_end(ap);
 }
 
 /* tcpd_jump - report serious problem and jump */
 
-void    VARARGS(tcpd_jump, char *, format)
+void    tcpd_jump(char *format, ...)
 {
     va_list ap;
 
-    VASTART(ap, char *, format);
+    va_start(ap, format);
     tcpd_diag(LOG_ERR, "error", format, ap);
-    VAEND(ap);
+    va_end(ap);
     longjmp(tcpd_buf, AC_ERROR);
 }

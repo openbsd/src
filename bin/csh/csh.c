@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.15 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: csh.c,v 1.16 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.15 2002/02/16 21:27:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.16 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,7 @@ static char rcsid[] = "$OpenBSD: csh.c,v 1.15 2002/02/16 21:27:06 millert Exp $"
 #include <locale.h>
 #include <unistd.h>
 #include <vis.h>
-#ifdef __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>
 
 #include "csh.h"
 #include "proc.h"

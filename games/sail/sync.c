@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.2 1999/01/18 06:20:54 pjanzen Exp $	*/
+/*	$OpenBSD: sync.c,v 1.3 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -39,17 +39,13 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: sync.c,v 1.2 1999/01/18 06:20:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: sync.c,v 1.3 2002/02/19 19:39:36 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <fcntl.h>
 #include <errno.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/file.h>
@@ -100,28 +96,13 @@ fmtship(buf, len, fmt, ship)
 
 /*VARARGS3*/
 void
-#ifdef __STDC__
 makesignal(struct ship *from, const char *fmt, struct ship *ship, ...)
-#else
-makesignal(va_alias)
-	va_dcl
-#endif
 {
 	char message[BUFSIZ];
 	char format[BUFSIZ];
 	va_list ap;
-#ifndef __STDC__
-	struct ship *from;
-	const char *fmt;
-	struct ship *ship;
 
-	va_start(ap);
-	from = va_arg(ap, struct ship *);
-	fmt = va_arg(ap, const char *);
-	ship = va_arg(ap, struct ship *);
-#else
 	va_start(ap, ship);
-#endif
 	fmtship(format, sizeof(format), fmt, ship);
 	(void) vsprintf(message, format, ap);
 	va_end(ap);
@@ -129,25 +110,12 @@ makesignal(va_alias)
 }
 
 void
-#ifdef __STDC__
 makemsg(struct ship *from, const char *fmt, ...)
-#else
-makemsg(va_alias)
-	va_dcl
-#endif
 {
 	char message[BUFSIZ];
 	va_list ap;
-#ifndef __STDC__
-	struct ship *from;
-	const char *fmt;
 
-	va_start(ap);
-	from = va_arg(ap, struct ship *);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 	(void) vsprintf(message, fmt, ap);
 	va_end(ap);
 	Writestr(W_SIGNAL, from, message);

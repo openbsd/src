@@ -39,11 +39,7 @@
 #include <sys/time.h>
 #include "defs.h"
 #include <arpa/inet.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #define DEFAULT_TIMEOUT	2	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 1	/* How many times to ask each router */
@@ -171,33 +167,18 @@ Neighbor *find_neighbor(addr, node)
  * message and the current debug level.  For errors of severity LOG_ERR or
  * worse, terminate the program.
  */
-#ifdef __STDC__
 void
 log(int severity, int syserr, char *format, ...)
 {
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap, format);
-#else
-/*VARARGS3*/
-void 
-log(severity, syserr, format, va_alist)
-	int     severity, syserr;
-	char   *format;
-	va_dcl
-{
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap);
-#endif
+    va_list ap;
+    char    fmt[100];
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
 	case 1: if (severity > LOG_NOTICE ) return;
 	case 2: if (severity > LOG_INFO   ) return;
 	default:
+	    va_start(ap, format);
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING)
 		strcat(fmt, "warning - ");

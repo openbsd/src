@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2001/08/18 20:50:02 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2002/02/19 19:39:38 millert Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -40,11 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "log.h"
 
@@ -151,15 +147,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 
 #ifdef USE_DEBUG
 void
-#ifdef __STDC__
 log_debug (int cls, int level, const char *fmt, ...)
-#else
-log_debug (cls, level, fmt, va_alist)
-     int cls;
-     int level;
-     const char *fmt;
-     va_dcl
-#endif
 {
   va_list ap;
 
@@ -168,12 +156,7 @@ log_debug (cls, level, fmt, va_alist)
    */
   if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
     return;
-#ifdef __STDC__
   va_start (ap, fmt);
-#else
-  va_start (ap);
-  fmt = va_arg (ap, const char *);
-#endif
   _log_print (0, LOG_DEBUG, fmt, ap, cls, level);
   va_end (ap);
 }
@@ -243,64 +226,31 @@ log_debug_cmd (int cls, int level)
 #endif /* USE_DEBUG */
 
 void
-#ifdef __STDC__
 log_print (const char *fmt, ...)
-#else
-log_print (fmt, va_alist)
-     const char *fmt;
-     va_dcl
-#endif
 {
   va_list ap;
 
-#ifdef __STDC__
   va_start (ap, fmt);
-#else
-  va_start (ap);
-  fmt = va_arg (ap, const char *);
-#endif
   _log_print (0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
 }
 
 void
-#ifdef __STDC__
 log_error (const char *fmt, ...)
-#else
-log_error (fmt, va_alist)
-     const char *fmt;
-     va_dcl
-#endif
 {
   va_list ap;
 
-#ifdef __STDC__
   va_start (ap, fmt);
-#else
-  va_start (ap);
-  fmt = va_arg (ap, const char *);
-#endif
   _log_print (1, LOG_ERR, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
 }
 
 void
-#ifdef __STDC__
 log_fatal (const char *fmt, ...)
-#else
-log_fatal (fmt, va_alist)
-     const char *fmt;
-     va_dcl
-#endif
 {
   va_list ap;
 
-#ifdef __STDC__
   va_start (ap, fmt);
-#else
-  va_start (ap);
-  fmt = va_arg (ap, const char *);
-#endif
   _log_print (1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
   exit (1);

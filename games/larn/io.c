@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.7 2000/06/29 07:55:41 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.8 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.7 1997/10/18 20:03:26 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: io.c,v 1.7 2000/06/29 07:55:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.8 2002/02/19 19:39:36 millert Exp $";
 #endif /* not lint */
 
 #include "header.h"
@@ -116,11 +116,7 @@ static char	saveeof, saveeol;
 #endif	/* not TERMIO or TERMIOS */
 
 #ifndef NOVARARGS	/* if we have varargs */
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #else	/* NOVARARGS */	/* if we don't have varargs */
 typedef char	*va_list;
 #define va_dcl int va_alist;
@@ -250,26 +246,14 @@ sprintf(str)
 }
 #else	/* lint */
 /* VARARGS */
-#ifdef __STDC__
 void lprintf(const char *fmt, ...)
-#else
-void
-lprintf(va_alist)
-va_dcl
-#endif
 {
 	va_list	ap;	/* pointer for variable argument list */
 	char	*outb, *tmpb;
 	long	wide, left, cont, n;	/* data for lprintf	 */
 	char	db[12];	/* %d buffer in lprintf	 */
-#ifndef __STDC__
-	char	*fmt;
 
-	va_start(ap);		/* initialize the var args pointer */
-	fmt = va_arg(ap, char *);	/* pointer to format string */
-#else
 	va_start(ap, fmt);
-#endif
 	if (lpnt >= lpend)
 		lflush();
 	outb = lpnt;

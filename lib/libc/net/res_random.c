@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.10 2002/02/16 21:27:23 millert Exp $ */
+/* $OpenBSD: res_random.c,v 1.11 2002/02/19 19:39:36 millert Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -100,14 +100,8 @@ static void res_initid(void);
  * of 0 - (mod-1)
  */
 
-#ifdef __STDC__
 static u_int16_t
 pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
-#else
-static u_int16_t
-pmod(gen, exp, mod)
-	u_int16_t gen, exp, mod;
-#endif
 {
 	u_int16_t s, t, u;
 

@@ -20,22 +20,14 @@ static char rcsid[] = "$NetBSD: s_rintf.c,v 1.4 1995/05/10 20:48:06 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float
-#else
-static float 
-#endif
 TWO23[2]={
   8.3886080000e+06, /* 0x4b000000 */
  -8.3886080000e+06, /* 0xcb000000 */
 };
 
-#ifdef __STDC__
-	float rintf(float x)
-#else
-	float rintf(x)
-	float x;
-#endif
+float
+rintf(float x)
 {
 	int32_t i0,j0,sx;
 	u_int32_t i,i1;

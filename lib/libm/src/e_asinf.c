@@ -20,11 +20,7 @@ static char rcsid[] = "$NetBSD: e_asinf.c,v 1.5 1995/05/12 04:57:25 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float 
-#else
-static float 
-#endif
 one =  1.0000000000e+00, /* 0x3F800000 */
 huge =  1.000e+30,
 pio2_hi =  1.5707962513e+00, /* 0x3fc90fda */
@@ -42,12 +38,8 @@ qS2 =  2.0209457874e+00, /* 0x4001572d */
 qS3 = -6.8828397989e-01, /* 0xbf303361 */
 qS4 =  7.7038154006e-02; /* 0x3d9dc62e */
 
-#ifdef __STDC__
-	float __ieee754_asinf(float x)
-#else
-	float __ieee754_asinf(x)
-	float x;
-#endif
+float
+__ieee754_asinf(float x)
 {
 	float t,w,p,q,c,r,s;
 	int32_t hx,ix;

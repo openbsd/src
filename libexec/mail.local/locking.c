@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.4 2002/02/17 23:16:09 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: locking.c,v 1.4 2002/02/17 23:16:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: locking.c,v 1.5 2002/02/19 19:39:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: locking.c,v 1.4 2002/02/17 23:16:09 millert Exp
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "pathnames.h"
 #include "mail.local.h"
 
@@ -160,28 +161,12 @@ baditem(path)
 	/* XXX if we fail to rename, another attempt will happen later */
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 merr(int isfatal, const char *fmt, ...)
-#else
-merr(isfatal, fmt)
-	int isfatal;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 	if (isfatal)

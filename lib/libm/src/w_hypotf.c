@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_hypotf.c,v 1.3 1995/05/10 20:49:09 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float hypotf(float x, float y)	/* wrapper hypotf */
-#else
-	float hypotf(x,y)		/* wrapper hypotf */
-	float x,y;
-#endif
+float
+hypotf(float x, float y)	/* wrapper hypotf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_hypotf(x,y);

@@ -24,12 +24,8 @@ static char rcsid[] = "$NetBSD: w_j0f.c,v 1.3 1995/05/10 20:49:13 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float j0f(float x)		/* wrapper j0f */
-#else
-	float j0f(x)			/* wrapper j0f */
-	float x;
-#endif
+float
+j0f(float x)		/* wrapper j0f */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_j0f(x);
@@ -44,12 +40,8 @@ static char rcsid[] = "$NetBSD: w_j0f.c,v 1.3 1995/05/10 20:49:13 jtc Exp $";
 #endif
 }
 
-#ifdef __STDC__
-	float y0f(float x)		/* wrapper y0f */
-#else
-	float y0f(x)			/* wrapper y0f */
-	float x;
-#endif
+float
+y0f(float x)		/* wrapper y0f */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_y0f(x);

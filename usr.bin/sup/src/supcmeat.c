@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.15 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.16 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1501,27 +1501,12 @@ finishone(t, fv)
 }
 
 void
-#ifdef __STDC__
 done (int value,char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-done (va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	int value;
-	char *fmt;
-
-	va_start(ap);
-	value = va_arg(ap, int);
-	fmt = va_arg(ap, char *);
-#endif
 	(void) netcrypt(NULL);
 
 	if (fmt) 
@@ -1543,26 +1528,12 @@ va_dcl
 }
 
 void
-#ifdef __STDC__
 goaway (char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-goaway (va_alist)
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
-
 	(void) netcrypt (NULL);
 	if (fmt) {
 		vsnprintf(buf, sizeof(buf), fmt, ap);

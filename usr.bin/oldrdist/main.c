@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2002/02/19 19:39:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,10 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.11 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.12 2002/02/19 19:39:38 millert Exp $";
 #endif /* not lint */
 
+#include <stdarg.h>
 #include "defs.h"
 
 #define NHOSTS 100
@@ -307,28 +308,13 @@ prnames(nl)
 	printf(")\n");
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 warn(const char *fmt, ...)
-#else
-warn(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	extern int yylineno;
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "rdist: line %d: Warning: ", yylineno);
 	(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, "\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.12 2002/02/16 21:27:29 millert Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.13 2002/02/19 19:39:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -218,25 +218,5 @@ extern struct tcpd_context tcpd_context;
 extern void process_options(char *, struct request_info *);
 extern int dry_run;			/* verification flag */
 __END_DECLS
-
-
-#ifdef _TCPD_PRIVATE
- /*
-  * What follows is an attempt to unify varargs.h and stdarg.h. I'd rather
-  * have this than #ifdefs all over the code.
-  *
-  * The code using these must include the proper system header.
-  */
-
-#ifdef __STDC__
-#define VARARGS(func,type,arg) func(type arg, ...)
-#define VASTART(ap,type,name)  va_start(ap,name)
-#define VAEND(ap)              va_end(ap)
-#else
-#define VARARGS(func,type,arg) func(va_alist) va_dcl
-#define VASTART(ap,type,name)  {type name; va_start(ap); name = va_arg(ap, type)
-#define VAEND(ap)              va_end(ap);}
-#endif
-#endif	/* _TCPD_PRIVATE */
 
 #endif	/* _TCPD_H_ */

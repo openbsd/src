@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-netbios.c,v 1.4 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-netbios.c,v 1.5 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-netbios.c,v 1.4 2000/10/03 14:31:57 ho Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-netbios.c,v 1.5 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -40,10 +40,8 @@ static const char rcsid[] =
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 
-#ifdef __STDC__
-#include <stdlib.h>
-#endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "interface.h"

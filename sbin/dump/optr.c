@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.20 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.21 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.20 2002/02/16 21:27:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.21 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,19 +51,12 @@ static char rcsid[] = "$OpenBSD: optr.c,v 1.20 2002/02/16 21:27:33 millert Exp $
 #include <grp.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#endif
 #include <tzfile.h>
-#ifdef __STDC__
 #include <unistd.h>
-#endif
 #include <utmp.h>
-#ifndef __STDC__
-#include <varargs.h>
-#endif
 
 #include "dump.h"
 #include "pathnames.h"
@@ -234,13 +227,7 @@ timeest()
 }
 
 void
-#ifdef __STDC__
 msg(const char *fmt, ...)
-#else
-msg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -248,51 +235,28 @@ msg(fmt, va_alist)
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void) fflush(stdout);
 	(void) fflush(stderr);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vsnprintf(lastmsg, sizeof(lastmsg), fmt, ap);
 	va_end(ap);
 }
 
 void
-#ifdef __STDC__
 msgtail(const char *fmt, ...)
-#else
-msgtail(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 }
 
 void
-#ifdef __STDC__
 quit(const char *fmt, ...)
-#else
-quit(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -300,11 +264,7 @@ quit(fmt, va_alist)
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void) fflush(stdout);

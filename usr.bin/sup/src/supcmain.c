@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.13 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.14 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -605,11 +605,7 @@ init(argc, argv)
 	int oflags, aflags;
 	int cwant;
 #ifdef	MACH
-#ifdef	__STDC__
 	void (*oldsigsys)();
-#else
-	int (*oldsigsys)();
-#endif
 #endif /* MACH */
 
 	sysflag = FALSE;		/* not system upgrade */

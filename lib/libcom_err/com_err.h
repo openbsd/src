@@ -43,10 +43,7 @@
 #ifndef __COM_ERR_H__
 #define __COM_ERR_H__
 
-#ifdef __STDC__
 #include <stdarg.h>
-#endif
-
 
 /*
  * For compatibility with MIT's com_err the com_right.h include

@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.7 2001/09/21 14:23:05 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.8 2002/02/19 19:39:36 millert Exp $
  */
 
 #include <sys/syscall.h>
@@ -42,19 +42,11 @@
 
 #define _IMMEDIATE_	#
 
-#ifdef __STDC__
-# define	__ENTRY(p,x)	ENTRY(p##x)
-# define	__DO_SYSCALL(x)					\
+#define		__ENTRY(p,x)	ENTRY(p##x)
+#define		__DO_SYSCALL(x)					\
 				movl _IMMEDIATE_ SYS_##x, d0;	\
 				trap _IMMEDIATE_ 0
-# define	__LABEL2(p,x)	_C_LABEL(p##x)
-#else
-# define	__ENTRY(p,x)	ENTRY(p/**/x)
-# define	__DO_SYSCALL(x)					\
-				movl _IMMEDIATE_ SYS_/**/x, d0;	\
-				trap _IMMEDIATE_ 0
-# define	__LABEL2(p,x)	_C_LABEL(p/**/x)
-#endif
+#define		__LABEL2(p,x)	_C_LABEL(p##x)
 
 /* perform a syscall */
 

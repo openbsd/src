@@ -78,13 +78,7 @@ typedef void (*ihfunc_t)(int, fd_set *);
 #define	DEL_ALL_ROUTES		1
 			    /* for Deleting kernel table entries */
 
-/* obnoxious gcc gives an extraneous warning about this constant... */
-#if defined(__STDC__) || defined(__GNUC__)
 #define JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
-#else
-#define JAN_1970	2208988800L	/* 1970 - 1900 in seconds */
-#define const		/**/
-#endif
 
 #ifdef RSRR
 #define BIT_ZERO(X)      ((X) = 0)

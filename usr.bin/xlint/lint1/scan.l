@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: scan.l,v 1.5 2002/02/19 19:39:39 millert Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.4 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.5 2002/02/19 19:39:39 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -834,11 +834,7 @@ getescc(d)
 			if (tflag)
 				/* \a undefined in traditional C */
 				warning(81);
-#ifdef __STDC__
 			return ('\a');
-#else
-			return ('\007');
-#endif
 		case 'b':
 			return ('\b');
 		case 'f':
@@ -853,11 +849,7 @@ getescc(d)
 			if (tflag)
 				/* \v undefined in traditional C */
 				warning(264);
-#ifdef __STDC__
 			return ('\v');
-#else
-			return ('\013');
-#endif
 		case '8': case '9':
 			/* bad octal digit %c */
 			warning(77, c);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.c,v 1.5 2002/02/16 21:27:21 millert Exp $	*/
+/*	$OpenBSD: modf.c,v 1.6 2002/02/19 19:39:36 millert Exp $	*/
 /* @(#)s_modf.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -12,7 +12,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: modf.c,v 1.5 2002/02/16 21:27:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: modf.c,v 1.6 2002/02/19 19:39:36 millert Exp $";
 #endif
 
 /*
@@ -253,18 +253,10 @@ extern float __kernel_tanf(float,float,int);
 extern int   __kernel_rem_pio2f(float*,float*,int,int,int,const int*);
 
 #endif /* _MATH_PRIVATE_H_ */
-#ifdef __STDC__
 static const double one = 1.0;
-#else
-static double one = 1.0;
-#endif
 
-#ifdef __STDC__
-	double modf(double x, double *iptr)
-#else
-	double modf(x, iptr)
-	double x,*iptr;
-#endif
+double
+modf(double x, double *iptr)
 {
 	int32_t i0,i1,j0;
 	u_int32_t i;

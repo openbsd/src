@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.6 2001/09/20 20:52:10 millert Exp $ */
+/*	$OpenBSD: SYS.h,v 1.7 2002/02/19 19:39:36 millert Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -37,15 +37,9 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifdef __STDC__
 #define	_CAT(x,y)	x##y
 #define	__ENTRY(p,x)	ENTRY(p##x,0)
 #define	__DO_SYSCALL(x)	chmk $ SYS_ ## x
-#else
-#define	_CAT(x,y)	x/**/y
-#define	__ENTRY(p,x)	ENTRY(p/**/x,0)
-#define	__DO_SYSCALL(x)	chmk $ SYS_/**/x
-#endif
 
 #define	__SYSCALL(p,x,y)						\
 	err:	jmp cerror;						\

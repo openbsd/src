@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.3 2001/11/07 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: update.c,v 1.4 2002/02/19 19:39:38 millert Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -19,7 +19,7 @@
 #if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.3 2001/11/07 18:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.4 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif
 
@@ -89,7 +89,7 @@ va_list ap;
 
 /* request_init - initialize request structure */
 
-struct request_info *VARARGS(request_init, struct request_info *, request)
+struct request_info *request_init(struct request_info *request, ...)
 {
     static struct request_info default_info;
     struct request_info *r;
@@ -100,7 +100,7 @@ struct request_info *VARARGS(request_init, struct request_info *, request)
      * members, to avoid pulling in the whole socket module when it is not
      * really needed.
      */
-    VASTART(ap, struct request_info *, request);
+    va_start(ap, request);
     *request = default_info;
     request->fd = -1;
     strlcpy(request->daemon, unknown, sizeof(request->daemon));
@@ -108,19 +108,19 @@ struct request_info *VARARGS(request_init, struct request_info *, request)
     request->client->request = request;
     request->server->request = request;
     r = request_fill(request, ap);
-    VAEND(ap);
+    va_end(ap);
     return (r);
 }
 
 /* request_set - update request structure */
 
-struct request_info *VARARGS(request_set, struct request_info *, request)
+struct request_info *request_set(struct request_info *request, ...)
 {
     struct request_info *r;
     va_list ap;
 
-    VASTART(ap, struct request_info *, request);
+    va_start(ap, request);
     r = request_fill(request, ap);
-    VAEND(ap);
+    va_end(ap);
     return (r);
 }

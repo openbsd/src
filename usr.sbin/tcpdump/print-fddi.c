@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-fddi.c,v 1.11 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-fddi.c,v 1.12 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-fddi.c,v 1.11 2000/10/03 14:31:57 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-fddi.c,v 1.12 2002/02/19 19:39:40 millert Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_FDDI
@@ -33,10 +33,8 @@ static const char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

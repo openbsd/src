@@ -48,12 +48,8 @@ static char rcsid[] = "$NetBSD: s_cos.c,v 1.7 1995/05/10 20:47:02 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double cos(double x)
-#else
-	double cos(x)
-	double x;
-#endif
+double
+cos(double x)
 {
 	double y[2],z=0.0;
 	int32_t n, ix;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.12 2001/07/17 18:19:49 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.13 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.12 2001/07/17 18:19:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.13 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,16 +79,8 @@ static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.12 2001/07/17 18:19:49 millert E
  *	list the members of an archive in ls format
  */
 
-#ifdef __STDC__
 void
 ls_list(register ARCHD *arcn, time_t now, FILE *fp)
-#else
-void
-ls_list(arcn, now, fp)
-	register ARCHD *arcn;
-	time_t now;
-	FILE *fp;
-#endif
 {
 	register struct stat *sbp;
 	char f_mode[MODELEN];
@@ -173,14 +165,8 @@ ls_list(arcn, now, fp)
  *	print a short summary of file to tty.
  */
 
-#ifdef __STDC__
 void
 ls_tty(register ARCHD *arcn)
-#else
-void
-ls_tty(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
@@ -208,15 +194,8 @@ ls_tty(arcn)
 	return;
 }
 
-#ifdef __STDC__
 void
 safe_print(char *str, FILE *fp)
-#else
-void
-safe_print(str, fp)
-	char *str;
-	FILE *fp;
-#endif
 {
 	char visbuf[5];
 	char *cp;
@@ -244,16 +223,8 @@ safe_print(str, fp)
  *	unsigned long value
  */
 
-#ifdef __STDC__
 u_long
 asc_ul(register char *str, int len, register int base)
-#else
-u_long
-asc_ul(str, len, base)
-	register char *str;
-	int len;
-	register int base;
-#endif
 {
 	register char *stop;
 	u_long tval = 0;
@@ -295,17 +266,8 @@ asc_ul(str, len, base)
  *	NOTE: the string created is NOT TERMINATED.
  */
 
-#ifdef __STDC__
 int
 ul_asc(u_long val, register char *str, register int len, register int base)
-#else
-int
-ul_asc(val, str, len, base)
-	u_long val;
-	register char *str;
-	register int len;
-	register int base;
-#endif
 {
 	register char *pt;
 	u_long digit;
@@ -358,16 +320,8 @@ ul_asc(val, str, len, base)
  *	u_quad_t value
  */
 
-#ifdef __STDC__
 u_quad_t
 asc_uqd(register char *str, int len, register int base)
-#else
-u_quad_t
-asc_uqd(str, len, base)
-	register char *str;
-	int len;
-	register int base;
-#endif
 {
 	register char *stop;
 	u_quad_t tval = 0;
@@ -409,17 +363,8 @@ asc_uqd(str, len, base)
  *	NOTE: the string created is NOT TERMINATED.
  */
 
-#ifdef __STDC__
 int
 uqd_asc(u_quad_t val, register char *str, register int len, register int base)
-#else
-int
-uqd_asc(val, str, len, base)
-	u_quad_t val;
-	register char *str;
-	register int len;
-	register int base;
-#endif
 {
 	register char *pt;
 	u_quad_t digit;

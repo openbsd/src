@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2001/09/03 21:36:12 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -38,18 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.7 2001/09/03 21:36:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.8 2002/02/19 19:39:36 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/file.h>
 #include <termios.h>
-
-#if __STDC__
-#include	<stdarg.h>
-#else
-#include	<varargs.h>
-#endif
+#include <stdarg.h>
 
 #include	"mille.h"
 
@@ -60,21 +55,11 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.7 2001/09/03 21:36:12 pjanzen Exp $"
 #define	NUMSAFE	4
 
 bool
-#if __STDC__
 error(char *str, ...)
-#else
-error(str, arg)
-	char	*str;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, str);
-#else
-	va_start(ap);
-#endif
 	wmove(Score, ERR_Y, ERR_X);
 	vwprintw(Score, str, ap);
 	wclrtoeol(Score);

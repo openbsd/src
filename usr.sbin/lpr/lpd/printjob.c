@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.30 2002/02/16 21:28:04 millert Exp $ */
+/*	$OpenBSD: printjob.c,v 1.31 2002/02/19 19:39:40 millert Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ static const char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include "lp.h"
 #include "lp.local.h"
@@ -1536,30 +1537,14 @@ setty()
 	return;
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 static void
-#ifdef __STDC__
 pstatus(const char *msg, ...)
-#else
-pstatus(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	int fd;
 	char buf[BUFSIZ];
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 
+	va_start(ap, msg);
 	umask(0);
 	fd = open(ST, O_WRONLY|O_CREAT, 0664);
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {

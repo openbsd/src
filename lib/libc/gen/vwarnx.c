@@ -32,17 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.2 1996/08/19 08:27:39 tholo Exp $";
+static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.3 2002/02/19 19:39:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
 #include <stdio.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 extern char *__progname;		/* Program name, from crt0. */
 

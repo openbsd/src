@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2002/02/19 19:39:39 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.22 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.23 2002/02/19 19:39:39 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.22 2002/02/16 21:27:54 millert Exp $
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdarg.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -300,32 +301,14 @@ sigwinch(signo)
 	gotwinch = 1;
 }
 
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-#ifdef __STDC__
 void
 error(const char *fmt, ...)
-#else
-void
-error(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char buf[255];
 	int oy, ox;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
+	va_start(ap, fmt);
 	if (wnd) {
 		getyx(stdscr, oy, ox);
 		(void) vsnprintf(buf, sizeof buf, fmt, ap);

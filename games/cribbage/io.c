@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 2001/08/17 23:14:30 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.7 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -49,12 +49,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.7 1995/03/21 15:08:53 cgd Exp $";
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "deck.h"
 #include "cribbage.h"
@@ -401,21 +396,11 @@ int     Mpos = 0;
 static int Newpos = 0;
 
 void
-#ifdef __STDC__
 msg(const char *fmt, ...)
-#else
-msg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
 	Newpos = strlen(Msgbuf);
 	va_end(ap);
@@ -427,21 +412,11 @@ msg(fmt, va_alist)
  *	Add things to the current message
  */
 void
-#ifdef __STDC__
 addmsg(const char *fmt, ...)
-#else
-addmsg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
 	Newpos = strlen(Msgbuf);
 	va_end(ap);

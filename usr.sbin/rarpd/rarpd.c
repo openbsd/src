@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.33 2002/02/17 19:42:39 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.34 2002/02/19 19:39:40 millert Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.33 2002/02/17 19:42:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.34 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 
@@ -43,6 +43,7 @@ static char rcsid[] = "$OpenBSD: rarpd.c,v 1.33 2002/02/17 19:42:39 millert Exp 
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -974,42 +975,22 @@ ipaddrtonetmask(addr)
 	/* NOTREACHED */
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 err(int fatal, const char *fmt,...)
-#else
-err(fmt, va_alist)
-	int     fatal;
-	char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
+
 	if (dflag) {
 		if (fatal)
 			(void) fprintf(stderr, "rarpd: error: ");
 		else
 			(void) fprintf(stderr, "rarpd: warning: ");
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void) vfprintf(stderr, fmt, ap);
 		va_end(ap);
 		(void) fprintf(stderr, "\n");
 	}
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 	if (fatal) {
@@ -1019,22 +1000,12 @@ va_dcl
 }
 
 void
-#ifdef __STDC__
 debug(const char *fmt,...)
-#else
-debug(fmt, va_alist)
-	char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 
 	if (dflag) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void) fprintf(stderr, "rarpd: ");
 		(void) vfprintf(stderr, fmt, ap);
 		va_end(ap);

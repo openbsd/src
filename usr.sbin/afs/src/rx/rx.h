@@ -1,4 +1,4 @@
-/* $Id: rx.h,v 1.3 2000/09/11 14:41:21 art Exp $ */
+/* $Id: rx.h,v 1.4 2002/02/19 19:39:39 millert Exp $ */
 
 /*
 ****************************************************************************
@@ -296,13 +296,8 @@ struct rx_securityClass {
     int refCount;
 };
 
-#if defined(__STDC__) && !defined(__HIGHC__)
 #define RXS_OP(obj,op,args) ((obj->ops->op_ ## op) ? \
 			     (*(obj)->ops->op_ ## op)args : 0)
-#else
-#define RXS_OP(obj,op,args) ((obj->ops->op_/**/op) ? \
-			     (*(obj)->ops->op_/**/op)args : 0)
-#endif
 
 #define RXS_Close(obj) RXS_OP(obj,Close,(obj))
 #define RXS_NewConnection(obj,conn) RXS_OP(obj,NewConnection,(obj,conn))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.13 2000/10/03 14:21:56 ho Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.14 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.13 2000/10/03 14:21:56 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.14 2002/02/19 19:39:40 millert Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -33,10 +33,8 @@ static const char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

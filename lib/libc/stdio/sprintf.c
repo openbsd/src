@@ -35,27 +35,16 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sprintf.c,v 1.4 1998/01/12 06:14:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: sprintf.c,v 1.5 2002/02/19 19:39:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <limits.h>
 #include "local.h"
 
 int
-#ifdef __STDC__
 sprintf(char *str, char const *fmt, ...)
-#else
-sprintf(str, fmt, va_alist)
-	char *str;
-	char *fmt;
-	va_dcl
-#endif
 {
 	int ret;
 	va_list ap;
@@ -65,11 +54,7 @@ sprintf(str, fmt, va_alist)
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vfprintf(&f, fmt, ap);
 	va_end(ap);
 	*f._p = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.3 1997/07/25 21:05:43 mickey Exp $	*/
+/*	$OpenBSD: time.h,v 1.4 2002/02/19 19:39:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -69,7 +69,6 @@ struct tm {
 	char	*tm_zone;	/* timezone abbreviation */
 };
 
-#if defined(__STDC__) || defined(c_plusplus)
 extern struct tm *gmtime(const time_t *);
 extern struct tm *localtime(const time_t *);
 extern time_t mktime(const struct tm *);
@@ -80,17 +79,5 @@ extern char *ctime(const time_t *);
 extern char *timezone(int , int);
 extern void tzset(void);
 extern void tzsetwall(void);
-#else
-extern struct tm *gmtime();
-extern struct tm *localtime();
-extern time_t mktime();
-extern time_t time();
-extern double difftime();
-extern char *asctime();
-extern char *ctime();
-extern char *timezone();
-extern void tzset();
-extern void tzsetwall();
-#endif 
 
 #endif /* _TIME_H */

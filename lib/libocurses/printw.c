@@ -35,19 +35,12 @@
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #endif	/* not lint */
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "curses.h"
 
 /*
  * printw and friends.
- *
- * These routines make nonportable assumptions about varargs if __STDC__
- * is not in effect.
  */
 
 static int __winwrite(void *, const char *, int);
@@ -57,22 +50,12 @@ static int __winwrite(void *, const char *, int);
  *	Printf on the standard screen.
  */
 int
-#ifdef __STDC__
 printw(const char *fmt, ...)
-#else
-printw(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwprintw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -83,23 +66,12 @@ printw(fmt, va_alist)
  *	Printf on the given window.
  */
 int
-#ifdef __STDC__
 wprintw(WINDOW * win, const char *fmt, ...)
-#else
-wprintw(win, fmt, va_alist)
-	WINDOW *win;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = vwprintw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -111,23 +83,12 @@ wprintw(win, fmt, va_alist)
  *	arguments, they cannot be macros.  Sigh....
  */
 int
-#ifdef __STDC__
 mvprintw(register int y, register int x, const char *fmt, ...)
-#else
-mvprintw(y, x, fmt, va_alist)
-	register int y, x;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (move(y, x) != OK)
 		return (ERR);
 	ret = vwprintw(stdscr, fmt, ap);
@@ -136,25 +97,13 @@ mvprintw(y, x, fmt, va_alist)
 }
 
 int
-#ifdef __STDC__
 mvwprintw(register WINDOW * win, register int y, register int x,
     const char *fmt, ...)
-#else
-mvwprintw(win, y, x, fmt, va_alist)
-	register WINDOW *win;
-	register int y, x;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int ret;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (wmove(win, y, x) != OK)
 		return (ERR);
 

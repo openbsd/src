@@ -20,12 +20,8 @@ static char rcsid[] = "$NetBSD: s_nextafterf.c,v 1.4 1995/05/10 20:48:01 jtc Exp
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float nextafterf(float x, float y)
-#else
-	float nextafterf(x,y)
-	float x,y;
-#endif
+float
+nextafterf(float x, float y)
 {
 	int32_t hx,hy,ix,iy;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.4 2001/01/08 07:14:42 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,13 +37,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: io.c,v 1.4 2001/01/08 07:14:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.5 2002/02/19 19:39:38 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <err.h>
 #include "indent_globs.h"
 
@@ -537,32 +538,15 @@ count_spaces(current, buffer)
     return (cur);
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 int	found_err;
 
 /* VARARGS2 */
 void
-#if __STDC__
 diag(int level, char *msg, ...)
-#else
-diag(level, msg, va_alist)
-	int   level;
-	char *msg;
-	va_dcl
-#endif
 {
-	va_list ap;
-#if __STDC__
-	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
+    va_list ap;
 
+    va_start(ap, msg);
     if (level)
 	found_err = 1;
     if (output == stdout) {

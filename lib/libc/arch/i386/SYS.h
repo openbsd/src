@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.10 2002/02/19 19:39:36 millert Exp $
  */
 
 #include <machine/asm.h>
@@ -51,11 +51,7 @@
 
 #ifdef _THREAD_SAFE
 /* Use _thread_sys_{syscall} when compiled with -D_THREAD_SAFE */
-#ifdef __STDC__
 #define	SYSENTRY(x)	ENTRY(_thread_sys_ ## x)
-#else /* ! __STDC__ */
-#define	SYSENTRY(x)	ENTRY(_thread_sys_/**/x)
-#endif /* ! __STDC__ */
 #else /* ! _THREAD_SAFE */
 /* Use {syscall} when compiling without -D_THREAD_SAFE */
 #define SYSENTRY(x)	ENTRY(x)
@@ -65,28 +61,15 @@
 
 /* Use both _thread_sys_{syscall} and [weak] {syscall}. */
 
-#ifdef __STDC__
 #define	SYSENTRY(x)					\
 			ENTRY(_thread_sys_ ## x)	\
 			.weak _C_LABEL(x);		\
 			_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
-#else /* ! __STDC__ */
-#define	SYSENTRY(x)					\
-			ENTRY(_thread_sys_/**/x)	\
-			.weak _C_LABEL(x);		\
-			_C_LABEL(x) = _C_LABEL(_thread_sys_/**/x)
-#endif /* ! __STDC__ */
 #endif /* WEAK_ALIASES */
 
-#ifdef __STDC__
 #define	__DO_SYSCALL(x)					\
 			movl $(SYS_ ## x),%eax;		\
 			int $0x80
-#else /* ! __STDC__ */
-#define	__DO_SYSCALL(x)					\
-			movl $(SYS_/**/x),%eax;		\
-			int $0x80
-#endif /* ! __STDC__ */
 
 /* perform a syscall */
 #define	_SYSCALL_NOERROR(x,y)				\

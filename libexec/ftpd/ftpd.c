@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.120 2002/02/16 21:27:29 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.120 2002/02/16 21:27:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.120 2002/02/16 21:27:29 millert Exp 
 #include <util.h>
 #include <utmp.h>
 #include <bsd_auth.h>
+#include <stdarg.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
@@ -125,12 +126,6 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.120 2002/02/16 21:27:29 millert Exp 
 
 #include "pathnames.h"
 #include "extern.h"
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 static char version[] = "Version 6.5/OpenBSD";
 
@@ -1890,22 +1885,12 @@ fatal(s)
 }
 
 void
-#ifdef __STDC__
 reply(int n, const char *fmt, ...)
-#else
-reply(n, fmt, va_alist)
-	int n;
-	char *fmt;
-	va_dcl
-#endif
 {
 	char *buf, *p, *next;
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (vasprintf(&buf, fmt, ap) == -1 || buf == NULL) {
 		printf("412 Local resource failure: malloc\r\n");
 		fflush(stdout);
@@ -1924,32 +1909,18 @@ reply(n, fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 lreply(int n, const char *fmt, ...)
-#else
-lreply(n, fmt, va_alist)
-	int n;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)printf("%d- ", n);
 	(void)vprintf(fmt, ap);
 	va_end(ap);
 	(void)printf("\r\n");
 	(void)fflush(stdout);
 	if (debug) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		syslog(LOG_DEBUG, "<--- %d- ", n);
 		vsyslog(LOG_DEBUG, fmt, ap);
 		va_end(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.9 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.10 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -65,11 +65,9 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#endif
 
 #include "pathnames.h"
 #include "mt.h"

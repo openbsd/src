@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.2 2001/05/04 22:16:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.3 2002/02/19 19:39:39 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -77,11 +77,7 @@ vis(dst, c, flag, nextc)
 			*dst++ = '\\';
 			*dst++ = 'b';
 			goto done;
-#ifdef __STDC__
 		case '\a':
-#else
-		case '\007':
-#endif
 			*dst++ = '\\';
 			*dst++ = 'a';
 			goto done;

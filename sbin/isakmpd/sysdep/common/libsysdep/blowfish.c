@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.1 2001/01/26 11:34:01 niklas Exp $ */
+/* $OpenBSD: blowfish.c,v 1.2 2002/02/19 19:39:38 millert Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -398,16 +398,8 @@ Blowfish_initstate(c)
 
 }
 
-#ifdef __STDC__
 u_int32_t
 Blowfish_stream2word(const u_int8_t *data, u_int16_t databytes, u_int16_t *current)
-#else
-u_int32_t
-Blowfish_stream2word(data, databytes, current)
-	const u_int8_t *data;
-	u_int16_t databytes;
-	u_int16_t *current;
-#endif
 {
 	u_int8_t i;
 	u_int16_t j;
@@ -426,16 +418,8 @@ Blowfish_stream2word(data, databytes, current)
 	return temp;
 }
 
-#if __STDC__
 void
 Blowfish_expand0state(blf_ctx *c, const u_int8_t *key, u_int16_t keybytes)
-#else
-void
-Blowfish_expand0state(c, key, keybytes)
-	blf_ctx *c;
-	const u_int8_t *key;
-	u_int16_t keybytes;
-#endif
 {
 	u_int16_t i;
 	u_int16_t j;
@@ -472,19 +456,9 @@ Blowfish_expand0state(c, key, keybytes)
 }
 
 
-#if __STDC__
 void
 Blowfish_expandstate(blf_ctx *c, const u_int8_t *data, u_int16_t databytes,
 		     const u_int8_t *key, u_int16_t keybytes)
-#else
-void
-Blowfish_expandstate(c, data, databytes, key, keybytes)
-	blf_ctx *c;
-	const u_int8_t *data;
-	u_int16_t databytes;
-	const u_int8_t *key;
-	u_int16_t keybytes;
-#endif
 {
 	u_int16_t i;
 	u_int16_t j;
@@ -525,16 +499,8 @@ Blowfish_expandstate(c, data, databytes, key, keybytes)
 
 }
 
-#if __STDC__
 void
 blf_key(blf_ctx *c, const u_int8_t *k, u_int16_t len)
-#else
-void
-blf_key(c, k, len)
-	blf_ctx *c;
-	const u_int8_t *k;
-	u_int16_t len;
-#endif
 {
 	/* Initalize S-boxes and subkeys with Pi */
 	Blowfish_initstate(c);
@@ -543,16 +509,8 @@ blf_key(c, k, len)
 	Blowfish_expand0state(c, k, len);
 }
 
-#if __STDC__
 void
 blf_enc(blf_ctx *c, u_int32_t *data, u_int16_t blocks)
-#else
-void
-blf_enc(c, data, blocks)
-	blf_ctx *c;
-	u_int32_t *data;
-	u_int16_t blocks;
-#endif
 {
 	u_int32_t *d;
 	u_int16_t i;
@@ -564,16 +522,8 @@ blf_enc(c, data, blocks)
 	}
 }
 
-#if __STDC__
 void
 blf_dec(blf_ctx *c, u_int32_t *data, u_int16_t blocks)
-#else
-void
-blf_dec(c, data, blocks)
-	blf_ctx *c;
-	u_int32_t *data;
-	u_int16_t blocks;
-#endif
 {
 	u_int32_t *d;
 	u_int16_t i;
@@ -585,16 +535,8 @@ blf_dec(c, data, blocks)
 	}
 }
 
-#if __STDC__
 void
 blf_ecb_encrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
-#else
-void
-blf_ecb_encrypt(c, data, len)
-     blf_ctx *c;
-     u_int8_t *data;
-     u_int32_t len;
-#endif
 {
 	u_int32_t l, r;
 	u_int32_t i;
@@ -615,16 +557,8 @@ blf_ecb_encrypt(c, data, len)
 	}
 }
 
-#if __STDC__
 void
 blf_ecb_decrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
-#else
-void
-blf_ecb_decrypt(c, data, len)
-     blf_ctx *c;
-     u_int8_t *data;
-     u_int32_t len;
-#endif
 {
 	u_int32_t l, r;
 	u_int32_t i;
@@ -645,17 +579,8 @@ blf_ecb_decrypt(c, data, len)
 	}
 }
 
-#if __STDC__
 void
 blf_cbc_encrypt(blf_ctx *c, u_int8_t *iv, u_int8_t *data, u_int32_t len)
-#else
-void
-blf_cbc_encrypt(c, iv, data, len)
-     blf_ctx *c;
-     u_int8_t *iv;
-     u_int8_t *data;
-     u_int32_t len;
-#endif
 {
 	u_int32_t l, r;
 	u_int32_t i, j;
@@ -679,17 +604,8 @@ blf_cbc_encrypt(c, iv, data, len)
 	}
 }
 
-#if __STDC__
 void
 blf_cbc_decrypt(blf_ctx *c, u_int8_t *iva, u_int8_t *data, u_int32_t len)
-#else
-void
-blf_cbc_decrypt(c, iva, data, len)
-     blf_ctx *c;
-     u_int8_t *iva;
-     u_int8_t *data;
-     u_int32_t len;
-#endif
 {
 	u_int32_t l, r;
 	u_int8_t *iv;

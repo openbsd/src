@@ -2,7 +2,7 @@
 #define DEFINES_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: defines.h,v 1.1 2001/05/23 12:34:41 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.2 2002/02/19 19:39:38 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -93,12 +93,7 @@ extern int debug;
 #define DEBUG_FOR	0x0400
 #define DEBUG_LOUD	0x0800
 
-#ifdef __STDC__
 #define CONCAT(a,b)	a##b
-#else
-#define I(a)		a
-#define CONCAT(a,b)	I(a)b
-#endif /* __STDC__ */
 
 #define DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 

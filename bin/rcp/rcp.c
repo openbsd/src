@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.27 2002/02/17 19:42:19 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.28 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -869,32 +869,18 @@ usage()
 	exit(1);
 }
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef KERBEROS
 void
-#ifdef __STDC__
 oldw(const char *fmt, ...)
-#else
-oldw(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	char realm[REALM_SZ];
 	va_list ap;
 
 	if (krb_get_lrealm(realm, 1) != KSUCCESS)
 		return;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "rcp: ");
 	(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, ", using standard rcp\n");
@@ -903,13 +889,7 @@ oldw(fmt, va_alist)
 #endif
 
 void
-#ifdef __STDC__
 run_err(const char *fmt, ...)
-#else
-run_err(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	static FILE *fp;
 	va_list ap;
@@ -919,22 +899,14 @@ run_err(fmt, va_alist)
 		return;
 	(void)fprintf(fp, "%c", 0x01);
 	(void)fprintf(fp, "rcp: ");
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vfprintf(fp, fmt, ap);
 	va_end(ap);
 	(void)fprintf(fp, "\n");
 	(void)fflush(fp);
 
 	if (!iamremote) {
-#ifdef __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		vwarnx(fmt, ap);
 		va_end(ap);
 	}

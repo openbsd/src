@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2002/02/19 19:39:36 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ int	sigpending(sigset_t *);
 int	sigprocmask(int, const sigset_t *, sigset_t *);
 int	sigsuspend(const sigset_t *);
 
-#if defined(__GNUC__) && defined(__STDC__)
+#if defined(__GNUC__)
 extern __inline int sigaddset(sigset_t *set, int signo) {
 	extern int errno;
 

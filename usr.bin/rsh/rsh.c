@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.24 2002/02/17 19:42:31 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.25 2002/02/19 19:39:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.24 2002/02/17 19:42:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.25 2002/02/19 19:39:39 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,11 +59,7 @@ static char rcsid[] = "$OpenBSD: rsh.c,v 1.24 2002/02/17 19:42:31 millert Exp $"
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "pathnames.h"
 
 #ifdef KERBEROS
@@ -444,28 +440,15 @@ sendsig(signo)
 #ifdef KERBEROS
 /* VARARGS */
 void
-#ifdef __STDC__
 warning(const char *fmt, ...)
-#else
-warning(va_alist)
-va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *fmt;
-#endif
 	char myrealm[REALM_SZ];
 
 	if (krb_get_lrealm(myrealm, 0) != KSUCCESS)
 		return;
 	(void)fprintf(stderr, "rsh: warning, using standard rsh: ");
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, ".\n");

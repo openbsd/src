@@ -20,18 +20,10 @@ static char rcsid[] = "$NetBSD: s_ceilf.c,v 1.4 1995/05/10 20:46:55 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float huge = 1.0e30;
-#else
-static float huge = 1.0e30;
-#endif
 
-#ifdef __STDC__
-	float ceilf(float x)
-#else
-	float ceilf(x)
-	float x;
-#endif
+float
+ceilf(float x)
 {
 	int32_t i0,j0;
 	u_int32_t i;

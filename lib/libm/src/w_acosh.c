@@ -21,12 +21,8 @@ static char rcsid[] = "$NetBSD: w_acosh.c,v 1.6 1995/05/10 20:48:31 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double acosh(double x)		/* wrapper acosh */
-#else
-	double acosh(x)			/* wrapper acosh */
-	double x;
-#endif
+double
+acosh(double x)		/* wrapper acosh */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_acosh(x);

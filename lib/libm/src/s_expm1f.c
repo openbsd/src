@@ -22,11 +22,7 @@ static char rcsid[] = "$NetBSD: s_expm1f.c,v 1.5 1995/05/10 20:47:11 jtc Exp $";
 
 static const volatile float huge = 1.0e+30, tiny = 1.0e-30;
 
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 one		= 1.0,
 o_threshold	= 8.8721679688e+01,/* 0x42b17180 */
 ln2_hi		= 6.9313812256e-01,/* 0x3f317180 */
@@ -39,12 +35,8 @@ Q3  =  -7.9365076090e-05, /* 0xb8a670cd */
 Q4  =   4.0082177293e-06, /* 0x36867e54 */
 Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 
-#ifdef __STDC__
-	float expm1f(float x)
-#else
-	float expm1f(x)
-	float x;
-#endif
+float
+expm1f(float x)
 {
 	float y,hi,lo,c,t,e,hxs,hfx,r1;
 	int32_t k,xsb;

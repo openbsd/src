@@ -25,12 +25,8 @@ static char rcsid[] = "$NetBSD: w_gamma.c,v 1.7 1995/11/20 22:06:43 jtc Exp $";
 
 extern int signgam;
 
-#ifdef __STDC__
-	double gamma(double x)
-#else
-	double gamma(x)
-	double x;
-#endif
+double
+gamma(double x)
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_lgamma_r(x,&signgam);

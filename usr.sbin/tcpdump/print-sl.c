@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.11 2000/10/13 08:32:17 jakob Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.12 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.11 2000/10/13 08:32:17 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.12 2002/02/19 19:39:40 millert Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_NET_SLIP_H
@@ -35,9 +35,7 @@ static const char rcsid[] =
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 
-#ifdef __STDC__
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

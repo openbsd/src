@@ -1,4 +1,4 @@
-/*	$OpenBSD: is_tar.c,v 1.4 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: is_tar.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -19,11 +19,7 @@
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 
-#if	defined(__STDC__) || defined(__cplusplus)
 static int from_oct(int, char*);	/* Decode octal number */
-#else
-static int from_oct();
-#endif
 
 /*
  * Return 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.h,v 1.4 2000/10/12 09:47:27 deraadt Exp $ */
+/*	$OpenBSD: yppush.h,v 1.5 2002/02/19 19:39:41 millert Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -36,7 +36,6 @@
 
 #include <rpc/rpc.h>
 
-
 enum yppush_status {
 	YPPUSH_SUCC = 1,
 	YPPUSH_AGE = 2,
@@ -56,57 +55,26 @@ enum yppush_status {
 	YPPUSH_REFUSED = -14,
 };
 typedef enum yppush_status yppush_status;
-#ifdef __cplusplus 
-extern "C" bool_t xdr_yppush_status(XDR *, yppush_status*);
-#elif defined(__STDC__)
-extern  bool_t xdr_yppush_status(XDR *, yppush_status*);
-#else /* Old Style C */ 
-bool_t xdr_yppush_status();
-#endif /* Old Style C */ 
-
 
 struct yppushresp_xfr {
 	u_int transid;
 	yppush_status status;
 };
 typedef struct yppushresp_xfr yppushresp_xfr;
-#ifdef __cplusplus 
-extern "C" bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr*);
-#elif defined(__STDC__)
-extern  bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr*);
-#else /* Old Style C */ 
-bool_t xdr_yppushresp_xfr();
-#endif /* Old Style C */ 
 
+#define YPPUSH_XFRRESPPROG	((u_long)0x40000000)
+#define YPPUSH_XFRRESPVERS	((u_long)1)
+#define YPPUSHPROC_NULL		((u_long)0)
+#define YPPUSHPROC_XFRRESP	((u_long)1)
 
-#define YPPUSH_XFRRESPPROG ((u_long)0x40000000)
-#define YPPUSH_XFRRESPVERS ((u_long)1)
-
-#ifdef __cplusplus
-#define YPPUSHPROC_NULL ((u_long)0)
-extern "C" void * yppushproc_null_1(void *, CLIENT *);
-extern "C" void * yppushproc_null_1_svc(void *, struct svc_req *);
-#define YPPUSHPROC_XFRRESP ((u_long)1)
-extern "C" void * yppushproc_xfrresp_1(yppushresp_xfr *, CLIENT *);
-extern "C" void * yppushproc_xfrresp_1_svc(yppushresp_xfr *, struct svc_req *);
-
-#elif defined(__STDC__)
-#define YPPUSHPROC_NULL ((u_long)0)
-extern  void * yppushproc_null_1(void *, CLIENT *);
-extern  void * yppushproc_null_1_svc(void *, struct svc_req *);
-#define YPPUSHPROC_XFRRESP ((u_long)1)
-extern  void * yppushproc_xfrresp_1(yppushresp_xfr *, CLIENT *);
-extern  void * yppushproc_xfrresp_1_svc(yppushresp_xfr *, struct svc_req *);
-
-#else /* Old Style C */ 
-#define YPPUSHPROC_NULL ((u_long)0)
-extern  void * yppushproc_null_1();
-extern  void * yppushproc_null_1_svc();
-#define YPPUSHPROC_XFRRESP ((u_long)1)
-extern  void * yppushproc_xfrresp_1();
-extern  void * yppushproc_xfrresp_1_svc();
-#endif /* Old Style C */ 
-
-char *	yppush_err_string(enum yppush_status y);
+__BEGIN_DECLS
+bool_t xdr_yppush_status(XDR *, yppush_status*);
+bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr*);
+void * yppushproc_null_1(void *, CLIENT *);
+void * yppushproc_null_1_svc(void *, struct svc_req *);
+void * yppushproc_xfrresp_1(yppushresp_xfr *, CLIENT *);
+void * yppushproc_xfrresp_1_svc(yppushresp_xfr *, struct svc_req *);
+char * yppush_err_string(enum yppush_status y);
+__END_DECLS
 
 #endif /* !_YPPUSH_H_RPCGEN */

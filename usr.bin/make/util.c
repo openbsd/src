@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.16 2001/05/23 12:34:51 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -35,15 +35,7 @@
 #include "config.h"
 #include "defines.h"
 
-#ifndef __STDC__
-# ifndef const
-#  define const
-# endif
-#endif
-
 #ifdef sun
-
-
 
 extern int errno, sys_nerr;
 extern char *sys_errlist[];
@@ -375,11 +367,7 @@ signal(s, a))()
 #endif
 
 #ifndef BSD4_4
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef _IOSTRG
 #define STRFLAG (_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
@@ -413,28 +401,12 @@ vsnprintf(s, n, fmt, args)
 }
 
 int
-#ifdef __STDC__
 snprintf(char *s, size_t n, const char *fmt, ...)
-#else
-snprintf(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 	int rv;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	char *s;
-	size_t n;
-	const char *fmt;
-
-	va_start(ap);
-
-	s = va_arg(ap, char *);
-	n = va_arg(ap, size_t);
-	fmt = va_arg(ap, const char *);
-#endif
 	rv = vsnprintf(s, n, fmt, ap);
 	va_end(ap);
 	return rv;

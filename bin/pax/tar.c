@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.24 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.25 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.24 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.25 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,13 +82,8 @@ static int tar_nodir;			/* do not write dirs under old tar */
  *	0 if ok, -1 otherwise (what wr_skip returns)
  */
 
-#ifdef __STDC__
 int
 tar_endwr(void)
-#else
-int
-tar_endwr()
-#endif
 {
 	return(wr_skip((off_t)(NULLCNT*BLKMULT)));
 }
@@ -100,13 +95,8 @@ tar_endwr()
  *	size of trailer (2 * BLKMULT)
  */
 
-#ifdef __STDC__
 off_t
 tar_endrd(void)
-#else
-off_t
-tar_endrd()
-#endif
 {
 	return((off_t)(NULLCNT*BLKMULT));
 }
@@ -122,16 +112,8 @@ tar_endrd()
  *	could never contain a header.
  */
 
-#ifdef __STDC__
 int
 tar_trail(register char *buf, register int in_resync, register int *cnt)
-#else
-int
-tar_trail(buf, in_resync, cnt)
-	register char *buf;
-	register int in_resync;
-	register int *cnt;
-#endif
 {
 	register int i;
 
@@ -173,17 +155,8 @@ tar_trail(buf, in_resync, cnt)
  *	0 if the number fit into the string, -1 otherwise
  */
 
-#ifdef __STDC__
 static int
 ul_oct(u_long val, register char *str, register int len, int term)
-#else
-static int
-ul_oct(val, str, len, term)
-	u_long val;
-	register char *str;
-	register int len;
-	int term;
-#endif
 {
 	register char *pt;
 
@@ -237,17 +210,8 @@ ul_oct(val, str, len, term)
  *	0 if the number fit into the string, -1 otherwise
  */
 
-#ifdef __STDC__
 static int
 uqd_oct(u_quad_t val, register char *str, register int len, int term)
-#else
-static int
-uqd_oct(val, str, len, term)
-	u_quad_t val;
-	register char *str;
-	register int len;
-	int term;
-#endif
 {
 	register char *pt;
 
@@ -300,15 +264,8 @@ uqd_oct(val, str, len, term)
  *	unsigned long checksum
  */
 
-#ifdef __STDC__
 static u_long
 tar_chksm(register char *blk, register int len)
-#else
-static u_long
-tar_chksm(blk, len)
-	register char *blk;
-	register int len;
-#endif
 {
 	register char *stop;
 	register char *pt;
@@ -348,15 +305,8 @@ tar_chksm(blk, len)
  *	0 if a tar header, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 tar_id(register char *blk, int size)
-#else
-int
-tar_id(blk, size)
-	register char *blk;
-	int size;
-#endif
 {
 	register HD_TAR *hd;
 	register HD_USTAR *uhd;
@@ -389,13 +339,8 @@ tar_id(blk, size)
  *	0 if ok -1 otherwise
  */
 
-#ifdef __STDC__
 int
 tar_opt(void)
-#else
-int
-tar_opt()
-#endif
 {
 	OPLIST *opt;
 
@@ -431,15 +376,8 @@ tar_opt()
  *	0
  */
 
-#ifdef __STDC__
 int
 tar_rd(register ARCHD *arcn, register char *buf)
-#else
-int
-tar_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
-#endif
 {
 	register HD_TAR *hd;
 	register char *pt;
@@ -565,14 +503,8 @@ tar_rd(arcn, buf)
  *	data to write after the header, -1 if archive write failed
  */
 
-#ifdef __STDC__
 int
 tar_wr(register ARCHD *arcn)
-#else
-int
-tar_wr(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register HD_TAR *hd;
 	int len;
@@ -728,13 +660,8 @@ tar_wr(arcn)
  *	0 if ok, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 ustar_strd(void)
-#else
-int
-ustar_strd()
-#endif
 {
 	if ((usrtb_start() < 0) || (grptb_start() < 0))
 		return(-1);
@@ -748,13 +675,8 @@ ustar_strd()
  *	0 if ok, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 ustar_stwr(void)
-#else
-int
-ustar_stwr()
-#endif
 {
 	if ((uidtb_start() < 0) || (gidtb_start() < 0))
 		return(-1);
@@ -769,15 +691,8 @@ ustar_stwr()
  *	0 if a ustar header, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 ustar_id(char *blk, int size)
-#else
-int
-ustar_id(blk, size)
-	char *blk;
-	int size;
-#endif
 {
 	register HD_USTAR *hd;
 
@@ -808,15 +723,8 @@ ustar_id(blk, size)
  *	0
  */
 
-#ifdef __STDC__
 int
 ustar_rd(register ARCHD *arcn, register char *buf)
-#else
-int
-ustar_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
-#endif
 {
 	register HD_USTAR *hd;
 	register char *dest;
@@ -969,14 +877,8 @@ ustar_rd(arcn, buf)
  *	data to write after the header, -1 if archive write failed
  */
 
-#ifdef __STDC__
 int
 ustar_wr(register ARCHD *arcn)
-#else
-int
-ustar_wr(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register HD_USTAR *hd;
 	register char *pt;
@@ -1147,15 +1049,8 @@ ustar_wr(arcn)
  *	the file name is too long
  */
 
-#ifdef __STDC__
 static char *
 name_split(register char *name, register int len)
-#else
-static char *
-name_split(name, len)
-	register char *name;
-	register int len;
-#endif
 {
 	register char *start;
 

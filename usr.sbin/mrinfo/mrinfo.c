@@ -87,11 +87,7 @@ static char rcsid[] =
 #include <sys/time.h>
 #include "defs.h"
 #include <arpa/inet.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #define DEFAULT_TIMEOUT	4	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to ask each router */
@@ -140,26 +136,12 @@ inet_name(addr)
  * message and the current debug level.  For errors of severity LOG_ERR or
  * worse, terminate the program.
  */
-#ifdef __STDC__
 void
 log(int severity, int syserr, char *format, ...)
 {
 	va_list ap;
 	char    fmt[100];
 
-	va_start(ap, format);
-#else
-void 
-log(severity, syserr, format, va_alist)
-	int     severity, syserr;
-	char   *format;
-	va_dcl
-{
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap);
-#endif
 	switch (debug) {
 	case 0:
 		if (severity > LOG_WARNING)
@@ -175,6 +157,7 @@ log(severity, syserr, format, va_alist)
 		if (severity == LOG_WARNING)
 			strcat(fmt, "warning - ");
 		strncat(fmt, format, 80);
+		va_start(ap, format);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
 		if (syserr == 0)

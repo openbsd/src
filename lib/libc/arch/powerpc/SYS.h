@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.10 2001/09/20 21:13:27 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.11 2002/02/19 19:39:36 millert Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -44,19 +44,12 @@
 
 #include "machine/asm.h"
 
-#ifdef __STDC__
 #define _CONCAT(x,y)	x##y
 #define PSEUDO_PREFIX(p,x,y)	.extern cerror ; \
 			ENTRY(p##x) \
 				li 0, SYS_##y ; \
 				/* sc */
-#else /* !__STDC__ */
-#define _CONCAT(x,y)	x/**/y
-#define PSEUDO_PREFIX(p,x,y)	.extern cerror ; \
-			ENTRY(p/**/x) \
-				li 0, SYS_/**/y ; \
-				/* sc */
-#endif /* !__STDC__ */
+
 #define PSEUDO_SUFFIX		cmpwi 0, 0 ; \
 				beqlr+ ; \
 				b PIC_PLT(_ASM_LABEL(cerror))

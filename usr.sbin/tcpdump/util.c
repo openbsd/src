@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2001/11/06 03:11:40 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.14 2001/11/06 03:11:40 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.15 2002/02/19 19:39:40 millert Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -38,11 +38,7 @@ static const char rcsid[] =
 #endif
 #include <pcap.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #ifdef TIME_WITH_SYS_TIME
@@ -200,22 +196,12 @@ tok2str(register const struct tok *lp, register const char *fmt,
 
 /* VARARGS */
 __dead void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
 	(void)fprintf(stderr, "%s: ", program_name);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (*fmt) {
@@ -229,22 +215,12 @@ error(fmt, va_alist)
 
 /* VARARGS */
 void
-#ifdef __STDC__
 warning(const char *fmt, ...)
-#else
-warning(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
 	(void)fprintf(stderr, "%s: WARNING: ", program_name);
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (*fmt) {

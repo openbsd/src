@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.12 2001/08/15 19:39:09 stevesk Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.13 2002/02/19 19:39:40 millert Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.12 2001/08/15 19:39:09 stevesk Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.13 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif				/* lint */
 
@@ -61,11 +61,7 @@ static char rcsid[] = "$OpenBSD: rdate.c,v 1.12 2001/08/15 19:39:09 stevesk Exp 
 #include <time.h>
 
 /* seconds from midnight Jan 1900 - 1970 */
-#ifdef __STDC__
 #define DIFFERENCE 2208988800UL
-#else
-#define DIFFERENCE 2208988800
-#endif
 
 extern char    *__progname;
 

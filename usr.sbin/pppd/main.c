@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.33 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.34 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif
 
@@ -1299,21 +1299,13 @@ format_packet(p, len, printer, arg)
 }
 
 static void
-pr_log __V((void *arg, char *fmt, ...))
+pr_log(void *arg, char *fmt, ...)
 {
     int n;
     va_list pvar;
     char buf[256];
 
-#ifdef __STDC__
     va_start(pvar, fmt);
-#else
-    void *arg;
-    char *fmt;
-    va_start(pvar);
-    arg = va_arg(pvar, void *);
-    fmt = va_arg(pvar, char *);
-#endif
 
     n = vfmtmsg(buf, sizeof(buf), fmt, pvar);
     va_end(pvar);
@@ -1384,22 +1376,12 @@ novm(msg)
  * Returns the number of chars put into buf.
  */
 int
-fmtmsg __V((char *buf, int buflen, char *fmt, ...))
+fmtmsg(char *buf, int buflen, char *fmt, ...)
 {
     va_list args;
     int n;
 
-#ifdef __STDC__
     va_start(args, fmt);
-#else
-    char *buf;
-    int buflen;
-    char *fmt;
-    va_start(args);
-    buf = va_arg(args, char *);
-    buflen = va_arg(args, int);
-    fmt = va_arg(args, char *);
-#endif
     n = vfmtmsg(buf, buflen, fmt, args);
     va_end(args);
     return n;

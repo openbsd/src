@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.15 2002/02/18 00:07:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.16 2002/02/19 19:39:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,12 +49,7 @@ static char rcsid[] = "$OpenBSD: syslog.c,v 1.15 2002/02/18 00:07:56 millert Exp
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 static struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -70,22 +65,11 @@ static void	connectlog_r(struct syslog_data *);
  *	print message on log file; output is intended for syslogd(8).
  */
 void
-#ifdef __STDC__
 syslog(int pri, const char *fmt, ...)
-#else
-syslog(pri, fmt, va_alist)
-	int pri;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsyslog(pri, fmt, ap);
 	va_end(ap);
 }
@@ -136,23 +120,11 @@ setlogmask(pmask)
 /* Reentrant version of syslog, i.e. syslog_r() */
 
 void
-#ifdef __STDC__
 syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
-#else
-syslog_r(pri, data, fmt, va_alist)
-	int pri;
-	struct syslog_data *data;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsyslog_r(pri, data, fmt, ap);
 	va_end(ap);
 }

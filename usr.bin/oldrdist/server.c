@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.16 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.17 2002/02/19 19:39:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,10 +35,11 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.16 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.17 2002/02/19 19:39:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
+#include <stdarg.h>
 #include "defs.h"
 
 #define	ack() 	(void) write(rem, "\0\n", 2)
@@ -1432,28 +1433,12 @@ dospecial(cmd)
 		ack();
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 log(FILE *fp, const char *fmt, ...)
-#else
-log(fp, fmt, va_alist)
-	FILE *fp;
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	/* Print changes locally if not quiet mode */
 	if (!qflag)
 		(void) vprintf(fmt, ap);
@@ -1465,22 +1450,12 @@ log(fp, fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static FILE *fp;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
+	va_start(ap, fmt);
 	++nerrs;
 	if (iamremote) {
 		if (!fp && (rem < 0 || !(fp = fdopen(rem, "w"))))
@@ -1504,22 +1479,12 @@ error(fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 fatal(const char *fmt, ...)
-#else
-fatal(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static FILE *fp;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
+	va_start(ap, fmt);
 	++nerrs;
 	if (!fp && !(fp = fdopen(rem, "w")))
 		return;
@@ -1603,21 +1568,12 @@ cleanup(signo)
 }
 
 static void
-#ifdef __STDC__
 note(const char *fmt, ...)
-#else
-note(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static char buf[BUFSIZ];
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void) vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	comment(buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.14 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.15 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.14 2002/02/17 19:42:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.15 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,14 +63,10 @@ static char rcsid[] = "$OpenBSD: tape.c,v 1.14 2002/02/17 19:42:27 millert Exp $
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#else
-int	write(), read();
-#endif
 
 #include "dump.h"
 #include "pathnames.h"

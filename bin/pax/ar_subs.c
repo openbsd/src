@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.17 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.18 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.17 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.18 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,13 +79,8 @@ u_long flcnt;				/* number of files processed */
  *	(no pattern matches all).
  */
 
-#ifdef __STDC__
 void
 list(void)
-#else
-void
-list()
-#endif
 {
 	register ARCHD *arcn;
 	register int res;
@@ -161,13 +156,8 @@ list()
  *	pattern(s) (no patterns extracts all members)
  */
 
-#ifdef __STDC__
 void
 extract(void)
-#else
-void
-extract()
-#endif
 {
 	register ARCHD *arcn;
 	register int res;
@@ -372,15 +362,8 @@ extract()
  *	previously written archive.
  */
 
-#ifdef __STDC__
 static void
 wr_archive(register ARCHD *arcn, int is_app)
-#else
-static void
-wr_archive(arcn, is_app)
-	register ARCHD *arcn;
-	int is_app;
-#endif
 {
 	register int res;
 	register int hlk;
@@ -582,13 +565,8 @@ wr_archive(arcn, is_app)
  *	over write existing files that it creates.
  */
 
-#ifdef __STDC__
 void
 append(void)
-#else
-void
-append()
-#endif
 {
 	register ARCHD *arcn;
 	register int res;
@@ -723,13 +701,8 @@ append()
  *	write a new archive
  */
 
-#ifdef __STDC__
 void
 archive(void)
-#else
-void
-archive()
-#endif
 {
 	ARCHD archd;
 
@@ -754,13 +727,8 @@ archive()
  *	(except the files are forced to be under the destination directory).
  */
 
-#ifdef __STDC__
 void
 copy(void)
-#else
-void
-copy()
-#endif
 {
 	register ARCHD *arcn;
 	register int res;
@@ -1006,14 +974,8 @@ copy()
  *	the specs for rd_wrbuf() for more details)
  */
 
-#ifdef __STDC__
 static int
 next_head(register ARCHD *arcn)
-#else
-static int
-next_head(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register int ret;
 	register char *hdend;
@@ -1164,13 +1126,8 @@ next_head(arcn)
  *	0 if archive found -1 otherwise
  */
 
-#ifdef __STDC__
 static int
 get_arc(void)
-#else
-static int
-get_arc()
-#endif
 {
 	register int i;
 	register int hdsz = 0;

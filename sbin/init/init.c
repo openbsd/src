@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.24 2002/02/16 21:27:35 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.25 2002/02/19 19:39:38 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.24 2002/02/16 21:27:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.25 2002/02/19 19:39:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.24 2002/02/16 21:27:35 millert Exp $
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,12 +69,6 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.24 2002/02/16 21:27:35 millert Exp $
 #include <ttyent.h>
 #include <unistd.h>
 #include <util.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef SECURE
 #include <pwd.h>
@@ -289,25 +284,14 @@ main(argc, argv)
  * Associate a function with a signal handler.
  */
 void
-#ifdef __STDC__
 handle(sig_t handler, ...)
-#else
-handle(va_alist)
-	va_dcl
-#endif
 {
 	int sig;
 	struct sigaction sa;
 	sigset_t mask_everything;
 	va_list ap;
-#ifndef __STDC__
-	sig_t handler;
 
-	va_start(ap);
-	handler = va_arg(ap, sig_t);
-#else
 	va_start(ap, handler);
-#endif
 
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = handler;
@@ -326,24 +310,12 @@ handle(va_alist)
  * Delete a set of signals from a mask.
  */
 void
-#ifdef __STDC__
 delset(sigset_t *maskp, ...)
-#else
-delset(va_alist)
-	va_dcl
-#endif
 {
 	int sig;
 	va_list ap;
-#ifndef __STDC__
-	sigset_t *maskp;
 
-	va_start(ap);
-	maskp = va_arg(ap, sigset_t *);
-#else
 	va_start(ap, maskp);
-#endif
-
 	while ((sig = va_arg(ap, int)))
 		sigdelset(maskp, sig);
 	va_end(ap);
@@ -355,23 +327,11 @@ delset(va_alist)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-#ifdef __STDC__
 stall(char *message, ...)
-#else
-stall(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *message;
 
-	va_start(ap);
-	message = va_arg(ap, char *);
-#else
 	va_start(ap, message);
-#endif
-
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
@@ -384,23 +344,11 @@ stall(va_alist)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-#ifdef __STDC__
 warning(char *message, ...)
-#else
-warning(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *message;
 
-	va_start(ap);
-	message = va_arg(ap, char *);
-#else
 	va_start(ap, message);
-#endif
-
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
@@ -411,23 +359,11 @@ warning(va_alist)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-#ifdef __STDC__
 emergency(char *message, ...)
-#else
-emergency(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *message;
 
-	va_start(ap);
-	message = va_arg(ap, char *);
-#else
 	va_start(ap, message);
-#endif
-
 	vsyslog(LOG_EMERG, message, ap);
 	va_end(ap);
 	closelog();
@@ -879,12 +815,7 @@ del_session(sp)
  * Look up a login session by pid.
  */
 session_t *
-#ifdef __STDC__
 find_session(pid_t pid)
-#else
-find_session(pid)
-	pid_t pid;
-#endif
 {
 	DBT key;
 	DBT data;
@@ -1180,12 +1111,7 @@ start_getty(sp)
  * If an exiting login, start a new login running.
  */
 void
-#ifdef __STDC__
 collect_child(pid_t pid)
-#else
-collect_child(pid)
-	pid_t pid;
-#endif
 {
 	session_t *sp, *sprev, *snext;
 

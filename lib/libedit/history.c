@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.6 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.7 2002/02/19 19:39:37 millert Exp $	*/
 /*	$NetBSD: history.c,v 1.5 1997/04/11 17:52:46 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: history.c,v 1.6 2002/02/16 21:27:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: history.c,v 1.7 2002/02/19 19:39:37 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,11 +52,7 @@ static char rcsid[] = "$OpenBSD: history.c,v 1.6 2002/02/16 21:27:26 millert Exp
 
 #include <string.h>
 #include <stdlib.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 static const char hist_cookie[] = "_HiStOrY_V1_\n";
 
@@ -575,27 +571,14 @@ history_next_string(h, str)
  *	User interface to history functions.
  */
 const HistEvent *
-#ifdef __STDC__
 history(History *h, int fun, ...)
-#else
-history(va_alist)
-    va_dcl
-#endif
 {
     va_list va;
     const HistEvent *ev = NULL;
     const char *str;
     static HistEvent sev = { 0, "" };
 
-#ifdef __STDC__
     va_start(va, fun);
-#else
-    History *h; 
-    int fun;
-    va_start(va);
-    h = va_arg(va, History *);
-    fun = va_arg(va, int);
-#endif
 
     switch (fun) {
     case H_ADD:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2002/02/19 19:39:40 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
 
 /*
@@ -45,16 +45,12 @@
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
  */
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include <sys/types.h>
 #include "config.h"
 
 static void nomem(void);
@@ -172,22 +168,12 @@ nvfreel(nv)
  * and line number.
  */
 void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	extern const char *yyfile;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vxerror(yyfile, currentline(), fmt, ap);
 	va_end(ap);
 }
@@ -197,23 +183,11 @@ error(fmt, va_alist)
  * find out about it until later).
  */
 void
-#ifdef __STDC__
 xerror(const char *file, int line, const char *fmt, ...)
-#else
-xerror(file, line, fmt, va_alist)
-	const char *file;
-	int line;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vxerror(file, line, fmt, ap);
 	va_end(ap);
 }
@@ -239,21 +213,11 @@ vxerror(file, line, fmt, ap)
  * Internal error, abort.
  */
 __dead void
-#ifdef __STDC__
 panic(const char *fmt, ...)
-#else
-panic(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "config: panic: ");
 	(void)vfprintf(stderr, fmt, ap);
 	(void)putc('\n', stderr);

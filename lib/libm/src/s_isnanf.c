@@ -25,12 +25,8 @@ static char rcsid[] = "$NetBSD: s_isnanf.c,v 1.4 1995/05/10 20:47:38 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int isnanf(float x)
-#else
-	int isnanf(x)
-	float x;
-#endif
+int
+isnanf(float x)
 {
 	int32_t ix;
 	GET_FLOAT_WORD(ix,x);

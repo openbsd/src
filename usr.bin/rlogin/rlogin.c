@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.29 2002/02/17 19:42:31 millert Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.30 2002/02/19 19:39:39 millert Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.29 2002/02/17 19:42:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.30 2002/02/19 19:39:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,12 +73,7 @@ static char rcsid[] = "$OpenBSD: rlogin.c,v 1.29 2002/02/17 19:42:31 millert Exp
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef KERBEROS
 #include <des.h>
@@ -604,12 +599,7 @@ writer()
 }
 
 void
-#ifdef __STDC__
 echo(char c)
-#else
-echo(c)
-	char c;
-#endif
 {
 	char *p;
 	char buf[8];
@@ -890,13 +880,7 @@ msg(str)
 #ifdef KERBEROS
 /* VARARGS */
 void
-#ifdef __STDC__
 warning(const char *fmt, ...)
-#else
-warning(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	char myrealm[REALM_SZ];
 	va_list ap;
@@ -904,11 +888,7 @@ warning(fmt, va_alist)
 	if (krb_get_lrealm(myrealm, 0) != KSUCCESS)
 		return;
 	(void)fprintf(stderr, "rlogin: warning, using standard rlogin: ");
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, ".\n");

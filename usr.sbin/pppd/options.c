@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.15 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.16 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.15 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.16 2002/02/19 19:39:40 millert Exp $";
 #endif
 #endif
 
@@ -722,18 +722,12 @@ options_for_tty()
  * stderr if phase == PHASE_INITIALIZE.
  */
 void
-option_error __V((char *fmt, ...))
+option_error(char *fmt, ...)
 {
     va_list args;
     char buf[256];
 
-#ifdef __STDC__
     va_start(args, fmt);
-#else
-    char *fmt;
-    va_start(args);
-    fmt = va_arg(args, char *);
-#endif
     vfmtmsg(buf, sizeof(buf), fmt, args);
     va_end(args);
     if (phase == PHASE_INITIALIZE)

@@ -24,12 +24,8 @@ static char rcsid[] = "$NetBSD: w_coshf.c,v 1.3 1995/05/10 20:48:49 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float coshf(float x)		/* wrapper coshf */
-#else
-	float coshf(x)			/* wrapper coshf */
-	float x;
-#endif
+float
+coshf(float x)		/* wrapper coshf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_coshf(x);

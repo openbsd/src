@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.9 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.10 2002/02/19 19:39:35 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.9 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.10 2002/02/19 19:39:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,14 +81,8 @@ static GRPT **grptb = NULL;		/* group selection table */
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#ifdef __STDC__
 int
 sel_chk(register ARCHD *arcn)
-#else
-int
-sel_chk(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	if (((usrtb != NULL) && usr_match(arcn)) ||
 	    ((grptb != NULL) && grp_match(arcn)) ||
@@ -112,14 +106,8 @@ sel_chk(arcn)
  *	0 if added ok, -1 otherwise;
  */
 
-#ifdef __STDC__
 int
 usr_add(register char *str)
-#else
-int
-usr_add(str)
-	register char *str;
-#endif
 {
 	register u_int indx;
 	register USRT *pt;
@@ -187,14 +175,8 @@ usr_add(str)
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#ifdef __STDC__
 static int
 usr_match(register ARCHD *arcn)
-#else
-static int
-usr_match(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register USRT *pt;
 
@@ -221,14 +203,8 @@ usr_match(arcn)
  *	0 if added ok, -1 otherwise;
  */
 
-#ifdef __STDC__
 int
 grp_add(register char *str)
-#else
-int
-grp_add(str)
-	register char *str;
-#endif
 {
 	register u_int indx;
 	register GRPT *pt;
@@ -296,14 +272,8 @@ grp_add(str)
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#ifdef __STDC__
 static int
 grp_match(register ARCHD *arcn)
-#else
-static int
-grp_match(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register GRPT *pt;
 
@@ -352,14 +322,8 @@ grp_match(arcn)
  *	0 if the time range was added to the list, -1 otherwise
  */
 
-#ifdef __STDC__
 int
 trng_add(register char *str)
-#else
-int
-trng_add(str)
-	register char *str;
-#endif
 {
 	register TIME_RNG *pt;
 	register char *up_pt = NULL;
@@ -498,14 +462,8 @@ trng_add(str)
  *	0 if this archive member should be processed, 1 if it should be skipped
  */
 
-#ifdef __STDC__
 static int
 trng_match(register ARCHD *arcn)
-#else
-static int
-trng_match(arcn)
-	register ARCHD *arcn;
-#endif
 {
 	register TIME_RNG *pt;
 
@@ -573,15 +531,8 @@ trng_match(arcn)
  *	0 if converted ok, -1 otherwise
  */
 
-#ifdef __STDC__
 static int
 str_sec(register char *str, time_t *tval)
-#else
-static int
-str_sec(str, tval)
-	register char *str;
-	time_t *tval;
-#endif
 {
 	register struct tm *lt;
 	register char *dot = NULL;

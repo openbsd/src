@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.28 2002/02/17 19:42:25 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.29 2002/02/19 19:39:37 millert Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.28 2002/02/17 19:42:25 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.29 2002/02/19 19:39:37 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,6 +69,7 @@ static char *rcsid = "$OpenBSD: kvm.c,v 1.28 2002/02/17 19:42:25 millert Exp $";
 #include <string.h>
 #include <unistd.h>
 #include <kvm.h>
+#include <stdarg.h>
 
 #include "kvm_private.h"
 
@@ -85,28 +86,13 @@ kvm_geterr(kd)
 	return (kd->errbuf);
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 /*
  * Wrapper around pread.
  */
 ssize_t
-#ifdef	__STDC__
 _kvm_pread(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
-#else
-_kvm_pread(kd, fd, buf, nbytes, offset)
-	kvm_t *kd;
-	int fd;
-	void *buf;
-	size_t nbytes;
-	off_t offset;
-#endif
 {
-ssize_t rval;
+	ssize_t rval;
 
 	errno = 0;
 	rval = pread(fd, buf, nbytes, offset);
@@ -120,18 +106,9 @@ ssize_t rval;
  * Wrapper around pwrite.
  */
 ssize_t
-#ifdef	__STDC__
 _kvm_pwrite(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
-#else
-_kvm_pwrite(kd, fd, buf, nbytes, offset)
-	kvm_t *kd;
-	int fd;
-	void *buf;
-	size_t nbytes;
-	off_t offset;
-#endif
 {
-ssize_t rval;
+	ssize_t rval;
 
 	errno = 0;
 	rval = pwrite(fd, buf, nbytes, offset);
@@ -148,22 +125,11 @@ ssize_t rval;
  * generate tons of error messages when trying to access bogus pointers).
  */
 void
-#ifdef __STDC__
 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...)
-#else
-_kvm_err(kd, program, fmt, va_alist)
-	kvm_t *kd;
-	char *program, *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (program != NULL) {
 		(void)fprintf(stderr, "%s: ", program);
 		(void)vfprintf(stderr, fmt, ap);
@@ -176,23 +142,12 @@ _kvm_err(kd, program, fmt, va_alist)
 }
 
 void
-#ifdef __STDC__
 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
-#else
-_kvm_syserr(kd, program, fmt, va_alist)
-	kvm_t *kd;
-	char *program, *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	register int n;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (program != NULL) {
 		(void)fprintf(stderr, "%s: ", program);
 		(void)vfprintf(stderr, fmt, ap);

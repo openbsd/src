@@ -32,21 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sethostname.c,v 1.4 1998/05/13 08:51:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sethostname.c,v 1.5 2002/02/19 19:39:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
-#ifdef __STDC__
 int
 sethostname(const char *name, size_t namelen)
-#else
-int
-sethostname(name, namelen)
-	char *name;
-	size_t namelen;
-#endif
 {
 	int mib[2];
 

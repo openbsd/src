@@ -21,17 +21,11 @@ static char rcsid[] = "$NetBSD: w_asinf.c,v 1.3 1995/05/10 20:48:37 jtc Exp $";
  * wrapper asinf(x)
  */
 
-
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float asinf(float x)		/* wrapper asinf */
-#else
-	float asinf(x)			/* wrapper asinf */
-	float x;
-#endif
+float
+asinf(float x)		/* wrapper asinf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_asinf(x);

@@ -24,13 +24,8 @@ static char rcsid[] = "$NetBSD: w_atan2f.c,v 1.3 1995/05/10 20:48:42 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-
-#ifdef __STDC__
-	float atan2f(float y, float x)		/* wrapper atan2f */
-#else
-	float atan2f(y,x)			/* wrapper atan2 */
-	float y,x;
-#endif
+float
+atan2f(float y, float x)		/* wrapper atan2f */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_atan2f(y,x);

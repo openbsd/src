@@ -20,11 +20,7 @@
 
 
 #include "defs.h"
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <fcntl.h>
 #include <util.h>
 
@@ -34,7 +30,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.8 2002/02/16 21:28:05 millert Exp $";
+	"@(#) $Id: main.c,v 1.9 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 extern char *configfilename;
@@ -259,14 +255,12 @@ usage:	fprintf(stderr,
     rsrr_init();
 #endif /* RSRR */
 
-#if defined(__STDC__) || defined(__GNUC__)
     /*
      * Allow cleanup if unexpected exit.  Apparently some architectures
      * have a kernel bug where closing the socket doesn't do an
      * ip_mrouter_done(), so we attempt to do it on exit.
      */
     atexit(cleanup);
-#endif
 
     if (debug)
 	fprintf(stderr, "pruning %s\n", pruning ? "on" : "off");
@@ -638,7 +632,6 @@ resetlogging(arg)
  * according to the severity of the message and the current debug level.
  * For errors of severity LOG_ERR or worse, terminate the program.
  */
-#ifdef __STDC__
 void
 log(int severity, int syserr, char *format, ...)
 {
@@ -651,24 +644,6 @@ log(int severity, int syserr, char *format, ...)
     time_t t;
 
     va_start(ap, format);
-#else
-/*VARARGS3*/
-void
-log(severity, syserr, format, va_alist)
-    int severity, syserr;
-    char *format;
-    va_dcl
-{
-    va_list ap;
-    static char fmt[211] = "warning - ";
-    char *msg;
-    char tbuf[20];
-    struct timeval now;
-    struct tm *thyme;
-    time_t t;
-
-    va_start(ap);
-#endif
     vsprintf(&fmt[10], format, ap);
     va_end(ap);
     msg = (severity == LOG_WARNING) ? fmt : &fmt[10];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipx.c,v 1.8 2001/11/06 03:11:40 deraadt Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.9 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.8 2001/11/06 03:11:40 deraadt Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.9 2002/02/19 19:39:40 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -41,10 +41,8 @@ static const char rcsid[] =
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 
-#ifdef __STDC__
-#include <stdlib.h>
-#endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "interface.h"

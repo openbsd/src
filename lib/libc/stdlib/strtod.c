@@ -90,7 +90,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.14 2001/07/09 06:57:45 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.15 2002/02/19 19:39:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -153,7 +153,6 @@ extern void *MALLOC(size_t);
 #include "errno.h"
 
 #ifdef Bad_float_h
-#undef __STDC__
 #ifdef IEEE_BIG_ENDIAN
 #define IEEE_ARITHMETIC
 #endif
@@ -1429,7 +1428,7 @@ strtod
 			if (e1 > DBL_MAX_10_EXP) {
  ovfl:
 				errno = ERANGE;
-#ifdef __STDC__
+#ifndef Bad_float_h
 				value(rv) = HUGE_VAL;
 #else
 				/* Can't trust HUGE_VAL */

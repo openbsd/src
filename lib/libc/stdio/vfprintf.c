@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.16 2002/02/17 19:42:24 millert Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.17 2002/02/19 19:39:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -50,12 +50,7 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.16 2002/02/17 19:42:24 millert Ex
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "local.h"
 #include "fvwrite.h"

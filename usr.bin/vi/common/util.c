@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2002/02/19 19:39:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -192,11 +192,7 @@ nget_slong(valp, p, endp, base)
 }
 
 #ifdef DEBUG
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 /*
  * TRACE --
@@ -205,25 +201,14 @@ nget_slong(valp, p, endp, base)
  * PUBLIC: void TRACE(SCR *, const char *, ...);
  */
 void
-#ifdef __STDC__
 TRACE(SCR *sp, const char *fmt, ...)
-#else
-TRACE(sp, fmt, va_alist)
-	SCR *sp;
-	char *fmt;
-	va_dcl
-#endif
 {
 	FILE *tfp;
 	va_list ap;
 
 	if ((tfp = sp->gp->tracefp) == NULL)
 		return;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vfprintf(tfp, fmt, ap);
 	va_end(ap);
 

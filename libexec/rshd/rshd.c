@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.41 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.42 2002/02/19 19:39:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.41 2002/02/16 21:27:31 millert Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.42 2002/02/19 19:39:38 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -75,6 +75,7 @@ static char *rcsid = "$OpenBSD: rshd.c,v 1.41 2002/02/16 21:27:31 millert Exp $"
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <login_cap.h>
 #include <bsd_auth.h>
 
@@ -761,29 +762,14 @@ fail:
  * connected to client, or older clients will hang waiting for that
  * connection first.
  */
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int len;
 	char *bp, buf[BUFSIZ];
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	bp = buf;
 	if (sent_null == 0) {
 		*bp++ = 1;

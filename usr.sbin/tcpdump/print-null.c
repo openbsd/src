@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.15 2002/01/23 23:32:20 mickey Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.16 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.15 2002/01/23 23:32:20 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.16 2002/02/19 19:39:40 millert Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -32,10 +32,8 @@ static const char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-#ifdef __STDC__
 struct mbuf;
 struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

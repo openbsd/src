@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.30 2002/01/23 23:32:20 mickey Exp $	*/
+/*	$OpenBSD: interface.h,v 1.31 2002/02/19 19:39:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.30 2002/01/23 23:32:20 mickey Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.31 2002/02/19 19:39:40 millert Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -136,10 +136,8 @@ extern const u_char *snapend;
 /* Bail if "var" was not captured */
 #define TCHECK(var) TCHECK2(var, sizeof(var))
 
-#ifdef __STDC__
 struct timeval;
 struct bpf_timeval;
-#endif
 
 extern void ts_print(const struct bpf_timeval *);
 
@@ -153,11 +151,9 @@ extern void safeputchar(int);
 
 extern void wrapup(int);
 
-#ifdef __STDC__
 extern __dead void error(const char *, ...)
     __attribute__((volatile, format (printf, 1, 2)));
 extern void warning(const char *, ...) __attribute__ ((format (printf, 1, 2)));
-#endif
 
 extern char *read_infile(char *);
 extern char *copy_argv(char **);
@@ -170,9 +166,7 @@ extern char *dnnum_string(u_short);
 
 /* The printer routines. */
 
-#ifdef __STDC__
 struct pcap_pkthdr;
-#endif
 
 extern int ether_encap_print(u_short, const u_char *, u_int, u_int);
 extern int llc_print(const u_char *, u_int, u_int, const u_char *,

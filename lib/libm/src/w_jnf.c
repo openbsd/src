@@ -20,12 +20,8 @@ static char rcsid[] = "$NetBSD: w_jnf.c,v 1.3 1995/05/10 20:49:21 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float jnf(int n, float x)	/* wrapper jnf */
-#else
-	float jnf(n,x)			/* wrapper jnf */
-	float x; int n;
-#endif
+float
+jnf(int n, float x)	/* wrapper jnf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_jnf(n,x);
@@ -41,12 +37,8 @@ static char rcsid[] = "$NetBSD: w_jnf.c,v 1.3 1995/05/10 20:49:21 jtc Exp $";
 #endif
 }
 
-#ifdef __STDC__
-	float ynf(int n, float x)	/* wrapper ynf */
-#else
-	float ynf(n,x)			/* wrapper ynf */
-	float x; int n;
-#endif
+float
+ynf(int n, float x)	/* wrapper ynf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_ynf(n,x);

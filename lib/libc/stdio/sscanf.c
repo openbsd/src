@@ -35,16 +35,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sscanf.c,v 1.4 2001/07/09 06:57:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sscanf.c,v 1.5 2002/02/19 19:39:37 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "local.h"
 
 /* ARGSUSED */
@@ -59,14 +55,7 @@ eofread(cookie, buf, len)
 }
 
 int
-#ifdef __STDC__
 sscanf(const char *str, char const *fmt, ...)
-#else
-sscanf(str, fmt, va_alist)
-	const char *str;
-	char *fmt;
-	va_dcl
-#endif
 {
 	int ret;
 	va_list ap;
@@ -78,11 +67,7 @@ sscanf(str, fmt, va_alist)
 	f._read = eofread;
 	f._ub._base = NULL;
 	f._lb._base = NULL;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	ret = __svfscanf(&f, fmt, ap);
 	va_end(ap);
 	return (ret);

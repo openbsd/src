@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: unvis.c,v 1.6 1997/07/25 20:30:05 mickey Exp $";
+static char rcsid[] = "$OpenBSD: unvis.c,v 1.7 2002/02/19 19:39:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,14 +56,7 @@ static char rcsid[] = "$OpenBSD: unvis.c,v 1.6 1997/07/25 20:30:05 mickey Exp $"
  * unvis - decode characters previously encoded by vis
  */
 int
-#ifdef __STDC__
 unvis(char *cp, char c, int *astate, int flag)
-#else
-unvis(cp, c, astate, flag)
-	char *cp;
-	char c;
-	int *astate, flag;
-#endif
 {
 
 	if (flag & UNVIS_END) {

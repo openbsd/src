@@ -47,12 +47,8 @@ static char rcsid[] = "$NetBSD: s_tan.c,v 1.7 1995/05/10 20:48:18 jtc Exp $";
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double tan(double x)
-#else
-	double tan(x)
-	double x;
-#endif
+double
+tan(double x)
 {
 	double y[2],z=0.0;
 	int32_t n, ix;
