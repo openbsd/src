@@ -1,3 +1,4 @@
+/* $OpenBSD: tga_conf.c,v 1.3 2000/10/14 18:04:07 aaron Exp $ */
 /* $NetBSD: tga_conf.c,v 1.4 2000/04/02 18:59:32 nathanw Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/* $OpenBSD: tgareg.h,v 1.3 2000/10/14 18:04:07 aaron Exp $ */
 /* $NetBSD: tgareg.h,v 1.3 2000/03/04 10:28:00 elric Exp $ */
 
 /*
