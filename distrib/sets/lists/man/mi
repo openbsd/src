@@ -286,6 +286,8 @@
 ./usr/share/man/cat1/grops.0
 ./usr/share/man/cat1/grotty.0
 ./usr/share/man/cat1/groups.0
+./usr/share/man/cat1/gspa.0
+./usr/share/man/cat1/gspahextoc.0
 ./usr/share/man/cat1/gunzip.0
 ./usr/share/man/cat1/gzcat.0
 ./usr/share/man/cat1/gzexe.0
@@ -1654,6 +1656,7 @@
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0
 ./usr/share/man/cat8/hp300/format.0
+./usr/share/man/cat8/hp300/hilinfo.0
 ./usr/share/man/cat8/hp300/makedev.0
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/wsconscfg.0
