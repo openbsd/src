@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.27 2000/01/25 22:11:38 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.28 2000/02/10 15:16:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -147,10 +147,11 @@ ENTRY($start)
 
 	/*
 	 * to keep the spl() routines consistent we need to put the correct
-	 * spl level into eiem
+	 * spl level into eiem, and reset any pending interrupts
 	 */
-	ldi	IPL_NONE, r1
-	mtctl	r1, eiem
+	ldi    	-1, r1
+	mtctl	r0, eiem	/* IPL_NONE */
+	mtctl   r1, eirr
 
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
@@ -205,13 +206,6 @@ $start_zero_tf
 	nop
 
 $qisnowon
-	
-	/*
-	 * Initialize the external interrupt request register
-	 */
-	/* ldi    	-1,r1 */
-	mtctl   r0,eirr
-
 	/*
 	 * load address of interrupt vector table
 	 */
