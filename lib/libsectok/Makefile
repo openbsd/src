@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.5 2001/07/02 22:08:29 markus Exp $
+# $OpenBSD: Makefile,v 1.6 2001/07/20 15:51:45 rees Exp $
 
 LIB=	sectok
 SRCS=	atr.c cmdtab.c cyberflex.c input.c r1r2.c sc7816.c sectok.c todos_atr.c \
 	ifdhandler.c scT1.c scio.c scrw.c
-HDRS=	sectok.h sc7816.h
+HDRS=	sectok.h
 
 CFLAGS+=-Wall
 

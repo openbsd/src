@@ -1,4 +1,4 @@
-/* $Id: todos_atr.c,v 1.7 2001/07/17 16:57:41 rees Exp $ */
+/* $Id: todos_atr.c,v 1.8 2001/07/20 15:51:45 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000
@@ -51,6 +51,7 @@ typedef long int32_t;
 #include <sys/types.h>
 #endif
 
+#include "sectok.h"
 #include "sc7816.h"
 #include "todos_scrw.h"
 
@@ -170,7 +171,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
     unsigned char tpb[8][4];
     int hiproto = 0;
 
-    if (flags & SCRFORCE) {
+    if (flags & STRFORCE) {
 	/* drain and ignore any atr bytes returned by the card */
 	while (scgetc(ttyn, atr, BYTETIME) == SCEOK)
 	    ;
@@ -184,7 +185,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
     }
 
 #ifndef DEBUG
-    flags &= ~SCRV;
+    flags &= ~STRV;
 #endif
 
     ap = atr;
@@ -194,13 +195,13 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
     SCGETC;
     ts = *ap++;
     if (ts == 0x3) {
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("inverse conversion\n");
 	todos_scsetflags(ttyn, SCOINVRT, SCOINVRT);
 	ts = todos_scinvert[ts];
     }
     if (ts != 0x3b && ts != 0x3f) {
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("TS=%02x (not default timing)\n", ts);
 	param->t = -1;
 	return 0;
@@ -236,7 +237,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 	if (t > hiproto)
 	    hiproto = t;
 
-	if (flags & SCRV) {
+	if (flags & STRV) {
 	    printf("proto %d T=%d", i + 1, t);
 	    for (pbn = 0; pbn < 4; pbn++)
 		if (t0 & (1 << (4 + pbn)))
@@ -255,7 +256,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 	    SCGETC;
 	    ap++;
 	}
-	if ((flags & SCRV))
+	if ((flags & STRV))
 	    printf("%d historical bytes\n", nhb);
     }
 
@@ -266,7 +267,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 	tck = 0;
 	for (i = 1; i < len; i++)
 	    tck ^= atr[i];
-	if (tck != 0 && (flags & SCRV))
+	if (tck != 0 && (flags & STRV))
 	    printf("Checksum failed, TCK=%x sum=%x\n", atr[len-1], tck);
     }
 
@@ -291,7 +292,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 		pps[2] = (bps[i].Fi << 4) | bps[i].Di;
 		pps[3] = 0;
 
-		if (flags & SCRV)
+		if (flags & STRV)
 		    printf("speed %ld\n", (long) bps[i].bps);
 
 #ifdef SCPPS
@@ -308,7 +309,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 		    continue;
 		if (todos_scsetspeed(ttyn, bps[i].bps) < 0) {
 		    /* We already sent the pps, can't back out now, so fail. */
-		    if (flags & SCRV)
+		    if (flags & STRV)
 			printf("scsetspeed %ld failed\n", (long) bps[i].bps);
 		    param->t = -1;
 		    return len;
@@ -329,7 +330,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
     param->etu = etu = (F * 50L) / (D * 179L);
     param->n = (N < 255) ? N : 0;
 
-    if (flags & SCRV) {
+    if (flags & STRV) {
 	printf("%d etu = %d F / %d D * 3.58 f\n", etu, F, D);
 	if (N)
 	    printf("%d N\n", N);
@@ -340,21 +341,21 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 
 	/* cwt is in milliseconds */
 	param->cwt = (960L * WI * F) / 3580L;
-	if ((flags & SCRV) && WI != 10)
+	if ((flags & STRV) && WI != 10)
 	    printf("%d cwt = (960 * %d WI * %d F) / 3.58 f / 1000\n",
 		   param->cwt, WI, F);
     } else if (t == 1) {
 	/* add 100 to each for engineering safety margin */
 	param->cwt = (11L + (1 << (TB1 & 0xf))) * etu / 1000 + 100;
 	param->bwt = (11L * etu / 1000L) + ((1 << ((TB1 >> 4) & 0xf)) * 100) + 100;
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("%d cwt, %d bwt\n", param->cwt, param->bwt);
     }
     param->t = t;
     return len;
 
  timedout:
-    if (flags & SCRV)
+    if (flags & STRV)
 	printf("timed out after %d atr bytes\n", len);
     param->t = -1;
     return 0;

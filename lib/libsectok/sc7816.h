@@ -1,4 +1,4 @@
-/* $Id: sc7816.h,v 1.1 2001/07/02 20:11:25 rees Exp $ */
+/* $Id: sc7816.h,v 1.2 2001/07/20 15:51:45 rees Exp $ */
 
 /*
 copyright 1997, 2000
@@ -69,12 +69,7 @@ such damages.
 #define SCEUNKNOWN	13
 
 extern char *scerrtab[];
-
-extern struct scparam {
-    int t, etu, cwt, bwt, n;
-} scparam[];
-
-extern unsigned char root_fid[];
+extern struct scparam scparam[];
 
 /* forward declarations */
 
@@ -100,7 +95,6 @@ void scdrain(int fd);
 int scioT1(int fd, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p);
 int scioT1Iblk(int fd, int ilen, unsigned char *ibuf, unsigned char *obuf);
 int scioT1pkt(int fd, unsigned char *ibuf, unsigned char *obuf);
-int parse_atr(int fd, int flags, unsigned char *atr, int len, struct scparam *param);
 int parse_input(char *ibuf, unsigned char *obuf, int olen);
 #ifndef __palmos__
 int get_input(FILE *f, unsigned char *obuf, int omin, int olen);
@@ -109,7 +103,6 @@ int dump_reply(unsigned char *p, int n, int r1, int r2);
 #endif
 void print_r1r2(int r1, int r2);
 char *get_r1r2s(int r1, int r2);
-char *lookup_cmdname(int ins);
 
 /* SCPERF - performance evaluation */
 #ifdef SCPERF

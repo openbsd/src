@@ -1,4 +1,4 @@
-/* $Id: atr.c,v 1.6 2001/07/02 20:07:07 rees Exp $ */
+/* $Id: atr.c,v 1.7 2001/07/20 15:51:45 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000, 2001
@@ -50,7 +50,7 @@ typedef long int32_t;
 #include <sys/types.h>
 #endif
 
-#include "sc7816.h"
+#include "sectok.h"
 
 /* Global interface bytes */
 #define TA1 (tpb[0][0])
@@ -145,7 +145,7 @@ static struct bps {
 
 
 int
-parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *param)
+sectok_parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *param)
 {
     int i, c, t, ts, t0, tck, nhb, pbn;
     int F, D, Fi, Di, N, etu, WI;
@@ -156,7 +156,7 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
     ap = atr;
 
     if (atr[0] == 0x3) {
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("inverse conversion\n");
 	for (i = 0; i < len; i++)
 	    atr[i] = scinvert[atr[i]];
@@ -164,14 +164,14 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
 
     ts = *ap++;
 
-    if (flags & SCRV) {
+    if (flags & STRV) {
 	for (i = 0; i < len; i++)
 	    printf("%d:%x ", i + 1, atr[i]);
 	printf("\n");
     }
 
     if (ts != 0x3b && ts != 0x3f) {
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("TS=%02x (not default timing)\n", ts);
 	param->t = -1;
 	return len;
@@ -202,7 +202,7 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
 	if (t > hiproto)
 	    hiproto = t;
 
-	if (flags & SCRV) {
+	if (flags & STRV) {
 	    printf("proto %d T=%d", i + 1, t);
 	    for (pbn = 0; pbn < 4; pbn++)
 		if (t0 & (1 << (4 + pbn)))
@@ -220,7 +220,7 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
 	ap += nhb;
     }
 
-    if (nhb && (flags & SCRV)) {
+    if (nhb && (flags & STRV)) {
 	printf("%d historical bytes:", nhb);
 	for (i = 0; i < nhb; i++) {
 	    c = hb[i];
@@ -235,23 +235,23 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
     if (hiproto > 0)
 	ap++;
 
-    if (ap - atr < len && (flags & SCRLEN))
+    if (ap - atr < len && (flags & STRLEN))
 	len = ap - atr;
 
     if (hiproto > 0) {
 	tck = 0;
 	for (i = 1; i < len; i++)
 	    tck ^= atr[i];
-	if (tck != 0 && (flags & SCRV))
+	if (tck != 0 && (flags & STRV))
 	    printf("Checksum failed, TCK=%x sum=%x\n", atr[len-1], tck);
     }
 
     /* got enough bytes? */
 
-    if (ap - atr != len && (flags & SCRV))
+    if (ap - atr != len && (flags & STRV))
 	printf("expected %d proto bytes + %d historical bytes, got %d\n", (int) (ap - atr) - nhb, nhb, len);
     if (ap - atr > len) {
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("atr underrun\n");
 	param->t = -1;
 	return len;
@@ -267,16 +267,13 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
     else
 	t = TD1 & 0xf;
 
-    /* Todos reader won't do higher speeds */
-    if (!(flags & SCRTODOS)) {
-	for (i = 0; bps[i].bps; i++) {
-	    if (((TA1 >> 4) & 0xf) >= bps[i].Fi && (TA1 & 0xf) >= bps[i].Di) {
-		if (flags & SCRV)
-		    printf("speed %ld\n", (long) bps[i].bps);
-		Fi = bps[i].Fi;
-		Di = bps[i].Di;
-		break;
-	    }
+    for (i = 0; bps[i].bps; i++) {
+	if (((TA1 >> 4) & 0xf) >= bps[i].Fi && (TA1 & 0xf) >= bps[i].Di) {
+	    if (flags & STRV)
+		printf("speed %ld\n", (long) bps[i].bps);
+	    Fi = bps[i].Fi;
+	    Di = bps[i].Di;
+	    break;
 	}
     }
 
@@ -288,7 +285,7 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
     param->etu = etu = (F * 50L) / (D * 179L);
     param->n = (N < 255) ? N : 0;
 
-    if (flags & SCRV) {
+    if (flags & STRV) {
 	printf("%d etu = %d F / %d D * 3.58 f\n", etu, F, D);
 	if (N)
 	    printf("%d N\n", N);
@@ -299,14 +296,14 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
 
 	/* cwt is in milliseconds */
 	param->cwt = (960L * WI * F) / 3580L;
-	if ((flags & SCRV) && WI != 10)
+	if ((flags & STRV) && WI != 10)
 	    printf("%d cwt = (960 * %d WI * %d F) / 3.58 f / 1000\n",
 		   param->cwt, WI, F);
     } else if (t == 1) {
 	/* add 100 to each for engineering safety margin */
 	param->cwt = (11L + (1 << (TB1 & 0xf))) * etu / 1000 + 100;
 	param->bwt = (11L * etu / 1000L) + ((1 << ((TB1 >> 4) & 0xf)) * 100) + 100;
-	if (flags & SCRV)
+	if (flags & STRV)
 	    printf("%d cwt, %d bwt\n", param->cwt, param->bwt);
     }
     param->t = t;

@@ -1,4 +1,4 @@
-/* $Id: scrw.c,v 1.5 2001/07/02 20:07:09 rees Exp $ */
+/* $Id: scrw.c,v 1.6 2001/07/20 15:51:45 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000
@@ -51,6 +51,7 @@ such damages.
 #ifdef SCPERF
 #define SCPERF_FIRST_APPEARANCE
 #endif /* SCPERF */
+#include "sectok.h"
 #include "sc7816.h"
 #include "todos_scrw.h"
 

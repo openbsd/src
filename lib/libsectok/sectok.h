@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.11 2001/07/02 20:07:09 rees Exp $ */
+/* $Id: sectok.h,v 1.12 2001/07/20 15:51:45 rees Exp $ */
 
 /*
 copyright 2001
@@ -35,6 +35,7 @@ such damages.
 #define STOHUP		0x4	/* send signal on card removal */
 
 /* Reset flags */
+#define STRV		0x1	/* be verbose */
 #define STRLEN		0x2	/* determine length by examing atr */
 #define STRFORCE	0x8	/* Talk to card even if atr is bad */
 
@@ -61,6 +62,10 @@ such damages.
 #define sectok_mksw(r1, r2) (((r1) << 8) | (r2))
 #define sectok_swOK(sw) (sectok_r1(sw) == 0x90 || sectok_r1(sw) == 0x61)
 
+struct scparam {
+    int t, etu, cwt, bwt, n;
+};
+
 extern unsigned char root_fid[];
 
 /* Common card functions */
@@ -75,6 +80,7 @@ int sectok_selectfile(int fd, int cla, unsigned char *fid, int *swp);
 
 /* Convenience functions */
 void sectok_fmt_fid(char *fname, int f0, int f1);
+int sectok_parse_atr(int fd, int flags, unsigned char *atr, int len, struct scparam *param);
 void sectok_parse_fname(char *buf, unsigned char *fid);
 int sectok_parse_input(char *ibuf, unsigned char *obuf, int olen);
 #ifndef __palmos__

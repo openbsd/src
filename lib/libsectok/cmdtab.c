@@ -1,4 +1,4 @@
-/* $Id: cmdtab.c,v 1.3 2001/06/08 15:04:02 rees Exp $ */
+/* $Id: cmdtab.c,v 1.4 2001/07/20 15:51:45 rees Exp $ */
 
 /*
 copyright 1999
@@ -47,7 +47,7 @@ such damages.
 #include <stdio.h>
 #endif
 
-struct cmd {
+static struct cmd {
     int ins, inout;
     char *name;
 } cmdtab[] = {
@@ -115,11 +115,10 @@ struct cmd {
     {0, 0, NULL}
 };
 
-struct cmd *
-lookup_cmd(int ins)
+char *
+sectok_get_ins(int ins)
 {
     struct cmd *p;
-    static struct cmd dummy;
     static char name[32];
 
     for (p = &cmdtab[0]; p->name; p++)
@@ -127,18 +126,9 @@ lookup_cmd(int ins)
 	    break;
 
     if (!p->name) {
-	dummy.ins = ins;
-	dummy.inout = 2;
 	sprintf(name, "unknown ins %02x", ins);
-	dummy.name = name;
-	p = &dummy;
+	return name;
     }
 
-    return p;
-}
-
-char *
-lookup_cmdname(int ins)
-{
-    return lookup_cmd(ins)->name;
+    return p->name;
 }
