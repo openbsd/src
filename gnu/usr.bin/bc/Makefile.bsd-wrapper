@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1998/06/29 13:24:30 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/07/05 07:30:02 downsj Exp $
 
 SUBDIR=bcwrap
 
@@ -25,10 +25,12 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	CFLAGS="${CFLAGS}" \
 	sh ${.CURDIR}/configure --prefix=${PREFIX}/usr --infodir=${PREFIX}/usr/share/info ${CF}
 
 config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	CFLAGS="${CFLAGS}" \
 	sh ${.CURDIR}/configure --prefix=${PREFIX}/usr --infodir=${PREFIX}/usr/share/info ${CF}
 
 .ifdef NOMAN
