@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: aic7xxx.c,v 1.9 1996/08/21 22:27:32 deraadt Exp $
+ *      $Id: aic7xxx.c,v 1.10 1996/10/16 10:25:07 deraadt Exp $
  */
 /*
  * TODO:
@@ -576,6 +576,8 @@ ahc_scsirate(ahc, scsirate, period, offset, channel, target )
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+int	ahcprint __P((void *, char *));
+
 int
 ahcprint(aux, name)
 	void *aux;
@@ -595,7 +597,9 @@ int
 ahc_attach(ahc)
 	struct ahc_data *ahc;
 {
+#if defined(__FreeBSD__)
 	struct scsibus_data *scbus;
+#endif
 
 #ifdef AHC_BROKEN_CACHE
 	if (cpu_class == CPUCLASS_386)	/* doesn't have "wbinvd" instruction */
