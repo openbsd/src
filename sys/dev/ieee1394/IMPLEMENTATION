@@ -1,7 +1,7 @@
-$OpenBSD: IMPLEMENTATION,v 1.1 2002/06/25 17:11:49 itojun Exp $
+$OpenBSD: IMPLEMENTATION,v 1.2 2002/12/13 02:54:18 tdeval Exp $
 $NetBSD: IMPLEMENTATION,v 1.6 2002/02/03 07:29:14 jmc Exp $
 
-At time point in time, there are 3 controller drivers planned:
+At this point in time, there are 3 controller drivers planned:
 
 	fwochi		IEEE 1394 OHCI Controller (PCI & CardBus)
 	fwlynx		TI TSB12LV21 (found B&W G3s)
@@ -22,9 +22,9 @@ fwohci*	at pci? dev ? function ?
 # specific device by specifing its nodeid as its identifier (XXX this
 # is a 64 bit quantity and locators used by config must be 32 bit integers).
 #
-fwnode0 at fwbus? idhi 0x003065ff idlo 0xfedc46c0       
-fwnode1 at fwbus? idhi 0x0060e202 idlo 0x0000157e       
-fwnode2 at fwbus? idhi 0x00110600 idlo 0x00003169          
+fwnode0 at fwbus? idhi 0x003065ff idlo 0xfedc46c0
+fwnode1 at fwbus? idhi 0x0060e202 idlo 0x0000157e
+fwnode2 at fwbus? idhi 0x00110600 idlo 0x00003169
 fwnode* at fwbus? idhi ? idlo ?
 #
 # An ip capable interface can be added to the local bus as a service to offer
@@ -39,16 +39,16 @@ fw* at fwbus?
 # look at values in their children nodes. (updating nodeid's, etc)
 #
 # One of the services that a node might offer is access to SCSI devices via
-# SBP-2.  As decsribed above, this mean a scsibus is a child of fwnode at some
-# point. (Making it a direct child is bad since that drags in the whole scsi
-# code base even if all a person wants is an fwnode and camera support)
+# SBP-2.  As described above, this means a scsibus is a child of fwnode at
+# some point. (Making it a direct child is bad since that drags in the whole
+# scsi code base even if all a person wants is an fwnode and camera support)
 #
 fwscsi* at fwnode?
 scsibus* at fwscsi?
 
-Note that with advent of highly mobile storage devices, the need for 
-signatures or other mechanisms to identity disks indepentend of their
-localtion in the device hierarchy is sorely needed.
+Note that with the advent of highly mobile storage devices, the need for
+signatures or other mechanisms to identify disks independently of their
+location in the device hierarchy is sorely needed.
 
 fwohci0 at pci1 dev 12 function 0: NEC uPD72870 IEEE 1394 OHCI Host Controller (rev. 0x01)
 fwohci0: interrupting at isa irq 15
