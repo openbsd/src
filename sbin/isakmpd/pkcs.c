@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs.c,v 1.6 1999/02/26 03:49:16 niklas Exp $	*/
+/*	$OpenBSD: pkcs.c,v 1.7 1999/03/24 16:13:56 niklas Exp $	*/
 /*	$EOM: pkcs.c,v 1.12 1999/02/25 11:39:18 niklas Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ struct norm_type RSAPrivateKey[] = {
  * Fill in the data field in struct norm_type with the octet data
  * from n.
  */
-
 int
 pkcs_mpz_to_norm_type (struct norm_type *obj, mpz_ptr n)
 {
@@ -87,7 +86,6 @@ pkcs_mpz_to_norm_type (struct norm_type *obj, mpz_ptr n)
  * Given the modulus and the public key, return an BER ASN.1 encoded
  * PKCS#1 compliant RSAPublicKey object.
  */
-
 u_int8_t *
 pkcs_public_key_to_asn (struct rsa_public_key *pub)
 {
@@ -124,7 +122,6 @@ pkcs_public_key_to_asn (struct rsa_public_key *pub)
  * Initalizes and Set's a Public Key Structure from an ASN BER encoded
  * Public Key.
  */
-
 int
 pkcs_public_key_from_asn (struct rsa_public_key *pub, u_int8_t *asn,
 			  u_int32_t len)
@@ -166,7 +163,6 @@ pkcs_free_public_key (struct rsa_public_key *pub)
  * Get ASN.1 representation of PrivateKey.
  * XXX - not sure if we need this.
  */
-
 u_int8_t *
 pkcs_private_key_to_asn (struct rsa_private_key *priv)
 {
@@ -236,7 +232,6 @@ pkcs_private_key_to_asn (struct rsa_private_key *priv)
  * Initalizes and Set's a Private Key Structure from an ASN BER encoded
  * Private Key.
  */
-
 int
 pkcs_private_key_from_asn (struct rsa_private_key *priv, u_int8_t *asn,
 			   u_int32_t len)
@@ -296,8 +291,9 @@ pkcs_free_private_key (struct rsa_private_key *priv)
  * XXX CRIPPLED in the OpenBSD version as RSA is patented in the US.
  */
 int
-pkcs_rsa_encrypt (int art, mpz_ptr n, mpz_ptr e, u_int8_t *data, u_int32_t len,
-		  u_int8_t **out, u_int32_t *outlen)
+pkcs_rsa_encrypt (int art, struct rsa_public_key *pub_key,
+		  struct rsa_private_key *priv_key, u_int8_t *data,
+		  u_int32_t len, u_int8_t **out, u_int32_t *outlen)
 {
   /* XXX Always fail until we interface legal (in the US) RSA code.  */
   return 0;
@@ -309,7 +305,8 @@ pkcs_rsa_encrypt (int art, mpz_ptr n, mpz_ptr e, u_int8_t *data, u_int32_t len,
  * XXX CRIPPLED in the OpenBSD version as RSA is patented in the US.
  */
 int
-pkcs_rsa_decrypt (int art, mpz_ptr n, mpz_ptr d, u_int8_t *in,
+pkcs_rsa_decrypt (int art, struct rsa_public_key *pub_key,
+		  struct rsa_private_key *priv_key, u_int8_t *in,
 		  u_int8_t **out, u_int16_t *outlen)
 {
   /* XXX Always fail until we interface legal (in the US) RSA code.  */
@@ -336,7 +333,6 @@ pkcs_generate_rsa_keypair (struct rsa_public_key *pubk,
 }
 
 /* Generate a random prime with at most bits significant bits */
-
 int
 pkcs_generate_prime (mpz_ptr p, u_int32_t bits)
 {
