@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.51 2004/12/15 12:29:25 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.52 2005/01/27 10:32:29 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,9 +27,7 @@
 #include "ntpd.h"
 
 int	client_update(struct ntp_peer *);
-void	set_next(struct ntp_peer *, time_t);
 void	set_deadline(struct ntp_peer *, time_t);
-time_t	scale_interval(time_t, double);
 
 void
 set_next(struct ntp_peer *p, time_t t)

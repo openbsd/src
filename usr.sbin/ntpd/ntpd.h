@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.48 2004/12/16 00:38:59 dtucker Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.49 2005/01/27 10:32:29 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -237,6 +237,8 @@ int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *, u_int8_t);
+time_t	scale_interval(time_t, double);
+void	set_next(struct ntp_peer *, time_t);
 
 /* util.c */
 double			gettime(void);

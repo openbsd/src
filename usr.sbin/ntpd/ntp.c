@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.46 2004/12/23 16:10:10 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.47 2005/01/27 10:32:29 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -199,16 +199,18 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			if (p->deadline > 0 && p->deadline < nextaction)
 				nextaction = p->deadline;
 			if (p->deadline > 0 && p->deadline <= time(NULL)) {
-				log_debug("no reply from %s received in time",
-				    log_sockaddr(
-				    (struct sockaddr *)&p->addr->ss));
+				timeout = scale_interval(
+				    INTERVAL_QUERY_PATHETIC, 0.0);
+				log_debug("no reply from %s received in time, "
+				    "next query %ds", log_sockaddr(
+				    (struct sockaddr *)&p->addr->ss), timeout);
 				if (p->trustlevel >= TRUSTLEVEL_BADPEER &&
 				    (p->trustlevel /= 2) < TRUSTLEVEL_BADPEER)
 					log_info("peer %s now invalid",
 					    log_sockaddr(
 					    (struct sockaddr *)&p->addr->ss));
 				client_nextaddr(p);
-				client_query(p);
+				set_next(p, timeout);
 			}
 
 			if (p->state == STATE_QUERY_SENT) {
