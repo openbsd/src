@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.9 1997/10/18 00:33:11 weingart Exp $	*/
+/*	$OpenBSD: bios.c,v 1.10 1997/10/19 06:34:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -91,7 +91,6 @@ struct {
 	u_int16_t cs;
 } bios_kentry;
 struct BIOS_vars BIOS_vars;
-bios_diskinfo_t bios_diskinfo[16];		/* XXX - For now */
 
 static __inline int
 bios_call(cmd, arg)

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 1997/10/18 00:33:12 weingart Exp $
+#	$OpenBSD: genassym.cf,v 1.5 1997/10/19 06:34:23 mickey Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -156,11 +156,3 @@ define	IH_ARG		offsetof(struct intrhand, ih_arg)
 define	IH_COUNT	offsetof(struct intrhand, ih_count)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 endif
-
-include "bios.h"
-ifdef NBIOS
-include <machine/biosvar.h>
-define	BOOT_DATA	offsetof(struct BIOS_vars, boot_data)
-define	BOOT_SIZE	sizeof(bios_diskinfo_t)
-endif
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.34 1997/10/18 00:33:13 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.35 1997/10/19 06:34:22 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -157,7 +157,6 @@
 	.globl	_bootapiver,_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
 #if NBIOS > 0
 	.globl	_BIOS_vars
-	.globl	_bios_diskinfo
 #endif
 _cpu:		.long	0	# are we 386, 386sx, 486, 586 or 686
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
@@ -210,16 +209,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	28(%esp), %esi
 	movl	$RELOC(_BIOS_vars), %edi
 	movl	32(%esp), %ecx
-	cld
-	rep;	movsb
-
-	/* Copy bios_diskinfo as well */
-	clc
-	movl	28(%esp), %eax		/* Get boot_data */
-	addl	$BOOT_DATA, %eax
-	movl	(%eax), %esi
-	movl	$RELOC(_bios_diskinfo), %edi
-	movl	$BOOT_SIZE*16, %ecx
 	cld
 	rep;	movsb
 1:
@@ -1575,7 +1564,6 @@ ENTRY(idle)
 	sti
 #if NAPM > 0
 	call	_apm_cpu_idle
-	hlt
 	cmpl	$0,_apm_dobusy
 	je	1f
 	call	_apm_cpu_busy
