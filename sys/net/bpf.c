@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.19 2000/02/19 08:59:04 niklas Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.20 2000/03/23 16:36:36 art Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -378,45 +378,6 @@ bpfclose(dev, flag, mode, p)
 }
 
 /*
- * Support for SunOS, which does not have tsleep.
- */
-#if BSD < 199103
-int
-bpf_timeout(arg)
-	caddr_t arg;
-{
-	struct bpf_d *d = (struct bpf_d *)arg;
-	d->bd_timedout = 1;
-	wakeup(arg);
-}
-
-#define BPF_SLEEP(chan, pri, s, t) bpf_sleep((struct bpf_d *)chan)
-
-int
-bpf_sleep(d)
-	register struct bpf_d *d;
-{
-	register int rto = d->bd_rtout;
-	register int st;
-
-	if (rto != 0) {
-		d->bd_timedout = 0;
-		timeout(bpf_timeout, (caddr_t)d, rto);
-	}
-	st = sleep((caddr_t)d, PRINET|PCATCH);
-	if (rto != 0) {
-		if (d->bd_timedout == 0)
-			untimeout(bpf_timeout, (caddr_t)d);
-		else if (st == 0)
-			return EWOULDBLOCK;
-	}
-	return (st != 0) ? EINTR : 0;
-}
-#else
-#define BPF_SLEEP tsleep
-#endif
-
-/*
  * Rotate the packet buffers in descriptor d.  Move the store buffer
  * into the hold slot, and the free buffer into the store slot.
  * Zero the length of the new store buffer.
@@ -477,7 +438,7 @@ bpfread(dev, uio, ioflag)
 			break;
 		}
 		if ((d->bd_rtout != -1) || (d->bd_rdStart + d->bd_rtout) < ticks) {
-			error = BPF_SLEEP((caddr_t)d, PRINET|PCATCH, "bpf",
+			error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
 			    d->bd_rtout);
 		} else {
 			if (d->bd_rtout == -1) {
