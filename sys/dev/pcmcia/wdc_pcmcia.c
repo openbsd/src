@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.14 2002/03/14 01:27:01 millert Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.15 2005/01/11 22:07:58 drahn Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -372,7 +372,7 @@ wdc_pcmcia_attach(parent, self, aux)
 #else
 	/* Establish the interrupt handler. */
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
-	    &sc->wdc_channel, "");
+	    &sc->wdc_channel, sc->sc_wdcdev.sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf("couldn't establish interrupt handler");
 	}
