@@ -1,4 +1,7 @@
-/*	$OpenBSD: ttydef.h,v 1.4 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: ttydef.h,v 1.5 2002/01/18 08:37:08 art Exp $	*/
+
+#ifndef TTYDEF_H
+#define TTYDEF_H
 
 /*
  *	Terminfo terminal file, nothing special, just make it big
@@ -8,8 +11,6 @@
 #define GOSLING				/* Compile in fancy display.	 */
 /* #define	MEMMAP		      *//* Not memory mapped video.	 */
 
-#define NROW	66			/* (maximum) Rows.		 */
-#define NCOL	132			/* (maximum) Columns.		 */
 /* #define	MOVE_STANDOUT	      *//* don't move in standout mode	 */
 #define STANDOUT_GLITCH			/* possible standout glitch	 */
 #define TERMCAP				/* for possible use in ttyio.c	 */
@@ -24,3 +25,5 @@
 
 #define	KFIRST	K00
 #define	KLAST	K00
+
+#endif /* TTYDEF_H */

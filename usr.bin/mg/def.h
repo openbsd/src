@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.23 2002/01/10 12:13:35 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.24 2002/01/18 08:37:08 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -360,6 +360,7 @@ int	 notmodified		__P((int, int));
 int	 popbuftop		__P((BUFFER *));
 
 /* display.c */
+int	vtresize		__P((int, int, int));
 void	vtinit			__P((void));
 void	vttidy			__P((void));
 void	update			__P((void));

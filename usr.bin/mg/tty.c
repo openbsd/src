@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.10 2002/01/10 12:13:35 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.11 2002/01/18 08:37:08 art Exp $	*/
 
 /*
  * Terminfo display driver
@@ -99,7 +99,7 @@ ttinit()
 		tcinsl = charcost(insert_line);
 	else
 		/* make this cost high enough */
-		tcinsl = NROW * NCOL;
+		tcinsl = nrow * ncol;
 
 	/* Estimate cost of deleting a line */
 	if (change_scroll_region)
@@ -111,7 +111,7 @@ ttinit()
 		tcdell = charcost(delete_line);
 	else
 		/* make this cost high enough */
-		tcdell = NROW * NCOL;
+		tcdell = nrow * ncol;
 
 	/* Flag to indicate that we can both insert and delete lines */
 	insdel = (insert_line || parm_insert_line) &&
@@ -400,33 +400,34 @@ ttcolor(color)
 
 /*
  * This routine is called by the "refresh the screen" command to try
- * to resize the display. The new size, which must not exceed the NROW
- * and NCOL limits, is stored back into "nrow" and * "ncol". Display can
- * always deal with a screen NROW by NCOL. Look in "window.c" to see how
+ * to resize the display. Look in "window.c" to see how
  * the caller deals with a change.
+ *
+ * We use `newrow' and `newcol' so vtresize() know the difference between the
+ * new and old settings.
  */
 void
 ttresize()
 {
+	int newrow = 0, newcol = 0;
+
 #ifdef	TIOCGWINSZ
 	struct	winsize winsize;
 
 	if (ioctl(0, TIOCGWINSZ, (char *) &winsize) == 0) {
-		nrow = winsize.ws_row;
-		ncol = winsize.ws_col;
-	} else nrow = 0;
-#endif
-	if ((nrow <= 0 || ncol <= 0) &&
-	    ((nrow = lines) <= 0 || (ncol = columns) <= 0)) {
-		nrow = 24;
-		ncol = 80;
+		newrow = winsize.ws_row;
+		newcol = winsize.ws_col;
 	}
-
-	/* Enforce maximum screen size. */
-	if (nrow > NROW)
-		nrow = NROW;
-	if (ncol > NCOL)
-		ncol = NCOL;
+#endif
+	if ((newrow <= 0 || newcol <= 0) &&
+	    ((newrow = lines) <= 0 || (newcol = columns) <= 0)) {
+		newrow = 24;
+		newcol = 80;
+	}
+	if (vtresize(1, newrow, newcol))
+		panic("vtresize failed");
+	nrow = newrow;
+	ncol = newcol;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.17 2001/11/25 07:34:17 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.18 2002/01/18 08:37:08 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -301,7 +301,7 @@ anycb(f)
 	char    prompt[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
-		if (*(bp->b_fname) != '\0'
+		if (bp->b_fname != NULL && *(bp->b_fname) != '\0'
 		    && (bp->b_flag & BFCHG) != 0) {
 			snprintf(prompt, sizeof prompt, "Save file %s",
 			    bp->b_fname);
