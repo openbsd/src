@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.69 2001/08/26 03:29:54 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.70 2001/08/27 22:02:37 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1194,7 +1194,7 @@ ubsec_feed2(sc)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		ubsec_bus_dmamap_sync(sc->sc_dmat, q->q_ctx.dma_map, 0,
 		    q->q_ctx.dma_map->dm_mapsize,
-		    BUS_DMASYNC_PREREAD);
+		    BUS_DMASYNC_PREWRITE);
 
 		WRITE_REG(sc, BS_MCR2, q->q_mcr.dma_paddr);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue2, q, q_next);
@@ -1213,7 +1213,7 @@ ubsec_callback2(sc, q)
 
 	ctx = (struct ubsec_ctx_keyop *)q->q_ctx.dma_vaddr;
 	ubsec_bus_dmamap_sync(sc->sc_dmat, q->q_ctx.dma_map, 0,
-	    q->q_ctx.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	    q->q_ctx.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
 	switch (ctx->ctx_op) {
 	case UBS_CTXOP_RNGBYPASS: {
@@ -1222,7 +1222,7 @@ ubsec_callback2(sc, q)
 		int i;
 
 		ubsec_bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map, 0,
-		    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		p = (u_int32_t *)rng->rng_buf.dma_vaddr;
 		for (i = 0; i < UBSEC_RNG_BUFSIZ; p++, i++)
 			add_true_randomness(*p);
@@ -1291,7 +1291,7 @@ ubsec_rng(vsc)
 	ctx->rbp_op = UBS_CTXOP_RNGBYPASS;
 
 	ubsec_bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map, 0,
-	    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, (struct ubsec_q2 *)rng, q_next);
 	rng->rng_used = 1;
