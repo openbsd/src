@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.65 2002/02/17 04:31:26 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.66 2002/03/14 17:17:23 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -320,7 +320,7 @@ sys_execve(p, v, retval)
 
 	/* Now get argv & environment */
 	if (!(cpp = SCARG(uap, argp))) {
-		error = EINVAL;
+		error = EFAULT;
 		goto bad;
 	}
 
