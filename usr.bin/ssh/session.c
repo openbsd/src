@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.38 2000/10/11 20:27:23 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.39 2000/10/14 12:12:09 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -196,7 +196,7 @@ do_authenticated(struct passwd * pw)
 	 * by the client telling us, so we can equally well trust the client
 	 * not to request anything bogus.)
 	 */
-	if (!no_port_forwarding_flag)
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
 		channel_permit_all_opens();
 
 	s = session_new();
@@ -346,6 +346,10 @@ do_authenticated(struct passwd * pw)
 		case SSH_CMSG_PORT_FORWARD_REQUEST:
 			if (no_port_forwarding_flag) {
 				debug("Port forwarding not permitted for this authentication.");
+				break;
+			}
+			if (!options.allow_tcp_forwarding) {
+				debug("Port forwarding not permitted.");
 				break;
 			}
 			debug("Received TCP/IP port forwarding request.");
