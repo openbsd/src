@@ -1,9 +1,9 @@
-/*	$OpenBSD: bitstring_test.c,v 1.3 2001/01/29 02:05:35 niklas Exp $	*/
+/*	$OpenBSD: bitstring_test.c,v 1.4 2003/01/04 22:36:12 deraadt Exp $	*/
 /*	$NetBSD: bitstring_test.c,v 1.4 1995/04/29 05:44:35 cgd Exp $	*/
 
 /*
  * this is a simple program to test bitstring.h
- * inspect the ouput, you should notice problems
+ * inspect the output, you should notice problems
  * choose the ATT or BSD flavor
  */
 /*#define ATT /*-*/

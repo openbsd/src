@@ -648,7 +648,7 @@ Readline thinks the screen display is correct.
 
 @deftypefun int rl_on_new_line ()
 Tell the update functions that we have moved onto a new (empty) line,
-usually after ouputting a newline.
+usually after outputting a newline.
 @end deftypefun
 
 @deftypefun int rl_on_new_line_with_prompt ()

@@ -686,7 +686,7 @@ default, of course.
 
 =item B<-terse>
 
-Use formatting conventions that emulate the ouput of B<B::Terse>. The
+Use formatting conventions that emulate the output of B<B::Terse>. The
 basic mode is almost indistinguishable from the real B<B::Terse>, and the
 exec mode looks very similar, but is in a more logical order and lacks
 curly brackets. B<B::Terse> doesn't have a tree mode, so the tree mode

@@ -674,7 +674,7 @@ PUBLIC HTStream *HTSaveStream ARGS1(
 **	- Checks or documents already loaded
 **	- Logs the access
 **	- Allows stdin filter option
-**	- Trace ouput and error messages
+**	- Trace output and error messages
 **
 **  On Entry,
 **	  anchor	    is the node_anchor for the document

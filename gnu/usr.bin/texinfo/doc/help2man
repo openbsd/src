@@ -167,7 +167,7 @@ for my $hash (\(%include, %append))
     for (keys %$hash) { $hash->{$_} =~ s/\n+$/\n/ }
 }
 
-# Turn off localisation of executable's ouput.
+# Turn off localisation of executable's output.
 @ENV{qw(LANGUAGE LANG LC_ALL)} = ('C') x 3;
 
 # Turn off localisation of date (for strftime).

@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	des_key_sched(&key, ks);
 
 	buf[0] = '\0';
-	readpassphrase("Enter challange: ", buf, sizeof(buf), RPP_ECHO_ON);
+	readpassphrase("Enter challenge: ", buf, sizeof(buf), RPP_ECHO_ON);
 	if (buf[0] == '\0')
 		exit(0);
 
