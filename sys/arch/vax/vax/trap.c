@@ -1,3 +1,4 @@
+/*      $OpenBSD: trap.c,v 1.7 1997/05/28 23:29:43 niklas Exp $     */
 /*      $NetBSD: trap.c,v 1.24 1996/11/06 20:19:55 cgd Exp $     */
 
 /*
@@ -130,20 +131,22 @@ void
 arithflt(frame)
 	struct trapframe *frame;
 {
-	u_int	sig, type=frame->trap,trapsig=1,s;
+	u_int	sig, type = frame->trap, trapsig=1, s;
 	u_int	rv, addr;
-	struct	proc *p=curproc;
+	struct	proc *p = curproc;
 	struct	pmap *pm;
 	vm_map_t map;
 	vm_prot_t ftype;
 	extern vm_map_t	pte_map;
-	
-	if((frame->psl & PSL_U) == PSL_U) {
+	int	typ;
+	caddr_t	v;
+
+	if ((frame->psl & PSL_U) == PSL_U) {
 		type|=T_USER;
 		p->p_addr->u_pcb.framep = frame; 
 	}
 
-	type&=~(T_WRITE|T_PTEFETCH);
+	type &= ~(T_WRITE|T_PTEFETCH);
 
 
 #ifdef TRAPDEBUG
@@ -152,7 +155,7 @@ if(faultdebug)printf("Trap: type %x, code %x, pc %x, psl %x\n",
 		frame->trap, frame->code, frame->pc, frame->psl);
 fram:
 #endif
-	switch(type){
+	switch (type) {
 
 	default:
 faulter:
@@ -162,28 +165,29 @@ faulter:
 		printf("Trap: type %x, code %x, pc %x, psl %x\n",
 		    frame->trap, frame->code, frame->pc, frame->psl);
 		showregs(frame);
-		panic("trap: adr %x",frame->code);
+		panic("trap: adr %x", frame->code);
 	case T_KSPNOTVAL:
 		goto faulter;
 
 	case T_TRANSFLT|T_USER:
 	case T_TRANSFLT: /* Translation invalid - may be simul page ref */
-		if(frame->trap&T_PTEFETCH){
+		if (frame->trap & T_PTEFETCH) {
 			u_int	*ptep, *pte, *pte1;
 
-			if(frame->code<0x40000000)
-				ptep=(u_int *)p->p_addr->u_pcb.P0BR;
+			if (frame->code<0x40000000)
+				ptep = (u_int *)p->p_addr->u_pcb.P0BR;
 			else
 				ptep=(u_int *)p->p_addr->u_pcb.P1BR;
-			pte1=(u_int *)trunc_page(&ptep[(frame->code
-				&0x3fffffff)>>PGSHIFT]);
-			pte=(u_int*)&Sysmap[((u_int)pte1&0x3fffffff)>>PGSHIFT];	
-			if(*pte&PG_SREF){ /* Yes, simulated */
-				s=splhigh();
+			pte1 = (u_int *)trunc_page(&ptep[(frame->code &
+			     0x3fffffff)>>PGSHIFT]);
+			pte = (u_int*)&Sysmap[((u_int)pte1 & 0x3fffffff) >>
+			     PGSHIFT];	
+			if (*pte & PG_SREF) { /* Yes, simulated */
+				s = splhigh();
 
-				*pte|=PG_REF|PG_V;*pte&=~PG_SREF;pte++;
-				*pte|=PG_REF|PG_V;*pte&=~PG_SREF;
-				mtpr(0,PR_TBIA);
+				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF; pte++;
+				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF;
+				mtpr(0, PR_TBIA);
 				splx(s);
 				goto uret;
 			}
@@ -191,23 +195,24 @@ faulter:
 			u_int   *ptep, *pte;
 
 			frame->code=trunc_page(frame->code);
-			if(frame->code<0x40000000){
-				ptep=(u_int *)p->p_addr->u_pcb.P0BR;
-				pte=&ptep[(frame->code>>PGSHIFT)];
-			} else if(frame->code>0x7fffffff){
-				pte=(u_int *)&Sysmap[((u_int)frame->code&
-					0x3fffffff)>>PGSHIFT];
+			if (frame->code<0x40000000) {
+				ptep = (u_int *)p->p_addr->u_pcb.P0BR;
+				pte = &ptep[(frame->code >> PGSHIFT)];
+			} else if(frame->code > 0x7fffffff) {
+				pte = (u_int *)&Sysmap[((u_int)frame->code &
+				    0x3fffffff) >> PGSHIFT];
 			} else {
-				ptep=(u_int *)p->p_addr->u_pcb.P1BR;
-				pte=&ptep[(frame->code&0x3fffffff)>>PGSHIFT];
+				ptep = (u_int *)p->p_addr->u_pcb.P1BR;
+				pte = &ptep[(frame->code & 0x3fffffff) >>
+				    PGSHIFT];
 			}
-			if(*pte&PG_SREF){
-				s=splhigh();
-				*pte|=PG_REF|PG_V;*pte&=~PG_SREF;pte++;
-				*pte|=PG_REF|PG_V;*pte&=~PG_SREF;
-			/*	mtpr(frame->code,PR_TBIS); */
-			/*	mtpr(frame->code+NBPG,PR_TBIS); */
-				mtpr(0,PR_TBIA);
+			if (*pte & PG_SREF) {
+				s = splhigh();
+				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF; pte++;
+				*pte |= PG_REF|PG_V; *pte &= ~PG_SREF;
+			/*	mtpr(frame->code, PR_TBIS); */
+			/*	mtpr(frame->code + NBPG, PR_TBIS); */
+				mtpr(0, PR_TBIA);
 				splx(s);
 				goto uret;
 			}
@@ -222,84 +227,101 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		if (!p)
 			panic("trap: access fault without process");
 		pm=&p->p_vmspace->vm_pmap;
-		if(frame->trap&T_PTEFETCH){
-			u_int faultaddr,testaddr=(u_int)frame->code&0x3fffffff;
-			int P0=0,P1=0,SYS=0;
+		if (frame->trap&T_PTEFETCH) {
+			u_int faultaddr;
+			u_int testaddr = (u_int)frame->code & 0x3fffffff;
+			int P0=0, P1=0, SYS=0;
 
-			if(frame->code==testaddr) P0++;
-			else if(frame->code>0x7fffffff) SYS++;
-			else P1++;
+			if (frame->code==testaddr)
+				P0++;
+			else if (frame->code > 0x7fffffff)
+				SYS++;
+			else
+				P1++;
 
-			if(P0){
-				faultaddr=(u_int)pm->pm_pcb->P0BR+
-					((testaddr>>PGSHIFT)<<2);
-			} else if(P1){
-				faultaddr=(u_int)pm->pm_pcb->P1BR+
-					((testaddr>>PGSHIFT)<<2);
-			} else panic("pageflt: PTE fault in SPT\n");
-	
-			faultaddr&=~PAGE_MASK;
-			rv = vm_fault(pte_map, faultaddr, 
-				VM_PROT_WRITE|VM_PROT_READ, FALSE);
+			if (P0) {
+				faultaddr = (u_int)pm->pm_pcb->P0BR +
+				    ((testaddr >> PGSHIFT) << 2);
+			} else if (P1) {
+				faultaddr = (u_int)pm->pm_pcb->P1BR +
+				    ((testaddr >> PGSHIFT) << 2);
+			} else
+				panic("pageflt: PTE fault in SPT\n");
+
+			rv = vm_fault(pte_map, faultaddr & ~PAGE_MASK, 
+			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
 			if (rv != KERN_SUCCESS) {
-	
-				sig=SIGSEGV;
+				typ = SEGV_MAPERR;
+				v = (caddr_t)faultaddr;
+				sig = SIGSEGV;
 				goto bad;
 			} else
 				trapsig=0;
 		}
-		addr=(frame->code& ~PAGE_MASK);
-		if((frame->pc>(unsigned)0x80000000)&&
-			(frame->code>(unsigned)0x80000000)){
-			map=kernel_map;
+		addr = (frame->code & ~PAGE_MASK);
+		if ((frame->pc > (unsigned)0x80000000) &&
+		    (frame->code > (unsigned)0x80000000)) {
+			map = kernel_map;
 		} else {
-			map= &p->p_vmspace->vm_map;
+			map = &p->p_vmspace->vm_map;
 		}
-		if(frame->trap&T_WRITE) ftype=VM_PROT_WRITE|VM_PROT_READ;
-		else ftype = VM_PROT_READ;
+		if (frame->trap & T_WRITE)
+			ftype = VM_PROT_WRITE|VM_PROT_READ;
+		else
+			ftype = VM_PROT_READ;
 
 		rv = vm_fault(map, addr, ftype, FALSE);
 		if (rv != KERN_SUCCESS) {
-			if(frame->pc>(u_int)0x80000000){
-				if(p->p_addr->u_pcb.iftrap){
-					frame->pc=(int)p->p_addr->u_pcb.iftrap;
+			if (frame->pc > (u_int)0x80000000) {
+				if (p->p_addr->u_pcb.iftrap) {
+					frame->pc =
+					    (int)p->p_addr->u_pcb.iftrap;
 					return;
 				}
-				printf("Segv in kernel mode: rv %d\n",rv);
+				printf("Segv in kernel mode: rv %d\n", rv);
 				goto faulter;
 			}
-			sig=SIGSEGV;
-		} else trapsig=0;
+			typ = SEGV_MAPERR;
+			v = (caddr_t)frame->code;
+			sig = SIGSEGV;
+		} else
+			trapsig=0;
 		break;
 
 	case T_PTELEN:
 	case T_PTELEN|T_USER:	/* Page table length exceeded */
-		pm=&p->p_vmspace->vm_pmap;
+		pm = &p->p_vmspace->vm_pmap;
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
 #endif
-		if(frame->code<0x40000000){ /* P0 */
+		if (frame->code < 0x40000000) { /* P0 */
 			int i;
 
-			if (p->p_vmspace == 0){
+			if (p->p_vmspace == 0) {
 				printf("no vmspace in fault\n");
 				goto faulter;
 			}
 			i = p->p_vmspace->vm_tsize + p->p_vmspace->vm_dsize;
-			if (i > (frame->code >> PAGE_SHIFT)){
+			if (i > (frame->code >> PAGE_SHIFT)) {
 				pmap_expandp0(pm, i << 1);
 				trapsig = 0;
 			} else {
+				typ = SEGV_MAPERR;
+				v = (caddr_t)0xdeadbeef;	/* XXX */
 				sig = SIGSEGV;
 			}
-		} else if (frame->code > 0x7fffffff){ /* System, segv */
+		} else if (frame->code > 0x7fffffff) { /* System, segv */
+			typ = SEGV_MAPERR;
+			v = (caddr_t)0xdeadbeef;	/* XXX */
 			sig = SIGSEGV;
 		} else { /* P1 */
 			int i;
 
 			i = (u_int)(p->p_vmspace->vm_maxsaddr);
-			if (frame->code < i){
+			if (frame->code < i) {
+				typ = SEGV_MAPERR;
+				v = (caddr_t)0xdeadbeef;	/* XXX */
 				sig = SIGSEGV;
 			} else {
 				pmap_expandp1(pm);
@@ -310,6 +332,8 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 
 	case T_BPTFLT|T_USER:
 	case T_TRCTRAP|T_USER:
+		typ = TRAP_BRKPT;
+		v = (caddr_t)0xdeadbeef;		/* XXX */
 		sig = SIGTRAP;
 		frame->psl &= ~PSL_T;
 		break;
@@ -317,16 +341,20 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 	case T_PRIVINFLT|T_USER:
 	case T_RESADFLT|T_USER:
 	case T_RESOPFLT|T_USER:
-		sig=SIGILL;
+		typ = ILL_ILLOPC;
+		v = (caddr_t)0xdeadbeef;		/* XXX */
+		sig = SIGILL;
 		break;
 
 	case T_ARITHFLT|T_USER:
-		sig=SIGFPE;
+		typ = FPE_FLTINV;	/* XXX? */
+		v = (caddr_t)0;
+		sig = SIGFPE;
 		break;
 
 	case T_ASTFLT|T_USER:
-		mtpr(AST_NO,PR_ASTLVL);
-		trapsig=0;
+		mtpr(AST_NO, PR_ASTLVL);
+		trapsig = 0;
 		break;
 
 #ifdef DDB
@@ -337,7 +365,7 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 	}
 bad:
 	if (trapsig)
-		trapsignal(curproc, sig, frame->code);
+		trapsignal(curproc, sig, frame->code, typ, v);
 uret:
 	userret(curproc, frame->pc, frame->psl);
 };
