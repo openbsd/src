@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.8 1997/07/23 20:36:36 kstailey Exp $	*/
+/*	$OpenBSD: utility.c,v 1.9 1998/02/16 04:57:55 jason Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.8 1997/07/23 20:36:36 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.9 1998/02/16 04:57:55 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -515,6 +515,7 @@ printsub(direction, pointer, length)
     int			length;		/* length of suboption data */
 {
     register int i;
+    char buf[512];
 
 	if (!(diagnostic & TD_OPTIONS))
 		return;

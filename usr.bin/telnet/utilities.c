@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.3 1996/12/12 11:24:08 robin Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.4 1998/02/16 04:59:04 jason Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.3 1996/12/12 11:24:08 robin Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.4 1998/02/16 04:59:04 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -304,6 +304,7 @@ printsub(direction, pointer, length)
     int		  length;	/* length of suboption data */
 {
     register int i;
+    char buf[512];
     extern int want_status_response;
 
     if (showoptions || direction == 0 ||
