@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.31 1999/12/17 22:47:05 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.32 1999/12/19 02:52:21 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -393,12 +393,17 @@ udp_input(m, va_alist)
 		for (inp = udbtable.inpt_queue.cqh_first;
 		    inp != (struct inpcb *)&udbtable.inpt_queue;
 		    inp = inp->inp_queue.cqe_next) {
+#ifdef INET6
+			/* don't accept it if AF does not match */
+			if (ipv6 && !(inp->inp_flags & INP_IPV6))
+				continue;
+			if (!ipv6 && (inp->inp_flags & INP_IPV6))
+				continue;
+#endif
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
 #ifdef INET6
 			if (ipv6) {
-				if (!(inp->inp_flags & INP_IPV6))
-					continue;
 				if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
 					if (!IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6,
 					    &ipv6->ip6_dst))
@@ -409,11 +414,6 @@ udp_input(m, va_alist)
 				if (inp->inp_laddr.s_addr !=
 				    ip->ip_dst.s_addr)
 					continue;
-			} else {
-#ifdef INET6
-				if (inp->inp_flags & INP_IPV6)
-					continue;	/*XXX*/
-#endif
 			}
 #ifdef INET6
 			if (ipv6) {
@@ -429,11 +429,6 @@ udp_input(m, va_alist)
 				    ip->ip_src.s_addr ||
 				    inp->inp_fport != uh->uh_sport)
 					continue;
-			} else {
-#ifdef INET6
-				if (inp->inp_flags & INP_IPV6)
-					continue;	/*XXX*/
-#endif
 			}
 
 			if (last != NULL) {
