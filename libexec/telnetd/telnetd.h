@@ -49,6 +49,8 @@
 #define HAVE_FCNTL_H
 #define HAVE_SYS_IOCTL_H
 #define HAVE_UNISTD_H
+#define HAVE_SYS_UTSNAME_H
+#define HAVE_UNAME
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -163,6 +165,10 @@
 
 #ifdef HAVE_ARPA_TELNET_H
 #include <arpa/telnet.h>
+#endif
+
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
 #endif
 
 #include "ext.h"
