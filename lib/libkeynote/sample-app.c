@@ -1,4 +1,4 @@
-/* $OpenBSD: sample-app.c,v 1.3 2001/03/22 01:16:02 millert Exp $ */
+/* $OpenBSD: sample-app.c,v 1.4 2001/03/22 18:20:01 millert Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -363,7 +363,7 @@ main(int argc, char **argv)
 		break;
 
 	    case ERROR_NOTFOUND:
-		fprintf(stderr, "Session %d not found while addiing action "
+		fprintf(stderr, "Session %d not found while adding action "
 			"attribute [app_domain = \"test application\"]\n",
 			sessionid);
 		break;
@@ -391,7 +391,7 @@ main(int argc, char **argv)
 		break;
 
 	    case ERROR_NOTFOUND:
-		fprintf(stderr, "Session %d not found while addiing action "
+		fprintf(stderr, "Session %d not found while adding action "
 			"attribute [some_num = \"1\"]\n", sessionid);
 		break;
 
@@ -418,7 +418,7 @@ main(int argc, char **argv)
 		break;
 
 	    case ERROR_NOTFOUND:
-		fprintf(stderr, "Session %d not found while addiing action "
+		fprintf(stderr, "Session %d not found while adding action "
 			"attribute [some_var = \"some other value\"]\n",
 			sessionid);
 		break;
@@ -446,7 +446,7 @@ main(int argc, char **argv)
 		break;
 
 	    case ERROR_NOTFOUND:
-		fprintf(stderr, "Session %d not found while addiing action "
+		fprintf(stderr, "Session %d not found while adding action "
 			"attribute [another_var = \"foo\"]\n", sessionid);
 		break;
 
