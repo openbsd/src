@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: udp.c,v 1.16 2002/07/18 18:52:36 brian Exp $
+ *	$OpenBSD: udp.c,v 1.17 2003/10/20 03:15:38 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -178,13 +178,15 @@ udp_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 {
   if (type == UDP_DEVICE) {
     struct udpdevice *dev = (struct udpdevice *)iov[(*niov)++].iov_base;
+    struct udpdevice *newdev;
 
-    dev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
-    if (dev == NULL) {
+    newdev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
+    if (newdev == NULL) {
       log_Printf(LogALERT, "Failed to allocate memory: %d\n",
                  (int)(sizeof *dev));
       AbortProgram(EX_OSERR);
     }
+    dev = newdev;
 
     /* Refresh function pointers etc */
     memcpy(&dev->dev, &baseudpdevice, sizeof dev->dev);

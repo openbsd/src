@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tty.c,v 1.19 2003/04/04 20:25:06 deraadt Exp $
+ *	$OpenBSD: tty.c,v 1.20 2003/10/20 03:15:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -626,13 +626,15 @@ tty_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 {
   if (type == TTY_DEVICE) {
     struct ttydevice *dev = (struct ttydevice *)iov[(*niov)++].iov_base;
+    struct ttydevice *newdev;
 
-    dev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
-    if (dev == NULL) {
+    newdev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
+    if (newdev == NULL) {
       log_Printf(LogALERT, "Failed to allocate memory: %d\n",
                  (int)(sizeof *dev));
       AbortProgram(EX_OSERR);
     }
+    dev = newdev;
 
 #ifndef NONETGRAPH
     if (*nauxfd) {

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.18 2003/04/04 20:25:06 deraadt Exp $
+ *	$OpenBSD: ether.c,v 1.19 2003/10/20 03:15:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -347,13 +347,15 @@ ether_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 {
   if (type == ETHER_DEVICE) {
     struct etherdevice *dev = (struct etherdevice *)iov[(*niov)++].iov_base;
+    struct etherdevice *newdev;
 
-    dev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
-    if (dev == NULL) {
+    newdev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
+    if (newdev == NULL) {
       log_Printf(LogALERT, "Failed to allocate memory: %d\n",
                  (int)(sizeof *dev));
       AbortProgram(EX_OSERR);
     }
+    dev = newdev;
 
     if (*nauxfd) {
       dev->cs = *auxfd;

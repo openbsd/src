@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: atm.c,v 1.9 2002/06/15 08:02:00 brian Exp $
+ *	$OpenBSD: atm.c,v 1.10 2003/10/20 03:15:37 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -146,13 +146,15 @@ atm_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 {
   if (type == ATM_DEVICE) {
     struct atmdevice *dev = (struct atmdevice *)iov[(*niov)++].iov_base;
+    struct atmdevice *newdev;
 
-    dev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
-    if (dev == NULL) {
+    newdev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
+    if (newdev == NULL) {
       log_Printf(LogALERT, "Failed to allocate memory: %d\n",
                  (int)(sizeof *dev));
       AbortProgram(EX_OSERR);
     }
+    dev = newdev;
 
     /* Refresh function pointers etc */
     memcpy(&dev->dev, &baseatmdevice, sizeof dev->dev);

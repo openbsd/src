@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: i4b.c,v 1.8 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: i4b.c,v 1.9 2003/10/20 03:15:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -334,13 +334,15 @@ i4b_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 {
   if (type == I4B_DEVICE) {
     struct i4bdevice *dev = (struct i4bdevice *)iov[(*niov)++].iov_base;
+    struct i4bdevice *newdev;
 
-    dev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
-    if (dev == NULL) {
+    newdev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
+    if (newdev == NULL) {
       log_Printf(LogALERT, "Failed to allocate memory: %d\n",
                  (int)(sizeof *dev));
       AbortProgram(EX_OSERR);
     }
+    dev = newdev;
 
     /* Refresh function pointers etc */
     memcpy(&dev->dev, &basei4bdevice, sizeof dev->dev);

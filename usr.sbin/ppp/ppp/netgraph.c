@@ -322,13 +322,15 @@ ng_iov2device(int type, struct physical *p, struct iovec *iov, int *niov,
 {
   if (type == NG_DEVICE) {
     struct ngdevice *dev = (struct ngdevice *)iov[(*niov)++].iov_base;
+    struct ngdevice *newdev;
 
-    dev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
-    if (dev == NULL) {
+    newdev = realloc(dev, sizeof *dev);	/* Reduce to the correct size */
+    if (newdev == NULL) {
       log_Printf(LogALERT, "Failed to allocate memory: %d\n",
                  (int)(sizeof *dev));
       AbortProgram(EX_OSERR);
     }
+    dev = newdev;
 
     if (*nauxfd) {
       dev->cs = *auxfd;
