@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.6 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.7 2005/03/02 17:10:03 miod Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -161,7 +161,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 	struct ispsoftc *isp = &sbc->sbus_isp;
 
-	printf(" for %s\n", sa->sa_name);
+	printf(": %s\n", sa->sa_name);
 
 	sbc->sbus_bustag = sa->sa_bustag;
 	if (sa->sa_nintr != 0)
