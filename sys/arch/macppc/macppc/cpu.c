@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2002/06/09 04:13:13 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.7 2002/06/21 00:00:05 itojun Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -51,6 +51,7 @@
 #define MPC750          8
 #define MPC604ev        9
 #define MPC7400         12
+#define	IBM750FX	0x7000
 #define MPC7410         0x800c
 #define MPC7450         0x8000
 #define MPC7455         0x8001
@@ -108,46 +109,51 @@ cpuattach(parent, dev, aux)
 	cpu = pvr >> 16;
 	switch (cpu) {
 	case MPC601:
-		sprintf(cpu_model, "601");
+		snprintf(cpu_model, sizeof(cpu_model), "601");
 		break;
 	case MPC603:
-		sprintf(cpu_model, "603");
+		snprintf(cpu_model, sizeof(cpu_model), "603");
 		break;
 	case MPC604:
-		sprintf(cpu_model, "604");
+		snprintf(cpu_model, sizeof(cpu_model), "604");
 		break;
 	case MPC603e:
-		sprintf(cpu_model, "603e");
+		snprintf(cpu_model, sizeof(cpu_model), "603e");
 		break;
 	case MPC603ev:
-		sprintf(cpu_model, "603ev");
+		snprintf(cpu_model, sizeof(cpu_model), "603ev");
 		break;
 	case MPC750:
-		sprintf(cpu_model, "750");
+		snprintf(cpu_model, sizeof(cpu_model), "750");
 		break;
 	case MPC604ev:
-		sprintf(cpu_model, "604ev");
+		snprintf(cpu_model, sizeof(cpu_model), "604ev");
 		break;
 	case MPC7400:
-		sprintf(cpu_model, "7400");
+		snprintf(cpu_model, sizeof(cpu_model), "7400");
+		break;
+	case IBM750FX:
+		snprintf(cpu_model, sizeof(cpu_model), "750FX");
 		break;
 	case MPC7410:
-		sprintf(cpu_model, "7410");
+		snprintf(cpu_model, sizeof(cpu_model), "7410");
 		break;
 	case MPC7450:
 		if ((pvr & 0xf) < 3)
-			sprintf(cpu_model, "7450");
+			snprintf(cpu_model, sizeof(cpu_model), "7450");
 		 else
-			sprintf(cpu_model, "7451");
+			snprintf(cpu_model, sizeof(cpu_model), "7451");
 		break;
 	case MPC7455:
-		sprintf(cpu_model, "7455");
+		snprintf(cpu_model, sizeof(cpu_model), "7455");
 		break;
 	default:
-		sprintf(cpu_model, "Version %x", cpu);
+		snprintf(cpu_model, sizeof(cpu_model), "Version %x", cpu);
 		break;
 	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
+	snprintf(cpu_model + strlen(cpu_model),
+	    sizeof(cpu_model) - strlen(cpu_model),
+	    " (Revision %x)", pvr & 0xffff);
 	printf(": %s", cpu_model);
 
 	/* This should only be executed on openfirmware systems... */
