@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.32 2000/05/15 06:10:21 niklas Exp $
+#	$OpenBSD: bsd.own.mk,v 1.33 2000/07/03 16:59:58 marc Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -33,7 +33,7 @@ AFS?=		no
 AFS?=		yes
 .endif
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
-DEBUGLIBS=	no
+DEBUGLIBS?=	no
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
