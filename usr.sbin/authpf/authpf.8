@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.14 2002/06/24 07:43:10 dhartmei Exp $
+.\" $OpenBSD: authpf.8,v 1.15 2002/06/24 07:59:48 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -409,9 +409,9 @@ ipsec_gw="10.2.3.4"
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
 pass in log quick on $internal_if proto tcp from $user_ip/32 to any \\
- { port 21, 22, 80, 443 } flags S/SA
+ port { 21, 22, 80, 443 } flags S/SA
 pass in quick on $internal_if proto tcp from $user_ip/32 to any \\
- { port 21, 22, 80, 443 }
+ port { 21, 22, 80, 443 }
 pass in quick proto udp from $user_ip/32 to $ipsec_gw/32 port = isakmp \\
  keep-state
 pass in quick proto esp from $user_ip/32 to $ipsec_gw/32
