@@ -45,8 +45,11 @@
 #include <errno.h>
 #include <string.h>
 
-static int cryptodev_fd = -1;
-static int cryptodev_sessions = 0;
+struct dev_crypto_state {
+	struct session_op d_sess;
+	int d_fd;
+};
+
 static u_int32_t cryptodev_asymfeat = 0;
 
 static int bn2crparam(const BIGNUM *a, struct crparam *crp);
@@ -106,31 +109,38 @@ static struct {
 };
 
 /*
- * Return 1 if /dev/crypto seems usable, 0 otherwise , also
- * does most of the work of initting the device, if not already
- * done.. This should leave is with global fd initialized with CRIOGET.
+ * Return a fd if /dev/crypto seems usable, 0 otherwise.
  */
 static int
-check_dev_crypto()
+get_dev_crypto()
 {
-	int fd;
+	int fd, retfd;
 
-	if (cryptodev_fd == -1) {
-		if ((fd = open("/dev/crypto", O_RDWR, 0)) == -1)
-			return (0);
-		if (ioctl(fd, CRIOGET, &cryptodev_fd) == -1) {
-			close(fd);
-			return (0);
-		}
+	if ((fd = open("/dev/crypto", O_RDWR, 0)) == -1)
+		return (-1);
+	if (ioctl(fd, CRIOGET, &retfd) == -1) {
 		close(fd);
-		/* close on exec */
-		if (fcntl(cryptodev_fd, F_SETFD, 1) == -1) {
-			close(cryptodev_fd);
-			cryptodev_fd = -1;
-			return (0);
-		}
+		return (-1);
 	}
-	return (1);
+	close(fd);
+
+	/* close on exec */
+	if (fcntl(retfd, F_SETFD, 1) == -1) {
+		close(retfd);
+		return (-1);
+	}
+	return (retfd);
+}
+
+/* Caching version for asym operations */
+static int
+get_asym_dev_crypto()
+{
+	static int fd = -1;
+
+	if (fd == -1)
+		fd = get_dev_crypto();
+	return fd;
 }
 
 /*
@@ -188,8 +198,12 @@ get_cryptodev_ciphers(const int **cnids)
 {
 	static int nids[CRYPTO_ALGORITHM_MAX];
 	struct session_op sess;
-	int i, count = 0;
+	int fd, i, count = 0;
 
+	if ((fd = get_dev_crypto()) < 0) {
+		*nids = NULL;
+		return (0);
+	}
 	memset(&sess, 0, sizeof(sess));
 	sess.key = (caddr_t)"123456781234567812345678";
 
@@ -199,10 +213,12 @@ get_cryptodev_ciphers(const int **cnids)
 		sess.cipher = ciphers[i].id;
 		sess.keylen = ciphers[i].keylen;
 		sess.mac = 0;
-		if (ioctl(cryptodev_fd, CIOCGSESSION, &sess) != -1 &&
-		    ioctl(cryptodev_fd, CIOCFSESSION, &sess.ses) != -1)
+		if (ioctl(fd, CIOCGSESSION, &sess) != -1 &&
+		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = ciphers[i].nid;
 	}
+	close(fd);
+
 	if (count > 0)
 		*cnids = nids;
 	else
@@ -221,18 +237,24 @@ get_cryptodev_digests(const int **cnids)
 {
 	static int nids[CRYPTO_ALGORITHM_MAX];
 	struct session_op sess;
-	int i, count = 0;
+	int fd, i, count = 0;
 
+	if ((fd = get_dev_crypto()) < 0) {
+		*nids = NULL;
+		return (0);
+	}
 	memset(&sess, 0, sizeof(sess));
 	for (i = 0; digests[i].id && count < CRYPTO_ALGORITHM_MAX; i++) {
 		if (digests[i].nid == NID_undef)
 			continue;
 		sess.mac = digests[i].id;
 		sess.cipher = 0;
-		if (ioctl(cryptodev_fd, CIOCGSESSION, &sess) != -1 &&
-		    ioctl(cryptodev_fd, CIOCFSESSION, &sess.ses) != -1)
+		if (ioctl(fd, CIOCGSESSION, &sess) != -1 &&
+		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = digests[i].nid;
 	}
+	close(fd);
+
 	if (count > 0)
 		*cnids = nids;
 	else
@@ -264,31 +286,12 @@ get_cryptodev_digests(const int **cnids)
 int
 cryptodev_usable_ciphers(const int **nids)
 {
-	struct syslog_data sd = SYSLOG_DATA_INIT;
-
-	if (!check_dev_crypto()) {
-		*nids = NULL;
-		return (0);
-	}
-
-	/* find what the device can do. Unfortunately, we don't
-	 * necessarily want all of these yet, because we aren't
-	 * yet set up to do them
-	 */
 	return (get_cryptodev_ciphers(nids));
-
-	/*
-	 * find out what asymmetric crypto algorithms we support
-	 */
-	if (ioctl(cryptodev_fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		syslog_r(LOG_ERR, &sd, "CIOCASYMFEAT failed (%m)");
-	}
 }
 
 int
 cryptodev_usable_digests(const int **nids)
 {
-#if 1
 	/*
 	 * XXXX just disable all digests for now, because it sucks.
 	 * we need a better way to decide this - i.e. I may not
@@ -303,29 +306,20 @@ cryptodev_usable_digests(const int **nids)
 	 */
 	*nids = NULL;
 	return (0);
-#endif
-
-	if (!check_dev_crypto()) {
-		*nids = NULL;
-		return (0);
-	}
-	return (get_cryptodev_digests(nids));
 }
-
 
 int
 cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, unsigned int inl)
 {
 	struct crypt_op cryp;
-	struct session_op *sess = ctx->cipher_data;
+	struct dev_crypto_state *state = ctx->cipher_data;
+	struct session_op *sess = &state->d_sess;
 	void *iiv;
 	unsigned char save_iv[EVP_MAX_IV_LENGTH];
 	struct syslog_data sd = SYSLOG_DATA_INIT;
 
-	if (cryptodev_fd == -1)
-		return (0);
-	if (sess == NULL)
+	if (state->d_fd < 0)
 		return (0);
 	if (!inl)
 		return (1);
@@ -352,7 +346,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	} else
 		cryp.iv = NULL;
 
-	if (ioctl(cryptodev_fd, CIOCCRYPT, &cryp) == -1) {
+	if (ioctl(state->d_fd, CIOCCRYPT, &cryp) == -1) {
 		/* XXX need better errror handling
 		 * this can fail for a number of different reasons.
 		 */
@@ -374,14 +368,12 @@ int
 cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	struct session_op *sess = ctx->cipher_data;
+	struct dev_crypto_state *state = ctx->cipher_data;
+	struct session_op *sess = &state->d_sess;
 	struct syslog_data sd = SYSLOG_DATA_INIT;
 	int cipher;
 
 	if ((cipher = cipher_nid_to_cryptodev(ctx->cipher->nid)) == NID_undef)
-		return (0);
-
-	if (!check_dev_crypto())
 		return (0);
 
 	if (ctx->cipher->iv_len > cryptodev_max_iv(cipher))
@@ -392,15 +384,20 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	memset(sess, 0, sizeof(struct session_op));
 
+	if ((state->d_fd = get_dev_crypto()) < 0)
+		return (0);
+
 	sess->key = (unsigned char *)key;
 	sess->keylen = ctx->key_len;
 	sess->cipher = cipher;
 
-	if (ioctl(cryptodev_fd, CIOCGSESSION, sess) == -1) {
+	if (ioctl(state->d_fd, CIOCGSESSION, sess) == -1) {
 		syslog_r(LOG_ERR, &sd, "CIOCGSESSION failed (%m)");
+
+		close(state->d_fd);
+		state->d_fd = -1;
 		return (0);
 	}
-	cryptodev_sessions++;
 	return (1);
 }
 
@@ -412,10 +409,11 @@ int
 cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 {
 	int ret = 0;
-	struct session_op *sess = ctx->cipher_data;
+	struct dev_crypto_state *state = ctx->cipher_data;
+	struct session_op *sess = &state->d_sess;
 	struct syslog_data sd = SYSLOG_DATA_INIT;
 
-	if (sess == NULL)
+	if (state->d_fd < 0)
 		return (0);
 
 	/* XXX if this ioctl fails, someting's wrong. the invoker
@@ -429,17 +427,15 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 	 * print messages to users of the library. hmm..
 	 */
 
-	if (ioctl(cryptodev_fd, CIOCFSESSION, &sess->ses) == -1) {
+	if (ioctl(state->d_fd, CIOCFSESSION, &sess->ses) == -1) {
 		syslog_r(LOG_ERR, &sd, "CIOCFSESSION failed (%m)");
 		ret = 0;
 	} else {
-		cryptodev_sessions--;
 		ret = 1;
 	}
-	if (cryptodev_sessions == 0 && cryptodev_fd != -1 ) {
-		close(cryptodev_fd); /* XXX should this be closed? */
-		cryptodev_fd = -1;
-	}
+	close(state->d_fd);
+	state->d_fd = -1;
+
 	return (ret);
 }
 
@@ -662,7 +658,10 @@ zapparams(struct crypt_kop *kop)
 static int
 cryptodev_sym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 {
-	int ret = -1;
+	int fd, ret = -1;
+
+	if ((fd = get_asym_dev_crypto()) < 0)
+		return (ret);
 
 	if (r) {
 		kop->crk_param[kop->crk_iparams].crp_p = calloc(rlen, sizeof(char));
@@ -675,13 +674,14 @@ cryptodev_sym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 		kop->crk_oparams++;
 	}
 
-	if (ioctl(cryptodev_fd, CIOCKEY, kop) == 0) {
+	if (ioctl(fd, CIOCKEY, kop) == 0) {
 		if (r)
 			crparam2bn(&kop->crk_param[kop->crk_iparams], r);
 		if (s)
 			crparam2bn(&kop->crk_param[kop->crk_iparams+1], s);
 		ret = 0;
 	}
+
 	return (ret);
 }
 
@@ -940,7 +940,10 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
 	struct crypt_kop kop;
 	int dhret = 1;
-	int keylen;
+	int fd, keylen;
+
+	if ((fd = get_asym_dev_crypto()) < 0)
+		return (-1);
 
 	keylen = BN_num_bits(dh->p);
 
@@ -960,7 +963,7 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	kop.crk_param[3].crp_nbits = keylen * 8;
 	kop.crk_oparams = 1;
 
-	if (ioctl(cryptodev_fd, CIOCKEY, &kop) == -1) {
+	if (ioctl(fd, CIOCKEY, &kop) == -1) {
 		const DH_METHOD *meth = DH_OpenSSL();
 
 		dhret = (meth->compute_key)(key, pub_key, dh);
@@ -1005,22 +1008,22 @@ ENGINE_load_cryptodev(void)
 {
 	ENGINE *engine = ENGINE_new();
 	struct syslog_data sd = SYSLOG_DATA_INIT;
+	int fd;
 
 	if (engine == NULL)
 		return;
-
-
-	if (!check_dev_crypto()) {
+	if ((fd = get_dev_crypto()) < 0)
 		return;
-	}
 
 	/*
 	 * find out what asymmetric crypto algorithms we support
 	 */
-	if (ioctl(cryptodev_fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
+	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
 		syslog_r(LOG_ERR, &sd, "CIOCASYMFEAT failed (%m)");
+		close(fd);
 		return;
 	}
+	close(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
 	    !ENGINE_set_name(engine, "OpenBSD cryptodev engine") ||
@@ -1084,4 +1087,3 @@ ENGINE_load_cryptodev(void)
 	ENGINE_free(engine);
 	ERR_clear_error();
 }
-
