@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.27 2003/06/11 23:33:29 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.28 2003/06/26 21:32:01 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -163,9 +163,7 @@ int mode = 0;
 char *arg = NULL;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -315,8 +313,7 @@ main(argc, argv)
  * Process a file to set standard ndp entries
  */
 int
-file(name)
-	char *name;
+file(char *name)
 {
 	FILE *fp;
 	int i, retval;
@@ -348,7 +345,7 @@ file(name)
 }
 
 void
-getsocket()
+getsocket(void)
 {
 	if (s < 0) {
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
@@ -372,9 +369,7 @@ struct	{
  * Set an individual neighbor cache entry
  */
 int
-set(argc, argv)
-	int argc;
-	char **argv;
+set(int argc, char **argv)
 {
 	struct sockaddr_in6 *sin = &sin_m;
 	struct sockaddr_dl *sdl;
@@ -456,8 +451,7 @@ overwrite:
  * Display an individual neighbor cache entry
  */
 void
-get(host)
-	char *host;
+get(char *host)
 {
 	struct sockaddr_in6 *sin = &sin_m;
 	struct addrinfo hints, *res;
@@ -493,8 +487,7 @@ get(host)
  * Delete a neighbor cache entry
  */
 int
-delete(host)
-	char *host;
+delete(char *host)
 {
 	struct sockaddr_in6 *sin = &sin_m;
 	struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
@@ -571,9 +564,7 @@ delete:
  * Dump the entire neighbor cache
  */
 void
-dump(addr, cflag)
-	struct in6_addr *addr;
-	int cflag;
+dump(struct in6_addr *addr, int cflag)
 {
 	int mib[6];
 	size_t needed;
@@ -777,10 +768,7 @@ again:;
 }
 
 static struct in6_nbrinfo *
-getnbrinfo(addr, ifindex, warning)
-	struct in6_addr *addr;
-	int ifindex;
-	int warning;
+getnbrinfo(struct in6_addr *addr, int ifindex, int warning)
 {
 	static struct in6_nbrinfo nbi;
 	int s;
@@ -803,8 +791,7 @@ getnbrinfo(addr, ifindex, warning)
 }
 
 static char *
-ether_str(sdl)
-	struct sockaddr_dl *sdl;
+ether_str(struct sockaddr_dl *sdl)
 {
 	static char hbuf[NI_MAXHOST];
 	u_char *cp;
@@ -820,9 +807,7 @@ ether_str(sdl)
 }
 
 int
-ndp_ether_aton(a, n)
-	char *a;
-	u_char *n;
+ndp_ether_aton(char *a, u_char *n)
 {
 	int i, o[6];
 
@@ -838,7 +823,7 @@ ndp_ether_aton(a, n)
 }
 
 void
-usage()
+usage(void)
 {
 	printf("usage: ndp [-nt] hostname\n");
 	printf("       ndp [-nt] -a | -c | -p | -r | -H | -P | -R\n");
@@ -854,8 +839,7 @@ usage()
 }
 
 int
-rtmsg(cmd)
-	int cmd;
+rtmsg(int cmd)
 {
 	static int seq;
 	int rlen;
@@ -919,10 +903,7 @@ doit:
 }
 
 void
-ifinfo(ifname, argc, argv)
-	char *ifname;
-	int argc;
-	char **argv;
+ifinfo(char *ifname, int argc, char **argv)
 {
 	struct in6_ndireq nd;
 	int i, s;
@@ -1038,7 +1019,7 @@ ifinfo(ifname, argc, argv)
 #endif
 
 void
-rtrlist()
+rtrlist(void)
 {
 #ifdef ICMPV6CTL_ND6_DRLIST
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_DRLIST };
@@ -1131,7 +1112,7 @@ rtrlist()
 }
 
 void
-plist()
+plist(void)
 {
 #ifdef ICMPV6CTL_ND6_PRLIST
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST };
@@ -1417,7 +1398,7 @@ plist()
 }
 
 void
-pfx_flush()
+pfx_flush(void)
 {
 	char dummyif[IFNAMSIZ+8];
 	int s;
@@ -1430,7 +1411,7 @@ pfx_flush()
 }
 
 void
-rtr_flush()
+rtr_flush(void)
 {
 	char dummyif[IFNAMSIZ+8];
 	int s;
@@ -1445,7 +1426,7 @@ rtr_flush()
 }
 
 void
-harmonize_rtr()
+harmonize_rtr(void)
 {
 	char dummyif[IFNAMSIZ+8];
 	int s;
@@ -1461,8 +1442,7 @@ harmonize_rtr()
 
 #ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
 static void
-setdefif(ifname)
-	char *ifname;
+setdefif(char *ifname)
 {
 	struct in6_ndifreq ndifreq;
 	unsigned int ifindex;
@@ -1487,7 +1467,7 @@ setdefif(ifname)
 }
 
 static void
-getdefif()
+getdefif(void)
 {
 	struct in6_ndifreq ndifreq;
 	char ifname[IFNAMSIZ+8];
@@ -1515,8 +1495,7 @@ getdefif()
 #endif
 
 static char *
-sec2str(total)
-	time_t total;
+sec2str(time_t total)
 {
 	static char result[256];
 	int days, hours, mins, secs;
@@ -1561,8 +1540,7 @@ sec2str(total)
  * from tcpdump/util.c
  */
 static void
-ts_print(tvp)
-	const struct timeval *tvp;
+ts_print(const struct timeval *tvp)
 {
 	int s;
 
