@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.18 1997/01/30 07:47:29 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.19 1997/01/30 18:26:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.18 1997/01/30 07:47:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.19 1997/01/30 18:26:55 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -156,7 +156,7 @@ ypbindproc_domain_2x(transp, argp, clnt)
 	char path[MAXPATHLEN];
 	time_t now;
 
-	if (strchr((char *)argp, '/') || strchr((char *)argp, '.'))
+	if (strchr((char *)argp, '/'))
 		return NULL;
 
 	memset(&res, 0, sizeof res);
@@ -495,7 +495,7 @@ main(argc, argv)
 	rmtcr.xdr_results = xdr_bool;
 	rmtcr.results_ptr = (caddr_t)&rmtcr_outval;
 
-	if (strchr(domain, '/') || strchr(domain, '.'))
+	if (strchr(domain, '/'))
 		errx(1, "bad domainname %s", domain);
 
 	/* build initial domain binding, make it "unsuccessful" */
@@ -984,7 +984,7 @@ int force;
 	char path[MAXPATHLEN];
 	int fd;
 
-	if (strchr(dom, '/') || strchr(dom, '.'))
+	if (strchr(dom, '/'))
 		return;
 
 #ifdef DEBUG
