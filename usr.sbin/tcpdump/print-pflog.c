@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.5 2001/06/26 22:26:14 deraadt Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.6 2001/06/26 22:51:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.5 2001/06/26 22:26:14 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.6 2001/06/26 22:51:03 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	hdr = (struct pfloghdr *)p;
 
 	res = ntohs(hdr->reason);
-	why = (res <= PFRES_MAX) ? pf_reasons[res] : "unkn";
+	why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
 
 	snprintf(reason, sizeof(reason), "%d(%s)", res, why); 
 

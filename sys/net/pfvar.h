@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.19 2001/06/26 22:26:13 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.20 2001/06/26 22:51:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -127,7 +127,7 @@ struct pf_rdr {
 #define PFRES_BADOFF	1		/* Bad offset for pull_hdr */
 #define PFRES_FRAG	2		/* Dropping following fragment */
 #define PFRES_SHORT	3		/* Dropping short packet */
-#define PFRES_MAX	3		/* total */
+#define PFRES_MAX	4		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
