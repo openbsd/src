@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.25 2003/05/09 00:48:42 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.26 2004/11/23 10:14:49 hshoexer Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 	}
 
 	/*
-	 * Free old vmcmds and restet the array.
+	 * Free old vmcmds and reset the array.
 	 */
 	evsp->evs_used = 0;
 	if (evsp->evs_cmds != evsp->evs_start)
