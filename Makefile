@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2000/12/30 06:45:52 angelos Exp $
+#	$OpenBSD: Makefile,v 1.61 2001/01/15 23:12:00 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -170,34 +170,10 @@ cross-binutils-new:	cross-dirs
 	    --prefix ${CROSSDIR}/usr \
 	    --disable-nls --disable-gdbtk --disable-commonbfdlib \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} DESTDIR=${CROSSDIR} install)
+	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} install)
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh \
-	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-as \
-	    ${CROSSDIR}/usr/bin/as
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-ar \
-	    ${CROSSDIR}/usr/bin/ar
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-ld \
-	    ${CROSSDIR}/usr/bin/ld
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-strip \
-	    ${CROSSDIR}/usr/bin/strip
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-size \
-	    ${CROSSDIR}/usr/bin/size
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-ranlib \
-	    ${CROSSDIR}/usr/bin/ranlib
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-nm \
-	    ${CROSSDIR}/usr/bin/nm
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-strings \
-	    ${CROSSDIR}/usr/bin/strings
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder \
 	    ${CROSSDIR}/usr/bin/lorder
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-objcopy \
-	    ${CROSSDIR}/usr/bin/objcopy
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-objdump \
-	    ${CROSSDIR}/usr/bin/objdump
-	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-gdb \
-	    ${CROSSDIR}/usr/bin/gdb
 
 cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
@@ -297,9 +273,9 @@ cross-gcc:	cross-dirs
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
 	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
 	    build_infodir=. \
-	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" && \
+	    GCC_FOR_TARGET="./xgcc -B./" && \
 	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
-	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" \
+	    GCC_FOR_TARGET="./xgcc -B./" \
 	    build_infodir=. INSTALL_MAN= INSTALL_HEADERS_DIR= install)
 	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-gcc \
 	    ${CROSSDIR}/usr/bin/cc
