@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.19 2003/04/15 08:35:34 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.20 2003/05/16 19:58:57 jsyn Exp $	*/
 
 /*
  * command history
@@ -1096,7 +1096,7 @@ writehistfile(lno, cmd)
 	unsigned char	*base;
 	unsigned char	*new;
 	int	bytes;
-	char	hdr[5];
+	unsigned char	hdr[5];
 
 	(void) flock(histfd, LOCK_EX);
 	sizenow = lseek(histfd, 0L, SEEK_END);
@@ -1160,7 +1160,7 @@ static int
 sprinkle(fd)
 	int fd;
 {
-	static char mag[] = { HMAGIC1, HMAGIC2 };
+	static unsigned char mag[] = { HMAGIC1, HMAGIC2 };
 
 	return(write(fd, mag, 2) != 2);
 }
