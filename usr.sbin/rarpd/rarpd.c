@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.22 1998/07/27 04:34:36 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.23 1998/08/15 17:25:32 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.22 1998/07/27 04:34:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.23 1998/08/15 17:25:32 deraadt Exp $";
 #endif
 
 
@@ -239,7 +239,7 @@ init_one(ifname)
 void
 init_all()
 {
-	char *inbuf = NULL;
+	char *inbuf = NULL, *ninbuf;
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	int fd, inlen = 8192;
@@ -252,11 +252,14 @@ init_all()
 
 	while (1) {
 		ifc.ifc_len = inlen;
-		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
-		if (inbuf == NULL) {
+		ninbuf = realloc(inbuf, inlen);
+		if (ninbuf == NULL) {
+			if (inbuf)
+				free(inbuf);
 			close(fd);
 			err(FATAL, "init_all: malloc: %s", strerror(errno));
 		}
+		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(fd);
 			free(inbuf);
@@ -621,7 +624,7 @@ lookup_eaddr(ifname, eaddr)
 	char *ifname;
 	u_char *eaddr;
 {
-	char *inbuf = NULL;
+	char *inbuf = NULL, *ninbuf;
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	struct sockaddr_dl *sdl;
@@ -640,11 +643,14 @@ lookup_eaddr(ifname, eaddr)
 
 	while (1) {
 		ifc.ifc_len = inlen;
-		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
-		if (inbuf == NULL) {
+		ninbuf= realloc(inbuf, inlen);
+		if (ninbuf == NULL) {
+			if (inbuf)
+				free(inbuf);
 			close(fd);
 			err(FATAL, "init_all: malloc: %s", strerror(errno));
 		}
+		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(fd);
 			free(inbuf);

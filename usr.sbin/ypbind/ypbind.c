@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.34 1998/03/23 06:18:38 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.35 1998/08/15 17:23:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.34 1998/03/23 06:18:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.35 1998/08/15 17:23:27 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -749,7 +749,7 @@ broadcast(ypdb, buf, outlen)
 	char *buf;
 	int outlen;
 {
-	char *inbuf = NULL;
+	char *inbuf = NULL, *ninbuf;
 	int i, sock, len, inlen = 8192;
 	struct sockaddr_in bindsin;
 	struct ifconf ifc;
@@ -769,11 +769,14 @@ broadcast(ypdb, buf, outlen)
 	
 	while (1) {
 		ifc.ifc_len = inlen;
-		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
-		if (inbuf == NULL) {
+		ninbuf = realloc(inbuf, inlen);
+		if (ninbuf == NULL) {
+			if (inbuf)
+				free(inbuf);
 			close(sock);
 			return (-1);
 		}
+		inbuf = ninbuf;
 		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(sock);
 			free(inbuf);
