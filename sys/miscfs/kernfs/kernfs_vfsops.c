@@ -1,5 +1,5 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.2 1996/02/27 07:55:18 niklas Exp $	*/
-/*	$NetBSD: kernfs_vfsops.c,v 1.25 1996/02/09 22:40:22 christos Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.3 1996/05/02 13:20:16 deraadt Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,6 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/cpu.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>

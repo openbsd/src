@@ -1,5 +1,5 @@
-/*	$OpenBSD: spec_vnops.c,v 1.2 1996/02/27 08:05:15 niklas Exp $	*/
-/*	$NetBSD: spec_vnops.c,v 1.28 1996/02/09 22:40:57 christos Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.3 1996/05/02 13:20:19 deraadt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,7 +50,6 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
-#include <sys/cpu.h>
 
 #include <miscfs/specfs/specdev.h>
 
