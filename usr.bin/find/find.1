@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: find.1,v 1.1.1.1 1995/10/18 08:45:13 deraadt Exp $
+.\"	$Id: find.1,v 1.2 1996/01/15 01:11:16 deraadt Exp $
 .\"
 .Dd June 6, 1993
 .Dt FIND 1
@@ -148,6 +148,8 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm find
 was executed.
+.It Ic -follow
+Follow symbolic links.
 .It Ic -fstype Ar type 
 True if the file is contained in a file system of type
 .Ar type .
@@ -401,9 +403,9 @@ utility syntax is a superset of the syntax specified by the
 standard.
 .Pp
 The options and the
-.Ic -inum ,
 .Ic -follow ,
 .Ic -fstype ,
+.Ic -inum ,
 .Ic -links ,
 .Ic -ls 
 and
