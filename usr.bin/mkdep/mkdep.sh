@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.sh,v 1.4 1996/09/30 16:55:19 bitblt Exp $
+#	$OpenBSD: mkdep.sh,v 1.5 1997/01/25 08:47:58 deraadt Exp $
 #	$NetBSD: mkdep.sh,v 1.3 1994/12/23 07:35:02 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -36,9 +36,6 @@
 #
 #	@(#)mkdep.sh	8.1 (Berkeley) 6/6/93
 #
-
-PATH=/bin:/usr/bin:/usr/ucb:/usr/old/bin
-export PATH
 
 D=.depend			# default dependency file is .depend
 append=0

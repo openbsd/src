@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.old.compiler,v 1.3 1996/09/16 01:20:02 deraadt Exp $
+#	$OpenBSD: mkdep.old.compiler,v 1.4 1997/01/25 08:47:57 deraadt Exp $
 #	$NetBSD: mkdep.old.compiler,v 1.2 1994/12/23 07:35:00 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -40,8 +40,6 @@
 # This is a version of mkdep that works pretty well
 # with compilers that don't have -M.
 MAKE=Makefile			# default makefile name is "Makefile"
-
-PATH=/bin:/usr/bin:/usr/ucb:/lib:/usr/lib
 
 INCL=
 
