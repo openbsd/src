@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1 2001/06/24 19:48:58 kjell Exp $ */
+/*	$OpenBSD: pf.c,v 1.2 2001/06/24 20:47:37 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -135,7 +135,7 @@ struct state	*pf_test_state_udp (int direction, struct ifnet *ifp, struct ip *h,
 struct state	*pf_test_state_icmp (int direction, struct ifnet *ifp,
 		    struct ip *h, struct icmp *ih);
 void		*pull_hdr (struct ifnet *ifp, struct mbuf **m, struct ip *h,
-		    int *action, u_int8_t len);
+		    int *action, u_int8_t len, void *);
 int		 pf_test (int direction, struct ifnet *ifp, struct mbuf **m);
 
 /* ------------------------------------------------------------------------ */
@@ -1597,10 +1597,11 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 
 inline void *
 pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int *action,
-    u_int8_t len)
+    u_int8_t len, void *header)
 {
 	u_int16_t hl = h->ip_hl << 2;
 	u_int16_t off = (h->ip_off & IP_OFFMASK) << 3;
+
 	if (off) {
 		if (off >= len)
 			*action = PF_PASS;
@@ -1617,13 +1618,10 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int *action,
 		print_ip(ifp, h);
 		return NULL;
 	}
-	if ((*m)->m_len < (hl + len))
-		if ((*m = m_pullup(*m, hl + len)) == NULL) {
-			printf("packetfilter: pullup proto header failed\n");
-			*action = PF_DROP;
-			return NULL;
-		}
-	return mtod(*m, char *) + hl;
+	if (hl + len > (*m)->m_pkthdr.len)
+		return NULL;
+	m_copydata(*m, hl, len, header);
+	return header;
 }
 
 int
@@ -1642,6 +1640,11 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 		last_purge = tv.tv_sec;
 	}
 
+#ifdef DIAGNOSTIC
+	if (((*m)->m_flags & M_PKTHDR) == 0)
+		panic("pf_test called with non-header mbuf");
+#endif
+
 	/* ensure we have at least the complete ip header pulled up */
 	if ((*m)->m_len < (h->ip_hl << 2))
 		if ((*m = m_pullup(*m, h->ip_hl << 2)) == NULL) {
@@ -1653,35 +1656,35 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	switch (h->ip_p) {
 
 	case IPPROTO_TCP: {
-		struct tcphdr *th = pull_hdr(ifp, m, h, &action, 20);
-		if (th == NULL)
+		struct tcphdr th;
+		if (pull_hdr(ifp, m, h, &action, 20, &th) == NULL)
 			goto done;
-		if (pf_test_state_tcp(direction, ifp, h, th))
+		if (pf_test_state_tcp(direction, ifp, h, &th))
 			action = PF_PASS;
 		else
-			action = pf_test_tcp(direction, ifp, h, th);
+			action = pf_test_tcp(direction, ifp, h, &th);
 		break;
 	}
 
 	case IPPROTO_UDP: {
-		struct udphdr *uh = pull_hdr(ifp, m, h, &action, 8);
-		if (uh == NULL)
+		struct udphdr uh;
+		if (pull_hdr(ifp, m, h, &action, 8, &uh) == NULL)
 			goto done;
-		if (pf_test_state_udp(direction, ifp, h, uh))
+		if (pf_test_state_udp(direction, ifp, h, &uh))
 			action = PF_PASS;
 		else
-			action = pf_test_udp(direction, ifp, h, uh);
+			action = pf_test_udp(direction, ifp, h, &uh);
 		break;
 	}
 
 	case IPPROTO_ICMP: {
-		struct icmp *ih = pull_hdr(ifp, m, h, &action, 8);
-		if (ih == NULL)
+		struct icmp ih;
+		if (pull_hdr(ifp, m, h, &action, 8, &ih) == NULL)
 			goto done;
-		if (pf_test_state_icmp(direction, ifp, h, ih))
+		if (pf_test_state_icmp(direction, ifp, h, &ih))
 			action = PF_PASS;
 		else
-			action = pf_test_icmp(direction, ifp, h, ih);
+			action = pf_test_icmp(direction, ifp, h, &ih);
 		break;
 	}
 
