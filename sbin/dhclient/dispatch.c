@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.8 2004/02/23 18:21:15 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.9 2004/02/23 18:29:33 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -81,9 +81,6 @@ discover_interfaces(int state)
 	int ir;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
-#ifdef ALIAS_NAMES_PERMUTED
-	char *s;
-#endif
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
