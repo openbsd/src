@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.7 2002/10/17 15:14:57 jason Exp $
+#	$OpenBSD: mkioctls,v 1.8 2002/11/26 13:45:17 mickey Exp $
 
 #
 # Copyright (c) 1994
@@ -49,7 +49,20 @@ BEGIN {
 	print "#include <sys/termios.h>"
 	print "#include <netinet/ip_ipsp.h>"
 	print "#include <net/if_enc.h>"
+	print "#include <sys/disklabel.h>"
+	print "#include <sys/ataio.h>"
 	print "#include <sys/audioio.h>"
+	print "#include <sys/cdio.h>"
+	print "#include <sys/chio.h>"
+	print "#include <sys/dkio.h>"
+	print "#include <sys/filio.h>"
+	print "#include <sys/midiio.h>"
+	print "#include <sys/mtio.h>"
+	print "#include <sys/pciio.h>"
+	print "#include <sys/radioio.h>"
+	print "#include <sys/scanio.h>"
+	print "#include <sys/scsiio.h>"
+	print "#include <dev/wscons/wsconsio.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print ""
@@ -57,34 +70,24 @@ BEGIN {
 	print "ioctlname(val)"
 	print "\tunsigned long val;"
 	print "{"
+	print "\tswitch (val) {"
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(TIO|FIO|SIO|OSIO)[A-Z]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*(ATAIO|AUDIO_|CDIO|CHIO|DIOC|MIDI_|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|PCIOC|RIOC|SCIOC|OSCIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z]*[ 	]*_IO/ {
 	
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
 		if ($i ~ /define/)
 			break;
 	++i;
-	# 
-	printf("\tif (val == %s)\n\t\treturn (\"%s\");\n", $i, $i);
-
-}
-
-/^#[ 	]*define[ 	]*(AUDIO_)[A-Z]*[ 	]*_IO/ {
-	
-	# find where the name starts
-	for (i = 1; i <= NF; i++)
-		if ($i ~ /define/)
-			break;
-	++i;
-	# 
-	printf("\tif (val == %s)\n\t\treturn (\"%s\");\n", $i, $i);
+	ioc[$i] = 0;
 }
 
 END {
-	print "\n\treturn (NULL);"
+	for(i in ioc)
+		printf("\tcase %s:\t\treturn (\"%s\");\n", i, i);
+	print "\tdefault:\t\treturn (NULL);\n\t}"
 	print "}"
 }
 '
