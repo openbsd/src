@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.1 2002/01/04 09:25:35 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -171,6 +171,7 @@ __devitem({-usbs-},usbs,make USB devices)dnl
 _mkdev(usbs,usbs,{-dnl
 _dl({-usb-},{-usb0 usb1-},
 {-urio-},{-urio-},
+{-uscan-},{-uscanner0-},
 {-uhid-},{-uhid0 uhid1 uhid2 uhid3-},
 {-ulpt-},{-ulpt0 ulpt1-},
 {-ugen-},{-ugen0 ugen1-},
@@ -389,6 +390,8 @@ __devitem(utty,utty*,Serial ports)dnl
 _mcdev({-utty-},utty*,{-utty-},{-major_utty_c-},660)dnl
 __devitem(urio,urio*,Diamond Multimedia Rio 500)dnl
 _mcdev({-urio-},urio*,{-urio-},{-major_urio_c-},660)dnl
+__devitem(uscan,uscanner*,Scanners)dnl
+_mcdev({-uscan-},uscanner*,{-uscanner-},{-major_uscan_c-},660)dnl
 __devitem(ugen,ugen*,Generic device)dnl
 _mkdev(ugen,ugen*,{-n=Mult($U,16)
 	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -566,7 +569,7 @@ divert(0)dnl
 #
 show_vers()dnl <-- now that all files are included, show versions
 #
-#	$OpenBSD: MAKEDEV.mi,v 1.1 2002/01/04 09:25:35 todd Exp $
+#	$OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp $
 dnl
 divert(2)dnl
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
