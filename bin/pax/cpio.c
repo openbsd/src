@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.6 2001/05/16 03:04:56 mickey Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.7 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.6 2001/05/16 03:04:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: cpio.c,v 1.7 2001/05/26 00:32:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -258,7 +258,7 @@ rd_ln_nm(arcn)
 	 */
 	if ((arcn->sb.st_size == 0) ||
 	    (arcn->sb.st_size >= sizeof(arcn->ln_name))) {
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		paxwarn(1, "Cpio link name length is invalid: %lu",
 		    arcn->sb.st_size);
 #		else
@@ -361,7 +361,7 @@ cpio_rd(arcn, buf)
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime, sizeof(hd->c_mtime),
 	    OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
-#	ifdef NET2_STAT
+#	ifdef LONG_OFF_T
 	arcn->sb.st_size = (off_t)asc_ul(hd->c_filesize,sizeof(hd->c_filesize),
 	    OCT);
 #	else
@@ -478,7 +478,7 @@ cpio_wr(arcn)
 		/*
 		 * set data size for file data
 		 */
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		if (ul_asc((u_long)arcn->sb.st_size, hd->c_filesize,
 		    sizeof(hd->c_filesize), OCT)) {
 #		else
@@ -688,7 +688,7 @@ vcpio_rd(arcn, buf)
 	arcn->sb.st_gid = (gid_t)asc_ul(hd->c_gid, sizeof(hd->c_gid), HEX);
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime,sizeof(hd->c_mtime),HEX);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
-#	ifdef NET2_STAT
+#	ifdef LONG_OFF_T
 	arcn->sb.st_size = (off_t)asc_ul(hd->c_filesize,
 	    sizeof(hd->c_filesize), HEX);
 #	else
@@ -845,7 +845,7 @@ vcpio_wr(arcn)
 		 * much to pad.
 		 */
 		arcn->pad = VCPIO_PAD(arcn->sb.st_size);
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		if (ul_asc((u_long)arcn->sb.st_size, hd->c_filesize,
 		    sizeof(hd->c_filesize), HEX)) {
 #		else

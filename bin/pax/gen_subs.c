@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.10 2001/05/16 03:04:57 mickey Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.11 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.10 2001/05/16 03:04:57 mickey Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.11 2001/05/26 00:32:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,14 +134,14 @@ ls_list(arcn, now, fp)
 	 * print device id's for devices, or sizes for other nodes
 	 */
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		(void)fprintf(fp, "%4u,%4u ", MAJOR(sbp->st_rdev),
 #		else
 		(void)fprintf(fp, "%4lu,%4lu ", (unsigned long)MAJOR(sbp->st_rdev),
 #		endif
 		    (unsigned long)MINOR(sbp->st_rdev));
 	else {
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		(void)fprintf(fp, "%9lu ", sbp->st_size);
 #		else
 		(void)fprintf(fp, "%9qu ", sbp->st_size);
@@ -315,7 +315,7 @@ ul_asc(val, str, len, base)
 	return(0);
 }
 
-#ifndef NET2_STAT
+#ifndef LONG_OFF_T
 /*
  * asc_uqd()
  *	convert hex/octal character string into a u_quad_t. We do not have to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.7 1997/08/17 23:05:09 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.8 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.7 1997/08/17 23:05:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.8 2001/05/26 00:32:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,11 +152,7 @@ usr_add(str)
 		}
 		uid = (uid_t)pw->pw_uid;
 	} else
-#		ifdef NET2_STAT
-		uid = (uid_t)atoi(str+1);
-#		else
 		uid = (uid_t)strtoul(str+1, NULL, 10);
-#		endif
 	endpwent();
 
 	/*
@@ -265,11 +261,7 @@ grp_add(str)
 		}
 		gid = (gid_t)gr->gr_gid;
 	} else
-#		ifdef NET2_STAT
-		gid = (gid_t)atoi(str+1);
-#		else
 		gid = (gid_t)strtoul(str+1, NULL, 10);
-#		endif
 	endgrent();
 
 	/*

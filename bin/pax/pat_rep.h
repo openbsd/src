@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.h,v 1.2 1996/06/23 14:20:38 deraadt Exp $	*/
+/*	$OpenBSD: pat_rep.h,v 1.3 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: pat_rep.h,v 1.3 1995/03/21 09:07:35 cgd Exp $	*/
 
 /*-
@@ -45,11 +45,7 @@
  */
 typedef struct replace {
 	char		*nstr;	/* the new string we will substitute with */
-#	ifdef NET2_REGEX
-	regexp		*rcmp;	/* compiled regular expression used to match */
-#	else
 	regex_t		rcmp;	/* compiled regular expression used to match */
-#	endif
 	int		flgs;	/* print conversions? global in operation?  */
 #define	PRNT		0x1
 #define	GLOB		0x2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.15 2001/05/19 15:31:20 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.16 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.15 2001/05/19 15:31:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.16 2001/05/26 00:32:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,11 +126,7 @@ ftree_start()
 	else
 		ftsopts |= FTS_PHYSICAL;
 	if (Hflag)
-#	ifdef NET2_FTS
-		paxwarn(0, "The -H flag is not supported on this version");
-#	else
 		ftsopts |= FTS_COMFOLLOW;
-#	endif
 	if (Xflag)
 		ftsopts |= FTS_XDEV;
 
@@ -430,13 +426,8 @@ next_file(arcn)
 			 * remember to force the time (this is -t on a read
 			 * directory, not a created directory).
 			 */
-#			ifdef NET2_FTS
-			if (!tflag || (get_atdir(ftent->fts_statb.st_dev,
-			    ftent->fts_statb.st_ino, &mtime, &atime) < 0))
-#			else
 			if (!tflag || (get_atdir(ftent->fts_statp->st_dev,
 			    ftent->fts_statp->st_ino, &mtime, &atime) < 0))
-#			endif
 				continue;
 			set_ftime(ftent->fts_path, mtime, atime, 1);
 			continue;
@@ -447,28 +438,16 @@ next_file(arcn)
 			paxwarn(1,"File system cycle found at %s",ftent->fts_path);
 			continue;
 		case FTS_DNR:
-#			ifdef NET2_FTS
-			syswarn(1, errno,
-#			else
 			syswarn(1, ftent->fts_errno,
-#			endif
 			    "Unable to read directory %s", ftent->fts_path);
 			continue;
 		case FTS_ERR:
-#			ifdef NET2_FTS
-			syswarn(1, errno,
-#			else
 			syswarn(1, ftent->fts_errno,
-#			endif
 			    "File system traversal error");
 			continue;
 		case FTS_NS:
 		case FTS_NSOK:
-#			ifdef NET2_FTS
-			syswarn(1, errno,
-#			else
 			syswarn(1, ftent->fts_errno,
-#			endif
 			    "Unable to access %s", ftent->fts_path);
 			continue;
 		}
@@ -481,11 +460,7 @@ next_file(arcn)
 		arcn->pad = 0;
 		arcn->ln_nlen = 0;
 		arcn->ln_name[0] = '\0';
-#		ifdef NET2_FTS
-		arcn->sb = ftent->fts_statb;
-#		else
 		memcpy(&arcn->sb, ftent->fts_statp, sizeof(arcn->sb));
-#		endif
 
 		/*
 		 * file type based set up and copy into the arcn struct

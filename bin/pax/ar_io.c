@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.21 2001/05/16 03:04:54 mickey Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.22 2001/05/26 00:32:20 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.21 2001/05/16 03:04:54 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.22 2001/05/26 00:32:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -398,7 +398,7 @@ ar_close()
 	 * could have written anything yet.
 	 */
 	if (frmt == NULL) {
-#	ifdef NET2_STAT
+#	ifdef LONG_OFF_T
 		(void)fprintf(listf, "%s: unknown format, %lu bytes skipped.\n",
 #	else
 		(void)fprintf(listf, "%s: unknown format, %qu bytes skipped.\n",
@@ -413,7 +413,7 @@ ar_close()
 		(void)fprintf(listf, "%qu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
 	else if (strcmp(NM_TAR, argv0) != 0)
 		(void)fprintf(listf,
-#	ifdef NET2_STAT
+#	ifdef LONG_OFF_T
 		    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
 #	else
 		    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.17 2001/05/16 03:04:59 mickey Exp $	*/
+/*	$OpenBSD: tar.c,v 1.18 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.17 2001/05/16 03:04:59 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.18 2001/05/26 00:32:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ static char rcsid[] = "$OpenBSD: tar.c,v 1.17 2001/05/16 03:04:59 mickey Exp $";
 static u_long tar_chksm __P((register char *, register int));
 static char *name_split __P((register char *, register int));
 static int ul_oct __P((u_long, register char *, register int, int));
-#ifndef NET2_STAT
+#ifndef LONG_OFF_T
 static int uqd_oct __P((u_quad_t, register char *, register int, int));
 #endif
 
@@ -225,7 +225,7 @@ ul_oct(val, str, len, term)
 	return(0);
 }
 
-#ifndef NET2_STAT
+#ifndef LONG_OFF_T
 /*
  * uqd_oct()
  *	convert an u_quad_t to an octal string. one of many oddball field
@@ -462,7 +462,7 @@ tar_rd(arcn, buf)
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 	arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
-#ifdef NET2_STAT
+#ifdef LONG_OFF_T
 	arcn->sb.st_size = (off_t)asc_ul(hd->size, sizeof(hd->size), OCT);
 #else
 	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
@@ -672,7 +672,7 @@ tar_wr(arcn)
 		 */
 		hd->linkflag = AREGTYPE;
 		memset(hd->linkname, 0, sizeof(hd->linkname));
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
 		    sizeof(hd->size), 1)) {
 #		else
@@ -855,7 +855,7 @@ ustar_rd(arcn, buf)
 	 */
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
-#ifdef NET2_STAT
+#ifdef LONG_OFF_T
 	arcn->sb.st_size = (off_t)asc_ul(hd->size, sizeof(hd->size), OCT);
 #else
 	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
@@ -1095,7 +1095,7 @@ ustar_wr(arcn)
 		memset(hd->devmajor, 0, sizeof(hd->devmajor));
 		memset(hd->devminor, 0, sizeof(hd->devminor));
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
-#		ifdef NET2_STAT
+#		ifdef LONG_OFF_T
 		if (ul_oct((u_long)arcn->sb.st_size, hd->size,
 		    sizeof(hd->size), 3)) {
 #		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.47 2001/02/10 17:21:14 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.48 2001/05/26 00:32:21 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.47 2001/02/10 17:21:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.48 2001/05/26 00:32:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1480,7 +1480,7 @@ str_offt(val)
 	char *expr;
 	off_t num, t;
 
-#	ifdef NET2_STAT
+#	ifdef LONG_OFF_T
 	num = strtol(val, &expr, 0);
 	if ((num == LONG_MAX) || (num <= 0) || (expr == val))
 #	else
