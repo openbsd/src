@@ -1,4 +1,4 @@
-/*	$Id: genassym.c,v 1.2 1995/11/07 08:50:18 deraadt Exp $ */
+/*	$OpenBSD: genassym.c,v 1.3 1996/04/28 10:57:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -68,8 +68,6 @@
 #define _VA_LIST_ _BSD_VA_LIST_
 #define _PTRDIFF_T_ _BSD_PTRDIFF_T_
 
-#define _KERNEL
-
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/map.h>
@@ -93,7 +91,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-#include <unistd.h>
 
 extern int errno;
 
