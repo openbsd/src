@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.174 2003/11/08 00:45:34 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.175 2003/12/11 13:13:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -725,6 +725,9 @@ struct pf_pdesc {
 #endif /* INET6 */
 		void			*any;
 	} hdr;
+	struct pf_addr   baddr;         /* address before translation */
+	struct pf_addr   naddr;         /* address after translation */
+	struct pf_rule	*nat_rule;	/* nat/rdr rule applied to packet */
 	struct pf_addr	*src;
 	struct pf_addr	*dst;
 	u_int16_t	*ip_sum;

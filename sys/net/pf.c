@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.405 2003/12/08 07:07:35 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.406 2003/12/11 13:13:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2187,7 +2187,6 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
-	struct pf_addr		 baddr, naddr;
 	struct tcphdr		*th = pd->hdr.tcp;
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
@@ -2209,26 +2208,28 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(pd, m, off, PF_OUT, ifp,
 		    saddr, th->th_sport, daddr, th->th_dport,
-		    &naddr, &nport)) != NULL) {
-			PF_ACPY(&baddr, saddr, af);
+		    &pd->naddr, &nport)) != NULL) {
+			PF_ACPY(&pd->baddr, saddr, af);
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			    &th->th_sum, &naddr, nport, 0, af);
+			    &th->th_sum, &pd->naddr, nport, 0, af);
 			rewrite++;
 			if (nat->natpass)
 				r = NULL;
+			pd->nat_rule = nat;
 		}
 	} else {
 		bport = nport = th->th_dport;
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(pd, m, off, PF_IN, ifp, saddr,
 		    th->th_sport, daddr, th->th_dport,
-		    &naddr, &nport)) != NULL) {
-			PF_ACPY(&baddr, daddr, af);
+		    &pd->naddr, &nport)) != NULL) {
+			PF_ACPY(&pd->baddr, daddr, af);
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
-			    &th->th_sum, &naddr, nport, 0, af);
+			    &th->th_sum, &pd->naddr, nport, 0, af);
 			rewrite++;
 			if (rdr->natpass)
 				r = NULL;
+			pd->nat_rule = rdr;
 		}
 	}
 
@@ -2314,11 +2315,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		/* undo NAT changes, if they have taken place */
 		if (nat != NULL) {
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			    &th->th_sum, &baddr, bport, 0, af);
+			    &th->th_sum, &pd->baddr, bport, 0, af);
 			rewrite++;
 		} else if (rdr != NULL) {
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
-			    &th->th_sum, &baddr, bport, 0, af);
+			    &th->th_sum, &pd->baddr, bport, 0, af);
 			rewrite++;
 		}
 		if (((r->rule_flag & PFRULE_RETURNRST) ||
@@ -2386,7 +2387,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->ext.addr, daddr, af);
 			s->ext.port = th->th_dport;
 			if (nat != NULL) {
-				PF_ACPY(&s->lan.addr, &baddr, af);
+				PF_ACPY(&s->lan.addr, &pd->baddr, af);
 				s->lan.port = bport;
 			} else {
 				PF_ACPY(&s->lan.addr, &s->gwy.addr, af);
@@ -2398,7 +2399,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->ext.addr, saddr, af);
 			s->ext.port = th->th_sport;
 			if (rdr != NULL) {
-				PF_ACPY(&s->gwy.addr, &baddr, af);
+				PF_ACPY(&s->gwy.addr, &pd->baddr, af);
 				s->gwy.port = bport;
 			} else {
 				PF_ACPY(&s->gwy.addr, &s->lan.addr, af);
@@ -2466,11 +2467,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->src.state = PF_TCPS_PROXY_SRC;
 			if (nat != NULL)
 				pf_change_ap(saddr, &th->th_sport,
-				    pd->ip_sum, &th->th_sum, &baddr,
+				    pd->ip_sum, &th->th_sum, &pd->baddr,
 				    bport, 0, af);
 			else if (rdr != NULL)
 				pf_change_ap(daddr, &th->th_dport,
-				    pd->ip_sum, &th->th_sum, &baddr,
+				    pd->ip_sum, &th->th_sum, &pd->baddr,
 				    bport, 0, af);
 			s->src.seqhi = arc4random();
 			/* Find mss option */
@@ -2499,7 +2500,6 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
-	struct pf_addr		 baddr, naddr;
 	struct udphdr		*uh = pd->hdr.udp;
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
@@ -2520,26 +2520,28 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(pd, m, off, PF_OUT, ifp,
 		    saddr, uh->uh_sport, daddr, uh->uh_dport,
-		    &naddr, &nport)) != NULL) {
-			PF_ACPY(&baddr, saddr, af);
+		    &pd->naddr, &nport)) != NULL) {
+			PF_ACPY(&pd->baddr, saddr, af);
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
-			    &uh->uh_sum, &naddr, nport, 1, af);
+			    &uh->uh_sum, &pd->naddr, nport, 1, af);
 			rewrite++;
 			if (nat->natpass)
 				r = NULL;
+			pd->nat_rule = nat;
 		}
 	} else {
 		bport = nport = uh->uh_dport;
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(pd, m, off, PF_IN, ifp, saddr,
-		    uh->uh_sport, daddr, uh->uh_dport, &naddr, &nport))
+		    uh->uh_sport, daddr, uh->uh_dport, &pd->naddr, &nport))
 		    != NULL) {
-			PF_ACPY(&baddr, daddr, af);
+			PF_ACPY(&pd->baddr, daddr, af);
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
-			    &uh->uh_sum, &naddr, nport, 1, af);
+			    &uh->uh_sum, &pd->naddr, nport, 1, af);
 			rewrite++;
 			if (rdr->natpass)
 				r = NULL;
+			pd->nat_rule = rdr;
 		}
 	}
 
@@ -2621,11 +2623,11 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		/* undo NAT changes, if they have taken place */
 		if (nat != NULL) {
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
-			    &uh->uh_sum, &baddr, bport, 1, af);
+			    &uh->uh_sum, &pd->baddr, bport, 1, af);
 			rewrite++;
 		} else if (rdr != NULL) {
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
-			    &uh->uh_sum, &baddr, bport, 1, af);
+			    &uh->uh_sum, &pd->baddr, bport, 1, af);
 			rewrite++;
 		}
 		if ((af == AF_INET) && r->return_icmp)
@@ -2677,7 +2679,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->ext.addr, daddr, af);
 			s->ext.port = uh->uh_dport;
 			if (nat != NULL) {
-				PF_ACPY(&s->lan.addr, &baddr, af);
+				PF_ACPY(&s->lan.addr, &pd->baddr, af);
 				s->lan.port = bport;
 			} else {
 				PF_ACPY(&s->lan.addr, &s->gwy.addr, af);
@@ -2689,7 +2691,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->ext.addr, saddr, af);
 			s->ext.port = uh->uh_sport;
 			if (rdr != NULL) {
-				PF_ACPY(&s->gwy.addr, &baddr, af);
+				PF_ACPY(&s->gwy.addr, &pd->baddr, af);
 				s->gwy.port = bport;
 			} else {
 				PF_ACPY(&s->gwy.addr, &s->lan.addr, af);
@@ -2724,7 +2726,6 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
-	struct pf_addr		 baddr, naddr;
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	u_short			 reason;
@@ -2773,48 +2774,50 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(pd, m, off, PF_OUT, ifp, saddr, 0,
-		    daddr, 0, &naddr, NULL)) != NULL) {
-			PF_ACPY(&baddr, saddr, af);
+		    daddr, 0, &pd->naddr, NULL)) != NULL) {
+			PF_ACPY(&pd->baddr, saddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
-				    naddr.v4.s_addr, 0);
+				    pd->naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &naddr, 0);
+				    &pd->naddr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
 			}
 			if (nat->natpass)
 				r = NULL;
+			pd->nat_rule = nat;
 		}
 	} else {
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(pd, m, off, PF_IN, ifp, saddr, 0,
-		    daddr, 0, &naddr, NULL)) != NULL) {
-			PF_ACPY(&baddr, daddr, af);
+		    daddr, 0, &pd->naddr, NULL)) != NULL) {
+			PF_ACPY(&pd->baddr, daddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, naddr.v4.s_addr, 0);
+				    pd->ip_sum, pd->naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(daddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &naddr, 0);
+				    &pd->naddr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
 			}
 			if (rdr->natpass)
 				r = NULL;
+			pd->nat_rule = rdr;
 		}
 	}
 
@@ -2923,7 +2926,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->ext.addr, daddr, af);
 			s->ext.port = icmpid;
 			if (nat != NULL)
-				PF_ACPY(&s->lan.addr, &baddr, af);
+				PF_ACPY(&s->lan.addr, &pd->baddr, af);
 			else
 				PF_ACPY(&s->lan.addr, &s->gwy.addr, af);
 			s->lan.port = icmpid;
@@ -2933,7 +2936,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->ext.addr, saddr, af);
 			s->ext.port = icmpid;
 			if (rdr != NULL)
-				PF_ACPY(&s->gwy.addr, &baddr, af);
+				PF_ACPY(&s->gwy.addr, &pd->baddr, af);
 			else
 				PF_ACPY(&s->gwy.addr, &s->lan.addr, af);
 			s->gwy.port = icmpid;
@@ -2969,7 +2972,6 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
-	struct pf_addr		 baddr, naddr;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
 	struct pf_tag		*pftag = NULL;
@@ -2980,44 +2982,46 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(pd, m, off, PF_OUT, ifp, saddr, 0,
-		    daddr, 0, &naddr, NULL)) != NULL) {
-			PF_ACPY(&baddr, saddr, af);
+		    daddr, 0, &pd->naddr, NULL)) != NULL) {
+			PF_ACPY(&pd->baddr, saddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
-				    naddr.v4.s_addr, 0);
+				    pd->naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(saddr, &naddr, af);
+				PF_ACPY(saddr, &pd->naddr, af);
 				break;
 #endif /* INET6 */
 			}
 			if (nat->natpass)
 				r = NULL;
+			pd->nat_rule = nat;
 		}
 	} else {
 		/* check incoming packet for BINAT/RDR */
 		if ((rdr = pf_get_translation(pd, m, off, PF_IN, ifp, saddr, 0,
-		    daddr, 0, &naddr, NULL)) != NULL) {
-			PF_ACPY(&baddr, daddr, af);
+		    daddr, 0, &pd->naddr, NULL)) != NULL) {
+			PF_ACPY(&pd->baddr, daddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, naddr.v4.s_addr, 0);
+				    pd->ip_sum, pd->naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(daddr, &naddr, af);
+				PF_ACPY(daddr, &pd->naddr, af);
 				break;
 #endif /* INET6 */
 			}
 			if (rdr->natpass)
 				r = NULL;
+			pd->nat_rule = rdr;
 		}
 	}
 
@@ -3088,12 +3092,12 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&a->v4.s_addr, pd->ip_sum,
-				    baddr.v4.s_addr, 0);
+				    pd->baddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(a, &baddr, af);
+				PF_ACPY(a, &pd->baddr, af);
 				break;
 #endif /* INET6 */
 			}
@@ -3145,14 +3149,14 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_ACPY(&s->gwy.addr, saddr, af);
 			PF_ACPY(&s->ext.addr, daddr, af);
 			if (nat != NULL)
-				PF_ACPY(&s->lan.addr, &baddr, af);
+				PF_ACPY(&s->lan.addr, &pd->baddr, af);
 			else
 				PF_ACPY(&s->lan.addr, &s->gwy.addr, af);
 		} else {
 			PF_ACPY(&s->lan.addr, daddr, af);
 			PF_ACPY(&s->ext.addr, saddr, af);
 			if (rdr != NULL)
-				PF_ACPY(&s->gwy.addr, &baddr, af);
+				PF_ACPY(&s->gwy.addr, &pd->baddr, af);
 			else
 				PF_ACPY(&s->gwy.addr, &s->lan.addr, af);
 		}
@@ -4851,7 +4855,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
 	struct ip	  *h;
-	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr;
+	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr, *nr;
 	struct pf_state	  *s = NULL;
 	struct pf_ruleset *ruleset = NULL;
 	struct pf_pdesc	   pd;
@@ -4892,6 +4896,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	pd.src = (struct pf_addr *)&h->ip_src;
 	pd.dst = (struct pf_addr *)&h->ip_dst;
+	PF_ACPY(&pd.baddr, dir == PF_OUT ? pd.src : pd.dst, AF_INET);
 	pd.ip_sum = &h->ip_sum;
 	pd.proto = h->ip_p;
 	pd.af = AF_INET;
@@ -5070,20 +5075,41 @@ done:
 				s->nat_rule.ptr->bytes += pd.tot_len;
 			}
 		}
+		tr = r;
+		nr = (s != NULL) ? s->nat_rule.ptr : pd.nat_rule;
+		if (nr != NULL) {
+			struct pf_addr *x;
+			/*
+			 * XXX: we need to make sure that the addresses
+			 * passed to pfr_update_stats() are the same than
+			 * the addresses used during matching (pfr_match)
+			 */
+			if (r == &pf_default_rule) {
+				tr = nr;
+				x = (s == NULL || s->direction == dir) ?
+				    &pd.baddr : &pd.naddr;
+			} else
+				x = (s == NULL || s->direction == dir) ?
+				    &pd.naddr : &pd.baddr;
+			if (x == &pd.baddr || s == NULL) {
+				/* we need to change the address */
+				if (dir == PF_OUT)
+					pd.src = x;
+				else
+					pd.dst = x;
+			}
+		}
+		if (tr->src.addr.type == PF_ADDR_TABLE)
+			pfr_update_stats(tr->src.addr.p.tbl, (s == NULL ||
+			    s->direction == dir) ? pd.src : pd.dst, pd.af,
+			    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
+			    tr->src.not);
+		if (tr->dst.addr.type == PF_ADDR_TABLE)
+			pfr_update_stats(tr->dst.addr.p.tbl, (s == NULL ||
+			    s->direction == dir) ? pd.dst : pd.src, pd.af,
+			    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
+			    tr->dst.not);
 	}
-	tr = r;
-	if (r == &pf_default_rule && s != NULL && s->nat_rule.ptr != NULL)
-		tr = s->nat_rule.ptr;
-	if (tr->src.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(tr->src.addr.p.tbl,
-		    (s == NULL || s->direction == dir) ? pd.src : pd.dst, pd.af,
-		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    tr->src.not);
-	if (tr->dst.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(tr->dst.addr.p.tbl,
-		    (s == NULL || s->direction == dir) ? pd.dst : pd.src, pd.af,
-		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    tr->dst.not);
 
 
 	if (action == PF_SYNPROXY_DROP) {
@@ -5105,7 +5131,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
 	struct ip6_hdr	  *h;
-	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr;
+	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr, *nr;
 	struct pf_state	  *s = NULL;
 	struct pf_ruleset *ruleset = NULL;
 	struct pf_pdesc    pd;
@@ -5138,6 +5164,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	pd.src = (struct pf_addr *)&h->ip6_src;
 	pd.dst = (struct pf_addr *)&h->ip6_dst;
+	PF_ACPY(&pd.baddr, dir == PF_OUT ? pd.src : pd.dst, AF_INET6);
 	pd.ip_sum = NULL;
 	pd.af = AF_INET6;
 	pd.tos = 0;
@@ -5335,20 +5362,41 @@ done:
 				s->nat_rule.ptr->bytes += pd.tot_len;
 			}
 		}
+		tr = r;
+		nr = (s != NULL) ? s->nat_rule.ptr : pd.nat_rule;
+		if (nr != NULL) {
+			struct pf_addr *x;
+			/*
+			 * XXX: we need to make sure that the addresses
+			 * passed to pfr_update_stats() are the same than
+			 * the addresses used during matching (pfr_match)
+			 */
+			if (r == &pf_default_rule) {
+				tr = nr;
+				x = (s == NULL || s->direction == dir) ?
+				    &pd.baddr : &pd.naddr;
+			} else {
+				x = (s == NULL || s->direction == dir) ?
+				    &pd.naddr : &pd.baddr;
+			}
+			if (x == &pd.baddr || s == NULL) {
+				if (dir == PF_OUT)
+					pd.src = x;
+				else
+					pd.dst = x;
+			}
+		}
+		if (tr->src.addr.type == PF_ADDR_TABLE)
+			pfr_update_stats(tr->src.addr.p.tbl, (s == NULL ||
+			    s->direction == dir) ? pd.src : pd.dst, pd.af,
+			    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
+			    tr->src.not);
+		if (tr->dst.addr.type == PF_ADDR_TABLE)
+			pfr_update_stats(tr->dst.addr.p.tbl, (s == NULL ||
+			    s->direction == dir) ? pd.dst : pd.src, pd.af,
+			    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
+			    tr->dst.not);
 	}
-	tr = r;
-	if (r == &pf_default_rule && s != NULL && s->nat_rule.ptr != NULL)
-		tr = s->nat_rule.ptr;
-	if (tr->src.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(tr->src.addr.p.tbl,
-		    (s == NULL || s->direction == dir) ? pd.src : pd.dst, pd.af,
-		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    tr->src.not);
-	if (tr->dst.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(tr->dst.addr.p.tbl,
-		    (s == NULL || s->direction == dir) ? pd.dst : pd.src, pd.af,
-		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    tr->dst.not);
 
 
 	if (action == PF_SYNPROXY_DROP) {
