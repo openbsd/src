@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.13 2005/03/10 08:30:56 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.14 2005/03/11 17:45:28 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -841,6 +841,8 @@ ath_reset(struct ath_softc *sc)
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
 			__func__, status);
 	}
+	/* In case channel changed, save as a node channel */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	ath_hal_intrset(ah, sc->sc_imask);
 	if (ath_startrecv(sc) != 0)	/* restart recv */
 		if_printf(ifp, "%s: unable to start recv logic\n", __func__);
@@ -1091,8 +1093,14 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
 			if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
-			    (IFF_RUNNING|IFF_UP))
-				ath_init(ifp);		/* XXX lose error */
+			    (IFF_RUNNING|IFF_UP)) {
+				struct ieee80211com *ic = &sc->sc_ic;
+
+				if (ic->ic_opmode != IEEE80211_M_MONITOR)
+					ath_init(ifp);	/* XXX lose error */
+				else
+					ath_reset(sc);
+			}
 			error = 0;
 		}
 		break;
@@ -2934,7 +2942,8 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_CHANNEL *chans;
 	int i, ix, nchan;
-
+	
+	sc->sc_nchan = 0;
 	chans = malloc(IEEE80211_CHAN_MAX * sizeof(HAL_CHANNEL),
 			M_TEMP, M_NOWAIT);
 	if (chans == NULL) {
@@ -2972,8 +2981,20 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
 			/* channels overlap; e.g. 11g and 11b */
 			ic->ic_channels[ix].ic_flags |= c->channelFlags;
 		}
+		/* count valid channels */
+		sc->sc_nchan++;
 	}
 	free(chans, M_TEMP);
+	
+	if (sc->sc_nchan < 1) {
+		if_printf(ifp, "no valid channels for regdomain %s\n",
+		    ieee80211_regdomain2name(ath_regdomain));
+		return ENOENT;
+	}
+
+	/* set an initial channel */
+	ic->ic_ibss_chan = &ic->ic_channels[0];
+
 	return 0;
 }
 

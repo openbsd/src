@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.5 2005/03/03 16:39:54 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.6 2005/03/11 17:45:28 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -228,6 +228,7 @@ struct ath_softc {
 				sc_hasveol  : 1,/* tx VEOL support */
 				sc_probing  : 1;/* probing AP on beacon miss */
 						/* rate tables */
+	u_int			sc_nchan;	/* number of valid channels */
 	const HAL_RATE_TABLE	*sc_rates[IEEE80211_MODE_MAX];
 	const HAL_RATE_TABLE	*sc_currates;	/* current rate table */
 	enum ieee80211_phymode	sc_curmode;	/* current phy mode */
