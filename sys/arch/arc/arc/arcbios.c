@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.3 1996/09/15 09:46:06 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.4 1996/09/24 19:37:23 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -173,11 +173,6 @@ bios_configure_memory()
 
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	while(descr != 0) {
-		sprintf(buf, "mem %d, 0x%x, 0x%x\n",
-			descr->Type,
-			descr->BasePage * 4096,
-			descr->PageCount * 4096);
-		bios_putstring(buf);
 
 		seg_start = descr->BasePage * 4096;
 		seg_end = seg_start + descr->PageCount * 4096;
@@ -226,6 +221,7 @@ bios_configure_memory()
 		descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	}
 
+#if 0
 	for( i = 0; i < MAXMEMSEGS; i++) {
 	    if(mem_layout[i].mem_size) {
 		sprintf(buf, "MEM %d, 0x%x, 0x%x\n",i,
@@ -234,6 +230,7 @@ bios_configure_memory()
 		bios_putstring(buf);
 	    }
 	}
+#endif
 }
 
 /*
@@ -298,3 +295,4 @@ bios_display_info(xpos, ypos, xsize, ysize)
 	*xsize = displayinfo.CursorMaxXPosition;
 	*ysize = displayinfo.CursorMaxYPosition;
 }
+

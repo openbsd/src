@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 1996/09/20 23:17:01 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.8 1996/09/24 19:37:26 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -56,7 +56,7 @@ options 	INET		# Internet protocols
 options 	MACHINE_NONCONTIG # Support noncontigous memory.
 
 # Specify storage configuration (its a joke..)
-config		bsd	swap generic
+config		bsd	root on sd0
 
 #
 # Definition of system

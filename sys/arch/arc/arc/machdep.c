@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 1996/09/19 22:30:07 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1996/09/24 19:37:24 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.14 1996/09/19 22:30:07 pefo Exp $
+ *      $Id: machdep.c,v 1.15 1996/09/24 19:37:24 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -243,7 +243,7 @@ mips_init(argc, argv, code)
 #endif
 	if (argc > 1) {
 		for (i = 1; i < argc; i++) {
-			if(strncmp("OSLOADOPTIONS=",argv[i],14) == 0) {
+			if(strncasecmp("osloadoptions=",argv[i],14) == 0) {
 				for (cp = argv[i]+14; *cp; cp++) {
 					switch (*cp) {
 					case 'a': /* autoboot */

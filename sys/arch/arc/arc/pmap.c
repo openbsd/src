@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 1996/09/14 15:58:17 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 1996/09/24 19:37:25 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.4 1996/09/14 15:58:17 pefo Exp $
+ *      $Id: pmap.c,v 1.5 1996/09/24 19:37:25 pefo Exp $
  */
 
 /*
@@ -260,11 +260,11 @@ pmap_bootstrap(firstaddr)
 
 	for( i = 0; i < MAXMEMSEGS; i++) {
 		/* Adjust for the kernel exeption vectors and sys data area */
-		if(mem_layout[i].mem_start < 0x8000) { 
+		if(mem_layout[i].mem_start < 0x20000) { 
 			if((mem_layout[i].mem_start + mem_layout[i].mem_size) < 0x8000)
 				continue;	/* To small skip it */
-			mem_layout[i].mem_size -= 0x8000 - mem_layout[i].mem_start;
-			mem_layout[i].mem_start = 0x8000;  /* Adjust to be above vec's */
+			mem_layout[i].mem_size -= 0x20000 - mem_layout[i].mem_start;
+			mem_layout[i].mem_start = 0x20000;  /* Adjust to be above vec's */
 		}
 		/* Adjust for the kernel expansion area (bufs etc) */
 		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(_ftext)) && 
@@ -351,7 +351,7 @@ pmap_init(phys_start, phys_end)
 {
 
 #ifdef DEBUG
-	if (1 || pmapdebug & (PDB_FOLLOW|PDB_INIT))
+	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
 #ifdef MACHINE_NONCONTIG
 		printf("pmap_init(%lx, %lx)\n", avail_start, avail_end);
 #else

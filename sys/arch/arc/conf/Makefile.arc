@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.4 1996/08/26 10:52:24 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.5 1996/09/24 19:37:26 pefo Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -114,7 +114,7 @@ clean::
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${ARC}/arc/Locore.c ${CFILES} ${ARC}/arc/swapgeneric.c \
+	    ${ARC}/arc/Locore.c ${CFILES} \
 	    ioconf.c param.c
 
 symbols.sort: ${ARC}/arc/symbols.raw
