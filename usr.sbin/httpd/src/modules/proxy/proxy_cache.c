@@ -1533,19 +1533,19 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
 
 /* we have all the header information we need - write it to the cache file */
     c->version++;
-    ap_proxy_sec2hex(date, buff + 17 * (0));
+    ap_proxy_sec2hex(date, buff + 17 * (0), sizeof(buff) - 17 * 0);
     buff[17 * (1) - 1] = ' ';
-    ap_proxy_sec2hex(lmod, buff + 17 * (1));
+    ap_proxy_sec2hex(lmod, buff + 17 * (1), sizeof(buff) - 17 * 1);
     buff[17 * (2) - 1] = ' ';
-    ap_proxy_sec2hex(expc, buff + 17 * (2));
+    ap_proxy_sec2hex(expc, buff + 17 * (2), sizeof(buff) - 17 * 2);
     buff[17 * (3) - 1] = ' ';
-    ap_proxy_sec2hex(c->version, buff + 17 * (3));
+    ap_proxy_sec2hex(c->version, buff + 17 * (3), sizeof(buff) - 17 * 3);
     buff[17 * (4) - 1] = ' ';
-    ap_proxy_sec2hex(c->req_time, buff + 17 * (4));
+    ap_proxy_sec2hex(c->req_time, buff + 17 * (4), sizeof(buff) - 17 * 4);
     buff[17 * (5) - 1] = ' ';
-    ap_proxy_sec2hex(c->resp_time, buff + 17 * (5));
+    ap_proxy_sec2hex(c->resp_time, buff + 17 * (5), sizeof(buff) - 17 * 5);
     buff[17 * (6) - 1] = ' ';
-    ap_proxy_sec2hex(c->len, buff + 17 * (6));
+    ap_proxy_sec2hex(c->len, buff + 17 * (6), sizeof(buff) - 17 * 6);
     buff[17 * (7) - 1] = '\n';
     buff[17 * (7)] = '\0';
 
@@ -1575,7 +1575,8 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
                    ( (c_clen = ap_strtol(c_clen_str, NULL, 10)) > 0) ) {
                         ap_table_set(resp_hdrs, "Content-Length", c_clen_str);
                         c->len = c_clen;
-                        ap_proxy_sec2hex(c->len, buff + 17 * (6));
+                        ap_proxy_sec2hex(c->len, buff + 17 * (6),
+			    sizeof(buff) - 17 * 6);
                         buff[17 * (7) - 1] = '\n';
                         buff[17 * (7)] = '\0';
                 }
@@ -1740,7 +1741,7 @@ void ap_proxy_cache_tidy(cache_req *c)
 
         c->len = bc;
         ap_bflush(c->fp);
-        ap_proxy_sec2hex(c->len, buff);
+        ap_proxy_sec2hex(c->len, buff, sizeof(buff));
         curpos = lseek(ap_bfileno(c->fp, B_WR), 17 * 6, SEEK_SET);
         if (curpos == -1)
             ap_log_error(APLOG_MARK, APLOG_ERR, s,
