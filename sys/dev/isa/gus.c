@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.16 1998/05/13 10:25:13 provos Exp $	*/
+/*	$OpenBSD: gus.c,v 1.17 1998/08/20 08:37:47 provos Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -615,10 +615,10 @@ struct audio_hw_if gus_hw_if = {
 	gus_mixer_set_port,
 	gus_mixer_get_port,
 	gus_mixer_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-        NULL,
+	ad1848_malloc,
+	ad1848_free,
+	ad1848_round,
+	ad1848_mappage,
 	gus_get_props,
 };
 
@@ -650,10 +650,10 @@ static struct audio_hw_if gusmax_hw_if = {
 	gusmax_mixer_set_port,
 	gusmax_mixer_get_port,
 	gusmax_mixer_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	ad1848_malloc,
+	ad1848_free,
+	ad1848_round,
+	ad1848_mappage,
 	gusmax_get_props,
 };
 
@@ -3564,7 +3564,8 @@ gus_get_props(addr)
 	void *addr;
 {
 	struct gus_softc *sc = addr;
-	return sc->sc_recdrq == sc->sc_drq ? 0 : AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_MMAP |
+		(sc->sc_recdrq == sc->sc_drq ? 0 : AUDIO_PROP_FULLDUPLEX);
 }
 
 STATIC int
