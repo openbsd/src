@@ -1,4 +1,5 @@
-/*	$NetBSD: unistd.h,v 1.26 1995/11/22 23:07:19 cgd Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.6 1996/06/10 06:31:34 deraadt Exp $ */
+/*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -127,7 +128,7 @@ char	*getpass __P((const char *));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
-int	 iruserok __P((u_long, int, const char *, const char *));
+int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));

@@ -73,7 +73,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	struct hostent *hp;
 	struct sockaddr_in sin, from;
 	fd_set reads;
-	long oldmask;
+	int oldmask;
 	pid_t pid;
 	int s, lport, timo;
 	char c;
@@ -280,7 +280,7 @@ ruserok(rhost, superuser, ruser, luser)
  */
 int
 iruserok(raddr, superuser, ruser, luser)
-	u_long raddr;
+	u_int32_t raddr;
 	int superuser;
 	const char *ruser, *luser;
 {
