@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfa.c,v 1.7 2002/05/31 00:56:21 deraadt Exp $	*/
+/*	$OpenBSD: nfa.c,v 1.8 2002/05/31 22:49:29 deraadt Exp $	*/
 
 /* nfa - NFA construction routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/nfa.c,v 1.7 2002/05/31 00:56:21 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/nfa.c,v 1.8 2002/05/31 22:49:29 deraadt Exp $ */
 
 #include "flexdef.h"
 
@@ -215,7 +215,7 @@ int mach, variable_trail_rule, headcnt, trailcnt;
 	if ( continued_action )
 		--rule_linenum[num_rules];
 
-	sprintf( action_text, "case %d:\n", num_rules );
+	snprintf( action_text, sizeof action_text, "case %d:\n", num_rules );
 	add_action( action_text );
 
 	if ( variable_trail_rule )
@@ -247,14 +247,16 @@ int mach, variable_trail_rule, headcnt, trailcnt;
 
 			if ( headcnt > 0 )
 				{
-				sprintf( action_text, "%s = %s + %d;\n",
-				scanner_cp, scanner_bp, headcnt );
+				snprintf( action_text, sizeof action_text,
+					"%s = %s + %d;\n",
+					scanner_cp, scanner_bp, headcnt );
 				add_action( action_text );
 				}
 
 			else
 				{
-				sprintf( action_text, "%s -= %d;\n",
+				snprintf( action_text, sizeof action_text,
+					"%s -= %d;\n",
 					scanner_cp, trailcnt );
 				add_action( action_text );
 				}

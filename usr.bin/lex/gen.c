@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen.c,v 1.8 2002/05/31 00:56:21 deraadt Exp $	*/
+/*	$OpenBSD: gen.c,v 1.9 2002/05/31 22:49:29 deraadt Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.8 2002/05/31 00:56:21 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.9 2002/05/31 22:49:29 deraadt Exp $ */
 
 #include "flexdef.h"
 
@@ -605,17 +605,18 @@ int worry_about_NULs;
 	if ( worry_about_NULs && ! nultrans )
 		{
 		if ( useecs )
-			(void) sprintf( char_map,
+			(void) snprintf( char_map, sizeof char_map,
 				"(*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : %d)",
 					NUL_ec );
 		else
-			(void) sprintf( char_map,
+			(void) snprintf( char_map, sizeof char_map,
 				"(*yy_cp ? YY_SC_TO_UI(*yy_cp) : %d)", NUL_ec );
 		}
 
 	else
-		strcpy( char_map, useecs ?
-			"yy_ec[YY_SC_TO_UI(*yy_cp)]" : "YY_SC_TO_UI(*yy_cp)" );
+		strlcpy( char_map, useecs ?
+			"yy_ec[YY_SC_TO_UI(*yy_cp)]" : "YY_SC_TO_UI(*yy_cp)",
+			sizeof char_map );
 
 	if ( worry_about_NULs && nultrans )
 		{
@@ -712,7 +713,7 @@ void gen_NUL_trans()
 		{
 		char NUL_ec_str[20];
 
-		(void) sprintf( NUL_ec_str, "%d", NUL_ec );
+		(void) snprintf( NUL_ec_str, sizeof NUL_ec_str, "%d", NUL_ec );
 		gen_next_compressed_state( NUL_ec_str );
 
 		do_indent();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2002/05/31 00:56:21 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2002/05/31 22:49:29 deraadt Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -34,7 +34,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.7 2002/05/31 00:56:21 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.8 2002/05/31 22:49:29 deraadt Exp $ */
 
 
 #include "flexdef.h"
@@ -286,8 +286,8 @@ void check_options()
 			else
 				suffix = "c";
 
-			sprintf( outfile_path, outfile_template,
-				prefix, suffix );
+			snprintf( outfile_path, sizeof outfile_path,
+				outfile_template, prefix, suffix );
 
 			outfilename = outfile_path;
 			}
@@ -1135,7 +1135,7 @@ _( "%s [-bcdfhilnpstvwBFILTV78+? -C[aefFmr] -ooutput -Pprefix -Sskeleton]\n" ),
 
 	if ( ! did_outfilename )
 		{
-		sprintf( outfile_path, outfile_template,
+		snprintf( outfile_path, sizeof outfile_path, outfile_template,
 			prefix, C_plus_plus ? "cc" : "c" );
 		outfilename = outfile_path;
 		}
