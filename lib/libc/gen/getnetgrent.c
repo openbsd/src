@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.6 1997/07/23 21:04:05 kstailey Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.7 1997/10/10 23:07:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.6 1997/07/23 21:04:05 kstailey Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.7 1997/10/10 23:07:30 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -299,10 +299,6 @@ lookup(ypdom, name, line, bywhat)
 		case _NG_KEYBYHOST:
 			map = "netgroup.byhost";
 			break;
-
-		default:
-			abort();
-			break;
 		}
 
 
@@ -415,10 +411,6 @@ addgroup(ypdom, sl, grp)
 
 		case _NG_ERROR:
 			return;
-
-		default:
-			abort();
-			return;
 		}
 	}
 }
@@ -517,10 +509,6 @@ in_find(ypdom, sl, grp, host, user, domain)
 
 		case _NG_ERROR:
 			free(line);
-			return 0;
-
-		default:
-			abort();
 			return 0;
 		}
 	}
