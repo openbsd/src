@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.200 2000/08/02 14:08:38 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.201 2000/08/08 19:23:43 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -77,7 +77,8 @@ cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 
 # NOTE: You may need to uncomment the following line for CardBus to work
-option	BIOS32,PCIBIOS,PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP
+option	BIOS32,PCIBIOS
+option	PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP,PCIBIOS_ADDR_FIXUP
 
 # PCI USB Controllers
 #uhci*	at pci?				# Universal Host Controller (Intel)

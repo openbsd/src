@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.3 2000/08/02 14:08:38 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.4 2000/08/08 19:23:44 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -83,7 +83,8 @@ cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 
 # NOTE: You may need to uncomment the following line for CardBus to work
-option	BIOS32,PCIBIOS,PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP
+option	BIOS32,PCIBIOS
+option	PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP,PCIBIOS_ADDR_FIXUP
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
