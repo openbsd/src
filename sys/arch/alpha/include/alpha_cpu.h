@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_cpu.h,v 1.3 1997/08/01 21:22:42 deraadt Exp $	*/
+/*	$OpenBSD: alpha_cpu.h,v 1.4 1998/06/05 13:28:32 janjaap Exp $	*/
 /*	$NetBSD: alpha_cpu.h,v 1.7 1996/11/23 06:25:31 cgd Exp $	*/
 
 /*
@@ -278,4 +278,4 @@ void		alpha_pal_wrusp __P((unsigned long));
 void		alpha_pal_wrvptptr __P((unsigned long));
 void		alpha_pal_wrmces __P((unsigned long));
 
-#endif __ALPHA_ALPHA_CPU_H__
+#endif /* __ALPHA_ALPHA_CPU_H__ */
