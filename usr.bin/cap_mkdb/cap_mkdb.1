@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cap_mkdb.1,v 1.6 1998/09/23 04:32:36 aaron Exp $
+.\"	$OpenBSD: cap_mkdb.1,v 1.7 1999/03/05 04:47:45 tholo Exp $
 .\"	$NetBSD: cap_mkdb.1,v 1.4 1995/03/26 03:59:36 glass Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 .Pp
 .Sh SYNOPSIS
 .Nm cap_mkdb
+.Op Fl i
 .Op Fl v
 .Op Fl f Ar outfile
 .Ar file1
@@ -52,6 +53,8 @@
 .Nm cap_mkdb 
 builds a hashed database out of the
 .Xr getcap 3 
+or
+.Xr terminfo 5
 logical database constructed by the concatenation of the specified
 files.
 .Pp
@@ -70,6 +73,10 @@ The options are as follows:
 .Bl -tag -width XXXXXX -indent
 .It Fl f Ar outfile
 Specify a different database basename.
+.It Fl i
+Expect the capability records to be parsed to be in
+.Xr terminfo 5
+format.
 .It Fl v
 Print out the number of capability records in the database.
 .El
@@ -103,4 +110,5 @@ utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr dbopen 3 ,
 .Xr getcap 3 ,
-.Xr termcap 5
+.Xr termcap 5 ,
+.Xr terminfo 5

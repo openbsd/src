@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.3 1997/01/15 23:42:17 millert Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.4 1999/03/05 04:47:45 tholo Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.3 1997/01/15 23:42:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.4 1999/03/05 04:47:45 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,15 +58,18 @@ static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.3 1997/01/15 23:42:17 millert Ex
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 
 void	 db_build __P((char **));
 void	 dounlink __P((void));
 void	 usage __P((void));
+int	 igetnext __P((char **, char **));
+int	 main __P((int, char *[]));
 
 DB *capdbp;
-int verbose;
-char *capdb, *capname, buf[8 * 1024];
+int info, verbose;
+char *capname, buf[8 * 1024];
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -78,7 +81,7 @@ HASHINFO openinfo = {
 };
 
 /*
- * Mkcapdb creates a capability hash database for quick retrieval of capability
+ * cap_mkdb creates a capability hash database for quick retrieval of capability
  * records.  The database contains 2 types of entries: records and references
  * marked by the first byte in the data.  A record entry contains the actual
  * capability record whereas a reference contains the name (key) under which
@@ -92,13 +95,16 @@ main(argc, argv)
 	int c;
 
 	capname = NULL;
-	while ((c = getopt(argc, argv, "f:v")) != -1) {
+	while ((c = getopt(argc, argv, "f:iv")) != -1) {
 		switch(c) {
 		case 'f':
 			capname = optarg;
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		    case 'i':
+			info = 1;
 			break;
 		case '?':
 		default:
@@ -149,7 +155,7 @@ dounlink()
 #define SHADOW	(char)2
 
 /*
- * Db_build() builds the name and capabilty databases according to the
+ * db_build() builds the name and capabilty databases according to the
  * details above.
  */
 void
@@ -164,7 +170,8 @@ db_build(ifiles)
 
 	data.data = NULL;
 	key.data = NULL;
-	for (reccnt = 0, bplen = 0; (st = cgetnext(&bp, ifiles)) > 0;) {
+	for (reccnt = 0, bplen = 0;
+	     (st = (info ? igetnext(&bp, ifiles) : cgetnext(&bp, ifiles))) > 0;) {
 
 		/*
 		 * Allocate enough memory to store record, terminating
@@ -178,7 +185,7 @@ db_build(ifiles)
 		}
 
 		/* Find the end of the name field. */
-		if ((p = strchr(bp, ':')) == NULL) {
+		if ((p = strchr(bp, info ? ',' : ':')) == NULL) {
 			warnx("no name field: %.*s", MIN(len, 20), bp);
 			continue;
 		}
@@ -190,13 +197,24 @@ db_build(ifiles)
 			break;
 		case 2:
 			((char *)(data.data))[0] = TCERR;
-			warnx("Record not tc expanded: %.*s", p - bp, bp);
+			warnx("Record not tc expanded: %.*s", (int)(p - bp), bp);
 			break;
 		}
 
 		/* Create the stored record. */
-		memmove(&((u_char *)(data.data))[1], bp, len + 1);
+		(void) memmove(&((u_char *)(data.data))[1], bp, len + 1);
 		data.size = len + 2;
+		if (info) {
+			for (t = memchr((char *)data.data + 1, ',', data.size - 1);
+			     t;
+			     t = memchr(t, ',', data.size - (t - (char *)data.data)))
+				*t++ = ':';
+
+			if (memchr((char *)data.data + 1, '\0', data.size - 2)) {
+				warnx("NUL in entry: %.*s", (int)MIN(len, 20), bp);
+				continue;
+			}
+		}
 
 		/* Store the record under the name field. */
 		key.data = bp;
@@ -208,7 +226,7 @@ db_build(ifiles)
 			/* NOTREACHED */
 		case 1:
 			warnx("ignored duplicate: %.*s",
-			    key.size, (char *)key.data);
+			    (int)key.size, (char *)key.data);
 			continue;
 		}
 		++reccnt;
@@ -219,12 +237,12 @@ db_build(ifiles)
 
 		/* The rest of the names reference the entire name. */
 		((char *)(data.data))[0] = SHADOW;
-		memmove(&((u_char *)(data.data))[1], key.data, key.size);
+		(void) memmove(&((u_char *)(data.data))[1], key.data, key.size);
 		data.size = key.size + 1;
 
 		/* Store references for other names. */
 		for (p = t = bp;; ++p) {
-			if (p > t && (*p == ':' || *p == '|')) {
+			if (p > t && (*p == (info ? ',' : ':') || *p == '|')) {
 				key.size = p - t;
 				key.data = t;
 				switch(capdbp->put(capdbp,
@@ -234,11 +252,11 @@ db_build(ifiles)
 					/* NOTREACHED */
 				case 1:
 					warnx("ignored duplicate: %.*s",
-					    key.size, (char *)key.data);
+					      (int)key.size, (char *)key.data);
 				}
 				t = p + 1;
 			}
-			if (*p == ':')
+			if (*p == (info ? ',' : ':'))
 				break;
 		}
 	}
@@ -260,6 +278,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: cap_mkdb [-v] [-f outfile] file1 [file2 ...]\n");
+	    "usage: cap_mkdb [-iv] [-f outfile] file1 [file2 ...]\n");
 	exit(1);
 }
