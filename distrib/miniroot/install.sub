@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.291 2003/03/02 00:17:20 krw Exp $
+#	$OpenBSD: install.sub,v 1.292 2003/03/06 00:27:41 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -857,10 +857,11 @@ install_files () {
 	done
 
 	if [[ -z $_sets ]]; then
+		# Show $_src, but delete any ftp password.
 		cat << __EOT
 No $OBSD sets were found at
 
-    '$_src'
+	$(echo $_src | sed -e 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/')
 
 Set names are: $THESETS
 __EOT
