@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2004/03/10 01:23:25 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2004/03/12 01:40:48 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -206,8 +206,8 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 #vr*	at pci? dev ? function ?		# VIA Rhine ethernet
-#dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
-#sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
+dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 #ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
@@ -232,14 +232,14 @@ bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 inphy*	at mii? phy ?				# Intel 82555 PHYs
 iophy*	at mii? phy ?				# Intel 82553 PHYs
 #icsphy* at mii? phy ?				# ICS 1890 PHYs
-#lxtphy* at mii? phy ?				# Level1 LXT970 PHYs
-#nsphy*	at mii? phy ?				# NS and compatible PHYs
-#nsphyter* at mii? phy ?			# NS and compatible PHYs
+lxtphy* at mii? phy ?				# Level1 LXT970 PHYs
+nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphyter* at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 #rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 #mtdphy* at mii? phy ?				# Myson MTD972 PHYs
-#dcphy*	at mii? phy ?				# Digital Clone PHYs
+dcphy*	at mii? phy ?				# Digital Clone PHYs
 #acphy*	at mii? phy ?				# Altima AC101 PHYs
 #amphy*	at mii? phy ?				# AMD 79C873 PHYs
 #tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
