@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.27 2005/01/08 18:14:54 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.28 2005/02/03 17:47:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -857,7 +857,8 @@ ami_start(ccb, wait)
 #endif
 			if (xs) {
 				struct timeval tv;
-				tv.tv_sec = xs->timeout / 1000;
+				/* add 5sec for whacky done() loops */
+				tv.tv_sec = 5 + xs->timeout / 1000;
 				tv.tv_usec = 1000 * (xs->timeout % 1000);
 				timeout_add(&xs->stimeout, tvtohz(&tv));
 			}
