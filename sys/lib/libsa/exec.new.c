@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.new.c,v 1.2 1998/07/20 18:12:34 mickey Exp $	*/
+/*	$OpenBSD: exec.new.c,v 1.3 1998/07/29 00:36:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -37,6 +37,8 @@
 #endif
 #include "libsa.h"
 #include <lib/libsa/exec.h>
+
+extern int debug;
 
 void
 exec(path, loadaddr, howto)
@@ -77,14 +79,15 @@ exec(path, loadaddr, howto)
 		goto err;
 	}
 #ifdef	EXEC_DEBUG
-	printf("ep=%x, end=%x\n.text=%x,%u,%u\n.data=%x,%u,%u\n"
-	       ".bss=%x,%u,%u\n.sym=%x,%u,%u\n.str=%x,%u,%u\n",
-	       param.xp_entry, param.xp_end,
-	       param.text.addr, param.text.size, param.text.foff,
-	       param.data.addr, param.data.size, param.data.foff,
-	       param.bss.addr,  param.bss.size,  param.bss.foff,
-	       param.sym.addr,  param.sym.size,  param.sym.foff,
-	       param.str.addr,  param.str.size,  param.str.foff);
+	if (debug)
+		printf("ep=%x, end=%x\n.text=%x,%u,%u\n.data=%x,%u,%u\n"
+		       ".bss=%x,%u,%u\n.sym=%x,%u,%u\n.str=%x,%u,%u\n",
+		       param.xp_entry, param.xp_end,
+		       param.text.addr, param.text.size, param.text.foff,
+		       param.data.addr, param.data.size, param.data.foff,
+		       param.bss.addr,  param.bss.size,  param.bss.foff,
+		       param.sym.addr,  param.sym.size,  param.sym.foff,
+		       param.str.addr,  param.str.size,  param.str.foff);
 #endif
 	pa = loadaddr;
 
@@ -105,7 +108,7 @@ exec(path, loadaddr, howto)
 	printf("+%u", param.bss.size);
 	bzero (pa + param.bss.addr, param.bss.size);
 
-	sz = 0;
+	sz = param.bss.addr + param.bss.size;
 	if (param.sym.size) {
 		printf("+[%u", param.sym.size);
 		if (lseek(fd, param.sym.foff, SEEK_SET) <= 0 ||
