@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.178 1999/09/08 14:25:49 jakob Exp $
+$OpenBSD: pcidevs,v 1.179 1999/09/11 10:10:42 matthieu Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -566,6 +566,7 @@ product 3COM 3C985		0x0001	3c985
 product 3DFX VOODOO		0x0001	Voodoo
 product 3DFX VOODOO2		0x0002	Voodoo2
 product 3DFX BANSHEE		0x0003	Banshee
+product 3DFX VOODOO3		0x0005	Voodoo3
 
 /* 3D Labs products */
 product 3DLABS 300SX		0x0001	GLINT 300SX
