@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.13 2000/02/17 17:09:40 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.14 2000/02/21 04:14:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -573,10 +573,6 @@ explore_fqdn(pai, hostname, servname, res)
 	return 0;
 
 free:
-#ifdef USE_GETIPNODEBY
-	if (hp)
-		freehostent(hp);
-#endif
 	if (aplist)
 		free(aplist);
 	if (apbuf)
@@ -951,9 +947,6 @@ static int
 addrconfig(pai)
 	const struct addrinfo *pai;
 {
-#ifdef USE_GETIPNODEBY
-	return 1;
-#else
 	int s;
 
 	/* XXX errno */
@@ -962,7 +955,6 @@ addrconfig(pai)
 		return 0;
 	close(s);
 	return 1;
-#endif
 }
 #endif
 
