@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphyreg.h,v 1.1 2000/10/17 15:59:10 jason Exp $	*/
+/*	$OpenBSD: amphyreg.h,v 1.2 2003/10/22 09:39:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -54,7 +54,7 @@
 #define DSCR_LINKLEDCTL		0x0020	/* Link LED control */
 #define DSCR_FDXLEDCTL		0x0010	/* FDX LED control */
 #define DSCR_SMRTS		0x0008	/* Reset state machine */
-#define DSCR_MFPSC		0x0004	/* Preamble surpression control */
+#define DSCR_MFPSC		0x0004	/* Preamble suppression control */
 #define DSCR_SLEEP		0x0002	/* Sleep mode */
 #define DSCR_RLOUT		0x0001	/* Remote loopout control */
 

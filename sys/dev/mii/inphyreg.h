@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphyreg.h,v 1.3 2001/04/17 01:19:22 jason Exp $	*/
+/*	$OpenBSD: inphyreg.h,v 1.4 2003/10/22 09:39:29 jmc Exp $	*/
 /*	$NetBSD: inphyreg.h,v 1.1 1998/08/11 00:00:28 thorpej Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
 #define	SCTRL_GOODLINK		0x0800	/* 100baseTX link good */
 #define	SCTRL_TCSD		0x0200	/* transmit carrier sense disable */
 #define	SCTRL_DDPD		0x0100	/* disable dynamic power-down */
-#define	SCTRL_ANEGLOOP		0x0080	/* autonegotiaion loopback */
+#define	SCTRL_ANEGLOOP		0x0080	/* autonegotiation loopback */
 #define	SCTRL_MDITRISTATE	0x0040	/* MDI Tri-state */
 #define	SCTRL_FILTERBYPASS	0x0020	/* Filter bypass */
 #define	SCTRL_AUTOPOLDIS	0x0010	/* auto-polarity disable */

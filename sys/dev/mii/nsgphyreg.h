@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphyreg.h,v 1.3 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: nsgphyreg.h,v 1.4 2003/10/22 09:39:29 jmc Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -66,7 +66,7 @@
 #define NSGPHY_BMSR_100T2FDX	0x0400	/* 100baseT2 full duplex */
 #define NSGPHY_BMSR_100T2HDX	0x0200	/* 100baseT2 full duplex */
 #define NSGPHY_BMSR_EXTSTS	0x0100	/* 1000baseT Extended status present */
-#define NSGPHY_BMSR_PRESUB	0x0040	/* Preamble surpression */
+#define NSGPHY_BMSR_PRESUB	0x0040	/* Preamble suppression */
 #define NSGPHY_BMSR_ACOMP	0x0020	/* Autoneg complete */
 #define NSGPHY_BMSR_RFAULT	0x0010	/* Remote fault condition occurred */
 #define NSGPHY_BMSR_ANEG	0x0008	/* Autoneg capable */

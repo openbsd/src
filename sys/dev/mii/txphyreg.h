@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphyreg.h,v 1.2 2003/06/02 19:08:58 jason Exp $	*/
+/*	$OpenBSD: txphyreg.h,v 1.3 2003/10/22 09:39:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -58,6 +58,6 @@
 #define	TXSTS_PLOK		0x2000	/* polarity ok */
 #define	TXSTS_TPENERGY		0x1000	/* TP energy detect */
 #define	TXSTS_SYNCLOSS		0x0800	/* 100btx rx descrambler sync loss */
-#define	TXSTS_FEFI		0x0400	/* Far-end fault indictation */
+#define	TXSTS_FEFI		0x0400	/* Far-end fault indication */
 
 #endif /* _DEV_MII_MTDPHYREG_H_ */
