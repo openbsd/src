@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2000/02/21 14:57:04 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2000/02/21 14:58:17 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -937,6 +937,9 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
+
+	if (node == 0)
+		sta(0, ASI_HICACHECLR, 0);
 
 	replacemul();
 }
