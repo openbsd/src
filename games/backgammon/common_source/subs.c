@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.9 2000/04/21 03:10:30 pjanzen Exp $	*/
+/*	$OpenBSD: subs.c,v 1.10 2000/07/23 21:35:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.9 2000/04/21 03:10:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.10 2000/07/23 21:35:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ void
 errexit(s)
 	const char *s;
 {
-	write(2, "\n", 1);
+	write(STDERR_FILENO, "\n", 1);
 	perror(s);
 	getout(0);
 }
@@ -78,7 +78,7 @@ addbuf(c)
 {
 	buffnum++;
 	if (buffnum == BUFSIZ) {
-		if (write(1, outbuff, BUFSIZ) != BUFSIZ)
+		if (write(STDOUT_FILENO, outbuff, BUFSIZ) != BUFSIZ)
 			errexit("addbuf (write):");
 		buffnum = 0;
 	}
@@ -92,7 +92,7 @@ buflush()
 	if (buffnum < 0)
 		return;
 	buffnum++;
-	if (write(1, outbuff, buffnum) != buffnum)
+	if (write(STDOUT_FILENO, outbuff, buffnum) != buffnum)
 		errexit("buflush (write):");
 	buffnum = -1;
 }
@@ -418,7 +418,7 @@ fixtty(t)
 	if (tflag)
 		newpos();
 	buflush();
-	if (tcsetattr(0, TCSADRAIN, t) < 0)
+	if (tcsetattr(STDIN_FILENO, TCSADRAIN, t) < 0)
 		errexit("fixtty");
 }
 
@@ -430,11 +430,14 @@ getout(dummy)
 	if (tflag) {
 		curmove(23, 0);
 		cline();
+		newpos();
 	} else
 		writec('\n');
 
-	/* fix terminal status */
-	fixtty(&old);
+	/* fix terminal status; avoid calling fixtty() to avoid loop */
+	if (buffnum >= 0)
+		write(STDOUT_FILENO, outbuff, buffnum + 1);
+	tcsetattr(STDIN_FILENO, TCSADRAIN, &old);
 	exit(0);
 }
 

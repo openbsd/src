@@ -1,4 +1,4 @@
-/*	$OpenBSD: fancy.c,v 1.8 2000/04/21 03:10:30 pjanzen Exp $	*/
+/*	$OpenBSD: fancy.c,v 1.9 2000/07/23 21:35:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fancy.c,v 1.8 2000/04/21 03:10:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fancy.c,v 1.9 2000/07/23 21:35:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -474,7 +474,8 @@ newpos()
 
 	switch (mode) {
 	case -1:		/* error! */
-		write(2, "\r\nInternal cursor error.\r\n", 26);
+		write(STDERR_FILENO, "\r\nInternal cursor error.\r\n", 26);
+		tflag = 0;	/* So we don't loop */
 		getout(0);
 
 	case  0:		/* direct cursor motion */
