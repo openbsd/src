@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 1996/06/06 23:06:35 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 1996/06/07 21:25:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,8 +49,6 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
-#ifdef _KERNEL
-
 #define KUSEG_ADDR		0x0
 #define CACHED_MEMORY_ADDR	0x80000000
 #define UNCACHED_MEMORY_ADDR	0xa0000000
@@ -66,6 +64,7 @@
 
 #define CODE_START		0x80080000
 
+#ifdef _KERNEL
 /*
  * The bits in the cause register.
  *
