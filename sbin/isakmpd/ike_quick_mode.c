@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.33 2000/02/25 17:22:22 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.117 2000/02/25 07:06:22 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.34 2000/04/07 22:05:19 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.121 2000/04/07 19:02:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -62,7 +62,9 @@
 #include "prf.h"
 #include "sa.h"
 #include "transport.h"
+#ifdef USE_X509
 #include "x509.h"
+#endif
 
 static void gen_g_xy (struct message *);
 static int initiator_send_HASH_SA_NONCE (struct message *);
@@ -107,12 +109,15 @@ extern struct sa *policy_isakmp_sa;
 static int
 check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
-  char *return_values[RETVALUES_NUM], cn[259];
+  char *return_values[RETVALUES_NUM];
   char *principal = NULL, *principal2 = NULL;
+  int result;
+#ifdef USE_X509
+  char cn[259];
   struct keynote_deckey dc;
   X509_NAME *subject;
-  int result;
   RSA *key;
+#endif
 
   /* If there is no policy setup, everything fails.  */
   if (keynote_sessid < 0)
@@ -143,6 +148,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       break;
 
     case ISAKMP_CERTENC_X509_SIG:
+#ifdef USE_X509
       /* Retrieve key from certificate.  */
       if (!x509_cert_get_key (isakmp_sa->recv_cert, &key))
 	{
@@ -156,7 +162,11 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
 				      KEYNOTE_PUBLIC_KEY));
       if (LKV (keynote_errno) == ERROR_MEMORY)
-	log_fatal ("check_policy: failed to get memory for public key");
+	{
+	  log_print ("check_policy: failed to get memory for public key");
+	  LC (RSA_free, (key));
+	  return 0;
+	}
       if (principal == NULL)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
@@ -189,6 +199,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  principal2 = cn;
 	}
       break;
+#endif
 	
     /* XXX Eventually handle these.  */
     case ISAKMP_CERTENC_PKCS:
