@@ -1,0 +1,67 @@
+#	$OpenBSD: type,v 1.1 1996/09/27 12:11:52 deraadt Exp $
+#
+#	.ashtype - This should be, but is not, a builtin in /bin/ash
+#
+# Copyright (c) Greg A. Woods 1996.  All rights reserved.
+# 
+# This software is not subject to any license of the American Telephone
+# and Telegraph Company, the Regents of the University of California, or
+# the Free Software Foundation.
+# 
+# Permission is granted to anyone to use this software for any purpose on
+# any computer system, and to alter it and redistribute it freely, subject
+# to the following restrictions:
+# 
+# 1. The authors are not responsible for the consequences of use of this
+#    software, no matter how awful, even if they arise from flaws in it.
+# 
+# 2. The origin of this software must not be misrepresented, either by
+#    explicit claim or by omission.  Since few users ever read sources,
+#    credits must appear in any relevant documentation.
+# 
+# 3. Altered versions must be plainly marked as such, and must not be
+#    misrepresented as being the original software.  Since few users
+#    ever read sources, credits must appear in any relevant documentation.
+# 
+# 4. This notice may not be removed or altered.
+# 
+#
+#ident	"@(#)HOME:.ashtype	1.2	96/09/27 01:13:27 (woods)"
+
+type () {
+	if [ $# -ne 1 ]
+	then
+		echo "Usage: type command" >&2
+		return 2
+	fi
+	hashv=`hash | grep "function $1\$"`
+	if [ -n "$hashv" ]
+	then
+		echo "$hashv" | sed 's/^\([^ ]*\) \(.*\)$/\2 is a \1/'
+		unset hashv
+		return 0
+	fi
+	case "$1" in
+	.|bg|bltin|cd|echo|eval|exec|exit|export|fg|getopts|hash|jobid|jobs|lc|local|pwd|read|readonly|return|set|setvar|shift|trap|umask|unset|wait)
+		typeout="$1 is a builtin"
+		;;
+	*)
+		typeout="$1 not found"
+		oifs="$IFS"
+		IFS=":"
+		for pathseg in $PATH
+		do
+			if [ -x $pathseg/$1 ]
+			then
+				typeout="$1 is $pathseg/$1"
+				break
+			fi
+		done
+		IFS="$oifs"
+		unset oifs
+		;;
+	esac
+	echo $typeout
+	unset hashv pathseg typeout
+	return 0
+}
