@@ -6,7 +6,7 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.1/2.7.2.1/include
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.1/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.16.0
+./usr/lib/libc.so.16.1
 ./usr/lib/libcurses.so.3.1
 ./usr/lib/libdes.so.5.0
 ./usr/lib/libedit.so.0.0
@@ -17,7 +17,7 @@
 ./usr/lib/libkafs.so.4.0
 ./usr/lib/libkdb.so.4.0
 ./usr/lib/libkrb.so.4.1
-./usr/lib/libkvm.so.5.1
+./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.0.0
 ./usr/lib/libocurses.so.2.1
@@ -275,7 +275,9 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/auto/Text
 ./usr/lib/perl5/sparc-openbsd/5.003/auto/Text/ParseWords
 ./usr/lib/perl5/sparc-openbsd/5.003/bitstring.ph
+./usr/lib/perl5/sparc-openbsd/5.003/blf.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/bm.ph
+./usr/lib/perl5/sparc-openbsd/5.003/com_err.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/curses.ph
@@ -366,6 +368,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/net
 ./usr/lib/perl5/sparc-openbsd/5.003/net/bpf.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/bpfdesc.ph
+./usr/lib/perl5/sparc-openbsd/5.003/net/encap.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/if.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/if_arp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/if_atm.ph
@@ -379,6 +382,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/net/if_tun.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/if_types.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/netisr.ph
+./usr/lib/perl5/sparc-openbsd/5.003/net/pfkeyv2.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/ppp-comp.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/ppp_defs.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/net/radix.ph
@@ -392,6 +396,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/nl_types.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/nlist.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/ocurses.ph
+./usr/lib/perl5/sparc-openbsd/5.003/olf_abi.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/panel.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/paths.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/pcap-namedb.ph
@@ -450,6 +455,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/exec_aout.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/exec_ecoff.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/exec_elf.ph
+./usr/lib/perl5/sparc-openbsd/5.003/sys/exec_olf.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/exec_script.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/extent.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/fcntl.ph
@@ -470,6 +476,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/malloc.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/map.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/mbuf.ph
+./usr/lib/perl5/sparc-openbsd/5.003/sys/md5k.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/mman.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/mount.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/msg.ph
@@ -491,6 +498,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/select.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/sem.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/shm.ph
+./usr/lib/perl5/sparc-openbsd/5.003/sys/siginfo.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/signal.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/signalvar.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/socket.ph
@@ -535,6 +543,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sysexits.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/syslog.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/tar.ph
+./usr/lib/perl5/sparc-openbsd/5.003/tcpd.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/term.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/termios.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/time.ph

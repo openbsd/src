@@ -672,6 +672,7 @@
 ./usr/lkm/ipl.o
 ./usr/local
 ./usr/local/bin
+./usr/local/info
 ./usr/local/lib
 ./usr/local/libdata
 ./usr/local/libexec
@@ -680,6 +681,7 @@
 ./usr/local/man/cat2
 ./usr/local/man/cat3
 ./usr/local/man/cat4
+./usr/local/man/cat4/i386
 ./usr/local/man/cat5
 ./usr/local/man/cat6
 ./usr/local/man/cat7
