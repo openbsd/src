@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.35 2000/06/08 20:50:16 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.126 2000/06/08 04:21:17 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.36 2000/08/03 07:23:44 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.127 2000/07/01 20:06:23 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -106,7 +106,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   char *return_values[RETVALUES_NUM];
   char **principal = NULL;
   int i, result = 0, nprinc = 0;
-  int *x509_ids, *keynote_ids;
+  int *x509_ids = NULL, *keynote_ids = NULL;
 #ifdef USE_X509
   char cn[259];
   struct keynote_deckey dc;
@@ -138,21 +138,25 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       return 0;
     }
 
-  keynote_ids = calloc (keynote_policy_asserts_num, sizeof(int));
-  if (keynote_ids == NULL)
+  if (keynote_policy_asserts_num)
     {
-      log_print ("check_policy: failed to allocate %d bytes for book keeping",
-		 keynote_policy_asserts_num * sizeof(int));
-      return 0;
+      keynote_ids = calloc (keynote_policy_asserts_num, sizeof(int));
+      if (keynote_ids == NULL)
+        {
+            log_print ("check_policy: failed to allocate %d bytes for book keeping", keynote_policy_asserts_num * sizeof(int));
+            return 0;
+        }
     }
 
-  x509_ids = calloc (x509_policy_asserts_num, sizeof(int));
-  if (x509_ids == NULL)
+  if (x509_policy_asserts_num)
     {
-      log_print ("check_policy: failed to allocate %d bytes for book keeping",
-		 x509_policy_asserts_num * sizeof(int));
-      free (keynote_ids);
-      return 0;
+      x509_ids = calloc (x509_policy_asserts_num, sizeof(int));
+      if (x509_ids == NULL)
+        {
+          log_print ("check_policy: failed to allocate %d bytes for book keeping", x509_policy_asserts_num * sizeof(int));
+          free (keynote_ids);
+          return 0;
+        }
     }
 
   /* Add the policy assertions */
