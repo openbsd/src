@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.55 2003/08/20 12:25:02 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.56 2003/10/13 13:57:51 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -137,7 +137,7 @@ Valid values for
 .Ar class
 are as follows:
 .Pp
-.Bl -tag -width 1n -compact -offset indent
+.Bl -tag -width 2n -compact -offset indent
 .It 0
 Misc
 .It 1
@@ -158,6 +158,8 @@ Exchange
 Negotiation
 .It 9
 Policy
+.It 10
+FIFO user interface
 .It A
 All
 .El
