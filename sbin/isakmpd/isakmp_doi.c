@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.10 2000/08/03 07:23:00 niklas Exp $	*/
-/*	$EOM: isakmp_doi.c,v 1.41 2000/07/02 18:47:16 provos Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.11 2000/10/07 06:59:24 niklas Exp $	*/
+/*	$EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -105,7 +105,9 @@ static struct doi isakmp_doi = {
   isakmp_validate_transform_id,
   isakmp_initiator,
   isakmp_responder,
+#ifdef USE_DEBUG
   ipsec_decode_ids
+#endif
 };
 
 /* Requires doi_init to already have been called.  */
