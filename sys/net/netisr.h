@@ -59,6 +59,7 @@
 #define	NETISR_ISO	7		/* same as AF_ISO */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
 #define	NETISR_ARP	18		/* same as AF_LINK */
+#define NETISR_IPX	23		/* same as AF_IPX */
 #define NETISR_PPP	26		/* for PPP processing */
 
 #ifndef _LOCORE
