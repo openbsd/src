@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.29 1998/04/02 20:52:53 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.30 1998/04/03 11:27:58 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.29 1998/04/02 20:52:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.30 1998/04/03 11:27:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -618,7 +618,7 @@ pr_pack(buf, cc, from)
 	register struct icmp *icp;
 	register in_addr_t l;
 	register u_int i, j;
-	register u_char *cp,*dp;
+	register u_char *cp, *dp;
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
 	struct ip *ip, *ip2;
@@ -810,6 +810,8 @@ pr_pack(buf, cc, from)
 			break;
 		default:
 			(void)printf("\nunknown option %x", *cp);
+			hlen = hlen + cp[1] - 1;
+			cp = cp + cp[1] - 1;
 			break;
 		}
 	if (!(options & F_FLOOD)) {
