@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_audit,v 1.2 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: pkg_audit,v 1.3 2004/11/11 11:16:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,8 @@ use File::Find;
 my %found;
 
 for my $pkg (installed_packages()) {
-	my $plist = OpenBSD::PackingList->fromfile(installed_info($pkg).CONTENTS, \&OpenBSD::PackingList::FilesOnly);
+	my $plist = OpenBSD::PackingList->from_installation($pkg, 
+	    \&OpenBSD::PackingList::FilesOnly);
 	print "$pkg...\n";
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();

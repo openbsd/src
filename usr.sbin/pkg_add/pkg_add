@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.99 2004/11/11 10:47:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.100 2004/11/11 11:16:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -43,8 +43,7 @@ sub fill_conflict_lists
 	my $state = shift;
 	# first, find all possible potential conflicts
 	for my $pkg (installed_packages()) {
-		my $dir = installed_info($pkg);
-		my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, 
+		my $plist = OpenBSD::PackingList->from_installation($pkg, 
 		    \&OpenBSD::PackingList::ConflictOnly);
 		next unless defined $plist;
 		$state->{conflict_list}->{$plist->pkgname()} = 
@@ -245,7 +244,7 @@ sub register_installation
 	for my $i (info_names()) {
 		copy($dir.$i, $dest);
 	}
-	$plist->tofile($dest.CONTENTS);
+	$plist->to_installation();
 }
 
 sub borked_installation
@@ -319,7 +318,8 @@ sub collision_report($)
 	
 
 	for my $pkg (installed_packages()) {
-		my $plist = OpenBSD::PackingList->fromfile(installed_info($pkg).CONTENTS, \&OpenBSD::PackingList::FilesOnly);
+		my $plist = OpenBSD::PackingList->from_installation($pkg, 
+		    \&OpenBSD::PackingList::FilesOnly);
 		for my $item (@{$plist->{items}}) {
 			next unless $item->IsFile();
 			my $name = $item->fullname();
@@ -404,9 +404,13 @@ sub manpages_index
 
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
-		eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
-		if ($@) {
-			print STDERR "Error in makewhatis: $@\n";
+		if ($state->{not}) {
+			print "Merging manpages in $destdir$k: ", join(@l), "\n";
+		} else {
+			eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
+			if ($@) {
+				print STDERR "Error in makewhatis: $@\n";
+			}
 		}
 	}
 }
@@ -675,9 +679,6 @@ if (defined $state->{destdir}) {
 	$state->{destdir} = '';
 }
 
-if ($< && !$forced{nonroot}) {
-	Fatal "$0 must be run as root";
-}
 
 $state->{conflict_list} = {};
 $state->{not} = $opt_n;
@@ -688,6 +689,14 @@ $state->{beverbose} = $opt_n || ($opt_v >= 2);
 
 if ($opt_x && !$state->{beverbose}) {
 	OpenBSD::ProgressMeter::enable();
+}
+
+if ($< && !$forced{nonroot}) {
+	if ($state->{not}) {
+		print "$0 should be run as root\n";
+	} else {
+		Fatal "$0 must be run as root";
+	}
 }
 
 fill_conflict_lists($state);

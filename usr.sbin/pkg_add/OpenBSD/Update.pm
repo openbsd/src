@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.20 2004/11/11 10:47:26 espie Exp $
+# $OpenBSD: Update.pm,v 1.21 2004/11/11 11:16:40 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -73,13 +73,17 @@ sub extract
 	if (defined $self->{link} || defined $self->{symlink}) {
 		return;
 	}
-	my ($fh, $tempname) = tempfile(DIR => dirname($file->{destdir}.$file->{name}));
+	
+	if ($state->{not}) {
+		print "extracting tempfile under ", dirname($file->{destdir}.$file->{name}), "\n";
+	} else {
+		my ($fh, $tempname) = tempfile(DIR => dirname($file->{destdir}.$file->{name}));
 
-	print "extracting $tempname\n" if $state->{very_verbose};
-	$file->{name} = $tempname;
-	$self->{tempname} = $tempname;
-	return if $state->{not};
-	$file->create();
+		print "extracting $tempname\n" if $state->{very_verbose};
+		$file->{name} = $tempname;
+		$self->{tempname} = $tempname;
+		$file->create();
+	}
 }
 
 package OpenBSD::PackingElement::Dir;
@@ -178,7 +182,7 @@ sub can_do
 	my $r = OpenBSD::RequiredBy->new($toreplace);
 	$state->{okay} = 1;
 	$state->{libs_to_check} = [];
-	my $plist = OpenBSD::PackingList->fromfile(installed_info($toreplace).CONTENTS);
+	my $plist = OpenBSD::PackingList->from_installation($toreplace);
 	$plist->visit('can_update', $state);
 	if ($state->{okay} == 0) {
 		print "Old package contains impossible to update elements\n";
@@ -190,7 +194,7 @@ sub can_do
 			next if defined $done_wanted->{$wanting};
 			$done_wanted->{$wanting} = 1;
 			print "Verifying dependencies still match for $wanting\n" if $state->{verbose};
-			my $p2 = OpenBSD::PackingList->fromfile(installed_info($wanting).CONTENTS,
+			my $p2 = OpenBSD::PackingList->from_installation($wanting,
 			    \&OpenBSD::PackingList::DependOnly);
 			$p2->visit('validate_depend', $state, $wanting, $toreplace, $replacement);
 		}
@@ -256,10 +260,9 @@ sub walk_depends_closure
 				push(@todo, $pkg2);
 				print "\t$pkg2\n" if $state->{beverbose};
 				$write->add($pkg2) unless $state->{not};
-				my $contents = installed_info($pkg2).CONTENTS;
-				my $plist = OpenBSD::PackingList->fromfile($contents);
+				my $plist = OpenBSD::PackingList->from_installation($pkg2);
 				OpenBSD::PackingElement::PkgDep->add($plist, $name);
-				$plist->tofile($contents) unless $state->{not};
+				$plist->to_installation() unless $state->{not};
 				$done->{$pkg2} = 1;
 			}
 		}
@@ -295,8 +298,8 @@ sub save_old_libraries
 			print $comment "Stub libraries for $oldname";
 			close $comment;
 			link($dest.COMMENT, $dest.DESC);
-			$stub_list->tofile($dest.CONTENTS);
-			$old_plist->tofile(installed_info($oldname).CONTENTS);
+			$stub_list->to_installation();
+			$old_plist->to_installation();
 		}
 
 		walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
@@ -308,8 +311,7 @@ sub adjust_dependency
 {
 	my ($dep, $from, $into) = @_;
 
-	my $contents = installed_info($dep).CONTENTS;
-	my $plist = OpenBSD::PackingList->fromfile($contents);
+	my $plist = OpenBSD::PackingList->from_installation($dep);
 	my $items = [];
 	for my $item (@{$plist->{pkgdep}}) {
 		next if $item->{'name'} eq $from;
@@ -317,6 +319,6 @@ sub adjust_dependency
 	}
 	$plist->{pkgdep} = $items;
 	OpenBSD::PackingElement::PkgDep->add($plist, $into);
-	$plist->tofile($contents);
+	$plist->to_installation();
 }
 1;

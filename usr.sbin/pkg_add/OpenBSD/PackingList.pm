@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.32 2004/11/10 09:55:43 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.33 2004/11/11 11:16:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -297,6 +297,25 @@ sub visit
 	while (my $item = shift @{$visitor->{list}}) {
 		$item->method(@l);
 	}
+}
+
+sub from_installation
+{
+	my ($o, $name, @args) = @_;
+
+	require OpenBSD::PackageInfo;
+
+	return $o->fromfile(OpenBSD::PackageInfo::installed_contents($name), 
+	    @args);
+}
+
+sub to_installation
+{
+	my ($self) = @_;
+
+	require OpenBSD::PackageInfo;
+
+	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
 }
 
 1;

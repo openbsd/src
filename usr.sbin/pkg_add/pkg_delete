@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.70 2004/11/11 10:47:26 espie Exp $
+# $OpenBSD: pkg_delete,v 1.71 2004/11/11 11:16:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -58,10 +58,6 @@ if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
 
-if ($< && !$forced{nonroot}) {
-	Fatal "$0 must be run as root";
-}
-
 my %done;
 my $removed;
 
@@ -77,6 +73,14 @@ $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
 if ($opt_x && $state->{beverbose}) {
 	OpenBSD::ProgressMeter::enable();
+}
+
+if ($< && !$forced{nonroot}) {
+	if ($state->{not}) {
+		print "$0 should be run as root\n";
+	} else {
+		Fatal "$0 must be run as root";
+	}
 }
 
 # First, resolve pkg names
@@ -172,7 +176,6 @@ eval {
 			    "$pkgname\n";
 		}
 		$state->set_pkgname($pkgname);
-		$state->{pkgname_tolog} = $pkgname;
 		OpenBSD::Delete::delete_package($pkgname, $state);
 		delete_installed($pkgname);
 		$done{$pkgname} = 1;

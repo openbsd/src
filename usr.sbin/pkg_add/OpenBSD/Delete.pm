@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.6 2004/11/09 11:11:01 espie Exp $
+# $OpenBSD: Delete.pm,v 1.7 2004/11/11 11:16:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,9 +31,13 @@ sub manpages_unindex
 
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
-		eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
-		if ($@) {
-			print STDERR "Error in makewhatis: $@\n";
+		if ($state->{not}) {
+			print "Removing manpages in $destdir$k: ", join(@l), "\n";
+		} else {
+			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
+			if ($@) {
+				print STDERR "Error in makewhatis: $@\n";
+			}
 		}
 	}
 	undef $state->{mandirs};
@@ -73,8 +77,7 @@ sub remove_packing_info
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
-	my $dir = installed_info($pkgname);
-	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS) or 
+	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    Fatal "Bad package";
 	if (!defined $plist->pkgname()) {
 		Fatal "Package $pkgname has no name";
