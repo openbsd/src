@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2004/06/28 01:47:41 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2004/08/02 21:40:46 brad Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1285,7 +1285,17 @@ _bus_dmamap_load_mbuf(t, t0, map, m, flags)
 			long incr;
 
 			incr = min(buflen, NBPG);
-			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
+
+			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE) {
+#ifdef DIAGNOSTIC
+				printf("_bus_dmamap_load_mbuf: pmap_extract failed %lx\n",
+					vaddr);
+				map->_dm_type = 0;
+				map->_dm_source = NULL;
+#endif
+				return EINVAL;
+			}
+
 			buflen -= incr;
 			vaddr += incr;
 
