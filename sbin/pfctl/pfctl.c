@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.232 2005/01/06 08:30:22 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.233 2005/03/06 02:40:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1442,11 +1442,6 @@ pfctl_set_interface_flags(struct pfctl *pf, char *ifname, int flags, int how)
 				err(1, "DIOCSETIFFLAG");
 		}
 	}
-
-	if (pf->opts & PF_OPT_VERBOSE)
-		printf("%s %s:0x%x flags\n", how ? "set" : "clear",
-		    pi.pfiio_name, pi.pfiio_flags);
-
 	return (0);
 }
 

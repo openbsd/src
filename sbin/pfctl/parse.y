@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.479 2005/02/27 15:08:39 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.480 2005/03/06 02:40:08 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4510,11 +4510,17 @@ expand_skip_interface(struct node_if *interfaces)
 
 	if (!interfaces || (!interfaces->next && !interfaces->not &&
 	    !strcmp(interfaces->ifname, "none"))) {
+		if (pf->opts & PF_OPT_VERBOSE)
+			printf("set skip on none\n");
 		errs = pfctl_set_interface_flags(pf, "", PFI_IFLAG_SKIP, 0);
 		return (errs);
 	}
 
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("set skip on {");
 	LOOP_THROUGH(struct node_if, interface, interfaces,
+		if (pf->opts & PF_OPT_VERBOSE)
+			printf(" %s", interface->ifname);
 		if (interface->not) {
 			yyerror("skip on ! <interface> is not supported");
 			errs++;
@@ -4522,6 +4528,8 @@ expand_skip_interface(struct node_if *interfaces)
 			errs += pfctl_set_interface_flags(pf,
 			    interface->ifname, PFI_IFLAG_SKIP, 1);
 	);
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf(" }\n");
 
 	FREE_LIST(struct node_if, interfaces);
 
