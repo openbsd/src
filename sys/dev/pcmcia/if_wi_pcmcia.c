@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.30 2002/06/08 00:01:25 fgsch Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.31 2002/06/09 03:14:18 todd Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -390,7 +390,7 @@ wi_pcmcia_detach(dev, flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	if (!(sc->wi_flags & WI_FLAGS_ATTACHED)) {
 		printf("%s: already detached\n", sc->sc_dev.dv_xname);
@@ -418,7 +418,7 @@ wi_pcmcia_activate(dev, act)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();

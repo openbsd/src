@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.36 2002/06/08 23:38:51 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.37 2002/06/09 03:14:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -211,7 +211,7 @@ xl_power(why, arg)
 	if (why != PWR_RESUME)
 		xl_stop(sc);
 	else {
-		ifp = &sc->arpcom.ac_if;
+		ifp = &sc->sc_arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP) {
 			xl_reset(sc, 1);
 			xl_init(sc);
@@ -635,13 +635,13 @@ void xl_setmulti(sc)
 	struct xl_softc		*sc;
 {
 	struct ifnet		*ifp;
-	struct arpcom *ac = &sc->arpcom;
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int8_t		rxfilt;
 	int			mcnt = 0;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	XL_SEL_WIN(5);
 	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
@@ -676,13 +676,13 @@ void xl_setmulti_hash(sc)
 {
 	struct ifnet		*ifp;
 	int			h = 0, i;
-	struct arpcom *ac = &sc->arpcom;
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int8_t		rxfilt;
 	int			mcnt = 0;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	XL_SEL_WIN(5);
 	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
@@ -731,16 +731,16 @@ void xl_testpacket(sc)
 	struct ifnet		*ifp;
 	int			error;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 
 	if (m == NULL)
 		return;
 
-	bcopy(&sc->arpcom.ac_enaddr,
+	bcopy(&sc->sc_arpcom.ac_enaddr,
 		mtod(m, struct ether_header *)->ether_dhost, ETHER_ADDR_LEN);
-	bcopy(&sc->arpcom.ac_enaddr,
+	bcopy(&sc->sc_arpcom.ac_enaddr,
 		mtod(m, struct ether_header *)->ether_shost, ETHER_ADDR_LEN);
 	mtod(m, struct ether_header *)->ether_type = htons(3);
 	mtod(m, unsigned char *)[14] = 0;
@@ -1217,7 +1217,7 @@ void xl_rxeof(sc)
 	int			total_len = 0, sumflags = 0;
 	u_int32_t		rxstat;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 again:
 
@@ -1336,7 +1336,7 @@ void xl_txeof(sc)
 	struct xl_chain		*cur_tx;
 	struct ifnet		*ifp;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Clear the timeout timer. */
 	ifp->if_timer = 0;
@@ -1388,7 +1388,7 @@ xl_txeof_90xB(sc)
 	struct ifnet *ifp;
 	int idx;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	idx = sc->xl_cdata.xl_tx_cons;
 	while(idx != sc->xl_cdata.xl_tx_prod) {
@@ -1493,7 +1493,7 @@ int xl_intr(arg)
 	int claimed = 0;
 
 	sc = arg;
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	while ((status = CSR_READ_2(sc, XL_STATUS)) & XL_INTRS) {
 
@@ -1559,7 +1559,7 @@ void xl_stats_update(xsc)
 	bzero((char *)&xl_stats, sizeof(struct xl_stats));
 
 	sc = xsc;
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	if (sc->xl_hasmii)
 		mii = &sc->sc_mii;
 
@@ -1921,7 +1921,7 @@ void xl_init(xsc)
 	void			*xsc;
 {
 	struct xl_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			s, i;
 	u_int16_t		rxfilt = 0;
 	struct mii_data		*mii = NULL;
@@ -1949,7 +1949,7 @@ void xl_init(xsc)
 	XL_SEL_WIN(2);
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		CSR_WRITE_1(sc, XL_W2_STATION_ADDR_LO + i,
-				sc->arpcom.ac_enaddr[i]);
+				sc->sc_arpcom.ac_enaddr[i]);
 	}
 
 	/* Clear the station mask. */
@@ -2255,7 +2255,7 @@ xl_ioctl(ifp, command, data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -2267,7 +2267,7 @@ xl_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			xl_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif /* INET */
 		default:
@@ -2314,8 +2314,8 @@ xl_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -2421,7 +2421,7 @@ void xl_stop(sc)
 {
 	struct ifnet *ifp;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_timer = 0;
 
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_DISABLE);
@@ -2462,7 +2462,7 @@ xl_attach(sc)
 	struct xl_softc *sc;
 {
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	caddr_t roundptr;
 	u_int round;
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
@@ -2479,9 +2479,9 @@ xl_attach(sc)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	bcopy(enaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(enaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->xl_flags & (XL_FLAG_INVERT_LED_PWR|XL_FLAG_INVERT_MII_PWR)) {
 		u_int16_t n;
@@ -2709,7 +2709,7 @@ int
 xl_detach(sc)
 	struct xl_softc *sc;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/* Unhook our tick handler. */
 	timeout_del(&sc->xl_stsup_tmo);

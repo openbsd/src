@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.24 2002/04/18 19:11:18 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.25 2002/06/09 03:14:18 todd Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -693,7 +693,7 @@ struct dc_mii_frame {
 struct dc_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
-	struct arpcom		arpcom;		/* interface info */
+	struct arpcom		sc_arpcom;	/* interface info */
 	mii_data_t		sc_mii;
 	bus_space_handle_t	dc_bhandle;	/* bus space handle */
 	bus_space_tag_t		dc_btag;	/* bus space tag */

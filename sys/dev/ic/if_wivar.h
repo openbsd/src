@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.12 2002/06/02 16:11:41 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.13 2002/06/09 03:14:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -40,7 +40,7 @@ struct wi_softc	{
 #ifndef __FreeBSD__
 	struct device		sc_dev;
 #endif	/* !__FreeBSD__ */
-	struct arpcom		arpcom;
+	struct arpcom		sc_arpcom;
 	struct ifmedia		sc_media;
 	bus_space_handle_t	wi_bhandle;
 	bus_space_tag_t		wi_btag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.49 2002/06/09 00:07:10 nordin Exp $	*/
+/*	$OpenBSD: dc.c,v 1.50 2002/06/09 03:14:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -938,13 +938,13 @@ void dc_setfilt_21143(sc)
 {
 	struct dc_desc		*sframe;
 	u_int32_t		h, *sp;
-	struct arpcom		*ac = &sc->arpcom;
+	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	struct ifnet		*ifp;
 	int			i;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	i = sc->dc_cdata.dc_tx_prod;
 	DC_INC(sc->dc_cdata.dc_tx_prod, DC_TX_LIST_CNT);
@@ -985,9 +985,9 @@ void dc_setfilt_21143(sc)
 	}
 
 	/* Set our MAC address */
-	sp[39] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 0);
-	sp[40] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 1);
-	sp[41] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 2);
+	sp[39] = DC_SP_FIELD(sc->sc_arpcom.ac_enaddr, 0);
+	sp[40] = DC_SP_FIELD(sc->sc_arpcom.ac_enaddr, 1);
+	sp[41] = DC_SP_FIELD(sc->sc_arpcom.ac_enaddr, 2);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    offsetof(struct dc_list_data, dc_sbuf[0]),
@@ -1020,17 +1020,17 @@ void dc_setfilt_admtek(sc)
 	struct dc_softc		*sc;
 {
 	struct ifnet		*ifp;
-	struct arpcom		*ac = &sc->arpcom;
+	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Init our MAC address */
-	CSR_WRITE_4(sc, DC_AL_PAR0, *(u_int32_t *)(&sc->arpcom.ac_enaddr[0]));
-	CSR_WRITE_4(sc, DC_AL_PAR1, *(u_int32_t *)(&sc->arpcom.ac_enaddr[4]));
+	CSR_WRITE_4(sc, DC_AL_PAR0, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]));
+	CSR_WRITE_4(sc, DC_AL_PAR1, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[4]));
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -1075,21 +1075,21 @@ void dc_setfilt_asix(sc)
 	struct dc_softc		*sc;
 {
 	struct ifnet		*ifp;
-	struct arpcom		*ac = &sc->arpcom;
+	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Init our MAC address */
 	CSR_WRITE_4(sc, DC_AX_FILTIDX, DC_AX_FILTIDX_PAR0);
 	CSR_WRITE_4(sc, DC_AX_FILTDATA,
-	    *(u_int32_t *)(&sc->arpcom.ac_enaddr[0]));
+	    *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]));
 	CSR_WRITE_4(sc, DC_AX_FILTIDX, DC_AX_FILTIDX_PAR1);
 	CSR_WRITE_4(sc, DC_AX_FILTDATA,
-	    *(u_int32_t *)(&sc->arpcom.ac_enaddr[4]));
+	    *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[4]));
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -1147,14 +1147,14 @@ void dc_setfilt_xircom(sc)
 	struct dc_softc		*sc;
 {
 	struct dc_desc		*sframe;
-	struct arpcom		*ac = &sc->arpcom;
+	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	u_int32_t		h, *sp;
 	struct ifnet		*ifp;
 	int			i;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_TX_ON|DC_NETCFG_RX_ON));
 
 	i = sc->dc_cdata.dc_tx_prod;
@@ -1197,9 +1197,9 @@ void dc_setfilt_xircom(sc)
 	}
 
 	/* Set our MAC address */
-	sp[0] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 0);
-	sp[1] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 1);
-	sp[2] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 2);
+	sp[0] = DC_SP_FIELD(sc->sc_arpcom.ac_enaddr, 0);
+	sp[1] = DC_SP_FIELD(sc->sc_arpcom.ac_enaddr, 1);
+	sp[2] = DC_SP_FIELD(sc->sc_arpcom.ac_enaddr, 2);
 
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_TX_ON);
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ON);
@@ -1630,31 +1630,31 @@ void dc_attach(sc)
 	case DC_TYPE_PNICII:
 		dc_read_eeprom(sc, (caddr_t)&mac_offset,
 		    (DC_EE_NODEADDR_OFFSET / 2), 1, 0);
-		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr,
 		    (mac_offset / 2), 3, 0);
 		break;
 	case DC_TYPE_PNIC:
-		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr, 0, 3, 1);
+		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr, 0, 3, 1);
 		break;
 	case DC_TYPE_DM9102:
 	case DC_TYPE_21143:
 	case DC_TYPE_ASIX:
-		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,	
+		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr,	
 		    DC_EE_NODEADDR, 3, 0);
 		break;
 	case DC_TYPE_AL981:
 	case DC_TYPE_AN983:
-		bcopy(&sc->dc_srom[DC_AL_EE_NODEADDR], &sc->arpcom.ac_enaddr,
+		bcopy(&sc->dc_srom[DC_AL_EE_NODEADDR], &sc->sc_arpcom.ac_enaddr,
 		    ETHER_ADDR_LEN);
 		break;
 	case DC_TYPE_XIRCOM:
 		break;
 	case DC_TYPE_CONEXANT:
 		bcopy(&sc->dc_srom + DC_CONEXANT_EE_NODEADDR,
-		    &sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+		    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 		break;
 	default:
-		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr,
 		    DC_EE_NODEADDR, 3, 0);
 		break;
 	}
@@ -1717,9 +1717,9 @@ hasmac:
 	/*
 	 * A 21143 or clone chip was detected. Inform the world.
 	 */
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1815,7 +1815,7 @@ fail:
 int dc_detach(sc)
 	struct dc_softc		*sc;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -2140,7 +2140,7 @@ void dc_rxeof(sc)
 	int			i, total_len = 0;
 	u_int32_t		rxstat;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	i = sc->dc_cdata.dc_rx_prod;
 
 	while(!(sc->dc_ldata->dc_rx_list[i].dc_status &
@@ -2247,7 +2247,7 @@ void dc_txeof(sc)
 	struct ifnet		*ifp;
 	int			idx;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Clear the timeout timer. */
 	ifp->if_timer = 0;
@@ -2364,7 +2364,7 @@ void dc_tick(xsc)
 
 	s = splimp();
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	mii = &sc->sc_mii;
 
 	if (sc->dc_flags & DC_REDUCED_MII_POLL) {
@@ -2441,7 +2441,7 @@ int dc_intr(arg)
 	int			claimed = 0;
 
 	sc = arg;
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Supress unwanted interrupts */
 	if (!(ifp->if_flags & IFF_UP)) {
@@ -2608,7 +2608,7 @@ int dc_encap(sc, m_head, txidx)
 		    htole32(DC_TXCTL_FINT);
 #ifdef ALTQ
 	else if ((sc->dc_flags & DC_TX_USE_TX_INTR) &&
-		 TBR_IS_ENABLED(&sc->arpcom.ac_if.if_snd))
+		 TBR_IS_ENABLED(&sc->sc_arpcom.ac_if.if_snd))
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
 		    htole32(DC_TXCTL_FINT);
 #endif
@@ -2746,7 +2746,7 @@ void dc_init(xsc)
 	void			*xsc;
 {
 	struct dc_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	struct mii_data		*mii;
 	int			s;
 
@@ -2984,7 +2984,7 @@ int dc_ioctl(ifp, command, data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -2995,7 +2995,7 @@ int dc_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET:
 			dc_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 		default:
 			dc_init(sc);
@@ -3026,8 +3026,8 @@ int dc_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -3087,7 +3087,7 @@ void dc_stop(sc)
 	register int		i;
 	struct ifnet		*ifp;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_timer = 0;
 
 	timeout_del(&sc->dc_tick_tmo);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.22 2002/06/07 23:44:05 drahn Exp $	*/
+/*	$OpenBSD: gem.c,v 1.23 2002/06/09 03:14:18 todd Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1361,7 +1361,7 @@ gem_ioctl(ifp, cmd, data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->arpcom, cmd, data)) > 0) {
 		splx(s);
 		return (error);
 	}
@@ -1375,7 +1375,7 @@ gem_ioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			gem_init(ifp);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(&sc->arpcom, ifa);
 			break;
 #endif
 #ifdef NS

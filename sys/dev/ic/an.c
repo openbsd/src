@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.23 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: an.c,v 1.24 2002/06/09 03:14:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -176,7 +176,7 @@ int
 an_attach(sc)
 	struct an_softc *sc;
 {
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
 
 	sc->an_gone = 0;
 	sc->an_associated = 0;
@@ -227,9 +227,9 @@ an_attach(sc)
 	}
 
 	bcopy((char *)&sc->an_caps.an_oemaddr,
-	   (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	   (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	printf(": address %6s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(": address %6s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -290,7 +290,7 @@ an_attach(sc)
 	ether_ifattach(ifp);
 	timeout_set(&sc->an_stat_ch, an_stats_update, sc);
 #if NBPFILTER > 0
-	BPFATTACH(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	BPFATTACH(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 
@@ -315,7 +315,7 @@ an_rxeof(sc)
 	struct mbuf		*m;
 	int			id, error = 0;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	id = CSR_READ_2(sc, AN_RX_FID);
 
@@ -400,7 +400,7 @@ an_txeof(sc, status)
 	struct ifnet	*ifp;
 	int		id;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -437,7 +437,7 @@ an_stats_update(xsc)
 	s = splimp();
 
 	sc = xsc;
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	sc->an_status.an_type = AN_RID_STATUS;
 	sc->an_status.an_len = sizeof(struct an_ltv_status);
@@ -472,7 +472,7 @@ an_intr(xsc)
 	if (sc->an_gone)
 		return 0;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	if (!(ifp->if_flags & IFF_UP)) {
 		CSR_WRITE_2(sc, AN_EVENT_ACK, 0xFFFF);
@@ -888,7 +888,7 @@ an_setdef(sc, areq)
 	struct an_ltv_gen	*sp;
 	extern struct ifaddr	**ifnet_addrs;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	switch (areq->an_type) {
 	case AN_RID_GENCONFIG:
@@ -896,7 +896,7 @@ an_setdef(sc, areq)
 
 		ifa = ifnet_addrs[ifp->if_index];
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		bcopy((char *)&cfg->an_macaddr, (char *)&sc->arpcom.ac_enaddr,
+		bcopy((char *)&cfg->an_macaddr, (char *)&sc->sc_arpcom.ac_enaddr,
 		    ETHER_ADDR_LEN);
 		bcopy((char *)&cfg->an_macaddr, LLADDR(sdl), ETHER_ADDR_LEN);
 
@@ -1011,7 +1011,7 @@ an_ioctl(ifp, command, data)
 		return(ENODEV);
 	}
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -1023,7 +1023,7 @@ an_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			an_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 		default:
@@ -1135,7 +1135,7 @@ void
 an_init(sc)
 	struct an_softc *sc;
 {
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	struct an_ltv_ssidlist	ssid;
 	struct an_ltv_aplist	aplist;
 	struct an_ltv_genconfig	genconf;
@@ -1160,7 +1160,7 @@ an_init(sc)
 	}
 
 	/* Set our MAC address. */
-	bcopy((char *)&sc->arpcom.ac_enaddr,
+	bcopy((char *)&sc->sc_arpcom.ac_enaddr,
 	    (char *)&sc->an_config.an_macaddr, ETHER_ADDR_LEN);
 
 	if (ifp->if_flags & IFF_BROADCAST)
@@ -1328,7 +1328,7 @@ an_stop(sc)
 	if (sc->an_gone)
 		return;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	an_cmd(sc, AN_CMD_FORCE_SYNCLOSS, 0);
 	CSR_WRITE_2(sc, AN_INT_EN, 0);

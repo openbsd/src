@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.14 2002/06/02 22:49:59 deraadt Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.15 2002/06/09 03:14:18 todd Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -224,7 +224,7 @@ pdq_eisa_attach(parent, self, aux)
 		printf(": interrupting at %s\n", intrstr);
 
 	bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
-	    sc->sc_ac.ac_enaddr, 6);
+	    sc->sc_arpcom.ac_enaddr, 6);
 
 	pdq_ifattach(sc, NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.16 2002/06/08 00:10:54 aaron Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.17 2002/06/09 03:14:18 todd Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -496,13 +496,13 @@ void rl_setmulti(sc)
 	struct ifnet		*ifp;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
-	struct arpcom		*ac = &sc->arpcom;
+	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	u_int32_t		rxfilt;
 	int			mcnt = 0;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	rxfilt = CSR_READ_4(sc, RL_RXCFG);
 
@@ -623,7 +623,7 @@ rl_rxeof(sc)
 	u_int16_t		limit;
 	u_int16_t		rx_bytes = 0, max_bytes;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	cur_rx = (CSR_READ_2(sc, RL_CURRXADDR) + 16) % RL_RXBUFLEN;
 
@@ -740,7 +740,7 @@ void rl_txeof(sc)
 	struct ifnet		*ifp;
 	u_int32_t		txstat;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Clear the timeout timer. */
 	ifp->if_timer = 0;
@@ -796,7 +796,7 @@ int rl_intr(arg)
 	u_int16_t		status;
 
 	sc = arg;
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	/* Disable interrupts. */
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
@@ -950,7 +950,7 @@ void rl_init(xsc)
 	void			*xsc;
 {
 	struct rl_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			s, i;
 	u_int32_t		rxcfg = 0;
 
@@ -963,7 +963,7 @@ void rl_init(xsc)
 
 	/* Init our MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		CSR_WRITE_1(sc, RL_IDR0 + i, sc->arpcom.ac_enaddr[i]);
+		CSR_WRITE_1(sc, RL_IDR0 + i, sc->sc_arpcom.ac_enaddr[i]);
 	}
 
 	/* Init the RX buffer pointer register. */
@@ -1073,7 +1073,7 @@ int rl_ioctl(ifp, command, data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -1085,7 +1085,7 @@ int rl_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			rl_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif /* INET */
 		default:
@@ -1112,8 +1112,8 @@ int rl_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1162,7 +1162,7 @@ void rl_stop(sc)
 	register int		i;
 	struct ifnet		*ifp;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_timer = 0;
 
 	timeout_del(&sc->sc_tick_tmo);
@@ -1188,7 +1188,7 @@ int
 rl_attach(sc)
 	struct rl_softc *sc;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
 	int rseg;
@@ -1210,10 +1210,10 @@ rl_attach(sc)
 	/*
 	 * Get station address.
 	 */
-	rl_read_eeprom(sc, (caddr_t)sc->arpcom.ac_enaddr, RL_EE_EADDR,
+	rl_read_eeprom(sc, (caddr_t)sc->sc_arpcom.ac_enaddr, RL_EE_EADDR,
 	    addr_len, 3, 0);
 
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, addr_len, 1, 0);
 
@@ -1310,7 +1310,7 @@ int
 rl_detach(sc)
 	struct rl_softc *sc;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/* Unhook our tick handler. */
 	timeout_del(&sc->sc_tick_tmo);

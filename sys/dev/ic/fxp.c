@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.37 2002/05/13 15:36:22 art Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.38 2002/06/09 03:14:18 todd Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ fxp_power(why, arg)
 	if (why != PWR_RESUME)
 		fxp_stop(sc, 0);
 	else {
-		ifp = &sc->arpcom.ac_if;
+		ifp = &sc->sc_arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP)
 			fxp_init(sc);
 	}
@@ -354,8 +354,8 @@ fxp_attach_common(sc, enaddr, intrstr)
 	 */
 	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
 
-	ifp = &sc->arpcom.ac_if;
-	bcopy(enaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	ifp = &sc->sc_arpcom.ac_if;
+	bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -373,7 +373,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 #endif
 
 	printf(": %s, address %s\n", intrstr,
-	    ether_sprintf(sc->arpcom.ac_enaddr));
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -454,7 +454,7 @@ int
 fxp_detach(sc)
 	struct fxp_softc *sc;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/* Unhook our tick handler. */
 	timeout_del(&sc->stats_update_to);
@@ -731,7 +731,7 @@ fxp_intr(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int8_t statack;
 	int claimed = 0, rnr;
 
@@ -883,7 +883,7 @@ fxp_stats_update(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct fxp_stats *sp = &sc->sc_ctrl->stats;
 	int s;
 
@@ -971,7 +971,7 @@ fxp_stop(sc, drain)
 	struct fxp_softc *sc;
 	int drain;
 {
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
 
 	/*
@@ -1073,7 +1073,7 @@ fxp_init(xsc)
 	void *xsc;
 {
 	struct fxp_softc *sc = xsc;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
@@ -1179,8 +1179,8 @@ fxp_init(xsc)
 	cb_ias->cb_status = 0;
 	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
 	cb_ias->link_addr = 0xffffffff;
-	bcopy(sc->arpcom.ac_enaddr, (void *)cb_ias->macaddr,
-	    sizeof(sc->arpcom.ac_enaddr));
+	bcopy(sc->sc_arpcom.ac_enaddr, (void *)cb_ias->macaddr,
+	    sizeof(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Start the IAS (Individual Address Setup) command/DMA.
@@ -1462,7 +1462,7 @@ fxp_ioctl(ifp, command, data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return (error);
 	}
@@ -1475,7 +1475,7 @@ fxp_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			fxp_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1524,8 +1524,8 @@ fxp_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
@@ -1568,7 +1568,7 @@ fxp_mc_setup(sc, doit)
 	int doit;
 {
 	struct fxp_cb_mcs *mcsp = &sc->sc_ctrl->u.mcs;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	int nmcasts;
@@ -1582,7 +1582,7 @@ fxp_mc_setup(sc, doit)
 
 	nmcasts = 0;
 	if (!(ifp->if_flags & IFF_ALLMULTI)) {
-		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+		ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 		while (enm != NULL) {
 			if (nmcasts >= MAXMCADDR) {
 				ifp->if_flags |= IFF_ALLMULTI;

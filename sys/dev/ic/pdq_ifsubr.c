@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.12 2002/06/02 22:49:59 deraadt Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.13 2002/06/09 03:14:18 todd Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -94,8 +94,8 @@ arp_ifinit(
     struct arpcom *ac,
     struct ifaddr *ifa)
 {
-    sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-    arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
+    sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+    arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
 #if _BSDI_VERSION >= 199401
     ifa->ifa_rtrequest = arp_rtrequest;
     ifa->ifa_flags |= RTF_CLONING;
@@ -151,7 +151,7 @@ ifnet_ret_t
 pdq_ifstart(
     struct ifnet *ifp)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
+    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_arpcom.ac_if));
     struct mbuf *m;
     int tx = 0;
 
@@ -245,7 +245,7 @@ pdq_os_addr_fill(
     struct ether_multistep step;
     struct ether_multi *enm;
 
-    ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+    ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
     while (enm != NULL && num_addrs > 0) {
 	((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
 	((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
@@ -262,7 +262,7 @@ pdq_ifioctl(
     ioctl_cmd_t cmd,
     caddr_t data)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
+    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_arpcom.ac_if));
     int s, error = 0;
 
     s = splimp();
@@ -276,7 +276,7 @@ pdq_ifioctl(
 #if defined(INET)
 		case AF_INET: {
 		    pdq_ifinit(sc);
-		    arp_ifinit(&sc->sc_ac, ifa);
+		    arp_ifinit(&sc->sc_arpcom, ifa);
 		    break;
 		}
 #endif /* INET */
@@ -289,12 +289,12 @@ pdq_ifioctl(
 		case AF_NS: {
 		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->sc_ac.ac_enaddr);
+			ina->x_host = *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
 			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)sc->sc_ac.ac_enaddr,
-			      sizeof sc->sc_ac.ac_enaddr);
+			      (caddr_t)sc->sc_arpcom.ac_enaddr,
+			      sizeof sc->sc_arpcom.ac_enaddr);
 		    }
 
 		    pdq_ifinit(sc);
@@ -321,9 +321,9 @@ pdq_ifioctl(
 	     * Update multicast listeners
 	     */
 	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
+		error = ether_addmulti((struct ifreq *)data, &sc->sc_arpcom);
 	    else
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ac);
+		error = ether_delmulti((struct ifreq *)data, &sc->sc_arpcom);
 
 	    if (error == ENETRESET) {
 		if (sc->sc_if.if_flags & IFF_RUNNING)

@@ -1,4 +1,4 @@
-/* $OpenBSD: awivar.h,v 1.4 2002/03/14 01:26:54 millert Exp $ */
+/* $OpenBSD: awivar.h,v 1.5 2002/06/09 03:14:18 todd Exp $ */
 /* $NetBSD: awivar.h,v 1.12 2000/07/21 04:48:56 onoe Exp $ */
 
 /*-
@@ -105,7 +105,7 @@ struct awi_softc
 #endif
 #ifdef __OpenBSD__
 	struct device 		sc_dev;
-	struct arpcom		sc_ec;
+	struct arpcom		sc_arpcom;
 	void			*sc_ih; /* interrupt handler */
 #endif
 	struct am79c930_softc 	sc_chip;

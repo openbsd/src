@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.63 2002/06/03 21:53:58 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.64 2002/06/09 03:14:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.63 2002/06/03 21:53:58 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.64 2002/06/09 03:14:18 todd Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -200,13 +200,13 @@ wi_attach(sc)
 		printf(": unable to read station address\n");
 		return (error);
 	}
-	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
+	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->sc_arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
 	wi_get_id(sc);
-	printf("address %s", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf("address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -383,7 +383,7 @@ wi_attach(sc)
 	printf("\n");
 
 #if NBPFILTER > 0
-	BPFATTACH(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	BPFATTACH(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 
@@ -405,7 +405,7 @@ wi_intr(vsc)
 
 	DPRINTF(WID_INTR, ("wi_intr: sc %p\n", sc));
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	if (!(sc->wi_flags & WI_FLAGS_ATTACHED) || !(ifp->if_flags & IFF_UP)) {
 		CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
@@ -470,7 +470,7 @@ wi_rxeof(sc)
 	u_int16_t		msg_type;
 	int			id;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	id = CSR_READ_2(sc, WI_RX_FID);
 
@@ -619,7 +619,7 @@ wi_rxeof(sc)
 			    mtod(m, caddr_t) + WI_802_11_OFFSET_RAW,
 			    rxlen + 2)) {
 				m_freem(m);
-				if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
+				if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 					printf("wihap: failed to copy header\n");
 				ifp->if_ierrors++;
 				return;
@@ -729,7 +729,7 @@ wi_txeof(sc, status)
 {
 	struct ifnet		*ifp;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -751,7 +751,7 @@ wi_inquire(xsc)
 	int s, rv;
 
 	sc = xsc;
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	timeout_add(&sc->sc_timo, hz * 60);
 
@@ -780,7 +780,7 @@ wi_update_stats(sc)
 	int			len, i;
 	u_int16_t		t;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	id = CSR_READ_2(sc, WI_INFO_FID);
 
@@ -1274,7 +1274,7 @@ wi_setmulti(sc)
 	struct ether_multistep	step;
 	struct ether_multi	*enm;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	bzero((char *)&mcast, sizeof(mcast));
 
@@ -1286,7 +1286,7 @@ wi_setmulti(sc)
 		return;
 	}
 
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 	while (enm != NULL) {
 		if (i >= 16) {
 			bzero((char *)&mcast, sizeof(mcast));
@@ -1320,14 +1320,14 @@ wi_setdef(sc, wreq)
 	extern struct ifaddr	**ifnet_addrs;
 	int error = 0;
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	switch(wreq->wi_type) {
 	case WI_RID_MAC_NODE:
 		ifa = ifnet_addrs[ifp->if_index];
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
-		bcopy((char *)&wreq->wi_val, (char *)&sc->arpcom.ac_enaddr,
+		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_arpcom.ac_enaddr,
 		    ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
@@ -1429,7 +1429,7 @@ wi_ioctl(ifp, command, data)
 	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p\n",
 	    command, data));
 
-	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -1456,7 +1456,7 @@ wi_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			wi_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif	/* INET */
 		default:
@@ -1498,8 +1498,8 @@ wi_ioctl(ifp, command, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -1703,7 +1703,7 @@ STATIC void
 wi_init(sc)
 	struct wi_softc		*sc;
 {
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			s;
 	struct wi_ltv_macaddr	mac;
 	int			id = 0;
@@ -1771,7 +1771,7 @@ wi_init(sc)
 	/* Set our MAC address. */
 	mac.wi_len = 4;
 	mac.wi_type = WI_RID_MAC_NODE;
-	bcopy((char *)&sc->arpcom.ac_enaddr,
+	bcopy((char *)&sc->sc_arpcom.ac_enaddr,
 	   (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
@@ -2036,7 +2036,7 @@ nextpkt:
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_FROMDS);
 			if (sc->wi_use_wep)
 				tx_frame.wi_frame_ctl |= htole16(WI_FCTL_WEP);
-			bcopy((char *)&sc->arpcom.ac_enaddr,
+			bcopy((char *)&sc->sc_arpcom.ac_enaddr,
 			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
 			bcopy((char *)&eh->ether_shost,
 			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
@@ -2189,7 +2189,7 @@ wi_stop(sc)
 
 	timeout_del(&sc->sc_timo);
 
-	ifp = &sc->arpcom.ac_if;
+	ifp = &sc->sc_arpcom.ac_if;
 
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0, 0, 0);
@@ -2469,7 +2469,7 @@ wi_media_change(ifp)
 		break;
 	}
 
-	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
 		if (otype != sc->wi_ptype || orate != sc->wi_tx_rate ||
 		    ocreate_ibss != sc->wi_create_ibss)
 			wi_init(sc);
@@ -2487,7 +2487,7 @@ wi_media_status(ifp, imr)
 {
 	struct wi_softc *sc = ifp->if_softc;
 
-	if (!(sc->arpcom.ac_if.if_flags & IFF_UP)) {
+	if (!(sc->sc_arpcom.ac_if.if_flags & IFF_UP)) {
 		imr->ifm_active = IFM_IEEE80211|IFM_NONE;
 		imr->ifm_status = 0;
 		return;
@@ -2526,7 +2526,7 @@ wi_set_nwkey(sc, nwkey)
 
 	wk->wi_len = (sizeof(*wk) / 2) + 1;
 	wk->wi_type = WI_RID_DEFLT_CRYPT_KEYS;
-	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
 		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 		if (error)
 			return error;
@@ -2537,7 +2537,7 @@ wi_set_nwkey(sc, nwkey)
 	wreq.wi_len = 2;
 	wreq.wi_type = WI_RID_TX_CRYPT_KEY;
 	wreq.wi_val[0] = htole16(nwkey->i_defkid - 1);
-	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
 		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 		if (error)
 			return error;
@@ -2547,7 +2547,7 @@ wi_set_nwkey(sc, nwkey)
 
 	wreq.wi_type = WI_RID_ENCRYPTION;
 	wreq.wi_val[0] = htole16(nwkey->i_wepon);
-	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
 		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 		if (error)
 			return error;
@@ -2555,7 +2555,7 @@ wi_set_nwkey(sc, nwkey)
 	if ((error = wi_setdef(sc, &wreq)))
 		return (error);
 
-	if (sc->arpcom.ac_if.if_flags & IFF_UP)
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP)
 		wi_init(sc);
 	return 0;
 }
@@ -2600,7 +2600,7 @@ wi_set_pm(struct wi_softc *sc, struct ieee80211_power *power)
 	sc->wi_pm_enabled = power->i_enabled;
 	sc->wi_max_sleep = power->i_maxsleep;
 
-	if (sc->arpcom.ac_if.if_flags & IFF_UP)
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP)
 		wi_init(sc);
 
 	return (0);

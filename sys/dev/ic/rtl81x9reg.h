@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.5 2002/06/08 00:10:54 aaron Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.6 2002/06/09 03:14:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -365,7 +365,7 @@ struct rl_softc {
 	bus_space_handle_t	rl_bhandle;	/* bus space handle */
 	bus_space_tag_t		rl_btag;	/* bus space tag */
 	bus_dma_tag_t		sc_dmat;
-	struct arpcom		arpcom;		/* interface info */
+	struct arpcom		sc_arpcom;		/* interface info */
 	struct mii_data		sc_mii;		/* MII information */
 	u_int8_t		rl_type;
 	void			*sc_sdhook;	/* shutdownhook */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.11 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.12 2002/06/09 03:14:18 todd Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -79,7 +79,7 @@ struct fxp_softc {
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */
-	struct arpcom arpcom;		/* per-interface network data */
+	struct arpcom sc_arpcom;	/* per-interface network data */
 	struct mii_data sc_mii;		/* MII media information */
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
