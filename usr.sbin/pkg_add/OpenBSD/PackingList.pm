@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.39 2004/11/13 13:55:03 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.40 2004/11/15 15:06:22 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -93,7 +93,7 @@ sub SharedItemsOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|newuser|newgroup|name)\b/ || m/^\@(?:sample|extra)\b.*\/$/ || m/^[^\@].*\/$/;
+		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|newuser|newgroup|name)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
 		&$cont($_);
 	}
 }
@@ -108,8 +108,8 @@ sub LibraryOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|lib|name)\b/ ||
-			m/^\@comment\s+subdir\=/;
+		next unless m/^\@(?:cwd|lib|name)\b/o ||
+			m/^\@comment\s+subdir\=/o;
 		&$cont($_);
 	}
 }
@@ -119,7 +119,7 @@ sub FilesOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell)\b/ || !m/^\@/;
+	    	next unless m/^\@(?:cwd|name|info|man|file|lib|shell)\b/o || !m/^\@/o;
 		&$cont($_);
 	}
 }
@@ -130,17 +130,17 @@ sub DependOnly
 	local $_;
 	while (<$fh>) {
 		# XXX optimization
-		if (m/^\@arch\b/) {
+		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:pkgdep|newdepend|libdepend)\b/) {
+			    if (m/^\@(?:pkgdep|newdepend|libdepend)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:groups|users|cwd)\b/) {
+			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
 				    last;
 			    }
 			}
 			return;
 		}
-		next unless m/^\@(?:pkgdep|newdepend|libdepend)\b/;
+		next unless m/^\@(?:pkgdep|newdepend|libdepend)\b/o;
 		&$cont($_);
 	}
 }
@@ -151,10 +151,10 @@ sub ExtraInfoOnly
 	local $_;
 	while (<$fh>) {
 		# XXX optimization
-		if (m/^\@arch\b/) {
+		if (m/^\@arch\b/o) {
 			return;
 		}
-		next unless m/^\@(?:name\b|comment\s+subdir\=)/;
+		next unless m/^\@(?:name\b|comment\s+subdir\=)/o;
 		&$cont($_);
 	}
 }
@@ -165,17 +165,17 @@ sub ConflictOnly
 	local $_;
 	while (<$fh>) {
 		# XXX optimization
-		if (m/^\@arch\b/) {
+		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:pkgcfl|conflict|option|name)\b/) {
+			    if (m/^\@(?:pkgcfl|conflict|option|name)\b/o) {
 				    &$cont($_);
-			    } elsif (m/^\@(?:pkgdep|newdepend|libdepend|groups|users|cwd)\b/) {
+			    } elsif (m/^\@(?:pkgdep|newdepend|libdepend|groups|users|cwd)\b/o) {
 				    last;
 			    }
 			}
 			return;
 		}
-	    	next unless m/^\@(?:pkgcfl|conflict|option|name)\b/;
+	    	next unless m/^\@(?:pkgcfl|conflict|option|name)\b/o;
 		&$cont($_);
 	}
 }
