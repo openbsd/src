@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.40 2002/06/20 14:44:17 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.41 2002/07/12 10:25:02 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -26,7 +26,6 @@ file	dev/ic/hme.c			hme
 device	uperf
 file	arch/sparc64/dev/uperf.c		uperf needs-flag
 
-include "dev/sun/files.sun"
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
