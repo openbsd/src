@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.3 1996/08/26 08:41:26 downsj Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.4 1997/03/27 23:43:36 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -90,6 +90,8 @@ int main(argc, argv)
 	    break;
 	case 's':
 	    salt = optarg;
+	    if (salt[0] == '$')		/* -s is only for DES. */
+		usage();
 	    break;
 	default:
 	    usage();
@@ -105,7 +107,7 @@ int main(argc, argv)
     if (do_makekey && (do_md5 || (salt != (char *)NULL)))
         usage();
 
-    if ((argc - optind) < 1) {
+    if (((argc - optind) < 1) || do_makekey) {
     	char line[BUFSIZ], *string, msalt[3];
 
     	/* Encrypt stdin to stdout. */
