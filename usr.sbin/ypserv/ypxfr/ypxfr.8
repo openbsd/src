@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypxfr.8,v 1.4 1996/06/26 21:26:41 maja Exp $
+.\"	$OpenBSD: ypxfr.8,v 1.5 1997/04/20 10:08:35 maja Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ypxfr.8,v 1.4 1996/06/26 21:26:41 maja Exp $
+.\"	$OpenBSD: ypxfr.8,v 1.5 1997/04/20 10:08:35 maja Exp $
 .\"
 .Dd August 18, 1994
 .Dt YPXFR 8
@@ -48,6 +48,14 @@
 .Nm ypxfr 
 is the utiliy in YP that transfers maps to the local host.
 .Pp
+Since the YP master transfers a map when it has changed, an YP slave should
+check for missed maps regulary. This can be done via an entry in
+.Xr crontab 5 .
+The scripts
+.Ar ypxfr_1perhour , ypxfr_2perday
+and
+.Ar ypxfr_1perday
+could be used for that.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -69,6 +77,12 @@ Specify a source domain other than the target domain.
 .It Fl C Ar tid prog ipadd port
 This option is only used by ypserv. This is to open communication with
 an yppush on another host.
+.El
+.Sh FILES
+.Bl -tag -width /usr/sbin/ypxfr_1perhour -compact
+.It Pa /usr/sbin/ypxfr_1perhour
+.It Pa /usr/sbin/ypxfr_2perday
+.It Pa /usr/sbin/ypxfr_1perday
 .El
 .Sh SEE ALSO
 .Xr yp 8 ,
