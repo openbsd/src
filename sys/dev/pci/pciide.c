@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.157 2004/01/31 19:53:18 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.158 2004/01/31 20:01:42 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6114,7 +6114,7 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t cfg, modectl;
 
 	cfg = pci_conf_read(sc->sc_pc, sc->sc_tag, IT_CFG);
-	modectl = pci_conf_read(sc->sc_pc, sc->sc_tag, IT_CFG);
+	modectl = pci_conf_read(sc->sc_pc, sc->sc_tag, IT_MODE);
 	WDCDEBUG_PRINT(("%s: cfg=0x%x, modectl=0x%x\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname, cfg & IT_CFG_MASK,
 	    modectl & IT_MODE_MASK), DEBUG_PROBE);
@@ -6149,7 +6149,7 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	/* Select 66 MHz bus */
 	modectl &= ~(IT_MODE_50MHZ(0) | IT_MODE_50MHZ(1));
 
-	pci_conf_write(sc->sc_pc, sc->sc_tag, IT_CFG, modectl);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IT_MODE, modectl);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
