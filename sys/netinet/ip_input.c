@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.15 1996/08/02 18:21:00 tholo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.16 1996/08/14 07:50:13 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1073,7 +1073,7 @@ ip_forward(m, srcrt)
 	dest = 0;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("forward: src %lx dst %x ttl %x\n", ip->ip_src.s_addr,
+		printf("forward: src %x dst %x ttl %x\n", ip->ip_src.s_addr,
 		    ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
@@ -1137,7 +1137,7 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-			printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
+			printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
 #endif
 		}
 	}
