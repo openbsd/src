@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.12 2003/03/13 16:42:52 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.13 2003/03/24 07:33:28 kjc Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -157,13 +157,13 @@ hfsc_add_altq(struct pf_altq *a)
 	MALLOC(hif, struct hfsc_if *, sizeof(struct hfsc_if),
 	    M_DEVBUF, M_WAITOK);
 	if (hif == NULL)
-		return (NULL);
+		return (ENOMEM);
 	bzero(hif, sizeof(struct hfsc_if));
 
 	hif->hif_eligible = ellist_alloc();
 	if (hif->hif_eligible == NULL) {
 		FREE(hif, M_DEVBUF);
-		return NULL;
+		return (ENOMEM);
 	}
 
 	hif->hif_ifq = &ifp->if_snd;
@@ -176,6 +176,7 @@ hfsc_add_altq(struct pf_altq *a)
 	root_sc.m2 = a->ifbandwidth;
 	if ((hif->hif_rootclass = hfsc_class_create(hif,
 	    &root_sc, &root_sc, NULL, NULL, 0, 0, 0)) == NULL) {
+		ellist_destroy(hif->hif_eligible);
 		FREE(hif, M_DEVBUF);
 		return (ENOMEM);
 	}
