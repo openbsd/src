@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.8 2001/01/21 02:42:49 mickey Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.9 2001/01/22 22:43:44 deraadt Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ ohci_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
