@@ -985,6 +985,7 @@
 ./usr/share/man/cat4/gdt.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gre.0
+./usr/share/man/cat4/gtp.0
 ./usr/share/man/cat4/gx.0
 ./usr/share/man/cat4/hifn.0
 ./usr/share/man/cat4/hp300
@@ -1101,7 +1102,6 @@
 ./usr/share/man/cat4/maestro.0
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
-./usr/share/man/cat4/mr.0
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/mvme68k
