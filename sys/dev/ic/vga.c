@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.32 2004/02/27 17:44:44 millert Exp $ */
+/* $OpenBSD: vga.c,v 1.33 2004/08/06 13:25:30 pefo Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -995,8 +995,6 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 					nrows * ncols);
 				scr->vga_rollover = scr->pcs.dispoffset;
 				scr->pcs.dispoffset = scr->mindispoffset;
-				memt = memt;
-				memh = memh;
 			}
 			scr->pcs.visibleoffset = scr->pcs.dispoffset;
 			vga_6845_write(&scr->cfg->hdl, startadrh,
