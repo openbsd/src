@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.7 2004/04/21 22:44:35 henning Exp $ */
+/*	$OpenBSD: icmp.c,v 1.8 2004/04/22 15:22:48 henning Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -95,12 +95,7 @@ icmp_echorequest(struct iaddr *addr)
 	icmp.icmp_code = 0;
 	icmp.icmp_cksum = 0;
 	icmp.icmp_seq = 0;
-#ifdef PTRSIZE_64BIT
-	icmp.icmp_id = (((u_int32_t) (u_int64_t) addr) ^
-	    (u_int32_t) (((u_int64_t) addr) >> 32));
-#else
-	icmp.icmp_id = (u_int32_t) addr;
-#endif
+	icmp.icmp_id = getpid() & 0xffff;
 
 	icmp.icmp_cksum = wrapsum(checksum((unsigned char *)&icmp,
 	    sizeof(icmp), 0));

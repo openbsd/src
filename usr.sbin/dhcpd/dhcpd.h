@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.10 2004/04/21 09:11:58 canacar Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.11 2004/04/22 15:22:48 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -89,10 +89,6 @@ extern int h_errno;
 
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
-
-#if defined(__alpha__) || (defined(__sparc64__) && defined(__arch64__))
-#define PTRSIZE_64BIT
-#endif
 
 #include "dhcp.h"
 #include "tree.h"
