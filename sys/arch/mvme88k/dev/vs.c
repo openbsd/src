@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.49 2004/07/20 20:32:02 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.50 2004/07/20 20:33:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -221,10 +221,12 @@ vsattach(struct device *parent, struct device *self, void *args)
 		if (sc->sc_id[bus] < 0)
 			continue;
 
+		bootbus = bus;
 		config_found(self, &sc->sc_link[bus], scsiprint);
 	}
 
-	bootpart = tmp;		    /* restore old value */
+	bootpart = tmp;		    /* restore old values */
+	bootbus = 0;
 }
 
 int

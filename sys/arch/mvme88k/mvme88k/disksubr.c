@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.25 2004/03/17 14:16:04 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.26 2004/07/20 20:33:21 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -47,7 +47,7 @@ int disksubr_debug;
 
 void bsdtocpulabel(struct disklabel *, struct cpu_disklabel *);
 void cputobsdlabel(struct disklabel *, struct cpu_disklabel *);
-int get_target(void);
+int get_target(int *, int *);
 
 #ifdef DEBUG
 void printlp(struct disklabel *, char *);
@@ -61,7 +61,7 @@ void printclp(struct cpu_disklabel *, char *);
  * MVME328 daughter cards (DLUN >= 0x40) are not handled correctly yet.
  */
 int
-get_target()
+get_target(int *target, int *bus)
 {
 	extern int bootdev;
 
@@ -71,7 +71,9 @@ get_target()
 	/* MVME327 */
 	case 0x02:
 	case 0x03:
-		return ((bootdev & 0xff) >> 4);
+		*bus = 0;
+		*target = (bootdev & 0x70) >> 4;
+		return 0;
 	/* MVME328 */
 	case 0x06:
 	case 0x07:
@@ -79,9 +81,11 @@ get_target()
 	case 0x17:
 	case 0x18:
 	case 0x19:
-		return ((bootdev & 0xff) >> 3);
-	default:
+		*bus = (bootdev & 0x40) >> 6;
+		*target = (bootdev & 0x38) >> 3;
 		return 0;
+	default:
+		return ENODEV;
 	}
 }
 
@@ -91,24 +95,28 @@ dk_establish(dk, dev)
 	struct device *dev;
 {
 	struct scsibus_softc *sbsc;
-	int target, lun;
+	int target, bus;
 
 	if (bootpart == -1) /* ignore flag from controller driver? */
 		return;
 
 	/*
-	 * scsi: sd,cd
+	 * scsi: sd,cd,st
 	 */
 
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
+	if (strncmp("cd", dev->dv_xname, 2) == 0 ||
+	    strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("st", dev->dv_xname, 2) == 0) {
 		sbsc = (struct scsibus_softc *)dev->dv_parent;
-		target = get_target(); /* Work the Motorola Magic */
-		lun = 0;
+		if (get_target(&target, &bus) != 0)
+			return;
     
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+		/* make sure we are on the expected scsibus */
+		if (bootbus != bus)
+			return;
+
+		if (sbsc->sc_link[target][0] != NULL &&
+		    sbsc->sc_link[target][0]->device_softc == (void *)dev) {
 			bootdv = dev;
 			return;
 		}
