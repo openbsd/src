@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.39 2003/07/22 00:15:55 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.40 2003/07/22 00:20:40 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.39 2003/07/22 00:15:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.40 2003/07/22 00:20:40 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,7 +76,6 @@ static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.39 2003/07/22 00:15:55 mill
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -397,15 +396,8 @@ notsame:
 			rewind(stdout);
 			free(header);
 		}
-	} else {
-		if (flags & D_HEADER) {
-			if (format == D_EDIT)
-				printf("ed - %s << '-*-END-*-'\n",
-				    basename(file1));
-			else
-				printf("%s %s %s\n", diffargs, file1, file2);
-		}
-	}
+	} else if (flags & D_HEADER)
+		printf("%s %s %s\n", diffargs, file1, file2);
 	prepare(0, f1);
 	prepare(1, f2);
 	prune();
@@ -447,8 +439,7 @@ notsame:
 			close(ostdout);
 		}
 		waitpid(pid, &wstatus, 0);
-	} else if ((flags & D_HEADER) && format == D_EDIT)
-		printf("w\nq\n-*-END-*-\n");
+	}
 closem:
 	if (f1 != NULL)
 		fclose(f1);
