@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.7 2004/01/08 09:18:00 markus Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.8 2004/02/07 16:50:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@
 #define CHECK_FREQ	60	/* check every n seconds */
 
 int		 main(int, char *[]);
-void		 check_sensors();
+void		 check_sensors(void);
 void		 report(time_t);
 static char	*print_sensor(enum sensor_type, u_int64_t);
 int		 parse_config(char *);
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 				err(1, "sysctl");
 		}
 		if ((limit = calloc(1, sizeof(struct limits_t))) == NULL)
-			err(1, "out of memory");
+			err(1, "calloc");
 		limit->num = i;
 		limit->type = sensor.type;
 		TAILQ_INSERT_TAIL(&limits, limit, entries);
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 }
 
 void
-check_sensors()
+check_sensors(void)
 {
 	struct sensor	 sensor;
 	struct limits_t	*limit;
@@ -241,7 +241,8 @@ parse_config(char *cf)
 	char		**cfa;
 	int		  watch_cnt = 0;
 
-	cfa = calloc(2, sizeof(char *));
+	if ((cfa = calloc(2, sizeof(char *))) == NULL)
+		err(1, "calloc");
 	cfa[0] = cf;
 	cfa[1] = NULL;
 
