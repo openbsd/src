@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.41 2000/06/18 16:32:19 millert Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.42 2000/07/18 17:32:25 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -791,16 +791,11 @@ dequeue_randomness(v)
 		rnd_event_free = rep;
 		splx(s);
 
-		/* Prevent overflow */
-		if ((random_state.entropy_count + nbits) > POOLBITS &&
-		    arc4random_state.cnt > 253)
-			arc4_stir();
-
 		add_entropy_words(&val, 1);
 		add_entropy_words(&time, 1);
 
-		random_state.entropy_count += nbits;
 		rndstats.rnd_total += nbits;
+		random_state.entropy_count += nbits;
 		if (random_state.entropy_count > POOLBITS)
 			random_state.entropy_count = POOLBITS;
 
