@@ -1,6 +1,6 @@
-.\"	$OpenBSD: twe.4,v 1.9 2001/03/06 19:56:50 brad Exp $
+.\"	$OpenBSD: twe.4,v 1.10 2001/04/24 00:16:16 mickey Exp $
 .\"
-.\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
+.\" Copyright (c) 2000,2001 Michael Shalayeff.  All rights reserved.
 .\"
 .\"
 .Dd September 15, 2000
@@ -52,7 +52,7 @@ which have their own BIOS, if such devices are configured earlier
 than this one.
 To avoid this situation, place
 .Nm
-cards in the lowest slot before other SCSI or RAID disk controllers.
+cards in the lowest numbered slot before other SCSI or RAID disk controllers.
 .Pp
 The current 3ware firmware is known to fail if a redundant configuration
 is selected (RAID0 or RAID10) and the array is heavily used
@@ -60,8 +60,8 @@ is selected (RAID0 or RAID10) and the array is heavily used
 In this case, create the array, boot the installation media and
 leave the array idle until all controller activity has ceased.
 .Pp
-The card provides a mechanism to receive asynchronous notifications
-about RAID set status change and so forth, unfortunately this
-information is not public.
+None of the volumes management or monitoring functions, provided by the
+card's firmware, is supported due to the fact that information
+on these functions is not public.
 .Pp
 Only 3W-5400 was tested, but others should work.
