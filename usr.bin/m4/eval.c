@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.49 2003/06/30 21:42:50 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.50 2003/06/30 21:47:21 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.49 2003/06/30 21:42:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.50 2003/06/30 21:47:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ unsigned long	expansion_id;
  * argc is 3 for macro-or-builtin() and 2 for macro-or-builtin
  */
 void
-eval(const char *argv[], int argc, int td)
+eval(const char *argv[], int argc, int td, int is_traced)
 {
 	ssize_t mark = -1;
 
@@ -111,7 +111,7 @@ eval(const char *argv[], int argc, int td)
 	if (td & RECDEF) 
 		errx(1, "%s at line %lu: expanding recursive definition for %s",
 			CURRENT_NAME, CURRENT_LINE, argv[1]);
-	if (traced_macros && is_traced(argv[1]))
+	if (is_traced)
 		mark = trace(argv, argc, infile+ilevel);
 	if (td == MACRTYPE)
 		expand_macro(argv, argc);

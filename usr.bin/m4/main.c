@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.59 2003/06/30 21:42:50 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.60 2003/06/30 21:47:21 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.59 2003/06/30 21:42:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.60 2003/06/30 21:47:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -328,6 +328,10 @@ macro(void)
 		 */
 				pushf(fp);	/* previous call frm */
 				pushf(macro_getdef(p)->type); /* type of the call  */
+				if (traced_macros && is_traced(macro_name(p)))
+					pushf(1);
+				else
+					pushf(0);
 				pushf(0);	/* parenthesis level */
 				fp = sp;	/* new frame pointer */
 		/*
@@ -344,7 +348,7 @@ macro(void)
 					if (sp == STACKMAX)
 						errx(1, "internal stack overflow");
 					eval((const char **) mstack+fp+1, 2, 
-					    CALTYP);
+					    CALTYP, TRACESTATUS);
 
 					ep = PREVEP;	/* flush strspace */
 					sp = PREVSP;	/* previous sp..  */
@@ -443,7 +447,7 @@ macro(void)
 					errx(1, "internal stack overflow");
 
 				eval((const char **) mstack+fp+1, sp-fp, 
-				    CALTYP);
+				    CALTYP, TRACESTATUS);
 
 				ep = PREVEP;	/* flush strspace */
 				sp = PREVSP;	/* previous sp..  */

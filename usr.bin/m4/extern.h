@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.34 2003/06/30 21:42:50 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.35 2003/06/30 21:47:21 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
  */
 
 /* eval.c */
-extern void	eval(const char *[], int, int);
+extern void	eval(const char *[], int, int, int);
 extern void	dodefine(const char *, const char *);
 extern unsigned long expansion_id;
 

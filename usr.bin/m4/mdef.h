@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.25 2003/06/30 21:42:50 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.26 2003/06/30 21:47:21 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -217,7 +217,8 @@ struct input_file {
  *
  */
 #define PARLEV  (mstack[fp].sfra)
-#define CALTYP  (mstack[fp-1].sfra)
+#define CALTYP  (mstack[fp-2].sfra)
+#define TRACESTATUS (mstack[fp-1].sfra)
 #define PREVEP	(mstack[fp+3].sstr)
-#define PREVSP	(fp-3)
-#define PREVFP	(mstack[fp-2].sfra)
+#define PREVSP	(fp-4)
+#define PREVFP	(mstack[fp-3].sfra)

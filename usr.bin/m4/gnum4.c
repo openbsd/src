@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.22 2003/06/30 21:42:50 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.23 2003/06/30 21:47:21 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -165,7 +165,8 @@ doindir(const char *argv[], int argc)
 	if (p == NULL)
 		errx(1, "undefined macro %s", argv[2]);
 	argv[1] = p->defn;
-	eval(argv+1, argc-1, p->type);
+	
+	eval(argv+1, argc-1, p->type, traced_macros && is_traced(argv[2]));
 }
 
 void 
@@ -175,7 +176,7 @@ dobuiltin(const char *argv[], int argc)
 	argv[1] = NULL;
 	n = builtin_type(argv[2]);
 	if (n != -1)
-		eval(argv+1, argc-1, n);
+		eval(argv+1, argc-1, n, traced_macros && is_traced(argv[2]));
 	else
 		errx(1, "unknown builtin %s", argv[2]);
 } 

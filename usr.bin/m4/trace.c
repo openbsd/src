@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.7 2003/06/12 14:36:43 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.8 2003/06/30 21:47:21 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -223,7 +223,7 @@ frame_level()
 	int framep;
 
 	for (framep = fp, level = 0; framep != 0; 
-		level++,framep = mstack[framep-2].sfra)
+		level++,framep = mstack[framep-3].sfra)
 		;
 	return level;
 }
