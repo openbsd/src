@@ -250,6 +250,7 @@
 ./usr/include/dev/ic/pckbcvar.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
+./usr/include/dev/ic/pt2254a.h
 ./usr/include/dev/ic/ramdac.h
 ./usr/include/dev/ic/rln.h
 ./usr/include/dev/ic/rlncmd.h
@@ -268,6 +269,7 @@
 ./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/stireg.h
 ./usr/include/dev/ic/stivar.h
+./usr/include/dev/ic/tc921x.h
 ./usr/include/dev/ic/tcic2reg.h
 ./usr/include/dev/ic/tcic2var.h
 ./usr/include/dev/ic/tea5757.h

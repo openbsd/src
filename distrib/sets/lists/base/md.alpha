@@ -701,6 +701,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pckbcvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pdqreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pdqvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/pt2254a.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/rln.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/rlncmd.ph
@@ -719,6 +720,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/smc93cx6var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/stivar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/tc921x.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/tcic2reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/tea5757.ph
