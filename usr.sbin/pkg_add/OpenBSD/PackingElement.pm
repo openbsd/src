@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.56 2004/10/16 11:01:29 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.57 2004/10/18 10:51:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1125,7 +1125,6 @@ sub run
 	my ($self, $state, @args) = @_;
 
 	my $dir = $state->{dir};
-	my $verbose = $state->{verbose};
 	my $not = $state->{not};
 	my $pkgname = $state->{pkgname};
 	my $name = $self->{name};

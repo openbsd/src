@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.57 2004/10/17 09:32:21 espie Exp $
+# $OpenBSD: pkg_delete,v 1.58 2004/10/18 10:51:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -18,7 +18,7 @@
 
 use strict;
 use warnings;
-use Getopt::Std;
+use OpenBSD::Getopt;
 use OpenBSD::PackingList;
 use OpenBSD::PackingOld;
 use OpenBSD::PackageInfo;
@@ -36,7 +36,7 @@ sub ensure_ldconfig
 	my $state = shift;
 	return if $state->{not};
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
-	VSystem($state->{verbose}, 
+	VSystem($state->{very_verbose}, 
 	    @OpenBSD::PackingElement::Lib::ldconfig, "-R");
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
@@ -300,7 +300,7 @@ sub delete
 	} else {
 		my $md5 = OpenBSD::md5::fromfile($realname);
 		if ($md5 eq $orig->{md5}) {
-			print "File $realname identical to sample\n";
+			print "File $realname identical to sample\n" if $state->{not} or $state->{verbose};
 		} else {
 			print "File $realname NOT identical to sample\n";
 			unless ($state->{extra}) {
@@ -310,7 +310,7 @@ sub delete
 		}
 	}
 	return if $state->{not};
-	print "deleting $realname\n";
+	print "deleting $realname\n" if $state->{verbose};
 	if (!unlink $realname) {
 		print "Problem deleting $realname\n";
 		$self->log_pkgname($state);
@@ -328,7 +328,7 @@ sub delete
 	my ($self, $state) = @_;
 	unless ($state->{not}) {
 	    my $fullname = $state->{destdir}.$self->fullname();
-	    VSystem($state->{verbose}, 
+	    VSystem($state->{very_verbose}, 
 	    "install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
 	}
 	$self->SUPER::delete($state);
@@ -473,6 +473,7 @@ package main;
 
 our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I);
 
+$opt_v = 0;
 sub remove_packing_info
 {
 	my $dir = shift;
@@ -568,7 +569,8 @@ sub delete_package
 	remove_packing_info($dir) unless $opt_n;
 }
 
-getopts('vcDdnf:qpS:L:B:I');
+getopts('vcDdnf:qpS:L:B:I',
+	{'v' => sub {++$opt_v;} });
 if ($opt_D) {
 	$opt_I = 1;
 }
@@ -602,8 +604,9 @@ my $removed;
 my $state = {};
 $state->{not} = $opt_n;
 $state->{quick} = $opt_q;
-$state->{verbose} = $opt_v;
-$state->{beverbose} = $opt_n || $opt_v;
+$state->{verbose} = $opt_v >= 2;
+$state->{very_verbose} = $opt_v;
+$state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
