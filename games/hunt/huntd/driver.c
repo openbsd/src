@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.6 1999/03/22 00:29:15 pjanzen Exp $	*/
+/*	$OpenBSD: driver.c,v 1.7 1999/12/12 15:13:50 d Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <tcpd.h>
 #include <syslog.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -27,8 +28,7 @@
 #include "server.h"
 
 char	*First_arg;		/* pointer to argv[0] */
-char	*Last_arg;		/* pointer to end of argv/environ */
-u_int16_t Server_port = HUNT_PORT;
+u_int16_t Server_port;
 int	Server_socket;		/* test socket to answer datagrams */
 FLAG	should_announce = TRUE;	/* true if listening on standard port */
 u_short	sock_port;		/* port # of tcp listen socket */
@@ -38,7 +38,7 @@ in_addr_t Server_addr = INADDR_ANY;	/* address to bind to */
 static	void	clear_scores __P((void));
 static	int	havechar __P((PLAYER *));
 static	void	init __P((void));
-	int	main __P((int, char *[], char *[]));
+	int	main __P((int, char *[]));
 static	void	makeboots __P((void));
 static	void	send_stats __P((void));
 static	void	zap __P((PLAYER *, FLAG));
@@ -52,12 +52,12 @@ static	void	handle_wkport __P((int));
  *	The main program.
  */
 int
-main(ac, av, ep)
+main(ac, av)
 	int	ac;
-	char	**av, **ep;
+	char	**av;
 {
-	PLAYER	*pp;
-	int	had_char;
+	PLAYER		*pp;
+	int		had_char;
 	static fd_set	read_fds;
 	static FLAG	first = TRUE;
 	static FLAG	server = FALSE;
@@ -66,20 +66,20 @@ main(ac, av, ep)
 	int		c;
 	static struct timeval	linger = { 0, 0 };
 	static struct timeval	timeout = { 0, 0 }, *to;
-	struct spawn	*sp;
+	struct spawn	*sp, *spnext;
 	int		ret;
 	int		nready;
+	int		fd;
 
 	First_arg = av[0];
-	if (ep == NULL || *ep == NULL)
-		ep = av + ac;
-	while (*ep)
-		ep++;
-	Last_arg = ep[-1] + strlen(ep[-1]);
+
+	/* Revoke privs: */
+	setegid(getgid());
+	setgid(getgid());
 
 	config();
 
-	while ((c = getopt(ac, av, "sp:a:")) != -1) {
+	while ((c = getopt(ac, av, "sp:a:D:")) != -1) {
 		switch (c) {
 		  case 's':
 			server = TRUE;
@@ -89,9 +89,11 @@ main(ac, av, ep)
 			Server_port = atoi(optarg);
 			break;
 		  case 'a':
-			Server_addr = inet_addr(optarg);
-			if (Server_addr == INADDR_NONE)
+			if (!inet_aton(optarg, (struct in_addr *)&Server_addr))
 				err(1, "bad interface address: %s", optarg);
+			break;
+		  case 'D':
+			config_arg(optarg);
 			break;
 		  default:
 erred:
@@ -163,16 +165,33 @@ again:
 		Have_inp = read_fds;
 
 		/* Answer new player connections: */
-		if (FD_ISSET(Socket, &read_fds))
+		if (FD_ISSET(Socket, &Have_inp))
 			answer_first();
 
 		/* Continue answering new player connections: */
-		for (sp = Spawn; sp; sp = sp->next)
-			if (FD_ISSET(sp->fd, &read_fds) && answer_next(sp)) {
+		for (sp = Spawn; sp; ) {
+			spnext = sp->next;
+			fd = sp->fd;
+			if (FD_ISSET(fd, &Have_inp) && answer_next(sp)) {
+				/*
+				 * Remove from the spawn list. (fd remains in 
+				 * read set).
+				 */
+				*sp->prevnext = sp->next;
+				if (sp->next)
+					sp->next->prevnext = sp->prevnext;
+				free(sp);
+
+				/* We probably consumed all data. */
+				FD_CLR(fd, &Have_inp);
+
+				/* Announce game if this is the first spawn. */
 				if (first && should_announce)
 					announce_game();
 				first = FALSE;
-			}
+			} 
+			sp = spnext;
+		}
 
 		/* Process input and move bullets until we've exhausted input */
 		had_char = TRUE;
@@ -206,32 +225,34 @@ again:
 		}
 
 		/* Handle a datagram sent to the server socket: */
-		if (FD_ISSET(Server_socket, &read_fds))
+		if (FD_ISSET(Server_socket, &Have_inp))
 			handle_wkport(Server_socket);
 
 		/* Answer statistics connections: */
-		if (FD_ISSET(Status, &read_fds))
+		if (FD_ISSET(Status, &Have_inp))
 			send_stats();
 
 		/* Flush/synchronize all the displays: */
 		for (pp = Player; pp < End_player; pp++) {
-			if (FD_ISSET(pp->p_fd, &read_fds))
+			if (FD_ISSET(pp->p_fd, &read_fds)) {
 				sendcom(pp, READY, pp->p_nexec);
-			pp->p_nexec = 0;
+				pp->p_nexec = 0;
+			}
 			flush(pp);
 		}
 		for (pp = Monitor; pp < End_monitor; pp++) {
-			if (FD_ISSET(pp->p_fd, &read_fds))
+			if (FD_ISSET(pp->p_fd, &read_fds)) {
 				sendcom(pp, READY, pp->p_nexec);
-			pp->p_nexec = 0;
+				pp->p_nexec = 0;
+			}
 			flush(pp);
 		}
 	} while (Nplayer > 0);
 
 	/* No more players! */
 
-	/* Continuous game? */
-	if (conf_linger < 0)
+	/* No players yet or a continuous game? */
+	if (first || conf_linger < 0)
 		goto again;
 
 	/* Wait a short while for one to come back: */
@@ -276,10 +297,11 @@ init()
 {
 	int	i;
 	struct sockaddr_in	test_port;
-	int	msg;
-	int	len;
+	int	true = 1;
+	socklen_t	len;
 	struct sockaddr_in	addr;
 	struct sigaction	sact;
+	struct servent *se;
 
 	(void) setsid();
 	if (setpgid(getpid(), getpid()) == -1)
@@ -341,9 +363,7 @@ init()
 	addr.sin_port = 0;
 
 	Socket = socket(AF_INET, SOCK_STREAM, 0);
-	msg = 1;
-	if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
-		log(LOG_ERR, "setsockopt loopback");
+
 	if (bind(Socket, (struct sockaddr *) &addr, sizeof addr) < 0) {
 		log(LOG_ERR, "bind");
 		cleanup(1);
@@ -366,6 +386,15 @@ init()
 	FD_SET(Status, &Fds_mask);
 	Num_fds = ((Socket > Status) ? Socket : Status) + 1;
 
+	/* Find the port that huntd should run on */
+	if (Server_port == 0) {
+		se = getservbyname("hunt", "udp");
+		if (se != NULL)
+			Server_port = ntohs(se->s_port);
+		else
+			Server_port = HUNT_PORT;
+	}
+
 	/* Check if stdin is a socket: */
 	len = sizeof (struct sockaddr_in);
 	if (getsockname(STDIN_FILENO, (struct sockaddr *) &test_port, &len) >= 0
@@ -374,6 +403,7 @@ init()
 		Server_socket = STDIN_FILENO;
 		conf_logerr = 0;
 		if (test_port.sin_port != htons((u_short) Server_port)) {
+			/* Private game */
 			should_announce = FALSE;
 			Server_port = ntohs(test_port.sin_port);
 		}
@@ -383,6 +413,12 @@ init()
 		test_port.sin_port = htons((u_short) Server_port);
 
 		Server_socket = socket(AF_INET, SOCK_DGRAM, 0);
+
+		/* Permit multiple huntd's on the same port. */
+		if (setsockopt(Server_socket, SOL_SOCKET, SO_REUSEPORT, &true, 
+		    sizeof true) < 0)
+			log(LOG_ERR, "setsockopt SO_REUSEADDR");
+
 		if (bind(Server_socket, (struct sockaddr *) &test_port,
 		    sizeof test_port) < 0) {
 			log(LOG_ERR, "bind port %d", Server_port);
@@ -862,11 +898,12 @@ static int
 havechar(pp)
 	PLAYER	*pp;
 {
+	int ret;
 
 	/* Do we already have characters? */
 	if (pp->p_ncount < pp->p_nchar)
 		return TRUE;
-	/* Is the player being quiet? */
+	/* Ignore if nothing to read. */
 	if (!FD_ISSET(pp->p_fd, &Have_inp))
 		return FALSE;
 	/* Remove the player from the read set until we have drained them: */
@@ -874,16 +911,26 @@ havechar(pp)
 
 	/* Suck their keypresses into a buffer: */
 check_again:
-	if ((pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf)) <= 0)
-	{
+	errno = 0;
+	ret = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf);
+	if (ret == -1) {
 		if (errno == EINTR)
 			goto check_again;
-		if (errno != EAGAIN) {
-			log(LOG_INFO, "read");
-			/* Assume their connection was lost/closed: */
-			pp->p_cbuf[0] = 'q';
-			pp->p_nchar = 1;
+		if (errno == EAGAIN) {
+#ifdef DEBUG
+			warn("Have_inp is wrong for %d", pp->p_fd);
+#endif
+			return FALSE;
 		}
+		log(LOG_INFO, "read");
+	}
+	if (ret > 0) {
+		/* Got some data */
+		pp->p_nchar = ret;
+	} else {
+		/* Connection was lost/closed: */
+		pp->p_cbuf[0] = 'q';
+		pp->p_nchar = 1;
 	}
 	/* Reset pointer into read buffer */
 	pp->p_ncount = 0;
@@ -931,8 +978,9 @@ send_stats()
 	FILE	*fp;
 	int	s;
 	struct sockaddr_in	sockstruct;
-	int	socklen;
+	socklen_t	socklen;
 	struct request_info ri;
+	int	flags;
 
 	/* Accept a connection to the statistics socket: */
 	socklen = sizeof sockstruct;
@@ -952,6 +1000,11 @@ send_stats()
 		close(s);
 		return;
 	}
+
+	/* Don't allow the writes to block: */
+	flags = fcntl(s, F_GETFL, 0);
+	flags |= O_NDELAY;
+	(void) fcntl(s, F_SETFL, flags);
 
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
@@ -1057,7 +1110,7 @@ static void
 announce_game()
 {
 
-	/* Stub */
+	/* TODO: could use system() to do something user-configurable */
 }
 
 /*
@@ -1068,7 +1121,7 @@ handle_wkport(fd)
 	int fd;
 {
 	struct sockaddr		fromaddr;
-	int 			fromlen;
+	socklen_t		fromlen;
 	u_int16_t		query;
 	u_int16_t		response;
 	struct request_info	ri;
@@ -1081,6 +1134,16 @@ handle_wkport(fd)
 		log(LOG_WARNING, "recvfrom");
 		return;
 	}
+
+#ifdef DEBUG
+	fprintf(stderr, "query %d (%s) from %s:%d\n", query,
+		query == C_MESSAGE ? "C_MESSAGE" :
+		query == C_SCORES ? "C_SCORES" :
+		query == C_PLAYER ? "C_PLAYER" :
+		query == C_MONITOR ? "C_MONITOR" : "?",
+		inet_ntoa(((struct sockaddr_in *)&fromaddr)->sin_addr),
+		ntohs(((struct sockaddr_in *)&fromaddr)->sin_port));
+#endif
 
 	/* Do we allow access? */
 	if (hosts_access(&ri) == 0) {
