@@ -1,4 +1,4 @@
-.\" $OpenBSD: moduli.5,v 1.9 2005/01/17 03:06:07 djm Exp $
+.\" $OpenBSD: moduli.5,v 1.10 2005/02/21 10:22:04 djm Exp $
 .\"
 .\" Copyright 1997, 2000 William Allen Simpson <wsimpson@greendragon.com>
 .\" All rights reserved.
@@ -144,9 +144,14 @@ Time, Size and Generator criteria.
 When more than one meet the criteria,
 the selection should be weighted toward newer moduli,
 without completely disqualifying older moduli.
+.Pp
+New moduli may be generated using the
+.Xr ssh-keygen 1
+tool.
 .Sh FILES
 .Bl -tag -width /etc/moduli -compact
 .It Pa /etc/moduli
 .El
 .Sh SEE ALSO
+.Xr ssh-keygen 1 ,
 .Xr sshd 8
