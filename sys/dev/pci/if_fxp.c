@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.18 1998/12/30 03:02:47 millert Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.19 1999/02/26 17:05:53 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1063,26 +1063,10 @@ rcvloop:
 					    sizeof(struct ether_header);
 					eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
-					if (ifp->if_bpf) {
+					if (ifp->if_bpf)
 						bpf_tap(FXP_BPFTAP_ARG(ifp),
 						    mtod(m, caddr_t),
 						    total_len); 
-						/*
-						 * Only pass this packet up
-						 * if it is for us.
-						 */
-						if ((ifp->if_flags &
-						    IFF_PROMISC) &&
-						    (*(u_int16_t *)(rfap +
-						    offsetof(struct fxp_rfa,
-						    rfa_status)) &
-						    FXP_RFA_STATUS_IAMATCH) &&
-						    (eh->ether_dhost[0] & 1)
-						    == 0) {
-							m_freem(m);
-							goto rcvloop;
-						}
-					}
 #endif /* NBPFILTER > 0 */
 					m->m_data +=
 					    sizeof(struct ether_header);

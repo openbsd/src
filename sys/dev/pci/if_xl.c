@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.19 1999/02/23 21:06:06 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.20 1999/02/26 17:05:55 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1965,13 +1965,6 @@ again:
 #else
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-			if (ifp->if_flags & IFF_PROMISC &&
-				(bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-						ETHER_ADDR_LEN) &&
-					(eh->ether_dhost[0] & 1) == 0)) {
-				m_freem(m);
-				continue;
-			}
 		}
 #endif
 		/* Remove header from mbuf and pass it on. */

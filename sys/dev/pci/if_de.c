@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.39 1999/02/04 22:33:32 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.40 1999/02/26 17:05:51 jason Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -3477,10 +3477,6 @@ tulip_rx_intr(
 	    }
 #endif
 	    sc->tulip_flags |= TULIP_RXACT;
-	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
-		    && (eh.ether_dhost[0] & 1) == 0
-		    && !TULIP_ADDREQUAL(eh.ether_dhost, sc->tulip_enaddr))
-		    goto next;
 	    accept = 1;
 	    total_len -= sizeof(struct ether_header);
 	} else {
@@ -3511,7 +3507,6 @@ tulip_rx_intr(
 		}
 	    }
 	}
-      next:
 #if defined(TULIP_DEBUG)
 	cnt++;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.11 1999/02/24 00:20:08 deraadt Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.12 1999/02/26 17:05:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -750,21 +750,10 @@ static void rl_rxeof(sc)
 
 #if NBPFILTER > 0
 		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
+		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if (ifp->if_flags & IFF_PROMISC &&
-				(bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-						ETHER_ADDR_LEN) &&
-					(eh->ether_dhost[0] & 1) == 0)) {
-				m_freem(m);
-				continue;
-			}
-		}
 #endif
 		/* Remove header from mbuf and pass it on. */
 		m_adj(m, sizeof(struct ether_header));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pn.c,v 1.1 1999/01/11 04:28:24 jason Exp $	*/
+/*	$OpenBSD: if_pn.c,v 1.2 1999/02/26 17:05:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -132,7 +132,7 @@
 
 #if !defined(lint) && defined(__FreeBSD__)
 static const char rcsid[] =
-	"$Id: if_pn.c,v 1.1 1999/01/11 04:28:24 jason Exp $";
+	"$Id: if_pn.c,v 1.2 1999/02/26 17:05:54 jason Exp $";
 #endif
 
 #if defined(__FreeBSD__)
@@ -1371,10 +1371,7 @@ static void pn_rxeof(sc)
 		m->m_pkthdr.len = m->m_len = total_len;
 #if NBPFILTER > 0
 		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
+		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf) {
 #ifdef __FreeBSD__
@@ -1382,13 +1379,6 @@ static void pn_rxeof(sc)
 #else
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-			if (ifp->if_flags & IFF_PROMISC &&
-				(bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-						ETHER_ADDR_LEN) &&
-					(eh->ether_dhost[0] & 1) == 0)) {
-				m_freem(m);
-				continue;
-			}
 		}
 #endif
 		/* Remove header from mbuf and pass it on. */
