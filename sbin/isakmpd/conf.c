@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.63 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.64 2004/04/15 18:53:56 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -77,44 +77,43 @@ TAILQ_HEAD(conf_trans_head, conf_trans) conf_trans_queue;
 /*
  * Radix-64 Encoding.
  */
-	const u_int8_t  bin2asc[]
-	= "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const u_int8_t  bin2asc[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-	const u_int8_t  asc2bin[] =
-	{
-		255, 255, 255, 255, 255, 255, 255, 255,
-		255, 255, 255, 255, 255, 255, 255, 255,
-		255, 255, 255, 255, 255, 255, 255, 255,
-		255, 255, 255, 255, 255, 255, 255, 255,
-		255, 255, 255, 255, 255, 255, 255, 255,
-		255, 255, 255, 62, 255, 255, 255, 63,
-		52, 53, 54, 55, 56, 57, 58, 59,
-		60, 61, 255, 255, 255, 255, 255, 255,
-		255, 0, 1, 2, 3, 4, 5, 6,
-		7, 8, 9, 10, 11, 12, 13, 14,
-		15, 16, 17, 18, 19, 20, 21, 22,
-		23, 24, 25, 255, 255, 255, 255, 255,
-		255, 26, 27, 28, 29, 30, 31, 32,
-		33, 34, 35, 36, 37, 38, 39, 40,
-		41, 42, 43, 44, 45, 46, 47, 48,
-		49, 50, 51, 255, 255, 255, 255, 255
-	};
+const u_int8_t  asc2bin[] =
+{
+	255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255, 255,
+	255, 255, 255, 62, 255, 255, 255, 63,
+	52, 53, 54, 55, 56, 57, 58, 59,
+	60, 61, 255, 255, 255, 255, 255, 255,
+	255, 0, 1, 2, 3, 4, 5, 6,
+	7, 8, 9, 10, 11, 12, 13, 14,
+	15, 16, 17, 18, 19, 20, 21, 22,
+	23, 24, 25, 255, 255, 255, 255, 255,
+	255, 26, 27, 28, 29, 30, 31, 32,
+	33, 34, 35, 36, 37, 38, 39, 40,
+	41, 42, 43, 44, 45, 46, 47, 48,
+	49, 50, 51, 255, 255, 255, 255, 255
+};
 
-	struct conf_binding {
-		LIST_ENTRY(conf_binding) link;
-		char           *section;
-		char           *tag;
-		char           *value;
-		int             is_default;
-	};
+struct conf_binding {
+	LIST_ENTRY(conf_binding) link;
+	char           *section;
+	char           *tag;
+	char           *value;
+	int             is_default;
+};
 
-	char           *conf_path = CONFIG_FILE;
+char           *conf_path = CONFIG_FILE;
 LIST_HEAD(conf_bindings, conf_binding) conf_bindings[256];
 
-	static char    *conf_addr;
-
-	static __inline__ u_int8_t
-	                conf_hash(char *s)
+static char    *conf_addr;
+static __inline__ u_int8_t
+conf_hash(char *s)
 {
 	u_int8_t        hash = 0;
 
@@ -1012,8 +1011,9 @@ conf_end(int transaction, int commit)
 			if (commit)
 				switch (node->op) {
 				case CONF_SET:
-					conf_set_now(node->section, node->tag, node->value,
-					  node->override, node->is_default);
+					conf_set_now(node->section, node->tag,
+					    node->value, node->override,
+					    node->is_default);
 					break;
 				case CONF_REMOVE:
 					conf_remove_now(node->section, node->tag);
@@ -1022,7 +1022,8 @@ conf_end(int transaction, int commit)
 					conf_remove_section_now(node->section);
 					break;
 				default:
-					log_print("conf_end: unknown operation: %d", node->op);
+					log_print("conf_end: unknown operation: %d",
+					    node->op);
 				}
 			TAILQ_REMOVE(&conf_trans_queue, node, link);
 			if (node->section)
@@ -1083,23 +1084,25 @@ conf_report(void)
 		     cb = LIST_NEXT(cb, link)) {
 			if (!cb->is_default) {
 				/* Dump this entry.  */
-				if (!current_section || strcmp(cb->section, current_section)) {
+				if (!current_section ||
+				    strcmp(cb->section, current_section)) {
 					if (current_section) {
 						len = strlen(current_section) + 3;
 						dnode->s = malloc(len);
 						if (!dnode->s)
 							goto mem_fail;
 
-						snprintf(dnode->s, len, "[%s]", current_section);
-						dnode->next
-							= (struct dumper *) calloc(1, sizeof(struct dumper));
+						snprintf(dnode->s, len, "[%s]",
+						    current_section);
+						dnode->next = (struct dumper *)
+						    calloc(1, sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
 							goto mem_fail;
 
 						dnode->s = "";
-						dnode->next
-							= (struct dumper *) calloc(1, sizeof(struct dumper));
+						dnode->next = (struct dumper *)
+						    calloc(1, sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
 							goto mem_fail;
@@ -1108,7 +1111,8 @@ conf_report(void)
 				}
 				dnode->s = cb->tag;
 				dnode->v = cb->value;
-				dnode->next = (struct dumper *) calloc(1, sizeof(struct dumper));
+				dnode->next = (struct dumper *)
+				    calloc(1, sizeof(struct dumper));
 				dnode = dnode->next;
 				if (!dnode)
 					goto mem_fail;
