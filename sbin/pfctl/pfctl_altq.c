@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.77 2003/08/22 21:50:34 david Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.78 2003/10/21 21:09:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -158,7 +158,7 @@ void
 print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw,
 	struct node_queue_opt *qopts)
 {
-	if (a->qname[0] != NULL) {
+	if (a->qname[0] != 0) {
 		print_queue(a, level, bw, 0, qopts);
 		return;
 	}
