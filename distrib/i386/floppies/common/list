@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1 1997/04/13 17:17:45 mickey Exp $
+#	$Id: list,v 1.2 1997/04/14 10:56:22 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -62,7 +62,7 @@ SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
@@ -78,5 +78,5 @@ COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 
 # and the common installation tools
-COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
-COPY	${TOPDIR}/inst-common/termcap.pc3	usr/share/misc/termcap
+COPY	${TOPDIR}/common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/common/termcap.pc3	usr/share/misc/termcap
