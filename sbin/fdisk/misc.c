@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2002/01/18 08:38:26 kjell Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2002/01/23 22:04:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -76,9 +76,9 @@ ask_cmd(cmd)
 	buf = &buf[strspn(buf, " \t")];
 	cp = &buf[strcspn(buf, " \t")];
 	*cp++ = '\0';
-	strncpy(cmd->cmd, buf, 10);
+	strncpy(cmd->cmd, buf, sizeof(cmd->cmd));
 	buf = &cp[strspn(cp, " \t")];
-	strncpy(cmd->args, buf, 100);
+	strncpy(cmd->args, buf, sizeof(cmd->args));
 
 	return (0);
 }
