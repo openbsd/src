@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 2002/08/11 23:11:22 art Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -53,20 +53,19 @@ int netif_debug;
  */
 #define	DEFAULT_KERNEL	"bsd"
 
-extern char		*version;
-unsigned long		esym;
-char			*strtab;
-int			strtablen;
-char			fbuf[80], dbuf[128];
+extern char	*version;
+extern vaddr_t	esym;
+char		fbuf[80], dbuf[128];
 
 typedef void (*entry_t)(caddr_t, int, int, int, long, long);
+int loadfile(int, vaddr_t *);
 
-void	loadfile(int, caddr_t);
 
 main()
 {
 	int	io;
 	char	*file;
+	entry_t entry;
 
 	prom_init();
 
@@ -94,169 +93,11 @@ main()
 	}
 
 	printf("Booting %s @ 0x%x\n", file, LOADADDR);
-	loadfile(io, LOADADDR);
-
-	_rtt();
-}
-
-void
-loadfile(io, addr)
-	register int	io;
-	register caddr_t addr;
-{
-	register entry_t entry = (entry_t)LOADADDR;
-	struct exec x;
-	int i;
-
-	i = read(io, (char *)&x, sizeof(x));
-	if (i != sizeof(x) ||
-	    N_BADMAG(x)) {
-		printf("Bad format\n");
-		return;
-	}
-	printf("%d", x.a_text);
-	if (N_GETMAGIC(x) == ZMAGIC) {
-		entry = (entry_t)(addr+sizeof(struct exec));
-		addr += sizeof(struct exec);
-	}
-	if (read(io, (char *)addr, x.a_text) != x.a_text)
-		goto shread;
-	addr += x.a_text;
-	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int)addr & __LDPGSZ)
-			*addr++ = 0;
-	printf("+%d", x.a_data);
-	if (read(io, addr, x.a_data) != x.a_data)
-		goto shread;
-	addr += x.a_data;
-	printf("+%d", x.a_bss);
-	for (i = x.a_bss; i ; --i)
-		*addr++ = 0;
-	if (x.a_syms != 0) {
-		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
-		addr += sizeof(x.a_syms);
-		printf("+[%d", x.a_syms);
-		if (read(io, addr, x.a_syms) != x.a_syms)
-			goto shread;
-		addr += x.a_syms;
-
-		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
-			goto shread;
-
-		bcopy(&strtablen, addr, sizeof(int));
-		if (i = strtablen) {
-			i -= sizeof(int);
-			addr += sizeof(int);
-			if (read(io, addr, i) != i)
-			    goto shread;
-			addr += i;
-		}
-		printf("+%d]", i);
-		esym = ((u_int)x.a_entry - (u_int)LOADADDR) +
-			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
-#if 0
-		/*
-		 * The FORTH word `loadsyms' is mentioned in the
-		 * "Openboot command reference" book, but it seems it has
-		 * not been implemented on at least one machine..
-		 */
-		promsyms(io, &x);
-#endif
-	}
-	printf("=0x%x\n", addr);
-	close(io);
+	loadfile(io, (vaddr_t *)&entry);
 
 	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
 	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec,
 		 0, 0, 0, esym, DDB_MAGIC1);
-	return;
 
-shread:
-	printf("boot: short read\n");
-	return;
+	_rtt();
 }
-
-#if 0
-struct syms {
-	u_int32_t	value;
-	u_int32_t	index;
-};
-
-void
-sort(syms, n)
-	struct syms *syms;
-	int n;
-{
-	register struct syms *sj;
-	register int i, j, k;
-	register u_int32_t value, index;
-
-	/* Insertion sort.  This is O(n^2), but so what? */
-	for (i = 1; i < n; i++) {
-		/* save i'th entry */
-		value = syms[i].value;
-		index = syms[i].index;
-		/* find j such that i'th entry goes before j'th */
-		for (j = 0, sj = syms; j < i; j++, sj++)
-			if (value < sj->value)
-				break;
-		/* slide up any additional entries */
-		for (k = 0; k < (i - j); k++) {
-			sj[k+1].value = sj[k].value;
-			sj[k+1].index = sj[k].index;
-		}
-		sj->value = value;
-		sj->index = index;
-	}
-}
-
-void
-promsyms(fd, hp)
-	int fd;
-	struct exec *hp;
-{
-	int i, n, strtablen;
-	char *str, *p, *cp, buf[128];
-	struct syms *syms;
-
-	lseek(fd, sizeof(*hp)+hp->a_text+hp->a_data, SEEK_SET);
-	n = hp->a_syms/sizeof(struct nlist);
-	if (n == 0)
-		return;
-	syms = (struct syms *)alloc(n * sizeof(struct syms));
-
-	printf("+[%x+", hp->a_syms);
-	for (i = 0; i < n; i++) {
-		struct nlist nlist;
-
-		if (read(fd, &nlist, sizeof(nlist)) != sizeof(nlist)) {
-			printf("promsyms: read failed\n");
-			return;
-		}
-		syms[i].value = nlist.n_value;
-		syms[i].index = nlist.n_un.n_strx - sizeof(strtablen);
-	}
-
-	sort(syms, n);
-
-	if (read(fd, &strtablen, sizeof(strtablen)) != sizeof(strtablen)) {
-		printf("promsym: read failed (strtablen)\n");
-		return;
-	}
-	if (strtablen < sizeof(strtablen)) {
-		printf("promsym: string table corrupted\n");
-		return;
-	}
-	strtablen -= sizeof(strtablen);
-	str = (char *)alloc(strtablen);
-
-	printf("%x]", strtablen);
-	if (read(fd, str, strtablen) != strtablen) {
-		printf("promsym: read failed (strtab)\n");
-		return;
-	}
-
-	sprintf(buf, "%x %d %x loadsyms", syms, n, str);
-	(promvec->pv_fortheval.v2_eval)(buf);
-}
-#endif
