@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.106 2004/02/19 07:41:45 kjc Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.107 2004/02/19 21:29:51 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1265,16 +1265,25 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state	*state;
+		struct pf_state		*state;
+		struct pfioc_state_kill *psk = (struct pfioc_state_kill *)addr;
+		int			 killed = 0;
 
 		s = splsoftnet();
-		RB_FOREACH(state, pf_state_tree_id, &tree_id)
-			state->timeout = PFTM_PURGE;
+		RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
+			    state->u.s.kif->pfik_name)) {
+				state->timeout = PFTM_PURGE;
+				killed++;
+			}
+		}
 		pf_purge_expired_states();
 		pf_status.states = 0;
 		splx(s);
+		psk->psk_af = killed;
 #if NPFSYNC
-		pfsync_clear_states(pf_status.hostid);
+		if (!psk->psk_ifname[0])
+			pfsync_clear_states(pf_status.hostid);
 #endif
 		break;
 	}
@@ -1304,7 +1313,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    (psk->psk_dst.port_op == 0 ||
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
-			    state->ext.port))) {
+			    state->ext.port)) &&
+			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
+			    state->u.s.kif->pfik_name))) {
 				state->timeout = PFTM_PURGE;
 				killed++;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.184 2004/02/19 07:41:45 kjc Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.185 2004/02/19 21:29:51 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1069,6 +1069,7 @@ struct pfioc_state_kill {
 	int			psk_proto;
 	struct pf_rule_addr	psk_src;
 	struct pf_rule_addr	psk_dst;
+	char			psk_ifname[IFNAMSIZ];
 };
 
 struct pfioc_states {
@@ -1202,7 +1203,7 @@ struct pfioc_iface {
 #define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
 #define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule)
 /* XXX cut 8 - 17 */
-#define DIOCCLRSTATES	_IO  ('D', 18)
+#define DIOCCLRSTATES	_IOWR('D', 18, struct pfioc_state_kill)
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.45 2004/01/24 18:54:40 deraadt Exp $
+.\"	$OpenBSD: pf.4,v 1.46 2004/02/19 21:29:51 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -211,8 +211,6 @@ of length
 .Va nbytes
 for the queue specified by
 .Va nr .
-.It Dv DIOCCLRSTATES
-Clears the state table.
 .It Dv DIOCADDSTATE    Fa "struct pfioc_state"
 Adds a state entry.
 .It Dv DIOCGETSTATE    Fa "struct pfioc_state"
@@ -233,8 +231,16 @@ struct pfioc_state_kill {
 	int			psk_proto;
 	struct pf_rule_addr	psk_src;
 	struct pf_rule_addr	psk_dst;
+	char			psk_ifname[IFNAMSIZ];
 };
 .Ed
+.It Dv DIOCCLRSTATES  Fa "struct pfioc_state_kill"
+Clears all states.
+It works like
+.Dv DIOCKILLSTATES ,
+but ignores the psk_af, psk_proto, psk_src and psk_dst fields of the
+.Fa pfioc_state_kill
+structure.
 .It Dv DIOCSETSTATUSIF Fa "struct pfioc_if"
 .Bd -literal
 struct pfioc_if {

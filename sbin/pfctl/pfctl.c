@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.205 2004/02/17 08:48:29 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.206 2004/02/19 21:29:51 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,8 +62,8 @@ int	 pfctl_clear_rules(int, int, char *, char *);
 int	 pfctl_clear_nat(int, int, char *, char *);
 int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_src_nodes(int, int);
-int	 pfctl_clear_states(int, int);
-int	 pfctl_kill_states(int, int);
+int	 pfctl_clear_states(int, const char *, int);
+int	 pfctl_kill_states(int, const char *, int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
 	    char *, char *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
@@ -368,17 +368,24 @@ pfctl_clear_src_nodes(int dev, int opts)
 }
 
 int
-pfctl_clear_states(int dev, int opts)
+pfctl_clear_states(int dev, const char *iface, int opts)
 {
-	if (ioctl(dev, DIOCCLRSTATES))
+	struct pfioc_state_kill psk;
+
+	memset(&psk, 0, sizeof(psk));
+	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
+	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
+		errx(1, "invalid interface: %s\n", iface);
+
+	if (ioctl(dev, DIOCCLRSTATES, &psk))
 		err(1, "DIOCCLRSTATES");
 	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "states cleared\n");
+		fprintf(stderr, "%d states cleared\n", psk.psk_af);
 	return (0);
 }
 
 int
-pfctl_kill_states(int dev, int opts)
+pfctl_kill_states(int dev, const char *iface, int opts)
 {
 	struct pfioc_state_kill psk;
 	struct addrinfo *res[2], *resp[2];
@@ -393,6 +400,9 @@ pfctl_kill_states(int dev, int opts)
 	    sizeof(psk.psk_src.addr.v.a.mask));
 	memset(&last_src, 0xff, sizeof(last_src));
 	memset(&last_dst, 0xff, sizeof(last_dst));
+	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
+	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
+		errx(1, "invalid interface: %s\n", iface);
 
 	if ((ret_ga = getaddrinfo(state_kill[0], NULL, NULL, &res[0]))) {
 		errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
@@ -1708,7 +1718,7 @@ main(int argc, char *argv[])
 			pfctl_clear_altq(dev, opts);
 			break;
 		case 's':
-			pfctl_clear_states(dev, opts);
+			pfctl_clear_states(dev, ifaceopt, opts);
 			break;
 		case 'S':
 			pfctl_clear_src_nodes(dev, opts);
@@ -1720,7 +1730,7 @@ main(int argc, char *argv[])
 			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
 			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
 			pfctl_clear_altq(dev, opts);
-			pfctl_clear_states(dev, opts);
+			pfctl_clear_states(dev, ifaceopt, opts);
 			pfctl_clear_src_nodes(dev, opts);
 			pfctl_clear_stats(dev, opts);
 			pfctl_clear_tables(anchorname, rulesetname, opts);
@@ -1735,7 +1745,7 @@ main(int argc, char *argv[])
 		}
 	}
 	if (state_killers)
-		pfctl_kill_states(dev, opts);
+		pfctl_kill_states(dev, ifaceopt, opts);
 
 	if (tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,
