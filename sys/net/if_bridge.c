@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.51 2001/03/05 03:38:38 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.52 2001/03/06 06:29:16 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1929,7 +1929,6 @@ bridge_filter(sc, ifp, eh, m)
 		ip = mtod(m, struct ip *);
 	}
 
-	ip->ip_sum = 0;
 	if ((ip->ip_sum = in_cksum(m, hlen)) != 0)
 		goto dropit;
 
