@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.11 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.12 2004/12/14 01:11:51 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -70,10 +70,8 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	cvs_files = cvs_file_get(".", 0);
-	if (cvs_files == NULL) {
+	if ((cvs_files = cvs_file_get(".", 0)) == NULL)
 		return (EX_USAGE);
-	}
 
 	root = CVS_DIR_ROOT(cvs_files);
 	if (root == NULL) {
@@ -84,7 +82,8 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_connect(root);
+		if (cvs_connect(root) < 0)
+			return (EX_DATAERR);
 
 		/* first send the expand modules command */
 		for (i = 0; i < argc; i++)
@@ -97,15 +96,16 @@ cvs_checkout(int argc, char **argv)
 
 		/* XXX not too sure why we have to send this arg */
 		if (cvs_sendarg(root, "-N", 0) < 0)
-			exit(1);
+			return (EX_PROTOCOL);
 
 		for (i = 0; i < argc; i++)
 			if (cvs_sendarg(root, argv[i], 0) < 0)
-				exit(EX_OSERR);
+				return (EX_PROTOCOL);
 
 		if ((cvs_senddir(root, cvs_files) < 0) ||
 		    (cvs_sendreq(root, CVS_REQ_CO, NULL) < 0)) {
 			cvs_log(LP_ERR, "failed to checkout");
+			return (EX_PROTOCOL);
 		}
 	}
 
