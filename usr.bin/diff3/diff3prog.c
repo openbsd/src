@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.5 2004/01/07 18:16:42 canacar Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.6 2005/03/30 04:44:52 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,11 +71,12 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.5 2004/01/07 18:16:42 canacar Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.6 2005/03/30 04:44:52 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <err.h>
 
@@ -117,7 +118,6 @@ struct diff d23[NC];
 struct diff de[NC];
 char overlap[NC];
 int  overlapcnt;
-char line[256];
 FILE *fp[3];
 int cline[3];		/* # of the last-read line in each file (0-2) */
 /*
@@ -132,8 +132,8 @@ char f1mark[40], f3mark[40];	/* markers for -E and -X */
 
 int duplicate(struct range *, struct range *);
 int edit(struct diff *, int, int);
-int getchange(FILE *);
-int getline(FILE *);
+char *getchange(FILE *);
+char *getline(FILE *, size_t *);
 int number(char **);
 int readin(char *, struct diff *);
 int skip(int, int, char *);
@@ -208,15 +208,13 @@ main(int argc, char **argv)
 int
 readin(char *name, struct diff *dd)
 {
-	int i;
-	int a,b,c,d;
-	char kind;
-	char *p;
+	int a, b, c, d, i;
+	char kind, *p;
+
 	fp[0] = fopen(name, "r");
-	for (i=0; getchange(fp[0]); i++) {
+	for (i=0; (p = getchange(fp[0])); i++) {
 		if (i >= NC)
 			err(EXIT_FAILURE, "too many changes");
-		p = line;
 		a = b = number(&p);
 		if (*p == ',') {
 			p++;
@@ -255,32 +253,44 @@ number(char **lc)
 	return (nn);
 }
 
-int
+char *
 getchange(FILE *b)
 {
-	while (getline(b)) {
+	char *line;
+
+	while ((line = getline(b, NULL))) {
 		if (isdigit((unsigned char)line[0]))
-			return (1);
+			return (line);
 	}
-	return (0);
+	return (NULL);
 }
 
-int
-getline(FILE *b)
+char *
+getline(FILE *b, size_t *n)
 {
-	int i, c;
+	char *cp;
+	size_t len;
+	static char *buf;
+	static size_t bufsize;
 
-	for (i = 0; i < sizeof(line) - 1; i++) {
-		c = getc(b);
-		if (c == EOF)
-			break;
-		line[i] = c;
-		if (c == '\n') {
-			line[++i] = 0;
-			return (i);
-		}
+	if ((cp = fgetln(b, &len)) == NULL)
+		return (NULL);
+
+	if (cp[len - 1] != '\n')
+		len++;
+	if (len + 1 > bufsize) {
+		do {
+			bufsize += 1024;
+		} while (len + 1 > bufsize);
+		if ((buf = realloc(buf, bufsize)) == NULL)
+			err(EXIT_FAILURE, NULL);
 	}
-	return (0);
+	memcpy(buf, cp, len - 1);
+	buf[len - 1] = '\n';
+	buf[len] = '\0';
+	if (n != NULL)
+		*n = len;
+	return (buf);
 }
 
 void
@@ -447,16 +457,17 @@ keep(int i, struct range *rnew)
 int
 skip(int i, int from, char *pr)
 {
-	int j, n;
+	size_t j, n;
+	char *line;
 
 	for (n = 0; cline[i] < from - 1; n += j) {
-		if ((j = getline(fp[i])) == 0)
+		if ((line = getline(fp[i], &j)) == NULL)
 			trouble();
 		if (pr != NULL)
 			printf("%s%s", pr, line);
 		cline[i]++;
 	}
-	return (n);
+	return ((int) n);
 }
 
 /*
