@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.2 2000/03/20 07:26:50 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.1 2000/03/20 07:26:50 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -51,62 +51,63 @@
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
+#include <powerpc/mac/openpicreg.h>
 
 #define ICU_LEN 64
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
 
 static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-static struct intrhand *intrhand[ICU_LEN];
+static struct intrhand *intrhand[ICU_LEN] = { 0 };
 static int hwirq[ICU_LEN], virq[64];
-unsigned int imen = 0xffffffff;
-int virq_max = 0;
+unsigned int imen /* = 0xffffffff */; /* XXX */
+static int virq_max = 0;
 
 struct evcnt evirq[ICU_LEN*2];
 
 static int fakeintr __P((void *));
 static char *intr_typename(int type);
 static void intr_calculatemasks();
-static void enable_irq(int x);
 static __inline int cntlzw(int x);
 static int mapirq(int irq);
 static int read_irq();
-static void mac_intr_do_pending_int();
+void openpic_enable_irq_mask(int irq_mask);
 
 extern u_int32_t *heathrow_FCR;
 
 #define HWIRQ_MAX 27
 #define HWIRQ_MASK 0x0fffffff
 
-#define INT_STATE_REG0  (interrupt_reg + 0x20)
-#define INT_ENABLE_REG0 (interrupt_reg + 0x24)
-#define INT_CLEAR_REG0  (interrupt_reg + 0x28)
-#define INT_LEVEL_REG0  (interrupt_reg + 0x2c)
-#define INT_STATE_REG1  (INT_STATE_REG0  - 0x10)
-#define INT_ENABLE_REG1 (INT_ENABLE_REG0 - 0x10)
-#define INT_CLEAR_REG1  (INT_CLEAR_REG0  - 0x10)
-#define INT_LEVEL_REG1  (INT_LEVEL_REG0  - 0x10)
 
-struct macintr_softc {
+static __inline u_int openpic_read __P((int));
+static __inline void openpic_write __P((int, u_int));
+void openpic_enable_irq __P((int));
+void openpic_disable_irq __P((int));
+void openpic_init();
+void openpic_set_priority __P((int, int));
+static __inline int openpic_read_irq __P((int));
+static __inline void openpic_eoi __P((int));
+
+struct openpic_softc {
 	struct device sc_dev;
 };
 
-int	macintr_match __P((struct device *parent, void *cf, void *aux));
-void	macintr_attach __P((struct device *, struct device *, void *));
-void	mac_do_pending_int();
-void	mac_ext_intr();
+int	openpic_match __P((struct device *parent, void *cf, void *aux));
+void	openpic_attach __P((struct device *, struct device *, void *));
+void	openpic_do_pending_int();
+void ext_intr_openpic();
 
-struct cfattach macintr_ca = { 
-	sizeof(struct macintr_softc),
-	macintr_match,
-	macintr_attach
+struct cfattach openpic_ca = { 
+	sizeof(struct openpic_softc),
+	openpic_match,
+	openpic_attach
 };
 
-struct cfdriver macintr_cd = {
-	NULL, "macintr", DV_DULL
+struct cfdriver openpic_cd = {
+	NULL, "openpic", DV_DULL
 };
 
 int
-macintr_match(parent, cf, aux) 
+openpic_match(parent, cf, aux) 
 	struct device *parent;
 	void *cf;
 	void *aux;
@@ -118,7 +119,7 @@ macintr_match(parent, cf, aux)
 
 	if (strcmp(ca->ca_name, "interrupt-controller") == 0 ) {
 		OF_getprop(ca->ca_node, "device_type", type, sizeof(type));
-		if (strcmp(type,  "interrupt-controller") == 0) {
+		if (strcmp(type,  "open-pic") == 0) {
 			return 1;
 		}
 	}
@@ -128,45 +129,53 @@ macintr_match(parent, cf, aux)
 u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
-int prog_switch (void *arg);
+static int prog_switch (void *arg);
 typedef int mac_intr_handle_t;
 
 typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
             int, int, int (*func)(void *), void *, char *));
 typedef void     (intr_disestablish_t) __P((void *, void *));
 
-intr_establish_t macintr_establish;
-intr_disestablish_t macintr_disestablish;
-extern intr_establish_t *mac_intr_establish_func;
-extern intr_disestablish_t *mac_intr_disestablish_func;
+vaddr_t openpic_base;
+void * openpic_intr_establish( void * lcv, int irq, int type, int level,
+	int (*ih_fun) __P((void *)), void *ih_arg, char *name);
+void openpic_intr_disestablish( void *lcp, void *arg);
 
 void
-macintr_attach(parent, self, aux)
+openpic_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct confargs *ca = aux;
-	struct macintr_softc *sc = (void *)self;
+	struct openpic_softc *sc = (void *)self;
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
+	extern intr_establish_t *mac_intr_establish_func;
+	extern intr_disestablish_t *mac_intr_disestablish_func;
 
-	interrupt_reg = (void *)ca->ca_baseaddr; /* XXX */
+	openpic_base = (vaddr_t) mapiodev (ca->ca_baseaddr +
+			ca->ca_reg[0], 0x22000);
 
-	install_extint(mac_ext_intr);
-	pending_int_f = mac_intr_do_pending_int;
-	intr_establish_func  = macintr_establish;
-	intr_disestablish_func  = macintr_disestablish;
-	mac_intr_establish_func  = macintr_establish;
-	mac_intr_disestablish_func  = macintr_disestablish;
+	printf("version %x", openpic_read(OPENPIC_VENDOR_ID));
 
+	openpic_init();
 
-	mac_intr_establish(parent, 0x14, IST_LEVEL, IPL_HIGH,
-		prog_switch, (void *)0x14, "prog button");
+	pending_int_f = openpic_do_pending_int;
+	intr_establish_func  = openpic_intr_establish;
+	intr_disestablish_func  = openpic_intr_disestablish;
+	mac_intr_establish_func  = openpic_intr_establish;
+	mac_intr_disestablish_func  = openpic_intr_disestablish;
+	install_extint(ext_intr_openpic);
+
+#if 1
+	mac_intr_establish(parent, 0x37, IST_LEVEL,
+		IPL_HIGH, prog_switch, 0x37, "prog button");
+#endif
 
 	printf("\n");
 }
 
-int
+static int
 prog_switch (void *arg)
 {
 #ifdef DDB
@@ -189,7 +198,7 @@ fakeintr(arg)
  * Register an interrupt handler.
  */
 void *
-macintr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
+openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	void * lcv;
 	int irq;
 	int type;
@@ -206,8 +215,7 @@ macintr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	fakehand.ih_fun  = fakeintr;
 
 #if 0
-printf("macintr_establish, hI %d L %d ", irq, type);
-printf("addr reg0 %x\n", INT_STATE_REG0);
+printf("mac_intr_establish, hI %d L %d ", irq, type);
 #endif
 
 	irq = mapirq(irq);
@@ -275,7 +283,7 @@ printf("vI %d ", irq);
  * Deregister an interrupt handler.
  */
 void
-macintr_disestablish(lcp, arg)
+openpic_intr_disestablish(lcp, arg)
 	void *lcp;
 	void *arg;
 {
@@ -326,6 +334,7 @@ intr_typename(type)
 #endif
 	}
 }
+
 /*
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
@@ -386,38 +395,15 @@ intr_calculatemasks()
 	{
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++) {
-			if (intrhand[irq])
+			if (intrhand[irq]) {
 				irqs |= 1 << irq;
+				openpic_enable_irq(hwirq[irq]);
+			} else {
+				openpic_disable_irq(hwirq[irq]);
+			}
 		}
 		imen = ~irqs;
-		enable_irq(~imen);
 	}
-}
-static void
-enable_irq(x)
-	int x;
-{
-	int state0, state1, v;
-	int irq;
-
-	x &= HWIRQ_MASK;	/* XXX Higher bits are software interrupts. */
-
-	state0 = state1 = 0;
-	while (x) {
-		v = 31 - cntlzw(x);
-		irq = hwirq[v];
-		if (irq < 32) {
-			state0 |= 1 << irq;
-		} else {
-			state1 |= 1 << (irq - 32);
-		}
-		x &= ~(1 << v);
-	}
-
-	if (heathrow_FCR) {
-		out32rb(INT_ENABLE_REG1, state1);
-	}
-	out32rb(INT_ENABLE_REG0, state0);
 }
 /*
  * Map 64 irqs into 32 (bits).
@@ -458,63 +444,9 @@ cntlzw(x)
 	return a;
 }
 
-/*
- * external interrupt handler
- */
-void
-mac_ext_intr()
-{
-	int i, irq = 0;
-	int o_imen, r_imen;
-	int pcpl;
-	struct intrhand *ih;
-	volatile unsigned long int_state;
-
-	pcpl = splhigh();	/* Turn off all */
-
-#if 0
-printf("mac_intr \n");
-#endif
-	int_state = read_irq();
-	if (int_state == 0)
-		goto out;
-
-start:
-	irq = 31 - cntlzw(int_state);
-
-	o_imen = imen;
-	r_imen = 1 << irq;
-
-	if ((pcpl & r_imen) != 0) {
-		ipending |= r_imen;	/* Masked! Mark this as pending */
-		imen |= r_imen;
-		enable_irq(~imen);
-	} else {
-		ih = intrhand[irq];
-		while (ih) {
-#if 0
-printf("calling handler %x\n", ih->ih_fun);
-#endif
-			(*ih->ih_fun)(ih->ih_arg);
-			ih = ih->ih_next;
-		}
-
-#ifdef UVM
-		uvmexp.intrs++;
-#else
-#endif
-		evirq[hwirq[irq]].ev_count++;
-	}
-	int_state &= ~r_imen;
-	if (int_state)
-		goto start;
-
-out:
-	splx(pcpl);	/* Process pendings. */
-}
 
 void
-mac_intr_do_pending_int()
+openpic_do_pending_int()
 {
 	struct intrhand *ih;
 	int irq;
@@ -534,7 +466,7 @@ mac_intr_do_pending_int()
 
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
-	enable_irq(~imen);
+	openpic_enable_irq_mask(~imen);
 	hwpend &= HWIRQ_MASK;
 	while (hwpend) {
 		irq = 31 - cntlzw(hwpend);
@@ -569,40 +501,170 @@ mac_intr_do_pending_int()
 	processing = 0;
 }
 
-static int
-read_irq()
+u_int
+openpic_read(reg)
+	int reg;
 {
-	int rv = 0;
-	int state0, state1, p;
-	int state0save, state1save;
+	char *addr = (void *)(openpic_base + reg);
 
-	state0 = in32rb(INT_STATE_REG0);
-	if (state0)
-		out32rb(INT_CLEAR_REG0, state0);
-		state0save = state0;
-	while (state0) {
-		p = 31 - cntlzw(state0);
-		rv |= 1 << virq[p];
-		state0 &= ~(1 << p);
+	return in32rb(addr);
+}
+
+void
+openpic_write(reg, val)
+	int reg;
+	u_int val;
+{
+	char *addr = (void *)(openpic_base + reg);
+
+	out32rb(addr, val);
+}
+
+void
+openpic_enable_irq_mask(irq_mask)
+int irq_mask;
+{
+	int irq;
+	for ( irq = 0; irq <= virq_max; irq++) {
+		if (irq_mask & (1 << irq)) {
+			openpic_enable_irq(hwirq[irq]);
+		} else {
+			openpic_disable_irq(hwirq[irq]);
+		}
 	}
+}
+void
+openpic_enable_irq(irq)
+	int irq;
+{
+	u_int x;
 
-	if (heathrow_FCR)			/* has heathrow? */
-		state1 = in32rb(INT_STATE_REG1);
-	else
-		state1 = 0;
+	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
+	x &= ~OPENPIC_IMASK;
+	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+}
 
-	if (state1)
-		out32rb(INT_CLEAR_REG1, state1);
-	state1save = state1;
-	while (state1) {
-		p = 31 - cntlzw(state1);
-		rv |= 1 << virq[p + 32];
-		state1 &= ~(1 << p);
-	}
-#if 0
-printf("mac_intr int_stat 0:%x 1:%x\n", state0save, state1save);
+void
+openpic_disable_irq(irq)
+	int irq;
+{
+	u_int x;
+
+	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
+	x |= OPENPIC_IMASK;
+	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+}
+
+void
+openpic_set_priority(cpu, pri)
+        int cpu, pri;
+{
+	u_int x;
+
+	x = openpic_read(OPENPIC_CPU_PRIORITY(cpu));
+	x &= ~OPENPIC_CPU_PRIORITY_MASK;
+	x |= pri;
+	openpic_write(OPENPIC_CPU_PRIORITY(cpu), x);
+}
+
+int
+openpic_read_irq(cpu)
+	int cpu;
+{
+	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
+}
+
+void
+openpic_eoi(cpu)
+        int cpu;
+{
+        openpic_write(OPENPIC_EOI(cpu), 0);
+        openpic_read(OPENPIC_EOI(cpu));
+}
+
+void
+ext_intr_openpic()
+{
+	int irq, realirq;
+	int r_imen;
+	int pcpl;
+	struct intrhand *ih;
+
+	pcpl = splhigh();       /* Turn off all */
+
+	realirq = openpic_read_irq(0);
+
+	while (realirq != 255) {
+		irq = virq[realirq];
+
+		/* XXX check range */
+
+		r_imen = 1 << irq;
+
+		if ((pcpl & r_imen) != 0) {
+			ipending |= r_imen;     /* Masked! Mark this as pending */
+			openpic_disable_irq(realirq);
+		} else {
+			ih = intrhand[irq];
+			while (ih) {
+				(*ih->ih_fun)(ih->ih_arg);
+				ih = ih->ih_next;
+			}
+
+#ifdef UVM
+			uvmexp.intrs++;
+#else
 #endif
+			evirq[realirq].ev_count++;
+		}
 
-	/* 1 << 0 is invalid. */
-	return rv & ~1;
+		openpic_eoi(0);
+
+		realirq = openpic_read_irq(0);
+	}
+
+	splx(pcpl);     /* Process pendings. */
+}
+void
+openpic_init()
+{
+        int irq;
+        u_int x;
+
+        /* disable all interrupts */
+        for (irq = 0; irq < ICU_LEN; irq++)
+                openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
+        openpic_set_priority(0, 15);
+
+        /* we don't need 8259 pass through mode */
+        x = openpic_read(OPENPIC_CONFIG);
+        x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+        openpic_write(OPENPIC_CONFIG, x);
+
+        /* send all interrupts to cpu 0 */
+        for (irq = 0; irq < ICU_LEN; irq++)
+                openpic_write(OPENPIC_IDEST(irq), 1 << 0);
+        for (irq = 0; irq < ICU_LEN; irq++) {
+                x = irq;
+                x |= OPENPIC_IMASK;
+                x |= OPENPIC_POLARITY_POSITIVE;
+                x |= OPENPIC_SENSE_LEVEL;
+                x |= 8 << OPENPIC_PRIORITY_SHIFT;
+                openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+        }
+
+        /* XXX set spurious intr vector */
+
+        openpic_set_priority(0, 0);
+
+        /* clear all pending interrunts */
+        for (irq = 0; irq < ICU_LEN; irq++) {
+                openpic_read_irq(0);
+                openpic_eoi(0);
+        }
+
+        for (irq = 0; irq < ICU_LEN; irq++)
+                openpic_disable_irq(irq);
+
+        install_extint(ext_intr_openpic);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.2 1999/11/23 01:25:29 rahnds Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.3 2000/03/20 07:26:51 rahnds Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -119,14 +119,14 @@ wdc_obio_probe(parent, match, aux)
 
 	/* XXX should not use name */
 	if (strcmp(ca->ca_name, "ATA") == 0 ||
-	    strcmp(ca->ca_name, "ata") == 0 ||
-	    strcmp(ca->ca_name, "ata0") == 0 ||
+	    strncmp(ca->ca_name, "ata", 3) == 0 ||
 	    strcmp(ca->ca_name, "ide") == 0)
 		return 1;
 
 	bzero(compat, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
-	if (strcmp(compat, "heathrow-ata") == 0)
+	if (strcmp(compat, "heathrow-ata") == 0 ||
+	    strcmp(compat, "keylargo-ata") == 0)
 		return 1;
 
 	return 0;
@@ -186,7 +186,8 @@ printf ("wdc_obio cmd_ioh %x ctl_ioh %x\n", chp->cmd_ioh, chp->ctl_ioh);
 	chp->data32iot = chp->cmd_iot;
 	chp->data32ioh = chp->cmd_ioh;
 
-	mac_intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
+	mac_intr_establish(parent, intr, IST_LEVEL, IPL_BIO, wdcintr, chp,
+		"wdc_obio");
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);

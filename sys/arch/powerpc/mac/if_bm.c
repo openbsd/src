@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.2 2000/02/03 05:49:46 rahnds Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.3 2000/03/20 07:26:49 rahnds Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -225,11 +225,14 @@ bmac_attach(parent, self, aux)
 	printf(" irq %d,%d: address %s\n", ca->ca_intr[0], ca->ca_intr[2],
 		ether_sprintf(laddr));
 
-	mac_intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, bmac_intr, sc);
+	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
+		bmac_intr, sc, "bmac intr");
 	/*
-	mac_intr_establish(ca->ca_intr[1], IST_LEVEL, IPL_NET, bmac_tx_intr, sc);
+	mac_intr_establish(parent, ca->ca_intr[1], IST_LEVEL, IPL_NET,
+		bmac_tx_intr, sc, "bmac_tx");
 	*/
-	mac_intr_establish(ca->ca_intr[2], IST_LEVEL, IPL_NET, bmac_rint, sc);
+	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_NET,
+		bmac_rint, sc, "bmac rint");
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
