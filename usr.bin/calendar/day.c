@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.17 2004/12/10 15:31:01 mickey Exp $	*/
+/*	$OpenBSD: day.c,v 1.18 2004/12/10 20:47:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: day.c,v 1.17 2004/12/10 15:31:01 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: day.c,v 1.18 2004/12/10 20:47:30 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,12 +143,15 @@ void setnnames(void)
 		fnmonths[i].len = strlen(buf);
 	}
 	/* Hardwired special events */
-	spev[0].name = strdup(EASTER);
-	spev[0].nlen = EASTERNAMELEN;
-	spev[0].getev = easter;
-	spev[1].name = strdup(PASKHA);
-	spev[1].nlen = PASKHALEN;
-	spev[1].getev = paskha;
+	spev[0].name = strdup(PESACH);
+	spev[0].nlen = PESACHLEN;
+	spev[0].getev = pesach;
+	spev[1].name = strdup(EASTER);
+	spev[1].nlen = EASTERNAMELEN;
+	spev[1].getev = easter;
+	spev[2].name = strdup(PASKHA);
+	spev[2].nlen = PASKHALEN;
+	spev[2].getev = paskha;
 	for (i = 0; i < NUMEV; i++) {
 		if (spev[i].name == NULL)
 			err(1, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.10 2004/12/10 15:00:27 mickey Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.11 2004/12/10 20:47:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -75,6 +75,7 @@ int	 getday(char *);
 int	 getdayvar(char *);
 int	 getfield(char *, char **, int *);
 int	 getmonth(char *);
+int	 pesach(int);
 int	 easter(int);
 int	 paskha(int);
 void	 insert(struct event **, struct event *);
@@ -100,6 +101,8 @@ extern int f_dayBefore;	/* days before current date */
 
 /* Special events; see also setnnames() in day.c */
 /* '=' is not a valid character in a special event name */
+#define PESACH "pesach"
+#define PESACHLEN (sizeof(PESACH) - 1)
 #define EASTER "easter"
 #define EASTERNAMELEN (sizeof(EASTER) - 1)
 #define PASKHA "paskha"
@@ -109,7 +112,7 @@ extern int f_dayBefore;	/* days before current date */
 extern enum calendars { GREGORIAN = 0, JULIAN, LUNAR } calendar;
 extern u_long julian;
 
-#define NUMEV 2	/* Total number of such special events */
+#define NUMEV 3	/* Total number of such special events */
 extern struct specialev spev[NUMEV];
 
 /* For calendar -a, specify a maximum time (in seconds) to spend parsing
