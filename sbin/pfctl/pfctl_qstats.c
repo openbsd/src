@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.10 2003/01/24 11:11:17 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.11 2003/01/24 11:20:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -295,6 +295,8 @@ print_cbqstats(struct queue_stats cur, struct queue_stats last)
 void
 print_priqstats(struct queue_stats cur, struct queue_stats last)
 {
+	double	interval;
+
 	printf("[ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    cur.data.priq_stats.xmitcnt.packets,
@@ -303,6 +305,16 @@ print_priqstats(struct queue_stats cur, struct queue_stats last)
 	    cur.data.priq_stats.dropcnt.bytes);
 	printf("[ qlength: %3d/%3d ]\n",
 	    cur.data.priq_stats.qlength, cur.data.priq_stats.qlimit);
+
+	if (!last.valid)
+		return;
+
+	interval = calc_interval(&cur.timestamp, &last.timestamp);
+	printf("[ measured: %7.1f packets/s, %s/s ]\n",
+	    calc_pps(cur.data.priq_stats.xmitcnt.packets,
+		last.data.priq_stats.xmitcnt.packets, interval),
+	    rate2str(calc_rate(cur.data.priq_stats.xmitcnt.bytes,
+		last.data.priq_stats.xmitcnt.bytes, interval)));
 }
 
 void
