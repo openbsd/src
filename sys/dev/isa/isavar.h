@@ -104,7 +104,7 @@ struct isa_softc {
 /* ISA interrupt sharing types */
 void	isascan __P((struct device *parent, void *match));
 void	*isa_intr_establish __P((int intr, int type, int level,
-	    int (*ih_fun)(void *), void *ih_arg));
+	    int (*ih_fun)(void *), void *ih_arg, char *ih_what));
 void	isa_intr_disestablish __P((void *handler));
 char	*isa_intr_typename __P((int type));
 

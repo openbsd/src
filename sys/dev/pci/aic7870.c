@@ -19,7 +19,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- *	$Id: aic7870.c,v 1.3 1995/12/27 22:06:44 deraadt Exp $
+ *	$Id: aic7870.c,v 1.4 1996/02/20 04:36:13 tholo Exp $
  */
 
 #include <sys/param.h>
@@ -106,5 +106,6 @@ aic7870_attach(parent, self, aux)
 
 	ahcattach(ahc);
 
-	ahc->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ahcintr, ahc);
+	ahc->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ahcintr, ahc,
+				 ahc->sc_dev.dv_xname);
 }

@@ -145,6 +145,8 @@ isa_nmi()
 	return(0);
 }
 
+int intrstray[ICU_LEN];
+
 /*
  * Caught a stray interrupt, notify
  */
@@ -152,17 +154,15 @@ void
 isa_strayintr(irq)
 	int irq;
 {
-	static u_long strays;
-
         /*
          * Stray interrupts on irq 7 occur when an interrupt line is raised
          * and then lowered before the CPU acknowledges it.  This generally
          * means either the device is screwed or something is cli'ing too
          * long and it's timing out.
          */
-	if (++strays <= 5)
+	if (intrstray[irq]++ <= 5)
 		log(LOG_ERR, "stray interrupt %d%s\n", irq,
-		    strays >= 5 ? "; stopped logging" : "");
+		    intrstray[irq] >= 5 ? "; stopped logging" : "");
 }
 
 int fastvec;
@@ -249,12 +249,13 @@ fakeintr(arg)
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-isa_intr_establish(irq, type, level, ih_fun, ih_arg)
+isa_intr_establish(irq, type, level, ih_fun, ih_arg, ih_what)
 	int irq;
 	int type;
 	int level;
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
+	char *ih_what;
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
@@ -308,6 +309,7 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
+	ih->ih_what = ih_what;
 	*p = ih;
 
 	return (ih);

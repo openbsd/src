@@ -914,7 +914,7 @@ gusattach(parent, self, aux)
 	 * we use IPL_CLOCK.
 	 */
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, gusintr,
-	    sc /* sc->sc_gusdsp */);
+	    sc /* sc->sc_gusdsp */, sc->sc_dev.dv_xname);
 
 	/*
 	 * Set some default values

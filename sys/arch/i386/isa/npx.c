@@ -326,7 +326,7 @@ npxattach(parent, self, aux)
 		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
-		    npxintr, 0);
+		    npxintr, 0, "npx");
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");

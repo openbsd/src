@@ -49,7 +49,7 @@
 
 void    *dec_axppci_33_pci_map_int __P((void *, pci_conftag_t,
 	    pci_intr_pin_t, pci_intr_line_t, int,
-	    int (*func)(void *), void *));
+	    int (*func)(void *), void *, char *));
 void    dec_axppci_33_pci_unmap_int __P((void *, void *));
 
 __const struct pci_intr_fns dec_axppci_33_pci_intr_fns = {
@@ -58,7 +58,7 @@ __const struct pci_intr_fns dec_axppci_33_pci_intr_fns = {
 };
 
 void *
-dec_axppci_33_pci_map_int(lcv, tag, pin, line, level, func, arg)
+dec_axppci_33_pci_map_int(lcv, tag, pin, line, level, func, arg, what)
 	void *lcv;
         pci_conftag_t tag;
 	pci_intr_pin_t pin;
@@ -66,6 +66,7 @@ dec_axppci_33_pci_map_int(lcv, tag, pin, line, level, func, arg)
         int level;
         int (*func) __P((void *));
         void *arg;
+	char *what;
 {
 	struct lca_config *lcp = lcv;
 	int bus, device, pirq;

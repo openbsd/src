@@ -608,7 +608,7 @@ uhaattach(parent, self, aux)
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
 	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-	    uha->intr, uha);
+	    uha->intr, uha, uha->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present

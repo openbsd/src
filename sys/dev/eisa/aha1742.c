@@ -540,7 +540,7 @@ ahbattach(parent, self, aux)
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
 #endif
 	ahb->sc_ih = eisa_intr_establish(ia->ia_irq, IST_LEVEL, IPL_BIO,
-	    ahbintr, ahb);
+	    ahbintr, ahb, ahb->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present

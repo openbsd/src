@@ -56,7 +56,7 @@
 #endif
 
 void	*kn20aa_pci_map_int __P((void *, pci_conftag_t, pci_intr_pin_t,
-	    pci_intr_line_t, int, int (*func)(void *), void *));
+	    pci_intr_line_t, int, int (*func)(void *), void *, char *));
 void	kn20aa_pci_unmap_int __P((void *, void *));
 
 __const struct pci_intr_fns kn20aa_pci_intr_fns = {
@@ -122,7 +122,7 @@ pci_kn20aa_pickintr(pcf, pcfa, ppf, ppfa, pifp, pifap)
 }
 
 void *
-kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg)
+kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg, what)
 	void *ccv;
         pci_conftag_t tag;
 	pci_intr_pin_t pin;
@@ -130,6 +130,7 @@ kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg)
         int level;
         int (*func) __P((void *));
         void *arg;
+	char *what;
 {
 	int device;
 	int kn20aa_slot, kn20aa_irq;

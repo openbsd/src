@@ -432,7 +432,8 @@ pasattach(parent, self, aux)
 	
 	sc->sc_iobase = iobase;
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO,
-				       sbdsp_intr, &sc->sc_sbdsp);
+				       sbdsp_intr, &sc->sc_sbdsp,
+				       sc->sc_dev.dv_xname);
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);
 	

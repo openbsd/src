@@ -239,7 +239,7 @@ lptattach(parent, self, aux)
 
 	if (ia->ia_irq != IRQUNK)
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
-		    lptintr, sc);
+		    lptintr, sc, sc->sc_dev.dv_xname);
 }
 
 /*

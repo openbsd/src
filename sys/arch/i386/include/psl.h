@@ -99,6 +99,21 @@
 
 #ifndef LOCORE
 
+/*
+ * Interrupt handler chains.  isa_intr_establish() inserts a handler into
+ * the list.  The handler is called with its (single) argument.
+ */
+
+struct intrhand {
+	int	(*ih_fun)();
+	void	*ih_arg;
+	u_long	ih_count;
+	struct	intrhand *ih_next;
+	int	ih_level;
+	int	ih_irq;
+	char	*ih_what;
+};
+
 volatile int cpl, ipending, astpending;
 int imask[5];
 

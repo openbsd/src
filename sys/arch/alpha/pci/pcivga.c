@@ -180,7 +180,8 @@ pcivgaattach(parent, self, aux)
 #if 0
 	pci_intrdata = pci_conf_read(sc->sc_pcitag, PCI_INTERRUPT_REG);
 	if (PCI_INTERRUPT_PIN(pci_intrdata) != PCI_INTERRUPT_PIN_NONE) {
-		sc->sc_intr = pci_map_int(sc->sc_pcitag, IPL_TTY, tgaintr, sc);
+		sc->sc_intr = pci_map_int(sc->sc_pcitag, IPL_TTY, tgaintr, sc,
+					  sc->sc_dev.dv_xname);
 		if (sc->sc_intr == NULL)
 			printf("%s: WARNING: couldn't map interrupt\n",
 			    sc->sc_dev.dv_xname);

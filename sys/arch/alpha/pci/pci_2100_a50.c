@@ -48,7 +48,7 @@
 
 void    *dec_2100_a50_pci_map_int __P((void *, pci_conftag_t,
 	    pci_intr_pin_t, pci_intr_line_t, int,
-	    int (*func)(void *), void *));
+	    int (*func)(void *), void *, char *));
 void    dec_2100_a50_pci_unmap_int __P((void *, void *));
 
 __const struct pci_intr_fns dec_2100_a50_pci_intr_fns = {
@@ -57,7 +57,7 @@ __const struct pci_intr_fns dec_2100_a50_pci_intr_fns = {
 };
 
 void *
-dec_2100_a50_pci_map_int(acv, tag, pin, line, level, func, arg)
+dec_2100_a50_pci_map_int(acv, tag, pin, line, level, func, arg, what)
 	void *acv;
         pci_conftag_t tag;
 	pci_intr_pin_t pin;
@@ -65,6 +65,7 @@ dec_2100_a50_pci_map_int(acv, tag, pin, line, level, func, arg)
         int level;
         int (*func) __P((void *));
         void *arg;
+	char *what;
 {
 	struct apecs_config *acp = acv;
 	int bus, device, pirq;

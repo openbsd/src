@@ -161,7 +161,6 @@ IDTVEC(fast/**/irq_num)							;\
 	ack(irq_num)							;\
 	addl	$4,%esp							;\
 	incl	_cnt+V_INTR		/* statistical info */		;\
-	incl	_intrcnt + (irq_num) * 4				;\
 	popl	%es							;\
 	popl	%ds							;\
 	popl	%edx							;\
@@ -219,7 +218,6 @@ _Xintr/**/irq_num/**/:							;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
 	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
 _Xresume/**/irq_num/**/:						;\
-	incl	_intrcnt + (irq_num) * 4				;\
 	movl	_cpl,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax							;\
 	orl	_intrmask + (irq_num) * 4,%eax				;\
@@ -332,27 +330,12 @@ IDTVEC(recurse)
 /* Some bogus data, to keep vmstat happy, for now. */
 	.globl	_intrcnt, _eintrcnt
 _intrcnt:
-	.space ICU_LEN * 4
+	.long 0
 _eintrcnt:
 
 	.globl	_intrnames, _eintrnames
 _intrnames:
-	.asciz	"irq  0"
-	.asciz	"irq  1"
-	.asciz	"irq  2"
-	.asciz	"irq  3"
-	.asciz	"irq  4"
-	.asciz	"irq  5"
-	.asciz	"irq  6"
-	.asciz	"irq  7"
-	.asciz	"irq  8"
-	.asciz	"irq  9"
-	.asciz	"irq 10"
-	.asciz	"irq 11"
-	.asciz	"irq 12"
-	.asciz	"irq 13"
-	.asciz	"irq 14"
-	.asciz	"irq 15"
+	.long 0
 _eintrnames:
 
 	.text

@@ -567,7 +567,8 @@ epattach(parent, self, aux)
 					     PCI_COMMAND_STATUS_REG) |
 			       PCI_COMMAND_MASTER_ENABLE);
 
-		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, epintr, sc);
+		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, epintr, sc,
+					sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL) {
 			printf("%s: couldn't map interrupt\n",
 			       sc->sc_dev.dv_xname);
@@ -580,7 +581,7 @@ epattach(parent, self, aux)
 	{
 		struct isa_attach_args *ia = aux;
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-		    epintr, sc);
+		    epintr, sc, sc->sc_dev.dv_xname);
 	}
 }
 

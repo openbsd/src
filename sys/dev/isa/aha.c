@@ -603,7 +603,7 @@ ahaattach(parent, self, aux)
 	isa_establish(&aha->sc_id, &aha->sc_dev);
 #endif
 	aha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, ahaintr,
-	    aha);
+	    aha, aha->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present
