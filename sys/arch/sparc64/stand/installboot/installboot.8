@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.4 2003/02/07 07:45:13 jmc Exp $
+.\"	$OpenBSD: installboot.8,v 1.5 2003/06/06 21:45:33 jmc Exp $
 .\"	$NetBSD: installboot.8,v 1.1 1995/09/30 21:32:14 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -49,8 +49,8 @@ is written into the superblock area in a partition
 and hence is limited in size to SBSIZE - DEV_BSIZE bytes
 .Pc ,
 and a second-stage program that resides in the filesystem proper.
-The first-stage program is loaded into memory by the PROM. After it receives
-control, it loads the second stage program
+The first-stage program is loaded into memory by the PROM.
+After it receives control, it loads the second stage program
 .Ar ofwboot
 from the filesystem.
 The second-stage boot program uses the device driver interface to
@@ -62,8 +62,8 @@ first-stage bootprogram can be found in
 .Pa /usr/mdec/ofwboot
 and
 .Pa /usr/mdec/bootblk
-respectively. The second-stage program commonly resides in the root directory
-as
+respectively.
+The second-stage program commonly resides in the root directory as
 .Pa /ofwboot .
 .Pp
 The options are as follows:
@@ -80,8 +80,8 @@ The arguments are:
 the name of the prototype file for the first stage boot program.
 .It Ar device
 the name of the raw device in which the first-stage boot program
-is to be installed.  This should correspond to the block device
-on which the file system containing
+is to be installed.
+This should correspond to the block device on which the file system containing
 .Ar ofwboot
 is mounted.
 .El
@@ -95,6 +95,14 @@ as the second-level boot program:
 .Bd -literal -offset indent
 installboot /usr/mdec/bootblk /dev/rsd0a
 .Ed
+.Sh SEE ALSO
+.Xr disklabel 8 ,
+.Xr init 8
+.Sh HISTORY
+The
+.Nm installboot
+first appeared in
+.Nx 1.1 .
 .Sh BUGS
 .Nm installboot
 requires simultaneous access to the mounted file system and
@@ -106,11 +114,3 @@ so
 .Nm installboot
 only works in single-user mode
 .Pq or insecure mode - see Xr init 8 .
-.Sh SEE ALSO
-.Xr disklabel 8 ,
-.Xr init 8
-.Sh HISTORY
-The
-.Nm installboot
-first appeared in
-.Nx 1.1 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.6 2003/02/01 16:38:39 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.7 2003/06/06 21:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat
 .\" Copyright (c) 1997-2002 Michael Shalayeff
@@ -269,6 +269,15 @@ booting the default kernel image.
 .It time
 Displays system time and date.
 .El
+.Sh FILES
+.Bl -tag -width /etc/boot.conf -compact
+.It Pa /boot
+system bootstrap
+.It Pa /etc/boot.conf
+system bootstrap's startup file
+.It Pa /bsd
+kernel image
+.El
 .Sh EXAMPLES
 .Li boot> boot
 .Pp
@@ -301,19 +310,6 @@ Once booted, such changes can be made permanent by using
 .Xr config 8 Ns 's
 .Fl e
 option.
-.Sh BUGS
-.Pp
-Changing the display resolution (mode) on a graphics console does not work
-correctly.
-.Sh FILES
-.Bl -tag -width /etc/boot.conf -compact
-.It Pa /boot
-system bootstrap
-.It Pa /etc/boot.conf
-system bootstrap's startup file
-.It Pa /bsd
-kernel image
-.El
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr autoconf 4 ,
@@ -335,3 +331,6 @@ for
 .Ox 3.1 .
 .Sh CAVEATS
 Making mistakes in console paths may cost you a toupee.
+.Sh BUGS
+Changing the display resolution (mode) on a graphics console does not work
+correctly.

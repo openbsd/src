@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.4 2003/05/08 08:53:23 jmc Exp $
+.\"	$OpenBSD: installboot.8,v 1.5 2003/06/06 21:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Paul Kranenburg
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .Dd May 31, 1995
 .Dt INSTALLBOOT 8 mvme88k
 .Os
@@ -68,8 +68,8 @@ where the first-stage boot program is to be installed.
 the name of the prototype file for the first stage boot program.
 .It Ar rawdev
 the name of the raw device in which the first-stage boot program
-is to be installed.  This should correspond to the block device
-on which the file system containing
+is to be installed.
+This should correspond to the block device on which the file system containing
 .Ar ufsboot
 is mounted.
 .El
@@ -79,6 +79,9 @@ cd /usr/mdec
 cp bootsd /
 installboot -v /bootsd ./bootxx /dev/rsd0a
 .Ed
+.Sh SEE ALSO
+.Xr disklabel 8 ,
+.Xr init 8
 .Sh BUGS
 .Nm installboot
 requires simultaneous access to the mounted file system and
@@ -87,7 +90,4 @@ the raw device, but that is not allowed with the kernel
 variable set to a value greater than zero (the default), so
 .Nm installboot
 only works in single-user mode (or insecure mode - see
-.Xr init 8 ).
-.Sh SEE ALSO
-.Xr disklabel 8 ,
-.Xr init 8
+.Xr init 8 ) .

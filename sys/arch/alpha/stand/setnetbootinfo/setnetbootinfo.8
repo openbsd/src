@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setnetbootinfo.8,v 1.4 2000/01/03 20:04:28 pjanzen Exp $
+.\"	$OpenBSD: setnetbootinfo.8,v 1.5 2003/06/06 21:45:33 jmc Exp $
 .\"	$NetBSD: setnetbootinfo.8,v 1.2 1997/04/06 08:41:36 cgd Exp $
 .\"
 .\" Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -82,8 +82,8 @@ program can get address information from the booting system's
 firmware.
 .It Fl h Ar ether-host
 Encode the ethernet address of the specified host into the network
-bootstrap program.  The host's name is translated to an ethernet
-address using the
+bootstrap program.
+The host's name is translated to an ethernet address using the
 .Xr ether_hostton 3
 function.
 (This option and the
@@ -92,7 +92,8 @@ option are mutually exclusive.)
 .It Fl o Ar outfile
 Output the resulting bootstrap program into the file named by
 .Ar outfile ,
-replacing it if it already exists.  If the
+replacing it if it already exists.
+If the
 .Fl o
 flag is not specified, the output file name will be
 the name of the input bootstrap program concatenated with a
@@ -108,8 +109,8 @@ input file name; the input file is read in its entirety before
 the output file is modified.
 .It Fl u
 Remove configuration information from the specified network
-bootstrap program.  If this option is used, an output file name must be
-specified with the
+bootstrap program.
+If this option is used, an output file name must be specified with the
 .Fl o
 option, and neither the
 .Fl a

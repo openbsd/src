@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.32 2003/06/03 20:22:11 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.33 2003/06/06 21:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -276,6 +276,17 @@ The default baudrate is 9600bps.
 .It time
 Displays system time and date.
 .El
+.Sh FILES
+.Bl -tag -width /usr/mdec/biosbootxx -compact
+.It Pa /usr/mdec/biosboot
+first stage bootstrap
+.It Pa /boot
+system bootstrap
+.It Pa /etc/boot.conf
+system bootstrap's startup file
+.It Pa /bsd
+kernel image
+.El
 .Sh EXAMPLES
 .Li boot> boot
 .Pp
@@ -312,17 +323,6 @@ Once booted, such changes can be made permanent by using
 .Xr config 8 Ns 's
 .Fl e
 option.
-.Sh FILES
-.Bl -tag -width /usr/mdec/biosbootxx -compact
-.It Pa /usr/mdec/biosboot
-first stage bootstrap
-.It Pa /boot
-system bootstrap
-.It Pa /etc/boot.conf
-system bootstrap's startup file
-.It Pa /bsd
-kernel image
-.El
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr autoconf 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.25 2003/06/03 20:22:11 mickey Exp $
+.\"	$OpenBSD: installboot.8,v 1.26 2003/06/06 21:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -82,8 +82,8 @@ The arguments are:
 .Bl -tag -width biosboot
 .It Ar boot
 The name of the second-stage boot program in the mounted file system
-where the first-stage boot program is to be installed.  This should be
-a full pathname.
+where the first-stage boot program is to be installed.
+This should be a full pathname.
 .It Ar biosboot
 The name of the prototype file for the first stage boot program,
 usually
@@ -122,7 +122,8 @@ The typical use is
 .Pp
 And if the information supplied looks right, run the above without the
 .Fl n
-flag.  If you are upgrading an old system, you may need to preface
+flag.
+If you are upgrading an old system, you may need to preface
 the above steps with some more steps... and do the following:
 .Pp
 .Dl boot the floppy.fs filesystem floppy
@@ -138,6 +139,11 @@ and
 you can use the boot block command:
 .Pp
 .Dl boot> machine diskinfo
+.Sh SEE ALSO
+.Xr biosboot 8 ,
+.Xr disklabel 8 ,
+.Xr fdisk 8 ,
+.Xr init 8
 .Sh BUGS
 The disklabel
 .Va d_type
@@ -149,8 +155,3 @@ You cannot run
 for a drive/partition other than the one you want the
 .Pa /boot
 to be loaded from.
-.Sh SEE ALSO
-.Xr biosboot 8 ,
-.Xr disklabel 8 ,
-.Xr fdisk 8 ,
-.Xr init 8

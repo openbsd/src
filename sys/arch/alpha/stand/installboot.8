@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.7 2000/01/03 20:04:27 pjanzen Exp $
+.\"	$OpenBSD: installboot.8,v 1.8 2003/06/06 21:45:33 jmc Exp $
 .\"	$NetBSD: installboot.8,v 1.2 1997/04/06 08:41:11 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -59,9 +59,9 @@ typically with the name
 .Pa /boot
 .Pc .
 The first-stage boot program is loaded into memory by the SRM console
-software.  After receiving control of the system, it loads the
-second-stage boot program from a set of filesystem block numbers that
-have been
+software.
+After receiving control of the system, it loads the second-stage boot
+program from a set of filesystem block numbers that have been
 hard-coded into it by
 .Nm installboot .
 The second-stage boot program locates and loads the kernel.
@@ -112,12 +112,21 @@ you would install the first-stage boot program on the disk
 .Bd -literal -offset indent
 installboot /boot /usr/mdec/bootxx /dev/rsd0c
 .Ed
+.Sh SEE ALSO
+.Xr disklabel 8 ,
+.Xr init 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The alpha
+.Nm
+command first appeared in
+.Nx 1.2 .
 .Sh BUGS
 The OpenBSD/alpha boot blocks can only load kernels from disks'
 .Dq a
-partitions.  (However, the second-stage boot
-program may be located on any FFS file system partition
-on the disk.)
+partitions.
+(However, the second-stage boot program may be located on any FFS file system
+partition on the disk.)
 .Pp
 .Nm Installboot
 requires simultaneous access to the mounted file system and
@@ -134,12 +143,3 @@ set to a value greater than one, or with
 set to one if the
 .Dq boot
 program resides in a file system on the disk's raw partition.
-.Sh SEE ALSO
-.Xr disklabel 8 ,
-.Xr init 8 ,
-.Xr sysctl 8
-.Sh HISTORY
-The alpha
-.Nm
-command first appeared in
-.Nx 1.2 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.16 2003/06/03 20:22:11 mickey Exp $
+.\"	$OpenBSD: biosboot.8,v 1.17 2003/06/06 21:45:33 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -47,7 +47,8 @@ location.
 .Nm
 must be installed by, and have its block table filled in by, the
 .Xr installboot 8
-program.  As this data is BIOS dependent, you must re-run
+program.
+As this data is BIOS dependent, you must re-run
 .Xr installboot 8
 each time you reinstall
 .Xr boot 8
@@ -66,12 +67,12 @@ protected mode and transferring control to the just loaded /boot program.
 Diagnostics consist of two error messages:
 .Bl -tag -width read_error_
 .It Er Read error
-Some kind of error returned by the BIOS read call. This might be
-any media error, including bad sectors (common on floppy disks),
+Some kind of error returned by the BIOS read call.
+This might be any media error, including bad sectors (common on floppy disks),
 and invalid sectors (can occur with messed up geometry translations).
 .It Er Bad magic
-The just loaded /boot image contains a bad magic in its header.  This
-might indicate some kind of hardware problem, the
+The just loaded /boot image contains a bad magic in its header.
+This might indicate some kind of hardware problem, the
 .Ar boot
 argument to the
 .Xr installboot 8
@@ -84,14 +85,17 @@ has been used in
 .Xr installboot 8
 for the device you are booting from.
 .Sh NOTES
-The practice of making OpenBSD use the whole disk (ie: having
+The practice of making
+.Ox
+use the whole disk (ie: having
 .Nm
 as the MBR) has been deprecated, and will not work on certain BIOS versions.
 There is a lot of strange behaviour with different BIOSes; one well
 known lobotomy case is that the BIOS does not pass the right boot drive
 number to the
 .Nm
-program.  This is one of the main reasons that having
+program.
+This is one of the main reasons that having
 .Nm
 as the MBR has been deprecated.
 .Sh FILES
@@ -110,6 +114,12 @@ system code
 .Xr boot_i386 8 ,
 .Xr fdisk 8 ,
 .Xr installboot 8
+.Sh HISTORY
+This program was written by Michael Shalayeff for
+.Ox 2.1 .
+However it's based on bootstrap code from older versions of this
+operating system, other operating systems, other programs, and
+other people's work.
 .Sh BUGS
 It should do a checksum over the loaded /boot image, and check that against
 a value that
@@ -121,9 +131,3 @@ reported.
 .Pp
 You can pick your motherboard, and you can pick your BIOS,
 but you can't pick your motherboard's BIOS.
-.Sh HISTORY
-This program was written by Michael Shalayeff for
-.Ox 2.1 .
-However it's based on bootstrap code from older versions of this
-operating system, other operating systems, other programs, and
-other people's work.
