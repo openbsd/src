@@ -32,15 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpass.c,v 1.5 1997/07/09 00:28:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: getpass.c,v 1.6 1999/12/08 04:26:13 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <termios.h>
-#include <signal.h>
-
+#include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
-#include <stdio.h>
+#include <signal.h>
+#include <termios.h>
 #include <unistd.h>
 
 char *
@@ -48,24 +47,22 @@ getpass(prompt)
 	const char *prompt;
 {
 	struct termios term;
-	register int ch;
-	register char *p;
-	FILE *fp, *outfp;
-	int echo;
+	char ch, *p;
+	int echo, input, output;
 	static char buf[_PASSWORD_LEN + 1];
 	sigset_t oset, nset;
 
 	/*
-	 * read and write to /dev/tty if possible; else read from
+	 * Read and write to /dev/tty if possible; else read from
 	 * stdin and write to stderr.
 	 */
-	if ((outfp = fp = fopen(_PATH_TTY, "r+")) == NULL) {
-		outfp = stderr;
-		fp = stdin;
+	if ((input = output = open(_PATH_TTY, O_RDWR)) == -1) {
+		input = STDIN_FILENO;
+		output = STDERR_FILENO;
 	}
 
 	/*
-	 * note - blocking signals isn't necessarily the
+	 * Note - blocking signals isn't necessarily the
 	 * right thing, but we leave it for now.
 	 */
 	sigemptyset(&nset);
@@ -73,24 +70,26 @@ getpass(prompt)
 	sigaddset(&nset, SIGTSTP);
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
-	(void)tcgetattr(fileno(fp), &term);
-	if ((echo = (term.c_lflag & ECHO))) {
+	/* Turn off echo if possible. */
+	if (tcgetattr(input, &term) == 0 && (term.c_lflag & ECHO)) {
+		echo = 1;
 		term.c_lflag &= ~ECHO;
-		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
-	}
-	(void)fputs(prompt, outfp);
-	rewind(outfp);			/* implied flush */
-	for (p = buf; (ch = getc(fp)) != EOF && ch != '\n';)
+		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
+	} else
+		echo = 0;
+
+	(void)write(output, prompt, strlen(prompt));
+	for (p = buf; read(input, &ch, 1) == 1 && ch != '\n';)
 		if (p < buf + _PASSWORD_LEN)
 			*p++ = ch;
 	*p = '\0';
-	(void)write(fileno(outfp), "\n", 1);
+	(void)write(output, "\n", 1);
 	if (echo) {
 		term.c_lflag |= ECHO;
-		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
+		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
-	if (fp != stdin)
-		(void)fclose(fp);
+	if (input != STDIN_FILENO)
+		(void)close(input);
 	return(buf);
 }
