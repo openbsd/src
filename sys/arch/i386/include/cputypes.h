@@ -1,4 +1,4 @@
-/*	$OpenBSD: cputypes.h,v 1.3 1997/12/17 08:54:51 downsj Exp $	*/
+/*	$OpenBSD: cputypes.h,v 1.4 1999/08/12 07:25:12 deraadt Exp $	*/
 /*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #define CPUVENDOR_CYRIX		1
 #define CPUVENDOR_NEXGEN	2
 #define CPUVENDOR_AMD		3
+#define CPUVENDOR_IDT		4
 
 /*
  * Some other defines, dealing with values returned by cpuid.

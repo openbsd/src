@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.110 1999/08/04 23:17:40 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.111 1999/08/12 07:25:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -765,6 +765,41 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX (M2)", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0,
 				"M2 class"	/* Default */
+			},
+			NULL
+		} }
+	},
+	{
+		"CentaurHauls",
+		CPUVENDOR_IDT,
+		"IDT",
+		/* Family 4, not yet available from IDT */
+		{ {
+			CPUCLASS_486, 
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 class"		/* Default */
+			},
+			NULL
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0, "WinChip C6", 0, 0, 0,
+				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
+				"WinChip"		/* Default */
+			},
+			NULL
+		},
+		/* Family 6, not yet available from IDT */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"686 class"		/* Default */
 			},
 			NULL
 		} }
