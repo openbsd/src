@@ -1,4 +1,4 @@
-/*	$NetBSD: iteconfig.c,v 1.4 1995/05/12 21:04:29 leo Exp $	*/
+/*	$NetBSD: iteconfig.c,v 1.4.6.1 1996/06/04 16:48:24 is Exp $	*/
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -279,8 +279,9 @@ initialize(file, is, ib, newis, newib)
 void
 usage()
 {
-	fprintf(stderr, "%s\n\t\t%s\n",
-	    "usage: iteconfig [-i] [-v volume] [-p period] [-t count]",
-	    "[-w width] [-h height] [-d depth] [-x off] [-y off] [color ...]");
+	fprintf(stderr, "%s\n\t\t%s\n\t\t%s\n",
+	    "usage: iteconfig [-i] [-f file] [-v volume] [-p pitch] [-t msec]",
+	    "[-w width] [-h height] [-d depth] [-x off] [-y off]",
+	    "[color ...]");
 	exit(1);
 }
