@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.77 2004/06/22 07:35:20 cedric Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.78 2004/06/25 03:04:24 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -91,6 +91,9 @@
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
+#ifdef IPSEC
+#include <netinet/ip_esp.h>
+#endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
 
@@ -159,6 +162,10 @@ in_baddynamic(port, proto)
 	case IPPROTO_TCP:
 		return (DP_ISSET(baddynamicports.tcp, port));
 	case IPPROTO_UDP:
+#ifdef IPSEC
+		if (port == udpencap_port)
+			return (1);
+#endif
 		return (DP_ISSET(baddynamicports.udp, port));
 	default:
 		return (0);
