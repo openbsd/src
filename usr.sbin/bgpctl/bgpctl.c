@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.48 2004/03/11 18:56:34 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.49 2004/04/13 22:55:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,7 @@ int		 main(int, char *[]);
 void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
+void		 print_neighbor_capa_mp_safi(u_int8_t);
 void		 print_neighbor_msgstats(struct peer *);
 void		 print_neighbor_timers(struct peer *);
 void		 print_timer(const char *, time_t, u_int);
@@ -303,6 +304,17 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		printf("  Last read %s, holdtime %us, keepalive interval %us\n",
 		    fmt_timeframe(p->stats.last_read),
 		    p->holdtime, p->holdtime/3);
+		if (p->capa.mp_v4 || p->capa.mp_v6) {
+			printf("  Neighbor capabilities:\n");
+			if (p->capa.mp_v4) {
+				printf("    Multiprotocol extensions: IPv4:");
+				print_neighbor_capa_mp_safi(p->capa.mp_v4);
+			}
+			if (p->capa.mp_v6) {
+				printf("    Multiprotocol extensions: IPv6:");
+				print_neighbor_capa_mp_safi(p->capa.mp_v6);
+			}
+		}
 		printf("\n");
 		switch (nv) {
 		case NV_DEFAULT:
@@ -335,6 +347,26 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 	}
 
 	return (0);
+}
+
+void
+print_neighbor_capa_mp_safi(u_int8_t safi)
+{
+	switch (safi) {
+	case SAFI_UNICAST:
+		printf(" Unicast");
+		break;
+	case SAFI_MULTICAST:
+		printf(" Multicast");
+		break;
+	case SAFI_BOTH:
+		printf(" Unicast Multicast");
+		break;
+	default:
+		printf(" unknown (%u)", safi);
+		break;
+	}
+	printf("\n");
 }
 
 void
