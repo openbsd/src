@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.12 2004/09/20 15:43:35 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.13 2004/09/21 08:39:46 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -280,20 +280,27 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	bnez	t1, Conf7KL2			# No L3 cache if set
 	li	ta3, 0				# Set size = 0
 
+#ifndef L3SZEXT
+	li	t3, CF_7_TS
+	and	t1, t3, v0
+	beq	t1, t3, Conf7KL2		# No L3 cache
+	srl	t1, CF_7_TS_AL
+
+	or	t2, CTYPE_HAS_XL3		# External L2 present.
+	li	t3, CF_7_TE			# Set SE in conf
+	or	v0, t3				# Update config register
+	li	ta3, 512*1024			# 512k per 'click'.
+	sll	ta3, t1
+#else
 	lw	ta3, CpuTertiaryCacheSize
 	and	t2, ~CTYPE_HAS_XL3
 	beqz	ta3, Conf7KL2			# No L3 cache present
 	nop
 
 	or	t2, CTYPE_HAS_XL3
-	lw	t3, CpuExternalCacheOn		# Check if disabled
-	bnez	t3, Conf7KL2			# No, use it
-	nop
-
-	and	v0, ~CF_7_TE			# Clear TE in conf
-	mtc0	v0, COP_0_CONFIG		# establish any new config
-	NOP10
-	li	ta3, 0				# L3 cache disabled
+	li	t3, CF_7_TE			# Set SE in conf
+	or	v0, t3				# Update config register
+#endif
 
 Conf7KL2:
 	and	t1, v0, CF_7_SC			# check for L2 cache
@@ -301,27 +308,8 @@ Conf7KL2:
 	li	ta2, 0				# No L2?
 
 	or	t2, CTYPE_HAS_IL2		# L2 is on chip
-	lw	t3, CpuOnboardCacheOn		# Check if disabled
-	bnez	t3, ConfResult			# No, use it
-	li	ta2, 256*1024			# size = 256k
-
-/* Sync on chip L2 */
-
-	LA	a0, KSEG0_BASE
-	LA	a1, KSEG0_BASE+0x00040000
-10:
-	cache	IndexWBInvalidate_S, 0(a0)
-	PTR_ADDU a0, 32
-	bne	a0, a1, 10b
-	nop
-
-	and	t2, ~CTYPE_HAS_IL2
-	li	t1, ~CF_7_SE			# Clear SE in conf
-	and	v0, t1
-	mtc0	v0, COP_0_CONFIG		# establish any new config
-	NOP10
 	b	ConfResult
-	li	ta2, 0				# L2 cache disabled
+	li	ta2, 256*1024			# L2 size = 256k
 
 /*
  * Get here with t2 = Cache type, ta0 = L1 I size, ta1 = L1 D size.
