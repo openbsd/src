@@ -390,7 +390,7 @@ re_backsrch() {
 
   register LINE *clp;
   register int tbo;
-  int error, startpos;
+  regmatch_t lastmatch;
   char m[1];
 
   clp = curwp->w_dotp;
@@ -410,15 +410,25 @@ re_backsrch() {
 
   while (clp != (curbp->b_linep)) {
 
-     re_match[0].rm_so = tbo;
-     re_match[0].rm_eo = llength(clp);
-     /* XXX - does not search backwards! */
-     error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
+     re_match[0].rm_so = 0;
+     re_match[0].rm_eo = tbo;
+     lastmatch.rm_so = -1;
+     /* Keep searching until we don't match any longer.  Assumes a non-match
+        does not modify the re_match array.
+     */
+     while (!regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND)) {
+       memcpy(&lastmatch, &re_match[0], sizeof(regmatch_t));
+       if (re_match[0].rm_eo >= tbo)
+         break;
+       re_match[0].rm_so = re_match[0].rm_eo;
+       re_match[0].rm_eo = tbo;
+     }
 
-     if (error) {
+     if (lastmatch.rm_so == -1) {
        clp = lback(clp);
        tbo = llength(clp);
      } else {
+       memcpy(&re_match[0], &lastmatch, sizeof(regmatch_t));
        curwp->w_doto = re_match[0].rm_so;
        curwp->w_dotp = clp;
        curwp->w_flag |= WFMOVE;
