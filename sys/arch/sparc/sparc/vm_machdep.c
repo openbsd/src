@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1999/01/10 13:34:19 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 1999/04/22 19:24:57 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -286,7 +286,11 @@ vmapbuf(bp, sz)
 	addr = (vm_offset_t)bp->b_saveaddr;
 	off = addr & PGOFSET;
 	size = round_page(bp->b_bcount + off);
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(kernel_map, size);
+#else
 	kva = kmem_alloc_wait(kernel_map, size);
+#endif
 	bp->b_data = (caddr_t)(kva + off);
 	addr = trunc_page(addr);
 	npf = btoc(size);
@@ -326,7 +330,11 @@ vunmapbuf(bp, sz)
 	kva = (vm_offset_t)bp->b_data;
 	off = kva & PGOFSET;
 	size = round_page(bp->b_bcount + off);
+#if defined(UVM)
+	uvm_km_free_wakeup(kernel_map, trunc_page(kva), size);
+#else
 	kmem_free_wakeup(kernel_map, trunc_page(kva), size);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 	if (CACHEINFO.c_vactype != VAC_NONE)
@@ -367,8 +375,15 @@ cpu_fork(p1, p2)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-	write_user_windows();
-	opcb->pcb_psr = getpsr();
+	if (p1 == curproc) {
+		write_user_windows();
+		opcb->pcb_psr = getpsr();
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
+
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
 		if (p1 == fpproc)
@@ -479,7 +494,11 @@ cpu_exit(p)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
+#if defined(UVM)
+	uvmspace_free(p->p_vmspace);
+#else
 	vmspace_free(p->p_vmspace);
+#endif
 	switchexit(kernel_map, p->p_addr, USPACE);
 	/* NOTREACHED */
 }
