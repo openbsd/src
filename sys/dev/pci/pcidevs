@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.739 2004/05/28 15:42:59 marco Exp $
+$OpenBSD: pcidevs,v 1.740 2004/06/05 07:30:40 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -139,7 +139,7 @@ vendor	CREATIVELABS	0x1102	Creative Labs
 vendor	TRIONES		0x1103	HighPoint
 vendor	SIGMA		0x1105	Sigma Designs
 vendor	VIATECH		0x1106	VIA
-vendor	COGENT		0x1109	Cogent Data Technologies
+vendor	COGENT		0x1109	Cogent Data
 vendor	SIEMENS 	0x110a	Siemens AG / Siemens Nixdorf AG
 vendor	ACCTON		0x1113	Accton
 vendor	VORTEX		0x1119	Vortex
@@ -166,7 +166,7 @@ vendor	V3		0x11b0	V3 Semiconductor
 vendor	PINNACLE	0x11bd	Pinnacle Systems
 vendor	LUCENT		0x11c1	AT&T/Lucent
 vendor	DOLPHIN		0x11c8	Dolphin Interconnect Solutions
-vendor	MRTMAGMA	0x11c9	Mesa Ridge Technologies (MAGMA)
+vendor	MRTMAGMA	0x11c9	Mesa Ridge (MAGMA)
 vendor	IRE		0x11d4	IRE
 vendor	ZORAN		0x11de	Zoran
 vendor	PIJNENBURG	0x11e3	Pijnenburg
@@ -186,7 +186,7 @@ vendor	SMI		0x126f	Silicon Motion
 vendor	ENSONIQ		0x1274	Ensoniq
 vendor	TRANSMETA	0x1279	Transmeta
 vendor	ROCKWELL	0x127a	Rockwell
-vendor	DAVICOM		0x1282	Davicom Technologies
+vendor	DAVICOM		0x1282	Davicom
 vendor	ITEXPRESS	0x1283	ITExpress
 vendor	PLATFORM	0x1285	Platform
 vendor	LUXSONOR	0x1287	LuxSonor
@@ -214,7 +214,7 @@ vendor	SUNIX		0x1409	Sunix
 vendor	OXFORD2		0x1415	Oxford
 vendor	TAMARACK	0x143d	Tamarack Microelectronics
 vendor	ASKEY		0x144f	Askey
-vendor	AVERMEDIA	0x1461	Avermedia Technologies
+vendor	AVERMEDIA	0x1461	Avermedia
 vendor	OXFORD		0x14d2	Oxford
 vendor	AIRONET		0x14b9	Aironet
 vendor	INVERTEX	0x14e1	Invertex
