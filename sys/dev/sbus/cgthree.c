@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.17 2002/06/02 19:51:03 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.18 2002/06/03 02:32:06 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -53,7 +53,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
-#include <dev/rcons/raster.h>
+#include <dev/rasops/rasops.h>
 
 #define	CGTHREE_CTRL_OFFSET	0x400000
 #define	CGTHREE_CTRL_SIZE	(sizeof(u_int32_t) * 8)
@@ -128,20 +128,8 @@ struct cgthree_softc {
 	bus_space_handle_t sc_vid_regs;
 	int sc_nscreens;
 	int sc_width, sc_height, sc_depth, sc_linebytes;
-	struct rcons sc_rcons;
-	struct raster sc_raster;
 	union bt_cmap sc_cmap;
-};
-
-struct wsdisplay_emulops cgthree_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
+	struct rasops_info sc_rasops;
 };
 
 struct wsscreen_descr cgthree_stdscreen = {
@@ -296,37 +284,30 @@ cgthreeattach(parent, self, aux)
 
 	cgthree_burner(sc, 1, 0);
 
-	sc->sc_rcons.rc_sp = &sc->sc_raster;
-	sc->sc_raster.width = sc->sc_width;
-	sc->sc_raster.height = sc->sc_height;
-	sc->sc_raster.depth = sc->sc_depth;
-	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
-	sc->sc_raster.pixels = (void *)bus_space_vaddr(sc->sc_bustag,
+	sc->sc_rasops.ri_depth = sc->sc_depth;
+	sc->sc_rasops.ri_stride = sc->sc_linebytes;
+	sc->sc_rasops.ri_flg = RI_CENTER;
+	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
+	sc->sc_rasops.ri_width = sc->sc_width;
+	sc->sc_rasops.ri_height = sc->sc_height;
+	sc->sc_rasops.ri_hw = sc;
 
-	if (console == 0 ||
-	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
-		sc->sc_rcons.rc_crow = sc->sc_rcons.rc_ccol = -1;
-		sc->sc_rcons.rc_crowp = &sc->sc_rcons.rc_crow;
-		sc->sc_rcons.rc_ccolp = &sc->sc_rcons.rc_ccol;
-	}
+	rasops_init(&sc->sc_rasops,
+	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
+	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
 
-	sc->sc_rcons.rc_maxcol =
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-	sc->sc_rcons.rc_maxrow =
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
-
-	rcons_init(&sc->sc_rcons,
-	    sc->sc_rcons.rc_maxrow, sc->sc_rcons.rc_maxcol);
-
-	cgthree_stdscreen.nrows = sc->sc_rcons.rc_maxrow;
-	cgthree_stdscreen.ncols = sc->sc_rcons.rc_maxcol;
-	cgthree_stdscreen.textops = &cgthree_emulops;
-	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, &defattr);
+	cgthree_stdscreen.nrows = sc->sc_rasops.ri_rows;
+	cgthree_stdscreen.ncols = sc->sc_rasops.ri_cols;
+	cgthree_stdscreen.textops = &sc->sc_rasops.ri_ops;
+	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, &defattr);
 
 	printf("\n");
 
 	if (console) {
+		int *ccolp, *crowp;
+
 		cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
 		cgthree_setcolor(sc, 255, 255, 255, 255);
 		cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
@@ -337,8 +318,15 @@ cgthreeattach(parent, self, aux)
 		cgthree_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
 		cgthree_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 
-		wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rcons,
-		    *sc->sc_rcons.rc_ccolp, *sc->sc_rcons.rc_crowp, defattr);
+		if (romgetcursoraddr(&crowp, &ccolp))
+			ccolp = crowp = NULL;
+		if (ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *ccolp;
+		if (crowp != NULL)
+			sc->sc_rasops.ri_crow = *crowp;
+
+		wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rasops,
+		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
 
 	waa.console = console;
@@ -425,10 +413,11 @@ cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rcons;
-	*curyp = *sc->sc_rcons.rc_crowp;
-	*curxp = *sc->sc_rcons.rc_ccolp;
-	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, attrp);
+	*cookiep = &sc->sc_rasops;
+	*curyp = 0;
+	*curxp = 0;
+	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
