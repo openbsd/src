@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.14 2001/02/07 22:36:03 stevesk Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.15 2001/02/07 22:55:47 stevesk Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -71,29 +71,29 @@ struct CMD {
 };
 
 const struct CMD cmds[] = {
-	{ "CD",		I_CHDIR },
-	{ "CHDIR",	I_CHDIR },
-	{ "CHGRP",	I_CHGRP },
-	{ "CHMOD",	I_CHMOD },
-	{ "CHOWN",	I_CHOWN },
-	{ "DIR",	I_LS },
-	{ "EXIT",	I_QUIT },
-	{ "GET",	I_GET },
-	{ "HELP",	I_HELP },
-	{ "LCD",	I_LCHDIR },
-	{ "LCHDIR",	I_LCHDIR },
-	{ "LLS",	I_LLS },
-	{ "LMKDIR",	I_LMKDIR },
-	{ "LPWD",	I_LPWD },
-	{ "LS",		I_LS },
-	{ "LUMASK",	I_LUMASK },
-	{ "MKDIR",	I_MKDIR },
-	{ "PUT",	I_PUT },
-	{ "PWD",	I_PWD },
-	{ "QUIT",	I_QUIT },
-	{ "RENAME",	I_RENAME },
-	{ "RM",		I_RM },
-	{ "RMDIR",	I_RMDIR },
+	{ "cd",		I_CHDIR },
+	{ "chdir",	I_CHDIR },
+	{ "chgrp",	I_CHGRP },
+	{ "chmod",	I_CHMOD },
+	{ "chown",	I_CHOWN },
+	{ "dir",	I_LS },
+	{ "exit",	I_QUIT },
+	{ "get",	I_GET },
+	{ "help",	I_HELP },
+	{ "lcd",	I_LCHDIR },
+	{ "lchdir",	I_LCHDIR },
+	{ "lls",	I_LLS },
+	{ "lmkdir",	I_LMKDIR },
+	{ "lpwd",	I_LPWD },
+	{ "ls",		I_LS },
+	{ "lumask",	I_LUMASK },
+	{ "mkdir",	I_MKDIR },
+	{ "put",	I_PUT },
+	{ "pwd",	I_PWD },
+	{ "quit",	I_QUIT },
+	{ "rename",	I_RENAME },
+	{ "rm",		I_RM },
+	{ "rmdir",	I_RMDIR },
 	{ "!",		I_SHELL },
 	{ "?",		I_HELP },
 	{ NULL,			-1}
