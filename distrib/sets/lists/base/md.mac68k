@@ -1457,6 +1457,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/adbsys.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ansi.ph

@@ -1493,6 +1493,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/machine
 ./usr/libdata/perl5/site_perl/m68k-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/math.ph

@@ -41,6 +41,7 @@
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
+./usr/include/m68k/vmparam.h
 ./usr/include/mac68k
 ./usr/include/mac68k/adbsys.h
 ./usr/include/mac68k/ansi.h
