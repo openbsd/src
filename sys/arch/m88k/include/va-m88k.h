@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.3 2004/06/07 20:44:18 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.4 2004/06/09 23:08:19 miod Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
@@ -9,6 +9,7 @@ typedef struct __va_list_tag {
 	unsigned int  __va_arg;		/* argument number */
 	unsigned int *__va_stk;		/* start of args passed on stack */
 	unsigned int *__va_reg;		/* start of args passed in regs */
+	unsigned int __va_tomfoolery;	/* do we need to eat stack for regs */
 } __va_list[1], __gnuc_va_list[1];
 
 #endif /* not __GNUC_VA_LIST */
@@ -23,6 +24,7 @@ __extension__ ({							\
   __builtin_memcpy ((AP), __builtin_saveregs (), sizeof(__gnuc_va_list)); \
   if ((AP)->__va_arg > 8)						\
  	(AP)->__va_stk += ((AP)->__va_arg - 8);				\
+  (AP)->__va_tomfoolery = 0;						\
   })
 
 #ifdef _STDARG_H /* stdarg.h support */
@@ -65,13 +67,16 @@ __extension__(*({							\
     if ((AP)->__va_arg <= 8 && __va_reg_p(TYPE)) {			\
 	__ptr = (TYPE *) (void *) ((AP)->__va_reg +			\
 	    (AP)->__va_arg - __va_size(TYPE));				\
+	if ((AP)->__va_tomfoolery)					\
+	    (AP)->__va_stk += __va_size(TYPE);				\
     } else {								\
 	if (((unsigned int)((AP)->__va_stk) & 4) != 0 &&		\
 	    __alignof__(*(TYPE *)0) > 4) {				\
 	    (AP)->__va_stk++;						\
-} \
+	} \
 	__ptr = (TYPE *) (AP)->__va_stk;				\
 	(AP)->__va_stk += __va_size(TYPE);				\
+	(AP)->__va_tomfoolery = 1;					\
     }									\
     __ptr;								\
 }))
