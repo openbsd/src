@@ -88,26 +88,28 @@ struct cgfour_softc {
 };
 
 /* autoconfiguration driver */
-void	cgfourattach	__P((struct device *, struct device *, void *));
-int	cgfourmatch	__P((struct device *, void *, void *));
+static void	cgfourattach __P((struct device *, struct device *, void *));
+static int	cgfourmatch __P((struct device *, void *, void *));
+int		cgfouropen __P((dev_t, int, int, struct proc *));
+int		cgfourclose __P((dev_t, int, int, struct proc *));
+int		cgfourioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int		cgfourmmap __P((dev_t, int, int));
+static void	cgfourunblank __P((struct device *));
+
 struct cfdriver cgfourcd = {
 	NULL, "cgfour", cgfourmatch, cgfourattach,
 	DV_DULL, sizeof(struct cgfour_softc)
 };
 
 /* frame buffer generic driver */
-static void cgfourunblank __P((struct device *));
-static struct fbdriver cgfourfbdriver = { cgfourunblank };
+static struct fbdriver cgfourfbdriver = {
+	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourmmap
+};
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
-extern int nullop();
-static int cgfour_cnputc();
 
 static void cgfourloadcmap __P((struct cgfour_softc *, int, int));
-
-#define	CGFOUR_MAJOR	39		/* XXX */
 
 /*
  * Match a cgfour.
@@ -138,21 +140,14 @@ cgfourattach(parent, self, args)
 {
 	register struct cgfour_softc *sc = (struct cgfour_softc *)self;
 	register struct confargs *ca = args;
-	register int node, ramsize, i;
+	register int node = 0, ramsize, i;
 	register volatile struct bt_regs *bt;
 	register struct cgfour_all *p;
 	int isconsole;
 
-	sc->sc_fb.fb_major = CGFOUR_MAJOR;	/* XXX to be removed */
-
 	sc->sc_fb.fb_driver = &cgfourfbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN4COLOR;
-	node = 0;
 
 	pfour_reset();
 	pfour_videosize(ca->ca_ra.ra_pfour, &sc->sc_fb.fb_type.fb_width,
@@ -410,9 +405,5 @@ cgfourmmap(dev, off, prot)
 		poff = off + (CG4REG_COLOUR - CG4REG_OVERLAY) - START_COLOUR;
 	else
 		return (-1);
-	/*
-	 * I turned on PMAP_NC here to disable the cache as I was
-	 * getting horribly broken behaviour with it on.
-	 */
 	return ((u_int)sc->sc_phys + poff + PMAP_OBIO + PMAP_NC);
 }

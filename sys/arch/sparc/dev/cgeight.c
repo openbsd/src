@@ -86,24 +86,26 @@ struct cgeight_softc {
 /* autoconfiguration driver */
 static void	cgeightattach(struct device *, struct device *, void *);
 static int	cgeightmatch(struct device *, void *, void *);
+int		cgeightopen __P((dev_t, int, int, struct proc *));
+int		cgeightclose __P((dev_t, int, int, struct proc *));
+int		cgeightioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int		cgeightmmap __P((dev_t, int, int));
+static void	cgeightunblank __P((struct device *));
+
 struct cfdriver cgeightcd = {
 	NULL, "cgeight", cgeightmatch, cgeightattach,
 	DV_DULL, sizeof(struct cgeight_softc)
 };
 
 /* frame buffer generic driver */
-static void	cgeightunblank(struct device *);
-static struct fbdriver cgeightfbdriver = { cgeightunblank };
+static struct fbdriver cgeightfbdriver = {
+	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, cgeightmmap
+};
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
-extern int nullop();
-static int cgeight_cnputc();
 
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
-
-#define	CGEIGHT_MAJOR	64		/* XXX */
 
 /*
  * Match a cgeight.
@@ -134,7 +136,7 @@ cgeightattach(parent, self, args)
 {
 	register struct cgeight_softc *sc = (struct cgeight_softc *)self;
 	register struct confargs *ca = args;
-	register int node, ramsize, i;
+	register int node = 0, ramsize, i;
 	register volatile struct bt_regs *bt;
 	register struct cgeight_all *p;
 	int isconsole;
@@ -142,21 +144,14 @@ cgeightattach(parent, self, args)
 	struct fbdevice fbd;
 #endif
 
-	sc->sc_fb.fb_major = CGEIGHT_MAJOR;	/* XXX to be removed */
-
 	sc->sc_fb.fb_driver = &cgeightfbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_MEMCOLOR;
-	node = 0;
 
-	/* all cg8's are the same size */
 	pfour_reset();
 	pfour_videosize(ca->ca_ra.ra_pfour, &sc->sc_fb.fb_type.fb_width,
 	    &sc->sc_fb.fb_type.fb_height);
+
 	sc->sc_fb.fb_linebytes = sc->sc_fb.fb_type.fb_width * 4;
 
 	ramsize = CG8REG_END - CG8REG_OVERLAY;
