@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.16 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: umodem.c,v 1.17 2004/07/11 12:16:46 deraadt Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -159,17 +159,31 @@ USB_MATCH(umodem)
 {
 	USB_MATCH_START(umodem, uaa);
 	usb_interface_descriptor_t *id;
-	int cm, acm;
+	usb_device_descriptor_t *dd;
+	int cm, acm, ret;
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id == NULL ||
-	    id->bInterfaceClass != UICLASS_CDC ||
-	    id->bInterfaceSubClass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
+	dd = usbd_get_device_descriptor(uaa->device);
+	if (id == NULL || dd == NULL)
 		return (UMATCH_NONE);
+
+	ret = UMATCH_NONE;
+	if (UGETW(dd->idVendor) == USB_VENDOR_KYOCERA &&
+	    UGETW(dd->idProduct) == USB_PRODUCT_KYOCERA_AHK3001V &&
+	    id->bInterfaceNumber == 0)
+		ret = UMATCH_VENDOR_PRODUCT;
+
+	if (ret == UMATCH_NONE &&
+	    id->bInterfaceClass == UICLASS_CDC &&
+	    id->bInterfaceSubClass == UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
+	    id->bInterfaceProtocol == UIPROTO_CDC_AT)
+		ret = UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
+
+	if (ret == UMATCH_NONE)
+		return (ret);
 
 	umodem_get_caps(uaa->device, &cm, &acm);
 	if (!(cm & USB_CDC_CM_DOES_CM) ||
@@ -177,7 +191,7 @@ USB_MATCH(umodem)
 	    !(acm & USB_CDC_ACM_HAS_LINE))
 		return (UMATCH_NONE);
 
-	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	return (ret);
 }
 
 USB_ATTACH(umodem)
