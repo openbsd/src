@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.5 1997/02/01 17:31:20 kstailey Exp $
+.\"	$OpenBSD: netstat.1,v 1.6 1997/02/16 10:26:39 deraadt Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -207,6 +207,10 @@ refer to
 .Xr inet 3 ) .
 Unspecified,
 or ``wildcard'', addresses and ports appear as ``*''.
+If a local port number is registered as being in use for RPC by
+.Xr portmap 8
+it's RPC service name or RPC service number will be printed in
+[ ] immediately after the port number.
 .Pp
 The interface display provides a table of cumulative
 statistics regarding packets transferred, errors, and collisions.
