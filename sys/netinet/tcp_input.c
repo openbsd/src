@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.83 2001/03/28 20:03:07 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.84 2001/04/04 05:42:57 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2761,9 +2761,7 @@ tcp_mss(tp, offer)
 	struct ifnet *ifp;
 	int mss, mssopt;
 	int iphlen;
-#ifdef INET6
 	int is_ipv6 = 0;
-#endif
 	struct inpcb *inp;
 
 	inp = tp->t_inpcb;
@@ -2812,24 +2810,31 @@ tcp_mss(tp, offer)
 		 * destination host.
 		 */
 		goto out;
-	else if (ip_mtudisc || ifp->if_flags & IFF_LOOPBACK)
+	else if (ifp->if_flags & IFF_LOOPBACK)
 		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+	else if (!is_ipv6) {
+		if (ip_mtudisc)
+			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		else if (inp && in_localaddr(inp->inp_faddr))
+			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+	}
 #ifdef INET6
 	else if (is_ipv6) {
-		if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
+		if (inp && IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
 			/* mapped addr case */
 			struct in_addr d;
 			bcopy(&inp->inp_faddr6.s6_addr32[3], &d, sizeof(d));
-			if (in_localaddr(d))
+			if (ip_mtudisc || in_localaddr(d))
 				mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		} else {
-			if (in6_localaddr(&inp->inp_faddr6))
-				mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+			/*
+			 * for IPv6, path MTU discovery is always turned on,
+			 * or the node must use packet size <= 1280.
+			 */
+			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		}
 	}
 #endif /* INET6 */
-	else if (inp && in_localaddr(inp->inp_faddr))
-		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 
 	/* Calculate the value that we offer in TCPOPT_MAXSEG */
 	if (offer != -1) {
