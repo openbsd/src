@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.12 1997/10/07 08:09:31 deraadt Exp $
+.\"	$OpenBSD: installboot.8,v 1.13 1998/03/11 15:36:42 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -40,8 +40,8 @@
 .Nm installboot
 .Op Fl n
 .Op Fl v
-.Oo Fl s Ar spt Oc
-.Oo Fl h Ar tpc Oc
+.Oo Fl s Ar sectors-per-track Oc
+.Oo Fl h Ar tracks-per-cyl Oc
 .Ar boot
 .Ar biosboot
 .Ar disk
@@ -63,7 +63,7 @@ Be verbose, printing out the CHS (Cylinder, Head, Sector)
 triples that are stored in
 .Ar biosboot
 along with lots of other information.
-.It Fl s Ar spt
+.It Fl s Ar sectors-per-track
 Used to specify the sectors-per-track value if the drive has
 sector translation activated, and
 .Nm
@@ -72,7 +72,7 @@ is unable to determine the translated geometry.
 If not specified, this defaults to the value retrieved from the BIOS
 at boot time, available via
 .Xr sysctl 8 .
-.It Fl h Ar tpc
+.It Fl h Ar tracks-per-cyl
 Used to specify the tracks-per-cylinder value if the drive has
 sector translation activated, and
 .Nm
