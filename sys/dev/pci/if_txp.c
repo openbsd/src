@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.39 2001/05/30 14:41:59 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.40 2001/06/05 02:15:19 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -87,9 +87,7 @@
 
 #include <dev/pci/if_txpreg.h>
 
-#define u32 u_int32_t
 #include <dev/microcode/typhoon/3c990img.h>
-#undef u32
 
 int txp_probe		__P((struct device *, void *, void *));
 void txp_attach		__P((struct device *, struct device *, void *));
