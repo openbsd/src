@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.9 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.10 2005/02/22 20:32:39 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -27,7 +27,7 @@
  */
 
 /*
- * Definitions used buy autoconfiguration.
+ * Definitions used by autoconfiguration.
  */
 
 #ifndef _MACHINE_AUTOCONF_H_
