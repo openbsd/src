@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.1 2004/04/29 14:33:27 miod Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.2 2004/06/22 04:54:54 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -84,14 +84,6 @@ ENTRY(set_isr)
 	jmp.n	r1
 	 stcr	r2, ISR 
 
-ENTRY(set_ilar)
-	jmp.n	r1
-	 stcr	r2, ILAR
-
-ENTRY(set_ipar)
-	jmp.n	r1
-	 stcr	r2, IPAR
-
 ENTRY(set_dcmd)
 	FLUSH_PIPELINE
 	jmp.n	r1
@@ -145,15 +137,6 @@ ENTRY(set_dsr)
 	jmp.n	r1
 	 stcr	r2, DSR 
 
-ENTRY(set_dlar)
-	jmp.n	r1
-	 stcr	r2, DLAR
-
-ENTRY(set_dpar)
-	jmp.n	r1
-	 stcr	r2, DPAR
-
-
 /* get routines */
 ENTRY(get_icmd)
 	jmp.n	r1
@@ -195,14 +178,6 @@ ENTRY(get_isr)
 	jmp.n	r1
 	 ldcr	r2, ISR 
 
-ENTRY(get_ilar)
-	jmp.n	r1
-	 ldcr	r2, ILAR
-
-ENTRY(get_ipar)
-	jmp.n	r1
-	 ldcr	r2, IPAR
-
 ENTRY(get_dcmd)
 	jmp.n	r1
 	 ldcr	r2, DCMD
@@ -242,11 +217,3 @@ ENTRY(get_dppl)
 ENTRY(get_dsr)
 	jmp.n	r1
 	 ldcr	r2, DSR 
-
-ENTRY(get_dlar)
-	jmp.n	r1
-	 ldcr	r2, DLAR
-
-ENTRY(get_dpar)
-	jmp.n	r1
-	 ldcr	r2, DPAR

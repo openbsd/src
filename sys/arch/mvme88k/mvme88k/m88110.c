@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.14 2004/05/07 18:06:34 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.15 2004/06/22 04:55:35 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -266,11 +266,7 @@ m88110_cmmu_init(void)
 	set_dcmd(CMMU_DCMD_INV_SATC);	/* invalidate ATCs */
 
 	set_isr(0);
-	set_ilar(0);
-	set_ipar(0);
 	set_dsr(0);
-	set_dlar(0);
-	set_dpar(0);
 }
 
 /*

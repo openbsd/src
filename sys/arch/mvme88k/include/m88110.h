@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.16 2004/01/13 23:24:10 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.17 2004/06/22 04:55:35 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -135,8 +135,6 @@ void set_ibp(unsigned value);
 void set_ippu(unsigned value);
 void set_ippl(unsigned value);
 void set_isr(unsigned value);
-void set_ilar(unsigned value);
-void set_ipar(unsigned value);
 void set_dcmd(unsigned value);
 void set_dctl(unsigned value);
 void set_dsar(unsigned value);
@@ -147,8 +145,6 @@ void set_dbp(unsigned value);
 void set_dppu(unsigned value);
 void set_dppl(unsigned value);
 void set_dsr(unsigned value);
-void set_dlar(unsigned value);
-void set_dpar(unsigned value);
 
 /* get routines */
 unsigned get_icmd(void);
@@ -161,8 +157,6 @@ unsigned get_ibp(void);
 unsigned get_ippu(void);
 unsigned get_ippl(void);
 unsigned get_isr(void);
-unsigned get_ilar(void);
-unsigned get_ipar(void);
 unsigned get_dcmd(void);
 unsigned get_dctl(void);
 unsigned get_dsar(void);
@@ -173,8 +167,6 @@ unsigned get_dbp(void);
 unsigned get_dppu(void);
 unsigned get_dppl(void);
 unsigned get_dsr(void);
-unsigned get_dlar(void);
-unsigned get_dpar(void);
 
 /* Cache inlines */
 
