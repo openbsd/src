@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.2 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.3 2001/01/14 23:01:19 angelos Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,21 +57,24 @@ static char copyright[] =
 
 u_int32_t checksum (buf, nbytes, sum)
 	unsigned char *buf;
-	int nbytes;
+	unsigned nbytes;
 	u_int32_t sum;
 {
-	int i;
+	unsigned i;
 
 #ifdef DEBUG_CHECKSUM
 	debug ("checksum (%x %d %x)", buf, nbytes, sum);
 #endif
 
 	/* Checksum all the pairs of bytes first... */
-	for (i = 0; i < (nbytes & ~1); i += 2) {
+	for (i = 0; i < (nbytes & ~1U); i += 2) {
 #ifdef DEBUG_CHECKSUM_VERBOSE
 		debug ("sum = %x", sum);
 #endif
 		sum += (u_int16_t) ntohs(*((u_int16_t *)(buf + i)));
+		/* Add carry. */
+		if (sum > 0xFFFF)
+			sum -= 0xFFFF;
 	}	
 
 	/* If there's a single byte left over, checksum it, too.   Network
@@ -81,13 +84,15 @@ u_int32_t checksum (buf, nbytes, sum)
 		debug ("sum = %x", sum);
 #endif
 		sum += buf [i] << 8;
+		/* Add carry. */
+		if (sum > 0xFFFF)
+			sum -= 0xFFFF;
 	}
 	
 	return sum;
 }
 
-/* Fold the upper sixteen bits of the checksum down into the lower bits,
-   complement the sum, and then put it into network byte order. */
+/* Finish computing the checksum, and then put it into network byte order. */
 
 u_int32_t wrapsum (sum)
 	u_int32_t sum;
@@ -96,19 +101,9 @@ u_int32_t wrapsum (sum)
 	debug ("wrapsum (%x)", sum);
 #endif
 
-	while (sum > 0x10000) {
-		sum = (sum >> 16) + (sum & 0xFFFF);
+	sum = ~sum & 0xFFFF;
 #ifdef DEBUG_CHECKSUM_VERBOSE
-		debug ("sum = %x", sum);
-#endif
-		sum += (sum >> 16);
-#ifdef DEBUG_CHECKSUM_VERBOSE
-		debug ("sum = %x", sum);
-#endif
-	}
-	sum = sum ^ 0xFFFF;
-#ifdef DEBUG_CHECKSUM_VERBOSE
-	debug ("sum = %x", sum);
+	log_debug ("sum = %x", sum);
 #endif
 	
 #ifdef DEBUG_CHECKSUM
@@ -194,13 +189,13 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	/* Compute UDP checksums, including the ``pseudo-header'', the UDP
 	   header and the data. */
 
-#if 0
+#if 1
 	udp.uh_sum =
 		wrapsum (checksum ((unsigned char *)&udp, sizeof udp,
 				   checksum (data, len, 
 					     checksum ((unsigned char *)
 						       &ip.ip_src,
-						       sizeof ip.ip_src,
+						       2 * sizeof ip.ip_src,
 						       IPPROTO_UDP +
 						       (u_int32_t)
 						       ntohs (udp.uh_ulen)))));
