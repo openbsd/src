@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/10/14 03:55:14 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1996/10/15 08:22:12 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -727,8 +727,11 @@ main(argc, argv)
 #endif
 					)
 				i = do_source((char_u *)VIMRC_FILE, TRUE);
+
+			if (i != FAIL)
+				check_version = TRUE;
 #ifdef UNIX
-			if (i == FAIL)
+			else
 			{
 				struct stat s;
 
@@ -738,13 +741,14 @@ main(argc, argv)
 				else
 					secure = 0;
 			}
-			else
-				check_version = TRUE;
 #endif
 			if (i == FAIL && fullpathcmp((char_u *)USR_EXRC_FILE,
 											 (char_u *)EXRC_FILE) != FPC_SAME)
 				(void)do_source((char_u *)EXRC_FILE, FALSE);
 		}
+		if (secure == 2)
+			need_wait_return = TRUE;
+		secure = 0;
 	}
 
 	/*
@@ -860,7 +864,7 @@ main(argc, argv)
  * by termcapinit and redifined in .exrc.
  */
 	settmode(1);
-	if (secure == 2 || need_wait_return || msg_didany)
+	if (need_wait_return || msg_didany)
 		wait_return(TRUE);
 
 	starttermcap();			/* start termcap if not done by wait_return() */
@@ -869,8 +873,6 @@ main(argc, argv)
 #endif
 	if (scroll_region)
 		scroll_region_reset();			/* In case Rows changed */
-
-	secure = 0;
 
 	scroll_start();
 
