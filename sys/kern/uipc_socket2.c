@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.7 1998/02/14 10:55:09 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.8 1999/01/21 03:27:42 millert Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ soisdisconnected(so)
 {
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
-	so->so_state |= (SS_CANTRCVMORE|SS_CANTSENDMORE);
+	so->so_state |= (SS_CANTRCVMORE|SS_CANTSENDMORE|SS_ISDISCONNECTED);
 	wakeup((caddr_t)&so->so_timeo);
 	sowwakeup(so);
 	sorwakeup(so);
