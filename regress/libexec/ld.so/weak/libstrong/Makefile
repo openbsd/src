@@ -1,8 +1,7 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2002/02/10 22:51:41 fgsch Exp $
+# $OpenBSD: Makefile,v 1.2 2002/11/13 22:08:39 todd Exp $
 
 LIB=		strong
 SRCS=		strong.c
-CFLAGS+=	-I${.CURDIR}/../prog
 
 regress: all
 
