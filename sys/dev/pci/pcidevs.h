@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.702 2004/01/06 17:22:46 tom Exp 
+ *	OpenBSD: pcidevs,v 1.703 2004/01/07 00:06:07 tom Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1418,7 +1418,6 @@
 
 /* Lucent products */
 #define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
-#define	PCI_PRODUCT_LUCENT_LTWINV90	0x0449		/* Win Modem V.90 */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0441	0x0441		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0442	0x0442		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0443	0x0443		/* LTMODEM */
@@ -1932,7 +1931,7 @@
 #define	PCI_PRODUCT_S3_964_0	0x88d0		/* 86C964-0 */
 #define	PCI_PRODUCT_S3_964_1	0x88d1		/* 86C964-1 */
 #define	PCI_PRODUCT_S3_964_2	0x88d2		/* 86C964-2 */
-#define	PCI_PRODUCT_S3_964_3	0x88d1		/* 86C964-3 */
+#define	PCI_PRODUCT_S3_964_3	0x88d3		/* 86C964-3 */
 #define	PCI_PRODUCT_S3_968_0	0x88f0		/* 86C968-0 */
 #define	PCI_PRODUCT_S3_968_1	0x88f1		/* 86C968-1 */
 #define	PCI_PRODUCT_S3_968_2	0x88f2		/* 86C968-2 */
