@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.4 1998/08/22 08:55:46 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.5 2001/08/12 23:07:40 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/04/22 10:28:21 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.4 1998/08/22 08:55:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.5 2001/08/12 23:07:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ save_game()
 {
 	char fname[64];
 
-	if (!get_input_line("file name?", save_file, fname, "game not saved",
-			0, 1)) {
+	if (!get_input_line("file name?", save_file, fname, sizeof(fname),
+	    "game not saved", 0, 1)) {
 		return;
 	}
 	check_message();
