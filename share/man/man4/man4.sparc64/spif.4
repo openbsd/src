@@ -1,4 +1,4 @@
-.\"     $OpenBSD: spif.4,v 1.2 2002/01/18 21:57:27 jason Exp $
+.\"     $OpenBSD: spif.4,v 1.3 2002/01/24 18:13:56 mpech Exp $
 .\"
 .\" Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Cd "sbpp* at spif?"
 .Sh DESCRIPTION
 The
-.Nm spif
+.Nm
 driver provides support for the Sun Serial/Parallel Interface card
 (Sun part number 501-1931)
 based around the
@@ -91,13 +91,15 @@ Parallel ports
 .Xr termios 4 ,
 .Xr tty 4
 .Sh AUTHORS
-The driver was written by Jason Wright <jason@thought.net>, and is
-heavily based on the
+The driver was written by 
+.An Jason Wright Aq jason@thought.net ,
+and is heavily based on the
 .Xr magma 4
-driver written by Iain Hibbert <plunky@skate.demon.co.uk>.
+driver written by
+.An Iain Hibbert Aq plunky@skate.demon.co.uk .
 .Sh HISTORY
 The
-.Nm spif
+.Nm
 driver was first supported in
 .Ox 3.1 .
 .Sh TODO

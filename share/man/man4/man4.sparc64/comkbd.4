@@ -1,4 +1,4 @@
-.\"     $OpenBSD: comkbd.4,v 1.1 2002/01/24 16:31:27 jason Exp $
+.\"     $OpenBSD: comkbd.4,v 1.2 2002/01/24 18:13:56 mpech Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Cd "wskbd* at comkbd? console ?"
 .Sh DESCRIPTION
 The
-.Nm comkbd
+.Nm
 driver provides support for Sun serial keyboards such as the Type 4,
 Type 5, and Type 6 attached to a clone of the
 .Tn NS16550
@@ -51,9 +51,10 @@ driver).
 .Xr com 4 ,
 .Xr wskbd 4
 .Sh AUTHORS
-The driver was written by Jason Wright <jason@thought.net>.
+The driver was written by
+.An Jason Wright Aq jason@thought.net .
 .Sh HISTORY
 The
-.Nm spif
+.Nm
 driver was first supported in
 .Ox 3.1 .
