@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.3 2001/07/16 22:43:19 markus Exp $ */
+/*      $OpenBSD: parse.y,v 1.4 2001/07/17 16:07:47 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -187,7 +187,7 @@ iface:					{ $$.string = NULL; }
 		| ON '!' STRING		{ $$.string = strdup($3); $$.not = 1;}
 		;
 
-proto:					{ proto = $$ = natmode ? IPPROTO_TCP : 0; }
+proto:					{ $$ = proto; }
 		| PROTO NUMBER		{
 			struct protoent *p;
 
@@ -385,7 +385,7 @@ natrule:	NAT iface proto FROM ipspec TO ipspec ARROW address
 		}
 		;
 
-rdrrule:	RDR iface proto FROM ipspec TO ipspec dport ARROW address rport
+rdrrule:	RDR { proto = IPPROTO_TCP; } iface proto FROM ipspec TO ipspec dport ARROW address rport
 		{
 			struct pf_rdr rdr;
 
@@ -395,32 +395,32 @@ rdrrule:	RDR iface proto FROM ipspec TO ipspec dport ARROW address rport
 
 			memset(&rdr, 0, sizeof(rdr));
 
-			if ($2.string) {
-				memcpy(rdr.ifname, $2.string,
+			if ($3.string) {
+				memcpy(rdr.ifname, $3.string,
 				    sizeof(rdr.ifname));
-				rdr.ifnot = $2.not;
+				rdr.ifnot = $3.not;
 			}
-			rdr.proto = $3;
+			rdr.proto = $4;
 			proto = 0;	/* reset syntesysed attribute */
 
-			rdr.saddr = $5->addr;
-			rdr.smask = $5->mask;
-			rdr.snot  = $5->not;
-			free($5);
+			rdr.saddr = $6->addr;
+			rdr.smask = $6->mask;
+			rdr.snot  = $6->not;
+			free($6);
 
-			rdr.daddr = $7->addr;
-			rdr.dmask = $7->mask;
-			rdr.dnot  = $7->not;
-			free($7);
+			rdr.daddr = $8->addr;
+			rdr.dmask = $8->mask;
+			rdr.dnot  = $8->not;
+			free($8);
 
-			rdr.dport  = $8.a;
-			rdr.dport2 = $8.b;
-			rdr.opts  |= $8.t;
+			rdr.dport  = $9.a;
+			rdr.dport2 = $9.b;
+			rdr.opts  |= $9.t;
 
-			rdr.raddr = $10;
+			rdr.raddr = $11;
 
-			rdr.rport  = $11.a;
-			rdr.opts  |= $11.t;
+			rdr.rport  = $12.a;
+			rdr.opts  |= $12.t;
 
 			pfctl_add_rdr(pf, &rdr);
 		}
