@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.4 2000/11/17 06:34:23 provos Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.5 2000/11/18 22:16:49 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -200,7 +200,14 @@ filt_procattach(struct knote *kn)
 	p = pfind(kn->kn_id);
 	if (p == NULL)
 		return (ESRCH);
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+
+	/*
+	 * Fail if it's not owned by you, or the last exec gave us
+	 * setuid/setgid privs (unless you're root).
+	 */
+	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
+	        (p->p_flag & P_SUGID)) &&
+	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
