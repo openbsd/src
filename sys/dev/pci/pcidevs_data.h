@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.335 2000/10/19 01:52:48 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.336 2000/10/23 20:06:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2181,13 +2181,61 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Pro/1000",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_HUB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    0,
 	    "Intel",
 	    "82815 Hub",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_GRAPHICS,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_GRAPH,
 	    0,
 	    "Intel",
 	    "82815 Graphics",
