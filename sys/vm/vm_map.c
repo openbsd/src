@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.11 1998/02/02 20:14:06 downsj Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.12 1998/02/03 01:27:09 millert Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -197,7 +197,11 @@ vmspace_alloc(min, max, pageable)
 	register struct vmspace *vm;
 
 	if (mapvmpgcnt == 0 && mapvm == 0) {
+#ifndef MACHINE_NONCONTIG
+		mapvmpgcnt = ((last_page-first_page) * sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
+#else
 		mapvmpgcnt = (vm_page_count * sizeof(struct vm_map_entry) + PAGE_SIZE - 1) / PAGE_SIZE;
+#endif
 		mapvm_start = mapvm = kmem_alloc_pageable(kernel_map,
 			mapvmpgcnt * PAGE_SIZE);
 		mapvmmax = mapvm_start + mapvmpgcnt * PAGE_SIZE;
