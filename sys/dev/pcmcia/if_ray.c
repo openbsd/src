@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.6 2000/06/29 03:15:36 aaron Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.7 2000/09/04 03:11:22 mickey Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
 
 /*
@@ -691,7 +691,10 @@ ray_activate(dev, act)
 	case DVACT_DEACTIVATE:
 		if (ifp->if_flags & IFF_RUNNING)
 			ray_disable(sc);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = NULL;
+		}
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
@@ -778,7 +781,7 @@ ray_disable(sc)
 
 	if (sc->sc_ih)
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-	sc->sc_ih = 0;
+	sc->sc_ih = NULL;
 }
 
 /*
