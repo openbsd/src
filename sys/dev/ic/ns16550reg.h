@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns16550reg.h,v 1.2 1996/10/31 01:01:36 niklas Exp $	*/
+/*	$OpenBSD: ns16550reg.h,v 1.3 1998/02/23 11:41:26 downsj Exp $	*/
 /*	$NetBSD: ns16550reg.h,v 1.4 1994/10/27 04:18:43 cgd Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #define	com_ier		1	/* interrupt enable (W) */
 #define	com_iir		2	/* interrupt identification (R) */
 #define	com_fifo	2	/* FIFO control (W) */
+#define com_efr		2	/* extended features register (W) */
 #define	com_lctl	3	/* line control register (R/W) */
 #define	com_cfcr	3	/* line control register (R/W) */
 #define	com_mcr		4	/* modem control register (R/W) */

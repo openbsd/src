@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.7 1997/10/15 14:04:18 pefo Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.8 1998/02/23 11:41:25 downsj Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #define	IER_ETXRDY	0x2	/* Enable transmitter empty interrupt */
 #define	IER_ERLS	0x4	/* Enable line status interrupt */
 #define	IER_EMSC	0x8	/* Enable modem status interrupt */
+#define IER_SLEEP	0x10	/* Enable sleep mode */
 
 /* interrupt identification register */
 #define	IIR_IMASK	0xf
@@ -68,6 +69,17 @@
 #define	FIFO_TRIGGER_4	0x40	/* ibid 4 */
 #define	FIFO_TRIGGER_8	0x80	/* ibid 8 */
 #define	FIFO_TRIGGER_14	0xc0	/* ibid 14 */
+/* ST16650 fifo control register */
+#define FIFO_RCV_TRIGGER_8	0x00
+#define FIFO_RCV_TRIGGER_16	0x40
+#define FIFO_RCV_TRIGGER_24	0x80
+#define FIFO_RCV_TRIGGER_28	0xc0
+#define FIFO_XMT_TRIGGER_16	0x00
+#define FIFO_XMT_TRIGGER_8	0x10
+#define FIFO_XMT_TRIGGER_24	0x20
+#define FIFO_XMT_TRIGGER_30	0x30
+/* TI16750 fifo control register */
+#define FIFO_ENABLE_64BYTE	0x20
 
 /* line control register */
 #define	LCR_DLAB	0x80	/* Divisor latch access enable */
@@ -112,6 +124,12 @@
 #define	MSR_TERI	0x04	/* RI has toggled low to high */
 #define	MSR_DDSR	0x02	/* DSR has changed state */
 #define	MSR_DCTS	0x01	/* CTS has changed state */
+
+/* enhanced features register */
+#define EFR_ECB		0x10	/* enhanced control bit */
+#define EFR_SCD		0x20	/* special character detect */
+#define EFR_RTS		0x40	/* RTS flow control */
+#define EFR_CTS		0x80	/* CTS flow control */
 
 #define	COM_NPORTS	8
 
