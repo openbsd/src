@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.6 2005/04/02 22:09:49 jmc Exp $
+.\"	$OpenBSD: stat.1,v 1.7 2005/04/03 18:30:55 deraadt Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,8 +39,7 @@
 .Dt STAT 1
 .Os
 .Sh NAME
-.Nm stat ,
-.Nm readlink
+.Nm stat
 .Nd display file status
 .Sh SYNOPSIS
 .Nm
@@ -50,9 +49,6 @@
 .Fl l | r | s | x
 .Oc
 .Op Fl t Ar timefmt
-.Op Ar
-.Nm readlink
-.Op Fl n
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -65,13 +61,6 @@ searchable.
 If no argument is given,
 .Nm
 displays information about the file descriptor for standard input.
-.Pp
-When invoked as
-.Nm readlink ,
-only the target of the symbolic link is printed.
-If the given argument is not a symbolic link,
-.Nm readlink
-will print nothing and exit with an error.
 .Pp
 The information displayed is obtained by calling
 .Xr lstat 2
@@ -119,9 +108,6 @@ Suppress failure messages if calls to
 or
 .Xr lstat 2
 fail.
-When run as
-.Nm readlink ,
-error messages are automatically suppressed.
 .It Fl r
 Display raw information.
 That is, for all the fields in the stat-structure,
