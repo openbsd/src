@@ -209,6 +209,8 @@ dlerror()
 	    (*ld_entry->dlctl)(NULL, DL_GETERRNO, &error) == -1)
 		return "Service unavailable";
 
+	if (error == 0)
+		return NULL;
 	return (char *)strerror(error);
 }
 
