@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.418 2004/01/06 20:24:33 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.419 2004/01/27 09:31:15 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5265,6 +5265,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
 
+	if (kif == NULL)
+		return (PF_DROP);
+
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("non-M_PKTHDR is passed to pf_test");
@@ -5565,6 +5568,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	if (!pf_status.running ||
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
+
+	if (kif == NULL)
+		return (PF_DROP);
 
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
