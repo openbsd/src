@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.264 2000/05/31 22:12:57 chris Exp 
+ *		OpenBSD: pcidevs,v 1.266 2000/06/12 17:40:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -521,6 +521,7 @@
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
+#define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_BLUESTEEL	0x15AB		/* Bluesteel Networks */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
@@ -772,6 +773,9 @@
 /* Bluesteel Networks */
 #define	PCI_PRODUCT_BLUESTEEL_5501	0x0000		/* 5501 */
 #define	PCI_PRODUCT_BLUESTEEL_5601	0x5601		/* 5601 */
+
+/* Broadcom */
+#define	PCI_PRODUCT_BROADCOM_5805	0x5805		/* 5805 */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* BT848 */

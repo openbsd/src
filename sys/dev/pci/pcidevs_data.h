@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.264 2000/05/31 22:12:57 chris Exp 
+ *		OpenBSD: pcidevs,v 1.266 2000/06/12 17:40:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1015,6 +1015,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bluesteel Networks",
 	    "5601",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5805,
+	    0,
+	    "Broadcom",
+	    "5805",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -7674,6 +7680,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AIRONET, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Aironet",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_BROADCOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Broadcom",
 	    NULL,
 	},
 	{
