@@ -2,7 +2,7 @@
 .\" To print, first run through tbl
 .\" -*- nroff -*-
 .\"
-.\" $Id: mkhybrid.8,v 1.1 2000/10/10 20:40:18 beck Exp $
+.\" $Id: mkhybrid.8,v 1.2 2001/10/01 17:45:51 drahn Exp $
 .\"
 .TH MKHYBRID 8 "7 April 1999" "Version 1.12b5.1"
 .SH NAME
@@ -194,6 +194,10 @@ mkhybrid \- create an hybrid ISO9660/JOLIET/HFS filesystem with optional Rock Ri
 [
 .B \-hfs-volid
 .I hfs_volid
+]
+[
+.B \-hfs-bless
+.I folder_name
 ]
 [
 .B \--cap
@@ -903,6 +907,16 @@ assigned to the disc on a Macintosh and replaces the
 used with the 
 .I \-V
 option
+.TP
+.BI \-hfs-bless " folder_name
+"Bless" the given directory (folder). This is usually the
+.B System Folder
+and is used in creating HFS bootable CDs. The name of the directory must
+be the whole path name as
+.B mkisofs
+sees it. e.g. if the given pathspec is ./cddata and the required folder is
+called System Folder, then the whole path name is "./cddata/System Folder"
+(remember to use quotes if the name contains spaces).
 .TP
 .B \--cap
 Look for AUFS CAP Macintosh files. Search for CAP Apple/Unix file formats
