@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.15 2000/03/26 16:21:33 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.16 2000/04/17 23:57:46 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.15 2000/03/26 16:21:33 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.16 2000/04/17 23:57:46 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,6 +191,8 @@ Targ_NewGN (name)
     gn->successors = 	Lst_Init();
     gn->preds =     	Lst_Init();
     gn->context =   	Lst_Init();
+    gn->lineno = 0;
+    gn->fname = NULL;
     gn->commands =  	Lst_Init();
     gn->suffix =	NULL;
 
