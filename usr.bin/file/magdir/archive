@@ -54,7 +54,7 @@
 # 0	string		!<arch>		current ar archive
 # 0	long		0x213c6172	archive file
 #
-# and for SVR3.1 archives, we have:
+# and for SVR1 archives, we have:
 #
 # 0	string		\<ar>		System V Release 1 ar archive
 # 0	string		=<ar>		archive
