@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.5 1999/08/06 20:41:05 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $	*/
 /*	$NetBSD: inode.c,v 1.1 1997/06/11 11:21:49 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #if 0
 static char rcsid[] = "$NetBSD: inode.c,v 1.1 1997/06/11 11:21:49 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.5 1999/08/06 20:41:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -65,6 +65,15 @@ static char rcsid[] = "$OpenBSD: inode.c,v 1.5 1999/08/06 20:41:05 deraadt Exp $
 #include "fsutil.h"
 #include "extern.h"
 
+/*
+ * CG is stored in fs byte order in memory, so we can't use ino_to_fsba
+ * here.
+ */
+
+#define fsck_ino_to_fsba(fs, x)                      \
+	(fs2h32((fs)->e2fs_gd[ino_to_cg(fs, x)].ext2bgd_i_tables) + \
+	(((x)-1) % (fs)->e2fs.e2fs_ipg)/(fs)->e2fs_ipb)
+
 static ino_t startinum;
 
 static int iblock __P((struct inodesc *, long, u_int64_t));
@@ -75,7 +84,7 @@ ckinode(dp, idesc)
 	register struct inodesc *idesc;
 {
 	register u_int32_t *ap;
-	long ret, n, ndb, offset;
+	long ret, n, ndb;
 	struct ext2fs_dinode dino;
 	u_int64_t remsize, sizepb;
 	mode_t mode;
@@ -84,13 +93,13 @@ ckinode(dp, idesc)
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
 	idesc->id_entryno = 0;
-	idesc->id_filesize = dp->e2di_size;
-	mode = dp->e2di_mode & IFMT;
-	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
-	    (dp->e2di_size < EXT2_MAXSYMLINKLEN)))
+	idesc->id_filesize = fs2h32(dp->e2di_size);
+	mode = fs2h16(dp->e2di_mode) & IFMT;
+	if (mode == IFBLK || mode == IFCHR || mode == IFIFO ||
+	    (mode == IFLNK && (fs2h32(dp->e2di_size) < EXT2_MAXSYMLINKLEN)))
 		return (KEEPON);
 	dino = *dp;
-	ndb = howmany(dino.e2di_size, sblock.e2fs_bsize);
+	ndb = howmany(fs2h32(dino.e2di_size), sblock.e2fs_bsize);
 	for (ap = &dino.e2di_blocks[0]; ap < &dino.e2di_blocks[NDADDR];
 																ap++,ndb--) {
 		idesc->id_numfrags = 1;
@@ -103,8 +112,8 @@ ckinode(dp, idesc)
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->e2di_size = (ap - &dino.e2di_blocks[0]) *
-					    sblock.e2fs_bsize;
+					dp->e2di_size = h2fs32((ap - &dino.e2di_blocks[0]) *
+					    sblock.e2fs_bsize);
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
 					rerun = 1;
@@ -113,7 +122,7 @@ ckinode(dp, idesc)
 			}
 			continue;
 		}
-		idesc->id_blkno = *ap;
+		idesc->id_blkno = fs2h32(*ap);
 		if (idesc->id_type == ADDR)
 			ret = (*idesc->id_func)(idesc);
 		else
@@ -122,11 +131,11 @@ ckinode(dp, idesc)
 			return (ret);
 	}
 	idesc->id_numfrags = 1;
-	remsize = dino.e2di_size - sblock.e2fs_bsize * NDADDR;
+	remsize = fs2h32(dino.e2di_size) - sblock.e2fs_bsize * NDADDR;
 	sizepb = sblock.e2fs_bsize;
 	for (ap = &dino.e2di_blocks[NDADDR], n = 1; n <= NIADDR; ap++, n++) {
 		if (*ap) {
-			idesc->id_blkno = *ap;
+			idesc->id_blkno = fs2h32(*ap);
 			ret = iblock(idesc, n, remsize);
 			if (ret & STOP)
 				return (ret);
@@ -139,7 +148,7 @@ ckinode(dp, idesc)
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->e2di_size -= remsize;
+					dp->e2di_size = h2fs32(fs2h32(dp->e2di_size) - remsize);
 					remsize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -192,8 +201,8 @@ iblock(idesc, ilevel, isize)
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
-			(void)sprintf(buf, "PARTIALLY TRUNCATED INODE I=%u",
-				idesc->id_number);
+			(void)snprintf(buf, sizeof(buf),
+			    "PARTIALLY TRUNCATED INODE I=%u", idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);
@@ -204,7 +213,7 @@ iblock(idesc, ilevel, isize)
 	aplim = &bp->b_un.b_indir[nif];
 	for (ap = bp->b_un.b_indir; ap < aplim; ap++) {
 		if (*ap) {
-			idesc->id_blkno = *ap;
+			idesc->id_blkno = fs2h32(*ap);
 			if (ilevel == 0)
 				n = (*func)(idesc);
 			else
@@ -222,7 +231,7 @@ iblock(idesc, ilevel, isize)
 				    pathbuf);
 				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-					dp->e2di_size -= isize;
+					dp->e2di_size = h2fs32(fs2h32(dp->e2di_size) - isize);
 					isize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -249,34 +258,36 @@ chkrange(blk, cnt)
 	int cnt;
 {
 	register int c;
+	int overh;
 
 	if ((unsigned)(blk + cnt) > maxfsblock)
 		return (1);
 	c = dtog(&sblock, blk);
-	if (blk < sblock.e2fs.e2fs_bpg * c + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock) {
-		if ((blk + cnt) > sblock.e2fs.e2fs_bpg * c + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock) {
+	overh = cgoverhead(c);
+	if (blk < sblock.e2fs.e2fs_bpg * c + overh +
+	    sblock.e2fs.e2fs_first_dblock) {
+		if ((blk + cnt) > sblock.e2fs.e2fs_bpg * c + overh +
+		    sblock.e2fs.e2fs_first_dblock) {
 			if (debug) {
 				printf("blk %d < cgdmin %d;",
-				    blk, sblock.e2fs.e2fs_bpg * c + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock);
+				    blk, sblock.e2fs.e2fs_bpg * c + overh +
+				    sblock.e2fs.e2fs_first_dblock);
 				printf(" blk + cnt %d > cgsbase %d\n",
-				    blk + cnt, sblock.e2fs.e2fs_bpg * c + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock);
+				    blk + cnt, sblock.e2fs.e2fs_bpg * c +
+				    overh + sblock.e2fs.e2fs_first_dblock);
 			}
 			return (1);
 		}
 	} else {
-		if ((blk + cnt) > sblock.e2fs.e2fs_bpg * (c + 1) + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock) {
+		if ((blk + cnt) > sblock.e2fs.e2fs_bpg * (c + 1) + overh +
+		    sblock.e2fs.e2fs_first_dblock) {
 			if (debug)  {
 				printf("blk %d >= cgdmin %d;",
-				    blk, sblock.e2fs.e2fs_bpg * c + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock);
+				    blk, sblock.e2fs.e2fs_bpg * c + overh +
+				    sblock.e2fs.e2fs_first_dblock);
 				printf(" blk + cnt %d > cgdmax %d\n",
-				    blk+cnt, sblock.e2fs.e2fs_bpg * (c + 1) + cgoverhead +
-											sblock.e2fs.e2fs_first_dblock);
+				    blk+cnt, sblock.e2fs.e2fs_bpg * (c + 1) +
+				    overh + sblock.e2fs.e2fs_first_dblock);
 			}
 			return (1);
 		}

@@ -75,7 +75,7 @@ e2fs_df(rfd, file, sfsp)
 		return (-1);
 	}
 	if ((sblock.e2fs_magic != E2FS_MAGIC) ||
-			(sblock.e2fs_rev != E2FS_REV)) {
+	    (sblock.e2fs_rev != E2FS_REV0 && sblock.e2fs_rev != E2FS_REV1)) {
 		return (-1);
 	}
 	sfsp->f_flags = 0;	/* The fs is not mapped, so no flags */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.5 1999/08/17 09:13:14 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #if 0
 static char rcsid[] = "$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1999/08/17 09:13:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1999/08/17 09:13:14 millert Exp $
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
+#include <sys/file.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -67,12 +68,10 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1999/08/17 09:13:14 millert Exp $
 #include "extern.h"
 #include "fsutil.h"
 
-struct bufarea asblk;
-#define altsblock (*asblk.b_un.b_fs)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 void badsb __P((int, char *));
-/* int calcsb __P((char *, int, struct m_ext2fs *)); */
+int calcsb __P((char *, int, struct m_ext2fs *));
 static struct disklabel *getdisklabel __P((char *, int));
 static int readsb __P((int));
 
@@ -80,7 +79,7 @@ int
 setup(dev)
 	char *dev;
 {
-	long cg, size, asked, i, j;
+	long cg, asked, i;
 	long bmapsize;
 	struct disklabel *lp;
 	off_t sizepb;
@@ -119,8 +118,8 @@ setup(dev)
 	lfdir = 0;
 	initbarea(&sblk);
 	initbarea(&asblk);
-	sblk.b_un.b_buf = malloc(sizeof(struct m_ext2fs));
-	asblk.b_un.b_buf = malloc(sizeof(struct m_ext2fs));
+	sblk.b_un.b_buf = malloc(SBSIZE);
+	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
 	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
@@ -183,6 +182,7 @@ setup(dev)
 		if (reply("SET TO DEFAULT") == 1) {
 			sblock.e2fs.e2fs_rbcount = sblock.e2fs.e2fs_bcount * 0.1;
 			sbdirty();
+			dirty(&asblk);
 		}
 	}
 	if (sblock.e2fs.e2fs_bpg != sblock.e2fs.e2fs_fpg) {
@@ -191,7 +191,7 @@ setup(dev)
 		return 0;
 	}
 	if (asblk.b_dirty && !bflag) {
-		memcpy(&altsblock, &sblock, (size_t)SBSIZE);
+		copyback_sb(&asblk);
 		flush(fswritefd, &asblk);
 	}
 	/*
@@ -199,6 +199,8 @@ setup(dev)
 	 */
 
 	sblock.e2fs_gd = malloc(sblock.e2fs_ngdb * sblock.e2fs_bsize);
+	if (sblock.e2fs_gd == NULL)
+		errexit("out of memory\n");
 	asked = 0;
 	for (i=0; i < sblock.e2fs_ngdb; i++) {
 		if (bread(fsreadfd,(char *)
@@ -227,14 +229,20 @@ setup(dev)
 			(unsigned)(maxino + 1));
 		goto badsblabel;
 	}
+	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
+	if (typemap == NULL) {
+		printf("cannot alloc %u bytes for typemap\n",
+		    (unsigned)(maxino + 1));
+		goto badsblabel; 
+	}
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n", 
-			(unsigned)(maxino + 1) * sizeof(int16_t));
+			(unsigned)((maxino + 1) * sizeof(int16_t)));
 		goto badsblabel;
 	}
 	for (numdirs = 0, cg = 0; cg < sblock.e2fs_ncg; cg++) {
-		numdirs += sblock.e2fs_gd[cg].ext2bgd_ndirs;
+		numdirs += fs2h16(sblock.e2fs_gd[cg].ext2bgd_ndirs);
 	}
 	inplast = 0;
 	listmax = numdirs + 10;
@@ -244,7 +252,7 @@ setup(dev)
 		sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %u bytes for inphead\n", 
-			(unsigned)numdirs * sizeof(struct inoinfo *));
+			(unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
 	bufinit();
@@ -264,10 +272,14 @@ readsb(listerr)
 {
 	daddr_t super = bflag ? bflag : SBOFF / dev_bsize;
 
-	if (bread(fsreadfd, (char *)&sblock.e2fs, super, (long)SBSIZE) != 0)
+	if (bread(fsreadfd, (char *)sblk.b_un.b_fs, super, (long)SBSIZE) != 0)
 		return (0);
 	sblk.b_bno = super;
 	sblk.b_size = SBSIZE;
+
+	/* Copy the superblock in memory */
+	e2fs_sbload(sblk.b_un.b_fs, &sblock.e2fs);
+	
 	/*
 	 * run a few consistency checks of the super block
 	 */
@@ -294,14 +306,6 @@ readsb(listerr)
 	sblock.e2fs_ipb = sblock.e2fs_bsize / sizeof(struct ext2fs_dinode);
 	sblock.e2fs_itpg = sblock.e2fs.e2fs_ipg/sblock.e2fs_ipb;
 
-	cgoverhead =	1 /* super block */ +
-					sblock.e2fs_ngdb +
-					1 /* block bitmap */ +
-					1 /* inode bitmap */ +
-					sblock.e2fs_itpg;
-
-	if (debug) /* DDD */
-		printf("cg overhead %d blocks \n", cgoverhead);
 	/*
 	 * Compute block size that the filesystem is based on,
 	 * according to fsbtodb, and adjust superblock block number
@@ -310,6 +314,11 @@ readsb(listerr)
 	super *= dev_bsize;
 	dev_bsize = sblock.e2fs_bsize / fsbtodb(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
+
+	getblk(&asblk, 1 * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock,
+		(long)SBSIZE);
+	if (asblk.b_errs)
+		return (0);
 	if (bflag) {
 		havesb = 1;
 		return (1);
@@ -320,36 +329,49 @@ readsb(listerr)
 	 * of whole super block against an alternate super block.
 	 * When an alternate super-block is specified this check is skipped.
 	 */
-	getblk(&asblk, 1 * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock,
-		(long)SBSIZE);
-	if (asblk.b_errs)
-		return (0);
-	altsblock.e2fs.e2fs_rbcount = sblock.e2fs.e2fs_rbcount;
-	altsblock.e2fs.e2fs_fbcount = sblock.e2fs.e2fs_fbcount;
-	altsblock.e2fs.e2fs_ficount = sblock.e2fs.e2fs_ficount;
-	altsblock.e2fs.e2fs_mtime = sblock.e2fs.e2fs_mtime;
-	altsblock.e2fs.e2fs_wtime = sblock.e2fs.e2fs_wtime;
-	altsblock.e2fs.e2fs_mnt_count = sblock.e2fs.e2fs_mnt_count;
-	altsblock.e2fs.e2fs_max_mnt_count = sblock.e2fs.e2fs_max_mnt_count;
-	altsblock.e2fs.e2fs_state = sblock.e2fs.e2fs_state;
-	altsblock.e2fs.e2fs_beh = sblock.e2fs.e2fs_beh;
-	altsblock.e2fs.e2fs_lastfsck = sblock.e2fs.e2fs_lastfsck;
-	altsblock.e2fs.e2fs_fsckintv = sblock.e2fs.e2fs_fsckintv;
-	altsblock.e2fs.e2fs_ruid = sblock.e2fs.e2fs_ruid;
-	altsblock.e2fs.e2fs_rgid = sblock.e2fs.e2fs_rgid;
-	if (memcmp(&(sblock.e2fs), &(altsblock.e2fs), (int)SBSIZE)) {
+	asblk.b_un.b_fs->e2fs_rbcount = sblk.b_un.b_fs->e2fs_rbcount;
+	asblk.b_un.b_fs->e2fs_fbcount = sblk.b_un.b_fs->e2fs_fbcount;
+	asblk.b_un.b_fs->e2fs_ficount = sblk.b_un.b_fs->e2fs_ficount;
+	asblk.b_un.b_fs->e2fs_mtime = sblk.b_un.b_fs->e2fs_mtime;
+	asblk.b_un.b_fs->e2fs_wtime = sblk.b_un.b_fs->e2fs_wtime;
+	asblk.b_un.b_fs->e2fs_mnt_count = sblk.b_un.b_fs->e2fs_mnt_count;
+	asblk.b_un.b_fs->e2fs_max_mnt_count = sblk.b_un.b_fs->e2fs_max_mnt_count;
+	asblk.b_un.b_fs->e2fs_state = sblk.b_un.b_fs->e2fs_state;
+	asblk.b_un.b_fs->e2fs_beh = sblk.b_un.b_fs->e2fs_beh;
+	asblk.b_un.b_fs->e2fs_lastfsck = sblk.b_un.b_fs->e2fs_lastfsck;
+	asblk.b_un.b_fs->e2fs_fsckintv = sblk.b_un.b_fs->e2fs_fsckintv;
+	asblk.b_un.b_fs->e2fs_ruid = sblk.b_un.b_fs->e2fs_ruid;
+	asblk.b_un.b_fs->e2fs_rgid = sblk.b_un.b_fs->e2fs_rgid;
+	asblk.b_un.b_fs->e2fs_block_group_nr =
+	    sblk.b_un.b_fs->e2fs_block_group_nr;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
+	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
 		if (debug) {
-			long *nlp, *olp, *endlp;
+			printf("compat 0x%08x, incompat 0x%08x, compat_ro "
+			    "0x%08x\n",
+			    sblock.e2fs.e2fs_features_compat,
+			    sblock.e2fs.e2fs_features_incompat,
+			    sblock.e2fs.e2fs_features_rocompat);
+		}
+		badsb(listerr,"INCOMPATIBLE FEATURE BITS IN SUPER BLOCK");
+		return 0;
+	}
+	if (memcmp(sblk.b_un.b_fs, asblk.b_un.b_fs, SBSIZE)) {
+		if (debug) {
+			u_int32_t *nlp, *olp, *endlp;
 
 			printf("superblock mismatches\n");
-			nlp = (long *)&altsblock;
-			olp = (long *)&sblock;
+			nlp = (u_int32_t *)asblk.b_un.b_fs;
+			olp = (u_int32_t *)sblk.b_un.b_fs;
 			endlp = olp + (SBSIZE / sizeof *olp);
 			for ( ; olp < endlp; olp++, nlp++) {
 				if (*olp == *nlp)
 					continue;
-				printf("offset %d, original %ld, alternate %ld\n",
-					olp - (long *)&sblock, *olp, *nlp);
+				printf("offset %ld, original %ld, alternate %ld\n",
+					(long)(olp - (u_int32_t *)sblk.b_un.b_fs),
+					(long)fs2h32(*olp),
+					(long)fs2h32(*nlp));
 			}
 		}
 		badsb(listerr,
@@ -358,6 +380,39 @@ readsb(listerr)
 	}
 	havesb = 1;
 	return (1);
+}
+
+void
+copyback_sb(bp)
+	struct bufarea *bp;
+{
+	/* Copy the in-memory superblock back to buffer */
+	bp->b_un.b_fs->e2fs_icount = fs2h32(sblock.e2fs.e2fs_icount);
+	bp->b_un.b_fs->e2fs_bcount = fs2h32(sblock.e2fs.e2fs_bcount);
+	bp->b_un.b_fs->e2fs_rbcount = fs2h32(sblock.e2fs.e2fs_rbcount);
+	bp->b_un.b_fs->e2fs_fbcount = fs2h32(sblock.e2fs.e2fs_fbcount);
+	bp->b_un.b_fs->e2fs_ficount = fs2h32(sblock.e2fs.e2fs_ficount);
+	bp->b_un.b_fs->e2fs_first_dblock =
+					fs2h32(sblock.e2fs.e2fs_first_dblock);
+	bp->b_un.b_fs->e2fs_log_bsize = fs2h32(sblock.e2fs.e2fs_log_bsize);
+	bp->b_un.b_fs->e2fs_fsize = fs2h32(sblock.e2fs.e2fs_fsize);
+	bp->b_un.b_fs->e2fs_bpg = fs2h32(sblock.e2fs.e2fs_bpg);
+	bp->b_un.b_fs->e2fs_fpg = fs2h32(sblock.e2fs.e2fs_fpg);
+	bp->b_un.b_fs->e2fs_ipg = fs2h32(sblock.e2fs.e2fs_ipg);
+	bp->b_un.b_fs->e2fs_mtime = fs2h32(sblock.e2fs.e2fs_mtime);
+	bp->b_un.b_fs->e2fs_wtime = fs2h32(sblock.e2fs.e2fs_wtime);
+	bp->b_un.b_fs->e2fs_lastfsck = fs2h32(sblock.e2fs.e2fs_lastfsck);
+	bp->b_un.b_fs->e2fs_fsckintv = fs2h32(sblock.e2fs.e2fs_fsckintv);
+	bp->b_un.b_fs->e2fs_creator = fs2h32(sblock.e2fs.e2fs_creator);
+	bp->b_un.b_fs->e2fs_rev = fs2h32(sblock.e2fs.e2fs_rev);
+	bp->b_un.b_fs->e2fs_mnt_count = fs2h16(sblock.e2fs.e2fs_mnt_count);
+	bp->b_un.b_fs->e2fs_max_mnt_count =
+					fs2h16(sblock.e2fs.e2fs_max_mnt_count);
+	bp->b_un.b_fs->e2fs_magic = fs2h16(sblock.e2fs.e2fs_magic);
+	bp->b_un.b_fs->e2fs_state = fs2h16(sblock.e2fs.e2fs_state);
+	bp->b_un.b_fs->e2fs_beh = fs2h16(sblock.e2fs.e2fs_beh);
+	bp->b_un.b_fs->e2fs_ruid = fs2h16(sblock.e2fs.e2fs_ruid);
+	bp->b_un.b_fs->e2fs_rgid = fs2h16(sblock.e2fs.e2fs_rgid);
 }
 
 void
@@ -389,7 +444,6 @@ calcsb(dev, devfd, fs)
 	register struct disklabel *lp;
 	register struct partition *pp;
 	register char *cp;
-	int i;
 
 	cp = strchr(dev, '\0') - 1;
 	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {
@@ -401,17 +455,17 @@ calcsb(dev, devfd, fs)
 		pp = &lp->d_partitions[0];
 	else
 		pp = &lp->d_partitions[*cp - 'a'];
-	if (pp->p_fstype != FS_BSDFFS) {
-		pfatal("%s: NOT LABELED AS A BSD FILE SYSTEM (%s)\n",
+	if (pp->p_fstype != FS_EXT2FS) {
+		pfatal("%s: NOT LABELED AS A EXT2 FILE SYSTEM (%s)\n",
 			dev, pp->p_fstype < FSMAXTYPES ?
 			fstypenames[pp->p_fstype] : "unknown");
 		return (0);
 	}
 	memset(fs, 0, sizeof(struct m_ext2fs));
-	fs->e2fs_bsize = 1024; /* XXX to look for altenate SP */
-	fs->e2fs.e2fs_log_bsize = 0;
+	fs->e2fs_bsize = pp->p_fsize;
+	fs->e2fs.e2fs_log_bsize = pp->p_fsize / 1024;
 	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
-	fs->e2fs.e2fs_first_dblock = 1;
+	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
 	fs->e2fs.e2fs_bpg = fs->e2fs_bsize * NBBY;
 	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
 	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
@@ -422,8 +476,6 @@ calcsb(dev, devfd, fs)
 	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
 	fs->e2fs_ngdb = howmany(fs->e2fs_ncg,
 		fs->e2fs_bsize / sizeof(struct ext2_gd));
-
-
 
 	return (1);
 }
@@ -442,4 +494,21 @@ getdisklabel(s, fd)
 		errexit("%s: can't read disk label\n", s);
 	}
 	return (&lab);
+}
+
+daddr_t
+cgoverhead(c)
+	int c;
+{
+	int overh;
+	overh =	1 /* block bitmap */ +
+		1 /* inode bitmap */ +
+		sblock.e2fs_itpg;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    sblock.e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSESUPER) {
+		if (cg_has_sb(c) == 0)
+			return overh;
+	}
+	overh += 1 + sblock.e2fs_ngdb;
+	return overh;
 }
