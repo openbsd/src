@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.6 1997/07/10 23:12:19 kstailey Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.7 1997/07/27 14:57:31 kstailey Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -364,8 +364,10 @@ wscons_emul_docontrol(we, c)
 
 			(*we->ac_ef->wef_erasecols)(we->ac_efa,
 			    we->ac_crow, we->ac_ccol,
-			    we->ac_ncol - (we->ac_ccol + copy_ncols));
+			    copy_ncols - we->ac_ccol);
 		}
+		break;
+	case 'm':		/* video attributes */
 		break;
 	}
 }
