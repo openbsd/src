@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.22 2001/06/27 00:58:55 lebel Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.23 2001/06/30 00:50:21 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.22 2001/06/27 00:58:55 lebel Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.23 2001/06/30 00:50:21 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -372,6 +372,7 @@ res_init()
 		    hints.ai_flags = AI_NUMERICHOST;
 		    hints.ai_socktype = SOCK_DGRAM;
 		    snprintf(pbuf, sizeof(pbuf), "%d", NAMESERVER_PORT);
+		    res = NULL;
 		    if (getaddrinfo(cp, pbuf, &hints, &res) == 0 &&
 			    res->ai_next == NULL) {
 			if (res->ai_addrlen <= sizeof(_res_ext.nsaddr_list[nserv])) {
@@ -390,6 +391,8 @@ res_init()
 			}
 			nserv++;
 		    }
+		    if (res)
+			freeaddrinfo(res);
 #else /* INET6 */
 		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
 			_res.nsaddr_list[nserv].sin_addr = a;
