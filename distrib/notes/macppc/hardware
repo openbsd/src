@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.30 2004/03/17 18:37:11 xsa Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -131,6 +131,9 @@ Supported devices {:-include-:}:
 	Sound Cards
 		AWACS audio (awacs)
 		Ensoniq AudioPCI (eap)
+		Snapper audio found on recent iBook (since May02) and
+		    PowerBook (since Apr02) models (need to verify
+		    iMac (Jan 02) and Power Mac G4 (Sep 02)) (snapper)
 		USB audio (uaudio)
 
 	Radio Receiver Devices
