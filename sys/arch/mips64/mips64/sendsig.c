@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.4 2004/09/16 09:06:41 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,8 +131,8 @@ sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs->sp - fsize);
-	if ((long)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-		(void)uvm_grow(p, (long)fp);
+	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+		(void)uvm_grow(p, (vaddr_t)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
@@ -179,13 +179,8 @@ bail:
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 	/*
 	 * Build the argument list for the signal handler.
