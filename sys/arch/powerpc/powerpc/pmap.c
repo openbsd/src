@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2002/03/21 05:42:43 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.65 2002/03/22 21:01:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -59,6 +59,8 @@ int pmap_cnt_avail;
 int pmap_cnt_allocated;
 
 
+void * pmap_pvh;
+void * pmap_attrib;
 pte_t  *pmap_ptable;
 int	pmap_ptab_cnt;
 #ifdef USE_WTABLE
@@ -1378,6 +1380,14 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	npgs = 0;
 	for (mp = pmap_avail; mp->size; mp++) {
 		npgs += btoc(mp->size);
+	}
+	/* Ok we loose a few pages from this allocation, but hopefully
+	 * not too many 
+	 */
+	pmap_pvh = pmap_steal_avail(sizeof(struct pted_pv_head *) * npgs, 4);
+	pmap_attrib = pmap_steal_avail(sizeof(char) * npgs, 1);
+	pmap_avail_fixup();
+	for (mp = pmap_avail; mp->size; mp++) {
 		uvm_page_physload(atop(mp->start), atop(mp->start+mp->size),
 		    atop(mp->start), atop(mp->start+mp->size),
 		    VM_FREELIST_DEFAULT);
@@ -1810,13 +1820,10 @@ void
 pmap_init()
 {
 	vsize_t sz;
-	vaddr_t addr;
 	struct pted_pv_head *pvh;
-	char *pmap_attrib, *attr;
+	char *attr;
 	int i, bank;
 
-	sz = (sizeof (struct pted_pv_head)+1) * npgs;
-	sz = round_page(sz);
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 20, "pmap", NULL);
 	pool_setlowat(&pmap_pmap_pool, 2);
 	pool_init(&pmap_vp_pool, sizeof(struct pmapvp), 0, 0, 150, "vp", NULL);
@@ -1825,14 +1832,15 @@ pmap_init()
 	    NULL);
 	pool_setlowat(&pmap_pted_pool, 20);
 
-	addr = uvm_km_zalloc(kernel_map, sz);
-	pvh = (struct pted_pv_head *)addr;
+	/* pmap_pvh and pmap_attr must be allocated 1-1 so that pmap_save_attr
+	 * is callable from pte_spill_r (with vm disabled)
+	 */
+	pvh = (struct pted_pv_head *)pmap_pvh;
 	for (i = npgs; i > 0; i--)
 		LIST_INIT(pvh++);
-	pmap_attrib = (char *)pvh; /* attrib was allocated at the end of pv */
 	attr = pmap_attrib;
 	bzero(pmap_attrib, npgs);
-	pvh = (struct pted_pv_head *)addr;
+	pvh = (struct pted_pv_head *)pmap_pvh;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		sz = vm_physmem[bank].end - vm_physmem[bank].start;
 		vm_physmem[bank].pmseg.pvent = pvh;
