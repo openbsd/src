@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.8 2002/07/20 04:19:53 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -133,7 +133,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, 1);
+	name = intercept_filename(fd, pid, addr, ICLINK_ALL);
 	if (name == NULL)
 		return (-1);
 
@@ -179,7 +179,31 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, 0);
+	name = intercept_filename(fd, pid, addr, ICLINK_NONE);
+	if (name == NULL)
+		return (-1);
+
+	len = strlen(name) + 1;
+	trans->trans_data = malloc(len);
+	if (trans->trans_data == NULL)
+		return (-1);
+
+	trans->trans_size = len;
+	memcpy(trans->trans_data, name, len);
+
+	return (0);
+}
+
+/* Resolves all symlinks but for the last component */
+
+static int
+ic_get_unlinkname(struct intercept_translate *trans, int fd, pid_t pid,
+    void *addr)
+{
+	char *name;
+	int len;
+
+	name = intercept_filename(fd, pid, addr, ICLINK_NOLAST);
 	if (name == NULL)
 		return (-1);
 
@@ -276,6 +300,11 @@ struct intercept_translate ic_translate_filename = {
 struct intercept_translate ic_translate_linkname = {
 	"filename",
 	ic_get_linkname, ic_print_filename,
+};
+
+struct intercept_translate ic_translate_unlinkname = {
+	"filename",
+	ic_get_unlinkname, ic_print_filename,
 };
 
 struct intercept_translate ic_translate_connect = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.8 2002/07/30 06:07:06 itojun Exp $	*/
+/*	$OpenBSD: register.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -81,7 +81,8 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "unlink", trans_cb, NULL));
-	tl = intercept_register_transfn("native", "unlink", 0);
+	tl = intercept_register_translation("native", "unlink", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "unlink", "native", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.20 2002/07/30 16:09:48 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.21 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -534,10 +534,15 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			goto error;
 	}
 
-	if (userp) {
+	if (userp != ICLINK_NONE) {
 		static char rcwd[2*MAXPATHLEN];
 		int failed = 0;
-		/* If realpath fails then the filename does not exist */
+
+		if (userp == ICLINK_NOLAST)
+			goto nolast;
+
+		/* If realpath fails then the filename does not exist,
+		 * or we are supposed to not resolve the last component */
 		if (realpath(cwd, rcwd) == NULL) {
 			char *dir, *file;
 			struct stat st;
@@ -547,6 +552,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 				goto out;
 			}
 
+		nolast:
 			/* Component of path could not be entered */
 			if (strlcpy(rcwd, cwd, sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
@@ -568,8 +574,11 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			 * At this point, filename has to exist and has to
 			 * be a directory.
 			 */
-			if (lstat(rcwd, &st) == -1 || !(st.st_mode & S_IFDIR))
+			if (lstat(rcwd, &st) == -1)
 				failed = 1;
+			else if (userp != ICLINK_NOLAST &&
+			    !(st.st_mode & S_IFDIR))
+					failed = 1;
 		}
 	out:
 		if (failed)

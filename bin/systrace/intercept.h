@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.9 2002/07/22 04:02:39 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.10 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -65,6 +65,10 @@ struct intercept_system {
 #define ICPOLICY_PERMIT	-1
 #define ICPOLICY_KILL	-2
 #define ICPOLICY_NEVER	1	/* overloaded with errno values > 1 */
+
+#define ICLINK_NONE	0	/* do not resolve symlinks */
+#define ICLINK_ALL	1	/* resolve all symlinks */
+#define ICLINK_NOLAST	2	/* do not resolve last component */
 
 #define ICFLAGS_RESULT	1
 
@@ -156,6 +160,7 @@ char *intercept_translate_print(struct intercept_translate *);
 extern struct intercept_translate ic_translate_string;
 extern struct intercept_translate ic_translate_filename;
 extern struct intercept_translate ic_translate_linkname;
+extern struct intercept_translate ic_translate_unlinkname;
 extern struct intercept_translate ic_translate_connect;
 
 void intercept_freepid(pid_t);
