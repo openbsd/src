@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2003/12/28 21:53:01 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -59,6 +59,8 @@ int forward_flags;
 static int default_forward=0;
 #endif
 
+int family = AF_UNSPEC;
+
 /*
  * Initialize variables.
  */
@@ -84,22 +86,22 @@ usage()
 	fprintf(stderr, "Usage: %s %s%s%s%s\n",
 	    prompt,
 #ifdef	AUTHENTICATION
-	    "[-8] [-E] [-K] [-L] [-S tos] [-X atype] [-a] [-c] [-d] [-e char]",
-	    "\n\t[-k realm] [-l user] [-f/-F] [-n tracefile] [-b hostalias ] ",
+	    "[-4] [-6] [-8] [-E] [-K] [-L] [-S tos] [-X atype] [-a] [-c] [-d]",
+	    "\n\t[-e char] [-k realm] [-l user] [-f/-F] [-n tracefile] [-b hostalias] ",
 #else
-	    "[-8] [-E] [-L] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
-	    "\n\t[-n tracefile] [-b hostalias ] ",
+	    "[-4] [-6] [-8] [-E] [-L] [-S tos] [-a] [-c] [-d] [-e char]",
+	    "\n\t[-l user][-n tracefile] [-b hostalias] ",
 #endif
+	    "\n\t"
 #if defined(TN3270) && defined(unix)
 # ifdef AUTHENTICATION
-	    "[-noasynch] [-noasynctty]\n\t[-noasyncnet] [-r] [-t transcom] ",
+	    "[-noasynch] [-noasynctty] [-noasyncnet] [-r] [-t transcom]\n\t",
 # else
-	    "[-noasynch] [-noasynctty] [-noasyncnet] [-r]\n\t[-t transcom]",
+	    "[-noasynch] [-noasynctty] [-noasyncnet] [-r] [-t transcom]\n\t",
 # endif
 #else
 	    "[-r] ",
 #endif
-	    "\n\t"
 #ifdef ENCRYPTION
 	    "[-x] "
 #endif
@@ -186,8 +188,15 @@ main(argc, argv)
 	 */
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "78DEKLS:X:ab:cde:fFk:l:n:rt:x")) != -1) {
+	while ((ch = getopt(argc, argv, "4678DEKLS:X:ab:cde:fFk:l:n:rt:x"))
+	    != -1) {
 		switch(ch) {
+		case '4':
+			family = AF_INET;
+			break;
+		case '6':
+			family = AF_INET6;
+			break;
 		case '8':
 			eight = 3;	/* binary output and input */
 			break;

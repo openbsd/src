@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.45 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.46 2003/12/28 21:53:01 otto Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2360,7 +2360,7 @@ tn(argc, argv)
     {
 	hostname = hostp;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_CANONNAME;
 	if (portp == NULL) {
@@ -2404,7 +2404,7 @@ tn(argc, argv)
 	    struct addrinfo ahints, *ares;
 
 	    memset(&ahints, 0, sizeof(ahints));
-	    ahints.ai_family = PF_UNSPEC;
+	    ahints.ai_family = family;
 	    ahints.ai_socktype = SOCK_STREAM;
 	    ahints.ai_flags = AI_PASSIVE;
 	    error = getaddrinfo(aliasp, "0", &ahints, &ares);
