@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 1995/08/18 10:47:46 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.9 1995/03/08 15:51:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@ struct romaux {
 	} ra_intr[RA_MAXINTR];
 	int	ra_nintr;		/* number of interrupt info elements */
 	struct	bootpath *ra_bp;	/* used for locating boot device */
+	int	ra_pfour;		/* p4 register, for BUS_PFOUR devices */
 };
 
 
@@ -94,6 +95,7 @@ struct confargs {
 #define BUS_VME16	2
 #define BUS_VME32	3
 #define BUS_SBUS	4
+#define BUS_PFOUR	5
 
 extern int bt2pmt[];
 
@@ -139,6 +141,10 @@ char	*clockfreq __P((int freq));
 void	*mapdev __P((void *pa, int va, int size, int bustype));
 #define	mapiodev(pa, size, bustype)	mapdev(pa, 0, size, bustype)
 
+void 	*bus_map __P((void *pa, int len, int bustype));
+void 	*bus_tmp __P((void *pa, int bustype));
+void	bus_untmp __P((void));
+
 /*
  * Memory description arrays.  Shared between pmap.c and autoconf.c; no
  * one else should use this (except maybe mem.c, e.g., if we fix the VM to
@@ -163,8 +169,8 @@ struct bootpath {
 
 struct device *bootdv;			/* found during autoconfiguration */
 
-struct bootpath	*bootpath_store __P((int, struct bootpath *));
-int		sd_crazymap __P((int));
+struct bootpath *bootpath_store __P((int, struct bootpath *));
+int sd_crazymap __P((int));
 
 /* Parse a disk string into a dev_t, return device struct pointer */
 struct	device *parsedisk __P((char *, int, int, dev_t *));
