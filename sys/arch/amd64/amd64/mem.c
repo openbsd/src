@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2004/01/28 01:39:39 mickey Exp $ */
+/*	$OpenBSD: mem.c,v 1.2 2004/02/24 00:20:45 mickey Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,6 +60,7 @@
 
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
+extern int start, end, etext;
 
 /* open counter for aperture */
 #ifdef APERTURE
@@ -119,6 +120,7 @@ mmclose(dev, flag, mode, p)
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
+	extern vaddr_t kern_end;
 	vaddr_t o, v;
 	int c;
 	struct iovec *iov;
@@ -166,7 +168,11 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
+			if (v >= (vaddr_t)&start && v < kern_end) {
+                                if (v < (vaddr_t)&etext &&
+                                    uio->uio_rw == UIO_WRITE)
+                                        return EFAULT;
+                        } else if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 2004/02/23 09:12:59 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 2004/02/24 00:20:45 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -157,6 +157,7 @@ extern int	boothowto;
 int	cpu_class;
 
 char	*ssym = NULL;
+vaddr_t kern_end;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
@@ -1296,6 +1297,7 @@ init_x86_64(first_avail)
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
+	kern_end = KERNBASE + first_avail;
 
 	/*
 	 * Now, load the memory clusters (which have already been
