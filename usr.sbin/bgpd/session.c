@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.90 2004/01/22 19:07:34 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.91 2004/01/22 20:34:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -178,7 +178,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 
 	signal(SIGTERM, session_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
-	logit(LOG_INFO, "session engine ready");
+	log_info("session engine ready");
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
 	init_conf(conf);
@@ -336,7 +336,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 	}
 
 	control_shutdown();
-	logit(LOG_INFO, "session engine exiting");
+	log_info("session engine exiting");
 	_exit(0);
 }
 
@@ -933,7 +933,7 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 	int			 errs = 0, n;
 
 	if ((p = getpeerbyid(peerid)) == NULL) {
-		logit(LOG_CRIT, "no such peer: id=%u", peerid);
+		log_warnx("no such peer: id=%u", peerid);
 		return;
 	}
 
@@ -1032,7 +1032,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 				len = sizeof(error);
 				if (getsockopt(pfd->fd, SOL_SOCKET, SO_ERROR,
 				    &error, &len) == -1)
-					logit(LOG_CRIT, "unknown socket error");
+					log_warnx("unknown socket error");
 				else {
 					errno = error;
 					log_peer_warn(peer, "socket error");
@@ -1129,9 +1129,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 				default:	/* cannot happen */
 					session_notification(peer, ERR_HEADER,
 					    ERR_HDR_TYPE, &msgtype, 1);
-					logit(LOG_CRIT,
-					    "received message with unknown type"
-					    " %u", msgtype);
+					log_warnx("received message with "
+					    "unknown type %u", msgtype);
 				}
 				rpos += msglen;
 			}
@@ -1447,7 +1446,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			free(nconf);
 			nconf = NULL;
 			pending_reconf = 0;
-			logit(LOG_INFO, "SE reconfigured");
+			log_info("SE reconfigured");
 			break;
 		case IMSG_MRT_REQ:
 			memcpy(&mrt, imsg.data, sizeof(mrt));
@@ -1480,7 +1479,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			    MAX_PKTSIZE - MSGSIZE_HEADER ||
 			    imsg.hdr.len < IMSG_HEADER_SIZE +
 			    MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER)
-				logit(LOG_CRIT, "RDE sent invalid update");
+				log_warnx("RDE sent invalid update");
 			else
 				session_update(imsg.hdr.peerid, imsg.data,
 				    imsg.hdr.len - IMSG_HEADER_SIZE);
@@ -1489,12 +1488,11 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(suberr)) {
-				logit(LOG_CRIT,
-				    "RDE sent invalid notification");
+				log_warnx("RDE sent invalid notification");
 				break;
 			}
 			if ((p = getpeerbyid(imsg.hdr.peerid)) == NULL)
-				logit(LOG_CRIT, "no such peer: id=%u",
+				log_warnx("no such peer: id=%u",
 				    imsg.hdr.peerid);
 			else {
 				memcpy(&suberr, imsg.data, sizeof(suberr));

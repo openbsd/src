@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.17 2004/01/07 01:15:54 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.18 2004/01/22 20:34:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 
 	/* merge conf (new) into xconf (old)  */
 	if (!conf->as) {
-		logit(LOG_CRIT, "configuration error: AS not given");
+		log_warnx("configuration error: AS not given");
 		return (1);
 	}
 	if (xconf->as != conf->as)

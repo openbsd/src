@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.70 2004/01/22 03:18:03 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.71 2004/01/22 20:34:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -124,8 +124,7 @@ main(int argc, char *argv[])
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
-				logit(LOG_CRIT,
-				    "could not parse macro definition %s",
+				log_warnx("could not parse macro definition %s",
 				    optarg);
 			break;
 		case 'f':
@@ -165,7 +164,7 @@ main(int argc, char *argv[])
 	if (!debug)
 		daemon(1, 0);
 
-	logit(LOG_INFO, "startup");
+	log_info("startup");
 
 	if (pipe(pipe_m2s) == -1)
 		fatal("pipe");
@@ -282,7 +281,7 @@ main(int argc, char *argv[])
 		}
 
 		if (reconfig) {
-			logit(LOG_CRIT, "rereading config");
+			log_info("rereading config");
 			reconfigure(conffile, &conf, &mrt_l, peer_l);
 			reconfig = 0;
 		}
@@ -316,7 +315,7 @@ main(int argc, char *argv[])
 	control_cleanup();
 	kr_shutdown();
 
-	logit(LOG_CRIT, "Terminating");
+	log_info("Terminating");
 	return (0);
 }
 
@@ -327,11 +326,11 @@ check_child(pid_t pid, const char *pname)
 
 	if (waitpid(pid, &status, WNOHANG) > 0) {
 		if (WIFEXITED(status)) {
-			logit(LOG_CRIT, "Lost child: %s exited", pname);
+			log_warnx("Lost child: %s exited", pname);
 			return (1);
 		}
 		if (WIFSIGNALED(status)) {
-			logit(LOG_CRIT, "Lost child: %s terminated; signal %d",
+			log_warnx("Lost child: %s terminated; signal %d",
 			    pname, WTERMSIG(status));
 			return (1);
 		}
@@ -349,7 +348,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	struct peer		*p, *next;
 
 	if (parse_config(conffile, conf, mrt_l, &peer_l, &net_l)) {
-		logit(LOG_CRIT, "config file %s has errors, not reloading",
+		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		return (-1);
 	}
@@ -395,7 +394,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 		return (-1);
 
 	if (n == 0) {	/* connection closed */
-		logit(LOG_CRIT, "dispatch_imsg in main: pipe closed");
+		log_warnx("dispatch_imsg in main: pipe closed");
 		return (-1);
 	}
 
@@ -410,54 +409,54 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 		case IMSG_MRT_MSG:
 		case IMSG_MRT_END:
 			if (mrt_queue(mrt_l, &imsg) == -1)
-				logit(LOG_CRIT, "mrt_queue failed.");
+				log_warnx("mrt_queue failed.");
 			break;
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
-				logit(LOG_CRIT, "route request not from RDE");
+				log_warnx("route request not from RDE");
 			else if (kr_change(imsg.data))
 				return (-1);
 			break;
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
-				logit(LOG_CRIT, "route request not from RDE");
+				log_warnx("route request not from RDE");
 			else if (kr_delete(imsg.data))
 				return (-1);
 			break;
 		case IMSG_NEXTHOP_ADD:
 			if (idx != PFD_PIPE_ROUTE)
-				logit(LOG_CRIT, "nexthop request not from RDE");
+				log_warnx("nexthop request not from RDE");
 			else
 				if (imsg.hdr.len != IMSG_HEADER_SIZE +
 				    sizeof(struct bgpd_addr))
-					logit(LOG_CRIT, "wrong imsg len");
+					log_warnx("wrong imsg len");
 				else if (kr_nexthop_add(imsg.data) == -1)
 					return (-1);
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)
-				logit(LOG_CRIT, "nexthop request not from RDE");
+				log_warnx("nexthop request not from RDE");
 			else
 				if (imsg.hdr.len != IMSG_HEADER_SIZE +
 				    sizeof(struct bgpd_addr))
-					logit(LOG_CRIT, "wrong imsg len");
+					log_warnx("wrong imsg len");
 				else kr_nexthop_delete(imsg.data);
 			break;
 		case IMSG_CTL_RELOAD:
 			if (idx != PFD_PIPE_SESSION)
-				logit(LOG_CRIT, "reload request not from SE");
+				log_warnx("reload request not from SE");
 			else
 				reconfig = 1;
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 			if (idx != PFD_PIPE_SESSION)
-				logit(LOG_CRIT, "couple request not from SE");
+				log_warnx("couple request not from SE");
 			else
 				kr_fib_couple();
 			break;
 		case IMSG_CTL_FIB_DECOUPLE:
 			if (idx != PFD_PIPE_SESSION)
-				logit(LOG_CRIT, "decouple request not from SE");
+				log_warnx("decouple request not from SE");
 			else
 				kr_fib_decouple();
 			break;
@@ -466,7 +465,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 		case IMSG_CTL_SHOW_NEXTHOP:
 		case IMSG_CTL_SHOW_INTERFACE:
 			if (idx != PFD_PIPE_SESSION)
-				logit(LOG_CRIT, "kroute request not from SE");
+				log_warnx("kroute request not from SE");
 			else
 				kr_show_route(&imsg);
 			break;
@@ -493,7 +492,7 @@ send_nexthop_update(struct kroute_nexthop *msg)
 	if (msg->nexthop.af == AF_INET)
 		nh = log_ntoa(msg->nexthop.v4.s_addr);
 
-	logit(LOG_INFO, "nexthop %s now %s%s%s", nh,
+	log_info("nexthop %s now %s%s%s", nh,
 	    msg->valid ? "valid" : "invalid",
 	    msg->connected ? ": directly connected" : "",
 	    msg->gateway.af ? gw : "");

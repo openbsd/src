@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.76 2004/01/22 03:18:04 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.77 2004/01/22 20:34:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -231,7 +231,7 @@ kr_fib_couple(void)
 		if ((kr->r.flags & F_BGPD_INSERTED))
 			send_rtmsg(kr_state.fd, RTM_ADD, &kr->r);
 
-	logit(LOG_INFO, "kernel routing table coupled");
+	log_info("kernel routing table coupled");
 }
 
 void
@@ -248,7 +248,7 @@ kr_fib_decouple(void)
 
 	kr_state.fib_sync = 0;
 
-	logit(LOG_INFO, "kernel routing table decoupled");
+	log_info("kernel routing table decoupled");
 }
 
 int
@@ -316,7 +316,7 @@ kr_show_route(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags)) {
-			logit(LOG_CRIT, "kr_show_route: wrong imsg len");
+			log_warnx("kr_show_route: wrong imsg len");
 			return;
 		}
 		memcpy(&flags, imsg->data, sizeof(flags));
@@ -328,7 +328,7 @@ kr_show_route(struct imsg *imsg)
 	case IMSG_CTL_KROUTE_ADDR:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE +
 		    sizeof(struct bgpd_addr)) {
-			logit(LOG_CRIT, "kr_show_route: wrong imsg len");
+			log_warnx("kr_show_route: wrong imsg len");
 			return;
 		}
 		addr = imsg->data;
@@ -437,7 +437,7 @@ kroute_insert(struct kroute_node *kr)
 	in_addr_t		 mask, ina;
 
 	if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-		logit(LOG_CRIT, "kroute_tree insert failed for %s/%u",
+		log_warnx("kroute_tree insert failed for %s/%u",
 		    log_ntoa(kr->r.prefix), kr->r.prefixlen);
 		free(kr);
 		return (-1);
@@ -467,7 +467,7 @@ kroute_remove(struct kroute_node *kr)
 	struct knexthop_node	*s;
 
 	if (RB_REMOVE(kroute_tree, &krt, kr) == NULL) {
-		logit(LOG_CRIT, "kroute_remove failed for %s/%u",
+		log_warnx("kroute_remove failed for %s/%u",
 		    log_ntoa(kr->r.prefix), kr->r.prefixlen);
 		return (-1);
 	}
@@ -502,7 +502,7 @@ int
 knexthop_insert(struct knexthop_node *kn)
 {
 	if (RB_INSERT(knexthop_tree, &knt, kn) != NULL) {
-		logit(LOG_CRIT, "knexthop_tree insert failed for %s",
+		log_warnx("knexthop_tree insert failed for %s",
 			    log_ntoa(kn->nexthop.v4.s_addr));
 		free(kn);
 		return (-1);
@@ -519,7 +519,7 @@ knexthop_remove(struct knexthop_node *kn)
 	kroute_detach_nexthop(kn);
 
 	if (RB_REMOVE(knexthop_tree, &knt, kn) == NULL) {
-		logit(LOG_CRIT, "knexthop_remove failed for %s",
+		log_warnx("knexthop_remove failed for %s",
 		    log_ntoa(kn->nexthop.v4.s_addr));
 		return (-1);
 	}
@@ -550,7 +550,7 @@ kif_insert(struct kif_node *kif)
 	LIST_INIT(&kif->kroute_l);
 
 	if (RB_INSERT(kif_tree, &kit, kif) != NULL) {
-		logit(LOG_CRIT, "RB_INSERT(kif_tree, &kit, kif)");
+		log_warnx("RB_INSERT(kif_tree, &kit, kif)");
 		free(kif);
 		return (-1);
 	}
@@ -564,7 +564,7 @@ kif_remove(struct kif_node *kif)
 	struct kif_kr	*kkr;
 
 	if (RB_REMOVE(kif_tree, &kit, kif) == NULL) {
-		logit(LOG_CRIT, "RB_REMOVE(kif_tree, &kit, kif)");
+		log_warnx("RB_REMOVE(kif_tree, &kit, kif)");
 		return (-1);
 	}
 
@@ -586,7 +586,7 @@ kif_kr_insert(struct kroute_node *kr)
 	struct kif_kr	*kkr;
 
 	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
-		logit(LOG_CRIT, "interface with index %u not found",
+		log_warnx("interface with index %u not found",
 		    kr->r.ifindex);
 		return (0);
 	}
@@ -610,7 +610,7 @@ kif_kr_remove(struct kroute_node *kr)
 	struct kif_kr	*kkr;
 
 	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
-		logit(LOG_CRIT, "interface with index %u not found",
+		log_warnx("interface with index %u not found",
 		    kr->r.ifindex);
 		return (0);
 	}
@@ -620,7 +620,7 @@ kif_kr_remove(struct kroute_node *kr)
 		;	/* nothing */
 
 	if (kkr == NULL) {
-		logit(LOG_CRIT, "can't remove connected route from interface "
+		log_warnx("can't remove connected route from interface "
 		    "with index %u: not found", kr->r.ifindex);
 		return (-1);
 	}
@@ -807,7 +807,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	u_int8_t		 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
-		logit(LOG_CRIT, "interface with index %u not found",
+		log_warnx("interface with index %u not found",
 		    ifindex);
 		return;
 	}
@@ -921,14 +921,12 @@ retry:
 				r.hdr.rtm_type = RTM_ADD;
 				goto retry;
 			} else if (r.hdr.rtm_type == RTM_DELETE) {
-				logit(LOG_INFO,
-				    "route %s/%u vanished before delete",
+				log_info("route %s/%u vanished before delete",
 				    log_ntoa(kroute->prefix),
 				    kroute->prefixlen);
 				return (0);
 			} else {
-				logit(LOG_CRIT,
-				    "send_rtmsg: action %u, "
+				log_warnx("send_rtmsg: action %u, "
 				    "prefix %s/%u: %s", r.hdr.rtm_type,
 				    log_ntoa(kroute->prefix), kroute->prefixlen,
 				    strerror(errno));
@@ -936,8 +934,7 @@ retry:
 			}
 			break;
 		default:
-			logit(LOG_CRIT,
-			    "send_rtmsg: action %u, prefix %s/%u: %s",
+			log_warnx("send_rtmsg: action %u, prefix %s/%u: %s",
 			    r.hdr.rtm_type, log_ntoa(kroute->prefix),
 			    kroute->prefixlen, strerror(errno));
 			return (0);
@@ -1125,7 +1122,7 @@ dispatch_rtmsg(void)
 	}
 
 	if (n == 0) {
-		logit(LOG_CRIT, "routing socket closed");
+		log_warnx("routing socket closed");
 		return (-1);
 	}
 
@@ -1189,8 +1186,7 @@ dispatch_rtmsg(void)
 		case RTM_ADD:
 		case RTM_CHANGE:
 			if (nexthop == 0 && !(flags & F_CONNECTED)) {
-				logit(LOG_CRIT,
-				    "dispatch_rtmsg: no nexthop for %s/%u",
+				log_warnx("dispatch_rtmsg no nexthop for %s/%u",
 				    log_ntoa(prefix), prefixlen);
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.21 2004/01/22 03:18:03 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.22 2004/01/22 20:34:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	memcpy(&imsg->hdr, ibuf->r.buf, sizeof(imsg->hdr));
 	if (imsg->hdr.len < IMSG_HEADER_SIZE ||
 	    imsg->hdr.len > MAX_IMSGSIZE) {
-		logit(LOG_CRIT, "wrong imsg hdr len");
+		log_warnx("imsg_get: imsg hdr len out of bounds");
 		return (-1);
 	}
 	if (imsg->hdr.len > av)
@@ -122,23 +122,23 @@ imsg_compose_core(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	hdr.pid = pid;
 	wbuf = buf_open(hdr.len);
 	if (wbuf == NULL) {
-		logit(LOG_CRIT, "imsg_compose: buf_open error");
+		log_warnx("imsg_compose: buf_open error");
 		return (-1);
 	}
 	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1) {
-		logit(LOG_CRIT, "imsg_compose: buf_add error");
+		log_warnx("imsg_compose: buf_add error");
 		buf_free(wbuf);
 		return (-1);
 	}
 	if (datalen)
 		if (buf_add(wbuf, data, datalen) == -1) {
-			logit(LOG_CRIT, "imsg_compose: buf_add error");
+			log_warnx("imsg_compose: buf_add error");
 			buf_free(wbuf);
 			return (-1);
 		}
 
 	if ((n = buf_close(&ibuf->w, wbuf)) < 0) {
-			logit(LOG_CRIT, "imsg_compose: buf_add error");
+			log_warnx("imsg_compose: buf_add error");
 			buf_free(wbuf);
 			return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.23 2004/01/18 00:44:44 deraadt Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.24 2004/01/22 20:34:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -360,7 +360,7 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 		/* 1.1 if not found -> add */
 		TAILQ_INIT(&a->prefix_h);
 		if (RB_INSERT(uptree_attr, &peer->up_attrs, a) != NULL) {
-			logit(LOG_CRIT, "uptree_attr insert failed");
+			log_warnx("uptree_attr insert failed");
 			return (-1);
 		}
 		TAILQ_INSERT_TAIL(&peer->updates, a, attr_l);
@@ -380,7 +380,7 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 	if ((np = RB_FIND(uptree_prefix, &peer->up_prefix, p)) == NULL) {
 		/* 2.1 if not found -> add */
 		if (RB_INSERT(uptree_prefix, &peer->up_prefix, p) != NULL) {
-			logit(LOG_CRIT, "uptree_prefix insert failed");
+			log_warnx("uptree_prefix insert failed");
 			return (-1);
 		}
 		peer->up_pcnt++;
@@ -456,7 +456,7 @@ up_generate_updates(struct rde_peer *peer,
 		p->prefix = old->prefix->prefix;
 		p->prefixlen = old->prefix->prefixlen;
 		if (up_add(peer, p, NULL) == -1)
-			logit(LOG_CRIT, "queuing update failed.");
+			log_warnx("queuing update failed.");
 	} else {
 		if (peer == new->peer)
 			/* Do not send routes back to sender */
@@ -493,8 +493,7 @@ up_generate_updates(struct rde_peer *peer,
 
 		if (up_generate_attr(peer, a, &new->aspath->flags,
 		    new->aspath->nexthop) == -1)
-			logit(LOG_CRIT,
-			    "generation of bgp path attributes failed");
+			log_warnx("generation of bgp path attributes failed");
 
 		/*
 		 * use aspath_hash as attr_hash, this may be unoptimal
@@ -505,7 +504,7 @@ up_generate_updates(struct rde_peer *peer,
 		p->prefixlen = new->prefix->prefixlen;
 
 		if (up_add(peer, p, a) == -1)
-			logit(LOG_CRIT, "queuing update failed.");
+			log_warnx("queuing update failed.");
 	}
 }
 
@@ -672,7 +671,7 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 			break;
 		wpos += r;
 		if (RB_REMOVE(uptree_prefix, &peer->up_prefix, upp) == NULL)
-			logit(LOG_CRIT, "dequeuing update failed.");
+			log_warnx("dequeuing update failed.");
 		TAILQ_REMOVE(upp->prefix_h, upp, prefix_l);
 		peer->up_pcnt--;
 		if (upp->prefix_h == &peer->withdraws)
@@ -718,7 +717,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	/* now check if all prefixes where written */
 	if (TAILQ_EMPTY(&upa->prefix_h)) {
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
-			logit(LOG_CRIT, "dequeuing update failed.");
+			log_warnx("dequeuing update failed.");
 		TAILQ_REMOVE(&peer->updates, upa, attr_l);
 		free(upa);
 		peer->up_acnt--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.64 2004/01/17 19:35:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.65 2004/01/22 20:34:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,7 +139,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 
 	network_init(net_l);
 
-	logit(LOG_INFO, "route decision engine ready");
+	log_info("route decision engine ready");
 
 	while (rde_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
@@ -179,7 +179,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		rde_update_queue_runner();
 	}
 
-	logit(LOG_INFO, "route decision engine exiting");
+	log_info("route decision engine exiting");
 	_exit(0);
 }
 
@@ -283,7 +283,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			free(nconf);
 			nconf = NULL;
 			prefix_network_clean(&peerself, reloadtime);
-			logit(LOG_INFO, "RDE reconfigured");
+			log_info("RDE reconfigured");
 			break;
 		case IMSG_NEXTHOP_UPDATE:
 			nexthop_update(imsg.data);
@@ -399,8 +399,8 @@ rde_update_dispatch(struct imsg *imsg)
 		nlri_len -= pos;
 		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
 		if (peer->prefix_cnt >= peer->conf.max_prefix) {
-			logit(LOG_CRIT, "peer %s max prefix limit reached",
-			    peer->conf.descr);
+			log_warnx("peer %s: prefix limit reached",
+			    peer->conf.descr);			/* LXXX */
 			rde_update_err(peer, ERR_UPD_UNSPECIFIC);
 			break;
 		}
@@ -506,8 +506,7 @@ rde_update_get_attr(struct rde_peer *peer, u_char *p, u_int16_t len,
 		if ((r = aspath_verify(p, attr_len, conf->as)) != 0) {
 			/* XXX could also be a aspath loop but this
 			 * check should be moved to the filtering. */
-			logit(LOG_INFO,
-			    "XXX aspath_verify failed: error %i\n", r);
+			log_warnx("XXX aspath_verify failed: error %i", r);
 			return (-1);
 		}
 		a->aspath = aspath_create(p, attr_len);
@@ -828,7 +827,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 
 	peer = peer_get(id);
 	if (peer == NULL) {
-		logit(LOG_CRIT, "peer_up: unknown peer id %d", id);
+		log_warnx("peer_up: unknown peer id %d", id);
 		return;
 	}
 
@@ -850,7 +849,7 @@ peer_down(u_int32_t id)
 
 	peer = peer_get(id);
 	if (peer == NULL) {
-		logit(LOG_CRIT, "peer_down: unknown peer id &d", id);
+		log_warnx("peer_down: unknown peer id &d", id);
 		return;
 	}
 	peer->remote_bgpid = 0;
@@ -909,8 +908,6 @@ network_add(struct network_config *nc)
 	attrs.origin = ORIGIN_IGP;
 	TAILQ_INIT(&attrs.others);
 
-	logit(LOG_DEBUG, "adding network %s/%d",
-	    inet_ntoa(nc->prefix.v4), nc->prefixlen);
 	path_update(&peerself, &attrs, &nc->prefix, nc->prefixlen);
 }
 

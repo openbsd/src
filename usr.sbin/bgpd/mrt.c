@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.22 2004/01/11 21:47:20 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.23 2004/01/22 20:34:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ static int		mrt_open(struct mrt *);
 	do {								\
 		u_char		t = (b);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			logit(LOG_ERR, "mrt_dump1: buf_add error");	\
+			log_warnx("mrt_dump1: buf_add error");		\
 			buf_free(buf);					\
 			return (-1);					\
 		}							\
@@ -61,7 +61,7 @@ static int		mrt_open(struct mrt *);
 		u_int16_t	t;					\
 		t = htons((s));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			logit(LOG_ERR, "mrt_dump2: buf_add error");	\
+			log_warnx("mrt_dump2: buf_add error");		\
 			buf_free(buf);					\
 			return (-1);					\
 		}							\
@@ -72,7 +72,7 @@ static int		mrt_open(struct mrt *);
 		u_int32_t	t;					\
 		t = htonl((l));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			logit(LOG_ERR, "mrt_dump3: buf_add error");	\
+			log_warnx("mrt_dump3: buf_add error");		\
 			buf_free(buf);					\
 			return (-1);					\
 		}							\
@@ -82,7 +82,7 @@ static int		mrt_open(struct mrt *);
 	do {								\
 		u_int32_t	t = (l);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
-			logit(LOG_ERR, "mrt_dump4: buf_add error");	\
+			log_warnx("mrt_dump4: buf_add error");		\
 			buf_free(buf);					\
 			return (-1);					\
 		}							\
@@ -104,18 +104,18 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
 	hdr.peerid = mrt->id;
 	buf = buf_open(hdr.len);
 	if (buf == NULL) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_open error");
+		log_warnx("mrt_dump_bgp_msg: buf_open error");
 		return (-1);
 	}
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE, len) ==
 	    -1) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		return (-1);
 	}
 
@@ -135,13 +135,13 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
 	}
 
 	if (buf_add(buf, pkg, pkglen) == -1) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_close error");
+		log_warnx("mrt_dump_bgp_msg: buf_close error");
 		buf_free(buf);
 		return (-1);
 	}
@@ -164,18 +164,18 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 	hdr.peerid = mrt->id;
 	buf = buf_open(hdr.len);
 	if (buf == NULL) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_open error");
+		log_warnx("mrt_dump_bgp_msg: buf_open error");
 		return (-1);
 	}
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_STATE_CHANGE,
 	    len) == -1) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		return (-1);
 	}
 
@@ -190,7 +190,7 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, new_state);
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_close error");
+		log_warnx("mrt_dump_bgp_msg: buf_close error");
 		buf_free(buf);
 		return (-1);
 	}
@@ -290,17 +290,17 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 	hdr.peerid = mrt->id;
 	buf = buf_open(hdr.len);
 	if (buf == NULL) {
-		logit(LOG_ERR, "mrt_dump_entry: buf_open error");
+		log_warnx("mrt_dump_entry: buf_open error");
 		return (-1);
 	}
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
-		logit(LOG_ERR, "mrt_dump_entry: buf_add error");
+		log_warnx("mrt_dump_entry: buf_add error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if (mrt_dump_header(buf, MSG_TABLE_DUMP, AFI_IPv4, len) == -1) {
-		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_bgp_msg: buf_add error");
 		return (-1);
 	}
 
@@ -315,19 +315,19 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(buf, attr_len);
 
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL) {
-		logit(LOG_ERR, "mrt_dump_entry: buf_reserve error");
+		log_warnx("mrt_dump_entry: buf_reserve error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if (mrt_attr_dump(bptr, attr_len, &p->aspath->flags) == -1) {
-		logit(LOG_ERR, "mrt_dump_entry: mrt_attr_dump error");
+		log_warnx("mrt_dump_entry: mrt_attr_dump error");
 		buf_free(buf);
 		return (-1);
 	}
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
-		logit(LOG_ERR, "mrt_dump_entry: buf_close error");
+		log_warnx("mrt_dump_entry: buf_close error");
 		buf_free(buf);
 		return (-1);
 	}
@@ -391,7 +391,7 @@ mrt_open(struct mrt *mrt)
 	now = time(NULL);
 	if (strftime(mrt->file, sizeof(mrt->file), mrt->name,
 		    localtime(&now)) == 0) {
-		logit(LOG_ERR, "mrt_open: strftime conversion failed");
+		log_warnx("mrt_open: strftime conversion failed");
 		mrt->msgbuf.sock = -1;
 		return (0);
 	}
@@ -399,7 +399,7 @@ mrt_open(struct mrt *mrt)
 	mrt->msgbuf.sock = open(mrt->file,
 	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
 	if (mrt->msgbuf.sock == -1) {
-		logit(LOG_ERR, "mrt_open %s: %s",
+		log_warnx("mrt_open %s: %s",
 		    mrt->file, strerror(errno));
 		return (0);
 	}
@@ -502,7 +502,7 @@ mrt_write(struct mrt *mrt)
 	case 0:
 		if (mrt->state == MRT_STATE_CLOSE && mrt->msgbuf.queued == 0) {
 			if (mrt_close(mrt) != 1) {
-				logit(LOG_ERR, "mrt_write: mrt_close failed");
+				log_warnx("mrt_write: mrt_close failed");
 				mrt_abort(mrt);
 				return (0);
 			}
@@ -510,12 +510,12 @@ mrt_write(struct mrt *mrt)
 		}
 		return (0);
 	case -1:
-		logit(LOG_ERR, "mrt_write: msgbuf_write: %s",
+		log_warnx("mrt_write: msgbuf_write: %s",
 		    strerror(errno));
 		mrt_abort(mrt);
 		return (0);
 	case -2:
-		logit(LOG_ERR, "mrt_write: msgbuf_write: %s",
+		log_warnx("mrt_write: msgbuf_write: %s",
 		    "connection closed");
 		mrt_abort(mrt);
 		return (0);
@@ -524,7 +524,7 @@ mrt_write(struct mrt *mrt)
 	}
 
 	if (mrt_close(mrt) != 1) {
-		logit(LOG_ERR, "mrt_write: mrt_close failed");
+		log_warnx("mrt_write: mrt_close failed");
 		mrt_abort(mrt);
 		return (0);
 	}
@@ -658,7 +658,7 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 		if (m->msgbuf.queued > 0) {
 			if (m->msgbuf.sock == -1 ||
 			    m->state == MRT_STATE_STOPPED) {
-				logit(LOG_ERR, "mrt_select: orphaned buffer");
+				log_warnx("mrt_select: orphaned buffer");
 				mrt_abort(m);
 				continue;
 			}
