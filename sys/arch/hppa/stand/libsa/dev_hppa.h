@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.h,v 1.6 2003/04/29 22:38:50 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.h,v 1.7 2003/04/30 23:03:55 mickey Exp $	*/
 
 
 #define IOPGSHIFT	11
@@ -15,8 +15,7 @@ struct hppa_dev {
 	struct disklabel *label;
 	/* buffer to cache data (aligned properly) */
 	char	*buf;
-	char	ua_buf[IODC_MAXIOSIZ + IODC_MINIOSIZ];
-
+	char	ua_buf[IODC_IOSIZ + IODC_MINIOSIZ];
 };
 
 #ifdef PDCDEBUG

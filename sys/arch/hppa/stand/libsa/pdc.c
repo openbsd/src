@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.15 2003/04/30 04:09:38 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.16 2003/04/30 23:03:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -144,7 +144,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 #ifdef PDCDEBUG
 	if (debug)
 		printf("iodcstrategy(%p, %s, %u, %u, %p, %p)\n", devdata,
-		    rw==F_READ?"READ":"WRITE", blk, size, buf, rsize);
+		    rw==F_READ? "READ" : "WRITE", blk, size, buf, rsize);
 
 	if (debug > 1)
 		PZDEV_PRINT(pzdev);
@@ -159,7 +159,6 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 			if (debug)
 				printf("iodc: rewind ");
 #endif
-			twiddle();
 			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 			    IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
 			    pdcbuf, 0, dp->buf, 0, 0)) < 0) {
@@ -184,8 +183,8 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 			dp->last_blk += dp->last_read;
 			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 			    IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
-			    pdcbuf, dp->last_blk, dp->buf, IODC_MAXIOSIZ,
-			    IODC_MAXIOSIZ)) < 0) {
+			    pdcbuf, dp->last_blk, dp->buf, IODC_IOSIZ,
+			    IODC_IOSIZ)) < 0) {
 #ifdef DEBUG
 				if (debug)
 					printf("IODC_IO: %d\n", ret);
@@ -230,12 +229,11 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 		    (rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
 		    pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
-		    blk - offset, dp->buf, IODC_MAXIOSIZ,
-		    IODC_MAXIOSIZ)) < 0) {
+		    blk - offset, dp->buf, IODC_IOSIZ, IODC_IOSIZ)) < 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("iodc_read(%d,%d): %d\n",
-				    blk - offset, IODC_MAXIOSIZ, ret);
+				    blk - offset, IODC_IOSIZ, ret);
 #endif
 			if (xfer)
 				break;
