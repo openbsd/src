@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.19 1995/05/15 02:47:41 christos Exp $	*/
+/*    $NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $     */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.19 1995/05/15 02:47:41 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ struct arglist exparg;		/* holds expanded arg list */
 STATIC void argstr __P((char *, int));
 STATIC char *exptilde __P((char *, int));
 STATIC void expbackq __P((union node *, int, int));
-STATIC int subevalvar __P((char *, char *, int, int, int));
+STATIC int subevalvar __P((char *, char *, int, int, int, int));
 STATIC char *evalvar __P((char *, int));
 STATIC int varisset __P((int));
 STATIC void varvalue __P((int, int, int));
@@ -424,30 +424,35 @@ expbackq(cmd, quoted, flag)
 
 
 STATIC int
-subevalvar(p, str, subtype, startloc, varflags)
+subevalvar(p, str, strloc, subtype, startloc, varflags)
 	char *p;
 	char *str;
+      int strloc;
 	int subtype;
 	int startloc;
 	int varflags;
 {
-
 	char *startp;
 	char *loc;
 	int c = 0;
 	int saveherefd = herefd;
 	struct nodelist *saveargbackq = argbackq;
+      int amount;
+
 	herefd = -1;
 	argstr(p, 0);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
 	argbackq = saveargbackq;
 	startp = stackblock() + startloc;
+      if (str == NULL)
+          str = stackblock() + strloc;
 
 	switch (subtype) {
 	case VSASSIGN:
 		setvar(str, startp, 0);
-		STADJUST(startp - expdest, expdest);
+              amount = startp - expdest;
+              STADJUST(amount, expdest);
 		varflags &= ~VSNUL;
 		if (c != 0)
 			*loc = c;
@@ -490,7 +495,8 @@ subevalvar(p, str, subtype, startloc, varflags)
 	case VSTRIMRIGHT:
 		for (loc = str - 1; loc >= startp; loc--) {
 			if (patmatch(str, loc)) {
-				expdest = loc;
+                              amount = loc - expdest;
+                              STADJUST(amount, expdest);
 				return 1;
 			}
 		}
@@ -499,7 +505,8 @@ subevalvar(p, str, subtype, startloc, varflags)
 	case VSTRIMRIGHTMAX:
 		for (loc = startp; loc < str - 1; loc++) {
 			if (patmatch(str, loc)) {
-				expdest = loc;
+                              amount = loc - expdest;
+                              STADJUST(amount, expdest);
 				return 1;
 			}
 		}
@@ -511,7 +518,8 @@ subevalvar(p, str, subtype, startloc, varflags)
 	}
 
 recordleft:
-	expdest = (str - 1) - (loc - startp);
+      amount = ((str - 1) - (loc - startp)) - expdest;
+      STADJUST(amount, expdest);
 	while (loc != str - 1)
 		*startp++ = *loc++;
 	return 1;
@@ -633,14 +641,15 @@ record:
 		 */
 		STPUTC('\0', expdest);
 		pat = expdest;
-		if (subevalvar(p, pat, subtype, startloc, varflags))
+              if (subevalvar(p, NULL, expdest - stackblock(), subtype,
+                             startloc, varflags))
 			goto record;
 		break;
 
 	case VSASSIGN:
 	case VSQUESTION:
 		if (!set) {
-			if (subevalvar(p, var, subtype, startloc, varflags))
+                      if (subevalvar(p, var, 0, subtype, startloc, varflags))
 				goto again;
 			break;
 		}
