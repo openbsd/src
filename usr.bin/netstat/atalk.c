@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.8 2002/05/27 01:50:36 deraadt Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.9 2002/07/25 03:58:56 deraadt Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$OpenBSD: atalk.c,v 1.8 2002/05/27 01:50:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atalk.c,v 1.9 2002/07/25 03:58:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,17 +232,16 @@ atalk_print2(sa, mask, what)
 
 	thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net &
 	    sat2->sat_addr.s_net;
-	n = snprintf(buf, sizeof(buf), "%s", atalk_print(sa2, 1 | (what & 8)));
-	if (n >= sizeof(buf))
+	if ((n = snprintf(buf, sizeof(buf), "%s",
+	    atalk_print(sa2, 1 | (what & 8)))) >= sizeof(buf))
 		n = sizeof(buf) - 1;
-	else if (n == -1)
+	else if (n < 0)
 		n = 0;	/* What else can be done ? */
 	if (sat2->sat_addr.s_net != 0xFFFF) {
 		thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net |
 		    ~sat2->sat_addr.s_net;
-		l = snprintf(buf + n, sizeof(buf) - n,
-		    "-%s", atalk_print(sa2, 1 | (what & 8)));
-		if (l >= sizeof(buf) - n)
+		if ((l = snprintf(buf + n, sizeof(buf) - n,
+		    "-%s", atalk_print(sa2, 1 | (what & 8)))) >= sizeof(buf) - n)
 			l = sizeof(buf) - n - 1;
 		if (l > 0)
 			n += l;
