@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.517 2002/06/05 22:35:16 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.518 2002/06/06 19:10:56 danh Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -898,6 +898,7 @@
 #define	PCI_PRODUCT_ATI_RAGE128_SL	0x534c		/* Rage 128 SL */
 #define	PCI_PRODUCT_ATI_RAGE128_SM	0x534d		/* Rage 128 SM */
 #define	PCI_PRODUCT_ATI_RAGE128	0x534e		/* Rage 128 */
+#define	PCI_PRODUCT_ATI_RAGE128_TF	0x5446		/* Rage 128 TF */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VU	0x5655		/* Mach64 VU */
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */
