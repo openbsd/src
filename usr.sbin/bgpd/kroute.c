@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.73 2004/01/17 21:06:55 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.74 2004/01/18 19:15:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-void		if_change(u_short, int, u_int8_t);
+void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
 
 int		send_rtmsg(int, int, struct kroute *);
@@ -798,7 +798,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 }
 
 void
-if_change(u_short ifindex, int flags, u_int8_t link_state)
+if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
 	struct kif_node		*kif;
 	struct kif_kr		*kkr;
@@ -812,7 +812,9 @@ if_change(u_short ifindex, int flags, u_int8_t link_state)
 	}
 
 	kif->k.flags = flags;
-	kif->k.link_state = link_state;
+	kif->k.link_state = ifd->ifi_link_state;
+	kif->k.media_type = ifd->ifi_type;
+	kif->k.baudrate = ifd->ifi_baudrate;
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		/*
@@ -820,7 +822,7 @@ if_change(u_short ifindex, int flags, u_int8_t link_state)
 		 * not all interfaces have a conecpt of "link state" and/or
 		 * do not report up
 		 */
-		if ((flags & IFF_UP) && (link_state != LINK_STATE_DOWN))
+		if ((flags & IFF_UP) && (kif->k.link_state != LINK_STATE_DOWN))
 			kkr->kr->r.flags &= ~F_DOWN;
 		else
 			kkr->kr->r.flags |= F_DOWN;
@@ -1076,6 +1078,8 @@ fetchifs(int ifindex)
 		kif->k.ifindex = ifm->ifm_index;
 		kif->k.flags = ifm->ifm_flags;
 		kif->k.link_state = ifm->ifm_data.ifi_link_state;
+		kif->k.media_type = ifm->ifm_data.ifi_type;
+		kif->k.baudrate = ifm->ifm_data.ifi_baudrate;
 
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
@@ -1221,7 +1225,7 @@ dispatch_rtmsg(void)
 		case RTM_IFINFO:
 			ifm = (struct if_msghdr *)next;
 			if_change(ifm->ifm_index, ifm->ifm_flags,
-			    ifm->ifm_data.ifi_link_state);
+			    &ifm->ifm_data);
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
