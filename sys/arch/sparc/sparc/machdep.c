@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 1998/02/26 08:00:19 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 1998/02/26 10:39:04 johns Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -142,7 +142,6 @@ static int ndvmamap;	/* # of entries in dvmamap */
 caddr_t allocsys __P((caddr_t));
 void	dumpsys __P((void));
 void	stackdump __P((void));
-void	identifycpu __P((void));
 
 /*
  * Machine-dependent startup code
@@ -172,7 +171,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	identifycpu();
+	/*identifycpu();*/
 #ifndef MACHINE_NONCONTIG
 	physmem = btoc(avail_end);
 #endif
