@@ -150,7 +150,7 @@ int main (argc, argv)
 		endservent ();
 	}
 	remote_port = htons (ntohs (local_port) + 1);
-  
+
 	/* We need at least one server. */
 	if (!sp) {
 		usage();
@@ -286,7 +286,6 @@ void relay (ip, packet, length, from_port, from, hfrom)
 			       inet_ntoa (sp -> to.sin_addr));
 		}
 	}
-				 
 }
 
 void
@@ -346,12 +345,12 @@ char *print_hw_addr (htype, hlen, data)
 
 			s += strlen (s);
 			slen -= (strlen(s) + 1);
- 			*s++ = ':';
+			*s++ = ':';
 		}
 		*--s = 0;
 	}
 	return habuf;
- bad:	
+ bad:
 	strlcpy (habuf, "<null>", sizeof habuf);
 	return habuf;
 
