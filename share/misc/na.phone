@@ -3,7 +3,7 @@
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
 202::District of Columbia:DC
-203::Connecticut:CT
+203:New Haven:Connecticut:CT
 204:Winnipeg:Manitoba:MB
 205:Burmingham Huntsville:Alabama:AL
 206:Seattle:Washington:WA
@@ -82,6 +82,7 @@
 319:Dubuque:Iowa:IA
 319:Iowa City:Iowa:IA
 334:Montgomery:Alabama:AL
+352:Gainsville:Florida:FL
 360:Bellingham:Washington:WA
 360:Olympia:Washington:WA
 360:Vancouver:Washington:WA
@@ -127,7 +128,7 @@
 502:Louisville:Kentucky:KY
 502:Paducah:Kentucky:KY
 502:Shelbyville:Kentucky:KY
-503::Oregon:OR
+503:Portland:Oregon:OR
 504:Baton Rouge:Louisiana:LA
 504:New Orleans:Louisiana:LA
 505::New Mexico:NM
@@ -153,6 +154,7 @@
 519:London:Ontario:ON
 540:Blacksburg:Virginia:VA
 540:Roanoke:Virginia:VA
+541::Oregon:OR
 601::Mississippi:MS
 602::Arizona:AZ
 603::New Hampshire:NH
@@ -234,6 +236,7 @@
 719:Lamar:Colorado:CO
 719:Pueblo:Colorado:CO
 719:South Fork:Colorado:CO
+770:Atlanta:Georgia:GA
 801::Utah:UT
 802::Vermont:VT
 803::South Carolina:SC
@@ -275,6 +278,7 @@
 818:Van Nuys:California:CA
 819:Hull:Quebec:PQ
 819:Sherbrooke:Quebec:PQ
+860:Hartford:Connecticut:CT
 901:Jackson:Tennessee:TN
 901:Memphis:Tennessee:TN
 902::Nova Scotia:NS
@@ -311,6 +315,7 @@
 915:El Paso:Texas:TX
 916:Davis:California:CA
 916:Sacramento:California:CA
+917:New York City:New York:NY
 918:Bartlesville:Oklahoma:OK
 918:Muscoga:Oklahoma:OK
 918:Tulsa:Oklahoma:OK
