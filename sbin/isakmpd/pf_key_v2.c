@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.34 2000/10/30 16:04:00 angelos Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.35 2000/11/17 04:53:57 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.59 2000/10/16 18:16:59 provos Exp $	*/
 
 /*
@@ -798,24 +798,28 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       switch (iproto->auth)
 	{
 	case IPSEC_AUTH_HMAC_MD5:
-#ifdef KAME
-	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC;
-#else
+#ifdef SADB_AALG_MD5HMAC96
 	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC96;
+#else
+	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC;
 #endif	
 	  break;
 
 	case IPSEC_AUTH_HMAC_SHA:
-#ifdef KAME
-	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
-#else
+#ifdef SADB_AALG_SHA1HMAC96 
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC96;
+#else
+	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
 #endif
 	  break;
 
 #ifndef KAME
         case IPSEC_AUTH_HMAC_RIPEMD:
+#ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
+#else
+	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+#endif
 	  break;
 #endif
 
@@ -839,24 +843,28 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       switch (proto->id)
 	{
 	case IPSEC_AH_MD5:
-#ifdef KAME
-	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC;
-#else
+#ifdef SADB_AALG_MD5HMAC96
 	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC96;
+#else
+	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC;
 #endif
 	  break;
 
 	case IPSEC_AH_SHA:
-#ifdef KAME
-	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
-#else
+#ifdef SADB_AALG_SHA1HMAC96
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC96;
+#else
+	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
 #endif
 	  break;
 
 #ifndef KAME
 	case IPSEC_AH_RIPEMD:
+#ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
+#else
+	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+#endif
 	  break;
 #endif
 
