@@ -51,7 +51,7 @@ main(argc, argv)
 	}else {
 		pcpul->vid_oss = 2;
 	}
-	pcpul->vid_osl = (((stat.st_size -0x30) +511) / 512) *2;
+	pcpul->vid_osl = (((stat.st_size -0x20) +511) / 512) *2;
 
 	lseek(exe_file, 0x14, SEEK_SET);
 	read(exe_file, &exe_addr, 4);

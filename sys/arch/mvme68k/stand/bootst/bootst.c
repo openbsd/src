@@ -25,12 +25,14 @@ struct kernel {
 
 typedef(*kernel_entry) __P((struct mvmeprom_args *, struct kernel *));
 
+extern struct mvmeprom_args bugargs;
 int
-main(pbugargs)
-	struct mvmeprom_args *pbugargs;
+main()
 {
 	kernel_entry addr;
+	struct mvmeprom_args *pbugargs;
 
+	pbugargs = &bugargs;
 	/*
 	print_bugargs(pbugargs);
 	print_time();
@@ -43,6 +45,7 @@ main(pbugargs)
 	} else {
 		addr = kernel.entry;
 
+#if 0
 		printf("kernel loaded at %x\n", addr);
 		printf("kernel.entry %x\n", kernel.entry);
 		printf("kernel.symtab %x\n", kernel.symtab);
@@ -54,16 +57,29 @@ main(pbugargs)
 		else
 			printf("kernel.kname <null>\n");
 		printf("kernel.end_loaded %x\n", kernel.end_loaded);
+#endif
 
 		if (kernel.bflags & RB_MINIROOT)
 			loadmini(kernel.end_loaded, pbugargs);
 
+#if 0
 		printf("kernel.smini %x\n", kernel.smini);
 		printf("kernel.emini %x\n", kernel.emini);
 		printf("kernel.end_loaded %x\n", kernel.end_loaded);
+#endif
 		if (kernel.bflags & RB_HALT)
 			mvmeprom_return();
-		(addr) (pbugargs, &kernel);
+		if (((u_long)addr &0xf) == 0x2) {
+			(addr)(pbugargs, &kernel);
+		} else {
+			/* is type fixing anything like price fixing? */
+			typedef (* kernel_start) __P((int, int, void *,void *, void *));
+			kernel_start addr1;
+			addr1 = (void *)addr;
+			(addr1)(kernel.bflags, 0, kernel.esym, kernel.smini, kernel.emini
+	);
+		}
+
 	}
 	return (0);
 }
@@ -136,7 +152,7 @@ load_kern(pbugargs)
 	ret = read_tape_block(pbugargs->ctrl_lun, pbugargs->dev_lun, &status,
 	    buf, &cnt, blk_num, &flags, verbose);
 	if (ret != 0) {
-		printf("unable to load kernel 1\n");
+		printf("unable to load kernel 1 status %x\n", status);
 		return (1);
 	}
 	pexec = (struct exec *) buf;
@@ -163,7 +179,6 @@ load_kern(pbugargs)
 		addr = (char *) (pexec->a_entry & ~0x0FFF);
 
 		if ((int) pexec->a_entry != (int) addr + 0x22) {
-			printf("warning kernel start address not %x, %x\n",
 			    (int) addr + 0x22, pexec->a_entry);
 			printf("kernel loaded at %x\n", addr);
 		}
@@ -184,7 +199,7 @@ load_kern(pbugargs)
 		ret = read_tape_block(pbugargs->ctrl_lun, pbugargs->dev_lun,
 		    &status, addr, &cnt, blk_num, &flags, verbose);
 		if (ret != 0 || cnt != len) {
-			printf("unable to load kernel 2\n");
+			printf("unable to load kernel 2 status %x\n", status);
 			return 1;
 		}
 		addr += len;
