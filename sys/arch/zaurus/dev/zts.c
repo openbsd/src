@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.4 2005/02/16 20:09:18 matthieu Exp $ */
+/* $OpenBSD: zts.c,v 1.5 2005/02/16 22:25:18 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -39,8 +39,6 @@ void zts_poll(void *v);
 int      zts_enable(void *);
 void     zts_disable(void *);
 int      zts_ioctl(void *, u_long, caddr_t, int, struct proc *);
-
-#undef DO_RELATIVE
 
 struct zts_softc {
 	struct device sc_dev;
@@ -127,114 +125,109 @@ zts_poll(void *v)
 	zts_irq(v);
 }
 
+#define TS_STABLE 8
+#define NSAMPLES 3
 int
 zts_irq(void *v)
 {
-
 	struct zts_softc *sc = v;
 	u_int32_t cmd;
-	u_int32_t t0, t1;
-	u_int32_t x;
-	u_int32_t y;
+	u_int32_t t0, t1, xv, x[NSAMPLES], yv, y[NSAMPLES];
+	int i, diff[NSAMPLES];
 	int down;
+	int mindiff, mindiffv;
 	extern int zkbd_modstate;
 
-	/* check that pen is down */
-	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
-	    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+	for (i = 0; i < NSAMPLES; i++) {
+		/* check that pen is down */
+		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
+		    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
 
-	t0 = pxa2x0_ssp_read_val(cmd);
+		t0 = pxa2x0_ssp_read_val(cmd);
 
+		/* X */
+		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
+		    (5 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+
+		x[i] = pxa2x0_ssp_read_val(cmd);
+
+		/* Y */
+		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
+		    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+
+		y[i] = pxa2x0_ssp_read_val(cmd);
+
+		/* check that pen is still down */
+		cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
+		    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+
+		t1 = pxa2x0_ssp_read_val(cmd);
+	}
 
 	/* X */
-	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
-	    (5 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+	for (i = 0 ; i < NSAMPLES; i++) {
+		int alt;
+		alt = i+1;
+		if (alt == NSAMPLES)
+			alt = 0;
 
-		/* XXX - read multiple times so it is stable? */
-	x = pxa2x0_ssp_read_val(cmd);
-
+		diff[i] = x[i]-x[alt];
+		if (diff[i] < 0)
+			diff[i] = -diff[i]; /* ABS */
+	}
+	mindiffv = diff[0];
+	mindiff = 0;
+	if (diff[1] < mindiffv) {
+		mindiffv = diff[1];
+		mindiff = 1;
+	}
+	if (diff[2] < mindiffv) {
+		mindiff = 2;
+	}
+	switch (mindiff) {
+	case 0:
+		xv = (x[0] + x[1]) / 2;
+		break;
+	case 1:
+		xv = (x[1] + x[2]) / 2;
+		break;
+	case 2:
+		xv = (x[2] + x[0]) / 2;
+		break;
+	}
 
 	/* Y */
-	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
-	    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
+	for (i = 0 ; i < NSAMPLES; i++) {
+		int alt;
+		alt = i+1;
+		if (alt == NSAMPLES)
+			alt = 0;
 
-		/* XXX - read multiple times so it is stable? */
-	y = pxa2x0_ssp_read_val(cmd);
-
-
-	/* check that pen is still down */
-	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
-	    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
-
-	t1 = pxa2x0_ssp_read_val(cmd);
+		diff[i] = y[i]-y[alt];
+		if (diff[i] < 0)
+			diff[i] = -diff[i]; /* ABS */
+	}
+	mindiffv = diff[0];
+	mindiff = 0;
+	if (diff[1] < mindiffv) {
+		mindiffv = diff[1];
+		mindiff = 1;
+	}
+	if (diff[2] < mindiffv) {
+		mindiff = 2;
+	}
+	switch (mindiff) {
+	case 0:
+		yv = (y[0] + y[1]) / 2;
+		break;
+	case 1:
+		yv = (y[1] + y[2]) / 2;
+		break;
+	case 2:
+		yv = (y[2] + y[0]) / 2;
+		break;
+	}
 	
-	down = pxa2x0_gpio_get_bit(IRQ_GPIO_TP_INT_C3K);
-
-	if (t0 != 0 && t1 != 0) {
-		/*
-		printf("zts: t0 %x t1 %x, x %x y %x int %d\n", t0, t1, x, y,
-		    down);
-		*/
-	}
-
-#ifdef DO_RELATIVE
-	/*
-	 * relative mode here is really just a hack until abs mode
-	 * really works in X.
-	 */
-	if (t0 > 10 && t1 > 10) {
-		int dx, dy;
-		int skip = 0;
-
-		if ( sc->sc_oldx == -1) {
-			if (zkbd_modstate != 0) {
-				/*
-				 * use motifiers with touchpress to indicate
-				 * buttons.
-				 */
-
-				if(zkbd_modstate & (1 << 0)) {
-					/* shift */
-					sc->sc_buttons |= (1 << 0);
-				}
-				if(zkbd_modstate & (1 << 1)) {
-					/* Fn */
-					sc->sc_buttons |= (1 << 1);
-				}
-				if(zkbd_modstate & (1 << 2)) {
-					/* 'Alt' */
-					sc->sc_buttons |= (1 << 2);
-				}
-				
-			}
-			skip = 1;
-		}
-
-		dx = x - sc->sc_oldx; /* temp */
-		dy = y - sc->sc_oldy;
-
-		/* scale down */
-		dx /= 10;
-		dy /= 10;
-
-		/* y is inverted */
-		dy = - dy;
-
-		sc->sc_oldx = x;
-		sc->sc_oldy = y;
-		if (!skip)
-			wsmouse_input(sc->sc_wsmousedev,  sc->sc_buttons,
-			    dx, dy, 0 /* XXX*/, WSMOUSE_INPUT_DELTA);
-	} else {
-		
-		sc->sc_buttons = 0;
-		wsmouse_input(sc->sc_wsmousedev, sc->sc_buttons,
-		    0, 0, 0 /* XXX*/, WSMOUSE_INPUT_DELTA);
-
-		sc->sc_oldx = -1;
-		sc->sc_oldy = -1;
-	}
-#else
 	down = (t0 > 10 && t1 > 10);
 	if (zkbd_modstate != 0 && down) {
 		if(zkbd_modstate & (1 << 1)) {
@@ -248,19 +241,17 @@ zts_irq(void *v)
 	}
 	if (!down) {
 		/* x/y values are not reliable when pen is up */
-		x = sc->sc_oldx;
-		y = sc->sc_oldy;
+		xv = sc->sc_oldx;
+		yv = sc->sc_oldy;
 	}
 	if (down || sc->sc_buttons != down) {
-		wsmouse_input(sc->sc_wsmousedev, down, x, y, 0 /* z */,
+		wsmouse_input(sc->sc_wsmousedev, down, xv, yv, 0 /* z */,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
 		    WSMOUSE_INPUT_ABSOLUTE_Z);
 		sc->sc_buttons = down;
-		sc->sc_oldx = x;
-		sc->sc_oldy = y;
+		sc->sc_oldx = xv;
+		sc->sc_oldy = yv;
 	}
-#endif
-
 
 	/*
 	pxa2x0_gpio_clear_intr(IRQ_GPIO_TP_INT_C3K);
