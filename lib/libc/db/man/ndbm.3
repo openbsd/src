@@ -1,5 +1,5 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.1 1998/05/13 12:41:02 d Exp $
+.\" $OpenBSD: ndbm.3,v 1.2 1998/05/13 17:15:32 deraadt Exp $
 .Dd May 13, 1998
 .Os OpenBSD
 .Dt NDBM 3
@@ -8,17 +8,28 @@
 .Nd database access methods
 .Sh SYNOPSIS
 .Fd #include <ndbm.h>
-.Fn "int dbm_clearerr" "DBM *db"
-.Fn "void dbm_close" "DBM *db"
-.Fn "int dbm_delete" "DBM *db" "datum key"
-.Fn "int dbm_dirfno" "DBM *db"
-.Fn "int dbm_error" "DBM *db"
-.Fn "datum dbm_fetch" "DBM *db" "datum key"
-.Fn "datum dbm_firstkey" "DBM *db"
-.Fn "datum dbm_nextkey" "DBM *db"
-.Fn "DBM *dbm_open" "const char *file" "int flags" "int mode"
-.Fn "int dbm_pagfno" "DBM *db"
-.Fn "int dbm_store" "DBM *db" "datum key" "datum content" "int store_mode"
+.Ft int
+.Fn dbm_clearerr "DBM *db"
+.Ft void
+.Fn dbm_close "DBM *db"
+.Ft int
+.Fn dbm_delete "DBM *db" "datum key"
+.Ft int
+.Fn dbm_dirfno "DBM *db"
+.Ft int
+.Fn dbm_error "DBM *db"
+.Ft datum
+.Fn dbm_fetch "DBM *db" "datum key"
+.Ft datum
+.Fn dbm_firstkey "DBM *db"
+.Ft datum
+.Fn dbm_nextkey "DBM *db"
+.Ft "DBM *"
+.Fn dbm_open "const char *file" "int flags" "int mode"
+.Ft int
+.Fn dbm_pagfno "DBM *db"
+.Ft int
+.Fn dbm_store "DBM *db" "datum key" "datum content" "int store_mode"
 .Sh DESCRIPTION
 These functions provide a dbm- and ndbm-compatible interface to the
 database access methods described in
