@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.16 2002/02/17 19:42:24 millert Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.17 2003/02/27 07:03:21 cloder Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -236,7 +236,7 @@ int		pthread_create(pthread_t *, const pthread_attr_t *,
 		    void *(*start_routine) (void *), void *);
 int		pthread_detach(pthread_t);
 int		pthread_equal(pthread_t, pthread_t);
-__dead void	pthread_exit(void *) __attribute__((__noreturn__));
+__dead void	pthread_exit(void *);
 void		*pthread_getspecific(pthread_key_t);
 int		pthread_join(pthread_t, void **);
 int		pthread_key_create(pthread_key_t *, void (*routine)(void *));
