@@ -135,6 +135,8 @@ Supported hardware {:-include-:}:
 				SMART-2SL
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters 
 		ICP-Vortex GDT 6XXXR[DNPS] series
+		I2O (intelligent I/O) RAID controllers, including:
+			Adaptec 2100S, 3200S 
 	CD-ROM and DVD-ROM Drives
 		Mitsumi CD-ROM drives [*] [+]
 			[Note: The Mitsumi driver device probe is known 
