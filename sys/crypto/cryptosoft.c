@@ -33,6 +33,7 @@
 #include <crypto/skipjack.h>
 #include <crypto/blf.h>
 #include <crypto/crypto.h>
+#include <crypto/cryptosoft.h>
 #include <crypto/xform.h>
 
 u_int8_t hmac_ipad_buffer[64] = {

@@ -144,49 +144,8 @@ struct cryptocap
     int             (*cc_freesession) (u_int32_t);
 };
 
-/* Software session entry */
-struct swcr_data
-{
-    int               sw_alg;		/* Algorithm */
-    union
-    {
-	struct
-	{
-            u_int8_t         *SW_ictx;
-            u_int8_t         *SW_octx;
-	    struct auth_hash *SW_axf;
-	} SWCR_AUTH;
-
-	struct
-	{
-            u_int8_t         *SW_kschedule;
-            u_int8_t         *SW_iv;
-	    struct enc_xform *SW_exf;
-	} SWCR_ENC;
-    } SWCR_UN;
-
-#define sw_ictx      SWCR_UN.SWCR_AUTH.SW_ictx
-#define sw_octx      SWCR_UN.SWCR_AUTH.SW_octx
-#define sw_axf       SWCR_UN.SWCR_AUTH.SW_axf
-#define sw_kschedule SWCR_UN.SWCR_ENC.SW_kschedule
-#define sw_iv        SWCR_UN.SWCR_ENC.SW_iv
-#define sw_exf       SWCR_UN.SWCR_ENC.SW_exf
-
-    struct swcr_data *sw_next;
-};
 
 #ifdef _KERNEL
-extern u_int8_t hmac_ipad_buffer[64];
-extern u_int8_t hmac_opad_buffer[64];
-
-extern int swcr_encdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
-extern int swcr_authcompute(struct cryptodesc *, struct swcr_data *,
-			    caddr_t, int);
-extern int swcr_process(struct cryptop *);
-extern int swcr_newsession(u_int32_t *, struct cryptoini *);
-extern int swcr_freesession(u_int32_t);
-extern void swcr_init(void);
-
 extern int crypto_newsession(u_int64_t *, struct cryptoini *);
 extern int crypto_freesession(u_int64_t);
 extern int crypto_dispatch(struct cryptop *);
