@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.14 2003/06/17 04:39:39 jfb Exp $	*/
+/*	$OpenBSD: frame.h,v 1.15 2003/07/15 18:15:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -133,12 +133,11 @@ struct trapframe {
 	unsigned	tf_rctr;	/* cr0 */
 	unsigned	tf_ccr;		/* cr10 */
 	unsigned	tf_eirr;	/* cr23 - DDB */
-	unsigned	tf_hptm;	/* cr24 - DDB */
 	unsigned	tf_vtop;	/* cr25 - DDB */
 	unsigned	tf_cr28;	/*      - DDB */
 	unsigned	tf_cr30;	/* uaddr */
 
-	unsigned	tf_pad[3];	/* pad to 256 bytes */
+	unsigned	tf_pad[4];	/* pad to 256 bytes */
 };
 #endif /* !_LOCORE */
 

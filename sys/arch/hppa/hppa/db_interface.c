@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.27 2003/03/03 18:28:35 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.28 2003/07/15 18:15:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -121,7 +121,6 @@ struct db_variable db_regs[] = {
 	{ "pidr4", (long *)&ddb_regs.tf_pidr4, FCN_NULL },
 #endif
 
-	{ "hptm",  (long *)&ddb_regs.tf_hptm,  FCN_NULL },
 	{ "vtop",  (long *)&ddb_regs.tf_vtop,  FCN_NULL },
 	{ "cr28",  (long *)&ddb_regs.tf_cr28,  FCN_NULL },
 	{ "cr30",  (long *)&ddb_regs.tf_cr30,  FCN_NULL },

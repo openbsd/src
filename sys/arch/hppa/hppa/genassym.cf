@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.23 2003/06/02 23:27:46 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.24 2003/07/15 18:15:41 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -125,7 +125,6 @@ member	TF_CR20		tf_isr
 member	TF_CR21		tf_ior
 member	TF_CR22		tf_ipsw
 member	TF_CR23		tf_eirr
-member	TF_CR24		tf_hptm
 member	TF_CR25		tf_vtop
 member	tf_cr28
 member	tf_cr30

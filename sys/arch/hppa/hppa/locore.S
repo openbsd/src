@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.108 2003/05/07 18:48:12 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.109 2003/07/15 18:15:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -688,13 +688,11 @@ $syscall
 	 * Save hpt mask and v2p translation table pointer
 	 */
 	mfctl	eirr, arg0
-	mfctl	hptmask, arg1
+	mfctl	vtop, arg1
 	stw	arg0, TF_CR23-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	arg1, TF_CR24-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_CR25-TRAPFRAME_SIZEOF(sr1, t3)
 
-	mfctl	vtop, arg0
 	mfctl	cr28, arg1
-	stw	arg0, TF_CR25-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	arg1, TF_CR28-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
 
@@ -1193,16 +1191,6 @@ $fpusw_done
 	nop
 EXIT(TLABEL(emu))
 
-	/* Compute the hpt entry ptr */
-#define	HPTENT \
-	extru	r9, 23, 24, r16		/* r16 = (offset >> 8) */	! \
-	zdep	r8, 22, 16, r24		/* r24 = (space << 9) */	! \
-	mfctl	hptmask, r17		/* r17 = sizeof(HPT)-1 */	! \
-	xor	r16, r24, r24		/* r24 ^= r16 */		! \
-	and	r17, r24, r24		/* r24 &= r17 */		! \
-	mfctl	vtop, r16		/* r16 = address of HPT table */! \
-	or	r16, r24, r24		/* r24 = HPT entry */
-
 	/* Construct the virtual address tag. */
 #define	VTAG ! \
 	shd	r0, r9, 1, r16		/* r16[1..15] = off[0..14] */	! \
@@ -1625,13 +1613,11 @@ $trapnowvirt
 	 * Save hpt mask and v2p translation table pointer
 	 */
 	mfctl	eirr, t1
-	mfctl	hptmask, t2
+	mfctl	vtop, t2
 	stw	t1, TF_CR23(t3)
-	stw	t2, TF_CR24(t3)
+	stw	t2, TF_CR25(t3)
 
-	mfctl	vtop, t1
 	mfctl	cr28, t2
-	stw	t1, TF_CR25(t3)
 	stw	t2, TF_CR28(t3)
 #endif
 	mfctl	cr30, t1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.13 2002/05/20 03:27:09 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.14 2003/07/15 18:15:41 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -159,7 +159,6 @@ isr	.reg	%cr20
 ior	.reg	%cr21
 ipsw	.reg	%cr22
 eirr	.reg	%cr23
-hptmask	.reg	%cr24
 tr0	.reg	%cr24
 vtop	.reg	%cr25
 tr1	.reg	%cr25
