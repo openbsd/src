@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.31 2003/10/08 19:10:05 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.32 2004/01/13 21:27:03 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -51,8 +51,6 @@
 #define  _MACHINE_ARCH  m88k
 #define  MACHINE_ARCH   "m88k"
 #define  MID_MACHINE    MID_M88K
-/* Older value for MID_MACHINE */
-#define	OLD_MID_MACHINE	151
 
 /*
  * Round p (pointer or byte index) down to a correctly-aligned value
