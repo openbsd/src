@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.43 2003/01/06 18:43:02 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.44 2003/01/07 03:32:15 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -70,6 +70,7 @@ static int	read_config(FILE *);
 static void	print_message(char *);
 static int	allowed_luser(char *);
 static int	check_luser(char *, char *);
+static int	remove_stale_rulesets(void);
 static int	change_filter(int, const char *, const char *);
 static void	authpf_kill_states(void);
 
@@ -254,6 +255,9 @@ main(int argc, char *argv[])
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	if (config != NULL && read_config(config))
+		do_death(0);
+
+	if (remove_stale_rulesets())
 		do_death(0);
 
 	/* We appear to be making headway, so actually mark our pid */
@@ -522,6 +526,61 @@ check_luser(char *luserdir, char *luser)
 	return (0);
 }
 
+/*
+ * Search for rulesets left by other authpf processes (either because they
+ * died ungracefully or were terminated) and remove them.
+ */
+static int
+remove_stale_rulesets()
+{
+	struct pfioc_ruleset	 prs;
+	const int		 action[PF_RULESET_MAX] = { PF_SCRUB,
+				    PF_PASS, PF_NAT, PF_BINAT, PF_RDR };
+	u_int32_t		 nr, mnr;
+
+	memset(&prs, 0, sizeof(prs));
+	strlcpy(prs.anchor, anchorname, sizeof(prs.anchor));
+	if (ioctl(dev, DIOCGETRULESETS, &prs)) {
+		if (errno == EINVAL)
+			return (0);
+		else
+			return (1);
+	}
+
+	mnr = prs.nr;
+	nr = 0;
+	while (nr < mnr) {
+		char	*s;
+		pid_t	 pid;
+
+		prs.nr = nr;
+		if (ioctl(dev, DIOCGETRULESET, &prs))
+			return (1);
+		errno = 0;
+		pid = strtoul(prs.name, &s, 10);
+		if (!prs.name[0] || errno || *s)
+			return (1);
+		if (kill(pid, 0)) {
+			int i;
+
+			for (i = 0; i < PF_RULESET_MAX; ++i) {
+				struct pfioc_rule pr;
+
+				memset(&pr, 0, sizeof(pr));
+				memcpy(pr.anchor, prs.anchor, sizeof(pr.anchor));
+				memcpy(pr.ruleset, prs.name, sizeof(pr.ruleset));
+				pr.rule.action = action[i];
+				if ((ioctl(dev, DIOCBEGINRULES, &pr) ||
+				    ioctl(dev, DIOCCOMMITRULES, &pr)) &&
+				    errno != EINVAL)
+					return (1);
+			}
+			mnr--;
+		} else
+			nr++;
+	}
+	return (0);
+}
 
 /*
  * Add/remove filter entries for user "luser" from ip "ipsrc"
@@ -676,6 +735,7 @@ do_death(int active)
 	if (active) {
 		change_filter(0, luser, ipsrc);
 		authpf_kill_states();
+		remove_stale_rulesets();
 	}
 	if (pidfp)
 		ftruncate(fileno(pidfp), 0);
