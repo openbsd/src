@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: engine.c,v 8.65 2000/02/17 17:52:14 ca Exp $";
+static char id[] = "@(#)$Sendmail: engine.c,v 8.67 2000/03/27 05:04:16 ca Exp $";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -384,7 +384,8 @@ sendreply(r, fd, timeout_ptr, ctx)
 		if (ctx->ctx_reply != NULL)
 		{
 			ret = mi_wr_cmd(fd, timeout_ptr, SMFIR_REPLYCODE,
-					ctx->ctx_reply, strlen(ctx->ctx_reply));
+					ctx->ctx_reply,
+					strlen(ctx->ctx_reply) + 1);
 			free(ctx->ctx_reply);
 			ctx->ctx_reply = NULL;
 		}
@@ -537,14 +538,17 @@ st_connectinfo(g)
 		++i;
 	if (i >= l)
 		return _SMFIS_ABORT;
-	family = s[++i];
+
+	/* Move past trailing \0 in host string */
+	i++;
+	family = s[i++];
 	memset(&sockaddr, '\0', sizeof sockaddr);
 	if (family != SMFIA_UNKNOWN)
 	{
 		(void) memcpy((void *) &port, (void *) (s + i),
 			      sizeof port);
 		port = ntohs(port);
-		if ((i += 2) >= l)
+		if ((i += sizeof port) >= l)
 		{
 			smi_log(SMI_LOG_ERR,
 				"%s: connect[%d]: wrong len %d >= %d",
@@ -555,7 +559,7 @@ st_connectinfo(g)
 # if NETINET
 		if (family == SMFIA_INET)
 		{
-			if (inet_aton(s + i, (struct in_addr *) &sockaddr)
+			if (inet_aton(s + i, (struct in_addr *) &sockaddr.sin.sin_addr)
 			    == INADDR_NONE)
 			{
 				smi_log(SMI_LOG_ERR,

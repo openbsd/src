@@ -15,9 +15,9 @@
 
 #ifndef lint
 # ifdef DAEMON
-static char id[] = "@(#)$Sendmail: daemon.c,v 8.399 2000/03/01 18:14:06 gshapiro Exp $ (with daemon mode)";
+static char id[] = "@(#)$Sendmail: daemon.c,v 8.401 2000/03/11 20:52:46 gshapiro Exp $ (with daemon mode)";
 # else /* DAEMON */
-static char id[] = "@(#)$Sendmail: daemon.c,v 8.399 2000/03/01 18:14:06 gshapiro Exp $ (without daemon mode)";
+static char id[] = "@(#)$Sendmail: daemon.c,v 8.401 2000/03/11 20:52:46 gshapiro Exp $ (without daemon mode)";
 # endif /* DAEMON */
 #endif /* ! lint */
 
@@ -819,7 +819,7 @@ opendaemonsocket(d, firsttime)
 				syserr("opendaemonsocket: daemon %s: failed to %s close-on-exec flag: %s",
 				       d->d_name,
 				       fdflags == -1 ? "get" : "set",
-				       strerror(save_errno));
+				       errstring(save_errno));
 				(void) close(d->d_socket);
 				goto severe;
 			}
@@ -2350,8 +2350,17 @@ getauthinfo(fd, may_be_forged)
 	if (isatty(fd) || (i = getpeername(fd, &RealHostAddr.sa, &falen)) < 0 ||
 	    falen <= 0 || RealHostAddr.sa.sa_family == 0)
 	{
-		if (i < 0 && errno != ENOTSOCK)
-			return NULL;
+		if (i < 0)
+		{
+			/*
+			**  ENOTSOCK is OK: bail on anything else, but reset
+			**  errno in this case, so a mis-report doesn't
+			**  happen later.
+			*/
+			if (errno != ENOTSOCK)
+				return NULL;
+			errno = 0;
+		}
 		(void) snprintf(hbuf, sizeof hbuf, "%s@localhost",
 			RealUserName);
 		if (tTd(9, 1))

@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: deliver.c,v 8.594 2000/02/10 20:40:06 ca Exp $";
+static char id[] = "@(#)$Sendmail: deliver.c,v 8.600 2000/04/06 00:50:14 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1184,8 +1184,8 @@ deliver(e, firstto)
 
 		ovr = TRUE;
 		/* do config file checking of compatibility */
-		rcode = rscheck("check_compat",
-				e->e_from.q_paddr, to->q_paddr, e, TRUE, TRUE);
+		rcode = rscheck("check_compat", e->e_from.q_paddr, to->q_paddr,
+				e, TRUE, TRUE, 4);
 		if (rcode == EX_OK)
 		{
 			/* do in-code checking if not discarding */
@@ -2219,7 +2219,9 @@ do_transfer:
 					/* not enough room */
 					continue;
 				}
-				else if ((i = smtprcpt(to, m, mci, e)) != EX_OK)
+
+
+				if ((i = smtprcpt(to, m, mci, e)) != EX_OK)
 				{
 					markfailure(e, to, mci, i, FALSE);
 					giveresponse(i, to->q_status,  m,
@@ -3062,7 +3064,7 @@ logdelivery(m, mci, dsn, status, ctladdr, xstart, e)
 
 	/* id, to: max 13 + TOBUFSIZE bytes */
 	l = SYSLOG_BUFSIZE - 100 - strlen(buf);
-	p = e->e_to;
+	p = e->e_to == NULL ? "NO-TO-LIST" : e->e_to;
 	while (strlen(p) >= (SIZE_T) l)
 	{
 		register char *q = strchr(p + l, ',');
@@ -3079,7 +3081,7 @@ logdelivery(m, mci, dsn, status, ctladdr, xstart, e)
 #else /* (SYSLOG_BUFSIZE) >= 256 */
 
 	l = SYSLOG_BUFSIZE - 85;
-	p = e->e_to;
+	p = e->e_to == NULL ? "NO-TO-LIST" : e->e_to;
 	while (strlen(p) >= (SIZE_T) l)
 	{
 		register char *q = strchr(p + l, ',');

@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: collect.c,v 8.135 2000/02/27 01:27:43 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: collect.c,v 8.136 2000/03/15 21:47:27 ca Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -461,7 +461,7 @@ nextstate:
 				dprintf("collect: rscheck(\"check_eoh\", \"%s $| %s\")\n",
 					hnum, hsize);
 			rstat = rscheck("check_eoh", hnum, hsize, e, FALSE,
-					TRUE);
+					TRUE, 4);
 
 #if _FFR_MILTER
 			/*

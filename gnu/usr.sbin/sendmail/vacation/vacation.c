@@ -13,7 +13,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1983, 1987, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n\
@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: vacation.c,v 8.63 2000/02/01 05:50:00 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: vacation.c,v 8.68 2000/03/17 07:32:51 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <ctype.h>
@@ -33,10 +33,6 @@ static char id[] = "@(#)$Sendmail: vacation.c,v 8.63 2000/02/01 05:50:00 gshapir
 # undef EX_OK		/* unistd.h may have another use for this */
 #endif /* EX_OK */
 #include <sysexits.h>
-
-#if defined(sun) && !defined(BSD) && !defined(SOLARIS)
-# include <pathname.h>
-#endif /* sun && ! BSD && ! SOLARIS */
 
 #include "sendmail/sendmail.h"
 #include "libsmdb/smdb.h"
@@ -116,6 +112,7 @@ main(argc, argv)
 	ALIAS *cur;
 	char *dbfilename = VDB;
 	char *msgfilename = VMSG;
+	char *name;
 	SMDB_USER_INFO user_info;
 	static char rnamebuf[MAXNAME];
 	extern int optind, opterr;
@@ -156,7 +153,7 @@ main(argc, argv)
 	exclude = FALSE;
 	interval = INTERVAL_UNDEF;
 	*From = '\0';
-	while ((ch = getopt(argc, argv, "a:f:Iim:r:s:xz")) != -1)
+	while ((ch = getopt(argc, argv, "a:f:Iim:r:s:t:xz")) != -1)
 	{
 		switch((char)ch)
 		{
@@ -233,17 +230,22 @@ main(argc, argv)
 			exit(EX_NOUSER);
 		}
 	}
+#if _FFR_BLACKBOX
+	name = *argv;
+#else /* _FFR_BLACKBOX */
 	else if ((pw = getpwnam(*argv)) == NULL)
 	{
 		syslog(LOG_ERR, "vacation: no such user %s.\n", *argv);
 		exit(EX_NOUSER);
 	}
+	name = pw->pw_name;
 	if (chdir(pw->pw_dir) != 0)
 	{
 		syslog(LOG_NOTICE,
 		       "vacation: no such directory %s.\n", pw->pw_dir);
 		exit(EX_NOINPUT);
 	}
+#endif /* _FFR_BLACKBOX */
 	user_info.smdbu_id = pw->pw_uid;
 	user_info.smdbu_group_id = pw->pw_gid;
 	(void) strlcpy(user_info.smdbu_name, pw->pw_name,
@@ -283,7 +285,7 @@ main(argc, argv)
 		       "vacation: can't allocate memory for username.\n");
 		exit(EX_OSERR);
 	}
-	cur->name = pw->pw_name;
+	cur->name = name;
 	cur->next = Names;
 	Names = cur;
 
@@ -295,7 +297,7 @@ main(argc, argv)
 		(void) time(&now);
 		setreply(From, now);
 		result = Db->smdb_close(Db);
-		sendmessage(pw->pw_name, msgfilename, emptysender);
+		sendmessage(name, msgfilename, emptysender);
 	}
 	else
 		result = Db->smdb_close(Db);
@@ -765,7 +767,7 @@ sendmessage(myname, msgfn, emptysender)
 void
 usage()
 {
-	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] [-f db] [-m msg] [-r interval] [-s sender] [-x] [-z] login\n",
+	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] [-f db] [-m msg] [-r interval] [-s sender] [-t time] [-x] [-z] login\n",
 	    getuid());
 	exit(EX_USAGE);
 }

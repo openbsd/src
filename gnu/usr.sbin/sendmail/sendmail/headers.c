@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: headers.c,v 8.202 2000/02/17 17:18:17 ca Exp $";
+static char id[] = "@(#)$Sendmail: headers.c,v 8.203 2000/03/15 21:47:29 ca Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -345,7 +345,7 @@ hse:
 				free(sp);
 			define(macid("{currHeader}", NULL), newstr(qval), e);
 			define(macid("{hdr_name}", NULL), newstr(fname), e);
-			(void) rscheck(rs, fvalue, NULL, e, stripcom, TRUE);
+			(void) rscheck(rs, fvalue, NULL, e, stripcom, TRUE, 4);
 		}
 	}
 

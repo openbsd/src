@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: savemail.c,v 8.211 2000/02/01 05:49:56 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: savemail.c,v 8.212 2000/03/13 22:56:51 ca Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -524,6 +524,12 @@ returntosender(msg, returnq, flags, e)
 	define('r', "", ee);
 	define('s', "localhost", ee);
 	define('_', "localhost", ee);
+#if SASL
+	define(macid("{auth_type}", NULL), "", ee);
+	define(macid("{auth_authen}", NULL), "", ee);
+	define(macid("{auth_author}", NULL), "", ee);
+#endif /* SASL */
+
 	ee->e_puthdr = putheader;
 	ee->e_putbody = errbody;
 	ee->e_flags |= EF_RESPONSE|EF_METOO;

@@ -15,9 +15,9 @@
 
 #ifndef lint
 # if QUEUE
-static char id[] = "@(#)$Sendmail: queue.c,v 8.342 2000/02/27 01:27:44 gshapiro Exp $ (with queueing)";
+static char id[] = "@(#)$Sendmail: queue.c,v 8.343 2000/03/15 06:58:09 gshapiro Exp $ (with queueing)";
 # else /* QUEUE */
-static char id[] = "@(#)$Sendmail: queue.c,v 8.342 2000/02/27 01:27:44 gshapiro Exp $ (without queueing)";
+static char id[] = "@(#)$Sendmail: queue.c,v 8.343 2000/03/15 06:58:09 gshapiro Exp $ (without queueing)";
 # endif /* QUEUE */
 #endif /* ! lint */
 
@@ -1818,6 +1818,7 @@ readqf(e)
 	register char *p;
 	char *orcpt = NULL;
 	bool nomore = FALSE;
+	MODE_T qsafe;
 	char qf[MAXPATHLEN];
 	char buf[MAXLINE];
 
@@ -1867,8 +1868,16 @@ readqf(e)
 		return FALSE;
 	}
 
-	if ((st.st_uid != geteuid() && geteuid() != RealUid) ||
-	    bitset(S_IWOTH|S_IWGRP, st.st_mode))
+	qsafe = S_IWOTH|S_IWGRP;
+#if _FFR_QUEUE_FILE_MODE
+	if (bitset(S_IWGRP, QueueFileMode))
+		qsafe &= ~S_IWGRP;
+#endif /* _FFR_QUEUE_FILE_MODE */
+
+	if ((st.st_uid != geteuid() &&
+	     st.st_uid != TrustedUid &&
+	     geteuid() != RealUid) ||
+	    bitset(qsafe, st.st_mode))
 	{
 		if (LogLevel > 0)
 		{

@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+** Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 **	All rights reserved.
 **
 ** By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
 */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: smdb1.c,v 8.40 1999/11/23 08:42:53 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: smdb1.c,v 8.43 2000/03/17 07:32:43 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <unistd.h>
@@ -122,6 +122,9 @@ smdb_cursor_get_flags_to_smdb1(flags)
 
 		case SMDB_CURSOR_GET_NEXT:
 			return R_NEXT;
+
+		case SMDB_CURSOR_GET_RANGE:
+			return R_CURSOR;
 
 		default:
 			return -1;
@@ -384,7 +387,7 @@ smdb_db_open(database, db_name, mode, mode_mask, sff, type, user_info,
 	char *db_name;
 	int mode;
 	int mode_mask;
-	int sff;
+	long sff;
 	SMDB_DBTYPE type;
 	SMDB_USER_INFO *user_info;
 	SMDB_DBPARAMS *db_params;

@@ -15,9 +15,9 @@
 
 #ifndef lint
 # if SMTP
-static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.240 2000/02/23 06:56:16 gshapiro Exp $ (with SMTP)";
+static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.245 2000/03/23 17:35:10 ca Exp $ (with SMTP)";
 # else /* SMTP */
-static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.240 2000/02/23 06:56:16 gshapiro Exp $ (without SMTP)";
+static char id[] = "@(#)$Sendmail: usersmtp.c,v 8.245 2000/03/23 17:35:10 ca Exp $ (without SMTP)";
 # endif /* SMTP */
 #endif /* ! lint */
 
@@ -434,6 +434,10 @@ getsasldata(line, firstline, m, mci, e)
 **
 **	Returns:
 **		line from file
+**
+**	Side Effects:
+**		overwrites local static buffer. The caller should copy
+**		the result.
 **
 */
 
@@ -1194,6 +1198,7 @@ smtpauth(m, mci, e)
 	char *mechused;
 	char *h;
 	static char *defrealm = NULL;
+	static char *mechs = NULL;
 
 	mci->mci_sasl_auth = FALSE;
 	if (defrealm == NULL)
@@ -1205,6 +1210,18 @@ smtpauth(m, mci, e)
 	if (defrealm == NULL || *defrealm == '\0')
 		defrealm = newstr(macvalue('j', CurEnv));
 	callbacks[CB_GETREALM_IDX].context = defrealm;
+
+# if _FFR_DEFAUTHINFO_MECHS
+	if (mechs == NULL)
+	{
+		h = readauth(SASL_MECH, SASLInfo, TRUE);
+		if (h != NULL && *h != '\0')
+			mechs = newstr(h);
+	}
+# endif /* _FFR_DEFAUTHINFO_MECHS */
+	if (mechs == NULL || *mechs == '\0')
+		mechs = AuthMechanisms;
+	mci->mci_saslcap = intersect(mechs, mci->mci_saslcap);
 
 	/* initialize sasl client library */
 	result = sasl_client_init(callbacks);
@@ -1336,7 +1353,7 @@ smtpmailfrom(m, mci, e)
 	if (bitset(MCIF_AUTH, mci->mci_flags) && e->e_auth_param != NULL &&
 	    SPACELEFT(optbuf, bufp) > strlen(e->e_auth_param) + 7
 # if SASL
-	     && (SASLTryAuth != SASL_AUTH_AUTH || mci->mci_sasl_auth)
+	     && (!bitset(SASL_AUTH_AUTH, SASLOpts) || mci->mci_sasl_auth)
 # endif /* SASL */
 	    )
 	{

@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: util.c,v 8.224 1999/11/24 08:44:38 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: util.c,v 8.225 2000/03/28 21:55:22 ca Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1613,9 +1613,11 @@ dumpfd(fd, printclosed, logit)
 	  case S_IFSOCK:
 		snprintf(p, SPACELEFT(buf, p), "SOCK ");
 		p += strlen(p);
+		memset(&sa, '\0', sizeof sa);
 		slen = sizeof sa;
 		if (getsockname(fd, &sa.sa, &slen) < 0)
-			snprintf(p, SPACELEFT(buf, p), "(%s)", errstring(errno));
+			snprintf(p, SPACELEFT(buf, p), "(%s)",
+				 errstring(errno));
 		else
 		{
 			hp = hostnamebyanyaddr(&sa);

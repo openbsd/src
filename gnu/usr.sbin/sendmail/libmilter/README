@@ -9,6 +9,14 @@ through reference to a sample filter which is attached at the end of this
 file.  It is necessary to first build libmilter.a, which can be done by
 issuing the './Build' command in SRCDIR/libmilter .
 
+NOTE: Both libmilter and the callouts in sendmail are marked as an FFR (For
+Future Release).  If you intend to use them in 8.10.X, you must compiled
+both libmilter and sendmail with -D_FFR_MILTER defined.  You can do this by
+adding the following to your devtools/Site/site.config.m4 file:
+
+	dnl Milter
+	APPENDDEF(`conf_sendmail_ENVDEF', `-D_FFR_MILTER=1')
+	APPENDDEF(`conf_libmilter_ENVDEF', `-D_FFR_MILTER=1') 
 
 +-------------------+
 | BUILDING A FILTER |
@@ -18,11 +26,13 @@ The following command presumes that the sample code from the end of this
 README is saved to a file named 'sample.c' and built in the local platform-
 specific build subdirectory (SRCDIR/obj.*/libmilter).
 
-	cc -I../../sendmail -I../../include -o sample sample.c -L. -lmilter -pthread
+	cc -I../../sendmail -I../../include -o sample sample.c libmilter.a ../libsmutil/libsmutil.a -pthread
 
 It is recommended that you build your filters in a location outside of
 the sendmail source tree.  Modify the compiler include references (-I)
-and linker library locations (-L) accordingly.
+and the library locations accordingly.  Also, some operating systems may
+require additional libraries.  For example, SunOS 5.X requires '-lresolv
+-lsocket -lnsl'.
 
 Filters must be thread-safe!  Many operating systems now provide support for
 POSIX threads in the standard C libraries.  The compiler flag to link with
@@ -174,7 +184,7 @@ extern sfsistat	 mlfi_cleanup(SMFICTX *, bool);
 sfsistat
 mlfi_envfrom(ctx, envfrom)
 	SMFICTX *ctx;
-	char *envfrom;
+	char **envfrom;
 {
 	struct mlfiPriv *priv;
 	int fd;
@@ -214,10 +224,10 @@ sfsistat
 mlfi_header(ctx, headerf, headerv)
 	SMFICTX *ctx;
 	char *headerf;
-	u_char *headerv;
+	char *headerv;
 {
 	/* write the header to the log file */
-	fprintf(MLFIPRIV->mlfi_fp, "%s: %s\n", headerf, headerv);
+	fprintf(MLFIPRIV->mlfi_fp, "%s: %s\r\n", headerf, headerv);
 
 	/* continue processing */
 	return SMFIS_CONTINUE;
@@ -228,7 +238,7 @@ mlfi_eoh(ctx)
 	SMFICTX *ctx;
 {
 	/* output the blank line between the header and the body */
-	fprintf(MLFIPRIV->mlfi_fp, "\n");
+	fprintf(MLFIPRIV->mlfi_fp, "\r\n");
 
 	/* continue processing */
 	return SMFIS_CONTINUE;
@@ -375,4 +385,4 @@ main(argc, argv)
 
 /* eof */
 
-$Revision: 1.2 $, Last updated $Date: 2000/04/02 19:48:31 $
+$Revision: 1.3 $, Last updated $Date: 2000/04/07 19:20:34 $

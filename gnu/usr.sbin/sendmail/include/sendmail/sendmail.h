@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: sendmail.h,v 8.33 2000/02/17 21:30:34 ca Exp $
+ *	$Sendmail: sendmail.h,v 8.34 2000/03/16 22:05:28 gshapiro Exp $
  */
 
 /*
@@ -86,15 +86,13 @@ typedef unsigned int	BITMAP256[BITMAPBYTES / sizeof (int)];
 #define SFF_NOWLINK	0x00000400L	/* links only in non-writable dirs */
 #define SFF_NOGWFILES	0x00000800L	/* disallow world writable files */
 #define SFF_NOWWFILES	0x00001000L	/* disallow group writable files */
-#define SFF_NOGRFILES	0x00008000L	/* disallow g readable files */
-#define SFF_NOWRFILES	0x00010000L	/* disallow o readable files */
-#define SFF_NORFILES	(SFF_NOGRFILES|SFF_NOWRFILES)
-
-/* flags that are actually specific to safeopen/safefopen/dfopen */
 #define SFF_OPENASROOT	0x00002000L	/* open as root instead of real user */
 #define SFF_NOLOCK	0x00004000L	/* don't lock the file */
-#define SFF_NOTEXCL	0x00010000L	/* creates don't need to be exclusive */
-#define SFF_EXECOK	0x00020000L	/* executable files are ok (E_SM_ISEXEC) */
+#define SFF_NOGRFILES	0x00008000L	/* disallow g readable files */
+#define SFF_NOWRFILES	0x00010000L	/* disallow o readable files */
+#define SFF_NOTEXCL	0x00020000L	/* creates don't need to be exclusive */
+#define SFF_EXECOK	0x00040000L	/* executable files are ok (E_SM_ISEXEC) */
+#define SFF_NORFILES	(SFF_NOGRFILES|SFF_NOWRFILES)
 
 /* pseudo-flags */
 #define SFF_NOLINK	(SFF_NOHLINK|SFF_NOSLINK)

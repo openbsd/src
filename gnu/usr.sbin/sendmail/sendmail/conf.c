@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: conf.c,v 8.643 2000/02/26 06:37:31 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: conf.c,v 8.646 2000/03/21 19:31:53 ca Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -4121,7 +4121,7 @@ validate_connection(sap, hostname, e)
 		dprintf("validate_connection(%s, %s)\n",
 			hostname, anynet_ntoa(sap));
 
-	if (rscheck("check_relay", hostname, anynet_ntoa(sap), e, TRUE, TRUE)
+	if (rscheck("check_relay", hostname, anynet_ntoa(sap), e, TRUE, TRUE, 4)
 	    != EX_OK)
 	{
 		static char reject[BUFSIZ*2];

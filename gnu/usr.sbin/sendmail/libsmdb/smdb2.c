@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+** Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 **	All rights reserved.
 **
 ** By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
 */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: smdb2.c,v 8.48 1999/11/23 08:42:54 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: smdb2.c,v 8.53 2000/03/17 07:32:43 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <fcntl.h>
@@ -199,6 +199,9 @@ smdb_cursor_get_flags_to_db2(flags)
 
 		case SMDB_CURSOR_GET_NEXT:
 			return DB_NEXT;
+
+		case SMDB_CURSOR_GET_RANGE:
+			return DB_SET_RANGE;
 
 		default:
 			return -1;
@@ -516,11 +519,12 @@ smdb_db_open(database, db_name, mode, mode_mask, sff, type, user_info, db_params
 	char *db_name;
 	int mode;
 	int mode_mask;
-	int sff;
+	long sff;
 	SMDB_DBTYPE type;
 	SMDB_USER_INFO *user_info;
 	SMDB_DBPARAMS *db_params;
 {
+	bool lockcreated = FALSE;
 	int result;
 	int db_flags;
 	int lock_fd;
@@ -546,10 +550,20 @@ smdb_db_open(database, db_name, mode, mode_mask, sff, type, user_info, db_params
 
 	lock_fd = -1;
 
+	if (stat_info.st_mode == ST_MODE_NOFILE &&
+	    bitset(mode, O_CREAT))
+		lockcreated = TRUE;
+
 	result = smdb_lock_file(&lock_fd, db_name, mode, sff,
 				SMDB2_FILE_EXTENSION);
 	if (result != SMDBE_OK)
 		return result;
+
+	if (lockcreated)
+	{
+		mode |= O_TRUNC;
+		mode &= ~(O_CREAT|O_EXCL);
+	}
 
 	smdb_db = smdb_malloc_database();
 	if (smdb_db == NULL)
@@ -566,11 +580,11 @@ smdb_db_open(database, db_name, mode, mode_mask, sff, type, user_info, db_params
 	db = NULL;
 
 	db_flags = 0;
-	if (O_CREAT & mode)
+	if (bitset(O_CREAT, mode))
 		db_flags |= DB_CREATE;
-	if (O_TRUNC & mode)
+	if (bitset(O_TRUNC, mode))
 		db_flags |= DB_TRUNCATE;
-	if (O_RDONLY == mode)
+	if (mode == O_RDONLY)
 		db_flags |= DB_RDONLY;
 # if !HASFLOCK && defined(DB_FCNTL_LOCKING)
 	db_flags |= DB_FCNTL_LOCKING;

@@ -294,9 +294,7 @@ No ident server is included with this distribution.  It is available
 from:
 
   ftp://ftp.lysator.liu.se/pub/ident/servers/
-  ftp://romulus.ucs.uoknor.edu/networking/ident/servers/
-  ftp://ftp.cyf-kr.edu.pl/agh/uciagh/network/ident/
-
+  http://sf.www.lysator.liu.se/~pen/pidentd/
 
 +-------------------------+
 | INTEROPERATION PROBLEMS |
@@ -366,4 +364,4 @@ sendmail	Source for the sendmail program itself.
 test		Some test scripts (currently only for compilation aids).
 vacation	Source for the vacation program.  NOT PART OF SENDMAIL!
 
-$Revision: 1.2 $, Last updated $Date: 2000/04/02 19:48:09 $
+$Revision: 1.3 $, Last updated $Date: 2000/04/07 19:20:25 $

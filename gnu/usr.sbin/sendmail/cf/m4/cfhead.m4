@@ -196,7 +196,7 @@ define(`_OPTINS', `ifdef(`$1', `$2$1$3')')
 m4wrap(`include(_CF_DIR_`m4/proto.m4')')
 
 # default location for files
-define(`MAIL_SETTINGS_DIR', `/etc/mail/')
+ifdef(`MAIL_SETTINGS_DIR', , `define(`MAIL_SETTINGS_DIR', `/etc/mail/')')
 
 # set our default hashed database type
 define(`DATABASE_MAP_TYPE', `hash')
@@ -245,4 +245,4 @@ define(`confMILTER_MACROS_ENVRCPT', ``{rcpt_mailer}, {rcpt_host}, {rcpt_addr}'')
 
 
 divert(0)dnl
-VERSIONID(`$Sendmail: cfhead.m4,v 8.74 2000/02/26 01:00:32 gshapiro Exp $')
+VERSIONID(`$Sendmail: cfhead.m4,v 8.76 2000/03/21 23:56:59 gshapiro Exp $')

@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: milter.c,v 8.45 2000/02/26 07:20:48 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: milter.c,v 8.50 2000/03/16 23:15:49 gshapiro Exp $";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -136,11 +136,11 @@ static char *MilterEnvRcptMacros[MAXFILTERMACROS + 1];
 		save_errno = errno; \
 		if (tTd(64, 5)) \
 			dprintf("%s(%s): select: %s\n", \
-				routine,  m->mf_name, strerror(save_errno)); \
+				routine,  m->mf_name, errstring(save_errno)); \
 		if (LogLevel > 0) \
 			sm_syslog(LOG_ERR, e->e_id, \
 				  "%s(%s): select: %s\n", \
-				  routine, m->mf_name, strerror(save_errno)); \
+				  routine, m->mf_name, errstring(save_errno)); \
 		milter_error(m); \
 		return NULL; \
  \
@@ -207,12 +207,12 @@ milter_read(m, cmd, rlen, to, e)
 
 		if (tTd(64, 5))
 			dprintf("milter_read(%s): read returned %ld: %s\n",
-				m->mf_name, (long) len, strerror(save_errno));
+				m->mf_name, (long) len, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_read(%s): read returned %ld: %s",
 				  m->mf_name, (long) len,
-				  strerror(save_errno));
+				  errstring(save_errno));
 		milter_error(m);
 		return NULL;
 	}
@@ -289,12 +289,12 @@ milter_read(m, cmd, rlen, to, e)
 
 		if (tTd(64, 5))
 			dprintf("milter_read(%s): read returned %ld: %s\n",
-				m->mf_name, (long) len, strerror(save_errno));
+				m->mf_name, (long) len, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_read(%s): read returned %ld: %s",
 				  m->mf_name, (long) len,
-				  strerror(save_errno));
+				  errstring(save_errno));
 		free(buf);
 		milter_error(m);
 		return NULL;
@@ -385,12 +385,12 @@ milter_write(m, cmd, buf, len, to, e)
 		if (tTd(64, 5))
 			dprintf("milter_write(%s): write(%c) returned %ld, expected %ld: %s\n",
 				m->mf_name, cmd, (long) i, (long) sl,
-				strerror(save_errno));
+				errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_write(%s): write(%c) returned %ld, expected %ld: %s",
 				  m->mf_name, cmd, (long) i, (long) sl,
-				  strerror(save_errno));
+				  errstring(save_errno));
 		milter_error(m);
 		return buf;
 	}
@@ -434,12 +434,12 @@ milter_write(m, cmd, buf, len, to, e)
 		if (tTd(64, 5))
 			dprintf("milter_write(%s): write(%c) returned %ld, expected %ld: %s\n",
 				m->mf_name, cmd, (long) i, (long) sl,
-				strerror(save_errno));
+				errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_write(%s): write(%c) returned %ld, expected %ld: %s",
 				  m->mf_name, cmd, (long) i, (long) len,
-				  strerror(save_errno));
+				  errstring(save_errno));
 		milter_error(m);
 		return NULL;
 	}
@@ -869,11 +869,11 @@ milter_open(m, parseonly, e)
 			save_errno = errno;
 			if (tTd(64, 5))
 				dprintf("X%s: error creating socket: %s\n",
-					m->mf_name, strerror(save_errno));
+					m->mf_name, errstring(save_errno));
 			if (LogLevel > 0)
 				sm_syslog(LOG_ERR, e->e_id,
 					  "X%s: error creating socket: %s",
-					  m->mf_name, strerror(save_errno));
+					  m->mf_name, errstring(save_errno));
 			milter_error(m);
 			return -1;
 		}
@@ -1272,7 +1272,7 @@ milter_quit_filter(m, e)
 		return;
 	}
 
-	(void) milter_write(m, SMFIC_QUIT, NULL, 0,
+	(void) milter_write(m, SMFIC_QUIT, (char *) NULL, 0,
 			    m->mf_timeout[SMFTO_WRITE], e);
 	(void) close(m->mf_sock);
 	m->mf_sock = -1;
@@ -1302,7 +1302,7 @@ milter_abort_filter(m, e)
 	    m->mf_state != SMFS_INMSG)
 		return;
 
-	(void) milter_write(m, SMFIC_ABORT, NULL, 0,
+	(void) milter_write(m, SMFIC_ABORT, (char *) NULL, 0,
 			    m->mf_timeout[SMFTO_WRITE], e);
 	if (m->mf_state != SMFS_ERROR)
 		m->mf_state = SMFS_DONE;
@@ -1637,7 +1637,7 @@ milter_negotiate(m, e)
 	if (ntohl(fvers) != SMFI_VERSION)
 	{
 		if (tTd(64, 5))
-			dprintf("milter_negotiate(%s): version %ld != MTA milter version %d\n",
+			dprintf("milter_negotiate(%s): version %lu != MTA milter version %d\n",
 				m->mf_name, (u_long) ntohl(fvers),
 				SMFI_VERSION);
 		if (LogLevel > 0)
@@ -1650,7 +1650,7 @@ milter_negotiate(m, e)
 	}
 	m->mf_fflags = ntohl(flags);
 	if (tTd(64, 5))
-		dprintf("milter_negotiate(%s): version %d, flags %x\n",
+		dprintf("milter_negotiate(%s): version %lu, flags %lx\n",
 			m->mf_name, (u_long) ntohl(fvers), m->mf_fflags);
 	return 0;
 }
@@ -1905,12 +1905,12 @@ milter_replbody(response, rlen, rcmd, m, e)
 			if (tTd(64, 5))
 				dprintf("milter_replbody(%s): fstat %s: %s\n",
 					m->mf_name, dfname,
-					strerror(save_errno));
+					errstring(save_errno));
 			if (LogLevel > 0)
 				sm_syslog(LOG_ERR, e->e_id,
 					  "milter_replbody(%s): fstat %s: %s",
 					  m->mf_name, dfname,
-					  strerror(save_errno));
+					  errstring(save_errno));
 			failure = TRUE;
 		}
 		else
@@ -1950,12 +1950,12 @@ milter_replbody(response, rlen, rcmd, m, e)
 			if (tTd(64, 5))
 				dprintf("milter_replbody(%s): fopen %s: %s\n",
 					m->mf_name, dfname,
-					strerror(save_errno));
+					errstring(save_errno));
 			if (LogLevel > 0)
 				sm_syslog(LOG_ERR, e->e_id,
 					  "milter_replbody(%s): fopen %s: %s",
 					  m->mf_name, dfname,
-					  strerror(save_errno));
+					  errstring(save_errno));
 			e->e_flags &= ~EF_HAS_DF;
 			failure = TRUE;
 		}
@@ -1977,11 +1977,11 @@ milter_replbody(response, rlen, rcmd, m, e)
 		save_errno = errno;
 		if (tTd(64, 5))
 			dprintf("milter_replbody(%s): bftruncate %s: %s\n",
-				m->mf_name, dfname, strerror(save_errno));
+				m->mf_name, dfname, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_replbody(%s): bftruncate %s: %s",
-				  m->mf_name, dfname, strerror(save_errno));
+				  m->mf_name, dfname, errstring(save_errno));
 		failure = TRUE;
 	}
 
@@ -2076,11 +2076,11 @@ milter_replbody(response, rlen, rcmd, m, e)
 		save_errno = errno;
 		if (tTd(64, 5))
 			dprintf("milter_replbody(%s): error writing/flushing %s: %s\n",
-				m->mf_name, dfname, strerror(save_errno));
+				m->mf_name, dfname, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_replbody(%s): error writing/flushing %s: %s",
-				  m->mf_name, dfname, strerror(save_errno));
+				  m->mf_name, dfname, errstring(save_errno));
 		if (SuperSafe)
 		{
 			(void) fclose(e->e_dfp);
@@ -2099,11 +2099,11 @@ milter_replbody(response, rlen, rcmd, m, e)
 		save_errno = errno;
 		if (tTd(64, 5))
 			dprintf("milter_replbody(%s): error sync'ing %s: %s\n",
-				m->mf_name, dfname, strerror(save_errno));
+				m->mf_name, dfname, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_replbody(%s): error sync'ing %s: %s",
-				  m->mf_name, dfname, strerror(save_errno));
+				  m->mf_name, dfname, errstring(save_errno));
 		(void) fclose(e->e_dfp);
 		e->e_dfp = NULL;
 		e->e_flags &= ~EF_HAS_DF;
@@ -2114,11 +2114,11 @@ milter_replbody(response, rlen, rcmd, m, e)
 		save_errno = errno;
 		if (tTd(64, 5))
 			dprintf("milter_replbody(%s): error closing %s: %s\n",
-				m->mf_name, dfname, strerror(save_errno));
+				m->mf_name, dfname, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_replbody(%s): error closing %s: %s",
-				  m->mf_name, dfname, strerror(save_errno));
+				  m->mf_name, dfname, errstring(save_errno));
 		e->e_flags &= ~EF_HAS_DF;
 		return -1;
 	}
@@ -2127,11 +2127,11 @@ milter_replbody(response, rlen, rcmd, m, e)
 		save_errno = errno;
 		if (tTd(64, 5))
 			dprintf("milter_replbody(%s): error reopening %s: %s",
-				m->mf_name, dfname, strerror(save_errno));
+				m->mf_name, dfname, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
 				  "milter_replbody(%s): error reopening %s: %s",
-				  m->mf_name, dfname, strerror(save_errno));
+				  m->mf_name, dfname, errstring(save_errno));
 		e->e_flags &= ~EF_HAS_DF;
 		return -1;
 	}
@@ -2537,7 +2537,7 @@ milter_header(name, value, e, state)
 	snprintf(buf, s, "%s%c%s", name, '\0', value);
 
 	/* send it over */
-	response = milter_command(SMFIC_HEADER, buf, s, NULL, e, state);
+	response = milter_command(SMFIC_HEADER, buf, s, (char **)NULL, e, state);
 	free(buf);
 
 	/*
@@ -2570,7 +2570,8 @@ milter_eoh(e, state)
 	if (tTd(64, 10))
 		dprintf("milter_eoh\n");
 
-	response = milter_command(SMFIC_EOH, NULL, 0, NULL, e, state);
+	response = milter_command(SMFIC_EOH, (void *) NULL, 0,
+				  (char **)NULL, e, state);
 
 	/*
 	**  If filter rejects/discards a per message command,
@@ -2706,7 +2707,7 @@ milter_body(e, state)
 			{
 				/* send chunk */
 				(void) milter_write(m, SMFIC_BODY, buf,
-						    buf - bp,
+						    bp - buf,
 						    m->mf_timeout[SMFTO_WRITE],
 						    e);
 				if (m->mf_state == SMFS_ERROR)

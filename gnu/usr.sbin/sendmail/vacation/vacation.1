@@ -1,4 +1,4 @@
-.\" Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -11,7 +11,7 @@
 .\"
 .\"	$Sendmail: vacation.1,v 8.9 1999/10/27 03:42:07 ca Exp $
 .\"
-.TH VACATION 1 "$Date: 2000/04/02 19:48:37 $"
+.TH VACATION 1 "$Date: 2000/04/07 19:20:47 $"
 .SH NAME
 .B vacation
 \- return ``I am not here'' indication
@@ -30,6 +30,8 @@
 .IR message ]
 .RB [ \-s
 .IR address ]
+.RB [ \-t
+.IR time ]
 .RB [ \-z ]
 .I login
 .SH DESCRIPTION
@@ -96,6 +98,10 @@ Use
 instead of the sender address in the
 .I From 
 line to determine the reply address.
+.TP
+.BI \-t " time"
+Ignored, available only for compatibility with Sun's
+vacation program.
 .TP
 .B \-x
 reads an exclusion list from stdin (one address per line).

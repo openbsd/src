@@ -13,7 +13,7 @@
 #include <sendmail.h>
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: alias.c,v 8.140 2000/02/01 05:49:54 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: alias.c,v 8.142 2000/03/31 05:35:29 ca Exp $";
 #endif /* ! lint */
 
 static MAP	*AliasFileMap = NULL;	/* the actual aliases.files map */
@@ -666,6 +666,7 @@ readaliases(map, af, announcestats, logstats)
 			*p = '\0';
 		else if (!feof(af))
 		{
+			errno = 0;
 			syserr("554 5.3.0 alias line too long");
 
 			/* flush to end of line */
@@ -798,7 +799,29 @@ readaliases(map, af, announcestats, logstats)
 
 		lhssize = strlen(al.q_user);
 		rhssize = strlen(rhs);
-		map->map_class->map_store(map, al.q_user, rhs);
+		if (rhssize > 0)
+		{
+			/* is RHS empty (just spaces)? */
+			p = rhs;
+			while (isascii(*p) && isspace(*p))
+				p++;
+		}
+		if (rhssize == 0 || *p == '\0')
+		{
+			syserr("554 5.3.5 %.40s... missing value for alias",
+			       line);
+
+		}
+		else
+		{
+			map->map_class->map_store(map, al.q_user, rhs);
+
+			/* statistics */
+			naliases++;
+			bytes += lhssize + rhssize;
+			if (rhssize > longest)
+				longest = rhssize;
+		}
 
 		if (al.q_paddr != NULL)
 			free(al.q_paddr);
@@ -806,12 +829,6 @@ readaliases(map, af, announcestats, logstats)
 			free(al.q_host);
 		if (al.q_user != NULL)
 			free(al.q_user);
-
-		/* statistics */
-		naliases++;
-		bytes += lhssize + rhssize;
-		if (rhssize > longest)
-			longest = rhssize;
 	}
 
 	CurEnv->e_to = NULL;

@@ -1,12 +1,12 @@
 /*
-** Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+** Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 **	All rights reserved.
 **
 ** By using this file, you agree to the terms and conditions set
 ** forth in the LICENSE file which can be found at the top level of
 ** the sendmail distribution.
 **
-** $Sendmail: smdb.h,v 8.26 2000/03/02 09:03:05 msk Exp $
+** $Sendmail: smdb.h,v 8.29 2000/03/17 07:32:42 gshapiro Exp $
 */
 
 #ifndef _SMDB_H_
@@ -253,6 +253,7 @@ typedef int (*db_cursor_get_func) __P((SMDB_CURSOR *cursor,
 #define SMDB_CURSOR_GET_FIRST	0
 #define SMDB_CURSOR_GET_LAST	1
 #define SMDB_CURSOR_GET_NEXT	2
+#define SMDB_CURSOR_GET_RANGE	3
 
 
 /*
@@ -346,23 +347,24 @@ typedef u_int SMDB_FLAG;
 extern SMDB_DATABASE	*smdb_malloc_database __P((void));
 extern void		smdb_free_database __P((SMDB_DATABASE *));
 extern int		smdb_open_database __P((SMDB_DATABASE **, char *, int,
-						int, int, SMDB_DBTYPE,
+						int, long, SMDB_DBTYPE,
 						SMDB_USER_INFO *,
 						SMDB_DBPARAMS *));
 # ifdef NEWDB
 extern int		smdb_db_open __P((SMDB_DATABASE **, char *, int, int,
-					  int, SMDB_DBTYPE, SMDB_USER_INFO *,
+					  long, SMDB_DBTYPE, SMDB_USER_INFO *,
 					  SMDB_DBPARAMS *));
 # endif /* NEWDB */
 # ifdef NDBM
 extern int		smdb_ndbm_open __P((SMDB_DATABASE **, char *, int, int,
-					    int, SMDB_DBTYPE, SMDB_USER_INFO *,
+					    long, SMDB_DBTYPE,
+					    SMDB_USER_INFO *,
 					    SMDB_DBPARAMS *));
 # endif /* NDBM */
 extern int		smdb_add_extension __P((char *, int, char *, char *));
-extern int		smdb_setup_file __P((char *, char *, int, int,
+extern int		smdb_setup_file __P((char *, char *, int, long,
 					     SMDB_USER_INFO *, struct stat *));
-extern int		smdb_lock_file __P((int *, char *, int, int, char *));
+extern int		smdb_lock_file __P((int *, char *, int, long, char *));
 extern int		smdb_unlock_file __P((int));
 extern int		smdb_filechanged __P((char *, char *, int,
 					      struct stat *));

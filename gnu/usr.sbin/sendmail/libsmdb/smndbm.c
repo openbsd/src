@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+** Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 **	All rights reserved.
 **
 ** By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
 */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: smndbm.c,v 8.37 1999/10/28 01:58:36 eric Exp $";
+static char id[] = "@(#)$Sendmail: smndbm.c,v 8.40 2000/03/19 05:03:30 ca Exp $";
 #endif /* ! lint */
 
 #include <fcntl.h>
@@ -313,6 +313,9 @@ smdbm_cursor_get(cursor, key, value, flags)
 	SMDB_DBM_DATABASE *db = dbm_cursor->smndbmc_db;
 	DBM *dbm = db->smndbm_dbm;
 
+	if (flags == SMDB_CURSOR_GET_RANGE)
+		return SMDBE_UNSUPPORTED;
+
 	if (dbm_cursor->smndbmc_current_key.dptr == NULL)
 	{
 		dbm_cursor->smndbmc_current_key = dbm_firstkey(dbm);
@@ -457,7 +460,7 @@ smdb_ndbm_open(database, db_name, mode, mode_mask, sff, type, user_info,
 	char *db_name;
 	int mode;
 	int mode_mask;
-	int sff;
+	long sff;
 	SMDB_DBTYPE type;
 	SMDB_USER_INFO *user_info;
 	SMDB_DBPARAMS *db_params;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1992 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1992 Eric P. Allman.  All rights reserved.\n\
      Copyright (c) 1992, 1993\n\
@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: makemap.c,v 8.132 1999/12/28 17:10:34 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: makemap.c,v 8.135 2000/04/07 17:05:21 ca Exp $";
 #endif /* ! lint */
 
 #include <sys/types.h>
@@ -63,12 +63,13 @@ usage(progname)
 {
 	fprintf(stderr,
 		"Usage: %s [-C cffile] [-N] [-c cachesize] [-d] [-e] [-f] [-l] [-o] [-r] [-s] %s[-u] [-v] type mapname\n",
+		progname,
 #if _FFR_DELIM
-		"[-t  delimiter] ",
+		"[-t  delimiter] "
 #else /* _FFR_DELIM */
-		"",
+		""
 #endif /* _FFR_DELIM */
-		progname);
+		);
 	exit(EX_USAGE);
 }
 
@@ -98,7 +99,7 @@ main(argc, argv)
 	int mode;
 	int smode;
 	int putflags = 0;
-	int sff = SFF_ROOTOK|SFF_REGONLY;
+	long sff = SFF_ROOTOK|SFF_REGONLY;
 	struct passwd *pw;
 	SMDB_DATABASE *database;
 	SMDB_CURSOR *cursor;

@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: main.c,v 8.483 2000/02/26 01:32:26 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: main.c,v 8.485 2000/03/11 19:53:01 ca Exp $";
 #endif /* ! lint */
 
 #define	_DEFINE
@@ -277,7 +277,9 @@ main(argc, argv, envp)
 			break;
 
 		  case 'L':
-			sysloglabel = optarg;
+			j = min(strlen(optarg), 24) + 1;
+			sysloglabel = xalloc(j);
+			(void) strlcpy(sysloglabel, optarg, j);
 			break;
 
 		  case 'U':	/* initial (user) submission */
@@ -289,8 +291,6 @@ main(argc, argv, envp)
 
 	if (sysloglabel != NULL)
 	{
-		if (strlen(sysloglabel) > 24)
-			sysloglabel[24] = '\0';
 #if LOG
 		closelog();
 # ifdef LOG_MAIL

@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.434 2000/02/22 22:55:17 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.446 2000/04/06 06:29:45 gshapiro Exp $')
 
 MAILER(local)dnl
 
@@ -512,8 +512,8 @@ _OPTION(AuthMechanisms, `confAUTH_MECHANISMS', `GSSAPI KERBEROS_V4 DIGEST-MD5 CR
 # default authentication information for outgoing connections
 _OPTION(DefaultAuthInfo, `confDEF_AUTH_INFO', `MAIL_SETTINGS_DIR`'default-auth-info')
 
-# try to authenticate? (Try when available/only when Authenticated)
-_OPTION(AuthOptions, `confAUTH_OPTIONS', `T')
+# SMTP AUTH flags
+_OPTION(AuthOptions, `confAUTH_OPTIONS', `')
 
 ifdef(`_FFR_MILTER', `
 # Input mail filters
@@ -880,7 +880,9 @@ R<@> $+ + $* < @ $* . >
 R<@> $+ + $* < @ $* . >
 			$: < $(virtuser $1 @ $3 $@ $1 $: @ $) > $1 + $2 < @ $3 . >
 dnl try default entry: @domain
-dnl +detail
+dnl +*@domain
+R<@> $+ + $+ < @ $+ . >	$: < $(virtuser + * @ $3 $@ $1 $@ $2 $: @ $) > $1 + $2 < @ $3 . >
+dnl @domain if +detail exists
 R<@> $+ + $* < @ $+ . >	$: < $(virtuser @ $3 $@ $1 $@ $2 $: @ $) > $1 + $2 < @ $3 . >
 dnl without +detail (or no match)
 R<@> $+ < @ $+ . >	$: < $(virtuser @ $2 $@ $1 $: @ $) > $1 < @ $2 . >
@@ -893,7 +895,7 @@ R< $+ > $+ < @ $+ >	$: $>Recurse $1',
 
 # short circuit local delivery so forwarded email works
 ifdef(`_MAILER_usenet_', `dnl
-R$+ . USENET < @ $=w . >	$#usenet $: $1		handle usenet specially', `dnl')
+R$+ . USENET < @ $=w . >	$#usenet $@ usenet $: $1	handle usenet specially', `dnl')
 ifdef(`_STICKY_LOCAL_DOMAIN_',
 `R$+ < @ $=w . >		$: < $H > $1 < @ $2 . >		first try hub
 R< $+ > $+ < $+ >	$>MailerToTriple < $1 > $2 < $3 >	yep ....
@@ -951,7 +953,7 @@ R$* < @ $+ .UUCP. > $*		$#_UUCP_ $@ $2 $: $1 < @ $2 .UUCP. > $3	user@host.UUCP',
 	`dnl')')
 ifdef(`_MAILER_usenet_', `
 # addresses sent to net.group.USENET will get forwarded to a newsgroup
-R$+ . USENET		$#usenet $: $1',
+R$+ . USENET		$#usenet $@ usenet $: $1',
 	`dnl')
 
 ifdef(`_LOCAL_RULES_',
@@ -1305,23 +1307,33 @@ dnl')
 SParseRecipient
 dnl mark and canonify address
 R$*				$: <?> $>CanonAddr $1
+dnl workspace: <?> localpart<@domain[.]>
 R<?> $* < @ $* . >		<?> $1 < @ $2 >			strip trailing dots
+dnl workspace: <?> localpart<@domain>
 R<?> $- < @ $* >		$: <?> $(dequote $1 $) < @ $2 >	dequote local part
 
 # if no $=O character, no host in the user portion, we are done
 R<?> $* $=O $* < @ $* >		$: <NO> $1 $2 $3 < @ $4>
+dnl no $=O in localpart: return
 R<?> $*				$@ $1
 
+dnl workspace: <?> localpart<@domain>, where localpart contains $=O
+dnl mark everything which has an "authorized" domain with <RELAY>
 ifdef(`_RELAY_ENTIRE_DOMAIN_', `dnl
 # if we relay, check username portion for user%host so host can be checked also
 R<NO> $* < @ $* $=m >		$: <RELAY> $1 < @ $2 $3 >', `dnl')
 
 ifdef(`_RELAY_MX_SERVED_', `dnl
+dnl do "we" ($=w) act as backup MX server for the destination domain?
 R<NO> $* < @ $+ >		$: <MX> < : $(mxserved $2 $) : > < $1 < @$2 > >
 R<MX> < : $* <TEMP> : > $*	$#error $@ 4.7.1 $: "450 Can not check MX records for recipient host " $1
+dnl yes: mark it as <RELAY>
 R<MX> < $* : $=w. : $* > < $+ >	$: <RELAY> $4
+dnl no: put old <NO> mark back
 R<MX> < : $* : > < $+ >		$: <NO> $2', `dnl')
 
+dnl workspace: <(NO|RELAY)> localpart<@domain>, where localpart contains $=O
+dnl if mark is <NO> then change it to <RELAY> if domain is "authorized"
 ifdef(`_RELAY_HOSTS_ONLY_',
 `R<NO> $* < @ $=R >		$: <RELAY> $1 < @ $2 >
 ifdef(`_ACCESS_TABLE_', `dnl
@@ -1331,6 +1343,7 @@ R<NO> $* < @ $+ >		$: <$(access $2 $: NO $)> $1 < @ $2 >',`dnl')',
 ifdef(`_ACCESS_TABLE_', `dnl
 R<NO> $* < @ $+ >		$: $>LookUpDomain <$2> <NO> <$1 < @ $2 >> <+To>
 R<$+> <$+>			$: <$1> $2',`dnl')')
+
 
 R<RELAY> $* < @ $* >		$@ $>ParseRecipient $1
 R<$-> $*			$@ $2
@@ -1455,7 +1468,7 @@ dnl workspace <mark> CanonicalAddress	where mark is ?, OK, PERM, TEMP
 dnl mark is ? iff the address is user (wo @domain)
 
 ifdef(`_ACCESS_TABLE_', `dnl
-# check sender address: user@address, user@, @address
+# check sender address: user@address, user@, address
 dnl should we remove +ext from user?
 dnl workspace: <mark> CanonicalAddress where mark is: ?, OK, PERM, TEMP
 R<$+> $+ < @ $* >	$: @<$1> <$2 < @ $3 >> $| <F:$2@$3> <U:$2@> <H:$3>
@@ -1490,10 +1503,10 @@ R<? $+> $*		$#error $@ 5.5.4 $: "553 Domain name required"
 # check results
 R<?> $*			$: @ $1		mark address: nothing known about it
 R<OK> $*		$@ <OK>
-R<TEMP> $*		$#error $@ 4.1.8 $: "451 Sender domain must resolve"
-R<PERM> $*		$#error $@ 5.1.8 $: "501 Sender domain must exist"
+R<TEMP> $*		$#error $@ 4.1.8 $: "451 Domain of sender address " $&f " does not resolve"
+R<PERM> $*		$#error $@ 5.1.8 $: "501 Domain of sender address " $&f " does not exist"
 ifdef(`_ACCESS_TABLE_', `dnl
-R<$={Accept}> $*	$@ $1
+R<$={Accept}> $*	$# $1
 R<DISCARD> $*		$#discard $: discard
 R<REJECT> $*		$#error ifdef(`confREJECT_MSG', `$: "confREJECT_MSG"', `$@ 5.7.1 $: "550 Access denied"')
 dnl error tag
@@ -1610,6 +1623,7 @@ ifdef(`_ACCESS_TABLE_', `dnl
 R<RELAY> $*		$@ RELAYTO
 R<$*> <$*>		$: $2',`dnl')
 
+
 ifdef(`_RELAY_MX_SERVED_', `dnl
 # allow relaying for hosts which we MX serve
 R$+ < @ $+ >		$: < : $(mxserved $2 $) : > $1 < @ $2 >
@@ -1691,6 +1705,9 @@ R<FORGED>		$#error $@ 5.7.1 $: "550 Relaying denied. IP name possibly forged " $
 R<FAIL>			$#error $@ 5.7.1 $: "550 Relaying denied. IP name lookup failed " $&{client_name}
 dnl ${client_resolve} should be OK, so go ahead
 R$*			$: <?> $&{client_name}
+# pass to name server to make hostname canonical
+R<?> $* $~P 		$:<?>  $[ $1 $2 $]
+R$* .			$1			strip trailing dots
 dnl should not be necessary since it has been done for client_addr already
 R<?>			$@ RELAYFROM
 ifdef(`_RELAY_ENTIRE_DOMAIN_', `dnl

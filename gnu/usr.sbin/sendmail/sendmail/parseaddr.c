@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: parseaddr.c,v 8.231 1999/12/06 21:48:51 ca Exp $";
+static char id[] = "@(#)$Sendmail: parseaddr.c,v 8.234 2000/03/17 07:32:48 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1063,17 +1063,20 @@ rewrite(pvp, ruleset, reclevel, e)
 		}
 
 		rp = *rvp;
-		if ((*rp & 0377) == CANONUSER)
+		if (rp != NULL)
 		{
-			rvp++;
-			rwr = rwr->r_next;
-			ruleno++;
-			loopcount = 0;
-		}
-		else if ((*rp & 0377) == CANONHOST)
-		{
-			rvp++;
-			rwr = NULL;
+			if ((*rp & 0377) == CANONUSER)
+			{
+				rvp++;
+				rwr = rwr->r_next;
+				ruleno++;
+				loopcount = 0;
+			}
+			else if ((*rp & 0377) == CANONHOST)
+			{
+				rvp++;
+				rwr = NULL;
+			}
 		}
 
 		/* substitute */
@@ -2640,6 +2643,7 @@ dequote_map(map, name, av, statp)
 **		e -- the current envelope.
 **		rmcomm -- remove comments?
 **		cnt -- count rejections (statistics)?
+**		logl -- logging level
 **
 **	Returns:
 **		EX_OK -- if the rwset doesn't resolve to $#error
@@ -2647,12 +2651,13 @@ dequote_map(map, name, av, statp)
 */
 
 int
-rscheck(rwset, p1, p2, e, rmcomm, cnt)
+rscheck(rwset, p1, p2, e, rmcomm, cnt, logl)
 	char *rwset;
 	char *p1;
 	char *p2;
 	ENVELOPE *e;
 	bool rmcomm, cnt;
+	int logl;
 {
 	char *buf;
 	int bufsize;
@@ -2751,7 +2756,7 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt)
 		}
 	}
 
-	if (LogLevel >= 4)
+	if (LogLevel >= logl)
 	{
 		char *relay;
 		char *p;

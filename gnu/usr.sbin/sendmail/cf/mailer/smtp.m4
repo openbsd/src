@@ -13,7 +13,7 @@ PUSHDIVERT(-1)
 #
 _DEFIFNOT(`_DEF_SMTP_MAILER_FLAGS', `mDFMuX')
 _DEFIFNOT(`SMTP_MAILER_FLAGS',`')
-_DEFIFNOT(`RELAY_MAILER_FLAGS', `')
+_DEFIFNOT(`RELAY_MAILER_FLAGS', `SMTP_MAILER_FLAGS')
 ifdef(`SMTP_MAILER_ARGS',, `define(`SMTP_MAILER_ARGS', `IPC $h')')
 ifdef(`ESMTP_MAILER_ARGS',, `define(`ESMTP_MAILER_ARGS', `IPC $h')')
 ifdef(`SMTP8_MAILER_ARGS',, `define(`SMTP8_MAILER_ARGS', `IPC $h')')
@@ -24,7 +24,7 @@ POPDIVERT
 ###   SMTP Mailer specification   ###
 #####################################
 
-VERSIONID(`$Sendmail: smtp.m4,v 8.55 1999/09/21 20:26:18 ca Exp $')
+VERSIONID(`$Sendmail: smtp.m4,v 8.56 2000/04/03 20:54:55 ca Exp $')
 
 #
 #  common sender and masquerading recipient rewriting

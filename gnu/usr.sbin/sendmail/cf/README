@@ -165,7 +165,7 @@ them with directed quotes, `like this'.
 
 sendmail 8.9 has introduced a new configuration directory for sendmail
 related files, /etc/mail.  The new files available for sendmail 8.9 --
-the class 'R' /etc/mail/relay-domains and the access database
+the class {R} /etc/mail/relay-domains and the access database
 /etc/mail/access -- take advantage of this new directory.  Beginning with
 8.10, all files will use this directory by default (some options may be
 set by OSTYPE() files).  This new directory should help to restore
@@ -252,12 +252,14 @@ HELP_FILE		[/etc/mail/helpfile] The name of the file
 			containing information printed in response to
 			the SMTP HELP command.
 QUEUE_DIR		[/var/spool/mqueue] The directory containing
-			queue files.  To use multiple queues, supply 
-			a value ending with an asterisk.  For 
+			queue files.  To use multiple queues, supply
+			a value ending with an asterisk.  For
 			example, /var/spool/mqueue/q* will use all of the
 			directories or symbolic links to directories
 			beginning with 'q' in /var/spool/mqueue as queue
-			directories.
+			directories.  The names 'qf', 'df', and 'xf' are
+			used as specific subdirectories for the corresponding
+			queue file types.
 STATUS_FILE		[/etc/mail/statistics] The file containing status
 			information.
 LOCAL_MAILER_PATH	[/bin/mail] The program used to deliver local mail.
@@ -299,7 +301,8 @@ SMTP_MAILER_FLAGS	[undefined] Flags added to SMTP mailer.  Default
 			"dsmtp" adds `%'.
 RELAY_MAILER_FLAGS	[undefined] Flags added to the relay mailer.  Default
 			flags are `mDFMuX' for all SMTP-based mailers; the
-			relay mailer adds `a8'.
+			relay mailer adds `a8'.  If this is not defined,
+			then SMTP_MAILER_FLAGS is used.
 SMTP_MAILER_MAX		[undefined] The maximum size of messages that will
 			be transported using the smtp, smtp8, esmtp, or dsmtp
 			mailers.
@@ -494,9 +497,9 @@ uucp		The Unix-to-Unix Copy Program mailer.  Actually, this
 		("uucp-dom" and "uucp-uudom") are also defined [warning:
 		you MUST specify MAILER(smtp) before MAILER(uucp)].  When you
 		include the uucp mailer, sendmail looks for all names in
-		the $=U class and sends them to the uucp-old mailer; all
-		names in the $=Y class are sent to uucp-new; and all
-		names in the $=Z class are sent to uucp-uudom.  Note that
+		class {U} and sends them to the uucp-old mailer; all
+		names in class {Y} are sent to uucp-new; and all
+		names in class {Z} are sent to uucp-uudom.  Note that
 		this is a function of what version of rmail runs on
 		the receiving end, and hence may be out of your control.
 		See the section below describing UUCP mailers in more
@@ -573,7 +576,7 @@ example, the .mc line:
 	FEATURE(`use_cw_file')
 
 tells sendmail that you want to have it read an /etc/mail/local-host-names
-file to get values for class $=w.  The FEATURE may contain up to 9
+file to get values for class {w}.  The FEATURE may contain up to 9
 optional parameters -- for example:
 
 	FEATURE(`mailertable', `dbm /usr/lib/mailertable')
@@ -605,7 +608,7 @@ use_ct_file	Read the file /etc/mail/trusted-users file to get the
 		by redefining confCT_FILE.
 
 redirect	Reject all mail addressed to "address.REDIRECT" with
-		a ``551 User not local; please try <address>'' message.
+		a ``551 User has moved; please try <address>'' message.
 		If this is set, you can alias people who have left
 		to their new address with ".REDIRECT" appended.
 
@@ -663,10 +666,10 @@ stickyhost	If set, email sent to "user@local.host" are marked
 		turn this off.
 
 mailertable	Include a "mailer table" which can be used to override
-		routing for particular domains (which are not in $=w, i.e.
-		local host names).  The argument of the FEATURE may be the
-		key definition.  If none is specified, the definition used
-		is:
+		routing for particular domains (which are not in class {w},
+		i.e.  local host names).  The argument of the FEATURE may be
+		the key definition.  If none is specified, the definition
+		used is:
 
 			hash /etc/mail/mailertable
 
@@ -746,10 +749,11 @@ allmasquerade	If masquerading is enabled (using MASQUERADE_AS), this
 		local entries.
 
 limited_masquerade
-		Normally, any hosts listed in $=w are masqueraded.  If this
-		feature is given, only the hosts listed in $=M are masqueraded.
-		This is useful if you have several domains with disjoint
-		namespaces hosted on the same machine.
+		Normally, any hosts listed in class {w} are masqueraded.  If
+		this feature is given, only the hosts listed in class {M} (see
+		below:  MASQUERADE_DOMAIN) are masqueraded.  This is useful
+		if you have several domains with disjoint namespaces hosted
+		on the same machine.
 
 masquerade_entire_domain
 		If masquerading is enabled (using MASQUERADE_AS) and
@@ -770,18 +774,18 @@ masquerade_entire_domain
 		    NOTE: only domains within your jurisdiction and
 		    current hierarchy should be masqueraded using this.
 
-genericstable	This feature will cause certain addresses originating locally
-		(i.e., that are unqualified) or a domain listed in $=G to be
-		looked up in a map and turned into another ("generic") form,
-		which can change both the domain name and the user name.  This
-		is similar to the userdb functionality.  The same types of
+genericstable	This feature will cause unqualified addresses (i.e., without
+		a domain) and addresses with a domain listed in class {G}
+		to be looked up in a map and turned into another ("generic")
+		form, which can change both the domain name and the user name.
+		This is similar to the userdb functionality.  The same types of
 		addresses as for masquerading are looked up, i.e., only header
 		sender addresses unless the allmasquerade and/or
 		masquerade_envelope features are given.  Qualified addresses
-		must have the domain part in the list of names given by the
-		by the macros GENERICS_DOMAIN or GENERICS_DOMAIN_FILE
-		(analogously to MASQUERADE_DOMAIN and MASQUERADE_DOMAIN_FILE,
-		see below).
+		must have the domain part in class {G}; entries can
+		be added to this class by the macros GENERICS_DOMAIN or
+		GENERICS_DOMAIN_FILE (analogously to MASQUERADE_DOMAIN and
+		MASQUERADE_DOMAIN_FILE, see below).
 
 		The argument of FEATURE(`genericstable') may be the map
 		definition; the default map definition is:
@@ -808,7 +812,7 @@ generics_entire_domain
 		If the genericstable is enabled and GENERICS_DOMAIN or
 		GENERICS_DOMAIN_FILE is used, this feature will cause
 		addresses to be searched in the map if their domain
-		parts are subdomains of elements in class $=G.
+		parts are subdomains of elements in class {G}.
 
 virtusertable	A domain-specific form of aliasing, allowing multiple
 		virtual domains to be hosted on one machine.  For example,
@@ -840,17 +844,20 @@ virtusertable	A domain-specific form of aliasing, allowing multiple
 
 			old+*@foo.org	new+%2@example.com
 			gen+*@foo.org	%2@example.com
+			+*@foo.org	%1+%2@example.com
 
-		and other forms are possible.
+		and other forms are possible.  Note: to preserve "+detail"
+		for a default case (@domain) +*@domain must be used as
+		exemplified above.
 
 		All the host names on the left hand side (foo.com, bar.com,
-		and baz.org) must be in $=w or $={VirtHost}, the latter can
-		be defined by the macros VIRTUSER_DOMAIN or
+		and baz.org) must be in class {w} or class {VirtHost}, the
+		latter can be defined by the macros VIRTUSER_DOMAIN or
 		VIRTUSER_DOMAIN_FILE (analogously to MASQUERADE_DOMAIN and
 		MASQUERADE_DOMAIN_FILE, see below).  If VIRTUSER_DOMAIN or
-		VIRTUSER_DOMAIN_FILE is used, then the entries of $={VirtHost}
-		are added to class 'R', i.e., relaying is allowed to
-		(and from) those domains.  The default map definition is:
+		VIRTUSER_DOMAIN_FILE is used, then the entries of class
+		{VirtHost} are added to class {R}, i.e., relaying is allowed
+		to (and from) those domains.  The default map definition is:
 
 			hash /etc/mail/virtusertable
 
@@ -863,12 +870,12 @@ virtuser_entire_domain
 		If the virtusertable is enabled and VIRTUSER_DOMAIN or
 		VIRTUSER_DOMAIN_FILE is used, this feature will cause
 		addresses to be searched in the map if their domain
-		parts are subdomains of elements in class $={VirtHost}.
+		parts are subdomains of elements in class {VirtHost}.
 
 ldap_routing	Implement LDAP-based e-mail recipient routing according to
 		the Internet Draft draft-lachman-laser-ldap-mail-routing-01.
 		This provides a method to re-route addresses with a
-		domain portion in the $={LDAPRoute} class to either a
+		domain portion in class {LDAPRoute} to either a
 		different mail host or a different address.  Hosts can
 		be added to this class using LDAPROUTE_DOMAIN and
 		LDAPROUTE_DOMAIN_FILE (analogously to MASQUERADE_DOMAIN and
@@ -888,10 +895,7 @@ nullclient	This is a special case -- it creates a configuration file
 		is the name of that hub.
 
 		The only other feature that should be used in conjunction
-		with this one is "nocanonify" (this causes addresses to
-		be sent unqualified via the SMTP connection; normally
-		they are qualified with the masquerade name, which
-		defaults to the name of the hub machine).  No mailers
+		with this one is FEATURE(`nocanonify').  No mailers
 		should be defined.  No aliasing or forwarding is done.
 
 local_lmtp	Use an LMTP capable local mailer.  The argument to this
@@ -965,19 +969,19 @@ promiscuous_relay
 		domain and sending it to another host outside your domain).
 		This option sets your site to allow mail relaying from any
 		site to any site.  In general, it is better to control the
-		relaying more carefully with the access db and the 'R'
-		class ($=R).  Domains can be added to class 'R' by the
-		macros RELAY_DOMAIN or RELAY_DOMAIN_FILE (analogously to
-		MASQUERADE_DOMAIN and MASQUERADE_DOMAIN_FILE, see below).
+		relaying more carefully with the access db and class {R}.
+		Domains can be added to class {R} by the macros RELAY_DOMAIN
+		or RELAY_DOMAIN_FILE (analogously to MASQUERADE_DOMAIN and
+		MASQUERADE_DOMAIN_FILE, see below).
 
 relay_entire_domain
 		By default, only hosts listed as RELAY in the access db
 		will be allowed to relay.  This option also allows any
-		host in your domain as defined by the 'm' class ($=m).
+		host in your domain as defined by class {m}.
 
 relay_hosts_only
 		By default, names that are listed as RELAY in the access
-		db and class 'R' ($=R) are domain names, not host names.
+		db and class {R} are domain names, not host names.
 		For example, if you specify ``foo.com'', then mail to or
 		from foo.com, abc.foo.com, or a.very.deep.domain.foo.com
 		will all be accepted for relaying.  This feature changes
@@ -1063,11 +1067,11 @@ rbl		This feature is deprecated! Please use dnsbl instead.
 		http://maps.vix.com/rbl/.
 
 dnsbl		Turns on rejection of hosts found in an DNS based rejection
-		list.  If an argument is provided it is used as the name
-		sever to contact; otherwise it defaults to rbl.maps.vix.com.
-		An explanation for an DNS based rejection list can be found
-		http://maps.vix.com/rbl/.  A second argument can be used to
-		change the default error message of
+		list.  If an argument is provided it is used as the domain
+		in which blocked hosts are listed; otherwise it defaults to
+		rbl.maps.vix.com.  An explanation for an DNS based rejection
+		list can be found http://maps.vix.com/rbl/.  A second argument
+		can be used to change the default error message of
 		Mail from $&{client_addr} refused by blackhole site SERVER
 		where SERVER is replaced by the first argument.  This feature
 		can be included several times to query different DNS based
@@ -1075,7 +1079,7 @@ dnsbl		Turns on rejection of hosts found in an DNS based rejection
 
 loose_relay_check
 		Normally, if % addressing is used for a recipient, e.g.
-		user%site@othersite, and othersite is in class 'R', the
+		user%site@othersite, and othersite is in class {R}, the
 		check_rcpt ruleset will strip @othersite and recheck
 		user@site for relaying.  This feature changes that
 		behavior.  It should not be needed for most installations.
@@ -1115,7 +1119,7 @@ lists of UUCP hosts they speak with directly.  This can get a bit more
 tricky.  For an example of a "complex" site, see cf/ucbvax.mc.
 
 If your host is known by several different names, you need to augment
-the $=w class.  This is a list of names by which you are known, and
+class {w}.  This is a list of names by which you are known, and
 anything sent to an address using a host name in this list will be
 treated as local mail.  You can do this in two ways:  either create the
 file /etc/mail/local-host-names containing a list of your aliases (one per
@@ -1133,13 +1137,13 @@ reads the file uucp.ucbvax for local connection information.  The
 second parameter is the local name (in this case just "ucbvax" since
 it is locally connected, and hence a UUCP hostname).  The third
 parameter is the name of both a macro to store the local name (in
-this case, $U) and the name of the class (e.g., $=U) in which to store
+this case, {U}) and the name of the class (e.g., {U}) in which to store
 the host information read from the file.  Another SITECONFIG line reads
 
 	SITECONFIG(`uucp.ucbarpa', `ucbarpa.Berkeley.EDU', `W')
 
 This says that the file uucp.ucbarpa contains the list of UUCP sites
-connected to ucbarpa.Berkeley.EDU.  The $=W class will be used to
+connected to ucbarpa.Berkeley.EDU.  Class {W} will be used to
 store this list, and $W is defined to be ucbarpa.Berkeley.EDU, that
 is, the name of the relay to which the hosts listed in uucp.ucbarpa
 are connected.  [The machine ucbarpa is gone now, but this
@@ -1149,7 +1153,7 @@ how you might do this.]
 Note that the case of SITECONFIG with a third parameter of ``U'' is
 special; the second parameter is assumed to be the UUCP name of the
 local site, rather than the name of a remote site, and the UUCP name
-is entered into $=w (the list of local hostnames) as $U.UUCP.
+is entered into class {w} (the list of local hostnames) as $U.UUCP.
 
 The siteconfig file (e.g., siteconfig/uucp.ucbvax.m4) contains nothing
 more than a sequence of SITE macros describing connectivity.  For
@@ -1323,8 +1327,9 @@ CNAME.  However, if you use a CNAME, the receiving side may canonify
 it for you, so don't think you can cheat CNAME mapping this way.
 
 Normally the only addresses that are masqueraded are those that come
-from this host (that is, are either unqualified or in $=w, the list
-of local domain names).  You can augment this list using
+from this host (that is, are either unqualified or in class {w}, the list
+of local domain names).  You can augment this list, which is realized
+by class {M} using
 
 	MASQUERADE_DOMAIN(`otherhost.domain')
 
@@ -1337,7 +1342,8 @@ If these names are in a file, you can use
 
 	MASQUERADE_DOMAIN_FILE(`filename')
 
-to read the list of names from the indicated file.
+to read the list of names from the indicated file (i.e., to add
+elements to class {M}).
 
 To exempt hosts or subdomains from being masqueraded, you can use
 
@@ -1358,7 +1364,7 @@ You can add users to this list using
 
 	EXPOSED_USER(`usernames')
 
-This adds users to class E; you could also use something like
+This adds users to class {E}; you could also use something like
 
 	FE/etc/mail/exposed-users
 
@@ -1376,7 +1382,7 @@ locally aliased.  You can add entries to this list using
 
 	LOCAL_USER(`usernames')
 
-This adds users to class L; you could also use something like
+This adds users to class {L}; you could also use something like
 
 	FL/etc/mail/local-users
 
@@ -1388,7 +1394,9 @@ shared /var/spool/mail scheme, use
 Again, ``mailer:'' defaults to "relay".  If you define both LOCAL_RELAY
 and MAIL_HUB _AND_ you have FEATURE(`stickyhost'), unqualified names will
 be sent to the LOCAL_RELAY and other local names will be sent to MAIL_HUB.
-Names in $=L will be delivered locally, so you MUST have aliases or
+Note: there is a (long standing) bug which keeps this combination from
+working for addresses of the form user+detail.
+Names in class {L} will be delivered locally, so you MUST have aliases or
 .forward files for them.
 
 For example, if you are on machine mastodon.CS.Berkeley.EDU and you have
@@ -1501,7 +1509,7 @@ address:
 						original address *OR*
 						bounced as unknown user
 
-The term "local" host above means the host specified is in class 'w' ($=w).
+The term "local" host above means the host specified is in class {w}.
 Note that the last case depends on whether the third argument is given
 to the FEATURE() command.  The default is to deliver the message to the
 original address.
@@ -1567,14 +1575,14 @@ this changed in sendmail 8.9; previous versions allowed relaying by
 default.  If you want to revert to the old behaviour, you will need
 to use FEATURE(`promiscuous_relay').  You can allow certain domains to
 relay through your server by adding their domain name or IP address to
-class 'R' ($=R) using RELAY_DOMAIN() and RELAY_DOMAIN_FILE() or via the
+class {R} using RELAY_DOMAIN() and RELAY_DOMAIN_FILE() or via the
 access database (described below).
 
 If you use
 
 	FEATURE(`relay_entire_domain')
 
-then any host in any of your local domains (that is, the $=m class)
+then any host in any of your local domains (that is, class {m})
 will be relayed (that is, you will accept mail either to or from any
 host in your domain).
 
@@ -1612,7 +1620,7 @@ the access map entries (see below: Finer control...).
 If source routing is used in the recipient address (i.e.
 RCPT TO: <user%site.com@othersite.com>), sendmail will check
 user@site.com for relaying if othersite.com is an allowed relay host
-in either class 'R', class 'm' if FEATURE(`relay_entire_domain') is used,
+in either class {R}, class {m} if FEATURE(`relay_entire_domain') is used,
 or the access database if FEATURE(`access_db') is used.  To prevent
 the address from being stripped down, use:
 
@@ -1740,13 +1748,13 @@ Use "450 4.2.2 mailbox full" or "ERROR:4.2.2:450 mailbox full"
 instead.
 
 Note, UUCP users may need to add hostname.UUCP to the access database
-or class 'R' ($=R).  If you also use:
+or class {R}.  If you also use:
 
 	FEATURE(`relay_hosts_only')
 
 then the above example will allow relaying for sendmail.org, but not
 hosts within the sendmail.org domain.  Note that this will also require
-hosts listed in class 'R' ($=R) to be fully qualified host names.
+hosts listed in class {R} to be fully qualified host names.
 
 You can also use the access database to block sender addresses based on
 the username portion of the address.  For example:
@@ -1960,7 +1968,7 @@ R$*		$: $&{auth_type}
 R$+		$# OK
 
 which checks whether a user has successfully authenticated using
-any available mechanism.  Depending on the setup of the CYRUS SASL 
+any available mechanism.  Depending on the setup of the CYRUS SASL
 library, more sophisticated rulesets might be required, e.g.,
 
 SLocal_check_rcpt
@@ -2014,7 +2022,7 @@ configured in your mc file using the two commands:
 The first command, MAIL_FILTER(), simply defines a filter with the given
 name and equates.  For example:
 
-	MAIL_FILTER(`archiver', `S=local:/var/run/archivesock, F=R')
+	MAIL_FILTER(`archive', `S=local:/var/run/archivesock, F=R')
 
 This creates the equivalent sendmail.cf entry:
 
@@ -2137,7 +2145,7 @@ any entry in the above table. You need to have something like:
 	my.domain		esmtp:host.my.domain
 
 The RHS should always be a "mailer:host" pair.  The mailer is the
-configuration name of a mailer (that is, an `M' line in the
+configuration name of a mailer (that is, an {M} line in the
 sendmail.cf file).  The "host" will be the hostname passed to
 that mailer.  In domain-based matches (that is, those with leading
 dots) the "%1" may be used to interpolate the wildcarded part of
@@ -2296,16 +2304,14 @@ confRECEIVED_HEADER	Received:
 					It is unwise to try to change this.
 confCW_FILE		Fw class	[/etc/mail/local-host-names] Name
 					of file used to get the local
-					additions to the $=w (local host
-					names) class.
+					additions to class {w} (local host
+					names).
 confCT_FILE		Ft class	[/etc/mail/trusted-users] Name of
-					file used to get the local
-					additions to the $=t (trusted
-					users) class.
+					file used to get the local additions
+					to class {t} (trusted users).
 confCR_FILE		FR class	[/etc/mail/relay-domains] Name of
 					file used to get the local additions
-					to the $=R (hosts allowed to relay)
-					class.
+					to class {R} (hosts allowed to relay).
 confTRUSTED_USERS	Ct class	[no default] Names of users to add to
 					the list of trusted users.  This list
 					always includes root, uucp, and daemon.
@@ -2321,8 +2327,8 @@ confSMTP_MAILER		-		[esmtp] The mailer name used when
 confUUCP_MAILER		-		[uucp-old] The mailer to be used by
 					default for bang-format recipient
 					addresses.  See also discussion of
-					$=U, $=Y, and $=Z in the MAILER(`uucp')
-					section.
+					class {U}, class {Y}, and class {Z}
+					in the MAILER(`uucp') section.
 confLOCAL_MAILER	-		[local] The mailer name used when
 					local connectivity is required.
 					Almost always "local".
@@ -2744,7 +2750,7 @@ confMAX_RCPTS_PER_MESSAGE  MaxRecipientsPerMessage
 confDONT_PROBE_INTERFACES  DontProbeInterfaces
 					[False] If set, sendmail will _not_
 					insert the names and addresses of any
-					local interfaces into the $=w class
+					local interfaces into class {w}
 					(list of known "equivalent" addresses).
 					If you set this, you must also include
 					some support for these addresses (e.g.,
@@ -2787,11 +2793,29 @@ confDEF_AUTH_INFO	DefaultAuthInfo	[undefined] Filename that contains
 					outgoing connections.  This file
 					must contain the user id, the
 					authorization id, the password
-					(plain text), and the realm to
-					use on separate lines and must be
+					(plain text), and the realm to use,
+					each on a separate line and must be
 					readable by root (or the trusted
 					user) only.  If no realm is
 					specified, $j is used.
+
+					NOTE: Currently, AuthMechanisms is
+					used to determine the list of
+					mechanisms to use on an outgoing
+					connection.  Sites which require a
+					different list of mechanisms for
+					incoming connections and outgoing
+					connections will have the ability
+					to do this in 8.11 by specifying a
+					list of mechanisms as the fifth
+					line of the DefaultAuthInfo file.
+					If no mechanisms are given in the
+					file, AuthMechanisms is used.  The
+					code for doing so is included as
+					in the sendmail source code but
+					disabled.  It can be enabled by
+					recompiling sendmail with:
+					-D_FFR_DEFAUTHINFO_MECHS
 confAUTH_OPTIONS	AuthOptions	[undefined] If this options is 'A'
 					then the AUTH= parameter for the
 					MAIL FROM command is only issued
@@ -2959,9 +2983,9 @@ MACROS
    S	Smart Host
    T
    U	my UUCP name (if you have a UUCP connection)
-   V	UUCP Relay (class V hosts)
-   W	UUCP Relay (class W hosts)
-   X	UUCP Relay (class X hosts)
+   V	UUCP Relay (class {V} hosts)
+   W	UUCP Relay (class {W} hosts)
+   X	UUCP Relay (class {X} hosts)
    Y	UUCP Relay (all other hosts)
    Z	Version number
 
@@ -3010,4 +3034,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-$Revision: 1.2 $, Last updated $Date: 2000/04/02 19:48:10 $
+$Revision: 1.3 $, Last updated $Date: 2000/04/07 19:20:28 $

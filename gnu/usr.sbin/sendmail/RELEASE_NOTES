@@ -1,10 +1,122 @@
 			SENDMAIL RELEASE NOTES
-      $Sendmail: RELEASE_NOTES,v 8.521 2000/03/03 19:28:31 gshapiro Exp $
+      $Sendmail: RELEASE_NOTES,v 8.561 2000/04/06 23:51:49 gshapiro Exp $
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.10.1/8.10.1	2000/04/06
+	SECURITY: Limit the choice of outgoing (client-side) SMTP
+		Authentication mechanisms to those specified in
+		AuthMechanisms to prevent information leakage.  We do not
+		recommend use of PLAIN for outgoing mail as it sends the
+		password in clear text to possibly untrusted servers.  See
+		cf/README's DefAuthInfo section for additional information.
+	Copy the ident argument for openlog() to avoid problems on some
+		OSs.  Based on patch from Rob Bajorek from Webhelp.com.
+	Avoid bogus error message when reporting an alias line as too long.
+	Avoid bogus socket error message if sendmail.cf version level is
+		greater than sendmail binary supported version.  Patch
+		from John Beck of Sun Microsystems.
+	Prevent a malformed ruleset (missing right hand side) from causing
+		a segmentation fault when using address test mode.  Based on
+		patch from John Beck of Sun Microsystems.
+	Prevent memory leak from use of NIS maps and yp_match(3).  Problem
+		noted by Gil Kloepfer of the University of Texas at Austin.
+	Fix queue file permission checks to allow for TrustedUser ownership.
+	Change logging of errors from the trust_auth ruleset to LogLevel 10
+		or higher.
+	Avoid simple password cracking attacks against SMTP AUTH by using
+		exponential delay after too many tries within one connection.
+	Encode an initial empty AUTH challenge as '=', not as empty string.
+	Avoid segmentation fault on EX_SOFTWARE internal error logs.
+		Problem noted by Allan E Johannesen of Worcester
+		Polytechnic Institute.
+	Ensure that a header check which resolves to $#discard actually
+		discards the message.
+	Emit missing value warnings for aliases with no right hand side
+		when newaliases is run instead of only when delivery is
+		attempted to the alias.
+	Remove AuthOptions missing value warning for consistency with other
+		flag options.
+	Portability:
+		SECURITY: Specify a run-time shared library search path for
+			AIX 4.X instead of using the dangerous AIX 4.X
+			linker semantics.  AIX 4.X users should consult
+			sendmail/README for further information.  Problem
+			noted by Valdis Kletnieks of Virginia Tech.
+		Avoid use of strerror(3) call.  Problem noted by Charles
+			Levert of Ecole Polytechnique de Montreal.
+		DGUX requires -lsocket -lnsl and has a non-standard install
+			program.  From Tim Boyer of Denman Tire Corporation.
+		HPUX 11.0 has a broken res_search() function.
+		Updates to devtools/OS/NeXT.3.X, NeXT.4.X, and NEXTSTEP.4.X
+			from J. P. McCann of E I A.
+		Digital UNIX/Compaq Tru64 5.0 now includes snprintf(3).
+			Problem noted by Michael Long of Info Avenue Internet
+			Services, LLC.
+		Modern (post-199912) OpenBSD versions include working
+			strlc{at,py}(3) functions.  From Todd C. Miller of
+			Courtesan Consulting.
+		SINIX doesn't have random(3).  From Gerald Rinske of
+			Siemens Business Services.
+	CONFIG: Change error message about unresolvable sender domain to
+		include the sender address.  Proposed by Wolfgang Rupprecht
+		of WSRCC.
+	CONFIG: Fix usenet mailer calls.
+	CONFIG: If RELAY_MAILER_FLAGS is not defined, use SMTP_MAILER_FLAGS
+		to be backward compatible with 8.9.
+	CONFIG: Change handling of default case @domain for virtusertable
+		to allow for +*@domain to deal with +detail.
+	CONTRIB: Remove converting.sun.configs -- it is obsolete.
+	DEVTOOLS: confUBINMODE was being ignored.  Fix from KITAZIMA, Tuneki
+		of NEC.
+	DEVTOOLS: Add to NCR platform list and include the architecture
+		(i486).  From Tom J. Moore of NCR.
+	DEVTOOLS: SECURITY: Change method of linking with sendmail utility
+		libraries to work around the AIX 4.X and SunOS 4.X linker's
+		overloaded -L option.  Problem noted by Valdis Kletnieks of
+		Virginia Tech.
+	DEVTOOLS: configure.sh was overriding the user's choice for
+		confNROFF.  Problem noted by Glenn A. Malling of Syracuse
+		University.
+	DEVTOOLS: New variables conf_prog_LIB_POST and confBLDVARIANT added
+		for other internal projects but included in the open source
+		release.
+	LIBSMDB: Check for ".db" instead of simply "db" at the end of the
+		map name to determine whether or not to add the extension.
+		This fixes makemap when building the userdb file.  Problem
+		noted by Andrew J Cole of the University of Leeds.
+	LIBSMDB: Allow a database to be opened for updating and created if
+		it doesn't already exist.  Problem noted by Rand Wacker of
+		Sendmail.
+	LIBSMDB: If type is SMDB_TYPE_DEFAULT and both NEWDB and NDBM are
+		available, fall back to NDBM if NEWDB open fails.  This
+		fixes praliases.  Patch	from John Beck of Sun Microsystems.
+	LIBSMUTIL: safefile()'s SFF_NOTEXCL check was being misinterpreted
+		as SFF_NOWRFILES.
+	OP.ME: Clarify some issues regarding mailer flags.  Suggested by
+		Martin Mokrejs of The Charles University and Neil Rickert of
+		Northern Illinois University.
+	PRALIASES: Restore 8.9.X functionality of being able to search for
+		particular keys in a database by specifying the keys on the
+		command line.  Man page updated accordingly.  Patch from
+		John Beck of Sun Microsystems.
+	VACATION: SunOS 4.X portability from Charles Levert of Ecole
+		Polytechnique de Montreal.
+	VACATION: Fix -t option which is ignored but available for
+		compatibility with Sun's version, based on patch from
+		Volker Dobler of Infratest Burke.
+	Added Files:
+		devtools/M4/UNIX/smlib.m4
+		devtools/OS/OSF1.V5.0
+	Deleted Files:
+		contrib/converting.sun.configs
+	Deleted Directories (already done in 8.10.0 but not listed):
+		doc/intro
+		doc/usenix
+		doc/changes
 
 8.10.0/8.10.0	2000/03/01
 	    *************************************************************
@@ -680,7 +792,7 @@ summary of the changes in that release.
 		spoof their return address.  Based on idea from Neil Rickert
 		of Northern Illinois University and patch from Per Hedeland
 		of Ericsson.
-	Report the proper UID in the bounce message if an :include: file is 
+	Report the proper UID in the bounce message if an :include: file is
 		owned by a uid that doesn't map to a username and the
 		:include: file contains delivery to a file or program.
 		Problem noted by John Beck of Sun Microsystems.
@@ -1024,7 +1136,7 @@ summary of the changes in that release.
 	CONFIG: Allow ":D.S.N:" for mailer/virtusertable "error:" entries,
 		where "D.S.N" is an RFC 1893 compliant error code.
 	CONFIG: Use /usr/lbin as confEBINDIR for Compaq Tru64 (Digital UNIX).
-	CONFIG: Remove second space between username and date in UNIX From_ 
+	CONFIG: Remove second space between username and date in UNIX From_
 		line.  Noted by Allan E Johannesen of Worcester Polytechnic
 		Institute.
 	CONFIG: Make sure all of the mailers have complete T= equates.

@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: readcf.c,v 8.380 2000/02/16 00:44:17 ca Exp $";
+static char id[] = "@(#)$Sendmail: readcf.c,v 8.382 2000/04/06 18:02:33 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -2832,18 +2832,43 @@ setoption(opt, val, safe, sticky, e)
 		break;
 
 	  case O_SASLOPTS:
-		if (*val == '\0')
+		while (*val != '\0')
 		{
-			printf("Warning: Option: %s requires parameter(s)\n",
-				o->o_name == NULL ? "<unknown>" : o->o_name);
-			break;
+			switch(*val)
+			{
+			  case 'A':
+				SASLOpts |= SASL_AUTH_AUTH;
+				break;
+# if _FFR_SASL_OPTS
+			  case 'a':
+				SASLOpts |= SASL_SEC_NOACTIVE;
+				break;
+			  case 'c':
+				SASLOpts |= SASL_SEC_PASS_CREDENTIALS;
+				break;
+			  case 'd':
+				SASLOpts |= SASL_SEC_NODICTIONARY;
+				break;
+			  case 'f':
+				SASLOpts |= SASL_SEC_FORWARD_SECRECY;
+				break;
+			  case 'p':
+				SASLOpts |= SASL_SEC_NOPLAINTEXT;
+				break;
+			  case 'y':
+				SASLOpts |= SASL_SEC_NOANONYMOUS;
+				break;
+# endif /* _FFR_SASL_OPTS */
+			  default:
+				printf("Warning: Option: %s unknown parameter '%c'\n",
+					o->o_name == NULL ? "<unknown>"
+							  : o->o_name,
+					(isascii(*val) && isprint(*val)) ? *val
+									 : '?');
+				break;
+			}
+			++val;
 		}
-		if (*val == 'A' || *val == 'a')
-			SASLTryAuth = SASL_AUTH_AUTH;
-		else
-			printf("Warning: Option: %s unknown parameter '%c'\n",
-				o->o_name == NULL ? "<unknown>" : o->o_name,
-				(isascii(*val) && isprint(*val)) ? *val : '?');
 		break;
 
 #else /* SASL */

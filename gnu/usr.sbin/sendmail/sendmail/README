@@ -9,7 +9,7 @@
 # the sendmail distribution.
 #
 #
-#	$Sendmail: README,v 8.257 2000/02/25 04:36:37 gshapiro Exp $
+#	$Sendmail: README,v 8.263 2000/04/06 20:27:44 gshapiro Exp $
 #
 
 This directory contains the source files for sendmail(TM).
@@ -115,7 +115,7 @@ HESIOD		Support for Hesiod (from the DEC/Athena distribution).  You
 		must already have Hesiod support on your system for this to
 		work.  You may be able to get this to work with the MIT/Athena
 		version of Hesiod, but that's likely to be a lot of work.
-LDAPMAP		Lightweight Directory Lookup Protocol support.  You will
+LDAPMAP		Lightweight Directory Access Protocol support.  You will
 		have to install the UMich or OpenLDAP
 		(http://www.openldap.org/) ldap and lber libraries to use
 		this flag.
@@ -673,6 +673,13 @@ Configuration file location
 	vendor location rather than changing the location in the sendmail
 	binary.
 
+	NETINFO systems use NETINFO to determine the location of
+	sendmail.cf. The full path to sendmail.cf is stored as the value of
+	the "sendmail.cf" property in the "/locations/sendmail"
+	subdirectory of NETINFO. Set the value of this property to
+	"/etc/mail/sendmail.cf" (without the quotes) to use this new
+	default location for Sendmail 8.10.0 and higher.
+
 ControlSocket permissions
 	Paraphrased from BIND 8.2.1's README:
 
@@ -711,6 +718,11 @@ SunOS 4.x (Solaris 1.x)
 	/etc/services on the NIS server machine.  Delete these
 	and it should work.  This info is thanks to Brian Bartholomew
 	<bb@math.ufl.edu> of I-Kinetics, Inc.
+
+	NOTE: The SunOS 4.X linker uses library paths specified during
+	compilation using -L for run-time shared library searches.
+	Therefore, it is vital that relative and unsafe directory paths not
+	be using when compiling sendmail.
 
 SunOS 4.0.2 (Sun 386i)
 	Date: Fri, 25 Aug 1995 11:13:58 +0200 (MET DST)
@@ -893,7 +905,7 @@ Ultrix
 	and therefore, sendmail can no longer automatically detect the
 	newer version.  If you get a compiler error:
 
-	/lib/libc.a(gethostent.o): local_hostname_length: multiply defined 
+	/lib/libc.a(gethostent.o): local_hostname_length: multiply defined
 
 	Then rebuild with this in devtools/Site/site.ULTRIX.m4:
 
@@ -1173,6 +1185,27 @@ Linux
 	implementation in the Linux 2.2.0 kernel and poll()-aware versions
 	of glib (at least up to 2.0.111).
 
+AIX 4.X
+	The AIX 4.X linker uses library paths specified during compilation
+	using -L for run-time shared library searches.  Therefore, it is
+	vital that relative and unsafe directory paths not be using when
+	compiling sendmail.  Because of this danger, by default, compiles
+	on AIX use the -blibpath option to limit shared libraries to
+	/usr/lib and /lib.  If you need to allow more directories, such as
+	/usr/local/lib, modify your devtools/Site/site.AIX.4.2.m4,
+	site.AIX.4.3.m4, and/or site.AIX.4.x.m4 file(s) and set confLDOPTS
+	approriately.  For example:
+
+	define(`confLDOPTS', `-blibpath:/usr/lib:/lib:/usr/local/lib')
+
+	Be sure to only add (safe) system directories.
+
+	The AIX version of GNU ld also exhibits this problem.  If you are
+	using that version, instead of -blibpath, use its -rpath option.
+	For example:
+
+	gcc -Wl,-rpath /usr/lib -Wl,-rpath /lib -Wl,-rpath /usr/local/lib
+
 AIX 4.2
 	The AIX m4 implements a different mechanism for ifdef which is
 	inconsistent with other versions of m4.  Therefore, it will not
@@ -1353,7 +1386,7 @@ BIND 4.9.2 and Ultrix
 
 BIND 8.X
 	BIND 8.X returns HOST_NOT_FOUND instead of TRY_AGAIN on temporary
-	DNS failures when trying to find the hostname associated with an IP 
+	DNS failures when trying to find the hostname associated with an IP
 	address (gethostbyaddr()).  This can cause problems as
 	$&{client_name} based lookups in class R ($=R) and the access
 	database won't succeed.
@@ -1538,4 +1571,4 @@ version.c	The version number and information about this
 		version of sendmail.  Theoretically, this gets
 		modified on every change.
 
-(Version $Revision: 1.2 $, last update $Date: 2000/04/02 19:48:34 $ )
+(Version $Revision: 1.3 $, last update $Date: 2000/04/07 19:20:38 $ )

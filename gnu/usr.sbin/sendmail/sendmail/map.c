@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: map.c,v 8.413 2000/02/26 05:35:01 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: map.c,v 8.414 2000/03/15 06:13:16 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -2118,11 +2118,15 @@ nis_map_open(map, mode)
 	}
 
 	/* check to see if this map actually exists */
+	vp = NULL;
 	yperr = yp_match(map->map_domain, map->map_file, "@", 1,
 			&vp, &vsize);
 	if (tTd(38, 10))
 		dprintf("nis_map_open: yp_match(@, %s, %s) => %s\n",
 			map->map_domain, map->map_file, yperr_string(yperr));
+	if (vp != NULL)
+		free(vp);
+
 	if (yperr == 0 || yperr == YPERR_KEY || yperr == YPERR_BUSY)
 	{
 		/*
@@ -2179,6 +2183,7 @@ nis_map_lookup(map, name, av, statp)
 	if (!bitset(MF_NOFOLDCASE, map->map_mflags))
 		makelower(keybuf);
 	yperr = YPERR_KEY;
+	vp = NULL;
 	if (bitset(MF_TRY0NULL, map->map_mflags))
 	{
 		yperr = yp_match(map->map_domain, map->map_file, keybuf, buflen,
@@ -2188,6 +2193,11 @@ nis_map_lookup(map, name, av, statp)
 	}
 	if (yperr == YPERR_KEY && bitset(MF_TRY1NULL, map->map_mflags))
 	{
+		if (vp != NULL)
+		{
+			free(vp);
+			vp = NULL;
+		}
 		buflen++;
 		yperr = yp_match(map->map_domain, map->map_file, keybuf, buflen,
 			     &vp, &vsize);
@@ -2198,12 +2208,21 @@ nis_map_lookup(map, name, av, statp)
 	{
 		if (yperr != YPERR_KEY && yperr != YPERR_BUSY)
 			map->map_mflags &= ~(MF_VALID|MF_OPEN);
+		if (vp != NULL)
+			free(vp);
 		return NULL;
 	}
 	if (bitset(MF_MATCHONLY, map->map_mflags))
 		return map_rewrite(map, name, strlen(name), NULL);
 	else
-		return map_rewrite(map, vp, vsize, av);
+	{
+		char *ret;
+
+		ret = map_rewrite(map, vp, vsize, av);
+		if (vp != NULL)
+			free(vp);
+		return ret;
+	}
 }
 
 
@@ -2243,6 +2262,7 @@ nis_getcanonname(name, hbsize, statp)
 		(void) yp_get_default_domain(&yp_domain);
 	makelower(nbuf);
 	yperr = YPERR_KEY;
+	vp = NULL;
 	if (try0null)
 	{
 		yperr = yp_match(yp_domain, "hosts.byname", nbuf, keylen,
@@ -2252,6 +2272,11 @@ nis_getcanonname(name, hbsize, statp)
 	}
 	if (yperr == YPERR_KEY && try1null)
 	{
+		if (vp != NULL)
+		{
+			free(vp);
+			vp = NULL;
+		}
 		keylen++;
 		yperr = yp_match(yp_domain, "hosts.byname", nbuf, keylen,
 			     &vp, &vsize);
@@ -2266,9 +2291,12 @@ nis_getcanonname(name, hbsize, statp)
 			*statp = EX_TEMPFAIL;
 		else
 			*statp = EX_UNAVAILABLE;
+		if (vp != NULL)
+			free(vp);
 		return FALSE;
 	}
 	(void) strlcpy(host_record, vp, sizeof host_record);
+	free(vp);
 	if (tTd(38, 44))
 		dprintf("got record `%s'\n", host_record);
 	if (!extract_canonname(nbuf, host_record, cbuf, sizeof cbuf))

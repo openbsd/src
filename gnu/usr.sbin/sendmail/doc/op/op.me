@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: op.me,v 8.310 2000/02/01 22:19:12 gshapiro Exp $
+.\"	$Sendmail: op.me,v 8.317 2000/04/06 21:05:27 gshapiro Exp $
 .\"
 .\" eqn op.me | pic | troff -me
 .eh 'SMM:08-%''Sendmail Installation and Operation Guide'
@@ -54,7 +54,7 @@ eric@Sendmail.COM
 .de Ve
 Version \\$2
 ..
-.Ve $Revision: 1.2 $
+.Ve $Revision: 1.3 $
 .rm Ve
 .sp
 For Sendmail Version 8.10
@@ -1767,7 +1767,10 @@ For example,
 .)b
 For a complete list of the available debug flags
 you will have to look at the code
-(they are too dynamic to keep this documentation up to date).
+and the
+.i TRACEFLAGS
+file in the sendmail distribution
+(they are too dynamic to keep this document up to date).
 .sh 2 "Changing the Values of Options"
 .pp
 Options can be overridden using the
@@ -3927,7 +3930,7 @@ The format of the UNIX from line.
 Unless you have changed the UNIX mailbox format,
 you should not change the default,
 which is
-.q "From $g  $d" .
+.q "From $g $d" .
 .ip $m
 The domain part of the \fIgethostname\fP return value.
 Under normal circumstances,
@@ -4702,6 +4705,7 @@ error messages will be sent as from the MAILER-DAEMON
 macro).
 .ip h
 Upper case should be preserved in host names
+(the $@ portion of the mailer triplet resolved from ruleset 0)
 for this mailer.
 .ip i
 Do User Database rewriting on envelope sender address.
@@ -4755,6 +4759,8 @@ macro occurs in the
 part of the mailer definition,
 that field will be repeated as necessary
 for all qualifying users.
+Removing this flag can defeat duplicate supression on a remote site
+as each recipient is sent in a separate transaction.
 .ip M\(dg
 This mailer wants a
 .q Message-Id:
@@ -4829,6 +4835,8 @@ this flag causes the effective user id to be set to that user.
 .ip u
 Upper case should be preserved in user names
 for this mailer.
+Standards require preservation of case in the local part of addresses,
+except for those address for which your system accepts responsibility.
 .ip U
 This mailer wants UUCP-style
 .q From
@@ -6192,7 +6200,7 @@ can be selected from:
 public	Allow open access
 needmailhelo	Insist on HELO or EHLO command before MAIL
 needexpnhelo	Insist on HELO or EHLO command before EXPN
-noexpn	Disallow EXPN entirely
+noexpn	Disallow EXPN entirely, implies noverb.
 needvrfyhelo	Insist on HELO or EHLO command before VRFY
 novrfy	Disallow VRFY entirely
 noetrn	Disallow ETRN entirely
@@ -7403,7 +7411,7 @@ or
 .q \|\et
 to indicate newline or tab respectively.
 If omitted entirely,
-the column separator is any sequence of whitespace.
+the column separator is any sequence of white space.
 For LDAP maps this is the separator character
 to combine multiple values
 into a single return string.
@@ -8892,7 +8900,7 @@ used to allow new
 binaries to read queue files created by older versions.
 Defaults to version zero.
 Must be the first line of the file if present.
-For 8.10 the version number is 3.
+For 8.10 the version number is 4.
 .ip H
 A header definition.
 There may be any number of these lines.
@@ -9122,7 +9130,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version $Revision: 1.2 $
+.\"Version $Revision: 1.3 $
 .\".ce 0
 .bp 3
 .ce

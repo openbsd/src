@@ -15,16 +15,16 @@
 
 #ifndef lint
 # if SMTP
-static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.457 2000/02/26 07:24:59 gshapiro Exp $ (with SMTP)";
+static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.471 2000/04/06 08:39:58 gshapiro Exp $ (with SMTP)";
 # else /* SMTP */
-static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.457 2000/02/26 07:24:59 gshapiro Exp $ (without SMTP)";
+static char id[] = "@(#)$Sendmail: srvrsmtp.c,v 8.471 2000/04/06 08:39:58 gshapiro Exp $ (without SMTP)";
 # endif /* SMTP */
 #endif /* ! lint */
 
 #if SMTP
 # if SASL
 #  define ENC64LEN(l)	(((l) + 2) * 4 / 3 + 1)
-static bool saslmechs __P((sasl_conn_t *, char **, bool));
+static int saslmechs __P((sasl_conn_t *, char **));
 # endif /* SASL */
 
 static time_t	checksmtpattack __P((volatile int *, int, bool,
@@ -122,7 +122,7 @@ static struct cmd	CmdTab[] =
 static bool	OneXact = FALSE;	/* one xaction only this run */
 static char	*CurSmtpClient;		/* who's at the other end of channel */
 
-# define MAXBADCOMMANDS	25	/* maximum number of bad commands */
+# define MAXBADCOMMANDS		25	/* maximum number of bad commands */
 # define MAXNOOPCOMMANDS	20	/* max "noise" commands before slowdown */
 # define MAXHELOCOMMANDS	3	/* max HELO/EHLO commands before slowdown */
 # define MAXVRFYCOMMANDS	6	/* max VRFY/EXPN commands before slowdown */
@@ -176,6 +176,7 @@ smtp(nullserver, d_flags, e)
 # if SASL
 	sasl_conn_t *conn;
 	volatile bool sasl_ok;
+	volatile int n_auth = 0;	/* count of AUTH commands */
 	bool ismore;
 	int result;
 	volatile int authenticating;
@@ -187,6 +188,7 @@ smtp(nullserver, d_flags, e)
 	unsigned int outlen;
 	char *volatile auth_type;
 	char *mechlist;
+	volatile int n_mechs;
 	int len;
 	sasl_security_properties_t ssp;
 	sasl_external_properties_t ext_ssf;
@@ -215,6 +217,7 @@ smtp(nullserver, d_flags, e)
 
 # if SASL
 	sasl_ok = FALSE;	/* SASL can't be used (yet) */
+	n_mechs = 0;
 
 	/* SASL server new connection */
 	hostname = macvalue('j', e);
@@ -272,6 +275,9 @@ smtp(nullserver, d_flags, e)
 
 		/* set properties */
 		(void) memset(&ssp, '\0', sizeof ssp);
+#  if _FFR_SASL_OPTS
+		ssp.security_flags = SASLOpts & SASL_SEC_MASK;
+#  endif /* _FFR_SASL_OPTS */
 		sasl_ok = sasl_setprop(conn, SASL_SEC_PROPS, &ssp) == SASL_OK;
 
 		if (sasl_ok)
@@ -286,7 +292,10 @@ smtp(nullserver, d_flags, e)
 					       &ext_ssf) == SASL_OK;
 		}
 		if (sasl_ok)
-			sasl_ok = saslmechs(conn, &mechlist, sasl_ok);
+		{
+			n_mechs = saslmechs(conn, &mechlist);
+			sasl_ok = n_mechs > 0;
+		}
 	}
 	else
 	{
@@ -322,10 +331,9 @@ smtp(nullserver, d_flags, e)
 	if (milterize && !bitset(EF_DISCARD, e->e_flags))
 	{
 		char state;
-		char *response;
 
-		response = milter_connect(peerhostname, RealHostAddr,
-					  e, &state);
+		(void) milter_connect(peerhostname, RealHostAddr,
+				      e, &state);
 		switch (state)
 		{
 		  case SMFIR_REPLYCODE:	/* REPLYCODE shouldn't happen */
@@ -685,6 +693,10 @@ smtp(nullserver, d_flags, e)
 			}
 			ismore = FALSE;
 
+			/* crude way to avoid crack attempts */
+			(void) checksmtpattack(&n_auth, n_mechs + 1, TRUE,
+					       "AUTH", e);
+
 			/* make sure it's a valid string */
 			for (q = p; *q != '\0' && isascii(*q); q++)
 			{
@@ -796,7 +808,7 @@ smtp(nullserver, d_flags, e)
 			}
 			else
 			{
-				message("334 %s", out2);
+				message("334 %s", *out2 == '\0' ? "=" : out2);
 				authenticating = SASL_PROC_AUTH;
 			}
 
@@ -1182,7 +1194,7 @@ smtp(nullserver, d_flags, e)
 
 			/* do config file checking of the sender */
 			if (rscheck("check_mail", addr,
-				    NULL, e, TRUE, TRUE) != EX_OK ||
+				    NULL, e, TRUE, TRUE, 4) != EX_OK ||
 			    Errors > 0)
 				goto undo_subproc_no_pm;
 
@@ -1375,7 +1387,7 @@ smtp(nullserver, d_flags, e)
 
 			/* do config file checking of the recipient */
 			if (rscheck("check_rcpt", addr,
-				    NULL, e, TRUE, TRUE) != EX_OK ||
+				    NULL, e, TRUE, TRUE, 4) != EX_OK ||
 			    Errors > 0)
 				break;
 
@@ -1577,6 +1589,16 @@ smtp(nullserver, d_flags, e)
 			(void) bftruncate(e->e_xfp);
 			id = e->e_id;
 
+			/*
+			**  If a header/body check (header checks or milter)
+			**  set EF_DISCARD, don't queueup the message --
+			**  that would lose the EF_DISCARD bit and deliver
+			**  the message.
+			*/
+
+			if (bitset(EF_DISCARD, e->e_flags))
+				doublequeue = FALSE;
+
 			if (doublequeue)
 			{
 				/* make sure it is in the queue */
@@ -1714,8 +1736,8 @@ smtp(nullserver, d_flags, e)
 			{
 				/* do config file checking of the address */
 				if (rscheck(vrfy ? "check_vrfy" : "check_expn",
-					    p, NULL, e, TRUE, FALSE) != EX_OK ||
-				    Errors > 0)
+					    p, NULL, e, TRUE, FALSE, 4)
+				    != EX_OK || Errors > 0)
 					goto undo_subproc;
 				(void) sendtolist(p, NULLADDR, &vrfyqueue, 0, e);
 			}
@@ -1772,7 +1794,7 @@ smtp(nullserver, d_flags, e)
 					     "ETRN", e);
 
 			/* do config file checking of the parameter */
-			if (rscheck("check_etrn", p, NULL, e, TRUE, FALSE)
+			if (rscheck("check_etrn", p, NULL, e, TRUE, FALSE, 4)
 			    != EX_OK || Errors > 0)
 				break;
 
@@ -2202,7 +2224,7 @@ mail_esmtp_args(kp, vp, e)
 		SuprErrs = TRUE;
 		QuickAbort = FALSE;
 		if (strcmp(auth_param, "<>") != 0 &&
-		     (rscheck("trust_auth", pbuf, NULL, e, TRUE, FALSE)
+		     (rscheck("trust_auth", pbuf, NULL, e, TRUE, FALSE, 10)
 		      != EX_OK || Errors > 0))
 		{
 			if (tTd(95, 8))
@@ -2471,40 +2493,58 @@ runinchild(label, e)
 
 # if SASL
 
-static bool
-saslmechs(conn, mechlist, sasl_ok)
+/*
+**  SASLMECHS -- get list of possible AUTH mechanisms
+**
+**	Parameters:
+**		conn -- SASL connection info
+**		mechlist -- output parameter for list of mechanisms
+**
+**	Returns:
+**		number of mechs
+*/
+static int
+saslmechs(conn, mechlist)
 	sasl_conn_t *conn;
 	char **mechlist;
-	bool sasl_ok;
 {
 	int len, num, result;
 
-	if (sasl_ok)
+	/* "user" is currently unused */
+	result = sasl_listmech(conn, "user", /* XXX */
+			       "", " ", "", mechlist,
+			       (u_int *)&len, (u_int *)&num);
+	if (result == SASL_OK && num > 0)
 	{
-		/* "user" is currently unused */
-		result = sasl_listmech(conn, "user", /* XXX */
-				       "", " ", "", mechlist,
-				       (u_int *)&len, (u_int *)&num);
-		if (result == SASL_OK && num > 0)
-		{
-			if (LogLevel > 11)
-				sm_syslog(LOG_INFO, NOQID,
-					  "SASL: available mech=%s, allowed mech=%s",
-					  *mechlist, AuthMechanisms);
-			*mechlist = intersect(AuthMechanisms, *mechlist);
-		}
-		else
-		{
-			sasl_ok = FALSE;
-			if (LogLevel > 9)
-				sm_syslog(LOG_WARNING, NOQID,
-					  "SASL error: listmech=%d, num=%d",
-					  result, num);
-		}
+		if (LogLevel > 11)
+			sm_syslog(LOG_INFO, NOQID,
+				  "SASL: available mech=%s, allowed mech=%s",
+				  *mechlist, AuthMechanisms);
+		*mechlist = intersect(AuthMechanisms, *mechlist);
 	}
-	return sasl_ok;
+	else
+	{
+		if (LogLevel > 9)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "SASL error: listmech=%d, num=%d",
+				  result, num);
+	}
+	return num;
 }
 
+/*
+**  PROXY_POLICY -- define proxy policy for AUTH
+**
+**	Parameters:
+**		conntext -- unused
+**		auth_identity -- authentication identity
+**		requested_user -- authorization identity
+**		user -- allowed user (output)
+**		errstr -- possible error string (output)
+**
+**	Returns:
+**		ok?
+*/
 int
 proxy_policy(context, auth_identity, requested_user, user, errstr)
 	void *context;
@@ -2513,12 +2553,10 @@ proxy_policy(context, auth_identity, requested_user, user, errstr)
 	const char **user;
 	const char **errstr;
 {
-	if (user != NULL)
-	{
-		*user = newstr(auth_identity);
-		return SASL_OK;
-	}
-	return SASL_FAIL;
+	if (user == NULL || auth_identity == NULL)
+		return SASL_FAIL;
+	*user = newstr(auth_identity);
+	return SASL_OK;
 }
 
 # endif /* SASL */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1993 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1993
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1993 Eric P. Allman.  All rights reserved.\n\
      Copyright (c) 1993\n\
@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: smrsh.c,v 8.28 1999/10/26 16:11:32 ca Exp $";
+static char id[] = "@(#)$Sendmail: smrsh.c,v 8.31 2000/03/17 07:32:49 gshapiro Exp $";
 #endif /* ! lint */
 
 /*
@@ -39,7 +39,7 @@ static char id[] = "@(#)$Sendmail: smrsh.c,v 8.28 1999/10/26 16:11:32 ca Exp $";
 **
 **	Leading pathnames are stripped from program names so that
 **	existing .forward files that reference things like
-**	"/usr/ucb/vacation" will continue to work.
+**	"/usr/bin/vacation" will continue to work.
 **
 **	The following characters are completely illegal:
 **		<  >  ^  &  `  (  ) \n \r
@@ -47,9 +47,7 @@ static char id[] = "@(#)$Sendmail: smrsh.c,v 8.28 1999/10/26 16:11:32 ca Exp $";
 **		|  &
 **	This is more restrictive than strictly necessary.
 **
-**	To use this, edit /etc/sendmail.cf, search for ^Mprog, and
-**	change P=/bin/sh to P=/usr/local/etc/smrsh, where this compiled
-**	binary is installed /usr/local/etc/smrsh.
+**	To use this, add FEATURE(`smrsh') to your .mc file.
 **
 **	This can be used on any version of sendmail.
 **

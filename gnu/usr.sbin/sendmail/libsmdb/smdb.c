@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+** Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 **	All rights reserved.
 **
 ** By using this file, you agree to the terms and conditions set
@@ -8,16 +8,7 @@
 */
 
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.\n\
-	All rights reserved.\n\
-     Copyright (c) 1983, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n\
-     Copyright (c) 1983 Eric P. Allman.  All rights reserved.\n";
-#endif /* ! lint */
-
-#ifndef lint
-static char id[] = "@(#)$Sendmail: smdb.c,v 8.33 1999/10/13 06:17:07 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: smdb.c,v 8.37 2000/03/17 07:32:43 gshapiro Exp $";
 #endif /* ! lint */
 
 #include <fcntl.h>
@@ -109,24 +100,45 @@ smdb_open_database(database, db_name, mode, mode_mask, sff, type, user_info,
 	char *db_name;
 	int mode;
 	int mode_mask;
-	int sff;
+	long sff;
 	SMDB_DBTYPE type;
 	SMDB_USER_INFO *user_info;
 	SMDB_DBPARAMS *params;
 {
 	int result;
+	bool type_was_default = FALSE;
 
+	if (type == SMDB_TYPE_DEFAULT)
+	{
+		type_was_default = TRUE;
 #ifdef NEWDB
-	if (type == SMDB_TYPE_DEFAULT)
 		type = SMDB_TYPE_HASH;
-#endif /* NEWDB */
-#ifdef NDBM
-	if (type == SMDB_TYPE_DEFAULT)
+#else /* NEWDB */
+# ifdef NDBM
 		type = SMDB_TYPE_NDBM;
-#endif /* NDBM */
+# endif /* NDBM */
+#endif /* NEWDB */
+	}
 
 	if (type == SMDB_TYPE_DEFAULT)
 		return SMDBE_UNKNOWN_DB_TYPE;
+
+	if ((strncmp(type, SMDB_TYPE_HASH, SMDB_TYPE_HASH_LEN) == 0) ||
+	    (strncmp(type, SMDB_TYPE_BTREE, SMDB_TYPE_BTREE_LEN) == 0))
+	{
+#ifdef NEWDB
+		result = smdb_db_open(database, db_name, mode, mode_mask, sff,
+				      type, user_info, params);
+# ifdef NDBM
+		if (result == ENOENT && type_was_default)
+			type = SMDB_TYPE_NDBM;
+		else
+# endif /* NDBM */
+			return result;
+#else /* NEWDB */
+		return SMDBE_UNSUPPORTED_DB_TYPE;
+#endif /* NEWDB */
+	}
 
 	if (strncmp(type, SMDB_TYPE_NDBM, SMDB_TYPE_NDBM_LEN) == 0)
 	{
@@ -137,18 +149,6 @@ smdb_open_database(database, db_name, mode, mode_mask, sff, type, user_info,
 #else /* NDBM */
 		return SMDBE_UNSUPPORTED_DB_TYPE;
 #endif /* NDBM */
-	}
-
-	if ((strncmp(type, SMDB_TYPE_HASH, SMDB_TYPE_HASH_LEN) == 0) ||
-	    (strncmp(type, SMDB_TYPE_BTREE, SMDB_TYPE_BTREE_LEN) == 0))
-	{
-#ifdef NEWDB
-		result = smdb_db_open(database, db_name, mode, mode_mask, sff,
-				      type, user_info, params);
-		return result;
-#else /* NEWDB */
-		return SMDBE_UNSUPPORTED_DB_TYPE;
-#endif /* NEWDB */
 	}
 
 	return SMDBE_UNKNOWN_DB_TYPE;
@@ -191,7 +191,8 @@ smdb_add_extension(full_name, max_full_name_len, db_name, extension)
 	if (extension_len + db_name_len + 2 > max_full_name_len)
 		return SMDBE_DB_NAME_TOO_LONG;
 
-	if (db_name_len < extension_len ||
+	if (db_name_len < extension_len + 1 ||
+	    db_name[db_name_len - extension_len - 1] != '.' ||
 	    strcmp(&db_name[db_name_len - extension_len], extension) != 0)
 		snprintf(full_name, max_full_name_len, "%s.%s", db_name,
 			 extension);
@@ -222,7 +223,7 @@ smdb_lock_file(lock_fd, db_name, mode, sff, extension)
 	int *lock_fd;
 	char *db_name;
 	int mode;
-	int sff;
+	long sff;
 	char *extension;
 {
 	int result;
@@ -288,7 +289,7 @@ smdb_setup_file(db_name, extension, mode_mask, sff, user_info, stat_info)
 	char *db_name;
 	char *extension;
 	int mode_mask;
-	int sff;
+	long sff;
 	SMDB_USER_INFO *user_info;
 	struct stat *stat_info;
 {

@@ -20,7 +20,7 @@
 #ifdef _DEFINE
 # define EXTERN
 # ifndef lint
-static char SmailId[] =	"@(#)$Sendmail: sendmail.h,v 8.513 2000/02/26 07:30:06 gshapiro Exp $";
+static char SmailId[] =	"@(#)$Sendmail: sendmail.h,v 8.517 2000/03/21 04:57:53 ca Exp $";
 # endif /* ! lint */
 #else /* _DEFINE */
 # define EXTERN extern
@@ -727,7 +727,7 @@ extern void	expand __P((char *, char *, size_t, ENVELOPE *));
 extern int	macid __P((char *, char **));
 extern char	*macname __P((int));
 extern char	*macvalue __P((int, ENVELOPE *));
-extern int	rscheck __P((char *, char *, char *, ENVELOPE *, bool, bool));
+extern int	rscheck __P((char *, char *, char *, ENVELOPE *, bool, bool, int));
 extern void	setclass __P((int, char *));
 extern int	strtorwset __P((char *, char **, int));
 extern void	translate_dollars __P((char *));
@@ -1403,8 +1403,19 @@ struct termescape
 # define SASL_PROC_AUTH	1		/* in process of authenticating */
 # define SASL_IS_AUTH	2		/* authenticated */
 
-/* use AUTH= ? */
-# define SASL_AUTH_AUTH	1		/* use auth= only if authenticated */
+/* SASL options */
+# define SASL_AUTH_AUTH	0x1000		/* use auth= only if authenticated */
+# if _FFR_SASL_OPTS
+#  define SASL_SEC_MASK	0x0fff		/* mask for SASL_SEC_* values: sasl.h */
+#  if (SASL_SEC_NOPLAINTEXT & SASL_SEC_MASK) == 0 || \
+	(SASL_SEC_NOACTIVE & SASL_SEC_MASK) == 0 || \
+	(SASL_SEC_NODICTIONARY & SASL_SEC_MASK) == 0 || \
+	(SASL_SEC_FORWARD_SECRECY & SASL_SEC_MASK) == 0 || \
+	(SASL_SEC_NOANONYMOUS & SASL_SEC_MASK) == 0 || \
+	(SASL_SEC_PASS_CREDENTIALS & SASL_SEC_MASK) == 0
+ERROR: change SASL_SEC_MASK_ notify sendmail.org!
+#  endif
+# endif /* _FFR_SASL_OPTS */
 
 # define MAXOUTLEN 1024			/* length of output buffer */
 #endif /* SASL */
@@ -1649,7 +1660,7 @@ EXTERN long	WkTimeFact;	/* priority offset each time this job is run */
 EXTERN char	*AuthMechanisms;	/* AUTH mechanisms */
 EXTERN char	*SASLInfo;		/* file with AUTH info */
 #endif /* SASL */
-EXTERN int	SASLTryAuth;		/* use AUTH= ? */
+EXTERN int	SASLOpts;		/* options for SASL */
 EXTERN char	*ConfFile;	/* location of configuration file [conf.c] */
 EXTERN char	*ControlSocketName; /* control socket filename [control.c] */
 EXTERN char	*CurHostName;	/* current host we are dealing with */

@@ -12,14 +12,14 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: rmail.c,v 8.38 2000/02/26 01:32:22 gshapiro Exp $";
+static char id[] = "@(#)$Sendmail: rmail.c,v 8.39 2000/03/17 07:32:47 gshapiro Exp $";
 #endif /* ! lint */
 
 /*
