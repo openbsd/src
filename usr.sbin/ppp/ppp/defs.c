@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.11 2000/03/28 15:14:14 brian Exp $
+ *	$OpenBSD: defs.c,v 1.12 2000/04/07 23:46:39 brian Exp $
  */
 
 
@@ -341,4 +341,20 @@ HexStr(long val, char *buf, size_t sz)
   }
   snprintf(buf, sz, "<0x%lx>", val);
   return buf;
+}
+
+const char *
+ex_desc(int ex)
+{
+  static char num[12];		/* Used immediately if returned */
+  static const char * const desc[] = {
+    "normal", "start", "sock", "modem", "dial", "dead", "done",
+    "reboot", "errdead", "hangup", "term", "nodial", "nologin",
+    "redial", "reconnect"
+  };
+
+  if (ex >= 0 && ex < sizeof desc / sizeof *desc)
+    return desc[ex];
+  snprintf(num, sizeof num, "%d", ex);
+  return num;
 }

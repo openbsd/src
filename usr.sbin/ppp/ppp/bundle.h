@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.h,v 1.13 2000/03/19 10:33:32 brian Exp $
+ *	$OpenBSD: bundle.h,v 1.14 2000/04/07 23:46:39 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -190,3 +190,4 @@ extern void bundle_CalculateBandwidth(struct bundle *);
 extern void bundle_AutoAdjust(struct bundle *, int, int);
 extern int bundle_WantAutoloadTimer(struct bundle *);
 extern void bundle_ChangedPID(struct bundle *);
+extern void bundle_Notify(struct bundle *, char);
