@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.24 2000/04/15 11:45:54 aaron Exp $
+.\"	$OpenBSD: stty.1,v 1.25 2001/11/13 14:00:15 mpech Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -535,8 +535,8 @@ bit, it is not possible to intuit what flags were set prior to setting
 This means that unsetting
 .Cm raw
 may not put back all the setting that were previously in effect.
-To set the terminal into a raw state and then accurately restore it, the following
-shell code is recommended:
+To set the terminal into a raw state and then accurately restore it,
+the following shell code is recommended:
 .Bd -literal -offset indent
 save_state=$(stty -g)
 stty raw
