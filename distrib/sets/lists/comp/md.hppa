@@ -188,6 +188,7 @@
 ./usr/include/hppa/psl.h
 ./usr/include/hppa/pte.h
 ./usr/include/hppa/ptrace.h
+./usr/include/hppa/rbus_machdep.h
 ./usr/include/hppa/reg.h
 ./usr/include/hppa/reloc.h
 ./usr/include/hppa/setjmp.h

@@ -1,5 +1,7 @@
+./sbin/ancontrol
 ./sbin/kbd
 ./sbin/ldconfig
+./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/gccbug
 ./usr/bin/ldd
@@ -1485,6 +1487,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/psl.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/pte.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ptrace.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/rbus_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/reloc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/setjmp.ph
