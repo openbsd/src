@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.3 2000/02/26 01:16:30 mickey Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.4 2000/03/21 23:18:13 mickey Exp $	*/
 /*	$NetBSD: if_media.c,v 1.7 1999/11/03 23:06:35 thorpej Exp $	*/
 
 /*-
@@ -254,7 +254,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		/*
 		 * If no change, we're done.
 		 * XXX Automedia may invole software intervention.
-		 *     Keep going in case the the connected media changed.
+		 *     Keep going in case the connected media changed.
 		 *     Similarly, if best match changed (kernel debugger?).
 		 */
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
@@ -326,7 +326,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		 * to 0 on the first call to know how much space to
 		 * callocate.
 		 */
-		for (; ep != NULL; ep = ep->ifm_list.le_next)
+		for (; ep != NULL; ep = LIST_NEXT(ep, ifm_list))
 			count++;
 
 		/*

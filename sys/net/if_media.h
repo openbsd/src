@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.5 2000/02/26 01:16:30 mickey Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.6 2000/03/21 23:18:13 mickey Exp $	*/
 /*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
 
 /*-
@@ -210,6 +210,7 @@ void	ifmedia_delete_instance __P((struct ifmedia *, int));
 #define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
+#define	IFM_IEEE80211_DS1	8	/* Direct Sequence  1Mbps*/
 #define	IFM_IEEE80211_ADHOC	0x100	/* Operate in Adhoc mode */
 
 /*
@@ -224,6 +225,7 @@ void	ifmedia_delete_instance __P((struct ifmedia *, int));
  */
 #define IFM_FDX		0x00100000	/* Force full duplex */
 #define	IFM_HDX		0x00200000	/* Force half duplex */
+#define	IFM_FLOW	0x00400000	/* enable hardware flow control */
 #define IFM_FLAG0	0x01000000	/* Driver defined flag */
 #define IFM_FLAG1	0x02000000	/* Driver defined flag */
 #define IFM_FLAG2	0x04000000	/* Driver defined flag */
@@ -247,6 +249,15 @@ void	ifmedia_delete_instance __P((struct ifmedia *, int));
  */
 #define	IFM_AVALID	0x00000001	/* Active bit valid */
 #define	IFM_ACTIVE	0x00000002	/* Interface attached to working net */
+
+/* Mask of "status valid" bits, for ifconfig(8). */
+#define	IFM_STATUS_VALID	IFM_AVALID
+
+/* List of "status valid" bits, for ifconfig(8). */
+#define	IFM_STATUS_VALID_LIST {						\
+	IFM_AVALID,							\
+	0								\
+}
 
 /*
  * Macros to extract various bits of information from the media word.
@@ -357,6 +368,7 @@ struct ifmedia_description {
 									\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1,	"DS1" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11" },		\
@@ -391,4 +403,29 @@ struct ifmedia_description {
 	{ 0, NULL },							\
 }
 
+/*
+ * Status bit descriptions for the various media types.
+ */
+struct ifmedia_status_description {
+	int	ifms_type;
+	int	ifms_valid;
+	int	ifms_bit;
+	const char *ifms_string[2];
+};
+
+#define	IFM_STATUS_DESC(ifms, bit)					\
+	(ifms)->ifms_string[((ifms)->ifms_bit & (bit)) ? 1 : 0]
+
+#define	IFM_STATUS_DESCRIPTIONS {					\
+	{ IFM_ETHER,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "no carrier", "active" } },				\
+	{ IFM_FDDI,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "no ring", "inserted" } },				\
+	{ IFM_TOKEN,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "no ring", "inserted" } },				\
+	{ IFM_IEEE80211,	IFM_AVALID,	IFM_ACTIVE,		\
+	    { "no network", "active" } },				\
+	{ 0,			0,		0,			\
+	    { NULL, NULL } }						\
+}
 #endif	/* _NET_IF_MEDIA_H_ */
