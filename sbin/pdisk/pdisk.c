@@ -657,7 +657,7 @@ do_create_partition(partition_map_header *map, int get_type)
 	return;
     }
     if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+	printf("The map is not writable.\n");
     }
 // XXX add help feature (i.e. '?' in any argument routine prints help string)
     if (get_base_argument(&base, map) == 0) {
@@ -765,7 +765,7 @@ do_rename_partition(partition_map_header *map)
 	return;
     }
     if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
 	bad_input("Bad partition number");
@@ -802,7 +802,7 @@ do_change_type(partition_map_header *map)
     }
 
     if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+	printf("The map is not writable.\n");
     }
 
     if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
@@ -844,7 +844,7 @@ do_delete_partition(partition_map_header *map)
 	return;
     }
     if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
 	bad_input("Bad partition number");
@@ -872,7 +872,7 @@ do_reorder(partition_map_header *map)
 	return;
     }
     if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &old_index, kDefault) == 0) {
 	bad_input("Bad partition number");
@@ -899,7 +899,7 @@ do_write_partition_map(partition_map_header *map)
 	return;
     }
     if (map->writeable == 0) {
-	bad_input("The map is not writeable.");
+	bad_input("The map is not writable.");
 	return;
     }
     printf("Writing the map destroys what was there before. ");
@@ -1006,7 +1006,7 @@ do_change_map_size(partition_map_header *map)
 	return;
     }
     if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("New size: ", &size, kDefault) == 0) {
 	bad_input("Bad size");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2002/11/29 00:27:03 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2002/12/15 13:30:17 henning Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -27,7 +27,7 @@
  * 4. This notice may not be removed or altered.
  */
 #ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.9 2002/11/29 00:27:03 millert Exp $";
+static char *moduleid = "$OpenBSD: file.c,v 1.10 2002/12/15 13:30:17 henning Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -316,7 +316,7 @@ int wid;
 
 	    if ((fd = open(inname, O_RDONLY)) < 0) {
 		    /* We can't open it, but we were able to stat it. */
-		    if (sb.st_mode & 0002) ckfputs("writeable, ", stdout);
+		    if (sb.st_mode & 0002) ckfputs("writable, ", stdout);
 		    if (sb.st_mode & 0111) ckfputs("executable, ", stdout);
 		    ckfprintf(stdout, "can't read `%s' (%s).\n",
 			inname, strerror(errno));

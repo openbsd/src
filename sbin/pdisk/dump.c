@@ -388,7 +388,7 @@ show_data_structures(partition_map_header *map)
     printf("map %d blocks out of %d,  media %lu blocks (%d byte blocks)\n",
 	    map->blocks_in_map, map->maximum_in_map,
 	    map->media_size, map->logical_block);
-    printf("Map is%s writeable", (map->writeable)?kStringEmpty:kStringNot);
+    printf("Map is%s writable", (map->writeable)?kStringEmpty:kStringNot);
     printf(", but%s changed\n", (map->changed)?kStringEmpty:kStringNot);
     printf("\n");
 
