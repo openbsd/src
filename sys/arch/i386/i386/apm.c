@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.5 1997/07/08 02:52:25 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.6 1997/08/19 20:09:04 angelos Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -118,11 +118,11 @@ STATIC void apm_event_handle __P((struct apm_softc *, struct apmregs *));
 STATIC int apm_get_event __P((struct apmregs *));
 STATIC void apm_set_ver __P((struct apm_softc *));
 STATIC void apm_periodic_check __P((void *));
-STATIC void apm_disconnect __P((void *));
+/* STATIC void apm_disconnect __P((void *)); */
 STATIC void apm_perror __P((const char *, struct apmregs *));
-STATIC void apm_powmgt_enable __P((int onoff));
+/* STATIC void apm_powmgt_enable __P((int onoff)); */
 STATIC void apm_powmgt_engage __P((int onoff, u_int devid));
-STATIC void apm_devpowmgt_enable __P((int onoff, u_int devid));
+/* STATIC void apm_devpowmgt_enable __P((int onoff, u_int devid)); */
 STATIC void apm_suspend __P((void));
 STATIC void apm_standby __P((void));
 STATIC int apm_record_event __P((struct apm_softc *sc, u_int event_type));
@@ -415,6 +415,7 @@ void *arg;
 	timeout(apm_periodic_check, sc, hz);
 }
 
+#ifdef notused
 STATIC void
 apm_powmgt_enable(onoff)
 int onoff;
@@ -425,6 +426,7 @@ int onoff;
 	if (apmcall(APM_PWR_MGT_ENABLE, &regs) != 0)
 		apm_perror("power management enable", &regs);
 }
+#endif
 
 STATIC void
 apm_powmgt_engage(onoff, dev)
@@ -442,6 +444,7 @@ u_int dev;
 		       APM_ERR_CODE(&regs));
 }
 
+#ifdef notused
 STATIC void
 apm_devpowmgt_enable(onoff, dev)
 int onoff;
@@ -460,6 +463,7 @@ u_int dev;
 		       dev, apm_err_translate(APM_ERR_CODE(&regs)),
 		       APM_ERR_CODE(&regs));
 }
+#endif
 
 int
 apm_set_powstate(dev, state)
@@ -558,6 +562,7 @@ struct apmregs *regs;
 	return apmcall(APM_POWER_STATUS, regs);
 }
 
+#ifdef notused
 STATIC void
 apm_disconnect(xxx)
 void *xxx;
@@ -573,6 +578,7 @@ void *xxx;
 	else
 		printf("APM disconnected\n");
 }
+#endif
 
 int
 apmprobe(parent, match, aux)
