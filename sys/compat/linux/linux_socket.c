@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.30 2003/07/24 01:31:36 tedu Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.31 2003/11/25 21:43:42 nordin Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1408,7 +1408,7 @@ linux_ioctl_socket(p, v, retval)
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR: {
-		struct linux_ifreq *ifr = (struct linux_ifreq *)SCARG(&ia, data);
+		struct linux_ifreq *ifr = (struct linux_ifreq *)SCARG(uap, data);
 		struct sockaddr_dl *sdl;
 		struct ifnet *ifp;
 		struct ifaddr *ifa;
@@ -1435,6 +1435,7 @@ linux_ioctl_socket(p, v, retval)
 			}
 		}
 		error = ENOENT;
+		break;
 	    }
 	default:
 		error = EINVAL;
