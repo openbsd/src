@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.13 2000/01/10 04:16:52 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.14 2000/01/15 18:27:51 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -99,7 +99,7 @@ int ah_enable = 0;
  * in IPv4 or IPv6.
  */
 
-static int
+int
 ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
