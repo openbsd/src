@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.1 1999/07/18 21:25:18 csapuntz Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.2 1999/07/22 04:32:38 csapuntz Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -63,6 +63,9 @@ struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	channel_softc *wdc_chanptr;
 	struct	channel_softc wdc_channel;
+#ifdef __OpenBSD__
+	struct  device *sc_isa;
+#endif
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -134,6 +137,7 @@ wdc_isa_attach(parent, self, aux)
 	sc->wdc_channel.cmd_iot = ia->ia_iot;
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
+	sc->sc_isa = parent;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_iobase,
 	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
@@ -186,8 +190,13 @@ static void
 wdc_isa_dma_setup(sc)
 	struct wdc_isa_softc *sc;
 {
+#ifndef __OpenBSD__
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+#else
+	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq,
+	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {			      
+#endif
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
 		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
@@ -203,14 +212,15 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 {
 	struct wdc_isa_softc *sc = v;
 
-	isa_dmastart(sc->sc_ic, sc->sc_drq, databuf, datalen, NULL,
-	    (read ? DMAMODE_READ : DMAMODE_WRITE)
 #ifndef __OpenBSD__
-| DMAMODE_DEMAND,
-#else 
-,
-#endif
+	isa_dmastart(sc->sc_ic, sc->sc_drq, databuf, datalen, NULL,
+	    (read ? DMAMODE_READ : DMAMODE_WRITE) | DMAMODE_DEMAND,
 	    BUS_DMA_NOWAIT);
+#else
+	isa_dmastart(sc->sc_isa, sc->sc_drq, databuf, datalen, NULL,
+	    (read ? DMAMODE_READ : DMAMODE_WRITE),
+	    BUS_DMA_NOWAIT);
+#endif
 	return 0;
 }
 
@@ -230,6 +240,10 @@ wdc_isa_dma_finish(v, channel, drive, read)
 {
 	struct wdc_isa_softc *sc = v;
 
+#ifndef __OpenBSD__
 	isa_dmadone(sc->sc_ic, sc->sc_drq);
+#else
+	isa_dmadone(sc->sc_isa, sc->sc_drq);
+#endif
 	return 0;
 }
