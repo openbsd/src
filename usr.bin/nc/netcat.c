@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.25 2001/06/26 21:19:14 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.26 2001/06/26 21:57:35 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -79,7 +79,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, s, ret = 1;
-	char *host, *uport;
+	char *host, *uport, *endp;
 	struct addrinfo hints;
 	struct servent *sv = 0;
 	socklen_t len;
@@ -97,7 +97,9 @@ main(argc, argv)
 			help();
 			break;
 		case 'i':
-			iflag = atoi(optarg);
+			iflag = (int)strtoul(optarg, &endp, 10);
+			if (iflag < 0 || *endp != '\0')
+				errx(1, "interval cannot be negative");
 			break;
 		case 'k':
 			kflag = 1;
@@ -126,8 +128,10 @@ main(argc, argv)
 		case 'v':
 			vflag = 1;
 			break;
-		case 'w':
-			timeout = atoi(optarg);
+		case 'w': 
+			timeout = (int)strtoul(optarg, &endp, 10);
+			if (timeout < 0 || *endp != '\0')
+				errx(1, "timeout cannot be negative");
 			break;
 		case 'z':
 			zflag = 1;
@@ -476,7 +480,7 @@ void
 build_ports(p)
 	char *p;
 {
-	char *n;
+	char *n, *endp;
 	int hi, lo, cp;
 	int x = 0;
 
@@ -488,8 +492,12 @@ build_ports(p)
 		n++;
 
 		/* Make sure the ports are in order: lowest->highest */
-		hi = atoi(n);
-		lo = atoi(p);
+		hi = (int)strtoul(n, &endp, 10);
+		if (hi <= 0 || hi > 65535 || *endp != '\0')
+			errx(1, "port range not valid");
+		lo = (int)strtoul(p, &endp, 10);
+		if (lo <= 0 || lo > 65535 || *endp != '\0')
+			errx(1, "port range not valid");
 
 		if (lo > hi) {
 			cp = hi;
@@ -517,6 +525,9 @@ build_ports(p)
 			}
 		}
 	} else {
+		hi = (int)strtoul(p, &endp, 10);
+		if (hi <= 0 || hi > 65535 || *endp != '\0')
+			errx(1, "port range not valid");
 		portlist[0] = malloc(sizeof(65535));
 		portlist[0] = p;
 	}
