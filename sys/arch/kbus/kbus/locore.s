@@ -1920,7 +1920,7 @@ window_uf:
 	save	%g0, %g0, %g0		! back to window I
 window_uf1:
 	/* SANITY check.  */
-	sethi	SERIES5_KERN_WINDOW, %l1
+	sethi	%hi(SERIES5_KERN_WINDOW), %l1
 	and	%sp, %l1, %l2
 	cmp	%l1, %l2
 	be	1f
@@ -2429,7 +2429,7 @@ dostart:
 	 nop; nop; nop
 
 	/* Map the initial u.  */
-	sethi	SERIES5_KERN_WINDOW, %l5
+	sethi	%hi(SERIES5_KERN_WINDOW), %l5
 	set	_u0 + PG_WINDOW, %l7
 	sethi	UADDR, %l6
 	andn	%l7, %l5, %l7
@@ -3100,7 +3100,7 @@ ENTRY(switchexit)
 	wr	%g0, PSR_S, %psr	! change to window 0, traps off
 	wr	%g0, 2, %wim		! and make window 1 the trap window
 
-	sethi	SERIES5_KERN_WINDOW, %g5
+	sethi	%hi(SERIES5_KERN_WINDOW), %g5
 	set	_idle_u + PG_WINDOW, %g7
 	sethi	UADDR, %g6
 	andn	%g7, %g5, %g7
