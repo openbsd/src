@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.h,v 1.4 2005/04/05 20:25:50 marco Exp $       */
+/* $OpenBSD: bioctl.h,v 1.5 2005/04/06 02:36:34 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -30,6 +30,7 @@
 
 /* misc defines */
 #define INQSIZE (36)
+#define SESSIZE (255)
 
 #define S_TERA (1099511627776llu)
 #define S_GIGA (1073741824llu)
@@ -69,9 +70,12 @@ void		parse_devlist(char *);
 void		print_sense(u_int8_t *, u_int8_t);
 void		print_inquiry(u_int8_t, u_int8_t*, u_int8_t);
 void		print_cap(u_int64_t);
+int		get_ses_page(u_int8_t, u_int8_t, u_int8_t*, u_int8_t);
+int		set_ses_page(u_int8_t, u_int8_t, u_int8_t*, u_int8_t);
 
 int		bio_get_capabilities(bioc_capabilities *);
 void		bio_alarm(char *);
+void		bio_blink_userland(u_int8_t, u_int8_t, u_int8_t);
 void		bio_blink(char *, u_int8_t, u_int8_t);
 void		bio_ping(void);
 void		bio_startstop(char *, u_int8_t, u_int8_t);

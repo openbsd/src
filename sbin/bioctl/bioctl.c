@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.6 2005/04/05 20:25:50 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.7 2005/04/06 02:36:34 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -443,6 +443,66 @@ bio_alarm(char *arg)
 }
 
 void
+bio_blink_userland(u_int8_t opc, u_int8_t c, u_int8_t t)
+{
+	struct dev *delm;
+	struct scsi_enc_ctrl_diag_page *cdp;
+
+	u_int8_t rc[SESSIZE];
+
+	/* FIXME if the raid controllers are clustered we might have more
+	 * than one proc device. */
+
+	bio_pt_enum();
+
+	SLIST_FOREACH(delm, &devices, next) {
+		if (delm->channel != c)
+			continue;
+
+		if (delm->type != T_PROCESSOR)
+			continue;
+
+		if (debug)
+			printf("proc at channel: %d target: %2d\n",
+			    delm->channel, delm->target);
+
+		/* get ses page so that we can modify bits for blink */
+		if (!get_ses_page(delm->channel, delm->target,
+		    &rc[0], sizeof(rc))) {
+			return;
+		}
+
+		cdp = (struct scsi_enc_ctrl_diag_page *)rc;
+
+		cdp->elmts[0].common_ctrl = 0x80;
+		switch (opc) {
+		case BIOCSBLINK_ALERT:
+			cdp->elmts[0].byte4 = SDECD_RQST_FAULT;
+			break;
+
+		case BIOCSBLINK_BLINK:
+			cdp->elmts[0].byte3 = SDECD_RQST_IDENT;
+			break;
+
+		case BIOCSBLINK_UNBLINK:
+			cdp->elmts[0].byte3 = 0x00;
+			cdp->elmts[0].byte4 = 0x00;
+			break;
+
+		default:
+			return;
+		}
+
+		if (!set_ses_page(delm->channel, delm->target,
+		    &rc[0], sizeof(rc))) {
+			return;
+		}
+
+		return; /* done */
+	}
+}
+
+void
 bio_blink(char * arg, u_int8_t c, u_int8_t t)
 {
 	int rv;
@@ -454,6 +514,12 @@ bio_blink(char * arg, u_int8_t c, u_int8_t t)
 	bb.cookie = bl.cookie;
 
 	switch (arg[0]) {
+	case 'a': /* blink amber or alert led */
+		if (debug)
+			printf("blink alert\n");
+		bb.opcode = BIOCSBLINK_ALERT;
+		break;
+
 	case 'b': /* blink hdd */
 		if (debug)
 			printf("blink\n");
@@ -477,6 +543,7 @@ bio_blink(char * arg, u_int8_t c, u_int8_t t)
 			/* operation is not supported in kernel, do it here */
 			if (debug)
 				printf("doing blink in userland\n");
+			bio_blink_userland(bb.opcode, c, t);
 		}
 		else
 			warnx("bioc_ioctl() call failed");
@@ -715,7 +782,7 @@ bio_pt_enum(void)
 	struct dev *delm;
 
 	d = 0;
-	for (c = 0; c < 2 /* FIXME */; c++) {
+	for (c = 0; c < 4 /* FIXME */; c++) {
 		for (t = 0; t < 16 /* FIXME */; t++) {
 			if (bio_pt_inquire(c, t, F_SILENCE, &inq[0])) {
 				if (inq[0] & SID_QUAL)
@@ -823,4 +890,112 @@ void print_cap(u_int64_t cap)
 	}
 
 	printf(" %llu B", cap);
+}
+
+#if 0
+	/* in case we want to do SAFTE this is the format */
+	/* SAF-TE */
+	memset(&bpt, 0, sizeof(bpt));
+	bpt.cookie = bl.cookie;
+	bpt.channel = delm->channel;
+	bpt.target = delm->target;
+	bpt.cdblen = 10;
+	bpt.cdb[0] = 0x3c; /* READ BUFFER */
+	bpt.cdb[1] = 0x01; /* SAF-TE command */
+	bpt.cdb[8] = sizeof(rc); /* LSB size, FIXME */
+	bpt.data = &rc[0];    /* set up return data pointer */
+	bpt.datalen = sizeof(rc);
+	bpt.direction = BIOC_DIRIN;
+	bpt.senselen = 32; /* silly since the kernel overrides it */
+#endif
+
+int
+get_ses_page(u_int8_t c, u_int8_t t, u_int8_t *buf, u_int8_t buflen)
+{
+	bioc_scsicmd bpt;
+	int rv;
+
+	memset(&bpt, 0, sizeof(bpt));
+	bpt.cookie = bl.cookie;
+	bpt.channel = c;
+	bpt.target = t;
+	bpt.cdblen = 6;
+	bpt.cdb[0] = RECEIVE_DIAGNOSTIC;
+	/* FIXME add this cdb struct + #defines to scsi_all.h */
+	bpt.cdb[1] = 0x01; /* set PCV bit for SES commands */
+	bpt.cdb[2] = 0x02; /* SES page nr */
+	bpt.cdb[4] = buflen;
+	bpt.data = buf;    /* set up return data pointer */
+	bpt.datalen = buflen;
+	bpt.direction = BIOC_DIRIN;
+	bpt.senselen = 32; /* silly since the kernel overrides it */
+
+	rv = ioctl(devh, BIOCSCSICMD, &bpt);
+	if (rv == -1) {
+		warnx("RECEIVE_DIAGNOSTIC failed %x", bpt.status);
+		return (0);
+	}
+	else if (bpt.status) {
+		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
+			print_sense(&bpt.sensebuf[0], bpt.senselen);
+		else
+			printf("channel: %d target: %2d RECEIVE_DIAGNOSTIC "
+			    "failed without sense data\n", c, t);
+
+		return (0);
+	}
+
+	if (debug) {
+		/* abuse print sense a little */
+		print_sense(buf, bpt.datalen);
+	}
+
+	return (1);
+}
+
+int
+set_ses_page(u_int8_t c, u_int8_t t, u_int8_t *buf, u_int8_t buflen)
+{
+	bioc_scsicmd bpt;
+	int rv;
+
+	memset(&bpt, 0, sizeof(bpt));
+	bpt.cookie = bl.cookie;
+	bpt.channel = c;
+	bpt.target = t;
+	bpt.cdblen = 6;
+	bpt.cdb[0] = SEND_DIAGNOSTIC;
+	bpt.cdb[1] = SSD_PF;
+	bpt.cdb[4] = buflen;
+	bpt.data = buf;    /* set up return data pointer */
+	/*
+	buf[12] = 0x80;
+	buf[14] = 0x00;
+	buf[15] = 0x20;
+	*/
+	bpt.datalen = buflen;
+	bpt.direction = BIOC_DIROUT;
+	bpt.senselen = 32; /* silly since the kernel overrides it */
+
+	rv = ioctl(devh, BIOCSCSICMD, &bpt);
+	if (rv == -1) {
+		warnx("SEND_DIAGNOSTIC failed %x", bpt.status);
+		return (0);
+	}
+	else if (bpt.status) {
+		if (bpt.sensebuf[0] == 0x70 || bpt.sensebuf[0] == 0x71)
+			print_sense(&bpt.sensebuf[0], bpt.senselen);
+		else
+			printf("channel: %d target: %2d SEND_DIAGNOSTIC "
+			    "failed without sense data\n", c, t);
+
+		return (0);
+	}
+
+	if (debug) {
+		/* abuse print sense a little */
+		print_sense(buf, bpt.datalen);
+	}
+
+	return (1);
 }
