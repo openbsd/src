@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.72 1998/05/13 21:10:03 deraadt Exp $
+#	$OpenBSD: rc,v 1.73 1998/05/14 23:58:01 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -293,10 +293,6 @@ if [ -f /var/account/acct ]; then
 	echo 'turning on accounting';	accton /var/account/acct
 fi
 
-echo -n standard daemons:
-echo -n ' cron';		cron
-echo '.'
-
 echo -n starting network daemons:
 
 # $gated and $routed_flags are imported from /etc/rc.conf.
@@ -414,6 +410,10 @@ if [ X${kerberos_slave} = X"YES" ]; then
 fi
 
 [ -f /etc/rc.local ] && . /etc/rc.local
+
+echo -n standard daemons:
+echo -n ' cron';		cron
+echo '.'
 
 date
 
