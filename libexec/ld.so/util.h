@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.7 2002/07/23 23:56:31 mickey Exp $	*/
+/*	$OpenBSD: util.h,v 1.8 2002/07/24 00:13:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,7 +36,7 @@
 
 #ifndef __DL_UTIL_H__
 #define __DL_UTIL_H__
-void *_dl_malloc(const int size);
+void *_dl_malloc(const size_t size);
 void _dl_free(void *);
 char *_dl_strdup(const char *);
 void _dl_printf(const char *fmt, ...);
@@ -56,12 +56,12 @@ _dl_wrstderr(const char *s)
 }
 
 static inline void *
-_dl_memset(void *p, const char v, size_t c)
+_dl_memset(void *p, const int v, size_t c)
 {
 	char *ip = p;
 
 	while (c--)
-		*ip++ = v;
+		*ip++ = (char)v;
 	return(p);
 }
 
@@ -76,7 +76,7 @@ _dl_strlen(const char *p)
 }
 
 static inline size_t
-_dl_strlcpy(char *dst, const char *src, int siz)
+_dl_strlcpy(char *dst, const char *src, size_t siz)
 {
 	char *d = dst;
 	const char *s = src;
@@ -102,13 +102,13 @@ _dl_strlcpy(char *dst, const char *src, int siz)
 }
 
 static inline int
-_dl_strncmp(const char *d, const char *s, int c)
+_dl_strncmp(const char *d, const char *s, size_t len)
 {
-	while (c-- && *d && *d == *s) {
+	while (len-- && *d && *d == *s) {
 		d++;
 		s++;
 	}
-	if (c < 0)
+	if (len < 0)
 		return(0);
 	return(*d - *s);
 }
