@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.11 2000/12/11 19:12:22 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.12 2000/12/12 20:55:52 mickey Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ struct icmp {
 
 /*
  * Definition of type and code field values.
+ *	http://www.isi.edu/in-notes/iana/assignments/icmp-parameters
  */
 #define	ICMP_ECHOREPLY		0		/* echo reply */
 #define	ICMP_UNREACH		3		/* dest unreachable, codes: */
@@ -156,6 +157,7 @@ struct icmp {
 #define		ICMP_REDIRECT_HOST	1		/* for host */
 #define		ICMP_REDIRECT_TOSNET	2		/* for tos and net */
 #define		ICMP_REDIRECT_TOSHOST	3		/* for tos and host */
+#define	ICMP_ALTHOSTADDR	6		/* alternate host address */
 #define	ICMP_ECHO		8		/* echo service */
 #define	ICMP_ROUTERADVERT	9		/* router advertisement */
 #define	ICMP_ROUTERSOLICIT	10		/* router solicitation */
@@ -163,7 +165,9 @@ struct icmp {
 #define		ICMP_TIMXCEED_INTRANS	0		/* ttl==0 in transit */
 #define		ICMP_TIMXCEED_REASS	1		/* ttl==0 in reass */
 #define	ICMP_PARAMPROB		12		/* ip header bad */
+#define		ICMP_PARAMPROB_ERRATPTR 0		/* req. opt. absent */
 #define		ICMP_PARAMPROB_OPTABSENT 1		/* req. opt. absent */
+#define		ICMP_PARAMPROB_LENGTH	2		/* bad length */
 #define	ICMP_TSTAMP		13		/* timestamp request */
 #define	ICMP_TSTAMPREPLY	14		/* timestamp reply */
 #define	ICMP_IREQ		15		/* information request */
