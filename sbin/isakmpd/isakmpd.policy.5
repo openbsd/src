@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.24 2001/12/13 20:16:48 mpech Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.25 2001/12/21 11:41:50 mpech Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -144,7 +144,7 @@ For more details on KeyNote assertion format, please see
 .Xr keynote 5 .
 Briefly, KeyNote policy assertions used in IKE have the following
 characteristics:
-
+.Pp
 .nf
 * The Authorizer field is typically "POLICY" (but see the examples
   below, for use of policy delegation).
@@ -159,10 +159,10 @@ characteristics:
 
 * The ordered return-values set for IPsec policy is "false, true".
 .fi
-
+.Pp
 For an explanation of these fields and their semantics, see
 .Xr keynote 5 .
-
+.Pp
 For example, the following policy assertion:
 .Bd -literal
     Authorizer: "POLICY"
@@ -172,7 +172,7 @@ For example, the following policy assertion:
     Conditions: app_domain == "IPsec policy" && esp_present == "yes"
 		&& esp_enc_alg != "null" -> "true";
 .Ed
-
+.Pp
 says that any proposal from a remote host that authenticates using the
 passphrase "foobar" or the public key contained in the X509
 certificate encoded as "abcd==" will be accepted, as long as it
@@ -191,7 +191,7 @@ The following policy assertion:
     Conditions: app_domain == "IPsec policy" && esp_present == "yes"
 		&& esp_enc_alg != "null" -> "true";
 .Ed
-
+.Pp
 is similar to the previous one, but instead of including a complete
 X509 credential in the Licensees field, only the X509 certificate's
 Subject Canonical Name need to be specified (note that the "DN:"
@@ -607,7 +607,6 @@ Signature: "sig-x509-sha1-base64:ql+vrUxv14DcBOQHR2jsbXayq6T\\
             mmtMiUB745a8rjwSrQwh+KIVDlUrghPnqhSIkWSDi9oWWMbfg\\
             mkdudZ0wjgeTLMI2NI4GibMMsToakOKMex/0q4cpdpln3DKcQ\\
             IcjzRv4khDws69FT3QfELjcpShvbLrXmh1Z00OFmxjyqDw="
-
 .Ed
 .Sh BUGS
 A more sane way of expressing IPv6 address ranges is needed.

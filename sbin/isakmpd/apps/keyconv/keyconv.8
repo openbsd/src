@@ -1,4 +1,4 @@
-.\" $OpenBSD: keyconv.8,v 1.4 2001/12/13 20:16:48 mpech Exp $
+.\" $OpenBSD: keyconv.8,v 1.5 2001/12/21 11:41:50 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Hakan Olsson.  All rights reserved.
 .\"
@@ -50,7 +50,7 @@ be used by
 .Xr isakmpd 8
 to authenticate an IKE negotiation.
 .Pp
-For proper operation, 
+For proper operation,
 .Ar infile
 is expected to contain the private key.
 .Pp
@@ -68,9 +68,9 @@ Convert from
 to
 .Pa DNSSEC
 format.
-In this mode, 
+In this mode,
 .Nm
-outputs both the private key, plus a 
+outputs both the private key, plus a
 .Em outfile.pubkey
 file containing the public key in DNS KEY format.
 .El
@@ -96,4 +96,3 @@ $ keyconv -d testkey.ssl testkey.dns
 .Sh HISTORY
 This command first appeared in
 .Ox 3.0 .
-

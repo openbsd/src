@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_msdos.8,v 1.17 2000/11/09 17:53:04 aaron Exp $
+.\"	$OpenBSD: newfs_msdos.8,v 1.18 2001/12/21 11:41:50 mpech Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -160,15 +160,12 @@ struct bsxbpb {
 };
 .Ed
 .Sh EXAMPLES
-
-	newfs_msdos /dev/rwd0i
-
 Create a file system, using default parameters, on /dev/rwd0i.
-
-	newfs_msdos -f 1440 -L foo fd0c
-
+.Dl newfs_msdos /dev/rwd0i
+.Pp
 Create a standard 1.44M file system, with volume label "foo", on
 /dev/rfd0c.
+.Dl newfs_msdos -f 1440 -L foo fd0c
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8 ,

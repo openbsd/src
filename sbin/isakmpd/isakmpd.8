@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.36 2001/12/13 20:16:48 mpech Exp $
+.\" $OpenBSD: isakmpd.8,v 1.37 2001/12/21 11:41:50 mpech Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -76,13 +76,13 @@ a FIFO or by signals, upcalls from the kernel via a
 .Dv PF_KEY
 socket, and lastly by scheduled events triggered by timers running out.
 .Pp
-Most uses of 
+Most uses of
 .Nm
 will be to implement so called "virtual private
 networks" or VPNs for short.
 The
 .Xr vpn 8
-manual page describes how to setup 
+manual page describes how to setup
 .Nm
 for a simple VPN.
 For other uses, some more knowledge of IKE as a protocol is required.
@@ -192,13 +192,13 @@ will be what the daemon binds its local end to when acting as
 initiator.
 .It Fl L
 Enable IKE packet capture.
-When this option is given, 
+When this option is given,
 .Nm
 will capture to file an unencrypted copy of the negotiation packets it
 is sending and receiveing.
-This file can later be read by 
+This file can later be read by
 .Xr tcpdump 8
-and other utilities using 
+and other utilities using
 .Xr pcap 3 .
 .It Fl l Ar packetlog-file
 As option
@@ -332,7 +332,7 @@ and put it in
 It is also possible to store trusted public keys to make them directly
 usable by
 .Nm isakmpd .
-The keys should be saved in PEM format (see 
+The keys should be saved in PEM format (see
 .Xr openssl 1 )
 and named and stored after this easy formula:
 .Bl -tag -width for_ufqdn_identities
@@ -350,10 +350,10 @@ The
 .Fl P
 flag does not do what we document, rather it does nothing.
 .Sh CAVEATS
-When storing a trusted public key for an IPv6 identity, the 
+When storing a trusted public key for an IPv6 identity, the
 .Em most efficient
 form of address representation, i.e "::" instead of ":0:0:0:",
-must be used or the matching will fail. 
+must be used or the matching will fail.
 .Nm
 uses the output from
 .Xr getnameinfo 3
@@ -396,8 +396,8 @@ The report file written when
 .Dv SIGUSR1
 is received.
 .It Pa /usr/share/ipsec/isakmpd/
-A directory containing some sample 
-.Nm 
+A directory containing some sample
+.Nm
 and keynote policy configuration files.
 .El
 .Sh SEE ALSO

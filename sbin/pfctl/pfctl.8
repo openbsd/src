@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.37 2001/12/13 20:16:48 mpech Exp $
+.\" $OpenBSD: pfctl.8,v 1.38 2001/12/21 11:41:50 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -241,7 +241,6 @@ Example:
     # Display the current established idle timeout
     pfctl -t tcp.established
 .Ed
-
 .It Fl v
 Produce more verbose output.
 .It Fl x Ar level
@@ -264,7 +263,7 @@ Packet filter rules file.
 Rules for Network Address Translation.
 .El
 .Sh SEE ALSO
-.Xr pf 4 , 
+.Xr pf 4 ,
 .Xr nat.conf 5 ,
 .Xr pf.conf 5 ,
 .Xr ftp-proxy 8 ,
@@ -275,7 +274,7 @@ Rules for Network Address Translation.
 .Sh HISTORY
 The
 .Nm
-program and the 
+program and the
 .Xr pf 4
 filter mechanism first appeared in
 .Ox 3.0 .

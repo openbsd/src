@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.48 2001/12/13 20:16:48 mpech Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.49 2001/12/21 11:41:50 mpech Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -225,7 +225,7 @@ If the destination address is set to all zeroes (0.0.0.0) or left
 unspecified, the destination address from the packet will be used
 to locate an SA (the source address is used for incoming flows).
 For incoming flows, the destination address (if specified) should
-point to the expected source of the SA (the remote SA peer). 
+point to the expected source of the SA (the remote SA peer).
 If no such SA exists, key management daemons will be used to generate
 them if
 .Fl acquire
@@ -296,7 +296,7 @@ Just like an SA, an IPCA consists of the destination
 address, a Compression Parameter Index (CPI) and a protocol (which is
 fixed to IPcomp).
 Compression algorithms are applied.
-Allowed modifiers are: 
+Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
 .Fl cpi ,
@@ -305,10 +305,10 @@ and
 .Fl forcetunnel .
 To create an IPsec SA using compression, an IPCA and an SA must first
 be created.
-After this a IPCA/SA bundle must be created using the 
+After this a IPCA/SA bundle must be created using the
 .Nm group
 keyword.
-The IPCA must be applied first. 
+The IPCA must be applied first.
 .El
 .Pp
 If no command is given
@@ -639,41 +639,41 @@ only flush SAs of type ip4.
 Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
-# ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \e\ 
-	-src 169.20.12.3 \e\ 
-	-key 638063806380638063806380638063806380638063806380 \e\ 
+# ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \e\
+	-src 169.20.12.3 \e\
+	-key 638063806380638063806380638063806380638063806380 \e\
 	-authkey 1234123412341234123412341234123412341234
 .Ed
 .Pp
 Setup a SA for authentication with old ah only:
 .Bd -literal
-# ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
+# ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \e\
 	-key 12341234deadbeef
 .Ed
 .Pp
 Setup a flow requiring use of AH:
 .Bd -literal
-# ipsecadm flow -dst 169.20.12.2 -proto ah \e\ 
+# ipsecadm flow -dst 169.20.12.2 -proto ah \e\
 	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0 -out -require
 .Ed
 .Pp
 Setup an inbound SA:
 .Bd -literal
-# ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\ 
-	-src 169.20.12.2 \e\ 
-	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e\ 
+# ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
+	-src 169.20.12.2 \e\
+	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e\
 	-authkey 12349876432167890192837465098273
 .Ed
 .Pp
 Setup an ingress flow on for the inbound SA:
 .Bd -literal
-# ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
+# ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\
 	-dst 169.20.12.2 -proto esp -in -require
 .Ed
 .Pp
 Setup a bypass flow:
 .Bd -literal
-# ipsecadm flow -bypass -out \e\ 
+# ipsecadm flow -bypass -out \e\
 	-addr 10.1.1.0 255.255.255.0 10.1.1.0 255.255.255.0
 .Ed
 .Pp

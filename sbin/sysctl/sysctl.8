@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.71 2001/12/13 20:16:48 mpech Exp $
+.\"	$OpenBSD: sysctl.8,v 1.72 2001/12/21 11:41:50 mpech Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -59,10 +59,10 @@ appropriate privilege to set kernel state.
 The state to be retrieved or set is described using a
 ``Management Information Base'' (``MIB'') style name,
 described as a dotted set of components.
-
+.Pp
 The options are as follows:
 .Bl -tag -width xxx
-.It Fl a 
+.It Fl a
 list all the currently available string or integer values.
 .It Fl A
 list all the known MIB names including tables.
