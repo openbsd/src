@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.4 2004/07/27 12:18:02 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.5 2004/07/27 16:35:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -213,7 +213,7 @@ struct cvsroot*
 cvsroot_get(const char *dir)
 {
 	size_t len;
-	char rootpath[MAXPATHLEN], *rootstr, *line;
+	char rootpath[MAXPATHLEN], *rootstr, line[128];
 	FILE *fp;
 	struct cvsroot *rp;
 
@@ -236,28 +236,19 @@ cvsroot_get(const char *dir)
 		}
 	}
 
-	line = fgetln(fp, &len);
-	if (line == NULL) {
+	if (fgets(line, sizeof(line), fp) == NULL) {
 		cvs_log(LP_ERR, "failed to read CVSROOT line from CVS/Root");
-		(void)fclose(fp);
-	}
-
-	/* line is not NUL-terminated, but we don't need to allocate an
-	 * extra byte because we don't want the trailing newline.  It will
-	 * get replaced by a \0.
-	 */
-	rootstr = (char *)malloc(len);
-	if (rootstr == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVSROOT string");
 		(void)fclose(fp);
 		return (NULL);
 	}
-	memcpy(rootstr, line, len - 1);
-	rootstr[len - 1] = '\0';
-	rp = cvsroot_parse(rootstr);
-
 	(void)fclose(fp);
-	free(rootstr);
 
-	return (rp);
+	len = strlen(line);
+	if (len == 0) {
+		cvs_log(LP_WARN, "empty CVS/Root file");
+	}
+	else if (line[len - 1] == '\n')
+		line[--len] = '\0';
+
+	return cvsroot_parse(line);
 }
