@@ -1,4 +1,4 @@
-/*	$OpenBSD: divrem.m4,v 1.4 2000/03/03 11:17:03 art Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.5 2002/08/11 12:21:33 art Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #ifdef notdef
 	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$OpenBSD: divrem.m4,v 1.4 2000/03/03 11:17:03 art Exp $"
+	.asciz "$OpenBSD: divrem.m4,v 1.5 2002/08/11 12:21:33 art Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -136,6 +136,7 @@ L.$1.eval(TWOSUPN+$2):
 
 #include "DEFS.h"
 #include <machine/trap.h>
+#include <machine/asm.h>
 
 	.globl NAME2
 NAME2:
