@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.16 2001/02/24 23:50:00 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.17 2001/02/27 08:46:10 art Exp $  */
 
 /*
  *  Portions of this code are:
@@ -164,12 +164,18 @@ sched_sync(p)
 			syncer_delayno = 0;
 		s = splbio();
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			splx(s);
-			if (VOP_ISLOCKED(vp) == 0) {
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-				(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
-				VOP_UNLOCK(vp, 0, p);
+			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT, p) != 0) {
+				/*
+				 * If we fail to get the lock, we move this
+				 * vnode one second ahead in time.
+				 * XXX - no good, but the best we can do.
+				 */
+				vn_syncer_add_to_worklist(vp, 1);
+				continue;
 			}
+			splx(s);
+			(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
+			VOP_UNLOCK(vp, 0, p);
 			s = splbio();
 			if (LIST_FIRST(slp) == vp) {
 				/*
