@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.6 1997/01/28 07:12:27 deraadt Exp $	*/
+/*	$OpenBSD: size.c,v 1.7 1997/08/23 01:59:21 mickey Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.6 1997/01/28 07:12:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.7 1997/08/23 01:59:21 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -339,6 +339,6 @@ erealloc(p, size)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: size [-w] [file ...]\n");
+	(void)fprintf(stderr, "usage: size [-tw] [file ...]\n");
 	exit(1);
 }
