@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.64 2004/02/10 10:30:24 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.65 2004/02/16 21:51:03 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -705,7 +705,7 @@ send:
 		m->m_data -= hdrlen;
 #else
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m != NULL) {
+		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(m);
@@ -718,7 +718,7 @@ send:
 		}
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
-		if (len <= MCLBYTES - hdrlen - max_linkhdr) {
+		if (len <= M_TRAILINGSPACE(m)) {
 			m_copydata(so->so_snd.sb_mb, off, (int) len,
 			    mtod(m, caddr_t) + hdrlen);
 			m->m_len += len;
@@ -750,7 +750,7 @@ send:
 			tcpstat.tcps_sndwinup++;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m != NULL) {
+		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(m);
