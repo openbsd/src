@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.10 2001/07/01 22:43:43 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.11 2001/08/24 22:45:42 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -73,33 +73,6 @@ int 	db_noisy = 0;
 int	quiet_db_read_bytes = 0;
 
 /************************/
-/* PRINTING *************/
-/************************/
-
-static void
-m88k_db_str(str)
-	char *str;
-{
-	db_printf(str);
-}
-
-static void
-m88k_db_str1(str, arg1)
-	char *str;
-	int arg1;
-{
-	db_printf(str, arg1);
-}
-
-static void
-m88k_db_str2(str, arg1, arg2)
-	char *str;
-	int arg1, arg2;
-{
-	db_printf(str, arg1, arg2);
-}
-
-/************************/
 /* 	DB_REGISTERS ****/
 /************************/
 
@@ -133,7 +106,7 @@ m88k_db_str2(str, arg1, arg2)
 /*
  * return 1 if the printing of the next stage should be surpressed
  */
-static int
+int
 m88k_dmx_print(t, d, a, no)
 	unsigned t, d, a, no;
 {
@@ -197,7 +170,7 @@ m88k_dmx_print(t, d, a, no)
 	return 0;
 }
 
-static void
+void
 m88k_db_print_frame(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -355,21 +328,6 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_printf("\n\n");
 }
 
-static void
-m88k_db_registers(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	int count;
-	char *modif;
-{
-	if (modif != NULL && *modif != 0) {
-		db_printf("usage: mach regs\n");
-		return;
-	}
-
-	m88k_db_print_frame((db_expr_t)DDB_REGS, TRUE, 0, 0);
-}
-
 /************************/
 /* PAUSE ****************/
 /************************/
@@ -377,7 +335,7 @@ m88k_db_registers(addr, have_addr, count, modif)
 /*
  * pause for 2*ticks many cycles
  */
-static void
+void
 m88k_db_pause(ticks)
 	unsigned volatile ticks;
 {
@@ -397,11 +355,11 @@ m88k_db_trap(type, regs)
 	int i;
 
 	if ((i = db_spl()) != 7)
-		m88k_db_str1("WARNING: spl is not high in m88k_db_trap (spl=%x)\n", i);
+		db_printf("WARNING: spl is not high in m88k_db_trap (spl=%x)\n", i);
 #endif /* 0 */
 
 	if (db_are_interrupts_disabled())
-		m88k_db_str("WARNING: entered debugger with interrupts disabled\n");
+		db_printf("WARNING: entered debugger with interrupts disabled\n");
 
 	switch(type) {
     
@@ -473,7 +431,7 @@ ddb_nmi_trap(level, eframe)
 	int level;
 	db_regs_t *eframe;
 {
-	NOISY(m88k_db_str("kernel: nmi interrupt\n");)
+	NOISY(db_printf("kernel: nmi interrupt\n");)
 	m88k_db_trap(T_KDB_ENTRY, eframe);
 
 	return 0;
@@ -527,10 +485,10 @@ ddb_error_trap(error, eframe)
 	char *error;
 	db_regs_t *eframe;
 {
-	m88k_db_str1("KERNEL:  terminal error [%s]\n",(int)error);
-	m88k_db_str ("KERNEL:  Exiting debugger will cause abort to rom\n");
-	m88k_db_str1("at 0x%x ", eframe->sxip & ~3);
-	m88k_db_str2("dmt0 0x%x dma0 0x%x", eframe->dmt0, eframe->dma0);
+	db_printf("KERNEL:  terminal error [%s]\n",(int)error);
+	db_printf("KERNEL:  Exiting debugger will cause abort to rom\n");
+	db_printf("at 0x%x ", eframe->sxip & ~3);
+	db_printf("dmt0 0x%x dma0 0x%x", eframe->dmt0, eframe->dma0);
 	m88k_db_pause(1000000);
 	m88k_db_trap(T_KDB_BREAK, eframe);
 }
@@ -600,7 +558,7 @@ db_getc()
 }
 
 /* display where all the cpus are stopped at */
-static void
+void
 m88k_db_where(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -632,7 +590,7 @@ m88k_db_where(addr, have_addr, count, modif)
  * If addr is given, it is assumed to an address on the stack to be
  * searched. Otherwise, r31 of the current cpu is used.
  */
-static void
+void
 m88k_db_frame_search(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -661,7 +619,7 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 }
 
 /* flush icache */
-static void
+void
 m88k_db_iflush(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -674,7 +632,7 @@ m88k_db_iflush(addr, have_addr, count, modif)
 
 /* flush dcache */
 
-static void
+void
 m88k_db_dflush(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -686,7 +644,7 @@ m88k_db_dflush(addr, have_addr, count, modif)
 }
 
 /* probe my cache */
-static void
+void
 m88k_db_peek(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -725,7 +683,7 @@ m88k_db_peek(addr, have_addr, count, modif)
 /*
  * control how much info the debugger prints about itself
  */
-static void
+void
 m88k_db_noise(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -758,7 +716,7 @@ m88k_db_noise(addr, have_addr, count, modif)
  * See how a virtual address translates.
  * Must have an address.
  */
-static void
+void
 m88k_db_translate(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -805,7 +763,7 @@ m88k_db_translate(addr, have_addr, count, modif)
 	cmmu_show_translation(addr, supervisor_flag, verbose_flag, -1);
 }
 
-static void
+void
 m88k_db_cmmucfg(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -835,7 +793,7 @@ m88k_db_prom_cmd(void)
 /* COMMAND TABLE / INIT */
 /************************/
 
-static struct db_command m88k_cache_cmds[] =
+struct db_command m88k_cache_cmds[] =
 {
     { "iflush",    m88k_db_iflush, 0, 0},
     { "dflush",    m88k_db_dflush, 0, 0},
@@ -848,7 +806,6 @@ struct db_command db_machine_cmds[] =
     {"cache",		0,			0, m88k_cache_cmds},
     {"frame",		m88k_db_print_frame,	0, 0},
     {"noise",		m88k_db_noise,		0, 0},
-    {"regs",		m88k_db_registers,	0, 0},
     {"searchframe",	m88k_db_frame_search,	0, 0},
     {"translate",	m88k_db_translate,      0, 0},
     {"cmmucfg",		m88k_db_cmmucfg,        0, 0},
