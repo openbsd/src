@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.16 2004/07/08 01:21:09 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.17 2004/07/08 15:06:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -285,9 +285,8 @@ ntp_adjtime(struct ntpd_conf *conf)
 
 	offset_median /= offset_cnt;
 
-	if (offset_median >= 0.001 || offset_median <= 0.001)
-		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
-			    &offset_median, sizeof(offset_median));
+	imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
+		    &offset_median, sizeof(offset_median));
 }
 
 int
