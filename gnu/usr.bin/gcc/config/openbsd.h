@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.h,v 1.17 1999/02/17 12:57:52 espie Exp $	*/
+/* $OpenBSD: openbsd.h,v 1.18 1999/02/28 15:44:58 espie Exp $	*/
 
 /* common OpenBSD configuration. 
    All OpenBSD architectures include this file, which is intended as
@@ -55,6 +55,18 @@
 
 /* Controlling the compilation driver 
  * ---------------------------------- */
+/* CPP_SPEC appropriate for OpenBSD. We deal with -posix and -pthread.
+   XXX the way threads are handling currently is not very satisfying,
+   since all code must be compiled with -pthread to work. 
+   This two-stage defines makes it easy to pick that for targets that
+   have subspecs.  */
+#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
+
+/* LIB_SPEC appropriate for OpenBSD.  Select the appropriate libc, 
+   depending on profiling and threads.  Basically, 
+   -lc(_r)?(_p)?, select _r for threads, and _p for p or pg.  */
+#define OBSD_LIB_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
+
 #ifndef OBSD_HAS_CORRECT_SPECS
 
 #ifndef OBSD_NO_DYNAMIC_LIBRARIES
@@ -64,12 +76,8 @@
    || (CHAR) == 'R')
 #endif
 
-/* CPP_SPEC appropriate for OpenBSD. We deal with -posix and -pthread.
-   XXX the way threads are handling currently is not very satisfying,
-   since all code must be compiled with -pthread to work.
- */
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
+#define CPP_SPEC OBSD_CPP_SPEC
 
 #ifdef OBSD_OLD_GAS
 /* ASM_SPEC appropriate for OpenBSD.  For some architectures, OpenBSD 
@@ -96,11 +104,8 @@
   "%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 #endif
 
-/* LIB_SPEC appropriate for OpenBSD.  Select the appropriate libc, 
-   depending on profiling and threads.
-   Basically, -lc(_r)?(_p)?, select _r for threads, and _p for p or pg.  */
 #undef LIB_SPEC
-#define LIB_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
+#define LIB_SPEC OBSD_LIB_SPEC
 #endif
 
 
