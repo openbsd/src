@@ -496,6 +496,11 @@ AddModule modules/standard/mod_auth.o
 
 AddModule modules/standard/mod_setenvif.o
 
+## mod_keynote adds RFC 2704 KeyNote-based authentication support.
+## It requires that mod_ssl also be configured in order to function.
+
+# AddModule modules/keynote/mod_keynote.o
+
 ## mod_ssl incorporates SSL into Apache.
 ## It must stay last here to be first in execution to 
 ## fake basic authorization.

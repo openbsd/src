@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.23 2001/08/06 18:45:03 brad Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.24 2001/10/03 01:24:22 millert Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -38,6 +38,7 @@ HTTPD_RUNDIR=		${HTTPD_PREFIX}/logs
 HTTPD_LOGDIR=		${HTTPD_PREFIX}/logs
 
 CONFIG_ARGS=	--with-layout="OpenBSD" --enable-module="ssl" \
+	--enable-module="keynote" \
 	--enable-suexec --suexec-caller="www" \
 	--suexec-docroot="${HTTPD_HTDOCSDIR}" \
 	--suexec-logfile="/var/log/suexec_log" --suexec-userdir="public_html" \
