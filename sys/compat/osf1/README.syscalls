@@ -1,3 +1,4 @@
+$OpenBSD: README.syscalls,v 1.2 1996/08/02 20:35:25 niklas Exp $
 $NetBSD: README.syscalls,v 1.1 1995/02/13 21:39:03 cgd Exp $
 
 Once the new syscall argument-handling method was implemented, most

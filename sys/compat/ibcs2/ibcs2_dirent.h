@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_dirent.h,v 1.2 1996/08/02 20:35:02 niklas Exp $	*/
 /*	$NetBSD: ibcs2_dirent.h,v 1.3 1995/10/09 11:23:57 mycroft Exp $	*/
 
 /*

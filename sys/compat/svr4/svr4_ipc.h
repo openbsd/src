@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_ipc.h,v 1.2 1996/08/02 20:35:40 niklas Exp $	*/
 /*	$NetBSD: svr4_ipc.h,v 1.1 1995/10/14 20:24:32 christos Exp $	*/
 
 /*

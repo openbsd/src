@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_signal.h,v 1.3 1996/08/02 20:35:41 niklas Exp $	 */
 /*	$NetBSD: svr4_signal.h,v 1.14 1995/10/14 20:24:41 christos Exp $	 */
 
 /*

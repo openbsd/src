@@ -1,3 +1,4 @@
+/*	$OpenBSD: freebsd_file.c,v 1.5 1996/08/02 20:34:45 niklas Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*

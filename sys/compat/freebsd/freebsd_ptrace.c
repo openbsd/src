@@ -1,3 +1,4 @@
+/*	$OpenBSD: freebsd_ptrace.c,v 1.3 1996/08/02 20:34:47 niklas Exp $	*/
 /*	$NetBSD: freebsd_ptrace.c,v 1.2 1996/05/03 17:03:12 christos Exp $	*/
 
 /*-

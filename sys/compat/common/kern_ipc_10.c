@@ -1,3 +1,4 @@
+/*	$OpenBSD: kern_ipc_10.c,v 1.2 1996/08/02 20:34:42 niklas Exp $	*/
 /*	$NetBSD: kern_ipc_10.c,v 1.4 1995/10/07 06:26:25 mycroft Exp $	*/
 
 /*

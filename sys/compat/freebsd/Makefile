@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/08/02 20:34:43 niklas Exp $
 #	$NetBSD: Makefile,v 1.1 1995/10/10 01:19:24 mycroft Exp $
 
 SYS=	../..

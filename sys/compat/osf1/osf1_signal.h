@@ -1,3 +1,5 @@
+/*	$OpenBSD: osf1_signal.h,v 1.2 1996/08/02 20:35:27 niklas Exp $	*/
+
 #ifndef _OSF1_SIGNAL_H
 #define _OSF1_SIGNAL_H
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_signal.h,v 1.3 1996/08/02 20:35:09 niklas Exp $	*/
 /*	$NetBSD: ibcs2_signal.h,v 1.8 1996/05/03 17:05:28 christos Exp $	*/
 
 /*

@@ -1,3 +1,5 @@
+/*	$OpenBSD: osf1_signal.c,v 1.3 1996/08/02 20:35:26 niklas Exp $	*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>

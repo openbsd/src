@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_exec.h,v 1.2 1996/08/02 20:35:37 niklas Exp $	 */
 /*	$NetBSD: svr4_exec.h,v 1.7 1995/07/02 06:16:06 christos Exp $	 */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_termios.h,v 1.2 1996/08/02 20:35:15 niklas Exp $	*/
 /*	$NetBSD: ibcs2_termios.h,v 1.3 1994/10/26 02:53:07 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_ipc.c,v 1.3 1996/08/02 20:35:07 niklas Exp $	*/
 /*	$NetBSD: ibcs2_ipc.c,v 1.6 1996/05/03 17:05:23 christos Exp $	*/
 
 /*

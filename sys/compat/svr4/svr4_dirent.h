@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_dirent.h,v 1.2 1996/08/02 20:35:35 niklas Exp $	 */
 /*	$NetBSD: svr4_dirent.h,v 1.4 1995/10/07 06:27:37 mycroft Exp $	 */
 
 /*

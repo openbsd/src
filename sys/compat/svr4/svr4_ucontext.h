@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_ucontext.h,v 1.2 1996/08/02 20:35:47 niklas Exp $	 */
 /*	$NetBSD: svr4_ucontext.h,v 1.3 1995/08/14 01:13:29 mycroft Exp $	 */
 
 /*

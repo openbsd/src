@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_types.h,v 1.3 1996/08/02 20:35:46 niklas Exp $	 */
 /*	$NetBSD: svr4_types.h,v 1.7 1995/10/14 20:25:04 christos Exp $	 */
 
 /*

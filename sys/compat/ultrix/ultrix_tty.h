@@ -1,3 +1,4 @@
+/*	$OpenBSD: ultrix_tty.h,v 1.3 1996/08/02 20:35:54 niklas Exp $	*/
 /*	$NetBSD: ultrix_tty.h,v 1.2 1996/01/04 19:03:36 jonathan Exp $	*/
 
 /* From:  NetBSD sunos.h,v 1.4 1995/03/04 09:50:00 pk Exp 	*/

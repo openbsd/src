@@ -1,3 +1,4 @@
+/*	$OpenBSD: hpux_tty.c,v 1.3 1996/08/02 20:35:00 niklas Exp $	*/
 /*	$NetBSD: hpux_tty.c,v 1.13 1995/12/11 16:32:46 thorpej Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: sunos_dirent.h,v 1.3 1996/08/02 20:35:31 niklas Exp $	 */
 /*	$NetBSD: sunos_dirent.h,v 1.1 1995/10/09 11:24:10 mycroft Exp $	 */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: freebsd_exec.c,v 1.3 1996/08/02 20:34:44 niklas Exp $	*/
 /*	$NetBSD: freebsd_exec.c,v 1.2 1996/05/18 16:02:08 christos Exp $	*/
 
 /*

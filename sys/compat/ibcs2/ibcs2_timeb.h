@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_timeb.h,v 1.3 1996/08/02 20:35:16 niklas Exp $	*/
 /*	$NetBSD: ibcs2_timeb.h,v 1.2 1996/05/03 17:05:34 christos Exp $	*/
 
 /*

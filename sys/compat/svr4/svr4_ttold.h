@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_ttold.h,v 1.2 1996/08/02 20:35:46 niklas Exp $	 */
 /*	$NetBSD: svr4_ttold.h,v 1.2 1994/11/18 02:54:25 christos Exp $	 */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_filio.h,v 1.2 1996/08/02 20:35:38 niklas Exp $	 */
 /*	$NetBSD: svr4_filio.h,v 1.2 1994/11/18 02:53:45 christos Exp $	 */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_hrt.h,v 1.2 1996/08/02 20:35:39 niklas Exp $	 */
 /*	$NetBSD: svr4_hrt.h,v 1.1 1994/11/18 02:56:09 christos Exp $	 */
 
 /*

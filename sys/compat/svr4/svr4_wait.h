@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_wait.h,v 1.2 1996/08/02 20:35:49 niklas Exp $	 */
 /*	$NetBSD: svr4_wait.h,v 1.5 1995/03/31 03:06:50 christos Exp $	 */
 
 /*

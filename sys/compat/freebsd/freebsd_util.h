@@ -1,3 +1,4 @@
+/*	$OpenBSD: freebsd_util.h,v 1.2 1996/08/02 20:34:50 niklas Exp $	*/
 /*	$NetBSD: freebsd_util.h,v 1.1 1995/10/10 01:19:38 mycroft Exp $	*/
 
 /*

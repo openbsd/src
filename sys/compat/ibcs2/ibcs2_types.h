@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_types.h,v 1.2 1996/08/02 20:35:16 niklas Exp $	*/
 /*	$NetBSD: ibcs2_types.h,v 1.5 1995/08/14 01:11:54 mycroft Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_statfs.h,v 1.2 1996/08/02 20:35:12 niklas Exp $	*/
 /*	$NetBSD: ibcs2_statfs.h,v 1.2 1994/10/26 02:53:06 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ibcs2_utime.h,v 1.3 1996/08/02 20:35:18 niklas Exp $	*/
 /*	$NetBSD: ibcs2_utime.h,v 1.2 1996/05/03 17:05:35 christos Exp $	*/
 
 /*

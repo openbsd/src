@@ -1,3 +1,4 @@
+/*	$OpenBSD: ultrix_ioctl.c,v 1.5 1996/08/02 20:35:51 niklas Exp $ */
 /*	$NetBSD: ultrix_ioctl.c,v 1.3.4.1 1996/06/13 18:22:37 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: svr4_fuser.h,v 1.2 1996/08/02 20:35:38 niklas Exp $	 */
 /*	$NetBSD: svr4_fuser.h,v 1.3 1994/10/29 00:43:20 christos Exp $	 */
 
 /*

@@ -1,3 +1,4 @@
+#	$OpenBSD: files.hpux,v 1.3 1996/08/02 20:34:52 niklas Exp $
 #	$NetBSD: files.hpux,v 1.2 1995/11/28 08:39:52 thorpej Exp $
 #
 # Config.new file description for machine-independent HPUX compat code.
