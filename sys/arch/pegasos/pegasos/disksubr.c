@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.1 2003/10/31 03:54:33 drahn Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.2 2003/11/13 23:00:55 drahn Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -43,13 +43,24 @@
 
 #define	b_cylin	b_resid
 
-#define BOOT_MAGIC 0xAA55
-#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
-
 void
 dk_establish(struct disk *dk, struct device *dev)
 {
 }
+
+int
+try_rdb_label(dev_t dev, void (*strat)(struct buf *), struct buf *bp,
+    struct disklabel *lp, struct cpu_disklabel *osdep, char **pmsg,
+    int *bsdpartoff);
+int
+try_hfs_label(dev_t dev, void (*strat)(struct buf *), struct buf *bp,
+    struct disklabel *lp, struct cpu_disklabel *osdep, char **pmsg,
+    int *bsdpartoff);
+int
+try_mbr_label(dev_t dev, void (*strat)(struct buf *), struct buf *bp,
+    struct disklabel *lp, struct cpu_disklabel *osdep, char **pmsg,
+    int *bsdpartoff);
+
 
 /*
  * Attempt to read a disk label from a device
@@ -59,32 +70,17 @@ dk_establish(struct disk *dk, struct device *dev)
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
  *
- * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition. Also, if bad block
- * table needed, attempt to extract it as well. Return buffer
- * for use in signalling errors if requested.
- *
- * We would like to check if each MBR has a valid BOOT_MAGIC, but
- * we cannot because it doesn't always exist. So.. we assume the
- * MBR is valid.
- *
  * Returns null on success and an error string on failure.
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
-	struct dos_partition *dp = osdep->dosparts, *dp2;
 	struct dkbad *bdp = &DKBAD(osdep);
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL, *cp;
-	char *s;
-	int dospartoff, cyl, i, ourpart = -1;
-	/* HFS variables */
-	int part_cnt, n, hfspartoff;
-	struct part_map_entry *part;
-
+	char *msg = NULL;
+	int partoff, i, found;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
@@ -104,227 +100,22 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* DPME (HFS) disklabel */
+	partoff = -1;
 
-	bp->b_blkno = 1;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
-	(*strat)(bp);
-
-	/* if successful, wander through DPME partition table */
-	if (biowait(bp)) {
-		msg = "DPME partition I/O error";
-		goto hfs_done;
-	}
-
-	part = (struct part_map_entry *)bp->b_data;
-	/* if first partition is not valid, assume not HFS/DPME partitioned */
-        if (part->pmSig != PART_ENTRY_MAGIC) {
-		osdep->macparts[0].pmSig = 0; /* make invalid */
-		goto hfs_done;
-        }
-	osdep->macparts[0] = *part;
-	part_cnt = part->pmMapBlkCnt;
-	n = 0;
-	for (i = 0; i < part_cnt; i++) {
-		struct partition *pp = &lp->d_partitions[8+n];
-
-		bp->b_blkno = 1+i;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = 1+i / lp->d_secpercyl;
-		(*strat)(bp);
-
-		if (biowait(bp)) {
-			msg = "DPME partition I/O error";
-			goto hfs_done;
-		}
-		part = (struct part_map_entry *)bp->b_data;
-		/* toupper the string, in case caps are different... */
-		for (s = part->pmPartType; *s; s++)
-			if ((*s >= 'a') && (*s <= 'z'))
-				*s = (*s - 'a' + 'A');
-
-		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0) {
-			hfspartoff = part->pmPyPartStart;
-			osdep->macparts[1] = *part;
-		}
-		/* currently we ignore all but HFS partitions */
-		if (strcmp(part->pmPartType, PART_TYPE_MAC) == 0) {
-			pp->p_offset = part->pmPyPartStart;
-			pp->p_size = part->pmPartBlkCnt;
-			pp->p_fstype = FS_HFS;
-			n++;
-		}
-	}
-	lp->d_npartitions = MAXPARTITIONS;
-
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
-		goto done;
-
-	/* next, dig out disk label */
-	bp->b_blkno = hfspartoff;
-	bp->b_cylin = hfspartoff/lp->d_secpercyl; /* XXX */
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	if (biowait(bp)) {
-		/* XXX we return the faked label built so far */
-		msg = "disk label I/O error";
-		goto done;
-	}
-	goto found_disklabel;
-
-
-hfs_done:
-	/* MBR type disklabel */
-	/* do dos partitions in the process of getting disklabel? */
-	dospartoff = 0;
-	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
-	        daddr_t part_blkno = DOSBBSECTOR;
-		unsigned long extoff = 0;
-		int wander = 1, loop = 0;
-		n = 0;
-
-		/*
-		 * Read dos partition table, follow extended partitions.
-		 * Map the partitions to disklabel entries i-p
-		 */
-		while (wander && n < 8 && loop < 8) {
-		        loop++;
-			wander = 0;
-			if (part_blkno < extoff)
-				part_blkno = extoff;
-
-			/* read boot record */
-			bp->b_blkno = part_blkno;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_flags = B_BUSY | B_READ;
-			bp->b_cylin = part_blkno / lp->d_secpercyl;
-			(*strat)(bp);
-
-			/* if successful, wander through dos partition table */
-			if (biowait(bp)) {
-				msg = "dos partition I/O error";
-				goto done;
-			}
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
-
-			if (ourpart == -1) {
-				/* Search for our MBR partition */
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (get_le(&dp2->dp_size) &&
-					    dp2->dp_typ == DOSPTYP_OPENBSD)
-						ourpart = i;
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (get_le(&dp2->dp_size) &&
-					    dp2->dp_typ == DOSPTYP_FREEBSD)
-						ourpart = i;
-				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
-				    i++, dp2++)
-					if (get_le(&dp2->dp_size) &&
-					    dp2->dp_typ == DOSPTYP_NETBSD)
-						ourpart = i;
-				if (ourpart == -1)
-					goto donot;
-				/*
-				 * This is our MBR partition.
-				 * need sector address * for SCSI/IDE,
-				 * cylinder for ESDI/ST506/RLL
-				 */
-				dp2 = &dp[ourpart];
-				dospartoff = get_le(&dp2->dp_start) +
-				    part_blkno;
-				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
-
-				/* XXX build a temporary disklabel */
-				lp->d_partitions[0].p_size =
-				    get_le(&dp2->dp_size);
-				lp->d_partitions[0].p_offset =
-				    get_le(&dp2->dp_start) + part_blkno;
-				if (lp->d_ntracks == 0)
-					lp->d_ntracks = dp2->dp_ehd + 1;
-				if (lp->d_nsectors == 0)
-					lp->d_nsectors = DPSECT(dp2->dp_esect);
-				if (lp->d_secpercyl == 0)
-					lp->d_secpercyl = lp->d_ntracks *
-					    lp->d_nsectors;
-			}
-donot:
-			/*
-			 * In case the disklabel read below fails, we want to
-			 * provide a fake label in i-p.
-			 */
-			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
-				struct partition *pp = &lp->d_partitions[8+n];
-
-				if (dp2->dp_typ == DOSPTYP_OPENBSD)
-					continue;
-				if (get_le(&dp2->dp_size) > lp->d_secperunit)
-					continue;
-				if (get_le(&dp2->dp_size))
-					pp->p_size = get_le(&dp2->dp_size);
-				if (get_le(&dp2->dp_start))
-					pp->p_offset =
-					    get_le(&dp2->dp_start) + part_blkno;
-
-				switch (dp2->dp_typ) {
-				case DOSPTYP_UNUSED:
-					for (cp = (char *)dp2;
-					    cp < (char *)(dp2 + 1); cp++)
-						if (*cp)
-							break;
-					/*
-					 * Was it all zeroes?  If so, it is
-					 * an unused entry that we don't
-					 * want to show.
-					 */
-					if (cp == (char *)(dp2 + 1))
-					    continue;
-					lp->d_partitions[8 + n++].p_fstype =
-					    FS_UNUSED;
-					break;
-
-				case DOSPTYP_LINUX:
-					pp->p_fstype = FS_EXT2FS;
-					n++;
-					break;
-
-				case DOSPTYP_FAT12:
-				case DOSPTYP_FAT16S:
-				case DOSPTYP_FAT16B:
-				case DOSPTYP_FAT16C:
-				case DOSPTYP_FAT32:
-					pp->p_fstype = FS_MSDOS;
-					n++;
-					break;
-				case DOSPTYP_EXTEND:
-				case DOSPTYP_EXTENDL:
-					part_blkno = get_le(&dp2->dp_start) + extoff;
-					if (!extoff) {
-						extoff = get_le(&dp2->dp_start);
-						part_blkno = 0;
-					}
-					wander = 1;
-					break;
-				default:
-					pp->p_fstype = FS_OTHER;
-					n++;
-					break;
-				}
-			}
-		}
-		lp->d_bbsize = 8192;
-		lp->d_sbsize = 64*1024;		/* XXX ? */
-		lp->d_npartitions = MAXPARTITIONS;
+	/* try hfs */
+	found = try_hfs_label(dev, strat, bp, lp, osdep, &msg, &partoff);
+	/* if no hfs or mbr, try rdb */
+	if (found == 0)
+		found = try_rdb_label(dev, strat, bp, lp, osdep, &msg,
+		    &partoff);
+	/* if no hfs, try mbr */
+	if (found == 0)
+		found = try_mbr_label(dev, strat, bp, lp, osdep, &msg,
+		    &partoff);
+	/* if no partition found, return */
+	if  (found == 0 || partoff == -1) {
+		/* no special partition table found try raw labeled disk. */
+		partoff = LABELSECTOR;
 	}
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
@@ -332,8 +123,8 @@ donot:
 		goto done;
 
 	/* next, dig out disk label */
-	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_blkno = partoff;
+	bp->b_cylin = partoff/lp->d_secpercyl; /* XXX */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -345,10 +136,9 @@ donot:
 		goto done;
 	}
 
-found_disklabel:
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data +
-	        lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
+		sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -505,6 +295,21 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		error = 1; /* EPERM? */
 		goto done;
 	}
+
+	/* label RDB disk */
+	if (osdep->rd_bsdlbl != 0) {
+		/* we have a location for the BSD label */
+		/* Really need to add some validation code here */
+		bp->b_blkno = osdep->rd_bsdlbl;
+		bp->b_cylin = bp->b_blkno/lp->d_secpercyl;
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_WRITE;
+		*(struct disklabel *)bp->b_data = *lp;
+		(*strat)(bp);
+		error = biowait(bp);
+		goto done;
+	}
+
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
