@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/06/19 02:28:36 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/08/22 00:35:37 deraadt Exp $
 
 .PATH: ${.CURDIR}/md
 
@@ -19,6 +19,7 @@ md4hl.c: mdXhl.c
 md5hl.c: mdXhl.c
 	sed -e 's/mdX/md5/g' -e 's/MDX/MD5/g' $> > $@
 
+.if !defined(NOMAN)
 md4.3:	mdX.3
 	sed -e 's/mdX/md4/g' -e 's/MDX/MD4/g' $> > $@
 	cat ${>:H}/md4.copyright >> $@
@@ -26,5 +27,6 @@ md4.3:	mdX.3
 md5.3:	mdX.3
 	sed -e 's/mdX/md5/g' -e 's/MDX/MD5/g' $> > $@
 	cat ${>:H}/md5.copyright >> $@
+.endif
 
 beforedepend:	md4hl.c md5hl.c
