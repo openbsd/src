@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.14 2005/01/14 22:39:11 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.15 2005/01/28 18:56:27 danh Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -328,7 +328,7 @@ _mkdev({-wsdisp-}, tty[C-F]*, {-U=${i##tty[C-F]}
 	ttyF*) n=F m=expr(3*256);;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c major_wsdisp_c {-$(( 16#$U + $m ))-} 600;;
+	[0-9a-f]) M tty$n$U c major_wsdisp_c Add(16#$U, $m) 600;;
 	cfg) M tty${n}cfg c major_wsdisp_c Add(255,$m) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac-})dnl
@@ -395,9 +395,9 @@ __devitem(uscan, uscanner*, Scanners,uscanner)dnl
 _mcdev({-uscan-}, uscanner*, {-uscanner-}, {-major_uscan_c-}, 660)dnl
 __devitem(ugen, ugen*, Generic USB devices)dnl
 _mkdev(ugen, ugen*, {-n=Mult($U, 16)
-	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
 	do
-		M ugen$U.$j c major_ugen_c Add($n, $j) 660
+		M ugen$U.$j c major_ugen_c Add($n, 10#$j) 660
 	done-})dnl
 __devtitle(call, Call units)dnl
 __devtitle(term, Terminal ports)dnl

@@ -1,5 +1,5 @@
 vers(__file__,
-        {-$OpenBSD: MAKEDEV.md,v 1.16 2004/04/11 18:05:23 millert Exp $-},
+        {-$OpenBSD: MAKEDEV.md,v 1.17 2005/01/28 18:56:27 danh Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -317,10 +317,10 @@ uhid*)
 	;;
 
 ugen*)
-	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
 	do
 		rm -f ugen$unit.$j
-		mknod ugen$unit.$j c 63 $(( $unit * 16 + $j ))
+		mknod ugen$unit.$j c 63 $(( $unit * 16 + 10#$j ))
 		chown root:wheel ugen$unit.$j
 		chmod 660 ugen$unit.$j
 	done
