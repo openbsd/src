@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2002/07/15 21:29:16 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/10/05 17:56:43 mickey Exp $
 
 # Makefile for hppa tags file and boot blocks
 
@@ -13,11 +13,12 @@ SUBDIR=	stand
 THPPA=	$S/arch/hppa/tags
 SHPPA=	$S/arch/hppa/hppa/*.[ch] $S/arch/hppa/include/*.h \
 	$S/arch/hppa/dev/*.[ch] $S/arch/hppa/gsc/*.[ch] \
-	$S/arch/hppa/eisa/*.[ch] $S/arch/hppa/isa/*.[ch]
-AHPPA=	$S/arch/hppa/hppa/*.S $S/lib/libkern/arch/hppa/*.[sS]
+	$S/arch/hppa/spmath/*.[ch]
+AHPPA=	$S/arch/hppa/hppa/*.S $S/arch/hppa/spmath/*.S \
+	$S/lib/libkern/arch/hppa/*.[sS]
 
 # Directories in which to place hppa tags links
-DHPPA=	conf dev gsc hppa eisa isa include
+DHPPA=	conf dev gsc hppa spmath include
 
 tags:
 	-ctags -wdtf ${THPPA} ${COMM} ${SHPPA}
