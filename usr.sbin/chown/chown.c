@@ -1,4 +1,4 @@
-/*	$OpenBSD: chown.c,v 1.11 1999/09/17 14:58:42 kstailey Exp $	*/
+/*	$OpenBSD: chown.c,v 1.12 2000/01/14 03:08:03 ericj Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.11 1999/09/17 14:58:42 kstailey Exp $";
+static char *rcsid = "$Id: chown.c,v 1.12 2000/01/14 03:08:03 ericj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,26 +76,25 @@ main(argc, argv)
 {
 	FTS *ftsp;
 	FTSENT *p;
-	int Hflag, Lflag, Pflag, ch, fts_options, hflag, rval;
+	int Hflag, Lflag, ch, fts_options, hflag, rval;
 	char *cp;
 	
 	setlocale(LC_ALL, "");
 
 	ischown = __progname[2] == 'o';
 	
-	Hflag = Lflag = Pflag = hflag = 0;
+	Hflag = Lflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfh")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
-			Lflag = Pflag = 0;
+			Lflag = 0;
 			break;
 		case 'L':
 			Lflag = 1;
-			Hflag = Pflag = 0;
+			Hflag = 0;
 			break;
 		case 'P':
-			Pflag = 1;
 			Hflag = Lflag = 0;
 			break;
 		case 'R':
