@@ -1,4 +1,4 @@
-/* $OpenBSD: eephy.c,v 1.1 2001/04/13 00:25:02 mjacob Exp $ */
+/* $OpenBSD: eephy.c,v 1.2 2001/04/14 09:36:20 deraadt Exp $ */
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -108,9 +108,15 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags |= MIIF_NOISOLATE;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+#ifdef __OpenBSD__
+#define PRINT(s)
+#else
 #define PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#endif
 
+#ifndef __OpenBSD__
 	printf("%s: ", sc->mii_dev.dv_xname);
+#endif
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX, sc->mii_inst),
 			E1000_CR_SPEED_1000 | E1000_CR_FULL_DUPLEX);
 	PRINT("1000baseTX-FDX");
@@ -135,7 +141,9 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), 0);
 	PRINT("auto");
 
+#ifndef __OpenBSD__
 	printf("\n");
+#endif
 #undef ADD
 #undef PRINT
 
