@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.230 2003/05/14 22:08:04 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.231 2003/05/14 22:53:59 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1253,7 +1253,7 @@ tm86_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-#ifdef LONGRUN
+#ifndef SMALL_KERNEL
 	extern int longrun_enabled;
 
 	longrun_enabled = 1;
@@ -2670,7 +2670,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &user_ldt_enable));
 #endif
-#ifdef LONGRUN
+#ifndef SMALL_KERNEL
 	case CPU_LONGRUN:
 		return (longrun_sysctl(oldp, oldlenp, newp, newlen));
 #endif
