@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.4 1999/09/29 18:16:20 dugsong Exp $
+.\" $Id: ssh.1,v 1.5 1999/09/30 08:52:34 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -20,12 +20,12 @@
 .Sh SYNOPSIS
 .Nm ssh
 .Op Fl l Ar login_name
-.Ar hostname
+.Op Ar hostname | user@hostname
 .Op Ar command
 .Pp
 .Nm ssh
 .Op Fl agknqtvxXC
-.Op Fl c Ar blowfish|idea|des|3des|none
+.Op Fl c Ar blowfish|3des|none
 .Op Fl e Ar escape_char
 .Op Fl i Ar identity_file
 .Op Fl l Ar login_name
@@ -33,12 +33,12 @@
 .Op Fl p Ar port
 .Op Fl L Ar port:host:hostport
 .Op Fl R Ar port:host:hostport
-.Ar hostname
+.Op Ar hostname | user@hostname
 .Op Ar command
 .Sh DESCRIPTION 
 .Nm
-(Secure Shell) a program for logging into a remote machine and for
-executing commands in a remote machine.  It is intended to replace
+(Secure Shell) is a program for logging into a remote machine and for
+executing commands on a remote machine.  It is intended to replace
 rlogin and rsh, and provide secure encrypted communications between
 two untrusted hosts over an insecure network.  X11 connections and
 arbitrary TCP/IP ports can also be forwarded over the secure channel.
@@ -253,16 +253,18 @@ host key is not known or has changed.
 .It Fl a
 Disables forwarding of the authentication agent connection. This may
 also be specified on a per-host basis in the configuration file.
-.It Fl c Ar blowfish|idea|des|3des|none
+.It Fl c Ar blowfish|3des|none
 Selects the cipher to use for encrypting the session. 
 .Ar 3des
 is used by default.  It is believed to be secure. 
-.Ar des
-is the data encryption standard, but is breakable by 
-governments, large corporations, and major criminal organizations.
 .Ar 3des
-(triple-des) is encrypt-decrypt-encrypt triple with three different keys.
-It is presumably more secure than DES.
+(triple-des) is an encrypt-decrypt-encrypt triple with three different keys.
+It is presumably more secure than the
+.Ar des
+cipher which is no longer supported in ssh.
+.Ar blowfish
+is a fast block cipher, it appears very secure and is much faster than
+.Ar 3des .  
 .Ar none
 disables encryption entirely; it is only intended for debugging, and
 it renders the connection insecure.
@@ -451,8 +453,6 @@ or
 .It Cm Cipher
 Specifies the cipher to use for encrypting the session.  Currently,
 .Dq blowfish ,
-.Dq idea ,
-.Dq des ,
 .Dq 3des ,
 and
 .Dq none
@@ -893,32 +893,26 @@ started.
 See the 
 .Xr sshd 8
 manual page for more information.
-.Sh INSTALLATION
-.Nm
-is normally installed as suid root.  It needs root privileges only for
-rhosts authentication (rhosts authentication requires that the
-connection must come from a privileged port, and allocating such a
-port requires root privileges).  It also needs to be able to read
-.Pa /etc/ssh_host_key
-to perform RSA
-host authentication.  It is possible to use
-.Nm
-without root privileges, but rhosts authentication will then be
-disabled.  
-.Nm
-drops any extra privileges immediately after the connection to the
-remote host has been made.
-.Pp
-Considerable work has been put into making
-.Xr sshd 8
-secure.  However, if you find a security problem, please report it
-immediately to <ssh-bugs@cs.hut.fi>.
+.It Pa libcrypto.so.X.1
+A version of this library which includes support for the RSA algorithm
+is required for proper operation.
 .Sh AUTHOR
 Tatu Ylonen <ylo@cs.hut.fi>
 .Pp
 Issues can be found from the SSH WWW home page:
 .Pp
 .Dl http://www.cs.hut.fi/ssh
+.Pp
+This version of
+.Nm
+is a derivative of the original 1.2.16 release, but with bugs removed and
+newer features re-added.   Rapidly after 1.2.16 release newer versions bore
+successively more restrictive licenses.  In this version, all components
+of a restrictive nature (ie. patents) have been directly removed from the
+source code; any licensed or patented components are chosen from external
+libraries.  The libraries described in
+.Xr ssl 8
+are required for proper operation.
 .Sh SEE ALSO
 .Xr make-ssh-known-hosts 1 ,
 .Xr rlogin 1 ,
@@ -928,4 +922,5 @@ Issues can be found from the SSH WWW home page:
 .Xr ssh-agent 1 ,
 .Xr ssh-keygen 1 ,
 .Xr telnet 1 ,
-.Xr sshd 8
+.Xr sshd 8 ,
+.Xr ssl 8
