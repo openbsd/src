@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.33 2001/08/25 21:50:13 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.34 2001/09/02 18:45:41 jakob Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -61,6 +61,7 @@ char   *sflag;					/* Source Address */
 int	tflag;					/* Telnet Emulation */
 int	uflag;					/* UDP - Default to TCP */
 int	vflag;					/* Verbosity */
+int	xflag;					/* Socks proxy */
 int	zflag;					/* Port Scan Flag */
 
 int timeout;
@@ -88,6 +89,9 @@ main(argc, argv)
 	struct servent *sv;
 	socklen_t len;
 	struct sockaddr *cliaddr;
+	char *proxy;
+	char *proxyhost, *proxyport;
+	struct addrinfo proxyhints;
 
 	ret = 1;
 	s = 0;
@@ -96,7 +100,7 @@ main(argc, argv)
 	endp = NULL;
 	sv = NULL;
 
-	while ((ch = getopt(argc, argv, "46hi:klnp:rs:tuvw:z")) != -1) {
+	while ((ch = getopt(argc, argv, "46hi:klnp:rs:tuvw:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -144,6 +148,10 @@ main(argc, argv)
 			if (timeout < 0 || *endp != '\0')
 				errx(1, "timeout cannot be negative");
 			break;
+		case 'x':
+			xflag = 1;
+			proxy = strdup(optarg);
+			break;
 		case 'z':
 			zflag = 1;
 			break;
@@ -182,6 +190,33 @@ main(argc, argv)
 	hints.ai_protocol = uflag ? IPPROTO_UDP : IPPROTO_TCP;
 	if (nflag)
 		hints.ai_flags |= AI_NUMERICHOST;
+
+	if (xflag) {
+		char *tmp;
+
+		if (uflag)
+			errx(1, "no proxy support for UDP mode");
+
+		if (lflag)
+			errx(1, "no proxy support for listen");
+
+		/* XXX IPv6 transport to proxy would probably work */
+		if (family == AF_INET6)
+			errx(1, "no proxy support for IPv6");
+
+		if (sflag)
+			errx(1, "no proxy support for local source address");
+
+		proxyhost = strsep(&proxy, ":");
+		proxyport = proxy;
+
+		memset(&proxyhints, 0, sizeof(struct addrinfo));
+		proxyhints.ai_family = family;
+		proxyhints.ai_socktype = SOCK_STREAM;
+		proxyhints.ai_protocol = IPPROTO_TCP;
+		if (nflag)
+			proxyhints.ai_flags |= AI_NUMERICHOST;
+	}
 
 	if (lflag) {
 		int connfd;
@@ -236,8 +271,14 @@ main(argc, argv)
 			
 			if (s)
 				close(s);
-	
-			if ((s = remote_connect(host, portlist[i], hints)) < 0)
+
+			if (xflag)
+				s = socks_connect(host, portlist[i], hints,
+				    proxyhost, proxyport, proxyhints);
+			else
+				s = remote_connect(host, portlist[i], hints);
+
+			if (s < 0)
 				continue;
 
 			ret = 0;
@@ -325,6 +366,9 @@ remote_connect(host, port, hints)
 		}
 
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
+			break;
+
+		if (error == 0)
 			break;
 		
 		close(s);
@@ -584,6 +628,7 @@ help()
 	\t-u		UDP mode\n\
 	\t-v		Verbose\n\
 	\t-w secs\t	Timeout for connects and final net reads\n\
+	\t-x addr[:port]\tSpecify socks5 proxy address and port\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
 	Port numbers can be individual or ranges: lo-hi [inclusive]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.18 2001/08/30 16:31:51 krw Exp $
+.\"     $OpenBSD: nc.1,v 1.19 2001/09/02 18:45:41 jakob Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Op Fl i Ar interval
 .Op Fl p Ar source port
 .Op Fl s Ar source ip address
+.Op Fl x Ar proxy address Op :port
 .Op Fl w Ar timeout
 .Op Ar hostname
 .Op Ar port[s]
@@ -127,6 +128,13 @@ Use UDP instead of the default option of TCP.
 Have
 .Nm
 give more verbose output.
+.It Fl x Ar proxy address Op :port
+Requests that
+.Nm
+should connect to
+.Ar hostname
+using a socks5 proxy at address and port.
+If port is not specified, port 1080 is used.
 .It Fl z
 Specifies that
 .Nm
