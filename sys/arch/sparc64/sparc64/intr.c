@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.20 2004/01/10 09:10:07 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.21 2004/06/20 04:50:24 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -280,15 +280,18 @@ intr_establish(level, ih)
 	if(ih->ih_map) {
 		id = CPU_UPAID;
 		m = *ih->ih_map;
-		if(INTTID(m) != id) {
+		if (INTTID(m) != id) {
+#ifdef DEBUG
 			printf("\nintr_establish: changing map 0x%llx -> ", m);
+#endif
 			m = (m & ~INTMAP_TID) | (id << INTTID_SHIFT);
+#ifdef DEBUG
 			printf("0x%llx (id=%llx) ", m, id);
+#endif
 		}
 		m |= INTMAP_V;
 		*ih->ih_map = m;
-	}
-	else {
+	} else {
 #ifdef DEBUG
 		printf(	"\n**********************\n"
 			"********************** intr_establish: no map register\n"
