@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.26 2003/12/03 14:55:58 markus Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.27 2004/12/23 09:32:55 camield Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -230,6 +230,11 @@ struct bridge_rtnode {
 	struct				ether_addr brt_addr;	/* dst addr */
 };
 
+#ifndef BRIDGE_RTABLE_SIZE
+#define BRIDGE_RTABLE_SIZE	1024
+#endif
+#define BRIDGE_RTABLE_MASK	(BRIDGE_RTABLE_SIZE - 1)
+
 /*
  * Software state for each bridge
  */
@@ -261,7 +266,7 @@ struct bridge_softc {
 	struct timeout			sc_brtimeout;	/* timeout state */
 	struct timeout			sc_bstptimeout;	/* stp timeout */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
-	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
+	LIST_HEAD(, bridge_rtnode)	sc_rts[BRIDGE_RTABLE_SIZE];	/* hash table */
 	LIST_HEAD(, bridge_iflist)	sc_spanlist;	/* span ports */
 };
 
