@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.4 1997/08/25 16:17:11 kstailey Exp $	*/
+/*	$OpenBSD: lib.c,v 1.5 1999/04/18 17:06:30 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -40,7 +40,7 @@ char	*fields;
 int	fieldssize = RECSIZE;
 
 Cell	**fldtab;	/* pointers to Cells */
-char	inputFS[100];
+char	inputFS[100] = " ";
 
 #define	MAXFLD	200
 int	nfields	= MAXFLD;	/* last allocated slot for $i */
@@ -114,8 +114,10 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 	}
 	   dprintf( ("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
 		*RS, *FS, *ARGC, *FILENAME) );
-	donefld = 0;
-	donerec = 1;
+	if (isrecord) {
+		donefld = 0;
+		donerec = 1;
+	}
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
 		   dprintf( ("argno=%d, file=|%s|\n", argno, file) );
@@ -145,7 +147,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 					xfree(fldtab[0]->sval);
 				fldtab[0]->sval = buf;	/* buf == record */
 				fldtab[0]->tval = REC | STR | DONTFREE;
-				if (isnumber(fldtab[0]->sval)) {
+				if (is_number(fldtab[0]->sval)) {
 					fldtab[0]->fval = atof(fldtab[0]->sval);
 					fldtab[0]->tval |= NUM;
 				}
@@ -240,7 +242,7 @@ void setclvar(char *s)	/* set var=value from s */
 	p = qstring(p, '\0');
 	q = setsymtab(s, p, 0.0, STR, symtab);
 	setsval(q, p);
-	if (isnumber(q->sval)) {
+	if (is_number(q->sval)) {
 		q->fval = atof(q->sval);
 		q->tval |= NUM;
 	}
@@ -329,7 +331,7 @@ void fldbld(void)	/* create fields from current record */
 	donefld = 1;
 	for (j = 1; j <= lastfld; j++) {
 		p = fldtab[j];
-		if(isnumber(p->sval)) {
+		if(is_number(p->sval)) {
 			p->fval = atof(p->sval);
 			p->tval |= NUM;
 		}
@@ -439,34 +441,28 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 {
 	int i;
 	char *r, *p;
-	char *buf = record;
-	int bufsize = recsize;
 
 	if (donerec == 1)
 		return;
-	r = buf;
+	r = record;
 	for (i = 1; i <= *NF; i++) {
 		p = getsval(fldtab[i]);
-		if (!adjbuf(&buf, &bufsize, 1+strlen(p)+r-buf, recsize, &r, "recbld 1"))
-			ERROR "created $0 `%.30s...' too long", buf FATAL;
+		if (!adjbuf(&record, &recsize, 1+strlen(p)+r-record, recsize, &r, "recbld 1"))
+			ERROR "created $0 `%.30s...' too long", record FATAL;
 		while ((*r = *p++) != 0)
 			r++;
 		if (i < *NF) {
-			if (!adjbuf(&buf, &bufsize, 2+strlen(*OFS)+r-buf, recsize, &r, "recbld 2"))
-				ERROR "created $0 `%.30s...' too long", buf FATAL;
+			if (!adjbuf(&record, &recsize, 2+strlen(*OFS)+r-record, recsize, &r, "recbld 2"))
+				ERROR "created $0 `%.30s...' too long", record FATAL;
 			for (p = *OFS; (*r = *p++) != 0; )
 				r++;
 		}
 	}
-	if (!adjbuf(&buf, &bufsize, 2+r-buf, recsize, &r, "recbld 3"))
-		ERROR "built giant record `%.30s...'", buf FATAL;
+	if (!adjbuf(&record, &recsize, 2+r-record, recsize, &r, "recbld 3"))
+		ERROR "built giant record `%.30s...'", record FATAL;
 	*r = '\0';
 	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, fldtab[0]) );
 
-	if (buf != record) {	/* increased size of record */
-		record = buf;	/* BUG?  memory leak? */
-		recsize = bufsize;
-	}
 	if (freeable(fldtab[0]))
 		xfree(fldtab[0]->sval);
 	fldtab[0]->tval = REC | STR | DONTFREE;
@@ -635,7 +631,7 @@ int isclvar(char *s)	/* is s of form var=something ? */
 /* strtod is supposed to be a proper test of what's a valid number */
 
 #include <math.h>
-int isnumber(char *s)
+int is_number(char *s)
 {
 	double r;
 	char *ep;

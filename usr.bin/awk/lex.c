@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.1 1997/08/25 16:17:11 kstailey Exp $	*/
+/*	$OpenBSD: lex.c,v 1.2 1999/04/18 17:06:30 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -97,7 +97,7 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 #define	RET(x)	return(x)
 #endif
 
-int peek()
+int peek(void)
 {
 	int c = input();
 	unput(c);
@@ -144,11 +144,11 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 			  || c == '.' || c == '+' || c == '-')
 				*bp++ = c;
 			else {
-				*bp = 0;
 				unput(c);
 				break;
 			}
 		}
+		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
 		unputstr(rem);		/* put rest back for later */
 		rem[0] = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1998/03/03 01:56:01 angelos Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1999/04/18 17:06:30 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-char	*version = "version 970821";
+char	*version = "version 990305";
 
 #define DEBUG
 #include <stdio.h>
@@ -37,6 +37,7 @@ char	*version = "version 970821";
 
 extern	char	**environ;
 extern	int	nfields;
+extern	char	*__progname;
 
 int	dbg	= 0;
 char	*cmdname;	/* gets argv[0] for error messages */
@@ -59,10 +60,7 @@ int main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if ((cmdname = strrchr(argv[0], '/')) != NULL)
-		cmdname++;
-	else
-		cmdname = argv[0];
+	cmdname = __progname;
 	if (argc == 1) {
 		fprintf(stderr, "Usage: %s [-f programfile | 'program'] [-Ffieldsep] [-v var=value] [-safe] [-mrn] [-mfn] [files]\n", cmdname);
 		exit(1);
@@ -128,6 +126,10 @@ int main(int argc, char *argv[])
 			if (dbg == 0)
 				dbg = 1;
 			printf("awk %s\n", version);
+			break;
+		case 'V':	/* added for exptools "standard" */
+			printf("awk %s\n", version);
+			exit(0);
 			break;
 		default:
 			ERROR "unknown option %s ignored", argv[1] WARNING;

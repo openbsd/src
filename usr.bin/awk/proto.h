@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.3 1997/08/25 16:17:13 kstailey Exp $	*/
+/*	$OpenBSD: proto.h,v 1.4 1999/04/18 17:06:30 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -133,7 +133,7 @@ extern	void	eprint(void);
 extern	void	bclass(int);
 extern	double	errcheck(double, char *);
 extern	int	isclvar(char *);
-extern	int	isnumber(char *);
+extern	int	is_number(char *);
 
 extern	int	adjbuf(char **pb, int *sz, int min, int q, char **pbp, char *what);
 extern	void	run(Node *);
@@ -146,7 +146,7 @@ extern	Cell	*jump(Node **, int);
 extern	Cell	*getline(Node **, int);
 extern	Cell	*getnf(Node **, int);
 extern	Cell	*array(Node **, int);
-extern	Cell	*adelete(Node **, int);
+extern	Cell	*awkdelete(Node **, int);
 extern	Cell	*intest(Node **, int);
 extern	Cell	*matchop(Node **, int);
 extern	Cell	*boolop(Node **, int);
