@@ -58,6 +58,22 @@ struct vnodeop_desc vop_default_desc = {
 };
 
 
+int vop_islocked_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_islocked_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_islocked_desc = {
+	0,
+	"vop_islocked",
+	0,
+	vop_islocked_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
 int vop_lookup_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_lookup_args,a_dvp),
 	VDESC_NO_OFFSET
@@ -576,22 +592,6 @@ struct vnodeop_desc vop_print_desc = {
 	NULL,
 };
 
-int vop_islocked_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_islocked_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_islocked_desc = {
-	0,
-	"vop_islocked",
-	0,
-	vop_islocked_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
 int vop_pathconf_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_pathconf_args,a_vp),
 	VDESC_NO_OFFSET
@@ -791,6 +791,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_strategy_desc,	/* XXX: SPECIAL CASE */
 	&vop_bwrite_desc,	/* XXX: SPECIAL CASE */
 
+	&vop_islocked_desc,
 	&vop_lookup_desc,
 	&vop_create_desc,
 	&vop_mknod_desc,
@@ -823,7 +824,6 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_unlock_desc,
 	&vop_bmap_desc,
 	&vop_print_desc,
-	&vop_islocked_desc,
 	&vop_pathconf_desc,
 	&vop_advlock_desc,
 	&vop_blkatoff_desc,

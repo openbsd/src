@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.26 1998/12/04 15:57:01 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.27 1998/12/05 16:50:40 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1040,6 +1040,9 @@ vclean(vp, flags, p)
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
 	vp->v_flag &= ~VXLOCK;
+#ifdef DIAGNOSTIC
+	vp->v_flag &= ~VLOCKSWORK;
+#endif
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
 		wakeup((caddr_t)vp);
@@ -1802,6 +1805,8 @@ fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 /*
  * Update outstanding I/O count and do wakeup if requested.
+ *
+ * Manipulates v_numoutput. Must be called at splbio()
  */
 void
 vwakeup(bp)
@@ -1853,6 +1858,7 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 		}
 		splx(s);
 	}
+loop:
 	s = splbio();
 	for (;;) {
 		if ((blist = vp->v_cleanblkhd.lh_first) && 
@@ -1890,17 +1896,16 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 			if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
 				splx(s);
 				(void) VOP_BWRITE(bp);
-				s = splbio();
-				break;
+				goto loop;
 			}
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 		}
 	}
-	splx(s);
 	if (!(flags & V_SAVEMETA) &&
 	    (vp->v_dirtyblkhd.lh_first || vp->v_cleanblkhd.lh_first))
 		panic("vinvalbuf: flush failed");
+	splx(s);
 	return (0);
 }
 
@@ -1949,6 +1954,8 @@ loop:
 
 /*
  * Associate a buffer with a vnode.
+ *
+ * Manipulates buffer vnode queues. Must be called at splbio().
  */
 void
 bgetvp(vp, bp)
@@ -1972,6 +1979,8 @@ bgetvp(vp, bp)
 
 /*
  * Disassociate a buffer from a vnode.
+ * 
+ * Manipulates vnode buffer queues. Must be called at splbio().
  */
 void
 brelvp(bp)
@@ -1998,6 +2007,8 @@ brelvp(bp)
  * Reassign a buffer from one vnode to another. Used to assign buffers
  * to the appropriate clean or dirty list and to add newly dirty vnodes
  * to the appropriate filesystem syncer list.
+ *
+ * Manipulates vnode buffer queues. Must be called at splbio().
  */
 void
 reassignbuf(bp, newvp)
