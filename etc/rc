@@ -190,7 +190,13 @@ elif [ "X${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
 fi
 
-# $name_flags is imported from /etc/netstart;
+# $mrouted_flags is imported from /etc/netstart;
+# If $mrouted_flags == NO, then mrouted isn't run.
+if [ "X${mrouted_flags}" != X"NO" ]; then
+	echo -n ' mrouted';		mrouted $mrouted_flags
+fi
+
+# $named_flags is imported from /etc/netstart;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
 	echo -n ' named';		named $named_flags

@@ -1,10 +1,11 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.22 1995/12/17 18:31:09 perry Exp $
+#	$NetBSD: netstart,v 1.23 1995/12/30 01:30:03 thorpej Exp $
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
+mrouted_flags=NO	# for 'normal' use: mrouted_flags=""
 rarpd_flags=NO		# for 'normal' use: rarpd_flags="-a"
 bootparamd_flags=NO	# for 'normal' use: bootparamd_flags=""
 rbootd_flags=NO		# for 'normal' use: rbootd_flags=""
