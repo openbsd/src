@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.12 2001/05/16 12:51:48 ho Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.13 2001/06/27 04:45:57 art Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -62,9 +62,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <dev/ramdisk.h>
 
@@ -542,11 +540,7 @@ rd_ioctl_kalloc(sc, urd, proc)
 
 	/* Sanity check the size. */
 	size = urd->rd_size;
-#if defined(UVM)
 	addr = uvm_km_zalloc(kernel_map, size);
-#else
-	addr = kmem_alloc(kernel_map, size);
-#endif
 	if (!addr)
 		return ENOMEM;
 

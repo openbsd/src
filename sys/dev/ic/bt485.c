@@ -1,4 +1,4 @@
-/* $OpenBSD: bt485.c,v 1.5 2001/04/21 20:03:54 aaron Exp $ */
+/* $OpenBSD: bt485.c,v 1.6 2001/06/27 04:45:58 art Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
@@ -276,17 +276,10 @@ bt485_set_cmap(rc, cmapp)
 	if ((u_int)cmapp->index >= 256 ||
 	    ((u_int)cmapp->index + (u_int)cmapp->count) > 256)
 		return (EINVAL);
-#if defined(UVM)
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(cmapp->red, cmapp->count, B_READ) ||
-            !useracc(cmapp->green, cmapp->count, B_READ) ||
-            !useracc(cmapp->blue, cmapp->count, B_READ))
-                return (EFAULT);
-#endif
 
 	s = spltty();
 
@@ -352,32 +345,19 @@ bt485_set_cursor(rc, cursorp)
 		     (u_int)cursorp->cmap.count) > 2)
 			return (EINVAL);
 		count = cursorp->cmap.count;
-#if defined(UVM)
 		if (!uvm_useracc(cursorp->cmap.red, count, B_READ) ||
 		    !uvm_useracc(cursorp->cmap.green, count, B_READ) ||
 		    !uvm_useracc(cursorp->cmap.blue, count, B_READ))
 			return (EFAULT);
-#else
-		if (!useracc(cursorp->cmap.red, count, B_READ) ||
-                    !useracc(cursorp->cmap.green, count, B_READ) ||
-                    !useracc(cursorp->cmap.blue, count, B_READ))
-                        return (EFAULT);
-#endif
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if ((u_int)cursorp->size.x > CURSOR_MAX_SIZE ||
 		    (u_int)cursorp->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
-#if defined(UVM)
 		if (!uvm_useracc(cursorp->image, count, B_READ) ||
 		    !uvm_useracc(cursorp->mask, count, B_READ))
 			return (EFAULT);
-#else
-		if (!useracc(cursorp->image, count, B_READ) ||
-                    !useracc(cursorp->mask, count, B_READ))
-                        return (EFAULT);
-#endif
 	}
 
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {

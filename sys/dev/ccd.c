@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.42 2001/05/05 20:56:58 art Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.43 2001/06/27 04:45:56 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -119,9 +119,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #ifdef __GNUC__
 #define INLINE static __inline
@@ -933,13 +931,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			nbp->b_data = addr;
 		else {
 			do {
-#if defined(UVM)
 				nbp->b_data = (caddr_t) uvm_km_valloc(ccdmap,
 							    bp->b_bcount);
-#else
-				nbp->b_data = (caddr_t) kmem_alloc_pageable(
-							 ccdmap, bp->b_bcount);
-#endif
 
 				/*
 				 * XXX Instead of sleeping, we might revert
@@ -1090,11 +1083,7 @@ ccdiodone(vbp)
 			off += cbp->cb_sg[i].cs_sglen;
 		}
 
-#if defined(UVM)
 		uvm_km_free(ccdmap, (vaddr_t)vbp->b_data, count);
-#else
-		kmem_free(ccdmap, (vaddr_t)vbp->b_data, count);
-#endif
 		if (ccd_need_kvm) {
 			ccd_need_kvm = 0;
 			wakeup(ccdmap);
@@ -1309,13 +1298,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		 * XXX doable via a freelist implementation though.
 		 */
 		if (!ccdmap && !(ccd.ccd_flags & CCDF_OLD))
-#if defined(UVM)
 			ccdmap = uvm_km_suballoc(kernel_map, &min, &max,
 			    CCD_CLUSTERS * MAXBSIZE, FALSE, FALSE, NULL);
-#else
-			ccdmap = kmem_suballoc(kernel_map, &min, &max,
-			    CCD_CLUSTERS * MAXBSIZE, FALSE);
-#endif
 
 		/* Attach the disk. */
 		cs->sc_dkdev.dk_name = cs->sc_xname;

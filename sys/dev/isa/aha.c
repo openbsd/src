@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.38 2001/04/02 23:12:50 niklas Exp $	*/
+/*	$OpenBSD: aha.c,v 1.39 2001/06/27 04:45:58 art Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1083,13 +1083,8 @@ aha_init(sc)
 	 */
 
 	/* XXX KLUDGE!  Should use bus_dmamem_alloc when busified.  */
-#ifdef UVM
 	wmbx = (struct aha_mbx *)uvm_pagealloc_contig(sizeof(struct aha_mbx),
 	    0, 0xffffff, PAGE_SIZE);
-#else
-	wmbx = (struct aha_mbx *)vm_page_alloc_contig(sizeof(struct aha_mbx),
-	    0, 0xffffff, PAGE_SIZE);
-#endif
 	if (wmbx == NULL)
 		panic("aha_init: could not allocate mailbox");
 

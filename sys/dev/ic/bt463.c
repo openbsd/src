@@ -1,4 +1,4 @@
-/* $OpenBSD: bt463.c,v 1.3 2001/04/21 20:03:54 aaron Exp $ */
+/* $OpenBSD: bt463.c,v 1.4 2001/06/27 04:45:57 art Exp $ */
 /* $NetBSD: bt463.c,v 1.2 2000/06/13 17:21:06 nathanw Exp $ */
 
 /*-
@@ -369,17 +369,10 @@ bt463_set_cmap(rc, cmapp)
 	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
 	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
 		return (EINVAL);
-#if defined(UVM)
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(cmapp->red, cmapp->count, B_READ) ||
-            !useracc(cmapp->green, cmapp->count, B_READ) ||
-            !useracc(cmapp->blue, cmapp->count, B_READ))
-                return (EFAULT);
-#endif
 
 	s = spltty();
 
@@ -434,17 +427,10 @@ bt463_check_curcmap(rc, cursorp)
 	     (u_int)cursorp->cmap.count) > 2)
 		return (EINVAL);
 	count = cursorp->cmap.count; 
-#if defined(UVM)
 	if (!uvm_useracc(cursorp->cmap.red, count, B_READ) ||
 	    !uvm_useracc(cursorp->cmap.green, count, B_READ) ||
 	    !uvm_useracc(cursorp->cmap.blue, count, B_READ))
 		return (EFAULT);
-#else
-	if (!useracc(cursorp->cmap.red, count, B_READ) ||
-            !useracc(cursorp->cmap.green, count, B_READ) ||
-            !useracc(cursorp->cmap.blue, count, B_READ))
-                return (EFAULT);
-#endif
 	return (0);
 }
 

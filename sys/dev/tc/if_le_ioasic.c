@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ioasic.c,v 1.5 2000/11/08 14:39:42 art Exp $	*/
+/*	$OpenBSD: if_le_ioasic.c,v 1.6 2001/06/27 04:45:59 art Exp $	*/
 /*	$NetBSD: if_le_ioasic.c,v 1.2 1996/05/07 02:24:56 thorpej Exp $	*/
 
 /*
@@ -43,9 +43,7 @@
 #include <net/if_media.h>
 
 #include <vm/vm.h>
-#ifdef UVM
 #include <uvm/uvm_extern.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -102,15 +100,9 @@ le_ioasic_attach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 	register struct le_softc *lesc = (void *)self;
 	register struct am7990_softc *sc = &lesc->sc_am7990;
-#ifdef UVM
 	caddr_t le_iomem;
-#else
-	extern caddr_t le_iomem;
-#endif
 
-#ifdef UVM
 	le_iomem = (caddr_t)uvm_pagealloc_contig(LE_IOASIC_MEMSIZE, 0, 0, LE_IOASIC_MEMALIGN);
-#endif
 
 	lesc->sc_r1 = (struct lereg1 *)
 		TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->iada_addr));
