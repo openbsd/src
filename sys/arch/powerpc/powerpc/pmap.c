@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.82 2003/07/02 21:30:12 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.83 2003/10/31 03:06:16 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -520,16 +520,9 @@ pmap_enter(pm, va, pa, prot, flags)
 		u_int sn = VP_SR(va);
 
         	pm->pm_exec[sn]++;
-		if (pm->pm_sr[sn] & SR_NOEXEC) {
+		if (pm->pm_sr[sn] & SR_NOEXEC)
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
 
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
-			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 		if (pattr != NULL)
 			*pattr |= (PTE_EXE >> ATTRSHIFT);
 	} else {
@@ -648,16 +641,8 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 
 		pted->pted_va &= ~PTED_VA_EXEC_M;
 		pm->pm_exec[sn]--;
-		if (pm->pm_exec[sn] == 0) {
+		if (pm->pm_exec[sn] == 0)
 			pm->pm_sr[sn] |= SR_NOEXEC;
-			
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
-			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 	}
 
 	pted->pted_pte.pte_hi &= ~PTE_VALID;
@@ -732,16 +717,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		u_int sn = VP_SR(va);
 
         	pm->pm_exec[sn]++;
-		if (pm->pm_sr[sn] & SR_NOEXEC) {
+		if (pm->pm_sr[sn] & SR_NOEXEC)
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
-
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
-			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 	}
 
 	splx(s);
@@ -795,16 +772,8 @@ pmap_kremove_pg(vaddr_t va)
 
 		pted->pted_va &= ~PTED_VA_EXEC_M;
 		pm->pm_exec[sn]--;
-		if (pm->pm_exec[sn] == 0) {
+		if (pm->pm_exec[sn] == 0)
 			pm->pm_sr[sn] |= SR_NOEXEC;
-
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
-			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 	}
 
 	if (PTED_MANAGED(pted))
@@ -1093,9 +1062,8 @@ again:
 			splx(s); /* pmap create unlock */
 
 			seg = try << 4;
-			for (k = 0; k < 16; k++) {
+			for (k = 0; k < 16; k++)
 				pm->pm_sr[k] = (seg + k) | SR_NOEXEC;
-			}
 			return;
 		}
 	}
@@ -1216,30 +1184,6 @@ pmap_avail_setup(void)
 	for (mp = pmap_mem; mp->size !=0; mp++)
 		physmem += btoc(mp->size);
 
-	/* limit to 1GB available, for now -XXXGRR */
-#define MEMMAX 0x40000000
-	for (mp = pmap_avail; mp->size !=0 ; /* increment in loop */) {
-		if (mp->start + mp->size > MEMMAX) {
-			int rm_start;
-			int rm_end;
-			if (mp->start > MEMMAX) {
-				rm_start = mp->start;
-				rm_end = mp->start+mp->size;
-			} else {
-				rm_start = MEMMAX;
-				rm_end = mp->start+mp->size;
-			}
-			pmap_remove_avail(rm_start, rm_end);
-
-			/* whack physmem, since we ignore more than 256MB */
-			physmem = btoc(MEMMAX);
-
-			/* start over at top, make sure not to skip any */
-			mp = pmap_avail;
-			continue;
-		}
-		mp++;
-	}
 	for (mp = pmap_avail; mp->size !=0; mp++)
 		pmap_cnt_avail += 1;
 }
@@ -1406,15 +1350,11 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 
 	msgbuf_addr = pmap_steal_avail(MSGBUFSIZE,4);
 
-	for (mp = pmap_avail; mp->size; mp++) {
-		bzero((void *)mp->start, mp->size);
-	}
-
 #ifndef  HTABENTS
 #define HTABENTS 1024
 #endif
 	pmap_ptab_cnt = HTABENTS;
-	while ((HTABSIZE << 7) < ctob(physmem)) {
+	while (HTABSIZE < (ctob(physmem) >> 7)) {
 		pmap_ptab_cnt <<= 1;
 	}
 	/*
@@ -1924,7 +1864,7 @@ pmap_init()
 	    NULL);
 	pool_setlowat(&pmap_pted_pool, 20);
 
-	/* pmap_pvh and pmap_attr must be allocated 1-1 so that pmap_save_attr
+	/* pmap_pvh and pmap_attr must be allocated 1-1 so that pmap_attr_save
 	 * is callable from pte_spill_r (with vm disabled)
 	 */
 	pvh = (struct pted_pv_head *)pmap_pvh;

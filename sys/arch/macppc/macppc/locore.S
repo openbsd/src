@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2003/10/24 19:56:44 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2003/10/31 03:06:16 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -284,15 +284,6 @@ switch_exited:
 
 	addic.	%r5,%r5,64
 	li	%r6,0
-	mfsr	%r8,KERNEL_SR		/* save kernel SR */
-1:
-	addis	%r6,%r6,-0x10000000@ha	/* set new procs segment registers */
-	or.	%r6,%r6,%r6		/* This is done from the real address pmap */
-	lwzu	%r7,-4(%r5)		/* so we don't have to worry */
-	mtsrin	%r7,%r6			/* about accessibility */
-	bne	1b
-	mtsr	KERNEL_SR,%r8		/* restore kernel SR */
-	isync
 
 	lwz	%r1,PCB_SP(%r4)		/* get new procs SP */
 
@@ -400,7 +391,6 @@ _C_LABEL(dsitrap):
 	mfxer	%r30			/* save XER */
 	mtsprg	2,%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
-#if 0
 	mtcr	%r31
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
@@ -427,7 +417,6 @@ _C_LABEL(dsitrap):
 	lmw	%r28,disisave(0)	/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
-#endif
 	mflr	%r28			/* save LR */
 	bla	s_dsitrap
 _C_LABEL(dsisize) =	.-_C_LABEL(dsitrap)
@@ -443,7 +432,6 @@ _C_LABEL(isitrap):
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfsrr1	%r31			/* test kernel mode */
-#if 0
 	mtcr	%r31
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfsrr0	%r31			/* get fault address */
@@ -459,7 +447,6 @@ _C_LABEL(isitrap):
 	lmw	%r28,disisave(0)	/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
-#endif
 	bla	s_isitrap
 _C_LABEL(isisize) =	.-_C_LABEL(isitrap)
 
@@ -748,6 +735,25 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	mfsrr0	%r30;							\
 	mfsrr1	%r31;							\
 	stmw	%r30,savearea+24(0);					\
+	/* load all kernel segment registers. */			\
+	lis	%r31,_C_LABEL(kernel_pmap_)@ha;				\
+	addi	%r31,%r31,_C_LABEL(kernel_pmap_)@l;			\
+	lwz	%r30,0(%r31);	mtsr 0,%r30;				\
+	lwz	%r30,4(%r31);	mtsr 1,%r30;				\
+	lwz	%r30,8(%r31);	mtsr 2,%r30;				\
+	lwz	%r30,12(%r31);	mtsr 3,%r30;				\
+	lwz	%r30,16(%r31);	mtsr 4,%r30;				\
+	lwz	%r30,20(%r31);	mtsr 5,%r30;				\
+	lwz	%r30,24(%r31);	mtsr 6,%r30;				\
+	lwz	%r30,28(%r31);	mtsr 7,%r30;				\
+	lwz	%r30,32(%r31);	mtsr 8,%r30;				\
+	lwz	%r30,36(%r31);	mtsr 9,%r30;				\
+	lwz	%r30,40(%r31);	mtsr 10,%r30;			\
+	lwz	%r30,44(%r31);	mtsr 11,%r30;			\
+	lwz	%r30,48(%r31);	mtsr 12,%r30;			\
+/*	lwz	%r30,52(%r31);	mtsr 13,%r30; - dont load user SR - XXX? */ \
+	lwz	%r30,56(%r31);	mtsr 14,%r30;			\
+	lwz	%r30,60(%r31);	mtsr 15,%r30;			\
 	mfmsr	%r30;							\
 	ori	%r30,%r30,(PSL_DR|PSL_IR);				\
 	mtmsr	%r30;							\
@@ -805,11 +811,23 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user & kernel access SR: */					\
 	lis	%r2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
-	lwz	%r2,_C_LABEL(curpm)@l(2);					\
-	lwz	%r3,PM_USRSR(%r2);					\
-	mtsr	USER_SR,%r3;						\
-	lwz	%r3,PM_KERNELSR(%r2);					\
-	mtsr	KERNEL_SR,%r3;						\
+	lwz	%r2,_C_LABEL(curpm)@l(2);				\
+	lwz	%r3,0(%r2);	mtsr 0,%r3;				\
+	lwz	%r3,4(%r2);	mtsr 1,%r3;				\
+	lwz	%r3,8(%r2);	mtsr 2,%r3;				\
+	lwz	%r3,12(%r2);	mtsr 3,%r3;				\
+	lwz	%r3,16(%r2);	mtsr 4,%r3;				\
+	lwz	%r3,20(%r2);	mtsr 5,%r3;				\
+	lwz	%r3,24(%r2);	mtsr 6,%r3;				\
+	lwz	%r3,28(%r2);	mtsr 7,%r3;				\
+	lwz	%r3,32(%r2);	mtsr 8,%r3;				\
+	lwz	%r3,36(%r2);	mtsr 9,%r3;				\
+	lwz	%r3,40(%r2);	mtsr 10,%r3;				\
+	lwz	%r3,44(%r2);	mtsr 11,%r3;				\
+	lwz	%r3,48(%r2);	mtsr 12,%r3;				\
+	lwz	%r3,52(%r2);	mtsr 13,%r3; 			\
+	lwz	%r3,56(%r2);	mtsr 14,%r3; 			\
+	lwz	%r3,60(%r2);	mtsr 15,%r3;				\
 1:	mfsprg	%r2,1;			/* restore cr */		\
 	mtcr	%r2;							\
 	lwz	%r2,savearea(0);					\
@@ -844,10 +862,6 @@ realtrap:
  * Now the common trap catching code.
  */
 s_trap:
-/* First have to enable KERNEL mapping */
-	lis	%r31,KERNEL_SEGMENT@ha
-	addi	%r31,%r31,KERNEL_SEGMENT@l
-	mtsr	KERNEL_SR,%r31
 	FRAME_SETUP(tempsave)
 /* Now we can recover interrupts again: */
 	mfmsr	%r7
@@ -954,7 +968,7 @@ s_pte_spill:
  * ISI second stage fault handler
  */
 s_isitrap:
-	mfsrr1	%r31			/* test if this may be a spill fault */
+	mfsrr1	%r31			/* test if this is a spill fault */
 	mtcr	%r31
 	mtsprg	1,%r1			/* save SP */
 	bc	4,%r1,disitrap		/* branch if table miss is false */
@@ -1014,10 +1028,26 @@ s_isitrap:
 	stw	%r5,20(%r1);						\
 	stw	%r4,12(%r1);						\
 	stw	%r3,8(%r1);						\
+/* load all kernel segment registers. */				\
+	lis	3,_C_LABEL(kernel_pmap_)@ha;				\
+	addi	3,3,_C_LABEL(kernel_pmap_)@l;				\
+	lwz	%r5,0(%r3);	mtsr 0,%r5;				\
+	lwz	%r5,4(%r3);	mtsr 1,%r5;				\
+	lwz	%r5,8(%r3);	mtsr 2,%r5;				\
+	lwz	%r5,12(%r3);	mtsr 3,%r5;				\
+	lwz	%r5,16(%r3);	mtsr 4,%r5;				\
+	lwz	%r5,20(%r3);	mtsr 5,%r5;				\
+	lwz	%r5,24(%r3);	mtsr 6,%r5;				\
+	lwz	%r5,28(%r3);	mtsr 7,%r5;				\
+	lwz	%r5,32(%r3);	mtsr 8,%r5;				\
+	lwz	%r5,36(%r3);	mtsr 9,%r5;				\
+	lwz	%r5,40(%r3);	mtsr 10,%r5;				\
+	lwz	%r5,44(%r3);	mtsr 11,%r5;				\
+	lwz	%r5,48(%r3);	mtsr 12,%r5;				\
+/*	lwz	%r5,52(%r3);	mtsr 13,%r5; - dont load user SR - XXX? */ \
+	lwz	%r5,56(%r3);	mtsr 14,%r5;				\
+	lwz	%r5,60(%r3);	mtsr 15,%r5;				\
 /* interrupts are recoverable here, and enable translation */		\
-	lis	%r3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@ha;		\
-	addi	%r3,%r3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
-	mtsr	KERNEL_SR,%r3;						\
 	mfmsr	%r5;							\
 	ori	%r5,%r5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	%r5;							\
@@ -1055,8 +1085,23 @@ intr_exit:
 	bc	4,17,1f			/* branch if PSL_PR is false */
 	lis	%r3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	%r3,_C_LABEL(curpm)@l(%r3)
-	lwz	%r3,PM_KERNELSR(%r3)
-	mtsr	KERNEL_SR,%r3		/* Restore kernel SR */
+	/* reload all segment registers. */
+	lwz	%r4,0(3);	mtsr 0,%r4;
+	lwz	%r4,4(3);	mtsr 1,%r4;
+	lwz	%r4,8(3);	mtsr 2,%r4;
+	lwz	%r4,12(3);	mtsr 3,%r4;
+	lwz	%r4,16(3);	mtsr 4,%r4;
+	lwz	%r4,20(3);	mtsr 5,%r4;
+	lwz	%r4,24(3);	mtsr 6,%r4;
+	lwz	%r4,28(3);	mtsr 7,%r4;
+	lwz	%r4,32(3);	mtsr 8,%r4;
+	lwz	%r4,36(3);	mtsr 9,%r4;
+	lwz	%r4,40(3);	mtsr 10,%r4;
+	lwz	%r4,44(3);	mtsr 11,%r4;
+	lwz	%r4,48(3);	mtsr 12,%r4;
+	lwz	%r4,52(3);	mtsr 13,%r4;
+	lwz	%r4,56(3);	mtsr 14,%r4;
+	lwz	%r4,60(3);	mtsr 15,%r4;
 	lis	%r3,_C_LABEL(astpending)@ha	/* Test AST pending */
 	lwz	%r4,_C_LABEL(astpending)@l(%r3)
 	andi.	%r4,%r4,1
