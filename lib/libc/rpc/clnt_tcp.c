@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.6 1996/08/19 08:31:29 tholo Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.7 1996/08/20 23:47:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -407,10 +407,11 @@ readtcp(ct, buf, len)
 		return (0);
 
 	if (ct->ct_sock+1 > FD_SETSIZE) {
-		fds = (fd_set *)malloc(howmany(ct->ct_sock+1, NBBY));
+		int bytes = howmany(ct->ct_sock+1, NFDBITS) * sizeof(fd_mask);
+		fds = (fd_set *)malloc(bytes);
 		if (fds == NULL)
 			return (-1);
-		memset(fds, '\0', howmany(ct->ct_sock+1, NBBY));
+		memset(fds, 0, bytes);
 	} else {
 		fds = &readfds;
 		FD_ZERO(fds);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.6 1996/08/19 08:31:51 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.7 1996/08/20 23:47:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,6 +49,7 @@ static char *rcsid = "$OpenBSD: svc.c,v 1.6 1996/08/19 08:31:51 tholo Exp $";
 #include <rpc/pmap_clnt.h>
 
 static SVCXPRT **xports;
+static int xportssize;
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
@@ -84,29 +85,40 @@ xprt_register(xprt)
 {
 	register int sock = xprt->xp_sock;
 
-	if (xports == NULL) {
-		xports = (SVCXPRT **)mem_alloc(FD_SETSIZE *
-		    sizeof(SVCXPRT *));
-		memset(xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
-	}
-
 	if (sock+1 > __svc_fdsetsize) {
+		int bytes = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
 		fd_set *fds;
 
-		fds = (fd_set *)malloc(howmany(sock+1, NBBY));
-		memset(fds, '\0', howmany(sock+1, NBBY));
+		fds = (fd_set *)malloc(bytes);
+		memset(fds, 0, bytes);
 		if (__svc_fdset) {
-			memcpy(fds, __svc_fdset,
-			    howmany(__svc_fdsetsize, NBBY));
+			memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize,
+			    NFDBITS) * sizeof(fd_mask));
 			free(__svc_fdset);
 		}
 		__svc_fdset = fds;
-		__svc_fdsetsize = sock+1;
+		__svc_fdsetsize = howmany(sock+1, NFDBITS);
 	}
 
 	if (sock < FD_SETSIZE)
 		FD_SET(sock, &svc_fdset);
 	FD_SET(sock, __svc_fdset);
+
+	if (xports == NULL || sock+1 > xportssize) {
+		SVCXPRT **xp;
+		int size = FD_SETSIZE;
+
+		if (sock+1 > size)
+			size = sock+1;
+		xp = (SVCXPRT **)mem_alloc(size * sizeof(SVCXPRT *));
+		memset(xp, 0, size * sizeof(SVCXPRT *));
+		if (xports) {
+			memcpy(xp, xports, xportssize * sizeof(SVCXPRT *));
+			free(xports);
+		}
+		xportssize = size;
+		xports = xp;
+	}
 	xports[sock] = xprt;
 	svc_maxfd = max(svc_maxfd, sock);
 }

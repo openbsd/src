@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.7 1996/08/19 08:31:42 tholo Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.8 1996/08/20 23:47:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -257,12 +257,13 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #endif /* def SO_BROADCAST */
 
 	if (sock+1 > FD_SETSIZE) {
-		fds = (fd_set *)malloc(howmany(sock+1, NBBY));
+		int bytes = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+		fds = (fd_set *)malloc(bytes);
 		if (fds == NULL) {
 			stat = RPC_CANTSEND;
 			goto done_broad;
 		}
-		memset(fds, '\0', howmany(sock+1, NBBY));
+		memset(fds, 0, bytes);
 	} else {
 		fds = &readfds;
 		FD_ZERO(fds);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.6 1996/08/19 08:31:30 tholo Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.7 1996/08/20 23:47:40 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -234,10 +234,11 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 		timeout = cu->cu_total; /* use default timeout */
 
 	if (cu->cu_sock+1 > FD_SETSIZE) {
-		fds = (fd_set *)malloc(howmany(cu->cu_sock+1, NBBY));
+		int bytes = howmany(cu->cu_sock+1, NFDBITS) * sizeof(fd_mask);
+		fds = (fd_set *)malloc(bytes);
 		if (fds == NULL)
 			return (cu->cu_error.re_status = RPC_CANTSEND);
-		memset(fds, '\0', howmany(cu->cu_sock+1, NBBY));
+		memset(fds, 0, bytes);
 	} else {
 		fds = &readfds;
 		FD_ZERO(fds);
