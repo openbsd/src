@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.42 1998/07/13 16:19:26 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.43 1998/10/29 17:07:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Michael Shalayeff
@@ -237,6 +237,7 @@ readline(buf, to)
 
 		if (!cnischar()) {
 			strncpy(buf, "boot", 5);
+			putchar('\n');
 			return strlen(buf);
 		}
 	} else
