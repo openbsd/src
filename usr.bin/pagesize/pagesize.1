@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pagesize.1,v 1.6 2003/06/03 02:56:14 millert Exp $
+.\"	$OpenBSD: pagesize.1,v 1.7 2005/03/30 11:03:38 martin Exp $
 .\"	$NetBSD: pagesize.1,v 1.4 1995/08/31 23:38:50 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -41,12 +41,14 @@
 .Sh DESCRIPTION
 .Nm pagesize
 prints the size of a page of memory in bytes, as
-returned by
-.Xr getpagesize 3 .
+returned by the
+.Xr sysctl 8
+variable
+.Va hw.pagesize .
 This program is useful in constructing portable
 shell scripts.
 .Sh SEE ALSO
-.Xr getpagesize 3
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm pagesize
