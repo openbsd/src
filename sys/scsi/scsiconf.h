@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.44 2004/05/09 05:33:59 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.45 2004/05/17 23:57:51 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -131,15 +131,6 @@ struct scsi_adapter {
 #define TRY_AGAIN_LATER		1
 #define	COMPLETE		2
 #define	ESCAPE_NOT_SUPPORTED	3
-
-/*
- * Device Specific Sense Handlers return either an errno
- * or one of these three items.
- */
-
-#define SCSIRET_NOERROR   0	/* No Error */
-#define SCSIRET_RETRY    -1	/* Retry the command that got this sense */
-#define SCSIRET_CONTINUE -2	/* Continue with standard sense processing */
 
 /*
  * These entry points are called by the low-end drivers to get services from

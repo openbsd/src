@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.37 2004/05/17 12:37:13 aoyama Exp $	*/
+/*	$OpenBSD: st.c,v 1.38 2004/05/17 23:57:51 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1822,7 +1822,7 @@ st_interpret_sense(xs)
 	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
-		return SCSIRET_CONTINUE; /* let the generic code handle it */
+		return EJUSTRETURN; /* let the generic code handle it */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {
@@ -1927,7 +1927,7 @@ st_interpret_sense(xs)
 			return 0;
 		}
 	}
-	return SCSIRET_CONTINUE;
+	return EJUSTRETURN;
 }
 
 /*

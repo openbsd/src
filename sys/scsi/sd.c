@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.68 2004/05/09 04:01:59 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.69 2004/05/17 23:57:51 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1099,7 +1099,7 @@ sd_interpret_sense(xs)
 	struct scsi_link *sc_link = xs->sc_link;
 	struct scsi_sense_data *sense = &xs->sense;
 	struct sd_softc *sd = sc_link->device_softc;
-	int retval = SCSIRET_CONTINUE;
+	int retval = EJUSTRETURN;
 
 	/*
 	 * If the device is not open yet, let the generic code handle it.
@@ -1126,7 +1126,7 @@ sd_interpret_sense(xs)
 			 * I really need a sdrestart function I can call here.
 			 */
 			delay(1000000 * 5);	/* 5 seconds */
-			retval = SCSIRET_RETRY;
+			retval = ERESTART;
 		} else if (sense->add_sense_code_qual == 0x2) {
 			if (sd->sc_link->flags & SDEV_REMOVABLE) {
 				printf(
@@ -1144,7 +1144,7 @@ sd_interpret_sense(xs)
 					    sd->sc_dev.dv_xname, retval);
 					retval = EIO;
 				} else {
-					retval = SCSIRET_RETRY;
+					retval = ERESTART;
 				}
 			}
 		}

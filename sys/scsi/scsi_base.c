@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.59 2004/05/13 01:56:09 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.60 2004/05/17 23:57:51 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -700,7 +700,7 @@ scsi_interpret_sense(xs)
 	if (sc_link->device->err_handler) {
 		SC_DEBUG(sc_link, SDEV_DB2, ("calling private err_handler()\n"));
 		error = (*sc_link->device->err_handler) (xs);
-		if (error != SCSIRET_CONTINUE)
+		if (error != EJUSTRETURN)
 			return error;		/* error >= 0  better ? */
 	}
 	/* otherwise use the default */
