@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.30 2002/06/25 22:37:15 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.31 2002/06/25 23:28:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -39,7 +39,7 @@
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
-#define	BLKCNT	12	/* Max without colliding with the partition table */
+#define	BLKCNT	12
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
