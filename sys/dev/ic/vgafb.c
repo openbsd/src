@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.1 1998/09/27 03:55:59 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.2 1998/09/27 05:29:59 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -180,7 +180,6 @@ vgafb_common_setup(iot, memt, vc, iobase, membase, memsize)
 	}
 	vc->vc_nrow = height / FONT_HEIGHT;
 
-	printf("col %d row %d\n", vc->vc_ncol, vc->vc_nrow );
 #if 0
 	/* assume resolution is 640x480 */
 	vc->vc_nrow = 25;
@@ -194,10 +193,12 @@ vgafb_common_setup(iot, memt, vc, iobase, membase, memsize)
 	vc->vc_ccol = cpos % vc->vc_ncol;
 #endif
 
+	vc->vc_crow = vc->vc_ccol = 0; /* Has to be some onscreen value */
 	vc->vc_so = 0;
 
 	/* clear screen, frob cursor, etc.? */
 	vgafb_eraserows(vc, 0, vc->vc_nrow);
+
 #if defined(alpha)
 	/*
 	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
