@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.47 2004/01/20 14:50:22 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.48 2004/04/15 21:16:34 mcbride Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 	for (i = 0; i < FXP_NRFABUFS; i++) {
 		if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
-			printf("%s: unable to create tx dma map %d, error %d\n",
+			printf("%s: unable to create rx dma map %d, error %d\n",
 			    sc->sc_dev.dv_xname, i, err);
 			goto fail;
 		}
