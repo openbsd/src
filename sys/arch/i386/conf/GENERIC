@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.381 2004/10/20 12:50:48 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.382 2004/10/20 12:56:45 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -430,8 +430,8 @@ an*	at isapnp?			# Aironet IEEE 802.11DS
 an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
 ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
-ipw*	at pci?				# Intel PRO/Wireless 2100
-iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG/2915ABG
+#ipw*	at pci?				# Intel PRO/Wireless 2100
+#iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG/2915ABG
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
