@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.50 2005/04/05 17:30:57 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.51 2005/04/05 21:08:47 marc Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -678,6 +678,7 @@ auich_set_params(v, setmode, usemode, play, rec)
 	struct auich_softc *sc = v;
 	int error;
 	u_int orate;
+	u_int adj_rate;
 
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
@@ -844,12 +845,13 @@ auich_set_params(v, setmode, usemode, play, rec)
 			return (EINVAL);
 		}
 
-		orate = play->sample_rate;
+		orate = adj_rate = play->sample_rate;
 		if (sc->sc_ac97rate != 0)
-			play->sample_rate = orate * AUICH_FIXED_RATE /
-			    sc->sc_ac97rate;
+			adj_rate = orate * AUICH_FIXED_RATE / sc->sc_ac97rate;
+		play->sample_rate = adj_rate;
 		error = ac97_set_rate(sc->codec_if, play, AUMODE_PLAY);
-		play->sample_rate = orate;
+		if (play->sample_rate == adj_rate)
+			play->sample_rate = orate;
 		if (error)
 			return (error);
 	}
