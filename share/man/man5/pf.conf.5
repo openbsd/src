@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.80 2002/09/12 12:14:35 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.81 2002/09/12 12:17:05 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -923,7 +923,8 @@ Syntax for
 .Em pf.conf
 in BNF:
 .Bd -literal
-line           = ( option | pf_rule | nat_rule | binat_rule | rdr_rule )
+line           = ( option | pf_rule | nat_rule | binat_rule | rdr_rule |
+		   antispoof_rule )
 
 option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                        [ "optimization" [ "default" | "normal" | 
@@ -953,6 +954,10 @@ binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 		 "from" ipspec "to" ipspec [ portspec ]
 		 [ "->" address [ portspec ] ] .
+
+antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
+		 "for" ( interface-name | "{" interface-list "}" )
+		 [ af ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
 return         = "return-rst" [ "(" "ttl" number ")" ] |
