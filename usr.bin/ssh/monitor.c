@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.5 2002/03/19 21:12:48 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.6 2002/03/21 18:38:33 stevesk Exp $");
 
 #include <openssl/dh.h>
 
@@ -520,13 +520,13 @@ mm_answer_authserv(int socket, Buffer *m)
 
 	authctxt->service = buffer_get_string(m, NULL);
 	authctxt->style = buffer_get_string(m, NULL);
+	debug3("%s: service=%s, style=%s",
+	    __FUNCTION__, authctxt->service, authctxt->style);
+
 	if (strlen(authctxt->style) == 0) {
 		xfree(authctxt->style);
 		authctxt->style = NULL;
 	}
-
-	debug3("%s: service=%s, style=%s",
-	    __FUNCTION__, authctxt->service, authctxt->style);
 
 	return (0);
 }
