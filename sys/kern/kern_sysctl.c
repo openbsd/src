@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.78 2003/01/15 23:41:56 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.79 2003/01/21 16:59:23 markus Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -269,6 +269,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		case KERN_SEMINFO:
 		case KERN_SHMINFO:
 		case KERN_INTRCNT:
+		case KERN_WATCHDOG:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -480,6 +481,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case KERN_INTRCNT:
 		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
+	case KERN_WATCHDOG:
+		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}

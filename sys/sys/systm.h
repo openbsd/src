@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.53 2003/01/09 22:27:12 miod Exp $	*/
+/*	$OpenBSD: systm.h,v 1.54 2003/01/21 16:59:23 markus Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -221,6 +221,8 @@ void	cpu_initclocks(void);
 void	startprofclock(struct proc *);
 void	stopprofclock(struct proc *);
 void	setstatclockrate(int);
+
+void	wdog_register(void *, int (*)(void *, int));
 
 /*
  * Startup/shutdown hooks.  Startup hooks are functions running after

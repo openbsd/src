@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.85 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.86 2003/01/21 16:59:23 markus Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.85 2002/12/17 23:11:32 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.86 2003/01/21 16:59:23 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
 struct ctlname ttyname[] = CTL_KERN_TTY_NAMES;
 struct ctlname semname[] = CTL_KERN_SEMINFO_NAMES;
 struct ctlname shmname[] = CTL_KERN_SHMINFO_NAMES;
+struct ctlname watchdogname[] = CTL_KERN_WATCHDOG_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -205,6 +206,7 @@ int sysctl_nchstats(char *, char **, int *, int, int *);
 int sysctl_malloc(char *, char **, int *, int, int *);
 int sysctl_seminfo(char *, char **, int *, int, int *);
 int sysctl_shminfo(char *, char **, int *, int, int *);
+int sysctl_watchdog(char *, char **, int *, int, int *);
 #ifdef CPU_CHIPSET
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
@@ -416,6 +418,12 @@ parse(char *string, int flags)
 			break;
 		case KERN_SHMINFO:
 			len = sysctl_shminfo(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_WATCHDOG:
+			len = sysctl_watchdog(string, &bufp, mib, flags,
+			    &type);
 			if (len < 0)
 				return;
 			break;
@@ -1337,6 +1345,7 @@ struct list nchstatslist = { nchstatsname, KERN_NCHSTATS_MAXID };
 struct list ttylist = { ttyname, KERN_TTY_MAXID };
 struct list semlist = { semname, KERN_SEMINFO_MAXID };
 struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
+struct list watchdoglist = { watchdogname, KERN_WATCHDOG_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -1847,6 +1856,26 @@ sysctl_shminfo(string, bufpp, mib, flags, typep)
 		return(-1);
 	mib[2] = indx;
 	*typep = CTLTYPE_INT;
+	return(3);
+}
+
+/*
+ * Handle watchdog support
+ */
+int
+sysctl_watchdog(char *string, char **bufpp, int mib[], int flags,
+    int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &watchdoglist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &watchdoglist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	*typep = watchdoglist.list[indx].ctl_type;
 	return(3);
 }
 

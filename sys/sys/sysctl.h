@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.61 2003/01/13 06:04:16 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.62 2003/01/21 16:59:23 markus Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -180,7 +180,8 @@ struct ctlname {
 #define	KERN_SEMINFO		61	/* struct: SysV struct seminfo */
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
-#define	KERN_MAXID		64	/* number of valid kern ids */
+#define	KERN_WATCHDOG		64	/* node: watchdog */
+#define	KERN_MAXID		65	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -247,6 +248,7 @@ struct ctlname {
 	{ "seminfo", CTLTYPE_STRUCT }, \
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
+ 	{ "watchdog", CTLTYPE_NODE }, \
 }
 
 /*
@@ -324,6 +326,19 @@ struct kinfo_proc {
 	{ "nintrcnt", CTLTYPE_INT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
 	{ "intrname", CTLTYPE_NODE }, \
+}
+
+/*
+ * KERN_WATCHDOG
+ */
+#define KERN_WATCHDOG_PERIOD	1	/* int: watchdog period */
+#define KERN_WATCHDOG_AUTO	2	/* int: automatic tickle */
+#define KERN_WATCHDOG_MAXID	3
+
+#define CTL_KERN_WATCHDOG_NAMES { \
+	{ 0, 0 }, \
+	{ "period", CTLTYPE_INT }, \
+	{ "auto", CTLTYPE_INT }, \
 }
 
 /*
@@ -518,6 +533,7 @@ int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 int vfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *);
 int sysctl_sysvipc(int *, u_int, void *, size_t *);
+int sysctl_wdog(int *, u_int, void *, size_t *, void *, size_t);
 
 void sysctl_init(void);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.266 2003/01/08 05:20:35 mickey Exp $
+#	$OpenBSD: files,v 1.267 2003/01/21 16:59:23 markus Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -520,6 +520,7 @@ file kern/kern_sysctl.c
 file kern/kern_synch.c
 file kern/kern_time.c
 file kern/kern_timeout.c
+file kern/kern_watchdog.c
 file kern/kern_xxx.c
 file kern/kgdb_stub.c			kgdb
 file kern/subr_autoconf.c
