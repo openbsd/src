@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.23 2002/01/19 21:15:37 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.24 2002/01/28 15:44:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -105,10 +105,13 @@ struct ubsec_q {
 	long				q_src_packp[UBS_MAX_SCATTER];
 	int				q_src_packl[UBS_MAX_SCATTER];
 	int				q_src_npa, q_src_l;
+	bus_dmamap_t			q_src_map;
 
 	long				q_dst_packp[UBS_MAX_SCATTER];
 	int				q_dst_packl[UBS_MAX_SCATTER];
 	int				q_dst_npa, q_dst_l;
+	bus_dmamap_t			q_dst_map;
+
 	int				q_sesn;
 	int				q_flags;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.79 2002/01/24 03:13:43 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.80 2002/01/28 15:44:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -98,6 +98,7 @@ void	ubsec_rng __P((void *));
 int	ubsec_dma_malloc __P((struct ubsec_softc *, bus_size_t,
     struct ubsec_dma_alloc *, int));
 void	ubsec_dma_free __P((struct ubsec_softc *, struct ubsec_dma_alloc *));
+int	ubsec_dmamap_aligned __P((bus_dmamap_t));
 
 #define	READ_REG(sc,r) \
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
@@ -449,10 +450,19 @@ ubsec_feed(sc)
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
 	--sc->sc_nqueue;
 
+	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
+	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
+	    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+
 	q->q_nstacked_mcrs = npkts - 1;		/* Number of packets stacked */
 
 	for (i = 0; i < q->q_nstacked_mcrs; i++) {
 		q2 = SIMPLEQ_FIRST(&sc->sc_queue);
+		bus_dmamap_sync(sc->sc_dmat, q2->q_src_map,
+		    0, q2->q_src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, q2->q_dst_map,
+		    0, q2->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q2, q_next);
 		--sc->sc_nqueue;
 
@@ -463,6 +473,9 @@ ubsec_feed(sc)
 	}
 	q->q_dma->d_dma->d_mcr.mcr_pkts = htole16(npkts);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
+	bus_dmamap_sync(sc->sc_dmat, q->q_dma->d_alloc.dma_map,
+	    0, q->q_dma->d_alloc.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	WRITE_REG(sc, BS_MCR1, q->q_dma->d_alloc.dma_paddr +
 	    offsetof(struct ubsec_dmachunk, d_mcr));
 	return (0);
@@ -478,6 +491,15 @@ feed1:
 		}
 
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
+
+		bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
+		    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
+		    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->sc_dmat, q->q_dma->d_alloc.dma_map,
+		    0, q->q_dma->d_alloc.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 		WRITE_REG(sc, BS_MCR1, q->q_dma->d_alloc.dma_paddr +
 		    offsetof(struct ubsec_dmachunk, d_mcr));
 #ifdef UBSEC_DEBUG
@@ -870,20 +892,35 @@ ubsec_process(crp)
 	}
 	ctx.pc_offset = htole16(coffset >> 2);
 
-	if (crp->crp_flags & CRYPTO_F_IMBUF)
-		q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
-		    q->q_src_packl, UBS_MAX_SCATTER, &nicealign);
-	else if (crp->crp_flags & CRYPTO_F_IOV)
-		q->q_src_l = iov2pages(q->q_src_io, &q->q_src_npa,
-		    q->q_src_packp, q->q_src_packl, UBS_MAX_SCATTER, &nicealign);
-	if (q->q_src_l == 0) {
+	if (bus_dmamap_create(sc->sc_dmat, 0xfff0, UBS_MAX_SCATTER,
+		0xfff0, 0, BUS_DMA_NOWAIT, &q->q_src_map) != 0) {
 		err = ENOMEM;
 		goto errout;
 	}
-	if (q->q_src_l > 0xfffc) {
-		err = EIO;
-		goto errout;
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, q->q_src_map,
+		    q->q_src_m, BUS_DMA_NOWAIT) != 0) {
+			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+			q->q_src_map = NULL;
+			err = ENOMEM;
+			goto errout;
+		}
+	} else if (crp->crp_flags & CRYPTO_F_IOV) {
+		if (bus_dmamap_load_uio(sc->sc_dmat, q->q_src_map,
+		    q->q_src_io, BUS_DMA_NOWAIT) != 0) {
+			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+			q->q_src_map = NULL;
+			err = ENOMEM;
+			goto errout;
+		}
 	}
+	q->q_src_l = q->q_src_map->dm_mapsize;
+	q->q_src_npa = q->q_src_map->dm_nsegs;
+	for (i = 0; i < q->q_src_map->dm_nsegs; i++) {
+		q->q_src_packp[i] = q->q_src_map->dm_segs[i].ds_addr;
+		q->q_src_packl[i] = q->q_src_map->dm_segs[i].ds_len;
+	}
+	nicealign = ubsec_dmamap_aligned(q->q_src_map);
 
 	dmap->d_dma->d_mcr.mcr_pktlen = htole16(stheend);
 
@@ -1004,20 +1041,33 @@ ubsec_process(crp)
 		} else
 			q->q_dst_m = q->q_src_m;
 
-		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
-			    q->q_dst_packp, q->q_dst_packl, UBS_MAX_SCATTER, NULL);
-		else if (crp->crp_flags & CRYPTO_F_IOV)
-			q->q_dst_l = iov2pages(q->q_dst_io, &q->q_dst_npa,
-			    q->q_dst_packp, q->q_dst_packl, UBS_MAX_SCATTER, NULL);
-
-		if (q->q_dst_l == 0) {
+		if (bus_dmamap_create(sc->sc_dmat, 0xfff0, UBS_MAX_SCATTER,
+		    0xfff0, 0, BUS_DMA_NOWAIT, &q->q_dst_map) != 0) {
 			err = ENOMEM;
 			goto errout;
 		}
-		if (q->q_dst_l > 0xfffc) {
-			err = ENOMEM;
-			goto errout;
+		if (crp->crp_flags & CRYPTO_F_IMBUF) {
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, q->q_dst_map,
+			    q->q_dst_m, BUS_DMA_NOWAIT) != 0) {
+				bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
+				q->q_dst_map = NULL;
+				err = ENOMEM;
+				goto errout;
+			}
+		} else if (crp->crp_flags & CRYPTO_F_IOV) {
+			if (bus_dmamap_load_uio(sc->sc_dmat, q->q_dst_map,
+			    q->q_dst_io, BUS_DMA_NOWAIT) != 0) {
+				bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
+				q->q_dst_map = NULL;
+				goto errout;
+			}
+		}
+
+		q->q_dst_l = q->q_dst_map->dm_mapsize;
+		q->q_dst_npa = q->q_dst_map->dm_nsegs;
+		for (i = 0; i < q->q_dst_map->dm_nsegs; i++) {
+			q->q_dst_packp[i] = q->q_dst_map->dm_segs[i].ds_addr;
+			q->q_dst_packl[i] = q->q_dst_map->dm_segs[i].ds_len;
 		}
 
 #ifdef UBSEC_DEBUG
@@ -1128,6 +1178,15 @@ errout:
 		ubsecstats.hst_invalid++;
 	else
 		ubsecstats.hst_nomem++;
+	if (q->q_src_map != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
+		bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+	}
+	if (q->q_dst_map != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
+		bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
+	}
+
 errout2:
 	crp->crp_etype = err;
 	crp->crp_callback(crp);
@@ -1146,6 +1205,12 @@ ubsec_callback(sc, q)
 	bus_dmamap_sync(sc->sc_dmat, dmap->d_alloc.dma_map, 0,
 	    dmap->d_alloc.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
+	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
+	    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+	bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
@@ -1538,4 +1603,20 @@ ubsec_totalreset(sc)
 	ubsec_reset_board(sc);
 	ubsec_init_board(sc);
 	ubsec_cleanchip(sc);
+}
+
+int
+ubsec_dmamap_aligned(map)
+	bus_dmamap_t map;
+{
+	int i;
+
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if (map->dm_segs[i].ds_addr & 3)
+			return (0);
+		if ((i != (map->dm_nsegs - 1)) &&
+		    (map->dm_segs[i].ds_len & 3))
+			return (0);
+	}
+	return (1);
 }
