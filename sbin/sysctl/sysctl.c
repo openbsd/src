@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.50 2000/05/22 17:29:42 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.51 2000/06/07 00:20:32 itojun Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.50 2000/05/22 17:29:42 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.51 2000/06/07 00:20:32 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1216,7 +1216,7 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
 struct ctlname ip6name[] = IPV6CTL_NAMES;
 struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
-struct ctlname pim6name[] = PIMCTL_NAMES;
+struct ctlname pim6name[] = PIM6CTL_NAMES;
 struct list inet6list = { inet6name, IPV6PROTO_MAXID };
 struct list inet6vars[] = {
 /*0*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
@@ -1254,7 +1254,7 @@ struct list inet6vars[] = {
 /*100*/	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ pim6name, PIMCTL_MAXID },	/* pim6 */
+	{ pim6name, PIM6CTL_MAXID },	/* pim6 */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim6_var.h,v 1.1 1999/12/08 06:50:23 itojun Exp $	*/
+/*	$OpenBSD: pim6_var.h,v 1.2 2000/06/07 00:20:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -60,10 +60,10 @@ int pim6_input __P((struct mbuf **, int*, int));
 /*
  * Names for PIM sysctl objects
  */
-#define PIMCTL_STATS		1	/* statistics (read-only) */
-#define PIMCTL_MAXID		2
+#define PIM6CTL_STATS		1	/* statistics (read-only) */
+#define PIM6CTL_MAXID		2
 
-#define PIMCTL_NAMES { \
+#define PIM6CTL_NAMES { \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 }
