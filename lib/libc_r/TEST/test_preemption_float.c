@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_preemption_float.c,v 1.3 2000/01/06 06:58:34 d Exp $	*/
 /* Test to see if floating point state is being properly maintained
    for each thread.  Different threads doing floating point operations
    simultaneously should not interfere with one another.  This

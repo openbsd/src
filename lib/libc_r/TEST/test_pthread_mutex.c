@@ -1,7 +1,8 @@
+/*	$OpenBSD: test_pthread_mutex.c,v 1.6 2000/01/06 06:58:34 d Exp $	*/
 /* ==== test_pthread_cond.c =========================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
  *
- * Description : Test pthread_cond(). Run this after test_create()
+ * Description : Test pthread_mutex(). Run this after test_create()
  *
  *  1.23 94/05/04 proven
  *      -Started coding this file.

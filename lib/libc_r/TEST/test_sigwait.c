@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_sigwait.c,v 1.3 2000/01/06 06:58:34 d Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.

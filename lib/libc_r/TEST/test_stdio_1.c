@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_stdio_1.c,v 1.3 2000/01/06 06:58:34 d Exp $	*/
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>

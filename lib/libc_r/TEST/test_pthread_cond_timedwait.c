@@ -1,3 +1,4 @@
+/*	$OpenBSD: test_pthread_cond_timedwait.c,v 1.3 2000/01/06 06:58:34 d Exp $	*/
 /* ==== test_pthread_cond.c =========================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
  *
