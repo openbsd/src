@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.8 1999/07/05 09:55:40 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.9 1999/07/07 06:00:24 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.8 1999/07/05 09:55:40 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.9 1999/07/07 06:00:24 espie Exp $";
 #endif
 
 /*
@@ -537,18 +537,16 @@ pkg_do(char *pkg)
     }
 
     if ((p = find_plist(&Plist, PLIST_DISPLAY)) != NULL) {
-	FILE *fp;
+	char *Pager;
 	char buf[BUFSIZ];
+	struct stat sbuf;
+
+	Pager = getenv("PAGER");
+	if (!Pager) 
+	    Pager = "/usr/bin/more";
 
 	snprintf(buf, sizeof buf, "%s/%s", LogDir, p->name);
-	fp = fopen(buf, "r");
-	if (fp) {
-	    putc('\n', stdout);
-	    while (fgets(buf, sizeof(buf), fp))
-		fputs(buf, stdout);
-	    putc('\n', stdout);
-	    (void) fclose(fp);
-	} else
+	if (!stat(buf,&sbuf) || vsystem("%s %s", Pager, buf)) 
 	    warnx("cannot open %s as display file", buf);
     }
 
