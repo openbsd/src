@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.21 1995/08/11 00:38:15 jtc Exp $	*/
+/*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: df.c,v 1.21 1995/08/11 00:38:15 jtc Exp $";
+static char rcsid[] = "$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ main(argc, argv)
 						warn("%s", mntpt);
 						continue;
 					}
-					if (mount(MOUNT_UFS, mntpt, MNT_RDONLY,
+					if (mount(MOUNT_FFS, mntpt, MNT_RDONLY,
 					    &mdev) != 0) {
 						(void)rmdir(mntpt);
 						if (!ufs_df(*argv, &mntbuf[mntsize]))
@@ -393,7 +393,7 @@ ufs_df(file, sfsp)
 		mntpt = "";
 	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
 	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
-	strncpy(sfsp->f_fstypename, MOUNT_UFS, MFSNAMELEN);
+	strncpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN);
 	(void)close(rfd);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1995/07/12 03:39:53 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.18.2.1 1995/11/01 00:06:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.18 1995/07/12 03:39:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.18.2.1 1995/11/01 00:06:18 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -330,7 +330,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 				args.export.ex_flags = 0;
 				args.export.ex_root = 0;
 				flags |= MNT_UPDATE | MNT_RELOAD;
-				ret = mount(MOUNT_UFS, "/", flags, &args);
+				ret = mount(MOUNT_FFS, "/", flags, &args);
 				if (ret == 0)
 					return(0);
 			}
