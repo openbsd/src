@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.10 2001/01/26 23:32:14 mickey Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.11 2001/12/04 17:47:24 mickey Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -109,23 +109,26 @@
 #define CPUID_PAT	0x00010000	/* has page attribute table */
 #define CPUID_PSE36	0x00020000	/* has 36bit page size extension */
 #define CPUID_SER	0x00040000	/* has processor serial number */
-#define CPUID_B19	0x00080000	/* reserved */
+#define CPUID_CFLUSH	0x00080000	/* CFLUSH insn supported */
 #define CPUID_B20	0x00100000	/* reserved */
-#define CPUID_B21	0x00200000	/* reserved */
-#define CPUID_B22	0x00400000	/* reserved */
+#define CPUID_DS	0x00200000	/* Debug Store */
+#define CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
 #define CPUID_MMX	0x00800000	/* has MMX instructions */
 #define CPUID_FXSR	0x01000000	/* has FXRSTOR instruction (Intel) */
 #define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix; obsolete) */
 #define CPUID_SIMD	0x02000000	/* has SIMD instructions (Intel) */
+#define CPUID_SIMD2	0x04000000	/* has SIMD instructions (Intel) #2 */
+#define	CPUID_SS	0x08000000	/* self-snoop */
+#define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
 #define CPUID_3DNOW	0x80000000	/* has 3DNow! instructions (AMD) */
 /* bits 26->31 also reserved. */
 
 #define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
 			    "\10MCE\11CX8\12APIC\13SYS1\14SYS2\15MTRR"
 #define CPUID_MASK1	0x00001fff
-#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN\24B19" \
-			    "\25B20\26B21\27B22\30MMX\31FXSR\32SIMD\33B26" \
-			    "\34B27\35B28\36B29\37B30\40B31"
+#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23SER\24CFLUSH" \
+			    "\25B20\26DS\27ACPI\30MMX\31FXSR\32SIMD\33SIMD2" \
+			    "\34SS\35B28\36TM\37B30\40B31"
 #define CPUID_MASK2	0xffffe000
 
 /*
