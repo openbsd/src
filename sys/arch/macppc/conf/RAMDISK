@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2002/06/08 00:05:02 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2002/07/24 00:22:35 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -28,10 +28,6 @@ option		DDB		# IP + ICMP + TCP + UDP
 
 config		bsd	root on rd0a swap on rd0b
 
-
-#
-#  Now the Machine specification
-#
 mainbus0	at root
 cpu*		at mainbus0
 
@@ -144,20 +140,32 @@ scsibus*	at umass?
 kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
 aue*		at uhub? port ?			# USB EtherNet 
 
+# CardBus bus support
+cardbus*	at cardslot?
+pcmcia*		at cardslot?
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
+wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
+#dc*		at cardbus? dev ? function ?	# 21143, "tulip" clone ethernet
+#fxp*		at cardbus? dev ? function ?	# Intel PRO/100 ethernet
+#xl*		at cardbus? dev ? function ?	# 3C575/3C656 ethernet
+#rl*		at cardbus? dev ? function ?	# RealTek 81[23]9 ethernet
+#wdc*		at pcmcia? function ?
+
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ? mux 1
 
 sd*		at scsibus? target ? lun ?
-st*		at scsibus? target ? lun ?            
+st*		at scsibus? target ? lun ?
 cd*		at scsibus? target ? lun ?
 #ch*		at scsibus? target ? lun ?
 #ss*		at scsibus? target ? lun ?
 #uk*		at scsibus? target ? lun ?
 
 pseudo-device	loop	1	# network loopback
-pseudo-device   bpfilter 1	# packet filter
+pseudo-device	bpfilter 1	# packet filter
 pseudo-device	rd	1	# ram disk
-pseudo-device   wsmux	2	# mouse & keyboard multiplexor
+pseudo-device	wsmux	2	# mouse & keyboard multiplexor
 
 # RAMDISK stuff
 option		MINIROOTSIZE=8192
