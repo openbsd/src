@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.60 2002/12/23 00:09:52 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.61 2003/01/25 05:13:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.60 2002/12/23 00:09:52 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.61 2003/01/25 05:13:02 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -185,7 +185,7 @@ int age_old_log(struct conf_entry *);
 char *sob(char *);
 char *son(char *);
 int isnumberstr(char *);
-void domonitor(char *, char *);
+int domonitor(struct conf_entry *);
 FILE *openmail(void);
 void child_killer(int);
 void run_command(char *);
@@ -313,10 +313,11 @@ do_entry(struct conf_entry *ent)
 		return;
 	}
 
-	DPRINTF(("%s <%d%s%s%s>: ", ent->log, ent->numlogs,
+	DPRINTF(("%s <%d%s%s%s%s>: ", ent->log, ent->numlogs,
 	    (ent->flags & CE_COMPACT) ? "Z" : "",
 	    (ent->flags & CE_BINARY) ? "B" : "",
-	    (ent->flags & CE_FOLLOW) ? "F" : ""));
+	    (ent->flags & CE_FOLLOW) ? "F" : "",
+	    (ent->flags & CE_MONITOR) && monitormode ? "M" : ""));
 
 	size = sizefile(ent->log);
 	modtime = age_old_log(ent);
@@ -328,10 +329,10 @@ do_entry(struct conf_entry *ent)
 			    (int)(ent->size / 1024)));
 		if (ent->hours > 0)
 			DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
-		if (monitormode && ent->flags & CE_MONITOR)
-			domonitor(ent->log, ent->whom);
-		if (!monitormode && (force ||
-		    (ent->size > 0 && size >= ent->size) ||
+		if (monitormode && (ent->flags & CE_MONITOR) && domonitor(ent))
+			DPRINTF(("--> monitored\n"));
+		else if (!monitormode &&
+		    (force || (ent->size > 0 && size >= ent->size) ||
 		    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
 		    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
 			DPRINTF(("--> trimming log....\n"));
@@ -603,19 +604,10 @@ parse_file(int *nentries)
 		} else
 			parse--;	/* no flags so undo */
 
-		working->whom = NULL;
-		if (working->flags & CE_MONITOR) {	/* Optional field */
-			q = parse = sob(++parse);
-			*(parse = son(parse)) = '\0';
-
-			working->whom = strdup(q);
-			if (working->log == NULL)
-				err(1, "strdup");
-		}
-
 		working->pidfile = PIDFILE;
 		working->signal = SIGHUP;
 		working->runcmd = NULL;
+		working->whom = NULL;
 		for (;;) {
 			q = parse = sob(++parse);	/* Optional field */
 			if (q == NULL || *q == '\0')
@@ -650,11 +642,20 @@ parse_file(int *nentries)
 				if (i == NSIG)
 					errx(1, "%s:%d: unknown signal: %s",
 					    conf, lineno, q);
+			} else if (working->flags & CE_MONITOR) {
+				*(parse = son(parse)) = '\0';
+				working->whom = strdup(q);
+				if (working->whom == NULL)
+					err(1, "strdup");
 			} else
 				errx(1, "%s:%d: unrecognized field: %s",
 				    conf, lineno, q);
 		}
 		free(errline);
+
+		if ((working->flags & CE_MONITOR) && working->whom == NULL)
+			errx(1, "%s:%d: missing monitor notification field",
+			    conf, lineno);
 
 		/* If there is an arcdir, set working->backdir. */
 		if (arcdir != NULL && working->logbase != NULL) {
@@ -922,8 +923,8 @@ isnumberstr(char *string)
 	return (1);
 }
 
-void
-domonitor(char *log, char *whom)
+int
+domonitor(struct conf_entry *ent)
 {
 	struct stat sb, tsb;
 	char fname[MAXPATHLEN], *flog, *p, *rb = NULL;
@@ -931,10 +932,16 @@ domonitor(char *log, char *whom)
 	off_t osize;
 	int rd;
 
-	if (stat(log, &sb) < 0)
-		return;
+	if (stat(ent->log, &sb) < 0)
+		return (0);
 
-	flog = strdup(log);
+	if (noaction) {
+		if (!verbose)
+			printf("%s: monitored\n", ent->log);
+		return (1);
+	}
+
+	flog = strdup(ent->log);
 	if (flog == NULL)
 		err(1, "strdup");
 
@@ -976,9 +983,9 @@ domonitor(char *log, char *whom)
 			err(1, "malloc");
 
 		/* Open logfile, seek. */
-		fp = fopen(log, "r");
+		fp = fopen(ent->log, "r");
 		if (fp == NULL) {
-			warn("%s", log);
+			warn("%s", ent->log);
 			goto cleanup;
 		}
 		fseek(fp, osize, SEEK_SET);
@@ -998,7 +1005,7 @@ domonitor(char *log, char *whom)
 			goto cleanup;
 		}
 		fprintf(fp, "To: %s\nSubject: LOGFILE NOTIFICATION: %s\n\n\n",
-		    whom, log);
+		    ent->whom, ent->log);
 		fwrite(rb, 1, rd, fp);
 		fputs("\n\n", fp);
 
@@ -1022,6 +1029,7 @@ cleanup:
 	free(flog);
 	if (rb != NULL)
 		free(rb);
+	return (1);
 }
 
 FILE *
