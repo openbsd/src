@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2004/07/09 19:45:43 david Exp $
+#	$OpenBSD: Makefile,v 1.33 2004/10/29 23:59:22 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -35,7 +35,8 @@ LTESTS= 	connect \
 		dynamic-forward \
 		forwarding \
 		multiplex \
-		reexec
+		reexec \
+		brokenkeys
 
 USER!=		id -un
 CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
