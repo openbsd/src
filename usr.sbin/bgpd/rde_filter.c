@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.12 2004/07/05 16:54:53 henning Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.13 2004/07/10 10:09:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -112,8 +112,8 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 
 	if (f->match.prefix.addr.af != 0 &&
 	    f->match.prefix.addr.af == prefix->af) {
-		if (prefix_equal(prefix, &f->match.prefix.addr,
-		    f->match.prefix.len) != 0)
+		if (!prefix_equal(prefix, &f->match.prefix.addr,
+		    f->match.prefix.len))
 			return (0);
 
 		/* test prefixlen stuff too */
