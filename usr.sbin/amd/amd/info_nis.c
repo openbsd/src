@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.7 2002/07/18 02:14:45 deraadt Exp $
+ *	$Id: info_nis.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -153,8 +153,8 @@ nis_reload(mnt_map *m, char *map, void (*fn)())
 	data.ncd_m = m;
 	data.ncd_map = map;
 	data.ncd_fn = fn;
-	cbinfo.data = (voidp) &data;
-	cbinfo.foreach = callback;
+	cbinfo.data = (voidp)&data;
+	cbinfo.foreach = (voidp)&callback;
 
 	error = yp_all(domain, map, &cbinfo);
 

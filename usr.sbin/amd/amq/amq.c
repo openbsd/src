@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.5 1997/01/15 23:43:46 millert Exp $
+ *	$Id: amq.c,v 1.6 2002/08/03 08:29:32 pvalchev Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.5 1997/01/15 23:43:46 millert Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.6 2002/08/03 08:29:32 pvalchev Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -61,10 +61,10 @@ static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #include <stdio.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <unistd.h>
 
 static int privsock();
 
-char *progname;
 static int flush_flag;
 static int minfo_flag;
 static int unmount_flag;
@@ -89,12 +89,9 @@ enum show_opt { Full, Stats, Calc, Short, ShowDone };
  * If (e) is Calc then just calculate the sizes
  * Otherwise display the mount node on stdout
  */
-static void show_mti(mt, e, mwid, dwid, twid)
-amq_mount_tree *mt;
-enum show_opt e;
-int *mwid;
-int *dwid;
-int *twid;
+static void
+show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid,
+    int *twid)
 {
 	switch (e) {
 	case Calc: {
@@ -163,12 +160,9 @@ printf("%-*.*s %-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%02d\n",
 /*
  * Display a mount tree.
  */
-static void show_mt(mt, e, mwid, dwid, pwid)
-amq_mount_tree *mt;
-enum show_opt e;
-int *mwid;
-int *dwid;
-int *pwid;
+static void
+show_mt(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid,
+    int *pwid)
 {
 	while (mt) {
 		show_mti(mt, e, mwid, dwid, pwid);
@@ -177,14 +171,12 @@ int *pwid;
 	}
 }
 
-static void show_mi(ml, e, mwid, dwid, twid)
-amq_mount_info_list *ml;
-enum show_opt e;
-int *mwid;
-int *dwid;
-int *twid;
+static void
+show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid,
+    int *dwid, int *twid)
 {
 	int i;
+
 	switch (e) {
 	case Calc: {
 		for (i = 0; i < ml->amq_mount_info_list_len; i++) {
@@ -231,8 +223,8 @@ int *twid;
 /*
  * Display general mount statistics
  */
-static void show_ms(ms)
-amq_mount_stats *ms;
+static void
+show_ms(amq_mount_stats *ms)
 {
 	printf("\
 requests  stale     mount     mount     unmount\n\
@@ -242,9 +234,7 @@ deferred  fhandles  ok        failed    failed\n\
 }
 
 static bool_t
-xdr_pri_free(xdr_args, args_ptr)
-xdrproc_t xdr_args;
-caddr_t args_ptr;
+xdr_pri_free(xdrproc_t xdr_args, caddr_t args_ptr)
 {
 	XDR xdr;
 	xdr.x_op = XDR_FREE;
@@ -253,7 +243,8 @@ caddr_t args_ptr;
 
 #ifdef hpux
 #include <cluster.h>
-static char *cluster_server()
+static char *
+cluster_server()
 {
 	struct cct_entry *cp;
 
@@ -276,9 +267,8 @@ static char *cluster_server()
 /*
  * MAIN
  */
-main(argc, argv)
-int argc;
-char *argv[];
+int
+main(int argc, char *argv[])
 {
 	int opt_ch;
 	int errs = 0;
@@ -293,76 +283,63 @@ char *argv[];
 	int nodefault = 0;
 
 	/*
-	 * Compute program name
-	 */
-	if (argv[0]) {
-		progname = strrchr(argv[0], '/');
-		if (progname && progname[1])
-			progname++;
-		else
-			progname = argv[0];
-	}
-	if (!progname)
-		progname = "amq";
-
-	/*
 	 * Parse arguments
 	 */
 	while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:")) != -1)
-	switch (opt_ch) {
-	case 'f':
-		flush_flag = 1;
-		nodefault = 1;
-		break;
+		switch (opt_ch) {
+		case 'f':
+			flush_flag = 1;
+			nodefault = 1;
+			break;
 
-	case 'h':
-		def_server = optarg;
-		break;
+		case 'h':
+			def_server = optarg;
+			break;
 
-	case 'l':
-		logfile = optarg;
-		nodefault = 1;
-		break;
+		case 'l':
+			logfile = optarg;
+			nodefault = 1;
+			break;
 
-	case 'm':
-		minfo_flag = 1;
-		nodefault = 1;
-		break;
+		case 'm':
+			minfo_flag = 1;
+			nodefault = 1;
+			break;
 
-	case 's':
-		stats_flag = 1;
-		nodefault = 1;
-		break;
+		case 's':
+			stats_flag = 1;
+			nodefault = 1;
+			break;
 
-	case 'u':
-		unmount_flag = 1;
-		nodefault = 1;
-		break;
+		case 'u':
+			unmount_flag = 1;
+			nodefault = 1;
+			break;
 
-	case 'v':
-		getvers_flag = 1;
-		nodefault = 1;
-		break;
+		case 'v':
+			getvers_flag = 1;
+			nodefault = 1;
+			break;
 
-	case 'x':
-		xlog_optstr = optarg;
-		nodefault = 1;
-		break;
+		case 'x':
+			xlog_optstr = optarg;
+			nodefault = 1;
+			break;
 
-	case 'D':
-		debug_opts = optarg;
-		nodefault = 1;
-		break;
+		case 'D':
+			debug_opts = optarg;
+			nodefault = 1;
+			break;
 
-	case 'M':
-		mount_map = optarg;
-		nodefault = 1;
-		break;
+		case 'M':
+			mount_map = optarg;
+			nodefault = 1;
+			break;
 
-	default:
-		errs = 1;
-		break;
-	}
+		default:
+			errs = 1;
+			break;
+		}
 
 	if (optind == argc) {
 		if (unmount_flag)
@@ -373,7 +350,7 @@ char *argv[];
 show_usage:
 		fprintf(stderr, "\
 Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
-\t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n", progname);
+\t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n", __progname);
 		exit(1);
 	}
 
@@ -391,7 +368,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 	 * Get address of server
 	 */
 	if ((hp = gethostbyname(server)) == 0 && strcmp(server, localhost) != 0) {
-		fprintf(stderr, "%s: Can't get address of %s\n", progname, server);
+		fprintf(stderr, "%s: Can't get address of %s\n", __progname, server);
 		exit(1);
 	}
 	bzero(&server_addr, sizeof server_addr);
@@ -415,7 +392,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		clnt = clntudp_create(&server_addr, AMQ_PROGRAM, AMQ_VERSION, TIMEOUT, &s);
 	}
 	if (clnt == 0) {
-		fprintf(stderr, "%s: ", progname);
+		fprintf(stderr, "%s: ", __progname);
 		clnt_pcreateerror(server);
 		exit(1);
 	}
@@ -430,10 +407,10 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = debug_opts;
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (rc && *rc < 0) {
-			fprintf(stderr, "%s: daemon not compiled for debug", progname);
+			fprintf(stderr, "%s: daemon not compiled for debug", __progname);
 			errs = 1;
 		} else if (!rc || *rc > 0) {
-			fprintf(stderr, "%s: debug setting for \"%s\" failed\n", progname, debug_opts);
+			fprintf(stderr, "%s: debug setting for \"%s\" failed\n", __progname, debug_opts);
 			errs = 1;
 		}
 	}
@@ -448,7 +425,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = xlog_optstr;
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (!rc || *rc) {
-			fprintf(stderr, "%s: setting log level to \"%s\" failed\n", progname, xlog_optstr);
+			fprintf(stderr, "%s: setting log level to \"%s\" failed\n", __progname, xlog_optstr);
 			errs = 1;
 		}
 	}
@@ -463,7 +440,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = logfile;
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (!rc || *rc) {
-			fprintf(stderr, "%s: setting logfile to \"%s\" failed\n", progname, logfile);
+			fprintf(stderr, "%s: setting logfile to \"%s\" failed\n", __progname, logfile);
 			errs = 1;
 		}
 	}
@@ -478,7 +455,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = "";
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (!rc || *rc) {
-			fprintf(stderr, "%s: amd on %s cannot flush the map cache\n", progname, server);
+			fprintf(stderr, "%s: amd on %s cannot flush the map cache\n", __progname, server);
 			errs = 1;
 		}
 	}
@@ -496,7 +473,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 			show_mi(ml, Full, &mwid, &dwid, &twid);
 
 		} else {
-			fprintf(stderr, "%s: amd on %s cannot provide mount info\n", progname, server);
+			fprintf(stderr, "%s: amd on %s cannot provide mount info\n", __progname, server);
 		}
 	}
 
@@ -513,7 +490,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 				errno = *rc;
 			else
 				errno = ETIMEDOUT;
-			fprintf(stderr, "%s: could not start new ", progname);
+			fprintf(stderr, "%s: could not start new ", __progname);
 			perror("autmount point");
 		}
 	}
@@ -527,7 +504,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 			printf("%s.\n", *spp);
 			free(*spp);
 		} else {
-			fprintf(stderr, "%s: failed to get version information\n", progname);
+			fprintf(stderr, "%s: failed to get version information\n", __progname);
 			errs = 1;
 		}
 	}
@@ -558,11 +535,11 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 			dwid, dwid, "What");
 						show_mt(mt, Stats, &mwid, &dwid, &twid);
 					} else {
-						fprintf(stderr, "%s: %s not automounted\n", progname, fs);
+						fprintf(stderr, "%s: %s not automounted\n", __progname, fs);
 					}
 					xdr_pri_free(xdr_amq_mount_tree_p, (caddr_t) mtp);
 				} else {
-					fprintf(stderr, "%s: ", progname);
+					fprintf(stderr, "%s: ", __progname);
 					clnt_perror(clnt, server);
 					errs = 1;
 				}
@@ -575,7 +552,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		if (ms) {
 			show_ms(ms);
 		} else {
-			fprintf(stderr, "%s: ", progname);
+			fprintf(stderr, "%s: ", __progname);
 			clnt_perror(clnt, server);
 			errs = 1;
 		}
@@ -595,7 +572,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 				else if (e == Short) e = ShowDone;
 			}
 		} else {
-			fprintf(stderr, "%s: ", progname);
+			fprintf(stderr, "%s: ", __progname);
 			clnt_perror(clnt, server);
 			errs = 1;
 		}

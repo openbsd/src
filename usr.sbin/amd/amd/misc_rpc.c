@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)misc_rpc.c	8.1 (Berkeley) 6/6/93
- *	$Id: misc_rpc.c,v 1.4 2002/02/23 09:18:27 deraadt Exp $
+ *	$Id: misc_rpc.c,v 1.5 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -45,15 +45,14 @@
 
 #include "am.h"
 
-void	rpc_msg_init P((struct rpc_msg *mp, u_long prog, u_long vers, u_long proc));
-int	pickup_rpc_reply P((voidp pkt, int len, voidp where, xdrproc_t where_xdr));
-int	make_rpc_packet P((char *buf, int buflen, unsigned long proc,
-	    struct rpc_msg *mp, voidp arg, xdrproc_t arg_xdr, AUTH *auth));
+void	rpc_msg_init(struct rpc_msg *, u_long, u_long, u_long);
+int	pickup_rpc_reply(voidp, int, voidp, xdrproc_t);
+int	make_rpc_packet(char *, int, unsigned long, struct rpc_msg *,
+    voidp, xdrproc_t, AUTH *);
 
 void
-rpc_msg_init(mp, prog, vers, proc)
-struct rpc_msg *mp;
-unsigned long prog, vers, proc;
+rpc_msg_init(struct rpc_msg *mp, unsigned long prog,
+    unsigned long vers, unsigned long proc)
 {
 	/*
 	 * Initialise the message
@@ -71,11 +70,7 @@ unsigned long prog, vers, proc;
  * Field reply to call to mountd
  */
 int
-pickup_rpc_reply(pkt, len, where, where_xdr)
-voidp pkt;
-int len;
-voidp where;
-xdrproc_t where_xdr;
+pickup_rpc_reply(voidp pkt, int len, voidp where, xdrproc_t where_xdr)
 {
 	XDR reply_xdr;
 	int ok;
@@ -115,14 +110,8 @@ drop:
 }
 
 int
-make_rpc_packet(buf, buflen, proc, mp, arg, arg_xdr, auth)
-char *buf;
-int buflen;
-unsigned long proc;
-struct rpc_msg *mp;
-voidp arg;
-xdrproc_t arg_xdr;
-AUTH *auth;
+make_rpc_packet(char *buf, int buflen, unsigned long proc,
+    struct rpc_msg *mp, voidp arg, xdrproc_t arg_xdr, AUTH *auth)
 {
 	XDR msg_xdr;
 	int len;

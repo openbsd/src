@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_nfs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_nfs.c,v 1.3 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: srvr_nfs.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -91,8 +91,8 @@ static char ping_buf[sizeof(struct rpc_msg) + 32];
 /*
  * Flush any cached data
  */
-void flush_srvr_nfs_cache P((void));
-void flush_srvr_nfs_cache()
+void
+flush_srvr_nfs_cache(void)
 {
 	fserver *fs = 0;
 
@@ -108,8 +108,8 @@ void flush_srvr_nfs_cache()
 /*
  * Startup the NFS ping
  */
-static void start_ping(P_void);
-static void start_ping()
+static void
+start_ping(P_void)
 {
 	XDR ping_xdr;
 	struct rpc_msg ping_msg;
@@ -145,14 +145,9 @@ static void start_ping()
  * Called when a portmap reply arrives
  */
 /*ARGSUSED*/
-static void got_portmap P((voidp pkt, int len, struct sockaddr_in *sa, struct sockaddr_in *ia, voidp idv, int done));
-static void got_portmap(pkt, len, sa, ia, idv, done)
-voidp pkt;
-int len;
-struct sockaddr_in *sa;
-struct sockaddr_in *ia;
-voidp idv;
-int done;
+static void
+got_portmap(voidp pkt, int len, struct sockaddr_in *sa,
+    struct sockaddr_in *ia, voidp idv, int done)
 {
 	fserver *fs2 = (fserver *) idv;
 	fserver *fs = 0;
@@ -206,11 +201,9 @@ int done;
 /*
  * Obtain portmap information
  */
-static int call_portmap P((fserver *fs, AUTH *auth, unsigned long prog, unsigned long vers, unsigned long prot));
-static int call_portmap(fs, auth, prog, vers, prot)
-fserver *fs;
-AUTH *auth;
-unsigned long prog, vers, prot;
+static int
+call_portmap(fserver *fs, AUTH *auth, unsigned long prog,
+    unsigned long vers, unsigned long prot)
 {
 	struct rpc_msg pmap_msg;
 	int len;
@@ -238,11 +231,10 @@ unsigned long prog, vers, prot;
 	return error;
 }
 
-static void nfs_keepalive P((fserver*));
+static void nfs_keepalive(fserver *);
 
-static void recompute_portmap P((fserver *fs));
-static void recompute_portmap(fs)
-fserver *fs;
+static void
+recompute_portmap(fserver *fs)
 {
 	int error;
 
@@ -266,14 +258,9 @@ fserver *fs;
  * structure when the ping was transmitted.
  */
 /*ARGSUSED*/
-static void nfs_pinged P((voidp pkt, int len, struct sockaddr_in *sp, struct sockaddr_in *tsp, voidp idv, int done));
-static void nfs_pinged(pkt, len, sp, tsp, idv, done)
-voidp pkt;
-int len;
-struct sockaddr_in *sp;
-struct sockaddr_in *tsp;
-voidp idv;
-int done;
+static void
+nfs_pinged(voidp pkt, int len, struct sockaddr_in *sp,
+    struct sockaddr_in *tsp, voidp idv, int done)
 {
 	/* XXX EVIL! XXX */
 	int xid = (int) ((long)idv);
@@ -372,9 +359,8 @@ int done;
 /*
  * Called when no ping-reply received
  */
-static void nfs_timed_out P((fserver *fs));
-static void nfs_timed_out(fs)
-fserver *fs;
+static void
+nfs_timed_out(fserver *fs)
 {
 	nfs_private *np = (nfs_private *) fs->fs_private;
 
@@ -444,9 +430,8 @@ fserver *fs;
 /*
  * Keep track of whether a server is alive
  */
-static void nfs_keepalive P((fserver *fs));
-static void nfs_keepalive(fs)
-fserver *fs;
+static void
+nfs_keepalive(fserver *fs)
 {
 	int error;
 	nfs_private *np = (nfs_private *) fs->fs_private;
@@ -524,11 +509,8 @@ fserver *fs;
 	fs->fs_cid = timeout(fstimeo, nfs_timed_out, (voidp) fs);
 }
 
-int nfs_srvr_port P((fserver *fs, u_short *port, voidp wchan));
-int nfs_srvr_port(fs, port, wchan)
-fserver *fs;
-u_short *port;
-voidp wchan;
+int
+nfs_srvr_port(fserver *fs, u_short *port, voidp wchan)
 {
 	int error = -1;
 	if ((fs->fs_flags & FSF_VALID) == FSF_VALID) {
@@ -571,10 +553,8 @@ voidp wchan;
 	return error;
 }
 
-static void start_nfs_pings P((fserver *fs, int pingval));
-static void start_nfs_pings(fs, pingval)
-fserver *fs;
-int pingval;
+static void
+start_nfs_pings(fserver *fs, int pingval)
 {
 	if (!(fs->fs_flags & FSF_PINGING)) {
 		fs->fs_flags |= FSF_PINGING;
@@ -597,9 +577,8 @@ int pingval;
 /*
  * Find an nfs server for a host.
  */
-fserver *find_nfs_srvr P((mntfs *mf));
-fserver *find_nfs_srvr(mf)
-mntfs *mf;
+fserver *
+find_nfs_srvr(mntfs *mf)
 {
 	fserver *fs;
 	struct hostent *hp = 0;

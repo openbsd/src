@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.6 2002/07/18 00:58:58 pvalchev Exp $	*/
+/*	$OpenBSD: am.h,v 1.7 2002/08/03 08:29:32 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -175,10 +175,10 @@ extern char *wire;		/* Name of primary connected network */
 #define	NEXP_AP	(254)
 #define NEXP_AP_MARGIN (128)
 
-typedef int (*task_fun)P((voidp));
-typedef void (*cb_fun)P((int, int, voidp));
-typedef void (*fwd_fun)P((voidp, int, struct sockaddr_in *,
-				struct sockaddr_in *, voidp, int));
+typedef int (*task_fun)(voidp);
+typedef void (*cb_fun)(int, int, voidp);
+typedef void (*fwd_fun)(voidp, int, struct sockaddr_in *,
+				struct sockaddr_in *, voidp, int);
 
 /*
  * String comparison macros
@@ -216,6 +216,8 @@ struct mntlist {
  */
 typedef struct mnt_map mnt_map;
 
+struct fhstatus;
+
 /*
  * Global routines
  */
@@ -229,6 +231,7 @@ extern int	 softclock(P_void);
 extern int	 debug_option(char *);
 #endif /* DEBUG */
 extern void	 deslashify(char *);
+extern void	 discard_mntlist(mntlist *mp);
 /*extern void	 domain_strip(char*, char *);*/
 extern mntfs	*dup_mntfs(mntfs *);
 extern fserver	*dup_srvr(fserver*);
@@ -241,6 +244,7 @@ extern mntfs	*find_mntfs(am_ops *, am_opts *, char *, char *, char *,
 		 char *, char *);
 extern void	 flush_mntfs(P_void);
 extern void	 flush_nfs_fhandle_cache(fserver *);
+extern void	 flush_srvr_nfs_cache(void);
 extern void	 forcibly_timeout_mp(am_node *);
 extern void	 free_mntfs(mntfs *);
 extern void	 free_opts(am_opts *);
@@ -275,6 +279,7 @@ extern int	 mapc_keyiter(mnt_map*, void (*)(char *,voidp), voidp);
 extern int	 mapc_search(mnt_map *, char *, char **);
 extern void	 mapc_reload(P_void);
 extern void	 mapc_showtypes(FILE *);
+extern void	 mf_mounted(mntfs *mf);
 extern int	 mkdirs(char *, int);
 extern void	 mk_fattr(am_node *, int);
 extern void	 mnt_free(struct mntent *);
@@ -282,7 +287,7 @@ extern int	 mount_auto_node(char *, voidp);
 extern int	 mount_automounter(pid_t);
 extern int	 mount_exported(P_void);
 extern int	 mount_fs(struct mntent *, int, caddr_t, int, MTYPE_TYPE);
-/*extern int	 mount_nfs_fh(struct fhstatus *, char *, char *, char *, mntfs *);*/
+extern int	 mount_nfs_fh(struct fhstatus *, char *, char *, char *, mntfs *);
 extern int	 mount_node(am_node *);
 extern mntfs	*new_mntfs(P_void);
 extern void	 new_ttl(am_node *);
@@ -321,8 +326,8 @@ extern int	 timeout(unsigned int, void (*fn)(), voidp);
 extern void	 timeout_mp(P_void);
 extern void	 umount_exported(P_void);
 extern int	 umount_fs(char *);
-/*extern int unmount_node P((am_node*));
-extern int unmount_node_wrap P((voidp));*/
+/*extern int unmount_node(am_node*);
+extern int unmount_node_wrap(voidp);*/
 extern void	 unregister_amq(P_void);
 extern void	 untimeout(int);
 extern int	 valid_key(char *);
@@ -380,27 +385,27 @@ struct am_fh {
 	int	fhh_gen;		/* generation number */
 };
 
-extern am_node *fh_to_mp P((nfs_fh*));
-extern am_node *fh_to_mp3 P((nfs_fh*,int*,int));
-extern void mp_to_fh P((am_node*, nfs_fh*));
+extern am_node	*fh_to_mp(nfs_fh *);
+extern am_node	*fh_to_mp3(nfs_fh *, int *, int);
+extern void	 mp_to_fh(am_node *, nfs_fh *);
 #define	fh_to_mp2(fhp, rp) fh_to_mp3(fhp, rp, VLOOK_CREATE)
-extern int auto_fmount P((am_node *mp));
-extern int auto_fumount P((am_node *mp));
+extern int	 auto_fmount(am_node *mp);
+extern int	 auto_fumount(am_node *mp);
 
 #define	MAX_READDIR_ENTRIES	16
 
-typedef char*	(*vfs_match)P((am_opts*));
-typedef int	(*vfs_init)P((mntfs*));
-typedef int	(*vmount_fs)P((am_node*));
-typedef int	(*vfmount_fs)P((mntfs*));
-typedef int	(*vumount_fs)P((am_node*));
-typedef int	(*vfumount_fs)P((mntfs*));
-typedef am_node*(*vlookuppn)P((am_node*, char*, int*, int));
-typedef int	(*vreaddir)P((am_node*, nfscookie, dirlist*, entry*, int));
-typedef am_node*(*vreadlink)P((am_node*, int*));
-typedef void	(*vmounted)P((mntfs*));
-typedef void	(*vumounted)P((am_node*));
-typedef fserver*(*vffserver)P((mntfs*));
+typedef char	*(*vfs_match)(am_opts *);
+typedef int	 (*vfs_init)(mntfs *);
+typedef int	 (*vmount_fs)(am_node *);
+typedef int	 (*vfmount_fs)(mntfs *);
+typedef int	 (*vumount_fs)(am_node *);
+typedef int	 (*vfumount_fs)(mntfs *);
+typedef am_node	*(*vlookuppn)(am_node *, char *, int *, int);
+typedef int	 (*vreaddir)(am_node *, nfscookie, dirlist *, entry *, int);
+typedef am_node	*(*vreadlink)(am_node *, int *);
+typedef void	 (*vmounted)(mntfs *);
+typedef void	 (*vumounted)(am_node *);
+typedef fserver	*(*vffserver)(mntfs *);
 
 struct am_ops {
 	char		*fs_type;
@@ -418,8 +423,8 @@ struct am_ops {
 	vffserver	ffserver;
 	int		fs_flags;
 };
-extern am_node *efs_lookuppn P((am_node*, char*, int*, int));
-extern int efs_readdir P((am_node*, nfscookie, dirlist*, entry*, int));
+extern am_node	*efs_lookuppn(am_node *, char *, int *, int);
+extern int	 efs_readdir(am_node *, nfscookie, dirlist *, entry *, int);
 
 #define	VLOOK_CREATE	0x1
 #define	VLOOK_DELETE	0x2

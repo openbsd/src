@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_afs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_afs.c,v 1.1.1.1 1995/10/18 08:47:12 deraadt Exp $
+ *	$Id: srvr_afs.c,v 1.2 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -53,9 +53,8 @@ static fserver *localhost;
 /*
  * Find an nfs server for the local host
  */
-fserver *find_afs_srvr P((mntfs *));
-fserver *find_afs_srvr(mf)
-mntfs *mf;
+fserver *
+find_afs_srvr(mntfs *mf)
 {
 	fserver *fs = localhost;
 
@@ -89,9 +88,8 @@ mntfs *mf;
 /*
  * Wakeup anything waiting for this server
  */
-void wakeup_srvr P((fserver *fs));
-void wakeup_srvr(fs)
-fserver *fs;
+void
+wakeup_srvr(fserver *fs)
 {
 	fs->fs_flags &= ~FSF_WANT;
 	wakeup((voidp) fs);
@@ -100,9 +98,8 @@ fserver *fs;
 /*
  * Called when final ttl of server has expired
  */
-static void timeout_srvr P((fserver *fs));
-static void timeout_srvr(fs)
-fserver *fs;
+static void
+timeout_srvr(fserver *fs)
 {
 	/*
 	 * If the reference count is still zero then
@@ -146,9 +143,8 @@ fserver *fs;
 /*
  * Free a file server
  */
-void free_srvr P((fserver *fs));
-void free_srvr(fs)
-fserver *fs;
+void
+free_srvr(fserver *fs)
 {
 	if (--fs->fs_refc == 0) {
 		/*
@@ -183,9 +179,8 @@ fserver *fs;
 /*
  * Make a duplicate fserver reference
  */
-fserver *dup_srvr P((fserver *fs));
-fserver *dup_srvr(fs)
-fserver *fs;
+fserver *
+dup_srvr(fserver *fs)
 {
 	fs->fs_refc++;
 	return fs;
@@ -194,10 +189,7 @@ fserver *fs;
 /*
  * Log state change
  */
-void srvrlog P((fserver *fs, char *state));
-void srvrlog(fs, state)
-fserver *fs;
-char *state;
+void srvrlog(fserver *fs, char *state)
 {
 	plog(XLOG_INFO, "file server %s type %s %s", fs->fs_host, fs->fs_type, state);
 }

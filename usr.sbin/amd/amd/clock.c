@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/6/93
- *	$Id: clock.c,v 1.2 2001/03/02 06:22:02 deraadt Exp $
+ *	$Id: clock.c,v 1.3 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -78,8 +78,8 @@ time_t next_softclock;			/* Time of next call to softclock() */
 #define	CID_ALLOC()	(++callout_id)
 #define	CID_UNDEF	(0)
 
-static callout *alloc_callout(P_void);
-static callout *alloc_callout()
+static callout *
+alloc_callout(P_void)
 {
 	callout *cp = free_callouts;
 	if (cp) {
@@ -90,9 +90,8 @@ static callout *alloc_callout()
 	return ALLOC(callout);
 }
 
-static void free_callout P((callout *cp));
-static void free_callout(cp)
-callout *cp;
+static void
+free_callout(callout *cp)
 {
 	if (nfree_callouts > CALLOUT_FREE_SLOP) {
 		free((voidp) cp);
@@ -108,11 +107,8 @@ callout *cp;
  *
  * (*fn)(closure) will be called at clocktime() + secs
  */
-int timeout P((unsigned int secs, void (*fn)(), voidp closure));
-int timeout(secs, fn, closure)
-unsigned int secs;
-void (*fn)();
-voidp closure;
+int
+timeout(unsigned int secs, void (*fn)(), voidp closure)
 {
 	callout *cp, *cp2;
 	time_t t = clocktime() + secs;
@@ -151,9 +147,8 @@ voidp closure;
 /*
  * De-schedule a callout
  */
-void untimeout P((int id));
-void untimeout(id)
-int id;
+void
+untimeout(int id)
 {
 	callout *cp, *cp2;
 	for (cp = &callouts; (cp2 = cp->c_next); cp = cp2) {
@@ -168,10 +163,8 @@ int id;
 /*
  * Reschedule after clock changed
  */
-void reschedule_timeouts P((time_t now, time_t then));
-void reschedule_timeouts(now, then)
-time_t now;
-time_t then;
+void
+reschedule_timeouts(time_t now, time_t then)
 {
 	callout *cp;
 
@@ -190,8 +183,8 @@ time_t then;
 /*
  * Clock handler
  */
-int softclock(P_void);
-int softclock()
+int
+softclock(P_void)
 {
 	time_t now;
 	callout *cp;

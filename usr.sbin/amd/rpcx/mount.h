@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.3 2002/07/18 02:03:00 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.4 2002/08/03 08:29:32 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -130,4 +130,3 @@ extern voidp mountproc_umntall_1();
 extern exports *mountproc_export_1();
 #define MOUNTPROC_EXPORTALL ((u_long)6)
 extern exports *mountproc_exportall_1();
-

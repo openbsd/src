@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -80,9 +80,8 @@
 /*
  * Execute needs the same as NFS plus a helper command
  */
-static char *host_match P((am_opts *fo));
-static char *host_match(fo)
-am_opts *fo;
+static char *
+host_match(am_opts *fo)
 {
 #ifdef HOST_EXEC
 	if (!host_helper) {
@@ -100,8 +99,8 @@ am_opts *fo;
 	return (*nfs_ops.fs_match)(fo);
 }
 
-static int host_init(mf)
-mntfs *mf;
+static int
+host_init(mntfs *mf)
 {
 	if (strchr(mf->mf_info, ':') == 0)
 		return ENOENT;
@@ -121,24 +120,19 @@ mntfs *mf;
 #ifndef HOST_EXEC
 
 static bool_t
-xdr_pri_free(xdr_args, args_ptr)
-xdrproc_t xdr_args;
-caddr_t args_ptr;
+xdr_pri_free(xdrproc_t xdr_args, caddr_t args_ptr)
 {
 	XDR xdr;
+
 	xdr.x_op = XDR_FREE;
 	return ((*xdr_args)(&xdr, args_ptr));
 }
 
-static int do_mount P((fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf));
-static int do_mount(fhp, dir, fs_name, opts, mf)
-fhstatus *fhp;
-char *dir;
-char *fs_name;
-char *opts;
-mntfs *mf;
+static int
+do_mount(fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
 {
 	struct stat stb;
+
 #ifdef DEBUG
 	dlog("host: mounting fs %s on %s\n", fs_name, dir);
 #endif /* DEBUG */
@@ -153,9 +147,8 @@ mntfs *mf;
 	return mount_nfs_fh(fhp, dir, fs_name, opts, mf);
 }
 
-static int sortfun P((const void *arg1, const void *arg2));
-static int sortfun(arg1, arg2)
-const void *arg1, *arg2;
+static int
+sortfun(const void *arg1, const void *arg2)
 {
 	const exports *a = arg1, *b = arg2;
 	return strcmp((*a)->ex_dir, (*b)->ex_dir);
@@ -164,11 +157,8 @@ const void *arg1, *arg2;
 /*
  * Get filehandle
  */
-static int fetch_fhandle P((CLIENT *client, char *dir, fhstatus *fhp));
-static int fetch_fhandle(client, dir, fhp)
-CLIENT *client;
-char *dir;
-fhstatus *fhp;
+static int
+fetch_fhandle(CLIENT *client, char *dir, fhstatus *fhp)
 {
 	struct timeval tv;
 	enum clnt_stat clnt_stat;
@@ -212,10 +202,8 @@ fhstatus *fhp;
 /*
  * Scan mount table to see if something already mounted
  */
-static int already_mounted P((mntlist *mlist, char*dir));
-static int already_mounted(mlist, dir)
-mntlist *mlist;
-char *dir;
+static int
+already_mounted(mntlist *mlist, char*dir)
 {
 	mntlist *ml;
 
@@ -228,9 +216,8 @@ char *dir;
 /*
  * Mount the export tree from a host
  */
-static int host_fmount P((mntfs *mf));
-static int host_fmount(mf)
-mntfs *mf;
+static int
+host_fmount(mntfs *mf)
 {
 	struct timeval tv2;
 	CLIENT *client;
@@ -407,10 +394,8 @@ out:
  * TODO:
  * Does not work if pref is "/".
  */
-static int directory_prefix P((char *pref, char *dir));
-static int directory_prefix(pref, dir)
-char *pref;
-char *dir;
+static int
+directory_prefix(char *pref, char *dir)
 {
 	int len = strlen(pref);
 	if (strncmp(pref, dir, len) != 0)
@@ -423,9 +408,8 @@ char *dir;
 /*
  * Unmount a mount tree
  */
-static int host_fumount P((mntfs *mf));
-static int host_fumount(mf)
-mntfs *mf;
+static int
+host_fumount(mntfs *mf)
 {
 	mntlist *ml, *mprev;
 	int xerror = 0;
@@ -475,7 +459,7 @@ mntfs *mf;
 					xerror = error;
 				if (error != EBUSY) {
 					errno = error;
-					plog("Tree unmount of %s failed: %m", ml->mnt->mnt_dir);
+					plog(XLOG_ERROR, "Tree unmount of %s failed: %m", ml->mnt->mnt_dir);
 				}
 			} else {
 #ifdef HOST_MKDIRS
@@ -512,8 +496,7 @@ mntfs *mf;
  * have other filesystems mounted, but the existing
  * mountd protocol is badly broken anyway.
  */
-static void host_umounted(mp)
-am_node *mp;
+static void host_umounted(am_node *mp)
 {
 #ifdef INFORM_MOUNTD
 	mntfs *mf = mp->am_mnt;
@@ -575,12 +558,8 @@ out:
 
 #else /* HOST_EXEC */
 
-static int host_exec P((char*op, char*host, char*fs, char*opts));
-static int host_exec(op, host, fs, opts)
-char *op;
-char *host;
-char *fs;
-char *opts;
+static int
+host_exec(char *op, char *host, char *fs, char *opts)
 {
 	int error;
 	char *argv[7];
@@ -636,18 +615,16 @@ char *opts;
 	return error;
 }
 
-static int host_mount P((am_node *mp));
-static int host_mount(mp)
-am_node *mp;
+static int
+host_mount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 
 	return host_exec("mount", mf->mf_server->fs_host, mf->mf_mount, mf->mf_opts);
 }
 
-static int host_umount P((am_node *mp));
-static int host_umount(mp)
-am_node *mp;
+static int
+host_umount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 

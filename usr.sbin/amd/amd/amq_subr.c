@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: amq_subr.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -49,9 +49,7 @@
 
 /*ARGSUSED*/
 voidp
-amqproc_null_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_null_1(voidp argp, struct svc_req *rqstp)
 {
 	static char res;
 
@@ -63,11 +61,10 @@ struct svc_req *rqstp;
  */
 /*ARGSUSED*/
 amq_mount_tree_p *
-amqproc_mnttree_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_mnttree_1(voidp argp, struct svc_req *rqstp)
 {
 	static am_node *mp;
+
 	mp = find_ap(*(char **) argp);
 	return (amq_mount_tree_p *) &mp;
 }
@@ -77,11 +74,10 @@ struct svc_req *rqstp;
  */
 /*ARGSUSED*/
 voidp
-amqproc_umnt_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_umnt_1(voidp argp, struct svc_req *rqstp)
 {
 	static char res;
+
 	am_node *mp = find_ap(*(char **) argp);
 	if (mp)
 		forcibly_timeout_mp(mp);
@@ -94,9 +90,7 @@ struct svc_req *rqstp;
  */
 /*ARGSUSED*/
 amq_mount_stats *
-amqproc_stats_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_stats_1(voidp argp, struct svc_req *rqstp)
 {
 	return (amq_mount_stats *) &amd_stats;
 }
@@ -106,9 +100,7 @@ struct svc_req *rqstp;
  */
 /*ARGSUSED*/
 amq_mount_tree_list *
-amqproc_export_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_export_1(voidp argp, struct svc_req *rqstp)
 {
 	static amq_mount_tree_list aml;
 
@@ -119,9 +111,7 @@ struct svc_req *rqstp;
 }
 
 int *
-amqproc_setopt_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_setopt_1(voidp argp, struct svc_req *rqstp)
 {
 	static int rc;
 
@@ -165,11 +155,9 @@ struct svc_req *rqstp;
 }
 
 amq_mount_info_list *
-amqproc_getmntfs_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_getmntfs_1(voidp argp, struct svc_req *rqstp)
 {
-extern qelem mfhead;
+	extern qelem mfhead;
 	return (amq_mount_info_list *) &mfhead;	/* XXX */
 }
 
@@ -245,9 +233,7 @@ struct svc_req *rqstp;
  * Disable "amq -M" functionality since it is inherently insecure.
  */
 int *
-amqproc_mount_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_mount_1(voidp argp, struct svc_req *rqstp)
 {
 	static int rc;
 	char *s = *(amq_string *) argp;
@@ -260,11 +246,10 @@ struct svc_req *rqstp;
 #endif
 
 amq_string *
-amqproc_getvers_1(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+amqproc_getvers_1(voidp argp, struct svc_req *rqstp)
 {
-static amq_string res;
+	static amq_string res;
+
 	res = version;
 	return &res;
 }
@@ -273,9 +258,7 @@ static amq_string res;
  * XDR routines.
  */
 bool_t
-xdr_amq_string(xdrs, objp)
-	XDR *xdrs;
-	amq_string *objp;
+xdr_amq_string(XDR *xdrs, amq_string *objp)
 {
 	if (!xdr_string(xdrs, objp, AMQ_STRLEN)) {
 		return (FALSE);
@@ -284,9 +267,7 @@ xdr_amq_string(xdrs, objp)
 }
 
 bool_t
-xdr_amq_setopt(xdrs, objp)
-	XDR *xdrs;
-	amq_setopt *objp;
+xdr_amq_setopt(XDR *xdrs, amq_setopt *objp)
 {
 	if (!xdr_enum(xdrs, (enum_t *)&objp->as_opt)) {
 		return (FALSE);
@@ -301,9 +282,7 @@ xdr_amq_setopt(xdrs, objp)
  * More XDR routines  - Should be used for OUTPUT ONLY.
  */
 bool_t
-xdr_amq_mount_tree_node(xdrs, objp)
-	XDR *xdrs;
-	amq_mount_tree *objp;
+xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp)
 {
 	am_node *mp = (am_node *) objp;
 
@@ -345,9 +324,7 @@ xdr_amq_mount_tree_node(xdrs, objp)
 }
 
 bool_t
-xdr_amq_mount_subtree(xdrs, objp)
-	XDR *xdrs;
-	amq_mount_tree *objp;
+xdr_amq_mount_subtree(XDR *xdrs, amq_mount_tree *objp)
 {
 	am_node *mp = (am_node *) objp;
 
@@ -364,9 +341,7 @@ xdr_amq_mount_subtree(xdrs, objp)
 }
 
 bool_t
-xdr_amq_mount_tree(xdrs, objp)
-	XDR *xdrs;
-	amq_mount_tree *objp;
+xdr_amq_mount_tree(XDR *xdrs, amq_mount_tree *objp)
 {
 	am_node *mp = (am_node *) objp;
 	am_node *mnil = 0;
@@ -384,9 +359,7 @@ xdr_amq_mount_tree(xdrs, objp)
 }
 
 bool_t
-xdr_amq_mount_tree_p(xdrs, objp)
-	XDR *xdrs;
-	amq_mount_tree_p *objp;
+xdr_amq_mount_tree_p(XDR *xdrs, amq_mount_tree_p *objp)
 {
 	if (!xdr_pointer(xdrs, (char **)objp, sizeof(amq_mount_tree), xdr_amq_mount_tree)) {
 		return (FALSE);
@@ -396,9 +369,7 @@ xdr_amq_mount_tree_p(xdrs, objp)
 
 
 bool_t
-xdr_amq_mount_stats(xdrs, objp)
-	XDR *xdrs;
-	amq_mount_stats *objp;
+xdr_amq_mount_stats(XDR *xdrs, amq_mount_stats *objp)
 {
 	if (!xdr_int(xdrs, &objp->as_drops)) {
 		return (FALSE);
@@ -420,9 +391,7 @@ xdr_amq_mount_stats(xdrs, objp)
 
 
 bool_t
-xdr_amq_mount_tree_list(xdrs, objp)
-	XDR *xdrs;
-	amq_mount_tree_list *objp;
+xdr_amq_mount_tree_list(XDR *xdrs, amq_mount_tree_list *objp)
 {
 	 if (!xdr_array(xdrs, (char **)&objp->amq_mount_tree_list_val, (u_int *)&objp->amq_mount_tree_list_len, ~0, sizeof(amq_mount_tree_p), xdr_amq_mount_tree_p)) {
 		return (FALSE);
@@ -431,15 +400,14 @@ xdr_amq_mount_tree_list(xdrs, objp)
 }
 
 bool_t
-xdr_amq_mount_info_qelem(xdrs, qhead)
-	XDR *xdrs;
-	qelem *qhead;
+xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
 {
 	/*
 	 * Compute length of list
 	 */
 	mntfs *mf;
 	u_int len = 0;
+
 	for (mf = LAST(mntfs, qhead); mf != HEAD(mntfs, qhead); mf = PREV(mntfs, mf)) {
 		if (!(mf->mf_ops->fs_flags & FS_AMQINFO))
 			continue;

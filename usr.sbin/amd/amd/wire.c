@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.9 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: wire.c,v 1.10 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -84,8 +84,8 @@ static addrlist *localnets = 0;
 #define clist (ifc.ifc_ifcu.ifcu_req)
 #define count (ifc.ifc_len/sizeof(struct ifreq))
 
-char *getwire P((void));
-char *getwire()
+char *
+getwire(void)
 {
 	struct hostent *hp;
 	struct netent *np;
@@ -252,8 +252,8 @@ out:
 
 #else
 
-char *getwire P((void));
-char *getwire()
+char *
+getwire(void)
 {
 	return strdup(NO_SUBNET);
 }
@@ -263,9 +263,8 @@ char *getwire()
  * Determine whether a network is on a local network
  * (addr) is in network byte order.
  */
-int islocalnet P((u_int32_t addr));
-int islocalnet(addr)
-u_int32_t addr;
+int
+islocalnet(u_int32_t addr)
 {
 	addrlist *al;
 

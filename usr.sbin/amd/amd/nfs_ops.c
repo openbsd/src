@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.14 2002/07/18 02:03:00 deraadt Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.15 2002/08/03 08:29:31 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.14 2002/07/18 02:03:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.15 2002/08/03 08:29:31 pvalchev Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -120,7 +120,8 @@ static int call_mountd(fh_cache*, unsigned long, fwd_fun, voidp);
 
 AUTH *nfs_auth;
 
-static fh_cache *find_nfs_fhandle_cache(voidp idv, int done)
+static fh_cache *
+find_nfs_fhandle_cache(voidp idv, int done)
 {
 	fh_cache *fp, *fp2 = 0;
 	/* XXX EVIL XXX */
@@ -152,8 +153,9 @@ static fh_cache *find_nfs_fhandle_cache(voidp idv, int done)
 /*
  * Called when a filehandle appears
  */
-static void got_nfs_fh(voidp pkt, int len, struct sockaddr_in *sa,
-	struct sockaddr_in *ia, voidp idv, int done)
+static void
+got_nfs_fh(voidp pkt, int len, struct sockaddr_in *sa,
+    struct sockaddr_in *ia, voidp idv, int done)
 {
 	fh_cache *fp = find_nfs_fhandle_cache(idv, done);
 	if (fp) {
@@ -178,7 +180,8 @@ static void got_nfs_fh(voidp pkt, int len, struct sockaddr_in *sa,
 	}
 }
 
-void flush_nfs_fhandle_cache(fserver *fs)
+void
+flush_nfs_fhandle_cache(fserver *fs)
 {
 	fh_cache *fp;
 	ITER(fp, fh_cache, &fh_head) {
@@ -189,7 +192,8 @@ void flush_nfs_fhandle_cache(fserver *fs)
 	}
 }
 
-static void discard_fh(fh_cache *fp)
+static void
+discard_fh(fh_cache *fp)
 {
 	rem_que(&fp->fh_q);
 #ifdef DEBUG
@@ -203,7 +207,8 @@ static void discard_fh(fh_cache *fp)
 /*
  * Determine the file handle for a node
  */
-static int prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, voidp wchan)
+static int
+prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, voidp wchan)
 {
 	fh_cache *fp, *fp_save = 0;
 	int error;
@@ -322,7 +327,8 @@ static int prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, voi
 	return error;
 }
 
-int make_nfs_auth(void)
+int
+make_nfs_auth(void)
 {
 #ifdef HAS_NFS_QUALIFIED_NAMES
 	/*
@@ -341,7 +347,8 @@ int make_nfs_auth(void)
 	return 0;
 }
 
-static int call_mountd(fh_cache *fp, u_long proc, fwd_fun f, voidp wchan)
+static int
+call_mountd(fh_cache *fp, u_long proc, fwd_fun f, voidp wchan)
 {
 	struct rpc_msg mnt_msg;
 	int len;
@@ -397,7 +404,8 @@ static int call_mountd(fh_cache *fp, u_long proc, fwd_fun f, voidp wchan)
  * remote hostname.
  * Local filesystem defaults to remote and vice-versa.
  */
-static char *nfs_match(am_opts *fo)
+static char *
+nfs_match(am_opts *fo)
 {
 	char *xmtab;
 	if (fo->opt_fs && !fo->opt_rfs)
@@ -427,7 +435,8 @@ static char *nfs_match(am_opts *fo)
 /*
  * Initialise am structure for nfs
  */
-static int nfs_init(mntfs *mf)
+static int
+nfs_init(mntfs *mf)
 {
 	if (!mf->mf_private) {
 		int error;
@@ -449,7 +458,9 @@ static int nfs_init(mntfs *mf)
 	return 0;
 }
 
-int mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
+int
+mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
+    mntfs *mf)
 {
 	struct nfs_args nfs_args;
 	struct mntent mnt;
@@ -663,7 +674,8 @@ int mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
 	return error;
 }
 
-static int mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
+static int
+mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
 {
 #ifdef notdef
 	int error;
@@ -691,7 +703,8 @@ static int mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
 	return mount_nfs_fh((fhstatus *) mf->mf_private, dir, fs_name, opts, mf);
 }
 
-static int nfs_fmount(mntfs *mf)
+static int
+nfs_fmount(mntfs *mf)
 {
 	int error;
 
@@ -706,7 +719,8 @@ static int nfs_fmount(mntfs *mf)
 	return error;
 }
 
-static int nfs_fumount(mntfs *mf)
+static int
+nfs_fumount(mntfs *mf)
 {
 	int error = UMOUNT_FS(mf->mf_mount);
 	if (error)
@@ -715,7 +729,8 @@ static int nfs_fumount(mntfs *mf)
 	return 0;
 }
 
-static void nfs_umounted(am_node *mp)
+static void
+nfs_umounted(am_node *mp)
 {
 #ifdef INFORM_MOUNTD
 	/*

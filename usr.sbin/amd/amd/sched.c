@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.6 2002/05/26 10:37:58 deraadt Exp $
+ *	$Id: sched.c,v 1.7 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -67,8 +67,8 @@ qelem proc_wait_list = { &proc_wait_list, &proc_wait_list };
 
 int task_notify_todo;
 
-void ins_que(elem, pred)
-qelem *elem, *pred;
+void
+ins_que(qelem *elem, qelem *pred)
 {
 	qelem *p = pred->q_forw;
 	elem->q_back = pred;
@@ -77,8 +77,8 @@ qelem *elem, *pred;
 	p->q_back = elem;
 }
 
-void rem_que(elem)
-qelem *elem;
+void
+rem_que(qelem *elem)
 {
 	qelem *p = elem->q_forw;
 	qelem *p2 = elem->q_back;
@@ -86,9 +86,8 @@ qelem *elem;
 	p->q_back = p2;
 }
 
-static pjob *sched_job(cf, ca)
-cb_fun cf;
-voidp ca;
+static pjob *
+sched_job(cb_fun cf, voidp ca)
 {
 	pjob *p = ALLOC(pjob);
 
@@ -103,11 +102,8 @@ voidp ca;
 	return p;
 }
 
-void run_task(tf, ta, cf, ca)
-task_fun tf;
-voidp ta;
-cb_fun cf;
-voidp ca;
+void
+run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
 {
 	pjob *p = sched_job(cf, ca);
 	sigset_t mask, omask;
@@ -131,10 +127,8 @@ voidp ca;
 /*
  * Schedule a task to be run when woken up
  */
-void sched_task(cf, ca, wchan)
-cb_fun cf;
-voidp ca;
-voidp wchan;
+void
+sched_task(cb_fun cf, voidp ca, voidp wchan)
 {
 	/*
 	 * Allocate a new task
@@ -148,16 +142,16 @@ voidp wchan;
 	bzero((voidp) &p->w, sizeof(p->w));
 }
 
-static void wakeupjob(p)
-pjob *p;
+static void
+wakeupjob(pjob *p)
 {
 	rem_que(&p->hdr);
 	ins_que(&p->hdr, &proc_list_head);
 	task_notify_todo++;
 }
 
-void wakeup(wchan)
-voidp wchan;
+void
+wakeup(voidp wchan)
 {
 	pjob *p, *p2;
 #ifdef DEBUG_SLEEP
@@ -190,18 +184,16 @@ voidp wchan;
 #endif
 }
 
-void wakeup_task(rc, term, cl)
-int rc;
-int term;
-voidp cl;
+void
+wakeup_task(int rc, int term, voidp cl)
 {
 	wakeup(cl);
 }
 
 /*ARGSUSED*/
 
-void sigchld(sig)
-int sig;
+void
+sigchld(int sig)
 {
 	union wait w;
 	int save_errno = errno;
@@ -250,7 +242,8 @@ int sig;
  * Run any pending tasks.
  * This must be called with SIGCHLD disabled
  */
-void do_task_notify(P_void)
+void
+do_task_notify(P_void)
 {
 	/*
 	 * Keep taking the first item off the list and processing it.

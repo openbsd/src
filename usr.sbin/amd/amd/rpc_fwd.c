@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpc_fwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: rpc_fwd.c,v 1.3 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: rpc_fwd.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -93,7 +93,8 @@ int fwd_sock;
 /*
  * Allocate a rely structure
  */
-static rpc_forward *fwd_alloc()
+static rpc_forward *
+fwd_alloc()
 {
 	time_t now = clocktime();
 	rpc_forward *p = 0, *p2;
@@ -149,8 +150,8 @@ static rpc_forward *fwd_alloc()
  * First unlink it from the list, then
  * discard it.
  */
-static void fwd_free(p)
-rpc_forward *p;
+static void
+fwd_free(rpc_forward *p)
 {
 #ifdef DEBUG
 	/*dlog("fwd_free: rpc_head = %#x", rpc_head.q_forw);*/
@@ -196,8 +197,8 @@ int fwd_init()
 /*
  * Locate a packet in the forwarding list
  */
-static rpc_forward *fwd_locate(id)
-u_int id;
+static rpc_forward *
+fwd_locate(u_int id)
 {
 	rpc_forward *p;
 
@@ -217,13 +218,9 @@ u_int id;
  * would not work because it might come from a
  * different address.
  */
-int fwd_packet(type_id, pkt, len, fwdto, replyto, i, cb)
-int type_id;
-voidp pkt;
-int len;
-struct sockaddr_in *fwdto, *replyto;
-voidp i;
-fwd_fun cb;
+int
+fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto,
+    struct sockaddr_in *replyto, voidp i, fwd_fun cb)
 {
 	rpc_forward *p;
 	u_int *pkt_int;
@@ -318,7 +315,8 @@ fwd_fun cb;
 /*
  * Called when some data arrives on the forwarding socket
  */
-void fwd_reply()
+void
+fwd_reply()
 {
 	int len;
 #ifdef DYNAMIC_BUFFERS

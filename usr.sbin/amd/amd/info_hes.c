@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_hes.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_hes.c,v 1.10 2002/07/18 02:14:45 deraadt Exp $
+ *	$Id: info_hes.c,v 1.11 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -338,7 +338,7 @@ hs_res_send(char *buf, int buflen, char *answer, int anslen)
 int
 hs_readresp(int s, char *answer, int anslen)
 {
-	register int len, n;
+	int len, n;
 	char *cp;
 
 	cp = answer;
@@ -370,7 +370,7 @@ hs_readresp(int s, char *answer, int anslen)
 int
 hs_res_vcread(int sock, char *buf, int buflen, struct timeval *timeout)
 {
-	register int n;
+	int n;
 
 	if ((n = hs_res_selwait(sock, timeout)) > 0)
 		return(read(sock, buf, buflen));
@@ -383,7 +383,7 @@ hs_res_selwait(int sock, struct timeval timeout)
 {
 	fd_set *fdsp;
 	int fdsn;
-	register int n;
+	int n;
 
 	/*
 	 * Wait for reply
@@ -407,9 +407,9 @@ hs_res_selwait(int sock, struct timeval timeout)
 int
 hs_parse(char *msg, char *eom)
 {
-	register char *cp;
-	register HEADER *hp;
-	register int n, len;
+	char *cp;
+	HEADER *hp;
+	int n, len;
 	int qdcount, ancount;
 	char key[PACKETSZ];
 	char *key_cpy, *value, *hs_make_value();
@@ -576,12 +576,12 @@ add_address(struct in_addr *addr)
 int
 hs_get_ns_list(char *domain)
 {
-	register HEADER *hp;
+	HEADER *hp;
 	int qdcount, nscount;
-	register char *cp;
-	register int n, len;
+	char *cp;
+	int n, len;
 	char key[PACKETSZ], name[PACKETSZ], msg[PACKETSZ], *eom;
-	register u_int32_t **hptr;
+	u_int32_t **hptr;
 	struct hostent *ghp;
 	int numns;
 	char nsname[MAXHSNS][MAXDATA];

@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)restart.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: restart.c,v 1.2 2002/07/18 02:03:00 deraadt Exp $";
+static char *rcsid = "$Id: restart.c,v 1.3 2002/08/03 08:29:31 pvalchev Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -55,7 +55,8 @@ static char *rcsid = "$Id: restart.c,v 1.2 2002/07/18 02:03:00 deraadt Exp $";
  * This module relies on internal details of other components.  If
  * you change something else make *sure* restart() still works.
  */
-void restart()
+void
+restart()
 {
 	/*
 	 * Read the existing mount table

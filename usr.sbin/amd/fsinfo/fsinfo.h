@@ -36,18 +36,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.h,v 1.3 2001/01/02 20:01:35 mickey Exp $
+ *	$Id: fsinfo.h,v 1.4 2002/08/03 08:29:32 pvalchev Exp $
  */
 
 /*
  * Get this in now so that OS_HDR can use it
  */
 #ifdef __STDC__
-#define	P(x) x
 #define	P_void void
 #define Const const
 #else
-#define P(x) ()
 #define P_void /* as nothing */
 #define Const /* as nothing */
 #endif /* __STDC__ */
@@ -124,7 +122,6 @@ extern char *fsmount_strings[];
 extern char *host_strings[];
 extern char *ether_if_strings[];
 extern char *autodir;
-extern char *__progname;
 extern char hostname[];
 extern char *username;
 extern char **g_argv;

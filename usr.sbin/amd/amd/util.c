@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: util.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -50,9 +50,8 @@
 #include <netdb.h>
 
 
-char *strnsave(str, len)
-Const char *str;
-int len;
+char *
+strnsave(Const char *str, int len)
 {
 	char *sp = (char *) xmalloc(len+1);
 
@@ -62,21 +61,12 @@ int len;
 	return sp;
 }
 
-char *strdup(s)
-Const char *s;
-{
-	return strnsave(s, strlen(s));
-}
-
 /*
  * Concatenate three strings and store in buffer pointed to
  * by p, making p large enough to hold the strings
  */
-char *str3cat(p, s1, s2, s3)
-char *p;
-char *s1;
-char *s2;
-char *s3;
+char *
+str3cat(char *p, char *s1, char *s2, char *s3)
 {
 	int l1 = strlen(s1);
 	int l2 = strlen(s2);
@@ -88,9 +78,8 @@ char *s3;
 	return p;
 }
 
-char *strealloc(p, s)
-char *p;
-char *s;
+char *
+strealloc(char *p, char *s)
 {
 	int len = strlen(s) + 1;
 
@@ -103,11 +92,8 @@ char *s;
 	return p;
 }
 
-char **strsplit P((char *s, int ch, int qc));
-char **strsplit(s, ch, qc)
-char *s;
-int ch;
-int qc;
+char **
+strsplit(char *s, int ch, int qc)
 {
 	char **ivec;
 	int ic = 0;
@@ -186,9 +172,8 @@ int qc;
  * to skip from right to left and do partial
  * matches along the way -- ie more expensive.
  */
-static void domain_strip P((char *otherdom, char *localdom));
-static void domain_strip(otherdom, localdom)
-char *otherdom, *localdom;
+static void
+domain_strip(char *otherdom, char *localdom)
 {
 #ifdef PARTIAL_DOMAINS
         char *p1 = otherdom-1;
@@ -215,9 +200,8 @@ char *otherdom, *localdom;
 /*
  * Normalize a host name
  */
-void host_normalize P((char **chp));
-void host_normalize(chp)
-char **chp;
+void
+host_normalize(char **chp)
 {
 	/*
 	 * Normalize hosts is used to resolve host name aliases
@@ -243,11 +227,8 @@ char **chp;
  * addr is in network byte order.
  * sizeof(buf) needs to be at least 16.
  */
-char *inet_dquad P((char *buf, size_t, u_int32_t addr));
-char *inet_dquad(buf, buflen, addr)
-char *buf;
-size_t buflen;
-u_int32_t addr;
+char *
+inet_dquad(char *buf, size_t buflen, u_int32_t addr)
 {
 	addr = ntohl(addr);
 	snprintf(buf, buflen, "%d.%d.%d.%d",
@@ -263,9 +244,8 @@ u_int32_t addr;
  * problems with macro expansions.
  */
 static char invalid_keys[] = "\"'!;@ \t\n";
-int valid_key P((char *key));
-int valid_key(key)
-char *key;
+int
+valid_key(char *key)
 {
 	while (*key)
 		if (strchr(invalid_keys, *key++))
@@ -273,9 +253,8 @@ char *key;
 	return TRUE;
 }
 
-void going_down P((int rc));
-void going_down(rc)
-int rc;
+void
+going_down(int rc)
 {
 	if (foreground) {
 		if (amd_state != Start) {
@@ -296,10 +275,8 @@ int rc;
 }
 
 
-int bind_resv_port P((int so, u_short *pp));
-int bind_resv_port(so, pp)
-int so;
-u_short *pp;
+int
+bind_resv_port(int so, u_short *pp)
 {
 	struct sockaddr_in sin;
 	int rc;
@@ -313,9 +290,8 @@ u_short *pp;
 	return rc;
 }
 
-void forcibly_timeout_mp P((am_node *mp));
-void forcibly_timeout_mp(mp)
-am_node *mp;
+void
+forcibly_timeout_mp(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 	/*
@@ -333,9 +309,8 @@ am_node *mp;
 	}
 }
 
-void mf_mounted P((mntfs *mf));
-void mf_mounted(mf)
-mntfs *mf;
+void
+mf_mounted(mntfs *mf)
 {
 	int quoted;
 	int wasmounted = mf->mf_flags & MFF_MOUNTED;
@@ -370,9 +345,8 @@ mntfs *mf;
 		mf->mf_ops->fs_type, mf->mf_mount);
 }
 
-void am_mounted P((am_node *mp));
-void am_mounted(mp)
-am_node *mp;
+void
+am_mounted(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 
@@ -427,9 +401,8 @@ am_node *mp;
 	amd_stats.d_mok++;
 }
 
-int mount_node P((am_node *mp));
-int mount_node(mp)
-am_node *mp;
+int
+mount_node(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 	int error;
@@ -447,9 +420,8 @@ am_node *mp;
 	return error;
 }
 
-void am_unmounted P((am_node *mp));
-void am_unmounted(mp)
-am_node *mp;
+void
+am_unmounted(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 
@@ -475,17 +447,15 @@ am_node *mp;
 	free_map(mp);
 }
 
-int auto_fmount P((am_node *mp));
-int auto_fmount(mp)
-am_node *mp;
+int
+auto_fmount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 	return (*mf->mf_ops->fmount_fs)(mf);
 }
 
-int auto_fumount P((am_node *mp));
-int auto_fumount(mp)
-am_node *mp;
+int
+auto_fumount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 	return (*mf->mf_ops->fumount_fs)(mf);
@@ -496,8 +466,8 @@ am_node *mp;
  *
  * TODO: Need a better strategy for handling errors
  */
-static pid_t dofork(P_void);
-static pid_t dofork()
+static pid_t
+dofork(P_void)
 {
 	pid_t pid;
 top:
@@ -516,8 +486,8 @@ top:
 	return pid;
 }
 
-pid_t background(P_void);
-pid_t background()
+pid_t
+background(P_void)
 {
 	pid_t pid = dofork();
 	if (pid == 0) {
@@ -533,10 +503,8 @@ pid_t background()
 /*
  * Make all the directories in the path.
  */
-int mkdirs P((char *path, int mode));
-int mkdirs(path, mode)
-char *path;
-int mode;
+int
+mkdirs(char *path, int mode)
 {
 	/*
 	 * take a copy in case path is in readonly store
@@ -602,9 +570,8 @@ int mode;
  * been created by Amd (not mode dr-x) or an rmdir
  * fails for any reason.
  */
-void rmdirs P((char *dir));
-void rmdirs(dir)
-char *dir;
+void
+rmdirs(char *dir)
 {
 	char *xdp = strdup(dir);
 	char *dp;

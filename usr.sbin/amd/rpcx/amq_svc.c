@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_svc.c,v 1.3 1995/12/18 16:48:57 deraadt Exp $
+ *	$Id: amq_svc.c,v 1.4 2002/08/03 08:29:32 pvalchev Exp $
  *
  */
 
@@ -45,9 +45,7 @@
 extern bool_t xdr_amq_mount_info_qelem();
 
 void
-amq_program_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		amq_string amqproc_mnttree_1_arg;
@@ -132,4 +130,3 @@ amq_program_1(rqstp, transp)
 		going_down(1);
 	}
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $	*/
+/*	$OpenBSD: map.c,v 1.6 2002/08/03 08:29:31 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: map.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: map.c,v 1.6 2002/08/03 08:29:31 pvalchev Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -96,9 +96,8 @@ static struct fattr gen_fattr = {
 /*
  * Resize exported_ap map
  */
-static int exported_ap_realloc_map P((int nsize));
-static int exported_ap_realloc_map(nsize)
-int nsize;
+static int
+exported_ap_realloc_map(int nsize)
 {
 #ifdef notdef
 	/*
@@ -182,9 +181,8 @@ am_node *exported_ap_alloc(P_void)
 /*
  * Free a mount slot
  */
-void exported_ap_free P((am_node *mp));
-void exported_ap_free(mp)
-am_node *mp;
+void
+exported_ap_free(am_node *mp)
 {
 	/*
 	 * Sanity check
@@ -225,9 +223,8 @@ am_node *mp;
  * of any other children, and the parent's child
  * pointer is adjusted to point to the new child node.
  */
-void insert_am(mp, p_mp)
-am_node *mp;
-am_node *p_mp;
+void
+insert_am(am_node *mp, am_node *p_mp)
 {
 	/*
 	 * If this is going in at the root then flag it
@@ -248,8 +245,8 @@ am_node *p_mp;
 /*
  * Remove am from its place in the mount tree
  */
-void remove_am(mp)
-am_node *mp;
+void
+remove_am(am_node *mp)
 {
 	/*
 	 * 1.  Consistency check
@@ -276,8 +273,8 @@ am_node *mp;
 /*
  * Compute a new time to live value for a node.
  */
-void new_ttl(mp)
-am_node *mp;
+void
+new_ttl(am_node *mp)
 {
 	mp->am_timeo_w = 0;
 
@@ -286,10 +283,8 @@ am_node *mp;
 	mp->am_ttl += mp->am_timeo;	/* sun's -tl option */
 }
 
-void mk_fattr P((am_node *mp, int vntype));
-void mk_fattr(mp, vntype)
-am_node *mp;
-int vntype;
+void
+mk_fattr(am_node *mp, int vntype)
 {
 	switch (vntype) {
 	case NFDIR:
@@ -316,9 +311,8 @@ int vntype;
  * before getting here so anything that would
  * be set to zero isn't done here.
  */
-void init_map(mp, dir)
-am_node *mp;
-char *dir;
+void
+init_map(am_node *mp, char *dir)
 {
 	/* mp->am_mapno initalised by exported_ap_alloc */
 	mp->am_mnt = new_mntfs();
@@ -352,8 +346,8 @@ char *dir;
  * Free a mount node.
  * The node must be already unmounted.
  */
-void free_map(mp)
-am_node *mp;
+void
+free_map(am_node *mp)
 {
 	remove_am(mp);
 
@@ -376,10 +370,8 @@ am_node *mp;
  * Convert from file handle to
  * automount node.
  */
-am_node *fh_to_mp3(fhp, rp, c_or_d)
-nfs_fh *fhp;
-int *rp;
-int c_or_d;
+am_node *
+fh_to_mp3(nfs_fh *fhp, int *rp, int c_or_d)
 {
 	struct am_fh *fp = (struct am_fh *) fhp;
 	am_node *ap = 0;
@@ -504,8 +496,8 @@ drop:
 	return ap;
 }
 
-am_node *fh_to_mp(fhp)
-nfs_fh *fhp;
+am_node *
+fh_to_mp(nfs_fh *fhp)
 {
 	int dummy;
 	return fh_to_mp2(fhp, &dummy);
@@ -515,9 +507,8 @@ nfs_fh *fhp;
  * Convert from automount node to
  * file handle.
  */
-void mp_to_fh(mp, fhp)
-am_node *mp;
-struct nfs_fh *fhp;
+void
+mp_to_fh(am_node *mp, struct nfs_fh *fhp)
 {
 	struct am_fh *fp = (struct am_fh *) fhp;
 
@@ -541,10 +532,8 @@ struct nfs_fh *fhp;
 	 */
 }
 
-static am_node *find_ap2 P((char *dir, am_node *mp));
-static am_node *find_ap2(dir, mp)
-char *dir;
-am_node *mp;
+static am_node *
+find_ap2(char *dir, am_node *mp)
 {
 	if (mp) {
 		am_node *mp2;
@@ -570,9 +559,8 @@ am_node *mp;
  * automount path or, if the node is
  * mounted, the mount location.
  */
-am_node *find_ap P((char *dir));
-am_node *find_ap(dir)
-char *dir;
+am_node *
+find_ap(char *dir)
 {
 	int i;
 
@@ -592,9 +580,8 @@ char *dir;
  * Find the mount node corresponding
  * to the mntfs structure.
  */
-am_node *find_mf P((mntfs *mf));
-am_node *find_mf(mf)
-mntfs *mf;
+am_node *
+find_mf(mntfs *mf)
 {
 	int i;
 
@@ -611,8 +598,8 @@ mntfs *mf;
  * This is used during the bootstrap to tell the kernel
  * the filehandles of the initial automount points.
  */
-nfs_fh *root_fh(dir)
-char *dir;
+nfs_fh *
+root_fh(char *dir)
 {
 	static nfs_fh nfh;
 	am_node *mp = root_ap(dir, TRUE);
@@ -638,9 +625,8 @@ char *dir;
 	return 0;
 }
 
-am_node *root_ap(dir, path)
-char *dir;
-int path;
+am_node *
+root_ap(char *dir, int path)
 {
 	am_node *mp = find_ap(dir);
 	if (mp && mp->am_parent == root_node)
@@ -653,9 +639,8 @@ int path;
  * Timeout all nodes waiting on
  * a given Fserver.
  */
-void map_flush_srvr P((fserver *fs));
-void map_flush_srvr(fs)
-fserver *fs;
+void
+map_flush_srvr(fserver *fs)
 {
 	int i;
 	int done = 0;
@@ -678,12 +663,11 @@ fserver *fs;
  * (root) node which will cause the
  * automount node to be automounted.
  */
-int mount_auto_node P((char *dir, voidp arg));
-int mount_auto_node(dir, arg)
-char *dir;
-voidp arg;
+int
+mount_auto_node(char *dir, voidp arg)
 {
 	int error = 0;
+
 	(void) afs_ops.lookuppn((am_node *) arg, dir, &error, VLOOK_CREATE);
 	if (error > 0) {
 		errno = error; /* XXX */
@@ -696,20 +680,20 @@ voidp arg;
  * Cause all the top-level mount nodes
  * to be automounted
  */
-int mount_exported P((void));
-int mount_exported()
+int
+mount_exported(void)
 {
 	/*
 	 * Iterate over all the nodes to be started
 	 */
-	return root_keyiter((void (*)P((char*,void*))) mount_auto_node, root_node);
+	return root_keyiter((void (*)(char *, void *)) mount_auto_node, root_node);
 }
 
 /*
  * Construct top-level node
  */
-void make_root_node P((void));
-void make_root_node()
+void
+make_root_node(void)
 {
 	mntfs *root_mnt;
 	char *rootmap = ROOT_MAP;
@@ -745,9 +729,11 @@ void make_root_node()
  * Cause all the nodes to be unmounted by timing
  * them out.
  */
-void umount_exported(P_void)
+void
+umount_exported(P_void)
 {
 	int i;
+
 	for (i = last_used_map; i >= 0; --i) {
 		am_node *mp = exported_ap[i];
 		if (mp) {
@@ -799,9 +785,8 @@ void umount_exported(P_void)
 	}
 }
 
-static int unmount_node P((am_node *mp));
-static int unmount_node(mp)
-am_node *mp;
+static int
+unmount_node(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 	int error;
@@ -833,13 +818,13 @@ am_node *mp;
 }
 
 #ifdef FLUSH_KERNEL_NAME_CACHE
-static void flush_kernel_name_cache P((am_node*));
-static void flush_kernel_name_cache(mp)
-am_node *mp;
+static void
+flush_kernel_name_cache(am_node *mp)
 {
 	int islink = (mp->am_mnt->mf_fattr.type == NFLNK);
 	int isdir = (mp->am_mnt->mf_fattr.type == NFDIR);
 	int elog = 0;
+
 	if (islink) {
 		if (unlink(mp->am_path) < 0)
 			elog = 1;
@@ -852,9 +837,8 @@ am_node *mp;
 }
 #endif /* FLUSH_KERNEL_NAME_CACHE */
 
-static int unmount_node_wrap P((voidp vp));
-static int unmount_node_wrap(vp)
-voidp vp;
+static int
+unmount_node_wrap(voidp vp)
 {
 #ifndef FLUSH_KERNEL_NAME_CACHE
 	return unmount_node((am_node*) vp);
@@ -903,10 +887,8 @@ voidp vp;
 #endif /* FLUSH_KERNEL_NAME_CACHE */
 }
 
-static void free_map_if_success(rc, term, closure)
-int rc;
-int term;
-voidp closure;
+static void
+free_map_if_success(int rc, int term, voidp closure)
 {
 	am_node *mp = (am_node *) closure;
 	mntfs *mf = mp->am_mnt;
@@ -955,8 +937,8 @@ voidp closure;
 	wakeup((voidp) mf);
 }
 
-static int unmount_mp(mp)
-am_node *mp;
+static int
+unmount_mp(am_node *mp)
 {
 	int was_backgrounded = 0;
 	mntfs *mf = mp->am_mnt;

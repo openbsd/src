@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.6 2002/07/18 02:03:00 deraadt Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.7 2002/08/03 08:29:31 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -71,11 +71,11 @@ typedef nfs_fh fhandle_t;
 /*
  * AFS needs nothing in particular.
  */
-static char *afs_match P((am_opts *fo));
-static char *afs_match(fo)
-am_opts *fo;
+static char *
+afs_match(am_opts *fo)
 {
 	char *p = fo->opt_rfs;
+
 	if (!fo->opt_rfs) {
 		plog(XLOG_USER, "auto: no mount point named (rfs:=)");
 		return 0;
@@ -103,10 +103,8 @@ am_opts *fo;
  * the necessary NFS parameters to be given to the
  * kernel so that it will talk back to us.
  */
-static int mount_toplvl P((char *dir, char *opts));
-static int mount_toplvl(dir, opts)
-char *dir;
-char *opts;
+static int
+mount_toplvl(char *dir, char *opts)
 {
 	struct nfs_args nfs_args;
 	struct mntent mnt;
@@ -241,9 +239,8 @@ char *opts;
 	return mount_fs(&mnt, flags, (caddr_t) &nfs_args, retry, type);
 }
 
-static void afs_mkcacheref P((mntfs *mf));
-static void afs_mkcacheref(mf)
-mntfs *mf;
+static void
+afs_mkcacheref(mntfs *mf)
 {
 	/*
 	 * Build a new map cache for this node, or re-use
@@ -261,9 +258,8 @@ mntfs *mf;
 /*
  * Mount the root...
  */
-static int root_mount P((am_node *mp));
-static int root_mount(mp)
-am_node *mp;
+static int
+root_mount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 
@@ -277,9 +273,8 @@ am_node *mp;
 /*
  * Mount a sub-mount
  */
-static int afs_mount P((am_node *mp));
-static int afs_mount(mp)
-am_node *mp;
+static int
+afs_mount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 
@@ -336,9 +331,8 @@ am_node *mp;
 /*
  * Mount the top-level
  */
-static int toplvl_mount P((am_node *mp));
-static int toplvl_mount(mp)
-am_node *mp;
+static int
+toplvl_mount(am_node *mp)
 {
 	mntfs *mf = mp->am_mnt;
 	struct stat stb;
@@ -392,9 +386,8 @@ am_node *mp;
 	return 0;
 }
 
-static void toplvl_mounted P((mntfs *mf));
-static void toplvl_mounted(mf)
-mntfs *mf;
+static void
+toplvl_mounted(mntfs *mf)
 {
 	afs_mkcacheref(mf);
 }
@@ -403,10 +396,8 @@ mntfs *mf;
 /*
  * Create a reference to a union'ed entry
  */
-static int create_union_node P((char *dir, voidp arg));
-static int create_union_node(dir, arg)
-char *dir;
-voidp arg;
+static int
+create_union_node(char *dir, voidp arg)
 {
 	if (strcmp(dir, "/defaults") != 0) {
 		int error = 0;
@@ -420,9 +411,8 @@ voidp arg;
 	return 0;
 }
 
-static void union_mounted P((mntfs *mf));
-static void union_mounted(mf)
-mntfs *mf;
+static void
+union_mounted(mntfs *mf)
 {
 	int i;
 
@@ -437,7 +427,7 @@ mntfs *mf;
 		if (mp && mp->am_mnt == mf) {
 			/* return value from create_union_node is ignored by mapc_keyiter */
 			(void) mapc_keyiter((mnt_map *) mp->am_mnt->mf_private,
-				(void (*)P((char*,void*))) create_union_node, mp);
+				(void (*)(char *, void *)) create_union_node, mp);
 			break;
 		}
 	}
@@ -458,9 +448,8 @@ mntfs *mf;
 /*
  * Unmount an automount sub-node
  */
-static int afs_umount P((am_node *mp));
-static int afs_umount(mp)
-am_node *mp;
+static int
+afs_umount(am_node *mp)
 {
 	return 0;
 }
@@ -468,9 +457,8 @@ am_node *mp;
 /*
  * Unmount a top-level automount node
  */
-static int toplvl_umount P((am_node *mp));
-static int toplvl_umount(mp)
-am_node *mp;
+static int
+toplvl_umount(am_node *mp)
 {
 	int error;
 
@@ -505,9 +493,8 @@ again:
 /*
  * Unmount an automount node
  */
-static void afs_umounted P((am_node *mp));
-static void afs_umounted(mp)
-am_node *mp;
+static void
+afs_umounted(am_node *mp)
 {
 	/*
 	 * If this is a pseudo-directory then just adjust the link count
@@ -554,9 +541,8 @@ struct continuation {
 /*
  * Discard an old continuation
  */
-static void free_continuation P((struct continuation *cp));
-static void free_continuation(cp)
-struct continuation *cp;
+static void
+free_continuation(struct continuation *cp)
 {
 	if (cp->callout)
 		untimeout(cp->callout);
@@ -569,15 +555,14 @@ struct continuation *cp;
 	free((voidp) cp);
 }
 
-static int afs_bgmount P((struct continuation*, int));
+static int afs_bgmount(struct continuation *, int);
 
 /*
  * Discard the underlying mount point and replace
  * with a reference to an error filesystem.
  */
-static void assign_error_mntfs P((am_node *mp));
-static void assign_error_mntfs(mp)
-am_node *mp;
+static void
+assign_error_mntfs(am_node *mp)
 {
 	if (mp->am_error > 0) {
 		/*
@@ -611,11 +596,8 @@ am_node *mp;
  * the task notifier when a background mount attempt
  * completes.
  */
-static void afs_cont P((int rc, int term, voidp closure));
-static void afs_cont(rc, term, closure)
-int rc;
-int term;
-voidp closure;
+static void
+afs_cont(int rc, int term, voidp closure)
 {
 	struct continuation *cp = (struct continuation *) closure;
 	mntfs *mf = cp->mp->am_mnt;
@@ -682,11 +664,8 @@ voidp closure;
  * Retry a mount
  */
 /*ARGSUSED*/
-static void afs_retry P((int rc, int term, voidp closure));
-static void afs_retry(rc, term, closure)
-int rc;
-int term;
-voidp closure;
+static void
+afs_retry(int rc, int term, voidp closure)
 {
 	struct continuation *cp = (struct continuation *) closure;
 	int error = 0;
@@ -722,9 +701,8 @@ voidp closure;
  * Try to mount a file system.  Can be called
  * directly or in a sub-process by run_task
  */
-static int try_mount P((voidp mvp));
-static int try_mount(mvp)
-voidp mvp;
+static int
+try_mount(voidp mvp)
 {
 	/*
 	 * Mount it!
@@ -817,10 +795,8 @@ For each location:
 endfor
  */
 
-static int afs_bgmount P((struct continuation *cp, int mpe));
-static int afs_bgmount(cp, mpe)
-struct continuation *cp;
-int mpe;
+static int
+afs_bgmount(struct continuation *cp, int mpe)
 {
 	mntfs *mf = cp->mp->am_mnt;	/* Current mntfs */
 	mntfs *mf_retry = 0;		/* First mntfs which needed retrying */
@@ -1167,12 +1143,8 @@ int mpe;
 /*
  * Automount interface to RPC lookup routine
  */
-static am_node *afs_lookuppn P((am_node *mp, char *fname, int *error_return, int op));
-static am_node *afs_lookuppn(mp, fname, error_return, op)
-am_node *mp;
-char *fname;
-int *error_return;
-int op;
+static am_node *
+afs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 {
 #define ereturn(x) { *error_return = x; return 0; }
 
@@ -1565,9 +1537,8 @@ in_progrss:
  * Locate next node in sibling list which is mounted
  * and is not an error node.
  */
-static am_node *next_nonerror_node P((am_node *xp));
-static am_node *next_nonerror_node(xp)
-am_node *xp;
+static am_node *
+next_nonerror_node(am_node *xp)
 {
 	mntfs *mf;
 
@@ -1589,13 +1560,9 @@ am_node *xp;
 	return xp;
 }
 
-static int afs_readdir P((am_node *mp, nfscookie cookie, struct dirlist *dp, struct entry *ep, int count));
-static int afs_readdir(mp, cookie, dp, ep, count)
-am_node *mp;
-nfscookie cookie;
-struct dirlist *dp;
-struct entry *ep;
-int count;
+static int
+afs_readdir(am_node *mp, nfscookie cookie, struct dirlist *dp,
+    struct entry *ep, int count)
 {
 	unsigned int gen = *(unsigned int*) cookie;
 	am_node *xp;
@@ -1708,10 +1675,8 @@ int count;
 
 }
 
-static am_node *dfs_readlink P((am_node *mp, int *error_return));
-static am_node *dfs_readlink(mp, error_return)
-am_node *mp;
-int *error_return;
+static am_node *
+dfs_readlink(am_node *mp, int *error_return)
 {
 	am_node *xp;
 	int rc = 0;

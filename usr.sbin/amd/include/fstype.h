@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fstype.h	8.1 (Berkeley) 6/6/93
- *	$Id: fstype.h,v 1.1.1.1 1995/10/18 08:47:21 deraadt Exp $
+ *	$Id: fstype.h,v 1.2 2002/08/03 08:29:32 pvalchev Exp $
  *
  */
 
@@ -48,11 +48,11 @@
  * Automount File System
  */
 #define HAS_AFS
-extern am_ops	afs_ops;	/* Automount file system (this!) */
-extern am_ops	toplvl_ops;	/* Top-level automount file system */
-extern am_ops	root_ops;	/* Root file system */
-extern qelem	afs_srvr_list;
-extern fserver *find_afs_srvr P((mntfs*));
+extern am_ops	 afs_ops;	/* Automount file system (this!) */
+extern am_ops	 toplvl_ops;	/* Top-level automount file system */
+extern am_ops	 root_ops;	/* Root file system */
+extern qelem	 afs_srvr_list;
+extern fserver	*find_afs_srvr(mntfs *);
 
 /*
  * Direct Automount File System
@@ -102,7 +102,7 @@ extern am_ops	host_ops;	/* NFS host */
 extern char	*host_helper;	/* "/usr/local/etc/amd-host" */
 #endif
 extern qelem	nfs_srvr_list;
-extern fserver *find_nfs_srvr P((mntfs*));
+extern fserver *find_nfs_srvr(mntfs *);
 
 /*
  * Program File System

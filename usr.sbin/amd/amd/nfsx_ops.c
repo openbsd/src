@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfsx_ops.c,v 1.3 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: nfsx_ops.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #include "am.h"
@@ -64,10 +64,10 @@ struct nfsx {
 	nfsx_mnt *nx_try;
 };
 
-static int nfsx_fmount P((mntfs*));
+static int nfsx_fmount(mntfs *);
 
-static char *nfsx_match(fo)
-am_opts *fo;
+static char *
+nfsx_match(am_opts *fo)
 {
 	char *xmtab;
 	char *ptr;
@@ -130,9 +130,8 @@ am_opts *fo;
 	return xmtab;
 }
 
-static void nfsx_prfree P((voidp vp));
-static void nfsx_prfree(vp)
-voidp vp;
+static void
+nfsx_prfree(voidp vp)
 {
 	struct nfsx *nx = (struct nfsx *) vp;
 	int i;
@@ -147,8 +146,8 @@ voidp vp;
 	free((voidp) nx);
 }
 
-static int nfsx_init(mf)
-mntfs *mf;
+static int
+nfsx_init(mntfs *mf)
 {
 	/*
 	 * mf_info has the form:
@@ -270,11 +269,8 @@ errexit:
 	return glob_error;
 }
 
-static void nfsx_cont P((int rc, int term, voidp closure));
-static void nfsx_cont(rc, term, closure)
-int rc;
-int term;
-voidp closure;
+static void
+nfsx_cont(int rc, int term, voidp closure)
 {
 	mntfs *mf = (mntfs *) closure;
 	struct nfsx *nx = (struct nfsx *) mf->mf_private;
@@ -325,9 +321,8 @@ voidp closure;
 	}
 }
 
-static int try_nfsx_mount P((voidp mv));
-static int try_nfsx_mount(mv)
-voidp mv;
+static int
+try_nfsx_mount(voidp mv)
 {
 	mntfs *mf = (mntfs *) mv;
 	int error;
@@ -338,10 +333,8 @@ voidp mv;
 	return error;
 }
 
-static int nfsx_remount P((mntfs *mf, int fg));
-static int nfsx_remount(mf, fg)
-mntfs *mf;
-int fg;
+static int
+nfsx_remount(mntfs *mf, int fg)
 {
 	struct nfsx *nx = (struct nfsx *) mf->mf_private;
 	nfsx_mnt *n;
@@ -408,9 +401,8 @@ int fg;
 	return glob_error < 0 ? 0 : glob_error;
 }
 
-static int nfsx_fmount P((mntfs *mf));
-static int nfsx_fmount(mf)
-mntfs *mf;
+static int
+nfsx_fmount(mntfs *mf)
 {
 	return nfsx_remount(mf, FALSE);
 }
@@ -420,8 +412,8 @@ mntfs *mf;
  * Note that this is called in the foreground
  * and so may hang under extremely rare conditions.
  */
-static int nfsx_fumount(mf)
-mntfs *mf;
+static int
+nfsx_fumount(mntfs *mf)
 {
 	struct nfsx *nx = (struct nfsx *) mf->mf_private;
 	nfsx_mnt *n;

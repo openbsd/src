@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.9 2002/07/18 00:50:23 pvalchev Exp $
+ *	$Id: amd.c,v 1.10 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #ifndef lint
@@ -91,7 +91,8 @@ int orig_umask;
  * SIGINT - tells amd to do a full shutdown, including unmounting all filesystem.
  * SIGTERM - tells amd to shutdown now.  Just unmounts the automount nodes.
  */
-static void sigterm(int sig)
+static void
+sigterm(int sig)
 {
 #ifdef SYS5_SIGNALS
 	signal(sig, sigterm);
@@ -119,7 +120,8 @@ static void sigterm(int sig)
  * When a SIGHUP arrives it schedules a call to mapc_reload
  */
 /*ARGSUSED*/
-static void sighup(int sig)
+static void
+sighup(int sig)
 {
 #ifdef SYS5_SIGNALS
 	signal(sig, sighup);
@@ -137,12 +139,14 @@ static void sighup(int sig)
 }
 
 /*ARGSUSED*/
-static void parent_exit(int sig)
+static void
+parent_exit(int sig)
 {
 	exit(0);
 }
 
-static pid_t daemon_mode(P_void)
+static pid_t
+daemon_mode(P_void)
 {
 	pid_t bgpid;
 

@@ -36,16 +36,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)umount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: umount_fs.c,v 1.2 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: umount_fs.c,v 1.3 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #include "am.h"
 
 #ifdef NEED_UMOUNT_BSD
 
-int umount_fs P((char *fs_name));
-int umount_fs(fs_name)
-char *fs_name;
+int
+umount_fs(char *fs_name)
 {
 	int error;
 
@@ -85,8 +84,8 @@ eintr:
 
 #include <sys/mount.h>		/* For MNT_NOFORCE */
 
-int umount_fs(fs_name)
-char *fs_name;
+int
+umount_fs(char *fs_name)
 {
 	int error;
 
@@ -127,8 +126,8 @@ eintr:
 
 #ifdef NEED_UMOUNT_FS
 
-int umount_fs(fs_name)
-char *fs_name;
+int
+umount_fs(char *fs_name)
 {
 	mntlist *mlist, *mp, *mp_save = 0;
 	int error = 0;

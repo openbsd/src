@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.9 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: nfs_start.c,v 1.10 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #include "am.h"
@@ -69,7 +69,8 @@ int max_fds = -1;
 /*
  * Check that we are not burning resources
  */
-static void checkup(P_void)
+static void
+checkup(P_void)
 {
 	static int max_fd = 0;
 	static char *max_mem = 0;
@@ -99,15 +100,13 @@ static void checkup(P_void)
 }
 #endif /* DEBUG */
 
-static int do_select(mask, omask, fds, fdp, tvp)
-sigset_t *mask;
-sigset_t *omask;
-int fds;
-fd_set *fdp;
-struct timeval *tvp;
+static int
+do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
+    struct timeval *tvp)
 {
 	int sig;
 	int nsel;
+
 	if ((sig = setjmp(select_intr))) {
 		select_intr_valid = 0;
 		/* Got a signal */
@@ -156,7 +155,8 @@ struct timeval *tvp;
  * Determine whether anything is left in
  * the RPC input queue.
  */
-static int rpc_pending_now()
+static int
+rpc_pending_now()
 {
 	struct timeval tvv;
 	int nsel;
@@ -197,7 +197,8 @@ static int rpc_pending_now()
 	return(0);
 }
 
-static serv_state run_rpc(P_void)
+static serv_state
+run_rpc(P_void)
 {
 	sigset_t mask, omask;
 
@@ -362,7 +363,8 @@ static serv_state run_rpc(P_void)
 	return amd_state;
 }
 
-static int bindnfs_port(int so)
+static int
+bindnfs_port(int so)
 {
 	unsigned short port;
 	int error = bind_resv_port(so, &port);
@@ -371,7 +373,8 @@ static int bindnfs_port(int so)
 	return error;
 }
 
-void unregister_amq(P_void)
+void
+unregister_amq(P_void)
 {
 #ifdef DEBUG
 	Debug(D_AMQ)
@@ -379,7 +382,8 @@ void unregister_amq(P_void)
 	(void) pmap_unset(AMQ_PROGRAM, AMQ_VERSION);
 }
 
-int mount_automounter(pid_t ppid)
+int
+mount_automounter(pid_t ppid)
 {
 	int so = socket(AF_INET, SOCK_DGRAM, 0);
 	SVCXPRT *amqp;

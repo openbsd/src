@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.7 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: xutil.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #include "config.h"
@@ -48,6 +48,7 @@
 #endif
 
 #include <unistd.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -57,8 +58,6 @@ int syslogging;
 #endif /* HAS_SYSLOG */
 int xlog_level = XLOG_ALL & ~XLOG_MAP & ~XLOG_STATS;
 int xlog_level_init = ~0;
-
-extern char *__progname;
 
 /*
  * List of log options
@@ -79,8 +78,8 @@ struct opt_tab xlog_opt[] = {
 	{ 0, 0 }
 };
 
-voidp xmalloc(len)
-int len;
+voidp
+xmalloc(int len)
 {
 	voidp p;
 	int retries = 600;
@@ -113,9 +112,8 @@ int len;
 	return 0;
 }
 
-voidp xrealloc(ptr, len)
-voidp ptr;
-int len;
+voidp
+xrealloc(voidp ptr, int len)
 {
 #if defined(DEBUG) && defined(DEBUG_MEM)
 	Debug(D_MEM) plog(XLOG_DEBUG, "Reallocated size %d; block %#x", len, ptr);
@@ -138,10 +136,7 @@ int len;
 }
 
 #if defined(DEBUG) && defined(DEBUG_MEM)
-xfree(f, l, p)
-char *f;
-int l;
-voidp p;
+xfree(char *f, int l, voidp p)
 {
 	Debug(D_MEM) plog(XLOG_DEBUG, "Free in %s:%d: block %#x", f, l, p);
 #undef free
@@ -151,9 +146,11 @@ voidp p;
 #ifdef DEBUG_MEM
 static int mem_bytes;
 static int orig_mem_bytes;
-static void checkup_mem(P_void)
+
+static void
+checkup_mem(P_void)
 {
-extern struct mallinfo __mallinfo;
+	extern struct mallinfo __mallinfo;
 	if (mem_bytes != __mallinfo.uordbytes) {
 		if (orig_mem_bytes == 0)
 			mem_bytes = orig_mem_bytes = __mallinfo.uordbytes;
@@ -180,10 +177,8 @@ extern struct mallinfo __mallinfo;
  * with the current error code taken from errno.  Make sure
  * 'e' never gets longer than maxlen characters.
  */
-INLINE
-static void expand_error(f, e, maxlen)
-char *f;
-char *e;
+INLINE static void
+expand_error(char *f, char *e, int maxlen)
 {
 #ifndef HAS_STRERROR
 	extern int sys_nerr;
@@ -220,11 +215,11 @@ char *e;
 /*
  * Output the time of day and hostname to the logfile
  */
-static void show_time_host_and_name(lvl)
-int lvl;
+static void
+show_time_host_and_name(int lvl)
 {
-static time_t last_t = 0;
-static char *last_ctime = 0;
+	static time_t last_t = 0;
+	static char *last_ctime = 0;
 	time_t t = clocktime();
 	char *sev;
 	extern char *ctime();
@@ -260,25 +255,16 @@ extern char **gargv;
 		sev);
 }
 
-#ifdef DEBUG
 /*VARARGS1*/
-void dplog(fmt, j,s,_,p,e,n,d,r,y)
-char *fmt;
-char *j, *s, *_, *p, *e, *n, *d, *r, *y;
-{
-	plog(XLOG_DEBUG, fmt, j,s,_,p,e,n,d,r,y);
-}
-
-#endif /* DEBUG */
-/*VARARGS1*/
-void plog(lvl, fmt, j,s,_,p,e,n,d,r,y)
-int lvl;
-char *fmt;
-char *j, *s, *_, *p, *e, *n, *d, *r, *y;
+void
+plog(int lvl, char *fmt, ...)
 {
 	char msg[1024];
 	char efmt[1024];
 	char *ptr;
+	va_list ap;
+
+	va_start(ap, fmt);
 
 	if (!(xlog_level & lvl))
 		return;
@@ -293,7 +279,7 @@ char *j, *s, *_, *p, *e, *n, *d, *r, *y;
 	 * more than 1024 bytes, if efmt is already large, and vargs expand
 	 * as well.
 	 */
-	snprintf(msg, sizeof(msg), efmt, j,s,_,p,e,n,d,r,y);
+	vsnprintf(msg, sizeof(msg), efmt, ap);
 	ptr = msg + strlen(msg);
 	if (ptr[-1] == '\n')
 		*--ptr  = '\0';
@@ -318,22 +304,22 @@ char *j, *s, *_, *p, *e, *n, *d, *r, *y;
 	/*
 	 * Mimic syslog header
 	 */
+	va_end(ap);
 	show_time_host_and_name(lvl);
 	fwrite(msg, ptr - msg, 1, logfp);
 	fputc('\n', logfp);
 	fflush(logfp);
 }
 
-void show_opts P((int ch, struct opt_tab *opts));
-void show_opts(ch, opts)
-int ch;
-struct opt_tab *opts;
+void
+show_opts(int ch, struct opt_tab *opts)
 {
 	/*
 	 * Display current debug options
 	 */
 	int i;
 	int s = '{';
+
 	fprintf(stderr, "\t[-%c {no}", ch);
 	for (i = 0; opts[i].opt; i++) {
 		fprintf(stderr, "%c%s", s, opts[i].opt);
@@ -342,11 +328,8 @@ struct opt_tab *opts;
 	fputs("}]\n", stderr);
 }
 
-int cmdoption P((char *s, struct opt_tab *optb, int *flags));
-int cmdoption(s, optb, flags)
-char *s;
-struct opt_tab *optb;
-int *flags;
+int
+cmdoption(char *s, struct opt_tab *optb, int *flags)
 {
 	char *p = s;
 	int errs = 0;
@@ -412,8 +395,8 @@ int *flags;
 /*
  * Switch on/off logging options
  */
-int switch_option(opt)
-char *opt;
+int
+switch_option(char *opt)
 {
 	int xl = xlog_level;
 	int rc = cmdoption(opt, xlog_opt, &xl);
@@ -436,9 +419,8 @@ char *opt;
 /*
  * Change current logfile
  */
-int switch_to_logfile P((char *logfile));
-int switch_to_logfile(logfile)
-char *logfile;
+int
+switch_to_logfile(char *logfile)
 {
 	FILE *new_logfp = stderr;
 
@@ -488,7 +470,8 @@ char *logfile;
 time_t clock_valid = 0;
 time_t xclock_valid = 0;
 #ifndef clocktime
-time_t clocktime(P_void)
+time_t
+clocktime(P_void)
 {
 	time_t now = time(&clock_valid);
 	if (xclock_valid > now) {

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)efs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: efs_ops.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: efs_ops.c,v 1.2 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #include "am.h"
@@ -54,22 +54,22 @@
 /*
  * EFS file system always matches
  */
-static char *efs_match(fo)
-am_opts *fo;
+static char *
+efs_match(am_opts *fo)
 {
 	return strdup("(error-hook)");
 }
 
 /*ARGSUSED*/
-static int efs_fmount(mf)
-mntfs *mf;
+static int
+efs_fmount(mntfs *mf)
 {
 	return ENOENT;
 }
 
 /*ARGSUSED*/
-static int efs_fumount(mf)
-mntfs *mf;
+static int
+efs_fumount(mntfs *mf)
 {
 	/*
 	 * Always succeed
@@ -84,11 +84,8 @@ mntfs *mf;
  * If we do then just give an error.
  */
 /*ARGSUSED*/
-am_node *efs_lookuppn(mp, fname, error_return, op)
-am_node *mp;
-char *fname;
-int *error_return;
-int op;
+am_node *
+efs_lookuppn(am_node *mp, char *fname, int *error_return, int op)
 {
 	*error_return = ESTALE;
 	return 0;
@@ -100,12 +97,9 @@ int op;
  * If we do then just give an error.
  */
 /*ARGSUSED*/
-int efs_readdir(mp, cookie, dp, ep, count)
-am_node *mp;
-nfscookie cookie;
-dirlist *dp;
-entry *ep;
-int count;
+int
+efs_readdir(am_node *mp, nfscookie cookie, dirlist *dp, entry *ep,
+    int count)
 {
 	return ESTALE;
 }

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)am_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: am_ops.c,v 1.3 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: am_ops.c,v 1.4 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 #include "am.h"
@@ -76,9 +76,8 @@ static am_ops *vops[] = {
 	0
 };
 
-void ops_showfstypes P((FILE *fp));
-void ops_showfstypes(fp)
-FILE *fp;
+void
+ops_showfstypes(FILE *fp)
 {
 	struct am_ops **ap;
 	int l = 0;
@@ -98,13 +97,9 @@ FILE *fp;
  * Construct an amd-style line and call the
  * normal amd matcher.
  */
-am_ops *sunos4_match(fo, key, g_key, path, keym, map)
-am_opts *fo;
-char *key;
-char *g_key;
-char *path;
-char *keym;
-char *map;
+am_ops *
+sunos4_match(am_opts *fo, char *key, char *g_key, char *path,
+    char *keym, char *map)
 {
 	char *host = key;
 	char *fs = strchr(host, ':');
@@ -121,13 +116,9 @@ char *map;
 #endif
 #endif /* SUNOS4_COMPAT */
 
-am_ops *ops_match(fo, key, g_key, path, keym, map)
-am_opts *fo;
-char *key;
-char *g_key;
-char *path;
-char *keym;
-char *map;
+am_ops *
+ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym,
+    char *map)
 {
 	am_ops **vp;
 	am_ops *rop = 0;

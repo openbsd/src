@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.5 2002/07/18 02:03:00 deraadt Exp $
+ *	$Id: get_args.c,v 1.6 2002/08/03 08:29:31 pvalchev Exp $
  */
 
 /*
@@ -51,7 +51,6 @@
 
 extern int optind;
 extern char *optarg;
-extern char *__progname;
 
 #if defined(DEBUG) && defined(PARANOID)
 char **gargv;
@@ -96,16 +95,15 @@ int debug_flags = D_AMQ			/* Register AMQ */
 /*
  * Switch on/off debug options
  */
-int debug_option(opt)
-char *opt;
+int
+debug_option(char *opt)
 {
 	return cmdoption(opt, dbg_opt, &debug_flags);
 }
 #endif /* DEBUG */
 
-void get_args(c, v)
-int c;
-char *v[];
+void
+get_args(int c, char *v[])
 {
 	int opt_ch;
 	int usage = 0;
@@ -113,119 +111,119 @@ char *v[];
 	char *sub_domain = 0;
 
 	while ((opt_ch = getopt(c, v, "mnprva:c:d:h:k:l:t:w:x:y:C:D:")) != -1)
-	switch (opt_ch) {
-	case 'a':
-		if (*optarg != '/') {
-			fprintf(stderr, "%s: -a option must begin with a '/'\n",
-			    __progname);
-			exit(1);
-		}
-		auto_dir = optarg;
-		break;
+		switch (opt_ch) {
+		case 'a':
+			if (*optarg != '/') {
+				fprintf(stderr, "%s: -a option must begin with a '/'\n",
+				    __progname);
+				exit(1);
+			}
+			auto_dir = optarg;
+			break;
 
-	case 'c':
-		am_timeo = atoi(optarg);
-		if (am_timeo <= 0)
-			am_timeo = AM_TTL;
-		break;
+		case 'c':
+			am_timeo = atoi(optarg);
+			if (am_timeo <= 0)
+				am_timeo = AM_TTL;
+			break;
 
-	case 'd':
-		sub_domain = optarg;
-		break;
+		case 'd':
+			sub_domain = optarg;
+			break;
 
-	case 'h':
+		case 'h':
 #if defined(HAS_HOST) && defined(HOST_EXEC)
-		host_helper = optarg;
+			host_helper = optarg;
 #else
-		plog(XLOG_USER, "-h: option ignored.  HOST_EXEC is not enabled.");
-		break;
+			plog(XLOG_USER, "-h: option ignored.  HOST_EXEC is not enabled.");
+			break;
 #endif /* defined(HAS_HOST) && defined(HOST_EXEC) */
 
-	case 'k':
-		karch = optarg;
-		break;
+		case 'k':
+			karch = optarg;
+			break;
 
-	case 'l':
-		logfile = optarg;
-		break;
+		case 'l':
+			logfile = optarg;
+			break;
 
-	case 'm':
-		plog(XLOG_USER, "The -m option is no longer supported.");
-		plog(XLOG_USER, "... Use `ypcat -k am.master` on the command line instead");
-		break;
+		case 'm':
+			plog(XLOG_USER, "The -m option is no longer supported.");
+			plog(XLOG_USER, "... Use `ypcat -k am.master` on the command line instead");
+			break;
 
-	case 'n':
-		normalize_hosts = 1;
-		break;
+		case 'n':
+			normalize_hosts = 1;
+			break;
 
-	case 'p':
-		print_pid = 1;
-		break;
+		case 'p':
+			print_pid = 1;
+			break;
 
-	case 'r':
-		restart_existing_mounts = 1;
-		break;
+		case 'r':
+			restart_existing_mounts = 1;
+			break;
 
-	case 't':
-		/* timeo.retrans */
-		{ char *dot = strchr(optarg, '.');
-		  if (dot) *dot = '\0';
-		  if (*optarg) {
-			afs_timeo = atoi(optarg);
-		  }
-		  if (dot) {
-			afs_retrans = atoi(dot+1);
-			*dot = '.';
-		  }
-		}
-		break;
+		case 't':
+			/* timeo.retrans */
+			{ char *dot = strchr(optarg, '.');
+			  if (dot) *dot = '\0';
+			  if (*optarg) {
+				afs_timeo = atoi(optarg);
+			  }
+			  if (dot) {
+				afs_retrans = atoi(dot+1);
+				*dot = '.';
+			  }
+			}
+			break;
 
-	case 'v':
-		fprintf(stderr, "%s%s (%s-endian).\n", copyright, version, endian);
-		fputs("Map support for: ", stderr);
-		mapc_showtypes(stderr);
-		fputs(".\nFS: ", stderr);
-		ops_showfstypes(stderr);
-		fputs(".\n", stderr);
-		fprintf(stderr, "Primary network is %s.\n", wire);
-		exit(0);
-		break;
+		case 'v':
+			fprintf(stderr, "%s%s (%s-endian).\n", copyright, version, endian);
+			fputs("Map support for: ", stderr);
+			mapc_showtypes(stderr);
+			fputs(".\nFS: ", stderr);
+			ops_showfstypes(stderr);
+			fputs(".\n", stderr);
+			fprintf(stderr, "Primary network is %s.\n", wire);
+			exit(0);
+			break;
 
-	case 'w':
-		am_timeo_w = atoi(optarg);
-		if (am_timeo_w <= 0)
-			am_timeo_w = AM_TTL_W;
-		break;
+		case 'w':
+			am_timeo_w = atoi(optarg);
+			if (am_timeo_w <= 0)
+				am_timeo_w = AM_TTL_W;
+			break;
 
-	case 'x':
-		usage += switch_option(optarg);
-		break;
+		case 'x':
+			usage += switch_option(optarg);
+			break;
 
-	case 'y':
+		case 'y':
 #ifdef HAS_NIS_MAPS
-		domain = optarg;
+			domain = optarg;
 #else
-		plog(XLOG_USER, "-y: option ignored.  No NIS support available.");
+			plog(XLOG_USER, "-y: option ignored.  No NIS support available.");
 #endif /* HAS_NIS_MAPS */
-		break;
+			break;
 
-	case 'C':
-		cluster = optarg;
-		break;
+		case 'C':
+			cluster = optarg;
+			break;
 
-	case 'D':
+		case 'D':
 #ifdef DEBUG
-		usage += debug_option(optarg);
+			usage += debug_option(optarg);
 #else
-		fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n",
-		    __progname);
+			fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n",
+			    __progname);
 #endif /* DEBUG */
-		break;
+			break;
 
-	default:
-		usage = 1;
-		break;
-	}
+		default:
+			usage = 1;
+			break;
+		}
 
 	if (xlog_level_init == ~0) {
 		(void) switch_option("");
