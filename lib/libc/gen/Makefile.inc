@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.11 1997/07/23 21:09:04 kstailey Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 1997/08/17 21:31:19 millert Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
-	ctype_.c daemon.c devname.c disklabel.c elf_hash.c err.c \
+SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c ctermid.c \
+	ctype_.c daemon.c devname.c dirname.c disklabel.c elf_hash.c err.c \
 	errx.c errlist.c errno.c exec.c fnmatch.c fstab.c ftok.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c \
 	getgrouplist.c gethostname.c getloadavg.c getlogin.c getmntinfo.c \
@@ -42,7 +42,7 @@ errlst.o errlst.po:
 
 .endif	# _NOTDEF_XXX_
 
-MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
+MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	devname.3 directory.3 err.3 exec.3 fnmatch.3 frexp.3 ftok.3 fts.3 \
 	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
