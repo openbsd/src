@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.61 2001/03/01 16:11:18 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.62 2001/03/06 19:56:50 brad Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -137,7 +137,9 @@ See
 .Xr compat_osf1 8 .
 .It Cd option COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine ID.
-On the i386, this includes NetBSD 0.8's ZMAGIC format, 386BSD and BSDI's
+On the i386, this includes
+.Nx
+0.8's ZMAGIC format, 386BSD and BSDI's
 QMAGIC, NMAGIC, and OMAGIC a.out formats.
 On the hp300 and other m68k architectures this permits certain old
 .Bx 4.3

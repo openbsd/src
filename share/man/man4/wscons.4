@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.3 2001/02/12 05:49:38 millert Exp $
+.\" $OpenBSD: wscons.4,v 1.4 2001/03/06 19:56:50 brad Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -207,10 +207,13 @@ Emulates enough of the
 .Dq pcvt
 driver to make X servers work.
 .It Cd WSDISPLAY_COMPAT_SYSCONS
-Emulates enough of the i386 FreeBSD
+Emulates enough of the i386
+.Fx
 .Dq syscons
 driver to make X servers work.
-Useful with FreeBSD binary emulation.
+Useful with
+.Fx
+binary emulation.
 .El
 .Pp
 Linux/i386 X servers do usually run if the first two options are
