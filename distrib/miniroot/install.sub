@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.54 1998/03/12 08:59:45 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.55 1998/03/12 09:42:40 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1571,6 +1571,7 @@ __install_sets_1
 
 		if [ ! -f /mnt/bsd ]; then
 			cat << \__install_sets_2
+
 You still do not have a /bsd in your filesystem (ie. the kernel), which
 seems to indicate that you are still missing important distribution files.
 So please continue installing..
@@ -1579,6 +1580,7 @@ __install_sets_2
 		fi
 		if [ ! -f /mnt/bin/cat ]; then
 			cat << \__install_sets_3
+
 You still do not have a /bin/cat in your filesystem (ie. a sample random file
 which you probably want). This seems to indicate that you are still missing
 important distribution files. So please continue installing..
