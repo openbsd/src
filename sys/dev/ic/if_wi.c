@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.48 2002/04/06 23:48:38 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.49 2002/04/07 23:23:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.48 2002/04/06 23:48:38 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.49 2002/04/07 23:23:49 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -132,6 +132,7 @@ static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
 #endif
 
 STATIC void wi_reset(struct wi_softc *);
+STATIC void wi_cor_reset(struct wi_softc *);
 STATIC int wi_ioctl(struct ifnet *, u_long, caddr_t);
 STATIC void wi_start(struct ifnet *);
 STATIC void wi_watchdog(struct ifnet *);
@@ -183,8 +184,9 @@ wi_attach(sc)
 	struct ifnet		*ifp;
 	int			error;
 
-	sc->wi_gone = 0;
+	sc->wi_flags = WI_FLAGS_ATTACHED;
 
+	wi_cor_reset(sc);
 	wi_reset(sc);
 
 	/* Read the station address. */
@@ -341,7 +343,7 @@ wi_intr(vsc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	if (sc->wi_gone || !(ifp->if_flags & IFF_UP)) {
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED) || !(ifp->if_flags & IFF_UP)) {
 		CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
 		return (0);
@@ -683,9 +685,34 @@ STATIC void
 wi_reset(sc)
 	struct wi_softc		*sc;
 {
+	DPRINTF(WID_RESET, ("wi_reset: sc %p\n", sc));
+
+	/* Symbol firmware cannot be initialized more than once. */
+	if (sc->sc_firmware_type == WI_SYMBOL &&
+	    (sc->wi_flags & WI_FLAGS_INITIALIZED))
+		return;
+
+	if (wi_cmd(sc, WI_CMD_INI, 0))
+		printf(WI_PRT_FMT ": init failed\n", WI_PRT_ARG(sc));
+	else
+		sc->wi_flags |= WI_FLAGS_INITIALIZED;
+
+	CSR_WRITE_2(sc, WI_INT_EN, 0);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
+
+	/* Calibrate timer. */
+	WI_SETVAL(WI_RID_TICK_TIME, 8);
+
+	return;
+}
+
+STATIC void
+wi_cor_reset(sc)
+	struct wi_softc		*sc;
+{
 	u_int8_t cor_value;
 
-	DPRINTF(WID_RESET, ("wi_reset: sc %p\n", sc));
+	DPRINTF(WID_RESET, ("wi_cor_reset: sc %p\n", sc));
 
 	/*
 	 * Do a soft reset of the card.  This is required by Symbol cards
@@ -702,15 +729,6 @@ wi_reset(sc)
 		    sc->wi_cor_offset, (cor_value & ~WI_COR_SOFT_RESET));
 		DELAY(1000);
 	}
-
-	if (wi_cmd(sc, WI_CMD_INI, 0))
-		printf(WI_PRT_FMT ": init failed\n", WI_PRT_ARG(sc));
-
-	CSR_WRITE_2(sc, WI_INT_EN, 0);
-	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
-
-	/* Calibrate timer. */
-	WI_SETVAL(WI_RID_TICK_TIME, 8);
 
 	return;
 }
@@ -1196,7 +1214,7 @@ wi_ioctl(ifp, command, data)
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
 
-	if (sc->wi_gone) {
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED)) {
 		splx(s);
 		return(ENODEV);
 	}
@@ -1418,7 +1436,7 @@ wi_init(sc)
 	struct wi_ltv_macaddr	mac;
 	int			id = 0;
 
-	if (sc->wi_gone)
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED))
 		return;
 
 	DPRINTF(WID_INIT, ("wi_init: sc %p\n", sc));
@@ -1702,7 +1720,7 @@ wi_start(ifp)
 
 	DPRINTF(WID_START, ("wi_start: ifp %p sc %p\n", ifp, sc));
 
-	if (sc->wi_gone)
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED))
 		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -1851,7 +1869,7 @@ wi_mgmt_xmit(sc, data, len)
 	struct wi_80211_hdr	*hdr;
 	caddr_t			dptr;
 
-	if (sc->wi_gone)
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED))
 		return(ENODEV);
 
 	hdr = (struct wi_80211_hdr *)data;
@@ -1888,7 +1906,7 @@ wi_stop(sc)
 
 	wihap_shutdown(sc);
 
-	if (sc->wi_gone)
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED))
 		return;
 
 	DPRINTF(WID_STOP, ("wi_stop: sc %p\n", sc));

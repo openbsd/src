@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.8 2002/04/01 22:00:18 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.9 2002/04/07 23:23:49 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -288,7 +288,7 @@ wihap_shutdown(struct wi_softc *sc)
 
 		timeout_del(&sta->tmo);
 
-		if (!sc->wi_gone) {
+		if (sc->wi_flags & WI_FLAGS_ATTACHED) {
 			/* Disassociate station. */
 			if (sta->flags & WI_SIFLAGS_ASSOC)
 				wihap_sta_disassoc(sc, sta,

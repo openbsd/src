@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.26 2002/04/06 21:58:12 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.27 2002/04/07 23:23:49 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -77,6 +77,7 @@ int	wi_pcmcia_activate(struct device *, enum devact);
 
 int	wi_intr(void *);
 int	wi_attach(struct wi_softc *);
+void	wi_cor_reset(struct wi_softc *);
 void	wi_init(struct wi_softc *);
 void	wi_stop(struct wi_softc *);
 
@@ -379,7 +380,7 @@ wi_pcmcia_detach(dev, flags)
 	struct wi_softc *sc = &psc->sc_wi;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 
-	if (sc->wi_gone) {
+	if (!(sc->wi_flags & WI_FLAGS_ATTACHED)) {
 		printf("%s: already detached\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
@@ -393,7 +394,7 @@ wi_pcmcia_detach(dev, flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	sc->wi_gone = 1;
+	sc->wi_flags = 0;
 
 	return (0);
 }
@@ -414,6 +415,7 @@ wi_pcmcia_activate(dev, act)
 		pcmcia_function_enable(psc->sc_pf);
 		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		    wi_intr, sc, sc->sc_dev.dv_xname);
+		wi_cor_reset(sc);
 		wi_init(sc);
 		break;
 
@@ -421,6 +423,7 @@ wi_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			wi_stop(sc);
+		sc->wi_flags &= ~WI_FLAGS_INITIALIZED;
 		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 		pcmcia_function_disable(psc->sc_pf);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.8 2002/04/06 23:48:38 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.9 2002/04/07 23:23:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -49,7 +49,7 @@ struct wi_softc	{
 	bus_size_t		wi_cor_offset;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
-	int			wi_gone;
+	int			wi_flags;
 	int			wi_if_flags;
 	u_int16_t		wi_ptype;
 	u_int16_t		wi_portnum;
@@ -88,6 +88,10 @@ struct wi_softc	{
 	u_int32_t		wi_icv;
 	int			wi_icv_flag;
 };
+
+/* Values for wi_flags. */
+#define WI_FLAGS_ATTACHED	0x01
+#define WI_FLAGS_INITIALIZED	0x02
 
 /* Firmware types */
 #define WI_LUCENT	0
