@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2002/06/07 05:02:58 hin Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/06/07 05:26:36 hin Exp $
 
 AFSTOPDIR=	../..
 .include <../../Makefile.inc>
@@ -6,7 +6,7 @@ AFSTOPDIR=	../..
 PROG	= afsd
 MAN	= afsd.8 CellServDB.5 ThisCell.5 SuidCells.5
 BINDIR	= /usr/libexec
-LDADD	+= ${LIBARLA} ${LIBROKEN} -lkafs -lkrb
+LDADD	+= ${LIBARLA} ${LIBROKEN} -lkafs -lkrb -ldes
 DPADD	+= ${LIBARLA} ${LIBROKEN}
 
 CFLAGS	+=  -I${AFSSRC}/util -I${AFSSRC}/arlad \
