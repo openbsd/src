@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.30 2002/06/12 03:44:35 art Exp $	*/
+/*	$OpenBSD: ps.c,v 1.31 2003/04/15 01:19:34 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.30 2002/06/12 03:44:35 art Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.31 2003/04/15 01:19:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -463,13 +463,14 @@ kludge_oldps_options(s)
 	char *newopts, *ns, *cp;
 
 	len = strlen(s);
-	if ((newopts = ns = malloc(len + 3)) == NULL)
+	if ((newopts = ns = malloc(2 + len + 1)) == NULL)
 		err(1, NULL);
 	/*
 	 * options begin with '-'
 	 */
 	if (*s != '-')
 		*ns++ = '-';	/* add option flag */
+
 	/*
 	 * gaze to end of argv[1]
 	 */
@@ -499,7 +500,8 @@ kludge_oldps_options(s)
 	if (isdigit(*cp) && (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
 	    (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
-	(void)strcpy(ns, cp);		/* and append the number */
+	/* and append the number */
+	(void)strlcpy(ns, cp, newopts + len + 3 - ns);
 
 	return (newopts);
 }
