@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.348 2003/03/27 18:01:57 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.349 2003/04/04 18:48:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -359,12 +359,12 @@ typedef struct {
 %token	ALTQ CBQ PRIQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
 %token	<v.string>		STRING
-%token	<v.i>			PORTUNARY PORTBINARY
+%token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno
 %type	<v.i>			no dir log af fragcache
-%type	<v.i>			staticport
+%type	<v.i>			staticport unaryop
 %type	<v.b>			action nataction flags flag blockspec
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
@@ -471,9 +471,7 @@ string		: string STRING				{
 		| STRING
 		;
 
-varset		: STRING PORTUNARY string		{
-			if ($2 != PF_OP_EQ)
-				YYERROR;
+varset		: STRING '=' string		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
@@ -759,9 +757,7 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 not		: '!'		{ $$ = 1; }
 		| /* empty */	{ $$ = 0; }
 
-tabledef	: TABLE PORTUNARY STRING PORTUNARY table_opts {
-			if ($2 != PF_OP_LT || $4 != PF_OP_GT)
-				YYERROR;
+tabledef	: TABLE '<' STRING '>' table_opts {
 			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name too long, max %d chars",
 				    PF_TABLE_NAME_SIZE - 1);
@@ -1582,9 +1578,7 @@ host		: STRING			{ $$ = host($1, -1); }
 			for (n = $1; n != NULL; n = n->next)
 				set_ipmask(n, $3);
 		}
-		| PORTUNARY STRING PORTUNARY	{
-			if ($1 != PF_OP_LT || $3 != PF_OP_GT)
-				YYERROR;
+		| '<' STRING '>'	{
 			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name '%s' too long");
 				YYERROR;
@@ -1661,7 +1655,7 @@ port_item	: port				{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| PORTUNARY port		{
+		| unaryop port		{
 			if ($2.t) {
 				yyerror("':' cannot be used with an other "
 				    "port operator");
@@ -1754,7 +1748,7 @@ uid_item	: uid				{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| PORTUNARY uid			{
+		| unaryop uid			{
 			if ($2 == UID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
 				yyerror("user unknown requires operator = or "
 				    "!=");
@@ -1833,7 +1827,7 @@ gid_item	: gid				{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| PORTUNARY gid			{
+		| unaryop gid			{
 			if ($2 == GID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
 				yyerror("group unknown requires operator = or "
 				    "!=");
@@ -2686,6 +2680,14 @@ yesno		: NO			{ $$ = 0; }
 			else
 				YYERROR;
 		}
+
+unaryop		: '='		{ $$ = PF_OP_EQ; }
+		| '!' '='	{ $$ = PF_OP_NE; }
+		| '<' '='	{ $$ = PF_OP_LE; }
+		| '<'		{ $$ = PF_OP_LT; }
+		| '>' '='	{ $$ = PF_OP_GE; }
+		| '>'		{ $$ = PF_OP_GT; }
+		;
 
 %%
 
@@ -3696,42 +3698,21 @@ top:
 		if (yylval.v.string == NULL)
 			err(1, "yylex: strdup");
 		return (STRING);
-	case '=':
-		yylval.v.i = PF_OP_EQ;
-		return (PORTUNARY);
-	case '!':
-		next = lgetc(fin);
-		if (next == '=') {
-			yylval.v.i = PF_OP_NE;
-			return (PORTUNARY);
-		}
-		lungetc(next);
-		break;
 	case '<':
 		next = lgetc(fin);
 		if (next == '>') {
 			yylval.v.i = PF_OP_XRG;
 			return (PORTBINARY);
-		} else if (next == '=') {
-			yylval.v.i = PF_OP_LE;
-		} else {
-			yylval.v.i = PF_OP_LT;
-			lungetc(next);
-		}
-		return (PORTUNARY);
+		} 
+		lungetc(next);
 		break;
 	case '>':
 		next = lgetc(fin);
 		if (next == '<') {
 			yylval.v.i = PF_OP_IRG;
 			return (PORTBINARY);
-		} else if (next == '=') {
-			yylval.v.i = PF_OP_GE;
-		} else {
-			yylval.v.i = PF_OP_GT;
-			lungetc(next);
 		}
-		return (PORTUNARY);
+		lungetc(next);
 		break;
 	case '-':
 		next = lgetc(fin);
