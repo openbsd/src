@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.25 2004/02/10 18:51:31 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.26 2004/02/10 18:54:57 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -79,8 +79,8 @@ sub write_uniques
 
 sub found($$)
 {
-    my ($regexp, $filename) = @_;
-    my @candidates = glob $regexp;
+    my ($pattern, $filename) = @_;
+    my @candidates = glob $pattern;
     if (@candidates > 0) {
     	# quick check of inode, dev number
     	my ($dev_cmp, $inode_cmp) = (stat $filename)[0,1];
