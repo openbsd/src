@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.33 2004/01/13 23:24:59 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.34 2004/01/19 17:18:13 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@
 #define SSIZE		1		/* initial stack size/NBPG */
 #define SINCR		1		/* increment of stack/NBPG */
 
-#define UPAGES		8		/* pages of u-area */
+#define UPAGES		3		/* pages of u-area */
 #define USPACE		(UPAGES * NBPG)
 
 #define UADDR		0xeee00000	/* address of u */
