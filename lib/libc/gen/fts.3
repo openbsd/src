@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.4 1997/09/01 02:48:46 millert Exp $
+.\"	$OpenBSD: fts.3,v 1.5 1998/03/01 00:02:23 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -316,7 +316,7 @@ Therefore, the
 and
 .Fa fts_accpath
 fields are guaranteed to be
-.Dv NULL Ns -terminated
+.Dv NUL Ns -terminated
 .Em only
 for the file most recently returned by
 .Fn fts_read .
@@ -334,7 +334,7 @@ are attempted.
 The
 .Fa fts_name
 field is always
-.Dv NULL Ns -terminated.
+.Dv NUL Ns -terminated.
 .Sh FTS_OPEN
 The
 .Fn fts_open
