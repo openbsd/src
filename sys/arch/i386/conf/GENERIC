@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.230 2001/01/29 00:43:41 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.231 2001/01/29 01:47:35 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -87,54 +87,27 @@ ohci*	at pci? disable			# Open Host Controller
 usb*	at uhci?
 usb*	at ohci?
 
-# USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
-
-# USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
-
-# USB Printers
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Mass Storage devices
-umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass?
-
-# USB Modems
-umodem*	at uhub? port ? configuration ?
+uhub*	at usb?				# USB Hubs
+uhub*	at uhub? port ? configuration ?	# USB Hubs
+uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
+umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
-
-# USB Audio
-uaudio* at uhub? port ? configuration ?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?			# ADMtek AN986 Pegasus based adapters
-cue*	at uhub? port ?			# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
-
-# Prolific PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
-# Handspring Visor
-uvisor*	at uhub? port ? configuration ?
+uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
-
-# USB Scanners
-uscanner* at uhub? port ?
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub? port ?
+uaudio* at uhub? port ? configuration ?	# USB Audio
+ulpt*	at uhub? port ? configuration ? # USB Printers
+umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+scsibus* at umass?
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+urio*	at uhub? port ?			# Diamond Multimedia Rio 500
+uscanner* at uhub? port ?		# USB Scanners
+usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
-
-# Y@P firmware loader
-#uyap*	at uhub? port ?
-
-# USB Generic driver
-ugen*	at uhub? port ? configuration ? interface ?
+#uyap*	at uhub? port ?			# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? # USB Generic driver
 
 puc*	at pci?				# PCI "universal" communication device
 
