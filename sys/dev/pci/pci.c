@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.18 2001/06/24 04:18:41 matthieu Exp $	*/
+/*	$OpenBSD: pci.c,v 1.19 2001/06/24 16:15:56 matthieu Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -404,6 +404,16 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = ENXIO;
 		goto done;
 	}
+#ifdef __i386__
+	/* The i386 pci_make_tag function can panic if called with wrong 
+	   args, try to avoid that */
+	if (io->pi_sel.pc_bus >= 256 || 
+	    io->pi_sel.pc_dev >= (pci_mode == 2 ? 32 : 16) ||
+	    io->pi_sel.pc_func >= 8) {
+		error = EINVAL;
+		goto done;
+	}
+#endif
 
 	tag = pci_make_tag(pc, io->pi_sel.pc_bus, io->pi_sel.pc_dev,
 			   io->pi_sel.pc_func);
