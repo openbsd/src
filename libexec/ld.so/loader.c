@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.53 2003/01/30 03:46:46 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.54 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -95,8 +95,7 @@ _dl_dtors(void)
 }
 
 void
-_dl_dopreload(paths)
-	char		*paths;
+_dl_dopreload(char *paths)
 {
 	char		*cp, *dp;
 
@@ -186,8 +185,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			exe_obj = _dl_add_object(argv[0],
 			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
 			    0, 0);
-		}
-		else if (phdp->p_type == PT_INTERP) {
+		} else if (phdp->p_type == PT_INTERP) {
 			us = _dl_strdup((char *)phdp->p_vaddr);
 		}
 		phdp++;
@@ -260,18 +258,19 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		sym = NULL;
 		ooff = _dl_find_symbol("atexit", _dl_objects, &sym,
 		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, "");
-		if (sym == NULL) {
+		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
-		} else {
-			(*(void (*)(Elf_Addr))(sym->st_value + ooff))((Elf_Addr)_dl_dtors);
-		}
+		else
+			(*(void (*)(Elf_Addr))(sym->st_value + ooff))
+			    ((Elf_Addr)_dl_dtors);
 	}
 
 	/*
 	 * Finally make something to help gdb when poking around in the code.
 	 */
 #ifdef __mips__
-	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP - DT_LOPROC + DT_NUM]);
+	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP -
+	    DT_LOPROC + DT_NUM]);
 #else
 	map_link = NULL;
 	for (dynp = exe_obj->load_dyn; dynp->d_tag; dynp++) {
@@ -280,9 +279,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			break;
 		}
 	}
-	if (dynp->d_tag != DT_DEBUG) {
+	if (dynp->d_tag != DT_DEBUG)
 		DL_DEB(("failed to mark DTDEBUG\n"));
-	}
 #endif
 	if (map_link) {
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
@@ -314,15 +312,13 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 void
 _dl_boot_bind(const long sp, long *dl_data)
 {
+	struct elf_object  dynld;	/* Resolver data for the loader */
 	AuxInfo		*auxstack;
 	long		*stack;
 	Elf_Dyn		*dynp;
-	int		n;
-	int argc;
-	char **argv;
-	char **envp;
+	int		n, argc;
+	char **argv, **envp;
 	long loff;
-	struct elf_object  dynld;	/* Resolver data for the loader */
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -411,7 +407,6 @@ _dl_boot_bind(const long sp, long *dl_data)
 			if (dynld.Dyn.info[val] != 0)
 				dynld.Dyn.info[val] += loff;
 		}
-
 	}
 
 	{
@@ -444,7 +439,6 @@ _dl_boot_bind(const long sp, long *dl_data)
 			RELOC_REL(rp, sp, ra, loff);
 			rp++;
 		}
-
 	}
 
 	for (n = 0; n < 2; n++) {
@@ -573,5 +567,4 @@ _dl_unsetenv(const char *var, char **env)
 		}
 		env++;
 	}
-
 }

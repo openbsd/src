@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.15 2002/07/29 22:43:36 art Exp $	*/
+/*	$OpenBSD: sod.c,v 1.16 2003/02/02 16:57:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -55,9 +55,7 @@ int _dl_hinthash(char *cp, int vmajor, int vminor);
  * Populate sod struct for dlopen's call to map_object
  */
 void
-_dl_build_sod(name, sodp)
-	const char	*name;
-	struct sod	*sodp;
+_dl_build_sod(const char *name, struct sod *sodp)
 {
 	unsigned int	tuplet;
 	int		major, minor;
@@ -116,9 +114,8 @@ _dl_build_sod(name, sodp)
 			goto backout;
 		}
 	}
-	if (realname == NULL) {
+	if (realname == NULL)
 		goto backout;
-	}
 	cp = (char *)sodp->sod_name;
 	sodp->sod_name = (long)_dl_strdup(realname);
 	_dl_free(cp);
@@ -142,7 +139,7 @@ char				*_dl_hint_search_path = NULL;
 #define HINTS_VALID (hheader != NULL && hheader != (struct hints_header *)-1)
 
 void
-_dl_maphints()
+_dl_maphints(void)
 {
 	caddr_t		addr;
 
@@ -197,10 +194,7 @@ _dl_maphints()
 }
 
 char *
-_dl_findhint(name, major, minor, prefered_path)
-	char	*name;
-	int	major, minor;
-	char	*prefered_path;
+_dl_findhint(char *name, int major, int minor, char *prefered_path)
 {
 	struct hints_bucket	*bp;
 
@@ -253,10 +247,9 @@ _dl_findhint(name, major, minor, prefered_path)
 	/* No hints available for name */
 	return NULL;
 }
+
 int
-_dl_hinthash(cp, vmajor, vminor)
-	char	*cp;
-	int	vmajor, vminor;
+_dl_hinthash(char *cp, int vmajor, int vminor)
 {
 	int	k = 0;
 

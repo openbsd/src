@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.23 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.24 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -648,7 +648,7 @@ _dl_bind(elf_object_t *object, int index)
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
-		    PROT_READ|PROT_WRITE|PROT_EXEC); 
+		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
 
 	_dl_reloc_plt(addr, ooff + this->st_value, rela);
@@ -656,7 +656,7 @@ _dl_bind(elf_object_t *object, int index)
 	/* if PLT is (to be protected), change back to RO/X */
 	if (object->plt_addr != NULL && object->plt_size != 0) {
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
-		    PROT_READ|PROT_EXEC); 
+		    PROT_READ|PROT_EXEC);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
@@ -725,7 +725,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	    NULL);
 	if (this != NULL)
 		object->plt_addr = ooff + this->st_value;
-	 
+
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_end", object, &this,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
@@ -743,10 +743,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	pltgot[8] = (Elf_Addr)object;
 
-	if (object->got_addr != NULL && object->got_size != 0) 
+	if (object->got_addr != NULL && object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
-		    PROT_READ); 
-	if (object->plt_addr != NULL && object->plt_size != 0) 
+		    PROT_READ);
+	if (object->plt_addr != NULL && object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
 }

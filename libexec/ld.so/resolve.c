@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.16 2003/01/30 03:46:46 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.17 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -46,12 +46,12 @@ elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
 
 /*
- *	Initialize and add a new dynamic object to the object list.
- *	Perform necessary relocations of pointers.
+ * Initialize and add a new dynamic object to the object list.
+ * Perform necessary relocations of pointers.
  */
 elf_object_t *
 _dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
-	const int objtype, const long laddr, const long loff)
+    const int objtype, const long laddr, const long loff)
 {
 	elf_object_t *object;
 #if 0
@@ -194,8 +194,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		h &= ~g;
 	}
 
-	for (object = startlook;
-	    object;
+	for (object = startlook; object;
 	    object = ((flags & SYM_SEARCH_SELF) ? 0 : object->next)) {
 		const Elf_Sym	*symt = object->dyn.symtab;
 		const char	*strt = object->dyn.strtab;
@@ -215,8 +214,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 				continue;
 
 			symn = strt + sym->st_name;
-			if (sym != *ref &&
-			    _dl_strcmp(symn, name))
+			if (sym != *ref && _dl_strcmp(symn, name))
 				continue;
 
 			/* allow this symbol if we are referring to a function
@@ -226,11 +224,10 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 			 * if flags has SYM_PLT set, we must have actual
 			 * symbol, so this symbol is skipped.
 			 */
-			if (sym->st_shndx == SHN_UNDEF)  {
+			if (sym->st_shndx == SHN_UNDEF) {
 				if ((flags & SYM_PLT) || sym->st_value == 0 ||
-				    ELF_ST_TYPE(sym->st_info) != STT_FUNC) {
+				    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
 					continue;
-				}
 			}
 
 			if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
@@ -268,5 +265,5 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		    weak_symn);
 		_dl_printf("relink your program\n");
 	}
-	return(weak_offs);
+	return (weak_offs);
 }

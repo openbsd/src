@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -266,13 +266,13 @@ _dl_bind_start:
 	pushl   %edi
 	pushl   %ds
 	pushl   %es
- 
+
 	pushl   44(%esp)		# Copy of reloff
 	pushl   44(%esp)		# Copy of obj
 	call    _dl_bind@PLT		# Call the binder
 	addl    $8,%esp			# pop binder args
 	movl    %eax,44(%esp)		# Store function to be called in obj
- 
+
 	popl    %es			# restore registers
 	popl    %ds
 	popl    %edi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.21 2003/01/30 06:40:38 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.22 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -66,7 +66,7 @@ void _dl_syncicache(char *from, size_t len);
 	lval &= ~0xfc000000; \
 	lval |= 0x48000000; \
 	(from) = lval; \
-}while(0)
+} while (0)
 
 /* these are structures/functions offset from PLT region */
 #define PLT_CALL_OFFSET		6
@@ -248,7 +248,7 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 			    relas->r_addend;
 			Elf32_Addr val = target - (Elf32_Addr)r_addr;
 
-			if(!B24_VALID_RANGE(val)){
+			if (!B24_VALID_RANGE(val)){
 				int index;
 #ifdef DL_PRINTF_DEBUG
 _dl_printf(" ooff %x, sym val %x, addend %x"
@@ -296,7 +296,7 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 		    {
 			Elf32_Addr val = ooff + this->st_value +
 			    relas->r_addend - (Elf32_Addr)r_addr;
-			if(!B24_VALID_RANGE(val)){
+			if (!B24_VALID_RANGE(val)){
 				/* invalid offset */
 				_dl_exit(20);
 			}
@@ -520,7 +520,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
 		_dl_syncicache((void*)object->got_addr, 4);
 	}
-	if (object->plt_addr != NULL && object->plt_size != 0) 
+	if (object->plt_addr != NULL && object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
 }
@@ -561,7 +561,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
-		    PROT_READ|PROT_WRITE|PROT_EXEC); 
+		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
 
 	value = ooff + this->st_value;

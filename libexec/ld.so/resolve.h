@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.20 2003/01/30 03:46:46 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.21 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -148,8 +148,8 @@ Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
     const Elf_Sym **ref, int flags, int sym_size, const char *module_name);
 /*
  * defines for _dl_find_symbol() flag field, three bits of meaning
- * myself 	- clear: search all objects,	set: search only this object
- * warnnotfound - clear: no warning, 		set: warn if not found
+ * myself	- clear: search all objects,	set: search only this object
+ * warnnotfound - clear: no warning,		set: warn if not found
  * inplt	- clear: possible plt ref	set: real matching function.
  *
  * inplt - due to how ELF handles function addresses in shared libraries

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.23 2002/11/23 04:09:34 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.24 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -68,11 +68,11 @@ dlopen(const char *libname, int how)
 		return((void *)object);	/* Already loaded */
 
 	/*
-	 *	Check for 'needed' objects. For each 'needed' object we
-	 *	create a 'shadow' object and add it to a list attached to
-	 *	the object so we know our dependencies. This list should
-	 *	also be used to determine the library search order when
-	 *	resolving undefined symbols. This is not yet done. XXX
+	 * Check for 'needed' objects. For each 'needed' object we
+	 * create a 'shadow' object and add it to a list attached to
+	 * the object so we know our dependencies. This list should
+	 * also be used to determine the library search order when
+	 * resolving undefined symbols. This is not yet done. XXX
 	 */
 	dynobj = object;
 	while (dynobj) {
@@ -192,8 +192,8 @@ _dl_real_close(void *handle)
 }
 
 /*
- *	Scan through the shadow dep list and 'unload' every library
- *	we depend upon. Shadow objects are removed when removing ourself.
+ * Scan through the shadow dep list and 'unload' every library
+ * we depend upon. Shadow objects are removed when removing ourself.
  */
 static void
 _dl_unload_deps(elf_object_t *object)
@@ -212,12 +212,10 @@ _dl_unload_deps(elf_object_t *object)
 }
 
 /*
- *	dlerror()
- *
- *	Return a character string describing the last dl... error occurred.
+ * Return a character string describing the last dl... error occurred.
  */
 const char *
-dlerror()
+dlerror(void)
 {
 	switch (_dl_errno) {
 	case 0:	/* NO ERROR */
@@ -244,7 +242,7 @@ dlerror()
 }
 
 void
-_dl_show_objects()
+_dl_show_objects(void)
 {
 	elf_object_t *object;
 	char *objtypename;
@@ -254,7 +252,7 @@ _dl_show_objects()
 	object = _dl_objects;
 	if (_dl_traceld)
 		outputfd = STDOUT_FILENO;
-	else 
+	else
 		outputfd = STDERR_FILENO;
 
 	if (sizeof(long) == 8)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2002/10/23 12:38:29 pefo Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -39,11 +39,11 @@
  *	char	*kargv[1];	size depends on kargc
  *	char	kargstr[1];	size varies
  *	char	kenvstr[1];	size varies
- * }; 
+ * };
  */
 
 LEAF(_dl_start)		/* Not really LEAF, but we simplify */
-	addu	sp, -64 	# Some space.
+	addu	sp, -64		# Some space.
 	.cprestore 12
 
 	la	a1, 1f

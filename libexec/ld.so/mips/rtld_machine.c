@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.11 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -226,10 +226,10 @@ DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 	}
 	object->status |= STAT_GOT_DONE;
 
-	if (object->got_addr != NULL && object->got_size != 0) 
+	if (object->got_addr != NULL && object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
-		    PROT_READ); 
-	if (object->plt_addr != NULL && object->plt_size != 0) 
+		    PROT_READ);
+	if (object->plt_addr != NULL && object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
 }

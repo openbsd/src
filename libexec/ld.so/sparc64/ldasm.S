@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.16 2002/12/18 19:20:02 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.17 2003/02/02 16:57:58 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ _dl_sigprocmask:
 	ld	[%o1], %o1			! indirect for new mask
 	mov	SYS_sigprocmask, %g1		! call sys_sigprocmask
 	t ST_SYSCALL				! off to wonderland
-						! what about errors? 
+						! what about errors?
 	cmp	%o2, 0
 	bne,a	1f				! if oset != NULL
 	 st	%o0, [%o2]			!   *oset = oldmask

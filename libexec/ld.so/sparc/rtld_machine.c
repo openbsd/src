@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2002/12/18 19:21:01 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -361,7 +361,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
-		    PROT_READ|PROT_WRITE|PROT_EXEC); 
+		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
 
 	_dl_reloc_plt(addr, value);
@@ -370,7 +370,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	if (object->plt_addr != NULL && object->plt_size != 0) {
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
-		    PROT_READ|PROT_EXEC); 
+		    PROT_READ|PROT_EXEC);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
@@ -447,10 +447,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		return;
 	}
 
-	if (object->got_addr != NULL && object->got_size != 0) 
+	if (object->got_addr != NULL && object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
-		    PROT_READ); 
-	if (object->plt_addr != NULL && object->plt_size != 0) 
+		    PROT_READ);
+	if (object->plt_addr != NULL && object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
 }

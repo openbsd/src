@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.25 2003/01/30 03:46:46 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.26 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -78,15 +78,13 @@ _dl_match_file(struct sod *sodp, char *name, int namelen)
 
 	lname = name;
 	if (sodp->sod_library) {
-		if (_dl_strncmp(name, "lib", 3)) {
+		if (_dl_strncmp(name, "lib", 3))
 			return 0;
-		}
 		lname += 3;
 	}
 	if (_dl_strncmp(lname, (char *)sodp->sod_name,
-	    _dl_strlen((char *)sodp->sod_name))) {
+	    _dl_strlen((char *)sodp->sod_name)))
 		return 0;
-	}
 
 	_dl_build_sod(name, &lsod);
 
@@ -111,14 +109,11 @@ char _dl_hint_store[MAXPATHLEN];
 char *
 _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 {
-	int len;
-	char *hint;
-	char lp[PATH_MAX + 10];
-	char *path;
-	const char *pp;
-	DIR *dd;
+	char *hint, lp[PATH_MAX + 10], *path;
 	struct dirent *dp;
-	int match;
+	const char *pp;
+	int match, len;
+	DIR *dd;
 
 	/* if we are to search default directories, and hints
 	 * are not to be used, search the standard path from ldconfig
@@ -156,6 +151,7 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 				pp = 0;
 		}
 	}
+
 	/*
 	 * For each directory in the searchpath, read the directory
 	 * entries looking for a match to sod. filename compare is
@@ -180,7 +176,8 @@ nohints:
 			while ((dp = _dl_readdir(dd)) != NULL) {
 				if (_dl_match_file(sodp, dp->d_name,
 				    dp->d_namlen)) {
-					/* When a match is found, sodp is
+					/*
+					 * When a match is found, sodp is
 					 * updated with the minor found.
 					 * We continue looking at this
 					 * directory, thus this will find
@@ -190,7 +187,6 @@ nohints:
 					 * so that it doesn't have to be
 					 * recreated from the hint.
 					 */
-
 					match = 1;
 					len = _dl_strlcpy(_dl_hint_store, lp,
 					    MAXPATHLEN);
@@ -199,7 +195,7 @@ nohints:
 						len++;
 					}
 					_dl_strlcpy(&_dl_hint_store[len],
-						dp->d_name, MAXPATHLEN-len);
+					    dp->d_name, MAXPATHLEN-len);
 				}
 			}
 			_dl_closedir(dd);
@@ -235,12 +231,10 @@ nohints:
 elf_object_t *
 _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 {
+	int try_any_minor, ignore_hints;
+	struct sod sod, req_sod;
 	elf_object_t *object;
-	struct sod sod;
-	struct sod req_sod;
 	char *hint;
-	int try_any_minor;
-	int ignore_hints;
 
 	try_any_minor = 0;
 	ignore_hints = 0;
@@ -250,7 +244,6 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 		_dl_link_sub(object, parent);
 		return(object);
 	}
-
 
 	_dl_build_sod(libname, &sod);
 	req_sod = sod;
@@ -514,9 +507,9 @@ _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 	if (p->first_child) {
 		p->last_child->next_sibling = n;
 		p->last_child = n;
-	} else {
+	} else
 		p->first_child = p->last_child = n;
-	}
+
 	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,
 	    p->load_name));
 }

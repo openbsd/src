@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.5 2003/01/31 22:25:34 drahn Exp $	*/
+/*	$OpenBSD: dir.c,v 1.6 2003/02/02 16:57:58 deraadt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,13 +52,11 @@ static char rcsid[] = ": opendir.c,v 1.6 1998/08/15 08:10:14 deraadt Exp $";
 long _dl_telldir(const DIR *dirp);
 void _dl_seekdir(DIR *dirp, long loc);
 
-
 /*
  * Open a directory.
  */
 DIR *
-_dl_opendir(name)
-	const char *name;
+_dl_opendir(const char *name)
 {
 	DIR *dirp;
 	int fd;
@@ -120,8 +118,7 @@ static char rcsid[] = "$ closedir.c,v 1.3 1998/11/20 11:18:37 d Exp $";
  * close a directory.
  */
 int
-_dl_closedir(dirp)
-	DIR *dirp;
+_dl_closedir(DIR *dirp)
 {
 	int fd;
 	int ret;
@@ -144,8 +141,7 @@ static char rcsid[] = "$ readdir.c,v 1.5 2001/05/17 20:20:36 rees Exp $";
  * get next entry in a directory.
  */
 struct dirent *
-_dl_readdir(dirp)
-	DIR *dirp;
+_dl_readdir(DIR *dirp)
 {
 	struct dirent *dp;
 
@@ -211,8 +207,7 @@ static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
  * return a pointer into a directory
  */
 long
-_dl_telldir(dirp)
-	const DIR *dirp;
+_dl_telldir(const DIR *dirp)
 {
 	int index;
 	struct ddloc *lp;
@@ -233,9 +228,7 @@ _dl_telldir(dirp)
  * Only values returned by "telldir" should be passed to seekdir.
  */
 void
-_dl_seekdir(dirp, loc)
-	DIR *dirp;
-	long loc;
+_dl_seekdir(DIR *dirp, long loc)
 {
 	struct ddloc *lp;
 	struct ddloc **prevlp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.10 2002/12/18 19:20:02 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.11 2003/02/02 16:57:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -104,7 +104,7 @@ _dl_start:
 	 nop
 
 	add	%sp, DL_DATA_SIZE, %sp	! restore stack
-	
+
 	jmp	%o0
 	 mov	%l1, %g1		! restore ps_strings
 
@@ -306,7 +306,7 @@ _dl_sigprocmask:
 	cmp	%o2, 0
 	bne,a	1f
 	 st	%o0, [%o2]
-1:	
+1:
 	retl
 	 clr	%o0
 

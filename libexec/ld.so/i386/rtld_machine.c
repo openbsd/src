@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2003/02/02 16:57:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -384,7 +384,7 @@ _dl_bind(elf_object_t *object, int index)
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		_dl_mprotect((void*)object->got_addr, object->got_size,
-		    PROT_READ|PROT_WRITE); 
+		    PROT_READ|PROT_WRITE);
 	}
 
 	_dl_reloc_plt(addr, ooff + this->st_value);
@@ -471,7 +471,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	/* PLT is already RO on i386, no point in mprotecting it, just GOT */
-	if (object->got_addr != NULL && object->got_size != 0) 
+	if (object->got_addr != NULL && object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
-		    PROT_READ); 
+		    PROT_READ);
 }
