@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_glue.h,v 1.2 1999/02/26 05:32:06 art Exp $	*/
 /*	$NetBSD: uvm_glue.h,v 1.4 1998/02/10 02:34:37 perry Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_anon.c,v 1.2 1999/02/26 05:32:06 art Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.1 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*

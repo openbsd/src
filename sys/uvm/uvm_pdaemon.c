@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_pdaemon.c,v 1.2 1999/02/26 05:32:08 art Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.12 1998/11/04 07:06:05 chs Exp $	*/
 
 /*
