@@ -197,7 +197,7 @@ int	asc_debug = 1;
 int	asc_debug_cmd;
 int	asc_debug_bn;
 int	asc_debug_sz;
-#define NLOG 8
+#define NLOG 16
 struct asc_log {
 	u_int	status;
 	u_char	state;
@@ -443,9 +443,11 @@ int	ascprint(void *, char *);
 
 int	asc_doprobe __P((void *, int, int, struct device *));
 
-extern struct cfdriver asccd;
-struct cfdriver asccd = {
-	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct asc_softc), 0
+struct cfattach asc_ca = {
+	sizeof(struct asc_softc), ascmatch, ascattach
+};
+struct cfdriver asc_cd = {
+	NULL, "asc", DV_DULL, NULL, 0
 };
 
 /*
@@ -751,7 +753,7 @@ asc_startcmd(asc, target)
 	asc_regmap_t *regs;
 	State *state;
 	struct scsi_xfer *scsicmd;
-	int len;
+	int i, len;
 
 	/*
 	 * See if another target is currently selected on this SCSI bus.
@@ -794,7 +796,6 @@ asc_startcmd(asc, target)
 	}
 	len = state->cmdlen;
 	state->dmalen = len;
-	MachHitFlushDCache(&state->cmd, len);
 	
 #ifdef DEBUG
 	if (asc_debug > 1) {
@@ -846,13 +847,15 @@ asc_startcmd(asc, target)
 		asc_logp = asc_log;
 #endif
 
-	/* preload the FIFO with the message to be sent */
+	/* preload the FIFO with the message and command to be sent */
 	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY | (scsicmd->sc_link->lun & 0x07);
-	MachEmptyWriteBuffer();
 
-	/* initialize the DMA */
-	DMA_START(asc->dma, (caddr_t)&state->cmd, len, DMA_TO_DEV);
-	ASC_TC_PUT(regs, len);
+	for( i = 0; i < len; i++ ) {
+		regs->asc_fifo = ((caddr_t)&state->cmd)[i];
+	}
+	ASC_TC_PUT(regs, 0);
+	readback(regs->asc_cmd);
+	regs->asc_cmd = ASC_CMD_DMA;
 	readback(regs->asc_cmd);
 
 	regs->asc_dbus_id = target;
@@ -862,10 +865,13 @@ asc_startcmd(asc, target)
 	regs->asc_syn_o = state->sync_offset;
 	readback(regs->asc_syn_o);
 
+/*XXX PEFO */
+/* we are not using sync transfer now, need to check this if we will */
+
 	if (state->flags & TRY_SYNC)
 		regs->asc_cmd = ASC_CMD_SEL_ATN_STOP;
 	else
-		regs->asc_cmd = ASC_CMD_SEL_ATN | ASC_CMD_DMA;
+		regs->asc_cmd = ASC_CMD_SEL_ATN;
 	readback(regs->asc_cmd);
 }
 
@@ -889,8 +895,11 @@ asc_intr(sc)
 
 	/* collect ephemeral information */
 	status = regs->asc_status;
-again:
 	ss = regs->asc_ss;
+
+	if ((status & ASC_CSR_INT) == 0) /* Make shure it's a real interrupt */
+		 return;
+
 	ir = regs->asc_intr;	/* this resets the previous two */
 	scpt = asc->script;
 
@@ -990,26 +999,30 @@ again:
 		if (state->script)
 			goto abort;
 
-		/* check for DMA in progress */
+		/*
+		 * OK, message coming in clean up whatever is going on.
+		 * Get number of bytes left to transfered from byte counter
+		 * counter decrements when data is trf on the SCSI bus
+		 */
 		ASC_TC_GET(regs, len);
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 		/* flush any data in the FIFO */
-		if (fifo) {
-			if (state->flags & DMA_OUT)
-				len += fifo;
+		if (fifo && !(state->flags & DMA_IN_PROGRESS)) {
+printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
+			regs->asc_cmd = ASC_CMD_FLUSH;
+			readback(regs->asc_cmd);
+			DELAY(2);
+		}
+		else if (fifo && state->flags & DMA_IN_PROGRESS) {	
+			if (state->flags & DMA_OUT) {
+				len += fifo; /* Bytes dma'ed but not sent */
+			}
 			else if (state->flags & DMA_IN) {
 				u_char *cp;
 
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
-				len += fifo;
-				cp = (u_char *)state->buf + (state->dmalen - len);
-				while (fifo-- > 0)
-					*cp++ = regs->asc_fifo;
-/*XXX Check, need to flush cache ?*/
-			} else
-				printf("asc_intr: dmalen %d len %d fifo %d\n",
-					state->dmalen, len, fifo); /* XXX */
+			}
 			regs->asc_cmd = ASC_CMD_FLUSH;
 			readback(regs->asc_cmd);
 			DELAY(2);
@@ -1075,7 +1088,15 @@ again:
 			if (len) {
 				printf("asc_intr: 2: len %d (fifo %d)\n", len,
 					fifo); /* XXX */
+/* XXX THEO */
+#if 1 
+				regs->asc_cmd = ASC_CMD_FLUSH;
+				readback(regs->asc_cmd);
+				DELAY(2);
+				len = 0;
+#else                                   
 				goto abort;
+#endif
 			}
 			/*
 			 * If this is the last chunk, the next expected
@@ -1236,17 +1257,9 @@ again:
 done:
 	MachEmptyWriteBuffer();
 	/*
-	 * watch out for HW race conditions and setup & hold time violations
-	 */
-	ir = regs->asc_status;
-	while (ir != (status = regs->asc_status))
-		ir = status;
-	if (status & ASC_CSR_INT)
-		goto again;
-	/*
-	 * If we missed here, we will have another try later before
-	 * returning to the interrupted code because the bus interrupt
-	 * handler does not give up before the int queue is empty.
+	 * If the next interrupt comes in immediatly the interrupt
+	 * dispatcher (which we are returning to) will catch it
+	 * before returning to the interrupted code.
 	 */
 	return;
 
@@ -1662,8 +1675,6 @@ asc_last_dma_out(asc, status, ss, ir)
 		len += fifo;
 		regs->asc_cmd = ASC_CMD_FLUSH;
 		readback(regs->asc_cmd);
-		printf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
-			state->buflen, state->dmalen, len, fifo);
 	}
 	state->flags &= ~DMA_IN_PROGRESS;
 	len = state->dmalen - len;
