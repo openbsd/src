@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 1997/01/12 15:13:13 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 1997/01/18 08:17:46 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.34 1996/12/17 08:41:20 thorpej Exp $	*/
 
 /*-
@@ -140,6 +140,13 @@ cdev_decl(bpf);
 cdev_decl(tun);
 cdev_decl(random);
 
+cdev_decl(ipl);
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -167,13 +174,15 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_random_init(1,random),	/* 25: random generator */
+	cdev_lkm_dummy(),		/* 25 */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_lkm_dummy(),		/* 28 */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
+	cdev_random_init(1,random),	/* 32: random generator */
+	cdev_gen_ipf(NIPF,ipl),		/* 33: ip filtering */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
