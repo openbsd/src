@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2000/09/07 01:43:05 rahnds Exp $
+#	$OpenBSD: GENERIC,v 1.18 2000/09/07 22:02:12 matthieu Exp $
 #
 # PPC GENERIC config file
 #
@@ -116,13 +116,17 @@ uhid*  at uhub? port ? configuration ? interface ?
 # USB HID Keyboard devices
 ukbd*  at uhub? port ? configuration ? interface ?
 
+# USB Mice
+ums*	at uhub? port ? configuration ? interface ?
+wsmouse*	at ums? mux 0
+
 # USB Generic driver
 ugen*  at uhub? port ? configuration ? interface ?
 
 #### Workstation Console attachments
 
 wsdisplay*	at vgafb?
-wskbd0		at ukbd? console 1
+wskbd0		at ukbd? console ?
 
 #### SCSI Bus devices
  
