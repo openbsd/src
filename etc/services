@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.17 1998/09/01 22:57:11 art Exp $
+#	$OpenBSD: services,v 1.18 1998/11/15 00:06:01 niklas Exp $
 #
 # Network services, Internet style
 #
@@ -125,6 +125,7 @@ nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
 photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
+isakmp		500/udp				# ISAKMP key management
 #
 # UNIX specific services
 #
