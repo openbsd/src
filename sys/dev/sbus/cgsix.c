@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.11 2002/02/07 16:39:48 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.12 2002/02/23 05:47:50 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -233,8 +233,7 @@ void cgsix_setcolor __P((struct cgsix_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t));
 void cgsix_reset __P((struct cgsix_softc *));
 void cgsix_hardreset __P((struct cgsix_softc *));
-void cgsix_blank __P((struct cgsix_softc *, int));
-
+void cgsix_burner __P((void *, u_int, u_int));
 static int a2int __P((char *, int));
 
 struct wsdisplay_accessops cgsix_accessops = {
@@ -243,7 +242,10 @@ struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_alloc_screen,
 	cgsix_free_screen,
 	cgsix_show_screen,
-	0 /* load_font */
+	NULL,	/* load_font */
+	NULL,	/* scrollback */
+	NULL,	/* getchar */
+	cgsix_burner,
 };
 
 int	cgsixmatch	__P((struct device *, void *, void *));
@@ -341,7 +343,7 @@ cgsixattach(parent, self, aux)
 		sc->sc_cmap.cm_map[i][2] = BT_READ(sc, BT_CMAP) >> 24;
 	}
 
-	cgsix_blank(sc, 0);
+	cgsix_burner(sc, 0, 0);
 
 	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
 	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
@@ -730,19 +732,23 @@ cgsix_hardreset(sc)
 }
 
 void
-cgsix_blank(sc, blank)
-	struct cgsix_softc *sc;
-	int blank;
+cgsix_burner(vsc, on, flags)
+	void *vsc;
+	u_int on, flags;
 {
+	struct cgsix_softc *sc = vsc;
 	int s;
 	u_int32_t thcm;
 
 	s = splhigh();
 	thcm = THC_READ(sc, CG6_THC_MISC);
-	if (blank)
-		thcm &= ~(THC_MISC_VIDEN | THC_MISC_SYNCEN);
-	else
+	if (!on)
 		thcm |= THC_MISC_VIDEN | THC_MISC_SYNCEN;
+	else {
+		thcm &= ~THC_MISC_VIDEN;
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			thcm &= ~THC_MISC_SYNCEN;
+	}
 	THC_WRITE(sc, CG6_THC_MISC, thcm);
 	splx(s);
 }

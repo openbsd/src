@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.8 2002/02/07 04:48:15 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.9 2002/02/23 05:47:50 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -169,7 +169,7 @@ int cg3_bt_putcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
 int cg3_bt_getcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
 void cgthree_setcolor __P((struct cgthree_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t));
-void cgthree_blank __P((struct cgthree_softc *, int));
+void cgthree_burner __P((void *, u_int, u_int));
 void cgthree_reset __P((struct cgthree_softc *));
 static int a2int __P((char *, int));
 
@@ -179,7 +179,10 @@ struct wsdisplay_accessops cgthree_accessops = {
 	cgthree_alloc_screen,
 	cgthree_free_screen,
 	cgthree_show_screen,
-	0 /* load_font */
+	NULL,	/* load_font */
+	NULL,	/* scrollback */
+	NULL,	/* getchar */
+	cgthree_burner,
 };
 
 int	cgthreematch	__P((struct device *, void *, void *));
@@ -286,7 +289,7 @@ cgthreeattach(parent, self, aux)
 	for (i = 0; i < 256 * 3 / 4; i++)
 		sc->sc_cmap.cm_chip[i] = BT_READ(sc, BT_CMAP);
 
-	cgthree_blank(sc, 0);
+	cgthree_burner(sc, 0, 0);
 
 	sc->sc_rcons.rc_sp = &sc->sc_raster;
 	sc->sc_raster.width = sc->sc_width;
@@ -620,19 +623,20 @@ cgthree_reset(sc)
 }
 
 void
-cgthree_blank(sc, blank)
-	struct cgthree_softc *sc;
-	int blank;
+cgthree_burner(vsc, on, flags)
+	void *vsc;
+	u_int on, flags;
 {
+	struct cgthree_softc *sc = vsc;
 	int s;
 	u_int32_t fbc;
 
 	s = splhigh();
 	fbc = FBC_READ(sc, CG3_FBC_CTRL);
-	if (blank)
-		fbc &= ~FBC_CTRL_VENAB;
-	else
+	if (!on)
 		fbc |= FBC_CTRL_VENAB;
+	else
+		fbc &= ~FBC_CTRL_VENAB;
 	FBC_WRITE(sc, CG3_FBC_CTRL, fbc);
 	splx(s);
 }
