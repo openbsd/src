@@ -1256,7 +1256,7 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 	else if ((conf->cgi_command_args == AP_FLAG_OFF)
             || (!r->args) || (!r->args[0])
             || strchr(r->args, '=')) {
-	    execle(r->filename, argv0, NULL, env);
+	    execle(r->filename, argv0, (void*)NULL, env);
 	}
 
 	else {
