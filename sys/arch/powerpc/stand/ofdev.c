@@ -1,3 +1,4 @@
+/*	$OpenBSD: ofdev.c,v 1.2 1996/12/28 06:31:17 rahnds Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1996/09/30 16:35:03 ws Exp $	*/
 
 /*

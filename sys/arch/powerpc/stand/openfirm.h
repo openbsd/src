@@ -1,3 +1,4 @@
+/*	$OpenBSD: openfirm.h,v 1.2 1996/12/28 06:31:19 rahnds Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:04 ws Exp $	*/
 
 /*
