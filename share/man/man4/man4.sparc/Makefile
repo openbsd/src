@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2002/09/06 05:28:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2002/11/23 21:10:59 miod Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
 
 MAN=	audioamd.4 audiocs.4 autoconf.4 be.4 bwtwo.4 cgtwo.4 cgthree.4 \
@@ -8,7 +8,7 @@ MAN=	audioamd.4 audiocs.4 autoconf.4 be.4 bwtwo.4 cgtwo.4 cgthree.4 \
 	tcx.4 vigra.4 xbox.4 xd.4 xy.4 zs.4
 MLINKS=	fd.4 fdc.4 \
 	fga.4 fvme.4 \
-	le.4 lebuffer.4 \
+	le.4 lebuffer.4 le.4 ledma.4 \
 	mem.4 kmem.4 \
 	zs.4 zskbd.4 \
 	zs.4 zstty.4
