@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.12 2002/07/12 20:17:03 mickey Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.13 2002/07/13 20:33:47 mickey Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -307,6 +307,8 @@ vga_pci_ioctl(v, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case AGPIOC_INFO:
+		if (!sc->sc_chipc)
+			return (ENXIO);
 	case AGPIOC_ACQUIRE:
 	case AGPIOC_RELEASE:
 	case AGPIOC_SETUP:
@@ -314,12 +316,10 @@ vga_pci_ioctl(v, cmd, addr, flag, p)
 	case AGPIOC_DEALLOCATE:
 	case AGPIOC_BIND:
 	case AGPIOC_UNBIND:
-		if (!sc->sc_chipc)
-			return (ENXIO);
+		if (cmd != AGPIOC_INFO && !(flag & FWRITE))
+			return (EPERM);
+		break;
 	}
-
-	if (cmd != AGPIOC_INFO && !(flag & FWRITE))
-		return (EPERM);
 #endif
 
 	switch (cmd) {
