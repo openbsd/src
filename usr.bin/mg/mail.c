@@ -1,4 +1,4 @@
-/* $OpenBSD: mail.c,v 1.2 2004/01/12 22:55:00 vincent Exp $ */
+/* $OpenBSD: mail.c,v 1.3 2004/01/27 23:43:37 vincent Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -10,10 +10,10 @@
 #include "kbd.h"
 #include "funmap.h"
 
-#define LIMIT	72
-
 static int	 fake_self_insert(int, int);
 static int	 mail(int, int);
+
+int limit = 72;
 
 /* mappings for all "printable" characters ('-' -> '~') */
 static PF mail_fake[] = {
@@ -40,7 +40,7 @@ static PF mail_fake[] = {
 	fake_self_insert, fake_self_insert, fake_self_insert, fake_self_insert,
 	fake_self_insert, fake_self_insert, fake_self_insert, fake_self_insert,
 	fake_self_insert, fake_self_insert, fake_self_insert, fake_self_insert,
-	fake_self_insert, fake_self_insert, fake_self_insert,
+	fake_self_insert, fake_self_insert, fake_self_insert
 };
 
 static struct KEYMAPE (1 + IMAPEXT) mailmap = {
@@ -52,10 +52,27 @@ static struct KEYMAPE (1 + IMAPEXT) mailmap = {
 	}
 };
 
+int
+mail_set_limit(int f, int n)
+{
+	char buf[32];
+	int s;
+
+	if ((f & FFARG) != 0) {
+		limit = n;
+	} else {
+		if ((s = ereply("Margin: ", buf, sizeof(buf))) != TRUE)
+			return s;
+		limit = atoi(buf);
+	}
+	return TRUE;
+}
+
 void
 mail_init(void)
 {
 	funmap_add(mail, "mail-mode");
+	funmap_add(mail_set_limit, "mail-set-margin");
 	maps_add((KEYMAP *)&mailmap, "mail-mode");
 }
 
@@ -77,22 +94,73 @@ mail(int f, int n)
 static int
 fake_self_insert(int f, int n)
 {
-	if (curwp->w_doto >= LIMIT - 1) {
-		int save = curwp->w_doto;
+	int len = llength(curwp->w_dotp), col;
 
+	if (len + 1 > limit) {
 		/*
-		 * Find the last word boundary.
+		 * find the column at which we should cut, taking
+		 * word boundaries into account
 		 */
-		while (curwp->w_doto > 0 &&
-		    !isspace(curwp->w_dotp->l_text[curwp->w_doto - 1]))
-			curwp->w_doto--;
-		/*
-		 * handle lines without any spaces correctly!
-		 */
-		if (curwp->w_doto == 0 && !isspace(curwp->w_dotp->l_text[0]))
-			curwp->w_doto = save;
-		newline(FFRAND, 1);
-		gotoeol(0, 1);
+		for (col = limit; col > 0; col--)
+			if (isspace(curwp->w_dotp->l_text[col])) {
+				col++;	/* XXX - skip the space */
+				break;
+			}
+
+		if (curbp->b_doto == len) {
+			/*
+			 * user is appending to the line; simple case.
+			 */
+			if (col) {
+				curwp->w_doto = col;
+				lnewline();
+				gotoeol(0, 1);
+			}
+			curwp->w_wrapline = NULL;
+		} else if ((len - col) > 0) {
+			/*
+			 * user is shifting words by inserting in the middle.
+			 */
+			const char *trail;
+			int save_doto = curwp->w_doto;
+			LINE *save_dotp = curwp->w_dotp;
+			int tlen = len - col;
+
+			trail = curwp->w_dotp->l_text + col;
+
+			/*
+			 * Create a new line or reuse the last wrapping line
+			 * unless we could fill it.
+			 */
+			if (curwp->w_wrapline != lforw(curwp->w_dotp) ||
+			    llength(curwp->w_wrapline) + tlen >= limit) {
+				curwp->w_doto = col;
+				lnewline();
+				curwp->w_wrapline = curwp->w_dotp;
+				curwp->w_dotp = save_dotp;
+			} else {
+				curwp->w_dotp = curwp->w_wrapline;
+				curwp->w_doto = 0;
+
+				/* insert trail */
+				linsert_str(trail, tlen);
+
+				/* delete trail */
+				curwp->w_dotp = save_dotp;
+				curwp->w_doto = col;
+				ldelete(tlen, KNONE);	/* don't store in kill ring */
+			}
+
+			/*
+			 * readjust dot to point at where the user expects
+			 * it to be after an insertion.
+			 */
+			curwp->w_doto = save_doto;
+			if (curwp->w_doto >= col) {
+				curwp->w_dotp = curwp->w_wrapline;
+				curwp->w_doto -= col;
+			}
+		}
 	}
 	selfinsert(f, n);
 	return (TRUE);

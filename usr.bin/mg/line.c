@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.19 2003/11/09 01:11:14 vincent Exp $	*/
+/*	$OpenBSD: line.c,v 1.20 2004/01/27 23:43:37 vincent Exp $	*/
 
 /*
  *		Text line handling.
@@ -148,6 +148,96 @@ lchange(int flag)
 }
 
 /*
+ * Insert "n" bytes from "s" at the current location of dot.
+ * In the easy case all that happens is the text is stored in the line.
+ * In the hard case, the line has to be reallocated.  When the window list
+ * is updated, take special care; I screwed it up once.  You always update
+ * dot in the current window.  You update mark and a dot in another window
+ * if it is greater than the place where you did the insert. Return TRUE
+ * if all is well, and FALSE on errors.
+ */
+int
+linsert_str(const char *s, int n)
+{
+	LINE *lp1;
+	MGWIN	*wp;
+	RSIZE	 i;
+	int	 doto;
+
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
+
+	if (!n)
+		return (TRUE);
+
+	lchange(WFHARD);
+
+	/* current line */
+	lp1 = curwp->w_dotp;
+
+	/* special case for the end */
+	if (lp1 == curbp->b_linep) {
+		LINE *lp2, *lp3;
+
+		/* now should only happen in empty buffer */
+		if (curwp->w_doto != 0)
+			panic("bug: linsert_str");
+		/* allocate a new line */
+		if ((lp2 = lalloc(n)) == NULL)
+			return FALSE;
+		/* previous line */
+		lp3 = lp1->l_bp;
+		/* link in */
+		lp3->l_fp = lp2;
+		lp2->l_fp = lp1;
+		lp1->l_bp = lp2;
+		lp2->l_bp = lp3;
+		for (i = 0; i < n; ++i)
+			lp2->l_text[i] = s[i];
+		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
+			if (wp->w_linep == lp1)
+				wp->w_linep = lp2;
+			if (wp->w_dotp == lp1)
+				wp->w_dotp = lp2;
+			if (wp->w_markp == lp1)
+				wp->w_markp = lp2;
+		}
+		undo_add_insert(lp2, 0, n);
+		curwp->w_doto = n;
+		return TRUE;
+	}
+	/* save for later */
+	doto = curwp->w_doto;
+
+	if ((lp1->l_used + n) > lp1->l_size) {
+		if (lrealloc(lp1, lp1->l_used + n) == FALSE)
+			return FALSE;
+	}
+	lp1->l_used += n;
+	if (lp1->l_used != n)
+		memmove(&lp1->l_text[doto + n], &lp1->l_text[doto],
+		    lp1->l_used - n - doto);
+
+	/* Add the characters */
+	for (i = 0; i < n; ++i)
+		lp1->l_text[doto + i] = s[i];
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
+		if (wp->w_dotp == lp1) {
+			if (wp == curwp || wp->w_doto > doto)
+				wp->w_doto += n;
+		}
+		if (wp->w_markp == lp1) {
+			if (wp->w_marko > doto)
+				wp->w_marko += n;
+		}
+	}
+	undo_add_insert(curwp->w_dotp, doto, n);
+	return TRUE;
+}
+
+/*
  * Insert "n" copies of the character "c" at the current location of dot.
  * In the easy case all that happens is the text is stored in the line.
  * In the hard case, the line has to be reallocated.  When the window list
@@ -163,6 +253,9 @@ linsert(int n, int c)
 	MGWIN	*wp;
 	RSIZE	 i;
 	int	 doto;
+
+	if (!n)
+		return (TRUE);
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
@@ -343,6 +436,7 @@ ldelete(RSIZE n, int kflag)
 			return FALSE;
 		/* Size of the chunk */
 		chunk = dotp->l_used - doto;
+
 		if (chunk > n)
 			chunk = n;
 		/* End of line, merge */
@@ -360,7 +454,6 @@ ldelete(RSIZE n, int kflag)
 		lchange(WFEDIT);
 		/* Scrunch text */
 		cp1 = &dotp->l_text[doto];
-		cp2 = cp1 + chunk;
 		if (kflag == KFORW) {
 			while (ksize - kused < chunk)
 				if (kgrow(FALSE) == FALSE)
@@ -375,8 +468,9 @@ ldelete(RSIZE n, int kflag)
 			kstart -= chunk;
 		} else if (kflag != KNONE)
 			panic("broken ldelete call");
-		while (cp2 != &dotp->l_text[dotp->l_used])
-			*cp1++ = *cp2++;
+		for (cp2 = cp1 + chunk; cp2 < &dotp->l_text[dotp->l_used];
+		    cp2++)
+			*cp1++ = *cp2;
 		dotp->l_used -= (int)chunk;
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 			if (wp->w_dotp == dotp && wp->w_doto >= doto) {
