@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet_locl.h,v 1.1 1998/03/12 04:57:44 art Exp $	*/
+/*	$OpenBSD: telnet_locl.h,v 1.2 1999/12/11 09:08:09 itojun Exp $	*/
 /* $KTH: telnet_locl.h,v 1.13 1997/11/03 21:37:55 assar Exp $ */
 
 /*
@@ -85,8 +85,6 @@
 #include "externs.h"
 #include "defines.h"
 #include "types.h"
-
-#undef AF_INET6 /* XXX - it has not been tested and it doesn't exist yet */
 
 /* prototypes */
 
