@@ -2251,5 +2251,6 @@
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/mdec/zboot
 ./usr/mdec/zbsdmod.o
+./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
