@@ -15,9 +15,3 @@ DATA_NONEXEC_PLT=
 GENERATE_SHLIB_SCRIPT=yes
 
 . ${srcdir}/emulparams/elf_obsd.sh
-
-case "${target}" in
-hppa-*-openbsd3.2)
-   unset PAD_RO RODATA_PADSIZE RODATA_ALIGN PAD_GOT PAD_PLT ;;
-esac
-
