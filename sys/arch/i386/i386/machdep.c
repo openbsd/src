@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 1999/09/03 18:00:50 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.114 1999/09/30 04:00:42 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -884,6 +884,7 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 	extern int cpu_feature;
 
 	switch (model) {
+	case -1: /* M1 w/o cpuid */
 	case 2:	/* M1 */
 		/* set up various cyrix registers */
 		/* Enable suspend on halt */
@@ -1026,6 +1027,8 @@ identifycpu()
 		name = i386_nocpuid_cpus[cpu].cpu_name;
 		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
+		model = -1;
+		step = -1;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
 		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
 		modifier = "";
