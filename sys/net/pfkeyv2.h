@@ -189,6 +189,7 @@ struct sadb_protocol {
 #define SADB_EXT_X_DST2               22
 #define SADB_EXT_MAX                  22
 
+/* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC    0
 #define SADB_SATYPE_AH        1
 #define SADB_SATYPE_ESP       2

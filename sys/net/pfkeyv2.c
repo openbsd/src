@@ -50,10 +50,11 @@ static struct pfkey_version pfkeyv2_version;
 #define PFKEYV2_SENDMESSAGE_BROADCAST  3
 
 struct pfkeyv2_socket {
-  struct pfkeyv2_socket *next;
-  struct socket *socket;
-  int flags;
-  uint32_t pid;
+    struct pfkeyv2_socket *next;
+    struct socket *socket;
+    int flags;
+    uint32_t pid;
+    uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
 };
 
 static struct pfkeyv2_socket *pfkeyv2_sockets = NULL;
@@ -66,11 +67,11 @@ static int nregistered = 0;
 static int npromisc = 0;
 
 static struct sadb_alg ealgs[] = {
-{ SADB_EALG_DESCBC, 64, 64, 64 },
-{ SADB_EALG_3DESCBC, 64, 192, 192 },
-{ SADB_EALG_X_BLF, 64, 5, BLF_MAXKEYLEN},
-{ SADB_EALG_X_CAST, 64, 5, 16},
-{ SADB_EALG_X_SKIPJACK, 64, 10, 10},
+    { SADB_EALG_DESCBC, 64, 64, 64 },
+    { SADB_EALG_3DESCBC, 64, 192, 192 },
+    { SADB_EALG_X_BLF, 64, 5, BLF_MAXKEYLEN},
+    { SADB_EALG_X_CAST, 64, 5, 16},
+    { SADB_EALG_X_SKIPJACK, 64, 10, 10},
 };
 
 static struct sadb_alg aalgs[] = {
@@ -444,7 +445,8 @@ import_key(struct ipsecinit *ii, struct sadb_key *sadb_key, int type)
 }
 
 static int
-pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket)
+pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
+		    u_int8_t satype, int count)
 {
   int i, j, rval;
   void *p, *buffer = NULL;
@@ -503,9 +505,18 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket)
 
     case PFKEYV2_SENDMESSAGE_REGISTERED:
       for (s = pfkeyv2_sockets; s; s = s->next)
-	if (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)
-	  pfkey_sendup(s->socket, packet, 1);
-    
+	if (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) {
+	    if (!satype)    /* Just send to everyone registered */
+	      pfkey_sendup(s->socket, packet, 1);
+	    else {
+		if ((1 << satype) & s->registration) /* specified SATYPE */
+		  if (count-- == 0) {     /* Done */
+		      pfkey_sendup(s->socket, packet, 1);
+		      break;
+		  }
+	    }
+	}
+      
       m_freem(packet);
 
       bzero(buffer, sizeof(struct sadb_msg));
@@ -649,7 +660,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
     if ((rval = pfkeyv2_get(sa, headers, &buffer)) != 0)
       return rval;
     rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_UNICAST,
-			       dump_state->socket);
+			       dump_state->socket, 0, 0);
     free(buffer, M_TEMP);
     if (rval)
       return rval;
@@ -1006,7 +1017,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	rval = ENOMEM;
 	goto ret;
       }
-
+      
+      /* Keep track what this socket has registered for */
+      pfkeyv2_socket->registration |= (1 << ((struct sadb_msg *)message)->sadb_msg_satype);
+      
       bzero(freeme, i);
 
       ((struct sadb_supported *)freeme)->sadb_supported_len =
@@ -1367,7 +1381,7 @@ ret:
       }
   }
 
-  rval = pfkeyv2_sendmessage(headers, mode, socket);
+  rval = pfkeyv2_sendmessage(headers, mode, socket, 0, 0);
 
 realret:
   if (freeme)
@@ -1483,7 +1497,7 @@ pfkeyv2_acquire(void *os)
   }
 
   if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_REGISTERED,
-				  NULL))!= 0)
+				  NULL, os->satype, count))!= 0)
     goto ret;
 
   rval = 0;
