@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.80 2001/07/25 15:29:47 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.81 2001/07/29 13:45:28 itojun Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -128,7 +128,9 @@ struct pf_key_v2_sa_seq {
 TAILQ_HEAD (, pf_key_v2_sa_seq) pf_key_v2_sa_seq_map;
 #endif
 
+#ifndef KAME
 static u_int8_t *pf_key_v2_convert_id (u_int8_t *, int, size_t *, int *);
+#endif
 static struct pf_key_v2_msg *pf_key_v2_call (struct pf_key_v2_msg *);
 static struct pf_key_v2_node *pf_key_v2_find_ext (struct pf_key_v2_msg *,
 						  u_int16_t);
@@ -775,8 +777,11 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   struct sadb_key *key = 0;
   struct sockaddr *src, *dst;
   struct sadb_ident *sid = 0;
+#ifndef KAME
   char *pp;
-  int keylen, hashlen, err, idtype;
+  int idtype;
+#endif
+  int keylen, hashlen, err;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
 #if defined (SADB_X_CREDTYPE_NONE) || defined (SADB_X_AUTHTYPE_NONE)
@@ -1967,6 +1972,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 #endif
 }
 
+#ifndef KAME
 static u_int8_t *
 pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 {
@@ -2066,6 +2072,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 
   return 0;
 }
+#endif
 
 /* Enable a flow given a SA.  */
 int
