@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.2 1996/10/23 16:43:12 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.3 1996/10/26 08:44:08 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -773,7 +773,7 @@ kvm_doargv(kd, kp, nchr, info)
 	 * Pointers are stored at the top of the user stack.
 	 */
 	if (p->p_stat == SZOMB || 
-	    kvm_uread(kd, p, ps, (char *)&arginfo,
+	    kvm_uread(kd, p, (u_long)ps, (char *)&arginfo,
 		      sizeof(arginfo)) != sizeof(arginfo))
 		return (0);
 
