@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@
 #define AT_PAD		0
 #define AT_AH_ATTRIB	1
 #define AT_ESP_ATTRIB	2
+#define AT_HMAC		254
 
 /* XXX - Only for the moment */
 #define DH_G_2_MD5          2
@@ -74,8 +75,7 @@ typedef struct _attribute_list {
 
 typedef struct _attrib_t {
      struct _attrib_t *next;
-     int id;			/* Photuris Attribute ID */
-     int koff;			/* Offset into kernel data structure */
+     u_int16_t id;		/* Photuris Attribute ID */
      int type;			/* Type of attribute: ident, enc, auth */
      int klen;			/* required key length */
 } attrib_t;
@@ -83,7 +83,7 @@ typedef struct _attrib_t {
 #define ATTRIBHASHMOD		17
 
 EXTERN void putattrib(attrib_t *attrib);
-EXTERN attrib_t *getattrib(int id);
+EXTERN attrib_t *getattrib(u_int8_t id);
 EXTERN void clearattrib(void);
 
 EXTERN void get_attrib_section(u_int8_t *, u_int16_t, u_int8_t **, u_int16_t *,

@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.10 1998/06/01 10:56:10 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.11 1998/06/30 16:58:31 provos Exp $";
 #endif
 
 #include <time.h>
@@ -98,46 +98,26 @@ time_t now;
 
 static int sd;
 
-typedef struct {
-     int photuris_id;
-     int kernel_id, flags;
-} transform;
-
-/* 
- * Translation from Photuris Attributes to Kernel Transforms.
- * For the actual ids see: draft-simpson-photuris-*.txt and
- * draft-simpson-photuris-schemes-*.txt
- */
-
-transform xf[] = {
-     {  5, ALG_AUTH_MD5, XF_AUTH|AH_OLD},
-     {  6, ALG_AUTH_SHA1, XF_AUTH|AH_OLD},
-     {  8, ALG_ENC_DES, XF_ENC|ESP_OLD},
-     {100, ALG_ENC_3DES, XF_ENC|ESP_NEW},
-     {101, ALG_ENC_BLF, XF_ENC|ESP_NEW},
-     {102, ALG_ENC_CAST, XF_ENC|ESP_NEW},
-     {105, ALG_AUTH_MD5, XF_AUTH|AH_NEW|ESP_NEW},
-     {106, ALG_AUTH_SHA1, XF_AUTH|AH_NEW|ESP_NEW},
-     {107, ALG_AUTH_RMD160, XF_AUTH|AH_NEW|ESP_NEW},
-};
-
 /*
- * Translate a Photuris ID to an offset into a data structure for the 
+ * Translate a Photuris ID into a data structure for the 
  * corresponding Kernel transform.
- * This makes is easier to write kernel modules for different IPSec
- * implementations.
  */
 
-int
-kernel_get_offset(int id)
+transform *
+kernel_get_transform(int id)
 {
      int i;
 
      for (i=sizeof(xf)/sizeof(transform)-1; i >= 0; i--) 
 	  if (xf[i].photuris_id == id)
-	       return i;
+	       return &xf[i];
+     return NULL;
+}
 
-     return -1;
+int
+kernel_known_transform(int id)
+{
+     return kernel_get_transform(id) == NULL ? -1 : 0;
 }
 
 /*
@@ -148,14 +128,51 @@ kernel_get_offset(int id)
  */
 
 int
-kernel_valid(int encoff, int authoff)
+kernel_valid(attrib_t *enc, attrib_t *auth)
 {
-     if (xf[encoff].flags & ESP_OLD) 
+     transform *xf_enc, *xf_auth;
+
+     xf_enc = kernel_get_transform(enc->id);
+     xf_auth = kernel_get_transform(auth->id);
+
+     if (xf_enc->flags & ESP_OLD) 
 	  return AT_ENC;
-     if (!(xf[authoff].flags & ESP_NEW))
+     if (!(xf_auth->flags & ESP_NEW))
 	  return AT_AUTH;
      return 0;
 }
+
+/*
+ * Check if the chosen authentication transform, satisfies the
+ * selected flags.
+ */
+
+int
+kernel_valid_auth(attrib_t *auth, u_int8_t *flag, u_int16_t size)
+{
+     int i, hmac = 0;
+     transform *xf_auth = kernel_get_transform(auth->id);
+
+     if (xf_auth == NULL)
+	  return -1; /* We don't know this attribute */
+
+     for (i=0; i<size; i++) {
+	  switch (flag[i]) {
+	  case AT_HMAC:
+	       hmac = 1;
+	       break;
+	  default:
+	       break;
+	  }
+     }
+
+     if (!hmac && !(xf_auth->flags & AH_OLD))
+	  return -1;
+     if (hmac && !(xf_auth->flags & AH_NEW))
+	  return -1;
+
+     return 0;
+} 
 
 int
 init_kernel(void)
@@ -274,20 +291,21 @@ kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, int proto)
 }
 
 int
-kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets)
+kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
 {
      struct encap_msghdr *em;
      struct ah_old_xencap *xdo;
      struct ah_new_xencap *xdn;
+     transform *xf = kernel_get_transform(ob->id);
 
-     if (!(xf[ob->koff].flags & XF_AUTH)) {
+     if (xf == NULL || !(xf->flags & XF_AUTH)) {
 	  log_error(0, "%d is not an auth transform in kernel_ah()", ob->id);
 	  return -1;
      }
 
      em = (struct encap_msghdr *)buffer;
 
-     if (xf[ob->koff].flags & AH_OLD) {
+     if (!hmac) {
 	  bzero(buffer, EMT_SETSPI_FLEN + 4 + ob->klen);
 
 	  em->em_msglen = EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN + ob->klen;
@@ -296,7 +314,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets)
 
 	  xdo = (struct ah_old_xencap *)(em->em_dat);
 	  
-	  xdo->amx_hash_algorithm = xf[ob->koff].kernel_id;
+	  xdo->amx_hash_algorithm = xf->kernel_id;
 	  xdo->amx_keylen = ob->klen;
 	
 	  bcopy(secrets, xdo->amx_key, ob->klen);
@@ -310,7 +328,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets)
 
 	  xdn = (struct ah_new_xencap *)(em->em_dat);
 
-	  xdn->amx_hash_algorithm = xf[ob->koff].kernel_id;
+	  xdn->amx_hash_algorithm = xf->kernel_id;
 	  xdn->amx_wnd = 16;
 	  xdn->amx_keylen = ob->klen;
 
@@ -353,6 +371,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      struct esp_new_xencap *xdn;
      attrib_t *attenc, *attauth = NULL;
      u_int8_t *sec1, *sec2 = NULL;
+     transform *xf_enc, *xf_auth;
 
      if (ob->type & AT_AUTH) {
 	  if (ob2 == NULL || ob2->type != AT_ENC) {
@@ -375,14 +394,18 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 	  return -1;
      }
 
-     if ((xf[attenc->koff].flags & ESP_OLD) && attauth != NULL) {
+     xf_enc = kernel_get_transform(attenc->id);
+     if ((xf_enc->flags & ESP_OLD) && attauth != NULL) {
 	  log_error(0, "Old ESP does not support AH in kernel_esp()");
 	  return -1;
      }
 
+     if (attauth != NULL)
+	  xf_auth = kernel_get_transform(attauth->id);
+
      em = (struct encap_msghdr *)buffer;
 
-     if (xf[attenc->koff].flags & ESP_OLD) {
+     if (xf_enc->flags & ESP_OLD) {
 	  bzero(buffer, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN +4+attenc->klen);
 	  
 	  em->em_msglen = EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN +4+attenc->klen;
@@ -391,7 +414,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 
 	  xdo = (struct esp_old_xencap *)(em->em_dat);
 
-	  xdo->edx_enc_algorithm = ALG_ENC_DES;
+	  xdo->edx_enc_algorithm = xf_enc->kernel_id;
 	  xdo->edx_ivlen = 4;
 	  xdo->edx_keylen = attenc->klen;
 
@@ -408,8 +431,8 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
 
 	  xdn = (struct esp_new_xencap *)(em->em_dat);
 
-	  xdn->edx_enc_algorithm = xf[attenc->koff].kernel_id;
-	  xdn->edx_hash_algorithm = attauth ? xf[attauth->koff].kernel_id : 0;
+	  xdn->edx_enc_algorithm = xf_enc->kernel_id;
+	  xdn->edx_hash_algorithm = attauth ? xf_auth->kernel_id : 0;
 	  xdn->edx_ivlen = 0;
 	  xdn->edx_confkeylen = attenc->klen;
 	  xdn->edx_authkeylen = attauth ? attauth->klen : 0;
@@ -607,78 +630,100 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 {
      u_int8_t *spi;
      u_int8_t *attributes;
-     u_int16_t attribsize;
-     u_int8_t *secrets;
-     attrib_t *attprop, *attprop2;
-     int i, n, offset, proto = 0;
-     int phase = 0;
+     u_int16_t attribsize, ahsize, espsize;
+     u_int8_t *secrets, *ah, *esp;
+     attrib_t *attprop;
+     int offset, proto = 0;
 
      spi = SPI->SPI;
      attributes = SPI->attributes;
      attribsize = SPI->attribsize;
      secrets = SPI->sessionkey;
 
-     if (vpn_mode)
-	  SPI->flags |= SPI_TUNNEL;
-     
-     for(n=0, i=0; n<attribsize; n += attributes[n+1] + 2) {
-	  switch(attributes[n]) {
-	  case AT_AH_ATTRIB:
-	       phase = AT_AH_ATTRIB;
-	       break;
-	  case AT_ESP_ATTRIB:
-	       phase = AT_ESP_ATTRIB;
-	       break;
-	  default:
-	       if (phase == 0) {
-		    log_error(0, "Unaligned attribute %d in kernel_insert_spi()", attributes[n]);
+     get_attrib_section(attributes, attribsize, &esp, &espsize,
+			AT_ESP_ATTRIB);
+     get_attrib_section(attributes, attribsize, &ah, &ahsize,
+			AT_AH_ATTRIB);
+
+     if (esp != NULL) {
+	  int count = 0;
+	  attrib_t *atesp = NULL, *atah = NULL;
+
+	  while (count < espsize && (atesp == NULL || atah == NULL)) {
+	       if ((attprop = getattrib(esp[count])) == NULL) {
+		    log_error(0, "Unknown attribute %d for ESP in kernel_insert_spi()",
+			      esp[count]);
 		    return -1;
 	       }
-	       if ((attprop = getattrib(attributes[n])) == NULL) {
-		    log_error(0, "Unknown attribute %d in kernel_insert_spi()",
-			      attributes[n]);
-		    return -1;
-	       }
-	       switch (phase) {
-	       case AT_AH_ATTRIB:
-		    offset = kernel_ah(attprop, SPI, secrets);
-		    if (offset == -1)
-			 return -1;
-		    phase = 0;
-		    secrets += offset; 
-		    i++;
-		    if (!proto) {
-			 proto = IPPROTO_AH;
-			 if (vpn_mode)
-			      SPI->flags = SPI->flags & ~SPI_TUNNEL;
-		    }
-		    break;
-	       case AT_ESP_ATTRIB:
-		    offset = attributes[n+1] + 2;
-		    attprop2 = NULL;
-		    if (n+offset < attribsize)
-			 attprop2 = getattrib(attributes[n+offset]);
-		    if (attprop2 != NULL)
-			 n += offset;
-		    offset = kernel_esp(attprop, attprop2, SPI, secrets);
-		    if (offset == -1)
-			 return -1;
-		    phase = 0;
-		    secrets += offset;
-		    i++;
-		    if (!proto) {
-			 proto = IPPROTO_ESP;
-			 if (vpn_mode)
-			      SPI->flags = SPI->flags & ~SPI_TUNNEL;
-		    }
-		    break;
-	       }
+	       if (atesp == NULL && attprop->type == AT_ENC)
+		    atesp = attprop;
+	       else if(atah == NULL && (attprop->type & AT_AUTH))
+		    atah = attprop;
+
+	       count += esp[count+1]+2;
 	  }
-		    
+	  if (atesp == NULL) {
+	       log_error(0, "No encryption attribute in ESP section for SA(%08x, %s->%s) in kernel_insert()", (SPI->SPI[0] << 24) + (SPI->SPI[1] << 16) + (SPI->SPI[2] << 8) + SPI->SPI[3], SPI->local_address, SPI->address);
+	       return -1;
+	  }
+
+	  if (vpn_mode)
+	       SPI->flags |= SPI_TUNNEL;
+     
+	  offset = kernel_esp(atesp, atah, SPI, secrets);
+	  if (offset == -1)
+	       return -1;
+	  secrets += offset;
      }
 
+     if (ah != NULL) {
+	  int count = 0, hmac = 0;
+	  attrib_t *atah = NULL;
+
+	  while (count < ahsize) {
+	       if ((attprop = getattrib(ah[count])) == NULL) {
+		    log_error(0, "Unknown attribute %d for AH in kernel_insert_spi()",
+			      ah[count]);
+		    return -1;
+	       }
+	       if(atah == NULL && (attprop->type & AT_AUTH))
+		    atah = attprop;
+	       else if (attprop->type == 0) {
+		    switch (attprop->id) {
+		    case AT_HMAC:
+			 hmac = 1;
+			 break;
+		    default:
+			 break;
+		    }
+	       }
+
+	       count += ah[count+1]+2;
+	  }
+
+	  if (atah == NULL) {
+	       log_error(0, "No authentication attribute in AH section for SA(%08x, %s->%s) in kernel_insert()", (SPI->SPI[0] << 24) + (SPI->SPI[1] << 16) + (SPI->SPI[2] << 8) + SPI->SPI[3], SPI->local_address, SPI->address);
+	       return -1;
+	  }
+
+	  if (vpn_mode && esp == NULL)
+	       SPI->flags |= SPI_TUNNEL;
+	  else 
+	       SPI->flags &= ~SPI_TUNNEL;
+
+	  offset = kernel_ah(atah, SPI, secrets, hmac);
+	  if (offset == -1)
+	       return -1;
+	  secrets += offset; 
+     }
+
+     if (esp != NULL)
+	  proto = IPPROTO_ESP;
+     else
+	  proto = IPPROTO_AH;
+
      /* Group the SPIs for User */
-     if (!(SPI->flags & SPI_OWNER) && i > 1) {
+     if (!(SPI->flags & SPI_OWNER) && ah != NULL && esp != NULL) {
 	  if (kernel_group_spi(SPI->address, spi) == -1)
 	       log_error(0, "kernel_group_spi() in kernel_insert_spi()");
      }
@@ -718,82 +763,49 @@ int
 kernel_unlink_spi(struct spiob *ospi)
 {
      int n, proto = 0;
-     int phase = 0, offset;
      attrib_t *attprop;
      u_int32_t spi;
-     u_int8_t SPI[SPI_SIZE], *p;
+     u_int8_t *p, *ah, *esp;
+     u_int16_t ahsize, espsize;
 
      if (!(ospi->flags & SPI_OWNER))
 	  p = ospi->address;
-       else
+     else
 	  p = ospi->local_address;
      
+     get_attrib_section(ospi->attributes, ospi->attribsize, &esp, &espsize,
+			AT_ESP_ATTRIB);
+     get_attrib_section(ospi->attributes, ospi->attribsize, &ah, &ahsize,
+			AT_AH_ATTRIB);
 
-     spi = (ospi->SPI[0]<<24) + (ospi->SPI[1]<<16) +
-	  (ospi->SPI[2]<<8) + ospi->SPI[3];
-	  
-     for(n=0; n<ospi->attribsize; n += ospi->attributes[n+1] + 2) {
-	  SPI[0] = (spi >> 24) & 0xFF;
-	  SPI[1] = (spi >> 16) & 0xFF;
-	  SPI[2] = (spi >> 8)  & 0xFF;
-	  SPI[3] =  spi        & 0xFF;
-	  switch(ospi->attributes[n]) {
-	  case AT_AH_ATTRIB:
-	       phase = AT_AH_ATTRIB;
-	       break;
-	  case AT_ESP_ATTRIB:
-	       phase = AT_ESP_ATTRIB;
-	       break;
-	  default:
-	       if (phase == 0) {
-		    log_error(0, "Unaligned attribute %d in kernel_unlink_spi()", ospi->attributes[n]);
-		    return -1;
-	       }
-	       if ((attprop = getattrib(ospi->attributes[n])) == NULL) {
-		    log_error(0, "Unknown attribute %d in kernel_unlink_spi()",
-			      ospi->attributes[n]);
-		    return -1;
-	       }
-	       switch (phase) {
-	       case AT_AH_ATTRIB:
-		    if (!proto) {
-		         int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | 
-			      ENABLE_FLAG_LOCAL;
-			 proto = IPPROTO_AH;
-			 if (!(ospi->flags & SPI_OWNER) &&
-			     kernel_disable_spi(ospi->isrc, ospi->ismask,
-						ospi->idst, ospi->idmask,
-						ospi->address, ospi->SPI, 
-						proto, flag) == -1)
-			      log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
-	       }
+     if (esp != NULL) {
+	  int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | ENABLE_FLAG_LOCAL;
+	  if (!(ospi->flags & SPI_OWNER) && 
+	      kernel_disable_spi(ospi->isrc, ospi->ismask,
+				 ospi->idst, ospi->idmask,
+				 ospi->address, ospi->SPI, 
+				 IPPROTO_ESP, flag) == -1)
+	       log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
 
-	       if (kernel_delete_spi(p, SPI, IPPROTO_AH) == -1)
-		    log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
-	       break;
-	       case AT_ESP_ATTRIB:
-		    if (!proto) {
-		         int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | 
-			      ENABLE_FLAG_LOCAL;
-			 proto = IPPROTO_ESP;
-			 if (!(ospi->flags & SPI_OWNER) && 
-			     kernel_disable_spi(ospi->isrc, ospi->ismask,
-						ospi->idst, ospi->idmask,
-						ospi->address, ospi->SPI, 
-						proto, flag) == -1)
-			      log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
-		    }
-		    if (kernel_delete_spi(p, SPI, IPPROTO_ESP) == -1)
-			 log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
-		    offset = ospi->attributes[n+1] + 2;
-		    if ((n + offset < ospi->attribsize) &&
-			getattrib(ospi->attributes[n+offset]) != NULL)
-			n += offset;
-		    break;
-	       }
-	  }
+	  if (kernel_delete_spi(p, ospi->SPI, IPPROTO_ESP) == -1)
+	       log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
      }
-
+	  
+     if (ah != NULL) {
+	  if (esp == NULL) {
+	       int flag = (vpn_mode ? ENABLE_FLAG_MODIFY : 0) | 
+		    ENABLE_FLAG_LOCAL;
+	       if (!(ospi->flags & SPI_OWNER) &&
+		   kernel_disable_spi(ospi->isrc, ospi->ismask,
+				      ospi->idst, ospi->idmask,
+				      ospi->address, ospi->SPI, 
+				      IPPROTO_AH, flag) == -1)
+		    log_error(0, "kernel_disable_spi() in kernel_unlink_spi()");
+	  }
+	  
+	  if (kernel_delete_spi(p, ospi->SPI, IPPROTO_AH) == -1)
+	       log_error(0, "kernel_delete_spi() in kernel_unlink_spi()");
+     }
 
      return 1;
 }

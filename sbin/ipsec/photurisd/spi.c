@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.5 1998/03/04 11:43:53 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.6 1998/06/30 16:58:35 provos Exp $";
 #endif
 
 #define _SPI_C_
@@ -84,12 +84,21 @@ make_spi(struct stateob *st, char *local_address,
 	
      /* Just grab a random number, this should be uniq */
      for(i=0; i<SPI_SIZE; i++) {
-	  if(i%4 == 0)
+	  if(i%4 == 0) {
 #ifdef IPSEC
-	       tmp = kernel_reserve_spi(local_address, st->flags);
+	       int i, flags = 0;
+
+	       for (i=0; i<*attribsize; i += (*attributes)[i+1]+2)
+		    if ((*attributes)[i] == AT_ESP_ATTRIB)
+			 flags |= IPSEC_OPT_ENC;
+		    else if ((*attributes)[i] == AT_AH_ATTRIB)
+			 flags |= IPSEC_OPT_AUTH;
+		    
+	       tmp = kernel_reserve_spi(local_address, flags);
 #else
 	       tmp = arc4random();
 #endif
+	  }
 	  SPI[i] = tmp & 0xFF;
 	  tmp = tmp >> 8;
      }

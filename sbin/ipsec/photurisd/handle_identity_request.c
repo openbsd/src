@@ -30,11 +30,10 @@
 /*
  * handle_identity_request:
  * receive a IDENTITY_REQUEST packet; return -1 on failure, 0 on success
- *
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_request.c,v 1.6 1998/05/18 21:25:23 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_request.c,v 1.7 1998/06/30 16:58:41 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -97,7 +96,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	if (st == NULL) {
 	     packet_size = PACKET_BUFFER_SIZE;
 	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
+ 				    header->icookie, header->rcookie,
 				    0, BAD_COOKIE);
 	     send_packet();
 	     return 0;
@@ -113,7 +112,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     goto verification_failed;
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG2
 	printf("Identity-Request (after decryption):\n");
 	packet_dump(packet, size, 0);
 #endif

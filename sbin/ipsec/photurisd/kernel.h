@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.6 1998/05/18 21:25:33 provos Exp $ */
+/* $Id: kernel.h,v 1.7 1998/06/30 16:58:33 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -48,11 +48,33 @@
 #define XF_ENC    0x10
 #define XF_AUTH   0x20
 
+typedef struct {
+     int photuris_id;
+     int kernel_id, flags;
+} transform;
+
+/* 
+ * Translation from Photuris Attributes to Kernel Transforms.
+ * For the actual ids see: draft-simpson-photuris-*.txt and
+ * draft-simpson-photuris-schemes-*.txt
+ */
+
+transform xf[] = {
+     {  5, ALG_AUTH_MD5, XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
+     {  6, ALG_AUTH_SHA1, XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
+     {  7, ALG_AUTH_RMD160, XF_AUTH|AH_NEW|ESP_NEW},
+     {  8, ALG_ENC_DES, XF_ENC|ESP_OLD},
+     { 18, ALG_ENC_3DES, XF_ENC|ESP_NEW},
+     { 16, ALG_ENC_BLF, XF_ENC|ESP_NEW},
+     { 17, ALG_ENC_CAST, XF_ENC|ESP_NEW},
+};
+
+transform *kernel_get_transform(int id);
 
 int kernel_xf_set(struct encap_msghdr *em);
 int kernel_xf_read(struct encap_msghdr *em, int msglen);
 
-int kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets);
+int kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac);
 int kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, 
 	       u_int8_t *secrets);
 
@@ -71,8 +93,9 @@ int kernel_request_sa(struct encap_msghdr *em);
 #define EXTERN extern
 #endif
 
-EXTERN int kernel_get_offset(int id);
-EXTERN int kernel_valid(int encoff, int authoff);
+EXTERN int kernel_known_transform(int id);
+EXTERN int kernel_valid(attrib_t *enc, attrib_t *auth);
+EXTERN int kernel_valid_auth(attrib_t *auth, u_int8_t *flag, u_int16_t size);
 
 EXTERN u_int32_t kernel_reserve_spi( char *srcaddress, int options);
 EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, 

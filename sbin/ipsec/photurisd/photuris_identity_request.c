@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: photuris_identity_request.c,v 1.2 1998/03/04 11:43:39 provos Exp $";
+static char rcsid[] = "$Id: photuris_identity_request.c,v 1.3 1998/06/30 16:58:43 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -118,7 +118,7 @@ photuris_identity_request(struct stateob *st, u_char *buffer, int *size)
         /* Create verification data */ 
         create_identity_verification(st, verifyp, (u_int8_t *)header, asize); 
 
-#ifdef DEBUG
+#ifdef DEBUG2
 	printf("Identity-Request (before encryption):\n");
 	packet_dump((u_int8_t *)header, asize, 0);
 #endif

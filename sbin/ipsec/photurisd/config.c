@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.9 1998/06/03 16:17:26 deraadt Exp $";
+static char rcsid[] = "$Id: config.c,v 1.10 1998/06/30 16:58:34 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -266,7 +266,7 @@ init_attributes(void)
 
 #ifdef IPSEC
 		    if ((tmpatt.type & ~AT_ID) &&
-			(tmpatt.koff = kernel_get_offset(tmpatt.id)) == -1) {
+			kernel_known_transform(tmpatt.id) == -1) {
 			 log_error(0, "Attribute %s not supported by kernel in init_attributes()", name);
 			 continue;
 		    }
@@ -981,9 +981,36 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 	  /* Take the ESP section */
 	  char *tp = wantesp, *ta = wantesp;
 	  u_int16_t tpsize = 0, tasize = 0;
+	  u_int8_t flag[20], flagc, hmac = 0;
 	  int res;
 	  attrib_t *attah = NULL;
 	  
+	  /* 
+	   * We travers the ESP section and look for flags,
+	   * perhaps mutually exclusive flags should be handled
+	   * but at the moment we only support the HMAC indicator
+	   */
+
+	  flagc = 0;
+	  while (tpsize < wantespsize && flagc < sizeof(flag)) {
+	       if (isinattrib(offeresp, offerespsize, tp[tpsize])) {
+		    attprop = getattrib(tp[tpsize]);
+		    /* A simple flag has no type */
+		    if (attprop != NULL && attprop->type == 0) {
+			 flag[flagc++] = attprop->id;
+			 switch(attprop->id) {
+			 case AT_HMAC:
+			      hmac = 1;
+			      break;
+			 default:
+			      break;
+			 }
+		    }
+	       }
+	       tpsize += tp[tpsize+1]+2;
+	  }
+
+	  tpsize = 0;
 	  attprop = NULL;
 	  /* We travers the ESP section and look for the first ENC attribute */
 	  while (tpsize < wantespsize) {
@@ -998,12 +1025,12 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 	       attprop = NULL;
 
 	  /* If we find a fitting AH, we take it */
-	  while (attprop != NULL && tasize < wantespsize) {
+	  while (hmac && attprop != NULL && tasize < wantespsize) {
 	       if (isinattrib(offeresp, offerespsize, ta[tasize])) {
 		    attah = getattrib(ta[tasize]);
 		    if (attah != NULL && (attah->type & AT_AUTH)) {
 #ifdef IPSEC
-			 res = kernel_valid(attprop->koff, attah->koff);
+			 res = kernel_valid(attprop, attah);
 #else
 			 res = 0;
 #endif
@@ -1043,6 +1070,14 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 		    count += wantesp[tasize+1] + 2;
 		    p += wantesp[tasize+1] + 2;
 	       }
+
+	       /* Insert the flags also */
+	       while (flagc--) {
+		    p[0] = flag[flagc];
+		    p[1] = 0;
+		    p += 2;
+		    count += 2;
+	       }
 	  }
      }
 
@@ -1050,13 +1085,30 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 	  /* Take the AH section */
 	  u_int8_t *tp = wantah;
 	  u_int16_t tpsize = 0;
+	  u_int8_t flag[20], flagc;
 
+	  flagc = 0;
+	  /* Look for flags */
+	  while (tpsize < wantahsize && flagc < sizeof(flag)) {
+	       if (isinattrib(offerah, offerahsize, tp[tpsize])) {
+		    attprop = getattrib(tp[tpsize]);
+		    if (attprop != NULL && attprop->type == 0)
+			 flag[flagc++] = attprop->id;
+	       }
+	       tpsize += tp[tpsize+1]+2;
+	  }
+
+	  tpsize = 0;
 	  attprop = NULL;
 	  /* We travers the AH section and look for the first AH attribute */
 	  while (tpsize < wantahsize) {
 	       if (isinattrib(offerah, offerahsize, tp[tpsize])) {
 		    attprop = getattrib(tp[tpsize]);
-		    if (attprop != NULL && (attprop->type & AT_AUTH))
+		    if (attprop != NULL && (attprop->type & AT_AUTH)
+#ifdef IPSEC
+			&& (kernel_valid_auth(attprop, flag, flagc) != -1)
+#endif
+			)
 			 break;
 	       }
 	       tpsize += tp[tpsize+1]+2;
@@ -1075,6 +1127,14 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 	       bcopy(wantah+tpsize, p, wantah[tpsize+1] + 2);
 	       count += wantah[tpsize+1] + 2;
 	       p += wantah[tpsize+1] + 2;
+
+	       /* Insert flags also */
+	       while (flagc--) {
+		    p[0] = flag[flagc];
+		    p[1] = 0;
+		    p += 2;
+		    count += 2;
+	       }
 	  }
      }
 

@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.5 1998/05/18 21:25:36 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.6 1998/06/30 16:58:40 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -67,6 +67,7 @@ static char rcsid[] = "$Id: server.c,v 1.5 1998/05/18 21:25:36 provos Exp $";
 #include "buffer.h"
 #ifdef IPSEC
 #include "spi.h"
+#include "attributes.h"
 #include "kernel.h"
 #endif
 
@@ -275,11 +276,14 @@ server(void)
 
 	  for (i=0; i<num_ifs; i++) {
 	       if (FD_ISSET(sockets[i], readfds)) {
+#ifdef IPSEC
 		    if (i == 1)       /* PF_ENCAP NOTIFIES */
 			 kernel_handle_notify(sockets[i]);
-		    else if (addresses[i] == NULL)
+		    else
+#endif
+			 if (addresses[i] == NULL)
 			 process_api(sockets[i], global_socket); 
-		    else if (strcmp("127.0.0.1", inet_ntoa(sin.sin_addr))) {
+			 else if (strcmp("127.0.0.1", inet_ntoa(sin.sin_addr))) {
 			 d = sizeof(struct sockaddr_in);
 			 if (recvfrom(sockets[i], 
 #ifdef BROKEN_RECVFROM

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_response.c,v 1.6 1998/05/18 21:25:25 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_response.c,v 1.7 1998/06/30 16:58:44 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -107,7 +107,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     goto verification_failed;
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG2
 	printf("Identity Response (after decryption):\n");
 	packet_dump((u_int8_t *)header, size, 0);
 #endif

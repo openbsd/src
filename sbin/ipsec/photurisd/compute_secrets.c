@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: compute_secrets.c,v 1.5 1998/03/04 11:43:14 provos Exp $"; 
+static char rcsid[] = "$Id: compute_secrets.c,v 1.6 1998/06/30 16:58:45 provos Exp $"; 
 #endif 
 
 #define _SECRETS_C_
@@ -160,18 +160,21 @@ make_session_keys(struct stateob *st, struct spiob *spi)
 					  &count);
 	       if (bits == -1)
 		    return -1;
+	       if (bits > 0) {
 #ifdef DEBUG
-	       {    int d = BUFFER_SIZE;
-		    printf("%s session key for AT %d: ", 
-			   spi->flags & SPI_OWNER ? 
-			   "Owner" : "User", (int)attributes[i]);
-		    bin2hex(buffer, &d, p, 
-			    bits & 7 ? (bits >> 3) + 1 : bits >> 3);
-		    printf("0x%s\n", buffer);
-	       }
+		    { 
+			 int d = BUFFER_SIZE;
+			 printf("%s session key for AT %d: ", 
+				spi->flags & SPI_OWNER ? 
+				"Owner" : "User", (int)attributes[i]);
+			 bin2hex(buffer, &d, p, 
+				 bits & 7 ? (bits >> 3) + 1 : bits >> 3);
+			 printf("0x%s\n", buffer);
+		    }
 #endif /* DEBUG */
 		    
-	       p += bits & 7 ? (bits >> 3) + 1 : bits >> 3;
+		    p += bits & 7 ? (bits >> 3) + 1 : bits >> 3;
+	       }
 	  }
      }
      
@@ -239,6 +242,8 @@ compute_session_key(struct stateob *st, u_int8_t *key,
 
      if ((bits = get_session_key_length(attribute)) == -1)
 	  return -1;
+     if (bits == 0)
+	  return 0;
 
      size = bits >> 3;
      if(bits & 0x7)
