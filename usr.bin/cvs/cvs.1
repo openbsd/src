@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.37 2005/02/01 14:20:05 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.38 2005/02/02 11:52:41 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -702,7 +702,13 @@ Enable recursive behaviour.
 This is the default.
 .El
 .It Xo Ic update
-.Op Fl AlPR
+.Op Fl AdflPpR
+.Oo Fl D Ar date \*(Ba
+.Fl r Ar rev Oc
+.Op Fl I Ar ign
+.Op Fl j Ar rev
+.Op Fl k Ar mode
+.Op Fl W Ar spec
 .Op Ar file ...
 .Xc
 .Pp
@@ -717,15 +723,61 @@ command takes the following options:
 .Bl -tag -width Ds -offset 3n
 .It Fl A
 Reset any sticky tags, dates, or kopts that have been set on the tree.
+.It Fl D Ar date
+Update as of the latest revision no later than
+.Ar date
+(is sticky).
+.It Fl d
+Create any new directories.
+Without this option,
+.Nm
+does not create any new files sitting in these new directories
+added in the base repository since the last update of the working
+copy, or since the last update with the
+.Fl d
+option.
+.It Fl f
+Force the use of the head revision if the specified
+tag or date is not found.
+.It Fl I Ar ign
+Ignore files specified by
+.Ar ign .
+This option can be used several times on the command line.
+To see all files, use the
+.Fl I Ar !\&
+specification.
+.It Fl j Ar rev
+Merge in changes made between current revision and
+.Ar rev .
+If two
+.Fl j
+options are specified, only merge the differences between the two
+revisions of the branch.
+This allows successive merges without having to resolve
+already resolved conflicts again.
+.It Fl k Ar mode
+Specify the keyword substitution mode (is sticky).
 .It Fl l
 Limit the scope of the search to the local directory
 only and disable recursive behaviour.
 .It Fl P
 Prune any directories that have become empty as a result of the update.
+.It Fl p
+Send the result of the update to standard output (avoids stickiness).
 .It Fl R
 Enable recursive behaviour.
 This is the default.
+.It Fl r Ar rev
+Update from a particular revision or branch (is sticky).
+.It Fl W Ar spec
+Wrappers specification line.
 .El
+.Pp
+By default, the
+.Ic update
+command does not create new directories; the
+.Fl d
+option must be used for that.
 .Pp
 For each file updated, a single letter prefix is given to
 specify the state of the file.
