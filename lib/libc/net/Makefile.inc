@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.38 2004/12/20 22:36:19 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.39 2005/01/06 04:24:14 itojun Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -31,7 +31,7 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getifaddrs.3 getnameinfo.3 getnetent.3 getprotoent.3 \
 	getrrsetbyname.3 getservent.3 if_indextoname.3 inet.3 \
-	inet_net.3 \
+	inet_net.3 inet6_option_space.3 inet6_rthdr_space.3 \
 	ipx.3 link_addr.3 net_addrcmp.3 ns.3 \
 	rcmd.3 rcmdsh.3 resolver.3
 
@@ -78,3 +78,15 @@ MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_mkquery.3 resolver.3 res_send.3 resolver.3 res_query.3 \
 	resolver.3 res_search.3
 MLINKS+=getrrsetbyname.3 freerrset.3
+MLINKS+=inet6_option_space.3 inet6_option_init.3 \
+	inet6_option_space.3 inet6_option_append.3 \
+	inet6_option_space.3 inet6_option_alloc.3 \
+	inet6_option_space.3 inet6_option_next.3 \
+	inet6_option_space.3 inet6_option_find.3
+MLINKS+=inet6_rthdr_space.3 inet6_rthdr_init.3 \
+	inet6_rthdr_space.3 inet6_rthdr_add.3 \
+	inet6_rthdr_space.3 inet6_rthdr_lasthop.3 \
+	inet6_rthdr_space.3 inet6_rthdr_reverse.3 \
+	inet6_rthdr_space.3 inet6_rthdr_segments.3 \
+	inet6_rthdr_space.3 inet6_rthdr_getaddr.3 \
+	inet6_rthdr_space.3 inet6_rthdr_getflags.3
