@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.1 1997/02/21 18:35:00 millert Exp $	*/
+/*	$OpenBSD: which.c,v 1.2 1997/04/08 02:44:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,11 +31,12 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: which.c,v 1.1 1997/02/21 18:35:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: which.c,v 1.2 1997/04/08 02:44:07 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -45,13 +46,17 @@ static char rcsid[] = "$OpenBSD: which.c,v 1.1 1997/02/21 18:35:00 millert Exp $
 #include <string.h>
 #include <unistd.h>
 
+#define PROG_WHICH	1
+#define PROG_WHEREIS	2
+
 extern char *__progname;
 
-int which __P((char *, char *));
+int findprog __P((char *, char *, int));
 void usage __P((void));
 
 /*
  * which(1) -- find an executable(s) in the user's path
+ * whereis(1) -- find an executable(s) in the default user path
  *
  * Return values:
  *	0 - all executables found
@@ -65,15 +70,44 @@ main(argc, argv)
 	char **argv;
 {
 	char *path;
-	int n, notfound = 0;
+	size_t n;
+	int ch, notfound = 0, progmode = PROG_WHICH;
 
 	(void)setlocale(LC_ALL, "");
 
 	if (argc == 1)
 		usage();
 
-	if ((path = getenv("PATH")) == NULL)
-		err(-1, "Can't get $PATH from environment");
+	/* Don't accept command args but check since old whereis(1) used to */
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			usage();
+		}
+	}
+
+	/*
+	 * which(1) uses user's $PATH.
+	 * whereis(1) uses user.cs_path from sysctl(3).
+	 */
+	if (strcmp(__progname, "whereis") == 0) {
+		int mib[2];
+
+		progmode = PROG_WHEREIS;
+		mib[0] = CTL_USER;
+		mib[1] = USER_CS_PATH;
+		if (sysctl(mib, 2, NULL, &n, NULL, 0) == -1)
+			err(-1, "unable to get length of user.cs_path");
+		if (n == 0)
+			errx(-1, "user.cs_path was zero length!");
+		if ((path = (char *)malloc(n)) == NULL)
+			errx(-1, "can't allocate memory.");
+		if (sysctl(mib, 2, path, &n, NULL, 0) == -1)
+			err(-1, "unable to get user.cs_path");
+	} else {
+		if ((path = getenv("PATH")) == NULL)
+			err(-1, "can't get $PATH from environment");
+	}
 
 	/* To make access(2) do what we want */
 	if (setgid(getegid()))
@@ -82,16 +116,17 @@ main(argc, argv)
 		err(-1, "Can't set uid to %u", geteuid());
 
 	for (n = 1; n < argc; n++)
-		if (which(argv[n], path) == 0)
+		if (findprog(argv[n], path, progmode) == 0)
 			notfound++;
 
 	exit((notfound == 0) ? 0 : ((notfound == argc - 1) ? 2 : 1));
 }
 
 int
-which(prog, path)
+findprog(prog, path, progmode)
 	char *prog;
 	char *path;
+	int progmode;
 {
 	char *p, filename[MAXPATHLEN];
 	int proglen, plen;
@@ -110,7 +145,7 @@ which(prog, path)
 	}
 
 	if ((path = strdup(path)) == NULL)
-		errx(1, "Can't allocate memory.");
+		errx(-1, "Can't allocate memory.");
 
 	proglen = strlen(prog);
 	while ((p = strsep(&path, ":")) != NULL) {
@@ -137,13 +172,15 @@ which(prog, path)
 	}
 	(void)free(path);
 
-	(void)printf("%s: Command not found.\n", prog);
+	/* whereis(1) is silent on failure. */
+	if (progmode != PROG_WHEREIS)
+		(void)printf("%s: Command not found.\n", prog);
 	return(0);
 }
 
 void
 usage()
 {
-	(void) fprintf(stderr, "Usage: %s [name ...]\n", __progname);
+	(void) fprintf(stderr, "Usage: %s name [...]\n", __progname);
 	exit(1);
 }

@@ -1,6 +1,8 @@
-.\"	$OpenBSD: which.1,v 1.5 1997/04/08 02:44:06 millert Exp $
-.\" Copyright (c) 1980, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: whereis.1,v 1.1 1997/04/08 02:44:06 millert Exp $
+.\"	$NetBSD: whereis.1,v 1.4 1995/08/31 21:54:51 jtc Exp $
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,23 +32,29 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)which.1	6.3 (Berkeley) 4/23/91
+.\"	@(#)whereis.1	8.3 (Berkeley) 4/27/95
 .\"
-.Dd February 21, 1997
-.Dt WHICH 1
-.Os
+.Dd April 27, 1995
+.Dt WHEREIS 1
+.Os BSD 3
 .Sh NAME
-.Nm which
-.Nd "locate a program file (or files) in the path"
+.Nm whereis
+.Nd locate programs
 .Sh SYNOPSIS
-.Nm which
-.Op Ar name
-.Ar ...
+.Nm whereis
+.Op Ar name ...
 .Sh DESCRIPTION
-.Nm Which
-takes a list of names and looks for the files which would be
-executed had these names been given as commands.
-Each argument is searched for along the user's path.
+The
+.Nm whereis
+utility checks the standard binary directories for the specified name,
+printing out the paths of any it finds that are executable by the
+user.
+.Pp
+The path searched is the string returned by the
+.Xr sysctl 8
+utility for the
+.Dq user.cs_path
+string.
 .Sh RETURN VALUES
 The
 .Nm
@@ -61,42 +69,14 @@ No names got resolved.
 .It -1
 A system error occurred.
 .El
-.Sh DIAGNOSTICS
-A diagnostic is given if an executable file with the argument
-name was not found in the path.
-.Sh ENVIRONMENT VARIABLES
-.Bl -tag -width PATH
-.It Ev PATH
-.Nm
-uses the environment variable
-.Ev PATH
-as a colon-separated list of directories in which to find executables.
-If
-.Ev PATH
-is not set, and the given name is not a fully-qualified
-or relative pathname,
-.Nm
-will fail.
-.El
-.Sh CAVEATS
-The
-.Nm
-command formerly was a
-.Xr csh 1
-script and could expand aliases.
-.Xr csh 1
-now has a built-in
-.Nm
-comand so this version is intended for use
-with other shells like
-.Xr sh 1 .
 .Sh SEE ALSO
-.Xr csh 1 ,
-.Xr sh 1 ,
-.Xr whereis 1 ,
-.Xr environ 7
+.Xr which 1 ,
+.Xr sysctl 8
+.Sh COMPATIBILITY
+The historic flags and arguments for the
+.Nm whereis
+utility are no longer available in this version.
 .Sh HISTORY
-A
-.Nm
-command appeared in
-.Bx 3.0 .
+The
+.Nm whereis
+command appeared in 3.0BSD.
