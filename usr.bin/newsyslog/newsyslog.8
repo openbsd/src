@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.16 1999/11/11 22:24:14 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.17 2000/03/05 00:28:53 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -171,9 +171,8 @@ Specify a command to run instead of sending a signal to the process.
 The command must be enclosed in double quotes ('"').  You cannot specify
 both a command and a pid file.
 .El
-.Sh OPTIONS
-The following options can be used with
-.Nm newsyslog :
+.Pp
+The options are as follows:
 .Bl -tag -width XXX
 .It Fl f Ar config-file
 Instructs newsyslog to use

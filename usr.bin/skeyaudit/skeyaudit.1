@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyaudit.1,v 1.4 1999/06/05 01:21:40 aaron Exp $
+.\" $OpenBSD: skeyaudit.1,v 1.5 2000/03/05 00:28:58 aaron Exp $
 .\"
 .\"
 .Dd 22 July 1997
@@ -15,15 +15,15 @@
 .Sh DESCRIPTION
 .Nm
 searches through the file
-.Dq Pa /etc/skeykeys
+.Pa /etc/skeykeys
 for users whose S/Key sequence number is less than
 .Ar limit ,
 and mails them a reminder to run
 .Xr skeyinit 1
 soon.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width "-l limit" -indent
-The available options are as follows:
 .It Fl a
 Check all keys in
 .Pa /etc/skeykeys .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgs.1,v 1.7 1999/06/10 22:38:03 pjanzen Exp $
+.\"	$OpenBSD: msgs.1,v 1.8 2000/03/05 00:28:58 aaron Exp $
 .\"	$NetBSD: msgs.1,v 1.5 1995/09/28 06:57:39 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -54,21 +54,27 @@
 .Nm msgs
 is used to read system messages.
 These messages are
-sent by mailing to the login `msgs' and should be short
+sent by mailing to the login
+.Dq msgs
+and should be short
 pieces of information which are suitable to be read once by most users
 of the system.
 .Pp
-The options available are as follows:
+The options are as follows:
 .Bl -tag -width Fl
 .It Fl f
-Do not say ``No new messages.''
+Do not say
+.Dq \&No new messages.
 This is useful in a
 .Pa .login
 file since this is often the case here.
 .It Fl q
 Queries whether there are messages, printing
-``There are new messages.'' if there are.
-The command ``msgs \-q'' is often used in login scripts.
+.Dq There are new messages.
+if there are.
+The command
+.Ic msgs \-q
+is often used in login scripts.
 .It Fl h
 Print the first part of messages only.
 .It Fl r
@@ -138,14 +144,16 @@ the next time
 .Nm msgs
 will pick up where it last left off.
 .It Ic s
-Append the current message to the file ``Messages'' in the current directory;
+Append the current message to the file
+.Pa Messages
+in the current directory;
 `s\-' will save the previously displayed message. A `s' or `s\-' may
 be followed by a space and a file name to receive the message replacing
 the default ``Messages''.
 .It Ic m
 A copy of the specified message is placed in a temporary
 mailbox and
-.Xr mail  1
+.Xr mail 1
 is invoked on that mailbox.
 .It Ic p
 The specified message is piped through the program specified by the

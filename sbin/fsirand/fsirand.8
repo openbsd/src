@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: fsirand.8,v 1.17 1999/07/04 18:59:39 aaron Exp $
+.\"	$OpenBSD: fsirand.8,v 1.18 2000/03/05 00:28:57 aaron Exp $
 .\"
 .Dd January 25, 1997
 .Dt FSIRAND 8
@@ -69,9 +69,9 @@ may be used on the root filesystem in single-user mode
 but the system should be rebooted via
 .Dq reboot -n
 afterwards.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
-The available options are as follows:
 .It Fl b
 Use the default block size (usually 512 bytes) instead
 of the value gleaned from the disklabel.

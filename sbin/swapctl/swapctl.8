@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.8 2000/02/26 04:18:55 hugh Exp $
+.\"	$OpenBSD: swapctl.8,v 1.9 2000/03/05 00:28:51 aaron Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -79,8 +79,8 @@ acts as
 with the
 .Fl A
 option.
-.Sh OPTIONS
-The following options are available:
+.Pp
+The options are as follows:
 .Bl -tag -width 123456
 .It Fl A
 This option causes
@@ -199,6 +199,11 @@ at all during system
 .Xr fsck 8
 and may run out of real memory, causing fsck to abnormally exit and
 startup scripts to fail.
+.Sh SEE ALSO
+.Xr swapctl 2 ,
+.Xr fstab 5 ,
+.Xr mount_nfs 8 ,
+.Xr vnconfig 8
 .Sh HISTORY
 The
 .Nm
@@ -224,8 +229,3 @@ option of
 .Nm
 are not currently supported by
 .Ox .
-.Sh SEE ALSO
-.Xr swapctl 2 ,
-.Xr fstab 5 ,
-.Xr mount_nfs 8 ,
-.Xr vnconfig 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.9 1999/10/05 20:53:10 aaron Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.10 2000/03/05 00:28:56 aaron Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -45,11 +45,7 @@ generates a list of filenames and inode numbers for the given
 file system.  Names of directories are followed by a
 .Dq \&. .
 .Pp
-The report is not sorted.
-.Pp
-The options to
-.Nm
-are as follows:
+The options are as follows:
 .Bl -tag -width indent
 .It Fl i Ar numbers
 Report only those files whose inode numbers follows.
@@ -63,8 +59,11 @@ which are ordinarily skipped.
 Give more verbose information on inodes
 .It Fl s
 Report only special files and files with set-user-ID or set-group-ID
-set.  This is meant to find hidden violations of security policies.
+set.
+This is meant to find hidden violations of security policies.
 .El
+.Pp
+The report is not sorted.
 .Sh SEE ALSO
 .Xr sort 1 ,
 .Xr fsck 8

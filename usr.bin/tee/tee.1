@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tee.1,v 1.3 1998/10/30 00:24:38 aaron Exp $
+.\"	$OpenBSD: tee.1,v 1.4 2000/03/05 00:28:55 aaron Exp $
 .\"	$NetBSD: tee.1,v 1.4 1994/12/09 01:43:37 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -49,12 +49,12 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm tee
+.Nm
 utility copies standard input to standard output,
 making a copy in zero or more files.
 The output is unbuffered.
 .Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Append the output to the files rather than
@@ -73,18 +73,18 @@ A pathname of an output
 .El
 .Pp
 The
-.Nm tee
+.Nm
 utility takes the default action for all signals,
 except in the event of the
 .Fl i
 option.
 .Pp
 The
-.Nm tee
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh STANDARDS
 The
-.Nm tee
+.Nm
 function is expected to be
 .Tn POSIX
 .St -p1003.2

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.29 2000/01/22 02:17:53 aaron Exp $
+.\"	$OpenBSD: fdisk.8,v 1.30 2000/03/05 00:28:49 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -57,21 +57,18 @@ in the first column), and if one
 is found, the boot block from that partition is loaded and executed in
 place of the original (MBR) boot block.
 .Pp
-The following options are available:
-.Pp
-.Bl -tag -width "-c cylinders" -compact
+The options are as follows:
+.Bl -tag -width "-c cylinders"
 .It Fl i
 Initialize the MBR sector.
-.Pp
 .It Fl e
 Edit existing MBR sectors.
-.Pp
 .It Fl f Ar mbrname
 Specifies an alternate MBR template file.
-.Pp
-.It Fl c Ar cylinders
-.It Fl h Ar heads
-.It Fl s Ar sectors
+.It Xo Fl c Ar cylinders ,
+.Fl h Ar heads ,
+.Fl s Ar sectors
+.Xc
 Specifies an alternate BIOS geometry for
 .Nm
 to use.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: comm.1,v 1.6 1999/07/07 10:50:07 aaron Exp $
+.\"	$OpenBSD: comm.1,v 1.7 2000/03/05 00:28:52 aaron Exp $
 .\"	$NetBSD: comm.1,v 1.4 1995/03/26 09:25:50 glass Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -62,9 +62,11 @@ lines only in
 .Ar file2 ;
 and lines in both files.
 .Pp
-The filename ``-'' means the standard input.
+The filename
+.Dq -
+means the standard input.
 .Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl 1
 Suppress printing of column 1.
@@ -93,7 +95,7 @@ participate in line comparisons.
 .\" .It Ev LC_COLLATE
 .\" .It Ev LC_MESSAGES
 .\" .El
-.Sh DIAGNOSTICS
+.Pp
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.

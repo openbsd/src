@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ul.1,v 1.4 1999/06/05 01:21:45 aaron Exp $
+.\"	$OpenBSD: ul.1,v 1.5 2000/03/05 00:28:55 aaron Exp $
 .\"	$NetBSD: ul.1,v 1.3 1994/12/07 00:28:23 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -46,7 +46,7 @@
 .Op Fl t Ar terminal
 .Op Ar name Ar ...
 .Sh DESCRIPTION
-.Nm ul
+.Nm
 reads the named files (or standard input if none are given)
 and translates occurrences of underscores to the sequence
 which indicates underlining for the terminal in use, as specified
@@ -59,12 +59,12 @@ If the terminal is incapable of underlining, but is capable of
 a standout mode, then that is used instead.
 If the terminal can overstrike,
 or handles underlining automatically,
-.Nm ul
+.Nm
 degenerates to
 .Xr cat 1 .
 If the terminal cannot underline, underlining is ignored.
 .Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl i
 Underlining is indicated by a separate line containing appropriate
