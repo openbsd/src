@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.14 2003/10/22 12:24:41 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.15 2003/11/11 09:15:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.14 2003/10/22 12:24:41 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.15 2003/11/11 09:15:36 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -74,6 +74,7 @@ static void		add_local(ssize_t);
 static void		warning(const char *);
 static void		init(void);
 static __dead void	usage(void);
+static char		*escape(const char *);
 
 static size_t		instr_sz = 0;
 static struct tree	*instructions = NULL;
@@ -120,7 +121,7 @@ extern char *__progname;
 %token DEFINE BREAK QUIT LENGTH
 %token RETURN FOR IF WHILE SQRT
 %token SCALE IBASE OBASE AUTO
-%token CONTINUE ELSE
+%token CONTINUE ELSE PRINT
 
 %nonassoc EQUALS LESS_EQ GREATER_EQ UNEQUALS LESS GREATER
 %right <str> ASSIGN_OP
@@ -141,6 +142,8 @@ extern char *__progname;
 %type <node>	opt_expression
 %type <node>	opt_relational_expression
 %type <node>	opt_statement
+%type <node>	print_expression
+%type <node>	print_expression_list
 %type <node>	relational_expression
 %type <node>	return_expression
 %type <node>	semicolon_list
@@ -324,6 +327,10 @@ statement	: expression
 				$$ = node($4, $3, cs(" "), END_NODE);
 			}
 		| LBRACE statement_list RBRACE
+			{
+				$$ = $2;
+			}
+		| PRINT print_expression_list
 			{
 				$$ = $2;
 			}
@@ -638,6 +645,26 @@ named_expression
 				$$.store = cs("o");
 			}
 		;
+
+print_expression_list
+		: print_expression
+		| print_expression_list COMMA print_expression
+			{
+				$$ = node($1, $3, END_NODE);
+			}
+
+print_expression
+		: expression
+			{
+				$$ = node($1, cs("dds.n"), END_NODE);
+			}
+		| STRING
+			{
+				char *p = escape($1);
+				$$ = node(cs("["), as(p), cs("]dn"),
+				    END_NODE);
+				free(p);
+			}
 %%
 
 
@@ -834,6 +861,60 @@ usage(void)
 	exit(1);
 }
 
+static char *
+escape(const char *str)
+{
+	char *ret, *p;
+
+	ret = malloc(strlen(str) + 1);
+	if (ret == NULL)
+		err(1, NULL);
+
+	p = ret;
+	while (*str != '\0') {
+		/*
+		 * We get _escaped_ strings here. Single backslashes are
+		 * already converted to double backslashes
+		 */
+		if (*str == '\\') {
+			if (*++str == '\\') {
+				switch (*++str) {
+				case 'a':
+					*p++ = '\a';
+					break;
+				case 'b':
+					*p++ = '\b';
+					break;
+				case 'f':
+					*p++ = '\f';
+					break;
+				case 'n':
+					*p++ = '\n';
+					break;
+				case 'q':
+					*p++ = '"';
+					break;
+				case 'r':
+					*p++ = '\r';
+					break;
+				case 't':
+					*p++ = '\t';
+					break;
+				case '\\':
+					*p++ = '\\';
+					break;
+				}
+				str++;
+			} else {
+				*p++ = '\\';
+				*p++ = *str++;
+			}
+		} else
+			*p++ = *str++;
+	}
+	*p = '\0';
+	return ret;
+}
 
 int
 main(int argc, char *argv[])
