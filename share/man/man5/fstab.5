@@ -124,6 +124,10 @@ It contains at least the type of mount (see
 below) plus any additional options
 appropriate to the filesystem type.
 .Pp
+The option ``auto'' can be used in the ``noauto'' form to cause
+a file system not to be mounted automatically (with ``mount -a'',
+or system boot time).
+.Pp
 If the options ``userquota'' and/or ``groupquota'' are specified,
 the filesystem is automatically processed by the
 .Xr quotacheck 8
