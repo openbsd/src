@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.5 1999/02/26 03:44:04 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.32 1999/02/25 09:30:26 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.6 1999/03/31 14:27:37 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.33 1999/03/31 14:19:52 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -104,7 +104,7 @@ struct ipsec_sa {
   /* Phase 2.  */
   u_int16_t group_desc;
 
-  /* Tunnel parameters.  */
+  /* Tunnel parameters.  These are in network byte order.  */
   in_addr_t src_net;
   in_addr_t src_mask;
   in_addr_t dst_net;

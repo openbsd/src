@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.9 1999/03/31 00:51:50 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.51 1999/03/30 21:43:08 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.10 1999/03/31 14:27:38 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.52 1999/03/31 14:19:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -712,10 +712,8 @@ pf_encap_enable_sa (struct sa *sa)
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
 
-  /* XXX Check why byte ordering is backwards.  */
-  return pf_encap_enable_spi (htonl (isa->src_net), htonl (isa->src_mask),
-			      htonl (isa->dst_net), htonl (isa->dst_mask),
-			      proto->spi[0], proto->proto,
+  return pf_encap_enable_spi (isa->src_net, isa->src_mask, isa->dst_net,
+			      isa->dst_mask, proto->spi[0], proto->proto,
 			      ((struct sockaddr_in *)dst)->sin_addr.s_addr);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.8 1999/03/31 00:51:07 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.85 1999/03/30 21:39:42 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.9 1999/03/31 14:27:37 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.86 1999/03/31 14:19:51 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -79,6 +79,7 @@ static int ipsec_debug_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
 static void ipsec_delete_spi (struct sa *, struct proto *, int);
 static u_int16_t *ipsec_exchange_script (u_int8_t);
 static void ipsec_finalize_exchange (struct message *);
+static void ipsec_set_network (u_int8_t *, u_int8_t *, struct ipsec_sa *);
 static void ipsec_free_exchange_data (void *);
 static void ipsec_free_proto_data (void *);
 static void ipsec_free_sa_data (void *);
@@ -236,7 +237,8 @@ ipsec_finalize_exchange (struct message *msg)
   struct proto *proto, *last_proto = 0;
   int initiator = exchange->initiator;
   struct timeval expiration;
-  int id;
+  struct sockaddr *addr;
+  int len;
 
   switch (exchange->phase)
     {
@@ -316,49 +318,42 @@ ipsec_finalize_exchange (struct message *msg)
 		  last_proto = proto;
 		}
 
-	      /* Figure out the networks.  */
 	      isa = sa->data;
-	      id = GET_ISAKMP_ID_TYPE (ie->id_ci);
-	      switch (id)
-		{
-		case IPSEC_ID_IPV4_ADDR:
-		  isa->src_net
-		    = decode_32 ((initiator ? ie->id_ci : ie->id_cr)
-				 + ISAKMP_ID_DATA_OFF);
-		  isa->src_mask = 0xffffffff;
-		  break;
-		case IPSEC_ID_IPV4_ADDR_SUBNET:
-		  isa->src_net
-		    = decode_32 ((initiator ? ie->id_ci : ie->id_cr)
-				 + ISAKMP_ID_DATA_OFF);
-		  isa->src_mask
-		    = decode_32 ((initiator ? ie->id_ci : ie->id_cr)
-				 + ISAKMP_ID_DATA_OFF + 4);
-		  break;
-		}
 
-	      id = GET_ISAKMP_ID_TYPE (ie->id_cr);
-	      switch (id)
+	      /*
+	       * If client identifiers are not present in the exchange,
+	       * we fake them. RFC 2409 states:
+	       *    The identities of the SAs negotiated in Quick Mode are
+	       *    implicitly assumed to be the IP addresses of the ISAKMP
+	       *    peers, without any constraints on the protocol or port
+	       *    numbers allowed, unless client identifiers are specified
+	       *    in Quick Mode.
+	       *
+	       * -- Michael Paddon (mwp@aba.net.au)
+	       */
+	      if (!ie->id_ci || !ie->id_cr)
 		{
-		case IPSEC_ID_IPV4_ADDR:
-		  isa->dst_net
-		    = decode_32 ((initiator ? ie->id_cr : ie->id_ci)
-				 + ISAKMP_ID_DATA_OFF);
-		  isa->dst_mask = 0xffffffff;
-		  break;
-		case IPSEC_ID_IPV4_ADDR_SUBNET:
-		  isa->dst_net
-		    = decode_32 ((initiator ? ie->id_cr : ie->id_ci)
-				 + ISAKMP_ID_DATA_OFF);
-		  isa->dst_mask
-		    = decode_32 ((initiator ? ie->id_cr : ie->id_ci)
-				 + ISAKMP_ID_DATA_OFF + 4);
-		  break;
+		  /* Get source address.  */
+		  msg->transport->vtbl->get_src (msg->transport, &addr, &len);
+		  isa->src_net = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
+		  isa->src_mask = htonl (0xffffffff);
+
+		  /* Get destination address.  */
+		  msg->transport->vtbl->get_dst (msg->transport, &addr, &len);
+		  isa->dst_net = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
+		  isa->dst_mask = htonl (0xffffffff);
 		}
+	      else if (initiator)
+		/* Initiator is source, responder is destination.  */
+		ipsec_set_network (ie->id_ci, ie->id_cr, isa);
+	      else
+		/* Responder is source, initiator is destination.  */
+		ipsec_set_network (ie->id_cr, ie->id_ci, isa);
+
 	      log_debug (LOG_MISC, 50,
 			 "ipsec_finalize_exchange: src %x %x dst %x %x",
-			 isa->src_net, isa->src_mask, isa->dst_net,
-			 isa->dst_mask);
+			 ntohl (isa->src_net), ntohl (isa->src_mask),
+			 ntohl (isa->dst_net), ntohl (isa->dst_mask));
 
 	      if (sysdep_ipsec_enable_sa (sa))
 		/* XXX Tear down this exchange.  */
@@ -374,6 +369,46 @@ ipsec_finalize_exchange (struct message *msg)
     }
 }
 
+/* Set the client addresses in ISA from SRC_ID and DST_ID.  */
+static void
+ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
+{
+  int id;
+
+  /* Set source address. */
+  id = GET_ISAKMP_ID_TYPE (src_id);
+  switch (id)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      memcpy (&isa->src_net, src_id + ISAKMP_ID_DATA_OFF, sizeof isa->src_net);
+      isa->src_mask = htonl (0xffffffff);
+      break;
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      memcpy (&isa->src_net, src_id + ISAKMP_ID_DATA_OFF, sizeof isa->src_net);
+      memcpy (&isa->src_mask,
+	      src_id + ISAKMP_ID_DATA_OFF + sizeof isa->src_net,
+	      sizeof isa->src_mask);
+      break;
+  }
+
+  /* Set destination address.  */
+  id = GET_ISAKMP_ID_TYPE (dst_id);
+  switch (id)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      memcpy (&isa->dst_net, dst_id + ISAKMP_ID_DATA_OFF, sizeof isa->dst_net);
+      isa->dst_mask = htonl (0xffffffff);
+      break;
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      memcpy (&isa->dst_net, dst_id + ISAKMP_ID_DATA_OFF, sizeof isa->dst_net);
+      memcpy (&isa->dst_mask,
+	      dst_id + ISAKMP_ID_DATA_OFF + sizeof isa->dst_net,
+	      sizeof isa->dst_mask);
+      break;
+    }
+}
+
+/* Free the DOI-specific exchange data pointed to by VIE.  */
 static void
 ipsec_free_exchange_data (void *vie)
 {
@@ -405,6 +440,7 @@ ipsec_free_exchange_data (void *vie)
     free (ie->hash_r);
 }
 
+/* Free the DOI-specific SA data pointed to by VISA.  */
 static void
 ipsec_free_sa_data (void *visa)
 {
@@ -416,6 +452,7 @@ ipsec_free_sa_data (void *visa)
     free (isa->skeyid_d);
 }
 
+/* Free the DOI-specific protocol data of an SA pointed to by VIPROTO.  */
 static void
 ipsec_free_proto_data (void *viproto)
 {
@@ -427,6 +464,7 @@ ipsec_free_proto_data (void *viproto)
       free (iproto->keymat[i]);
 }
 
+/* Return exchange script based on TYPE.  */
 static u_int16_t *
 ipsec_exchange_script (u_int8_t type)
 {
@@ -440,7 +478,7 @@ ipsec_exchange_script (u_int8_t type)
   return 0;
 }
 
-/* Requires doi_init to already have been called.  */
+/* Initialize this DOI, requires doi_init to already have been called.  */
 void
 ipsec_init ()
 {

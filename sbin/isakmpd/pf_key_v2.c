@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.2 1999/03/31 01:53:00 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.2 1999/03/31 01:32:57 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.3 1999/03/31 14:27:38 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.3 1999/03/31 14:19:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1119,10 +1119,8 @@ pf_key_v2_enable_sa (struct sa *sa)
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
 
-  /* XXX Check why byte ordering is backwards.  */
-  return pf_key_v2_flow (htonl (isa->src_net), htonl (isa->src_mask),
-			 htonl (isa->dst_net), htonl (isa->dst_mask),
-			 proto->spi[0], proto->proto,
+  return pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
+			 isa->dst_mask, proto->spi[0], proto->proto,
 			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0);
 }
 
@@ -1137,10 +1135,8 @@ pf_key_v2_disable_sa (struct sa *sa)
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
 
-  /* XXX Check why byte ordering is backwards.  */
-  return pf_key_v2_flow (htonl (isa->src_net), htonl (isa->src_mask),
-			 htonl (isa->dst_net), htonl (isa->dst_mask),
-			 proto->spi[0], proto->proto,
+  return pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
+			 isa->dst_mask, proto->spi[0], proto->proto,
 			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 1);
 }
 
