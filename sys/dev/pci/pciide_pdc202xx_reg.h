@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.6 2002/04/01 16:57:54 gluk Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.7 2003/01/16 16:15:46 grange Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -115,7 +115,9 @@ static int8_t pdc2xx_udma_mb[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
 static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
 
 /*
- * Two registers for PDC20268
+ * Registers definitions for Promise PDC20268 and above chips
  */
-#define PDC268_REG0	0x1
-#define PDC268_REG1	0x3
+#define PDC268_INDEX(chan)	(0x01 + IDEDMA_SCH_OFFSET * (chan))
+#define PDC268_DATA(chan)	(0x03 + IDEDMA_SCH_OFFSET * (chan))
+#define PDC268_CABLE		0x04
+#define PDC268_INTR		0x20
