@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.9 2001/06/26 21:50:25 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.10 2001/06/27 05:11:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -126,6 +126,7 @@
 #define	OP_RB_SHIFT		11
 #define	OP_RM_SHIFT		6
 #define	OP_R_MASK		0x1f
+#define	OP_LEN_MASK		0xffff
 
 #define	LOFN_INSTR(done,op,rd,ra,rb,rm) 		\
     ((done) | (op) |					\
@@ -133,3 +134,9 @@
      (((ra) & OP_R_MASK) << OP_RA_SHIFT) |		\
      (((rb) & OP_R_MASK) << OP_RB_SHIFT) |		\
      (((rm) & OP_R_MASK) << OP_RM_SHIFT))
+
+#define	LOFN_INSTR2(done,op,rd,ra,len)			\
+    ((done) | (op) |					\
+     (((rd) & OP_R_MASK) << OP_RD_SHIFT) |		\
+     (((ra) & OP_R_MASK) << OP_RA_SHIFT) |		\
+     ((len) & OP_LEN_MASK))
