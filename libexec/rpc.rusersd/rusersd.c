@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.12 2003/01/20 19:51:36 deraadt Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.13 2003/07/05 17:02:37 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusersd.c,v 1.12 2003/01/20 19:51:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusersd.c,v 1.13 2003/07/05 17:02:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ extern void rusers_service(struct svc_req *, SVCXPRT *);
 int from_inetd = 1;
 int utmp_fd;
 
-void
+static void
 cleanup(int signo)
 {
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);	/* XXX signal races */

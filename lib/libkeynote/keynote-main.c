@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-main.c,v 1.8 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: keynote-main.c,v 1.9 2003/07/05 17:01:49 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -44,8 +44,10 @@
 
 #include "header.h"
 
+void	mainusage(void);
+
 void
-mainusage()
+mainusage(void)
 {
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, "\tsign ...\n");

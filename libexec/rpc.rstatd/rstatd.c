@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.14 2003/01/20 19:51:36 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.15 2003/07/05 17:02:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.14 2003/01/20 19:51:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.15 2003/07/05 17:02:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,14 +63,14 @@ int closedown = 20;	/* how long to wait before going dormant */
 
 volatile sig_atomic_t gotsig;
 
-void
+static void
 getsig(int signo)
 {
 	gotsig = 1;
 }
 
 
-void
+static void
 cleanup(void)
 {
 	(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);	/* XXX signal races */

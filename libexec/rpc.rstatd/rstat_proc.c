@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.22 2002/06/28 22:40:33 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.23 2003/07/05 17:02:36 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.22 2002/06/28 22:40:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.23 2003/07/05 17:02:36 deraadt Exp $";
 #endif
 
 /*
@@ -99,7 +99,7 @@ static int stat_is_init = 0;
 #define FSCALE (1 << 8)
 #endif
 
-void
+static void
 stat_init(void)
 {
 	stat_is_init = 1;
@@ -275,6 +275,8 @@ setup(void)
 {
 	dkinit(0);
 }
+
+void	rstat_service(struct svc_req *, SVCXPRT *);
 
 void
 rstat_service(struct svc_req *rqstp, SVCXPRT *transp)

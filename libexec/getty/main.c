@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2003/06/25 21:11:10 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2003/07/05 17:02:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.26 2003/06/25 21:11:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.27 2003/07/05 17:02:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -145,7 +145,7 @@ interrupt(int signo)
 /*
  * Action to take when getty is running too long.
  */
-void
+static void
 timeoverrun(int signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;

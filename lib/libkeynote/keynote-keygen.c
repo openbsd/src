@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.18 2002/05/27 06:29:14 deraadt Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.19 2003/07/05 17:01:49 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -47,6 +47,8 @@
 #include "keynote.h"
 #include "assertion.h"
 #include "signature.h"
+
+void	keygenusage(void);
 
 void
 keygenusage(void)
