@@ -1,4 +1,6 @@
 ./sbin/fdisk
+./dev/scan0
+./dev/scan1
 ./usr/include/powerpc
 ./usr/include/readline
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4
