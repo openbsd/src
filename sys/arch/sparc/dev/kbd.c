@@ -261,11 +261,13 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
 	k->k_open = iopen;
 	k->k_close = iclose;
 
+#if defined(SUN4C) || defined(SUN4M)
 	if (cputyp != CPU_SUN4) {
 		cp = getpropstring(optionsnode, "keyboard-click?");
 		if (cp && strcmp(cp, "true") == 0)
 			k->k_state.kbd_click = 1;
 	}
+#endif /* SUN4C || SUN4M */
 }
 
 /*
@@ -326,6 +328,7 @@ kbd_reset(register struct kbd_state *ks)
 		break;
 	default:
 		printf("Unknown keyboard type %d\n", ks->kbd_id);
+		break;
 	}
 
 	ks->kbd_leds = 0;
@@ -677,6 +680,7 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 			int s;
 			char leds = *(char *)data;
 			struct tty *tp = kbd_softc.k_kbd;
+
 			s = spltty();
 			if (tp->t_outq.c_cc > 120)
 				(void) tsleep((caddr_t)&lbolt, TTIPRI,
@@ -694,7 +698,6 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 	case KIOCGLED:
 		*(char *)data = k->k_state.kbd_leds;
 		return (0);
-
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
 		return (0);
