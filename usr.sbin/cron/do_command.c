@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.11 2001/10/24 17:28:16 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.12 2002/01/09 00:51:00 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: do_command.c,v 1.11 2001/10/24 17:28:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.12 2002/01/09 00:51:00 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -65,8 +65,8 @@ static void
 child_process(entry *e, user *u) {
 	int stdin_pipe[2], stdout_pipe[2];
 	char *usernm;
-	char * volatile input_data, * volatile mailto;
-	volatile int children = 0;
+	char *input_data, *mailto;
+	int children = 0;
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd))
 
@@ -361,7 +361,7 @@ child_process(entry *e, user *u) {
 		int	ch = getc(in);
 
 		if (ch != EOF) {
-			FILE	* volatile mail;
+			FILE	*mail;
 			int	bytes = 1;
 			int	status = 0;
 
