@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.118 2003/06/02 18:42:56 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.119 2003/06/25 09:41:18 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -153,7 +153,8 @@ int		bridge_addrule(struct bridge_iflist *,
     struct ifbrlreq *, int out);
 int		bridge_flushrule(struct bridge_iflist *);
 int	bridge_brlconf(struct bridge_softc *, struct ifbrlconf *);
-u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *);
+u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
+    struct mbuf *);
 #if NPF > 0
 struct mbuf *bridge_filter(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m);
@@ -766,6 +767,11 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
 		req.ifbr_dst = n->brl_dst;
+#if NPF > 0
+		req.ifbr_tagname[0] = '\0';
+		if (n->brl_tag)
+			pf_tag2tagname(n->brl_tag, req.ifbr_tagname);
+#endif
 		error = copyout((caddr_t)&req,
 		    (caddr_t)(bc->ifbrl_buf + (i * sizeof(req))), sizeof(req));
 		if (error)
@@ -783,6 +789,11 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
 		req.ifbr_dst = n->brl_dst;
+#if NPF > 0
+		req.ifbr_tagname[0] = '\0';
+		if (n->brl_tag)
+			pf_tag2tagname(n->brl_tag, req.ifbr_tagname);
+#endif
 		error = copyout((caddr_t)&req,
 		    (caddr_t)(bc->ifbrl_buf + (i * sizeof(req))), sizeof(req));
 		if (error)
@@ -1153,7 +1164,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 		return;
 	}
 
-	if (bridge_filterrule(&ifl->bif_brlin, &eh) == BRL_ACTION_BLOCK) {
+	if (bridge_filterrule(&ifl->bif_brlin, &eh, m) == BRL_ACTION_BLOCK) {
 		m_freem(m);
 		return;
 	}
@@ -1196,7 +1207,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	if (bridge_filterrule(&ifl->bif_brlout, &eh) == BRL_ACTION_BLOCK) {
+	if (bridge_filterrule(&ifl->bif_brlout, &eh, m) == BRL_ACTION_BLOCK) {
 		m_freem(m);
 		return;
 	}
@@ -1410,7 +1421,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		    bridge_blocknonip(eh, m))
 			continue;
 
-		if (bridge_filterrule(&p->bif_brlout, eh) == BRL_ACTION_BLOCK)
+		if (bridge_filterrule(&p->bif_brlout, eh, m) == BRL_ACTION_BLOCK)
 			continue;
 
 		/* If last one, reuse the passed-in mbuf */
@@ -1984,7 +1995,7 @@ bridge_blocknonip(struct ether_header *eh, struct mbuf *m)
 }
 
 u_int8_t
-bridge_filterrule(struct brl_head *h, struct ether_header *eh)
+bridge_filterrule(struct brl_head *h, struct ether_header *eh, struct mbuf *m)
 {
 	struct brl_node *n;
 	u_int8_t flags;
@@ -1992,26 +2003,30 @@ bridge_filterrule(struct brl_head *h, struct ether_header *eh)
 	SIMPLEQ_FOREACH(n, h, brl_next) {
 		flags = n->brl_flags & (BRL_FLAG_SRCVALID|BRL_FLAG_DSTVALID);
 		if (flags == 0)
-			return (n->brl_action);
+			goto return_action;
 		if (flags == (BRL_FLAG_SRCVALID|BRL_FLAG_DSTVALID)) {
 			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
 				continue;
 			if (bcmp(eh->ether_dhost, &n->brl_src, ETHER_ADDR_LEN))
 				continue;
-			return (n->brl_action);
+			goto return_action;
 		}
 		if (flags == BRL_FLAG_SRCVALID) {
 			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
 				continue;
-			return (n->brl_action);
+			goto return_action;
 		}
 		if (flags == BRL_FLAG_DSTVALID) {
 			if (bcmp(eh->ether_dhost, &n->brl_dst, ETHER_ADDR_LEN))
 				continue;
-			return (n->brl_action);
+			goto return_action;
 		}
 	}
 	return (BRL_ACTION_PASS);
+
+return_action:
+	pf_tag_packet(m, NULL, n->brl_tag);
+	return (n->brl_action);
 }
 
 int
@@ -2026,6 +2041,12 @@ bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 	bcopy(&req->ifbr_dst, &n->brl_dst, sizeof(struct ether_addr));
 	n->brl_action = req->ifbr_action;
 	n->brl_flags = req->ifbr_flags;
+#if NPF > 0
+	if (req->ifbr_tagname[0])
+		n->brl_tag = pf_tagname2tag(req->ifbr_tagname);
+	else
+		n->brl_tag = 0;
+#endif
 	if (out) {
 		n->brl_flags &= ~BRL_FLAG_IN;
 		n->brl_flags |= BRL_FLAG_OUT;
@@ -2046,11 +2067,17 @@ bridge_flushrule(struct bridge_iflist *bif)
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlin)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlin);
 		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlin, p, brl_next);
+#if NPF > 0
+		pf_tag_unref(p->brl_tag);
+#endif
 		free(p, M_DEVBUF);
 	}
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlout)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlout);
 		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlout, p, brl_next);
+#if NPF > 0
+		pf_tag_unref(p->brl_tag);
+#endif
 		free(p, M_DEVBUF);
 	}
 	return (0);

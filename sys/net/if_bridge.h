@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.23 2003/06/02 18:42:56 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.24 2003/06/25 09:41:18 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -33,6 +33,8 @@
 
 #ifndef _NET_IF_BRIDGE_H_
 #define _NET_IF_BRIDGE_H_
+
+#include <net/pfvar.h>
 
 /*
  * Bridge control request: add/delete member interfaces.
@@ -132,6 +134,7 @@ struct ifbrlreq {
 	u_int8_t		ifbr_flags;		/* flags */
 	struct ether_addr	ifbr_src;		/* source mac */
 	struct ether_addr	ifbr_dst;		/* destination mac */
+	char			ifbr_tagname[PF_TAG_NAME_SIZE];	/* pf tagname */
 };
 #define	BRL_ACTION_BLOCK	0x01			/* block frame */
 #define	BRL_ACTION_PASS		0x02			/* pass frame */
@@ -162,6 +165,7 @@ struct brl_node {
 	SIMPLEQ_ENTRY(brl_node)	brl_next;	/* next rule */
 	struct ether_addr	brl_src;	/* source mac address */
 	struct ether_addr	brl_dst;	/* destination mac address */
+	u_int16_t		brl_tag;	/* pf tag ID */
 	u_int8_t		brl_action;	/* what to do with match */
 	u_int8_t		brl_flags;	/* comparision flags */
 };
