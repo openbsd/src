@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.9 1997/09/16 13:40:14 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.10 1997/09/17 23:23:03 bri Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.9 1997/09/16 13:40:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.10 1997/09/17 23:23:03 bri Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ setthetime(p)
 
 	lt = localtime(&tval);
 
-	if (dot != NULL) {			/* .ss */
+	if (dot != NULL) {			/* .SS */
 		*dot++ = '\0';
 		if (strlen(dot) != 2)
 			badformat();
@@ -204,12 +204,12 @@ setthetime(p)
 		if (lt->tm_mday > 31)
 			badformat();
 		/* FALLTHROUGH */
-	case 4:					/* hh */
+	case 4:					/* HH */
 		lt->tm_hour = ATOI2(p);
 		if (lt->tm_hour > 23)
 			badformat();
 		/* FALLTHROUGH */
-	case 2:					/* mm */
+	case 2:					/* MM */
 		lt->tm_min = ATOI2(p);
 		if (lt->tm_min > 59)
 			badformat();
@@ -251,6 +251,6 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: date [-nu] [-d dst] [-r seconds] [-t west] [+format]\n");
-	(void)fprintf(stderr, "            [[[yy]yy[mm[dd[hh]]]]mm[.ss]]\n");
+	(void)fprintf(stderr, "            [[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n");
 	exit(1);
 }
