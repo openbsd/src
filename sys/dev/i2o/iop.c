@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.11 2001/06/26 20:05:21 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.12 2001/06/26 22:58:10 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -1075,7 +1075,7 @@ iop_hrt_get(struct iop_softc *sc)
 	    letoh16(hrthdr.numentries)));
 
 	size = sizeof(struct i2o_hrt) + 
-	    (htole32(hrthdr.numentries) - 1) * sizeof(struct i2o_hrt_entry);
+	    (letoh16(hrthdr.numentries) - 1) * sizeof(struct i2o_hrt_entry);
 	hrt = (struct i2o_hrt *)malloc(size, M_DEVBUF, M_NOWAIT);
 	if (!hrt)
 		return (ENOMEM);
