@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.11 1999/03/13 19:06:16 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.12 1999/06/23 21:55:28 cmetz Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -330,6 +330,17 @@ struct	ifconf {
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
 };
+
+struct if_nameindex {
+	unsigned int	if_index;
+	char 		*if_name;
+};
+
+unsigned int if_nametoindex __P((const char *));
+char 	*if_indextoname __P((unsigned int, char *));
+struct	if_nameindex *if_nameindex __P((void));
+
+#define if_freenameindex(x) free(x)
 
 #include <net/if_arp.h>
 

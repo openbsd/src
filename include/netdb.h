@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.5 1999/06/05 23:47:07 deraadt Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.6 1999/06/23 21:55:29 cmetz Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -141,6 +141,7 @@ struct	protoent {
 #define AI_PASSIVE	1	/* socket address is intended for bind() */
 #define AI_CANONNAME	2	/* request for canonical name */
 #define AI_NUMERICHOST	4	/* don't ever try nameservice */
+#define AI_EXT		8	/* enable non-portable extensions */
 
 #define NI_NUMERICHOST	1	/* return the host address, not the name */
 #define NI_NUMERICSERV	2	/* return the service address, not the name */

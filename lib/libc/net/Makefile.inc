@@ -1,19 +1,21 @@
-#	$OpenBSD: Makefile.inc,v 1.17 1998/11/20 11:18:43 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 1999/06/23 21:55:28 cmetz Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
 
 CFLAGS+=-DRESOLVSORT
 
-SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
-	getnetnamadr.c getproto.c getprotoent.c getprotoname.c getservbyname.c \
-	getservbyport.c getservent.c herror.c inet_addr.c inet_lnaof.c \
-	inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
-	inet_net_ntop.c inet_net_pton.c inet_ntoa.c inet_ntop.c \
-	inet_pton.c ipx_addr.c ipx_ntoa.c \
-	iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c \
-	res_comp.c res_data.c res_debug.c res_init.c res_mkquery.c res_query.c \
-	res_random.c res_send.c send.c sethostent.c ethers.c rcmdsh.c
+SRCS+=	__siocgifconf.c base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c \
+	gethostnamadr.c getnameinfo.c getnetbyaddr.c getnetbyname.c \
+	getnetent.c getnetnamadr.c getproto.c getprotoent.c getprotoname.c \
+	getservbyname.c getservbyport.c getservent.c herror.c \
+	if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
+	inet_lnaof.c inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
+	inet_net_ntop.c inet_net_pton.c inet_ntoa.c inet_ntop.c inet_pton.c \
+	ipx_addr.c ipx_ntoa.c iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c \
+	nsap_addr.c rcmd.c recv.c res_comp.c res_data.c res_debug.c \
+	res_init.c res_mkquery.c res_query.c res_random.c res_send.c send.c \
+	sethostent.c ethers.c rcmdsh.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
