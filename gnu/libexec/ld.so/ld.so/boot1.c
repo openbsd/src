@@ -692,13 +692,13 @@ void _dl_boot(void *a0, void *a1, void *a2, void *a3, void *a4)
       tpnt->init_flag |= INIT_FUNCS_CALLED;
       
       if(tpnt->dynamic_info[DT_INIT]) {
-	_dl_elf_init = (int (*)(void)) (tpnt->loadaddr + 
+	_dl_elf_init = (int (*)(void)) (tpnt->loadoffs +
 				    tpnt->dynamic_info[DT_INIT]);
 	(*_dl_elf_init)();
       }
       if(_dl_atexit && tpnt->dynamic_info[DT_FINI])
       {
-        (*_dl_atexit)(tpnt->loadaddr + tpnt->dynamic_info[DT_FINI]);
+        (*_dl_atexit)(tpnt->loadoffs + tpnt->dynamic_info[DT_FINI]);
       }
 #undef DL_DEBUG
 #ifdef DL_DEBUG
