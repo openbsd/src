@@ -860,7 +860,11 @@ oldw(fmt, va_alist)
         va_dcl
 #endif
 {
+	char realm[REALM_SZ];
 	va_list ap;
+
+	if (krb_get_lrealm(realm, 1) != KSUCCESS)
+		return;
 #if __STDC__
 	va_start(ap, fmt);
 #else
