@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.93 2001/03/09 18:38:25 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.94 2001/03/09 19:09:12 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -147,6 +147,8 @@ union sockunion data_source;
 union sockunion data_dest;
 union sockunion his_addr;
 union sockunion pasv_addr;
+
+sigset_t allsigs;
 
 int	daemon_mode = 0;
 int	data;
@@ -299,7 +301,8 @@ main(argc, argv, envp)
 	FILE *fp;
 	struct hostent *hp;
 
-	tzset();	/* in case no timezone database in ~ftp */
+	tzset();		/* in case no timezone database in ~ftp */
+	sigfillset(&allsigs);	/* used to block signals while root */
 
 	while ((ch = getopt(argc, argv, argstr)) != -1) {
 		switch (ch) {
@@ -625,7 +628,8 @@ static void
 lostconn(signo)
 	int signo;
 {
-	/* XXX signal races */
+
+	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 	if (debug)
 		syslog(LOG_DEBUG, "lost connection");
 	dologout(1);
@@ -635,7 +639,8 @@ static void
 sigquit(signo)
 	int signo;
 {
-	/* XXX signal races */
+	
+	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 	syslog(LOG_ERR, "got signal %s", sys_signame[signo]);
 	dologout(1);
 }
@@ -827,8 +832,7 @@ checkuser(fname, name)
 static void
 end_login()
 {
-	sigset_t allsigs;
-	sigfillset (&allsigs);
+
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	(void) seteuid((uid_t)0);
 	if (logged_in) {
@@ -853,7 +857,6 @@ pass(passwd)
 	FILE *fp;
 	static char homedir[MAXPATHLEN];
 	char *dir, rootdir[MAXPATHLEN];
-	sigset_t allsigs;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -1015,7 +1018,6 @@ skip:
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
-	sigfillset(&allsigs);
 	sigprocmask(SIG_UNBLOCK, &allsigs, NULL);
 
 	/*
@@ -1240,11 +1242,9 @@ getdatasock(mode)
 	char *mode;
 {
 	int on = 1, s, t, tries;
-	sigset_t allsigs;
 
 	if (data >= 0)
 		return (fdopen(data, mode));
-	sigfillset(&allsigs);
 	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	(void) seteuid((uid_t)0);
 	s = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
@@ -1265,7 +1265,6 @@ getdatasock(mode)
 		sleep(tries);
 	}
 	(void) seteuid((uid_t)pw->pw_uid);
-	sigfillset(&allsigs);
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 
 #ifdef IP_TOS
@@ -1298,7 +1297,6 @@ bad:
 	/* Return the real value of errno (close may change it) */
 	t = errno;
 	(void) seteuid((uid_t)pw->pw_uid);
-	sigfillset (&allsigs);
 	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 	(void) close(s);
 	errno = t;
@@ -2079,12 +2077,10 @@ void
 dologout(status)
 	int status;
 {
-	sigset_t allsigs;
 
 	transflag = 0;
 
 	if (logged_in) {
-		sigfillset(&allsigs);
 		sigprocmask(SIG_BLOCK, &allsigs, NULL);
 		(void) seteuid((uid_t)0);
 		ftpdlogwtmp(ttyline, "", "");
