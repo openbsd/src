@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.119 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.120 2004/11/23 19:08:55 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ struct	timeval boottime;
 struct	timeval runtime;
 #endif
 int	ncpus =  1;
+__volatile int start_init_exec;		/* semaphore for start_init() */
 
 #if !defined(NO_PROPOLICE)
 long	__guard[8];
@@ -185,7 +186,6 @@ main(framep)
 	struct timeval rtv;
 	quad_t lim;
 	int s, i;
-	register_t rval[2];
 	extern struct pdevinit pdevinit[];
 	extern void scheduler_start(void);
 	extern void disk_init(void);
@@ -399,6 +399,34 @@ main(framep)
 	/* Start the scheduler */
 	scheduler_start();
 
+	/*
+	 * Create process 1 (init(8)).  We do this now, as Unix has
+	 * historically had init be process 1, and changing this would
+	 * probably upset a lot of people.
+	 *
+	 * Note that process 1 won't immediately exec init(8), but will
+	 * wait for us to inform it that the root file system has been
+	 * mounted.
+	 */
+	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, start_init, NULL, NULL,
+	    &initproc))
+		panic("fork init");
+
+	/*
+	 * Create any kernel threads who's creation was deferred because
+	 * initproc had not yet been created.
+	 */
+	kthread_run_deferred_queue();
+
+	/*
+	 * Now that device driver threads have been created, wait for
+	 * them to finish any deferred autoconfiguration.  Note we don't
+	 * need to lock this semaphore, since we haven't booted any
+	 * secondary processors, yet.
+	 */
+	while (config_pending)
+		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
+
 	dostartuphooks();
 
 	/* Configure root/swap devices */
@@ -419,6 +447,15 @@ main(framep)
 	p->p_fd->fd_rdir = NULL;
 
 	/*
+	 * Now that root is mounted, we can fixup initproc's CWD
+	 * info.  All other processes are kthreads, which merely
+	 * share proc0's CWD info.
+	 */
+	initproc->p_fd->fd_cdir = rootvnode;
+	VREF(initproc->p_fd->fd_cdir);
+	initproc->p_fd->fd_rdir = NULL;
+
+	/*
 	 * Now can look at time, having had a chance to verify the time
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
@@ -428,48 +465,44 @@ main(framep)
 #else
 	boottime = mono_time = time;	
 #endif
-	p->p_stats->p_start = boottime;	
-#ifdef __HAVE_CPUINFO
-	microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
-#else
+#ifndef __HAVE_CPUINFO
 	microuptime(&runtime);
 #endif
-	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	LIST_FOREACH(p, &allproc, p_list) {
+		p->p_stats->p_start = boottime;
+#ifdef __HAVE_CPUINFO
+		microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
+#endif
+		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	}
 
 	uvm_swap_init();
 
-	/* Create process 1 (init(8)). */
-	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, start_init, NULL, rval))
-		panic("fork init");
-
-	/* Create process 2, the pageout daemon kernel thread. */
+	/* Create the pageout daemon kernel thread. */
 	if (kthread_create(uvm_pageout, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
-	/* Create process 3, the reaper daemon kernel thread. */
+	/* Create the reaper daemon kernel thread. */
 	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
-	/* Create process 4, the cleaner daemon kernel thread. */
+	/* Create the cleaner daemon kernel thread. */
 	if (kthread_create(start_cleaner, NULL, NULL, "cleaner"))
 		panic("fork cleaner");
 
-	/* Create process 5, the update daemon kernel thread. */
+	/* Create the update daemon kernel thread. */
 	if (kthread_create(start_update, NULL, NULL, "update"))
 		panic("fork update");
 
-	/* Create process 6, the aiodone daemon kernel thread. */ 
+	/* Create the aiodone daemon kernel thread. */ 
 	if (kthread_create(uvm_aiodone_daemon, NULL, NULL, "aiodoned"))
 		panic("fork aiodoned");
 
 #ifdef CRYPTO
-	/* Create process 7, the crypto kernel thread. */
+	/* Create the crypto kernel thread. */
 	if (kthread_create(start_crypto, NULL, NULL, "crypto"))
 		panic("crypto thread");
 #endif /* CRYPTO */
-
-	/* Create any other deferred kernel threads. */
-	kthread_run_deferred_queue();
 
 	microtime(&rtv);
 	srandom((u_long)(rtv.tv_sec ^ rtv.tv_usec));
@@ -480,6 +513,12 @@ main(framep)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
 #endif
+
+	/*
+	 * Okay, now we can let init(8) exec!  It's off to userland!
+	 */
+	start_init_exec = 1;
+	wakeup((void *)&start_init_exec);
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -535,11 +574,16 @@ start_init(arg)
 	char flags[4], *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1 = NULL;
 
-	initproc = p;
-
 	/*
 	 * Now in process 1.
 	 */
+
+	/*
+	 * Wait for main() to tell us that it's safe to exec.
+	 */
+	while (start_init_exec == 0)
+		(void) tsleep((void *)&start_init_exec, PWAIT, "initexec", 0);
+
 	check_console(p);
 
 	/*

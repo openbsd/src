@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.22 2004/05/04 16:59:32 grange Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.23 2004/11/23 19:08:55 miod Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@ kthread_create(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
 {
 	struct proc *p2;
-	register_t rv[2];
 	int error;
 	va_list ap;
 
@@ -74,12 +73,10 @@ kthread_create(void (*func)(void *), void *arg,
 	 * descriptors and don't leave the exit status around for the
 	 * parent to wait for.
 	 */
-	error = fork1(&proc0, 0,
-	    FORK_SHAREVM|FORK_NOZOMBIE|FORK_SIGHAND, NULL, 0, func, arg, rv);
+	error = fork1(&proc0, 0, FORK_SHAREVM |FORK_NOZOMBIE |FORK_SIGHAND,
+	    NULL, 0, func, arg, NULL, &p2);
 	if (error)
 		return (error);
-
-	p2 = pfind(rv[0]);
 
 	/*
 	 * Mark it as a system process and not a candidate for

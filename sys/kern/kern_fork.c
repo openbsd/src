@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.72 2004/08/06 22:31:30 mickey Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.73 2004/11/23 19:08:55 miod Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -75,7 +75,8 @@ int pidtaken(pid_t);
 int
 sys_fork(struct proc *p, void *v, register_t *retval)
 {
-	return (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, NULL, NULL, retval));
+	return (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, NULL,
+	    NULL, retval, NULL));
 }
 
 /*ARGSUSED*/
@@ -83,7 +84,7 @@ int
 sys_vfork(struct proc *p, void *v, register_t *retval)
 {
 	return (fork1(p, SIGCHLD, FORK_VFORK|FORK_PPWAIT, NULL, 0, NULL,
-	    NULL, retval));
+	    NULL, retval, NULL));
 }
 
 int
@@ -121,7 +122,7 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 	if (rforkflags & RFMEM)
 		flags |= FORK_SHAREVM;
 
-	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval));
+	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
 }
 
 /* print the 'table full' message once per 10 seconds */
@@ -129,7 +130,8 @@ struct timeval fork_tfmrate = { 10, 0 };
 
 int
 fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
-    void (*func)(void *), void *arg, register_t *retval)
+    void (*func)(void *), void *arg, register_t *retval,
+    struct proc **rnewprocp)
 {
 	struct proc *p2;
 	uid_t uid;
@@ -354,6 +356,14 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 */
 	PRELE(p1);
 
+	/*
+	 * Notify any interested parties about the new process.
+	 */
+	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
+
+	/*
+	 * Update stats now that we know the fork was successfull.
+	 */
 	uvmexp.forks++;
 	if (flags & FORK_PPWAIT)
 		uvmexp.forks_ppwait++;
@@ -361,9 +371,10 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		uvmexp.forks_sharevm++;
 
 	/*
-	 * tell any interested parties about the new process
+	 * Pass a pointer to the new process to the caller.
 	 */
-	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
+	if (rnewprocp != NULL)
+		*rnewprocp = p2;
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
