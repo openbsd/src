@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.39 2001/08/21 06:48:55 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.40 2001/09/24 16:22:08 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -368,6 +368,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			}
 
 			/* Cached entry is good. */
+			*error = 0;
 			return ipsp_spd_inp(m, af, hlen, error, direction,
 			    tdbp, inp, ipo);
 
