@@ -2,6 +2,7 @@
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
+NROFF?=		nroff
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
