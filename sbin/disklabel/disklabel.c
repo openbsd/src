@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.57 1999/01/12 04:48:25 aaron Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.58 1999/03/01 01:50:45 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.57 1999/01/12 04:48:25 aaron Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.58 1999/03/01 01:50:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ enum {
 	UNSPEC, EDIT, EDITOR, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
 } op = UNSPEC;
 
-int	pflag;
+int	dflag;
 int	rflag;
 int	tflag;
 int	nwflag;
@@ -135,6 +135,7 @@ char	*skip __P((char *));
 char	*word __P((char *));
 int	getasciilabel __P((FILE *, struct disklabel *));
 int	checklabel __P((struct disklabel *));
+int	cmplabel __P((struct disklabel *, struct disklabel *));
 void	setbootflag __P((struct disklabel *));
 void	usage __P((void));
 u_short	dkcksum __P((struct disklabel *));
@@ -148,7 +149,7 @@ main(argc, argv)
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BENRWb:enprs:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "BENRWb:denrs:tvw")) != -1)
 		switch (ch) {
 #if NUMBOOT > 0
 		case 'B':
@@ -163,11 +164,6 @@ main(argc, argv)
 			break;
 #endif
 #endif
-		case 'E':
-			if (op != UNSPEC)
-				usage();
-			op = EDITOR;
-			break;
 		case 'N':
 			if (op != UNSPEC)
 				usage();
@@ -185,13 +181,18 @@ main(argc, argv)
 			writeable = 1;
 			op = SETWRITEABLE;
 			break;
+		case 'd':
+			++dflag;
+			break;
 		case 'e':
 			if (op != UNSPEC)
 				usage();
 			op = EDIT;
 			break;
-		case 'p':
-			++pflag;
+		case 'E':
+			if (op != UNSPEC)
+				usage();
+			op = EDITOR;
 			break;
 		case 'r':
 			++rflag;
@@ -231,7 +232,7 @@ main(argc, argv)
 		op = READ;
 #endif
 
-	if (argc < 1)
+	if (argc < 1 || (rflag && dflag))
 		usage();
 
 	dkname = argv[0];
@@ -399,7 +400,6 @@ writelabel(f, boot, lp)
 #endif
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
-	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
 #ifdef DOSLABEL
@@ -716,7 +716,7 @@ readlabel(f)
 		}
 		warnx(msg);
 		return(NULL);
-	} else if (pflag) {
+	} else if (dflag) {
 		lp = &lab;
 		if (ioctl(f, DIOCGPDINFO, lp) < 0)
 			err(4, "ioctl DIOCGPDINFO");
@@ -1151,6 +1151,12 @@ edit(lp, f)
 		}
 		memset(&label, 0, sizeof(label));
 		if (getasciilabel(fp, &label)) {
+			if (cmplabel(lp, &label) == 0) {
+				puts("No changes.");
+				fclose(fp);
+				(void) unlink(tmpfil);
+				return (0);
+			}
 			*lp = label;
 			if (writelabel(f, bootarea, lp) == 0) {
 				fclose(fp);
@@ -1684,6 +1690,24 @@ setbootflag(lp)
 }
 #endif
 
+int
+cmplabel(lp1, lp2)
+	struct disklabel *lp1;
+	struct disklabel *lp2;
+{
+	struct disklabel lab1 = *lp1;
+	struct disklabel lab2 = *lp2;
+
+	/* We don't compare these fields */
+	lab1.d_magic = lab2.d_magic;
+	lab1.d_magic2 = lab2.d_magic2;
+	lab1.d_checksum = lab2.d_checksum;
+	lab1.d_bbsize = lab2.d_bbsize;
+	lab1.d_sbsize = lab2.d_sbsize;
+
+	return (memcmp(&lab1, &lab2, sizeof(struct disklabel)));
+}
+
 void
 usage()
 {
@@ -1699,13 +1723,13 @@ usage()
 
 	fprintf(stderr, "usage:\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r] [-t] disk%s         (read)\n",
+	    "  disklabel [-nv] [-r|-d] [-t] disk%s         (read)\n",
 	    blank);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r] -e disk%s           (edit)\n",
+	    "  disklabel [-nv] [-r|-d] -e disk%s           (edit)\n",
 	    blank);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r] -E disk%s           (simple editor)\n",
+	    "  disklabel [-nv] [-r|-d] -E disk%s           (simple editor)\n",
 	    blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",

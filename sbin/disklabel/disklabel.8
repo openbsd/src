@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.23 1998/12/15 01:20:28 aaron Exp $
+.\"	$OpenBSD: disklabel.8,v 1.24 1999/03/01 01:50:45 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -45,39 +45,46 @@
 .Nd read and write disk pack label
 .Sh SYNOPSIS
 .Nm disklabel
-.Op Fl r
 .Op Fl n
+.Op Fl d Li \&| Fl r
 .Op Fl t
+.Op Fl v
 .Ar disk
 .Nm disklabel
 .Fl w
-.Op Fl r
 .Op Fl n
+.Op Fl d Li \&| Fl r
+.Op Fl v
 .Ar disk Ar disktype
 .Oo Ar packid Oc
 .Nm disklabel
 .Fl e
-.Op Fl r
 .Op Fl n
+.Op Fl d Li \&| Fl r
+.Op Fl v
 .Ar disk
 .Nm disklabel
 .Fl E
-.Op Fl r
 .Op Fl n
+.Op Fl d Li \&| Fl r
+.Op Fl v
 .Ar disk
 .Nm disklabel
 .Fl R
 .Op Fl r
 .Op Fl n
+.Op Fl v
 .Ar disk Ar protofile
 .Nm disklabel
 .Op Fl NW
 .Op Fl n
+.Op Fl v
 .Ar disk
 .sp
 .Nm disklabel
 .Fl B
 .Op Fl n
+.Op Fl v
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -88,6 +95,7 @@
 .Fl w
 .Fl B
 .Op Fl n
+.Op Fl v
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -98,6 +106,7 @@
 .Fl R
 .Fl B
 .Op Fl n
+.Op Fl v
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -134,6 +143,25 @@ These variants are described later.
 In all cases you can specify
 .Fl n
 to operate in no change mode to avoid committing any permanent changes.
+The
+.Fl v
+flag can be used to make
+.Nm
+be more verbose about what it is doing.
+.Pp
+When reading or editing a label, you may also specify the
+.Fl d
+option to use the
+.Em default
+label.  This ignores any existing
+.Ox
+partitions on the disk.  Note that this option will only work for
+disks that are capable of reporting their geometry, such as SCSI,
+IDE, and ESDI.  Also note that the
+.Fl d
+flag may not be used in conjuction with the
+.Fl r
+flag.
 .Pp
 The first form of the command (read) is used to examine the label on the named
 disk drive (e.g. sd0 or

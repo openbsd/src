@@ -1,7 +1,7 @@
-/*	$OpenBSD: editor.c,v 1.45 1998/10/11 20:49:17 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.46 1999/03/01 01:50:45 millert Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.45 1998/10/11 20:49:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.46 1999/03/01 01:50:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
