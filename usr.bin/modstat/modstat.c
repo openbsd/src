@@ -1,4 +1,4 @@
-/* *	$OpenBSD: modstat.c,v 1.4 1996/07/02 06:37:57 deraadt Exp $*/
+/* *	$OpenBSD: modstat.c,v 1.5 1996/08/05 11:11:41 mickey Exp $*/
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
@@ -94,7 +94,7 @@ dostat(devfd, modnum, modname)
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf("%-7s %3d %3d %08x %04x %8x %3d s\n",
+	printf("%-7s %3d %3d %08x %04x %8x %3d %s\n",
 	    type_names[sbuf.type],
 	    sbuf.id,		/* module id */
 	    sbuf.offset,	/* offset into modtype struct */
@@ -159,7 +159,7 @@ main(argc, argv)
 
 	atexit(cleanup);
 
-	printf("Type    Id  Off Loadaddr Size Info     Rev Module Name\n");
+	printf("Type     Id Off Loadaddr Size Info     Rev Module Name\n");
 
 	/*
 	 * Oneshot?
