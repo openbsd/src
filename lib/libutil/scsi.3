@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.3,v 1.1 1996/06/12 11:21:34 deraadt Exp $
+.\"	$OpenBSD: scsi.3,v 1.2 1999/03/10 21:25:28 pjanzen Exp $
 .\" Copyright (c) 1994 HD Associates (hd@world.std.com)
 .\" All rights reserved.
 .\"
@@ -333,7 +333,7 @@ returns the result of the ioctl call.
 This only works completely for the 1542C.  The host adapter code
 that sets up the residual amount of data transfer has to be added
 to each individual adapter.  This library is usable on the other
-host adapters, however, the SCSI driver pretends that the proper
+host adapters; however, the SCSI driver pretends that the proper
 amount of data is always transferred.  If you have an Adaptec 174x
 and can hack contact dufault@hda.com and you can have the code to
 calculate residual data for the 174x series to integrate and test.

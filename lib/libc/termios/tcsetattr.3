@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.4 1997/09/30 16:47:37 deraadt Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.5 1999/03/10 21:25:27 pjanzen Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -93,10 +93,10 @@ function.
 The input and output baud rates are found in the termios structure.
 The unsigned integer
 .Li speed_t
-is typdef'd in the include file
+is typedef'd in the include file
 .Aq Pa termios.h .
 The value of the integer corresponds directly to the baud rate being
-represented, however, the following symbolic values are defined.
+represented; however, the following symbolic values are also defined.
 .Bd -literal
 #define B0	0
 #define B50	50
@@ -202,7 +202,7 @@ by
 .Fa fd
 in the termios structure referenced by
 .Fa tp .
-This function is allowed from a background process, however, the terminal
+This function is allowed from a background process, although the terminal
 attributes may be subsequently changed by a foreground process.
 .Pp
 The

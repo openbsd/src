@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" $OpenBSD: chat.8,v 1.7 1999/03/01 06:09:51 aaron Exp $
+.\" $OpenBSD: chat.8,v 1.8 1999/03/10 21:25:31 pjanzen Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
@@ -136,7 +136,7 @@ received. For example, consider the following script:
 ogin:--ogin: ppp ssword: hello2u2
 .LP
 This would be a better script than the simple one used earlier. This would look
-for the same login: prompt, however, if one was not received, a single
+for the same login: prompt.  If one is not received, a single
 return sequence is sent and then it will look for login: again. Should line
 noise obscure the first login prompt then sending the empty line will
 usually generate a login prompt again.
@@ -242,7 +242,7 @@ modem's connect string and return the value to the chat user. The
 analysis of the report string logic occurs in conjunction with the
 other string processing such as looking for the expect string. The use
 of the same string for a report and abort sequence is probably not
-very useful, however, it is possible.
+very useful; however, it is possible.
 .LP
 The report strings to no change the completion code of the program.
 .LP
