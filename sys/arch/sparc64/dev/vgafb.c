@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.10 2002/03/27 01:15:12 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.11 2002/03/27 05:00:12 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -64,7 +64,7 @@ struct vgafb_softc {
 	bus_space_handle_t sc_mem_h, sc_io_h, sc_mmio_h;
 	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr, sc_rom_addr;
 	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size, sc_rom_size;
-	u_int32_t *sc_rom_ptr;
+	u_int8_t *sc_rom_ptr;
 	int sc_has_rom;
 	struct rcons sc_rcons;
 	struct raster sc_raster;
@@ -477,7 +477,8 @@ vgafb_rommap(sc, pa)
 	struct pci_attach_args *pa;
 {
 	bus_space_handle_t bh;
-	u_int32_t origaddr, address, mask, size, *romptr, *p, i;
+	u_int32_t origaddr, address, mask, size, i;
+	u_int8_t *romptr, *p;
 	int s;
 
 	s = splhigh();
@@ -501,8 +502,7 @@ vgafb_rommap(sc, pa)
 
 	size = PCI_ROMBAR_SIZE(mask);
 
-	if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE, address, size, 0,
-	    NULL, &bh)) {
+	if (bus_space_map(pa->pa_memt, address, size, 0, &bh)) {
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
 		return (0);
 	}
@@ -517,15 +517,15 @@ vgafb_rommap(sc, pa)
 		return (0);
 	}
 
-	romptr = (u_int32_t *)malloc(size, M_DEVBUF, M_NOWAIT);
+	romptr = (u_int8_t *)malloc(size, M_DEVBUF, M_NOWAIT);
 	if (romptr == NULL) {
 		bus_space_unmap(pa->pa_memt, bh, size);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
 		return (0);
 	}
 
-	for (p = romptr, i = 0; i < size; i += 4, p++)
-		*p = bus_space_read_4(pa->pa_memt, bh, i);
+	for (p = romptr, i = 0; i < size; i++)
+		*p++ = bus_space_read_1(pa->pa_memt, bh, i);
 
 	sc->sc_rom_ptr = romptr;
 	sc->sc_rom_addr = address;
