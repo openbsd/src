@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2003/02/21 09:04:09 markus Exp $
+#	$OpenBSD: Makefile,v 1.40 2003/04/09 08:24:24 hin Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -23,13 +23,5 @@ install:
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+= -DKRB5 -I${DESTDIR}/usr/include/kerberosV
 .endif # KERBEROS5
-
-.if (${KERBEROS:L} == "yes")
-CFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
-.if (${AFS:L} == "yes")
-CFLAGS+= -DAFS
-SRCS+=  radix.c
-.endif # AFS
-.endif # KERBEROS
 
 .include <bsd.lib.mk>
