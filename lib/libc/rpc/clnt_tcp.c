@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.16 1998/05/19 06:58:51 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.17 2000/08/24 17:03:15 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -117,7 +117,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	u_int recvsz;
 {
 	CLIENT *h;
-	register struct ct_data *ct;
+	register struct ct_data *ct = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 

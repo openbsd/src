@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.15 1998/03/01 10:05:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.16 2000/08/24 17:03:15 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -113,7 +113,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	u_int recvsz;
 {
 	CLIENT *cl;
-	register struct cu_data *cu;
+	register struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 
