@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.h,v 1.11 2001/06/13 21:33:41 brian Exp $
+ * $OpenBSD: ipcp.h,v 1.12 2001/07/28 11:33:05 brian Exp $
  */
 
 #define	IPCP_MAXCODE	CODE_CODEREJ
@@ -108,6 +108,7 @@ struct ipcp {
 
   unsigned heis1172 : 1;		/* True if he is speaking rfc1172 */
 
+  unsigned peer_req : 1;		/* Any TY_IPADDR REQs from the peer ? */
   struct in_addr peer_ip;		/* IP address he's willing to use */
   u_int32_t peer_compproto;		/* VJ params he's willing to use */
 
