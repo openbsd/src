@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.20 2004/02/07 05:26:21 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.21 2004/02/08 09:18:45 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -638,6 +638,10 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 	}
 
 	switch (action) {
+	case PFSYNC_ACT_CLR:
+		len = sizeof(struct pfsync_header) +
+		    sizeof(struct pfsync_state_clr);
+		break;
 	case PFSYNC_ACT_UPD_C:
 		len = (sc->sc_maxcount * sizeof(struct pfsync_state_upd)) +
 		    sizeof(struct pfsync_header);
@@ -646,13 +650,9 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 		len = (sc->sc_maxcount * sizeof(struct pfsync_state_del)) +
 		    sizeof(struct pfsync_header);
 		break;
-	case PFSYNC_ACT_CLR:
-		len = sizeof(struct pfsync_header) +
-		    sizeof(struct pfsync_state_clr);
-		break;
 	case PFSYNC_ACT_UREQ:
-		len = sizeof(struct pfsync_header) +
-		    sizeof(struct pfsync_state_upd_req);
+		len = (sc->sc_maxcount * sizeof(struct pfsync_state_upd_req)) +
+		    sizeof(struct pfsync_header);
 		break;
 	default:
 		len = (sc->sc_maxcount * sizeof(struct pfsync_state)) +
@@ -895,7 +895,7 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 		h = mtod(sc->sc_mbuf, struct pfsync_header *);
 		if (h->action != PFSYNC_ACT_UREQ) {
 			pfsync_sendout(sc);
-			if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UPD,
+			if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
 			    (void *)&sc->sc_statep.s)) == NULL) {
 				splx(s);
 				return (ENOMEM);
@@ -960,9 +960,13 @@ pfsync_sendout(sc)
 	struct pfsync_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct mbuf *m = sc->sc_mbuf;
+	struct mbuf *m;
 
 	timeout_del(&sc->sc_tmo);
+
+	if (sc->sc_mbuf == NULL)
+		return (0);
+	m = sc->sc_mbuf;
 	sc->sc_mbuf = NULL;
 	sc->sc_statep.s = NULL;
 
@@ -970,7 +974,6 @@ pfsync_sendout(sc)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
-
 
 	if (sc->sc_mbuf_net) {
 		m_freem(m);
