@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.5 1996/05/05 12:23:19 mickey Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.6 1996/05/10 13:58:44 mickey Exp $	*/
 /*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
 
 /* 
@@ -33,14 +33,15 @@
 /*
  * This module can handle multiple symbol tables
  */
-typedef struct {
+typedef struct db_symtab {
+	TAILQ_ENTRY(db_symtab)	list;	/* all the tabs */
 	char		*name;		/* symtab name */
 	char		*start;		/* symtab location */
 	char		*end;
 	char		*private;	/* optional machdep pointer */
-} db_symtab_t;
+}	*db_symtab_t;
 
-extern db_symtab_t	*db_last_symtab; /* where last symbol was found */
+extern db_symtab_t	db_last_symtab; /* where last symbol was found */
 extern size_t		db_nsymtabs;	/* number of symbol tables */
 
 /*
@@ -71,12 +72,13 @@ extern boolean_t	db_qualify_ambiguous_names;
 /*
  * Functions exported by the symtable module
  */
+void db_sym_init __P((void));
 int db_add_symbol_table __P((char *, char *, char *, char *));
 					/* extend the list of symbol tables */
 
 void db_del_symbol_table __P((char *));
 					/* remove a symbol table from list */
-db_symtab_t *db_istab __P((size_t));
+db_symtab_t db_istab __P((size_t));
 
 boolean_t db_eqname __P((char *, char *, int));
 					/* strcmp, modulo leading char */

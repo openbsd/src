@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.7 1996/05/05 12:23:06 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.8 1996/05/10 13:58:43 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -139,14 +139,14 @@ X_db_sym_init(symtab, esymtab, name)
 
 size_t
 X_db_nsyms(stab)
-	db_symtab_t	*stab;
+	db_symtab_t	stab;
 {
 	return (struct nlist *)stab->end - (struct nlist *)stab->start;
 }
 
 db_sym_t
 X_db_isym(stab, i)
-	db_symtab_t	*stab;
+	db_symtab_t	stab;
 	size_t		i;
 {
 	if (i >= X_db_nsyms(stab))
@@ -157,7 +157,7 @@ X_db_isym(stab, i)
 
 db_sym_t
 X_db_lookup(stab, symstr)
-	db_symtab_t	*stab;
+	db_symtab_t	stab;
 	char *		symstr;
 {
 	register struct nlist *sp, *ep;
@@ -180,7 +180,7 @@ X_db_lookup(stab, symstr)
 
 db_sym_t
 X_db_search_symbol(symtab, off, strategy, diffp)
-	db_symtab_t *	symtab;
+	db_symtab_t	symtab;
 	register
 	db_addr_t	off;
 	db_strategy_t	strategy;
@@ -249,7 +249,7 @@ X_db_symbol_values(sym, namep, valuep)
 
 boolean_t
 X_db_line_at_pc(symtab, cursym, filename, linenum, off)
-	db_symtab_t *	symtab;
+	db_symtab_t	symtab;
 	db_sym_t	cursym;
 	char 		**filename;
 	int 		*linenum;
@@ -313,7 +313,7 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
 
 boolean_t
 X_db_sym_numargs(symtab, cursym, nargp, argnamep)
-	db_symtab_t *	symtab;
+	db_symtab_t	symtab;
 	db_sym_t	cursym;
 	int		*nargp;
 	char		**argnamep;
@@ -360,10 +360,14 @@ ddb_init()
 	extern char	*esym;
 	extern int	end;
 
+	db_sym_init();
+
 	if (esym > (char *)&end) {
 	    X_db_sym_init((int *)&end, esym, "bsd");
 	}
 #else
+	db_sym_init();
+
 	X_db_sym_init (db_symtab, 0, "bsd");
 #endif
 }

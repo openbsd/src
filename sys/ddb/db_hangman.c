@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.2 1996/05/07 12:34:37 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.3 1996/05/10 13:58:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -67,7 +67,7 @@ db_randomsym(lenp)
 {
 	register char	*p, *q;
 		/* choose random symtab */
-	register db_symtab_t	*stab = db_istab(db_random(db_nsymtabs));
+	register db_symtab_t	stab = db_istab(db_random(db_nsymtabs));
 
 		/* choose random symbol from the table */
 	q = db_qualify(X_db_isym(stab, db_random(X_db_nsyms(stab))),stab->name);
