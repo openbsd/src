@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2001/04/09 20:40:51 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.18 2001/05/31 21:05:00 miod Exp $
 
 machine		mvme88k 
 
@@ -29,7 +29,7 @@ pcctwo0 at mainbus0 addr 0xfff00000
 syscon0 at mainbus0 addr 0xfff00000
 busswitch0 at mainbus0 addr 0xfff00000
 
-# ----------------------------- busswicth devices -----------------------
+# ----------------------------- busswitch devices -----------------------
 pcctwo0 at busswitch0 offset 0x42000
 
 # ------------------------------ pcctwo devices -------------------------
@@ -70,7 +70,7 @@ vs3	at vmes0 addr 0xffff5800 ipl 2 vec 0x86 len 0x800
 vs4	at vmes0 addr 0xffff7000 ipl 2 vec 0x88 len 0x800
 vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 
-# ------------------------------ svme0 devices -------------------------
+# ------------------------------- vs0 devices --------------------------
 scsibus* at vs?
 
 # ------------------------------ ssh0 devices --------------------------
@@ -82,5 +82,4 @@ st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 
 # ------------------------------ pseudo devices ------------------------
-#pseudo-device	raid		4
 pseudo-device	rd 2

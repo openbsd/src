@@ -1,4 +1,4 @@
-#	$OpenBSD: M188,v 1.6 2001/04/09 20:40:51 deraadt Exp $
+#	$OpenBSD: M188,v 1.7 2001/05/31 21:05:00 miod Exp $
 
 machine mvme88k
 
@@ -49,10 +49,10 @@ vs3	at vmes0 addr 0xffff5800 ipl 2 len 0x800
 vs4	at vmes0 addr 0xffff7000 ipl 2 len 0x800
 vs5	at vmes0 addr 0xffff7800 ipl 2 len 0x800
 
-# ------------------------------ svme0 devices -------------------------
+# ------------------------------- vs0 devices --------------------------
 scsibus* at vs?
 
-# ------------------------------ scsibus devices ----------------------
+# ------------------------------ scsibus devices -----------------------
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
