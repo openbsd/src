@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.175 2000/09/06 01:51:16 rahnds Exp $
+#	$OpenBSD: files,v 1.176 2000/09/15 13:44:23 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -89,6 +89,10 @@ file	dev/ic/bha.c		bha
 # ICP Vortex GDT RAID controllers
 device	gdt: scsi
 file	dev/ic/gdt_common.c	gdt
+
+# 3ware Escalade RAID controllers
+device	twe: scsi
+file	dev/ic/twe.c		twe
 
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
