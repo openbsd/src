@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.31 2004/05/23 06:47:49 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.32 2004/05/27 07:41:58 otto Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1290,8 +1290,8 @@ int
 bridge_rulefile(int s, char *brdg, char *fname)
 {
 	FILE *f;
-	char *str, *argv[MAXRULEWORDS], buf[1024], xbuf[1024];
-	int ln = 1, argc = 0, err = 0, xerr;
+	char *str, *argv[MAXRULEWORDS], buf[1024];
+	int ln = 0, argc = 0, err = 0, xerr;
 
 	f = fopen(fname, "r");
 	if (f == NULL) {
@@ -1299,29 +1299,23 @@ bridge_rulefile(int s, char *brdg, char *fname)
 		return (EX_IOERR);
 	}
 
-	while (1) {
-		fgets(buf, sizeof(buf), f);
-		if (feof(f))
-			break;
+	while (fgets(buf, sizeof(buf), f) != NULL) {
 		ln++;
 		if (buf[0] == '#' || buf[0] == '\n')
 			continue;
 
 		argc = 0;
 		str = strtok(buf, "\n\t\r ");
-		strlcpy(xbuf, buf, sizeof(xbuf));
-		while (str != NULL) {
+		while (str != NULL && argc < MAXRULEWORDS) {
 			argv[argc++] = str;
-			if (argc > MAXRULEWORDS) {
-				fprintf(stderr, "invalid rule: %d: %s\n",
-				    ln, xbuf);
-				break;
-			}
 			str = strtok(NULL, "\n\t\r ");
 		}
 
-		if (argc > MAXRULEWORDS)
+		/* Rule is too long if there's more. */
+		if (str != NULL) {
+			fprintf(stderr, "invalid rule: %d: %s ...\n", ln, buf);
 			continue;
+		}
 
 		xerr = bridge_rule(s, brdg, argc, argv, ln);
 		if (xerr)
