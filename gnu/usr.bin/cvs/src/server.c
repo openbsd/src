@@ -2165,17 +2165,19 @@ do_cvs_command (command)
 	    FD_ZERO (&writefds);
 	    if (! buf_empty_p (&outbuf))
 	      FD_SET (STDOUT_FILENO, &writefds);
-	    if (stdout_pipe[0] >= 0 && buf_len (&outbuf) < 256*1024)
-	    {
-		FD_SET (stdout_pipe[0], &readfds);
-	    }
-	    if (stderr_pipe[0] >= 0)
-	    {
-		FD_SET (stderr_pipe[0], &readfds);
-	    }
-	    if (protocol_pipe[0] >= 0)
-	    {
-		FD_SET (protocol_pipe[0], &readfds);
+	    if ( buf_len (&outbuf) < 2*1024*1024) {
+		if (stdout_pipe[0] >= 0)
+		{
+		    FD_SET (stdout_pipe[0], &readfds);
+		}
+		if (stderr_pipe[0] >= 0)
+		{
+		    FD_SET (stderr_pipe[0], &readfds);
+		}
+		if (protocol_pipe[0] >= 0)
+		{
+		    FD_SET (protocol_pipe[0], &readfds);
+		}
 	    }
 
 	    do {
