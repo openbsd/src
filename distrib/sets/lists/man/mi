@@ -1682,6 +1682,7 @@
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
 ./usr/share/man/cat8/clri.0
+./usr/share/man/cat8/compat_aout.0
 ./usr/share/man/cat8/compat_bsdos.0
 ./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_hpux.0
