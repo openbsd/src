@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.65 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: dc.c,v 1.66 2004/04/15 08:34:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1917,9 +1917,8 @@ dc_newbuf(sc, i, m)
 			return (ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_sparemap,
-		    mtod(m_new, caddr_t), MCLBYTES, NULL,
-		    BUS_DMA_NOWAIT) != 0) {
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rx_sparemap,
+		    m_new, BUS_DMA_NOWAIT) != 0) {
 			printf("%s: rx load failed\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
@@ -2201,6 +2200,7 @@ dc_rxeof(sc)
 		/* No errors; receive the packet. */	
 		total_len -= ETHER_CRC_LEN;
 
+		m->m_pkthdr.rcvif = ifp;
 		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
 		    total_len + ETHER_ALIGN, 0, ifp, NULL);
 		dc_newbuf(sc, i, m);
