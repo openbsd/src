@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.5 1999/06/08 19:13:53 niklas Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.6 2001/01/26 17:36:41 weingart Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -117,10 +117,12 @@ ufsscan(fd, beg, end, flags)
 
 
 void
-usage()
+usage(code)
+	int code;
 {
-	fprintf(stderr, "usage: scan_ffs [-lsv] [-b begin] [-e end] <device>\n");
-	exit(1);
+	extern char *__progname;
+	(void)fprintf(stderr, "usage: %s [-lsv] [-b begin] [-e end] device\n", __progname);
+	exit(code);
 }
 
 
@@ -150,13 +152,14 @@ main(argc, argv)
 			flags |= FLAG_LABELS;
 			break;
 		default:
-			usage();
+			usage(1);
+			/* NOTREACHED */
 	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 1)
-		usage();
+		usage(1);
 
 	fd = opendev(argv[0], O_RDONLY, OPENDEV_PART, NULL);
 	if (fd < 0)
