@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.306 2000/09/01 02:06:33 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.307 2000/09/01 06:50:19 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -602,6 +602,7 @@
 #define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
 
+/* 3Ware products */
 #define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade Storage Controller */
 
 /* Aironet Products */
