@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.21 1997/06/11 06:47:24 denny Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.22 1997/06/11 10:17:04 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -629,13 +629,16 @@ wait_for_reply(sock, from, sent)
 	struct sockaddr_in *from;
 	struct timeval *sent;
 {
-	fd_set fds;
 	struct timeval now, wait;
-	int cc = 0;
+	int cc = 0, fdsn;
 	int fromlen = sizeof (*from);
+	fd_set *fdsp;
 
-	FD_ZERO(&fds);
-	FD_SET(sock, &fds);
+	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+		err(1, "malloc");
+	memset(fdsp, 0, fdsn);
+	FD_SET(sock, fdsp);
 	gettimeofday(&now, NULL);
 	wait.tv_sec = (sent->tv_sec + waittime) - now.tv_sec;
 	wait.tv_usec =  sent->tv_usec - now.tv_usec;
@@ -646,10 +649,11 @@ wait_for_reply(sock, from, sent)
 	if (wait.tv_sec < 0)
 		wait.tv_sec = wait.tv_usec = 0;
 
-	if (select(sock+1, &fds, (fd_set *)0, (fd_set *)0, &wait) > 0)
+	if (select(sock+1, fdsp, (fd_set *)0, (fd_set *)0, &wait) > 0)
 		cc=recvfrom(s, (char *)packet, sizeof(packet), 0,
 			    (struct sockaddr *)from, &fromlen);
 
+	free(fdsp);
 	return(cc);
 }
 
