@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.65 2003/12/05 13:17:37 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.66 2004/03/09 21:42:02 hshoexer Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -550,8 +550,9 @@ message_validate_hash (struct message *msg, struct payload *p)
 
   if (isakmp_sa == NULL)
     {
-       log_print ("message_validate_hash: invalid hash information");
-       return -1;
+      log_print ("message_validate_hash: invalid hash information");
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 1);
+      return -1;
     }
 
   isa = isakmp_sa->data;
@@ -559,14 +560,16 @@ message_validate_hash (struct message *msg, struct payload *p)
 
   if (hash == NULL)
     {
-       log_print ("message_validate_hash: invalid hash information");
-       return -1;
+      log_print ("message_validate_hash: invalid hash information");
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 1);
+      return -1;
     }
 
   /* If no SKEYID_a, we can not do anything (should not happen).  */
   if (!isa->skeyid_a)
     {
       log_print ("message_validate_hash: invalid hash information");
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 1);
       return -1;
     }
 
@@ -575,14 +578,18 @@ message_validate_hash (struct message *msg, struct payload *p)
 		isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
-    return -1;
+    {
+      message_free (msg);
+      return -1;
+    }
 
   comp_hash = (u_int8_t *)malloc (hash->hashsize);
   if (!comp_hash)
     {
       log_error ("message_validate_hash: malloc (%lu) failed",
-	        (unsigned long)hash->hashsize);
+	         (unsigned long)hash->hashsize);
       prf_free (prf);
+      message_free (msg);
       return -1;
     }
 
@@ -1256,6 +1263,7 @@ message_recv (struct message *msg)
 	{
 	  LOG_DBG ((LOG_MISC, 10,
 		    "message_recv: no isakmp_sa for encrypted message"));
+	  message_free (msg);
 	  return -1;
 	}
 
