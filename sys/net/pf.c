@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.180 2001/12/18 00:14:20 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.181 2001/12/31 16:46:39 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1017,9 +1017,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	int error = 0;
 	int s;
 
-	if (!(flags & FWRITE))
-		return (EACCES);
-
 	/* XXX keep in sync with switch() below */
 	if (securelevel > 1)
 		switch (cmd) {
@@ -1042,6 +1039,25 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		default:
 			return EPERM;
+		}
+
+	if (!(flags & FWRITE))
+		switch (cmd) {
+		case DIOCGETRULES:
+		case DIOCGETRULE:
+		case DIOCGETNATS:
+		case DIOCGETNAT:
+		case DIOCGETRDRS:
+		case DIOCGETRDR:
+		case DIOCGETSTATE:
+		case DIOCGETSTATUS:
+		case DIOCGETSTATES:
+		case DIOCGETTIMEOUT:
+		case DIOCGETBINATS:
+		case DIOCGETBINAT:
+			break;
+		default:
+			return (EACCES);
 		}
 
 	switch (cmd) {
