@@ -1,9 +1,0 @@
-This directory is intended to include all Mips common code used by several
-ports. This is mainly include files, common locore code, trap code, mmu
-code etc.
-
-Any code added here must be endian safe. Code with different ISA targets
-has to be well documented and preferbly generate error messages if compiled
-without the appropriate switches set.
-
-Questions can be directed to pefo@openbsd.org.
