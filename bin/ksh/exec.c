@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.19 1999/07/14 13:37:23 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.20 1999/07/14 15:05:27 millert Exp $	*/
 
 /*
  * execute command tree
@@ -1363,21 +1363,11 @@ iosetup(iop, tp)
 	  }
 	}
 	if (do_open) {
-		int nfd;
-
 		if (Flag(FRESTRICTED) && (flags & O_CREAT)) {
 			warningf(TRUE, "%s: restricted", cp);
 			return -1;
 		}
 		u = open(cp, flags, 0666);
-		if (u >= 0 && u < 3) {
-			/* Don't reuse stdin/stdout/stderr */
-			nfd = ksh_dupbase(u, 3);
-			if (nfd != -1) {
-				close(u);
-				u = nfd;
-			}
-		}
 #ifdef OS2
 		if (u < 0 && strcmp(cp, "/dev/null") == 0)
 			u = open("nul", flags, 0666);
@@ -1394,12 +1384,17 @@ iosetup(iop, tp)
 	}
 	/* Do not save if it has already been redirected (i.e. "cat >x >y"). */
 	if (e->savefd[iop->unit] == 0)
-		/* c_exec() assumes e->savefd[fd] set for any redirections.
-		 * Ask savefd() not to close iop->unit - allows error messages
-		 * to be seen if iop->unit is 2; also means we can't lose
-		 * the fd (eg, both dup2 below and dup2 in restfd() failing).
-		 */
-		e->savefd[iop->unit] = savefd(iop->unit, 1);
+		/* If these are the same, it means unit was previously closed */
+		if (u == iop->unit)
+			e->savefd[iop->unit] = -1;
+		else
+			/* c_exec() assumes e->savefd[fd] set for any
+			 * redirections.  Ask savefd() not to close iop->unit;
+			 * this allows error messages to be seen if iop->unit
+			 * is 2; also means we can't lose the fd (eg, both
+			 * dup2 below and dup2 in restfd() failing).
+			 */
+			e->savefd[iop->unit] = savefd(iop->unit, 1);
 
 	if (do_close)
 		close(iop->unit);
