@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2004/04/29 14:33:27 miod Exp $
+#	$OpenBSD: GENERIC,v 1.43 2004/05/07 18:12:55 miod Exp $
 
 machine		mvme88k m88k
 
@@ -38,7 +38,7 @@ clock0	at pcctwo0 ipl 5
 nvram0	at pcctwo0 offset 0xc0000
 vme0	at pcctwo0 offset 0x40000
 ie0	at pcctwo0 offset 0x46000 ipl 1
-ssh0	at pcctwo0 offset 0x47000 ipl 2
+osiop0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 cl1	at pcctwo0 offset 0x45200 ipl 3		# M8120 only
 #lptwo0	at pcctwo0 offset 0x45000 ipl 1
@@ -70,7 +70,7 @@ vs4	at vmes0 addr 0xffff7000 ipl 2
 vs5	at vmes0 addr 0xffff7800 ipl 2
 
 scsibus* at vs?
-scsibus* at ssh?
+scsibus* at osiop?
 
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?

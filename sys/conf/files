@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.295 2004/05/07 14:42:26 millert Exp $
+#	$OpenBSD: files,v 1.296 2004/05/07 18:13:00 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -184,7 +184,7 @@ file	dev/ic/siop.c			siop
 
 # Symbios/NCR 53c710 SCSI controllers
 device	osiop: scsi
-file	dev/ic/osiop.c			osiop & (osiop_gsc | osiop_eisa)
+file	dev/ic/osiop.c			osiop & (osiop_gsc | osiop_eisa | osiop_pcctwo)
 
 # Symbios/NCR 53c700 SCSI controllers
 device	oosiop: scsi

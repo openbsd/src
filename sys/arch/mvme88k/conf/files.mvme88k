@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.28 2004/05/07 18:10:26 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.29 2004/05/07 18:12:55 miod Exp $
 #
 maxpartitions 16
 
@@ -54,9 +54,8 @@ major { cd = 6 }
 major { rd = 7 }
 major { vnd = 8 }
 
-device ssh: scsi
-attach ssh at pcctwo
-file	arch/mvme88k/dev/ssh.c				ssh
+attach osiop at pcctwo with osiop_pcctwo
+file	arch/mvme88k/dev/osiop_pcctwo.c			osiop_pcctwo
 
 device vme { }
 attach vme at pcctwo, syscon
