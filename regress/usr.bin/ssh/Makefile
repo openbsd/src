@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2004/06/24 19:32:00 djm Exp $
+#	$OpenBSD: Makefile,v 1.32 2004/07/09 19:45:43 david Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -39,7 +39,7 @@ LTESTS= 	connect \
 
 USER!=		id -un
 CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
-		ssh_config ssh_proxy sshd_config sshd_proxy \
+		ssh_config sshd_config.orig ssh_proxy sshd_config sshd_proxy \
 		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
 		ls.copy banner.in banner.out empty.in \
