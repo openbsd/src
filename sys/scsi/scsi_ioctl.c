@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.8 1997/08/31 07:41:52 downsj Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.9 1997/09/01 19:11:46 niklas Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_safeioctl(0x%lx)\n", cmd));
 
 	switch(cmd) {
 	case SCIOCIDENTIFY: {
