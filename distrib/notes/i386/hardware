@@ -53,7 +53,7 @@ Supported devices {:-include-:}:
 		IBM PC-RT 4-port serial boards [*]
 	Parallel ports.
 	Ethernet adapters:
-		Alteon Tigon I & II PCI Gigabit Ethernet adapters, including:
+		Alteon Tigon I/II PCI Gigabit Ethernet boards [*] [+]:
 			3Com 3c985
 			Alteon ACEnic
 			Netgear GA620
@@ -73,7 +73,7 @@ Supported devices {:-include-:}:
 		3COM 3c505 [*]
 		3COM 3c507
 		3COM 3c509, 3c579, 3c589, 3c59x
-		3COM 3c515
+		3COM 3c515 [*] [+]
 		3COM 3c900, 3c900b, 3c905, and 3c905b, 3c905c
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			SMC EtherPower 10, 10/100 (PCI only!)
@@ -122,6 +122,8 @@ Supported devices {:-include-:}:
 			Xircom CE3
 			Xircom Realport
 		Lucent technologies WaveLAN IEEE 802.11 [*] [+]
+		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
+			adapters [*] [+]
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
@@ -297,8 +299,16 @@ SMC EtherPower II (EPIC) 10/100 Ethernet boards
 		tx0	any	any 	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
 
-Macronix 98713/98715/98725 Ethernet adapters, including:
+Macronix 98713/98715/98725 Ethernet boards
 		mx0	any	any	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
+
+Alteon Tigon I/II PCI Gigabit Ethernet boards
+		ti0	any	any	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
+
+SysKonnect 984x Gigabit Ethernet boards
+		sk0	any	any	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
 
 SPECIAL CARE FOR SMC ULTRA ELITE
