@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wump.6,v 1.4 1998/12/15 19:19:01 pjanzen Exp $
+.\"	$OpenBSD: wump.6,v 1.5 2000/06/29 07:37:38 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nd hunt the wumpus in an underground cave
 .Sh SYNOPSIS
 .Nm wump
-.Op Fl h
+.Op Fl ho
 .Op Fl a Ar arrows
 .Op Fl b Ar bats
 .Op Fl p Ar pits
@@ -73,6 +73,10 @@ The default is three.
 .It Fl h
 Play the hard version -- more pits, more bats, and a generally more
 dangerous cave.
+.It Fl o
+Play the original version, where there are twenty rooms arranged on the
+vertices of a dodecahedron, connected by the edges.  In this case, the
+default is two pits and two bat rooms.
 .It Fl p
 Specifies the number of rooms in the cave which contain bottomless pits.
 The default is three.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.13 2000/04/11 02:55:18 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.14 2000/06/29 07:37:38 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.13 2000/04/11 02:55:18 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.14 2000/06/29 07:37:38 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,13 +104,14 @@ int player_loc = -1;			/* player location */
 int wumpus_loc = -1;			/* The Bad Guy location */
 int level = EASY;			/* level of play */
 int arrows_left;			/* arrows unshot */
+int oldstyle = 0;			/* dodecahedral cave? */
 
 #ifdef DEBUG
 int debug = 0;
 #endif
 
-int pit_num = PIT_COUNT;		/* # pits in cave */
-int bat_num = BAT_COUNT;		/* # bats */
+int pit_num = -1;		/* # pits in cave */
+int bat_num = -1;		/* # bats */
 int room_num = ROOMS_IN_CAVE;		/* # rooms in cave */
 int link_num = LINKS_IN_ROOM;		/* links per room  */
 int arrow_num = NUMBER_OF_ARROWS;	/* arrow inventory */
@@ -121,6 +122,7 @@ int	bats_nearby __P((void));
 void	cave_init __P((void));
 void	clear_things_in_cave __P((void));
 void	display_room_stats __P((void));
+void	dodecahedral_cave_init __P((void));
 int	getans __P((const char *));
 void	initialize_things_in_cave __P((void));
 void	instructions __P((void));
@@ -157,9 +159,9 @@ main(argc, argv)
 	setgid(getgid());
 
 #ifdef DEBUG
-	while ((c = getopt(argc, argv, "a:b:hp:r:t:d")) != -1)
+	while ((c = getopt(argc, argv, "a:b:hop:r:t:d")) != -1)
 #else
-	while ((c = getopt(argc, argv, "a:b:hp:r:t:")) != -1)
+	while ((c = getopt(argc, argv, "a:b:hop:r:t:")) != -1)
 #endif
 		switch (c) {
 		case 'a':
@@ -176,41 +178,51 @@ main(argc, argv)
 		case 'h':
 			level = HARD;
 			break;
+		case 'o':
+			oldstyle = 1;
+			break;
 		case 'p':
 			pit_num = atoi(optarg);
 			break;
 		case 'r':
 			room_num = atoi(optarg);
-			if (room_num < MIN_ROOMS_IN_CAVE) {
-				(void)fprintf(stderr,
-	"No self-respecting wumpus would live in such a small cave!\n");
-				exit(1);
-			}
-			if (room_num > MAX_ROOMS_IN_CAVE) {
-				(void)fprintf(stderr,
-	"Even wumpii can't furnish caves that large!\n");
-				exit(1);
-			}
+			if (room_num < MIN_ROOMS_IN_CAVE)
+				errx(1,
+	"no self-respecting wumpus would live in such a small cave!");
+			if (room_num > MAX_ROOMS_IN_CAVE)
+				errx(1,
+	"even wumpii can't furnish caves that large!");
 			break;
 		case 't':
 			link_num = atoi(optarg);
-			if (link_num < 2) {
-				(void)fprintf(stderr,
-	"Wumpii like extra doors in their caves!\n");
-				exit(1);
-			}
+			if (link_num < 2)
+				errx(1,
+	"wumpii like extra doors in their caves!");
 			break;
 		case '?':
 		default:
 			usage();
 	}
 
-	if (link_num > MAX_LINKS_IN_ROOM ||
-	    link_num > room_num - (room_num / 4)) {
-		(void)fprintf(stderr,
-"Too many tunnels!  The cave collapsed!\n(Fortunately, the wumpus escaped!)\n");
-		exit(1);
+	if (oldstyle) {
+		room_num = 20;
+		link_num = 3;
+		/* Original game had exactly 2 bats and 2 pits */
+		if (bat_num < 0)
+			bat_num = 2;
+		if (pit_num < 0)
+			pit_num = 2;
+	} else {
+		if (bat_num < 0)
+			bat_num = BAT_COUNT;
+		if (pit_num < 0)
+			pit_num = PIT_COUNT;
 	}
+
+	if (link_num > MAX_LINKS_IN_ROOM ||
+	    link_num > room_num - (room_num / 4))
+		errx(1,
+"too many tunnels!  The cave collapsed!\n(Fortunately, the wumpus escaped!)");
 
 	if (level == HARD) {
 		srandom((int)time((time_t *)0));
@@ -223,20 +235,19 @@ main(argc, argv)
 	/* Leave at least two rooms free--one for the player to start in, and
 	 * potentially one for the wumpus.
 	 */
-	if (bat_num > room_num / 2 - 1) {
-		(void)fprintf(stderr,
-"The wumpus refused to enter the cave, claiming it was too crowded!\n");
-		exit(1);
-	}
+	if (bat_num > room_num / 2 - 1)
+		errx(1,
+"the wumpus refused to enter the cave, claiming it was too crowded!");
 
-	if (pit_num > room_num / 2 - 1) {
-		(void)fprintf(stderr,
-"The wumpus refused to enter the cave, claiming it was too dangerous!\n");
-		exit(1);
-	}
+	if (pit_num > room_num / 2 - 1)
+		errx(1,
+"the wumpus refused to enter the cave, claiming it was too dangerous!");
 
 	instructions();
-	cave_init();
+	if (oldstyle)
+		dodecahedral_cave_init();
+	else
+		cave_init();
 
 	/* and we're OFF!  da dum, da dum, da dum, da dum... */
 	(void)printf(
@@ -257,15 +268,19 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 			if (!fgets(answer, sizeof(answer), stdin))
 				break;
 		} while (!take_action());
-		(void)fpurge(stdin); 
+		(void)fpurge(stdin);
 
 		if (!getans("\nCare to play another game? (y-n) ")) {
 			(void)printf("\n");
 			exit(0);
 		}
 		clear_things_in_cave();
-		if (!getans("In the same cave? (y-n) "))
-			cave_init();
+		if (!getans("In the same cave? (y-n) ")) {
+			if (oldstyle)
+				dodecahedral_cave_init();
+			else
+				cave_init();
+		}
 	}
 	/* NOTREACHED */
 }
@@ -394,7 +409,7 @@ move_to(room_number)
 	player_loc = next_room;
 	for (;;) {
 		if (next_room == wumpus_loc) {		/* uh oh... */
-			if (just_moved_by_bats) 
+			if (just_moved_by_bats)
 				wump_bat_kill();
 			else
 				wump_kill();
@@ -405,7 +420,7 @@ move_to(room_number)
 				pit_survive();
 				return(0);
 			} else {
-				if (just_moved_by_bats) 
+				if (just_moved_by_bats)
 					pit_kill_bat();
 				else
 					pit_kill();
@@ -451,7 +466,7 @@ shoot(room_list)
 			if (roomcnt == 1) {
 				(void)printf("Enter a list of rooms to shoot into:\n");
 				(void)fflush(stdout);
-			     if (!(p = strtok(fgets(answer, sizeof(answer), stdin),
+				if (!(p = strtok(fgets(answer, sizeof(answer), stdin),
 							" \t\n"))) {
 					(void)printf(
 				"The arrow falls to the ground at your feet.\n");
@@ -468,9 +483,9 @@ shoot(room_list)
 		}
 
 		next = atoi(p);
-		if (next == 0) 
+		if (next == 0)
 			break;	/* Old wumpus used room 0 as the terminator */
-           
+
 		chance = random() % 10;
 		if (roomcnt == 4 && chance < 2) {
 			(void)printf(
@@ -603,8 +618,8 @@ try_again:		link = (random() % room_num) + 1;
 			for (k = 0; k < j; k++)
 				if (cave[i].tunnel[k] == link)
 					goto try_again;
-               /* don't let a room connect to itself */
-               if (link == i)
+			/* don't let a room connect to itself */
+			if (link == i)
 				goto try_again;
 			cave[i].tunnel[j] = link;
 			if (random() % 2 == 1)
@@ -622,6 +637,72 @@ try_again:		link = (random() % room_num) + 1;
 				}
 			}
 		}
+	/*
+	 * now that we're done, sort the tunnels in each of the rooms to
+	 * make it easier on the intrepid adventurer.
+	 */
+	for (i = 1; i <= room_num; ++i)
+		qsort(cave[i].tunnel, (u_int)link_num,
+		    sizeof(cave[i].tunnel[0]), int_compare);
+
+#ifdef DEBUG
+	if (debug)
+		for (i = 1; i <= room_num; ++i) {
+			(void)printf("<room %d  has tunnels to ", i);
+			for (j = 0; j < link_num; ++j)
+				(void)printf("%d ", cave[i].tunnel[j]);
+			(void)printf(">\n");
+		}
+#endif
+}
+
+void
+dodecahedral_cave_init()
+{
+	int vert[20][3] = {
+		{1, 4, 7},
+		{0, 2, 9},
+		{1, 3, 11},
+		{2, 4, 13},
+		{0, 3, 5},
+		{4, 6, 14},
+		{5, 7, 16},
+		{0, 6, 8},
+		{7, 9, 17},
+		{1, 8, 10},
+		{9, 11, 18},
+		{2, 10, 12},
+		{11, 13, 19},
+		{3, 12, 14},
+		{5, 13, 15},
+		{14, 16, 19},
+		{6, 15, 17},
+		{8, 16, 18},
+		{10, 17, 19},
+		{12, 15, 18},
+	};
+	int loc[20];
+	int i, j, temp;
+
+	if (room_num != 20 || link_num != 3)
+		errx(1, "wrong parameters for dodecahedron");
+	for (i = 0; i < 20; i++)
+		loc[i] = i;
+	srandom((int)time((time_t *)0));
+	for (i = 0; i < 20; i++) {
+		j = random() % (20 - i);
+		if (j) {
+			temp = loc[i];
+			loc[i] = loc[i + j];
+			loc[i + j] = temp;
+		}
+	}
+	/* cave is offset by 1 */
+	for (i = 0; i < 20; i++) {
+		for (j = 0; j < 3; j++)
+			cave[loc[i] + 1].tunnel[j] = loc[vert[i][j]] + 1;
+	}
+
 	/*
 	 * now that we're done, sort the tunnels in each of the rooms to
 	 * make it easier on the intrepid adventurer.
@@ -675,8 +756,8 @@ initialize_things_in_cave()
 		do {
 			loc = (random() % room_num) + 1;
 		} while (cave[loc].has_a_pit || cave[loc].has_a_bat);
-          /* Above used to be &&;  || makes sense but so does just 
-           * checking cave[loc].has_a_pit  */
+		/* Above used to be &&;  || makes sense but so does just
+		 * checking cave[loc].has_a_pit  */
 		cave[loc].has_a_pit = 1;
 #ifdef DEBUG
 		if (debug)
@@ -729,7 +810,7 @@ getans(prompt)
 
 int
 bats_nearby()
-{ 
+{
 	int i;
 
 	/* check for bats in the immediate vicinity */
@@ -741,7 +822,7 @@ bats_nearby()
 
 int
 pit_nearby()
-{ 
+{
 	int i;
 
 	/* check for pits in the immediate vicinity */
@@ -834,7 +915,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: wump [-h] [-a arrows] [-b bats] [-p pits] [-r rooms] [-t tunnels]\n");
+"usage: wump [-ho] [-a arrows] [-b bats] [-p pits] [-r rooms] [-t tunnels]\n");
 	exit(1);
 }
 
