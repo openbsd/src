@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.4 2000/09/29 19:46:26 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.5 2000/10/14 06:23:52 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -84,7 +84,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
     union sockaddr_union sdst, ssrc;
     struct sockaddr_encap *ddst;
     struct ipsec_policy *ipo;
-    int ignore = 0;
+    int signore = 0, dignore = 0;
 
     /*
      * If there are no flows in place, there's no point
@@ -285,6 +285,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		else
 		  bcopy(&ipo->ipo_dst, &ssrc, sizeof(union sockaddr_union));
 	    }
+	    else
+	      dignore = 1;
 	    break;
 #endif /* INET */
 
@@ -297,6 +299,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		else
 		  bcopy(&ipo->ipo_dst, &ssrc, sizeof(union sockaddr_union));
 	    }
+	    else
+	      dignore = 1;
 	    break;
 #endif /* INET6 */
     }
@@ -313,7 +317,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		  bcopy(&ipo->ipo_src, &sdst, sizeof(union sockaddr_union));
 	    }
             else
-              ignore = 1;
+              signore = 1;
 	    break;
 #endif /* INET */
 
@@ -327,7 +331,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		  bcopy(&ipo->ipo_src, &sdst, sizeof(union sockaddr_union));
 	    }
             else
-              ignore = 1;
+              signore = 1;
 	    break;
 #endif /* INET6 */
     }
@@ -423,7 +427,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	{
 	    case IPSP_IPSEC_REQUIRE:
 		/* Acquire SA through key management */
-		if (ipsp_acquire_sa(ipo, &sdst, ignore ? NULL : &ssrc) != 0)
+		if (ipsp_acquire_sa(ipo, &sdst, signore ? NULL : &ssrc,
+				    ddst) != 0)
                 {
                     *error = EACCES;
 		    return NULL;
@@ -437,7 +442,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 	    case IPSP_IPSEC_ACQUIRE:
 		/* Acquire SA through key management */
-		if (ipsp_acquire_sa(ipo, &sdst, ignore ? NULL : &ssrc) != 0)
+		if (ipsp_acquire_sa(ipo, &sdst, signore ? NULL : &ssrc,
+				    ddst) != 0)
                 {
                     *error = EACCES;
 		    return NULL;
@@ -514,7 +520,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 		/* Acquire SA through key management */
 		if ((*error = ipsp_acquire_sa(ipo, &ssrc,
-                                              ignore ? NULL : &sdst)) != 0)
+					      dignore ? NULL : &sdst,
+					      ddst)) != 0)
 		  return NULL;
 
 		*error = -EINVAL;
@@ -568,7 +575,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 		/* Acquire SA through key management */
 		if ((*error = ipsp_acquire_sa(ipo, &ssrc,
-                                              ignore ? NULL : &sdst)) != 0)
+                                              dignore ? NULL : &sdst,
+					      ddst)) != 0)
 		  return NULL;
 
 		/* Just accept the packet */
@@ -804,9 +812,10 @@ ipsp_acquire_expirations(void *arg)
  */
 int
 ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
-		union sockaddr_union *laddr)
+		union sockaddr_union *laddr, struct sockaddr_encap *ddst)
 {
     struct ipsec_acquire *ipa;
+    int i;
 
     /*
      * Check whether request has been made already.
@@ -827,6 +836,157 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
     if (ipa == NULL)
       return ENOMEM;
     bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
+
+    ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
+    ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
+    /* Just copy the right information */
+    switch (ipo->ipo_addr.sen_type)
+    {
+#ifdef INET
+	case SENT_IP4:
+	    ipa->ipa_info.sen_type = ipa->ipa_mask.sen_type = SENT_IP4;
+	    ipa->ipa_info.sen_direction = ipo->ipo_addr.sen_direction;
+	    ipa->ipa_mask.sen_direction = ipo->ipo_mask.sen_direction;
+
+	    if (ipo->ipo_mask.sen_ip_src.s_addr == INADDR_ANY ||
+		ipo->ipo_addr.sen_ip_src.s_addr == INADDR_ANY)
+	    {
+		ipa->ipa_info.sen_ip_src = ddst->sen_ip_src;
+		ipa->ipa_mask.sen_ip_src.s_addr = INADDR_BROADCAST;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip_src = ipo->ipo_addr.sen_ip_src;
+		ipa->ipa_mask.sen_ip_src = ipo->ipo_mask.sen_ip_src;
+	    }
+
+	    if (ipo->ipo_mask.sen_ip_dst.s_addr == INADDR_ANY ||
+		ipo->ipo_addr.sen_ip_dst.s_addr == INADDR_ANY)
+	    {
+		ipa->ipa_info.sen_ip_dst = ddst->sen_ip_dst;
+		ipa->ipa_mask.sen_ip_dst.s_addr = INADDR_BROADCAST;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip_dst = ipo->ipo_addr.sen_ip_dst;
+		ipa->ipa_mask.sen_ip_dst = ipo->ipo_mask.sen_ip_dst;
+	    }
+
+	    if (ipo->ipo_mask.sen_proto)
+	    {
+		ipa->ipa_info.sen_proto = ipo->ipo_addr.sen_proto;
+		ipa->ipa_mask.sen_proto = ipo->ipo_mask.sen_proto;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_proto = ddst->sen_proto;
+		if (ddst->sen_proto)
+		  ipa->ipa_mask.sen_proto = 0xff;
+	    }
+
+	    if (ipo->ipo_mask.sen_sport)
+	    {
+		ipa->ipa_info.sen_sport = ipo->ipo_addr.sen_sport;
+		ipa->ipa_mask.sen_sport = ipo->ipo_mask.sen_sport;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_sport = ddst->sen_sport;
+		if (ddst->sen_sport)
+		  ipa->ipa_mask.sen_sport = 0xffff;
+	    }
+
+	    if (ipo->ipo_mask.sen_dport)
+	    {
+		ipa->ipa_info.sen_dport = ipo->ipo_addr.sen_dport;
+		ipa->ipa_mask.sen_dport = ipo->ipo_mask.sen_dport;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_dport = ddst->sen_dport;
+		if (ddst->sen_dport)
+		  ipa->ipa_mask.sen_dport = 0xffff;
+	    }
+	    
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case SENT_IP6:
+	    ipa->ipa_info.sen_type = ipa->ipa_mask.sen_type = SENT_IP6;
+	    ipa->ipa_info.sen_ip6_direction = ipo->ipo_addr.sen_ip6_direction;
+	    ipa->ipa_mask.sen_ip6_direction = ipo->ipo_mask.sen_ip6_direction;
+
+	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_src) ||
+		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src))
+	    {
+		ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
+		for (i = 0; i < 16; i++)
+		  ipa->ipa_mask.sen_ip6_src.s6_addr8[i] = 0xff;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip6_src = ipo->ipo_addr.sen_ip6_src;
+		ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
+	    }
+
+	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_dst) ||
+		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst))
+	    {
+		ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
+		for (i = 0; i < 16; i++)
+		  ipa->ipa_mask.sen_ip6_dst.s6_addr8[i] = 0xff;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip6_dst = ipo->ipo_addr.sen_ip6_dst;
+		ipa->ipa_mask.sen_ip6_dst = ipo->ipo_mask.sen_ip6_dst;
+	    }
+
+	    if (ipo->ipo_mask.sen_ip6_proto)
+	    {
+		ipa->ipa_info.sen_ip6_proto = ipo->ipo_addr.sen_ip6_proto;
+		ipa->ipa_mask.sen_ip6_proto = ipo->ipo_mask.sen_ip6_proto;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip6_proto = ddst->sen_ip6_proto;
+		if (ddst->sen_ip6_proto)
+		  ipa->ipa_mask.sen_ip6_proto = 0xff;
+	    }
+
+	    if (ipo->ipo_mask.sen_ip6_sport)
+	    {
+		ipa->ipa_info.sen_ip6_sport = ipo->ipo_addr.sen_ip6_sport;
+		ipa->ipa_mask.sen_ip6_sport = ipo->ipo_mask.sen_ip6_sport;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip6_sport = ddst->sen_ip6_sport;
+		if (ddst->sen_ip6_sport)
+		  ipa->ipa_mask.sen_ip6_sport = 0xffff;
+	    }
+
+	    if (ipo->ipo_mask.sen_ip6_dport)
+	    {
+		ipa->ipa_info.sen_ip6_dport = ipo->ipo_addr.sen_ip6_dport;
+		ipa->ipa_mask.sen_ip6_dport = ipo->ipo_mask.sen_ip6_dport;
+	    }
+	    else
+	    {
+		ipa->ipa_info.sen_ip6_dport = ddst->sen_ip6_dport;
+		if (ddst->sen_ip6_dport)
+		  ipa->ipa_mask.sen_ip6_dport = 0xffff;
+	    }
+
+	    break;
+#endif /* INET6 */
+
+	default:
+	    FREE(ipa, M_TDB);
+	    return 0;
+    }
+
     ipa->ipa_expire = time.tv_sec + ipsec_expire_acquire;
     TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 
@@ -835,5 +995,19 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	      hz * (ipa->ipa_expire - time.tv_sec));
 
     /* PF_KEYv2 notification message */
-    return pfkeyv2_acquire(ipo, gw, laddr);
+    return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
+}
+
+struct ipsec_acquire *
+ipsec_get_acquire(u_int32_t seq)
+{
+    struct ipsec_acquire *ipa;
+
+    for (ipa = TAILQ_FIRST(&ipsec_acquire_head);
+	 ipa;
+	 ipa = TAILQ_NEXT(ipa, ipa_next))
+      if (ipa->ipa_seq == seq)
+	return ipa;
+
+    return NULL;
 }

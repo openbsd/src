@@ -58,6 +58,7 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #define BITMAP_X_FLOW_TYPE             (1 << SADB_X_EXT_FLOW_TYPE)
 #define BITMAP_X_SA2                   (1 << SADB_X_EXT_SA2)
 #define BITMAP_X_DST2                  (1 << SADB_X_EXT_DST2)
+#define BITMAP_X_POLICY                (1 << SADB_X_EXT_POLICY)
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -74,7 +75,7 @@ uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
   /* GET */
   BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
   /* ACQUIRE */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK,
+  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL,
   /* REGISTER */
   0,
   /* EXPIRE */
@@ -91,6 +92,8 @@ uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_GRPSPIS */
   BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+  /* X_ASKPOLICY */
+  BITMAP_X_POLICY,
 };
 
 uint32_t sadb_exts_required_in[SADB_MAX+1] =
@@ -125,6 +128,8 @@ uint32_t sadb_exts_required_in[SADB_MAX+1] =
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_GRPSPIS */
   BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+  /* X_ASKPOLICY */
+  BITMAP_X_POLICY,
 };
 
 uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
@@ -142,7 +147,7 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
   /* GET */
   BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY,
   /* ACQUIRE */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK,
+  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL,
   /* REGISTER */
   BITMAP_SUPPORTED,
   /* EXPIRE */
@@ -159,6 +164,8 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_GRPSPIS */
   BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+  /* X_ASKPOLICY */
+  BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE | BITMAP_X_POLICY,
 };
 
 uint32_t sadb_exts_required_out[SADB_MAX+1] =
@@ -193,6 +200,8 @@ uint32_t sadb_exts_required_out[SADB_MAX+1] =
   BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
   /* X_GRPSPIS */
   BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+  /* X_REPPOLICY */
+  BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE,
 };
 
 int pfkeyv2_parsemessage(void *, int, void **);
@@ -296,6 +305,10 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
       case SADB_X_EXT_FLOW_TYPE:
 	if (i != sizeof(struct sadb_protocol))
 	    return EINVAL;
+	break;
+      case SADB_X_EXT_POLICY:
+        if (i != sizeof(struct sadb_policy))
+	  return EINVAL;
 	break;
       case SADB_EXT_LIFETIME_CURRENT:
       case SADB_EXT_LIFETIME_HARD:

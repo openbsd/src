@@ -29,7 +29,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #define SADB_X_ADDFLOW     12
 #define SADB_X_DELFLOW     13
 #define SADB_X_GRPSPIS     14
-#define SADB_MAX           14
+#define SADB_X_ASKPOLICY   15
+#define SADB_MAX           15
 
 struct sadb_msg {
   uint8_t sadb_msg_version;
@@ -157,7 +158,13 @@ struct sadb_protocol {
   uint8_t  sadb_protocol_direction;
   uint16_t sadb_protocol_reserved2;
 };
-    
+
+struct sadb_policy {
+  uint16_t  sadb_policy_len;
+  uint16_t  sadb_policy_exttype;
+  u_int32_t sadb_policy_seq;
+};
+
 #define SADB_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
                                                          IPPROTO_IPIP )
@@ -186,7 +193,8 @@ struct sadb_protocol {
 #define SADB_X_EXT_DST_FLOW           21
 #define SADB_X_EXT_SA2                22
 #define SADB_X_EXT_DST2               23
-#define SADB_EXT_MAX                  23
+#define SADB_X_EXT_POLICY             24
+#define SADB_EXT_MAX                  24
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -300,7 +308,8 @@ int pfkeyv2_cleanup(void);
 int pfkeyv2_parsemessage(void *, int, void **);
 int pfkeyv2_expire(struct tdb *, u_int16_t);
 int pfkeyv2_acquire(struct ipsec_policy *, union sockaddr_union *,
-                    union sockaddr_union *);
+                    union sockaddr_union *, u_int32_t *,
+		    struct sockaddr_encap *);
 
 int pfkey_register(struct pfkey_version *version);
 int pfkey_unregister(struct pfkey_version *version);

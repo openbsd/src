@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.47 2000/10/09 22:18:29 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.48 2000/10/14 06:23:51 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -77,6 +77,7 @@ void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 
 int pfkeyv2_create(struct socket *);
 int pfkeyv2_get(struct tdb *, void **, void **);
+int pfkeyv2_policy(struct ipsec_acquire *, void **, void **);
 int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
@@ -740,6 +741,174 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 }
 
 /*
+ * Get SPD information for an ACQUIRE. We setup the message such that
+ * the SRC/DST payloads are relative to us (regardless of whether the
+ * SPD rule was for incoming or outgoing packets).
+ */
+int
+pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
+{
+    union sockaddr_union sunion;
+    struct sadb_protocol *sp;
+    int rval, i, dir;
+    void *p;
+
+    /* Find out how big a buffer we need */
+    i = 4 * sizeof(struct sadb_address) + sizeof(struct sadb_protocol);
+    bzero(&sunion, sizeof(union sockaddr_union));
+
+    switch (ipa->ipa_info.sen_type)
+    {
+#ifdef INET
+	case SENT_IP4:
+	    i += 4 * PADUP(sizeof(struct sockaddr_in));
+	    sunion.sa.sa_family = AF_INET;
+	    sunion.sa.sa_len = sizeof(struct sockaddr_in);
+	    dir = ipa->ipa_info.sen_direction;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case SENT_IP6:
+	    i += 4 * PADUP(sizeof(struct sockaddr_in6));
+	    sunion.sa.sa_family = AF_INET6;
+	    sunion.sa.sa_len = sizeof(struct sockaddr_in6);
+	    dir = ipa->ipa_info.sen_ip6_direction;
+	    break;
+#endif /* INET6 */
+
+	default:
+	    return EINVAL;
+    }
+
+    if (!(p = malloc(i, M_PFKEY, M_DONTWAIT)))
+    {
+	rval = ENOMEM;
+	goto ret;
+    }
+    else
+    {
+	*buffer = p;
+	bzero(p, i);
+    }
+
+    if (dir == IPSP_DIRECTION_OUT)
+      headers[SADB_X_EXT_SRC_FLOW] = p;
+    else
+      headers[SADB_X_EXT_DST_FLOW] = p;
+    switch (sunion.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    sunion.sin.sin_addr = ipa->ipa_info.sen_ip_src;
+	    sunion.sin.sin_port = ipa->ipa_info.sen_sport;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    sunion.sin6.sin6_addr = ipa->ipa_info.sen_ip6_src;
+	    sunion.sin6.sin6_port = ipa->ipa_info.sen_ip6_sport;
+	    break;
+#endif /* INET6 */
+    }
+    export_address(&p, (struct sockaddr *) &sunion);
+
+    if (dir == IPSP_DIRECTION_OUT)
+      headers[SADB_X_EXT_SRC_MASK] = p;
+    else
+      headers[SADB_X_EXT_DST_MASK] = p;
+    switch (sunion.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    sunion.sin.sin_addr = ipa->ipa_mask.sen_ip_src;
+	    sunion.sin.sin_port = ipa->ipa_mask.sen_sport;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    sunion.sin6.sin6_addr = ipa->ipa_mask.sen_ip6_src;
+	    sunion.sin6.sin6_port = ipa->ipa_mask.sen_ip6_sport;
+	    break;
+#endif /* INET6 */
+    }
+    export_address(&p, (struct sockaddr *) &sunion);
+
+    if (dir == IPSP_DIRECTION_OUT)
+      headers[SADB_X_EXT_DST_FLOW] = p;
+    else
+      headers[SADB_X_EXT_SRC_FLOW] = p;
+    switch (sunion.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    sunion.sin.sin_addr = ipa->ipa_info.sen_ip_dst;
+	    sunion.sin.sin_port = ipa->ipa_info.sen_dport;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    sunion.sin6.sin6_addr = ipa->ipa_info.sen_ip6_dst;
+	    sunion.sin6.sin6_port = ipa->ipa_info.sen_ip6_dport;
+	    break;
+#endif /* INET6 */
+    }
+    export_address(&p, (struct sockaddr *) &sunion);
+
+    if (dir == IPSP_DIRECTION_OUT)
+      headers[SADB_X_EXT_DST_MASK] = p;
+    else
+      headers[SADB_X_EXT_SRC_MASK] = p;
+    switch (sunion.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    sunion.sin.sin_addr = ipa->ipa_mask.sen_ip_dst;
+	    sunion.sin.sin_port = ipa->ipa_mask.sen_dport;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    sunion.sin6.sin6_addr = ipa->ipa_mask.sen_ip6_dst;
+	    sunion.sin6.sin6_port = ipa->ipa_mask.sen_ip6_dport;
+	    break;
+#endif /* INET6 */
+    }
+    export_address(&p, (struct sockaddr *) &sunion);
+
+    headers[SADB_X_EXT_FLOW_TYPE] = p;
+    sp = p;
+    sp->sadb_protocol_len = sizeof(struct sadb_protocol) / sizeof(u_int64_t);
+    switch (sunion.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    if (ipa->ipa_mask.sen_proto)
+	      sp->sadb_protocol_proto = ipa->ipa_info.sen_proto;
+	    sp->sadb_protocol_direction = ipa->ipa_info.sen_direction;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    if (ipa->ipa_mask.sen_ip6_proto)
+	      sp->sadb_protocol_proto = ipa->ipa_info.sen_ip6_proto;
+	    sp->sadb_protocol_direction = ipa->ipa_info.sen_ip6_direction;
+	    break;
+#endif /* INET6 */
+    }
+
+    rval = 0;
+
+ ret:
+    return rval;
+}
+
+/*
  * Get all the information contained in an SA to a PFKEYV2 message.
  */
 int
@@ -968,6 +1137,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
     int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST, delflag = 0, s;
     struct sockaddr_encap encapdst, encapnetmask, encapgw;
     struct ipsec_policy *ipo;
+    struct ipsec_acquire *ipa;
 
     struct pfkeyv2_socket *pfkeyv2_socket, *so = NULL;
 
@@ -1302,6 +1472,21 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    splx(s);
 
 	    sa2 = NULL;
+	    break;
+
+	case SADB_X_ASKPOLICY:
+	    /* Get the relevant policy */
+	    ipa = ipsec_get_acquire(((struct sadb_policy *) headers[SADB_X_EXT_POLICY])->sadb_policy_seq);
+	    if (ipa == NULL)
+	    {
+		rval = ESRCH;
+		goto ret;
+	    }
+
+	    rval = pfkeyv2_policy(ipa, headers, &freeme);
+	    if (rval)
+	      mode = PFKEYV2_SENDMESSAGE_UNICAST;
+
 	    break;
 
 	case SADB_GET:
@@ -1915,7 +2100,8 @@ splxret:
  */
 int
 pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
-		union sockaddr_union *laddr)
+		union sockaddr_union *laddr, u_int32_t *seq,
+		struct sockaddr_encap *ddst)
 {
     void *p, *headers[SADB_EXT_MAX + 1], *buffer = NULL;
     struct sadb_ident *srcid, *dstid;
@@ -1925,6 +2111,8 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
     struct sadb_msg *smsg;
     int rval = 0;
     int i, j;
+
+    *seq = pfkeyv2_seq++;
 
     if (!nregistered)
     {
@@ -1964,7 +2152,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
     smsg->sadb_msg_version = PF_KEY_V2;
     smsg->sadb_msg_type = SADB_ACQUIRE;
     smsg->sadb_msg_len = i / sizeof(uint64_t);
-    smsg->sadb_msg_seq = pfkeyv2_seq++;
+    smsg->sadb_msg_seq = *seq;
 
     if (ipo->ipo_sproto == IPPROTO_ESP)
       smsg->sadb_msg_satype = SADB_SATYPE_ESP;
@@ -2122,8 +2310,6 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	sadb_comb->sadb_comb_hard_usetime = ipsec_exp_first_use;
 	sadb_comb++;
     }
-
-    /* XXX How to externalize the policy itself ? */
 
     /* Send the ACQUIRE message to all compliant registered listeners. */
     if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_REGISTERED,
