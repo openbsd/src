@@ -106,9 +106,6 @@ int SSL_library_init(void)
 	EVP_add_digest(EVP_sha());
 	EVP_add_digest(EVP_dss());
 #endif
-#ifdef __OpenBSD__
-	ENGINE_setup_openbsd();
-#endif
 	return(1);
 	}
 
