@@ -363,7 +363,7 @@ globtilde(const Char *pattern, Char *patbuf, glob_t *pglob)
 		 * handle a plain ~ or ~/ by expanding $HOME 
 		 * first and then trying the password file
 		 */
-		if ((h = getenv("HOME")) == NULL) {
+		if ((h = getenv("HOME")) == NULL || *h == '\0') {
 			if ((pwd = k_getpwuid(getuid())) == NULL)
 				return pattern;
 			else

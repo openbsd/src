@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkisofs.c,v 1.3 1999/11/29 21:53:15 d Exp $	*/
+/*	$OpenBSD: mkisofs.c,v 1.4 2000/08/02 04:10:45 millert Exp $	*/
 /*
  * Program mkisofs.c - generate iso9660 filesystem  based upon directory
  * tree on hard disk.
@@ -156,7 +156,7 @@ void FDECL1(read_rcfile, char *, appname)
   if (!rcfile)
     {
       pnt = getenv("HOME");
-      if (pnt && strlen(pnt) + strlen(rcfn) + 2 <= sizeof(filename))
+      if (pnt && *pnt && strlen(pnt) + strlen(rcfn) + 2 <= sizeof(filename))
 	{
 	  strcpy(filename, pnt);
 	  strcat(filename, "/");

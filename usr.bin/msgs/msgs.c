@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.16 2000/07/06 06:24:39 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.17 2000/08/02 04:10:48 millert Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.16 2000/07/06 06:24:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.17 2000/08/02 04:10:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,6 +172,7 @@ main(argc, argv)
 	int firstmsg, nextmsg, lastmsg = 0;
 	int blast = 0;
 	FILE *bounds;
+	char *cp;
 
 #ifdef UNBUFFERED
 	setbuf(stdout, NULL);
@@ -294,9 +295,9 @@ main(argc, argv)
 		lastmsg = 0;
 
 		for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)){
-			register char *cp = dp->d_name;
 			register int i = 0;
 
+			cp = dp->d_name;
 			if (dp->d_ino == 0)
 				continue;
 			if (dp->d_namlen == 0)
@@ -417,7 +418,11 @@ main(argc, argv)
 	totty = (isatty(fileno(stdout)) != 0);
 	use_pager = use_pager && totty;
 
-	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), MSGSRC);
+	if ((cp = getenv("HOME")) == NULL || *cp == '\0') {
+		fprintf(stderr, "Error, no home directory!\n");
+		exit(1);
+	}
+	snprintf(fname, sizeof(fname), "%s/%s", cp, MSGSRC);
 	msgsrc = fopen(fname, "r");
 	if (msgsrc) {
 		newrc = NO;

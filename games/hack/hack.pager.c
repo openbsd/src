@@ -380,6 +380,7 @@ union wait {		/* used only for the cast  (union wait *) 0  */
 child(wt) {
 	int status;
 	register int f;
+	char *home;
 
 	f = fork();
 	if(f == 0){		/* child */
@@ -388,7 +389,10 @@ child(wt) {
 		setegid(getgid());
 		setgid(getgid());
 #ifdef CHDIR
-		(void) chdir(getenv("HOME"));
+		home = getenv("HOME");
+		if (home == NULL || *home == '\0')
+			home = "/";
+		(void) chdir(home);
 #endif CHDIR
 		return(1);
 	}

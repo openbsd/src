@@ -114,7 +114,7 @@ ruserpass(char *host, char **aname, char **apass, char **aacct)
 
     hdir = getenv("HOME");
     if (hdir == NULL)
-	hdir = ".";
+	return (0);
     snprintf(buf, sizeof(buf), "%s/.netrc", hdir);
     cfile = fopen(buf, "r");
     if (cfile == NULL) {

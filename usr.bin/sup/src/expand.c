@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.6 1997/09/16 23:03:10 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.7 2000/08/02 04:10:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -128,11 +128,15 @@ static void glob(as)
 {
 	register char *cs;
 	register char *spathp, *oldcs;
+	char *home;
 	struct stat stb;
+
+	if ((home = getenv("HOME")) != NULL && *home == '\0')
+		home = NULL;
 
 	spathp = pathp;
 	cs = as;
-	if (*cs == '~' && pathp == path) {
+	if (*cs == '~' && home && pathp == path) {
 		if (addpath('~')) goto endit;
 		for (cs++; isalnum(*cs) || *cs == '_' || *cs == '-';)
 			if (addpath(*cs++)) goto endit;
@@ -142,7 +146,7 @@ static void glob(as)
 				if (gethdir(path + 1,sizeof path-1)) goto endit;
 				strncpy(path, path + 1, sizeof path-1);
 			} else
-				strncpy(path, (char *)getenv("HOME"), sizeof path-1);
+				strncpy(path, home, sizeof path-1);
 			path[sizeof path-1] = '\0';
 			pathp = path + strlen(path);
 		}

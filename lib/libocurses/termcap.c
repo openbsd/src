@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.4 1998/11/19 17:07:14 millert Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.5 2000/08/02 04:10:46 millert Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: termcap.c,v 1.4 1998/11/19 17:07:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.5 2000/08/02 04:10:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ tgetent(bp, name)
 		if ((termpath = getenv("TERMPATH")) != NULL)
 			strlcpy(pathbuf, termpath, sizeof(pathbuf));
 		else {
-			if ((home = getenv("HOME")) != NULL &&
+			if ((home = getenv("HOME")) != NULL && *home != '\0' &&
 			    strlen(home) + sizeof(_PATH_DEF) <
 			    sizeof(pathbuf)) {
 				sprintf(pathbuf, "%s/%s", home,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1999/06/10 22:38:03 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2000/08/02 04:10:50 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -66,7 +66,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: main.c,v 8.4 1996/11/11 06:36:54 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1999/06/10 22:38:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 2000/08/02 04:10:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1123,7 +1123,7 @@ ReadRC()
     register char *cp;
     char buf[PATH_MAX];
 
-    if ((cp = getenv("HOME")) != NULL &&
+    if ((cp = getenv("HOME")) != NULL && *cp != '\0' &&
 	(strlen(cp) + strlen(_PATH_NSLOOKUPRC)) < sizeof(buf)) {
 
 	(void) strncpy(buf, cp, sizeof buf - 1);

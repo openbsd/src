@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.12 2000/06/30 16:00:16 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.13 2000/08/02 04:10:48 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.12 2000/06/30 16:00:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.13 2000/08/02 04:10:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,11 +182,14 @@ schdir(v)
 	char **arglist = v;
 	char *cp;
 
-	if (*arglist == NULL)
+	if (*arglist == NULL) {
+		if (homedir == NULL)
+			return(1);
 		cp = homedir;
-	else
+	} else {
 		if ((cp = expand(*arglist)) == NULL)
 			return(1);
+	}
 	if (chdir(cp) < 0) {
 		warn("%s", cp);
 		return(1);

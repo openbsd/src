@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.8 1999/11/25 03:46:47 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.9 2000/08/02 04:10:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.8 1999/11/25 03:46:47 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.9 2000/08/02 04:10:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -310,7 +310,10 @@ opencal()
 		    if (!freopen(calendarFile, "r", stdin))
 		        return (NULL);
 		} else {
-		        chdir(getenv("HOME"));
+			char *home = getenv("HOME");
+			if (home == NULL || *home == '\0')
+				errx(1, "cannot get home directory");
+		        chdir(home);
 			if (!(chdir(calendarHome) == 0 &&
 			      freopen(calendarFile, "r", stdin)))
 				errx(1, "no calendar file: ``%s'' or ``~/%s/%s",

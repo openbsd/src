@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.5 1997/12/23 03:28:14 deraadt Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.6 2000/08/02 04:10:49 millert Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nohup.c,v 1.5 1997/12/23 03:28:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nohup.c,v 1.6 2000/08/02 04:10:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -116,7 +116,7 @@ dofile()
 	p = FILENAME;
 	if ((fd = open(p, O_RDWR|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR)) >= 0)
 		goto dupit;
-	if ((p = getenv("HOME")) != NULL &&
+	if ((p = getenv("HOME")) != NULL && *p != '\0' &&
 	    (strlen(p) + strlen(FILENAME) + 1) < sizeof(path)) {
 		(void)strcpy(path, p);
 		(void)strcat(path, "/");

@@ -1,9 +1,9 @@
-/*	$OpenBSD: main.c,v 1.10 2000/06/29 07:55:42 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2000/08/02 04:10:45 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $	*/
 
 /* main.c		 */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2000/06/29 07:55:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2000/08/02 04:10:45 millert Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -90,8 +90,10 @@ main(argc, argv)
 	strlcpy(loginname, ptr, LOGIN_NAME_MAX);
 	/* this will be overwritten with the player's name */
 	strlcpy(logname, ptr, LOGNAMESIZE);
-	if ((ptr = getenv("HOME")) == NULL)
-		ptr = ".";
+	if ((ptr = getenv("HOME")) == NULL) {
+		fprintf(stderr, "You have no home directory!\n");
+		exit(1);
+	}
 	if (strlen(ptr) + 9 < sizeof(savefilename)) {
 		strcpy(savefilename, ptr);
 		strcat(savefilename, "/Larn.sav");	/* save file name in

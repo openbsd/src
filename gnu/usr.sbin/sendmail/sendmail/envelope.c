@@ -833,9 +833,13 @@ setsender(from, e, delimptr, delimchar, internal)
 		if (e->e_from.q_home == NULL)
 		{
 			e->e_from.q_home = getenv("HOME");
-			if (e->e_from.q_home != NULL &&
-			    strcmp(e->e_from.q_home, "/") == 0)
-				e->e_from.q_home++;
+			if (e->e_from.q_home != NULL)
+			{
+				if (*e->e_from.q_home == '\0')
+					e->e_from.q_home = NULL;
+				else if (strcmp(e->e_from.q_home, "/") == 0)
+					e->e_from.q_home++;
+			}
 		}
 		e->e_from.q_uid = RealUid;
 		e->e_from.q_gid = RealGid;

@@ -210,8 +210,9 @@ adjustname(fn)
 		break;
 	case '~':
 		fn++;
-		if (*fn == '/' || *fn == '\0') {
-			(VOID) strcpy(fnb, getenv("HOME"));
+		cp = getenv("HOME");
+		if (cp != NULL && *cp != '\0' && (*fn == '/' || *fn == '\0')) {
+			(VOID) strcpy(fnb, cp);
 			cp = fnb + strlen(fnb);
 			if (*fn)
 				fn++;
@@ -324,7 +325,7 @@ startupfile(suffix)
 	char           *file;
 	static char     home[NFILEN];
 
-	if ((file = getenv("HOME")) == NULL)
+	if ((file = getenv("HOME")) == NULL || *file == '\0')
 		goto notfound;
 	if (strlen(file) + 7 >= NFILEN - 1)
 		goto notfound;

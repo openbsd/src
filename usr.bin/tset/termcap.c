@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.1 1998/11/16 03:08:41 millert Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.2 2000/08/02 04:10:50 millert Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: termcap.c,v 1.1 1998/11/16 03:08:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.2 2000/08/02 04:10:50 millert Exp $";
 #endif /* not lint */
 
 #define	PVECSIZ		32	/* max number of names in path */
@@ -90,6 +90,7 @@ tcgetent(bp, name)
 				strlcpy(pathbuf, termpath, sizeof(pathbuf));
 			else {
 				if ((home = getenv("HOME")) != NULL &&
+				    *home != '\0' &&
 				    strlen(home) + sizeof(_PATH_DEF) <
 				    sizeof(pathbuf)) {
 					sprintf(pathbuf, "%s/%s", home,

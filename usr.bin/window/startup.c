@@ -1,4 +1,4 @@
-/*	$OpenBSD: startup.c,v 1.4 1997/02/25 00:04:17 downsj Exp $	*/
+/*	$OpenBSD: startup.c,v 1.5 2000/08/02 04:10:50 millert Exp $	*/
 /*	$NetBSD: startup.c,v 1.4 1996/02/08 20:45:04 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: startup.c,v 1.4 1997/02/25 00:04:17 downsj Exp $";
+static char rcsid[] = "$OpenBSD: startup.c,v 1.5 2000/08/02 04:10:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,8 @@ doconfig()
 	char *home;
 	static char runcom[] = RUNCOM;
 
-	if ((home = getenv("HOME")) == 0)
-		home = ".";
+	if ((home = getenv("HOME")) == NULL || *home == '\0')
+		return -1;
 	(void) sprintf(buf, "%.*s/%s",
 		(sizeof buf - sizeof runcom) / sizeof (char) - 1,
 		home, runcom);

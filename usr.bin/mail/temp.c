@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.10 1997/11/14 00:23:59 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.11 2000/08/02 04:10:48 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.10 1997/11/14 00:23:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: temp.c,v 1.11 2000/08/02 04:10:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,9 +85,12 @@ tinit()
 		} else
 			myname = savestr(cp);
 	}
-	if ((cp = getenv("HOME")) == NULL || strlen(getenv("HOME")) >= PATHSIZE)
-		cp = ".";
-	homedir = savestr(cp);
+	if ((cp = getenv("HOME")) == NULL || *cp == '\0' ||
+	    strlen(cp) >= PATHSIZE)
+		homedir = NULL;
+	else
+		homedir = savestr(cp);
 	if (debug)
-		printf("user = %s, homedir = %s\n", myname, homedir);
+		printf("user = %s, homedir = %s\n", myname,
+		    homedir ? homedir : "NONE");
 }

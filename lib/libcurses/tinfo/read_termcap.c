@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.9 2000/06/19 03:53:52 millert Exp $	 */
+/*	$OpenBSD: read_termcap.c,v 1.10 2000/08/02 04:10:47 millert Exp $	 */
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -802,7 +802,7 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 	if ((termpath = getenv("TERMPATH")) != 0) {
 	    strlcpy(pathbuf, termpath, PBUFSIZ);
 	} else {
-	    if ((home = getenv("HOME")) != 0 &&
+	    if ((home = getenv("HOME")) != 0 && *home != '\0' &&
 		strlen(home) < PBUFSIZ) {	/* setup path */
 		p += strlen(home);	/* path, looking in */
 		strcpy(pathbuf, home);	/* $HOME first */
@@ -1007,7 +1007,7 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
 
 #define PRIVATE_CAP "%s/.termcap"
 
-	if (!issetugid() && (h = getenv("HOME")) != NULL
+	if (!issetugid() && (h = getenv("HOME")) != NULL && *home != '\0'
 	    && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX) {
 	    /* user's .termcap, if any, should override it */
 	    (void) strcpy(envhome, h);

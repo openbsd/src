@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.28 2000/04/30 23:57:08 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.29 2000/08/02 04:10:49 millert Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2202,6 +2202,8 @@ cmdrc(char *m1, char *m2)
     if (rcname[0] == 0) {
 	char *home = getenv("HOME");
 
+	if (home == NULL || *home == '\0')
+	    return;
 	snprintf (rcname, sizeof(rcname), "%s/.telnetrc",
 		  home ? home : "");
     }

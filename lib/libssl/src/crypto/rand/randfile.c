@@ -230,7 +230,7 @@ const char *RAND_file_name(char *buf, int size)
 	else
 		{
 		s=getenv("HOME");
-		if (s == NULL) 
+		if (s == NULL || *s == '\0') 
 		  ret = RFILE;
 		if (((int)(strlen(s)+strlen(RFILE)+2)) > size) 
 			ret=RFILE;

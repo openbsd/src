@@ -464,7 +464,7 @@ history_filename (filename)
       home = getenv ("HOME");
 
       if (!home)
-	home = ".";
+	return (NULL);
 
       return_val = (char *)xmalloc (2 + strlen (home) + strlen (".history"));
 
@@ -499,8 +499,10 @@ read_history_range (filename, from, to)
   int file, current_line;
   struct stat finfo;
 
-  input = history_filename (filename);
-  file = open (input, O_RDONLY, 0666);
+  if ((input = history_filename (filename)))
+    file = open (input, O_RDONLY, 0666);
+  else
+    file = -1;
 
   if ((file < 0) ||
       (stat (input, &finfo) == -1))
@@ -584,7 +586,7 @@ history_truncate_file (fname, lines)
   struct stat finfo;
 
   filename = history_filename (fname);
-  if (stat (filename, &finfo) == -1)
+  if (!filename || stat (filename, &finfo) == -1)
     goto truncate_exit;
 
   file = open (filename, O_RDONLY, 0666);
@@ -656,7 +658,7 @@ history_do_write (filename, nelements, overwrite)
   else
     mode = O_WRONLY | O_APPEND;
 
-  if ((file = open (output, mode, 0666)) == -1)
+  if (!output || (file = open (output, mode, 0666)) == -1)
     {
       if (output)
 	free (output);

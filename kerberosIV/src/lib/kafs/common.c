@@ -232,7 +232,7 @@ _kafs_afslog_all_local_cells(kafs_data *data, uid_t uid, const char *homedir)
 
     if (homedir == NULL)
 	homedir = getenv("HOME");
-    if (homedir != NULL) {
+    if (homedir != NULL && *homedir != '\0') {
 	char home[MaxPathLen];
 	snprintf(home, sizeof(home), "%s/.TheseCells", homedir);
 	find_cells(home, &cells, &index);

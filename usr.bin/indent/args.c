@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.4 1997/07/25 22:00:44 mickey Exp $	*/
+/*	$OpenBSD: args.c,v 1.5 2000/08/02 04:10:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)args.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.4 1997/07/25 22:00:44 mickey Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.5 2000/08/02 04:10:47 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -168,16 +168,20 @@ set_profile()
 {
     register FILE *f;
     char        fname[BUFSIZ];
+    char	*home;
     static char prof[] = ".indent.pro";
 
-    if (strlen(getenv("HOME")) + sizeof(prof) > sizeof(fname)) {
-	warnx("%s/%s: %s", getenv("HOME"), prof, strerror(ENAMETOOLONG));
-	return;
-    }
-    sprintf(fname, "%s/%s", getenv("HOME"), prof);
-    if ((f = fopen(option_source = fname, "r")) != NULL) {
-	scan_profile(f);
-	(void) fclose(f);
+    home = getenv("HOME");
+    if (home != NULL && *home != '\0') {
+	if (strlen(home) + sizeof(prof) > sizeof(fname)) {
+	    warnx("%s/%s: %s", home, prof, strerror(ENAMETOOLONG));
+	    return;
+	}
+	sprintf(fname, "%s/%s", home, prof);
+	if ((f = fopen(option_source = fname, "r")) != NULL) {
+	    scan_profile(f);
+	    (void) fclose(f);
+	}
     }
     if ((f = fopen(option_source = prof, "r")) != NULL) {
 	scan_profile(f);

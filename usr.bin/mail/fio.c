@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.16 1998/06/12 17:51:51 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.17 2000/08/02 04:10:48 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.16 1998/06/12 17:51:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.17 2000/08/02 04:10:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -389,7 +389,7 @@ expand(name)
 		name = savestr(xname);
 	}
 	/* catch the most common shell meta character */
-	if (name[0] == '~' && (name[1] == '/' || name[1] == '\0')) {
+	if (name[0] == '~' && homedir && (name[1] == '/' || name[1] == '\0')) {
 		(void)snprintf(xname, sizeof(xname), "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
@@ -455,7 +455,8 @@ getfold(name, namelen)
 		strncpy(name, folder, namelen-1);
 		name[namelen-1] = '\0';
 	} else
-		(void)snprintf(name, namelen, "%s/%s", homedir, folder);
+		(void)snprintf(name, namelen, "%s/%s", homedir ? homedir : ".",
+		    folder);
 	return(0);
 }
 
