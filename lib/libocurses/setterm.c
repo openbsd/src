@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)setterm.c	8.7 (Berkeley) 7/27/94";
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "curses.h"
 
@@ -116,10 +117,16 @@ setterm(type)
 	}
 
 	/* POSIX 1003.2 requires that the environment override. */
-	if ((p = getenv("LINES")) != NULL)
-		LINES = strtol(p, NULL, 10);
-	if ((p = getenv("COLUMNS")) != NULL)
-		COLS = strtol(p, NULL, 10);
+	if ((p = getenv("LINES")) != NULL) {
+		long l = strtol(p, &p, 10);
+		if (l > 0 && l < INT_MAX && *p == '\0')
+			LINES = (int)l;
+	}
+	if ((p = getenv("COLUMNS")) != NULL) {
+		long l = strtol(p, &p, 10);
+		if (l > 0 && l < INT_MAX && *p == '\0')
+			COLS = (int)l;
+	}
 
 	/*
 	 * Want cols > 4, otherwise things will fail.
