@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.19 2004/11/11 12:58:45 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.20 2004/11/11 13:01:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1256,7 +1256,8 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			axe_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				axe_setmulti(sc);
 			error = 0;
 		}
 		break;
