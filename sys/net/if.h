@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.49 2004/01/15 10:47:55 markus Exp $	*/
+/*	$OpenBSD: if.h,v 1.50 2004/04/17 00:09:01 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct	ifqueue {
 	int	ifq_len;
 	int	ifq_maxlen;
 	int	ifq_drops;
+	int	ifq_congestion;
 };
 
 /*
@@ -290,6 +291,17 @@ struct ifnet {				/* and the entries */
 		(ifq)->ifq_len--; \
 	} \
 }
+
+#define	IF_INPUT_ENQUEUE(ifq, m) {			\
+	if (IF_QFULL(ifq)) {				\
+		IF_DROP(ifq);				\
+		m_freem(m);				\
+		if (!ifq->ifq_congestion)		\
+			if_congestion(ifq);		\
+	} else						\
+		IF_ENQUEUE(ifq, m);			\
+}
+
 #define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
 #define	IF_PURGE(ifq)							\
 do {									\
@@ -613,6 +625,8 @@ void	if_clone_detach(struct if_clone *);
 
 int	if_clone_create(const char *);
 int	if_clone_destroy(const char *);
+
+void	if_congestion(struct ifqueue *);
 
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);

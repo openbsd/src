@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.84 2004/02/28 09:14:10 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.85 2004/04/17 00:09:01 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -129,6 +129,8 @@ void	if_detached_watchdog(struct ifnet *);
 
 int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
+
+void	if_congestion_clear(void *);
 
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
@@ -779,6 +781,29 @@ if_clone_list(ifcr)
 	}
 
 	return (error);
+}
+
+/*
+ * set queue congestion marker and register timeout to clear it
+ */
+void
+if_congestion(struct ifqueue *ifq)
+{
+	static struct timeout	to;
+
+	ifq->ifq_congestion = 1;
+	bzero(&to, sizeof(to));
+	timeout_set(&to, if_congestion_clear, ifq);
+	timeout_add(&to, hz / 100);
+}
+
+/*
+ * clear the congestion flag
+ */
+void
+if_congestion_clear(void *ifq)
+{
+	((struct ifqueue *)ifq)->ifq_congestion = 0;
 }
 
 /*

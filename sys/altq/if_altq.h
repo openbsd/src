@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.8 2003/01/07 09:00:34 kjc Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.9 2004/04/17 00:09:00 henning Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ struct	ifaltq {
 	int	ifq_len;
 	int	ifq_maxlen;
 	int	ifq_drops;
+	int	ifq_congestion;
 
 	/* alternate queueing related fields */
 	int	altq_type;		/* discipline type */
