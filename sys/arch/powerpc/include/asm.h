@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 1996/12/28 06:09:16 rahnds Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 1998/07/04 23:56:13 rahnds Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -71,17 +71,33 @@
 #endif
 #define	_ASM_LABEL(x)	x
 
+#ifdef __STDC__
+# define _TMP_LABEL(x)	.L_ ## x
+#else
+# define _TMP_LABEL(x)	.L_/**/x
+#endif
+
 #define _ENTRY(x) \
 	.text; .align 2; .globl x; .type x,@function; x:
 
 #ifdef PROF
-# define _PROF_PROLOGUE	XXX
+# define _PROF_PROLOGUE(y)	\
+	.section ".data"; \
+	.align 2; \
+_TMP_LABEL(y):; \
+	.long 0; \
+	.section ".text"; \
+	mflr 0; \
+	addis 11, 11, _TMP_LABEL(y)@ha; \
+	stw 0, 4(1); \
+	addi 0, 11,_TMP_LABEL(y)@l; \
+	bl _mcount; 
 #else
-# define _PROF_PROLOGUE
+# define _PROF_PROLOGUE(y)
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE(y)
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE(y)
 
 #define	ASMSTR		.asciz
 
