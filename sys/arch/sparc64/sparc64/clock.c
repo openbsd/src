@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.20 2004/06/28 01:47:41 aaron Exp $	*/
+/*	$OpenBSD: clock.c,v 1.21 2004/09/23 17:25:03 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -94,6 +94,7 @@
 #include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
+#include <sparc64/dev/fhcvar.h>
 
 static u_int64_t lasttick;
 extern u_int64_t cpu_clockrate;
@@ -141,6 +142,8 @@ static int	clockmatch_sbus(struct device *, void *, void *);
 static void	clockattach_sbus(struct device *, struct device *, void *);
 static int	clockmatch_ebus(struct device *, void *, void *);
 static void	clockattach_ebus(struct device *, struct device *, void *);
+static int	clockmatch_fhc(struct device *, void *, void *);
+static void	clockattach_fhc(struct device *, struct device *, void *);
 static int	clockmatch_rtc(struct device *, void *, void *);
 static void	clockattach_rtc(struct device *, struct device *, void *);
 static void	clockattach(int, bus_space_tag_t, bus_space_handle_t);
@@ -151,6 +154,10 @@ struct cfattach clock_sbus_ca = {
 
 struct cfattach clock_ebus_ca = {
 	sizeof(struct device), clockmatch_ebus, clockattach_ebus
+};
+
+struct cfattach clock_fhc_ca = {
+	sizeof(struct device), clockmatch_fhc, clockattach_fhc
 };
 
 struct cfattach rtc_ebus_ca = {
@@ -221,6 +228,17 @@ clockmatch_ebus(parent, cf, aux)
 	struct ebus_attach_args *ea = aux;
 
 	return (strcmp("eeprom", ea->ea_name) == 0);
+}
+
+static int
+clockmatch_fhc(parent, cf, aux)
+	struct device *parent;
+	void *cf;
+	void *aux;
+{
+	struct fhc_attach_args *fa = aux;
+        
+	return (strcmp("eeprom", fa->fa_name) == 0);
 }
 
 static int
@@ -359,6 +377,35 @@ clockattach_ebus(parent, self, aux)
 	todr_handle->bus_cookie = &cwi;
 	todr_handle->todr_setwen = (ea->ea_memtag == bt) ? 
 	    clock_bus_wenable : NULL;
+}
+
+static void
+clockattach_fhc(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct fhc_attach_args *fa = aux;
+	bus_space_tag_t bt = fa->fa_bustag;
+	int sz;
+	static struct clock_wenable_info cwi;
+
+	/* use sa->sa_regs[0].size? */
+	sz = 8192;
+
+	if (fhc_bus_map(bt, fa->fa_reg[0].fbr_slot,
+	    (fa->fa_reg[0].fbr_offset & ~NBPG), fa->fa_reg[0].fbr_size,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY, &cwi.cwi_bh) != 0) {
+		printf("%s: can't map register\n", self->dv_xname);
+		return;
+	}
+
+	clockattach(fa->fa_node, bt, cwi.cwi_bh);
+
+	/* Save info for the clock wenable call. */
+	cwi.cwi_bt = bt;
+	cwi.cwi_size = sz;
+	todr_handle->bus_cookie = &cwi;
+	todr_handle->todr_setwen = clock_bus_wenable;
 }
 
 static void
