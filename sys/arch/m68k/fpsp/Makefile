@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1996/05/29 21:05:23 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/06/16 10:33:44 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1994/10/26 07:48:46 cgd Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -342,6 +342,8 @@ all:
 depend:
 
 install:
+
+includes:
 
 .include <bsd.obj.mk>
 .include <bsd.own.mk>
