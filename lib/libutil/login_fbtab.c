@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.9 2002/06/21 16:37:11 millert Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.10 2002/06/22 00:18:58 millert Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -65,6 +65,7 @@
 #include <limits.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -83,34 +84,47 @@ void
 login_fbtab(const char *tty, uid_t uid, gid_t gid)
 {
 	FILE	*fp;
-	char	buf[BUFSIZ], *bufp, *devname, *cp;
+	char	*buf, *toklast, *tbuf, *devname, *cp;
 	int	prot;
+	size_t	len;
 
 	if ((fp = fopen(_PATH_FBTAB, "r")) == NULL)
 		return;
 
-	while ((bufp = fgets(buf, sizeof(buf), fp)) != NULL) {
+	tbuf = NULL;
+	while ((buf = fgetln(fp, &len)) != NULL) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			if ((tbuf = (char *)malloc(len + 1)) == NULL)
+				break;
+			memcpy(tbuf, buf, len);
+			tbuf[len] = '\0';
+			buf = tbuf;
+		}
 		if ((cp = strchr(buf, '#')))
 			*cp = 0;	/* strip comment */
-		if ((devname = strsep(&bufp, WSPACE)) == NULL)
+		if ((cp = devname = strtok_r(buf, WSPACE, &toklast)) == NULL)
 			continue;	/* empty or comment */
 		if (strncmp(devname, _PATH_DEV, sizeof(_PATH_DEV) - 1) != 0 ||
-		    (cp = strsep(&bufp, WSPACE)) == NULL ||
+		    (cp = strtok_r(NULL, WSPACE, &toklast)) == NULL ||
 		    *cp != '0' ||
 		    sscanf(cp, "%o", &prot) == 0 ||
 		    prot == 0 ||
 		    (prot & 0777) != prot ||
-		    (cp = strsep(&bufp, WSPACE)) == NULL) {
+		    (cp = strtok_r(NULL, WSPACE, &toklast)) == NULL) {
 			syslog(LOG_ERR, "%s: bad entry: %s", _PATH_FBTAB,
 			    cp ? cp : "(null)");
 			continue;
 		}
 		if (strcmp(devname + sizeof(_PATH_DEV) - 1, tty) == 0) {
-			bufp = cp;
-			while ((cp = strsep(&bufp, ":")) != NULL)
+			for (cp = strtok_r(cp, ":", &toklast); cp != NULL;
+			    cp = strtok_r(NULL, ":", &toklast))
 				login_protect(cp, prot, uid, gid);
 		}
 	}
+	if (tbuf != NULL)
+		free(tbuf);
 	fclose(fp);
 }
 
