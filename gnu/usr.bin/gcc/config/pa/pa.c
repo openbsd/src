@@ -5082,7 +5082,7 @@ output_millicode_call (insn, call_dest)
 	  output_asm_insn ("nop", xoperands);
 	}
       /* Pure portable runtime doesn't allow be/ble; we also don't have
-	 PIC support int he assembler/linker, so this sequence is needed.  */
+	 PIC support in the assembler/linker, so this sequence is needed.  */
       else if (TARGET_PORTABLE_RUNTIME)
 	{
 	  xoperands[0] = call_dest;

@@ -116,6 +116,14 @@ extern int target_flags;
    occurring within the switch table.  */
 #define TARGET_BIG_SWITCH (target_flags & 2048)
 
+#ifndef TARGET_DEFAULT
+#define TARGET_DEFAULT 0x88		/* TARGET_GAS + TARGET_JUMP_IN_DELAY */
+#endif
+
+#ifndef TARGET_CPU_DEFAULT
+#define TARGET_CPU_DEFAULT 0
+#endif
+
 /* Macro to define tables used to set the flags.
    This is a list in braces of pairs in braces,
    each pair being { "NAME", VALUE }
@@ -151,14 +159,6 @@ extern int target_flags;
    {"no-big-switch", -2048},	\
    {"linker-opt", 0},		\
    { "", TARGET_DEFAULT | TARGET_CPU_DEFAULT}}
-
-#ifndef TARGET_DEFAULT
-#define TARGET_DEFAULT 0x88		/* TARGET_GAS + TARGET_JUMP_IN_DELAY */
-#endif
-
-#ifndef TARGET_CPU_DEFAULT
-#define TARGET_CPU_DEFAULT 0
-#endif
 
 #define TARGET_OPTIONS			\
 {					\
@@ -233,6 +233,7 @@ extern int target_flags;
   fprintf (FILE,							\
 	   "\t.stabs \"\",%d,0,0,L$text_end0000\nL$text_end0000:\n", N_SO)
 
+#undef CPP_SPEC
 #if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 1) == 0
 #define CPP_SPEC "%{msnake:-D__hp9000s700 -D_PA_RISC1_1}\
  %{mpa-risc-1-1:-D__hp9000s700 -D_PA_RISC1_1}\
@@ -245,6 +246,7 @@ extern int target_flags;
 
 #define CC1_SPEC "%{pg:} %{p:}"
 
+#undef LINK_SPEC
 #define LINK_SPEC "%{mlinker-opt:-O} %{!shared:-u main} %{shared:-b}"
 
 /* We don't want -lg.  */
@@ -1112,6 +1114,7 @@ extern enum cmp_type hppa_branch_type;
 	       "\t.SUBSPA %s\n", name);				\
   }
     
+#undef ASM_DECLARE_FUNCTION_NAME
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL) \
     do { tree fntype = TREE_TYPE (TREE_TYPE (DECL));			\
 	 tree tree_type = TREE_TYPE (DECL);				\

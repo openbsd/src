@@ -3167,9 +3167,9 @@ for machine in $build $host $target; do
 		;;
 	hppa*-*-openbsd*)
 		target_cpu_default=1
-		tm_file="pa/pa-openbsd.h"
-		xm_file=pa/xm-openbsd.h
-		xmake_file=x-openbsd
+		tm_file="${cpu_type}/openbsd.h"
+		xm_file="${cpu_type}/xm-openbsd.h"
+		tmake_file=pa/t-openbsd
 		use_collect2=yes
 		fixincludes=Makefile.in
 		;;
