@@ -132,7 +132,7 @@ scsibus* at aic?
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+#uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 #wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5

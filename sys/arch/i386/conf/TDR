@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.19 1996/10/24 23:25:16 downsj Exp $
+#	$OpenBSD: TDR,v 1.20 1996/12/11 00:40:04 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -134,7 +134,7 @@ scsibus* at bt?
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+#uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
