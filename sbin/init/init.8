@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.14 1998/12/15 01:20:32 aaron Exp $
+.\"	$OpenBSD: init.8,v 1.15 1999/03/02 02:38:03 aaron Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -124,9 +124,7 @@ Normally, the system runs in level 0 mode while single-user
 and in level 1 mode while multi-user.
 If the level 2 mode is desired while running multi-user,
 it can be set in the startup script
-.Pa /etc/rc
-using
-.Xr sysctl 8 .
+.Pa /etc/rc.securelevel .
 If it is desired to run the system in level 0 mode while multi-user,
 the administrator must build a kernel with
 .Dq option INSECURE
@@ -265,7 +263,7 @@ that is stuck in a device driver because of
 a persistent device error condition.
 .El
 .Sh FILES
-.Bl -tag -width /var/log/wtmp -compact
+.Bl -tag -width /etc/rc.securelevel -compact
 .It Pa /dev/console
 system console device
 .It Pa /dev/tty*
@@ -279,6 +277,8 @@ record of all logins and logouts
 terminal initialization information file
 .It Pa /etc/rc
 system startup commands
+.It Pa /etc/rc.securelevel
+commands that run before the security level changes
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
