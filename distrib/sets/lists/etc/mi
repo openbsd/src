@@ -144,14 +144,10 @@
 ./var/run/utmp
 ./var/www/cgi-bin/printenv
 ./var/www/cgi-bin/test-cgi
-./var/www/conf/access.conf
-./var/www/conf/access.conf-dist
 ./var/www/conf/httpd.conf
 ./var/www/conf/httpd.conf-dist
 ./var/www/conf/magic
 ./var/www/conf/mime.types
-./var/www/conf/srm.conf
-./var/www/conf/srm.conf-dist
 ./var/www/htdocs/apache_pb.gif
 ./var/www/htdocs/blowfish.jpg
 ./var/www/htdocs/bsd_small.gif
