@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.34 2001/06/25 19:22:26 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.35 2001/06/25 19:53:37 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -573,12 +573,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pr->ticket != ticket_rules_inactive) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		rule = pool_get(&pf_rule_pl, PR_NOWAIT);
 		if (rule == NULL) {
 			error = ENOMEM;
-			goto done;
+			break;
 		}
 		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
 		rule->ifp = NULL;
@@ -587,7 +587,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (rule->ifp == NULL) {
 				pool_put(&pf_rule_pl, rule);
 				error = EINVAL;
-				goto done;
+				break;
 			}
 		}
 		rule->next = NULL;
@@ -605,7 +605,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (*ticket != ticket_rules_inactive) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 
 		/* Swap rules, keep the old. */
@@ -652,7 +652,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pr->ticket != ticket_rules_active) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		s = splsoftnet();
 		rule = pf_rulehead_active;
@@ -664,7 +664,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (rule == NULL) {
 			error = EBUSY;
 			splx(s);
-			goto done;
+			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
 		splx(s);
@@ -689,19 +689,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pn->ticket != ticket_nats_inactive) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		nat = pool_get(&pf_nat_pl, PR_NOWAIT);
 		if (nat == NULL) {
 			error = ENOMEM;
-			goto done;
+			break;
 		}
 		bcopy(&pn->nat, nat, sizeof(struct pf_nat));
 		nat->ifp = ifunit(nat->ifname);
 		if (nat->ifp == NULL) {
 			pool_put(&pf_nat_pl, nat);
 			error = EINVAL;
-			goto done;
+			break;
 		}
 		nat->next = pf_nathead_inactive;
 		pf_nathead_inactive = nat;
@@ -713,7 +713,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (*ticket != ticket_nats_inactive) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		s = splsoftnet();
 		while (pf_nathead_active != NULL) {
@@ -751,7 +751,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pn->ticket != ticket_nats_active) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		s = splsoftnet();
 		nat = pf_nathead_active;
@@ -763,7 +763,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (nat == NULL) {
 			error = EBUSY;
 			splx(s);
-			goto done;
+			break;
 		}
 		bcopy(nat, &pn->nat, sizeof(struct pf_nat));
 		splx(s);
@@ -788,19 +788,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pr->ticket != ticket_rdrs_inactive) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		rdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
 		if (rdr == NULL) {
 			error = ENOMEM;
-			goto done;
+			break;
 		}
 		bcopy(&pr->rdr, rdr, sizeof(struct pf_rdr));
 		rdr->ifp = ifunit(rdr->ifname);
 		if (rdr->ifp == NULL) {
 			pool_put(&pf_rdr_pl, rdr);
 			error = EINVAL;
-			goto done;
+			break;
 		}
 		rdr->next = pf_rdrhead_inactive;
 		pf_rdrhead_inactive = rdr;
@@ -812,7 +812,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (*ticket != ticket_rdrs_inactive) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		s = splsoftnet();
 		while (pf_rdrhead_active != NULL) {
@@ -850,7 +850,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pr->ticket != ticket_rdrs_active) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		s = splsoftnet();
 		rdr = pf_rdrhead_active;
@@ -862,7 +862,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (rdr == NULL) {
 			error = EBUSY;
 			splx(s);
-			goto done;
+			break;
 		}
 		bcopy(rdr, &pr->rdr, sizeof(struct pf_rdr));
 		splx(s);
@@ -892,7 +892,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		if (state == NULL) {
 			error = EBUSY;
-			goto done;
+			break;
 		}
 		bcopy(state, &ps->state, sizeof(struct pf_state));
 		ps->state.creation = pftv.tv_sec - ps->state.creation;
@@ -936,7 +936,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-done:
 	return (error);
 }
 
