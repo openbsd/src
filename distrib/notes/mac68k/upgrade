@@ -1,7 +1,7 @@
 To upgrade to OpenBSD OSREV from a previous version, you should follow the
 instructions on installing the system beginning with using the MacBSD
 Install Utility.  All you need do is copy each of the distribution sets in
-over your current system from the MacOS.
+over your current system from the Mac OS.
 
 However, you should not copy the etc{:--:}OSrev.tgz file into the system.
 Instead, download it while running OpenBSD and put it in /tmp or some other
