@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.51 2002/08/31 00:05:20 stevesk Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.52 2002/09/06 19:50:05 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.51 2002/08/31 00:05:20 stevesk Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.52 2002/09/06 19:50:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -687,7 +687,7 @@ wait_for_reply(int sock, struct sockaddr_in *from, struct timeval *sent)
 {
 	struct timeval now, wait;
 	int cc = 0, fdsn;
-	int fromlen = sizeof (*from);
+	socklen_t fromlen = sizeof (*from);
 	fd_set *fdsp;
 
 	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
