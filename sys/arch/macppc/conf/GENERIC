@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2002/07/23 17:53:24 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.30 2002/07/24 00:22:26 deraadt Exp $g
 #
 # PPC GENERIC config file
 #
@@ -28,9 +28,6 @@ include "../../../conf/GENERIC"
 
 config		bsd	swap generic
 
-#
-#  Now the Machine specification
-#
 mainbus0	at root
 cpu*		at mainbus0
 
@@ -165,20 +162,20 @@ umass*		at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus*	at umass?
 kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
 aue*		at uhub? port ?			# USB EtherNet 
-uplcom* 	at uhub? port ?            # I/O DATA USB-RSAQ2 serial adapter
-ucom*   	at uplcom? portno ?
+uplcom* 	at uhub? port ?			# I/O DATA USB-RSAQ2 serial
+ucom*		at uplcom? portno ?
 
 # CardBus bus support
-cardbus*        at cardslot?
-pcmcia*         at cardslot?
-cbb*            at pci? dev ? function ?
-cardslot*       at cbb?
+cardbus*	at cardslot?
+pcmcia*		at cardslot?
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
 wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
 #dc*		at cardbus? dev ? function ?	# 21143, "tulip" clone ethernet
 #fxp*		at cardbus? dev ? function ?	# Intel PRO/100 ethernet
 #xl*		at cardbus? dev ? function ?	# 3C575/3C656 ethernet
 #rl*		at cardbus? dev ? function ?	# RealTek 81[23]9 ethernet
-#wdc*	at pcmcia? function ?
+#wdc*		at pcmcia? function ?
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ? mux 1
@@ -190,4 +187,4 @@ ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
 
-pseudo-device        wsmux	2	# mouse & keyboard multiplexor
+pseudo-device	wsmux	2	# mouse & keyboard multiplexor
