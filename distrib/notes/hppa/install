@@ -1,8 +1,8 @@
-dnl	$OpenBSD: install,v 1.8 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: install,v 1.9 2004/05/04 23:40:49 mickey Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
-Currently, the only way to bootstrap the installation procedure is 
+Currently, the only way to bootstrap the installation procedure is
 to boot the miniroot over the network.
 
 
@@ -17,7 +17,7 @@ on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
 Your MACHINE expects to be able to download a so-called LIF (``Logical
 Interchange Format'') image, containing both the boot code and the kernel,
-via the HP rboot protocol, for older firmware, or via bootp or dhcp, for
+via the HP rboot protocol, for older firmware, or via bootp, for
 more recent firmware.
 
 Old firmware operation
@@ -33,9 +33,9 @@ The first level is a short menu:
 
 	Select from menu:
 
-In this case, you will need to set up rbootd on the server. Start by creating
+In this case, you will need to setup rbootd on the server. Start by creating
 an /etc/rbootd.conf file on the bootserver. The format of this file is the
-Ethernet address followed by the LIF filename. Here is an example:
+ethernet address followed by the LIF filename. Here is an example:
 
 	08:00:09:70:c4:11		lif{:--:}OSrev.fs
 
@@ -45,25 +45,23 @@ the possible boot choices in a boot device search (``s'' command).
 
 Modern firmware operation
 
-More recent machines mostly based on the 7100LC, 7200 and 7300LC CPU types
-have a different PDC version.  There is only one interactive mode, with a
-BOOT_ADMIN> prompt, which provides both boot settings and commands.
+More recent machines mostly those based on the 7100LC, 7200 and 7300LC CPU
+types have a different PDC version.  There is only one interactive mode,
+with a BOOT_ADMIN> prompt, which provides both boot settings and commands.
 
 In this case, you will need to set up either bootpd or dhcpd on the server.
-Assuming a bootp setup, start by editing the /etc/bootptab on the bootserver,
+Assuming a dhcpd setup, start by editing the /etc/dhcpd.conf on the bootserver,
 and declare an information block. Here is an example:
 
-	boron:\
-		ha=08000970c411:\
-		bf=lif{:--:}OSrev.fs:\
-		hd=:\
-		ht=ethernet:\
-		ip=10.42.42.42:\
-		rp=/export/MACHINE:\
-		sm=255.0.0.0:\
-		td=/tftpboot:
+	subnet 10.0.0.0 netmask 255.0.0.0 {
+		host boron {
+			filename "lif{:--:}OSrev.fs";
+			hardware ethernet 08:00:09:70:c4:11;
+			fixed-address 10.42.42.42;
+		}
+	}
 
-Do not forget to enable bootpd, either as a standalone process, or via inetd.
+Do not forget to enable dhcpd, either as a standalone process, or via inetd.
 
 You will also need to enable tftpd, for the MACHINE to download the
 miniroot (bf entry) from the server in the /tftpboot (td entry) directory.
@@ -98,8 +96,8 @@ OpenBSDBootMsgs
 	installing from a non-serial console, the default of "vt100"
 	is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100.)
-	
+	(If your terminal type is xterm, just use vt100).
+
 OpenBSDInstallPart3
 
 OpenBSDInstallPart4
