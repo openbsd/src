@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.20 2002/11/21 19:42:39 jason Exp $
+.\"	$OpenBSD: crypto.9,v 1.21 2003/02/20 06:35:25 jason Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -229,7 +229,8 @@ Contains the SID.
 .It Fa crp_ilen
 Indicates the total length in bytes of the buffer to be processed.
 .It Fa crp_olen
-On return, contains the total length of the result.
+On return, contains the length of the result, not including
+.Fa crd_skip .
 For symmetric crypto operations, this will be the same as the input length.
 .It Fa crp_alloctype
 Indicates the type of buffer, as used in the kernel
