@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- perl -*-
 #
-# $OpenBSD: rmuser.perl,v 1.5 2002/03/05 17:23:45 millert Exp $
+# $OpenBSD: rmuser.perl,v 1.6 2002/05/31 19:47:00 millert Exp $
 #
 # Copyright 1995, 1996 Guy Helmer, Madison, South Dakota 57042.
 # All rights reserved.
@@ -51,7 +51,7 @@ $atjob_dir = "/var/at/jobs";
 #$debug = 1;
 
 END {
-    if (-e $passwd_tmp && defined(fileno(TMP_PW))) {
+    if (-e $passwd_tmp && defined(fileno(NEW_PW))) {
 	unlink($passwd_tmp) ||
 	    warn "\n${whoami}: warning: couldn't unlink $passwd_tmp ($!)\n\tPlease investigate, as this file should not be left in the filesystem\n";
     }
