@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.170 2001/10/15 22:58:59 krw Exp $
+#	$OpenBSD: install.sub,v 1.171 2001/10/31 01:33:24 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -2248,15 +2248,15 @@ donetconfig() {
 	echo "any name servers."
 	echo
 
-	configurenetwork
-
-	# Get FQDN after possible DHCP invocation
+	# Get FQDN before creation of hosts file entries in addhostent()
 	if [ -f /tmp/resolv.conf.shadow ]; then
 		get_fqdn /tmp/resolv.conf.shadow
 	else
 		# If install is being re-run, save a few keystrokes
 		get_fqdn /tmp/resolv.conf
 	fi
+
+	configurenetwork
 
 	resp=`route -n show |
 	    grep '^default' |
