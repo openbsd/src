@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-2022-jp"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
   <head>
 
     <title>Apache module mod_alias</title>
@@ -145,8 +145,8 @@
     <p>このディレクティブは <a href="#alias">Alias</a>
     とほとんど同じですが、簡単な先頭からのマッチを行なうのではなく、
     標準正規表現を利用します。ここで指定された正規表現と URL-path
-    が合うかどうかを調べ、合う場合は括弧で括られたマッチを
-    与えられた文字列で置き換え、それをファイル名として使用します。たとえば、
+    が合うかどうかを調べ、合う場合は括弧で囲まれたマッチを
+    与えられた文字列で置き換え、それをファイル名として使用します。例えば、
     <code>/icons</code> ディレクトリを使用するようにする
     ためには以下のようなものが使用できます:</p>
 <pre>
@@ -322,7 +322,7 @@
 
     <p>このディレクティブはクライアントに Redirect が永久的なもの
     (ステータス 301) であることを知らせます。
-    <code>Redirect premanent</code> とまったく同じです。</p>
+    <code>Redirect premanent</code> と全く同じです。</p>
     <hr />
 
     <h2><a id="scriptalias" name="scriptalias">ScriptAlias
@@ -379,9 +379,9 @@
     <p>このディレクティブは <a href="#scriptalias">ScriptAlias</a>
     とほとんど同じですが、簡単な先頭からのマッチを行なうのではなく、
     標準正規表現を利用します。ここで指定された正規表現と URL-path
-    が合うかどうかを調べ、合う場合は括弧で括られたマッチを
+    が合うかどうかを調べ、合う場合は括弧で囲まれたマッチを
     与えられた文字列で置き換え、それをファイル名として使用します。
-    たとえば、標準の <code>/cgi-bin</code>
+    例えば、標準の <code>/cgi-bin</code>
     を使用するようにするためには、以下のようなものを使います:
     </p>
 <pre>

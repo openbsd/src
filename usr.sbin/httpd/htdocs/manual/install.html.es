@@ -63,7 +63,7 @@
     en la web y por ftp an&oacute;nimo.</p>
 
     <p>Si se ha bajado la distribuci&oacute;n binaria, vaya a <a
-    href="#install">Instalaci&oacute;n de Apache</a>. Si no es
+    href="#installing">Instalaci&oacute;n de Apache</a>. Si no es
     as&iacute; lea la siguiente secci&oacute;n como compilar el
     servidor.</p>
 
@@ -160,7 +160,7 @@
     Hay instrucciones en esa p&aacute;gina para a&ntilde;adir estos
     m&oacute;dulos en el n&uacute;cleo de Apache.</p>
 
-    <h2><a id="install" name="install">Instalaci&oacute;n de
+    <h2><a id="installing" name="installing">Instalaci&oacute;n de
     Apache</a></h2>
 
     <p>Tendr&aacute; un fichero binario llamado <code>hhtpd</code>
