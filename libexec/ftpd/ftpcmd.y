@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.33 2002/01/23 16:38:12 mpech Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.34 2002/01/25 06:40:14 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.33 2002/01/23 16:38:12 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.34 2002/01/25 06:40:14 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ cmd
 	| SITE SP CHMOD check_login SP octal_number SP pathname CRLF
 		{
 			if ($4 && ($8 != NULL)) {
-				if ($6 > 0777)
+				if (($6 == -1) || ($6 > 0777))
 					reply(501,
 					    "CHMOD: Mode value must be between "
 					    "0 and 0777");
