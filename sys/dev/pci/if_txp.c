@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.11 2001/04/10 22:10:09 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.12 2001/04/11 15:41:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -81,7 +81,10 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_txpreg.h>
-#include <dev/microcode/typhoon/typhoon_image.h>
+
+#define u32 u_int32_t
+#include <dev/microcode/typhoon/3c990img.h>
+#undef u32
 
 int txp_probe		__P((struct device *, void *, void *));
 void txp_attach		__P((struct device *, struct device *, void *));
@@ -349,7 +352,7 @@ txp_download_fw(sc)
 	/* Ack the status */
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
-	fileheader = (struct txp_fw_file_header *)TyphoonImage;
+	fileheader = (struct txp_fw_file_header *)tc990image;
 	if (strncmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
 		printf(": fw invalid magic\n");
 		return (-1);
@@ -364,7 +367,7 @@ txp_download_fw(sc)
 		return (-1);
 	}
 
-	secthead = (struct txp_fw_section_header *)(TyphoonImage +
+	secthead = (struct txp_fw_section_header *)(((u_int8_t *)tc990image) +
 	    sizeof(struct txp_fw_file_header));
 
 	for (sect = 0; sect < fileheader->nsections; sect++) {
@@ -437,15 +440,15 @@ txp_download_fw_section(sc, sect, sectnum)
 		return (0);
 
 	/* Make sure we aren't past the end of the image */
-	rseg = ((u_int8_t *)sect) - ((u_int8_t *)TyphoonImage);
-	if (rseg >= sizeof(TyphoonImage)) {
+	rseg = ((u_int8_t *)sect) - ((u_int8_t *)tc990image);
+	if (rseg >= sizeof(tc990image)) {
 		printf(": fw invalid section address, section %d\n", sectnum);
 		return (-1);
 	}
 
 	/* Make sure this section doesn't go past the end */
 	rseg += sect->nbytes;
-	if (rseg >= sizeof(TyphoonImage)) {
+	if (rseg >= sizeof(tc990image)) {
 		printf(": fw truncated section %d\n", sectnum);
 		return (-1);
 	}
