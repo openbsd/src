@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.32 2001/01/31 17:42:26 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.33 2001/05/30 20:57:58 smart Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.32 2001/01/31 17:42:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.33 2001/05/30 20:57:58 smart Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,11 +207,11 @@ main(argc, argv)
 		if (wcmd == 0 || (sel_user &&
 		    strncmp(utmp.ut_name, sel_user, UT_NAMESIZE) != 0))
 			continue;
-		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
+		if ((ep = calloc(1, sizeof(*ep))) == NULL)
 			err(1, NULL);
 		*nextp = ep;
 		nextp = &(ep->next);
-		memcpy(&(ep->utmp), &utmp, sizeof(struct utmp));
+		memcpy(&(ep->utmp), &utmp, sizeof(utmp));
 		if (!(stp = ttystat(ep->utmp.ut_line)))
 			continue;
 		ep->tdev = stp->st_rdev;
@@ -242,7 +242,7 @@ main(argc, argv)
 	}
 
 #define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT"
-#define WUSED	(sizeof (HEADER) - sizeof ("WHAT"))
+#define WUSED	(sizeof(HEADER) - sizeof("WHAT"))
 	(void)puts(HEADER);
 
 	if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL)
@@ -268,8 +268,8 @@ main(argc, argv)
 					ep->kp = kp;
 					break;
 				}
-			} else if (ep->tdev == e->e_tdev
-				   && e->e_pgid == e->e_tpgid) {
+			} else if (ep->tdev == e->e_tdev &&
+			    e->e_pgid == e->e_tpgid) {
 				/*
 				 * Proc is in foreground of this terminal
 				 */
@@ -412,7 +412,7 @@ pr_header(nowp, nusers)
 	 */
 	(void)strftime(buf, sizeof(buf) - 1,
 	    __CONCAT("%l:%","M%p"), localtime(nowp));
-	buf[sizeof buf -1] = '\0';
+	buf[sizeof(buf) - 1] = '\0';
 	(void)printf("%s ", buf);
 
 	/*
@@ -476,9 +476,8 @@ ttystat(line)
 	char ttybuf[sizeof(_PATH_DEV) + UT_LINESIZE];
 
 	/* Note, line may not be NUL-terminated */
-	(void)strcpy(ttybuf, _PATH_DEV);
-	(void)strncpy(ttybuf + sizeof(_PATH_DEV) - 1, line, UT_LINESIZE);
-	ttybuf[sizeof(ttybuf) - 1] = '\0';
+	(void)strlcpy(ttybuf, _PATH_DEV, sizeof(ttybuf));
+	(void)strncat(ttybuf, line, sizeof(ttybuf) - 1 - strlen(ttybuf));
 	if (stat(ttybuf, &sb))
 		return (NULL);
 	return (&sb);
@@ -490,8 +489,9 @@ usage(wcmd)
 {
 	if (wcmd)
 		(void)fprintf(stderr,
-		    "usage: w: [-hia] [-M core] [-N system] [user]\n");
+		    "usage: w [-hia] [-M core] [-N system] [user]\n");
 	else
-		(void)fprintf(stderr, "usage: uptime\n");
+		(void)fprintf(stderr,
+		    "usage: uptime [-M core] [-N system]\n");
 	exit (1);
 }
