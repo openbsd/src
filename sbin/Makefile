@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1996/06/27 07:20:27 downsj Exp $
+#	$OpenBSD: Makefile,v 1.17 1996/07/27 10:27:14 deraadt Exp $
 #	$NetBSD: Makefile,v 1.29 1996/05/14 17:39:21 ws Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -36,7 +36,7 @@ SUBDIR+= pcmcia_cntrl
 SUBDIR+= fdisk
 .elif ${MACHINE} == "pc532"
 SUBDIR+= bim
-.elif ${MACHINE} == "sun3"
+.elif (${MACHINE} == "sun3") || (${MACHINE} == "atari") || (${MACHINE} == "sparc")
 SUBDIR+= edlabel
 .endif
 
