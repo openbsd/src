@@ -273,10 +273,6 @@ deffilep.c ldgram.c ldlex.c
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-# Target to use for installing unformatted man-pages.  Some systems may not
-# want them installed.
-INSTALL_MAN = install-man
-
 TAR = tar
 GZIP_ENV = --best
 SOURCES = $(ld_new_SOURCES) $(EXTRA_ld_new_SOURCES)
@@ -728,7 +724,7 @@ all-recursive-am: config.h
 install-exec-am: install-exec-local
 install-exec: install-exec-recursive
 
-install-data-am: $(INSTALL_MAN) install-data-local
+install-data-am: install-man install-data-local
 install-data: install-data-recursive
 
 install-am: all-am
@@ -1093,7 +1089,7 @@ ehppalinux.c: $(srcdir)/emulparams/hppalinux.sh \
 	${GENSCRIPTS} hppalinux "$(tdir_hppalinux)"
 ehppaobsd.c: $(srcdir)/emulparams/hppaobsd.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/hppaelf.em \
-  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+  $(srcdir)/scripttempl/hppaobsd.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} hppaobsd "$(tdir_hppaobsd)"
 ei386aout.c: $(srcdir)/emulparams/i386aout.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
