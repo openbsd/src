@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atu.4,v 1.3 2004/11/08 23:38:03 jmc Exp $
+.\"	$OpenBSD: atu.4,v 1.4 2004/11/13 19:01:45 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -64,19 +64,6 @@ By default, the
 driver configures the card for BSS operation (aka infrastructure
 mode).
 This mode requires the use of an access point (base station).
-.Pp
-The
-.Nm
-driver also supports an ad-hoc (point-to-point) mode where
-the nwid is ignored and stations can communicate amongst
-themselves without the aid of an access point.
-Note that there are two possible ad-hoc modes.
-One mode, referred to as
-.Dq ad-hoc demo mode ,
-predates the IEEE 802.11 specification and so may not interoperate
-with cards from other vendors.
-The standardized ad-hoc mode, also known as IBSS mode, is not
-supported by cards with very old firmware revisions.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
