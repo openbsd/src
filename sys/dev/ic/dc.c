@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.29 2001/06/27 06:34:40 kjc Exp $	*/
+/*	$OpenBSD: dc.c,v 1.30 2001/07/02 01:28:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -128,8 +128,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
+#include <machine/bus.h>
 #include <dev/pci/pcidevs.h>
 
 #define DC_USEIOSPACE

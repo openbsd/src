@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.25 2001/06/27 06:34:43 kjc Exp $	*/
+/*	$OpenBSD: xl.c,v 1.26 2001/07/02 01:28:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -136,9 +136,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
+#include <machine/bus.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
