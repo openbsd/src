@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.23 2000/09/28 23:50:12 miod Exp $
+#	$OpenBSD: Makefile.sun3,v 1.24 2000/11/09 02:10:21 miod Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -37,7 +37,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dsun3
 CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes \
-		-Wno-format -Wno-uninitialized -Wno-main \
+		-Wno-format -Wno-uninitialized -Wno-main
 CFLAGS= 	${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -fno-defer-pop
 AFLAGS=		-m68020 -x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
