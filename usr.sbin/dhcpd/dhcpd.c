@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.6 2004/04/14 03:59:17 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.7 2004/04/14 04:13:58 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -60,77 +60,72 @@ char *path_dhcpd_db = _PATH_DHCPD_DB;
 int
 main(int argc, char *argv[])
 {
-	int i, status;
-	struct servent *ent;
-	char *s;
-	int cftest = 0;
-	int quiet = 0;
-	int daemonize = 1;
+	int		 ch, status;
+	int		 cftest = 0, quiet = 0, daemonize = 1;
+	struct servent	*ent;
 	extern char *__progname;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO (LOG_INFO));
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp (argv [i], "-p")) {
-			if (++i == argc)
-				usage();
-			for (s = argv [i]; *s; s++)
-				if (!isdigit (*s))
-					error ("%s: not a valid UDP port",
-					       argv [i]);
-			status = atoi (argv [i]);
-			if (status < 1 || status > 65535)
-				error ("%s: not a valid UDP port",
-				       argv [i]);
-			local_port = htons (status);
-			debug ("binding to user-specified port %d",
-			       ntohs (local_port));
-		} else if (!strcmp (argv [i], "-f")) {
-			daemonize = 0;
-		} else if (!strcmp (argv [i], "-d")) {
+	while ((ch = getopt(argc, argv, "c:dfl:p:tq")) != -1)
+		switch (ch) {
+		case 'c':
+			path_dhcpd_conf = optarg;
+			break;
+		case 'd':
 			daemonize = 0;
 			log_perror = -1;
-		} else if (!strcmp (argv [i], "-cf")) {
-			if (++i == argc)
-				usage();
-			path_dhcpd_conf = argv [i];
-		} else if (!strcmp (argv [i], "-lf")) {
-			if (++i == argc)
-				usage();
-			path_dhcpd_db = argv [i];
-                } else if (!strcmp (argv [i], "-t")) {
-			/* test configurations only */
+			break;
+		case 'f':
+			daemonize = 0;
+			break;
+		case 'l':
+			path_dhcpd_db = optarg;
+			break;
+		case 'p':
+			status = atoi(optarg);
+			if (status < 1 || status > 65535)
+				error ("%s: not a valid UDP port", optarg);
+			local_port = htons(status);
+			break;
+		case 'q':
+			quiet = 1;
+			quiet_interface_discovery = 1;
+			break;
+		case 't':
 			daemonize = 0;
 			cftest = 1;
 			log_perror = -1;
-		} else if (!strcmp (argv [i], "-q")) {
-			quiet = 1;
-			quiet_interface_discovery = 1;
-		} else if (argv [i][0] == '-') {
+			break;
+		default:
 			usage();
-		} else {
-			struct interface_info *tmp =
-				((struct interface_info *)
-				 dmalloc (sizeof *tmp, "get_interface_list"));
-			if (!tmp)
-				error ("Insufficient memory to %s %s",
-				       "record interface", argv [i]);
-			memset (tmp, 0, sizeof *tmp);
-			strlcpy (tmp->name, argv [i], sizeof(tmp->name));
-			tmp->next = interfaces;
-			tmp->flags = INTERFACE_REQUESTED;
-			interfaces = tmp;
 		}
+
+	argc -= optind;
+	argv += optind;
+
+	if (!argc)
+		usage();
+
+	while (argc > 0) {
+		struct interface_info *tmp = calloc(1, sizeof(*tmp));
+		if (!tmp)
+			error("calloc");
+		strlcpy(tmp->name, argv[0], sizeof(tmp->name));
+		tmp->next = interfaces;
+		tmp->flags = INTERFACE_REQUESTED;
+		interfaces = tmp;
+		argc--;
+		argv++;
 	}
 
 	if (quiet)
 		log_perror = 0;
 
 	/* Default to the DHCP/BOOTP port. */
-	if (!local_port)
-	{
+	if (!local_port) {
 		ent = getservbyname ("dhcp", "udp");
 		if (!ent)
 			local_port = htons (67);
