@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.26 2003/05/06 00:10:40 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.27 2003/05/06 04:32:16 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.26 2003/05/06 00:10:40 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.27 2003/05/06 04:32:16 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -613,10 +613,9 @@ next:
 	sblock.fs_fmod = 0;
 	sblock.fs_ronly = 0;
 	sblock.fs_clean = FS_ISCLEAN;
-#ifdef FSIRAND
 	sblock.fs_id[0] = (u_int32_t)utime;
 	sblock.fs_id[1] = (u_int32_t)arc4random();
-#endif
+
 	/*
 	 * Dump out summary information about file system.
 	 */
@@ -754,10 +753,8 @@ initcg(cylno, utime)
 			acg.cg_cs.cs_nifree--;
 		}
 	for (i = 0; i < sblock.fs_ipg / INOPF(&sblock); i += sblock.fs_frag) {
-#ifdef FSIRAND
 		for (j = 0; j < sblock.fs_bsize / sizeof(struct dinode); j++)
 			zino[j].di_gen = (u_int32_t)arc4random();
-#endif
 		wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
 		    sblock.fs_bsize, (char *)zino);
 	}
@@ -1031,9 +1028,7 @@ iput(ip, ino)
 	daddr_t d;
 	int c;
 
-#ifdef FSIRAND
 	ip->di_gen = (u_int32_t)arc4random();
-#endif
 	c = ino_to_cg(&sblock, ino);
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);

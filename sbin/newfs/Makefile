@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:37:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/05/06 04:32:16 tedu Exp $
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c
 MAN=	newfs.8
 
 MOUNT=	${.CURDIR}/../mount
-CFLAGS+=-DMFS -DFSIRAND -I${MOUNT}
+CFLAGS+=-DMFS -I${MOUNT}
 .PATH:	${MOUNT} ${.CURDIR}/../disklabel
 
 DPADD=	${LIBUTIL}
