@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.6 2002/07/12 20:28:55 drahn Exp $	*/
+/*	$OpenBSD: pte.h,v 1.7 2003/01/30 15:38:09 drahn Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@ struct pte {
 #define	PTE_CHG		0x00000080
 #define	PTE_WIMG	0x00000078
 #define	PTE_W		0x00000040
+#define	PTE_EXE		0x00000040 /* only used in pmap_attr, same as PTE_W */
 #define	PTE_I		0x00000020
 #define	PTE_M		0x00000010
 #define	PTE_G		0x00000008

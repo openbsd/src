@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.78 2002/11/06 00:17:27 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.79 2003/01/30 15:38:09 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -457,8 +457,10 @@ pmap_enter(pm, va, pa, prot, flags)
 	struct pte_desc *pted;
 	struct pted_pv_head *pvh;
 	int s;
-	int need_sync;
+	int need_sync = 0;
 	int cache;
+	u_int8_t *pattr = NULL;
+	int first_map = 0;
 
 	/* MP - Acquire lock for this pmap */
 
@@ -489,7 +491,27 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	pmap_fill_pte(pm, va, pa, pted, prot, flags, cache);
 
-	need_sync = pmap_enter_pv(pted, pvh);
+	if (pvh != NULL) {
+		pattr = pmap_find_attr(pa); /* pattr only for managed mem */
+		first_map = pmap_enter_pv(pted, pvh); /* only managed mem */
+	}
+
+	/* 
+	 * We want to flush for executable pages which are not managed???
+	 * Always flush for the first mapping if it is executable.
+	 * If previous mappings exist, but this is the first EXE, sync.
+	 */
+
+	if (prot & VM_PROT_EXECUTE) {
+		need_sync = 1;
+		 if (pvh != NULL) {
+			if (!first_map)
+				need_sync =
+				    (*pattr & (PTE_EXE >> ATTRSHIFT)) == 0;
+			else if (pattr != NULL)
+				*pattr = 0;
+		}
+	}
 
 	/*
 	 * Insert into HTAB
@@ -513,12 +535,21 @@ pmap_enter(pm, va, pa, prot, flags)
 				    :: "r"(pm->pm_sr[sn]),
 				       "r"(sn << ADDR_SR_SHIFT) );
 		}
+		if (pattr != NULL)
+			*pattr |= (PTE_EXE >> ATTRSHIFT);
+	} else {
+		/*
+		 * Should we be paranoid about writeable non-exec 
+		 * mappings ? if so, clear the exec tag
+		 */
+		if ((prot & VM_PROT_WRITE) && (pattr != NULL))
+			*pattr &= ~(PTE_EXE >> ATTRSHIFT);
 	}
 
 	splx(s);
 
 	/* only instruction sync executable pages */
-	if (need_sync && (prot & VM_PROT_EXECUTE))
+	if (need_sync)
 		pmap_syncicache_user_virt(pm, va);
 
 	/* MP - free pmap lock */
@@ -941,10 +972,13 @@ pteclrbits(paddr_t pa, u_int bit, u_int clear)
 		 * currently mapped. If the mapping was thrown away in
 		 * exchange for another page mapping, then this page is
 		 * not currently in the HASH.
+		 *
+		 * if we are not clearing bits, and have found all of the
+		 * bits we want, we can stop
 		 */
 		if ((pted->pted_pte.pte_hi | (PTED_HID(pted) ? PTE_HID : 0))
 		    == ptp->pte_hi) {
-			bits |=	ptp->pte_lo & (PTE_REF|PTE_CHG);
+			bits |=	ptp->pte_lo & bit;
 			if (clear) {
 				ptp->pte_hi &= ~PTE_VALID;
 				__asm__ volatile ("sync");
@@ -953,11 +987,11 @@ pteclrbits(paddr_t pa, u_int bit, u_int clear)
 				ptp->pte_lo &= ~bit;
 				__asm__ volatile ("sync");
 				ptp->pte_hi |= PTE_VALID;
-			}
+			} else if (bits == bit)
+				break;
 		}
 	}
 
-	bits |= (*pattr << ATTRSHIFT) & bit;
 	if (clear)
 		*pattr &= ~(bit >> ATTRSHIFT);
 	else
