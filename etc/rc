@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.146 2000/07/11 22:30:56 matt Exp $
+#	$OpenBSD: rc,v 1.147 2000/07/13 13:15:36 itojun Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -411,9 +411,8 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 			/usr/sbin/route6d ${route6d_flags}
 		fi
 		# $rtadvd_flags is imported from /etc/rc.conf;
-		# If $rtadvd_flags == NO or /etc/rtadvd.conf doesn't exist,
-		# then rtadvd isn't run.
-		if [ "X${rtadvd_flags}" != X"NO" -a -f /etc/rtadvd.conf ]; then
+		# If $rtadvd_flags == NO, then rtadvd isn't run.
+		if [ "X${rtadvd_flags}" != X"NO" ]; then
 			echo -n ' rtadvd'
 			/usr/sbin/rtadvd ${rtadvd_flags}
 		fi
