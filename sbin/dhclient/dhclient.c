@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.53 2004/06/03 18:59:44 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.54 2004/06/22 01:33:51 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -100,14 +100,15 @@ int		routefd;
 
 struct interface_info	*ifi;
 
-int	 findproto(char *, int);
-void	 routehandler(struct protocol *);
-void	 usage(void);
-int	 check_option(struct client_lease *l, int option);
-int	 ipv4addrs(char * buf);
-int	 res_hnok(const char *dn);
-char	*option_as_string(unsigned int code, unsigned char *data, int len);
-int	 fork_privchld(int, int);
+int		 findproto(char *, int);
+struct sockaddr	*get_ifa(char *, int);
+void		 routehandler(struct protocol *);
+void		 usage(void);
+int		 check_option(struct client_lease *l, int option);
+int		 ipv4addrs(char * buf);
+int		 res_hnok(const char *dn);
+char		*option_as_string(unsigned int code, unsigned char *data, int len);
+int		 fork_privchld(int, int);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -143,6 +144,25 @@ findproto(char *cp, int n)
 	return (-1);
 }
 
+struct sockaddr *
+get_ifa(char *cp, int n)
+{
+	struct sockaddr *sa;
+	int i;
+
+	if (n == 0)
+		return (NULL);
+	for (i = 1; i; i <<= 1)
+		if (i & n) {
+			sa = (struct sockaddr *)cp;
+			if (i == RTA_IFA)
+				return (sa);
+			ADVANCE(cp, sa);
+		}
+
+	return (NULL);
+}
+
 void
 routehandler(struct protocol *p)
 {
@@ -151,6 +171,9 @@ routehandler(struct protocol *p)
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
+	struct client_lease *l;
+	struct sockaddr *sa;
+	struct iaddr a;
 	ssize_t n;
 
 	n = read(routefd, &msg, sizeof(msg));
@@ -166,7 +189,24 @@ routehandler(struct protocol *p)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
-		/* goto die; */
+		if (ifi == NULL)
+			goto die;
+		sa = get_ifa((char *)(ifam + 1), ifam->ifam_addrs);
+		if (sa == NULL)
+			goto die;
+
+		if ((a.len = sizeof(struct in_addr)) > sizeof(a.iabuf))
+			error("king bula sez: len mismatch");
+		memcpy(a.iabuf, &((struct sockaddr_in *)sa)->sin_addr, a.len);
+
+		for (l = ifi->client->active; l != NULL; l = l->next)
+			if (addr_eq(a, l->address))
+				break;
+
+		if (l != NULL)	/* new addr is the one we set */
+			break;
+
+		goto die;
 		break;
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
@@ -174,7 +214,7 @@ routehandler(struct protocol *p)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
-		goto die;
+		/* goto die; */
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
