@@ -1,12 +1,14 @@
-# $OpenBSD: Makefile,v 1.1 2001/05/25 08:18:55 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/05/25 12:38:17 ho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
 LIB=	krb5
 
-INCLUDE_FILES=	${KRB5SRC}/lib/krb5/{krb5.h,krb5-protos.h,krb5-private.h} \
-		${KRB5DIR}/include/krb5-types.h krb5_err.h heim_err.h
+INCLUDE_FILES=	${KRB5SRC}/lib/krb5/krb5.h ${KRB5SRC}/lib/krb5/krb5-protos.h \
+		${KRB5SRC}/lib/krb5/krb5-private.h \
+		${KRB5DIR}/include/krb5-types.h \
+		krb5_err.h heim_err.h
 
 includes:	krb5_err.h heim_err.h
 
