@@ -68,6 +68,8 @@ static char sccsid[] = "@(#)arp.c	8.2 (Berkeley) 1/2/94";
 #include <errno.h>
 #include <nlist.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <paths.h>
 #include <syslog.h>
 
@@ -94,24 +96,30 @@ struct	{
 	char	m_space[512];
 }	m_rtmsg;
 
+int	arptab_set __P((u_char *, u_int32_t));
+int	rtmsg __P((int));
+
 /*
  * Set an individual arp entry
  */
+int
 arptab_set(eaddr, host)
 	u_char *eaddr;
-	u_long host;
+	u_int32_t host;
 {
 	register struct sockaddr_inarp *sin = &sin_m;
 	register struct sockaddr_dl *sdl;
 	register struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
 	struct timeval time;
+	int rt;
 
 	getsocket();
 	pid = getpid();
+
 	sdl_m = blank_sdl;
 	sin_m = blank_sin;
 	sin->sin_addr.s_addr = host;
-	bcopy((char *)eaddr, (u_char *)LLADDR(&sdl_m), 6);
+	memcpy((u_char *)LLADDR(&sdl_m), (char *)eaddr, 6);
 	sdl_m.sdl_alen = 6;
 	doing_proxy = flags = export_only = expire_time = 0;
 	gettimeofday(&time, 0);
@@ -163,12 +171,15 @@ overwrite:
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
+	rt = rtmsg(RTM_ADD);
 	close(s);
 	s = -1;
-	return (rtmsg(RTM_ADD));
+	return (rt);
 }
 
+int
 rtmsg(cmd)
+	int cmd;
 {
 	static int seq;
 	int rlen;
@@ -179,7 +190,7 @@ rtmsg(cmd)
 	errno = 0;
 	if (cmd == RTM_DELETE)
 		goto doit;
-	bzero((char *)&m_rtmsg, sizeof(m_rtmsg));
+	memset((char *)&m_rtmsg, 0, sizeof(m_rtmsg));
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
 
@@ -207,7 +218,9 @@ rtmsg(cmd)
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
-		bcopy((char *)&s, cp, sizeof(s)); cp += sizeof(s);}
+		memcpy(cp, (char *)&s, sizeof(s)); \
+		cp += sizeof(s); \
+	}
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
