@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.86 2003/02/16 23:25:40 krw Exp $
+#	$OpenBSD: netstart,v 1.87 2003/08/27 11:49:36 henning Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -175,8 +175,13 @@ fi
 # Otherwise, process with the complete network initialization.
 
 # /etc/myname contains my symbolic name
-hostname=`cat /etc/myname`
-hostname $hostname
+if [ -f /etc/myname ]; then
+	hostname=`cat /etc/myname`
+	hostname $hostname
+else
+	hostname=`hostname`
+fi
+
 if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
