@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.17 2003/09/29 16:03:16 deraadt Exp $
+ *	$OpenBSD: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.17 2003/09/29 16:03:16 deraadt Exp $
+ *      $Id: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $
  */
 
 #ifndef lint
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.17 2003/09/29 16:03:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.18 2004/04/08 20:08:59 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -332,8 +332,8 @@ cputime(void)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: locate [-Scims] [-l limit] ");
-	(void)fprintf(stderr, "[-d database] pattern ...\n");
+	(void)fprintf(stderr, "usage: locate [-cimSs] [-d database] ");
+	(void)fprintf(stderr, "[-l limit] pattern ...\n");
 	(void)fprintf(stderr, "default database: `%s' or $LOCATE_PATH\n",
 	    _PATH_FCODES);
 	exit(1);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.21 2003/09/25 18:06:23 jmc Exp $
+.\"	$OpenBSD: locate.1,v 1.22 2004/04/08 20:08:59 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.21 2003/09/25 18:06:23 jmc Exp $
+.\"	$Id: locate.1,v 1.22 2004/04/08 20:08:59 jmc Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -39,9 +39,9 @@
 .Nd find filenames quickly
 .Sh SYNOPSIS
 .Nm locate
-.Op Fl Scims
-.Op Fl l Ar limit
+.Op Fl cimSs
 .Op Fl d Ar database
+.Op Fl l Ar limit
 .Ar pattern Op Ar ...
 .Sh DESCRIPTION
 The
@@ -90,8 +90,6 @@ Characters less than 32 or greater than 127 are stored as 2 bytes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl S
-Print some statistics about the database and exit.
 .It Fl c
 Suppress normal output; instead print a count of matching file names.
 .It Fl d Ar database
@@ -169,6 +167,8 @@ instead of the
 library.
 This is the default behavior.
 Usually faster in most cases.
+.It Fl S
+Print some statistics about the database and exit.
 .It Fl s
 Use the
 .Xr stdio 3
