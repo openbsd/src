@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.35 2003/12/15 07:11:30 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.36 2003/12/27 19:37:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -262,7 +262,6 @@ print_state(struct pf_state *s, int opts)
 			printf(", source-track");
 		if (s->nat_src_node != NULL)
 			printf(", sticky-address");
-		printf("\n");
 		printf("\n");
 	}
 	if (opts & PF_OPT_VERBOSE2) {
