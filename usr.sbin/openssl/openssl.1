@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.20 2003/10/26 15:16:13 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.21 2003/10/30 13:11:40 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -329,8 +329,8 @@ MD2 Digest.
 MD4 Digest.
 .It Cm md5
 MD5 Digest.
-.It Cm rmd160
-RMD-160 Digest.
+.It Cm ripemd160
+RIPEMD-160 Digest.
 .It Cm sha
 SHA Digest.
 .It Cm sha1
@@ -437,8 +437,8 @@ Read the password from standard input.
 .Sh ASN1PARSE
 .Nm openssl asn1parse
 .Bk -words
-.Op Fl i
 .Op Fl dump
+.Op Fl i
 .Op Fl noout
 .Op Fl dlimit Ar number
 .Op Fl in Ar filename
@@ -1312,8 +1312,9 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 .\"
 .Sh CIPHERS
 .Nm openssl ciphers
-.Op Fl hv
+.Op Fl h
 .Op Fl ssl2 | ssl3 | tls1
+.Op Fl v
 .Op Ar cipherlist
 .Pp
 The
@@ -1865,28 +1866,28 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Nm openssl dgst
 .Bk -words
 .Oo
-.Fl md5 | md4 | md2 | sha1 |
-.Fl sha | ripemd160 | dss1
+.Fl dss1 | md2 | md4 | md5 |
+.Fl ripemd160 | sha | sha1
 .Oc
+.Op Fl binary
 .Op Fl c
 .Op Fl d
 .Op Fl hex
-.Op Fl binary
-.Op Fl out Ar filename
-.Op Fl sign Ar filename
-.Op Fl verify Ar filename
-.Op Fl prverify Ar filename
-.Op Fl rand Ar file ...
-.Op Fl signature Ar filename
 .Op Fl engine Ar id
 .Op Fl keyform Ar PEM | ENGINE
+.Op Fl out Ar filename
+.Op Fl prverify Ar filename
+.Op Fl rand Ar file ...
+.Op Fl sign Ar filename
+.Op Fl signature Ar filename
+.Op Fl verify Ar filename
 .Op Ar file ...
 .Ek
 .Pp
 .Nm openssl
 .Xo
-.Cm md5 | md4 | md2 | sha1 |
-.Cm sha | ripemd160
+.Cm md2 | md4 | md5 |
+.Cm ripemd160 | sha | sha1
 .Xc
 .Op Fl c
 .Op Fl d
@@ -1900,43 +1901,15 @@ in hexadecimal form.
 They can also be used for digital signing and verification.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width "-binary"
+.It Fl binary
+Output the digest or signature in binary form.
 .It Fl c
 Print out the digest in two-digit groups separated by colons; only relevant if
 .Em hex
 format output is used.
 .It Fl d
 Print out BIO debugging information.
-.It Fl hex
-Digest is to be output as a hex dump.
-This is the default case for a
-.Qq normal
-digest as opposed to a digital signature.
-.It Fl binary
-Output the digest or signature in binary form.
-.It Fl out Ar filename
-Filename to output to, or standard output by default.
-.It Fl sign Ar filename
-Digitally sign the digest using the private key in
-.Ar filename .
-.It Fl verify Ar filename
-Verify the signature using the public key in
-.Ar filename .
-The output is either
-.Qq Verification OK
-or
-.Qq Verification Failure .
-.It Fl prverify Ar filename
-Verify the signature using the private key in
-.Ar filename .
-.It Fl rand Ar file ...
-A file or files containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
-.It Fl signature Ar filename
-The actual signature to verify.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -1945,8 +1918,40 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl hex
+Digest is to be output as a hex dump.
+This is the default case for a
+.Qq normal
+digest as opposed to a digital signature.
 .It Fl keyform Ar PEM | ENGINE
 Key file format.
+.It Fl out Ar filename
+Filename to output to, or standard output by default.
+.It Fl prverify Ar filename
+Verify the signature using the private key in
+.Ar filename .
+The output is either
+.Qq Verification OK
+or
+.Qq Verification Failure .
+.It Fl rand Ar file ...
+A file or files containing random data used to seed the random number
+generator, or an EGD socket (see
+.Xr RAND_egd 3 ) .
+Multiple files can be specified separated by a
+.Sq \&: .
+.It Fl sign Ar filename
+Digitally sign the digest using the private key in
+.Ar filename .
+.It Fl signature Ar filename
+The actual signature to verify.
+.It Fl verify Ar filename
+Verify the signature using the public key in
+.Ar filename .
+The output is either
+.Qq Verification OK
+or
+.Qq Verification Failure .
 .It Ar file ...
 File or files to digest.
 If no files are specified then standard input is used.
