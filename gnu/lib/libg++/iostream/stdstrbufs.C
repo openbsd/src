@@ -16,8 +16,7 @@
 //    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "ioprivate.h"
-#include <std
-io.h>
+#include <stdio.h>
 
 // This file defines the standard streambufs, corresponding to cin, cout, cerr.
 // We define two sets:
