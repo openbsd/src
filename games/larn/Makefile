@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1998/12/31 23:43:04 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 1999/01/01 17:47:17 millert Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -57,7 +57,7 @@
 
 PROG=	larn
 MAN=	larn.6
-CFLAGS=+-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
+CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
