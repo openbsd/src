@@ -726,6 +726,9 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_devar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_em.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_em_hw.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_em_osdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_gxreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_gxvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_levar.ph

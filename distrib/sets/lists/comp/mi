@@ -423,6 +423,9 @@
 ./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_devar.h
+./usr/include/dev/pci/if_em.h
+./usr/include/dev/pci/if_em_hw.h
+./usr/include/dev/pci/if_em_osdep.h
 ./usr/include/dev/pci/if_gxreg.h
 ./usr/include/dev/pci/if_gxvar.h
 ./usr/include/dev/pci/if_levar.h

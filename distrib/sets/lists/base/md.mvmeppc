@@ -67,6 +67,7 @@
 ./usr/lib/libstdc++.so.30.0
 ./usr/lib/libtermcap.so.8.0
 ./usr/lib/libtermlib.so.8.0
+./usr/lib/libusbhid.so.0.0
 ./usr/lib/libutil.so.7.1
 ./usr/lib/libwrap.so.2.0
 ./usr/lib/libz.so.1.4
@@ -812,6 +813,9 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_devar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_em.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_em_hw.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_em_osdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_gxreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_gxvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_levar.ph
@@ -1939,4 +1943,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/lib/libusbhid.so.0.0
