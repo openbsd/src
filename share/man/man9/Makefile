@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.56 2002/08/24 03:34:20 wcobb Exp $
+#	$OpenBSD: Makefile,v 1.57 2002/08/27 01:16:58 wcobb Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	altq.9 audio.9 boot.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 \
-	disk.9 disklabel.9 \
+MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 copy.9 \
+	crypto.9 ctxsw.9 disk.9 disklabel.9 \
 	dohooks.9 dopowerhooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	extattr.9 file.9 \
 	fetch.9 fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
@@ -21,6 +21,13 @@ MAN=	altq.9 audio.9 boot.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 \
 	vm_allocate.9 vm_map_copy.9 vm_deallocate.9 \
 	vm_map_inherit.9 vm_map_protect.9 vnode.9 vn_lock.9 \
 	vwaitforio.9 vwaitforio.9
+
+MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
+	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
+	autoconf.9 config_found.9 autoconf.9 config_rootfound.9 \
+	autoconf.9 config_attach.9 autoconf.9 config_detach.9 \
+	autoconf.9 config_activate.9 autoconf.9 config_deactivate.9 \
+	autoconf.9 config_defer.9
 
 MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamap_load.9 bus_dma.9 bus_dmamap_load_mbuf.9 \
