@@ -28,7 +28,13 @@ Boston, MA 02111-1307, USA.  */
 /* insert a guard variable before a character buffer and change the order
  of pointer variables, character buffers and pointer arguments */
 
-extern void prepare_stack_protection  PARAMS ((void));
+extern void prepare_stack_protection  PARAMS ((int inlinable));
+
+#ifdef TREE_CODE
+/* search a character array from the specified type tree */
+
+extern int search_string_def PARAMS ((tree names));
+#endif
 
 /* allocate a local variable in the stack area before character buffers
    to avoid the corruption of it */
