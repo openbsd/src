@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.9 2004/03/25 17:53:16 henning Exp $
+.\"	$OpenBSD: carp.4,v 1.10 2004/07/05 22:39:54 jmc Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -89,18 +89,22 @@ of 100 on the second virtual host means that its advertisements will be sent
 out slightly less frequently.
 .Bd -literal -offset indent
 # ifconfig carp0 create
-# ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.10 \e
+	255.255.255.0
 # ifconfig carp1 create
-# ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat \e
+	192.168.1.10 255.255.255.0
 .Ed
 .Pp
 The configuration for host B is identical, except the skew is on
 virtual host 1 rather than virtual host 2.
 .Bd -literal -offset indent
 # ifconfig carp0 create
-# ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat \e
+	192.168.1.10 255.255.255.0
 # ifconfig carp1 create
-# ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.1.10 \e
+	255.255.255.0
 .Ed
 .Pp
 Finally, the ARP balancing feature must be enabled on both hosts:
