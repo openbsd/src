@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2003/06/23 22:05:23 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2003/06/24 17:32:10 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -152,7 +152,7 @@ procfile(char *fn)
 	if (Lflag && c == 0)
 		printf("%s\n", fn);
 	if (c && !cflag && !lflag && !Lflag &&
-	    binbehave == BIN_FILE_BIN && nottext)
+	    binbehave == BIN_FILE_BIN && nottext && !qflag)
 		printf("Binary file %s matches\n", fn);
 
 	return c;
@@ -511,4 +511,30 @@ printline(str_t *line, int sep)
 		putchar(sep);
 	fwrite(line->dat, line->len, 1, stdout);
 	putchar('\n');
+}
+
+size_t
+strlcpy(char *dst, const char *src, size_t siz)
+{
+	register char *d = dst;
+	register const char *s = src;
+	register size_t n = siz;
+
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
