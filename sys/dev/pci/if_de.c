@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_de.c,v 1.17 1997/04/10 16:33:05 pefo Exp $       */
+/*    $OpenBSD: if_de.c,v 1.18 1997/04/10 16:51:35 pefo Exp $       */
 /*    $NetBSD: if_de.c,v 1.29 1996/10/25 21:33:30 cgd Exp $       */
 
 /*-
@@ -105,9 +105,6 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/bus.h>
 #include <machine/intr.h>
-#if defined(__mips__)
-#include <machine/cpu.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -253,7 +250,7 @@ typedef struct {
  * but we gone to directly DMA'ing into MBUFs because with 100Mb
  * cards the copying is just too much of a hit.
  */
-#if defined(__alpha__) || defined(__mips__)
+#if defined(__alpha__)
 #define	TULIP_COPY_RXDATA	1
 #endif
 
@@ -271,7 +268,6 @@ typedef enum {
     TULIP_DC21140_COGENT_EM100,
     TULIP_DC21140_ZNYX_ZX34X,
     TULIP_DC21041_GENERIC,
-    TULIP_DC21041_P4032,
     TULIP_DC21041_DE450
 } tulip_board_t;
 
@@ -950,40 +946,6 @@ static const tulip_boardsw_t tulip_dc21041_de450_boardsw = {
     tulip_dc21041_media_probe,
     tulip_dc21041_media_select
 };
-
-#if defined(__mips__)
-static void
-tulip_p4032_media_select(
-    tulip_softc_t * const sc)
-{
-    /* This board is AUI only! */
-    sc->tulip_media = TULIP_MEDIA_AUI;
-    sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
-
-    sc->tulip_cmdmode |= TULIP_CMD_CAPTREFFCT|TULIP_CMD_ENHCAPTEFFCT
-        /* |TULIP_CMD_FULLDUPLEX */ |TULIP_CMD_THRSHLD160;
-    TULIP_WRITE_CSR(sc, csr_command, sc->tulip_cmdmode);
-
-    sc->tulip_intrmask |= TULIP_STS_NORMALINTR
-        |TULIP_STS_ABNRMLINTR|TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
-    TULIP_WRITE_CSR(sc, csr_intr, sc->tulip_intrmask);
-
-    TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_SIACONN_RESET);
-    TULIP_WRITE_CSR(sc, csr_sia_tx_rx,        TULIP_DC21041_SIATXRX_AUI);
-    TULIP_WRITE_CSR(sc, csr_sia_general,      TULIP_DC21041_SIAGEN_AUI);
-    TULIP_WRITE_CSR(sc, csr_sia_connectivity, TULIP_DC21041_SIACONN_AUI);
-    DELAY(10000);       /* Wait 10 millisecs */
-}
-
-
-static const tulip_boardsw_t tulip_p4032_boardsw = {
-    TULIP_DC21041_P4032,
-    "P4032 ",
-    tulip_dc21041_media_probe,
-    tulip_p4032_media_select
-};
-#endif
-
 
 static void
 tulip_reset(
@@ -1001,11 +963,11 @@ tulip_reset(
     sc->tulip_intrmask = 0;
     TULIP_WRITE_CSR(sc, csr_intr, sc->tulip_intrmask);
 
-    TULIP_WRITE_CSR(sc, csr_txlist, vtophys(&sc->tulip_txinfo.ri_first[0]) | 0xc0000000);
-    TULIP_WRITE_CSR(sc, csr_rxlist, vtophys(&sc->tulip_rxinfo.ri_first[0]) | 0xc0000000);
+    TULIP_WRITE_CSR(sc, csr_txlist, vtophys(&sc->tulip_txinfo.ri_first[0]));
+    TULIP_WRITE_CSR(sc, csr_rxlist, vtophys(&sc->tulip_rxinfo.ri_first[0]));
     TULIP_WRITE_CSR(sc, csr_busmode,
 	(1 << (TULIP_BURSTSIZE(sc->tulip_unit) + 8))
-	|TULIP_BUSMODE_CACHE_ALIGN8|TULIP_BUSMODE_BURSTLEN_8LW /*XXX*/
+	|TULIP_BUSMODE_CACHE_ALIGN8
 	|(BYTE_ORDER != LITTLE_ENDIAN ? TULIP_BUSMODE_BIGENDIAN : 0));
 
     sc->tulip_txq.ifq_maxlen = TULIP_TXDESCS;
@@ -1023,9 +985,8 @@ tulip_reset(
     ri = &sc->tulip_txinfo;
     ri->ri_nextin = ri->ri_nextout = ri->ri_first;
     ri->ri_free = ri->ri_max;
-    for (di = ri->ri_first; di < ri->ri_last; di++) {
+    for (di = ri->ri_first; di < ri->ri_last; di++)
 	di->d_status = 0;
-    }
 
     /*
      * We need to collect all the mbufs were on the 
@@ -1108,9 +1069,8 @@ tulip_rx_intr(
 	if (sc->tulip_rxq.ifq_len < TULIP_RXQ_TARGET)
 	    goto queue_mbuf;
 
-	if (((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_OWNER) {
+	if (((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_OWNER)
 	    return;
-	}
 
 	/*
 	 * It is possible (though improbable unless the BIG_PACKET support
@@ -1120,9 +1080,8 @@ tulip_rx_intr(
 	while ((((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_RxLASTDESC) == 0) {
 	    if (++eop == ri->ri_last)
 		eop = ri->ri_first;
-	    if (((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_OWNER) {
+	    if (((volatile tulip_desc_t *) eop)->d_status & TULIP_DSTS_OWNER)
 		return;
-	    }
 	    total_len++;
 	}
 
@@ -1245,11 +1204,8 @@ tulip_rx_intr(
 	 */
 	do {
 	    ri->ri_nextout->d_length1 = TULIP_RX_BUFLEN;
-	    ri->ri_nextout->d_addr1 = vtophys(mtod(ms, caddr_t)) | 0xc0000000;
+	    ri->ri_nextout->d_addr1 = vtophys(mtod(ms, caddr_t));
 	    ri->ri_nextout->d_status = TULIP_DSTS_OWNER;
-#if defined(__mips__)
-	    R4K_HitFlushDCache(mtod(ms, caddr_t),TULIP_RX_BUFLEN);
-#endif
 	    if (++ri->ri_nextout == ri->ri_last)
 		ri->ri_nextout = ri->ri_first;
 	    me = ms->m_next;
@@ -1347,13 +1303,10 @@ tulip_start(
 	    ri->ri_nextout->d_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
 	    ri->ri_nextout->d_flag |= TULIP_DFLAG_TxFIRSTSEG|TULIP_DFLAG_TxLASTSEG
 		    |TULIP_DFLAG_TxSETUPPKT|TULIP_DFLAG_TxWANTINTR;
-#if defined(__mips__)
-	    R4K_HitFlushDCache(sc->tulip_setupbuf, sizeof(sc->tulip_setupbuf));
-#endif
 	    if (sc->tulip_flags & TULIP_WANTHASH)
 		ri->ri_nextout->d_flag |= TULIP_DFLAG_TxHASHFILT;
 	    ri->ri_nextout->d_length1 = sizeof(sc->tulip_setupbuf);
-	    ri->ri_nextout->d_addr1 = vtophys(sc->tulip_setupbuf) | 0xc0000000;
+	    ri->ri_nextout->d_addr1 = vtophys(sc->tulip_setupbuf);
 	    ri->ri_nextout->d_length2 = 0;
 	    ri->ri_nextout->d_addr2 = 0;
 	    ri->ri_nextout->d_status = TULIP_DSTS_OWNER;
@@ -1430,16 +1383,13 @@ tulip_start(
 			nextout = ri->ri_first;
 		    eop->d_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
 		    eop->d_status = d_status;
-		    eop->d_addr1 = vtophys(addr) | 0xc0000000; eop->d_length1 = slen;
+		    eop->d_addr1 = vtophys(addr); eop->d_length1 = slen;
 		} else {
 		    /*
 		     *  Fill in second half of descriptor
 		     */
-		    eop->d_addr2 = vtophys(addr) | 0xc0000000; eop->d_length2 = slen;
+		    eop->d_addr2 = vtophys(addr); eop->d_length2 = slen;
 		}
-#if defined(__mips__)
-		R4K_HitFlushDCache(addr, slen);
-#endif
 		d_status = TULIP_DSTS_OWNER;
 		len -= slen;
 		addr += slen;
@@ -1691,13 +1641,6 @@ tulip_read_macaddr(
     unsigned char tmpbuf[8];
     static const u_char testpat[] = { 0xFF, 0, 0x55, 0xAA, 0xFF, 0, 0x55, 0xAA };
 
-#if defined(__mips__)	/* XXX Oh well */
-    if (sc->tulip_chipid == TULIP_DC21041 && sc->tulip_unit == 0 &&
-        pci_ether_hw_addr(sc->tulip_pc, (u_int8_t *)&sc->tulip_hwaddr) == 0) {
-        sc->tulip_boardsw = &tulip_p4032_boardsw;
-        return 0;
-    }
-#endif
     if (sc->tulip_chipid == TULIP_DC21040) {
 	TULIP_WRITE_CSR(sc, csr_enetrom, 1);
 	for (idx = 0; idx < 32; idx++) {
@@ -2184,10 +2127,6 @@ tulip_initring(
     tulip_desc_t *descs,
     int ndescs)
 {
-#if defined(__mips__)
-    R4K_HitFlushDCache(descs, ndescs * sizeof(tulip_desc_t));
-    descs = (tulip_desc_t *)PHYS_TO_UNCACHED(vtophys(descs));
-#endif
     ri->ri_max = ndescs;
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
