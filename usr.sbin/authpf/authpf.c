@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.76 2004/04/09 12:42:06 cedric Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.77 2004/04/25 18:40:42 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -29,7 +29,9 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <net/if.h>
 #include <net/pfvar.h>
@@ -44,9 +46,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-
-#include <pfctl_parser.h>
-#include <pfctl.h>
 
 #include "pathnames.h"
 
@@ -592,87 +591,68 @@ remove_stale_rulesets(void)
 static int
 change_filter(int add, const char *luser, const char *ipsrc)
 {
-	char			 fn[MAXPATHLEN];
-	FILE			*f = NULL;
-	struct pfctl		 pf;
-	struct pfr_buffer	 t;
-	int			 i;
+	char	*pargv[13]= {
+		"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor:ruleset",
+		"-D", "user_ip=X", "-D", "user_id=X", "-f",
+		"file", NULL
+	};
+	char	*fdpath = NULL;
+	char	*userstr= NULL;
+	char	*ipstr = NULL;
+	char	*rsn = NULL;
+	char	*fn = NULL;
+	int	pid, s;
 
 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 		syslog(LOG_ERR, "invalid luser/ipsrc");
 		goto error;
 	}
 
-	if (add) {
-		if ((i = snprintf(fn, sizeof(fn), "%s/%s/authpf.rules",
-		    PATH_USER_DIR, luser)) < 0 || i >= sizeof(fn)) {
-			syslog(LOG_ERR, "user rule path too long");
-			goto error;
-		}
-		if ((f = fopen(fn, "r")) == NULL && errno != ENOENT) {
-			syslog(LOG_ERR, "cannot open %s (%m)", fn);
-			goto error;
-		}
-		if (f == NULL) {
-			if (strlcpy(fn, PATH_PFRULES, sizeof(fn)) >=
-			    sizeof(fn)) {
-				syslog(LOG_ERR, "rule path too long");
-				goto error;
-			}
-			if ((f = fopen(fn, "r")) == NULL) {
-				syslog(LOG_ERR, "cannot open %s (%m)", fn);
-				goto error;
-			}
-		}
-	}
-
-	if (pfctl_load_fingerprints(dev, 0)) {
-		syslog(LOG_ERR, "unable to load kernel's OS fingerprints");
-		goto error;
-	}
-	bzero(&t, sizeof(t));
-	t.pfrb_type = PFRB_TRANS;
-	memset(&pf, 0, sizeof(pf));
-	for (i = 0; i < PF_RULESET_MAX; ++i) {
-		if (pfctl_add_trans(&t, i, anchorname, rulesetname)) {
-			syslog(LOG_ERR, "pfctl_add_trans %m");
-			goto error;
-		}
-	}
-	if (pfctl_trans(dev, &t, DIOCXBEGIN, 0)) {
-		syslog(LOG_ERR, "DIOCXBEGIN (%s) %m", add?"add":"remove");
-		goto error;
-	}
+	if (asprintf(&rsn, "%s:%s", anchorname, rulesetname) == -1)
+		goto no_mem;
+	if (asprintf(&fdpath, "/dev/fd/%d", dev) == -1)
+		goto no_mem;
+	if (asprintf(&ipstr, "user_ip=%s", ipsrc) == -1)
+		goto no_mem;
+	if (asprintf(&userstr, "user_id=%s", luser) == -1)
+		goto no_mem;
 
 	if (add) {
-		if (symset("user_ip", ipsrc, 0) ||
-		    symset("user_id", luser, 0)) {
-			syslog(LOG_ERR, "symset");
+		struct stat sb;
+		if (asprintf(&fn, "%s/%s/authpf.rules", PATH_USER_DIR, luser)
+		    == -1)
+			goto no_mem;
+		if (stat(fn, &sb) == -1) {
+			free(fn);
+			if ((fn = strdup(PATH_PFRULES)) == NULL)
+				goto no_mem;
+		}
+	}
+	pargv[2] = fdpath;
+	pargv[5] = rsn;
+	pargv[7] = userstr;
+	pargv[9] = ipstr;
+	if (!add) {
+		pargv[11]="/dev/null";
+	} else {
+		pargv[11]=fn;
+	}
+	switch (pid = fork()) {
+	case -1:
+		err(1, "fork failed");
+	case 0:
+		execvp(PATH_PFCTL, pargv);
+		err(1, "exec of %s failed", PATH_PFCTL);
+	}
+	/* parent */
+	waitpid(pid, &s, 0);
+	if (s != 0) {
+		if (WIFEXITED(s)) {
+			syslog(LOG_ERR, "pfctl exited abnormally");
 			goto error;
 		}
-
-		pf.dev = dev;
-		pf.trans = &t;
-		pf.anchor = anchorname;
-		pf.ruleset = rulesetname;
-
-		infile = fn;
-		if (parse_rules(f, &pf) < 0) {
-			syslog(LOG_ERR, "syntax error in rule file: "
-			    "authpf rules not loaded");
-			goto error;
-		}
-
-		infile = NULL;
-		fclose(f);
-		f = NULL;
 	}
-
-	if (pfctl_trans(dev, &t, DIOCXCOMMIT, 0)) {
-		syslog(LOG_ERR, "DIOCXCOMMIT (%s) %m", add?"add":"remove");
-		goto error;
-	}
-
+		
 	if (add) {
 		gettimeofday(&Tstart, NULL);
 		syslog(LOG_INFO, "allowing %s, user %s", ipsrc, luser);
@@ -682,13 +662,19 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
 	return (0);
-
+no_mem:
+	syslog(LOG_ERR, "malloc failed");
 error:
-	if (f != NULL)
-		fclose(f);
-	if (pfctl_trans(dev, &t, DIOCXROLLBACK, 0))
-		syslog(LOG_ERR, "DIOCXROLLBACK (%s) %m", add?"add":"remove");
-
+	free(fdpath);
+	fdpath = NULL;
+	free(rsn);
+	rsn = NULL;
+	free(userstr);
+	userstr = NULL;
+	free(ipstr);
+	ipstr = NULL;
+	free(fn);
+	fn = NULL;
 	infile = NULL;
 	return (-1);
 }
@@ -754,164 +740,4 @@ do_death(int active)
 		if (unlink(pidfile) == -1)
 			syslog(LOG_ERR, "cannot unlink %s (%m)", pidfile);
 	exit(ret);
-}
-
-/*
- * callbacks for parse_rules(void)
- */
-
-int
-pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
-{
-	u_int8_t		rs_num;
-	struct pfioc_rule	pr;
-
-	switch (r->action) {
-	case PF_PASS:
-	case PF_DROP:
-		rs_num = PF_RULESET_FILTER;
-		break;
-	case PF_SCRUB:
-		rs_num = PF_RULESET_SCRUB;
-		break;
-	case PF_NAT:
-	case PF_NONAT:
-		rs_num = PF_RULESET_NAT;
-		break;
-	case PF_RDR:
-	case PF_NORDR:
-		rs_num = PF_RULESET_RDR;
-		break;
-	case PF_BINAT:
-	case PF_NOBINAT:
-		rs_num = PF_RULESET_BINAT;
-		break;
-	default:
-		syslog(LOG_ERR, "invalid rule action %d", r->action);
-		return (1);
-	}
-
-	bzero(&pr, sizeof(pr));
-	strlcpy(pr.anchor, pf->anchor, sizeof(pr.anchor));
-	strlcpy(pr.ruleset, pf->ruleset, sizeof(pr.ruleset));
-	if (pfctl_add_pool(pf, &r->rpool, r->af))
-		return (1);
-	pr.ticket = pfctl_get_ticket(pf->trans, rs_num, pf->anchor,
-	    pf->ruleset);
-	pr.pool_ticket = pf->paddr.ticket;
-	memcpy(&pr.rule, r, sizeof(pr.rule));
-	if (ioctl(pf->dev, DIOCADDRULE, &pr)) {
-		syslog(LOG_ERR, "DIOCADDRULE %m");
-		return (1);
-	}
-	pfctl_clear_pool(&r->rpool);
-	return (0);
-}
-
-int
-pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
-{
-	struct pf_pooladdr	*pa;
-
-	if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr)) {
-		syslog(LOG_ERR, "DIOCBEGINADDRS %m");
-		return (1);
-	}
-	pf->paddr.af = af;
-	TAILQ_FOREACH(pa, &p->list, entries) {
-		memcpy(&pf->paddr.addr, pa, sizeof(struct pf_pooladdr));
-		if (ioctl(pf->dev, DIOCADDADDR, &pf->paddr)) {
-			syslog(LOG_ERR, "DIOCADDADDR %m");
-			return (1);
-		}
-	}
-	return (0);
-}
-
-void
-pfctl_clear_pool(struct pf_pool *pool)
-{
-	struct pf_pooladdr	*pa;
-
-	while ((pa = TAILQ_FIRST(&pool->list)) != NULL) {
-		TAILQ_REMOVE(&pool->list, pa, entries);
-		free(pa);
-	}
-}
-
-int
-pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
-{
-	fprintf(stderr, "altq rules not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_set_optimization(struct pfctl *pf, const char *opt)
-{
-	fprintf(stderr, "set optimization not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_set_logif(struct pfctl *pf, char *ifname)
-{
-	fprintf(stderr, "set loginterface not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_set_hostid(struct pfctl *pf, u_int32_t hostid)
-{
-	fprintf(stderr, "set hostid not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds, int quiet)
-{
-	fprintf(stderr, "set timeout not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
-{
-	fprintf(stderr, "set limit not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_set_debug(struct pfctl *pf, char *d)
-{
-	fprintf(stderr, "set debug not supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_define_table(char *name, int flags, int addrs, const char *anchor,
-    const char *ruleset, struct pfr_buffer *ab, u_int32_t ticket)
-{
-	fprintf(stderr, "table definitions not yet supported in authpf\n");
-	return (1);
-}
-
-int
-pfctl_rules(int dev, char *filename, int opts, char *anchorname,
-    char *rulesetname, struct pfr_buffer *t)
-{
-	/* never called, no anchors inside anchors, but we need the stub */
-	fprintf(stderr, "load anchor not supported from authpf\n");
-	return (1);
-}
-
-void
-pfctl_print_title(char *title)
-{
-}
-
-FILE *
-pfctl_fopen(const char *name, const char *mode)
-{
-	return fopen(name, mode);
 }
