@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.11 1997/11/08 23:17:11 todd Exp $	*/
+/*	$OpenBSD: cp.c,v 1.12 1998/07/03 16:43:56 csapuntz Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.11 1997/11/08 23:17:11 todd Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.12 1998/07/03 16:43:56 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
 int copy __P((char *[], enum op, int));
 int mastercmp __P((const FTSENT **, const FTSENT **));
+char *find_last_component __P((char *));
 
 int
 main(argc, argv)
@@ -188,7 +189,6 @@ main(argc, argv)
 		*to.p_end++ = '.';
 		*to.p_end = '\0';
 	}
-	STRIP_TRAILING_SLASH(to);
 	to.target_end = to.p_end;
 
 	/* Set end of argument list for fts(3). */
@@ -245,6 +245,33 @@ main(argc, argv)
 		type = FILE_TO_DIR;
 
 	exit (copy(argv, type, fts_options));
+}
+
+char *
+find_last_component(path)
+	char *path;
+
+{ 
+	char *p;
+
+	if ((p = strrchr(path, '/')) == NULL)
+		p = path;
+	else {
+		/* Special case foo/ */
+	        if (!*(p+1)) {
+			while ((p >= path) &&
+			       *p == '/')
+				p--;
+
+			while ((p >= path) &&
+			       *p != '/')
+				p--;
+		}
+
+		p++;
+	}
+
+	return (p);
 }
 
 int
@@ -305,10 +332,9 @@ copy(argv, type, fts_options)
 			 */
 			if (curr->fts_level == FTS_ROOTLEVEL)
 				if (type != DIR_TO_DNE) {
-					p = strrchr(curr->fts_path, '/');
-					base = (p == NULL) ? 0 :
-					    (int)(p - curr->fts_path + 1);
-
+					p = find_last_component(curr->fts_path);
+					base = p - curr->fts_path;
+					
 					if (!strcmp(&curr->fts_path[base],
 					    ".."))
 						base += 1;
@@ -330,7 +356,6 @@ copy(argv, type, fts_options)
 			(void)strncat(target_mid, p, nlen);
 			to.p_end = target_mid + nlen;
 			*to.p_end = '\0';
-			STRIP_TRAILING_SLASH(to);
 		}
 
 		/* Not an error but need to remember it happened */
