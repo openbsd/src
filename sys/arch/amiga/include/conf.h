@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 1996/05/02 06:44:43 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 1996/05/04 09:28:38 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.1 1996/04/21 21:13:16 veego Exp $	*/
 
 /*
@@ -30,14 +30,41 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+cdev_decl(com);
 
 cdev_decl(ctty);
 
 bdev_decl(fd);
 cdev_decl(fd);
+
+cdev_decl(grf);
+
+cdev_decl(ipl);
+
+cdev_decl(ite);
+
+cdev_decl(kbd);
+
+cdev_decl(lpt);
+
+cdev_decl(mfcs);
+
+#define mmread mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
+
+cdev_decl(ms);
+
+cdev_decl(msc);
+
+cdev_decl(par);
+
+cdev_decl(ser);
+
+bdev_decl(sw);
+cdev_decl(sw);
+
+cdev_decl(view);
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
@@ -46,17 +73,18 @@ cdev_decl(fd);
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
 	dev_init(c,n,mmap) }
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
-#define	cdev_view_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
-	dev_init(c,n,mmap) }
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl -- XXX should be a generic device */
 #define	cdev_par_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, \
 	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, ioctl */
@@ -66,23 +94,9 @@ cdev_decl(fd);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
-cdev_decl(ms);
-
-cdev_decl(grf);
-
-cdev_decl(kbd);
-
-cdev_decl(ite);
-
-cdev_decl(par);
-
-cdev_decl(ser);
-
-cdev_decl(msc);
-
-cdev_decl(mfcs);
-
-cdev_decl(view);
-
-bdev_decl(sw);
-cdev_decl(sw);
+/* open, close, ioctl, select, mmap -- XXX should be a map device */
+#define	cdev_view_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
+	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	dev_init(c,n,mmap) }
