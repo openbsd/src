@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.92 2002/07/01 05:28:22 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.93 2002/07/15 18:13:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -670,8 +670,12 @@ print_rule(struct pf_rule *r)
 		printf("log-all ");
 	if (r->quick)
 		printf("quick ");
-	if (r->ifname[0])
-		printf("on %s ", r->ifname);
+	if (r->ifname[0]) {
+		if (r->ifnot)
+			printf("on ! %s ", r->ifname);
+		else
+			printf("on %s ", r->ifname);
+	}
 	if (r->rt) {
 		if (r->rt == PF_ROUTETO)
 			printf("route-to ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2002/07/15 15:44:15 pb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.120 2002/07/15 18:13:53 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -350,13 +350,6 @@ pfrule		: action dir log quick interface route af proto fromto
 			r.direction = $2;
 			r.log = $3;
 			r.quick = $4;
-
-			if ($5 != NULL)
-				if ($5->not) {
-					yyerror("'pass/block on ! $interface' "
-					    "isn't supported.");
-					YYERROR;
-				}
 
 			r.af = $7;
 			r.flags = $12.b1;
@@ -1862,6 +1855,7 @@ expand_rule(struct pf_rule *r,
 		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
 		expand_label(r->label, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
+		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
 		r->src.mask = src_host->mask;
