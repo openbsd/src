@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2003/07/02 20:26:59 pvalchev Exp $
+# $OpenBSD: Makefile,v 1.3 2003/07/17 19:07:10 pvalchev Exp $
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
 
 t1:
 	grep t.s ${.CURDIR}/in | diff - ${.CURDIR}/t1.out
@@ -31,6 +31,9 @@ t9:
 
 t10:
 	grep -s foo nonexistentfile | diff - /dev/null
+
+t11:
+	grep -C1 examples ${.CURDIR}/in | diff - ${.CURDIR}/t11.out
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10
 
