@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.38 1999/05/11 23:41:37 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.39 1999/05/11 23:52:47 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -850,7 +850,9 @@ ss_set_window(ss, sio)
 		return (scsi_scsi_cmd(sc_link,
 		        (struct scsi_generic *)&window_cmd,
 			sizeof(window_cmd), (u_char *) &wd.window_data,
-			sizeof(wd.window_data), 4, 5000, NULL, SCSI_DATA_OUT));
+			(ss->quirkdata->quirks & SS_Q_WINDOW_DESC_LEN) ?
+			ss->quirkdata->window_descriptor_length : 40,
+			4, 5000, NULL, SCSI_DATA_OUT));
 }
 
 int
