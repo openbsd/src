@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.33 2004/04/28 06:55:57 cedric Exp $
+.\" $OpenBSD: authpf.8,v 1.34 2004/04/28 07:46:38 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -474,10 +474,10 @@ Oct 31 19:42:30.296553 rule 0.bbeck(20267).1/0(match): pass out on fxp1: \e
 16384 <mss 1460,nop,nop,sackOK> (DF)
 .Ed
 .Pp
-.Sy Using "authpf_user" table.
-Simple
+.Sy Using authpf_user table
+\- Simple
 .Nm
-settings can be implemented without anchor by just using the "authpf_user"
+settings can be implemented without an anchor by just using the "authpf_user"
 .Pa table .
 For example, the following
 .Xr pf.conf 5
@@ -491,7 +491,7 @@ pass in on $ext_if proto tcp from <authpf_users> \e
 It is also possible to use the "authpf_user"
 .Pa table
 in combination with anchors.
-For example, 
+For example,
 .Xr pf 4
 processing can be sped up by looking up the anchor
 only for packets coming from logged in users:
