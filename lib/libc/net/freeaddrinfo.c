@@ -33,13 +33,15 @@
 #include <stdlib.h>
 #include <netdb.h>
 
-void freeaddrinfo(struct addrinfo *ai)
+void
+freeaddrinfo(ai)
+	struct addrinfo *ai;
 {
-  struct addrinfo *p;
+	struct addrinfo *p;
 
-  while(ai) {
-    p = ai;
-    ai = ai->ai_next;
-    free((void *)p);
-  }
+	while (ai) {
+		p = ai;
+		ai = ai->ai_next;
+		free((void *)p);
+	}
 }
