@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.15 2000/06/18 06:24:45 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.16 2000/06/18 06:27:15 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.94 2000/06/13 10:06:19 jinmei Exp $	*/
 
 /*
@@ -221,9 +221,11 @@ ip6intr()
 				l = MCLBYTES;
 			else
 				l = m->m_pkthdr.len;
-			m = m_pullup2(m, l);
-			if (!m)
-				continue;
+			if (l > m->m_len) {
+				m = m_pullup2(m, l);
+				if (!m)
+					continue;
+			}
 		}
 #endif
 		ip6_input(m);
