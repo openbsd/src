@@ -98,7 +98,9 @@ is the interface name, e.g.
 and then using
 .Xr ifconfig 8
 to manually configure it
-if you do not wish to reboot.
+if you do not wish to reboot. Read the 
+.Xr hostname.if 5 for more information on the format of the
+.Pa /etc/hostname. Ns Ar interface .
 The loopback interface will look something like:
 .Bd -literal -offset indent
 lo0: flags=8009<UP,LOOPBACK,MULTICAST>
@@ -156,7 +158,7 @@ if you do not wish to reboot.
 See
 .Xr route 8 .
 .Pp
-If you wish to route packets between interfaces you do that by putting
+If you wish to route packets between interfaces put
 .Bd -literal -offset indent
 net.inet.ip.forwarding=1
 .Ed
@@ -181,7 +183,7 @@ lookup file bind
 .Ed
 .Pp
 If using a caching name server add the line "nameserver 127.0.0.1" first.
-For a local caching name server to run
+To get a local caching name server to run
 you will need to set "named_flags" in
 .Pa /etc/rc.conf
 and create the
@@ -218,7 +220,9 @@ line to
 .Pp
 +:*::::::::
 .Pp
-Once this is done, you'll need to run
+You do this by using
+.Xr vipw 8 ,
+once this is done, you'll need to run
 .Ic pwd_mkdb /etc/master.passwd
 to regenerate the password databases.
 .Pp
