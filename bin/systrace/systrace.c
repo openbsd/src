@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.15 2002/06/11 05:21:17 jsyn Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.16 2002/06/12 22:14:51 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -449,10 +449,6 @@ main(int argc, char **argv)
 	systrace_initpolicy(filename);
 	systrace_initcb();
 
-	/* Start the policy gui if necessary */
-	if (usex11 && !automatic && !allow)
-		requestor_start(guipath);
-
 	if ((fd = intercept_open()) == -1)
 		exit(1);
 
@@ -480,6 +476,10 @@ main(int argc, char **argv)
 		if (intercept_attachpid(fd, pidattach, argv[0]) == -1)
 			err(1, "attachpid");
 	}
+
+	/* Start the policy gui if necessary */
+	if (usex11 && !automatic && !allow)
+		requestor_start(guipath);
 
 	while (intercept_read(fd) != -1)
 		if (!intercept_existpids())
