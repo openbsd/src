@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.120 2004/07/27 13:27:42 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.121 2004/07/27 20:26:59 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,13 +67,23 @@ struct filter_peers_l {
 	struct filter_peers	 p;
 };
 
+struct filter_prefix_l {
+	struct filter_prefix_l	*next;
+	struct filter_prefix	 p;
+};
+
+struct filter_match_l {
+	struct filter_match	 m;
+	struct filter_prefix_l	*prefix_l;
+};
+
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
-		    struct filter_match *, struct filter_set *);
+		    struct filter_match_l *, struct filter_set *);
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
 
@@ -99,7 +109,9 @@ typedef struct {
 		struct bgpd_addr	 addr;
 		u_int8_t		 u8;
 		struct filter_peers_l	*filter_peers;
-		struct filter_match	 filter_match;
+		struct filter_match_l	 filter_match;
+		struct filter_prefix_l	*filter_prefix;
+		struct filter_prefixlen	 prefixlen;
 		struct filter_set	 filter_set;
 		struct {
 			struct bgpd_addr	prefix;
@@ -137,8 +149,10 @@ typedef struct {
 %type	<v.prefix>		prefix addrspec
 %type	<v.u8>			action quick direction
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
-%type	<v.filter_match>	filter_match prefixlenop
+%type	<v.filter_match>	filter_match
+%type	<v.prefixlen>		prefixlenop
 %type	<v.filter_set>		filter_set filter_set_l filter_set_opt
+%type	<v.filter_prefix>	filter_prefix filter_prefix_l filter_prefix_h
 %type	<v.u8>			unaryop binaryop filter_as
 %type	<v.encspec>		encspec;
 %%
@@ -741,12 +755,14 @@ encspec		: /* nada */	{
 
 filterrule	: action quick direction filter_peer_h filter_match filter_set
 		{
-			struct filter_rule	r;
+			struct filter_rule	 r;
+			struct filter_prefix_l	*l;
 
-			if ($5.prefix.addr.af && $5.prefix.addr.af != AF_INET) {
-				yyerror("king bula sez: AF_INET only for now");
-				YYERROR;
-			}
+			for (l = $5.prefix_l; l != NULL; l = l->next)
+				if (l->p.addr.af && l->p.addr.af != AF_INET) {
+					yyerror("king bula sez: AF_INET only");
+					YYERROR;
+				}
 
 			bzero(&r, sizeof(r));
 			r.action = $1;
@@ -830,47 +846,54 @@ filter_peer	: ANY		{
 		}
 		;
 
+filter_prefix_h	: filter_prefix
+		| '{' filter_prefix_l '}'		{ $$ = $2; }
+		;
+
+filter_prefix_l	: filter_prefix				{ $$ = $1; }
+		| filter_prefix_l comma filter_prefix	{
+			$3->next = $1;
+			$$ = $3;
+		}
+		;
+
+filter_prefix	: prefix				{
+			if (($$ = calloc(1, sizeof(struct filter_prefix_l))) ==
+			    NULL)
+				fatal(NULL);
+			memcpy(&$$->p.addr, &$1.prefix,
+			    sizeof($$->p.addr));
+			$$->p.len = $1.len;
+			$$->next = NULL;
+		}
+		;
+
 filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
-		| PREFIX prefix			{
-			bzero(&$$, sizeof($$));
-			memcpy(&$$.prefix.addr, &$2.prefix,
-			    sizeof($$.prefix.addr));
-			$$.prefix.len = $2.len;
+		| PREFIX filter_prefix_h	{
+			$$.prefix_l = $2;
 		}
 		| PREFIX prefix PREFIXLEN prefixlenop	{
 			bzero(&$$, sizeof($$));
-			memcpy(&$$.prefix.addr, &$2.prefix,
-			    sizeof($$.prefix.addr));
-			$$.prefix.len = $2.len;
-			$$.prefixlen = $4.prefixlen;
-			$$.prefixlen.af = $2.prefix.af;
-			if ($$.prefixlen.af == AF_INET)
-				if ($$.prefixlen.len_max > 32 ||
-				    $$.prefixlen.len_min > 32) {
-					yyerror("prefixlen must be <= 32");
-					YYERROR;
-				}
-			if ($$.prefixlen.af == AF_INET6)
-				if ($$.prefixlen.len_max > 128 ||
-				    $$.prefixlen.len_min > 128) {
-					yyerror("prefixlen must be <= 128");
-					YYERROR;
-				}
+			memcpy(&$$.m.prefix.addr, &$2.prefix,
+			    sizeof($$.m.prefix.addr));
+			$$.m.prefix.len = $2.len;
+			memcpy(&$$.m.prefixlen, &$4, sizeof($$.m.prefixlen));
+			$$.m.prefixlen.af = $2.prefix.af;
 		}
 		| PREFIXLEN prefixlenop		{
 			bzero(&$$, sizeof($$));
-			$$.prefixlen = $2.prefixlen;
-			$$.prefixlen.af = AF_INET;
+			memcpy(&$$.m.prefixlen, &$2, sizeof($$.m.prefixlen));
+			$$.m.prefixlen.af = AF_INET;
 		}
 		| filter_as asnumber		{
 			bzero(&$$, sizeof($$));
-			$$.as.as = $2;
-			$$.as.type = $1;
+			$$.m.as.as = $2;
+			$$.m.as.type = $1;
 		}
 		| COMMUNITY STRING	{
 			bzero(&$$, sizeof($$));
-			if (parsecommunity($2, &$$.community.as,
-			    &$$.community.type) == -1) {
+			if (parsecommunity($2, &$$.m.community.as,
+			    &$$.m.community.type) == -1) {
 				free($2);
 				YYERROR;
 			}
@@ -884,8 +907,8 @@ prefixlenop	: unaryop number		{
 				yyerror("prefixlen must be < 128");
 				YYERROR;
 			}
-			$$.prefixlen.op = $1;
-			$$.prefixlen.len_min = $2;
+			$$.op = $1;
+			$$.len_min = $2;
 		}
 		| number binaryop number	{
 			bzero(&$$, sizeof($$));
@@ -897,9 +920,9 @@ prefixlenop	: unaryop number		{
 				yyerror("start prefixlen is bigger that end");
 				YYERROR;
 			}
-			$$.prefixlen.op = $2;
-			$$.prefixlen.len_min = $1;
-			$$.prefixlen.len_max = $3;
+			$$.op = $2;
+			$$.len_min = $1;
+			$$.len_max = $3;
 		}
 		;
 
@@ -1682,35 +1705,53 @@ get_id(struct peer *newpeer)
 
 int
 expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
-    struct filter_match *match, struct filter_set *set)
+    struct filter_match_l *match, struct filter_set *set)
 {
 	struct filter_rule	*r;
-	struct filter_peers_l	*p, *next;
+	struct filter_peers_l	*p, *pnext;
+	struct filter_prefix_l	*prefix, *prefix_next;
 
 	p = peer;
-
 	do {
-		if ((r = calloc(1, sizeof(struct filter_rule))) == NULL) {
-			log_warn("expand_rule");
-			return (-1);
-		}
+		prefix = match->prefix_l;
+		do {
+			if ((r = calloc(1, sizeof(struct filter_rule))) ==
+			    NULL) {
+				log_warn("expand_rule");
+				return (-1);
+			}
 
-		memcpy(r, rule, sizeof(struct filter_rule));
-		memcpy(&r->match, match, sizeof(struct filter_match));
-		memcpy(&r->set, set, sizeof(struct filter_set));
+			memcpy(r, rule, sizeof(struct filter_rule));
+			memcpy(&r->match, match, sizeof(struct filter_match));
+			memcpy(&r->set, set, sizeof(struct filter_set));
+
+			if (p != NULL)
+				memcpy(&r->peer, &p->p,
+				    sizeof(struct filter_peers));
+
+			if (prefix != NULL)
+				memcpy(&r->match.prefix, &prefix->p,
+				    sizeof(r->match.prefix));
+
+			TAILQ_INSERT_TAIL(filter_l, r, entry);
+
+			if (prefix != NULL)
+				prefix = prefix->next;
+		} while (prefix != NULL);
 
 		if (p != NULL)
-			memcpy(&r->peer, &p->p, sizeof(struct filter_peers));
-
-		TAILQ_INSERT_TAIL(filter_l, r, entry);
-
-		if (p != NULL) {
-			next = p->next;
-			free(p);
-			p = next;
-		} else
-			p = NULL;
+			p = p->next;
 	} while (p != NULL);
+
+	for (p = peer; p != NULL; p = pnext) {
+		pnext = p->next;
+		free(p);
+	}
+
+	for (prefix = match->prefix_l; prefix != NULL; prefix = prefix_next) {
+		prefix_next = prefix->next;
+		free(prefix);
+	}
 
 	return (0);
 }
