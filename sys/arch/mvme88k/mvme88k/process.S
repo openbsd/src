@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.26 2004/01/07 23:43:54 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.27 2004/01/13 01:02:10 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -100,36 +100,11 @@ ENTRY(cpu_switch)
 	/*
 	 * Save state of previous process in its pcb.
 	 */
-
-	or.u	r10, r0, hi16(_C_LABEL(curpcb))
-	ld	r10,r10, lo16(_C_LABEL(curpcb))
-	st	r1, r10, PCB_PC
-	st	r14,r10, PCB_R14
-	st	r15,r10, PCB_R15
-	st	r16,r10, PCB_R16
-	st	r17,r10, PCB_R17
-	st	r18,r10, PCB_R18
-	st	r19,r10, PCB_R19
-	st	r20,r10, PCB_R20
-	st	r21,r10, PCB_R21
-	st	r22,r10, PCB_R22
-	st	r23,r10, PCB_R23
-	st	r24,r10, PCB_R24
-	st	r25,r10, PCB_R25
-	st	r26,r10, PCB_R26
-	st	r27,r10, PCB_R27
-	st	r28,r10, PCB_R28
-	st	r29,r10, PCB_R29
-	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
-	st	r31,r10, PCB_SP
-	fldcr	r2, fcr62
-	fldcr	r3, fcr63
-	st	r2, r10, PCB_FCR62
-	st	r3, r10, PCB_FCR63
-
-	bsr.n	_C_LABEL(getipl)
-	 or	r14,r10, 0		/* save r10 in r14 */
-	st	r2, r14, PCB_IPL	/* save ipl in pcb */
+	or.u	r2, r0, hi16(_C_LABEL(curpcb))
+	ld	r2, r2, lo16(_C_LABEL(curpcb))
+	st	r1, r2, PCB_PC		/* save return address */
+	bsr	_ASM_LABEL(__savectx)
+	/* note that we don't need to recover r1 at this point */
 
 	or.u	r11, r0, hi16(_C_LABEL(curproc))
 	ld	r2, r11, lo16(_C_LABEL(curproc))
@@ -320,36 +295,48 @@ ASLOCAL(Ldoneloop)
  * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
-	/* get the spl mask */
-	subu	r31,r31,48		/* allocate stack for r1 and args */
-	st	r1,r31,36		/* save return address */
+	/*
+	 * Save preserved general register set.
+	 */
+	st	r1,  r2,  PCB_PC		/* save return address */
+ASENTRY(__savectx)
+	st	r14, r2,  PCB_R14
+	st	r15, r2,  PCB_R15
+	st	r16, r2,  PCB_R16
+	st	r17, r2,  PCB_R17
+	st	r18, r2,  PCB_R18
+	st	r19, r2,  PCB_R19
+	st	r20, r2,  PCB_R20
+	st	r21, r2,  PCB_R21
+	st	r22, r2,  PCB_R22
+	st	r23, r2,  PCB_R23
+	st	r24, r2,  PCB_R24
+	st	r25, r2,  PCB_R25
+	st	r26, r2,  PCB_R26
+	st	r27, r2,  PCB_R27
+	st	r28, r2,  PCB_R28
+	st	r29, r2,  PCB_R29
+	st	r30, r2,  PCB_R30	/* save frame pointer & stack pointer */
+	st	r31, r2,  PCB_SP
+
+	/*
+	 * Get the current spl.
+	 * We need to save r1 on the stack because we don't know if we were
+	 * called as savectx or __savectx.
+	 */
+	subu	r31, r31, 36		/* allocate stack for r1 and args */
+	st	r1,  r31, 32
 	bsr.n	_C_LABEL(getipl)	/* get the current interrupt mask */
-	 st	r2,r31,32		/* save r2 */
-	ld	r1,r31,36		/* recover return address */
-	ld	r10,r31,32		/* recover r2 into r10 */
-	addu	r31,r31,48		/* put stack pointer back */
-	st	r1, r10, PCB_PC		/* save return address */
-	st	r14,r10, PCB_R14
-	st	r15,r10, PCB_R15
-	st	r16,r10, PCB_R16
-	st	r17,r10, PCB_R17
-	st	r18,r10, PCB_R18
-	st	r19,r10, PCB_R19
-	st	r20,r10, PCB_R20
-	st	r21,r10, PCB_R21
-	st	r22,r10, PCB_R22
-	st	r23,r10, PCB_R23
-	st	r24,r10, PCB_R24
-	st	r25,r10, PCB_R25
-	st	r26,r10, PCB_R26
-	st	r27,r10, PCB_R27
-	st	r28,r10, PCB_R28
-	st	r29,r10, PCB_R29
-	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
-	st	r31,r10, PCB_SP
-	st	r2, r10, PCB_IPL	/* save interrupt mask */
-	fldcr	r2, fcr62
-	fldcr	r3, fcr63
-	st	r2, r10, PCB_FCR62
+	 or	r14, r0,  r2
+	st	r2,  r14, PCB_IPL	/* save interrupt mask */
+	ld	r1,  r31, 32		/* recover return address */
+	addu	r31, r31, 36		/* put stack pointer back */
+
+	/*
+	 * Save FP state.
+	 */
+	fldcr	r2,  fcr62
+	fldcr	r3,  fcr63
+	st	r2,  r14, PCB_FCR62
 	jmp.n	r1
-	 st	r3, r10, PCB_FCR63
+	 st	r3,  r14, PCB_FCR63
