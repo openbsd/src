@@ -1,5 +1,5 @@
-/*	$OpenBSD: ubavar.h,v 1.3 2002/03/14 01:26:48 millert Exp $	*/
-/*	$NetBSD: ubavar.h,v 1.29 2000/06/04 06:17:04 matt Exp $	*/
+/*	$OpenBSD: ubavar.h,v 1.4 2003/02/03 19:43:24 hugh Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.31 2001/04/26 19:16:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -135,6 +135,18 @@ struct uba_attach_args {
 #define	UBA_DONTQUE	0x10		/* Do not enqueue xfer */
 
 /*
+ * Struct for unibus allocation.
+ */
+struct ubinfo {
+	bus_dmamap_t ui_dmam;
+	bus_dma_segment_t ui_seg;
+	int ui_rseg;
+	caddr_t ui_vaddr;
+	bus_addr_t ui_baddr;
+	bus_size_t ui_size;
+};
+
+/*
  * Some common defines for all subtypes of U/Q-buses/adapters.
  */
 #define	MAXUBAXFER	(63*1024)	/* Max transfer size in bytes */
@@ -148,6 +160,10 @@ void uba_attach(struct uba_softc *, unsigned long);
 void uba_enqueue(struct uba_unit *);
 void uba_done(struct uba_softc *);
 void ubareset(struct uba_softc *);
+int uballoc(struct uba_softc *, struct ubinfo *, int);
+int ubmemalloc(struct uba_softc *, struct ubinfo *, int);
+void ubfree(struct uba_softc *, struct ubinfo *);
+void ubmemfree(struct uba_softc *, struct ubinfo *);
 #endif /* _KERNEL */
 
 #endif /* _QBUS_UBAVAR_H */
