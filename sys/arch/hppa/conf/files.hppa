@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.5 1998/11/30 21:05:03 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.6 1998/12/23 17:48:46 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -111,7 +111,7 @@ major	{rd = 3}
 # GSC bus devices
 #
 
-device	gsc {}
+device	gsc {[irq = -1]}
 attach	gsc at gscbus
 file	arch/hppa/gsc/gscbus.c		gsc
 
@@ -127,10 +127,14 @@ major	{ ft = 8 }
 attach	fdc at gsc with fdc_gsc
 file	arch/hppa/gsc/fdc_gsc.c		fdc
 
-#device	ie: ether
+#device	ie: ether, i82586
 attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
-file	dev/ic/i82596.c			ie
+file	dev/ic/i82586.c			ie
+
+#device	iz: ether
+#attach	iz at gsc
+#file	arch/hppa/gsc/if_i596.c		iz
 
 device	siop: ncr53c7xx, scsi
 attach	siop at gsc
@@ -172,9 +176,6 @@ file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/disksubr.c		disk
 file	arch/hppa/hppa/machdep.c
-file	arch/hppa/hppa/movc.S
-file	arch/hppa/hppa/cswtch.S
-file	arch/hppa/hppa/syscall.S
 file	arch/hppa/hppa/pmap.c
 file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.3 1998/10/30 19:45:35 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.4 1998/12/23 17:48:46 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -46,8 +46,7 @@ S?=	../../../..
 HPPA?=	${S}/arch/hppa
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhppa \
-		-DBFD_SUBSPA_BUG
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhppa
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -mdisable-fpregs \
