@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.70 2001/09/30 00:37:17 art Exp $
+#	$OpenBSD: files.isa,v 1.71 2001/10/04 21:48:56 gluk Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -338,6 +338,16 @@ file	dev/isa/gus_isa.c		gus & (gus_isa | gus_isapnp) needs-flag
 # Yamaha OPL2/OPL3 FM synth
 attach	opl at isa with opl_isa
 file	dev/isa/opl_isa.c		opl_isa
+
+#Sound Forte RadioLink SF16-FMR2 FM Radio Card
+device sf2r: radio, isa, tea5757
+attach sf2r at isa
+file	dev/isa/sf16fmr2.c		sf2r	needs-flag
+
+#Aztech/PackardBell FM Radio Card
+device az: radio, isa, lm700x
+attach az at isa
+file	dev/isa/aztech.c		az	needs-flag
 
 # PC PPI + TIMER 1 (speaker interface)
 device  pcppi {}
