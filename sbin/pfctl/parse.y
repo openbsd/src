@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.387 2003/05/19 18:31:13 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.388 2003/05/19 20:21:53 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2555,6 +2555,8 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 				remove_invalid_hosts(&$7->host, &r.af);
 				if (invalid_redirect($7->host, r.af))
 					YYERROR;
+				if (check_netmask($7->host, r.af))
+					YYERROR;
 
 				r.rpool.proxy_port[0] = ntohs($7->rport.a);
 
@@ -2691,6 +2693,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 			    $11->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
+			if ($11 != NULL && check_netmask($11->host, binat.af))
+				YYERROR;
 
 			if ($7 != NULL) {
 				if ($7->next) {
@@ -2703,6 +2707,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
+				if (check_netmask($7, binat.af))
+					YYERROR;
 				memcpy(&binat.src.addr, &$7->addr,
 				    sizeof(binat.src.addr));
 				free($7);
@@ -2716,6 +2722,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
+				if (check_netmask($9, binat.af))
+					YYERROR;
 				memcpy(&binat.dst.addr, &$9->addr,
 				    sizeof(binat.dst.addr));
 				binat.dst.not = $9->not;
@@ -3585,6 +3593,10 @@ expand_rule(struct pf_rule *r,
 			errx(1, "expand_rule: strlcpy");
 		expand_label(r->label, r->ifname, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
+
+		error += check_netmask(src_host, r->af);
+		error += check_netmask(dst_host, r->af);
+
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.159 2003/05/19 18:21:01 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.160 2003/05/19 20:21:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -800,6 +800,29 @@ set_ipmask(struct node_host *h, u_int8_t b)
 	n = &h->addr.v.a.addr;
 	for (i = 0; i < 4; i++)
 		n->addr32[i] = n->addr32[i] & m->addr32[i];
+}
+
+int
+check_netmask(struct node_host *h, sa_family_t af)
+{
+	struct node_host	*n = NULL;
+	struct pf_addr	*m;
+
+	for (n = h; n != NULL; n = n->next) {
+		m = &h->addr.v.a.mask;
+		/* fix up netmask for dynaddr */
+		if (af == AF_INET && h->addr.type == PF_ADDR_DYNIFTL &&
+		    unmask(m, AF_INET6) > 32)
+			set_ipmask(n, 32);
+		/* netmasks > 32 bit are invalid on v4 */
+		if (af == AF_INET &&
+		    (m->addr32[1] || m->addr32[2] || m->addr32[3])) {
+			fprintf(stderr, "netmask %u invalid for IPv4 address\n",
+			    unmask(m, AF_INET6));
+			return (1);
+		}
+	}
+	return (0);
 }
 
 /* interface lookup routines */

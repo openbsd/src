@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.60 2003/05/10 00:45:24 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.61 2003/05/19 20:21:53 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -190,6 +190,7 @@ struct pf_timeout {
 extern const struct pf_timeout pf_timeouts[];
 
 void			 set_ipmask(struct node_host *, u_int8_t);
+int			 check_netmask(struct node_host *, sa_family_t);
 void			 ifa_load(void);
 struct node_host	*ifa_exists(const char *);
 struct node_host	*ifa_lookup(const char *, enum pfctl_iflookup_mode);
