@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2002/03/10 06:48:43 hugh Exp $
+#	$OpenBSD: install.md,v 1.7 2002/03/10 06:51:15 hugh Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -68,8 +68,8 @@ md_get_msgbuf() {
 
 md_get_diskdevs() {
 	# return available disk devices
-	md_get_msgbuf | sed -n 	-e '/^sd[0-9] /{s/ .*//;p;}' \
-	    -e '/^x[ra][0-9] /{s/ .*//;p;}'
+	md_get_msgbuf |sed -n  -e '/^[hs]d[0-9] /{s/ .*//;p;}' \
+	    -e '/^r[al][0-9] /{s/ .*//;p;}'
 }
 
 md_get_cddevs() {
