@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.8 1997/07/23 22:12:12 deraadt Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.9 1998/04/22 14:44:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: rmjob.c,v 1.8 1997/07/23 22:12:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmjob.c,v 1.9 1998/04/22 14:44:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,14 +333,14 @@ rmremote()
 	 */
 	fflush(stdout);
 
-	(void)snprintf(buf, sizeof(buf), "\5%s %s", RP, all ? "-all" : person);
-	cp = buf;
-	for (i = 0; i < users && cp-buf+1+strlen(user[i]) < sizeof buf; i++) {
+	(void)snprintf(buf, sizeof(buf)-2, "\5%s %s", RP, all ? "-all" : person);
+	cp = buf + strlen(buf);
+	for (i = 0; i < users && cp-buf+1+strlen(user[i]) < sizeof buf - 2; i++) {
 		cp += strlen(cp);
 		*cp++ = ' ';
 		strcpy(cp, user[i]);
 	}
-	for (i = 0; i < requests && cp-buf+10 < sizeof(buf) - 1; i++) {
+	for (i = 0; i < requests && cp-buf+10 < sizeof(buf) - 2; i++) {
 		cp += strlen(cp);
 		(void) sprintf(cp, " %d", requ[i]);
 	}
