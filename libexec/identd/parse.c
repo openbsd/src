@@ -26,6 +26,11 @@
 
 #define IO_TIMEOUT	30	/* Timeout I/O operations after N seconds */
 
+static int check_noident __P((char *));
+ssize_t timed_read __P((int, void *, size_t, time_t));
+ssize_t timed_write __P((int, const void *, size_t, time_t));
+int parse __P((int, struct in_addr *, struct in_addr *));
+
 /*
  * A small routine to check for the existance of the ".noident"
  * file in a users home directory.
