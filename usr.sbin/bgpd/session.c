@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.117 2004/02/17 23:55:11 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.118 2004/02/18 00:30:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1080,10 +1080,11 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 					if (error)
 						errno = error;
 					log_peer_warn(&p->conf, "socket error");
+					bgp_fsm(p, EVNT_CON_OPENFAIL);
+					return (1);
 				}
-				bgp_fsm(p, EVNT_CON_OPENFAIL);
-			} else
-				bgp_fsm(p, EVNT_CON_OPEN);
+			}
+			bgp_fsm(p, EVNT_CON_OPEN);
 			return (1);
 		}
 		if (pfd->revents & POLLHUP) {
