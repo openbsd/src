@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.49 2000/10/13 08:29:21 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.50 2000/11/24 14:29:56 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -93,6 +93,11 @@
  *	    	  	    third argument is non-zero, Parse_Error is
  *	    	  	    called if any variables are undefined.
  *
+ *	Var_SubstVar 	    Substitute a named variable in a string using
+ *	    	  	    the given context as the top-most one,
+ *	    	  	    accumulating the result into a user-supplied
+ *	    	  	    buffer.
+ *
  *	Var_Parse 	    Parse a variable expansion from a string and
  *	    	  	    return the result and the number of characters
  *	    	  	    consumed.
@@ -126,7 +131,7 @@
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: var.c,v 1.49 2000/10/13 08:29:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.50 2000/11/24 14:29:56 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1007,84 +1012,93 @@ Var_Subst(str, ctxt, undefErr)
  * Var_SubstVar  --
  *	Substitute for one variable in the given string in the given context
  *	If undefErr is TRUE, Parse_Error will be called when an undefined
- *	variable is encountered.
- *
- * Side Effects:
- *	Append the result to the buffer
+ *	variable is encountered. Returns the string with substitutions.
  *-----------------------------------------------------------------------
  */
-void
-Var_SubstVar(buf, str, var, ctxt)
-    Buffer	buf;		/* Where to store the result */
-    char	*str;	        /* The string in which to substitute */
+char *
+Var_SubstVar(str, var, val, estimate)
+    const char	*str;	        /* The string in which to substitute */
     const char	*var;		/* Named variable */
-    GSymT	*ctxt;		/* The context wherein to find variables */
+    const char	*val;		/* Its value */
+    size_t	estimate;	/* Size estimate for the result buffer */
 {
-    char	*val;		/* Value substituted for a variable */
-    size_t	length;		/* Length of the variable invocation */
-    Boolean	doFree;		/* Set true if val should be freed */
+    BUFFER	buf;		/* Where to store the result */
 
+    Buf_Init(&buf, estimate);
     for (;;) {
-	const char *cp;
-	/* copy uninteresting stuff */
-	for (cp = str; *str != '\0' && *str != '$'; str++)
+	const char *start;
+	/* Copy uninteresting stuff */
+	for (start = str; *str != '\0' && *str != '$'; str++)
 	    ;
-	Buf_AddInterval(buf, cp, str);
-	if (*str == '\0')
+	Buf_AddInterval(&buf, start, str);
+
+	start = str;
+	if (*str++ == '\0')
 	    break;
-	if (str[1] == '$') {
-	    Buf_AddString(buf, "$$");
-	    str += 2;
+	str++;
+	/* and escaped dollars */
+	if (start[1] == '$') {
+	    Buf_AddInterval(&buf, start, start+2);
 	    continue;
 	}
-	if (str[1] != '(' && str[1] != '{') {
-	    if (str[1] != *var || var[1] != '\0') {
-		Buf_AddChars(buf, 2, str);
-		str += 2;
+	/* Simple variable, if it's not us, copy.  */
+	if (start[1] != '(' && start[1] != '{') {
+	    if (start[1] != *var || var[1] != '\0') {
+		Buf_AddChars(&buf, 2, start);
 		continue;
 	    }
 	} else {
-	    char *p;
+	    const char *p;
 	    char endc;
 
-	    if (str[1] == '(')
+	    if (start[1] == '(')
 		endc = ')';
-	    else if (str[1] == '{')
+	    else 
 		endc = '}';
 
 	    /* Find the end of the variable specification.  */
-	    p = str+2;
+	    p = str;
 	    while (*p != '\0' && *p != ':' && *p != endc && *p != '$')
 		p++;
 	    /* A variable inside the variable.  We don't know how to
 	     * expand the external variable at this point, so we try 
 	     * again with the nested variable.  */
 	    if (*p == '$') {
-		Buf_AddInterval(buf, str, p);
+		Buf_AddInterval(&buf, start, p);
 		str = p;
 		continue;
 	    }
 
-	    if (strncmp(var, str + 2, p - str - 2) != 0 ||
-		var[p - str - 2] != '\0') {
+	    if (strncmp(var, str, p - str) != 0 ||
+		var[p - str] != '\0') {
 		/* Not the variable we want to expand.  */
-		Buf_AddInterval(buf, str, p);
+		Buf_AddInterval(&buf, start, p);
 		str = p;
 		continue;
 	    } 
-	}
-	/* okay, so we've found the variable we want to expand.  */
-	val = Var_Parse(str, (SymTable *)ctxt, FALSE, &length, &doFree);
-	/* We've now got a variable structure to store in. But first,
-	 * advance the string pointer.  */
-	str += length;
+	    if (*p == ':') {
+		size_t	length;		/* Length of the variable invocation */
+		Boolean	doFree;		/* Set true if val should be freed */
+		char	*newval;	/* Value substituted for a variable */
 
-	/* Copy all the characters from the variable value straight
-	 * into the new string.  */
-	Buf_AddString(buf, val);
-	if (doFree)
-	    free(val);
+	    	length = p - str + 1;
+		doFree = FALSE;
+
+		/* val won't be freed since doFree == FALSE, but
+		 * VarModifiers_Apply doesn't know that, hence the cast. */
+		newval = VarModifiers_Apply((char *)val, NULL, FALSE, 
+		    &doFree, p+1, endc, &length);
+		Buf_AddString(&buf, newval);
+		if (doFree)
+		    free(newval);
+		str += length;
+		continue;
+	    } else
+	    	str = p+1;
+	}
+	Buf_AddString(&buf, val);
     }
+    return Buf_Retrieve(&buf);
 }
 
 /*-

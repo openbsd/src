@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.22 2000/09/14 13:35:38 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.23 2000/11/24 14:29:55 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: for.c,v 1.22 2000/09/14 13:35:38 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.23 2000/11/24 14:29:55 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,16 +270,10 @@ ForExec(namep, argp)
     char *name = (char *)namep;
     For *arg = (For *)argp;
 
-    Buf_Init(&arg->buf, arg->guess);
-    Var_Set(arg->var, name, VAR_GLOBAL);
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "--- %s = %s\n", arg->var, name);
-    Var_SubstVar(&arg->buf, arg->text, arg->var, VAR_GLOBAL);
-    if (Buf_Size(&arg->buf) >= arg->guess)
-    	arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;
-    
-    Parse_FromString(Buf_Retrieve(&arg->buf), arg->lineno);
-    Var_Delete(arg->var, VAR_GLOBAL);
+    Parse_FromString(Var_SubstVar(arg->text, arg->var, name, 
+    	arg->guess), arg->lineno);
 }
 
 

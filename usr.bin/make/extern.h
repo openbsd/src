@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.34 2000/10/13 08:30:51 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.35 2000/11/24 14:29:55 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -155,7 +155,8 @@ extern char *Var_Value __P((const char *, GSymT *));
 extern char *Varq_Value __P((int,  GNode *));
 extern char *Var_Parse __P((char *, SymTable *, Boolean, size_t *, Boolean *));
 extern char *Var_Subst __P((char *, SymTable *, Boolean));
-extern void Var_SubstVar __P((Buffer, char *, const char *, GSymT *));
+extern char *Var_SubstVar __P((const char *, const char *, const char *, 
+	size_t));
 extern char *Var_GetTail __P((char *));
 extern char *Var_GetHead __P((char *));
 extern void Var_Init __P((void));
