@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 1997/04/04 04:47:45 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.5 1997/04/05 23:27:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,8 +47,6 @@ char *kernels[] = { "bsd",     "bsd.gz",
 extern	const char version[];
 int	boothowto;
 u_int	cnvmem, extmem;
-
-void	devboot __P((dev_t, char *));
 
 void
 boot(bootdev)
@@ -105,38 +103,6 @@ boot(bootdev)
 
 		printf(" failed(%d)\nwill try %s\n", errno, bootfile);
 	}
-}
-
-void
-devboot(bootdev, p)
-	dev_t bootdev;
-	char *p;
-{
-#ifdef _TEST
-	*p++ = '/';
-	*p++ = 'd';
-	*p++ = 'e';
-	*p++ = 'v';
-	*p++ = '/';
-	*p++ = 'r';
-#endif
-	if (bootdev & 0x80)
-		*p++ = 'h';
-	else
-		*p++ = 'f';
-	*p++ = 'd';
-#ifndef _TEST
-	*p++ = '(';
-#endif
-	*p++ = '0' + (bootdev & 0x7f);
-#ifndef _TEST
-	*p++ = ',';
-#endif
-	*p++ = 'a';
-#ifndef _TEST
-	*p++ = ')';
-#endif
-	*p = '\0';
 }
 
 #ifdef _TEST
