@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.47 2004/06/19 14:29:20 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.48 2004/06/20 18:03:03 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -120,13 +120,14 @@ struct vnd_softc {
 	struct device	 sc_dev;
 	struct disk	 sc_dk;
 
-	int		 sc_flags;	/* flags */
-	size_t		 sc_size;	/* size of vnd in blocks */
-	struct vnode	*sc_vp;		/* vnode */
-	struct ucred	*sc_cred;	/* credentials */
-	int		 sc_maxactive;	/* max # of active requests */
-	struct buf	 sc_tab;	/* transfer queue */
-	void		*sc_keyctx;	/* key context */
+	char		 sc_file[VNDNLEN];	/* file we're covering */
+	int		 sc_flags;		/* flags */
+	size_t		 sc_size;		/* size of vnd in blocks */
+	struct vnode	*sc_vp;			/* vnode */
+	struct ucred	*sc_cred;		/* credentials */
+	int		 sc_maxactive;		/* max # of active requests */
+	struct buf	 sc_tab;		/* transfer queue */
+	void		*sc_keyctx;		/* key context */
 };
 
 /* sc_flags */
@@ -751,6 +752,7 @@ vndioctl(dev, cmd, addr, flag, p)
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
+	struct vnd_user *vnu;
 	struct vattr vattr;
 	struct nameidata nd;
 	int error, part, pmask, s;
@@ -838,6 +840,7 @@ vndioctl(dev, cmd, addr, flag, p)
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob((off_t)vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
+		strlcpy(vnd->sc_file, vio->vnd_file, sizeof(vnd->sc_file));
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: SET vp %p size %llx\n",
@@ -894,6 +897,35 @@ vndioctl(dev, cmd, addr, flag, p)
 		vndunlock(vnd);
 		bzero(vnd, sizeof(struct vnd_softc));
 		splx(s);
+		break;
+
+	case VNDIOCGET:
+		vnu = (struct vnd_user *)addr;
+
+		if (vnu->vnu_unit == -1)
+			vnu->vnu_unit = unit;
+		if (vnu->vnu_unit >= numvnd)
+			return (ENXIO);
+		if (vnu->vnu_unit < 0)
+			return (EINVAL);
+
+		vnd = &vnd_softc[vnu->vnu_unit];
+
+		if (vnd->sc_flags & VNF_INITED) {
+			error = VOP_GETATTR(vnd->sc_vp, &vattr, p->p_ucred, p);
+			if (error)
+				return (error);
+
+			strlcpy(vnu->vnu_file, vnd->sc_file,
+			    sizeof(vnu->vnu_file));
+
+			vnu->vnu_dev = vattr.va_fsid;
+			vnu->vnu_ino = vattr.va_fileid;
+		} else {
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+		}
+
 		break;
 
 	case DIOCGDINFO:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vndioctl.h,v 1.5 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: vndioctl.h,v 1.6 2004/06/20 18:03:03 pedro Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
@@ -39,6 +39,11 @@
  *	@(#)vnioctl.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _SYS_VNDIOCTL_H_
+#define _SYS_VNDIOCTL_H_
+
+#define VNDNLEN	90
+
 /*
  * Ioctl definitions for file (vnode) disk pseudo-device.
  */
@@ -50,6 +55,16 @@ struct vnd_ioctl {
 };
 
 /*
+ * A simple structure used by userland to query about a specific vnd.
+ */
+struct vnd_user {
+	char	vnu_file[VNDNLEN];	/* vnd file */
+	int	vnu_unit;		/* vnd unit */
+	dev_t	vnu_dev;		/* vnd device */
+	ino_t	vnu_ino;		/* vnd inode */
+};
+
+/*
  * Before you can use a unit, it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
  * an VNDIOCCLR must be used to reset a configuration.  An attempt to
@@ -57,3 +72,6 @@ struct vnd_ioctl {
  */
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
+#define VNDIOCGET	_IOWR('F', 2, struct vnd_user)	/* get disk info */
+
+#endif /* !_SYS_VNDIOCTL_H_ */
