@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.34 2003/09/29 11:29:20 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.35 2003/10/04 11:35:31 jmc Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -612,14 +612,20 @@ braces, followed by options with operands, in alphabetical order,
 each in braces, followed by required arguments in the order they
 are specified, followed by optional arguments in the order they
 are specified.
+.Pp
 A bar
 .Pq Sq \&|
 separates either-or options/arguments,
 and multiple options/arguments which are specified together are
 placed in a single set of braces.
 .Pp
+If numbers are used as options, they should be placed first,
+as shown in the example below.
+Uppercase letters take precedence over lowercase.
+Note that the options list in manual pages should be purely alphabetical.
+That is, with no regard to whether an option takes an argument.
 .Bd -ragged -offset 0.3i
-"usage: f [-ade] [-b b_arg] [-m m_arg] req1 req2 [opt1 [opt2]]\en"
+"usage: f [-12aDde] [-b b_arg] [-m m_arg] req1 req2 [opt1 [opt2]]\en"
 "usage: f [-a | -b] [-c [-de] [-n number]]\en"
 .Ed
 .Pp
