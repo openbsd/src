@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.3 2001/12/05 10:58:54 mickey Exp $
+.\"	$OpenBSD: radio.4,v 1.4 2002/01/04 17:14:51 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -173,7 +173,8 @@ Informs whether the device receives a stereo or mono signal.
 .Xr rt 4 ,
 .Xr rtii 4 ,
 .Xr sf2r 4 ,
-.Xr sf4r 4
+.Xr sf4r 4 ,
+.Xr radio 9
 .Sh BUGS
 You can have only one card of the same type.
 For example, if you have two aztech FM tuners, the first card with jumper
@@ -183,8 +184,12 @@ Don't even try to compile support for the second card into the kernel.
 .Sh AUTHORS
 The
 .Nm
-driver was written by Vladimir Popov and Maxim Tsyplakov.
-The man page was written by Vladimir Popov.
+driver was written by
+.An Vladimir Popov Aq jumbo@narod.ru
+and
+.An Maxim Tsyplakov Aq tm@oganer.net .
+The man page was written by
+.An Maxim Tsyplakov Aq tm@oganer.net .
 .Sh HISTORY
 The
 .Nm
