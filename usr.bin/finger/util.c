@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2003/06/25 21:10:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.17 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.18 2003/06/25 21:10:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.17 2003/06/10 22:20:46 deraadt Exp $
 #include "extern.h"
 
 char *estrdup(char *);
+WHERE *walloc(PERSON *pn);
 
 void
 find_idle_and_ttywrite(WHERE *w)

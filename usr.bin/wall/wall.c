@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.18 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: wall.c,v 1.19 2003/06/25 21:09:53 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.18 2003/06/03 02:56:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.19 2003/06/25 21:09:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -159,7 +159,7 @@ makemsg(char *fname)
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
-	time_t now, time();
+	time_t now;
 	FILE *fp;
 	int fd;
 	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[MAXPATHLEN];
