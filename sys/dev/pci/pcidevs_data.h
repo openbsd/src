@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.672 2003/09/25 15:39:02 jason Exp 
+ *		OpenBSD: pcidevs,v 1.673 2003/09/25 20:23:42 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4941,6 +4941,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5BRIDGE,
 	    "CSB5 PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_LPC,
+	    "CSB6 LPC",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ISA,
