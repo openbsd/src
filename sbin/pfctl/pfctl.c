@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.164 2003/04/02 14:07:38 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.165 2003/04/02 14:09:20 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -946,13 +946,12 @@ pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDALTQ, pf->paltq)) {
 				if (errno == ENXIO)
-					fprintf(stderr,
-					    "qtype not configured\n");
+					errx(1, "qtype not configured\n");
 				else if (errno == ENODEV)
-					fprintf(stderr,
-					    "%s: driver does not support "
+					errx(1, "%s: driver does not support "
 					    "altq\n", a->ifname);
-				err(1, "DIOCADDALTQ");
+				else
+					err(1, "DIOCADDALTQ");
 			}
 		}
 		pfaltq_store(&pf->paltq->altq);
