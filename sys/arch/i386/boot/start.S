@@ -1,9 +1,6 @@
-/*	$OpenBSD: start.S,v 1.4 1996/06/02 11:18:14 mickey Exp $	*/
 /*	$NetBSD: start.S,v 1.12 1995/01/18 17:34:18 mycroft Exp $	*/
 
-/*-
- *
- * Changes by Michael Shalayeff May 1996
+/*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
  * Mach Operating System
@@ -58,7 +55,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
 
-BOOTSEG		=	0x1000	# boot will be loaded here (below 640K)
+BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
 BOOTSTACK	=	0xfffc	# boot stack
 SIGNATURE	=	0xaa55
 LOADSZ		=	15	# size of unix boot
@@ -106,22 +103,21 @@ start1:
 	popl	%edx
 #endif
 
-#ifdef	FDDEBUG
+#ifdef	DEBUG
 	data32
 	movl	$one, %esi
 	data32
 	call	message
 #endif
-#if	!defined(NOFD) && !defined(NOHD)
+
 	# bootstrap passes us drive number in %dl
-	testb	$0x80, %dl
+	cmpb	$0x80, %dl
 	data32
-	jnz	hd
-#endif
-#ifndef	NOFD
+	jae	hd
+
 fd:
 #	reset the disk system
-#ifdef	FDDEBUG
+#ifdef	DEBUG
 	data32
 	movl	$two, %esi
 	data32
@@ -129,7 +125,7 @@ fd:
 #endif
 	movb	$0x00, %ah
 	int	$0x13
-#ifdef	FDDEBUG
+#ifdef	DEBUG
 	data32
 	movl	$three, %esi
 	data32
@@ -139,11 +135,10 @@ fd:
 	movl	$0x0001, %ecx	# cyl 0, sector 1
 	movb	$0x00, %dh	# head
 	# XXX Override the drive number.
-	# movb	$0x00, %dl
+	movb	$0x00, %dl
 	data32
 	jmp	load
-#endif
-#ifndef	NOHD
+
 hd:	/**** load sector 0 into the BOOTSEG ****/
 #ifdef	DEBUG
 	data32
@@ -156,20 +151,28 @@ hd:	/**** load sector 0 into the BOOTSEG ****/
 	xorl	%ebx, %ebx	# %bx = 0
 	data32
 	movl	$0x0001, %ecx
+#ifdef	DEBUG
+	data32
+	movl	$five, %esi
+	data32
+	call	message
+#endif
 	data32
 	andl	$0xff, %edx
+	/*mov	$0x0080, %edx*/
 	int	$0x13
 	data32
 	jb	read_error
 
-	/***# find the first active partition *****/
+	/***# find the first 386BSD partition *****/
 	data32
 	movl	$PARTSTART, %ebx
 	data32
 	movl	$NUMPART, %ecx
 again:
 	addr32
-	cmpb    $BOOTABLE, %es:(%ebx)
+	movb    %es:4(%ebx), %al
+	cmpb	$BSDPART, %al
 	data32
 	je	found
 	data32
@@ -180,8 +183,13 @@ again:
 	movl	$enoboot, %esi
 	data32
 	jmp	err_stop
-#endif
+#else /* !DOSREAD */
+      movb    $0xff, %dl
+      jmp     _C_LABEL(boot2)
+#endif /* DOSREAD */
 
+
+#ifndef DOSREAD
 /*
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
 #       Call with       %ah = 0x2
@@ -194,84 +202,31 @@ again:
 #       Return:
 #                       %al = 0x0 on success; err code on failure
 */
-#ifndef	NOHD
+
 found:
 	addr32
 	movb	%es:1(%ebx), %dh /* head */
 	addr32
 	movl	%es:2(%ebx), %ecx /*sect, cyl (+ 2 bytes junk in top word) */
-	data32
-	pushl	%ecx
 
-	addr32
-	movb	%es:4(%ebx), %al
-	cmpb	$BSDPART, %al
-	je	loadbsd
-
-	# set up %ds
-	movl	%cs, %ax
-	movl	%ax, %ds
-
-	# relocate the code to leave the space for next stage
-	movl	$0x5c0, %ax
-	movl	%ax, %es
-	data32
-	xorl	%esi, %esi
-	data32
-	xorl	%edi, %edi
-	data32
-	movl	$0x100, %ecx
-	cld
-	rep
-	movsl
-	# jump to the new code
-	data32
-	ljmp $0x5c0, $start2
-
-start2:
-	movl	$0x7c0, %ax
-	movl	%ax, %es
-
-loadbsd:
-	data32
-	popl	%ecx
-#endif
 load:
-	data32
-	pushl	%ebx
 	movb	$0x2, %ah	/* function 2 */
 	movb	$LOADSZ, %al	/* number of blocks */
 	xorl	%ebx, %ebx	/* %bx = 0, put it at 0 in the BOOTSEG */
 	int	$0x13
 	data32
-	popl	%ebx
-	data32
 	jb	read_error
 
-#ifndef	NOHD
-	testb	$0x80, %dl	/* no fdisk partion table on floppy */
-	data32
-	jz	dobsd
+	# ljmp to the second stage boot loader (boot2).
+	# After ljmp, %cs is BOOTSEG and boot1 (512 bytes) will be used
+	# as an internal buffer "intbuf".
 
-	addr32
-	movb	%es:4(%ebx), %al
-	cmpb	$BSDPART, %al
-	je	dobsd
-
-	ljmp	$0, $0x7c00
-
-dobsd:
-#endif
 #ifdef	DEBUG
 	data32
 	movl	$six, %esi
 	data32
 	call	message
 #endif
-
-	# ljmp to the second stage boot loader (boot2).
-	# After ljmp, %cs is BOOTSEG and boot1 (512 bytes) will be used
-	# as an internal buffer "intbuf".
 
 	data32
 	ljmp	$BOOTSEG, $_C_LABEL(boot2)
@@ -315,6 +270,7 @@ message:
 	data32
 	pushl	%edx
 
+#endif
 nextb:
 	cld
 	lodsb			# load a byte into %al
@@ -345,10 +301,7 @@ done:
 	popl	%eax
 	data32
 	ret
-#else	/* !DOSREAD */
-	movb	$0xff, %dl
-	jmp	_C_LABEL(boot2)
-#endif /* DOSREAD */
+
 
 /* Conventional GDT indexes. */
 BOOT_CS_INDEX	=	3
@@ -370,7 +323,7 @@ ENTRY(boot2)
 	/* fix up GDT entries for bootstrap */
 #define FIXUP(gdt_index) \
 	addr32; \
-	movl	%eax, _C_LABEL(Gdt)+(8*gdt_index)+2;  /* actually movw %ax */ \
+	movl	%eax, _C_LABEL(Gdt)+(8*gdt_index)+2;	/* actually movw %ax */ \
 	addr32; \
 	movb	%bl, _C_LABEL(Gdt)+(8*gdt_index)+4
 
@@ -410,18 +363,15 @@ stop:
 
 /* error messages */
 
-#if	defined(DEBUG) && !defined(DOSREAD)
-#ifdef	FDDEBUG
+#ifdef	DEBUG
 one:	.asciz		"1\r\n"
 two:	.asciz		"2\r\n"
 three:	.asciz		"3\r\n"
-#endif	/* FDDEBUG */
 four:	.asciz		"4\r\n"
 five:	.asciz		"5\r\n"
 six:	.asciz		"6\r\n"
 seven:	.asciz		"7\r\n"
-#endif	/* DEBUG */
-#ifndef	DOSREAD
+#endif	DEBUG
 eread:	.asciz		"Read error\r\n"
 enoboot: .asciz		"No bootable partition\r\n"
 endofcode:
@@ -440,7 +390,6 @@ endofcode:
 	. = _C_LABEL(boot1) + 0x1fe
 	.short	SIGNATURE
 	. = _C_LABEL(boot1) + 0x200
-#endif
 	.globl	_disklabel
 _disklabel:
 	. = _C_LABEL(boot1) + 0x400	
