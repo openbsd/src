@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.2 2000/09/01 22:29:32 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.3 2000/09/01 22:32:41 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -244,7 +244,7 @@ stat_to_attrib(struct stat *st)
 	a.flags |= SSH_FXA_HAVE_SIZE;
 	a.size = st->st_size;
 	a.size_low = a.size;
-	a.size_high = (u_int32_t) a.size >> 32;
+	a.size_high = (u_int32_t) (a.size >> 32);
 	a.flags |= SSH_FXA_HAVE_UGID;
 	a.uid = st->st_uid;
 	a.gid = st->st_gid;
