@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.7 2003/04/30 12:11:44 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.8 2003/05/12 10:52:57 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -135,7 +135,6 @@
 .Nm
 .Cm no- Ns Ar XXX
 .Op Ar arbitrary options
-.Pp
 .Sh DESCRIPTION
 .Nm OpenSSL
 is a cryptography toolkit implementing the Secure Sockets Layer
@@ -214,7 +213,7 @@ availability of ciphers in the
 .Nm
 program.
 .Pp
-.Sy Note:
+.Sy Note :
 .Cm no- Ns Ar XXX
 is not able to detect pseudo-commands such as
 .Cm quit ,
@@ -406,7 +405,6 @@ Read the password from standard input.
 .\" ASN1PARSE
 .\"
 .Sh ASN1PARSE
-.Pp
 .Nm "openssl asn1parse"
 .Op Fl inform Ar PEM|DER
 .Op Fl in Ar filename
@@ -541,6 +539,10 @@ The output of some ASN.1 types is not well handled (if at all).
 .Op Fl name Ar section
 .Op Fl gencrl
 .Op Fl revoke Ar file
+.Op Fl crl_reason Ar reason
+.Op Fl crl_hold Ar instruction
+.Op Fl crl_compromise Ar time
+.Op Fl crl_CA_compromise Ar time
 .Op Fl subj Ar arg
 .Op Fl crldays Ar days
 .Op Fl crlhours Ar hours
@@ -567,6 +569,7 @@ The output of some ASN.1 types is not well handled (if at all).
 .Op Fl msie_hack
 .Op Fl extensions Ar section
 .Op Fl extfile Ar section
+.Op Fl engine Ar id
 .Ek
 .Pp
 The
@@ -599,7 +602,7 @@ A single self-signed certificate to be signed by the CA.
 A file containing a single Netscape signed public key and challenge,
 and additional field values to be signed by the CA.
 See the
-.Sx CA NOTES
+.Sx SPKAC FORMAT
 section for information on the required format.
 .It Fl infiles
 If present, this should be the last option; all subsequent arguments
@@ -708,6 +711,14 @@ to read certificate extensions from
 (using the default section unless the
 .Fl extensions
 option is also used).
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh CRL OPTIONS
 .Bl -tag -width "XXXX"
@@ -724,6 +735,35 @@ The number of hours before the next CRL is due.
 A
 .Ar filename
 containing a certificate to revoke.
+.It Fl crl_reason Ar reason
+Revocation reason, where
+.Ar reason
+is one of:
+unspecified, keyCompromise, CACompromise, affiliationChanged, superseded,
+cessationOfOperation, certificateHold or removeFromCRL.
+The matching of
+.Ar reason
+is case insensitive.
+Setting any revocation reason will make the CRL v2.
+In practive removeFromCRL is not particularly useful because it is only used
+in delta CRLs which are not currently implemented.
+.It Fl crl_hold Ar instruction
+This sets the CRL revocation reason code to certificateHold and the hold
+instruction to
+.Ar instruction
+which must be an OID.
+Although any OID can be used, only holdInstructionNone
+(the use of which is discouraged by RFC 2459), holdInstructionCallIssuer or
+holdInstructionReject will normally be used.
+.It Fl crl_compromise Ar time
+This sets the revocation reason to keyCompromise and the compromise time to
+.Ar time .
+.Ar time
+should be in GeneralizedTime format, i.e. YYYYMMDDHHMMSSZ.
+.It Fl crl_CA_compromise Ar time
+This is the same as
+.Fl crl_compromise ,
+except the revocation reason is set to CACompromise.
 .It Fl subj Ar arg
 Supersedes the subject name given in the request.
 The
@@ -799,7 +839,7 @@ It specifies the directory where new certificates will be placed.
 Mandatory.
 .It Ar certificate
 The same as
-.Fl cert.
+.Fl cert .
 It gives the file containing the CA certificate.
 Mandatory.
 .It Ar private_key
@@ -958,7 +998,7 @@ the SPKAC and also the required DN components as name value pairs.
 If it's necessary to include the same component twice then it can be
 preceded by a number and a '.'.
 .Sh CA EXAMPLES
-.Sy Note:
+.Sy Note :
 these examples assume that the
 .Nm ca
 directory structure is already set up and the relevant files already exist.
@@ -1049,25 +1089,8 @@ A sample configuration file with the relevant sections for
 \& commonName             = supplied
 \& emailAddress           = optional
 .Ed
-.Sh CA WARNINGS
-The
-.Nm ca
-command is quirky and at times downright unfriendly.
-.Pp
-The
-.Nm ca
-utility was originally meant as an example of how to do things in a CA.
-It was not supposed to be used as a full blown CA itself;
-nevertheless some people are using it for this purpose.
-.Pp
-The
-.Nm ca
-command is effectively a single user command: no locking is
-done on the various files and attempts to run more than one
-.Nm ca
-command on the same database can have unpredictable results.
 .Sh CA FILES
-.Sy Note:
+.Sy Note :
 the location of all files can change either by compile time options,
 configuration file entries, environment variables or command line options.
 The values below reflect the default values.
@@ -1095,9 +1118,6 @@ The text database index file is a critical part of the process,
 and if corrupted it can be difficult to fix.
 It is theoretically possible to rebuild the index file from all the
 issued certificates and a current CRL; however there is no option to do this.
-.Pp
-CRL entry extensions cannot currently be created; only CRL extensions
-can be added.
 .Pp
 V2 CRL features like delta CRL support and CRL numbers are not currently
 supported.
@@ -1140,6 +1160,23 @@ The behaviour should be more friendly and configurable.
 Cancelling some commands by refusing to certify a certificate can
 create an empty file.
 .Sh CA WARNINGS
+The
+.Nm ca
+command is quirky and at times downright unfriendly.
+.Pp
+The
+.Nm ca
+utility was originally meant as an example of how to do things in a CA.
+It was not supposed to be used as a full blown CA itself:
+nevertheless some people are using it for this purpose.
+.Pp
+The
+.Nm ca
+command is effectively a single user command: no locking is done on the
+various files, and attempts to run more than one
+.Nm ca
+command on the same database can have unpredictable results.
+.Pp
 The
 .Ar copy_extensions
 option should be used with caution.
@@ -1368,6 +1405,8 @@ TLS v1.0, SSL v3.0 or SSL v2.0 cipher suites, respectively.
 Cipher suites using DH, including anonymous DH.
 .It Ar ADH
 Anonymous DH cipher suites.
+.It Ar AES
+Cipher suites using AES.
 .It Ar 3DES
 Cipher suites using triple DES.
 .It Ar DES
@@ -1388,114 +1427,135 @@ The following lists give the SSL or TLS cipher suites names from the
 relevant specification and their
 .Nm OpenSSL
 equivalents.
+It should be noted that several cipher suite names do not include the
+authentication used, e.g. DES-CBC3-SHA.
+In these cases, RSA authentication is used.
 .Pp
-.Cm SSL v3.0 cipher suites
+.Sy "SSL v3.0 cipher suites"
 .Pp
 .Bd -literal
-\& SSL_RSA_WITH_NULL_MD5                   NULL-MD5
-\& SSL_RSA_WITH_NULL_SHA                   NULL-SHA
-\& SSL_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
-\& SSL_RSA_WITH_RC4_128_MD5                RC4-MD5
-\& SSL_RSA_WITH_RC4_128_SHA                RC4-SHA
-\& SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
-\& SSL_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
-\& SSL_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
-\& SSL_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
-\& SSL_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
+ SSL_RSA_WITH_NULL_MD5                   NULL-MD5
+ SSL_RSA_WITH_NULL_SHA                   NULL-SHA
+ SSL_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
+ SSL_RSA_WITH_RC4_128_MD5                RC4-MD5
+ SSL_RSA_WITH_RC4_128_SHA                RC4-SHA
+ SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
+ SSL_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
+ SSL_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
+ SSL_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
+ SSL_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 .Ed
 .Pp
 .Bd -literal
-\& SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-\& SSL_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
-\& SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
-\& SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-\& SSL_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
-\& SSL_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
-\& SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
-\& SSL_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
-\& SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
-\& SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
-\& SSL_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
-\& SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
+ SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
+ SSL_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
+ SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
+ SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
+ SSL_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
+ SSL_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
+ SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
+ SSL_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
+ SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
+ SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
+ SSL_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
+ SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
 .Ed
 .Pp
 .Bd -literal
-\& SSL_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
-\& SSL_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
-\& SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
-\& SSL_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
-\& SSL_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
+ SSL_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
+ SSL_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
+ SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
+ SSL_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
+ SSL_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 .Ed
 .Pp
 .Bd -literal
-\& SSL_FORTEZZA_KEA_WITH_NULL_SHA          Not implemented.
-\& SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA  Not implemented.
-\& SSL_FORTEZZA_KEA_WITH_RC4_128_SHA       Not implemented.
+ SSL_FORTEZZA_KEA_WITH_NULL_SHA          Not implemented.
+ SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA  Not implemented.
+ SSL_FORTEZZA_KEA_WITH_RC4_128_SHA       Not implemented.
 .Ed
 .Pp
-.Cm TLS v1.0 cipher suites
+.Sy "TLS v1.0 cipher suites"
 .Pp
 .Bd -literal
-\& TLS_RSA_WITH_NULL_MD5                   NULL-MD5
-\& TLS_RSA_WITH_NULL_SHA                   NULL-SHA
-\& TLS_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
-\& TLS_RSA_WITH_RC4_128_MD5                RC4-MD5
-\& TLS_RSA_WITH_RC4_128_SHA                RC4-SHA
-\& TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
-\& TLS_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
-\& TLS_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
-\& TLS_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
-\& TLS_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
-.Ed
-.Pp
-.Bd -literal
-\& TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-\& TLS_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
-\& TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
-\& TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
-\& TLS_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
-\& TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
-\& TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
-\& TLS_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
-\& TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
-\& TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
-\& TLS_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
-\& TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
+ TLS_RSA_WITH_NULL_MD5                   NULL-MD5
+ TLS_RSA_WITH_NULL_SHA                   NULL-SHA
+ TLS_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
+ TLS_RSA_WITH_RC4_128_MD5                RC4-MD5
+ TLS_RSA_WITH_RC4_128_SHA                RC4-SHA
+ TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
+ TLS_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
+ TLS_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
+ TLS_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
+ TLS_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 .Ed
 .Pp
 .Bd -literal
-\& TLS_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
-\& TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
-\& TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
-\& TLS_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
-\& TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
+ TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
+ TLS_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
+ TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
+ TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
+ TLS_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
+ TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
+ TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-DSS-DES-CBC-SHA
+ TLS_DHE_DSS_WITH_DES_CBC_SHA            EDH-DSS-CBC-SHA
+ TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       EDH-DSS-DES-CBC3-SHA
+ TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-EDH-RSA-DES-CBC-SHA
+ TLS_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
+ TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
 .Ed
 .Pp
-.Cm Additional Export 1024 and other cipher suites
+.Bd -literal
+ TLS_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
+ TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
+ TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
+ TLS_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
+ TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
+.Ed
 .Pp
-.Sy Note:
+.Sy "AES ciphersuites from RFC 3268, extending TLS v1.0"
+.Bd -literal
+ TLS_RSA_WITH_AES_128_CBC_SHA            AES128-SHA
+ TLS_RSA_WITH_AES_256_CBC_SHA            AES256-SHA
+
+ TLS_DH_DSS_WITH_AES_128_CBC_SHA         DH-DSS-AES128-SHA
+ TLS_DH_DSS_WITH_AES_256_CBC_SHA         DH-DSS-AES256-SHA
+ TLS_DH_RSA_WITH_AES_128_CBC_SHA         DH-RSA-AES128-SHA
+ TLS_DH_RSA_WITH_AES_256_CBC_SHA         DH-RSA-AES256-SHA
+
+ TLS_DHE_DSS_WITH_AES_128_CBC_SHA        DHE-DSS-AES128-SHA
+ TLS_DHE_DSS_WITH_AES_256_CBC_SHA        DHE-DSS-AES256-SHA
+ TLS_DHE_RSA_WITH_AES_128_CBC_SHA        DHE-RSA-AES128-SHA
+ TLS_DHE_RSA_WITH_AES_256_CBC_SHA        DHE-RSA-AES256-SHA
+
+ TLS_DH_anon_WITH_AES_128_CBC_SHA        ADH-AES128-SHA
+ TLS_DH_anon_WITH_AES_256_CBC_SHA        ADH-AES256-SHA
+.Ed
+.Pp
+.Sy "Additional Export 1024 and other cipher suites"
+.Pp
+.Sy Note :
 These ciphers can also be used in SSL v3.
 .Pp
 .Bd -literal
-\& TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA     EXP1024-DES-CBC-SHA
-\& TLS_RSA_EXPORT1024_WITH_RC4_56_SHA      EXP1024-RC4-SHA
-\& TLS_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA EXP1024-DHE-DSS-DES-CBC-SHA
-\& TLS_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA  EXP1024-DHE-DSS-RC4-SHA
-\& TLS_DHE_DSS_WITH_RC4_128_SHA            DHE-DSS-RC4-SHA
+ TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA     EXP1024-DES-CBC-SHA
+ TLS_RSA_EXPORT1024_WITH_RC4_56_SHA      EXP1024-RC4-SHA
+ TLS_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA EXP1024-DHE-DSS-DES-CBC-SHA
+ TLS_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA  EXP1024-DHE-DSS-RC4-SHA
+ TLS_DHE_DSS_WITH_RC4_128_SHA            DHE-DSS-RC4-SHA
 .Ed
 .Pp
-.Cm SSL v2.0 cipher suites
+.Sy "SSL v2.0 cipher suites"
 .Pp
 .Bd -literal
-\& SSL_CK_RC4_128_WITH_MD5                 RC4-MD5
-\& SSL_CK_RC4_128_EXPORT40_WITH_MD5        EXP-RC4-MD5
-\& SSL_CK_RC2_128_CBC_WITH_MD5             RC2-MD5
-\& SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    EXP-RC2-MD5
-\& SSL_CK_IDEA_128_CBC_WITH_MD5            IDEA-CBC-MD5
-\& SSL_CK_DES_64_CBC_WITH_MD5              DES-CBC-MD5
-\& SSL_CK_DES_192_EDE3_CBC_WITH_MD5        DES-CBC3-MD5
+ SSL_CK_RC4_128_WITH_MD5                 RC4-MD5
+ SSL_CK_RC4_128_EXPORT40_WITH_MD5        EXP-RC4-MD5
+ SSL_CK_RC2_128_CBC_WITH_MD5             RC2-MD5
+ SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    EXP-RC2-MD5
+ SSL_CK_IDEA_128_CBC_WITH_MD5            IDEA-CBC-MD5
+ SSL_CK_DES_64_CBC_WITH_MD5              DES-CBC-MD5
+ SSL_CK_DES_192_EDE3_CBC_WITH_MD5        DES-CBC3-MD5
 .Ed
-.Pp
 .Sh CIPHERS NOTES
 The non-ephemeral DH modes are currently unimplemented in
 .Nm OpenSSL
@@ -1766,7 +1826,7 @@ Digitally sign the digest using the private key in
 .Ar filename .
 .It Fl verify Ar filename
 Verify the signature using the public key in
-.Ar filename.
+.Ar filename .
 The output is either "Verification OK" or "Verification Failure".
 .It Fl prverify Ar filename
 Verify the signature using the private key in
@@ -1812,7 +1872,7 @@ being signed or verified.
 Diffie-Hellman Parameter Management. The
 .Nm dh
 command has been replaced by
-.Nm dhparam.
+.Nm dhparam .
 See
 .Sx DHPARAM
 below.
@@ -1833,6 +1893,7 @@ below.
 .Op Fl 2
 .Op Fl 5
 .Op Fl rand Ar file ...
+.Op Fl engine Ar id
 .Op Ar numbits
 .Ek
 .Pp
@@ -1919,6 +1980,14 @@ This option converts the parameters into C code.
 The parameters can then be loaded by calling the
 .Cm get_dh Ns Ar numbits Ns Li ()
 function.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh DHPARAM WARNINGS
 The program
@@ -1985,6 +2054,7 @@ option was added in
 .Op Fl modulus
 .Op Fl pubin
 .Op Fl pubout
+.Op Fl engine Ar id
 .Ek
 .Pp
 The
@@ -1992,7 +2062,7 @@ The
 command processes DSA keys.
 They can be converted between various forms and their components printed out.
 .Pp
-.Sy Note:
+.Sy Note :
 This command uses the traditional
 .Nm SSLeay
 compatible format for private key encryption:
@@ -2079,6 +2149,14 @@ With this option a public key is read instead.
 By default a private key is output.
 With this option a public key will be output instead.
 This option is automatically set if the input is a public key.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh DSA NOTES
 The
@@ -2123,6 +2201,7 @@ To just output the public part of a private key:
 .\"
 .Sh DSAPARAM
 .Nm openssl dsaparam
+.Bk -words
 .Op Fl inform Ar DER|PEM
 .Op Fl outform Ar DER|PEM
 .Op Fl in Ar filename
@@ -2132,7 +2211,9 @@ To just output the public part of a private key:
 .Op Fl C
 .Op Fl rand Ar file ...
 .Op Fl genkey
+.Op Fl engine Ar id
 .Op Ar numbits
+.Ek
 .Pp
 The
 .Nm dsaparam
@@ -2203,6 +2284,14 @@ This option specifies that a parameter set should be generated of size
 .Ar numbits .
 It must be the last option.
 If this option is included, then the input file (if any) is ignored.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh DSAPARAM NOTES
 .Ar PEM
@@ -2565,7 +2654,7 @@ utility is undocumented.
 .\"
 .Sh GENDH
 Generation of Diffie-Hellman Parameters. Replaced by
-.Nm dhparam.
+.Nm dhparam .
 See
 .Sx DHPARAM
 above.
@@ -2579,6 +2668,7 @@ above.
 .Op Fl des3
 .Op Fl idea
 .Op Fl rand Ar file ...
+.Op Fl engine Ar id
 .Op Ar paramfile
 .Pp
 The
@@ -2611,6 +2701,14 @@ for MS-Windows,
 for OpenVMS, and
 .Cm \&:
 for all others.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .It Ar paramfile
 This option specifies the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
@@ -2634,6 +2732,7 @@ much quicker that RSA key generation for example.
 .Op Fl f4
 .Op Fl 3
 .Op Fl rand Ar file ...
+.Op Fl engine Ar id
 .Op Ar numbits
 .Pp
 The
@@ -2680,6 +2779,14 @@ for MS-Windows,
 for OpenVMS, and
 .Cm \&:
 for all others.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .It Ar numbits
 The size of the private key to generate in bits.
 This must be the last option specified.
@@ -2783,6 +2890,10 @@ input and output files and allowing multiple certificate files to be used.
 .Op Fl issuer Ar file
 .Op Fl cert Ar file
 .Op Fl serial Ar n
+.Op Fl signer Ar file
+.Op Fl signkey Ar file
+.Op Fl sign_other Ar file
+.Op Fl no_certs
 .Op Fl req_text
 .Op Fl resp_text
 .Op Fl text
@@ -2792,27 +2903,35 @@ input and output files and allowing multiple certificate files to be used.
 .Op Fl respin Ar file
 .Op Fl nonce
 .Op Fl no_nonce
-.Op Fl url Ar responder_url
+.Op Fl url Ar URL
 .Op Fl host Ar host:n
 .Op Fl path
-.Op Fl CApath Ar file
+.Op Fl CApath Ar dir
 .Op Fl CAfile Ar file
 .Op Fl VAfile Ar file
-.Op Fl verify_certs Ar file
+.Op Fl validity_period Ar n
+.Op Fl status_age Ar n
 .Op Fl noverify
+.Op Fl verify_other Ar file
 .Op Fl trust_other
 .Op Fl no_intern
-.Op Fl no_sig_verify
+.Op Fl no_signature_verify
 .Op Fl no_cert_verify
 .Op Fl no_chain
 .Op Fl no_cert_checks
-.Op Fl validity_period Ar nsec
-.Op Fl status_age Ar nsec
+.Op Fl port Ar num
+.Op Fl index Ar file
+.Op Fl CA Ar file
+.Op Fl rsigner Ar file
+.Op Fl rkey Ar file
+.Op Fl rother Ar file
+.Op Fl resp_no_certs
+.Op Fl nmin Ar n
+.Op Fl ndays Ar n
+.Op Fl resp_key_id
+.Op Fl nrequest Ar n
 .Ek
 .br
-.Pp
-.Sy WARNING:
-this documentation is preliminary and subject to change.
 .Pp
 The Online Certificate Status Protocol (OCSP) enables applications to
 determine the (revocation) state of an identified certificate (RFC 2560).
@@ -2865,6 +2984,8 @@ If the
 option is not present then the private key is read from the same file
 as the certificate.
 If neither option is specified then the OCSP request is not signed.
+.It Fl sign_other Ar filename
+Additional certificates to include in the signed request.
 .It Fl nonce , no_nonce
 Add an OCSP
 .Em nonce
@@ -2923,7 +3044,7 @@ or
 .Ar pathname
 containing trusted CA certificates.
 These are used to verify the signature on the OCSP response.
-.It Fl verify_certs Ar file
+.It Fl verify_other Ar file
 .Ar file
 containing additional certificates to search when attempting to locate
 the OCSP response signing certificate.
@@ -2958,7 +3079,7 @@ With this option the signer's certificate must be specified with either the
 or
 .Fl VAfile
 options.
-.It Fl no_sig_verify
+.It Fl no_signature_verify
 Don't check the signature on the OCSP response.
 Since this option tolerates invalid signatures on OCSP responses,
 it will normally only be used for testing purposes.
@@ -3003,7 +3124,6 @@ seconds old.
 By default this additional check is not performed.
 .El
 .Sh OCSP SERVER OPTIONS
-.Pp
 .Bl -tag -width "XXXX"
 .It Fl index Ar indexfile
 .Ar indexfile
@@ -3236,7 +3356,7 @@ The password list is taken from the named
 for option
 .Fl in ,
 from stdin for option
-.Fl stdin,
+.Fl stdin ,
 or from the command line, or from the terminal otherwise.
 The Unix standard algorithm
 .Em crypt
@@ -3279,14 +3399,13 @@ In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 .El
 .Sh PASSWD EXAMPLES
-.Pp
 .Bl -tag -width "XXXX"
 .It $ openssl passwd -crypt -salt xx password
 prints
 .Em xxj31ZMTZzkVA .
 .It $ openssl passwd -1 -salt xxxxxxxx password
 prints
-.Em $1$xxxxxxxx$8XJIcl6ZXqBMCK0qFevqT1 .
+.Em $1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a. .
 .It $ openssl passwd -apr1 -salt xxxxxxxx password
 prints
 .Em $apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0 .
@@ -3304,6 +3423,7 @@ prints
 .Op Fl print_certs
 .Op Fl text
 .Op Fl noout
+.Op Fl engine Ar id
 .Ek
 .br
 .Pp
@@ -3347,6 +3467,14 @@ Don't output the encoded version of the PKCS#7 structure
 (or certificates if
 .Fl print_certs
 is set).
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh PKCS7 EXAMPLES
 Convert a PKCS#7 file from
@@ -3400,6 +3528,7 @@ They cannot currently parse, for example, the new CMS as described in RFC2630.
 .Op Fl nsdb
 .Op Fl v2 Ar alg
 .Op Fl v1 Ar alg
+.Op Fl engine Ar id
 .Ek
 .Pp
 The
@@ -3522,6 +3651,14 @@ is used.
 .It Fl v1 Ar alg
 This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use.
 A complete list of possible algorithms is included below.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh PKCS8 NOTES
 The encrypted form of a
@@ -4061,6 +4198,7 @@ encoding on the output.
 .Op Fl nameopt
 .Op Fl batch
 .Op Fl verbose
+.Op Fl engine Ar id
 .Ek
 .Pp
 The
@@ -4163,7 +4301,7 @@ is the number of bits, generates an RSA key
 in size.
 .Ar dsa:filename
 generates a DSA key using the parameters in the file
-.Ar filename.
+.Ar filename .
 .It Fl key Ar filename
 This specifies the file to read the private key from.
 It also accepts PKCS#8 format private keys for
@@ -4274,6 +4412,14 @@ Some software (Netscape certificate server) and some CAs need this.
 Non-interactive mode.
 .It Fl verbose
 Print extra details about the operations being performed.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh REQ CONFIGURATION FILE FORMAT
 The configuration options are specified in the
@@ -4506,7 +4652,7 @@ These are compiled into
 .Nm OpenSSL
 and include the usual values such as
 .Em commonName , countryName , localityName , organizationName ,
-.Em organizationUnitName , stateOrPrivinceName .
+.Em organizationUnitName , stateOrProvinceName .
 Additionally
 .Em emailAddress
 is included as well as
@@ -4631,15 +4777,15 @@ The header and footer lines in the
 format are normally:
 .Pp
 .Bd -literal
-\& -----BEGIN CERTIFICATE REQUEST----
-\& -----END CERTIFICATE REQUEST----
+\& -----BEGIN CERTIFICATE REQUEST-----
+\& -----END CERTIFICATE REQUEST-----
 .Ed
 .Pp
 Some software (some versions of Netscape certificate server) instead needs:
 .Pp
 .Bd -literal
-\& -----BEGIN NEW CERTIFICATE REQUEST----
-\& -----END NEW CERTIFICATE REQUEST----
+\& -----BEGIN NEW CERTIFICATE REQUEST-----
+\& -----END NEW CERTIFICATE REQUEST-----
 .Ed
 .Pp
 which is produced with the
@@ -4736,6 +4882,7 @@ should be input by the user.
 .\"
 .Sh RSA
 .Cm openssl rsa
+.Bk -words
 .Op Fl inform Ar PEM|NET|DER
 .Op Fl outform Ar PEM|NET|DER
 .Op Fl in Ar filename
@@ -4752,6 +4899,8 @@ should be input by the user.
 .Op Fl check
 .Op Fl pubin
 .Op Fl pubout
+.Op Fl engine Ar id
+.Ek
 .Pp
 The
 .Nm rsa
@@ -4850,6 +4999,14 @@ option a public key is read instead.
 By default a private key is output:
 with this option a public key will be output instead.
 This option is automatically set if the input is a public key.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh RSA NOTES
 The
@@ -5098,6 +5255,7 @@ which it can be seen agrees with the recovered value above.
 .\"
 .Sh S_CLIENT
 .Nm openssl s_client
+.Bk -words
 .Op Fl connect Ar host:port>
 .Op Fl verify Ar depth
 .Op Fl cert Ar filename
@@ -5123,8 +5281,11 @@ which it can be seen agrees with the recovered value above.
 .Op Fl no_tls1
 .Op Fl bugs
 .Op Fl cipher Ar cipherlist
+.Op Fl starttls Ar protocol
+.Op Fl starttls Ar protocol
 .Op Fl engine Ar id
 .Op Fl rand Ar file ...
+.Ek
 .Pp
 The
 .Nm s_client
@@ -5236,6 +5397,11 @@ the first supported cipher in the list sent by the client.
 See the
 .Sx CIPHERS
 section above for more information.
+.It Fl starttls Ar protocol
+Send the protocol-specific message(s) to switch to TLS for communication.
+.Ar protocol
+is a keyword for the intended protocol.
+Currently, the only supported keyword is "smtp".
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -5379,6 +5545,7 @@ We should really report information whenever a session is renegotiated.
 .Op Fl WWW
 .Op Fl HTTP
 .Op Fl engine Ar id
+.Op Fl id_prefix Ar arg
 .Op Fl rand Ar file ...
 .Ek
 .Pp
@@ -5535,6 +5702,12 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl id_prefix Ar arg
+Generate SSL/TLS session IDs prefixed by
+.Ar arg .
+This is mostly useful for testing any SSL/TLS code (e.g. proxies) that wish
+to deal with multiple servers, when each of which might be generating a
+unique range of session IDs (e.g. with a certain prefix).
 .It Fl rand Ar file ...
 A
 .Ar file
@@ -6146,8 +6319,8 @@ You can use this program to verify the signature by line wrapping the
 base64 encoded structure and surrounding it with:
 .Pp
 .Bd -literal
-\& -----BEGIN PKCS7----
-\& -----END PKCS7----
+\& -----BEGIN PKCS7-----
+\& -----END PKCS7-----
 .Ed
 .Pp
 and using the command:
@@ -6259,6 +6432,7 @@ tests those algorithms, otherwise all of the above are tested.
 .Op Fl spksect Ar section
 .Op Fl noout
 .Op Fl verify
+.Op Fl engine Ar id
 .Pp
 The
 .Nm spkac
@@ -6314,6 +6488,14 @@ Output the public key of an SPKAC (not used if an SPKAC is
 being created).
 .It Fl verify
 Verifies the digital signature on the supplied SPKAC.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh SPKAC EXAMPLES
 Print out the contents of an SPKAC:
@@ -6783,6 +6965,7 @@ option was added in
 .Op Fl clrext
 .Op Fl extfile Ar filename
 .Op Fl extensions Ar section
+.Op Fl engine Ar id
 .Ek
 .Pp
 The
@@ -6835,6 +7018,14 @@ options.
 If not specified then MD5 is used.
 If the key being used to sign with is a DSA key then
 this option has no effect: SHA1 is always used with DSA keys.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm req
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 .El
 .Sh X509 DISPLAY OPTIONS
 .Sy Note :
@@ -6843,7 +7034,7 @@ The
 and
 .Fl purpose
 options are also display options but are described in the
-.Sx X509 TRUST OPTIONS
+.Sx X509 TRUST SETTINGS
 section.
 .Bl -tag -width "XXXX"
 .It Fl text
@@ -7102,7 +7293,7 @@ For example if the CA certificate file is called
 .Pa mycacert.pem ,
 it expects to find a serial number file called
 .Pa mycacert.srl .
-.It Fl CAcreateserial Ar filename
+.It Fl CAcreateserial
 With this option the CA serial number file is created if it does not exist:
 it will contain the serial number "02" and the certificate being signed will
 have 1 as its serial number.
@@ -7381,11 +7572,11 @@ certificate extensions:
 .Ed
 .Pp
 Set a certificate to be trusted for SSL
-client use and change set its alias to "Steve's Class 1 CA":
+client use and set its alias to "Steve's Class 1 CA":
 .Pp
 .Bd -literal
-\& $ openssl x509 -in cert.pem -addtrust sslclient \e
-\&        -alias "Steve's Class 1 CA" -out trust.pem
+\& $ openssl x509 -in cert.pem -addtrust clientAuth \e
+\&        -setalias "Steve's Class 1 CA" -out trust.pem
 .Ed
 .Sh X509 NOTES
 The
@@ -7393,22 +7584,22 @@ The
 format uses the header and footer lines:
 .Pp
 .Bd -literal
-\& -----BEGIN CERTIFICATE----
-\& -----END CERTIFICATE----
+\& -----BEGIN CERTIFICATE-----
+\& -----END CERTIFICATE-----
 .Ed
 .Pp
 It will also handle files containing:
 .Pp
 .Bd -literal
-\& -----BEGIN X509 CERTIFICATE----
-\& -----END X509 CERTIFICATE----
+\& -----BEGIN X509 CERTIFICATE-----
+\& -----END X509 CERTIFICATE-----
 .Ed
 .Pp
 Trusted certificates have the lines:
 .Pp
 .Bd -literal
-\& -----BEGIN TRUSTED CERTIFICATE----
-\& -----END TRUSTED CERTIFICATE----
+\& -----BEGIN TRUSTED CERTIFICATE-----
+\& -----END TRUSTED CERTIFICATE-----
 .Ed
 .Pp
 The conversion to UTF8 format used with the name options assumes that
