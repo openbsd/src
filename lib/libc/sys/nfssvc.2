@@ -84,11 +84,11 @@ and
 along with a pointer to a
 .Bd -literal
 struct nfsd_cargs {
-	char		*ncd_dirp;	/* Mount dir path */
-	uid_t		ncd_authuid;	/* Effective uid */
-	int		ncd_authtype;	/* Type of authenticator */
-	int		ncd_authlen;	/* Length of authenticator string */
-	u_char		*ncd_authstr;	/* Authenticator string */
+        char            *ncd_dirp;      /* Mount dir path */
+        uid_t           ncd_authuid;    /* Effective uid */
+        int             ncd_authtype;   /* Type of authenticator */
+        int             ncd_authlen;    /* Length of authenticator string */
+        u_char          *ncd_authstr;   /* Authenticator string */
         int             ncd_verflen;    /* and the verifier */
         u_char          *ncd_verfstr;
         NFSKERBKEY_T    ncd_key;        /* Session key */
@@ -135,12 +135,12 @@ is called with the flag
 and a pointer to a
 .Bd -literal
 struct nfsd_srvargs {
-	struct nfsd	*nsd_nfsd;	/* Pointer to in kernel nfsd struct */
-	uid_t		nsd_uid;	/* Effective uid mapped to cred */
-	u_int32_t	nsd_haddr;	/* Ip address of client */
-	struct ucred	nsd_cr;		/* Cred. uid maps to */
-	int		nsd_authlen;	/* Length of auth string (ret) */
-	u_char		*nsd_authstr;	/* Auth string (ret) */
+        struct nfsd     *nsd_nfsd;      /* Pointer to in kernel nfsd struct */
+        uid_t           nsd_uid;        /* Effective uid mapped to cred */
+        u_int32_t       nsd_haddr;      /* Ip address of client */
+        struct ucred    nsd_cr;         /* Cred. uid maps to */
+        int             nsd_authlen;    /* Length of auth string (ret) */
+        u_char          *nsd_authstr;   /* Auth string (ret) */
         int             nsd_verflen;    /* and the verfier */
         u_char          *nsd_verfstr;
         struct timeval  nsd_timestamp;  /* timestamp from verifier */
@@ -196,9 +196,9 @@ with the flag
 and a pointer to a
 .Bd -literal
 struct nfsd_args {
-	int	sock;		/* Socket to serve */
-	caddr_t	name;		/* Client address for connection based sockets */
-	int	namelen;	/* Length of name */
+        int     sock;           /* Socket to serve */
+        caddr_t name;           /* Client address for connection based sockets */
+        int     namelen;        /* Length of name */
 };
 .Ed
 .sp
