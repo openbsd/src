@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.12 2000/09/11 18:11:28 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.13 2000/09/16 13:51:24 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -41,8 +41,11 @@ Other BSD, and older versions of
 .Nm
 included other targets and variables. Conversion methods are outlined here.
 .Pp
-This is an incomplete draft, most variables and targets are not yet
+This is an incomplete draft, some variables and targets are not yet
 documented.
+.\"
+.\"
+.\"
 .Sh TARGETS
 .Bl -tag -width do-configure
 .It Ar build , Ar all
@@ -85,6 +88,9 @@ Invoked with VARNAME=name, show the contents of VARNAME.  Mostly used from
 recursive makes, or to know the contents of another port's variables
 without guessing wrong.
 .El
+.\"
+.\"
+.\"
 .Sh VARIABLES
 .Bl -tag -width MASTER_SITES
 .It Ev ALL_TARGET
@@ -189,9 +195,30 @@ conventions.
 Supplementary options appended to ${CFLAGS} for building. Since most ports
 ignore the COPTS convention, they are actually told to use
 ${CFLAGS} ${COPTS} as CFLAGS.
+.It Ev DEF_UMASK
+Correct value of umask for the port to build and package correctly.
+Tested against the actual umask at
+.Ar fake
+time. Default is 022. Don't override.
+.It Ev DISTDIR
+Directory where all ports distfiles are stashed. Defaults to
+.Pa ${PORTSDIR}/distfiles.  Override if distfiles are stored elsewhere,
+but use
+.Ev FULLDISTDIR
+to refer to ports's distfiles location instead.
+.It Ev DISTORIG
+Suffix used by
+.Ar distpatch
+to rename original files.  Defaults to
+.Pa .bak.orig .
+Distinct from
+.Pa .orig
+to avoid confusing
+.Ar update-patches .
 .It Ev DIST_SUBDIR
-Optionally subdirectory of ${DISTDIR} where the current port's distfiles
-and patchfiles will be located. See target fetch.
+Optional subdirectory of ${DISTDIR} where the current port's distfiles
+and patchfiles will be located. See target
+.Ar fetch.
 .It Ev ECHO_MSG
 Used to display
 .Sq ===> Configuring for foo
@@ -205,7 +232,7 @@ archives, so that the default case is equivalent to the following shell
 fragment:
 .Bd -literal -indent
 set -e
-cd ${WKRDIR}
+cd ${WRKDIR}
 for archive in ${EXTRACT_ONLY}
 do
     case $$archive in
@@ -240,6 +267,10 @@ Flags passed to ${MAKE_PROGRAM} on fake invocation. By default,
 DESTDIR=${WRKINST}. If CONFIGURE_STYLE involves gnu, adds
 AM_MAKEFLAGS='DESTDIR=${WRKINST}' to take automatic care of recent automaker
 recursive issues.
+.It Ev FETCH_CMD
+Command used to fetch distfiles for this port. Defaults to
+.Pa /usr/bin/ftp .
+No current port overrides the default.
 .It Ev FETCH_DEPENDS
 See BUILD_DEPENDS for specification.  Fetch dependencies are checked at
 the beginning of the extract stage. No current port uses FETCH_DEPENDS.
@@ -322,6 +353,12 @@ specification to check when creating a PLIST with the
 .Ar plist
 target.  By default,
 .Pa ${PORTSDIR}/infrastructure/db/fake.mtree.
+.It Ev MULTI_PACKAGES
+Set to a list of package extensions for ports that create multiple
+packages. See
+.Qq Flavors and multi-packages
+below.
+
 .It Ev NEED_VERSION
 Specific revision of
 .Nm
@@ -341,16 +378,31 @@ Always OpenBSD (read-only).
 Revision number of OpenBSD (read-only).
 .It Ev PACKAGES
 Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
+.It Ev PATCH
+Command to use to apply all patches. Defaults to
+.Pa /usr/bin/patch .
 .It Ev PATCHDIR
 Location for patches applied by patch target (default: patches.${ARCH} or
 patches).
+.It Ev PATCH_ARGS
+Full list of options used while applying port's patches.
 .It Ev PATCH_DEBUG
 If set to
 .Sq Yes ,
-the make patch stage will output extra debug information.
+the
+.Ar patch
+stage will output extra debug information.
+.It Ev PATCH_DIST_ARGS
+Full list of options used while applying distribution patches.
+.It Ev PATCH_DIST_STRIP
+Patch option used to strip directory levels while applying distribution
+patches.  Defaults to -p0 .
 .It Ev PATCH_LIST
 Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
 Note that filenames ending in .orig, or ~ are never applied.
+.It Ev PATCH_STRIP
+Patch option used to strip directory levels while applying port's patches.
+Defaults to -p0 .
 .It Ev PORTPATH
 Path used by most shell invocations. Don't override unless really needed.
 .It Ev PORTSDIR
@@ -382,7 +434,7 @@ will take care of installing them.
 Pipeline of commands used to create the actual packing list from the
 PLIST template (usually ${PKGDIR}/PLIST).
 .Nm
-appends to it substitution commands corresponding to the the port's
+appends to it substitution commands corresponding to the port's
 FLAVOR and variables from SUBST_VARS.
 ${SED_PLIST} is invoked as a pipeline after inserting PFRAG.shared fragments.
 .It Ev SCRIPTDIR
@@ -410,13 +462,24 @@ port. Read-only. Used to test for dependencies or to adjust the package
 name.
 .It Ev SUBST_VARS
 Make variables whole values get substituted to create the actual package
-information.  Always holds ARCH, HOMEPAGE, and PREFIX. Add other
+information.  Always holds
+.Ev ARCH ,
+.Ev HOMEPAGE ,
+.Ev PREFIX ,
+and
+.Ev SYSCONFDIR .
+Add other
 variables as needed.
 .It Ev SYSCONFDIR
-Location for ports system configuration files. Defaults to /etc, should
-never be set to /usr/local/etc.
+Location for ports system configuration files. Defaults to
+.Pa /etc ,
+should
+never be set to
+.Pat /usr/local/etc .
 .It Ev TEMPLATES
-Base location for the templates used in the readme target.
+Base location for the templates used in the
+.Ar readme
+target.
 .It Ev USE_ZIP
 Set to Yes if port needs zip to build properly. This is automatic if
 EXTRACT_ONLY holds files matching *.zip.
@@ -478,6 +541,38 @@ and is always appended.
 .\"
 .\"
 .\"
+.Sh FILES
+.Bl -tag -width files/md5
+.It Pa ../Makefile.inc
+Common Makefile fragment for a set of ports, included automatically.
+.It Pa Makefile.${ARCH}
+Arch-dependent Makefile fragment, included automatically.
+.It Pa ${FILESDIR}/md5
+Checksum file. Holds the output of
+.Xr md5 1 ,
+.Xr sha1 1
+and
+.Xr rmd160 1
+for the ports ${DISTFILES} and ${PATCHFILES}.
+.It Pa ${PKGDIR}/DESCR
+Description for the port. Variables such as ${HOMEPAGE} will be expanded
+(see SUBST_VARS). Multi-packages ports will use DESCR${SUBPACKAGE}.
+.It Pa ${PKGDIR}/COMMENT
+Short, one line description of the port, that is displayed by
+.Xr pkg_info 1 ,
+and appears in
+.Pa ${PORTSDIR}/INDEX .
+Name will be adjusted for flavored and multi-packages ports.
+.It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
+Specification used for populating ${WRKINST} at the start of
+.Ar fake .
+Use
+.Ar pre-fake
+if this is incomplete.
+.El
+.\"
+.\"
+.\"
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
 .It Ar {pre,do}-extract
@@ -492,7 +587,16 @@ Use the more powerful
 and
 .Ar fetch-makefile
 targets instead.
+.It Ar mirror-distfiles
+Use the more powerful
+.Ar mirror-maker
+and
+.Ar fetch-makefile
+targets instead.
 .El
+.\"
+.\"
+.\"
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
 .It Ev DESCR_SRC
@@ -535,6 +639,13 @@ package variations instead.
 Use
 .Ev CHECKSUM_FILE
 instead.
+.It Ev MIRROR_DISTFILE
+Use
+.Ev PERMIT_DISTFILES_FTP
+and
+.Ev PERMIT_DISTFILES_CDROM
+to determine which files can be mirrored instead.  See
+.Xr mirroring-ports 7 .
 .It Ev NO_CONFIGURE
 If ${FILESDIR}/configure does not exist, no automatic configuration will
 be done anyway.
@@ -619,35 +730,6 @@ instead.
 .\"
 .\"
 .\"
-.Sh FILES
-.Bl -tag -width files/md5
-.It Pa ../Makefile.inc
-Common Makefile fragment for a set of ports, included automatically.
-.It Pa Makefile.${ARCH}
-Arch-dependent Makefile fragment, included automatically.
-.It Pa ${FILESDIR}/md5
-Checksum file. Holds the output of
-.Xr md5 1 ,
-.Xr sha1 1
-and
-.Xr rmd160 1
-for the ports ${DISTFILES} and ${PATCHFILES}.
-.It Pa ${PKGDIR}/DESCR
-Description for the port. Variables such as ${HOMEPAGE} will be expanded
-(see SUBST_VARS). Multi-packages ports will use DESCR${SUBPACKAGE}.
-.It Pa ${PKGDIR}/COMMENT
-Short, one line description of the port, that is displayed by
-.Xr pkg_info 1 ,
-and appears in
-.Pa ${PORTSDIR}/INDEX .
-Name will be adjusted for flavored and multi-packages ports.
-.It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
-Specification used for populating ${WRKINST} at the start of
-.Ar fake .
-Use
-.Ar pre-fake
-if this is incomplete.
-.El
 .Sh OBSOLETE FILES
 .Bl -tag -width files/md5
 .It Pa ${SCRIPTDIR}/{pre,do,post}-*
@@ -663,14 +745,15 @@ did not substitute variables in the packing list unless this special form
 was used.
 .It Pa /usr/share/mk/bsd.port.mk
 Original location of
-.Nm .
+.Nm bsd.port.mk .
 The current file lives under ${PORTSDIR}/infrastructure/mk/bsd.port.mk,
 whereas /usr/share/mk/bsd.port.mk is just a stub.
 .It Pa {scripts,files,patches}.${OPSYS}
 The
 .Ox
 ports tree focuses on robustness, not on being portable to other operating
-systems.
+systems. In any case, portability should not need to depend on operating
+system dependent patches.
 .It Pa /usr/local/etc
 Used by
 .Fx
@@ -811,6 +894,9 @@ It is currently not possible to have a subpackage depend on the main
 package, except by inserting an explicit
 .Li "@pkgdep"
 command into the packing-list.
+.\"
+.\"
+.\"
 .Sh THE GENERATION OF PACKING INFORMATION
 Starting after
 .Ox 2.7
@@ -904,6 +990,9 @@ apart if one tries to build/use stuff elsewhere.
 .Ev LIB_DEPENDS
 is automatically both a BUILD_DEPENDS and a RUN_DEPENDS, whereas some
 smarter, more intricate mechanism could be designed to minimize dependencies.
+.\"
+.\"
+.\"
 .Sh HISTORY
 The ports mechanism originally came from
 .Fx .
@@ -920,3 +1009,4 @@ improvements.
 
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
+.\" HAVE_MOTIF, REQUIRE_MOTIF: need to revisit what these should mean.
