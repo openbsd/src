@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2004/04/27 04:38:12 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.89 2004/04/27 22:06:54 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,7 @@ typedef struct {
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
 %token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
-%token	IPSEC ESP AH SPI
+%token	IPSEC ESP AH SPI IKE
 %token	<v.string>		STRING
 %type	<v.number>		number asnumber optnumber yesno inout
 %type	<v.string>		string
@@ -548,11 +548,16 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($4);
 		}
+		| IPSEC IKE {
+			curpeer->conf.ipsec.method = IPSEC_IKE;
+		}
 		| IPSEC ESP inout SPI number STRING STRING encspec {
 			unsigned	i;
 			char		s[3];
 			u_int32_t	auth_alg;
 			u_int8_t	keylen;
+
+			curpeer->conf.ipsec.method = IPSEC_MANUAL_ESP;
 
 			if (!strcmp($6, "sha1")) {
 				auth_alg = SADB_AALG_SHA1HMAC;
@@ -960,6 +965,7 @@ lookup(char *s)
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "in",			IN},
+		{ "ike",		IKE},
 		{ "ipsec",		IPSEC},
 		{ "key",		KEY},
 		{ "listen",		LISTEN},
