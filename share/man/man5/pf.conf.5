@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.144 2002/12/08 20:59:08 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.145 2002/12/09 09:44:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1319,8 +1319,8 @@ in the alphabetical order of their names.
 .Pp
 Rules may contain
 .Pa anchor
-attachment points that do not contain any rules when the main rule set
-is loaded, and named rule sets can be manipulated through
+attachment points which do not contain any rules when the main rule set
+is loaded, and later such named rule sets can be manipulated through
 .Xr pfctl 8
 without reloading the main rule set.
 For example,
