@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.198 2002/03/27 18:16:21 mickey Exp $ */
+/*	$OpenBSD: pf.c,v 1.199 2002/03/30 06:21:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3859,7 +3859,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 * the crappy stack check or if we picked up the connection
 		 * after establishment)
 		 */
-		if (SEQ_GEQ(end + MAX(1, dst->max_win), src->seqhi))
+		if (src->seqhi == 1 ||
+		    SEQ_GEQ(end + MAX(1, dst->max_win), src->seqhi))
 			src->seqhi = end + MAX(1, dst->max_win);
 		if (win > src->max_win)
 			src->max_win = win;
