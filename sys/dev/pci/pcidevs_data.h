@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.662 2003/08/07 17:39:17 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.663 2003/08/07 17:53:19 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7003,12 +7003,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Avance Logic",
 	},
 	{
-	    PCI_VENDOR_TSENG,
-	    "Tseng Labs",
+	    PCI_VENDOR_NS,
+	    "NS",
 	},
 	{
-	    PCI_VENDOR_AST,
-	    "AST Research",
+	    PCI_VENDOR_TSENG,
+	    "Tseng Labs",
 	},
 	{
 	    PCI_VENDOR_WEITEK,
@@ -7027,14 +7027,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "IBM",
 	},
 	{
-	    PCI_VENDOR_UNISYS,
-	    "Unisys Systems",
-	},
-	{
-	    PCI_VENDOR_NCR,
-	    "AT&T GIS",
-	},
-	{
 	    PCI_VENDOR_WD,
 	    "Western Digital",
 	},
@@ -7043,28 +7035,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "AMI",
 	},
 	{
-	    PCI_VENDOR_PICTURETEL,
-	    "PictureTel",
-	},
-	{
-	    PCI_VENDOR_HITACHICOMP,
-	    "Hitachi Computer",
-	},
-	{
-	    PCI_VENDOR_OKI,
-	    "OKI Electric Industry",
-	},
-	{
 	    PCI_VENDOR_AMD,
 	    "AMD",
 	},
 	{
 	    PCI_VENDOR_TRIDENT,
 	    "Trident",
-	},
-	{
-	    PCI_VENDOR_ZENITH,
-	    "Zenith Data Systems",
 	},
 	{
 	    PCI_VENDOR_ACER,
@@ -7087,56 +7063,20 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Chips and Technologies",
 	},
 	{
-	    PCI_VENDOR_WYSE,
-	    "WYSE Technology",
-	},
-	{
-	    PCI_VENDOR_OLIVETTI,
-	    "Olivetti",
-	},
-	{
 	    PCI_VENDOR_TOSHIBA,
 	    "Toshiba",
-	},
-	{
-	    PCI_VENDOR_TMCRESEARCH,
-	    "TMC Research",
-	},
-	{
-	    PCI_VENDOR_MIRO,
-	    "Miro Computer Products",
-	},
-	{
-	    PCI_VENDOR_COMPAQ2,
-	    "Compaq",
 	},
 	{
 	    PCI_VENDOR_NEC,
 	    "NEC",
 	},
 	{
-	    PCI_VENDOR_BURNDY,
-	    "Burndy",
-	},
-	{
-	    PCI_VENDOR_COMPCOMM,
-	    "Comp. & Comm. Research Lab",
-	},
-	{
 	    PCI_VENDOR_FUTUREDOMAIN,
 	    "Future Domain",
 	},
 	{
-	    PCI_VENDOR_HITACHIMICRO,
-	    "Hitach Microsystems",
-	},
-	{
 	    PCI_VENDOR_SIS,
 	    "SIS",
-	},
-	{
-	    PCI_VENDOR_TATUNGAMERICA,
-	    "Tatung Co. of America",
 	},
 	{
 	    PCI_VENDOR_HP,
@@ -7187,60 +7127,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Winbond",
 	},
 	{
-	    PCI_VENDOR_ANIGMA,
-	    "Anigma",
-	},
-	{
-	    PCI_VENDOR_YOUNGMICRO,
-	    "Young Micro",
-	},
-	{
-	    PCI_VENDOR_HITACHI,
-	    "Hitachi",
-	},
-	{
-	    PCI_VENDOR_EFARMICRO,
-	    "Efar Microsystems",
-	},
-	{
-	    PCI_VENDOR_ICL,
-	    "ICL",
-	},
-	{
 	    PCI_VENDOR_MOT,
 	    "Motorola",
-	},
-	{
-	    PCI_VENDOR_ETR,
-	    "Electronics & Telec. RSH",
-	},
-	{
-	    PCI_VENDOR_TEKNOR,
-	    "Teknor Microsystems",
 	},
 	{
 	    PCI_VENDOR_PROMISE,
 	    "Promise",
 	},
 	{
-	    PCI_VENDOR_FOXCONN,
-	    "Foxconn",
-	},
-	{
-	    PCI_VENDOR_WIPRO,
-	    "Wipro Infotech",
-	},
-	{
 	    PCI_VENDOR_NUMBER9,
 	    "Number 9",
-	},
-	{
-	    PCI_VENDOR_VTECH,
-	    "Vtech Computers",
-	},
-	{
-	    PCI_VENDOR_INFOTRONIC,
-	    "Infotronic America",
 	},
 	{
 	    PCI_VENDOR_UMC,
@@ -7251,72 +7147,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "I. T. T.",
 	},
 	{
-	    PCI_VENDOR_MASPAR,
-	    "MasPar Computer",
-	},
-	{
-	    PCI_VENDOR_OCEANOA,
-	    "Ocean Office Automation",
-	},
-	{
-	    PCI_VENDOR_ALCATEL,
-	    "Alcatel CIT",
-	},
-	{
-	    PCI_VENDOR_TEXASMICRO,
-	    "Texas Microsystems",
-	},
-	{
 	    PCI_VENDOR_PICOPOWER,
 	    "Picopower Technology",
-	},
-	{
-	    PCI_VENDOR_MITSUBISHI,
-	    "Mitsubishi",
-	},
-	{
-	    PCI_VENDOR_DIVERSIFIED,
-	    "Diversified Technology",
 	},
 	{
 	    PCI_VENDOR_MYLEX,
 	    "Mylex",
 	},
 	{
-	    PCI_VENDOR_ATEN,
-	    "Aten Research",
-	},
-	{
 	    PCI_VENDOR_APPLE,
 	    "Apple",
-	},
-	{
-	    PCI_VENDOR_HYUNDAI,
-	    "Hyundai",
-	},
-	{
-	    PCI_VENDOR_SEQUENT,
-	    "Sequent",
-	},
-	{
-	    PCI_VENDOR_DFI,
-	    "DFI",
-	},
-	{
-	    PCI_VENDOR_CITYGATE,
-	    "City Gate Development",
-	},
-	{
-	    PCI_VENDOR_DAEWOO,
-	    "Daewoo Telecom",
-	},
-	{
-	    PCI_VENDOR_MITAC,
-	    "Mitac",
-	},
-	{
-	    PCI_VENDOR_GIT,
-	    "GIT Co.",
 	},
 	{
 	    PCI_VENDOR_YAMAHA,
@@ -7327,36 +7167,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "NexGen Microsystems",
 	},
 	{
-	    PCI_VENDOR_AIR,
-	    "Advanced Integration Research",
-	},
-	{
-	    PCI_VENDOR_CHAINTECH,
-	    "Chaintech Computer",
-	},
-	{
 	    PCI_VENDOR_QLOGIC,
 	    "QLogic",
 	},
 	{
 	    PCI_VENDOR_CYRIX,
 	    "Cyrix",
-	},
-	{
-	    PCI_VENDOR_IBUS,
-	    "I-Bus",
-	},
-	{
-	    PCI_VENDOR_NETWORTH,
-	    "NetWorth",
-	},
-	{
-	    PCI_VENDOR_GATEWAY,
-	    "Gateway 2000",
-	},
-	{
-	    PCI_VENDOR_GOLDSTART,
-	    "Goldstar",
 	},
 	{
 	    PCI_VENDOR_LEADTEK,
@@ -7367,56 +7183,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Interphase",
 	},
 	{
-	    PCI_VENDOR_DATATECH,
-	    "Data Technology Corporation",
-	},
-	{
 	    PCI_VENDOR_CONTAQ,
 	    "Contaq Microsystems",
 	},
 	{
-	    PCI_VENDOR_SUPERMAC,
-	    "Supermac Technology",
-	},
-	{
-	    PCI_VENDOR_EFA,
-	    "EFA",
-	},
-	{
-	    PCI_VENDOR_FOREX,
-	    "Forex Computer",
-	},
-	{
-	    PCI_VENDOR_PARADOR,
-	    "Parador",
-	},
-	{
-	    PCI_VENDOR_TULIP,
-	    "Tulip Computers",
-	},
-	{
-	    PCI_VENDOR_JBOND,
-	    "J. Bond Computer Systems",
-	},
-	{
-	    PCI_VENDOR_CACHECOMP,
-	    "Cache Computer",
-	},
-	{
-	    PCI_VENDOR_MICROCOMP,
-	    "Microcomputer Systems",
-	},
-	{
-	    PCI_VENDOR_DG,
-	    "Data General",
-	},
-	{
 	    PCI_VENDOR_BIT3,
 	    "Bit3 Computer Corp.",
-	},
-	{
-	    PCI_VENDOR_ELONEX,
-	    "Elonex PLC c/o Oakleigh Systems",
 	},
 	{
 	    PCI_VENDOR_OLICOM,
@@ -7427,14 +7199,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Sun",
 	},
 	{
-	    PCI_VENDOR_SYSTEMSOFT,
-	    "Systemsoft",
-	},
-	{
-	    PCI_VENDOR_ENCORE,
-	    "Encore Computer",
-	},
-	{
 	    PCI_VENDOR_INTERGRAPH,
 	    "Intergraph",
 	},
@@ -7443,92 +7207,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Diamond Multimedia",
 	},
 	{
-	    PCI_VENDOR_NATIONALINST,
-	    "National Instruments",
-	},
-	{
-	    PCI_VENDOR_FICOMP,
-	    "First Int'l Computers",
-	},
-	{
 	    PCI_VENDOR_CMDTECH,
 	    "CMD Technology",
-	},
-	{
-	    PCI_VENDOR_ALACRON,
-	    "Alacron",
-	},
-	{
-	    PCI_VENDOR_APPIAN,
-	    "Appian Technology",
 	},
 	{
 	    PCI_VENDOR_QUANTUMDESIGNS,
 	    "Quantum Designs",
 	},
 	{
-	    PCI_VENDOR_SAMSUNGELEC,
-	    "Samsung Electronics",
-	},
-	{
-	    PCI_VENDOR_PACKARDBELL,
-	    "Packard Bell",
-	},
-	{
-	    PCI_VENDOR_GEMLIGHT,
-	    "Gemlight Computer",
-	},
-	{
-	    PCI_VENDOR_MEGACHIPS,
-	    "Megachips",
-	},
-	{
-	    PCI_VENDOR_ZIDA,
-	    "Zida Technologies",
-	},
-	{
 	    PCI_VENDOR_BROOKTREE,
 	    "Brooktree",
-	},
-	{
-	    PCI_VENDOR_TRIGEM,
-	    "Trigem Computer",
-	},
-	{
-	    PCI_VENDOR_MEIDENSHA,
-	    "Meidensha",
-	},
-	{
-	    PCI_VENDOR_JUKO,
-	    "Juko Electronics",
-	},
-	{
-	    PCI_VENDOR_QUANTUM,
-	    "Quantum",
-	},
-	{
-	    PCI_VENDOR_EVEREX,
-	    "Everex Systems",
-	},
-	{
-	    PCI_VENDOR_GLOBE,
-	    "Globe Manufacturing Sales",
-	},
-	{
-	    PCI_VENDOR_RACAL,
-	    "Racal Interlan",
-	},
-	{
-	    PCI_VENDOR_INFORMTECH,
-	    "Informtech Industrial",
-	},
-	{
-	    PCI_VENDOR_BENCHMARQ,
-	    "Benchmarq Microelectronics",
-	},
-	{
-	    PCI_VENDOR_SIERRA,
-	    "Sierra Semiconductor",
 	},
 	{
 	    PCI_VENDOR_SGI,
@@ -7539,40 +7227,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "ACC Microelectronics",
 	},
 	{
-	    PCI_VENDOR_DIGICOM,
-	    "Digicom",
-	},
-	{
-	    PCI_VENDOR_HONEYWELL,
-	    "Honeywell IASD",
-	},
-	{
 	    PCI_VENDOR_SYMPHONY,
 	    "Symphony Labs",
-	},
-	{
-	    PCI_VENDOR_CORNERSTONE,
-	    "Cornerstone Technology",
-	},
-	{
-	    PCI_VENDOR_MICROCOMPSON,
-	    "Micro Computer Systems (M) SON",
-	},
-	{
-	    PCI_VENDOR_CARDEXPER,
-	    "CardExpert Technology",
-	},
-	{
-	    PCI_VENDOR_CABLETRON,
-	    "Cabletron Systems",
-	},
-	{
-	    PCI_VENDOR_RAYETHON,
-	    "Raytheon",
-	},
-	{
-	    PCI_VENDOR_DATABOOK,
-	    "Databook",
 	},
 	{
 	    PCI_VENDOR_STB,
@@ -7603,136 +7259,24 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Mitsubishi Electronics",
 	},
 	{
-	    PCI_VENDOR_DAPHA,
-	    "Dapha Electronics",
-	},
-	{
-	    PCI_VENDOR_ALR,
-	    "Advanced Logic Research",
-	},
-	{
 	    PCI_VENDOR_SURECOM,
 	    "Surecom Technology",
-	},
-	{
-	    PCI_VENDOR_MOST,
-	    "Most",
-	},
-	{
-	    PCI_VENDOR_BOCA,
-	    "Boca Research",
-	},
-	{
-	    PCI_VENDOR_ICM,
-	    "ICM",
-	},
-	{
-	    PCI_VENDOR_AUSPEX,
-	    "Auspex Systems",
-	},
-	{
-	    PCI_VENDOR_SAMSUNGSEMI,
-	    "Samsung Semiconductors",
-	},
-	{
-	    PCI_VENDOR_AWARD,
-	    "Award",
-	},
-	{
-	    PCI_VENDOR_XEROX,
-	    "Xerox",
-	},
-	{
-	    PCI_VENDOR_RAMBUS,
-	    "Rambus",
-	},
-	{
-	    PCI_VENDOR_MEDIAVIS,
-	    "Media Vision",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC,
 	    "Neomagic",
 	},
 	{
-	    PCI_VENDOR_DATAEXPERT,
-	    "Dataexpert",
-	},
-	{
-	    PCI_VENDOR_FUJITSU,
-	    "Fujitsu",
-	},
-	{
-	    PCI_VENDOR_OMRON,
-	    "Omron",
-	},
-	{
-	    PCI_VENDOR_MENTOR,
-	    "Mentor ARC",
-	},
-	{
 	    PCI_VENDOR_ADVSYS,
 	    "Advansys",
-	},
-	{
-	    PCI_VENDOR_RADIUS,
-	    "Radius",
-	},
-	{
-	    PCI_VENDOR_CITICORP,
-	    "Citicorp TTI",
-	},
-	{
-	    PCI_VENDOR_FUJITSU2,
-	    "Fujitsu",
-	},
-	{
-	    PCI_VENDOR_FUTUREPLUS,
-	    "Future+ Systems",
 	},
 	{
 	    PCI_VENDOR_MOLEX,
 	    "Molex",
 	},
 	{
-	    PCI_VENDOR_JABIL,
-	    "Jabil Circuit",
-	},
-	{
-	    PCI_VENDOR_HAULON,
-	    "Hualon Microelectronics",
-	},
-	{
-	    PCI_VENDOR_AUTOLOGIC,
-	    "Autologic",
-	},
-	{
-	    PCI_VENDOR_CETIA,
-	    "Cetia",
-	},
-	{
-	    PCI_VENDOR_BCM,
-	    "BCM Advanced",
-	},
-	{
-	    PCI_VENDOR_APL,
-	    "Advanced Peripherals Labs",
-	},
-	{
 	    PCI_VENDOR_MACRONIX,
 	    "Macronix",
-	},
-	{
-	    PCI_VENDOR_THOMASCONRAD,
-	    "Thomas-Conrad",
-	},
-	{
-	    PCI_VENDOR_ROHM,
-	    "Rohm Research",
-	},
-	{
-	    PCI_VENDOR_CERN,
-	    "CERN/ECP/EDU",
 	},
 	{
 	    PCI_VENDOR_ES,
@@ -7755,128 +7299,20 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Tekram Technology (1st ID)",
 	},
 	{
-	    PCI_VENDOR_APTIX,
-	    "Aptix",
-	},
-	{
 	    PCI_VENDOR_NEWBRIDGE,
 	    "Newbridge",
-	},
-	{
-	    PCI_VENDOR_TANDEM,
-	    "Tandem",
-	},
-	{
-	    PCI_VENDOR_MICROINDUSTRIES,
-	    "Micro Industries",
-	},
-	{
-	    PCI_VENDOR_GAINBERY,
-	    "Gainbery Computer Products",
-	},
-	{
-	    PCI_VENDOR_VADEM,
-	    "Vadem",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS,
 	    "Applied Micro Circuits",
 	},
 	{
-	    PCI_VENDOR_ALPSELECTIC,
-	    "Alps Electric",
-	},
-	{
-	    PCI_VENDOR_INTERGRAPHICS,
-	    "Integraphics Systems",
-	},
-	{
-	    PCI_VENDOR_ARTISTSGRAPHICS,
-	    "Artists Graphics",
-	},
-	{
 	    PCI_VENDOR_REALTEK,
 	    "Realtek",
 	},
 	{
-	    PCI_VENDOR_ASCIICORP,
-	    "ASCII Corporation",
-	},
-	{
-	    PCI_VENDOR_XILINX,
-	    "Xilinx",
-	},
-	{
-	    PCI_VENDOR_RACORE,
-	    "Racore Computer Products",
-	},
-	{
-	    PCI_VENDOR_PERITEK,
-	    "Peritek",
-	},
-	{
-	    PCI_VENDOR_TYAN,
-	    "Tyan Computer",
-	},
-	{
-	    PCI_VENDOR_ACHME,
-	    "Achme Computer",
-	},
-	{
-	    PCI_VENDOR_ALARIS,
-	    "Alaris",
-	},
-	{
-	    PCI_VENDOR_SMOS,
-	    "S-MOS Systems",
-	},
-	{
 	    PCI_VENDOR_NKK,
 	    "NKK",
-	},
-	{
-	    PCI_VENDOR_CREATIVE,
-	    "Creative Electronic Systems",
-	},
-	{
-	    PCI_VENDOR_MATSUSHITA,
-	    "Matsushita",
-	},
-	{
-	    PCI_VENDOR_ALTOS,
-	    "Altos India",
-	},
-	{
-	    PCI_VENDOR_PCDIRECT,
-	    "PC Direct",
-	},
-	{
-	    PCI_VENDOR_TRUEVISIO,
-	    "Truevision",
-	},
-	{
-	    PCI_VENDOR_THESYS,
-	    "Thesys Ges. F. Mikroelektronik",
-	},
-	{
-	    PCI_VENDOR_IODATA,
-	    "I-O Data Device",
-	},
-	{
-	    PCI_VENDOR_SOYO,
-	    "Soyo Technology",
-	},
-	{
-	    PCI_VENDOR_FAST,
-	    "Fast Electronic",
-	},
-	{
-	    PCI_VENDOR_NCUBE,
-	    "NCube",
-	},
-	{
-	    PCI_VENDOR_JAZZ,
-	    "Jazz Multimedia",
 	},
 	{
 	    PCI_VENDOR_INITIO,
@@ -7891,24 +7327,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "HighPoint",
 	},
 	{
-	    PCI_VENDOR_RASTEROPS,
-	    "RasterOps",
-	},
-	{
 	    PCI_VENDOR_SIGMA,
 	    "Sigma Designs",
 	},
 	{
 	    PCI_VENDOR_VIATECH,
 	    "VIA",
-	},
-	{
-	    PCI_VENDOR_STRATIS,
-	    "Stratus Computer",
-	},
-	{
-	    PCI_VENDOR_PROTEON,
-	    "Proteon",
 	},
 	{
 	    PCI_VENDOR_COGENT,
@@ -7919,60 +7343,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Siemens AG / Siemens Nixdorf AG",
 	},
 	{
-	    PCI_VENDOR_XENON,
-	    "Xenon Microsystems",
-	},
-	{
-	    PCI_VENDOR_MINIMAX,
-	    "Mini-Max Technology",
-	},
-	{
-	    PCI_VENDOR_ZNYX,
-	    "Znyx Advanced Systems",
-	},
-	{
-	    PCI_VENDOR_CPUTECH,
-	    "CPU Technology",
-	},
-	{
-	    PCI_VENDOR_ROSS,
-	    "Ross Technology",
-	},
-	{
-	    PCI_VENDOR_POWERHOUSE,
-	    "Powerhouse Systems",
-	},
-	{
-	    PCI_VENDOR_SCO,
-	    "SCO",
-	},
-	{
-	    PCI_VENDOR_RNS,
-	    "RNS",
-	},
-	{
 	    PCI_VENDOR_ACCTON,
 	    "Accton Technology",
-	},
-	{
-	    PCI_VENDOR_ATMEL,
-	    "Atmel",
-	},
-	{
-	    PCI_VENDOR_DUPONT,
-	    "DuPont Pixel Systems",
-	},
-	{
-	    PCI_VENDOR_DATATRANSLATION,
-	    "Data Translation",
-	},
-	{
-	    PCI_VENDOR_DATACUBE,
-	    "Datacube",
-	},
-	{
-	    PCI_VENDOR_BERG,
-	    "Berg Electronics",
 	},
 	{
 	    PCI_VENDOR_VORTEX,
@@ -7983,600 +7355,84 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Efficent Networks",
 	},
 	{
-	    PCI_VENDOR_TELEDYNE,
-	    "Teledyne",
-	},
-	{
-	    PCI_VENDOR_TRICORD,
-	    "Tricord Systems",
-	},
-	{
 	    PCI_VENDOR_IDT,
 	    "IDT",
-	},
-	{
-	    PCI_VENDOR_ELDEC,
-	    "Eldec",
-	},
-	{
-	    PCI_VENDOR_PDI,
-	    "Prescision Digital Images",
-	},
-	{
-	    PCI_VENDOR_EMC,
-	    "Emc",
-	},
-	{
-	    PCI_VENDOR_ZILOG,
-	    "Zilog",
-	},
-	{
-	    PCI_VENDOR_MULTITECH,
-	    "Multi-tech Systems",
-	},
-	{
-	    PCI_VENDOR_LEUTRON,
-	    "Leutron Vision",
-	},
-	{
-	    PCI_VENDOR_EUROCORE,
-	    "Eurocore/Vigra",
-	},
-	{
-	    PCI_VENDOR_VIGRA,
-	    "Vigra",
 	},
 	{
 	    PCI_VENDOR_FORE,
 	    "FORE Systems",
 	},
 	{
-	    PCI_VENDOR_FIRMWORKS,
-	    "Firmworks",
-	},
-	{
-	    PCI_VENDOR_HERMES,
-	    "Hermes Electronics",
-	},
-	{
-	    PCI_VENDOR_LINOTYPE,
-	    "Linotype",
-	},
-	{
-	    PCI_VENDOR_RAVICAD,
-	    "Ravicad",
-	},
-	{
-	    PCI_VENDOR_INFOMEDIA,
-	    "Infomedia Microelectronics",
-	},
-	{
-	    PCI_VENDOR_IMAGINGTECH,
-	    "Imaging Technlogy",
-	},
-	{
-	    PCI_VENDOR_COMPUTERVISION,
-	    "Computervision",
-	},
-	{
-	    PCI_VENDOR_PHILIPS,
-	    "Philips",
-	},
-	{
-	    PCI_VENDOR_MITEL,
-	    "Mitel",
-	},
-	{
-	    PCI_VENDOR_EICON,
-	    "Eicon Technology",
-	},
-	{
-	    PCI_VENDOR_MCS,
-	    "Mercury Computer Systems",
-	},
-	{
-	    PCI_VENDOR_FUJIXEROX,
-	    "Fuji Xerox",
-	},
-	{
-	    PCI_VENDOR_MOMENTUM,
-	    "Momentum Data Systems",
-	},
-	{
-	    PCI_VENDOR_CISCO,
-	    "Cisco",
-	},
-	{
 	    PCI_VENDOR_ZIATECH,
 	    "Ziatech",
-	},
-	{
-	    PCI_VENDOR_DYNPIC,
-	    "Dynamic Pictures",
-	},
-	{
-	    PCI_VENDOR_FWB,
-	    "FWB",
 	},
 	{
 	    PCI_VENDOR_CYCLONE,
 	    "Cyclone",
 	},
 	{
-	    PCI_VENDOR_LEADINGEDGE,
-	    "Leading Edge",
-	},
-	{
-	    PCI_VENDOR_SANYO,
-	    "Sanyo",
-	},
-	{
-	    PCI_VENDOR_EQUINOX,
-	    "Equinox",
-	},
-	{
-	    PCI_VENDOR_INTERVOICE,
-	    "Intervoice",
-	},
-	{
-	    PCI_VENDOR_CREST,
-	    "Crest Microsystem",
-	},
-	{
 	    PCI_VENDOR_ALLIANCE,
 	    "Alliance Semiconductor",
-	},
-	{
-	    PCI_VENDOR_NETPOWER,
-	    "NetPower",
-	},
-	{
-	    PCI_VENDOR_CINMILACRON,
-	    "Cincinnati Milacron",
-	},
-	{
-	    PCI_VENDOR_WORKBIT,
-	    "Workbit",
-	},
-	{
-	    PCI_VENDOR_FORCE,
-	    "Force",
-	},
-	{
-	    PCI_VENDOR_INTERFACE,
-	    "Interface",
 	},
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH,
 	    "Schneider & Koch",
 	},
 	{
-	    PCI_VENDOR_WINSYSTEM,
-	    "Win System",
-	},
-	{
-	    PCI_VENDOR_VMIC,
-	    "VMIC",
-	},
-	{
-	    PCI_VENDOR_CANOPUS,
-	    "Canopus",
-	},
-	{
-	    PCI_VENDOR_ANNABOOKS,
-	    "Annabooks",
-	},
-	{
-	    PCI_VENDOR_IC,
-	    "IC Corporation",
-	},
-	{
-	    PCI_VENDOR_NIKON,
-	    "Nikon",
-	},
-	{
-	    PCI_VENDOR_DIGIINTERNAT,
-	    "Digi",
-	},
-	{
-	    PCI_VENDOR_TMC,
-	    "Thinking Machines",
-	},
-	{
-	    PCI_VENDOR_JAE,
-	    "JAE Electronics",
-	},
-	{
-	    PCI_VENDOR_MEGATEK,
-	    "Megatek",
-	},
-	{
-	    PCI_VENDOR_LANDWIN,
-	    "Land Win Electronic",
-	},
-	{
-	    PCI_VENDOR_MELCO,
-	    "Melco",
-	},
-	{
-	    PCI_VENDOR_PINETECH,
-	    "Pine Technology",
-	},
-	{
-	    PCI_VENDOR_PERISCOPE,
-	    "Periscope",
-	},
-	{
-	    PCI_VENDOR_AVSYS,
-	    "Avsys",
-	},
-	{
-	    PCI_VENDOR_VOARX,
-	    "Voarx R & D",
-	},
-	{
 	    PCI_VENDOR_MUTECH,
 	    "Mutech",
-	},
-	{
-	    PCI_VENDOR_HARLEQUIN,
-	    "Harlequin",
-	},
-	{
-	    PCI_VENDOR_PARALLAX,
-	    "Parallax Graphics",
 	},
 	{
 	    PCI_VENDOR_XIRCOM,
 	    "Xircom",
 	},
 	{
-	    PCI_VENDOR_PEERPROTO,
-	    "Peer Protocols",
-	},
-	{
-	    PCI_VENDOR_MAXTOR,
-	    "Maxtor",
-	},
-	{
-	    PCI_VENDOR_SYNEMA,
-	    "Synema",
-	},
-	{
-	    PCI_VENDOR_APT,
-	    "Advanced Peripherals Technologies",
-	},
-	{
-	    PCI_VENDOR_IMAGRAPH,
-	    "Imagraph",
-	},
-	{
 	    PCI_VENDOR_RCC,
 	    "ServerWorks",
-	},
-	{
-	    PCI_VENDOR_MUTOH,
-	    "Mutoh Industries",
-	},
-	{
-	    PCI_VENDOR_THINE,
-	    "Thine Electronics",
-	},
-	{
-	    PCI_VENDOR_CDAC,
-	    "Centre for Dev. of Advanced Computing",
-	},
-	{
-	    PCI_VENDOR_POLARIS,
-	    "Polaris Communications",
-	},
-	{
-	    PCI_VENDOR_CONNECTWARE,
-	    "Connectware",
-	},
-	{
-	    PCI_VENDOR_WSTECH,
-	    "Workstation Technology",
-	},
-	{
-	    PCI_VENDOR_INVENTEC,
-	    "Inventec",
-	},
-	{
-	    PCI_VENDOR_LOUGHSOUND,
-	    "Loughborough Sound Images",
-	},
-	{
-	    PCI_VENDOR_ALTERA,
-	    "Altera",
-	},
-	{
-	    PCI_VENDOR_ADOBE,
-	    "Adobe Systems",
-	},
-	{
-	    PCI_VENDOR_BRIDGEPORT,
-	    "Bridgeport Machines",
-	},
-	{
-	    PCI_VENDOR_MIRTRON,
-	    "Mitron Computer",
-	},
-	{
-	    PCI_VENDOR_SBE,
-	    "SBE",
-	},
-	{
-	    PCI_VENDOR_SILICONENG,
-	    "Silicon Engineering",
-	},
-	{
-	    PCI_VENDOR_ALFA,
-	    "Alfa",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2,
 	    "Toshiba",
 	},
 	{
-	    PCI_VENDOR_ATREND,
-	    "A-Trend Technology",
-	},
-	{
-	    PCI_VENDOR_ATTO,
-	    "Atto Technology",
-	},
-	{
-	    PCI_VENDOR_TR,
-	    "T/R Systems",
-	},
-	{
 	    PCI_VENDOR_RICOH,
 	    "Ricoh",
-	},
-	{
-	    PCI_VENDOR_TELEMATICS,
-	    "Telematics International",
-	},
-	{
-	    PCI_VENDOR_FUJIKURA,
-	    "Fujikura",
-	},
-	{
-	    PCI_VENDOR_FORKS,
-	    "Forks",
-	},
-	{
-	    PCI_VENDOR_DATAWORLD,
-	    "Dataworld",
 	},
 	{
 	    PCI_VENDOR_DLINK,
 	    "D-Link Systems",
 	},
 	{
-	    PCI_VENDOR_ATL,
-	    "Advanced Techonoloy Labratories",
-	},
-	{
-	    PCI_VENDOR_SHIMA,
-	    "Shima Seiki Manufacturing",
-	},
-	{
-	    PCI_VENDOR_MATSUSHITA2,
-	    "Matsushita",
-	},
-	{
-	    PCI_VENDOR_HILEVEL,
-	    "HiLevel Technology",
-	},
-	{
 	    PCI_VENDOR_COROLLARY,
 	    "Corrollary",
-	},
-	{
-	    PCI_VENDOR_BITFLOW,
-	    "BitFlow",
-	},
-	{
-	    PCI_VENDOR_HERMSTEDT,
-	    "Hermstedt",
 	},
 	{
 	    PCI_VENDOR_ACARD,
 	    "Acard",
 	},
 	{
-	    PCI_VENDOR_DENSAN,
-	    "Densan",
-	},
-	{
 	    PCI_VENDOR_ZEINET,
 	    "Zeinet",
-	},
-	{
-	    PCI_VENDOR_TOUCAN,
-	    "Toucan Technology",
-	},
-	{
-	    PCI_VENDOR_RATOC,
-	    "Ratoc System",
-	},
-	{
-	    PCI_VENDOR_HYTEC,
-	    "Hytec Electronic",
-	},
-	{
-	    PCI_VENDOR_GAGE,
-	    "Gage Applied Sciences",
-	},
-	{
-	    PCI_VENDOR_LAMBDA,
-	    "Lambda Systems",
-	},
-	{
-	    PCI_VENDOR_DCA,
-	    "Digital Communications Associates",
-	},
-	{
-	    PCI_VENDOR_MINDSHARE,
-	    "Mind Share",
 	},
 	{
 	    PCI_VENDOR_OMEGA,
 	    "Omega Micro",
 	},
 	{
-	    PCI_VENDOR_ITI,
-	    "Information Technology Institute",
-	},
-	{
-	    PCI_VENDOR_BUG,
-	    "Bug Sapporo",
-	},
-	{
-	    PCI_VENDOR_FUJITSU3,
-	    "Fujitsu",
-	},
-	{
-	    PCI_VENDOR_BULL,
-	    "Bull Hn Information Systems",
-	},
-	{
-	    PCI_VENDOR_CONVEX,
-	    "Convex Computer",
-	},
-	{
-	    PCI_VENDOR_HAMAMATSU,
-	    "Hamamatsu Photonics",
-	},
-	{
-	    PCI_VENDOR_SIERRA2,
-	    "Sierra Research & Technology",
-	},
-	{
-	    PCI_VENDOR_BARCO,
-	    "Barco",
-	},
-	{
-	    PCI_VENDOR_MICROUNITY,
-	    "MicroUnity Systems Engineering",
-	},
-	{
-	    PCI_VENDOR_PUREDATA,
-	    "Pure Data",
-	},
-	{
-	    PCI_VENDOR_POWERCC,
-	    "Power Computing",
-	},
-	{
-	    PCI_VENDOR_INNOSYS,
-	    "InnoSys",
-	},
-	{
-	    PCI_VENDOR_ACTEL,
-	    "Actel",
-	},
-	{
-	    PCI_VENDOR_GALILEO,
-	    "Galileo Technology",
-	},
-	{
-	    PCI_VENDOR_CANNON,
-	    "Cannon IS",
-	},
-	{
 	    PCI_VENDOR_LITEON,
 	    "Lite-On",
-	},
-	{
-	    PCI_VENDOR_SCITEX,
-	    "Scitex",
-	},
-	{
-	    PCI_VENDOR_PROLOG,
-	    "Pro-Log",
 	},
 	{
 	    PCI_VENDOR_V3,
 	    "V3 Semiconductor",
 	},
 	{
-	    PCI_VENDOR_APRICOT,
-	    "Apricot Computer",
-	},
-	{
-	    PCI_VENDOR_KODAK,
-	    "Eastman Kodak",
-	},
-	{
-	    PCI_VENDOR_BARR,
-	    "Barr Systems",
-	},
-	{
-	    PCI_VENDOR_LEITECH,
-	    "Leitch Technology",
-	},
-	{
-	    PCI_VENDOR_RADSTONE,
-	    "Radstone Technology",
-	},
-	{
-	    PCI_VENDOR_UNITEDVIDEO,
-	    "United Video",
-	},
-	{
-	    PCI_VENDOR_MOT2,
-	    "Motorola",
-	},
-	{
-	    PCI_VENDOR_XPOINT,
-	    "Xpoint Technologies",
-	},
-	{
-	    PCI_VENDOR_PATHLIGHT,
-	    "Pathlight Technology",
-	},
-	{
-	    PCI_VENDOR_VIDEOTRON,
-	    "VideoTron",
-	},
-	{
-	    PCI_VENDOR_PYRAMID,
-	    "Pyramid Technologies",
-	},
-	{
-	    PCI_VENDOR_NETPERIPH,
-	    "Network Peripherals",
-	},
-	{
 	    PCI_VENDOR_PINNACLE,
 	    "Pinnacle Systems",
 	},
 	{
-	    PCI_VENDOR_IMI,
-	    "International Microcircuts",
-	},
-	{
 	    PCI_VENDOR_LUCENT,
 	    "AT&T/Lucent",
-	},
-	{
-	    PCI_VENDOR_NEC2,
-	    "NEC",
-	},
-	{
-	    PCI_VENDOR_DOCTECH,
-	    "Document Technologies",
-	},
-	{
-	    PCI_VENDOR_SHIVA,
-	    "Shiva",
-	},
-	{
-	    PCI_VENDOR_DCMDATA,
-	    "DCM Data Systems",
 	},
 	{
 	    PCI_VENDOR_DOLPHIN,
@@ -8585,22 +7441,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_MRTMAGMA,
 	    "Mesa Ridge Technologies (MAGMA)",
-	},
-	{
-	    PCI_VENDOR_LSISYS,
-	    "LSI Systems",
-	},
-	{
-	    PCI_VENDOR_SPECIALIX,
-	    "Specialix Research",
-	},
-	{
-	    PCI_VENDOR_MKC,
-	    "Michels & Kleberhoff Computer",
-	},
-	{
-	    PCI_VENDOR_HAL,
-	    "HAL Computer Systems",
 	},
 	{
 	    PCI_VENDOR_IRE,
@@ -8617,10 +7457,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_COMPEX,
 	    "Compex",
-	},
-	{
-	    PCI_VENDOR_PMCSIERRA,
-	    "PMC-Sierra",
 	},
 	{
 	    PCI_VENDOR_CYCLADES,
@@ -8643,18 +7479,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Advanced Telecommunications Modules",
 	},
 	{
-	    PCI_VENDOR_ARIEL,
-	    "Ariel",
-	},
-	{
-	    PCI_VENDOR_AZTECH,
-	    "Aztech",
-	},
-	{
-	    PCI_VENDOR_3DO,
-	    "The 3D0 Company",
-	},
-	{
 	    PCI_VENDOR_CCUBE,
 	    "C-Cube",
 	},
@@ -8663,20 +7487,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "AVM",
 	},
 	{
-	    PCI_VENDOR_STALLION,
-	    "Stallion Technologies",
-	},
-	{
-	    PCI_VENDOR_LINEARSYS,
-	    "Linear Systems",
-	},
-	{
 	    PCI_VENDOR_ASIX,
 	    "ASIX",
-	},
-	{
-	    PCI_VENDOR_AURORA,
-	    "Aurora Technologies",
 	},
 	{
 	    PCI_VENDOR_ESSTECH,
@@ -8697,10 +7509,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ENSONIQ,
 	    "Ensoniq",
-	},
-	{
-	    PCI_VENDOR_NETAPP,
-	    "Network Appliance",
 	},
 	{
 	    PCI_VENDOR_TRANSMETA,
@@ -8731,24 +7539,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "TriTech Microelectronics",
 	},
 	{
-	    PCI_VENDOR_KOFAX,
-	    "Kofax Image Products",
-	},
-	{
-	    PCI_VENDOR_RISCOM,
-	    "RISCom",
-	},
-	{
 	    PCI_VENDOR_ALTEON,
 	    "Alteon",
 	},
 	{
 	    PCI_VENDOR_USR,
 	    "US Robotics",
-	},
-	{
-	    PCI_VENDOR_PICTUREEL,
-	    "Picture Elements",
 	},
 	{
 	    PCI_VENDOR_STB2,
@@ -8781,10 +7577,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PCTEL,
 	    "PCTEL",
-	},
-	{
-	    PCI_VENDOR_KAWASAKI,
-	    "Kawasaki",
 	},
 	{
 	    PCI_VENDOR_LMC,
@@ -8851,10 +7643,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Aironet",
 	},
 	{
-	    PCI_VENDOR_COMPAL,
-	    "COMPAL",
-	},
-	{
 	    PCI_VENDOR_INVERTEX,
 	    "Invertex",
 	},
@@ -8913,10 +7701,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETSEC,
 	    "NetSec",
-	},
-	{
-	    PCI_VENDOR_ATHEROS,
-	    "Atheros",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN,
@@ -8983,10 +7767,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "NetVin",
 	},
 	{
-	    PCI_VENDOR_BUSLOGIC2,
-	    "Buslogic",
-	},
-	{
 	    PCI_VENDOR_GEMTEK,
 	    "Gemtek",
 	},
@@ -8995,32 +7775,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "S3",
 	},
 	{
-	    PCI_VENDOR_NETPOWER2,
-	    "NetPower",
-	},
-	{
 	    PCI_VENDOR_C4T,
 	    "c't Magazin",
-	},
-	{
-	    PCI_VENDOR_QUANCM,
-	    "Quancm Electronic GmbH",
 	},
 	{
 	    PCI_VENDOR_INTEL,
 	    "Intel",
 	},
 	{
-	    PCI_VENDOR_TRIGEM2,
-	    "Trigem Computer",
-	},
-	{
 	    PCI_VENDOR_WINBOND2,
 	    "Winbond",
-	},
-	{
-	    PCI_VENDOR_COMPUTONE,
-	    "Computone",
 	},
 	{
 	    PCI_VENDOR_KTI,
@@ -9041,10 +7805,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETMOS,
 	    "NetMos",
-	},
-	{
-	    PCI_VENDOR_CHRYSALIS,
-	    "Chrysalis-ITS",
 	},
 	{
 	    PCI_VENDOR_ENDACE,
