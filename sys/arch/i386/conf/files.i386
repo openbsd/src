@@ -51,11 +51,13 @@ device	isa at root {[port = -1], [size = 0],
 device	pci at root {[bus = -1], [dev = -1]}
 #device	mca at root {...}
 
+define vm86
+file	arch/i386/i386/vm86.c		vm86
+
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
 
-include "../../../dev/isa/files.isa"
 major	{mcd = 7}
 #major	{scd = 15}
 major	{wd = 0}
@@ -82,6 +84,14 @@ file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
+
+#define pcic here until config issues are resolved
+device pcic at isa
+file	dev/isa/pcmcia_pcic.c		pcic pcmciabus
+device	pcmciabus at isa {[port = -1], [size = 0],
+		[iomem = -1], [iosiz = 0],
+		[irq = -1], [drq = -1]}
+include "../../../dev/isa/files.isa"
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms at isa
@@ -121,6 +131,11 @@ include "../../../dev/eisa/files.eisa"
 
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
+
+#
+# Pcmcia
+#
+include "../../../dev/pcmcia/files.pcmcia"
 
 #
 # Compatibility modules
