@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: lorder.sh,v 1.6 1997/01/23 02:19:58 niklas Exp $
+#	$OpenBSD: lorder.sh,v 1.7 1997/01/25 21:16:44 deraadt Exp $
 #	$NetBSD: lorder.sh,v 1.3 1995/04/24 07:38:52 cgd Exp $
 #
 # Copyright (c) 1990, 1993
@@ -35,9 +35,6 @@
 #
 #	@(#)lorder.sh	8.1 (Berkeley) 6/6/93
 #
-
-PATH=/bin:/usr/bin
-export PATH
 
 # only one argument is a special case, just output the name twice
 case $# in
