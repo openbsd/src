@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: strtoll.c,v 1.3 2005/03/02 12:24:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: strtoll.c,v 1.4 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,10 +45,7 @@ static const char rcsid[] = "$OpenBSD: strtoll.c,v 1.3 2005/03/02 12:24:26 mille
  * alphabets and digits are each contiguous.
  */
 long long
-strtoll(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	int base;
+strtoll(const char *nptr, char **endptr, int base)
 {
 	const char *s;
 	long long acc, cutoff;
@@ -151,10 +148,7 @@ strtoll(nptr, endptr, base)
 __weak_alias(strtoq, strtoll);
 #else
 quad_t
-strtoq(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	int base;
+strtoq(const char *nptr, char **endptr, int base)
 {
 
         return ((quad_t)strtoll(nptr, endptr, base));

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: system.c,v 1.6 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: system.c,v 1.7 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,8 +41,7 @@ static char *rcsid = "$OpenBSD: system.c,v 1.6 2003/06/02 20:18:38 millert Exp $
 extern char **environ;
 
 int
-system(command)
-	const char *command;
+system(const char *command)
 {
 	pid_t pid;
 	sig_t intsave, quitsave;

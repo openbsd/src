@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: merge.c,v 1.6 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: merge.c,v 1.7 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -91,15 +91,12 @@ static void insertionsort(u_char *, size_t, size_t, int (*)());
  * Arguments are as for qsort.
  */
 int
-mergesort(base, nmemb, size, cmp)
-	void *base;
-	size_t nmemb;
-	register size_t size;
-	int (*cmp)(const void *, const void *);
+mergesort(void *base, size_t nmemb, size_t size,
+    int (*cmp)(const void *, const void *))
 {
-	register int i, sense;
+	int i, sense;
 	int big, iflag;
-	register u_char *f1, *f2, *t, *b, *tp2, *q, *l1, *l2;
+	u_char *f1, *f2, *t, *b, *tp2, *q, *l1, *l2;
 	u_char *list2, *list1, *p2, *p, *last, **p1;
 
 	if (size < PSIZE / 2) {		/* Pointers must fit into 2 * size. */
@@ -251,10 +248,8 @@ COPY:	    			b = t;
  * is defined.  Otherwise simple pairwise merging is used.)
  */
 void
-setup(list1, list2, n, size, cmp)
-	size_t n, size;
-	int (*cmp)(const void *, const void *);
-	u_char *list1, *list2;
+setup(u_char *list1, u_char *list2, size_t n, size_t size,
+    int (*cmp)(const void *, const void *))
 {
 	int i, length, size2, tmp, sense;
 	u_char *f1, *f2, *s, *l2, *last, *p2;
@@ -325,10 +320,8 @@ setup(list1, list2, n, size, cmp)
  * last 4 elements.
  */
 static void
-insertionsort(a, n, size, cmp)
-	u_char *a;
-	size_t n, size;
-	int (*cmp)(const void *, const void *);
+insertionsort(u_char *a, size_t n, size_t size,
+    int (*cmp)(const void *, const void *))
 {
 	u_char *ai, *s, *t, *u, tmp;
 	int i;

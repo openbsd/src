@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtol.c,v 1.5 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strtol.c,v 1.6 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -44,15 +44,12 @@ static char *rcsid = "$OpenBSD: strtol.c,v 1.5 2003/06/02 20:18:38 millert Exp $
  * alphabets and digits are each contiguous.
  */
 long
-strtol(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	register int base;
+strtol(const char *nptr, char **endptr, int base)
 {
-	register const char *s;
-	register long acc, cutoff;
-	register int c;
-	register int neg, any, cutlim;
+	const char *s;
+	long acc, cutoff;
+	int c;
+	int neg, any, cutlim;
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.

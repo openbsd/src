@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: setenv.c,v 1.7 2005/02/16 21:20:22 millert Exp $";
+static char *rcsid = "$OpenBSD: setenv.c,v 1.8 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -44,10 +44,7 @@ extern char **environ;
  *	"value".  If rewrite is set, replace any current value.
  */
 int
-setenv(name, value, rewrite)
-	const char *name;
-	const char *value;
-	int rewrite;
+setenv(const char *name, const char *value, int rewrite)
 {
 	static char **lastenv;			/* last value of environ */
 	char *C;
@@ -97,8 +94,7 @@ setenv(name, value, rewrite)
  *	Delete environmental variable "name".
  */
 void
-unsetenv(name)
-	const char *name;
+unsetenv(const char *name)
 {
 	char **P;
 	int offset;

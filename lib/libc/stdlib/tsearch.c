@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsearch.c,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: tsearch.c,v 1.5 2005/03/30 18:51:49 pat Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -22,12 +22,10 @@ typedef struct node_t {
 
 /* find or insert datum into search tree */
 void *
-tsearch(vkey, vrootp, compar)
-	const void 	*vkey;		/* key to be located */
-	void		**vrootp;	/* address of tree root */
-	int		(*compar)(const void *, const void *);
+tsearch(const void *vkey, void **vrootp,
+    int (*compar)(const void *, const void *))
 {
-    register node *q;
+    node *q;
     char *key = (char *)vkey;
     node **rootp = (node **)vrootp;
 
@@ -53,16 +51,14 @@ tsearch(vkey, vrootp, compar)
 
 /* delete node with given key */
 void *
-tdelete(vkey, vrootp, compar)
-	const void	*vkey;		/* key to be deleted */
-	void		**vrootp;	/* address of the root of tree */
-	int		(*compar)(const void *, const void *);
+tdelete(const void *vkey, void **vrootp,
+    int (*compar)(const void *, const void *))
 {
     node **rootp = (node **)vrootp;
     char *key = (char *)vkey;
     node *p;
-    register node *q;
-    register node *r;
+    node *q;
+    node *r;
     int cmp;
 
     if (rootp == (struct node_t **)0 || (p = *rootp) == (struct node_t *)0)
@@ -97,10 +93,7 @@ tdelete(vkey, vrootp, compar)
 
 /* Walk the nodes of a tree */
 static void
-trecurse(root, action, level)
-	register node	*root;		/* Root of the tree to be walked */
-	register void	(*action)();	/* Function to be called at each node */
-	register int	level;
+trecurse(node *root, void (*action)(const void *, VISIT, int), int level)
 {
     if (root->left == (struct node_t *)0 && root->right == (struct node_t *)0)
 	(*action)(root, leaf, level);
@@ -117,12 +110,10 @@ trecurse(root, action, level)
 
 /* Walk the nodes of a tree */
 void
-twalk(vroot, action)
-	const void	*vroot;		/* Root of the tree to be walked */
-	void		(*action)(const void *, VISIT, int);
+twalk(const void *vroot, void (*action)(const void *, VISIT, int))
 {
     node *root = (node *)vroot;
 
-    if (root != (node *)0 && action != (void(*)())0)
+    if (root != (node *)0 && action != (void (*)(const void *, VISIT, int))0)
 	trecurse(root, action, 0);
 }

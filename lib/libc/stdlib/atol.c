@@ -28,14 +28,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: atol.c,v 1.3 2003/06/02 20:18:37 millert Exp $";
+static char *rcsid = "$OpenBSD: atol.c,v 1.4 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
 long
-atol(str)
-	const char *str;
+atol(const char *str)
 {
 	return(strtol(str, (char **)NULL, 10));
 }

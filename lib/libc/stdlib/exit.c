@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: exit.c,v 1.9 2003/06/02 20:18:37 millert Exp $";
+static char *rcsid = "$OpenBSD: exit.c,v 1.10 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,11 +51,10 @@ int     __isthreaded    = 0;
  * Exit, flushing stdio buffers if necessary.
  */
 void
-exit(status)
-	int status;
+exit(int status)
 {
-	register struct atexit *p, *q;
-	register int n, pgsize = getpagesize();
+	struct atexit *p, *q;
+	int n, pgsize = getpagesize();
 
 	if (!__atexit_invalid) {
 		p = __atexit;

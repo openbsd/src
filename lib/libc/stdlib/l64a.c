@@ -4,15 +4,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: l64a.c,v 1.3 1997/08/17 22:58:34 millert Exp $";
+static char *rcsid = "$OpenBSD: l64a.c,v 1.4 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdlib.h>
 
 char *
-l64a(value)
-	long value;
+l64a(long value)
 {
 	static char buf[8];
 	char *s = buf;

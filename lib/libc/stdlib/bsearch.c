@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bsearch.c,v 1.4 2003/06/02 20:18:37 millert Exp $";
+static char *rcsid = "$OpenBSD: bsearch.c,v 1.5 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -50,16 +50,12 @@ static char *rcsid = "$OpenBSD: bsearch.c,v 1.4 2003/06/02 20:18:37 millert Exp 
  * look at item 3.
  */
 void *
-bsearch(key, base0, nmemb, size, compar)
-	register const void *key;
-	const void *base0;
-	size_t nmemb;
-	register size_t size;
-	register int (*compar)(const void *, const void *);
+bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *))
 {
-	register const char *base = base0;
-	register int lim, cmp;
-	register const void *p;
+	const char *base = base0;
+	int lim, cmp;
+	const void *p;
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
 		p = base + (lim >> 1) * size;

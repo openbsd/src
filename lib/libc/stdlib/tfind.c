@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfind.c,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: tfind.c,v 1.5 2005/03/30 18:51:49 pat Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -21,10 +21,8 @@ typedef struct node_t
 
 /* find a node, or return 0 */
 void *
-tfind(vkey, vrootp, compar)
-	const void	*vkey;		/* key to be found */
-	void		*const *vrootp;	/* address of the tree root */
-	int		(*compar)(const void *, const void *);
+tfind(const void *vkey, void * const *vrootp,
+    int (*compar)(const void *, const void *))
 {
     char *key = (char *)vkey;
     node **rootp = (node **)vrootp;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getenv.c,v 1.6 2003/06/02 20:18:37 millert Exp $";
+static char *rcsid = "$OpenBSD: getenv.c,v 1.7 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -49,9 +49,9 @@ char *
 __findenv(const char *name, int *offset)
 {
 	extern char **environ;
-	register int len, i;
-	register const char *np;
-	register char **p, *cp;
+	int len, i;
+	const char *np;
+	char **p, *cp;
 
 	if (name == NULL || environ == NULL)
 		return (NULL);
@@ -75,8 +75,7 @@ __findenv(const char *name, int *offset)
  *	Returns ptr to value associated with name, if any, else NULL.
  */
 char *
-getenv(name)
-	const char *name;
+getenv(const char *name)
 {
 	int offset;
 

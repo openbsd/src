@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: atexit.c,v 1.7 2002/09/14 22:03:14 dhartmei Exp $";
+static char *rcsid = "$OpenBSD: atexit.c,v 1.8 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -59,11 +59,10 @@ struct atexit *__atexit;
  * Register a function to be performed at exit.
  */
 int
-atexit(fn)
-	void (*fn)();
+atexit(void (*fn)(void))
 {
-	register struct atexit *p = __atexit;
-	register int pgsize = getpagesize();
+	struct atexit *p = __atexit;
+	int pgsize = getpagesize();
 
 	if (pgsize < sizeof(*p))
 		return (-1);
@@ -102,11 +101,10 @@ atexit(fn)
  * Register the cleanup function
  */
 void
-__atexit_register_cleanup(fn)
-	void (*fn)();
+__atexit_register_cleanup(void (*fn)(void))
 {
-	register struct atexit *p = __atexit;
-	register int pgsize = getpagesize();
+	struct atexit *p = __atexit;
+	int pgsize = getpagesize();
 
 	if (pgsize < sizeof(*p))
 		return;

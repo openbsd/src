@@ -31,14 +31,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ldiv.c,v 1.3 2003/06/02 20:18:37 millert Exp $";
+static char *rcsid = "$OpenBSD: ldiv.c,v 1.4 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>		/* ldiv_t */
 
 ldiv_t
-ldiv(num, denom)
-	long num, denom;
+ldiv(long num, long denom)
 {
 	ldiv_t r;
 

@@ -28,13 +28,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: qsort.c,v 1.8 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: qsort.c,v 1.9 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
 
-static __inline char	*med3(char *, char *, char *, int (*)());
+static __inline char	*med3(char *, char *, char *, int (*)(const void *, const void *));
 static __inline void	 swapfunc(char *, char *, int, int);
 
 #define min(a, b)	(a) < (b) ? a : b
@@ -44,10 +44,10 @@ static __inline void	 swapfunc(char *, char *, int, int);
  */
 #define swapcode(TYPE, parmi, parmj, n) { 		\
 	long i = (n) / sizeof (TYPE); 			\
-	register TYPE *pi = (TYPE *) (parmi); 		\
-	register TYPE *pj = (TYPE *) (parmj); 		\
+	TYPE *pi = (TYPE *) (parmi); 			\
+	TYPE *pj = (TYPE *) (parmj); 			\
 	do { 						\
-		register TYPE	t = *pi;		\
+		TYPE	t = *pi;			\
 		*pi++ = *pj;				\
 		*pj++ = t;				\
         } while (--i > 0);				\
@@ -57,9 +57,7 @@ static __inline void	 swapfunc(char *, char *, int, int);
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
 static __inline void
-swapfunc(a, b, n, swaptype)
-	char *a, *b;
-	int n, swaptype;
+swapfunc(char *a, char *b, int n, int swaptype)
 {
 	if (swaptype <= 1) 
 		swapcode(long, a, b, n)
@@ -78,9 +76,7 @@ swapfunc(a, b, n, swaptype)
 #define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
 static __inline char *
-med3(a, b, c, cmp)
-	char *a, *b, *c;
-	int (*cmp)();
+med3(char *a, char *b, char *c, int (*cmp)(const void *, const void *))
 {
 	return cmp(a, b) < 0 ?
 	       (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
@@ -88,14 +84,11 @@ med3(a, b, c, cmp)
 }
 
 void
-qsort(aa, n, es, cmp)
-	void *aa;
-	size_t n, es;
-	int (*cmp)();
+qsort(void *aa, size_t n, size_t es, int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int d, r, swaptype, swap_cnt;
-	register char *a = aa;
+	char *a = aa;
 
 loop:	SWAPINIT(a, es);
 	swap_cnt = 0;

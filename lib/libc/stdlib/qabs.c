@@ -28,14 +28,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: qabs.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: qabs.c,v 1.4 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
 quad_t
-qabs(j)
-	quad_t j;
+qabs(quad_t j)
 {
 	return(j < 0 ? -j : j);
 }

@@ -79,7 +79,6 @@
  * #define Just_16 to store 16 bits per 32-bit Long when doing high-precision
  *	integer arithmetic.  Whether this speeds things up or slows things
  *	down depends on the machine and the number being converted.
- * #define KR_headers for old-style C function headers.
  * #define Bad_float_h if your system lacks a float.h or if it does not
  *	define some or all of DBL_DIG, DBL_MAX_10_EXP, DBL_MAX_EXP,
  *	FLT_RADIX, FLT_ROUNDS, and DBL_MAX.
@@ -90,7 +89,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.19 2004/02/03 16:52:11 drahn Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.20 2005/03/30 18:51:49 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -130,22 +129,13 @@ static char *rcsid = "$OpenBSD: strtod.c,v 1.19 2004/02/03 16:52:11 drahn Exp $"
 #include "malloc.h"
 #include "memory.h"
 #else
-#ifndef KR_headers
 #include "stdlib.h"
 #include "string.h"
 #include "locale.h"
-#else
-#include "malloc.h"
-#include "memory.h"
-#endif
 #endif
 
 #ifdef MALLOC
-#ifdef KR_headers
-extern char *MALLOC();
-#else
 extern void *MALLOC(size_t);
-#endif
 #else
 #define MALLOC malloc
 #endif
@@ -203,11 +193,7 @@ extern "C" {
 #endif
 
 #ifndef CONST
-#ifdef KR_headers
-#define CONST /* blank */
-#else
 #define CONST const
-#endif
 #endif
 
 #ifdef Unsigned_Shifts
@@ -341,11 +327,7 @@ typedef union {
 #ifdef RND_PRODQUOT
 #define rounded_product(a,b) a = rnd_prod(a, b)
 #define rounded_quotient(a,b) a = rnd_quot(a, b)
-#ifdef KR_headers
-extern double rnd_prod(), rnd_quot();
-#else
 extern double rnd_prod(double, double), rnd_quot(double, double);
-#endif
 #else
 #define rounded_product(a,b) a *= b
 #define rounded_quotient(a,b) a /= b
@@ -385,12 +367,7 @@ Bigint {
  static Bigint *freelist[Kmax+1];
 
  static Bigint *
-Balloc
-#ifdef KR_headers
-	(k) int k;
-#else
-	(int k)
-#endif
+Balloc(int k)
 {
 	int x;
 	Bigint *rv;
@@ -409,12 +386,7 @@ Balloc
 	}
 
  static void
-Bfree
-#ifdef KR_headers
-	(v) Bigint *v;
-#else
-	(Bigint *v)
-#endif
+Bfree(Bigint *v)
 {
 	if (v) {
 		v->next = freelist[v->k];
@@ -426,12 +398,7 @@ Bfree
 y->wds*sizeof(Long) + 2*sizeof(int))
 
  static Bigint *
-multadd
-#ifdef KR_headers
-	(b, m, a) Bigint *b; int m, a;
-#else
-	(Bigint *b, int m, int a)	/* multiply by m and add a */
-#endif
+multadd(Bigint *b, int m, int a)	/* multiply by m and add a */
 {
 	int i, wds;
 	ULong *x, y;
@@ -471,12 +438,7 @@ multadd
 	}
 
  static Bigint *
-s2b
-#ifdef KR_headers
-	(s, nd0, nd, y9) CONST char *s; int nd0, nd; ULong y9;
-#else
-	(CONST char *s, int nd0, int nd, ULong y9)
-#endif
+s2b(CONST char *s, int nd0, int nd, ULong y9)
 {
 	Bigint *b;
 	int i, k;
@@ -509,14 +471,9 @@ s2b
 	}
 
  static int
-hi0bits
-#ifdef KR_headers
-	(x) register ULong x;
-#else
-	(register ULong x)
-#endif
+hi0bits(ULong x)
 {
-	register int k = 0;
+	int k = 0;
 
 	if (!(x & 0xffff0000)) {
 		k = 16;
@@ -543,15 +500,10 @@ hi0bits
 	}
 
  static int
-lo0bits
-#ifdef KR_headers
-	(y) ULong *y;
-#else
-	(ULong *y)
-#endif
+lo0bits(ULong *y)
 {
-	register int k;
-	register ULong x = *y;
+	int k;
+	ULong x = *y;
 
 	if (x & 7) {
 		if (x & 1)
@@ -591,12 +543,7 @@ lo0bits
 	}
 
  static Bigint *
-i2b
-#ifdef KR_headers
-	(i) int i;
-#else
-	(int i)
-#endif
+i2b(int i)
 {
 	Bigint *b;
 
@@ -607,12 +554,7 @@ i2b
 	}
 
  static Bigint *
-mult
-#ifdef KR_headers
-	(a, b) Bigint *a, *b;
-#else
-	(Bigint *a, Bigint *b)
-#endif
+mult(Bigint *a, Bigint *b)
 {
 	Bigint *c;
 	int k, wa, wb, wc;
@@ -697,12 +639,7 @@ mult
  static Bigint *p5s;
 
  static Bigint *
-pow5mult
-#ifdef KR_headers
-	(b, k) Bigint *b; int k;
-#else
-	(Bigint *b, int k)
-#endif
+pow5mult(Bigint *b, int k)
 {
 	Bigint *b1, *p5, *p51;
 	int i;
@@ -736,12 +673,7 @@ pow5mult
 	}
 
  static Bigint *
-lshift
-#ifdef KR_headers
-	(b, k) Bigint *b; int k;
-#else
-	(Bigint *b, int k)
-#endif
+lshift(Bigint *b, int k)
 {
 	int i, k1, n, n1;
 	Bigint *b1;
@@ -796,12 +728,7 @@ lshift
 	}
 
  static int
-cmp
-#ifdef KR_headers
-	(a, b) Bigint *a, *b;
-#else
-	(Bigint *a, Bigint *b)
-#endif
+cmp(Bigint *a, Bigint *b)
 {
 	ULong *xa, *xa0, *xb, *xb0;
 	int i, j;
@@ -830,12 +757,7 @@ cmp
 	}
 
  static Bigint *
-diff
-#ifdef KR_headers
-	(a, b) Bigint *a, *b;
-#else
-	(Bigint *a, Bigint *b)
-#endif
+diff(Bigint *a, Bigint *b)
 {
 	Bigint *c;
 	int i, wa, wb;
@@ -912,15 +834,10 @@ diff
 	}
 
  static double
-ulp
-#ifdef KR_headers
-	(_x) double _x;
-#else
-	(double _x)
-#endif
+ulp(double _x)
 {
 	_double x;
-	register Long L;
+	Long L;
 	_double a;
 
 	value(x) = _x;
@@ -952,12 +869,7 @@ ulp
 	}
 
  static double
-b2d
-#ifdef KR_headers
-	(a, e) Bigint *a; int *e;
-#else
-	(Bigint *a, int *e)
-#endif
+b2d(Bigint *a, int *e)
 {
 	ULong *xa, *xa0, w, y, z;
 	int k;
@@ -1022,12 +934,7 @@ b2d
 	}
 
  static Bigint *
-d2b
-#ifdef KR_headers
-	(_d, e, bits) double d; int *e, *bits;
-#else
-	(double _d, int *e, int *bits)
-#endif
+d2b(double _d, int *e, int *bits)
 {
 	Bigint *b;
 	int de, i, k;
@@ -1156,12 +1063,7 @@ d2b
 #undef d1
 
  static double
-ratio
-#ifdef KR_headers
-	(a, b) Bigint *a, *b;
-#else
-	(Bigint *a, Bigint *b)
-#endif
+ratio(Bigint *a, Bigint *b)
 {
 	_double da, db;
 	int k, ka, kb;
@@ -1223,12 +1125,7 @@ static CONST double tinytens[] = { 1e-16, 1e-32 };
 #endif
 
  double
-strtod
-#ifdef KR_headers
-	(s00, se) CONST char *s00; char **se;
-#else
-	(CONST char *s00, char **se)
-#endif
+strtod(CONST char *s00, char **se)
 {
 	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
@@ -1239,11 +1136,7 @@ strtod
 	ULong y, z;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
 
-#ifndef KR_headers
 	CONST char decimal_point = localeconv()->decimal_point[0];
-#else
-	CONST char decimal_point = '.';
-#endif
 
 	sign = nz0 = nz = 0;
 	value(rv) = 0.;
@@ -1769,12 +1662,7 @@ strtod
 	}
 
  static int
-quorem
-#ifdef KR_headers
-	(b, S) Bigint *b, *S;
-#else
-	(Bigint *b, Bigint *S)
-#endif
+quorem(Bigint *b, Bigint *S)
 {
 	int n;
 	Long borrow, y;
@@ -1909,13 +1797,7 @@ quorem
  */
 
  char *
-__dtoa
-#ifdef KR_headers
-	(_d, mode, ndigits, decpt, sign, rve)
-	double _d; int mode, ndigits, *decpt, *sign; char **rve;
-#else
-	(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
-#endif
+__dtoa(double _d, int mode, int ndigits, int *decpt, int *sign, char **rve)
 {
  /*	Arguments ndigits, decpt, sign are similar to those
 	of ecvt and fcvt; trailing zeros are suppressed from
