@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.71 2001/06/22 22:34:26 art Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.72 2001/06/22 23:17:27 art Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.71 2001/06/22 22:34:26 art Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.72 2001/06/22 23:17:27 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,6 +197,10 @@ static int sysctl_vfs __P((char *, char **, int[], int, int *));
 static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 int sysctl_bios __P((char *, char **, int *, int, int *));
 int sysctl_swpenc __P((char *, char **, int *, int, int *));
+int sysctl_forkstat __P((char *, char **, int *, int, int *));
+int sysctl_tty __P((char *, char **, int *, int, int *));
+int sysctl_nchstats __P((char *, char **, int *, int, int *));
+int sysctl_malloc __P((char *, char **, int *, int, int *));
 void vfsinit __P((void));
 
 int
@@ -287,7 +291,7 @@ parse(string, flags)
 	size_t size, newsize = 0;
 	int lal = 0, special = 0;
 	void *newval = 0;
-	quad_t quadval;
+	int64_t quadval;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
@@ -605,7 +609,8 @@ parse(string, flags)
 			break;
 
 		case CTLTYPE_QUAD:
-			(void)sscanf(newval, "%qd", &quadval);
+			/* XXX - assumes sizeof(long long) == sizeof(quad_t) */
+			(void)sscanf(newval, "%lld", (long long *)&quadval);
 			newval = &quadval;
 			newsize = sizeof(quadval);
 			break;
@@ -642,8 +647,8 @@ parse(string, flags)
 		printf("total_allocated = %llu ", (long long)kb->kb_total);
 		printf("total_free = %lld ", (long long)kb->kb_totalfree);
 		printf("elements = %lld ", (long long)kb->kb_elmpercl);
-		printf("high watermark = %lld ", kb->kb_highwat);
-		printf("could_free = %lld", kb->kb_couldfree);
+		printf("high watermark = %lld ", (long long)kb->kb_highwat);
+		printf("could_free = %lld", (long long)kb->kb_couldfree);
 		printf(")\n");
 		return;
 	}
@@ -768,11 +773,11 @@ parse(string, flags)
 		    (unsigned long long)rndstats->rnd_drops,
 		    (unsigned long long)rndstats->rnd_drople);
 		for (i = 0; i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]); i++)
-			(void)printf(" %qu", rndstats->rnd_ed[i]);
+			(void)printf(" %llu", (unsigned long long)rndstats->rnd_ed[i]);
 		for (i = 0; i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]); i++)
-			(void)printf(" %qu", rndstats->rnd_sc[i]);
+			(void)printf(" %llu", (unsigned long long)rndstats->rnd_sc[i]);
 		for (i = 0; i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]); i++)
-			(void)printf(" %qu", rndstats->rnd_sb[i]);
+			(void)printf(" %llu", (unsigned long long)rndstats->rnd_sb[i]);
 		printf("\n");
 		return;
 	}
@@ -842,14 +847,18 @@ parse(string, flags)
 
 	case CTLTYPE_QUAD:
 		if (newsize == 0) {
+			long long tmp = *(quad_t *)buf;
+
 			if (!nflag)
 				(void)printf("%s = ", string);
-			(void)printf("%qd\n", *(quad_t *)buf);
+			(void)printf("%lld\n", tmp);
 		} else {
+			long long tmp = *(quad_t *)buf;
+
 			if (!nflag)
-				(void)printf("%s: %qd -> ", string,
-				    *(quad_t *)buf);
-			(void)printf("%qd\n", *(quad_t *)newval);
+				(void)printf("%s: %lld -> ", string, tmp);
+			tmp = *(quad_t *)newval;
+			(void)printf("%qd\n", tmp);
 		}
 		return;
 
