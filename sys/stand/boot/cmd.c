@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.30 1997/09/02 20:48:17 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.31 1997/09/02 21:02:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,6 +47,8 @@ static int Xboot __P((void));
 static int Xdevice __P((void));
 #ifdef DEBUG
 static int Xdebug __P((void));
+#endif
+#ifdef DUMP_REGS
 static int Xregs __P((void));
 #endif
 static int Xhelp __P((void));
