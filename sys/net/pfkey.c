@@ -117,22 +117,36 @@ static int
 pfkey_output(struct mbuf *mbuf, struct socket *socket)
 {
   void *message;
+  int error = 0;
 
 #if DIAGNOSTIC
-  if (!mbuf || !(mbuf->m_flags & M_PKTHDR)) 
-    return EINVAL;
+  if (!mbuf || !(mbuf->m_flags & M_PKTHDR)) {
+    error = EINVAL;
+    goto ret;
+  }
 #endif /* DIAGNOSTIC */
 
-  if (mbuf->m_pkthdr.len > PFKEY_MSG_MAXSZ)
-    return EMSGSIZE;
+  if (mbuf->m_pkthdr.len > PFKEY_MSG_MAXSZ) {
+    error = EMSGSIZE;
+    goto ret;
+  }
 
   if (!(message = malloc((unsigned long) mbuf->m_pkthdr.len, M_TEMP,
-			 M_DONTWAIT)))
-    return ENOMEM;
+			 M_DONTWAIT))) {
+    error = ENOMEM;
+    goto ret;
+  }
 
   m_copydata(mbuf, 0, mbuf->m_pkthdr.len, message);
 
-  return pfkey_versions[socket->so_proto->pr_protocol]->send(socket, message, mbuf->m_pkthdr.len);
+  error =
+    pfkey_versions[socket->so_proto->pr_protocol]->send(socket, message,
+							mbuf->m_pkthdr.len);
+
+ ret:
+  if (mbuf)
+    m_freem (mbuf);
+  return error;
 }
 
 static int
