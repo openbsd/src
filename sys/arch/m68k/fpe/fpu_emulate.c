@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.10 2002/03/14 03:15:54 millert Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.11 2002/04/29 22:23:49 miod Exp $	*/
 /*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
 
 /*
@@ -42,6 +42,10 @@
 #include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 #include "fpu_emulate.h"
 
@@ -250,7 +254,7 @@ fpu_emulate(frame, fpf)
     else {
 	printf(" fpu_emulate: sig=%d, opcode=%x, word1=%x\n",
 	       sig, insn.is_opcode, insn.is_word1);
-	kdb_trap(-1, frame);
+	kdb_trap(-1, (db_regs_t *)frame);
     }
 #endif
     if (frame->f_format == 4)
