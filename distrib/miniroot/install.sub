@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.257 2002/09/20 00:15:00 millert Exp $
+#	$OpenBSD: install.sub,v 1.258 2002/09/22 22:42:25 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -101,9 +101,9 @@ welcome() {
 Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
 
 This program will help you ${MODE} OpenBSD in a simple and rational way. At
-any prompt except password prompts you can run a shell command by typing '!foo',
-or escape to a shell by typing '!'. Default answers are shown in []'s and are
-selected by pressing RETURN. At any time you can exit this program by
+any prompt except password prompts you can run a shell command by typing
+'!foo', or escape to a shell by typing '!'. Default answers are shown in []'s
+and are selected by pressing RETURN. At any time you can exit this program by
 pressing Control-C and then RETURN, but quitting during an ${MODE} can leave
 your system in an inconsistent state.
 
@@ -420,8 +420,6 @@ makedev() {
 get_rootdisk() {
 	local _defdsk
 
-	ROOTDISK=
-
 	_defdsk=`echo $DKDEVS | cutlast`
 	[ "$_defdsk" = "$DKDEVS" ] || _defdsk=
 
@@ -433,6 +431,9 @@ available security features you should configure the disk(s) to allow the
 creation of separate filesystems for /, /tmp, /var, /usr, and /home.
 __EOT
 fi
+
+	ROOTDISK=
+	ROOTDEV=
 
 	ask_fordev "Which disk is the root disk?" "$DKDEVS" "$_defdsk"
 	[ "$resp" = "done" ] && exit
@@ -1728,9 +1729,12 @@ check_fs() {
 	while read _dev _mp _fstype _rest; do
 		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
 		[ -f "/sbin/fsck_$_fstype" ] || continue
+		# Make sure device exists before fsck'ing it.
+		_rest=${_dev#/dev/}
+		makedev ${_rest%[a-p]} || continue
 		echo -n "fsck -p ${_dev}..."
 		if ! fsck -fp ${_dev} > /dev/null 2>&1; then
-			echo "FAILED. You must fsck this device manually."
+			echo "FAILED. You must fsck $_dev manually."
 			_fail=y
 		else
 			echo "OK."

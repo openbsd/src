@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.114 2002/09/17 12:28:54 krw Exp $
+#	$OpenBSD: install.sh,v 1.115 2002/09/22 22:42:25 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -89,11 +89,6 @@ if [ ! -f /etc/fstab ]; then
 	# purposes without mounting the miniroot read-write.
 	[ -f /etc/disktab.shadow ] && cp /etc/disktab.shadow /tmp/disktab.shadow
 
-	# Prevent the user from choosing anything but the default as the
-	# root device. Any attempt to mount '/' anywhere else will
-	# trigger a duplicate mount error.
-	echo "${ROOTDEV} /" > $FILESYSTEMS
-
 	DISK=
 	_DKDEVS=$DKDEVS
 
@@ -101,8 +96,12 @@ if [ ! -f /etc/fstab ]; then
 		_DKDEVS=`rmel "$DISK" $_DKDEVS`
 		[ "$_DKDEVS" ] || break
 
+		# Always do ROOTDISK first, and repeat until
+		# it is configured acceptably.
 		if isin $ROOTDISK $_DKDEVS; then
 			resp=$ROOTDISK
+			rm -f /tmp/fstab
+			rm -f $FILESYSTEMS
 		else
 			ask_fordev "Which disk do you wish to initialize?" "$_DKDEVS"
 			[ "$resp" = "done" ] && break
@@ -117,28 +116,7 @@ if [ ! -f /etc/fstab ]; then
 		rm -f /tmp/fstab.$DISK
 		md_prep_disklabel $DISK
 
-		# Assume $ROOTDEV is the root filesystem, but loop to get the rest.
-		# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
-		cat << __EOT
-
-You will now enter the mount point (full path with the leading '/' character)
-for each OpenBSD partition in the disklabel for ${DISK}.
-
-__EOT
-
-		if [ "$DISK" = "$ROOTDISK" ]; then
-			cat << __EOT
-The following partitions will be used for the root filesystem and swap:
-	${ROOTDEV}	/
-	${ROOTDISK}b	swap
-
-__EOT
-		fi
-
-		# XXX - allow the user to name mount points on disks other than ROOTDISK
-		#	also allow a way to enter non-BSD partitions (but don't newfs!)
 		# Get the list of BSD partitions and store sizes
-
 		# XXX - It would be nice to just pipe the output of sed to a
 		#       'while read _pp _ps' loop, but our 'sh' runs the last
 		#       element of a pipeline in a subshell and the required side
@@ -151,28 +129,51 @@ __EOT
 			# Removing the partition size leaves us with the partition name
 			_pp=${DISK}${_p%${_ps}}
 
-			[ "$_pp" = "$ROOTDEV" ] && continue
+			if [[ $_pp == $ROOTDEV ]]; then
+				echo "$ROOTDEV /" > $FILESYSTEMS
+				continue
+			fi
 
 			_partitions[$_i]=$_pp
 			_psizes[$_i]=$_ps
+
 			# If the user assigned a mount point, use it if possible.
-			if [ -f /tmp/fstab.$DISK ]; then
+			if [[ -f /tmp/fstab.$DISK ]]; then
 				while read _pp _mp _rest; do
 					[[ $_pp == "/dev/${_partitions[$_i]}" ]] || continue
-					[[ $_mp == "/" ]] && break
-					[[ -n $(grep " $_mp\$" $FILESYSTEMS) ]] && break
+					# Ignore mount points that have already been specified.
+					[[ -f $FILESYSTEMS && -n $(grep " $_mp\$" $FILESYSTEMS) ]] && break
 					isin $_mp ${_mount_points[*]} && break
-					# If not '/', and not already used on another disk, and
-					# not already used on this disk, then the user specified
-					# mount point is ok. 
+					# Ignore '/' for any partition but ROOTDEV. Check just
+					# in case ROOTDEV isn't first partition processed. 
+					[[ $_mp == '/' ]] && break					
+					# Otherwise, record user specified mount point.
 					_mount_points[$_i]=$_mp
 				done < /tmp/fstab.$DISK
 			fi
 			: $(( _i += 1 ))
-		done
+ 		done
 
-		# If there are no partitions, go on to next disk.
-		[ $_i -gt 0 ] || continue
+		if [[ $DISK == $ROOTDISK ]]; then
+			# Ensure that ROOTDEV was configured.
+			if [[ -f $FILESYSTEMS && -n $(grep "^$ROOTDEV /$" $FILESYSTEMS) ]]; then
+				echo "The root filesystem will be mounted on $ROOTDEV."
+			else
+				echo "ERROR: Unable to mount the root filesystem on $ROOTDEV."
+				DISK=
+			fi
+			# Ensure that ${ROOTDISK}b was configured as swap space.
+			if [[ -n $(disklabel $ROOTDISK 2>&1 | sed -ne '/^ *\(b\):.*swap/s//\1/p') ]]; then
+				echo "${ROOTDISK}b will be used for swap space."
+			else
+				echo "ERROR: Unable to use ${ROOTDISK}b for swap space."
+				DISK=
+			fi
+			[[ -n $DISK ]] || echo "You must reconfigure $ROOTDISK."
+		fi
+
+		# If there are no BSD partitions, or $DISK has been reset, go on to next disk.
+		[[ ${#_partitions[*]} > 0 && -n $DISK ]] || continue
 		
 		# Now prompt the user for the mount points. Loop until "done" entered.
 		_i=0
@@ -182,7 +183,7 @@ __EOT
 			_mp=${_mount_points[$_i]}
 
 			# Get the mount point from the user
-			ask "Mount point for ${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
+			ask "Mount point for ${_pp} (size=${_ps}k), none or done?" "$_mp"
 			case $resp in
 			"")	;;
 			none)	_mp=
@@ -259,7 +260,6 @@ __EOT
 
 	# Write fstab entries to /tmp/fstab in mount point alphabetic
 	# order to enforce a rational mount order.
-	rm -f /tmp/fstab
 	for _mp in `bsort ${_mount_points[*]}`; do
 		_i=0
 		for _pp in ${_partitions[*]}; do

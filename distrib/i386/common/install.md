@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2002/09/21 21:11:58 krw Exp $
+#	$OpenBSD: install.md,v 1.12 2002/09/22 22:42:25 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ md_prep_fdisk()
 	local _disk=$1 _whole=$2
 
 	if [ -n "$_whole" ]; then
-		echo -n "Putting all of $_disk into an active OpenBSD MBR partition..."
+		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
 		fdisk -e ${_disk} << __EOT > /dev/null
 reinit
 update
@@ -175,7 +175,7 @@ partition. The disklabel defines how OpenBSD splits up the MBR partition
 into OpenBSD partitions in which filesystems and swap space are created. 
 
 The offsets used in the disklabel are ABSOLUTE, i.e. relative to the
-start of the disk, NOT the start of the MBR 'A6' partition.
+start of the disk, NOT the start of the OpenBSD MBR partition.
 
 __EOT
 
