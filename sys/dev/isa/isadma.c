@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.21 1998/11/20 16:04:01 deraadt Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.22 1999/01/11 01:49:00 millert Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -339,7 +339,7 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 			dmam = sc->sc_dmamaps[chan] = isadma_dmam[chan];
 		else
 #endif /* __ISADMA_COMPAT */
-		panic("isa_dmastart: no DMA map for chan %d\n", chan);
+		panic("isa_dmastart: no DMA map for chan %d", chan);
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, dmam, addr, nbytes, p,
@@ -429,8 +429,8 @@ isa_dmaabort(isadev, chan)
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmaabort");
+		panic("isa_dmaabort: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 
 	isa_dmamask(sc, chan);
@@ -449,8 +449,8 @@ isa_dmacount(isadev, chan)
 	int ochan = chan & 3;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmacount");
+		panic("isa_dmacount: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 
 	isa_dmamask(sc, chan);
@@ -495,8 +495,8 @@ isa_dmafinished(isadev, chan)
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmafinished");
+		panic("isa_dmafinished: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 
 	/* check that the terminal count was reached */
@@ -519,8 +519,8 @@ isa_dmadone(isadev, chan)
 	bus_dmamap_t dmam;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmadone");
+		panic("isa_dmadone: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 
 	dmam = sc->sc_dmamaps[chan];
@@ -552,8 +552,8 @@ isa_dmamem_alloc(isadev, chan, size, addrp, flags)
 	int error, boundary, rsegs;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmamem_alloc");
+		panic("isa_dmamem_alloc: %s: bogus drq %d",
+		    sc->sc_dev.dv_xname, chan);
 	}
 
 	boundary = (chan & 4) ? (1 << 17) : (1 << 16);
@@ -580,8 +580,8 @@ isa_dmamem_free(isadev, chan, addr, size)
 	bus_dma_segment_t seg;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmamem_free");
+		panic("isa_dmamem_free: %s: bogus drq %d",
+		    sc->sc_dev.dv_xname, chan);
 	}
 
 	seg.ds_addr = addr;
@@ -603,8 +603,8 @@ isa_dmamem_map(isadev, chan, addr, size, kvap, flags)
 	bus_dma_segment_t seg;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmamem_map");
+		panic("isa_dmamem_map: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 
 	seg.ds_addr = addr;
@@ -623,8 +623,8 @@ isa_dmamem_unmap(isadev, chan, kva, size)
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmamem_unmap");
+		panic("isa_dmamem_unmap: %s: bogus drq %d",
+		    sc->sc_dev.dv_xname, chan);
 	}
 
 	bus_dmamem_unmap(sc->sc_dmat, kva, size);
@@ -642,8 +642,8 @@ isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
 	bus_dma_segment_t seg;
 
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_dmamem_mmap");
+		panic("isa_dmamem_mmap: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 
 	if (off < 0)
@@ -662,8 +662,8 @@ isa_drq_isfree(isadev, chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
 	if (chan < 0 || chan > 7) {
-		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
-		panic("isa_drq_isfree");
+		panic("isa_drq_isfree: %s: bogus drq %d", sc->sc_dev.dv_xname,
+		    chan);
 	}
 	return ISA_DRQ_ISFREE(sc, chan);
 }
