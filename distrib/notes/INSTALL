@@ -1,4 +1,4 @@
-INSTALLATION NOTES for OpenBSD/MACHINE 2.0
+INSTALLATION NOTES for OpenBSD/MACHINE 2.1
 
 
 What is OpenBSD?
@@ -18,7 +18,7 @@ improved. Source code for all critical system components has been
 checked for remote-access, local-access, denial-of-service, data
 destruction, or information-gathering problems.
 
-OpenBSD 2.0 has significantly enhanced the binary emulation subsystem 
+OpenBSD 2.1 has significantly enhanced the binary emulation subsystem 
 (which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
 compatibility) and several kernel subsystems have been generalized
 to support this more readily.  The binary emulation strategy is 
@@ -28,7 +28,7 @@ Cryptography components are part of OpenBSD. OpenBSD is from Canada,
 and export of these pieces (such as kerberosIV) to the world is not
 restricted.
 
-Many new user programs have been added in OpenBSD 2.0, as well,
+Many new user programs have been added in OpenBSD 2.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
 environment. Tools like perl and ksh are standard, as are numerous
 other useful tools.
@@ -40,18 +40,18 @@ Sources of OpenBSD:
 
 #include "mirrors"
 
-OpenBSD 2.0 Release Contents:
+OpenBSD 2.1 Release Contents:
 -----------------------------
 
-The OpenBSD 2.0 release is organized in the following way:
+The OpenBSD 2.1 release is organized in the following way:
 
-.../2.0/
+.../2.1/
 		src/			Source distribution sets; see
 					below.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures that OpenBSD
-2.0 has a binary distribution for.  (That is described further along in
+2.1 has a binary distribution for.  (That is described further along in
 this document).
 
 The source distribution sets can be found in subdirectories of the
@@ -59,23 +59,23 @@ The source distribution sets can be found in subdirectories of the
 complete sources to the system.  The source distribution sets 
 are as follows:
 
-	gsrc20	This set contains the "gnu" sources, including
+	gsrc21	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
-	ksrc20	This set contains the sources to the OpenBSD 2.0
+	ksrc21	This set contains the sources to the OpenBSD 2.1
 		kernel, config(8), config.old(8) and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
-	ssrc20	This set contains the "share" sources, which include
+	ssrc21	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
 		[ 2.4M gzipped, 8.9M uncompressed ]
 
-	src20	This set contains all of the OpenBSD 2.0 sources which
+	src21	This set contains all of the OpenBSD 2.1 sources which
 		are not mentioned above.
 		[ 9.3M gzipped, 41.6M uncompressed ]
 
