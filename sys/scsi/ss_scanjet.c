@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.8 1996/10/31 01:14:13 niklas Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.9 1996/10/31 02:49:45 deraadt Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -111,6 +111,10 @@ scanjet_attach(ss, sa)
 	if (!bcmp(sa->sa_inqbuf->product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIcx");
+	}
+	if (!bcmp(sa->sa_inqbuf->product, "C1130A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 4p");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "C1130A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
