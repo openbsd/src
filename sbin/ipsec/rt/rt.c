@@ -113,7 +113,7 @@ char **argv;
 
 	if (atoi(argv[8]) >= 0)
 	{
-		dst->sen_proto = atoi(argv[7]);
+		dst->sen_proto = atoi(argv[8]);
 		msk->sen_proto = 0xff;
 		if (atoi(argv[9]) >= 0)
 		{
