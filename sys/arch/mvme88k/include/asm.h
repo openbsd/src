@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: asm.h,v 1.13 2001/08/24 22:50:03 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,33 +30,40 @@
 #ifndef __MACHINE_M88K_ASM_H__
 #define __MACHINE_M88K_ASM_H__
 
+#ifdef	_LOCORE
 #ifdef __STDC__
-#	define FUNC(NAME) _##NAME
+#define	_C_LABEL(name)		_ ## name
 #else
-#	define FUNC(NAME) _/**/NAME
+#define	_C_LABEL(name)		_/**/name
 #endif
 
-/* Define EH_DEBUG to be non-zero to compile-in various debugging things */
-#ifndef	EH_DEBUG
-#define EH_DEBUG 1
-#endif /* EH_DEBUG */
+#define	_ASM_LABEL(name)	name
 
-#define	ENTRY(NAME) \
-    .align 8; .globl FUNC(NAME); FUNC(NAME):
-    
+#define	_ENTRY(name) \
+	.text; .align 8; .globl name; name:
 
-#define  LABEL(name)	 name:  .globl name ;
-/*
- * _LABEL(name)
- *	Defines one visible only to the file, unless debugging
- * 	is enabled, in which case it's visible to the world (and
- *	hence to debuggers, and such).
- */
-#if EH_DEBUG
-#  define _LABEL(name)	name:	.globl name ;
-#else
-#  define _LABEL(name)	name:               ;
-#endif
+#define	ENTRY(name)		_ENTRY(_C_LABEL(name))
+#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
+
+#define	GLOBAL(name) \
+	.globl _C_LABEL(name); _C_LABEL(name):
+
+#define ASGLOBAL(name) \
+	.globl _ASM_LABEL(name); _ASM_LABEL(name):
+
+#define	LOCAL(name) \
+	_C_LABEL(name):
+
+#define	ASLOCAL(name) \
+	_ASM_LABEL(name):
+
+#define	BSS(name, size) \
+	.comm	_C_LABEL(name), size
+
+#define	ASBSS(name, size) \
+	.comm	_ASM_LABEL(name), size
+
+#endif	/* _LOCORE */
 
 #define RTE	NOP ; rte
 
@@ -282,9 +289,9 @@
 #define DEBUG_JKDB_BIT			21
 #define DEBUG_BUGCALL_BIT		22
 #define DEBUG_NON_MASK_BIT	   23		/* MVME197 Non-Maskable Interrupt */
-#define DEBUG_197_READ_BIT    25    /* MVME198 Data Read Miss (Software Table Searches) */
-#define DEBUG_197_WRITE_BIT   26    /* MVME198 Data Write Miss (Software Table Searches) */
-#define DEBUG_197_INST_BIT    27    /* MVME198 Inst ATC Miss (Software Table Searches) */
+#define DEBUG_197_READ_BIT    25    /* MVME197 Data Read Miss (Software Table Searches) */
+#define DEBUG_197_WRITE_BIT   26    /* MVME197 Data Write Miss (Software Table Searches) */
+#define DEBUG_197_INST_BIT    27    /* MVME197 Inst ATC Miss (Software Table Searches) */
 
 #define DEBUG_UNKNOWN_BIT		31
 
