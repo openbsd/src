@@ -32,6 +32,7 @@
 .Nd lock user's system mailbox
 .Sh SYNOPSIS
 .Nm lockspool
+.Op Ar username
 .Sh DESCRIPTION
 .Nm Lockspool
 is useful for a client mail program to attain proper locking.
@@ -39,7 +40,8 @@ is useful for a client mail program to attain proper locking.
 obtains a
 .Nm username.lock
 for the calling user and retains it until stdin is closed or a signal
-like SIGINT, SIGTERM, or SIGHUP is received.
+like SIGINT, SIGTERM, or SIGHUP is received.  Additionally, the superuser
+may specify the name of a user in order to lock a different mailbox.
 .Pp
 If
 .Nm lockspool

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.1 1998/08/15 21:02:23 millert Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.2 1998/09/27 20:23:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: lockspool.c,v 1.1 1998/08/15 21:02:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: lockspool.c,v 1.2 1998/09/27 20:23:02 millert Exp $";
 #endif /* not lint */
 
 #include <sys/signal.h>
@@ -56,14 +56,20 @@ main(argc, argv)
 
 	openlog(__progname, LOG_PERROR, LOG_MAIL);
 
-	if (argc != 1)
+	if (argc != 1 && argc != 2)
 		usage();
+	if (argc == 2 && getuid() != 0)
+		err(1, "you must be root to lock someone else's spool");
 
 	signal(SIGTERM, unhold);
 	signal(SIGINT, unhold);
 	signal(SIGHUP, unhold);
 
-	from = getlogin();
+	if (argc == 2)
+		from = argv[1];
+	else
+		from = getlogin();
+
 	if (from) {
 		pw = getpwnam(from);
 		if (pw == NULL)
@@ -102,5 +108,5 @@ void
 usage()
 {
 
-	err(FATAL, "usage: %s", __progname);
+	err(FATAL, "usage: %s [username]", __progname);
 }
