@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.7 2002/02/23 21:47:32 deraadt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.8 2002/02/23 22:09:37 deraadt Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.7 2002/02/23 21:47:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.8 2002/02/23 22:09:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,8 +68,8 @@ static char rcsid[] = "$OpenBSD: xstr.c,v 1.7 2002/02/23 21:47:32 deraadt Exp $"
 
 off_t	tellpt;
 off_t	mesgpt;
-char	*strings =	"strings";
-char	*array =	0;
+char	*strings = "strings";
+char	*array = 0;
 
 int	cflg;
 int	vflg;
@@ -118,8 +118,9 @@ main(int argc, char *argv[])
 			array = optarg;
 			break;
 		default:
-			fprintf(stderr, "usage: xstr [ -v ] [ -c ] [ -l array ] [ - ] [ name ... ]\n");
-			exit (1);
+			fprintf(stderr,
+			    "usage: xstr [-vc] [-l array] [-] [name ...]\n");
+			exit(1);
 		} 
 	argc -= optind;
 	argv += optind;
@@ -147,16 +148,20 @@ main(int argc, char *argv[])
 	}
 
 	while (readstd || argc > 0) {
-		if (freopen("x.c", "w", stdout) == NULL)
-			perror("x.c"), exit(1);
-		if (!readstd && freopen(argv[0], "r", stdin) == NULL)
-			perror(argv[0]), exit(2);
+		if (freopen("x.c", "w", stdout) == NULL) {
+			perror("x.c");
+			exit(1);
+		}
+		if (!readstd && freopen(argv[0], "r", stdin) == NULL) {
+			perror(argv[0]);
+			exit(2);
+		}
 		process("x.c");
 		if (readstd == 0)
 			argc--, argv++;
 		else
 			readstd = 0;
-	};
+	}
 	flushsh();
 	if (cflg == 0)
 		xsdotc();
@@ -252,7 +257,7 @@ yankstr(char **cpp)
 			if (c == 0)
 				break;
 			if (c == '\n') {
-				if (fgets(linebuf, sizeof linebuf, stdin) 
+				if (fgets(linebuf, sizeof linebuf, stdin)
 				    == NULL) {
 					if (ferror(stdin)) {
 						perror("x.c");
@@ -381,20 +386,26 @@ flushsh(void)
 	if (new == 0 && old != 0)
 		return;
 	mesgwrit = fopen(strings, old ? "r+" : "w");
-	if (mesgwrit == NULL)
-		perror(strings), exit(4);
+	if (mesgwrit == NULL) {
+		perror(strings);
+		exit(4);
+	}
 	for (i = 0; i < BUCKETS; i++)
 		for (hp = bucket[i].hnext; hp != NULL; hp = hp->hnext) {
 			found(hp->hnew, hp->hpt, hp->hstr);
 			if (hp->hnew) {
 				fseek(mesgwrit, hp->hpt, 0);
 				fwrite(hp->hstr, strlen(hp->hstr) + 1, 1, mesgwrit);
-				if (ferror(mesgwrit))
-					perror(strings), exit(4);
+				if (ferror(mesgwrit)) {
+					perror(strings);
+					exit(4);
+				}
 			}
 		}
-	if (fclose(mesgwrit) == EOF)
-		perror(strings), exit(4);
+	if (fclose(mesgwrit) == EOF) {
+		perror(strings);
+		exit(4);
+	}
 }
 
 void
@@ -432,11 +443,15 @@ xsdotc(void)
 	FILE *strf = fopen(strings, "r");
 	FILE *xdotcf;
 
-	if (strf == NULL)
-		perror(strings), exit(5);
+	if (strf == NULL) {
+		perror(strings);
+		exit(5);
+	}
 	xdotcf = fopen("xs.c", "w");
-	if (xdotcf == NULL)
-		perror("xs.c"), exit(6);
+	if (xdotcf == NULL) {
+		perror("xs.c");
+		exit(6);
+	}
 	fprintf(xdotcf, "char\t%s[] = {\n", array);
 	for (;;) {
 		int i, c;
