@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.32 2000/05/22 18:42:01 markus Exp $");
+RCSID("$Id: readconf.c,v 1.33 2000/05/29 20:20:46 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -697,7 +697,7 @@ void
 fill_default_options(Options * options)
 {
 	if (options->forward_agent == -1)
-		options->forward_agent = 1;
+		options->forward_agent = 0;
 	if (options->forward_x11 == -1)
 		options->forward_x11 = 0;
 	if (options->gateway_ports == -1)
