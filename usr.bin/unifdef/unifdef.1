@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.6 1999/10/17 20:35:46 aaron Exp $
+.\"	$OpenBSD: unifdef.1,v 1.7 2000/03/06 03:17:40 aaron Exp $
 .\"	$NetBSD: unifdef.1,v 1.4 1994/12/07 00:33:48 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -158,12 +158,12 @@ Premature
 with line numbers of the unterminated #ifdefs.
 .Pp
 Exit status is 0 if output is exact copy of input, 1 if not, 2 if trouble.
-.Sh BUGS
-Should try to deal with ``#if'' lines.
-.Pp
-Doesn't work correctly if input contains null characters.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.3 .
+.Sh BUGS
+Should try to deal with ``#if'' lines.
+.Pp
+Doesn't work correctly if input contains null characters.

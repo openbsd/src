@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.4 1999/06/05 01:21:43 aaron Exp $
+.\"	$OpenBSD: tftp.1,v 1.5 2000/03/06 03:17:40 aaron Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -162,6 +162,13 @@ Toggle packet tracing.
 .It Ic verbose
 Toggle verbose mode.
 .El
+.Sh SEE ALSO
+.Xr ftp 1
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
 .Sh BUGS
 Because there is no user login or validation within
 the
@@ -170,8 +177,3 @@ protocol, the remote site will probably have some
 sort of file access restrictions in place.  The
 exact methods are specific to each site and therefore
 difficult to document here.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.3 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: showmount.8,v 1.6 1999/05/23 14:11:30 aaron Exp $
+.\"	$OpenBSD: showmount.8,v 1.7 2000/03/06 03:17:39 aaron Exp $
 .\"	$NetBSD: showmount.8,v 1.5 1995/08/31 22:26:07 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -82,6 +82,11 @@ Use mount protocol Version 3, compatible with NFS Version 3.
 .Sh SEE ALSO
 .Xr mount 8 ,
 .Xr mountd 8
+.Sh HISTORY
+The
+.Nm showmount
+utility first appeared in
+.Bx 4.4 .
 .Sh BUGS
 The mount daemon running on the server only has an idea of the actual mounts,
 since the
@@ -90,8 +95,3 @@ server is stateless.
 .Nm showmount
 will only display the information
 as accurately as the mount daemon reports it.
-.Sh HISTORY
-The
-.Nm showmount
-utility first appeared in
-.Bx 4.4 .
