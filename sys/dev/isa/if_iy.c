@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.12 2001/06/23 22:03:10 fgsch Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.13 2001/06/25 04:44:28 fgsch Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -775,7 +775,6 @@ struct iy_softc *sc;
 int iobase, rxlen;
 {
 	struct mbuf *m, *top, **mp;
-	struct ether_header *eh;
 	struct ifnet *ifp;
 	int len;
 
@@ -839,14 +838,11 @@ int iobase, rxlen;
 	/* XXX receive the top here */
 	++ifp->if_ipackets;
 
-	eh = mtod(top, struct ether_header *);
-
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
-	m_adj(top, sizeof(struct ether_header));
-	ether_input(ifp, eh, top);
+	ether_input_mbuf(ifp, top);
 	return;
 
 dropped:

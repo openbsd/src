@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.11 2001/06/23 21:54:48 fgsch Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.12 2001/06/25 04:44:28 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -693,7 +693,6 @@ efread(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 	int len;
 
 	len = bus_space_read_2(iot, ioh, EF_W1_RX_STATUS);
@@ -742,15 +741,12 @@ efread(sc)
 
 	ifp->if_ipackets++;
 
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 }
 
 struct mbuf *

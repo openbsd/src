@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.19 2001/06/23 21:54:49 fgsch Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.20 2001/06/25 04:44:28 fgsch Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -681,7 +681,6 @@ egread(sc, buf, len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 	
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
@@ -700,9 +699,6 @@ egread(sc, buf, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -712,9 +708,7 @@ egread(sc, buf, len)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/* We assume the header fit entirely in one mbuf. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 }
 
 /*

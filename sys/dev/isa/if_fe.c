@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.14 2001/06/23 21:54:50 fgsch Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.15 2001/06/25 04:44:28 fgsch Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -2017,7 +2017,6 @@ fe_get_packet(sc, len)
 	struct fe_softc *sc;
 	int len;
 {
-	struct ether_header *eh;
 	struct mbuf *m;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
@@ -2057,7 +2056,6 @@ fe_get_packet(sc, len)
 	 * header mbuf.
 	 */
 	m->m_data += EOFF;
-	eh = mtod(m, struct ether_header *);
 
 	/* Set the length of this packet. */
 	m->m_len = len;
@@ -2074,9 +2072,7 @@ fe_get_packet(sc, len)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/* Fix up data start offset in mbuf to point past ether header. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 	return (1);
 }
 
