@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 1997/01/17 08:32:52 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 1997/03/31 07:25:48 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.6 1996/10/14 07:33:46 thorpej Exp $	*/
 
 /*
@@ -170,5 +170,5 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	asm("movl %0,d5" : : "m" (cons_scode));
 	asm("movl %0,a5" : : "a" (loadaddr));
 	asm("movl %0,a4" : : "a" (esym));
-	(*((int (*)())entry))();
+	(*((int (*)())loadaddr))();
 }
