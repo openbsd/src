@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.22 2001/09/18 14:43:23 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.23 2001/09/18 15:46:39 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.22 2001/09/18 14:43:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.23 2001/09/18 15:46:39 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -376,6 +376,6 @@ dump_buffer(f, m)
 {
 	char *s;
 
-	for (s = bp; s != buf + m;)
+	for (s = bp; s-buf > m;)
 		fputc(*--s, f);
 }
