@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.78 2002/02/24 23:33:47 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -1068,27 +1068,11 @@ nmihand(frame)
 
 	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
-		printf("Got a keyboard NMI");
-
-		/*
-		 * We can:
-		 *
-		 *	- enter DDB
-		 *
-		 *	- Start the crashandburn sequence
-		 *
-		 *	- Ignore it.
-		 */
 #ifdef DDB
 		if (db_console) {
-			printf(": entering debugger\n");
 			Debugger();
-		} else
-			printf("\n");
-#else
-			printf(": ignoring\n");
+		}
 #endif /* DDB */
-
 		goto nmihand_out;	/* no more work to do */
 	}
 
