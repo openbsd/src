@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.63 2004/08/26 20:08:35 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.64 2005/01/15 17:52:07 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -30,6 +30,7 @@ MACHINE,mvme88k,m88k,
 MACHINE,mvmeppc,powerpc,
 MACHINE,sgi,mips64,
 MACHINE,sun3,m68k,
+MACHINE,zaurus,arm,
 MACHINE)')dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl

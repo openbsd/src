@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.1 2005/01/10 03:30:48 drahn Exp $
+dnl	$OpenBSD: contents,v 1.2 2005/01/15 17:52:09 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -9,26 +9,30 @@ OpenBSDrd
 dnl not yet...
 dnl OpenBSDcd
 
+	zboot		The OpenBSD/MACHINE disk-based boot loader.
+
+	zbsdmod.o	The OpenBSD/MACHINE memory-based boot loader.
+
 DistributionDescription(eleven)
 
-OpenBSDbase(40639006,107004458,shared)
+OpenBSDbase(42397502,111254895,shared)
 
-OpenBSDcomp(17316979,57637693,shared)
+OpenBSDcomp(17814778,59292414,shared)
 
-OpenBSDetc(1698829,6544396)
+OpenBSDetc(1699887,6711364)
 
-OpenBSDgame(2647774,5967190)
+OpenBSDgame(2648211,5962900)
 
-OpenBSDman(7234770,25874762)
+OpenBSDman(7321462,26208011)
 
-OpenBSDmisc(2245813,7365432)
+OpenBSDmisc(2275916,7480471)
 
-OpenBSDxbase(10673091,28798093)
+OpenBSDxbase(13283350,36790409)
 
-OpenBSDxetc(447126,2313145)
+OpenBSDxetc(84593,312250)
 
-OpenBSDxfont(32513427,36041353)
+OpenBSDxfont(33193003,37048786)
 
-OpenBSDxserv(9393219,24479132)
+OpenBSDxserv(10691512,28944061)
 
-OpenBSDxshare(1934460,9968263)
+OpenBSDxshare(1983150,10193779)

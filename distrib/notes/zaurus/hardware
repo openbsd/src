@@ -1,9 +1,11 @@
-dnl	$OpenBSD: hardware,v 1.1 2005/01/10 03:30:48 drahn Exp $
-OpenBSD/MACHINE runs on the Sharp Zaurus C3000, C860(?)
+dnl	$OpenBSD: hardware,v 1.2 2005/01/15 17:52:09 miod Exp $
+dnl When more than one models is supported, turn this into a list...
+OpenBSD/MACHINE runs on the Sharp Zaurus C3000 only at the moment.
+Support for the C-760 and C-860 is under development.
 
 Supported devices {:-include-:}:
 	Ethernet Adapters
-		CF ne3000 (?)
+		CF ne3000 (untested)
 	Wireless Ethernet Adapters
 		USB Adapters
 		    Acer Warplink USB-400
@@ -39,7 +41,10 @@ Supported devices {:-include-:}:
 		USB-USB cables
 		USB Y@p phone
 	Keyboards
+dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
+		System keyboard
 		USB keyboards
 	Pointing Devices
 		USB mice
-	PXALCD Onboard Display.
+dnl C3000 specific. Mention it when C860 is supported but not its keyboard.
+	On-board Display (pxalcd)

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.3 2005/01/14 08:24:44 deraadt Exp $
+dnl	$OpenBSD: install,v 1.4 2005/01/15 17:52:09 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -50,6 +50,7 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
 	'h', 'i' and so on.-:})
 
+dnl Change this after fdisk swap command is added.
 	One of the three partitions on the Zaurus C3000 hard drive is
 	a 3GB MSDOS filesystem.  It is recommended that you use fdisk
 	to convert this Zaurus partition to an OpenBSD partition by

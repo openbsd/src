@@ -1,7 +1,6 @@
-dnl	$OpenBSD: prep,v 1.1 2005/01/10 03:30:48 drahn Exp $
+dnl	$OpenBSD: prep,v 1.2 2005/01/15 17:52:09 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Linux, the low-level
 process that controls the microprocessor after hardware initialization.
-
 dnl
 dnl XXX bootable partitions
