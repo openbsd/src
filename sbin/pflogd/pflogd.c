@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.28 2004/04/28 06:59:58 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.29 2004/05/23 19:00:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -506,6 +506,7 @@ main(int argc, char **argv)
 	struct pcap_stat pstat;
 	int ch, np, Xflag = 0;
 	pcap_handler phandler = dump_packet;
+	const char *errstr = NULL;
 
 	closefrom(STDERR_FILENO + 1);
 
@@ -515,18 +516,19 @@ main(int argc, char **argv)
 			Debug = 1;
 			break;
 		case 'd':
-			delay = atoi(optarg);
-			if (delay < 5 || delay > 60*60)
+			delay = strtonum(optarg, 5, 60*60, &errstr);
+			if (errstr)
 				usage();
 			break;
 		case 'f':
 			filename = optarg;
 			break;
 		case 's':
-			snaplen = atoi(optarg);
+			snaplen = strtonum(optarg, 0, PFLOGD_MAXSNAPLEN,
+			    &errstr);
 			if (snaplen <= 0)
 				snaplen = DEF_SNAPLEN;
-			if (snaplen > PFLOGD_MAXSNAPLEN)
+			if (errstr)
 				snaplen = PFLOGD_MAXSNAPLEN;
 			break;
 		case 'x':
