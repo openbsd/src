@@ -20,9 +20,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
 
-/* Define if your struct stat has st_blksize.  */
-#define HAVE_ST_BLKSIZE 1
-
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #define HAVE_SYS_WAIT_H 1
 
@@ -294,9 +291,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Define if you have the setrlimit function.  */
 #define HAVE_SETRLIMIT 1
-
-/* Define if you have the setsid function.  */
-#define HAVE_SETSID 1
 
 /* Define if you have the strchr function.  */
 #define HAVE_STRCHR 1

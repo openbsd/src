@@ -14,7 +14,7 @@ Allocating a pseudo-terminal, and making it the controlling tty.
 */
 
 #include "includes.h"
-RCSID("$Id: pty.c,v 1.1 1999/09/26 20:53:36 deraadt Exp $");
+RCSID("$Id: pty.c,v 1.2 1999/09/29 21:15:54 deraadt Exp $");
 
 #include "pty.h"
 #include "ssh.h"
@@ -246,14 +246,8 @@ void pty_make_controlling_tty(int *ttyfd, const char *ttyname)
       close(fd);
     }
 #endif /* TIOCNOTTY */
-#ifdef HAVE_SETSID
-#ifdef ultrix
-  setpgrp(0, 0);
-#else /* ultrix */
   if (setsid() < 0)
     error("setsid: %.100s", strerror(errno));
-#endif /* ultrix */
-#endif /* HAVE_SETSID */
   
   /* Verify that we are successfully disconnected from the controlling tty. */
   fd = open("/dev/tty", O_RDWR|O_NOCTTY);

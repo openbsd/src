@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.2 1999/09/29 18:16:20 dugsong Exp $
+ *	$Id: scp.c,v 1.3 1999/09/29 21:15:54 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.2 1999/09/29 18:16:20 dugsong Exp $");
+RCSID("$Id: scp.c,v 1.3 1999/09/29 21:15:54 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -957,7 +957,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.2 1999/09/29 18:16:20 dugsong Exp $
+ *	$Id: scp.c,v 1.3 1999/09/29 21:15:54 deraadt Exp $
  */
 
 char *
@@ -1018,7 +1018,6 @@ allocbuf(bp, fd, blksize)
 	int fd, blksize;
 {
 	size_t size;
-#ifdef HAVE_ST_BLKSIZE
 	struct stat stb;
 
 	if (fstat(fd, &stb) < 0) {
@@ -1029,10 +1028,7 @@ allocbuf(bp, fd, blksize)
 	  size = blksize;
         else
   	  size = blksize + (stb.st_blksize - blksize % stb.st_blksize) %
-	  stb.st_blksize;
-#else /* HAVE_ST_BLKSIZE */
-	size = blksize;
-#endif /* HAVE_ST_BLKSIZE */
+	    stb.st_blksize;
 	if (bp->cnt >= size)
 		return (bp);
   	if (bp->buf == NULL)

@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.11 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.12 1999/09/29 21:15:54 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -628,9 +628,7 @@ main(int ac, char **av)
 	fatal("fork failed: %.100s", strerror(errno));
       if (ret != 0)
 	exit(0);
-#ifdef HAVE_SETSID
       setsid();
-#endif /* HAVE_SETSID */
     }
 
 #ifdef WITH_ZLIB
