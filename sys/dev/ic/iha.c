@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.22 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: iha.c,v 1.23 2004/01/19 00:44:32 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -2769,7 +2769,7 @@ iha_se2_rd(iot, ioh, addr)
 	int i;
 
 	/* Send 'READ' instruction == address | READ bit */
-	iha_se2_instr(iot, ioh, (addr | READ));
+	iha_se2_instr(iot, ioh, (addr | NVREAD));
 
 	readWord = 0;
 	for (i = 15; i >= 0; i--) {

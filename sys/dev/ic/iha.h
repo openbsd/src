@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.14 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: iha.h,v 1.15 2004/01/19 00:44:33 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -249,9 +249,9 @@ struct iha_nvram {
 #define TUL_PNVPG	0x5A	       /* R/W Data port to external BIOS     */
 #define TUL_EPDATA	0x5C	       /* R/W EEPROM Data port		     */
 #define TUL_NVRAM	0x5D	       /* R/W Non-volatile RAM port	     */
-#define     READ	    0x80       /*     Read from given NVRAM addr     */
-#define     WRITE           0x40       /*     Write to given NVRAM addr	     */
-#define     ENABLE_ERASE    0x30       /*     Enable NVRAM Erase/Write       */
+#define     NVREAD	    0x80       /*     Read from given NVRAM addr     */
+#define     NVWRITE         0x40       /*     Write to given NVRAM addr	     */
+#define     NVENABLE_ERASE  0x30       /*     Enable NVRAM Erase/Write       */
 #define	    NVRCS	    0x08       /*     Select external NVRAM	     */
 #define	    NVRCK	    0x04       /*     NVRAM Clock		     */
 #define	    NVRDO	    0x02       /*     NVRAM Write Data		     */
