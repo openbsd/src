@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.43 2002/01/18 01:36:29 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.44 2002/02/22 20:37:45 drahn Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -473,6 +473,10 @@ struct vfsops {
 				     size_t, struct proc *));
 	int	(*vfs_checkexp) __P((struct mount *mp, struct mbuf *nam,
 				    int *extflagsp, struct ucred **credanonp));
+	int     (*vfs_extattrctl) __P((struct mount *mp, int cmd,
+				    struct vnode *filename_vp,
+				    int attrnamespace, const char *attrname,
+				    struct proc *p));
 };
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
@@ -489,6 +493,18 @@ struct vfsops {
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
 #define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
+#define VFS_EXTATTRCTL(MP, C, FN, NS, N, P) \
+	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, FN, NS, N, P)
+
+/* 
+ * Declarations for these vfs default operations are located in 
+ * kern/vfs_default.c, they should be used instead of making "dummy" 
+ * functions or casting entries in the VFS op table to "enopnotsupp()".
+ */ 
+int	vfs_stdextattrctl __P((struct mount *mp, int cmd,
+	    struct vnode *filename_vp, int attrnamespace, const char *attrname,
+	    struct proc *p));
+
 #endif /* _KERNEL */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.17 2002/02/18 09:23:26 ericj Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.18 2002/02/22 20:37:46 drahn Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -82,7 +83,8 @@ struct vfsops mfs_vfsops = {
 	ffs_vptofh,
 	mfs_init,
 	ffs_sysctl,
-	mfs_checkexp
+	mfs_checkexp,
+	vfs_stdextattrctl
 };
 
 /*

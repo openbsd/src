@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.10 2001/12/01 19:12:25 deraadt Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.11 2002/02/22 20:37:46 drahn Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ffs/ffs_extern.h>

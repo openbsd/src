@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.38 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.39 2002/02/22 20:37:46 drahn Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 
 #include <dev/rndvar.h>
 
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.25 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.26 2002/02/22 20:37:46 drahn Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -107,7 +108,11 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
+#ifdef UFS_EXTATTR
+	{ &vop_getextattr_desc, ufs_vop_getextattr },
+	{ &vop_setextattr_desc, ufs_vop_setextattr },
+#endif
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
@@ -152,6 +157,10 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
+#ifdef UFS_EXTATTR
+	{ &vop_getextattr_desc, ufs_vop_getextattr },
+	{ &vop_setextattr_desc, ufs_vop_setextattr },
+#endif
 	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_specop_opv_desc =
@@ -198,6 +207,10 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
+#ifdef UFS_EXTATTR
+	{ &vop_getextattr_desc, ufs_vop_getextattr },
+	{ &vop_setextattr_desc, ufs_vop_setextattr },
+#endif
 	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =

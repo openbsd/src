@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.11 2001/09/18 01:21:55 art Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.12 2002/02/22 20:37:45 drahn Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -62,6 +62,7 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>

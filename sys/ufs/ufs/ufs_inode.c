@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.16 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.17 2002/02/22 20:37:46 drahn Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>

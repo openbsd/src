@@ -1,4 +1,4 @@
-/* 	$OpenBSD: osf1_mount.c,v 1.6 2002/02/12 18:41:20 art Exp $ */
+/* 	$OpenBSD: osf1_mount.c,v 1.7 2002/02/22 20:37:45 drahn Exp $ */
 /*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
 
 /*
@@ -83,6 +83,7 @@
 #include <nfs/nfsmount.h>
 
 #include <ufs/ufs/quota.h>
+#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/ufsmount.h>
 
 #include <machine/vmparam.h>

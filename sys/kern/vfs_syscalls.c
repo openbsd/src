@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.93 2002/02/12 18:41:21 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.94 2002/02/22 20:37:45 drahn Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/extattr.h>
 
 #include <sys/syscallargs.h>
 
@@ -2804,3 +2805,408 @@ sys_pwritev(p, v, retval)
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &offset, retval));
 }
+
+#ifdef UFS_EXTATTR
+/*
+ * Syscall to push extended attribute configuration information into the
+ * VFS.  Accepts a path, which it converts to a mountpoint, as well as
+ * a command (int cmd), and attribute name and misc data.  For now, the
+ * attribute name is left in userspace for consumption by the VFS_op.
+ * It will probably be changed to be copied into sysspace by the
+ * syscall in the future, once issues with various consumers of the
+ * attribute code have raised their hands.
+ *
+ * Currently this is used only by UFS Extended Attributes.
+ */
+int
+sys_extattrctl(struct proc *p, void *v, register_t *reval)
+{
+	struct sys_extattrctl_args /* {
+		syscallarg(const char *) path;
+		syscallarg(int) cmd;
+		syscallarg(const char *) filename;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+	} */ *uap = v;
+	struct vnode *filename_vp;
+	struct nameidata nd;
+	struct mount *mp;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	/*
+	 * SCARG(uap, attrname) not always defined.  We check again later
+	 * when we invoke the VFS call so as to pass in NULL there if needed.
+	 */
+	if (SCARG(uap, attrname) != NULL) {
+		error = copyinstr(SCARG(uap, attrname), attrname,
+		    EXTATTR_MAXNAMELEN, NULL);
+		if (error)
+			return (error);
+	}
+
+	/*
+	 * SCARG(uap, filename) not always defined.  If it is, grab
+	 * a vnode lock, which VFS_EXTATTRCTL() will later release.
+	 */
+	filename_vp = NULL;
+	if (SCARG(uap, filename) != NULL) {
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+		    SCARG(uap, filename), p);
+		if ((error = namei(&nd)) != 0)
+			return (error);
+		filename_vp = nd.ni_vp;
+	}
+
+	/* SCARG(uap, path) always defined. */
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0) {
+		if (filename_vp != NULL)
+			vput(filename_vp);
+		return (error);
+	}
+
+	mp = nd.ni_vp->v_mount;
+	if (error) {
+		if (filename_vp != NULL)
+			vput(filename_vp);
+		return (error);
+	}
+
+	if (SCARG(uap, attrname) != NULL) {
+		error = VFS_EXTATTRCTL(mp, SCARG(uap, cmd), filename_vp,
+		    SCARG(uap, attrnamespace), attrname, p);
+	} else {
+		error = VFS_EXTATTRCTL(mp, SCARG(uap, cmd), filename_vp,
+		    SCARG(uap, attrnamespace), NULL, p);
+	}
+
+	/*
+	 * VFS_EXTATTRCTL will have unlocked, but not de-ref'd,
+	 * filename_vp, so vrele it if it is defined.
+	 */
+	if (filename_vp != NULL)
+		vrele(filename_vp);
+
+	return (error);
+}
+
+/*-
+ * Set a named extended attribute on a file or directory
+ * 
+ * Arguments: unlocked vnode "vp", attribute namespace "attrnamespace",
+ *            kernelspace string pointer "attrname", userspace buffer
+ *            pointer "data", buffer length "nbytes", thread "td".
+ * Returns: 0 on success, an error number otherwise
+ * Locks: none
+ * References: vp must be a valid reference for the duration of the call
+ */
+static int
+extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
+    void *data, size_t nbytes, struct proc *p, register_t *retval)
+{
+	struct uio auio;
+	struct iovec aiov;
+	ssize_t cnt;
+	int error;
+
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+
+	aiov.iov_base = data;
+	aiov.iov_len = nbytes;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_offset = 0;
+	if (nbytes > INT_MAX) {
+		error = EINVAL;
+		goto done;
+	}
+	auio.uio_resid = nbytes;
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_procp = p;
+	cnt = nbytes;
+
+	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio,
+	    p->p_ucred, p);
+	cnt -= auio.uio_resid;
+	retval[0] = cnt;
+
+done:
+	VOP_UNLOCK(vp, 0, p);
+	return (error);
+}
+
+int
+sys_extattr_set_file(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_extattr_set_file_args /* {
+		syscallarg(const char *) path;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+		syscallarg(void *) data;
+		syscallarg(size_t) nbytes;
+	} */ *uap = v;
+	struct nameidata nd;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	error = copyinstr(SCARG(uap, attrname), attrname, EXTATTR_MAXNAMELEN,
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = extattr_set_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
+	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_extattr_set_fd(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_extattr_set_fd_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+		syscallarg(struct iovec *) iovp;
+		syscallarg(int) iovcnt;
+	} */ *uap = v;
+	struct file *fp;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	error = copyinstr(SCARG(uap, attrname), attrname, EXTATTR_MAXNAMELEN,
+	    NULL);
+	if (error)
+		return (error);
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	FREF(fp);
+	error = extattr_set_vp((struct vnode *)fp->f_data,
+	    SCARG(uap, attrnamespace), attrname, SCARG(uap, data),
+	    SCARG(uap, nbytes), p, retval);
+	FRELE(fp);
+
+	return (error);
+}
+
+/*-
+ * Get a named extended attribute on a file or directory
+ * 
+ * Arguments: unlocked vnode "vp", attribute namespace "attrnamespace",
+ *            kernelspace string pointer "attrname", userspace buffer
+ *            pointer "data", buffer length "nbytes", thread "td".
+ * Returns: 0 on success, an error number otherwise
+ * Locks: none
+ * References: vp must be a valid reference for the duration of the call
+ */
+static int
+extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
+    void *data, size_t nbytes, struct proc *p, register_t *retval)
+{
+	struct uio auio;
+	struct iovec aiov;
+	ssize_t cnt;
+	size_t size;
+	int error;
+
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_READ);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+
+	/*
+	 * Slightly unusual semantics: if the user provides a NULL data
+	 * pointer, they don't want to receive the data, just the
+	 * maximum read length.
+	 */
+	if (data != NULL) {
+		aiov.iov_base = data;
+		aiov.iov_len = nbytes;
+		auio.uio_iov = &aiov;
+		auio.uio_offset = 0;
+		if (nbytes > INT_MAX) {
+			error = EINVAL;
+			goto done;
+		}
+		auio.uio_resid = nbytes;
+		auio.uio_rw = UIO_READ;
+		auio.uio_segflg = UIO_USERSPACE;
+		auio.uio_procp = p;
+		cnt = nbytes;
+		error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio,
+		    NULL, p->p_ucred, p);
+		cnt -= auio.uio_resid;
+		retval[0] = cnt;
+	} else {
+		error = VOP_GETEXTATTR(vp, attrnamespace, attrname, NULL,
+		    &size, p->p_ucred, p);
+		retval[0] = size;
+	}
+done:
+	VOP_UNLOCK(vp, 0, p);
+	return (error);
+}
+
+int
+sys_extattr_get_file(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_extattr_get_file_args /* {
+		syscallarg(const char *) path;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+		syscallarg(void *) data;
+		syscallarg(size_t) nbytes;
+	} */ *uap = v;
+	struct nameidata nd;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	error = copyinstr(SCARG(uap, attrname), attrname, EXTATTR_MAXNAMELEN,
+	    NULL);
+	if (error)
+		return (error);
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = extattr_get_vp(nd.ni_vp, SCARG(uap, attrnamespace), attrname,
+	    SCARG(uap, data), SCARG(uap, nbytes), p, retval);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+int
+sys_extattr_get_fd(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_extattr_get_fd_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+		syscallarg(void *) data;
+		syscallarg(size_t) nbytes;
+	} */ *uap = v;
+	struct file *fp;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	error = copyinstr(SCARG(uap, attrname), attrname, EXTATTR_MAXNAMELEN,
+	    NULL);
+	if (error)
+		return (error);
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	FREF(fp);
+	error = extattr_get_vp((struct vnode *)fp->f_data,
+	    SCARG(uap, attrnamespace), attrname, SCARG(uap, data),
+	    SCARG(uap, nbytes), p, retval);
+	FRELE(fp);
+
+	return (error);
+}
+
+/*
+ * extattr_delete_vp(): Delete a named extended attribute on a file or
+ *                      directory
+ * 
+ * Arguments: unlocked vnode "vp", attribute namespace "attrnamespace",
+ *            kernelspace string pointer "attrname", proc "p"
+ * Returns: 0 on success, an error number otherwise
+ * Locks: none
+ * References: vp must be a valid reference for the duration of the call
+ */
+static int
+extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
+    struct proc *p)
+{
+	int error;
+
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+
+	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
+	    p->p_ucred, p);
+
+	VOP_UNLOCK(vp, 0, p);
+	return (error);
+}
+
+int
+sys_extattr_delete_file(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_extattr_delete_file_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+	} */ *uap = v;
+	struct nameidata nd;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	error = copyinstr(SCARG(uap, attrname), attrname, EXTATTR_MAXNAMELEN,
+	     NULL);
+	if (error)
+		return(error);
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return(error);
+
+	error = extattr_delete_vp(nd.ni_vp, SCARG(uap, attrnamespace),
+	    attrname, p);
+
+	vrele(nd.ni_vp);
+	return(error);
+}
+
+int
+sys_extattr_delete_fd(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_extattr_delete_fd_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) attrnamespace;
+		syscallarg(const char *) attrname;
+	} */ *uap = v; 
+	struct file *fp;
+	char attrname[EXTATTR_MAXNAMELEN];
+	int error;
+
+	error = copyinstr(SCARG(uap, attrname), attrname, EXTATTR_MAXNAMELEN,
+	    NULL);
+	if (error)
+		return (error);
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	FREF(fp);
+	error = extattr_delete_vp((struct vnode *)fp->f_data,
+	    SCARG(uap, attrnamespace), attrname, p);
+	FRELE(fp);
+
+	return (error);
+}
+#endif 

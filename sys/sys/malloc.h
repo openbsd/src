@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.54 2002/02/12 17:19:41 provos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.55 2002/02/22 20:37:45 drahn Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -149,7 +149,8 @@
 #define	M_USBHC		103	/* USB host controller */
 /* 104 - free */
 #define M_MEMDESC	105	/* Memory range */
-/* 106-107 - free */
+#define M_UFS_EXTATTR	106	/* Extended Attributes */
+/* 107 - free */
 #define M_CRYPTO_DATA   108	/* Crypto framework data buffers (keys etc.) */
 /* 109 - free */
 #define M_CREDENTIALS   110	/* IPsec-related credentials and ID info */

@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.47 2001/06/26 19:56:52 dugsong Exp $
+;	$OpenBSD: syscalls.master,v 1.48 2002/02/22 20:37:45 drahn Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -534,4 +534,32 @@
 271	STD		{ int sys_mlockall(int flags); }
 272	STD		{ int sys_munlockall(void); }
 273	STD		{ int sys_getpeereid(int fdes, uid_t *euid, gid_t *egid); }
-
+#ifdef UFS_EXTATTR
+274	STD		{ int sys_extattrctl(const char *path, int cmd, \
+			    const char *filename, int attrnamespace, \
+			    const char *attrname); }
+275	STD		{ int sys_extattr_set_file(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+276	STD		{ ssize_t sys_extattr_get_file(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+277	STD		{ int sys_extattr_delete_file(const char *path, \
+			    int attrnamespace, const char *attrname); }
+278	STD		{ int sys_extattr_set_fd(int fd, int attrnamespace, \
+			    const char *attrname, void *data, \
+			    size_t nbytes); }
+279	STD		{ ssize_t sys_extattr_get_fd(int fd, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+280	STD		{ int sys_extattr_delete_fd(int fd, int attrnamespace, \
+			    const char *attrname); }
+#else
+274	UNIMPL		sys_extattrctl
+275	UNIMPL		sys_extattr_set_file
+276	UNIMPL		sys_extattr_get_file
+277	UNIMPL		sys_extattr_delete_file
+278	UNIMPL		sys_extattr_set_fd
+279	UNIMPL		sys_extattr_get_fd
+280	UNIMPL		sys_extattr_delete_fd
+#endif

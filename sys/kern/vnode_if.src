@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.18 2001/12/19 08:58:06 art Exp $
+#	$OpenBSD: vnode_if.src,v 1.19 2002/02/22 20:37:45 drahn Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -467,3 +467,27 @@ vop_whiteout {
 #vop_bwrite {
 #	IN struct buf *bp;
 #};
+#
+#% getextattr	vp	L L L
+#
+vop_getextattr {
+	IN struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	INOUT struct uio *uio;
+	OUT size_t *size;
+	IN struct ucred *cred;
+	IN struct proc *p;
+};
+
+#
+#% setextattr	vp	L L L
+#
+vop_setextattr {
+	IN struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	INOUT struct uio *uio;
+	IN struct ucred *cred;
+	IN struct proc *p;
+};
