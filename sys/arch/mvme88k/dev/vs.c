@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.43 2004/07/18 19:45:51 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.44 2004/07/19 20:31:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -324,7 +324,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 	    (u_int8_t *)xs->cmd, xs->cmdlen);
 
 	vs_write(2, iopb + IOPB_CMD, IOPB_PASSTHROUGH);
-	vs_write(2, iopb + IOPB_UNIT, (slp->lun << 3) | slp->target);
+	vs_write(2, iopb + IOPB_UNIT, IOPB_UNIT_VALUE(slp->target, slp->lun));
 	vs_write(1, iopb + IOPB_NVCT, sc->sc_nvec);
 	vs_write(1, iopb + IOPB_EVCT, sc->sc_evec);
 
@@ -415,6 +415,7 @@ vs_chksense(struct scsi_xfer *xs)
 	mce_iopb_write(2, IOPB_ADDR, ADDR_MOD);
 	mce_iopb_write(4, IOPB_BUFF, kvtop((vaddr_t)&xs->sense));
 	mce_iopb_write(4, IOPB_LENGTH, sizeof(struct scsi_sense_data));
+	mce_iopb_write(2, IOPB_UNIT, IOPB_UNIT_VALUE(slp->target, slp->lun));
 
 	vs_bzero(sh_MCE, CQE_SIZE);
 	mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
@@ -607,7 +608,7 @@ vs_resync(struct vs_softc *sc)
 		mce_iopb_write(1, DRCF_NVCT, sc->sc_nvec);
 		mce_iopb_write(1, DRCF_EVCT, sc->sc_evec);
 		mce_iopb_write(2, DRCF_ILVL, 0);
-		mce_iopb_write(2, DRCF_UNIT, i);
+		mce_iopb_write(2, DRCF_UNIT, IOPB_UNIT_VALUE(i, 0));
 
 		vs_bzero(sh_MCE, CQE_SIZE);
 		mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);

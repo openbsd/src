@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.9 2004/07/18 19:45:51 miod Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.10 2004/07/19 20:31:51 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -336,6 +336,8 @@
 #define	CNTR_DEV_REINIT			0x4c /* reinitialize device */
 #define	CNTR_ISSUE_ABORT		0x4e /* abort has been issued */
 #define	CNTR_DOWNLOAD_FIRMWARE		0x4f /* download firmware (COUGAR) */
+
+#define	IOPB_UNIT_VALUE(target, lun)	((lun) << 3 | (target & 7))
 
 /*
  * Memory types
