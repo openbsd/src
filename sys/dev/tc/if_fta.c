@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fta.c,v 1.5 1999/11/30 04:00:44 jason Exp $	*/
+/*	$OpenBSD: if_fta.c,v 1.6 1999/12/03 16:01:59 jason Exp $	*/
 /*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
 
 /*-
@@ -63,6 +63,9 @@
 #include <dev/tc/tcvar.h>
 #include <dev/ic/pdqvar.h>
 #include <dev/ic/pdqreg.h>
+
+int	pdq_tc_match __P((struct device *, void *, void *));
+void	pdq_tc_attach __P((struct device *, struct device *, void *));
 
 int
 pdq_tc_match(parent, match, aux)
