@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.4 2001/10/01 16:55:57 jason Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.5 2001/10/07 15:27:12 jason Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -174,11 +174,6 @@ ebus_attach(parent, self, aux)
 
 	printf("\n");
 
-	/*
-	 * The "parent" of an ebus is the pci layer, in this case we
-	 * really want the grandparent.
-	 */
-	sc->sc_parent = (struct psycho_softc *)parent->dv_parent;
 	sc->sc_memtag = pa->pa_memt;
 	sc->sc_iotag = pa->pa_iot;
 	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
@@ -548,7 +543,8 @@ ebus_intr_establish(t, pri, level, flags, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
+	return (bus_intr_establish(t->parent, pri, level, flags,
+	    handler, arg));
 }
 
 /*
@@ -563,10 +559,7 @@ ebus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	return (iommu_dvmamap_load(t, sc->sc_parent->sc_is, map, buf, buflen,
-	    p, flags));
+	return (bus_dmamap_load(t->_parent, map, buf, buflen, p, flags));
 }
 
 void
@@ -574,9 +567,7 @@ ebus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamap_unload(t, sc->sc_parent->sc_is, map);
+	bus_dmamap_unload(t->_parent, map);
 }
 
 void
@@ -587,9 +578,6 @@ ebus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamap_sync(t, sc->sc_parent->sc_is, map, offset, len, ops);
 	bus_dmamap_sync(t->_parent, map, offset, len, ops);
 }
 
@@ -604,10 +592,8 @@ ebus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	return (iommu_dvmamem_alloc(t, sc->sc_parent->sc_is, size, alignment,
-	    boundary, segs, nsegs, rsegs, flags));
+	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary, segs,
+	    nsegs, rsegs, flags));
 }
 
 void
@@ -616,9 +602,7 @@ ebus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamem_free(t, sc->sc_parent->sc_is, segs, nsegs);
+	bus_dmamem_free(t->_parent, segs, nsegs);
 }
 
 int
@@ -630,10 +614,7 @@ ebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	return (iommu_dvmamem_map(t, sc->sc_parent->sc_is, segs, nsegs,
-	    size, kvap, flags));
+	return (bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags));
 }
 
 void
@@ -642,7 +623,5 @@ ebus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	struct ebus_softc *sc = t->_cookie;
-
-	iommu_dvmamem_unmap(t, sc->sc_parent->sc_is, kva, size);
+	return (bus_dmamem_unmap(t->_parent, kva, size));
 }
