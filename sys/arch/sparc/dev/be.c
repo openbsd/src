@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.9 1998/09/04 05:59:19 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.10 1998/09/08 02:01:06 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -1194,30 +1194,27 @@ be_ifmedia_sts(ifp, ifmr)
 
 	bmcr = be_tcvr_read(sc, PHY_BMCR);
 
-	if ((bmcr & (PHY_BMCR_SPEED | PHY_BMCR_DUPLEX)) ==
-	    (PHY_BMCR_SPEED | PHY_BMCR_DUPLEX)) {
+	switch (bmcr & (PHY_BMCR_SPEED | PHY_BMCR_DUPLEX)) {
+	case (PHY_BMCR_SPEED | PHY_BMCR_DUPLEX):
 		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
-		return;
-	}
-
-	if (bmcr & PHY_BMCR_SPEED) {
+		break;
+	case PHY_BMCR_SPEED:
 		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
-		return;
-	}
-
-	if (bmcr & PHY_BMCR_DUPLEX) {
+		break;
+	case PHY_BMCR_DUPLEX:
 		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
-		return;
+		break;
+	case 0:
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
+		break;
 	}
-
-	ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
 
 	bmsr = be_tcvr_read(sc, PHY_BMSR);
 	if (bmsr & PHY_BMSR_LINKSTATUS)
-		ifmr->ifm_active |=  IFM_AVALID | IFM_ACTIVE;
+		ifmr->ifm_status |=  IFM_AVALID | IFM_ACTIVE;
 	else {
-		ifmr->ifm_active |=  IFM_AVALID;
-		ifmr->ifm_active &= ~IFM_ACTIVE;
+		ifmr->ifm_status |=  IFM_AVALID;
+		ifmr->ifm_status &= ~IFM_ACTIVE;
 	}
 }
 
