@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.124 2004/07/28 14:43:54 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.125 2004/07/28 15:05:20 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,7 +158,7 @@ typedef struct {
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
 %type	<v.filter_match>	filter_match filter_elm filter_match_h
 %type	<v.filter_as>		filter_as filter_as_l filter_as_h
-%type	<v.filter_as>		filter_as_t filter_as_t_l
+%type	<v.filter_as>		filter_as_t filter_as_t_l filter_as_l_h
 %type	<v.prefixlen>		prefixlenop
 %type	<v.filter_set>		filter_set filter_set_l filter_set_opt
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l filter_prefix_h
@@ -898,7 +898,7 @@ filter_as_t	: filter_as_type filter_as			{
 			$$ = $2;
 			$$->a.type = $1;
 		}
-		| filter_as_type '{' filter_as_l '}'	{
+		| filter_as_type '{' filter_as_l_h '}'	{
 			struct filter_as_l	*a;
 
 			$$ = $3;
@@ -907,7 +907,22 @@ filter_as_t	: filter_as_type filter_as			{
 		}
 		;
 
-filter_as_l	: filter_as				{ $$ = $1; }
+filter_as_l_h	: filter_as_l
+		| '{' filter_as_l '}'			{ $$ = $2; }
+		| '{' filter_as_l '}' filter_as_l_h
+		{
+			struct filter_as_l	*a;
+
+			/* merge, both can be lists */
+			for (a = $2; a != NULL && a->next != NULL; a = a->next)
+				;	/* nothing */
+			if (a != NULL)
+				a->next = $4;
+			$$ = $2;
+		}
+		;			
+
+filter_as_l	: filter_as
 		| filter_as_l comma filter_as	{
 			$3->next = $1;
 			$$ = $3;
