@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/03/26 00:35:39 deraadt Exp $
-#	$NetBSD: Makefile,v 1.6 1996/02/28 21:03:49 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:51:10 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.

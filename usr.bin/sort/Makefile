@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/01/20 19:39:46 millert Exp $
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:50:57 deraadt Exp $
 
 PROG=	sort
 SRCS=	append.c fields.c files.c fsort.c init.c msort.c sort.c tmp.c

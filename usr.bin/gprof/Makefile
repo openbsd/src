@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:44 millert Exp $
-#	$NetBSD: Makefile,v 1.14 1995/04/19 07:24:08 cgd Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:49:15 deraadt Exp $
 
 .if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "mips")
 NOPROG=

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/06/16 04:37:48 denny Exp $
-#	$NetBSD: Makefile,v 1.9 1995/03/21 09:04:14 cgd Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:34:56 deraadt Exp $
 
 PROG=	df
 SRCS=	df.c ffs_df.c lfs_df.c ext2fs_df.c

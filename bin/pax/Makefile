@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/04/10 10:53:45 kstailey Exp $
-#	$NetBSD: Makefile,v 1.4 1995/03/21 09:07:02 cgd Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/09/21 11:35:28 deraadt Exp $
 
 # To install on versions prior to BSD 4.4 the following may have to be
 # defined with CFLAGS +=

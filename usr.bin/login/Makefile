@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1997/04/19 21:26:26 millert Exp $
-#	$NetBSD: Makefile,v 1.10 1994/12/23 06:52:56 jtc Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/09/21 11:49:39 deraadt Exp $
 
 PROG=	login
 SRCS=	login.c failedlogin.c

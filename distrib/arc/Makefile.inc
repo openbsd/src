@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1997/05/18 13:40:44 pefo Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/09/21 11:45:48 deraadt Exp $
 
 # Revision is 2.1
 REV=	21

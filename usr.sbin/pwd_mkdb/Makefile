@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$OpenBSD: Makefile,v 1.3 1996/09/28 05:44:32 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:44:07 deraadt Exp $
 
 PROG=	pwd_mkdb
 SRCS=	pwd_mkdb.c getpwent.c

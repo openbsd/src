@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/04/22 10:36:43 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:37:00 deraadt Exp $
 
 PROG=	sail
 SRCS=	main.c pl_main.c pl_1.c pl_2.c pl_3.c pl_4.c pl_5.c pl_6.c pl_7.c \

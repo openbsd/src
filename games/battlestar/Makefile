@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/06/30 19:56:27 kstailey Exp $
-#	$NetBSD: Makefile,v 1.5 1995/03/21 15:06:38 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:35:28 deraadt Exp $
 
 PROG=	battlestar
 SRCS=	battlestar.c com1.c com2.c com3.c com4.c com5.c com6.c com7.c \

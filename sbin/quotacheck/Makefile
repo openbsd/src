@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/01/03 16:22:09 mickey Exp $
-#	$NetBSD: Makefile,v 1.6 1996/04/05 04:17:57 cgd Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:37:57 deraadt Exp $
 
 PROG=	quotacheck
 SRCS=	quotacheck.c preen.c fsutil.c

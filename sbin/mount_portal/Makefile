@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:22 millert Exp $
-#	$NetBSD: Makefile,v 1.10 1995/03/18 14:57:50 cgd Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/09/21 11:37:28 deraadt Exp $
 
 PROG=	mount_portal
 SRCS=	mount_portal.c activate.c conf.c getmntopts.c pt_conf.c \

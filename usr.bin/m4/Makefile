@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:36:10 deraadt Exp $
-
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:49:47 deraadt Exp $
 
 # -DEXTENDED 
 # 	if you want the paste & spaste macros.

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:42:42 deraadt Exp $
-
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:51:54 deraadt Exp $
 
 PROG=	w
 SRCS=	fmt.c pr_time.c proc_compare.c w.c

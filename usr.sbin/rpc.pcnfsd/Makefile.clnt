@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.clnt,v 1.3 1995/07/25 22:20:19 gwr Exp $
+#	$OpenBSD: Makefile.clnt,v 1.2 1997/09/21 11:44:17 deraadt Exp $
 
 #	This Makefile builds a client used for testing.
 

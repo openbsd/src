@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/04/27 20:55:42 millert Exp $
-#	$NetBSD: Makefile,v 1.5 1995/03/21 15:08:39 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:35:46 deraadt Exp $
 
 PROG=	cribbage
 DPADD=	${LIBCURSES} ${LIBTERMLIB}

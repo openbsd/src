@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 1997/03/26 00:35:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:43:18 deraadt Exp $
 
 SRCS=	apmd.c apmsubr.c
 

@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/12/16 07:02:50 downsj Exp $
-#	$NetBSD: Makefile,v 1.11 1995/03/25 22:53:48 cgd Exp $
-#	@(#)Makefile	8.2 (Berkeley) 3/31/94
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:35:09 deraadt Exp $
 
 # Missing: ching dungeon hunt warp
 # Moved: chess

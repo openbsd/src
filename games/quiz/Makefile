@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1995/05/11 22:00:50 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:36:46 deraadt Exp $
 
 PROG=	quiz
 MAN=	quiz.6

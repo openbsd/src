@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:41:59 deraadt Exp $
-#	$NetBSD: Makefile,v 1.3 1994/12/07 01:06:23 jtc Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:51:25 deraadt Exp $
 
 PROG=	tsort
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 1997/06/11 15:31:07 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:49:10 deraadt Exp $
 
 PROG=	gencat
 MAN=	gencat.1

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/23 14:31:19 deraadt Exp $
-#	$NetBSD: Makefile,v 1.1 1995/07/12 03:46:47 cgd Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:37:14 deraadt Exp $
 
 PROG=	mount_ffs
 SRCS=	mount_ffs.c getmntopts.c

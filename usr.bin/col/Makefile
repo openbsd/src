@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:32:08 deraadt Exp $
-#	$NetBSD: Makefile,v 1.3 1995/03/26 05:25:51 glass Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:48:42 deraadt Exp $
 
 PROG=	col
 

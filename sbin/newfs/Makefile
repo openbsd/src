@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/02/23 03:51:22 millert Exp $
-#	$NetBSD: Makefile,v 1.10 1996/05/16 07:13:01 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:37:41 deraadt Exp $
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c

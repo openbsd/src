@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 1997/08/14 14:02:15 downsj Exp $
-#	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
-#	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
+#	$OpenBSD: Makefile,v 1.47 1997/09/21 11:48:14 deraadt Exp $
 
 .include <bsd.own.mk>
 

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1996/05/10 21:40:48 dm Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:43:47 deraadt Exp $
 
 SUBDIR= ipsend ipresend iptest
 

@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/04/22 08:34:18 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:37:03 deraadt Exp $
 
 SUBDIR=	snake snscore
 

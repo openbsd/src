@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/10/20 19:30:27 millert Exp $
-#	$NetBSD: Makefile,v 1.3 1996/04/08 21:03:06 jtc Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:36:43 deraadt Exp $
 
 PROG=	fsdb
 MAN=	fsdb.8

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 1997/09/03 20:38:53 deraadt Exp $
-#	$NetBSD: Makefile,v 1.29 1996/05/14 17:39:21 ws Exp $
+#	$OpenBSD: Makefile,v 1.29 1997/09/21 11:35:59 deraadt Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/12/14 17:23:51 deraadt Exp $
-#	$NetBSD: Makefile,v 1.12 1995/04/19 09:08:28 cgd Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:38:05 deraadt Exp $
 
 PROG=	route
 MAN=	route.8

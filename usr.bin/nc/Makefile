@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1996/09/05 08:55:31 deraadt Exp $
-#	$NetBSD: Makefile,v 1.11 1995/10/03 21:42:34 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:50:13 deraadt Exp $
 
 CFLAGS+= -DTELNET
 PROG=	nc

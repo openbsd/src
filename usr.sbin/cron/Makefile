@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:43:33 deraadt Exp $
 
 PROG=	cron
 SRCS=	cron.c database.c user.c entry.c job.c do_command.c \

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/09/02 06:46:59 etheisen Exp $
-#	$NetBSD: Makefile,v 1.2 1995/03/25 18:04:51 glass Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:48:21 deraadt Exp $
 
 PROG=	asa
 

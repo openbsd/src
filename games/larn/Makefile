@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/04/27 20:55:45 millert Exp $
-#	$NetBSD: Makefile,v 1.8 1995/04/22 07:34:00 cgd Exp $
-#	@(#)Makefile	5.12 (Berkeley) 5/30/93
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:36:13 deraadt Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics

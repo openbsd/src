@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/04/28 05:48:32 downsj Exp $
-#	$NetBSD: Makefile,v 1.6 1995/09/28 06:57:37 tls Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:50:11 deraadt Exp $
 
 PROG=	msgs
 DPADD=	${LIBTERMLIB}

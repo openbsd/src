@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/07/30 23:28:39 deraadt Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/19/93
+#	$OpenBSD: Makefile,v 1.8 1997/09/21 11:38:08 deraadt Exp $
 
 PROG=	routed
 SRCS=	if.c input.c main.c output.c parms.c radix.c rdisc.c table.c trace.c

@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/08/01 04:03:58 deraadt Exp $
-#	$NetBSD: Makefile,v 1.1 1997/06/11 11:21:45 bouyer Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/5/93
+#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:36:34 deraadt Exp $
 
 PROG=	fsck_ext2fs
 MAN=    fsck_ext2fs.8

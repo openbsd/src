@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:32:00 deraadt Exp $
-#	$NetBSD: Makefile,v 1.6 1995/09/02 05:45:13 jtc Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:48:39 deraadt Exp $
 
 PROG=	cksum
 SRCS=	cksum.c crc.c print.c sum1.c sum2.c

@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1995/03/21 12:04:12 cgd Exp $
-#	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile.inc,v 1.4 1997/09/21 11:35:10 deraadt Exp $
 
 BINGRP?=	games
 .if defined(HIDEGAME)

@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1997/09/02 15:47:07 angelos Exp $
-#	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.10 1997/09/21 11:36:29 deraadt Exp $
 
 PROG=	phantasia
 SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c

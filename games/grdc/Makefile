@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1996/08/21 07:58:07 downsj Exp $
-#       $FreeBSD: Makefile,v 1.1.1.1 1994/12/04 21:51:19 ache Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:36:03 deraadt Exp $
 
 PROG=	grdc
 MAN=	grdc.6

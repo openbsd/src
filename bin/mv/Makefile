@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/23 14:20:25 deraadt Exp $
-#	$NetBSD: Makefile,v 1.6 1995/03/21 09:06:48 cgd Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:35:25 deraadt Exp $
 
 PROG=	mv
 

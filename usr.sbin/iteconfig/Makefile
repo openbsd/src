@@ -1,4 +1,4 @@
-#   $NetBSD: Makefile,v 1.3 1995/05/12 21:04:26 leo Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:43:48 deraadt Exp $
 
 PROG=iteconfig
 MAN=	iteconfig_${MACHINE}.8

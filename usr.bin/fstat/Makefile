@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:33:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:49:07 deraadt Exp $
 
 PROG=	fstat
 DPADD=	${LIBKVM}

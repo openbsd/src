@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/26 05:40:19 deraadt Exp $
-#	$NetBSD: Makefile,v 1.3 1994/12/09 02:14:09 jtc Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:51:06 deraadt Exp $
 
 PROG=	talk
 DPADD=	${LIBCURSES} ${LIBTERMLIB} ${LIBCOMPAT}

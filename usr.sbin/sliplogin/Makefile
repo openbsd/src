@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1997/04/27 20:57:07 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:44:24 deraadt Exp $
 
 PROG=	sliplogin
 MAN=	sliplogin.8

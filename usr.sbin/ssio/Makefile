@@ -1,5 +1,7 @@
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:44:27 deraadt Exp $
+
 #  PINT Makefile for utilities
-#  $Id: Makefile,v 1.2 1997/04/17 13:58:25 kstailey Exp $
+#  $Id: Makefile,v 1.3 1997/09/21 11:44:27 deraadt Exp $
 #
 # Copyright (c) 1996 Kenneth Stailey
 # All rights reserved.

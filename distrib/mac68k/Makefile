@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1995/07/18 04:12:51 briggs Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:45:55 deraadt Exp $
 
 SUBDIR= inst
 

@@ -1,3 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/05/30 09:52:59 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1997/09/21 11:44:38 deraadt Exp $
 
 BINDIR?=	/usr/sbin

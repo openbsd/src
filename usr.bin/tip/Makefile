@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/07/21 05:25:29 deraadt Exp $
-#	$NetBSD: Makefile,v 1.5 1996/12/29 10:36:37 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:51:16 deraadt Exp $
 #
 # Files are:
 #	/etc/remote		remote host description file

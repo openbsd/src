@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/04/19 21:26:28 millert Exp $
-#	$NetBSD: Makefile,v 1.5 1995/03/21 07:58:28 cgd Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:50:36 deraadt Exp $
 
 PROG=	rlogin
 SRCS=	rlogin.c

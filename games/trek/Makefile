@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1995/04/22 10:58:17 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:37:09 deraadt Exp $
 
 PROG=	trek
 SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \

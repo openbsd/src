@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/04/19 21:26:23 millert Exp $
-#	$NetBSD: Makefile,v 1.10 1995/03/18 14:58:57 cgd Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:37:46 deraadt Exp $
 
 PROG=	nfsd
 MAN=	nfsd.8

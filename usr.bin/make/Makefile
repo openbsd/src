@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/11/30 21:08:48 millert Exp $
-#	$NetBSD: Makefile,v 1.12 1996/11/06 17:58:58 christos Exp $
-#	@(#)Makefile	5.2 (Berkeley) 12/28/90
+#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:49:52 deraadt Exp $
 
 PROG=	make
 CFLAGS+= -I${.CURDIR} -Wall -Wno-unused #-Wmissing-prototypes -Wstrict-prototypes

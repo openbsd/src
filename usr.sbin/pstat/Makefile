@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.2 1997/07/17 06:52:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:44:06 deraadt Exp $
 
 PROG=	pstat
 MAN=	pstat.8

@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:48:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:44:15 deraadt Exp $
 
 PROG=	rmt
 MAN=	rmt.8

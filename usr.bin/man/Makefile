@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:36:59 deraadt Exp $
-#	$NetBSD: Makefile,v 1.6 1995/09/28 06:05:11 tls Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:49:57 deraadt Exp $
 
 PROG=	man
 SRCS=	config.c man.c

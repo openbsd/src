@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1997/02/03 05:10:55 downsj Exp $
-#	$NetBSD: Makefile,v 1.3 1997/01/31 23:12:12 carrel Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:43:40 deraadt Exp $
 
 PROG=	grfinfo
 CFLAGS+= -I${.CURDIR}/../../sys/arch/hp300

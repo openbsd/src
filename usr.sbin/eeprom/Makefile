@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.1 1995/07/13 18:07:19 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:43:38 deraadt Exp $
 
 PROG=	eeprom
 MAN=	eeprom.8

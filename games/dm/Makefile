@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1995/03/21 15:09:02 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:35:48 deraadt Exp $
 
 # -DLOG		log games
 PROG=	dm

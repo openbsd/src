@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/10/12 21:16:53 gwr Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:45:57 deraadt Exp $
 
 SUBDIR= ramdisk
 

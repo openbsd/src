@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 1997/07/23 04:24:37 millert Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/09/21 11:50:50 deraadt Exp $
 
 PROG=	skey
 MAN=	skey.1 skeyprune.8

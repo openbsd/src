@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 1997/03/20 19:10:20 niklas Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:36:11 deraadt Exp $
 
 SRCS=	config_slot.c pcmcia_conf.c
 #dumpreg.c

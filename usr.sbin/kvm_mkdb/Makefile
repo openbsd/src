@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:43:50 deraadt Exp $
 
 PROG=	kvm_mkdb
 SRCS=	kvm_mkdb.c nlist.c testdb.c

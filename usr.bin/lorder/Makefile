@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:48 millert Exp $
-#	$NetBSD: Makefile,v 1.9 1995/12/18 07:59:12 jonathan Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/09/21 11:49:46 deraadt Exp $
 
 MAN=	lorder.1
 

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/03/26 00:33:39 deraadt Exp $
-#	$NetBSD: Makefile,v 1.24 1995/03/21 09:04:30 cgd Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/09/21 11:35:04 deraadt Exp $
 
 PROG=	ed
 CFLAGS+=-DBACKWARDS -DDES

@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/02/25 00:03:49 downsj Exp $
-#	$NetBSD: Makefile,v 1.6 1995/12/21 05:24:49 mycroft Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:52:06 deraadt Exp $
 
 PROG=	window
 SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \

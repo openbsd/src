@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 1997/07/23 04:24:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:50:51 deraadt Exp $
 
 PROG=	skeyaudit
 BINOWN=	root

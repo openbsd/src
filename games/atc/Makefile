@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/06/18 18:32:43 kstailey Exp $
-#	$NetBSD: Makefile,v 1.9 1995/03/21 15:03:38 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$OpenBSD: Makefile,v 1.7 1997/09/21 11:35:18 deraadt Exp $
 
 PROG=	atc
 CFLAGS+=-DBSD -I${.CURDIR} -I.

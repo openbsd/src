@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:34:40 deraadt Exp $
-#	$NetBSD: Makefile,v 1.2 1994/11/14 20:27:34 jtc Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:49:22 deraadt Exp $
 
 PROG=	jot
 

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/12/04 01:31:10 deraadt Exp $
-#	$NetBSD: Makefile,v 1.14 1996/09/27 22:38:37 christos Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:36:32 deraadt Exp $
 
 PROG=	fsck
 SRCS=	fsck.c fsutil.c preen.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/04/21 23:42:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:44:26 deraadt Exp $
 
 PROG=	spray
 MAN=	spray.8

@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/23 14:29:59 deraadt Exp $
-#	$NetBSD: Makefile,v 1.2 1996/05/16 07:11:17 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/09/21 11:36:07 deraadt Exp $
 
 PROG=	ccdconfig
 MAN=	ccdconfig.8
