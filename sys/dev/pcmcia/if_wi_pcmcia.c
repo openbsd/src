@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.3 2001/06/06 18:53:49 millert Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.4 2001/06/07 04:49:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -96,121 +96,102 @@ static const struct wi_pcmcia_product {
 	u_int16_t	pp_product;
 	const char	*pp_cisinfo[4];
 	const char	*pp_name;
-	int		pp_prism2;
 } wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
-	  "WaveLAN/IEEE",
-	  0 },
-
+	  "WaveLAN/IEEE"
+	},
 	{ PCMCIA_VENDOR_3COM,
 	  PCMCIA_PRODUCT_3COM_3CRWE737A,
 	  PCMCIA_CIS_3COM_3CRWE737A,
-	  "3Com AirConnect Wireless LAN",
-	  1 },
-
+	  "3Com AirConnect Wireless LAN"
+	},
 	{ PCMCIA_VENDOR_COREGA,
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
-	  "Corega Wireless LAN PCC-11",
-	  1 },
-
+	  "Corega Wireless LAN PCC-11"
+	},
 	{ PCMCIA_VENDOR_COREGA,
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
 	  "Corega Wireless LAN PCCA-11",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_INTERSIL,
 	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
 	  PCMCIA_CIS_INTERSIL_PRISM2,
 	  "Intersil Prism II",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_SAMSUNG,
 	  PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
 	  PCMCIA_CIS_SAMSUNG_SWL_2000N,
 	  "Samsung MagicLAN SWL-2000N",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_SMC_2632W,
 	  "SMC 2632 EZ Connect Wireless PC Card",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_NANOSPEED_PRISM2,
 	  "NANOSPEED ROOT-RZ2000 WLAN Card",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_ELSA,
 	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
 	  PCMCIA_CIS_ELSA_XI300_IEEE,
 	  "XI300 Wireless LAN",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_COMPAQ,
 	  PCMCIA_PRODUCT_COMPAQ_NC5004,
 	  PCMCIA_CIS_COMPAQ_NC5004,
 	  "Compaq Agency NC5004 Wireless Card",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_CONTEC,
 	  PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
 	  PCMCIA_CIS_CONTEC_FX_DS110_PCC,
 	  "Contec FLEXLAN/FX-DS110-PCC",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_TDK,
 	  PCMCIA_PRODUCT_TDK_LAK_CD011WL,
 	  PCMCIA_CIS_TDK_LAK_CD011WL,
 	  "TDK LAK-CD011WL",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_NEC_CMZ_RT_WP,
 	  "NEC Wireless Card CMZ-RT-WP",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_NTT_ME_WLAN,
 	  "NTT-ME 11Mbps Wireless LAN PC Card",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_ADDTRON,
 	  PCMCIA_PRODUCT_ADDTRON_AWP100,
 	  PCMCIA_CIS_ADDTRON_AWP100,
 	  "Addtron AWP-100",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_CABLETRON_ROAMABOUT,
 	  "Cabletron RoamAbout",
-	  0 },
-
+	},
 	{ PCMCIA_VENDOR_IODATA2,
 	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
 	  PCMCIA_CIS_IODATA2_WNB11PCM,
 	  "I-O DATA WN-B11/PCM",
-	  1 },
-
+	},
 	{ PCMCIA_VENDOR_LINKSYS,
 	  PCMCIA_PRODUCT_LINKSYS_WPC11,
 	  PCMCIA_CIS_LINKSYS_WPC11,
 	  "Linksys WPC11",
-	  1 },
-
+	},
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
 	  NULL,
-	  0 }
+	}
 };
 
 static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
@@ -269,7 +250,6 @@ wi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function	*pf = pa->pf;
 	struct pcmcia_config_entry *cfe = pf->cfe_head.sqh_first;
-	const struct wi_pcmcia_product *pp;
 	int			state = 0;
 
 	psc->sc_pf = pf;
@@ -294,13 +274,6 @@ wi_pcmcia_attach(parent, self, aux)
 		goto bad;
 	}
 	state++;
-
-	pp = wi_lookup(pa);
-	if (pp == NULL) {
-		/* should not happen */
-		sc->sc_prism2 = 0;
-	} else
-		sc->sc_prism2 = pp->pp_prism2;
 
 	sc->wi_btag = psc->sc_pcioh.iot;
 	sc->wi_bhandle = psc->sc_pcioh.ioh;

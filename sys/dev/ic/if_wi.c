@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.2 2001/06/06 18:56:24 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.3 2001/06/07 04:49:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.2 2001/06/06 18:56:24 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.3 2001/06/07 04:49:07 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -149,6 +149,7 @@ STATIC int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
 STATIC void wi_inquire		__P((void *));
 STATIC void wi_setdef		__P((struct wi_softc *, struct wi_req *));
 STATIC int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
+STATIC void wi_get_id		__P((struct wi_softc *));
 
 int	wi_intr			__P((void *));
 int	wi_attach		__P((struct wi_softc *));
@@ -179,8 +180,10 @@ wi_attach(sc)
 	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
-	printf(": %saddress %s", sc->sc_prism2? "Prism II, " : "",
-	    ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(": ");
+	wi_get_id(sc);
+
+	printf(" address %s", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	ifp = &sc->arpcom.ac_if;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -213,6 +216,8 @@ wi_attach(sc)
 	sc->wi_create_ibss = WI_DEFAULT_CREATE_IBSS;
 	sc->wi_pm_enabled = WI_DEFAULT_PM_ENABLED;
 	sc->wi_max_sleep = WI_DEFAULT_MAX_SLEEP;
+	sc->wi_roaming = WI_DEFAULT_ROAMING;
+	sc->wi_authtype = WI_DEFAULT_AUTHTYPE;
 
 	/*
 	 * Read the default channel from the NIC. This may vary
@@ -979,8 +984,14 @@ wi_setdef(sc, wreq)
 	case WI_RID_MAX_SLEEP:
 		sc->wi_max_sleep = wreq->wi_val[0];
 		break;
+	case WI_RID_AUTH_CNTL:
+		sc->wi_authtype = letoh16(wreq->wi_val[0]);
+		break;
+	case WI_RID_ROAMING_MODE:
+		sc->wi_roaming = letoh16(wreq->wi_val[0]);
+		break;
 	case WI_RID_ENCRYPTION:
-		sc->wi_use_wep = wreq->wi_val[0];
+		sc->wi_use_wep = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_TX_CRYPT_KEY:
 		sc->wi_tx_key = wreq->wi_val[0];
@@ -1188,6 +1199,9 @@ wi_init(xsc)
 	/* Power Managment Max Sleep */
 	WI_SETVAL(WI_RID_MAX_SLEEP, sc->wi_max_sleep);
 
+	/* Roaming type */
+	WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
+
 	/* Specify the IBSS name */
 	WI_SETSTR(WI_RID_OWN_SSID, sc->wi_ibss_name);
 
@@ -1214,6 +1228,20 @@ wi_init(xsc)
 		sc->wi_keys.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
 		sc->wi_keys.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
+		if (sc->sc_prism2 && sc->wi_use_wep) {
+			/*
+			 * Prism2 Firmware version less than 0.8 variant3
+			 *   If promiscuous mode disable, Prism2 chip
+			 *  does not work with WEP .
+			 * It is under investigation for details.
+			 * (ichiro@netbsd.org)
+			 */
+			 if (sc->sc_prism2_ver < 83 ) {
+				/* firm ver < 0.8 variant 3 */
+				WI_SETVAL(WI_RID_PROMISC, 1);
+			 }
+			 WI_SETVAL(WI_RID_AUTH_CNTL, sc->wi_authtype);
+		}
 	}
 
 	/* Initialize promisc mode. */
@@ -1433,6 +1461,75 @@ wi_shutdown(arg)
 
 	sc = arg;
 	wi_stop(sc);
+
+	return;
+}
+
+STATIC void
+wi_get_id(sc)
+	struct wi_softc *sc;
+{
+	struct wi_ltv_ver       ver;
+	const char		*p;
+
+	/* getting chip identity */
+	memset(&ver, 0, sizeof(ver));
+	ver.wi_type = WI_RID_CARDID;
+	ver.wi_len = 5;
+	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	switch (letoh16(ver.wi_ver[0])) {
+		case WI_NIC_EVB2:
+			p = "PRISM I HFA3841(EVB2)";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB3763:
+			p = "PRISM II HWB3763 rev.B";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB3163:
+			p = "PRISM II HWB3163 rev.A";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB3163B:
+			p = "PRISM II HWB3163 rev.B";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_EVB3:
+			p = "PRISM II  HFA3842(EVB3)";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_HWB1153:
+			p = "PRISM I HFA1153";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_P2_SST:
+			p = "PRISM II HWB3163 SST-flash";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_PRISM2_5:
+			p = "PRISM 2.5 ISL3873";
+			sc->sc_prism2 = 1;
+			break;
+		default:
+			p = "Lucent chip or unknown chip";
+			sc->sc_prism2 = 0;
+			break;
+	}
+
+	if (sc->sc_prism2) {
+		/* try to get prism2 firmware version */
+		memset(&ver, 0, sizeof(ver));
+		ver.wi_type = WI_RID_IDENT;
+		ver.wi_len = 5;
+		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+		ver.wi_ver[1] = letoh16(ver.wi_ver[1]);
+		ver.wi_ver[2] = letoh16(ver.wi_ver[2]);
+		ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
+		printf("%s, Firmware %i.%i variant %i,", p, ver.wi_ver[2],
+		       ver.wi_ver[3], ver.wi_ver[1]);
+		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
+				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
+	}
 
 	return;
 }
