@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.11 1998/09/14 05:44:12 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.12 1998/11/16 06:28:32 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.11 1998/09/14 05:44:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.12 1998/11/16 06:28:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ main(argc, argv)
 		p += len;
 		*p++ = ' ';
 	}
-	*p = '\0';
+	*--p = '\0';
 
 	/* Use system(3) in case someone's pager is "pager arg1 arg2". */
 	(void)system(cmd);
