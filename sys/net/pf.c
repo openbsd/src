@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.102 2001/07/06 22:09:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.103 2001/07/06 22:22:45 chris Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1362,7 +1362,8 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 
 	n = TAILQ_FIRST(pf_nats_active);
 	while (n && nm == NULL) {
-		if (((n->ifp == ifp) == !n->ifnot) &&
+		if (((n->ifp == ifp && !n->ifnot) ||
+		    (n->ifp != ifp && n->ifnot)) &&
 		    (!n->proto || n->proto == proto) &&
 		    pf_match_addr(n->not, n->saddr, n->smask, addr))
 			nm = n;
@@ -1379,7 +1380,8 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 
 	r = TAILQ_FIRST(pf_rdrs_active);
 	while (r && rm == NULL) {
-		if (((r->ifp == ifp) == !r->ifnot) &&
+		if (((r->ifp == ifp && !r->ifnot) ||
+		    (r->ifp != ifp && r->ifnot)) &&
 		    (!r->proto || r->proto == proto) &&
 		    pf_match_addr(r->not, r->daddr, r->dmask, addr) &&
 		    (ntohs(port) >= ntohs(r->dport)) && 
