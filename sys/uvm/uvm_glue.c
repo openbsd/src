@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.13 2001/05/05 23:25:54 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.23 1999/05/28 20:49:51 thorpej Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.14 2001/05/07 16:08:40 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.26 1999/06/17 15:47:22 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -155,11 +155,18 @@ uvm_useracc(addr, len, rw)
 	size_t len;
 	int rw;
 {
+	vm_map_t map;
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-	rv = uvm_map_checkprot(&curproc->p_vmspace->vm_map,
-			trunc_page((vaddr_t)addr), round_page((vaddr_t)addr+len), prot);
+	/* XXX curproc */
+	map = &curproc->p_vmspace->vm_map;
+
+	vm_map_lock_read(map);
+	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
+		round_page((vaddr_t)addr+len), prot);
+	vm_map_unlock_read(map);
+
 	return(rv);
 }
 
@@ -210,16 +217,24 @@ uvm_chgkprot(addr, len, rw)
  * - XXXCDC: consider nuking this (or making it a macro?)
  */
 
-void
+int
 uvm_vslock(p, addr, len, access_type)
 	struct proc *p;
 	caddr_t	addr;
 	size_t	len;
 	vm_prot_t access_type;
 {
+	vm_map_t map;
+	vaddr_t start, end;
+	int rv;
 
-	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
-	    round_page((vaddr_t)addr+len), access_type);
+	map = &p->p_vmspace->vm_map;
+	start = trunc_page((vaddr_t)addr);
+	end = round_page((vaddr_t)addr + len);
+
+	rv = uvm_fault_wire(map, start, end, access_type);
+
+	return (rv);
 }
 
 /*

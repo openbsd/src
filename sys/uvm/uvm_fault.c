@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.10 2001/03/22 23:36:52 niklas Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.35 1999/06/16 18:43:28 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.11 2001/05/07 16:08:40 art Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.37 1999/06/16 23:02:40 thorpej Exp $	*/
 
 /*
  *
@@ -1707,10 +1707,10 @@ Case2:
 /*
  * uvm_fault_wire: wire down a range of virtual addresses in a map.
  *
- * => map should be locked by caller?   If so how can we call
- *	uvm_fault?   WRONG.
- * => XXXCDC: locking here is all screwed up!!!  start with 
- *	uvm_map_pageable and fix it.
+ * => map may be read-locked by caller, but MUST NOT be write-locked.
+ * => if map is read-locked, any operations which may cause map to
+ *	be write-locked in uvm_fault() must be taken care of by
+ *	the caller.  See uvm_map_pageable().
  */
 
 int
@@ -1761,6 +1761,24 @@ uvm_fault_unwire(map, start, end)
 	vm_map_t map;
 	vaddr_t start, end;
 {
+
+	vm_map_lock_read(map);
+	uvm_fault_unwire_locked(map, start, end);
+	vm_map_unlock_read(map);
+}
+
+/*
+ * uvm_fault_unwire_locked(): the guts of uvm_fault_unwire().
+ *
+ * => map must be at least read-locked.
+ */
+
+void
+uvm_fault_unwire_locked(map, start, end)
+	vm_map_t map;
+	vaddr_t start, end;
+{
+	vm_map_entry_t entry;
 	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;
@@ -1768,7 +1786,7 @@ uvm_fault_unwire(map, start, end)
 
 #ifdef DIAGNOSTIC
 	if (map->flags & VM_MAP_INTRSAFE)
-		panic("uvm_fault_unwire: intrsafe map");
+		panic("uvm_fault_unwire_locked: intrsafe map");
 #endif
 
 	/*
@@ -1780,15 +1798,47 @@ uvm_fault_unwire(map, start, end)
 
 	uvm_lock_pageq();
 
+	/*
+	 * find the beginning map entry for the region.
+	 */
+#ifdef DIAGNOSTIC
+	if (start < vm_map_min(map) || end > vm_map_max(map))
+		panic("uvm_fault_unwire_locked: address out of range");
+#endif
+	if (uvm_map_lookup_entry(map, start, &entry) == FALSE)
+		panic("uvm_fault_unwire_locked: address not in map");
+
 	for (va = start; va < end ; va += PAGE_SIZE) {
 		pa = pmap_extract(pmap, va);
 
 		/* XXX: assumes PA 0 cannot be in map */
 		if (pa == (paddr_t) 0) {
-			panic("uvm_fault_unwire: unwiring non-wired memory");
+			panic("uvm_fault_unwire_locked: unwiring "
+			    "non-wired memory");
 		}
 
-		pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */
+		/*
+		 * make sure the current entry is for the address we're
+		 * dealing with.  if not, grab the next entry.
+		 */
+#ifdef DIAGNOSTIC
+		if (va < entry->start)
+			panic("uvm_fault_unwire_locked: hole 1");
+#endif
+		if (va >= entry->end) {
+#ifdef DIAGNOSTIC
+			if (entry->next == &map->header ||
+			    entry->next->start > entry->end)
+				panic("uvm_fault_unwire_locked: hole 2");
+#endif
+			entry = entry->next;
+		}
+
+		/*
+		 * if the entry is no longer wired, tell the pmap.
+		 */
+		if (VM_MAPENT_ISWIRED(entry) == 0)
+			pmap_change_wiring(pmap, va, FALSE);
 
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg)

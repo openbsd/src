@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.h,v 1.6 2001/03/09 05:34:38 smart Exp $	*/
-/*	$NetBSD: uvm_fault.h,v 1.11 1999/06/04 23:38:41 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.h,v 1.7 2001/05/07 16:08:40 art Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.12 1999/06/16 22:11:23 thorpej Exp $	*/
 
 /*
  *
@@ -84,6 +84,7 @@ static void uvmfault_unlockmaps __P((struct uvm_faultinfo *, boolean_t));
 
 int uvm_fault_wire __P((vm_map_t, vaddr_t, vaddr_t, vm_prot_t));
 void uvm_fault_unwire __P((vm_map_t, vaddr_t, vaddr_t));
+void uvm_fault_unwire_locked __P((vm_map_t, vaddr_t, vaddr_t));
 
 #endif /* _KERNEL */
 

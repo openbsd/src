@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.12 2001/05/05 23:25:55 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.56 1999/06/16 19:34:24 thorpej Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.13 2001/05/07 16:08:40 art Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.58 1999/06/17 00:24:10 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -293,8 +293,8 @@ uvm_map_entry_unwire(map, entry)
 	vm_map_entry_t entry;
 {
 
-	uvm_fault_unwire(map, entry->start, entry->end);
 	entry->wired_count = 0;
+	uvm_fault_unwire_locked(map, entry->start, entry->end);
 }
 
 /*
@@ -2043,10 +2043,6 @@ uvm_map_pageable(map, start, end, new_pageable)
 		 * POSIX 1003.1b - a single munlock call unlocks a region,
 		 * regardless of the number of mlock calls made on that
 		 * region.
-		 *
-		 * Note, uvm_fault_unwire() (called via uvm_map_entry_unwire())
-		 * does not lock the map, so we don't have to do anything
-		 * special regarding locking here.
 		 */
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
@@ -2229,10 +2225,6 @@ uvm_map_pageable_all(map, flags, limit)
 		/*
 		 * POSIX 1003.1b -- munlockall unlocks all regions,
 		 * regardless of how many times mlockall has been called.
-		 *
-		 * Note, uvm_fault_unwire() (called via uvm_map_entry_unwire())
-		 * does not lock the map, so we don't have to do anything
-		 * special regarding locking here.
 		 */
 		for (entry = map->header.next; entry != &map->header;
 		     entry = entry->next) {
