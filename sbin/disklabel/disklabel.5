@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.15 2003/06/02 20:06:14 millert Exp $
+.\"	$OpenBSD: disklabel.5,v 1.16 2003/06/21 23:14:23 jmc Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -119,3 +119,21 @@ All of these operations are normally done using
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8
+.Sh CAVEATS
+.Nm
+only supports up to a maximum of 15 partitions,
+.Sq a
+through
+.Sq p ,
+excluding
+.Sq c .
+The
+.Sq c
+partition is reserved for the entire physical disk.
+By convention, the
+.Sq a
+partition of the boot disk is the root partition, and the
+.Sq b
+partition of the boot disk is the swap partition,
+but all other letters can be used in any order for any other
+partitions as desired.

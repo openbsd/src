@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.52 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.53 2003/06/21 23:14:23 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -624,6 +624,24 @@ but this usage is deprecated.
 .Pp
 On some machines, such as the sparc, partition tables
 may not exhibit the full functionality that is described above.
+.Sh CAVEATS
+.Nm
+only supports up to a maximum of 15 partitions,
+.Sq a
+through
+.Sq p ,
+excluding
+.Sq c .
+The
+.Sq c
+partition is reserved for the entire physical disk.
+By convention, the
+.Sq a
+partition of the boot disk is the root partition, and the
+.Sq b
+partition of the boot disk is the swap partition,
+but all other letters can be used in any order for any other
+partitions as desired.
 .Sh BUGS
 When a disk name is given without a full pathname, the constructed
 device name uses the
