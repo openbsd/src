@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.56.2.1 1995/10/13 19:57:44 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.59 1995/12/14 18:44:44 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -372,30 +372,8 @@ again:
 	 */
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
 	    ncookies);
-	if (error) {
-		off_t coff;
-
-		if (error != EINVAL)
-			goto out;
-		error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, 0, 0);
-		if (error)
-			goto out;
-
-		/* Fake the cookies */
-		error = 0;
-		inp = buf;
-		len = buflen - auio.uio_resid;
-		coff = off;
-		cookie = cookiebuf;
-		for (; len > 0; len -= reclen) {
-			reclen = ((struct dirent *)inp)->d_reclen;
-			if (reclen & 3)
-				panic("sunos_getdents");
-			coff += reclen;		/* each entry points to next */
-			*cookie++ = coff;
-			inp += reclen;
-		}
-	}
+	if (error)
+		goto out;
 
 	inp = buf;
 	outp = SCARG(uap, buf);
