@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.13 1997/03/29 03:16:18 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.14 1997/03/30 22:44:03 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -73,11 +73,6 @@ struct cfdriver intvid_cd = {
 struct cfattach intvid_ca = {
 	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
 };
-
-/* XXX -- kludge */
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #define QUADRA_DAFB_BASE	0xF9800000
 
@@ -159,7 +154,6 @@ grfiv_attach(parent, self, aux)
 					0, &sc->sc_regh)) {
 			panic("failed to map space for DAFB regs.\n");
 		}
-		/* Show off a bit -- no need to really set these. */
 		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
 		break;
 	default:
