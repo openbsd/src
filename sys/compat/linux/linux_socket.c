@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.25 2002/08/09 03:11:30 aaron Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.26 2002/11/27 07:30:36 ish Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -76,7 +76,9 @@
  * are copied to structures.
  */
 
-int linux_to_bsd_domain(int);
+static int linux_to_bsd_domain (int);
+static int bsd_to_linux_domain(int);
+
 int linux_socket(struct proc *, void *, register_t *);
 int linux_bind(struct proc *, void *, register_t *);
 int linux_connect(struct proc *, void *, register_t *);
@@ -104,32 +106,95 @@ int linux_check_hdrincl(struct proc *, int, register_t *);
 int linux_sendto_hdrincl(struct proc *, struct sys_sendto_args *,
     register_t *);
 
+int linux_sa_get(struct proc *, caddr_t *sgp, struct sockaddr **sap,
+    const struct osockaddr *osa, int *osalen);
+int linux_sa_put(struct osockaddr *osa);
+
+static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
+	AF_UNSPEC,
+	AF_UNIX,
+	AF_INET,
+	AF_CCITT,	/* LINUX_AF_AX25 */
+	AF_IPX,
+	AF_APPLETALK,
+	-1,		/* LINUX_AF_NETROM */
+	-1,		/* LINUX_AF_BRIDGE */
+	-1,		/* LINUX_AF_ATMPVC */
+	AF_CCITT,	/* LINUX_AF_X25 */
+	AF_INET6,
+	-1,		/* LINUX_AF_ROSE */
+	AF_DECnet,
+	-1,		/* LINUX_AF_NETBEUI */
+	-1,		/* LINUX_AF_SECURITY */
+	-1,		/* pseudo_AF_KEY */
+	AF_ROUTE,	/* LINUX_AF_NETLINK */
+	-1,		/* LINUX_AF_PACKET */
+	-1,		/* LINUX_AF_ASH */
+	-1,		/* LINUX_AF_ECONET */
+	-1,		/* LINUX_AF_ATMSVC */
+	AF_SNA,
+	/* rest up to LINUX_AF_MAX-1 is not allocated */
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+static const int bsd_to_linux_domain_[AF_MAX] = {
+	LINUX_AF_UNSPEC,
+	LINUX_AF_UNIX,
+	LINUX_AF_INET,
+	-1,		/* AF_IMPLINK */
+	-1,		/* AF_PUP */
+	-1,		/* AF_CHAOS */
+	-1,		/* AF_NS */
+	-1,		/* AF_ISO */
+	-1,		/* AF_ECMA */
+	-1,		/* AF_DATAKIT */
+	LINUX_AF_AX25,	/* AF_CCITT */
+	-1,		/* LINUX_AF_SNA */
+	-1,		/* LINUX_AF_DECnet */
+	-1,		/* AF_DLI */
+	-1,		/* AF_LAT */
+	-1,		/* AF_HYLINK */
+	LINUX_AF_APPLETALK,
+	-1,		/* LINUX_AF_NETLINK */
+	-1,		/* AF_LINK */
+	-1,		/* AF_XTP */
+	-1,		/* AF_COIP */
+	-1,		/* AF_CNT */
+	-1,		/* pseudo_AF_RTIP */
+	LINUX_AF_IPX,
+	LINUX_AF_INET6,
+	-1,		/* pseudo_AF_PIP */
+	-1,		/* AF_ISDN */
+	-1,		/* AF_NATM */
+	-1,		/* AF_ARP */
+	-1,		/* LINUX_pseudo_AF_KEY */
+	-1,		/* pseudo_AF_HDRCMPLT */
+};
+
 /*
  * Convert between Linux and BSD socket domain values
  */
-int
+static int
 linux_to_bsd_domain(ldom)
 	int ldom;
 {
+	if (ldom < 0 || ldom >= LINUX_AF_MAX)
+		return (-1);
 
-	switch (ldom) {
-	case LINUX_AF_UNSPEC:
-		return AF_UNSPEC;
-	case LINUX_AF_UNIX:
-		return AF_LOCAL;
-	case LINUX_AF_INET:
-		return AF_INET;
-	case LINUX_AF_AX25:
-		return AF_CCITT;
-	case LINUX_AF_IPX:
-		return AF_IPX;
-	case LINUX_AF_APPLETALK:
-		return AF_APPLETALK;
-	case LINUX_AF_INET6:
-		return AF_INET6;
-	default:
-		return -1;
-	}
+	return linux_to_bsd_domain_[ldom];
+}
+
+/*
+ * Convert between BSD and Linux socket domain values
+ */
+static int
+bsd_to_linux_domain(bdom)
+	int bdom;
+{
+	if (bdom < 0 || bdom >= AF_MAX)
+		return (-1);
+
+	return bsd_to_linux_domain_[bdom];
 }
 
 int
@@ -172,13 +237,24 @@ linux_bind(p, v, retval)
 	struct linux_bind_args lba;
 	struct sys_bind_args bba;
 	int error;
+	int namlen;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lba, sizeof lba)))
 		return error;
 
 	SCARG(&bba, s) = lba.s;
-	SCARG(&bba, name) = (void *) lba.name;
-	SCARG(&bba, namelen) = lba.namelen;
+	namlen = lba.namelen;
+	if (lba.name) {
+		struct sockaddr *sa;
+		caddr_t sg = stackgap_init(0);
+
+		error = linux_sa_get(p, &sg, &sa, lba.name, &namlen);
+		if (error)
+			return (error);
+		SCARG(&bba, name) = sa;
+	} else
+		SCARG(&bba, name) = NULL;
+	SCARG(&bba, namelen) = namlen;
 
 	return sys_bind(p, &bba, retval);
 }
@@ -191,19 +267,27 @@ linux_connect(p, v, retval)
 {
 	struct linux_connect_args /* {
 		syscallarg(int)	s;
-		syscallarg(struct sockaddr *) name;
+		syscallarg(struct osockaddr *) name;
 		syscallarg(int)	namelen;
 	} */ *uap = v;
 	struct linux_connect_args lca;
 	struct sys_connect_args bca;
+	struct sockaddr *sa;
+	caddr_t sg = stackgap_init(0);
+	int namlen;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lca, sizeof lca)))
 		return error;
 
+	namlen = lca.namelen;
+	error = linux_sa_get(p, &sg, &sa, lca.name, &namlen);
+	if (error)
+		return (error);
+
 	SCARG(&bca, s) = lca.s;
-	SCARG(&bca, name) = (void *) lca.name;
-	SCARG(&bca, namelen) = lca.namelen;
+	SCARG(&bca, name) = sa;
+	SCARG(&bca, namelen) = (unsigned int)namlen;
 
 	error = sys_connect(p, &bca, retval);
 
@@ -319,21 +403,28 @@ linux_getsockname(p, v, retval)
 {
 	struct linux_getsockname_args /* {
 		syscallarg(int) s;
-		syscallarg(struct sockaddr *) addr;
+		syscallarg(caddr_t) addr;
 		syscallarg(int *) namelen;
 	} */ *uap = v;
 	struct linux_getsockname_args lga;
-	struct compat_43_sys_getsockname_args bga;
+	struct sys_getsockname_args bga;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lga, sizeof lga)))
 		return error;
 
-	SCARG(&bga, fdec) = lga.s;
-	SCARG(&bga, asa) = (caddr_t) lga.addr;
+	SCARG(&bga, fdes) = lga.s;
+	SCARG(&bga, asa) = (struct sockaddr *) lga.addr;
 	SCARG(&bga, alen) = lga.namelen;
 
-	return compat_43_sys_getsockname(p, &bga, retval);
+	error = sys_getsockname(p, &bga, retval);
+	if (error)
+		return (error);
+
+	if ((error = linux_sa_put((struct osockaddr *)lga.addr)))
+		return (error);
+
+	return (0);
 }
 
 int
@@ -348,17 +439,24 @@ linux_getpeername(p, v, retval)
 		syscallarg(int *) namelen;
 	} */ *uap = v;
 	struct linux_getpeername_args lga;
-	struct compat_43_sys_getpeername_args bga;
+	struct sys_getpeername_args bga;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lga, sizeof lga)))
 		return error;
 
 	SCARG(&bga, fdes) = lga.s;
-	SCARG(&bga, asa) = (caddr_t) lga.addr;
+	SCARG(&bga, asa) = (struct sockaddr *) lga.addr;
 	SCARG(&bga, alen) = lga.namelen;
 
-	return compat_43_sys_getpeername(p, &bga, retval);
+	error = sys_getpeername(p, &bga, retval);
+	if (error)
+		return (error);
+
+	if ((error = linux_sa_put((struct osockaddr *)lga.addr)))
+		return (error);
+
+	return (0);
 }
 
 int
@@ -568,12 +666,13 @@ linux_sendto(p, v, retval)
 		syscallarg(void *) msg;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-		syscallarg(sockaddr *) to;
+		syscallarg(osockaddr *) to;
 		syscallarg(int) tolen;
 	} */ *uap = v;
 	struct linux_sendto_args lsa;
 	struct sys_sendto_args bsa;
 	int error;
+	int tolen;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
@@ -582,8 +681,17 @@ linux_sendto(p, v, retval)
 	SCARG(&bsa, buf) = lsa.msg;
 	SCARG(&bsa, len) = lsa.len;
 	SCARG(&bsa, flags) = lsa.flags;
-	SCARG(&bsa, to) = (void *) lsa.to;
-	SCARG(&bsa, tolen) = lsa.tolen;
+	tolen = lsa.tolen;
+	if (lsa.to) {
+		struct sockaddr *sa;
+		caddr_t sg = stackgap_init(0);
+
+		if ((error = linux_sa_get(p, &sg, &sa, lsa.to, &tolen)))
+			return (error);
+		SCARG(&bsa, to) = sa;
+	} else
+		SCARG(&bsa, to) = NULL;
+	SCARG(&bsa, tolen) = tolen;
 
 	if (linux_check_hdrincl(p, lsa.s, retval) == 0)
 		return linux_sendto_hdrincl(p, &bsa, retval);
@@ -601,11 +709,11 @@ linux_recvfrom(p, v, retval)
 		syscallarg(void *) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-		syscallarg(struct sockaddr *) from;
+		syscallarg(struct osockaddr *) from;
 		syscallarg(int *) fromlen;
 	} */ *uap = v;
 	struct linux_recvfrom_args lra;
-	struct compat_43_sys_recvfrom_args bra;
+	struct sys_recvfrom_args bra;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lra, sizeof lra)))
@@ -615,10 +723,16 @@ linux_recvfrom(p, v, retval)
 	SCARG(&bra, buf) = lra.buf;
 	SCARG(&bra, len) = lra.len;
 	SCARG(&bra, flags) = lra.flags;
-	SCARG(&bra, from) = (caddr_t) lra.from;
+	SCARG(&bra, from) = (struct sockaddr *) lra.from;
 	SCARG(&bra, fromlenaddr) = lra.fromlen;
 
-	return compat_43_sys_recvfrom(p, &bra, retval);
+	if ((error = sys_recvfrom(p, &bra, retval)))
+		return (error);
+
+	if (lra.from && (error = linux_sa_put(lra.from)))
+		return (error);
+
+	return (0);
 }
 
 int
@@ -887,6 +1001,7 @@ linux_recvmsg(p, v, retval)
 	} */ *uap = v;
 	struct linux_recvmsg_args lla;
 	struct sys_recvmsg_args bla;
+	struct msghdr msg;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lla, sizeof lla)))
@@ -896,7 +1011,16 @@ linux_recvmsg(p, v, retval)
 	SCARG(&bla, msg) = (struct msghdr *)lla.msg;
 	SCARG(&bla, flags) = lla.flags;
 
-	return sys_recvmsg(p, &bla, retval);
+	error = sys_recvmsg(p, &bla, retval);
+	if (error)
+		return (error);
+
+	error = copyin(lla.msg, (caddr_t)&msg, sizeof(msg));
+
+	if (!error && msg.msg_name && msg.msg_namelen > 2)
+		error = linux_sa_put(msg.msg_name);
+
+	return (error);
 }
 
 int
@@ -912,12 +1036,36 @@ linux_sendmsg(p, v, retval)
 	} */ *uap = v;
 	struct linux_sendmsg_args lla;
 	struct sys_sendmsg_args bla;
+	struct msghdr msg, *nmsg = NULL;
 	int error;
 	caddr_t control;
 	int level;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lla, sizeof lla)))
 		return error;
+
+	if ((error = copyin(lla.msg, (caddr_t) &msg, sizeof(msg))))
+		return (error);
+
+	if (msg.msg_name) {
+		struct sockaddr *sa;
+		caddr_t sg = stackgap_init(0);
+
+		nmsg = (struct msghdr *)stackgap_alloc(&sg,
+		    sizeof(struct msghdr));
+		if (!nmsg)
+			return (ENOMEM);
+
+		error = linux_sa_get(p, &sg, &sa,
+		    (struct osockaddr *)msg.msg_name, &msg.msg_namelen);
+		if (error)
+			return (error);
+
+		msg.msg_name = (struct sockaddr *)sa;
+		if ((error = copyout(&msg, nmsg, sizeof(struct msghdr))))
+			return (error);
+	}
+
 	SCARG(&bla, s) = lla.s;
 	SCARG(&bla, msg) = lla.msg;
 	SCARG(&bla, flags) = lla.flags;
@@ -945,6 +1093,139 @@ linux_sendmsg(p, v, retval)
 	}
 done:
 	return sys_sendmsg(p, &bla, retval);
+}
+
+/*
+ * Copy the osockaddr structure pointed to by osa to kernel, adjust
+ * family and convert to sockaddr, allocate stackgap and put the
+ * the converted structure there, address on stackgap returned in sap.
+ */
+int
+linux_sa_get(p, sgp, sap, osa, osalen)
+	struct proc *p;
+	caddr_t *sgp;
+	struct sockaddr **sap;
+	const struct osockaddr *osa;
+	int *osalen;
+{
+	int error=0, bdom;
+	struct sockaddr *sa, *usa;
+	struct osockaddr *kosa = (struct osockaddr *) &sa;
+	int alloclen;
+#ifdef INET6
+	int oldv6size;
+	struct sockaddr_in6 *sin6;
+#endif
+
+	if (*osalen < 2 || *osalen > UCHAR_MAX || !osa) {
+		return (EINVAL);
+	}
+
+	alloclen = *osalen;
+#ifdef INET6
+	oldv6size = 0;
+	/*
+	 * Check for old (pre-RFC2553) sockaddr_in6. We may accept it
+	 * if it's a v4-mapped address, so reserve the proper space
+	 * for it.
+	 */
+	if (alloclen == sizeof (struct sockaddr_in6) - sizeof (u_int32_t)) {
+		alloclen = sizeof (struct sockaddr_in6);
+		oldv6size = 1;
+	}
+#endif
+
+	kosa = (struct osockaddr *) malloc(alloclen, M_TEMP, M_WAITOK);
+
+	if ((error = copyin(osa, (caddr_t) kosa, *osalen))) {
+		goto out;
+	}
+
+	bdom = linux_to_bsd_domain(kosa->sa_family);
+	if (bdom == -1) {
+		error = EINVAL;
+		goto out;
+	}
+
+#ifdef INET6
+	/*
+	 * Older Linux IPv6 code uses obsolete RFC2133 struct sockaddr_in6,
+	 * which lacks the scope id compared with RFC2553 one. If we detect
+	 * the situation, reject the address.
+	 *
+	 * Still accept addresses for which the scope id is not used.
+	 */
+	if (oldv6size && bdom == AF_INET6) {
+		sin6 = (struct sockaddr_in6 *)kosa;
+		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
+		    (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
+		     !IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) &&
+		     !IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) &&
+		     !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
+		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
+			sin6->sin6_scope_id = 0;
+		} else {
+			error = EINVAL;
+			goto out;
+		}
+	} else
+#endif 
+	if (bdom == AF_INET) {
+		alloclen = sizeof(struct sockaddr_in);
+	}
+
+	sa = (struct sockaddr *) kosa;
+	sa->sa_family = bdom;
+	sa->sa_len = alloclen;
+
+	usa = (struct sockaddr *) stackgap_alloc(sgp, alloclen);
+	if (!usa) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	if ((error = copyout(sa, usa, alloclen))) {
+		goto out;
+	}
+
+	*sap = usa;
+
+    out:
+	*osalen = alloclen;
+	free(kosa, M_TEMP);
+	return (error);
+}
+
+int
+linux_sa_put(osa)
+	struct osockaddr *osa;
+{
+	struct sockaddr sa;
+	struct osockaddr *kosa;
+	int error, bdom, len;
+
+	/*
+	 * Only read/write the sockaddr family and length part, the rest is
+	 * not changed.
+	 */
+	len = sizeof(sa.sa_len) + sizeof(sa.sa_family);
+
+	error = copyin((caddr_t) osa, (caddr_t) &sa, len);
+	if (error)
+		return (error);
+
+	bdom = bsd_to_linux_domain(sa.sa_family);
+	if (bdom == -1)
+		return (EINVAL);
+
+	/* Note: we convert from sockaddr to osockaddr here, too */
+	kosa = (struct osockaddr *) &sa;
+	kosa->sa_family = bdom;
+	error = copyout(kosa, osa, len);
+	if (error)
+		return (error);
+
+	return (0);
 }
 
 /*
