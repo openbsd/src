@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2004/10/01 18:58:09 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 2005/04/04 11:44:50 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -170,7 +170,7 @@ vaddr_t kmapva = 0;
  * Internal routines
  */
 static void flush_atc_entry(long, vaddr_t, boolean_t);
-pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t);
+pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t, int);
 void pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *);
 void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
 void pmap_expand(pmap_t, vaddr_t);
@@ -303,7 +303,7 @@ pmap_pte(pmap_t pmap, vaddr_t virt)
  *
  */
 pt_entry_t *
-pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
+pmap_expand_kmap(vaddr_t virt, vm_prot_t prot, int canfail)
 {
 	sdt_entry_t template, *sdt;
 	kpdt_entry_t kpdt_ent;
@@ -323,8 +323,12 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
 #endif
 
 	kpdt_ent = kpdt_free;
-	if (kpdt_ent == KPDT_ENTRY_NULL)
-		panic("pmap_expand_kmap: Ran out of kernel pte tables");
+	if (kpdt_ent == KPDT_ENTRY_NULL) {
+		if (canfail)
+			return (NULL);
+		else
+			panic("pmap_expand_kmap: Ran out of kernel pte tables");
+	}
 
 	kpdt_free = kpdt_free->next;
 	/* physical table */
@@ -408,7 +412,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 	for (num_phys_pages = npages; num_phys_pages != 0; num_phys_pages--) {
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			pte = pmap_expand_kmap(virt,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_MAP | CD_FULL)) == (CD_MAP | CD_FULL))
@@ -711,7 +715,7 @@ pmap_bootstrap(vaddr_t load_start)
 ({ \
 	v = (c)virt; \
 	if ((p = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL) \
-		pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE); \
+		pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE, 0); \
 	virt += ((n) * PAGE_SIZE); \
 })
 
@@ -734,7 +738,7 @@ pmap_bootstrap(vaddr_t load_start)
 
 	for (i = 0, virt = UADDR; i < UPAGES; i++, virt += PAGE_SIZE) {
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
-			pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE);
+			pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 
 	/*
@@ -1654,7 +1658,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	while ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL) {
 		if (pmap == kernel_pmap) {
-			pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE);
+			/* will only return NULL if PMAP_CANFAIL is set */
+			if (pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE,
+			    flags & PMAP_CANFAIL) == NULL)
+				return (ENOMEM);
 		} else {
 			/*
 			 * Must unlock to expand the pmap.
@@ -2460,7 +2467,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 * Expand pmap to include this pte.
 	 */
 	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL)
-		pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	/*
 	 * And count the mapping.
