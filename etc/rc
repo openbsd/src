@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.259 2004/11/03 18:04:46 henning Exp $
+#	$OpenBSD: rc,v 1.260 2004/11/22 09:26:23 jsg Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -166,6 +166,17 @@ if [ -f /etc/sysctl.conf ]; then
 	set -- `stripcom /etc/sysctl.conf`
 	while [ $# -ge 1 ] ; do
 		sysctl $1
+		shift
+	done
+)
+fi
+
+if [ -f /etc/mixerctl.conf ]; then
+(
+	# delete comments and blank lines
+	set -- `stripcom /etc/mixerctl.conf`
+	while [ $# -ge 1 ] ; do
+		mixerctl -q $1 > /dev/null 2>&1
 		shift
 	done
 )
