@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.11 1999/02/23 23:54:17 art Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.11 1999/02/23 23:54:17 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ int f_whiteout;			/* show whiteout entries */
 int rval;
 
 int
-main(argc, argv)
+ls_main(argc, argv)
 	int argc;
 	char *argv[];
 {
