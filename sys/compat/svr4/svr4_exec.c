@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.6 1998/02/22 01:07:58 niklas Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.7 1998/03/06 22:05:47 niklas Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -131,6 +131,7 @@ svr4_elf_probe(p, epp, itp, pos, os)
 	}
 	epp->ep_emul = &emul_svr4;
 	*pos = SVR4_INTERP_ADDR;
-	*os = OOS_SVR4;
+	if (*os == OOS_NULL)
+		*os = OOS_SVR4;
 	return (0);
 }
