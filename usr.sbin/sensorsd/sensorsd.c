@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.1 2003/09/24 20:32:49 henning Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.2 2003/09/29 16:05:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -105,9 +105,9 @@ main(int argc, char *argv[])
 	if (parse_config(configfile))
 		errx(1, "error in config file");
 
-/*	if (daemon(0, 0) == -1)
+	if (daemon(0, 0) == -1)
 		err(1, "unable to fork");
-*/
+
 	signal(SIGHUP, reparse_cfg);
 
 	syslog(LOG_INFO, "startup, monitoring %d sensors", i);
