@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.24 1997/10/23 15:13:30 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.25 1997/11/30 21:51:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -278,7 +278,7 @@ memprobe()
 	/* Register in global var */
 	addbootarg(BOOTARG_MEMMAP, (pm - bm + 1) * sizeof(*bm), bm);
 	memory_map = bm; /* XXX for 'machine mem' command only */
-	printf("mem0:");
+	printf("memory:");
 
 	/* XXX - Compatibility, remove later */
 	extmem = cnvmem = 0;

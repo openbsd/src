@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.48 1997/11/05 02:02:25 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.49 1997/11/30 21:51:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,6 +38,7 @@
 #include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
+#include "disk.h"
 #include "debug.h"
 #include "libsa.h"
 #include "biosdev.h"
@@ -47,11 +48,13 @@ static int biosdisk_errno __P((u_int));
 
 extern int debug;
 
+#if 0
 struct biosdisk {
 	bios_diskinfo_t *bios_info;
 	dev_t	bsddev;
 	struct disklabel disklabel;
 };
+#endif
 
 struct EDD_CB {
 	u_int8_t  edd_len;   /* size of packet */
@@ -62,16 +65,34 @@ struct EDD_CB {
 };
 
 /*
+ * reset disk system
+ */
+static int
+biosdreset(dev)
+	int dev;
+{
+	int rv;
+	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
+			  : "0" (0), "d" (dev) : "%ecx", "cc");
+	return (rv & 0xff)? rv >> 8 : 0;
+}
+
+/*
  * Fill out a bios_diskinfo_t for this device.
  * Return 0 if all ok.
  * Return 1 if not ok.
  */
 int
-bios_getinfo(dev, pdi)
+bios_getdiskinfo(dev, pdi)
 	int dev;
 	bios_diskinfo_t *pdi;
 {
 	u_int rv;
+
+	rv = biosdreset(dev);
+	if(rv)
+		return(1);
+
 #ifdef BIOS_DEBUG
 	printf("getinfo: try #8, %x,%p\n", dev, pdi);
 #endif
@@ -135,19 +156,6 @@ bios_getinfo(dev, pdi)
 	}
 
 	return(0);
-}
-
-/*
- * reset disk system
- */
-static __inline int
-biosdreset(dev)
-	int dev;
-{
-	int rv;
-	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
-			  : "0" (0), "d" (dev) : "%ecx", "cc");
-	return (rv & 0xff)? rv >> 8 : 0;
 }
 
 /*
@@ -245,7 +253,9 @@ biosd_io(rw, dev, cyl, head, sect, nsect, buf)
 			break;
 
 		default:	/* All other errors */
+#ifdef BIOS_DEBUG
 			printf("\nBIOS error 0x%x (%s)\n", error, biosdisk_err(error));
+#endif
 			biosdreset(dev);
 			break;
 		}
@@ -268,22 +278,20 @@ biosd_io(rw, dev, cyl, head, sect, nsect, buf)
  * Try to read the bsd label on the given BIOS device
  */
 const char *
-bios_getdisklabel(dev, label)
-	int dev;
+bios_getdisklabel(bd, label)
+	bios_diskinfo_t *bd;
 	struct disklabel *label;
 {
 	daddr_t off = LABELSECTOR;
-	bios_diskinfo_t *bd;
 	char *buf;
 	struct dos_mbr mbr;
 	int cyl, head, sect;
 	int error, i;
 
 	/* Read MBR */
-	bd = bios_dklookup(dev);
 	btochs(DOSBBSECTOR, cyl, head, sect, bd->bios_heads, bd->bios_sectors);
 
-	error = biosd_io(F_READ, dev, cyl, head, sect, 1, &mbr);
+	error = biosd_io(F_READ, bd->bios_number, cyl, head, sect, 1, &mbr);
 	if(error)
 		return(biosdisk_err(error));
 
@@ -313,7 +321,7 @@ bios_getdisklabel(dev, label)
 #endif
 	/* read disklabel */
 	btochs(off, cyl, head, sect, bd->bios_heads, bd->bios_sectors);
-	error = biosd_io(F_READ, dev, cyl, head, sect, 1, buf);
+	error = biosd_io(F_READ, bd->bios_number, cyl, head, sect, 1, buf);
 
 	if(error)
 		return("failed to read disklabel");
@@ -327,9 +335,8 @@ biosopen(struct open_file *f, ...)
 {
 	va_list ap;
 	register char	*cp, **file;
-	const char *st;
 	dev_t	maj, unit, part;
-	register struct biosdisk *bd;
+	struct diskinfo *dip;
 	int biosdev;
 
 	va_start(ap, f);
@@ -395,35 +402,41 @@ biosopen(struct open_file *f, ...)
 		return ENXIO;
 	}
 
-	bd = alloc(sizeof(*bd));
-	bzero(bd, sizeof(bd));
+	/* Find device */
+	bootdev_dip = dip = dklookup(biosdev);
 
-	if (!(bd->bios_info = bios_dklookup(biosdev)))
-		return ENXIO;
+	/* Fix up bootdev */
+	{ dev_t bsd_dev;
+		bsd_dev = dip->bios_info.bsd_dev;
+		dip->bsddev = MAKEBOOTDEV(B_TYPE(bsd_dev), B_ADAPTOR(bsd_dev),
+			B_CONTROLLER(bsd_dev), unit, part);
+		dip->bootdev = MAKEBOOTDEV(B_TYPE(bsd_dev), B_ADAPTOR(bsd_dev),
+			B_CONTROLLER(bsd_dev), B_UNIT(bsd_dev), part);
+	}
 
-	bootdev = bd->bios_info->bsd_dev;
-	bd->bsddev = MAKEBOOTDEV(B_TYPE(bootdev), B_ADAPTOR(bootdev),
-		B_CONTROLLER(bootdev), unit, part);
-	bootdev = MAKEBOOTDEV(B_TYPE(bootdev), B_ADAPTOR(bootdev),
-		B_CONTROLLER(bootdev), B_UNIT(bootdev), part);
+#if 0
+	dip->bios_info.bsd_dev = dip->bootdev;
+	bootdev = dip->bootdev;
+#endif
 
 #ifdef BIOS_DEBUG
 	if (debug) {
 		printf("BIOS geometry: heads=%u, s/t=%u; EDD=%d\n",
-			bd->bios_info->bios_heads, bd->bios_info->bios_sectors,
-			bd->bios_info->bios_edd);
+			dip->bios_info.bios_heads, dip->bios_info.bios_sectors,
+			dip->bios_info.bios_edd);
 	}
 #endif
 
-	/* Get disklabel from drive */
-	if ((st = bios_getdisklabel(biosdev, &bd->disklabel)) != NULL) {
-		if (debug)
+	/* Try for disklabel again (might be removable media) */
+	if(dip->bios_info.flags & BDI_BADLABEL){
+		const char *st = bios_getdisklabel((void*)biosdev, &dip->disklabel);
+		if (debug && st)
 			printf("%s\n", st);
 
 		return ERDLAB;
 	}
 
-	f->f_devdata = bd;
+	f->f_devdata = dip;
 
 	return 0;
 }
@@ -517,24 +530,24 @@ biosstrategy(devdata, rw, blk, size, buf, rsize)
 	size_t *rsize;
 {
 	u_int8_t error = 0;
-	struct biosdisk *bd = (struct biosdisk *)devdata;
+	struct diskinfo *dip = (struct diskinfo *)devdata;
 	register size_t i, nsect, n, spt, tpc;
 	int dev;
 
 	nsect = (size + DEV_BSIZE-1) / DEV_BSIZE;
 	if (rsize != NULL)
-		blk += bd->disklabel.
-			d_partitions[B_PARTITION(bd->bsddev)].p_offset;
+		blk += dip->disklabel.
+			d_partitions[B_PARTITION(dip->bsddev)].p_offset;
 
 	/* handle floppies w/ different from drive geometry */
-	if (!(bd->bios_info->bios_number & 0x80) &&
-	    bd->disklabel.d_nsectors != 0)
-		spt = bd->disklabel.d_nsectors;
+	if (!(dip->bios_info.bios_number & 0x80) &&
+	    dip->disklabel.d_nsectors != 0)
+		spt = dip->disklabel.d_nsectors;
 	else
-		spt = bd->bios_info->bios_sectors;
+		spt = dip->bios_info.bios_sectors;
 
-	tpc = bd->bios_info->bios_heads;
-	dev = bd->bios_info->bios_number;
+	tpc = dip->bios_info.bios_heads;
+	dev = dip->bios_info.bios_number;
 
 	for (i = 0; error == 0 && i < nsect;
 	     i += n, blk += n, buf += n * DEV_BSIZE) {
@@ -567,7 +580,7 @@ int
 biosclose(f)
 	struct open_file *f;
 {
-	free(f->f_devdata, 0);
+	f->f_devdata = NULL;
 	return 0;
 }
 

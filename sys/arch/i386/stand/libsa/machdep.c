@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 1997/10/22 23:34:39 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 1997/11/30 21:51:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -38,7 +38,6 @@
 #include "debug.h"
 
 struct BIOS_regs	BIOS_regs;
-int bootdev;
 
 #if defined(DEBUG) && !defined(_TEST)
 #define CKPT(c)	(*(u_int16_t*)0xb8148 = 0x4700 + (c))
@@ -57,7 +56,10 @@ machdep()
 #ifndef _TEST
 	memprobe();   CKPT('4');
 	diskprobe();  CKPT('6');
+
+	printf("bios:");
 	apmprobe();   CKPT('7');
+	printf("\n");
 #endif
 	CKPT('9');
 }

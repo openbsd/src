@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.11 1997/10/29 23:12:46 niklas Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.12 1997/11/30 21:51:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,12 +32,17 @@
  *
  */
 
+/* We want the disk type names from disklabel.h */
+#define DKTYPENAMES
+
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 #include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
 #include <lib/libz/zlib.h>
+#include "disk.h"
 #include "biosdev.h"
 #include "libsa.h"
 
@@ -46,110 +51,202 @@
 /* Local Prototypes */
 static int disksum __P((int));
 
-/* These get passed to kernel */
-bios_diskinfo_t bios_diskinfo[16];
-u_int32_t bios_cksumlen;
+/* List of disk devices we found/probed */
+static struct disklist_lh disklist;
 
-/* Probe for all BIOS disks */
-void
-diskprobe()
+/* Pointer to boot device */
+struct diskinfo *bootdev_dip;
+
+
+/* Probe for all BIOS floppies */
+static void
+floppyprobe()
 {
-	struct disklabel label;
-	register u_int i;
-	register bios_diskinfo_t *pdi;
-	u_int type;
-	u_int scsi = 0, ide = 0, bsdunit;
-
-	printf("Probing disks:");
-	pdi = bios_diskinfo;
+	struct diskinfo *dip;
+	int i;
 
 	/* Floppies */
-	for(i = 0; i < 4; i++, pdi++) {
-		if(bios_getinfo(i, pdi)) {
+	for(i = 0; i < 4; i++) {
+		dip = alloc(sizeof(struct diskinfo));
+		bzero(dip, sizeof(*dip));
+
+		if(bios_getdiskinfo(i, &dip->bios_info)) {
 #ifdef BIOS_DEBUG
 			printf(" <!fd%u>", i);
 #endif
-			break;
-		} else
-			printf(" fd%u", i);
-
-		/* Fill out best we can - (fd?) */
-		pdi->bsd_dev = MAKEBOOTDEV(2, 0, 0, i, RAW_PART);
-	}
-
-#ifdef BIOS_DEBUG
-	printf(";");
-#endif
-
-	/* Hard disks */
-	for(i = 0; i < 8; i++, pdi++) {
-
-		if(bios_getinfo(i | 0x80, pdi)) {
-#ifdef BIOS_DEBUG
-			printf(" <!hd%u>", i);
-#endif
+			free(dip, 0);
 			break;
 		}
 
-		printf(" hd%u%s", i, (pdi->bios_edd > 0?"+":""));
+		printf(" fd%u", i);
+
+		/* Fill out best we can - (fd?) */
+		dip->bios_info.bsd_dev = MAKEBOOTDEV(2, 0, 0, i, RAW_PART);
+		if((bios_getdisklabel(&dip->bios_info, &dip->disklabel)) != 0) 
+			dip->bios_info.flags |= BDI_BADLABEL;
+		else
+			dip->bios_info.flags |= BDI_GOODLABEL;
+
+		/* Add to queue of disks */
+		TAILQ_INSERT_TAIL(&disklist, dip, list);
+	}
+}
+
+
+/* Probe for all BIOS floppies */
+static void
+hardprobe()
+{
+	struct diskinfo *dip;
+	int i;
+	u_int bsdunit, type;
+	u_int scsi = 0, ide = 0;
+
+	/* Hard disks */
+	for(i = 0x80; i < 0x88; i++) {
+		dip = alloc(sizeof(struct diskinfo));
+
+		if(bios_getdiskinfo(i, &dip->bios_info)) {
+#ifdef BIOS_DEBUG
+			printf(" <!hd%u>", i);
+#endif
+			free(dip, 0);
+			break;
+		}
+
+		printf(" hd%u%s", i&0x7f, (dip->bios_info.bios_edd > 0?"+":""));
 
 		/* Try to find the label, to figure out device type */
-		if((bios_getdisklabel(i | 0x80, &label)) ) {
+		if((bios_getdisklabel(&dip->bios_info, &dip->disklabel)) ) {
 			printf("*");
 			bsdunit = ide++;
 			type = 0;	/* XXX let it be IDE */
 		} else {
 			/* Best guess */
-			switch (label.d_type) {
+			switch (dip->disklabel.d_type) {
 			case DTYPE_SCSI:
 				type = 4;
 				bsdunit = scsi++;
-				pdi->flags |= BDI_GOODLABEL;
+				dip->bios_info.flags |= BDI_GOODLABEL;
 				break;
 
 			case DTYPE_ESDI:
 			case DTYPE_ST506:
 				type = 0;
 				bsdunit = ide++;
-				pdi->flags |= BDI_GOODLABEL;
+				dip->bios_info.flags |= BDI_GOODLABEL;
 				break;
 
 			default:
-				pdi->flags |= BDI_BADLABEL;
+				dip->bios_info.flags |= BDI_BADLABEL;
 				type = 0;	/* XXX Suggest IDE */
 				bsdunit = ide++;
 			}
 		}
 
-		pdi->checksum = 0; /* just in case */
+		dip->bios_info.checksum = 0; /* just in case */
 		/* Fill out best we can */
-		pdi->bsd_dev = MAKEBOOTDEV(type, 0, 0, bsdunit, RAW_PART);
-	}
+		dip->bios_info.bsd_dev = MAKEBOOTDEV(type, 0, 0, bsdunit, RAW_PART);
 
-	/* End of list */
-	pdi->bios_number = -1;
+		/* Add to queue of disks */
+		TAILQ_INSERT_TAIL(&disklist, dip, list);
+	}
+}
+
+
+/* Probe for all BIOS supported disks */
+void
+diskprobe()
+{
+	struct diskinfo *dip;
+	int i;
+
+	/* These get passed to kernel */
+	bios_diskinfo_t *bios_diskinfo;
+	static u_int32_t bios_cksumlen;
+
+	/* Init stuff */
+	printf("disk:");
+	TAILQ_INIT(&disklist);
+
+	/* Do probes */
+	floppyprobe();
+#ifdef BIOS_DEBUG
+	printf(";");
+#endif
+	hardprobe();
+
+
 	/* Checksumming of hard disks */
 	for (i = 0; disksum(i++) && i < MAX_CKSUMLEN; )
 		;
 	bios_cksumlen = i;
-	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
-	addbootarg(BOOTARG_DISKINFO, (pdi - bios_diskinfo + 1) *
-				     sizeof(bios_diskinfo[0]), bios_diskinfo);
 
+	/* Get space for passing bios_diskinfo stuff to kernel */
+	for(i = 0, dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list))
+		i++;
+	bios_diskinfo = alloc(++i * sizeof(bios_diskinfo_t));
+
+	/* Copy out the bios_diskinfo stuff */
+	for(i = 0, dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list))
+		bios_diskinfo[i++] = dip->bios_info;
+
+	bios_diskinfo[i++].bios_number = -1;
+	/* Register for kernel use */
+	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
+	addbootarg(BOOTARG_DISKINFO, i * sizeof(bios_diskinfo_t), bios_diskinfo);
 
 	printf("\n");
 }
 
+
 /* Find info on given BIOS disk */
+struct diskinfo *
+dklookup(dev)
+	int dev;
+{
+	struct diskinfo *dip;
+
+	for(dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list))
+		if(dip->bios_info.bios_number == dev)
+			return(dip);
+
+	return(NULL);
+}
+
+void
+dump_diskinfo()
+{
+	struct diskinfo *dip;
+
+	(void)fstypenames, (void)fstypesnames;
+
+	printf("Disk\tBIOS#\tType\tCyls\tHeads\tSecs\tFlags\tChecksum\n");
+	for(dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list)){
+		bios_diskinfo_t *bdi = &dip->bios_info;
+		int d = bdi->bios_number;
+
+		printf("%cd%d\t0x%x\t%s\t%d\t%d\t%d\t0x%x\t0x%x\n",
+		    (d & 0x80)?'h':'f', d & 0x7F, d,
+			(bdi->flags & BDI_BADLABEL)?"*none*":
+				dktypenames[B_TYPE(dip->disklabel.d_type)],
+		    bdi->bios_cylinders, bdi->bios_heads, bdi->bios_sectors,
+		    bdi->flags, bdi->checksum);
+	}
+}
+
+/* Find BIOS protion on given BIOS disk
+ * XXX - Use dklookup() instead.
+ */
 bios_diskinfo_t *
 bios_dklookup(dev)
 	register int dev;
 {
-	register int i;
+	struct diskinfo *dip;
 
-	for(i = 0; bios_diskinfo[i].bios_number != -1; i++)
-		if(bios_diskinfo[i].bios_number == dev)
-			return(&bios_diskinfo[i]);
+	dip = dklookup(dev);
+	if(dip)
+		return(&dip->bios_info);
 
 	return(NULL);
 }
@@ -164,14 +261,16 @@ static int
 disksum(blk)
 	int blk;
 {
-	bios_diskinfo_t *bdi, *bd;
+	struct diskinfo *dip, *dip2;
 	int st, reprobe = 0;
 	int hpc, spt, dev;
 	char *buf;
 	int cyl, head, sect;
 
 	buf = alloca(DEV_BSIZE);
-	for (bdi = bios_diskinfo; bdi->bios_number != -1; bdi++) {
+	for(dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list)){
+		bios_diskinfo_t *bdi = &dip->bios_info;
+
 		/* Skip this disk if it is not a HD or has had an I/O error */
 		if (!(bdi->bios_number & 0x80) || bdi->flags & BDI_INVALID)
 			continue;
@@ -189,12 +288,16 @@ disksum(blk)
 		}
 		bdi->checksum = adler32(bdi->checksum, buf, DEV_BSIZE);
 
-		for (bd = bios_diskinfo; bd != bdi; bd++)
+		for(dip2 = TAILQ_FIRST(&disklist); dip2 != dip;
+				dip2 = TAILQ_NEXT(dip2, list)){
+			bios_diskinfo_t *bd = &dip2->bios_info;
 			if ((bd->bios_number & 0x80) &&
 			    !(bd->flags & BDI_INVALID) &&
 			    bdi->checksum == bd->checksum)
 				reprobe = 1;
+		}
 	}
 
 	return (reprobe);
 }
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.18 1997/10/25 02:07:09 weingart Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.19 1997/11/30 21:51:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -33,8 +33,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
+#include <sys/reboot.h>
 #include <machine/biosvar.h>
+#include <sys/disklabel.h>
+#include "disk.h"
 #include "debug.h"
 #include "biosdev.h"
 #include "libsa.h"
@@ -59,21 +61,7 @@ const struct cmd_table cmd_machine[] = {
 static int
 Xdiskinfo()
 {
-	int i;
-
-	printf(
-	    "Disk\tBIOS#\tBSD#\t\tCyls\tHeads\tSecs\tFlags\tChecksum(%d)\n",
-	    bios_cksumlen);
-	for(i = 0; bios_diskinfo[i].bios_number != -1 && i < 10; i++){
-		int d = bios_diskinfo[i].bios_number;
-
-		printf(
-		    "%cd%d\t0x%x\t0x%x\t%d\t%d\t%d\t0x%x\t0x%x\n",
-		    (d & 0x80)?'h':'f', (d & 0x80)?d - 128:d, d,
-		    bios_diskinfo[i].bsd_dev, bios_diskinfo[i].bios_cylinders,
-		    bios_diskinfo[i].bios_heads, bios_diskinfo[i].bios_sectors,
-		    bios_diskinfo[i].flags, bios_diskinfo[i].checksum);
-	}
+	dump_diskinfo();
 
 	return 0;
 }

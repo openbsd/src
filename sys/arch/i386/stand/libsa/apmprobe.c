@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.2 1997/10/22 23:34:36 mickey Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.3 1997/11/30 21:51:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -132,7 +132,6 @@ apmprobe()
 
 	if ((ai.apm_detail = apm_check())) {
 
-		printf("apm0");
 		apm_disconnect();
 		if (apm_connect(&ai) != 0)
 			printf(": connect error\n");
@@ -143,7 +142,7 @@ apmprobe()
 		       ai.apm_data_base, ai.apm_data_len,
 		       ai.apm_entry);
 #else
-		printf(" detected");
+		printf(" apm");
 #endif
 		putchar('\n');
 		addbootarg(BOOTARG_APMINFO, sizeof(ai), &ai);

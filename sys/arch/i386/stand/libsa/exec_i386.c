@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.19 1997/10/25 07:00:26 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.20 1997/11/30 21:51:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,6 +40,8 @@
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
+#include <sys/disklabel.h>
+#include "disk.h"
 #include "libsa.h"
 
 #define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
@@ -52,6 +54,7 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	char *startaddr, *loadaddr, *ssym, *esym;
 	int howto;
 {
+	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
 #ifdef EXEC_DEBUG
