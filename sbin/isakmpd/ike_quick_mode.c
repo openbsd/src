@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.54 2001/08/15 13:06:53 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.55 2001/10/05 05:57:06 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -1801,7 +1801,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(2).  XXX Share?  */
-  LOG_DBG ((LOG_NEGOTIATION, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
+  LOG_DBG ((LOG_NEGOTIATION, 90, "responder_recv_HASH: isakmp_sa %p isa %p",
 	    isakmp_sa, isa));
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: SKEYID_a",
 		isa->skeyid_a, isa->skeyid_len));
@@ -1888,7 +1888,7 @@ responder_recv_HASH (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(3).  XXX Share?  */
-  LOG_DBG ((LOG_NEGOTIATION, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
+  LOG_DBG ((LOG_NEGOTIATION, 90, "responder_recv_HASH: isakmp_sa %p isa %p",
 	    isakmp_sa, isa));
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH: SKEYID_a",
 		isa->skeyid_a, isa->skeyid_len));
