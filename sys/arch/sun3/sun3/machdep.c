@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -93,7 +93,6 @@
 #include <machine/reg.h>
 
 extern char *cpu_string;
-extern char version[];
 extern short exframesize[];
 
 int physmem;

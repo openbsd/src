@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.55 2002/03/14 01:26:48 millert Exp $ */
+/* $OpenBSD: machdep.c,v 1.56 2002/03/14 20:31:31 mickey Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -174,7 +174,6 @@ void
 cpu_startup()
 {
 	caddr_t		v;
-	extern char	version[];
 	int		base, residual, i, sz;
 	vm_offset_t	minaddr, maxaddr;
 	vm_size_t	size;

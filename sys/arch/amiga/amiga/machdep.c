@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2002/03/14 20:31:30 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -576,7 +576,6 @@ setregs(p, pack, stack, retval)
  * Info for CTL_HW
  */
 char cpu_model[120];
-extern char version[];
 
 #if defined(M68060)
 int m68060_pcr_init = 0x21;	/* make this patchable */

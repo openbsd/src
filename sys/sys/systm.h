@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.48 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: systm.h,v 1.49 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -76,8 +76,11 @@
  */
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
-extern char version[];		/* system version */
-extern char copyright[];	/* system copyright */
+extern const char version[];		/* system version */
+extern const char copyright[];	/* system copyright */
+extern const char ostype[];
+extern const char osversion[];
+extern const char osrelease[];
 extern int cold;		/* cold start flag initialized in locore */
 
 extern int nblkdev;		/* number of entries in bdevsw */

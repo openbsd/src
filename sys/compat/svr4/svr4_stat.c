@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.21 2002/03/14 01:26:51 millert Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.22 2002/03/14 20:31:31 mickey Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -523,8 +523,9 @@ svr4_sys_uname(p, v, retval)
 {
 	struct svr4_sys_uname_args *uap = v;
 	struct svr4_utsname	sut;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
-	char *cp, *dp, *ep;
+	extern char hostname[], machine[];
+	const char *cp;
+	char *dp, *ep;
 
 	bzero(&sut, sizeof(sut));
 
@@ -563,12 +564,11 @@ svr4_sys_systeminfo(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_systeminfo_args *uap = v;
-	char *str;
+	const char *str;
 	int name;
 	int error;
 	long len;
-	extern char ostype[], hostname[], osrelease[],
-		    version[], machine[], domainname[];
+	extern char hostname[], machine[], domainname[];
 #ifdef __sparc__
 	extern char *cpu_class;
 #endif

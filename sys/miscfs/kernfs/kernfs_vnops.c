@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.26 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.27 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ static int	posix = _POSIX_VERSION;
 static int	osrev = OpenBSD;
 static int	ncpu = 1;	/* XXX */
 extern char machine[], cpu_model[];
-extern char ostype[], osrelease[];
 
 #ifdef IPSEC
 extern int ipsp_kern(int, char **, int);
@@ -88,7 +87,7 @@ struct kern_target kern_targets[] = {
      { DT_DIR, N(".."),        0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_REG, N("boottime"),  &boottime.tv_sec, KTT_INT,  VREG, READ_MODE  },
      { DT_REG, N("byteorder"), &byteorder,   KTT_INT,      VREG, READ_MODE  },
-     { DT_REG, N("copyright"), copyright,    KTT_STRING,   VREG, READ_MODE  },
+     { DT_REG, N("copyright"), (void*)copyright,KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KTT_HOSTNAME, VREG, WRITE_MODE },
      { DT_REG, N("domainname"),0,            KTT_DOMAIN,   VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KTT_INT,      VREG, READ_MODE  },
@@ -97,9 +96,9 @@ struct kern_target kern_targets[] = {
      { DT_REG, N("model"),     cpu_model,    KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("msgbuf"),    0,	     KTT_MSGBUF,   VREG, READ_MODE  },
      { DT_REG, N("ncpu"),      &ncpu,        KTT_INT,      VREG, READ_MODE  },
-     { DT_REG, N("ostype"),    &ostype,      KTT_STRING,   VREG, READ_MODE  },
-     { DT_REG, N("osrelease"), &osrelease,   KTT_STRING,   VREG, READ_MODE  },
-     { DT_REG, N("osrev"),     &osrev,       KTT_INT,      VREG, READ_MODE  },
+     { DT_REG, N("ostype"),    (void*)&ostype,KTT_STRING,   VREG, READ_MODE  },
+     { DT_REG, N("osrelease"), (void*)&osrelease,KTT_STRING,VREG, READ_MODE  },
+     { DT_REG, N("osrev"),     &osrev,	     KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("pagesize"),  &uvmexp.pagesize, KTT_INT,  VREG, READ_MODE  },
      { DT_REG, N("physmem"),   &physmem,     KTT_PHYSMEM,  VREG, READ_MODE  },
      { DT_REG, N("posix"),     &posix,       KTT_INT,      VREG, READ_MODE  },
@@ -110,7 +109,7 @@ struct kern_target kern_targets[] = {
      { DT_CHR, N("rrootdev"),  &rrootdev,    KTT_DEVICE,   VCHR, READ_MODE  },
      { DT_REG, N("time"),      0,            KTT_TIME,     VREG, READ_MODE  },
      { DT_REG, N("usermem"),   0,            KTT_USERMEM,  VREG, READ_MODE  },
-     { DT_REG, N("version"),   version,      KTT_STRING,   VREG, READ_MODE  },
+     { DT_REG, N("version"),   (void*)version,KTT_STRING,  VREG, READ_MODE  },
 #ifdef IPSEC
      { DT_REG, N("ipsec"),     0,            KTT_IPSECSPI, VREG, READ_MODE  },
 #endif

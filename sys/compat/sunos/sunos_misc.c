@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.36 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.37 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ sunos_sys_uname(p, v, retval)
 {
 	struct sunos_sys_uname_args *uap = v;
 	struct sunos_utsname sut;
-	extern char ostype[], machine[], osrelease[];
+	extern char machine[];
 
 	bzero(&sut, sizeof(sut));
 

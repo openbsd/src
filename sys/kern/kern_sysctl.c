@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.63 2002/03/14 19:42:54 mickey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.64 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -241,7 +241,6 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	int error, level, inthostid, oldsgap;
-	extern char ostype[], osrelease[], osversion[];
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
 	extern long cp_time[CPUSTATES];

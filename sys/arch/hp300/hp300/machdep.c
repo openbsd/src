@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 2002/03/14 20:31:30 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -505,7 +505,6 @@ setregs(p, pack, stack, retval)
  * Info for CTL_HW
  */
 char	cpu_model[120];
-extern	char version[];
 
 /*
  * Text description of models we support, indexed by machineid.

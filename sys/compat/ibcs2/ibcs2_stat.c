@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_stat.c,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: ibcs2_stat.c,v 1.9 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ ibcs2_sys_utssys(p, v, retval)
 	case 0:			/* uname(2) */
 	{
 		struct ibcs2_utsname sut;
-		extern char ostype[], machine[], osrelease[];
+		extern char machine[];
 
 		bzero(&sut, ibcs2_utsname_len);
 		bcopy(ostype, sut.sysname, sizeof(sut.sysname) - 1);

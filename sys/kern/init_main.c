@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.93 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.94 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -98,7 +98,7 @@
 extern void nfs_init(void);
 #endif
 
-char	copyright[] =
+const char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
 "\tThe Regents of the University of California.  All rights reserved.\n"
 "Copyright (c) 1995-2002 OpenBSD. All rights reserved.  http://www.OpenBSD.org\n";

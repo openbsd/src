@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.25 2002/03/14 03:16:03 millert Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.26 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ ultrix_sys_uname(p, v, retval)
 {
 	struct ultrix_sys_uname_args *uap = v;
 	struct ultrix_utsname sut;
-	extern char ostype[], machine[], osrelease[];
+	extern char machine[];
 
 	bzero(&sut, sizeof(sut));
 

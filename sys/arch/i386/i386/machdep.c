@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.199 2002/03/14 16:52:11 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.200 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -622,7 +622,6 @@ setup_buffers(maxaddr)
  * Info for CTL_HW
  */
 char	cpu_model[120];
-extern	char version[];
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.

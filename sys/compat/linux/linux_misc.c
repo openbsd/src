@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.41 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.42 2002/03/14 20:31:31 mickey Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -521,8 +521,7 @@ linux_sys_uname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_utsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[],
-	    domainname[];
+	extern char hostname[], machine[], domainname[];
 	struct linux_utsname luts;
 	int len;
 	char *cp;
@@ -558,7 +557,7 @@ linux_sys_olduname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_oldutsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
+	extern char hostname[], machine[];
 	struct linux_oldutsname luts;
 	int len;
 	char *cp;
@@ -587,7 +586,7 @@ linux_sys_oldolduname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_oldoldutsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
+	extern char hostname[], machine[];
 	struct linux_oldoldutsname luts;
 	int len;
 	char *cp;
