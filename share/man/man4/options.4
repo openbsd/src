@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.38 1999/07/30 15:44:29 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.39 1999/10/05 19:37:09 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -104,6 +104,11 @@ applications built for the same architecture.  This option is
 available on the i386 architecture.
 See
 .Xr compat_freebsd 8 .
+.It Cd option COMPAT_NETBSD
+On those architectures that support it, this enables binary compatibility
+with
+.Em NetBSD
+applications built for the same architecture.
 .It Cd option COMPAT_HPUX
 On those architectures that support it, this enables binary
 compatibility with
@@ -266,8 +271,9 @@ and
 for details on NFS.
 .It Cd option CD9660
 Includes code for the ISO 9660 + Rock Ridge file system, which is the
-standard file system used on many CD-ROMs.  It is useful mostly if a
-CD drive is present.  See
+standard file system used on many CD-ROMs.
+It also supports Joliet extensions.
+See
 .Xr mount_cd9660 8
 for details.
 .It Cd option MSDOSFS
@@ -419,8 +425,12 @@ See also
 .Ss Miscellaneous Options
 .Bl -ohang
 .It Cd option PCIVERBOSE
-Makes the boot process more verbose on what peripherals are detected
-(vendor names and other information is printed etc.)
+Makes the boot process more verbose for PCI peripherals
+(vendor names and other information is printed, etc.).
+.It Cd option EISAVERBOSE
+Makes the boot process more verbose for EISA peripherals.
+.It Cd option PCMCIAVERBOSE
+Makes the boot process more verbose for PCMCIA peripherals.
 .It Cd option APERTURE
 Provide in-kernel support for VGA framebuffer mapping by user-processes
 (such as an X windows server).  This option is supported in the i386
@@ -492,6 +502,12 @@ driver, and much of the networking code.
 Note that this option is silently turned on by the
 .Em DEBUG
 option.
+.It Cd option BOOT_CONFIG
+Adds support for the
+.Fl c
+boot option (User Kernel Config).
+Allows modification of kernel settings (i.e., device parameters) before
+booting the system.
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -645,6 +661,11 @@ based filtering for ppp connections. This option is used by
 which needs to be compiled with
 .Em PPP_FILTER
 defined (the current default).
+.It Cd option PPP_BSDCOMP
+Enables BSD compressor for PPP connections.
+.It Cd option PPP_DEFLATE
+For use in conjunction with PPP_BSDCOMP; provides an interface to zlib for PPP
+for deflate compression/decompression.
 .It Cd option IPSEC
 This option enables IP security protocol support. See
 .Xr ipsec 4
@@ -676,6 +697,10 @@ Terser SCSI error messages.  This omits the table for decoding ASC/ASCQ
 info, saving about 8 bytes or so.
 .It Cd option SCSIDEBUG
 Prints extra debugging info for the SCSI subsystem to the console.
+.El
+.Ss PCVT Options (i386 Architecture)
+See
+.Xr pcvt 4 .
 .Ss System V IPC Options
 .Bl -ohang
 .It Cd option SYSVMSG
