@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.24 2004/05/03 17:30:14 millert Exp $
+.\"	$OpenBSD: rmd160.3,v 1.25 2004/05/16 18:29:09 otto Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -198,6 +198,7 @@ char *buf = "abc";
 printf("0x%s\en", RMD160Data(buf, strlen(buf), output));
 .Ed
 .Sh SEE ALSO
+.Xr cksum 1 ,
 .Xr rmd160 1 ,
 .Xr md4 3 ,
 .Xr md5 3 ,

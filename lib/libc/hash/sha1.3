@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.32 2004/05/05 17:09:46 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.33 2004/05/16 18:29:09 otto Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -195,6 +195,7 @@ char *buf = "abc";
 printf("0x%s\en", SHA1Data(buf, strlen(buf), output));
 .Ed
 .Sh SEE ALSO
+.Xr cksum 1 ,
 .Xr sha1 1 ,
 .Xr md4 3 ,
 .Xr md5 3 ,
