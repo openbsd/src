@@ -4724,6 +4724,7 @@
 ./usr/share/man/cat9/timeout_triggered.0
 ./usr/share/man/cat9/tsleep.0
 ./usr/share/man/cat9/ttyprintf.0
+./usr/share/man/cat9/tvtohz.0
 ./usr/share/man/cat9/untimeout.0
 ./usr/share/man/cat9/uprintf.0
 ./usr/share/man/cat9/uvm.0
