@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.30 2002/04/02 06:01:43 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.31 2002/04/06 22:00:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.30 2002/04/02 06:01:43 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.31 2002/04/06 22:00:05 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -405,25 +405,27 @@ wi_printcardid(wreq, chip_id)
 	case WI_NIC_37300P:
 		chip_name = "PRISM 2.5 ISL37300P";
 		break;
-	case 1:
+	case WI_NIC_LUCENT:
 		chip_name = "Lucent";
 		break;
-	case 2:
+	case WI_NIC_SONY:
 		chip_name = "Sony";
 		break;
-	case 5:
+	case WI_NIC_LUCENT_EM:
 		chip_name = "Lucent (embedded)";
 		break;
 	default:
-		asprintf(&chip_name, "Unknown (%d)", chip_id);
-		break;
+		if (chip_id & 0x8000)
+			chip_name = "Unknown PRISM II chip";
+		else
+			chip_name = "Unknown Lucent chip";
 	}
-	if (chip_id <= 5)
-		printf("[ %s, Firmware %d.%d variant %d ]", chip_name,
+	if (chip_id & 0x8000)
+		printf("[ %s, Firmware %d.%d.%d ]", chip_name,
 		    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
 		    letoh16(wreq->wi_val[1]));
 	else
-		printf("[ %s, Firmware %d.%d.%d ]", chip_name,
+		printf("[ %s, Firmware %d.%d variant %d ]", chip_name,
 		    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
 		    letoh16(wreq->wi_val[1]));
 }
