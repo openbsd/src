@@ -549,9 +549,6 @@ fdstart(fd)
 	fd->sc_q.b_active = 1;
 	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 
-	/* Instrumentation. */
-	disk_busy(&fd->sc_dk);
-
 	/* If controller not already active, start it. */
 	if (!active)
 		fdcstart(fdc);
@@ -581,8 +578,6 @@ fdfinish(fd, bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
-
-	disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 	biodone(bp);
 	/* turn off motor 5s from now */
@@ -903,6 +898,10 @@ loop:
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
+
+		fd->sc_dk.dk_seek++;
+		disk_busy(&fd->sc_dk);
+
 		timeout(fdctimeout, fdc, 4 * hz);
 		return 1;
 
@@ -954,6 +953,9 @@ loop:
 		out_fdc(iobase, type->gap1);		/* gap1 size */
 		out_fdc(iobase, type->datalen);		/* data length */
 		fdc->sc_state = IOCOMPLETE;
+
+		disk_busy(&fd->sc_dk);
+
 		/* allow 2 seconds for operation */
 		timeout(fdctimeout, fdc, 2 * hz);
 		return 1;				/* will return later */
@@ -966,6 +968,8 @@ loop:
 		return 1;
 
 	case SEEKCOMPLETE:
+		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+
 		/* Make sure seek really happened. */
 		out_fdc(iobase, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
@@ -993,6 +997,9 @@ loop:
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		untimeout(fdctimeout, fdc);
+
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
 #ifdef NEWCONFIG
 			at_dma_abort(fdc->sc_drq);
