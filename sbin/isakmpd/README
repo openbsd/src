@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.11 1999/04/30 11:48:06 niklas Exp $
-$EOM: README,v 1.21 1999/04/30 11:37:42 niklas Exp $
+$OpenBSD: README,v 1.12 1999/05/02 19:18:07 niklas Exp $
+$EOM: README,v 1.22 1999/05/02 13:39:37 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -59,7 +59,10 @@ $ echo "c IPsec-east-west" >/tmp/other.fifo
 
 and watch.  You can turn on debugging on that isakmpd too of course, for
 greater fun.  This rudimentary user interface is slightly described in
-DESIGN-NOTES.
+DESIGN-NOTES.  If you are going to look at the config file, don't be scared,
+the man page isakmpd.conf(5) covers every detail, and the flexibility will
+be hidden under a userfriendlier layer in a later release.  I did this
+first config-file syntax just because it should be easy to parse.
 
 Happy IKEing!
 
