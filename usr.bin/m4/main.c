@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2000/01/05 16:06:14 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2000/01/11 14:06:11 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.23 2000/01/05 16:06:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.24 2000/01/11 14:06:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "sinclude",     SINCTYPE },
 	{ "define",       DEFITYPE },
 	{ "defn",         DEFNTYPE },
-	{ "divert",       DIVRTYPE },
+	{ "divert",       DIVRTYPE | NOARGS },
 	{ "expr",         EXPRTYPE },
 	{ "eval",         EXPRTYPE },
 	{ "substr",       SUBSTYPE },
@@ -102,9 +102,9 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "len",          LENGTYPE },
 	{ "incr",         INCRTYPE },
 	{ "decr",         DECRTYPE },
-	{ "dnl",          DNLNTYPE },
-	{ "changequote",  CHNQTYPE },
-	{ "changecom",    CHNCTYPE },
+	{ "dnl",          DNLNTYPE | NOARGS },
+	{ "changequote",  CHNQTYPE | NOARGS },
+	{ "changecom",    CHNCTYPE | NOARGS },
 	{ "index",        INDXTYPE },
 #ifdef EXTENDED
 	{ "paste",        PASTTYPE },
@@ -112,24 +112,24 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 #endif
 	{ "popdef",       POPDTYPE },
 	{ "pushdef",      PUSDTYPE },
-	{ "dumpdef",      DUMPTYPE },
-	{ "shift",        SHIFTYPE },
+	{ "dumpdef",      DUMPTYPE | NOARGS },
+	{ "shift",        SHIFTYPE | NOARGS },
 	{ "translit",     TRNLTYPE },
 	{ "undefine",     UNDFTYPE },
-	{ "undivert",     UNDVTYPE },
-	{ "divnum",       DIVNTYPE },
+	{ "undivert",     UNDVTYPE | NOARGS },
+	{ "divnum",       DIVNTYPE | NOARGS },
 	{ "maketemp",     MKTMTYPE },
-	{ "errprint",     ERRPTYPE },
-	{ "m4wrap",       M4WRTYPE },
-	{ "m4exit",       EXITTYPE },
+	{ "errprint",     ERRPTYPE | NOARGS },
+	{ "m4wrap",       M4WRTYPE | NOARGS },
+	{ "m4exit",       EXITTYPE | NOARGS },
 	{ "syscmd",       SYSCTYPE },
-	{ "sysval",       SYSVTYPE },
+	{ "sysval",       SYSVTYPE | NOARGS },
 
-#if defined(unix) || defined(__unix__)
-	{ "unix",         SELFTYPE },
+#if defined(unix) || defined(__unix__) 
+	{ "unix",         SELFTYPE | NOARGS },
 #else
 #ifdef vms
-	{ "vms",          SELFTYPE },
+	{ "vms",          SELFTYPE | NOARGS },
 #endif
 #endif
 };
@@ -278,14 +278,12 @@ macro()
 		if (t == '_' || isalpha(t)) {
 			putback(t);
 			s = token;
-			if ((p = inspect(s)) == nil) {
-				if (sp < 0)
-					while (*s)
-						putc(*s++, active);
-				else
-					while (*s)
-						chrsave(*s++);
-			}
+			p = inspect(s);
+			if (p != nil)
+				putback(l = gpbc());
+			if (p == nil || (l != LPAREN && 
+			    (p->type & NEEDARGS) != 0))
+				outputstr(s);
 			else {
 		/*
 		 * real thing.. First build a call frame:
@@ -301,7 +299,6 @@ macro()
 				pushs(p->name);	      /* macro name  */
 				pushs(ep);	      /* start next..*/
 
-				putback(l = gpbc());
 				if (l != LPAREN)  {   /* add bracks  */
 					putback(RPAREN);
 					putback(LPAREN);
@@ -343,14 +340,8 @@ macro()
 					chars[1] = EOS;
 					s = chars;
 				}
-				if (nlpar > 0) {
-					if (sp < 0)
-						while (*s)
-							putc(*s++, active);
-					else
-						while (*s)
-							chrsave(*s++);
-				}
+				if (nlpar > 0)
+					outputstr(s);
 			}
 			while (nlpar != 0);
 		}
@@ -439,6 +430,21 @@ macro()
 	}
 }
 
+/* 
+ * output string directly, without pushing it for reparses. 
+ */
+void
+outputstr(s)
+	const char *s;
+{
+	if (sp < 0)
+		while (*s)
+			putc(*s++, active);
+	else
+		while (*s)
+			chrsave(*s++);
+}
+
 /*
  * build an input token..
  * consider only those starting with _ or A-Za-z. This is a
@@ -490,7 +496,9 @@ initkwds()
 		p->name = keywrds[i].knam;
 		p->defn = null;
 		p->hv = h;
-		p->type = keywrds[i].ktyp | STATIC;
+		p->type = (keywrds[i].ktyp & TYPEMASK) | STATIC;
+		if ((keywrds[i].ktyp & NOARGS) == 0)
+			p->type |= NEEDARGS;
 	}
 }
 

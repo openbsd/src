@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.8 1999/11/17 15:31:53 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.9 2000/01/11 14:06:11 espie Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -30,15 +30,18 @@ parenthesis '('.  If the macro name is not followed by an open
 parenthesis it is processed with no arguments.
 .Pp
 Macro names consist of a leading alphabetic or underscore
-possibly followed by alphanumeric or underscore characters, therefore
-valid macro names match this pattern [a-zA-Z_][a-zA-Z0-9_]*.
+possibly followed by alphanumeric or underscore characters, e.g.,
+valid macro names match the pattern [a-zA-Z_][a-zA-Z0-9_]*.
 .Pp
 In arguments to macros, leading unquoted space, tab and newline
-characters are ignored.  To quote strings use left and right single
+characters are ignored.  To quote strings, use left and right single
 quotes (e.g., ` this is a string with a leading space').  You can change
 the quote characters with the
 .Ic changequote
 built-in macro.
+.Pp
+Some built-ins don't make any sense without arguments, and hence are not
+recognized as special when not followed by an open parenthesis.
 .Pp
 The options are as follows:
 .Bl -tag -width "-Dname[=value]xxx"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 1999/11/30 22:19:50 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2000/01/11 14:06:11 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -56,6 +56,9 @@ extern ndptr	addent __P((const char *));
 extern unsigned	hash __P((const char *));
 extern ndptr	lookup __P((const char *));
 extern void	remhash __P((const char *, int));
+
+/* main.c */
+extern void outputstr __P((const char *));
 
 /* misc.c */
 extern void	chrsave __P((int));
