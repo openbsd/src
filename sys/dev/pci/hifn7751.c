@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.43 2000/06/20 05:40:44 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.44 2000/07/28 19:59:11 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1114,10 +1114,9 @@ hifn_newsession(sidp, cri)
 	if (sc == NULL)
 		return (EINVAL);
 
-	for (i = 0; i < sc->sc_maxses; i++) {
+	for (i = 0; i < sc->sc_maxses; i++)
 		if (sc->sc_sessions[i].hs_flags == 0)
 			break;
-	}
 	if (i == sc->sc_maxses)
 		return (ENOMEM);
 
@@ -1157,7 +1156,7 @@ hifn_freesession(tid)
 {
 	struct hifn_softc *sc;
 	int card, session;
-	u_int32_t sid = (tid >> 31) & 0xffffffff;
+	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
 	card = HIFN_CARD(sid);
 	if (card >= hifn_cd.cd_ndevs || hifn_cd.cd_devs[card] == NULL)
@@ -1168,7 +1167,7 @@ hifn_freesession(tid)
 	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	sc->sc_sessions[session].hs_flags = 0;
+	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
@@ -1388,7 +1387,8 @@ hifn_callback(sc, cmd, macbuf)
 			    crd->crd_alg != CRYPTO_3DES_CBC)
 				continue;
 			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 8, 8,
+			    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
+			    HIFN_IV_LENGTH,
 			    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
 			break;
 		}
