@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.42 1998/09/10 16:01:32 marc Exp $
+#	$OpenBSD: netstart,v 1.43 1998/09/18 18:42:10 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -84,6 +84,7 @@ route -n add -net 127 127.0.0.1 -reject
 
 	    # check to see if device should be configure by dhcp
 	    if [ "$af" = "dhcp" ]; then
+		ifconfig $1 $extras down
 		cmd="/sbin/dhclient $1";
 	    else
 		if [ ! -n "$name" ]; then
