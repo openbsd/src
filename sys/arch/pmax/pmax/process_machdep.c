@@ -104,7 +104,7 @@ process_sstep(p, sstep)
 {
 	/* XXX what are the correct semantics: sstep once, or forevermore? */
 	if(sstep)
-		mips_singlestep(p);
+		cpu_singlestep(p);
 	return (0);
 }
 
