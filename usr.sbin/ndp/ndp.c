@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.31 2003/10/02 03:26:07 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.32 2004/01/08 06:51:44 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ rtmsg(int cmd)
 		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC);
 		if (rtm->rtm_flags & RTF_ANNOUNCE) {
 			rtm->rtm_flags &= ~RTF_HOST;
-			rtm->rtm_flags |= RTA_NETMASK;
+			rtm->rtm_addrs |= RTA_NETMASK;
 		}
 		/* FALLTHROUGH */
 	case RTM_GET:
