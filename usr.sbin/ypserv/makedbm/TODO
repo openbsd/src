@@ -1,4 +1,0 @@
-Go through code and add error handling.
-
-fgets in read_line in create_db coredumps if file don't exists. (Fixed 950908)
-
