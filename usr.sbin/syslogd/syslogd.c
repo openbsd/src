@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.63 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.64 2003/07/08 01:28:11 avsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.63 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.64 2003/07/08 01:28:11 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,12 @@ main(int argc, char *argv[])
 			NoDNS = 1;
 			break;
 		case 'p':		/* path */
-			funixn[0] = optarg;
+			if (strlen(optarg) >= sizeof(sunx.sun_path)) {
+				fprintf(stderr,
+				    "syslogd: socket path too long, exiting\n");
+				exit(1);
+			} else
+				funixn[0] = optarg;
 			break;
 		case 'u':		/* allow udp input port */
 			SecureMode = 0;
