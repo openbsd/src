@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.4 2000/12/21 00:33:38 deraadt Exp $";
+    "@(#) $Id: mtrace.c,v 1.5 2001/03/09 03:24:07 deraadt Exp $";
 #endif
 
 #include <netdb.h>
@@ -1328,7 +1328,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	(connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0) ||
 	getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
 	perror("Determining local address");
-	exit(-1);
+	exit(1);
     }
 
 #ifdef SUNOS5
@@ -1347,14 +1347,14 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	error = sysinfo(SI_HOSTNAME, myhostname, sizeof(myhostname));
 	if (error == -1) {
 	    perror("Getting my hostname");
-	    exit(-1);
+	    exit(1);
 	}
 
 	hp = gethostbyname(myhostname);
 	if (hp == NULL || hp->h_addrtype != AF_INET ||
 	    hp->h_length != sizeof(addr.sin_addr)) {
 	    perror("Finding IP address for my hostname");
-	    exit(-1);
+	    exit(1);
 	}
 
 	memcpy((char *)&addr.sin_addr.s_addr, hp->h_addr, hp->h_length);
@@ -1715,7 +1715,7 @@ log(severity, syserr, format, va_alist)
 	    else
 		fprintf(stderr, ": errno %d\n", syserr);
     }
-    if (severity <= LOG_ERR) exit(-1);
+    if (severity <= LOG_ERR) exit(1);
 }
 
 /* dummies */

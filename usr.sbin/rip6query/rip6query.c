@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.1 2000/01/19 08:13:01 itojun Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.2 2001/03/09 03:24:10 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,7 +104,7 @@ main(argc, argv)
 
 	if (argc != 1) {
 		usage();
-		exit(-1);
+		exit(1);
 	}
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {

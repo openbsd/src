@@ -498,7 +498,7 @@ do_etc_file(const char *file)
     case 0:
 	/* We are the child. */
 	execl(file, prog, NULL);
-	_exit(-1);
+	_exit(1);
 	/* NOTREACHED */
     default:
 	/* We are the parent. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.16 2001/03/08 03:24:57 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.17 2001/03/09 03:24:10 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.60 2001/03/08 02:15:42 onoe Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.16 2001/03/08 03:24:57 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.17 2001/03/09 03:24:10 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -1531,7 +1531,7 @@ rtrecv()
 
 	if ((len = read(rtsock, buf, sizeof(buf))) < 0) {
 		perror("read from rtsock");
-		exit(-1);
+		exit(1);
 	}
 	if (len < sizeof(*rtm)) {
 		trace(1, "short read from rtsock: %d (should be > %lu)\n",
@@ -2760,12 +2760,12 @@ getroute(np, gw)
 		if (errno == ESRCH)	/* No such route found */
 			return NULL;
 		perror("write to rtsock");
-		exit(-1);
+		exit(1);
 	}
 	do {
 		if ((len = read(rtsock, buf, sizeof(buf))) < 0) {
 			perror("read from rtsock");
-			exit(-1);
+			exit(1);
 		}
 		rtm = (struct rt_msghdr *)buf;
 	} while (rtm->rtm_seq != myseq || rtm->rtm_pid != pid);

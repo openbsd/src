@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2000/09/15 07:13:51 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2001/03/09 03:24:09 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.29 2000/09/15 07:13:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.30 2001/03/09 03:24:09 deraadt Exp $";
 #endif
 #endif
 
@@ -1188,7 +1188,7 @@ run_program(prog, args, must_exist)
 	execve(prog, args, script_env);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
-	_exit(-1);
+	_exit(1);
     }
     MAINDEBUG((LOG_DEBUG, "Script %s started; pid = %d", prog, pid));
     ++n_children;

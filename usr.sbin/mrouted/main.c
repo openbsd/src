@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.4 1996/09/11 19:15:33 deraadt Exp $";
+	"@(#) $Id: main.c,v 1.5 2001/03/09 03:24:07 deraadt Exp $";
 #endif
 
 extern char *configfilename;
@@ -727,7 +727,7 @@ log(severity, syserr, format, va_alist)
 		syslog(severity, "%s", msg);
 	}
 
-	if (severity <= LOG_ERR) exit(-1);
+	if (severity <= LOG_ERR) exit(1);
     }
 }
 

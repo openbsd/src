@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.18 2000/08/20 18:42:42 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.19 2001/03/09 03:19:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -336,7 +336,7 @@ char **argv;
 	  }
 	  else if (r < 0) {
 	    perror("fork:");
-	    exit(-1);
+	    exit(1);
 	  }
 	  setsid();
 	}
