@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.12 1995/07/04 06:28:28 paulus Exp $	*/
+/*	$NetBSD: slcompress.c,v 1.13 1995/11/20 20:43:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -422,10 +422,10 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	 * header (we assume the packet we were handed has enough space to
 	 * prepend 128 bytes of header).
 	 */
-	if ((int)cp & 3) {
+	if ((long)cp & 3) {
 		if (len > 0)
-			(void) ovbcopy(cp, (caddr_t)((int)cp &~ 3), len);
-		cp = (u_char *)((int)cp &~ 3);
+			(void) ovbcopy(cp, (caddr_t)((long)cp &~ 3), len);
+		cp = (u_char *)((long)cp &~ 3);
 	}
 	cp -= hlen;
 	len += hlen;
