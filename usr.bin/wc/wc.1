@@ -1,6 +1,7 @@
-.\"	$OpenBSD: wc.1,v 1.4 1998/11/04 22:36:41 aaron Exp $
-.\" Copyright (c) 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: wc.1,v 1.5 1999/02/02 03:44:07 millert Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -33,9 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)wc.1	6.4 (Berkeley) 6/27/91
+.\"     from: @(#)wc.1	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 27, 1991
+.Dd April 19, 1994
 .Dt WC 1
 .Os
 .Sh NAME
@@ -54,11 +55,12 @@ default, writes the number of lines, words, and bytes
 contained in each input file to the standard output.
 If more than one input file is specified,
 a line of cumulative count(s) for all named files is output on a
-separate line
-following the last file count.
+separate line following the last file count.
 .Nm wc
-considers a word to be a maximal string of
-characters delimited by white space.
+considers a word to be a maximal string of characters delimited by white
+space.  White space characters are the set of characters for which the
+.Xr isspace 3
+function returns true.
 .Pp
 The following options are available:
 .Bl -tag -width Ds
@@ -78,13 +80,14 @@ is written to the standard output.
 .Pp
 When an option is specified,
 .Nm wc
-only
-reports the
-information requested by that option. The
-default action is equivalent to all the
-flags
+only reports the information requested by that option.
+The default action is equivalent to the flags
 .Fl clw
-having been specified.
+having been specified.  The
+.Fl c
+and
+.Fl m
+options are mutually exclusive.
 .Pp
 The following operands are available:
 .Bl -tag -width Ds
@@ -92,9 +95,8 @@ The following operands are available:
 A pathname of an input file.
 .El
 .Pp
-If no file names
-are specified, the standard input is used and
-a file name is not output. The resulting output is one
+If no file names are specified, the standard input is used
+and a file name is not output. The resulting output is one
 line of the requested count(s) with the cumulative sum
 of all files read in via standard input.
 .Pp
@@ -110,6 +112,22 @@ by spaces.
 The
 .Nm wc
 utility exits 0 on success or >0 if an error occurred.
+.Sh SEE ALSO
+.Xr isspace 3
+.Sh COMPATIBILITY
+Historically, the
+.Nm wc
+utility was documented to define a word as a ``maximal string of
+characters delimited by <space>, <tab> or <newline> characters''.
+The implementation, however, didn't handle non-printing characters
+correctly so that ``  ^D^E  '' counted as 6 spaces, while ``foo^D^Ebar''
+counted as 8 characters.
+4BSD systems after 4.3BSD modified the implementation to be consistent
+with the documentation.
+This implementation defines a ``word'' in terms of the
+.Xr isspace 3
+function, as required by
+.St -p1003.2-92 .
 .Sh STANDARDS
 The
 .Nm wc
