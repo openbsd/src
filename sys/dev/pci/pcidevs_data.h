@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.209 2000/01/10 02:21:05 jason Exp 
+ *		OpenBSD: pcidevs,v 1.210 2000/01/18 05:18:23 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1399,6 +1399,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "DEC",
 	    "DECchip 21142/3",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX,
+	    0,
+	    "DEC",
+	    "Farallon PN9000SX",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21052,
