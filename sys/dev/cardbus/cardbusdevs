@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.4 2000/07/01 14:43:26 aaron Exp $
+$OpenBSD: cardbusdevs,v 1.5 2000/09/17 03:50:20 aaron Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -42,12 +42,13 @@ $OpenBSD: cardbusdevs,v 1.4 2000/07/01 14:43:26 aaron Exp $
  */
 
 vendor DEC		0x1011	Digital Equipment
+vendor OPTI		0x1045	Opti
 vendor 3COM		0x10B7	3Com
+vendor XIRCOM		0x115d	Xircom
+vendor ADMTEK		0x1317	ADMtek
+vendor INTEL		0x8086	Intel
 vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
-vendor OPTI		0x1045	Opti
-vendor XIRCOM		0x115d	Xircom
-vendor INTEL		0x8086	Intel
 vendor INVALID		0xffff	INVALID VENDOR ID
 
 /*
@@ -55,7 +56,6 @@ vendor INVALID		0xffff	INVALID VENDOR ID
  */
 
 /* 3COM Products */
-
 product 3COM 3C575	0x5057	3C575 100Base-TX
 product 3COM 3CCFE575BT	0x5157  3CCFE575BT 100Base-TX
 product 3COM 3CCFE575CT	0x5257	3CCFE575CT 100Base-TX
@@ -63,6 +63,9 @@ product 3COM 3CCFEM656	0x6560	3CCFEM656 100Base-TX
 product 3COM 3CCFEM656B	0x6562	3CCFEM656B 100Base-TX
 product 3COM MODEM56	0x6563	56k Modem
 product 3COM 3CCFEM656C	0x6564	3CCFEM656C 100Base-TX
+
+/* ADMtek products */
+product ADMTEK AN985	0x1985	AN985 100Base-TX
 
 /* Adaptec products */
 product ADP 1480        0x6075  APA-1480
