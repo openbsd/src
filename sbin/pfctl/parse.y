@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.454 2004/05/21 23:10:48 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.455 2004/06/10 14:22:54 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3278,7 +3278,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 					YYERROR;
 				memcpy(&binat.dst.addr, &$10->addr,
 				    sizeof(binat.dst.addr));
-				binat.dst.not = $10->not;
+				binat.dst.neg = $10->not;
 				free($10);
 			}
 
@@ -4212,12 +4212,12 @@ expand_rule(struct pf_rule *r,
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
-		r->src.not = src_host->not;
+		r->src.neg = src_host->not;
 		r->src.port[0] = src_port->port[0];
 		r->src.port[1] = src_port->port[1];
 		r->src.port_op = src_port->op;
 		r->dst.addr = dst_host->addr;
-		r->dst.not = dst_host->not;
+		r->dst.neg = dst_host->not;
 		r->dst.port[0] = dst_port->port[0];
 		r->dst.port[1] = dst_port->port[1];
 		r->dst.port_op = dst_port->op;

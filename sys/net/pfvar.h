@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.195 2004/05/19 17:50:52 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.196 2004/06/10 14:22:54 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -275,7 +275,7 @@ struct pfi_dynaddr {
 #endif /* PF_INET6_ONLY */
 #endif /* PF_INET_INET6 */
 
-#define	PF_MISMATCHAW(aw, x, af, not)				\
+#define	PF_MISMATCHAW(aw, x, af, neg)				\
 	(							\
 		(((aw)->type == PF_ADDR_NOROUTE &&		\
 		    pf_routable((x), (af))) ||			\
@@ -287,7 +287,7 @@ struct pfi_dynaddr {
 		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&		\
 		    !PF_MATCHA(0, &(aw)->v.a.addr,		\
 		    &(aw)->v.a.mask, (x), (af)))) !=		\
-		(not)						\
+		(neg)						\
 	)
 
 struct pf_rule_uid {
@@ -303,7 +303,7 @@ struct pf_rule_gid {
 struct pf_rule_addr {
 	struct pf_addr_wrap	 addr;
 	u_int16_t		 port[2];
-	u_int8_t		 not;
+	u_int8_t		 neg;
 	u_int8_t		 port_op;
 };
 

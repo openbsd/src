@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.200 2004/05/27 11:48:06 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.201 2004/06/10 14:22:54 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -364,13 +364,13 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 	    PF_AZERO(&src->addr.v.a.mask, AF_INET6) &&
 	    PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
 	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) &&
-	    !src->not && !dst->not &&
+	    !src->neg && !dst->neg &&
 	    !src->port_op && !dst->port_op &&
 	    osfp == PF_OSFP_ANY)
 		printf(" all");
 	else {
 		printf(" from ");
-		if (src->not)
+		if (src->neg)
 			printf("! ");
 		print_addr(&src->addr, af, verbose);
 		if (src->port_op)
@@ -382,7 +382,7 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 			    sizeof(buf)));
 
 		printf(" to ");
-		if (dst->not)
+		if (dst->neg)
 			printf("! ");
 		print_addr(&dst->addr, af, verbose);
 		if (dst->port_op)
