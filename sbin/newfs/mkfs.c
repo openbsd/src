@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.23 2003/02/19 00:57:14 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.24 2003/04/16 10:33:16 markus Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.23 2003/02/19 00:57:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.24 2003/04/16 10:33:16 markus Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/wait.h>
 #include <sys/resource.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -54,7 +53,6 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.23 2003/02/19 00:57:14 millert Exp $
 
 #include <string.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 #ifndef STANDALONE
@@ -159,7 +157,6 @@ mkfs(pp, fsys, fi, fo)
 	int status;
 	time_t utime;
 	quad_t sizepb;
-	void started();
 	int width;
 	char tmpbuf[100];	/* XXX this will break in about 2,500 years */
 
@@ -175,18 +172,6 @@ mkfs(pp, fsys, fi, fo)
 	time(&utime);
 #endif
 	if (mfs) {
-		ppid = getpid();
-		(void) signal(SIGUSR1, started);
-		if ((i = fork())) {
-			if (i == -1) {
-				perror("mfs");
-				exit(10);
-			}
-			if (waitpid(i, &status, 0) != -1 && WIFEXITED(status))
-				exit(WEXITSTATUS(status));
-			exit(11);
-			/* NOTREACHED */
-		}
 		(void)malloc(0);
 		if (fssize * sectorsize > memleft)
 			fssize = (memleft - 16384) / sectorsize;
@@ -701,18 +686,6 @@ next:
 	pp->p_fsize = sblock.fs_fsize;
 	pp->p_frag = sblock.fs_frag;
 	pp->p_cpg = sblock.fs_cpg;
-	/*
-	 * Notify parent process of success.
-	 * Dissociate from session and tty.
-	 */
-	if (mfs) {
-		kill(ppid, SIGUSR1);
-		(void) setsid();
-		(void) close(0);
-		(void) close(1);
-		(void) close(2);
-		(void) chdir("/");
-	}
 }
 
 /*
@@ -1086,16 +1059,6 @@ iput(ip, ino)
 	buf[ino_to_fsbo(&sblock, ino)] = *ip;
 	wtfs(d, sblock.fs_bsize, buf);
 	free(buf);
-}
-
-/*
- * Notify parent process that the filesystem has created itself successfully.
- */
-void
-started()
-{
-
-	_exit(0);
 }
 
 /*

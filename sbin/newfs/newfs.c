@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.36 2003/03/13 09:09:26 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.37 2003/04/16 10:33:16 markus Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.36 2003/03/13 09:09:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.37 2003/04/16 10:33:16 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.36 2003/03/13 09:09:26 deraadt Exp 
 #include <sys/disklabel.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/wait.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
@@ -71,6 +72,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.36 2003/03/13 09:09:26 deraadt Exp 
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 #include <util.h>
 #include <err.h>
 
@@ -202,7 +204,13 @@ main(argc, argv)
 	struct stat st;
 	struct statfs *mp;
 	int fsi = -1, fso, len, n, maxpartitions;
-	char *cp, *s1, *s2, *special, *opstring, buf[BUFSIZ];
+	char *cp, *s1, *s2, *special, *opstring;
+#ifdef MFS
+	char mountfromname[BUFSIZ];
+	pid_t pid, res;
+	struct statfs sf;
+	int status;
+#endif
 	char *fstype = NULL;
 	char **saveargv = argv;
 	int ffs = 1;
@@ -588,9 +596,61 @@ havelabel:
 #ifdef MFS
 	if (mfs) {
 		struct mfs_args args;
-
-		snprintf(buf, sizeof buf, "mfs:%ld", (long)getpid());
-		args.fspec = buf;
+ 
+ 		switch (pid = fork()) {
+ 		case -1:
+ 			perror("mfs");
+ 			exit(10);
+ 		case 0:
+ 			snprintf(mountfromname, sizeof(mountfromname),
+			    "mfs:%d", getpid());
+ 			break;
+ 		default:
+ 			snprintf(mountfromname, sizeof(mountfromname),
+			    "mfs:%d", pid);
+ 			for (;;) {
+ 				/*
+ 				 * spin until the mount succeeds
+ 				 * or the child exits
+ 				 */
+ 				usleep(1);
+ 
+ 				/*
+ 				 * XXX Here is a race condition: another process
+ 				 * can mount a filesystem which hides our
+ 				 * ramdisk before we see the success.
+ 				 */
+ 				if (statfs(argv[1], &sf) < 0)
+ 					err(88, "statfs %s", argv[1]);
+ 				if (!strcmp(sf.f_mntfromname, mountfromname) &&
+ 				    !strncmp(sf.f_mntonname, argv[1],
+ 					     MNAMELEN) &&
+ 				    !strcmp(sf.f_fstypename, "mfs"))
+ 					exit(0);
+ 
+ 				res = waitpid(pid, &status, WNOHANG);
+ 				if (res == -1)
+ 					err(11, "waitpid");
+ 				if (res != pid)
+ 					continue;
+ 				if (WIFEXITED(status)) {
+ 					if (WEXITSTATUS(status) == 0)
+ 						exit(0);
+ 					errx(1, "%s: mount: %s", argv[1],
+ 					     strerror(WEXITSTATUS(status)));
+ 				} else
+ 					errx(11, "abnormal termination");
+ 			}
+ 			/* NOTREACHED */
+ 		}
+ 
+ 		(void) setsid();
+ 		(void) close(0);
+ 		(void) close(1);
+ 		(void) close(2);
+ 		(void) chdir("/");
+ 
+ 		args.fspec = mountfromname;
 		args.export_info.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
 			args.export_info.ex_flags = MNT_EXRDONLY;
@@ -599,7 +659,7 @@ havelabel:
 		args.base = membase;
 		args.size = fssize * sectorsize;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
-			fatal("%s: %s", argv[1], strerror(errno));
+			exit(errno); /* parent prints message */
 	}
 #endif
 	exit(0);
