@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.43 2003/07/27 07:39:52 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.44 2003/07/27 18:58:26 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.43 2003/07/27 07:39:52 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.44 2003/07/27 18:58:26 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -418,6 +418,7 @@ notsame:
 	class = erealloc(class, (slen[0] + 2) * sizeof(int));
 
 	klist = emalloc((slen[0] + 2) * sizeof(int));
+	clen = 0;
 	clistlen = 100;
 	clist = emalloc(clistlen * sizeof(cand));
 	i = stone(class, slen[0], member, klist);
