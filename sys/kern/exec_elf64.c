@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.13 2001/03/07 00:56:30 niklas Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.14 2001/03/29 13:25:34 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -400,6 +400,11 @@ elf64_load_file(p, path, epp, ap, last)
 	}
 
 	phsize = eh.e_phnum * sizeof(Elf64_Phdr);
+	if (phsize > 8192) {
+		/* XXX - this is not the way we want to fix this, but ... */
+		error = EINVAL;
+		goto bad1;
+	}
 	ph = (Elf64_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = elf64_read_from(p, nd.ni_vp, eh.e_phoff, (caddr_t)ph,
@@ -789,6 +794,10 @@ elf64_os_pt_note(p, epp, eh, os_name, name_size, desc_size)
 	int error;
 
 	phsize = eh->e_phnum * sizeof(Elf64_Phdr);
+	if (phsize > 8192) {
+		/* XXX - this is not the way we want to fix this, but ... */
+		return EINVAL;
+	}
 	hph = (Elf64_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 	if ((error = elf64_read_from(p, epp->ep_vp, eh->e_phoff,
 	    (caddr_t)hph, phsize)) != 0)
