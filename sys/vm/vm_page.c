@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_page.c,v 1.2 1996/03/03 17:45:35 niklas Exp $    */
+/*    $OpenBSD: vm_page.c,v 1.3 1996/08/02 00:06:03 niklas Exp $    */
 /*    $NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $    */
 
 /* 
@@ -71,6 +71,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>

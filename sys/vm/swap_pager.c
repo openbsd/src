@@ -1,3 +1,4 @@
+/*	$OpenBSD: swap_pager.c,v 1.5 1996/08/02 00:05:57 niklas Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -137,6 +138,10 @@ static void		swap_pager_cluster
 			    __P((vm_pager_t, vm_offset_t,
 				 vm_offset_t *, vm_offset_t *));
 static void		swap_pager_dealloc __P((vm_pager_t));
+static int		swap_pager_remove
+			    __P((vm_pager_t, vm_offset_t, vm_offset_t));
+static vm_offset_t	swap_pager_next __P((vm_pager_t, vm_offset_t));
+static int		swap_pager_count __P((vm_pager_t));
 static int		swap_pager_getpage
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
 static boolean_t	swap_pager_haspage __P((vm_pager_t, vm_offset_t));
@@ -144,6 +149,7 @@ static int		swap_pager_io __P((sw_pager_t, vm_page_t *, int, int));
 static void		swap_pager_iodone __P((struct buf *));
 static int		swap_pager_putpage
 			    __P((vm_pager_t, vm_page_t *, int, boolean_t));
+static int		count_bits __P((u_int));
 
 struct pagerops swappagerops = {
 	swap_pager_init,
@@ -152,7 +158,10 @@ struct pagerops swappagerops = {
 	swap_pager_getpage,
 	swap_pager_putpage,
 	swap_pager_haspage,
-	swap_pager_cluster
+	swap_pager_cluster,
+	swap_pager_remove,
+	swap_pager_next,
+	swap_pager_count
 };
 
 static void
@@ -310,7 +319,7 @@ swap_pager_alloc(handle, size, prot, foff)
 	}
 	bzero((caddr_t)swp->sw_blocks,
 	      swp->sw_nblocks * sizeof(*swp->sw_blocks));
-	swp->sw_poip = 0;
+	swp->sw_poip = swp->sw_cnt = 0;
 	if (handle) {
 		vm_object_t object;
 
@@ -560,7 +569,8 @@ swap_pager_io(swp, mlist, npages, flags)
 	register struct buf *bp;
 	register sw_blk_t swb;
 	register int s;
-	int ix, mask;
+	int ix;
+	u_int mask;
 	boolean_t rv;
 	vm_offset_t kva, off;
 	swp_clean_t spc;
@@ -732,6 +742,7 @@ swap_pager_io(swp, mlist, npages, flags)
 			printf("swpg_io: off=%lx, npg=%x, mask=%x, bmask=%x\n",
 			       off, npages, mask, swb->swb_mask);
 #endif
+		swp->sw_cnt += count_bits(mask & ~swb->swb_mask);
 		swb->swb_mask |= mask;
 	}
 	/*
@@ -1029,4 +1040,242 @@ swap_pager_iodone(bp)
 	}
 	wakeup(&vm_pages_needed);
 	splx(s);
+}
+
+/*
+ *	swap_pager_remove:
+ *
+ *	This is called via the vm_pager_remove path and
+ *	will remove any pages inside the range [from, to)
+ *	backed by us.  It is assumed that both addresses
+ *	are multiples of PAGE_SIZE.  The special case
+ *	where TO is zero means: remove to end of object.
+ */
+static int
+swap_pager_remove(pager, from, to)
+	vm_pager_t pager;
+	vm_offset_t from, to;
+{
+	sw_pager_t swp;
+	sw_blk_t swb;
+	int bsize, blk, bit, to_blk, to_bit, mask, cnt = 0;
+
+#ifdef DEBUG
+	if (swpagerdebug & SDB_FOLLOW)
+		printf("swpg_remove()\n");
+#endif
+
+	/*	Special case stupid ranges.	*/
+	if (to > 0 && from >= to)
+		return(0);
+
+	swp = (sw_pager_t)pager->pg_data;
+
+	/*
+	 *	If we back no pages, just return.  XXX Can this
+	 *	ever be the case?  At least all remove calls should
+	 *	be through vm_object_remove_from_pager which also
+	 *	deallocates the pager when it no longer backs any
+	 *	pages.  Left is the initial case: can a swap-pager
+	 *	be created without any pages put into it?
+	 */
+	if (swp->sw_cnt == 0)
+		return(0);
+
+	bsize = dbtob(swp->sw_bsize);
+	blk = from / bsize;
+
+	/*	Another fast one.. no blocks in range.	*/
+	if (blk >= swp->sw_nblocks)
+		return(0);
+	bit = atop(from % bsize);
+
+	/*
+	 *	Deal with the special case with TO == 0.
+	 *	XXX Perhaps the code might be improved if we
+	 *	made to_blk & to_bit signify the inclusive end
+	 *	of range instead (i.e. to - 1).
+	 */
+	if (to) {
+		to_blk = to / bsize;
+		if (to_blk > swp->sw_nblocks) {
+			to_blk = swp->sw_nblocks;
+			to_bit = 0;
+		} else
+			to_bit = atop(to % bsize);
+	} else {
+		to_blk = swp->sw_nblocks;
+		to_bit = 0;
+	}
+
+	/*
+	 *	Loop over the range, remove pages as we find them.
+	 *	If all pages in a block get freed, deallocate the
+	 *	swap block as well.
+	 */
+	for (swb = &swp->sw_blocks[blk], mask = (1 << bit) - 1;
+	    blk < to_blk || to_bit;
+	    blk++, swb++, mask = 0) {
+
+		/*	Don't bother if the block is already cleared.  */
+		if (swb->swb_block == 0)
+			continue;
+
+		/*
+		 *	When coming to the end-block we need to
+		 *	adjust the mask in the othher end, as well as
+		 *	ensuring this will be the last iteration.
+		 */
+		if (blk == to_blk) {
+			mask |= ~((1 << to_bit) - 1);
+			to_bit = 0;
+		}
+
+		/*	Count pages that will be removed.	*/
+		cnt += count_bits(swb->swb_mask & ~mask);
+
+		/*
+		 *	Remove pages by applying our mask, and if this
+		 *	means no pages are left in the block, free it.
+		 */
+		if ((swb->swb_mask &= mask) == 0) {
+			rmfree(swapmap, swp->sw_bsize, swb->swb_block);
+			swb->swb_block = 0;
+		}
+ 	}
+
+	/*	Adjust the page count and return the removed count.	*/
+	swp->sw_cnt -= cnt;
+#ifdef DEBUG
+	if (swp->sw_cnt < 0)
+		panic("swap_pager_remove: sw_cnt < 0");
+#endif
+	return(cnt);
+}
+
+/*
+ *	swap_pager_next:
+ *
+ *	This is called via the vm_pager_next path and
+ *	will return the offset of the next page (addresswise)
+ *	which this pager is backing.  If there are no more
+ *	pages we will return the size of the pager's managed
+ *	space (which by definition is larger than any page's
+ *	offset).
+ */
+static vm_offset_t
+swap_pager_next(pager, offset)
+	vm_pager_t pager;
+	vm_offset_t offset;
+{
+	sw_pager_t swp;
+	sw_blk_t swb;
+	int bsize, blk, bit, to_blk, to_bit, mask;
+
+#ifdef DEBUG
+	if (swpagerdebug & SDB_FOLLOW)
+		printf("swpg_next()\n");
+#endif
+
+	swp = (sw_pager_t)pager->pg_data;
+
+	/*
+	 *	If we back no pages, just return our size.  XXX Can
+	 *	this ever be the case?  At least all remove calls
+	 *	should be through vm_object_remove_from_pager which
+	 *	also deallocates the pager when it no longer backs any
+	 *	pages.  Left is the initial case: can a swap-pager
+	 *	be created without any pages put into it?
+	 */
+	if (swp->sw_cnt == 0)
+		return(swp->sw_osize);
+
+	bsize = dbtob(swp->sw_bsize);
+	blk = offset / bsize;
+
+	/*	Another fast one.. no blocks in range.	*/
+	if (blk >= swp->sw_nblocks)
+		return(swp->sw_osize);
+	bit = atop(offset % bsize);
+	to_blk = swp->sw_osize / bsize;
+	to_bit = atop(swp->sw_osize % bsize);
+
+	/*
+	 *	Loop over the remaining blocks, returning as soon
+	 *	as we find a page.
+	 */
+	swb = &swp->sw_blocks[blk];
+	mask = ~((1 << bit) - 1);
+	for (;;) {
+		if (blk == to_blk) {
+			/*	Nothing to be done in this end-block?	*/
+			if (to_bit == 0)
+				break;
+			mask &= (1 << to_bit) - 1; 
+		}
+
+		/*
+		 *	Check this block for a backed page and return
+		 *	its offset if there.
+		 */
+		mask &= swb->swb_mask;
+		if (mask)
+			return(blk * bsize + (ffs (mask) - 1) * PAGE_SIZE);
+
+		/*
+		 *	If we handled the end of range now, this
+		 *	means we are ready.
+		 */
+		if (blk == to_blk)
+			break;
+
+		/*	Get on with the next block.	*/
+		blk++;
+		swb++;
+		mask = ~0;
+ 	}
+	return swp->sw_osize;
+}
+
+/*
+ *	swap_pager_count:
+ *
+ *	Just returns the count of pages backed by this pager.
+ */
+int
+swap_pager_count(pager)
+	vm_pager_t	pager;
+{
+#ifndef notyet
+	return((sw_pager_t)pager->pg_data)->sw_cnt;
+#else
+	sw_pager_t swp;
+	sw_blk_t swb;
+	int i, cnt = 0;
+
+	swp = (sw_pager_t)pager->pg_data;
+	if (swp->sw_blocks == NULL)
+		return 0;
+	for (i = 0; i < swp->sw_nblocks; i++)
+		cnt += count_bits(swp->sw_blocks[i].swb_mask); 
+	return cnt;
+#endif
+}
+
+/*
+ *	count_bits:
+ *
+ *	Counts the number of set bits in a word.
+ */
+static int
+count_bits(x)
+	u_int	x;
+{
+	int	cnt = 0;
+
+	while (x) {
+		cnt += x & 1;
+		x >>= 1;
+	}
+	return(cnt);
 }

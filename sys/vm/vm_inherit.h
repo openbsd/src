@@ -1,3 +1,4 @@
+/*	$OpenBSD: vm_inherit.h,v 1.2 1996/08/02 00:06:00 niklas Exp $	*/
 /*	$NetBSD: vm_inherit.h,v 1.7 1994/06/29 06:47:58 cgd Exp $	*/
 
 /* 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: vm_map.h,v 1.3 1996/08/02 00:06:01 niklas Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 

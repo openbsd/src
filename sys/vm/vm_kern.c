@@ -1,3 +1,4 @@
+/*	$OpenBSD: vm_kern.c,v 1.3 1996/08/02 00:06:01 niklas Exp $	*/
 /*	$NetBSD: vm_kern.c,v 1.17.6.1 1996/06/13 17:21:28 cgd Exp $	*/
 
 /* 
@@ -70,6 +71,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: device_pager.c,v 1.4 1996/08/02 00:05:54 niklas Exp $	*/
 /*	$NetBSD: device_pager.c,v 1.21 1996/03/16 23:15:18 christos Exp $	*/
 
 /*
@@ -49,6 +50,7 @@
 #include <sys/conf.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: vm_prot.h,v 1.2 1996/08/02 00:06:05 niklas Exp $	*/
 /*	$NetBSD: vm_prot.h,v 1.6 1994/06/29 06:48:42 cgd Exp $	*/
 
 /* 

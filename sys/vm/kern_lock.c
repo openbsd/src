@@ -1,3 +1,4 @@
+/*	$OpenBSD: kern_lock.c,v 1.4 1996/08/02 00:05:56 niklas Exp $	*/
 /*	$NetBSD: kern_lock.c,v 1.10 1994/10/30 19:11:09 cgd Exp $	*/
 
 /* 

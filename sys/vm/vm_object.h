@@ -1,3 +1,4 @@
+/*	$OpenBSD: vm_object.h,v 1.3 1996/08/02 00:06:02 niklas Exp $	*/
 /*	$NetBSD: vm_object.h,v 1.16 1995/03/29 22:10:28 briggs Exp $	*/
 
 /* 
@@ -98,7 +99,11 @@ struct vm_object {
 	struct vm_object	*shadow;	/* My shadow */
 	vm_offset_t		shadow_offset;	/* Offset in shadow */
 	TAILQ_ENTRY(vm_object)	cached_list;	/* for persistence */
+	LIST_HEAD(, vm_object)	shadowers;	/* set of shadowers */
+	LIST_ENTRY(vm_object)	shadowers_list;	/* link to next shadower of
+						   this object's shadow */
 };
+
 /*
  * Flags
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pager.c,v 1.3 1996/04/21 22:33:16 deraadt Exp $	*/
+/*	$OpenBSD: vm_pager.c,v 1.4 1996/08/02 00:06:05 niklas Exp $	*/
 /*	$NetBSD: vm_pager.c,v 1.21 1996/03/16 23:15:25 christos Exp $	*/
 
 /* 
@@ -173,8 +173,36 @@ vm_pager_deallocate(pager)
 {
 	if (pager == NULL)
 		panic("vm_pager_deallocate: null pager");
-
 	(*pager->pg_ops->pgo_dealloc)(pager);
+}
+
+int
+vm_pager_remove(pager, from, to)
+	vm_pager_t	pager;
+	vm_offset_t	from, to;
+{
+	if (pager == NULL)
+		panic("vm_pager_remove: null pager");
+	return (*pager->pg_ops->pgo_remove)(pager, from, to);
+}
+
+vm_offset_t
+vm_pager_next(pager, offset)
+	vm_pager_t	pager;
+	vm_offset_t	offset;
+{
+	if (pager == NULL)
+		panic("vm_pager_next: null pager");
+	return (*pager->pg_ops->pgo_next)(pager, offset);
+}
+
+int
+vm_pager_count(pager)
+	vm_pager_t	pager;
+{
+	if (pager == NULL)
+		panic("vm_pager_count: null pager");
+	return (*pager->pg_ops->pgo_count)(pager);
 }
 
 int

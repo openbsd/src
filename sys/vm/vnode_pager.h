@@ -1,3 +1,4 @@
+/*	$OpenBSD: vnode_pager.h,v 1.2 1996/08/02 00:06:06 niklas Exp $	*/
 /*	$NetBSD: vnode_pager.h,v 1.6 1994/06/29 06:48:49 cgd Exp $	*/
 
 /*

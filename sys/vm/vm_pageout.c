@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pageout.c,v 1.2 1996/03/03 17:45:36 niklas Exp $	*/
+/*	$OpenBSD: vm_pageout.c,v 1.3 1996/08/02 00:06:04 niklas Exp $	*/
 /*	$NetBSD: vm_pageout.c,v 1.23 1996/02/05 01:54:07 christos Exp $	*/
 
 /* 
@@ -71,6 +71,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -276,6 +277,10 @@ vm_pageout_page(m, object)
 	if (object->pager == NULL)
 		vm_object_collapse(object);
 
+#ifdef DIAGNOSTIC
+	if (object->paging_in_progress == 0xdead)
+		panic("vm_pageout_page: object deallocated");
+#endif
 	object->paging_in_progress++;
 	vm_object_unlock(object);
 
@@ -443,6 +448,10 @@ vm_pageout_cluster(m, object)
 	 * in case it blocks.
 	 */
 	vm_page_unlock_queues();
+#ifdef DIAGNOSTIC
+	if (object->paging_in_progress == 0xdead)
+		panic("vm_pageout_cluster: object deallocated");
+#endif
 	object->paging_in_progress++;
 	vm_object_unlock(object);
 again:
