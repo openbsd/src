@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1 1997/04/13 17:17:55 mickey Exp $
+#	$OpenBSD: list,v 1.2 1997/04/17 02:10:46 niklas Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc/disktab.preinstall
