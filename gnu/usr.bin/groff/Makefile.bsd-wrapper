@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/09/14 23:21:38 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1996/10/06 21:02:15 tholo Exp $
 
 #
 # groff config
@@ -23,6 +23,7 @@ MAN=	addftinfo/addftinfo.1 groff/groff.1 troff/troff.1 tbl/tbl.1 \
 	man/groff_font.5 man/groff_out.5 tmac/groff_ms.7 tmac/me.7 \
 	tmac/msafer.7 afmtodit/afmtodit.1 grog/grog.1 nroff/nroff.1 \
 	mm/groff_mm.7 mm/groff_mmse.7 
+MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7
 
 all: config.status gnu_build
 
