@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.12 2001/02/20 02:03:19 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.13 2001/02/21 18:13:31 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.12 2001/02/20 02:03:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.13 2001/02/21 18:13:31 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -301,8 +301,12 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 			      ? (bit_test(e->dow,dow) && bit_test(e->dom,dom))
 			      : (bit_test(e->dow,dow) || bit_test(e->dom,dom))
 			    )
-			   )
-				job_add(e, u);
+			   ) {
+				if ((doNonWild &&
+				    !(e->flags & (MIN_STAR|HR_STAR))) || 
+				    (doWild && (e->flags & (MIN_STAR|HR_STAR))))
+					job_add(e, u);
+			}
 		}
 	}
 }
