@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.64 2003/11/18 06:08:19 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.65 2004/02/23 06:19:32 drahn Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1509,6 +1509,10 @@ uvm_unmap_remove(map, start, end, entry_list)
 		first_entry = entry;
 		entry = next;		/* next entry, please */
 	}
+	/* if ((map->flags & VM_MAP_DYING) == 0) { */
+		pmap_update(vm_map_pmap(map));
+	/* } */
+
 
 	uvm_tree_sanity(map, "unmap_remove leave");
 
@@ -2027,6 +2031,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 			/* end of 'while' loop */
 			fudge = 0;
 		}
+		pmap_update(srcmap->pmap);
 
 		/*
 		 * unlock dstmap.  we will dispose of deadentry in
@@ -2250,6 +2255,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 
 		current = current->next;
 	}
+	pmap_update(map->pmap);
 
  out:
 	vm_map_unlock(map);
@@ -3556,6 +3562,8 @@ uvmspace_fork(vm1)
 					     old_entry->end,
 					     old_entry->protection &
 					     ~VM_PROT_WRITE);
+			        pmap_update(old_map->pmap);
+
 			      }
 			      old_entry->etype |= UVM_ET_NEEDSCOPY;
 			    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.23 2002/11/06 00:17:28 art Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.24 2004/02/23 06:19:32 drahn Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -460,11 +460,15 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 			 */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
+
+			/* sync what we have so far */
+			pmap_update(ufi->orig_map->pmap);      
 			uvm_wait("udv_fault");
 			return (VM_PAGER_REFAULT);
 		}
 	}
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	pmap_update(ufi->orig_map->pmap);
 	return (retval);
 }

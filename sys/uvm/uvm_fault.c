@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.31 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.32 2004/02/23 06:19:32 drahn Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -862,6 +862,7 @@ ReFault:
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
 		simple_unlock(&anon->an_lock);
+		pmap_update(ufi.orig_map->pmap);
 	}
 
 	/* locked: maps(read), amap(if there) */
@@ -1001,6 +1002,7 @@ ReFault:
 				pages[lcv]->flags &= ~(PG_BUSY); /* un-busy! */
 				UVM_PAGE_OWN(pages[lcv], NULL);
 			}	/* for "lcv" loop */
+				pmap_update(ufi.orig_map->pmap);
 		}   /* "gotpages" != 0 */
 		/* note: object still _locked_ */
 	} else {
@@ -1299,6 +1301,7 @@ ReFault:
 	 */
 
 	uvmfault_unlockall(&ufi, amap, uobj, oanon);
+	pmap_update(ufi.orig_map->pmap);
 	return (KERN_SUCCESS);
 
 
@@ -1761,6 +1764,7 @@ Case2:
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 	uvmfault_unlockall(&ufi, amap, uobj, NULL);
+	pmap_update(ufi.orig_map->pmap);
 
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return (KERN_SUCCESS);

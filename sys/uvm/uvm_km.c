@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.34 2002/10/29 18:30:21 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.35 2004/02/23 06:19:32 drahn Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -579,6 +579,8 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		offset += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
+
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
 }
@@ -707,6 +709,7 @@ uvm_km_alloc1(map, size, zeroit)
 		offset += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(map->pmap);
 	
 	/*
 	 * zero on request (note that "size" is now zero due to the above loop
