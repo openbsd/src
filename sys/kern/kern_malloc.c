@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.16 1999/07/15 14:07:41 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.17 1999/09/10 22:14:39 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ malloc(size, type, flags)
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
-			allocsize = roundup(size, CLBYTES);
+			allocsize = clrnd(round_page(size));
 		else
 			allocsize = 1 << indx;
 		npg = clrnd(btoc(allocsize));
