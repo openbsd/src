@@ -15,6 +15,7 @@
 ./usr/include/alpha/bwx.h
 ./usr/include/alpha/cdefs.h
 ./usr/include/alpha/cfbreg.h
+./usr/include/alpha/conf.h
 ./usr/include/alpha/cpu.h
 ./usr/include/alpha/cpuconf.h
 ./usr/include/alpha/db_machdep.h
@@ -30,6 +31,7 @@
 ./usr/include/alpha/ieeefp.h
 ./usr/include/alpha/intr.h
 ./usr/include/alpha/intrcnt.h
+./usr/include/alpha/ioctl_fd.h
 ./usr/include/alpha/kbio.h
 ./usr/include/alpha/kcore.h
 ./usr/include/alpha/limits.h

@@ -1219,6 +1219,8 @@
 ./usr/share/man/cat4/sparc64/pcons.0
 ./usr/share/man/cat4/sparc64/qe.0
 ./usr/share/man/cat4/sparc64/qec.0
+./usr/share/man/cat4/sparc64/sab.0
+./usr/share/man/cat4/sparc64/sabtty.0
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
