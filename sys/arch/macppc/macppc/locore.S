@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2002/11/17 20:36:53 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -137,43 +137,6 @@ start:
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
-
-#define LED_ADDR 0x800008c0
-_ENTRY(_C_LABEL(led_dbg))
-	stwu	1,-32(1)
-	mflr	0
-	stw	0,36(1)
-
-	stw	4,8(1)
-	stw	5,12(1)
-	stw	6,16(1)
-	stw	7,20(1)
-	mfmsr	5
-
-	mr	6,5
-	ori	6,6,(PSL_IR|PSL_DR)@l	/* turn on MMU */
-	mtmsr	6
-	sync
-	isync
-
-	lis	4,LED_ADDR@ha
-	addi	4,4,LED_ADDR@l
-	li	7,0
-	ori	3,3,0x2000
-	sthbrx	3,7,4
-
-	sync
-	mtmsr	5
-	isync
-	lwz	4,8(1)
-	lwz	5,12(1)
-	lwz	6,16(1)
-	lwz	7,20(1)
-
-	lwz	0,36(1)
-	mtlr	0
-	addi	1,1,32
-	blr
 
 /*
  * No processes are runnable, so loop waiting for one.
