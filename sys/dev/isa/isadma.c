@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.26 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.27 2004/01/13 22:09:40 deraadt Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -722,7 +722,7 @@ isa_free(addr, pool)
 		;
 	m = *mp;
 	if (!m) {
-		printf("isa_free: freeing unallocted memory\n");
+		printf("isa_free: freeing unallocated memory\n");
 		return;
 	}
 	*mp = m->next;
@@ -742,7 +742,7 @@ isa_mappage(mem, off, prot)
 	for(m = isa_mem_head; m && m->kva != (caddr_t)mem; m = m->next)
 		;
 	if (!m) {
-		printf("isa_mappage: mapping unallocted memory\n");
+		printf("isa_mappage: mapping unallocated memory\n");
 		return -1;
 	}
 	return (isa_dmamem_mmap(m->isadev, m->chan, m->addr, m->size, off,

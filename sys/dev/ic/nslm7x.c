@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.4 2004/01/12 14:10:53 grange Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.5 2004/01/13 22:07:09 deraadt Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -208,7 +208,7 @@ def_match(struct lm_softc *sc)
 	int i;
 
 	i = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
-	printf(": Unknown chip (ID %d)\n", i);
+	printf(": unknown chip (ID %d)\n", i);
 	lm_common_match(sc);
 	return 1;
 }
@@ -299,7 +299,7 @@ wb_match(struct lm_softc *sc)
 		printf(": W83627THF\n");
 		break;
 	default:
-		printf(": unknow winbond chip ID 0x%x\n", j);
+		printf(": unknown winbond chip ID 0x%x\n", j);
 		/* handle as a standart lm7x */
 		lm_common_match(sc);
 		return 1;
