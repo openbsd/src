@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.6 2002/02/17 19:42:26 millert Exp $	*/
+/*	$OpenBSD: library.c,v 1.7 2002/05/22 06:07:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.6 2002/02/17 19:42:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.7 2002/05/22 06:07:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -150,8 +150,8 @@ get_superblock (fsp, sbp)
 	char mntfromname[MNAMELEN+1];
 	int fid;
 
-	strcpy(mntfromname, "/dev/r");
-	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);
+	snprintf(mntfromname, sizeof mntfromname, "/dev/r%s",
+	    fsp->fi_statfsp->f_mntfromname+5);
 
 	if ((fid = open(mntfromname, O_RDONLY, (mode_t)0)) < 0) {
 		err(0, "get_superblock: bad open");
@@ -178,11 +178,13 @@ get_ifile (fsp, use_mmap)
 	caddr_t ifp;
 	char *ifile_name;
 	int count, fid;
+	int len;
 
 	ifp = NULL;
-	ifile_name = malloc(strlen(fsp->fi_statfsp->f_mntonname) +
-	    strlen(IFILE_NAME)+2);
-	strcat(strcat(strcpy(ifile_name, fsp->fi_statfsp->f_mntonname), "/"),
+	len = strlen(fsp->fi_statfsp->f_mntonname) + strlen(IFILE_NAME) + 2;
+	ifile_name = malloc(len);
+	
+	snprintf(ifile_name, len, "%s/%s", fsp->fi_statfsp->f_mntonname,
 	    IFILE_NAME);
 
 	if ((fid = open(ifile_name, O_RDWR, (mode_t)0)) < 0)

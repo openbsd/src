@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.8 2002/02/17 19:42:26 millert Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.9 2002/05/22 06:07:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.8 2002/02/17 19:42:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.9 2002/05/22 06:07:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ int	 lfs_markv(fsid_t *, BLOCK_INFO *, int);
 int	 bi_tossold(const void *, const void *, const void *);
 int	 choose_segments(FS_INFO *, struct seglist *, 
 	     int (*)(FS_INFO *, SEGUSE *));
-void	 clean_fs((FS_INFO *, int (*)(FS_INFO *, SEGUSE *), int, long);
+void	 clean_fs(FS_INFO *, int (*)(FS_INFO *, SEGUSE *), int, long);
 int	 clean_loop(FS_INFO *, int, long);
 int	 clean_segment(FS_INFO *, int);
 int	 cost_benefit(FS_INFO *, SEGUSE *);
