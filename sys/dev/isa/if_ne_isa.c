@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isa.c,v 1.3 1999/03/26 06:34:27 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_isa.c,v 1.4 1999/04/30 07:20:29 fgsch Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -120,7 +120,6 @@ ne_isa_match(parent, match, aux)
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
-	int rv = 0;
 
 	/* Disallow wildcarded values. */
 	if (ia->ia_irq ==  -1 /* ISACF_IRQ_DEFAULT */)
@@ -148,14 +147,14 @@ ne_isa_match(parent, match, aux)
 	nsc->sc_asich = asich;
 
 	/* Look for an NE2000-compatible card. */
-	rv = ne2000_detect(nsc);
+	nsc->sc_type = ne2000_detect(nsc);
 
-	if (rv)
+	if (nsc->sc_type)
 		ia->ia_iosize = NE2000_NPORTS;
 
  out:
 	bus_space_unmap(nict, nich, NE2000_NPORTS);
-	return (rv);
+	return (nsc->sc_type);
 }
 
 void
@@ -175,7 +174,6 @@ ne_isa_attach(parent, self, aux)
 	    int *, int *));
 	int *media, nmedia, defmedia;
 	const char *typestr;
-	int netype;
 
 	printf("\n");
 
@@ -201,12 +199,7 @@ ne_isa_attach(parent, self, aux)
 	nsc->sc_asict = asict;
 	nsc->sc_asich = asich;
 
-	/*
-	 * Detect it again, so we can print some information about the
-	 * interface.
-	 */
-	netype = ne2000_detect(nsc);
-	switch (netype) {
+	switch (nsc->sc_type) {
 	case NE2000_TYPE_NE1000:
 		typestr = "NE1000";
 		break;
