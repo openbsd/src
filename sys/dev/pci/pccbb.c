@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.9 2000/11/29 21:18:14 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.10 2000/11/29 21:25:18 aaron Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -496,13 +496,14 @@ pccbbattach(parent, self, aux)
 	switch (sc->sc_chipset) {
 	case CB_RX5C46X:	       /* fallthrough */
 #if 0
+	/* The RX5C47X-series requires writes to the PCI_LEGACY register. */
 	case CB_RX5C47X:
 #endif
 		/* 
-		 * The legacy pcic io-port on Ricoh CardBus bridges cannot be
-		 * disabled by substituting 0 into PCI_LEGACY register.  Ricoh
-		 * CardBus bridges have special bits on Bridge control reg (addr
-		 * 0x3e on PCI config space).
+		 * The legacy pcic io-port on Ricoh RX5C46X CardBus bridges
+		 * cannot be disabled by substituting 0 into PCI_LEGACY
+		 * register.  Ricoh CardBus bridges have special bits on Bridge
+		 * control reg (addr 0x3e on PCI config space).
 		 */
 		reg = pci_conf_read(pc, pa->pa_tag, PCI_BCR_INTR);
 		reg &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
