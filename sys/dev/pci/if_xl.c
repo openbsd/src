@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.18 1998/12/31 02:47:41 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.19 1999/02/23 21:06:06 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -3021,31 +3021,42 @@ xl_attach(parent, self, aux)
 	 * us to save the PCI iobase, membase and IRQ, put the chip
 	 * back in the D0 state, then restore the PCI config ourselves.
 	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, XL_PCI_CAPID) & 0xff;
+	command = pci_conf_read(pc, pa->pa_tag, XL_PCI_CAPID) & 0xff;
 	if (command == 0x01) {
 
-		command = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		command = pci_conf_read(pc, pa->pa_tag,
 		    XL_PCI_PWRMGMTCTRL);
 		if (command & XL_PSTATE_MASK) {
+			u_int32_t io, mem, irq;
+
+			/* Save PCI config */
+			io = pci_conf_read(pc, pa->pa_tag, XL_PCI_LOIO);
+			mem = pci_conf_read(pc, pa->pa_tag, XL_PCI_LOMEM);
+			irq = pci_conf_read(pc, pa->pa_tag, XL_PCI_INTLINE);
+
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n",
 			    sc->sc_dev.dv_xname, command & XL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			pci_conf_write(pc, pa->pa_tag,
 			    XL_PCI_PWRMGMTCTRL, command);
+
+			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOIO, io);
+			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOMEM, mem);
+			pci_conf_write(pc, pa->pa_tag, XL_PCI_INTLINE, irq);
 		}
 	}
 
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_IO_ENABLE |
 		   PCI_COMMAND_MEM_ENABLE |
 		   PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef XL_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
