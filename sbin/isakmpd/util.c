@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2001/07/01 14:23:30 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2001/07/01 19:59:13 niklas Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +66,11 @@ int allow_name_lookups = 0;
  * cause predictable random numbers be generated.
  */
 int regrand = 0;
+
+/*
+ * If in regression-test mode, this is the seed used.
+ */
+unsigned long seed;
 
 /*
  * XXX These might be turned into inlines or macros, maybe even
@@ -265,7 +271,42 @@ text2sockaddr (char *address, char *port, struct sockaddr **sa)
   freeaddrinfo (ai);
   return 0;
 #else
-  return -1;
+  int af = strchr (address, ':') != NULL ? AF_INET6 : AF_INET;
+  size_t sz = af == AF_INET
+    ? sizeof (struct sockaddr_in) : sizeof (struct sockaddr_in6);
+  long lport;
+  struct servent *sp;
+  char *ep;
+
+  *sa = calloc (1, sz);
+  if (!*sa)
+    return -1;
+
+  (*sa)->sa_len = sz;
+  (*sa)->sa_family = af;
+  if (inet_pton (af, address, sockaddr_data (*sa)) != 1)
+    {
+      free (*sa);
+      return -1;
+    }
+  sp = getservbyname (port, "udp");
+  if (!sp)
+    {
+      lport = strtol (port, &ep, 10);
+      if (ep == port || lport < 0 || lport > USHRT_MAX)
+	{
+	  free (*sa);
+	  return -1;
+	}
+      lport = htons (lport);
+    }
+  else
+    lport = sp->s_port;
+  if ((*sa)->sa_family == AF_INET)
+    ((struct sockaddr_in *)*sa)->sin_port = lport;
+  else
+    ((struct sockaddr_in6 *)*sa)->sin6_port = lport;
+  return 0;
 #endif
 }
 
@@ -277,32 +318,39 @@ int
 sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 {
   char buf[NI_MAXHOST];
-  char *token, *bstart, *p;
+  char *token, *bstart, *p, *ep;
   int addrlen, c_pre = 0, c_post = 0;
+  long val;
 
 #ifdef HAVE_GETNAMEINFO
   if (getnameinfo (sa, sa->sa_len, buf, sizeof buf, 0, 0,
 		   allow_name_lookups ? 0 : NI_NUMERICHOST))
     return -1;
 #else
-  if (sa->sa_family == AF_INET)
+  switch (sa->sa_family)
     {
-      strncpy (buf, inet_ntoa (((struct sockaddr_in *)sa)->sin_addr), 
-	       NI_MAXHOST - 1);
+    case AF_INET:
+    case AF_INET6:
+      if (inet_ntop (sa->sa_family, sa->sa_data, buf, NI_MAXHOST - 1) == NULL)
+	{
+	  log_error ("sockaddr2text: inet_ntop (%d, %p, %p, %d) failed",
+		     sa->sa_family, sa->sa_data, buf, NI_MAXHOST - 1);
+	  return -1;
+	}
       buf[NI_MAXHOST - 1] = '\0';
-    }
-  else
-    {
+      break;
+
+    default:
       log_print ("sockaddr2text: unsupported protocol family %d\n",
 		  sa->sa_family);
-      strcpy (buf, "<error>");
+      return -1;
     }
 #endif
 
   if (zflag == 0)
     {
       *address = malloc (strlen (buf) + 1);
-      if (*address == NULL)
+      if (!*address)
 	return -1;
       strcpy (*address, buf);
     }
@@ -314,8 +362,9 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 	*address = malloc (addrlen);
 	if (!*address)
 	  return -1;
-	buf[addrlen] = '\0'; /* Terminate */
-	bstart = buf; **address = '\0';
+	buf[addrlen] = '\0';
+	bstart = buf;
+	**address = '\0';
 	while ((token = strsep (&bstart, ".")) != NULL)
 	  {
 	    if (strlen (*address) > 12)
@@ -323,24 +372,35 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 		free (*address);
 		return -1;
 	      }
-	    sprintf (*address + strlen (*address), "%03ld",
-		     strtol (token, NULL, 10));
+	    val = strtol (token, &ep, 10);
+	    if (ep == token || val < 0 || val > UCHAR_MAX)
+	      {
+		free (*address);
+		return -1;
+	      }
+	    sprintf (*address + strlen (*address), "%03ld", val);
 	    if (bstart)
 	      strcat (*address + strlen (*address), ".");
 	  }
 	break;
+
       case AF_INET6:
+	/*
+	 * XXX In the algorithm below there are some magic numbers we
+	 * probably could give explaining names.
+	 */
 	addrlen = sizeof "0000:0000:0000:0000:0000:0000:0000:0000";
 	*address = malloc (addrlen);
 	if (!*address)
 	  return -1;
-	bstart = buf; **address = '\0';
-	buf[addrlen] = '\0'; /* Terminate */
+	bstart = buf;
+	**address = '\0';
+	buf[addrlen] = '\0';
 	while ((token = strsep (&bstart, ":")) != NULL)
 	  {
 	    if (strlen (token) == 0)
 	      {
-		/* 
+		/*
 		 * Encountered a '::'. Fill out the string.
 		 * XXX Isn't there a library function for this somewhere?
 		 */
@@ -367,13 +427,19 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 		    free (*address);
 		    return -1;
 		  }
-		sprintf (*address + strlen (*address), "%04lx", 
-			 strtol (token, NULL, 16));
+		val = strtol (token, &ep, 10);
+		if (ep == token || val < 0 || val > USHRT_MAX)
+		  {
+		    free (*address);
+		    return -1;
+		  }
+		sprintf (*address + strlen (*address), "%04lx", val);
 		if (bstart)
 		  strcat (*address + strlen (*address), ":");
 	      }
 	  }
 	break;
+
       default:
 	strcpy (*address, "<error>");
       }
@@ -383,7 +449,7 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 
 /*
  * sockaddr_len and sockaddr_data return the relevant sockaddr info depending
- * on address family. Useful to keep other code shorter(/clearer?).
+ * on address family.  Useful to keep other code shorter(/clearer?).
  */
 int
 sockaddr_len (struct sockaddr *sa)
@@ -394,8 +460,8 @@ sockaddr_len (struct sockaddr *sa)
       return sizeof ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr;
     case AF_INET:
       return sizeof ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-    default: 
-      log_print ("sockaddr_len: unsupported protocol family %d", 
+    default:
+      log_print ("sockaddr_len: unsupported protocol family %d",
 		 sa->sa_family);
       return 0;
     }
@@ -411,7 +477,7 @@ sockaddr_data (struct sockaddr *sa)
     case AF_INET:
       return (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr.s_addr;
     default:
-      return 0; /* XXX */
+      return 0;
     }
 }
 
@@ -434,9 +500,9 @@ util_ntoa (char **buf, int af, u_int8_t *addr)
     case AF_INET:
       sfrom->sa_len = sizeof (struct sockaddr_in);
       memcpy (&ip4_buf, addr, sizeof (struct in_addr));
-/*      ((struct sockaddr_in *)sfrom)->sin_addr.s_addr = htonl (ip4_buf);*/
       ((struct sockaddr_in *)sfrom)->sin_addr.s_addr = ip4_buf;
       break;
+
     case AF_INET6:
       sfrom->sa_len = sizeof (struct sockaddr_in6);
       memcpy (sockaddr_data (sfrom), addr, sizeof (struct in6_addr));
@@ -445,7 +511,8 @@ util_ntoa (char **buf, int af, u_int8_t *addr)
 
   if (sockaddr2text (sfrom, buf, 0))
     {
-      log_error ("util_ntoa: sockaddr2text () failed");
+      log_print ("util_ntoa: "
+		 "could not make printable address out of sockaddr %p", sfrom);
       *buf = 0;
     }
 }
@@ -453,13 +520,13 @@ util_ntoa (char **buf, int af, u_int8_t *addr)
 /*
  * Perform sanity check on files containing secret information.
  * Returns -1 on failure, 0 otherwise.
- * Also, if *file_size != NULL, store file size here.
+ * Also, if FILE_SIZE is a not a null pointer, store file size here.
  */
 int
 check_file_secrecy (char *name, off_t *file_size)
 {
   struct stat st;
-  
+
   if (stat (name, &st) == -1)
     {
       log_error ("check_file_secrecy: stat (\"%s\") failed", name);
@@ -479,7 +546,7 @@ check_file_secrecy (char *name, off_t *file_size)
       errno = EPERM;
       return -1;
     }
-  
+
   if (file_size)
     *file_size = st.st_size;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.9 2001/06/29 04:12:01 ho Exp $	*/
+/*	$OpenBSD: util.h,v 1.10 2001/07/01 19:59:14 niklas Exp $	*/
 /*	$EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	*/
 
 /*
@@ -44,8 +44,10 @@
 
 extern int allow_name_lookups;
 extern int regrand;
+extern unsigned long seed;
 
 struct message;
+struct sockaddr;
 
 extern u_int16_t decode_16 (u_int8_t *);
 extern u_int32_t decode_32 (u_int8_t *);

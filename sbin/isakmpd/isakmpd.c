@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.31 2001/06/29 19:41:43 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.32 2001/07/01 19:59:13 niklas Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ static void
 parse_args (int argc, char *argv[])
 {
   int ch;
+  char *ep;
 #ifdef USE_DEBUG
   int cls, level;
   int do_packetlog = 0;
@@ -138,7 +139,7 @@ parse_args (int argc, char *argv[])
 	      {
 		  for (cls = 0; cls < LOG_ENDCLASS; cls++)
 		    log_debug_cmd (cls, level);
-	      }  
+	      }
 	    else
 	      log_print ("parse_args: -D argument unparseable: %s", optarg);
 	}
@@ -178,7 +179,10 @@ parse_args (int argc, char *argv[])
 #endif /* USE_DEBUG */
 
     case 'r':
-      srandom (strtoul (optarg, 0, 0));
+      seed = strtoul (optarg, &ep, 0);
+      srandom (seed);
+      if (*ep != '\0')
+	log_fatal ("parse_args: invalid numeric arg to -r (%s)", optarg);
       regrand = 1;
       break;
 
@@ -206,8 +210,8 @@ reinit (void)
 {
   log_print ("SIGHUP recieved, reinitializing daemon.");
 
-  /* 
-   * XXX Remove all(/some?) pending exchange timers? - they may not be 
+  /*
+   * XXX Remove all(/some?) pending exchange timers? - they may not be
    *     possible to complete after we've re-read the config file.
    *     User-initiated SIGHUP's maybe "authorizes" a wait until
    *     next connection-check.
@@ -216,7 +220,7 @@ reinit (void)
 
   /* Reinitialize PRNG if we are in deterministic mode.  */
   if (regrand)
-    srandom (strtoul (optarg, 0, 0));
+    srandom (seed);
 
   /* Reread config file.  */
   conf_reinit ();
@@ -240,7 +244,7 @@ reinit (void)
 
   /*
    * XXX Rescan interfaces.
-   *   transport_reinit (); 
+   *   transport_reinit ();
    *   udp_reinit ();
    */
 
@@ -266,7 +270,7 @@ report (void)
 {
   FILE *report, *old;
   mode_t old_umask;
-	
+
   old_umask = umask (S_IRWXG | S_IRWXO);
   report = fopen (report_file, "w");
   umask (old_umask);
@@ -300,7 +304,7 @@ rehash_timers (void)
 #if 0
   /* XXX - not yet */
   log_print ("SIGUSR2 received, rehasing soft expiration timers.");
-  
+
   timer_rehash_timers ();
 #endif
 
@@ -367,7 +371,7 @@ main (int argc, char *argv[])
   if (pcap_file != 0)
     log_packet_init (pcap_file);
 #endif
-  
+
   /* Allocate the file descriptor sets just big enough.  */
   n = getdtablesize ();
   mask_size = howmany (n, NFDBITS) * sizeof (fd_mask);
@@ -391,7 +395,7 @@ main (int argc, char *argv[])
       /* and if someone sent SIGUSR2, do a timer rehash.  */
       if (sigusr2ed)
 	rehash_timers ();
-      
+
       /* Setup the descriptors to look for incoming messages at.  */
       memset (rfds, 0, mask_size);
       n = transport_fd_set (rfds);
