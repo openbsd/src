@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.zap.c,v 1.8 2003/05/19 09:00:54 pjanzen Exp $	*/
+/*	$OpenBSD: hack.zap.c,v 1.9 2004/09/17 21:07:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.zap.c,v 1.8 2003/05/19 09:00:54 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.zap.c,v 1.9 2004/09/17 21:07:26 mickey Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -390,11 +390,12 @@ bhit(int ddx, int ddy, int range, char sym,
 				tmp_at(-1, -1);	/* close call */
 				return(mtmp);
 			}
-			(*fhitm)(mtmp, obj);
+			if (fhitm)
+				(*fhitm)(mtmp, obj);
 			range -= 3;
 		}
 		if ((otmp = o_at(bhitpos.x,bhitpos.y))){
-			if((*fhito)(otmp, obj))
+			if(fhito && (*fhito)(otmp, obj))
 				range--;
 		}
 		if (!ZAP_POS(typ)) {
