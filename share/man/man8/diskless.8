@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.20 2002/10/31 01:43:59 millert Exp $
+.\"	$OpenBSD: diskless.8,v 1.21 2002/12/13 12:09:21 deraadt Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -241,9 +241,9 @@ Build the swap file for myclient:
 .Bd -literal -offset indent -compact
 # mkdir /export/myclient
 # cd /export/myclient
-# dd if=/dev/zero of=swap bs=1m count=16
+# dd if=/dev/zero of=swap bs=1m count=120
 .Ed
-This creates a 16 Megabyte swap file.
+This creates a 120 Megabyte swap file.
 .Pp
 .It 7.
 Populate myclient's
