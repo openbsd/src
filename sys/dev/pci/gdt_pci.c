@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.3 2000/03/01 22:38:51 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.4 2000/08/01 00:18:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -279,8 +279,14 @@ gdt_pci_attach(parent, self, aux)
 	    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM : GDT_PCI_DPMEM,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M, 0, &dpmemt,
 	    &dpmemh, &dpmembase, &dpmemsize)) {
-		printf("cannot map DPMEM\n");
-		goto bail_out;
+		if (pci_mapreg_map(pa,
+		    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM :
+		    GDT_PCI_DPMEM,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+		    &dpmemt,&dpmemh, &dpmembase, &dpmemsize)) {
+			printf("cannot map DPMEM\n");
+			goto bail_out;
+		}
 	}
 	status |= DPMEM_MAPPED;
 	gdt->sc_dpmemt = dpmemt;
