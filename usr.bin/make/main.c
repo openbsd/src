@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.60 2003/04/06 22:47:14 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.61 2003/04/21 23:14:06 millert Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -194,9 +194,7 @@ MainParseArgs(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
-	int c;
+	int c, optend;
 	int forceJobs = 0;
 
 #define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
@@ -204,8 +202,19 @@ MainParseArgs(argc, argv)
 
 	optind = 1;	/* since we're called more than once */
 	optreset = 1;
+	optend = 0;
 	while (optind < argc) {
-		switch (c = getopt(argc, argv, OPTFLAGS)) {
+		if (!optend && argv[optind][0] == '-') {
+			if (argv[optind][1] == '\0')
+				optind++;	/* ignore "-" */
+			else if (argv[optind][1] == '-' &&
+			    argv[optind][2] == '\0') {
+				optind++;	/* ignore "--" */
+				optend++;	/* "--" denotes end of flags */
+			}
+		}
+		c = optend ? -1 : getopt(argc, argv, OPTFLAGS);
+		switch (c) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);
 			record_option(c, optarg);
@@ -304,8 +313,7 @@ MainParseArgs(argc, argv)
 			    !Parse_DoVar(argv[optind], VAR_CMD)) {
 				if (!*argv[optind])
 					Punt("illegal (null) argument.");
-				if (strcmp(argv[optind], "-") != 0)
-					Lst_AtEnd(create, estrdup(argv[optind]));
+				Lst_AtEnd(create, estrdup(argv[optind]));
 			}
 			optind++;	/* skip over non-option */
 			break;
