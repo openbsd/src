@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.16 2004/02/28 02:16:51 mickey Exp $
+.\"	$OpenBSD: ami.4,v 1.17 2004/03/27 17:35:55 mickey Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -14,27 +14,29 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for MegaRAID family of RAID controllers, including:
+driver provides support for the MegaRAID family of RAID controllers,
+including:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It AMI MegaRAID
-.It Dell PERC 4Si and 4Di
-.It Hewlett-Packard 438, 466 and T[567]
+.It Dell PERC2/DC, PERC3/DC, PERC3/QC, PERC3/SC, PERC4/DC, PERC4/SC,
+.It Dell PERC4/Di, PERC4/Si, and CERC
+.It Hewlett-Packard 438, 466, and T[567]
+.It LSI/AMI MegaRAID
 .It LSI/Symbios 523 SATA
 .El
 .Pp
-These controllers support RAID 0, RAID 1, RAID 5, JBOD
+These controllers support RAID 0, RAID 1, RAID 5, JBOD,
 and superpositions of those configurations.
 .Pp
-Some cards support both I2O and so called `Mass Storage' mode
+Some cards support both I2O and a so-called `Mass Storage' mode
 of operation.
-This driver only supports the `Mass Storage' mode, I2O mode is supported
+This driver only supports the `Mass Storage' mode; I2O mode is supported
 by the
 .Xr iop 4
 driver.
 .Pp
-Although the controllers are actual RAID controllers the driver makes them
-look just like SCSI controllers.
+Although the controllers are actual RAID controllers,
+the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -52,7 +54,3 @@ The
 .Nm
 driver was written by
 .An Michael Shalayeff Aq mickey@openbsd.org .
-.Sh BUGS
-The
-.Tn IDE
-versions of these controllers were not tested.
