@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.16 1997/09/17 17:56:10 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.17 1997/09/19 17:20:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -43,6 +43,9 @@
 
 #define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
 
+typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
+    __attribute__ ((noreturn));
+
 void
 machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	char *startaddr, *loadaddr, *ssym, *esym;
@@ -67,9 +70,8 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 
 	printf("entry point at 0x%x\n", (int)startaddr);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(int __attribute__((noreturn))(*)(int,int,int,int,int,int,int,int))
-	 startaddr)(howto, bootdev, BOOT_APIVER, round_to_size(esym),
-		    extmem, cnvmem, (int)&BIOS_vars, sizeof(BIOS_vars));
+	(*(startfuncp)startaddr)(howto, bootdev, BOOT_APIVER,
+	    round_to_size(esym), extmem, cnvmem, (int)&BIOS_vars,
+	    sizeof (BIOS_vars));
 	/* not reached */
 }
-
