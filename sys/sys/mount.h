@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.32 1999/12/05 06:56:34 art Exp $	*/
+/*	$OpenBSD: mount.h,v 1.33 2000/02/07 04:52:11 assar Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -456,12 +456,13 @@ struct vfsops {
 	int	(*vfs_vget)	__P((struct mount *mp, ino_t ino,
 				    struct vnode **vpp));
 	int	(*vfs_fhtovp)	__P((struct mount *mp, struct fid *fhp,
-				    struct mbuf *nam, struct vnode **vpp,
-				    int *exflagsp, struct ucred **credanonp));
+				     struct vnode **vpp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	int	(*vfs_init)	__P((struct vfsconf *));
 	int     (*vfs_sysctl)   __P((int *, u_int, void *, size_t *, void *,
 				     size_t, struct proc *));
+	int	(*vfs_checkexp) __P((struct mount *mp, struct mbuf *nam,
+				    int *extflagsp, struct ucred **credanonp));
 };
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
@@ -473,9 +474,11 @@ struct vfsops {
 #define VFS_STATFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statfs)(MP, SBP, P)
 #define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
 #define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
-#define VFS_FHTOVP(MP, FIDP, NAM, VPP, EXFLG, CRED) \
-	(*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, NAM, VPP, EXFLG, CRED)
+#define VFS_FHTOVP(MP, FIDP, VPP) \
+	(*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
+#define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
+	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #endif /* _KERNEL */
 
 /*
@@ -563,7 +566,11 @@ int	getmntinfo __P((struct statfs **, int));
 int	mount __P((const char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
-
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+int	fhopen __P((const fhandle_t *, int));
+int	fhstat __P((const fhandle_t *, struct stat *));
+int	fhstatfs __P((const fhandle_t *, struct statfs *));
+#endif /* !_POSIX_C_SOURCE */
 
 __END_DECLS
 
