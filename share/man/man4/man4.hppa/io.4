@@ -1,4 +1,4 @@
-.\" $OpenBSD: io.4,v 1.8 2004/04/18 00:04:34 mickey Exp $
+.\" $OpenBSD: io.4,v 1.9 2004/09/02 07:20:36 mickey Exp $
 .\"
 .\" Copyright (c) 2003,2004 Paul Weissmann
 .\" All rights reserved.
@@ -64,12 +64,26 @@ machines.
 .It "748i" "	DLW" "	SE" "	DX" "	Artist" "	VME"
 .It "750" "	A" "	SE" "	DX" "	[SGC]"
 .It "755" "	A" "	SE, FWD" "	DX, FDDI" "	[SGC]"
-.It "J2x0/XC" "	LW" "	SE, FWD" "	CA" "	[GSC]"
-.It "A180" "	DL" "	SE" "	DC" "	[GSC/PCI]"
-.It "B1xxL" "	DLW" "	SE, FWD" "	CA" "	EG"
-.It "B1xxL+" "	DLW" "	SE, UW" "	DC" "	EG"
-.It "C1x0" "	LW" "	SE, FWD" "	CA" "	[GSC]"
-.It "C1xxL" "	DLW" "	SE, UW" "	DC" "	EG"
+.It "A180/C" "	DL" "	SE" "	DC" "	[GSC/PCI]"
+.It "B132L" "	DLW" "	SE, FWD" "	CA" "	EG"
+.It "B160L" "	DLW" "	SE, UW" "	DC" "	EG"
+.It "B180L" "	DLW" "	SE, UW" "	DC" "	EG"
+.It "C100" "	LUW" "	SE, FWD" "	CA" "	[GSC]"
+.It "C110" "	LUW" "	SE, FWD" "	CA" "	[GSC]"
+.It "C132L" "	DLUW" "	SE, UW" "	DC" "	EG"
+.It "C160L" "	DLUW" "	SE, UW" "	DC" "	EG"
+.It "C160" "	DLU" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "C180L" "	DLUW" "	SE, UW" "	DC" "	EG"
+.It "C180" "	DLU" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "C200" "	DLU" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "C230" "	DLU" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "C240" "	DLU" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "C360" "	DLU" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "J200" "	LUW" "	SE, FWD" "	CA" "	[GSC]"
+.It "J210/XC" "	LUW" "	SE, FWD" "	CA" "	[GSC]"
+.It "J280" "	DLUW" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "J282" "	DLUW" "	SE, UW" "	DC" "	[GSC/PCI]"
+.It "J2240" "	DLUW" "	SE, UW" "	DC" "	[GSC/PCI]"
 .It "RDI" "	DL" "	SE" "	CA" "	EG" "	CardBus"
 .It "SAIC" "	LW" "	SE" "	CA" "	Artist" "	PCMCIA"
 .El
@@ -83,6 +97,8 @@ The MBA column denotes the bus adapters in use:
 .Xr dino 4
 .It L
 .Xr lasi 4
+.It U
+.Xr uturn 4
 .It W
 .Xr wax 4
 .El
