@@ -1,4 +1,4 @@
-/* $OpenBSD $*/
+/* $OpenBSD: cddb.c,v 1.3 2002/04/18 22:07:04 espie Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -37,17 +37,17 @@
 #include <vis.h>
 #include "extern.h"
 
-unsigned long 	cddb_discid(int, struct cd_toc_entry *);
-unsigned long 	cddb_sum(unsigned long);
-void 		send_hello(FILE *);
-void 		send_query(FILE *, int, struct cd_toc_entry *);
-int 		further_query(FILE *, char *);
-int 		connect_to(const char *, const char *);
-int 		parse_connect_to(const char *, const char *);
-char * 		get_line(FILE *);
+unsigned long	cddb_discid(int, struct cd_toc_entry *);
+unsigned long	cddb_sum(unsigned long);
+void		send_hello(FILE *);
+void		send_query(FILE *, int, struct cd_toc_entry *);
+int		further_query(FILE *, char *);
+int		connect_to(const char *, const char *);
+int		parse_connect_to(const char *, const char *);
+char *		get_line(FILE *);
 char *		get_answer(FILE *);
-void 		verify_track_names(char **, int, struct cd_toc_entry *);
-char * 		safe_copy(const char *);
+void		verify_track_names(char **, int, struct cd_toc_entry *);
+char *		safe_copy(const char *);
 
 unsigned long
 cddb_sum(unsigned long v)
@@ -61,16 +61,16 @@ cddb_sum(unsigned long v)
 	return (sum);
 }
 
-unsigned long 
+unsigned long
 cddb_discid(int n, struct cd_toc_entry *e)
 {
 	unsigned long sum;
 	int i;
 
 	sum = 0;
-	for (i =0; i < n; i++) 
+	for (i =0; i < n; i++)
 		sum += cddb_sum(entry2time(e+i));
-	return (((sum % 0xff) << 24) | 
+	return (((sum % 0xff) << 24) |
 	    ((entry2time(e+n) - entry2time(e)) << 8) | n);
 }
 
@@ -81,12 +81,12 @@ send_hello(FILE *cout)
 
 	if (gethostname(hostname, sizeof(hostname)) == -1)
 		strcpy(hostname, "unknown");
-	fprintf(cout, "CDDB HELLO %s %s cdio " VERSION "\r\n", 
+	fprintf(cout, "CDDB HELLO %s %s cdio " VERSION "\r\n",
 	    getlogin(), hostname);
 	fflush(cout);
 }
 
-void 
+void
 send_query(FILE *f, int n, struct cd_toc_entry *e)
 {
 	int i;
@@ -230,7 +230,7 @@ verify_track_names(char **names, int n, struct cd_toc_entry *e)
 	}
 }
 
-char ** 
+char **
 cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 {
 	int s = -1;
