@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.9 2004/12/07 22:56:09 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.10 2004/12/07 23:01:43 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -119,7 +119,6 @@ Although adding a file does not involve a log message, it is possible to
 specify one to include with the action, using the
 .Fl m
 option.
-.Pp
 .It Xo Sy checkout
 .Op Fl c
 .Op Ar module ...
@@ -129,7 +128,6 @@ The
 .Sy checkout
 command is used to create a local copy of one or more modules present on the
 target CVS repository.
-.Pp
 .It Xo Sy commit
 .Op Fl flnR
 .Op Fl F Ar logfile
@@ -142,7 +140,6 @@ The
 .Sy commit
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
-.Pp
 .It Xo Sy diff Op Fl cilu
 .Op Fl D Ar date
 .Op Fl r Ar rev
