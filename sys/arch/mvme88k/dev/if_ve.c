@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.17 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.18 2002/04/28 15:17:09 miod Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -149,12 +149,8 @@ nvram_cmd(sc, cmd, addr)
 	u_short addr;
 {
 	int i;
-	u_char rcmd = 0;
 	struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 
-	rcmd = addr;
-	rcmd = rcmd << 3;
-	rcmd |= cmd;
 	for (i=0;i<8;i++) {
 		reg1->ver1_ear=((cmd|(addr<<1))>>i); 
 		CDELAY; 

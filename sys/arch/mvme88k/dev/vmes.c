@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.9 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: vmes.c,v 1.10 2002/04/28 15:17:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
@@ -39,7 +38,9 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
+
 #include <mvme88k/dev/vme.h>
 
 /*
@@ -60,12 +61,6 @@ struct cfdriver vmes_cd = {
 };
 
 int vmesscan(struct device *, void *, void *);
-int vmesopen(dev_t, int, int);
-int vmesclose(dev_t, int, int);
-int vmesioctl(dev_t, int, caddr_t, int, struct proc *);
-int vmesread(dev_t, struct uio *, int);
-int vmeswrite(dev_t, struct uio *, int);
-paddr_t vmesmmap(dev_t, off_t, int);
 
 int
 vmesmatch(parent, cf, args)
@@ -99,9 +94,10 @@ vmesattach(parent, self, args)
 
 /*ARGSUSED*/
 int
-vmesopen(dev, flag, mode)
+vmesopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	if (minor(dev) >= vmes_cd.cd_ndevs ||
 	    vmes_cd.cd_devs[minor(dev)] == NULL)
@@ -111,9 +107,10 @@ vmesopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-vmesclose(dev, flag, mode)
+vmesclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -122,9 +119,10 @@ vmesclose(dev, flag, mode)
 /*ARGSUSED*/
 int
 vmesioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
+	dev_t dev;
+	u_long cmd;
 	caddr_t data;
-	int     cmd, flag;
+	int flag;
 	struct proc *p;
 {
 	int error = 0;

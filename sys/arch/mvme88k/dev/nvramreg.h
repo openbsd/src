@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvramreg.h,v 1.3 1999/09/27 18:43:24 smurph Exp $ */
+/*	$OpenBSD: nvramreg.h,v 1.4 2002/04/28 15:17:09 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,9 +88,6 @@ struct m188_clockreg {
 /* bits in cl_csr */
 #define	CLK_WRITE	0x80		/* want to write */
 #define	CLK_READ	0x40		/* want to read (freeze clock) */
-
-struct clockreg *clockreg;
-struct m188_clockreg *m188_clockreg;
 
 /*
  * Motorola chose the year `1900' as their base count.

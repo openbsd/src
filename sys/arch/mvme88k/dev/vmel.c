@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.9 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: vmel.c,v 1.10 2002/04/28 15:17:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -31,15 +31,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/cpu.h>
+
 #include <mvme88k/dev/vme.h>
 
 /*
@@ -60,12 +61,6 @@ struct cfdriver vmel_cd = {
 };
 
 int vmelscan(struct device *, void *, void *);
-int vmelopen(dev_t, int, int);
-int vmelclose(dev_t, int, int);
-int vmelioctl(dev_t, int, caddr_t, int, struct proc *);
-int vmelread(dev_t, struct uio *, int);
-int vmelwrite(dev_t, struct uio *, int);
-paddr_t vmelmmap(dev_t, off_t, int);
 
 int
 vmelmatch(parent, cf, args)
@@ -99,9 +94,10 @@ vmelattach(parent, self, args)
 
 /*ARGSUSED*/
 int
-vmelopen(dev, flag, mode)
+vmelopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	if (minor(dev) >= vmel_cd.cd_ndevs ||
 	    vmel_cd.cd_devs[minor(dev)] == NULL)
@@ -111,9 +107,10 @@ vmelopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-vmelclose(dev, flag, mode)
+vmelclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -122,9 +119,10 @@ vmelclose(dev, flag, mode)
 /*ARGSUSED*/
 int
 vmelioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
+	dev_t dev;
+	u_long cmd;
 	caddr_t data;
-	int     cmd, flag;
+	int flag;
 	struct proc *p;
 {
 	int error = 0;

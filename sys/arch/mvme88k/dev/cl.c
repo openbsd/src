@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.23 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: cl.c,v 1.24 2002/04/28 15:17:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -33,7 +33,6 @@
 /* DMA mode still does not work!!! */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
@@ -43,11 +42,13 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/cpu.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
+
 #include <mvme88k/dev/clreg.h>
 
 #include "cl.h"
@@ -183,13 +184,6 @@ void cl_dumpport(int channel);
 
 int	clprobe(struct device *parent, void *self, void *aux);
 void	clattach(struct device *parent, struct device *self, void *aux);
-
-int clopen(dev_t dev, int flag, int mode, struct proc *p);
-int clclose(dev_t dev, int flag, int mode, struct proc *p);
-int clread(dev_t dev, struct uio *uio, int flag);
-int clwrite(dev_t dev, struct uio *uio, int flag);
-int clioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-int clstop(struct tty *tp, int flag);
 
 void cl_initchannel(struct clsoftc *sc, int channel);
 void clputc(struct clsoftc *sc, int unit, u_char c);
@@ -373,6 +367,7 @@ clattach(parent, self, aux)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_mxintrcnt);
 	printf("\n");
 }
+
 void
 cl_initchannel(sc, channel)
 	struct clsoftc *sc;
@@ -423,7 +418,8 @@ cl_initchannel(sc, channel)
 
 int cldefaultrate = TTYDEF_SPEED;
 
-int clmctl (dev, bits, how)
+int
+clmctl(dev, bits, how)
 	dev_t dev;
 	int bits;
 	int how;
@@ -515,7 +511,8 @@ int clmctl (dev, bits, how)
 	return(bits);
 }
 
-int clopen (dev, flag, mode, p)
+int
+clopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
@@ -657,7 +654,9 @@ if (channel == 2) { /* test one channel now */
 #endif
 	return((*linesw[tp->t_line].l_open)(dev, tp));
 }
-int clparam(tp, t)
+
+int
+clparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
@@ -724,7 +723,8 @@ cloutput(tp)
 }
 #endif
 
-int clclose (dev, flag, mode, p)
+int
+clclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
@@ -766,7 +766,9 @@ int clclose (dev, flag, mode, p)
 
 	return 0;
 }
-int clread (dev, uio, flag)
+
+int
+clread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
@@ -788,7 +790,8 @@ int clread (dev, uio, flag)
 	return((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
-int clwrite (dev, uio, flag)
+int
+clwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
@@ -810,9 +813,10 @@ int clwrite (dev, uio, flag)
 	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
-int clioctl (dev, cmd, data, flag, p)
+int
+clioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -891,6 +895,7 @@ int clioctl (dev, cmd, data, flag, p)
 
 	return 0;
 }
+
 int
 clstop(tp, flag)
 	struct tty *tp;
@@ -991,6 +996,7 @@ cl_instat(sc)
 	}
 	return (cl_reg->cl_rir & 0x40);
 }
+
 int
 clcngetc(dev)
 	dev_t dev;
@@ -1078,6 +1084,7 @@ clcnpollc(dev, on)
 	}
 	return;
 }
+
 void
 clputc(sc, unit, c)
 	struct clsoftc *sc;
@@ -1108,33 +1115,33 @@ clputc(sc, unit, c)
 	}
 	cl->schr3 = schar;
 #else
-if (unit == 0) {
-	s = splhigh();
-	oldchannel = cl_reg->cl_car;
-	cl_reg->cl_car = unit;
-	schar = cl_reg->cl_schr3;
-	cl_reg->cl_schr3 = c;
-	cl_reg->cl_stcr = 0x08 | 0x03; /* send special char, char 3 */
-	while (0 != cl_reg->cl_stcr) {
-		/* wait until cl notices the command
-		 * otherwise it may not notice the character
-		 * if we send characters too fast.
-		 */
+	if (unit == 0) {
+		s = splhigh();
+		oldchannel = cl_reg->cl_car;
+		cl_reg->cl_car = unit;
+		schar = cl_reg->cl_schr3;
+		cl_reg->cl_schr3 = c;
+		cl_reg->cl_stcr = 0x08 | 0x03; /* send special char, char 3 */
+		while (0 != cl_reg->cl_stcr) {
+			/* wait until cl notices the command
+			 * otherwise it may not notice the character
+			 * if we send characters too fast.
+			 */
+		}
+		DELAY(5);
+		cl_reg->cl_schr3 = schar;
+		cl_reg->cl_car = oldchannel;
+		splx(s);
+	} else {
+		s = splhigh();
+		oldchannel = cl_reg->cl_car;
+		cl_reg->cl_car = unit;
+		if (cl_reg->cl_tftc > 0) {
+			cl_reg->cl_tdr = c;
+		}
+		cl_reg->cl_car = oldchannel;
+		splx(s);
 	}
-	DELAY(5);
-	cl_reg->cl_schr3 = schar;
-	cl_reg->cl_car = oldchannel;
-	splx(s);
-} else {
-	s = splhigh();
-	oldchannel = cl_reg->cl_car;
-	cl_reg->cl_car = unit;
-	if (cl_reg->cl_tftc > 0) {
-		cl_reg->cl_tdr = c;
-	}
-	cl_reg->cl_car = oldchannel;
-	splx(s);
-}
 #endif
 	return;
 }
@@ -1230,6 +1237,7 @@ clgetc(sc, channel)
 	}
 	return data;
 }
+
 int
 clccparam(sc, par, channel)
 	struct clsoftc *sc;
@@ -1357,6 +1365,7 @@ cl_clkdiv(speed)
 	/* return some sane value if unknown speed */
 	return cl_clocks[4].divisor;
 }
+
 u_char 
 cl_clknum(speed)
 	int speed;
@@ -1375,6 +1384,7 @@ cl_clknum(speed)
 	/* return some sane value if unknown speed */
 	return cl_clocks[4].clock;
 }
+
 u_char 
 cl_clkrxtimeout(speed)
 	int speed;
@@ -1820,6 +1830,7 @@ cl_overflow (sc, channel, ptime, msg)
 	}
 	return;
 }
+
 void
 cl_parity (sc, channel)
 	struct clsoftc *sc;
@@ -1828,6 +1839,7 @@ cl_parity (sc, channel)
 	log(LOG_WARNING, "%s%d[%d]: parity error\n", cl_cd.cd_name, 0, channel);
 	return;
 }
+
 void
 cl_frame (sc, channel)
 	struct clsoftc *sc;

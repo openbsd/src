@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.18 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: nvram.c,v 1.19 2002/04/28 15:17:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -44,11 +44,12 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
-#include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
+#include <machine/psl.h>
 #include <machine/vmparam.h>
 
 #include <uvm/uvm_param.h>
@@ -75,14 +76,6 @@ struct cfattach nvram_ca = {
 struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL, 0
 };
-
-int nvramopen(dev_t dev, int flag, int mode);
-int nvramclose(dev_t dev, int flag, int mode);
-int nvramioctl(dev_t dev, int cmd, caddr_t data, int flag,
-    struct proc *p);
-int nvramread(dev_t dev, struct uio *uio, int flags);
-int nvramwrite(dev_t dev, struct uio *uio, int flags);
-paddr_t nvrammmap(dev_t dev, off_t off, int prot);
 
 u_long chiptotime(int, int, int, int, int, int);
 
@@ -368,7 +361,8 @@ inittodr(base)
  * and when rebooting.  Do nothing if the time is not yet known, e.g.,
  * when crashing during autoconfig.
  */
-void resettodr()
+void
+resettodr()
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	struct chiptime c;
@@ -407,9 +401,10 @@ void resettodr()
 
 /*ARGSUSED*/
 int
-nvramopen(dev, flag, mode)
+nvramopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	if (minor(dev) >= nvram_cd.cd_ndevs ||
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
@@ -419,9 +414,10 @@ nvramopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-nvramclose(dev, flag, mode)
+nvramclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	return (0);
 }
@@ -430,7 +426,7 @@ nvramclose(dev, flag, mode)
 int
 nvramioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

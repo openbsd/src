@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.19 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: vx.c,v 1.20 2002/04/28 15:17:09 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -31,7 +31,6 @@
  */  
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
@@ -41,8 +40,9 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/cpu.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
@@ -138,13 +138,7 @@ int  vx_mctl(dev_t dev, int bits, int how);
 int  vxmatch(struct device *parent, void *self, void *aux);
 void vxattach(struct device *parent, struct device *self, void *aux);
 
-int  vxopen(dev_t dev, int flag, int mode, struct proc *p);
-int  vxclose(dev_t dev, int flag, int mode, struct proc *p);
-int  vxread(dev_t dev, struct uio *uio, int flag);
-int  vxwrite(dev_t dev, struct uio *uio, int flag);
-int  vxioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
 void vxstart(struct tty *tp);
-int  vxstop(struct tty *tp, int flag);
 
 void   vxputc(struct vxsoftc *sc, int port, u_char c);
 
@@ -721,7 +715,7 @@ vxwrite (dev, uio, flag)
 int
 vxioctl (dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

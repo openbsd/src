@@ -1,4 +1,5 @@
-/*	$OpenBSD: bugtty.c,v 1.11 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.12 2002/04/28 15:17:09 miod Exp $ */
+
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
@@ -35,13 +36,13 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <mvme88k/dev/bugttyfunc.h>
@@ -64,13 +65,6 @@ int bugttycnprobe(struct consdev *cp);
 int bugttycninit(struct consdev *cp);
 int bugttycngetc(dev_t dev);
 void bugttycnputc(dev_t dev, char c);
-
-int bugttyopen(dev_t dev, int flag, int mode, struct proc *p);
-int bugttyclose(dev_t dev, int flag, int mode, struct proc *p);
-int bugttyread(dev_t dev, struct uio *uio, int flag);
-int bugttywrite(dev_t dev, struct uio *uio, int flag);
-int bugttyioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-int bugttystop(struct tty *tp, int flag);
 
 struct tty *bugttytty(dev_t dev);
 int bugttymctl(dev_t dev, int bits, int how);
@@ -144,7 +138,7 @@ bugttytty(dev)
 }
 
 int
-	bugttymctl(dev, bits, how)
+bugttymctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
@@ -272,7 +266,7 @@ void
 bugttyoutput(tp)
 	struct tty *tp;
 {
-	int cc, s, cnt ;
+	int cc, s, cnt;
 
 	/* only supports one unit */
 
@@ -374,7 +368,7 @@ bugttywrite(dev, uio, flag)
 int
 bugttyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

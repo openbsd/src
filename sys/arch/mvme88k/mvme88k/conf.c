@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2001/09/28 02:53:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 2002/04/28 15:17:09 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,8 +40,9 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
+
+#include <machine/conf.h>
 
 #include "pty.h"
 #include "bpfilter.h"
@@ -76,22 +77,10 @@ bdev_decl(xd);
 cdev_decl(xd);
 #endif /* notyet */
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-cdev_decl(sram);
-cdev_decl(nvram);
-cdev_decl(vmel);
-cdev_decl(vmes);
 #ifdef notyet
 #include "flash.h"
 cdev_decl(flash);
 #endif /* notyet */
-
-cdev_decl(dart);
-cdev_decl(cl);
-cdev_decl(bugtty);
-cdev_decl(vx);
 
 /* open, close, write, ioctl */
 #define	cdev_lp_init(c,n) { \
@@ -128,7 +117,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_disk_init(NRD,rd),		/* 7: ramdisk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_notdef(),			/* 9 */
+	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 #if notyet
 	bdev_disk_init(NXD,xd),		/* 10: XD disk */
 #endif /* notyet */
@@ -294,7 +283,7 @@ static int chrtoblktbl[] = {
 /*
  * Convert a character device number to a block device number.
  */
-int
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
@@ -335,12 +324,12 @@ blktochr(dev)
  */
 #include <dev/cons.h>
 
-#define dartcnpollc      nullcnpollc
-cons_decl(dart);
-#define clcnpollc      nullcnpollc
-cons_decl(cl);
-#define bugttycnpollc      nullcnpollc
+#define bugttycnpollc	nullcnpollc
 cons_decl(bugtty);
+#define clcnpollc	nullcnpollc
+cons_decl(cl);
+#define dartcnpollc	nullcnpollc
+cons_decl(dart);
 
 struct	consdev constab[] = {
 #if NDART > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.16 2002/03/14 01:26:39 millert Exp $	*/
+/*	$OpenBSD: dart.c,v 1.17 2002/04/28 15:17:09 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
@@ -40,6 +39,7 @@
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/psl.h>
@@ -107,12 +107,6 @@ void dartmodemtrans(struct dartsoftc *, unsigned int, unsigned int);
 void dartrint(struct dartsoftc *, int);
 void dartxint(struct dartsoftc *, int);
 
-int dartopen(dev_t dev, int flag, int mode, struct proc *p);
-int dartclose(dev_t dev, int flag, int mode, struct proc *p);
-int dartread(dev_t dev, struct uio *uio, int flag);
-int dartwrite(dev_t dev, struct uio *uio, int flag);
-int dartioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-int dartstop(struct tty *tp, int flag);
 int dartintr(void *);
 void dartbreak(dev_t dev, int state);
 
@@ -539,9 +533,9 @@ dartbreak(dev, state)
 }
 
 int 
-dartioctl (dev, cmd, data, flag, p)
+dartioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
