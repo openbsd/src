@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.61 2003/09/30 00:22:03 tedu Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.62 2003/10/02 00:02:10 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1211,12 +1211,13 @@ malloc(size_t size)
 {
     void *r;
 
-    malloc_func = " in malloc():";
     _MALLOC_LOCK();
+    malloc_func = " in malloc():";
     if (malloc_active++) {
 	wrtwarning("recursive call\n");
         malloc_active--;
 	_MALLOC_UNLOCK();
+	errno = EDEADLK;
 	return (NULL);
     }
     r = imalloc(size);
@@ -1231,12 +1232,13 @@ malloc(size_t size)
 void
 free(void *ptr)
 {
-    malloc_func = " in free():";
     _MALLOC_LOCK();
+    malloc_func = " in free():";
     if (malloc_active++) {
 	wrtwarning("recursive call\n");
         malloc_active--;
 	_MALLOC_UNLOCK();
+	errno = EDEADLK;
 	return;
     }
     ifree(ptr);
@@ -1251,12 +1253,13 @@ realloc(void *ptr, size_t size)
 {
     void *r;
 
-    malloc_func = " in realloc():";
     _MALLOC_LOCK();
+    malloc_func = " in realloc():";
     if (malloc_active++) {
 	wrtwarning("recursive call\n");
         malloc_active--;
 	_MALLOC_UNLOCK();
+	errno = EDEADLK;
 	return (NULL);
     }
     if (ptr == NULL) {
