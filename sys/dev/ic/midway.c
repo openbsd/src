@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.21 1996/11/09 03:43:29 chuck Exp $	*/
+/*	$OpenBSD: midway.c,v 1.18 1996/11/21 20:53:04 chuck Exp $	*/
 /*	(sync'd to midway.c 1.64)	*/
 
 /*
