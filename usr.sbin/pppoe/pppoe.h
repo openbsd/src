@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $	*/
+/*	$OpenBSD: pppoe.h,v 1.2 2001/04/24 05:02:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -49,7 +49,7 @@ struct pppoe_header {
 	u_int16_t sessionid;	/* PPPoE session id */
 	u_int16_t len;		/* PPPoE payload length */
 };
-#define	PPPOE_MTU		(ETHERMTU - sizeof(struct pppoe_header) - 2)
+#define	PPPOE_MTU		(ETHERMTU - sizeof(struct pppoe_header))
 
 #define	PPPOE_VER_S		0	/* Version shift */
 #define	PPPOE_VER_M		0x0f	/* Version mask */
