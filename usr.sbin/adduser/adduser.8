@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.19 2000/11/08 19:37:33 aaron Exp $
+.\"	$OpenBSD: adduser.8,v 1.20 2001/01/31 21:12:58 chris Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -209,7 +209,7 @@ politely refuses to remove users whose UID is 0 (typically root).
 .Bl -tag -width Ds
 .It Sy username
 Login names should contain only lowercase characters or digits.
-They should be no longer than 8 characters (see BUGS section of
+They should be no longer than 32 characters (see BUGS section of
 .Xr setlogin 2 ) .
 .\" The reasons for this limit are "Historical".
 .\" Given that people have traditionally wanted to break this
