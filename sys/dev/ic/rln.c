@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.10 2001/06/23 23:17:35 fgsch Exp $	*/
+/*	$OpenBSD: rln.c,v 1.11 2001/06/24 20:59:40 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -155,7 +155,6 @@ rlninit(sc)
 	/* LLDInit() */
 	struct ifnet * ifp = &sc->sc_arpcom.ac_if;
 	int s;
-	extern int cold;
 
 	s = splnet();
 	dprintf(" [init]");
@@ -408,7 +407,6 @@ rlnintr(arg)
 	void *	arg;
 {
 	struct rln_softc * sc = (struct rln_softc *)arg;
-	extern int cold;
 
 	dprintf("!");
 

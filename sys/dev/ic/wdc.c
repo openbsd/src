@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.34 2001/06/06 04:12:19 angelos Exp $     */
+/*      $OpenBSD: wdc.c,v 1.35 2001/06/24 20:59:40 fgsch Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -613,7 +613,6 @@ wdcattach(chp)
 	struct ata_atapi_attach aa_link;
 	struct ataparams params;
 	static int inited = 0;
-	extern int cold;
 #ifdef WDCDEBUG
 	int    savedmask = wdcdebug_mask;
 #endif
@@ -993,10 +992,6 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 {
 	u_char status;
 	int time = 0;
-
-#ifdef WDCNDELAY_DEBUG
-	extern int cold;
-#endif
 
 	WDCDEBUG_PRINT(("wdcwait %s:%d\n", chp->wdc ?chp->wdc->sc_dev.dv_xname
 	    :"none", chp->channel), DEBUG_STATUS);

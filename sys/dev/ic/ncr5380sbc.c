@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.9 1997/09/11 01:02:41 kstailey Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.10 2001/06/24 20:59:39 fgsch Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -597,7 +597,6 @@ ncr5380_scsi_cmd(xs)
 	struct	ncr5380_softc *sc;
 	struct sci_req	*sr;
 	int s, rv, i, flags;
-	extern int cold;		/* XXX */
 
 	sc = xs->sc_link->adapter_softc;
 
