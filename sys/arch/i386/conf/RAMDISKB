@@ -1,8 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.32 2001/02/15 04:58:08 krw Exp $
-#	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
-#
-#	Install kernels no longer support X.
-#
+#	$OpenBSD: RAMDISKB,v 1.33 2001/03/06 04:57:34 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
