@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.17 2003/04/06 18:38:42 deraadt Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.18 2003/04/06 21:12:07 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -655,9 +655,8 @@ fmt_entry(TERMTYPE * tterm,
 		    } else if (suppress_untranslatable) {
 			continue;
 		    } else {
-			char *s = srccap, *d = buffer;
-			snprintf(buffer, buffer + sizeof buffer - d, "..%s=",
-			    name);
+			char *d, *s = srccap;
+			snprintf(buffer, sizeof buffer, "..%s=", name);
 			d = buffer + strlen(buffer);
 			while ((*d = *s++) != 0) {	/* XXX overflow? */
 			    if (*d == ':') {
