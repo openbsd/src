@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.176 2005/01/29 06:22:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.177 2005/02/12 05:44:46 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -391,18 +391,29 @@ Supported hardware {:-include-:}:
 		  [B] [C]
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
+		    AboCom Systems URE450 Ethernet
 		    ADS Technologies USB-10T
 		    Aox USB101
+		    Asante USB to Ethernet
+		    ATen DSB-650C
 		    ATen UC10T
 		    Corega USB-T
-		    D-Link DSB-650
+		    D-Link DSB-650C
 		    Entegra NET-USB-E45
+		    I/O Data USB-ET/T
+		    Jaton USB XpressNet
 		    Kawasaki USB101
+		    Kingston Ethernet
 		    LinkSys USB10T
+		    Mobility Ethernet
 		    Netgear EA101
 		    Peracom USB
+		    Portgear Ethernet
+		    Portsmith Express Ethernet
+		    Psion Dacom Gold Port Ethernet
+		    Shark Pocket Adapter
+		    Silicom U2E
 		    SMC 2102/2104USB
-		    I/O Data USB-ET/T
 		Lite-On PNIC/PNIC-II-based adapters, including:
 		    Kingston KNE110TX
 		    LinkSys LNE100TX

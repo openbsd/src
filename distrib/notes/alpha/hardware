@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.49 2005/01/29 06:22:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.50 2005/02/12 05:44:46 jsg Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -402,18 +402,29 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		  including: [*]
 			3Com 3C19250
 			3Com 3c460 HomeConnect
+			AboCom Systems URE450 Ethernet
 			ADS Technologies USB-10BT
 			Aox USB101
+			Asante USB to Ethernet
+			ATen DSB-650C
 			ATen UC10T
 			Corega USB-T
-			D-Link DSB-650
+			D-Link DSB-650C
 			Entegra NET-USB-E45
+			I/O Data USB-ET/T
+			Jaton USB XpressNet
 			Kawasaki USB101
+			Kingston Ethernet
 			LinkSys USB10T
+			Mobility Ethernet
 			Netgear EA101
 			Peracom USB
+			Portgear Ethernet
+			Portsmith Express Ethernet
+			Psion Dacom Gold Port Ethernet
+			Shark Pocket Adapter
+			Silicom U2E
 			SMC 2102/2104USB
-			I/O Data USB-ET/T
 		Lite-On PNIC/PNIC-II-based adapters (dc), including: [*]
 			Kingston KNE110TX
 			LinkSys LNE100TX

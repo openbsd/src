@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.14 2005/01/29 06:22:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.15 2005/02/12 05:44:46 jsg Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -132,18 +132,29 @@ Supported devices {:-include-:}:
 		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
 		    3Com 3c19250
 		    3Com 3c460 HomeConnect
+		    AboCom Systems URE450 Ethernet
 		    ADS Technologies USB-10T
 		    Aox USB101
+		    Asante USB to Ethernet
+		    ATen DSB-650C
 		    ATen UC10T
 		    Corega USB-T
-		    D-Link DSB-650
+		    D-Link DSB-650C
 		    Entegra NET-USB-E45
+		    I/O Data USB-ET/T
+		    Jaton USB XpressNet
 		    Kawasaki USB101
+		    Kingston Ethernet
 		    LinkSys USB10T
+		    Mobility Ethernet
 		    Netgear EA101
 		    Peracom USB
+		    Portgear Ethernet
+		    Portsmith Express Ethernet
+		    Psion Dacom Gold Port Ethernet
+		    Shark Pocket Adapter
+		    Silicom U2E
 		    SMC 2102/2104USB
-		    I/O Data USB-ET/T
 		Novell NE1000, NE2000
 		VIA Rhine/RhineII/RhineIII Ethernet adapters, including:
 		    Addtron AEF-360TX
