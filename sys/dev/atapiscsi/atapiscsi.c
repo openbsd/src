@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.11 1999/09/24 05:31:51 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.12 1999/10/06 04:56:23 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -83,9 +83,11 @@
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #define DEBUG_DSC    0x20
-#define DEBUG_POLL    0x40
+#define DEBUG_POLL   0x40
+#define DEBUG_ERRORS 0x80   /* Debug error handling code */
+
 #ifdef WDCDEBUG
-int wdcdebug_atapi_mask = 0x0;
+int wdcdebug_atapi_mask = DEBUG_ERRORS;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args
@@ -122,9 +124,7 @@ int	atapi_dsc_wait __P((struct ata_drive_datas *, int));
 int	atapi_dsc_ready __P((void *));
 int	atapi_dsc_semiready __P((void *));
 int	atapi_poll_wait __P((int (*) __P((void *)), void *, int, int, char *));
-
-#define ATAPI_TO_SCSI_SENSE(sc, atapi_error) \
-   (sc)->error_code = XS_SHORTSENSE; (sc)->flags = (atapi_error) >> 4; 
+void    atapi_to_scsi_sense __P((struct scsi_xfer *, u_int8_t));
 
 struct atapiscsi_softc {
 	struct device  sc_dev;
@@ -249,6 +249,10 @@ atapiscsi_attach(parent, self, aux)
 			    DEBUG_PROBE);
 		}
 	}
+
+	config_found((struct device *)as, 
+		     &as->sc_adapterlink, scsiprint);
+
 }
 
 
@@ -256,9 +260,7 @@ void
 wdc_atapibus_final_attach(chp)
 	struct channel_softc *chp;
 {
-	if (chp->ch_as)
-		config_found((struct device *)chp->ch_as, 
-			     &chp->ch_as->sc_adapterlink, scsiprint);
+	/* Get rid of this eventually */
 }
 
 void
@@ -469,6 +471,43 @@ restart:
 	return (ret);
 }
 
+void    
+atapi_to_scsi_sense(xfer, flags)
+	struct scsi_xfer *xfer;
+	u_int8_t flags;
+{
+	struct scsi_sense_data *sense = &xfer->sense;
+	
+	sense->error_code = SSD_ERRCODE_VALID | 0x70;
+	sense->flags = (flags >> 4);
+
+	WDCDEBUG_PRINT(("Atapi error: %d ", (flags >> 4)), DEBUG_ERRORS);
+
+	if ((flags & 0x4) && (sense->flags == 0)) {
+		sense->flags = SKEY_ABORTED_COMMAND;
+		WDCDEBUG_PRINT(("ABRT "), DEBUG_ERRORS);
+	}
+
+	if (flags & 0x1) {
+		sense->flags |= SSD_ILI;
+		WDCDEBUG_PRINT(("ILI "), DEBUG_ERRORS);
+	}
+
+	if (flags & 0x2) {
+		sense->flags |= SSD_EOM;
+		WDCDEBUG_PRINT(("EOM "), DEBUG_ERRORS);
+	}
+
+	/* Media change requested */
+	/* Let's ignore these in version 1 */
+	if (flags & 0x8) {
+		WDCDEBUG_PRINT(("MCR "), DEBUG_ERRORS);
+	}
+
+	WDCDEBUG_PRINT(("\n"), DEBUG_ERRORS);
+}
+
+
 void
 wdc_atapi_start(chp, xfer)
 	struct channel_softc *chp;
@@ -481,7 +520,8 @@ wdc_atapi_start(chp, xfer)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
 	    sc_xfer->flags), DEBUG_XFERS);
 	/* Adjust C_DMA, it may have changed if we are requesting sense */
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	if (!(xfer->c_flags & C_POLL) && 
+	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (sc_xfer->datalen > 0 || (xfer->c_flags & C_SENSE)))
 		xfer->c_flags |= C_DMA;
 	else
@@ -956,8 +996,7 @@ again:
 			if (chp->ch_status & WDCS_ERR) {
 				/* save the short sense */
 				sc_xfer->error = XS_SHORTSENSE;
-				ATAPI_TO_SCSI_SENSE(&sc_xfer->sense,
-				    chp->ch_error);
+				atapi_to_scsi_sense(sc_xfer, chp->ch_error);
 				if ((sc_xfer->sc_link->quirks &
 				    ADEV_NOSENSE) == 0) {
 					/*
@@ -1003,7 +1042,7 @@ again:
 		printf("wdc_atapi_intr: unknown phase 0x%x\n", phase);
 		if (chp->ch_status & WDCS_ERR) {
 			sc_xfer->error = XS_SHORTSENSE;
-			ATAPI_TO_SCSI_SENSE(&sc_xfer->sense, chp->ch_error);
+			atapi_to_scsi_sense(sc_xfer, chp->ch_error);
 		} else {
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
@@ -1069,9 +1108,15 @@ again:
 		}
 
 		wdcbit_bucket(chp, 512);
+		
+		errstring = "Post IDENTIFY";
+		/* Wait for the drive to become unbusy before shoving
+		   the PIOMODE command down its throat */
+		if (wdcwait(chp, 0, 0, 10000))
+			goto timeout;
 
 		drvp->state = PIOMODE;
-	/* fall through */
+		goto again;
 
 	case PIOMODE:
 piomode:
@@ -1151,7 +1196,7 @@ error:
 	    errstring);
 	printf("error (0x%x)\n", chp->ch_error);
 	sc_xfer->error = XS_SHORTSENSE;
-	ATAPI_TO_SCSI_SENSE(&sc_xfer->sense, chp->ch_error);
+	atapi_to_scsi_sense(sc_xfer, chp->ch_error);
 	wdc_atapi_reset(chp, xfer);
 	return (1);
 }
