@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.10 1999/02/21 08:28:16 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.11 2001/01/19 17:58:21 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.10 1999/02/21 08:28:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.11 2001/01/19 17:58:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +66,7 @@ static char *rcsid = "$OpenBSD: write.c,v 1.10 1999/02/21 08:28:16 deraadt Exp $
 #include <err.h>
 #include <vis.h>
 
-void done(); 
+void done __P((int sig));
 void do_write __P((char *, char *, uid_t));
 void wr_fputs __P((char *));
 void search_utmp __P((char *, char *, char *, uid_t));
@@ -127,7 +127,7 @@ main(argc, argv)
 		(void)fprintf(stderr, "usage: write user [tty]\n");
 		exit(1);
 	}
-	done();
+	done(0);
 	/* NOTREACHED */
 }
 
@@ -285,10 +285,13 @@ do_write(tty, mytty, myuid)
  * done - cleanup and exit
  */
 void
-done()
+done(int sig)
 {
-	(void)printf("EOF\r\n");
-	exit(0);
+	(void)printf("EOF\r\n");	/* XXX signal race */
+	if (sig)
+		_exit(0);
+	else
+		exit(0);
 }
 
 /*

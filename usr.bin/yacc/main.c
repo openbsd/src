@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1999/08/04 18:31:26 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2001/01/19 17:58:22 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1999/08/04 18:31:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/01/19 17:58:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ void
 onintr(signo)
 	int signo;
 {
-    done(1);
+    done(1);	/* XXX signal race */
 }
 
 

@@ -507,10 +507,10 @@ Exit(sig)
 {
     (void) unlink(stmp);
 
-    if (sig > 0)
+    if (sig > 0)	/* XXX signal race */
 	(void) fprintf(stderr, "%s exiting, caught signal %d.\n", Argv[0], sig);
 
-    exit(-sig);
+    exit(-sig);		/* XXX for signal case, should be _exit() */
 }
 
 static void
