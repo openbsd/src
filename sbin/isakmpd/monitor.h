@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.11 2004/06/26 06:07:03 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.12 2004/11/08 12:34:00 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -70,13 +70,11 @@ int             mm_receive_fd(int);
 FILE           *monitor_fopen(const char *, const char *);
 int             monitor_open(const char *, int, mode_t);
 int             monitor_stat(const char *, struct stat *);
-int             monitor_socket(int, int, int);
 int             monitor_setsockopt(int, int, int, const void *, socklen_t);
 int             monitor_bind(int, const struct sockaddr *, socklen_t);
-int             monitor_mkfifo(const char *, mode_t);
 struct monitor_dirents *monitor_opendir(const char *);
 struct dirent  *monitor_readdir(struct monitor_dirents *);
-int             monitor_closedir(struct monitor_dirents *);
+void            monitor_closedir(struct monitor_dirents *);
 void            monitor_init_done(void);
 
 void		monitor_ui_init(void);
@@ -88,17 +86,15 @@ void		monitor_exit(int);
 #define monitor_fopen	fopen
 #define monitor_open	open
 #define monitor_stat	stat
-#define monitor_socket	socket
 #define monitor_setsockopt setsockopt
 #define monitor_bind	bind
-#define monitor_mkfifo	mkfifo
 #define monitor_opendir	opendir
 #define monitor_readdir	readdir
 #define monitor_closedir closedir
 
 #define monitor_ui_init	ui_init
-#define monitor_exit	exit
 #define monitor_pf_key_v2_open pf_key_v2_open
+#define monitor_exit	exit
 
 #endif				/* USE_PRIVSEP */
 #endif				/* _MONITOR_H_ */
