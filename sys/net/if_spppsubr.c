@@ -17,7 +17,7 @@
  *
  * Version 2.6, Tue May 12 17:10:39 MSD 1998
  *
- * $Id: if_spppsubr.c,v 1.1 1999/07/01 23:10:40 deraadt Exp $
+ * $Id: if_spppsubr.c,v 1.2 1999/07/02 17:46:55 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -3917,14 +3917,6 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 	u_long subcmd;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct spppreq spr;
-
-	/*
-	 * ifr->ifr_data is supposed to point to a struct spppreq.
-	 * Check the cmd word first before attempting to fetch all the
-	 * data.
-	 */
-	if ((subcmd = fuword(ifr->ifr_data)) == -1)
-		return EFAULT;
 
 	if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
 		return EFAULT;
