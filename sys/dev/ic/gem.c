@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.38 2004/06/20 20:50:41 pvalchev Exp $	*/
+/*	$OpenBSD: gem.c,v 1.39 2004/09/27 23:59:27 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -63,10 +63,6 @@
 #if NBPFILTER > 0 
 #include <net/bpf.h>
 #endif 
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -232,6 +228,7 @@ gem_config(sc)
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
@@ -735,12 +732,7 @@ gem_init(struct ifnet *ifp)
 
 	/* step 4. TX MAC registers & counters */
 	gem_init_regs(sc);
-	max_frame_size = max(ifp->if_mtu, ETHERMTU);
-	max_frame_size += ETHER_HDR_LEN + ETHER_CRC_LEN;
-#if 0
-	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
-		max_frame_size += ETHER_VLAN_ENCAP_LEN;
-#endif
+	max_frame_size = ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN;
 	v = (max_frame_size) | (0x2000 << 16) /* Burst size */;
 	bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, v);
 
