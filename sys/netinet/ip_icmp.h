@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.2 1996/03/03 22:30:36 niklas Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.3 1996/08/02 23:35:57 tholo Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -42,6 +42,14 @@
  */
 
 /*
+ * ICMP Router Advertisement data
+ */
+struct icmp_ra_addr {
+	n_long ira_addr;
+	n_long ira_preference;
+};
+
+/*
  * Structure of an icmp header.
  */
 struct icmp {
@@ -62,6 +70,12 @@ struct icmp {
 			  n_short ipm_void;    
 			  n_short ipm_nextmtu;
 		} ih_pmtu;
+
+		struct ih_rtradv {
+			u_int8_t irt_num_addrs;
+			u_int8_t irt_wpa;
+			n_short irt_lifetime;
+		} ih_rtradv;
 	} icmp_hun;
 #define	icmp_pptr	  icmp_hun.ih_pptr
 #define	icmp_gwaddr	  icmp_hun.ih_gwaddr
@@ -70,6 +84,9 @@ struct icmp {
 #define	icmp_void	  icmp_hun.ih_void
 #define	icmp_pmvoid	  icmp_hun.ih_pmtu.ipm_void
 #define	icmp_nextmtu	  icmp_hun.ih_pmtu.ipm_nextmtu
+#define	icmp_num_addrs	  icmp_hun.ih_rtradv.irt_num_addrs
+#define	icmp_wpa	  icmp_hun.ih_rtradv.irt_wpa
+#define	icmp_lifetime	  icmp_hun.ih_rtradv.irt_lifetime
 	union {
 		struct id_ts {
 			  n_time its_otime;
