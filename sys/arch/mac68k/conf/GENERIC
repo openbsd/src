@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2001/05/08 17:30:39 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.28 2001/06/27 05:46:17 art Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC - an all-in-one kernel for the mac68k
@@ -18,8 +18,6 @@ option		ZS_CONSOLE_ABORT
 option		DISABLE_EXT_CACHE # Don't use IIci external cache
 option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		  # Use ROM-based ADB driver
-
-option		UVM		# use the UVM virtual memory system
 
 config		bsd	swap generic
 maxusers	16

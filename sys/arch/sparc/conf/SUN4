@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.23 2001/05/10 10:34:41 art Exp $
+#	$OpenBSD: SUN4,v 1.24 2001/06/27 05:46:27 art Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -16,8 +16,6 @@ option		SUN4		# sun4/100, sun4/200, sun4/300
 option		RASTERCONSOLE	# fast rasterop console
 option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
-
-option		UVM		# use the UVM virtual memory system ; required
 
 maxusers	16		# estimated number of users
 

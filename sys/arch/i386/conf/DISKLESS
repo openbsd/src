@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.35 2001/05/17 00:57:55 pvalchev Exp $
+#	$OpenBSD: DISKLESS,v 1.36 2001/06/27 05:46:14 art Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -13,8 +13,6 @@ option		I486_CPU
 option		I586_CPU
 option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
-
-option		UVM		# use the UVM virtual memory system. REQUIRED
 
 #option		VM86		# Virtual 8086 emulation
 #option		USER_LDT	# user-settable LDT; used by WINE

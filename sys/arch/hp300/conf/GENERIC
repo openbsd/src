@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2001/05/04 22:48:58 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.27 2001/06/27 05:46:12 art Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -23,8 +23,6 @@ option	 	HP385
 option	 	HP400
 option	 	HP425
 option	 	HP433
-
-option		UVM		# use the UVM virtual memory system
 
 # Need to set locally
 maxusers	32

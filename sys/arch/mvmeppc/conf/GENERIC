@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2001/06/26 21:57:37 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.2 2001/06/27 05:46:23 art Exp $
 #
 # MVMEPPC GENERIC config file
 #
@@ -11,7 +11,6 @@ maxusers	32
 # actual machine type probed via name of openfirmware root node.
 option		SYS_TYPE=APPL
 
-option		UVM
 option		PCIVERBOSE
 
 include "../../../conf/GENERIC"

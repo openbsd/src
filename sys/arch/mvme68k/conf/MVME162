@@ -1,8 +1,6 @@
-#	$OpenBSD: MVME162,v 1.16 2001/06/26 21:35:24 miod Exp $
+#	$OpenBSD: MVME162,v 1.17 2001/06/27 05:46:19 art Exp $
 
 machine		mvme68k m68k
-
-option		UVM
 
 option		"M68040"	# support for 040
 option		FPSP		# MC68040 floating point support

@@ -1,4 +1,4 @@
-#	$OpenBSD: M197,v 1.5 2001/05/31 21:05:00 miod Exp $
+#	$OpenBSD: M197,v 1.6 2001/06/27 05:46:22 art Exp $
 
 machine mvme88k
 
@@ -8,7 +8,6 @@ include "../../../conf/GENERIC"
 
 option		"M88000"	# support for 88K
 option 		MVME197		# support for 197
-option		UVM
 option		BUGMAP		# use Bug Rom VME Mappings
 
 maxusers 64

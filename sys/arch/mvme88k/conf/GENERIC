@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2001/05/31 21:05:00 miod Exp $
+#	$OpenBSD: GENERIC,v 1.19 2001/06/27 05:46:21 art Exp $
 
 machine		mvme88k 
 
@@ -8,7 +8,6 @@ option		"M88000"	# support for 88K
 option		MVME187		# support for 187
 option		MVME188		# support for 188
 #option		MVME197		# support for 197
-option		UVM		# use the UVM virtual memory system
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
 #option		DEBUG		# print debugging statements

@@ -1,9 +1,8 @@
-#	$OpenBSD: RAMDISKB,v 1.9 2001/06/23 19:46:57 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.10 2001/06/27 05:46:08 art Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
 
-option		UVM		# required
 option		PMAP_NEW	# required
 option		SMALL_KERNEL
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.14 2000/11/08 11:53:54 art Exp $
+#	$OpenBSD: DRACO,v 1.15 2001/06/27 05:46:10 art Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -22,8 +22,6 @@ option		DRACO
 
 option		"M68060"	# support for 060
 option		"M060SP"	# MC68060 software support (Required for 060)
-
-option		UVM		# use the UVM virtual memory system
 
 #
 # Networking options

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.38 2001/05/10 10:34:41 art Exp $
+#	$OpenBSD: SUN4M,v 1.39 2001/06/27 05:46:28 art Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -14,8 +14,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDB		# support for kernel gdb
 #option		KGDBDEV=0xc01	# kgdb device number (dev_t)
 #option		KGDBRATE=38400	# baud rate
-
-option		UVM		# use the UVM virtual memory system; required
 
 # Options for SPARCstation hardware
 option		RASTERCONSOLE	# fast rasterop console
