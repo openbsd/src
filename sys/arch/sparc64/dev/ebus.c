@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.11 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.12 2003/06/12 05:57:43 henric Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -103,8 +103,6 @@ static paddr_t ebus_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     off_t, int, int);
 static int _ebus_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
-static void *ebus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int,
-    int, int (*)(void *), void *);
 bus_space_tag_t ebus_alloc_mem_tag(struct ebus_softc *, bus_space_tag_t);
 bus_space_tag_t ebus_alloc_io_tag(struct ebus_softc *, bus_space_tag_t);
 bus_space_tag_t _ebus_alloc_bus_tag(struct ebus_softc *sc, const char *,
@@ -393,7 +391,7 @@ _ebus_alloc_bus_tag(struct ebus_softc *sc, const char *name,
 	bt->sasi = parent->sasi;
 	bt->sparc_bus_map = _ebus_bus_map;
 	bt->sparc_bus_mmap = ebus_bus_mmap;
-	bt->sparc_intr_establish = ebus_intr_establish;
+
 	return (bt);
 }
 
@@ -503,23 +501,5 @@ ebus_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 	}
 
 	return (-1);
-}
-
-/*
- * install an interrupt handler for a PCI device
- */
-void *
-ebus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
-    int flags, int (*handler)(void *), void *arg)
-{
-	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
-		printf("\nebus_bus_mmap: invalid parent");
-		return (NULL);
-        }
-
-	t = t->parent;
-
-	return ((*t->sparc_intr_establish)(t, t0, pri, level, flags,
-	    handler, arg));
 }
 
