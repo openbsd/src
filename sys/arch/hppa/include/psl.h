@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.7 2002/10/07 15:32:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -43,64 +43,64 @@
 /*
  * Processor Status Word Bit Positions (in PA-RISC bit order)
  */
-#define	PSW_Y_POS	(0)
-#define	PSW_Z_POS	(1)
-#define	PSW_SS_POS	(3)	/* Reserved, Software-defined */
-#define	PSW_E_POS	(5)
-#define	PSW_S_POS	(6)
-#define	PSW_T_POS	(7)
-#define	PSW_H_POS	(8)
-#define	PSW_L_POS	(9)
-#define	PSW_N_POS	(10)
-#define	PSW_X_POS	(11)
-#define	PSW_B_POS	(12)
-#define	PSW_C_POS	(13)
-#define	PSW_V_POS	(14)
-#define	PSW_M_POS	(15)
-#define	PSW_CB_POS	(16)
-#define	PSW_G_POS	(25)
-#define	PSW_F_POS	(26)
-#define	PSW_R_POS	(27)
-#define	PSW_Q_POS	(28)
-#define	PSW_P_POS	(29)
-#define	PSW_D_POS	(30)
-#define	PSW_I_POS	(31)
+#define	PSL_Y_POS	(0)
+#define	PSL_Z_POS	(1)
+#define	PSL_SS_POS	(3)	/* Reserved, Software-defined */
+#define	PSL_E_POS	(5)
+#define	PSL_S_POS	(6)
+#define	PSL_T_POS	(7)
+#define	PSL_H_POS	(8)
+#define	PSL_L_POS	(9)
+#define	PSL_N_POS	(10)
+#define	PSL_X_POS	(11)
+#define	PSL_B_POS	(12)
+#define	PSL_C_POS	(13)
+#define	PSL_V_POS	(14)
+#define	PSL_M_POS	(15)
+#define	PSL_CB_POS	(16)
+#define	PSL_G_POS	(25)
+#define	PSL_F_POS	(26)
+#define	PSL_R_POS	(27)
+#define	PSL_Q_POS	(28)
+#define	PSL_P_POS	(29)
+#define	PSL_D_POS	(30)
+#define	PSL_I_POS	(31)
 
-#define	PSW_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G"  \
+#define	PSL_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G"  \
 			"\021M\022V\023C\024B\025X\026N\027L\030H" \
 			"\031T\032S\033E\037Z\040Y"
 
 /*
  * Processor Status Word Bit Values
  */
-#define	PSW_Y	(1 << (31-PSW_Y_POS))	/* Data Debug Trap Disable */
-#define	PSW_Z	(1 << (31-PSW_Z_POS))	/* Instruction Debug Trap Disable */
-#define	PSW_SS	(1 << (31-PSW_SS_POS))	/* Reserved; Software Single-Step */
-#define	PSW_E	(1 << (31-PSW_E_POS))	/* Little Endian Memory Access Enable */
-#define	PSW_S	(1 << (31-PSW_S_POS))	/* Secure Interval Timer */
-#define	PSW_T	(1 << (31-PSW_T_POS))	/* Taken Branch Trap Enable */
-#define	PSW_H	(1 << (31-PSW_H_POS))	/* Higher-privilege Transfer Trap Enable */
-#define	PSW_L	(1 << (31-PSW_L_POS))	/* Lower-privilege Transfer Trap Enable */
-#define	PSW_N	(1 << (31-PSW_N_POS))	/* Nullify */
-#define	PSW_X	(1 << (31-PSW_X_POS))	/* Data Memory Break Disable */
-#define	PSW_B	(1 << (31-PSW_B_POS))	/* Taken Branch */
-#define	PSW_C	(1 << (31-PSW_C_POS))	/* Instruction Address Translation Enable */
-#define	PSW_V	(1 << (31-PSW_V_POS))	/* Divide Step Correction */
-#define	PSW_M	(1 << (31-PSW_M_POS))	/* High-priority Machine Check Mask */
-#define	PSW_CB	(1 << (31-PSW_CB_POS))	/* Carry/Borrow Bits */
-#define	PSW_G	(1 << (31-PSW_G_POS))	/* Debug Trap Enable */
-#define	PSW_F	(1 << (31-PSW_F_POS))	/* Perfomance Monitor Interrupt Unmask */
-#define	PSW_R	(1 << (31-PSW_R_POS))	/* Recover Counter Enable */
-#define	PSW_Q	(1 << (31-PSW_Q_POS))	/* Interrupt State Collection Enable */
-#define	PSW_P	(1 << (31-PSW_P_POS))	/* Protection Identifier Validation Enable */
-#define	PSW_D	(1 << (31-PSW_D_POS))	/* Data Adress Translation Enable */
-#define	PSW_I	(1 << (31-PSW_I_POS))	/* External Interrupt, Power Failure
+#define	PSL_Y	(1 << (31-PSL_Y_POS))	/* Data Debug Trap Disable */
+#define	PSL_Z	(1 << (31-PSL_Z_POS))	/* Instruction Debug Trap Disable */
+#define	PSL_SS	(1 << (31-PSL_SS_POS))	/* Reserved; Software Single-Step */
+#define	PSL_E	(1 << (31-PSL_E_POS))	/* Little Endian Memory Access Enable */
+#define	PSL_S	(1 << (31-PSL_S_POS))	/* Secure Interval Timer */
+#define	PSL_T	(1 << (31-PSL_T_POS))	/* Taken Branch Trap Enable */
+#define	PSL_H	(1 << (31-PSL_H_POS))	/* Higher-privilege Transfer Trap Enable */
+#define	PSL_L	(1 << (31-PSL_L_POS))	/* Lower-privilege Transfer Trap Enable */
+#define	PSL_N	(1 << (31-PSL_N_POS))	/* Nullify */
+#define	PSL_X	(1 << (31-PSL_X_POS))	/* Data Memory Break Disable */
+#define	PSL_B	(1 << (31-PSL_B_POS))	/* Taken Branch */
+#define	PSL_C	(1 << (31-PSL_C_POS))	/* Instruction Address Translation Enable */
+#define	PSL_V	(1 << (31-PSL_V_POS))	/* Divide Step Correction */
+#define	PSL_M	(1 << (31-PSL_M_POS))	/* High-priority Machine Check Mask */
+#define	PSL_CB	(1 << (31-PSL_CB_POS))	/* Carry/Borrow Bits */
+#define	PSL_G	(1 << (31-PSL_G_POS))	/* Debug Trap Enable */
+#define	PSL_F	(1 << (31-PSL_F_POS))	/* Perfomance Monitor Interrupt Unmask */
+#define	PSL_R	(1 << (31-PSL_R_POS))	/* Recover Counter Enable */
+#define	PSL_Q	(1 << (31-PSL_Q_POS))	/* Interrupt State Collection Enable */
+#define	PSL_P	(1 << (31-PSL_P_POS))	/* Protection Identifier Validation Enable */
+#define	PSL_D	(1 << (31-PSL_D_POS))	/* Data Adress Translation Enable */
+#define	PSL_I	(1 << (31-PSL_I_POS))	/* External Interrupt, Power Failure
 					   Interrupt, and Low-Priority Machine
 					   Check Interrupt unmask */
 
 /*
  * Frequently Used PSW Values
  */
-#define	RESET_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
+#define	RESET_PSL	(PSL_R | PSL_Q | PSL_P | PSL_D | PSL_I)
 
 #endif  /* _MACHINE_PSL_H_ */

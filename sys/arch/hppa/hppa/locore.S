@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.90 2002/10/07 14:38:34 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.91 2002/10/07 15:32:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -220,7 +220,7 @@ $start_zero_tf
 	ldil	L%$qisnowon, rp
 	ldo	R%$qisnowon(rp), rp
 	b	$kernel_setup
-	ldi	PSW_Q|PSW_I, arg2
+	ldi	PSL_Q|PSL_I, arg2
 
 $qisnowon
 	/*
@@ -433,7 +433,7 @@ pdc_call_unmapped1
 	nop
 
 	copy	arg0, t4
-	ldi	PSW_Q, arg0 /* (!pdc_flag && args[0] == PDC_PIM)? PSW_M:0) */
+	ldi	PSL_Q, arg0 /* (!pdc_flag && args[0] == PDC_PIM)? PSL_M:0) */
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	nop
 	stw	ret0, HPPA_FRAME_ARG(23)(sp)
@@ -1710,7 +1710,7 @@ EXIT(desidhash_t)
  * ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
  */
 LEAF_ENTRY(ibtlb_l)
-	rsm	(PSW_R|PSW_I), t4
+	rsm	(PSL_R|PSL_I), t4
 	nop ! nop ! nop ! nop ! nop ! nop ! nop
 
 	bv	0(rp)
@@ -1738,7 +1738,7 @@ EXIT(hpti_l)
  */
 LEAF_ENTRY(pbtlb_l)
 	; DR_PAGE0
-	rsm	(PSW_R|PSW_I), t4
+	rsm	(PSL_R|PSL_I), t4
 	nop ! nop ! nop ! nop
 	ldil	L%0xc041, t1
 	ldo	R%0xc041(t1), t1
@@ -1798,7 +1798,7 @@ ENTRY(TLABEL(hpmc),0)
 	ldo	R%hpmc_dump(rp), rp
 	ldil	L%kpsw, %arg2
 	ldw	R%kpsw(%arg2), %arg2
-	depi	0, PSW_I_POS, 1, %arg2
+	depi	0, PSL_I_POS, 1, %arg2
 	stw	%arg2, R%kpsw(t1)
 	ldil	L%emrg_stack, arg1
 	b	$kernel_setup
@@ -1830,7 +1830,7 @@ ENTRY(hppa_toc,0)
 	ldo	R%boot(rp), rp
 	ldil	L%kpsw, %arg2
 	ldw	R%kpsw(%arg2), %arg2
-	depi	0, PSW_I_POS, 1, %arg2
+	depi	0, PSL_I_POS, 1, %arg2
 	stw	%arg2, R%kpsw(t1)
 	ldi	0, arg0
 	ldil	L%emrg_stack, arg1
@@ -1858,7 +1858,7 @@ ENTRY(hppa_pfr,0)
 	ldo	R%boot(rp), rp
 	ldil	L%kpsw, %arg2
 	ldw	R%kpsw(%arg2), %arg2
-	depi	0, PSW_I_POS, 1, %arg2
+	depi	0, PSL_I_POS, 1, %arg2
 	stw	%arg2, R%kpsw(t1)
 	ldi	RB_HALT|RB_POWERDOWN, arg0
 	ldil	L%emrg_stack, arg1

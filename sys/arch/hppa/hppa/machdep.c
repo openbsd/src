@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 2002/10/07 14:42:07 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.84 2002/10/07 15:32:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1306,9 +1306,9 @@ sys_sigreturn(p, v, retval)
 	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc))
 		return (EINVAL);
 
-#define PSW_MBS (PSW_C|PSW_Q|PSW_P|PSW_D|PSW_I)
-#define PSW_MBZ (PSW_Y|PSW_Z|PSW_S|PSW_X|PSW_M|PSW_R)
-	if ((ksc.sc_ps & (PSW_MBS|PSW_MBZ)) != PSW_MBS)
+#define PSL_MBS (PSL_C|PSL_Q|PSL_P|PSL_D|PSL_I)
+#define PSL_MBZ (PSL_Y|PSL_Z|PSL_S|PSL_X|PSL_M|PSL_R)
+	if ((ksc.sc_ps & (PSL_MBS|PSL_MBZ)) != PSL_MBS)
 		return (EINVAL);
 
 	if (ksc.sc_onstack)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.43 2002/10/07 14:38:34 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.44 2002/10/07 15:32:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -200,7 +200,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 */
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	tf->tf_eiem = ~0;
-	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */;
+	tf->tf_ipsw = PSL_C | PSL_Q | PSL_P | PSL_D | PSL_I /* | PSL_L */;
 
 	/*
 	 * Set up return value registers as libc:fork() expects
