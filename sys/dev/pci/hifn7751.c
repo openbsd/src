@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.58 2001/05/08 20:41:00 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.59 2001/05/11 15:01:15 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -120,6 +120,9 @@ hifn_probe(parent, match, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751)
 		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751)
 		return (1);
@@ -209,6 +212,10 @@ hifn_attach(parent, self, aux)
 		printf("%s: crypto enabling failed\n", sc->sc_dv.dv_xname);
 		goto fail_mem;
 	}
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
 
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
@@ -376,6 +383,11 @@ struct pci2id {
 	char		card_id[13];
 } pci2id[] = {
 	{
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7951,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
 		PCI_VENDOR_NETSEC,
 		PCI_PRODUCT_NETSEC_7751,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -445,9 +457,7 @@ hifn_enable_crypto(sc, pciid)
 #ifdef HIFN_DEBUG
 		printf(": Strong Crypto already enabled!\n");
 #endif
-		WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
-		WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
-		return 0;	/* success */
+		goto report;
 	}
 
 	if (encl != 0 && encl != HIFN_PUSTAT_ENA_0) {
@@ -482,6 +492,7 @@ hifn_enable_crypto(sc, pciid)
 		printf(": engine enabled successfully!");
 #endif
 
+report:
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 
