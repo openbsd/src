@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.188 1999/11/25 00:43:44 millert Exp $
+# $Sudo: Makefile.in,v 1.190 1999/12/05 02:18:45 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -138,7 +138,7 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6
+VERSION = 1.6.1
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES FAQ HISTORY INSTALL INSTALL.configure \
 	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
@@ -251,29 +251,17 @@ securid.o: $(authdir)/securid.c $(AUTHDEP)
 sia.o: $(authdir)/sia.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/sia.c
 
-sudo.html: $(srcdir)/sudo.pod
-	@rm -f $(srcdir)/$@
-	(cd $(srcdir); pod2html --title="Sudo Manual" --infile=sudo.pod --outfile=$(srcdir)/$@)
-
 sudo.man: $(srcdir)/sudo.pod
 	@rm -f $(srcdir)/$@
 	(cd $(srcdir); pod2man --section=$(mansect8) --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudo.pod > $(srcdir)/$@)
 
 sudo.cat: sudo.man
 
-visudo.html: $(srcdir)/visudo.pod
-	@rm -f $(srcdir)/$@
-	(cd $(srcdir); pod2html --title="Visudo Manual" --infile=visudo.pod --outfile=$(srcdir)/$@)
-
 visudo.man: $(srcdir)/visudo.pod
 	@rm -f $(srcdir)/$@
 	(cd $(srcdir); pod2man --section=$(mansect8) --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod > $(srcdir)/$@)
 
 visudo.cat: visudo.man
-
-sudoers.html: $(srcdir)/sudoers.pod
-	@rm -f $(srcdir)/$@
-	(cd $(srcdir); pod2html --title="Sudoers Manual" --infile=sudoers.pod --outfile=$(srcdir)/$@)
 
 sudoers.man: $(srcdir)/sudoers.pod
 	@rm -f $(srcdir)/$@
@@ -321,7 +309,7 @@ mostlyclean: clean
 
 distclean: clean
 	-rm -f Makefile pathnames.h config.h config.status config.cache \
-	       config.log pod2html-dircache pod2html-itemcache $(PARSESRCS)
+	       config.log $(PARSESRCS)
 
 clobber: distclean
 

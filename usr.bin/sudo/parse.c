@@ -50,7 +50,7 @@
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif /* HAVE_STRINGS_H */
-#if defined(HAVE_FNMATCH) && defined(HAVE_FNMATCH_H)
+#ifdef HAVE_FNMATCH
 # include <fnmatch.h>
 #endif /* HAVE_FNMATCH_H */
 #ifdef HAVE_NETGROUP_H
@@ -91,7 +91,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.121 1999/08/28 10:00:22 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.123 1999/12/09 03:54:57 millert Exp $";
 #endif /* lint */
 
 /*
@@ -142,7 +142,10 @@ sudoers_lookup(check_cmnd)
      * Assume the worst.  If the stack is empty the user was
      * not mentioned at all.
      */
-    error = VALIDATE_NOT_OK;
+    if (def_flag(I_AUTHENTICATE))
+	error = VALIDATE_NOT_OK;
+    else
+	error = VALIDATE_NOT_OK | FLAG_NOPASS;
     if (check_cmnd == TRUE) {
 	error |= FLAG_NO_HOST;
 	if (!top)

@@ -657,7 +657,7 @@ fi
 
 
 
-echo "Configuring Sudo version 1.6"
+echo "Configuring Sudo version 1.6.1"
 PROGS="sudo visudo"
 CPPFLAGS=""
 LDFLAGS=""
@@ -4807,7 +4807,7 @@ fi
 
 fi
 
-for ac_hdr in string.h strings.h unistd.h malloc.h paths.h utime.h fnmatch.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h
+for ac_hdr in string.h strings.h unistd.h malloc.h paths.h utime.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
@@ -5403,7 +5403,7 @@ EOF
 
 ;;
 esac
-for ac_func in strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid ftruncate strftime setrlimit
+for ac_func in strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid ftruncate strftime setrlimit initgroups
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:5410: checking for $ac_func" >&5
@@ -6339,9 +6339,9 @@ else
   cat > conftest.$ac_ext <<EOF
 #line 6341 "configure"
 #include "confdefs.h"
-main() {
-exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", 0));
-}
+#include <fnmatch.h>
+main() { exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", 0)); }
+
 EOF
 if { (eval echo configure:6347: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then

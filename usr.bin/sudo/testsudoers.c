@@ -50,7 +50,7 @@
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif /* HAVE_STRINGS_H */
-#if defined(HAVE_FNMATCH) && defined(HAVE_FNMATCH_H)
+#ifdef HAVE_FNMATCH
 # include <fnmatch.h>
 #endif /* HAVE_FNMATCH_H */
 #ifdef HAVE_NETGROUP_H
@@ -77,7 +77,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.64 1999/09/08 08:06:19 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.66 1999/12/09 03:54:57 millert Exp $";
 #endif /* lint */
 
 /*
@@ -277,6 +277,12 @@ netgr_matches(netgr, host, user)
 void
 set_perms(i, j)
     int i, j;
+{
+    return;
+}
+
+void
+set_fqdn()
 {
     return;
 }

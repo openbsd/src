@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: config.h.in,v 1.139 1999/11/04 19:01:08 millert Exp $
+ * $Sudo: config.h.in,v 1.141 1999/12/09 04:04:42 millert Exp $
  */
 
 /*
@@ -188,6 +188,9 @@
 /* Define if you have innetgr(3).  */
 #undef HAVE_INNETGR
 
+/* Define if you have initgroups(3).  */
+#undef HAVE_INITGROUPS
+
 /* Define if you have getdomainname(2).  */
 #undef HAVE_GETDOMAINNAME
 
@@ -297,9 +300,6 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
-
-/* Define if you have the <fnmatch.h> header file.  */
-#undef HAVE_FNMATCH_H
 
 /* Define if you have the <netgroup.h> header file.  */
 #undef HAVE_NETGROUP_H

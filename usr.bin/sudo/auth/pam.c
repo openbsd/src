@@ -57,7 +57,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: pam.c,v 1.10 1999/10/07 21:21:07 millert Exp $";
+static const char rcsid[] = "$Sudo: pam.c,v 1.12 1999/11/23 18:27:00 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -90,15 +90,22 @@ pam_verify(pw, prompt, auth)
     char *prompt;
     sudo_auth *auth;
 {
+    int error;
+    const char *s;
     pam_handle_t *pamh = (pam_handle_t *) auth->data;
 
     def_prompt = prompt;	/* for sudo_conv */
 
     /* PAM_SILENT prevents error messages from going to syslog(3) */
-    if (pam_authenticate(pamh, PAM_SILENT) == PAM_SUCCESS)
+    if ((error = pam_authenticate(pamh, PAM_SILENT)) == PAM_SUCCESS)
 	return(AUTH_SUCCESS);
-    else
-	return(AUTH_FAILURE);
+
+    /* Any error other than PAM_PERM_DENIED may indicate a config problem. */
+    if (error != PAM_PERM_DENIED && (s = pam_strerror(pamh, error))) {
+	log_error(NO_EXIT|NO_MAIL, "pam_authenticate: %s\n", s);
+	return(AUTH_FATAL);
+    }
+    return(AUTH_FAILURE);
 }
 
 int
@@ -125,7 +132,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     VOID *appdata_ptr;
 {
     struct pam_response *pr;
-    struct pam_message *pm;
+    PAM_CONST struct pam_message *pm;
     char *p = def_prompt;
     int echo = 0;
     extern int nil_pw;

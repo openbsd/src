@@ -235,9 +235,9 @@ AC_DEFUN(SUDO_FUNC_FNMATCH,
 [AC_MSG_CHECKING(for working fnmatch)
 AC_CACHE_VAL(sudo_cv_func_fnmatch,
 [rm -f conftestdata; > conftestdata
-AC_TRY_RUN([main() {
-exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", 0));
-}], sudo_cv_func_fnmatch=yes, sudo_cv_func_fnmatch=no,
+AC_TRY_RUN([#include <fnmatch.h>
+main() { exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", 0)); }
+], sudo_cv_func_fnmatch=yes, sudo_cv_func_fnmatch=no,
   sudo_cv_func_fnmatch=no)
 rm -f core core.* *.core])dnl
 AC_MSG_RESULT($sudo_cv_func_fnmatch)

@@ -81,7 +81,7 @@ extern int stat		__P((const char *, struct stat *));
 #endif /* POSIX_SIGNALS && !SA_RESETHAND */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: visudo.c,v 1.116 1999/11/09 20:12:20 millert Exp $";
+static const char rcsid[] = "$Sudo: visudo.c,v 1.117 1999/12/02 20:31:25 millert Exp $";
 #endif /* lint */
 
 /*
@@ -405,6 +405,12 @@ netgr_matches(n, h, u)
     char *n, *h, *u;
 {
     return(TRUE);
+}
+
+void
+set_fqdn()
+{
+    return;
 }
 
 /*

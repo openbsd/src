@@ -79,7 +79,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.yacc,v 1.166 1999/10/07 21:20:57 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.yacc,v 1.167 1999/12/05 19:06:09 millert Exp $";
 #endif /* lint */
 
 /*
@@ -242,6 +242,8 @@ yyerror(s)
 %type <BOOLEAN>	 cmnd
 %type <BOOLEAN>	 host
 %type <BOOLEAN>	 runasuser
+%type <BOOLEAN>	 oprunasuser
+%type <BOOLEAN>	 runaslist
 %type <BOOLEAN>	 user
 
 %%
@@ -462,17 +464,22 @@ runasspec	:	/* empty */ {
 				runas_matches = (strcmp(*user_runas,
 				    def_str(I_RUNAS_DEF)) == 0);
 			}
-		|	RUNAS runaslist { ; }
-		;
-
-runaslist	:	oprunasuser
-		|	runaslist ',' oprunasuser
-		;
-
-oprunasuser	:	runasuser {
-			    if ($1 != -1)
-				runas_matches = $1;
+		|	RUNAS runaslist {
+			    runas_matches = ($2 == TRUE ? TRUE : FALSE);
 			}
+		;
+
+runaslist	:	oprunasuser { ; }
+		|	runaslist ',' oprunasuser {
+			    /* Later entries override earlier ones. */
+			    if ($3 != -1)
+				$$ = $3;
+			    else
+				$$ = $1;
+			}
+		;
+
+oprunasuser	:	runasuser { ; }
 		|	'!' {
 			    if (printmatches == TRUE) {
 				if (in_alias == TRUE)
@@ -482,8 +489,8 @@ oprunasuser	:	runasuser {
 				    append_runas("!", ", ");
 			    }
 			} runasuser {
-			    if ($3 != -1)
-				runas_matches = ! $3;
+			    /* Set $$ to the negation of runasuser */
+			    $$ = ($3 == -1 ? -1 : ! $3);
 			}
 
 runasuser	:	WORD {
@@ -717,7 +724,6 @@ runasaliases	:	runasalias
 		;
 
 runasalias	:	ALIAS {
-			    push;
 			    if (printmatches == TRUE) {
 				in_alias = TRUE;
 				/* Allocate space for ga_list if necessary. */
@@ -726,10 +732,9 @@ runasalias	:	ALIAS {
 				ga_list[ga_list_len-1].alias = estrdup($1);
 			    }
 			} '=' runaslist {
-			    if ((runas_matches != -1 || pedantic) &&
-				!add_alias($1, RUNAS_ALIAS, runas_matches))
+			    if (($4 != -1 || pedantic) &&
+				!add_alias($1, RUNAS_ALIAS, $4))
 				YYERROR;
-			    pop;
 			    free($1);
 
 			    if (printmatches == TRUE)

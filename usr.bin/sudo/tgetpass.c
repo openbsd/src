@@ -78,7 +78,7 @@
 #endif /* TCSASOFT */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.90 1999/11/01 15:58:46 millert Exp $";
+static const char rcsid[] = "$Sudo: tgetpass.c,v 1.91 1999/12/05 02:18:47 millert Exp $";
 #endif /* lint */
 
 static char *tgetline __P((int, char *, size_t, int));
@@ -188,6 +188,9 @@ tgetline(fd, buf, bufsiz, timeout)
     if (bufsiz == 0)
 	return(NULL);			/* sanity */
 
+    cp = buf;
+    left = bufsiz;
+
     /*
      * Timeout of <= 0 means no timeout.
      */
@@ -196,29 +199,33 @@ tgetline(fd, buf, bufsiz, timeout)
 	n = howmany(fd + 1, NFDBITS) * sizeof(fd_mask);
 	readfds = (fd_set *) emalloc(n);
 	(void) memset((VOID *)readfds, 0, n);
-	FD_SET(fd, readfds);
 
 	/* Set timeout for select */
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
-	/*
-	 * Make sure there is something to read or timeout
-	 */
-	while ((n = select(fd + 1, readfds, 0, 0, &tv)) == -1 &&
-	    errno == EINTR)
-	    ;
-	if (n == 0)
-	    return(NULL);		/* timeout */
-    }
-    if (readfds)
-	free(readfds);
+	while (--left) {
+	    FD_SET(fd, readfds);
 
-    /* Keep reading until out of space, EOF, error, or newline */
-    cp = buf;
-    left = bufsiz;
-    while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n')
-	*cp++ = c;
+	    /* Make sure there is something to read (or timeout) */
+	    while ((n = select(fd + 1, readfds, 0, 0, &tv)) == -1 &&
+		errno == EINTR)
+		;
+	    if (n == 0)
+		return(NULL);		/* timeout */
+
+	    /* Read a character, exit loop on error, EOF or EOL */
+	    n = read(fd, &c, 1);
+	    if (n != 1 || c == '\n')
+		break;
+	    *cp++ = c;
+	}
+	free(readfds);
+    } else {
+	/* Keep reading until out of space, EOF, error, or newline */
+	while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n')
+	    *cp++ = c;
+    }
     *cp = '\0';
 
     return(cp == buf ? NULL : buf);

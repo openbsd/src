@@ -31,13 +31,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: insults.h,v 1.43 1999/07/31 16:19:46 millert Exp $
+ * $Sudo: insults.h,v 1.45 1999/12/06 06:47:13 millert Exp $
  */
 
 #ifndef _SUDO_INSULTS_H
 #define _SUDO_INSULTS_H
 
-#ifdef USE_INSULTS
+#if defined(HAL_INSULTS) || defined(GOONS_INSULTS) || defined(CLASSIC_INSULTS) || defined(CSOPS_INSULTS)
 
 /*
  * Use one or more set of insults as determined by configure
@@ -75,6 +75,6 @@ char *insults[] = {
  */
 #define INSULT		(insults[time(NULL) % NOFINSULTS])
 
-#endif /* USE_INSULTS */
+#endif /* HAL_INSULTS || GOONS_INSULTS || CLASSIC_INSULTS || CSOPS_INSULTS */
 
 #endif /* _SUDO_INSULTS_H */

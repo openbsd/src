@@ -61,7 +61,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.192 1999/10/07 21:20:55 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.193 1999/12/05 02:54:20 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -457,9 +457,9 @@ remove_timestamp(remove)
 		status = unlink(timestampfile);
 	    else
 		status = rmdir(timestampdir);
-	    if (status == -1) {
+	    if (status == -1 && errno != ENOENT) {
 		log_error(NO_EXIT, "can't remove %s (%s), will reset to epoch",
-		    strerror(errno), ts);
+		    ts, strerror(errno));
 		remove = FALSE;
 	    }
 	}

@@ -1,4 +1,4 @@
-This is Sudo version 1.6
+This is Sudo version 1.6.1
 
 The sudo philosophy
 ===================
@@ -35,8 +35,9 @@ NOTE: Starting with sudo 1.5.7 the configuration method has changed
 
 System requirements
 ===================
-Sudo requires a machine running UN*X (most flavors of BSD, SYSV,
-or POSIX will do), a working C compiler, and the make utility.
+To build sudo from the source distribution you need a machine running
+UN*X (most flavors of BSD, SYSV, or POSIX will do), a working C
+compiler, and the make utility.
 
 If you wish to modify the parser then you will need flex version
 2.5.2 or later and either bison or byacc (sudo comes with a
@@ -69,7 +70,7 @@ sudo-users	This list is for questions and general discussion about sudo.
 
 sudo-workers	This list is for people working on and porting sudo.
 
-To subscribe to a list, send a mail message to "majordomo@cs.colorado.edu"
+To subscribe to a list, send a mail message to "majordomo@courtesan.com"
 with a line in the message body (_not_ the subject) of "subscribe listname"
 where "listname" is one of sudo-announce, sudo-users, or sudo-workers.
 

@@ -86,7 +86,7 @@ extern char *getenv	__P((char *));
 #endif /* STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.258 1999/11/16 06:09:23 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.262 1999/12/09 04:04:47 millert Exp $";
 #endif /* lint */
 
 /*
@@ -163,6 +163,7 @@ main(argc, argv)
     int fd;
     int cmnd_status;
     int sudo_mode;
+    int check_cmnd;
 #ifdef POSIX_SIGNALS
     sigset_t set, oset;
 #else
@@ -217,15 +218,7 @@ main(argc, argv)
     /* Setup defaults data structures. */
     init_defaults();
 
-    /* Initialize syslog(3) if we are using it. */
-    if (def_str(I_LOGFACSTR)) {
-#ifdef LOG_NFACILITIES
-	openlog("sudo", 0, def_ival(I_LOGFAC));
-#else
-	openlog("sudo", 0);
-#endif /* LOG_NFACILITIES */
-    }
-
+    check_cmnd = 1;
     if (sudo_mode & MODE_SHELL)
 	user_cmnd = "shell";
     else
@@ -244,10 +237,12 @@ main(argc, argv)
 		break;
 	    case MODE_VALIDATE:
 		user_cmnd = "validate";
+		check_cmnd = 0;
 		break;
 	    case MODE_KILL:
 	    case MODE_INVALIDATE:
 		user_cmnd = "kill";
+		check_cmnd = 0;
 		break;
 	    case MODE_LISTDEFS:
 		list_options();
@@ -256,6 +251,7 @@ main(argc, argv)
 	    case MODE_LIST:
 		user_cmnd = "list";
 		printmatches = 1;
+		check_cmnd = 0;
 		break;
 	}
 
@@ -271,16 +267,16 @@ main(argc, argv)
 
     check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
 
+    add_env(!(sudo_mode & MODE_SHELL));	/* add in SUDO_* envariables */
+
+    /* Validate the user but don't search for pseudo-commands. */
+    validated = sudoers_lookup(check_cmnd);
+
+    /* This goes after the sudoers parse since we honor sudoers options. */
     if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE) {
 	remove_timestamp((sudo_mode == MODE_KILL));
 	exit(0);
     }
-
-    add_env(!(sudo_mode & MODE_SHELL));	/* add in SUDO_* envariables */
-
-    /* Validate the user but don't search for pseudo-commands. */
-    validated =
-	sudoers_lookup((sudo_mode != MODE_VALIDATE && sudo_mode != MODE_LIST));
 
     if (validated & VALIDATE_ERROR)
 	log_error(0, "parse error in %s near line %d", _PATH_SUDOERS,
@@ -292,6 +288,10 @@ main(argc, argv)
 	    stderr);
 	exit(1);
     }
+
+    /* May need to set $HOME to target user. */
+    if ((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME))
+	sudo_mode |= MODE_RESET_HOME;
 
     /* Bail if a tty is required and we don't have one.  */
     if (def_flag(I_REQUIRETTY)) {
@@ -416,7 +416,6 @@ init_vars(sudo_mode)
     int sudo_mode;
 {
     char *p, thost[MAXHOSTNAMELEN];
-    struct hostent *hp;
 
     /* Sanity check command from user. */
     if (user_cmnd == NULL && strlen(NewArgv[0]) >= MAXPATHLEN) {
@@ -445,21 +444,16 @@ init_vars(sudo_mode)
 	log_error(USE_ERRNO|MSG_ONLY, "can't get hostname");
     } else
 	user_host = estrdup(thost);
-    if (def_flag(I_FQDN)) {
-	if (!(hp = gethostbyname(user_host))) {
-	    log_error(USE_ERRNO|MSG_ONLY|NO_EXIT,
-		"unable to lookup %s via gethostbyname()", user_host);
+    if (def_flag(I_FQDN))
+	set_fqdn();
+    else {
+	if ((p = strchr(user_host, '.'))) {
+	    *p = '\0';
+	    user_shost = estrdup(user_host);
+	    *p = '.';
 	} else {
-	    free(user_host);
-	    user_host = estrdup(hp->h_name);
+	    user_shost = user_host;
 	}
-    }
-    if ((p = strchr(user_host, '.'))) {
-	*p = '\0';
-	user_shost = estrdup(user_host);
-	*p = '.';
-    } else {
-	user_shost = user_host;
     }
 
     if ((p = ttyname(STDIN_FILENO)) || (p = ttyname(STDOUT_FILENO))) {
@@ -549,12 +543,12 @@ parse_args()
     NewArgv = Argv + 1;
     NewArgc = Argc - 1;
 
-    if (Argc < 2) {			/* no options and no command */
-	if (!def_flag(I_SHELL_NOARGS))
-	    usage(1);
+#ifdef SHELL_IF_NO_ARGS
+    if (NewArgc == 0) {			/* no options and no command */
 	rval |= MODE_SHELL;
 	return(rval);
     }
+#endif
 
     while (NewArgc > 0 && NewArgv[0][0] == '-') {
 	if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0') {
@@ -633,8 +627,9 @@ parse_args()
 		break;
 	    case 's':
 		rval |= MODE_SHELL;
-		if (def_flag(I_SET_HOME))
-		    rval |= MODE_RESET_HOME;
+		if (excl && excl != 's')
+		    usage_excl(1);
+		excl = 's';
 		break;
 	    case 'H':
 		rval |= MODE_RESET_HOME;
@@ -642,8 +637,10 @@ parse_args()
 	    case '-':
 		NewArgc--;
 		NewArgv++;
-		if (def_flag(I_SHELL_NOARGS) && rval == MODE_RUN)
+#ifdef SHELL_IF_NO_ARGS
+		if (rval == MODE_RUN)
 		    rval |= MODE_SHELL;
+#endif
 		return(rval);
 	    case '\0':
 		(void) fprintf(stderr, "%s: '-' requires an argument\n",
@@ -932,7 +929,7 @@ set_perms(perm, sudo_mode)
 					    strerror(errno));
 					exit(1);
 				    }
-
+#ifdef HAVE_INITGROUPS
 				    /*
 				     * Initialize group vector only if are
 				     * going to run as a non-root user.
@@ -945,7 +942,7 @@ set_perms(perm, sudo_mode)
 					    Argv[0], strerror(errno));
 					exit(1);
 				    }
-
+#endif /* HAVE_INITGROUPS */
 				    if (setuid(pw->pw_uid)) {
 					(void) fprintf(stderr,
 					    "%s: cannot set uid to %ld: %s\n",
@@ -1036,6 +1033,35 @@ initial_setup()
 }
 
 /*
+ * Look up the fully qualified domain name and set user_host and user_shost.
+ */
+void
+set_fqdn()
+{
+    struct hostent *hp;
+    char *p;
+
+    if (def_flag(I_FQDN)) {
+	if (!(hp = gethostbyname(user_host))) {
+	    log_error(USE_ERRNO|MSG_ONLY|NO_EXIT,
+		"unable to lookup %s via gethostbyname()", user_host);
+	} else {
+	    free(user_host);
+	    user_host = estrdup(hp->h_name);
+	}
+    }
+    if (user_shost != user_host)
+	free(user_shost);
+    if ((p = strchr(user_host, '.'))) {
+	*p = '\0';
+	user_shost = estrdup(user_host);
+	*p = '.';
+    } else {
+	user_shost = user_host;
+    }
+}
+
+/*
  * Tell which options are mutually exclusive and exit.
  */
 static void
@@ -1043,7 +1069,7 @@ usage_excl(exit_val)
     int exit_val;
 {
     (void) fprintf(stderr,
-	"Only one of the -v, -k, -K, -l, -V and -h options may be used\n");
+	"Only one of the -h, -k, -K, -l, -s, -v or -V options may be used\n");
     usage(exit_val);
 }
 

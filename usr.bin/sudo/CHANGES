@@ -282,7 +282,7 @@ CHANGES from sudo 1.3.1pl4
 95) Worked around a bug in AIX's lex in parse.c.  AIX lex doesn't seem
     to handle {x,y} range notation correctly.  Bleah.
 
-96) Sudo would not report a failed attempt if the user entered <return>
+96) Sudo would not report a failed attempt if the user entered return
     at the 2nd password: prompt so someone trying to guess a password
     could just invoked sudo multiple times and try one passwd at a time.
     Reported by Jonathan Adams <jonathan@smada.com>.
@@ -1184,3 +1184,31 @@ Sudo 1.5.9 released.
      to be character at a time.
 
 372) sudo now turns off core dumps via setrlimit (probably paranoia).
+
+Sudo 1.6 released.
+
+373) Better diagnostics on PAM failure.
+
+374) Killed shell_noargs option, it cannot work since the command needs to
+     be set before sudoers is parsed.
+
+375) Fixed the following Defaults options: set_home, fqdn, syslog, tty_tickets,
+     ticket_dir, insults.
+
+376) When using select() in tgetpass(), do a separate select before
+     each read to be sure we can timeout correctly.
+
+377) SecurID support compiles and works again.
+
+378) Fixed a bug parsing runas modifiers.  If a user spec contained multiple
+     runas specs, the latter ones may not be applied.
+
+379) #uid now works in a RunasAlias
+
+380) Don't ask the user for a password if the user is not allowed to run
+     the command and the authenticate flag (in sudoers) is false.
+
+381) Added configure check for initgroups(3).
+
+382) Use our own fnmatch() if there is no fnmatch.h, even if there is an
+     fnmatch() in libc.

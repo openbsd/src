@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo.h,v 1.163 1999/09/08 08:06:17 millert Exp $
+ * $Sudo: sudo.h,v 1.164 1999/12/02 20:31:24 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -193,6 +193,7 @@ void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
 int lock_file		__P((int, int));
 int touch		__P((char *, time_t));
+void set_fqdn		__P((void));
 YY_DECL;
 
 /* Only provide extern declarations outside of sudo.c. */

@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.291 1999/11/08 22:45:42 millert Exp $
+dnl $Sudo: configure.in,v 1.294 1999/12/09 04:04:45 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -9,7 +9,7 @@ AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-echo "Configuring Sudo version 1.6"
+echo "Configuring Sudo version 1.6.1"
 dnl
 dnl Variables that get substituted in the Makefile
 dnl
@@ -1304,7 +1304,7 @@ dnl Header file checks
 dnl
 AC_HEADER_STDC
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(string.h strings.h unistd.h malloc.h paths.h utime.h fnmatch.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h)
+AC_CHECK_HEADERS(string.h strings.h unistd.h malloc.h paths.h utime.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h)
 dnl ultrix termio/termios are broken
 if test "$OS" != "ultrix"; then
     AC_CHECK_HEADERS(termio.h)
@@ -1333,7 +1333,7 @@ esac
 dnl
 dnl Function checks
 dnl
-AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid ftruncate strftime setrlimit)
+AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid ftruncate strftime setrlimit initgroups)
 if test -n "$SECUREWARE"; then
     AC_CHECK_FUNCS(bigcrypt)
     AC_CHECK_FUNCS(set_auth_parameters)

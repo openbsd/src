@@ -57,7 +57,7 @@
 #include "insults.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.15 1999/10/13 02:34:55 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.17 1999/12/06 06:47:19 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
@@ -224,11 +224,12 @@ pass_warn(fp)
     FILE *fp;
 {
 
-#ifdef USE_INSULTS
-    (void) fprintf(fp, "%s\n", INSULT);
-#else
-    (void) fprintf(fp, "%s\n", def_str(I_BADPASS_MSG));
-#endif /* USE_INSULTS */
+#ifdef INSULT
+    if (def_flag(I_INSULTS))
+	(void) fprintf(fp, "%s\n", INSULT);
+    else
+#endif
+	(void) fprintf(fp, "%s\n", def_str(I_BADPASS_MSG));
 }
 
 void

@@ -62,7 +62,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: securid.c,v 1.5 1999/08/14 15:36:46 millert Exp $";
+static const char rcsid[] = "$Sudo: securid.c,v 1.6 1999/12/02 20:21:31 millert Exp $";
 #endif /* lint */
 
 union config_record configure;
@@ -73,7 +73,9 @@ securid_init(pw, promptp, auth)
     char **promptp;
     sudo_auth *auth;
 {
+    static struct SD_CLIENT sd_dat;		/* SecurID data block */
 
+    auth->data = (VOID *) &sd_dat;		/* For method-specific data */
     creadcfg();					/* Only read config file once */
     return(AUTH_SUCCESS);
 }
@@ -84,10 +86,9 @@ securid_setup(pw, promptp, auth)
     char **promptp;
     sudo_auth *auth;
 {
-    static SD_CLIENT sd_dat;			/* SecurID data block */
+    struct SD_CLIENT *sd = (struct SD_CLIENT *) auth->data;
 
     /* Re-initialize SecurID every time. */
-    auth->data = (VOID *) &sd_dat;
     if (sd_init(sd) == 0)
 	return(AUTH_SUCCESS);
     else {

@@ -53,7 +53,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: defaults.c,v 1.12 1999/11/05 22:11:55 millert Exp $";
+static const char rcsid[] = "$Sudo: defaults.c,v 1.13 1999/12/02 20:31:24 millert Exp $";
 #endif /* lint */
 
 /*
@@ -165,9 +165,6 @@ struct sudo_defs_types sudo_defs_table[] = {
     }, {
 	"log_year", T_FLAG, { 0 },
 	"Log the year in the (non-syslog) log file"
-    }, {
-	"shell_noargs", T_FLAG, { 0 },
-	"If sudo is invoked with no arguments, start a shell"
     }, {
 	"set_home", T_FLAG, { 0 },
 	"Set $HOME to the target user when starting a shell with -s"
@@ -321,8 +318,9 @@ set_default(var, val, op)
     int op;     /* TRUE or FALSE */
 {
     struct sudo_defs_types *cur;
+    int num;
 
-    for (cur = sudo_defs_table; cur->name; cur++) {
+    for (cur = sudo_defs_table, num = 0; cur->name; cur++, num++) {
 	if (strcmp(var, cur->name) == 0)
 	    break;
     }
@@ -425,6 +423,10 @@ set_default(var, val, op)
 		return(FALSE);
 	    }
 	    cur->sd_un.flag = op;
+
+	    /* Special action for I_FQDN.  Move to own switch if we get more */
+	    if (num == I_FQDN && op)
+		set_fqdn();
 	    break;
     }
 
@@ -489,9 +491,6 @@ init_defaults()
 #endif
 #ifdef HOST_IN_LOG
     def_flag(I_LOG_HOST) = TRUE;
-#endif
-#ifdef SHELL_IF_NO_ARGS
-    def_flag(I_SHELL_NOARGS) = TRUE;
 #endif
 #ifdef SHELL_SETS_HOME
     def_flag(I_SET_HOME) = TRUE;
@@ -615,13 +614,19 @@ store_syslogfac(val, def, op)
 	return(FALSE);				/* not found */
 
     /* Store both name and number. */
-    if (def->sd_un.str)
+    if (def->sd_un.str) {
 	free(def->sd_un.str);
+	closelog();
+    }
+    openlog("sudo", 0, fac->num);
     def->sd_un.str = estrdup(fac->name);
     sudo_defs_table[I_LOGFAC].sd_un.ival = fac->num;
 #else
-    if (def->sd_un.str)
+    if (def->sd_un.str) {
 	free(def->sd_un.str);
+	closelog();
+    }
+    openlog("sudo", 0);
     def->sd_un.str = estrdup("default");
 #endif /* LOG_NFACILITIES */
     return(TRUE);
