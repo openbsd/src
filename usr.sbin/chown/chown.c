@@ -1,4 +1,4 @@
-/*	$OpenBSD: chown.c,v 1.10 1997/09/20 12:44:29 deraadt Exp $	*/
+/*	$OpenBSD: chown.c,v 1.11 1999/09/17 14:58:42 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.10 1997/09/20 12:44:29 deraadt Exp $";
+static char *rcsid = "$Id: chown.c,v 1.11 1999/09/17 14:58:42 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -233,7 +233,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-R [-H | -L | -P]] [-f] %s file ...\n",
+	    "usage: %s [-R [-H | -L | -P]] [-f] [-h] %s file ...\n",
 	    __progname, ischown ? "[owner][:group]" : "group");
 	exit(1);
 }
