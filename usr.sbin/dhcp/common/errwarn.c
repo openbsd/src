@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1 1998/08/18 03:43:25 deraadt Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.2 2000/06/29 00:25:42 deraadt Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -71,7 +71,7 @@ void error (ANSI_DECL(char *) fmt, VA_DOTDOTDOT)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, mbuf);
+  syslog (log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
   /* Also log it to stderr? */
@@ -104,7 +104,7 @@ int warn (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, mbuf);
+  syslog (log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -130,7 +130,7 @@ int note (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_INFO, mbuf);
+  syslog (log_priority | LOG_INFO, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -156,7 +156,7 @@ int debug (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_DEBUG, mbuf);
+  syslog (log_priority | LOG_DEBUG, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -231,8 +231,8 @@ int parse_warn (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
 	va_end (list);
 
 #ifndef DEBUG
-	syslog (log_priority | LOG_ERR, mbuf);
-	syslog (log_priority | LOG_ERR, token_line);
+	syslog (log_priority | LOG_ERR, "%s", mbuf);
+	syslog (log_priority | LOG_ERR, "%s", token_line);
 	if (lexline < 81)
 		syslog (log_priority | LOG_ERR,
 			"%s^", &spaces [sizeof spaces - lexchar]);
