@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 1997/05/28 21:38:34 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 1997/06/25 14:43:27 downsj Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -59,6 +59,7 @@
 
 static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
+static __inline u_long sun_extended_sum __P((struct sun_disklabel *));
 
 #define b_cylin		b_resid
 
