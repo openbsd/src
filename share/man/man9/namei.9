@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.9 2004/03/09 18:31:15 tedu Exp $
+.\"	$OpenBSD: namei.9,v 1.10 2004/12/13 23:46:09 pedro Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ is returned locked in
 .Em ndp-\*[Gt]ni_vp ,
 otherwise it is returned unlocked.
 .It Fn relookup "dvp" "vpp" "cnp"
-Reacquire a path name component is a directory.
+Reacquire a path name component in a directory.
 This is a quicker way to lookup a pathname component when the parent
 directory is known.
 The unlocked parent directory vnode is specified by
