@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.3 2004/11/12 12:12:29 deraadt Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.4 2004/11/15 12:50:08 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.3 2004/11/12 12:12:29 deraadt Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.4 2004/11/15 12:50:08 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -46,26 +46,6 @@
 /* #define ATU_NO_RFMD */
 /* #define ATU_NO_RFMD2958 */
 /* #define ATU_NO_RFMD2958_SMC */
-
-
-/* debug flags used in the driver - don't change */
-#define FLAG_COMMANDS           0x00001 /* Atmel USB commands */  
-#define FLAG_BEACONS            0x00002 /* reception of beacons */
-#define FLAG_BEACONSFULL        0x00004 /*   verbose */
-#define FLAG_SIGNAL             0x00008 /* signal strength of packets */
-#define FLAG_TX                 0x00010 /* transmittion of packets */ 
-#define FLAG_RX                 0x00020 /* reception of packets */
-#define FLAG_RXFULL             0x00040 /*   verbose */
-#define FLAG_MGMT               0x00080 /* managment packets */
-#define FLAG_MGMTFULL           0x00100 /*   verbose */
-#define FLAG_STATE              0x00200 /* scan/join/auth/assoc state */
-#define FLAG_INIT               0x00400 /* device initialisation / tear down */
-#define FLAG_FW                 0x00800 /* firmware loader */
-#define FLAG_FWFULL             0x01000 /*   verbose */
-#define FLAG_IOCTL              0x02000 /* ioctls */
-#define FLAG_BPF                0x04000 /* bpf */
-#define FLAG_ALL		0x07fff /* all of the above */
-
 
 #define ATU_CONFIG_NO		1
 #define ATU_IFACE_IDX		0
@@ -304,11 +284,11 @@ enum atu_mgmt_state {
 	STATE_GIVEN_UP
 };
 
-  
+#ifdef ATU_DEBUG  
 u_int8_t	*atu_mgmt_statename[] = {"NONE", "LISTENING", "JOINING",
     "AUTHENTICATING", "ASSOCIATING", "CREATING IBSS", "HAPPY NETWORKING :)",
     "GIVEN UP"};
-
+#endif ATU_DEBUG
 
 struct atu_mgmt {
 	enum atu_mgmt_state	state;

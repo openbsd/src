@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.14 2004/11/15 09:59:17 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.15 2004/11/15 12:50:08 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -97,16 +97,16 @@
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
 
+#ifdef USB_DEBUG
+#define ATU_DEBUG
+#endif
+
 #include <dev/usb/if_atureg.h>
 
 #include <dev/microcode/atmel/atuwi_rfmd_fw.h>
 #include <dev/microcode/atmel/atuwi_rfmd2958_fw.h>
 #include <dev/microcode/atmel/atuwi_rfmd2958-smc_fw.h>
 #include <dev/microcode/atmel/atuwi_intersil_fw.h>
-
-#ifdef USB_DEBUG
-#define ATU_DEBUG
-#endif
 
 #ifdef ATU_DEBUG
 #define DPRINTF(x)	do { if (atudebug) printf x; } while (0)
