@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.6 1999/04/20 20:24:18 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.7 1999/07/12 18:08:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -321,30 +321,25 @@ pdc_call(func, pdc_flag)
 	iodcio_t func;
 	int pdc_flag;
 {
-	register register_t ret, psw;
+	register register_t ret, opsw;
 	va_list va;
-	int args[11], i;
+	int args[10], i;
 
 	va_start(va, pdc_flag);
 	for (i = 0; i < sizeof(args)/sizeof(args[0]); i++)
 		args[i] = va_arg(va, int);
 	va_end(va);
 	
-	if (kernelmapped) {
-		psw = PSW_Q;
-		
-		if (!pdc_flag && args[0] == PDC_PIM)
-			psw |= PSW_M;
-
-		set_psw(psw);
-	}
+	if (kernelmapped)
+		opsw = set_psw(PSW_Q |
+			       ((!pdc_flag && args[0] == PDC_PIM)? PSW_M:0));
 
 	ret = (func)((void *)args[0], args[1], args[2], args[3], args[4],
-		     args[5], args[6], args[7], args[8], args[9], args[10]);
+		     args[5], args[6], args[7], args[8], args[9]);
 
-	if (kernelmapped) {
-		set_psw(KERNEL_PSW);
-	}
+	if (kernelmapped)
+		set_psw(opsw);
 
 	return ret;
 }
+
