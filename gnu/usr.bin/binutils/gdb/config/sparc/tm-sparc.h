@@ -71,6 +71,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
        || function_stab_type == N_STSYM \
        || function_stab_type == N_GSYM))
 
+#ifndef GDB_TARGET_IS_SPARC64
+#define GDB_TARGET_IS_SPARC64 0
+#endif
+
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
 
