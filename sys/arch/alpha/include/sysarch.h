@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.3 2002/04/28 20:55:14 pvalchev Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.4 2003/03/01 00:19:09 miod Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.8 2001/04/26 03:10:46 ross Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #ifndef _ALPHA_SYSARCH_H_
 #define _ALPHA_SYSARCH_H_
 
-#include <machine/bus.h>
 #include <machine/ieeefp.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: divrem.m4,v 1.3 1996/11/13 21:20:09 niklas Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.4 2003/03/01 00:19:08 miod Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.7 1996/10/17 03:08:04 cgd Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ ifelse(OP, `div',
 ifelse(S, `true',
 `
 	/* Check to see if we should negate it. */
-	subqv	zero, RESULT, T_0
+	subq	zero, RESULT, T_0
 	cmovlbs	NEG, T_0, RESULT
 ')
 

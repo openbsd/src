@@ -1,8 +1,8 @@
-/*	$OpenBSD: fpsetmask.c,v 1.3 1996/11/13 21:20:15 niklas Exp $	*/
-/*	$NetBSD: fpsetmask.c,v 1.1 1995/04/29 05:11:01 cgd Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.4 2003/03/01 00:19:08 miod Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.3 2002/01/13 21:45:40 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou
+ * Copyright (c) 1995 Ross Harvey
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
+ *      This product includes software developed by Ross Harvey
  *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -33,16 +33,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: fpsetmask.c,v 1.3 1996/11/13 21:20:15 niklas Exp $";
+static char *rcsid = "$OpenBSD: fpsetmask.c,v 1.4 2003/03/01 00:19:08 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <ieeefp.h>
+#include <machine/sysarch.h>
 
 fp_except
 fpsetmask(mask)
 	fp_except mask;
 {
+	struct alpha_fp_except_args a;
 
-	/* XXX */
-	abort();
+	a.mask = mask;
+	return sysarch(ALPHA_FPSETMASK, &a);
 }
