@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.14 1999/09/30 08:34:25 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.15 1999/09/30 21:45:47 aaron Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -2056,10 +2056,6 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 	snprintf(buf, sizeof buf, "%d", auth_get_fd());
 	child_set_env(&env, &envsize, SSH_AUTHFD_ENV_NAME, buf);
       }
-
-  /* Read environment variable settings from /etc/environment.  (This exists
-     at least on AIX, but could be useful also elsewhere.) */
-  read_environment_file(&env, &envsize, "/etc/environment");
 
   /* Read $HOME/.ssh/environment. */
   snprintf(buf, sizeof buf, "%.200s/.ssh/environment", pw->pw_dir);
