@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.842 2005/03/09 12:12:56 jsg Exp $
+$OpenBSD: pcidevs,v 1.843 2005/03/10 20:47:29 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -204,6 +204,7 @@ vendor	FORTEMEDIA	0x1319	Forte Media
 vendor	SIIG		0x131f	SIIG
 vendor	DTCTECH		0x134a	DTC Tech
 vendor	PCTEL		0x134d	PCTEL
+vendor	CNET		0x1371	CNet
 vendor	LMC		0x1376	LAN Media Corp
 vendor	NETGEAR		0x1385	Netgear
 vendor	MOXA		0x1393	Moxa
@@ -304,14 +305,14 @@ product 3COM 3C940		0x1700	3c940
 product 3COM 3C339		0x3390	3c339
 product 3COM 3C359		0x3590	3c359
 product 3COM 3C450		0x4500	3c450
-product 3COM 3C590		0x5900	3c590 10Mbps
-product 3COM 3C595TX		0x5950	3c595 100Base-TX
-product 3COM 3C595T4		0x5951	3c595 100Base-T4
-product 3COM 3C595MII		0x5952	3c595 10Mbps-MII
 product 3COM 3C555		0x5055	3c555 100Base-TX
 product 3COM 3C575		0x5057	3c575
 product 3COM 3CCFE575BT		0x5157	3CCFE575BT
 product 3COM 3CCFE575CT		0x5257	3CCFE575CT
+product 3COM 3C590		0x5900	3c590 10Mbps
+product 3COM 3C595TX		0x5950	3c595 100Base-TX
+product 3COM 3C595T4		0x5951	3c595 100Base-T4
+product 3COM 3C595MII		0x5952	3c595 10Mbps-MII
 product 3COM 3CRSHPW796		0x6000	3CRSHPW796 802.11b
 product 3COM 3C556		0x6055	3c556 100Base-TX
 product 3COM 3C556B		0x6056	3c556B 100Base-TX
@@ -322,6 +323,7 @@ product 3COM 3CCFEM656C		0x6564	3CCFEM656C
 product 3COM GLOBALMODEM56	0x6565	56k Global Modem
 product 3COM 3CSOHO100TX	0x7646	3cSOHO-TX
 product 3COM 3CRWE777A		0x7770	3crwe777a AirConnect
+product 3COM GIG		0x80eb	Gig
 product 3COM 3C900TPO		0x9000	3c900 10Base-T
 product 3COM 3C900COMBO		0x9001	3c900 10Mbps-Combo
 product 3COM 3C900B		0x9004	3c900B 10Mbps
@@ -924,6 +926,9 @@ product CMDTECH 3512		0x3512	SiI3512 SATA
 /* Fake product id for SiI3112 found on Adaptec 1210SA */
 product CMDTECH AAR_1210SA	0x0240	AAR-1210SA
 
+/* CNet produts */
+product CNET GIGACARD		0x434e	GigaCard
+
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX
 
@@ -1087,6 +1092,7 @@ product DLINK 530TXPLUS		0x1300	530TX+
 product DLINK DFE690TXD		0x1340	DFE-690TXD
 product DLINK DWL610		0x3300	DWL-610
 product DLINK DGE550T		0x4000	DGE-550T
+product DLINK DGE560T		0x4b00	DGE-560T
 product DLINK DGE530T		0x4c00	DGE-530T
 
 /* Distributed Processing Technology products */
@@ -1703,6 +1709,19 @@ product MARTINMARIETTA I740	0x00d1	i740 PCI
 
 /* Marvell products */
 product MARVELL SK_V2		0x4320	SKv2
+product MARVELL YUKON_1		0x4340	Yukon
+product MARVELL YUKON_2		0x4341	Yukon
+product MARVELL YUKON_3		0x4342	Yukon
+product MARVELL YUKON_4		0x4343	Yukon
+product MARVELL YUKON_5		0x4344	Yukon
+product MARVELL YUKON_6		0x4345	Yukon
+product MARVELL YUKON_7		0x4346	Yukon
+product MARVELL YUKON_8		0x4347	Yukon
+product MARVELL YUKON_8035	0x4350	Yukon 8035
+product MARVELL YUKON_8036	0x4351	Yukon 8036
+product MARVELL YUKON_8052	0x4360	Yukon 8052
+product MARVELL YUKON_8050	0x4361	Yukon 8050
+product MARVELL YUKON_8053	0x4362	Yukon 8053
 product MARVELL SK_V2_BELKIN	0x5005	Belkin F5D5005
 
 /* Matrox products */
@@ -2275,6 +2294,8 @@ product SAMSUNG SWL2210P	0xa000	MagicLAN SWL-2210P
 product SCHNEIDERKOCH GE	0x4300	984x GE
 product SCHNEIDERKOCH SK9821v2	0x4320	SK-9821 v2.0
 product SCHNEIDERKOCH SK9D21	0x4400	SK-9D21
+product SCHNEIDERKOCH SK9Sxx	0x9000	SK-9Sxx
+product SCHNEIDERKOCH SK9Exx	0x9300	SK-9Exx
 
 /* SGI products */
 product SGI TIGON		0x0009	Tigon
