@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.9 2001/05/05 00:51:49 angelos Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.10 2001/06/29 18:45:27 ho Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -128,7 +128,8 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
       /* XXX should be random instead I think.  */
       return strdup ("\x12\x34\x56\x78");
     }
-  return KEY_API (get_spi) (sz, proto, src, srclen, dst, dstlen, seq);
+  return KEY_API (get_spi) (sz, proto, src, src->sa_len, dst, dst->sa_len, 
+			    seq);
 }
 
 /* Force communication on socket FD to go in the clear.  */
