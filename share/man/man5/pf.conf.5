@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.22 2001/10/09 13:49:18 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.23 2001/10/11 19:02:19 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -233,6 +233,7 @@ show:
 The rule only applies to TCP packets that have the flags <a> set
 out of set <b>.
 Flags not specified in <b> are ignored.
+Possible flags are F (FIN), S (SYN), R (RST), P (PUSH), A (ACK) and U (URG).
 .Bl -tag -width Fl
 .It Em flags S/S
 Flag SYN is set.
