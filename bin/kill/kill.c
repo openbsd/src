@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.2 1996/06/23 14:20:14 deraadt Exp $	*/
+/*	$OpenBSD: kill.c,v 1.3 1997/02/06 13:29:08 deraadt Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.2 1996/06/23 14:20:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: kill.c,v 1.3 1997/02/06 13:29:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ main(argc, argv)
 				nosig(*argv);
 		} else if (isdigit(**argv)) {
 			numsig = strtol(*argv, &ep, 10);
-			if (!*argv || *ep)
+			if (*ep)
 				errx(1, "illegal signal number: %s", *argv);
 			if (numsig < 0 || numsig >= NSIG)
 				nosig(*argv);
@@ -129,7 +129,7 @@ main(argc, argv)
 
 	for (errors = 0; argc; argc--, argv++) {
 		pid = strtol(*argv, &ep, 10);
-		if (!*argv || *ep) {
+		if (!**argv || *ep) {
 			warnx("illegal process id: %s", *argv);
 			errors = 1;
 		} else if (kill(pid, numsig) == -1) {
