@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 1999/09/27 19:13:21 smurph Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 2000/10/18 21:00:38 mickey Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -122,7 +122,7 @@ dk_establish(dk, dev)
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.

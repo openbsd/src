@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 2000/01/17 07:01:01 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -227,7 +227,7 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines

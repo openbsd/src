@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 2000/01/10 03:55:38 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:36 mickey Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -79,7 +79,7 @@ dk_establish(dk, dev)
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines

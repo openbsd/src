@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2000/10/18 21:00:40 mickey Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ bad:
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
