@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.23 2001/03/03 05:40:01 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.24 2001/03/29 20:02:52 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -187,6 +187,8 @@ mpcpcibrattach(parent, self, aux)
 	int map, node;
 	char *bridge;
 	int of_node = 0;
+	u_int32_t base;
+	u_int32_t size;
 
 	switch(system_type) {
 	case POWER4e:
@@ -341,6 +343,11 @@ mpcpcibrattach(parent, self, aux)
 			char compat[32];
 			u_int32_t addr_offset;
 			u_int32_t data_offset;
+			struct pci_reserve_mem null_reserve = {
+				0,
+				0,
+				0
+			};
 			int i;
 			int len;
 			int rangelen;
@@ -388,6 +395,8 @@ mpcpcibrattach(parent, self, aux)
 
 			{
 				int found;
+				unsigned int base = 0;
+				unsigned int size = 0;
 
 				/* mac configs */
 
@@ -409,6 +418,8 @@ mpcpcibrattach(parent, self, aux)
 				if (prange[found].flags == 0x01000000) {
 					sc->sc_iobus_space.bus_base =
 						prange[found].base;
+					sc->sc_iobus_space.bus_size =
+						prange[found].size;
 				}
 
 				/* the mem space ranges 
@@ -419,12 +430,43 @@ mpcpcibrattach(parent, self, aux)
 				 * and all IO and device memory will be in
 				 * upper 2G of address space, set to
 				 * 0x80000000
+				 * start with segment 1 not 0, 0 is config.
 				 */
-                         
-				sc->sc_membus_space.bus_base = 0x80000000;
-				sc->sc_membus_space.bus_reverse = 1;
+				for (i = 0; i < rangelen ; i++)
+				{
+					if (prange[i].flags == 0x02000000) {
+						/* find last? */
+						printf("\nfound mem %x %x",
+							prange[i].base,
+							prange[i].size);
+							
+						if (base != 0) {
+							if ((base + size) ==
+							    prange[i].base)
+							{
+							    size +=
+								prange[i].size;
+							} else {
+								base =
+								 prange[i].base;
+								size =
+								 prange[i].size;
+							}
+						} else {
+							base = prange[i].base;
+							size = prange[i].size;
+						}
+					}
+				}
+				sc->sc_membus_space.bus_base = base;
+				sc->sc_membus_space.bus_size = size;
 
 			}
+			printf("membase %x size %x iobase %x size %x\n",
+				sc->sc_membus_space.bus_base,
+				sc->sc_membus_space.bus_size,
+				sc->sc_iobus_space.bus_base,
+				sc->sc_iobus_space.bus_size);
 
 			
 			addr_offset = 0;
@@ -487,6 +529,10 @@ mpcpcibrattach(parent, self, aux)
 
 			printf(": %s, Revision 0x%x\n", compat, 
 				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
+
+#if 0
+			pci_addr_fixup(sc, &lcp->lc_pc, 32, &null_reserve);
+#endif
 		}
 		break;
 
@@ -836,7 +882,9 @@ mpc_conf_read(cpv, tag, offset)
 	int daddr = 0;
 
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
+#ifdef DEBUG_CONFIG 
 		printf ("pci_conf_read: bad reg %x\n", offset);
+#endif /* DEBUG_CONFIG */
 		return(~0);
 	}
 
