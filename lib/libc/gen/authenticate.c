@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.3 2001/06/24 21:18:15 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.4 2001/07/02 19:22:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -185,7 +185,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		else {
 			if ((pwd = getpwuid(getuid())) == NULL) {
 				syslog(LOG_ERR, "no such user id %d", getuid());
-				warnx("cannot approve who we don't recognize");
+				_warnx("cannot approve who we don't recognize");
 				return (0);
 			}
 			name = pwd->pw_name;
@@ -198,7 +198,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		if (strlen(name) >= MAXPATHLEN) {
 			syslog(LOG_ERR, "username to login %.*s...",
 			    MAXPATHLEN, name);
-			warnx("username too long");
+			_warnx("username too long");
 			return (0);
 		}
 		if (pwd == NULL && (approve = strchr(name, '.')) != NULL) {
@@ -208,7 +208,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		}
 		lc = login_getclass(pwd ? pwd->pw_class : NULL);
 		if (lc == NULL) {
-			warnx("unable to classify user");
+			_warnx("unable to classify user");
 			return (0);
 		}
 	}
@@ -229,7 +229,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		if (close_lc_on_exit)
 			login_close(lc);
 		syslog(LOG_ERR, "Invalid %s script: %s", s, approve);
-		warnx("invalid path to approval script");
+		_warnx("invalid path to approval script");
 		return (0);
 	}
 
@@ -237,14 +237,14 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		if (close_lc_on_exit)
 			login_close(lc);
 		syslog(LOG_ERR, "%m");
-		warnx(NULL);
+		_warn(NULL);
 		return (0);
 	}
 
 	auth_setstate(as, AUTH_OKAY);
 	if (auth_setitem(as, AUTHV_NAME, name) < 0) {
 		syslog(LOG_ERR, "%m");
-		warnx(NULL);
+		_warn(NULL);
 		goto out;
 	}
 	if (auth_check_expire(as))	/* is this account expired */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.5 2001/06/24 21:18:14 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.6 2001/07/02 19:22:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -319,7 +319,7 @@ auth_setenv(auth_session_t *as)
 				for (; isblank(*line); ++line)
 					;
 				if (*line != '\0' && setenv(name, line, 1))
-					warn("setenv(%s, %s)", name, line);
+					_warn("setenv(%s, %s)", name, line);
 			}
 		} else
 		if (!strncasecmp(line, BI_UNSETENV, sizeof(BI_UNSETENV)-1)) {
@@ -787,13 +787,13 @@ auth_call(auth_session_t *as, char *path, ...)
 
 	if (secure_path(path) < 0) {
 		syslog(LOG_ERR, "%s: path not secure", path);
-		warnx("invalid script: %s", path);
+		_warnx("invalid script: %s", path);
 		goto fail;
 	}
 
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) < 0) {
 		syslog(LOG_ERR, "unable to create backchannel %m");
-		warnx("internal resource failure");
+		_warnx("internal resource failure");
 		goto fail;
 	}
 
@@ -802,7 +802,7 @@ auth_call(auth_session_t *as, char *path, ...)
 		close(pfd[0]);
 		close(pfd[1]);
 		syslog(LOG_ERR, "%s: %m", path);
-		warnx("internal resource failure");
+		_warnx("internal resource failure");
 		goto fail;
 	case 0:
 #define	COMM_FD	3
@@ -834,7 +834,7 @@ auth_call(auth_session_t *as, char *path, ...)
 		close(pfd[0]);
 		if (waitpid(pid, &status, 0) < 0) {
 			syslog(LOG_ERR, "%s: waitpid: %m", path);
-			warnx("internal failure");
+			_warnx("internal failure");
 			goto fail;
 		}
 
