@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.23 2004/11/04 23:04:22 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.24 2004/11/10 11:27:54 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 	struct ntpd_conf	 conf;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 chld_pid = 0, pid;
-	char			*conffile;
+	const char		*conffile;
 	int			 ch, nfds, timeout = INFTIM;
 	int			 pipe_chld[2];
 

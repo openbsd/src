@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2004/11/05 14:28:29 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.23 2004/11/10 11:27:54 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@ static struct ntpd_conf		*conf;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
-char				*infile;
+const char			*infile;
 
 int	 yyerror(const char *, ...);
 int	 yyparse(void);
@@ -399,7 +399,7 @@ yylex(void)
 }
 
 int
-parse_config(char *filename, struct ntpd_conf *xconf)
+parse_config(const char *filename, struct ntpd_conf *xconf)
 {
 	conf = xconf;
 	lineno = 1;
