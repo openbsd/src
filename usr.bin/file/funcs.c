@@ -1,3 +1,4 @@
+/* $OpenBSD: funcs.c,v 1.2 2004/05/19 02:36:26 tedu Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -34,7 +35,7 @@
 #include <ctype.h>
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: funcs.c,v 1.1 2004/05/19 02:32:35 tedu Exp $")
+FILE_RCSID("@(#)$Id: funcs.c,v 1.2 2004/05/19 02:36:26 tedu Exp $")
 #endif	/* lint */
 /*
  * Like printf, only we print to a buffer and advance it.
