@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.33 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.34 2004/08/06 11:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -217,20 +217,21 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_SHOW_NEIGHBOR:
+			c->ibuf.pid = imsg.hdr.pid;
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct bgpd_addr)) {
 				addr = imsg.data;
 				p = getpeerbyaddr(addr);
 				if (p != NULL)
-					imsg_compose(&c->ibuf,
-					    IMSG_CTL_SHOW_NEIGHBOR,
-					    0, p, sizeof(struct peer));
+					imsg_compose_rde(imsg.hdr.type,
+					    imsg.hdr.pid,
+					    p, sizeof(struct peer));
 			} else
 				for (p = peers; p != NULL; p = p->next)
-					imsg_compose(&c->ibuf,
-					    IMSG_CTL_SHOW_NEIGHBOR,
-					    0, p, sizeof(struct peer));
-			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, NULL, 0);
+					imsg_compose_rde(imsg.hdr.type,
+					    imsg.hdr.pid,
+					    p, sizeof(struct peer));
+			imsg_compose_rde(IMSG_CTL_END, imsg.hdr.pid, NULL, 0);
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_FIB_COUPLE:

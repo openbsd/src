@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.60 2004/08/05 21:01:38 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.61 2004/08/06 11:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,6 +150,7 @@ struct peer_stats {
 	u_int64_t		 msg_sent_rrefresh;
 	time_t			 last_updown;
 	time_t			 last_read;
+	u_int32_t		 prefix_cnt;
 };
 
 struct peer_capa {
