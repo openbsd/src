@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.4 1995/12/01 17:57:34 deraadt Exp $ */
+/*	$OpenBSD: flash.c,v 1.5 1996/04/28 11:11:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -59,7 +59,7 @@
 
 struct flashsoftc {
 	struct device		sc_dev;
-	caddr_t			sc_paddr;
+	u_char *			sc_paddr;
 	volatile u_char *	sc_vaddr;
 	u_char			sc_manu;
 	u_char			sc_ii;
@@ -70,9 +70,12 @@ struct flashsoftc {
 void flashattach __P((struct device *, struct device *, void *));
 int  flashmatch __P((struct device *, void *, void *));
 
-struct cfdriver flashcd = {
-	NULL, "flash", flashmatch, flashattach,
-	DV_DULL, sizeof(struct flashsoftc), 0
+struct cfattach flash_ca = {
+	sizeof(struct flashsoftc), flashmatch, flashattach
+};
+
+struct cfdriver flash_cd = {
+	NULL, "flash", DV_DULL, 0
 };
 
 int flashwritebyte __P((struct flashsoftc *sc, int addr, u_char val));
@@ -176,7 +179,7 @@ flashattach(parent, self, args)
 	sc->sc_vaddr[0] = FLCMD_CLEARSTAT;
 	sc->sc_vaddr[0] = FLCMD_RESET;
 
-	unmapiodev(sc->sc_vaddr, NBPG);
+	unmapiodev((void *)sc->sc_vaddr, NBPG);
 	sc->sc_vaddr = mapiodev(sc->sc_paddr, sc->sc_len);
 	if (sc->sc_vaddr == NULL) {
 		sc->sc_len = 0;
@@ -185,25 +188,25 @@ flashattach(parent, self, args)
 	printf("\n");
 }
 
-caddr_t
+u_char *
 flashsavezone(sc, start)
 	struct flashsoftc *sc;
 	int start;
 {
-	caddr_t zone;
+	u_char *zone;
 
 	zone = (u_char *)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
 	if (!zone)
 		return (NULL);
 	sc->sc_vaddr[0] = FLCMD_RESET;
-	bcopy((caddr_t)&sc->sc_vaddr[start], zone, sc->sc_zonesize);
+	bcopy((u_char *)&sc->sc_vaddr[start], zone, sc->sc_zonesize);
 	return (zone);
 }
 
 int
 flashwritezone(sc, zone, start)
 	struct flashsoftc *sc;
-	caddr_t zone;
+	u_char *zone;
 	int start;
 {
 	u_char sr;
@@ -288,8 +291,8 @@ flashopen(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
 {
-	if (minor(dev) >= flashcd.cd_ndevs ||
-	    flashcd.cd_devs[minor(dev)] == NULL)
+	if (minor(dev) >= flash_cd.cd_ndevs ||
+	    flash_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
 	return (0);
 }
@@ -308,12 +311,12 @@ flashclose(dev, flag, mode)
 int
 flashioctl(dev, cmd, data, flag, p)
 	dev_t   dev;
-	caddr_t data;
+	u_char *data;
 	int     cmd, flag;
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct flashsoftc *sc = (struct flashsoftc *) flashcd.cd_devs[unit];
+	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
 	int error = 0;
 	
 	switch (cmd) {
@@ -335,7 +338,7 @@ flashread(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct flashsoftc *sc = (struct flashsoftc *) flashcd.cd_devs[unit];
+	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
 	register vm_offset_t v;
 	register int c;
 	register struct iovec *iov;
@@ -357,7 +360,7 @@ flashread(dev, uio, flags)
 			c = sc->sc_len - v;	/* till end of FLASH */
 		if (c == 0)
 			return (0);
-		error = uiomove((caddr_t)sc->sc_vaddr + v, c, uio);
+		error = uiomove((u_char *)sc->sc_vaddr + v, c, uio);
 	}
 	return (error);
 }
@@ -370,16 +373,16 @@ flashwrite(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct flashsoftc *sc = (struct flashsoftc *) flashcd.cd_devs[unit];
+	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
 	register vm_offset_t v;
 	register int c, i, r;
 	register struct iovec *iov;
 	int error = 0;
-	caddr_t cmpbuf;
+	u_char *cmpbuf;
 	int neederase = 0, needwrite = 0;
 	int zonestart, zoneoff;
 
-	cmpbuf = (caddr_t)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
+	cmpbuf = (u_char *)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
 	if (!cmpbuf)
 		return (ENOMEM);
 
@@ -407,7 +410,7 @@ flashwrite(dev, uio, flags)
 			c = sc->sc_zonesize - zoneoff; /* till end of zone */
 		if (c == 0)
 			return (0);
-		error = uiomove((caddr_t)cmpbuf, c, uio);
+		error = uiomove((u_char *)cmpbuf, c, uio);
 
 		/*
 		 * compare to see if we are going to need a block erase
@@ -443,7 +446,7 @@ flashwrite(dev, uio, flags)
 				goto tryerase;
 			}
 		} else if (neederase) {
-			caddr_t mem;
+			u_char *mem;
 
 tryerase:
 			mem = flashsavezone(sc, zonestart);
@@ -470,7 +473,7 @@ flashmmap(dev, off, prot)
 	int off, prot;
 {
 	int unit = minor(dev);
-	struct flashsoftc *sc = (struct flashsoftc *) flashcd.cd_devs[unit];
+	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
 
 	/* allow access only in RAM */
 	if (off > sc->sc_len)
