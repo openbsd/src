@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.21 2003/05/14 23:35:30 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.22 2003/05/22 07:28:11 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -131,7 +131,9 @@ hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
 hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 hide void lehwreset(struct am7990_softc *);
 hide void lehwinit(struct am7990_softc *);
+#if defined(SUN4M)
 hide void lenocarrier(struct am7990_softc *);
+#endif
 
 hide void
 lewrcsr(sc, port, val)
