@@ -1,12 +1,12 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<!-- $OpenBSD: tz-link.htm,v 1.1 2000/04/16 16:24:04 d Exp $ -->
+<!-- $OpenBSD: tz-link.htm,v 1.2 2000/09/06 23:05:12 millert Exp $ -->
 <HTML>
 <HEAD>
 <TITLE>Sources for Time Zone and Daylight Saving Time Data</TITLE>
 <LINK REL="schema.DC" HREF="http://purl.org/DC/elements/1.1/">
 <META NAME="DC.Creator" CONTENT="Paul Eggert">
 <META NAME="DC.Contributor" CONTENT="Arthur David Olson">
-<META NAME="DC.Date" CONTENT="2000/03/04">
+<META NAME="DC.Date" CONTENT="2000/08/10">
 <META NAME="DC.Description"
  CONTENT="Sources of information about time zones and daylight saving time">
 <META NAME="DC.Identifier" CONTENT="http://www.twinsun.com/tz/tz-link.htm">
@@ -16,7 +16,7 @@
 <BODY>
 <H1>Sources for Time Zone and Daylight Saving Time Data</H1>
 <ADDRESS>
-@(#)tz-link.htm	7.25
+@(#)tz-link.htm	7.27
 </ADDRESS>
 <P>
 Please send corrections to this web page to the
@@ -37,6 +37,9 @@ the code is in the file <samp>tzcode<var>C</var>.tar.gz</samp>,
 where <samp><var>C</var></samp> is the code's version;
 similarly, the data are in <samp>tzdata<var>D</var>.tar.gz</samp>,
 where <samp><var>D</var></samp> is the data's version.
+The code lets you compile the text data into time zone files, one for
+each location.  It also lets you read a compiled time zone file and
+interpret time stamps for that location.
 <P>
 The data are by no means authoritative. If you find errors, please
 send changes to the <A HREF="mailto:tz@elsie.nci.nih.gov">time zone
@@ -46,12 +49,6 @@ mailing list, or retrieve the <A
 HREF="ftp://elsie.nci.nih.gov/pub/tzarchive.gz">archive of old
 messages</A> (in <A HREF="http://www.gzip.org/">gzip</A> compressed
 format).
-<P>
-The <A HREF="http://www.gnu.org/software/libc/">GNU C Library</A>
-has an independent, thread-safe implementation of
-a time zone file reader that is compatible with <samp>tz</samp>.
-This library is freely available under the GNU Library General Public License,
-and is widely used in GNU/Linux systems.
 <P>
 The Web has several other sources for time zone and daylight saving time data.
 Here are some recent links that may be of interest.
@@ -70,9 +67,24 @@ is a fancier web interface.
 is an even fancier interface.
 <LI><A HREF="http://www.burbs.com/fcgi-bin/tzconvert.fcgi">Burbs time
 zone converter</A> is a multilingual interface.
+<LI><A HREF="http://www.holidayfestival.com/">The Worldwide Holiday
+&amp; Festival Site</A> lists DST-related clock changes along with holidays.
 <LI><A HREF="http://www.timeanddate.com/worldclock/">The World Clock</A>
 is a web interface to a time zone database derived from
 <samp>tz</samp>'s.
+</UL>
+<H2>Other time zone file readers</H2>
+<UL>
+<LI>The <A HREF="http://www.gnu.org/software/libc/">GNU C Library</A>
+has an independent, thread-safe implementation of
+a time zone file reader that is compatible with <samp>tz</samp>.
+This library is freely available under the
+<A HREF="http://www.gnu.org/copyleft/lesser.html">
+GNU Lesser General Public License (LGPL)</A>,
+and is widely used in GNU/Linux systems.
+<LI><A HREF="http://www.bmsi.com/java/#TZ">ZoneInfo.java</A>
+is a time zone file reader written in Java.
+It is freely available under the GNU LGPL.
 </UL>
 <H2>Other <SAMP>tz</SAMP>-based time zone conversion software</H2>
 <UL>
@@ -86,9 +98,10 @@ Microsoft Windows 95/98/NT4 program.
 <H2>Other time zone databases</H2>
 <UL>
 <LI><A HREF="http://www.astro.ch/atlas/">Astrology / Astrologie -&gt;
-Astrodienst Atlas Database</A> is Astrodienst's Web version of <A
-HREF="http://astrocom.com/books/xrefa.htm#SHANKS">Shanks's
-excellent time zone history atlases</A> published by <A
+Astrodienst Atlas Database</A> is Astrodienst's Web version of Shanks's
+excellent time zone history atlases published in both <A
+HREF="http://astrocom.com/software/ACS_PC_Atlas.htm">computer</A> and <A
+HREF="http://astrocom.com/books/xrefa.htm#SHANKS">book</A> form by <A
 HREF="http://astrocom.com/">Astro Communications Services</A>.
 <LI><A HREF="http://worldtime.com/">WORLDTIME: interactive atlas,
 time info, public holidays</A>
@@ -175,6 +188,14 @@ briefly explains interplanetary space flight timekeeping.
 of IERS</A> contains official publications of the
 International Earth Rotation Service, the committee that decides
 when leap seconds occur.
+<LI>The <A
+HREF="http://clockdev.usno.navy.mil/archives/leapsecs.html">Leap
+Second Discussion List</A> covers <A
+HREF="http://www.gisdevelopment.net/reference/scie/s_t_41_50.htm#47">McCarthy
+and Klepczynski's proposal to remove leap seconds</A>, currently
+being studied by a <A
+HREF="http://www.intec.rug.ac.be/Research/Projects/ursi/Commissions.html">URSI
+Commission J</A> working group.
 </UL>
 <H2>Time notation</H2>
 <UL>

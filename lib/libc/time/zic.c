@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zic.c	7.100";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.14 2000/08/05 20:53:38 deraadt Exp $";
+static char elsieid[] = "@(#)zic.c	7.101";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.15 2000/09/06 23:05:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.12 2000/04/16 16:24:04 d Exp $	*/
+/*	$OpenBSD: private.h,v 1.13 2000/09/06 23:05:11 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -33,7 +33,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.49";
+static char	privatehid[] = "@(#)private.h	7.51";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -51,12 +51,16 @@ static char	privatehid[] = "@(#)private.h	7.49";
 #define HAVE_GETTEXT		0
 #endif /* !defined HAVE_GETTEXT */
 
+#ifndef HAVE_INCOMPATIBLE_CTIME_R
+#define HAVE_INCOMPATIBLE_CTIME_R	0
+#endif /* !defined INCOMPATIBLE_CTIME_R */
+
 #ifndef HAVE_SETTIMEOFDAY
 #define HAVE_SETTIMEOFDAY	3
 #endif /* !defined HAVE_SETTIMEOFDAY */
 
 #ifndef HAVE_STRERROR
-#define HAVE_STRERROR		0
+#define HAVE_STRERROR		1
 #endif /* !defined HAVE_STRERROR */
 
 #ifndef HAVE_SYMLINK
@@ -80,6 +84,11 @@ static char	privatehid[] = "@(#)private.h	7.49";
 #define LOCALE_HOME		"/usr/share/locale"
 #endif /* !defined LOCALE_HOME */
 #endif
+
+#if HAVE_INCOMPATIBLE_CTIME_R
+#define asctime_r _incompatible_asctime_r
+#define ctime_r _incompatible_ctime_r
+#endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 /*
 ** Nested includes
@@ -293,6 +302,13 @@ char *	scheck P((const char *string, const char *format));
 #ifndef TZ_DOMAIN
 #define TZ_DOMAIN "tz"
 #endif /* !defined TZ_DOMAIN */
+
+#if HAVE_INCOMPATIBLE_CTIME_R
+#undef asctime_r
+#undef ctime_r
+char *asctime_r P((struct tm const *, char *));
+char *ctime_r P((time_t const *, char *));
+#endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
 /*
 ** UNIX was a registered trademark of UNIX System Laboratories in 1993.

@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)strftime.c	7.58";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.6 2000/04/16 16:24:04 d Exp $";
+static char elsieid[] = "@(#)strftime.c	7.62";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.7 2000/09/06 23:05:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -236,19 +236,20 @@ label:
 			case 'E':
 			case 'O':
 				/*
-				** POSIX locale extensions, a la
-				** Arnold Robbins' strftime version 3.0.
+				** C99 locale modifiers.
 				** The sequences
-				**	%Ec %EC %Ex %Ey %EY
+				**	%Ec %EC %Ex %EX %Ey %EY
 				**	%Od %oe %OH %OI %Om %OM
 				**	%OS %Ou %OU %OV %Ow %OW %Oy
 				** are supposed to provide alternate
 				** representations.
-				** (ado, 1993-05-24)
 				*/
 				goto label;
 			case 'e':
 				pt = _conv(t->tm_mday, "%2d", pt, ptlim);
+				continue;
+			case 'F':
+				pt = _fmt("%Y-%m-%d", t, pt, ptlim, warnp);
 				continue;
 			case 'H':
 				pt = _conv(t->tm_hour, "%02d", pt, ptlim);
@@ -492,10 +493,66 @@ label:
 					pt = _add(t->TM_ZONE, pt, ptlim);
 				else
 #endif /* defined TM_ZONE */
-				if (t->tm_isdst == 0 || t->tm_isdst == 1) {
-					pt = _add(tzname[t->tm_isdst],
+				if (t->tm_isdst >= 0)
+					pt = _add(tzname[t->tm_isdst != 0],
 						pt, ptlim);
-				} else  pt = _add("?", pt, ptlim);
+				/*
+				** C99 says that %Z must be replaced by the
+				** empty string if the time zone is not
+				** determinable.
+				*/
+				continue;
+			case 'z':
+				{
+				int		diff;
+				char const *	sign;
+
+				if (t->tm_isdst < 0)
+					continue;
+#ifdef TM_GMTOFF
+				diff = t->TM_GMTOFF;
+#else /* !defined TM_GMTOFF */
+				/*
+				** C99 says that the UTC offset must
+				** be computed by looking only at
+				** tm_isdst.  This requirement is
+				** incorrect, since it means the code
+				** must rely on magic (in this case
+				** altzone and timezone), and the
+				** magic might not have the correct
+				** offset.  Doing things correctly is
+				** tricky and requires disobeying C99;
+				** see GNU C strftime for details.
+				** For now, punt and conform to the
+				** standard, even though it's incorrect.
+				**
+				** C99 says that %z must be replaced by the
+				** empty string if the time zone is not
+				** determinable, so output nothing if the
+				** appropriate variables are not available.
+				*/
+				if (t->tm_isdst == 0)
+#ifdef USG_COMPAT
+					diff = -timezone;
+#else /* defined USG_COMPAT */
+					continue;
+#endif /* !defined USG_COMPAT */
+				else
+#ifdef ALTZONE
+					diff = -altzone;
+#else /* !defined ALTZONE */
+					continue;
+#endif /* !defined ALTZONE */
+#endif /* !defined TM_GMTOFF */
+				if (diff < 0) {
+					sign = "-";
+					diff = -diff;
+				} else	sign = "+";
+				pt = _add(sign, pt, ptlim);
+				diff /= 60;
+				pt = _conv((diff/60)*100 + diff%60,
+					"%04d", pt, ptlim);
+				}
 				continue;
 			case '+':
 				pt = _fmt(Locale->date_fmt, t, pt, ptlim,
@@ -503,10 +560,10 @@ label:
 				continue;
 			case '%':
 			/*
-			 * X311J/88-090 (4.12.3.5): if conversion char is
-			 * undefined, behavior is undefined.  Print out the
-			 * character itself as printf(3) also does.
-			 */
+			** X311J/88-090 (4.12.3.5): if conversion char is
+			** undefined, behavior is undefined.  Print out the
+			** character itself as printf(3) also does.
+			*/
 			default:
 				break;
 			}
