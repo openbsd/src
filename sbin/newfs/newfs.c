@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.10 1997/01/15 23:41:31 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.11 1997/01/16 05:48:02 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.10 1997/01/15 23:41:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.11 1997/01/16 05:48:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ main(argc, argv)
 
 		if (fstype == NULL)
 			fstype = readlabelfs(special, 0);
-		if (fstype == NULL || strcmp(fstype, "ffs")) {
+		if (fstype != NULL && strcmp(fstype, "ffs")) {
 			snprintf(name, sizeof name, "newfs_%s", fstype);
 			saveargv[0] = name;
 			snprintf(execname, sizeof execname, "%s/newfs_%s",
