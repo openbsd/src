@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.19 2002/06/08 03:35:48 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.20 2002/06/08 18:19:34 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.19 2002/06/08 03:35:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.20 2002/06/08 18:19:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -256,7 +256,7 @@ getq(namelist)
 	PRIV_END;
 	if (dirp == NULL)
 		return(-1);
-	if (fstat(dirp->dd_fd, &stbuf) < 0)
+	if (fstat(dirfd(dirp), &stbuf) < 0)
 		goto errdone;
 
 	/*
