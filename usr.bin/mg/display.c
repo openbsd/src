@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.7 2002/01/18 08:37:08 art Exp $	*/
+/*	$OpenBSD: display.c,v 1.8 2002/02/14 00:11:46 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -291,6 +291,8 @@ vtputc(c)
 {
 	VIDEO	*vp;
 
+	c &= 0xff;
+	
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
@@ -320,8 +322,9 @@ vtpute(c)
 {
 	VIDEO *vp;
 
+	c &= 0xff;
+	
 	vp = vscreen[vtrow];
-
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
 	else if (c == '\t'
@@ -331,8 +334,7 @@ vtpute(c)
 		) {
 		do {
 			vtpute(' ');
-		}
-		while (((vtcol + lbound) & 0x07) != 0 && vtcol < ncol);
+		} while (((vtcol + lbound) & 0x07) != 0 && vtcol < ncol);
 	} else if (ISCTRL(c) != FALSE) {
 		vtpute('^');
 		vtpute(CCHR(c));
@@ -392,72 +394,82 @@ update()
 		}
 	}
 	hflag = FALSE;			/* Not hard.		 */
-	wp = wheadp;
-	while (wp != NULL) {
-		if (wp->w_flag != 0) {	/* Need update.		 */
-			if ((wp->w_flag & WFFORCE) == 0) {
-				lp = wp->w_linep;
-				for (i = 0; i < wp->w_ntrows; ++i) {
-					if (lp == wp->w_dotp)
-						goto out;
-					if (lp == wp->w_bufp->b_linep)
-						break;
-					lp = lforw(lp);
-				}
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
+		/*
+		 * Nothing to be done.
+		 */
+		if (wp->w_flag == 0)
+			continue;
+		
+		if ((wp->w_flag & WFFORCE) == 0) {
+			lp = wp->w_linep;
+			for (i = 0; i < wp->w_ntrows; ++i) {
+				if (lp == wp->w_dotp)
+					goto out;
+				if (lp == wp->w_bufp->b_linep)
+					break;
+				lp = lforw(lp);
 			}
-			i = wp->w_force;	/* Reframe this one.	 */
-			if (i > 0) {
-				--i;
-				if (i >= wp->w_ntrows)
-					i = wp->w_ntrows - 1;
-			} else if (i < 0) {
-				i += wp->w_ntrows;
-				if (i < 0)
-					i = 0;
-			} else
-				i = wp->w_ntrows / 2;
-			lp = wp->w_dotp;
-			while (i != 0 && lback(lp) != wp->w_bufp->b_linep) {
-				--i;
-				lp = lback(lp);
-			}
-			wp->w_linep = lp;
-			wp->w_flag |= WFHARD;	/* Force full.		 */
+		}
+		/*
+		 * Put the middle-line in place.
+		 */
+		i = wp->w_force;
+		if (i > 0) {
+			--i;
+			if (i >= wp->w_ntrows)
+				i = wp->w_ntrows - 1;
+		} else if (i < 0) {
+			i += wp->w_ntrows;
+			if (i < 0)
+				i = 0;
+		} else
+			i = wp->w_ntrows / 2; /* current center,
+					       * no change */
+		
+		/*
+		 * Find the line
+		 */
+		lp = wp->w_dotp;
+		while (i != 0 && lback(lp) != wp->w_bufp->b_linep) {
+			--i;
+			lp = lback(lp);
+		}
+		wp->w_linep = lp;
+		wp->w_flag |= WFHARD;	/* Force full.		 */
 	out:
-			lp = wp->w_linep;	/* Try reduced update.	 */
-			i = wp->w_toprow;
-			if ((wp->w_flag & ~WFMODE) == WFEDIT) {
-				while (lp != wp->w_dotp) {
-					++i;
-					lp = lforw(lp);
-				}
+		lp = wp->w_linep;	/* Try reduced update.	 */
+		i = wp->w_toprow;
+		if ((wp->w_flag & ~WFMODE) == WFEDIT) {
+			while (lp != wp->w_dotp) {
+				++i;
+				lp = lforw(lp);
+			}
+			vscreen[i]->v_color = CTEXT;
+			vscreen[i]->v_flag |= (VFCHG | VFHBAD);
+			vtmove(i, 0);
+			for (j = 0; j < llength(lp); ++j)
+				vtputc(lgetc(lp, j));
+			vteeol();
+		} else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0) {
+			hflag = TRUE;
+			while (i < wp->w_toprow + wp->w_ntrows) {
 				vscreen[i]->v_color = CTEXT;
 				vscreen[i]->v_flag |= (VFCHG | VFHBAD);
 				vtmove(i, 0);
-				for (j = 0; j < llength(lp); ++j)
-					vtputc(lgetc(lp, j));
-				vteeol();
-			} else if ((wp->w_flag & (WFEDIT | WFHARD)) != 0) {
-				hflag = TRUE;
-				while (i < wp->w_toprow + wp->w_ntrows) {
-					vscreen[i]->v_color = CTEXT;
-					vscreen[i]->v_flag |= (VFCHG | VFHBAD);
-					vtmove(i, 0);
-					if (lp != wp->w_bufp->b_linep) {
-						for (j = 0; j < llength(lp); ++j)
-							vtputc(lgetc(lp, j));
-						lp = lforw(lp);
-					}
-					vteeol();
-					++i;
+				if (lp != wp->w_bufp->b_linep) {
+					for (j = 0; j < llength(lp); ++j)
+						vtputc(lgetc(lp, j));
+					lp = lforw(lp);
 				}
+				vteeol();
+				++i;
 			}
-			if ((wp->w_flag & WFMODE) != 0)
-				modeline(wp);
-			wp->w_flag = 0;
-			wp->w_force = 0;
 		}
-		wp = wp->w_wndp;
+		if ((wp->w_flag & WFMODE) != 0)
+			modeline(wp);
+		wp->w_flag = 0;
+		wp->w_force = 0;
 	}
 	lp = curwp->w_linep;	/* Cursor location.	 */
 	currow = curwp->w_toprow;
