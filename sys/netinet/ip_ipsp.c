@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.83 2000/04/19 03:37:35 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.84 2000/06/01 04:02:32 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -2019,4 +2019,354 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
     /* Not reached */
     return EINVAL;
+}
+
+/*
+ * Lookup at the SPD based on the headers contained on the mbuf. The second
+ * argument indicates what protocol family the header at the beginning of
+ * the mbuf is. hlen is the the offset of the transport protocol header
+ * in the mbuf.
+ *
+ * Return combinations (of return value and in *error):
+ * - NULL/0 -> no IPsec required on packet
+ * - NULL/-EINVAL -> silently drop the packet
+ * - NULL/errno -> drop packet and return error
+ * or a valid TDB value.
+ */
+struct tdb *
+ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
+{
+    struct sockaddr_encap *ddst, *gw;
+    struct route_enc re0, *re = &re0;
+    union sockaddr_union sunion;
+    struct tdb *tdb, tdb2;
+
+    /*
+     * If there are no flows in place, there's no point
+     * continuing with the SPD lookup.
+     */
+    if (!ipsec_in_use)
+    {
+	*error = 0;
+	return NULL;
+    }
+
+    bzero((caddr_t) re, sizeof(*re));
+    ddst = (struct sockaddr_encap *) &re->re_dst;
+    ddst->sen_family = PF_KEY;
+
+    /*
+     * Do an SPD lookup -- this code should probably be moved
+     * to a separate function.
+     */
+    switch (af)
+    {
+#ifdef INET
+	case AF_INET:
+	    ddst->sen_len = SENT_IP4_LEN;
+	    ddst->sen_type = SENT_IP4;
+	    m_copydata(m, offsetof(struct ip, ip_src),
+		       sizeof(struct in_addr), (caddr_t) &(ddst->sen_ip_src));
+	    m_copydata(m, offsetof(struct ip, ip_dst),
+		       sizeof(struct in_addr), (caddr_t) &(ddst->sen_ip_dst));
+	    m_copydata(m, offsetof(struct ip, ip_p), sizeof(u_int8_t),
+		       (caddr_t) &(ddst->sen_proto));
+
+	    /* If TCP/UDP, extract the port numbers to use in the lookup */
+	    switch (ddst->sen_proto)
+	    {
+		case IPPROTO_UDP:
+		case IPPROTO_TCP:
+		    /*
+		     * Luckily, the offset of the src/dst ports in both the UDP
+		     * and TCP headers is the same (first two 16-bit values
+		     * in the respective headers), so we can just copy them.
+		     */
+		    m_copydata(m, hlen, sizeof(u_int16_t),
+			       (caddr_t) &(ddst->sen_sport));
+		    m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			       (caddr_t) &(ddst->sen_dport));
+		    break;
+
+		default:
+		    ddst->sen_sport = 0;
+		    ddst->sen_dport = 0;
+	    }
+
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    ddst->sen_len = SENT_IP6_LEN;
+	    ddst->sen_type = SENT_IP6;
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		       sizeof(struct in6_addr),
+		       (caddr_t) &(ddst->sen_ip6_src));
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
+		       sizeof(struct in6_addr),
+		       (caddr_t) &(ddst->sen_ip6_dst));
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_nxt), sizeof(u_int8_t),
+		       (caddr_t) &(ddst->sen_ip6_proto));
+
+	    /* If TCP/UDP, extract the port numbers to use in the lookup */
+	    switch (ddst->sen_ip6_proto)
+	    {
+		case IPPROTO_UDP:
+		case IPPROTO_TCP:
+		    /*
+		     * Luckily, the offset of the src/dst ports in both the UDP
+		     * and TCP headers is the same (first two 16-bit values
+		     * in the respective headers), so we can just copy them.
+		     */
+		    m_copydata(m, hlen, sizeof(u_int16_t),
+			       (caddr_t) &(ddst->sen_ip6_sport));
+		    m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			       (caddr_t) &(ddst->sen_ip6_dport));
+		    break;
+
+		default:
+		    ddst->sen_ip6_sport = 0;
+		    ddst->sen_ip6_dport = 0;
+	    }
+
+	    break;
+#endif /* INET6 */
+
+	default:
+	    *error = EAFNOSUPPORT;
+	    return NULL;
+    }
+
+    /* Actual SPD lookup */
+    rtalloc((struct route *) re);
+    if (re->re_rt == NULL)
+    {
+	*error = 0;
+	return NULL; /* Nothing found */
+    }
+
+    bzero(&sunion, sizeof(sunion));
+    gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
+
+    /* Sanity check */
+    if (gw == NULL || ((gw->sen_type != SENT_IPSP) &&
+		       (gw->sen_type != SENT_IPSP6)))
+    {
+	DPRINTF(("ipsp_spd_lookup(): no gw, or gw data not IPSP (%d)\n",
+		 gw->sen_type));
+
+	if (re->re_rt)
+	  RTFREE(re->re_rt);
+	*error = EHOSTUNREACH;
+	return NULL;
+    }
+
+    /*
+     * There might be a specific route, that tells us to avoid
+     * doing IPsec; this is useful for specific routes that we
+     * don't want to have IPsec applied on, like the key
+     * management ports.
+     */
+    switch (gw->sen_type)
+    {
+#ifdef INET
+	case SENT_IPSP:
+	    if ((gw->sen_ipsp_sproto == 0) && (gw->sen_ipsp_spi == 0) &&
+		(gw->sen_ipsp_dst.s_addr == 0))
+	    {
+		*error = 0;
+		return NULL;
+	    }
+
+	    sunion.sin.sin_family = AF_INET;
+	    sunion.sin.sin_len = sizeof(struct sockaddr_in);
+	    sunion.sin.sin_addr = gw->sen_ipsp_dst;
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case SENT_IPSP6:
+	    if ((gw->sen_ipsp6_sproto == 0) && (gw->sen_ipsp6_spi == 0) &&
+		IN6_IS_ADDR_UNSPECIFIED(&gw->sen_ipsp6_dst))
+	    {
+		*error = 0;
+		return NULL;
+	    }
+
+	    sunion.sin6.sin6_family = AF_INET6;
+	    sunion.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	    sunion.sin6.sin6_addr = gw->sen_ipsp6_dst;
+	    break;
+#endif /* INET6 */
+
+	default:
+	    *error = EAFNOSUPPORT;
+	    return NULL;
+    }
+
+    /*
+     * At this point we have an IPSP "gateway" (tunnel) spec.
+     * Use the destination of the tunnel and the SPI to
+     * look up the necessary Tunnel Control Block. Look it up,
+     * and then pass it, along with the packet and the gw,
+     * to the appropriate transformation.
+     */
+    tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
+				gw->sen_ipsp_sproto);
+
+    /* Bypass the SA acquisition if that is what we want. */
+    if (tdb && tdb->tdb_satype == SADB_X_SATYPE_BYPASS)
+    {
+	*error = 0;
+	return NULL;
+    }
+
+    /* 
+     * For VPNs, a route with a reserved SPI is used to
+     * indicate the need for an SA when none is established.
+     */
+    if (((ntohl(gw->sen_ipsp_spi) == SPI_LOCAL_USE) &&
+	 (gw->sen_type == SENT_IPSP)) ||
+	((ntohl(gw->sen_ipsp6_spi) == SPI_LOCAL_USE) &&
+	 (gw->sen_type == SENT_IPSP6)))
+    {
+	if (tdb == NULL)
+	{
+	    /* We will just use system defaults. */
+	    tdb = &tdb2;
+	    bzero(&tdb2, sizeof(tdb2));
+
+	    /* Default entry is for ESP */
+	    tdb2.tdb_satype = SADB_SATYPE_ESP;
+	}
+
+	/* Check whether Perfect Forward Secrect is required */
+	if (ipsec_require_pfs)
+	  tdb->tdb_flags |= TDBF_PFS;
+	else
+	  tdb->tdb_flags &= ~TDBF_PFS;
+
+	/* Initialize expirations */
+	if (ipsec_soft_allocations > 0) 
+	  tdb->tdb_soft_allocations = ipsec_soft_allocations;
+	else
+	  tdb->tdb_soft_allocations = 0;
+
+	if (ipsec_exp_allocations > 0)
+	  tdb->tdb_exp_allocations = ipsec_exp_allocations;
+	else
+	  tdb->tdb_exp_allocations = 0;
+
+	if (ipsec_soft_bytes > 0)
+	  tdb->tdb_soft_bytes = ipsec_soft_bytes;
+	else
+	  tdb->tdb_soft_bytes = 0;
+
+	if (ipsec_exp_bytes > 0)
+	  tdb->tdb_exp_bytes = ipsec_exp_bytes;
+	else
+	  tdb->tdb_exp_bytes = 0;
+
+	if (ipsec_soft_timeout > 0)
+	  tdb->tdb_soft_timeout = ipsec_soft_timeout;
+	else
+	  tdb->tdb_soft_timeout = 0;
+
+	if (ipsec_exp_timeout > 0)
+	  tdb->tdb_exp_timeout = ipsec_exp_timeout;
+	else
+	  tdb->tdb_exp_timeout = 0;
+
+	if (ipsec_soft_first_use > 0)
+	  tdb->tdb_soft_first_use = ipsec_soft_first_use;
+	else
+	  tdb->tdb_soft_first_use = 0;
+
+	if (ipsec_exp_first_use > 0)
+	  tdb->tdb_exp_first_use = ipsec_exp_first_use;
+	else
+	  tdb->tdb_exp_first_use = 0;
+
+	/* 
+	 * If we don't have an existing desired encryption
+	 * algorithm, use the default.
+	 */
+	if ((tdb->tdb_encalgxform == NULL) &&
+	    (tdb->tdb_satype & NOTIFY_SATYPE_CONF))
+	{
+	    if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
+	      tdb->tdb_encalgxform = &enc_xform_des;
+	    else
+	      if (!strncasecmp(ipsec_def_enc, "3des",
+			       sizeof("3des")))
+		tdb->tdb_encalgxform = &enc_xform_3des;
+	      else
+		if (!strncasecmp(ipsec_def_enc, "blowfish",
+				 sizeof("blowfish")))
+		  tdb->tdb_encalgxform = &enc_xform_blf;
+		else
+		  if (!strncasecmp(ipsec_def_enc, "cast128",
+				   sizeof("cast128")))
+		    tdb->tdb_encalgxform = &enc_xform_cast5;
+		  else
+		    if (!strncasecmp(ipsec_def_enc, "skipjack",
+				     sizeof("skipjack")))
+		      tdb->tdb_encalgxform = &enc_xform_skipjack;
+	}
+
+	/*
+	 * If we don't have an existing desired authentication
+	 * algorithm, use the default.
+	 */
+	if ((tdb->tdb_authalgxform == NULL) && 
+	    (tdb->tdb_satype & NOTIFY_SATYPE_AUTH))
+	{
+	    if (!strncasecmp(ipsec_def_auth, "hmac-md5",
+			     sizeof("hmac-md5")))
+	      tdb->tdb_authalgxform = &auth_hash_hmac_md5_96;
+	    else
+	      if (!strncasecmp(ipsec_def_auth, "hmac-sha1",
+			       sizeof("hmac-sha1")))
+		tdb->tdb_authalgxform = &auth_hash_hmac_sha1_96;
+	      else
+		if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
+				 sizeof("hmac_ripemd160")))
+		  tdb->tdb_authalgxform = &auth_hash_hmac_ripemd_160_96;
+	}
+
+	/* XXX Initialize src_id/dst_id */
+
+	/* PF_KEYv2 notification message */
+	if ((*error = pfkeyv2_acquire(tdb, 0)) != 0)
+	  return NULL;
+
+	*error = -EINVAL; /* Hack alert... */
+	return NULL;
+    }
+
+    /* Couldn't find the TDB */
+    if (tdb == NULL)
+    {
+#ifdef INET
+	if (gw->sen_type == SENT_IPSP)
+	  DPRINTF(("ipsp_spd_lookup(): non-existant TDB for SA %s/%08x/%u\n",
+		   inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi),
+		   gw->sen_ipsp_sproto));
+#endif /* INET */
+
+#ifdef INET6
+	if (gw->sen_type == SENT_IPSP6)
+	  DPRINTF(("ipsp_spd_lookup(): non-existant TDB for SA %s/%08x/%u\n",
+		   inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi),
+		   gw->sen_ipsp6_sproto));
+#endif /* INET6 */	  
+
+	*error = EHOSTUNREACH;
+	return NULL;
+    }
+
+    /* Done, IPsec processing necessary */
+    *error = 0;
+    return tdb;
 }
