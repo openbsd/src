@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.13 2003/06/11 06:22:15 deraadt Exp $	*/
+/*	$OpenBSD: trace.c,v 1.14 2003/07/03 02:47:03 avsm Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.13 2003/06/11 06:22:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.14 2003/07/03 02:47:03 avsm Exp $";
 #endif
 
 #define	RIPCMDS
@@ -55,7 +55,7 @@ u_int	tracelevel, new_tracelevel;
 FILE	*ftrace = stdout;		/* output trace file */
 static char *tracelevel_pat = "%s\n";
 
-char savetracename[MAXPATHLEN+1];
+char savetracename[MAXPATHLEN];
 
 static void trace_dump(void);
 
@@ -242,7 +242,7 @@ trace_on(char *filename, int trusted)
 	tmsg("switch to trace file %s\n", filename);
 	trace_close();
 	if (filename != savetracename)
-		strncpy(savetracename, filename, sizeof(savetracename)-1);
+		strlcpy(savetracename, filename, sizeof(savetracename));
 	ftrace = n_ftrace;
 
 	fflush(stdout);
