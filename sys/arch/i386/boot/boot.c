@@ -297,7 +297,7 @@ getbootdev(howto)
 {
 	static char namebuf[100]; /* don't allocate on stack! */
 	char c, *ptr = namebuf;
-	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] :- ",
+	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] : ",
 	    devs[maj], unit, 'a'+part, name);
 #ifdef CHECKSUM
 	cflag = 0;
