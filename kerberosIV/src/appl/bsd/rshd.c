@@ -42,7 +42,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: rshd.c,v 1.60.2.1 2000/06/23 02:40:54 assar Exp $");
+RCSID("$KTH: rshd.c,v 1.60.2.3 2000/10/18 20:39:12 assar Exp $");
 
 extern char *__rcmd_errstr; /* syslog hook from libc/net/rcmd.c. */
 extern int __check_rhosts_file;
@@ -435,6 +435,11 @@ doit(struct sockaddr_in *fromp)
 	    close(2);
 	    close(pv[1]);
 
+	    if (s >= FD_SETSIZE || pv[0] >= FD_SETSIZE) {
+		error ("fd too large\n");
+		exit (1);
+	    }
+
 	    FD_ZERO(&readfrom);
 	    FD_SET(s, &readfrom);
 	    FD_SET(pv[0], &readfrom);
@@ -443,6 +448,11 @@ doit(struct sockaddr_in *fromp)
 	    else
 		nfd = s;
 	    if (doencrypt) {
+		if (pv2[1] >= FD_SETSIZE || pv1[0] >= FD_SETSIZE) {
+		    error ("fd too large\n");
+		    exit (1);
+		}
+
 		FD_ZERO(&writeto);
 		FD_SET(pv2[1], &writeto);
 		FD_SET(pv1[0], &readfrom);

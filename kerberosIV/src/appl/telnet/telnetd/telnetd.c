@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$KTH: telnetd.c,v 1.58 1999/11/13 06:31:04 assar Exp $");
+RCSID("$KTH: telnetd.c,v 1.58.2.1 2000/10/10 13:12:08 assar Exp $");
 
 #ifdef _SC_CRAY_SECURE_SYS
 #include <sys/sysv.h>
@@ -1008,6 +1008,11 @@ my_telnet(int f, int p, char *host, int level, char *autoname)
 	FD_ZERO(&ibits);
 	FD_ZERO(&obits);
 	FD_ZERO(&xbits);
+
+	if (f >= FD_SETSIZE
+	    || p >= FD_SETSIZE)
+	    fatal(net, "fd too large");
+
 	/*
 	 * Never look for input if there's still
 	 * stuff in the corresponding output buffer

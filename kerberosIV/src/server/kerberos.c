@@ -9,7 +9,13 @@
 #include "config.h"
 #include "protos.h"
 
-RCSID("$KTH: kerberos.c,v 1.87.2.1 2000/06/23 03:14:04 assar Exp $");
+RCSID("$KTH: kerberos.c,v 1.87.2.3 2000/10/18 20:24:13 assar Exp $");
+
+/*
+ * If support for really large numbers of network interfaces is
+ * desired, define FD_SETSIZE to some suitable value.
+ */
+#define FD_SETSIZE (4*1024)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -560,8 +566,8 @@ mksocket(struct descr *d, struct in_addr addr, int type,
     if ((sock = socket(AF_INET, type, 0)) < 0)
 	err (1, "socket");
     if (sock >= FD_SETSIZE) {
-	errno = EMFILE;
-        errx(1, "aborting: too many descriptors");
+        errno = EMFILE;
+	errx(1, "Aborting: too many descriptors");
     }
 #if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
@@ -976,13 +982,24 @@ read_socket(struct descr *n)
     }
 }
 
+static fd_set readfds;
+
 static void
-loop(struct descr *fds, int nfds)
+loop(struct descr *fds, int base_nfds)
 {
+    int nfds = base_nfds;
+    int max_tcp = min(FD_SETSIZE, getdtablesize()) - fds[base_nfds - 1].s;
+    if (max_tcp <= 10) {
+        errno = EMFILE;
+ 	errx(1, "Aborting: too many descriptors");
+    }
+    max_tcp -= 10;		/* We need a few extra for DB, logs, etc. */
+    if (max_tcp > 100) max_tcp = 100; /* Keep to some sane limit. */
+
     for (;;) {
 	int ret;
-        fd_set readfds;
 	struct timeval tv;
+	int next_timeout = 10;	/* In seconds */
 	int maxfd = 0;
 	struct descr *n, *minfree;
 	int accepted; /* accept at most one socket per `round' */
@@ -1005,12 +1022,15 @@ loop(struct descr *fds, int nfds)
 	    }
 	    FD_SET(n->s, &readfds);
 	    maxfd = max(maxfd, n->s);
+	    next_timeout = min(next_timeout, tv.tv_sec - n->timeout);
 	}
 	/* add more space for sockets */
-	if(minfree == NULL){
+	if (minfree == NULL && nfds < base_nfds + max_tcp) {
 	    int i = nfds;
 	    struct descr *new;
 	    nfds *=2;
+	    if (nfds > base_nfds + max_tcp)
+	        nfds = base_nfds + max_tcp;
 	    new = realloc(fds, sizeof(struct descr) * nfds);
 	    if(new){
 		fds = new;
@@ -1018,7 +1038,27 @@ loop(struct descr *fds, int nfds)
 		for(; i < nfds; i++) fds[i].s = -1;
 	    }
 	}
-	ret = select(maxfd + 1, &readfds, 0, 0, 0);
+	if (minfree == NULL) {
+	    /*
+	     * We are possibly the subject of a DOS attack, pick a TCP
+	     * connection at random and drop it.
+	     */
+	    int r = rand() % (nfds - base_nfds);
+	    r = r + base_nfds;
+	    FD_CLR(fds[r].s, &readfds);
+	    close(fds[r].s);
+	    fds[r].s = -1;
+	    minfree = &fds[r];
+	}
+	if (next_timeout < 0) next_timeout = 0;
+	tv.tv_sec = next_timeout;
+	tv.tv_usec = 0;
+	ret = select(maxfd + 1, &readfds, 0, 0, &tv);
+	if (ret < 0) {
+	    if (errno != EINTR)
+	        klog(L_KRB_PERR, "select: %s", strerror(errno));
+	  continue;
+	}
 	accepted = 0;
 	for (n = fds; n < fds + nfds; n++){
 	    if(n->s < 0) continue;
@@ -1031,7 +1071,6 @@ loop(struct descr *fds, int nfds)
 		    accepted = 1;
 		    s = accept(n->s, NULL, 0);
 		    if (minfree == NULL || s >= FD_SETSIZE) {
-			kerb_err_reply(s, NULL, KFAILURE, "Out of memory");
 			close(s);
 		    }else{
 			minfree->s = s;
