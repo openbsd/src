@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.23 2001/06/25 08:39:48 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.24 2001/06/25 08:42:08 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -97,7 +97,7 @@ struct pool		pf_state_pl;
  * Prototypes
  */
 
-signed char	 tree_key_compare(struct tree_key *, struct tree_key *);
+int		 tree_key_compare(struct tree_key *, struct tree_key *);
 void		 tree_rotate_left(struct tree_node **);
 void		 tree_rotate_right(struct tree_node **);
 int		 tree_insert(struct tree_node **, struct tree_key *,
@@ -143,7 +143,7 @@ void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, int,
 		    struct ip *, int *);
 int		 pf_test(int, struct ifnet *, struct mbuf **);
 
-signed char
+int
 tree_key_compare(struct tree_key *a, struct tree_key *b)
 {
 	/*
@@ -250,7 +250,7 @@ int
 tree_remove(struct tree_node **p, struct tree_key *key)
 {
 	int deltaH = 0;
-	signed char c;
+	int c;
 
 	if (*p == NULL)
 		return (0);
