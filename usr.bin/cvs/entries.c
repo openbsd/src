@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.7 2004/07/27 13:12:10 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.8 2004/07/30 17:37:13 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -60,27 +60,35 @@ cvs_ent_open(const char *dir, int flags)
 	size_t len;
 	char entpath[MAXPATHLEN], ebuf[128], mode[4];
 	FILE *fp;
+	struct stat st;
 	struct cvs_ent *ent;
 	CVSENTRIES *ep;
 
 	memset(mode, 0, sizeof(mode));
+
+	snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
+
 	switch (flags & O_ACCMODE) {
+	case O_WRONLY:
 	case O_RDWR:
+		/* we have to use append otherwise the file gets truncated */
+		mode[0] = 'w';
 		mode[1] = '+';
-		/* fallthrough */
+		break;
 	case O_RDONLY:
 		mode[0] = 'r';
 		break;
-	case O_WRONLY:
-		mode[0] = 'a';
-		break;
 	}
 
-	snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
+	/* we can use 'r' if the file already exists */
+	if (stat(entpath, &st) == 0)
+		mode[0] = 'r';
+
+
 	fp = fopen(entpath, mode);
 	if (fp == NULL) {
-		cvs_log(LP_ERRNO, "cannot open CVS/Entries for reading",
-		    entpath);
+		cvs_log(LP_ERRNO, "cannot open %s for %s", entpath,
+		    mode[1] == '+' ? "writing" : "reading");
 		return (NULL);
 	}
 
@@ -103,6 +111,8 @@ cvs_ent_open(const char *dir, int flags)
 	ep->cef_cur = NULL;
 	TAILQ_INIT(&(ep->cef_ent));
 
+	rewind(fp);
+
 	while (fgets(ebuf, sizeof(ebuf), fp) != NULL) {
 		len = strlen(ebuf);
 		if ((len > 0) && (ebuf[len - 1] == '\n'))
@@ -117,11 +127,14 @@ cvs_ent_open(const char *dir, int flags)
 	}
 
 	/* only keep a pointer to the open file if we're in writing mode */
-	if ((flags & O_WRONLY) || (flags & O_RDWR))
+	if ((flags & O_WRONLY) || (flags & O_RDWR)) {
+		ep->cef_flags |= CVS_ENTF_WR;
 		ep->cef_file = fp;
+	}
 	else
 		(void)fclose(fp);
 
+	ep->cef_flags |= CVS_ENTF_SYNC;
 	return (ep);
 }
 
@@ -137,6 +150,12 @@ void
 cvs_ent_close(CVSENTRIES *ep)
 {
 	struct cvs_ent *ent;
+
+	if ((ep->cef_flags & CVS_ENTF_WR) &&
+	    !(ep->cef_flags & CVS_ENTF_SYNC)) {
+		/* implicit sync with disk */
+		(void)cvs_ent_write(ep);
+	}
 
 	if (ep->cef_file != NULL)
 		(void)fclose(ep->cef_file);
@@ -156,16 +175,16 @@ cvs_ent_close(CVSENTRIES *ep)
 /*
  * cvs_ent_add()
  *
- * Add the entry <ent> to the Entries file <ef>.
+ * Add the entry <ent> to the Entries file <ef>.  The disk contents are not
+ * modified until a call to cvs_ent_write() is performed.  This is done
+ * implicitly on a call to cvs_ent_close() on an Entries file that has been
+ * opened for writing.
  * Returns 0 on success, or -1 on failure.
  */
 
 int
 cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 {
-	void *tmp;
-	char nbuf[64];
-
 	if (ef->cef_file == NULL) {
 		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
 		return (-1);
@@ -174,15 +193,10 @@ cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 	if (cvs_ent_get(ef, ent->ce_name) != NULL)
 		return (-1);
 
-	if (fseek(ef->cef_file, (long)0, SEEK_END) == -1) {
-		cvs_log(LP_ERRNO, "failed to seek to end of CVS/Entries file");
-		return (-1);
-	}
-	rcsnum_tostr(ent->ce_rev, nbuf, sizeof(nbuf));
-	fprintf(ef->cef_file, "/%s/%s/%s/%s/\n", ent->ce_name, nbuf,
-	    ent->ce_timestamp, ent->ce_opts);
-
 	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
+
+	ef->cef_flags &= ~CVS_ENTF_SYNC;
+
 	return (0);
 }
 
@@ -196,7 +210,6 @@ cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 int
 cvs_ent_addln(CVSENTRIES *ef, const char *line)
 {
-	void *tmp;
 	struct cvs_ent *ent;
 
 	if (ef->cef_file == NULL) {
@@ -212,6 +225,8 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
 		return (-1);
 
 	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
+	ef->cef_flags &= ~CVS_ENTF_SYNC;
+
 	return (0);
 }
 
@@ -227,7 +242,6 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
 struct cvs_ent*
 cvs_ent_get(CVSENTRIES *ef, const char *file)
 {
-	u_int i;
 	struct cvs_ent *ep;
 
 	TAILQ_FOREACH(ep, &(ef->cef_ent), ce_list)
@@ -381,4 +395,43 @@ cvs_ent_getent(const char *path)
 
 	cvs_ent_close(entf);
 	return (ep);
+}
+
+
+/*
+ * cvs_ent_write()
+ *
+ * Explicitly write the contents of the Entries file <ef> to disk.
+ * Returns 0 on success, or -1 on failure.
+ */
+
+int
+cvs_ent_write(CVSENTRIES *ef)
+{
+	char revbuf[64];
+	struct cvs_ent *ent;
+
+	if (ef->cef_file == NULL)
+		return (-1);
+
+	if (ef->cef_flags & CVS_ENTF_SYNC)
+		return (0);
+
+	/* reposition ourself at beginning of file */
+	rewind(ef->cef_file);
+	TAILQ_FOREACH(ent, &(ef->cef_ent), ce_list) {
+		if (ent->ce_type == CVS_ENT_DIR)
+			putc('D', ef->cef_file);
+
+		rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
+		fprintf(ef->cef_file, "/%s/%s/%s/%s/%s\n", ent->ce_name,
+		    revbuf, ent->ce_timestamp, "", "");
+	}
+
+	/* terminating line */
+	fprintf(ef->cef_file, "D\n");
+
+	ef->cef_flags |= CVS_ENTF_SYNC;
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.16 2004/07/30 01:49:22 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.17 2004/07/30 17:37:13 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -140,59 +140,6 @@ struct cvsroot {
 };
 
 
-#define CF_STAT     0x01    /* allocate space for file stats */
-#define CF_IGNORE   0x02    /* apply regular ignore rules */
-#define CF_RECURSE  0x04    /* recurse on directory operations */
-#define CF_SORT     0x08    /* all files are sorted alphabetically */
-#define CF_KNOWN    0x10    /* only recurse in directories known to CVS */
-#define CF_CREATE   0x20    /* create if file does not exist */
-
-
-/*
- * The cvs_file structure is used to represent any file or directory within
- * the CVS tree's hierarchy.  The <cf_path> field is a path relative to the
- * directory in which the cvs command was executed.  The <cf_parent> field
- * points back to the parent node in the directory tree structure (it is
- * NULL if the directory is at the wd of the command).
- *
- * The <cf_cvstat> field gives the file's status with regards to the CVS
- * repository.  The file can be in any one of the CVS_FST_* states.
- * If the file's type is DT_DIR, then the <cf_ddat> pointer will point to
- * a cvs_dir structure containing data specific to the directory (such as
- * the contents of the directory's CVS/Entries, CVS/Root, etc.).
- */
-
-#define CVS_FST_UNKNOWN   0
-#define CVS_FST_UPTODATE  1
-#define CVS_FST_MODIFIED  2
-#define CVS_FST_ADDED     3
-#define CVS_FST_REMOVED   4
-#define CVS_FST_CONFLICT  5
-#define CVS_FST_PATCHED   6
-
-
-TAILQ_HEAD(cvs_flist, cvs_file);
-
-
-typedef struct cvs_file {
-	char            *cf_path;
-	struct cvs_file *cf_parent;  /* parent directory (NULL if none) */
-	char            *cf_name;
-	u_int16_t        cf_cvstat;  /* cvs status of the file */
-	u_int16_t        cf_type;    /* uses values from dirent.h */
-	struct stat     *cf_stat;    /* only available with CF_STAT flag */
-	struct cvs_dir  *cf_ddat;    /* only for directories */
-
-	TAILQ_ENTRY(cvs_file)  cf_list;
-} CVSFILE;
-
-
-struct cvs_dir {
-	struct cvsroot  *cd_root;
-	char            *cd_repo;
-	struct cvs_flist cd_files;
-};
-
 #define CVS_HIST_ADDED    'A'
 #define CVS_HIST_EXPORT   'E'
 #define CVS_HIST_RELEASE  'F'
@@ -205,6 +152,9 @@ struct cvs_dir {
 #define CVS_ENT_NONE    0
 #define CVS_ENT_FILE    1
 #define CVS_ENT_DIR     2
+
+#define CVS_ENTF_SYNC   0x01    /* contents of disk and memory match */
+#define CVS_ENTF_WR     0x02    /* file is opened for writing too */
 
 
 struct cvs_ent {
@@ -222,6 +172,7 @@ struct cvs_ent {
 typedef struct cvs_entries {
 	char    *cef_path;
 	FILE    *cef_file;
+	u_int    cef_flags;
 
 	TAILQ_HEAD(, cvs_ent) cef_ent;
 	struct cvs_ent       *cef_cur;
@@ -278,33 +229,10 @@ int  cvs_update   (int, char **);
 int  cvs_version  (int, char **);
 
 
-/* from client.c */
-int     cvs_client_connect     (struct cvsroot *);
-void    cvs_client_disconnect  (struct cvsroot *);
-int     cvs_client_sendreq     (u_int, const char *, int);
-int     cvs_client_sendarg     (const char *, int);
-int     cvs_client_sendln      (const char *);
-int     cvs_client_sendraw     (const void *, size_t);
-ssize_t cvs_client_recvraw     (void *, size_t);
-int     cvs_client_getln       (char *, size_t);
-int     cvs_client_senddir     (const char *);
-
-
 /* from root.c */
 struct cvsroot*  cvsroot_parse (const char *);
 void             cvsroot_free  (struct cvsroot *);
 struct cvsroot*  cvsroot_get   (const char *);
-
-
-/* from file.c */
-int      cvs_file_init    (void);
-int      cvs_file_ignore  (const char *);
-int      cvs_file_chkign  (const char *);
-CVSFILE* cvs_file_create  (const char *, u_int, mode_t);
-CVSFILE* cvs_file_get     (const char *, int);
-CVSFILE* cvs_file_getspec (char **, int, int);
-void     cvs_file_free    (struct cvs_file *);
-int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
 
 
 /* Entries API */
@@ -314,6 +242,7 @@ struct cvs_ent*  cvs_ent_next   (CVSENTRIES *);
 int              cvs_ent_add    (CVSENTRIES *, struct cvs_ent *);
 int              cvs_ent_addln  (CVSENTRIES *, const char *);
 int              cvs_ent_remove (CVSENTRIES *, const char *);
+int              cvs_ent_write  (CVSENTRIES *);
 struct cvs_ent*  cvs_ent_parse  (const char *);
 void             cvs_ent_close  (CVSENTRIES *);
 void             cvs_ent_free   (struct cvs_ent *);
