@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.15 1999/07/09 13:35:48 aaron Exp $
+.\"	$OpenBSD: ddb.4,v 1.16 1999/09/05 16:20:15 espie Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -586,6 +586,9 @@ Prints a list of all the breakpoints that have been set with the
 .Ic break
 command.
 .\" --------------------
+.It Ic show extents
+Prints a detailed list of all extents.
+.\" --------------------
 .It Xo
 .Ic show map
 .Op Cm /f
@@ -785,7 +788,8 @@ It may be followed by a ':' and  modifiers as described above.
 .Sh SEE ALSO
 .Xr gdb 1 ,
 .Xr nm 1 ,
-.Xr hangman 6
+.Xr hangman 6 ,
+.Xr extent 9
 .Sh HISTORY
 This kernel facility first appeared in MACH 2 operating system
 developed by CMU.
