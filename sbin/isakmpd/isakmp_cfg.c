@@ -408,7 +408,7 @@ cfg_initiator_recv_ATTR (struct message *msg)
     case ISAKMP_CFG_ACK:
       if (ie->cfg_type != ISAKMP_CFG_SET)
 	{
-	  log_print ("cfg_initiator_recv_ATTR: backup packet type ACK");
+	  log_print ("cfg_initiator_recv_ATTR: bad packet type ACK");
 	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 	  return -1;
 	}
@@ -476,6 +476,7 @@ cfg_initiator_recv_ATTR (struct message *msg)
       break;
     }
 
+  attrp->flags |= PL_MARK;
   return 0;
 }
 
@@ -772,11 +773,11 @@ cfg_encode_attributes (struct isakmp_cfg_attr_head *attrs, u_int32_t type,
   struct sockaddr *sa;
   sa_family_t family;
   u_int32_t value;
-  u_int16_t attrlen, off;
+  u_int16_t off;
   char *field;
 
   /* Compute length */
-  attrlen = ISAKMP_ATTRIBUTE_SZ;
+  *len = ISAKMP_ATTRIBUTE_SZ;
   for (attr = LIST_FIRST (attrs); attr; attr = LIST_NEXT (attr, link))
     {
       /* With ACK we only include the attrs we've actually used.  */
@@ -823,15 +824,15 @@ cfg_encode_attributes (struct isakmp_cfg_attr_head *attrs, u_int32_t type,
 	  attr->ignore++;
 	  /* XXX Log!  */
 	}
-      attrlen += ISAKMP_ATTR_SZ + attr->length;
+      *len += ISAKMP_ATTR_SZ + attr->length;
     }
 
   /* Allocate enough space for the payload */
-  *attrp = calloc (1, attrlen);
+  *attrp = calloc (1, *len);
   if (!*attrp)
     {
       log_error ("cfg_encode_attributes: calloc (1, %lu) failed",
-		 (unsigned long)attrlen);
+		 (unsigned long)*len);
       return -1;
     }
 
