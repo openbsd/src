@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.82 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.83 2004/02/05 22:56:10 millert Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -738,6 +738,7 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 		    0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
 			printf("kernel mapping failed %d\n", r);
+			uao_detach(e->e_sigobject);
 			return (ENOMEM);
 		}
 		memcpy((void *)va, e->e_sigcode, sz);
@@ -751,6 +752,7 @@ exec_sigcode_map(struct proc *p, struct emul *e)
 	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) {
 		printf("user mapping failed\n");
+		uao_detach(e->e_sigobject);
 		return (ENOMEM);
 	}
 
