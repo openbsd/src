@@ -51,7 +51,6 @@ static char rcsid[] = "$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $";
 #include <sys/mtio.h>
 #include <sys/param.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -97,34 +96,34 @@ static void cpio_usage __P((void));
 
 FSUB fsub[] = {
 /* 0: OLD BINARY CPIO */
-	"bcpio", 5120, sizeof(HD_BCPIO), 1, 0, 0, 1, bcpio_id, cpio_strd,
+	{"bcpio", 5120, sizeof(HD_BCPIO), 1, 0, 0, 1, bcpio_id, cpio_strd,
 	bcpio_rd, bcpio_endrd, cpio_stwr, bcpio_wr, cpio_endwr, cpio_trail,
-	rd_wrfile, wr_rdfile, bad_opt,
+	rd_wrfile, wr_rdfile, bad_opt},
 
 /* 1: OLD OCTAL CHARACTER CPIO */
-	"cpio", 5120, sizeof(HD_CPIO), 1, 0, 0, 1, cpio_id, cpio_strd,
+	{"cpio", 5120, sizeof(HD_CPIO), 1, 0, 0, 1, cpio_id, cpio_strd,
 	cpio_rd, cpio_endrd, cpio_stwr, cpio_wr, cpio_endwr, cpio_trail,
-	rd_wrfile, wr_rdfile, bad_opt,
+	rd_wrfile, wr_rdfile, bad_opt},
 
 /* 2: SVR4 HEX CPIO */
-	"sv4cpio", 5120, sizeof(HD_VCPIO), 1, 0, 0, 1, vcpio_id, cpio_strd,
+	{"sv4cpio", 5120, sizeof(HD_VCPIO), 1, 0, 0, 1, vcpio_id, cpio_strd,
 	vcpio_rd, vcpio_endrd, cpio_stwr, vcpio_wr, cpio_endwr, cpio_trail,
-	rd_wrfile, wr_rdfile, bad_opt,
+	rd_wrfile, wr_rdfile, bad_opt},
 
 /* 3: SVR4 HEX CPIO WITH CRC */
-	"sv4crc", 5120, sizeof(HD_VCPIO), 1, 0, 0, 1, crc_id, crc_strd,
+	{"sv4crc", 5120, sizeof(HD_VCPIO), 1, 0, 0, 1, crc_id, crc_strd,
 	vcpio_rd, vcpio_endrd, crc_stwr, vcpio_wr, cpio_endwr, cpio_trail,
-	rd_wrfile, wr_rdfile, bad_opt,
+	rd_wrfile, wr_rdfile, bad_opt},
 
 /* 4: OLD TAR */
-	"tar", 10240, BLKMULT, 0, 1, BLKMULT, 0, tar_id, no_op,
+	{"tar", 10240, BLKMULT, 0, 1, BLKMULT, 0, tar_id, no_op,
 	tar_rd, tar_endrd, no_op, tar_wr, tar_endwr, tar_trail,
-	rd_wrfile, wr_rdfile, tar_opt,
+	rd_wrfile, wr_rdfile, tar_opt},
 
 /* 5: POSIX USTAR */
-	"ustar", 10240, BLKMULT, 0, 1, BLKMULT, 0, ustar_id, ustar_strd,
+	{"ustar", 10240, BLKMULT, 0, 1, BLKMULT, 0, ustar_id, ustar_strd,
 	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
-	rd_wrfile, wr_rdfile, bad_opt,
+	rd_wrfile, wr_rdfile, bad_opt},
 };
 #define F_TAR	4	/* format when called as tar */
 #define DEFLT	5	/* default write format from list above */
@@ -217,7 +216,7 @@ pax_options(argc, argv)
 			 */
 			flg |= BF;
 			if ((wrblksz = (int)str_offt(optarg)) <= 0) {
-				warn(1, "Invalid block size %s", optarg);
+				paxwarn(1, "Invalid block size %s", optarg);
 				pax_usage();
 			}
 			break;
@@ -319,7 +318,7 @@ pax_options(argc, argv)
 					pmode = 1;
 					break;
 				default:
-					warn(1, "Invalid -p string: %c", *pt);
+					paxwarn(1, "Invalid -p string: %c", *pt);
 					pax_usage();
 					break;
 				}
@@ -374,12 +373,12 @@ pax_options(argc, argv)
 			 * specify an archive format on write
 			 */
 			tmp.name = optarg;
-			if (frmt = (FSUB *)bsearch((void *)&tmp, (void *)fsub,
-			    sizeof(fsub)/sizeof(FSUB), sizeof(FSUB), c_frmt)) {
+			if ((frmt = (FSUB *)bsearch((void *)&tmp, (void *)fsub,
+			    sizeof(fsub)/sizeof(FSUB), sizeof(FSUB), c_frmt)) != NULL) {
 				flg |= XF;
 				break;
 			}
-			warn(1, "Unknown -x format: %s", optarg);
+			paxwarn(1, "Unknown -x format: %s", optarg);
 			(void)fputs("pax: Known -x formats are:", stderr);
 			for (i = 0; i < (sizeof(fsub)/sizeof(FSUB)); ++i)
 				(void)fprintf(stderr, " %s", fsub[i].name);
@@ -399,11 +398,11 @@ pax_options(argc, argv)
 			 * single archive volume.
 			 */
 			if ((wrlimit = str_offt(optarg)) <= 0) {
-				warn(1, "Invalid write limit %s", optarg);
+				paxwarn(1, "Invalid write limit %s", optarg);
 				pax_usage();
 			}
 			if (wrlimit % BLKMULT) {
-				warn(1, "Write limit is not a %d byte multiple",
+				paxwarn(1, "Write limit is not a %d byte multiple",
 				    BLKMULT);
 				pax_usage();
 			}
@@ -427,7 +426,7 @@ pax_options(argc, argv)
 			if (strcmp(NONE, optarg) == 0)
 				maxflt = -1;
 			else if ((maxflt = atoi(optarg)) < 0) {
-				warn(1, "Error count value must be positive");
+				paxwarn(1, "Error count value must be positive");
 				pax_usage();
 			}
 			break;
@@ -562,7 +561,7 @@ pax_options(argc, argv)
 		break;
 	case COPY:
 		if (optind >= argc) {
-			warn(0, "Destination directory was not supplied");
+			paxwarn(0, "Destination directory was not supplied");
 			pax_usage();
 		}
 		--argc;
@@ -612,7 +611,7 @@ tar_options(argc, argv)
 			 * specify blocksize
 			 */
 			if ((wrblksz = (int)str_offt(optarg)) <= 0) {
-				warn(1, "Invalid block size %s", optarg);
+				paxwarn(1, "Invalid block size %s", optarg);
 				tar_usage();
 			}
 			break;
@@ -836,7 +835,7 @@ printflg(flg)
 	int pos = 0;
 
 	(void)fprintf(stderr,"%s: Invalid combination of options:", argv0);
-	while (nxt = ffs(flg)) {
+	while ((nxt = ffs(flg)) != 0) {
 		flg = flg >> nxt;
 		pos += nxt;
 		(void)fprintf(stderr, " -%c", flgch[pos-1]);
@@ -907,7 +906,7 @@ bad_opt()
 	/*
 	 * print all we were given
 	 */
-	warn(1,"These format options are not supported");
+	paxwarn(1,"These format options are not supported");
 	while ((opt = opt_next()) != NULL)
 		(void)fprintf(stderr, "\t%s = %s\n", opt->name, opt->value);
 	pax_usage();
@@ -938,7 +937,7 @@ opt_add(str)
 	register char *endpt;
 
 	if ((str == NULL) || (*str == '\0')) {
-		warn(0, "Invalid option name");
+		paxwarn(0, "Invalid option name");
 		return(-1);
 	}
 	frpt = endpt = str;
@@ -952,11 +951,11 @@ opt_add(str)
 		if ((endpt = strchr(frpt, ',')) != NULL)
 			*endpt = '\0';
 		if ((pt = strchr(frpt, '=')) == NULL) {
-			warn(0, "Invalid options format");
+			paxwarn(0, "Invalid options format");
 			return(-1);
 		}
 		if ((opt = (OPLIST *)malloc(sizeof(OPLIST))) == NULL) {
-			warn(0, "Unable to allocate space for option list");
+			paxwarn(0, "Unable to allocate space for option list");
 			return(-1);
 		}
 		*pt++ = '\0';

@@ -52,7 +52,6 @@ static char rcsid[] = "$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $";
 #include <pwd.h>
 #include <grp.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -134,7 +133,7 @@ usr_add(str)
 		return(-1);
 	if ((usrtb == NULL) &&
  	    ((usrtb = (USRT **)calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
-                warn(1, "Unable to allocate memory for user selection table");
+                paxwarn(1, "Unable to allocate memory for user selection table");
                 return(-1);
 	}
 
@@ -148,7 +147,7 @@ usr_add(str)
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
 		if ((pw = getpwnam(str)) == NULL) {
-                	warn(1, "Unable to find uid for user: %s", str);
+                	paxwarn(1, "Unable to find uid for user: %s", str);
                 	return(-1);
 		}
 		uid = (uid_t)pw->pw_uid;
@@ -181,7 +180,7 @@ usr_add(str)
 		usrtb[indx] = pt;
 		return(0);
 	}
-        warn(1, "User selection table out of memory");
+        paxwarn(1, "User selection table out of memory");
         return(-1);
 }
 
@@ -247,7 +246,7 @@ grp_add(str)
 		return(-1);
 	if ((grptb == NULL) &&
  	    ((grptb = (GRPT **)calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
-                warn(1, "Unable to allocate memory fo group selection table");
+                paxwarn(1, "Unable to allocate memory fo group selection table");
                 return(-1);
 	}
 
@@ -261,7 +260,7 @@ grp_add(str)
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
 		if ((gr = getgrnam(str)) == NULL) {
-                	warn(1,"Cannot determine gid for group name: %s", str);
+                	paxwarn(1,"Cannot determine gid for group name: %s", str);
                 	return(-1);
 		}
 		gid = (gid_t)gr->gr_gid;
@@ -294,7 +293,7 @@ grp_add(str)
 		grptb[indx] = pt;
 		return(0);
 	}
-        warn(1, "Group selection table out of memory");
+        paxwarn(1, "Group selection table out of memory");
         return(-1);
 }
 
@@ -380,7 +379,7 @@ trng_add(str)
 	 * throw out the badly formed time ranges
 	 */
 	if ((str == NULL) || (*str == '\0')) {
-		warn(1, "Empty time range string");
+		paxwarn(1, "Empty time range string");
 		return(-1);
 	}
 
@@ -407,7 +406,7 @@ trng_add(str)
 			++dot;
 			continue;
 		}
-		warn(1, "Improperly specified time range: %s", str);
+		paxwarn(1, "Improperly specified time range: %s", str);
 		goto out;
 	}
 
@@ -415,7 +414,7 @@ trng_add(str)
 	 * allocate space for the time range and store the limits
 	 */
 	if ((pt = (TIME_RNG *)malloc(sizeof(TIME_RNG))) == NULL) {
-		warn(1, "Unable to allocate memory for time range");
+		paxwarn(1, "Unable to allocate memory for time range");
 		return(-1);
 	}
 
@@ -438,7 +437,7 @@ trng_add(str)
 				pt->flgs |= CMPCTME;
 				break;
 			default:
-				warn(1, "Bad option %c with time range %s",
+				paxwarn(1, "Bad option %c with time range %s",
 				    *flgpt, str);
 				goto out;
 			}
@@ -455,7 +454,7 @@ trng_add(str)
 		 * add lower limit
 		 */
 		if (str_sec(str, &(pt->low_time)) < 0) {
-			warn(1, "Illegal lower time range %s", str);
+			paxwarn(1, "Illegal lower time range %s", str);
 			(void)free((char *)pt);
 			goto out;
 		}
@@ -467,7 +466,7 @@ trng_add(str)
 		 * add upper limit
 		 */
 		if (str_sec(up_pt, &(pt->high_time)) < 0) {
-			warn(1, "Illegal upper time range %s", up_pt);
+			paxwarn(1, "Illegal upper time range %s", up_pt);
 			(void)free((char *)pt);
 			goto out;
 		}
@@ -478,7 +477,7 @@ trng_add(str)
 		 */
 		if (pt->flgs & HASLOW) {
 			if (pt->low_time > pt->high_time) {
-				warn(1, "Upper %s and lower %s time overlap",
+				paxwarn(1, "Upper %s and lower %s time overlap",
 					up_pt, str);
 				(void)free((char *)pt);
 				return(-1);
@@ -496,7 +495,7 @@ trng_add(str)
 	return(0);
 
     out:
-	warn(1, "Time range format is: [yy[mm[dd[hh]]]]mm[.ss][/[c][m]]");
+	paxwarn(1, "Time range format is: [yy[mm[dd[hh]]]]mm[.ss][/[c][m]]");
 	return(-1);
 }
 

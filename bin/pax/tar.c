@@ -51,7 +51,6 @@ static char rcsid[] = "$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $";
 #include <sys/param.h>
 #include <string.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include "pax.h"
@@ -402,9 +401,9 @@ tar_opt()
 	while ((opt = opt_next()) != NULL) {
 		if (strcmp(opt->name, TAR_OPTION) ||
 		    strcmp(opt->value, TAR_NODIR)) {
-			warn(1, "Unknown tar format -o option/value pair %s=%s",
+			paxwarn(1, "Unknown tar format -o option/value pair %s=%s",
 			    opt->name, opt->value);
-			warn(1,"%s=%s is the only supported tar format option",
+			paxwarn(1,"%s=%s is the only supported tar format option",
 			    TAR_OPTION, TAR_NODIR);
 			return(-1);
 		}
@@ -413,7 +412,7 @@ tar_opt()
 		 * we only support one option, and only when writing
 		 */
 		if ((act != APPND) && (act != ARCHIVE)) {
-			warn(1, "%s=%s is only supported when writing.",
+			paxwarn(1, "%s=%s is only supported when writing.",
 			    opt->name, opt->value);
 			return(-1);
 		}
@@ -579,23 +578,23 @@ tar_wr(arcn)
 			return(1);
 		break;
 	case PAX_CHR:
-		warn(1, "Tar cannot archive a character device %s",
+		paxwarn(1, "Tar cannot archive a character device %s",
 		    arcn->org_name);
 		return(1);
 	case PAX_BLK:
-		warn(1, "Tar cannot archive a block device %s", arcn->org_name);
+		paxwarn(1, "Tar cannot archive a block device %s", arcn->org_name);
 		return(1);
 	case PAX_SCK:
-		warn(1, "Tar cannot archive a socket %s", arcn->org_name);
+		paxwarn(1, "Tar cannot archive a socket %s", arcn->org_name);
 		return(1);
 	case PAX_FIF:
-		warn(1, "Tar cannot archive a fifo %s", arcn->org_name);
+		paxwarn(1, "Tar cannot archive a fifo %s", arcn->org_name);
 		return(1);
 	case PAX_SLK:
 	case PAX_HLK:
 	case PAX_HRG:
 		if (arcn->ln_nlen > sizeof(hd->linkname)) {
-			warn(1,"Link name too long for tar %s", arcn->ln_name);
+			paxwarn(1,"Link name too long for tar %s", arcn->ln_name);
 			return(1);
 		}
 		break;
@@ -612,7 +611,7 @@ tar_wr(arcn)
 	if (arcn->type == PAX_DIR)
 		++len;
 	if (len > sizeof(hd->name)) {
-		warn(1, "File name too long for tar %s", arcn->name);
+		paxwarn(1, "File name too long for tar %s", arcn->name);
 		return(1);
 	}
 
@@ -668,7 +667,7 @@ tar_wr(arcn)
 		if (uqd_oct((u_quad_t)arcn->sb.st_size, hd->size,
 		    sizeof(hd->size), 1)) {
 #		endif
-			warn(1,"File is too large for tar %s", arcn->org_name);
+			paxwarn(1,"File is too large for tar %s", arcn->org_name);
 			return(1);
 		}
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
@@ -703,7 +702,7 @@ tar_wr(arcn)
 	/*
 	 * header field is out of range
 	 */
-	warn(1, "Tar header field is too small for %s", arcn->org_name);
+	paxwarn(1, "Tar header field is too small for %s", arcn->org_name);
 	return(1);
 }
 
@@ -973,7 +972,7 @@ ustar_wr(arcn)
 	 * check for those file system types ustar cannot store
 	 */
 	if (arcn->type == PAX_SCK) {
-		warn(1, "Ustar cannot archive a socket %s", arcn->org_name);
+		paxwarn(1, "Ustar cannot archive a socket %s", arcn->org_name);
 		return(1);
 	}
 
@@ -982,7 +981,7 @@ ustar_wr(arcn)
 	 */
 	if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
 	    (arcn->type == PAX_HRG)) && (arcn->ln_nlen > sizeof(hd->linkname))){
-		warn(1, "Link name too long for ustar %s", arcn->ln_name);
+		paxwarn(1, "Link name too long for ustar %s", arcn->ln_name);
 		return(1);
 	}
 
@@ -991,7 +990,7 @@ ustar_wr(arcn)
 	 * pt != arcn->name, the name has to be split
 	 */
 	if ((pt = name_split(arcn->name, arcn->nlen)) == NULL) {
-		warn(1, "File name too long for ustar %s", arcn->name);
+		paxwarn(1, "File name too long for ustar %s", arcn->name);
 		return(1);
 	}
 	hd = (HD_USTAR *)hdblk;
@@ -1085,7 +1084,7 @@ ustar_wr(arcn)
 		if (uqd_oct((u_quad_t)arcn->sb.st_size, hd->size,
 		    sizeof(hd->size), 3)) {
 #		endif
-			warn(1,"File is too long for ustar %s",arcn->org_name);
+			paxwarn(1,"File is too long for ustar %s",arcn->org_name);
 			return(1);
 		}
 		break;
@@ -1126,7 +1125,7 @@ ustar_wr(arcn)
     	/*
 	 * header field is out of range
 	 */
-	warn(1, "Ustar header field is too small for %s", arcn->org_name);
+	paxwarn(1, "Ustar header field is too small for %s", arcn->org_name);
 	return(1);
 }
 

@@ -51,7 +51,6 @@ static char rcsid[] = "$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $";
 #include <sys/param.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -98,7 +97,7 @@ tty_init()
 	}
 
 	if (iflag) {
-		warn(1, "Fatal error, cannot open %s", DEVTTY);
+		paxwarn(1, "Fatal error, cannot open %s", DEVTTY);
 		return(-1);
 	}
 	return(0);
@@ -166,17 +165,17 @@ tty_read(str, len)
 }
 
 /*
- * warn()
+ * paxwarn()
  *	write a warning message to stderr. if "set" the exit value of pax
  *	will be non-zero.
  */
 
 #if __STDC__
 void
-warn(int set, char *fmt, ...)
+paxwarn(int set, char *fmt, ...)
 #else
 void
-warn(set, fmt, va_alist)
+paxwarn(set, fmt, va_alist)
 	int set;
 	char *fmt;
 	va_dcl

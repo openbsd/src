@@ -52,7 +52,6 @@ static char rcsid[] = "$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $";
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -577,7 +576,7 @@ append()
 	if (get_arc() < 0)
 		return;
 	if ((orgfrmt != NULL) && (orgfrmt != frmt)) {
-		warn(1, "Cannot mix current archive format %s with %s",
+		paxwarn(1, "Cannot mix current archive format %s with %s",
 		    frmt->name, orgfrmt->name);
 		return;
 	}
@@ -763,7 +762,7 @@ copy()
 		return;
 	}
 	if (!S_ISDIR(sb.st_mode)) {
-		warn(1, "Destination is not a directory %s", dirptr);
+		paxwarn(1, "Destination is not a directory %s", dirptr);
 		return;
 	}
 
@@ -817,7 +816,7 @@ copy()
 			else
 				res = 0;
 			if ((arcn->nlen - res) > drem) {
-				warn(1, "Destination pathname too long %s",
+				paxwarn(1, "Destination pathname too long %s",
 					arcn->name);
 				continue;
 			}
@@ -1014,16 +1013,16 @@ next_head(arcn)
 			 * storage device, better give the user the bad news.
 			 */
 			if ((ret == 0) || (rd_sync() < 0)) {
-				warn(1,"Premature end of file on archive read");
+				paxwarn(1,"Premature end of file on archive read");
 				return(-1);
 			}
 			if (!in_resync) {
 				if (act == APPND) {
-					warn(1,
+					paxwarn(1,
 				          "Archive I/O error, cannot continue");
 					return(-1);
 				}
-				warn(1,"Archive I/O error. Trying to recover.");
+				paxwarn(1,"Archive I/O error. Trying to recover.");
 				++in_resync;
 			}
 
@@ -1084,10 +1083,10 @@ next_head(arcn)
 		 */
 		if (!in_resync) {
 			if (act == APPND) {
-				warn(1,"Unable to append, archive header flaw");
+				paxwarn(1,"Unable to append, archive header flaw");
 				return(-1);
 			}
-			warn(1,"Invalid header, starting valid header search.");
+			paxwarn(1,"Invalid header, starting valid header search.");
 			++in_resync;
 		}
 		memmove(hdbuf, hdbuf+1, shftsz);
@@ -1179,7 +1178,7 @@ get_arc()
 			if (!notice) {
 				if (act == APPND)
 					return(-1);
-				warn(1,"Cannot identify format. Searching...");
+				paxwarn(1,"Cannot identify format. Searching...");
 				++notice;
 			}
 		}
@@ -1214,7 +1213,7 @@ get_arc()
 		if (!notice) {
 			if (act == APPND)
 				return(-1);
-			warn(1, "Cannot identify format. Searching...");
+			paxwarn(1, "Cannot identify format. Searching...");
 			++notice;
 		}
 
@@ -1239,6 +1238,6 @@ get_arc()
 	/*
 	 * we cannot find a header, bow, apologize and quit
 	 */
-	warn(1, "Sorry, unable to determine archive format.");
+	paxwarn(1, "Sorry, unable to determine archive format.");
 	return(-1);
 }

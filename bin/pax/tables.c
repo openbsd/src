@@ -51,7 +51,6 @@ static char rcsid[] = "$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $";
 #include <sys/param.h>
 #include <sys/fcntl.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -120,7 +119,7 @@ lnk_start()
 	if (ltab != NULL)
 		return(0);
  	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
-                warn(1, "Cannot allocate memory for hard link table");
+                paxwarn(1, "Cannot allocate memory for hard link table");
                 return(-1);
         }
 	return(0);
@@ -219,7 +218,7 @@ chk_lnk(arcn)
 		(void)free((char *)pt);
 	}
 
-	warn(1, "Hard link table out of memory");
+	paxwarn(1, "Hard link table out of memory");
 	return(-1);
 }
 
@@ -368,7 +367,7 @@ ftime_start()
 	if (ftab != NULL)
 		return(0);
  	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
-                warn(1, "Cannot allocate memory for file time table");
+                paxwarn(1, "Cannot allocate memory for file time table");
                 return(-1);
         }
 
@@ -500,7 +499,7 @@ chk_ftime(arcn)
 		} else 
 			syswarn(1, errno, "Failed seek on file time table");
 	} else
-		warn(1, "File time table ran out of memory");
+		paxwarn(1, "File time table ran out of memory");
 
 	if (pt != NULL)
 		(void)free((char *)pt);
@@ -537,7 +536,7 @@ name_start()
 	if (ntab != NULL)
 		return(0);
  	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
-                warn(1, "Cannot allocate memory for interactive rename table");
+                paxwarn(1, "Cannot allocate memory for interactive rename table");
                 return(-1);
         }
 	return(0);
@@ -570,7 +569,7 @@ add_name(oname, onamelen, nname)
 		/*
 		 * should never happen
 		 */
-		warn(0, "No interactive rename table, links may fail\n");
+		paxwarn(0, "No interactive rename table, links may fail\n");
 		return(0); 
 	}
 
@@ -596,7 +595,7 @@ add_name(oname, onamelen, nname)
 
 			(void)free((char *)pt->nname);
 			if ((pt->nname = strdup(nname)) == NULL) {
-				warn(1, "Cannot update rename table");
+				paxwarn(1, "Cannot update rename table");
 				return(-1);
 			}
 			return(0);
@@ -617,7 +616,7 @@ add_name(oname, onamelen, nname)
 		}
 		(void)free((char *)pt);
 	}
-	warn(1, "Interactive rename table out of memory");
+	paxwarn(1, "Interactive rename table out of memory");
 	return(-1);
 }
 
@@ -729,7 +728,7 @@ dev_start()
 	if (dtab != NULL)
 		return(0);
  	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
-                warn(1, "Cannot allocate memory for device mapping table");
+                paxwarn(1, "Cannot allocate memory for device mapping table");
                 return(-1);
         }
 	return(0);
@@ -815,7 +814,7 @@ chk_dev(dev, add)
 	 * list must be NULL.
 	 */
 	if ((pt = (DEVT *)malloc(sizeof(DEVT))) == NULL) {
-		warn(1, "Device map table out of memory");
+		paxwarn(1, "Device map table out of memory");
 		return(NULL);
 	}
 	pt->dev = dev;
@@ -957,9 +956,9 @@ map_dev(arcn, dev_mask, ino_mask)
 	return(0);
 
     bad:
-	warn(1, "Unable to fix truncated inode/device field when storing %s",
+	paxwarn(1, "Unable to fix truncated inode/device field when storing %s",
 	    arcn->name);
-	warn(0, "Archive may create improper hard links when extracted");
+	paxwarn(0, "Archive may create improper hard links when extracted");
 	return(0);
 }
 
@@ -998,7 +997,7 @@ atdir_start()
 	if (atab != NULL)
 		return(0);
  	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
-                warn(1,"Cannot allocate space for directory access time table");
+                paxwarn(1,"Cannot allocate space for directory access time table");
                 return(-1);
         }
 	return(0);
@@ -1105,7 +1104,7 @@ add_atdir(fname, dev, ino, mtime, atime)
 		(void)free((char *)pt);
 	}
 
-	warn(1, "Directory access time reset table ran out of memory");
+	paxwarn(1, "Directory access time reset table ran out of memory");
 	return;
 }
 
@@ -1227,7 +1226,7 @@ dir_start()
 		(void)unlink(pt);
 		return(0);
 	}
-	warn(1, "Unable to create temporary file for directory times: %s", pt);
+	paxwarn(1, "Unable to create temporary file for directory times: %s", pt);
 	return(-1);
 }
 
@@ -1266,7 +1265,7 @@ add_dir(name, nlen, psb, frc_mode)
 	 * in the trailer
 	 */
 	if ((dblk.npos = lseek(dirfd, 0L, SEEK_CUR)) < 0) {
-		warn(1,"Unable to store mode and times for directory: %s",name);
+		paxwarn(1,"Unable to store mode and times for directory: %s",name);
 		return;
 	}
 
@@ -1284,7 +1283,7 @@ add_dir(name, nlen, psb, frc_mode)
 		return;
 	}
 
-	warn(1,"Unable to store mode and times for created directory: %s",name);
+	paxwarn(1,"Unable to store mode and times for created directory: %s",name);
 	return;
 }
 
@@ -1340,7 +1339,7 @@ proc_dir()
 	(void)close(dirfd);
 	dirfd = -1;
 	if (cnt != dircnt)
-		warn(1,"Unable to set mode and times for created directories");
+		paxwarn(1,"Unable to set mode and times for created directories");
 	return;
 }
 
