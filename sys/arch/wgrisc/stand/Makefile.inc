@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1997/05/11 16:17:48 pefo Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/07/21 06:58:11 pefo Exp $
 
 CPPFLAGS+=-Wall -Werror -I. -Imachine
-CPPFLAGS+=-D_STANDALONE -DSTRIPPED
-CFLAGS+=-mno-abicalls -mips1 -mcpu=r3000
-START=0x10000
-HEAP_LIMIT=0x50000
+CPPFLAGS+=-D_STANDALONE -DSTRIPPED -DALLOC_FIRST_FIT -DNO_SYM_LINKS
+CFLAGS+=-O2 -mno-abicalls -mips1 -mcpu=r3000
 BOOTREL=0x3000
 BOOTMAGIC=0xdeadbeef
 

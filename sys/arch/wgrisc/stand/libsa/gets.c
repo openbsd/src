@@ -1,4 +1,4 @@
-/*	$OpenBSD: gets.c,v 1.1 1997/05/11 16:17:56 pefo Exp $	*/
+/*	$OpenBSD: gets.c,v 1.2 1997/07/21 06:58:15 pefo Exp $	*/
 /*	$NetBSD: gets.c,v 1.5.2.1 1995/10/13 19:54:26 pk Exp $	*/
 
 /*-
@@ -42,8 +42,8 @@ void
 gets(buf)
 	char *buf;
 {
-	register int c;
-	register char *lp;
+	int c;
+	char *lp;
 
 	for (lp = buf;;)
 		switch (c = getchar() & 0177) {
@@ -60,21 +60,9 @@ gets(buf)
 				putchar('\b');
 			}
 			break;
-		case 'r'&037: {
-			register char *p;
-
-			putchar('\n');
-			for (p = buf; p < lp; ++p)
-				putchar(*p);
-			break;
-		}
-		case 'u'&037:
-		case 'w'&037:
-			lp = buf;
-			putchar('\n');
-			break;
 		default:
-			*lp++ = c;
+			*lp = c;
+			lp++;
 		}
 	/*NOTREACHED*/
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.1 1997/05/11 16:17:54 pefo Exp $ */
+/*	$OpenBSD: start.S,v 1.2 1997/07/21 06:58:13 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -52,6 +52,11 @@ __start:
 	move	s0, a0				# save argc
 	move	s1, a1				# save argv
 
+	la	a0, __start+512			# Merge together from
+	la	a1, __start+1024		# disklabel split.
+	jal	memcpy
+	li	a2, 8192 - 1024
+
 	la	a0, edata			# clear BSS
 	li	a1, 0
 	la	a2, end
@@ -61,15 +66,101 @@ __start:
 	move	a0, s0				# restore argc
 	jal	main				# main(argc, argv)
 	move	a1, s1				# restore argv
+/* MAIN NEVER RETURNS */
 
-	j	restart				# restart...
-	nop
 
-/* dummy routine for gcc2 */
-LEAF(__main)
+/* dummy routines return 0 */
+	.globl	getenv
+	.globl	__main
+getenv:
+__main:
+	.set	noreorder
 	j	ra
+	li	v0, 0
+
+	.globl	strcmp
+strcmp:
+	.set	noreorder
+1:
+	lbu	v0, 0(a0)
+	lbu	v1, 0(a1)
+	beqz	v0, 2f
+	addu	a0, a0, 1
+	beq	v0, v1, 1b
+	addu	a1, a1, 1
+2:
+	jr	ra
+	subu	v0, v0, v1
+
+	.globl	strlen
+strlen:
+	.set	noreorder
+	li	v0, 0
+1:
+	lbu	v1, 0(a0)
+	addu	a0, a0, 1
+	bnez	v1, 1b
+	addu	v0, v0, 1
+
+	jr	ra
+	addu	v0, v0, -1
+
+	.globl	memset
+memset:
+	.set	noreorder
+	move	v0, a0
+1:
+	beqz	a2, 2f
+	addu	a2, a2, -1
+
+	sb	a1, 0(a0)
+	b	1b
+	addu	a0, a0, 1
+2:
+	jr	ra
 	nop
-END(__main)
+
+	.globl	memcpy
+memcpy:
+	.set	noreorder
+	beqz	a2, 3f
+	move	v0, a0
+	sltu	v1, a1, a0
+	beqz	v1, 1f
+	li	a3, 1		/* Forward copy */
+
+	li	a3, -1		/* Backwrads copy */
+	addu	a0, a2
+	b	2f
+	addu	a1, a2
+
+1:
+	lbu	v1, 0(a1)
+	addu	a2, a2, -1
+	sb	v1, 0(a0)
+2:
+	addu	a0, a0, a3
+	bnez	a2, 1b
+	addu	a1, a1, a3
+
+3:
+	jr	ra
+	nop
+
+	.globl	twiddle
+twiddle:
+	.set	noreorder
+	la	v0, twc+4
+	lw	a0, -4(v0)
+	li	a1, 7
+	addu	a0, a0, 2
+	sw	a0, -4(v0)
+	and	a1, a0, a1
+	add	a1, a1, v0
+
+	li	a0, 1		/* Stdout */
+	b	prom_write
+	li	a2, 2
 
 /*
  * Boot rom entrypoints.
@@ -77,54 +168,71 @@ END(__main)
 
 #define BOOTVEC 0xbfc00500	/* Address of boot vector table */
 
-NON_LEAF(getchar, STAND_FRAME_SIZE, ra)
-	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-	subu	sp, sp, STAND_FRAME_SIZE
-	sw	ra, STAND_RA_OFFSET(sp)
+	.globl	getchar
+getchar:
+	.set	noreorder
+	sw	ra, 4(sp)
 
 	move	a1, sp
 	li	a0, 0
-	li	a2, 1
 	jal	prom_read
+	li	a2, 1
 
+	lw	ra, 4(sp)
 	lbu	v0, 0(sp)
-	lw	ra, STAND_RA_OFFSET(sp)
-	addu	sp, sp, STAND_FRAME_SIZE
 	jr	ra
-END(getchar)
+	nop
 
-LEAF(putchar)
+	.globl	disk_open
+disk_open:
+	.set	noreorder
+	b	__go
+	li	v0, 96
+
+	.globl	disk_read
+disk_read:
+	.set	noreorder
+	b	__go
+	li	v0, 100
+
+	.globl	prom_read
+prom_read:
+	.set	noreorder
+	b	__go
+	li	v0, 0
+
+	.globl	putchar
+putchar:
+	.set	noreorder
 	sb	a0, 0(sp)
 	move	a1, sp
 	li	a0, 1		/* Stdout */
 	li	a2, 1
-	b	prom_write
-	
-END(putchar)
+/* -- fall through -- */
+	.globl	prom_write
+prom_write:
+	.set	noreorder
+	b	__go
+	li	v0, 4
 
-LEAF(restart)
-END(restart)
+	.globl	printf
+printf:
+	.set	noreorder
+	b	__go
+	li	v0, 20
 
-LEAF(panic)
-END(panic)
+	.globl	panic
+panic:
 
-LEAF(disk_open)
-	lw	v0, BOOTVEC+96
+__go:
+	.set	noreorder
+	lw	v0, BOOTVEC(v0)
+	nop
 	jr	v0
-END(disk_open)
+	nop
 
-LEAF(disk_read)
-	lw	v0, BOOTVEC+100
-	jr	v0
-END(disk_read)
+	.align	2
+	.globl	twc
+twc:	.word	0
+tws:	.ascii	"\\\b-\b/\b-\b"
 
-
-LEAF(prom_read)
-	lw	v0, BOOTVEC+0
-	jr	v0
-END(prom_read)
-
-LEAF(prom_write)
-	lw	v0, BOOTVEC+4
-	jr	v0
-END(prom_write)

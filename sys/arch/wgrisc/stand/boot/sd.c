@@ -50,8 +50,6 @@ int disk_open __P((char *, int));
 
 struct	sd_softc {
 	int	sc_fd;			/* PROM file id */
-	int	sc_ctlr;		/* controller number */
-	int	sc_unit;		/* disk unit number */
 	int	sc_part;		/* disk partition number */
 	struct	disklabel sc_label;	/* disk label for this disk */
 };
@@ -66,30 +64,16 @@ sdstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	u_int *cnt;	/* out: number of bytes transfered */
 {
 	struct sd_softc *sc = (struct sd_softc *)devdata;
-	int part = sc->sc_part;
-	struct partition *pp = &sc->sc_label.d_partitions[part];
+	struct partition *pp = &sc->sc_label.d_partitions[sc->sc_part];
 	int s;
 	long offset;
 
-	offset = bn * DEV_BSIZE;
-
-	/*
-	 * Partial-block transfers not handled.
-	 */
-	if (reqcnt & (DEV_BSIZE - 1)) {
-		*cnt = 0;
-		return (EINVAL);
-	}
-
-	offset += pp->p_offset * DEV_BSIZE;
+	offset = (pp->p_offset + bn) * DEV_BSIZE;
 
 	s = disk_read(sc->sc_fd, addr, offset, reqcnt);
-#if 0 /* XXX error code not returned yet... */
-	if (s <= 0)
-		return (EIO);
-#endif
-
-	*cnt = reqcnt;
+	if (s < 0)
+		return (-s);
+	*cnt = s;
 	return (0);
 }
 
@@ -100,9 +84,8 @@ sdopen(struct open_file *f, ...)
 
 	struct sd_softc *sc;
 	struct disklabel *lp;
-	struct dos_partition dp, *dp2;
 	int i, fd;
-	char *msg;
+	char *msg = "rd err";
 	char buf[DEV_BSIZE];
 	int cnt;
 	daddr_t labelsector;
@@ -128,8 +111,6 @@ sdopen(struct open_file *f, ...)
 	f->f_devdata = (void *)sc;
 
 	sc->sc_fd = fd;
-	sc->sc_ctlr = ctlr;
-	sc->sc_unit = unit;
 	sc->sc_part = part;
 
 	lp = &sc->sc_label;
@@ -137,48 +118,46 @@ sdopen(struct open_file *f, ...)
 	lp->d_secpercyl = 1;
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_partitions[part].p_offset = 0;
-	lp->d_partitions[part].p_size = 0x7fffffff;
+	lp->d_partitions[part].p_size = 0x7fff0000;
 
+	labelsector = LABELSECTOR;
+
+#ifdef USE_DOSBBSECTOR
 	/* First check for any DOS partition table */
 	i = sdstrategy(sc, F_READ, (daddr_t)DOSBBSECTOR, DEV_BSIZE, buf, &cnt);
-	if (i || cnt != DEV_BSIZE) {
-		printf("sd%d: error reading disk label\n", unit);
+	if (!(i || cnt != DEV_BSIZE)) {
+		struct dos_partition dp, *dp2;
+		bcopy(buf + DOSPARTOFF, &dp, NDOSPART * sizeof(dp));
+		for (dp2=&dp, i=0; i < NDOSPART; i++, dp2++) {
+			if (dp2->dp_size) {
+				if((dp2->dp_typ == DOSPTYP_386BSD) ||
+				   (dp2->dp_typ == DOSPTYP_OPENBSD)) {
+					labelsector += dp2->dp_start;
+					break;
+				}
+			}
+		}
+	}
+	else {
 		goto bad;
 	}
-	labelsector = 0;
-	bcopy(buf + DOSPARTOFF, &dp, NDOSPART * sizeof(dp));
-	for (dp2=&dp, i=0; i < NDOSPART; i++, dp2++) {
-		if (dp2->dp_size && dp2->dp_typ == DOSPTYP_OPENBSD) {
-			labelsector = dp2->dp_start;
-			break;
-		}
-	}
-	for (dp2=&dp, i=0; i < NDOSPART; i++, dp2++) {
-		if (dp2->dp_size && dp2->dp_typ == DOSPTYP_386BSD) {
-			labelsector = dp2->dp_start;
-			break;
-		}
-	}
+#endif
 
 
 	/* try to read disk label and partition table information */
-	labelsector += LABELSECTOR;
 	i = sdstrategy(sc, F_READ, (daddr_t)labelsector, DEV_BSIZE, buf, &cnt);
 	if (i || cnt != DEV_BSIZE) {
-		printf("sd%d: error reading disk label\n", unit);
 		goto bad;
 	}
 	msg = getdisklabel(buf, lp);
 	if (msg) {
-		printf("sd%d: %s\n", unit, msg);
 		goto bad;
 	}
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
-	bad:
-#ifndef SMALL
-		free(sc, sizeof(struct sd_softc));
-#endif
+		msg = "no part";
+bad:
+		printf("sd%d: %s\n", unit, msg);
 		return (ENXIO);
 	}
 	return (0);
@@ -188,7 +167,9 @@ int
 sdclose(f)
 	struct open_file *f;
 {
+#ifdef FANCY
 	free(f->f_devdata, sizeof(struct sd_softc));
 	f->f_devdata = (void *)0;
+#endif
 	return (0);
 }
