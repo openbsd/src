@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.10 1997/07/30 19:40:58 flipk Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.11 1997/07/31 20:15:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -38,7 +38,6 @@
 #include <machine/psl.h>
 #define _LOCORE
 #include <machine/trap.h>
-#include <machine/segments.h>
 #include <debug_md.h>
 #undef _LOCORE
 #include <assym.h>
@@ -338,30 +337,34 @@ IEMUENT(44); IEMUENT(45); IEMUENT(46); IEMUENT(47)
  * entry point for BIOS real-mode interface
  * all the magic for real-prot mode switching is here
  *
- * Call:	%eax, %ecx, %edx, %ebx, %ebp, %esi, %edi, %es
+ * Call:	%eax, %ecx, %edx, %ebx, %ebp, %esi, %edi, %es, %ds
  * Return:	%eax, %edx, %ecx, %eflags (as returned from BIOS)
  *
  */
 EMUh:
+	/* save %eax */
+	movl	%eax, 3f
+	popl	%eax
+
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
 	pushl	%gs
 
-	/* save %eax */
-	movl	%eax, 3f
-
 	/* save BIOS int vector */
-	movb	12*4(%esp), %al
 	movb	%al, intno
-	movl	%eax, 2f
 
 	prot2real
+
+	pushl	%ds
 
 	addr32
 	movl	_C_LABEL(BIOS_regs)+(biosr_es), %eax
 	movl	%ax, %es
+	addr32
+	movl	_C_LABEL(BIOS_regs)+(biosr_ds), %eax
+	movl	%ax, %ds
 
 	data32
 	# movl	Leax, %eax
@@ -372,6 +375,8 @@ EMUh:
 	int	$0
 intno	= . - 1
 	cli
+
+	popl	%ds
 
 	addr32
 	data32
@@ -397,7 +402,7 @@ intno	= . - 1
 	movl	%eax, 0xb*4(%esp)
 	movl	%ecx, 0xa*4(%esp)
 	movl	%edx, 0x9*4(%esp)
-	movb	%bh , 0xf*4(%esp)
+	movb	%bh , 0xe*4(%esp)
 
 	/* save registers into save area */
 	movl	%eax, _C_LABEL(BIOS_regs)+biosr_ax
@@ -412,7 +417,6 @@ intno	= . - 1
 	popl	%es
 	popl	%ds
 	popal
-	addl	$4, %esp
 	iret
 
 	.globl	_C_LABEL(kentry)
