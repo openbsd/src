@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.4 2000/01/02 10:56:32 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.5 2000/01/02 11:12:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -104,7 +104,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 #define IPSEC_NAME (sproto == IPPROTO_ESP ? "esp_input()" : "ah_input()")
 
     union sockaddr_union sunion;
-    struct ifqueue *ifq = NULL;
     struct tdb *tdbp;
     u_int32_t spi;
     u_int8_t prot;
@@ -414,7 +413,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     {
 	/* Packet is confidental */
 	m->m_flags |= M_CONF;
-	/* XXX How about M_AUTH if the SA has authentication on ? */
+
+	/* Check if we had authenticated ESP */
+	if (tdbp->tdb_authalgxform)
+	  m->m_flags |= M_AUTH;
     }
     else
       m->m_flags |= M_AUTH;
@@ -445,47 +447,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 #endif
     splx(s);
 
-    /*
-     * Interface pointer is already in first mbuf; chop off the 
-     * `outer' header and reschedule.
-     */
-
-#ifdef INET
-    if (af == AF_INET)
-      ifq = &ipintrq;
-#endif /* INET */
-
-#ifdef INET6
-    if (af == AF_INET6)
-      ifq = &ip6intrq;
-#endif /* INET6 */
-
-    s = splimp();			/* isn't it already? */
-    if (IF_QFULL(ifq))
-    {
-	IF_DROP(ifq);
-	if (m->m_pkthdr.tdbi)
-	  free(m->m_pkthdr.tdbi, M_TEMP);
-	m_freem(m);
-	IPSEC_ISTAT(espstat.esps_qfull, ahstat.ahs_qfull);
-	splx(s);
-	DPRINTF(("%s: dropped packet because of full IP queue\n", IPSEC_NAME));
-	return ENOSPC;
-    }
-
-    IF_ENQUEUE(ifq, m);
-
-#ifdef INET
-    if (af == AF_INET)
-      schednetisr(NETISR_IP);
-#endif /* INET */
-
-#ifdef INET6
-    if (af == AF_INET6)
-      schednetisr(NETISR_IPV6);
-#endif /* INET6 */
-
-    splx(s);
     return 0;
 #undef IPSEC_NAME
 #undef IPSEC_ISTAT
@@ -532,30 +493,78 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
 void
 ah_input(struct mbuf *m, ...)
 {
-    int skip;
+    struct ifqueue *ifq = &ipintrq;
+    int skip, s;
 
     va_list ap;
     va_start(ap, m);
     skip = va_arg(ap, int);
     va_end(ap);
 
-    ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
-		       IPPROTO_AH);
+    if (ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
+			   IPPROTO_AH) != 0)
+      return;
+
+    /*
+     * Interface pointer is already in first mbuf; chop off the 
+     * `outer' header and reschedule.
+     */
+
+    s = splimp();			/* isn't it already? */
+    if (IF_QFULL(ifq))
+    {
+	IF_DROP(ifq);
+	if (m->m_pkthdr.tdbi)
+	  free(m->m_pkthdr.tdbi, M_TEMP);
+	m_freem(m);
+	ahstat.ahs_qfull++;
+	splx(s);
+	DPRINTF(("ah_input(): dropped packet because of full IP queue\n"));
+	return;
+    }
+
+    IF_ENQUEUE(ifq, m);
+    schednetisr(NETISR_IP);
+    splx(s);
 }
 
 /* IPv4 ESP wrapper */
 void
 esp_input(struct mbuf *m, ...)
 {
-    int skip;
+    struct ifqueue *ifq = &ipintrq;
+    int skip, s;
 
     va_list ap;
     va_start(ap, m);
     skip = va_arg(ap, int);
     va_end(ap);
 
-    ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
-		       IPPROTO_ESP);
+    if (ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
+			   IPPROTO_ESP) != 0)
+      return;
+
+    /*
+     * Interface pointer is already in first mbuf; chop off the 
+     * `outer' header and reschedule.
+     */
+
+    s = splimp();			/* isn't it already? */
+    if (IF_QFULL(ifq))
+    {
+	IF_DROP(ifq);
+	if (m->m_pkthdr.tdbi)
+	  free(m->m_pkthdr.tdbi, M_TEMP);
+	m_freem(m);
+	espstat.esps_qfull++;
+	splx(s);
+	DPRINTF(("esp_input(): dropped packet because of full IP queue\n"));
+	return;
+    }
+
+    IF_ENQUEUE(ifq, m);
+    schednetisr(NETISR_IP);
+    splx(s);
 }
 #endif /* INET */
 
