@@ -115,6 +115,13 @@ and
 .Xr fcntl 2 ) .
 Descriptors that remain open are unaffected by
 .Fn execve .
+In the case of a new setuid or setgid executable being executed, if
+file descriptors 0, 1, or 2 (representing stdin, stdout, and stderr)
+are currently unallocated, these descriptors will be opened to point to
+some system file like
+.Pa /dev/null .
+The intent is to ensure these descriptors are not unallocated, since
+many libraries make assumptions about the use of these 3 file descriptors.
 .Pp
 Signals set to be ignored in the calling process are set to be ignored in
 the
