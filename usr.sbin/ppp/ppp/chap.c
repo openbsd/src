@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.38 2003/04/07 23:58:53 deraadt Exp $
+ * $OpenBSD: chap.c,v 1.39 2003/04/08 19:55:52 tedu Exp $
  */
 
 #include <sys/param.h>
@@ -605,8 +605,10 @@ chap_Failure(struct authinfo *authp)
     snprintf(buf, sizeof(buf), "E=691 R=0 C=");
     ptr += strlen(ptr);
     for (i=0; i<16; i++) {
-      snprintf(ptr, 3, "%02X", *(auth2chap(authp)->challenge.local+1+i));
+      snprintf(ptr, buf + sizeof buf - ptr, "%02X", *(auth2chap(authp)->challenge.local+1+i));
       ptr += strlen(ptr);
+      if (ptr > buf + sizeof buf)
+        break;
     }
 
     snprintf(ptr, buf + sizeof buf - ptr, " V=3 M=Invalid!");
