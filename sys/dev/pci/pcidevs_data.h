@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.605 2003/03/12 05:00:02 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.606 2003/03/12 21:44:09 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5083,14 +5083,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "963 Host-PCI",
 	},
 	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
-	    "7016 10/100BaseTX",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
-	    "Trident 4D WAVE",
-	},
-	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
 	    "5511",
 	},
@@ -5155,16 +5147,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5597/5598 USB",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7002,
+	    "7002 USB",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7007,
+	    "7007 FireWire",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_ACA,
-	    "7012 AC-97 Sound",
+	    "7012 AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7013,
+	    "7013 Modem",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
-	    "7016 10/100 Ethernet",
+	    "7016 10/100BaseTX",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
-	    "7018 Sound",
+	    "7018 Audio",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.605 2003/03/12 05:00:02 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.606 2003/03/12 21:44:09 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2181,8 +2181,6 @@
 #define	PCI_PRODUCT_SIS_961	0x0961		/* 961 Host-PCI */
 #define	PCI_PRODUCT_SIS_962	0x0962		/* 962 Host-PCI */
 #define	PCI_PRODUCT_SIS_963	0x0963		/* 963 Host-PCI */
-#define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100BaseTX */
-#define	PCI_PRODUCT_SIS_7018	0x7018		/* Trident 4D WAVE */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
 #define	PCI_PRODUCT_SIS_5512	0x5512		/* 5512 */
 #define	PCI_PRODUCT_SIS_5513	0x5513		/* 5513 EIDE */
@@ -2199,9 +2197,12 @@
 #define	PCI_PRODUCT_SIS_530	0x6306		/* 530 VGA */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP Video */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB */
-#define	PCI_PRODUCT_SIS_7012_ACA	0x7012		/* 7012 AC-97 Sound */
-#define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100 Ethernet */
-#define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Sound */
+#define	PCI_PRODUCT_SIS_7002	0x7002		/* 7002 USB */
+#define	PCI_PRODUCT_SIS_7007	0x7007		/* 7007 FireWire */
+#define	PCI_PRODUCT_SIS_7012_ACA	0x7012		/* 7012 AC97 Audio */
+#define	PCI_PRODUCT_SIS_7013	0x7013		/* 7013 Modem */
+#define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100BaseTX */
+#define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Audio */
 
 /* SMC products */
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
