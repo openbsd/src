@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:25 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2000/03/02 10:17:28 art Exp $
 
 LIB	= kafs
 
@@ -11,7 +11,7 @@ CFLAGS += -I${KRBSRC}/lib/kafs
 
 .PATH:	${KRBSRC}/lib/kafs
 
-SRCS=	afssys.c \
+SRCS=	afssys_openbsd.c \
 	afskrb.c \
 	$(afskrb5_c) \
 	common.c \
