@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 1998/04/17 18:18:04 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.15 1998/10/09 13:10:46 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -285,13 +285,12 @@ cache_print(sc)
 	struct cpu_softc *sc;
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
-	char *sep;
+	char *sep = "";
 
-	printf("%s:", sc->dv.dv_xname);
+	printf("%s: ", sc->dv.dv_xname);
 
-	sep = " ";
 	if (ci->c_split) {
-		printf("%s", (ci->c_physical ? " physical" : ""));
+		printf("%s", (ci->c_physical ? "physical " : ""));
 		if (ci->ic_totalsize > 0) {
 			printf("%s%dK instruction (%d b/l)", sep,
 			    ci->ic_totalsize/1024, ci->ic_linesize);
@@ -302,23 +301,25 @@ cache_print(sc)
 			    ci->dc_totalsize/1024, ci->dc_linesize);
 			sep = ", ";
 		}
-		printf(" ");
 	} else if (ci->c_physical) {
 		/* combined, physical */
-		printf(" physical %dK combined cache (%d bytes/line) ",
+		printf("physical %dK combined cache (%d bytes/line)",
 		    ci->c_totalsize/1024, ci->c_linesize);
+		sep = ", ";
 	} else {
 		/* combined, virtual */
-		printf(" %dK byte write-%s, %d bytes/line, %cw flush ",
+		printf("%dK byte write-%s, %d bytes/line, %cw flush",
 		    ci->c_totalsize/1024,
 		    (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		    ci->c_linesize, ci->c_hwflush ? 'h' : 's');
+		sep = ", ";
 	}
 
 	if (ci->ec_totalsize > 0) {
-		printf(", %dK external (%d b/l)",
+		printf("%s%dK external (%d b/l)", sep,
 		    ci->ec_totalsize/1024, ci->ec_linesize);
 	}
+	printf(" ");
 }
 
 
