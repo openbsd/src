@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.14 2000/08/03 07:25:11 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.40 2000/07/26 06:04:27 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.15 2000/10/07 06:59:56 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.45 2000/10/02 03:23:25 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -52,12 +52,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
-
-#ifdef KAME
-#  include <openssl/ssl.h>
-#else
-#  include <ssl/ssl.h>
-#endif
+#include <openssl/ssl.h>
 
 #include "sysdep.h"
 
@@ -276,7 +271,7 @@ policy_callback (char *name)
 	pfs = "yes";
 
       is = policy_isakmp_sa->data;
-      sprintf (phase1_group, "%d", is->group_desc);
+      sprintf (phase1_group, "%u", is->group_desc);
 
       for (proto = TAILQ_FIRST (&policy_sa->protos); proto;
 	   proto = TAILQ_NEXT (proto, link))
@@ -412,19 +407,19 @@ policy_callback (char *name)
 		      if (lifetype == IPSEC_DURATION_SECONDS)
 			{
 			  if (len == 2)
-			    sprintf (ah_life_seconds, "%d",
+			    sprintf (ah_life_seconds, "%u",
 				     decode_16 (value));
 			  else
-			    sprintf (ah_life_seconds, "%d",
+			    sprintf (ah_life_seconds, "%u",
 				     decode_32 (value));
 			}
 		      else
 			{
 			  if (len == 2)
-			    sprintf (ah_life_kbytes, "%d",
+			    sprintf (ah_life_kbytes, "%u",
 				     decode_16 (value));
 			  else
-			    sprintf (ah_life_kbytes, "%d",
+			    sprintf (ah_life_kbytes, "%u",
 				     decode_32 (value));
 			}
 
@@ -434,19 +429,19 @@ policy_callback (char *name)
 		      if (lifetype == IPSEC_DURATION_SECONDS)
 			{
 			  if (len == 2)
-			    sprintf (esp_life_seconds, "%d",
+			    sprintf (esp_life_seconds, "%u",
 				     decode_16 (value));
 			  else
-			    sprintf (esp_life_seconds, "%d",
+			    sprintf (esp_life_seconds, "%u",
 				     decode_32 (value));
 			}
 		      else
 			{
 			  if (len == 2)
-			    sprintf (esp_life_kbytes, "%d",
+			    sprintf (esp_life_kbytes, "%u",
 				     decode_16 (value));
 			  else
-			    sprintf (esp_life_kbytes, "%d",
+			    sprintf (esp_life_kbytes, "%u",
 				     decode_32 (value));
 			}
 
@@ -456,19 +451,19 @@ policy_callback (char *name)
 		      if (lifetype == IPSEC_DURATION_SECONDS)
 			{
 			  if (len == 2)
-			    sprintf (comp_life_seconds, "%d",
+			    sprintf (comp_life_seconds, "%u",
 				     decode_16 (value));
 			  else
-			    sprintf (comp_life_seconds, "%d",
+			    sprintf (comp_life_seconds, "%u",
 				     decode_32 (value));
 			}
 		      else
 			{
 			  if (len == 2)
-			    sprintf (comp_life_kbytes, "%d",
+			    sprintf (comp_life_kbytes, "%u",
 				     decode_16 (value));
 			  else
-			    sprintf (comp_life_kbytes, "%d",
+			    sprintf (comp_life_kbytes, "%u",
 				     decode_32 (value));
 			}
 
@@ -480,16 +475,16 @@ policy_callback (char *name)
 		  switch (proto->proto)
 		    {
 		    case IPSEC_PROTO_IPSEC_AH:
-		      sprintf (ah_group_desc, "%d", decode_16 (value));
+		      sprintf (ah_group_desc, "%u", decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPSEC_ESP:
-		      sprintf (esp_group_desc, "%d",
+		      sprintf (esp_group_desc, "%u",
 			       decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPCOMP:
-		      sprintf (comp_group_desc, "%d",
+		      sprintf (comp_group_desc, "%u",
 			       decode_16 (value));
 		      break;
 		    }
@@ -579,11 +574,11 @@ policy_callback (char *name)
 		  switch (proto->proto)
 		    {
 		    case IPSEC_PROTO_IPSEC_AH:
-		      sprintf (ah_key_length, "%d", decode_16 (value));
+		      sprintf (ah_key_length, "%u", decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPSEC_ESP:
-		      sprintf (esp_key_length, "%d",
+		      sprintf (esp_key_length, "%u",
 			       decode_16 (value));
 		      break;
 		    }
@@ -593,22 +588,22 @@ policy_callback (char *name)
 		  switch (proto->proto)
 		    {
 		    case IPSEC_PROTO_IPSEC_AH:
-		      sprintf (ah_key_rounds, "%d", decode_16 (value));
+		      sprintf (ah_key_rounds, "%u", decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPSEC_ESP:
-		      sprintf (esp_key_rounds, "%d",
+		      sprintf (esp_key_rounds, "%u",
 			       decode_16 (value));
 		      break;
 		    }
 		  break;
 
 		case IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE:
-		  sprintf (comp_dict_size, "%d", decode_16 (value));
+		  sprintf (comp_dict_size, "%u", decode_16 (value));
 		  break;
 
 		case IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM:
-		  sprintf (comp_private_alg, "%d", decode_16 (value));
+		  sprintf (comp_private_alg, "%u", decode_16 (value));
 		  break;
 		}
 	    }
@@ -777,7 +772,7 @@ policy_callback (char *name)
 	  break;
 
 	default:
-	  log_print ("policy_callback: unknown remote ID type %d", id[0]);
+	  log_print ("policy_callback: unknown remote ID type %u", id[0]);
 	  goto bad;
 	}
 
@@ -803,7 +798,7 @@ policy_callback (char *name)
 	  break;
 	}
 
-      snprintf (remote_id_port, sizeof remote_id_port - 1, "%d",
+      snprintf (remote_id_port, sizeof remote_id_port - 1, "%u",
 		decode_16 (id + 2));
 
       if (policy_exchange->initiator)
@@ -954,7 +949,7 @@ policy_callback (char *name)
 	      break;
 
 	    default:
-	      log_print ("policy_callback: unknown Remote ID type %d",
+	      log_print ("policy_callback: unknown Remote ID type %u",
 			 GET_ISAKMP_ID_TYPE (idremote));
 	      goto bad;
 	    }
@@ -976,13 +971,13 @@ policy_callback (char *name)
 #endif
 
  	    default:
-	      sprintf (remote_filter_proto_num, "%2d", id[1]);
+	      sprintf (remote_filter_proto_num, "%2d", idremote[ISAKMP_GEN_SZ + 1]);
 	      remote_filter_proto = remote_filter_proto_num;
 	      break;
 	    }
 
 	  snprintf (remote_filter_port, sizeof remote_filter_port - 1,
-		    "%d", decode_16 (idremote + ISAKMP_GEN_SZ + 2));
+		    "%u", decode_16 (idremote + ISAKMP_GEN_SZ + 2));
 	}
       else
         {
@@ -1134,7 +1129,7 @@ policy_callback (char *name)
 	      break;
 
 	    default:
-	      log_print ("policy_callback: unknown Local ID type %d",
+	      log_print ("policy_callback: unknown Local ID type %u",
 			 GET_ISAKMP_ID_TYPE (idlocal));
 	      goto bad;
 	    }
@@ -1156,13 +1151,13 @@ policy_callback (char *name)
 #endif
 
  	    default:
-	      sprintf (local_filter_proto_num, "%2d", id[1]);
+	      sprintf (local_filter_proto_num, "%2d", idlocal[ISAKMP_GEN_SZ + 1]);
 	      local_filter_proto = local_filter_proto_num;
 	      break;
 	    }
 
 	  snprintf (local_filter_port, sizeof local_filter_port - 1,
-		    "%d", decode_16 (idlocal + ISAKMP_GEN_SZ + 2));
+		    "%u", decode_16 (idlocal + ISAKMP_GEN_SZ + 2));
 	}
       else
         {
@@ -1300,10 +1295,10 @@ policy_callback (char *name)
     return ah_life_seconds;
 
   if (strcmp (name, "esp_life_kbytes") == 0)
-    return ah_life_kbytes;
+    return esp_life_kbytes;
 
   if (strcmp (name, "esp_life_seconds") == 0)
-    return ah_life_seconds;
+    return esp_life_seconds;
 
   if (strcmp (name, "comp_life_kbytes") == 0)
     return comp_life_kbytes;
@@ -1733,7 +1728,8 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
 /* This should never be called */
 int
-keynote_cert_get_subject (void *scert, u_int8_t **id, u_int32_t *id_len)
+keynote_cert_get_subjects (void *scert, int *n, u_int8_t ***id,
+			   u_int32_t **id_len)
 {
   return 0;
 }
