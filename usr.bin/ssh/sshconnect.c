@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.30 1999/11/15 21:38:54 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.31 1999/11/15 23:58:54 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1177,12 +1177,14 @@ void ssh_login(int host_key_valid,
       if (ip_status == HOST_NEW) {
 	if (!add_host_to_hostfile(options.user_hostfile, ip,
 				  host_key->e, host_key->n))
-	  log("Failed to add the host ip to the list of known hosts (%.30s).", 
-	      options.user_hostfile);
+ 	  log("Failed to add the host key for IP address '%.30s' to the list of known hosts (%.30s).", 
+ 	      ip, options.user_hostfile);
 	else
-	  log("Warning: Permanently added host ip '%.30s' to the list of known hosts.", ip);
+ 	  log("Warning: Permanently added host key for IP address '%.30s' to the list of known hosts.",
+               ip);
       } else if (ip_status != HOST_OK)
-	log("Warning: the host key differ from the key of the ip address '%.30s' differs", ip);
+ 	log("Warning: the host key for '%.200s' differs from the key for the IP address '%.30s'",
+ 	    host, ip);
     }
     
     break;
@@ -1224,13 +1226,20 @@ void ssh_login(int host_key_valid,
   case HOST_CHANGED:
     if (options.check_host_ip) {
       if (host_ip_differ) {
+        char *msg;
+	if (ip_status == HOST_NEW)
+	  msg = "is unknown";
+	else if (ip_status == HOST_OK)
+	  msg = "is unchanged";
+	else 
+	  msg = "has a different value";
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	error("@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @");
 	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	error("The host key for %s has changed,", host);
-	error("but the key for the according IP address %s has", ip);
-	error("a different status.  This could either mean that DNS");
-	error("SPOOFING is happening or the IP address for the host");
+	error("and the key for the according IP address %s", ip);
+	error("%s. This could either mean that", msg);
+	error("DNS SPOOFING is happening or the IP address for the host");
 	error("and its host key have changed at the same time");
       }
     }
