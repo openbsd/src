@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.10 1998/10/30 18:04:59 mickey Exp $	*/
+/*	$OpenBSD: chat.c,v 1.11 1999/12/02 02:22:56 d Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.10 1998/10/30 18:04:59 mickey Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.11 1999/12/02 02:22:56 d Exp $";
 #endif
 #endif
 
@@ -634,12 +634,69 @@ char *clean(s, sending)
 register char *s;
 int sending;  /* set to 1 when sending (putting) this string. */
 {
-    char temp[STR_LEN], cur_chr;
+    char *ret, *t, cur_chr;
+    int new_length;
     register char *s1, *phchar;
     int add_return = sending;
 #define isoctal(chr) (((chr) >= '0') && ((chr) <= '7'))
 
-    s1 = temp;
+    /* Overestimate new length: */
+    new_length = 0;
+    for (t = s; *t; t++)
+	if (*t == '^' && *(t+1) != '\0') {
+	    t++;
+	    new_length++;
+	} else if (*t != '\\') {
+	    new_length++;
+	} else {
+	    t++;
+	    switch (*t) {
+	    case 'c':
+	    case 'b':
+	    case 'r':
+	    case 'n':
+	    case 's':
+	    case 't':
+		new_length++;
+		break;
+	    case 'K':
+	    case 'p':
+	    case 'd':
+	    case '\0':
+	    case '\\':
+	    case 'N':
+		new_length += 2;
+		break;
+	    case 'T':
+		new_length += sending && phone_num ? strlen(phone_num) : 2;
+		break;
+	    case 'U':
+		new_length += sending && phone_num2 ? strlen(phone_num2) : 2;
+		break;
+	    default:
+		if (isoctal(*t)) {
+		    t++;
+		    if (isoctal(*t)) {
+			t++;
+			if (isoctal(*t)) 
+			    t++;
+		    }
+		}
+		t--;
+		new_length += 2;	/* Could become \\ */
+	    }
+	    if (*t == '\0')
+		break;
+	}
+
+    if (add_return)
+	new_length++;
+
+    new_length += 2;	/* Two nuls terminate */
+
+    ret = (char *)malloc(new_length);
+
+    s1 = ret;
     while (*s) {
 	cur_chr = *s++;
 	if (cur_chr == '^') {
@@ -774,7 +831,15 @@ int sending;  /* set to 1 when sending (putting) this string. */
 
     *s1++ = '\0'; /* guarantee closure */
     *s1++ = '\0'; /* terminate the string */
-    return dup_mem (temp, (size_t) (s1 - temp)); /* may have embedded nuls */
+
+#ifdef DEBUG
+    fprintf(stderr, "clean(): guessed %d and used %d\n", new_length, s1-ret);
+#endif
+    if (new_length < s1 - ret)
+	logf("clean(): new_length too short! %d < %d: \"%s\" -> \"%s\"", 
+	    new_length, s1 - ret, s, ret);
+
+    return ret;
 }
 
 /*
