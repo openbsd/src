@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.4 1999/12/21 05:52:46 millert Exp $	*/
+/*	$OpenBSD: look.c,v 1.5 2000/10/12 10:01:18 art Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: look.c,v 1.4 1999/12/21 05:52:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: look.c,v 1.5 2000/10/12 10:01:18 art Exp $";
 #endif /* not lint */
 
 /*
@@ -148,7 +148,7 @@ main(argc, argv)
 	if (sb.st_size > SIZE_T_MAX)
 		err(2, "%s: %s", file, strerror(EFBIG));
 	if ((front = mmap(NULL,
-	    (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0)) == NULL)
+	    (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED)
 		err(2, "%s", file);
 	back = front + sb.st_size;
 	exit(look(string, front, back));
