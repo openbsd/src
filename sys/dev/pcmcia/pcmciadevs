@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.14 1999/07/01 06:07:15 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.15 1999/07/01 13:18:21 niklas Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -55,6 +55,7 @@ vendor QUATECH			0x0137	Quatech
 vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
+vendor LUCENT			0x0156	Lucent Technologies
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna
@@ -119,6 +120,9 @@ product LINKSYS FAST_ECARD	0x0230 D-Link DFE-650 or Netgear FA410TX
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 
+/* Lucent technologies corporation */
+product LUCENT WAVELAN		0x0002 Lucent WaveLAN
+
 /* Megahertz Products */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
 product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
@@ -146,13 +150,15 @@ product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
 /* TDK Vendor ID also used by Xircom! */
-product TDK XIR_CE_10		0x0108 Xircom CreditCard Ethernet
-product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
-product TDK XIR_CNW		0x0802 Xircom CreditCard Netwave
-product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
+product XIRCOM XIR_CE_10	0x0108 Xircom CreditCard Ethernet
+product XIRCOM XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
+product XIRCOM XIR_CNW		0x0802 Xircom CreditCard Netwave
+product XIRCOM XIR_CEM_10	0x110a Xircom CreditCard Ethernet + Modem
+product XIRCOM XIR_CEM_28	0x110b Xircom CreditCard Ethernet + Modem
 
 /* NewMedia Products */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
+product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia Sound/SCSI
 product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI Host Adapter
 
 /* Standard Microsystems Corporation Products */
