@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.19 1996/08/07 15:54:41 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.20 1996/08/29 18:03:27 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -291,6 +291,7 @@ fdcforceintr(aux)
  */
 struct fdc_attach_args {
 	int fa_drive;
+	int fa_flags;
 	struct fd_type *fa_deftype;
 };
 
@@ -358,6 +359,7 @@ fdcattach(parent, self, aux)
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
+		fa.fa_flags = 0;
 		if (type >= 0 && fa.fa_drive < 2)
 			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
 			    type, fa.fa_drive);
@@ -389,6 +391,11 @@ fdprobe(parent, match, aux)
 	 */
 	if (cf->cf_loc[0] == -1 && drive >= 2)
 		return 0;
+
+	/*
+	 * We want to keep the flags config gave us.
+	 */
+	fa->fa_flags = cf->cf_flags;
 
 	/* select drive and turn on motor */
 	bus_io_write_1(bc, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
@@ -431,7 +438,24 @@ fdattach(parent, self, aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	/* XXX Allow `flags' to override device type? */
+	if (!type || (fa->fa_flags & 0x10)) {
+		/* The config has overridden this. */
+		switch (fa->fa_flags & 0x07) {
+		/* 1 is reserved for 2.88MB */
+		case 2:	/* 1.44MB */
+			type = &fd_types[0];
+			break;
+		case 3: /* 1.2MB */
+			type = &fd_types[1];
+			break;
+		case 4: /* 720K */
+			type = &fd_types[4];
+			break;
+		case 5: /* 360K */
+			type = &fd_types[3];
+			break;
+		}
+	}
 
 	if (type)
 		printf(": %s %d cyl, %d head, %d sec\n", type->name,
