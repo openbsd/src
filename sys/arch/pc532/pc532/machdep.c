@@ -714,7 +714,7 @@ microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec += tick;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.5 1999/01/11 05:11:38 millert Exp $ */
+/*	$OpenBSD: nvram.c,v 1.6 2000/04/11 02:44:29 pjanzen Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -123,13 +123,13 @@ microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

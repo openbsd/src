@@ -210,7 +210,7 @@ microtime(tvp)
 
 /* Make sure the micro seconds don't overflow. */
 
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
@@ -220,7 +220,7 @@ microtime(tvp)
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
 		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec > 1000000) {
+		if (tvp->tv_usec >= 1000000) {
 			tvp->tv_usec -= 1000000;
 			++tvp->tv_sec;
 		}

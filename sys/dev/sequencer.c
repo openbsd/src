@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.2 1999/07/23 13:18:04 niklas Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.3 2000/04/11 02:44:33 pjanzen Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define ADDTIMEVAL(a, b) ( \
 	(a)->tv_sec += (b)->tv_sec, \
 	(a)->tv_usec += (b)->tv_usec, \
-	(a)->tv_usec > 1000000 ? ((a)->tv_sec++, (a)->tv_usec -= 1000000) : 0\
+	(a)->tv_usec >= 1000000 ? ((a)->tv_sec++, (a)->tv_usec -= 1000000) : 0\
 	)
 
 #define SUBTIMEVAL(a, b) ( \

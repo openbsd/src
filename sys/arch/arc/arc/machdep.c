@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2000/03/23 09:59:53 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2000/04/11 02:44:25 pjanzen Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.37 2000/03/23 09:59:53 art Exp $
+ *      $Id: machdep.c,v 1.38 2000/04/11 02:44:25 pjanzen Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -1261,14 +1261,14 @@ microtime(tvp)
 	*tvp = time;
 #ifdef notdef
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 #endif
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

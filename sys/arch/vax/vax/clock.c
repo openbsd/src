@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 1997/09/10 12:04:42 maja Exp $	 */
+/*	$OpenBSD: clock.c,v 1.9 2000/04/11 02:44:32 pjanzen Exp $	 */
 /*	$NetBSD: clock.c,v 1.20 1997/04/18 18:49:37 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -69,13 +69,13 @@ microtime(tvp)
 
 	i = mfpr(PR_ICR) + tick; /* Get current interval count */
 	tvp->tv_usec += i;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

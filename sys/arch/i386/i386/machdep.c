@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2000/04/08 05:50:50 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.130 2000/04/11 02:44:27 pjanzen Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1729,7 +1729,7 @@ microtime(tvp)
 	*tvp = time;
 	tvp->tv_usec += tick;
 	splx(s);
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

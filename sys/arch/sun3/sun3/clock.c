@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 1997/01/16 04:04:14 kstailey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2000/04/11 02:44:31 pjanzen Exp $	*/
 /*	$NetBSD: clock.c,v 1.31 1996/10/30 00:24:42 gwr Exp $	*/
 
 /*
@@ -302,13 +302,13 @@ microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec++; 	/* XXX */
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 		tvp->tv_usec <= lasttime.tv_usec &&
-		(tvp->tv_usec = lasttime.tv_usec + 1) > 1000000)
+		(tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000)
 	{
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2000/03/23 09:59:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2000/04/11 02:44:12 pjanzen Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -1618,14 +1618,14 @@ microtime(tvp)
 	*tvp = time;
 #ifdef notdef
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 #endif
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
