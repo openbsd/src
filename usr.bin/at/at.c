@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.11 1997/03/03 03:34:34 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.12 1997/06/12 16:57:44 kstailey Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.11 1997/03/03 03:34:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.12 1997/06/12 16:57:44 kstailey Exp $";
 #endif
 
 char *no_export[] =
@@ -145,7 +145,7 @@ nextjob()
 	int jobno;
 	FILE *fid;
 
-	if ((fid = fopen(_PATH_SEQFILE, "r+")) != (FILE*)0) {
+	if ((fid = fopen(_PATH_SEQFILE, "r+")) != NULL) {
 		if (fscanf(fid, "%5x", &jobno) == 1) {
 			(void)rewind(fid);
 			jobno = (1+jobno) % 0xfffff;	/* 2^20 jobs enough? */
@@ -154,7 +154,7 @@ nextjob()
 			jobno = EOF;
 		(void)fclose(fid);
 		return (jobno);
-	} else if ((fid = fopen(_PATH_SEQFILE, "w")) != (FILE*)0) {
+	} else if ((fid = fopen(_PATH_SEQFILE, "w")) != NULL) {
 		(void)fprintf(fid, "%05x\n", jobno = 1);
 		(void)fclose(fid);
 		return (1);
