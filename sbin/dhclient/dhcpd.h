@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.12 2004/02/24 13:08:26 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.13 2004/02/24 13:21:32 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -618,7 +618,6 @@ char *piaddr(struct iaddr);
 /* dhclient.c */
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
-extern int interfaces_requested;
 extern time_t cur_time;
 extern u_int16_t local_port;
 extern int log_priority;

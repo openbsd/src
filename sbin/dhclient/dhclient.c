@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.14 2004/02/24 13:08:26 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.15 2004/02/24 13:21:32 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -80,8 +80,6 @@ struct tree_cache *global_options[256];
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = _PATH_DHCLIENT_DB;
 
-int interfaces_requested = 0;
-
 int log_perror = 1;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
@@ -104,7 +102,6 @@ u_int16_t	remote_port;
 int		log_priority;
 int		no_daemon;
 int		save_scripts;
-int		onetry = 0;
 int		unknown_ok = 1;
 int		routefd;
 
@@ -261,7 +258,6 @@ main(int argc, char *argv[])
 		error("calloc");
 	strlcpy(ip->name, argv[0], IFNAMSIZ);
 	ip->flags = INTERFACE_REQUESTED;
-	interfaces_requested = 1;
 	interfaces = ip;
 
 	if (quiet)
@@ -303,9 +299,6 @@ main(int argc, char *argv[])
 
 	/* Close and unlock */
 	close(fd);
-
-	if (!interfaces_requested)
-		error("no interface given");
 
 	if (interface_link_status(ip->name)) {
 		script_init(ip, "PREINIT", NULL);
@@ -1216,8 +1209,6 @@ activate_next:
 	/* No leases were available, or what was available didn't work, so
 	   tell the shell script that we failed to allocate an address,
 	   and try again later. */
-	if (onetry)
-		exit(1);
 	note("No working leases in persistent database - sleeping.\n");
 	script_init(ip, "FAIL", NULL);
 	if (ip->client->alias)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.7 2004/02/07 21:10:26 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.8 2004/02/24 13:21:32 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -401,7 +401,6 @@ parse_interface_declaration(FILE *cfile, struct client_config *outer_config)
 		make_client_config(ip, outer_config);
 
 	ip->flags &= ~INTERFACE_AUTOMATIC;
-	interfaces_requested = 1;
 
 	token = next_token(&val, cfile);
 	if (token != LBRACE) {
