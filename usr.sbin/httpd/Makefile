@@ -154,9 +154,6 @@ MANUALFILES= \
 	manual/mod/mod_ssl/ssl_intro.gfont000.gif \
 	manual/mod/mod_ssl/ssl_intro.html \
 	manual/mod/mod_ssl/ssl_intro.wml \
-	manual/mod/mod_ssl/CVS/Root \
-	manual/mod/mod_ssl/CVS/Repository \
-	manual/mod/mod_ssl/CVS/Entries \
 	manual/mod/mod_ssl/ssl_intro_fig1.gif \
 	manual/mod/mod_ssl/ssl_intro_fig2.gif \
 	manual/mod/mod_ssl/ssl_intro_fig3.gif \
