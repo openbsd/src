@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.4 1996/09/02 18:14:15 dm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.5 1996/09/06 07:21:41 niklas Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 #include <sys/syslog.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+
+#include <machine/cpu.h>
 
 #include <vm/vm.h>
 
