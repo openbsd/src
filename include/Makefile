@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 1997/02/03 00:08:24 millert Exp $
+#	$OpenBSD: Makefile,v 1.37 1997/02/13 22:41:51 provos Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -8,8 +8,8 @@
 
 # Missing: mp.h
 
-FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
-	disktab.h elf_abi.h err.h fnmatch.h fstab.h fts.h glob.h \
+FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h cpio.h ctype.h db.h \
+	dirent.h disktab.h elf_abi.h err.h fnmatch.h fstab.h fts.h glob.h \
 	grp.h ieeefp.h iso646.h kvm.h langinfo.h limits.h locale.h \
 	malloc.h math.h md4.h md5.h memory.h mpool.h ndbm.h netdb.h \
 	netgroup.h nlist.h nl_types.h olf_abi.h paths.h poll.h pwd.h \
