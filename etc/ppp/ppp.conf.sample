@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.16 2000/01/23 02:25:48 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.17 2000/03/26 18:35:05 brian Exp $
 #
 #################################################################
 
@@ -162,7 +162,7 @@ examples:
 #
     enable dns
 #
-# If you don't want to tell them what's in your /etc/resolf.conf file
+# If you don't want to tell them what's in your /etc/resolv.conf file
 # with `enable dns', override the values:
 #
     set dns 10.0.0.1 10.0.0.2
