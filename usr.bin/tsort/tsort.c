@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.9 2001/05/01 20:36:57 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.10 2001/07/14 14:18:50 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -148,7 +148,7 @@ static unsigned int read_hints __P((FILE *, struct ohash *, int,
 static struct node *find_smallest_node __P((struct array *));
 static struct node *find_good_cycle_break __P((struct array *));
 static void print_cycle __P((struct array *));
-static int find_cycle_with __P((struct node *, struct array *));
+static struct node *find_cycle_from __P((struct node *, struct array *));
 static struct node *find_predecessor __P((struct array *, struct node *));
 static unsigned int traverse_node __P((struct node *, unsigned int, struct array *));
 static struct node *find_longest_cycle __P((struct array *, struct array *));
@@ -649,10 +649,10 @@ find_smallest_node(h)
  *** Graph algorithms.
  ***/
 
-/* Explore the nodes reachable from i to find a cycle containing it, store
- * it in c.  This may fail.  */
-static int 
-find_cycle_with(i, c)
+/* Explore the nodes reachable from i to find a cycle, store it in c.  
+ * This may fail.  */
+static struct node * 
+find_cycle_from(i, c)
 	struct node 	*i;
 	struct array 	*c;
 {
@@ -676,12 +676,15 @@ find_cycle_with(i, c)
 			struct node *go = n->traverse->node;
 
 			if (go->mark) {
-				if (go == i) {
-					c->entries = 0;
-					for (; n != NULL; n = n->from) 
-						c->t[c->entries++] = n;
-					return 1;
+				c->entries = 0;
+				for (; n != NULL && n != go; n = n->from) {
+					c->t[c->entries++] = n;
+					n->mark = 0;
 				}
+				for (; n != NULL; n = n->from)
+					n->mark = 0;
+				c->t[c->entries++] = go;
+				return go;
 			} else {
 			    go->from = n;
 			    n = go;
@@ -690,7 +693,7 @@ find_cycle_with(i, c)
 			n->mark = 0;
 			n = n->from;
 			if (n == NULL) 
-				return 0;
+				return NULL;
 		}
 	}
 }
@@ -991,14 +994,15 @@ main(argc, argv)
 			    if (long_flag) {
 				    n = find_longest_cycle(&remaining, &aux);
 			    } else {
+				    struct node *b;
+
 				    if (hints_flag) 
 					    n = find_smallest_node(&remaining);
 				    else 
 					    n = find_good_cycle_break(&remaining);
-				    if (!quiet_flag) {
-					    while (!find_cycle_with(n, &aux))
-						    n = find_predecessor(&remaining, n);
-				    }
+				    while ((b = find_cycle_from(n, &aux)) == NULL)
+					    n = find_predecessor(&remaining, n);
+				    n = b;
 			    }
 
 			    if (!quiet_flag) {
