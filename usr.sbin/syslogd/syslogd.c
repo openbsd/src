@@ -480,7 +480,7 @@ logmsg(pri, msg, from, flags)
 	int fac, msglen, omask, prilev;
 	char *timestamp;
 
-	dprintf("logmsg: pri %o, flags %x, from %s, msg %s\n",
+	dprintf("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
 	    pri, flags, from, msg);
 
 	omask = sigblock(sigmask(SIGHUP)|sigmask(SIGALRM));
