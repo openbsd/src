@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.16 2003/01/30 04:36:27 marc Exp $
+# $OpenBSD: Makefile,v 1.17 2003/02/05 06:00:58 marc Exp $
 
 SUBDIR= cancel cancel2 close cwd execve fork group malloc_duel netdb pcap poll \
 	preemption preemption_float pthread_cond_timedwait pthread_create \
 	pthread_join pthread_kill pthread_mutex pthread_specific readdir \
 	select setjmp signal sigdeliver siginfo signodefer sigsuspend \
-	sigwait sleep socket stdarg stdio switch system
+	sigwait sleep socket stdarg stdfiles stdio switch system
 
 # Not available or disabled: fcntl, pause, and pw
 
