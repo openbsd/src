@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.112 2001/07/14 10:36:53 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.113 2001/07/15 23:05:04 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1931,6 +1931,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		src->seqlo = end;
 		src->seqhi = end + 1;
 		src->max_win = 1;
+		if (src->state < 1)
+			src->state = 1;
 	}
 
 	if ((th->th_flags & TH_ACK) == 0) {
