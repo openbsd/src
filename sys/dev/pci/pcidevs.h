@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.552 2002/10/03 23:50:50 jason Exp 
+ *		OpenBSD: pcidevs,v 1.553 2002/10/04 09:39:49 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1320,6 +1320,7 @@
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
 
 /* Intel products */
+#define	PCI_PRODUCT_INTEL_21145	0x0039		/* 21145 */
 #define	PCI_PRODUCT_INTEL_EESISA	0x0008		/* EES ISA */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB PCI-EISA */
