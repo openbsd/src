@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.15 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.16 2003/04/06 18:41:03 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -103,12 +103,12 @@ ExitProgram(int code) GCC_NORETURN;
 #endif
 
 static char *
-canonical_name(char *ptr, char *buf)
+canonical_name(char *ptr, char *buf, size_t bufl)
 /* extract the terminal type's primary name */
 {
     char *bp;
 
-    (void) strcpy(buf, ptr);
+    (void) strlcpy(buf, ptr, bufl);
     if ((bp = strchr(buf, '|')) != 0)
 	*bp = '\0';
 
@@ -304,32 +304,32 @@ dump_boolean(int val)
 }
 
 static void
-dump_numeric(int val, char *buf)
+dump_numeric(int val, char *buf, size_t bufl)
 /* display the value of a boolean capability */
 {
     switch (val) {
     case ABSENT_NUMERIC:
-	strcpy(buf, s_absent);
+	strlcpy(buf, s_absent, bufl);
 	break;
     case CANCELLED_NUMERIC:
-	strcpy(buf, s_cancel);
+	strlcpy(buf, s_cancel, bufl);
 	break;
     default:
-	sprintf(buf, "%d", val);
+	snprintf(buf, bufl, "%d", val);
 	break;
     }
 }
 
 static void
-dump_string(char *val, char *buf)
+dump_string(char *val, char *buf, size_t bufl)
 /* display the value of a string capability */
 {
     if (val == ABSENT_STRING)
-	strcpy(buf, s_absent);
+	strlcpy(buf, s_absent, bufl);
     else if (val == CANCELLED_STRING)
-	strcpy(buf, s_cancel);
+	strlcpy(buf, s_cancel, bufl);
     else {
-	sprintf(buf, "'%.*s'", MAX_STRING - 3, TIC_EXPAND(val));
+	snprintf(buf, bufl, "'%.*s'", MAX_STRING - 3, TIC_EXPAND(val));
     }
 }
 
@@ -373,8 +373,8 @@ compare_predicate(int type, int idx, const char *name)
     case CMP_NUMBER:
 	n1 = e1->tterm.Numbers[idx];
 	n2 = e2->tterm.Numbers[idx];
-	dump_numeric(n1, buf1);
-	dump_numeric(n2, buf2);
+	dump_numeric(n1, buf1, sizeof buf1);
+	dump_numeric(n2, buf2, sizeof buf2);
 	switch (compare) {
 	case C_DIFFERENCE:
 	    if (!((n1 == ABSENT_NUMERIC && n2 == ABSENT_NUMERIC)) && n1 != n2)
@@ -399,8 +399,8 @@ compare_predicate(int type, int idx, const char *name)
 	switch (compare) {
 	case C_DIFFERENCE:
 	    if (capcmp(idx, s1, s2)) {
-		dump_string(s1, buf1);
-		dump_string(s2, buf2);
+		dump_string(s1, buf1, sizeof buf1);
+		dump_string(s2, buf2, sizeof buf2);
 		if (strcmp(buf1, buf2))
 		    (void) printf("\t%s: %s, %s.\n", name, buf1, buf2);
 	    }
@@ -605,7 +605,8 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 	    && ((sp[3 + len] == 'h') || (sp[3 + len] == 'l'))) {
 	    char buf3[MAX_TERMINFO_LENGTH];
 
-	    (void) strcpy(buf2, (sp[3 + len] == 'h') ? "DEC+" : "DEC-");
+	    (void) strlcpy(buf2, (sp[3 + len] == 'h') ? "DEC+" : "DEC-",
+		sizeof buf2);
 	    (void) strncpy(buf3, sp + 3, len);
 	    len += 4;
 	    buf3[len] = '\0';
@@ -618,15 +619,15 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 		    size_t tlen = strlen(ap->from);
 
 		    if (strncmp(ap->from, ep, tlen) == 0) {
-			(void) strcat(buf2, ap->to);
+			(void) strlcat(buf2, ap->to, sizeof buf2);
 			found = TRUE;
 			break;
 		    }
 		}
 
 		if (!found)
-		    (void) strcat(buf2, ep);
-		(void) strcat(buf2, ";");
+		    (void) strlcat(buf2, ep, sizeof buf2);
+		(void) strlcat(buf2, ";", sizeof buf2);
 	    } while
 		((ep = strtok((char *) 0, ";")));
 	    buf2[strlen(buf2) - 1] = '\0';
@@ -640,7 +641,7 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 	    && sp[2 + len] == 'm') {
 	    char buf3[MAX_TERMINFO_LENGTH];
 
-	    (void) strcpy(buf2, "SGR:");
+	    (void) strlcpy(buf2, "SGR:", sizeof buf2);
 	    (void) strncpy(buf3, sp + 2, len);
 	    len += 3;
 	    buf3[len] = '\0';
@@ -653,15 +654,15 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 		    size_t tlen = strlen(ap->from);
 
 		    if (strncmp(ap->from, ep, tlen) == 0) {
-			(void) strcat(buf2, ap->to);
+			(void) strlcat(buf2, ap->to, sizeof buf2);
 			found = TRUE;
 			break;
 		    }
 		}
 
 		if (!found)
-		    (void) strcat(buf2, ep);
-		(void) strcat(buf2, ";");
+		    (void) strlcat(buf2, ep, sizeof buf2);
+		(void) strlcat(buf2, ";", sizeof buf2);
 	    } while
 		((ep = strtok((char *) 0, ";")));
 
@@ -670,7 +671,7 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 	}
 	/* now check for scroll region reset */
 	if (!expansion) {
-	    (void) sprintf(buf2, "\033[1;%dr", tp->Numbers[2]);
+	    (void) snprintf(buf2, sizeof buf2, "\033[1;%dr", tp->Numbers[2]);
 	    len = strlen(buf2);
 	    if (strncmp(buf2, sp, len) == 0)
 		expansion = "RSR";
@@ -678,7 +679,7 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 
 	/* now check for home-down */
 	if (!expansion) {
-	    (void) sprintf(buf2, "\033[%d;1H", tp->Numbers[2]);
+	    (void) snprintf(buf2, sizeof buf2, "\033[%d;1H", tp->Numbers[2]);
 	    len = strlen(buf2);
 	    if (strncmp(buf2, sp, len) == 0)
 		expansion = "LL";
@@ -693,7 +694,7 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 	    /* couldn't match anything */
 	    buf2[0] = *sp;
 	    buf2[1] = '\0';
-	    (void) strcat(buf, TIC_EXPAND(buf2));
+	    (void) strlcat(buf, TIC_EXPAND(buf2), sizeof buf);
 	}
     }
     (void) printf("%s\n", buf);
@@ -827,8 +828,8 @@ file_comparison(int argc, char *argv[])
 	    if (entryeq(&qp->tterm, &rp->tterm) && useeq(qp, rp)) {
 		char name1[NAMESIZE], name2[NAMESIZE];
 
-		(void) canonical_name(qp->tterm.term_names, name1);
-		(void) canonical_name(rp->tterm.term_names, name2);
+		(void) canonical_name(qp->tterm.term_names, name1, sizeof name1);
+		(void) canonical_name(rp->tterm.term_names, name2, sizeof name2);
 
 		(void) printf("%s = %s\n", name1, name2);
 	    }
@@ -851,8 +852,8 @@ file_comparison(int argc, char *argv[])
 		entries[0] = *qp;
 		entries[1] = *rp;
 
-		(void) canonical_name(qp->tterm.term_names, name1);
-		(void) canonical_name(rp->tterm.term_names, name2);
+		(void) canonical_name(qp->tterm.term_names, name1, sizeof name1);
+		(void) canonical_name(rp->tterm.term_names, name2, sizeof name2);
 
 		switch (compare) {
 		case C_DIFFERENCE:
@@ -942,12 +943,15 @@ static char *
 name_initializer(const char *type)
 {
     static char *initializer;
+    static size_t len;
     char *s;
 
-    if (initializer == 0)
-	initializer = (char *) malloc(strlen(entries->tterm.term_names) + 20);
+    if (initializer == 0) {
+	len = strlen(entries->tterm.term_names) + 20;
+	initializer = (char *) malloc(len);
+    }
 
-    (void) sprintf(initializer, "%s_data_%s", type, entries->tterm.term_names);
+    (void) snprintf(initializer, len, "%s_data_%s", type, entries->tterm.term_names);
     for (s = initializer; *s != 0 && *s != '|'; s++) {
 	if (!isalnum(CharOf(*s)))
 	    *s = '_';
@@ -1001,7 +1005,7 @@ dump_initializers(TERMTYPE * term)
 	    str = "CANCELLED_NUMERIC";
 	    break;
 	default:
-	    sprintf(buf, "%d", term->Numbers[n]);
+	    snprintf(buf, sizeof buf, "%d", term->Numbers[n]);
 	    str = buf;
 	    break;
 	}
