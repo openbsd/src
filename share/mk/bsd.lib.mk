@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.35 2001/07/22 13:37:29 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.36 2001/09/25 14:33:44 drahn Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -99,9 +99,9 @@ SHLIB_MINOR=${minor}
 
 .S.so .s.so:
 	@echo "${CPP} -DPIC ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	    ${AS} -k -o ${.TARGET}"
+	    ${AS} ${ASPICFLAG} -o ${.TARGET}"
 	@${CPP} -DPIC ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
-	    ${AS} -k -o ${.TARGET}.o
+	    ${AS} ${ASPICFLAG} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
