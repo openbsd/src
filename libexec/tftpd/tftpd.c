@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.3 1996/08/12 08:29:45 deraadt Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.4 1996/12/03 00:25:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -349,7 +349,7 @@ validate_access(filename, mode)
 		if ((stbuf.st_mode&(S_IWRITE >> 6)) == 0)
 			return (EACCESS);
 	}
-	fd = open(filename, mode == RRQ ? 0 : 1);
+	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|O_TRUNC));
 	if (fd < 0)
 		return (errno + 100);
 	file = fdopen(fd, (mode == RRQ)? "r":"w");
