@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.14 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.15 2002/01/02 02:38:42 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ sys_ptrace(p, v, retval)
 	struct uio uio;
 	struct iovec iov;
 	int error, write;
+	int temp;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -215,11 +216,11 @@ sys_ptrace(p, v, retval)
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
 	case  PT_WRITE_D:
 		write = 1;
+		temp = SCARG(uap, data);
 	case  PT_READ_I:		/* XXX no separate I and D spaces */
 	case  PT_READ_D:
 		/* write = 0 done above. */
-		iov.iov_base =
-		    write ? (caddr_t)&SCARG(uap, data) : (caddr_t)retval;
+		iov.iov_base = (caddr_t)&temp;
 		iov.iov_len = sizeof(int);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
@@ -228,7 +229,10 @@ sys_ptrace(p, v, retval)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		return (procfs_domem(p, t, NULL, &uio));
+		error = procfs_domem(p, t, NULL, &uio);
+		if (write == 0)
+			*retval = temp;
+		return (error);
 
 #ifdef PT_STEP
 	case  PT_STEP:
