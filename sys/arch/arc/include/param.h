@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.11 1998/08/30 22:05:35 millert Exp $ */
+/*      $OpenBSD: param.h,v 1.12 1999/08/11 22:14:17 niklas Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@
  */
 #define	ALIGNBYTES	7
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGNED_POINTER(p, t)  ((((u_int32_t)(p)) & (sizeof (t) - 1)) == 0)
 
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
