@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.10 2002/03/25 21:18:03 angelos Exp $
+.\" $OpenBSD: gre.4,v 1.11 2002/04/03 20:32:13 angelos Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -44,7 +44,8 @@
 .Sh SYNOPSIS
 .Cd pseudo-device gre Op Ar count
 .Sh NOTE
-.Tn GRE
+.Tn GRE,
+.Tn WCCPv1,
 and
 .Tn MobileIP
 are enabled with the following
@@ -54,6 +55,8 @@ variables respectively in
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
 .It net.inet.gre.allow
 Allow GRE packets in and out of the system.
+.It net.inet.gre.wccp
+Allow WCCPv2-style GRE packets into the system (depends on the above).
 .It net.inet.mobileip.allow
 Allow MobileIP packets in and out of the system.
 .El
