@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.28 2002/08/05 22:12:32 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.29 2002/08/06 03:48:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -233,7 +233,8 @@ cgsixattach(parent, self, aux)
 
 	sc->sc_rasops.ri_depth = sc->sc_depth;
 	sc->sc_rasops.ri_stride = sc->sc_linebytes;
-	sc->sc_rasops.ri_flg = RI_CENTER;
+	sc->sc_rasops.ri_flg = RI_CENTER |
+	    (console ? 0 : RI_CLEAR);
 	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
 	sc->sc_rasops.ri_width = sc->sc_width;
