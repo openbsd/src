@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.18 1997/08/06 01:45:21 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.19 1997/08/09 12:59:14 niklas Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -721,9 +721,10 @@ get_exportlist()
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
 			if (mount(fsp->f_fstypename, fsp->f_mntonname,
-				  fsp->f_flags | MNT_UPDATE,
+				  (u_short)fsp->f_flags | MNT_UPDATE,
 				  (caddr_t)&targs) < 0)
-				syslog(LOG_ERR, "Can't delete exports for %s",
+				syslog(LOG_ERR,
+				       "Can't delete exports for %s: %m",
 				       fsp->f_mntonname);
 		}
 		fsp++;
@@ -1650,7 +1651,8 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		 * exportable file systems and not just MOUNT_FFS.
 		 */
 		while (mount(fsb->f_fstypename, dirp,
-		       fsb->f_flags | MNT_UPDATE, (caddr_t)&args) < 0) {
+		       (u_short)fsb->f_flags | MNT_UPDATE, (caddr_t)&args) <
+                       0) {
 			if (cp)
 				*cp-- = savedc;
 			else
@@ -1682,7 +1684,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			if (cp == dirp) {
 				if (debug)
 					fprintf(stderr, "mnt unsucc\n");
-				syslog(LOG_ERR, "Can't export %s", dirp);
+				syslog(LOG_ERR, "Can't export %s: %m", dirp);
 				return (2);
 			}
 			savedc = *cp;
