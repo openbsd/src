@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.43 2004/07/20 05:44:35 espie Exp $
+.\" $OpenBSD: ports.7,v 1.44 2004/07/20 10:33:34 jmc Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -275,7 +275,7 @@ Remove the symbolic links created by
 The ports tree can be used concurrently for building several ports at the
 same time, thanks to a locking mechanism.
 By default, this mechanism is disabled.
-Defining 
+Defining
 .Ev LOCKDIR ,
 .Ev LOCK_CMD ,
 and
@@ -284,22 +284,23 @@ to proper values will activate it.
 .Pp
 All locks will be stored in
 .Pa ${LOCKDIR} .
-.Ev LOCK_CMD 
+.Ev LOCK_CMD
 should be used to acquire a lock, and
-.Ev UNLOCK_CMD should be used to release it.
+.Ev UNLOCK_CMD
+should be used to release it.
 .Pp
-Locks are named ${LOCKDIR}/${FULLPKGNAME}.lock, 
+Locks are named ${LOCKDIR}/${FULLPKGNAME}.lock,
 or ${LOCKDIR}/${DISTFILE}.lock for distfiles fetching.
 .Pp
 The locking protocol follows a big-lock model: each top-level target
-in a port directory will acquire the corresponding lock, complete its job, 
-then release the lock, e.g., running 
+in a port directory will acquire the corresponding lock, complete its job,
+then release the lock, e.g., running
 .Bd -literal -offset indent
-$ make build 
+$ make build
 .Ed
 .Pp
 will acquire the lock, run the port
-through 
+through
 .Ar fetch ,
 .Ar checksum ,
 .Ar extract ,
@@ -310,9 +311,9 @@ then release the lock.
 If dependencies are involved, they will invoke top-level targets in other
 directories, and thus acquire some other locks as well.
 .Pp
-At no moment should a given invocation of 
+At no moment should a given invocation of
 .Xr make 1
-acquire the same lock twice, thus recursive locking is not needed for 
+acquire the same lock twice, thus recursive locking is not needed for
 .Ev LOCK_CMD .
 .Sh BULK PACKAGE BUILDING
 The ports tree contains some mechanisms to save space when building
@@ -439,7 +440,8 @@ and
 .Ic server .
 .Pp
 In this instance, the build will yield multiple packages, one
-corresponding to each subpackage. In the case of our mysql example,
+corresponding to each subpackage.
+In the case of our mysql example,
 the subpackages will be called
 .Ic mysql-tests-<version> and mysql-server-<version> .
 .Pp
@@ -454,7 +456,6 @@ command during the install/deinstall phase:
 $ env SUBPACKAGE="-server" make install
 $ env SUBPACKAGE="-server" make deinstall
 .Ed
-.Pp
 .Sh PORT VARIABLES
 These can be changed in the environment, or in
 .Pa /etc/mk.conf
