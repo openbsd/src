@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2003/12/17 22:05:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.95 2003/12/18 23:38:46 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -730,7 +730,7 @@ haltsys:
 			tadpole_powerdown();
 #endif
 #endif /* NPOWER || MTCTRL */
-			prom_interpret("power-off");
+			rominterpret("power-off");
 			printf("WARNING: powerdown failed!\n");
 		}
 #endif /* SUN4M */
