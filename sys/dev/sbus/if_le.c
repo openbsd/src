@@ -62,8 +62,6 @@
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>	/*XXX*/
 
-#include <dev/ic/lancereg.h>
-#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
