@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.308 2003/01/24 11:30:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.309 2003/01/24 15:05:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1829,10 +1829,8 @@ pf_get_wscale(struct mbuf *m, int off, struct tcphdr *th, sa_family_t af)
 	u_int8_t	*opt, optlen;
 	u_int8_t	 wscale = 0;
 
-	hlen = th->th_off * 4;
+	hlen = th->th_off << 2;
 	if (hlen <= sizeof(*th))
-		return (0);
-	if (!pf_pull_hdr(m, off, th, hlen, NULL, NULL, af))
 		return (0);
 	opt = (u_int8_t *)(th + 1);
 	hlen -= sizeof(*th);
@@ -4139,6 +4137,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	case IPPROTO_TCP: {
 		struct tcphdr	th;
+		int		hlen;
 
 		pd.hdr.tcp = &th;
 		if (!pf_pull_hdr(m, off, &th, sizeof(th),
@@ -4146,7 +4145,13 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		pd.p_len = pd.tot_len - off - (th.th_off << 2);
+		hlen = th.th_off << 2;
+		if (hlen > sizeof(th) && !pf_pull_hdr(m, off, &th, hlen,
+		    &action, &reason, AF_INET)) {
+			log = action != PF_PASS;
+			goto done;
+		}
+		pd.p_len = pd.tot_len - off - hlen;
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
@@ -4356,6 +4361,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	case IPPROTO_TCP: {
 		struct tcphdr	th;
+		int		hlen;
 
 		pd.hdr.tcp = &th;
 		if (!pf_pull_hdr(m, off, &th, sizeof(th),
@@ -4363,7 +4369,13 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		pd.p_len = pd.tot_len - off - (th.th_off << 2);
+		hlen = th.th_off << 2;
+		if (hlen > sizeof(th) && !pf_pull_hdr(m, off, &th, hlen,
+		    &action, &reason, AF_INET6)) {
+			log = action != PF_PASS;
+			goto done;
+		}
+		pd.p_len = pd.tot_len - off - hlen;
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
