@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.94 2002/02/22 21:13:18 drahn Exp $
+.\"	$OpenBSD: options.4,v 1.95 2002/03/18 08:47:42 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -282,6 +282,12 @@ Adds hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.
 See
 .Xr ktrace 1
+for details.
+.It Cd option PTRACE
+Adds hooks for the process tracing facility, allowing a process to
+control and observe another process.
+See
+.Xr ptrace 2
 for details.
 .El
 .Ss File Systems
@@ -1025,6 +1031,7 @@ and/or
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
 .Xr msgsnd 2 ,
+.Xr ptrace 2 ,
 .Xr semctl 2 ,
 .Xr semget 2 ,
 .Xr semop 2 ,
