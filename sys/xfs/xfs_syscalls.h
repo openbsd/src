@@ -39,7 +39,7 @@
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
 
-#include <afssysdefs.h>
+#include <xfs/afssysdefs.h>
 
 struct sys_pioctl_args {
     syscallarg(int) operation;

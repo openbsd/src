@@ -35,6 +35,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#else
+#include <xfs/xfs_config.h>
 #endif
 
 #ifndef RCSID
