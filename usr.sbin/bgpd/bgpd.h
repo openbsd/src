@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.57 2004/01/06 23:14:58 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.58 2004/01/08 16:17:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -233,15 +233,15 @@ int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
 
 /* kroute.c */
-int	kroute_init(int);
-int	kroute_change(struct kroute *);
-int	kroute_delete(struct kroute *);
-void	kroute_shutdown(void);
-void	kroute_fib_couple(void);
-void	kroute_fib_decouple(void);
-int	kroute_dispatch_msg(void);
-int	kroute_nexthop_add(in_addr_t);
-void	kroute_nexthop_delete(in_addr_t);
+int	kr_init(int);
+int	kr_change(struct kroute *);
+int	kr_delete(struct kroute *);
+void	kr_shutdown(void);
+void	kr_fib_couple(void);
+void	kr_fib_decouple(void);
+int	kr_dispatch_msg(void);
+int	kr_nexthop_add(in_addr_t);
+void	kr_nexthop_delete(in_addr_t);
 
 /* control.c */
 int	control_init(void);

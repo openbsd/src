@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.58 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.59 2004/01/08 16:17:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
 	mrt_init(&ibuf_rde, &ibuf_se);
-	if ((rfd = kroute_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
+	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
 
 	for (p = peer_l; p != NULL; p = next) {
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
 			nfds--;
-			if (kroute_dispatch_msg() == -1)
+			if (kr_dispatch_msg() == -1)
 				quit = 1;
 		}
 
@@ -301,7 +301,7 @@ main(int argc, char *argv[])
 	} while (pid > 0 || (pid == -1 && errno == EINTR));
 
 	control_cleanup();
-	kroute_shutdown();
+	kr_shutdown();
 
 	logit(LOG_CRIT, "Terminating");
 	return (0);
@@ -393,13 +393,13 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
 				logit(LOG_CRIT, "route request not from RDE");
-			else if (kroute_change(imsg.data))
+			else if (kr_change(imsg.data))
 				return (-1);
 			break;
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
 				logit(LOG_CRIT, "route request not from RDE");
-			else if (kroute_delete(imsg.data))
+			else if (kr_delete(imsg.data))
 				return (-1);
 			break;
 		case IMSG_NEXTHOP_ADD:
@@ -407,7 +407,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 				logit(LOG_CRIT, "nexthop request not from RDE");
 			else {
 				memcpy(&ina, imsg.data, sizeof(ina));
-				if (kroute_nexthop_add(ina) == -1)
+				if (kr_nexthop_add(ina) == -1)
 					return (-1);
 			}
 			break;
@@ -416,7 +416,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 				logit(LOG_CRIT, "nexthop request not from RDE");
 			else {
 				memcpy(&ina, imsg.data, sizeof(ina));
-				kroute_nexthop_delete(ina);
+				kr_nexthop_delete(ina);
 			}
 			break;
 		case IMSG_CTL_RELOAD:
@@ -429,13 +429,13 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 			if (idx != PFD_PIPE_SESSION)
 				logit(LOG_CRIT, "couple request not from SE");
 			else
-				kroute_fib_couple();
+				kr_fib_couple();
 			break;
 		case IMSG_CTL_FIB_DECOUPLE:
 			if (idx != PFD_PIPE_SESSION)
 				logit(LOG_CRIT, "decouple request not from SE");
 			else
-				kroute_fib_decouple();
+				kr_fib_decouple();
 			break;
 		default:
 			break;
