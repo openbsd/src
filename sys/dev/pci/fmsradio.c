@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsradio.c,v 1.4 2002/05/29 12:39:02 mickey Exp $	*/
+/*	$OpenBSD: fmsradio.c,v 1.5 2002/06/03 16:54:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
@@ -71,7 +71,8 @@
 				RADIO_CAPS_HW_AFC |	\
 				RADIO_CAPS_LOCK_SENSITIVITY
 
-#define SF256PCPR_CAPS		RADIO_CAPS_SET_MONO |	\
+#define SF256PCPR_CAPS		RADIO_CAPS_DETECT_STEREO |	\
+				RADIO_CAPS_SET_MONO |	\
 				RADIO_CAPS_HW_SEARCH |	\
 				RADIO_CAPS_HW_AFC |	\
 				RADIO_CAPS_LOCK_SENSITIVITY
@@ -99,6 +100,7 @@
 #define PCPR_CLOCK_OFF		0
 #define PCPR_DATA_ON		FM_IO_PIN1
 #define PCPR_DATA_OFF		0
+#define PCPR_INFO_STEREO	0x04
 
 #define PCS_WREN_ON		0
 #define PCS_WREN_OFF		FM_IO_PIN2
@@ -526,7 +528,9 @@ fmsradio_get_info(void *v, struct radio_info *ri)
 		ri->caps = SF256PCPR_CAPS;
 		buf = sf256pcpr_hw_read(radio->tea.iot, radio->tea.ioh,
 		    radio->tea.offset);
-		ri->info = 0; /* UNSUPPORTED */
+		ri->info = bus_space_read_2(radio->tea.iot, radio->tea.ioh,
+			FM_VOLUME) == PCPR_INFO_STEREO ?
+			RADIO_INFO_STEREO : 0;
 		break;
 	case TUNER_SF64PCR:
 		ri->caps = SF64PCR_CAPS;
