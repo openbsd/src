@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.102 2000/12/15 01:14:31 brian Exp $
+.\" $OpenBSD: ppp.8,v 1.103 2000/12/29 14:17:54 angelos Exp $
 .Dd 20 September 1995
 .Dt PPP 8
 .Os
@@ -1584,7 +1584,7 @@ host, but not on other machines in the LAN, then the masquerading
 software is working properly, but the host is either not forwarding
 or possibly receiving IP packets.
 Check that IP forwarding is enabled in
-.Pa /etc/rc.conf
+.Pa /etc/sysctl.conf
 and that other machines have designated the
 .Nm
 host as the gateway for the LAN.
