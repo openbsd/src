@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.8 2004/04/11 12:56:05 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.9 2004/04/12 13:24:27 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -1138,11 +1138,14 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 					ntodo = MPT_NSGL(mpt) - 1;
 					ce->NextChainOffset = (MPT_RQSL(mpt) -
 					    sizeof(SGE_SIMPLE32)) >> 2;
+					ce->Length = MPT_NSGL(mpt)
+						* sizeof(SGE_SIMPLE32);
 				} else {
 					ntodo = nleft;
 					ce->NextChainOffset = 0;
+					ce->Length = ntodo
+						* sizeof(SGE_SIMPLE32);
 				}
-				ce->Length = ntodo * sizeof(SGE_SIMPLE32);
 				ce->Address = req->req_pbuf +
 				    ((char *)se - (char *)mpt_req);
 				ce->Flags = MPI_SGE_FLAGS_CHAIN_ELEMENT;
