@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.8 2004/07/09 16:22:02 deraadt Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.9 2005/03/06 16:12:48 miod Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,9 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <vis.h>
 
 #include <machine/eeprom.h>
 #include <machine/openpromio.h>
@@ -58,6 +60,7 @@ extern	int verbose;
 static	char err_str[BUFSIZE];
 
 static	void op_notsupp(struct extabent *, struct opiocdesc *, char *);
+static	void op_print(char *);
 
 /*
  * There are several known fields that I either don't know how to
@@ -118,7 +121,7 @@ op_handler(char *keyword, char *arg)
 			if (ex->ex_keyword != NULL)
 				(*ex->ex_handler)(ex, &opio, NULL);
 			else
-				printf("%s\n", opio.op_buf);
+				op_print(opio.op_buf);
 		}
  out:
 		if (ex->ex_keyword != NULL)
@@ -136,7 +139,7 @@ op_handler(char *keyword, char *arg)
 			if (ex->ex_keyword != NULL)
 				(*ex->ex_handler)(ex, &opio, NULL);
 			else
-				printf("%s\n", opio.op_buf);
+				op_print(opio.op_buf);
 		}
 	} else {
 		opio.op_buf = &opio_buf[0];
@@ -153,8 +156,10 @@ op_handler(char *keyword, char *arg)
 
 		if (ex->ex_keyword != NULL)
 			(*ex->ex_handler)(ex, &opio, NULL);
-		else
-			printf("%s=%s\n", keyword, opio.op_buf);
+		else {
+			printf("%s=", keyword);
+			op_print(opio.op_buf);
+		}
 	}
 
 	(void)close(fd);
@@ -245,8 +250,10 @@ op_dump(void)
 
 		if (ex->ex_keyword != NULL)
 			(*ex->ex_handler)(ex, &opio2, NULL);
-		else
-			printf("%s=%s\n", opio2.op_name, opio2.op_buf);
+		else {
+			printf("%s=", opio2.op_name);
+			op_print(opio2.op_buf);
+		}
 
 		/*
 		 * Place the name of the last read value back into
@@ -257,4 +264,21 @@ op_dump(void)
 		strlcpy(opio1.op_name, opio2.op_name, sizeof(buf1));
 	}
 	/* NOTREACHED */
+}
+
+static void
+op_print(char *op_buf)
+{
+	char *vistr;
+	size_t size;
+
+	size = 1 + 4 * strlen(op_buf);
+	vistr = (char *)malloc(size);
+	if (vistr == NULL)
+		printf("(out of memory)\n");
+	else {
+		strnvis(vistr, op_buf, size, VIS_NL | VIS_TAB | VIS_OCTAL);
+		printf("%s\n", vistr);
+		free(vistr);
+	}
 }
