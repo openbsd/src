@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.5 1997/08/04 19:25:54 deraadt Exp $	*/
+/*	$OpenBSD: child.c,v 1.6 1997/12/16 22:15:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: child.c,v 1.5 1997/08/04 19:25:54 deraadt Exp $";
+"$OpenBSD: child.c,v 1.6 1997/12/16 22:15:36 deraadt Exp $";
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
@@ -364,7 +364,9 @@ extern void waitup()
 #if	defined(HAVE_SELECT)
 	register int count;
 	register CHILD *pc;
-	fd_set rchildfds;
+	fd_set *rchildfdsp = NULL;
+	int rchildfdsn = 0;
+	int bytes;
 
 	debugmsg(DM_CALL, "waitup() start\n");
 
@@ -377,12 +379,19 @@ extern void waitup()
 	/*
 	 * Settup which children we want to select() on.
 	 */
-	FD_ZERO(&rchildfds);
+	for (pc = childlist; pc; pc = pc->c_next)
+		if (pc->c_readfd > rchildfdsn)
+			rchildfdsn = pc->c_readfd;
+	bytes = howmany(rchildfdsn+1, NFDBITS) * sizeof(fd_mask);
+	if ((rchildfdsp = (fd_set *)malloc(bytes)) == NULL)
+		return;
+
+	memset(rchildfdsp, 0, bytes);
 	for (pc = childlist; pc; pc = pc->c_next)
 		if (pc->c_readfd > 0) {
 			debugmsg(DM_MISC, "waitup() select on %d (%s)\n",
 				 pc->c_readfd, pc->c_name);
-			FD_SET(pc->c_readfd, &rchildfds);
+			FD_SET(pc->c_readfd, rchildfdsp);
 		}
 
 	/*
@@ -392,7 +401,7 @@ extern void waitup()
 	debugmsg(DM_MISC, "waitup() Call select(), activechildren=%d\n", 
 		 activechildren);
 
-	count = select(FD_SETSIZE, (SELECT_FD_TYPE *) &rchildfds,
+	count = select(rchildfdsn+1, (SELECT_FD_TYPE *) rchildfdsp,
 		       (SELECT_FD_TYPE *) NULL, (SELECT_FD_TYPE *) NULL,
 		       (struct timeval *) NULL);
 
@@ -407,6 +416,7 @@ extern void waitup()
 		if (errno != EINTR)
 			error("Select failed reading children input: %s", 
 			      SYSERR);
+		free(rchildfdsp);
 		return;
 	}
 
@@ -415,6 +425,7 @@ extern void waitup()
 	 */
 	if (count == 0) {
 		error("Select returned an unexpected count of 0.");
+		free(rchildfdsp);
 		return;
 	}
 
@@ -436,7 +447,7 @@ extern void waitup()
 		}
 
 		if (pc->c_name == NULL ||
-		    !FD_ISSET(pc->c_readfd, &rchildfds))
+		    !FD_ISSET(pc->c_readfd, rchildfdsp))
 			continue;
 
 		readchild(pc);
@@ -455,6 +466,7 @@ extern void waitup()
 
 #endif	/* defined(HAVE_SELECT) */
 	debugmsg(DM_CALL, "waitup() end\n");
+	free(rchildfdsp);
 }
 
 /*
