@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 1999/09/24 22:11:32 espie Exp $
+#	$OpenBSD: Makefile,v 1.7 2000/12/11 02:22:53 provos Exp $
 #	$NetBSD: Makefile,v 1.7 1995/04/23 07:50:21 cgd Exp $
 
-SUBDIR+=../egcs libgmp
+SUBDIR+=../egcs
 
 .include <bsd.subdir.mk>
