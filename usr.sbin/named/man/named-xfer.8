@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named-xfer.8,v 1.3 1997/06/10 20:04:31 deraadt Exp $
+.\"	$OpenBSD: named-xfer.8,v 1.4 1998/05/31 17:35:10 millert Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -112,12 +112,12 @@ A number after the ``d'' determines the level of
 messages printed.
 .TP
 .B \-l
-Specifies a log file for debugging messages.  The default is system-
-dependent but is usually in
-.I /etc/namedb/tmp/
-or
-.IR /usr/tmp .
-Note that this only applies if
+Specifies a log file for debugging messages.  The log file will be
+written in the directory specified in
+.I named.boot
+(which is
+.IR /var/named
+in the default configuration).  Note that this only applies if
 .I \-d
 is also specified.
 .TP
