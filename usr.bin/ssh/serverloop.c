@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.44 2001/01/31 20:37:23 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.45 2001/02/04 15:32:25 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -162,7 +162,7 @@ make_packets_from_stdout_data()
 		} else {
 			/* Keep the packets at reasonable size. */
 			if (len > packet_get_maxsize())
-				len = packet_get_maxsize();	
+				len = packet_get_maxsize();
 		}
 		packet_start(SSH_SMSG_STDOUT_DATA);
 		packet_put_string(buffer_ptr(&stdout_buffer), len);
@@ -830,7 +830,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 	xfree(ctype);
 }
 
-void 
+void
 server_input_global_request(int type, int plen, void *ctxt)
 {
 	char *rtype;
@@ -840,7 +840,7 @@ server_input_global_request(int type, int plen, void *ctxt)
 	rtype = packet_get_string(NULL);
 	want_reply = packet_get_char();
 	debug("server_input_global_request: rtype %s want_reply %d", rtype, want_reply);
-	
+
 	if (strcmp(rtype, "tcpip-forward") == 0) {
 		struct passwd *pw;
 		char *listen_address;

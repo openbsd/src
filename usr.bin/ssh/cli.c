@@ -1,5 +1,5 @@
 #include "includes.h"
-RCSID("$OpenBSD: cli.c,v 1.6 2001/01/21 19:05:47 markus Exp $");
+RCSID("$OpenBSD: cli.c,v 1.7 2001/02/04 15:32:23 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -138,11 +138,11 @@ cli_write(char* buf, int size)
 
 	output = xmalloc(4*size);
 	for (p = output, i = 0; i < size; i++) {
-                if (buf[i] == '\n')
-                        *p++ = buf[i];
-                else
-                        p = vis(p, buf[i], 0, 0);
-        }
+		if (buf[i] == '\n')
+			*p++ = buf[i];
+		else
+			p = vis(p, buf[i], 0, 0);
+	}
 	len = p - output;
 
 	for (pos = 0; pos < len; pos += ret) {

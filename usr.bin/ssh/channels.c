@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.88 2001/02/01 21:58:08 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.89 2001/02/04 15:32:23 stevesk Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
@@ -704,7 +704,7 @@ channel_post_connecting(Channel *c, fd_set * readset, fd_set * writeset)
 		int err = 0;
 		int sz = sizeof(err);
 		c->type = SSH_CHANNEL_OPEN;
-                if (getsockopt(c->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &sz) < 0) {
+		if (getsockopt(c->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &sz) < 0) {
 			debug("getsockopt SO_ERROR failed");
 		} else {
 			if (err == 0) {
@@ -1561,7 +1561,7 @@ channel_request_forwarding(
 
 	if (remote_fwd) {
 		host = listen_address;
-	    	ctype = SSH_CHANNEL_RPORT_LISTENER;
+		ctype = SSH_CHANNEL_RPORT_LISTENER;
 	} else {
 		host = host_to_connect;
 		ctype  =SSH_CHANNEL_PORT_LISTENER;
@@ -1767,14 +1767,14 @@ channel_connect_to(const char *host, u_short host_port)
 			error("connect %.100s port %s: %.100s", ntop, strport,
 			    strerror(errno));
 			close(sock);
-			continue;	/* fail -- try next */	
+			continue;	/* fail -- try next */
 		}
 		break; /* success */
 
 	}
 	freeaddrinfo(aitop);
 	if (!ai) {
-		error("connect %.100s port %d: failed.", host, host_port);	
+		error("connect %.100s port %d: failed.", host, host_port);
 		return -1;
 	}
 	/* success */
@@ -2455,7 +2455,7 @@ channel_cancel_cleanup(int id)
 	}
 	c->dettach_user = NULL;
 }
-void   
+void
 channel_register_filter(int id, channel_filter_fn *fn)
 {
 	Channel *c = channel_lookup(id);

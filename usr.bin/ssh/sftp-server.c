@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.16 2001/02/04 15:23:08 deraadt Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.17 2001/02/04 15:32:25 stevesk Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -201,7 +201,7 @@ handle_to_dir(int handle)
 int
 handle_to_fd(int handle)
 {
-	if (handle_is_ok(handle, HANDLE_FILE)) 
+	if (handle_is_ok(handle, HANDLE_FILE))
 		return handles[handle].fd;
 	return -1;
 }
@@ -602,7 +602,7 @@ process_opendir(void)
 	id = get_int();
 	path = get_string(NULL);
 	TRACE("opendir id %d path %s", id, path);
-	dirp = opendir(path); 
+	dirp = opendir(path);
 	if (dirp == NULL) {
 		status = errno_to_portable(errno);
 	} else {
@@ -613,7 +613,7 @@ process_opendir(void)
 			send_handle(id, handle);
 			status = SSH2_FX_OK;
 		}
-		
+
 	}
 	if (status != SSH2_FX_OK)
 		send_status(id, status);
@@ -917,7 +917,7 @@ main(int ac, char **av)
 	handle_init();
 
 #ifdef DEBUG_SFTP_SERVER
-        log_init("sftp-server", SYSLOG_LEVEL_DEBUG1, SYSLOG_FACILITY_AUTH, 0);
+	log_init("sftp-server", SYSLOG_LEVEL_DEBUG1, SYSLOG_FACILITY_AUTH, 0);
 #endif
 
 	in = dup(STDIN_FILENO);

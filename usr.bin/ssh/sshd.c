@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.160 2001/02/04 15:14:15 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.161 2001/02/04 15:32:27 stevesk Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -420,7 +420,7 @@ destroy_sensitive_data(void)
 		key_free(sensitive_data.server_key);
 		sensitive_data.server_key = NULL;
 	}
-        for(i = 0; i < options.num_host_key_files; i++) {
+	for(i = 0; i < options.num_host_key_files; i++) {
 		if (sensitive_data.host_keys[i]) {
 			key_free(sensitive_data.host_keys[i]);
 			sensitive_data.host_keys[i] = NULL;
@@ -965,7 +965,7 @@ main(int ac, char **av)
 						startups++;
 						break;
 					}
-				
+
 				/*
 				 * Got connection.  Fork a child to handle it, unless
 				 * we are in debugging mode.
@@ -1483,7 +1483,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	fprintf(stderr, "\npub= ");
 	BN_print_fp(stderr, dh->pub_key);
 	fprintf(stderr, "\n");
-        DHparams_print_fp(stderr, dh);
+	DHparams_print_fp(stderr, dh);
 #endif
 	if (!dh_pub_is_valid(dh, dh_client_pub))
 		packet_disconnect("bad client public DH value");
@@ -1626,7 +1626,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	fprintf(stderr, "\npub= ");
 	BN_print_fp(stderr, dh->pub_key);
 	fprintf(stderr, "\n");
-        DHparams_print_fp(stderr, dh);
+	DHparams_print_fp(stderr, dh);
 #endif
 	if (!dh_pub_is_valid(dh, dh_client_pub))
 		packet_disconnect("bad client public DH value");

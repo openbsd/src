@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.92 2001/01/30 22:48:52 djm Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.93 2001/02/04 15:32:26 stevesk Exp $");
 
 #include <openssl/bn.h>
 
@@ -324,7 +324,7 @@ ssh_exchange_identification()
 	int remote_major, remote_minor, i, mismatch;
 	int connection_in = packet_get_connection_in();
 	int connection_out = packet_get_connection_out();
-	int minor1 = PROTOCOL_MINOR_1; 
+	int minor1 = PROTOCOL_MINOR_1;
 
 	/* Read other side\'s version identification. */
 	for (;;) {
@@ -680,7 +680,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			error("X11 forwarding is disabled to avoid trojan horses.");
 			options.forward_x11 = 0;
 		}
-	        if (options.num_local_forwards > 0 || options.num_remote_forwards > 0) {
+		if (options.num_local_forwards > 0 || options.num_remote_forwards > 0) {
 			error("Port forwarding is disabled to avoid trojan horses.");
 			options.num_local_forwards = options.num_remote_forwards = 0;
 		}

@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.34 2001/02/04 13:30:11 stevesk Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.35 2001/02/04 15:32:22 stevesk Exp $");
 
 #include <openssl/evp.h>
 
@@ -553,7 +553,7 @@ ssh_remove_all_identities(AuthenticationConnection *auth, int version)
 	return decode_reply(type);
 }
 
-int 
+int
 decode_reply(int type)
 {
 	switch (type) {

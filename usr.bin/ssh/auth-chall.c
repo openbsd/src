@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-chall.c,v 1.3 2001/01/21 19:05:41 markus Exp $");
+RCSID("$OpenBSD: auth-chall.c,v 1.4 2001/02/04 15:32:22 stevesk Exp $");
 
 #include "auth.h"
 
@@ -34,7 +34,7 @@ char *
 get_challenge(Authctxt *authctxt, char *devs)
 {
 	static char challenge[1024];
-        struct skey skey;
+	struct skey skey;
 	if (skeychallenge(&skey, authctxt->user, challenge) == -1)
 		return NULL;
 	strlcat(challenge, "\nS/Key Password: ", sizeof challenge);

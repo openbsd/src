@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.11 2001/01/21 19:05:57 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.12 2001/02/04 15:32:26 stevesk Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -489,7 +489,7 @@ conloop(void)
 	c = tq.tqh_first;
 	while (c &&
 	       (c->c_tv.tv_sec < now.tv_sec ||
-	        (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
+		(c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
 		int s = c->c_fd;
 		c = c->c_link.tqe_next;
 		conrecycle(s);

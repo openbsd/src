@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.52 2001/02/03 10:08:37 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.53 2001/02/04 15:32:25 stevesk Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -114,7 +114,7 @@ extern int startup_pipe;
 static char *xauthfile;
 
 /* original command from peer. */
-char *original_command = NULL; 
+char *original_command = NULL;
 
 /* data */
 #define MAX_SESSIONS 10
@@ -830,7 +830,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 			    (LOGIN_SETALL & ~LOGIN_SETPATH)) < 0) {
 				perror("unable to set user context");
 				exit(1);
-				
+
 			}
 #else
 			if (setlogin(pw->pw_name) < 0)
@@ -1059,7 +1059,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 				if (f) {
 					fprintf(f, "add %s %s %s\n", display,
 					    auth_proto, auth_data);
-					if (screen != NULL) 
+					if (screen != NULL)
 						fprintf(f, "add %.*s/unix%s %s %s\n",
 						    (int)(screen-display), display,
 						    screen, auth_proto, auth_data);
