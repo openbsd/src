@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.95 2004/04/28 04:34:46 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.96 2004/04/28 06:43:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1274,6 +1274,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	infile = filename;
 
 	if (check_file_secrecy(fileno(fin), filename)) {
+		fclose(fin);
 		free(conf);
 		free(mrtconf);
 		return (-1);
