@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.220 2000/02/22 18:50:38 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.222 2000/03/04 18:46:42 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -676,8 +676,14 @@
 #define	PCI_PRODUCT_AMD_PCHOME_PCI	0x2001		/* 79c978 PChome-PCI LANCE */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */
 #define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ether+SCSI */
-#define	PCI_PRODUCT_AMD_AMD_751AGP	0x7006		/* 751 PCI-AGP */
-#define	PCI_PRODUCT_AMD_AMD_751PCI	0x7007		/* 751 PCI-PCI */
+/* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
+#define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System Controller */
+#define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 PCI-PCI */
+/* http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf */
+#define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* 756 PCI-to-ISA Bridge */
+#define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* 756 IDE */
+#define	PCI_PRODUCT_AMD_PBC756_PMC	0x740B		/* 756 Power Management */
+#define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* 756 USB Host */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI */

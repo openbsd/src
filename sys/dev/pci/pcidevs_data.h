@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.220 2000/02/22 18:50:38 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.222 2000/03/04 18:46:42 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -585,16 +585,40 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "79C974 PCnet-PCI Ether+SCSI",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD_751AGP,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
 	    0,
 	    "AMD",
-	    "751 PCI-AGP",
+	    "751 System Controller",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD_751PCI,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_PPB,
 	    0,
 	    "AMD",
 	    "751 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
+	    0,
+	    "AMD",
+	    "756 PCI-to-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE,
+	    0,
+	    "AMD",
+	    "756 IDE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC,
+	    0,
+	    "AMD",
+	    "756 Power Management",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_USB,
+	    0,
+	    "AMD",
+	    "756 USB Host",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
