@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.45 1999/11/03 23:31:03 markus Exp $");
+RCSID("$Id: sshd.c,v 1.46 1999/11/10 22:24:01 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -43,12 +43,8 @@ int deny_severity = LOG_WARNING;
 #define O_NOCTTY	0
 #endif
 
-#ifdef KRB4
-char *ticket = NULL;
-#endif /* KRB4 */
-
 /* Local Xauthority file. */
-char *xauthfile = NULL;
+static char *xauthfile = NULL;
 
 /* Server configuration options. */
 ServerOptions options;
@@ -1381,6 +1377,19 @@ do_authentication(char *user, int privileged_port)
   do_authenticated(pw);
 }
 
+/* Remove local Xauthority file. */
+static void
+xauthfile_cleanup_proc(void *ignore)
+{
+  debug("xauthfile_cleanup_proc called");
+
+  if (xauthfile != NULL) {
+    unlink(xauthfile);
+    xfree(xauthfile);
+    xauthfile = NULL;
+  }
+}
+
 /* Prepares for an interactive session.  This is called after the user has
    been successfully authenticated.  During this message exchange, pseudo
    terminals are allocated, X11, TCP/IP, and authentication agent forwardings
@@ -1536,6 +1545,7 @@ void do_authenticated(struct passwd *pw)
 	  if ((xauthfd = mkstemp(xauthfile)) != -1) {
 	    fchown(xauthfd, pw->pw_uid, pw->pw_gid);
 	    close(xauthfd);
+            fatal_add_cleanup(xauthfile_cleanup_proc, NULL);
 	  }
 	  else {
 	    xfree(xauthfile);
@@ -1764,11 +1774,6 @@ void pty_cleanup_proc(void *context)
 
   debug("pty_cleanup_proc called");
 
-#if defined(KRB4)
-  /* Destroy user's ticket cache file. */
-  (void) dest_tkt();
-#endif /* KRB4 */
-  
   /* Record that the user has logged out. */
   record_logout(cu->pid, cu->ttyname);
 
@@ -2167,10 +2172,14 @@ void do_child(const char *command, struct passwd *pw, const char *term,
     child_set_env(&env, &envsize, "DISPLAY", display);
 
 #ifdef KRB4
-  if (ticket)
-    child_set_env(&env, &envsize, "KRBTKFILE", ticket);
+  {
+    extern char *ticket;
+    
+    if (ticket)
+      child_set_env(&env, &envsize, "KRBTKFILE", ticket);
+  }
 #endif /* KRB4 */
-
+  
   /* Set XAUTHORITY to always be a local file. */
   if (xauthfile)
       child_set_env(&env, &envsize, "XAUTHORITY", xauthfile);

@@ -15,7 +15,7 @@ to the system log.
 */
 
 #include "includes.h"
-RCSID("$Id: log-server.c,v 1.5 1999/10/17 20:39:11 dugsong Exp $");
+RCSID("$Id: log-server.c,v 1.6 1999/11/10 22:24:01 markus Exp $");
 
 #include <syslog.h>
 #include "packet.h"
@@ -187,19 +187,16 @@ void fatal(const char *fmt, ...)
   va_list args;
   struct fatal_cleanup *cu, *next_cu;
   static int fatal_called = 0;
-#if defined(KRB4)
-  extern char *ticket;
-#endif /* KRB4 */
   DECL_MSGBUF;
 
-  if (log_quiet)
-    exit(1);
-  va_start(args, fmt);
-  vsnprintf(msgbuf, MSGBUFSIZE, fmt, args);
-  va_end(args);
-  if (log_on_stderr)
-    fprintf(stderr, "fatal: %s\n", msgbuf);
-  syslog(LOG_ERR, "fatal: %.500s", msgbuf);
+  if (!log_quiet) {
+    va_start(args, fmt);
+    vsnprintf(msgbuf, MSGBUFSIZE, fmt, args);
+    va_end(args);
+    if (log_on_stderr)
+      fprintf(stderr, "fatal: %s\n", msgbuf);
+    syslog(LOG_ERR, "fatal: %.500s", msgbuf);
+  }
 
   if (fatal_called)
     exit(1);
@@ -213,21 +210,6 @@ void fatal(const char *fmt, ...)
 	    (unsigned long)cu->proc, (unsigned long)cu->context);
       (*cu->proc)(cu->context);
     }
-#if defined(KRB4)
-  /* If you forwarded a ticket you get one shot for proper
-     authentication. */
-  /* If tgt was passed unlink file */
-  if (ticket)
-    {
-      if (strcmp(ticket,"none"))
-	unlink(ticket);
-      else
-	ticket = NULL;
-    }
-#endif /* KRB4 */
-
-  /* If local XAUTHORITY was created, remove it. */
-  if (xauthfile) unlink(xauthfile);
 
   exit(1);
 }
