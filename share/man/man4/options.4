@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.4 1997/08/18 15:48:09 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.5 1997/09/22 05:13:23 millert Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
@@ -579,6 +579,13 @@ which needs to be compiled with
 .Em PPP_FILTER
 defined (the current default).
 .El
+.Ss SCSI Subsystem Options
+.Bl -ohang
+.It Cd option SCSITERSE
+Terser SCSI error messages.  This omits the table for decoding ASC/ASCQ
+info, saving about 8 bytes or so.
+.It Cd option SCSIDEBUG
+Prints extra debugging info for the SCSI subsystem to the console.
 .Ss System V IPC Options
 .Bl -ohang
 .It Cd option SYSVMSG
