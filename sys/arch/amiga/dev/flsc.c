@@ -1,6 +1,6 @@
-/*	$OpenBSD: flsc.c,v 1.3 1996/05/02 06:43:39 niklas Exp $	*/
+/*	$OpenBSD: flsc.c,v 1.4 1996/08/23 18:52:32 niklas Exp $	*/
 
-/*	$NetBSD: flsc.c,v 1.5 1996/04/21 21:11:03 veego Exp $	*/
+/*	$NetBSD: flsc.c,v 1.5.4.1 1996/06/03 19:35:40 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -110,7 +110,8 @@ flscmatch(pdp, match, auxp)
 		return(0);
 
 	zap = auxp;
-	if (zap->manid == 0x2140 && zap->prodid == 11)
+	if (zap->manid == 0x2140 && zap->prodid == 11
+	    && iszthreepa(zap->pa))
 		return(1);
 
 	return(0);

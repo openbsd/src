@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.1 1996/05/19 21:06:00 veego Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.1.4.1 1996/05/27 01:12:10 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -64,6 +64,7 @@ void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
 void et_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
 void et_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
     int dir));
+static void etbcopy(const void *src, void *dst, size_t len);
 
 
 /*
@@ -198,9 +199,9 @@ et_clear(ip, sy, sx, h, w)
 	len = w*h;
 
 	SetTextPlane(ba, 0x00);
-	bcopy(src, dst, len);
+	etbcopy(src, dst, len);
 	SetTextPlane(ba, 0x01);
-	bcopy(src, dst, len);
+	etbcopy(src, dst, len);
 }
 
 
@@ -220,18 +221,18 @@ et_scroll(ip, sy, sx, count, dir)
 
 	switch (dir) {
 	    case SCROLL_UP:
-		bcopy(fb, fb - (count * ip->cols), 
+		etbcopy(fb, fb - (count * ip->cols), 
 		    (ip->bottom_margin + 1 - sy) * ip->cols);
 		break;
 	    case SCROLL_DOWN:
-		bcopy(fb, fb + (count * ip->cols),
+		etbcopy(fb, fb + (count * ip->cols),
 		    (ip->bottom_margin + 1 - (sy + count)) * ip->cols);
 		break;
 	    case SCROLL_RIGHT:
-		bcopy(fb+sx, fb+sx+count, ip->cols - (sx + count));
+		etbcopy(fb+sx, fb+sx+count, ip->cols - (sx + count));
 		break;
 	    case SCROLL_LEFT:
-		bcopy(fb+sx, fb+sx-count, ip->cols - sx);
+		etbcopy(fb+sx, fb+sx-count, ip->cols - sx);
 		break;
 	}
 
@@ -239,19 +240,45 @@ et_scroll(ip, sy, sx, count, dir)
 
 	switch (dir) {
 	    case SCROLL_UP:
-		bcopy(fb, fb - (count * ip->cols), 
+		etbcopy(fb, fb - (count * ip->cols), 
 		    (ip->bottom_margin + 1 - sy) * ip->cols);
 		break;
 	    case SCROLL_DOWN:
-		bcopy(fb, fb + (count * ip->cols),
+		etbcopy(fb, fb + (count * ip->cols),
 		    (ip->bottom_margin + 1 - (sy + count)) * ip->cols);
 		break;
 	    case SCROLL_RIGHT:
-		bcopy(fb+sx, fb+sx+count, ip->cols - (sx + count));
+		etbcopy(fb+sx, fb+sx+count, ip->cols - (sx + count));
 		break;
 	    case SCROLL_LEFT:
-		bcopy(fb+sx, fb+sx-count, ip->cols - sx);
+		etbcopy(fb+sx, fb+sx-count, ip->cols - sx);
 		break;
 	}
 }
+
+
+static void etbcopy(src, dst, len)
+	const void *src;
+	void *dst;
+	size_t len;
+{
+	int i;
+
+	if (src == dst)
+		return;
+
+	if (src > dst)
+		for (i=len; i>0; i--) {
+			*((char *)dst)++ = *((char *)src)++;
+		}
+	else {
+		((char *)src) += len;
+		((char *)dst) += len;
+		
+		for (i=len; i>0; i--){
+			*--((char *)dst) = *--((char *)src);
+		}
+	}
+}
+
 #endif /* NGRFET */

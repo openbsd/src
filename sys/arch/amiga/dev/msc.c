@@ -1,5 +1,5 @@
-/*	$OpenBSD: msc.c,v 1.4 1996/05/02 06:44:22 niklas Exp $ */
-/*	$NetBSD: msc.c,v 1.6 1996/04/21 21:12:15 veego Exp $ */
+/*	$OpenBSD: msc.c,v 1.5 1996/08/23 18:53:14 niklas Exp $ */
+/*	$NetBSD: msc.c,v 1.6.4.1 1996/06/06 04:53:17 mhitch Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -324,6 +324,7 @@ mscopen(dev, flag, mode, p)
   if (!msc_tty[ttyn]) {
 
       tp = ttymalloc();
+      tty_attach(tp);
       msc_tty[ttyn] = tp;
       msc_tty[ttyn+1] = (struct tty *)NULL;
 

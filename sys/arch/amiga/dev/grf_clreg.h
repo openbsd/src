@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_clreg.h,v 1.4 1996/05/29 10:14:59 niklas Exp $	*/
-/*	$NetBSD: grf_clreg.h,v 1.4 1996/05/19 21:05:23 veego Exp $	*/
+/*	$OpenBSD: grf_clreg.h,v 1.5 1996/08/23 18:52:38 niklas Exp $	*/
+/*	$NetBSD: grf_clreg.h,v 1.4.4.1 1996/05/27 10:50:42 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -272,122 +272,37 @@ struct grfcltext_mode {
 
 
 #define WGfx(ba, idx, val) \
-	do { vgaw(ba, GCT_ADDRESS, idx); vgaw(ba, GCT_ADDRESS_W , val); } while (0)
+	do { \
+		vgaw(ba, GCT_ADDRESS, idx); \
+		vgaw(ba, GCT_ADDRESS_W , val); \
+	} while (0)
 
 #define WSeq(ba, idx, val) \
-	do { vgaw(ba, SEQ_ADDRESS, idx); vgaw(ba, SEQ_ADDRESS_W , val); } while (0)
+	do { \
+		vgaw(ba, SEQ_ADDRESS, idx); \
+		vgaw(ba, SEQ_ADDRESS_W , val); \
+	} while (0) \
+
+/*		asm volatile ("nop"); \ */
 
 #define WCrt(ba, idx, val) \
-	do { vgaw(ba, CRT_ADDRESS, idx); vgaw(ba, CRT_ADDRESS_W , val); } while (0)
+	do { \
+		vgaw(ba, CRT_ADDRESS, idx); \
+		vgaw(ba, CRT_ADDRESS_W , val); \
+	} while (0)
 
 #define WAttr(ba, idx, val) \
 	do {	\
-		vgar(ba, ACT_ADDRESS_RESET);\
-		vgaw(ba, ACT_ADDRESS_W, idx);\
-		vgaw(ba, ACT_ADDRESS_W, val);\
+		vgar(ba, ACT_ADDRESS_RESET); \
+		vgaw(ba, ACT_ADDRESS_W, idx); \
+		vgaw(ba, ACT_ADDRESS_W, val); \
 	} while (0)
 
 #define SetTextPlane(ba, m) \
 	do { \
-    	     WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 );\
-	     WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3)));\
-        } while (0)
-
-/* Special wakeup/passthrough registers on graphics boards
- *
- * The methods have diverged a bit for each board, so
- * WPass(P) has been converted into a set of specific
- * inline functions.
- */
-static inline void RegWakeup(volatile void *ba) {
-	extern int cltype;
-	extern int cl_sd64;
-
-	switch (cltype) {
-	    case SPECTRUM:
-		vgaw(ba, PASS_ADDRESS_W, 0x1f);
-		break;
-	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		break;
-	    case PICCOLO:
-		if (cl_sd64 == 1)
-			vgaw(ba, PASS_ADDRESS_W, 0x1f);
-		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x10);
-		break;
-	}
-	delay(200000);
-}
-
-static inline void RegOnpass(volatile void *ba) {
-	extern int cltype;
-	extern int cl_sd64;
-	extern unsigned char pass_toggle;
-
-	switch (cltype) {
-	    case SPECTRUM:
-		vgaw(ba, PASS_ADDRESS_W, 0x4f);
-		break;
-	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_WP, 0x01);
-		break;
-	    case PICCOLO:
-		if (cl_sd64 == 1)
-			vgaw(ba, PASS_ADDRESS_W, 0x4f);
-		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) & 0xdf);
-		break;
-	}
-	pass_toggle = 1;
-	delay(200000);
-}
-
-static inline void RegOffpass(volatile void *ba) {
-	extern int cltype;
-	extern int cl_sd64;
-	extern unsigned char pass_toggle;
-
-	switch (cltype) {
-	    case SPECTRUM:
-		vgaw(ba, PASS_ADDRESS_W, 0x6f);
-		break;
-	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		delay(200000);
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		break;
-	    case PICCOLO:
-		if (cl_sd64 == 1)
-			vgaw(ba, PASS_ADDRESS_W, 0x6f);
-		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x20);
-		break;
-	}
-	pass_toggle = 0;
-	delay(200000);
-}
-
-static inline unsigned char RAttr(volatile void * ba, short idx) {
-	vgar(ba, ACT_ADDRESS_RESET);
-	vgaw(ba, ACT_ADDRESS_W, idx);
-	return vgar (ba, ACT_ADDRESS_R);
-}
-
-static inline unsigned char RSeq(volatile void * ba, short idx) {
-	vgaw (ba, SEQ_ADDRESS, idx);
-	return vgar (ba, SEQ_ADDRESS_R);
-}
-
-static inline unsigned char RCrt(volatile void * ba, short idx) {
-	vgaw (ba, CRT_ADDRESS, idx);
-	return vgar (ba, CRT_ADDRESS_R);
-}
-
-static inline unsigned char RGfx(volatile void * ba, short idx) {
-	vgaw(ba, GCT_ADDRESS, idx);
-	return vgar (ba, GCT_ADDRESS_R);
-}
+		WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 ); \
+		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); \
+	} while (0)
 
 int cl_mode __P((register struct grf_softc *gp, u_long cmd, void *arg,
 			u_long a2, int a3));

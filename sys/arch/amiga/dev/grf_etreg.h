@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_etreg.h,v 1.1 1996/05/19 21:05:34 veego Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.1.4.1 1996/05/27 01:12:13 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ser.c,v 1.4 1996/05/02 06:44:30 niklas Exp $	*/
-/*	$NetBSD: ser.c,v 1.34 1996/04/27 20:53:31 veego Exp $	*/
+/*	$OpenBSD: ser.c,v 1.5 1996/08/23 18:53:17 niklas Exp $	*/
+/*	$NetBSD: ser.c,v 1.34.4.1 1996/06/06 04:53:19 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -251,9 +251,11 @@ seropen(dev, flag, mode, p)
 
 	if (ser_tty[unit]) 
 		tp = ser_tty[unit];
-	else
+	else {
 		tp = ((struct ser_softc *)ser_cd.cd_devs[unit])->ser_tty =
 		    ser_tty[unit] =  ttymalloc();
+		tty_attach(tp);
+	}
 
 	tp->t_oproc = (void (*) (struct tty *)) serstart;
 	tp->t_param = serparam;

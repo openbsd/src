@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rh.c,v 1.7 1996/05/29 10:15:10 niklas Exp $	*/
-/*	$NetBSD: grf_rh.c,v 1.17 1996/05/19 21:05:37 veego Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.8 1996/08/23 18:52:46 niklas Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.17.4.1 1996/05/26 17:26:45 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1414,7 +1414,7 @@ int rh_mon_max = sizeof (monitor_defs)/sizeof (monitor_defs[0]);
 int rh_default_mon = 0;
 int rh_default_gfx = 4;
 
-static struct MonDef *current_mon;
+static struct MonDef *current_mon;	/* EVIL */
 
 int  rh_mode     __P((struct grf_softc *, u_long, void *, u_long, int));
 void grfrhattach __P((struct device *, struct device *, void *));
@@ -1494,12 +1494,6 @@ grfrhattach(pdp, dp, auxp)
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_regkva = (volatile caddr_t)zap->va;
-
-		gp->g_regkva[0x3c8]=0;
-		gp->g_regkva[0x3c9]=30;
-		gp->g_regkva[0x3c9]=30;
-		gp->g_regkva[0x3c9]=00;
-
 		gp->g_fbkva = (volatile caddr_t)zap->va + LM_OFFSET;
 		gp->g_unit = GRF_RETINAIII_UNIT;
 		gp->g_mode = rh_mode;
@@ -2064,12 +2058,12 @@ rh_blank(gp, on)
 	struct grf_softc *gp;
 	int *on;
 {
+	struct MonDef *md = (struct MonDef *)gp->g_data;
 	int r;
 
-	r = RSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE);
-	r &= 0xdf;	/* set Bit 5 to 0 */
+	r = 0x01 | ((md->FLG & MDF_CLKDIV2)/ MDF_CLKDIV2 * 8);
 
-	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, r | (*on ? 0x00 : 0x20));
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? r : 0x21);
 
 	return(0);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cl.c,v 1.5 1996/05/29 10:14:57 niklas Exp $	*/
-/*      $NetBSD: grf_cl.c,v 1.11 1996/05/19 21:05:20 veego Exp $        */
+/*	$OpenBSD: grf_cl.c,v 1.6 1996/08/23 18:52:36 niklas Exp $	*/
+/*      $NetBSD: grf_cl.c,v 1.11.4.1 1996/05/27 10:50:40 is Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -78,28 +78,32 @@
 #include <amiga/dev/grf_clreg.h>
 #include <amiga/dev/zbusvar.h>
 
-static int cl_mondefok __P((struct grfvideo_mode *));
-static void cl_boardinit __P((struct grf_softc *));
+int cl_mondefok __P((struct grfvideo_mode *));
+void cl_boardinit __P((struct grf_softc *));
 static void cl_CompFQ __P((u_int, u_char *, u_char *));
-static int cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-static int cl_setvmode __P((struct grf_softc *, unsigned int));
-static int cl_toggle __P((struct grf_softc *, unsigned short));
-static int cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
-static int cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
+int cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+int cl_setvmode __P((struct grf_softc *, unsigned int));
+int cl_toggle __P((struct grf_softc *, unsigned short));
+int cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
+int cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
 #ifndef CL5426CONSOLE
-static void cl_off __P((struct grf_softc *));
+void cl_off __P((struct grf_softc *));
 #endif
-static void cl_inittextmode __P((struct grf_softc *));
-static int cl_ioctl __P((register struct grf_softc *, u_long, void *));
-static int cl_getmousepos __P((struct grf_softc *, struct grf_position *));
-static int cl_setmousepos __P((struct grf_softc *, struct grf_position *));
+void cl_inittextmode __P((struct grf_softc *));
+int cl_ioctl __P((register struct grf_softc *, u_long, void *));
+int cl_getmousepos __P((struct grf_softc *, struct grf_position *));
+int cl_setmousepos __P((struct grf_softc *, struct grf_position *));
 static int cl_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-static int cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+int cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
 static int cl_getspritemax __P((struct grf_softc *, struct grf_position *));
-static int cl_blank __P((struct grf_softc *, int *));
+int cl_blank __P((struct grf_softc *, int *));
 int cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
 void cl_writesprpos __P((volatile char *, short, short));
 void writeshifted __P((volatile char *, char, char));
+
+static void RegWakeup __P((volatile caddr_t));
+static void RegOnpass __P((volatile caddr_t));
+static void RegOffpass __P((volatile caddr_t));
 
 void grfclattach __P((struct device *, struct device *, void *));
 int grfclprint __P((void *, char *));
@@ -307,7 +311,6 @@ grfclattach(pdp, dp, auxp)
 
 		/* wakeup the board */
 		cl_boardinit(gp);
-
 #ifdef CL5426CONSOLE
 		grfcl_iteinit(gp);
 		(void) cl_load_mon(gp, &clconsole_mode);
@@ -378,7 +381,8 @@ cl_boardinit(gp)
 	vgaw(ba, 0x46e8, 0x16);
 	vgaw(ba, 0x102, 1);
 	vgaw(ba, 0x46e8, 0x0e);
-	vgaw(ba, 0x3c3, 1);
+	if (cl_sd64 != 1)
+		vgaw(ba, 0x3c3, 1);
 
 	/* setup initial unchanging parameters */
 
@@ -400,11 +404,17 @@ cl_boardinit(gp)
 	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x0e);	/* a or 6? */
 	WSeq(ba, SEQ_ID_EXT_SEQ_MODE, (cltype == PICASSO) ? 0x20 : 0x80);
 	WSeq(ba, SEQ_ID_EEPROM_CNTL, 0x00);
-	WSeq(ba, SEQ_ID_PERF_TUNE, 0x0a);	/* mouse 0a fa */
+	if (cl_sd64 == 1)
+		WSeq(ba, SEQ_ID_PERF_TUNE, 0x5a);
+	else
+		WSeq(ba, SEQ_ID_PERF_TUNE, 0x0a);	/* mouse 0a fa */
 	WSeq(ba, SEQ_ID_SIG_CNTL, 0x02);
 	WSeq(ba, SEQ_ID_CURSOR_ATTR, 0x04);
 
-	WSeq(ba, SEQ_ID_MCLK_SELECT, 0x22);
+	if (cl_sd64 == 1)
+		WSeq(ba, SEQ_ID_MCLK_SELECT, 0x1c);
+	else
+		WSeq(ba, SEQ_ID_MCLK_SELECT, 0x22);
 
 	WCrt(ba, CRT_ID_PRESET_ROW_SCAN, 0x00);
 	WCrt(ba, CRT_ID_CURSOR_START, 0x00);
@@ -450,7 +460,7 @@ cl_boardinit(gp)
 	delay(200000);
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0xef);
 
-	WGfx(ba, GCT_ID_BLT_STAT_START, 0x40);
+	WGfx(ba, GCT_ID_BLT_STAT_START, 0x04);
 	WGfx(ba, GCT_ID_BLT_STAT_START, 0x00);
 
 	/* colors initially set to greyscale */
@@ -543,7 +553,7 @@ cl_blank(gp, on)
         struct grf_softc *gp;
         int *on;
 {
-        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x21 : 0x01);
+        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x01 : 0x21);
         return(0);
 }
         
@@ -766,8 +776,7 @@ cl_getspriteinfo(gp, data)
 	return (0);
 }
 
-static
-int
+static int
 cl_setspriteinfo(gp, data)
 	struct grf_softc *gp;
 	struct grf_spriteinfo *data;
@@ -903,8 +912,7 @@ cl_setspriteinfo(gp, data)
 	return (0);
 }
 
-static
-int
+static int
 cl_getspritemax(gp, data)
 	struct grf_softc *gp;
 	struct grf_position *data;
@@ -1073,7 +1081,7 @@ cl_toggle(gp, wopp)
 	struct grf_softc *gp;
 	unsigned short wopp;	/* don't need that one yet, ill */
 {
-	volatile unsigned char *ba;
+	volatile caddr_t ba;
 
 	ba = gp->g_regkva;
 
@@ -1191,8 +1199,7 @@ cl_load_mon(gp, md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile unsigned char *ba;
-	volatile caddr_t fb;
+	volatile caddr_t ba, fb;
 	unsigned char num0, denom0;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
@@ -1315,8 +1322,7 @@ cl_load_mon(gp, md)
 	    (DBLSCAN ? 0x80 : 0x00) |
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
-	WCrt(ba, CRT_ID_MODE_CONTROL,
-	    ((TEXT || (gv->depth == 1)) ? 0xc3 : 0xa3));
+	WCrt(ba, CRT_ID_MODE_CONTROL, 0xe3);
 
 	/* text cursor */
 
@@ -1337,7 +1343,7 @@ cl_load_mon(gp, md)
 	WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
 
 	WCrt(ba, CRT_ID_START_VER_RETR, VSS);
-	WCrt(ba, CRT_ID_END_VER_RETR, (VSE & 0x0f) | 0x30);
+	WCrt(ba, CRT_ID_END_VER_RETR, (VSE & 0x0f) | 0x20);
 	WCrt(ba, CRT_ID_VER_DISP_ENA_END, VDE);
 	WCrt(ba, CRT_ID_START_VER_BLANK, VBS);
 	WCrt(ba, CRT_ID_END_VER_BLANK, VBE);
@@ -1531,4 +1537,81 @@ cl_memset(d, c, l)
 	for (; l > 0; l--)
 		*d++ = c;
 }
+
+/* Special wakeup/passthrough registers on graphics boards
+ *
+ * The methods have diverged a bit for each board, so
+ * WPass(P) has been converted into a set of specific
+ * inline functions.
+ */
+static void
+RegWakeup(ba)
+	volatile caddr_t ba;
+{
+
+	switch (cltype) {
+	    case SPECTRUM:
+		vgaw(ba, PASS_ADDRESS_W, 0x1f);
+		break;
+	    case PICASSO:
+		vgaw(ba, PASS_ADDRESS_W, 0xff);
+		break;
+	    case PICCOLO:
+		if (cl_sd64 == 1)
+			vgaw(ba, PASS_ADDRESS_W, 0x1f);
+		else
+			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x10);
+		break;
+	}
+	delay(200000);
+}
+
+static void
+RegOnpass(ba)
+	volatile caddr_t ba;
+{
+
+	switch (cltype) {
+	    case SPECTRUM:
+		vgaw(ba, PASS_ADDRESS_W, 0x4f);
+		break;
+	    case PICASSO:
+		vgaw(ba, PASS_ADDRESS_WP, 0x01);
+		break;
+	    case PICCOLO:
+		if (cl_sd64 == 1)
+			vgaw(ba, PASS_ADDRESS_W, 0x4f);
+		else
+			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) & 0xdf);
+		break;
+	}
+	pass_toggle = 1;
+	delay(200000);
+}
+
+static void
+RegOffpass(ba)
+	volatile caddr_t ba;
+{
+
+	switch (cltype) {
+	    case SPECTRUM:
+		vgaw(ba, PASS_ADDRESS_W, 0x6f);
+		break;
+	    case PICASSO:
+		vgaw(ba, PASS_ADDRESS_W, 0xff);
+		delay(200000);
+		vgaw(ba, PASS_ADDRESS_W, 0xff);
+		break;
+	    case PICCOLO:
+		if (cl_sd64 == 1)
+			vgaw(ba, PASS_ADDRESS_W, 0x6f);
+		else
+			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x20);
+		break;
+	}
+	pass_toggle = 0;
+	delay(200000);
+}
+
 #endif /* NGRFCL */

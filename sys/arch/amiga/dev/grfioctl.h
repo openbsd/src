@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.11 1995/10/09 02:08:47 chopps Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.11.6.1 1996/06/04 10:22:00 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -217,3 +217,6 @@ struct grf_bitblt {
 
 /* can't use IOCON/OFF because that would turn ite on */
 #define GRFIOCBLANK	_IOW('G', 58, int)
+
+#define GRFIOCBLANK_LIVE	1
+#define GRFIOCBLANK_DARK	0

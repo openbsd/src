@@ -1,5 +1,5 @@
-/*	$OpenBSD: grfabs_cc.c,v 1.3 1996/05/29 10:15:20 niklas Exp $	*/
-/*	$NetBSD: grfabs_cc.c,v 1.12 1996/05/19 21:05:50 veego Exp $	*/
+/*	$OpenBSD: grfabs_cc.c,v 1.4 1996/08/23 18:52:55 niklas Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.12.4.1 1996/05/28 20:46:04 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1843,7 +1843,11 @@ cc_init_ntsc_aga()
 		aga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
 								 * enable,
 								 * shres. */
+#ifdef GRF_AGA_VGA
 		aga_this_data->std_start_x = 0x40 /*STANDARD_VIEW_X*/;
+#else 
+		aga_this_data->std_start_x = 0x4f /*STANDARD_VIEW_X*/;
+#endif 
 		aga_this_data->std_start_y = 0x2b /*STANDARD_VIEW_Y*/;
 		aga_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
 		aga_this_data->beamcon0 = SPECIAL_BEAMCON ^ VSYNCTRUE;
@@ -1856,12 +1860,23 @@ cc_init_ntsc_aga()
 
 /* static, so I can patch and play */
 
+#ifdef GRF_AGA_VGA
 int	AGA_htotal = 0x71;
 int	AGA_hsstrt = 0xc;
 int	AGA_hsstop = 0x16;
 int	AGA_hbstrt = 0x5;
+#else 
+int	AGA_htotal = 0x79;
+int	AGA_hsstrt = 0xe;
+int	AGA_hsstop = 0x1c;
+int	AGA_hbstrt = 0x8;
+#endif 
 int	AGA_hbstop = 0x1e;
+#ifdef GRF_AGA_VGA
 int	AGA_vtotal = 0x1c1;
+#else 
+int	AGA_vtotal = 0x1ec;
+#endif 
 int	AGA_vsstrt = 0x3;
 int	AGA_vsstop = 0x6;
 int	AGA_vbstrt = 0x0;

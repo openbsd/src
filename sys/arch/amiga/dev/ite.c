@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.7 1996/05/29 10:15:27 niklas Exp $  */
-/*	$NetBSD: ite.c,v 1.41 1996/05/19 19:03:06 is Exp $	*/
+/*	$OpenBSD: ite.c,v 1.8 1996/08/23 18:53:07 niklas Exp $  */
+/*	$NetBSD: ite.c,v 1.41.4.1 1996/06/06 04:53:13 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -445,9 +445,10 @@ iteopen(dev, mode, devtype, p)
 	
 	ip = getitesp(dev);
 
-	if (ip->tp == NULL)
+	if (ip->tp == NULL) {
 		tp = ip->tp = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
