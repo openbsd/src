@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_misc.c,v 1.16 2004/06/24 19:35:23 tholo Exp $ */
+/* $OpenBSD: osf1_misc.c,v 1.17 2004/06/25 16:28:51 deraadt Exp $ */
 /* $NetBSD: osf1_misc.c,v 1.55 2000/06/28 15:39:33 mrg Exp $ */
 
 /*
@@ -293,7 +293,7 @@ osf1_sys_usleep_thread(p, v, retval)
 	tsleep(p, PUSER|PCATCH, "uslpthrd", ticks);	/* XXX */
 
 	if (SCARG(uap, slept) != NULL) {
-		struct timval tv2;
+		struct timeval tv2;
 
 		getmicrotime(&tv2);
 		timersub(&tv2, &tv, &endtv);
