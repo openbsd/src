@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.75 2001/08/12 00:09:29 mickey Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.76 2001/08/21 15:18:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1905,7 +1905,7 @@ bridge_flushrule(bif)
 	}
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlout)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlout);
-		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlin, p, brl_next);
+		SIMPLEQ_REMOVE_HEAD(&bif->bif_brlout, p, brl_next);
 		free(p, M_DEVBUF);
 	}
 	return (0);
