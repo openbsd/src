@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.20 2002/09/28 02:04:44 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.21 2002/11/14 17:20:52 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -801,10 +801,20 @@ hme_eint(sc, status)
 	struct hme_softc *sc;
 	u_int status;
 {
-	if ((status & HME_SEB_STAT_MIFIRQ) != 0) {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	if (status & HME_SEB_STAT_MIFIRQ) {
 		printf("%s: XXXlink status changed\n", sc->sc_dev.dv_xname);
-		return (1);
+		status &= ~HME_SEB_STAT_MIFIRQ;
 	}
+
+	if (status & HME_SEB_STAT_DTIMEXP) {
+		ifp->if_oerrors++;
+		status &= ~HME_SEB_STAT_DTIMEXP;
+	}
+
+	if (status == 0)
+		return (1);
 
 	printf("%s: status=%b\n", sc->sc_dev.dv_xname, status, HME_SEB_STAT_BITS);
 	return (1);
@@ -842,7 +852,7 @@ hme_watchdog(ifp)
 	struct hme_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++ifp->if_oerrors;
+	ifp->if_oerrors++;
 
 	hme_reset(sc);
 }
