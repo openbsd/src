@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.22 2003/07/21 22:44:50 tedu Exp $
+#	$OpenBSD: vnode_if.src,v 1.23 2003/09/23 16:46:02 millert Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -210,15 +210,11 @@ vop_ioctl {
 };
 
 #
-#% select	vp	U U U
+#% poll	vp	U U U
 #
-# Needs work?  (fflags)
-#
-vop_select {
+vop_poll {
 	IN struct vnode *vp;
-	IN int which;
-	IN int fflags;
-	IN struct ucred *cred;
+	IN int events;
 	IN struct proc *p;
 };
 
