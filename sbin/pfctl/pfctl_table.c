@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.5 2003/01/03 22:24:19 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.6 2003/01/03 22:50:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -58,7 +58,7 @@
 #include "pf_print_state.h"
 
 
-#define _BUF_SIZE 256
+#define BUF_SIZE 256
 
 extern void	 usage(void);
 static int	pfctl_table(int, char *[], char *, char *, char *, int);
@@ -66,7 +66,7 @@ static void	grow_buffer(int, int);
 static void	print_table(struct pfr_table *);
 static void	print_tstats(struct pfr_tstats *);
 static void	load_addr(int, char *[], char *, int);
-static int	next_token(char [_BUF_SIZE], FILE *);
+static int	next_token(char [], FILE *);
 static void	append_addr(char *, int);
 static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
@@ -396,7 +396,7 @@ void
 load_addr(int argc, char *argv[], char *file, int nonetwork)
 {
 	FILE	*fp;
-	char	 buf[_BUF_SIZE];
+	char	 buf[BUF_SIZE];
 
 	while (argc--)
 		append_addr(*argv++, nonetwork);
@@ -417,7 +417,7 @@ load_addr(int argc, char *argv[], char *file, int nonetwork)
 }
 
 int
-next_token(char buf[_BUF_SIZE], FILE *fp)
+next_token(char buf[BUF_SIZE], FILE *fp)
 {
 	static char	next_ch = ' ';
 	int		i = 0;
@@ -441,11 +441,11 @@ next_token(char buf[_BUF_SIZE], FILE *fp)
 		return (0);
 	}
 	do {
-		if (i < _BUF_SIZE)
+		if (i < BUF_SIZE)
 			buf[i++] = next_ch;
 		next_ch = fgetc(fp);
 	} while (!feof(fp) && !isspace(next_ch));
-	if (i >= _BUF_SIZE) {
+	if (i >= BUF_SIZE) {
 		fprintf(stderr, "%s: address too long (%d bytes)\n",
 		    __progname, i);
 		exit(1);
@@ -457,13 +457,13 @@ next_token(char buf[_BUF_SIZE], FILE *fp)
 void
 append_addr(char *s, int test)
 {
-	char		 buf[_BUF_SIZE], *p, *q;
+	char		 buf[BUF_SIZE], *p, *q;
 	struct addrinfo *res, *ai, hints;
 	int		 not = (*s == '!'), net = -1, rv;
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_socktype = SOCK_DGRAM;
-	if (strlen(s) >= _BUF_SIZE) {
+	if (strlen(s) >= BUF_SIZE) {
 		fprintf(stderr, "%s: address too long (%ld bytes)\n",
 		    __progname, (long)strlen(s));
 		exit(1);
@@ -528,7 +528,7 @@ append_addr(char *s, int test)
 void
 print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 {
-	char		buf[_BUF_SIZE] = "{error}";
+	char		buf[BUF_SIZE] = "{error}";
 	const char	fb[] = { ' ', 'M', 'A', 'D', 'C', 'Z', 'X', ' ' };
 	int		fback, hostnet;
 
@@ -539,7 +539,7 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 	if (ad->pfra_net < hostnet)
 		printf("/%d", ad->pfra_net);
 	if (rad != NULL && fback != PFR_FB_NONE) {
-		strcpy(buf, "{error}");
+		strlcpy(buf, "{error}", sizeof buf);
 		inet_ntop(rad->pfra_af, &rad->pfra_u, buf, sizeof(buf));
 		printf("\t%c%s", (rad->pfra_not?'!':' '), buf);
 		if (rad->pfra_net < hostnet)
