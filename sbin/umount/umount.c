@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.10 2000/04/11 18:38:32 millert Exp $	*/
+/*	$OpenBSD: umount.c,v 1.11 2000/07/27 20:06:00 millert Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.10 2000/04/11 18:38:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.11 2000/07/27 20:06:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,36 +184,35 @@ umountfs(oname)
 		mntpt = name = rname;
 	newname = NULL;
 
-	if (stat(name, &sb) < 0) {
-		/*
-		 * 99.9% of the time the path in the kernel is the one
-		 * realpath() returns but check the original just in case...
-		 */
-		if (!(newname = getmntname(name, MNTFROM, type)) &&
-		    !(mntpt = getmntname(name, MNTON, type)) ) {
-			mntpt = oname;
-			if (!(newname = getmntname(oname, MNTFROM, type)) &&
-			    !(mntpt = getmntname(oname, MNTON, type))) {
-				warnx("%s: not currently mounted", oname);
-				return (1);
-			}
-		}
-		if (newname)
-			name = newname;
-	} else if (S_ISBLK(sb.st_mode)) {
+	/* If we can stat the file, check to see if it is a device or non-dir */
+	if (stat(name, &sb) == 0) {
+	    if (S_ISBLK(sb.st_mode)) {
 		if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
 			warnx("%s: not currently mounted", name);
 			return (1);
 		}
-	} else if (S_ISDIR(sb.st_mode)) {
-		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
-			warnx("%s: not currently mounted", mntpt);
-			return (1);
-		}
-	} else {
+	    } else if (!S_ISDIR(sb.st_mode)) {
 		warnx("%s: not a directory or special device", name);
 		return (1);
+	    }
 	}
+
+	/*
+	 * Look up the name in the mount table.
+	 * 99.9% of the time the path in the kernel is the one
+	 * realpath() returns but check the original just in case...
+	 */
+	if (!(newname = getmntname(name, MNTFROM, type)) &&
+	    !(mntpt = getmntname(name, MNTON, type)) ) {
+		mntpt = oname;
+		if (!(newname = getmntname(oname, MNTFROM, type)) &&
+		    !(mntpt = getmntname(oname, MNTON, type))) {
+			warnx("%s: not currently mounted", oname);
+			return (1);
+		}
+	}
+	if (newname)
+		name = newname;
 
 	if (!selected(type))
 		return (1);
