@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 1999/04/20 20:39:13 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.7 1999/05/21 17:34:50 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -63,10 +63,14 @@ define	USPACE			USPACE
 define	NBPG			NBPG
 define	PGSHIFT			PGSHIFT
 define	USRSTACK		USRSTACK
-define	INTSTACK_SIZE		INTSTACK_SIZE
 define	HPPA_PID_KERNEL		HPPA_PID_KERNEL
 define	HPPA_SID_KERNEL		HPPA_SID_KERNEL
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
+
+# `break' entry points
+define	HPPA_BREAK_KERNEL	HPPA_BREAK_KERNEL
+define	HPPA_BREAK_GET_PSW	HPPA_BREAK_GET_PSW
+define	HPPA_BREAK_SET_PSW	HPPA_BREAK_SET_PSW
 
 # pte things
 define	TLB_REF_POS		TLB_REF_POS
@@ -165,6 +169,7 @@ define	TF_SR4		offsetof(struct trapframe, tf_sr4)
 define	TF_SR5		offsetof(struct trapframe, tf_sr5)
 define	TF_SR6		offsetof(struct trapframe, tf_sr6)
 define	TF_SR7		offsetof(struct trapframe, tf_sr7)
+define	TF_FPREGS	offsetof(struct trapframe, tf_fpregs)
 
 # proc fields and values
 struct	proc
