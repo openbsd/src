@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.20 2003/06/26 17:07:01 jolan Exp $	*/
+/*	$OpenBSD: types.h,v 1.21 2003/08/19 23:42:46 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ __END_DECLS
  * be enough for most uses.
  */
 #ifndef	FD_SETSIZE
-#define	FD_SETSIZE	256
+#define	FD_SETSIZE	1024
 #endif
 
 typedef int32_t	fd_mask;
