@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.214 2002/11/25 17:44:39 mickey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.215 2002/11/25 18:11:34 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3474,11 +3474,19 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 void
 decide_address_family(struct node_host *n, sa_family_t *af)
 {
+	sa_family_t target_af = 0;
+
 	while (!*af && n != NULL) {
-		if (n->af)
-			*af = n->af;
+		if (n->af) {
+			if (target_af == 0)
+				target_af = n->af;
+			if (target_af != n->af)
+				return;
+		}
 		n = n->next;
 	}
+	if (!*af && target_af)
+		*af = target_af;
 }
 
 void
