@@ -1321,6 +1321,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_cdcereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_kuereg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_kuevar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_wi_usb.ph

@@ -701,6 +701,7 @@
 ./usr/include/dev/usb/if_cdcereg.h
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
+./usr/include/dev/usb/if_kuevar.h
 ./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_wi_usb.h

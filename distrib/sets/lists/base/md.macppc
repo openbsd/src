@@ -1,6 +1,3 @@
-./etc/firmware/eprimsym
-./etc/firmware/esecsym
-./etc/firmware/symbol-license
 ./etc/firmware/atu-intersil-ext
 ./etc/firmware/atu-intersil-int
 ./etc/firmware/atu-license
@@ -10,6 +7,9 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
+./etc/firmware/eprimsym
+./etc/firmware/esecsym
+./etc/firmware/symbol-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
 ./sbin/ancontrol
@@ -1271,6 +1271,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_cdcereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_kuereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_kuevar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_wi_usb.ph
