@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.8 1997/06/11 10:32:15 grr Exp $ */
+/*	$OpenBSD: kvm.c,v 1.9 1997/06/18 05:10:16 kstailey Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.8 1997/06/11 10:32:15 grr Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.9 1997/06/18 05:10:16 kstailey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -489,23 +489,29 @@ off_t	dump_off;
 	if (Lseek(kd, kd->pmfd, dump_off+hdr_size, SEEK_SET) == -1)
 		goto fail;
 	sz = Read(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size);
-	if (sz != cpu_hdr.c_size)
+	if (sz != cpu_hdr.c_size) {
+		_kvm_err(kd, 0, "invalid size in cpu_hdr");
 		goto fail;
+	}
 	hdr_size += kd->cpu_dsize;
 
 	/*
 	 * Leave phys mem pointer at beginning of memory data
 	 */
 	kd->dump_off = dump_off + hdr_size;
-	if (Lseek(kd, kd->pmfd, kd->dump_off, SEEK_SET) == -1)
+	if (Lseek(kd, kd->pmfd, kd->dump_off, SEEK_SET) == -1) {
+		_kvm_err(kd, 0, "invalid dump offset");
 		goto fail;
+	}
 
 	/*
 	 * Create a kcore_hdr.
 	 */
 	kd->kcore_hdr = _kvm_malloc(kd, sizeof(kcore_hdr_t));
-	if (kd->kcore_hdr == NULL)
+	if (kd->kcore_hdr == NULL) {
+		_kvm_err(kd, 0, "missing header");
 		goto fail;
+	}
 
 	kd->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
 	kd->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
