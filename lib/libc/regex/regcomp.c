@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regcomp.c,v 1.6 1998/08/14 21:39:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: regcomp.c,v 1.7 2001/11/01 23:27:28 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1106,31 +1106,52 @@ register struct parse *p;
 		nbytes = nc / CHAR_BIT * css;
 		if (p->g->sets == NULL)
 			p->g->sets = (cset *)malloc(nc * sizeof(cset));
-		else
-			p->g->sets = (cset *)realloc((char *)p->g->sets,
-							nc * sizeof(cset));
+		else {
+			cset *ptr;
+			ptr = (cset *)realloc((char *)p->g->sets,
+			    nc * sizeof(cset));
+			if (ptr == NULL) {
+				free(p->g->sets);
+				p->g->sets = NULL;
+			} else
+				p->g->sets = ptr;
+		}
+		if (p->g->sets == NULL)
+			goto nomem;
+
 		if (p->g->setbits == NULL)
 			p->g->setbits = (uch *)malloc(nbytes);
 		else {
-			p->g->setbits = (uch *)realloc((char *)p->g->setbits,
-								nbytes);
-			/* xxx this isn't right if setbits is now NULL */
-			for (i = 0; i < no; i++)
-				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
+			uch *ptr;
+
+			ptr = (uch *)realloc((char *)p->g->setbits, nbytes);
+			if (ptr == NULL) {
+				free(p->g->setbits);
+				p->g->setbits = NULL;
+			} else {
+				p->g->setbits = ptr;
+
+				for (i = 0; i < no; i++)
+					p->g->sets[i].ptr = p->g->setbits +
+					    css*(i/CHAR_BIT);
+			}
 		}
-		if (p->g->sets != NULL && p->g->setbits != NULL)
-			(void) memset((char *)p->g->setbits + (nbytes - css),
-								0, css);
-		else {
+
+		if (p->g->sets == NULL || p->g->setbits == NULL) {
+nomem:
 			no = 0;
 			SETERROR(REG_ESPACE);
 			/* caller's responsibility not to do set ops */
-		}
+		} else
+			(void) memset((char *)p->g->setbits + (nbytes - css),
+			    0, css);
 	}
 
 	assert(p->g->sets != NULL);	/* xxx */
-	cs = &p->g->sets[no];
-	cs->ptr = p->g->setbits + css*((no)/CHAR_BIT);
+	if (p->g->sets != NULL && p->g->setbits != NULL) {
+		cs = &p->g->sets[no];
+		cs->ptr = p->g->setbits + css*((no)/CHAR_BIT);
+	}
 	cs->mask = 1 << ((no) % CHAR_BIT);
 	cs->hash = 0;
 	cs->smultis = 0;
