@@ -1,4 +1,4 @@
-/*	$Id: kdb_destroy.c,v 1.1.1.1 1995/12/14 06:52:43 tholo Exp $	*/
+/*	$Id: kdb_destroy.c,v 1.2 1996/08/22 01:18:51 deraadt Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -25,14 +25,14 @@ main(void)
     char    answer[10];		/* user input */
     char    dbm[256];		/* database path and name */
     char    dbm1[256];		/* database path and name */
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
     char   *file;               /* database file names */
 #else
     char   *file1, *file2;	/* database file names */
 #endif
 
     strcpy(dbm, DBM_FILE);
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
     file = strcat(dbm, ".db");
 #else
     strcpy(dbm1, DBM_FILE);
@@ -46,7 +46,7 @@ main(void)
     fgets(answer, sizeof(answer), stdin);
 
     if (answer[0] == 'y' || answer[0] == 'Y') {
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	if (unlink(file) == 0)
 #else
 	if (unlink(file1) == 0 && unlink(file2) == 0)
