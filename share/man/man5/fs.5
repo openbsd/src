@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fs.5,v 1.4 1998/11/26 04:25:58 aaron Exp $
+.\"	$OpenBSD: fs.5,v 1.5 1999/03/11 01:35:05 pjanzen Exp $
 .\"	$NetBSD: fs.5,v 1.3 1994/11/30 19:31:17 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -200,10 +200,11 @@ to determine block availability, aligned fragments are examined.
 .Pp
 The root inode is the root of the file system.
 Inode 0 can't be used for normal purposes and
-historically bad blocks were linked to inode 1,
-thus the root inode is 2 (inode 1 is no longer used for
-this purpose, however numerous dump tapes make this
+historically bad blocks were linked to inode 1
+(inode 1 is no longer used for
+this purpose; however, numerous dump tapes make this
 assumption, so we are stuck with it).
+Thus the root inode is 2.
 .Pp
 The
 .Fa fs_minfree
@@ -214,7 +215,7 @@ The
 .Fa fs_minfree
 element
 may be set to 0 if no reserve of free blocks is deemed necessary,
-however severe performance degradations will be observed if the
+although severe performance degradations will be observed if the
 file system is run at greater than 95% full; thus the default
 value of
 .Fa fs_minfree
@@ -222,7 +223,7 @@ is 5%.
 .Pp
 Empirically the best trade-off between block fragmentation and
 overall disk utilization at a loading of 95% comes with a
-fragmentation of 8, thus the default fragment size is an eighth
+fragmentation of 8; thus the default fragment size is an eighth
 of the block size.
 .Pp
 The element

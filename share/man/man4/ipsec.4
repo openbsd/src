@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.18 1999/03/02 15:40:37 aaron Exp $
+.\" $OpenBSD: ipsec.4,v 1.19 1999/03/11 01:35:04 pjanzen Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -154,7 +154,7 @@ protect the outer
 .Tn IP
 header but furthermore it encrypts the payload data
 with an encryption algorithm using a secret encryption key.  Only the ones
-knowing this key can decrypt the data, hence confidentiality is provided.  Both
+knowing this key can decrypt the data, thus providing confidentiality.  Both
 the algorithm and the encryption key are parameters of the SA.
 .Pp
 In order to identify a SA we need to have a unique name for it.  This name is

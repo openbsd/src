@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.7 1999/02/27 21:57:07 deraadt Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.8 1999/03/11 01:35:02 pjanzen Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -262,7 +262,7 @@ and
 .Fa inval
 is private to
 .Fn yp_all ,
-and is overwritten with each subsequent key-value pair, thus the
+and is overwritten with each subsequent key-value pair; therefore, the
 .Pa foreach
 function should do something useful with the contents of that memory during
 each iteration.  If the key-value pairs are not terminated with either

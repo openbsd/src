@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.10 1999/03/02 10:32:31 deraadt Exp $
+.\"	$OpenBSD: select.2,v 1.11 1999/03/11 01:35:01 pjanzen Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -113,8 +113,8 @@ argument should be non-nil, pointing to a zero-valued timeval structure.
 .Fa timeout
 is not changed by
 .Fn select ,
-and may be reused on subsequent calls, however it is good style to re-initialize
-it before each invocation of
+and may be reused on subsequent calls; however, it is good style to
+re-initialize it before each invocation of
 .Fn select .
 .Pp
 Any of

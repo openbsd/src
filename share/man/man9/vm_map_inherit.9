@@ -1,5 +1,5 @@
 .\" 
-.\"	$OpenBSD: vm_map_inherit.9,v 1.1 1996/03/11 13:04:52 mickey Exp $
+.\"	$OpenBSD: vm_map_inherit.9,v 1.2 1999/03/11 01:35:06 pjanzen Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -82,7 +82,7 @@ This region will be absent from child maps.
 .B vm_map_inherit
 specifies how a region of a virtual address space
 is to be passed to child maps at the time of map creation.
-Inheritance is an attribute of virtual pages, thus the addresses
+Inheritance is an attribute of virtual pages; thus the addresses
 and size of memory to be set will be rounded out to refer to
 whole pages.
 

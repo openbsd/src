@@ -1,4 +1,4 @@
-.\" $Id: ppp.8,v 1.27 1999/03/08 01:40:23 brian Exp $
+.\" $Id: ppp.8,v 1.28 1999/03/11 01:35:07 pjanzen Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Os FreeBSD
@@ -1567,7 +1567,7 @@ it uses 192.244.177.2.
 The routing table entry will have a netmask of 0xffffffff.
 .El
 .Pp
-This is all fine when each side has a pre-determined IP address, however
+This is all fine when each side has a pre-determined IP address.  However,
 it is often the case that one side is acting as a server which controls
 all IP addresses and the other side should obey the direction from it.
 In order to allow more flexible behaviour, `ifaddr' variable allows the

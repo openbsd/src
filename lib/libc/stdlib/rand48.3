@@ -9,7 +9,7 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.\"	$OpenBSD: rand48.3,v 1.3 1998/07/05 19:54:23 millert Exp $
+.\"	$OpenBSD: rand48.3,v 1.4 1999/03/11 01:35:01 pjanzen Exp $
 .\"
 .Dd October 8, 1993
 .Dt RAND48 3
@@ -123,7 +123,7 @@ the constant multiplicand and addend of the algorithm are
 reset to the default values given above.
 .Fn seed48
 returns a pointer to an array of 3 shorts which contains the old seed.
-This array is statically allocated, thus its contents are lost after
+This array is statically allocated, so its contents are lost after
 each new call to
 .Fn seed48 .
 .Pp

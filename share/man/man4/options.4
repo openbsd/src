@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.26 1998/11/29 20:43:31 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.27 1999/03/11 01:35:04 pjanzen Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -605,9 +605,9 @@ addresses are allowed to proceed. Connections from other addresses
 trigger a mechanism for determining whether those are "friendly". The
 list of friendly addresses is controlled by the
 .Em TCK_NFRIENDS
-option, which is by default set to 16. Unfortunately, hosts behind a
+option, which is by default set to 16. Unfortunately, hosts behind
 some stateful packet-filtering firewalls are unverifiable due to the
-nature of the mechanism and the filtering process, thus connections
+nature of the mechanism and the filtering process, so connections
 from such hosts are not allowed to proceed.
 .It Cd option TCP_SACK
 Turns on selective acknowledgements. Additional information about

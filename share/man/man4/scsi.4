@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.3 1998/11/17 23:29:35 aaron Exp $
+.\"	$OpenBSD: scsi.4,v 1.4 1999/03/11 01:35:04 pjanzen Exp $
 .\"
 .Dd August 4, 1996
 .Dt SD 4
@@ -115,7 +115,7 @@ types of adapters. The adapters take requests from the upper layers and do
 all IO between the 
 .Em SCSI
 bus and the system. The maximum size of a transfer is governed by the
-adapter. Most adapters can transfer 64KB in a single operation, however
+adapter. Most adapters can transfer 64KB in a single operation, and
 many can transfer larger amounts.
 .Sh TARGET MODE
 Some adapters support 
