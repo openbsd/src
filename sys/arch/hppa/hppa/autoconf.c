@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2003/07/30 21:18:09 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2003/07/30 22:29:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -152,6 +152,7 @@ heartbeat(v)
 	 *  _| |_| |_,_,_,_
 	 *   0 1 2 3 4 6 7
 	 */
+	toggle = 0;
 	if (hbcnt++ < 8 && hbcnt & 1)
 		toggle = PALED_HEARTBEAT;
 	hbcnt &= 15;
