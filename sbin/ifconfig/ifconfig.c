@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.131 2005/02/15 19:45:22 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.132 2005/03/30 02:55:37 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.131 2005/02/15 19:45:22 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.132 2005/03/30 02:55:37 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,6 +159,7 @@ void	notrailers(const char *, int);
 void	setifgroup(const char *, int);
 void	unsetifgroup(const char *, int);
 void	setifaddr(const char *, int);
+void	setiflladdr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
 void	setifbroadaddr(const char *, int);
@@ -351,6 +352,7 @@ const struct	cmd {
 	{ "mode",	NEXTARG,	A_MEDIAMODE,	setmediamode },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ "lladdr",	NEXTARG,	0,		setiflladdr },
 	{ "description", NEXTARG,	0,		setifdesc },
 	{ "descr",	NEXTARG,	0,		setifdesc },
 	{ NULL, /*src*/	0,		0,		setifaddr },
@@ -3337,7 +3339,7 @@ usage(int value)
 	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
 	    "\t[description value] [[-]group group-name]\n"
-	    "\t[[-]link0] [[-]link1] [[-]link2]\n"
+	    "\t[[-]link0] [[-]link1] [[-]link2] [lladdr etheraddr]\n"
 	    "\t[media type] [[-]mediaopt opts] [mode mode] [instance minst]\n"
 	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
 	    "\t[nwid id] [nwkey key] [nwkey persist[:key]] [-nwkey]\n"
@@ -3449,3 +3451,21 @@ sec2str(time_t total)
 	return (result);
 }
 #endif /* INET6 */
+
+void
+setiflladdr(const char *addr, int param)
+{
+	struct ether_addr *eap;
+
+	eap = ether_aton(addr);
+	if (eap == NULL) {
+		warnx("malformed link-level address");
+		return;
+	}
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
+	ifr.ifr_addr.sa_family = AF_LINK;
+	bcopy(eap, ifr.ifr_addr.sa_data, ETHER_ADDR_LEN);
+	if (ioctl(s, SIOCSIFLLADDR, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFLLADDR");
+}

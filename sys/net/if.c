@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.104 2005/02/07 15:00:16 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.105 2005/03/30 02:55:36 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1190,6 +1190,8 @@ ifioctl(so, cmd, data, p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
+	struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
 	int error = 0;
@@ -1343,6 +1345,48 @@ ifioctl(so, cmd, data, p)
 		ifgr = (struct ifgroupreq *)data;
 		if ((error = if_delgroup(ifp, ifgr->ifgr_group)))
 			return (error);
+		break;
+
+	case SIOCSIFLLADDR:
+	        if ((error = suser(p, 0)))
+	                return (error);
+	        ifa = ifnet_addrs[ifp->if_index];
+	        if (ifa == NULL)
+	                return(EINVAL);
+	        sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+	        if (sdl == NULL)
+	                return(EINVAL);
+	        if (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN)
+	                return(EINVAL);
+	        switch (ifp->if_type) {
+		case IFT_ETHER:
+		case IFT_FDDI:
+		case IFT_XETHER:
+		case IFT_ISO88025:
+		case IFT_L2VLAN:
+	                bcopy((caddr_t)ifr->ifr_addr.sa_data,
+			      (caddr_t)((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
+			/* fall through */
+		case IFT_ARCNET:
+                        bcopy((caddr_t)ifr->ifr_addr.sa_data,
+			      LLADDR(sdl), ETHER_ADDR_LEN);
+			break;
+		default:
+	                return (ENODEV);
+		}
+		if (ifp->if_flags & IFF_UP) {
+		        int s = splimp();
+			ifp->if_flags &= ~IFF_UP;
+			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+			ifp->if_flags |= IFF_UP;
+			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+			splx(s);
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			        if (ifa->ifa_addr != NULL &&
+				    ifa->ifa_addr->sa_family == AF_INET)
+				        arp_ifinit((struct arpcom *)ifp, ifa);
+			}
+		}
 		break;
 
 	default:

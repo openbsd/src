@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.32 2005/01/14 11:49:01 henning Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.33 2005/03/30 02:55:37 tedu Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@
 #define	SIOCDIFADDR	 _IOW('i', 25, struct ifreq)	/* delete IF addr */
 #define	SIOCAIFADDR	 _IOW('i', 26, struct ifaliasreq)/* add/chg IF alias */
 #define	SIOCGIFDATA	_IOWR('i', 27, struct ifreq)	/* get if_data */
+#define	SIOCSIFLLADDR	_IOW('i', 31, struct ifreq)	/* set link level addr */
 
 /* KAME IPv6 */
 /* SIOCAIFALIAS? */
