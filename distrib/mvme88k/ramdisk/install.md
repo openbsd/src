@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.11 2002/05/07 02:03:57 krw Exp $
+#       $OpenBSD: install.md,v 1.12 2002/05/08 23:01:47 krw Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -40,15 +40,10 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+MDTERM=vt100
 ARCH=ARCH
 
 md_set_term() {
-	if [ ! -z "$TERM" ]; then
-		return
-	fi
-	ask "Specify terminal type:" xterm
-	TERM="$resp"
-	export TERM
 }
 
 md_get_diskdevs() {
@@ -62,11 +57,6 @@ md_get_cddevs() {
 md_get_ifdevs() {
 	# return available network devices
 	dmesg | egrep "(^ie[0-9] )|(^le[0-9] )" | cut -d" " -f1 | sort -u
-}
-
-md_get_partition_range() {
-	# return range of valid partition letters
-	echo "[a-p]"
 }
 
 md_questions() {

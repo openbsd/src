@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.218 2002/05/04 22:21:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.219 2002/05/08 23:01:46 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,21 +67,32 @@
 
 # OpenBSD install/upgrade script common subroutines and initialization code
 
-# include machine-dependent functions
+# Include machine-dependent functions and definitions.
+#
 # The following functions must be provided:
-#	md_get_diskdevs()	- return available disk devices
-#	md_get_cddevs()		- return available CD-ROM devices
-#	md_get_partition_range() - return range of valid partition letters
-#	md_installboot()	- install boot-blocks on disk
-#	md_prep_disklabel()	- label the root disk
-#	md_welcome_banner()	- display friendly message
+#	md_congrats()		  - display friendly message
+#	md_get_cddevs()		  - return available CD-ROM devices
+#	md_get_diskdevs()	  - return available disk devices
+#	md_installboot()	  - install boot-blocks on disk
+#	md_native_fsopts()	  - native filesystem options for disk installs
+#	md_native_fstype()	  - native filesystem type for disk installs
 #	md_not_going_to_install() - display friendly message
-#	md_congrats()		- display friendly message
-#	md_native_fstype()	- native filesystem type for disk installs
-#	md_native_fsopts()	- native filesystem options for disk installs
-
-# include machine dependent subroutines
+#	md_prep_disklabel()	  - label the root disk
+#	md_set_term()		  - set up terminal
+#	md_welcome_banner()	  - display friendly message
+#
+# The following variables can be provided if required:
+#	MDTERM           - 'vt220' assumed if not provided
 . install.md
+
+set_term() {
+	[ "$TERM" ] && return
+	ask "Specify terminal type:" ${MDTERM:-vt220}
+	TERM=$resp
+	export TERM
+
+	md_set_term
+}
 
 # Ask for a password, saving the input in $resp.
 #    Display $1 as the prompt.
@@ -1211,7 +1222,7 @@ install_from_mounted_fs() {
 }
 
 install_cdrom() {
-	local _drive _range _part _fstype _directory _n
+	local _drive _part _fstype _directory _n
 
 	# Get the cdrom device info
 	if [ -z "$_CDDEVS" ]; then
@@ -1268,12 +1279,11 @@ __EOT
 		_part=c
 	else
 		# Get partition from user
-		_range=`md_get_partition_range`
 		resp=
 		while [ -z "$resp" ] ; do
 			ask "CD-ROM partition to mount? (normally 'c')" c
 			case $resp in
-			$_range)
+			[a-p])
 				_part=$resp
 				;;
 			*)	echo "Invalid response: $resp"
@@ -2152,7 +2162,7 @@ y*|Y*)	echo "\nCool!  Let's get to it...\n"
 esac
 
 # Deal with terminal issues
-md_set_term
+set_term
 
 cat << __EOT
 

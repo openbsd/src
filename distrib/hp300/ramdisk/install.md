@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.27 2002/04/28 14:44:01 krw Exp $
+#	$OpenBSD: install.md,v 1.28 2002/05/08 23:01:46 krw Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,12 +43,10 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+MDTERM=hp300h
 ARCH=ARCH
 
 md_set_term() {
-	ask "Specify terminal type:" hp300h
-	TERM="$resp"
-	export TERM
 }
 
 md_get_diskdevs() {
@@ -60,11 +58,6 @@ md_get_diskdevs() {
 md_get_cddevs() {
 	# return available CD-ROM devices
 	dmesg | egrep -a "sd[0-9]*:.*CD-ROM" | cutword -t: 1 | sort -u
-}
-
-md_get_partition_range() {
-	# return range of valid partition letters
-	echo [a-p]
 }
 
 md_questions() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2002/04/28 14:44:01 krw Exp $
+#	$OpenBSD: install.md,v 1.8 2002/05/08 23:01:47 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,13 +42,10 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+MDTERM=sun
 ARCH=ARCH
 
 md_set_term() {
-	test -n "$TERM" && return
-	ask "Specify terminal type:" sun
-	TERM=$resp
-	export TERM
 }
 
 md_get_msgbuf() {
@@ -72,11 +69,6 @@ md_get_diskdevs() {
 md_get_cddevs() {
 	# return available CDROM devices
 	md_get_msgbuf | sed -n 	-e '/^cd[0-9] /{s/ .*//;p;}'
-}
-
-md_get_partition_range() {
-	# return range of valid partition letters
-	echo [a-p]
 }
 
 md_questions() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2002/05/07 02:03:57 krw Exp $
+#	$OpenBSD: install.md,v 1.15 2002/05/08 23:01:46 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -45,12 +45,6 @@ MDSETS=kernel
 ARCH=ARCH
 
 md_set_term() {
-	if [ ! -z "$TERM" ]; then
-		return
-	fi
-	ask "Specify terminal type:" vt220
-	TERM="$resp"
-	export TERM
 }
 
 md_get_diskdevs() {
@@ -61,11 +55,6 @@ md_get_diskdevs() {
 md_get_cddevs() {
 	# return available CDROM devices
 	dmesg | sed -n -e '/^a\{0,1\}cd[0-9] /{s/ .*//;p;}'
-}
-
-md_get_partition_range() {
-	# return range of valid partition letters
-	echo "[a-p]"
 }
 
 md_questions() {
