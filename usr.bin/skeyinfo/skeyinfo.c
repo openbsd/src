@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.8 2001/06/17 22:54:44 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.9 2001/06/19 01:49:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -38,20 +38,24 @@
 
 extern char *__progname;
 
-void usage __P((void));
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct passwd *pw;
-	char *challenge, *cp, *name = NULL;
+	char *style, *challenge, *cp, *name;
 	int ch, verbose = 0;
+	login_cap_t *lc;
 	auth_session_t *as;
 
-	while ((ch = getopt(argc, argv, "v")) != -1)
+	name = NULL;
+	style = "skey";
+	while ((ch = getopt(argc, argv, "a:v")) != -1)
 		switch(ch) {
+		case 'a':
+			style = optarg;
+			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -80,11 +84,17 @@ main(argc, argv)
 	if ((name = strdup(pw->pw_name)) == NULL)
 		err(1, "cannot allocate memory");
 
-	as = auth_userchallenge(name, "skey", NULL, &challenge);
+	if ((lc = login_getclass(pw->pw_class)) == NULL)
+		errx(1, "unable to classify user %s", name);
+
+	if ((cp = login_getstyle(lc, style, NULL)) == NULL)
+		errx(1, "unknown authentication method %s", style);
+
+	as = auth_userchallenge(name, cp, NULL, &challenge);
 	if (as == NULL || challenge == NULL) {
 		if (as)
 			auth_close(as);
-		errx(1, "unable to retrieve S/Key challenge for %s", name);
+		errx(1, "unable to retrieve challenge for %s", name);
 	}
 
 	/*
@@ -107,8 +117,10 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-v] [user]\n", __progname);
+
+	(void)fprintf(stderr, "Usage: %s [-a auth-type] [-v] [user]\n",
+	    __progname);
 	exit(1);
 }

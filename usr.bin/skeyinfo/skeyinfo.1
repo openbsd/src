@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyinfo.1,v 1.4 2001/06/17 22:44:51 millert Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.5 2001/06/19 01:49:45 millert Exp $
 .\"
 .Dd 17 June 2001
 .Dt SKEYINFO 1
@@ -8,6 +8,7 @@
 .Nd obtain the next S/Key challenge for a user
 .Sh SYNOPSIS
 .Nm skeyinfo
+.Op Fl a Ar auth-type
 .Op Fl v
 .Op Ar user
 .Sh DESCRIPTION
@@ -16,7 +17,14 @@ prints out the next S/Key challenge for the specified user or for the
 current user if no user is specified.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width auth-typeXXXX
+.It Fl a Ar auth-type
+Specify an authentication type instead of the default
+.Dq skey .
+This can be used to get a challenge for a challenge/response authentication
+mechanism other than S/Key, or if a remote S/Key server is in use.
+Note that this will cause an error if the selected type
+does not support challenge/response style authentication.
 .It Fl v
 Print the hash algorithm as well.
 .El
