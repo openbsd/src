@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arithmetic.6,v 1.2 1998/08/19 07:39:48 pjanzen Exp $
+.\"	$OpenBSD: arithmetic.6,v 1.3 1998/11/29 19:37:16 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Op Fl o Ar +\-x/
 .Op Fl r Ar range
 .Sh DESCRIPTION
-.Nm Arithmetic
+.Nm
 asks you to solve problems in simple arithmetic.
 Each question must be answered correctly before going on to the next.
 After every 20 problems, it prints the score so far and the time taken.
@@ -57,7 +57,7 @@ The options are as follows:
 .Bl -tag -width indent 
 .It Fl o
 By default,
-.Nm arithmetic
+.Nm
 asks questions on addition of numbers from 0 to 10, and corresponding
 subtraction.
 By supplying one or more of the characters
@@ -92,7 +92,7 @@ will remember the numbers involved, and will tend to select those numbers
 more often than others, in problems of the same sort.
 Eventually it will forgive and forget.
 .Pp
-.Nm Arithmetic
+.Nm
 cannot be persuaded to tell you the right answer.
 You must work it out for yourself.
 .Sh DIAGNOSTICS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: factor.6,v 1.2 1998/08/19 07:40:27 pjanzen Exp $
+.\"	$OpenBSD: factor.6,v 1.3 1998/11/29 19:37:34 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,14 +113,10 @@ The
 .Ar start
 value is terminated by a non-digit character (such as a newline).
 The input line must not be longer than 255 characters.
-.Sh DIAGNOSTICS
-Out of range or invalid input results in 
-.Sq ouch
-being written to standard error.
 .Sh BUGS
-.Nm Factor
+.Nm factor
 cannot handle the 
 .Dq 10 most wanted
-factor list,
+factor list;
 .Nm primes
 won't get you a world record.
