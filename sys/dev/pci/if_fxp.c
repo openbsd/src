@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.4 1997/07/06 14:30:57 niklas Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.5 1997/07/06 16:06:47 niklas Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -356,11 +356,12 @@ fxp_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc
 #ifdef __OpenBSD__
-	    , self->dv_xname
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc,
+	    self->dv_xname);
+#else
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
 #endif
-	    );
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
