@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.28 1998/05/18 21:41:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.29 1998/05/30 20:54:42 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ cansignal(p, pc, q, signum)
 	 */
 	if (q->p_flag & P_SUGID) {
 		switch (signum) {
+		case 0:
 		case SIGKILL:
 		case SIGINT:
 		case SIGTERM:
