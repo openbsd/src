@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.16 2000/02/25 17:23:41 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.70 2000/02/20 19:58:40 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.17 2000/06/08 20:49:19 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.71 2000/05/12 12:41:23 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -923,12 +923,7 @@ pf_encap_connection_check (char *conn)
       return;
     }
   doi_str = conf_get_str (conf, "DOI");
-  if (!doi_str)
-    {
-      log_print ("pf_encap_connection_check: No DOI specified for %s", conf);
-      return;
-    }
-  if (strcasecmp (doi_str, "IPSEC") != 0)
+  if (doi_str && strcasecmp (doi_str, "IPSEC") != 0)
     {
       log_print ("pf_encap_connection_check: DOI \"%s\" unsupported", doi_str);
       return;
