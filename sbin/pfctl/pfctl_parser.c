@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.58 2002/01/07 17:24:43 mpech Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.59 2002/01/08 09:31:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -360,7 +360,9 @@ print_flags(u_int8_t f)
 void
 print_nat(struct pf_nat *n)
 {
-	printf("@nat ");
+	if (n->no)
+		printf("no ");
+	printf("nat ");
 	if (n->ifname[0]) {
 		printf("on ");
 		if (n->ifnot)
@@ -390,15 +392,19 @@ print_nat(struct pf_nat *n)
 		printf(" ");
 	} else
 		printf("any ");
-	printf("-> ");
-	print_addr(&n->raddr, NULL, n->af);
+	if (!n->no) {
+		printf("-> ");
+		print_addr(&n->raddr, NULL, n->af);
+	}
 	printf("\n");
 }
 
 void
 print_binat(struct pf_binat *b)
 {
-	printf("@binat ");
+	if (b->no)
+		printf("no ");
+	printf("binat ");
 	if (b->ifname[0]) {
 		printf("on ");
 		printf("%s ", b->ifname);
@@ -421,15 +427,19 @@ print_binat(struct pf_binat *b)
 		printf(" ");
 	} else
 		printf("any ");
- 	printf("-> ");
-	print_addr(&b->raddr, NULL, b->af);
+	if (!b->no) {
+	 	printf("-> ");
+		print_addr(&b->raddr, NULL, b->af);
+	}
 	printf("\n");
 }
 
 void
 print_rdr(struct pf_rdr *r)
 {
-	printf("@rdr ");
+	if (r->no)
+		printf("no ");
+	printf("rdr ");
 	if (r->ifname[0]) {
 		printf("on ");
 		if (r->ifnot)
@@ -464,13 +474,15 @@ print_rdr(struct pf_rdr *r)
 		if (r->opts & PF_DPORT_RANGE)
 			printf(":%u", ntohs(r->dport2));
 	}
-	printf(" -> ");
-	print_addr(&r->raddr, NULL, r->af);
-	printf(" ");
-	if (r->rport) {
-		printf("port %u", ntohs(r->rport));
-		if (r->opts & PF_RPORT_RANGE)
-			printf(":*");
+	if (!r->no) {
+		printf(" -> ");
+		print_addr(&r->raddr, NULL, r->af);
+		printf(" ");
+		if (r->rport) {
+			printf("port %u", ntohs(r->rport));
+			if (r->opts & PF_RPORT_RANGE)
+				printf(":*");
+		}
 	}
 	printf("\n");
 }

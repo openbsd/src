@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.58 2001/12/10 18:28:32 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.59 2002/01/08 09:31:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -299,6 +299,7 @@ struct pf_nat {
 	u_int8_t	 snot;
 	u_int8_t	 dnot;
 	u_int8_t	 ifnot;
+	u_int8_t	 no;
 };
 
 struct pf_binat {
@@ -312,6 +313,7 @@ struct pf_binat {
 	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 dnot;
+	u_int8_t	 no;
 };
 
 struct pf_rdr {
@@ -332,6 +334,7 @@ struct pf_rdr {
 	u_int8_t	 dnot;
 	u_int8_t	 ifnot;
 	u_int8_t	 opts;
+	u_int8_t	 no;
 };
 
 struct pf_tree_key {

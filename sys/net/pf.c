@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.181 2001/12/31 16:46:39 mickey Exp $ */
+/*	$OpenBSD: pf.c,v 1.182 2002/01/08 09:31:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -415,7 +415,8 @@ pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
 	    a->af != b->af ||
 	    a->snot != b->snot ||
 	    a->dnot != b->dnot ||
-	    a->ifnot != b->ifnot)
+	    a->ifnot != b->ifnot ||
+	    a->no != b->no)
 		return (1);
 	if (PF_ANEQ(&a->saddr, &b->saddr, a->af))
 		return (1);
@@ -435,6 +436,11 @@ pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
 int
 pf_compare_binats(struct pf_binat *a, struct pf_binat *b)
 {
+	if (a->proto != b->proto ||
+	    a->dnot != b->dnot ||
+	    a->af != b->af ||
+	    a->no != b->no)
+		return (1);
 	if (PF_ANEQ(&a->saddr, &b->saddr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->daddr, &b->daddr, a->af))
@@ -442,10 +448,6 @@ pf_compare_binats(struct pf_binat *a, struct pf_binat *b)
 	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
 		return (1);
 	if (PF_ANEQ(&a->raddr, &b->raddr, a->af))
-		return (1);
-	if (a->proto != b->proto ||
-	    a->dnot != b->dnot ||
-	    a->af != b->af)
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -463,7 +465,8 @@ pf_compare_rdrs(struct pf_rdr *a, struct pf_rdr *b)
 	    a->snot != b->snot ||
 	    a->dnot != b->dnot ||
 	    a->ifnot != b->ifnot ||
-	    a->opts != b->opts)
+	    a->opts != b->opts ||
+	    a->no != b->no)
 		return (1);
 	if (PF_ANEQ(&a->saddr, &b->saddr, a->af))
 		return (1);
@@ -2715,6 +2718,8 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		else
 			n = TAILQ_NEXT(n, entries);
 	}
+	if (nm && nm->no)
+		return (NULL);
 	return (nm);
 }
 
@@ -2744,6 +2749,8 @@ pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
 		else
 			b = TAILQ_NEXT(b, entries);
 	}
+	if (bm && bm->no)
+		return (NULL);
 	return (bm);
 }
 
@@ -2768,6 +2775,8 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		else
 			r = TAILQ_NEXT(r, entries);
 	}
+	if (rm && rm->no)
+		return (NULL);
 	return (rm);
 }
 
