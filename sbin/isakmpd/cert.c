@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.c,v 1.14 2000/04/07 22:07:07 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.16 2000/03/14 19:43:31 ho Exp $	*/
+/*	$OpenBSD: cert.c,v 1.15 2000/06/08 20:51:55 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.17 2000/05/17 16:46:35 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -55,6 +55,10 @@
 #endif
 #endif
 
+#ifdef USE_KEYNOTE
+#include "policy.h"
+#endif
+
 struct cert_handler cert_handler[] = {
 #ifdef USE_X509
   {
@@ -63,7 +67,16 @@ struct cert_handler cert_handler[] = {
     x509_cert_insert, x509_cert_free,
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
     x509_cert_obtain, x509_cert_get_key, x509_cert_get_subject
-  }
+  },
+#endif
+#ifdef USE_KEYNOTE
+  {
+    ISAKMP_CERTENC_KEYNOTE,
+    keynote_cert_init, keynote_cert_get, keynote_cert_validate,
+    keynote_cert_insert, keynote_cert_free,
+    keynote_certreq_validate, keynote_certreq_decode, keynote_free_aca,
+    keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subject
+  },
 #endif
 };
 
