@@ -163,11 +163,6 @@ db_read_bytes(addr, size, data)
 }
 
 
-/*
- * XXX - stolen from pmap.c
- */
-#define	getpte(va)		lda(va, ASI_PTE)
-#define	setpte(va, pte)		sta(va, ASI_PTE, pte)
 #define	splpmap() splimp()
 
 static void
@@ -175,25 +170,22 @@ db_write_text(dst, ch)
 	unsigned char *dst;
 	int ch;
 {        
-	int s, pte0, pte;
 	vm_offset_t va;
+	int s;
 
 	s = splpmap();
 	va = (unsigned long)dst & (~PGOFSET);
-	pte0 = getpte(va);
 
-	if ((pte0 & PG_V) == 0) { 
+	if (pmap_extract(pmap_kernel(), va) == 0) {
 		db_printf(" address 0x%x not a valid page\n", dst);
 		splx(s);
 		return;
 	}
 
-	pte = pte0 | PG_W;
-	setpte(va, pte);
-
+	pmap_changeprot(pmap_kernel(), va, VM_PROT_ALL, 0);
 	*dst = (unsigned char)ch;
+	pmap_protect(pmap_kernel(), va, va, VM_PROT_READ|VM_PROT_EXECUTE);
 
-	setpte(va, pte0);
 	splx(s);
 }
 
