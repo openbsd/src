@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.22 2002/12/16 01:57:04 tdeval Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.23 2003/06/18 04:13:10 millert Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -192,10 +192,8 @@ dkreadstats(void)
 			if (sysctl(mib, 2, disknames, &size, NULL, 0) < 0)
 				err(1, "can't get hw.disknames");
 			bufpp = disknames;
-			i = 0;
-			while ((name = strsep(&bufpp, ",")) != NULL) {
-			    dk_name[i++] = name;
-			}
+			for (i = 0; i < dk_ndrive && (name = strsep(&bufpp, ",")) != NULL; i++)
+				dk_name[i] = name;
 			disknames = cur.dk_name[0];	/* To free old names. */
 
 			if (dk_ndrive < cur.dk_ndrive) {
@@ -474,10 +472,9 @@ dkinit(int select)
 		if (sysctl(mib, 2, disknames, &size, NULL, 0) < 0)
 			err(1, "can't get hw.disknames");
 		bufpp = disknames;
-		i = 0;
-		while ((name = strsep(&bufpp, ",")) != NULL) {
-		    cur.dk_name[i] = name;
-		    cur.dk_select[i++] = select;
+		for (i = 0; i < dk_ndrive && (name = strsep(&bufpp, ",")) != NULL; i++) {
+			cur.dk_name[i] = name;
+			cur.dk_select[i] = select;
 		}
 	} else {
 #if !defined(NOKVM)
