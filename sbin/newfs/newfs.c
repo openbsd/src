@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.48 2004/06/26 18:21:36 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.49 2004/07/02 15:48:36 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.48 2004/06/26 18:21:36 otto Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.49 2004/07/02 15:48:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -959,19 +959,34 @@ copy(char *src, char *dst)
 static int
 gettmpmnt(char *mountpoint, size_t len)
 {
+	const char *tmp;
+	const char *mnt = _PATH_MNT;
 	struct statfs fs;
+	size_t n;
 
-	if (statfs("/tmp", &fs) != 0)
-		err(1, "statfs /tmp");
+	tmp = getenv("TMPDIR");
+	if (tmp == NULL || *tmp == '\0')
+		tmp = _PATH_TMP;
+
+	if (statfs(tmp, &fs) != 0)
+		err(1, "statfs %s", tmp);
 	if (fs.f_flags & MNT_RDONLY) {
-		if (statfs("/mnt", &fs) != 0)
-			err(1, "statfs /mnt");
+		if (statfs(mnt, &fs) != 0)
+			err(1, "statfs %s", mnt);
 		if (strcmp(fs.f_mntonname, "/") != 0)
-			errx(1, "temp mountpoint /mnt busy");
-		strlcpy(mountpoint, "/mnt", len);
+			errx(1, "tmp mountpoint %s busy", mnt);
+		if (strlcpy(mountpoint, mnt, len) >= len)
+			errx(1, "tmp mountpoint %s too long", mnt);
 		return (0);
 	}
-	strlcpy(mountpoint, "/tmp/mntXXXXXXXXXXX", len);
+	n = strlcpy(mountpoint, tmp, len);
+	if (n >= len)
+		errx(1, "tmp mount point too long");
+	if (mountpoint[n - 1] != '/')
+		strlcat(mountpoint, "/", len);
+	n = strlcat(mountpoint, "mntXXXXXXXXXX", len);
+	if (n >= len)
+		errx(1, "tmp mount point too long");
 	if (mkdtemp(mountpoint) == NULL)
 		err(1, "mkdtemp %s", mountpoint);
 	return (1);
