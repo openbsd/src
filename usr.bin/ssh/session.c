@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.47 2001/01/13 18:32:50 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.48 2001/01/13 18:43:31 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -494,7 +494,7 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 		packet_disconnect("fork failed: %.100s", strerror(errno));
 	s->pid = pid;
 	/* Set interactive/non-interactive mode. */
-	packet_set_interactive(s->display);
+	packet_set_interactive(s->display != NULL);
 #ifdef USE_PIPES
 	/* We are the parent.  Close the child sides of the pipes. */
 	close(pin[0]);
