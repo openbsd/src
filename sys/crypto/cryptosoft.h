@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.h,v 1.5 2001/06/16 22:17:50 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.h,v 1.6 2001/07/05 08:26:05 jjbg Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -39,6 +39,10 @@ struct swcr_data {
 			u_int8_t	 *SW_iv;
 			struct enc_xform *SW_exf;
 		} SWCR_ENC;
+		struct {
+			u_int32_t	 SW_size;
+			struct comp_algo *SW_cxf;
+		} SWCR_COMP;
 	} SWCR_UN;
 
 #define sw_ictx		SWCR_UN.SWCR_AUTH.SW_ictx
@@ -48,6 +52,8 @@ struct swcr_data {
 #define sw_kschedule	SWCR_UN.SWCR_ENC.SW_kschedule
 #define sw_iv		SWCR_UN.SWCR_ENC.SW_iv
 #define sw_exf		SWCR_UN.SWCR_ENC.SW_exf
+#define sw_size		SWCR_UN.SWCR_COMP.SW_size
+#define sw_cxf		SWCR_UN.SWCR_COMP.SW_cxf
 
 	struct swcr_data *sw_next;
 };
@@ -59,6 +65,7 @@ extern u_int8_t hmac_opad_buffer[64];
 int	swcr_encdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
 int	swcr_authcompute(struct cryptodesc *, struct swcr_data *,
 	caddr_t, int);
+int	swcr_compdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
 int	swcr_process(struct cryptop *);
 int	swcr_newsession(u_int32_t *, struct cryptoini *);
 int	swcr_freesession(u_int64_t);

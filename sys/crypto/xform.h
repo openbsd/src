@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.5 2001/06/16 22:17:50 deraadt Exp $	*/
+/*	$OpenBSD: xform.h,v 1.6 2001/07/05 08:26:04 jjbg Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -52,6 +52,14 @@ struct enc_xform {
 	void (*zerokey) (u_int8_t **);
 };
 
+struct comp_algo {
+	int type;
+	char *name;
+	size_t minlen;
+	u_int32_t (*compress) (u_int8_t *, u_int32_t, u_int8_t **);
+	u_int32_t (*decompress) (u_int8_t *, u_int32_t, u_int8_t **);
+};
+
 union authctx {
 	MD5_CTX md5ctx;
 	SHA1_CTX sha1ctx;
@@ -71,4 +79,5 @@ extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
+extern struct comp_algo comp_algo_deflate;
 #endif /* _CRYPTO_XFORM_H_ */
