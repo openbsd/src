@@ -59,6 +59,9 @@ Boston, MA 02111-1307, USA.  */
 /* Every structure or union's size must be a multiple of 2 bytes.  */
 #define STRUCTURE_SIZE_BOUNDARY 16
 
+/* optimize_reg_copy_3() is known to misbehave with some constructs */
+#define	BROKEN_OPTIMIZE_REG_COPY_3_P
+
 /* Specific options for DBX Output.  */
 
 /* This is BSD, so it wants DBX format.  */

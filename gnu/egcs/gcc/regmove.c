@@ -1127,12 +1127,14 @@ regmove_optimize (f, nregs, regmove_dump_file)
 	  if (! set)
 	    continue;
 
+#ifndef BROKEN_OPTIMIZE_REG_COPY_3_P
 	  if (flag_expensive_optimizations && ! pass
 	      && (GET_CODE (SET_SRC (set)) == SIGN_EXTEND
 		  || GET_CODE (SET_SRC (set)) == ZERO_EXTEND)
 	      && GET_CODE (XEXP (SET_SRC (set), 0)) == REG
 	      && GET_CODE (SET_DEST(set)) == REG)
 	    optimize_reg_copy_3 (insn, SET_DEST (set), SET_SRC (set));
+#endif
 
 	  if (flag_expensive_optimizations && ! pass
 	      && GET_CODE (SET_SRC (set)) == REG
