@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.60 2001/08/25 19:29:16 fgsch Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.61 2001/08/26 22:35:03 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -521,7 +521,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "NEC ", "SD120S-200      ",	 "0001"}, SDEV_NOLUNS},
         {{T_DIRECT, T_FIXED,
-         "MICROP", "4421-07   0329SJ",   ""},     SDEV_NOTAGS},
+         "MICROP", "4421-07",		 ""},     SDEV_NOTAGS},
         {{T_DIRECT, T_FIXED,
          "SEAGATE", "ST150176LW",        "0002"}, SDEV_NOTAGS},
 
