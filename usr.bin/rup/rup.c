@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.3 1996/08/16 09:10:29 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.4 1996/09/04 23:43:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.3 1996/08/16 09:10:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.4 1996/09/04 23:43:57 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -216,7 +216,8 @@ print_rup_data(host, host_stat)
 			hours_buf[0] = '\0';
 
 	if (printtime)
-		printf(" %2d:%02d%cm", host_time.tm_hour % 12,
+		printf(" %2d:%02d%cm",
+		    (host_time.tm_hour % 12) ? (host_time.tm_hour % 12) : 12,
 		    host_time.tm_min,
 		    (host_time.tm_hour >= 12) ? 'p' : 'a');
 
