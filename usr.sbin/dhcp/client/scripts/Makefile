@@ -30,8 +30,10 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SCRIPTS=netbsd
-SCRIPTSNAME_netbsd=dhclient-script
-SCRIPTSDIR=/etc
+NOMAN=
+
+beforeinstall:
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${.CURDIR}/dhclient-script ${DESTDIR}/usr/bin/dhclient-script
 
 .include <bsd.prog.mk>
