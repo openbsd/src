@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2001/05/08 17:30:41 aaron Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2001/06/08 08:09:03 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -262,12 +262,14 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t) from);
+		pmap_extract(pmap_kernel(), (vm_offset_t) from, &pa);
 #ifdef DEBUG
+#if 0
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to, XXX) != 0)
 			panic("pagemove 3");
+#endif
 #endif
 		pmap_remove(pmap_kernel(),
 			   (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
@@ -345,12 +347,11 @@ int
 kvtop(addr)
 	caddr_t addr;
 {
-	vm_offset_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (va == 0)
+	if (pmap_extract(pmap_kernel(), (vm_offset_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -390,8 +391,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		pa = pmap_extract(upmap, uva);
-		if (pa == 0)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		uva += PAGE_SIZE;

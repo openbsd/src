@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2001/05/09 15:31:26 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 2001/06/08 08:09:22 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -257,38 +258,11 @@ struct pv_entry {
 
 struct pv_entry *pv_table;
 
-struct pv_page;
-struct pv_page_info {
-	LIST_ENTRY(pv_page) pgi_list;
-	struct pv_entry *pgi_freelist;
-	int pgi_nfree;
-};
-#define	NPVPPG	((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
-struct pv_page {
-	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[NPVPPG];
-};
-LIST_HEAD(pv_page_list, pv_page) pv_page_freelist;
-int pv_nfree;
-int pv_pcnt;
+struct pool pmap_pv_pool;
 static struct pv_entry *pmap_alloc_pv __P((void));
 static void pmap_free_pv __P((struct pv_entry *));
 
-struct po_page;
-struct po_page_info {
-	LIST_ENTRY(po_page) pgi_list;
-	vm_page_t pgi_page;
-	LIST_HEAD(po_freelist, pte_ovfl) pgi_freelist;
-	int pgi_nfree;
-};
-#define	NPOPPG	((NBPG - sizeof(struct po_page_info)) / sizeof(struct pte_ovfl))
-struct po_page {
-	struct po_page_info pop_pgi;
-	struct pte_ovfl pop_po[NPOPPG];
-};
-LIST_HEAD(po_page_list, po_page) po_page_freelist;
-int po_nfree;
-int po_pcnt;
+struct pool pmap_po_pool;
 static struct pte_ovfl *poalloc __P((void));
 static void pofree __P((struct pte_ovfl *, int));
 
@@ -629,7 +603,6 @@ avail_end = npgs * NBPG;
 		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 	for (i = 0; i < ptab_cnt; i++)
 		LIST_INIT(potable + i);
-	LIST_INIT(&pv_page_freelist);
 
 	/* use only one memory list */
 	{ 
@@ -741,7 +714,10 @@ pmap_init()
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
-	LIST_INIT(&pv_page_freelist);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+            0, NULL, NULL, M_VMPMAP);
+	pool_init(&pmap_po_pool, sizeof(struct pte_ovfl), 0, 0, 0, "popl",
+            0, NULL, NULL, M_VMPMAP);
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
 #ifdef MACHINE_NEW_NONCONTIG
@@ -1019,34 +995,29 @@ pmap_copy_page(src, dst)
 static struct pv_entry *
 pmap_alloc_pv()
 {
-	struct pv_page *pvp;
 	struct pv_entry *pv;
-	int i;
-	
-	if (pv_nfree == 0) {
-#ifdef UVM
-		if (!(pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG)))
-			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
-#else
-		if (!(pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG)))
-			panic("pmap_alloc_pv: kmem_alloc() failed");
-#endif
-		pv_pcnt++;
-		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
-		for (i = NPVPPG - 2; --i >= 0; pv++)
-			pv->pv_next = pv + 1;
-		pv->pv_next = 0;
-		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
-		LIST_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		pv = pvp->pvp_pv;
-	} else {
-		pv_nfree--;
-		pvp = pv_page_freelist.lh_first;
-		if (--pvp->pvp_pgi.pgi_nfree <= 0)
-			LIST_REMOVE(pvp, pvp_pgi.pgi_list);
-		pv = pvp->pvp_pgi.pgi_freelist;
-		pvp->pvp_pgi.pgi_freelist = pv->pv_next;
-	}
+	int s;
+
+	/*
+	 * XXX - this splimp can go away once we have PMAP_NEW and
+	 *       a correct implementation of pmap_kenter.
+	 */
+	/*
+	 * Note that it's completly ok to use a pool here because it will
+	 * never map anything or call pmap_enter because we have
+	 * PMAP_MAP_POOLPAGE.
+	 */
+	s = splimp();
+	pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
+	splx(s);
+	/*
+	 * XXX - some day we might want to implement pv stealing, or
+	 *       to pass down flags from pmap_enter about allowed failure.
+	 *	 Right now - just panic.
+	 */
+	if (pv == NULL)
+		panic("pmap_alloc_pv: failed to allocate pv");
+
 	return pv;
 }
 
@@ -1054,73 +1025,34 @@ static void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
 {
-	struct pv_page *pvp;
-	
-	pvp = (struct pv_page *)trunc_page((vaddr_t)pv);
-	switch (++pvp->pvp_pgi.pgi_nfree) {
-	case 1:
-		LIST_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-	default:
-		pv->pv_next = pvp->pvp_pgi.pgi_freelist;
-		pvp->pvp_pgi.pgi_freelist = pv;
-		pv_nfree++;
-		break;
-	case NPVPPG:
-		pv_nfree -= NPVPPG - 1;
-		pv_pcnt--;
-		LIST_REMOVE(pvp, pvp_pgi.pgi_list);
-#ifdef UVM
-		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
-#else
-		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
-#endif
-		break;
-	}
+	int s;
+
+	/* XXX - see pmap_alloc_pv */
+	s = splimp();
+	pool_put(&pmap_pv_pool, pv);
+	splx(s);
 }
 
 /*
  * We really hope that we don't need overflow entries
  * before the VM system is initialized!							XXX
+ * XXX - see pmap_alloc_pv
  */
 static struct pte_ovfl *
 poalloc()
 {
-	struct po_page *pop;
 	struct pte_ovfl *po;
-	vm_page_t mem;
-	int i;
+	int s;
 	
+#ifdef DIAGNOSTIC
 	if (!pmap_initialized)
 		panic("poalloc");
-	
-	if (po_nfree == 0) {
-		/*
-		 * Since we cannot use maps for potable allocation,
-		 * we have to steal some memory from the VM system.			XXX
-		 */
-#ifdef UVM
-		mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
-#else
-		mem = vm_page_alloc(NULL, NULL);
 #endif
-		po_pcnt++;
-		pop = (struct po_page *)VM_PAGE_TO_PHYS(mem);
-		pop->pop_pgi.pgi_page = mem;
-		LIST_INIT(&pop->pop_pgi.pgi_freelist);
-		for (i = NPOPPG - 1, po = pop->pop_po + 1; --i >= 0; po++)
-			LIST_INSERT_HEAD(&pop->pop_pgi.pgi_freelist, po, po_list);
-		po_nfree += pop->pop_pgi.pgi_nfree = NPOPPG - 1;
-		LIST_INSERT_HEAD(&po_page_freelist, pop, pop_pgi.pgi_list);
-		po = pop->pop_po;
-	} else {
-		po_nfree--;
-		pop = po_page_freelist.lh_first;
-		if (--pop->pop_pgi.pgi_nfree <= 0)
-			LIST_REMOVE(pop, pop_pgi.pgi_list);
-		po = pop->pop_pgi.pgi_freelist.lh_first;
-		LIST_REMOVE(po, po_list);
-	}
-	return po;
+	s = splimp();
+	po = pool_get(&pmap_po_pool, PR_NOWAIT);
+	splx(s);
+	if (po == NULL)
+		panic("poalloc: failed to alloc po");
 }
 
 static void
@@ -1128,29 +1060,10 @@ pofree(po, freepage)
 	struct pte_ovfl *po;
 	int freepage;
 {
-	struct po_page *pop;
-	
-	pop = (struct po_page *)trunc_page((vaddr_t)po);
-	switch (++pop->pop_pgi.pgi_nfree) {
-	case NPOPPG:
-		if (!freepage)
-			break;
-		po_nfree -= NPOPPG - 1;
-		po_pcnt--;
-		LIST_REMOVE(pop, pop_pgi.pgi_list);
-#ifdef UVM
-		uvm_pagefree(pop->pop_pgi.pgi_page);
-#else
-		vm_page_free(pop->pop_pgi.pgi_page);
-#endif
-		return;
-	case 1:
-		LIST_INSERT_HEAD(&po_page_freelist, pop, pop_pgi.pgi_list);
-	default:
-		break;
-	}
-	LIST_INSERT_HEAD(&pop->pop_pgi.pgi_freelist, po, po_list);
-	po_nfree++;
+	int s;
+	s = splimp();
+	pool_put(&pmap_po_pool, po);
+	splx(s);
 }
 
 /*
@@ -1474,28 +1387,30 @@ pte_find(pm, va)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-vm_offset_t
-pmap_extract(pm, va)
+boolean_t
+pmap_extract(pm, va, pap)
 	struct pmap *pm;
-	vm_offset_t va;
+	vaddr_t va;
+	paddr_t *pap;
 {
 	pte_t *ptp;
-	vm_offset_t o;
 	int s = splimp();
+	boolean_t ret;
 	
 	if (!(ptp = pte_find(pm, va))) {
 		/* return address 0 if not mapped??? */
-		o = 0;
+		ret = FALSE;
 		if (pm == pmap_kernel() && va < 0x80000000){
 			/* if in kernel, va==pa for 0 - 0x80000000 */
-			o = va;
+			*pap = va;
+			ret = TRUE;
 		}
 		splx(s);
-		return o;
+		return ret;
 	}
-	o = (ptp->pte_lo & PTE_RPGN) | (va & ADDR_POFF);
+	*pap = (ptp->pte_lo & PTE_RPGN) | (va & ADDR_POFF);
 	splx(s);
-	return o;
+	return TRUE;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.9 2001/05/05 23:25:40 art Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.10 2001/06/08 08:08:53 art Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -98,14 +98,10 @@ _bus_space_unmap(t, bsh, size, adrp)
       }
 #endif
 
-#if __NetBSD_Version__ > 104050000
       if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
 	panic("_i386_memio_unmap:i386/rbus_machdep.c wrong virtual address");
       }
       bpa += (bsh & PGOFSET);
-#else
-      bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
-#endif
 
       /*
        * Free the kernel virtual mapping.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2001/05/09 15:31:25 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.20 2001/06/08 08:09:08 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -488,7 +488,7 @@ bogons:
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 
 	Segtabzero = (st_entry_t *) addr;
-	Segtabzeropa = (st_entry_t *) pmap_extract(pmap_kernel(), addr);
+	pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
 #ifdef M68060
 	if (mmutype == MMU_68060) {
 		addr2 = addr;
@@ -562,7 +562,7 @@ bogons:
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
-		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
+		pmap_extract(pmap_kernel(), addr2, &kpt_pages->kpt_pa);
 #ifdef M68060
       if (mmutype == MMU_68060) {
 			pmap_changebit(kpt_pages->kpt_pa, PG_CCB, 0);
@@ -1472,27 +1472,28 @@ pmap_unwire(pmap, va)
  *		with the given map/virtual_address pair.
  */
 
-vm_offset_t
-pmap_extract(pmap, va)
-	register pmap_t	pmap;
+boolean_t
+pmap_extract(pmap, va, pap)
+	pmap_t	pmap;
 	vm_offset_t va;
+	paddr_t *pap;
 {
-	register vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%x, %x) -> ", pmap, va);
 #endif
-	pa = 0;
 	if (pmap && pmap_ste_v(pmap, va))
 		pa = *pmap_pte(pmap, va);
-	if (pa)
-		pa = (pa & PG_FRAME) | (va & ~PG_FRAME);
+	else
+		return (FALSE);
+	*pap = (pa & PG_FRAME) | (va & ~PG_FRAME);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("%x\n", pa);
+		printf("%x\n", *pap);
 #endif
-	return(pa);
+	return (TRUE);
 }
 
 /*
@@ -1652,7 +1653,7 @@ ok:
 		 * We call pmap_remove_entry to take care of invalidating
 		 * ST and Sysptmap entries.
 		 */
-		kpa = pmap_extract(pmap, pv->pv_va);
+		pmap_extract(pmap, pv->pv_va, &kpa);
 		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
 				    PRM_TFLUSH|PRM_CFLUSH);
 		/*
@@ -2264,8 +2265,8 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (st_entry_t *)
 			kmem_alloc(st_map, M68K_STSIZE);
-		pmap->pm_stpa = (st_entry_t *)
-			pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_stab);
+		pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_stab,
+			(paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
 		if (mmutype <= MMU_68040) {
 #ifdef DEBUG
@@ -2411,7 +2412,7 @@ pmap_enter_ptpage(pmap, va)
 			printf("vm_fault(pt_map, %x, RW, 0) -> %d\n", va, s);
 			panic("pmap_enter: vm_fault failed");
 		}
-		ptpa = pmap_extract(pmap_kernel(), va);
+		pmap_extract(pmap_kernel(), va, &ptpa);
 		/*
 		 * Mark the page clean now to avoid its pageout (and
 		 * hence creation of a pager) between now and when it

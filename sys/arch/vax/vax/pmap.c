@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2001/05/16 17:29:39 hugh Exp $ */
+/*	$OpenBSD: pmap.c,v 1.17 2001/06/08 08:09:32 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -860,10 +860,11 @@ if(startpmapdebug)
 	return(virtuell+(count-pstart)+KERNBASE);
 }
 
-paddr_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	paddr_t pa = 0;
 	int	*pte, sva;
@@ -874,23 +875,26 @@ if(startpmapdebug)printf("pmap_extract: pmap %p, va %lx\n",pmap, va);
 
 	if (va & KERNBASE) {
 		pa = kvtophys(va); /* Is 0 if not mapped */
-		return(pa);
+		*pap = pa;
+		return (TRUE);
 	}
 
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
 		if (sva > (pmap->pm_p0lr & ~AST_MASK))
-			return NULL;
+			return (FALSE);
 		pte = (int *)pmap->pm_p0br;
 	} else {
 		if (sva < pmap->pm_p1lr)
-			return NULL;
+			return (FALSE);
 		pte = (int *)pmap->pm_p1br;
 	}
-	if (kvtopte(&pte[sva])->pg_pfn) 
-		return ((pte[sva] & PG_FRAME) << VAX_PGSHIFT);
+	if (kvtopte(&pte[sva])->pg_pfn) {
+		*pap = ((pte[sva] & PG_FRAME) << VAX_PGSHIFT);
+		return (TRUE);
+	}
 	
-	return (NULL);
+	return (FALSE);
 }
 
 /*

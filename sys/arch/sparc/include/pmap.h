@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.17 2001/05/09 15:31:27 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.18 2001/06/08 08:09:26 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -421,7 +421,7 @@ extern void		(*pmap_clear_reference_p) __P((paddr_t pa));
 extern void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 extern void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t,
 					     vm_prot_t, boolean_t, vm_prot_t));
-extern paddr_t		(*pmap_extract_p) __P((pmap_t, vaddr_t));
+extern boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 #ifdef PMAP_NEW
 extern boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 extern boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));

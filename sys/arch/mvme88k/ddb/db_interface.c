@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2001/03/16 00:01:51 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2001/06/08 08:09:11 art Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -577,7 +577,7 @@ db_write_bytes(addr, size, data)
 #endif
 		*dst++ = *data++;    
 	}
-	physaddr = pmap_extract(kernel_pmap, (vm_offset_t)addr);
+	pmap_extract(kernel_pmap, (vm_offset_t)addr, &physaddr);
 	cmmu_flush_cache(physaddr, i); 
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.37 2001/05/05 21:26:46 art Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.38 2001/06/08 08:09:43 art Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -162,14 +162,10 @@ chgkprot(addr, len, rw)
 	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
 		 * Extract physical address for the page.
-		 * We use a cheezy hack to differentiate physical
-		 * page 0 from an invalid mapping, not that it
-		 * really matters...
 		 */
-		pa = pmap_extract(pmap_kernel(), sva|1);
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE, 0);
+		pmap_enter(pmap_kernel(), sva, pa, prot, TRUE, 0);
 	}
 }
 #endif

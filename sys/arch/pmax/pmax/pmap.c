@@ -1103,12 +1103,13 @@ pmap_unwire(pmap, va)
  *		Extract the physical page address associated
  *		with the given map/virtual_address pair.
  */
-vm_offset_t
-pmap_extract(pmap, va)
-	register pmap_t	pmap;
-	vm_offset_t va;
+boolean_t
+pmap_extract(pmap, va, pap)
+	pmap_t	pmap;
+	vaddr_t va;
+	paddr_t *pap;
 {
-	register vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1125,20 +1126,20 @@ pmap_extract(pmap, va)
 		register pt_entry_t *pte;
 
 		if (!(pte = pmap_segmap(pmap, va)))
-			pa = 0;
+			return (FALSE);
 		else {
 			pte += (va >> PGSHIFT) & (NPTEPG - 1);
 			pa = pte->pt_entry & PG_FRAME;
 		}
 	}
-	if (pa)
-		pa |= va & PGOFSET;
+	pa |= va & PGOFSET;
+	*pap = pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract: pa %lx\n", pa);
 #endif
-	return (pa);
+	return (TRUE);
 }
 
 /*

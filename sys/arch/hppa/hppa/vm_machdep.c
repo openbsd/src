@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.21 2001/05/06 00:45:49 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.22 2001/06/08 08:08:49 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -107,7 +107,7 @@ pagemove(from, to, size)
 	register paddr_t pa;
 
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
+		pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
 		pmap_remove(pmap_kernel(),
 			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(), (vaddr_t)to, pa,
@@ -345,11 +345,8 @@ vmapbuf(bp, len)
 		/* not needed, thanks to PMAP_PREFER() */
 		/* fdcache(vm_map_pmap(map)->pmap_space, addr, PAGE_SIZE); */
 
-		pa = pmap_extract(vm_map_pmap(map), addr);
-#ifdef DIAGNOSTIC
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(map), addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-#endif
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
 		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 

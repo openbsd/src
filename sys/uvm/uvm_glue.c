@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.14 2001/05/07 16:08:40 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.26 1999/06/17 15:47:22 thorpej Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.15 2001/06/08 08:09:39 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.27 1999/07/08 18:11:03 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -202,10 +202,9 @@ uvm_chgkprot(addr, len, rw)
 		 * page 0 from an invalid mapping, not that it
 		 * really matters...
 		 */
-		pa = pmap_extract(pmap_kernel(), sva|1);
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE, 0);
+		pmap_enter(pmap_kernel(), sva, pa, prot, TRUE, 0);
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.162 2001/05/17 18:41:48 provos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.163 2001/06/08 08:08:51 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2728,7 +2728,8 @@ bus_space_unmap(t, bsh, size)
 			panic("bus_space_unmap: overflow");
 #endif
 
-		bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+		pmap_extract(pmap_kernel(), va, &bpa);
+		bpa += (bsh & PGOFSET);
 
 		/*
 		 * Free the kernel virtual mapping.
@@ -3197,7 +3198,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+		pmap_extract(pmap, (vm_offset_t)vaddr, (paddr_t *)&curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.

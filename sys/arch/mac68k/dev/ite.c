@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.17 1998/05/03 07:12:58 gene Exp $	*/
+/*	$OpenBSD: ite.c,v 1.18 2001/06/08 08:08:59 art Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -935,11 +935,11 @@ itematch(parent, vcf, aux)
 {
 	struct grfbus_attach_args *ga = aux;
 	struct grfmode *gm = ga->ga_grfmode;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	if (strcmp(ga->ga_name, "ite"))
 		return 0;
-	pa = pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase + gm->fboff);
+	pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase + gm->fboff, &pa);
 
 	return (pa == (vm_offset_t) mac68k_vidphys);
 }

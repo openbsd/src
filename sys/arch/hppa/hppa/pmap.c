@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2001/05/09 15:31:24 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2001/06/08 08:08:48 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -1299,17 +1299,19 @@ pmap_unwire(pmap, va)
 }
 
 /*
- * pmap_extract(pmap, va)
- *	returns the physical address corrsponding to the
- *	virtual address specified by pmap and va if the
- *	virtual address is mapped and 0 if it is not.
+ * pmap_extract(pmap, va, pap)
+ *	fills in the physical address corrsponding to the
+ *	virtual address specified by pmap and va into the
+ *	storage pointed to by pap and returns TRUE if the
+ *	virtual address is mapped. returns FALSE in not mapped.
  */
-paddr_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
-	register struct pv_entry *pv;
+	struct pv_entry *pv;
 
 	va = hppa_trunc_page(va);
 #ifdef PMAPDEBUG
@@ -1318,9 +1320,11 @@ pmap_extract(pmap, va)
 #endif
 
 	if (!(pv = pmap_find_va(pmap_sid(pmap, va), va & ~PGOFSET)))
-		return(0);
-	else
-		return tlbptob(pv->pv_tlbpage) + (va & PGOFSET);
+		return (FALSE);
+	else {
+		*pap = tlbptob(pv->pv_tlbpage) + (va & PGOFSET);
+		return (TRUE);
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2001/05/09 15:31:22 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2001/06/08 08:09:42 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -147,18 +147,17 @@ void		 pmap_destroy __P((pmap_t));
 #if defined(PMAP_NEW) && defined(__i386__)
 #ifdef notyet
 int		 pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
-boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 #else
 int		 _pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 #define	 pmap_enter(pmap, va, pa, prot, wired, access_type) \
     (_pmap_enter((pmap), (va), (pa), (prot), ((wired) ? PMAP_WIRED : 0)))
-boolean_t	 _pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 #endif
 #else
 void		 pmap_enter __P((pmap_t,
 		    vaddr_t, paddr_t, vm_prot_t, boolean_t, vm_prot_t));
 #endif
-paddr_t		 pmap_extract __P((pmap_t, vaddr_t));
+
+boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 #if defined(PMAP_NEW) && defined(PMAP_GROWKERNEL)
 vaddr_t		 pmap_growkernel __P((vaddr_t));
 #endif

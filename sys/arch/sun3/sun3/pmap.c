@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/05/30 20:40:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2001/06/08 08:09:29 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -2797,13 +2797,13 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *		with the given map/virtual_address pair.
  *	Returns FALSE if VA not valid.
  */
-vm_offset_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	int s, sme, segnum, ptenum, pte;
-	vm_offset_t pa;
 
 	pte = 0;
 	PMAP_LOCK();
@@ -2825,15 +2825,15 @@ pmap_extract(pmap, va)
 		printf("pmap_extract: invalid va=0x%x\n", va);
 		Debugger();
 #endif
-		pte = 0;
+		return (FALSE);
 	}
-	pa = PG_PA(pte);
+	*pap = PG_PA(pte);
 #ifdef	DIAGNOSTIC
 	if (pte & PG_TYPE) {
 		panic("pmap_extract: not main mem, va=0x%x", va);
 	}
 #endif
-	return (pa);
+	return (TRUE);
 }
 
 /*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.8 2001/03/22 03:05:56 smart Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.22 1999/07/22 22:58:39 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.9 2001/06/08 08:09:40 art Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.21 1999/07/08 01:02:44 thorpej Exp $	*/
 
 /*
  *

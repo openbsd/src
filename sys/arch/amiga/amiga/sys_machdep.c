@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.8 2000/06/23 02:14:35 mickey Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.9 2001/06/08 08:08:42 art Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.16 1997/05/19 10:14:47 veego Exp $	*/
 
 /*
@@ -97,10 +97,9 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(
+				if (pmap_extract(
 				    curproc->p_vmspace->vm_map.pmap,
-				    (vm_offset_t)addr);
-				if (pa == 0)
+				    (vm_offset_t)addr, &pa) == FALSE)
 					doall = 1;
 			}
 			switch (req) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2001/05/05 21:26:39 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.30 2001/06/08 08:09:09 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -723,11 +723,14 @@ int docachepush;
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
+			paddr_t pa;
+
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 						  trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE, TRUE, VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(pmap_kernel(), (vm_offset_t)fa));
+			pmap_extract(pmap_kernel(), (vm_offset_t)fa, &pa);
+			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 							(vm_offset_t)&vmmap[NBPG]);
 		} else
@@ -950,8 +953,7 @@ u_int a, d;
 			 num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 			 f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("	       PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a);
-	if (pa == 0)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a, &pa) == FALSE)
 		printf("<invalid address>");
 	else
 		printf("%x, current value %x", pa, fuword((caddr_t)a));

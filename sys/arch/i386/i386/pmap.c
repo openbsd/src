@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2001/05/09 15:31:25 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2001/06/08 08:08:52 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.84 2000/02/21 02:01:24 chs Exp $	*/
 
 /*
@@ -1782,7 +1782,7 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, NBPG);
 	if (pmap->pm_pdir == NULL)
 		panic("pmap_pinit: kernel_map out of virtual space!");
-	(void) _pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
 			    (paddr_t *)&pmap->pm_pdirpa);
 
 	/* init PDP */
@@ -2032,7 +2032,7 @@ pmap_deactivate(p)
  */
 
 boolean_t
-_pmap_extract(pmap, va, pap)
+pmap_extract(pmap, va, pap)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t *pap;
@@ -2049,18 +2049,6 @@ _pmap_extract(pmap, va, pap)
 		return (TRUE);
 	}
 	return (FALSE);
-}
-
-paddr_t
-pmap_extract(pmap, va)
-	pmap_t pmap;
-	vaddr_t va;
-{
-	paddr_t pa;
-
-	if (_pmap_extract(pmap, va, &pa))
-		return (pa);
-	return (NULL);
 }
 
 /*

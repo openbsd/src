@@ -1,4 +1,4 @@
-/*      $OpenBSD: mbuf.c,v 1.3 2000/04/24 04:54:19 deraadt Exp $	*/
+/*      $OpenBSD: mbuf.c,v 1.4 2001/06/08 08:09:35 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -64,9 +64,8 @@ mbuf2pages(m, np, pp, lp, maxp, nicep)
 		va -= off;
 
 next_page:
-		pa = pmap_extract(pmap_kernel(), va);
-		if (pa == 0)
-			panic("mbuf2pages: pa == 0");
+		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+			panic("mbuf2pages: unmapped page");
 
 		pa += off;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2001/05/06 00:45:54 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2001/06/08 08:09:16 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -243,7 +243,8 @@ vmapbuf(bp, len)
 	vm_size_t len;
 {
 	register caddr_t addr;
-	register vm_offset_t pa, kva, off;
+	register vm_offset_t kva, off;
+	vm_offset_t pa;
 	struct pmap *pmap;
 
 #ifdef DIAGNOSTIC
@@ -279,8 +280,7 @@ vmapbuf(bp, len)
 
 	bp->b_data = (caddr_t)(kva + off);
 	while (len > 0) {
-		pa = pmap_extract(pmap, (vm_offset_t)addr);
-		if (pa == 0)
+		if (pmap_extract(pmap, (vm_offset_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
@@ -502,21 +502,25 @@ badpaddr(caddr_t pa, int size)
  * Move pages from one kernel virtual address to another.
  */
 void
-pagemove(caddr_t from, caddr_t to, size_t size)
+pagemove(from, to, size)
+	caddr_t from, to;
+	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+		pmap_extract(kernel_pmap, (vm_offset_t)from, &pa);
 #ifdef DEBUG
+#if 0
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
+		if (pmap_extract(kernel_pmap, (vm_offset_t)to, XXX) != 0)
 			panic("pagemove 3");
+#endif
 #endif
 		pmap_remove(kernel_pmap,
 			    (vm_offset_t)from, (vm_offset_t)from + NBPG);
@@ -530,45 +534,12 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 }
 
 u_int
-kvtop(vm_offset_t va)
+kvtop(va)
+	vm_offset_t va;
 {
+	vm_offset_t pa;
 	extern pmap_t kernel_pmap;
-	return ((u_int)pmap_extract(kernel_pmap, va));
+
+	pmap_extract(kernel_pmap, va, &pa);
+	return ((u_int)pa);
 }
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */ 
-#if 0
-physaccess(vaddr, paddr, size, prot)
-	void *vaddr, *paddr;
-	register int size, prot;
-{
-/*	register pt_entry_t *pte;*/
-	pte_template_t *pte;
-	register u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += NBPG;
-	}
-	TBIAS();
-}
-
-physunaccess(vaddr, size)
-	caddr_t vaddr;
-	register int size;
-{
-	register pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
-}
-
-#endif

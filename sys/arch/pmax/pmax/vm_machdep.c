@@ -297,7 +297,8 @@ vmapbuf(bp, len)
 	register struct buf *bp;
 	vm_size_t len;
 {
-	register vm_offset_t faddr, taddr, off, pa;
+	register vm_offset_t faddr, taddr, off;
+	vm_offset_t pa;
 	struct proc *p;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -310,8 +311,8 @@ vmapbuf(bp, len)
 	bp->b_data = (caddr_t) (taddr + off);
 	len = atop(len);
 	while (len--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
+		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
 			VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);

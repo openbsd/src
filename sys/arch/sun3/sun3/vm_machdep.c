@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2001/05/30 20:40:04 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2001/06/08 08:09:30 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DIAGNOSTIC
 	if ((size & PAGE_MASK) != 0 ||
@@ -306,11 +306,8 @@ pagemove(from, to, size)
 		panic("pagemove 1");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
-#ifdef DIAGNOSTIC
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)from, &pa) == FALSE)
 			panic("pagemove 2");
-#endif
 		/* this does the cache flush work itself */
 		pmap_remove(pmap_kernel(),
 			(vm_offset_t)from, (vm_offset_t)from + NBPG);
@@ -353,7 +350,8 @@ vmapbuf(bp, sz)
 	register struct buf *bp;
 	vm_size_t sz;
 {
-	register vm_offset_t addr, kva, pa;
+	register vm_offset_t addr, kva;
+	vm_offset_t pa;
 	register vm_size_t size, off;
 	register int npf;
 	struct proc *p;
@@ -377,10 +375,10 @@ vmapbuf(bp, sz)
 
 	npf = btoc(size);
 	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(map), (vm_offset_t)addr);
-		pa = trunc_page(pa);	/* page type in low bits? */
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(map), (vm_offset_t)addr,
+		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
+		pa = trunc_page(pa);	/* page type in low bits? */
 #ifdef	HAVECACHE
 		/* flush write-back on old mappings */
 		if (cache_size)

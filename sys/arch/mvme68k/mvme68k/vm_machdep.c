@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2001/05/06 00:45:52 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.23 2001/06/08 08:09:10 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,12 +172,14 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pmap_extract(pmap_kernel(), (vm_offset_t)from, &pa);
 #ifdef DEBUG
+#if 0
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to, XXX) != 0)
 			panic("pagemove 3");
+#endif
 #endif
 		pmap_remove(pmap_kernel(),
 			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
@@ -246,14 +248,13 @@ setredzone(pte, vaddr)
  * Convert kernel VA to physical address
  */
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	vm_offset_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (va == 0)
+	if (pmap_extract(pmap_kernel(), (vm_offset_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -288,9 +289,8 @@ vmapbuf(bp, siz)
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
 	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
+		    (vm_offset_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);

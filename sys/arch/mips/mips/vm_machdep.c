@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2001/05/06 00:45:52 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2001/06/08 08:09:04 art Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -313,9 +313,8 @@ vmapbuf(bp, len)
 	bp->b_un.b_addr = (caddr_t) (kva + off);
 	sz = atop(sz);
 	while (sz--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-			(vm_offset_t)addr);
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
+			(vm_offset_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
 			VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.1 2000/04/27 01:10:10 bjc Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.2 2001/06/08 08:09:31 art Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -585,8 +585,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = pmap_extract(pmap, (vaddr_t)vaddr);
-
+		pmap_extract(pmap, (vaddr_t)vaddr, &curaddr);
 #if 0
 		/*
 		 * Make sure we're in an allowed DMA range.

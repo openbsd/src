@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.5 2001/05/08 17:30:40 aaron Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.6 2001/06/08 08:09:01 art Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -212,7 +212,7 @@ bus_space_unmap(t, bsh, size)
 		panic("bus_space_unmap: overflow");
 #endif
 
-	bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+	pmap_extract(pmap_kernel(), va, &bpa) + (bsh & PGOFSET);
 
 	/*
 	 * Free the kernel virtual mapping.

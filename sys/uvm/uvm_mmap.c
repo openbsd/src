@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.13 2001/05/10 14:51:21 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.29 1999/07/07 06:02:22 thorpej Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.14 2001/06/08 08:09:39 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.30 1999/07/08 00:52:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -894,8 +894,7 @@ sys_madvise(p, v, retval)
 		/*
 		 * These pages contain no valid data, and may be
 		 * grbage-collected.  Toss all resources, including
-		 * backing store; note that if the page is not backed
-		 * by swap, it will be cleaned first, for good measure.
+		 * any swap space in use.
 		 */
 		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
 		    PGO_FREE);

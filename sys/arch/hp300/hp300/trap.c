@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2001/05/13 17:19:56 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2001/06/08 08:08:45 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -829,12 +829,15 @@ writeback(fp, docachepush)
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
+			paddr_t pa;
+
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 				   trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE,
 				   TRUE, VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(pmap_kernel(), (vaddr_t)fa));
+			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
+			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
 		} else
@@ -1059,8 +1062,7 @@ dumpwb(num, s, a, d)
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a);
-	if (pa == 0)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
 		printf("<invalid address>");
 	else
 		printf("%lx, current value %lx", pa, fuword((caddr_t)a));

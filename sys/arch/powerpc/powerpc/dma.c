@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.3 2000/08/03 03:02:50 rahnds Exp $	*/
+/*	$OpenBSD: dma.c,v 1.4 2001/06/08 08:09:21 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+		pmap_extract(pmap, (vm_offset_t)vaddr, (paddr_t *)&curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.

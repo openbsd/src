@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.18 2001/05/09 15:31:23 art Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.19 2001/06/08 08:09:43 art Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.21 1998/01/31 04:02:39 ross Exp $	*/
 
 /* 
@@ -888,7 +888,8 @@ vm_fault_unwire(map, start, end)
 	vm_offset_t	start, end;
 {
 
-	register vm_offset_t	va, pa;
+	register vm_offset_t	va;
+	vm_offset_t pa;
 	register pmap_t		pmap;
 
 	pmap = vm_map_pmap(map);
@@ -900,8 +901,7 @@ vm_fault_unwire(map, start, end)
 	vm_page_lock_queues();
 
 	for (va = start; va < end; va += PAGE_SIZE) {
-		pa = pmap_extract(pmap, va);
-		if (pa == (vm_offset_t)0) {
+		if (pmap_extract(pmap, va, &pa) == FALSE) {
 			panic("unwire: page not in pmap");
 		}
 		pmap_unwire(pmap, va);

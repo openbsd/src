@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2001/05/06 00:45:47 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/06/08 08:08:42 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -175,22 +175,24 @@ cpu_exit(p)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pmap_extract(pmap_kernel(), (vm_offset_t)from, &pa);
 #ifdef DEBUG
+#if 0
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to, XXX) != FALSE)
 			panic("pagemove 3");
+#endif
 #endif
 		pmap_remove(pmap_kernel(), (vm_offset_t)from,
 		    (vm_offset_t)from + PAGE_SIZE);
@@ -342,14 +344,13 @@ setredzone(pte, vaddr)
  */
 int
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	vm_offset_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (va == 0)
+	if (pmap_extract(pmap_kernel(), (vm_offset_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -386,7 +387,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		if ((pa = pmap_extract(upmap, uva)) == 0)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
 			   TRUE, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.9 2000/06/23 02:14:37 mickey Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.10 2001/06/08 08:09:09 art Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -115,9 +115,8 @@ int len;
 			 */
 			if (!doall &&
 				 (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-										(vm_offset_t)addr);
-				if (pa == 0)
+				if (pmap_extract(curproc->p_vmspace->vm_map.pmap,
+				    (vm_offset_t)addr, &pa) == FALSE)
 					doall = 1;
 			}
 			switch (req) {

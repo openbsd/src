@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2001/05/28 21:08:36 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2001/06/08 08:08:46 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -236,12 +236,14 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
+		pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
 #ifdef DEBUG
+#if 0
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vaddr_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to, XXX) != FALSE)
 			panic("pagemove 3");
+#endif
 #endif
 #ifdef PMAP_NEW
 		pmap_kremove((vaddr_t)from, PAGE_SIZE);
@@ -303,8 +305,7 @@ kvtop(addr)
 {
 	paddr_t pa;
 
-	pa = pmap_extract(pmap_kernel(), (vaddr_t)addr);
-	if (pa == 0)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
@@ -346,8 +347,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		pa = pmap_extract(upmap, uva);
-		if (pa == 0)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		uva += PAGE_SIZE;

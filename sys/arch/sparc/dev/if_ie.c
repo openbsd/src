@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.15 2001/05/10 10:34:44 art Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.16 2001/06/08 08:09:24 art Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -565,8 +565,7 @@ ieattach(parent, self, aux)
 		 * to IEOB_ADBASE to be safe.
 		 */
 
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr);
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE)
 			panic("ie pmap_extract");
 		pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
                     (paddr_t)pa | PMAP_NC /*| PMAP_IOC*/,

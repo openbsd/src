@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2001/05/15 14:19:58 jj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2001/06/08 08:08:41 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -589,7 +589,7 @@ bogons:
 	addr = (vaddr_t)kmem_alloc(kernel_map, s);
 #endif
 	Segtabzero = (u_int *)addr;
-	Segtabzeropa = (u_int *)pmap_extract(pmap_kernel(), addr);
+	pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
 
 	addr += AMIGA_STSIZE;
 
@@ -677,7 +677,7 @@ bogons:
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
-		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
+		pmap_extract(pmap_kernel(), addr2, &kpt_pages->kpt_pa);
 	} while (addr != addr2);
 
 #ifdef DEBUG
@@ -1552,10 +1552,11 @@ pmap_unwire(pmap, va)
  *		with the given map/virtual_address pair.
  */
 
-paddr_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	paddr_t pa;
 
@@ -1563,16 +1564,16 @@ pmap_extract(pmap, va)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
-	pa = 0;
 	if (pmap && pmap_ste_v(pmap, va))
 		pa = *(int *)pmap_pte(pmap, va);
-	if (pa)
-		pa = (pa & PG_FRAME) | (va & ~PG_FRAME);
+	else
+		return (FALSE);
+	*pap = (pa & PG_FRAME) | (va & ~PG_FRAME);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("%lx\n", pa);
+		printf("%lx\n", *pap);
 #endif
-	return (pa);
+	return (TRUE);
 }
 
 /*
@@ -1725,7 +1726,7 @@ ok:
 		 * We call pmap_remove to take care of invalidating ST
 		 * and Sysptmap entries.
 		 */
-		kpa = pmap_extract(pmap, pv->pv_va);
+		pmap_extract(pmap, pv->pv_va, &kpa);
 		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
 				PRM_TFLUSH|PRM_CFLUSH);
 
@@ -2399,8 +2400,8 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_stab = (u_int *)
 			kmem_alloc(kernel_map, AMIGA_STSIZE);
 #endif
-		pmap->pm_stpa = (u_int *)pmap_extract(
-		    pmap_kernel(), (vaddr_t)pmap->pm_stab);
+		pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
+			(paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
 		if (mmutype == MMU_68040) {
 #if defined(M68060)

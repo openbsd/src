@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/05/06 00:45:50 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/06/08 08:08:53 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -329,12 +329,11 @@ pagemove(from, to, size)
  */
 int
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
 	vm_offset_t pa;
 
-	pa = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (pa == 0)
+	if (pmap_extract(pmap_kernel(), (vm_offset_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
@@ -387,8 +386,8 @@ vmapbuf(bp, len)
 	 * mapping is removed).
 	 */
 	while (len) {
-		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
-		    faddr);
+		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ | VM_PROT_WRITE);

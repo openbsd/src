@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.12 2001/02/20 19:39:31 mickey Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.13 2001/06/08 08:09:06 art Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -168,8 +168,6 @@ vm_map_t ie_map; /* for obio */
 						MUST BE POWER OF TWO */
 #define	NTXBUF		2		/* number of transmit commands */
 #define	IE_TBUF_SIZE	ETHER_MAX_LEN	/* length of transmit buffer */
-
-#define CACHED_TO_PHYS(x) pmap_extract(pmap_kernel(), (vm_offset_t)(x))
 
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
@@ -364,8 +362,8 @@ ie_obreset(sc)
 	ieo->portlow = a >> 16;
 	delay(1000);
 
-	a = (u_long)CACHED_TO_PHYS(sc->scp) |
-	    IE_PORT_NEWSCPADDR;
+	pmap_extract(pmap_kernel(), sc->scp, &a);
+	a |= IE_PORT_NEWSCPADDR;
 	ieo->porthigh = a & 0xffff;
 	t = 0; t = 1;
 	ieo->portlow = a >> 16;
@@ -402,7 +400,7 @@ ieattach(parent, self, aux)
 	register struct bootpath *bp;
 	int     pri = ca->ca_ipl;
 	volatile struct ieob *ieo;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	sc->reset_596 = ie_obreset;
 	sc->chan_attn = ie_obattend;
@@ -420,8 +418,8 @@ ieattach(parent, self, aux)
 	/* get the first avaliable etherbuf */
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
 	if (sc->sc_maddr == NULL) panic("ie: too many ethernet boards");
-	pa = CACHED_TO_PHYS(sc->sc_maddr);
-	if (pa == 0) panic("ie: pmap_extract");
+	if (pmap_extract(pmap_kernel(), sc->sc_maddr, &pa) == FALSE)
+		panic("ie: pmap_extract");
 	sc->sc_iobase = (caddr_t)pa;	/* iobase = paddr (24 bit) */
 
 	/*printf("maddrP %x iobaseV %x\n", sc->sc_maddr, sc->sc_iobase);*/
@@ -436,7 +434,8 @@ ieattach(parent, self, aux)
 	/*printf("scpV %x iscpV %x scbV %x\n", sc->scp, sc->iscp, sc->scb);*/
 
 	sc->scp->ie_bus_use = 0x44;
-	SWT_32(sc->scp->ie_iscp_ptr, CACHED_TO_PHYS(sc->iscp));
+	pmap_extract(pmap_kernel(), sc->iscp, &pa);
+	SWT_32(sc->scp->ie_iscp_ptr, pa);
 	/*
 	 * rest of first page is unused (wasted!), rest of ram
 	 * for buffers

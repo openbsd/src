@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2001/05/16 12:49:47 ho Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2001/06/08 08:09:14 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -1709,18 +1709,24 @@ pmap_pinit(pmap_t p)
 	if (segdt == NULL)
 		panic("pmap_create: kmem_alloc failure");
 
+#if !defined(UVM)
+	/* uvm_km_zalloc gives zeroed memory */
 	/* use pmap zero page to zero it out */
 	addr = (vm_offset_t)segdt;
 	for (i=0; i<atop(s); i++) {
-		pmap_zero_page(pmap_extract(kernel_pmap, addr));
+		paddr_t pa;
+
+		pmap_extract(kernel_pmap, addr, &pa);
+		pmap_zero_page(pa);
 		addr += PAGE_SIZE;
 	}
+#endif
 	
 	/*
 	 * Initialize pointer to segment table both virtual and physical.
 	 */
 	p->sdt_vaddr = segdt;
-	p->sdt_paddr = (sdt_entry_t *)pmap_extract(kernel_pmap,(vm_offset_t)segdt);
+	pmap_extract(kernel_pmap, (vaddr_t)segdt, (paddr_t *)&p->sdt_paddr);
 
 	if (!PAGE_ALIGNED(p->sdt_paddr)) {
 		printf("pmap_create: std table = %x\n",(int)p->sdt_paddr);
@@ -2654,7 +2660,6 @@ pmap_expand(pmap_t map, vm_offset_t v)
 	vm_offset_t	pdt_vaddr, pdt_paddr;
 	sdt_entry_t	*sdt;
 	pt_entry_t	*pte;
-	vm_offset_t	pmap_extract();
 
 	if (map == PMAP_NULL) {
 		panic("pmap_expand: pmap is NULL");
@@ -2688,7 +2693,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 #else
 	pdt_vaddr = kmem_alloc (kernel_map, PAGE_SIZE);
 #endif
-	pdt_paddr = pmap_extract(kernel_pmap, pdt_vaddr);
+	pmap_extract(kernel_pmap, pdt_vaddr, &pdt_paddr);
 
 #ifdef MVME188
 	if (cputyp == CPU_188) {
@@ -3110,6 +3115,7 @@ pmap_unwire(pmap_t map, vm_offset_t v)
  * Parameters:
  *	pmap		pointer to pmap structure
  *	va		virtual address
+ *	pap		storage for result.
  *
  * Calls:
  *	PMAP_LOCK, PMAP_UNLOCK
@@ -3125,12 +3131,12 @@ pmap_unwire(pmap_t map, vm_offset_t v)
  * then 0 address is returned. Otherwise, the physical page address from
  * the PTE is returned.
  */
-vm_offset_t
-pmap_extract(pmap_t pmap, vm_offset_t va)
+boolean_t
+pmap_extract(pmap_t pmap, vm_offset_t va, paddr_t *pap)
 {
-	register pt_entry_t  *pte;
-	register vm_offset_t pa;
-	register int   i;
+	pt_entry_t  *pte;
+	paddr_t pa;
+	int   i;
 	int         spl;
 
 	if (pmap == PMAP_NULL)
@@ -3142,28 +3148,31 @@ pmap_extract(pmap_t pmap, vm_offset_t va)
 	if (pmap == kernel_pmap && batc_used > 0)
 		for (i = batc_used-1; i > 0; i--)
 			if (batc_entry[i].lba == M88K_BTOBLK(va)) {
-				pa = (batc_entry[i].pba << BATC_BLKSHIFT) | 
+				*pap = (batc_entry[i].pba << BATC_BLKSHIFT) | 
 					(va & BATC_BLKMASK );
-				return (pa);
+				return (TRUE);
 			}
 
 	PMAP_LOCK(pmap, spl);
 
-	if ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL)
-		pa = (vm_offset_t) 0;
-	else {
+	if ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL) {
+		goto fail;
+	} else {
 		if (PDT_VALID(pte))
 			pa = M88K_PTOB(pte->pfn);
 		else
-			pa = (vm_offset_t) 0;
+			goto fail;
 	}
 
-	if (pa)
-		pa |= (va & M88K_PGOFSET); /* offset within page */
+	pa |= (va & M88K_PGOFSET); /* offset within page */
+	*pap = pa;
 
 	PMAP_UNLOCK(pmap, spl);
-	return (pa);
-} /* pamp_extract() */
+	return (TRUE);
+fail:
+	PMAP_UNLOCK(pmap, spl);
+	return (FALSE);
+} /* pmap_extract() */
 
 /*
   a version for the kernel debugger 

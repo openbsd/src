@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2001/05/17 18:41:50 provos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2001/06/08 08:09:22 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -748,7 +748,7 @@ sendsig(catcher, sig, mask, code, type, val)
 			 - (p->p_emul->e_esigcode - p->p_emul->e_sigcode));
 
 #if WHEN_WE_ONLY_FLUSH_DATA_WHEN_DOING_PMAP_ENTER
-	pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),tf->srr0);
+	pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),tf->srr0, &pa);
 	syncicache(pa, (p->p_emul->e_esigcode - p->p_emul->e_sigcode));
 #endif
 }
@@ -1140,7 +1140,7 @@ bus_space_unmap_p(t, bsh, size)
 {
 	bus_addr_t paddr;
 
-	paddr = (bus_addr_t) pmap_extract(pmap_kernel(), bsh);
+	pmap_extract(pmap_kernel(), bsh, &paddr);
 	bus_space_unmap((t), (bsh), (size));
 	return paddr ;
 }
@@ -1165,7 +1165,7 @@ bus_space_unmap(t, bsh, size)
 	kmem_free_wakeup(phys_map, sva, len);
 #endif
 #if 0
-	bpa = pmap_extract(pmap_kernel(), sva);
+	pmap_extract(pmap_kernel(), sva, &bpa);
 	if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
 		(ppc_malloc_ok ? EX_MALLOCOK : 0)))
 	{

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.13 2001/05/09 15:31:23 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.14 2001/06/08 08:08:35 art Exp $ */
 /* $NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $ */
 
 /*-
@@ -2183,8 +2183,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-paddr_t
-pmap_extract(pmap_t pmap, vaddr_t va)
+boolean_t
+pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	paddr_t pa = 0;
@@ -2218,7 +2218,8 @@ pmap_extract(pmap_t pmap, vaddr_t va)
 			printf("failed\n");
 	}
 #endif
-	return (pa);
+	*pap = pa;
+	return (pa != 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/05/18 08:25:03 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/06/08 08:09:28 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -88,8 +88,7 @@ pagemove(from, to, size)
 		panic("pagemove 1");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
 			panic("pagemove 2");
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
@@ -216,8 +215,7 @@ dvma_mapin_space(map, va, len, canwait, space)
 	kva = tva;
 
 	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(map), va);
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(map), va, &pa) == FALSE)
 			panic("dvma_mapin: null page frame");
 		pa = trunc_page(pa);
 
@@ -328,8 +326,7 @@ vmapbuf(bp, sz)
 	bp->b_data = (caddr_t)(kva + off);
 
 	while (size > 0) {
-		pa = pmap_extract(pmap, uva);
-		if (pa == 0)
+		if (pmap_extract(pmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 
 		/*

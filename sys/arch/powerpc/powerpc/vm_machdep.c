@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2001/05/05 21:26:40 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2001/06/08 08:09:23 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -71,7 +71,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 
-	pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(), (vm_offset_t)pcb->pcb_pm);
+	pmap_extract(pmap_kernel(),
+		 (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 	
 	/*
 	 * Setup the trap frame for the new process
@@ -137,7 +138,8 @@ cpu_swapin(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	
-	pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(), (vm_offset_t)pcb->pcb_pm);
+	pmap_extract(pmap_kernel(),
+		(vm_offset_t)pcb->pcb_pm, (paddr_t *)pcb->pcb_pmreal);
 }
 
 /*
@@ -148,10 +150,11 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	vm_offset_t pa, va;
+	vaddr_t va;
+	paddr_t pa;
 	
 	for (va = (vm_offset_t)from; size > 0; size -= NBPG) {
-		pa = pmap_extract(pmap_kernel(), va);
+		pmap_extract(pmap_kernel(), va, &pa);
 		pmap_remove(pmap_kernel(), va, va + NBPG);
 		pmap_enter(pmap_kernel(), (vm_offset_t)to, pa,
 			   VM_PROT_READ | VM_PROT_WRITE, 1,
@@ -247,7 +250,7 @@ vmapbuf(bp, len)
 #endif
 	bp->b_data = (caddr_t)(taddr + off);
 	for (; len > 0; len -= NBPG) {
-		pa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
+		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr, &pa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, pa,
 			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 		faddr += NBPG;
