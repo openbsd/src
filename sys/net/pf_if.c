@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.2 2003/12/31 11:18:25 cedric Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.3 2003/12/31 15:32:43 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -112,11 +112,11 @@ pfi_initialize(void)
 	TAILQ_INIT(&pfi_statehead);
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
-	pfi_dynamic_drivers();
 	pfi_buffer_max = 64;
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
 	pfi_self = pfi_if_create("self", NULL, PFI_IFLAG_GROUP);
+	pfi_dynamic_drivers();
 }
 
 void
