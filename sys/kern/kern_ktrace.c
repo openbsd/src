@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.12 2000/03/03 11:31:42 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.13 2000/04/06 13:25:26 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-struct ktr_header *ktrgetheader __P((int));
+struct ktr_header *ktrgetheader __P((struct proc *, int));
 int ktrops __P((struct proc *, struct proc *, int, int, struct vnode *));
 int ktrsetchildren __P((struct proc *, struct proc *, int, int,
 			struct vnode *));
@@ -59,11 +59,11 @@ void ktrwrite __P((struct vnode *, struct ktr_header *));
 int ktrcanset __P((struct proc *, struct proc *));
 
 struct ktr_header *
-ktrgetheader(type)
+ktrgetheader(p, type)
+	struct proc *p;
 	int type;
 {
-	register struct ktr_header *kth;
-	struct proc *p = curproc;	/* XXX */
+	struct ktr_header *kth;
 
 	MALLOC(kth, struct ktr_header *, sizeof (struct ktr_header), 
 		M_TEMP, M_WAITOK);
@@ -84,13 +84,13 @@ ktrsyscall(vp, code, argsize, args)
 {
 	struct	ktr_header *kth;
 	struct	ktr_syscall *ktp;
-	register unsigned int len = sizeof(struct ktr_syscall) + argsize;
+	unsigned int len = sizeof(struct ktr_syscall) + argsize;
 	struct proc *p = curproc;	/* XXX */
 	register_t *argp;
 	int i;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_SYSCALL);
+	kth = ktrgetheader(p, KTR_SYSCALL);
 	MALLOC(ktp, struct ktr_syscall *, len, M_TEMP, M_WAITOK);
 	ktp->ktr_code = code;
 	ktp->ktr_argsize = argsize;
@@ -117,7 +117,7 @@ ktrsysret(vp, code, error, retval)
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_SYSRET);
+	kth = ktrgetheader(p, KTR_SYSRET);
 	ktp.ktr_code = code;
 	ktp.ktr_error = error;
 	ktp.ktr_retval = retval;		/* what about val2 ? */
@@ -139,7 +139,7 @@ ktrnamei(vp, path)
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_NAMEI);
+	kth = ktrgetheader(p, KTR_NAMEI);
 	kth->ktr_len = strlen(path);
 	kth->ktr_buf = path;
 
@@ -157,7 +157,7 @@ ktremul(vp, emul)
 	struct proc *p = curproc;       /* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_EMUL);
+	kth = ktrgetheader(p, KTR_EMUL);
 	kth->ktr_len = strlen(emul);
 	kth->ktr_buf = emul;
 
@@ -171,19 +171,19 @@ ktrgenio(vp, fd, rw, iov, len, error)
 	struct vnode *vp;
 	int fd;
 	enum uio_rw rw;
-	register struct iovec *iov;
+	struct iovec *iov;
 	int len, error;
 {
 	struct ktr_header *kth;
-	register struct ktr_genio *ktp;
-	register caddr_t cp;
-	register int resid = len, cnt;
+	struct ktr_genio *ktp;
+	caddr_t cp;
+	int resid = len, cnt;
 	struct proc *p = curproc;	/* XXX */
 	
 	if (error)
 		return;
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_GENIO);
+	kth = ktrgetheader(p, KTR_GENIO);
 	MALLOC(ktp, struct ktr_genio *, sizeof(struct ktr_genio) + len,
 		M_TEMP, M_WAITOK);
 	ktp->ktr_fd = fd;
@@ -220,7 +220,7 @@ ktrpsig(vp, sig, action, mask, code)
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_PSIG);
+	kth = ktrgetheader(p, KTR_PSIG);
 	kp.signo = (char)sig;
 	kp.action = action;
 	kp.mask = mask;
@@ -243,7 +243,7 @@ ktrcsw(vp, out, user)
 	struct proc *p = curproc;	/* XXX */
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
-	kth = ktrgetheader(KTR_CSW);
+	kth = ktrgetheader(p, KTR_CSW);
 	kc.out = out;
 	kc.user = user;
 	kth->ktr_buf = (caddr_t)&kc;
@@ -266,13 +266,13 @@ sys_ktrace(curp, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_ktrace_args /* {
+	struct sys_ktrace_args /* {
 		syscallarg(char *) fname;
 		syscallarg(int) ops;
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
-	register struct vnode *vp = NULL;
+	struct vnode *vp = NULL;
 	struct proc *p = NULL;
 	struct pgrp *pg;
 	int facs = SCARG(uap, facs) & ~((unsigned) KTRFAC_ROOT);
@@ -416,8 +416,8 @@ ktrsetchildren(curp, top, ops, facs, vp)
 	int ops, facs;
 	struct vnode *vp;
 {
-	register struct proc *p;
-	register int ret = 0;
+	struct proc *p;
+	int ret = 0;
 
 	p = top;
 	for (;;) {
@@ -445,11 +445,11 @@ ktrsetchildren(curp, top, ops, facs, vp)
 void
 ktrwrite(vp, kth)
 	struct vnode *vp;
-	register struct ktr_header *kth;
+	struct ktr_header *kth;
 {
 	struct uio auio;
 	struct iovec aiov[2];
-	register struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 
 	if (vp == NULL)
@@ -501,8 +501,8 @@ int
 ktrcanset(callp, targetp)
 	struct proc *callp, *targetp;
 {
-	register struct pcred *caller = callp->p_cred;
-	register struct pcred *target = targetp->p_cred;
+	struct pcred *caller = callp->p_cred;
+	struct pcred *target = targetp->p_cred;
 
 	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
 	     target->p_ruid == target->p_svuid &&
