@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.26 2001/05/30 20:40:30 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.27 2001/05/31 23:30:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.26 2001/05/30 20:40:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.27 2001/05/31 23:30:48 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ static void	 fts_padjust __P((FTS *, FTSENT *));
 static int	 fts_palloc __P((FTS *, size_t));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
-static int	 fts_safe_changedir __P((FTS *, FTSENT *, int));
+static int	 fts_safe_changedir __P((FTS *, FTSENT *, int, char *));
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
@@ -69,7 +69,6 @@ static int	 fts_safe_changedir __P((FTS *, FTSENT *, int));
 #define	ISSET(opt)	(sp->fts_options & (opt))
 #define	SET(opt)	(sp->fts_options |= (opt))
 
-#define	CHDIR(sp, path)	(!ISSET(FTS_NOCHDIR) && chdir(path))
 #define	FCHDIR(sp, fd)	(!ISSET(FTS_NOCHDIR) && fchdir(fd))
 
 /* fts_build flags */
@@ -271,7 +270,6 @@ fts_read(sp)
 	FTS *sp;
 {
 	FTSENT *p, *tmp;
-	struct stat sb;
 	int instr;
 	char *t;
 	int saved_errno;
@@ -347,7 +345,7 @@ fts_read(sp)
 		 * FTS_STOP or the fts_info field of the node.
 		 */
 		if (sp->fts_child) {
-			if (fts_safe_changedir(sp, p, -1)) {
+			if (fts_safe_changedir(sp, p, -1, p->fts_accpath)) {
 				p->fts_errno = errno;
 				p->fts_flags |= FTS_DONTCHDIR;
 				for (p = sp->fts_child; p; p = p->fts_link)
@@ -444,17 +442,10 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 			return (NULL);
 		}
 		(void)close(p->fts_symfd);
-	} else if (!(p->fts_flags & FTS_DONTCHDIR) && !ISSET(FTS_NOCHDIR)) {
-		if (chdir("..") || stat(".", &sb)) {
-			SET(FTS_STOP);
-			return (NULL);
-		}
-		if (sb.st_ino != p->fts_parent->fts_ino ||
-		    sb.st_dev != p->fts_parent->fts_dev) {
-			errno = ENOENT;
-			SET(FTS_STOP);
-			return (NULL);
-		}
+	} else if (!(p->fts_flags & FTS_DONTCHDIR) &&
+	    fts_safe_changedir(sp, p->fts_parent, -1, "..")) {
+		SET(FTS_STOP);
+		return (NULL);
 	}
 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
 	return (sp->fts_cur = p);
@@ -639,7 +630,7 @@ fts_build(sp, type)
 	 */
 	cderrno = 0;
 	if (nlinks || type == BREAD) {
-		if (fts_safe_changedir(sp, cur, dirfd(dirp))) {
+		if (fts_safe_changedir(sp, cur, dirfd(dirp), NULL)) {
 			if (nlinks && type == BREAD)
 				cur->fts_errno = errno;
 			cur->fts_flags |= FTS_DONTCHDIR;
@@ -800,8 +791,8 @@ mem1:				saved_errno = errno;
 	 * can't get back, we're done.
 	 */
 	if (descend && (type == BCHILD || !nitems) &&
-	    (cur->fts_level == FTS_ROOTLEVEL ?
-	    FCHDIR(sp, sp->fts_rfd) : CHDIR(sp, ".."))) {
+	    (cur->fts_level == FTS_ROOTLEVEL ? FCHDIR(sp, sp->fts_rfd) :
+	    fts_safe_changedir(sp, cur->fts_parent, -1, ".."))) {
 		cur->fts_info = FTS_ERR;
 		SET(FTS_STOP);
 		return (NULL);
@@ -1077,10 +1068,11 @@ fts_maxarglen(argv)
  * Assumes p->fts_dev and p->fts_ino are filled in.
  */
 static int
-fts_safe_changedir(sp, p, fd)
+fts_safe_changedir(sp, p, fd, path)
 	FTS *sp;
 	FTSENT *p;
 	int fd;
+	char *path;
 {
 	int ret, oerrno, newfd;
 	struct stat sb;
@@ -1088,7 +1080,7 @@ fts_safe_changedir(sp, p, fd)
 	newfd = fd;
 	if (ISSET(FTS_NOCHDIR))
 		return (0);
-	if (fd < 0 && (newfd = open(p->fts_accpath, O_RDONLY, 0)) < 0)
+	if (fd < 0 && (newfd = open(path, O_RDONLY, 0)) < 0)
 		return (-1);
 	if (fstat(newfd, &sb)) {
 		ret = -1;
