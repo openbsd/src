@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.13 2001/02/20 19:39:30 mickey Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.14 2001/06/29 08:18:19 jj Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
@@ -116,9 +116,9 @@
 #include <amiga/dev/if_qnreg.h>
 
 
-#define ETHER_MIN_LEN	60
+/* #define ETHER_MIN_LEN	60
 #define ETHER_MAX_LEN	1514
-#define ETHER_HDR_SIZE	14
+#define ETHER_HDR_SIZE	14 */
 #define	NIC_R_MASK	(R_INT_PKT_RDY | R_INT_ALG_ERR |\
 			 R_INT_CRC_ERR | R_INT_OVR_FLO)
 #define	MAX_PACKETS	30 /* max number of packets read per interrupt */
