@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.31 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.32 2003/12/05 21:55:29 millert Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 .Ft void
 .Fn SLIST_REMOVE_HEAD "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Ft void
-.Fn SLIST_REMOVE "SLIST_HEAD *head" "TYPE *elm" "TYPE" "SLIST_ENTRY NAME"
+.Fn SLIST_REMOVE "SLIST_HEAD *head" "struct TYPE *elm" "TYPE" "SLIST_ENTRY NAME"
 .Pp
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_HEAD "HEADNAME" "TYPE"
