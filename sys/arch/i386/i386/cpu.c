@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2004/06/27 23:59:00 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2004/07/14 18:35:50 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -272,10 +272,8 @@ cpu_attach(parent, self, aux)
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (", caa->cpu_number);
-		printf("boot processor");
+		printf("apid %d (boot processor)", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
-		printf(")\n");
 		identifycpu(ci);
 		cpu_init(ci);
 
