@@ -1,0 +1,66 @@
+.\" $OpenBSD: ral.4,v 1.1 2005/02/15 20:51:12 damien Exp $
+.\"
+.\" Copyright (c) 2005
+.\"	Damien Bergamini <damien.bergamini@free.fr>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 15, 2005
+.Os
+.Dt RAL 4
+.Sh NAME
+.Nm ral
+.Nd Ralink Technology RT2500 IEEE 802.11A/B/G network adapter
+.Sh SYNOPSIS
+.Cd "ral* at cardbus?"
+.Cd "ral* at pci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports PCI/Cardbus wireless adapters based on the Ralink RT2500
+chipset.
+.Pp
+By default, the
+.Nm
+driver configures the adapter for BSS operation (aka infrastructure mode).
+This mode requires the use of an access point.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "ral%d: device timeout"
+The driver will reset the hardware.
+This should not happen.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr cardbus 4 ,
+.Xr ifmedia 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr ifconfig 8
+.Rs
+.%T Ralink Technology
+.%O http://www.ralinktech.com
+.Re
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.7 .
+.Sh AUTHORS
+The
+.Nm
+driver and this man page were written by
+.An Damien Bergamini Aq damien.bergamini@free.fr .

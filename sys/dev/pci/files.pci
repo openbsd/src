@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.170 2005/01/14 01:08:11 pvalchev Exp $
+#	$OpenBSD: files.pci,v 1.171 2005/02/15 20:51:22 damien Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -521,6 +521,10 @@ file	dev/pci/if_atw_pci.c		atw_pci
 # Realtek RTL8180 PCI/Mini-PCI
 attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
+
+# Ralink RT2500 PCI/Mini-PCI
+attach	ral at pci with ral_pci
+file	dev/pci/if_ral_pci.c		ral_pci
 
 # Sangoma PCI card
 device	san: ifnet, ifmedia

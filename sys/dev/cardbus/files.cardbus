@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.13 2005/01/14 02:52:06 pvalchev Exp $
+#	$OpenBSD: files.cardbus,v 1.14 2005/02/15 20:51:18 damien Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -71,6 +71,12 @@ file	dev/cardbus/if_atw_cardbus.c		atw_cardbus
 #
 attach  rtw at cardbus with rtw_cardbus
 file    dev/cardbus/if_rtw_cardbus.c            rtw_cardbus
+
+#
+# Ralink RT2500
+#
+attach	ral at cardbus with ral_cardbus
+file	dev/cardbus/if_ral_cardbus.c		ral_cardbus
 
 #
 # EHCI USB controller
