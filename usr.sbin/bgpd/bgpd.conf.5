@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.35 2004/08/13 14:03:20 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.36 2004/08/19 16:12:31 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -437,14 +437,14 @@ It must be stored in a file
 named after the peer's IP address and must be stored in
 .Pa /etc/isakmpd/pubkeys/ipv4/ .
 The local public key must be copied to the peer in the same way.
-A simple
-.Pa /etc/isakmpd/isakmpd.policy
-file is needed as well; it can be as simple as
-.Bd -literal -offset indent
-Authorizer: "POLICY"
-Comment: This bare-bones assertion accepts everything
-.Ed
-.Pp
+As
+.Xr bgpd 8
+manages the flows on its own, it is sufficient to restrict
+.Xr isakmpd 8
+to only take care of keying by specifying the flags
+.Fl Ka .
+This can be done in
+.Xr rc.conf.local 8 .
 After starting the
 .Xr isakmpd 8
 and
@@ -832,7 +832,8 @@ configuration file
 .Xr bgpctl 8 ,
 .Xr bgpd 8 ,
 .Xr ipsecadm 8 ,
-.Xr isakmpd 8
+.Xr isakmpd 8 ,
+.Xr rc.conf.local 8
 .Sh HISTORY
 The
 .Nm
