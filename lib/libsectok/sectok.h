@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.6 2001/06/25 23:14:29 markus Exp $ */
+/* $Id: sectok.h,v 1.7 2001/06/26 21:32:47 rees Exp $ */
 
 /*
 copyright 1997, 2000
@@ -126,6 +126,7 @@ int cyberflex_load_rsa_pub(int fd, int cla, unsigned char *key_fid,
 int cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid,
 			    int nkey_elems, int keylen, unsigned char *key_elems[]);
 int cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len);
+int cyberflex_inq_class(int fd);
 
 /* SCPERF - performance evaluation */
 #ifdef SCPERF

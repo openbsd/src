@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.2 2001/06/25 23:14:29 markus Exp $ */
+/* $Id: cyberflex.c,v 1.3 2001/06/26 21:32:47 rees Exp $ */
 
 /*
 copyright 2000
@@ -214,19 +214,30 @@ cyberflex_verify_AUT0(int fd, int cla, unsigned char *aut0, int aut0len)
     int n, r1, r2;
 
     n = scwrite(fd, cla, 0x2a, 0, 0, aut0len, aut0, &r1, &r2);
-    if (n >= 0 && cla == 0 && r1 == 0x6d) {
-        /* F0 card? */
-        n = scwrite(fd, 0xf0, 0x2a, 0, 0, aut0len, aut0, &r1, &r2);
-        if (r1 == 0x90) {
-            printf("class F0\n");
-            cla = 0xf0;
-        }
+    if (n < 0 || r1 != 0x90) {
+	if (n >= 0)
+	    print_r1r2(r1, r2);
+	return -1;
     }
-    printf("Verify key: ");
-    if (n < 0) {
-        printf("scwrite failed\n");
-        return -1;
-    }
-    dump_reply(NULL, 0, r1, r2);
     return 0;
+}
+
+int
+cyberflex_inq_class(int fd)
+{
+    unsigned char buf[32];
+    int n, r1, r2;
+
+    n = scread(fd, 0x00, 0xca, 0, 1, 0x16, buf, &r1, &r2);
+    if (n >= 0 && r1 == 0x90)
+	return 0x00;
+
+    if (n >= 0 && r1 == 0x6d) {
+        /* F0 card? */
+        n = scread(fd, 0xf0, 0xca, 0, 1, 0x16, buf, &r1, &r2);
+        if (n >= 0 && r1 == 0x90)
+	    return 0xf0;
+    }
+
+    return -1;
 }
