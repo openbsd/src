@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.7 1997/01/15 23:42:54 millert Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.8 1997/02/06 13:02:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -74,6 +74,7 @@ dostat(devfd, modnum, modname)
 	struct lmc_stat	sbuf;
 	char name[MAXLKMNAME] = "";
 
+	bzero(&sbuf, sizeof sbuf);
 	sbuf.id = modnum;
 	sbuf.name = name;
 
