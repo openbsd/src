@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.7 2002/07/25 16:37:54 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.8 2003/04/08 21:19:57 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -36,6 +36,8 @@ static BUFFER	*compile_mode(char *name, char *command);
 
 
 void grep_init(void);
+
+static char compile_last_command[NFILEN] = "make ";
 
 /*
  * Hints for next-error
@@ -100,9 +102,10 @@ compile(int f, int n)
 	BUFFER *bp;
 	MGWIN *wp;
 
-	(void)strlcpy(prompt, "make ", sizeof prompt);
+	(void)strlcpy(prompt, compile_last_command, sizeof prompt);
 	if (eread("Compile command: ", prompt, NFILEN, EFDEF|EFNEW|EFCR) == ABORT)
 		return ABORT;
+	(void)strlcpy(compile_last_command, prompt, sizeof compile_last_command);
 
 	(void)snprintf(command, sizeof command, "%s 2>&1", prompt);
 
