@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.19 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: mmu.h,v 1.20 2003/09/07 13:52:17 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -155,7 +155,8 @@ typedef u_int32_t	pt_entry_t;
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
 #define	PG_SO		0x00000100
-#define	PG_W		0x00000400	/* XXX unused but reserved field */
+#define	PG_W		0x00000020	/* XXX unused but reserved field */
+#define	PG_U0		0x00000400	/* U0 bit for M88110 */
 #define	PG_U1		0x00000800	/* U1 bit for M88110 */
 
 #define	PDT_VALID(pte)	(*(pte) & PG_V)
