@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.5 1996/04/18 23:47:02 niklas Exp $	*/
+/*	$OpenBSD: cons.h,v 1.6 1998/06/17 14:58:34 mickey Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 
 void	cninit __P((void));
+int	cnset __P((dev_t));
 int	cnopen __P((dev_t, int, int, struct proc *));
 int	cnclose __P((dev_t, int, int, struct proc *));
 int	cnread __P((dev_t, struct uio *, int));
