@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.29 2004/06/06 21:30:38 jmc Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.30 2004/06/07 19:22:20 otto Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -48,9 +48,9 @@ option.
 .Pp
 Before initializing an S/Key entry, the user must authenticate
 using either a standard password or an S/Key challenge.
-When used over an untrusted network, a password of
-.Sq s/key
-should be used.
+To use a one-time password for initial authentication, the
+.Dq Fl a Li skey
+option can be used.
 The user will then be presented with the standard
 S/Key challenge and allowed to proceed if it is correct.
 .Pp
@@ -134,9 +134,10 @@ mode.
 Displays one-time password in hexadecimal instead of ASCII.
 .It Fl a Ar auth-type
 Specify an authentication type such as
-.Dq krb5
+.Dq krb5 ,
+.Dq passwd
 or
-.Dq passwd .
+.Dq skey .
 .It Fl n Ar count
 Start the
 .Nm skey
