@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.47 2002/07/01 18:53:00 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.48 2002/08/21 16:51:27 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -249,7 +249,7 @@ struct consdev wsdisplay_cons = {
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS
-# define WSDISPLAY_DEFAULTSCREENS	0
+# define WSDISPLAY_DEFAULTSCREENS	1
 #endif
 int wsdisplay_defaultscreens = WSDISPLAY_DEFAULTSCREENS;
 
