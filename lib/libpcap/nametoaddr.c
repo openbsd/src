@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.9 2002/02/19 19:39:37 millert Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.10 2004/01/27 06:58:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,11 +23,6 @@
  * Name to id translation routines used by the scanner.
  * These functions are not time critical.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/nametoaddr.c,v 1.9 2002/02/19 19:39:37 millert Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>				/* concession to AIX */

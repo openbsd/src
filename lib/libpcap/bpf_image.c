@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_image.c,v 1.8 2000/04/26 21:25:52 jakob Exp $	*/
+/*	$OpenBSD: bpf_image.c,v 1.9 2004/01/27 06:58:02 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/bpf_image.c,v 1.8 2000/04/26 21:25:52 jakob Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

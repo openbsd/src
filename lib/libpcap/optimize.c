@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.9 2002/08/12 00:42:56 aaron Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.10 2004/01/27 06:58:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -22,10 +22,6 @@
  *
  *  Optimization module for tcpdump intermediate representation.
  */
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/optimize.c,v 1.9 2002/08/12 00:42:56 aaron Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherent.c,v 1.6 1999/07/20 04:49:54 deraadt Exp $	*/
+/*	$OpenBSD: etherent.c,v 1.7 2004/01/27 06:58:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/etherent.c,v 1.6 1999/07/20 04:49:54 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 

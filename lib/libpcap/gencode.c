@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.20 2004/01/26 02:20:24 fgsch Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.21 2004/01/27 06:58:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -20,10 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.20 2004/01/26 02:20:24 fgsch Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
