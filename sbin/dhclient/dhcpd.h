@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.23 2004/03/02 13:39:44 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.24 2004/03/02 15:41:44 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -202,9 +202,6 @@ struct interface_info {
 	size_t			 rbuf_offset;
 	size_t			 rbuf_len;
 	struct ifreq		*ifp;
-	u_int32_t		 flags;
-#define INTERFACE_REQUESTED 1
-#define INTERFACE_AUTOMATIC 2
 	struct client_state	*client;
 	int			 noifmedia;
 	int			 errors;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.26 2004/03/02 15:34:03 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.27 2004/03/02 15:41:44 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -247,7 +247,6 @@ main(int argc, char *argv[])
 	if ((ifi = calloc(1, sizeof(struct interface_info))) == NULL)
 		error("calloc");
 	strlcpy(ifi->name, argv[0], IFNAMSIZ);
-	ifi->flags = INTERFACE_REQUESTED;
 
 	if (quiet)
 		log_perror = 0;
