@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.6 1996/08/11 20:39:08 niklas Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.7 1996/12/06 12:21:06 niklas Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ int	 locc __P((int, char *, u_int));
 u_long	 random __P((void));
 void	 srandom __P((u_long));
 char	*rindex __P((const char *, int));
-int	 scanc __P((u_int, u_char *, u_char *, int));
+int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 size_t	 strlen __P((const char *));
 char	*strcat __P((char *, const char *));

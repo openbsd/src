@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanc.c,v 1.2 1996/04/19 16:09:33 niklas Exp $	*/
+/*	$OpenBSD: scanc.c,v 1.3 1996/12/06 12:21:07 niklas Exp $	*/
 /*	$NetBSD: scanc.c,v 1.3 1996/03/14 18:52:16 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
 int
 scanc(size, cp, table, mask)
 	u_int size;
-	register u_char *cp, table[];
+	register const u_char *cp, table[];
 	register u_char mask;
 {
-	register u_char *end = &cp[size];
+	register const u_char *end = &cp[size];
 
 	while (cp < end && (table[*cp] & mask) == 0)
 		cp++;
