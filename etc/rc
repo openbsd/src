@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.234 2004/02/25 08:42:38 jmc Exp $
+#	$OpenBSD: rc,v 1.235 2004/02/26 07:33:08 beck Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -498,8 +498,15 @@ if [ "X${sendmail_flags}" != X"NO" -a -s /etc/mailer.conf ]; then
 fi
 
 if [ "X${spamd_flags}" != X"NO" ]; then
+	if [ "X${spamd_grey}" != X"NO" ]; then
+		spamd_flags="${spamd_flags} -g"
+	fi
 	echo -n ' spamd';		/usr/libexec/spamd ${spamd_flags}
 	/usr/libexec/spamd-setup
+	if [ "X${spamd_grey}" != X"NO" ]; then
+		echo -n ' spamlogd'
+		/usr/libexec/spamlogd
+	fi
 fi
 
 if [ "X${httpd_flags}" != X"NO"  ]; then
