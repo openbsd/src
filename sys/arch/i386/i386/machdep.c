@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.299 2004/06/15 23:36:55 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.300 2004/06/22 08:58:16 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -403,7 +403,7 @@ cpu_startup()
 
 	/* XXX Merge with identifycpu */
 	old_identifycpu();
-	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
+	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024U);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -435,7 +435,7 @@ cpu_startup()
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024);
+	    ptoa(uvmexp.free)/1024U);
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
 		nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
