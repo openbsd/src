@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.1 2002/02/24 19:42:46 provos Exp $
+.\"	$OpenBSD: tree.3,v 1.2 2002/03/19 00:07:45 vincent Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -238,7 +238,7 @@ from the tree pointed by
 .Pp
 The
 .Fn SPLAY_FIND
-macro can be used to find a particular element in the free.
+macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
@@ -352,7 +352,7 @@ from the tree pointed by
 .Pp
 The
 .Fn RB_FIND
-macro can be used to find a particular element in the free.
+macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
