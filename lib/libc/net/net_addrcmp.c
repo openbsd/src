@@ -23,7 +23,9 @@ net_addrcmp(sa1, sa2)
 	case AF_INET6:
 		return (memcmp(&((struct sockaddr_in6 *)sa1)->sin6_addr,
 		    &((struct sockaddr_in6 *)sa2)->sin6_addr,
-		    sizeof(struct in6_addr)));
+		    sizeof(struct in6_addr)) == 0 &&
+		    ((struct sockaddr_in6 *)sa1)->sin6_scope_id ==
+		    ((struct sockaddr_in6 *)sa2)->sin6_scpoe_id);
 	case AF_NS:
 		return (memcmp(&((struct sockaddr_ns *)sa1)->sns_addr,
 		    &((struct sockaddr_ns *)sa2)->sns_addr,
