@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.2 1999/02/28 03:23:36 jason Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.3 1999/03/02 06:12:33 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -336,12 +336,6 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P0_PSTOP, sc->rec_page_stop);
 
 	/*
-	 * Clear all interrupts.  A '1' in each bit position clears the
-	 * corresponding flag.
-	 */
-	NIC_PUT(regt, regh, ED_P0_ISR, 0xff);
-
-	/*
 	 * Enable the following interrupts: receive/transmit complete,
 	 * receive/transmit error, and Receiver OverWrite.
 	 *
@@ -350,6 +344,12 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P0_IMR,
 	    ED_IMR_PRXE | ED_IMR_PTXE | ED_IMR_RXEE | ED_IMR_TXEE |
 	    ED_IMR_OVWE);
+
+	/*
+	 * Clear all interrupts.  A '1' in each bit position clears the
+	 * corresponding flag.
+	 */
+	NIC_PUT(regt, regh, ED_P0_ISR, 0xff);
 
 	/* Program command register for page 1. */
 	NIC_PUT(regt, regh, ED_P0_CR,
@@ -385,6 +385,7 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P1_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
+	/* Accept broadcast and multicast packets by default. */
 	i = ED_RCR_AB | ED_RCR_AM;
 	if (ifp->if_flags & IFF_PROMISC) {
 		/*
@@ -449,8 +450,7 @@ dp8390_xmit(sc)
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP | ED_CR_STA);
 
 	/* Point to next transmit buffer slot and wrap if necessary. */
-	sc->txb_next_tx++;
-	if (sc->txb_next_tx == sc->txb_cnt)
+	if (++sc->txb_next_tx == sc->txb_cnt)
 		sc->txb_next_tx = 0;
 
 	/* Set a timer just in case we never hear from the board again. */
@@ -511,15 +511,13 @@ outloop:
 	m_freem(m0);
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
 
-	/* Start the first packet transmitting. */
-	if (sc->txb_inuse == 0)
-		dp8390_xmit(sc);
-
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
 		sc->txb_new = 0;
 
-	sc->txb_inuse++;
+	/* Start the first packet transmitting. */
+	if (sc->txb_inuse++ == 0)
+		dp8390_xmit(sc);
 
 	/* Loop back to the top to possibly buffer more packets. */
 	goto outloop;
@@ -689,10 +687,15 @@ dp8390_intr(arg)
 		/*
 		 * Handle transmitter interrupts.  Handle these first because
 		 * the receiver will reset the board under some conditions.
+		 *
+		 * If the chip was reset while a packet was transmitting, it
+		 * may still deliver a TX interrupt.  In this case, just ignore
+		 * the interrupt.
 		 */
-		if (isr & (ED_ISR_PTX | ED_ISR_TXE)) {
-			u_char collisions = NIC_GET(regt, regh,
-			    ED_P0_NCR) & 0x0f;
+		if (isr & (ED_ISR_PTX | ED_ISR_TXE) &&
+		    sc->txb_inuse != 0) {
+			u_char collisions =
+			    NIC_GET(regt, regh, ED_P0_NCR) & 0x0f;
 
 			/*
 			 * Check for transmit error.  If a TX completed with an
@@ -703,7 +706,6 @@ dp8390_intr(arg)
 			 * course, with UDP we're screwed, but this is expected
 			 * when a network is heavily loaded.
 			 */
-			(void)NIC_GET(regt, regh, ED_P0_TSR);
 			if (isr & ED_ISR_TXE) {
 				/*
 				 * Excessive collisions (16).
@@ -721,15 +723,15 @@ dp8390_intr(arg)
 				/* Update output errors counter. */
 				++ifp->if_oerrors;
 			} else {
+				/* Throw away the non-error status bits. */
+				(void)NIC_GET(regt, regh, ED_P0_TSR);
+
 				/*
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
 				++ifp->if_opackets;
 			}
-
-			/* Done with the buffer. */
-			sc->txb_inuse--;
 
 			/* Clear watchdog timer. */
 			ifp->if_timer = 0;
@@ -748,7 +750,7 @@ dp8390_intr(arg)
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.
 			 */
-			if (sc->txb_inuse > 0)
+			if (--sc->txb_inuse != 0)
 				dp8390_xmit(sc);
 		}
 
