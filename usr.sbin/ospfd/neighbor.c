@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.4 2005/02/02 19:15:07 henning Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.5 2005/02/09 12:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -625,7 +625,7 @@ nbr_to_ctl(struct nbr *nbr)
 
 	memcpy(nctl.name, nbr->iface->name, sizeof(nctl.name));
 	memcpy(&nctl.id, &nbr->id, sizeof(nctl.id));
-	memcpy(&nctl.addr, &nbr->iface->addr, sizeof(nctl.addr));
+	memcpy(&nctl.addr, &nbr->addr, sizeof(nctl.addr));
 	memcpy(&nctl.dr, &nbr->dr, sizeof(nctl.dr));
 	memcpy(&nctl.bdr, &nbr->bdr, sizeof(nctl.bdr));
 	memcpy(&nctl.area, &nbr->iface->area->id, sizeof(nctl.area));
