@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.106 2003/12/20 21:49:06 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.107 2004/01/14 09:12:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -670,12 +670,42 @@ pmap_destroy(pmap)
 
 #ifdef DIAGNOSTIC
 	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq))) {
-		printf("pmap_destroy: unaccounted ptp 0x%lx count %d\n",
-		    VM_PAGE_TO_PHYS(pg), pg->wire_count);
-		if (pg->flags & PG_BUSY)
-			panic("pmap_destroy: busy page table page");
-		pg->wire_count = 0;
-		uvm_pagefree(pg);
+		pt_entry_t *pde, *epde;
+		struct vm_page *sheep;
+		struct pv_entry *haggis;
+
+		if (pg == pmap->pm_pdir_pg)
+			continue;
+
+#ifdef PMAPDEBUG
+		printf("pmap_destroy(%p): stray ptp 0x%lx w/ %d ents:",
+		    pmap, VM_PAGE_TO_PHYS(pg), pg->wire_count - 1);
+#endif
+
+		pde = (pt_entry_t *)VM_PAGE_TO_PHYS(pg);
+		epde = (pt_entry_t *)(VM_PAGE_TO_PHYS(pg) + PAGE_SIZE);
+		for (; pde < epde; pde++) {
+			if (*pde == 0)
+				continue;
+
+			sheep = PHYS_TO_VM_PAGE(PTE_PAGE(*pde));
+			for (haggis = sheep->mdpage.pvh_list; haggis != NULL; )
+				if (haggis->pv_pmap == pmap) {
+#ifdef PMAPDEBUG
+					printf(" 0x%x", haggis->pv_va);
+#endif
+					pmap_remove(pmap, haggis->pv_va,
+					    haggis->pv_va + PAGE_SIZE);
+
+					/* exploit the sacred knowledge
+					   of lambeous ozzmosis */
+					haggis = sheep->mdpage.pvh_list;
+				} else
+					haggis = haggis->pv_next;
+		}
+#ifdef PMAPDEBUG
+		printf("\n");
+#endif
 	}
 #endif
 	pmap_sdir_set(pmap->pm_space, 0);
