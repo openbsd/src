@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.2 2003/02/11 22:53:42 miod Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.3 2003/02/26 20:22:54 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -39,27 +39,28 @@
 
 const keysym_t hilkbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
+    KC(0),			KS_Control_R,
     KC(2),   KS_Cmd2,		KS_Alt_R,	KS_Multi_key,
     KC(3),   KS_Cmd2,		KS_Alt_L,
     KC(4),			KS_Shift_R,
     KC(5),			KS_Shift_L,
     KC(6),   KS_Cmd1,		KS_Control_L,
-    KC(7),   KS_Cmd_KbdReset,	/* Break/Reset */
-    KC(8),			KS_KP_4,
-    KC(9),			KS_KP_8,
-    KC(10),			KS_KP_5,
-    KC(11),			KS_KP_9,
-    KC(12),			KS_KP_6,
-    KC(13),			KS_KP_7,
+    KC(7),   KS_Cmd_KbdReset,			/* Break/Reset */
+    KC(8),			KS_KP_Left,	KS_KP_4,
+    KC(9),			KS_KP_Up,	KS_KP_8,
+    KC(10),			KS_KP_Begin,	KS_KP_5,
+    KC(11),			KS_KP_Prior,	KS_KP_9,
+    KC(12),			KS_KP_Right,	KS_KP_6,
+    KC(13),			KS_KP_Home,	KS_KP_7,
     KC(14),			KS_comma,	/* numeric pad */
     KC(15),			KS_KP_Enter,
-    KC(16),			KS_KP_1,
+    KC(16),			KS_KP_End,	KS_KP_1,
     KC(17),			KS_KP_Divide,
-    KC(18),			KS_KP_2,
+    KC(18),			KS_KP_Down,	KS_KP_2,
     KC(19),			KS_KP_Add,
-    KC(20),			KS_KP_3,
+    KC(20),			KS_KP_Next,	KS_KP_3,
     KC(21),			KS_KP_Multiply,
-    KC(22),			KS_KP_0,
+    KC(22),			KS_KP_Insert,	KS_KP_0,
     KC(23),			KS_KP_Subtract,
     KC(24),			KS_b,
     KC(25),			KS_v,
@@ -67,13 +68,13 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(27),			KS_x,
     KC(28),			KS_z,
 
-    KC(31),  KS_Cmd_Debugger,	KS_Escape,
-    /* 33 numeric pad unlabeled key #2 */
-    /* 35 numeric pad unlabeled key #3 */
-    KC(36),			KS_KP_Decimal,
-    /* 37 numeric pad unlabeled key #1 */
+    KC(31),  KS_Cmd_Debugger,	KS_Escape,	KS_Delete,
+    KC(33), KS_Cmd_Screen9,	KS_f10,		/* also KS_KP_F2 */
+    KC(35), KS_Cmd_Screen10,	KS_f11,		/* also KS_KP_F3 */
+    KC(36),			KS_KP_Delete,	KS_KP_Decimal,
+    KC(37), KS_Cmd_Screen8,	KS_f9,		/* also KS_KP_F1 */
     KC(38),			KS_Tab,		/* numeric pad */
-    /* 39 numeric pad unlabeled key #4 */
+    KC(39), KS_Cmd_Screen11,	KS_f12,		/* also KS_KP_F4 */
     KC(40),			KS_h,
     KC(41),			KS_g,
     KC(42),			KS_f,
@@ -99,19 +100,19 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(62),			KS_1,		KS_exclam,
     KC(63),			KS_grave,	KS_asciitilde,
 
-    /* 72 Menu */
+    KC(72),			KS_Print_Screen, /* Menu */
     KC(73),  KS_Cmd_Screen3,	KS_f4,
     KC(74),  KS_Cmd_Screen2,	KS_f3,
     KC(75),  KS_Cmd_Screen1,	KS_f2,
     KC(76),  KS_Cmd_Screen0,	KS_f1,
 
-    /* 78 Stop */
+    KC(78),			KS_Hold_Screen,
     KC(79),			KS_Return,	KS_Print_Screen,
-    /* 80 System/User */
+    KC(80),			KS_Num_Lock,	/* System/User */
     KC(81),  KS_Cmd_Screen4,	KS_f5,
-    KC(82),  KS_Cmd_Screen7,	KS_f8,
+    KC(82),  KS_Cmd_Screen5,	KS_f6,
     KC(83),  KS_Cmd_Screen6,	KS_f7,
-    KC(84),  KS_Cmd_Screen5,	KS_f6,
+    KC(84),  KS_Cmd_Screen7,	KS_f8,
 
     /* 86 Clear line */
     /* 87 Clear display */
@@ -120,7 +121,7 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(90),			KS_0,		KS_parenright,
     KC(91),			KS_minus,	KS_underscore,
     KC(92),			KS_equal,	KS_plus,
-    KC(93),  KS_Cmd_ResetEmul,	KS_Delete, /* Backspace */
+    KC(93),  KS_Cmd_ResetEmul,	KS_Delete,	/* Backspace */
     /* 94 Insert line */
     /* 95 Delete line */
     KC(96),			KS_i,
@@ -145,7 +146,7 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(114),			KS_period,	KS_greater,
     KC(115),			KS_slash,	KS_question,
 
-    /* 117 Select */
+    KC(117),			KS_End,		/* Select */
 
     KC(119), KS_Cmd_ScrollFwd,	KS_Next,
     KC(120),			KS_n,

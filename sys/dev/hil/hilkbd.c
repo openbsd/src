@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.8 2003/02/26 20:22:04 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.9 2003/02/26 20:22:54 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -168,6 +168,16 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+
+	/*
+	 * If this is an old keyboard with a numeric pad but no ``num lock''
+	 * key, simulate it being pressed so that the keyboard runs in
+	 * numeric mode.
+	 */
+	if (sc->sc_numleds == 0 && sc->sc_wskbddev != NULL) {
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN, 80);
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, 80);
+	}
 }
 
 int
