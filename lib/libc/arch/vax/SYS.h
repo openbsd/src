@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 1998/05/14 23:06:56 niklas Exp $ */
+/*	$OpenBSD: SYS.h,v 1.5 2001/08/23 21:58:37 miod Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -38,40 +38,48 @@
 #include <sys/syscall.h>
 
 #ifdef __STDC__
-#define SYSTRAP(x)	chmk $ SYS_ ## x
+#define	_CAT(x,y)	x##y
+#define	__ENTRY(p,x)	ENTRY(p##x,0)
+#define	__DO_SYSCALL(x)	chmk $ SYS_ ## x
 #else
-#define SYSTRAP(x)	chmk $ SYS_/**/x
+#define	_CAT(x,y)	x/**/y
+#define	__ENTRY(p,x)	ENTRY(p/**/x,0)
+#define	__DO_SYSCALL(x)	chmk $ SYS_/**/x
 #endif
 
-#define _SYSCALL_NOERROR(x,y)						\
-	ENTRY(x,0);							\
-	SYSTRAP(y)
+#define	__SYSCALL(p,x,y)						\
+	err:	jmp cerror;						\
+	__ENTRY(p,x);							\
+		__DO_SYSCALL(y);					\
+		jcs err
 
-#define _SYSCALL(x,y)							\
-	err: jmp cerror;						\
-	_SYSCALL_NOERROR(x,y);						\
-	jcs err
+#define	__PSEUDO(p,x,y)							\
+	err:	jmp cerror;						\
+	__ENTRY(p,x);							\
+		__DO_SYSCALL(y);					\
+		jcs err;						\
+		ret
 
-#define SYSCALL_NOERROR(x)						\
-	_SYSCALL_NOERROR(x,x)
-
-#define SYSCALL(x)							\
-	_SYSCALL(x,x)
-
-#define PSEUDO_NOERROR(x,y)						\
-	_SYSCALL_NOERROR(x,y);						\
-	ret
-
-#define PSEUDO(x,y)							\
-	_SYSCALL(x,y);							\
-	ret
-
-#define RSYSCALL_NOERROR(x)						\
-	PSEUDO_NOERROR(x,x)
-
-#define RSYSCALL(x)							\
-	PSEUDO(x,x)
-
-#define	ASMSTR		.asciz
+#ifdef _THREAD_SAFE
+/*
+ * For the thread_safe versions, we prepend _thread_sys_ to the function
+ * name so that the 'C' wrapper can go around the real name.
+ */
+#define	SYSCALL(x)	__SYSCALL(_thread_sys_,x,x)
+#define	RSYSCALL(x)	__PSEUDO(_thread_sys_,x,x)
+#define	PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
+#define	SYSENTRY(x)	__ENTRY(_thread_sys_,x)
+#define	SYSNAME(x)	_CAT(__thread_sys_,x)
+#else _THREAD_SAFE
+/*
+ * The non-threaded library defaults to traditional syscalls where
+ * the function name matches the syscall name.
+ */
+#define	SYSCALL(x)	__SYSCALL(,x,x)
+#define	RSYSCALL(x)	__PSEUDO(,x,x)
+#define	PSEUDO(x,y)	__PSEUDO(,x,y)
+#define	SYSENTRY(x)	__ENTRY(,x)
+#define	SYSNAME(x)	_CAT(_,x)
+#endif _THREAD_SAFE
 
 	.globl	cerror

@@ -33,13 +33,13 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: exect.S,v 1.3 1998/05/17 10:06:31 niklas Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.4 2001/08/23 21:58:41 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 #include <machine/psl.h>
 
-ENTRY(exect, 0)
+SYSENTRY(exect)
 	bispsw	$PSL_T
 	chmk	$ SYS_execve
 	jmp	cerror		# exect(file, argv, env)

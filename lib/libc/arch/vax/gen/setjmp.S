@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.4 2001/08/23 21:58:41 miod Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -47,17 +47,17 @@
  * and a struct sigcontext, see <signal.h>
  */
 
-#include "DEFS.h"
+#include "SYS.h"
 
 ENTRY(setjmp, R6)
 	movl	4(ap),r6		# construct sigcontext
 	subl2	$12,sp			# space for current struct sigstack
 	pushl	sp			# get current values
 	pushl	$0			# no new values
-	calls	$4,_sigaltstack		# pop args plus signal stack value
+	calls	$4,SYSNAME(sigaltstack)# pop args plus signal stack value
 	movl	(sp)+,(r6)+		# save onsigstack status of caller
 	pushl	$0
-	calls	$1,_sigblock		# get signal mask
+	calls	$1,SYSNAME(sigblock)	# get signal mask
 	movl	r0,(r6)+		# save signal mask of caller
 	movl	(ap),r0
 	moval	4(ap)[r0],(r6)+		# save sp of caller
@@ -90,7 +90,7 @@ loop:
 
 done:
 	pushl	r1			# pointer to sigcontext
-	calls	$1,_sigreturn		# restore previous context
+	calls	$1,SYSNAME(sigreturn)	# restore previous context
 					# we should never return
 botch:
 	calls	$0,_longjmperror
