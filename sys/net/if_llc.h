@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_llc.h,v 1.4 2000/10/18 16:15:37 jason Exp $	*/
+/*	$OpenBSD: if_llc.h,v 1.5 2000/11/05 22:58:23 jason Exp $	*/
 /*	$NetBSD: if_llc.h,v 1.6 1995/03/08 02:56:57 cgd Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ struct llc {
 /*
  * ISO PDTR 10178 contains among others
  */
+#define	LLC_8021D_LSAP	0x42
 #define	LLC_X25_LSAP	0x7e
 #define	LLC_SNAP_LSAP	0xaa
 #define	LLC_ISO_LSAP	0xfe
