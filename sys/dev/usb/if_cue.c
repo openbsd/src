@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.12 2002/05/06 05:19:20 nate Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.13 2002/06/26 11:29:55 espie Exp $ */
 /*	$NetBSD: if_cue.c,v 1.38 2001/12/12 15:36:08 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -602,7 +602,7 @@ USB_DETACH(cue)
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
+	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
 	usb_uncallout(sc->cue_stat_ch, cue_tick, sc);
 	/*
@@ -653,7 +653,7 @@ cue_activate(device_ptr_t self, enum devact act)
 {
 	struct cue_softc *sc = (struct cue_softc *)self;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
+	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -778,7 +778,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	int			s;
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->cue_dev),
-		     __FUNCTION__, status));
+		     __func__, status));
 
 	if (sc->cue_dying)
 		return;
@@ -842,7 +842,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 #endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->cue_dev),
-		    __FUNCTION__, m->m_len));
+		    __func__, m->m_len));
 	IF_INPUT(ifp, m);
  done1:
 	splx(s);
@@ -855,7 +855,7 @@ done:
 	usbd_transfer(c->cue_xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->cue_dev),
-		    __FUNCTION__));
+		    __func__));
 }
 
 /*
@@ -876,7 +876,7 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	s = splnet();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->cue_dev),
-		    __FUNCTION__, status));
+		    __func__, status));
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -917,7 +917,7 @@ cue_tick(void *xsc)
 	if (sc->cue_dying)
 		return;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
+	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
 	/* Perform statistics update in process context. */
 	usb_add_task(sc->cue_udev, &sc->cue_tick_task);
@@ -932,7 +932,7 @@ cue_tick_task(void *xsc)
 	if (sc->cue_dying)
 		return;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
+	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
 	ifp = GET_IFP(sc);
 
@@ -963,7 +963,7 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 	total_len = m->m_pkthdr.len + 2;
 
 	DPRINTFN(10,("%s: %s: total_len=%d\n",
-		     USBDEVNAME(sc->cue_dev), __FUNCTION__, total_len));
+		     USBDEVNAME(sc->cue_dev), __func__, total_len));
 
 	/* The first two bytes are the frame length */
 	c->cue_buf[0] = (u_int8_t)m->m_pkthdr.len;
@@ -997,7 +997,7 @@ cue_start(struct ifnet *ifp)
 	if (sc->cue_dying)
 		return;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
+	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__func__));
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -1041,7 +1041,7 @@ cue_init(void *xsc)
 	if (sc->cue_dying)
 		return;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
+	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__func__));
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -1253,7 +1253,7 @@ cue_watchdog(struct ifnet *ifp)
 	usbd_status		stat;
 	int			s;
 
-	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
+	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__func__));
 
 	if (sc->cue_dying)
 		return;
@@ -1282,7 +1282,7 @@ cue_stop(struct cue_softc *sc)
 	struct ifnet		*ifp;
 	int			i;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
+	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__func__));
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.2 2002/05/07 19:50:01 nate Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.3 2002/06/26 11:29:55 espie Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -105,7 +105,7 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
+	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -138,7 +138,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
-	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
+	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
 	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENXIO);
@@ -227,7 +227,7 @@ urlphy_status(struct mii_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int msr, bmsr, bmcr;
 
-	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
+	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -240,7 +240,7 @@ urlphy_status(struct mii_softc *sc)
 	if (msr & URLPHY_MSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	DPRINTF(("%s: %s: link %s\n", sc->mii_dev.dv_xname, __FUNCTION__,
+	DPRINTF(("%s: %s: link %s\n", sc->mii_dev.dv_xname, __func__,
 		 mii->mii_media_status & IFM_ACTIVE ? "up" : "down"));
 
 	bmcr = PHY_READ(sc, MII_BMCR);
