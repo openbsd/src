@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.32 2000/09/14 13:32:05 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.33 2000/09/14 13:46:44 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -91,6 +91,7 @@
 #include    <sys/stat.h>
 #include    <sys/time.h>
 #include    <sys/param.h>
+#include    <stddef.h>
 #include    <ctype.h>
 #include    <ar.h>
 #include    <utime.h>
@@ -98,6 +99,7 @@
 #include    <stdlib.h>
 #include    <fcntl.h>
 #include    "make.h"
+#include    "ohash.h"
 #include    "hash.h"
 #include    "dir.h"
 #include    "config.h"
@@ -107,7 +109,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.32 2000/09/14 13:32:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.33 2000/09/14 13:46:44 espie Exp $";
 #endif
 #endif /* not lint */
 

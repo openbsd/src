@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.56 2000/09/14 13:43:31 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.57 2000/09/14 13:46:45 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -86,11 +86,12 @@
 #else
 #include <varargs.h>
 #endif
+#include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
 #include "make.h"
-#include "hash.h"
+#include "ohash.h"
 #include "dir.h"
 #include "job.h"
 #include "buf.h"
@@ -102,7 +103,7 @@
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.56 2000/09/14 13:43:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.57 2000/09/14 13:46:45 espie Exp $";
 #endif
 #endif /* not lint */
 

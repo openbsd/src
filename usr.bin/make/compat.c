@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.33 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.34 2000/09/14 13:46:44 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
  *	    	  	    thems as need creatin'
  */
 
+#include    <stddef.h>
 #include    <stdio.h>
 #include    <sys/types.h>
 #include    <sys/stat.h>
@@ -60,7 +61,7 @@
 #include    <errno.h>
 #include    <signal.h>
 #include    "make.h"
-#include    "hash.h"
+#include    "ohash.h"
 #include    "dir.h"
 #include    "job.h"
 
@@ -69,7 +70,7 @@
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: compat.c,v 1.33 2000/09/14 13:32:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.34 2000/09/14 13:46:44 espie Exp $";
 #endif
 #endif /* not lint */
 

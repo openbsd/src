@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.21 2000/09/14 13:32:07 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.22 2000/09/14 13:46:45 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -71,8 +71,9 @@
  *				and perform the .USE actions if so.
  */
 
+#include    <stddef.h>
 #include    "make.h"
-#include    "hash.h"
+#include    "ohash.h"
 #include    "dir.h"
 #include    "job.h"
 
@@ -81,7 +82,7 @@
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: make.c,v 1.21 2000/09/14 13:32:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.22 2000/09/14 13:46:45 espie Exp $";
 #endif
 #endif /* not lint */
 

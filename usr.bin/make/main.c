@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2000/09/14 13:43:31 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2000/09/14 13:46:45 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -87,7 +88,7 @@
 #include <varargs.h>
 #endif
 #include "make.h"
-#include "hash.h"
+#include "ohash.h"
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
@@ -104,7 +105,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: main.c,v 1.42 2000/09/14 13:43:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.43 2000/09/14 13:46:45 espie Exp $";
 #endif
 #endif /* not lint */
 

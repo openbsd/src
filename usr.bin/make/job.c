@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.35 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.36 2000/09/14 13:46:45 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -105,11 +105,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <utime.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include "make.h"
-#include "hash.h"
+#include "ohash.h"
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
@@ -125,7 +126,7 @@
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: job.c,v 1.35 2000/09/14 13:32:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.36 2000/09/14 13:46:45 espie Exp $";
 #endif
 #endif /* not lint */
 

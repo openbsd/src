@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.8 2000/09/14 13:43:31 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.9 2000/09/14 13:46:45 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ typedef struct Path_ {
     int		refCount; 	/* Number of paths with this directory */
     int		hits;	    	/* the number of times a file in this
 				 * directory has been found */
-    Hash_Table	files;    	/* Hash table of files in directory */
+    struct hash	files;    	/* Hash table of files in directory */
     char	name[1];	/* Name of directory */
 } Path;
 

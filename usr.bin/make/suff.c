@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.37 2000/09/14 13:40:03 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.38 2000/09/14 13:46:45 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -90,9 +90,10 @@
  *	    	  	    	if the target had no implicit sources.
  */
 
+#include          <stddef.h>
 #include    	  <stdio.h>
 #include	  "make.h"
-#include	  "hash.h"
+#include	  "ohash.h"
 #include	  "dir.h"
 
 #ifndef lint
@@ -100,7 +101,7 @@
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: suff.c,v 1.37 2000/09/14 13:40:03 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.38 2000/09/14 13:46:45 espie Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.21 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.22 2000/09/14 13:46:44 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -48,10 +48,11 @@
  *
  */
 
+#include    <stddef.h>
 #include    <ctype.h>
 #include    <math.h>
 #include    "make.h"
-#include    "hash.h"
+#include    "ohash.h"
 #include    "dir.h"
 #include    "buf.h"
 
@@ -60,7 +61,7 @@
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: cond.c,v 1.21 2000/09/14 13:32:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.22 2000/09/14 13:46:44 espie Exp $";
 #endif
 #endif /* not lint */
 
