@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.3 1999/07/07 22:04:34 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.16 1999/06/07 00:10:47 ho Exp $	*/
+/*	$OpenBSD: connection.c,v 1.4 1999/07/13 15:46:32 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.17 1999/07/11 13:09:54 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -451,9 +451,9 @@ connection_report (void)
   gettimeofday (&now, 0);
   for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
     log_debug (LOG_REPORT, 0, 
-	       "connection_report: connection %s next check %ld seconds",
+	       "connection_report: connection %s next check %d seconds",
 	       (conn->name ? conn->name : "<unnamed>"),
-	       (long)conn->ev - now.tv_sec);
+	       conn->ev->expiration.tv_sec - now.tv_sec);
   for (pconn = TAILQ_FIRST (&connections_passive); pconn; 
        pconn = TAILQ_NEXT (pconn, link))
     log_debug (LOG_REPORT, 0,
