@@ -385,6 +385,7 @@ disk_unbusy(diskp, bcount)
 		diskp->dk_bytes += bcount;
 		diskp->dk_xfer++;
 	}
+	diskp->dk_seek++;
 }
 
 /*
@@ -401,6 +402,7 @@ disk_resetstat(diskp)
 
 	diskp->dk_xfer = 0;
 	diskp->dk_bytes = 0;
+	diskp->dk_seek = 0;
 
 	t = splclock();
 	diskp->dk_attachtime = mono_time;
