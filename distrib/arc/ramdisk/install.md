@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 1997/09/30 17:52:38 deraadt Exp $
+#	$OpenBSD: install.md,v 1.7 1998/03/25 11:57:23 pefo Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -60,6 +60,10 @@ md_machine_arch() {
 	cat /kern/machine
 }
 
+md_machine_model() {
+	cat /kern/model
+}
+
 md_get_diskdevs() {
 	# return available disk devices
 	cat /kern/msgbuf | egrep "^[sw]d[0-9] " | cut -d" " -f1 | sort -u
@@ -81,23 +85,50 @@ md_get_partition_range() {
 }
 
 md_installboot() {
-	echo "Installing bootable kernel in the msdos partition /dev/${1}i"
-	if mount -t msdos /dev/${1}i /mnt2 ; then
-		elf2ecoff /mnt/bsd /mnt2/bsd
-		umount /mnt2
-	else
-		echo "Failed, you will not be able to boot from /dev/${1}."
-	fi
+	local model
+
+	model=`md_machine_model`
+	case "$model" in
+	Algor*)
+	;;
+	*)
+		echo "Installing bootable kernel in the msdos partition /dev/${1}i"
+		if mount -t msdos /dev/${1}i /mnt2 ; then
+			elf2ecoff /mnt/bsd /mnt2/bsd
+			umount /mnt2
+		else
+			echo "Failed, you will not be able to boot from /dev/${1}."
+		fi
+	;;
+	esac
 	echo "Building dynamic libraries cache"
 	/mnt/sbin/ldconfig -f /mnt/etc/ld.so.cache -P /mnt
 }
 
 md_native_fstype() {
-    echo "msdos"
+	local model
+
+	model=`md_machine_model`
+	case "$model" in
+	Algor*)
+	;;
+	*)
+	    echo "msdos"
+	;;
+	esac
 }
 
 md_native_fsopts() {
-    echo "ro"
+	local model
+
+	model=`md_machine_model`
+	case "$model" in
+	Algor*)
+	;;
+	*)
+	    echo "ro"
+	;;
+	esac
 }
 
 md_init_mbr() {
@@ -136,39 +167,46 @@ md_init_mbr() {
 md_checkfordisklabel() {
 	# $1 is the disk to check
 	local rval
+	local model
 
-	echo
-	echo "ARC systems need a MBR and MSDOS partition on the bootable disk."
-	echo "This is necessary because the BIOS doesn't know nothing about"
-	echo "OpenBSD and have to boot the system from a file stored in the"
-	echo "MSDOS partition. Install will put a bootable kernel with the"
-	echo "name 'bsd' in there that you later should use to boot OpenBSD. "
-	echo
-	echo -n "Have this disk previously been used with DOS or Windows? [n]"
-	getresp "n"
-	case "$resp" in
-	n*|N*)
-		md_init_mbr $1;;
+	model=`md_machine_model`
+	case "$model" in
+	Algor*)
+	;;
 	*)
 		echo
-		echo "You may keep your current setup if you want to be able to use any"
-		echo "already loaded OS. However you will be asked to prepare an empty"
-		echo "partition for OpenBSD later. There must also be ~1.5Mb free space"
-		echo "in the boot partition to hold the bootable OpenBSD kernel."
-		echo "Also note that the boot partition must be included as partition"
-		echo "'i' in the OpenBSD disklabel."
+		echo "ARC systems need a MBR and MSDOS partition on the bootable disk."
+		echo "This is necessary because the BIOS doesn't know nothing about"
+		echo "OpenBSD and have to boot the system from a file stored in the"
+		echo "MSDOS partition. Install will put a bootable kernel with the"
+		echo "name 'bsd' in there that you later should use to boot OpenBSD. "
 		echo
-		echo -n "Do You want to keep the current MSDOS partition setup? [y]"
-		getresp "y"
+		echo -n "Have this disk previously been used with DOS or Windows? [n]"
+		getresp "n"
 		case "$resp" in
 		n*|N*)
 			md_init_mbr $1;;
 		*)
+			echo
+			echo "You may keep your current setup if you want to be able to use any"
+			echo "already loaded OS. However you will be asked to prepare an empty"
+			echo "partition for OpenBSD later. There must also be ~1.5Mb free space"
+			echo "in the boot partition to hold the bootable OpenBSD kernel."
+			echo "Also note that the boot partition must be included as partition"
+			echo "'i' in the OpenBSD disklabel."
+			echo
+			echo -n "Do You want to keep the current MSDOS partition setup? [y]"
+			getresp "y"
+			case "$resp" in
+			n*|N*)
+				md_init_mbr $1;;
+			*)
+			;;
+			esac
 		;;
 		esac
 	;;
 	esac
-
 
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
@@ -326,7 +364,7 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/ARC ${VERSION} installation program."
+		echo "	Welcome to the OpenBSD/ARC ${VERSION} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put OpenBSD on your disk,
@@ -337,7 +375,7 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the OpenBSD/ARC ${VERSION} upgrade program."
+		echo "	Welcome to the OpenBSD/ARC ${VERSION} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your OpenBSD system in a
