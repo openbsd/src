@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.4 1999/08/21 16:42:06 d Exp $	*/
+/*	$OpenBSD: rln.c,v 1.5 1999/08/25 07:20:29 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -158,6 +158,7 @@ rlninit(sc)
 	int s;
 	extern int cold;
 
+	s = splnet();
 	dprintf(" [init]");
 
 	sc->sc_intsel = 0;
@@ -197,7 +198,6 @@ rlninit(sc)
 	/* Synchronise with something. */
 	rln_searchsync(sc);
 #endif
-	s = splnet();
 	ifp->if_flags |= IFF_RUNNING;
 	rlnstart(ifp);
 	splx(s);
@@ -206,6 +206,7 @@ rlninit(sc)
 
     fail:
 	ifp->if_flags &= ~IFF_UP;
+	splx(s);
 	return;
 }
 
@@ -216,7 +217,7 @@ rlnstart(ifp)
 {
 	struct rln_softc * sc = (struct rln_softc *)ifp->if_softc;
 	struct mbuf *	m0;
-	int		len, pad, ret;
+	int		len, pad, ret, s;
 
 	dprintf(" start[");
 
@@ -239,7 +240,9 @@ rlnstart(ifp)
 	rln_enable(sc, 1);
 
     startagain:
+	s = splimp();
 	IF_DEQUEUE(&ifp->if_snd, m0);
+	splx(s);
 
 	if (m0 == NULL) {
 		dprintf(" empty]");
@@ -422,7 +425,7 @@ rlnintr(arg)
 	return (1);
 }
 
-/* Process earlier card interrupt at splnetintr. */
+/* Process earlier card interrupt at splsoftnet. */
 void
 rlnsoftintr(arg)
 	void * arg;
@@ -432,7 +435,9 @@ rlnsoftintr(arg)
 	int len;
 	u_int8_t w;
 	struct rln_mm_cmd hdr;
+	int s;
 
+	s = splsoftnet();
 	dprintf(" si(");
 
     again:
@@ -480,6 +485,7 @@ rlnsoftintr(arg)
 	rln_enable(sc, 1);
 
 	dprintf(")");
+	splx(s);
 }
 
 /* Read and process a message from the card. */
@@ -799,7 +805,7 @@ rlnget(sc, hdr, totlen)
 #ifdef RLNDUMP
 	printf("\n");
 #endif
-	return m;
+	return top;
 
 drop:
 #ifdef RLNDUMP
