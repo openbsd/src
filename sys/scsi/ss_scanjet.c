@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.20 1997/08/02 21:35:33 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.21 1998/09/16 15:53:24 kstailey Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -108,6 +108,11 @@ scanjet_attach(ss, sa)
 	if (!bcmp(sa->sa_inqbuf->product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIc");
+	}
+	/* The IIp is a grayscale-only HP SCL scanner */
+	if (!bcmp(sa->sa_inqbuf->product, "C1790A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet IIp");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
