@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.221 2000/02/28 14:25:44 aaron Exp $
+	$OpenBSD: pcidevs,v 1.222 2000/03/04 18:46:42 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -671,8 +671,14 @@ product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
 product AMD PCHOME_PCI		0x2001	79c978 PChome-PCI LANCE
 product AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ether+SCSI
-product AMD AMD_751AGP		0x7006	751 PCI-AGP
-product AMD AMD_751PCI		0x7007	751 PCI-PCI
+/* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
+product AMD SC751_SC		0x7006  751 System Controller
+product AMD SC751_PPB		0x7007  751 PCI-PCI
+/* http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf */
+product AMD PBC756_ISA		0x7408  756 PCI-to-ISA Bridge
+product AMD PBC756_IDE		0x7409  756 IDE
+product AMD PBC756_PMC		0x740B  756 Power Management
+product AMD PBC756_USB		0x740C  756 USB Host
 
 /* Apple products */
 product APPLE BANDIT		0x0001	PCI
