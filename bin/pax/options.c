@@ -1129,7 +1129,7 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar -{txru}[cevfbmopwBHLPX014578] [tapefile] ",
+	(void)fputs("usage: tar -{txru}[cevfbmopwzBHLPXZ014578] [tapefile] ",
 		 stderr);
 	(void)fputs("[blocksize] file1 file2...\n", stderr);
 	exit(1);
