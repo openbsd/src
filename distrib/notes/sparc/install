@@ -116,9 +116,9 @@ installation scripts'' below.
 
 Booting From CD-ROM installation media:
 
-    > b sd(,30,0){:--:}OSrev/sparc/bsd.rd	# for Sun4 monitors*
-    ok boot sd(,6,0){:--:}OSrev/sparc/bsd.rd	# for version 1 OpenBOOT ROMs
-    ok boot cdrom {:--:}OSrev/sparc/bsd.rd	# for version 2 OpenBOOT ROMs
+	> b sd(,30,0)OSREV/sparc/bsd.rd		# for Sun4 monitors* (not working currently)
+	ok boot sd(,6,0)OSREV/sparc/bsd.rd	# for version 1 OpenBOOT ROMs
+	ok boot cdrom OSREV/sparc/bsd.rd		# for version 2 OpenBOOT ROMs
 
 If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
@@ -179,9 +179,9 @@ Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
 this command takes one of the following forms:
 
-	> b le()bsd		# for sun4 monitors
-	ok boot le()bsd		# for version 1 OpenBOOT ROMs
-	ok boot net bsd		# for version 2 OpenBOOT ROMs
+	> b le()bsd.rd		# for sun4 monitors
+	ok boot le()bsd.rd	# for version 1 OpenBOOT ROMs
+	ok boot net bsd.rd	# for version 2 OpenBOOT ROMs
 
 This will cause the kernel provided by the diskless setup to be booted.
 After the initial probe messages you'll asked to start the install
