@@ -36,7 +36,7 @@
 Host and process identifiers
 .PP
 Each UNIX host has associated with it a 32-bit host id, and a host
-name of up to 64 characters (as defined by MAXHOSTNAMELEN in
+name of up to 256 characters (as defined by MAXHOSTNAMELEN in
 \fI<sys/param.h>\fP).
 These are set (by a privileged user)
 and returned by the calls:
