@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.6 1999/07/20 04:49:54 deraadt Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.7 2000/04/26 21:25:52 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.6 1999/07/20 04:49:54 deraadt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.7 2000/04/26 21:25:52 jakob Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -30,6 +30,7 @@
 #define Q_PORT		3
 #define Q_GATEWAY	4
 #define Q_PROTO		5
+#define Q_PROTOCHAIN	6
 
 /* Protocol qualifiers. */
 
@@ -51,6 +52,14 @@
 #define	Q_MOPRC		14
 #define	Q_MOPDL		15
 
+
+#define Q_IPV6		16
+#define Q_ICMPV6	17
+#define Q_AH		18
+#define Q_ESP		19
+
+#define Q_PIM		20
+
 /* Directional qualifiers. */
 
 #define Q_SRC		1
@@ -61,8 +70,12 @@
 #define Q_DEFAULT	0
 #define Q_UNDEF		255
 
+struct slist;
+
 struct stmt {
 	int code;
+	struct slist *jt;	/*only for relative jump in block*/
+	struct slist *jf;	/*only for relative jump in block*/
 	bpf_int32 k;
 };
 
@@ -148,7 +161,11 @@ void gen_not(struct block *);
 
 struct block *gen_scode(const char *, struct qual);
 struct block *gen_ecode(const u_char *, struct qual);
+struct block *gen_acode(const u_char *, struct qual);
 struct block *gen_mcode(const char *, const char *, int, struct qual);
+#ifdef INET6
+struct block *gen_mcode6(const char *, const char *, int, struct qual);
+#endif
 struct block *gen_ncode(const char *, bpf_u_int32, struct qual);
 struct block *gen_proto_abbrev(int);
 struct block *gen_relation(int, struct arth *, struct arth *, int);
@@ -176,3 +193,5 @@ void sappend(struct slist *, struct slist *);
 /* XXX */
 #define JT(b)  ((b)->et.succ)
 #define JF(b)  ((b)->ef.succ)
+
+extern int no_optimize;

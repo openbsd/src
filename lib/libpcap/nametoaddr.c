@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.7 1999/07/20 04:49:55 deraadt Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.8 2000/04/26 21:25:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/nametoaddr.c,v 1.7 1999/07/20 04:49:55 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/nametoaddr.c,v 1.8 2000/04/26 21:25:53 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -43,6 +43,10 @@ struct rtentry;
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
+#ifdef INET6
+#include <netdb.h>
+#include <sys/socket.h>
+#endif /*INET6*/
 
 #include <ctype.h>
 #include <errno.h>
@@ -94,6 +98,24 @@ pcap_nametoaddr(const char *name)
 	else
 		return 0;
 }
+
+#ifdef INET6
+struct addrinfo *
+pcap_nametoaddrinfo(const char *name)
+{
+	struct addrinfo hints, *res;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;	/*not really*/
+	error = getaddrinfo(name, NULL, &hints, &res);
+	if (error)
+		return NULL;
+	else
+		return res;
+}
+#endif /*INET6*/
 
 /*
  *  Convert net name to internet address.
@@ -186,6 +208,9 @@ struct eproto eproto_db[] = {
 	{ "pup", ETHERTYPE_PUP },
 	{ "xns", ETHERTYPE_NS },
 	{ "ip", ETHERTYPE_IP },
+#ifdef INET6
+	{ "ip6", ETHERTYPE_IPV6 },
+#endif
 	{ "arp", ETHERTYPE_ARP },
 	{ "rarp", ETHERTYPE_REVARP },
 	{ "sprite", ETHERTYPE_SPRITE },
@@ -331,7 +356,7 @@ pcap_ether_hostton(const char *name)
 }
 #else
 
-#ifndef sgi
+#if !defined(sgi) && !defined(__NetBSD__)
 extern int ether_hostton(char *, struct ether_addr *);
 #endif
 
@@ -369,8 +394,16 @@ __pcap_nametodnaddr(const char *name)
 #else
 	bpf_error("decnet name support not included, '%s' cannot be translated\n",
 		name);
+	/* NOTREACHED */
 #ifdef lint
-	return 0;
+	/*
+	 * Arguably, lint should assume that functions which don't return
+	 * (i.e. that contain no return statements and whose ends are
+	 * unreachable) actually return a value, so callers won't get
+	 * warnings for using that value (since they won't actually
+	 * be doing so).  However, most lints don't seem to do that...
+	 */
+	return (0);
 #endif
 #endif
 }

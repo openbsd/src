@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-namedb.h,v 1.5 1999/07/20 04:49:55 deraadt Exp $	*/
+/*	$OpenBSD: pcap-namedb.h,v 1.6 2000/04/26 21:25:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap-namedb.h,v 1.5 1999/07/20 04:49:55 deraadt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap-namedb.h,v 1.6 2000/04/26 21:25:53 jakob Exp $ (LBL)
  */
 
 #ifndef lib_pcap_ethers_h
@@ -57,6 +57,9 @@ u_char *pcap_ether_hostton(const char*);
 u_char *pcap_ether_aton(const char *);
 
 bpf_u_int32 **pcap_nametoaddr(const char *);
+#ifdef INET6
+struct addrinfo *pcap_nametoaddrinfo(const char *);
+#endif
 bpf_u_int32 pcap_nametonetaddr(const char *);
 
 int	pcap_nametoport(const char *, int *, int *);

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.8 1999/07/20 04:49:56 deraadt Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.9 2000/04/26 21:25:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.8 1999/07/20 04:49:56 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.9 2000/04/26 21:25:53 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -37,6 +37,11 @@ static const char rcsid[] =
 
 #include "gencode.h"
 #include <pcap-namedb.h>
+
+#ifdef INET6
+#include <netdb.h> 
+#include <sys/socket.h>
+#endif /*INET6*/
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
@@ -77,8 +82,91 @@ static char *in_buffer;
 
 N		([0-9]+|(0X|0x)[0-9A-Fa-f]+)
 B		([0-9A-Fa-f][0-9A-Fa-f]?)
+W		([0-9A-Fa-f][0-9A-Fa-f]?[0-9A-Fa-f]?[0-9A-Fa-f]?)
 
-%a 3000
+%a 15000
+%o 17000
+%e 6000
+%k 4000
+%p 19000
+
+V680		{W}:{W}:{W}:{W}:{W}:{W}:{W}:{W}
+
+V670		::{W}:{W}:{W}:{W}:{W}:{W}:{W}
+V671		{W}::{W}:{W}:{W}:{W}:{W}:{W}
+V672		{W}:{W}::{W}:{W}:{W}:{W}:{W}
+V673		{W}:{W}:{W}::{W}:{W}:{W}:{W}
+V674		{W}:{W}:{W}:{W}::{W}:{W}:{W}
+V675		{W}:{W}:{W}:{W}:{W}::{W}:{W}
+V676		{W}:{W}:{W}:{W}:{W}:{W}::{W}
+V677		{W}:{W}:{W}:{W}:{W}:{W}:{W}::
+
+V660		::{W}:{W}:{W}:{W}:{W}:{W}
+V661		{W}::{W}:{W}:{W}:{W}:{W}
+V662		{W}:{W}::{W}:{W}:{W}:{W}
+V663		{W}:{W}:{W}::{W}:{W}:{W}
+V664		{W}:{W}:{W}:{W}::{W}:{W}
+V665		{W}:{W}:{W}:{W}:{W}::{W}
+V666		{W}:{W}:{W}:{W}:{W}:{W}::
+
+V650		::{W}:{W}:{W}:{W}:{W}
+V651		{W}::{W}:{W}:{W}:{W}
+V652		{W}:{W}::{W}:{W}:{W}
+V653		{W}:{W}:{W}::{W}:{W}
+V654		{W}:{W}:{W}:{W}::{W}
+V655		{W}:{W}:{W}:{W}:{W}::
+
+V640		::{W}:{W}:{W}:{W}
+V641		{W}::{W}:{W}:{W}
+V642		{W}:{W}::{W}:{W}
+V643		{W}:{W}:{W}::{W}
+V644		{W}:{W}:{W}:{W}::
+
+V630		::{W}:{W}:{W}
+V631		{W}::{W}:{W}
+V632		{W}:{W}::{W}
+V633		{W}:{W}:{W}::
+
+V620		::{W}:{W}
+V621		{W}::{W}
+V622		{W}:{W}::
+
+V610		::{W}
+V611		{W}::
+
+V600		::
+
+V6604		{W}:{W}:{W}:{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+
+V6504		::{W}:{W}:{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6514		{W}::{W}:{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6524		{W}:{W}::{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6534		{W}:{W}:{W}::{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6544		{W}:{W}:{W}:{W}::{W}:{N}\.{N}\.{N}\.{N}
+V6554		{W}:{W}:{W}:{W}:{W}::{N}\.{N}\.{N}\.{N}
+
+V6404		::{W}:{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6414		{W}::{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6424		{W}:{W}::{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6434		{W}:{W}:{W}::{W}:{N}\.{N}\.{N}\.{N}
+V6444		{W}:{W}:{W}:{W}::{N}\.{N}\.{N}\.{N}
+
+V6304		::{W}:{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6314		{W}::{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6324		{W}:{W}::{W}:{N}\.{N}\.{N}\.{N}
+V6334		{W}:{W}:{W}::{N}\.{N}\.{N}\.{N}
+
+V6204		::{W}:{W}:{N}\.{N}\.{N}\.{N}
+V6214		{W}::{W}:{N}\.{N}\.{N}\.{N}
+V6224		{W}:{W}::{N}\.{N}\.{N}\.{N}
+
+V6104		::{W}:{N}\.{N}\.{N}\.{N}
+V6114		{W}::{N}\.{N}\.{N}\.{N}
+
+V6004		::{N}\.{N}\.{N}\.{N}
+
+
+V6		({V680}|{V670}|{V671}|{V672}|{V673}|{V674}|{V675}|{V676}|{V677}|{V660}|{V661}|{V662}|{V663}|{V664}|{V665}|{V666}|{V650}|{V651}|{V652}|{V653}|{V654}|{V655}|{V640}|{V641}|{V642}|{V643}|{V644}|{V630}|{V631}|{V632}|{V633}|{V620}|{V621}|{V622}|{V610}|{V611}|{V600}|{V6604}|{V6504}|{V6514}|{V6524}|{V6534}|{V6544}|{V6554}|{V6404}|{V6414}|{V6424}|{V6434}|{V6444}|{V6304}|{V6314}|{V6324}|{V6334}|{V6204}|{V6214}|{V6224}|{V6104}|{V6114}|{V6004})
 
 %%
 dst		return DST;
@@ -94,6 +182,12 @@ udp		return UDP;
 icmp		return ICMP;
 igmp		return IGMP;
 igrp		return IGRP;
+pim		return PIM;
+
+ip6		return IPV6;
+icmp6		return ICMPV6;
+ah		return AH;
+esp		return ESP;
 
 atalk		return ATALK;
 decnet		return DECNET;
@@ -107,6 +201,13 @@ net		return NET;
 mask		return MASK;
 port		return PORT;
 proto		return PROTO;
+protochain	{
+#ifdef NO_PROTOCHAIN
+		  bpf_error("%s not supported", yytext);
+#else
+		  return PROTOCHAIN;
+#endif
+		}
 
 gateway		return GATEWAY;
 
@@ -132,11 +233,28 @@ outbound	return OUTBOUND;
 "=="			return '=';
 "<<"			return LSH;
 ">>"			return RSH;
+:{B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
+			  return AID; }
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
 			yylval.s = sdup((char *)yytext); return HID; }
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
+{V6}			{
+#ifdef INET6
+			  struct addrinfo hints, *res;
+			  memset(&hints, 0, sizeof(hints));
+			  hints.ai_family = AF_INET6;
+			  hints.ai_flags = AI_NUMERICHOST;
+			  if (getaddrinfo(yytext, NULL, &hints, &res))
+				bpf_error("bogus IPv6 address %s", yytext);
+			  else {
+				yylval.e = sdup((char *)yytext); return HID6;
+			  }
+#else
+			  bpf_error("IPv6 address %s not supported", yytext);
+#endif /*INET6*/
+			}
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
 [A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
 			 yylval.s = sdup((char *)yytext); return ID; }

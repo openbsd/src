@@ -1,6 +1,12 @@
-$OpenBSD: CHANGES,v 1.5 1999/07/20 04:49:54 deraadt Exp $
+$OpenBSD: CHANGES,v 1.6 2000/04/26 21:25:52 jakob Exp $
 $NetBSD: CHANGES,v 1.2 1995/03/06 11:37:58 mycroft Exp $
-@(#) $Header: /home/cvs/src/lib/libpcap/CHANGES,v 1.5 1999/07/20 04:49:54 deraadt Exp $ (LBL)
+@(#) $Header: /home/cvs/src/lib/libpcap/CHANGES,v 1.6 2000/04/26 21:25:52 jakob Exp $ (LBL)
+
+Sun Oct 19 JST 1999  itojun@iijlab.net
+	* bring in KAME IPv6/IPsec bpf compiler.
+
+Sometime in 1999
+	* tcpdump.org imported LBL 0.4
 
 v0.4 Sat Jul 25 12:40:09 PDT 1998
 

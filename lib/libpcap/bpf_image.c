@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_image.c,v 1.7 1999/07/20 04:49:54 deraadt Exp $	*/
+/*	$OpenBSD: bpf_image.c,v 1.8 2000/04/26 21:25:52 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/bpf_image.c,v 1.7 1999/07/20 04:49:54 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/bpf_image.c,v 1.8 2000/04/26 21:25:52 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -245,12 +245,12 @@ bpf_image(p, n)
 
 	case BPF_ALU|BPF_AND|BPF_K:
 		op = "and";
-		fmt = "#%d";
+		fmt = "#0x%x";
 		break;
 
 	case BPF_ALU|BPF_OR|BPF_K:
 		op = "or";
-		fmt = "#%d";
+		fmt = "#0x%x";
 		break;
 
 	case BPF_ALU|BPF_LSH|BPF_K:

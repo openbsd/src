@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.7 1999/07/20 04:49:55 deraadt Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.8 2000/04/26 21:25:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.7 1999/07/20 04:49:55 deraadt Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.8 2000/04/26 21:25:53 jakob Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -117,6 +117,8 @@ char	*pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
 int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
 	    bpf_u_int32);
+int	pcap_compile_nopcap(int, int, struct bpf_program *,
+	    char *, int, bpf_u_int32);
 /* XXX */
 int	pcap_freecode(pcap_t *, struct bpf_program *);
 int	pcap_datalink(pcap_t *);
