@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.44 1999/10/29 02:02:33 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.45 1999/10/29 02:10:02 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -352,8 +352,7 @@ struct xformsw
     int		(*xf_init)(struct tdb *, struct xformsw *, struct ipsecinit *);
     int		(*xf_zeroize)(struct tdb *); /* termination */
     struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *); /* input */
-    int		(*xf_output)(struct mbuf *, struct sockaddr_encap *,
-			     struct tdb *, struct mbuf **);        /* output */
+    int		(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **);        /* output */
 };
 
 /* xform IDs */
@@ -479,32 +478,28 @@ extern void etherip_input __P((struct mbuf *, ...));
 extern int ah_old_attach(void);
 extern int ah_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_old_zeroize(struct tdb *);
-extern int ah_old_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
-			 struct mbuf **);
+extern int ah_old_output(struct mbuf *, struct tdb *, struct mbuf **);
 extern struct mbuf *ah_old_input(struct mbuf *, struct tdb *);
 
 /* XF_NEW_AH */
 extern int ah_new_attach(void);
 extern int ah_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_new_zeroize(struct tdb *);
-extern int ah_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
-			 struct mbuf **);
+extern int ah_new_output(struct mbuf *, struct tdb *, struct mbuf **);
 extern struct mbuf *ah_new_input(struct mbuf *, struct tdb *);
 
 /* XF_OLD_ESP */
 extern int esp_old_attach(void);
 extern int esp_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_old_zeroize(struct tdb *);
-extern int esp_old_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
-			  struct mbuf **);
+extern int esp_old_output(struct mbuf *, struct tdb *, struct mbuf **);
 extern struct mbuf *esp_old_input(struct mbuf *, struct tdb *);
 
 /* XF_NEW_ESP */
 extern int esp_new_attach(void);
 extern int esp_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_new_zeroize(struct tdb *);
-extern int esp_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
-			  struct mbuf **);
+extern int esp_new_output(struct mbuf *, struct tdb *, struct mbuf **);
 extern struct mbuf *esp_new_input(struct mbuf *, struct tdb *);
 
 /* XF_TCPSIGNATURE */
@@ -513,8 +508,7 @@ extern int tcp_signature_tdb_init __P((struct tdb *, struct xformsw *,
 				       struct ipsecinit *));
 extern int tcp_signature_tdb_zeroize __P((struct tdb *));
 extern struct mbuf *tcp_signature_tdb_input __P((struct mbuf *, struct tdb *));
-extern int tcp_signature_tdb_output __P((struct mbuf *,
-					 struct sockaddr_encap *, struct tdb *,
+extern int tcp_signature_tdb_output __P((struct mbuf *, struct tdb *,
 					 struct mbuf **));
 
 /* Padding */

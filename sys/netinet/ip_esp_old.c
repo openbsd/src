@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.36 1999/10/06 22:27:57 jason Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.37 1999/10/29 02:10:02 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -428,8 +428,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 }
 
 int
-esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
-	      struct mbuf **mp)
+esp_old_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
 {
     struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
     struct ip *ip, ipo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.24 1999/06/30 17:23:59 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.25 1999/10/29 02:10:01 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -375,8 +375,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 }
 
 int
-ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
-  	      struct mbuf **mp)
+ah_old_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct ip *ip, ipo;

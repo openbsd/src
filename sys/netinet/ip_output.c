@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.50 1999/10/29 02:04:02 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.51 1999/10/29 02:10:02 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -472,8 +472,7 @@ ip_output(m0, va_alist)
 				ip->ip_sum = in_cksum(m, hlen);
 			}
 
-			error = (*(tdb->tdb_xform->xf_output))(m, gw,
-			    tdb, &mp);
+			error = (*(tdb->tdb_xform->xf_output))(m, tdb, &mp);
 			if (!error && mp == NULL)
 				error = EFAULT;
 			if (error) {
