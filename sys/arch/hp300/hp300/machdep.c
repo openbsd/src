@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 1998/02/09 06:26:19 dima Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 1998/03/06 17:33:32 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -1303,7 +1303,7 @@ cpu_exec_aout_makecmds(p, epp)
 	int error;
 	struct exec *execp = epp->ep_hdr;
 #ifdef COMPAT_SUNOS
-	extern sunos_exec_aout_makecmds
+	extern int sunos_exec_aout_makecmds
 		__P((struct proc *, struct exec_package *));
 #endif
 

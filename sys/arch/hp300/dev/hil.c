@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.10 1997/04/16 11:56:07 downsj Exp $	*/
+/*	$OpenBSD: hil.c,v 1.11 1998/03/06 17:33:30 millert Exp $	*/
 /*	$NetBSD: hil.c,v 1.34 1997/04/02 22:37:32 scottr Exp $	*/
 
 /*
@@ -882,12 +882,13 @@ hil_process_int(hilp, stat, c)
 	case HIL_DATA:
 		if (hilp->hl_actdev != 0)	/* Collecting poll data */
 			*hilp->hl_pollbp++ = c;
-		else if (hilp->hl_cmddev != 0)  /* Collecting cmd data */
+		else if (hilp->hl_cmddev != 0) { /* Collecting cmd data */
 			if (hilp->hl_cmdending) {
 				hilp->hl_cmddone = TRUE;
 				hilp->hl_cmdending = FALSE;
-			} else  
+			} else
 				*hilp->hl_cmdbp++ = c;
+		}
 		return;
 		
 	case 0:		/* force full jump table */
