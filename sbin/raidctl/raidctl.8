@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.19 2001/12/30 00:31:03 brad Exp $
+.\"	$OpenBSD: raidctl.8,v 1.20 2002/01/05 13:47:37 tdeval Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,8 +170,8 @@ and the failed drive has been reconstructed onto a spare drive.
 Configure the RAIDframe device
 .Ar dev
 according to the configuration given in
-.Ar config_file .
-A description of the contents of
+.Ar config_file . 
+A description of the contents of 
 .Ar config_file
 is given later.
 .It Fl C Ar config_file Ar dev
@@ -435,11 +435,11 @@ f:  1800000  200495     RAID              # (Cyl.  405*- 4041*)
 .Pp
 While
 .Dv FS_BSDFFS 
-will also work as the component type, the type
+(e.g. 4.2BSD) will also work as the component type, the type
 .Dv FS_RAID 
-is preferred for RAIDframe use, as it is required for features such as
-auto-configuration.  As part of the initial configuration of each RAID
-set, each component will be given a
+(e.g. RAID) is preferred for RAIDframe use, as it is required for
+features such as auto-configuration.  As part of the initial
+configuration of each RAID set, each component will be given a
 .Sq component label .
 A
 .Sq component label
@@ -635,7 +635,7 @@ for use.
 .Pp
 Under certain circumstances (e.g. the additional component has not
 arrived, or data is being migrated off of a disk destined to become a
-component) it may be desirable to to configure a RAID 1 set with only
+component) it may be desirable to configure a RAID 1 set with only
 a single component.  This can be achieved by configuring the set with
 a physically existing component (as either the first or second
 component) and with a
@@ -706,6 +706,41 @@ Components:
            /dev/sd3e: optimal
 Spares:
            /dev/sd4e: spare
+Parity status: clean
+Reconstruction is 100% complete.
+Parity Re-write is 100% complete.
+Copyback is 100% complete.
+.Ed
+.Pp
+This indicates that all is well with the RAID set.  Of importance here
+are the component lines which read
+.Sq optimal ,
+and the 
+.Sq Parity status
+line which indicates that the parity is up-to-date.  Note that if
+there are file systems open on the RAID set, the individual components
+will not be 
+.Sq clean
+but the set as a whole can still be clean.
+.Pp
+The
+.Fl v
+option may be also used in conjunction with
+.Fl s :
+.Bd -unfilled -offset indent
+raidctl -sv raid0
+.Ed
+.Pp
+In this case, the components' label information (see the
+.Fl g
+option) will be given as well:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: optimal
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e: spare
 Component label for /dev/sd1e:
    Row: 0 Column: 0 Num Rows: 1 Num Columns: 3
    Version: 2 Serial Number: 13432 Mod Counter: 65
@@ -735,17 +770,6 @@ Reconstruction is 100% complete.
 Parity Re-write is 100% complete.
 Copyback is 100% complete.
 .Ed
-.Pp
-This indicates that all is well with the RAID set.  Of importance here
-are the component lines which read
-.Sq optimal ,
-and the 
-.Sq Parity status
-line which indicates that the parity is up-to-date.  Note that if
-there are file systems open on the RAID set, the individual components
-will not be 
-.Sq clean
-but the set as a whole can still be clean.
 .Pp
 To check the component label of /dev/sd1e, the following is used:
 .Bd -unfilled -offset indent
@@ -1027,20 +1051,22 @@ To return raid0a to be just an auto-configuring set simply use the
 .Fl A Ar yes
 arguments.
 .Pp
-Note that kernels can only be directly read from RAID 1 components on
-alpha and pmax architectures.  On those architectures, the 
-.Dv FS_RAID
-file system is recognized by the bootblocks, and will properly load the
-kernel directly from a RAID 1 component.  For other architectures, or
-to support the root file system on other RAID sets, some other
-mechanism must be used to get a kernel booting.  For example, a small
-partition containing only the secondary boot-blocks and an alternate
-kernel (or two) could be used.  Once a kernel is booting however, and
-an auto-configuring RAID set is found that is eligible to be root,
-then that RAID set will be auto-configured and used as the root
-device.  If two or more RAID sets claim to be root devices, then the
-user will be prompted to select the root device.  At this time, RAID
-0, 1, 4, and 5 sets are all supported as root devices.
+.\" Note that kernels can only be directly read from RAID 1 components on
+.\" alpha and pmax architectures.  On those architectures, the 
+.\" .Dv FS_RAID
+.\" file system is recognized by the bootblocks, and will properly load the
+.\" kernel directly from a RAID 1 component. 
+.\" For other architectures, or
+Note that kernels can't be directly read from a RAID component. 
+To support the root file system on RAID sets, some mechanism must be
+used to get a kernel booting.  For example, a small partition containing
+only the secondary boot-blocks and an alternate kernel (or two) could be
+used.  Once a kernel is booting however, and an auto-configuring RAID
+set is found that is eligible to be root, then that RAID set will be
+auto-configured and used as the root device.  If two or more RAID sets
+claim to be root devices, then the user will be prompted to select the
+root device.  At this time, RAID 0, 1, 4, and 5 sets are all supported
+as root devices.
 .Pp
 A typical RAID 1 setup with root on RAID might be as follows:
 .Bl -enum
@@ -1312,7 +1338,9 @@ command first appeared as a program in CMU's RAIDframe v1.1 distribution.
 This version of
 .Nm
 is a complete re-write, and first appeared in
-.Nx 1.4 .
+.Nx 1.4
+from where it was ported to
+.Ox 2.5 .
 .Sh COPYRIGHT
 .Bd -unfilled
 The RAIDframe Copyright is as follows:
