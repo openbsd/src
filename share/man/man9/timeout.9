@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.7 2000/06/05 07:24:08 art Exp $
+.\"	$OpenBSD: timeout.9,v 1.8 2000/06/05 13:23:00 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -140,7 +140,8 @@ These functions are implemented in the file
 .Pa sys/kern/kern_timeout.c .
 .Sh SEE ALSO
 .Xr hz 9 ,
-.Xr sleep 9
+.Xr sleep 9 ,
+.Xr spl 9
 .Sh BUGS
 The
 .Fn timeout_add
