@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.9 1997/10/26 23:19:54 mickey Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.10 1997/10/28 23:32:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -58,6 +58,7 @@ diskprobe()
 	register u_int i;
 	register bios_diskinfo_t *pdi;
 	u_int type;
+	u_int scsi = 0, ide = 0, bsdunit;
 
 	printf("Probing disks:");
 	pdi = bios_diskinfo;
@@ -95,30 +96,34 @@ diskprobe()
 		/* Try to find the label, to figure out device type */
 		if((bios_getdisklabel(i | 0x80, &label)) ) {
 			printf("*");
+			bsdunit = ide++;
 			type = 0;	/* XXX let it be IDE */
 		} else {
 			/* Best guess */
 			switch (label.d_type) {
 			case DTYPE_SCSI:
 				type = 4;
+				bsdunit = scsi++;
 				pdi->flags |= BDI_GOODLABEL;
 				break;
 
 			case DTYPE_ESDI:
 			case DTYPE_ST506:
 				type = 0;
+				bsdunit = ide++;
 				pdi->flags |= BDI_GOODLABEL;
 				break;
 
 			default:
 				pdi->flags |= BDI_BADLABEL;
 				type = 0;	/* XXX Suggest IDE */
+				bsdunit = ide++;
 			}
 		}
 
 		pdi->checksum = 0; /* just in case */
 		/* Fill out best we can */
-		pdi->bsd_dev = MAKEBOOTDEV(type, 0, 0, i, RAW_PART);
+		pdi->bsd_dev = MAKEBOOTDEV(type, 0, 0, bsdunit, RAW_PART);
 	}
 
 	/* End of list */
