@@ -2036,3 +2036,5 @@
 ./var/www/htdocs/manual/new_features_2_0.html
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
+./usr/share/man/cat8/powerpc/MAKEDEV.0
+./usr/share/man/cat8/powerpc/makedev.0

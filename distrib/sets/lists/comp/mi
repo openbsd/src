@@ -4063,3 +4063,4 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/sys/kgdb.h
