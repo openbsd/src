@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.7 1996/04/21 22:19:13 deraadt Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.8 1996/05/05 12:23:18 mickey Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -49,10 +49,9 @@
 #endif
 
 db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
+size_t		db_nsymtabs = 0;
 
 db_symtab_t	*db_last_symtab;
-
-static char *db_qualify __P((db_sym_t, char *));
 
 /*
  * Add symbol table, with given name, to list of symbol tables.
@@ -79,6 +78,7 @@ db_add_symbol_table(start, end, name, ref)
 	db_symtabs[slot].end = end;
 	db_symtabs[slot].name = name;
 	db_symtabs[slot].private = ref;
+	db_nsymtabs++;
 
 	return(slot);
 }
@@ -102,10 +102,23 @@ db_del_symbol_table(name)
 		return;
 	}
 
+	db_nsymtabs--;
 	db_symtabs[slot].start = 0;
 	db_symtabs[slot].end = 0;
 	db_symtabs[slot].name = 0;
 	db_symtabs[slot].private = 0;
+}
+
+db_symtab_t *
+db_istab(i)
+	size_t	i;
+{
+	register db_symtab_t	*stab;
+
+	for (stab = db_symtabs; i ; stab++)
+		if (stab->name != NULL)
+			i--;
+	return stab;
 }
 
 /*
@@ -114,7 +127,7 @@ db_del_symbol_table(name)
  *  Note: return value points to static data whose content is
  *  overwritten by each call... but in practice this seems okay.
  */
-static char *
+char *
 db_qualify(sym, symtabname)
 	db_sym_t	sym;
 	register char	*symtabname;

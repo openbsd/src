@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.6 1996/04/19 16:08:28 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.7 1996/05/05 12:23:06 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -137,6 +137,24 @@ X_db_sym_init(symtab, esymtab, name)
         }
 }
 
+size_t
+X_db_nsyms(stab)
+	db_symtab_t	*stab;
+{
+	return (struct nlist *)stab->end - (struct nlist *)stab->start;
+}
+
+db_sym_t
+X_db_isym(stab, i)
+	db_symtab_t	*stab;
+	size_t		i;
+{
+	if (i >= X_db_nsyms(stab))
+		return NULL;
+	else
+		return (db_sym_t)((struct nlist *)stab->start + i);
+}
+
 db_sym_t
 X_db_lookup(stab, symstr)
 	db_symtab_t	*stab;
@@ -220,7 +238,8 @@ X_db_symbol_values(sym, namep, valuep)
 {
 	register struct nlist *sp;
 
-	sp = (struct nlist *)sym;
+	if ((sp = (struct nlist *)sym) == NULL)
+	    return;
 	if (namep)
 	    *namep = sp->n_un.n_name;
 	if (valuep)

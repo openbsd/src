@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.4 1996/04/21 22:19:15 deraadt Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.5 1996/05/05 12:23:19 mickey Exp $	*/
 /*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
 
 /* 
@@ -41,6 +41,7 @@ typedef struct {
 } db_symtab_t;
 
 extern db_symtab_t	*db_last_symtab; /* where last symbol was found */
+extern size_t		db_nsymtabs;	/* number of symbol tables */
 
 /*
  * Symbol representation is specific to the symtab style:
@@ -75,6 +76,7 @@ int db_add_symbol_table __P((char *, char *, char *, char *));
 
 void db_del_symbol_table __P((char *));
 					/* remove a symbol table from list */
+db_symtab_t *db_istab __P((size_t));
 
 boolean_t db_eqname __P((char *, char *, int));
 					/* strcmp, modulo leading char */
@@ -83,6 +85,8 @@ int db_value_of_name __P((char *, db_expr_t *));
 					/* find symbol value given name */
 
 db_sym_t db_lookup __P((char *));
+
+char *db_qualify __P((db_sym_t, char *));
 
 boolean_t db_symbol_is_ambiguous __P((db_sym_t));
 
@@ -106,3 +110,6 @@ void db_printsym __P((db_expr_t, db_strategy_t));
 boolean_t db_line_at_pc __P((db_sym_t, char **, int *, db_expr_t));
 
 int db_sym_numargs __P((db_sym_t, int *, char **));
+
+/* db_hangman.c */
+void db_hangman __P((db_expr_t, int, db_expr_t, char *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.7 1996/04/21 22:18:57 deraadt Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.8 1996/05/05 12:23:09 mickey Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -380,6 +380,7 @@ struct db_command db_command_table[] = {
 	{ "callout",	db_show_callout,	0,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
 	{ "boot",	NULL,			0,		db_boot_cmds },
+	{ "hangman",	db_hangman,		0,		NULL },
 	{ NULL, 	NULL,			0,		NULL }
 };
 
