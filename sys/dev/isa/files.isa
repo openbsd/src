@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.62 1999/08/17 22:47:16 mickey Exp $
+#	$OpenBSD: files.isa,v 1.63 1999/11/28 12:15:08 downsj Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -44,6 +44,11 @@ file	dev/isa/boca.c			boca
 device	rtfps: commulti
 attach	rtfps at isa
 file	dev/isa/rtfps.c			rtfps
+
+# Hostess 4-port board
+device	hsq: commulti
+attach	hsq at isa
+file	dev/isa/hsq.c			hsq
 
 #
 # Serial and parallel drivers
