@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.24 1997/11/22 20:23:53 mickey Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.25 1997/12/10 23:02:01 rees Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -202,7 +202,7 @@ wdcprobe(parent, match, aux)
 	/* Wait for controller to become ready. */
 	if (wait_for_unbusy(wdc) < 0)
 		goto nomatch;
-    
+
 	/* Start drive diagnostics. */
 	bus_space_write_1(iot, ioh, wd_command, WDCC_DIAGNOSE);
 
@@ -310,7 +310,7 @@ wdcattach(parent, self, aux)
 			wdc->d_link[drive]->ctlr_link = &(wdc->ctlr_link);
 			wdc->d_link[drive]->sc_drive = drive;
 #if NISADMA > 0
-			if (wdc->sc_drq != DRQUNK) 
+			if (wdc->sc_drq != DRQUNK)
 				wdc->d_link[drive]->sc_mode = WDM_DMA;
 			else
 #endif	/* NISADMA */
@@ -397,7 +397,7 @@ wdc_ata_start(wdc, xfer)
 	struct buf *bp = xfer->c_bp;
 	int nblks;
 
-	if (wdc->sc_errors >= WDIORETRIES) {
+	if (xfer->c_errors >= WDIORETRIES) {
 		wderror(d_link, bp, "wdcstart hard error");
 		xfer->c_flags |= C_ERROR;
 		wdc_ata_done(wdc, xfer);
@@ -433,15 +433,14 @@ wdc_ata_start(wdc, xfer)
 
 	/* When starting a transfer... */
 	if (xfer->c_skip == 0) {
-		daddr_t blkno;
+		struct buf *bp = xfer->c_bp;
 
+		xfer->c_bcount = bp->b_bcount;
+		xfer->c_blkno = (bp->b_blkno + xfer->c_p_offset) / (d_link->sc_lp->d_secsize / DEV_BSIZE);
 		WDDEBUG_PRINT(("\n%s: wdc_ata_start %s %d@%d; map ",
 		    wdc->sc_dev.dv_xname,
 		    (xfer->c_flags & B_READ) ? "read" : "write",
 		    xfer->c_bcount, xfer->c_blkno));
-
-		blkno = xfer->c_blkno+xfer->c_p_offset;
-		xfer->c_blkno = blkno / (d_link->sc_lp->d_secsize / DEV_BSIZE);
 	} else {
 		WDDEBUG_PRINT((" %d)0x%x", xfer->c_skip,
 		    bus_space_read_1(iot, ioh, wd_altsts)));
@@ -522,7 +521,7 @@ wdc_ata_start(wdc, xfer)
 		else
 			xfer->c_nblks = nblks;
 		xfer->c_nbytes = xfer->c_nblks * d_link->sc_lp->d_secsize;
-    
+
 #ifdef B_FORMAT
 		if (bp->b_flags & B_FORMAT) {
 			sector = d_link->sc_lp->d_gap3;
@@ -562,7 +561,7 @@ wdc_ata_start(wdc, xfer)
 #endif
 			return;
 		}
-	
+
 		/* Initiate command! */
 		if (wdccommand(d_link, command, d_link->sc_drive,
 		    cylin, head, sector, nblks) != 0) {
@@ -651,7 +650,7 @@ wdc_ata_intr(wdc, xfer)
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
 #ifdef WDDEBUG
-		wderror(d_link, NULL, "wdc_ata_start");
+		wderror(d_link, NULL, "wdc_ata_intr");
 #endif
 		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
 			wdc->sc_flags |= WDCF_ERROR;
@@ -663,12 +662,11 @@ wdc_ata_intr(wdc, xfer)
 			goto bad;
 #endif
 
-		if (wdc->sc_errors == (WDIORETRIES + 1) / 2) {
-			wderror(d_link, NULL, "wedgie");
+		if (++xfer->c_errors == (WDIORETRIES + 1) / 2) {
 			wdcunwedge(wdc);
 			return 1;
 		}
-		if (++wdc->sc_errors < WDIORETRIES)
+		if (xfer->c_errors < WDIORETRIES)
 			goto restart;
 
 		wderror(d_link, xfer->c_bp, "hard error");
@@ -698,14 +696,14 @@ wdc_ata_intr(wdc, xfer)
 			bus_space_read_raw_multi_4(iot, ioh, wd_data,
 			    xfer->databuf + xfer->c_skip, xfer->c_nbytes);
 	}
-    
+
 	/* If we encountered any abnormalities, flag it as a soft error. */
-	if (wdc->sc_errors > 0 ||
+	if (xfer->c_errors > 0 ||
 	    (wdc->sc_status & WDCS_CORR) != 0) {
 		wderror(d_link, xfer->c_bp, "soft error (corrected)");
-		wdc->sc_errors = 0;
+		xfer->c_errors = 0;
 	}
-    
+
 	/* Adjust pointers for the next block, if any. */
 	xfer->c_blkno += xfer->c_nblks;
 	xfer->c_skip += xfer->c_nbytes;
@@ -744,7 +742,6 @@ wdc_ata_done(wdc, xfer)
 	s = splbio();
 	TAILQ_REMOVE(&wdc->sc_xfer, xfer, c_xferchain);
 	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR | WDCF_ACTIVE);
-	wdc->sc_errors = 0;
 	if (bp) {
 		if (xfer->c_flags & C_ERROR) {
 			bp->b_flags |= B_ERROR;
@@ -972,7 +969,6 @@ wdccontrol(d_link)
 
 	case READY:
 	ready:
-		wdc->sc_errors = 0;
 		d_link->sc_state = READY;
 		/*
 		 * The rest of the initialization can be done by normal means.
@@ -1045,7 +1041,7 @@ wdc_atapi_start(wdc, xfer)
 #ifdef ATAPI_DEBUG_WDC
 	printf("wdc_atapi_start, acp flags %lx\n",acp->flags);
 #endif
-	if (wdc->sc_errors >= WDIORETRIES) {
+	if (xfer->c_errors >= WDIORETRIES) {
 		acp->status |= ERROR;
 		acp->error = bus_space_read_1(iot, ioh, wd_error);
 		wdc_atapi_done(wdc, xfer);
@@ -1155,7 +1151,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 #endif
 		error = 0;
 		goto end;
-	} 
+	}
 	if ((status = wait_for_unbusy(wdc)) != 0) {
 #ifdef ATAPI_DEBUG
 	printf("wdc_atapi_get_params: wait_for_unbusy failed "
@@ -1214,7 +1210,7 @@ wdc_atapi_send_command_packet(ab_link, acp)
 	bus_space_handle_t ioh = wdc->sc_ioh;
 	struct wdc_xfer *xfer;
 	u_int8_t flags = acp->flags & 0xff;
-	
+
 	if (flags & A_POLLED) {   /* Must use the queue and wdc_atapi_start */
 		struct wdc_xfer xfer_s;
 		int i, phase;
@@ -1271,7 +1267,7 @@ wdc_atapi_send_command_packet(ab_link, acp)
 			printf("wdc_atapi_send_command_packet: "
 			    "got wrong phase (0x%x) wanted data I/O\n",
 			    phase);
-		
+
 		while (wdc_atapi_intr(wdc, xfer)) {
 			for (i = 2000; i > 0; --i) {
 				if ((bus_space_read_1(iot, ioh, wd_status) &
@@ -1289,7 +1285,7 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		delay(1000);
 
 		wdc->sc_flags &= ~(WDCF_IRQ_WAIT | WDCF_SINGLE | WDCF_ERROR);
-		wdc->sc_errors = 0;
+		xfer->c_errors = 0;
 		xfer->c_skip = 0;
 		return;
 	} else {	/* POLLED */
@@ -1341,7 +1337,7 @@ again:
 	st = bus_space_read_1(iot, ioh, wd_status);
 	err = bus_space_read_1(iot, ioh, wd_error);
 	ire = bus_space_read_1(iot, ioh, wd_ireason);
-	
+
 	phase = (ire & (WDCI_CMD | WDCI_IN)) | (st & WDCS_DRQ);
 #ifdef ATAPI_DEBUG_WDC
 	printf("wdc_atapi_intr: len %d st %d err %d ire %d :",
@@ -1357,7 +1353,7 @@ again:
 #ifdef ATAPI_DEBUG_WDC
 		{
 			int i;
-			char *c = (char *)acp->command;   
+			char *c = (char *)acp->command;
 
 			printf("wdc_atapi_intr: cmd ");
 			for (i = 0; i < acp->command_size; i++)
@@ -1399,7 +1395,7 @@ again:
 			xfer->c_bcount -= len;
 			return 1;
 		}
-	
+
 	case PHASE_DATAIN:
 		/* Read data */
 #ifdef ATAPI_DEBUG_WDC
@@ -1444,7 +1440,7 @@ again:
 #endif
 		break;
 
-	default: 
+	default:
 		if (++retries < 500) {
 			DELAY(100);
 			goto again;
@@ -1471,7 +1467,6 @@ wdc_atapi_done(wdc, xfer)
 	s = splbio();
 
 	/* remove this command from xfer queue */
-	wdc->sc_errors = 0;
 	xfer->c_skip = 0;
 	if ((xfer->c_flags & A_POLLED) == 0) {
 		untimeout(wdctimeout, wdc);
@@ -1630,7 +1625,6 @@ wdcunwedge(wdc)
 	}
 
 	wdc->sc_flags |= WDCF_ERROR;
-	++wdc->sc_errors;
 
 	/* Wake up in a little bit and restart the operation. */
 	WDDEBUG_PRINT(("wdcrestart from wdcunwedge\n"));
@@ -1688,7 +1682,7 @@ wdcwait(wdc, mask)
 		if (xfer == NULL)
 			printf("%s: warning: busy-wait took %dus\n",
 	    		wdc->sc_dev.dv_xname, WDCDELAY * timeout);
-		else 
+		else
 			printf("%s(%s): warning: busy-wait took %dus\n",
 				wdc->sc_dev.dv_xname,
 			    ((struct device*)xfer->d_link->wd_softc)->dv_xname,
@@ -1823,7 +1817,7 @@ wdc_exec_xfer(d_link, xfer)
 	    wdc->sc_flags));
 	wdcstart(wdc);
 	splx(s);
-}   
+}
 
 struct wdc_xfer *
 wdc_get_xfer(c_link,flags)
@@ -1881,7 +1875,7 @@ wdc_free_xfer(xfer)
 }
 
 void
-wdcerror(wdc, msg) 
+wdcerror(wdc, msg)
 	struct wdc_softc *wdc;
 	char *msg;
 {
@@ -1889,16 +1883,16 @@ wdcerror(wdc, msg)
 	if (xfer == NULL)
 		printf("%s: %s\n", wdc->sc_dev.dv_xname, msg);
 	else
-		printf("%s(%s): %s\n", wdc->sc_dev.dv_xname, 
+		printf("%s(%s): %s\n", wdc->sc_dev.dv_xname,
 		    ((struct device*)xfer->d_link->wd_softc)->dv_xname, msg);
 }
 
-/* 
+/*
  * the bit bucket
  */
 void
 wdcbit_bucket(wdc, size)
-	struct wdc_softc *wdc; 
+	struct wdc_softc *wdc;
 	int size;
 {
 	bus_space_tag_t iot = wdc->sc_iot;
@@ -1906,10 +1900,10 @@ wdcbit_bucket(wdc, size)
 	int i;
 
 	for (i = 0 ; i < size / 2 ; i++) {
-		u_int16_t null; 
+		u_int16_t null;
 
 		bus_space_read_multi_2(iot, ioh, wd_data, &null, 1);
-	} 
+	}
 
 	if (size % 2)
 		bus_space_read_1(iot, ioh, wd_data);
