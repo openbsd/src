@@ -850,13 +850,16 @@ die(signo)
 	int signo;
 {
 	struct filed *f;
+	int was_initialized = Initialized;
 	char buf[100];
 
+	Initialized = 0;		/* Don't log SIGCHLDs */
 	for (f = Files; f != NULL; f = f->f_next) {
 		/* flush any pending output */
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
 	}
+	Initialized = was_initialized;
 	if (signo) {
 		dprintf("syslogd: exiting on signal %d\n", signo);
 		(void)sprintf(buf, "exiting on signal %d", signo);
