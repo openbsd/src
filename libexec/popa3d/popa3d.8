@@ -1,0 +1,48 @@
+.\"	$OpenBSD: popa3d.8,v 1.1 2001/08/16 19:39:15 ericj Exp $
+.Dd August 15, 2001
+.Dt POPA3D 8
+.Os
+.Sh NAME
+.Nm popa3d
+.Nd "Post Office Protocol server"
+.Sh SYNOPSIS
+.Nm popa3d
+.Op Fl i
+.Sh DESCRIPTION
+.Nm
+is a POP3 server. It offers remote access to user mailboxes.
+Using the POP protocol, a remote mail user agent (MUA) can list,
+retrieve and delete email messages on the server.
+The server uses the 
+.Tn TCP
+protocol
+and listens at the port specified in the
+.Dq pop3
+service specification; see
+.Xr services 5 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl i
+Allow startup of
+.Nm
+via
+.Xr inetd 8 .
+.El
+.Sh FILES
+.Bl -tag -width /var/mail -compact
+.It Pa /var/mail
+User mail spools
+.El
+.Sh SEE ALSO
+.Xr inetd 8 ,
+.Xr sendmail 8
+.Sh HISTORY
+.Nm
+first appeared in
+.Ox 3.0 .
+.Sh CAVEATS
+POP authenticates using cleartext passwords.
+.Sh AUTHOR
+Solar Designer
+.Aq solar@openwall.com
