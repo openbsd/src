@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.8 1997/04/16 11:56:14 downsj Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.9 1997/07/02 12:21:46 downsj Exp $	*/
 /*	$NetBSD: scsi.c,v 1.19 1997/04/14 02:33:22 thorpej Exp $	*/
 
 /*
@@ -614,7 +614,7 @@ issue_select(hd, target, our_addr)
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << target) | our_addr;
 	/* select timeout is hardcoded to 2ms */
-	hd->scsi_tch = 0;
+	hd->scsi_tch = 15;
 	hd->scsi_tcm = 32;
 	hd->scsi_tcl = 4;
 
