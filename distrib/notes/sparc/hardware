@@ -1,25 +1,158 @@
+dnl	$OpenBSD: hardware,v 1.40 2002/06/30 13:47:07 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
-	- sun4  -- 4/100, 4/200, and 4/300.   (note that support
-		   for the 4/400 processor is incomplete)
-	- sun4c -- SS1, SS1+, SS2, IPC, ELC, IPX, and SLC
-	- sun4m -- Sun Sparc Classic, LX, 4, 5, 10, 20, and 600MP
-	- Tadpole SPARCbook 3GS, 3GX and 3XP
-	- Force CPU5V
-	- as well as faithful clones of the above Sun systems, such as:
-		+ Aries Research Inc, Parrot II
-		+ Axil 243, 245, 320 (and possibly other models)
-		+ Opus 5000, 5250
-		+ TWS,SuperCOMPstation-20S
-		+ Tatung micro COMPstation 5, COMPstation LX
-		+ RDI BrideLite and PowerLite
-		+ DTKstation/Classic+
-		+ Transtec SS5/170
+    * sun4: the VME series
+	- 4/100: Original sparc with VME. Many hardware bugs.
+	- 4/200: A fairly decent VME-only machine
+	- 4/300: a 25MHz VME machine with many devices built onto the main
+	  board. In other respects, it is quite similar to the SS1+.
+
+    * sun4c:
+    	- SS1: the original 20MHz sun4c. Hardware limitations prevent SBus
+	  DMA peripherals from working in some of the slots.
+	- SS1+: 25MHz version of the above. Hardware limitations prevent
+	  SBus DMA peripherals from working in some of the slots.
+	- IPC: SS1+ in a cube, with bwtwo graphics builtin
+	- SLC: SS1+ built into a B&W monitor
+	- SS2: 40MHz version of the SS1
+	- IPX: SS2 in a cube, with cgsix graphics builtin
+	- ELC: SS2-performance built into a B&W monitor
+
+    * sun4m:
+	- 600MP: The original Sun4m machine. This is a mbus machine with
+	  SBus and VME busses.
+	- LC: 50MHz MicroSPARC-1 based machines (aka Classic)
+	- LX: LC with a few more devices
+	- SS4: Reduced cost version of the SS5, available at 70MHz and
+	  110MHz
+	- SS5: MicroSPARC-2 based machines available in 60, 70, 85, and 110
+	  MHz versions
+	- SS5: TurboSPARC cpus in accelerated SS5 machines, running at
+	  170MHz
+	- SS10: Pizzabox mbus-based machine
+	- SS20: Improved pizzabox mbus-based machine
+	- Sun Voyager (untested)
+
+    * As vell as faithful clones of the above Sun systems, such as:
+	- Aries Research Inc, Parrot II (SS2 clone)
+	- Axil 243 and 245 (and possibly other models) (SS5 clones)
+	- Axil 320 (SS20 clone)
+	- Opus 5000 (SS1 clone)
+	- Opus 5250 (SS1 clone)
+	- SPARCbook 3GX, 3GS and 3XP by Tadpole (MicroSPARC-2)
+	- CPU5V: VME card by Force Computer (sun4m)
+	- TWS,SuperCOMPstation-20S (SS20 clone)
+	- Tatung micro COMPstation 5 (SS5 clone)
+	- Tatung micro COMPstation LX (LX clone)
+	- RDI,PowerLite: sun4m models, available in 50, 85 and 110 MHz
+	- RDI,BrideLite
+	- DTKstation/Classic+
+	- Transtec SS5/170
 
 For sun4m machines, the following Mbus CPU modules are supported:
-	- SM30, SM40, SM41, SM50, SM51, SM51-2, SM61, SM61-2, SM71,
-	  SM81, SM81-2
-	- SM100
-	- Ross RT620/RT625 at 90, 125, 150 or 166 MHz
+	- SM30: 30 or 36 MHz SuperSPARC with no secondary cache
+	- SM40: 40 MHz SuperSPARC with no secondary cache
+	- SM41: 40 MHz SuperSPARC with 1MB of secondary cache
+	- SM50: 50 MHz SuperSPARC with no secondary cache
+	- SM51: 50 MHz SuperSPARC with 1MB of secondary cache
+	- SM51-2: 50 MHz SuperSPARC with 2MB of secondary cache
+	- SM61: 60 MHz SuperSPARC with 1MB of secondary cache
+	- SM61-2: 60 MHz SuperSPARC with 2MB of secondary cache
+	- SM71: 75 MHz SuperSPARC with 1MB of secondary cache
+	- SM81: 85 MHz SuperSPARC with 1MB of secondary cache
+	- SM81-2: 85 MHz SuperSPARC with 2MB of secondary cache
+	- SM100: dual 40 MHz Cypress 7C601 with 64KB of primary cache
+	- Ross HyperSparc RT620/625 at 90 MHz, with 256KB of primary cache
+	- Ross HyperSparc RT620/625 at 125 MHz, with 256KB of primary cache
+	- Ross HyperSparc RT620/625 at 150 MHz, with 512KB of primary cache
+	- Ross HyperSparc RT620/625 at 166 MHz, with 512KB of primary cache
+
+The minimal configuration requires 4M of RAM and ~60M of disk space.
+To install the entire system requires much more disk space, and to run
+X or compile the system, more RAM is recommended.  (OpenBSD with 4M of
+RAM feels like Solaris with 4M of RAM.) Note that until you have
+around 16M of RAM, getting more RAM is more important than getting a
+faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
+
+Supported devices {:-include-:}:
+    * Sun keyboard and mouse
+    	- Type 2, 3, 4, and 5 keyboards with several layouts
+
+    * Floppy drives:
+	- sun4c and sun4m floppy disk drive
+
+    * Serial ports:
+	- ttya and ttyb on-board serial ports (can be used as console if
+	  needed)
+	- 4/300 ttyc and ttyd on-board serial ports
+	- SBus magma serial port cards, including: 4Sp, 8Sp, 12Sp, 16Sp,
+	  LC2+1Sp, 2+1Sp, 4+1Sp, 8+2Sp, and 2+1HS Sp.
+	- SBus Serial Parallel Interface (SUNW,spif, 501-1931)
+
+    * Audio support:
+	- on-board audio support for systems with AMD79C30 8-bit audio chips
+	  (this includes sun4c models, SPARCclassic, and 600MP)
+	- SUNW,CS4231 16-bit audio chips found on SPARCstation 4/5
+
+    * Framebuffers:
+	- SBus and sun4c/sun4m on-board video:
+	  + bwtwo - black and white
+	  + cgthree - 8-bit color, unaccelerated
+	    The cgthree driver also supports the cgRDI, an onboard
+	    cgthree-like framebuffer found in some laptops.
+	  + cgsix - 8-bit color, accelerated (GX, GX+, TGX, TGX+)
+	    This driver should also work with faithful emulations or clones
+	    of the SBus cgsix.
+	  + cgfourteen - 8-bt color (24-bit MBus accelerated card, but the
+	    driver only properly emulates a cgthree)
+	  + p9100 ("pnozz") framebuffer found in Tapdole SPARCbook 3GS and
+	    3GX (8-bit unaccelerated)
+	  + TCX - 8-bit color (24-bit, but driver emulates a cgthree)
+	- 4/200 on-board bwtwo
+	- P4 video (4/100 and 4/300):
+	  + bwtwo - black and white
+	  + cgthree - 8-bit color, unaccelerated
+	  + cgfour - 8-bit color, 1-bit overlay, unaccelerated
+	  + cgsix - 8-bit color, accelerated
+	  + cgeight - 24-bit color, 1-bit overlay, unaccelerated
+	- VME video (sun4):
+	  + cgtwo - 8-bit color, unaccelerated
+	  + cgthree - 8-bit color, unaccelerated
+	  + cgsix - 8-bit color, accelerated
+
+    * Ethernet adapters:
+	- on-board AMD Lance Ethernet (le)
+	- SBus AMD Lance Ethernet cards (le)
+	- SBus cards containing both AMD Lance le and esp SCSI (le)
+	- on-board Intel 82586 Ethernet on 4/100 and 4/200 (ie)
+	- VME Intel 82586 Ethernet cards (ie)
+	- SBus 10/100Mbit qec+be found on Sun FastEthernet cards
+	  (SUNW,501-2655) (be)
+	- SBus Quad 10/100Mbit qec+qe found on Sun Quad Ethernet cards
+	  (SUNW,501-2062) (qe)
+	- SBus 10/100MBit hme Ethernet cards (hme) [*]
+	- SBus 10/100MBit SunSwift SUNW,fas Ethernet+SCSI cards (hme) [*]
+	- SBus Quad 10/100MBit hme and qfe Ethernet cards (hme) [*]
+	[*] Not supported in sun4c-class machines due to PROM limitations.
+
+    * SCSI controllers:
+	- on-board SCSI controller (sun4c, sun4m, and 4/300) (esp)
+	- SBus SCSI controllers (including 3rd party compatible boards) (esp)
+	- SBus cards containing both AMD Lance le and esp SCSI (esp)
+	- VME "SUN-3"/"si" SCSI controller (interrupt driven DMA) (si)
+	- 4/110 "SCSI weird" on-board controller (polled DMA) (sw)
+	- QSP/ISP SCSI controllers (i.e. "PTI,ptisp", "ptisp", "SUNW,isp"
+	  and "QLGC,isp") (isp)
+
+    * SMD and other disk controllers:
+	- Xylogics 7053 VME SMD disk controller (xd)
+	- Xylogics 450/451 VME SMD disk controller (xy)
+
+    * Miscellaneous:
+	- SBus Expansion Subsystem (SUNW,xbox) (xbox)
+	- Force FGA5000 VME/SBus bridge (fga)
+	- Force system configuration registers (scf)
+	- Force flash memory (flash)
+	- Tadpole microcontroller (power/system control) (tctrl)
 
 OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 	- Sun 4/400
@@ -32,82 +165,38 @@ OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 	- clones that are significantly different from the Sun systems
 		(e.g. K-Bus based Solbourne)
 
-The minimal configuration requires 4M of RAM and ~60M of disk space.
-To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (OpenBSD with 4M of
-RAM feels like Solaris with 4M of RAM.) Note that until you have
-around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
-
-Supported devices {:-include-:}:
-	sun4c and sun4m SBus video:
-		cgsix (GX, GX+, TGX, TGX+), cgthree, and bwtwo frame buffers
-
-        sun4m on-board machine specific video:
-                TCX, cgfourteen (aka SX), p9100 (Tadpole 3GS, 3GX)
-
-	sun4 video (not thoroughly tested...):
-		P4  -- on-board bwtwo, cgfour, cgsix, cgeight
-                VME -- cgtwo, cgthree, cgsix
-
-	serial ports:
-		ttya and ttyb (can be used as console if needed),
-                ttyc and ttyd (Sun 4/300 only)
-		SBus magma serial port cards, including:
-			4Sp, 8Sp, 12Sp, 16Sp, LC2+1Sp, 2+1Sp,
-			4+1Sp, 8+2Sp, and 2+1HS Sp.
-		SBus Serial Parallel Interface (SUNW,spif)
-
-	ethernet:
-		on-board AMD Lance ethernet ("le0"),
-		SBus AMD Lance ethernet cards,
-		on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's),
-		VME Intel 82586 ethernet cards
-		SBus SunSwift and Quad FastEthernet cards (hme, qfe)
-		SBus FastEthernet cards (qec+be)
-		SBus QuadEthernet cards (qec+qe)
-
-	SCSI:
-		on-board "esp" SCSI controller (sun4c's, and the 4/300),
-		SBus "esp" SCSI controller (including 3rd party compatibles),
-		Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
-		Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
-
-	VME disks:
-		Xylogics 7053 VME/SMD disk controller ("xd"),
-		Xylogics 450/451 VME disk controller ("xy")
-		[note: VME/IPI disks are not supported]
-
-	Audio:
-		sun4c/Classic AMD audio.
-		sun4m (ss4/ss5) CS4231 audio.
-
-	Miscellaneous devices:
-		Sun floppy disk drive on sun4c machines.
-		Sun keyboard and mouse.
-		Sun SBus Expansion Subsystem (SUNW,xbox)
-		Tadpole microcontroller (tctrl)
-		Force FGA5000 SBus/VME bridge
-		Force system configuration registers
-		Force flash memory
-
 Hardware the we do NOT currently support, but get many questions about:
-	Multiprocessor machines (Will not boot correctly on multiple CPU sun4m)
-	Audio driver for some sun4m machines (LX,ZX,ss10,ss20)
-	Floppy driver for sun4m (can boot/install from ramdisk floppies though)
-	Interrupt driven SCSI driver for Sun 4/100's and 4/200's
-        VME mti 16-port serial card
-        VME alm2 16-port serial card
-        VME mcp 4-port serial card
-        VME IPI controller
-        VME cgfive framebuffer
-        VME cgnine framebuffer
-        VME GP/GP2 Graphics Processor
-        SBus cgeight framebuffers
-        SBus GS framebuffer (aka cgtwelve)
-        SBus GT framebuffer ("Graphics Tower")
-        SBus ZX framebuffer (aka Leo)
-	Tadpole onboard PCMCIA and modem
+    * Serial Cards:
+        - VME mti 16-port serial card
+        - VME alm2 16-port serial card
+        - VME mcp 4-port serial card (or is it 8-port)
+    * Disk Controllers:
+        - VME "sc" SCSI controller
+        - VME IPI controller
+    * Framebuffers:
+        - VME cgfive, 8-bit color, 1-bit overlay, double-buffered,
+	  unaccelerated without GP/GP2
+        - VME cgnine, 24-bit color, 1-bit overlay, double-buffered,
+	  unaccelerated without GP/GP2
+        - VME GP/GP2 Graphics Processor (drives a cgfive or cgnine)
+        - SBus cgeight, 24-bit color, unaccelerated
+        - SBus GS, 24-bit color, 8-bit color, overlay planes,
+	  double-buffered, 3-D acceleration (aka cgtwelve)
+        - SBus GT, 24-bit color, 8-bit color, overlay planes,
+	  double-buffered, 3-D acceleration (aka "Graphics Tower")
+        - SBus ZX, 24-bit color, 8-bit color, overlay planes,
+	  double-buffered, 3-D acceleration (aka Leo)
+    * On-board Audio and ISDN
+	This is present on some sun4m systems (LX, LC, SPARCstation 10/20)
+    * Multiple Processors/Modules in sun4m systems
+	OpenBSD will not currently boot on some machines with multiple
+	processors. You must remove the extra CPUs.
+    * SBus SUNW,bpp (parallel port)
+    * SBus FAS SCSI controllers
+	The FAS-only card is not supported. The HME+FAS card only supports
+	the HME part of the card.
+    * SBus FDDI cards
+    * Tadpole PCMCIA bridge
 
 The supplied GENERIC kernel is the best attempt at a configuration that
 works on the widest range of machinery (sun4, sun4c, and sun4m).
