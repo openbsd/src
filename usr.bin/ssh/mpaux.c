@@ -15,7 +15,7 @@
 */
 
 #include "includes.h"
-RCSID("$Id: mpaux.c,v 1.9 1999/12/08 22:37:42 markus Exp $");
+RCSID("$Id: mpaux.c,v 1.10 2000/03/28 20:27:09 markus Exp $");
 
 #include <ssl/bn.h>
 #include "getput.h"
@@ -25,9 +25,9 @@ RCSID("$Id: mpaux.c,v 1.9 1999/12/08 22:37:42 markus Exp $");
 
 void
 compute_session_id(unsigned char session_id[16],
-		   unsigned char cookie[8],
-		   BIGNUM* host_key_n,
-		   BIGNUM* session_key_n)
+    unsigned char cookie[8],
+    BIGNUM* host_key_n,
+    BIGNUM* session_key_n)
 {
 	unsigned int host_key_bytes = BN_num_bytes(host_key_n);
 	unsigned int session_key_bytes = BN_num_bytes(session_key_n);
