@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.128 2005/01/18 21:43:54 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.129 2005/01/18 21:51:14 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.128 2005/01/18 21:43:54 claudio Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.129 2005/01/18 21:51:14 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,6 +195,7 @@ void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
 void	settimeslot(const char *, int);
+void	timeslot_status(void);
 void	setvlantag(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
@@ -374,7 +375,7 @@ void	print_media_word(int, int, int);
 void	process_media_commands(void);
 void	init_current_media(void);
 
-unsigned long get_ts_map(int ts_flag, int ts_start, int ts_stop);
+unsigned long get_ts_map(int, int, int);
 /*
  * XNS support liberally adapted from code written at the University of
  * Maryland principally by James O'Toole and Chris Torek.
@@ -1710,6 +1711,43 @@ get_ts_map(int ts_flag, int ts_start, int ts_stop)
 }
 #endif /* SMALL */
 
+#ifndef SMALL
+void
+timeslot_status(void)
+{
+	char		*sep = " ";
+	unsigned long	 ts_map = 0;
+	int		 i, start = -1;
+
+	ifr.ifr_data = (caddr_t)&ts_map;
+
+	if (ioctl(s, SIOCGIFTIMESLOT, (caddr_t)&ifr) == -1)
+		return;
+
+	printf("\ttimeslot:");
+	for (i = 0; i < sizeof(ts_map) * 8; i++) {
+		if (start == -1 && ts_map & (1 << i))
+			start = i;
+		else if (start != -1 && !(ts_map & (1 << i))) {
+			if (start == i - 1)
+				printf("%s%d", sep, start);
+			else
+				printf("%s%d-%d", sep, start, i-1);
+			sep = ",";
+			start = -1;
+		}
+	}
+	if (start != -1) {
+		if (start == i - 1)
+			printf("%s%d", sep, start);
+		else
+			printf("%s%d-%d", sep, start, i-1);
+	}
+	printf("\n");
+}
+#endif
+
+
 const struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
 
@@ -1937,6 +1975,7 @@ status(int link, struct sockaddr_dl *sdl)
 	carp_status();
 	pfsync_status();
 	pppoe_status();
+	timeslot_status();
 #endif
 	ieee80211_status();
 	getifgroups();
