@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2000/02/21 17:08:36 art Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2001/05/10 10:34:45 art Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -59,9 +59,7 @@ include <sys/device.h>
 include <sys/disklabel.h>
 include <sys/disk.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/pmap.h>
 include <machine/cpu.h>
@@ -101,15 +99,9 @@ define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
 
 # interrupt/fault metering
-ifdef UVM
 define  V_SWTCH		offsetof(struct uvmexp, swtch)
 define  V_INTR		offsetof(struct uvmexp, intrs)
 define  V_FAULTS	offsetof(struct uvmexp, faults)
-else
-define	V_SWTCH		offsetof(struct vmmeter, v_swtch)
-define	V_INTR		offsetof(struct vmmeter, v_intr)
-define	V_FAULTS	offsetof(struct vmmeter, v_faults)
-endif
 
 # CPU info structure
 define  CPUINFO_GETSYNCFLT      offsetof(struct cpu_softc, get_syncflt)

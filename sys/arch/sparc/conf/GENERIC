@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2001/04/17 05:31:00 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.50 2001/05/10 10:34:40 art Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -19,7 +19,7 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDBDEV=0xc01	# kgdb device number (dev_t)
 #option		KGDBRATE=38400	# baud rate
 
-option		UVM		# use the UVM virtual memory system
+option		UVM		# use the UVM virtual memory system ; required
 
 # Options for SPARCstation hardware
 option		RASTERCONSOLE	# fast rasterop console

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930intr.s,v 1.4 1999/04/22 18:43:50 art Exp $	*/
+/*	$OpenBSD: amd7930intr.s,v 1.5 2001/05/10 10:34:44 art Exp $	*/
 /*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
@@ -100,17 +100,10 @@ _amd7930_trap:
 	st	%l2, [%l7 + %lo(savepc)]
 
 	! tally interrupt
-#if defined(UVM)
 	sethi	%hi(_uvmexp+V_INTR), %l7
 	ld	[%l7 + %lo(_uvmexp+V_INTR)], %l6
 	inc	%l6
 	st	%l6, [%l7 + %lo(_uvmexp+V_INTR)]
-#else
-	sethi	%hi(_cnt+V_INTR), %l7
-	ld	[%l7 + %lo(_cnt+V_INTR)], %l6
-	inc	%l6
-	st	%l6, [%l7 + %lo(_cnt+V_INTR)]
-#endif
 	sethi	%hi(_auiop), %l7
 	ld	[%l7 + %lo(_auiop)], %l7
 

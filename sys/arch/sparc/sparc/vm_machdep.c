@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2001/05/05 20:56:53 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2001/05/10 10:34:50 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -312,7 +312,6 @@ vmapbuf(bp, sz)
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + sz);
-#if defined(UVM)
 	/*
 	 * Note that this is an expanded version of:
 	 *   kva = uvm_km_valloc_wait(kernel_map, size);
@@ -327,9 +326,6 @@ vmapbuf(bp, sz)
 			break;
 		tsleep(kernel_map, PVM, "vallocwait", 0);
 	}
-#else
-	kva = kmem_alloc_wait(kernel_map, size);
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	while (size > 0) {
@@ -378,11 +374,7 @@ vunmapbuf(bp, sz)
 	off = (vaddr_t)bp->b_data - kva;
 	size = round_page(sz + off);
 
-#if defined(UVM)
 	uvm_km_free_wakeup(kernel_map, kva, size);
-#else
-	kmem_free_wakeup(kernel_map, kva, size);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 	if (CACHEINFO.c_vactype != VAC_NONE)

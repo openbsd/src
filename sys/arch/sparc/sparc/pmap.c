@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.82 2001/05/10 08:43:56 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.83 2001/05/10 10:34:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -73,10 +73,8 @@
 #include <vm/vm_prot.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
 #include <sys/pool.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
@@ -217,7 +215,6 @@ pvfree(pv)
 }
 
 #if defined(SUN4M)
-#if defined(UVM)	/* We can only use pool with uvm */
 /*
  * Memory pools and back-end supplier for SRMMU page tables.
  * Share a pool between the level 2 and level 3 page tables,
@@ -295,36 +292,6 @@ pt23_free(pt)
 {
 	pool_put(&L23_pool, pt);
 }
-
-#else
-
-static __inline int *
-pt1_alloc()
-{
-	return malloc(SRMMU_L1SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
-}
-
-static __inline void
-pt1_free(pt)
-	int *pt;
-{
-	free(pt, M_VMPMAP);
-}
-
-static __inline int *
-pt23_alloc()
-{
-	return malloc(SRMMU_L2SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
-}
-
-static __inline void
-pt23_free(pt)
-	int *pt;
-{
-	free(pt, M_VMPMAP);
-}
-
-#endif /* !UVM */
 #endif /* SUN4M */
 
 /*
@@ -885,13 +852,8 @@ pmap_page_upload(first_pa)
 		if (start >= end)
 			continue;
 
-#if defined(UVM)
 		uvm_page_physload(atop(start), atop(end),
 				  atop(start), atop(end), VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(atop(start), atop(end),
-				 atop(start), atop(end));
-#endif
 	}
 }
 
@@ -2007,17 +1969,9 @@ pv_changepte4_4c(pv0, bis, bic)
 				 * Bizarreness:  we never clear PG_W on
 				 * pager pages, nor PG_NC on DVMA pages.
 				 */
-#if defined(UVM)
 				if (bic == PG_W &&
 				    va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
-#else
-				extern vaddr_t pager_sva, pager_eva;
-
-				if (bic == PG_W &&
-				    va >= pager_sva && va < pager_eva)
-					continue;
-#endif
 				if (bic == PG_NC &&
 				    va >= DVMA_BASE && va < DVMA_END)
 					continue;
@@ -2327,17 +2281,9 @@ pv_changepte4m(pv0, bis, bic)
 			 * Bizarreness:  we never clear PG_W on
 			 * pager pages, nor set PG_C on DVMA pages.
 			 */
-#if defined(UVM)
 			if ((bic & PPROT_WRITE) &&
 			    va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
-#else
-			extern vaddr_t pager_sva, pager_eva;
-
-			if ((bic & PPROT_WRITE) &&
-			    va >= pager_sva && va < pager_eva)
-				continue;
-#endif
 			if ((bis & SRMMU_PG_C) &&
 			    va >= DVMA_BASE && va < DVMA_END)
 				continue;
@@ -2682,13 +2628,8 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
 
-#if defined(UVM)
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
-#else
-	cnt.v_page_size = NBPG;
-	vm_set_page_size();
-#endif
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 	/* In this case NPTESG is not a #define */
@@ -3462,11 +3403,7 @@ pmap_init()
 
 	size = npages * sizeof(struct pvlist);
 	size = round_page(size);
-#if defined(UVM)
 	addr = uvm_km_zalloc(kernel_map, size);
-#else
-	addr = kmem_alloc(kernel_map, size);
-#endif
 	if (addr == 0)
 		panic("pmap_init: no memory for pv_list");
 
@@ -3482,7 +3419,7 @@ pmap_init()
 	 */
 	pmap_initialized = 1;
 
-#if defined(SUN4M) && defined(UVM)
+#if defined(SUN4M)
         if (CPU_ISSUN4M) {
                 /*
                  * The SRMMU only ever needs chunks in one of two sizes:

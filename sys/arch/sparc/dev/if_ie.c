@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.14 2001/03/24 10:07:18 ho Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.15 2001/05/10 10:34:44 art Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -137,9 +137,7 @@ Mode of operation:
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_map.h>
-#endif
 
 /*
  * ugly byte-order hack for SUNs
@@ -542,19 +540,10 @@ ieattach(parent, self, aux)
 		 * XXX
 		 */
 
-#if defined(UVM)
 		ie_map = uvm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
 			(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
-#else
-		ie_map = vm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
-			(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
-#endif
 		if (ie_map == NULL) panic("ie_map");
-#if defined(UVM)
 		sc->sc_maddr = (caddr_t) uvm_km_alloc(ie_map, sc->sc_msize);
-#else
-		sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
-#endif
 		if (sc->sc_maddr == NULL) panic("ie kmem_alloc");
 		kvm_uncache(sc->sc_maddr, sc->sc_msize >> PGSHIFT);
 		if (((u_long)sc->sc_maddr & ~(NBPG-1)) != (u_long)sc->sc_maddr)

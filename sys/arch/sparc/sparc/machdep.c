@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2001/05/05 22:34:19 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2001/05/10 10:34:47 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -93,9 +93,7 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif
 
 #ifdef SUN4M
 #include <sparc/dev/power.h>
@@ -114,13 +112,9 @@
 #include "led.h"
 #endif
 
-#if defined(UVM)
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
-#else
-vm_map_t buffer_map;
-#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -204,17 +198,12 @@ cpu_startup()
 	 */
 	sz = (int)allocsys((caddr_t)0);
 
-#if defined(UVM)
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
-#else
-	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
-#endif
 		panic("startup: no room for tables");
 
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
-#if defined(UVM)
         /*
          * allocate virtual and physical memory for the buffers.
          */
@@ -261,52 +250,12 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-#else
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-
-	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
-	    &maxaddr, size, TRUE);
-
-	minaddr = (vaddr_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = PAGE_SIZE * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-	}
-#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if defined(UVM)
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-#else
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
@@ -315,11 +264,7 @@ cpu_startup()
 	 */
 	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
 	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
-#if defined(UVM)
 	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
-#else
-	phys_map = vm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
-#endif
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 	/*
@@ -327,13 +272,8 @@ cpu_startup()
 	 * resource map for double mappings which is usable from
 	 * interrupt contexts.
 	 */
-#if defined(UVM)
 	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
 		panic("unable to allocate from DVMA map");
-#else
-	if (kmem_alloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
-		panic("unable to allocate from DVMA map");
-#endif
 	dvmamap_extent = extent_create("dvmamap", dvma_base, dvma_end,
 				       M_DEVBUF, NULL, 0, EX_NOWAIT);
 	if (dvmamap_extent == 0)
@@ -346,13 +286,8 @@ cpu_startup()
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
-#if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
-#else
-	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
-#endif
 	/*
 	 * Initialize timeouts
 	 */
@@ -361,11 +296,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-#if defined(UVM)
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-#else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * PAGE_SIZE);
 
@@ -440,9 +371,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 	return (v);
 }
@@ -736,13 +664,8 @@ sys_sigreturn(p, v, retval)
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	scp = SCARG(uap, sigcntxp);
-#if defined(UVM)
 	if ((int)scp & 3 || uvm_useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
 		return (EINVAL);
-#else
-	if ((int)scp & 3 || useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
-		return (EINVAL);
-#endif
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
@@ -1101,15 +1024,9 @@ oldmon_w_trace(va)
 		printf("curproc = %p, pid %d\n", curproc, curproc->p_pid);
 	else
 		printf("no curproc\n");
-#if defined(UVM)
 	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
 	       uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
 	       uvmexp.softs, uvmexp.faults);
-#else
-	printf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
-	    cnt.v_swtch, cnt.v_trap, cnt.v_syscall, cnt.v_intr, cnt.v_soft,
-	    cnt.v_faults);
-#endif
 	write_user_windows();
 
 	printf("\nstack trace with sp = 0x%lx\n", va);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2001/05/05 20:56:53 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.15 2001/05/10 10:34:48 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -121,13 +121,8 @@ mmrw(dev, uio, flags)
 				return (error);
 		}
 		physlock = 1;
-#if defined(UVM)
 		if (mem_page == 0)
 			mem_page = uvm_km_valloc_wait(kernel_map, NBPG);
-#else
-		if (mem_page == 0)
-			mem_page = kmem_alloc_pageable(kernel_map, NBPG);
-#endif
 		if (mem_page == 0)
 			panic("mmrw: out of space in kernel_map");
 	}
@@ -169,15 +164,9 @@ mmrw(dev, uio, flags)
 				c = min(iov->iov_len, prom_vend - prom_vstart);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 				if (!uvm_kernacc((caddr_t)va, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
-#else
-				if (!kernacc((caddr_t)va, c,
-				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-					return (EFAULT);
-#endif
 			}
 			error = uiomove((caddr_t)va, c, uio);
 			continue;

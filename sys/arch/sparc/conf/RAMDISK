@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.23 1999/10/29 14:14:27 art Exp $
+# 	$OpenBSD: RAMDISK,v 1.24 2001/05/10 10:34:41 art Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -18,7 +18,7 @@ option		MINIROOTSIZE=4352
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
-option		UVM		# UVM virtual memory system
+option		UVM		# UVM virtual memory system ; required
 option		DIAGNOSTIC	# internal consistency checks
 option		FFS		# UFS
 option		NFSCLIENT	# Network File System client

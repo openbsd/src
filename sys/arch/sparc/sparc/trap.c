@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/05/05 20:56:53 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2001/05/10 10:34:49 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -290,11 +290,7 @@ trap(type, psr, pc, tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -667,11 +663,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	u_quad_t sticks;
 	union sigval sv;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -715,13 +707,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-#if defined(UVM)
 			if (uvm_fault(kernel_map, va, 0, ftype) == KERN_SUCCESS)
 				return;
-#else
-			if (vm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
-				return;
-#endif
 			goto kfault;
 		}
 	} else
@@ -741,11 +728,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		goto out;
 
 	/* alas! must call the horrible vm code */
-#if defined(UVM)
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, ftype);
-#else
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
-#endif
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -830,11 +813,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	u_quad_t sticks;
 	union sigval sv;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -968,13 +947,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-#if defined(UVM)
 			if (uvm_fault(kernel_map, va, 0, ftype) == KERN_SUCCESS)
 				return;
-#else
-			if (vm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
-				return;
-#endif
 			goto kfault;
 		}
 	} else
@@ -983,11 +957,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
-#if defined(UVM)
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, ftype);
-#else
-	rv = vm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
-#endif
 	/*
 	 * If this was a stack access we keep track of the maximum
 	 * accessed stack size.  Also, if vm_fault gets a protection
@@ -1064,11 +1034,7 @@ syscall(code, tf, pc)
 	extern struct pcb *cpcb;
 #endif
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)

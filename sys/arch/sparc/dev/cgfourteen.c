@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.4 1999/09/10 23:32:01 art Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.5 2001/05/10 10:34:43 art Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -483,15 +483,9 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
 				return (EINVAL);
 			count = p->size.y * 32 / NBBY;
-#if defined(UVM)
 			if (!uvm_useracc(p->image, count, B_READ) ||
 			    !uvm_useracc(p->mask, count, B_READ))
 				return (EFAULT);
-#else
-			if (!useracc(p->image, count, B_READ) ||
-			    !useracc(p->mask, count, B_READ))
-				return (EFAULT);
-#endif
 		}
 
 		/* parameters are OK; do it */
@@ -767,17 +761,10 @@ cg14_get_cmap(p, cm, cmsize)
 	}
 #endif
 
-#if defined(UVM)
         if (!uvm_useracc(p->red, count, B_WRITE) ||
             !uvm_useracc(p->green, count, B_WRITE) ||
             !uvm_useracc(p->blue, count, B_WRITE))
                 return (EFAULT);
-#else
-        if (!useracc(p->red, count, B_WRITE) ||
-            !useracc(p->green, count, B_WRITE) ||
-            !useracc(p->blue, count, B_WRITE))
-                return (EFAULT);
-#endif
         for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
                 p->red[i] = cp[3];
                 p->green[i] = cp[2];
@@ -809,17 +796,10 @@ cg14_put_cmap(p, cm, cmsize)
 	}
 #endif
 
-#if defined(UVM)
         if (!uvm_useracc(p->red, count, B_READ) ||
             !uvm_useracc(p->green, count, B_READ) ||
             !uvm_useracc(p->blue, count, B_READ))
                 return (EFAULT);
-#else
-        if (!useracc(p->red, count, B_READ) ||
-            !useracc(p->green, count, B_READ) ||
-            !useracc(p->blue, count, B_READ))
-                return (EFAULT);
-#endif
         for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
                 cp[3] = p->red[i];
                 cp[2] = p->green[i];

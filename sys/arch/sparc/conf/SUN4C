@@ -1,4 +1,4 @@
-# 	$OpenBSD: SUN4C,v 1.28 1999/10/29 14:14:28 art Exp $
+# 	$OpenBSD: SUN4C,v 1.29 2001/05/10 10:34:41 art Exp $
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
@@ -18,7 +18,7 @@ option		RASTERCONSOLE		# fast rasterop console
 option		SYSVMSG,SYSVSEM,SYSVSHM
 option		COMPAT_09, COMPAT_10
 
-option		UVM		# use the UVM virtual memory system
+option		UVM		# use the UVM virtual memory system ; required
 
 # Filesystem options
 option		FFS
