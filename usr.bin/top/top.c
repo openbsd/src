@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.5 2000/11/21 07:22:19 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.6 2000/12/22 22:46:57 deraadt Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -276,13 +276,18 @@ char *argv[];
 		break;
 
 	      case 's':
-		if ((delay = atoi(optarg)) < 0)
 		{
+		  char *endp;
+
+		  delay = strtoul(optarg, &endp, 10);
+		  if (delay < 0 || *endp != '\0')
+		  {
 		    fprintf(stderr,
 			"%s: warning: seconds delay should be non-negative -- using default\n",
 			myname);
 		    delay = Default_DELAY;
 		    warnings++;
+		  }
 		}
 		break;
 
