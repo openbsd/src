@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.10 1998/05/04 05:37:53 millert Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.11 1998/06/12 17:15:24 millert Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: v7.local.c,v 1.10 1998/05/04 05:37:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: v7.local.c,v 1.11 1998/06/12 17:15:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,8 @@ void
 demail()
 {
 
-	if (value("keep") != NULL)
-		(void)truncate(mailname, 0);
+	if (value("keep") != NULL || truncate(mailname, 0) == -1)
+		(void)close(creat(mailname, 0600));
 }
 
 /*
