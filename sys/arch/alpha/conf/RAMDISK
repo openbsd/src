@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 1998/03/01 08:07:33 millert Exp $
+#	$OpenBSD: RAMDISK,v 1.17 1998/09/21 23:16:56 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -37,7 +37,7 @@ option		FFS		# Fast file system
 #option		MFS		# Memory-based file system
 option		KERNFS		# pseudo-fs to get at kernel internals
 #option		NFSSERVER	# Sun NFS-compatible file system server
-option		NFSCLIENT	# Sun NFS-compatible file system client
+#option		NFSCLIENT	# Sun NFS-compatible file system client
 option		CD9660		# ISO 9660 + Rock Ridge file system
 
 # Networking options
@@ -92,7 +92,7 @@ esp1	at	tcds? slot ?
 cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
-fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+#fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -106,13 +106,13 @@ pci*	at	lca?
 pci*	at	ppb?
 
 # PCI devices
-ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
+#ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ed*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
-fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
+#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
@@ -144,7 +144,7 @@ wdc1	at	isa? port 0x170 irq 15		# controllers
 #cy0	at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
 
 # EISA devices
-fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
+#fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 
 # devices/busses hanging of IDE controllers
 atapibus* at	wdc?				# Virtual ATAPI bus
@@ -168,9 +168,6 @@ wscons*	at	vga?
 wscons*	at	sfb?
 wscons*	at	tga?
 
-#pseudo-device	bpfilter	16
+pseudo-device	bpfilter	1
 pseudo-device	loop
-pseudo-device	pty		64
 pseudo-device	rd		1
-#pseudo-device	sl		4
-#pseudo-device	vnd		4
