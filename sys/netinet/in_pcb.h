@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.7 1997/08/19 04:54:52 millert Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.8 1997/08/19 06:29:50 millert Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ struct inpcbtable {
 #define	DP_MAPBITS	(sizeof(u_int32_t) * NBBY)
 #define	DP_MAPSIZE	(howmany(IPPORT_RESERVED/2, DP_MAPBITS))
 #define	DP_SET(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] |= (1 << ((p) % DP_MAPBITS)))
+#define	DP_CLR(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] &= ~(1 << ((p) % DP_MAPBITS)))
 #define	DP_ISSET(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] & (1 << ((p) % DP_MAPBITS)))
 
 /* default values for baddynamicports [see ip_init()] */
