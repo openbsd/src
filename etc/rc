@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.240 2004/03/22 04:34:42 mcbride Exp $
+#	$OpenBSD: rc,v 1.241 2004/03/22 15:02:35 cedric Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -50,7 +50,7 @@ if [ $1x = shutdownx ]; then
 		for hn in /etc/hostname.carp[0-9]*; do
 			# Strip off /etc/hostname. prefix
 			if=${hn#/etc/hostname.}
-			test "$if" = "*" && continue
+			test "$if" = "carp[0-9]*" && continue
 
 			ifconfig $if down
 		done
