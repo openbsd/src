@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.48 2001/06/23 04:01:18 aaron Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.49 2001/06/23 06:20:35 angelos Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_var.h>
 #endif
 #include <netinet/if_ether.h>
+#include <netinet/ip_ipsp.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -496,6 +497,7 @@ ether_output(ifp, m0, dst, rt0)
 		senderr(EAFNOSUPPORT);
 	}
 
+	/* XXX Should we feed-back an unencrypted IPsec packet ? */
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 
@@ -523,8 +525,38 @@ ether_output(ifp, m0, dst, rt0)
 	 * for output.
 	 */
 	if (ifp->if_bridge) {
-		bridge_output(ifp, m, NULL, NULL);
-		return (error);
+		struct m_tag *mtag;
+
+		/*
+		 * Check if this packet has already been sent out through
+		 * this bridge, in which case we simply send it out
+		 * without further bridge processing.
+		 */
+		for (mtag = m_tag_find(m, PACKET_TAG_BRIDGE, NULL); mtag;
+		    mtag = m_tag_find(m, PACKET_TAG_BRIDGE, mtag)) {
+#ifdef DEBUG
+			/* Check that the information is there */
+			if (mtag->m_tag_len != sizeof(caddr_t)) {
+				error = EINVAL;
+				goto bad;
+			}
+#endif
+			if (!bcmp(&ifp->if_bridge, mtag + 1, sizeof(caddr_t)))
+				break;
+		}
+		if (mtag == NULL) {
+			/* Attach a tag so we can detect loops */
+			mtag = m_tag_get(PACKET_TAG_BRIDGE, sizeof(caddr_t),
+			    M_NOWAIT);
+			if (mtag == NULL) {
+				error = ENOBUFS;
+				goto bad;
+			}
+			bcopy(&ifp->if_bridge, mtag + 1, sizeof(caddr_t));
+			m_tag_prepend(m, mtag);
+			bridge_output(ifp, m, NULL, NULL);
+			return (error);
+		}
 	}
 #endif
 
