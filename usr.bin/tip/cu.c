@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.8 2001/09/17 22:41:26 deraadt Exp $	*/
+/*	$OpenBSD: cu.c,v 1.9 2001/09/24 17:43:15 millert Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cu.c,v 1.8 2001/09/17 22:41:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cu.c,v 1.9 2001/09/24 17:43:15 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -91,7 +91,7 @@ cumain(argc, argv)
 			BR = (int)l;
 			break;
 		case 'h':
-			value(LECHO) = (char *)TRUE;
+			setboolean(value(LECHO), TRUE);
 			HD = TRUE;
 			break;
 		case 't':
@@ -153,7 +153,7 @@ cumain(argc, argv)
 	user_uid();
 	vinit();
 	setparity("none");
-	setboolean(value(VERBOSE), 0);
+	setboolean(value(VERBOSE), FALSE);
 	if (HW)
 		ttysetup(speed(BR));
 	if (connect()) {
