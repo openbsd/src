@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.64 2003/05/17 16:42:37 nate Exp $
+$OpenBSD: usbdevs,v 1.65 2003/05/18 18:16:51 nate Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -240,6 +240,7 @@ vendor GUILLEMOT	0x06f8	Guillemot
 vendor SMC		0x0707	Standard Microsystems
 vendor PUTERCOM		0x0708	Putercom
 vendor MCT		0x0711	MCT
+vendor IMATION		0x0718	Imation
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
@@ -790,6 +791,9 @@ product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
 
 /* Iiyama products */
 product IIYAMA HUB		0x0201	Hub
+
+/* Imation */
+product IMATION FLASHGO		0xb000	Flash Go!
 
 /* Inside Out Networks products */
 product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 RS232
