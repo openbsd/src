@@ -1,4 +1,4 @@
-#	$OpenBSD: locate.rc,v 1.5 2003/02/27 16:26:41 millert Exp $
+#	$OpenBSD: locate.rc,v 1.6 2003/09/18 09:20:13 jmc Exp $
 #
 # /etc/locate.rc -  command script for updatedb(8)
 #
@@ -16,7 +16,7 @@ SEARCHPATHS="/"
 PRUNEPATHS="/tmp /var/tmp /usr/tmp"
 
 # filesystems allowed. Beware: a non-listed filesystem will be pruned
-# and is the SEARCHPATHS starts in such a filesystem locate will build
+# and if the SEARCHPATHS starts in such a filesystem locate will build
 # an empty database
 #
 # be careful if you add 'nfs'
