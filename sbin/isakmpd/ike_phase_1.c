@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.2 1999/04/30 11:46:23 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.3 1999/04/29 10:51:36 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.3 1999/05/02 19:16:41 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.4 1999/05/02 12:50:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -617,7 +617,6 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   ie->skeyid_a = malloc (ie->skeyid_len);
   if (!ie->skeyid_a)
     {
-      /* XXX How to notify peer?  */
       log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%d) failed",
 		 ie->skeyid_len);
       prf_free (prf);

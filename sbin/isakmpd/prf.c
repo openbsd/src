@@ -1,5 +1,5 @@
-/*	$OpenBSD: prf.c,v 1.6 1999/04/19 19:54:54 niklas Exp $	*/
-/*	$EOM: prf.c,v 1.6 1999/04/02 00:58:06 niklas Exp $	*/
+/*	$OpenBSD: prf.c,v 1.7 1999/05/02 19:16:41 niklas Exp $	*/
+/*	$EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -87,7 +87,10 @@ prf_alloc (enum prfs type, int subtype, char *shared, int sharedsize)
     case PRF_HMAC:
       hash = hash_get (subtype);
       if (!hash)
-	return 0;
+	{
+	  log_print ("prf_alloc: unknown hash type %d", subtype);
+	  return 0;
+	}
       break;
     default:
       log_print ("prf_alloc: unknown PRF type %d", type);
