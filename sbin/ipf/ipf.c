@@ -1,5 +1,3 @@
-/*	$OpenBSD: ipf.c,v 1.4 1996/06/23 14:30:54 deraadt Exp $	*/
-
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -11,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #if !defined(__SVR4) && !defined(__GNUC__)
 #include <strings.h>
 #endif
@@ -36,7 +35,8 @@ extern	char	*index();
 #include "ipf.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipf.c	1.22 2/3/96 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
+static	char	rcsid[] = "$Id: ipf.c,v 1.5 1996/07/18 05:11:01 dm Exp $";
 #endif
 
 #if	SOLARIS
@@ -49,8 +49,9 @@ extern	char	*optarg;
 int	opts = 0;
 
 static	int	fd = -1;
+
 static	void	procfile(), flushfilter(), set_state();
-static	void	packetlogon(), swapactive();
+static	void	packetlogon(), swapactive(), showstats();
 
 int main(argc,argv)
 int argc;
@@ -58,10 +59,7 @@ char *argv[];
 {
 	char	c;
 
-	if ((fd = open(IPL_NAME, O_RDONLY)) == -1)
-		perror("open device");
-
-	while ((c = getopt(argc, argv, "AsInovdryf:F:l:EDZ")) != -1)
+	while ((c = getopt(argc, argv, "AsInopvdryf:F:l:EDzZ")) != -1) {
 		switch (c)
 		{
 		case 'E' :
@@ -77,7 +75,7 @@ char *argv[];
 			opts |= OPT_DEBUG;
 			break;
 		case 'f' :
-			procfile(optarg);
+			procfile(argv[0], optarg);
 			break;
 		case 'F' :
 			flushfilter(optarg);
@@ -94,6 +92,9 @@ char *argv[];
 		case 'o' :
 			opts |= OPT_OUTQUE;
 			break;
+		case 'p' :
+			opts |= OPT_PRINTFR;
+			break;
 		case 'r' :
 			opts |= OPT_REMOVE;
 			break;
@@ -108,31 +109,54 @@ char *argv[];
 			frsync();
 			break;
 #endif
+		case 'z' :
+			opts |= OPT_ZERORULEST;
+			break;
 		case 'Z' :
 			zerostats();
 			break;
 		}
+	}
 
 	if (fd != -1)
 		(void) close(fd);
-	return 0;
+
+	exit(0);
+	/* NOTREACHED */
 }
+
+
+static int opendevice()
+{
+	if (opts & OPT_DONOTHING)
+		return -2;
+
+	if (!(opts & OPT_DONOTHING) && fd == -1)
+		if ((fd = open(IPL_NAME, O_RDWR)) == -1)
+			if ((fd = open(IPL_NAME, O_RDONLY)) == -1)
+				perror("open device");
+	return fd;
+}
+
 
 static	void	set_state(enable)
 u_int	enable;
 {
-	if (ioctl(fd, SIOCFRENB, &enable) == -1)
-		perror("SIOCFRENB");
+	if (opendevice() != -2)
+		if (ioctl(fd, SIOCFRENB, &enable) == -1)
+			perror("SIOCFRENB");
 	return;
 }
 
-static	void	procfile(file)
-char	*file;
+static	void	procfile(name, file)
+char	*name, *file;
 {
 	FILE	*fp;
 	char	line[513], *s;
 	struct	frentry	*fr;
 	u_int	add = SIOCADAFR, del = SIOCRMAFR;
+
+	(void) opendevice();
 
 	if (opts & OPT_INACTIVE) {
 		add = SIOCADIFR;
@@ -146,8 +170,9 @@ char	*file;
 	if (!strcmp(file, "-"))
 		fp = stdin;
 	else if (!(fp = fopen(file, "r"))) {
-		perror("fopen");
-		exit(1);;
+		fprintf(stderr, "%s: fopen(%s) failed: %s", name, file,
+			STRERROR(errno));
+		exit(1);
 	}
 
 	while (fgets(line, sizeof(line)-1, fp)) {
@@ -174,7 +199,9 @@ char	*file;
 		(void)fflush(stdout);
 
 		if (fr) {
-			if (opts & OPT_INACTIVE)
+			if (opts & OPT_ZERORULEST)
+				add = SIOCZRLST;
+			else if (opts & OPT_INACTIVE)
 				add = fr->fr_hits ? SIOCINIFR : SIOCADIFR;
 			else
 				add = fr->fr_hits ? SIOCINAFR : SIOCADAFR;
@@ -187,8 +214,16 @@ char	*file;
 
 			if (opts & OPT_DEBUG)
 				binprint(fr);
-				
-			if ((opts & OPT_REMOVE) && !(opts & OPT_DONOTHING)) {
+
+			if ((opts & OPT_ZERORULEST) &&
+			    !(opts & OPT_DONOTHING)) {
+				if (ioctl(fd, add, fr) == -1)
+					perror("ioctl(SIOCZRLST)");
+				else
+					printf("hits %d bytes %d\n",
+						fr->fr_hits, fr->fr_bytes);
+			} else if ((opts & OPT_REMOVE) &&
+				   !(opts & OPT_DONOTHING)) {
 				if (ioctl(fd, del, fr) == -1)
 					perror("ioctl(SIOCDELFR)");
 			} else if (!(opts & OPT_DONOTHING)) {
@@ -206,7 +241,7 @@ char	*opt;
 {
 	int	err, flag;
 
-	if (opts & OPT_VERBOSE) {
+	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 		if ((err = ioctl(fd, SIOCGETFF, &flag)))
 			perror("ioctl(SIOCGETFF)");
 
@@ -231,11 +266,10 @@ char	*opt;
 			printf("set log flag: block\n");
 	}
 
-	if (!(opts & OPT_DONOTHING) &&
-	    (err = ioctl(fd, SIOCSETFF, &flag)))
+	if (opendevice() != -2 && (err = ioctl(fd, SIOCSETFF, &flag)))
 		perror("ioctl(SIOCSETFF)");
 
-	if (opts & OPT_VERBOSE) {
+	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 		if ((err = ioctl(fd, SIOCGETFF, &flag)))
 			perror("ioctl(SIOCGETFF)");
 
@@ -260,9 +294,9 @@ char	*arg;
 	fl |= (opts & FR_INACTIVE);
 	rem = fl;
 
-	if (!(opts & OPT_DONOTHING) && ioctl(fd, SIOCIPFFL, &fl) == -1)
+	if (opendevice() == -2 || ioctl(fd, SIOCIPFFL, &fl) == -1)
 		perror("ioctl(SIOCIPFFL)");
-	if (opts & OPT_VERBOSE){
+	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 		printf("remove flags %s%s (%d)\n", (rem & FR_INQUE) ? "I" : "",
 			(rem & FR_OUTQUE) ? "O" : "", rem);
 		printf("removed %d filter rules\n", fl);
@@ -275,7 +309,7 @@ static void swapactive()
 {
 	int in = 2;
 
-	if (ioctl(fd, SIOCSWAPA, &in) == -1)
+	if (opendevice() != -2 && ioctl(fd, SIOCSWAPA, &in) == -1)
 		perror("ioctl(SIOCSWAPA)");
 	else
 		printf("Set %d now inactive\n", in);
@@ -285,7 +319,7 @@ static void swapactive()
 #if defined(sun) && (defined(__SVR4) || defined(__svr4__))
 void frsync()
 {
-	if (ioctl(fd, SIOCFRSYN, 0) == -1)
+	if (opendevice() != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
 		perror("SIOCFRSYN");
 	else
 		printf("filter sync'd\n");
@@ -295,11 +329,46 @@ void frsync()
 
 void zerostats()
 {
-	struct	friostat	fio;
+	friostat_t	fio;
 
-	if (ioctl(fd, SIOCFRZST, &fio) == -1) {
-		perror("ioctl(SIOCFRZST)");
-		exit(-1);
+	if (opendevice() != -2) {
+		if (ioctl(fd, SIOCFRZST, &fio) == -1) {
+			perror("ioctl(SIOCFRZST)");
+			exit(-1);
+		}
+		showstats(&fio);
 	}
 
+}
+
+
+/*
+ * read the kernel stats for packets blocked and passed
+ */
+static void showstats(fp)
+friostat_t	*fp;
+{
+#if SOLARIS
+	printf("dropped packets:\tin %lu\tout %lu\n",
+			fp->f_st[0].fr_drop, fp->f_st[1].fr_drop);
+	printf("non-ip packets:\t\tin %lu\tout %lu\n",
+			fp->f_st[0].fr_notip, fp->f_st[1].fr_notip);
+	printf("   bad packets:\t\tin %lu\tout %lu\n",
+			fp->f_st[0].fr_bad, fp->f_st[1].fr_bad);
+#endif
+	printf(" input packets:\t\tblocked %lu passed %lu nomatch %lu",
+			fp->f_st[0].fr_block, fp->f_st[0].fr_pass,
+			fp->f_st[0].fr_nom);
+	printf(" counted %lu\n", fp->f_st[0].fr_acct);
+	printf("output packets:\t\tblocked %lu passed %lu nomatch %lu",
+			fp->f_st[1].fr_block, fp->f_st[1].fr_pass,
+			fp->f_st[1].fr_nom);
+	printf(" counted %lu\n", fp->f_st[0].fr_acct);
+	printf(" input packets logged:\tblocked %lu passed %lu\n",
+			fp->f_st[0].fr_bpkl, fp->f_st[0].fr_ppkl);
+	printf("output packets logged:\tblocked %lu passed %lu\n",
+			fp->f_st[1].fr_bpkl, fp->f_st[1].fr_ppkl);
+	printf(" packets logged:\tinput %lu-%lu output %lu-%lu\n",
+			fp->f_st[0].fr_pkl, fp->f_st[0].fr_skip,
+			fp->f_st[1].fr_pkl, fp->f_st[1].fr_skip);
 }

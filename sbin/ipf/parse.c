@@ -1,5 +1,3 @@
-/*	$OpenBSD: parse.c,v 1.5 1996/06/26 16:48:44 dm Exp $	*/
-
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -34,7 +32,8 @@
 #include <ctype.h>
 
 #ifndef	lint
-static	char	sccsid[] ="@(#)parse.c	1.41 4/10/96 (C) 1993-1996 Darren Reed";
+static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
+static	char	rcsid[] = "$Id: parse.c,v 1.6 1996/07/18 05:11:03 dm Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -123,9 +122,9 @@ char	*line;
 		}
 	} else if (**cpp == 'c')
 		fil.fr_flags = FR_ACCOUNT;
-	else if (**cpp == 'p')
+	else if (**cpp == 'p') {
 		fil.fr_flags = FR_PASS;
-	else if (**cpp == 'l') {
+	} else if (**cpp == 'l') {
 		fil.fr_flags = FR_LOG;
 		if (!strcasecmp(*(cpp+1), "body")) {
 			fil.fr_flags |= FR_LOGBODY;
@@ -189,8 +188,35 @@ char	*line;
 			}
 			return &fil;
 		}
-	}
 
+		if (*cpp) {
+#if SOLARIS
+			if (!strcasecmp(*cpp, "dup-to")  ||
+			    !strcasecmp(*cpp, "to") ||
+			    !strcasecmp(*cpp, "fastroute")) {
+				(void) fprintf(stderr,
+					"%s not supported under SunOS5\n",
+					*cpp);
+				return NULL;
+			}
+#endif
+			if (!strcasecmp(*cpp, "dup-to") && *(cpp + 1)) {
+				cpp++;
+				if (to_interface(&fil.fr_dif, *cpp))
+					return NULL;
+				cpp++;
+			}
+			if (!strcasecmp(*cpp, "to") && *(cpp + 1)) {
+				cpp++;
+				if (to_interface(&fil.fr_tif, *cpp))
+					return NULL;
+				cpp++;
+			} else if (!strcasecmp(*cpp, "fastroute")) {
+				fil.fr_flags |= FR_FASTROUTE;
+				cpp++;
+			}
+		}
+	}
 	if (!strcasecmp(*cpp, "tos")) {
 		if (!*++cpp) {
 			(void)fprintf(stderr, "tos missing value\n");
@@ -387,6 +413,40 @@ char	*line;
 */
 	return &fil;
 }
+
+
+int to_interface(fdp, to)
+frdest_t *fdp;
+char *to;
+{
+	int	r = 0;
+	char	*s;
+
+	s = index(to, ':');
+	fdp->fd_ifp = NULL;
+	if (s) {
+		*s++ = '\0';
+		fdp->fd_ip.s_addr = hostnum(s, &r);
+		if (r == -1)
+			return -1;
+	}
+	(void) strncpy(fdp->fd_ifname, to, sizeof(fdp->fd_ifname) - 1);
+	fdp->fd_ifname[sizeof(fdp->fd_ifname) - 1] = '\0';
+	return 0;
+}
+
+
+void print_toif(tag, fdp)
+char *tag;
+frdest_t *fdp;
+{
+	(void)printf("%s %s%s", tag, fdp->fd_ifname,
+		     (fdp->fd_ifp || (int)fdp->fd_ifp == -1) ? "" : "(!)");
+	if (fdp->fd_ip.s_addr)
+		(void)printf(":%s", inet_ntoa(fdp->fd_ip));
+	putchar(' ');
+}
+
 
 /*
  * returns false if neither "hostmask/num" or "hostmask mask addr" are
@@ -753,7 +813,7 @@ u_long optmsk, optbits;
 	char *s;
 	int secflag = 0;
 
-	s = "opt ";
+	s = " opt ";
 	for (io = ionames; io->on_name; io++)
 		if ((io->on_bit & optmsk) &&
 		    ((io->on_bit & optmsk) == (io->on_bit & optbits))) {
@@ -773,18 +833,16 @@ u_long optmsk, optbits;
 		s = " ";
 		for (so = secclass; so->on_name; so++)
 			if ((secmsk & so->on_bit) &&
-			    ((io->on_bit & secmsk) == (io->on_bit & secbits))) {
+			    ((so->on_bit & secmsk) == (so->on_bit & secbits))) {
 				printf("%s%s", s, so->on_name);
 				s = ",";
 			}
 	}
 
-	if (strcmp(s, "opt "))
-		putchar(' ');
 	if ((optmsk && (optmsk != optbits)) ||
 	    (secmsk && (secmsk != secbits))) {
 		s = " ";
-		printf("not opt");
+		printf(" not opt");
 		if (optmsk != optbits) {
 			for (io = ionames; io->on_name; io++)
 				if ((io->on_bit & optmsk) &&
@@ -909,7 +967,7 @@ char	***cp;
 struct	frentry	*fp;
 {
 	if (fp->fr_proto != IPPROTO_TCP && fp->fr_proto != IPPROTO_UDP &&
-	    fp->fr_proto != IPPROTO_ICMP) {
+	    fp->fr_proto != IPPROTO_ICMP && !(fp->fr_ip.fi_fl & FI_TCPUDP)) {
 		(void)fprintf(stderr, "Can only use keep with UDP/ICMP/TCP\n");
 		return -1;
 	}
@@ -998,18 +1056,13 @@ struct	frentry	*fp;
 	static	char	*pcmp1[] = { "*", "=", "!=", "<", ">", "<=", ">=",
 				    "<>", "><"};
 	struct	protoent	*p;
+	frdest_t	*fdp;
 	int	ones = 0, pr;
 	char	*s;
 	u_char	*t;
 
-	if (fp->fr_flags & FR_PASS)
+	if (fp->fr_flags & FR_PASS) {
 		(void)printf("pass");
-	else if (fp->fr_flags & FR_LOG) {
-		(void)printf("log");
-		if (fp->fr_flags & FR_LOGBODY)
-			(void)printf(" body");
-		if (fp->fr_flags & FR_LOGFIRST)
-			(void)printf(" first");
 	} else if (fp->fr_flags & FR_BLOCK) {
 		(void)printf("block");
 		if (fp->fr_flags & FR_RETICMP) {
@@ -1023,6 +1076,12 @@ struct	frentry	*fp;
 		}
 		if (fp->fr_flags & FR_RETRST)
 			(void)printf(" return-rst");
+	} else if ((fp->fr_flags & FR_LOGMASK) == FR_LOG) {
+		(void)printf("log");
+		if (fp->fr_flags & FR_LOGBODY)
+			(void)printf(" body");
+		if (fp->fr_flags & FR_LOGFIRST)
+			(void)printf(" first");
 	} else if (fp->fr_flags & FR_ACCOUNT)
 		(void)printf("count");
 
@@ -1042,9 +1101,17 @@ struct	frentry	*fp;
 	if (fp->fr_flags & FR_QUICK)
 		(void)printf("quick ");
 
-	if (*fp->fr_ifname)
+	if (*fp->fr_ifname) {
 		(void)printf("on %s%s ", fp->fr_ifname,
 			(fp->fr_ifa || (int)fp->fr_ifa == -1) ? "" : "(!)");
+		if (*fp->fr_dif.fd_ifname)
+			print_toif("dup-to", &fp->fr_dif);
+		if (*fp->fr_tif.fd_ifname)
+			print_toif("to", &fp->fr_tif);
+		if (fp->fr_flags & FR_FASTROUTE)
+			(void)printf("fastroute ");
+
+	}
 	if (fp->fr_mip.fi_tos)
 		(void)printf("tos %#x ", fp->fr_tos);
 	if (fp->fr_mip.fi_ttl)
@@ -1076,27 +1143,27 @@ struct	frentry	*fp;
 			(void)printf("port %s %s ", pcmp1[fp->fr_scmp],
 				     portname(pr, fp->fr_sport));
 	if (!fp->fr_dst.s_addr & !fp->fr_dmsk.s_addr)
-		(void)printf("to any ");
+		(void)printf("to any");
 	else {
 		(void)printf("to %s", inet_ntoa(fp->fr_dst));
 		if ((ones = countbits(fp->fr_dmsk.s_addr)) == -1)
-			(void)printf("/%s ", inet_ntoa(fp->fr_dmsk));
+			(void)printf("/%s", inet_ntoa(fp->fr_dmsk));
 		else
-			(void)printf("/%d ", ones);
+			(void)printf("/%d", ones);
 	}
 	if (fp->fr_dcmp) {
 		if (fp->fr_dcmp == FR_INRANGE || fp->fr_dcmp == FR_OUTRANGE)
-			(void)printf("port %d %s %d ", fp->fr_dport,
+			(void)printf(" port %d %s %d", fp->fr_dport,
 				     pcmp1[fp->fr_dcmp], fp->fr_dtop);
 		else
-			(void)printf("port %s %s ", pcmp1[fp->fr_dcmp],
+			(void)printf(" port %s %s", pcmp1[fp->fr_dcmp],
 				     portname(pr, fp->fr_dport));
 	}
 	if ((fp->fr_ip.fi_fl & ~FI_TCPUDP) ||
 	    (fp->fr_mip.fi_fl & ~FI_TCPUDP) ||
 	    fp->fr_ip.fi_optmsk || fp->fr_mip.fi_optmsk ||
 	    fp->fr_ip.fi_secmsk || fp->fr_mip.fi_secmsk) {
-		(void)printf("with ");
+		(void)printf(" with");
 		if (fp->fr_ip.fi_optmsk || fp->fr_mip.fi_optmsk ||
 		    fp->fr_ip.fi_secmsk || fp->fr_mip.fi_secmsk)
 			optprint(fp->fr_mip.fi_secmsk,
@@ -1105,18 +1172,18 @@ struct	frentry	*fp;
 				 fp->fr_ip.fi_optmsk);
 		else if (fp->fr_mip.fi_fl & FI_OPTIONS) {
 			if (!(fp->fr_ip.fi_fl & FI_OPTIONS))
-				(void)printf("not ");
-			(void)printf("ipopt ");
+				(void)printf(" not");
+			(void)printf(" ipopt");
 		}
 		if (fp->fr_mip.fi_fl & FI_SHORT) {
 			if (!(fp->fr_ip.fi_fl & FI_SHORT))
-				(void)printf("not ");
-			(void)printf("short ");
+				(void)printf(" not");
+			(void)printf(" short");
 		}
 		if (fp->fr_mip.fi_fl & FI_FRAG) {
 			if (!(fp->fr_ip.fi_fl & FI_FRAG))
-				(void)printf("not ");
-			(void)printf("frag ");
+				(void)printf(" not");
+			(void)printf(" frag");
 		}
 	}
 	if (fp->fr_proto == IPPROTO_ICMP && fp->fr_icmpm) {
@@ -1127,14 +1194,14 @@ struct	frentry	*fp;
 		type /= 256;
 		if (type < (sizeof(icmptypes) / sizeof(char *)) &&
 		    icmptypes[type])
-			(void)printf("icmp-type %s ", icmptypes[type]);
+			(void)printf(" icmp-type %s", icmptypes[type]);
 		else
-			(void)printf("icmp-type %d ", type);
+			(void)printf(" icmp-type %d", type);
 		if (code)
-			(void)printf("code %d ", code);
+			(void)printf(" code %d", code);
 	}
 	if (fp->fr_proto == IPPROTO_TCP && (fp->fr_tcpf || fp->fr_tcpfm)) {
-		(void)printf("flags ");
+		(void)printf(" flags ");
 		for (s = flagset, t = flags; *s; s++, t++)
 			if (fp->fr_tcpf & *t)
 				(void)putchar(*s);
@@ -1145,9 +1212,11 @@ struct	frentry	*fp;
 					(void)putchar(*s);
 		}
 	}
-	if (fp->fr_flags & (FR_KEEPFRAG|FR_KEEPSTATE))
-		printf(" keep %s ",
-			(fp->fr_flags & FR_KEEPFRAG) ? "frags" : "state");
+
+	if (fp->fr_flags & FR_KEEPSTATE)
+		printf(" keep state");
+	if (fp->fr_flags & FR_KEEPFRAG)
+		printf(" keep frags");
 	(void)putchar('\n');
 }
 

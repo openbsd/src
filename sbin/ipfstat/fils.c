@@ -1,5 +1,3 @@
-/*	$OpenBSD: fils.c,v 1.5 1996/07/10 03:53:49 ccappuc Exp $	*/
-
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -29,6 +27,8 @@
 #include <netinet/ip.h>
 #include <net/if.h>
 #include "ip_fil.h"
+#include "ip_fil_compat.h"
+#include "ip_nat.h"
 #include "ip_frag.h"
 #include "ip_state.h"
 #include <netdb.h>
@@ -41,12 +41,13 @@
 #endif
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)fils.c	1.20 3/24/96 (C) 1993-1996 Darren Reed";
+static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
+static	char	rcsid[] = "$Id: fils.c,v 1.6 1996/07/18 05:08:09 dm Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
 #else
-#define	VMUNIX	"/bsd"
+#define	VMUNIX	"/vmunix"
 #endif
 
 extern	char	*optarg;
@@ -63,6 +64,14 @@ int	opts = 0;
 
 static	void	showstats(), showfrstates();
 static	void	showlist(), showipstates();
+
+void Usage(name)
+char *name;
+{
+	fprintf(stderr, "Usage: %s [-afhIiosv] [-d <device>]\n", name);
+	exit(1);
+}
+
 
 int main(argc,argv)
 int argc;
@@ -113,6 +122,9 @@ char *argv[];
 			break;
 		case 'v' :
 			opts |= OPT_VERBOSE;
+			break;
+		default :
+			Usage();
 			break;
 		}
 	}
