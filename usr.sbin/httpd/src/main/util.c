@@ -1819,7 +1819,7 @@ char *strdup(const char *str)
 	fprintf(stderr, "Ouch!  Out of memory in our strdup()!\n");
 	return NULL;
     }
-    sdup = strcpy(sdup, str);
+    sdup = strlcpy(sdup, str, strlen(str) + 1);
 
     return sdup;
 }
@@ -2237,34 +2237,6 @@ API_EXPORT(char *) ap_caret_escape_args(pool *p, const char *str)
     return cmd;
 }
 #endif
-
-#ifdef OS2
-void os2pathname(char *path)
-{
-    char newpath[MAX_STRING_LEN];
-    int loop;
-    int offset;
-
-    offset = 0;
-    for (loop = 0; loop < (strlen(path) + 1) && loop < sizeof(newpath) - 1; loop++) {
-	if (path[loop] == '/') {
-	    newpath[offset] = '\\';
-	    /*
-	       offset = offset + 1;
-	       newpath[offset] = '\\';
-	     */
-	}
-	else
-	    newpath[offset] = path[loop];
-	offset = offset + 1;
-    };
-    /* Debugging code */
-    /* fprintf(stderr, "%s \n", newpath); */
-
-    strcpy(path, newpath);
-};
-#endif
-
 
 #ifdef NEED_STRERROR
 char *
