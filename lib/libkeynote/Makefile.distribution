@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.distribution,v 1.6 1999/07/14 20:34:09 angelos Exp $
+# $OpenBSD: Makefile.distribution,v 1.7 1999/08/13 22:24:15 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -45,10 +45,15 @@ RMFLAGS = -f
 NROFFFLAGS = -mandoc
 
 # SSLeay/OpenSSL pointers
-SSLINC = -I/usr/local/include -I/usr/local/ssl/include \
-	 -I/usr/local/openssl/include -I/usr/local/ssl/include/openssl
+SSLINC = -I/usr/local/include -I/usr/local/include/ssl \
+	 -I/usr/local/include/openssl -I/usr/include/ssl \
+	 -I/usr/include/openssl \
+	 -I/usr/local/ssl/include -I/usr/local/ssl/include/ssl \
+	 -I/usr/local/openssl/include -I/usr/local/openssl/include/openssl \
+	 -I/usr/local/openssl/include/ssl -I/usr/local/ssl/include/openssl
 SSLLIB = -L/usr/lib -L/usr/local/lib -L/usr/local/ssl/lib \
-	 -L/usr/local/openssl/lib -L/usr/local/openssl/ -lcrypto
+	 -L/usr/local/ssl/lib -L/usr/local/openssl/lib \
+	 -L/usr/local/openssl/ -lcrypto
 
 # No-crypto compile/link flags and definitions
 NOCRYPTODEFS = #-DPGPLIB -DNO_SNPRINTF -DNEED_GETOPT -DPILOT
