@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.5 2001/02/06 23:53:54 djm Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.6 2001/02/07 22:27:18 djm Exp $");
 
 /* XXX: commandline mode */
 /* XXX: copy between two remote hosts (commandline) */
@@ -91,11 +91,13 @@ make_ssh_args(char *add_arg)
 
 	/* Init args array */
 	if (args == NULL) {
-		nargs = 4;
+		nargs = 6;
 		i = 0;
 		args = xmalloc(sizeof(*args) * nargs);
 		args[i++] = "ssh";
 		args[i++] = "-oProtocol=2";
+		args[i++] = "-oForwardAgent=no";
+		args[i++] = "-oForwardX11=no";
 		args[i++] = "-s";
 		args[i++] = NULL;
 	}
