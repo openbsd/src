@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hilms.4,v 1.4 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: hilms.4,v 1.5 2005/01/16 02:04:28 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Nd HIL mouse and graphics tablet driver
 .Sh SYNOPSIS
 .Cd "hilms* at hil?"
-.Cd "wsmouse* at hilms?"
+.Cd "wsmouse* at hilms? mux 0"
 .Sh DESCRIPTION
 This driver supports HIL mice and graphics tablet within the
 .Xr wscons 4
