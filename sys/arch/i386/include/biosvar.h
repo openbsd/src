@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.1 1997/07/17 23:13:44 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.2 1997/07/27 00:38:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,6 +47,18 @@
 
 #define	BIOSNHEADS(d)	(((d)>>8)+1)
 #define	BIOSNSECTS(d)	((d)&0xff)	/* sectors are 1-based */
+
+/* BIOS media ID */
+#define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
+#define	BIOSM_F160K	0xfe	/* floppy ss/sd  8 spt */
+#define	BIOSM_F360K	0xfd	/* floppy ds/sd  9 spt */
+#define	BIOSM_F180K	0xfc	/* floppy ss/sd  9 spt */
+#define	BIOSM_ROMD	0xfa	/* ROM disk */
+#define	BIOSM_F120M	0xf9	/* floppy ds/hd 15 spt 5.25" */
+#define	BIOSM_F720K	0xf9	/* floppy ds/dd  9 spt 3.50" */
+#define	BIOSM_HD	0xf8	/* hard drive */
+#define	BIOSM_F144K	0xf0	/* floppy ds/hd 18 spt 3.50" */
+#define	BIOSM_OTHER	0xf0	/* any other */
 
 /*
  * Advanced Power Management (APM) BIOS driver for laptop PCs.
