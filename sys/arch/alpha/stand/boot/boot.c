@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1995/11/23 02:39:27 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1996/05/10 00:15:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,15 +43,15 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/exec_ecoff.h>
 
 #include <machine/prom.h>
 
-#include "include/coff.h"
 #define _KERNEL
 #include "include/pte.h"
 
 static int aout_exec __P((int, struct exec *, u_int64_t *));
-static int coff_exec __P((int, struct exechdr *, u_int64_t *));
+static int coff_exec __P((int, struct ecoff_exechdr *, u_int64_t *));
 static int loadfile __P((char *, u_int64_t *));
 
 char line[64] = "/netbsd";
@@ -160,7 +160,7 @@ loadfile(fname, entryp)
 	struct devices *dp;
 	union {
 		struct exec aout;
-		struct exechdr coff;
+		struct ecoff_exechdr coff;
 	} hdr;
 	ssize_t nr;
 	int fd, rval;
@@ -179,7 +179,7 @@ loadfile(fname, entryp)
 	}
 
 	/* Exec a.out or COFF. */
-	rval = N_COFFBADMAG(hdr.coff.a) ?
+	rval = ECOFF_BADMAG(&hdr.coff) ?	/* XXX check aouthdr */
 	    aout_exec(fd, &hdr.aout, entryp) :
 	    coff_exec(fd, &hdr.coff, entryp);
 
@@ -237,13 +237,13 @@ aout_exec(fd, aout, entryp)
 static int
 coff_exec(fd, coff, entryp)
 	int fd;
-	struct exechdr *coff;
+	struct ecoff_exechdr *coff;
 	u_int64_t *entryp;
 {
 
 	/* Read in text. */
 	(void)printf("%lu", coff->a.tsize);
-	(void)lseek(fd, N_COFFTXTOFF(coff->f, coff->a), 0);
+	(void)lseek(fd, ECOFF_TXTOFF(coff), 0);
 	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
 	    coff->a.tsize) {
 		(void)printf("read text: %d\n", errno);

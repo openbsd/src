@@ -1,4 +1,4 @@
-/*	$NetBSD: lcareg.h,v 1.1 1995/11/23 02:37:44 cgd Exp $	*/
+/*	$NetBSD: lcareg.h,v 1.2 1996/04/23 14:03:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -45,6 +45,8 @@
 #define LCA_IOC_HAE	LCA_IOC_BASE		/* Host Address Extension */
 
 #define LCA_IOC_CONF	(LCA_IOC_BASE + 0x020)	/* Configuration Cycle Type */
+#define LCA_IOC_STAT0	(LCA_IOC_BASE + 0x040)	/* Status 0 */
+#define LCA_IOC_STAT1	(LCA_IOC_BASE + 0x060)	/* Status 1 */
 
 #define LCA_IOC_W_BASE0	(LCA_IOC_BASE + 0x100)	/* Window Base */
 #define LCA_IOC_W_MASK0	(LCA_IOC_BASE + 0x140)	/* Window Mask */

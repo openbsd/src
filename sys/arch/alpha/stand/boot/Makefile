@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/11/23 02:39:20 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/04/12 01:35:15 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -6,7 +6,7 @@ BOOT_PROG = boot
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
 BOOT_SRCS = start.S boot.c disk.c conf.c prom.c prom_disp.S OSFpal.c
-BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c
+BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c dkcksum.c
 BOOT_SRCS+= getfile.c gets.c ioctl.c lseek.c open.c printf.c read.c
 BOOT_SRCS+= strcmp.c ufs.c write.c bcopy.c filesystem.c strlen.c
 BOOT_SRCS+= ntohl.c prom_swpal.S

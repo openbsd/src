@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1995/11/23 02:34:26 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1996/04/12 02:09:24 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -267,6 +267,8 @@ void pmap_pvdump	__P((vm_offset_t));
 void pmap_check_wiring	__P((char *, vm_offset_t));
 #endif
 
+#define PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
+
 /* pmap_remove_mapping flags */
 #define	PRM_TFLUSH	1
 #define	PRM_CFLUSH	2
@@ -406,8 +408,19 @@ pmap_bootstrap(firstaddr, ptaddr)
 	/* Nothing to do; it's already zero'd */
 
 	avail_start = k0segtophys(firstaddr);
-	avail_end = alpha_ptob(1 + lastusablepage);
+#if 1
+	avail_end = alpha_ptob(lastusablepage + 1);
 	mem_size = avail_end - avail_start;
+#else
+	/* XXX why not lastusablepage + 1, & not include NBPG in mem_size? */
+	avail_end = alpha_ptob(lastusablepage);
+	mem_size = NBPG + avail_end - avail_start;
+#endif
+#if 0
+	printf("avail_start = 0x%lx\n", avail_start);
+	printf("avail_end = 0x%lx\n", avail_end);
+	printf("mem_size = 0x%lx\n", mem_size);
+#endif
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
@@ -522,6 +535,10 @@ pmap_init(phys_start, phys_end)
 	 */
 	vm_first_phys = phys_start;
 	vm_last_phys = phys_end;
+#if 0
+	printf("vm_first_phys = 0x%lx\n", vm_first_phys);
+	printf("vm_last_phys = 0x%lx\n", vm_last_phys);
+#endif
 	pmap_initialized = TRUE;
 }
 
@@ -769,7 +786,7 @@ pmap_page_protect(pa, prot)
 	    prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE))
 		printf("pmap_page_protect(%lx, %lx)\n", pa, prot);
 #endif
-	if (pa < vm_first_phys || pa >= vm_last_phys)
+	if (!PAGE_IS_MANAGED(pa))
 		return;
 
 	switch (prot) {
@@ -1015,7 +1032,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Note that we raise IPL while manipulating pv_table
 	 * since pmap_enter can be called at interrupt time.
 	 */
-	if (pa >= vm_first_phys && pa < vm_last_phys) {
+	if (PAGE_IS_MANAGED(pa)) {
 		register pv_entry_t pv, npv;
 		int s;
 
@@ -1092,10 +1109,12 @@ validate:
 	 * Build the new PTE.
 	 */
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap, prot) | PG_V;
-	if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) == 0)
-		npte |= PG_FOR | PG_FOW | PG_FOE;
-	else if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) == 0)
-		npte |= PG_FOW;
+	if (PAGE_IS_MANAGED(pa)) {
+		if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) == 0)
+			npte |= PG_FOR | PG_FOW | PG_FOE;
+		else if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) == 0)
+			npte |= PG_FOW;
+	}
 	if (wired)
 		npte |= PG_WIRED;
 #ifdef DEBUG
@@ -1471,7 +1490,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		if (!pmap_ste_v(pmap, sva))
 			return;
 		pa = pmap_pte_pa(pmap_pte(pmap, sva));
-		if (pa < vm_first_phys || pa >= vm_last_phys)
+		if (!PAGE_IS_MANAGED(pa))
 			return;
 		pv = pa_to_pvh(pa);
 		if (pv->pv_ptpte == NULL)
@@ -1514,6 +1533,8 @@ pmap_clear_modify(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
+	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
+		return;
 	if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) != 0) {
 		pmap_changebit(pa, PG_FOW, TRUE);
 		pmap_attributes[pa_index(pa)] &= ~PMAP_ATTR_MOD;
@@ -1533,6 +1554,8 @@ void pmap_clear_reference(pa)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
+	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
+		return;
 	if ((pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) != 0) {
 		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
 		pmap_attributes[pa_index(pa)] &= ~PMAP_ATTR_REF;
@@ -1552,6 +1575,8 @@ pmap_is_referenced(pa)
 {
 	boolean_t rv;
 
+	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
+		return 0;
 	rv = (pmap_attributes[pa_index(pa)] & PMAP_ATTR_REF) != 0;
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
@@ -1574,6 +1599,8 @@ pmap_is_modified(pa)
 {
 	boolean_t rv;
 
+	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
+		return 0;
 	rv = (pmap_attributes[pa_index(pa)] & PMAP_ATTR_MOD) != 0;
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
@@ -1709,7 +1736,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	/*
 	 * If this isn't a managed page, we are all done.
 	 */
-	if (pa < vm_first_phys || pa >= vm_last_phys)
+	if (!PAGE_IS_MANAGED(pa))
 		return;
 	/*
 	 * Otherwise remove it from the PV table
@@ -1848,7 +1875,7 @@ pmap_changebit(pa, bit, setem)
 		printf("pmap_changebit(%lx, %lx, %s)\n",
 		       pa, bit, setem ? "set" : "clear");
 #endif
-	if (pa < vm_first_phys || pa >= vm_last_phys)
+	if (!PAGE_IS_MANAGED(pa))
 		return;
 
 #ifdef PMAPSTATS
@@ -2156,6 +2183,10 @@ pmap_emulate_reference(p, v, user, write)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("\tpa = 0x%lx\n", pa);
 #endif
+#ifdef DIAGNOSTIC
+	if (!PAGE_IS_MANAGED(pa))
+		printf("WARNING: pmap_emulate_reference(0x%lx, 0x%lx, %d, %d): pa 0x%lx not managed\n", p, v, user, write, pa);
+#endif
 
 	/*
 	 * Twiddle the appropriate bits to reflect the reference
@@ -2177,6 +2208,7 @@ pmap_emulate_reference(p, v, user, write)
 #if 0
 		/*
 		 * This is apparently normal.  Why? -- cgd
+		 * XXX because was being called on unmanaged pages?
 		 */
 		printf("warning: pmap_changebit didn't.");
 #endif

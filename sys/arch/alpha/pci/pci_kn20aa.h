@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.h,v 1.1 1995/11/23 02:38:05 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.h,v 1.2 1996/04/13 00:24:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,9 +27,7 @@
  * rights to redistribute these changes.
  */
 
-void	pci_kn20aa_pickintr __P((__const struct pci_conf_fns *, void *,
-	    __const struct pci_pio_fns *, void *,
-	    __const struct pci_intr_fns **, void **));
+void	pci_kn20aa_pickintr __P((struct cia_config *));
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt kn20aa_intr_evcnt;

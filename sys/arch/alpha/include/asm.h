@@ -1,7 +1,7 @@
-/*	$NetBSD: asm.h,v 1.2 1995/11/23 02:35:45 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 1996/04/12 01:36:51 cgd Exp $	*/
 
 /* 
- * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
+ * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
@@ -600,6 +600,6 @@ _name_:;							\
 
 #define	MF_FPCR(x)	mf_fpcr x
 #define	MT_FPCR(x)	mt_fpcr x
-#define	JMP(loc)	br	zero,loc
+#define	JMP(loc)	jmp	zero,loc
 #define	CONST(c,reg)	ldiq	reg, c
 

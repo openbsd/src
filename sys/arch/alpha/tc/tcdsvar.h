@@ -1,7 +1,7 @@
-/*	$NetBSD: tcdsvar.h,v 1.1 1995/12/20 00:40:41 cgd Exp $	*/
+/*	$NetBSD: tcdsvar.h,v 1.3 1996/04/12 06:10:18 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -66,16 +66,16 @@ struct tcds_slotconfig {
 };
 
 struct tcdsdev_attach_args {
-	struct tcdev_attach_args tcdsda_tc;
+	struct tc_attach_args tcdsda_ta;
 	struct tcds_slotconfig *tcdsda_sc;
 	u_int	tcdsda_id;
 	u_int	tcdsda_freq;
 };
-#define	tcdsda_modname	tcdsda_tc.tcda_modname
-#define	tcdsda_slot	tcdsda_tc.tcda_slot
-#define	tcdsda_offset	tcdsda_tc.tcda_offset
-#define	tcdsda_addr	tcdsda_tc.tcda_addr
-#define	tcdsda_cookie	tcdsda_tc.tcda_cookie
+#define	tcdsda_modname	tcdsda_ta.ta_modname
+#define	tcdsda_slot	tcdsda_ta.ta_slot
+#define	tcdsda_offset	tcdsda_ta.ta_offset
+#define	tcdsda_addr	tcdsda_ta.ta_addr
+#define	tcdsda_cookie	tcdsda_ta.ta_cookie
 
 #define	TCDS_REG(base, off) \
     (volatile u_int32_t *)TC_DENSE_TO_SPARSE((base) + (off))
@@ -105,4 +105,4 @@ int	tcds_dmaintr	__P((struct tcds_slotconfig *));
  * The TCDS (bus) cfdriver, so that subdevices can more
  * easily tell what bus they're on.
  */
-extern struct cfdriver tcdscd;
+extern struct cfdriver tcds_cd;

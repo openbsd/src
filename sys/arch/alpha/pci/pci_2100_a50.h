@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_2100_a50.h,v 1.1 1995/11/23 02:37:51 cgd Exp $	*/
+/*	$NetBSD: pci_2100_a50.h,v 1.3 1996/04/12 06:08:42 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -27,6 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_2100_a50_pickintr __P((__const struct pci_conf_fns *, void *,
-	    __const struct pci_pio_fns *, void *,
-	    __const struct pci_intr_fns **, void **));
+void	pci_2100_a50_pickintr __P((struct apecs_config *));

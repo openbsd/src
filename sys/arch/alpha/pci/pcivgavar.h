@@ -1,7 +1,7 @@
-/*	$NetBSD: pcivgavar.h,v 1.3 1995/11/23 02:38:13 cgd Exp $	*/
+/*	$NetBSD: pcivgavar.h,v 1.5 1996/04/12 06:08:58 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -27,20 +27,14 @@
  * rights to redistribute these changes.
  */
 
-#include <dev/pseudo/ansicons.h>
-
 struct pcivga_devconfig {
-	__const struct pci_conf_fns *dc_pcf;
-	void		*dc_pcfa;
-	__const struct pci_mem_fns *dc_pmf;
-	void		*dc_pmfa;
-	__const struct pci_pio_fns *dc_ppf;
-	void		*dc_ppfa;
+	bus_chipset_tag_t dc_bc;
+	pci_chipset_tag_t dc_pc;
 
-	pci_tag_t	dc_pcitag;	/* PCI tag */
+	pcitag_t	dc_pcitag;	/* PCI tag */
 
-	u_int16_t	*dc_crtat;	/* VGA screen memory */
-	int		dc_iobase;	/* VGA I/O address */
+	bus_io_handle_t	dc_ioh;
+	bus_mem_handle_t dc_memh;
 
 	int		dc_ncol, dc_nrow; /* screen width & height */
 	int		dc_ccol, dc_crow; /* current cursor position */
@@ -48,8 +42,6 @@ struct pcivga_devconfig {
 	char		dc_so;		/* in standout mode? */
 	char		dc_at;		/* normal attributes */
 	char		dc_so_at;	/* standout attributes */
-
-	struct ansicons	dc_ansicons;	/* ansi console emulator info XXX */
 };
 	
 struct pcivga_softc {
@@ -59,15 +51,11 @@ struct pcivga_softc {
 	void	*sc_intr;		/* interrupt handler info */
 };
 
-#define	PCIVGA_CURSOR_OFF	-1	/* pass to pcivga_cpos to disable */
-
 #define	DEVICE_IS_PCIVGA(class, id)					\
-	    ((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
+	    (((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||	\
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
-	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA))
+	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
-void    pcivga_console __P((__const struct pci_conf_fns *, void *, 
-	    __const struct pci_mem_fns *, void *,
-	    __const struct pci_pio_fns *, void *,
-	    pci_bus_t, pci_device_t, pci_function_t));
+void    pcivga_console __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int,
+	    int));

@@ -1,7 +1,7 @@
-/*	$NetBSD: sio.c,v 1.3 1995/11/23 02:38:16 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.8 1996/04/13 00:23:34 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -32,6 +32,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <machine/intr.h>
+#include <machine/bus.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
 
@@ -44,17 +47,37 @@
 int	siomatch __P((struct device *, void *, void *));
 void	sioattach __P((struct device *, struct device *, void *));
 
-struct cfdriver siocd = {
-	NULL, "sio", siomatch, sioattach, DV_DULL, sizeof(struct device)
+struct cfattach sio_ca = {
+	sizeof(struct device), siomatch, sioattach,
+};
+
+struct cfdriver sio_cd = {
+	NULL, "sio", DV_DULL,
 };
 
 int	pcebmatch __P((struct device *, void *, void *));
 
-struct cfdriver pcebcd = {
-	NULL, "pceb", pcebmatch, sioattach, DV_DULL, sizeof(struct device)
+struct cfattach pceb_ca = {
+	sizeof(struct device), pcebmatch, sioattach,
 };
 
-static int	sioprint __P((void *, char *pnp));
+struct cfdriver pceb_cd = {
+	NULL, "pceb", DV_DULL,
+};
+
+union sio_attach_args {
+	const char *sa_name;			/* XXX should be common */
+	struct isabus_attach_args sa_iba;
+	struct eisabus_attach_args sa_eba;
+};
+
+int	sioprint __P((void *, char *pnp));
+void	sio_isa_attach_hook __P((struct device *, struct device *,
+	    struct isabus_attach_args *));
+void	sio_eisa_attach_hook __P((struct device *, struct device *,
+	    struct eisabus_attach_args *));
+int	sio_eisa_maxslots __P((void *));
+int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
 
 int
 siomatch(parent, match, aux)
@@ -62,10 +85,10 @@ siomatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pcidev_attach_args *pda = aux;
+	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_INTEL_SIO)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_SIO)
 		return (0);
 
 	return (1);
@@ -77,10 +100,10 @@ pcebmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pcidev_attach_args *pda = aux;
+	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_INTEL_PCEB)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PCEB)
 		return (0);
 
 	return (1);
@@ -91,23 +114,24 @@ sioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcidev_attach_args *pda = aux;
-	struct isa_attach_args ia;
-	struct eisa_attach_args ea;
+	struct pci_attach_args *pa = aux;
+	struct alpha_isa_chipset ic;
+	struct alpha_eisa_chipset ec;
+	union sio_attach_args sa;
 	int sio, haseisa;
 	char devinfo[256];
 
-	sio = (PCI_PRODUCT(pda->pda_id) == PCI_PRODUCT_INTEL_SIO);
-	haseisa = (PCI_PRODUCT(pda->pda_id) == PCI_PRODUCT_INTEL_PCEB);
+	sio = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO);
+	haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
-	pci_devinfo(pda->pda_id, pda->pda_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pda->pda_class));
+	    PCI_REVISION(pa->pa_class));
 
 	if (sio) {
 		pci_revision_t rev;
 
-		rev = PCI_REVISION(pda->pda_class);
+		rev = PCI_REVISION(pa->pa_class);
 		
 		if (rev < 3)
 			printf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
@@ -118,44 +142,89 @@ sioattach(parent, self, aux)
 	evcnt_attach(self, "intr", &sio_intr_evcnt);
 #endif
 
-	ia.ia_bus = BUS_ISA;
-	ia.ia_dmafns = pda->pda_dmafns;
-	ia.ia_dmaarg = pda->pda_dmaarg;
-	ia.ia_intrfns = &sio_isa_intr_fns;
-	ia.ia_intrarg = NULL;			/* XXX needs nothing */
-	ia.ia_memfns = pda->pda_memfns;
-	ia.ia_memarg = pda->pda_memarg;
-	ia.ia_piofns = pda->pda_piofns;
-	ia.ia_pioarg = pda->pda_pioarg;
-	config_found(self, &ia, sioprint);
-
 	if (haseisa) {
-		ea.ea_bus = BUS_EISA;
-		ea.ea_dmafns = pda->pda_dmafns;
-		ea.ea_dmaarg = pda->pda_dmaarg;
-		ea.ea_intrfns = &sio_isa_intr_fns;
-		ea.ea_intrarg = NULL;		/* XXX needs nothing */
-		ea.ea_memfns = pda->pda_memfns;
-		ea.ea_memarg = pda->pda_memarg;
-		ea.ea_piofns = pda->pda_piofns;
-		ea.ea_pioarg = pda->pda_pioarg;
-		config_found(self, &ea, sioprint);
+		ec.ec_v = NULL;
+		ec.ec_attach_hook = sio_eisa_attach_hook;
+		ec.ec_maxslots = sio_eisa_maxslots;
+		ec.ec_intr_map = sio_eisa_intr_map;
+		ec.ec_intr_string = sio_intr_string;
+		ec.ec_intr_establish = sio_intr_establish;
+		ec.ec_intr_disestablish = sio_intr_disestablish;
+
+		sa.sa_eba.eba_busname = "eisa";
+		sa.sa_eba.eba_bc = pa->pa_bc;
+		sa.sa_eba.eba_ec = &ec;
+		config_found(self, &sa.sa_eba, sioprint);
 	}
+
+	ic.ic_v = NULL;
+	ic.ic_attach_hook = sio_isa_attach_hook;
+	ic.ic_intr_establish = sio_intr_establish;
+	ic.ic_intr_disestablish = sio_intr_disestablish;
+
+	sa.sa_iba.iba_busname = "isa";
+	sa.sa_iba.iba_bc = pa->pa_bc;
+	sa.sa_iba.iba_ic = &ic;
+	config_found(self, &sa.sa_iba, sioprint);
 }
 
-static int
+int
 sioprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-        register struct isa_attach_args *ia = aux;
-
-	/*
-	 * XXX Assumes that the first fields of 'struct isa_attach_args'
-	 * XXX and 'struct eisa_attach_args' are the same.
-	 */
+        register union sio_attach_args *sa = aux;
 
         if (pnp)
-                printf("%s at %s", isa_bustype_name(ia->ia_bus), pnp);
+                printf("%s at %s", sa->sa_name, pnp);
         return (UNCONF);
+}
+
+void
+sio_isa_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
+
+	/* Nothing to do. */
+}
+
+void
+sio_eisa_attach_hook(parent, self, eba)
+	struct device *parent, *self;
+	struct eisabus_attach_args *eba;
+{
+
+	/* Nothing to do. */
+}
+
+int
+sio_eisa_maxslots(v)
+	void *v;
+{
+
+	return 16;		/* as good a number as any.  only 8, maybe? */
+}
+
+int
+sio_eisa_intr_map(v, irq, ihp)
+	void *v;
+	u_int irq;
+	eisa_intr_handle_t *ihp;
+{
+
+#define	ICU_LEN		16	/* number of ISA IRQs (XXX) */
+
+	if (irq >= ICU_LEN) {
+		printf("sio_eisa_intr_map: bad IRQ %d\n", irq);
+		*ihp = -1;
+		return 1;
+	}
+	if (irq == 2) {
+		printf("sio_eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		irq = 9;
+	}
+
+	*ihp = irq;
+	return 0;
 }

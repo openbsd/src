@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 1995/12/20 00:08:43 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.12 1996/03/04 05:04:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,9 @@
 /*
  * Machine dependent constants for the Alpha.
  */
+#define	_MACHINE	alpha
 #define	MACHINE		"alpha"
+#define	_MACHINE_ARCH	alpha
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
@@ -157,7 +159,7 @@
 #define	splhigh()               pal_swpipl(PSL_IPL_HIGH)
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 
 /* This was calibrated empirically */
 extern	u_int64_t cycles_per_usec;

@@ -1,14 +1,14 @@
-$NetBSD: TODO.users,v 1.2 1995/11/23 02:33:29 cgd Exp $
+$NetBSD: TODO.users,v 1.3.4.1 1996/06/13 20:49:07 cgd Exp $
 
 The NetBSD/Alpha "User" To-Do List
 
 
-The following are things that I'd like to see "users" of NetBSD/Alpha do.
-It's unlikely that I'll get around to them in any reasonable time
-frame, and I think they _should_ get done.
+The following are things that I'd like to see "users" of NetBSD/Alpha
+do.  It's unlikely that I'll get around to them in any reasonable time
+frame, and I think they should get done.
 
-If you think of something that should be added to this list (and don't
-want to do it yourself, right then 8-), send me mail and I'll add it.
+If you think of something that should be added to this list send me
+mail and I'll add it.
 
 If you're planning to work on something on this list, send me mail and
 tell me about it, so that I can keep people from duplicating work.
@@ -16,35 +16,23 @@ Once you've done something on this list, send me context diffs.
 
 
 Chris Demetriou
-cgd@netbsd.org
+cgd@cs.cmu.edu
 --
-Make GDB work.
-	(1) function arguments and local variables don't seem to work.
-
 Test programs; find and fix bugs.  In particular:
 	(1) make sure accounting works
-	(2) figure out why strip doesn't seem to work
-	(3) last i checked, 'file' core dumped
-	(4) /usr/games
+	(2) last i checked, 'file' core dumped
+	(3) /usr/games
 
-Make TurboChannel option slots work reasonably.  This will require
-    different sets of code to be written on the 3000/[4-9]00 and on the
-    3000/300 families.  It shouldn't be too hard, but you will need some
-    devices that live in option slots.
-
-Once TC option slots work, somebody with a TC ethernet board should
-    make it work, for completeness.
+Test TurboChannel option slot support.  Write TurboChannel option
+board drivers.  Test PMAD-A (TC le) driver.
 
 Get the GNU tools to generate a.out binaries for the alpha.  Once that
-    is done:
-	(1) make gprof work, then profile the kernel and tell me how
-	    bad my assumptions lost.
-	(2) make the rest of the NetBSD a.out-manipulation tools (e.g.
-	    nm) work.
+is done, make the rest of the NetBSD a.out-manipulation tools (e.g. nm)
+work.
 
 Make DDB work.  (For completeness, may require a.out kernel binaries
-    and/or some ecoff symbol handling code to be written; the former
-    is strongly preferred.)
+and/or some ecoff symbol handling code to be written; the former is
+strongly preferred.)
 
-Track down bugs caused by compiling the kernel with -O.  (At least
-    some of these are likely to be code generation bugs.)
+Track down any bugs caused by compiling the kernel with -O.  (At least
+some of these may be code generation bugs.)

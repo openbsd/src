@@ -1,79 +1,75 @@
-$NetBSD: README,v 1.7 1995/11/23 02:33:17 cgd Exp $
+$NetBSD: README,v 1.8.4.1 1996/06/13 20:49:01 cgd Exp $
 
 Obtaining NetBSD/Alpha sources and binaries:
 
-	NetBSD/Alpha sources and binaries are available from:
-		ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
-	See the README.files file there to figure out which of
-	the following items corresponds to what file(s) in the FTP
-	archive.
+	NetBSD/Alpha's sources, with the exceptions of the GNU
+	toolchain and X11 code, are integrated into NetBSD-current,
+	and are available from:
+		ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/
 
-	There are two sets of system binaries available:
+	The latest NetBSD/Alpha binary snapshot, and source snapshots
+	for the toolchain and X11 code, can be found at:
+		ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
+
+	Binary snapshots include two different set of system binaries:
 		(1) an rz25 disk image, for first-time installation
-		    (see below), and
-		(2) two tar files of the binaries, for updates.
+		    (see below for instructions), and
+		(2) three tar files of the binaries, for updates.
 		    (one of the tar files is the contents of /etc,
-		    one is everything else, except a kernel.
+		    one contains X11 binaries, and the last is everything
+		    else, except the kernel and the installed boot block.)
 		    There are no instructions on how to use these.
 		    Good luck!  8-)
 
-	There are also two precompiled kernels available: one generic
-	kernel which will prompt for a root device, and one which tries
-	to boot diskless.  The generic kernel is included in the rz25
-	disk image.
+	Binary snapshots include a kernel image which is the same
+	as the one on the rz25 disk image.
 
-	X11 client binaries are packaged seperately.  (There is no
-	server at this time.)
-
-	There are several sets of sources available:
-		(1) kernel source snapshot (complete kernel sources),
-		(2) compiler toolchain source snapshot (complete
-		    toolchain sources),
-		(3) diffs to the NetBSD-current sources as of the date
-		    of the release to make them match what's used on
-		    the alpha port.  (You should be able to get the
-		    NetBSD-current sources, replace the kernel sources
-		    with the ones i'm distributing, add in these
-		    diffs and the toolchain sources, and compile up a
-		    complete system.)
-		(4) diffs to the XFree86 3.1.2 sources to make them
-		    work with NetBSD/Alpha.  (If you add these to
-		    the XFree86 3.1.2 sources, you should be able to
-		    compile up the X clients.)
+	The sources provided seperately from the normal NetBSD-current
+	distribution are:
+		(1) complete compiler toolchain sources
+		(2) diffs against the XFree86 3.1.2 distribution to
+		    make X work with NetBSD/Alpha.  (Note that
+		    at this time, the diffs are against 3.1.2,
+		    i.e. not against 3.1.2D, etc.)
 	
-	If you are interested in the NetBSD/Alpha port, I suggest that you
-	subscribe to the NetBSD "port-alpha" mailing list by sending an
-	email message to majordomo@netbsd.org with no subject and with a
-	body of "subscribe port-alpha" (without the quotes).  For help on
-	using majordomo, send it mail with an empty subject and body.
+	If you are using or are interested in the NetBSD/Alpha port, I
+	suggest that you subscribe to the NetBSD "port-alpha" mailing list
+	by sending an email message to majordomo@netbsd.org with no
+	subject and with a body of "subscribe port-alpha" (without the
+	quotes).  For help on using majordomo, send it mail with an empty
+	subject and body.  In general, questions about NetBSD/Alpha
+	are best asked on that mailing list (rather than by sending me
+	mail directly).
 
 Installing the NetBSD/Alpha distribution:
 
 	[ Note that these instructions are minimal; it's assumed that if
 	  you're going to be installing this, you're knowledgeable about
-	  booting Alphas and doing other sysadmin-ish stuff, are willing
-	  to look in your Alpha documentation, or are brave.  If they're
-	  really not good enough to get you running, get in touch with me
-	  and I'll try to help you. ]
+	  booting Alphas and doing sysadmin-ish stuff, are willing to look
+	  in your Alpha documentation, or are brave.  If they're really not
+	  good enough to get you running, get in touch with me and I'll try
+	  to help you. ]
 
 	To install the NetBSD/Alpha distribution, you'll need a disk at
 	least the size of an RZ25 -- about 406Mb.  Once you've gotten the
-	binary distribution from me, gunzip it and dd it to the raw disk.
-	The binary distribution includes a disklabel and boot block, so you
-	don't need to do anything special to make it bootable.  I created
-	the binary distribution's file systems with an older version (4.3
-	Reno) of the Berkeley Fast File System format, so that you can
-	mount, read, and write them under OSF/1.
+	binary distribution, gunzip it and dd it to the raw disk.  The binary
+	distribution includes a disklabel and boot block, so you don't need
+	to do anything special to make it bootable.  The binary distribution's
+	file systems are created with an older version ("Level 1") of the
+	Berkeley Fast File System format, so that you can mount, read, and
+	write them under Digital UNIX.
 
-	Once you've dd'd the image to the disk, set your system to use a
-	serial console.  Boot the Alpha with the NetBSD disk, supplying the
-	boot flag "-s".  It should print something about "NetBSD/Alpha Boot
-	program", load the kernel, print a copyright, and print various
-	startup messages.  Included among those startup messages will be
-	SCSI bus/id to device name mappings for all of the SCSI devices
-	that NetBSD recognizes.  Eventually, it'll ask you for the name of
-	the root device.  It expects something like "sd0", "sd1", etc., and
-	you should pick the name that corresponds to the NetBSD disk.
+	If your are using one of the supported systems that includes a
+	PCI bus, and have either a PCI VGA frame buffer of any type or
+	a ZLXp-E1 frame buffer, you may use it as console.  (If you
+	are using your frame buffer as the console, you should use the
+	terminal type 'sun'.)  Otherwise (if you are using a TurboChannel
+	Alpha or have a different kind of frame buffer, you have to use
+	a serial console.)
+	
+	Boot the Alpha with the NetBSD disk, supplying the boot flag "-s".
+	It should print something like "NetBSD/Alpha Boot program", load
+	the kernel, print a copyright, and print various startup messages.
 
 	After a short while, you should be asked for the name of a shell
 	to use; just hit return.  You're advised to fsck the disk at this
@@ -81,54 +77,42 @@ Installing the NetBSD/Alpha distribution:
 	is partition 'd'), remount the root partition read-write (use mount
 	-u root-dev /), and create some necessary system information files:
 		/etc/hosts
-		/etc/resolv.conf (if you want to use DNS)
-		/etc/myname (the hostname of the machine)
-		/etc/mygate (the LAN's gateway's IP address, if your network
-			setup requires that it be named explicitly)
-		/etc/hostname.le0 (on TurboChannel machines, to describe
-			the enet addr, etc., for the Alpha's ethernet.  The
-			format can be discerned by looking in /etc/netstart.
-			As an example, for my development machine, it's:
-			inet macallan.dssc.cs.cmu.edu 0xffff0000 128.2.255.255
-			     ^^^^^^^^^^^^^^^hostname  ^^^netmask ^^^broadcast)
-		/etc/hostname.de0 (on PCI machines; same format as
-			hostname.le0 would have.)
-		/etc/fstab (a prototype is in /etc/fstab.sd)
+		/etc/resolv.conf
+			DNS resolver configuration information, if you
+			want to use DNS.
+		/etc/myname
+			The hostname of the machine.
+		/etc/mygate
+			The LAN's gateway's IP address, if your network
+			setup requires that a static route to the
+			gateway be created.
+		/etc/hostname.xxy
+			(where "xxy" is your machine's ethernet
+			interface name, e.g. "le0" for TurboChannel
+			machines or "de0" for PCI machines.)
+			The IP address, etc., for the named network
+			interface.  (You can have multiple of these
+			files, for example, if the machine is
+			multi-homed.)  The format can be discerned by
+			looking in /etc/netstart, and is typically
+			something like:
+			    inet hostname.in.etc.hosts net.mask broadcast.addr
+			where the netmask is formatted as a hex number
+			(e.g. 0xffffff00), and the broadcast address
+			is formatted as an IP address (e.g.  128.2.255.255)
+		/etc/fstab
+			The file system information table for the system.
+			A prototype is in /etc/fstab.sd.
 	(You can also create the files mentioned above by mounting the
-	disk's file systems under OSF/1 and filling in the appropriate
-	information.)
+	disk's file systems under Digital UNIX.)
 
 	Once those files are created, you should be able to boot the system
 	multi-user.  To do so, halt the system and boot again from the
-	NetBSD disk, this time supplying the boot flags "-a".
+	NetBSD disk, this time supplying the boot flag "-a".
 
-	Once the system has booted, you should be able to log in over the
-	network.  (Log in as root, at first, then use vipw to create user
-	account(s) and re-log in as the appropriate user.)  If you used a
-	disk other than an RZ25, you may also want to edit the disk's
-	disklabel, and create one or more partitions to use the extra space.
-
-Using NetBSD/Alpha:
-	You'll probably want to NFS mount the sources from another machine;
-	that's what I do, and it works just fine.  If you'd like tips on
-	good ways to keep the NetBSD sources under source control, just ask.
-
-	A fair number of binaries don't work properly.  For example, GDB
-	won't properly run programs or debug core files; someone needs
-	to write support for NetBSD/Alpha.
-
-	As noted above, the SCSI code on TurboChannel machines is reliable
-	only when being used with one SCSI bus at a time; this is obviously
-	a bug.  Additionally, the SCSI driver seems unhappy about dealing
-	with certain types of disk drives (e.g. the IBM Lightning).
-
-	Because I've been working on getting the system up and running, then
-	out the door, I've not had much time to do performance analysis on
-	the kernel, nor tried to improve performance in any way.  Some of
-	the code is awfully rough.  That being said, on a lot of operations
-	I'm seeing performance comparable to that of OSF/1 on the same
-	hardware, so I've not gone too far wrong anywhere.
-
+	If you used a disk other than an RZ25, you may want to edit the
+	disk's disklabel, and create one or more partitions after the
+	existing partitions to use the extra space.
 
 
 Chris Demetriou

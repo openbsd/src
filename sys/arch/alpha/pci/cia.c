@@ -1,7 +1,7 @@
-/*	$NetBSD: cia.c,v 1.1 1995/11/23 02:37:24 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.5.4.1 1996/06/10 00:02:39 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -51,9 +51,12 @@
 int	ciamatch __P((struct device *, void *, void *));
 void	ciaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver ciacd = {
-	NULL, "cia", ciamatch, ciaattach, DV_DULL,
-	    sizeof(struct cia_softc)
+struct cfattach cia_ca = {
+	sizeof(struct cia_softc), ciamatch, ciaattach,
+};
+
+struct cfdriver cia_cd = {
+	NULL, "cia", DV_DULL,
 };
 
 static int	ciaprint __P((void *, char *pnp));
@@ -73,7 +76,7 @@ ciamatch(parent, match, aux)
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a CIA. */
-	if (strcmp(ca->ca_name, ciacd.cd_name) != 0)
+	if (strcmp(ca->ca_name, cia_cd.cd_name) != 0)
 		return (0);
 
 	if (ciafound)
@@ -94,15 +97,12 @@ cia_init(ccp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-	ccp->cc_conffns = &cia_conf_fns;
-	ccp->cc_confarg = ccp;
-	ccp->cc_dmafns = &cia_dma_fns;
-	ccp->cc_dmaarg = ccp;
-	/* Interrupt routines set up in 'attach' */
-	ccp->cc_memfns = &cia_mem_fns;
-	ccp->cc_memarg = ccp;
-	ccp->cc_piofns = &cia_pio_fns;
-	ccp->cc_pioarg = ccp;
+        cia_bus_io_init(&ccp->cc_bc, ccp);
+        cia_bus_mem_init(&ccp->cc_bc, ccp);
+        cia_pci_init(&ccp->cc_pc, ccp);
+
+	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
+	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
 }
 
 void
@@ -113,7 +113,7 @@ ciaattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
-	struct pci_attach_args pa;
+	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 CIAs. */
 	ciafound = 1;
@@ -131,9 +131,7 @@ ciaattach(parent, self, aux)
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_KN20AA)
 	case ST_DEC_KN20AA:
-		pci_kn20aa_pickintr(ccp->cc_conffns, ccp->cc_confarg,
-		    ccp->cc_piofns, ccp->cc_pioarg,
-		    &ccp->cc_intrfns, &ccp->cc_intrarg);
+		pci_kn20aa_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
 		evcnt_attach(self, "intr", &kn20aa_intr_evcnt);
 #endif
@@ -143,22 +141,11 @@ ciaattach(parent, self, aux)
 		panic("ciaattach: shouldn't be here, really...");
 	}
 
-	pa.pa_bus = 0;
-	pa.pa_maxdev = 32;
-	pa.pa_burstlog2 = 8;
-
-	pa.pa_conffns = ccp->cc_conffns;
-	pa.pa_confarg = ccp->cc_confarg;
-	pa.pa_dmafns = ccp->cc_dmafns;
-	pa.pa_dmaarg = ccp->cc_dmaarg;
-	pa.pa_intrfns = ccp->cc_intrfns;
-	pa.pa_intrarg = ccp->cc_intrarg;
-	pa.pa_memfns = ccp->cc_memfns;
-	pa.pa_memarg = ccp->cc_memarg;
-	pa.pa_piofns = ccp->cc_piofns;
-	pa.pa_pioarg = ccp->cc_pioarg;
-
-	config_found(self, &pa, ciaprint);
+	pba.pba_busname = "pci";
+	pba.pba_bc = &ccp->cc_bc;
+	pba.pba_pc = &ccp->cc_pc;
+	pba.pba_bus = 0;
+	config_found(self, &pba, ciaprint);
 }
 
 static int
@@ -166,11 +153,11 @@ ciaprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-	register struct pci_attach_args *pa = aux;
+	register struct pcibus_attach_args *pba = aux;
 
 	/* only PCIs can attach to CIAs; easy. */
 	if (pnp)
-		printf("pci at %s", pnp);
-	printf(" bus %d", pa->pa_bus);
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: pcivga.c,v 1.4 1995/12/24 02:29:47 mycroft Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.8 1996/04/17 21:49:58 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -36,39 +36,41 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
-#include <dev/pseudo/ansicons.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <alpha/pci/pcivgavar.h>
-#include <alpha/pci/wsconsvar.h>
+#include <alpha/wscons/wsconsvar.h>
+
+#define	PCIVGA_6845_ADDR	0x24
+#define	PCIVGA_6845_DATA	0x25
 
 int	pcivgamatch __P((struct device *, void *, void *));
 void	pcivgaattach __P((struct device *, struct device *, void *));
+int	pcivgaprint __P((void *, char *));
 
-struct cfdriver pcivgacd = {
-	NULL, "pcivga", pcivgamatch, pcivgaattach, DV_DULL,
-	    sizeof(struct pcivga_softc)
+struct cfattach pcivga_ca = {
+	sizeof(struct pcivga_softc), pcivgamatch, pcivgaattach,
 };
 
-void	pcivga_getdevconfig __P((__const struct pci_conf_fns *, void *,
-	    __const struct pci_mem_fns *, void *,
-	    __const struct pci_pio_fns *, void *,
-	    pci_conftag_t tag, struct pcivga_devconfig *dc));
+struct cfdriver pcivga_cd = {
+	NULL, "pcivga", DV_DULL,
+};
+
+void	pcivga_getdevconfig __P((bus_chipset_tag_t, pci_chipset_tag_t,
+	    pcitag_t, struct pcivga_devconfig *dc));
 
 struct pcivga_devconfig pcivga_console_dc;
 
-void	pcivga_cursor __P((void *, int, int));
+void	pcivga_cursor __P((void *, int, int, int));
 void	pcivga_putstr __P((void *, int, int, char *, int));
 void	pcivga_copycols __P((void *, int, int, int,int));
 void	pcivga_erasecols __P((void *, int, int, int));
 void	pcivga_copyrows __P((void *, int, int, int));
 void	pcivga_eraserows __P((void *, int, int));
-void	pcivga_bell __P((void *));			/* XXX */
 
-struct ansicons_functions pcivga_acf = {
-	pcivga_bell,
+struct wscons_emulfuncs pcivga_emulfuncs = {
 	pcivga_cursor,
 	pcivga_putstr,
 	pcivga_copycols,
@@ -77,7 +79,9 @@ struct ansicons_functions pcivga_acf = {
 	pcivga_eraserows,
 };
 
-#define	PCIVGAUNIT(dev)	minor(dev)
+int	pcivgaioctl __P((struct device *, u_long, caddr_t, int,
+	    struct proc *));
+int	pcivgammap __P((struct device *, off_t, int));
 
 int
 pcivgamatch(parent, match, aux)
@@ -85,55 +89,71 @@ pcivgamatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pcidev_attach_args *pda = aux;
+	struct pci_attach_args *pa = aux;
 
 	/*
 	 * If it's prehistoric/vga or display/vga, we match.
 	 */
-	if (PCI_CLASS(pda->pda_class) == PCI_CLASS_PREHISTORIC &&
-	    PCI_SUBCLASS(pda->pda_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
 		return (1);
-	if (PCI_CLASS(pda->pda_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pda->pda_class) == PCI_SUBCLASS_DISPLAY_VGA)
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
 		return (1);
 
 	return (0);
 }
 
 void
-pcivga_getdevconfig(pcf, pcfa, pmf, pmfa, ppf, ppfa, tag, dc)
-	__const struct pci_conf_fns *pcf;
-	__const struct pci_mem_fns *pmf;
-	__const struct pci_pio_fns *ppf;
-	void *pcfa, *pmfa, *ppfa;
-	pci_conftag_t tag;
+pcivga_getdevconfig(bc, pc, tag, dc)
+	bus_chipset_tag_t bc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
 	struct pcivga_devconfig *dc;
 {
+	bus_io_handle_t ioh;
+	int cpos;
 
-	dc->dc_pcf = pcf;
-	dc->dc_pcfa = pcfa;
-	dc->dc_pmf = pmf;
-	dc->dc_pmfa = pmfa;
-	dc->dc_ppf = ppf;
-	dc->dc_ppfa = ppfa;
+	dc->dc_bc = bc;
+	dc->dc_pc = pc;
 	dc->dc_pcitag = tag;
 
 	/* XXX deal with mapping foo */
 
-	/* XXX */
-	dc->dc_crtat = (u_short *)PCI_MEM_MAP(pmf, pmfa, 0xb8000, 0x8000, 1);
-	dc->dc_iobase = 0x3d4;			/* XXX */
+	if (bus_mem_map(bc, 0xb8000, 0x8000, 0, &dc->dc_memh))
+		panic("pcivga_getdevconfig: couldn't map memory");
+	if (bus_io_map(bc, 0x3b0, 0x30, &ioh))
+		panic("pcivga_getdevconfig: couldn't map io");
+	dc->dc_ioh = ioh;
 
 	dc->dc_nrow = 25;
 	dc->dc_ncol = 80;
+
 	dc->dc_ccol = dc->dc_crow = 0;
 
+	bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 14);
+	cpos = bus_io_read_1(bc, ioh, PCIVGA_6845_DATA) << 8;
+	bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 15);
+	cpos |= bus_io_read_1(bc, ioh, PCIVGA_6845_DATA);
+
+	dc->dc_crow = cpos / dc->dc_ncol;
+	dc->dc_ccol = cpos % dc->dc_ncol;
+
 	dc->dc_so = 0;
+#if 0
 	dc->dc_at = 0x00 | 0xf;		  /* black bg | white fg */
 	dc->dc_so_at = 0x00 | 0xf | 0x80; /* black bg | white fg | blink */
 
 	/* clear screen, frob cursor, etc.? */
 	pcivga_eraserows(dc, 0, dc->dc_nrow);
+#endif
+	/*
+	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
+	 * XXX Therefore, though the comments say "blue bg", the code uses
+	 * XXX the value for a red background!
+	 */
+	dc->dc_at = 0x40 | 0x0f;		/* blue bg | white fg */
+	dc->dc_so_at = 0x40 | 0x0f | 0x80;	/* blue bg | white fg | blink */
 }
 
 void
@@ -141,29 +161,26 @@ pcivgaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcidev_attach_args *pda = aux;
+	struct pci_attach_args *pa = aux;
 	struct pcivga_softc *sc = (struct pcivga_softc *)self;
+	struct wscons_attach_args waa;
+	struct wscons_odev_spec *wo;
 	char devinfo[256];
 	int console;
 
-	console = (pda->pda_tag == pcivga_console_dc.dc_pcitag);
+	console = (pa->pa_tag == pcivga_console_dc.dc_pcitag);
 	if (console)
 		sc->sc_dc = &pcivga_console_dc;
 	else {
 		sc->sc_dc = (struct pcivga_devconfig *)
 		    malloc(sizeof(struct pcivga_devconfig), M_DEVBUF, M_WAITOK);
-		pcivga_getdevconfig(pda->pda_conffns, pda->pda_confarg,
-		    pda->pda_memfns, pda->pda_memarg, pda->pda_piofns,
-		    pda->pda_memarg, pda->pda_tag, sc->sc_dc);
-	}
-	if (sc->sc_dc->dc_crtat == NULL) {
-		printf(": couldn't map memory space; punt!\n");
-		return;
+		pcivga_getdevconfig(pa->pa_bc, pa->pa_pc, pa->pa_tag,
+		    sc->sc_dc);
 	}
 
-	pci_devinfo(pda->pda_id, pda->pda_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pda->pda_class));
+	    PCI_REVISION(pa->pa_class));
 
 #if 0
 	if (sc->sc_dc->dc_tgaconf == NULL) {
@@ -180,94 +197,120 @@ pcivgaattach(parent, self, aux)
 #if 0
 	pci_intrdata = pci_conf_read(sc->sc_pcitag, PCI_INTERRUPT_REG);
 	if (PCI_INTERRUPT_PIN(pci_intrdata) != PCI_INTERRUPT_PIN_NONE) {
-		sc->sc_intr = pci_map_int(sc->sc_pcitag, IPL_TTY, tgaintr, sc,
-					  sc->sc_dev.dv_xname);
+		sc->sc_intr = pci_map_int(sc->sc_pcitag, IPL_TTY, tgaintr, sc);
 		if (sc->sc_intr == NULL)
 			printf("%s: WARNING: couldn't map interrupt\n",
 			    sc->sc_dev.dv_xname);
 	}
 #endif
 
-	if (!wscattach_output(self, console, &sc->sc_dc->dc_ansicons,
-	    &pcivga_acf, sc->sc_dc, sc->sc_dc->dc_nrow, sc->sc_dc->dc_ncol,
-	    0, 0)) {
-		panic("pcivgaattach: wscattach failed");
-		/* NOTREACHED */
-	}
+	waa.waa_isconsole = console;
+	wo = &waa.waa_odev_spec;
+	wo->wo_ef = &pcivga_emulfuncs;
+	wo->wo_efa = sc->sc_dc;
+	wo->wo_nrows = sc->sc_dc->dc_nrow;
+	wo->wo_ncols = sc->sc_dc->dc_ncol;
+	wo->wo_crow = sc->sc_dc->dc_crow;
+	wo->wo_ccol = sc->sc_dc->dc_ccol;
+	wo->wo_ioctl = pcivgaioctl;
+	wo->wo_mmap = pcivgammap;
+
+	config_found(self, &waa, pcivgaprint);
 }
 
-#if 0
 int
-tgammap(dev, offset, nprot)
-	dev_t dev;
-	int offset;
-	int nprot;
+pcivgaprint(aux, pnp)
+	void *aux;
+	char *pnp;
 {
-	struct pcivga_softc *sc = pcivgacd.cd_devs[TGAUNIT(dev)];
 
-	if (offset > sc->sc_dc->dc_pcivgaconf->pcivgac_cspace_size)
-		return -1;
-	return alpha_btop(sc->sc_dc->dc_paddr + offset);
+	if (pnp)
+		printf("wscons at %s", pnp);
+	return (UNCONF);
 }
+
+int
+pcivgaioctl(dev, cmd, data, flag, p)
+	struct device *dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+
+	return -1; /* XXX */
+}
+
+int
+pcivgammap(dev, offset, prot)
+	struct device *dev;
+	off_t offset;
+	int prot;
+{
+	struct pcivga_softc *sc = (struct pcivga_softc *)dev;
+	int rv;
+
+	rv = -1;
+#if 0 /* XXX */
+	if (offset >= 0 && offset < 0x100000) {		/* 1MB */
+		/* Deal with mapping the VGA memory */
+		if (offset >= 0xb8000 && offset < 0xc0000) {
+			offset -= 0xb8000;
+			rv = alpha_btop(k0segtophys(sc->sc_dc->dc_crtat) +
+			    offset);
+		}
+	} else {
+		/* XXX should do something with PCI memory */
+		rv = -1;
+	}
 #endif
+	return rv;
+}
 
 void
-pcivga_console(pcf, pcfa, pmf, pmfa, ppf, ppfa, bus, device, function)
-	__const struct pci_conf_fns *pcf;
-	__const struct pci_mem_fns *pmf;
-	__const struct pci_pio_fns *ppf;
-	void *pcfa, *pmfa, *ppfa;
-	pci_bus_t bus;
-	pci_device_t device;
-	pci_function_t function;
+pcivga_console(bc, pc, bus, device, function)
+	bus_chipset_tag_t bc;
+	pci_chipset_tag_t pc;
+	int bus, device, function;
 {
 	struct pcivga_devconfig *dcp = &pcivga_console_dc;
+	struct wscons_odev_spec wo;
 
-	pcivga_getdevconfig(pcf, pcfa, pmf, pmfa, ppf, ppfa,
-	    PCI_MAKE_TAG(bus, device, function), dcp);
+	pcivga_getdevconfig(bc, pc,
+	    pci_make_tag(pc, bus, device, function), dcp);
 
-	/* sanity checks */
-	if (dcp->dc_crtat == NULL)
-		panic("pcivga_console(%d, %d): couldn't map memory space",
-		    device, function);
-#if 0
-	if (dcp->dc_pcivgaconf == NULL)
-		panic("pcivga_console(%d, %d): unknown board configuration",
-		    device, function);
-#endif
+        wo.wo_ef = &pcivga_emulfuncs;
+        wo.wo_efa = dcp;
+        wo.wo_nrows = dcp->dc_nrow;
+        wo.wo_ncols = dcp->dc_ncol;
+	wo.wo_crow = dcp->dc_crow;
+	wo.wo_ccol = dcp->dc_ccol;
+        /* ioctl and mmap are unused until real attachment. */
 
-	wsc_console(&dcp->dc_ansicons, &pcivga_acf, dcp,
-	    dcp->dc_nrow, dcp->dc_ncol, 0, 0);
+        wscons_attach_console(&wo);
 }
 
 /*
  * The following functions implement the MI ANSI terminal emulation on
  * a VGA display.
  */
-void							/* XXX */
-pcivga_bell(id)						/* XXX */
-	void *id;					/* XXX */
-{							/* XXX */
-							/* XXX */
-	printf("pcivga_bell: unimplemented\n");		/* XXX */
-}							/* XXX */
-
 void
-pcivga_cursor(id, row, col)
+pcivga_cursor(id, on, row, col)
 	void *id;
-	int row, col;
+	int on, row, col;
 {
 	struct pcivga_devconfig *dc = id;
+	bus_chipset_tag_t bc = dc->dc_bc;
+	bus_io_handle_t ioh = dc->dc_ioh;
 	int pos;
 
 #if 0
 	printf("pcivga_cursor: %d %d\n", row, col);
 #endif
         /* turn the cursor off */
-        if (row == -1 || col == -1) {
-		dc->dc_crow = dc->dc_ccol = PCIVGA_CURSOR_OFF;
-
-		/* XXX disable cursor??? */
+        if (!on) {
+		/* XXX disable cursor how??? */
+		dc->dc_crow = dc->dc_ccol = -1;
         } else {
 		dc->dc_crow = row;
 		dc->dc_ccol = col;
@@ -275,10 +318,10 @@ pcivga_cursor(id, row, col)
 
 	pos = row * dc->dc_ncol + col;
 
-	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase, 14);
-	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase+1, pos >> 8);
-	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase, 15);
-	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase+1, pos);
+        bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 14);
+        bus_io_write_1(bc, ioh, PCIVGA_6845_DATA, pos >> 8);
+        bus_io_write_1(bc, ioh, PCIVGA_6845_ADDR, 15);
+        bus_io_write_1(bc, ioh, PCIVGA_6845_DATA, pos);
 }
 
 void
@@ -289,20 +332,16 @@ pcivga_putstr(id, row, col, cp, len)
 	int len;
 {
 	struct pcivga_devconfig *dc = id;
+	bus_chipset_tag_t bc = dc->dc_bc;
+	bus_mem_handle_t memh = dc->dc_memh;
 	char *dcp;
-	int i;
+	int i, off;
 
-	for (i = 0; i < len; i++, cp++) {
-		dcp = (char *)&dc->dc_crtat[row * dc->dc_ncol + col];
-#if 0
-printf("*cp = %c, attr = 0x%x\n", *cp, dc->dc_so ? dc->dc_so_at : dc->dc_at);
-printf("was: %c/", *dcp);
-#endif
-		*dcp++ = *cp;
-#if 0
-printf("0x%x\n", *dcp);
-#endif
-		*dcp++ = dc->dc_so ? dc->dc_so_at : dc->dc_at;
+	off = (row * dc->dc_ncol + col) * 2;
+	for (i = 0; i < len; i++, cp++, off += 2) {
+		bus_mem_write_1(bc, memh, off, *cp);
+		bus_mem_write_1(bc, memh, off + 1,
+		    dc->dc_so ? dc->dc_so_at : dc->dc_at);
 	}
 }
 
@@ -312,16 +351,20 @@ pcivga_copycols(id, row, srccol, dstcol, ncols)
 	int row, srccol, dstcol, ncols;
 {
 	struct pcivga_devconfig *dc = id;
-	u_short *ssp, *dsp;
-	int nclr;
+	bus_chipset_tag_t bc = dc->dc_bc;
+	bus_mem_handle_t memh = dc->dc_memh;
+	bus_mem_size_t srcoff, srcend, dstoff;
 
-#if 0
-	printf("pcivga_copycols: row %d: %d, %d -> %d\n", row, srccol, ncols,
-	    dstcol);
-#endif
-	ssp = &dc->dc_crtat[row * dc->dc_ncol + srccol];
-	dsp = &dc->dc_crtat[row * dc->dc_ncol + dstcol];
-	bcopy(ssp, dsp, ncols * sizeof(u_short));
+	/*
+	 * YUCK.  Need bus copy functions.
+	 */
+	srcoff = (row * dc->dc_ncol + srccol) * 2;
+	srcend = srcoff + ncols * 2;
+	dstoff = (row * dc->dc_ncol + dstcol) * 2;
+
+	for (; srcoff < srcend; srcoff += 2, dstoff += 2)
+		bus_mem_write_2(bc, memh, dstoff,
+		    bus_mem_read_2(bc, memh, srcoff));
 }
 
 void
@@ -330,15 +373,20 @@ pcivga_erasecols(id, row, startcol, ncols)
 	int row, startcol, ncols;
 {
 	struct pcivga_devconfig *dc = id;
-	u_short *ssp;
-	int i;
+	bus_chipset_tag_t bc = dc->dc_bc;
+	bus_mem_handle_t memh = dc->dc_memh;
+	bus_mem_size_t off, endoff;
+	u_int16_t val;
 
-#if 0
-	printf("pcivga_erasecols: row %d: %d, %d\n", row, startcol, ncols);
-#endif
-	ssp = &dc->dc_crtat[row * dc->dc_ncol + startcol];
-	for (i = 0; i < ncols; i++)
-		*ssp++ = (dc->dc_at << 8) | ' ';
+	/*
+	 * YUCK.  Need bus 'set' functions.
+	 */
+	off = (row * dc->dc_ncol + startcol) * 2;
+	endoff = off + ncols * 2;
+	val = (dc->dc_at << 8) | ' ';
+
+	for (; off < endoff; off += 2)
+		bus_mem_write_2(bc, memh, off, val);
 }
 
 void
@@ -347,15 +395,20 @@ pcivga_copyrows(id, srcrow, dstrow, nrows)
 	int srcrow, dstrow, nrows;
 {
 	struct pcivga_devconfig *dc = id;
-	u_short *ssp, *dsp;
-	int nclr;
+	bus_chipset_tag_t bc = dc->dc_bc;
+	bus_mem_handle_t memh = dc->dc_memh;
+	bus_mem_size_t srcoff, srcend, dstoff;
 
-#if 0
-	printf("pcivga_copyrows: %d, %d -> %d\n", srcrow, nrows, dstrow);
-#endif
-	ssp = &dc->dc_crtat[srcrow * dc->dc_ncol + 0];
-	dsp = &dc->dc_crtat[dstrow * dc->dc_ncol + 0];
-	bcopy(ssp, dsp, nrows * dc->dc_ncol * sizeof(u_short));
+	/*
+	 * YUCK.  Need bus copy functions.
+	 */
+	srcoff = (srcrow * dc->dc_ncol + 0) * 2;
+	srcend = srcoff + (nrows * dc->dc_ncol * 2);
+	dstoff = (dstrow * dc->dc_ncol + 0) * 2;
+
+	for (; srcoff < srcend; srcoff += 2, dstoff += 2)
+		bus_mem_write_2(bc, memh, dstoff,
+		    bus_mem_read_2(bc, memh, srcoff));
 }
 
 void
@@ -364,13 +417,18 @@ pcivga_eraserows(id, startrow, nrows)
 	int startrow, nrows;
 {
 	struct pcivga_devconfig *dc = id;
-	u_short *ssp;
-	int i;
+	bus_chipset_tag_t bc = dc->dc_bc;
+	bus_mem_handle_t memh = dc->dc_memh;
+	bus_mem_size_t off, endoff;
+	u_int16_t val;
 
-#if 0
-	printf("pcivga_eraserows: %d, %d\n", startrow, nrows);
-#endif
-	ssp = &dc->dc_crtat[startrow * dc->dc_ncol + 0];
-	for (i = 0; i < nrows * dc->dc_ncol; i++)
-		*ssp++ = (dc->dc_at << 8) | ' ';
+	/*
+	 * YUCK.  Need bus 'set' functions.
+	 */
+	off = (startrow * dc->dc_ncol + 0) * 2;
+	endoff = off + (nrows * dc->dc_ncol) * 2;
+	val = (dc->dc_at << 8) | ' ';
+
+	for (; off < endoff; off += 2)
+		bus_mem_write_2(bc, memh, off, val);
 }

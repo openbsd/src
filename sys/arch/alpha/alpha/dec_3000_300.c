@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_3000_300.c,v 1.2 1995/08/03 01:12:21 cgd Exp $	*/
+/*	$NetBSD: dec_3000_300.c,v 1.2.6.2 1996/06/13 18:35:12 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -28,7 +28,18 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 #include <machine/rpb.h>
+
+#include <machine/autoconf.h>
+
+#include <dev/tc/tcvar.h>
+
+#include <alpha/tc/tcdsvar.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 char *
 dec_3000_300_modelname()
@@ -55,16 +66,74 @@ dec_3000_300_modelname()
 }
 
 void
-dec_3000_300_consinit(constype)
-	char *constype;
+dec_3000_300_consinit()
 {
 
 }
 
-dev_t
-dec_3000_300_bootdev(booted_dev)
-	char *booted_dev;
+void
+dec_3000_300_device_register(dev, aux)
+	struct device *dev;
+	void *aux;
 {
+	static int found;
+	static struct device *scsidev;
+	struct bootdev_data *b = bootdev_data;
+	struct device *parent = dev->dv_parent;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdriver *cd = cf->cf_driver;
 
-	panic("gack.");
+	if (found)
+		return;
+
+	if (strcmp(cd->cd_name, "esp") == 0) {
+		if (b->slot == 4 &&
+		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "tcds")
+		      == 0) {
+			struct tcdsdev_attach_args *tcdsdev = aux;
+
+			if (tcdsdev->tcdsda_slot == b->channel) {
+				scsidev = dev;
+#if 0
+				printf("\nscsidev = %s\n", dev->dv_xname);
+#endif
+			}
+		}
+	} else if (strcmp(cd->cd_name, "sd") == 0 ||
+	    strcmp(cd->cd_name, "st") == 0 ||
+	    strcmp(cd->cd_name, "cd") == 0) {
+		struct scsibus_attach_args *sa = aux;
+
+		if (scsidev == NULL)
+			return;
+
+		if (parent->dv_parent != scsidev)
+			return;
+
+		if (b->unit / 100 != sa->sa_sc_link->target)
+			return;
+
+		/* XXX LUN! */
+
+		switch (b->boot_dev_type) {
+		case 0:
+			if (strcmp(cd->cd_name, "sd") &&
+			    strcmp(cd->cd_name, "cd"))
+				return;
+			break;
+		case 1:
+			if (strcmp(cd->cd_name, "st"))
+				return;
+			break;
+		default:
+			return;
+		}
+
+		/* we've found it! */
+		booted_device = dev;
+#if 0
+		printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+		found = 1;
+	}
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: lca.c,v 1.1 1995/11/23 02:37:38 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.5 1996/04/23 14:00:53 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Jeffrey Hsu
+ * Authors: Jeffrey Hsu and Chris G. Demetriou
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -48,9 +48,12 @@
 int	lcamatch __P((struct device *, void *, void *));
 void	lcaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver lcacd = {
-	NULL, "lca", lcamatch, lcaattach, DV_DULL,
-	    sizeof(struct lca_softc)
+struct cfattach lca_ca = {
+	sizeof(struct lca_softc), lcamatch, lcaattach,
+};
+
+struct cfdriver lca_cd = {
+	NULL, "lca", DV_DULL,
 };
 
 static int	lcaprint __P((void *, char *pnp));
@@ -68,7 +71,7 @@ lcamatch(parent, match, aux)
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a LCA. */
-	if (strcmp(ca->ca_name, lcacd.cd_name) != 0)
+	if (strcmp(ca->ca_name, lca_cd.cd_name) != 0)
 		return (0);
 
 	if (lcafound)
@@ -89,20 +92,33 @@ lca_init(lcp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-	lcp->lc_conffns = &lca_conf_fns;
-	lcp->lc_confarg = lcp;
-	lcp->lc_dmafns = &lca_dma_fns;
-	lcp->lc_dmaarg = lcp;
-	/* Interrupt routines set up in 'attach' */
-	lcp->lc_memfns = &lca_mem_fns;
-	lcp->lc_memarg = lcp;
-	lcp->lc_piofns = &lca_pio_fns;
-	lcp->lc_pioarg = lcp;
+	apecs_lca_bus_io_init(&lcp->lc_bc, lcp);
+	apecs_lca_bus_mem_init(&lcp->lc_bc, lcp);
+	lca_pci_init(&lcp->lc_pc, lcp);
 
-/*
-printf("lca_init: before IOC_HAE=0x%x\n", REGVAL(LCA_IOC_HAE));
-	REGVAL(LCA_IOC_HAE) = 0; */
+	/*
+	 * Refer to ``DECchip 21066 and DECchip 21068 Alpha AXP Microprocessors
+	 * Hardware Reference Manual''.
+	 * ...
+	 */
 
+	/*
+	 * According to section 6.4.1, all bits of the IOC_HAE register are
+	 * undefined after reset.  Bits <31:27> are write-only.  However, we
+	 * cannot blindly set it to zero.  The serial ROM code that initializes
+	 * the PCI devices' address spaces, allocates sparse memory blocks in
+	 * the range that must use the IOC_HAE register for address translation,
+	 * and sets this register accordingly (see section 6.4.14).
+	 *
+	 *	IOC_HAE left AS IS.
+	 */
+
+	/* According to section 6.4.2, all bits of the IOC_CONF register are
+	 * undefined after reset.  Bits <1:0> are write-only.  Set them to
+	 * 0x00 for PCI Type 0 configuration access.
+	 *
+	 *	IOC_CONF set to ZERO.
+	 */
 	REGVAL(LCA_IOC_CONF) = 0;
 
 	/* Turn off DMA window enables in Window Base Registers */
@@ -142,10 +158,9 @@ lcaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
 	struct lca_softc *sc = (struct lca_softc *)self;
 	struct lca_config *lcp;
-	struct pci_attach_args pa;
+	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 LCAs. */
 	/* Um, not sure about this.  XXX JH */
@@ -167,31 +182,18 @@ lcaattach(parent, self, aux)
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_AXPPCI_33)
 	case ST_DEC_AXPPCI_33:
-		pci_axppci_33_pickintr(lcp->lc_conffns, lcp->lc_confarg,
-		    lcp->lc_piofns, lcp->lc_pioarg,
-		    &lcp->lc_intrfns, &lcp->lc_intrarg);
+		pci_axppci_33_pickintr(lcp);
 		break;
 #endif
 	default:
 		panic("lcaattach: shouldn't be here, really...");
 	}
 
-	pa.pa_bus = 0;
-	pa.pa_maxdev = 13;
-	pa.pa_burstlog2 = 8;
-
-	pa.pa_conffns = lcp->lc_conffns;
-	pa.pa_confarg = lcp->lc_confarg;
-	pa.pa_dmafns = lcp->lc_dmafns;
-	pa.pa_dmaarg = lcp->lc_dmaarg;
-	pa.pa_intrfns = lcp->lc_intrfns;
-	pa.pa_intrarg = lcp->lc_intrarg;
-	pa.pa_memfns = lcp->lc_memfns;
-	pa.pa_memarg = lcp->lc_memarg;
-	pa.pa_piofns = lcp->lc_piofns;
-	pa.pa_pioarg = lcp->lc_pioarg;
-
-	config_found(self, &pa, lcaprint);
+	pba.pba_busname = "pci";
+	pba.pba_bc = &lcp->lc_bc;
+	pba.pba_pc = &lcp->lc_pc;
+	pba.pba_bus = 0;
+	config_found(self, &pba, lcaprint);
 }
 
 static int
@@ -199,12 +201,11 @@ lcaprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-        register struct pci_attach_args *pa = aux;
+        register struct pcibus_attach_args *pba = aux;
 
-	/* what does this do?  XXX JH */
 	/* only PCIs can attach to LCAes; easy. */
 	if (pnp)
-		printf("pci at %s", pnp);
-	printf(" bus %d", pa->pa_bus);
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: tc_3000_300.c,v 1.4 1995/12/20 00:43:27 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.7.4.1 1996/06/05 00:39:06 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -32,10 +32,14 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_300.h>
+#include <alpha/tc/ioasicreg.h>
 
 void	tc_3000_300_intr_setup __P((void));
 void	tc_3000_300_intr_establish __P((struct device *, void *,
@@ -47,6 +51,14 @@ int	tc_3000_300_intrnull __P((void *));
 
 #define	C(x)	((void *)(u_long)x)
 #define	KV(x)	(phystok0seg(x))
+
+/*
+ * We have to read and modify the IOASIC registers directly, because
+ * the TC option slot interrupt request and mask bits are stored there,
+ * and the ioasic code isn't initted when we need to frob some interrupt
+ * bits.
+ */
+#define	DEC_3000_300_IOASIC_ADDR	KV(0x1a0000000)
 
 struct tc_slotdesc tc_3000_300_slots[] = {
 	{ KV(0x100000000), C(TC_3000_300_DEV_OPT0), },	/* 0 - opt slot 0 */
@@ -71,21 +83,17 @@ struct tcintr {
 	void	*tci_arg;
 } tc_3000_300_intr[TC_3000_300_NCOOKIES];
 
-/* XXX */
-void	ioasic_intr_300_opt0_enable __P((int));
-void	ioasic_intr_300_opt1_enable __P((int));
-void	ioasic_300_opts_isintr __P((int *, int *));
-
 void
 tc_3000_300_intr_setup()
 {
+	volatile u_int32_t *imskp;
 	u_long i;
 
 	/*
-	 * Sisable all interrupts that we can (can't disable builtins).
+	 * Disable all interrupts that we can (can't disable builtins).
 	 */
-	ioasic_intr_300_opt0_enable(0);
-	ioasic_intr_300_opt1_enable(0);
+	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	*imskp &= ~(IOASIC_INTR_300_OPT0 | IOASIC_INTR_300_OPT1);
 
 	/*
 	 * Set up interrupt handlers.
@@ -103,6 +111,7 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 	tc_intrlevel_t level;
 	int (*func) __P((void *));
 {
+	volatile u_int32_t *imskp;
 	u_long dev = (u_long)cookie;
 
 #ifdef DIAGNOSTIC
@@ -115,12 +124,13 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 	tc_3000_300_intr[dev].tci_func = func;
 	tc_3000_300_intr[dev].tci_arg = arg;
 
+	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
 	switch (dev) {
 	case TC_3000_300_DEV_OPT0:
-		ioasic_intr_300_opt0_enable(1);
+		*imskp |= IOASIC_INTR_300_OPT0;
 		break;
 	case TC_3000_300_DEV_OPT1:
-		ioasic_intr_300_opt1_enable(1);
+		*imskp |= IOASIC_INTR_300_OPT1;
 		break;
 	default:
 		/* interrupts for builtins always enabled */
@@ -133,6 +143,7 @@ tc_3000_300_intr_disestablish(tcadev, cookie)
 	struct device *tcadev;
 	void *cookie;
 {
+	volatile u_int32_t *imskp;
 	u_long dev = (u_long)cookie;
 
 #ifdef DIAGNOSTIC
@@ -143,12 +154,13 @@ tc_3000_300_intr_disestablish(tcadev, cookie)
 		panic("tc_3000_300_intr_disestablish: cookie %d bad intr",
 		    dev);
 
+	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
 	switch (dev) {
 	case TC_3000_300_DEV_OPT0:
-		ioasic_intr_300_opt0_enable(0);
+		*imskp &= ~IOASIC_INTR_300_OPT0;
 		break;
 	case TC_3000_300_DEV_OPT1:
-		ioasic_intr_300_opt1_enable(0);
+		*imskp &= ~IOASIC_INTR_300_OPT1;
 		break;
 	default:
 		/* interrupts for builtins always enabled */
@@ -173,7 +185,7 @@ tc_3000_300_iointr(framep, vec)
 	void *framep;
 	int vec;
 {
-	u_int32_t ir;
+	u_int32_t tcir, ioasicir, ioasicimr;
 	int opt0intr, opt1intr, ifound;
 
 #ifdef DIAGNOSTIC
@@ -190,33 +202,53 @@ tc_3000_300_iointr(framep, vec)
 		tc_syncbus();
 
 		/* find out what interrupts/errors occurred */
-		ir = *(volatile u_int32_t *)TC_3000_300_IR;
-		ioasic_300_opts_isintr(&opt0intr, &opt1intr);
+		tcir = *(volatile u_int32_t *)TC_3000_300_IR;
+		ioasicir = *(volatile u_int32_t *)
+		    IOASIC_REG_INTR(DEC_3000_300_IOASIC_ADDR);
+		ioasicimr = *(volatile u_int32_t *)
+		    IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
 		tc_mb();
 
+		/* Ignore interrupts that aren't enabled out. */
+		ioasicir &= ioasicimr;
+
 		/* clear the interrupts/errors we found. */
-		*(volatile u_int32_t *)TC_3000_300_IR = ir;
+		*(volatile u_int32_t *)TC_3000_300_IR = tcir;
 		/* XXX can't clear TC option slot interrupts here? */
 		tc_wmb();
 
 		ifound = 0;
+
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */
+	XXX BREAK HERE XXX
+#else /* !EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN16 + slot]++
+#endif /* EVCNT_COUNTERS */
+
 #define	CHECKINTR(slot, flag)						\
-		if (flag) {					\
+		if (flag) {						\
 			ifound = 1;					\
+			INCRINTRCNT(slot);				\
 			(*tc_3000_300_intr[slot].tci_func)		\
 			    (tc_3000_300_intr[slot].tci_arg);		\
 		}
 		/* Do them in order of priority; highest slot # first. */
-		CHECKINTR(TC_3000_300_DEV_CXTURBO, ir & TC_3000_300_IR_CXTURBO);
-		CHECKINTR(TC_3000_300_DEV_IOASIC, ir & TC_3000_300_IR_IOASIC);
-		CHECKINTR(TC_3000_300_DEV_TCDS, ir & TC_3000_300_IR_TCDS);
-		CHECKINTR(TC_3000_300_DEV_OPT1, opt1intr);
-		CHECKINTR(TC_3000_300_DEV_OPT0, opt0intr);
+		CHECKINTR(TC_3000_300_DEV_CXTURBO,
+		    tcir & TC_3000_300_IR_CXTURBO);
+		CHECKINTR(TC_3000_300_DEV_IOASIC,
+		    (tcir & TC_3000_300_IR_IOASIC) &&
+	            (ioasicir & ~(IOASIC_INTR_300_OPT1|IOASIC_INTR_300_OPT0)));
+		CHECKINTR(TC_3000_300_DEV_TCDS, tcir & TC_3000_300_IR_TCDS);
+		CHECKINTR(TC_3000_300_DEV_OPT1,
+		    ioasicir & IOASIC_INTR_300_OPT1);
+		CHECKINTR(TC_3000_300_DEV_OPT0,
+		    ioasicir & IOASIC_INTR_300_OPT0);
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
 #define PRINTINTR(msg, bits)						\
-	if (ir & bits)							\
+	if (tcir & bits)						\
 		printf(msg);
 		PRINTINTR("BCache tag parity error\n",
 		    TC_3000_300_IR_BCTAGPARITY);

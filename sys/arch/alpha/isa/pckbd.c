@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.3 1995/12/24 02:29:35 mycroft Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.7 1996/05/05 01:41:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -52,16 +52,18 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
+#include <machine/intr.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/isa/pckbdreg.h>
+#include <alpha/isa/spkrreg.h>
+#include <alpha/isa/timerreg.h>
+#include <machine/wsconsio.h>
 
-#include "wsc.h"
-#if NWSC
-#include <alpha/pci/wsconsvar.h>
-#endif
+#include <alpha/wscons/wsconsvar.h>
+#include "wscons.h"
 
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
@@ -70,28 +72,58 @@ static u_char lock_state = 0x00,	/* all off */
 	      typematic_rate = 0xff,	/* don't update until set by user */
 	      old_typematic_rate = 0xff;
 
-__const struct isa_intr_fns *pckbd_intr_fns;			/* XXX */
-void *pckbd_intr_arg;						/* XXX */
-__const struct isa_pio_fns *pckbd_pio_fns;			/* XXX */
-void *pckbd_pio_arg;						/* XXX */
+bus_chipset_tag_t pckbd_bc;
+isa_chipset_tag_t pckbd_ic;
+
+bus_io_handle_t pckbd_data_ioh;
+#define	pckbd_out_ioh	pckbd_data_ioh
+bus_io_handle_t pckbd_status_ioh;
+#define	pckbd_cmd_ioh	pckbd_status_ioh
+bus_io_handle_t pckbd_timer_ioh;
+bus_io_handle_t pckbd_pitaux_ioh;
+bus_io_handle_t pckbd_delay_ioh;
 
 struct pckbd_softc {
         struct  device sc_dev;
         void    *sc_ih;
+
+	int	sc_bellactive;		/* is the bell active? */
+	int	sc_bellpitch;		/* last pitch programmed */
 };
 
 int pckbdprobe __P((struct device *, void *, void *));
 void pckbdattach __P((struct device *, struct device *, void *));
 int pckbdintr __P((void *));
 
-struct cfdriver pckbdcd = {
-	NULL, "pckbd", pckbdprobe, pckbdattach, DV_DULL,
-	    sizeof(struct pckbd_softc)
+struct cfattach pckbd_ca = {
+	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach,
 };
 
-char *sget __P((void));
-int pccngetc __P((void *));
-void pccnpollc __P((void *, int));
+struct cfdriver pckbd_cd = {
+	NULL, "pckbd", DV_DULL,
+};
+
+int	pckbd_cngetc __P((struct device *));
+void	pckbd_cnpollc __P((struct device *, int));
+void	pckbd_bell __P((struct device *, struct wsconsio_bell_data *));
+int	pckbd_ioctl __P((struct device *, u_long, caddr_t, int,
+	    struct proc *));
+
+char	*pckbd_translate __P((struct device *dev, int c));
+
+#if NWSCONS
+struct wscons_idev_spec pckbd_wscons_idev = {
+	pckbd_cngetc,
+	pckbd_cnpollc,
+	pckbd_bell,
+	pckbd_ioctl,
+	pckbd_translate,
+	0x7f,			/* key data mask */
+	0x80,			/* key-up mask */
+};
+#endif
+
+void	pckbd_bell_stop __P((void *));
 
 /*
  * DANGER WIL ROBINSON -- the values of SCROLL, NUM, CAPS, and ALT are
@@ -109,10 +141,10 @@ void pccnpollc __P((void *, int));
 #define	NONE		0x0400	/* no function */
 
 #define	KBD_DELAY \
-	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); } \
-	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); } \
-	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); } \
-	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); }
+	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); } \
+	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); } \
+	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); } \
+	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); }
 
 static inline int
 kbd_wait_output()
@@ -120,7 +152,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_IBF)
+		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_IBF)
 		    == 0) {
 			KBD_DELAY;
 			return 1;
@@ -134,7 +166,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
 		    != 0) {
 			KBD_DELAY;
 			return 1;
@@ -148,11 +180,11 @@ kbd_flush_input()
 	u_int i;
 
 	for (i = 10; i; i--) {
-		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
 		    == 0)
 			return;
 		KBD_DELAY;
-		(void) INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP);
+		(void) bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
 	}
 }
 
@@ -166,10 +198,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	OUTB(pckbd_pio_fns, pckbd_pio_arg, KBCMDP, K_RDCMDBYTE);
+	bus_io_write_1(pckbd_bc, pckbd_cmd_ioh, 0, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP);
+	return bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
 }
 #endif
 
@@ -183,10 +215,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	OUTB(pckbd_pio_fns, pckbd_pio_arg, KBCMDP, K_LDCMDBYTE);
+	bus_io_write_1(pckbd_bc, pckbd_cmd_ioh, 0, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	OUTB(pckbd_pio_fns, pckbd_pio_arg, KBOUTP, val);
+	bus_io_write_1(pckbd_bc, pckbd_out_ioh, 0, val);
 	return 1;
 }
 
@@ -205,16 +237,16 @@ kbd_cmd(val, polling)
 		if (!kbd_wait_output())
 			return 0;
 		ack = nak = 0;
-		OUTB(pckbd_pio_fns, pckbd_pio_arg, KBOUTP, val);
+		bus_io_write_1(pckbd_bc, pckbd_out_ioh, 0, val);
 		if (polling)
 			for (i = 100000; i; i--) {
-				if (INB(pckbd_pio_fns, pckbd_pio_arg,
-				    KBSTATP) & KBS_DIB) {
+				if (bus_io_read_1(pckbd_bc,
+				    pckbd_status_ioh, 0) & KBS_DIB) {
 					register u_char c;
 
 					KBD_DELAY;
-					c = INB(pckbd_pio_fns, pckbd_pio_arg,
-					    KBDATAP);
+					c = bus_io_read_1(pckbd_bc,
+					    pckbd_data_ioh, 0);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
 						return 1;
@@ -231,8 +263,8 @@ kbd_cmd(val, polling)
 			}
 		else
 			for (i = 100000; i; i--) {
-				(void) INB(pckbd_pio_fns, pckbd_pio_arg,
-				    KBSTATP);
+				(void) bus_io_read_1(pckbd_bc,
+				    pckbd_status_ioh, 0);
 				if (ack)
 					return 1;
 				if (nak)
@@ -252,11 +284,19 @@ pckbdprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct isadev_attach_args *ida = aux;
+	struct isa_attach_args *ia = aux;
 	u_int i;
 
-	pckbd_pio_fns = ida->ida_piofns;			/* XXX */
-	pckbd_pio_arg = ida->ida_pioarg;			/* XXX */
+	pckbd_bc = ia->ia_bc;
+	pckbd_ic = ia->ia_ic;
+
+	if (bus_io_map(pckbd_bc, KBDATAP, 1, &pckbd_data_ioh) ||
+	    bus_io_map(pckbd_bc, KBSTATP, 1, &pckbd_status_ioh) ||
+	    bus_io_map(pckbd_bc, IO_TIMER1, 4, &pckbd_timer_ioh) ||
+	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh))
+		return 0;
+
+	pckbd_delay_ioh = ia->ia_delayioh;
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -273,12 +313,12 @@ pckbdprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
 		    != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP)
+	if (i == 0 || bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0)
 	    != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
@@ -329,8 +369,8 @@ lose:
 	 */
 #endif
 
-	ida->ida_nports[0] = 16;
-	ida->ida_iosiz[0] = 0;
+	ia->ia_iobase = 16;
+	ia->ia_iosize = 0;
 	return 1;
 }
 
@@ -340,20 +380,29 @@ pckbdattach(parent, self, aux)
 	void *aux;
 {
 	struct pckbd_softc *sc = (void *)self;
-	struct isadev_attach_args *ida = aux;
+	struct isa_attach_args *ia = aux;
 
-	pckbd_intr_fns = ida->ida_intrfns;			/* XXX */
-	pckbd_intr_arg = ida->ida_intrarg;			/* XXX */
-	pckbd_pio_fns = ida->ida_piofns;			/* XXX */
-	pckbd_pio_arg = ida->ida_pioarg;			/* XXX */
-	
-	sc->sc_ih = ISA_INTR_ESTABLISH(pckbd_intr_fns, pckbd_intr_arg,
-	    ida->ida_irq[0], IST_EDGE, IPL_TTY, pckbdintr, sc);
-#if NWSC
+	pckbd_bc = ia->ia_bc;
+	pckbd_ic = ia->ia_ic;
+
+	if (bus_io_map(pckbd_bc, KBDATAP, 1, &pckbd_data_ioh) ||
+	    bus_io_map(pckbd_bc, KBSTATP, 1, &pckbd_status_ioh) ||
+	    bus_io_map(pckbd_bc, IO_TIMER1, 4, &pckbd_timer_ioh) ||
+	    bus_io_map(pckbd_bc, PITAUX_PORT, 1, &pckbd_pitaux_ioh))
+                panic("pckbdattach couldn't map");
+
+	pckbd_delay_ioh = ia->ia_delayioh;
+
+	sc->sc_ih = isa_intr_establish(pckbd_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, pckbdintr, sc);
+
+	sc->sc_bellactive = sc->sc_bellpitch = 0;
+
+#if NWSCONS
 	printf("\n");
-	wscattach_input(self, self, pccngetc, pccnpollc);
+	kbdattach(self, &pckbd_wscons_idev);
 #else
-	printf(": no wsc driver; no input possible\n");
+	printf(": no wscons driver present; no input possible\n");
 #endif
 }
 
@@ -367,19 +416,35 @@ pckbdintr(arg)
 	void *arg;
 {
 	struct pckbd_softc *sc = arg;
-	u_char *cp;
+	u_char data;
+	static u_char last;
 
-	if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB) == 0)
+	if ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
 	do {
-		cp = sget();
-#if NWSC
-		if (cp)
-			wscons_kbdinput(cp);
+		KBD_DELAY;
+		data = bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
+
+		switch (data) {
+		case KBR_ACK:
+			ack = 1;
+			break;
+		case KBR_RESEND:
+			nak = 1;
+			break;
+		default:
+			/* Always ignore typematic keys */
+			if (data == last)
+				break;
+			last = data;
+#if NWSCONS
+			kbd_input(data);
 #endif
-	} while (INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB);
+			break;
+		}
+	} while (bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB);
 	return 1;
 }
 
@@ -424,6 +489,23 @@ async_update()
 		async = 1;
 		timeout(do_async_update, NULL, 1);
 	}
+}
+
+int
+pckbd_ioctl(dev, cmd, data, flag, p)
+	struct device *dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+
+	switch (cmd) {
+	case WSCONSIO_KBD_GTYPE:
+		*(int *)data = KBD_TYPE_PC;
+		return 0;
+	}
+	return ENOTTY;
 }
 
 #if 0
@@ -633,96 +715,18 @@ static Scan_def	scan_codes[] = {
  * Get characters from the keyboard.  If none are present, return NULL.
  */
 char *
-sget()
+pckbd_translate(dev, c)
+	struct device *dev;
+	int c;
 {
-	u_char dt;
+	u_char dt = c;
 	static u_char extended = 0, shift_state = 0;
 	static u_char capchar[2];
 
-top:
-	KBD_DELAY;
-	dt = INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP);
-
-	switch (dt) {
-	case KBR_ACK:
-		ack = 1;
-		goto loop;
-	case KBR_RESEND:
-		nak = 1;
-		goto loop;
-	}
-
-#if 0
-	if (pc_xmode > 0) {
-#if defined(DDB) && defined(XSERVER_DDB)
-		/* F12 enters the debugger while in X mode */
-		if (dt == 88)
-			Debugger();
-#endif
-		capchar[0] = dt;
-		capchar[1] = 0;
-		/*
-		 * Check for locking keys.
-		 *
-		 * XXX Setting the LEDs this way is a bit bogus.  What if the
-		 * keyboard has been remapped in X?
-		 */
-		switch (scan_codes[dt & 0x7f].type) {
-		case NUM:
-			if (dt & 0x80) {
-				shift_state &= ~NUM;
-				break;
-			}
-			if (shift_state & NUM)
-				break;
-			shift_state |= NUM;
-			lock_state ^= NUM;
-			async_update();
-			break;
-		case CAPS:
-			if (dt & 0x80) {
-				shift_state &= ~CAPS;
-				break;
-			}
-			if (shift_state & CAPS)
-				break;
-			shift_state |= CAPS;
-			lock_state ^= CAPS;
-			async_update();
-			break;
-		case SCROLL:
-			if (dt & 0x80) {
-				shift_state &= ~SCROLL;
-				break;
-			}
-			if (shift_state & SCROLL)
-				break;
-			shift_state |= SCROLL;
-			lock_state ^= SCROLL;
-			if ((lock_state & SCROLL) == 0)
-				wakeup((caddr_t)&lock_state);
-			async_update();
-			break;
-		}
-		return capchar;
-	}
-#endif /* 0 */
-
-	switch (dt) {
-	case KBR_EXTENDED:
+	if (dt == KBR_EXTENDED) {
 		extended = 1;
-		goto loop;
+		return NULL;
 	}
-
-#ifdef DDB
-	/*
-	 * Check for cntl-alt-esc.
-	 */
-	if ((dt == 1) && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
-		Debugger();
-		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
-	}
-#endif
 
 	/*
 	 * Check for make/break.
@@ -837,31 +841,43 @@ top:
 	}
 
 	extended = 0;
-loop:
-	if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB) == 0)
-		return 0;
-	goto top;
+	return (NULL);
 }
 
 
 /* ARGSUSED */
 int
-pccngetc(cookie)
-        void *cookie;
+pckbd_cngetc(dev)
+	struct device *dev;
 {
         register char *cp;
-
-#if 0
-        if (pc_xmode > 0)
-                return 0;
-#endif
+	u_char data;
+	static u_char last;
 
         do {
-                /* wait for byte */
-                while ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
-		    == 0);
-                /* see if it's worthwhile */
-                cp = sget();
+		/* wait for byte */
+                while ((bus_io_read_1(pckbd_bc, pckbd_status_ioh, 0) & KBS_DIB)
+		    == 0)
+			KBD_DELAY;
+		KBD_DELAY;
+
+                data = bus_io_read_1(pckbd_bc, pckbd_data_ioh, 0);
+
+                if (data == KBR_ACK) {
+                        ack = 1;
+                        continue;
+		}
+                if (data ==  KBR_RESEND) {
+                        nak = 1;
+                        continue;
+		}
+
+		/* Ignore typematic keys */
+		if (data == last)
+			continue;
+		last = data;
+
+		cp = pckbd_translate(NULL, data);
         } while (!cp);
         if (*cp == '\r')
                 return '\n';
@@ -869,11 +885,11 @@ pccngetc(cookie)
 }
 
 void
-pccnpollc(cookie, on)
-        void *cookie;
+pckbd_cnpollc(dev, on)
+	struct device *dev;
         int on;
 {
-	struct pckbd_softc *sc = cookie;
+	struct pckbd_softc *sc = (struct pckbd_softc *)dev;
 
         polling = on;
         if (!on) {
@@ -891,4 +907,60 @@ pccnpollc(cookie, on)
 			splx(s);
 		}
         }
+}
+
+void
+pckbd_bell(dev, wbd)
+	struct device *dev;
+	struct wsconsio_bell_data *wbd;
+{
+	struct pckbd_softc *sc = (struct pckbd_softc *)dev;
+	int pitch, period;
+	int s;
+
+	pitch = wbd->wbd_pitch;
+	period = (wbd->wbd_period * hz) / 1000;
+	/* XXX volume ignored */
+
+	s = splhigh();
+	if (sc->sc_bellactive)
+		untimeout(pckbd_bell_stop, sc);
+	splx(s);
+	if (pitch == 0 || period == 0) {
+		pckbd_bell_stop(sc);
+		sc->sc_bellpitch = 0;
+		return;
+	}
+	if (!sc->sc_bellactive || sc->sc_bellpitch != pitch) {
+		s = splhigh();
+		bus_io_write_1(pckbd_bc, pckbd_timer_ioh, TIMER_MODE,
+		    TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
+		bus_io_write_1(pckbd_bc, pckbd_timer_ioh, TIMER_CNTR2,
+		    TIMER_DIV(pitch) % 256);
+		bus_io_write_1(pckbd_bc, pckbd_timer_ioh, TIMER_CNTR2,
+		    TIMER_DIV(pitch) / 256);
+		/* enable speaker */
+		bus_io_write_1(pckbd_bc, pckbd_pitaux_ioh, 0,
+	    	    bus_io_read_1(pckbd_bc, pckbd_pitaux_ioh, 0) |
+		      PIT_SPKR);
+		splx(s);
+	}
+	sc->sc_bellpitch = pitch;
+	sc->sc_bellactive = 1;
+	timeout(pckbd_bell_stop, sc, period);
+}
+
+void
+pckbd_bell_stop(arg)
+	void *arg;
+{
+	struct pckbd_softc *sc = arg;
+	int s;
+
+	/* disable bell */
+	s = splhigh();
+	bus_io_write_1(pckbd_bc, pckbd_pitaux_ioh, 0,
+	    bus_io_read_1(pckbd_bc, pckbd_pitaux_ioh, 0) & ~PIT_SPKR);
+	sc->sc_bellactive = 0;
+	splx(s);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: tcds.c,v 1.6 1995/12/20 00:40:29 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.9.4.2 1996/06/05 01:32:26 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
@@ -34,6 +34,9 @@
 
 #include <machine/pte.h>
 #include <machine/rpb.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
@@ -55,8 +58,14 @@ struct tcds_softc {
 int	tcdsmatch __P((struct device *, void *, void *));
 void	tcdsattach __P((struct device *, struct device *, void *));
 int     tcdsprint(void *, char *);
-struct cfdriver tcdscd =
-    { NULL, "tcds", tcdsmatch, tcdsattach, DV_DULL, sizeof(struct tcds_softc) };
+
+struct cfattach tcds_ca = {
+	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
+};
+
+struct cfdriver tcds_cd = {
+	NULL, "tcds", DV_DULL,
+};
 
 /*static*/ int	tcds_intr __P((void *));
 /*static*/ int	tcds_intrnull __P((void *));
@@ -67,11 +76,11 @@ tcdsmatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 	extern int cputype;
 
 	/* Make sure that we're looking for this type of device. */
-	if (strncmp("PMAZ-DS ", tcdev->tcda_modname, TC_ROM_LLEN))
+	if (strncmp("PMAZ-DS ", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
 	/* PMAZ-FS? */
 
@@ -88,7 +97,7 @@ tcdsattach(parent, self, aux)
 	void *aux;
 {
 	struct tcds_softc *sc = (struct tcds_softc *)self;
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 	struct tcdsdev_attach_args tcdsdev;
 	struct tcds_slotconfig *slotc;
 	int i;
@@ -96,8 +105,8 @@ tcdsattach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_base = tcdev->tcda_addr;
-	sc->sc_cookie = tcdev->tcda_cookie;
+	sc->sc_base = ta->ta_addr;
+	sc->sc_cookie = ta->ta_cookie;
 
 	sc->sc_cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 	sc->sc_imer = TCDS_REG(sc->sc_base, TCDS_IMER);
@@ -196,11 +205,11 @@ tcdsprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 
 	if (pnp)
-		printf("%s at %s", tcdev->tcda_modname, pnp);
-	printf(" slot 0x%lx", tcdev->tcda_slot);
+		printf("%s at %s", ta->ta_modname, pnp);
+	printf(" slot %d", ta->ta_slot);
 	return (UNCONF);
 }
 
@@ -349,8 +358,16 @@ tcds_intr(val)
 	tc_syncbus();
 	wbflush();
 
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */ 
+	XXX BREAK HERE XXX
+#else
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_TCDS + slot]++
+#endif
+
 #define	CHECKINTR(slot)							\
 	if (ir & sc->sc_slots[slot].sc_intrbits) {			\
+		INCRINTRCNT(slot);					\
 		(void)(*sc->sc_slots[slot].sc_intrhand)			\
 		    (sc->sc_slots[slot].sc_intrarg);			\
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff.h,v 1.2 1995/11/23 02:35:57 cgd Exp $	*/
+/*	$NetBSD: ecoff.h,v 1.3 1996/05/09 23:47:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -34,47 +34,49 @@
 #define ECOFF_LDPGSZ 4096
 
 #define ECOFF_PAD \
-	u_short	ea_bldrev;				/* XXX */
+	u_short	bldrev;					/* XXX */
 
 #define ECOFF_MACHDEP \
-        u_int	ea_gprmask; \
-        u_int	ea_fprmask; \
-        u_long ea_gp_value
+        u_int	gprmask; \
+        u_int	fprmask; \
+        u_long	gp_value
 
 #define ECOFF_MAGIC_ALPHA		0603
-#define ECOFF_MAGIC_NATIVE_ALPHA	0605
-#define ECOFF_BADMAG(ex)					\
-	(ex->ef_magic != ECOFF_MAGIC_ALPHA &&			\
-	    ex->ef_magic != ECOFF_MAGIC_NATIVE_ALPHA)
+#define ECOFF_MAGIC_NETBSD_ALPHA	0605
+#define ECOFF_BADMAG(ep)						\
+	((ep)->f.f_magic != ECOFF_MAGIC_ALPHA &&			\
+	    (ep)->f.f_magic != ECOFF_MAGIC_NETBSD_ALPHA)
 
-#define ECOFF_SEGMENT_ALIGNMENT(eap) (eap->ea_vstamp < 23 ? 8 : 16)
+#define ECOFF_FLAG_EXEC			0002
+#define ECOFF_SEGMENT_ALIGNMENT(ep) \
+    (((ep)->f.f_flags & ECOFF_FLAG_EXEC) == 0 ? 8 : 16)
 
 struct ecoff_symhdr {
-	int16_t		sh_magic;
-	int16_t		sh_vstamp;
-	int32_t		sh_linemax;
-	int32_t		sh_densenummax;
-	int32_t		sh_procmax;
-	int32_t		sh_lsymmax;
-	int32_t		sh_optsymmax;
-	int32_t		sh_auxxymmax;
-	int32_t		sh_lstrmax;
-	int32_t		sh_estrmax;
-	int32_t		sh_fdmax;
-	int32_t		sh_rfdmax;
-	int32_t		sh_esymmax;
-	long		sh_linesize;
-	long		sh_lineoff;
-	long		sh_densenumoff;
-	long		sh_procoff;
-	long		sh_lsymoff;
-	long		sh_optsymoff;
-	long		sh_auxsymoff;
-	long		sh_lstroff;
-	long		sh_estroff;
-	long		sh_fdoff;
-	long		sh_rfdoff;
-	long		sh_esymoff;
+	int16_t		magic;
+	int16_t		vstamp;
+	int32_t		lineMax;
+	int32_t		densenumMax;
+	int32_t		procMax;
+	int32_t		lsymMax;
+	int32_t		optsymMax;
+	int32_t		auxsymMax;
+	int32_t		lstrMax;
+	int32_t		estrMax;
+	int32_t		fdMax;
+	int32_t		rfdMax;
+	int32_t		esymMax;
+	long		linesize;
+	long		cbLineOffset;
+	long		cbDnOffset;
+	long		cbPdOffset;
+	long		cbSymOffset;
+	long		cbOptOffset;
+	long		cbAuxOffset;
+	long		cbSsOffset;
+	long		cbSsExtOffset;
+	long		cbFdOffset;
+	long		cbRfdOffset;
+	long		cbExtOffset;
 };
 
 struct ecoff_extsym {

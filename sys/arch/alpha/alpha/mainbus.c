@@ -1,7 +1,7 @@
-/*	$NetBSD: mainbus.c,v 1.6 1995/12/20 00:18:50 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 1996/04/12 06:07:35 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -44,9 +44,14 @@ struct mainbus_softc {
 static int	mbmatch __P((struct device *, void *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, char *));
-struct cfdriver mainbuscd =
-    { NULL, "mainbus", mbmatch, mbattach, DV_DULL,
-	sizeof (struct mainbus_softc) };
+
+struct cfattach mainbus_ca = {
+	sizeof(struct mainbus_softc), mbmatch, mbattach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
+};
 
 void	mb_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	mb_intr_disestablish __P((struct confargs *));
@@ -111,7 +116,7 @@ mbattach(parent, self, aux)
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
-		if (config_found(self, &nca, mbprint))
+		if (config_found(self, &nca, mbprint) != NULL)
 			cpuattachcnt++;
 	}
 	if (ncpus != cpuattachcnt)

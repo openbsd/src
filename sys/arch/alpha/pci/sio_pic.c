@@ -1,7 +1,7 @@
-/*	$NetBSD: sio_pic.c,v 1.3 1995/12/24 02:29:49 mycroft Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.7.4.3 1996/06/05 22:50:23 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -33,6 +33,9 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 
+#include <machine/intr.h>
+#include <machine/bus.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/pci/siovar.h>
@@ -56,21 +59,10 @@
 /*
  * Private functions and variables.
  */
-static void	*sio_intr_establish __P((void *, isa_irq_t,
-		    int, int, int (*)(void *), void *));
-static void	sio_intr_disestablish __P((void *, void *));
-static void	sio_strayintr __P((isa_irq_t));
+static void	sio_strayintr __P((int));
 
-static __const struct isa_pio_fns *sio_ipf;		/* XXX */
-static void *sio_ipfa;					/* XXX */
-
-void		sio_intr_setup __P((__const struct isa_pio_fns *, void *));
-void		sio_iointr __P((void *framep, int vec));
-
-struct	isa_intr_fns sio_isa_intr_fns = {
-	sio_intr_establish,
-	sio_intr_disestablish,
-};
+bus_chipset_tag_t sio_bc;
+bus_io_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
 
 /*
  * Interrupt handler chains.  sio_intr_establish() inserts a handler into
@@ -131,7 +123,7 @@ sio_setirqstat(irq, enabled, type)
 	int icu, bit;
 
 #if 0
-	printf("sio_setirqstat: irq %d, %s, %s\n", irq,
+	printf("sio_setirqstat: irq %d: %s, %s\n", irq,
 	    enabled ? "enabled" : "disabled", isa_intr_typename(type));
 #endif
 
@@ -140,10 +132,10 @@ sio_setirqstat(irq, enabled, type)
 	icu = irq / 8;
 	bit = irq % 8;
 
-	ocw1[0] = INB(sio_ipf, sio_ipfa, IO_ICU1 + 1);
-	ocw1[1] = INB(sio_ipf, sio_ipfa, IO_ICU2 + 1);
-	elcr[0] = INB(sio_ipf, sio_ipfa, 0x4d0);		/* XXX */
-	elcr[1] = INB(sio_ipf, sio_ipfa, 0x4d1);		/* XXX */
+	ocw1[0] = bus_io_read_1(sio_bc, sio_ioh_icu1, 1);
+	ocw1[1] = bus_io_read_1(sio_bc, sio_ioh_icu2, 1);
+	elcr[0] = bus_io_read_1(sio_bc, sio_ioh_elcr, 0);	/* XXX */
+	elcr[1] = bus_io_read_1(sio_bc, sio_ioh_elcr, 1);	/* XXX */
 
 	/*
 	 * interrupt enable: set bit to mask (disable) interrupt.
@@ -178,39 +170,42 @@ sio_setirqstat(irq, enabled, type)
 	    (ocw1[1] & ~initial_ocw1[1]) != 0 ||
 	    (elcr[0] & initial_elcr[0]) != initial_elcr[0] ||
 	    (elcr[1] & initial_elcr[1]) != initial_elcr[1]) {
-		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2X)\n",
+		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
 		    initial_ocw1[0], initial_ocw1[1],
 		    initial_elcr[0], initial_elcr[1]);
-		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2X)\n",
+		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
 		    ocw1[0], ocw1[1], elcr[0], elcr[1]);
 		panic("sio_setirqstat: hosed");
 	}
 #endif
 
-	OUTB(sio_ipf, sio_ipfa, IO_ICU1 + 1, ocw1[0]);
-	OUTB(sio_ipf, sio_ipfa, IO_ICU2 + 1, ocw1[1]);
-	OUTB(sio_ipf, sio_ipfa, 0x4d0, elcr[0]);		/* XXX */
-	OUTB(sio_ipf, sio_ipfa, 0x4d1, elcr[1]);		/* XXX */
+	bus_io_write_1(sio_bc, sio_ioh_icu1, 1, ocw1[0]);
+	bus_io_write_1(sio_bc, sio_ioh_icu2, 1, ocw1[1]);
+	bus_io_write_1(sio_bc, sio_ioh_elcr, 0, elcr[0]);	/* XXX */
+	bus_io_write_1(sio_bc, sio_ioh_elcr, 1, elcr[1]);	/* XXX */
 }
 
 void
-sio_intr_setup(ipf, ipfa)
-	__const struct isa_pio_fns *ipf;
-	void *ipfa;
+sio_intr_setup(bc)
+	bus_chipset_tag_t bc;
 {
 	int i;
 
-	sio_ipf = ipf;
-	sio_ipfa = ipfa;
+	sio_bc = bc;
+
+	if (bus_io_map(sio_bc, IO_ICU1, IO_ICUSIZE, &sio_ioh_icu1) ||
+	    bus_io_map(sio_bc, IO_ICU2, IO_ICUSIZE, &sio_ioh_icu2) ||
+	    bus_io_map(sio_bc, 0x4d0, 2, &sio_ioh_elcr))
+		panic("sio_intr_setup: can't map I/O ports");
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
 	 * Remember the initial values, because the prom is stupid.
 	 */
-	initial_ocw1[0] = INB(sio_ipf, sio_ipfa, IO_ICU1 + 1);
-	initial_ocw1[1] = INB(sio_ipf, sio_ipfa, IO_ICU2 + 1);
-	initial_elcr[0] = INB(sio_ipf, sio_ipfa, 0x4d0);	/* XXX */
-	initial_elcr[1] = INB(sio_ipf, sio_ipfa, 0x4d1);	/* XXX */
+	initial_ocw1[0] = bus_io_read_1(sio_bc, sio_ioh_icu1, 1);
+	initial_ocw1[1] = bus_io_read_1(sio_bc, sio_ioh_icu2, 1);
+	initial_elcr[0] = bus_io_read_1(sio_bc, sio_ioh_elcr, 0); /* XXX */
+	initial_elcr[1] = bus_io_read_1(sio_bc, sio_ioh_elcr, 1); /* XXX */
 #if 0
 	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
 	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
@@ -262,14 +257,27 @@ sio_intr_setup(ipf, ipfa)
 	}
 }
 
+const char *
+sio_intr_string(v, irq)
+	void *v;
+	int irq;
+{
+	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
+
+	if (irq == 0 || irq >= ICU_LEN || irq == 2)
+		panic("sio_intr_string: bogus IRQ 0x%x\n", irq);
+
+	sprintf(irqstr, "isa irq %d", irq);
+	return (irqstr);
+}
+
 void *
-sio_intr_establish(siifa, irq, type, level, ih_fun, ih_arg)
-	void *siifa;
-        isa_irq_t irq;
+sio_intr_establish(v, irq, type, level, ih_fun, ih_arg)
+	void *v, *ih_arg;
+        int irq;
         int type;
         int level;
         int (*ih_fun)(void *);
-        void *ih_arg;
 {
 	struct intrhand **p, *c, *ih;
 	extern int cold;
@@ -288,10 +296,18 @@ sio_intr_establish(siifa, irq, type, level, ih_fun, ih_arg)
 		if (type == sio_intrsharetype[irq])
 			break;
 	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s",
-			    isa_intrsharetype_name(sio_intrsharetype[irq]),
-			    isa_intrsharetype_name(type));
+		if (type != IST_NONE) {
+			if (sio_intrhand[irq] == NULL) {
+				printf("sio_intr_establish: irq %d: warning: using %s on %s\n",
+				    irq, isa_intr_typename(type),
+				    isa_intr_typename(sio_intrsharetype[irq]));
+				type = sio_intrsharetype[irq];
+			} else {
+				panic("sio_intr_establish: irq %d: can't share %s with %s",
+				    irq, isa_intr_typename(type),
+				    isa_intr_typename(sio_intrsharetype[irq]));
+			}
+		}
 		break;
         }
 
@@ -320,12 +336,12 @@ sio_intr_establish(siifa, irq, type, level, ih_fun, ih_arg)
 }
 
 void
-sio_intr_disestablish(siifa, handler)
-	void *siifa;
-	void *handler;
+sio_intr_disestablish(v, cookie)
+	void *v;
+	void *cookie;
 {
 
-	printf("sio_intr_disestablish(%lx)\n", handler);
+	printf("sio_intr_disestablish(%lx)\n", cookie);
 	/* XXX */
 
 	/* XXX NEVER ALLOW AN INITIALLY-ENABLED INTERRUPT TO BE DISABLED */
@@ -337,7 +353,7 @@ sio_intr_disestablish(siifa, handler)
  */
 void
 sio_strayintr(irq)
-	isa_irq_t irq;
+	int irq;
 {
 
 	if (++sio_strayintrcnt[irq] <= STRAY_MAX)
@@ -401,8 +417,8 @@ sio_iointr(framep, vec)
 	 * by the interrupt handler.
 	 */
 	if (irq > 7)
-		OUTB(sio_ipf, sio_ipfa,
-		    IO_ICU2 + 0, 0x20 | (irq & 0x07));		/* XXX */
-	OUTB(sio_ipf, sio_ipfa,
-	    IO_ICU1 + 0, 0x20 | (irq > 7 ? 2 : irq));		/* XXX */
+		bus_io_write_1(sio_bc,
+		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
+	bus_io_write_1(sio_bc,
+	    sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));	/* XXX */
 }

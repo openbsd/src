@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.9 1995/12/20 00:14:19 cgd Exp $
+#	$NetBSD: files.alpha,v 1.19.4.2 1996/05/30 23:20:37 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -12,9 +12,11 @@ maxusers 2 8 64
 # Bus-independent devices
 #
 
-device mainbus at root { }              # no locators (yet?)
+device	mainbus { }	              # no locators (yet?)
+attach	mainbus at root
 
-device	cpu at mainbus { }		# not really optional; can be a 'bus'
+device	cpu { }				# not really optional; can be a 'bus'
+attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
 
@@ -29,30 +31,27 @@ major { sd = 8 }
 
 
 #
-# ansi/sun console emulator
-#
-
-define	ansicons
-file	dev/pseudo/ansicons.c		ansicons
-
-
-#
 # raster console routines
 #
 
+define	raster
 include "../../../dev/rcons/files.rcons"
-
-define	rcons
-file	dev/pseudo/rcons_init.c		rcons
-file	dev/pseudo/rcons_subr.c		rcons
+file	arch/alpha/wscons/wscons_rinit.c	raster
+file	arch/alpha/wscons/wscons_rops.c		raster
 
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & kbd.
-# XXX should be pseudo-device, with an ansicons attribute.
 #
-define	wsc				# XXX should be pseudo-dev
-file	arch/alpha/pci/wscons.c		wsc		needs-flag
+define  wsconsdev {[console = -1]}
+device	wscons
+attach	wscons at wsconsdev
+file	arch/alpha/wscons/wscons.c	wscons		needs-flag
+file	arch/alpha/wscons/wscons_emul.c	wscons
+
+file	arch/alpha/wscons/event.c	wscons
+file	arch/alpha/wscons/kbd.c		wscons
+file	arch/alpha/wscons/ms.c		wscons
 
 
 #
@@ -61,44 +60,57 @@ file	arch/alpha/pci/wscons.c		wsc		needs-flag
 
 include "../../../dev/tc/files.tc"
 
-device tcasic at mainbus: tcbus
+device	tcasic: tcbus
+attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
-file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
-file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
+file	arch/alpha/tc/tc_bus_io.c	tcasic
+file	arch/alpha/tc/tc_bus_mem.c	tcasic
+file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
+file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
 # the TurboChannel IOCTL ASIC
-device ioasic at tc { offset = -1 }
-file	arch/alpha/tc/ioasic.c		ioasic		needs-flag
+device	ioasic { offset = -1 }
+attach	ioasic at tc
+file	arch/alpha/tc/ioasic.c		ioasic
 
-# the TurboChannel clock (XXX)
-# device clock at ioasic			# not really optional
-#file	arch/alpha/alpha/clock.c	clock
+# Color Frame buffer
+device	cfb: raster, wsconsdev
+attach	cfb at tc
+file	arch/alpha/tc/cfb.c		cfb
 
-# Smart Frame buffer (XXX NOT YET SUPPORTED)
-device sfb at tc
+# Smart Frame buffer
+device	sfb: raster, wsconsdev
+attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
 # 8530 UARTs
-device scc at ioasic
+device	scc
+attach	scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
 # the TCDS ASIC
-device tcds at tc { slot = -1 }
+device	tcds { slot = -1 }
+attach	tcds at tc
 file	arch/alpha/tc/tcds.c		tcds		needs-count
 
 # 53C[F]90 SCSI
-device esp at tcds: scsi
+device	esp: scsi
+attach	esp at tcds
 file	arch/alpha/tc/esp.c		esp		needs-count
 file	arch/alpha/tc/tcds_dma.c	esp
 
 # Baseboard Lance ethernet.
-device le at ioasic, tc: ether, ifnet
-file	dev/tc/if_le.c			le	needs-flag # for le_iomem
+attach	le at ioasic with le_ioasic
+attach	le at tc with le_tc
+file	dev/tc/if_le_dec.c		(le_ioasic | le_tc)
+file	dev/tc/if_le_ioasic.c		le_ioasic	needs-flag #for le_iomem
+file	dev/tc/if_le_tc.c		le_tc
 
 #
 # ISA Bus support
 #
 
+include "../../../dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "../../../dev/isa/files.isa"
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
@@ -108,13 +120,15 @@ include "../../../dev/isa/files.isa"
 # ISA Bus devices
 #
 
-device	ibus at mainbus { }
-device	jcombo at ibus: isabus
-device	jeisa at ibus: eisabus
+#device	ibus at mainbus { }
+#device	jcombo at ibus: isabus
+#device	jeisa at ibus: eisabus
 
-device  pckbd at isa
+device  pckbd
+attach  pckbd at isa
 file    arch/alpha/isa/pckbd.c           pckbd needs-flag
-device  pms at isa
+device  pms
+attach  pms at isa
 file    arch/alpha/isa/pms.c             pms needs-flag
 
 
@@ -129,22 +143,27 @@ include "../../../dev/eisa/files.eisa"
 # PCI Bus support
 #
 
-include "../../../dev/pci/files.pci"
+# include "../../../dev/pci/files.pci" XXX SEE ABOVE
 
-device	apecs at mainbus: pcibus
+device	apecs: pcibus
+attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
-file	arch/alpha/pci/apecs_isa.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
-device	cia at mainbus: pcibus
-file	arch/alpha/pci/cia.c		cia
-file	arch/alpha/pci/cia_isa.c	cia
-file	arch/alpha/pci/cia_pci.c	cia
-
-device	lca at mainbus: pcibus
+device	lca: pcibus
+attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
-file	arch/alpha/pci/lca_isa.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
+
+file	arch/alpha/pci/apecs_lca_bus_io.c	apecs | lca
+file	arch/alpha/pci/apecs_lca_bus_mem.c	apecs | lca
+
+device	cia: pcibus
+attach	cia at mainbus
+file	arch/alpha/pci/cia.c		cia
+file	arch/alpha/pci/cia_bus_io.c	cia
+file	arch/alpha/pci/cia_bus_mem.c	cia
+file	arch/alpha/pci/cia_pci.c	cia
 
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
@@ -157,15 +176,23 @@ file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio at pci: isabus
-device	pceb at pci: eisabus
-file	arch/alpha/pci/sio.c		sio pceb	needs-flag
-file	arch/alpha/pci/sio_pic.c	sio pceb
+device	sio: isabus
+attach	sio at pci
+device	pceb: isabus, eisabus
+attach	pceb at pci
+file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
+file	arch/alpha/pci/sio_pic.c	sio | pceb
 
-device	tga at pci: rcons, wsc, ansicons
+device	tga: raster, wsconsdev
+attach	tga at pci
 file	arch/alpha/pci/tga.c		tga		needs-flag
+file	arch/alpha/pci/tga_conf.c	tga
+file	arch/alpha/pci/tga_bt463.c	tga
+file	arch/alpha/pci/tga_bt485.c	tga
 
-device	pcivga at pci: wsc, ansicons
+
+device	pcivga: wsconsdev
+attach	pcivga at pci
 file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 
 
@@ -173,17 +200,19 @@ file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 # Devices that can live on multiple busses
 #
 
-device clock at isa, ioasic				# not really optional
-file	arch/alpha/alpha/clock.c	clock
-file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
-					dec_2100_a50 dec_kn20aa dec_axppci_33
-					dec_21000
+device	mcclock
+attach	mcclock at ioasic with mcclock_ioasic
+attach	mcclock at isa with mcclock_isa
+file	arch/alpha/alpha/mcclock.c	mcclock
+file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
+file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
 
 #
 # Standard files
 #
 
 file	arch/alpha/alpha/autoconf.c
+file	arch/alpha/alpha/clock.c
 file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/machdep.c
@@ -198,14 +227,14 @@ file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 file	dev/cons.c
-file	netinet/in_cksum.c
 
 
 #
 # Optional/miscellaneous files
 #
 
-file	netns/ns_cksum.c		ns
+file	arch/alpha/alpha/in_cksum.c		inet
+file	netns/ns_cksum.c			ns
 
 # XXX
 file	arch/alpha/alpha/promcons.c

@@ -1,7 +1,7 @@
-/*	$NetBSD: lcavar.h,v 1.1 1995/11/23 02:37:47 cgd Exp $	*/
+/*	$NetBSD: lcavar.h,v 1.3 1996/04/12 06:08:35 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Jeffrey Hsu
@@ -37,20 +37,8 @@
  * do their dirty work (and more!).
  */
 struct lca_config {
-	__const struct pci_conf_fns	*lc_conffns;
-	void				*lc_confarg;
-
-	__const struct pci_dma_fns	*lc_dmafns;
-	void				*lc_dmaarg;
-
-	__const struct pci_intr_fns	*lc_intrfns;
-	void				*lc_intrarg;
-
-	__const struct pci_mem_fns	*lc_memfns;
-	void				*lc_memarg;
-
-	__const struct pci_pio_fns	*lc_piofns;
-	void				*lc_pioarg;
+	struct alpha_bus_chipset lc_bc;
+	struct alpha_pci_chipset lc_pc;
 };
 
 struct lca_softc {
@@ -59,10 +47,5 @@ struct lca_softc {
 	struct	lca_config *sc_lcp;
 };
 
-extern __const struct pci_conf_fns	lca_conf_fns;
-extern __const struct pci_dma_fns	lca_dma_fns;
-/* pci interrupt functions handled elsewhere */
-extern __const struct pci_mem_fns	lca_mem_fns;
-extern __const struct pci_pio_fns	lca_pio_fns;
-
 void	lca_init __P((struct lca_config *));
+void	lca_pci_init __P((pci_chipset_tag_t, void *));

@@ -1,7 +1,7 @@
-/*	$NetBSD: tgavar.h,v 1.3 1995/11/23 02:38:31 cgd Exp $	*/
+/*	$NetBSD: tgavar.h,v 1.5 1996/04/12 06:09:21 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -27,27 +27,40 @@
  * rights to redistribute these changes.
  */
 
-#include <alpha/pci/tgareg.h>
+#include <machine/tgareg.h>
 #include <dev/rcons/raster.h>
-#include <dev/pseudo/rcons.h>
-#include <dev/pseudo/ansicons.h>
+#include <alpha/wscons/wsconsvar.h>
+#include <alpha/wscons/wscons_raster.h>
 
 struct tga_devconfig;
+struct fbcmap;
+struct fbcursor;
+struct fbcurpos;
 
 struct tga_ramdac_conf {
 	char	*tgar_name;
-	void	(*tgar_set_cpos) __P((struct tga_devconfig *, int, int));
-	void	(*tgar_get_cpos) __P((struct tga_devconfig *, int *, int *));
-	/* set cursor shape */
-	/* set cursor location */
-	/* set cursor colormap? */
-	/* set colormap? */
+	void	(*tgar_init) __P((struct tga_devconfig *, int));
+	int	(*tgar_intr) __P((void *));
+	int	(*tgar_set_cmap) __P((struct tga_devconfig *,
+		    struct fbcmap *));
+	int	(*tgar_get_cmap) __P((struct tga_devconfig *,
+		    struct fbcmap *));
+	int	(*tgar_set_cursor) __P((struct tga_devconfig *,
+		    struct fbcursor *));
+	int	(*tgar_get_cursor) __P((struct tga_devconfig *,
+		    struct fbcursor *));
+	int	(*tgar_set_curpos) __P((struct tga_devconfig *,
+		    struct fbcurpos *));
+	int	(*tgar_get_curpos) __P((struct tga_devconfig *,
+		    struct fbcurpos *));
+	int	(*tgar_get_curmax) __P((struct tga_devconfig *,
+		    struct fbcurpos *));
 };
 
 struct tga_conf {
 	char	    *tgac_name;		/* name for this board type */
 
-	__const struct tga_ramdac_conf
+	const struct tga_ramdac_conf
 		    *tgac_ramdac;	/* the RAMDAC type; see above */
 	int	    tgac_phys_depth;	/* physical frame buffer depth */
 	vm_size_t   tgac_cspace_size;	/* core space size */
@@ -63,20 +76,16 @@ struct tga_conf {
 };
 
 struct tga_devconfig {
-	__const struct pci_conf_fns *dc_pcf;
-	void		*dc_pcfa;
-	__const struct pci_mem_fns *dc_pmf;
-	void		*dc_pmfa;
-	__const struct pci_pio_fns *dc_ppf;
-	void		*dc_ppfa;
+	bus_chipset_tag_t dc_bc;
+	pci_chipset_tag_t dc_pc;
 
-	pci_conftag_t    dc_pcitag;	/* PCI tag */
-	pci_moffset_t	 dc_pcipaddr;	/* PCI phys addr. */
+	pcitag_t   	 dc_pcitag;	/* PCI tag */
+	bus_mem_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
 
 	tga_reg_t   *dc_regs;		/* registers; XXX: need aliases */
 
 	int	    dc_tga_type;	/* the device type; see below */
-	__const struct tga_conf *dc_tgaconf; /* device buffer configuration */
+	const struct tga_conf *dc_tgaconf; /* device buffer configuration */
 
 	vm_offset_t dc_vaddr;		/* memory space virtual base address */
 	vm_offset_t dc_paddr;		/* memory space physical base address */
@@ -89,7 +98,9 @@ struct tga_devconfig {
 
 	struct raster	dc_raster;	/* raster description */
 	struct rcons	dc_rcons;	/* raster blitter control info */
-	struct ansicons	dc_ansicons;	/* ansi console emulator info XXX */
+
+	int	    dc_blanked;		/* currently had video disabled */
+	void	    *dc_ramdac_private; /* RAMDAC private storage */
 };
 	
 struct tga_softc {
@@ -97,6 +108,7 @@ struct tga_softc {
 
 	struct	tga_devconfig *sc_dc;	/* device configuration */
 	void	*sc_intr;		/* interrupt handler info */
+	/* XXX should record intr fns/arg */
 };
 
 #define	TGA_TYPE_T8_01		0	/* 8bpp, 1MB */
@@ -108,13 +120,20 @@ struct tga_softc {
 #define	TGA_TYPE_T32_88		6	/* 32bpp, 16MB */
 #define	TGA_TYPE_UNKNOWN	7	/* unknown */
 
-#define	TGA_CURSOR_OFF		-1	/* pass to tgar_cpos to disable */
-
 #define	DEVICE_IS_TGA(class, id)					\
-	    (PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
-	     PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030)
+	    ((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
+	     PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ? 10 : 0)
 
-void    tga_console __P((__const struct pci_conf_fns *, void *, 
-	    __const struct pci_mem_fns *, void *,
-	    __const struct pci_pio_fns *, void *,
-	    pci_bus_t, pci_device_t, pci_function_t));
+void    tga_console __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int, int));
+
+int	tga_identify __P((tga_reg_t *));
+const struct tga_conf *tga_getconf __P((int));
+
+extern const struct tga_ramdac_conf tga_ramdac_bt463;
+extern const struct tga_ramdac_conf tga_ramdac_bt485;
+
+int     tga_builtin_set_cursor __P((struct tga_devconfig *, struct fbcursor *));
+int     tga_builtin_get_cursor __P((struct tga_devconfig *, struct fbcursor *));
+int     tga_builtin_set_curpos __P((struct tga_devconfig *, struct fbcurpos *));
+int     tga_builtin_get_curpos __P((struct tga_devconfig *, struct fbcurpos *));
+int     tga_builtin_get_curmax __P((struct tga_devconfig *, struct fbcurpos *));

@@ -1,10 +1,10 @@
-/*	$NetBSD: pci_axppci_33.h,v 1.1 1995/11/23 02:37:56 cgd Exp $	*/
+/*	$NetBSD: pci_axppci_33.h,v 1.3 1996/04/12 06:08:47 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Jeffrey Hsu
+ * Author: Chris G. Demetriou
  *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -27,6 +27,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_axppci_33_pickintr __P((__const struct pci_conf_fns *, void *,
-	    __const struct pci_pio_fns *, void *,
-	    __const struct pci_intr_fns **, void **));
+void	pci_axppci_33_pickintr __P((struct lca_config *));

@@ -1,21 +1,21 @@
-/*	$NetBSD: apecsvar.h,v 1.1 1995/11/23 02:37:21 cgd Exp $	*/
+/*	$NetBSD: apecsvar.h,v 1.3 1996/04/12 06:08:14 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- *
+ * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
+ * 
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -41,20 +41,8 @@ struct apecs_config {
 	int	ac_epic_pass2;
 	int	ac_memwidth;
 
-	__const struct pci_conf_fns	*ac_conffns;
-	void				*ac_confarg;
-
-	__const struct pci_dma_fns	*ac_dmafns;
-	void				*ac_dmaarg;
-
-	__const struct pci_intr_fns	*ac_intrfns;
-	void				*ac_intrarg;
-
-	__const struct pci_mem_fns	*ac_memfns;
-	void				*ac_memarg;
-
-	__const struct pci_pio_fns	*ac_piofns;
-	void				*ac_pioarg;
+	struct alpha_bus_chipset ac_bc;
+	struct alpha_pci_chipset ac_pc;
 };
 
 struct apecs_softc {
@@ -63,10 +51,5 @@ struct apecs_softc {
 	struct	apecs_config *sc_acp;
 };
 
-extern __const struct pci_conf_fns	apecs_conf_fns;
-extern __const struct pci_dma_fns	apecs_dma_fns;
-/* pci interrupt functions handled elsewhere */
-extern __const struct pci_mem_fns	apecs_mem_fns;
-extern __const struct pci_pio_fns	apecs_pio_fns;
-
 void	apecs_init __P((struct apecs_config *));
+void	apecs_pci_init __P((pci_chipset_tag_t, void *));

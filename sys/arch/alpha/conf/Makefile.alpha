@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.alpha,v 1.8 1995/11/23 02:35:16 cgd Exp $
-#
+#	$NetBSD: Makefile.alpha,v 1.16 1996/05/19 21:16:51 cgd Exp $
+
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/conf/``machineid''
+#	/sys/arch/alpha/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/conf/Makefile.``machinetype''
+#	/sys/arch/alpha/conf/Makefile.alpha
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -22,21 +22,21 @@
 # PROF is set to -pg if profiling.
 
 AS?=	as
-AWK?=	awk
 CC?=	cc
 CPP?=	cpp
 LD?=	ld
+STRIP?=	strip -g -X -x
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 ALPHA=	../..
 
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	-Werror -fno-builtin -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
-#CFLAGS+=-Wmissing-prototypes -Wmissing-declarations
-AFLAGS=	${COPTS}
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dalpha
+CFLAGS=		${DEBUG} -O2 -Werror -mno-fp-regs
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -59,103 +59,115 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
-NORMAL_C=	${CC} -c ${CFLAGS} ${PROF} $<
-NORMAL_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-NORMAL_S=	rm -f $*.c; ln -s $< $*.c; \
-		${CC} ${AFLAGS} -I${ALPHA}/alpha -E $*.c > $*.i; \
-		${AS} -o $@ $*.i; rm -f $*.c $*.i
-NORMAL_S_C=	rm -f $*.c; ln -s $< $*.c; \
-		${CC} ${AFLAGS} ${PARAM} -I${ALPHA}/alpha -E $*.c > $*.i; \
-		${AS} -o $@ $*.i; rm -f $*.c $*.i
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
+
+%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o \
+		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
 DEBUG?=
 .if ${DEBUG} == "-g"
-LDX=-X
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} $@; ${STRIP} $@
 .else
-LDX=-x
-.endif
-LDFLAGS= ${LDX} -G 4 -N -e __start -Ttext fffffc0000230000
-SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o ${LIBKERN} \
-		${LIBCOMPAT}
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	-@echo ${LD} ${LDFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ${XXX}; \
-		${LD} ${LDFLAGS} -o $@ ${SYSTEM_OBJ} vers.o ${XXX}
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
-.if ${DEBUG} == "-g"
-.if 0
-SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo strip -d $@; strip -d $@
-.else
-SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo strip -g -X -x $@; strip -g -X -x $@
-.endif
+LINKFLAGS+=	-x
 .endif
 
 %LOAD
 
-newvers:
-	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
-
-clean::
-	rm -f eddep *netbsd netbsd.gdb tags tags1 *.[io] \
-		[a-z]*.s Errs errs linterrs makelinks genassym
-
-
-locore.o: ${ALPHA}/alpha/locore.s ${ALPHA}/alpha/pal.s \
-	  ${ALPHA}/alpha/prom_disp.s ${ALPHA}/include/intrcnt.h assym.s
-	${NORMAL_S_C}
-
-# depend on maxusers
-assym.s: Makefile
-
-./assym.s: assym.s
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${ALPHA}/alpha/genassym.c
-	${CC} -c ${CFLAGS} ${PARAM} $<
-
-SRCS= ${CFILES} ${ALPHA}/alpha/genassym.c ioconf.c param.c
-depend: .depend
-.depend: ${SRCS} assym.s
-	mkdep ${COPTS} ${SRCS}
-	mkdep -a -p ${COPTS} ${ALPHA}/alpha/genassym.c
-
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
-
-tags: depend
-	sh $S/conf/systags.sh
-	rm -f tags1
-	sed -e 's,	../,	,' tags > tags1
-
-ioconf.o: ioconf.c
-	${CC} -c ${CFLAGS} ioconf.c
+	${NORMAL_C_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${CC} -c ${CFLAGS} ${PARAM} param.c
+	${NORMAL_C_C}
+
+ioconf.o: ioconf.c
+	${NORMAL_C}
+
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${ALPHA}/alpha/Locore.c ${CFILES} ${ALPHA}/alpha/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	${ALPHA}/alpha/locore.s \
+	param.c ioconf.c ${CFILES} ${SFILES}
+depend:: .depend
+.depend: ${SRCS} assym.h param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ALPHA}/alpha/genassym.c
+
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on maxusers
+genassym.o machdep.o: Makefile
+
+# depend on CPU configuration 
+clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
+
+
+locore.o: ${ALPHA}/alpha/locore.s assym.h
+	${NORMAL_S}
 
 %RULES

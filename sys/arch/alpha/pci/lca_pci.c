@@ -1,10 +1,10 @@
-/*	$NetBSD: lca_pci.c,v 1.1 1995/11/23 02:37:42 cgd Exp $	*/
+/*	$NetBSD: lca_pci.c,v 1.3 1996/04/23 14:01:00 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Jeffrey Hsu
+ * Author: Chris G. Demetriou
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -38,62 +38,119 @@
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-pci_confreg_t	lca_conf_read __P((void *, pci_conftag_t, pci_confoffset_t));
-void		lca_conf_write __P((void *, pci_conftag_t,
-		    pci_confoffset_t, pci_confreg_t));
-int		lca_find_io __P((void *, pci_conftag_t,
-		    pci_confoffset_t, pci_iooffset_t *, pci_iosize_t *));
-int		lca_find_mem __P((void *, pci_conftag_t,
-		    pci_confoffset_t, pci_moffset_t *, pci_msize_t *, int *));
+void		lca_attach_hook __P((struct device *, struct device *,
+		    struct pcibus_attach_args *));
+int		lca_bus_maxdevs __P((void *, int));
+pcitag_t	lca_make_tag __P((void *, int, int, int));
+void		lca_decompose_tag __P((void *, pcitag_t, int *, int *,
+		    int *));
+pcireg_t	lca_conf_read __P((void *, pcitag_t, int));
+void		lca_conf_write __P((void *, pcitag_t, int, pcireg_t));
 
-__const struct pci_conf_fns lca_conf_fns = {
-	lca_conf_read,
-	lca_conf_write,
-	lca_find_io,
-	lca_find_mem,
-};
+void
+lca_pci_init(pc, v)
+	pci_chipset_tag_t pc;
+	void *v;
+{
 
-pci_confreg_t
+	pc->pc_conf_v = v;
+	pc->pc_attach_hook = lca_attach_hook;
+	pc->pc_bus_maxdevs = lca_bus_maxdevs;
+	pc->pc_make_tag = lca_make_tag;
+	pc->pc_decompose_tag = lca_decompose_tag;
+	pc->pc_conf_read = lca_conf_read;
+	pc->pc_conf_write = lca_conf_write;
+}
+
+void
+lca_attach_hook(parent, self, pba)
+	struct device *parent, *self;
+	struct pcibus_attach_args *pba;
+{
+}
+
+int
+lca_bus_maxdevs(cpv, busno)
+	void *cpv;
+	int busno;
+{
+
+	if (busno == 0)
+		return 16;
+	else
+		return 32;
+}
+
+pcitag_t
+lca_make_tag(cpv, b, d, f)
+	void *cpv;
+	int b, d, f;
+{
+
+	return (b << 16) | (d << 11) | (f << 8);
+}
+
+void
+lca_decompose_tag(cpv, tag, bp, dp, fp)
+	void *cpv;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+	if (bp != NULL)
+		*bp = (tag >> 16) & 0xff;
+	if (dp != NULL)
+		*dp = (tag >> 11) & 0x1f;
+	if (fp != NULL)
+		*fp = (tag >> 8) & 0x7;
+}
+
+pcireg_t
 lca_conf_read(cpv, tag, offset)
 	void *cpv;
-	pci_conftag_t tag;
-	pci_confoffset_t offset;
+	pcitag_t tag;
+	int offset;
 {
-	pci_confreg_t *datap, data;
-	int s, secondary, ba;
-	int32_t old_ioc_conf;					/* XXX */
-	u_int64_t dev_sel;
+	struct lca_config *lcp = cpv;
+	pcireg_t *datap, data;
+	int s, secondary, device, ba;
 
-	dev_sel = 1 << PCI_TAG_DEVICE(tag) + 11;
-
-	secondary = PCI_TAG_BUS(tag) != 0;
+	/* secondary if bus # != 0 */
+	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
-		old_ioc_conf = REGVAL(LCA_IOC_CONF);
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf | 0x1;
+		REGVAL(LCA_IOC_CONF) = 0x01;
 		wbflush();
+	} else {
+		/*
+		 * on the LCA, must frob the tag used for
+		 * devices on the primary bus, in the same ways
+		 * as is used by type 1 configuration cycles
+		 * on PCs.
+		 */
+		tag = (1 << (device + 11)) | (tag & 0x7ff);
 	}
 
-	datap = (pci_confreg_t *)phystok0seg(LCA_PCI_CONF |
-	    dev_sel << 5UL |				/* XXX */
+	datap = (pcireg_t *)phystok0seg(LCA_PCI_CONF |
+	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
 	    0x3 << 3);						/* XXX */
-	data = (pci_confreg_t)-1;
+	data = (pcireg_t)-1;
 	if (!(ba = badaddr(datap, sizeof *datap)))
 		data = *datap;
 
 	if (secondary) {
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf;
+		REGVAL(LCA_IOC_CONF) = 0x00;
 		wbflush();
 		splx(s);
 	}
 
 #if 0
-	printf("lca_conf_read: tag 0x%x, offset 0x%x -> %x @ %p%s\n", tag,
-	    offset, data, datap, ba ? " (badaddr)" : "");
+	printf("lca_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
+	    data, datap, ba ? " (badaddr)" : "");
 #endif
 
 	return data;
@@ -102,28 +159,33 @@ lca_conf_read(cpv, tag, offset)
 void
 lca_conf_write(cpv, tag, offset, data)
 	void *cpv;
-	pci_conftag_t tag;
-	pci_confoffset_t offset;
-	pci_confreg_t data;
+	pcitag_t tag;
+	int offset;
+	pcireg_t data;
 {
-	pci_confreg_t *datap;
-	int s, secondary;
-	int32_t old_ioc_conf;					/* XXX */
-	int32_t dev_sel;
+	struct lca_config *lcp = cpv;
+	pcireg_t *datap;
+	int s, secondary, device;
 
-	dev_sel = 1 << PCI_TAG_DEVICE(tag) + 11;
-
-	secondary = PCI_TAG_BUS(tag) != 0;
+	/* secondary if bus # != 0 */
+	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
-		old_ioc_conf = REGVAL(LCA_IOC_CONF);
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf | 0x1;
+		REGVAL(LCA_IOC_CONF) = 0x01;
 		wbflush();
+	} else {
+		/*
+		 * on the LCA, must frob the tag used for
+		 * devices on the primary bus, in the same ways
+		 * as is used by type 1 configuration cycles
+		 * on PCs.
+		 */
+		tag = (1 << (device + 11)) | (tag & 0x7ff);
 	}
 
-	datap = (pci_confreg_t *)phystok0seg(LCA_PCI_CONF |
-	    dev_sel << 5UL |				/* XXX */
+	datap = (pcireg_t *)phystok0seg(LCA_PCI_CONF |
+	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
 	    0x3 << 3);						/* XXX */
@@ -131,96 +193,13 @@ lca_conf_write(cpv, tag, offset, data)
 
 	if (secondary) {
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf;	
+		REGVAL(LCA_IOC_CONF) = 0x00;	
 		wbflush();
 		splx(s);
 	}
 
 #if 0
-	printf("lca_conf_write: tag 0x%x, offset 0x%x -> 0x%x @ %p\n", tag,
-	    offset, data, datap);
+	printf("lca_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
+	    reg, data, datap);
 #endif
-}
-
-int
-lca_find_io(cpv, tag, reg, iobasep, sizep)
-	void *cpv;
-	pci_conftag_t tag;
-	pci_confoffset_t reg;
-	pci_iooffset_t *iobasep;
-	pci_iosize_t *sizep;
-{
-	struct lca_config *lcp = cpv;
-	pci_confreg_t addrdata, sizedata;
-	pci_iooffset_t pci_iobase;
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("lca_map_io: bad request");
-
-	addrdata = PCI_CONF_READ(lcp->lc_conffns, lcp->lc_confarg, tag, reg);
-
-	PCI_CONF_WRITE(lcp->lc_conffns, lcp->lc_confarg, tag, reg, 0xffffffff);
-	sizedata = PCI_CONF_READ(lcp->lc_conffns, lcp->lc_confarg, tag, reg);
-	PCI_CONF_WRITE(lcp->lc_conffns, lcp->lc_confarg, tag, reg, addrdata);
-
-	if (PCI_MAPREG_TYPE(addrdata) == PCI_MAPREG_TYPE_MEM)
-		panic("lca_map_io: attempt to I/O map an memory region");
-
-	if (iobasep != NULL)
-		*iobasep = PCI_MAPREG_IO_ADDRESS(addrdata);
-	if (sizep != NULL)
-		*sizep = ~PCI_MAPREG_IO_ADDRESS(sizedata) + 1;
-
-	return (0);
-}
-
-int
-lca_find_mem(cpv, tag, reg, paddrp, sizep, cacheablep)
-	void *cpv;
-	pci_conftag_t tag;
-	pci_confoffset_t reg;
-	pci_moffset_t *paddrp;
-	pci_msize_t *sizep;
-	int *cacheablep;
-{
-	struct lca_config *lcp = cpv;
-	pci_confreg_t addrdata, sizedata;
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
-		panic("lca_map_mem: bad request");
-
-	/*
-	 * The PROM has mapped the device for us.  We take the address
-	 * that's been assigned to the register, and figure out what
-	 * physical and virtual addresses go with it...
-	 */
-	addrdata = PCI_CONF_READ(lcp->lc_conffns, lcp->lc_confarg, tag, reg);
-
-	PCI_CONF_WRITE(lcp->lc_conffns, lcp->lc_confarg, tag, reg, 0xffffffff);
-	sizedata = PCI_CONF_READ(lcp->lc_conffns, lcp->lc_confarg, tag, reg);
-	PCI_CONF_WRITE(lcp->lc_conffns, lcp->lc_confarg, tag, reg, addrdata);
-
-	if (PCI_MAPREG_TYPE(addrdata) == PCI_MAPREG_TYPE_IO)
-		panic("lca_map_mem: attempt to memory map an I/O region");
-
-	switch (PCI_MAPREG_MEM_TYPE(addrdata)) {
-	case PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-		break;
-	case PCI_MAPREG_MEM_TYPE_64BIT:
-/* XXX */	printf("lca_map_mem: attempt to map 64-bit region\n");
-/* XXX */	break;
-	default:
-		printf("lca_map_mem: reserved mapping type\n");
-		return EINVAL;
-	}
-
-	if (paddrp != NULL)
-		*paddrp = PCI_MAPREG_MEM_ADDRESS(addrdata);	/* PCI addr */
-	if (sizep != NULL)
-		*sizep = ~PCI_MAPREG_MEM_ADDRESS(sizedata) + 1;
-	if (cacheablep != NULL)
-		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
-
-	return 0;
 }

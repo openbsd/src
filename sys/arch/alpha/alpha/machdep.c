@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.14 1996/01/04 22:21:33 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.4.5 1996/06/15 03:56:33 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -35,6 +35,7 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #ifdef REAL_CLISTS
@@ -94,7 +95,7 @@
 #include <net/netisr.h>
 #include "ether.h"
 
-#include "le.h"			/* XXX for le_iomem creation */
+#include "le_ioasic.h"			/* for le_iomem creation */
 
 vm_map_t buffer_map;
 
@@ -135,7 +136,7 @@ u_int32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "alpha";
-char	*cpu_model;
+char	cpu_model[128];
 char	*model_names[] = {
 	"UNKNOWN (0)",
 	"Alpha Demonstration Unit",
@@ -174,18 +175,19 @@ int		ncpus;
 
 /* various CPU-specific functions. */
 char		*(*cpu_modelname) __P((void));
-void		(*cpu_consinit) __P((char *));
-dev_t		(*cpu_bootdev) __P((char *));
+void		(*cpu_consinit) __P((void));
+void		(*cpu_device_register) __P((struct device *dev, void *aux));
 char		*cpu_iobus;
 
-char *boot_file, *boot_flags, *boot_console, *boot_dev;
+char boot_flags[64];
+
+/* for cpu_sysctl() */
+char		root_device[17];
 
 int
-alpha_init(pfn, ptb, argc, argv, envp)
+alpha_init(pfn, ptb)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
-	u_long argc;
-	char *argv[], *envp[];
 {
 	extern char _end[];
 	caddr_t start, v;
@@ -362,7 +364,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_3000_500:
 		cpu_modelname = dec_3000_500_modelname;
 		cpu_consinit = dec_3000_500_consinit;
-		cpu_bootdev = dec_3000_500_bootdev;
+		cpu_device_register = dec_3000_500_device_register;
 		cpu_iobus = "tcasic";
 		break;
 #endif
@@ -371,7 +373,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_3000_300:
 		cpu_modelname = dec_3000_300_modelname;
 		cpu_consinit = dec_3000_300_consinit;
-		cpu_bootdev = dec_3000_300_bootdev;
+		cpu_device_register = dec_3000_300_device_register;
 		cpu_iobus = "tcasic";
 		break;
 #endif
@@ -380,7 +382,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_2100_A50:
 		cpu_modelname = dec_2100_a50_modelname;
 		cpu_consinit = dec_2100_a50_consinit;
-		cpu_bootdev = dec_2100_a50_bootdev;
+		cpu_device_register = dec_2100_a50_device_register;
 		cpu_iobus = "apecs";
 		break;
 #endif
@@ -389,7 +391,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_KN20AA:
 		cpu_modelname = dec_kn20aa_modelname;
 		cpu_consinit = dec_kn20aa_consinit;
-		cpu_bootdev = dec_kn20aa_bootdev;
+		cpu_device_register = dec_kn20aa_device_register;
 		cpu_iobus = "cia";
 		break;
 #endif
@@ -398,7 +400,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_AXPPCI_33:
 		cpu_modelname = dec_axppci_33_modelname;
 		cpu_consinit = dec_axppci_33_consinit;
-		cpu_bootdev = dec_axppci_33_bootdev;
+		cpu_device_register = dec_axppci_33_device_register;
 		cpu_iobus = "lca";
 		break;
 #endif
@@ -407,7 +409,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_2000_300:
 		cpu_modelname = dec_2000_300_modelname;
 		cpu_consinit = dec_2000_300_consinit;
-		cpu_bootdev = dec_2000_300_bootdev;
+		cpu_device_register = dec_2000_300_device_register;
 		cpu_iobus = "ibus";
 	XXX DEC 2000/300 NOT SUPPORTED
 		break;
@@ -417,8 +419,9 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_21000:
 		cpu_modelname = dec_21000_modelname;
 		cpu_consinit = dec_21000_consinit;
-		cpu_bootdev = dec_21000_bootdev;
+		cpu_device_register = dec_21000_device_register;
 		cpu_iobus = "tlsb";
+	XXX DEC 21000 NOT SUPPORTED
 		break;
 #endif
 
@@ -430,22 +433,30 @@ alpha_init(pfn, ptb, argc, argv, envp)
 			    model_names[cputype]);
 	}
 
-	cpu_model = (*cpu_modelname)();
-	if (cpu_model == NULL)
-		cpu_model = model_names[cputype];
+	if ((*cpu_modelname)() != NULL)
+		strncpy(cpu_model, (*cpu_modelname)(), sizeof cpu_model - 1);
+	else
+		strncpy(cpu_model, model_names[cputype], sizeof cpu_model - 1);
+	cpu_model[sizeof cpu_model - 1] = '\0';
 
-#if NLE > 0
+#if NLE_IOASIC > 0
 	/*
 	 * Grab 128K at the top of physical memory for the lance chip
 	 * on machines where it does dma through the I/O ASIC.
 	 * It must be physically contiguous and aligned on a 128K boundary.
+	 *
+	 * Note that since this is conditional on the presence of
+	 * IOASIC-attached 'le' units in the kernel config, the
+	 * message buffer may move on these systems.  This shouldn't
+	 * be a problem, because once people have a kernel config that
+	 * they use, they're going to stick with it.
 	 */
 	if (cputype == ST_DEC_3000_500 ||
 	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
 		lastusablepage -= btoc(128 * 1024);
 		le_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
 	}
-#endif /* NLE */
+#endif /* NLE_IOASIC */
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -490,14 +501,12 @@ alpha_init(pfn, ptb, argc, argv, envp)
 
 	/*
 	 * Determine how many buffers to allocate.
-	 * We allocate the BSD standard of 10% of memory for the first
-	 * 2 Meg, and 5% of remaining memory for buffer space.  Insure a
+	 * We allocate 10% of memory for buffer space.  Insure a
 	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
 	 * headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-		    (20 * CLSIZE);
+		bufpages = (physmem * 10) / (CLSIZE * 100);
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -538,70 +547,40 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_ksp;
 
 	/*
-	 * figure out what arguments we have
-	 */
-	switch (argc) {
-	default:
-		printf("weird number of arguments from boot: %d\n", argc);
-		if (argc < 1)
-			break;
-		/* FALLTHRU */
-	case 4:
-		boot_dev = argv[3];
-		/* FALLTHRU */
-	case 3:
-		boot_console = argv[2];
-		/* FALLTHRU */
-	case 2:
-		boot_flags = argv[1];
-		/* FALLTHRU */
-	case 1:
-		boot_file = argv[0];
-		/* FALLTHRU */
-	}
-
-	/*
-	 * Look at arguments and compute bootdev.
-	 * XXX NOT HERE.
-	 */
-#if 0
-	{							/* XXX */
-		extern dev_t bootdev;				/* XXX */
-		bootdev = (*cpu_bootdev)(boot_dev);
-	}							/* XXX */
-#endif
-
-	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
-	boothowto = RB_SINGLE;
-#ifdef GENERIC
-	boothowto |= RB_ASKNAME;
+	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
+#if 0
+	printf("boot flags = \"%s\"\n", boot_flags);
 #endif
+
+	boothowto = RB_SINGLE;
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
 	for (p = boot_flags; p && *p != '\0'; p++) {
+		/*
+		 * Note that we'd really like to differentiate case here,
+		 * but the Alpha AXP Architecture Reference Manual
+		 * says that we shouldn't.
+		 */
 		switch (*p) {
 		case 'a': /* autoboot */
-		case 'A': /* DEC's notion of autoboot */
+		case 'A':
 			boothowto &= ~RB_SINGLE;
 			break;
 
-		case 'd': /* use compiled in default root */
-			boothowto |= RB_DFLTROOT;
-			break;
-
-		case 'm': /* mini root present in memory */
-			boothowto |= RB_MINIROOT;
-			break;
-
-		case 'n': /* ask for names */
+		case 'n': /* askname */
+		case 'N':
 			boothowto |= RB_ASKNAME;
 			break;
 
-		case 'N': /* don't ask for names */
-			boothowto &= ~RB_ASKNAME;
+#if 0
+		case 'm': /* mini root present in memory */
+		case 'M':
+			boothowto |= RB_MINIROOT;
+			break;
+#endif
 		}
 	}
 
@@ -621,13 +600,15 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	return (0);
 }
 
+void
 consinit()
 {
 
-	(*cpu_consinit)(boot_console);
+	(*cpu_consinit)();
 	pmap_unmap_prom();
 }
 
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -757,6 +738,7 @@ identifycpu()
 int	waittime = -1;
 struct pcb dumppcb;
 
+void
 boot(howto)
 	int howto;
 {
@@ -770,12 +752,6 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-
-		/* protect against curproc->p_stats.foo refs in sync   XXX */
-		if (curproc == NULL)
-			curproc = &proc0;
-
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -1236,6 +1212,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
+
+	case CPU_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp, root_device));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1319,7 +1299,7 @@ netintr()
 #endif
 #ifdef PPP
 	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_CCITT);
+		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
 	}
 #endif
@@ -1440,21 +1420,31 @@ microtime(tvp)
 	splx(s);
 }
 
+/*
+ * Wait "n" microseconds.
+ */
+int
+delay(n)
+	int n;
+{
+	long N = cycles_per_usec * (n);
+
+	while (N > 0)				/* XXX */
+		N -= 3;				/* XXX */
+}
+
 #if defined(COMPAT_OSF1) || 1		/* XXX */
 void
-cpu_exec_ecoff_setregs(p, pack, stack, retval)
+cpu_exec_ecoff_setregs(p, epp, stack, retval)
 	struct proc *p;
-	struct exec_package *pack;
+	struct exec_package *epp;
 	u_long stack;
 	register_t *retval;
 {
-	struct ecoff_aouthdr *eap;
+	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, pack, stack, retval);
-
-	eap = (struct ecoff_aouthdr *)
-	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
-	p->p_md.md_tf->tf_gp = eap->ea_gp_value;
+	setregs(p, epp, stack, retval);
+	p->p_md.md_tf->tf_gp = execp->a.gp_value;
 }
 
 /*
@@ -1465,26 +1455,25 @@ cpu_exec_ecoff_setregs(p, pack, stack, retval)
  *
  */
 int
-cpu_exec_ecoff_hook(p, epp, eap)
+cpu_exec_ecoff_hook(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
-	struct ecoff_aouthdr *eap;
 {
-	struct ecoff_filehdr *efp = epp->ep_hdr;
-	extern struct emul emul_native;
+	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
+	extern struct emul emul_netbsd;
 #ifdef COMPAT_OSF1
 	extern struct emul emul_osf1;
 #endif
 
-	switch (efp->ef_magic) {
+	switch (execp->f.f_magic) {
 #ifdef COMPAT_OSF1
 	case ECOFF_MAGIC_ALPHA:
 		epp->ep_emul = &emul_osf1;
 		break;
 #endif
 
-	case ECOFF_MAGIC_NATIVE_ALPHA:
-		epp->ep_emul = &emul_native;
+	case ECOFF_MAGIC_NETBSD_ALPHA:
+		epp->ep_emul = &emul_netbsd;
 		break;
 
 	default:

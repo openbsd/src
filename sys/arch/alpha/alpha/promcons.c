@@ -1,4 +1,4 @@
-/*	$NetBSD: promcons.c,v 1.2 1995/06/28 02:45:19 cgd Exp $	*/
+/*	$NetBSD: promcons.c,v 1.2.6.1 1996/06/03 18:54:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -64,9 +64,10 @@ promopen(dev, flag, mode, p)
 
 	s = spltty();
 
-	if (!prom_tty[unit])
+	if (!prom_tty[unit]) {
 		tp = prom_tty[unit] = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = prom_tty[unit];
 
 	tp->t_oproc = promstart;

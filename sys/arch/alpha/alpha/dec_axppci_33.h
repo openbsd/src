@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_axppci_33.h,v 1.1 1995/11/23 02:33:57 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.h,v 1.1.4.2 1996/06/13 18:35:18 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -28,5 +28,5 @@
  */
 
 char	*dec_axppci_33_modelname __P((void));
-void	dec_axppci_33_consinit __P((char *));
-dev_t	dec_axppci_33_bootdev __P((char *));
+void	dec_axppci_33_consinit __P((void));
+void	dec_axppci_33_device_register __P((struct device *, void *));

@@ -1,7 +1,7 @@
-/*	$NetBSD: apecs.c,v 1.4 1995/11/23 02:37:11 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.7 1996/04/12 06:08:01 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -44,18 +44,20 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
+#include <alpha/pci/pci_2100_a50.h>
 
 int	apecsmatch __P((struct device *, void *, void *));
 void	apecsattach __P((struct device *, struct device *, void *));
 
-struct cfdriver apecscd = {
-	NULL, "apecs", apecsmatch, apecsattach, DV_DULL,
-	    sizeof(struct apecs_softc)
+struct cfattach apecs_ca = {
+	sizeof(struct apecs_softc), apecsmatch, apecsattach,
+};
+
+struct cfdriver apecs_cd = {
+	NULL, "apecs", DV_DULL,
 };
 
 static int	apecsprint __P((void *, char *pnp));
-
-#define	REGVAL(r)	(*(int32_t *)phystok0seg(r))
 
 /* There can be only one. */
 int apecsfound;
@@ -70,7 +72,7 @@ apecsmatch(parent, match, aux)
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for an APECS. */
-	if (strcmp(ca->ca_name, apecscd.cd_name) != 0)
+	if (strcmp(ca->ca_name, apecs_cd.cd_name) != 0)
 		return (0);
 
 	if (apecsfound)
@@ -98,15 +100,9 @@ apecs_init(acp)
 	 * Can't set up SGMAP data here; can be called before malloc().
 	 */
 
-	acp->ac_conffns = &apecs_conf_fns;
-	acp->ac_confarg = acp;
-	acp->ac_dmafns = &apecs_dma_fns;
-	acp->ac_dmaarg = acp;
-	/* Interrupt routines set up in 'attach' */
-	acp->ac_memfns = &apecs_mem_fns;
-	acp->ac_memarg = acp;
-	acp->ac_piofns = &apecs_pio_fns;
-	acp->ac_pioarg = acp;
+	apecs_lca_bus_io_init(&acp->ac_bc, acp);
+	apecs_lca_bus_mem_init(&acp->ac_bc, acp);
+	apecs_pci_init(&acp->ac_pc, acp);
 
 	/* Turn off DMA window enables in PCI Base Reg 1. */
 	REGVAL(EPIC_PCI_BASE_1) = 0;
@@ -120,10 +116,9 @@ apecsattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
 	struct apecs_softc *sc = (struct apecs_softc *)self;
 	struct apecs_config *acp;
-	struct pci_attach_args pa;
+	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 APECSes. */
 	apecsfound = 1;
@@ -151,31 +146,18 @@ apecsattach(parent, self, aux)
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_2100_A50)
 	case ST_DEC_2100_A50:
-		pci_2100_a50_pickintr(acp->ac_conffns, acp->ac_confarg,
-		    acp->ac_piofns, acp->ac_pioarg,
-		    &acp->ac_intrfns, &acp->ac_intrarg);
+		pci_2100_a50_pickintr(acp);
 		break;
 #endif
 	default:
 		panic("apecsattach: shouldn't be here, really...");
 	}
 
-	pa.pa_bus = 0;
-	pa.pa_maxdev = 32;
-	pa.pa_burstlog2 = 8;
-
-	pa.pa_conffns = acp->ac_conffns;
-	pa.pa_confarg = acp->ac_confarg;
-	pa.pa_dmafns = acp->ac_dmafns;
-	pa.pa_dmaarg = acp->ac_dmaarg;
-	pa.pa_intrfns = acp->ac_intrfns;
-	pa.pa_intrarg = acp->ac_intrarg;
-	pa.pa_memfns = acp->ac_memfns;
-	pa.pa_memarg = acp->ac_memarg;
-	pa.pa_piofns = acp->ac_piofns;
-	pa.pa_pioarg = acp->ac_pioarg;
-
-	config_found(self, &pa, apecsprint);
+	pba.pba_busname = "pci";
+	pba.pba_bc = &acp->ac_bc;
+	pba.pba_pc = &acp->ac_pc;
+	pba.pba_bus = 0;
+	config_found(self, &pba, apecsprint);
 }
 
 static int
@@ -183,11 +165,11 @@ apecsprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-        register struct pci_attach_args *pa = aux;
+        register struct pcibus_attach_args *pba = aux;
 
 	/* only PCIs can attach to APECSes; easy. */
 	if (pnp)
-		printf("pci at %s", pnp);
-	printf(" bus %d", pa->pa_bus);
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

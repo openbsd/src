@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1995/08/17 17:40:42 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1996/04/12 02:07:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,6 +45,12 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
+#ifndef LKM
+#define	lkmenodev	enodev
+#else
+int	lkmenodev();
+#endif
+
 bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
@@ -78,6 +84,18 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
+/* open, close, read, write, ioctl, tty, mmap */
+#define cdev_wscons_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
+
+/* open, close, write, ioctl */
+#define cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread  mmrw
@@ -97,7 +115,7 @@ cdev_decl(tun);
 cdev_decl(sd);
 cdev_decl(vnd);
 cdev_decl(ccd);
-dev_type_open(fdopen);
+dev_type_open(filedescopen);
 #include "bpfilter.h"
 cdev_decl(bpf);
 cdev_decl(st);
@@ -114,12 +132,17 @@ cdev_decl(scc);
 cdev_decl(lkm);
 #include "audio.h"
 cdev_decl(audio);
-#include "wsc.h"
-cdev_decl(wsc);
+#include "wscons.h"
+cdev_decl(wscons);
 #include "com.h"
 cdev_decl(com);
+cdev_decl(kbd);
+cdev_decl(ms);
+#include "lpt.h"
+cdev_decl(lpt);
 
 cdev_decl(prom);			/* XXX XXX XXX */
+
 
 struct cdevsw	cdevsw[] =
 {
@@ -133,7 +156,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),	/* 7: network tunnel */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
-	cdev_fd_init(1,fd),		/* 10: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 10: file descriptor pseudo-dev */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 11: Berkeley packet filter */
 	cdev_tape_init(NST,st),		/* 12: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 13: SCSI CD-ROM */
@@ -148,9 +171,13 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 22 */
 	cdev_tty_init(1,prom),          /* 23: XXX prom console */
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
-	cdev_tty_init(NWSC,wsc),	/* 25: workstation console */
+	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
+	cdev_notdef(),			/* 28 */
+	cdev_mouse_init(NWSCONS,kbd),	/* 29: /dev/kbd XXX */
+	cdev_mouse_init(NWSCONS,ms),	/* 30: /dev/mouse XXX */
+	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -218,6 +245,10 @@ static int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	7,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
 };
 
 /*

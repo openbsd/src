@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1995/12/20 00:38:53 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 1996/04/23 15:26:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,32 +51,6 @@
 
 #include <alpha/alpha/clockvar.h>
 
-#include "ioasic.h"
-#if NIOASIC
-#include <dev/tc/tcreg.h>
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>			/* XXX */
-#endif
-
-#include "isa.h"
-#if NISA
-#include <dev/isa/isavar.h>			/* XXX */
-#endif
-
-/* Definition of the driver for autoconfig. */
-static int	clockmatch __P((struct device *, void *, void *));
-static void	clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd =
-    { NULL, "clock", clockmatch, clockattach, DV_DULL,
-	sizeof(struct clock_softc) };
-
-#if defined(DEC_3000_500) || defined(DEC_3000_300) || \
-    defined(DEC_2000_300) || defined(DEC_2100_A50) || \
-    defined(DEC_KN20AA)
-void	mcclock_attach __P((struct device *parent,
-	    struct device *self, void *aux));
-#endif
-
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 #define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
@@ -84,54 +58,15 @@ void	mcclock_attach __P((struct device *parent,
 
 #define	LEAPYEAR(year)	(((year) % 4) == 0)
 
-static int
-clockmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+struct device *clockdev;
+const struct clockfns *clockfns;
+int clockinitted;
+
+void
+clockattach(dev, fns)
+	struct device *dev;
+	const struct clockfns *fns;
 {
-	struct cfdata *cf = cfdata;
-	struct confargs *ca = aux;
-
-#if NIOASIC
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
-		struct ioasicdev_attach_args *d = aux;
-
-		if (strncmp("TOY_RTC ", d->iada_modname, TC_ROM_LLEN))
-			return (0);
-	} else
-#endif
-#if NISA
-	if ((parent->dv_cfdata->cf_driver == &isacd)) {
-		struct isadev_attach_args *ida = aux;
-
-		/* XXX XXX XXX */
-		if (ida->ida_port[0] != 0x70 && ida->ida_port[0] != -1)
-			return (0);
-
-		ida->ida_port[0] = 0x70;		/* XXX */
-		ida->ida_nports[0] = 2;			/* XXX */
-		ida->ida_iosiz[0] = 0;
-	} else
-#endif
-		return (0);
-
-	return (1);
-}
-
-static void
-clockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-
-	/*
-	 * XXX deal with other clock type, if the system
-	 * XXX supports the other clock.  get systype
-	 * from RPB.
-	 */
-	mcclock_attach(parent, self, aux);
 
 	/*
 	 * establish the clock interrupt; it's a special case
@@ -140,8 +75,12 @@ clockattach(parent, self, aux)
 #ifdef EVCNT_COUNTERS
 	evcnt_attach(self, "intr", &clock_intr_evcnt);
 #endif
-
 	printf("\n");
+
+	if (clockfns != NULL)
+		panic("clockattach: multiple clocks");
+	clockdev = dev;
+	clockfns = fns;
 }
 
 /*
@@ -161,14 +100,14 @@ clockattach(parent, self, aux)
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
+void
 cpu_initclocks()
 {
 	extern int tickadj;
 	struct clock_softc *csc;
 	int fractick;
 
-	if (clockcd.cd_devs == NULL ||
-	    (csc = (struct clock_softc *)clockcd.cd_devs[0]) == NULL)
+	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 
 	hz = 1024;		/* 1024 Hz clock */
@@ -185,7 +124,7 @@ cpu_initclocks()
 	/*
 	 * Get the clock started.
 	 */
-	(*csc->sc_init)(csc);
+	(*clockfns->cf_init)(clockdev);
 }
 
 /*
@@ -218,7 +157,6 @@ void
 inittodr(base)
 	time_t base;
 {
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
 	register int days, yr;
 	struct clocktime ct;
 	long deltat;
@@ -232,9 +170,8 @@ inittodr(base)
 	} else
 		badbase = 0;
 
-	(*csc->sc_get)(csc, base, &ct);
-
-	csc->sc_initted = 1;
+	(*clockfns->cf_get)(clockdev, base, &ct);
+	clockinitted = 1;
 
 	/* simple sanity checks */
 	if (ct.year < 70 || ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
@@ -287,12 +224,11 @@ bad:
 void
 resettodr()
 {
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
 	register int t, t2;
 	struct clocktime ct;
 	int s;
 
-	if (!csc->sc_initted)
+	if (!clockinitted)
 		return;
 
 	/* compute the day of week. */
@@ -324,17 +260,5 @@ resettodr()
 	ct.min = t / SECMIN;
 	ct.sec = t % SECMIN;
 
-	(*csc->sc_set)(csc, &ct);
-}
-
-/*
- * Wait "n" microseconds.  This doesn't belong here.  XXX.
- */
-delay(n)
-	int n;
-{
-	register long N = cycles_per_usec * (n);
-
-	while (N > 0)
-		N -= 3;
+	(*clockfns->cf_set)(clockdev, &ct);
 }

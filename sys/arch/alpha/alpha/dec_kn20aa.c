@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.1 1995/11/23 02:34:00 cgd Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.4.4.2 1996/06/14 20:42:25 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -29,11 +29,15 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
+#include <machine/autoconf.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -41,6 +45,9 @@
 #include <alpha/pci/ciavar.h>
 
 #include <alpha/alpha/dec_kn20aa.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 char *
 dec_kn20aa_modelname()
@@ -58,8 +65,7 @@ dec_kn20aa_modelname()
 }
 
 void
-dec_kn20aa_consinit(constype)
-	char *constype;
+dec_kn20aa_consinit()
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -70,33 +76,32 @@ dec_kn20aa_consinit(constype)
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
-	printf("constype = %s\n", constype);
-	printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-	printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-
 	switch (ctb->ctb_term_type) {
 	case 2: 
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comdefaultrate, comconsole;
-			extern int comconsaddr, comconsinit;
+			extern bus_chipset_tag_t comconsbc;	/* set */
+			extern bus_io_handle_t comcomsioh;	/* set */
+			extern int comconsaddr, comconsinit;	/* set */
+			extern int comdefaultrate;
 			extern int comcngetc __P((dev_t));
 			extern void comcnputc __P((dev_t, int));
 			extern void comcnpollc __P((dev_t, int));
-			extern __const struct isa_pio_fns *comconsipf;
-			extern __const void *comconsipfa;
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
+			/* Delay to allow PROM putchars to complete */
+			DELAY(10000);
 
-			cominit(ccp->cc_piofns, ccp->cc_pioarg, 0,
-			    comdefaultrate);
-			comconsole = 0;				/* XXX */
-			comconsaddr = 0x3f8;			/* XXX */
+			comconsaddr = 0x3f8;
 			comconsinit = 0;
-			comconsipf = ccp->cc_piofns;
-			comconsipfa = ccp->cc_pioarg;
+			comconsbc = &ccp->cc_bc;
+			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
+			    &comconsioh))
+				panic("can't map serial console I/O ports");
+			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+			cominit(comconsbc, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -106,21 +111,103 @@ dec_kn20aa_consinit(constype)
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(ccp->cc_conffns, ccp->cc_confarg,
-		    ccp->cc_memfns, ccp->cc_memarg, ccp->cc_piofns,
-		    ccp->cc_pioarg, 0, ctb->ctb_turboslot & 0xffff, 0);
+		pci_display_console(&ccp->cc_bc, &ccp->cc_pc,
+		    (ctb->ctb_turboslot >> 8) & 0xff,
+		    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
+		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
 }
 
-dev_t
-dec_kn20aa_bootdev(booted_dev)
-	char *booted_dev;
+void
+dec_kn20aa_device_register(dev, aux)
+	struct device *dev;
+	void *aux;
 {
+	static int found;
+	static struct device *pcidev, *scsidev;
+	struct bootdev_data *b = bootdev_data;
+	struct device *parent = dev->dv_parent;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdriver *cd = cf->cf_driver;
 
-	panic("gack.");
+	if (found)
+		return;
+
+	if (pcidev == NULL) {
+		if (strcmp(cd->cd_name, "pci"))
+			return;
+		else {
+			struct pcibus_attach_args *pba = aux;
+
+			if (b->bus != pba->pba_bus)
+				return;
+	
+			pcidev = dev;
+#if 0
+			printf("\npcidev = %s\n", pcidev->dv_xname);
+#endif
+			return;
+		}
+	}
+
+	if (scsidev == NULL) {
+		if (parent != pcidev)
+			return;
+		else {
+			struct pci_attach_args *pa = aux;
+
+			if (b->slot != pa->pa_device)
+				return;
+
+			/* XXX function? */
+	
+			scsidev = dev;
+#if 0
+			printf("\nscsidev = %s\n", scsidev->dv_xname);
+#endif
+			return;
+		}
+	}
+
+	if (!strcmp(cd->cd_name, "sd") ||
+	    !strcmp(cd->cd_name, "st") ||
+	    !strcmp(cd->cd_name, "cd")) {
+		struct scsibus_attach_args *sa = aux;
+
+		if (parent->dv_parent != scsidev)
+			return;
+
+		if (b->unit / 100 != sa->sa_sc_link->target)
+			return;
+
+		/* XXX LUN! */
+
+		switch (b->boot_dev_type) {
+		case 0:
+			if (strcmp(cd->cd_name, "sd") &&
+			    strcmp(cd->cd_name, "cd"))
+				return;
+			break;
+		case 1:
+			if (strcmp(cd->cd_name, "st"))
+				return;
+			break;
+		default:
+			return;
+		}
+
+		/* we've found it! */
+		booted_device = dev;
+#if 0
+		printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+		found = 1;
+	}
 }

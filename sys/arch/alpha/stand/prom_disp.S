@@ -1,7 +1,7 @@
-/*	$NetBSD: prom_disp.S,v 1.1 1995/11/23 02:39:10 cgd Exp $	*/
+/*	$NetBSD: prom_disp.S,v 1.3 1996/04/12 06:09:38 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include "include/asm.h"
 #include "include/prom.h"
 #include "include/rpb.h"

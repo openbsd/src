@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.3 1995/11/23 02:35:41 cgd Exp $	*/
+/*	$NetBSD: ansi.h,v 1.4 1996/03/16 01:31:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -73,6 +73,7 @@ typedef struct {
  * defined for ctype.h.
  */
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
+#define _BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
 
 #endif	/* _ANSI_H_ */

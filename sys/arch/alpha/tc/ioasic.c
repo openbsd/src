@@ -1,7 +1,7 @@
-/*	$NetBSD: ioasic.c,v 1.1 1995/12/20 00:43:20 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.4.4.1 1996/06/05 00:39:05 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
@@ -35,6 +35,9 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/ioasicreg.h>
@@ -51,9 +54,14 @@ struct ioasic_softc {
 int	ioasicmatch __P((struct device *, void *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
 int     ioasicprint(void *, char *);
-struct cfdriver ioasiccd =
-    { NULL, "ioasic", ioasicmatch, ioasicattach, DV_DULL,
-    sizeof(struct ioasic_softc) };
+
+struct cfattach ioasic_ca = {
+	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
+};
+
+struct cfdriver ioasic_cd = {
+	NULL, "ioasic", DV_DULL,
+};
 
 int	ioasic_intr __P((void *));
 int	ioasic_intrnull __P((void *));
@@ -75,7 +83,8 @@ struct ioasic_dev {
 	void		*iad_cookie;
 	u_int32_t	iad_intrbits;
 } ioasic_devs[] = {
-	{ "lance   ", 0x000c0000, C(IOASIC_DEV_LANCE), IOASIC_INTR_LANCE, },
+	/* XXX lance name */
+	{ "lance",    0x000c0000, C(IOASIC_DEV_LANCE), IOASIC_INTR_LANCE, },
 	{ "z8530   ", 0x00100000, C(IOASIC_DEV_SCC0),  IOASIC_INTR_SCC_0, },
 	{ "z8530   ", 0x00180000, C(IOASIC_DEV_SCC1),  IOASIC_INTR_SCC_1, },
 	{ "TOY_RTC ", 0x00200000, C(IOASIC_DEV_BOGUS), 0,                 },
@@ -101,10 +110,10 @@ ioasicmatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 
 	/* Make sure that we're looking for this type of device. */
-	if (strncmp("FLAMG-IO", tcdev->tcda_modname, TC_ROM_LLEN))
+	if (strncmp("FLAMG-IO", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
 
 	/* Check that it can actually exist. */
@@ -123,15 +132,15 @@ ioasicattach(parent, self, aux)
 	void *aux;
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 	struct ioasicdev_attach_args ioasicdev;
 	u_long i;
 
 	ioasicfound = 1;
 
-	sc->sc_base = tcdev->tcda_addr;
+	sc->sc_base = ta->ta_addr;
 	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
-	sc->sc_cookie = tcdev->tcda_cookie;
+	sc->sc_cookie = ta->ta_cookie;
 
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
@@ -292,10 +301,18 @@ ioasic_intr(val)
 
 		sir = *sirp;
 
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */ 
+	XXX BREAK HERE XXX
+#else /* !EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_IOASIC + slot]++
+#endif /* EVCNT_COUNTERS */ 
+
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
 #define	CHECKINTR(slot, bits)						\
 		if (sir & bits) {					\
 			ifound = 1;					\
+			INCRINTRCNT(slot);				\
 			(*ioasicintrs[slot].iai_func)			\
 			    (ioasicintrs[slot].iai_arg);		\
 		}
@@ -335,42 +352,3 @@ ioasic_lance_dma_setup(v)
 	    IOASIC_CSR_DMAEN_LANCE;
 	tc_mb();
 }
-
-#ifdef DEC_3000_300
-void
-ioasic_intr_300_opt0_enable(enable)
-	int enable;
-{
-
-	if (enable)
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) |=
-			IOASIC_INTR_300_OPT0;
-	else
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) &=
-			~IOASIC_INTR_300_OPT0;
-}
-
-void
-ioasic_intr_300_opt1_enable(enable)
-	int enable;
-{
-
-	if (enable)
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) |=
-			IOASIC_INTR_300_OPT1;
-	else
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) &=
-			~IOASIC_INTR_300_OPT1;
-}
-
-void
-ioasic_300_opts_isintr(opt0, opt1)
-	int *opt0, *opt1;
-{
-	u_int32_t sir;
-
-	sir = *(volatile u_int32_t *)IOASIC_REG_INTR(ioasic_base);
-	*opt0 = sir & IOASIC_INTR_300_OPT0;
-	*opt1 = sir & IOASIC_INTR_300_OPT1;
-}
-#endif

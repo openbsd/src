@@ -1,7 +1,7 @@
-/*	$NetBSD: ciavar.h,v 1.1 1995/11/23 02:37:35 cgd Exp $	*/
+/*	$NetBSD: ciavar.h,v 1.3.4.1 1996/06/10 00:04:12 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -37,20 +37,11 @@
  * do their dirty work (and more!).
  */
 struct cia_config {
-	__const struct pci_conf_fns	*cc_conffns;
-	void				*cc_confarg;
+	struct alpha_bus_chipset cc_bc;
+	struct alpha_pci_chipset cc_pc;
 
-	__const struct pci_dma_fns	*cc_dmafns;
-	void				*cc_dmaarg;
-
-	__const struct pci_intr_fns	*cc_intrfns;
-	void				*cc_intrarg;
-
-	__const struct pci_mem_fns	*cc_memfns;
-	void				*cc_memarg;
-
-	__const struct pci_pio_fns	*cc_piofns;
-	void				*cc_pioarg;
+	u_int32_t cc_hae_mem;
+	u_int32_t cc_hae_io;
 };
 
 struct cia_softc {
@@ -60,10 +51,8 @@ struct cia_softc {
 	/* XXX SGMAP info */
 };
 
-extern __const struct pci_conf_fns	cia_conf_fns;
-extern __const struct pci_dma_fns	cia_dma_fns;
-/* pci interrupt functions handled elsewhere */
-extern __const struct pci_mem_fns	cia_mem_fns;
-extern __const struct pci_pio_fns	cia_pio_fns;
-
 void	cia_init __P((struct cia_config *));
+void	cia_pci_init __P((pci_chipset_tag_t, void *));
+
+void	cia_bus_mem_init __P((bus_chipset_tag_t bc, void *memv));
+void	cia_bus_io_init __P((bus_chipset_tag_t bc, void *iov));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1995/11/23 02:34:21 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 1996/04/12 02:06:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@ kmemphys:
 #endif
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove(phystok0seg(v), c, uio);
+			error = uiomove((caddr_t)phystok0seg(v), c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */

@@ -1,6 +1,8 @@
-#	$NetBSD: JURA,v 1.4 1995/11/23 02:35:09 cgd Exp $
+#	$NetBSD: JURA,v 1.6.4.1 1996/06/13 19:22:10 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
+#
+# THIS KERNEL DOES NOT CURRENTLY WORK, OR EVEN CONFIGURE!
 
 include	"std.alpha"
 
@@ -33,7 +35,9 @@ options		INET		# Internet protocol suite
 options		COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
+#options	COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
 
 # Loadable Kernel Modules
 options		LKM
@@ -47,9 +51,9 @@ ibus*	at	mainbus0			# "internal bus"
 jcombo* at	ibus?				# the VLSI combo chip
 isa*	at	jcombo?
 
-clock0  at      isa? port 0x70
+mcclock0 at      isa? port 0x70
 pckbd0  at      isa? port 0x60 irq 1            # PC-ish ISA keyboard
-#pms0   at      isa? port 0x60 irq 12           # PS/2 auxiliary
+pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0    at      isa? port 0x3f8 irq 4           # standard serial ports
 com1    at      isa? port 0x2f8 irq 3
 lpt0    at      isa? port 0x3bc irq 7           # standard parallel port

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.3 1995/11/23 02:34:06 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.4 1996/05/17 18:29:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -56,6 +56,7 @@
 #include <err.h>
 
 void	def __P((char *, long));
+int	main __P((int argc, char **argv));
 
 #define	off(what, s, m)	def(what, (int)offsetof(s, m))
 
@@ -69,7 +70,10 @@ def(what, val)
 		err(1, "printf");
 }
 
-main()
+int
+main(argc, argv)
+	int argc;
+	char **argv;
 {
 
 	/* general constants */

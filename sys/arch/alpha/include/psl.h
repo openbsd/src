@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.4 1995/11/23 02:36:33 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.5 1996/04/23 15:24:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -75,8 +75,8 @@
  */
 
 /* Flush all write buffers */
-static __inline int wbflush() { __asm __volatile("mb"); }	/* XXX? wmb */
-
+static __inline int wbflush() \
+	{ __asm __volatile("mb" : : : "memory"); }	/* XXX? wmb */
 #define	IMB()		pal_imb()	/* Sync instruction cache w/data */
 
 void alpha_mb __P((void));		/* Flush all write buffers */
@@ -84,6 +84,7 @@ void pal_imb __P((void));		/* Sync instruction cache */
 u_int64_t pal_swpipl __P((u_int64_t));	/* write new IPL, return old */
 u_int64_t profile_swpipl __P((u_int64_t));	/* pal_swpipl w/o profiling */
 void pal_tbi __P((u_int64_t, void *));	/* Invalidate TLB entries */
+void pal_halt __P((void)) __attribute__((__noreturn__)); /* halt/reboot */
 #endif /* _KERNEL */
 
 #endif /* !__ALPHA_PSL_H__ */

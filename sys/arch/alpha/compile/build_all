@@ -1,15 +1,33 @@
 #!/bin/sh -
+#
+#	$NetBSD: build_all,v 1.4.4.1 1996/06/15 03:46:17 cgd Exp $
 
-dirlist=`find . -type d ! \( -name . -o -name CVS \) -prune | \
-	sed -e s,./,, | sort`
+cflist=`cd ../conf ; find . -type f ! -name "*[a-z.]*" ! -name ".*" | \
+    sed -e 's,^\./,,'`
 
-for dir in $dirlist; do
-	echo === $dir
+docmd()
+{
+
+	echo "    ===> $*"
+#	echo "        eval ($*)"
+	eval "($*)"
+	echo "    <==="
+}
+
+docf()
+{
+	echo "===> $1"
+	(
+		docmd "cd ../conf ; config $cf" 
+		cd $cf
+		docmd "time make -k clean"
+		docmd "time make -k depend"
+		docmd "time make -k"
+	)
+	echo "<==="
 	echo ""
-	echo "***"
-	echo ""
-	(cd $dir ; time make -k)
-	echo ""
-	echo "***"
-	echo ""
+}
+
+for cf in $cflist; do
+	docf $cf
 done

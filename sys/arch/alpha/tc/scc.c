@@ -1,7 +1,7 @@
-/*	$NetBSD: scc.c,v 1.11 1995/12/20 00:43:24 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.16.4.2 1996/06/03 19:44:41 cgd Exp $	*/
 
 /* 
- * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
+ * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
@@ -63,7 +63,7 @@
  *	@(#)scc.c	8.2 (Berkeley) 11/30/93
  */
 
-#include <scc.h>
+#include "scc.h"
 #if NSCC > 0
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -175,8 +175,14 @@ struct speedtab sccspeedtab[] = {
 /* Definition of the driver for autoconfig. */
 static int      sccmatch(struct device *, void *, void *);
 static void     sccattach(struct device *, struct device *, void *);
-struct cfdriver scccd =
-    { NULL, "scc", sccmatch, sccattach, DV_TTY, sizeof (struct scc_softc) };
+
+struct cfattach scc_ca = {
+	sizeof (struct scc_softc), sccmatch, sccattach,
+};
+
+struct cfdriver scc_cd = {
+	NULL, "scc", DV_TTY,
+};
 
 int		sccGetc __P((dev_t));
 void		sccPutc __P((dev_t, int));
@@ -299,6 +305,8 @@ sccattach(parent, self, aux)
 	for (cntr = 0; cntr < 2; cntr++) {
 		pdp->p_addr = (void *)sccaddr;
 		tp = scc_tty[sc->sc_dv.dv_unit * 2 + cntr] = ttymalloc();
+		if (cntr == 0)
+			tty_attach(tp);
 		pdp->p_arg = (long)tp;
 		pdp->p_fcn = (void (*)())0;
 		tp->t_dev = (dev_t)((sc->sc_dv.dv_unit << 1) | cntr);
@@ -349,7 +357,7 @@ sccattach(parent, self, aux)
                 s = spltty();
                 ctty.t_dev = makedev(SCCDEV,
                     sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
-                cterm.c_cflag = CS8;
+                cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
                 cterm.c_ospeed = cterm.c_ispeed = 9600;
                 (void) sccparam(&ctty, &cterm);
                 DELAY(1000);
@@ -457,9 +465,9 @@ sccopen(dev, flag, mode, p)
 	int s, error = 0;
 
 	unit = SCCUNIT(dev);
-	if (unit >= scccd.cd_ndevs)
+	if (unit >= scc_cd.cd_ndevs)
 		return (ENXIO);
-	sc = scccd.cd_devs[unit];
+	sc = scc_cd.cd_devs[unit];
 	if (!sc)
 		return (ENXIO);
 
@@ -467,8 +475,10 @@ sccopen(dev, flag, mode, p)
 	if (sc->scc_pdma[line].p_addr == NULL)
 		return (ENXIO);
 	tp = scc_tty[minor(dev)];
-	if (tp == NULL)
+	if (tp == NULL) {
 		tp = scc_tty[minor(dev)] = ttymalloc();
+		tty_attach(tp);
+	}
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
 	tp->t_dev = dev;
@@ -514,7 +524,7 @@ sccclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct scc_softc *sc = scccd.cd_devs[SCCUNIT(dev)];
+	register struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	register struct tty *tp;
 	register int line;
 
@@ -586,7 +596,7 @@ sccioctl(dev, cmd, data, flag, p)
 		return (error);
 
 	line = SCCLINE(dev);
-	sc = scccd.cd_devs[SCCUNIT(dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	switch (cmd) {
 
 	case TIOCSBRK:
@@ -671,7 +681,7 @@ sccparam(tp, t)
 		return (0);
 	}
 
-	sc = scccd.cd_devs[SCCUNIT(tp->t_dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
 	line = SCCLINE(tp->t_dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 
@@ -786,7 +796,7 @@ sccintr(xxxunit)
 	register int cc, chan, rr1, rr2, rr3;
 	int overrun = 0;
 
-	sc = scccd.cd_devs[unit];
+	sc = scc_cd.cd_devs[unit];
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
 	for (;;) {
@@ -948,7 +958,7 @@ sccstart(tp)
 	u_char temp;
 	int s, sendone;
 
-	sc = scccd.cd_devs[SCCUNIT(tp->t_dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
 	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
 	regs = (scc_regmap_t *)dp->p_addr;
 	s = spltty();
@@ -982,6 +992,7 @@ sccstart(tp)
 		}
 		goto out;
 	}
+#if 0
 	if (tp->t_flags & (RAW|LITOUT))
 		cc = ndqb(&tp->t_outq, 0);
 	else {
@@ -993,6 +1004,9 @@ sccstart(tp)
 			goto out;
 		}
 	}
+#else
+	cc = ndqb(&tp->t_outq, 0);
+#endif
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
@@ -1034,7 +1048,7 @@ sccstop(tp, flag)
 	register struct scc_softc *sc;
 	register int s;
 
-	sc = scccd.cd_devs[SCCUNIT(tp->t_dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
 	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
@@ -1058,7 +1072,7 @@ sccmctl(dev, bits, how)
 	register u_char value;
 	int s;
 
-	sc = scccd.cd_devs[SCCUNIT(dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	line = SCCLINE(dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	s = spltty();
@@ -1122,7 +1136,7 @@ scc_modem_intr(dev)
 	register u_char value;
 	int s;
 
-	sc = scccd.cd_devs[SCCUNIT(dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = scc_tty[minor(dev)];
 	chan = SCCLINE(dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[chan].p_addr;
@@ -1160,7 +1174,7 @@ sccGetc(dev)
 	int s;
 
 	line = SCCLINE(dev);
-	sc = scccd.cd_devs[SCCUNIT(dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	if (!regs)
 		return (0);
@@ -1202,7 +1216,7 @@ sccPutc(dev, c)
 
 	s = splhigh();
 	line = SCCLINE(dev);
-	sc = scccd.cd_devs[SCCUNIT(dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 1995/11/23 02:36:37 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 1996/02/01 22:28:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -66,7 +66,7 @@ typedef u_int64_t	pt_entry_t;
 #define	K0SEG_END	0xfffffe0000000000
 #define PHYS_UNCACHED	0x0000000040000000
 
-#if !defined(LOCORE)
+#ifndef _LOCORE
 #define	k0segtophys(x)	((vm_offset_t)(x) & 0x00000003ffffffff)
 #define	phystok0seg(x)	((vm_offset_t)(x) | K0SEG_BEGIN)
 

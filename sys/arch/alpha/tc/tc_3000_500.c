@@ -1,7 +1,7 @@
-/*	$NetBSD: tc_3000_500.c,v 1.3 1995/12/20 00:43:30 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.4.4.3 1996/06/13 18:35:35 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -32,6 +32,9 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
@@ -86,19 +89,21 @@ struct tcintr {
 	void	*tci_arg;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
+u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
+
 void
 tc_3000_500_intr_setup()
 {
 	u_long i;
-	u_int32_t imr;
 
 	/*
-	 * Disable all slot interrupts.
+	 * Disable all slot interrupts.  Note that this cannot
+	 * actually disable CXTurbo, TCDS, and IOASIC interrupts.
 	 */
-	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
+	tc_3000_500_imask = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
 	for (i = 0; i < TC_3000_500_NCOOKIES; i++)
-		imr |= tc_3000_500_intrbits[i];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+		tc_3000_500_imask |= tc_3000_500_intrbits[i];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
         /*
@@ -118,7 +123,6 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	int (*func) __P((void *));
 {
 	u_long dev = (u_long)cookie;
-	u_int32_t imr;
 
 #ifdef DIAGNOSTIC
 	/* XXX bounds-check cookie. */
@@ -130,9 +134,8 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	tc_3000_500_intr[dev].tci_func = func;
 	tc_3000_500_intr[dev].tci_arg = arg;
 
-	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
-	imr &= ~tc_3000_500_intrbits[dev];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_3000_500_imask &= ~tc_3000_500_intrbits[dev];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 }
 
@@ -142,7 +145,6 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 	void *cookie;
 {
 	u_long dev = (u_long)cookie;
-	u_int32_t imr;
 
 #ifdef DIAGNOSTIC
 	/* XXX bounds-check cookie. */
@@ -152,9 +154,8 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 		panic("tc_3000_500_intr_disestablish: cookie %d bad intr",
 		    dev);
 
-	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
-	imr |= tc_3000_500_intrbits[dev];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_3000_500_imask |= tc_3000_500_intrbits[dev];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
 	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
@@ -192,10 +193,22 @@ tc_3000_500_iointr(framep, vec)
 		tc_syncbus();
 		ir = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
 
+		/* Ignore interrupts that we haven't enabled. */
+		ir &= ~(tc_3000_500_imask & 0x1ff);
+
 		ifound = 0;
+
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */ 
+	XXX BREAK HERE XXX
+#else /* !EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN15 + slot]++
+#endif /* EVCNT_COUNTERS */ 
+
 #define	CHECKINTR(slot)							\
 		if (ir & tc_3000_500_intrbits[slot]) {			\
 			ifound = 1;					\
+			INCRINTRCNT(slot);				\
 			(*tc_3000_500_intr[slot].tci_func)		\
 			    (tc_3000_500_intr[slot].tci_arg);		\
 		}

@@ -1,13 +1,10 @@
-#	$NetBSD: ALPHA,v 1.8 1995/12/20 00:14:10 cgd Exp $
+#	$NetBSD: ALPHA,v 1.14.4.4 1996/06/13 19:21:59 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"std.alpha"
 
 maxusers 8
-
-# does not really do anything anymore, but this replaces "ident GENERIC"
-options		GENERIC
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
@@ -41,8 +38,9 @@ options		NULLFS		# Null file system layer
 options		KERNFS		# Kernel variable file system (/kern)
 options		FDESC		# File descriptor file system (/dev/fd)
 options		PORTAL		# Portal file system
-options		UMAP		# User-mapping file system layer
+options		UMAPFS		# User-mapping file system layer
 options		PROCFS		# Process file system (/proc)
+options		UNION		# union file system
 
 # Networking options
 options		INET		# Internet protocol suite
@@ -60,6 +58,7 @@ options		COMPAT_43
 # Binary compatibility with previous versions of NetBSD.
 #options	COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
 #options	COMPAT_OSF1
@@ -98,14 +97,17 @@ tc*	at	tcasic?
 
 # TurboChannel devices
 ioasic0	at	tc? slot ? offset ?
-clock0	at	ioasic? offset ?
-le0	at	ioasic? offset ?
+mcclock0 at	ioasic? offset ?
+le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
-#sfb*	at	tc? slot ? offset ?
+cfb*	at	tc? slot ? offset ?
+sfb*	at	tc? slot ? offset ?
+le*	at	tc? slot ? offset ?
+fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -120,12 +122,14 @@ pci*	at	ppb?
 
 # PCI devices
 de*	at	pci?
+le*	at	pci?
 ncr*	at	pci?
 pceb*	at	pci?
 pcivga*	at	pci?
 ppb*	at	pci?
 sio*	at	pci?
 tga*	at	pci?
+fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 # ISA/EISA bus support
 isa*	at	pceb?
@@ -133,13 +137,16 @@ eisa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-clock0	at	isa? port 0x70
+mcclock0 at	isa? port 0x70
 pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-#pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
+pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
 #wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+# EISA devices
+fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 
 # SCSI bus support
 scsibus* at	esp?
@@ -150,10 +157,17 @@ sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
 
-pseudo-device	bpfilter
+# Workstation Console attachments
+wscons*	at	cfb?
+wscons*	at	pcivga?
+wscons*	at	sfb?
+wscons*	at	tga?
+
+pseudo-device	bpfilter	16
 pseudo-device	loop
-pseudo-device	ppp
-pseudo-device	pty
-pseudo-device	sl
-pseudo-device	tun
-pseudo-device	vnd
+pseudo-device	ppp		4
+pseudo-device	pty		64
+pseudo-device	sl		4
+pseudo-device	strip		4
+pseudo-device	tun		4
+pseudo-device	vnd		4

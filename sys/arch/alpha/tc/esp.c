@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.6 1995/12/20 00:40:21 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.8.4.1 1996/06/05 00:39:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -93,9 +93,12 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ void	esp_abort	__P((struct esp_softc *, struct ecb *));
 
 /* Linkup to the rest of the kernel */
-struct cfdriver espcd = {
-	NULL, "esp", espmatch, espattach,
-	DV_DULL, sizeof(struct esp_softc)
+struct cfattach esp_ca = {
+	sizeof(struct esp_softc), espmatch, espattach,
+};
+
+struct cfdriver esp_cd = {
+	NULL, "esp", DV_DULL,
 };
 
 struct scsi_adapter esp_switch = {
@@ -190,8 +193,8 @@ espattach(parent, self, aux)
 		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len, ca->ca_bustype);
 	}
 #else
-	sc->sc_reg = (volatile u_int32_t *)tcdsdev->tcdsda_tc.tcda_addr;
-	sc->sc_cookie = tcdsdev->tcdsda_tc.tcda_cookie;
+	sc->sc_reg = (volatile u_int32_t *)tcdsdev->tcdsda_addr;
+	sc->sc_cookie = tcdsdev->tcdsda_cookie;
 	sc->sc_dma = tcdsdev->tcdsda_sc;
 
 	printf(": address %x", sc->sc_reg);
@@ -213,7 +216,7 @@ espattach(parent, self, aux)
 		sc->sc_freq = ((struct sbus_softc *)
 		    sc->sc_dev.dv_parent)->sc_clockfreq;
 #else
-	if (parent->dv_cfdata->cf_driver == &tcdscd) {
+	if (parent->dv_cfdata->cf_driver == &tcds_cd) {
 		sc->sc_id = tcdsdev->tcdsda_id;
 		sc->sc_freq = tcdsdev->tcdsda_freq;
 	} else {
@@ -367,8 +370,8 @@ espattach(parent, self, aux)
 	sc->sc_ih.ih_fun = (void *) espintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(sc->sc_pri, &sc->sc_ih);
-#endif
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+#endif
 
 	/*
 	 * fill in the prototype scsi_link.
@@ -889,7 +892,7 @@ esp_done(ecb)
 		if (xs->error == XS_SENSE) {
 			printf("sense=%2x; ", xs->sense.error_code);
 			if (xs->sense.error_code == 0x70)
-				printf("extcode: %x; ", xs->sense.extended_flags);
+				printf("extcode: %x; ", xs->sense.flags);
 		}
 	}
 	if ((xs->resid || xs->error > XS_SENSE) && esp_debug & ESP_SHOWMISC) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.4 1995/11/23 02:33:48 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 1996/04/29 16:36:19 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -36,8 +36,14 @@
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, void *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
-struct cfdriver cpucd =
-    { NULL, "cpu", cpumatch, cpuattach, DV_DULL, sizeof (struct device) };
+
+struct cfattach cpu_ca = {
+	sizeof(struct device), cpumatch, cpuattach
+};
+
+struct cfdriver cpu_cd = {
+	NULL, "cpu", DV_DULL
+};
 
 static int	cpuprint __P((void *, char *pnp));
 
@@ -51,7 +57,7 @@ cpumatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpucd.cd_name) != 0)
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
 
 	return (1);
@@ -67,11 +73,11 @@ cpuattach(parent, dev, aux)
 	char *cpu_major[] = {
 		"UNKNOWN MAJOR TYPE (0)",
 		"EV3",				/* PCS_PROC_EV3 */
-		"EV4 (21064)",			/* PCS_PROC_EV4 */
+		"21064 (EV4)",			/* PCS_PROC_EV4 */
 		"Simulator",			/* PCS_PROC_SIMULATOR */
-		"LCA4 (21066/21068)",		/* PCS_PROC_LCA4 */
-		"EV5 (21164)",			/* PCS_PROC_EV5 */
-		"EV45 (21064A)",		/* PCS_PROC_EV45 */
+		"21066/21068 (LCA4)",		/* PCS_PROC_LCA4 */
+		"21164 (EV5)",			/* PCS_PROC_EV5 */
+		"21064A (EV45)",		/* PCS_PROC_EV45 */
 	};
 	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
 	char *dc21064_cpu_minor[] = {
@@ -136,8 +142,8 @@ cpuattach(parent, dev, aux)
 			printf("%sIEEE FP support", needcomma ? ", " : "");
 			needcomma = 1;
 		}
-		if (p->pcs_proc_var & PCS_VAR_IOACCESS) {
-			printf("%shas I/O access", needcomma ? ", " : "");
+		if (p->pcs_proc_var & PCS_VAR_PE) {
+			printf("%sPrimary Eligible", needcomma ? ", " : "");
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_RESERVED)

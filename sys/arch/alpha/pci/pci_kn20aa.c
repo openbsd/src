@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.2 1995/12/24 02:29:45 mycroft Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.3.4.2 1996/06/13 18:35:31 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -55,14 +55,12 @@
 #include <alpha/pci/siovar.h>
 #endif
 
-void	*kn20aa_pci_map_int __P((void *, pci_conftag_t, pci_intr_pin_t,
-	    pci_intr_line_t, int, int (*func)(void *), void *, char *));
-void	kn20aa_pci_unmap_int __P((void *, void *));
-
-__const struct pci_intr_fns kn20aa_pci_intr_fns = {
-	kn20aa_pci_map_int,
-	kn20aa_pci_unmap_int,
-};
+int	dec_kn20aa_intr_map __P((void *, pcitag_t, int, int,
+	    pci_intr_handle_t *));
+const char *dec_kn20aa_intr_string __P((void *, pci_intr_handle_t));
+void	*dec_kn20aa_intr_establish __P((void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *));
+void	dec_kn20aa_intr_disestablish __P((void *, void *));
 
 #define	KN20AA_PCEB_IRQ	31
 #define	KN20AA_MAX_IRQ	32
@@ -90,25 +88,25 @@ struct kn20aa_intrhand *kn20aa_attach_intr __P((struct kn20aa_intrchain *,
 			    int, int (*) (void *), void *));
 
 void
-pci_kn20aa_pickintr(pcf, pcfa, ppf, ppfa, pifp, pifap)
-	__const struct pci_conf_fns *pcf;
-	__const struct pci_pio_fns *ppf;
-	void *pcfa, *ppfa;
-	__const struct pci_intr_fns **pifp;
-	void **pifap;
+pci_kn20aa_pickintr(ccp)
+	struct cia_config *ccp;
 {
 	int i;
 	struct kn20aa_intrhand *nintrhand;
-
+	bus_chipset_tag_t bc = &ccp->cc_bc;
+	pci_chipset_tag_t pc = &ccp->cc_pc;
 
 	for (i = 0; i < KN20AA_MAX_IRQ; i++)
 		TAILQ_INIT(&kn20aa_pci_intrs[i]);
 
-	*pifp = &kn20aa_pci_intr_fns;
-	*pifap = NULL;					/* XXX ? */
+        pc->pc_intr_v = ccp;
+        pc->pc_intr_map = dec_kn20aa_intr_map;
+        pc->pc_intr_string = dec_kn20aa_intr_string;
+        pc->pc_intr_establish = dec_kn20aa_intr_establish;
+        pc->pc_intr_disestablish = dec_kn20aa_intr_disestablish;
 
 #if NSIO
-	sio_intr_setup(ppf, ppfa);
+	sio_intr_setup(bc);
 #endif
 
 	set_iointr(kn20aa_iointr);
@@ -121,27 +119,25 @@ pci_kn20aa_pickintr(pcf, pcfa, ppf, ppfa, pifp, pifap)
 #endif
 }
 
-void *
-kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg, what)
-	void *ccv;
-        pci_conftag_t tag;
-	pci_intr_pin_t pin;
-	pci_intr_line_t line;
-        int level;
-        int (*func) __P((void *));
-        void *arg;
-	char *what;
+int     
+dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
+        void *ccv;
+        pcitag_t bustag; 
+        int buspin, line;
+        pci_intr_handle_t *ihp;
 {
+	struct cia_config *ccp = ccv;
+	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int device;
 	int kn20aa_slot, kn20aa_irq;
 	void *ih;
 
-        if (pin == 0) {
+        if (buspin == 0) {
                 /* No IRQ used. */
                 return 0;
         }
-        if (pin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", pin);
+        if (buspin > 4) {
+                printf("pci_map_int: bad interrupt pin %d\n", buspin);
                 return NULL;
         }
 
@@ -152,7 +148,8 @@ kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg, what)
 	 * The DEC engineers who did this hardware obviously engaged
 	 * in random drug testing.
 	 */
-	switch (device = PCI_TAG_DEVICE(tag)) {
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	switch (device) {
 	case 11:
 	case 12:
 		kn20aa_slot = (device - 11) + 0;
@@ -175,29 +172,56 @@ kn20aa_pci_map_int(ccv, tag, pin, line, level, func, arg, what)
 		    device);
 	}
 
-	kn20aa_irq = (kn20aa_slot * 4) + pin - 1;
+	kn20aa_irq = (kn20aa_slot * 4) + buspin - 1;
 	if (kn20aa_irq > KN20AA_MAX_IRQ)
 		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)\n",
 		    kn20aa_irq);
 
-#if 0
-	printf("kn20aa_attach_intr: func 0x%lx, arg 0x%lx, level %d, irq %d\n",
-	    func, arg, level, kn20aa_irq);
-#endif
-
-	ih = kn20aa_attach_intr(&kn20aa_pci_intrs[kn20aa_irq], level,
-	    func, arg);
-	kn20aa_enable_intr(kn20aa_irq);
-	return (ih);
+	*ihp = kn20aa_irq;
 }
 
-void
-kn20aa_pci_unmap_int(pifa, cookie)
-	void *pifa;
-	void *cookie;
+const char *
+dec_kn20aa_intr_string(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
 {
+	struct cia_config *ccp = ccv;
+        static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
-	panic("kn20aa_pci_unmap_int not implemented");	/* XXX */
+        if (ih > KN20AA_MAX_IRQ)
+                panic("dec_kn20aa_a50_intr_string: bogus kn20aa IRQ 0x%x\n",
+		    ih);
+
+        sprintf(irqstr, "kn20aa irq %d", ih);
+        return (irqstr);
+}
+
+void *
+dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
+        void *ccv, *arg;
+        pci_intr_handle_t ih;
+        int level;
+        int (*func) __P((void *));
+{           
+        struct cia_config *ccp = ccv;
+	void *cookie;
+
+        if (ih > KN20AA_MAX_IRQ)
+                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x\n",
+		    ih);
+
+	cookie = kn20aa_attach_intr(&kn20aa_pci_intrs[ih], level, func, arg);
+	kn20aa_enable_intr(ih);
+	return (cookie);
+}
+
+void    
+dec_kn20aa_intr_disestablish(ccv, cookie)
+        void *ccv, *cookie;
+{
+	struct cia_config *ccp = ccv;
+
+	panic("dec_kn20aa_intr_disestablish not implemented"); /* XXX */
 }
 
 /*

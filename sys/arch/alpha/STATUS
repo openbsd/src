@@ -1,6 +1,9 @@
-$NetBSD: STATUS,v 1.2 1995/11/23 02:33:26 cgd Exp $
+$NetBSD: STATUS,v 1.3.4.1 1996/06/13 20:49:04 cgd Exp $
 
 NetBSD/Alpha's Status
+
+If you find an inaccuracy in this file, can clarify it in any place,
+etc., please send mail to me (cgd@cs.cmu.edu).
 
 
 Supported hardware:
@@ -9,54 +12,66 @@ Supported hardware:
 	600, but the rest should "just work) using the following
 	peripherals:
 
-		Built-in serial ports
-		LANCE ethernet -- only the on-board interface.  (see below.)
-		SCSI system -- it recognizes and can use both on-board SCSI
-		    controller chips.  However, it has trouble working with
-		    both at the same time.
+		Supported hardware:
+			Built-in serial ports
+			Built-in LANCE ethernet.
+			Built-in SCSI chips (53c[f]94), though both
+			    may not work at the same time.
+
+		Things that may work but haven't been tested:
+			TurboChannel option slot LANCE (PMAD-A)
 
 		Things are aren't supported:
 			No frame buffers of any type.
-			Devices in TurboChannel option slots (see the
+			Other TurboChannel option boards (see the
 			    TODO.users file.)
 			The ISDN/Audio chip.
 
 	DEC 3000/300 family, with same hardware above.
 
-	*** NOTE THAT I HAVE NOT TESTED NEW KERNELS THOROUGHLY ON
-	    DEC 3000/[3-900] SYSTEMS!
-
-	AlphaStation {200,250,400} systems using the following
+	AlphaStation {200,250,255,400} systems using the following
 	peripherals:
 
-		On-board NRC 53c810 SCSI.
-		On-board ns16550-based serial ports.
-		DC21040-based ethernet (on-board or in an option
-		    slot).
-		DC21050-based PCI-PCI bridges (though other
-		    types of PCI-PCI bridges should work).
-		PCI VGA video boards.
-		DEC ZLXp-E1 (DC21030-based, "TGA") video boards.
-		Keyboard.
+		Supported hardware:
+			NCR 53c810 SCSI (built-in or PCI board).
+			Built-in ns16550 serial ports.
+			DC21040-based ethernet (built-in or PCI board).
+			DC21140-based PCI ethernet boards.
+			DC21050-based PCI-PCI bridges (though other
+			    types of PCI-PCI bridges should work).
+			PCI VGA video boards.
+			DEC ZLXp-E1 (DC21030-based, "TGA") video boards.
+			Keyboard.
+			PS/2-style mice.
+
+		Things that may work but haven't been tested:
+			Built-in parallel ports.
+			ISA ns16x50-family serial port boards.
+			ISA ns16x50 multi-port serial boards.
+			Other NCR 53c8xx SCSI boards.
 
 		Things that ARE NOT supported at this time:
-			DEC ZLXp-E2 and ZLXp-E3 video boards.
-			Mouse.
-			Sound hardware (Windows Sound System).
+			ISA VGA boards.
+			Sound hardware (including Windows Sound System
+			    built-in on some machines).
+			DEC ZLXp-E2 and ZLXp-E3 PCI video boards.
+			Other PCI boards.
 
 	AlphaStation 600 systems, with the same supported hardware
-	list as the AlphaStation {200,250,400} systems.  (NOTE THAT
-	THAT MEANS THE AlphaStation 600's BUILT-IN SCSI CONTROLLERS
-	DO NOT WORK.  You'll need to get a 53c810 board, or
-	something.)
+	list as the AlphaStation {200,250,255,400} systems.  (NOTE
+	THAT THAT MEANS THE AlphaStation 600's BUILT-IN SCSI
+	CONTROLLERS DO NOT WORK.  You'll need to get a 53c810 board,
+	or run diskless.)  AlphaStation 500 systems may work, but
+	have not been tested.
 
-	AXPpci systems, with the same supported hardware list as
-	the AlphaStation {200,250,400} systems.  (AXPpci support
-	was written by Jeffrey Hsu.  Thanks, Jeff!)
+	AXPpci systems (including Multia), with the same supported
+	hardware list as the AlphaStation {200,250,255,400} systems.
 
 At this time none of the following systems are supported:
-	DECpc AXP systems (EISA-bus PC-like systems)
-	Alpha "server" systems
+	DECpc AXP 150 systems (EISA-bus PC-like systems)
+	Alpha "server" systems (other than perhaps the
+	    AlphaServer 400, which might be an AlphaStation 400
+	    in disguise).
 	Multiprocessor Alpha systems
 
 I was hoping to get a DECpc AXP port working "for free" based on
@@ -66,28 +81,30 @@ NetBSD/Alpha run on the DECpc AXP system, get in touch and I'll do
 what I can to help you get started.
 
 
-Console frame buffers & keyboard are supported only on the AlphaStation
-and AXPpci families of machines.  On the TurboChannel-baesd machines,
-NetBSD/Alpha _must_ be used with a serial console.  To configure various
-Alpha systems to use a serial console, do the following depending on
-the model:
+Console frame buffers & keyboard are supported only with the frame
+buffers and keyboards mentioned as supported above.  On other systems
+(including all TurboChannel-based machines), NetBSD/Alpha _must_ be used
+with a serial console.  To configure various Alpha systems to use a serial
+console, do the following depending on the model:
 
 	DEC 3000/[4-9]00's:
 		Flip the appropriate switch on the back of the machine.
-		(See your owner's manual for more details.)
 
 	DEC 3000/300 family machines:
 		Boot the machine with the keyboard/mouse connector
 		unplugged.
 
-	DECpc AXPs, AXPpcis, and AlphaStations:
+	DECpc AXPs, AlphaStations, and AXPpci systems:
 		Get to the console prompt.  Set the variable
 		"console" to be "serial", and "init" or power cycle
 		the system.
 
+See your owner's manual for more details on how to set your machine
+to use a serial console.
+
 
 See the file src/sys/arch/alpha/README to find out how to get the
-latest sources and/or binaries.
+latest sources and binaries.
 
 Please see the file src/sys/arch/alpha/TODO.users for a list of things
 that users can do to help NetBSD/Alpha improve.  If you're interested
@@ -96,4 +113,4 @@ I'll do what I can to help.
 
 
 Chris Demetriou
-cgd@netbsd.org
+cgd@cs.cmu.edu

@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.7 1995/11/23 02:34:11 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.13.4.1 1996/06/13 18:06:59 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -27,16 +27,22 @@
  * rights to redistribute these changes.
  */
 
-#define LOCORE
-
 #include <machine/asm.h>
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
-#include "assym.s"
+#include "assym.h"
 
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
+	.text
+
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	EXPORT(kernel_text)
+kernel_text:
 
 /*
  * bootstack: a temporary stack, for booting.
@@ -51,13 +57,9 @@ bootstack:
  * Arguments:
  *	a0 is the first free page frame number (PFN)
  *	a1 is the page table base register (PTBR)
- *	a2 argc
- *	a3 argv
- *	a4 envp
  *
  * All arguments are passed to alpha_init().
  */
-	.text
 NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	br	pv,1f
 1:	SETGP(pv)
@@ -1619,5 +1621,13 @@ EXPORT(intrcnt)
 #endif
 EXPORT(eintrcnt)
 	.text
+
+/**************************************************************************/
+
+	.text
+LEAF(rpcc,1)
+	rpcc	v0
+	RET
+	END(pal_mtpr_mces)
 
 /**************************************************************************/

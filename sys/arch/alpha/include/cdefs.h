@@ -32,9 +32,7 @@
 
 #define	_C_LABEL(x)	_STRING(x)
 
-#ifndef lint
-#define	__indr_reference(sym,msg)	/* nothing */
-#endif
+#define	__indr_references(sym,msg)	/* nothing */
 #define	__warn_references(sym,msg)	/* nothing */
 
 #endif /* !_MACHINE_CDEFS_H_ */
