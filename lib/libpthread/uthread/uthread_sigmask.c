@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigmask.c,v 1.5 2002/02/21 20:57:41 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sigmask.c,v 1.6 2003/01/27 22:22:30 marc Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -95,7 +95,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			 * Call the kernel scheduler which will safely
 			 * install a signal frame for the running thread:
 			 */
-			_thread_kern_sched_sig();
+			_thread_kern_sched(NULL);
 	}
 
 	/* Return the completion status: */

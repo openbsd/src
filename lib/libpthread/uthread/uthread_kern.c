@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.24 2003/01/24 21:03:15 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.25 2003/01/27 22:22:30 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,12 +50,6 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-#if defined(PTHREAD_TRACE_KERN)
-#define PTHREAD_TRACE(x)	_thread_sys_write(-1, (void*) x, 0)
-#else
-#define PTHREAD_TRACE(x)
-#endif
-
 /*
  * local functions.   Do NOT make these static... we want so see them in
  * crash dumps.
@@ -68,16 +62,6 @@ inline void	_thread_run_switch_hook(pthread_t, pthread_t);
 static int	last_tick = 0;
 
 void
-_thread_kern_sched_sig(void)
-{
-	struct pthread	*curthread = _get_curthread();
-
-	PTHREAD_TRACE(1);
-	curthread->check_pending = 1;
-	_thread_kern_sched(NULL);
-}
-
-void
 _thread_kern_sched(struct sigcontext * scp)
 {
 	struct timespec	ts;
@@ -87,8 +71,6 @@ _thread_kern_sched(struct sigcontext * scp)
 	unsigned int	current_tick;
 	int		add_to_prioq;
 	pthread_t	old_thread_run;
-
-	PTHREAD_TRACE(2);
 
 	/*
 	 * Flag the pthread kernel as executing scheduler code
@@ -257,23 +239,6 @@ _thread_kern_sched(struct sigcontext * scp)
 				PTHREAD_WORKQ_INSERT(curthread);
 				break;
 			}
-
-			/*
-			 * Are there pending signals for this thread?
-			 *
-			 * This check has to be performed after the thread
-			 * has been placed in the queue(s) appropriate for
-			 * its state.  The process of adding pending signals
-			 * can change a threads state, which in turn will
-			 * attempt to add or remove the thread from any
-			 * scheduling queue to which it belongs.
-			 */
-#ifdef notyet
-			if (curthread->check_pending != 0) {
-				curthread->check_pending = 0;
-				_thread_sig_check_pending(curthread);
-			}
-#endif
 		}
 
 		/*
@@ -502,18 +467,10 @@ _thread_kern_sched(struct sigcontext * scp)
 			/* Restore floating point state. */
 			_thread_machdep_restore_float_state(&curthread->_machdep);
 
-			/*
-			 * Restore the new thread, saving current.
-			 */
+			/* Restore the new thread, saving current. */
 			_thread_machdep_switch(&curthread->_machdep,
 					       &old_thread_run->_machdep);
-
-			/*
-			 * Process any pending signals for the thread we
-			 * just switched to.
-			 */
 			_thread_kern_in_sched = 0;
-			_dispatch_signals(scp);
 
 			/* run any installed switch-hooks */
 			if ((_sched_switch_hook != NULL) &&
@@ -528,6 +485,10 @@ _thread_kern_sched(struct sigcontext * scp)
 			    ((curthread->cancelflags &
 			      PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
 				pthread_testcancel();
+
+			/* dispatch any pending signals if possible */
+			if (curthread->sig_defer_count == 0)
+				_dispatch_signals(scp);
 
 			/* Check if a signal context was saved: */
 			if (curthread->sig_saved == 1) {
@@ -556,7 +517,6 @@ _thread_kern_sched_state(enum pthread_state state, char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 
-	PTHREAD_TRACE(3);
 	/*
 	 * Flag the pthread kernel as executing scheduler code
 	 * to avoid a scheduler signal from interrupting this
@@ -584,8 +544,6 @@ _thread_kern_sched_state_unlock(enum pthread_state state,
     spinlock_t *lock, char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
-
-	PTHREAD_TRACE(4);
 
 	/*
 	 * Flag the pthread kernel as executing scheduler code
@@ -623,8 +581,6 @@ _thread_kern_poll(int wait_reqd)
 	struct pthread	*pthread;
 	struct timespec ts;
 	struct timeval  tv;
-
-	PTHREAD_TRACE(5);
 
 	/* Check if the caller wants to wait: */
 	if (wait_reqd == 0) {
@@ -948,8 +904,6 @@ _thread_kern_set_timeout(const struct timespec * timeout)
 	struct timespec current_time;
 	struct timeval  tv;
 
-	PTHREAD_TRACE(6);
-
 	/* Reset the timeout flag for the running thread: */
 	curthread->timeout = 0;
 
@@ -990,8 +944,6 @@ _thread_kern_sig_defer(void)
 {
 	struct pthread	*curthread = _get_curthread();
 
-	PTHREAD_TRACE(7);
-
 	/* Allow signal deferral to be recursive. */
 	curthread->sig_defer_count++;
 }
@@ -1000,8 +952,6 @@ void
 _thread_kern_sig_undefer(void)
 {
 	struct pthread	*curthread = _get_curthread();
-
-	PTHREAD_TRACE(8);
 
 	/*
 	 * Perform checks to yield only if we are about to undefer
@@ -1049,8 +999,6 @@ _dequeue_signals(void)
 	char	bufr[128];
 	int	i, num;
 
-	PTHREAD_TRACE(9);
-
 	/*
 	 * Enter a loop to read and handle queued signals from the
 	 * pthread kernel pipe:
@@ -1062,16 +1010,8 @@ _dequeue_signals(void)
 		 * each byte is the signal number.
 		 */
 		for (i = 0; i < num; i++) {
-			if ((int) bufr[i] == _SCHED_SIGNAL) {
-				/*
-				 * Scheduling signals shouldn't ever be
-				 * queued; just ignore it for now.
-				 */
-			}
-			else {
-				/* Handle this signal: */
-				_thread_sig_process((int) bufr[i], NULL);
-			}
+			if ((int) bufr[i] != _SCHED_SIGNAL)
+				_thread_sig_handle((int) bufr[i], NULL);
 		}
 	}
 	if ((num < 0) && (errno != EAGAIN)) {
@@ -1088,8 +1028,6 @@ _thread_run_switch_hook(pthread_t thread_out, pthread_t thread_in)
 {
 	pthread_t tid_out = thread_out;
 	pthread_t tid_in = thread_in;
-
-	PTHREAD_TRACE(10);
 
 	if ((tid_out != NULL) &&
 	    (tid_out->flags & PTHREAD_FLAGS_PRIVATE) != 0)

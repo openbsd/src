@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.17 2003/01/24 21:03:15 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.18 2003/01/27 22:22:30 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -41,11 +41,6 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-/* Static variables: */
-static _spinlock_lock_t	signal_lock = _SPINLOCK_UNLOCKED;
-siginfo_t		info_queue[NSIG];
-volatile sig_atomic_t	pending_sigs[NSIG];
-volatile sig_atomic_t	check_pending = 0;
 
 /* Initialize signal handling facility: */
 void
@@ -55,32 +50,8 @@ _thread_sig_init(void)
 
 	/* Clear local state */
 	for (i = 1; i < NSIG; i++) {
-		pending_sigs[i - 1] = 0;
+		_thread_sigq[i - 1].pending = 0;
 	}
-
-	/* Clear the lock: */
-	signal_lock = _SPINLOCK_UNLOCKED;
-}
-
-/*
- * Process a pending signal unless it is already in progress.  If the
- * SA_NODEFER  flag is on, process it any way.
- */
-void
-_thread_sig_process(int sig, struct sigcontext * scp)
-{
-	int locked = 0;
-
-	if (_atomic_lock(&signal_lock) == 0)
-		locked = 1;
-
-	if (locked || _thread_sigact[sig - 1].sa_flags & SA_NODEFER) {
-		pending_sigs[sig - 1] = 0;
-		_thread_sig_handle(sig, scp);
-	} else
-		check_pending = 1;
-	if (locked)
-		signal_lock = _SPINLOCK_UNLOCKED;
 }
 
 /*
@@ -93,17 +64,6 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 {
 	struct pthread	*curthread = _get_curthread();
 	char	c;
-	int	i;
-
-	/*
-	 * save the info for this signal in a per signal queue of depth
-	 * one.  Per a POSIX suggestion, only the info for the first
-	 * of multiple activations of the same signal is kept.
-	 */
-	if (pending_sigs[sig - 1] == 0) {
-		pending_sigs[sig - 1]++;
-		memcpy(&info_queue[sig - 1], info, sizeof *info);
-	}
 
 	if (sig == _SCHED_SIGNAL) {
 		/* Update the scheduling clock: */
@@ -138,59 +98,68 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 				return;
 			}
 		}
-	} else if ((_queue_signals != 0) ||
-		   ((_thread_kern_in_sched == 0) &&
-		    (curthread->sig_defer_count > 0))) {
-		/*
-		 * The kernel has been interrupted while the scheduler
-		 * is accessing the scheduling queues or there is a currently
-		 * running thread that has deferred signals.
-		 *
-		 * Cast the signal number to a character variable and Write
-		 * the signal number to the kernel pipe so that it will be
-		 * ready to read when this signal handler returns.
-		 */
-		c = sig;
-		_thread_sys_write(_thread_kern_pipe[1], &c, 1);
-		_sigq_check_reqd = 1;
 	} else {
-		/* process the signal */
-		_thread_sig_process(sig, scp);
 		/*
-		 * process pending signals unless a current signal handler
-		 * is running (signal_lock is locked).   When locked
-		 * the pending signals will be processed when the running
-		 * handler returns.
+		 * save the info for this signal in a per signal queue of depth
+		 * one.  Per a POSIX suggestion, only the info for the first
+		 * of multiple activations of the same signal is kept.
 		 */
-		while (check_pending != 0 && _atomic_lock(&signal_lock) == 0) {
-			check_pending = 0;
-			signal_lock = _SPINLOCK_UNLOCKED;
-			for (i = 1; i < NSIG; i++)
-				if (pending_sigs[i - 1])
-					_thread_sig_process(i, scp);
+		if (_thread_sigq[sig - 1].pending == 0) {
+			sigaddset(&_process_sigpending, sig);
+			_thread_sigq[sig - 1].pending++;
+			memcpy(&_thread_sigq[sig - 1].siginfo, info,
+			       sizeof *info);
+		}
+
+		if ((_queue_signals != 0) ||
+		    ((_thread_kern_in_sched == 0) &&
+		     (curthread->sig_defer_count > 0))) {
+			/*
+			 * The kernel has been interrupted while the scheduler
+			 * is accessing the scheduling queues or there is a
+			 * currently running thread that has deferred signals.
+			 *
+			 * Cast the signal number to a character variable
+			 * and Write the signal number to the kernel pipe so
+			 * that it will be ready to read when this signal
+			 * handler returns. 
+			 */
+			c = sig;
+			_thread_sys_write(_thread_kern_pipe[1], &c, 1);
+			_sigq_check_reqd = 1;
+		} else {
+			if (_thread_sig_handle(sig, scp))
+				_dispatch_signals(scp);
 		}
 	}
-
 }
 
 /*
  * Clear the pending flag for the given signal on all threads
+ * if per process, or only for the given thread if non null
+ * and the signal doesn't exist in _process_sigpending.
  */
 void
-_clear_pending_flag(int sig)
+_thread_clear_pending(int sig, pthread_t thread)
 {
 	pthread_t pthread;
 
-	TAILQ_FOREACH(pthread, &_thread_list, tle) {
-		sigdelset(&pthread->sigpend, sig);
-	}
+	if (sigismember(&_process_sigpending, sig)) {
+		_thread_sigq[sig - 1].pending = 0;
+		sigdelset(&_process_sigpending, sig);
+		TAILQ_FOREACH(pthread, &_thread_list, tle) {
+			sigdelset(&pthread->sigpend, sig);
+		}
+	} else if (thread)
+		sigdelset(&thread->sigpend, sig);
 }
 
 
 /*
- * Process the given signal.
+ * Process the given signal.   Returns 1 if the signal may be dispatched,
+ * otherwise 0.
  */
-void
+int
 _thread_sig_handle(int sig, struct sigcontext * scp)
 {
 	struct pthread	*curthread = _get_curthread();
@@ -216,11 +185,27 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 		}
 
 		/*
-		 * POSIX says that pending SIGCONT signals are
-		 * discarded when one of these signals occurs.
+		 * If the handler is SIG_IGN the signal never happened.
+		 * remove it from the pending list and return.
 		 */
-		if (sig == SIGTSTP || sig == SIGTTIN || sig == SIGTTOU)
-			_clear_pending_flag(SIGCONT);
+		if (_thread_sigact[sig - 1].sa_handler == SIG_IGN) {
+			_thread_clear_pending(sig, curthread);
+			return 0;
+		}
+
+		/*
+		 * POSIX says that pending SIGCONT signals are discarded
+		 * when one of these signals occurs and vice versa.
+		 */
+		if (sig == SIGSTOP || sig == SIGTSTP || sig == SIGTTIN ||
+		    sig == SIGTTOU)
+			_thread_clear_pending(SIGCONT, curthread);
+		if (sig == SIGCONT) {
+			_thread_clear_pending(SIGSTOP, curthread);
+			_thread_clear_pending(SIGTSTP, curthread);
+			_thread_clear_pending(SIGTTIN, curthread);
+			_thread_clear_pending(SIGTTOU, curthread);
+		}
 
 		/*
 		 * Enter a loop to process each thread in the waiting
@@ -239,61 +224,49 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 
 			if ((pthread->state == PS_SIGWAIT) &&
 			    sigismember(pthread->data.sigwait, sig)) {
-				/* Change the state of the thread to run: */
-				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
-
-				/* Return the signal number: */
-				pthread->signo = sig;
-
 				/*
-				 * Do not attempt to deliver this signal
-				 * to other threads.
+				 * found a sigwaiter.   Mark its state as
+				 * running, save the signal that will be
+				 * returned, and mark the signal as no
+				 * longer pending. 
 				 */
-				return;
+				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+				pthread->signo = sig;
+				_thread_clear_pending(sig, pthread);
+				return 0;
 			}
 		}
 
-		if (_thread_sigact[sig - 1].sa_handler != SIG_IGN) {
-			/*
-			 * mark the signal as pending for each thread
-			 * and give the thread a chance to update
-			 * its state.
-			 */
-			TAILQ_FOREACH(pthread, &_thread_list, tle) {
-				/* Current thread inside critical region? */
-				if (curthread->sig_defer_count > 0)
-					pthread->sig_defer_count++;
-				_thread_signal(pthread,sig);
-				if (curthread->sig_defer_count > 0)
-					pthread->sig_defer_count--;
-			}
-			/*
-			 * Give the current thread a chance to dispatch
-			 * the signals.  Other threads will get thier
-			 * chance (if the signal is still pending) later.
-			 */
-			_dispatch_signals(scp);
-
+		/*
+		 * mark the signal as pending for each thread
+		 * and give the thread a chance to update
+		 * its state.
+		 */
+		TAILQ_FOREACH(pthread, &_thread_list, tle) {
+			/* Current thread inside critical region? */
+			if (curthread->sig_defer_count > 0)
+				pthread->sig_defer_count++;
+			_thread_signal(pthread,sig);
+			if (curthread->sig_defer_count > 0)
+				pthread->sig_defer_count--;
 		}
+		return 1;
 	}
+	return 0;
 }
 
 /* Perform thread specific actions in response to a signal: */
 void
 _thread_signal(pthread_t pthread, int sig)
 {
-	/*
-	 * Flag the signal as pending. It may be dispatched later.
-	 */
+	/* Flag the signal as pending. It may be dispatched later. */
 	sigaddset(&pthread->sigpend,sig);
 
 	/* skip this thread if signal is masked */
 	if (sigismember(&pthread->sigmask, sig))
 		return;
 
-	/*
-	 * Process according to thread state:
-	 */
+	/* Process according to thread state: */
 	switch (pthread->state) {
 	/*
 	 * States which do not change when a signal is trapped:
@@ -377,14 +350,49 @@ _thread_signal(pthread_t pthread, int sig)
 }
 
 /*
+ * Dispatch a signal to the current thread after setting up the
+ * appropriate signal mask.
+ */
+void
+_dispatch_signal(int sig, struct sigcontext * scp)
+{
+	struct pthread	*curthread = _get_curthread();
+	
+	sigset_t set;
+	sigset_t oset;
+	struct sigaction act;
+	void (*action)(int, siginfo_t *, void *);
+
+	_thread_clear_pending(sig, curthread);
+
+	/* save off the action and set the signal mask */
+	action = _thread_sigact[sig - 1].sa_sigaction;
+	set = _thread_sigact[sig - 1].sa_mask;
+	if ((_thread_sigact[sig-1].sa_flags & SA_NODEFER) == 0)
+		sigaddset(&set, sig);
+	oset = curthread->sigmask;
+	curthread->sigmask |= set;
+
+	/* clear custom handler if SA_RESETHAND set. */
+	if (_thread_sigact[sig - 1].sa_flags & SA_RESETHAND) {
+		act.sa_handler = SIG_DFL;
+		act.sa_flags = 0;
+		sigemptyset(&act.sa_mask);
+		sigaction(sig, &act, NULL);
+	}
+
+	/* call the action and reset the signal mask */
+	(*action)(sig, &_thread_sigq[sig - 1].siginfo, scp);
+	curthread->sigmask = oset;
+}
+
+/*
  * possibly dispatch a signal to the current thread.
  */
 void
 _dispatch_signals(struct sigcontext * scp)
 {
 	struct pthread	*curthread = _get_curthread();
-	struct sigaction act;
-	void (*action)(int, siginfo_t *, void *);
 	int i;
 
 	/*
@@ -401,24 +409,8 @@ _dispatch_signals(struct sigcontext * scp)
 			if (_thread_sigact[i - 1].sa_handler != SIG_DFL &&
 			    _thread_sigact[i - 1].sa_handler != SIG_IGN &&
 			    sigismember(&curthread->sigpend,i) &&
-			    !sigismember(&curthread->sigmask,i)) {
-				action = _thread_sigact[i - 1].sa_sigaction;
-				_clear_pending_flag(i);
-
-				/* clear custom handler if SA_RESETHAND set. */
-				if (_thread_sigact[i - 1].sa_flags &
-				    SA_RESETHAND) {
-					act.sa_handler = SIG_DFL;
-					act.sa_flags = 0;
-					sigemptyset(&act.sa_mask);
-					sigaction(i, &act, NULL);
-				}
-
-				/*
-				 * Dispatch the signal via the custom signal
-				 * handler.
-				 */
-				(*action)(i, &info_queue[i - 1], scp);
-			}
+			    !sigismember(&curthread->sigmask,i))
+				/* dispatch */
+				_dispatch_signal(i, scp);
 }
 #endif

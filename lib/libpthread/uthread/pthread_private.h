@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.41 2003/01/24 21:03:15 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.42 2003/01/27 22:22:30 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -624,7 +624,6 @@ struct pthread {
 	sigset_t	sigmask;
 	sigset_t	sigpend;
 	int		sigmask_seqno;
-	int		check_pending;
 
 	/* Thread state: */
 	enum pthread_state	state;
@@ -1016,14 +1015,7 @@ SCLASS volatile int	_spinblock_count
 /* Used to maintain pending and active signals: */
 struct sigstatus {
 	int		pending;	/* Is this a pending signal? */
-	int		blocked;	/*
-					 * A handler is currently active for
-					 * this signal; ignore subsequent
-					 * signals until the handler is done.
-					 */
-	int		signo;		/* arg 1 to signal handler */
 	siginfo_t	siginfo;	/* arg 2 to signal handler */
-	struct sigcontext uc;		/* arg 3 to signal handler */
 };
 
 SCLASS struct sigstatus	_thread_sigq[NSIG];
@@ -1095,11 +1087,11 @@ void	_waitq_clearactive(void);
 __dead void _thread_exit(const char *, int, const char *) __attribute__((__noreturn__));
 void    *_thread_cleanup(pthread_t);
 void    _thread_cleanupspecific(void);
+void	_thread_clear_pending(int, pthread_t);
 void	_thread_dump_data(const void *, int);
 void    _thread_dump_info(void);
 void    _thread_init(void);
 void    _thread_kern_sched(struct sigcontext *);
-void    _thread_kern_sched_sig(void);
 void    _thread_kern_sched_state(enum pthread_state,char *fname,int lineno);
 void	_thread_kern_sched_state_unlock(enum pthread_state state,
 	    spinlock_t *lock, char *fname, int lineno);
@@ -1107,9 +1099,8 @@ void    _thread_kern_set_timeout(const struct timespec *);
 void    _thread_kern_sig_defer(void);
 void    _thread_kern_sig_undefer(void);
 void    _thread_sig_handler(int, siginfo_t *, struct sigcontext *);
-void    _thread_sig_handle(int, struct sigcontext *);
+int	_thread_sig_handle(int, struct sigcontext *);
 void	_thread_sig_init(void);
-void	_thread_sig_process(int, struct sigcontext *);
 void    _thread_start(void);
 void    _thread_start_sig_handler(void);
 void	_thread_seterrno(pthread_t,int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigwait.c,v 1.11 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: uthread_sigwait.c,v 1.12 2003/01/27 22:22:30 marc Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -82,10 +82,7 @@ sigwait(const sigset_t * set, int *sig)
 		}
 
 		/* Clear the pending signal: */
-		if (sigismember(&curthread->sigpend, i))
-			sigdelset(&curthread->sigpend, i);
-		else
-			sigdelset(&_process_sigpending, i);
+		_thread_clear_pending(i, curthread);
 
 		/* Return the signal number to the caller: */
 		*sig = i;
