@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1997/06/25 13:22:25 downsj Exp $ */
+/*	$OpenBSD: machdep.c,v 1.26 1997/07/01 21:32:02 grr Exp $ */
 /*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
 
 /*
@@ -93,6 +93,7 @@
 
 #ifdef SUN4M
 #include <sparc/dev/power.h>
+#include "power.h"
 #endif
 
 vm_map_t buffer_map;
@@ -687,8 +688,12 @@ boot(howto)
 		doshutdownhooks();
 #if defined(SUN4M)
 		if (howto & RB_POWERDOWN) {
+#if NPOWER > 0
 			printf("attempting to power down...\n");
 			powerdown();
+#else
+			printf("WARNING: power not configured!\n");
+#endif
 		}
 #endif
 		printf("halted\n\n");

@@ -42,7 +42,7 @@ file	arch/sparc/sparc/clock.c
 
 device power
 attach power at obio
-file	arch/sparc/dev/power.c			power
+file	arch/sparc/dev/power.c			power needs-count
 
 device cpu
 attach cpu at mainbus
