@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.19 2003/03/29 17:52:01 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.20 2003/03/29 23:28:49 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -223,9 +223,6 @@ iha_setup_sg_list(sc, pScb)
 	int i, error, nseg = pScb->SCB_DataDma->dm_nsegs;
 
 	if (nseg > 1) {
-		pScb->SCB_Flags	|= FLAG_SG;
-		bzero(pScb->SCB_SGList, sizeof(pScb->SCB_SGList));
-
 		error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_SGDma,
 				pScb->SCB_SGList, sizeof(pScb->SCB_SGList), NULL,
 				(pScb->SCB_Flags & SCSI_NOSLEEP) ?
@@ -235,6 +232,13 @@ iha_setup_sg_list(sc, pScb)
 			printf("error %d loading SG list dma map\n", error);
 			return (error);
 		}
+
+		/*
+		 * Only set FLAG_SG when SCB_SGDma is loaded so iha_scsi_done
+		 * will not unload an unloaded map.
+		 */
+		pScb->SCB_Flags	|= FLAG_SG;
+		bzero(pScb->SCB_SGList, sizeof(pScb->SCB_SGList));
 
 		pScb->SCB_SGIdx	  = 0;
 		pScb->SCB_SGCount = nseg;
@@ -323,6 +327,10 @@ iha_scsi_cmd(xs)
 			xs->error = XS_DRIVER_STUFFUP;
 			return (COMPLETE);
 		}
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
+			0, pScb->SCB_BufChars,
+			(pScb->SCB_Flags & SCSI_DATA_IN) ?
+				BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 		error = iha_setup_sg_list(sc, pScb);
 		if (error) {
@@ -331,10 +339,6 @@ iha_scsi_cmd(xs)
 			return (COMPLETE);
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
-			0, pScb->SCB_BufChars,
-			(pScb->SCB_Flags & SCSI_DATA_IN) ?
-				BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
 
 	/*
@@ -839,8 +843,24 @@ iha_push_sense_request(sc, pScb)
 	struct scsi_sense *sensecmd;
 	int error;
 
-	pScb->SCB_Flags &= SCSI_POLL | SCSI_NOSLEEP;
-	pScb->SCB_Flags |= FLAG_RSENS | SCSI_DATA_IN;
+	/* First sync & unload any existing DataDma and SGDma maps */
+	if ((pScb->SCB_Flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != 0) {
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma,
+			0, pScb->SCB_BufChars,
+			((pScb->SCB_Flags & SCSI_DATA_IN) ? 
+				BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+		bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
+		/* Don't unload this map again until it is reloaded */
+		pScb->SCB_Flags &= ~(SCSI_DATA_IN | SCSI_DATA_OUT);
+	}
+	if ((pScb->SCB_Flags & FLAG_SG) != 0) {
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma,
+			0, sizeof(pScb->SCB_SGList),
+			BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, pScb->SCB_SGDma);
+		/* Don't unload this map again until it is reloaded */
+		pScb->SCB_Flags &= ~FLAG_SG;
+	}
 
 	pScb->SCB_BufChars     = sizeof(pScb->SCB_ScsiSenseData);
 	pScb->SCB_BufCharsLeft = sizeof(pScb->SCB_ScsiSenseData);
@@ -855,19 +875,18 @@ iha_push_sense_request(sc, pScb)
 		sc_print_addr(pScb->SCB_Xs->sc_link);
 		printf("error %d loading request sense buffer dma map\n",
 			error);
-		return (1);
-	}
-
-	error = iha_setup_sg_list(sc, pScb);
-	if (error) {
-		bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
 		return (error);
 	}
-
 	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
-		0, pScb->SCB_BufChars,
-		(pScb->SCB_Flags & SCSI_DATA_IN) ?
-			BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+		0, pScb->SCB_BufChars, BUS_DMASYNC_PREREAD);
+
+	/* Save _POLL and _NOSLEEP flags. */ 
+	pScb->SCB_Flags &= SCSI_POLL | SCSI_NOSLEEP;
+	pScb->SCB_Flags |= FLAG_RSENS | SCSI_DATA_IN;
+
+	error = iha_setup_sg_list(sc, pScb);
+	if (error)
+		return (error);
 
 	pScb->SCB_Ident &= ~MSG_IDENTIFY_DISCFLAG;
 
@@ -921,7 +940,10 @@ iha_scsi_label:
 				if ((pScb->SCB_Flags & FLAG_RSENS) != 0)
 					/* Check condition on check condition*/
 					pScb->SCB_HaStat = HOST_BAD_PHAS;
-				else if (iha_push_sense_request(sc, pScb) == 0)
+				else if (iha_push_sense_request(sc, pScb) != 0)
+					/* Could not push sense request */
+					pScb->SCB_HaStat = HOST_BAD_PHAS;
+				else
 					/* REQUEST SENSE ready to process */
 					goto iha_scsi_label;
 				break;
