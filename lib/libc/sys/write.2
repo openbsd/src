@@ -91,7 +91,7 @@ starts at a position
 given by the pointer associated with
 .Fa d
 (see
-.Xr lseek 2 ) .
+.Xr lseek 2 . )
 Upon return from
 .Fn write ,
 the pointer is incremented by the number of bytes which were written.
@@ -108,6 +108,12 @@ by a user who
 .Dq captures
 a writable set-user-id file
 owned by the super-user.
+.Pp
+If
+.Fn write
+succeeds it will update the st_ctime and st_mtime fields of the file's
+meta-data (see
+.Xr stat 2 . )
 .Pp
 When using non-blocking I/O on objects such as sockets that are subject
 to flow control,
