@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.19 2001/10/28 02:23:28 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.20 2001/12/04 20:13:47 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -24,6 +24,7 @@ include "dev/i2o/files.i2o"
 include "dev/mii/files.mii"
 include "dev/atapiscsi/files.atapiscsi"
 include "dev/ata/files.ata"
+include "dev/wscons/files.wscons"
 
 # COMPAT_NETBSD
 include "compat/netbsd/files.netbsd"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2001/11/15 03:59:08 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2001/12/04 20:13:47 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -112,6 +112,8 @@
 #define NCGSIX 0
 #define NTCX 0
 #define NCGFOURTEEN 0
+
+#include "wsdisplay.h"
 
 #include "rd.h"
 #include "ses.h"
@@ -244,7 +246,8 @@ struct cdevsw	cdevsw[] =
 	cdev_crypto_init(NCRYPTO,crypto), /* 75: /dev/crypto */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 76 *: Kernel symbols device */
 	cdev_tty_init(NSABTTY,sabtty),	/* 77: sab82532 serial ports */
-	cdev_notdef(),			/* 78 */
+	cdev_wsdisplay_init(NWSDISPLAY,	/* 78: frame buffers, etc. */
+	    wsdisplay),
 	cdev_notdef(),			/* 79 */
 	cdev_notdef(),			/* 80 */
 	cdev_notdef(),			/* 81 */
