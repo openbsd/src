@@ -1,4 +1,4 @@
-\	$OpenBSD: bootblk.fth,v 1.2 2003/08/26 19:55:21 drahn Exp $
+\	$OpenBSD: bootblk.fth,v 1.3 2003/08/28 23:47:31 jason Exp $
 \	$NetBSD: bootblk.fth,v 1.3 2001/08/15 20:10:24 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
@@ -285,7 +285,8 @@ h# 2000 buffer: indir-block
 \ Read file into internal buffer and return pointer and len
 \
 
-2000 buffer: cur-block		\ Why do dynamic allocation?
+0 value cur-block			\ allocated dynamically in ufs-open
+0 value cur-blocksize			\ size of cur-block
 -1 value cur-blockno
 0 value cur-offset
 
@@ -405,9 +406,10 @@ h# 2000 buffer: indir-block
       niaddr 0 ?do
 	sb-buf fs_nindir l@ * dup	( sizebp sizebp -- )
 	sb-buf fs_maxfilesize dup x@	( sizebp sizebp *fs_maxfilesize fs_maxfilesize -- )
-	rot ( sizebp *fs_maxfilesize fs_maxfilesize sizebp -- )
-	+ ( sizebp *fs_maxfilesize new_fs_maxfilesize  -- ) swap x! ( sizebp -- )
-      loop drop ( -- )
+	rot 				( sizebp *fs_maxfilesize fs_maxfilesize sizebp -- )
+	+ 				( sizebp *fs_maxfilesize new_fs_maxfilesize  -- ) 
+        swap x! 			( sizebp -- )
+      loop drop 			( -- )
       sb-buf dup fs_bmask l@ not swap fs_qbmask x!
       sb-buf dup fs_fmask l@ not swap fs_qfmask x!
    then
@@ -451,17 +453,21 @@ h# 2000 buffer: indir-block
       ." Superblock bsize" space . ." too large" cr
       abort
    then 
-   fs_SIZEOF <  if
+   dup fs_SIZEOF <  if
       ." Superblock bsize < size of superblock" cr
       abort
    then
-   ffs_oldcompat
+   ffs_oldcompat	( fs_bsize -- fs_bsize )
+   dup to cur-blocksize alloc-mem to cur-block    \ Allocate cur-block
    boot-debug?  if ." ufs-open complete" cr then
 ;
 
 : ufs-close ( -- ) 
    boot-ihandle dup -1 <>  if
       cif-close -1 to boot-ihandle 
+   then
+   cur-block 0<> if
+      cur-block cur-blocksize free-mem
    then
 ;
 
@@ -551,7 +557,16 @@ h# 2000 buffer: indir-block
    2drop
 ;
 
-h# 5000 constant loader-base
+\
+\ According to the 1275 addendum for SPARC processors:
+\ Default load-base is 0x4000.  At least 0x8.0000 or
+\ 512KB must be available at that address.  
+\
+\ The Fcode bootblock can take up up to 8KB (O.K., 7.5KB) 
+\ so load programs at 0x4000 + 0x2000=> 0x6000
+\
+
+h# 6000 constant loader-base
 
 \
 \ Elf support -- find the load addr
@@ -596,7 +611,7 @@ h# 5000 constant loader-base
 ;
 
 : do-boot ( bootfile -- )
-   ." OpenBSD IEEE 1275 Bootblock" cr
+   ." OpenBSD IEEE 1275 Bootblock 1.1" cr
    boot-path load-file ( -- load-base )
    dup 0<> if  " to load-base init-program" evaluate then
 ;
