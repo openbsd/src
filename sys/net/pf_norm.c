@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.64 2003/07/09 22:03:16 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.65 2003/07/09 22:09:20 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1013,7 +1013,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	struct ip6_opt		 opt;
 	struct ip6_opt_jumbo	 jumbo;
 	struct ip6_frag		 frag;
-	u_int32_t		 jumbolen = 0;
+	u_int32_t		 jumbolen = 0, plen;
 	u_int16_t		 fragoff = 0;
 	int			 optend;
 	int			 ooff;
@@ -1049,12 +1049,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		r->packets++;
 
 	/* Check for illegal packets */
-	if (ntohs(h->ip6_plen) == 0) {
-		/* jumbo payload option must be present */
-		if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET >= m->m_pkthdr.len)
-			goto drop;
-	} else if (sizeof(struct ip6_hdr) + ntohs(h->ip6_plen) !=
-	    m->m_pkthdr.len)
+	if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET >= m->m_pkthdr.len)
 		goto drop;
 
 	off = sizeof(struct ip6_hdr);
@@ -1129,7 +1124,12 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		}
 	} while (!terminal);
 
-	if (ntohs(h->ip6_plen) == 0 && !jumbolen)
+	/* jumbo payload option must be present, or plen > 0 */
+	if (ntohs(h->ip6_plen) == 0)
+		plen = jumbolen;
+	else
+		plen = ntohs(h->ip6_plen);
+	if (plen == 0)
 		goto drop;
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
