@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.7 1998/08/23 22:08:51 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.8 1998/08/25 08:20:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -133,9 +133,12 @@ mpcpcibrattach(parent, self, aux)
 	case POWER4e:
 		lcp = sc->sc_pcibr = &mpc_config;
 
+		addbatmap(MPC106_V_PCI_MEM_SPACE,
+			  MPC106_P_PCI_MEM_SPACE, BAT_I);
+
 		sc->sc_membus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
 		sc->sc_membus_space.bus_reverse = 1;
-		sc->sc_iobus_space.bus_base = MPC106_PCI_IO_SPACE;
+		sc->sc_iobus_space.bus_base = MPC106_V_PCI_IO_SPACE;
 		sc->sc_iobus_space.bus_reverse = 1;
 
 		lcp->lc_pc.pc_conf_v = lcp;
@@ -157,13 +160,13 @@ mpcpcibrattach(parent, self, aux)
 				mpc_cfg_read_1(MPC106_PCI_REVID));
 		mpc_cfg_write_2(MPC106_PCI_STAT, 0xff80); /* Reset status */
 		break;
+
 	case OFWMACH:
 	case PWRSTK:
 		lcp = sc->sc_pcibr = &mpc_config;
 
 		{
 			unsigned int addr;
-
 			/* need to map 0xf0000000 also but cannot
 			 * because kernel uses that address space
 			 */
@@ -181,7 +184,7 @@ mpcpcibrattach(parent, self, aux)
 
 		sc->sc_membus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
 		sc->sc_membus_space.bus_reverse = 1;
-		sc->sc_iobus_space.bus_base = MPC106_PCI_IO_SPACE;
+		sc->sc_iobus_space.bus_base = MPC106_V_PCI_IO_SPACE;
 		sc->sc_iobus_space.bus_reverse = 1;
 
 		lcp->lc_pc.pc_conf_v = lcp;
@@ -203,6 +206,7 @@ mpcpcibrattach(parent, self, aux)
 				mpc_cfg_read_1(MPC106_PCI_REVID));
 		mpc_cfg_write_2(MPC106_PCI_STAT, 0xff80); /* Reset status */
 		break;
+
 	default:
 		printf("unknown system_type %d\n",system_type);
 		return;
@@ -395,9 +399,12 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
 	int buspin, line;
 	pci_intr_handle_t *ihp;
 {
+	struct pcibr_config *lcp = lcv;
+	pci_chipset_tag_t pc = &lcp->lc_pc; 
 	int error = 0;
 	int route;
 	int lvl;
+	int device;
 
 	*ihp = -1;
         if (buspin == 0) {
@@ -410,31 +417,41 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
         }
 
 	if(system_type == POWER4e) {
+		pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 		route = in32rb(MPC106_PCI_CONF_SPACE + 0x860);
-		switch(line) {
-		case 14:
-			line = 9;
-			route &= ~0x000000ff;
-			route |= line;
-			break;
-		case 11:
+		switch(device) {
+		case 1:			/* SCSI */
 			line = 6;
 			route &= ~0x0000ff00;
 			route |= line << 8;
 			break;
-		case 12:
+
+		case 2:			/* Ethernet */
 			line = 14;
 			route &= ~0x00ff0000;
 			route |= line << 16;
 			break;
-		case 13:
+
+		case 3:			/* Tundra VME */
 			line = 15;
 			route &= ~0xff000000;
 			route |= line << 24;
 			break;
+
+		case 4:			/* PMC Slot */
+			line = 9;
+			route &= ~0x000000ff;
+			route |= line;
+			break;
+
+		default:
+			printf("mpc_intr_map: bad dev slot %d!\n", device);
+			error = 1;
+			break;
 		}
+
 		lvl = isa_inb(0x04d0);
-		lvl |= isa_inb(0x04d1);
+		lvl |= isa_inb(0x04d1) << 8;
 		lvl |= 1L << line;
 		isa_outb(0x04d0, lvl);
 		isa_outb(0x04d1, lvl >> 8);
