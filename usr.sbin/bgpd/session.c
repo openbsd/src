@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.56 2004/01/03 20:22:07 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.57 2004/01/03 22:18:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -838,6 +838,8 @@ session_open(struct peer *peer)
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
+
+	peer->stats.msg_send++;
 }
 
 void
@@ -879,6 +881,7 @@ session_keepalive(struct peer *peer)
 	}
 
 	start_timer_keepalive(peer);
+	peer->stats.msg_send++;
 }
 
 void
@@ -929,6 +932,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
+	peer->stats.msg_send++;
 }
 
 int
@@ -1038,6 +1042,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 					    " %u", msgtype);
 				}
 				rpos += msglen;
+				peer->stats.msg_rcvd++;
 			}
 			if (rpos < av) {
 				left = av - rpos;
