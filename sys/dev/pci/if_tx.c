@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_tx.c,v 1.4 1999/02/26 17:05:55 jason Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.5 1999/03/10 20:04:13 jason Exp $	*/
+/*	$FreeBSD: if_tx.c,v 1.21 1999/03/09 17:30:12 andreas Exp $ */
 
 /*-
  * Copyright (c) 1997 Semen Ustimenko (semen@iclub.nsu.ru)
@@ -25,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_tx.c,v 1.4 1999/02/26 17:05:55 jason Exp $
+ *	$FreeBSD: if_tx.c,v 1.21 1999/03/09 17:30:12 andreas Exp $
  *
  */
 
@@ -138,7 +139,11 @@
 #endif
 
 #if defined(__FreeBSD__)
+#if __FreeBSD_version >= 300000
+#define EPIC_IFIOCTL_CMD_TYPE u_long
+#else
 #define EPIC_IFIOCTL_CMD_TYPE int
+#endif
 #define EPIC_INTR_RET_TYPE void
 #else /* __OpenBSD__ */
 #define EPIC_IFIOCTL_CMD_TYPE u_long
@@ -356,7 +361,7 @@ epic_shutdown(
 #else /* __FreeBSD__ */
 /* -----------------------------FreeBSD------------------------------------- */
 
-static char* epic_freebsd_probe __P((pcici_t, pcidi_t));
+static const char* epic_freebsd_probe __P((pcici_t, pcidi_t));
 static void epic_freebsd_attach __P((pcici_t, int));
 static void epic_shutdown __P((int, void *));
 
@@ -373,7 +378,7 @@ static struct pci_device txdevice = {
 DATA_SET ( pcidevice_set, txdevice );
 
 /* Synopsis: Check if device id corresponds with SMC83C170 id.  */
-static char*
+static const char*
 epic_freebsd_probe(
     pcici_t config_id,
     pcidi_t device_id)
@@ -403,8 +408,7 @@ epic_freebsd_attach(
 #else
 	caddr_t	pmembase;
 #endif
-	int i,k,s,tmp;
-	u_int32_t pool;
+	int i,s,tmp;
 
 	printf("tx%d",unit);
 
@@ -647,7 +651,7 @@ epic_ifioctl __P((
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update out multicast list */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#if defined(__FreeBSD__) && __FreeBSD_version >= 300000
 		epic_set_mc_table(sc);
 		error = 0;
 #else
@@ -1805,7 +1809,7 @@ epic_read_phy_register __P((
 
 	CSR_WRITE_4( sc, MIICTL, ((loc << 4) | 0x0601) );
 
-	for( i=0;i<0x1000;i++) if( !(CSR_READ_4( sc, MIICTL )&1) ) break;
+	for( i=0;i<0x100000;i++) if( !(CSR_READ_4( sc, MIICTL )&1) ) break;
 
 	return CSR_READ_4( sc, MIIDATA );
 }
@@ -1821,7 +1825,7 @@ epic_write_phy_register __P((
 	CSR_WRITE_4( sc, MIIDATA, val );
 	CSR_WRITE_4( sc, MIICTL, ((loc << 4) | 0x0602) );
 
-	for( i=0;i<0x1000;i++) if( !(CSR_READ_4( sc, MIICTL )&2) ) break;
+	for( i=0;i<0x100000;i++) if( !(CSR_READ_4( sc, MIICTL )&2) ) break;
 
 	return;
 }
@@ -1850,13 +1854,14 @@ epic_dump_state __P((
 	printf(EPIC_FORMAT ": dumping tx descriptors\n",EPIC_ARGS(sc));
 	for(j=0;j<TX_RING_SIZE;j++){
 		tdesc = sc->tx_desc + j;
-		printf("desc%d: %4d 0x%04x, 0x%08x, 0x%04x %4d, 0x%08x, mbuf: 0x%08x\n",
+		printf(
+ 		"desc%d: %4d 0x%04x, 0x%08lx, 0x%04x %4u, 0x%08lx, mbuf: %p\n",
 			j,
 			tdesc->txlength,tdesc->status,
-			tdesc->bufaddr,
+			(u_long)tdesc->bufaddr,
 			tdesc->control,tdesc->buflength,
-			tdesc->next,
-			sc->tx_buffer[j].mbuf
+			(u_long)tdesc->next,
+			(void *)sc->tx_buffer[j].mbuf
 		);
 	}
 }
