@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.3 1995/03/18 14:55:04 cgd Exp $	*/
+/*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$NetBSD: optr.c,v 1.3 1995/03/18 14:55:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,9 @@ query(question)
 	char	replybuffer[64];
 	int	back, errcount;
 	FILE	*mytty;
+	time_t	firstprompt, when_answered;
+
+	firstprompt = time((time_t *)0);
 
 	if ((mytty = fopen(_PATH_TTY, "r")) == NULL)
 		quit("fopen on %s fails: %s\n", _PATH_TTY, strerror(errno));
@@ -124,6 +127,13 @@ query(question)
 	if (signal(SIGALRM, sig) == SIG_IGN)
 		signal(SIGALRM, SIG_IGN);
 	(void) fclose(mytty);
+	when_answered = time((time_t *)0);
+	/*
+	 * Adjust the base for time estimates to ignore time we spent waiting
+	 * for operator input.
+	 */
+	if (tstart_writing != 0)
+	    tstart_writing += (when_answered - firstprompt);
 	return(back);
 }
 
