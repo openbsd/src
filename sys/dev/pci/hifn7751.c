@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.94 2001/08/17 17:37:12 ben Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.95 2001/08/22 05:15:25 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1112,22 +1112,28 @@ hifn_crypto(sc, cmd, crp)
 {
 	struct	hifn_dma *dma = sc->sc_dma;
 	u_int32_t cmdlen;
-	int cmdi, resi, s;
+	int cmdi, resi, s, err = 0;
 
 	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
 	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
-		return (-1);
+		return (ENOMEM);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->src_map,
-		    cmd->srcu.src_m, BUS_DMA_NOWAIT))
+		    cmd->srcu.src_m, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
 			goto err_srcmap1;
+		}
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
 		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->src_map,
-		    cmd->srcu.src_io, BUS_DMA_NOWAIT))
+		    cmd->srcu.src_io, BUS_DMA_NOWAIT)) {
+			err = ENOMEM;
 			goto err_srcmap1;
-	} else
+		}
+	} else {
+		err = EINVAL;
 		goto err_srcmap1;
+	}
 
 	if (hifn_dmamap_aligned(cmd->src_map)) {
 		if (crp->crp_flags & CRYPTO_F_IOV)
@@ -1136,9 +1142,10 @@ hifn_crypto(sc, cmd, crp)
 			cmd->dstu.dst_m = cmd->srcu.src_m;
 		cmd->dst_map = cmd->src_map;
 	} else {
-		if (crp->crp_flags & CRYPTO_F_IOV)
+		if (crp->crp_flags & CRYPTO_F_IOV) {
+			err = EINVAL;
 			goto err_srcmap;
-		if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		} else if (crp->crp_flags & CRYPTO_F_IMBUF) {
 			int totlen, len;
 			struct mbuf *m, *m0, *mlast;
 
@@ -1150,8 +1157,10 @@ hifn_crypto(sc, cmd, crp)
 				len = MLEN;
 				MGET(m0, M_DONTWAIT, MT_DATA);
 			}
-			if (m0 == NULL)
+			if (m0 == NULL) {
+				err = ENOMEM;
 				goto err_srcmap;
+			}
 			if (len == MHLEN)
 				M_DUP_PKTHDR(m0, cmd->srcu.src_m);
 			if (totlen >= MINCLSIZE) {
@@ -1166,6 +1175,7 @@ hifn_crypto(sc, cmd, crp)
 			while (totlen > 0) {
 				MGET(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
+					err = ENOMEM;
 					m_freem(m0);
 					goto err_srcmap;
 				}
@@ -1190,16 +1200,22 @@ hifn_crypto(sc, cmd, crp)
 	if (cmd->dst_map == NULL) {
 		if (bus_dmamap_create(sc->sc_dmat,
 		    HIFN_MAX_SEGLEN * MAX_SCATTER, MAX_SCATTER,
-		    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->dst_map))
+		    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->dst_map)) {
+			err = ENOMEM;
 			goto err_srcmap;
+		}
 		if (crp->crp_flags & CRYPTO_F_IMBUF) {
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
-			    cmd->dstu.dst_m, BUS_DMA_NOWAIT))
+			    cmd->dstu.dst_m, BUS_DMA_NOWAIT)) {
+				err = ENOMEM;
 				goto err_dstmap1;
+			}
 		} else if (crp->crp_flags & CRYPTO_F_IOV) {
 			if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
-			    cmd->dstu.dst_io, BUS_DMA_NOWAIT))
+			    cmd->dstu.dst_io, BUS_DMA_NOWAIT)) {
+				err = ENOMEM;
 				goto err_dstmap1;
+			}
 		}
 	}
 
@@ -1230,6 +1246,7 @@ hifn_crypto(sc, cmd, crp)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		splx(s);
+		err = ENOMEM;
 		goto err_dstmap;
 	}
 
@@ -1312,7 +1329,7 @@ hifn_crypto(sc, cmd, crp)
 
 	sc->sc_active = 5;
 	splx(s);
-	return 0;		/* success */
+	return (err);		/* success */
 
 err_dstmap:
 	if (cmd->src_map != cmd->dst_map)
@@ -1324,7 +1341,7 @@ err_srcmap:
 	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
 err_srcmap1:
 	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
-	return (-1);
+	return (err);
 }
 
 void
@@ -1771,10 +1788,9 @@ hifn_process(crp)
 	cmd->session_num = session;
 	cmd->softc = sc;
 
-	if (hifn_crypto(sc, cmd, crp) == 0)
-		return (0);
-
-	err = ENOMEM;
+	err = hifn_crypto(sc, cmd, crp);
+	if (err == 0)
+		return (err);
 
 errout:
 	if (cmd != NULL)
