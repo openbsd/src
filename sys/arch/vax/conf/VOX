@@ -1,4 +1,4 @@
-#	$OpenBSD: VOX,v 1.1 1997/10/02 19:56:47 niklas Exp $
+#	$OpenBSD: VOX,v 1.2 1997/10/08 07:13:50 niklas Exp $
 #
 # simple VS2000 configuration file.
 #
@@ -63,8 +63,8 @@ option		FIFO
 # Kernel(s) to compile
 #config		ra0bsd	     root on ra0 swap on ra0
 #config		ra2bsd	     root on ra2 swap on ra2
-#config		hd0bsd	     root on hd0 swap on hd0
-config		bsd	     root on nfs swap on nfs
+config		hd0bsd	     root on hd0 swap on hd0
+config		nfsbsd	     root on nfs swap on nfs
 
 backplane0	at root
 
