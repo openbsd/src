@@ -1,7 +1,6 @@
-/*	$OpenBSD: ip_rmd160.h,v 1.2 1998/03/23 15:17:48 janjaap Exp $	*/
+/*	$OpenBSD: ip_rmd160.h,v 1.3 1999/02/17 18:10:08 deraadt Exp $	*/
 
-/********************************************************************\
- *
+/*
  *      FILE:     rmd160.h
  *
  *      CONTENTS: Header file for a sample C-implementation of the
@@ -15,25 +14,17 @@
  *      Copyright (c) Katholieke Universiteit Leuven
  *      1996, All Rights Reserved
  *
-\********************************************************************/
+ */
 
 #ifndef  _RMD160_H	/* make sure this file is read only once */
 #define  _RMD160_H
 
-/********************************************************************/
-
-/* structure definitions */
-
 typedef struct {
 	u_int32_t state[5];	/* state (ABCDE) */
 	u_int32_t length[2];	/* number of bits */
-	u_char    bbuffer[64];    /* overflow buffer */
-	u_int32_t buflen;       /* number of chars in bbuffer */
+	u_char    bbuffer[64];	/* overflow buffer */
+	u_int32_t buflen;	/* number of chars in bbuffer */
 } RMD160_CTX;
-
-/********************************************************************/
-
-/* function prototypes */
 
 void RMD160Init __P((RMD160_CTX *context));
 void RMD160Transform __P((u_int32_t state[5], const u_int32_t block[16]));
@@ -44,5 +35,3 @@ char *RMD160File __P((char *, char *));
 char *RMD160Data __P((const u_char *, size_t, char *));
 
 #endif  /* _RMD160_H */
-
-/*********************** end of file rmd160.h ***********************/

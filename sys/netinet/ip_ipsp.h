@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.21 1999/01/08 21:40:28 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.22 1999/02/17 18:10:38 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -37,39 +37,36 @@
  * IPSP global definitions.
  */
 
-struct expiration
-{
-    u_int32_t          exp_timeout;
-    struct in_addr     exp_dst;
-    u_int32_t          exp_spi;
-    u_int8_t           exp_sproto;
-    struct expiration *exp_next;
-    struct expiration *exp_prev;
+struct expiration {
+	u_int32_t	exp_timeout;
+	struct in_addr	exp_dst;
+	u_int32_t	exp_spi;
+	u_int8_t	exp_sproto;
+	struct expiration *exp_next;
+	struct expiration *exp_prev;
 };
 
-struct flow
-{
-    struct flow     *flow_next;		/* Next in flow chain */
-    struct flow     *flow_prev;		/* Previous in flow chain */
-    struct tdb      *flow_sa;		/* Pointer to the SA */
-    struct in_addr   flow_src;   	/* Source address */
-    struct in_addr   flow_srcmask;	/* Source netmask */
-    struct in_addr   flow_dst;		/* Destination address */
-    struct in_addr   flow_dstmask;	/* Destination netmask */
-    u_int16_t	     flow_sport;	/* Source port, if applicable */
-    u_int16_t	     flow_dport;	/* Destination port, if applicable */
-    u_int8_t	     flow_proto;	/* Transport protocol, if applicable */
-    u_int8_t	     foo[3];		/* Alignment */
+struct flow {
+	struct flow	*flow_next;	/* Next in flow chain */
+	struct flow	*flow_prev;	/* Previous in flow chain */
+	struct tdb	*flow_sa;	/* Pointer to the SA */
+	struct in_addr	flow_src;   	/* Source address */
+	struct in_addr	flow_srcmask;	/* Source netmask */
+	struct in_addr	flow_dst;	/* Destination address */
+	struct in_addr	flow_dstmask;	/* Destination netmask */
+	u_int16_t	flow_sport;	/* Source port, if applicable */
+	u_int16_t	flow_dport;	/* Destination port, if applicable */
+	u_int8_t	flow_proto;	/* Transport protocol, if applicable */
+	u_int8_t	foo[3];		/* Alignment */
 };
 
-struct tdb				/* tunnel descriptor block */
-{
-    struct tdb	   *tdb_hnext;  	/* next in hash chain */
-    struct tdb	   *tdb_onext;	        /* next in output */
-    struct tdb	   *tdb_inext;  	/* next in input (prev!) */
-    struct xformsw *tdb_xform;	        /* transformation to use */
-    u_int32_t	    tdb_spi;    	/* SPI to use */
-    u_int32_t	    tdb_flags;  	/* Flags related to this TDB */
+struct tdb {				/* tunnel descriptor block */
+	struct tdb	*tdb_hnext;  	/* next in hash chain */
+	struct tdb	*tdb_onext;	/* next in output */
+	struct tdb	*tdb_inext;  	/* next in input (prev!) */
+	struct xformsw *tdb_xform;	/* transformation to use */
+	u_int32_t	tdb_spi;    	/* SPI to use */
+	u_int32_t	tdb_flags;  	/* Flags related to this TDB */
 #define TDBF_UNIQUE	   0x00001	/* This should not be used by others */
 #define TDBF_TIMER         0x00002	/* Absolute expiration timer in use */
 #define TDBF_BYTES         0x00004	/* Check the byte counters */
@@ -82,49 +79,57 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_SOFT_PACKETS  0x00200	/* Soft expiration */
 #define TDBF_SOFT_FIRSTUSE 0x00400	/* Soft expiration */
 #define TDBF_SAME_TTL      0x00800	/* Keep the packet TTL, in tunneling */
-    u_int64_t       tdb_exp_packets;	/* Expire after so many packets s|r */
-    u_int64_t       tdb_soft_packets;	/* Expiration warning */ 
-    u_int64_t       tdb_cur_packets;    /* Current number of packets s|r'ed */
-    u_int64_t       tdb_exp_bytes;	/* Expire after so many bytes passed */
-    u_int64_t       tdb_soft_bytes;	/* Expiration warning */
-    u_int64_t       tdb_cur_bytes;	/* Current count of bytes */
-    u_int64_t       tdb_exp_timeout;	/* When does the SPI expire */
-    u_int64_t       tdb_soft_timeout;	/* Send a soft-expire warning */
-    u_int64_t       tdb_established;	/* When was the SPI established */
-    u_int64_t	    tdb_first_use;	/* When was it first used */
-    u_int64_t       tdb_soft_first_use; /* Soft warning */
-    u_int64_t       tdb_exp_first_use;	/* Expire if tdb_first_use +
+	u_int64_t	tdb_exp_packets; /* Expire after so many packets s|r */
+	u_int64_t	tdb_soft_packets; /* Expiration warning */ 
+	u_int64_t	tdb_cur_packets; /* Current number of packets s|r'ed */
+	u_int64_t	tdb_exp_bytes;	/* Expire after so many bytes passed */
+	u_int64_t	tdb_soft_bytes;	/* Expiration warning */
+	u_int64_t	tdb_cur_bytes;	/* Current count of bytes */
+	u_int64_t	tdb_exp_timeout; /* When does the SPI expire */
+	u_int64_t	tdb_soft_timeout; /* Send a soft-expire warning */
+	u_int64_t	tdb_established; /* When was the SPI established */
+	u_int64_t	tdb_first_use;	/* When was it first used */
+	u_int64_t	tdb_soft_first_use; /* Soft warning */
+	u_int64_t	tdb_exp_first_use; /* Expire if tdb_first_use +
 					   tdb_exp_first_use <= curtime */
-    struct in_addr  tdb_dst;	        /* dest address for this SPI */
-    struct in_addr  tdb_src;	        /* source address for this SPI,
+	struct in_addr	tdb_dst;	/* dest address for this SPI */
+	struct in_addr	tdb_src;	/* source address for this SPI,
 					 * used when tunneling */
-    struct in_addr  tdb_osrc;
-    struct in_addr  tdb_odst;		/* Source and destination addresses
+	struct in_addr	tdb_osrc;
+	struct in_addr	tdb_odst;	/* Source and destination addresses
 					 * of outer IP header if we're doing
 					 * tunneling */
-    caddr_t	    tdb_xdata;	        /* transformation data (opaque) */
-    struct flow	   *tdb_flow; 		/* Which flows use this SA */
+	caddr_t		tdb_xdata;	/* transformation data (opaque) */
+	struct flow	*tdb_flow; 	/* Which flows use this SA */
 
-    u_int8_t	    tdb_ttl;		/* TTL used in tunneling */
-    u_int8_t	    tdb_sproto;		/* IPsec protocol */
-    u_int16_t       tdb_satype;		/* Alignment */
-    u_int32_t       tdb_epoch;		/* Used by the kernfs interface */
-    u_int8_t       *tdb_confname;       /* Used by the kernfs interface */
-    u_int8_t       *tdb_authname;       /* Used by the kernfs interface */
+	u_int8_t	tdb_ttl;	/* TTL used in tunneling */
+	u_int8_t	tdb_sproto;	/* IPsec protocol */
+	u_int16_t	tdb_satype;	/* Alignment */
+	u_int32_t	tdb_epoch;	/* Used by the kernfs interface */
+	u_int8_t	*tdb_confname;	/* Used by the kernfs interface */
+	u_int8_t	*tdb_authname;	/* Used by the kernfs interface */
 };
 
 #define TDB_HASHMOD	257
 
 struct xformsw
 {
-    u_short		xf_type;	/* Unique ID of xform */
-    u_short		xf_flags;	/* flags (see below) */
-    char		*xf_name;	/* human-readable name */
-    int		(*xf_attach)(void);	/* called at config time */
-    int		(*xf_init)(struct tdb *, struct xformsw *, struct mbuf *);	/* xform initialization */
-    int		(*xf_zeroize)(struct tdb *); /* termination */
-    struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *);	/* called when packet received */
-    int		(*xf_output)(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);	/* called when packet sent */
+	u_short		xf_type;	/* Unique ID of xform */
+	u_short		xf_flags;	/* flags (see below) */
+	char		*xf_name;	/* human-readable name */
+	int		(*xf_attach) __P((void));	/* called at config time */
+
+	/* xform initialization */
+	int		(*xf_init) __P((struct tdb *, struct xformsw *, struct mbuf *));
+
+	int		(*xf_zeroize) __P((struct tdb *));	/* termination */
+
+	/* called when packet received */
+	struct mbuf 	*(*xf_input) __P((struct mbuf *, struct tdb *));
+
+	/* called when packet sent */
+	int		(*xf_output) __P((struct mbuf *, struct sockaddr_encap *,
+			    struct tdb *, struct mbuf **));
 };
 
 #define XF_IP4		1		/* IP inside IP */
@@ -154,11 +159,11 @@ struct xformsw
 static __inline u_int64_t
 htonq(u_int64_t q)
 {
-    register u_int32_t u, l;
-    u = q >> 32;
-    l = (u_int32_t) q;
+	register u_int32_t u, l;
+	u = q >> 32;
+	l = (u_int32_t) q;
         
-    return htonl(u) | ((u_int64_t)htonl(l) << 32);
+	return htonl(u) | ((u_int64_t)htonl(l) << 32);
 }
 
 #define ntohq(_x) htonq(_x)
@@ -193,14 +198,15 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 u_int32_t notify_msgids;
 
 /* Check if a given tdb has encryption, authentication and/or tunneling */
-#define TDB_ATTRIB(x) (((x)->tdb_confname != NULL ? NOTIFY_SATYPE_CONF : 0)| \
-		       ((x)->tdb_authname != NULL ? NOTIFY_SATYPE_AUTH : 0)| \
-		       ((x)->tdb_confname != NULL && \
-			((x)->tdb_flags & TDBF_TUNNELING) ? NOTIFY_SATYPE_TUNNEL : 0))
+#define TDB_ATTRIB(x) \
+    (((x)->tdb_confname != NULL ? NOTIFY_SATYPE_CONF : 0)| \
+    ((x)->tdb_authname != NULL ? NOTIFY_SATYPE_AUTH : 0)| \
+    ((x)->tdb_confname != NULL && \
+    ((x)->tdb_flags & TDBF_TUNNELING) ? NOTIFY_SATYPE_TUNNEL : 0))
 
 /* Traverse spi chain and get attributes */
 
-#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) {\
+#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) { \
 	struct tdb *tmptdb = (TDBP); \
 	(have) = 0; \
 	\
