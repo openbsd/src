@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rt.c,v 1.4 1996/05/02 06:43:50 niklas Exp $	*/
-/*	$NetBSD: grf_rt.c,v 1.25 1996/04/21 21:11:21 veego Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.5 1996/05/04 13:54:29 niklas Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.26 1996/05/01 09:59:28 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -802,8 +802,8 @@ grfrtmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
-	struct cfdata *cfp = match;
 #ifdef RETINACONSOLE
+	struct cfdata *cfp = match;
 	static int rtconunit = -1;
 #endif
 	struct zbus_args *zap;

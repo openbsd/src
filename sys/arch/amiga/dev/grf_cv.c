@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_cv.c,v 1.8 1996/05/02 06:43:46 niklas Exp $	*/
-/*	$NetBSD: grf_cv.c,v 1.12 1996/04/21 21:11:15 veego Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.9 1996/05/04 13:54:22 niklas Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.13 1996/05/01 09:59:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -307,9 +307,11 @@ grfcvmatch(pdp, match, auxp)
 	struct device *pdp;
 	void *match, *auxp;
 {
+#ifdef CV64CONSOLE
 	struct cfdata *cfp = match;
-	struct zbus_args *zap;
 	static int cvcons_unit = -1;
+#endif
+	struct zbus_args *zap;
 
 	zap = auxp;
 
