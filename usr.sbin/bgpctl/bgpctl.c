@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.23 2004/01/09 19:09:45 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.24 2004/01/10 21:04:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -234,6 +234,10 @@ again:
 		done = 1;
 		break;
 	}
+
+	while (ibuf.w.queued)
+		if (msgbuf_write(&ibuf.w) < 0)
+			err(1, "write error");
 
 	while (!done) {
 		if ((n = imsg_read(&ibuf)) == -1)
