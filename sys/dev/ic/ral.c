@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.43 2005/04/01 11:12:56 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.44 2005/04/01 11:21:28 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -904,6 +904,7 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_ASSOC:
+		ral_set_chan(sc, ic->ic_bss->ni_chan);
 		break;
 
 	case IEEE80211_S_RUN:
