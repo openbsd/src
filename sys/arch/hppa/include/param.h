@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.22 2004/04/19 22:55:49 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.23 2004/06/28 14:36:59 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -93,15 +93,15 @@
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
-#define	dtoc(x)	((x)>>(PGSHIFT-DEV_BSHIFT))
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define	ctob(x)	((x)<<PGSHIFT)
-#define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
-#define	btodb(bytes)	((unsigned)(bytes) >> DEV_BSHIFT)
-#define	dbtob(db)	((unsigned)(db) << DEV_BSHIFT)
+#define	btodb(x)	((x) >> DEV_BSHIFT)
+#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
