@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.56 2002/07/03 09:39:28 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.57 2002/09/06 21:17:39 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.56 2002/07/03 09:39:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.57 2002/09/06 21:17:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,8 @@ main(int argc, char *argv[])
 	struct in_addr saddr;
 	int i;
 	int ch, hold = 1, packlen, preload;
-	int maxsize, maxsizelen, fdmasks;
+	int maxsize, fdmasks;
+	socklen_t maxsizelen;
 	u_char *datap, *packet;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 	u_char ttl = MAXTTL, loop = 1, df = 0;
@@ -394,7 +395,7 @@ main(int argc, char *argv[])
 		    " are incompatible");
 
 	if (options & F_HDRINCL) {
-		struct ip *ip = (struct ip*)outpackhdr;
+		struct ip *ip = (struct ip *)outpackhdr;
 
 		setsockopt(s, IPPROTO_IP, IP_HDRINCL, &hold, sizeof(hold));
 		ip->ip_v = IPVERSION;
@@ -491,7 +492,8 @@ main(int argc, char *argv[])
 	for (;;) {
 		struct sockaddr_in from;
 		sigset_t omask, nmask;
-		int fromlen, cc;
+		socklen_t fromlen;
+		int cc;
 
 		if (options & F_FLOOD) {
 			pinger();
@@ -585,7 +587,7 @@ pinger(void)
 	struct icmp *icp;
 	char buf[8192];
 	int cc, i;
-	char *packet = outpack;
+	u_char *packet = outpack;
 
 	icp = (struct icmp *)outpack;
 	icp->icmp_type = ICMP_ECHO;
@@ -612,9 +614,9 @@ pinger(void)
 	icp->icmp_cksum = in_cksum((u_short *)icp, cc);
 
 	if (options & F_HDRINCL) {
-		struct ip *ip = (struct ip*)outpackhdr;
+		struct ip *ip = (struct ip *)outpackhdr;
 
-		packet = (char*)ip;
+		packet = (u_char *)ip;
 		cc += sizeof(struct ip);
 		ip->ip_len = htons(cc);
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
@@ -723,7 +725,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
-			cp = (u_char*)&icp->icmp_data[sizeof(struct tvi)];
+			cp = (u_char *)&icp->icmp_data[sizeof(struct tvi)];
 			dp = &outpack[8 + sizeof(struct tvi)];
 			for (i = 8 + sizeof(struct tvi); i < datalen;
 			    ++i, ++cp, ++dp) {
@@ -731,7 +733,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 					(void)printf("\nwrong data byte #%d "
 					    "should be 0x%x but was 0x%x",
 					    i, *dp, *cp);
-					cp = (u_char*)&icp->icmp_data[0];
+					cp = (u_char *)&icp->icmp_data[0];
 					for (i = 8; i < datalen; ++i, ++cp) {
 						if ((i % 32) == 8)
 							(void)printf("\n\t");
