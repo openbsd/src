@@ -114,6 +114,7 @@ struct cfdriver wdc_cd = {
 #endif
 
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
+void  _wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_ata_bio_kill_xfer __P((struct channel_softc *,struct wdc_xfer *));
 void  wdc_ata_bio_done   __P((struct channel_softc *, struct wdc_xfer *)); 
@@ -160,6 +161,22 @@ wdc_ata_bio_start(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct ata_bio *ata_bio = xfer->cmd;
+	WDCDEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
+	    DEBUG_XFERS);
+
+	/* start timeout machinery */
+	if ((ata_bio->flags & ATA_POLL) == 0)
+		timeout_add(&chp->ch_timo, ATA_DELAY / 1000 * hz);
+	_wdc_ata_bio_start(chp, xfer);
+}
+
+void
+_wdc_ata_bio_start(chp, xfer)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+{
+	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	u_int16_t cyl;
 	u_int8_t head, sect, cmd = 0;
@@ -167,7 +184,7 @@ wdc_ata_bio_start(chp, xfer)
 	int ata_delay;
 	int dma_flags = 0;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
+	WDCDEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
 	    DEBUG_INTR | DEBUG_XFERS);
 	/* Do control operations specially. */
@@ -179,10 +196,10 @@ wdc_ata_bio_start(chp, xfer)
 		 */
 		/* at this point, we should only be in RECAL state */
 		if (drvp->state != RECAL) {
-			printf("%s:%d:%d: bad state %d in wdc_ata_bio_start\n",
+			printf("%s:%d:%d: bad state %d in _wdc_ata_bio_start\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive, drvp->state);
-			panic("wdc_ata_bio_start: bad state");
+			panic("_wdc_ata_bio_start: bad state");
 		}
 		xfer->c_intr = wdc_ata_ctrl_intr;
 		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
@@ -192,7 +209,6 @@ wdc_ata_bio_start(chp, xfer)
 		drvp->state = RECAL_WAIT;
 		if ((ata_bio->flags & ATA_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
-			timeout_add(&chp->ch_timo, ATA_DELAY / 1000 * hz);
 		} else {
 			/* Wait for at last 400ns for status bit to be valid */
 			DELAY(1);
@@ -336,7 +352,6 @@ again:
 intr:	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
-		timeout_add(&chp->ch_timo, ATA_DELAY / 1000 * hz);
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
@@ -344,7 +359,6 @@ intr:	/* Wait for IRQ (either real or polled) */
 		if ((ata_bio->flags & ATA_ITSDONE) == 0)
 			goto again;
 	}
-
 	return;
 timeout:
 	printf("%s:%d:%d: not ready, st=0x%02x, err=0x%02x\n",
@@ -487,9 +501,9 @@ end:
 	if (xfer->c_bcount > 0) {
 		if ((ata_bio->flags & ATA_POLL) == 0) {
 			/* Start the next operation */
-			wdc_ata_bio_start(chp, xfer);
+			_wdc_ata_bio_start(chp, xfer);
 		} else {
-			/* Let wdc_ata_bio_start do the loop */
+			/* Let _wdc_ata_bio_start do the loop */
 			return 1;
 		}
 	} else { /* Done with this transfer */
@@ -674,13 +688,12 @@ again:
 		 * The drive is usable now
 		 */
 		xfer->c_intr = wdc_ata_bio_intr;
-		wdc_ata_bio_start(chp, xfer); 
+		_wdc_ata_bio_start(chp, xfer); 
 		return 1;
 	}
 
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
-		timeout_add(&chp->ch_timo, ATA_DELAY / 1000 * hz);
 	} else {
 		goto again;
 	}

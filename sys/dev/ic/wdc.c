@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.38 2001/07/19 19:45:01 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.39 2001/07/21 09:08:48 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -843,7 +843,6 @@ wdcintr(arg)
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
-	timeout_del(&chp->ch_timo);
         ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0)	/* irq was not for us, still waiting for irq */
 		chp->ch_flags |= WDCF_IRQ_WAIT;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.48 2001/07/10 01:08:02 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.49 2001/07/21 09:08:49 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -544,6 +544,8 @@ wdc_atapi_intr(chp, xfer, irq)
 	struct wdc_xfer *xfer;
 	int irq;
 {
+	timeout_del(&chp->ch_timo);
+
 	/* XXX we should consider an alternate signaling regime here */
 	if (xfer->c_flags & C_TIMEOU) {
 		xfer->c_flags &= ~C_TIMEOU;
