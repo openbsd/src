@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.115 2004/01/06 19:45:54 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.116 2004/03/31 19:12:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.115 2004/01/06 19:45:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.116 2004/03/31 19:12:22 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -1331,6 +1331,13 @@ more:
 		if (argc < MAXARGV)
 			sep->se_argv[argc++] = newstr(arg);
 	}
+	if (argc == 0 && sep->se_bi == NULL) {
+		if ((arg = strrchr(sep->se_server, '/')) != NULL)
+			arg++;
+		else
+			arg = sep->se_server;
+		sep->se_argv[argc++] = newstr(arg);
+	}
 	while (argc <= MAXARGV)
 		sep->se_argv[argc++] = NULL;
 
@@ -2009,7 +2016,7 @@ spawn(struct servtab *sep, int ctrl)
 				}
 			}
 			if (debug)
-				fprintf(stderr, "%ld execl %s\n",
+				fprintf(stderr, "%ld execv %s\n",
 				    (long)getpid(), sep->se_server);
 			if (ctrl != STDIN_FILENO) {
 				dup2(ctrl, STDIN_FILENO);
