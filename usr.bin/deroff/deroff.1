@@ -1,0 +1,163 @@
+.\" $OpenBSD: deroff.1,v 1.1 2002/02/28 06:58:21 millert Exp $
+.\"
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" Copyright (C) Caldera International Inc.  2001-2002.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code and documentation must retain the above
+.\"    copyright notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed or owned by Caldera
+.\"	International, Inc.
+.\" 4. Neither the name of Caldera International, Inc. nor the names of other
+.\"    contributors may be used to endorse or promote products derived from
+.\"    this software without specific prior written permission.
+.\"
+.\" USE OF THE SOFTWARE PROVIDED FOR UNDER THIS LICENSE BY CALDERA
+.\" INTERNATIONAL, INC. AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL CALDERA INTERNATIONAL, INC. BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	@(#)deroff.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd June 6, 1993
+.Dt DEROFF 1
+.Os
+.Sh NAME
+.Nm deroff
+.Nd remove nroff/troff, eqn, pic and tbl constructs
+.Sh SYNOPSIS
+.Nm deroff
+.Op Fl ikpw
+.Op Fl m Ar m | s | e | a | l
+.Ar file \&...
+.Sh DESCRIPTION
+.Nm deroff
+reads each file in sequence and removes all
+.Xr nroff 1
+and
+.Xr troff 1
+command lines, backslash constructions, macro definitions,
+.Xr eqn 1
+constructs (between `.EQ' and `.EN' lines or between delimiters),
+.Xr pic 1
+pictures,
+and table descriptions and writes the remainder to the standard output.
+.Nm
+follows chains of included files (`.so' and `.nx' commands);
+if a file has already been included, a `.so' is ignored and a `.nx'
+terminates execution.
+If no input file is given,
+.Nm
+reads from the standard input.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl i
+Ignore `.so' and `.nx' commands.
+.It Fl k
+Keep blocks of text intact.
+This is the default behavior unless the
+.Fl m
+option is given.
+.It Fl m
+Enable support for common macro packages.
+The
+.Fl m
+option takes the following arguments:
+.Bl -tag -width Ds
+.It a
+recognize 
+.Xr man 7
+macros.
+.It e
+recognize 
+.Xr me 7
+macros.
+.It m
+recognize 
+.Xr me 7
+macros.
+.It s
+recognize 
+.Xr me 7
+macros.
+.It l
+recognize 
+.Xr mm 7
+macros and delete
+.Xr mm 7
+lists.
+.El
+.It Fl p
+Preserve paragraph macros.
+This option only has an effect if the
+.Fl m
+option is also specified.
+.It Fl w
+Output a word list, one
+.Sq word
+(string of letters, digits, and apostrophes, beginning with a letter;
+apostrophes are removed) per line, and all other characters ignored.
+Normally, the output follows the original, with the deletions mentioned above.
+.El
+.Sh SEE ALSO
+.Xr eqn 1 ,
+.Xr nroff 1 ,
+.Xr troff 1 ,
+.Xr pic 1 ,
+.Xr tbl 1
+.Sh HISTORY
+.Nm
+appeared in Version 7 AT&T Unix.
+.Sh BUGS
+.Nm
+is not a complete
+.Xr troff 1
+interpreter, so it can be confused by subtle constructs.
+Most errors result in too much rather than too little output.
