@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.10 2002/06/05 15:59:52 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.11 2002/06/05 16:51:08 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -51,6 +51,7 @@ int fd;
 int connected = 0;		/* Connected to GUI */
 int inherit = 0;		/* Inherit policy to childs */
 int automatic = 0;		/* Do not run interactively */
+int allow = 0;			/* Allow all and generate */
 int userpolicy = 1;		/* Permit user defined policies */
 char *username = NULL;		/* Username in automatic mode */
 char cwd[MAXPATHLEN];		/* Current working directory of process */
@@ -393,11 +394,14 @@ main(int argc, char **argv)
 	char *guipath = _PATH_XSYSTRACE;
 	int usex11 = 1;
 
-	while ((c = getopt(argc, argv, "aitUg:f:")) != -1) {
+	while ((c = getopt(argc, argv, "aAitUg:f:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
 			username = uid_to_name(getuid());
+			break;
+		case 'A':
+			allow = 1;
 			break;
 		case 'i':
 			inherit = 1;
@@ -453,7 +457,7 @@ main(int argc, char **argv)
 	if (intercept_attach(fd, pid) == -1)
 		err(1, "attach");
 
-	if (usex11 && !automatic)
+	if (usex11 && !automatic && !allow)
 		requestor_start(guipath);
 
 	if (kill(pid, SIGCONT) == -1)

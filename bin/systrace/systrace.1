@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.8 2002/06/05 12:00:15 mpech Exp $
+.\"	$OpenBSD: systrace.1,v 1.9 2002/06/05 16:51:08 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd generates and enforces system call policies
 .Sh SYNOPSIS
 .Nm systrace
-.Op Fl aitU
+.Op Fl aAitU
 .Op Fl g Ar gui
 .Op Fl f Ar file
 .Ar command ...
@@ -57,6 +57,10 @@ The options are as follows:
 Enables automatic enforcement of configured policies.
 An operation not covered by policy is denied and logged via
 .Xr syslog 3 .
+.It Fl A
+Automatically generate a policy that allows every operation the
+application executes.
+The created policy functions as a base that can be refined.
 .It Fl i
 Inherits the policy of the first executed binary to all children.
 .It Fl t

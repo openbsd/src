@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.5 2002/06/05 16:09:20 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.6 2002/06/05 16:51:08 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -44,6 +44,7 @@
 #include "intercept.h"
 #include "systrace.h"
 
+extern int allow;
 extern int connected;
 extern char cwd[];
 
@@ -291,7 +292,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
     int policynr, char *emulation, char *name,
     char *output, short *pfuture, int *pflags)
 {
-	char line[1024], *p;
+	char line[2*MAXPATHLEN], *p;
 	struct filter *filter;
 	struct policy *policy;
 	short action;
@@ -304,22 +305,59 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 		errx(1, "%s:%d: no policy %d\n", __func__, __LINE__,
 		    policynr);
 
-	printf("%s\n", output);
+	if (!allow)
+		printf("%s\n", output);
 
 	while (1) {
 		filter = NULL;
 
-		if (!connected)
-			printf("Answer: ");
-		else {
-			/* Do not prompt the first time */
-			if (first) {
-				printf("WRONG\n");
+		if (!allow) {
+			/* Ask for a policy */
+			if (!connected)
+				printf("Answer: ");
+			else {
+				/* Do not prompt the first time */
+				if (first) {
+					printf("WRONG\n");
+				}
+				first = 1;
 			}
-			first = 1;
+
+			fgets(line, sizeof(line), stdin);
+		} else {
+			/* Automatically allow */
+			if (strcmp(name, "execve") == 0) {
+				strlcpy(line,"true then permit", sizeof(line));
+			} else if (tls != NULL) {
+				struct intercept_translate *tl;
+				char compose[MAXPATHLEN], *l;
+				int set = 0;
+
+				/* Explicitly match every component */
+				line[0] = '\0';
+				TAILQ_FOREACH(tl, tls, next) {
+					if (!tl->trans_valid)
+						break;
+					l = intercept_translate_print(tl);
+					if (l == NULL)
+						continue;
+
+					snprintf(compose, sizeof(compose),
+					    "%s eq \"%s\"", tl->name, l);
+					if (set)
+						strlcat(line, " and ",
+						    sizeof(line));
+					else
+						set = 1;
+					strlcat(line, compose, sizeof(line));
+				}
+				if (!set)
+					strlcpy(line, "true", sizeof(line));
+				strlcat(line, " then permit", sizeof(line));
+			} else
+				strlcpy(line, "permit", sizeof(line));
 		}
 
-		fgets(line, sizeof(line), stdin);
 		p = line;
 		strsep(&p, "\n");
 
