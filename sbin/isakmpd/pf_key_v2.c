@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.46 2001/02/24 03:59:55 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.47 2001/03/27 21:09:49 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -229,14 +229,16 @@ pf_key_v2_msg_add (struct pf_key_v2_msg *msg, struct sadb_ext *ext, int flags)
 static void
 pf_key_v2_msg_free (struct pf_key_v2_msg *msg)
 {
-  struct pf_key_v2_node *np, *next;
+  struct pf_key_v2_node *np;
 
-  for (np = TAILQ_FIRST (msg); np; np = next)
+  np = TAILQ_FIRST (msg);
+  while (np)
     {
-      next = TAILQ_NEXT (np, link);
+      TAILQ_REMOVE (msg, np, link);
       if (np->flags & PF_KEY_V2_NODE_MALLOCED)
 	free (np->seg);
       free (np);
+      np = TAILQ_FIRST (msg);
     }
   free (msg);
 }
@@ -1680,7 +1682,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 			  ((struct sockaddr_in *)src)->sin_addr.s_addr, 0, 0,
 			  sidtype, sid, sidlen, didtype, did, didlen);
   if (error)
-    return error;
+    goto cleanup;
 
 #ifndef SADB_X_EXT_FLOW_TYPE
   /* Ingress flows, handling SA bundles */
@@ -1694,17 +1696,27 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
 			      0, 1, 0, 0, 0, 0, 0, 0);
       if (error)
-	return error;
+	goto cleanup;
       proto = TAILQ_NEXT (proto, link);
     }
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
-  return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
-			 isa->src_mask, isa->tproto, isa->dport, isa->sport,
-			 proto->spi[1], proto->proto,
-			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1,
-			 sidtype, sid, sidlen, didtype, did, didlen);
+  error = pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
+			  isa->src_mask, isa->tproto, isa->dport, isa->sport,
+			  proto->spi[1], proto->proto,
+			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			  ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1,
+			  sidtype, sid, sidlen, didtype, did, didlen);
+  
+ cleanup:
+#ifdef SADB_X_EXT_FLOW_TYPE
+  if (sid)
+    free (sid);
+  if (did)
+    free (did);
+#endif /* SADB_X_EXT_FLOW_TYPE */
+
+  return error;
 }
 
 /* Disable a flow given a SA.  */
