@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.8 1997/07/16 22:31:26 deraadt Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.9 1997/07/17 06:52:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: recvjob.c,v 1.8 1997/07/16 22:31:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.9 1997/07/17 06:52:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,8 @@ readjob()
 			 * something different than what gethostbyaddr()
 			 * returns
 			 */
-			strcpy(cp + 6, from);
+			strncpy(cp + 6, from, sizeof(line) + line - cp - 7);
+			line[sizeof(line) -1 ] = '\0';
 			strncpy(tfname, cp, sizeof tfname-1);
 			tfname[sizeof tfname-1] = '\0';
 			tfname[0] = 't';
