@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.322 2004/12/22 12:02:47 grange Exp $
+#	$OpenBSD: files,v 1.323 2004/12/29 01:02:30 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -335,6 +335,12 @@ file	dev/ic/ath.c		ath
 # ADMtek ADM8211 802.11
 device	atw: ether, ifnet, ifmedia, smc93cx6, wlan
 file	dev/ic/atw.c		atw
+
+# Realtek RTL8180 802.11
+device	rtw: ether, ifnet, ifmedia, smc93cx6, wlan
+file	dev/ic/rtw.c		rtw
+file	dev/ic/rtwphy.c		rtw
+file	dev/ic/rtwphyio.c	rtw
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
