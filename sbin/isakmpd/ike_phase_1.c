@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.4 1999/07/07 22:15:42 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.5 1999/06/15 11:21:21 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.5 1999/07/16 02:01:59 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.6 1999/07/16 02:01:52 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -213,21 +213,30 @@ ike_phase_1_initiator_send_SA (struct message *msg)
       /* Record the real transform size.  */
       transforms_len += transform_len[i] = attr - transform[i];
 
-      /*
-       * Make sure that if a group description is specified, it is
-       * specified for all transforms equally.
-       */
-      attr = conf_get_str (xf->field, "GROUP_DESCRIPTION");
-      new_group_desc = attr ? constant_value (ike_group_desc_cst, attr) : 0;
-      if (group_desc == -1)
-	group_desc = new_group_desc;
-      else if (group_desc != new_group_desc)
+      /* XXX I don't like exchange-specific stuff in here.  */
+      if (exchange->type == ISAKMP_EXCH_AGGRESSIVE)
 	{
-	  log_print ("ike_phase_1_inititor_send_SA: "
-		     "differing group descriptions in a proposal");
-	  goto bail_out;
+	  /*
+	   * Make sure that if a group description is specified, it is
+	   * specified for all transforms equally.
+	   */
+	  attr = conf_get_str (xf->field, "GROUP_DESCRIPTION");
+	  new_group_desc
+	    = attr ? constant_value (ike_group_desc_cst, attr) : 0;
+	  if (group_desc == -1)
+	    group_desc = new_group_desc;
+	  else if (group_desc != new_group_desc)
+	    {
+	      log_print ("ike_phase_1_inititor_send_SA: "
+			 "differing group descriptions in a proposal");
+	      goto bail_out;
+	    }
 	}
     }
+
+  /* XXX I don't like exchange-specific stuff in here.  */
+  if (exchange->type == ISAKMP_EXCH_AGGRESSIVE)
+    ie->group = group_get (group_desc);
 
   proposal_len = ISAKMP_PROP_SPI_OFF;
   proposal = malloc (proposal_len);
@@ -322,9 +331,6 @@ ike_phase_1_initiator_send_SA (struct message *msg)
       transforms_len += transform_len[i];
     }
 
-  if (group_desc)
-    ie->group = group_get (group_desc);
-
   conf_free_list (conf);
   free (transform);
   free (transform_len);
@@ -353,10 +359,9 @@ int
 ike_phase_1_initiator_recv_SA (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
-  struct ipsec_exch *ie = exchange->data;
   struct sa *sa = TAILQ_FIRST (&exchange->sa_list);
+  struct ipsec_exch *ie = exchange->data;
   struct ipsec_sa *isa = sa->data;
-  struct proto *proto;
   struct payload *sa_p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]);
   struct payload *prop = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_PROPOSAL]);
   struct payload *xf = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]);
@@ -375,25 +380,19 @@ ike_phase_1_initiator_recv_SA (struct message *msg)
       return -1;
     }
 
-  /* Build the protection suite in our SA.  */
-  if (sa_add_transform (sa, xf, msg->exchange->initiator, &proto))
-    {
-      /* XXX Log?  */
-      return -1;
-    }
+  /* Check that the chosen transform matches an offer.  */
+  if (message_negotiate_sa (msg, ike_phase_1_validate_prop)
+      || !TAILQ_FIRST (&sa->protos))
+    return -1;
 
-  /* XXX Check that the chosen transform matches an offer.  */
   ipsec_decode_transform (msg, sa, TAILQ_FIRST (&sa->protos), xf->p);
 
+  /* XXX I don't like exchange-specific stuff in here.  */
+  if (exchange->type != ISAKMP_EXCH_AGGRESSIVE)
+    ie->group = group_get (isa->group_desc);
+ 
   /* Mark the SA as handled.  */
   sa_p->flags |= PL_MARK;
-
-  if ((isa->group_desc && (!ie->group || ie->group->id != isa->group_desc))
-      || (!isa->group_desc && ie->group))
-    {
-      log_print ("ike_phase_1_initiator_recv_SA: disagreement on DH group");
-      return -1;
-    }
 
   return 0;
 }
@@ -1178,7 +1177,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	      rv = 1;
 	      goto bail_out;
 	    }
-	  rv = !conf_match_num (vs->life, "LIFE_DURATION", decode_16 (value));
+	  rv = !conf_match_num (vs->life, "LIFE_DURATION",
+				len == 4 ? decode_32 (value) : decode_16 (value));
 	  free (vs->life);
 	  vs->life = 0;
 	  break;
