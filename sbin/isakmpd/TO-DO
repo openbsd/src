@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.12 1999/05/03 22:45:24 niklas Exp $
-$EOM: TO-DO,v 1.37 1999/05/03 07:59:34 niklas Exp $
+$OpenBSD: TO-DO,v 1.13 1999/06/02 06:31:54 niklas Exp $
+$EOM: TO-DO,v 1.39 1999/05/25 07:52:01 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -104,3 +104,5 @@ the program is far from ready in any area.
 * Flexible identification.
 
 * Remove referring flows when a SPI is removed.
+
+* IPCOMP?  (PGP's new client defaults to using this...)
