@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.38 2005/03/04 09:40:44 otto Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.39 2005/03/05 23:15:19 cloder Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.38 2005/03/04 09:40:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.39 2005/03/05 23:15:19 cloder Exp $";
 #endif /* not lint */
 
 /*
@@ -702,10 +702,14 @@ oack(void)
 		if (options[i].o_request) {
 			n = snprintf(bp, size, "%s%c%d", options[i].o_type,
 			    0, options[i].o_reply);
+			if (n == -1 || n >= size) {
+				syslog(LOG_ERR, "oack: no buffer space");
+				exit(1);
+			}
 			bp += n+1;
 			size -= n+1;
 			if (size < 0) {
-				syslog(LOG_ERR, "oack: buffer overflow");
+				syslog(LOG_ERR, "oack: no buffer space");
 				exit(1);
 			}
 		}
