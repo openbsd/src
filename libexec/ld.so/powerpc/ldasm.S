@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.8 2002/10/21 16:01:55 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.9 2002/12/09 20:56:34 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -44,6 +44,7 @@
 #define AUX_entry 9
 
 #include <machine/asm.h>
+#include <sys/syscall.h>
 
 ENTRY(_dl_start)
 	mr	19, 1
@@ -79,6 +80,16 @@ ENTRY(_dl_start)
 	 * operation that would be below would calulate.
 	 */
 	add	28, 18, 5
+	mr	6, 5 	# save offset for later use
+
+	/* mprotect GOT-4 for correct execution of blrl instruction */
+	li	0, SYS_mprotect
+	mr	3, 28
+	li	4, 4
+	li	5, 7 /* (PROT_READ|PROT_WRITE|PROT_EXEC) */
+	sc
+
+	mr	5, 6
 
 	li	0, 0
 	dcbf	5, 18
