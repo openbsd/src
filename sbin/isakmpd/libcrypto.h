@@ -1,4 +1,4 @@
-/* $OpenBSD: libcrypto.h,v 1.16 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: libcrypto.h,v 1.17 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -33,8 +33,6 @@
 #ifndef _LIBCRYPTO_H_
 #define _LIBCRYPTO_H_
 
-#ifdef USE_X509
-
 #include <stdio.h>
 
 /* XXX I want #include <ssl/cryptall.h> but we appear to not install meth.h  */
@@ -44,8 +42,6 @@
 #include <openssl/pem.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509.h>
-
-#endif				/* USE_X509 */
 
 extern void     libcrypto_init(void);
 

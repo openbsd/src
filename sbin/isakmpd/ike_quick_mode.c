@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.91 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.92 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -60,10 +60,7 @@
 #include "transport.h"
 #include "util.h"
 #include "key.h"
-
-#ifdef USE_X509
 #include "x509.h"
-#endif
 
 static void     gen_g_xy(struct message *);
 static int      initiator_send_HASH_SA_NONCE(struct message *);
@@ -107,10 +104,8 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	int             i, len, result = 0, nprinc = 0;
 	int            *x509_ids = 0, *keynote_ids = 0;
 	unsigned char   hashbuf[20];	/* Set to the largest digest result */
-#ifdef USE_X509
 	struct keynote_deckey dc;
 	X509_NAME      *subject;
-#endif
 
 	/* Do we want to use keynote policies? */
 	if (ignore_policy ||
@@ -243,7 +238,6 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 		break;
 
 	case ISAKMP_CERTENC_X509_SIG:
-#ifdef USE_X509
 		principal = calloc(2, sizeof *principal);
 		if (!principal) {
 			log_error("check_policy: calloc (2, %lu) failed",
@@ -301,7 +295,6 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			nprinc = 1;
 		}
 		break;
-#endif
 
 		/* XXX Eventually handle these.  */
 	case ISAKMP_CERTENC_PKCS:
@@ -1739,9 +1732,7 @@ next_sa:
 			goto cleanup;
 		}
 	} else if (
-#if defined (USE_X509) && defined (USE_POLICY)
 	    ignore_policy ||
-#endif
 	    strncmp("yes", conf_get_str("General", "Use-Keynote"), 3)) {
 		log_print("responder_recv_HASH_SA_NONCE: peer proposed "
 		    "invalid phase 2 IDs: %s",

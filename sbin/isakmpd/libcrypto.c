@@ -1,4 +1,4 @@
-/* $OpenBSD: libcrypto.c,v 1.16 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: libcrypto.c,v 1.17 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -36,7 +36,7 @@
 void
 libcrypto_init(void)
 {
-#if defined (USE_X509) && defined (USE_LIBCRYPTO)
+#if defined (USE_LIBCRYPTO)
 
 	/* Add all algorithms known by SSL */
 #if OPENSSL_VERSION_NUMBER >= 0x00905100L
@@ -45,5 +45,5 @@ libcrypto_init(void)
 	SSLeay_add_all_algorithms();
 #endif
 
-#endif /* USE_X509 && USE_LIBCRYPTO */
+#endif /* USE_LIBCRYPTO */
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.77 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.78 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -475,7 +475,6 @@ conf_load_defaults(int tr)
 	conf_set(tr, "General", "Pubkey-directory", CONF_DFLT_PUBKEY_DIR, 0,
 	    1);
 
-#ifdef USE_X509
 	conf_set(tr, "X509-certificates", "CA-directory",
 	    CONF_DFLT_X509_CA_DIR, 0, 1);
 	conf_set(tr, "X509-certificates", "Cert-directory",
@@ -484,7 +483,6 @@ conf_load_defaults(int tr)
 	    CONF_DFLT_X509_PRIVATE_KEY, 0, 1);
 	conf_set(tr, "X509-certificates", "CRL-directory",
 	    CONF_DFLT_X509_CRL_DIR, 0, 1);
-#endif
 
 #ifdef USE_KEYNOTE
 	conf_set(tr, "KeyNote", "Credential-directory",

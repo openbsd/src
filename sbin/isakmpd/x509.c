@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.97 2005/03/15 16:49:05 mpf Exp $	 */
+/* $OpenBSD: x509.c,v 1.98 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -31,7 +31,6 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#ifdef USE_X509
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1432,4 +1431,4 @@ x509_DN_string(u_int8_t *asn1, size_t sz)
 	buf[sizeof buf - 1] = '\0';
 	return strdup(buf);
 }
-#endif				/* USE_X509 */
+

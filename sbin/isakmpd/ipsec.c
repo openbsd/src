@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.110 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.111 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -73,9 +73,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
-#ifdef USE_X509
 #include "x509.h"
-#endif
 
 extern int acquire_only;
 
@@ -2013,7 +2011,6 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 			buf[id_len] = '\0';
 			break;
 
-#ifdef USE_X509
 		case IPSEC_ID_DER_ASN1_DN:
 			addr = x509_DN_string(id + ISAKMP_ID_DATA_OFF,
 			    id_len - ISAKMP_ID_DATA_OFF);
@@ -2023,7 +2020,6 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 			}
 			strlcpy(buf, addr, size);
 			break;
-#endif
 
 		default:
 			snprintf(buf, size, "<id type unknown: %x>", id_type);
@@ -2450,7 +2446,6 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 		*(buf + len + id_len) = '\0';
 		break;
 
-#ifdef USE_X509
 	case IPSEC_ID_DER_ASN1_DN:
 		strlcpy(buf, "asn1_dn/", size);
 		len = strlen(buf);
@@ -2462,7 +2457,6 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 			goto fail;
 		strlcpy(buf + len, addrstr, size - len);
 		break;
-#endif
 
 	default:
 		/* Unknown type.  */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.156 2005/04/04 19:31:11 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.157 2005/04/05 20:46:20 cloder Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -1627,7 +1627,7 @@ nodid:
 			break;
 #endif				/* USE_KEYNOTE */
 
-#if defined (USE_X509) && defined (SADB_X_EXT_REMOTE_CREDENTIALS)
+#if defined (SADB_X_EXT_REMOTE_CREDENTIALS)
 		case ISAKMP_CERTENC_X509_SIG:
 			{
 				u_int8_t       *data;
@@ -1666,7 +1666,7 @@ nodid:
 					goto cleanup;
 			}
 			break;
-#endif /* USE_X509 */
+#endif
 		}
 	}
 #endif /* SADB_X_CREDTYPE_NONE */

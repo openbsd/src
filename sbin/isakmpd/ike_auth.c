@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.97 2005/02/22 16:57:48 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.98 2005/04/05 20:46:20 cloder Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -70,9 +70,7 @@
 #include "transport.h"
 #include "util.h"
 #include "key.h"
-#if defined (USE_X509)
 #include "x509.h"
-#endif
 
 #ifdef notyet
 static u_int8_t *enc_gen_skeyid(struct exchange *, size_t *);
@@ -82,11 +80,9 @@ static u_int8_t *pre_shared_gen_skeyid(struct exchange *, size_t *);
 static int      pre_shared_decode_hash(struct message *);
 static int      pre_shared_encode_hash(struct message *);
 
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 static u_int8_t *sig_gen_skeyid(struct exchange *, size_t *);
 static int      rsa_sig_decode_hash(struct message *);
 static int      rsa_sig_encode_hash(struct message *);
-#endif
 
 #if defined (USE_RAWKEY)
 static int      get_raw_key_from_file(int, u_int8_t *, size_t, RSA **);
@@ -107,13 +103,11 @@ static struct ike_auth ike_auth[] = {
 		pre_shared_encode_hash
 	},
 #endif
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 	{
 		IKE_AUTH_RSA_SIG, sig_gen_skeyid,
 		rsa_sig_decode_hash,
 		rsa_sig_encode_hash
 	},
-#endif
 #ifdef notdef
 	{
 		IKE_AUTH_RSA_ENC, enc_gen_skeyid,
@@ -147,15 +141,11 @@ static void *
 ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 {
 	char	*key, *buf;
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 	int	 fd;
 	char	*keyfile;
-#if defined (USE_X509)
 	FILE	*keyfp;
 	RSA	*rsakey;
 	size_t	fsize;
-#endif
-#endif
 
 	switch (type) {
 	case IKE_AUTH_PRE_SHARED:
@@ -198,7 +188,6 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 		break;
 
 	case IKE_AUTH_RSA_SIG:
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 #if defined (USE_KEYNOTE)
 		if (local_id && (keyfile = conf_get_str("KeyNote",
 		    "Credential-directory")) != 0) {
@@ -281,7 +270,6 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 		}
 ignorekeynote:
 #endif				/* USE_KEYNOTE */
-#ifdef USE_X509
 		/* Otherwise, try X.509 */
 		keyfile = conf_get_str("X509-certificates", "Private-key");
 
@@ -315,8 +303,6 @@ ignorekeynote:
 			return 0;
 		}
 		return rsakey;
-#endif /* USE_X509 */
-#endif /* USE_X509 || USE_KEYNOTE */
 
 	default:
 		log_print("ike_auth_get_key: unknown key type %d", type);
@@ -423,7 +409,6 @@ pre_shared_gen_skeyid(struct exchange *exchange, size_t *sz)
 	return skeyid;
 }
 
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 /* Both DSS & RSA signature authentication use this algorithm.  */
 static u_int8_t *
 sig_gen_skeyid(struct exchange *exchange, size_t *sz)
@@ -471,7 +456,6 @@ sig_gen_skeyid(struct exchange *exchange, size_t *sz)
 	prf_free(prf);
 	return skeyid;
 }
-#endif				/* USE_X509 || USE_KEYNOTE */
 
 #ifdef notdef
 /*
@@ -548,7 +532,6 @@ pre_shared_decode_hash(struct message *msg)
 	return 0;
 }
 
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 /* Decrypt the HASH in SIG, we already need a parsed ID payload.  */
 static int
 rsa_sig_decode_hash(struct message *msg)
@@ -824,7 +807,6 @@ rsa_sig_decode_hash(struct message *msg)
 	p->flags |= PL_MARK;
 	return 0;
 }
-#endif				/* USE_X509 || USE_KEYNOTE */
 
 static int
 pre_shared_encode_hash(struct message *msg)
@@ -850,7 +832,6 @@ pre_shared_encode_hash(struct message *msg)
 	return 0;
 }
 
-#if defined (USE_X509) || defined (USE_KEYNOTE)
 /* Encrypt the HASH into a SIG type.  */
 static int
 rsa_sig_encode_hash(struct message *msg)
@@ -1080,7 +1061,6 @@ skipcert:
 	}
 	return 0;
 }
-#endif				/* USE_X509 || USE_KEYNOTE */
 
 int
 ike_auth_hash(struct exchange *exchange, u_int8_t *buf)

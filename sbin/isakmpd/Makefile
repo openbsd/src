@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.58 2004/11/10 22:07:46 drahn Exp $
+#	$OpenBSD: Makefile,v 1.59 2005/04/05 20:46:20 cloder Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -46,10 +46,10 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES=	tripledes des blowfish cast aes
-#FEATURES+=	policy x509 ec aggressive debug gmp
+#FEATURES+=	policy ec aggressive debug gmp
 #FEATURES+=	rawkey isakmp_cfg dnssec privsep nat_traversal dpd
 FEATURES=	tripledes des blowfish cast aes
-FEATURES+=	policy x509 ec aggressive debug
+FEATURES+=	policy ec aggressive debug
 FEATURES+=	rawkey isakmp_cfg privsep nat_traversal dpd
 
 .PATH:		${.CURDIR}/sysdep/${OS}
@@ -64,7 +64,7 @@ SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		ipsec_num.c isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c \
 		key.c libcrypto.c log.c message.c math_2n.c math_group.c \
 		prf.c sa.c sysdep.c timer.c transport.c virtual.c udp.c \
-		ui.c util.c
+		ui.c util.c x509.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
@@ -156,7 +156,7 @@ LDADD+=		-ldes
 DPADD+=		${LIBDES}
 .endif
 
-SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
+SRCS+=		${IPSEC_SRCS} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
 		${ISAKMP_CFG} ${PRIVSEP} ${DPD} ${NAT_TRAVERSAL}
 CFLAGS+=	${IPSEC_CFLAGS} ${DNSSEC_CFLAGS}
 

@@ -1,4 +1,4 @@
-#    $OpenBSD: GNUmakefile,v 1.11 2005/02/10 15:00:36 ho Exp $
+#    $OpenBSD: GNUmakefile,v 1.12 2005/04/05 20:46:20 cloder Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -66,7 +66,7 @@ SRCS=		app.c attribute.c cert.c connection.c \
 		ipsec.c ipsec_fld.c ipsec_num.c isakmpd.c isakmp_doi.c \
 		isakmp_fld.c isakmp_num.c key.c libcrypto.c log.c message.c \
 		math_2n.c math_group.c prf.c sa.c sysdep.c timer.c \
-		transport.c udp.c ui.c util.c virtual.c
+		transport.c udp.c ui.c util.c virtual.c x509.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
@@ -161,7 +161,6 @@ CFLAGS+=	-DUSE_KEYNOTE
 endif
 
 ifdef USE_LIBCRYPTO
-X509=		x509.c
 CFLAGS+=	-DUSE_LIBCRYPTO
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
@@ -172,7 +171,7 @@ USE_LIBCRYPTO=  yes
 CFLAGS+=        -DUSE_RAWKEY
 endif
 
-SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
+SRCS+=		${IPSEC_SRCS} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
 		${ISAKMP_CFG} ${NAT_TRAVERSAL} ${DPD}
 CFLAGS+=	${IPSEC_CFLAGS}
 LDADD+=		${DESLIB}
