@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.49 2002/05/03 09:18:46 gluk Exp $     */
+/*      $OpenBSD: wdc.c,v 1.50 2002/05/24 09:24:36 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -895,18 +895,7 @@ wdcstart(chp)
 {
 	struct wdc_xfer *xfer;
 
-#ifdef WDC_DIAGNOSTIC
-	int spl1, spl2;
-
-	spl1 = splbio();
-	spl2 = splbio();
-	if (spl2 != spl1) {
-		printf("wdcstart: not at splbio()\n");
-		panic("wdcstart");
-	}
-	splx(spl2);
-	splx(spl1);
-#endif /* WDC_DIAGNOSTIC */
+	splassert(IPL_BIO);
 
 	/* is there a xfer ? */
 	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL) {
