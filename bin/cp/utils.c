@@ -1,5 +1,5 @@
-/*	$OpenBSD: utils.c,v 1.5 1997/02/25 02:27:28 millert Exp $	*/
-/*	$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $	*/
+/*	$OpenBSD: utils.c,v 1.6 1997/04/05 04:37:40 tholo Exp $	*/
+/*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.5 1997/02/25 02:27:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.6 1997/04/05 04:37:40 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,12 +238,13 @@ copy_special(from_stat, exists)
 
 int
 setfile(fs, fd)
-	register struct stat *fs;
+	struct stat *fs;
 	int fd;
 {
 	static struct timeval tv[2];
-	int rval = 0;
+	int rval;
 
+	rval = 0;
 	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
 	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
@@ -267,15 +268,23 @@ setfile(fs, fd)
 		fs->st_mode &= ~(S_ISUID | S_ISGID);
 	}
 	if (fd ? fchmod(fd, fs->st_mode) : chmod(to.p_path, fs->st_mode)) {
-		warn("chmod: %s", to.p_path);
+		warn("chown: %s", to.p_path);
 		rval = 1;
 	}
 
-	if (fd ?
-	    fchflags(fd, fs->st_flags) : chflags(to.p_path, fs->st_flags)) {
-		warn("chflags: %s", to.p_path);
-		rval = 1;
-	}
+	/*
+	 * XXX
+	 * NFS doesn't support chflags; ignore errors unless there's reason
+	 * to believe we're losing bits.  (Note, this still won't be right
+	 * if the server supports flags and we were trying to *remove* flags
+	 * on a file that we copied, i.e., that we didn't create.)
+	 */
+	errno = 0;
+	if (fd ? fchflags(fd, fs->st_flags) : chflags(to.p_path, fs->st_flags))
+		if (errno != EOPNOTSUPP || fs->st_flags != 0) {
+			warn("chflags: %s", to.p_path);
+			rval = 1;
+		}
 	return (rval);
 }
 
