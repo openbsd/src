@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.7 2002/05/08 16:46:35 art Exp $	*/
+/*	$OpenBSD: i386.c,v 1.8 2003/06/04 16:24:45 deraadt Exp $	*/
 /*	$NetBSD: i386.c,v 1.5 1995/04/19 07:16:04 cgd Exp $	*/
 
 /*-
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: i386.c,v 1.7 2002/05/08 16:46:35 art Exp $";
+static char rcsid[] = "$OpenBSD: i386.c,v 1.8 2003/06/04 16:24:45 deraadt Exp $";
 #endif /* not lint */
 
 #include "gprof.h"

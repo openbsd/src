@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.19 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.20 2003/06/04 16:24:45 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -49,8 +49,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
