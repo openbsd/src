@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.24 2000/03/26 16:08:27 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.25 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.24 2000/03/26 16:08:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.25 2000/03/26 16:21:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -384,7 +384,7 @@ JobPassSig(signo)
 	(void) fprintf(stdout, "JobPassSig(%d) called.\n", signo);
 	(void) fflush(stdout);
     }
-    Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
+    Lst_ForEach(jobs, JobCondPassSig, &signo);
 
     /*
      * Deal with proper cleanup based on the signal received. We only run
@@ -430,7 +430,7 @@ JobPassSig(signo)
     (void) KILL(getpid(), signo);
 
     signo = SIGCONT;
-    Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
+    Lst_ForEach(jobs, JobCondPassSig, &signo);
 
     (void) sigprocmask(SIG_SETMASK, &omask, NULL);
     sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -536,7 +536,7 @@ JobPrintCommand(cmdp, jobp)
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
 	    job->tailCmds = Lst_Succ(Lst_Member(job->node->commands,
-						(ClientData)cmd));
+						cmd));
 	    return 1;
 	}
 	return 0;
@@ -555,9 +555,9 @@ JobPrintCommand(cmdp, jobp)
      * For debugging, we replace each command with the result of expanding
      * the variables in the command.
      */
-    cmdNode = Lst_Member(job->node->commands, (ClientData)cmd);
+    cmdNode = Lst_Member(job->node->commands, cmd);
     cmdStart = cmd = Var_Subst(cmd, job->node, FALSE);
-    Lst_Replace(cmdNode, (ClientData)cmdStart);
+    Lst_Replace(cmdNode, cmdStart);
 
     cmdTemplate = "%s\n";
 
@@ -854,7 +854,7 @@ JobFinish(job, status)
 		    WSTOPSIG(*status));
 	    }
 	    job->flags |= JOB_RESUME;
-	    Lst_AtEnd(stoppedJobs, (ClientData)job);
+	    Lst_AtEnd(stoppedJobs, job);
 #ifdef REMOTE
 	    if (job->flags & JOB_REMIGRATE)
 		JobRestart(job);
@@ -892,7 +892,7 @@ JobFinish(job, status)
 #endif
 	    }
 	    job->flags &= ~JOB_CONTINUING;
- 	    Lst_AtEnd(jobs, (ClientData)job);
+ 	    Lst_AtEnd(jobs, job);
 	    nJobs += 1;
 	    if (!(job->flags & JOB_REMOTE)) {
 		if (DEBUG(JOB)) {
@@ -968,7 +968,7 @@ JobFinish(job, status)
 	if (job->tailCmds != NULL) {
 	    Lst_ForEachFrom(job->node->commands, job->tailCmds,
 			     JobSaveCommand,
-			    (ClientData)job->node);
+			    job->node);
 	}
 	job->node->made = MADE;
 	Make_Update(job->node);
@@ -1335,7 +1335,7 @@ jobExecFinish:
      * Now the job is actually running, add it to the table.
      */
     nJobs += 1;
-    Lst_AtEnd(jobs, (ClientData)job);
+    Lst_AtEnd(jobs, job);
     if (nJobs == maxJobs) {
 	jobFull = TRUE;
     }
@@ -1470,7 +1470,7 @@ JobRestart(job)
 		   (void) fprintf(stdout, "*** holding\n");
 		   (void) fflush(stdout);
   		}
-		Lst_AtFront(stoppedJobs, (ClientData)job);
+		Lst_AtFront(stoppedJobs, job);
 		jobFull = TRUE;
 		if (DEBUG(JOB)) {
 		   (void) fprintf(stdout, "Job queue is full.\n");
@@ -1491,7 +1491,7 @@ JobRestart(job)
 	}
 #endif
 
-	Lst_AtEnd(jobs, (ClientData)job);
+	Lst_AtEnd(jobs, job);
 	nJobs += 1;
 	if (nJobs == maxJobs) {
 	    jobFull = TRUE;
@@ -1536,7 +1536,7 @@ JobRestart(job)
 		    (void) fprintf(stdout, "holding\n");
 		    (void) fflush(stdout);
 		}
-		Lst_AtFront(stoppedJobs, (ClientData)job);
+		Lst_AtFront(stoppedJobs, job);
 		jobFull = TRUE;
 		if (DEBUG(JOB)) {
 		    (void) fprintf(stdout, "Job queue is full.\n");
@@ -1635,7 +1635,7 @@ JobRestart(job)
 		(void) fprintf(stdout, "table full\n");
 		(void) fflush(stdout);
 	    }
-	    Lst_AtFront(stoppedJobs, (ClientData)job);
+	    Lst_AtFront(stoppedJobs, job);
 	    jobFull = TRUE;
 	    if (DEBUG(JOB)) {
 		(void) fprintf(stdout, "Job queue is full.\n");
@@ -1764,8 +1764,7 @@ JobStart(gn, flags, previous)
 		LstNode	ln = Lst_Next(gn->commands);
 
 		if ((ln == NULL) ||
-		    JobPrintCommand((ClientData) Lst_Datum(ln),
-				    (ClientData) job))
+		    JobPrintCommand(Lst_Datum(ln), job))
 		{
 		    noExec = TRUE;
 		    Lst_Close(gn->commands);
@@ -1790,7 +1789,7 @@ JobStart(gn, flags, previous)
 	     * We can do all the commands at once. hooray for sanity
 	     */
 	    numCommands = 0;
-	    Lst_ForEach(gn->commands, JobPrintCommand, (ClientData)job);
+	    Lst_ForEach(gn->commands, JobPrintCommand, job);
 
 	    /*
 	     * If we didn't print out any commands to the shell script,
@@ -1816,7 +1815,7 @@ JobStart(gn, flags, previous)
 	 * doesn't do any harm in this case and may do some good.
 	 */
 	if (cmdsOK) {
-	    Lst_ForEach(gn->commands, JobPrintCommand, (ClientData)job);
+	    Lst_ForEach(gn->commands, JobPrintCommand, job);
 	}
 	/*
 	 * Don't execute the shell, thank you.
@@ -1857,7 +1856,7 @@ JobStart(gn, flags, previous)
 		if (job->tailCmds != NULL) {
 		    Lst_ForEachFrom(job->node->commands, job->tailCmds,
 				    JobSaveCommand,
-				   (ClientData)job->node);
+				   job->node);
 		}
 		Make_Update(job->node);
 	    }
@@ -1940,7 +1939,7 @@ JobStart(gn, flags, previous)
 	   (void) fflush(stdout);
 	}
 	job->flags |= JOB_RESTART;
-	Lst_AtEnd(stoppedJobs, (ClientData)job);
+	Lst_AtEnd(stoppedJobs, job);
     } else {
 	if ((nLocal >= maxLocal) && local) {
 	    /*
@@ -2252,11 +2251,11 @@ Job_CatchChildren(block)
 	}
 
 
-	jnode = Lst_Find(jobs, JobCmpPid, (ClientData)&pid);
+	jnode = Lst_Find(jobs, JobCmpPid, &pid);
 
 	if (jnode == NULL) {
 	    if (WIFSIGNALED(status) && (WTERMSIG(status) == SIGCONT)) {
-		jnode = Lst_Find(stoppedJobs, JobCmpPid, (ClientData)&pid);
+		jnode = Lst_Find(stoppedJobs, JobCmpPid, &pid);
 		if (jnode == NULL) {
 		    Error("Resumed child (%d) not in table", pid);
 		    continue;
@@ -3088,10 +3087,10 @@ JobFlagForMigration(hostID)
 	(void) fprintf(stdout, "JobFlagForMigration(%d) called.\n", hostID);
 	(void) fflush(stdout);
     }
-    jnode = Lst_Find(jobs, JobCmpRmtID, (ClientData)&hostID);
+    jnode = Lst_Find(jobs, JobCmpRmtID, &hostID);
 
     if (jnode == NULL) {
-	jnode = Lst_Find(stoppedJobs, JobCmpRmtID, (ClientData)&hostID);
+	jnode = Lst_Find(stoppedJobs, JobCmpRmtID, &hostID);
 		if (jnode == NULL) {
 		    if (DEBUG(JOB)) {
 			Error("Evicting host(%d) not in table", hostID);

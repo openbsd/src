@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.14 1999/12/18 02:11:26 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.15 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.14 1999/12/18 02:11:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.15 2000/03/26 16:21:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ build_words_list(lst, s)
 	    continue;
     	/* note that we fill the list backward, since 
      	 * Parse_FromString stacks strings.  */
-	Lst_AtFront(lst, (ClientData)interval_dup(wrd, s));
+	Lst_AtFront(lst, interval_dup(wrd, s));
     }
 }
 
@@ -304,7 +304,7 @@ For_Run(arg)
     arg->text = Buf_Retrieve(&arg->buf);
     arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;
 
-    Lst_ForEach(arg->lst, ForExec, (ClientData)arg);
+    Lst_ForEach(arg->lst, ForExec, arg);
     free(arg->var);
     free(arg->text);
     Lst_Destroy(arg->lst, (void (*) __P((ClientData)))free);

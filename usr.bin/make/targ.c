@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.14 2000/02/02 13:47:48 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.15 2000/03/26 16:21:33 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.14 2000/02/02 13:47:48 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.15 2000/03/26 16:21:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ Targ_NewGN (name)
 #ifdef CLEANUP
     if (allGNs == NULL)
 	allGNs = Lst_Init();
-    Lst_AtEnd(allGNs, (ClientData)gn);
+    Lst_AtEnd(allGNs, gn);
 #endif
 
     return (gn);
@@ -270,7 +270,7 @@ Targ_FindNode (name, flags)
 	if (isNew) {
 	    gn = Targ_NewGN (name);
 	    Hash_SetValue (he, gn);
-	    Lst_AtEnd(allTargets, (ClientData)gn);
+	    Lst_AtEnd(allTargets, gn);
 	}
     } else {
 	he = Hash_FindEntry (&targets, name);
@@ -323,7 +323,7 @@ Targ_FindList (names, flags)
 	     * are added to the list in the order in which they were
 	     * encountered in the makefile.
 	     */
-	    Lst_AtEnd(nodes, (ClientData)gn);
+	    Lst_AtEnd(nodes, gn);
 	    if (gn->type & OP_DOUBLEDEP) {
 		Lst_Concat(nodes, gn->cohorts, LST_CONCNEW);
 	    }
@@ -579,13 +579,13 @@ TargPrintNode (gnp, passp)
 	    }
 	    if (!Lst_IsEmpty (gn->iParents)) {
 		printf("# implicit parents: ");
-		Lst_ForEach (gn->iParents, TargPrintName, (ClientData)0);
+		Lst_ForEach(gn->iParents, TargPrintName, NULL);
 		fputc ('\n', stdout);
 	    }
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
 	    printf("# parents: ");
-	    Lst_ForEach (gn->parents, TargPrintName, (ClientData)0);
+	    Lst_ForEach(gn->parents, TargPrintName, NULL);
 	    fputc ('\n', stdout);
 	}
 
@@ -599,12 +599,12 @@ TargPrintNode (gnp, passp)
 		printf(":: "); break;
 	}
 	Targ_PrintType (gn->type);
-	Lst_ForEach (gn->children, TargPrintName, (ClientData)0);
+	Lst_ForEach(gn->children, TargPrintName, NULL);
 	fputc ('\n', stdout);
-	Lst_ForEach (gn->commands, Targ_PrintCmd, (ClientData)0);
+	Lst_ForEach(gn->commands, Targ_PrintCmd, NULL);
 	printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEach (gn->cohorts, TargPrintNode, (ClientData)&pass);
+	    Lst_ForEach(gn->cohorts, TargPrintNode, &pass);
 	}
     }
     return (0);
@@ -653,10 +653,10 @@ Targ_PrintGraph (pass)
 			 * 2 => processing done */
 {
     printf("#*** Input graph:\n");
-    Lst_ForEach (allTargets, TargPrintNode, (ClientData)&pass);
+    Lst_ForEach(allTargets, TargPrintNode, &pass);
     printf("\n\n");
     printf("#\n#   Files that are only sources:\n");
-    Lst_ForEach (allTargets, TargPrintOnlySrc, (ClientData) 0);
+    Lst_ForEach(allTargets, TargPrintOnlySrc, NULL);
     printf("#*** Global Variables:\n");
     Var_Dump (VAR_GLOBAL);
     printf("#*** Command-line Variables:\n");

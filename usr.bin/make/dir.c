@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2000/02/02 13:47:47 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.16 2000/02/02 13:47:47 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.17 2000/03/26 16:21:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ Dir_End()
 {
 #ifdef CLEANUP
     dot->refCount -= 1;
-    Dir_Destroy((ClientData) dot);
+    Dir_Destroy(dot);
     Dir_ClearPath(dirSearchPath);
     Lst_Destroy(dirSearchPath, NOFREE);
     Dir_ClearPath(openDirectories);
@@ -663,7 +663,7 @@ Dir_Expand (word, path, expansions)
 	}
     }
     if (DEBUG(DIR)) {
-	Lst_ForEach(expansions, DirPrintWord, (ClientData) 0);
+	Lst_ForEach(expansions, DirPrintWord, NULL);
 	fputc('\n', stdout);
     }
 }
@@ -881,7 +881,8 @@ Dir_FindFile (name, path)
 		}
 		entry = Hash_CreateEntry(&mtimes, (char *) file,
 					 (Boolean *)NULL);
-		Hash_SetValue(entry, (long)stb.st_mtime);
+		/* XXX */
+		Hash_SetValue(entry, (ClientData)((long)stb.st_mtime));
 		nearmisses += 1;
 		return (file);
 	    } else {
@@ -959,7 +960,8 @@ Dir_FindFile (name, path)
 	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
 	}
-	Hash_SetValue(entry, (long)stb.st_mtime);
+	/* XXX */
+	Hash_SetValue(entry, (ClientData)(long)stb.st_mtime);
 	return (estrdup (name));
     } else {
 	if (DEBUG(DIR)) {
@@ -1071,12 +1073,12 @@ Dir_AddDir (path, name)
     DIR     	  *d;	      /* for reading directory */
     register struct dirent *dp; /* entry in directory */
 
-    ln = Lst_Find(openDirectories, DirFindName, (ClientData)name);
+    ln = Lst_Find(openDirectories, DirFindName, name);
     if (ln != NULL) {
 	p = (Path *)Lst_Datum (ln);
-	if (Lst_Member(path, (ClientData)p) == NULL) {
+	if (Lst_Member(path, p) == NULL) {
 	    p->refCount += 1;
-	    Lst_AtEnd(path, (ClientData)p);
+	    Lst_AtEnd(path, p);
 	}
     } else {
 	if (DEBUG(DIR)) {
@@ -1111,8 +1113,8 @@ Dir_AddDir (path, name)
 		(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
 	    }
 	    (void) closedir (d);
-	    Lst_AtEnd(openDirectories, (ClientData)p);
-	    Lst_AtEnd(path, (ClientData)p);
+	    Lst_AtEnd(openDirectories, p);
+	    Lst_AtEnd(path, p);
 	}
 	if (DEBUG(DIR)) {
 	    printf("done\n");
@@ -1140,7 +1142,7 @@ Dir_CopyDir(p)
 {
     ((Path *) p)->refCount += 1;
 
-    return ((ClientData)p);
+    return p;
 }
 
 /*-
@@ -1209,7 +1211,7 @@ Dir_Destroy (pp)
     if (p->refCount == 0) {
 	LstNode	ln;
 
-	ln = Lst_Member (openDirectories, (ClientData)p);
+	ln = Lst_Member(openDirectories, p);
 	Lst_Remove(openDirectories, ln);
 
 	Hash_DeleteTable (&p->files);
@@ -1238,7 +1240,7 @@ Dir_ClearPath(path)
 {
     Path    *p;
     while ((p = (Path *)Lst_DeQueue(path)) != NULL)
-	Dir_Destroy((ClientData)p);
+	Dir_Destroy(p);
 }
 
 
@@ -1266,9 +1268,9 @@ Dir_Concat(path1, path2)
 
     for (ln = Lst_First(path2); ln != NULL; ln = Lst_Succ(ln)) {
 	p = (Path *)Lst_Datum(ln);
-	if (Lst_Member(path1, (ClientData)p) == NULL) {
+	if (Lst_Member(path1, p) == NULL) {
 	    p->refCount += 1;
-	    Lst_AtEnd(path1, (ClientData)p);
+	    Lst_AtEnd(path1, p);
 	}
     }
 }
@@ -1307,5 +1309,5 @@ void
 Dir_PrintPath (path)
     Lst	path;
 {
-    Lst_ForEach (path, DirPrintDir, (ClientData)0);
+    Lst_ForEach(path, DirPrintDir, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDeQueue.c,v 1.6 1999/12/18 21:58:08 espie Exp $	*/
+/*	$OpenBSD: lstDeQueue.c,v 1.7 2000/03/26 16:21:33 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.6 1999/12/18 21:58:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.7 2000/03/26 16:21:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ Lst_DeQueue(l)
 
     tln = Lst_First(l);
     if (tln == NULL)
-	return (ClientData)NULL;
+	return NULL;
 
     rd = ((ListNode)tln)->datum;
     Lst_Remove(l, tln);

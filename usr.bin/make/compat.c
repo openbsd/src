@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.22 2000/02/02 13:47:47 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.23 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.22 2000/02/02 13:47:47 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.23 2000/03/26 16:21:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ CompatInterrupt (signo)
 	if (signo == SIGINT) {
 	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
 	    if (gn != NULL) {
-		Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
+		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 	    }
 	}
 
@@ -232,7 +232,7 @@ CompatRunCommand (cmdp, gnp)
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
 
-    cmdNode = Lst_Member (gn->commands, (ClientData)cmd);
+    cmdNode = Lst_Member(gn->commands, cmd);
     cmdStart = Var_Subst(cmd, gn, FALSE);
 
     /*
@@ -249,10 +249,10 @@ CompatRunCommand (cmdp, gnp)
     } else {
 	cmd = cmdStart;
     }
-    Lst_Replace (cmdNode, (ClientData)cmdStart);
+    Lst_Replace(cmdNode, cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
-	Lst_AtEnd(ENDNode->commands, (ClientData)cmdStart);
+	Lst_AtEnd(ENDNode->commands, cmdStart);
 	return(0);
     } else if (strcmp(cmdStart, "...") == 0) {
 	gn->type |= OP_SAVE_CMDS;
@@ -363,7 +363,7 @@ CompatRunCommand (cmdp, gnp)
 	free(bp);
     }
     free(cmdStart);
-    Lst_Replace(cmdNode, (ClientData)NULL);
+    Lst_Replace(cmdNode, NULL);
 
     /*
      * The child is off and running. Now all we can do is wait...
@@ -459,7 +459,7 @@ CompatMake (gnp, pgnp)
 	gn->make = TRUE;
 	gn->made = BEINGMADE;
 	Suff_FindDeps (gn);
-	Lst_ForEach (gn->children, CompatMake, (ClientData)gn);
+	Lst_ForEach(gn->children, CompatMake, gn);
 	if (!gn->make) {
 	    gn->made = ABORTED;
 	    pgn->make = FALSE;
@@ -522,7 +522,7 @@ CompatMake (gnp, pgnp)
 	     */
 	    if (!touchFlag) {
 		curTarg = gn;
-		Lst_ForEach (gn->commands, CompatRunCommand, (ClientData)gn);
+		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
 		Job_Touch (gn, gn->type & OP_SILENT);
@@ -691,7 +691,7 @@ Compat_Run(targs)
     if (!queryFlag) {
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 	if (gn != NULL) {
-	    Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
+	    Lst_ForEach(gn->commands, CompatRunCommand, gn);
             if (gn->made == ERROR) {
                 printf("\n\nStop.\n");
                 exit(1);
@@ -725,6 +725,6 @@ Compat_Run(targs)
      * If the user has defined a .END target, run its commands.
      */
     if (errors == 0) {
-	Lst_ForEach(ENDNode->commands, CompatRunCommand, (ClientData)gn);
+	Lst_ForEach(ENDNode->commands, CompatRunCommand, gn);
     }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.25 2000/02/02 13:47:46 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.26 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.25 2000/02/02 13:47:46 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.26 2000/03/26 16:21:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -344,7 +344,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		    return(FAILURE);
 		} else {
 		    gn->type |= OP_ARCHV;
-		    Lst_AtEnd(nodeLst, (ClientData)gn);
+		    Lst_AtEnd(nodeLst, gn);
 		}
 	    } else if (Arch_ParseArchive(&sacrifice, nodeLst, ctxt)!=SUCCESS) {
 		/*
@@ -379,7 +379,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		     * end of the provided list.
 		     */
 		    gn->type |= OP_ARCHV;
-		    Lst_AtEnd(nodeLst, (ClientData)gn);
+		    Lst_AtEnd(nodeLst, gn);
 		}
 	    }
 	    Lst_Destroy(members, NOFREE);
@@ -397,7 +397,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		 * provided list.
 		 */
 		gn->type |= OP_ARCHV;
-		Lst_AtEnd(nodeLst, (ClientData)gn);
+		Lst_AtEnd(nodeLst, gn);
 	    }
 	}
 	if (doSubst) {
@@ -496,7 +496,7 @@ ArchStatMember (archive, member, hash)
     if (cp != NULL)
 	member = cp + 1;
 
-    ln = Lst_Find(archives, ArchFindArchive, (ClientData)archive);
+    ln = Lst_Find(archives, ArchFindArchive, archive);
     if (ln != NULL) {
 	ar = (Arch *) Lst_Datum (ln);
 
@@ -635,7 +635,7 @@ ArchStatMember (archive, member, hash)
 #endif
 
 	    he = Hash_CreateEntry (&ar->members, memName, NULL);
-	    Hash_SetValue (he, (ClientData)emalloc (sizeof (struct ar_hdr)));
+	    Hash_SetValue (he, emalloc (sizeof (struct ar_hdr)));
 	    memcpy ((Address)Hash_GetValue (he), (Address)&arh,
 		sizeof (struct ar_hdr));
 	}
@@ -644,7 +644,7 @@ ArchStatMember (archive, member, hash)
 
     fclose (arch);
 
-    Lst_AtEnd(archives, (ClientData)ar);
+    Lst_AtEnd(archives, ar);
 
     /*
      * Now that the archive has been read and cached, we can look into

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.29 2000/01/08 09:45:16 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.30 2000/03/26 16:21:33 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.29 2000/01/08 09:45:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.30 2000/03/26 16:21:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -320,16 +320,16 @@ VarFind (name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Lst_Find(ctxt->context, VarCmp, (ClientData)name);
+    var = Lst_Find(ctxt->context, VarCmp, name);
 
     if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
-	var = Lst_Find(VAR_CMD->context, VarCmp, (ClientData)name);
+	var = Lst_Find(VAR_CMD->context, VarCmp, name);
     if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
 	(ctxt != VAR_GLOBAL)) {
-	var = Lst_Find(VAR_GLOBAL->context, VarCmp, (ClientData)name);
+	var = Lst_Find(VAR_GLOBAL->context, VarCmp, name);
     }
     if ((var == NULL) && (flags & FIND_ENV)) {
-    	var = Lst_Find(VAR_ENV->context, VarCmp, (ClientData)name);
+    	var = Lst_Find(VAR_ENV->context, VarCmp, name);
 	if (var == NULL) {
 	    char *env;
 
@@ -339,7 +339,7 @@ VarFind (name, ctxt, flags)
     }
     if (var == NULL && checkEnvFirst && (flags & FIND_GLOBAL) &&
 		   (ctxt != VAR_GLOBAL)) 
-	    var = Lst_Find(VAR_GLOBAL->context, VarCmp, (ClientData)name);
+	    var = Lst_Find(VAR_GLOBAL->context, VarCmp, name);
     if (var == NULL)
 	return NULL;
     else 
@@ -379,8 +379,8 @@ VarAdd(name, val, ctxt)
 
     v->flags = 0;
 
-    Lst_AtFront(ctxt->context, (ClientData)v);
-    Lst_AtEnd(allVars, (ClientData)v);
+    Lst_AtFront(ctxt->context, v);
+    Lst_AtEnd(allVars, v);
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
@@ -435,7 +435,7 @@ Var_Delete(name, ctxt)
     if (DEBUG(VAR)) {
 	printf("%s:delete %s\n", ctxt->name, name);
     }
-    ln = Lst_Find(ctxt->context, VarCmp, (ClientData)name);
+    ln = Lst_Find(ctxt->context, VarCmp, name);
     if (ln != NULL) {
 	register Var 	  *v;
 
@@ -443,7 +443,7 @@ Var_Delete(name, ctxt)
 	Lst_Remove(ctxt->context, ln);
 	ln = Lst_Member(allVars, v);
 	Lst_Remove(allVars, ln);
-	VarDelete((ClientData) v);
+	VarDelete(v);
     }
 }
 
@@ -1569,9 +1569,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			val = VarValue(v);
 
 			if (str[3] == 'D') {
-			    val = VarModify(val, VarHead, (ClientData)0);
+			    val = VarModify(val, VarHead, NULL);
 			} else {
-			    val = VarModify(val, VarTail, (ClientData)0);
+			    val = VarModify(val, VarTail, NULL);
 			}
 			/*
 			 * Resulting string is dynamically allocated, so
@@ -1753,10 +1753,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			pattern = &tstr[1];
 		    }
 		    if (*tstr == 'M' || *tstr == 'm') {
-			newStr = VarModify(str, VarMatch, (ClientData)pattern);
+			newStr = VarModify(str, VarMatch, pattern);
 		    } else {
-			newStr = VarModify(str, VarNoMatch,
-					   (ClientData)pattern);
+			newStr = VarModify(str, VarNoMatch, pattern);
 		    }
 		    if (copy) {
 			free(pattern);
@@ -1807,8 +1806,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    }
 
 		    termc = *cp;
-		    newStr = VarModify(str, VarSubstitute,
-				       (ClientData)&pattern);
+		    newStr = VarModify(str, VarSubstitute, &pattern);
 
 		    /*
 		     * Free the two strings.
@@ -1870,8 +1868,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			pattern.nsub = 10;
 		    pattern.matches = emalloc(pattern.nsub *
 					      sizeof(regmatch_t));
-		    newStr = VarModify(str, VarRESubstitute,
-				       (ClientData) &pattern);
+		    newStr = VarModify(str, VarRESubstitute, &pattern);
 		    regfree(&pattern.re);
 		    free(pattern.replace);
 		    free(pattern.matches);
@@ -1888,7 +1885,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'T':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarTail, (ClientData)0);
+			newStr = VarModify(str, VarTail, NULL);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -1896,7 +1893,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'H':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarHead, (ClientData)0);
+			newStr = VarModify(str, VarHead, NULL);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -1904,7 +1901,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'E':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarSuffix, (ClientData)0);
+			newStr = VarModify(str, VarSuffix, NULL);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -1912,7 +1909,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'R':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarRoot, (ClientData)0);
+			newStr = VarModify(str, VarRoot, NULL);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -1920,7 +1917,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'U':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarUppercase, (ClientData)0);
+			newStr = VarModify(str, VarUppercase, NULL);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -1928,7 +1925,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'L':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarLowercase, (ClientData)0);
+			newStr = VarModify(str, VarLowercase, NULL);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -2007,8 +2004,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * SYSV modifications happen through the whole
 			 * string. Note the pattern is anchored at the end.
 			 */
-			newStr = VarModify(str, VarSYSVMatch,
-					   (ClientData)&pattern);
+			newStr = VarModify(str, VarSYSVMatch, &pattern);
 
 			/*
 			 * Restore the nulled characters
@@ -2278,7 +2274,7 @@ char *
 Var_GetTail(file)
     char    	*file;	    /* Filename to modify */
 {
-    return(VarModify(file, VarTail, (ClientData)0));
+    return VarModify(file, VarTail, NULL);
 }
 
 /*-
@@ -2300,7 +2296,7 @@ char *
 Var_GetHead(file)
     char    	*file;	    /* Filename to manipulate */
 {
-    return(VarModify(file, VarHead, (ClientData)0));
+    return VarModify(file, VarHead, NULL);
 }
 
 /*-
@@ -2354,5 +2350,5 @@ void
 Var_Dump (ctxt)
     GNode          *ctxt;
 {
-    Lst_ForEach (ctxt->context, VarPrintVar, (ClientData) 0);
+    Lst_ForEach(ctxt->context, VarPrintVar, NULL);
 }

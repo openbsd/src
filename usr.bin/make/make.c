@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.13 2000/02/02 13:47:48 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.14 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.13 2000/02/02 13:47:48 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.14 2000/03/26 16:21:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,7 @@ Make_OODate (gn)
      * thinking they're out-of-date.
      */
     if (!oodate) {
-	Lst_ForEach (gn->parents, MakeTimeStamp, (ClientData)gn);
+	Lst_ForEach(gn->parents, MakeTimeStamp, gn);
     }
 
     return (oodate);
@@ -298,7 +298,7 @@ MakeAddChild (gnp, lp)
     Lst            l = (Lst) lp;
 
     if (!gn->make && !(gn->type & OP_USE)) {
-	Lst_EnQueue(l, (ClientData)gn);
+	Lst_EnQueue(l, gn);
     }
     return (0);
 }
@@ -502,7 +502,7 @@ Make_Update (cgn)
 		     * Queue the node up -- any unmade predecessors will
 		     * be dealt with in MakeStartJobs.
 		     */
-		    (void)Lst_EnQueue (toBeMade, (ClientData)pgn);
+		    Lst_EnQueue(toBeMade, pgn);
 		} else if (pgn->unmade < 0) {
 		    Error ("Graph cycles through %s", pgn->name);
 		}
@@ -520,9 +520,9 @@ Make_Update (cgn)
 	GNode	*succ = (GNode *)Lst_Datum(ln);
 
 	if (succ->make && succ->unmade == 0 && succ->made == UNMADE &&
-	    Lst_Member(toBeMade, (ClientData)succ) == NULL)
+	    Lst_Member(toBeMade, succ) == NULL)
 	{
-	    Lst_EnQueue(toBeMade, (ClientData)succ);
+	    Lst_EnQueue(toBeMade, succ);
 	}
     }
 
@@ -639,7 +639,7 @@ void
 Make_DoAllVar (gn)
     GNode	*gn;
 {
-    Lst_ForEach (gn->children, MakeAddAllSrc, (ClientData) gn);
+    Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
     if (!Var_Exists (OODATE, gn)) {
 	Var_Set (OODATE, "", gn);
@@ -778,11 +778,11 @@ MakePrintStatus(gnp, cyclep)
 	    if (gn->made == CYCLE) {
 		Error("Graph cycles through `%s'", gn->name);
 		gn->made = ENDCYCLE;
-		Lst_ForEach(gn->children, MakePrintStatus, (ClientData) &t);
+		Lst_ForEach(gn->children, MakePrintStatus, &t);
 		gn->made = UNMADE;
 	    } else if (gn->made != ENDCYCLE) {
 		gn->made = CYCLE;
-		Lst_ForEach(gn->children, MakePrintStatus, (ClientData) &t);
+		Lst_ForEach(gn->children, MakePrintStatus, &t);
 	    }
 	} else {
 	    printf ("`%s' not remade because of errors.\n", gn->name);
@@ -844,13 +844,13 @@ Make_Run (targs)
 	     * Apply any .USE rules before looking for implicit dependencies
 	     * to make sure everything has commands that should...
 	     */
-	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
+	    Lst_ForEach (gn->children, MakeHandleUse, gn);
 	    Suff_FindDeps (gn);
 
 	    if (gn->unmade != 0) {
-		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
+		Lst_ForEach (gn->children, MakeAddChild, examine);
 	    } else {
-		Lst_EnQueue(toBeMade, (ClientData)gn);
+		Lst_EnQueue(toBeMade, gn);
 	    }
 	}
     }
@@ -898,7 +898,7 @@ Make_Run (targs)
      * because some inferior reported an error.
      */
     errors = ((errors == 0) && (numNodes != 0));
-    Lst_ForEach(targs, MakePrintStatus, (ClientData) &errors);
+    Lst_ForEach(targs, MakePrintStatus, &errors);
 
     return (TRUE);
 }

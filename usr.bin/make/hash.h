@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.h,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: hash.h,v 1.5 2000/03/26 16:21:32 espie Exp $	*/
 /*	$NetBSD: hash.h,v 1.5 1996/11/06 17:59:07 christos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ typedef struct Hash_Search {
  *     char *val;
  */
 
-#define Hash_SetValue(h, val) ((h)->clientData = (ClientData) (val))
+#define Hash_SetValue(h, val) ((h)->clientData = (val))
 
 /*
  * Hash_Size(n) returns the number of words in an object of n bytes
