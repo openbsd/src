@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_so.c,v 1.9 2003/04/15 16:32:41 henning Exp $ */
+/*	$OpenBSD: mod_so.c,v 1.10 2003/04/30 23:08:18 avsm Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -245,6 +245,7 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
     /*
      * Load the file into the Apache address space
      */
+    ap_server_strip_chroot(szModuleFile, 0);
     if (!(modhandle = ap_os_dso_load(szModuleFile))) {
 	const char *my_error = ap_os_dso_error();
 	return ap_pstrcat (cmd->pool, "Cannot load ", szModuleFile,
