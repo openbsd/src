@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.29 2001/01/29 05:51:00 mickey Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.30 2001/01/29 06:16:14 mickey Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -610,7 +610,7 @@ isapnp_submatch(parent, match, aux)
 	const char *dname;
 	int i;
 
-	for (i = 0; isapnp_knowndevs[i].pnpid[0]; i++) {
+	for (i = 0; i < sizeof(isapnp_knowndevs)/sizeof(isapnp_knowndevs[0]); i++) {
 		dname = NULL;
 
 		if (strcmp(isapnp_knowndevs[i].pnpid, ipa->ipa_devlogic) == 0)

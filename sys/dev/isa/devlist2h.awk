@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.5 2001/01/29 05:47:03 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.6 2001/01/29 06:16:14 mickey Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -83,6 +83,5 @@ END {
 			printf("\t/* %s */", products[i, 3]) > dfile
 		printf("\n") > dfile
 	}
-	printf("\t{ {""}, {""}, }\n") > dfile
 	printf("};\n") > dfile
 }
