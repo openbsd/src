@@ -11,8 +11,8 @@ LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} libdep
 ${PROG}:${OBJS} ${LIBS}
 	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBS}
 	# convert to Sun magic
+	@size a.out
 	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
 	@rm a.out
-	@size ${.TARGET}
 
 .include <bsd.prog.mk>
