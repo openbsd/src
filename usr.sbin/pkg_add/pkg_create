@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.28 2004/12/06 12:35:36 espie Exp $
+# $OpenBSD: pkg_create,v 1.29 2004/12/07 12:13:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -390,12 +390,6 @@ if (defined $opt_p) {
 	Usage "Prefix required";
 }
 
-if (!$regen_package && $ARGV[0] =~ m|([^/]+)$|) {
-	my $pkgname = $1;
-	$pkgname =~ s/\.tgz$//;
-	OpenBSD::PackingElement::Name->add($plist, $pkgname);
-} 
-
 if (defined $opt_A) {
 	OpenBSD::PackingElement::Arch->add($plist, $opt_A);
 }
@@ -408,7 +402,7 @@ if ($regen_package) {
 	my $v = 0;
 	$plist->visit('anything', \$v);
 	if ($v != 0 || @contents != 1) {
-		Usage "Exactly one single package name is required";
+		Usage "Exactly one single packing list is required";
 	}
 	$dir = dirname($contents[0]);
 }
@@ -457,6 +451,12 @@ for my $contentsfile (@contents) {
 	}
     ) or die "Can't open packing list $contentsfile";
 }
+
+if (!$plist->has('name') && $ARGV[0] =~ m|([^/]+)$|) {
+	my $pkgname = $1;
+	$pkgname =~ s/\.tgz$//;
+	OpenBSD::PackingElement::Name->add($plist, $pkgname);
+} 
 
 
 my $base = '/';
