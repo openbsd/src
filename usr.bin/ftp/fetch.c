@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.43 2003/02/17 18:51:11 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.44 2003/03/10 06:20:10 itojun Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.43 2003/02/17 18:51:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.44 2003/03/10 06:20:10 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -107,7 +107,7 @@ url_get(origline, proxyenv, outfile)
 	volatile int s, out;
 	size_t len;
 	char *cp, *ep, *portnum, *path;
-	char pbuf[NI_MAXSERV];
+	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST];
 	const char * volatile savefile;
 	char *line, *host, *port, *buf;
 	char * volatile proxy;
@@ -309,10 +309,11 @@ url_get(origline, proxyenv, outfile)
 
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
-		getnameinfo(res->ai_addr, res->ai_addrlen, pbuf, sizeof(pbuf),
-		    NULL, 0, NI_NUMERICHOST);
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy(hbuf, "(unknown)", sizeof(hbuf));
 		if (verbose)
-			fprintf(ttyout, "Trying %s...\n", pbuf);
+			fprintf(ttyout, "Trying %s...\n", hbuf);
 
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s == -1) {
