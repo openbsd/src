@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.31 1999/05/14 23:36:21 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.32 1999/05/16 21:48:37 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -376,6 +376,13 @@ htonq(u_int64_t q)
 #endif                                          
 
 #ifdef _KERNEL
+
+/*
+ * Protects all tdb lists.
+ * Must at least be splsoftclock.
+ */
+#define spltdb	splsoftclock
+
 extern int encdebug;
 extern int ipsec_in_use;
 extern u_int8_t hmac_ipad_buffer[64];
@@ -392,17 +399,19 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Traverse spi chain and get attributes */
 
-#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) {\
+#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) do {\
+	int s = spltdb(); \
 	struct tdb *tmptdb = (TDBP); \
-	(have) = 0; \
 	\
+	(have) = 0; \
 	while (tmptdb && tmptdb->tdb_xform) { \
 	        if (tmptdb == NULL || tmptdb->tdb_flags & TDBF_INVALID) \
 	                break; \
                 (have) |= TDB_ATTRIB(tmptdb); \
                 tmptdb = tmptdb->TDB_DIR; \
         } \
-}
+	splx(s); \
+} while (0)
 
 /* Misc. */
 extern char *inet_ntoa4(struct in_addr);
@@ -414,9 +423,12 @@ extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
 			     union sockaddr_union *, u_int8_t, int *);
 extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
 extern void puttdb(struct tdb *);
-extern int tdb_delete(struct tdb *, int);
+extern void tdb_delete(struct tdb *, int, int);
 extern int tdb_init (struct tdb *, u_int16_t, struct ipsecinit *);
 extern void tdb_expiration(struct tdb *, int);
+/* Flag values for the last argument of tdb_expiration().  */
+#define TDBEXP_EARLY	1	/* The tdb is likely to end up early.  */
+#define TDBEXP_TIMEOUT	2	/* Maintain expiration timeout.  */
 extern void handle_expirations(void *);
 
 /* Flow management routines */

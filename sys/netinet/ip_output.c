@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.46 1999/05/14 23:36:20 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.47 1999/05/16 21:48:36 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ ip_output(m0, va_alist)
 		struct route_enc re0, *re = &re0;
 		struct sockaddr_encap *ddst, *gw;
 		struct tdb *tdb, *t;
+		int s;
 		u_int8_t sa_require, sa_have = 0;
 
 		if (inp == NULL)
@@ -184,6 +185,11 @@ ip_output(m0, va_alist)
 
 		bzero((caddr_t) re, sizeof(*re));
 
+		/*
+		 * splnet is chosen over spltdb because we are not allowed to
+		 * lower the level, and udp_output calls us in splnet().
+		 */
+		s = splnet();
 		/* Check if there was a bound outgoing SA */
 		if (inp && inp->inp_tdb &&
 		    (inp->inp_tdb->tdb_dst.sin.sin_addr.s_addr ==
@@ -194,8 +200,10 @@ ip_output(m0, va_alist)
 			goto have_tdb;
 		}
 
-		if (!ipsec_in_use)
+		if (!ipsec_in_use) {
+			splx(s);
 			goto no_encap;
+		}
 
 		ddst = (struct sockaddr_encap *) &re->re_dst;
 		ddst->sen_family = PF_KEY;
@@ -236,8 +244,10 @@ ip_output(m0, va_alist)
 		}
 
 		rtalloc((struct route *) re);
-		if (re->re_rt == NULL)
+		if (re->re_rt == NULL) {
+			splx(s);
 			goto no_encap;
+		}
 
 		gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
 
@@ -248,10 +258,13 @@ ip_output(m0, va_alist)
 		 */
 
 		if ((gw != NULL) && (gw->sen_ipsp_dst.s_addr == 0) &&
-		    (gw->sen_ipsp_sproto == 0) && (gw->sen_ipsp_spi == 0))
+		    (gw->sen_ipsp_sproto == 0) && (gw->sen_ipsp_spi == 0)) {
+			splx(s);
 			goto no_encap;
+		}
 
 		if (gw == NULL || gw->sen_type != SENT_IPSP) {
+			splx(s);
 		        DPRINTF(("ip_output(): no gw or gw data not IPSP\n"));
 
 			if (re->re_rt)
@@ -272,6 +285,8 @@ ip_output(m0, va_alist)
 
 			/* XXX PF_KEYv2 notification message */
 			
+			splx(s);
+
 			/* 
 			 * When sa_require is set, the packet will be dropped
 			 * at no_encap.
@@ -309,6 +324,7 @@ ip_output(m0, va_alist)
 			goto no_encap;
 
 		if (tdb == NULL) {
+			splx(s);
 		        DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
 
 			if (re->re_rt)
@@ -364,6 +380,7 @@ ip_output(m0, va_alist)
 			}			
 
 			if (ro->ro_rt == 0) {
+			    splx(s);
 			    ipstat.ips_noroute++;
 			    error = EHOSTUNREACH;
 			    m_freem(m);
@@ -379,6 +396,7 @@ ip_output(m0, va_alist)
 		while (tdb && tdb->tdb_xform) {
 			/* Check if the SPI is invalid */
 			if (tdb->tdb_flags & TDBF_INVALID) {
+				splx(s);
 			        DPRINTF(("ip_output(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
 				m_freem(m);
 				if (re->re_rt)
@@ -389,7 +407,7 @@ ip_output(m0, va_alist)
 			/* Register first use, setup expiration timer */
 			if (tdb->tdb_first_use == 0) {
 				tdb->tdb_first_use = time.tv_sec;
-				tdb_expiration(tdb, 0);
+				tdb_expiration(tdb, TDBEXP_TIMEOUT);
 			}
     
 			/* Check for tunneling */
@@ -411,6 +429,7 @@ ip_output(m0, va_alist)
 				if (mp == NULL)
 					error = EFAULT;
 				if (error) {
+					splx(s);
 					if (re->re_rt)
 						RTFREE(re->re_rt);
 					return error;
@@ -433,6 +452,7 @@ ip_output(m0, va_alist)
 			if (!error && mp == NULL)
 				error = EFAULT;
 			if (error) {
+				splx(s);
 				if (mp != NULL)
 					m_freem(mp);
 				if (re->re_rt)
@@ -447,6 +467,7 @@ ip_output(m0, va_alist)
 
 			tdb = tdb->tdb_onext;
 		}
+		splx(s);
 
 		/*
 		 * At this point, m is pointing to an mbuf chain with the
@@ -866,6 +887,9 @@ ip_ctloutput(op, so, level, optname, mp)
 	register int optval = 0;
 #ifdef IPSEC
 	struct proc *p = curproc; /* XXX */
+	struct tdb *tdb;
+	struct tdb_ident *tdbip, tdbi;
+	int s;
 #endif
 	int error = 0;
 
@@ -967,22 +991,19 @@ ip_ctloutput(op, so, level, optname, mp)
 #ifndef IPSEC
 			error = EINVAL;
 #else
+			s = spltdb();
 			if (m == 0 || m->m_len != sizeof(struct tdb_ident)) {
 				error = EINVAL;
-				break;
 			} else {
-				struct tdb *tdb;
-				struct tdb_ident *tdbi;
-
-				tdbi = mtod(m, struct tdb_ident *);
-				tdb = gettdb(tdbi->spi, &tdbi->dst,
-					     tdbi->proto);
-				if (tdb == NULL) {
+				tdbip = mtod(m, struct tdb_ident *);
+				tdb = gettdb(tdbip->spi, &tdbip->dst,
+				    tdbip->proto);
+				if (tdb == NULL)
 					error = ESRCH;
-					break;
-				}
-				tdb_add_inp(tdb, inp);
+				else
+					tdb_add_inp(tdb, inp);
 			}
+			splx(s);
 #endif /* IPSEC */
 			break;
 
@@ -1118,19 +1139,19 @@ ip_ctloutput(op, so, level, optname, mp)
 #ifndef IPSEC
 			error = EINVAL;
 #else
+			s = spltdb();
 			if (inp->inp_tdb == NULL) {
 				error = ENOENT;
-				break;
 			} else {
-				struct tdb_ident tdbi;
 				tdbi.spi = inp->inp_tdb->tdb_spi;
 				tdbi.dst = inp->inp_tdb->tdb_dst;
 				tdbi.proto = inp->inp_tdb->tdb_sproto;
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
 				m->m_len = sizeof(tdbi);
 				bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
-				      (unsigned)m->m_len);
+				    (unsigned)m->m_len);
 			}
+			splx(s);
 #endif /* IPSEC */
 			break;
 

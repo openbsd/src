@@ -286,7 +286,7 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
   }
 
   /* Setup/update our position in the expiration queue.  */
-  tdb_expiration(tdb, 0);
+  tdb_expiration(tdb, TDBEXP_TIMEOUT);
 }
 
 void
@@ -675,8 +675,8 @@ int
 pfkeyv2_send(struct socket *socket, void *message, int len)
 {
   void *headers[SADB_EXT_MAX + 1];
-  int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST, delflag = 0;
-  struct pfkeyv2_socket *pfkeyv2_socket, *s = NULL;
+  int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST, delflag = 0, s;
+  struct pfkeyv2_socket *pfkeyv2_socket, *so = NULL;
   void *freeme = NULL, *bckptr = NULL;
   struct tdb sa, *sa2 = NULL;
   struct flow *flow = NULL;
@@ -716,9 +716,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			       &packet)) != 0)
       goto ret;
 
-    for (s = pfkeyv2_sockets; s; s = s->next)
-      if (s->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
-	pfkey_sendup(s->socket, packet, 1);
+    for (so = pfkeyv2_sockets; so; so = so->next)
+      if (so->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
+	pfkey_sendup(so->socket, packet, 1);
 
     m_zero(packet);
     m_freem(packet);
@@ -737,44 +737,44 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
       switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
 	case SADB_SATYPE_AH:
-	    if (!ah_enable) {
-		rval = EOPNOTSUPP;
-		goto ret;
-	    }
-	    sa.tdb_sproto = IPPROTO_AH;
-	    break;
-	    
-	case SADB_SATYPE_ESP:
-	    if (!esp_enable) {
-		rval = EOPNOTSUPP;
-		goto ret;
-	    }
-	    sa.tdb_sproto = IPPROTO_ESP;
-	    break;
-
-	case SADB_SATYPE_X_AH_OLD:
-	    if (!ah_enable) {
-		rval = EOPNOTSUPP;
-		goto ret;
-	    }
-	    sa.tdb_sproto = IPPROTO_AH;
-	    break;
-	    
-	case SADB_SATYPE_X_ESP_OLD:
-	    if (!esp_enable) {
-		rval = EOPNOTSUPP;
-		goto ret;
-	    }
-	    sa.tdb_sproto = IPPROTO_ESP;
-	    break;
-
-	case SADB_SATYPE_X_IPIP:
-	    sa.tdb_sproto = IPPROTO_IPIP;
-	    break;
-
-	default: /* Nothing else supported */
+	  if (!ah_enable) {
 	    rval = EOPNOTSUPP;
 	    goto ret;
+	  }
+	  sa.tdb_sproto = IPPROTO_AH;
+	  break;
+	    
+	case SADB_SATYPE_ESP:
+	  if (!esp_enable) {
+	    rval = EOPNOTSUPP;
+	    goto ret;
+	  }
+	  sa.tdb_sproto = IPPROTO_ESP;
+	  break;
+
+	case SADB_SATYPE_X_AH_OLD:
+	  if (!ah_enable) {
+	    rval = EOPNOTSUPP;
+	    goto ret;
+	  }
+	  sa.tdb_sproto = IPPROTO_AH;
+	  break;
+	    
+	case SADB_SATYPE_X_ESP_OLD:
+	  if (!esp_enable) {
+	    rval = EOPNOTSUPP;
+	    goto ret;
+	  }
+	  sa.tdb_sproto = IPPROTO_ESP;
+	  break;
+
+	case SADB_SATYPE_X_IPIP:
+	  sa.tdb_sproto = IPPROTO_IPIP;
+	  break;
+
+	default: /* Nothing else supported */
+	  rval = EOPNOTSUPP;
+	  goto ret;
       }
       
       import_address((struct sockaddr *)&sa.tdb_src,
@@ -799,139 +799,140 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       break;
 
     case SADB_UPDATE:
+      s = spltdb();
       sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
 		   (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 					    sizeof(struct sadb_address)),
 		   SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
       if (sa2 == NULL) {
 	rval = ESRCH;
-	goto ret;
+	goto splxret;
       }
       
       if (sa2->tdb_flags & TDBF_INVALID) {
+	struct tdb *newsa;
+	struct ipsecinit ii;
+	int alg;
+
 	MALLOC(freeme, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
 	bzero(freeme, sizeof(struct tdb));
-
-	{
-	  struct tdb *newsa = (struct tdb *)freeme;
-	  struct ipsecinit ii;
-	  int alg;
-
-	  bzero(&ii, sizeof(struct ipsecinit));
-	  switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
-	      case SADB_SATYPE_AH:
-		  if (!ah_enable) {
-		      rval = EOPNOTSUPP;
-		      goto ret;
-		  }
-		  newsa->tdb_sproto = IPPROTO_AH;
-		  alg = XF_NEW_AH;
-		  break;
+	newsa = (struct tdb *)freeme;
+	bzero(&ii, sizeof(struct ipsecinit));
+	switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
+	  case SADB_SATYPE_AH:
+	    if (!ah_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_AH;
+	    alg = XF_NEW_AH;
+	    break;
 	    
-	      case SADB_SATYPE_ESP:
-		  if (!esp_enable) {
-		      rval = EOPNOTSUPP;
-		      goto ret;
-		  }
-		  newsa->tdb_sproto = IPPROTO_ESP;
-		  alg = XF_NEW_ESP;
-		  break;
+	  case SADB_SATYPE_ESP:
+	    if (!esp_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_ESP;
+	    alg = XF_NEW_ESP;
+	    break;
 
-	      case SADB_SATYPE_X_AH_OLD:
-		  if (!ah_enable) {
-		      rval = EOPNOTSUPP;
-		      goto ret;
-		  }
-		  newsa->tdb_sproto = IPPROTO_AH;
-		  alg = XF_OLD_AH;
-		  break;
-	    
-	      case SADB_SATYPE_X_ESP_OLD:
-		  if (!esp_enable) {
-		      rval = EOPNOTSUPP;
-		      goto ret;
-		  }
-		  newsa->tdb_sproto = IPPROTO_ESP;
-		  alg = XF_OLD_ESP;
-		  break;
+	  case SADB_SATYPE_X_AH_OLD:
+	    if (!ah_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_AH;
+	    alg = XF_OLD_AH;
+	    break;
 
-	      case SADB_SATYPE_X_IPIP:
-		  newsa->tdb_sproto = IPPROTO_IPIP;
-		  alg = XF_IP4;
-		  break;
+	  case SADB_SATYPE_X_ESP_OLD:
+	    if (!esp_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_ESP;
+	    alg = XF_OLD_ESP;
+	    break;
+
+	  case SADB_SATYPE_X_IPIP:
+	    newsa->tdb_sproto = IPPROTO_IPIP;
+	    alg = XF_IP4;
+	    break;
 		  
-	      default: /* Nothing else supported */
-		  rval = EOPNOTSUPP;
-		  goto ret;
-	  }
+	  default: /* Nothing else supported */
+	    rval = EOPNOTSUPP;
+	    goto splxret;
+	}
 	  
-	  import_sa(newsa, headers[SADB_EXT_SA], &ii);
-	  import_address((struct sockaddr *)&newsa->tdb_src,
-			 headers[SADB_EXT_ADDRESS_SRC]);
-	  import_address((struct sockaddr *)&newsa->tdb_dst,
-			 headers[SADB_EXT_ADDRESS_DST]);
-	  import_address((struct sockaddr *)&newsa->tdb_proxy,
-			 headers[SADB_EXT_ADDRESS_PROXY]);
+	import_sa(newsa, headers[SADB_EXT_SA], &ii);
+	import_address((struct sockaddr *)&newsa->tdb_src,
+		       headers[SADB_EXT_ADDRESS_SRC]);
+	import_address((struct sockaddr *)&newsa->tdb_dst,
+		       headers[SADB_EXT_ADDRESS_DST]);
+	import_address((struct sockaddr *)&newsa->tdb_proxy,
+		       headers[SADB_EXT_ADDRESS_PROXY]);
 
-	  import_lifetime(newsa, headers[SADB_EXT_LIFETIME_CURRENT], 2);
-	  import_lifetime(newsa, headers[SADB_EXT_LIFETIME_SOFT], 1);
-	  import_lifetime(newsa, headers[SADB_EXT_LIFETIME_HARD], 0);
-	  import_key(&ii, headers[SADB_EXT_KEY_AUTH], 1);
-	  import_key(&ii, headers[SADB_EXT_KEY_ENCRYPT], 0);
-	  import_identity(newsa, headers[SADB_EXT_IDENTITY_SRC], 0);
-	  import_identity(newsa, headers[SADB_EXT_IDENTITY_DST], 1);
+	import_lifetime(newsa, headers[SADB_EXT_LIFETIME_CURRENT], 2);
+	import_lifetime(newsa, headers[SADB_EXT_LIFETIME_SOFT], 1);
+	import_lifetime(newsa, headers[SADB_EXT_LIFETIME_HARD], 0);
+	import_key(&ii, headers[SADB_EXT_KEY_AUTH], 1);
+	import_key(&ii, headers[SADB_EXT_KEY_ENCRYPT], 0);
+	import_identity(newsa, headers[SADB_EXT_IDENTITY_SRC], 0);
+	import_identity(newsa, headers[SADB_EXT_IDENTITY_DST], 1);
 
-	  headers[SADB_EXT_KEY_AUTH] = NULL;
-	  headers[SADB_EXT_KEY_ENCRYPT] = NULL;
+	headers[SADB_EXT_KEY_AUTH] = NULL;
+	headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 
-	  rval = tdb_init(newsa, alg, &ii);
-	  if (rval) {
-	    rval = EINVAL;
-	    tdb_delete(freeme, 0);
-	    freeme = NULL;
-	    goto ret;
-	  }
-	  newsa->tdb_flow = sa2->tdb_flow;
-	  newsa->tdb_cur_allocations = sa2->tdb_cur_allocations;
-	  for (flow = newsa->tdb_flow; flow != NULL; flow = flow->flow_next)
-	    flow->flow_sa = newsa;
-	  sa2->tdb_flow = NULL;
+	rval = tdb_init(newsa, alg, &ii);
+	if (rval) {
+	  rval = EINVAL;
+	  tdb_delete(freeme, 0, TDBEXP_TIMEOUT);
+	  freeme = NULL;
+	  goto splxret;
+	}
+	newsa->tdb_flow = sa2->tdb_flow;
+	newsa->tdb_cur_allocations = sa2->tdb_cur_allocations;
+	for (flow = newsa->tdb_flow; flow != NULL; flow = flow->flow_next)
+	  flow->flow_sa = newsa;
+	sa2->tdb_flow = NULL;
+
+	tdb_delete(sa2, 0, TDBEXP_TIMEOUT);
+	puttdb((struct tdb *) freeme);
+	sa2 = freeme = NULL;
+      } else {
+	if (headers[SADB_EXT_ADDRESS_PROXY] ||
+	    headers[SADB_EXT_KEY_AUTH] ||
+	    headers[SADB_EXT_KEY_ENCRYPT] ||
+	    headers[SADB_EXT_IDENTITY_SRC] ||
+	    headers[SADB_EXT_IDENTITY_DST] ||
+	    headers[SADB_EXT_SENSITIVITY]) {
+	  rval = EINVAL;
+	  goto splxret;
 	}
 
-	 tdb_delete(sa2, 0);
-	 puttdb((struct tdb *) freeme);
-	 sa2 = freeme = NULL;
-      } else {
-	  if (headers[SADB_EXT_ADDRESS_PROXY] ||
-	      headers[SADB_EXT_KEY_AUTH] ||
-	      headers[SADB_EXT_KEY_ENCRYPT] ||
-	      headers[SADB_EXT_IDENTITY_SRC] ||
-	      headers[SADB_EXT_IDENTITY_DST] ||
-	      headers[SADB_EXT_SENSITIVITY]) {
-	    rval = EINVAL;
-	    goto ret;
-	  }
-
-	  import_sa(sa2, headers[SADB_EXT_SA], NULL);
-	  import_lifetime(sa2, headers[SADB_EXT_LIFETIME_CURRENT], 2);
-	  import_lifetime(sa2, headers[SADB_EXT_LIFETIME_SOFT], 1);
-	  import_lifetime(sa2, headers[SADB_EXT_LIFETIME_HARD], 0);
+	import_sa(sa2, headers[SADB_EXT_SA], NULL);
+	import_lifetime(sa2, headers[SADB_EXT_LIFETIME_CURRENT], 2);
+	import_lifetime(sa2, headers[SADB_EXT_LIFETIME_SOFT], 1);
+	import_lifetime(sa2, headers[SADB_EXT_LIFETIME_HARD], 0);
       }
+      splx(s);
       break;
 
     case SADB_ADD:
+      s = spltdb();
       sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
 		   (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 					    sizeof(struct sadb_address)),
 		   SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
       if (sa2 != NULL) {
 	rval = EEXIST;
-	goto ret;
+	goto splxret;
       }
       if (((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_state !=
 	  SADB_SASTATE_MATURE) {
 	rval = EINVAL;
-	goto ret;
+	goto splxret;
       }
 
       MALLOC(freeme, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
@@ -944,50 +945,50 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	bzero(&ii, sizeof(struct ipsecinit));
 	switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
-	    case SADB_SATYPE_AH:
-		if (!ah_enable) {
-		    rval = EOPNOTSUPP;
-		    goto ret;
-		}
-		newsa->tdb_sproto = IPPROTO_AH;
-		alg = XF_NEW_AH;
-		break;
+	  case SADB_SATYPE_AH:
+	    if (!ah_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_AH;
+	    alg = XF_NEW_AH;
+	    break;
 	    
-	    case SADB_SATYPE_ESP:
-		if (!esp_enable) {
-		    rval = EOPNOTSUPP;
-		    goto ret;
-		}
-		newsa->tdb_sproto = IPPROTO_ESP;
-		alg = XF_NEW_ESP;
-		break;
-		
-	    case SADB_SATYPE_X_AH_OLD:
-		if (!ah_enable) {
-		    rval = EOPNOTSUPP;
-		    goto ret;
-		}
-		newsa->tdb_sproto = IPPROTO_AH;
-		alg = XF_OLD_AH;
-		break;
-	    
-	    case SADB_SATYPE_X_ESP_OLD:
-		if (!esp_enable) {
-		    rval = EOPNOTSUPP;
-		    goto ret;
-		}
-		newsa->tdb_sproto = IPPROTO_ESP;
-		alg = XF_OLD_ESP;
-		break;
+	  case SADB_SATYPE_ESP:
+	    if (!esp_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_ESP;
+	    alg = XF_NEW_ESP;
+	    break;
 
-	    case SADB_SATYPE_X_IPIP:
-		newsa->tdb_sproto = IPPROTO_IPIP;
-		alg = XF_IP4;
-		break;
+	  case SADB_SATYPE_X_AH_OLD:
+	    if (!ah_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_AH;
+	    alg = XF_OLD_AH;
+	    break;
+  
+	  case SADB_SATYPE_X_ESP_OLD:
+	    if (!esp_enable) {
+	      rval = EOPNOTSUPP;
+	      goto splxret;
+	    }
+	    newsa->tdb_sproto = IPPROTO_ESP;
+	    alg = XF_OLD_ESP;
+	    break;
 
-	    default: /* Nothing else supported */
-		rval = EOPNOTSUPP;
-		goto ret;
+	  case SADB_SATYPE_X_IPIP:
+	    newsa->tdb_sproto = IPPROTO_IPIP;
+	    alg = XF_IP4;
+	    break;
+
+	  default: /* Nothing else supported */
+	    rval = EOPNOTSUPP;
+	    goto splxret;
 	}
 
 	import_sa(newsa, headers[SADB_EXT_SA], &ii);
@@ -1012,43 +1013,48 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	rval = tdb_init(newsa, alg, &ii);
 	if (rval) {
 	  rval = EINVAL;
-	  tdb_delete(freeme, 0);
+	  tdb_delete(freeme, 0, TDBEXP_TIMEOUT);
 	  freeme = NULL;
-	  goto ret;
+	  goto splxret;
 	}
       }
 
       puttdb((struct tdb *)freeme);
+      splx(s);
       freeme = NULL;
       break;
 
     case SADB_DELETE:
-	sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
-		     (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
-					      sizeof(struct sadb_address)),
-		     SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
-	if (sa2 == NULL) {
-	    rval = ESRCH;
-	    goto ret;
-	}
-      
-	tdb_delete(sa2, ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & SADB_SAFLAGS_X_CHAINDEL);
-	sa2 = NULL;
-	break;
-
-    case SADB_GET:
+      s = spltdb();
       sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
 		   (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 					    sizeof(struct sadb_address)),
 		   SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
       if (sa2 == NULL) {
 	rval = ESRCH;
-	goto ret;
+	goto splxret;
+      }
+      
+      tdb_delete(sa2, ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & SADB_SAFLAGS_X_CHAINDEL, TDBEXP_TIMEOUT);
+      splx(s);
+      sa2 = NULL;
+      break;
+
+    case SADB_GET:
+      s = spltdb();
+      sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
+		   (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
+					    sizeof(struct sadb_address)),
+		   SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
+      if (sa2 == NULL) {
+	rval = ESRCH;
+	goto splxret;
       }
       
       rval = pfkeyv2_get(sa2, headers, &freeme);
       if (rval)
 	mode = PFKEYV2_SENDMESSAGE_UNICAST;
+      splx(s);
       break;
 
     case SADB_REGISTER:
@@ -1137,13 +1143,14 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    goto ret;
 	}
 
+	s = spltdb();
 	if (!delflag)
 	{
 	    sa2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi, (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address)), SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 
 	    if (sa2 == NULL) {
 		rval = ESRCH;
-		goto ret;
+		goto splxret;
 	    }
 	}
 
@@ -1173,7 +1180,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    ((delflag && (flow == NULL)) || (!delflag && (flow != NULL))))
 	{
 	    rval = delflag ? ESRCH : EEXIST;
-	    goto ret;
+	    goto splxret;
 	}
 
 	/* Check for 0.0.0.0/255.255.255.255 if the flow is local */
@@ -1190,7 +1197,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		 (!delflag && (flow2 != NULL))))
 	    {
 		rval = delflag ? ESRCH : EEXIST;
-		goto ret;
+		goto splxret;
 	    }
 	}
 
@@ -1280,7 +1287,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		delete_flow(flow, sa2);
 		if (flow2)
 		  delete_flow(flow2, sa2);
-		goto ret;
+		goto splxret;
 	    }
 
 	    ipsec_in_use++;
@@ -1303,7 +1310,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    delete_flow(flow, sa2);
 		    if (flow2)
 		      delete_flow(flow2, sa2);
-		    goto ret;
+		    goto splxret;
 		}
 		ipsec_in_use++;
 	    }
@@ -1313,7 +1320,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		delete_flow(flow, sa2);
 		if (flow2)
 		  delete_flow(flow2, sa2);
-		goto ret;
+		goto splxret;
 	    }
 
 	    sa2->tdb_cur_allocations++;
@@ -1357,7 +1364,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    delete_flow(flow, sa2);
 		    delete_flow(flow2, sa2);
 		    ipsec_in_use--;
-		    goto ret;
+		    goto splxret;
 		}
 
 		ipsec_in_use++;
@@ -1387,7 +1394,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			if (old_flow)
 			  delete_flow(old_flow, old_flow->flow_sa);
 			delete_flow(flow2, sa2);
-			goto ret;
+			goto splxret;
 		    }
 	            ipsec_in_use++;
 		}
@@ -1402,7 +1409,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    if (old_flow)
 		      delete_flow(old_flow, old_flow->flow_sa);
 		    delete_flow(flow2, sa2);
-		    goto ret;
+		    goto splxret;
 		}
 
 		sa2->tdb_cur_allocations++;
@@ -1423,8 +1430,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		(sa2->tdb_cur_allocations > sa2->tdb_exp_allocations)) {
 		/* XXX expiration notification */
 
-		tdb_delete(sa2, 0);
-		break;
+		tdb_delete(sa2, 0, TDBEXP_TIMEOUT);
 	    } else 
 	      if ((sa2->tdb_flags & TDBF_SOFT_ALLOCATIONS) &&
 		  (sa2->tdb_cur_allocations > sa2->tdb_soft_allocations)) {
@@ -1433,30 +1439,31 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	      }
 	}
     }
-
-     break;
+    splx(s);
+    break;
 	
     case SADB_X_GRPSPIS:
     {
 	struct tdb *tdb1, *tdb2, *tdb3;
-	
+
+	s = spltdb();
 	tdb1 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
-		     (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
-					      sizeof(struct sadb_address)),
-		     SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
+		      (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
+					       sizeof(struct sadb_address)),
+		      SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 	if (tdb1 == NULL) {
 	    rval = ESRCH;
-	    goto ret;
+	    goto splxret;
 	}
 
 	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_X_SA2])->sadb_sa_spi,
-		     (union sockaddr_union *)(headers[SADB_EXT_X_DST2] +
-					      sizeof(struct sadb_address)),
-		     SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto));
+		      (union sockaddr_union *)(headers[SADB_EXT_X_DST2] +
+					       sizeof(struct sadb_address)),
+		      SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto));
 
 	if (tdb2 == NULL) {
 	    rval = ESRCH;
-	    goto ret;
+	    goto splxret;
 	}
 
 	/* Detect cycles */
@@ -1464,7 +1471,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  if (tdb3 == tdb1)
 	  {
 	      rval = ESRCH;
-	      goto ret;
+	      goto splxret;
 	  }
 
 	/* Maintenance */
@@ -1479,27 +1486,28 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	/* Link them */
 	tdb1->tdb_onext = tdb2;
 	tdb2->tdb_inext = tdb1;
+	splx(s);   
     }
-       
-	break;
+    break;
 	
     case SADB_X_BINDSA:
     {
 	struct tdb *tdb1, *tdb2;
-	
+
+	s = spltdb();
 	tdb1 = gettdb(((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_spi,
 		     (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
 					      sizeof(struct sadb_address)),
 		     SADB_GETSPROTO(((struct sadb_msg *)headers[0])->sadb_msg_satype));
 	if (tdb1 == NULL) {
 	    rval = ESRCH;
-	    goto ret;
+	    goto splxret;
 	}
 
 	if (TAILQ_FIRST(&tdb1->tdb_bind_in)) {
 	    /* Incoming SA has not list of referencing incoming SAs */
 	    rval = EINVAL;
-	    goto ret;
+	    goto splxret;
 	}
 
 	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_X_SA2])->sadb_sa_spi,
@@ -1509,13 +1517,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	if (tdb2 == NULL) {
 	    rval = ESRCH;
-	    goto ret;
+	    goto splxret;
 	}
 
 	if (tdb2->tdb_bind_out) {
 	    /* Outgoing SA has no pointer to an outgoing SA */
 	    rval = EINVAL;
-	    goto ret;
+	    goto splxret;
 	}
 
 	/* Maintenance */
@@ -1527,8 +1535,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	tdb1->tdb_bind_out = tdb2;
 	TAILQ_INSERT_TAIL(&tdb2->tdb_bind_in, tdb1, tdb_bind_in_next);
     }
-       
-	break;
+    splx(s);
+    break;
 	
     case SADB_X_PROMISC:
       if (len >= 2 * sizeof(struct sadb_msg)) {
@@ -1537,12 +1545,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	if ((rval = pfdatatopacket(message, len, &packet)) != 0)
 	  goto ret;
 
-	for (s = pfkeyv2_sockets; s; s = s->next)
-	  if ((s != pfkeyv2_socket) &&
+	for (so = pfkeyv2_sockets; so; so = so->next)
+	  if ((so != pfkeyv2_socket) &&
 	      (!((struct sadb_msg *)headers[0])->sadb_msg_seq ||
 	       (((struct sadb_msg *)headers[0])->sadb_msg_seq ==
 		pfkeyv2_socket->pid)))
-	    pfkey_sendup(s->socket, packet, 1);
+	    pfkey_sendup(so->socket, packet, 1);
 
 	m_freem(packet);
       } else {
@@ -1602,6 +1610,10 @@ realret:
   free(message, M_TEMP);
 
   return rval;
+
+ splxret:
+  splx(s);
+  goto ret;
 }
 
 int

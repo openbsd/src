@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.22 1999/05/14 23:36:17 niklas Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.23 1999/05/16 21:48:33 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -178,7 +178,7 @@ esp_input(m, va_alist)
     if (tdbp->tdb_first_use == 0)
     {
 	tdbp->tdb_first_use = time.tv_sec;
-	tdb_expiration(tdbp, 0);
+	tdb_expiration(tdbp, TDBEXP_TIMEOUT);
     }
     
     ipn = *ipo;
@@ -238,6 +238,8 @@ esp_input(m, va_alist)
     if (ipo->ip_p == IPPROTO_TCP || ipo->ip_p == IPPROTO_UDP)
     {
 	struct tdb_ident *tdbi = NULL;
+	int s = spltdb();
+
 	if (tdbp->tdb_bind_out)
 	{
 	    tdbi = m->m_pkthdr.tdbi;
@@ -258,6 +260,7 @@ esp_input(m, va_alist)
 
     no_mem:
 	m->m_pkthdr.tdbi = tdbi;
+	splx(s);
     } else
         m->m_pkthdr.tdbi = NULL;
 

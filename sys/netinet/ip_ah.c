@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.22 1999/05/14 23:36:16 niklas Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.23 1999/05/16 21:48:30 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -179,7 +179,7 @@ ah_input(m, va_alist)
     if (tdbp->tdb_first_use == 0)
     {
 	tdbp->tdb_first_use = time.tv_sec;
-	tdb_expiration(tdbp, 0);
+	tdb_expiration(tdbp, TDBEXP_TIMEOUT);
     }
     
     ipn = *ipo;
@@ -239,6 +239,8 @@ ah_input(m, va_alist)
     if (ipo->ip_p == IPPROTO_TCP || ipo->ip_p == IPPROTO_UDP)
     {
 	struct tdb_ident *tdbi = NULL;
+	int s = spltdb();
+
 	if (tdbp->tdb_bind_out)
 	{
 	    tdbi = m->m_pkthdr.tdbi;
@@ -259,6 +261,7 @@ ah_input(m, va_alist)
 
     no_mem:
 	m->m_pkthdr.tdbi = tdbi;
+	splx(s);
     } else
         m->m_pkthdr.tdbi = NULL;
 

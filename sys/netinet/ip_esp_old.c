@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.33 1999/05/12 22:58:48 ho Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.34 1999/05/16 21:48:33 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -292,7 +292,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, 0);
+	  tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
 	  m_freem(m);
 	  return NULL;
       }
@@ -608,7 +608,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
     {
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb, 0);
+	tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
 	m_freem(m);
 	return EINVAL;
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.25 1999/03/24 17:00:44 niklas Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.26 1999/05/16 21:48:31 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -274,7 +274,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, 0);
+	  tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
 	  m_freem(m);
 	  return NULL;
       }
@@ -501,7 +501,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, 0);
+	  tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
 	  m_freem(m);
 	  return EINVAL;
       }
