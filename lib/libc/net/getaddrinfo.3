@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.23 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.24 2003/07/27 15:34:03 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -67,16 +67,16 @@ The
 structure is defined as a result of including the
 .Aq Pa netdb.h
 header:
-.Bd -literal -offset
-struct addrinfo {                                                  *
-     int     ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
-     int     ai_family;    /* PF_xxx */
-     int     ai_socktype;  /* SOCK_xxx */
-     int     ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
-     size_t  ai_addrlen;   /* length of ai_addr */
-     char   *ai_canonname; /* canonical name for nodename */
-     struct sockaddr  *ai_addr; /* binary address */
-     struct addrinfo  *ai_next; /* next structure in linked list */
+.Bd -literal
+struct addrinfo {
+	int ai_flags;		/* input flags */
+	int ai_family;		/* protocol family for socket */
+	int ai_socktype;	/* socket type */
+	int ai_protocol;	/* protocol for socket */
+	socklen_t ai_addrlen;	/* length of socket-address */
+	struct sockaddr *ai_addr; /* socket-address for socket */
+	char *ai_canonname;	/* canonical name for service location */
+	struct addrinfo *ai_next; /* pointer to next in list */
 };
 .Ed
 .Pp
