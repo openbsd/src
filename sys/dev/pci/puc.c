@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.1 1999/10/26 13:06:14 downsj Exp $	*/
+/*	$OpenBSD: puc.c,v 1.2 1999/11/14 01:27:57 downsj Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -171,11 +171,11 @@ puc_attach(parent, self, aux)
 		return;
 	}
 
-	printf(": %s (", sc->sc_desc->name);
+	printf(": ");
 	for (i = 0; PUC_PORT_VALID(sc->sc_desc, i); i++)
 		printf("%s%s", i ? ", " : "",
 		    puc_port_type_name(sc->sc_desc->ports[i].type));
-	printf(")\n");
+	printf("\n");
 
 	/*
 	 * XXX This driver assumes that 'com' ports attached to it
@@ -318,8 +318,11 @@ puc_find_description(vend, prod, svend, sprod)
 
 #define checkreg(val, index) \
     (((val) & puc_devices[i].rmask[(index)]) == puc_devices[i].rval[(index)])
+#define pucdevdone(idx) \
+    (puc_devices[idx].rval[0] == 0 && puc_devices[idx].rval[1] == 0 \
+	&& puc_devices[idx].rval[2] == 0 && puc_devices[idx].rval[3] == 0)
 
-	for (i = 0; puc_devices[i].name != NULL; i++) {
+	for (i = 0; !pucdevdone(i); i++) {
 		if (checkreg(vend, PUC_REG_VEND) &&
 		    checkreg(prod, PUC_REG_PROD) &&
 		    checkreg(svend, PUC_REG_SVEND) &&
@@ -327,6 +330,7 @@ puc_find_description(vend, prod, svend, sprod)
 			return (&puc_devices[i]);
 	}
 
+#undef devdone
 #undef checkreg
 
 	return (NULL);
