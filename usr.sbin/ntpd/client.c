@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.32 2004/08/16 11:14:15 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.33 2004/09/14 22:01:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,6 +96,7 @@ int
 client_nextaddr(struct ntp_peer *p)
 {
 	close(p->query->fd);
+	p->query->fd = -1;
 
 	if (p->addr_head.a == NULL) {
 		ntp_host_dns(p->addr_head.name, p->id);
