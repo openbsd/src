@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.59 1999/03/04 00:00:13 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.60 1999/03/07 22:42:42 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -119,16 +119,16 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
-isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-scsibus* at isp?
+#isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+#scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 scsibus* at adv?
-#adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
-#scsibus* at adw?
+adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
+scsibus* at adw?
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
@@ -194,8 +194,8 @@ xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
-#mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
-#vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 
 # Media Independent Interface (mii) drivers
