@@ -1,5 +1,5 @@
-/*	$OpenBSD: stat.h,v 1.2 1996/02/29 13:57:29 niklas Exp $	*/
-/*	$NetBSD: stat.h,v 1.17 1995/06/15 23:08:08 cgd Exp $	*/
+/*	$OpenBSD: stat.h,v 1.3 1996/05/22 11:40:30 deraadt Exp $	*/
+/*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/time.h>
 
-#ifndef _POSIX_SOURCE
+#ifdef _KERNEL
 struct ostat {
 	u_int16_t st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
@@ -64,7 +64,7 @@ struct ostat {
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
-#endif /* !_POSIX_SOURCE */
+#endif /* !_KERNEL */
 
 struct stat {
 	dev_t	  st_dev;		/* inode's device */
