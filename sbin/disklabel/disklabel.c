@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.22 1996/10/01 09:23:38 maja Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.23 1996/10/04 07:24:58 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.22 1996/10/01 09:23:38 maja Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.23 1996/10/04 07:24:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -384,7 +384,7 @@ writelabel(f, boot, lp)
 		 * otherwise we reject the request as meaningless. -wfj
 		 */
 		if (dosdp && pp->p_size &&
-		    (dosdp->dp_typ == DOSPTYP_386BSD ||
+		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 		    dosdp->dp_typ == DOSPTYP_386BSD)) {
 		        sectoffset = dosdp->dp_start * lp->d_secsize;
 		} else {
@@ -482,7 +482,7 @@ writelabel(f, boot, lp)
 		/*
 		 * Output the remainder of the disklabel
 		 */
-		if (bootbuf && write(f, bootbuf, bootsize) != bootsize) {
+		if (!donothing && bootbuf && write(f, bootbuf, bootsize) != bootsize) {
 			perror("write");
 			return(1);
 		}
