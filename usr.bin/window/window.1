@@ -1,4 +1,4 @@
-.\"	$OpenBSD: window.1,v 1.18 2003/09/04 22:14:43 jmc Exp $
+.\"	$OpenBSD: window.1,v 1.19 2005/04/02 22:59:41 jmc Exp $
 .\"	$NetBSD: window.1,v 1.3 1995/09/28 10:35:05 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -41,11 +41,9 @@
 .Nd window environment
 .Sh SYNOPSIS
 .Nm window
-.Op Fl t
-.Op Fl f
-.Op Fl d
-.Op Fl e Ar escape-char
+.Op Fl dft
 .Op Fl c Ar command
+.Op Fl e Ar escape-char
 .Sh DESCRIPTION
 .Nm
 implements a window environment on
@@ -79,13 +77,11 @@ the terminal screen are created by default.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl t
-Turn on terse mode (see the
-.Ic terse
-command below).
-.It Fl f
-Fast.
-Don't perform any startup action.
+.It Fl c Ar command
+Execute the string
+.Ar command
+as a long command (see below)
+before doing anything else.
 .It Fl d
 Ignore
 .Pa .windowrc
@@ -101,11 +97,13 @@ where
 .Ar X
 is any character, meaning
 .No control\- Ns Ar X .
-.It Fl c Ar command
-Execute the string
-.Ar command
-as a long command (see below)
-before doing anything else.
+.It Fl f
+Fast.
+Don't perform any startup action.
+.It Fl t
+Turn on terse mode (see the
+.Ic terse
+command below).
 .El
 .Pp
 Windows can overlap and are framed as necessary.
@@ -429,8 +427,7 @@ an expression on the next line, terminate the first line with
 .Nm
 has a single control structure:
 the fully bracketed if statement in the form
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 if <expr> then
 \t<statement>
 \t...

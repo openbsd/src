@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2003/06/10 22:20:54 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2005/04/02 22:59:41 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1996/02/08 20:45:01 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2003/06/10 22:20:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2005/04/02 22:59:41 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ bad:
 
 usage(void)
 {
-	fprintf(stderr, "Usage: window [-e escape-char] [-c command] [-t] [-f] [-d]\n");
+	fprintf(stderr, "Usage: window [-dft] [-c command] [-e escape-char]\n");
 	exit(1);
 	return 0;			/* for lint */
 }
