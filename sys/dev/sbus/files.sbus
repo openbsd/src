@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.17 2002/06/03 02:32:06 jason Exp $
+#	$OpenBSD: files.sbus,v 1.18 2002/06/04 19:42:53 jason Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -51,6 +51,10 @@ file	dev/sbus/cs4231.c		audiocs
 
 attach	isp at sbus with isp_sbus
 file	dev/sbus/isp_sbus.c		isp_sbus
+
+device	bwtwo: wsemuldisplaydev, rasops1, wsemul_sun
+attach	bwtwo at sbus
+file	dev/sbus/bwtwo.c		bwtwo
 
 device	cgsix: wsemuldisplaydev, rasops8, wsemul_sun
 attach	cgsix at sbus
