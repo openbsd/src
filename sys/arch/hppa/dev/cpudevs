@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.18 2001/03/20 08:15:22 mickey Exp $
+$OpenBSD: cpudevs,v 1.19 2002/03/06 20:19:21 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -315,15 +315,15 @@ fpu	TYCO	0x03	Sterling I MIU (TYCO)
 fpu	ROC	0x04	Sterling I MIU (ROC w/Weitek)
 fpu	FPCW	0x06	FPC (NMOS-III w/Weitek)
 fpu	FPCB	0x07	FPC (NMOS-III w/Bit)
-fpu	PCXS	0x08	PCX-S (Timex-II)
-fpu	PCXT	0x09	PCX-T (Rolex - CMOS-26B)
+fpu	PCXS	0x08	PCXS (Timex-II)
+fpu	PCXT	0x09	PCXT (Rolex - CMOS-26B)
 fpu	HARP	0x0a	HARP-I
 fpu	TORNADO	0x0b	Tornado
 fpu	PA50	0x0c	PA-50 (Hitachi)
-fpu	PCXL	0x0d	PCX-L (CMOS-26B)
-fpu	PCXU	0x0e	PCX-U/PCX-U+
+fpu	PCXL	0x0d	PCXL (CMOS-26B)
+fpu	PCXU	0x0e	PCXU/PCXU+
 fpu	VR	0x0f	VR
-fpu	PCXW	0x10	PCX-W
+fpu	PCXW	0x10	PCXW
 
 nproc	HPPA	4	PA-RISC
 
