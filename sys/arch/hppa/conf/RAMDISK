@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2003/01/31 22:56:01 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2003/02/11 19:48:15 miod Exp $
 #
 # Diskless kernel config
 #
@@ -70,16 +70,10 @@ option	EISAVERBOSE
 
 # GSC devices
 
-#hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
-#hkbd*	at hil? code 0	# keyboard
-#hilnmi0 at hil? irq 2	# double-break on hil keyboard
-#tb*	at hil? code 1	# graphics tablet
-#hms*	at hil? code 2	# mouse, 3b mouse, 3b trackball, 3b quadrature mouse
-#knob*	at hil? code 3	# knob
-#bbox*	at hil? code 4	# 32 button box
-#dizer*	at hil? code 5	# A & B size digitizers
-#crsr*	at hil? code 6	# cursor for digitizer
-#qbox*	at hil? code 7	# quadrature
+hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
+hilkbd*	at hil?		# keyboard, knob and buttons
+#hilms*	at hil?		# mouse and tablets
+#hilid*	at hil?		# ID module
 
 #medusa* at gsc? irq 4	# FDDI
 
@@ -101,9 +95,8 @@ scsibus* at osiop?
 #audio*	at aone?
 #harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
 #audio*	at harmony?
-#gsckbc*	at gsc? irq 26
-#gsckbd*	at gsckbc?	# PS/2 keyboard
-#wskbd*	at gsckbd?
+gsckbc*	at gsc? irq 26
+gsckbd*	at gsckbc?	# PS/2 keyboard
 #fdc*	at gsc?		# PC floppy controller (WD37C65C)
 #option	FD_DEBUG
 
@@ -125,10 +118,10 @@ scsibus* at osiop?
 
 # MI devices
 #wsdisplay*	at vgafb?
-#wsdisplay*	at sti?
-#wskbd*		at pckbd?
-#wskbd*		at hkbd?
-#wsmouse*	at pms?
+wsdisplay*	at sti?
+wskbd*		at gsckbd?
+wskbd*		at hilkbd?
+#wsmouse*	at gscms?
 #wsmouse*	at hms?
 
 #fd*	at fdc?	drive ?	# floppy drives

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.40 2003/02/01 21:32:30 miod Exp $
+#	$OpenBSD: files.hppa,v 1.41 2003/02/11 19:48:15 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -50,6 +50,11 @@ include "dev/eisa/files.eisa"
 # PCI Bus support
 #
 include "dev/pci/files.pci"
+
+#
+# HIL Human Interface Loop devices
+#
+include "dev/hil/files.hil"
 
 #
 # Gonzo System Connect Bus
@@ -149,9 +154,8 @@ file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
 attach	osiop at gsc with osiop_gsc
 file	arch/hppa/gsc/osiop_gsc.c	osiop_gsc
 
-device	hil: tty
-attach	hil at gsc
-file	arch/hppa/gsc/hil.c		hil
+attach	hil at gsc with hil_gsc
+file	arch/hppa/gsc/hil_gsc.c		hil_gsc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
 device	aone: audio, mulaw, auconv
