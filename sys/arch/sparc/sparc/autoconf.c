@@ -479,8 +479,13 @@ bootpath_fake(bp, cp)
 				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
 				return;
 			case SUN4_100:
-				BP_APPEND(bp,"obio",-1,0);
-				BP_APPEND(bp,"sw",-1,v0val[0]);
+				if (v0val[0] == 0) {
+					BP_APPEND(bp,"obio",-1,0);
+					BP_APPEND(bp,"sw",-1,v0val[0]);
+				} else {
+					BP_APPEND(bp,"obio",-1,0);
+					BP_APPEND(bp,"si",-1,v0val[0]-1);
+				}
 				sprintf(tmpname,"%c%c", cp[0], cp[1]);
 				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
 				return;
