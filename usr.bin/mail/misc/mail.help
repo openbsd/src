@@ -1,23 +1,37 @@
-    Mail   Commands
-t <message list>		type messages
-n				goto and type next message
-e <message list>		edit messages
-f <message list>		give head lines of messages
-d <message list>		delete messages
-s <message list> file		append messages to file
-u <message list>		undelete messages
-R <message list>		reply to message senders
-r <message list>		reply to message senders and all recipients
-pre <message list>		make messages go back to /var/mail
-m <user list>			mail to specific users
-q				quit, saving unresolved messages in mbox
-x				quit, do not remove system mailbox
-h				print out active message headers
-!				shell escape
+Mail Command			Description
+-------------------------	--------------------------------------------
+t [message list]		type message(s).
+n				goto and type next message.
+e [message list]		edit message(s).
+f [message list]		give head lines of messages.
+d [message list]		delete message(s).
+s [message list] <file>		append message(s) to file.
+u [message list]		undelete message(s).
+R [message list]		reply to message sender(s).
+r [message list]		reply to message sender(s) and all recipients.
+p [message list]		print message list (pipe to lpr).
+pre [message list]		make messages go back to /var/mail.
+m <recipient list>		mail to specific recipient(s).
+q				quit, saving unresolved messages in mbox.
+x				quit, do not remove system mailbox.
+h				print out active message headers.
+!				shell escape.
+| [msglist] command		pipe message(s) to shell command.
+pi [msglist] command		pipe message(s) to shell command.
 cd [directory]			chdir to directory or home if none given
+fi <file>			switch to file (%=system inbox, %user=user's
+				system inbox).  + searches in your folder
+				directory for the file.
+set variable[=value]		set Mail variable.
 
-A <message list> consists of integers, ranges of same, or user names separated
-by spaces.  If omitted, Mail uses the last message typed.
+A [message list] consists of integers, ranges of same, :status, /subject, or
+user names separated by spaces.  If omitted, Mail uses the current message.
+The pipe command doesn't accept user names or subject message list, since
+that might conflict with the command string.
 
-A <user list> consists of user names or aliases separated by spaces.
-Aliases are defined in .mailrc in your home directory.
+A <recipient list> consists of recipient addresses or aliases separated by
+spaces.  Aliases are defined in .mailrc in your home directory.
+
+<file> is a full or relative pathname, +folder, % (system inbox), %user
+(specified user's syetem inbox), # (previous file), & (mbox file), or an
+expression understood by ${SHELL:-/bin/sh} -c 'echo ...'.
