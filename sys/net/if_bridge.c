@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.30 2000/05/25 00:30:27 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.31 2000/06/02 00:36:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1102,6 +1102,7 @@ bridge_input(ifp, eh, m)
 				bridge_rtupdate(sc,
 				    (struct ether_addr *)&eh->ether_dhost,
 				    ifp, 0, IFBAF_DYNAMIC);
+			m->m_pkthdr.rcvif = ifl->ifp;
 			return (m);
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0) {

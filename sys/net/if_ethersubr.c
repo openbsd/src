@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.35 2000/04/26 19:03:11 chris Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.36 2000/06/02 00:36:41 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -595,6 +595,7 @@ ether_input(ifp, eh, m)
 		if (m == NULL)
 			return;
 		/* The bridge has determined it's for us. */
+		ifp = m->m_pkthdr.rcvif;
 		goto decapsulate;
 	}
 #endif
