@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.1 2000/06/30 03:28:07 art Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.2 2000/07/12 18:45:17 art Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -697,6 +697,7 @@ cs4280_intr(p)
 	struct cs4280_softc *sc = p;
 	u_int32_t intr, mem;
 	char * empty_dma;
+	int handled = 0;
 
 	intr = BA0READ4(sc, CS4280_HISR);
 
@@ -707,6 +708,7 @@ cs4280_intr(p)
 	
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
+		handled = 1;
 		mem = BA1READ4(sc, CS4280_PFIE);
 		BA1WRITE4(sc, CS4280_PFIE, (mem & ~PFIE_PI_MASK) | PFIE_PI_DISABLE);
 		if (sc->sc_pintr) {
@@ -730,7 +732,8 @@ cs4280_intr(p)
 	if (intr & HISR_CINT) {
 		int  i;
 		int16_t rdata;
-		
+
+		handled = 1;
 		mem = BA1READ4(sc, CS4280_CIE);
 		BA1WRITE4(sc, CS4280_CIE, (mem & ~CIE_CI_MASK) | CIE_CI_DISABLE);
 		++sc->sc_ri;
@@ -792,6 +795,7 @@ cs4280_intr(p)
 	if (intr & HISR_MIDI) {
 		int data;
 
+		handled = 1;
 		DPRINTF(("i: %d: ", 
 			 BA0READ4(sc, CS4280_MIDSR)));
 		/* Read the received data */
@@ -825,7 +829,7 @@ cs4280_intr(p)
 #endif
 	/* Throw EOI */
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
-	return (0);
+	return handled;
 }
 
 
@@ -1822,7 +1826,7 @@ cs4280_power(why, v)
 		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
 			if(i == 0x04) /* AC97_REG_MASTER_TONE */
 				continue;
-			cs4280_write_codec(sc, 2*i, sc->ac97_reg[i]);
+			cs4280_write_codec(sc, 2*i, sc->ac97_reg[i>>1]);
 		}
 	}
 }
