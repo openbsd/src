@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.11 2004/09/20 11:04:23 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.12 2004/09/20 15:43:35 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -96,8 +96,8 @@
 /*
  *  R5000 config register bits.
  */
-#define	CF_5_SC		(1 << 17)	/* Secondary cache not present */
 #define	CF_5_SE		(1 << 12)	/* Secondary cache enable */
+#define	CF_5_SC		(1 << 17)	/* Secondary cache not present */
 #define	CF_5_SS		(3 << 20)	/* Secondary cache size */
 #define	CF_5_SS_AL	20		/* Shift to align */
 
@@ -255,7 +255,7 @@ Conf52K:					# R5200 type, check for L2 cache
 	srl	t1, CF_52_SS_AL
 
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	li	t3, CF_5_SE			# Set SE in conf
+	li	t3, CF_52_SE			# Set SE in conf
 	or	v0, t3				# Update config register
 	li	ta2, 512*1024			# 512k per 'click'.
 	sll	ta2, t1
