@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.46 1998/03/14 15:56:43 maja Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.47 1998/03/14 16:17:05 maja Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -400,6 +400,12 @@ html
 
 # ./usr/share/doc/html/lynx_help
 lynx_html
+
+# ./usr/share/doc/html/lynx_help/keystrokes
+keystrokes
+# ./usr/share/doc/html/lynx_help/keystrokes
+..
+
 # ./usr/share/doc/html/lynx_help
 ..
 
