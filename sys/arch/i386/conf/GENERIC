@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.275 2001/10/04 22:01:23 gluk Exp $
+#	$OpenBSD: GENERIC,v 1.276 2001/10/05 19:11:48 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -335,6 +335,7 @@ sk*	at skc?					#  each port of above
 wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
+bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
