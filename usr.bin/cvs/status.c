@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.4 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: status.c,v 1.5 2004/12/14 22:30:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,9 +64,8 @@ int
 cvs_status(int argc, char **argv)
 {
 	int i, ch, flags;
-	struct cvs_file *cf;
+	struct cvsroot *root;
 
-	cf = NULL;
 	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
 
 	while ((ch = getopt(argc, argv, "F:flm:Rr:")) != -1) {
@@ -80,16 +79,35 @@ cvs_status(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0) {
-		cf = cvs_file_get(".", flags);
-		if (cf == NULL) {
-			return (EX_DATAERR);
-		}
-
-		cvs_file_examine(cf, cvs_status_file, NULL);
+		cvs_files = cvs_file_get(".", flags);
 	} else {
-		for (i = 0; i < argc; i++) {
-			cf = cvs_file_get(argv[i], flags);
-		}
+		cvs_files = cvs_file_getspec(argv, argc, 0);
+	}
+	if (cvs_files == NULL)
+		return (EX_DATAERR);
+
+	root = CVS_DIR_ROOT(cvs_files);
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
+
+	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
+		return (EX_PROTOCOL);
+
+	cvs_file_examine(cvs_files, cvs_status_file, NULL);
+
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
+		for (i = 0; i < argc; i++)
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				return (EX_PROTOCOL);
+		if (cvs_sendreq(root, CVS_REQ_STATUS, NULL) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	return (0);
@@ -104,65 +122,52 @@ cvs_status(int argc, char **argv)
 int
 cvs_status_file(CVSFILE *cfp, void *arg)
 {
+	int ret;
 	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvs_ent *entp;
 	struct cvsroot *root;
 
-	cvs_file_getpath(cfp, fpath, sizeof(fpath));
-	cvs_log(LP_DEBUG, "%s: getting status for %s", __func__, fpath);
-
-	if (cfp->cf_type == DT_DIR) {
-		root = cfp->cf_ddat->cd_root;
-		if ((cfp->cf_parent == NULL) ||
-		    (root != cfp->cf_parent->cf_ddat->cd_root)) {
-			cvs_connect(root);
-		}
-
-		cvs_senddir(root, cfp);
-		return (0);
-	} else
-		root = cfp->cf_parent->cf_ddat->cd_root;
-
+	ret = 0;
 	rf = NULL;
-	if (cfp->cf_parent != NULL)
-		repo = cfp->cf_parent->cf_ddat->cd_repo;
-	else
-		repo = NULL;
+	root = CVS_DIR_ROOT(cfp);
+	repo = CVS_DIR_REPO(cfp);
 
-	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
-		if (root->cr_method == CVS_METHOD_LOCAL)
-			cvs_log(LP_WARN, "I know nothing about %s", fpath);
-		else
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cfp));
-		return (0);
-	}
+	if ((root->cr_method != CVS_METHOD_LOCAL) && (cfp->cf_type == DT_DIR))
+		return (cvs_senddir(root, cfp));
 
+	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 	entp = cvs_ent_getent(fpath);
-	if (entp == NULL)
-		return (-1);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_sendentry(root, entp) < 0) {
+		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
 			cvs_ent_free(entp);
 			return (-1);
 		}
-	}
 
-	if (cfp->cf_cvstat == CVS_FST_UPTODATE) {
-		if (root->cr_method != CVS_METHOD_LOCAL)
-			cvs_sendreq(root, CVS_REQ_UNCHANGED,
+		switch (cfp->cf_cvstat) {
+		case CVS_FST_UNKNOWN:
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
 			    CVS_FILE_NAME(cfp));
-		cvs_ent_free(entp);
-		return (0);
-	}
-
-	/* at this point, the file is modified */
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp));
-		cvs_sendfile(root, fpath);
+			break;
+		case CVS_FST_UPTODATE:
+			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
+			    CVS_FILE_NAME(cfp));
+			break;
+		case CVS_FST_MODIFIED:
+			ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
+			    CVS_FILE_NAME(cfp));
+			if (ret == 0)
+				ret = cvs_sendfile(root, fpath);
+		default:
+			break;
+		}
 	} else {
+		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
+			cvs_log(LP_WARN, "I know nothing about %s", fpath);
+			return (0);
+		}
+
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
 
@@ -174,6 +179,8 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 
 		rcs_close(rf);
 	}
-	cvs_ent_free(entp);
-	return (0);
+
+	if (entp != NULL)
+		cvs_ent_free(entp);
+	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.11 2004/12/13 23:08:45 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.12 2004/12/14 22:30:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -119,18 +119,27 @@ cvs_commit(int argc, char **argv)
 	}
 
 	root = CVS_DIR_ROOT(cvs_files);
-	cvs_connect(root);
-	cvs_logmsg_send(root, msg);
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
+	if ((root->cr_method != CVS_METHOD_LOCAL) &&
+	    ((cvs_connect(root) < 0) || (cvs_logmsg_send(root, msg) < 0)))
+		return (EX_PROTOCOL);
 
 	cvs_file_examine(cvs_files, cvs_commit_file, &cl);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_senddir(root, cvs_files);
-		if (argc > 0) {
-			for (i = 0; i < argc; i++)
-				cvs_sendarg(root, argv[i], 0);
-		}
-		cvs_sendreq(root, CVS_REQ_CI, NULL);
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
+		for (i = 0; i < argc; i++)
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				return (EX_PROTOCOL);
+		if (cvs_sendreq(root, CVS_REQ_CI, NULL) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	return (0);
@@ -176,10 +185,10 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 
 	rf = NULL;
 	repo = NULL;
+	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-			root = CVS_DIR_ROOT(cf);
 			if ((cf->cf_parent != NULL) &&
 			    (root != cf->cf_parent->cf_ddat->cd_root)) {
 				cvs_connect(root);
@@ -191,8 +200,6 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-
-	root = CVS_DIR_ROOT(cf);
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_parent != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.1 2004/12/09 20:03:26 jfb Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.2 2004/12/14 22:30:47 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -94,15 +94,26 @@ cvs_annotate(int argc, char **argv)
 		return (EX_DATAERR);
 
 	root = CVS_DIR_ROOT(cvs_files);
-	if (root->cr_method != NULL) {
-		cvs_connect(root);
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
+
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_connect(root) < 0)
+			return (EX_PROTOCOL);
 		if (rev != NULL) {
-			cvs_sendarg(root, "-r", 0);
-			cvs_sendarg(root, rev, 0);
+			if ((cvs_sendarg(root, "-r", 0) < 0) ||
+			    (cvs_sendarg(root, rev, 0) < 0))
+				return (EX_PROTOCOL);
 		}
 		if (date != NULL) {
-			cvs_sendarg(root, "-D", 0);
-			cvs_sendarg(root, date, 0); 
+			if ((cvs_sendarg(root, "-D", 0) < 0) ||
+			    (cvs_sendarg(root, date, 0) < 0))
+				return (EX_PROTOCOL);
 		}
 	}
 
@@ -110,10 +121,13 @@ cvs_annotate(int argc, char **argv)
 
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_senddir(root, cvs_files);
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
 		for (i = 0; i < argc; i++)
-			cvs_sendarg(root, argv[i], 0);
-		cvs_sendreq(root, CVS_REQ_ANNOTATE, NULL);
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				return (EX_PROTOCOL);
+		if (cvs_sendreq(root, CVS_REQ_ANNOTATE, NULL) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	return (0);
@@ -128,64 +142,57 @@ cvs_annotate(int argc, char **argv)
 int
 cvs_annotate_file(CVSFILE *cf, void *arg)
 {
+	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
 	struct cvs_ent *entp;
 
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
+	ret = 0;
+	root = CVS_DIR_ROOT(cf);
 
-	if (cf->cf_type == DT_DIR) {
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-			root = cf->cf_parent->cf_ddat->cd_root;
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+	if ((root->cr_method != CVS_METHOD_LOCAL) && (cf->cf_type == DT_DIR)) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
 			    CVS_FILE_NAME(cf));
-		} else {
-			root = cf->cf_ddat->cd_root;
-			if ((cf->cf_parent == NULL) ||
-			    (root != cf->cf_parent->cf_ddat->cd_root)) {
-				cvs_connect(root);
-			}
-
-			cvs_senddir(root, cf);
-		}
-
-		return (0);
-	} else
-		root = cf->cf_parent->cf_ddat->cd_root;
-
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		if (root->cr_method == CVS_METHOD_LOCAL)
-			cvs_printf("? %s\n", fpath);
 		else
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
-		return (0);
+			ret = cvs_senddir(root, cf);
+		return (ret);
 	}
 
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
 	entp = cvs_ent_getent(fpath);
-	if ((entp != NULL) && (root->cr_method != CVS_METHOD_LOCAL) &&
-	    (cvs_sendentry(root, entp) < 0)) {
-		cvs_ent_free(entp);
-		return (-1);
-	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		switch (cf->cf_cvstat) {
-		case CVS_FST_UPTODATE:
-			cvs_sendreq(root, CVS_REQ_UNCHANGED, CVS_FILE_NAME(cf));
-			break;
-		case CVS_FST_ADDED:
-		case CVS_FST_MODIFIED:
-			cvs_sendreq(root, CVS_REQ_ISMODIFIED,
-			    CVS_FILE_NAME(cf));
-			break;
-		default:
+		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
+			cvs_ent_free(entp);
 			return (-1);
 		}
 
+		switch (cf->cf_cvstat) {
+		case CVS_FST_UNKNOWN:
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
+			break;
+		case CVS_FST_UPTODATE:
+			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
+			    CVS_FILE_NAME(cf));
+			break;
+		case CVS_FST_ADDED:
+		case CVS_FST_MODIFIED:
+			ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
+			    CVS_FILE_NAME(cf));
+			break;
+		default:
+			break;
+		}
+	} else {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+			cvs_printf("? %s\n", fpath);
+			return (0);
+		}
 	}
 
 	if (entp != NULL)
 		cvs_ent_free(entp);
-	return (0);
+	return (ret);
 }

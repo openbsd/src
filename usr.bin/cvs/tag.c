@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.1 2004/12/14 19:11:54 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.2 2004/12/14 22:30:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <amni@pandora.be>
@@ -116,26 +116,28 @@ cvs_tag(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (EX_OSERR);
-
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (branch)
-			cvs_sendarg(root, "-b", 0);
-		if (delete)
-			cvs_sendarg(root, "-d", 0);
+		if (cvs_connect(root) < 0)
+			return (EX_PROTOCOL);
+		if (branch && (cvs_sendarg(root, "-b", 0) < 0))
+			return (EX_PROTOCOL);
+		if (delete && (cvs_sendarg(root, "-d", 0) < 0))
+			return (EX_PROTOCOL);
 		if (old_tag) {
 			cvs_sendarg(root, "-r", 0);
 			cvs_sendarg(root, old_tag, 0);
 		}
-		cvs_sendarg(root, tag, 0);
+		if (cvs_sendarg(root, tag, 0) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	cvs_file_examine(cvs_files, cvs_tag_file, NULL);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_senddir(root, cvs_files);
-		cvs_sendreq(root, CVS_REQ_TAG, NULL);
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
+		if (cvs_sendreq(root, CVS_REQ_TAG, NULL) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	return (0);

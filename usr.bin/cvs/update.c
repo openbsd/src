@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.11 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: update.c,v 1.12 2004/12/14 22:30:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,7 +54,8 @@ int  cvs_update_prune (CVSFILE *, void *);
 int
 cvs_update(int argc, char **argv)
 {
-	int ch, flags;
+	int i, ch, flags;
+	struct cvsroot *root;
 
 	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_KNOWN|CF_NOSYMS;
 
@@ -87,9 +88,9 @@ cvs_update(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
+	if (argc == 0)
 		cvs_files = cvs_file_get(".", flags);
-	} else {
+	else {
 		/* don't perform ignore on explicitly listed files */
 		flags &= ~(CF_IGNORE | CF_RECURSE | CF_SORT);
 		cvs_files = cvs_file_getspec(argv, argc, flags);
@@ -97,10 +98,29 @@ cvs_update(int argc, char **argv)
 	if (cvs_files == NULL)
 		return (EX_DATAERR);
 
+	root = CVS_DIR_ROOT(cvs_files);
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
+	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
+		return (EX_PROTOCOL);
+
 	cvs_file_examine(cvs_files, cvs_update_file, NULL);
 
-	cvs_senddir(cvs_files->cf_ddat->cd_root, cvs_files);
-	cvs_sendreq(cvs_files->cf_ddat->cd_root, CVS_REQ_UPDATE, NULL);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
+
+		for (i = 0; i < argc; i++)
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				return (EX_PROTOCOL);
+		if (cvs_sendreq(root, CVS_REQ_UPDATE, NULL) < 0)
+			return (EX_PROTOCOL);
+	}
 
 	return (0);
 }
@@ -109,92 +129,81 @@ cvs_update(int argc, char **argv)
 /*
  * cvs_update_file()
  *
- * Diff a single file.
+ * Update a single file.  In the case where we act as client, send any
+ * pertinent information about that file to the server.
  */
 int
 cvs_update_file(CVSFILE *cf, void *arg)
 {
+	int ret;
 	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
 
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
-
-	if (cf->cf_type == DT_DIR) {
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-			root = cf->cf_parent->cf_ddat->cd_root;
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
-		} else {
-			root = cf->cf_ddat->cd_root;
-			if ((cf->cf_parent == NULL) ||
-			    (root != cf->cf_parent->cf_ddat->cd_root)) {
-				cvs_connect(root);
-			}
-
-			cvs_senddir(root, cf);
-		}
-
-		return (0);
-	} else
-		root = cf->cf_parent->cf_ddat->cd_root;
-
+	ret = 0;
 	rf = NULL;
-	if (cf->cf_parent != NULL) {
-		repo = cf->cf_parent->cf_ddat->cd_repo;
-	} else {
-		repo = NULL;
-	}
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
 
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		if (root->cr_method == CVS_METHOD_LOCAL)
-			cvs_printf("? %s\n", fpath);
+	if ((root->cr_method != CVS_METHOD_LOCAL) && (cf->cf_type == DT_DIR)) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
 		else
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, CVS_FILE_NAME(cf));
-		return (0);
+			ret = cvs_senddir(root, cf);
+		return (ret);
 	}
 
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
 	entp = cvs_ent_getent(fpath);
-	if (entp == NULL)
-		return (-1);
-
-	if ((root->cr_method != CVS_METHOD_LOCAL) &&
-	    (cvs_sendentry(root, entp) < 0)) {
-		cvs_ent_free(entp);
-		return (-1);
-	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		switch (cf->cf_cvstat) {
-		case CVS_FST_UPTODATE:
-			cvs_sendreq(root, CVS_REQ_UNCHANGED, CVS_FILE_NAME(cf));
-			break;
-		case CVS_FST_ADDED:
-		case CVS_FST_MODIFIED:
-			cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cf));
-			cvs_sendfile(root, fpath);
-			break;
-		default:
+		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
+			cvs_ent_free(entp);
 			return (-1);
 		}
 
-		cvs_ent_free(entp);
-		return (0);
+		switch (cf->cf_cvstat) {
+		case CVS_FST_UNKNOWN:
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
+			break;
+		case CVS_FST_UPTODATE:
+			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
+			    CVS_FILE_NAME(cf));
+			break;
+		case CVS_FST_ADDED:
+		case CVS_FST_MODIFIED:
+			ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
+			    CVS_FILE_NAME(cf));
+			if (ret == 0)
+				ret = cvs_sendfile(root, fpath);
+			break;
+		default:
+			break;
+		}
+	} else {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+			cvs_printf("? %s\n", fpath);
+			return (0);
+		}
+
+		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+		    root->cr_dir, repo, fpath, RCS_FILE_EXT);
+
+		rf = rcs_open(rcspath, RCS_MODE_READ);
+		if (rf == NULL) {
+			cvs_ent_free(entp);
+			return (-1);
+		}
+
+		rcs_close(rf);
 	}
 
-	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
-
-	rf = rcs_open(rcspath, RCS_MODE_READ);
-	if (rf == NULL) {
+	if (entp != NULL)
 		cvs_ent_free(entp);
-		return (-1);
-	}
-
-	rcs_close(rf);
-	cvs_ent_free(entp);
-	return (0);
+	return (ret);
 }
 
 
