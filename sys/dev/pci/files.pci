@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.32 1998/12/26 18:31:22 niklas Exp $
+#	$OpenBSD: files.pci,v 1.33 1999/01/08 04:43:18 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -102,6 +102,11 @@ file	dev/pci/if_fxp.c		fxp
 device	rl: ether, ifnet, mii, ifmedia
 attach	rl at pci
 file	dev/pci/if_rl.c			rl
+
+# Macronix
+device	mx: ether, ifnet, ifmedia
+attach	mx at pci
+file	dev/pci/if_mx.c			mx
 
 # Texas Instruments ThunderLAN
 device	tl: ether, ifnet, mii, ifmedia
