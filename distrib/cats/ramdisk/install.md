@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2005/02/27 08:57:01 david Exp $
+#	$OpenBSD: install.md,v 1.7 2005/02/27 09:01:34 david Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ md_prep_disk() {
 $_disk must be partitioned using an BSD or an MBR partition table.
 
 BSD partition table or MBR partition tables can be created by OpenBSD.
-It is more a question of firmware compatiblity disk portability.
+It is more a question of firmware compatibility disk portability.
 (Once we can figure out what filesystems ABLE can boot)
 __EOT
 
