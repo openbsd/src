@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.8 2000/09/19 08:43:37 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.9 2000/11/10 09:42:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -307,7 +307,7 @@ gdt_pci_attach(parent, self, aux)
 		gdth_delay(20);
 		while (gdth_readb(&dp6_ptr->u.ic.S_Status) != 0xff) {
 		  if (--retries == 0) {
-		    printk("GDT-PCI: Initialization error (DEINIT failed)\n");
+		    printk("initialization error (DEINIT failed)\n");
 		    gdth_munmap(ha->brd);
 		    return 0;
 		  }
@@ -317,7 +317,7 @@ gdt_pci_attach(parent, self, aux)
 		gdth_writeb(0, &dp6_ptr->u.ic.S_Status);
 		gdth_writeb(0xff, &dp6_ptr->io.irqdel);
 		if (prot_ver != PROTOCOL_VERSION) {
-		  printk("GDT-PCI: Illegal protocol version\n");
+		  printk("illegal protocol version\n");
 		  gdth_munmap(ha->brd);
 		  return 0;
 		}
@@ -336,7 +336,7 @@ gdt_pci_attach(parent, self, aux)
 		gdth_delay(20);
 		while (gdth_readb(&dp6_ptr->u.ic.S_Status) != 0xfe) {
 		  if (--retries == 0) {
-		    printk("GDT-PCI: Initialization error\n");
+		    printk("initialization error\n");
 		    gdth_munmap(ha->brd);
 		    return 0;
 		  }
@@ -382,7 +382,7 @@ gdt_pci_attach(parent, self, aux)
 		gdth_delay(20);
 		while (gdth_readb(&dp6c_ptr->u.ic.S_Status) != 0xff) {
 		  if (--retries == 0) {
-		    printk("GDT-PCI: Initialization error (DEINIT failed)\n");
+		    printk("initialization error (DEINIT failed)\n");
 		    gdth_munmap(ha->brd);
 		    return 0;
 		  }
@@ -391,7 +391,7 @@ gdt_pci_attach(parent, self, aux)
 		prot_ver = (unchar)gdth_readl(&dp6c_ptr->u.ic.S_Info[0]);
 		gdth_writeb(0, &dp6c_ptr->u.ic.Status);
 		if (prot_ver != PROTOCOL_VERSION) {
-		  printk("GDT-PCI: Illegal protocol version\n");
+		  printk("illegal protocol version\n");
 		  gdth_munmap(ha->brd);
 		  return 0;
 		}
@@ -412,7 +412,7 @@ gdt_pci_attach(parent, self, aux)
 		gdth_delay(20);
 		while (gdth_readb(&dp6c_ptr->u.ic.S_Status) != 0xfe) {
 		  if (--retries == 0) {
-		    printk("GDT-PCI: Initialization error\n");
+		    printk("initialization error\n");
 		    gdth_munmap(ha->brd);
 		    return 0;
 		  }
