@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.9 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: lam.c,v 1.10 2003/12/09 00:55:18 mickey Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.9 2003/06/10 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lam.c,v 1.10 2003/12/09 00:55:18 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -111,10 +111,8 @@ getargs(char *av[])
 			morefiles++;
 			if (*p == '-')
 				ip->fp = stdin;
-			else if ((ip->fp = fopen(p, "r")) == NULL) {
-				perror(p);
-				exit(1);
-			}
+			else if ((ip->fp = fopen(p, "r")) == NULL)
+				err(1, p);
 			ip->pad = P;
 			if (!ip->sepstring)
 				ip->sepstring = (S ? (ip-1)->sepstring : "");
@@ -215,16 +213,17 @@ gatherline(struct openfile *ip)
 void
 error(char *msg, char *s)
 {
-	fprintf(stderr, "lam: ");
-	fprintf(stderr, msg, s);
+	extern char *__progname;
+	warnx(msg, s);
 	fprintf(stderr,
-"\nUsage:  lam [ -[fp] min.max ] [ -s sepstring ] [ -t c ] file ...\n");
+	    "Usage: %s [ -[fp] min.max ] [ -s sepstring ] [ -t c ] file ...\n",
+	    __progname);
 	if (strncmp("lam - ", msg, 6) == 0)
-		fprintf(stderr, "Options:\n\t%s\t%s\t%s\t%s\t%s",
-		    "-f min.max	field widths for file fragments\n",
-		    "-p min.max	like -f, but pad missing fragments\n",
-		    "-s sepstring	fragment separator\n",
-"-t c		input line terminator is c, no \\n after output lines\n",
-		    "Capitalized options affect more than one file.\n");
+		fprintf(stderr, "Options:\n"
+		    "\t-f min.max\tfield widths for file fragments\n"
+		    "\t-p min.max\tlike -f, but pad missing fragments\n"
+		    "\t-s sepstring\tfragment separator\n"
+"\t-t c\t\tinput line terminator is c, no \\n after output lines\n"
+		    "\tCapitalized options affect more than one file.\n");
 	exit(1);
 }
