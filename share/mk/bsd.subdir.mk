@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.subdir.mk,v 1.12 2004/01/18 23:44:51 marc Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.13 2005/01/19 18:01:51 espie Exp $
 #	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
@@ -40,7 +40,7 @@ _SUBDIRUSE: .USE
 		if [ X$${skipdir} = X -o X$${subentry} != X ]; then \
 			echo "===> $${_nextdir_}"; \
 			cd ${.CURDIR}/$${_newdir_}; \
-			${MAKE} ${.MAKEFLAGS} SKIPDIR="$${subskipdir}" \
+			${MAKE} SKIPDIR="$${subskipdir}" \
 			    $${_makefile_spec_} _THISDIR_="$${_nextdir_}" \
 			    ${.TARGET:S/realinstall/install/:S/.depend/depend/}; \
 		fi); \
@@ -58,58 +58,29 @@ ${SUBDIR}::
 	fi; \
 	echo "===> $${_newdir_}"; \
 	cd ${.CURDIR}/$${_newdir_}; \
-	${MAKE} ${.MAKEFLAGS} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
+	${MAKE} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
 .endif
 
 .if !target(install)
-.if !target(beforeinstall)
+.  if !target(beforeinstall)
 beforeinstall:
-.endif
-.if !target(afterinstall)
+.  endif
+.  if !target(afterinstall)
 afterinstall:
-.endif
+.  endif
 install: maninstall
 maninstall: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall _SUBDIRUSE
 .endif
 
-.if !target(all)
-all: _SUBDIRUSE
-.endif
 
-.if !target(clean)
-clean: _SUBDIRUSE
-.endif
-
-.if !target(cleandir)
-cleandir: _SUBDIRUSE
-.endif
-
-.if !target(includes)
-includes: _SUBDIRUSE
-.endif
-
-.if !target(depend)
-depend: _SUBDIRUSE
-.endif
-
-.if !target(lint)
-lint: _SUBDIRUSE
-.endif
-
-.if !target(obj)
-obj: _SUBDIRUSE
-.endif
-
-.if !target(tags)
-tags: _SUBDIRUSE
-.endif
-
-.if !target(regress)
-regress: _SUBDIRUSE
-.endif
+.for t in all clean cleandir includes depend lint obj tags regress
+.  if !target($t)
+$t: _SUBDIRUSE
+.  endif
+.endfor
 
 .if !defined(BSD_OWN_MK)
-.include <bsd.own.mk>
+.  include <bsd.own.mk>
 .endif
