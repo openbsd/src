@@ -184,6 +184,9 @@ static int RSA_eay_private_encrypt(int flen, unsigned char *from,
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
+        BN_init(&f);
+        BN_init(&ret);
+
 	/* Body of this routine removed for OpenBSD - will return
 	 * when the RSA patent expires
 	 */
@@ -208,6 +211,9 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 	unsigned char *p;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
+
+        BN_init(&f);
+        BN_init(&ret);
 
 	/* Body of this routine removed for OpenBSD - will return
 	 * when the RSA patent expires
@@ -234,6 +240,9 @@ static int RSA_eay_public_decrypt(int flen, unsigned char *from,
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
+        BN_init(&f);
+        BN_init(&ret);
+
 	/* Body of this routine removed for OpenBSD - will return
 	 * when the RSA patent expires
 	 */
@@ -254,11 +263,11 @@ static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
 	BIGNUM r1,m1;
 	int ret=0;
-	BN_CTX *ctx;
+	BN_CTX *ctx = NULL;
 
-	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&m1);
 	BN_init(&r1);
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
 	/* Body of this routine removed for OpenBSD - will return
 	 * when the RSA patent expires
