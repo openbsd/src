@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.10 2005/03/03 14:36:38 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.11 2005/03/03 16:39:54 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -386,24 +386,17 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
-	    sizeof(struct ieee80211_frame) + 64);
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
 
-	/*
-	 * Initialize constant fields.
-	 * XXX make header lengths a multiple of 32-bits so subsequent
-	 *     headers are properly aligned; this is a kludge to keep
-	 *     certain applications happy.
-	 *
-	 * NB: the channel is setup each time we transition to the
-	 *     RUN state to avoid filling it in for each frame.
-	 */
-	sc->sc_tx_th_len = roundup(sizeof(sc->sc_tx_th), sizeof(u_int32_t));
-	sc->sc_tx_th.wt_ihdr.it_len = htole16(sc->sc_tx_th_len);
-	sc->sc_tx_th.wt_ihdr.it_present = htole32(ATH_TX_RADIOTAP_PRESENT);
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
+	bzero(&sc->sc_rxtapu, sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(ATH_RX_RADIOTAP_PRESENT);
 
-	sc->sc_rx_th_len = roundup(sizeof(sc->sc_rx_th), sizeof(u_int32_t));
-	sc->sc_rx_th.wr_ihdr.it_len = htole16(sc->sc_rx_th_len);
-	sc->sc_rx_th.wr_ihdr.it_present = htole32(ATH_RX_RADIOTAP_PRESENT);
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
+	bzero(&sc->sc_txtapu, sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(ATH_TX_RADIOTAP_PRESENT);
 #endif
 
 	sc->sc_flags |= ATH_ATTACHED;
@@ -654,7 +647,6 @@ ath_bmiss_proc(void *arg, int pending)
 		 * machine will drop us into scanning after timing
 		 * out waiting for a probe response.
 		 */
-		/* XXX sometimes after association */
 		ieee80211_new_state(ic, IEEE80211_S_ASSOC, -1);
 	}
 }
@@ -1342,7 +1334,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		, m->m_pkthdr.len + IEEE80211_CRC_LEN	/* packet length */
 		, sizeof(struct ieee80211_frame)	/* header length */
 		, HAL_PKT_TYPE_BEACON		/* Atheros packet type */
-		, 0x20				/* txpower XXX */
+		, 60				/* txpower XXX */
 		, rate, 1			/* series 0 rate/tries */
 		, HAL_TXKEYIX_INVALID		/* no encryption */
 		, 0				/* antenna mode */
@@ -1973,16 +1965,18 @@ ath_rx_proc(void *arg, int npending)
 		if (sc->sc_drvbpf) {
 			struct mbuf mb;
 
-			sc->sc_rx_th.wr_rate =
-				sc->sc_hwmap[ds->ds_rxstat.rs_rate];
-			sc->sc_rx_th.wr_antsignal = ds->ds_rxstat.rs_rssi;
-			sc->sc_rx_th.wr_antenna = ds->ds_rxstat.rs_antenna;
-			/* XXX TSF */
+			sc->sc_rxtap.wr_rate =
+			    sc->sc_hwmap[ds->ds_rxstat.rs_rate] &
+			    IEEE80211_RATE_VAL;
+			sc->sc_rxtap.wr_antsignal = ds->ds_rxstat.rs_rssi;
+			sc->sc_rxtap.wr_antenna = ds->ds_rxstat.rs_antenna;
+
 			M_DUP_PKTHDR(&mb, m);
-			mb.m_data = (caddr_t)&sc->sc_rx_th;
-			mb.m_len = sc->sc_rx_th_len;
+			mb.m_data = (caddr_t)&sc->sc_rxtap;
+			mb.m_len = sc->sc_rxtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
+
 			bpf_mtap(sc->sc_drvbpf, &mb);
 		}
 #endif
@@ -2337,18 +2331,19 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	if (sc->sc_drvbpf) {
 		struct mbuf mb;
 
-		sc->sc_tx_th.wt_flags = 0;
+		sc->sc_txtap.wt_flags = 0;
 		if (shortPreamble)
-			sc->sc_tx_th.wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+			sc->sc_txtap.wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 		if (iswep)
-			sc->sc_tx_th.wt_flags |= IEEE80211_RADIOTAP_F_WEP;
-		sc->sc_tx_th.wt_rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-		sc->sc_tx_th.wt_txpower = 60/2;		/* XXX */
-		sc->sc_tx_th.wt_antenna = antenna;
+			sc->sc_txtap.wt_flags |= IEEE80211_RADIOTAP_F_WEP;
+		sc->sc_txtap.wt_rate = ni->ni_rates.rs_rates[ni->ni_txrate] &
+		    IEEE80211_RATE_VAL;
+		sc->sc_txtap.wt_txpower = 30;
+		sc->sc_txtap.wt_antenna = antenna;
 
 		M_DUP_PKTHDR(&mb, m0);
-		mb.m_data = (caddr_t)&sc->sc_tx_th;
-		mb.m_len = sc->sc_tx_th_len;
+		mb.m_data = (caddr_t)&sc->sc_txtap;
+		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(sc->sc_drvbpf, &mb);
@@ -2689,10 +2684,10 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		/*
 		 * Update BPF state.
 		 */
-		sc->sc_tx_th.wt_chan_freq = sc->sc_rx_th.wr_chan_freq =
-			htole16(chan->ic_freq);
-		sc->sc_tx_th.wt_chan_flags = sc->sc_rx_th.wr_chan_flags =
-			htole16(chan->ic_flags);
+		sc->sc_txtap.wt_chan_freq = sc->sc_rxtap.wr_chan_freq =
+		    htole16(chan->ic_freq);
+		sc->sc_txtap.wt_chan_flags = sc->sc_rxtap.wr_chan_flags =
+		    htole16(chan->ic_flags);
 
 		/*
 		 * Change channels and update the h/w rate map

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.1 2005/02/25 22:25:30 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.2 2005/03/03 16:39:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -832,11 +832,11 @@ ar5k_ar5211_resetTxQueue(hal, queue)
 	 */
 	if (IEEE80211_IS_CHAN_B(channel)) {
 		hal->ah_cw_min = AR5K_TUNE_CWMIN_11B;
-		hal->ah_cw_max = AR5K_TUNE_CWMAX_11B;
+		cw_max = hal->ah_cw_max = AR5K_TUNE_CWMAX_11B;
 		hal->ah_aifs = AR5K_TUNE_AIFS_11B;
 	} else {
 		hal->ah_cw_min = AR5K_TUNE_CWMIN;
-		hal->ah_cw_max = AR5K_TUNE_CWMAX;
+		cw_max = hal->ah_cw_max = AR5K_TUNE_CWMAX;
 		hal->ah_aifs = AR5K_TUNE_AIFS;
 	}
 
@@ -856,11 +856,11 @@ ar5k_ar5211_resetTxQueue(hal, queue)
 
 	AR5K_REG_WRITE(AR5K_AR5211_DCU_RETRY_LMT(queue),
 	    AR5K_REG_SM(AR5K_INIT_SLG_RETRY,
-		AR5K_AR5211_DCU_RETRY_LMT_SLG_RETRY)
-	    | AR5K_REG_SM(AR5K_INIT_SSH_RETRY,
-		AR5K_AR5211_DCU_RETRY_LMT_SSH_RETRY)
-	    | AR5K_REG_SM(retry_lg, AR5K_AR5211_DCU_RETRY_LMT_LG_RETRY)
-	    | AR5K_REG_SM(retry_sh, AR5K_AR5211_DCU_RETRY_LMT_SH_RETRY));
+	    AR5K_AR5211_DCU_RETRY_LMT_SLG_RETRY) |
+	    AR5K_REG_SM(AR5K_INIT_SSH_RETRY,
+	    AR5K_AR5211_DCU_RETRY_LMT_SSH_RETRY) |
+	    AR5K_REG_SM(retry_lg, AR5K_AR5211_DCU_RETRY_LMT_LG_RETRY) |
+	    AR5K_REG_SM(retry_sh, AR5K_AR5211_DCU_RETRY_LMT_SH_RETRY));
 
 	/*
 	 * Set initial content window (cw_min/cw_max)
@@ -1521,27 +1521,23 @@ ar5k_ar5211_setLedState(hal, state)
 	switch (state) {
 	case IEEE80211_S_SCAN:
 	case IEEE80211_S_AUTH:
-		led =
-		    AR5K_AR5211_PCICFG_LEDMODE_PROP |
+		led = AR5K_AR5211_PCICFG_LEDMODE_PROP |
 		    AR5K_AR5211_PCICFG_LED_PEND;
 		break;
 
 	case IEEE80211_S_INIT:
-		led =
-		    AR5K_AR5211_PCICFG_LEDMODE_PROP |
+		led = AR5K_AR5211_PCICFG_LEDMODE_PROP |
 		    AR5K_AR5211_PCICFG_LED_NONE;
 		break;
 
 	case IEEE80211_S_ASSOC:
 	case IEEE80211_S_RUN:
-		led |=
-		    AR5K_AR5211_PCICFG_LEDMODE_PROP |
+		led = AR5K_AR5211_PCICFG_LEDMODE_PROP |
 		    AR5K_AR5211_PCICFG_LED_ASSOC;
 		break;
 
 	default:
-		led |=
-		    AR5K_AR5211_PCICFG_LEDMODE_PROM |
+		led = AR5K_AR5211_PCICFG_LEDMODE_PROM |
 		    AR5K_AR5211_PCICFG_LED_NONE;
 		break;
 	}

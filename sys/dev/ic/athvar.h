@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.4 2005/02/17 21:02:24 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.5 2005/03/03 16:39:54 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -133,13 +133,13 @@ struct ath_stats {
 
 struct ath_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	u_int8_t	wr_flags;		/* XXX for padding */
+	u_int8_t	wr_flags;
 	u_int8_t	wr_rate;
 	u_int16_t	wr_chan_freq;
 	u_int16_t	wr_chan_flags;
 	u_int8_t	wr_antenna;
 	u_int8_t	wr_antsignal;
-};
+} __packed;
 
 #define ATH_TX_RADIOTAP_PRESENT (		\
 	(1 << IEEE80211_RADIOTAP_FLAGS)		| \
@@ -151,13 +151,13 @@ struct ath_rx_radiotap_header {
 
 struct ath_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	u_int8_t	wt_flags;		/* XXX for padding */
+	u_int8_t	wt_flags;
 	u_int8_t	wt_rate;
 	u_int16_t	wt_chan_freq;
 	u_int16_t	wt_chan_flags;
 	u_int8_t	wt_txpower;
 	u_int8_t	wt_antenna;
-};
+} __packed;
 
 /* 
  * driver-specific node 
@@ -235,21 +235,23 @@ struct ath_softc {
 	u_int8_t		sc_hwmap[32];	/* h/w rate ix to IEEE table */
 	HAL_INT			sc_imask;	/* interrupt mask copy */
 
-#ifdef __FreeBSD__
-	struct bpf_if		*sc_drvbpf;
-#else
+#if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
+
+	union {
+		struct ath_rx_radiotap_header	th;
+		uint8_t				pad[IEEE80211_RADIOTAP_HDRLEN];
+	}			sc_rxtapu;
+#define sc_rxtap		sc_rxtapu.th
+	int			sc_rxtap_len;
+
+	union {
+		struct ath_tx_radiotap_header	th;
+		uint8_t				pad[IEEE80211_RADIOTAP_HDRLEN];
+	}			sc_txtapu;
+#define sc_txtap		sc_txtapu.th
+	int			sc_txtap_len;
 #endif
-	union {
-		struct ath_tx_radiotap_header th;
-		u_int8_t	pad[64];
-	} u_tx_rt;
-	int			sc_tx_th_len;
-	union {
-		struct ath_rx_radiotap_header th;
-		u_int8_t	pad[64];
-	} u_rx_rt;
-	int			sc_rx_th_len;
 
 	struct ath_desc		*sc_desc;	/* TX/RX descriptors */
 	bus_dma_segment_t	sc_dseg;
@@ -361,9 +363,6 @@ enum {
 
 #define	ATH_IS_ENABLED(sc)	((sc)->sc_flags & ATH_ENABLED)
 #endif
-
-#define	sc_tx_th		u_tx_rt.th
-#define	sc_rx_th		u_rx_rt.th
 
 #define	ATH_LOCK_INIT(_sc) \
 	mtx_init(&(_sc)->sc_mtx, device_get_nameunit((_sc)->sc_dev), \

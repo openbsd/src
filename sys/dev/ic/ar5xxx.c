@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.15 2005/02/25 22:25:30 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.16 2005/03/03 16:39:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1191,7 +1191,7 @@ ar5k_ar5111_channel(hal, channel)
 	/*
 	 * Set the channel on the AR5111 radio
 	 */
-	data0 = 0;
+	data0 = data1 = 0;
 	ath_channel = ieee_channel = ath_hal_mhz2ieee(channel->c_channel,
 	    channel->c_channel_flags);
 
@@ -1230,6 +1230,7 @@ ar5k_ar5112_channel(hal, channel)
 	u_int32_t data, data0, data1, data2;
 	u_int16_t c;
 
+	data = data0 = data1 = data2 = 0;
 	c = channel->c_channel;
 
 	/*
