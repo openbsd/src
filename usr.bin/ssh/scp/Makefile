@@ -13,6 +13,6 @@ BINMODE?=555
 BINDIR=	/usr/bin
 MAN=	scp.1
 
-SRCS=	scp.c atomicio.c
+SRCS=	scp.c
 
 .include <bsd.prog.mk>
