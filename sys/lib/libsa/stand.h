@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.30 1997/10/07 07:59:58 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.31 1998/02/24 22:14:44 weingart Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -153,6 +153,7 @@ char	*strncpy __P((char *, const char *, size_t));
 char	*strcpy __P((char *, const char *));
 int	strncmp __P((const char *, const char *, size_t));
 size_t	strlen __P((const char *));
+long	strtol __P((const char *, char **, int));
 void	*memset __P((void *, int, size_t));
 void	exec __P((char *, void *, int));
 void	exit __P((void));
