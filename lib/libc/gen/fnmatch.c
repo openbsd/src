@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.3 1997/07/09 00:28:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.4 1997/07/23 21:09:04 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -149,13 +149,13 @@ rangematch(pattern, test, flags)
 	 */
 	if ((negate = (*pattern == '!' || *pattern == '^')))
 		++pattern;
-	
+
 	for (ok = 0; (c = *pattern++) != ']';) {
 		if (c == '\\' && !(flags & FNM_NOESCAPE))
 			c = *pattern++;
 		if (c == EOS)
 			return (NULL);
-		if (*pattern == '-' 
+		if (*pattern == '-'
 		    && (c2 = *(pattern+1)) != EOS && c2 != ']') {
 			pattern += 2;
 			if (c2 == '\\' && !(flags & FNM_NOESCAPE))
