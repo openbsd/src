@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.8 1998/12/21 01:02:26 niklas Exp $	*/
-/*	$EOM: message.c,v 1.103 1998/12/15 16:58:45 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.9 1999/02/26 03:47:46 niklas Exp $	*/
+/*	$EOM: message.c,v 1.106 1999/02/25 11:39:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -41,6 +41,8 @@
 #include <machine/endian.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "attribute.h"
 #include "cert.h"
@@ -202,6 +204,11 @@ message_free (struct message *msg)
       }
   while ((node = TAILQ_FIRST (&msg->post_send)) != 0)
     TAILQ_REMOVE (&msg->post_send, TAILQ_FIRST (&msg->post_send), link);
+
+  /* If we are on the send queue, remove us from there.  */
+  if (msg->flags & MSG_IN_TRANSIT)
+    TAILQ_REMOVE (&msg->transport->sendq, msg, link);
+
   free (msg);
 }
 
@@ -1050,6 +1057,7 @@ message_send (struct message *msg)
 			  | ISAKMP_FLAGS_COMMIT);
 
   message_dump_raw ("message_send", msg);
+  msg->flags |= MSG_IN_TRANSIT;
   TAILQ_INSERT_TAIL (&msg->transport->sendq, msg, link);
 }
 
@@ -1143,7 +1151,9 @@ struct info_args {
 /*
  * As a reaction to the incoming message MSG create an informational exchange
  * protected by ISAKMP_SA and send a notify payload of type NOTIFY, with
- * fields initialized from SA.
+ * fields initialized from SA.  INCOMING is true if the SPI field should be
+ * filled with the incoming SPI and false if it is to be filled with the
+ * outgoing one.
  *
  * XXX Should we handle sending multiple notify payloads?  The draft allows
  * it, but do we need it?  Furthermore, should we not return a success
@@ -1152,16 +1162,16 @@ struct info_args {
 void
 message_send_notification (struct message *msg, struct sa *isakmp_sa,
 			   u_int16_t notify, struct proto *proto,
-			   int initiator)
+			   int incoming)
 {
   struct info_args args;
 
   args.discr = 'N';
   args.doi = proto ? proto->sa->doi->id : 0;
   args.proto = proto ? proto->proto : 0;
-  args.spi_sz = proto ? proto->spi_sz[initiator] : 0;
+  args.spi_sz = proto ? proto->spi_sz[incoming] : 0;
   args.u.n.msg_type = notify;
-  args.u.n.spi = proto ? proto->spi[initiator] : 0;
+  args.u.n.spi = proto ? proto->spi[incoming] : 0;
   if (isakmp_sa->flags & SA_FLAG_READY)
     exchange_establish_p2 (isakmp_sa, ISAKMP_EXCH_INFO, &args);
   else
@@ -1521,8 +1531,7 @@ message_negotiate_sa (struct message *msg,
 		    }
 		  else
 		    spi = 0;
-		  TAILQ_FIRST (&sa->protos)->spi[!msg->exchange->initiator]
-		    = spi;
+		  TAILQ_FIRST (&sa->protos)->spi[1] = spi;
 		  log_debug_buf (LOG_MESSAGE, 40, "message_negotiate_sa: SPI",
 				 spi, spi_sz);
 
@@ -1644,8 +1653,8 @@ message_add_sa_payload (struct message *msg)
 				  msg);
 	      if (spi_sz && !spi)
 		goto cleanup;
-	      proto->spi[exchange->initiator] = spi;
-	      proto->spi_sz[exchange->initiator] = spi_sz;
+	      proto->spi[0] = spi;
+	      proto->spi_sz[0] = spi_sz;
 	    }
 	  else
 	    spi_sz = 0;
