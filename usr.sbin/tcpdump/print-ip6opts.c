@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.1 2000/04/26 21:35:41 jakob Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.2 2004/04/07 12:07:11 otto Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -116,7 +116,7 @@ hbhopt_print(register const u_char *bp)
     ep = snapend;
     TCHECK(dp->ip6h_len);
     hbhlen = (int)((dp->ip6h_len + 1) << 3);
-    TCHECK2(dp, hbhlen);
+    TCHECK2(*dp, hbhlen);
     printf("HBH ");
     if (vflag)
 	ip6_opt_print((const u_char *)dp + sizeof(*dp), hbhlen - sizeof(*dp));
@@ -139,7 +139,7 @@ dstopt_print(register const u_char *bp)
     ep = snapend;
     TCHECK(dp->ip6d_len);
     dstoptlen = (int)((dp->ip6d_len + 1) << 3);
-    TCHECK2(dp, dstoptlen);
+    TCHECK2(*dp, dstoptlen);
     printf("DSTOPT ");
     if (vflag) {
 	ip6_opt_print((const u_char *)dp + sizeof(*dp),
