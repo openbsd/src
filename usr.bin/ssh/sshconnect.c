@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.82 2000/11/29 13:51:27 provos Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.83 2000/11/30 22:53:35 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -636,6 +636,14 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		if (options.forward_agent) {
 			error("Agent forwarding is disabled to avoid trojan horses.");
 			options.forward_agent = 0;
+		}
+		if (options.forward_x11) {
+			error("X11 forwarding is disabled to avoid trojan horses.");
+			options.forward_x11 = 0;
+		}
+	        if (options.num_local_forwards > 0 || options.num_remote_forwards > 0) {
+			error("Port forwarding is disabled to avoid trojan horses.");
+			options.num_local_forwards = options.num_remote_forwards = 0;
 		}
 		/*
 		 * XXX Should permit the user to change to use the new id.
