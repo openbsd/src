@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.43 2003/06/08 09:41:07 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.44 2003/06/27 15:35:00 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -61,7 +61,6 @@ static void	grow_buffer(size_t, int);
 static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
 static void	load_addr(int, char *[], char *, int);
-static int	next_token(char [], FILE *);
 static void	append_addr(char *, int);
 static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
@@ -393,59 +392,9 @@ print_tstats(struct pfr_tstats *ts, int debug)
 void
 load_addr(int argc, char *argv[], char *file, int nonetwork)
 {
-	FILE	*fp;
-	char	 buf[BUF_SIZE];
-
 	while (argc--)
 		append_addr(*argv++, nonetwork);
-	if (file == NULL)
-		return;
-	if (!strcmp(file, "-"))
-		fp = stdin;
-	else {
-		fp = fopen(file, "r");
-		if (fp == NULL)
-			err(1, "%s", file);
-	}
-	while (next_token(buf, fp))
-		append_addr(buf, nonetwork);
-	if (fp != stdin)
-		fclose(fp);
-}
-
-int
-next_token(char buf[BUF_SIZE], FILE *fp)
-{
-	static char	next_ch = ' ';
-	int		i = 0;
-
-	for (;;) {
-		/* skip spaces */
-		while (isspace(next_ch) && !feof(fp))
-			next_ch = fgetc(fp);
-		/* remove from '#' until end of line */
-		if (next_ch == '#')
-			while (!feof(fp)) {
-				next_ch = fgetc(fp);
-				if (next_ch == '\n')
-					break;
-			}
-		else
-			break;
-	}
-	if (feof(fp)) {
-		next_ch = ' ';
-		return (0);
-	}
-	do {
-		if (i < BUF_SIZE)
-			buf[i++] = next_ch;
-		next_ch = fgetc(fp);
-	} while (!feof(fp) && !isspace(next_ch));
-	if (i >= BUF_SIZE)
-		errx(1, "address too long (%d bytes)", i);
-	buf[i] = '\0';
-	return (1);
+	pfr_buf_load(file, nonetwork, append_addr);
 }
 
 void
@@ -567,13 +516,7 @@ print_astats(struct pfr_astats *as, int dns)
 void
 radix_perror(void)
 {
-	if (errno == ESRCH)
-		fprintf(stderr, "%s: Table does not exist.\n", __progname);
-	else if (errno == ENOENT)
-		fprintf(stderr, "%s: Anchor or Ruleset does not exist.\n",
-		    __progname);
-	else
-		perror(__progname);
+	fprintf(stderr, "%s: %s.\n", __progname, pfr_strerror(errno));
 }
 
 void

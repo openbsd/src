@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.13 2003/06/08 09:41:07 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.14 2003/06/27 15:35:00 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -39,10 +39,19 @@
 
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdio.h>
+#include <err.h>
 
 #include "pfctl.h"
 
+#define BUF_SIZE 256
+
 extern int dev;
+
+static int	 pfr_next_token(char buf[], FILE *);
+
 
 int
 pfr_clr_tables(struct pfr_table *filter, int *ndel, int flags)
@@ -437,4 +446,73 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (naddr != NULL)
 		*naddr = io.pfrio_naddr;
 	return (0);
+}
+
+void
+pfr_buf_load(char *file, int nonetwork, void (*append_addr)(char *, int))
+{
+	FILE	*fp;
+	char	 buf[BUF_SIZE];
+
+	if (file == NULL)
+		return;
+	if (!strcmp(file, "-"))
+		fp = stdin;
+	else {
+		fp = fopen(file, "r");
+		if (fp == NULL)
+			err(1, "%s", file);
+	}
+	while (pfr_next_token(buf, fp))
+		append_addr(buf, nonetwork);
+	if (fp != stdin)
+		fclose(fp);
+}
+
+int
+pfr_next_token(char buf[BUF_SIZE], FILE *fp)
+{
+	static char	next_ch = ' ';
+	int		i = 0;
+
+	for (;;) {
+		/* skip spaces */
+		while (isspace(next_ch) && !feof(fp))
+			next_ch = fgetc(fp);
+		/* remove from '#' until end of line */
+		if (next_ch == '#')
+			while (!feof(fp)) {
+				next_ch = fgetc(fp);
+				if (next_ch == '\n')
+					break;
+			}
+		else
+			break;
+	}
+	if (feof(fp)) {
+		next_ch = ' ';
+		return (0);
+	}
+	do {
+		if (i < BUF_SIZE)
+			buf[i++] = next_ch;
+		next_ch = fgetc(fp);
+	} while (!feof(fp) && !isspace(next_ch));
+	if (i >= BUF_SIZE)
+		errx(1, "address too long (%d bytes)", i);
+	buf[i] = '\0';
+	return (1);
+}
+
+char *
+pfr_strerror(int errnum)
+{
+	switch (errnum) {
+	case ESRCH:
+		return "Table does not exist";
+	case ENOENT:
+		return "Anchor or Ruleset does not exist";
+	default:
+		return strerror(errnum);
+	}
 }
