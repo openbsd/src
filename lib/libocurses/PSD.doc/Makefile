@@ -28,6 +28,9 @@ VFONT=	/usr/libexec/vfontedpr
 paper.ps: ${SRCS}
 	soelim ${SRCS} | ${ROFF} > ${.TARGET}
 
+paper.txt: ${SRCS}
+	soelim ${SRCS} | ${ROFF} -Tascii > ${.TARGET}
+
 Master: twinkle1.gr ex1.gr ex2.gr fns.doc intro.5 intro.2.tbl intro.0 intro.1 \
 	intro.3 intro.4 intro.6 macros c_macros
 
