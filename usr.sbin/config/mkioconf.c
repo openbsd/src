@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.26 2005/01/01 16:20:04 millert Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.27 2005/01/02 21:59:33 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ static int loc[%d] = {", locators.used) < 0)
 #endif\n\
 int extraloc[MAXEXTRALOC] = { -1 };\n\
 int nextraloc = MAXEXTRALOC;\n\
-int uextraloc __attribute__((__section__(\"data\")));\n") < 0);
+int uextraloc = 0;\n") < 0);
 }
 
 static int nlocnames, maxlocnames = 8;
