@@ -958,7 +958,6 @@ rzclose(dev, flags, mode, p)
 		while (sc->sc_tab.b_actf)
 			sleep((caddr_t)&sc->sc_tab, PZERO - 1);
 		splx(s);
-		sc->sc_flags &= ~RZF_WLABEL;
 	}
 	return (0);
 }

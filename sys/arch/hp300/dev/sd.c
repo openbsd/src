@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.18 1998/05/02 05:36:58 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.19 1998/05/07 05:19:33 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -609,7 +609,7 @@ sdclose(dev, flag, mode, p)
 			sleep((caddr_t)&sc->sc_tab, PRIBIO);
 		}
 		splx(s);
-		sc->sc_flags &= ~(SDF_CLOSING|SDF_WLABEL|SDF_ERROR);
+		sc->sc_flags &= ~(SDF_CLOSING|SDF_ERROR);
 		wakeup((caddr_t)sc);
 	}
 	sc->sc_format_pid = -1;
