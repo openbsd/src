@@ -39,13 +39,16 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fingerd.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fingerd.c,v 1.2 1996/05/30 08:44:11 deraadt Exp $";
+static char rcsid[] = "$Id: fingerd.c,v 1.3 1996/06/24 17:41:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include "pathnames.h"
 
-main()
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	register FILE *fp;
 	register int ch;
@@ -53,7 +56,8 @@ main()
 	int p[2];
 #define	ENTRIES	50
 	char **ap, *av[ENTRIES + 1], line[1024], *strtok();
-	int i;
+	int forward = 1, nvalid;
+	int i, j, l;
 
 #ifdef LOGGING					/* unused for now */
 #include <netinet/in.h>
@@ -64,6 +68,9 @@ main()
 	if (getpeername(0, &sin, &sval) < 0)
 		fatal("getpeername");
 #endif
+
+	if (argc > 1 && strcmp(argv[1], "-s") == 0)
+		forward = 0;
 
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
@@ -81,13 +88,26 @@ main()
 		lp = NULL;
 	}
 
-	for (i = 1; av[i]; i++) {
-		int l = strlen(av[i]);
+	nvalid = 0;
+	if (av[1] == NULL)
+		nvalid = 1;
+	for (i = 1; av[i];) {
+		if (forward == 0 && strchr(av[i], '@')) {
+			/* no way, delete it! */
+			for (j = i; av[j]; j++)
+				av[j] = av[j+1];
+			if (av[i])
+				continue;
+			break;
+		}
 
+		l = strlen(av[i]);
 		while (av[i][l-1] == '@')
 			av[i][--l] = '\0';
 		if (av[i][0] == '\0')
 			av[i] = NULL;
+		nvalid++;
+		i++;
 	}
 
 	if (pipe(p) < 0)
@@ -100,7 +120,8 @@ main()
 			(void)dup2(p[1], 1);
 			(void)close(p[1]);
 		}
-		execv(_PATH_FINGER, av);
+		if (nvalid)
+			execv(_PATH_FINGER, av);
 		_exit(1);
 	case -1:
 		fatal("fork");

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fingerd.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: fingerd.8,v 1.1.1.1 1995/10/18 08:43:15 deraadt Exp $
+.\"	$Id: fingerd.8,v 1.2 1996/06/24 17:41:06 deraadt Exp $
 .\"
 .Dd March 16, 1991
 .Dt FINGERD 8
@@ -40,6 +40,7 @@
 .Nd remote user information server
 .Sh SYNOPSIS
 .Nm fingerd
+.Op Fl s
 .Sh DESCRIPTION
 .Nm Fingerd
 is a simple protocol based on
@@ -52,6 +53,13 @@ or a particular person in depth.
 There is no required format and the
 protocol consists mostly of specifying a single
 .Dq command line .
+.Pp
+The
+.Fl s
+option prevents
+.Nm fingerd
+from doing lookups on names which have @ in them.  This allows subnetworks
+to be hidden from prying eyes.
 .Pp
 .Nm Fingerd
 listens for
