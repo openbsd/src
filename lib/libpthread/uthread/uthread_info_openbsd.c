@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.8 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.9 2003/03/20 00:09:21 marc Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -413,7 +413,7 @@ void
 _thread_dump_data(const void *addr, int len)
 {
 	int fd = -1;
-	unsigned char data[ DUMP_BUFLEN ];
+	unsigned char data[DUMP_BUFLEN];
 
 	if (getenv("PTHREAD_DEBUG") != NULL)
 		fd = _thread_sys_open(_PATH_TTY, O_WRONLY | O_APPEND);
@@ -439,7 +439,7 @@ _thread_dump_data(const void *addr, int len)
 			}
 			(char *) addr += 8;
 
-			sprintf( data, "%18p:   ", d );
+			snprintf(data, DUMP_BUFLEN, "%18p:   ", d);
 			while (count--) {
 				if (isprint(*d))
 					*a++ = *d;
