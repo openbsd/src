@@ -9,37 +9,14 @@ HTDOCS= \
 CGIFILES= \
 	cgi-bin/printenv cgi-bin/test-cgi	
 MANUALFILES= \
-	manual/mod/mod_cgi.html  \
-	manual/mod/mod_cookies.html \
-	manual/mod/mod_digest.html \
-	manual/mod/mod_dir.html \
-	manual/mod/mod_dld.html \
-	manual/mod/mod_dll.html \
-	manual/mod/mod_env.html \
-	manual/mod/mod_example.html \
-	manual/mod/mod_expires.html \
-	manual/mod/mod_headers.html \
-	manual/mod/mod_imap.html \
-	manual/mod/mod_include.html \
-	manual/mod/mod_info.html \
-	manual/mod/mod_isapi.html \
-	manual/mod/mod_log_agent.html \
-	manual/mod/mod_log_common.html \
-	manual/mod/mod_log_config.html \
-	manual/mod/mod_log_referer.html \
-	manual/mod/mod_mime.html \
-	manual/mod/mod_mime_magic.html \
-	manual/mod/mod_mmap_static.html \
-	manual/mod/mod_negotiation.html \
-	manual/mod/mod_proxy.html \
-	manual/mod/mod_rewrite.html \
-	manual/mod/mod_setenvif.html \
-	manual/mod/mod_so.html \
-	manual/mod/mod_speling.html \
-	manual/mod/mod_status.html \
-	manual/mod/mod_unique_id.html \
-	manual/mod/mod_userdir.html \
-	manual/mod/mod_usertrack.html \
+	manual/images/custom_errordocs.gif \
+	manual/images/home.gif \
+	manual/images/index.gif \
+	manual/images/mod_rewrite_fig1.fig \
+	manual/images/mod_rewrite_fig1.gif \
+	manual/images/mod_rewrite_fig2.fig \
+	manual/images/mod_rewrite_fig2.gif \
+	manual/images/sub.gif \
 	manual/LICENSE \
 	manual/bind.html \
 	manual/cgi_path.html \
@@ -71,14 +48,6 @@ MANUALFILES= \
 	manual/unixware.html \
 	manual/upgrading_to_1_3.html \
 	manual/windows.html \
-	manual/images/custom_errordocs.gif \
-	manual/images/home.gif \
-	manual/images/index.gif \
-	manual/images/mod_rewrite_fig1.fig \
-	manual/images/mod_rewrite_fig1.gif \
-	manual/images/mod_rewrite_fig2.fig \
-	manual/images/mod_rewrite_fig2.gif \
-	manual/images/sub.gif \
 	manual/misc/API.html \
 	manual/misc/FAQ.html \
 	manual/misc/HTTP_Features.tsv \
@@ -101,6 +70,54 @@ MANUALFILES= \
 	manual/misc/security_tips.html \
 	manual/misc/vif-info.html \
 	manual/misc/windoz_keepalive.html \
+	manual/mod/core.html \
+	manual/mod/directive-dict.html \
+	manual/mod/directives.html \
+	manual/mod/footer.html \
+	manual/mod/header.html \
+	manual/mod/index.html \
+	manual/mod/mod_access.html \
+	manual/mod/mod_actions.html \
+	manual/mod/mod_alias.html \
+	manual/mod/mod_asis.html \
+	manual/mod/mod_auth.html \
+	manual/mod/mod_auth_anon.html \
+	manual/mod/mod_auth_db.html \
+	manual/mod/mod_auth_dbm.html \
+	manual/mod/mod_autoindex.html \
+	manual/mod/mod_browser.html \
+	manual/mod/mod_cern_meta.html \
+	manual/mod/mod_cgi.html \
+	manual/mod/mod_cookies.html \
+	manual/mod/mod_digest.html \
+	manual/mod/mod_dir.html \
+	manual/mod/mod_dld.html \
+	manual/mod/mod_dll.html \
+	manual/mod/mod_env.html \
+	manual/mod/mod_example.html \
+	manual/mod/mod_expires.html \
+	manual/mod/mod_headers.html \
+	manual/mod/mod_imap.html \
+	manual/mod/mod_include.html \
+	manual/mod/mod_info.html \
+	manual/mod/mod_isapi.html \
+	manual/mod/mod_log_agent.html \
+	manual/mod/mod_log_common.html \
+	manual/mod/mod_log_config.html \
+	manual/mod/mod_log_referer.html \
+	manual/mod/mod_mime.html \
+	manual/mod/mod_mime_magic.html \
+	manual/mod/mod_mmap_static.html \
+	manual/mod/mod_negotiation.html \
+	manual/mod/mod_proxy.html \
+	manual/mod/mod_rewrite.html \
+	manual/mod/mod_setenvif.html \
+	manual/mod/mod_so.html \
+	manual/mod/mod_speling.html \
+	manual/mod/mod_status.html \
+	manual/mod/mod_unique_id.html \
+	manual/mod/mod_userdir.html \
+	manual/mod/mod_usertrack.html \
 	manual/vhosts/details.html \
 	manual/vhosts/details_1_2.html \
 	manual/vhosts/examples.html \
@@ -113,6 +130,7 @@ MANUALFILES= \
 	manual/vhosts/name-based.html \
 	manual/vhosts/vhosts-in-depth.html \
 	manual/vhosts/virtual-host.html
+
 
 ICONFILES= \
 	icons/README icons/c.gif icons/hand.right.gif icons/pie2.gif	\
