@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vacation.1,v 1.4 1998/10/30 00:24:42 aaron Exp $
+.\"	$OpenBSD: vacation.1,v 1.5 1999/02/12 05:51:39 marc Exp $
 .\"	$NetBSD: vacation.1,v 1.5 1995/08/31 21:57:08 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
@@ -142,14 +142,15 @@ please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 .Ed
 .Pp
 .Nm vacation
-reads the first line from the standard input for a
+reads the incoming message from standard input, checking the message
+headers for either the
 .Ux
 .Dq From
-line to determine the sender.
-.Xr Sendmail 8
-includes this
-.Dq From
-line automatically.
+line or a
+.Dq Return-Path
+header to determine the sender.  If both are present the sender from the
+.Dq Return-Path
+header is used.
 .Pp
 Fatal errors, such as calling
 .Nm vacation
