@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.13 1996/07/31 00:18:13 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 1996/08/23 20:57:36 niklas Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
 MLINKS+=	gcc.1 cc.1
