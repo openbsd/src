@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 1999/11/09 00:20:42 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.15 2000/06/15 03:12:46 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -110,13 +110,19 @@ cdev_decl(ofrtc);
 cdev_decl(kbd);
 cdev_decl(ms);
 
-#define cdev_wscons_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap), D_TTY }
+#if 0
+#include "wsdisplay.h"
+#include "wskdb.h"
+#include "wsmouse.h"
+#else
+#define NWSKBD 0
+#define NWSDISPLAY 0
+#define NWSMOUSE 0
 
-#include "wscons.h"
-cdev_decl(wscons);
+cdev_decl(wsdisplay);
+cdev_decl(wskdb);
+cdev_decl(wsmouse);
+#endif
 
 #include <sd.h>
 #include <st.h>
@@ -190,12 +196,21 @@ struct cdevsw cdevsw[] = {
         cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
         cdev_bpftun_init(NTUN,tun),     /* 23: network tunnel */
         cdev_lkm_init(NLKM,lkm),        /* 24: loadable module driver */
-	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */     
+	#if 0
+	cdev_wsdisplay_init(NWSDISPLAY,wscons), /* 25: workstation console */
+	#else
+        cdev_notdef(),                  /* 25 */
+	#endif
         cdev_notdef(),                  /* 26 */
         cdev_notdef(),                  /* 27 */
         cdev_notdef(),                  /* 28 */
-        cdev_mouse_init(NWSCONS,kbd),   /* 29 /dev/kbd XX */
-        cdev_mouse_init(NWSCONS,ms),    /* 30 /dev/mouse XXX */
+	#if 0
+        cdev_mouse_init(NWSKDB,wskbd),   /* 29 /dev/kbd XX */
+        cdev_mouse_init(NWSMOUSE,msmouse),    /* 30 /dev/mouse XXX */
+	#else
+        cdev_notdef(),                  /* 29 */
+        cdev_notdef(),                  /* 30 */
+	#endif
         cdev_notdef(),                  /* 31 */
         cdev_notdef(),                  /* 32 */
         cdev_lkm_dummy(),               /* 33 */
@@ -315,10 +330,14 @@ blktochr(dev)
 
 cons_decl(com);
 cons_decl(ofc);
+/* cons_decl(wscons); */
 
 struct consdev constab[] = {
 #if NOFCONS > 0
 	cons_init(ofc),
+#endif
+#if NWSCONS1 > 0
+	cons_init(wscons),
 #endif
 #if NCOM > 0
 	cons_init(com),
