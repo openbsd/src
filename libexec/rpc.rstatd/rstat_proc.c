@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.5 1997/04/17 00:06:30 weingart Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.6 1997/07/08 20:19:35 kstailey Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.5 1997/04/17 00:06:30 weingart Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.6 1997/07/08 20:19:35 kstailey Exp $";
 #endif
 
 /*
@@ -463,7 +463,7 @@ rstat_service(rqstp, transp)
 		svcerr_systemerr(transp);
 	}
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
+		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
 leave:
