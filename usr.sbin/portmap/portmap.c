@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.3 1996/06/29 19:03:50 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.4 1996/07/01 00:35:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -155,7 +155,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "cannot create udp socket: %m");
 		exit(1);
 	}
-	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
 		syslog(LOG_ERR, "cannot bind udp: %m");
 		exit(1);
@@ -194,7 +194,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "cannot create tcp socket: %m");
 		exit(1);
 	}
-	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
 		syslog(LOG_ERR, "cannot bind udp: %m");
 		exit(1);
