@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.6 1999/06/18 05:19:59 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.7 1999/07/20 14:13:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -49,8 +49,8 @@ struct hppa_frame {
 	register_t f_rp;
 	register_t f_r3 , f_r4 , f_r5 , f_r6 , f_r7 , f_r8 , f_r9 , f_r10,
 		   f_r11, f_r12, f_r13, f_r14, f_r15, f_r16, f_r17, f_r18;
-	register_t f_sp;
 	register_t f_args[HPPA_FRAME_NARGS];
+	register_t f_sp;
 	register_t f_pad[2];
 	/* locals goes here */
 };
@@ -126,8 +126,9 @@ struct trapframe {
 	u_int	tf_hptm;	/* cr24 */
 	u_int	tf_vtop;	/* cr25 */
 	u_int	tf_tr2;		/* cr26 */
+	u_int	tf_cr28;
 
-	u_int	tf_pad[5];	/* pad to 256 bytes */
+	u_int	tf_pad[4];	/* pad to 256 bytes */
 };
 #endif /* !_LOCORE */
 

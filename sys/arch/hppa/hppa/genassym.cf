@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 1999/07/12 18:14:28 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.13 1999/07/20 14:13:32 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -168,6 +168,7 @@ define	TF_SR6		offsetof(struct trapframe, tf_sr6)
 define	TF_SR7		offsetof(struct trapframe, tf_sr7)
 define	TF_CR24		offsetof(struct trapframe, tf_hptm)
 define	TF_CR25		offsetof(struct trapframe, tf_vtop)
+define	TF_CR28		offsetof(struct trapframe, tf_cr28)
 
 # proc fields and values
 struct	proc
