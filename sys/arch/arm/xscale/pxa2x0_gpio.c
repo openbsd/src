@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.7 2005/01/10 23:42:22 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.8 2005/01/11 18:12:30 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -61,6 +62,8 @@ struct gpio_irq_handler {
 	void *gh_arg;
 	int gh_spl;
 	u_int gh_gpio;
+	int gh_irq;
+	struct evcount gh_count;
 };
 
 struct pxagpio_softc {
@@ -248,6 +251,8 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	gh->gh_arg = arg;
 	gh->gh_spl = spl;
 	gh->gh_gpio = gpio;
+	gh->gh_irq = gpio+32;
+	evcount_attach(&gh->gh_count, name, (void *)&gh->gh_irq, &evcount_intr);
 
 	gh->gh_next = sc->sc_handlers[gpio];
 	sc->sc_handlers[gpio] = gh;
@@ -296,6 +301,8 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 	struct pxagpio_softc *sc = pxagpio_softc;
 	struct gpio_irq_handler *gh = cookie;
 	u_int32_t bit, reg;
+
+	evcount_detach(&gh->gh_count);
 
 	bit = GPIO_BIT(gh->gh_gpio);
 
@@ -366,7 +373,7 @@ static int
 gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 {
 	struct gpio_irq_handler **ghp, *gh;
-	int i, s, handled, pins;
+	int i, s, nhandled, handled, pins;
 	u_int32_t gedr, mask;
 	int bank;
 
@@ -419,7 +426,10 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 
 		s = _splraise(gh->gh_spl);
 		do {
-			handled |= (gh->gh_func)(gh->gh_arg);
+			nhandled = (gh->gh_func)(gh->gh_arg);
+			if (handled != 0)
+				gh->gh_count.ec_count++;
+			handled |= nhandled;
 			gh = gh->gh_next;
 		} while (gh != NULL);
 		splx(s);

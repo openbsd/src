@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.4 2005/01/04 23:43:22 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.5 2005/01/11 18:12:30 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
@@ -105,6 +106,8 @@ static struct intrhandler{
 	void *arg;		/* NULL for stackframe */
 	/* struct evbnt ev; */
 	char *name;
+	int ih_irq;
+	struct evcount ih_count;
 }
 handler[ICU_LEN];
 
@@ -216,6 +219,7 @@ pxa2x0_irq_handler(void *arg)
 		(* handler[irqno].func)( 
 			handler[irqno].arg == 0
 			? frame : handler[irqno].arg );
+		handler[irqno].ih_count.ec_count++;
 #else
 		/* process all handlers for this interrupt.
 		   XXX not yet */
@@ -440,23 +444,29 @@ pxa2x0_intr_establish(int irqno, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	int psw;
+	struct intrhandler *ih;
 
 	if (irqno < PXA2X0_IRQ_MIN || irqno >= ICU_LEN)
 		panic("intr_establish: bogus irq number %d", irqno);
 
 	psw = disable_interrupts(I32_bit);
 
-	handler[irqno].arg = arg;
-	handler[irqno].func = func;
-	handler[irqno].name = name;
+	ih = &handler[irqno];
+	ih->arg = arg;
+	ih->func = func;
+	ih->name = name;
+	ih->ih_irq = irqno;
 	extirq_level[irqno] = level;
+
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq, &evcount_intr);
+
 	pxa2x0_update_intr_masks(irqno, level);
 
 	intr_mask = pxa2x0_imask[current_spl_level];
 	
 	restore_interrupts(psw);
 
-	return (&handler[irqno]);
+	return (ih);
 }
 void
 pxa2x0_intr_disestablish(void *cookie)
@@ -464,6 +474,7 @@ pxa2x0_intr_disestablish(void *cookie)
 	struct intrhandler *lhandler = cookie;
 	int irqno;
 	int psw;
+	struct intrhandler *ih;
 
 	irqno = lhandler - handler;
 
@@ -472,9 +483,12 @@ pxa2x0_intr_disestablish(void *cookie)
 
 	psw = disable_interrupts(I32_bit);
 
-	handler[irqno].arg = (void *) irqno;
-	handler[irqno].func = stray_interrupt;
-	handler[irqno].name = "stray";
+	ih = &handler[irqno];
+	evcount_detach(&ih->ih_count);
+
+	ih->arg = (void *) irqno;
+	ih->func = stray_interrupt;
+	ih->name = "stray";
 	extirq_level[irqno] = IPL_SERIAL;
 	pxa2x0_update_intr_masks(irqno, IPL_SERIAL);
 
