@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2000/02/09 05:56:50 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.10 2001/01/12 23:49:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -169,14 +169,16 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 
 		*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
+#if notused
 		for (; spa < epa; spa += NBPG, va += NBPG) {
 			if (!cachable)
-				pmap_changebit(spa, TLB_UNCACHEABLE, ~0);
+				pmap_changebit(va, TLB_UNCACHEABLE, ~0);
 			else
-				pmap_changebit(spa, 0, ~TLB_UNCACHEABLE);
+				pmap_changebit(va, 0, ~TLB_UNCACHEABLE);
 		}
+#endif /* notused */
 #else
-			panic("mbus_add_mapping: not implemented");
+		panic("mbus_add_mapping: not implemented");
 #endif
 	}
 
@@ -683,7 +685,27 @@ mbus_dmamap_unload(void *v, bus_dmamap_t map)
 void
 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_dmasync_op_t ops)
 {
-	__asm __volatile ("syncdma");
+	int i;
+	switch (ops) {
+	case BUS_DMASYNC_POSTREAD:
+	case BUS_DMASYNC_POSTWRITE:
+		__asm __volatile ("syncdma");
+		break;
+
+	case BUS_DMASYNC_PREREAD:
+		for (i = map->dm_nsegs; i--; )
+			pdcache(HPPA_SID_KERNEL, map->dm_segs[i].ds_addr,
+			    map->dm_segs[i].ds_len);
+		sync_caches();
+		break;
+
+	case BUS_DMASYNC_PREWRITE:
+		for (i = map->dm_nsegs; i--; )
+			fdcache(HPPA_SID_KERNEL, map->dm_segs[i].ds_addr,
+			    map->dm_segs[i].ds_len);
+		sync_caches();
+		break;
+	}
 }
 
 int
@@ -702,7 +724,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	    alignment, 0, &pglist, 1, FALSE))
 		return ENOMEM;
 
-	if ((va = uvm_km_valloc(kernel_map, size)) == 0) {
+	if (uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET,
+	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	      UVM_ADV_RANDOM, 0)) != KERN_SUCCESS) {
 		uvm_pglistfree(&pglist);
 		return ENOMEM;
 	}
@@ -715,9 +739,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ|VM_PROT_WRITE);
-
-		pmap_changebit(pg, TLB_UNCACHEABLE, 0); /* XXX for now */
-
+#if notused
+		pmap_changebit(va, TLB_UNCACHEABLE, 0); /* XXX for now */
+#endif
 		va += PAGE_SIZE;
 	}
 
