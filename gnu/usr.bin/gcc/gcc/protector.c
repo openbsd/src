@@ -117,7 +117,7 @@ static void change_arg_use_in_operand
 static void validate_insns_of_varrefs PARAMS ((rtx insn));
 static void validate_operand_of_varrefs PARAMS ((rtx insn, rtx *loc));
 
-#define SUSPICIOUS_BUF_SIZE 0
+#define SUSPICIOUS_BUF_SIZE 8
 
 #define AUTO_BASEPTR(X) \
   (GET_CODE (X) == PLUS ? XEXP (X, 0) : X)
@@ -948,6 +948,7 @@ arrange_var_order (block)
 	      && ! DECL_INLINE (types)	/* don't sweep inlined string */
 	      && DECL_RTL_SET_P (types)
 	      && GET_CODE (DECL_RTL (types)) == MEM
+	      && GET_MODE (DECL_RTL (types)) == BLKmode
 
 	      && (is_array=0, search_string_def (TREE_TYPE (types))
 		  || (! current_function_defines_vulnerable_string
@@ -972,11 +973,9 @@ arrange_var_order (block)
 		    ((TREE_INT_CST_LOW (DECL_SIZE (types)) + BITS_PER_UNIT - 1)
 		     / BITS_PER_UNIT);
 
-		  if (GET_MODE (DECL_RTL (types)) == BLKmode)
-		    {
-		      int alignment = BIGGEST_ALIGNMENT / BITS_PER_UNIT;
-		      var_size = CEIL_ROUND (var_size, alignment);
-		    }
+		  /* confirmed it is BLKmode.  */
+		  int alignment = BIGGEST_ALIGNMENT / BITS_PER_UNIT;
+		  var_size = CEIL_ROUND (var_size, alignment);
 
 		  /* skip the variable if it is top of the region
 		     specified by sweep_frame_offset */
