@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.20 2002/05/07 19:28:59 nate Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.21 2002/06/08 07:59:20 chris Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -40,14 +40,6 @@
 #define _NETINET_IF_ETHER_H_
 
 /*
- * Ethernet address - 6 octets
- * this is only used by the ethers(3) functions.
- */
-struct ether_addr {
-	u_int8_t ether_addr_octet[6];
-};
-
-/*
  * Some Ethernet constants.
  */
 #define	ETHER_ADDR_LEN	6	/* Ethernet address length		*/
@@ -56,6 +48,13 @@ struct ether_addr {
 #define ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
 #define ETHER_MIN_LEN	64	/* Minimum frame length, CRC included	*/
 #define ETHER_MAX_LEN	1518	/* Maximum frame length, CRC included	*/
+
+/*
+ * Ethernet address - 6 octets
+ */
+struct ether_addr {
+	u_int8_t ether_addr_octet[ETHER_ADDR_LEN];
+};
 
 /*
  * The length of the combined header.
