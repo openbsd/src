@@ -6,7 +6,7 @@
 #	Please note that before you use this kernel config as an example for
 #	anything, it currently requires special boot blocks.
 #
-#	$OpenBSD: TARDIS,v 1.1 1997/06/08 19:14:03 downsj Exp $
+#	$OpenBSD: TARDIS,v 1.2 1997/06/23 19:05:39 kstailey Exp $
 #
 
 machine		i386
@@ -51,6 +51,7 @@ option		MFS
 
 option		PPP_BSDCOMP,PPP_DEFLATE
 option		IPFILTER
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 
 option		NFSCLIENT
 option		NFSSERVER

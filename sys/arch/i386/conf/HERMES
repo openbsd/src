@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.6 1997/06/12 20:40:02 kstailey Exp $
+# $OpenBSD: HERMES,v 1.7 1997/06/23 19:05:38 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -67,6 +67,7 @@ option		PROCFS		# access the insides of procs via the FS
 option		INET		# IP + ICMP + TCP + UDP
 option		GATEWAY		# packet forwarding
 option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 #option		NS		# XNS
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP

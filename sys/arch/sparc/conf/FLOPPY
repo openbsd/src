@@ -1,4 +1,4 @@
-# 	$OpenBSD: FLOPPY,v 1.14 1997/06/22 21:42:40 downsj Exp $
+# 	$OpenBSD: FLOPPY,v 1.15 1997/06/23 19:05:41 kstailey Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -63,6 +63,7 @@ option		INET		# IP + ICMP + TCP + UDP
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 #option		IPFILTER	# IP packet filter for security
+#option		IPFILTER_LOG	# use /dev/ipl to log IPF
 
 pseudo-device	loop	1	# network loopback
 #pseudo-device	bpfilter 8	# packet filter

@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.14 1997/06/03 20:41:17 deraadt Exp $
+#	$OpenBSD: ALL,v 1.15 1997/06/23 19:05:37 kstailey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -78,6 +78,7 @@ option		ISO,TPIP	# OSI
 option		EON		# OSI tunneling over IP
 option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 
 config		bsd	swap generic
 

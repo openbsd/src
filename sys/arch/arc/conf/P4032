@@ -1,4 +1,4 @@
-#	$OpenBSD: P4032,v 1.1 1997/05/18 13:45:23 pefo Exp $
+#	$OpenBSD: P4032,v 1.2 1997/06/23 19:05:36 kstailey Exp $
 #
 #	Generic configuration file for Algorithmics P4032 board
 #
@@ -54,6 +54,7 @@ options 	INET		# Internet protocols
 #options 	EON		# OSI tunneling over IP
 #option         CCITT,LLC,HDLC  # X.25
 option          IPFILTER        # IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MULTICAST	# Multicast support

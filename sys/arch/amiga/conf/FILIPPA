@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.18 1997/05/04 01:33:53 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.19 1997/06/23 19:05:34 kstailey Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -33,6 +33,7 @@ option		IPSEC		# IP-SEC networking support
 #option		EON		# ISO CLNL over IP
 option		GATEWAY		# Packet forwarding
 option		IPFILTER	# Darren Reed's IP filter
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 #option		DIRECTED_BROADCAST	# Broadcast across subnets
 #option		NSIP		# XNS over IP
 option		NTP		# Network time protocol syscalls

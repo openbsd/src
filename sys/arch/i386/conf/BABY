@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.19 1997/06/09 21:50:57 deraadt Exp $
+#	$OpenBSD: BABY,v 1.20 1997/06/23 19:05:38 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -76,6 +76,7 @@ option		NS		# XNS
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 
 config		bsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and sd4 dumps on sd2
 
