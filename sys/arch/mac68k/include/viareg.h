@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.14 2005/01/11 21:07:19 martin Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.15 2005/02/06 19:51:35 martin Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -144,6 +144,7 @@ extern volatile unsigned char *Via2Base;	/* init in VIA_Initialize */
 #define VIA1_addr	Via1Base	/* at PA 0x50f00000 */
 #define VIA2OFF		1		/* VIA2 addr = VIA1_addr * 0x2000 */
 #define RBVOFF		0x13		/* RBV addr = VIA1_addr * 0x13000 */
+#define OSSOFF		0xd		/* OSS addr = VIA1_addr + 0x1A000 */
 
 #define VIA1		0
 extern int VIA2;
@@ -159,7 +160,7 @@ extern int VIA2;
 #define vT1LH		0x0e00
 #define vT2C		0x1000
 #define vT2CH		0x1200
-#define vSR			0x1400	/* shift register */
+#define vSR		0x1400	/* shift register */
 #define vACR		0x1600	/* aux control register */
 #define vPCR		0x1800	/* peripheral control register */
 #define vIFR		0x1a00	/* interrupt flag register */
@@ -174,15 +175,21 @@ extern int VIA2;
 #define rSlotInt	0x12	/* Slot interrupt */
 
 /* RBV monitor type flags and masks */
-#define RBVDepthMask	0x07	/* depth in bits */
+#define RBVDepthMask	0x07	/* Depth in bits */
 #define RBVMonitorMask	0x38	/* Type numbers */
-#define RBVOff		0x40	/* monitor turn off */
-#define RBVMonIDNone	0x38	/* What RBV actually has for no video */
-#define RBVMonIDOff	0x0	/* What rbv_vidstatus() returns for no video */
-#define RBVMonID15BWP	0x08	/* BW portrait */
-#define RBVMonIDRGB	0x10	/* color monitor */
+#define RBVOff		0x40	/* Monitor turned off */
+#define RBVMonIDBWP	0x08	/* 15 inch BW portrait */
+#define RBVMonIDRGB	0x10	/* 12 inch colorr */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
-#define RBVMonIDBW	0x30	/* No internal video */
+#define RBVMonIDStd	0x30	/* 12 inch BW or 13 inch color */
+#define RBVMonIDNone	0x38	/* No monitor connected */
+
+/* OSS registers */
+#define OSS_IFR		0x202
+#define OSS_PENDING_IRQ (*(volatile u_short *)(Via2Base + (OSS_IFR)))
+
+#define OSS_oRCR	0x204
+#define OSS_POWEROFF	0x80
 
 #define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
 #define via2_reg(r) (*(Via2Base+(r)))
@@ -202,7 +209,6 @@ struct via2hand {
 typedef SLIST_HEAD(, via2hand)	via2hand_t;
 
 void	via_init(void);
-int	rbv_vidstatus(void);
 void	via_powerdown(void);
 void	via_set_modem(int);
 void	add_nubus_intr(int, int (*)(void *), void *, const char *);

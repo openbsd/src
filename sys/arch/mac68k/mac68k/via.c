@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.21 2005/01/11 21:07:19 martin Exp $	*/
+/*	$OpenBSD: via.c,v 1.22 2005/02/06 19:51:35 martin Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
  */
 
 /*
- *	This code handles both the VIA and RBV functionality.
+ *	This code handles both the VIA, RBV and OSS functionality.
  */
 
 #include <sys/param.h>
@@ -52,23 +52,24 @@
 
 int	mrg_adbintr(void *);
 int	mrg_pmintr(void *);
-void	profclock(void *);
-int	rbv_nubus_intr(void *);
-static int rbv_slot_ignore(void *);
 int	rtclock_intr(void *);
-void	via1_intr(struct frame *);
-int	via2_nubus_intr(void *);
+void	profclock(void *);
 
-int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
+void	via1_intr(struct frame *);
+void	via2_intr(struct frame *);
+void	rbv_intr(struct frame *);
+void	oss_intr(struct frame *);
+int	via2_nubus_intr(void *);
+int	rbv_nubus_intr(void *);
+
+static	int slot_ignore(void *);
+
+void	(*real_via2_intr)(struct frame *);
+
+int	VIA2 = VIA2OFF;		/* default for II, IIx, IIcx, SE/30. */
 
 struct intrhand via1intrs[7];
 via2hand_t via2intrs[7];
-
-void	oss_intr(struct frame *);
-void	rbv_intr(struct frame *);
-void	via2_intr(struct frame *);
-
-void	(*real_via2_intr)(struct frame *);
 
 /*
  * Nubus slot interrupt routines and parameters for slots 9-15.  Note
@@ -168,7 +169,7 @@ via_init()
 		nubus_intr.vh_fn = rbv_nubus_intr;
 		via2_register_irq(&nubus_intr, NULL);
 		/* XXX necessary? */
-		add_nubus_intr(0, rbv_slot_ignore, NULL, "dummy");
+		add_nubus_intr(0, slot_ignore, (void *)0, "dummy");
 	}
 }
 
@@ -192,7 +193,8 @@ via1_intr(struct frame *fp)
 	u_int8_t intbits, bitnum;
 	u_int mask;
 
-	intbits = via_reg(VIA1, vIFR) & via_reg(VIA1, vIER);
+	intbits = via_reg(VIA1, vIFR);		/* get interrupts pending */
+	intbits &= via_reg(VIA1, vIER);		/* only care about enabled */
 
 	if (intbits == 0)
 		return;
@@ -206,14 +208,9 @@ via1_intr(struct frame *fp)
 	intbits &= 0x7f;
 	mask = 1;
 	for (bitnum = 0, ih = via1intrs; ; bitnum++, ih++) {
-		if ((intbits & mask) != 0 && ih->ih_fn != NULL) {
+		if ((intbits & mask) != 0 && ih->ih_fn != NULL)
 			if ((*ih->ih_fn)(ih->ih_arg) != 0)
 				ih->ih_count.ec_count++;
-		} else {
-#if 0
-			printf("spurious VIA1 interrupt, source %d\n", bitnum);
-#endif
-		}
 		mask <<= 1;
 		if (intbits < mask)
 			break;
@@ -229,7 +226,8 @@ via2_intr(struct frame *fp)
 	u_int mask;
 	int handled, rc;
 
-	intbits = via2_reg(vIFR) & via2_reg(vIER);
+	intbits = via2_reg(vIFR);		/* get interrupts pending */
+	intbits &= via2_reg(vIER);		/* only care about enabled */
 
 	if (intbits == 0)
 		return;
@@ -240,24 +238,19 @@ via2_intr(struct frame *fp)
 	mask = 1;
 	for (bitnum = 0, anchor = via2intrs; ; bitnum++, anchor++) {
 		if ((intbits & mask) != 0) {
-			handled = 0;
-			SLIST_FOREACH(v2h, anchor, v2h_link) {
-				struct intrhand *ih = &v2h->v2h_ih;
-				rc = (*ih->ih_fn)(ih->ih_arg);
-				if (rc != 0) {
-					ih->ih_count.ec_count++;
-					handled |= rc;
-				}
+		handled = 0;
+		SLIST_FOREACH(v2h, anchor, v2h_link) {
+			struct intrhand *ih = &v2h->v2h_ih;
+			rc = (*ih->ih_fn)(ih->ih_arg);
+			if (rc != 0) {
+				ih->ih_count.ec_count++;
+				handled |= rc;
 			}
-#if 0
-			if (handled == 0)
-				printf("spurious VIA2 interrupt, source %d\n",
-				    bitnum);
-#endif
 		}
-		mask <<= 1;
-		if (intbits < mask)
-			break;
+	}
+	mask <<= 1;
+	if (intbits < mask)
+		break;
 	}
 }
 
@@ -270,7 +263,8 @@ rbv_intr(struct frame *fp)
 	u_int mask;
 	int handled, rc;
 
-	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
+	intbits = via2_reg(vIFR + rIFR);
+	intbits &= via2_reg(vIER + rIER);
 
 	if (intbits == 0)
 		return;
@@ -290,11 +284,6 @@ rbv_intr(struct frame *fp)
 					handled |= rc;
 				}
 			}
-#if 0
-			if (handled == 0)
-				printf("spurious VIA2 interrupt, source %d\n",
-				    bitnum);
-#endif
 		}
 		mask <<= 1;
 		if (intbits < mask)
@@ -367,15 +356,12 @@ oss_intr(struct frame *fp)
 		return;
 
 	intbits &= 0x7f;
-	mask =1 ;
+	mask = 1;
 	for (bitnum = 0, ih = slotintrs; ; bitnum++, ih++) {
 		if (intbits & mask) {
 			if (ih->ih_fn != NULL) {
 				if ((*ih->ih_fn)(ih->ih_arg) != 0)
 					ih->ih_count.ec_count++;
-			} else {
-				printf("spurious nubus interrupt, slot %d\n",
-				    bitnum);
 			}
 			via2_reg(rIFR) = mask;
 		}
@@ -393,7 +379,7 @@ via2_nubus_intr(void *bitarg)
 	u_int8_t i, intbits, mask;
 	int rv = 0;
 
-	via2_reg(vIFR) = 0x80 | V2IF_SLOTINT;
+	via2_reg(vIFR) = V2IF_SLOTINT;
 	while ((intbits = (~via2_reg(vBufA)) & nubus_intr_mask)) {
 		for (i = 6, ih = &slotintrs[i], mask = 1 << i; mask != 0;
 		    i--, ih--, mask >>= 1) {
@@ -403,11 +389,6 @@ via2_nubus_intr(void *bitarg)
 						ih->ih_count.ec_count++;
 						rv = 1;
 					}
-				} else {
-#if 0
-					printf("spurious nubus interrupt, slot %d\n",
-					    i);
-#endif
 				}
 			}
 		}
@@ -434,11 +415,6 @@ rbv_nubus_intr(void *bitarg)
 						ih->ih_count.ec_count++;
 						rv = 1;
 					}
-				} else {
-#if 0
-					printf("spurious nubus interrupt, slot %d\n",
-					    i);
-#endif
 				}
 			}
 		}
@@ -448,10 +424,9 @@ rbv_nubus_intr(void *bitarg)
 }
 
 static int
-rbv_slot_ignore(void *client_data)
+slot_ignore(void *client_data)
 {
-	int slot = 0 + 9;
-	int mask = (1 << (slot - 9));
+	int mask = (1 << (int)client_data);
 
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirA) |= mask;
@@ -471,19 +446,6 @@ via_powerdown()
 		via2_reg(vBufB) &= ~0x04; /* Shut down */
 	} else if (VIA2 == RBVOFF)
 		via2_reg(rBufB) &= ~0x04;
-}
-
-int
-rbv_vidstatus()
-{
-/*
-	int montype;
-
-	montype = via2_reg(rMonitor) & RBVMonitorMask;
-	if(montype == RBVMonIDNone)
-		montype = RBVMonIDOff;
-*/
-	return(0);
 }
 
 void
