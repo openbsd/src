@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.14 2004/02/23 21:01:22 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.15 2004/03/15 09:13:10 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -350,12 +350,10 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc)
 			return;
 		}
 		if (uid != proc->kp_eproc.e_ucred.cr_uid) {
-			warnx("other process's maps are restricted");
+			warnx("other users' process maps are restricted");
 			return;
 		}
 	}
-		
-		
 
 	vmspace = &kbit[0];
 	vm_map = &kbit[1];
