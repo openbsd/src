@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.14 2004/12/16 11:07:33 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.15 2004/12/27 22:16:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -50,10 +50,35 @@ for my $i (@info) {
 	$info{$i} = $j;
 }
 
+sub _init_list
+{
+	$list = {};
+	my @bad=();
+
+	opendir(my $dir, $pkg_db) or die "Bad pkg_db: $!";
+	while (my $e = readdir($dir)) {
+		next if $e eq '.' or $e eq '..';
+		next unless -d "$pkg_db/$e";
+		if (! -r _) {
+			push(@bad, $e);
+			next;
+		}
+		if (-f "$pkg_db/$e/+CONTENTS") {
+			$list->{$e} = 1;
+		} else {
+			print "Warning: $e is not really a package\n";
+		}
+	}
+	close($dir);
+	if (@bad > 0) {
+		print "Warning: can't access information for ", join(", ", @bad), "\n";
+	}
+}
+
 sub add_installed
 {
 	if (!defined $list) {
-		installed_packages();
+		_init_list();
 	}
 	for my $p (@_) {
 		$list->{$p} = 1;
@@ -63,10 +88,10 @@ sub add_installed
 sub delete_installed
 {
 	if (!defined $list) {
-		installed_packages();
+		_init_list();
 	}
 	for my $p (@_) {
-		undef $list->{$p};
+		delete $list->{$p};
 
 	}
 }
@@ -74,27 +99,7 @@ sub delete_installed
 sub installed_packages(;$)
 {
 	if (!defined $list) {
-		$list = {};
-		my @bad=();
-
-		opendir(my $dir, $pkg_db) or die "Bad pkg_db: $!";
-		while (my $e = readdir($dir)) {
-			next if $e eq '.' or $e eq '..';
-			next unless -d "$pkg_db/$e";
-			if (! -r _) {
-				push(@bad, $e);
-				next;
-			}
-			if (-f "$pkg_db/$e/+CONTENTS") {
-				$list->{$e} = 1;
-			} else {
-				print "Warning: $e is not really a package\n";
-			}
-		}
-		close($dir);
-		if (@bad > 0) {
-			print "Warning: can't access information for ", join(", ", @bad), "\n";
-		}
+		_init_list();
 	}
 	if ($_[0]) {
 		return grep { !/^\./ } keys %$list;
