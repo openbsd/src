@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.9 1997/08/12 19:12:09 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.10 1997/08/22 20:13:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,8 +43,9 @@ memprobe()
 {
 	int ram;
 
-	__asm __volatile(DOINT(0x12) : "=a" (cnvmem) :: "%ecx", "%edx", "cc");
-	cnvmem &= 0xffff;
+	__asm __volatile(DOINT(0x12) : "=a" (BIOS_vars.bios_cnvmem)
+			 :: "%ecx", "%edx", "cc");
+	BIOS_vars.bios_cnvmem &= 0xffff;
 
 	/* probe extended memory
 	 *
@@ -60,7 +61,7 @@ memprobe()
 	}
 
 	printf("Found %d KB extended memory.\n", ram-1024);
-	extmem = ram - 1024;
+	BIOS_vars.bios_extmem = ram - 1024;
 }
 
 /* addrprobe(kloc): Probe memory at address kloc * 1024.

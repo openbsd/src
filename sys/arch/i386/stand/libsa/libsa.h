@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.14 1997/08/21 22:04:33 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.15 1997/08/22 20:13:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -39,12 +39,9 @@ void memprobe __P((void));
 void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
 void machdep __P((void));
-int kentry __P((u_int, u_int));
 void time_print __P((void));
 
-		/* XXX filled in assumption that last file opened is kernel */
-extern int	bootdev, bootdev_geometry;
-extern u_int	cnvmem, extmem;
-extern struct apm_connect_info apminfo;
 extern const char bdevs[][4];
 extern const int nbdevs;
+extern int bootdev; /* XXX pass through the global to exec_i386 */
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1997/08/21 20:36:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1997/08/22 20:13:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,12 +58,12 @@
 
 #include "libsa.h"
 #include <machine/apmvar.h>
-#undef APM_DISCONNECT /* XXX temp hack */
 #include <machine/biosvar.h>
 #include "debug.h"
 
-struct apm_connect_info apminfo;
 struct BIOS_regs	BIOS_regs;
+struct BIOS_vars	BIOS_vars;
+int bootdev;
 
 #ifdef DEBUG
 #define CKPT(c)	(*(u_int16_t*)0xb8148 = 0x4700 + (c))
@@ -72,8 +72,8 @@ struct BIOS_regs	BIOS_regs;
 #endif
 
 #ifdef BOOT_APM
-static u_int
-apm_init()
+static __inline u_int
+apm_check()
 {
 	u_int detail;
 	u_int8_t f;
@@ -100,13 +100,13 @@ apm_disconnect() {
 	__asm __volatile(DOINT(0x15) "\n\t"
 			 "setc %b0"
 			 : "=a" (rv)
-			 : "a" (APM_DISCONNECT), "b" (PMDV_APMBIOS)
+			 : "a" (APM_DISCONNECTANY), "b" (PMDV_APMBIOS)
 			 : "%ecx", "%edx", "cc");
 	return (rv & 0xff)? rv >> 8 : 0;
 }
 
 static __inline int
-apm_connect(struct apm_connect_info *apminfo)
+apm_connect()
 {
 	register u_int16_t f;
 	__asm __volatile (DOINT(0x15) "\n\t"
@@ -116,18 +116,18 @@ apm_connect(struct apm_connect_info *apminfo)
 			  "movzwl %%cx, %%ecx\n\tshll $4, %2\n\t"
 			  "movzwl %%dx, %%edx\n\tshll $4, %3\n\t"
 			  : "=b" (f),
-			    "=a" (apminfo->apm_code32_seg_base),
-			    "=c" (apminfo->apm_code16_seg_base),
-			    "=d" (apminfo->apm_data_seg_base)
+			    "=a" (BIOS_vars.apm_code32_base),
+			    "=c" (BIOS_vars.apm_code16_base),
+			    "=d" (BIOS_vars.apm_data_base)
 			  : "a" (APM_PROT32CONNECT), "b" (PMDV_APMBIOS)
 			  : "cc");
-	apminfo->apm_entrypt         = BIOS_regs.biosr_bx;
+	BIOS_vars.apm_entry    = BIOS_regs.biosr_bx;
 #if 0
-	apminfo->apm_code32_seg_len  = BIOS_regs.biosr_si & 0xffff;
-	apminfo->apm_data_seg_len    = BIOS_regs.biosr_di & 0xffff;
+	BIOS_vars.apm_code_len = BIOS_regs.biosr_si & 0xffff;
+	BIOS_vars.apm_data_len = BIOS_regs.biosr_di & 0xffff;
 #else
-	apminfo->apm_code32_seg_len  = 0x10000;
-	apminfo->apm_data_seg_len    = 0x10000;
+	BIOS_vars.apm_code_len = 0x10000;
+	BIOS_vars.apm_data_len = 0x10000;
 #endif
 	return (f & 0xff)? f >> 8 : 0;
 }
@@ -146,21 +146,18 @@ machdep()
 #endif
 
 #ifdef BOOT_APM
-	if ((apminfo.apm_detail = apm_init())) {
+	if ((BIOS_vars.apm_detail = apm_check())) {
 
 		printf("apm: ");
 		apm_disconnect();
-		if (apm_connect(&apminfo) != 0)
+		if (apm_connect() != 0)
 			printf("connect error\n");
 #ifdef DEBUG
 		printf("%x text=%x/%x[%x] data=%x[%x] @ %x",
-		       apminfo.apm_detail,
-		       apminfo.apm_code32_seg_base,
-		       apminfo.apm_code16_seg_base,
-		       apminfo.apm_code32_seg_len,
-		       apminfo.apm_data_seg_base,
-		       apminfo.apm_data_seg_len,
-		       apminfo.apm_entrypt);
+		       BIOS_vars.apm_detail, BIOS_vars.apm_code32_base,
+		       BIOS_vars.apm_code16_base, BIOS_vars.apm_code_len,
+		       BIOS_vars.apm_data_base, BIOS_vars.apm_data_len,
+		       BIOS_vars.apm_entry);
 #else
 		printf("present");
 #endif
