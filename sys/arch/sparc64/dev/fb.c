@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.1 2003/06/16 20:46:10 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.2 2003/06/17 17:35:40 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -166,21 +166,23 @@ fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
     void (*burner)(void *, u_int, u_int))
 {
 	long defattr;
-	int *ccolp, *crowp;
 
-	if (romgetcursoraddr(&crowp, &ccolp))
-		ccolp = crowp = NULL;
-	if (ccolp != NULL)
-		sf->sf_ro.ri_ccol = *ccolp;
+	if (romgetcursoraddr(&sf->sf_crowp, &sf->sf_ccolp))
+		sf->sf_ccolp = sf->sf_crowp = NULL;
+	if (sf->sf_ccolp != NULL)
+		sf->sf_ro.ri_ccol = *sf->sf_ccolp;
 
 	if (row < 0) {
-		if (crowp != NULL)
-			sf->sf_ro.ri_crow = *crowp;
+		if (sf->sf_crowp != NULL)
+			sf->sf_ro.ri_crow = *sf->sf_crowp;
 		else
 			/* assume last row */
 			sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
-	} else
+	} else {
 		sf->sf_ro.ri_crow = row;
+		if (sf->sf_crowp != NULL)
+			*sf->sf_crowp = row;
+	}
 
 	/*
 	 * Scale back rows and columns if the font would not otherwise

@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.25 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.26 2003/06/17 17:35:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -42,17 +42,13 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
+#include <machine/fbvar.h>
 
 #include <sparc64/dev/creatorreg.h>
 #include <sparc64/dev/creatorvar.h>
 
 struct wsscreen_descr creator_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *creator_scrlist[] = {
@@ -72,7 +68,6 @@ void	creator_free_screen(void *, void *);
 int	creator_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
 paddr_t creator_mmap(void *, off_t, int);
-static int a2int(char *, int);
 void	creator_ras_fifo_wait(struct creator_softc *, int);
 void	creator_ras_wait(struct creator_softc *);
 void	creator_ras_init(struct creator_softc *);
@@ -82,7 +77,6 @@ void	creator_ras_eraserows(void *, int, int, long int);
 void	creator_ras_updatecursor(struct rasops_info *);
 void	creator_ras_fill(struct creator_softc *);
 void	creator_ras_setfg(struct creator_softc *, int32_t);
-void	creator_ras_updatecursor(struct rasops_info *);
 int	creator_setcursor(struct creator_softc *, struct wsdisplay_cursor *);
 int	creator_updatecursor(struct creator_softc *, u_int);
 void	creator_curs_enable(struct creator_softc *, u_int);
@@ -139,66 +133,40 @@ creator_attach(struct creator_softc *sc)
 	if (sc->sc_type == FFB_AFB)
 		sc->sc_dacrev = 10;
 
-	sc->sc_depth = 24;
-	sc->sc_linebytes = 8192;
-	sc->sc_height = getpropint(sc->sc_node, "height", 0);
-	sc->sc_width = getpropint(sc->sc_node, "width", 0);
+	fb_setsize(&sc->sc_sunfb, 32, 1152, 900, sc->sc_node, 0);
+	/* linesize has a fixed value, compensate */
+	sc->sc_sunfb.sf_linebytes = 8192;
+	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height * 8192;
 
-	sc->sc_rasops.ri_depth = 32;
-	sc->sc_rasops.ri_stride = sc->sc_linebytes;
-	sc->sc_rasops.ri_flg = RI_CENTER;
-	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
 	    sc->sc_pixel_h);
+	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	fbwscons_init(&sc->sc_sunfb, sc->sc_console ? 0 : RI_CLEAR);
 
-	sc->sc_rasops.ri_width = sc->sc_width;
-	sc->sc_rasops.ri_height = sc->sc_height;
-	sc->sc_rasops.ri_hw = sc;
-
-	rasops_init(&sc->sc_rasops,
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-
-	if ((sc->sc_dv.dv_cfdata->cf_flags & CREATOR_CFFLAG_NOACCEL) == 0) {
-		sc->sc_rasops.ri_hw = sc;
-		sc->sc_rasops.ri_ops.eraserows = creator_ras_eraserows;
-		sc->sc_rasops.ri_ops.erasecols = creator_ras_erasecols;
-		sc->sc_rasops.ri_ops.copyrows = creator_ras_copyrows;
+	if ((sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags & CREATOR_CFFLAG_NOACCEL)
+	    == 0) {
+		sc->sc_sunfb.sf_ro.ri_ops.eraserows = creator_ras_eraserows;
+		sc->sc_sunfb.sf_ro.ri_ops.erasecols = creator_ras_erasecols;
+		sc->sc_sunfb.sf_ro.ri_ops.copyrows = creator_ras_copyrows;
 		creator_ras_init(sc);
 	}
 
-	creator_stdscreen.nrows = sc->sc_rasops.ri_rows;
-	creator_stdscreen.ncols = sc->sc_rasops.ri_cols;
-	creator_stdscreen.textops = &sc->sc_rasops.ri_ops;
+	creator_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
+	creator_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
+	creator_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
+	creator_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
 	if (sc->sc_console) {
-		long defattr;
-
-		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
-			sc->sc_ccolp = sc->sc_crowp = NULL;
-		if (sc->sc_ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
-		if (sc->sc_crowp != NULL)
-			sc->sc_rasops.ri_crow = *sc->sc_crowp;
-
-		/* fix color choice */
-		wscol_white = 0;
-		wscol_black = 255;
-		wskernel_bg = 0;
-		wskernel_fg = 255;
-
-		sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-		    0, 0, 0, &defattr);
-		sc->sc_rasops.ri_updatecursor = creator_ras_updatecursor;
-
-		wsdisplay_cnattach(&creator_stdscreen, &sc->sc_rasops,
-		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
+		sc->sc_sunfb.sf_ro.ri_updatecursor = creator_ras_updatecursor;
+		fbwscons_console_init(&sc->sc_sunfb, &creator_stdscreen, -1,
+		    NULL);
 	}
 
 	waa.console = sc->sc_console;
 	waa.scrdata = &creator_screenlist;
 	waa.accessops = &creator_accessops;
 	waa.accesscookie = sc;
-	config_found(&sc->sc_dv, &waa, wsemuldisplaydevprint);
+	config_found(&sc->sc_sunfb.sf_dev, &waa, wsemuldisplaydevprint);
 }
 
 int
@@ -225,13 +193,13 @@ creator_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = sc->sc_height;
-		wdf->width  = sc->sc_width;
+		wdf->height = sc->sc_sunfb.sf_height;
+		wdf->width  = sc->sc_sunfb.sf_width;
 		wdf->depth  = 32;
-		wdf->cmsize = 256; /* XXX */
+		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_linebytes;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 	case WSDISPLAYIO_GCURSOR:
 		curs = (struct wsdisplay_cursor *)data;
@@ -429,10 +397,11 @@ creator_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rasops;
+	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, attrp);
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
+	    0, 0, 0, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
@@ -545,18 +514,6 @@ creator_mmap(vsc, off, prot)
 	}
 
 	return (-1);
-}
-
-static int
-a2int(char *cp, int deflt)
-{
-	int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
 }
 
 void
@@ -749,8 +706,8 @@ creator_ras_updatecursor(ri)
 {
 	struct creator_softc *sc = ri->ri_hw;
 
-	if (sc->sc_crowp != NULL)
-		*sc->sc_crowp = ri->ri_crow;
-	if (sc->sc_ccolp != NULL)
-		*sc->sc_ccolp = ri->ri_ccol;
+	if (sc->sc_sunfb.sf_crowp != NULL)
+		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
+	if (sc->sc_sunfb.sf_ccolp != NULL)
+		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

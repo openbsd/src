@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorvar.h,v 1.9 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: creatorvar.h,v 1.10 2003/06/17 17:35:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
@@ -34,22 +34,19 @@
 #define	CREATOR_CFFLAG_NOACCEL	0x1
 
 struct creator_softc {
-	struct device sc_dv;
+	struct sunfb sc_sunfb;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_pixel_h;
 	bus_space_handle_t sc_fbc_h;
 	bus_space_handle_t sc_dac_h;
 	bus_addr_t sc_addrs[FFB_NREGS];
 	bus_size_t sc_sizes[FFB_NREGS];
-	int sc_height, sc_width, sc_linebytes, sc_depth;
 	int sc_nscreens, sc_nreg;
 	int sc_console;
 	int sc_node;
 	int sc_type;
 	u_int sc_mode;
-	struct rasops_info sc_rasops;
 	int32_t sc_fifo_cache, sc_fg_cache;
-	int *sc_crowp, *sc_ccolp;
 	u_int32_t sc_dacrev;
 	u_int sc_curs_enabled, sc_curs_fg, sc_curs_bg;
 	struct wsdisplay_curpos sc_curs_pos, sc_curs_hot, sc_curs_size;
