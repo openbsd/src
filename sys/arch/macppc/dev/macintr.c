@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.8 2002/01/21 05:11:29 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.9 2002/01/26 15:22:52 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -400,15 +400,14 @@ intr_calculatemasks()
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
-
-	/*
+	 *
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET];
+	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_CLOCK] |= imask[IPL_IMP] | SPL_CLOCK;
 
 	/*
 	 * These are pseudo-levels.
