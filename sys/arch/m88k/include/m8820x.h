@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.2 2004/08/04 09:08:19 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.3 2004/08/06 13:23:49 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -171,4 +171,30 @@
 
 #define NBSG    	(1 << (PDT_BITS + PG_BITS))	/* segment size */
 
+#ifndef _LOCORE
+
+/*
+ * CMMU kernel information
+ */
+struct m8820x_cmmu {
+	volatile u_int32_t *cmmu_regs;	/* CMMU "base" area */
+#ifdef M88200_HAS_SPLIT_ADDRESS
+	vaddr_t		cmmu_addr;	/* address range */
+	vaddr_t		cmmu_addr_mask;	/* address mask */
+#endif
+};
+
+#define	INST_CMMU	0x00	/* even number */
+#define	DATA_CMMU	0x01	/* odd number */
+#define	CMMU_MODE(num)	((num) & 1)
+
+#define MAX_CMMUS	8		/* maximum cmmus on the board */
+extern struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
+extern u_int cmmu_shift;
+extern u_int max_cmmus;
+
+extern void m8820x_setup_board_config(void);
+extern unsigned m8820x_cmmu_cpu_number(void);
+
+#endif	/* _LOCORE */
 #endif	/* __M88K_M8820X_H__ */

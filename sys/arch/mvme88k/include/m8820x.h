@@ -1,4 +1,6 @@
-/*	$OpenBSD: m8820x.h,v 1.14 2004/08/02 08:35:00 miod Exp $ */
+#ifndef	_MVME88K_M8820X_H_
+#define	_MVME88K_M8820X_H_
+/*	$OpenBSD: m8820x.h,v 1.15 2004/08/06 13:23:49 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -49,7 +51,13 @@
  * the rights to redistribute these changes.
  */
 
-#include <m88k/m8820x.h>
+/*
+ * Code features to enable
+ */
+
+#ifdef MVME188
+#define	M88200_HAS_SPLIT_ADDRESS
+#endif
 
 /*
  * Address masks for MVME188 CMMU configs
@@ -59,3 +67,7 @@
 #define CMMU_A12_MASK		(1 << 12)
 #define CMMU_A14_MASK		(1 << 14)
 #define CMMU_SRAM_MASK		((1 << 31) | (1 << 30))
+
+#include <m88k/m8820x.h>
+
+#endif	/* _MVME88K_M8820X_H_ */
