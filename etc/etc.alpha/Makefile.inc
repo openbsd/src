@@ -1,11 +1,11 @@
 #
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.6 1997/05/14 10:00:28 graichen Exp $
+#	$Id: Makefile.inc,v 1.7 1997/05/24 21:39:06 graichen Exp $
 
 .ifdef DESTDIR
 
-snap_md: binutils bsd boot floppy
+snap_md: binutils bsd floppy
 
 binutils:
 	cd ${DESTDIR} && tar cf - usr/*openbsd* \
