@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.13 1998/06/29 06:51:06 angelos Exp $
+.\"	$OpenBSD: options.4,v 1.14 1998/06/29 06:57:01 angelos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -398,8 +398,9 @@ See also
 Makes the boot process more verbose on what peripherals are detected
 (vendor names and other information is printed etc.)
 .It Cd option APERTURE
-Provide in-kernel support for video memory mapping for user-processes.
-Very useful for running X windows.
+Provide in-kernel support for VGA framebuffer mapping by user-processes
+(such as an X windows server).  This option is supported in the i386
+architecture.
 .It Cd option XSERVER
 Support for X windows in the console driver.
 .It Cd option LKM
@@ -751,6 +752,7 @@ between 5% and 10% of total available RAM.
 .Xr rpc.rquotad 8 ,
 .Xr ktrace 1 ,
 .Xr X 1 ,
+.Xr xf86 4 ,
 .Xr gdb 1
 .Sh HISTORY
 The
