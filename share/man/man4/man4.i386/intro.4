@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.4 1998/10/03 07:24:30 fgsch Exp $
+.\"	$OpenBSD: intro.4,v 1.5 1998/11/19 09:33:13 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -102,12 +102,24 @@ Not all supported devices are listed.
 Adaptec 154x ISA SCSI adapter boards.
 .It ahb
 Adaptec 1742 EISA SCSI adapter boards.
+.It ahc
+Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards
+.It adv
+AdvanSys PCI narrow SCSI Host Adapters
+.It adw
+AdvanSys PCI wide SCSI Host Adapters
 .It aic
 Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
 .It apm
 advanced power management device interface.
+.It aria
+Sierra Semiconductor Aria 16 sound cards 
 .It ast
 multiplexing serial communications card first made by AST. 
+.It bktr
+Brooktree video capture driver
+.It boca
+BOCA serial cards.
 .It bt
 Buslogic BT-445, BT-74x, and BT-9xx SCSI boards.
 .It com
@@ -116,6 +128,8 @@ communications device interface.
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
 device interface.
+.It de
+DEC tulip-based ethernet cards
 .It ec
 3Com Etherlink II (3c503) Ethernet interface.
 .It eg
@@ -124,8 +138,16 @@ device interface.
 3Com 3c501 Ethernet board.
 .It ep
 3Com Etherlink III (3c5x9) Ethernet interface.
+.It
+Intel EtherExpress PRO/10 ethernet cards
 .It ie
 Ethernet driver for the AT&T StarLAN 10, EN100, StarLan Fiber, and 3Com 3c507.
+.It isp
+QLogic PCI SCSI controllers.
+.It iy
+Ether-Express PRO/10
+.It joy
+Joystick
 .It le
 Ethernet driver for BICC Isolan, Novell NE2100, and Digital DEPCA cards.
 .It lms
@@ -144,10 +166,14 @@ NCR PCI SCSI adapter boards.
 Novell NE1000 and 2000 Ethernet interface.
 .It npx
 Numeric Processing Extension coprocessor and emulator.
+.It pctr
+CPU performance counter registers
 .It pms
 PS/2 auxiliary port mouse device interface.
 .It rtfps
 another multiplexing serial communications card.
+.It rl
+RealTek 8129/8139 fast ethernet
 .It sb
 Sound Blaster card.
 .It sea
@@ -155,15 +181,23 @@ Seagate/Future Domain SCSI cards.  ST01/02, Future Domain TMC-885, and
 Future Domain TMC-950.
 .It speaker
 console speaker device interface.
+.It tl
+Texas Instruments ThunderLAN ethernet
+.It tx
+SMC 9432 10/100 Mbps Ethernet cards
 .It uha
 Ultrastor ISA and EISA SCSI adapter cards.  Ultrastore 14f, Ultrastore 34f,
 and Ultrastore 24f.
-.It wd
+.It wdc
 Standard ISA Western Digital type hard drives.  MFM, RLL, ESDI, and IDE.
+.It wds
+WD-7000 SCSI host adapters.
 .It we
 Western Digital/SMC WD 80x3, SMC Elite Ultra and SMC EtherEZ Ethernet cards.
 .It wt
 Wangtek and compatible tape drives.  QIC-02 and QIC-36.
+.It xl
+3COM 3c9xx Etherlink XL and Fast Etherlink XL cards
 .El
 .Sh HISTORY
 The
