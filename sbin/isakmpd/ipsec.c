@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.94 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.95 2004/06/16 15:05:37 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1936,7 +1936,7 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 
 		case IPSEC_ID_IPV6_ADDR_SUBNET:
 			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
-			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF +
+			util_ntoa(&mask, AF_INET6, id + ISAKMP_ID_DATA_OFF +
 			    sizeof(struct in6_addr));
 			snprintf(buf, size,
 			    "%08x%08x%08x%08x/%08x%08x%08x%08x: %s/%s", *idp,
