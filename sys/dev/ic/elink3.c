@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.20 1997/10/30 23:49:28 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.21 1998/01/17 16:40:38 mickey Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -719,7 +719,7 @@ epsetmedia(sc, medium)
 	case EPMEDIA_MII:
 		break;
 	default:
-#if defined(DEBUG)
+#if defined(EP_DEBUG)
 		printf("%s unknown media 0x%x\n", sc->sc_dev.dv_xname, medium);
 #endif
 		break;
@@ -738,14 +738,14 @@ epsetmedia(sc, medium)
 		config1 = (u_int)bus_space_read_2(iot, ioh,
 		    EP_W3_INTERNAL_CONFIG + 2);
 
-#if defined(DEBUG)
+#if defined(EP_DEBUG)
 		printf("%s:  read 0x%x, 0x%x from EP_W3_CONFIG register\n",
 		       sc->sc_dev.dv_xname, config0, config1);
 #endif
 		config1 = config1 & ~CONFIG_MEDIAMASK;
 		config1 |= (medium << CONFIG_MEDIAMASK_SHIFT);
 		
-#if defined(DEBUG)
+#if defined(EP_DEBUG)
 		printf("epsetmedia: %s: medium 0x%x, 0x%x to EP_W3_CONFIG\n",
 		    sc->sc_dev.dv_xname, medium, config1);
 #endif
