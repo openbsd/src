@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ipx_ntoa.c,v 1.4 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: ipx_ntoa.c,v 1.5 2003/09/26 06:19:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -36,19 +36,14 @@ static char rcsid[] = "$OpenBSD: ipx_ntoa.c,v 1.4 2003/06/02 20:18:35 millert Ex
 #include <stdio.h>
 
 char *
-ipx_ntoa(addr)
-	struct ipx_addr addr;
+ipx_ntoa(struct ipx_addr addr)
 {
-	static char obuf[] = "xxxx.xx:xx:xx:xx:xx:xx.uuuuu";
+	static char obuf[] = "xxxxxxxxH.xx:xx:xx:xx:xx:xx.uuuuu";
 
 	snprintf(obuf, sizeof obuf, "%8xH.%02x:%02x:%02x:%02x:%02x:%02x.%u",
-		ntohl(addr.ipx_net.l_net),
-		addr.ipx_host.c_host[0],
-		addr.ipx_host.c_host[1],
-		addr.ipx_host.c_host[2],
-		addr.ipx_host.c_host[3],
-		addr.ipx_host.c_host[4],
-		addr.ipx_host.c_host[5],
-		ntohs(addr.ipx_port));
+	    ntohl(addr.ipx_net.l_net), addr.ipx_host.c_host[0],
+	    addr.ipx_host.c_host[1], addr.ipx_host.c_host[2],
+	    addr.ipx_host.c_host[3], addr.ipx_host.c_host[4],
+	    addr.ipx_host.c_host[5], ntohs(addr.ipx_port));
 	return (obuf);
 }
