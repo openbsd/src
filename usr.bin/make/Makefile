@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2002/07/25 18:40:24 art Exp $
+#	$OpenBSD: Makefile,v 1.37 2004/01/28 02:01:48 mickey Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -20,6 +20,14 @@ SRCS+=	lstAddNew.c lstAppend.c lstConcat.c lstConcatDestroy.c \
 	lstInsert.c lstMember.c lstRemove.c lstReplace.c lstSucc.c
 .PATH:	${.CURDIR}/lst.lib
 
+# Use this for bootstrapping
+#.PATH: ${.CURDIR}/../../lib/libc/ohash
+#CFLAGS+=-I${.CURDIR}/../../lib/libc/ohash
+#HSRCS+=	ohash_create_entry.c ohash_delete.c ohash_do.c ohash_entries.c \
+#	ohash_enum.c ohash_init.c ohash_interval.c \
+#	ohash_lookup_interval.c ohash_lookup_memory.c \
+#	ohash_qlookup.c ohash_qlookupi.c
+#SRCS+=	${HSRCS}
 
 CLEANFILES+=generate hashconsts.h generate.o regress.o check
 
@@ -37,7 +45,7 @@ varhashconsts.h: generate
 condhashconsts.h: generate
 	${.OBJDIR}/generate 2 ${MAGICCONDSLOTS} >${.TARGET}
 
-generate: generate.c stats.c memory.c
+generate: generate.c stats.c memory.c ${HSRCS}
 	${HOSTCC} ${LDSTATIC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
 
 check: regress.o str.o memory.o buf.o
