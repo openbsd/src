@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.10 2001/08/19 23:22:17 brian Exp $
+ * $OpenBSD: arp.c,v 1.11 2001/10/24 10:01:09 brian Exp $
  *
  */
 
@@ -133,7 +133,7 @@ arp_ProxySub(struct bundle *bundle, struct in_addr addr, int add, int s)
     + arpmsg.hwa.sdl_len;
 
 
-  if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0 &&
+  if (ID0write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0 &&
       !(!add && errno == ESRCH)) {
     log_Printf(LogERROR, "%s proxy arp entry %s: %s\n",
 	add ? "Add" : "Delete", inet_ntoa(addr), strerror(errno));
