@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.24 2002/04/09 01:27:06 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.25 2002/04/10 18:25:16 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -264,6 +264,15 @@ wi_pci_attach(parent, self, aux)
 	switch (pp->pp_type) {
 	case WI_PCI_PLX:
 		/*
+		 * Check that there really is a PCMCIA card inserted and
+		 * print its CIS strings.
+		 */
+		if (localsize != 0 && wi_pci_handle_cis(sc) != 0) {
+			bus_space_unmap(localt, localh, localsize);
+			return;
+		}
+
+		/*
 		 * Tell the PLX chip to enable interrupts.  In most cases
 		 * the serial EEPROM has done this for us but some cards
 		 * appear not to.
@@ -286,13 +295,6 @@ wi_pci_attach(parent, self, aux)
 		/* Unmap registers we no longer need access to. */
 		if (localsize != 0)
 			bus_space_unmap(localt, localh, localsize);
-
-		/*
-		 * For PLX bridge cards, check for a PCMCIA card and
-		 * print its CIS strings.
-		 */
-		if (localsize != 0 && wi_pci_handle_cis(sc) != 0)
-			return;
 		break;
 	case WI_PCI_PRISM:
 		bus_space_write_2(iot, ioh, WI_PCI_COR_OFFSET,
