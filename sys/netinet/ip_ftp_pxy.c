@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ftp_pxy.c,v 1.9 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_ftp_pxy.c,v 1.10 2000/04/12 21:32:39 kjell Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -17,9 +17,7 @@ extern	kmutex_t	ipf_rw;
 #define	IPF_MAXPORTLEN	30
 #define	IPF_MIN227LEN	39
 #define	IPF_MAX227LEN	51
-#define	IPF_FTPBUFSZ	MAX(68,IPF_MAX227LEN)	/* This *MUST* be >= 51! */
-			/* 68 is chosen as the minimum datagram size for */
-			/* an unfragmented packet */
+#define	IPF_FTPBUFSZ	MAX(96,IPF_MAX227LEN)	/* This *MUST* be >= 51! */
 
 
 int ippr_ftp_init __P((void));
@@ -208,6 +206,7 @@ nat_t *nat;
 	 */
 	if (ippr_ftp_complete(portbuf, dlen))
 		return 0;
+
 	ftp = nat->nat_aps->aps_data;
 	switch (ftp->ftp_passok)
 	{
@@ -433,15 +432,14 @@ nat_t *nat;
 	 * Don't put the switch in one common function because one side
 	 * should only see numeric responses and the other commands.
 	 */
-	if (ippr_ftp_complete(portbuf, dlen))
-		return 0;
+
 	ftp = nat->nat_aps->aps_data;
 	switch (ftp->ftp_passok)
 	{
 	case 1 :
 		if (!strncmp(portbuf, "331", 3))
 			ftp->ftp_passok = 2;
-		else if (!strncmp(portbuf, "520", 3))
+		else if (!strncmp(portbuf, "530", 3))
 			ftp->ftp_passok = 0;
 		break;
 	case 3 :
@@ -452,8 +450,9 @@ nat_t *nat;
 		break;
 	}
 
-	if (ftp->ftp_passok != 4)
+	if (ippr_ftp_complete(portbuf, dlen) || (ftp->ftp_passok != 4))
 		return 0;
+
 	/*
 	 * Check for PASV reply message.
 	 */
