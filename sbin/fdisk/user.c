@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.21 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.22 2005/01/19 15:48:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -53,6 +53,7 @@ static cmd_table_t cmd_table[] = {
 	{"flag",   Xflag,	"Flag given table entry as bootable"},
 	{"update", Xupdate,	"Update machine code in loaded MBR"},
 	{"select", Xselect,	"Select extended partition table entry MBR"},
+	{"swap",   Xswap,	"Swap two partition entries"},
 	{"print",  Xprint,	"Print loaded MBR partition table"},
 	{"write",  Xwrite,	"Write loaded MBR to disk"},
 	{"exit",   Xexit,	"Exit edit of current MBR, without saving changes"},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.37 2004/11/06 18:57:59 otto Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.38 2005/01/19 15:48:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -92,6 +92,48 @@ Xdisk(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 
 	return (CMD_CONT);
 }
+
+/* ARGSUSED */
+int
+Xswap(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
+{
+	int pf, pt, ret;
+	prt_t pp;
+
+	ret = CMD_CONT;
+
+	if (!isdigit(cmd->args[0])) {
+		printf("Invalid argument: %s <from partition number>\n",
+		    cmd->cmd);
+		return (ret);
+	}
+
+	pf = atoi(cmd->args);
+	if (pf < 0 || pf > 3) {
+		printf("Invalid partition number %d.\n", pf);
+		return (ret);
+	}
+
+	pt = ask_num("Swap with what paritition?", ASK_DEC,
+	    -1, 0, 3, NULL);
+	if (pt < 0 || pt > 3) {
+		printf("Invalid partition number %d.\n", pt);
+		return (ret);
+	}
+
+	if (pt == pf) {
+		printf("%d same partition as %d, doing nothing.\n", pt, pf);
+		return (ret);
+	}
+
+	pp = mbr->part[pt];
+	mbr->part[pt] = mbr->part[pf];
+	mbr->part[pf] = pp;
+
+	ret = CMD_DIRTY;
+	return (ret);
+}
+
 
 /* ARGSUSED */
 int
