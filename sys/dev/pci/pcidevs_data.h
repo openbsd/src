@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.706 2004/01/15 23:01:26 grange Exp 
+ *	OpenBSD: pcidevs,v 1.707 2004/01/23 17:08:16 wilfried Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7045,6 +7045,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
 	    "Virtual SVGA",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2,
+	    "Virtual SVGA II",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.706 2004/01/15 23:01:26 grange Exp 
+ *	OpenBSD: pcidevs,v 1.707 2004/01/23 17:08:16 wilfried Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2426,6 +2426,7 @@
 
 /* VMware */
 #define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
+#define	PCI_PRODUCT_VMWARE_VIRTUAL2	0x0405		/* Virtual SVGA II */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */
