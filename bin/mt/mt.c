@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.15 1996/09/14 03:50:46 millert Exp $	*/
+/*	$OpenBSD: mt.c,v 1.16 1997/03/29 21:23:10 tholo Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.15 1996/09/14 03:50:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.16 1997/03/29 21:23:10 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,22 +75,23 @@ struct commands {
 	char *c_name;
 	int c_code;
 	int c_ronly;
+	int c_mincount;
 } com[] = {
-	{ "blocksize",	MTSETBSIZ, 1 },
-	{ "bsf",	MTBSF,	1 },
-	{ "bsr",	MTBSR,	1 },
-	{ "density",	MTSETDNSTY, 1 },
-	{ "eof",	MTWEOF,	0 },
-	{ "eom",	MTEOM,	1 },
-	{ "erase",	MTERASE, 0 },
-	{ "fsf",	MTFSF,	1 },
-	{ "fsr",	MTFSR,	1 },
-	{ "offline",	MTOFFL,	1 },
-	{ "rewind",	MTREW,	1 },
-	{ "rewoffl",	MTOFFL,	1 },
-	{ "status",	MTNOP,	1 },
-	{ "retension",	MTRETEN, 1 },
-	{ "weof",	MTWEOF,	0 },
+	{ "blocksize",	MTSETBSIZ,  1, 0 },
+	{ "bsf",	MTBSF,      1, 1 },
+	{ "bsr",	MTBSR,      1, 1 },
+	{ "density",	MTSETDNSTY, 1, 1 },
+	{ "eof",	MTWEOF,     0, 1 },
+	{ "eom",	MTEOM,      1, 1 },
+	{ "erase",	MTERASE,    0, 1 },
+	{ "fsf",	MTFSF,      1, 1 },
+	{ "fsr",	MTFSR,      1, 1 },
+	{ "offline",	MTOFFL,     1, 1 },
+	{ "rewind",	MTREW,      1, 1 },
+	{ "rewoffl",	MTOFFL,     1, 1 },
+	{ "status",	MTNOP,      1, 1 },
+	{ "retension",	MTRETEN,    1, 1 },
+	{ "weof",	MTWEOF,     0, 1 },
 	{ NULL }
 };
 #define COM_EJECT	9	/* element in the above array */
@@ -186,7 +187,7 @@ main(argc, argv)
 		mt_com.mt_op = comp->c_code;
 		if (*argv) {
 			mt_com.mt_count = strtol(*argv, &p, 10);
-			if (mt_com.mt_count <= 0 || *p)
+			if (mt_com.mt_count < comp->c_mincount || *p)
 				errx(2, "%s: illegal count", *argv);
 		}
 		else
