@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.5 2002/12/13 22:54:29 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.6 2002/12/14 01:15:21 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -321,7 +321,7 @@ fwscsi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.device_softc = sc;
 	sc->sc_link.adapter = &fwscsi_switch;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.flags |= SDEV_ATAPI;
+	sc->sc_link.quirks |= SDEV_NOLUNS | SDEV_NOTAGS | SDEV_NOCDB6;
 #endif	/* ! __NetBSD__ */
 
 	sc->sc_fwnode = (struct fwnode_softc *)parent;
