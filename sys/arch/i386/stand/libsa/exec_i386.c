@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.23 1998/07/20 18:14:56 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.24 1998/09/27 17:41:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -53,24 +53,27 @@ machdep_exec(xp, howto, loadaddr)
 	void *loadaddr;
 {
 #ifndef _TEST
+#ifdef EXEC_DEBUG
+	extern int debug;
+#endif
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
-#ifdef EXEC_DEBUG
-	struct exec *x;
-#endif
+
 	makebootargs(av, &ac);
 
 #ifdef EXEC_DEBUG
-	x = (void *)loadaddr;
-	printf("exec {\n\ta_midmag = %x\n\ta_text = %x\n\ta_data = %x\n"
-	       "\ta_bss = %x\n\ta_syms = %x\n\ta_entry = %x\n"
-	       "\ta_trsize = %x\n\ta_drsize = %x\n}\n",
-	       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
-	       x->a_entry, x->a_trsize, x->a_drsize);
+	if (debug) {
+		struct exec *x = (void *)loadaddr;
+		printf("exec {\n\ta_midmag = %x\n\ta_text = %x\n\ta_data = %x\n"
+		       "\ta_bss = %x\n\ta_syms = %x\n\ta_entry = %x\n"
+		       "\ta_trsize = %x\n\ta_drsize = %x\n}\n",
+		       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
+		       x->a_entry, x->a_trsize, x->a_drsize);
 
-	printf("/bsd(%x,%u,%p)\n", BOOTARG_APIVER, ac, av);
-	getchar();
+		printf("/bsd(%x,%u,%p)\n", BOOTARG_APIVER, ac, av);
+		getchar();
+	}
 #endif
 	xp->xp_entry &= 0xffffff;
 
