@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.99 2003/04/10 02:06:00 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.100 2003/04/11 01:48:41 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -347,8 +347,6 @@ checkdirs(olddp)
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
 	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
-		if (P_ZOMBIE(p))
-			continue;
 		fdp = p->p_fd;
 		if (fdp->fd_cdir == olddp) {
 			vrele(fdp->fd_cdir);
