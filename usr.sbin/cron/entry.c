@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.28 2004/06/22 03:15:33 avsm Exp $	*/
+/*	$OpenBSD: entry.c,v 1.29 2004/06/22 21:02:19 avsm Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.28 2004/06/22 03:15:33 avsm Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.29 2004/06/22 21:02:19 avsm Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -280,59 +280,64 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char
 	}
 	if (!env_get("SHELL", e->envp)) {
 		if (snprintf(envstr, sizeof envstr, "SHELL=%s", _PATH_BSHELL) >=
-		    sizeof(envstr)) {
+		    sizeof(envstr))
+			log_it("CRON", getpid(), "error", "can't set SHELL");
+		else {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
 				goto eof;
 			}
 			e->envp = tenvp;
-		} else
-			log_it("CRON", getpid(), "error", "can't set SHELL");
+		}
 	}
 	if (!env_get("HOME", e->envp)) {
 		if (snprintf(envstr, sizeof envstr, "HOME=%s", pw->pw_dir) >=
-		    sizeof(envstr)) {
+		    sizeof(envstr))
+			log_it("CRON", getpid(), "error", "can't set HOME");
+		else {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
 				goto eof;
 			}
 			e->envp = tenvp;
-		} else
-			log_it("CRON", getpid(), "error", "can't set HOME");
+		}
 	}
 #ifndef LOGIN_CAP
 	/* If login.conf is in use we will get the default PATH later. */
 	if (!env_get("PATH", e->envp)) {
 		if (snprintf(envstr, sizeof envstr, "PATH=%s", _PATH_DEFPATH) >=
-		    sizeof(envstr)) {
+		    sizeof(envstr))
+			log_it("CRON", getpid(), "error", "can't set PATH");
+		else {
 			if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 				ecode = e_memory;
 				goto eof;
 			}
 			e->envp = tenvp;
-		} else
-			log_it("CRON", getpid(), "error", "can't set PATH");
+		}
 	}
 #endif /* LOGIN_CAP */
 	if (snprintf(envstr, sizeof envstr, "LOGNAME=%s", pw->pw_name) >=
-		sizeof(envstr)) {
+		sizeof(envstr))
+		log_it("CRON", getpid(), "error", "can't set LOGNAME");
+	else {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 			ecode = e_memory;
 			goto eof;
 		}
 		e->envp = tenvp;
-	} else
-		log_it("CRON", getpid(), "error", "can't set LOGNAME");
+	}
 #if defined(BSD) || defined(__linux)
 	if (snprintf(envstr, sizeof envstr, "USER=%s", pw->pw_name) >=
-		sizeof(envstr)) {
+		sizeof(envstr))
+		log_it("CRON", getpid(), "error", "can't set USER");
+	else {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
 			ecode = e_memory;
 			goto eof;
 		}
 		e->envp = tenvp;
-	} else
-		log_it("CRON", getpid(), "error", "can't set USER");
+	}
 #endif
 
 	Debug(DPARS, ("load_entry()...about to parse command\n"))
