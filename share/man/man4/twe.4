@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.2 2000/09/15 18:17:35 mickey Exp $
+.\"	$OpenBSD: twe.4,v 1.3 2000/09/15 19:55:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
 .\"
@@ -18,13 +18,13 @@ The
 .Nm
 driver provides support for Escalade family of raid controllers,
 including the
-.Tn 3W-5x000 and
-.Tn 3W-6x000
+.Tn 3W-5x00 and
+.Tn 3W-6x00
 models.
 .Pp
-Controllers support RAID 0, RAID 1, RAID 10 and JBOD
-configurations. All the RAID set volume management is done
-through the cards BIOS.
+These controllers support RAID 0, RAID 1, RAID 10 and JBOD
+configurations.
+All the RAID set volume management is done via the card BIOS.
 .Pp
 Even though the card uses IDE drives, this driver makes drives
 and/or RAID sets appear as
@@ -46,22 +46,15 @@ The
 driver first appeared in
 .Ox 2.8 .
 .Sh BUGS
-The card's BIOS seem to conflict w/ other disk controllers with
-own BIOS if later are configured earlier than this one.
-To avoid that put the card in the lowest slot before other
-SCSI or RAID disk controllers, if possible.
+The card's BIOS seems to conflict with some other disk controllers
+which have their own BIOS, if such devices are configured earlier
+than this one.
+To avoid this situation, place
+.Nm
+cards in the lowest slot before other SCSI or RAID disk controllers.
 .Pp
-The card provides mechanism to receive asynchronous notifications
+The card provides a mechanism to receive asynchronous notifications
 about RAID set status change and so forth, unfortunately this
 information is not public.
-.Pp
-The card requires data buffers to be aligned to 512 bytes, which
-is not always provided by the
-.Ox
-kernel.
-To work around that double-buffering is used, allocating aligned
-buffer when required and copying data back and forth as needed.
-Unaligned buffers are very rare occasion, but if not handled properly
-makes the card comatose.
 .Pp
 Only 3W-5400 was tested, but others should work.
