@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.45 2003/12/27 14:58:22 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.46 2003/12/30 20:59:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -358,10 +358,14 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 				wbuf = buf_open(len);
 				if (wbuf == NULL)
 					return (-1);
-				if (buf_add(wbuf, imsg.data, len) == -1)
+				if (buf_add(wbuf, imsg.data, len) == -1) {
+					free(wbuf);
 					return (-1);
-				if ((n = buf_close(&m->msgbuf, wbuf)) < 0)
+				}
+				if ((n = buf_close(&m->msgbuf, wbuf)) < 0) {
+					free(wbuf);
 					return (-1);
+				}
 				break;
 			}
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.12 2003/12/28 14:34:30 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.13 2003/12/30 20:59:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -101,16 +101,19 @@ imsg_compose(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	}
 	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1) {
 		logit(LOG_CRIT, "imsg_compose: buf_add error");
+		free(wbuf);
 		return (-1);
 	}
 	if (datalen)
 		if (buf_add(wbuf, data, datalen) == -1) {
 			logit(LOG_CRIT, "imsg_compose: buf_add error");
+			free(wbuf);
 			return (-1);
 		}
 
 	if ((n = buf_close(&ibuf->w, wbuf)) < 0) {
 			logit(LOG_CRIT, "imsg_compose: buf_add error");
+			free(wbuf);
 			return (-1);
 	}
 	return (n);
