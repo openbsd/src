@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.47 2001/04/09 12:34:37 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.48 2001/05/31 20:27:50 angelos Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
 #include "sa.h"
 #include "transport.h"
 #include "util.h"
+#include "key.h"
+
 #ifdef USE_X509
 #include "x509.h"
 #endif
@@ -113,7 +115,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 #ifdef USE_X509
   struct keynote_deckey dc;
   X509_NAME *subject;
-  RSA *key;
 #endif
 
   /* Initialize if necessary -- e.g., if pre-shared key auth was used */
@@ -204,18 +205,19 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  goto policydone;
 	}
 
-      principal[0] = calloc (isakmp_sa->recv_certlen + 1 +
+      principal[0] = calloc (strlen (isakmp_sa->recv_key) + 1 +
 			     strlen ("passphrase:"), sizeof (char));
       if (principal[0] == NULL)
         {
 	  log_error ("check_policy: failed to allocate %d bytes",
-		     isakmp_sa->recv_certlen + 1 + strlen ("passphrase:"));
+		     strlen (isakmp_sa->recv_key) + 1 +
+		     strlen ("passphrase:"));
 	  goto policydone;
 	}
 
       strcpy (principal[0], "passphrase:");
-      memcpy (principal[0] + strlen ("passphrase:"), isakmp_sa->recv_cert,
-	      isakmp_sa->recv_certlen);
+      memcpy (principal[0] + strlen ("passphrase:"), isakmp_sa->recv_key,
+	      strlen (isakmp_sa->recv_key));
 
       principal[1] = calloc (strlen ("passphrase-md5-hex:") +
 			     32 + 1, sizeof (char));
@@ -227,7 +229,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	}
 
       strcpy (principal[1], "passphrase-md5-hex:");
-      MD5 (isakmp_sa->recv_cert, isakmp_sa->recv_certlen, hashbuf);
+      MD5 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 16; i++)
 	sprintf (principal[1] + (2 * i) + strlen ("passphrase-md5-hex:"),
 		 "%02x", hashbuf[i]);
@@ -242,7 +244,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	}
 
       strcpy (principal[2], "passphrase-sha1-hex:");
-      SHA1 (isakmp_sa->recv_cert, isakmp_sa->recv_certlen, hashbuf);
+      SHA1 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 20; i++)
 	sprintf (principal[2] + (2 * i) + strlen ("passphrase-sha1-hex:"),
 		 "%02x", hashbuf[i]);
@@ -261,11 +263,11 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	}
 
       /* Dup the keys */
-      principal[0] = strdup (isakmp_sa->recv_key);
+      principal[0] = strdup (isakmp_sa->keynote_key);
       if (principal[0] == NULL)
         {
 	  log_error ("check_policy: failed to allocate %d bytes",
-		     strlen (isakmp_sa->recv_key));
+		     strlen (isakmp_sa->keynote_key));
 	  goto policydone;
 	}
 #endif
@@ -273,13 +275,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 
     case ISAKMP_CERTENC_X509_SIG:
 #ifdef USE_X509
-      /* Retrieve key from certificate.  */
-      if (!x509_cert_get_key (isakmp_sa->recv_cert, &key))
-	{
-	  log_print ("check_policy: failed to get key from X509 cert");
-	  goto policydone;
-	}
-
       principal = calloc (2, sizeof *principal);
       if (principal == NULL)
         {
@@ -287,22 +282,27 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  goto policydone;
 	}
 
-      /* XXX RSA-specific.  */
-      dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
-      dc.dec_key = (void *) key;
+      if (isakmp_sa->recv_keytype == ISAKMP_KEY_RSA)
+	dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
+      else
+	{
+	  log_error ("check_policy: unknown/unsupported public key algorithm "
+		     "%d", isakmp_sa->recv_keytype);
+	  goto policydone;
+	}
+
+      dc.dec_key = isakmp_sa->recv_key;
       principal[0] = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
 					 KEYNOTE_PUBLIC_KEY));
       if (LKV (keynote_errno) == ERROR_MEMORY)
 	{
 	  log_print ("check_policy: failed to get memory for public key");
-	  LC (RSA_free, (key));
 	  goto policydone;
 	}
 
       if (principal[0] == NULL)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
-	  LC (RSA_free, (key));
 	  goto policydone;
 	}
 
@@ -311,14 +311,12 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (principal[1] == NULL)
 	{
 	  log_error ("check_policy: failed to allocate memory for principal");
-	  LC (RSA_free, (key));
 	  goto policydone;
 	}
 
       strcpy (principal[1], "rsa-hex:");
       strcpy (principal[1] + strlen ("rsa-hex:"), principal[0]);
       free (principal[0]);
-      LC (RSA_free, (key));
       principal[0] = principal[1];
       principal[1] = NULL;
 
@@ -330,7 +328,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
           if (principal[1] == NULL)
             {
 	      log_error ("check_policy: failed to allocate memory for principal[1]");
-	      LC (RSA_free, (key));
 	      goto policydone;
             }
 	  strcpy (principal[1], "DN:");
