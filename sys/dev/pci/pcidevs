@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.223 2000/03/05 21:42:00 mickey Exp $
+	$OpenBSD: pcidevs,v 1.224 2000/03/20 07:33:07 rahnds Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -665,6 +665,15 @@ product ALTEON ACENIC		0x0001	Acenic
 
 /* Apple products */
 product APPLE BANDIT		0x0001	PCI
+product APPLE GC		0x0002	PCI
+product APPLE OHARE		0x0007	PCI
+product APPLE HEATHROW		0x0010	MACIO
+product APPLE PADDINGTON	0x0017	MACIO
+product APPLE UNINORTHETH	0x001e	PCI
+product APPLE UNINORTH		0x001f	PCI
+product APPLE UNINORTHAGP	0x0020	AGP
+product APPLE GMAC		0x0021	GMAC
+product APPLE KEYLARGO		0x0022	MACIO
 
 /* AMD products */
 product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
@@ -679,9 +688,6 @@ product AMD PBC756_ISA		0x7408  756 PCI-to-ISA Bridge
 product AMD PBC756_IDE		0x7409  756 IDE
 product AMD PBC756_PMC		0x740B  756 Power Management
 product AMD PBC756_USB		0x740C  756 USB Host
-
-/* Apple products */
-product APPLE BANDIT		0x0001	PCI
 
 /* ARC Logic products */
 product ARC 1000PV		0xa091	1000PV
@@ -1555,6 +1561,10 @@ product WINBOND W89C940F	0x0940	Linksys EtherPCI II
 
 /* Winbond Electronics products (PCI products set 2) */
 product WINBOND2 W89C940	0x1980	Linksys EtherPCI
+
+/* Motorola products */
+product MOT 	MPC105		0x0001	MPC105 PPC PCI bridge
+product MOT	MPC106		0x0002	MPC106 PPC PCI bridge
 
 /* Yamaha products */
 product YAMAHA YMF724E_V	0x0004	724 Audio
