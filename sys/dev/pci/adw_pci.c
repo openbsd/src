@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.6 2000/06/28 23:49:31 krw Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.7 2001/04/11 04:05:17 krw Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -68,7 +68,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/adwlib.h>
-#include <dev/ic/adwmcode.h>
+#include <dev/microcode/adw/adwmcode.h>
 #include <dev/ic/adw.h>
 
 /******************************************************************************/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.12 2001/02/22 17:17:32 krw Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.13 2001/04/11 04:05:16 krw Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -71,7 +71,7 @@
 #include <vm/vm.h>
 
 #include <dev/ic/adwlib.h>
-#include <dev/ic/adwmcode.h>
+#include <dev/microcode/adw/adwmcode.h>
 #include <dev/ic/adw.h>
 
 

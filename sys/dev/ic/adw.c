@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.16 2001/02/22 17:17:32 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.17 2001/04/11 04:05:15 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -60,7 +60,7 @@
 #include <scsi/scsiconf.h>
 
 #include <dev/ic/adwlib.h>
-#include <dev/ic/adwmcode.h>
+#include <dev/microcode/adw/adwmcode.h>
 #include <dev/ic/adw.h>
 
 #ifndef DDB

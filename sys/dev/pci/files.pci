@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.103 2001/04/10 22:52:00 aaron Exp $
+#	$OpenBSD: files.pci,v 1.104 2001/04/11 04:05:17 krw Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -56,7 +56,7 @@ file	dev/ic/advmcode.c		adv_pci
 attach	adw at pci with adw_pci
 file	dev/pci/adw_pci.c		adw_pci
 file	dev/ic/adwlib.c			adw_pci
-file	dev/ic/adwmcode.c		adw_pci
+file	dev/microcode/adw/adwmcode.c	adw_pci
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/dev/isa/files.isa
