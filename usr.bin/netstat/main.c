@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2003/11/28 10:05:43 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2003/11/28 23:10:49 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.41 2003/11/28 10:05:43 jmc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.42 2003/11/28 23:10:49 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -375,7 +375,7 @@ main(int argc, char *argv[])
 		case 'p':
 			if ((tp = name2protox(optarg)) == NULL) {
 				(void)fprintf(stderr,
-				    "%s: %s: unknown or uninstrumented protocol\n",
+				    "%s: %s: unknown protocol\n",
 				    __progname, optarg);
 				exit(1);
 			}
