@@ -1,17 +1,29 @@
-Warning!
+Warning
+=======
 
 This is experimental stuff, don't expect things to work correctly at this
 point. Please contact <hin@openbsd.org> if you have questions about the
 kerberosV stuff.
 
+
+Status of the code
+==================
+
+The current status is that the libraries, KDC, kadmind, some basic
+administrators and users utilities, and the telnet client and server works.
+
+
+Building
+========
+
 To build this stuff, do the following:
 
+# echo "KERBEROS5=Yes" >> /etc/mk.conf
 # cd /usr/src/kerberosV
 # make build
 
 To get a telnet client and server with kerberos5 support, do the following:
 
-# echo "KERBEROS5=Yes" >> /etc/mk.conf
 # cd /usr/src/lib/libtelnet
 # make ; make install
 # cd /usr/src/usr.bin/telnet
@@ -20,10 +32,21 @@ To get a telnet client and server with kerberos5 support, do the following:
 # make ; make install 
 
 
+Documentation
+=============
+
+Some documentation is available in the `heimdal' info-page, but it is currently
+quite incomplete. A number of manpages for library functions are also
+available.
+
+
+TODO
+====
 
 Things todo, in no particular order:
 
  - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
+   (i think this is actually ok, but it needs to be verified.)
  - hprop, iprop
  - kf, kfd
  - kpasswdd and hack krb5 support in our passwd
@@ -32,7 +55,6 @@ Things todo, in no particular order:
  - krb5 support in login, xdm, xlock, su and sudo
  - rxtelnet, rxterm
  - string2key
- - verify_krb5_conf
  - pop-server and push
  - rsh, rshd
  - ssh and sshd
