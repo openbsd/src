@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.10 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.11 2001/11/17 19:56:36 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.10 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.11 2001/11/17 19:56:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ int ttydisc __P((char *));
 
 void handler __P((int));
 
-sig_atomic_t dying;
+volatile sig_atomic_t dying;
 
 int
 main(argc, argv)

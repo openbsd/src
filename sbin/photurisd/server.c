@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.9 2001/01/28 22:45:17 niklas Exp $	*/
+/*	$OpenBSD: server.c,v 1.10 2001/11/17 19:54:57 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: server.c,v 1.9 2001/01/28 22:45:17 niklas Exp $";
+static char rcsid[] = "$OpenBSD: server.c,v 1.10 2001/11/17 19:54:57 deraadt Exp $";
 #endif
 
 #define _SERVER_C_
@@ -275,7 +275,7 @@ server(void)
 	  FD_SET(sockets[i], normfds);
 
      while (1) {
-	  extern sig_atomic_t wantconfig;
+	  extern volatile sig_atomic_t wantconfig;
 
 	  if (wantconfig) {
 		reconfig(0);

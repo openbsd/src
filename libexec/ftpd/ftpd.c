@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.106 2001/11/05 09:51:13 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.107 2001/11/17 19:54:56 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.106 2001/11/05 09:51:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.107 2001/11/17 19:54:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ int	doutmp = 0;		/* update utmp file */
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
 int	family = AF_INET;
-sig_atomic_t transflag;
+volatile sig_atomic_t transflag;
 off_t	file_size;
 off_t	byte_count;
 #if !defined(CMASK) || CMASK == 0

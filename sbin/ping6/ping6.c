@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.38 2001/11/05 07:54:44 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.39 2001/11/17 19:54:57 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -247,7 +247,6 @@ struct msghdr smsghdr;
 struct iovec smsgiov;
 char *scmsg = 0;
 
-volatile int signo;
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
 #ifdef SIGINFO
@@ -999,7 +998,7 @@ main(argc, argv)
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
 
-	signo = seenalrm = seenint = 0;
+	seenalrm = seenint = 0;
 #ifdef SIGINFO
 	seeninfo = 0;
 #endif
@@ -1097,10 +1096,9 @@ main(argc, argv)
 
 void
 onsignal(sig)
-	int sig;
+	int signo;
 {
-	signo = sig;
-	switch (sig) {
+	switch (signo) {
 	case SIGALRM:
 		seenalrm++;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.17 2001/07/08 21:18:06 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.18 2001/11/17 19:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.17 2001/07/08 21:18:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.18 2001/11/17 19:54:56 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ void readutmp __P((int));
 void doreadutmp __P((void));
 void reapchildren __P((int));
 
-sig_atomic_t wantreadutmp;
+volatile sig_atomic_t wantreadutmp;
 
 int
 main(argc, argv)

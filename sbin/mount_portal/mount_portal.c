@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.15 2001/11/05 09:58:13 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.16 2001/11/17 20:01:53 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.15 2001/11/05 09:58:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.16 2001/11/17 20:01:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static char *mountpt;		/* made available to signal handler */
 
 static void usage __P((void));
 
-static sig_atomic_t readcf;	/* Set when SIGHUP received */
+static volatile sig_atomic_t readcf;	/* Set when SIGHUP received */
 
 static void
 sigchld(sig)

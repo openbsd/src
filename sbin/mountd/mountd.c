@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.39 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.40 2001/11/17 19:54:57 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -216,8 +216,8 @@ int opt_flags;
 
 int debug = 0;
 
-sig_atomic_t gothup;
-sig_atomic_t gotterm;
+volatile sig_atomic_t gothup;
+volatile sig_atomic_t gotterm;
 
 /*
  * Mountd server for NFS mount protocol as described in:

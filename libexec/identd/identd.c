@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.21 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: identd.c,v 1.22 2001/11/17 19:54:56 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -134,7 +134,7 @@ gethost6(addr)
 	return(hbuf[bb]);
 }
 
-sig_atomic_t alarm_fired;
+volatile sig_atomic_t alarm_fired;
 
 /*
  * Exit cleanly after our time's up.
