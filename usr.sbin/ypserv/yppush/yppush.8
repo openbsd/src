@@ -27,16 +27,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: yppush.8,v 1.1 1996/03/02 03:01:42 dm Exp $
+.\"	$Id: yppush.8,v 1.2 1996/04/24 12:37:46 deraadt Exp $
 .\"
 .Dd January 29, 1995
 .Dt YPPUSH 8
-.Os 
+.Os
 .Sh NAME
 .Nm yppush
 .Nd force distribution of YP map
 .Sh SYNOPSIS
-.Nm /usr/sbin/yppush
+.Nm yppush
 .Op Fl d Ar domainname
 .Op Fl h Ar hostname
 .\" .Op Fl p Ar paralleljobs
@@ -63,6 +63,7 @@ Distribute map only to one host and not to the hosts in the ypserver map.
 Verbose. Announce what the program is doing.
 .El
 .Sh SEE ALSO
+.Xr yp 8 ,
 .Xr ypserv 8 
 .Sh AUTHOR
 Mats O Jansson

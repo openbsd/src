@@ -25,16 +25,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: yptest.8,v 1.1 1995/11/01 16:56:40 deraadt Exp $
+.\"	$Id: yptest.8,v 1.2 1996/04/24 12:37:51 deraadt Exp $
 .\"
 .Dd August 26, 1994
 .Dt YPTEST 8
-.Os NetBSD 1.0
+.Os
 .Sh NAME
 .Nm yptest
 .Nd calls different YP routines
 .Sh SYNOPSIS
-.Nm /usr/sbin/yptest
+.Nm yptest
 .\".Op Fl u Ar file
 .\".Nm /usr/sbin/makedbm
 .\".Op Fl bls
@@ -56,6 +56,7 @@ is a utility written to check if the YP server works as expected.
 .\"as value.
 .\".El
 .Sh SEE ALSO
+.Xr yp 8 ,
 .Xr ypserv 8 
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

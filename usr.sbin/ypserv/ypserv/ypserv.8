@@ -25,16 +25,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: ypserv.8,v 1.1 1995/11/01 16:56:34 deraadt Exp $
+.\"	$Id: ypserv.8,v 1.2 1996/04/24 12:37:48 deraadt Exp $
 .\"
 .Dd June 27, 1994
 .Dt YPSERV 8
-.Os NetBSD 1.0
+.Os
 .Sh NAME
 .Nm ypserv
 .Nd YP server daemon
 .Sh SYNOPSIS
-.Nm /usr/sbin/ypserv
+.Nm ypserv
 .Op Fl a Ar aclfile
 .Op Fl d
 .Op Fl x
@@ -103,6 +103,7 @@ or
 .It Pa /var/yp/ypserv.acl
 .El
 .Sh SEE ALSO
+.Xr yp 8 ,
 .Xr ypserv.acl 5 ,
 .Xr securenet 5 ,
 .Xr ypbind 1 

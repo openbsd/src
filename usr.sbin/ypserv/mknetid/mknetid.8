@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: mknetid.8,v 1.1 1996/03/02 03:01:33 dm Exp $
+.\"	$Id: mknetid.8,v 1.2 1996/04/24 12:37:41 deraadt Exp $
 .\"
 .Dd Januari 13, 1996
 .Dt MKNETID 8
@@ -36,7 +36,7 @@
 .Nm mknetid
 .Nd a YP filter program
 .Sh SYNOPSIS
-.Nm /usr/sbin/mknetid
+.Nm mknetid
 .Op Fl d Ar domain
 .Op Fl q
 .Op Fl p Ar passwdfile
@@ -91,6 +91,7 @@ file.
 .It Pa /etc/netid
 .El
 .Sh SEE ALSO
+.Xr yp 8
 .Xr passwd 5 ,
 .Xr group 5 ,
 .Xr hosts 5 ,

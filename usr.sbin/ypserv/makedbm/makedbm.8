@@ -25,16 +25,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: makedbm.8,v 1.1 1995/11/01 16:56:23 deraadt Exp $
+.\"	$Id: makedbm.8,v 1.2 1996/04/24 12:37:39 deraadt Exp $
 .\"
 .Dd July 19, 1994
 .Dt MAKEDBM 8
-.Os NetBSD 1.0
+.Os
 .Sh NAME
 .Nm makedbm
 .Nd create a YP database
 .Sh SYNOPSIS
-.Nm /usr/sbin/makedbm
+.Nm makedbm
 .Op Fl u Ar file
 .Nm /usr/sbin/makedbm
 .Op Fl bls
@@ -80,6 +80,7 @@ Include an entry the in the map with the key YP_MASTER_NAME and the argument
 as value.
 .El
 .Sh SEE ALSO
+.Xr yp 8 ,
 .Xr db 3 ,
 .Xr ypxfr 8 ,
 .Xr ypserv 8 

@@ -25,16 +25,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: ypxfr.8,v 1.1 1995/11/01 16:56:42 deraadt Exp $
+.\"	$Id: ypxfr.8,v 1.2 1996/04/24 12:37:55 deraadt Exp $
 .\"
 .Dd August 18, 1994
 .Dt YPXFR 8
-.Os NetBSD 1.0
+.Os
 .Sh NAME
 .Nm ypxfr
 .Nd get a YP map from YP server
 .Sh SYNOPSIS
-.Nm /usr/sbin/ypxfr
+.Nm ypxfr
 .Op Fl bcf
 .Op Fl d Ar domain
 .Op Fl h Ar host
@@ -68,6 +68,7 @@ This option is only used by ypserv. This is to open communication with
 an yppush on another host.
 .El
 .Sh SEE ALSO
+.Xr yp 8 ,
 .Xr yppush 8 ,
 .Xr ypserv 8 
 .Sh AUTHOR
