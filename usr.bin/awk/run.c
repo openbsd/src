@@ -1,4 +1,3 @@
-/*	$OpenBSD: run.c,v 1.5 1997/01/21 23:57:37 kstailey Exp $	*/
 /****************************************************************
 Copyright (C) AT&T and Lucent Technologies 1996
 All Rights Reserved
@@ -719,16 +718,12 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 	return(z);
 }
 
-/*
- * printf-like conversions
- *   returns len of buf or -1 on error
- */
-int format(char *buf, int bufsize, char *s, Node *a)
+int format(char *buf, int bufsize, char *s, Node *a)	/* printf-like conversions */
 {
 	char fmt[RECSIZE];
 	char *p, *t, *os;
 	Cell *x;
-	int flag = 0, len = 0, n;
+	int flag = 0, n;
 
 	os = s;
 	p = buf;
@@ -736,12 +731,10 @@ int format(char *buf, int bufsize, char *s, Node *a)
 		if (p - buf >= bufsize)
 			return -1;
 		if (*s != '%') {
-		        len++;
 			*p++ = *s++;
 			continue;
 		}
 		if (*(s+1) == '%') {
-			len++;
 			*p++ = '%';
 			s += 2;
 			continue;
@@ -791,7 +784,6 @@ int format(char *buf, int bufsize, char *s, Node *a)
 		a = a->nnext;
 		switch (flag) {
 		case 0:	sprintf((char *)p, "%s", fmt);	/* unknown, so dump it too */
-			len += strlen(p);
 			p += strlen(p);
 			sprintf((char *)p, "%s", getsval(x));
 			break;
@@ -807,22 +799,18 @@ int format(char *buf, int bufsize, char *s, Node *a)
 			sprintf((char *)p, (char *)fmt, t);
 			break;
 		case 5:
-			isnum(x) ?
-			  (getfval(x) ?
-			    sprintf((char *)p, (char *)fmt, (int) getfval(x))
-                                      : len++)
+			isnum(x) ? sprintf((char *)p, (char *)fmt, (int) getfval(x))
 				 : sprintf((char *)p, (char *)fmt, getsval(x)[0]);
 			break;
 		}
 		tempfree(x);
-		len += strlen(p);
 		p += strlen(p);
 		s++;
 	}
 	*p = '\0';
 	for ( ; a; a = a->nnext)		/* evaluate any remaining args */
 		execute(a);
-	return (len);
+	return 0;
 }
 
 Cell *awksprintf(Node **a, int n)		/* sprintf(a[0]) */
@@ -849,20 +837,21 @@ Cell *awkprintf(Node **a, int n)		/* printf */
 	Cell *x;
 	Node *y;
 	char buf[3*RECSIZE];
-	int len;
 
 	y = a[0]->nnext;
 	x = execute(a[0]);
-	if ((len = format(buf, sizeof buf, getsval(x), y)) == -1)
+	if (format(buf, sizeof buf, getsval(x), y) == -1)
 		ERROR "printf string %.30s... too long", buf FATAL;
 	tempfree(x);
 	if (a[1] == NULL) {
-		if (write(1, buf, len) != len)
+		fputs((char *)buf, stdout);
+		if (ferror(stdout))
 			ERROR "write error on stdout" FATAL;
 	} else {
 		fp = redirect((int)a[1], a[2]);
-		ferror(fp);	/* XXX paranoia */
-		if (write(fileno(fp), buf, len) != len)
+		fputs((char *)buf, fp);
+		fflush(fp);
+		if (ferror(fp))
 			ERROR "write error on %s", filename(fp) FATAL;
 	}
 	return(true);

@@ -22,6 +22,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
 USE OR PERFORMANCE OF THIS SOFTWARE.
 ****************************************************************/
 
+extern	int	yywrap(void);
 extern	void	setfname(Cell *);
 extern	int	constnode(Node *);
 extern	char	*strnode(Node *);
@@ -30,8 +31,12 @@ extern	int	yyparse(void);
 
 extern	int	yylex(void);
 extern	void	startreg(void);
-extern	int	lex_input(void);
+extern	int	input(void);
+extern	void	unput(int);
 extern	void	unputstr(char *);
+extern	int	yylook(void);
+extern	int	yyback(int *, int);
+extern	int	yyinput(void);
 
 extern	fa	*makedfa(char *, int);
 extern	fa	*mkdfa(char *, int);
@@ -60,7 +65,6 @@ extern	int	cgoto(fa *, int, int);
 extern	void	freefa(fa *);
 
 extern	int	pgetc(void);
-extern	void	init_input_source(void);
 
 extern	Node	*nodealloc(int);
 extern	Node	*exptostat(Node *);

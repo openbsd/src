@@ -431,7 +431,7 @@ void bracecheck(void)
 
 	if (beenhere++)
 		return;
-	while ((c = lex_input()) != EOF && c != '\0')
+	while ((c = input()) != EOF && c != '\0')
 		bclass(c);
 	bcheck2(bracecnt, '{', '}');
 	bcheck2(brackcnt, '[', ']');
@@ -479,7 +479,6 @@ void error(int f, char *s)
 
 void eprint(void)	/* try to print context around error */
 {
-#if 0
 	char *p, *q;
 	int c;
 	static int been_here = 0;
@@ -512,7 +511,6 @@ void eprint(void)	/* try to print context around error */
 		}
 	putc('\n', stderr);
 	ep = ebuf;
-#endif
 }
 
 void bclass(int c)

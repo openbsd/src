@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.3 1997/01/21 21:14:03 kstailey Exp $	*/
+/*	$OpenBSD: FIXES,v 1.4 1997/01/24 23:11:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) AT&T and Lucent Technologies 1996
 All Rights Reserved
@@ -475,6 +475,3 @@ Jun 28, 1996:
 Jun 29, 1996:
 	fixed awful bug in new field splitting; didn't get all the places
 	where input was done.
-
-Jan 21, 1997
-	Fixed %c:  works if the value is 0 -- now prints \0.

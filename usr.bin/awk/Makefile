@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 1996/10/12 10:25:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/01/24 23:11:29 millert Exp $
 
 PROG=	awk
 LINKS=	${BINDIR}/awk ${BINDIR}/nawk
-SRCS=	awkgram.c awklex.c b.c main.c parse.c proctab.c tran.c lib.c run.c
+SRCS=	awkgram.c lexyy.c b.c main.c parse.c proctab.c tran.c lib.c run.c
 LDADD=	-ll -lm
 DPADD=	${LIBL} ${LIBM}
-CLEANFILES+=awkgram.c awkgram.h awklex.c awklex.h proctab.c maketab prevawkgram.h
+CLEANFILES+=awkgram.c awkgram.h proctab.c maketab prevawkgram.h
 CFLAGS+=-I. -I${.CURDIR}
 MLINKS=	awk.1 nawk.1
 
@@ -14,10 +14,6 @@ awkgram.c awkgram.h prevawkgram.h: awkgram.y
 	mv y.tab.c awkgram.c
 	mv y.tab.h awkgram.h
 	cmp -s awkgram.h prevawkgram.h || cp awkgram.h prevawkgram.h
-
-awklex.c: awklex.l
-	lex ${.IMPSRC}
-	mv lex.yy.c awklex.c
 
 proctab.c: maketab
 	./maketab >proctab.c
