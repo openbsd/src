@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.5 2001/09/26 19:34:54 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.6 2001/09/26 22:16:55 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.34 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -593,14 +593,15 @@ psycho_ue(arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
+	unsigned long long afsr = regs->psy_ue_afsr;
+	unsigned long long afar = regs->psy_ue_afar;
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-
-	panic("%s: uncorrectable DMA error AFAR %llx AFSR %llx\n",
-	    sc->sc_dev.dv_xname, 
-	    (long long)regs->psy_ue_afar, (long long)regs->psy_ue_afsr);
+	panic("%s: uncorrectable DMA error AFAR %llx (pa=%llx) AFSR %llx\n",
+	    sc->sc_dev.dv_xname, afar,
+	    (long long)iommu_extract(sc->sc_is, (vaddr_t)afar), afsr);
 	return (1);
 }
 
