@@ -6851,8 +6851,8 @@ display_debug_info (section, start, file)
 	      return 0;
 	    }
 
-	  printf (_(" <%d><%x>: Abbrev Number: %lu (%s)\n"),
-		  level, tags - section_begin - bytes_read,
+	  printf (_(" <%d><%lx>: Abbrev Number: %lu (%s)\n"),
+		  level, (unsigned long) (tags - section_begin - bytes_read),
 		  abbrev_number,
 		  get_TAG_name (entry->tag));
 
