@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.1 2002/10/01 07:12:30 miod Exp $
+.\"	$OpenBSD: sd.4,v 1.2 2003/03/03 06:47:43 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -123,10 +123,10 @@ If a removable device is attached to the
 .Nm
 driver, then the act of changing the media will invalidate the
 disklabel and information held within the kernel.
-To avoid corruption, all accesses to the device will be discarded until there
+To avoid corruption, all access to the device will be discarded until there
 are no more open file descriptors referencing the device.
 During this period, all new open attempts will be rejected.
-When no more open file descriptors reference the device, the first next 
+When no more open file descriptors reference the device, the next 
 open will load a new set of parameters (including disklabel) for the drive.
 .Sh FILES
 .Bl -tag -width /dev/rsdXXXXX -compact

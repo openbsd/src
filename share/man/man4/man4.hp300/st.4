@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.9 2002/10/01 07:12:30 miod Exp $
+.\"	$OpenBSD: st.4,v 1.10 2003/03/03 06:47:43 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ driver was written especially to support the Exabyte
 Cartridge
 Tape Subsystem.
 It has several extensions specific to the Exabyte, but should support other 
-tape drives as long has they follow the
+tape drives as long as they follow the
 .Tn ANSI SCSI-I
 specification.
 Besides extensive use with an Exabyte, the driver has been tested with an
@@ -159,7 +159,7 @@ nrst56	X	X	X	X
 .Xr mtio 4 ,
 .Xr sd 4
 .Rs
-.%T EXB-8200 8MM Cartridge Tape Subsystem Interface User Manual.
+.%T EXB-8200 8MM Cartridge Tape Subsystem Interface User Manual
 .Re
 .Sh BUGS
 The
@@ -178,7 +178,7 @@ chip.
 Read requests are normally even length for which a
 .Tn DMA
 transfer is used.
-If, however, the driver detects that a odd length read has happened
+If, however, the driver detects that an odd length read has happened
 (when a even length was requested) it will issue the
 .Dv EIO
 error and the last byte of the read
@@ -236,7 +236,7 @@ or run to the end of the tape, so you have to be careful not to
 .Dq Li mt fsf too_many .
 .Ed
 .Pp
-Archive support gets confused if asked to moved more filemarks than there are
+Archive support gets confused if asked to move more filemarks than there are
 on the tape.
 .Pp
 This man page needs some work.
