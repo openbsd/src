@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.11 1995/07/30 13:38:08 briggs Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.12 1996/01/12 04:53:05 briggs Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -31,6 +31,7 @@ struct ae_ring {
 #define AE_VENDOR_DAYNA		0x02	/* DaynaPORT E/30s (and others?) */
 #define AE_VENDOR_ASANTE	0x03	/* Asante MacCon II/E */
 #define AE_VENDOR_FARALLON	0x04	/* Farallon EtherMac II-TP */
+#define AE_VENDOR_FOCUS		0x05	/* FOCUS Enhancements EtherLAN */
 
 /*
  * Compile-time config flags

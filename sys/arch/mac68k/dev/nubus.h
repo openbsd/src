@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.11 1995/09/24 14:13:56 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.12 1996/01/12 04:52:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -65,6 +65,7 @@
 #define   NUBUS_DRSW_TECHWORKS	0x0109
 #define    NUBUS_DRHW_SONIC	0x0110
 #define   NUBUS_DRSW_FARALLON	0x010C
+#define   NUBUS_DRSW_FOCUS	0x011A
 
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
 #define  NUBUS_TYPE_RS232	0x0002
