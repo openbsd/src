@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.25 2001/07/12 05:17:26 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.26 2001/12/05 02:29:19 art Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -140,6 +140,8 @@ static int pageshift;		/* log base 2 of the pagesize */
 /* define pagetok in terms of pageshift */
 #define pagetok(size) ((size) << pageshift)
 
+int maxslp;
+
 int
 getstathz()
 {
@@ -216,7 +218,7 @@ get_system_info(si)
 	double *infoloadp;
 	int total, i;
 	size_t  size;
-
+	
 	size = sizeof(cp_time);
 	if (sysctl(cp_time_mib, 2, &cp_time, &size, NULL, 0) < 0) {
 		warn("sysctl kern.cp_time failed");
@@ -271,8 +273,15 @@ getprocs(op, arg, cnt)
 	size_t size = sizeof(int);
 	int mib[4] = {CTL_KERN, KERN_PROC, op, arg};
 	int smib[2] = {CTL_KERN, KERN_NPROCS};
+	static int maxslp_mib[] = {CTL_VM, VM_MAXSLP};
 	static struct kinfo_proc *procbase;
 	int st;
+
+	size = sizeof(maxslp);
+	if (sysctl(maxslp_mib, 2, &maxslp, &size, NULL, 0) < 0) {
+		warn("sysctl vm.maxslp failed");
+		return (0);
+	}
 
 	st = sysctl(smib, 2, cnt, &size, NULL, 0);
 	if (st == -1) {
@@ -430,7 +439,7 @@ format_next_process(handle, get_userid)
 	    PP(pp, p_nice) - NZERO,
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(VP(pp, vm_rssize))),
-	    (PP(pp, p_stat) == SSLEEP && PP(pp, p_slptime) > MAXSLP)
+	    (PP(pp, p_stat) == SSLEEP && PP(pp, p_slptime) > maxslp)
 	    ? "idle" : state_abbrev[(unsigned char) PP(pp, p_stat)],
 	    p_wait,
 	    format_time(cputime),
