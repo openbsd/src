@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1997/07/08 10:06:31 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/07/19 19:08:28 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/07/08 10:06:31 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/19 19:08:28 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ main(argc, argv)
 	char *infile, outfile[MAXPATHLEN], suffix[16];
 	char *p;
 
+	bits = cat = decomp = 0;
 	p = __progname;
 	if (p[0] == 'g') {
 		method = M_DEFLATE;
@@ -124,7 +125,6 @@ main(argc, argv)
 			errx(1, "unknown program name");
 	}
 
-	bits = cat = decomp = 0;
 	outfile[0] = '\0';
 	while ((ch = getopt(argc, argv, "0123456789b:cdfghlnOo:qStv")) != -1)
 		switch(ch) {
