@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.14 2001/03/25 06:34:51 csapuntz Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.15 2001/05/16 13:41:27 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -698,6 +698,13 @@ vr_attach(parent, self, aux)
 		goto fail;
 	}
 	printf(": %s", intrstr);
+
+	/*
+	 * Windows may put the chip in suspend mode when it
+	 * shuts down. Be sure to kick it in the head to wake it
+	 * up again.
+	 */
+	VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
 
 	/* Reset the adapter. */
 	vr_reset(sc);

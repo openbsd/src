@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.4 2001/02/20 19:12:48 jason Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.5 2001/05/16 13:41:27 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -81,6 +81,7 @@
 #define VR_CONFIG		0x78
 #define VR_MPA_CNT		0x7C
 #define VR_CRC_CNT		0x7E
+#define VR_STICKHW		0x83
 
 /*
  * RX config bits.
@@ -270,6 +271,13 @@
 #define VR_CFG_PCIREADLINE	0x20000000
 #define VR_CFG_DIAG		0x40000000
 #define VR_CFG_GPIOEN		0x80000000
+
+/* Sticky HW bits */
+#define VR_STICKHW_DS0		0x01
+#define VR_STICKHW_DS1		0x02
+#define VR_STICKHW_WOL_ENB	0x04
+#define VR_STICKHW_WOL_STS	0x08
+#define VR_STICKHW_LEGWOL_ENB	0x80
 
 /*
  * Rhine TX/RX list structure.
