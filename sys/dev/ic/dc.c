@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.50 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: dc.c,v 1.51 2002/07/05 13:45:21 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -128,7 +128,6 @@
 #include <machine/bus.h>
 #include <dev/pci/pcidevs.h>
 
-#define DC_USEIOSPACE
 #include <dev/ic/dcreg.h>
 
 int dc_intr(void *);
