@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.51 2004/04/25 18:53:09 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.52 2004/04/25 20:04:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@ enum neighbor_views {
 	NV_DEFAULT,
 	NV_TIMERS
 };
-
 
 void		 usage(void);
 int		 main(int, char *[]);
@@ -246,7 +245,7 @@ main(int argc, char *argv[])
 void
 show_summary_head(void)
 {
-	printf("%-15s %-5s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS",
+	printf("%-20s %-5s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS",
 	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State");
 }
 
@@ -254,13 +253,24 @@ int
 show_summary_msg(struct imsg *imsg)
 {
 	struct peer		*p;
+	char			*s;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		printf("%-15s %5u %10llu %10llu %5u %-8s %s\n",
-		    log_addr(&p->conf.remote_addr),
-		    p->conf.remote_as,
+		if ((p->conf.remote_addr.af == AF_INET &&
+		    p->conf.remote_masklen != 32) ||
+		    (p->conf.remote_addr.af == AF_INET6 &&
+		    p->conf.remote_masklen != 128)) {
+			if (asprintf(&s, "%s/%u",
+			    log_addr(&p->conf.remote_addr),
+			    p->conf.remote_masklen) == -1)
+				err(1, NULL);
+		} else
+			s = strdup(log_addr(&p->conf.remote_addr));
+
+		printf("%-20s %5u %10llu %10llu %5u %-8s %s\n",
+		    s, p->conf.remote_as,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive,
 		    p->stats.msg_sent_open + p->stats.msg_sent_notification +
@@ -268,6 +278,7 @@ show_summary_msg(struct imsg *imsg)
 		    p->wbuf.queued,
 		    fmt_timeframe(p->stats.last_updown),
 		    statenames[p->state]);
+		free(s);
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -284,15 +295,34 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
 	struct in_addr		 ina;
-	char			 buf[NI_MAXHOST], pbuf[NI_MAXSERV];
+	char			 buf[NI_MAXHOST], pbuf[NI_MAXSERV], *s;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
+		if ((p->conf.remote_addr.af == AF_INET &&
+		    p->conf.remote_masklen != 32) ||
+		    (p->conf.remote_addr.af == AF_INET6 &&
+		    p->conf.remote_masklen != 128)) {
+			if (asprintf(&s, "%s/%u",
+			    log_addr(&p->conf.remote_addr),
+			    p->conf.remote_masklen) == -1)
+				err(1, NULL);
+		} else
+			s = strdup(log_addr(&p->conf.remote_addr));
+
 		ina.s_addr = p->remote_bgpid;
-		printf("BGP neighbor is %s, remote AS %u\n",
-		    log_addr(&p->conf.remote_addr),
-		    p->conf.remote_as);
+		printf("BGP neighbor is %s, ", s);
+		free(s);
+		if (p->conf.remote_as == 0 && p->conf.template)
+			printf("remote AS: accept any");
+		else
+			printf("remote AS %u", p->conf.remote_as);
+		if (p->conf.template)
+			printf(", Template");
+		if (p->conf.cloned)
+			printf(", Cloned");
+		printf("\n");
 		if (p->conf.descr[0])
 			printf(" Description: %s\n", p->conf.descr);
 		printf("  BGP version 4, remote router-id %s\n",
