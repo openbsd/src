@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.26 2001/10/24 10:23:53 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.27 2001/11/26 16:51:13 jasoni Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -46,7 +46,7 @@ Syntax for filter rules in BNF:
 .Bd -literal
 rule       = action ( "in" | "out" )
              [ "log" | "log-all" ] [ "quick" ]
-             [ "on" interface-name ] [ af ]
+             [ "on" interface-name ] [ route ] [ af ]
              [ "proto" ( proto-name | proto-number | "{" proto-list "}" ) ]
              hosts
              [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
@@ -81,6 +81,10 @@ ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ "code" ( icmp-code-name | icmp-code-number ) ] .
 icmp-list  = icmp-type-code [ "," icmp-list ] . 
+
+route      = "fastroute" |
+             "route-to" interface-name[":"address] |
+             "dup-to" interface-name[":"address]
 
 .Ed
 .Sh FILTER RULES
@@ -158,6 +162,24 @@ If a packet matches a rule which has the
 option set, this rule
 is considered the last matching rule, and evaluation of subsequent rules
 is skipped.
+.Sh ROUTING
+If a packet matches a rule with a route option set, the packet filter will
+route the packet according to the type of route option.
+.Ss fastroute
+The
+.Em fastroute
+option does a normal route lookup to find the next hop for the packet.
+.Ss route-to
+The
+.Em route-to
+option routes the packet to the specified interface with an optional address
+for the next hop.
+.Ss dup-to
+The
+.Em dup-to
+option creates a duplicate of the packet and routes it like
+.Em route-to.
+The original packet gets routed as it normally would.
 .Sh PARAMETERS
 The rule parameters specify for what packets a rule applies.
 A packet always comes in on or goes out through one interface.
