@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.1 1995/10/10 01:19:33 mycroft Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -78,11 +78,13 @@ freebsd_sys_rtprio(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef notyet
 	struct freebsd_sys_rtprio_args /* {
 		syscallarg(int) function;
 		syscallarg(pid_t) pid;
 		syscallarg(struct freebsd_rtprio *) rtp;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;	/* XXX */
 }
@@ -93,9 +95,11 @@ freebsd_ntp_adjtime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef notyet
 	struct freebsd_ntp_adjtime_args /* {
 		syscallarg(struct freebsd_timex *) tp;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;	/* XXX */
 }

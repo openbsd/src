@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.1 1995/10/10 01:19:34 mycroft Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.2 1996/05/03 17:03:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -126,8 +126,9 @@ freebsd_sys_ptrace(p, v, retval)
 						      retval);
 
 		case FREEBSD_PT_WRITE_U:
-			if (error = freebsd_ptrace_setregs(&fr,
-				SCARG(uap, addr), SCARG(uap, data)))
+			error = freebsd_ptrace_setregs(&fr,
+			    SCARG(uap, addr), SCARG(uap, data));
+			if (error)
 			    return error;
 			freebsd_to_netbsd_ptrace_regs(&fr,
 						&nrp->regs, &nrp->fpregs);

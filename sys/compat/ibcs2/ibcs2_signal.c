@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.7 1995/10/07 06:26:52 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -124,6 +124,12 @@ int ibcs2_to_bsd_sig[] = {
 	0,			/* 30 */
 	0,			/* 31 */
 };
+
+void ibcs2_to_bsd_sigset __P((const ibcs2_sigset_t *, sigset_t *));
+void bsd_to_ibcs2_sigset __P((const sigset_t *, ibcs2_sigset_t *));
+void ibcs2_to_bsd_sigaction __P((struct ibcs2_sigaction *,
+    struct sigaction *));
+void bsd_to_ibcs2_sigaction __P((struct sigaction *, struct ibcs2_sigaction *));
 
 void
 ibcs2_to_bsd_sigset(iss, bss)

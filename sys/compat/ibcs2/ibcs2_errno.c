@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_errno.c,v 1.2 1996/05/03 17:05:16 christos Exp $	*/
+
 /*
  * ibcs2_errno.c
  * Copyright (c) 1995 Scott Bartram

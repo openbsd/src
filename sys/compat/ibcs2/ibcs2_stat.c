@@ -1,3 +1,4 @@
+/*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 /*
  * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
@@ -51,6 +52,8 @@
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utsname.h>
 
+static void bsd_stat2ibcs_stat __P((struct ostat *, struct ibcs2_stat *));
+static int cvt_statfs __P((struct statfs *, caddr_t, int));
 
 static void
 bsd_stat2ibcs_stat(st, st4)
@@ -112,12 +115,12 @@ ibcs2_sys_statfs(p, v, retval)
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if (error = VFS_STATFS(mp, sp, p))
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
@@ -140,11 +143,11 @@ ibcs2_sys_fstatfs(p, v, retval)
 	register struct statfs *sp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if (error = VFS_STATFS(mp, sp, p))
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
@@ -169,9 +172,9 @@ ibcs2_sys_stat(p, v, retval)
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	if (error = compat_43_sys_stat(p, &cup, retval))
+	if ((error = compat_43_sys_stat(p, &cup, retval)) != 0)
 		return error;
-	if (error = copyin(SCARG(&cup, ub), &st, sizeof(st)))
+	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
 	bsd_stat2ibcs_stat(&st, &ibcs2_st);
 	return copyout((caddr_t)&ibcs2_st, (caddr_t)SCARG(uap, st),
@@ -197,9 +200,9 @@ ibcs2_sys_lstat(p, v, retval)
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	if (error = compat_43_sys_lstat(p, &cup, retval))
+	if ((error = compat_43_sys_lstat(p, &cup, retval)) != 0)
 		return error;
-	if (error = copyin(SCARG(&cup, ub), &st, sizeof(st)))
+	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
 	bsd_stat2ibcs_stat(&st, &ibcs2_st);
 	return copyout((caddr_t)&ibcs2_st, (caddr_t)SCARG(uap, st),
@@ -224,9 +227,9 @@ ibcs2_sys_fstat(p, v, retval)
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(st));
-	if (error = compat_43_sys_fstat(p, &cup, retval))
+	if ((error = compat_43_sys_fstat(p, &cup, retval)) != 0)
 		return error;
-	if (error = copyin(SCARG(&cup, sb), &st, sizeof(st)))
+	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return error;
 	bsd_stat2ibcs_stat(&st, &ibcs2_st);
 	return copyout((caddr_t)&ibcs2_st, (caddr_t)SCARG(uap, st),

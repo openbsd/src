@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_sockio.c,v 1.5 1996/05/02 13:06:53 deraadt Exp $	 */
-/*	$NetBSD: svr4_sockio.c,v 1.9 1996/04/22 01:17:33 christos Exp $	 */
+/*	$OpenBSD: svr4_sockio.c,v 1.6 1996/05/07 08:49:20 deraadt Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.10 1996/05/03 17:09:15 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -132,7 +132,9 @@ svr4_sock_ioctl(fp, p, retval, fd, cmd, data)
 			if ((error = copyin(data, &sr, sizeof(sr))) != 0)
 				return error;
 
-			(void) strcpy(br.ifr_name, sr.svr4_ifr_name);
+			(void) strncpy(br.ifr_name, sr.svr4_ifr_name,
+			    sizeof(br.ifr_name));
+
 			if ((error = (*ctl)(fp, SIOCGIFFLAGS, 
 					    (caddr_t) &br, p)) != 0) {
 				DPRINTF(("SIOCGIFFLAGS %s: error %d\n", 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_socksys.c,v 1.4 1996/05/03 17:05:29 christos Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
  * Copyright (c) 1994 Arne H Juul
@@ -24,6 +26,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -32,7 +35,11 @@
 #include <sys/tty.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/mount.h>
 #include <net/if.h>
+
+
+#include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_socksys.h>
 #include <compat/ibcs2/ibcs2_util.h>
@@ -48,13 +55,12 @@ struct ibcs2_socksys_args {
 };
 
 int
-ibcs2_socksys(p, uap, retval)
+ibcs2_socksys(p, v, retval)
 	register struct proc *p;
-	register struct ibcs2_socksys_args *uap;
+	void *v;
 	register_t *retval;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	register struct ibcs2_socksys_args *uap = v;
 	int error;
 	int realargs[7]; /* 1 for command, 6 for recvfrom */
       
@@ -64,7 +70,8 @@ ibcs2_socksys(p, uap, retval)
 	 * The others are (and should be) only legal on sockets.
 	 */
 
-	if (error = copyin(uap->argsp, (caddr_t)realargs, sizeof(realargs)))
+	error = copyin(uap->argsp, (caddr_t)realargs, sizeof(realargs));
+	if (error)
 		return error;
 	DPRINTF(("ibcs2_socksys: %08x %08x %08x %08x %08x %08x %08x\n",
 	       realargs[0], realargs[1], realargs[2], realargs[3], 

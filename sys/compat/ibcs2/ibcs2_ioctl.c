@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.10 1995/12/26 17:56:36 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.11 1996/05/03 17:05:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -110,6 +110,11 @@ static u_long s2btab[] = {
 	19200,
 	38400,
 };
+
+static void stios2btios __P((struct ibcs2_termios *, struct termios *));
+static void btios2stios __P((struct termios *, struct ibcs2_termios *));
+static void stios2stio __P((struct ibcs2_termios *, struct ibcs2_termio *));
+static void stio2stios __P((struct ibcs2_termio *, struct ibcs2_termios *));
 
 static void
 stios2btios(st, bt)
@@ -336,7 +341,7 @@ ibcs2_sys_ioctl(p, v, retval)
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl)();
+	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
 	if (SCARG(uap, fd) < 0 || SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -504,7 +509,7 @@ ibcs2_sys_ioctl(p, v, retval)
 
 		SCARG(&sa, pid) = 0;
 		SCARG(&sa, pgid) = (int)SCARG(uap, data);
-		if (error = sys_setpgid(p, &sa, retval))
+		if ((error = sys_setpgid(p, &sa, retval)) != 0)
 			return error;
 		return 0;
 	    }

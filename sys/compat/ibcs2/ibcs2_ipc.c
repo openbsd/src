@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_ipc.c,v 1.6 1996/05/03 17:05:23 christos Exp $	*/
+
 /*
  * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
@@ -82,10 +84,13 @@ struct ibcs2_msqid_ds {
 	ibcs2_time_t msg_ctime;
 };
 
+static void cvt_msqid2imsqid __P((struct msqid_ds *, struct ibcs2_msqid_ds *));
+static void cvt_imsqid2msqid __P((struct ibcs2_msqid_ds *, struct msqid_ds *));
+
 static void
 cvt_msqid2imsqid(bp, ibp)
-struct msqid_ds *bp;
-struct ibcs2_msqid_ds *ibp;
+	struct msqid_ds *bp;
+	struct ibcs2_msqid_ds *ibp;
 {
 	ibp->msg_perm = bp->msg_perm;
 	ibp->msg_first = bp->msg_first;
@@ -103,8 +108,8 @@ struct ibcs2_msqid_ds *ibp;
 
 static void
 cvt_imsqid2msqid(ibp, bp)
-struct ibcs2_msqid_ds *ibp;
-struct msqid_ds *bp;
+	struct ibcs2_msqid_ds *ibp;
+	struct msqid_ds *bp;
 {
 	bp->msg_perm = ibp->msg_perm;
 	bp->msg_first = ibp->msg_first;
@@ -154,13 +159,14 @@ ibcs2_sys_msgsys(p, v, retval)
 		case IBCS2_IPC_STAT:
 			error = compat_10_sys_msgsys(p, &margs, retval);
 			if (!error)
-				cvt_msqid2imsqid(SCARG(&margs, a4),
+				cvt_msqid2imsqid((struct msqid_ds *)
+				    SCARG(&margs, a4),
 				    (struct ibcs2_msqid_ds *)SCARG(uap, a4));
 			return error;
 		case IBCS2_IPC_SET:
 			cvt_imsqid2msqid((struct ibcs2_msqid_ds *)SCARG(uap,
 									a4),
-					 SCARG(&margs, a4));
+					 (struct msqid_ds *) SCARG(&margs, a4));
 			return compat_10_sys_msgsys(p, &margs, retval);
 		case IBCS2_IPC_RMID:
 			return compat_10_sys_msgsys(p, &margs, retval);
@@ -200,10 +206,16 @@ struct ibcs2_sem {
 	u_short semzcnt;
 };
 
+static void cvt_semid2isemid __P((struct semid_ds *, struct ibcs2_semid_ds *));
+static void cvt_isemid2semid __P((struct ibcs2_semid_ds *, struct semid_ds *));
+#ifdef notdef
+static void cvt_sem2isem __P((struct sem *, struct ibcs2_sem *));
+static void cvt_isem2sem __P((struct ibcs2_sem *, struct sem *));
+
 static void
 cvt_sem2isem(bp, ibp)
-struct sem *bp;
-struct ibcs2_sem *ibp;
+	struct sem *bp;
+	struct ibcs2_sem *ibp;
 {
 	ibp->semval = bp->semval;
 	ibp->sempid = bp->sempid;
@@ -214,8 +226,8 @@ struct ibcs2_sem *ibp;
 
 static void
 cvt_isem2sem(ibp, bp)
-struct ibcs2_sem *ibp;
-struct sem *bp;
+	struct ibcs2_sem *ibp;
+	struct sem *bp;
 {
 	bp->semval = ibp->semval;
 	bp->sempid = ibp->sempid;
@@ -223,11 +235,12 @@ struct sem *bp;
 	bp->semzcnt = ibp->semzcnt;
 	return;
 }
+#endif
 
 static void
 cvt_semid2isemid(bp, ibp)
-struct semid_ds *bp;
-struct ibcs2_semid_ds *ibp;
+	struct semid_ds *bp;
+	struct ibcs2_semid_ds *ibp;
 {
 	ibp->sem_perm = bp->sem_perm;
 	ibp->sem_base = (struct ibcs2_sem *)bp->sem_base;
@@ -239,8 +252,8 @@ struct ibcs2_semid_ds *ibp;
 
 static void
 cvt_isemid2semid(ibp, bp)
-struct ibcs2_semid_ds *ibp;
-struct semid_ds *bp;
+	struct ibcs2_semid_ds *ibp;
+	struct semid_ds *bp;
 {
 	bp->sem_perm = ibp->sem_perm;
 	bp->sem_base = (struct sem *)ibp->sem_base;
@@ -337,10 +350,13 @@ struct ibcs2_shmid_ds {
 	ibcs2_time_t shm_ctime;
 };
 
+static void cvt_shmid2ishmid __P((struct shmid_ds *, struct ibcs2_shmid_ds *));
+static void cvt_ishmid2shmid __P((struct ibcs2_shmid_ds *, struct shmid_ds *));
+
 static void
 cvt_shmid2ishmid(bp, ibp)
-struct shmid_ds *bp;
-struct ibcs2_shmid_ds *ibp;
+	struct shmid_ds *bp;
+	struct ibcs2_shmid_ds *ibp;
 {
 	ibp->shm_perm = bp->shm_perm;
 	ibp->shm_segsz = bp->shm_segsz;
@@ -356,8 +372,8 @@ struct ibcs2_shmid_ds *ibp;
 
 static void
 cvt_ishmid2shmid(ibp, bp)
-struct ibcs2_shmid_ds *ibp;
-struct shmid_ds *bp;
+	struct ibcs2_shmid_ds *ibp;
+	struct shmid_ds *bp;
 {
 	bp->shm_perm = ibp->shm_perm;
 	bp->shm_segsz = ibp->shm_segsz;

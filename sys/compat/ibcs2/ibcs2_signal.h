@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.7 1995/08/14 02:26:01 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.8 1996/05/03 17:05:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -79,10 +79,10 @@
 #define IBCS2_SIGNO(x)		((x) & IBCS2_SIGNO_MASK)
 #define IBCS2_SIGCALL(x)	((x) & ~IBCS2_SIGNO_MASK)
 
-#define IBCS2_SIG_DFL		(void(*)())0
-#define IBCS2_SIG_ERR		(void(*)())-1
-#define IBCS2_SIG_IGN		(void(*)())1
-#define IBCS2_SIG_HOLD		(void(*)())2
+#define IBCS2_SIG_DFL		(void(*) __P((int)))	0
+#define IBCS2_SIG_ERR		(void(*) __P((int)))	-1
+#define IBCS2_SIG_IGN		(void(*) __P((int)))	1
+#define IBCS2_SIG_HOLD		(void(*) __P((int)))	2
 
 #define IBCS2_SIG_SETMASK	0
 #define IBCS2_SIG_BLOCK		1

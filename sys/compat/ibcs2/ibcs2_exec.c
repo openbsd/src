@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.10 1995/06/24 20:18:55 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.11 1996/05/03 17:05:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -67,6 +67,10 @@ int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_setup_stack __P((struct proc *, struct exec_package *));
 int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
+static int coff_find_section __P((struct proc *, struct vnode *, 
+				  struct coff_filehdr *, struct coff_scnhdr *,
+				  int));
+	
 
 extern int bsd2ibcs_errno[];
 extern struct sysent ibcs2_sysent[];
@@ -108,8 +112,6 @@ exec_ibcs2_coff_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	u_long midmag, magic;
-	u_short mid;
 	int error;
 	struct coff_filehdr *fp = epp->ep_hdr;
 	struct coff_aouthdr *ap;
@@ -141,7 +143,6 @@ exec_ibcs2_coff_makecmds(p, epp)
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
-bad:
 	return error;
 }
 
@@ -286,10 +287,10 @@ coff_find_section(p, vp, fp, sh, s_type)
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
-		if (error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
-				    siz, pos,
-				    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-				    &resid, p)) {
+		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
+		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
+		    &resid, p);
+		if (error) {
 			DPRINTF(("section hdr %d read error %d\n", i, error));
 			return error;
 		}
@@ -478,15 +479,15 @@ coff_load_shlib(p, path, epp)
 	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
-	if (error = namei(&nd)) {
+	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));
 		return error;
 	}
 
 	siz = sizeof(struct coff_filehdr);
-	if (error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
-			    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-			    &resid, p)) {
+	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
+	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
+	if (error) {
 	    DPRINTF(("filehdr read error %d\n", error));
 	    vrele(nd.ni_vp);
 	    return error;
@@ -558,8 +559,6 @@ exec_ibcs2_xout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	u_long midmag, magic;
-	u_short mid;
 	int error;
 	struct xexec *xp = epp->ep_hdr;
 	struct xext *xep;

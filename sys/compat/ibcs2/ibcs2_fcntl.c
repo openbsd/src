@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_fcntl.c,v 1.6 1996/05/03 17:05:20 christos Exp $	*/
+
 /*
  * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
@@ -45,6 +47,12 @@
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
+
+static int cvt_o_flags __P((int));
+static void cvt_flock2iflock __P((struct flock *, struct ibcs2_flock *));
+static void cvt_iflock2flock __P((struct ibcs2_flock *, struct flock *));
+static int ioflags2oflags __P((int));
+static int oflags2ioflags __P((int));
 
 static int
 cvt_o_flags(flags)
@@ -243,7 +251,7 @@ ibcs2_sys_eaccess(p, v, retval)
 
         NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
             SCARG(uap, path), p);
-        if (error = namei(&nd))
+        if ((error = namei(&nd)) != 0)
                 return error;
         vp = nd.ni_vp;
 
@@ -307,7 +315,7 @@ ibcs2_sys_fcntl(p, v, retval)
 	case IBCS2_F_SETFL:
 		SCARG(&fa, fd) = SCARG(uap, fd);
 		SCARG(&fa, cmd) = F_SETFL;
-		SCARG(&fa, arg) = (void *)ioflags2oflags(SCARG(uap, arg));
+		SCARG(&fa, arg) = (void *)ioflags2oflags((int) SCARG(uap, arg));
 		return sys_fcntl(p, &fa, retval);
 
 	case IBCS2_F_GETLK:
