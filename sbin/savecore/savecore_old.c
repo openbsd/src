@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.8 1998/07/13 02:11:25 millert Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.9 1998/08/24 05:24:25 millert Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.8 1998/07/13 02:11:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.9 1998/08/24 05:24:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ kmem_setup()
 {
 	FILE *fp;
 	int kmem, i;
-	char *dump_sys;
+	char *dump_sys, *current_sys;
 	
 	/*
 	 * Some names we need for the currently running system, others for
@@ -218,8 +218,14 @@ kmem_setup()
 	 * presumed to be the same (since the disk partitions are probably
 	 * the same!)
 	 */
-	if ((nlist(_PATH_UNIX, current_nl)) == -1)
-		syslog(LOG_ERR, "%s: nlist: %s", _PATH_UNIX, strerror(errno));
+	if ((i = open(_PATH_KSYMS, O_RDONLY)) != -1) {
+		current_sys = _PATH_KSYMS;
+		(void)close(i);
+	} else {
+		current_sys = _PATH_UNIX;
+	}
+	if ((nlist(current_sys, current_nl)) == -1)
+		syslog(LOG_ERR, "%s: nlist: %m", current_sys);
 	for (i = 0; cursyms[i] != -1; i++)
 		if (current_nl[cursyms[i]].n_value == 0) {
 			syslog(LOG_ERR, "%s: %s not in namelist",
@@ -665,6 +671,9 @@ Write(fd, bp, size)
 void
 usage()
 {
-	fprintf(stderr, "usage: savecore [-cfvz] [-N system] directory");
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-cfvz] [-N system] directory\n",
+	    __progname);
 	exit(1);
 }
