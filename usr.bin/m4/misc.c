@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.24 2001/09/19 13:14:18 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.25 2001/10/10 11:17:37 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.24 2001/09/19 13:14:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.25 2001/10/10 11:17:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -353,7 +353,9 @@ void
 doprintfilename(f)
 	struct input_file *f;
 {
+	pbstr(rquote);
 	pbstr(f->name);
+	pbstr(lquote);
 }
 
 /* 
