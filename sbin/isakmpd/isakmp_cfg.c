@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.5 2001/08/23 19:44:28 niklas Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.6 2001/08/27 03:10:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -34,10 +34,11 @@
  * (http://www.gatespace.com/).
  */
 
-#include <stdlib.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #include "sysdep.h"
 
