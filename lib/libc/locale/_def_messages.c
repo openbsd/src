@@ -4,7 +4,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: _def_messages.c,v 1.3 1997/07/23 21:14:38 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: _def_messages.c,v 1.4 2001/07/30 22:40:22 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -12,7 +12,7 @@ static char rcsid[] = "$OpenBSD: _def_messages.c,v 1.3 1997/07/23 21:14:38 kstai
 
 const _MessagesLocale _DefaultMessagesLocale =
 {
-	"^[Yn]",
+	"^[Yy]",
 	"^[Nn]",
 	"yes",
 	"no"
