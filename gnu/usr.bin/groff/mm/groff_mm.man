@@ -1,5 +1,5 @@
 .\"
-.\" $Id: groff_mm.man,v 1.1.1.2 1996/09/15 01:48:07 etheisen Exp $
+.\" $Id: groff_mm.man,v 1.1.1.3 1996/09/15 01:56:33 etheisen Exp $
 .\"
 .de T2
 .ne 2v
@@ -41,13 +41,6 @@ groff mm does not support cut marks
 \fBm@TMAC_M@\fP is intended to be international. Therefore it is 
 possible to write short national macrofiles which change all
 english text to the preferred language. Use \fBm@TMAC_M@se\fP as an example.
-.LP
-New macros: \fBAPP\fP, \fBAPPSK\fP, \fBB1\fP, \fBB2\fP, \fBBVL\fP,
-\fBCOVER\fP, \fBCOVEND\fP, \fBGETHN\fP, \fBGETPN\fP, \fBGETR\fP,
-\fBGETST\fP, \fBINITR\fP, \fBMC\fP, \fBMOVE\fP, \fBMULB\fP,
-\fBMULN\fP, \fBMULE\fP, \fBPGFORM\fP, \fBPGNH\fP, \fBSETR\fP,
-\fBTAB\fP, \fBVERBON\fP, \fBVERBOFF\fP.
-.LP
 .\"########################################################################
 .LP
 A file called \fBlocale\fP or \fIlang\fP\fB_locale\fP is read
@@ -395,12 +388,19 @@ change the numbering.
 It is possible to use \fB.af\fP to change the format of the number.
 If number register \fBOf\fP is 1, then the format of title
 will use a dash instead of a dot after the number.
+.br
 The string \fBLe\fP controls the title of the
 List of Equations, default is \fILIST OF EQUATIONS\fP.
+The List of Equations will only be printed if number register \fBLe\fP
+is 1, default 0.
 The string \fBLiec\fP contains the word \fIEquation\fP, wich
 is printed before the number.
-If \fIrefname\fP is used, then the equationnumber is saved with
+If \fIrefname\fP is used, then the equation number is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
+.br
+Special handling of the title will occur if
+\fBEC\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
+affected by the format of \fBDS\fP.
 .TP
 .B "EF [arg]"
 Even-page footer, printed just above the normal page footer
@@ -439,14 +439,20 @@ number register \fBEq\fP is 1. Then the label will appear at the
 left margin.
 .TP
 .B "EX [title [override [flag [refname]]]]"
-Exhibit title, arguments are the same as for \fBEC\fP
+Exhibit title, arguments are the same as for \fBEC\fP.
 \fBEX\fP uses the number register \fBEx\fP as counter.
 The string \fBLx\fP controls the title of the
 List of Exhibits, default is \fILIST OF EXHIBITS\fP.
+The List of Exhibits will only be printed if number register \fBLx\fP
+is 1, default 1.
 The string \fBLiex\fP contains the word \fIExhibit\fP, wich
 is printed before the number.
-If \fIrefname\fP is used, then the exhibitnumber is saved with
+If \fIrefname\fP is used, then the exhibit number is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
+.br
+Special handling of the title will occur if
+\fBEX\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
+affected by the format of \fBDS\fP.
 .TP
 .B "FC [closing]"
 Prints \fIYours\ very\ truly,\fP as a formal closing of a letter or
@@ -485,9 +491,20 @@ Default for m@TMAC_M@m is 10.
 Footnote end.
 .TP
 .B "FG [title [override [flag [refname]]]]"
-Figure title.
-If \fIrefname\fP is used, then the figurenumber is saved with
+Figure title, arguments are the same as for \fBEC\fP.
+\fBFG\fP uses the number register \fBFg\fP as counter.
+The string \fBLf\fP controls the title of the
+List of Figures, default is \fILIST OF FIGURES\fP.
+The List of Figures will only be printed if number register \fBLf\fP
+is 1, default 1.
+The string \fBLifg\fP contains the word \fIFigure\fP, wich
+is printed before the number.
+If \fIrefname\fP is used, then the figure number is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
+.br
+Special handling of the title will occur if
+\fBFG\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
+affected by the format of \fBDS\fP.
 .TP
 .B "FS [label]"
 Footnote start.
@@ -737,6 +754,52 @@ See \fBI\fP.
 .TP
 .B IE
 Ends the address-specification after \fPIA\fP.
+.TP
+.B "INITI filename [type]"
+Initialize the new index system, sets the filename to collect
+index lines in with \fBIND\fP. Argument \fItype\fP selects
+teh type of index, page number, header marks or both.
+The default is \fIN\fP.
+.sp
+\fBtype\fP
+.in +.5i
+.T2 N
+Page numbers
+.T2 H
+Header marks
+.T2 B
+Both page numbers and header marks, tab separated
+.in
+.TP
+.B "IND arg1 [arg2 [...]]"
+\fBIND\fP writes a line in the index file selected by \fBINITI\fP
+with all arguments and the page number or header mark separated by tabs.
+.in +.5i
+\fBExamples\fP
+.br
+arg1\etpage number
+.br
+arg1\etarg2\etpage number
+.br
+arg1\etheader mark
+.br
+arg1\etpage number\etheader mark
+.in
+.TP
+.B "INDP"
+\fBINDP\fP prints the index by running the command specified
+by string variable \fBIndcmd\fP, normally \fIsort\ -t\et\fP.
+\fBINDP\fP reads the output from the command to form
+the index, normally in two columns (can be changed by defining \fBTYIND\fP).
+The index is printed with string variable \fBIndex\fP as header,
+default is \fBINDEX\fP. One-column processing is
+returned after the list. \fBINDP\fP will call the
+user-defined macros \fBTXIND\fP, \fBTYIND\fP and \fBTZIND\fP if defined.
+\fBTXIND\fP is called before printing \fBINDEX\fP, \fBTYIND\fP
+is called instead of printing \fBINDEX\fP. \fBTZIND\fP is called
+after the printing and should take care of restoring to normal
+operation again.
+
 .TP
 .B "INITR filename"
 Initialize the refencemacros. References will be written to
@@ -1207,9 +1270,18 @@ to avoid this.
 reset tabs to every 5n. Normally used to reset any previous tabpositions.
 .TP
 .B "TB [title [override [flag [refname]]]]"
-Table title.
-If \fIrefname\fP is used, then the tablenumber is saved with
-\&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
+Table title, arguments are the same as for \fBEC\fP.
+\fBTB\fP uses the number register \fBTb\fP as counter.
+The string \fBLt\fP controls the title of the
+List of Tables, default is \fILIST OF TABLES\fP.
+The List of Tables will only be printed if number register \fBLt\fP
+is 1, default 1.
+The string \fBLitb\fP contains the word \fITABLE\fP, wich
+is printed before the number.
+.br
+Special handling of the title will occur if
+\fBTB\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
+affected by the format of \fBDS\fP.
 .TP
 .B "TC [slevel [spacing [tlevel [tab [h1 [h2 [h3 [h4 [h5]]]]]]]]]"
 Table of contents.
@@ -1235,7 +1307,7 @@ of \fICONTENTS\fP, and \fBTY\fP is called instead of printing \fICONTENTS\fP.
 .sp
 Equivalent macros can be defined for list of figures, tables, equations
 and excibits by defining \fBTXxx\fP or \fBTYxx\fP, where \fBxx\fP
-is \fFg\fP, \fBTB\fP, \fBEC\fP or \fBEX\fP.
+is \fBFg\fP, \fBTB\fP, \fBEC\fP or \fBEX\fP.
 .sp
 String \fBCi\fP can be set to control the indentations for each heading-level.
 It must be scaled, like \fB.ds\ Ci\ .25i\ .5i\ .75i\ 1i\ 1i\fP.
@@ -1383,6 +1455,12 @@ Nonnumeric fontnames may also be used.
 Pointsize list for headings. Normally "0 0 0 0 0 0 0" which is the same as
 "10 10 10 10 10 10 10".
 .TP
+.B Index
+.TP
+Contains \fIINDEX\fP.
+.B Indcmd
+.TP
+Contains the index command, \fIsort\ -t\et\fP.
 .B Lifg
 String containing \fIFigure\fP.
 .TP

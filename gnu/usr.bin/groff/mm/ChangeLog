@@ -1,3 +1,21 @@
+Wed May 15 07:39:32 1996 Jörgen Hägg (jh at axis.se)
+
+	* version 1.29
+	* Syntax and scaling errror fixed, (thanks to Frazer Williams)
+	* DF/DE will now do a line-break before printing the display.
+	* Updated the manual for TB,FG,EX and EC.
+	* Added support for the ms- (and mgs-)macro .IX
+	* Added indexmacro IX, INITI, IND and INDP, support for
+	  TXIND, TYIND and TZIND.
+	* PGFORM will now always really reset to the default
+	  values for unspecified arguments.
+	* Floating displays tested and repaired, it should
+	  now (finanlly) work exactly as the original (I hope :-).
+	* Should now set year correctly even after 2000.
+	* Stupid bug in PGNH fixed.
+	* Corrected line length for figure caption (FG and friends)
+
+
 Mon Apr 24 07:37:52 1995 Jörgen Hägg (jh at axis.se)
 
 	* version 1.28

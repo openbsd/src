@@ -3,11 +3,11 @@
 .ds RE \\$2
 ..
 .\"
-.\" $Id: tmac.m,v 1.1.1.2 1996/09/15 01:48:05 etheisen Exp $
-.@revision $Revision: 1.1.1.2 $
+.\" $Id: tmac.m,v 1.1.1.3 1996/09/15 01:56:30 etheisen Exp $
+.@revision $Revision: 1.1.1.3 $
 .ig
 
-Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 mgm is written by Jörgen Hägg <jh@axis.se>
 
 mgm is free software; you can redistribute it and/or modify it under
@@ -154,27 +154,28 @@ Index		array!index
 .\"
 .\"	Current pointsize and vertical space, always in points.
 .ie r S \{\
-.	ps (p;\n[S])
-.	vs (p;\n[S]+2)
+.	ps (u;\n[S])
+.	vs (u;\n[S]+2p)
 .\}
 .el \{\
-.	ps (p;10)
+.	ps 10
 .	vs 12p
 .\}
 .nr @ps \n[.ps]
 .nr @vs \n[.v]
+.if \n[D]>1 .tm @ps=\n[@ps], @vs=\n[@vs]
 .\"
 .\"	Page length
-.ie r L \{\
-.	ie n .pl (v;\n[L])
-.	el .pl \n[L]
+.if r L \{\
+.	ie n .pl \n[L]u
+.	el .pl \n[L]u
 .\}
 .nr @pl \n[.p]
 .\"
 .\"	page width
 .ie r W \{\
-.	ie n .ll (n;\n[W])
-.	el .ll \n[W]
+.	ie n .ll \n[W]u
+.	el .ll \n[W]u
 .\}
 .el .ll 6i
 .nr @ll \n[.l]
@@ -209,6 +210,11 @@ Index		array!index
 .nr Hps2 1v
 .if n .nr Hps2 2v
 .\"
+.\" header text for the index
+.ds Index INDEX
+.\" command to sort the index
+.ds Indcmd sort
+.\"
 .\" flag for mkindex
 .if !r Idxf .nr Idxf 0
 .\"	Change these in the national configuration file
@@ -223,7 +229,7 @@ Index		array!index
 .\"
 .\" Lsp controls the height of an empty line. Normally 0.5v
 .\" Normally used for nroff compatibility.
-.nr Lsp 0.5v
+.nr Lsp 0.25v
 .if n .nr Lsp 1v
 .ds MO1 January
 .ds MO2 February
@@ -376,12 +382,12 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de P
 .\"	skip P if previous heading
 .ie !((\\n[nl]=\\n[hd*last-pos]):(\\n[nl]=(\\n[hd*last-pos]-.5v))) \{\
-.	if \\n[D]>2 .tm Paragraph 
+.	if \\n[D]>2 .tm Paragraph nl=\\n[nl]
 .	par@doit \\$*
 .	if \\n[Np] \\n[H1].\\n+[par*number]\ \ \c
 .\}
 .el .if !(\\n[hd*last-hpos]=\\n[.k]) \{\
-.	if \\n[D]>2 .tm Paragraph 
+.	if \\n[D]>2 .tm Paragraph nl=\\n[nl]
 .	par@doit \\$*
 .	if \\n[Np] \\n[H1].\\n+[par*number]\ \ \c
 .\}
@@ -391,12 +397,12 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de nP
 .\"	skip P if previous heading
 .ie !((\\n[nl]=\\n[hd*last-pos]):(\\n[nl]=(\\n[hd*last-pos]-.5v))) \{\
-.	if \\n[D]>2 .tm Paragraph 
+.	if \\n[D]>2 .tm Paragraph nl=\\n[nl]
 .	par@doit \\$*
 \\n[H2].\\n+[par*number2]\ \ \c
 .\}
 .el .if !(\\n[hd*last-hpos]=\\n[.k]) \{\
-.	if \\n[D]>2 .tm Paragraph 
+.	if \\n[D]>2 .tm Paragraph nl=\\n[nl]
 .	par@doit \\$*
 \\n[H2].\\n+[par*number2]\ \ \c
 .\}
@@ -499,22 +505,28 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" Hope this doesn't break anything else :-)
 .\" Don't break if arg_4 is a '1'.
 .if ''\\$4' .br
-.if !''\\$1' \{\
+.ie !''\\$1' \{\
 .	ll \\$1
 .	nr @ll \n[.l]
 .	nr @cur-ll \\n[@ll]
 .	lt \\n[@ll]u
 .\}
+.el \{\
+.	ll \\n[@ll]u
+.	lt \\n[@ll]u
+.\}
 .\"
-.if !''\\$2' \{\
+.ie !''\\$2' \{\
 .	pl \\$2
 .	nr @pl \n[.p]
 .\}
+.el .pl \\n[@pl]u
 .\"
-.if !''\\$3' \{\
+.ie !''\\$3' \{\
 .	po \\$3
 .	nr @po \n[.o]
 .\}
+.el .po \\n[@po]u
 'in 0
 .pg@move-trap
 ..
@@ -570,8 +582,9 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .if !'\\*[misc*a]'C' \{\
 .	ie '\\*[misc*a]'P' .ps \\n[misc*S-ps]u
 .	el \{\
-.		ie '\\*[misc*a]'D' .ps 10p
-.		el .ps (p;\\*[misc*a])
+.		ie '\\*[misc*a]'D' .ps 10
+.		el .ps \\*[misc*a]
+.		if \\n[D]>2 .tm S: .ps \\*[misc*a]
 .	\}
 .\}
 .\"
@@ -580,13 +593,14 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	ie '\\*[misc*b]'P' .vs \\n[misc*S-vs]u
 .	el \{\
 .		ie '\\*[misc*b]'D' .vs \\n[@ps]u+2p
-.		el .vs (p;\\*[misc*b])
+.		el .vs \\*[misc*b]
+.		if \\n[D]>2 .tm S: .ps \\*[misc*b]
 .	\}
 .\}
 .nr @ps \\n[.ps]
 .nr @vs \\n[.v]
 .\"
-.if \\n[D]>1 .tm S[\\n[.c]]: point-size \\n[@ps]u, vertical spacing \\n[@vs]u
+.if \\n[D]>1 .tm S(\\$*): ma:\\*[misc*a], mb:\\*[misc*b] => ps:\\n[@ps]u, vs:\\n[@vs]u
 .nr misc*S-ps \\n[misc*S-ps1]
 .nr misc*S-vs \\n[misc*S-vs1]
 .nr misc*S-ps1 \\n[@ps]
@@ -944,7 +958,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .\" no header on the next page
 .de PGNH
-.nr pg*top-enabled -1
+.nr pg*top-enabled (-1)
 ..
 .\" set first trap for pagefooter
 .pg@enable-top-trap
@@ -1579,6 +1593,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"-------------
 .\" called by end-of-text
 .de df@eot-print
+.br
 .if \\n[df*o-fnr]<=\\n[df*fnr] \{\
 .	if \\n[D]>2 .tm Print remaining displays.
 .\" still some floats left, make non-empty environment
@@ -1603,16 +1618,34 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .if !\\n[ds*float-busy] \{\
 .	nr ds*float-busy 1
 .\" at .DE
-.	if (\\$1=1)&((\\n[Df]%2)=1) \{\
+.	if \\n[D]>3 .tm print-float: .t=\\n[.t], h=\\n[df*height!\\n[df*o-fnr]]
+.	\" Df = 1 or 5
+.	if (\\$1=1)&((\\n[Df]=1):(\\n[Df]=5)) \{\
 .		if \\n[.t]>\\n[df*height!\\n[df*o-fnr]] \{\
-.			\" Df = 1,3 or 5
+.			\" Print only new displays.
+.			if \\n[df*o-fnr]=\\n[df*fnr] \{\
+.				br
+.				ds@print-one-float
+.			\}
+.		\}
+.	\}
+.	\" Df = 3
+.	if (\\$1=1)&(\\n[Df]=3) \{\
+.		if \\n[.t]>\\n[df*height!\\n[df*o-fnr]] \{\
+.			br
 .			ds@print-one-float
 .		\}
 .	\}
 .\" print all if Df<2 and end of section
-.	if (\\$1=2)&(\\n[Df]<2) .ds@print-all-floats
+.	if (\\$1=2)&(\\n[Sectp]>0)&(\\n[Df]<2) \{\
+.		br
+.		ds@print-all-floats
+.	\}
 .\" print all if end of document. Where should they go instead?
-.	if \\$1=3 .ds@print-all-floats
+.	if \\$1=3 \{\
+.		br
+.		ds@print-all-floats
+.\}
 .\" new page
 .	if (\\$1=4)&(\\n[Df]>1) \{\
 .		if \\n[Df]=2 .ds@print-one-float
@@ -1655,6 +1688,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" print one floating display if there is one.
 .de ds@print-one-float
 .if \\n[df*o-fnr]<=\\n[df*fnr] \{\
+.	if \\n[D]>3 .tm print-one-float: .t=\\n[.t], h=\\n[df*height!\\n[df*o-fnr]]
 .	if \\n[.t]<\\n[df*height!\\n[df*o-fnr]] .pg@next-page
 .	ds@output-div
 .	if \\n[De] .pg@next-page
@@ -1665,7 +1699,10 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" if De>0 do a page eject between the floats.
 .de ds@print-all-floats
 .while \\n[df*o-fnr]<=\\n[df*fnr] \{\
+.	if \\n[D]>3 .tm print-all-floats: .t=\\n[.t], h=\\n[df*height!\\n[df*o-fnr]]
 .	if \\n[.t]<\\n[df*height!\\n[df*o-fnr]] .pg@next-page
+.	br
+\c
 .	ds@output-div
 .	if \\n[De] .pg@next-page
 .\}
@@ -1674,6 +1711,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" print as many floats as will fit on the current page
 .de ds@print-this-page
 .while \\n[df*o-fnr]<=\\n[df*fnr] \{\
+.	if \\n[D]>3 .tm print-this-page: .t=\\n[.t], h=\\n[df*height!\\n[df*o-fnr]]
 .	if \\n[.t]<\\n[df*height!\\n[df*o-fnr]] .break
 .	ds@output-div
 .\}
@@ -2194,7 +2232,6 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" level mark text pagenumber
 .de toc@set
 .if \\$1<=\\n[toc*slevel] .SP \\n[toc*spacing]u
-.ne 2v
 .na
 .fi
 .nr toc*ind 0
@@ -2215,6 +2252,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .nr toc*i \\n[toc*hl!\\$1]-\w@\\$2@
 .\"
 .ll \\n[@ll]u-\w@\\$4@u-2m
+.ne 2v
 .\" ragged right ---------------------------------
 .ie \\$1>\\n[toc*tlevel] \{\
 \\$2
@@ -2322,14 +2360,18 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 \!.el .ds lix*pgnr \\\\n[%]
 \!.SP \\\\n[Lsp]u
 \!.misc@ev-keep lix
+\!.ll \\n[.l]u
 \!.init@reset
-\!.br
+\!.fi
 \!.ie (\w@\\$1\\$2@)>(\\\\n[.l]-\\\\n[.i]) \{\
 .	in +\w@\\$1@u
 \!.	ti 0
-\!.\}
-\!.el .ce 1
 \!\fB\\$1\fP\\$2
+\!.\}
+\!.el \{\
+.	ce 1
+\!\fB\\$1\fP\\$2
+\!.\}
 \!.br
 \!.ev
 .\" save line for LIST OF XXX, wth is the width of the lable
@@ -2692,8 +2734,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de AE
 ..
 .\" I am planning to use mgm some time :-)
-.ie \\n[yr]<50 .ds cov*new-date \\*[MO\\n[mo]] \\n[dy], 20\\n[yr]
-.el .ds cov*new-date \\*[MO\\n[mo]] \\n[dy], 19\\n[yr]
+.nr cov*year 1900+\n[yr]
+.ds cov*new-date \*[MO\n[mo]] \n[dy], \n[cov*year]
 .als DT cov*new-date
 .de ND
 .ds cov*new-date \\$1
@@ -2853,6 +2895,65 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .		GETPN \\$1 Qrfp
 \\*[Qrf]
 .	\}
+.\}
+..
+.\"########################### module ind ############################
+.\" Support for mgs-style indexing, borrowed from mgs.
+.de IX
+.tm \\$1\t\\$2\t\\$3\t\\$4 ... \\n[%]
+..
+.\"--------------------
+.\" Another type of index system
+.\" INITI filename [type]
+.de INITI
+.if \\n[.$]<1 .@error "INITI:filename missing"
+.\" ignore if INITI has already been used
+.if r ind*pass .@error "INITI:already initialyzed"
+.nr ind*pass 1
+.ds ind*file \\$1.ind
+.ie \\n[.$]<2 .ds ind*type N
+.el .ds ind*type \\$2
+.open ind*stream \\*[ind*file]
+.close ind*stream
+..
+.\"---------------
+.de IND
+.if !r ind*pass .@error "IND: No .INITI in this file"
+.if '\\*[ind*type]'N' .ds ind*ref \\n[%]
+.if '\\*[ind*type]'H' .ds ind*ref \\*[hd*toc-mark]
+.if '\\*[ind*type]'B' .ds ind*ref \\*[hd*toc-mark]\t\\n[%]
+.\"
+.if \\n[.$] .ds ind*line \\$1
+.while \\n[.$]>0 \{\
+.	shift
+.	as ind*line \t\\$1
+.\}
+.as ind*line \\*[ind*ref]
+.opena ind*stream \\*[ind*file]
+.write ind*stream \\*[ind*line]
+.close ind*stream
+..
+.\" print index
+.de INDP
+.\" sort the index
+.if !\\n[Cp] .pg@next-page
+.\" print INDEX
+.\" execute user-defined macros
+.if d TXIND .TXIND
+.ie d TYIND .TYIND
+.el \{\
+.	SK
+.	ce
+\\*[Index]
+.	SP 3
+.	2C
+.	nf
+.\}
+.pso \\*[Indcmd] \\*[ind*file]
+.ie d TZIND .TZIND
+.el \{\
+.	fi
+.	1C
 .\}
 ..
 .\"########################### module let ############################
