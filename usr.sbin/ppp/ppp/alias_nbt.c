@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_nbt.c,v 1.8 2002/06/15 08:01:59 brian Exp $
+ * $OpenBSD: alias_nbt.c,v 1.9 2004/05/31 02:21:17 brad Exp $
  *
  *  TODO:
  *       oClean up.
@@ -111,7 +111,7 @@ static void PrintRcode( u_char rcode )  {
 		case CFT_ERR:
 			printf("\nName in conflict error.\n");
 		default:
-			printf("\n???=%0x\n", rcode );
+			printf("\n?%c?=%0x\n", '?', rcode);
 
 	}
 }
