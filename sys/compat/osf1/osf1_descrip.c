@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_descrip.c,v 1.1 2000/08/04 15:47:54 ericj Exp $ */
+/* $OpenBSD: osf1_descrip.c,v 1.2 2001/05/14 10:59:09 art Exp $ */
 /* $NetBSD: osf1_descrip.c,v 1.5 1999/06/26 01:24:41 cgd Exp $ */
 
 /*
@@ -258,6 +258,12 @@ osf1_sys_fstat(p, v, retval)
 	case DTYPE_SOCKET:
 		error = soo_stat((struct socket *)fp->f_data, &ub);
 		break;
+
+#ifndef OLD_PIPE
+	case DTYPE_PIPE:
+		error = pipe_stat(fp, &sb, p);
+		break;
+#endif
 
 	default:
 		panic("ofstat");
