@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bs.6,v 1.8 2001/06/06 21:02:26 pjanzen Exp $
+.\"	$OpenBSD: bs.6,v 1.9 2001/11/17 05:35:02 pjanzen Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -65,14 +65,18 @@ command will place all remaining ships randomly.
 The ^L command
 .Pq form feed, ASCII 12
 will force a screen redraw.
-.Sh OPTIONS
-The command-line arguments control game modes.
+.Pp
+The command-line arguments control game modes:
 .Bl -tag -width XxXXX
 .It Fl b
 Selects a
 .Sq blitz
 variant.
 This allows a side to shoot for as long as it continues to score hits.
+.It Fl c
+Permits ships to be placed adjacently.
+Normally, ships must be separated by at least one square of open water.
+This disables that check and allows them to close-pack.
 .It Fl s
 Selects a
 .Sq salvo
@@ -82,10 +86,6 @@ ships still afloat.
 This puts a premium on scoring hits early and knocking out
 some ships and also makes it much harder, for example, when you face a superior
 force with only your PT-boat.
-.It Fl c
-Permits ships to be placed adjacently.
-Normally, ships must be separated by at least one square of open water.
-This disables that check and allows them to close-pack.
 .El
 .Sh AUTHORS
 Originally written by one Bruce Holloway in 1986.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boggle.6,v 1.9 2001/11/17 05:27:09 pjanzen Exp $
+.\"	$OpenBSD: boggle.6,v 1.10 2001/11/17 05:35:00 pjanzen Exp $
 .\"	$NetBSD: boggle.6,v 1.2 1995/03/21 12:14:35 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -95,8 +95,8 @@ The (N+1)th cube in the word must be horizontally,
 vertically, or diagonally adjacent to the Nth cube.
 Cubes cannot be reused.
 Words consist solely of lower case letters and must be at least 3 letters long.
-.Sh OPTIONS
-Command line flags can be given to change the rules of the game.
+.Pp
+Command line flags can be given to change the rules of the game:
 .Bl -tag -width boardspec
 .It Fl b
 Run
@@ -143,6 +143,7 @@ compressed dictionary
 dictionary index
 .It Pa /usr/share/games/boggle/helpfile
 online help file
+.El
 .Sh AUTHORS
 Boggle is a trademark of Parker Brothers.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sail.6,v 1.5 2001/09/19 10:53:38 pjanzen Exp $
+.\"	$OpenBSD: sail.6,v 1.6 2001/11/17 05:35:02 pjanzen Exp $
 .\"	$NetBSD: sail.6,v 1.4 1995/04/22 10:37:24 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1993
@@ -133,12 +133,12 @@ Since
 .Ux
 guarantees that a link will point to only one file, the process
 that succeeds in linking will have exclusive access to the temporary file.
-.Pp
-\." Whether or not this really works is open to speculation.  When ucbmiro
-\." was rebooted after a crash, the file system check program found 3 links
-\." between the
-\." .Nm
-\." temporary file and its link file.
+.\" .Pp
+.\" Whether or not this really works is open to speculation.  When ucbmiro
+.\" was rebooted after a crash, the file system check program found 3 links
+.\" between the
+.\" .Nm
+.\" temporary file and its link file.
 .Ss "CONSEQUENCES OF SEPARATE PLAYER AND DRIVER PROCESSES"
 When players do something of global interest, such as moving or firing,
 the driver must coordinate the action with the other ships in the game.
@@ -980,7 +980,6 @@ Dave Riggle
 Ed Wang, co-author
 .Pp
 Craig Leres, refitting
-.Pp
 .Ss CONSULTANTS
 .nf
 Chris Guthrie
