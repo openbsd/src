@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.110 2002/11/08 08:08:47 mpech Exp $
+.\"	$OpenBSD: options.4,v 1.111 2002/11/25 13:14:54 henning Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -869,7 +869,7 @@ While not IP specific, this option is usually used in conjunction with option
 .It Cd option ALTQ
 Enables ALTQ (Alternate Queueing).
 For simple rate-limiting, use
-.Xr tbrconfig 8
+.Xr pfctl 8
 to set up the interface transmission rate.
 To use queueing disciplines, their options should also be defined.
 .Em ALTQ_CBQ
@@ -879,8 +879,8 @@ are enabled by default with option
 .Em ALTQ
 in
 .Ox .
-Queueing disciplines are managed by
-.Xr altqd 8 .
+Queueing disciplines are also managed by
+.Xr pfctl 8 .
 See
 .Xr altq 9
 for details on ALTQ.
