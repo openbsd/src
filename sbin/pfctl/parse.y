@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2001/08/28 09:27:16 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2001/08/28 09:54:14 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -238,11 +238,18 @@ quick		: /* empty */			{ $$ = 0; }
 
 natiface	: iface
 		| ON '!' STRING			{
-			$$.string = strdup($3); $$.not = 1;
+			$$.string = strdup($3);
+			if ($$.string == NULL)
+				err(1, "natiface: strdup");
+			$$.not = 1;
 		}
 		;
 iface		: /* empty */			{ $$.string = NULL; }
-		| ON STRING			{ $$.string = strdup($2); }
+		| ON STRING			{
+			$$.string = strdup($2);
+			if ($$.string == NULL)
+				err(1, "iface: strdup");
+		}
 		;
 
 proto		: /* empty */			{ $$ = NULL; }
@@ -262,6 +269,8 @@ proto_item	: NUMBER			{
 				YYERROR;
 			}
 			$$ = malloc(sizeof(struct node_proto));
+			if ($$ == NULL)
+				err(1, "proto_item: malloc");
 			$$->proto = p->p_proto;
 			$$->next = NULL;
 		}
@@ -273,6 +282,8 @@ proto_item	: NUMBER			{
 				YYERROR;
 			}
 			$$ = malloc(sizeof(struct node_proto));
+			if ($$ == NULL)
+				err(1, "proto_item: malloc");
 			$$->proto = p->p_proto;
 			$$->next = NULL;
 		}
@@ -358,6 +369,8 @@ port_list	: port_item			{ $$ = $1; }
 
 port_item	: port				{
 			$$ = malloc(sizeof(struct node_port));
+			if ($$ == NULL)
+				err(1, "port_item: malloc");
 			$$->port[0] = $1;
 			$$->port[1] = $1;
 			$$->op = PF_OP_EQ;
@@ -365,6 +378,8 @@ port_item	: port				{
 		}
 		| PORTUNARY port		{
 			$$ = malloc(sizeof(struct node_port));
+			if ($$ == NULL)
+				err(1, "port_item: malloc");
 			$$->port[0] = $2;
 			$$->port[1] = $2;
 			$$->op = $1;
@@ -372,6 +387,8 @@ port_item	: port				{
 		}
 		| port PORTBINARY port		{
 			$$ = malloc(sizeof(struct node_port));
+			if ($$ == NULL)
+				err(1, "port_item: malloc");
 			$$->port[0] = $1;
 			$$->port[1] = $3;
 			$$->op = $2;
@@ -668,6 +685,8 @@ rule_consistent(struct pf_rule *r)
 	do { \
 		if (r == NULL) { \
 			r = malloc(sizeof(T)); \
+			if (r == NULL) \
+				err(1, "malloc"); \
 			memset(r, 0, sizeof(T)); \
 		} \
 	} while (0)
@@ -904,6 +923,8 @@ top:
 		if (val == NULL)
 			return (ERROR);
 		parsebuf = strdup(val);
+		if (parsebuf == NULL)
+			err(1, "parsebuf: strdup");
 		parseindex = 0;
 		goto top;
 	}
@@ -928,6 +949,8 @@ top:
 			*p++ = (char)c;
 		}
 		yylval.v.string = strdup(buf);
+		if (yylval.v.string == NULL)
+			err(1, "yylex: strdup");
 		return (STRING);
 	case '=':
 		yylval.v.i = PF_OP_EQ;
@@ -1035,6 +1058,8 @@ top:
 		*p = '\0';
 		token = lookup(buf);
 		yylval.v.string = strdup(buf);
+		if (yylval.v.string == NULL)
+			err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
