@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.7 1997/05/28 21:53:32 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.8 1997/07/31 17:00:58 kstailey Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.7 1997/05/28 21:53:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.8 1997/07/31 17:00:58 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ copy_file(entp, dne)
 	if (fs->st_size <= 8 * 1048576) {
 		if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
 		    0, from_fd, (off_t)0)) == (char *)-1) {
-			warn("%s", entp->fts_path);
+			warn("mmap: %s", entp->fts_path);
 			rval = 1;
 		} else {
 			if (write(to_fd, p, fs->st_size) != fs->st_size) {
