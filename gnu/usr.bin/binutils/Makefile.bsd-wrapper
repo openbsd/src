@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1998/03/26 02:26:22 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 1998/03/26 02:32:49 millert Exp $
 
 MAN=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
@@ -12,7 +12,11 @@ SUBDIRS+=	gdb mmalloc readline
 MAN+=		gdb/gdb.1 
 .endif
 
+# some ports use all of binutils, some do not.
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips") || \
+	(${MACHINE_ARCH} == "powerpc")
 SUBDIRS+=	binutils ld gas
+.endif
 	
 all:	config.status
 	${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
