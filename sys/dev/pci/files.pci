@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.116 2001/10/05 18:57:28 nate Exp $
+#	$OpenBSD: files.pci,v 1.117 2001/10/24 03:21:06 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -92,6 +92,11 @@ file	dev/pci/opl_eso.c		opl_eso
 device	auich: audio, auconv, mulaw, ac97
 attach	auich at pci
 file	dev/pci/auich.c			auich
+
+# Creative Labs EMU10k1 (SBLive! series and PCI512)
+device	emu: audio, auconv, mulaw, ac97
+attach	emu at pci
+file	dev/pci/emuxki.c		emu
 
 # CS4280 CrystalClear Audio
 device	clcs: audio, auconv, mulaw, ac97
