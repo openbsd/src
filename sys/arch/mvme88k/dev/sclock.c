@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.2 2001/02/01 03:38:14 smurph Exp $ */
+/*	$OpenBSD: sclock.c,v 1.3 2001/02/12 08:16:23 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -247,6 +247,9 @@ void *cap;
 
 	sys_pcc2->pcc2_t2irq = stat_reset;
 
+	/* increment intr counter */
+	intrcnt[M88K_SCLK_IRQ]++; 
+	
 	statclock((struct clockframe *)cap);
 
 	/*
@@ -281,6 +284,10 @@ void *cap;
         volatile int *ist = (volatile int *)MVME188_IST;
 
 	CIO_LOCK;
+	
+	/* increment intr counter */
+	intrcnt[M88K_SCLK_IRQ]++; 
+
 	statclock((struct clockframe *)cap);
 	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);  /* Ack the interrupt */
 
@@ -299,11 +306,13 @@ void *cap;
 	*/
 	write_cio(CIO_CT1MSB, (newint & 0xFF00) >> 8);	/* Load time constant CTC #1 */
 	write_cio(CIO_CT1LSB, newint & 0xFF);
-	/* force a trigger event */
-	write_cio(CIO_CSR1, CIO_GCB|CIO_TCB|CIO_IE);  /* Start CTC #1 running */
-	if (*ist & DTI_BIT) {
+	
+	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);  /* Start CTC #1 running */
+#if 0
+	if (*ist & CIOI_BIT) {
 		printf("CIOI not clearing!\n");
 	}
+#endif 
 	CIO_UNLOCK;
 	return (1);
 }

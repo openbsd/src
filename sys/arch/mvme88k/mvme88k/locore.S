@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2001/02/01 03:38:20 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2001/02/12 08:16:24 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -530,3 +530,26 @@ _sigcode:
 	or	r0, r0, 0
 	global	_esigcode
 _esigcode:
+
+/* interrupt counters */
+	global	_intrcnt,_eintrcnt,_intrnames,_eintrnames
+_intrnames:
+	string	"spur\0"
+	string	"lev1\0"
+	string	"lev2\0"
+	string	"lev3\0"
+	string	"lev4\0"
+	string	"lev5\0"
+	string	"lev6\0"
+	string	"lev7\0"
+	string	"clk\0"
+	string	"sclk\0"
+	string	"pclk\0"
+	string	"nmi\0"
+_eintrnames:
+	.align	8
+_intrcnt:
+	word	0,0,0,0,0,0,0,0,0,0,0,0
+_eintrcnt:
+
+

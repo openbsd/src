@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.5 2001/02/01 03:38:13 smurph Exp $ */
+/*	$OpenBSD: bugio.c,v 1.6 2001/02/12 08:16:21 smurph Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <machine/bugio.h>
 
@@ -105,7 +105,7 @@ buginstat(void)
 	asm volatile ("tb0 0,r0,0x1F0");
 	asm volatile ("or %0,r0,r2" : "=r" (ret) : );
 	OSCTXT();
-	return (ret & 0x4 ? 1 : 0);
+	return (ret & 0x4 ? 0 : 1);
 }
 
 bugoutstr(char *s, char *se)

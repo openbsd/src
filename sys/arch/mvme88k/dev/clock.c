@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2001/02/01 03:38:14 smurph Exp $ */
+/*	$OpenBSD: clock.c,v 1.8 2001/02/12 08:16:22 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -237,10 +237,14 @@ sbc_clockintr(arg)
 void *arg;
 {
 	sys_pcc2->pcc2_t1irq = prof_reset;
+	
+	/* increment intr counter */
+	intrcnt[M88K_CLK_IRQ]++; 
+	
 	hardclock(arg);
 #include "bugtty.h"
 #if NBUGTTY > 0
-/*	bugtty_chkinput();*/
+	bugtty_chkinput();
 #endif /* NBUGTTY */
 	timerok = 1;
 	return (1);
@@ -285,6 +289,8 @@ void *arg;
         volatile int *ist = (volatile int *)MVME188_IST;
 	register unsigned long sp;
 	
+	/* increment intr counter */
+	intrcnt[M88K_CLK_IRQ]++; 
 	/* acknowledge the timer interrupt */
 	dma_cachectl(0xFFF82000, 0x1000, DMA_CACHE_SYNC_INVAL);
 	tmp = *dti_stop;
@@ -317,7 +323,7 @@ void *arg;
 	hardclock(arg);
 #include "bugtty.h"
 #if NBUGTTY > 0
-/*	bugtty_chkinput(); */
+	bugtty_chkinput();
 #endif /* NBUGTTY */
 	/* give the start counter/timer command */
 	tmp = *dti_start;

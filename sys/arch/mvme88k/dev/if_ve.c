@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.2 2001/02/01 03:38:14 smurph Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.3 2001/02/12 08:16:23 smurph Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -141,23 +141,24 @@ hide void vewrcsr __P((struct vam7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t verdcsr __P((struct vam7990_softc *, u_int16_t));
 
 /* send command to the nvram controller */
+void
 nvram_cmd(sc, cmd, addr )
 struct vam7990_softc *sc;
 u_char cmd;
 u_short addr;
 {
-   int i;
-   u_char rcmd = 0;
-   u_char rcmd2= 0;
+	int i;
+	u_char rcmd = 0;
+	u_char rcmd2= 0;
 	struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
-   
-   rcmd = addr;
-   rcmd = rcmd << 3;
-   rcmd |= cmd;
-   for(i=0;i<8;i++){ 
-      reg1->ver1_ear=((cmd|(addr<<1))>>i); 
-      CDELAY; 
-   } 
+
+	rcmd = addr;
+	rcmd = rcmd << 3;
+	rcmd |= cmd;
+	for (i=0;i<8;i++) {
+		reg1->ver1_ear=((cmd|(addr<<1))>>i); 
+		CDELAY; 
+	} 
 }
 
 /* read nvram one bit at a time */
@@ -166,27 +167,29 @@ nvram_read(sc, nvram_addr)
 struct vam7990_softc *sc;
 u_char nvram_addr;
 {
-   u_short val = 0, mask = 0x04000;
-   u_int16_t wbit;
-   /* these used by macros DO NOT CHANGE!*/
-   int i;
+	u_short val = 0, mask = 0x04000;
+	u_int16_t wbit;
+	/* these used by macros DO NOT CHANGE!*/
+	int i;
 	struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
-   sc->csr = 0x4f;
-   ENABLE_NVRAM;
-   nvram_cmd(sc, NVRAM_RCL, 0);
-   DISABLE_NVRAM;
-   CDELAY;
-   ENABLE_NVRAM;
-   nvram_cmd(sc, NVRAM_READ, nvram_addr);
-   for (wbit=0; wbit<15; wbit++) {
-      (reg1->ver1_ear & 0x01) ? (val = (val | mask)) : (val = (val & (~mask)));
-      mask = mask>>1;
-      CDELAY;
-   }
-   (reg1->ver1_ear & 0x01) ? (val = (val | 0x8000)) : (val = (val & 0x7FFF));
-   CDELAY;
-   DISABLE_NVRAM;
-   return (val);
+	sc->csr = 0x4f;
+	ENABLE_NVRAM;
+	nvram_cmd(sc, NVRAM_RCL, 0);
+	DISABLE_NVRAM;
+	CDELAY;
+	ENABLE_NVRAM;
+	nvram_cmd(sc, NVRAM_READ, nvram_addr);
+	for (wbit=0; wbit<15; wbit++) {
+		(reg1->ver1_ear & 0x01) ? 
+			(val = (val | mask)) : (val = (val & (~mask)));
+		mask = mask>>1;
+		CDELAY;
+	}
+	(reg1->ver1_ear & 0x01) ? 
+		(val = (val | 0x8000)) : (val = (val & 0x7FFF));
+	CDELAY;
+	DISABLE_NVRAM;
+	return (val);
 }
 
 hide void
@@ -216,14 +219,14 @@ verdcsr(sc, port)
 /* reset MVME376, set ipl and vec */
 void
 vereset(sc)
-	struct vam7990_softc *sc;
+struct vam7990_softc *sc;
 {
 	register struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
-   u_char vec = ((struct ve_softc *)sc)->sc_vec;
-   u_char ipl = ((struct ve_softc *)sc)->sc_ipl;
-   sc->csr = 0x4f;
-   WRITE_CSR_AND( ~ipl );
-   SET_VEC(vec);
+	u_char vec = ((struct ve_softc *)sc)->sc_vec;
+	u_char ipl = ((struct ve_softc *)sc)->sc_ipl;
+	sc->csr = 0x4f;
+	WRITE_CSR_AND( ~ipl );
+	SET_VEC(vec);
 	return;
 }
 
@@ -234,24 +237,21 @@ struct vam7990_softc *sc;
 {
 	register struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 	ENABLE_INTR;
+        CLEAR_INTR;
 }
 
 int
 vematch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+struct device *parent;
+void *vcf, *args;
 {
 
 	struct confargs *ca = args;
 	if (!badvaddr(ca->ca_vaddr, 1)) {
-      if (ca->ca_vec & 0x03) {
-         printf("ve: bad vector 0x%x\n", ca->ca_vec);
-         return (0);
-      }
-		return(1);
-   } else {
+		return (1);
+	} else {
 		return (0);
-	}	    
+	}           
 }
 
 /*
@@ -261,9 +261,9 @@ vematch(parent, vcf, args)
  */
 void
 veattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+struct device *parent;
+struct device *self;
+void *aux;
 {
 	register struct ve_softc *lesc = (struct ve_softc *)self;
 	struct vam7990_softc *sc = &lesc->sc_am7990;
@@ -288,32 +288,35 @@ veattach(parent, self, aux)
 		bootdv = self;
 	
 	lesc->sc_r1 = (struct vereg1 *)ca->ca_vaddr;
-   lesc->sc_ipl = ca->ca_ipl;
-   lesc->sc_vec = ca->ca_vec;
+	lesc->sc_ipl = ca->ca_ipl;
+	lesc->sc_vec = ca->ca_vec;
 
-   /* get the first avaliable etherbuf */
-   switch ((int)ca->ca_paddr) {
-   case 0xFFFF1200:
-      addr = (caddr_t)0xFD6C0000;
-      break;
-   case 0xFFFF1400:
-      addr = (caddr_t)0xFD700000;
-      break;
-   case 0xFFFF1600:
-      addr = (caddr_t)0xFD740000;
-      break;
-   default:
-      panic("ve: invalid address");
-   }
-   sc->sc_mem = (void *)mapiodev(addr, LEMEMSIZE);
-   if (sc->sc_mem == NULL) panic("ve: no more memory in external I/O map");
+
+	/* get the first avaliable etherbuf */
+	switch ((int)ca->ca_paddr) {
+	case 0xFFFF1200:
+		addr = (caddr_t)0xFD6C0000;
+		break;
+	case 0xFFFF1400:
+		addr = (caddr_t)0xFD700000;
+		break;
+	case 0xFFFF1600:
+		addr = (caddr_t)0xFD740000;
+		break;
+	default:
+		panic("ve: invalid address");
+	}
+	
+	sc->sc_mem = (void *)mapiodev(addr, LEMEMSIZE);
+	
+	if (sc->sc_mem == NULL)	panic("ve: no more memory in external I/O map");
 	sc->sc_memsize = LEMEMSIZE;
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = kvtop(sc->sc_mem);
-	
+
 	/* get ether address via bug call */
 	veetheraddr(sc);
-	
+
 	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "errs", &lesc->sc_errcnt);
 
@@ -342,19 +345,19 @@ void
 veetheraddr(sc)
 struct vam7990_softc *sc;
 {
-   u_char * cp = sc->sc_arpcom.ac_enaddr;
-   u_int16_t ival[3];
-   u_char i;
-   
-   for (i=0; i<3; i++) {
-      ival[i] = nvram_read(sc, i);
-   }
-   memcpy(cp, &ival[0], 6);
+	u_char * cp = sc->sc_arpcom.ac_enaddr;
+	u_int16_t ival[3];
+	u_char i;
+
+	for (i=0; i<3; i++) {
+		ival[i] = nvram_read(sc, i);
+	}
+	memcpy(cp, &ival[0], 6);
 }
 
 void
 ve_config(sc)
-	struct vam7990_softc *sc;
+struct vam7990_softc *sc;
 {
 	int mem;
 
@@ -368,7 +371,7 @@ ve_config(sc)
 	ifp->if_ioctl = ve_ioctl;
 	ifp->if_watchdog = ve_watchdog;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 #ifdef LANCE_REVC_BUG
 	ifp->if_flags &= ~IFF_MULTICAST;
 #endif
@@ -414,9 +417,9 @@ ve_config(sc)
 	}
 
 	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
-          ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	       ether_sprintf(sc->sc_arpcom.ac_enaddr));
 	printf("%s: %d receive buffers, %d transmit buffers\n", 
-          sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
+	       sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	sc->sc_sh = shutdownhook_establish(ve_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -455,7 +458,7 @@ ve_reset(sc)
  */
 void
 ve_meminit(sc)
-	register struct vam7990_softc *sc;
+register struct vam7990_softc *sc;
 {
 	u_long a;
 	int bix;
@@ -470,11 +473,11 @@ ve_meminit(sc)
 #endif
 		init.init_mode = LE_MODE_NORMAL;
 	init.init_padr[0] =
-	    (sc->sc_arpcom.ac_enaddr[1] << 8) | sc->sc_arpcom.ac_enaddr[0];
+	(sc->sc_arpcom.ac_enaddr[1] << 8) | sc->sc_arpcom.ac_enaddr[0];
 	init.init_padr[1] =
-	    (sc->sc_arpcom.ac_enaddr[3] << 8) | sc->sc_arpcom.ac_enaddr[2];
+	(sc->sc_arpcom.ac_enaddr[3] << 8) | sc->sc_arpcom.ac_enaddr[2];
 	init.init_padr[2] =
-	    (sc->sc_arpcom.ac_enaddr[5] << 8) | sc->sc_arpcom.ac_enaddr[4];
+	(sc->sc_arpcom.ac_enaddr[5] << 8) | sc->sc_arpcom.ac_enaddr[4];
 	ve_setladrf(&sc->sc_arpcom, init.init_ladrf);
 
 	sc->sc_last_rd = 0;
@@ -501,7 +504,7 @@ ve_meminit(sc)
 		rmd.rmd2 = -LEBLEN | LE_XMD2_ONES;
 		rmd.rmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &rmd, LE_RMDADDR(sc, bix),
-		    sizeof(rmd));
+				     sizeof(rmd));
 	}
 
 	/*
@@ -511,11 +514,11 @@ ve_meminit(sc)
 		a = sc->sc_addr + LE_TBUFADDR(sc, bix);
 		tmd.tmd0 = a;
 		tmd.tmd1_hadr = a >> 16;
-		tmd.tmd1_bits = 0;
-		tmd.tmd2 = 0 | LE_XMD2_ONES;
+		tmd.tmd1_bits = LE_R1_STP | LE_R1_ENP;
+		tmd.tmd2 = -2000 | LE_XMD2_ONES;
 		tmd.tmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &tmd, LE_TMDADDR(sc, bix),
-		    sizeof(tmd));
+				     sizeof(tmd));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vereg.h,v 1.2 2000/12/21 16:54:56 aaron Exp $ */
+/*	$OpenBSD: if_vereg.h,v 1.3 2001/02/12 08:16:23 smurph Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -67,6 +67,7 @@ struct vereg1 {
 #define ENABLE_NVRAM       WRITE_CSR_AND(~NVRAM_EN)
 #define DISABLE_NVRAM      WRITE_CSR_OR(NVRAM_EN)
 #define ENABLE_INTR        WRITE_CSR_AND(~INTR_EN)
+#define CLEAR_INTR         WRITE_CSR_OR(HW_RS | PARITYB | NVRAM_EN)
 #define DISABLE_INTR       WRITE_CSR_OR(INTR_EN)
 #define RESET_HW           WRITE_CSR_AND(~0xFF00);WRITE_CSR_AND(~HW_RS);CDELAY
 #define SET_IPL(x)         WRITE_CSR_AND(~x)

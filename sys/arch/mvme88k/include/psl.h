@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.5 2000/07/06 15:25:04 ho Exp $ */
+/*	$OpenBSD: psl.h,v 1.6 2001/02/12 08:16:23 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -44,6 +44,37 @@
  */
 #ifndef __M88K_M88100_PSL_H__
 #define __M88K_M88100_PSL_H__
+
+/*
+ * INTERRUPT STAT levels.  for 'systat vmstat'
+ * intrcnt and friends are defined in locore.S
+ * XXX smurph
+ */
+#ifndef _LOCORE
+
+#define M88K_NIRQ	12
+
+#define M88K_SPUR_IRQ	0
+#define M88K_LEVEL1_IRQ	1
+#define M88K_LEVEL2_IRQ	2
+#define M88K_LEVEL3_IRQ	3
+#define M88K_LEVEL4_IRQ	4
+#define M88K_LEVEL5_IRQ	5
+#define M88K_LEVEL6_IRQ	6
+#define M88K_LEVEL7_IRQ	7
+/* 
+ * We keep track of these seperately, but   
+ * they will be reflected with the above also.
+ */
+#define M88K_CLK_IRQ	8
+#define M88K_SCLK_IRQ	9
+#define M88K_PCLK_IRQ	10
+#define M88K_NMI_IRQ	11
+
+extern int intrcnt[M88K_NIRQ];
+
+#endif 
+
 
 /* needs major cleanup - XXX nivas */
 

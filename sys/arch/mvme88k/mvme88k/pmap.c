@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2001/02/01 03:38:21 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2001/02/12 08:16:25 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -350,7 +350,7 @@ boolean_t   pmap_initialized = FALSE;/* Has pmap_init completed? */
  * in pmap_con_dbg.
  */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 
 static void check_pv_list __P((vm_offset_t, pv_entry_t, char *));
 static void check_pmap_consistency __P((char *));
@@ -405,7 +405,7 @@ flush_atc_entry(long users, vm_offset_t va, int kernel)
 	register int cpu;
 	long tusers = users;
 
-#if 0
+#ifdef DIAGNOSTIC
 	if (ff1(tusers) > 4) { /* can't be more than 4 */
 		printf("ff1 users = %d!\n", ff1(tusers));
 		panic("bogus amount of users!!!");
@@ -443,7 +443,6 @@ m88k_protection(pmap_t map, vm_prot_t prot)
 
 } /* m88k_protection */
 
-
 /*
  * Routine:	PMAP_PTE
  *
@@ -465,7 +464,6 @@ m88k_protection(pmap_t map, vm_prot_t prot)
  *	SDT_VALID
  *	PDT_IDX
  */
-vm_offset_t va_tmp = (vm_offset_t)0xDEADBEEF;
 
 pt_entry_t *
 pmap_pte(pmap_t map, vm_offset_t virt)
@@ -478,9 +476,6 @@ pmap_pte(pmap_t map, vm_offset_t virt)
 		panic("pmap_pte: pmap is NULL");
 
 	sdt = SDTENT(map,virt);
-	if (virt == va_tmp) {
-		printf("check sdt @ 0x%x\n", sdt);
-	}
 	/*
 	 * Check whether page table is exist or not.
 	 */
@@ -536,11 +531,10 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
 	kpdt_entry_t  kpdt_ent;
 	pmap_t     map = kernel_pmap;
 
-#if	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_KMAP | CD_FULL)) == (CD_KMAP | CD_FULL))
 		printf("(pmap_expand_kmap :%x) v %x\n", curproc,virt);
 #endif
-
 	aprot = m88k_protection (map, prot);
 
 	/*  segment table entry derivate from map and virt. */
@@ -621,7 +615,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 	cmode = (prot & 0xffff0000) >> 16;
 	prot &= 0x0000ffff;
 
-#if	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_MAP | CD_NORM)) == (CD_MAP | CD_NORM))
 		printf ("(pmap_map :%x) phys address from %x to %x mapped at virtual %x, prot %x cmode %x\n",
 			curproc, start, end, virt, prot, cmode);
@@ -642,7 +636,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 			if ((pte = pmap_expand_kmap(virt, VM_PROT_READ|VM_PROT_WRITE)) == PT_ENTRY_NULL)
 				panic ("pmap_map: Cannot allocate pte table");
 
-#ifdef	DEBUG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_MAP | CD_FULL)) == (CD_MAP | CD_FULL))
 			if (pte->dtype)
 				printf("(pmap_map :%x) pte @ 0x%x already valid\n", curproc, (unsigned)pte);
@@ -723,7 +717,7 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 	batc_template_t	batctmp;
 	register int	i;
 
-#if	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_MAPB | CD_FULL)) == (CD_MAPB | CD_FULL))
 		printf ("(pmap_map_batc :%x) phys address from %x to %x mapped at virtual %x, prot %x\n", curproc,
 			start, end, virt, prot);
@@ -1182,12 +1176,12 @@ pmap_bootstrap(vm_offset_t load_start, /* IN */
 		*phys_start += etherlen; 
 
 		if (vaddr != *virt_start) {
-   #ifdef DEBUG
+#ifdef DEBUG
 			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 				printf("2:vaddr %x *virt_start %x *phys_start %x\n", vaddr,
 				       *virt_start, *phys_start);
 			}
-   #endif
+#endif
 			*virt_start = vaddr;
 			*phys_start = round_page(*phys_start);
 		}
@@ -1439,7 +1433,7 @@ pmap_init(void)
 	struct simplelock	*lock;
 	int			bank;
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_INIT | CD_NORM)) == (CD_INIT | CD_NORM))
 		printf("pmap_init()\n");
 #endif
@@ -1454,7 +1448,7 @@ pmap_init(void)
 	s += PV_LOCK_TABLE_SIZE(npages);	/* pv_lock_table */
 	s += npages * sizeof(char);		/* pmap_modify_list */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_INIT | CD_FULL)) == (CD_INIT | CD_FULL)) {
 		printf("(pmap_init) nbr of managed pages = %x\n", npages);
 		printf("(pmap_init) size of pv_list = %x\n",
@@ -1515,7 +1509,7 @@ pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
 	register int		i;
 	vm_size_t		pvl_table_size;
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_INIT | CD_NORM)) == (CD_INIT | CD_NORM))
 		printf("(pmap_init) phys_start %x  phys_end %x\n", phys_start, phys_end);
 #endif
@@ -1529,7 +1523,7 @@ pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
 	s += PV_LOCK_TABLE_SIZE(npages);	/* pv_lock_table */
 	s += npages * sizeof(char);		/* pmap_modify_list */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_INIT | CD_FULL)) == (CD_INIT | CD_FULL)) {
 		printf("(pmap_init) nbr of managed pages = %x\n", npages);
 		printf("(pmap_init) size of pv_list = %x\n",
@@ -1704,7 +1698,7 @@ pmap_pinit(pmap_t p)
 	 * Allocate memory for *actual* segment table and *shadow* table.
 	 */
 	s = M88K_ROUND_PAGE(2 * SDT_SIZE);
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_CREAT | CD_NORM)) == (CD_CREAT | CD_NORM)) {
 		printf("(pmap_create :%x) need %d pages for sdt\n",
 		       curproc, atop(s));
@@ -1737,13 +1731,14 @@ pmap_pinit(pmap_t p)
 		panic("pmap_create: sdt_table not aligned on page boundary");
 	}
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_CREAT | CD_NORM)) == (CD_CREAT | CD_NORM)) {
 		printf("(pmap_create :%x) pmap=0x%x, sdt_vaddr=0x%x, sdt_paddr=0x%x\n",
 		       curproc, (unsigned)p, p->sdt_vaddr, p->sdt_paddr);
 	}
 #endif
 
+#ifdef MVME188
 	if (cputyp == CPU_188) {
 		/*
 		 * memory for page tables should be CACHE DISABLED on MVME188
@@ -1753,6 +1748,7 @@ pmap_pinit(pmap_t p)
 				(vm_offset_t)segdt+ (SDT_SIZE*2),
 				CACHE_INH);
 	}
+#endif
 	/*
 	 * Initialize SDT_ENTRIES.
 	 */
@@ -1783,7 +1779,7 @@ pmap_pinit(pmap_t p)
 	stats->resident_count = 0;
 	stats->wired_count = 0;
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	/* link into list of pmaps, just after kernel pmap */
 	p->next = kernel_pmap->next;
 	p->prev = kernel_pmap;
@@ -1825,7 +1821,7 @@ pmap_free_tables(pmap_t pmap)
 	pt_entry_t	*gdttbl; /*  ptr to first entry in a page table */
 	unsigned int	i,j;
 
-#if	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_FREE | CD_NORM)) == (CD_FREE | CD_NORM))
 		printf("(pmap_free_tables :%x) pmap %x\n", curproc, pmap);
 #endif
@@ -1844,7 +1840,7 @@ pmap_free_tables(pmap_t pmap)
 	for ( ; i < j; i++) {
 		sdt_va = PDT_TABLE_GROUP_VA_SPACE*i;
 		if ((gdttbl = pmap_pte(pmap, (vm_offset_t)sdt_va)) != PT_ENTRY_NULL) {
-#ifdef	DEBUG
+#ifdef DEBUG
 			if ((pmap_con_dbg & (CD_FREE | CD_FULL)) == (CD_FREE | CD_FULL))
 				printf("(pmap_free_tables :%x) free page table = 0x%x\n",
 				       curproc, gdttbl);
@@ -1853,7 +1849,7 @@ pmap_free_tables(pmap_t pmap)
 		}
 	} /* Segment Loop */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_FREE | CD_FULL)) == (CD_FREE | CD_FULL))
 		printf("(pmap_free_tables :%x) free segment table = 0x%x\n",
 		       curproc, sdttbl);
@@ -1873,14 +1869,13 @@ void
 pmap_release(register pmap_t p)
 {
 	pmap_free_tables(p);
-#ifdef	DBG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_DESTR | CD_NORM)) == (CD_DESTR | CD_NORM))
 		printf("(pmap_destroy :%x) ref_count = 0\n", curproc);
 	/* unlink from list of pmap structs */
 	p->prev->next = p->next;
 	p->next->prev = p->prev;
 #endif
-
 }
 
 /*
@@ -1913,7 +1908,7 @@ pmap_destroy(pmap_t p)
 	register int  c, s;
 
 	if (p == PMAP_NULL) {
-#ifdef	DEBUG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_DESTR | CD_NORM)) == (CD_DESTR | CD_NORM))
 			printf("(pmap_destroy :%x) pmap is NULL\n", curproc);
 #endif
@@ -2275,7 +2270,7 @@ pmap_remove_all(vm_offset_t phys)
 
 	if (!PMAP_MANAGED(phys)) {
 		/* not a managed page. */
-#ifdef	DEBUG
+#ifdef DEBUG
 		if (pmap_con_dbg & CD_RMAL)
 			printf("(pmap_remove_all :%x) phys addr 0x%x not a managed page\n", curproc, phys);
 #endif
@@ -2410,7 +2405,7 @@ pmap_copy_on_write(vm_offset_t phys)
 	int                  kflush;
 
 	if (!PMAP_MANAGED(phys)) {
-#ifdef	DEBUG
+#ifdef DEBUG
 		if (pmap_con_dbg & CD_CMOD)
 			printf("(pmap_copy_on_write :%x) phys addr 0x%x not managed \n", curproc, phys);
 #endif
@@ -2425,7 +2420,7 @@ copy_on_write_Retry:
 	LOCK_PVH(phys);
 	
 	if (pv_e->pmap  == PMAP_NULL) {
-#ifdef	DEBUG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_COW | CD_NORM)) == (CD_COW | CD_NORM))
 			printf("(pmap_copy_on_write :%x) phys addr 0x%x not mapped\n", curproc, phys);
 #endif
@@ -2575,7 +2570,7 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 				va += (1<<SDT_SHIFT) - PAGE_SIZE; /* no page table, skip to next seg entry */
 			else /* wrap around */
 				break;
-#ifdef	DEBUG
+#ifdef DEBUG
 			if ((pmap_con_dbg & (CD_PROT | CD_FULL)) == (CD_PROT | CD_FULL))
 				printf("(pmap_protect :%x) no page table :: skip to 0x%x\n", curproc, va + PAGE_SIZE);
 #endif
@@ -2583,7 +2578,7 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 		}
 
 		if (!PDT_VALID(pte)) {
-#ifdef	DEBUG
+#ifdef DEBUG
 			if ((pmap_con_dbg & (CD_PROT | CD_FULL)) == (CD_PROT | CD_FULL))
 				printf("(pmap_protect :%x) pte invalid pte @ 0x%x\n", curproc, pte);
 #endif
@@ -2669,7 +2664,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 		panic("pmap_expand: pmap is NULL");
 	}
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_EXP | CD_NORM)) == (CD_EXP | CD_NORM))
 		printf ("(pmap_expand :%x) map %x v %x\n", curproc, map, v);
 #endif
@@ -2684,7 +2679,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 		if (pmap_expand_kmap(v, VM_PROT_READ|VM_PROT_WRITE) == PT_ENTRY_NULL)
 			panic ("pmap_expand: Cannot allocate kernel pte table");
 		PMAP_UNLOCK(map, spl);
-#ifdef	DEBUG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_EXP | CD_FULL)) == (CD_EXP | CD_FULL))
 			printf("(pmap_expand :%x) kernel_pmap\n", curproc);
 #endif
@@ -2699,12 +2694,14 @@ pmap_expand(pmap_t map, vm_offset_t v)
 #endif
 	pdt_paddr = pmap_extract(kernel_pmap, pdt_vaddr);
 
+#ifdef MVME188
 	if (cputyp == CPU_188) {
 		/*
 		 * the page for page tables should be CACHE DISABLED on MVME188
 		 */
 		pmap_cache_ctrl(kernel_pmap, pdt_vaddr, pdt_vaddr+PAGE_SIZE, CACHE_INH);
 	}
+#endif
 
 	PMAP_LOCK(map, spl);
 
@@ -2721,7 +2718,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 		kmem_free (kernel_map, pdt_vaddr, PAGE_SIZE);
 #endif
 
-#ifdef	DEBUG
+#ifdef DEBUG
 		if (pmap_con_dbg & CD_EXP)
 			printf("(pmap_expand :%x) table has already allocated\n", curproc);
 #endif
@@ -2859,7 +2856,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 	 *	Range check no longer use, since we use whole address space
 	 */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
 		if (pmap == kernel_pmap)
 			printf ("(pmap_enter :%x) pmap kernel va %x pa %x\n", curproc, va, pa);
@@ -2867,7 +2864,6 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 			printf ("(pmap_enter :%x) pmap %x  va %x pa %x\n", curproc, pmap, va, pa);
 	}
 #endif
-
 	ap = m88k_protection (pmap, prot);
 
 	/*
@@ -2957,7 +2953,7 @@ Retry:
 			 *	Invalidate the translation buffer,
 			 *	then remove the mapping.
 			 */
-#ifdef	DEBUG
+#ifdef DEBUG
 			if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
 				if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
 					printf("vaddr1 0x%x vaddr2 0x%x va 0x%x pa 0x%x managed %x\n", 
@@ -2976,7 +2972,7 @@ Retry:
 		}
 
 		if (PMAP_MANAGED(pa)) {
-#ifdef	DEBUG
+#ifdef DEBUG
 			if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
 				if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
 					printf("va 0x%x and managed pa 0x%x\n", va, pa);
@@ -3000,7 +2996,7 @@ Retry:
 				pvl->next = PV_ENTRY_NULL;
 
 			} else {
-#ifdef	DEBUG
+#ifdef DEBUG
 				/*
 				 * check that this mapping is not already there
 				 */
@@ -3244,7 +3240,7 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vm_offset_t dst_addr,
 	  vm_size_t len, vm_offset_t src_addr)
 {
-#ifdef        lint
+#ifdef lint
 	dst_pmap++; src_pmap++; dst_addr++; len++; src_addr++;
 #endif
 
@@ -3276,7 +3272,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vm_offset_t dst_addr,
 void
 pmap_update(void)
 {
-#ifdef	DBG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_UPD | CD_FULL)) == (CD_UPD | CD_FULL))
 		printf("(pmap_update :%x) Called \n", curproc);
 #endif
@@ -3356,7 +3352,7 @@ pmap_collect(pmap_t pmap)
 
 	CHECK_PMAP_CONSISTENCY ("pmap_collect");
 
-#ifdef	DBG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_COL | CD_NORM)) == (CD_COL | CD_NORM))
 		printf ("(pmap_collect :%x) pmap %x\n", curproc, pmap);
 #endif
@@ -3429,7 +3425,7 @@ pmap_collect(pmap_t pmap)
 
 	PMAP_UNLOCK(pmap, spl);
 
-#ifdef	DBG
+#ifdef DEBUG
 	if ((pmap_con_dbg & (CD_COL | CD_NORM)) == (CD_COL | CD_NORM))
 		printf  ("(pmap_collect :%x) done \n", curproc);
 #endif
@@ -3636,7 +3632,6 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 
 } /* pmap_copy_page() */
 
-
 /*
  *	copy_to_phys
  *
@@ -3790,7 +3785,7 @@ void
 pmap_pageable(pmap_t pmap, vm_offset_t start, vm_offset_t end,
 	      boolean_t pageable)
 {
-#ifdef	lint
+#ifdef lint
 	pmap++; start++; end++; pageable++;
 #endif
 } /* pmap_pagealbe() */
@@ -3905,7 +3900,7 @@ pmap_clear_modify(vm_offset_t phys)
 	int        kflush;
 
 	if (!PMAP_MANAGED(phys)) {
-#ifdef	DBG
+#ifdef DEBUG
 		if (pmap_con_dbg & CD_CMOD)
 			printf("(pmap_clear_modify :%x) phys addr 0x%x not managed \n", curproc, phys);
 #endif
@@ -3923,7 +3918,7 @@ clear_modify_Retry:
 	SET_ATTRIB(phys, 0);
 
 	if (pvl->pmap == PMAP_NULL) {
-#ifdef	DEBUG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_CMOD | CD_NORM)) == (CD_CMOD | CD_NORM))
 			printf("(pmap_clear_modify :%x) phys addr 0x%x not mapped\n", curproc, phys);
 #endif
@@ -4020,7 +4015,7 @@ pmap_is_modified(vm_offset_t phys)
 	boolean_t   modified_flag;
 
 	if (!PMAP_MANAGED(phys)) {
-#ifdef	DBG
+#ifdef DEBUG
 		if (pmap_con_dbg & CD_IMOD)
 			printf("(pmap_is_modified :%x) phys addr 0x%x not managed\n", curproc, phys);
 #endif
@@ -4036,7 +4031,7 @@ pmap_is_modified(vm_offset_t phys)
 	if ((boolean_t) PA_TO_ATTRIB(phys)) {
 		/* we've already cached a modify flag for this page,
 		   no use looking further... */
-#ifdef	DBG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_IMOD | CD_NORM)) == (CD_IMOD | CD_NORM))
 			printf("(pmap_is_modified :%x) already cached a modify flag for this page\n", curproc);
 #endif
@@ -4049,7 +4044,7 @@ pmap_is_modified(vm_offset_t phys)
 		/* unmapped page - get info from page_modified array
 		   maintained by pmap_remove_range/ pmap_remove_all */
 		modified_flag = (boolean_t) PA_TO_ATTRIB(phys);
-#ifdef	DBG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_IMOD | CD_NORM)) == (CD_IMOD | CD_NORM))
 			printf("(pmap_is_modified :%x) phys addr 0x%x not mapped\n", curproc, phys);
 #endif
@@ -4074,7 +4069,7 @@ pmap_is_modified(vm_offset_t phys)
 		for (i = ptes_per_vm_page; i > 0; i--) {
 			if (ptep->modified) {
 				simple_unlock(&pvep->pmap->lock);
-#ifdef	DBG
+#ifdef DEBUG
 				if ((pmap_con_dbg & (CD_IMOD | CD_FULL)) == (CD_IMOD | CD_FULL))
 					printf("(pmap_is_modified :%x) modified page pte@0x%x\n", curproc, (unsigned)ptep);
 #endif
@@ -4141,7 +4136,7 @@ pmap_clear_reference(vm_offset_t phys)
 	int        kflush;
 
 	if (!PMAP_MANAGED(phys)) {
-#ifdef	DBG
+#ifdef DEBUG
 		if (pmap_con_dbg & CD_CREF) {
 			printf("(pmap_clear_reference :%x) phys addr 0x%x not managed\n", curproc,phys);
 		}
@@ -4158,7 +4153,7 @@ pmap_clear_reference(vm_offset_t phys)
 
 
 	if (pvl->pmap == PMAP_NULL) {
-#ifdef	DBG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_CREF | CD_NORM)) == (CD_CREF | CD_NORM))
 			printf("(pmap_clear_reference :%x) phys addr 0x%x not mapped\n", curproc,phys);
 #endif
@@ -4358,7 +4353,7 @@ pmap_verify_free(vm_offset_t phys)
 boolean_t
 pmap_valid_page(vm_offset_t p)
 {
-#ifdef	lint
+#ifdef lint
 	p++;
 #endif
 	return (TRUE);
@@ -4454,13 +4449,13 @@ pagemove(vm_offset_t from, vm_offset_t to, int size)
 			panic("pagemove: Distination pte already valid");
 		}
 
-   #ifdef DEBUG
+#ifdef DEBUG
 		if ((pmap_con_dbg & (CD_PGMV | CD_NORM)) == (CD_PGMV | CD_NORM))
 			printf("(pagemove :%x) from 0x%x to 0x%x\n", curproc, from, to);
 		if ((pmap_con_dbg & (CD_PGMV | CD_FULL)) == (CD_PGMV | CD_FULL))
 			printf("(pagemove :%x) srcpte @ 0x%x = %x dstpte @ 0x%x = %x\n", curproc, (unsigned)srcpte, *(unsigned *)srcpte, (unsigned)dstpte, *(unsigned *)dstpte);
 
-   #endif /* DEBUG */
+#endif /* DEBUG */
 
 		/*
 		 * Update pv_list
@@ -4662,7 +4657,7 @@ pmap_cache_flush(pmap_t pmap, vm_offset_t virt, int bytes, int mode)
 	PMAP_UNLOCK(pmap, spl);
 } /* pmap_cache_flush */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 /*
  *  DEBUGGING ROUTINES - check_pv_list and check_pmp_consistency are used
  *		only for debugging.  They are invoked only
@@ -4936,7 +4931,6 @@ check_pmap_consistency(char *who)
 	int bank;
 	unsigned      npages;
 #endif 
-
 	if ((pmap_con_dbg & (CD_CHKPM | CD_NORM)) == (CD_CHKPM | CD_NORM))
 		printf("check_pmap_consistency (%s :%x) start.\n", who, curproc);
 
@@ -5061,7 +5055,6 @@ pmap_print(pmap_t pmap)
 	       pmap->stats.loopups,
 	       pmap->stats.faults);
 #endif
-
 	sdtp = (sdt_entry_t *) pmap->sdt_vaddr;	 /* addr of physical table */
 	sdtv = sdtp + SDT_ENTRIES;	/* shadow table with virt address */
 	if (sdtp == (sdt_entry_t *)0)
@@ -5178,7 +5171,7 @@ pmap_print_trace (pmap_t pmap, vm_offset_t va, boolean_t long_format)
 	/* get addrs of page (pte) table (no shadow table) */
 
 	sdtp = ((sdt_entry_t *)pmap->sdt_vaddr) + SDTIDX(va);
-#ifdef DBG
+#ifdef DEBUG
 	printf("*** DEBUG (sdtp) ");
 	PRINT_SDT(sdtp);
 #endif
@@ -5502,4 +5495,3 @@ pmap_range_remove(pmap_range_t *ranges, vm_offset_t start, vm_offset_t end)
 		range->start = end;
 }
 #endif /* FUTURE_MAYBE */
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.4 1998/12/15 05:52:29 smurph Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.5 2001/02/12 08:16:22 smurph Exp $ */
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
@@ -77,7 +77,6 @@ char bugtty_ibuffer[BUGBUF+1];
 volatile char *pinchar = bugtty_ibuffer;
 char bug_obuffer[BUGBUF+1];
 
-#define bugtty_tty bugttytty
 struct tty *bugtty_tty[NBUGTTY];
 int needprom = 1;
 /*
@@ -125,10 +124,22 @@ void bugttyoutput __P((struct tty *tp));
 int bugttydefaultrate = TTYDEF_SPEED;
 int bugttyswflags;
 
+struct tty * 
+bugttytty(dev)
+dev_t dev;
+{
+	int unit;
+	unit = BUGTTYUNIT(dev);
+	if (unit >= 4) {
+		return (NULL);
+	}
+	return bugtty_tty[unit];
+}
+
 int
 bugttymctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
+dev_t dev;
+int bits, how;
 {
 	static int settings = TIOCM_DTR | TIOCM_RTS |
 	    TIOCM_CTS | TIOCM_CD | TIOCM_DSR;
@@ -165,9 +176,9 @@ bugttymctl(dev, bits, how)
 
 int
 bugttyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	int s, unit = BUGTTYUNIT(dev);
 	struct tty *tp;
@@ -252,7 +263,7 @@ bugttyparam()
 
 void
 bugttyoutput(tp)
-	struct tty *tp;
+struct tty *tp;
 {
 	int cc, s, unit, cnt ;
 
@@ -274,9 +285,9 @@ bugttyoutput(tp)
 
 int
 bugttyclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	int unit = BUGTTYUNIT(dev);
 	struct tty *tp = bugtty_tty[unit];
@@ -292,9 +303,9 @@ bugttyclose(dev, flag, mode, p)
 
 int
 bugttyread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+dev_t dev;
+struct uio *uio;
+int flag;
 {
 	struct tty *tp;
 
@@ -308,12 +319,12 @@ bugttyread(dev, uio, flag)
 bugtty_chkinput()
 {
 	struct tty *tp;
-
+	int rc = 0;
 	tp = bugtty_tty[0]; /* Kinda ugly hack */
 	if (tp == NULL )
 		return;
 
-	if (buginstat()) {
+	if (rc = buginstat()) {
 		while (buginstat()) {
 			u_char c = buginchr() & 0xff;
 			(*linesw[tp->t_line].l_rint)(c, tp);
@@ -327,9 +338,9 @@ bugtty_chkinput()
 
 int
 bugttywrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+dev_t dev;
+struct uio *uio;
+int flag;
 {
 #if 0
 	/* bypass tty output routines. */
@@ -356,11 +367,11 @@ bugttywrite(dev, uio, flag)
 
 int
 bugttyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+dev_t dev;
+int cmd;
+caddr_t data;
+int flag;
+struct proc *p;
 {
 	int unit = BUGTTYUNIT(dev);
 	struct tty *tp = bugtty_tty[unit];
@@ -430,8 +441,8 @@ bugttyioctl(dev, cmd, data, flag, p)
 
 int
 bugttystop(tp, flag)
-	struct tty *tp;
-	int flag;
+struct tty *tp;
+int flag;
 {
 	int s;
 
@@ -449,7 +460,7 @@ bugttystop(tp, flag)
  */
 int
 bugttycnprobe(cp)
-	struct consdev *cp;
+struct consdev *cp;
 {
 	int maj;
 	int needprom = 1;
@@ -486,22 +497,23 @@ bugttycnprobe(cp)
 
 int
 bugttycninit(cp)
-	struct consdev *cp;
+struct consdev *cp;
 {
-    /* Nothing to do */
+	/* Nothing to do */
+	return 0;
 }
 
 int
 bugttycngetc(dev)
-	dev_t dev;
+dev_t dev;
 {
 	return (buginchr());
 }
 
 int
 bugttycnputc(dev, c)
-	dev_t dev;
-	char c;
+dev_t dev;
+char c;
 {
 	int s;
 

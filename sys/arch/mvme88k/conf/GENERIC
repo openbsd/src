@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2001/02/01 03:38:11 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.14 2001/02/12 08:16:20 smurph Exp $
 
 machine		mvme88k 
 
@@ -7,7 +7,7 @@ include "../../../conf/GENERIC"
 option		"M88000"	# support for 88K
 option		MVME187		# support for 187
 option		MVME188		# support for 188
-option		MVME197		# support for 197
+#option		MVME197		# support for 197
 option		UVM		# use the UVM virtual memory system
 option		FFS_SOFTUPDATES	# Soft Updates
 option		"NCPUS=1"	# number of CPUs supported (max 4)

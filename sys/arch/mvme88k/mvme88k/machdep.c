@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.25 2001/02/01 03:38:21 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.26 2001/02/12 08:16:24 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -151,7 +151,7 @@ volatile unsigned int *int_mask_reg[MAX_CPUS] = {
 #if defined(MVME187) || defined(MVME197)
 u_char *int_mask_level = (u_char *)INT_MASK_LEVEL;
 u_char *int_pri_level = (u_char *)INT_PRI_LEVEL;
-#endif /* MVME188 */
+#endif /* defined(MVME187) || defined(MVME197) */
 
 u_char *iackaddr;
 volatile u_char *pcc2intr_mask;
@@ -352,7 +352,8 @@ size_memory(void)
 		*look = save;
 	}
 	if ((look > (unsigned int *)0x01FFF000) && (cputyp == CPU_188)) {
-		look = (unsigned int *)0x01FFF000; /* temp hack to fake 32Meg on MVME188 */
+                /* temp hack to fake 32Meg on MVME188 */
+		look = (unsigned int *)0x01FFF000; 
 	}
 	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
 	return (trunc_page((unsigned)look));
@@ -523,25 +524,6 @@ cpu_startup()
 		panic("bad UADDR");
 	}
 	
-	/*
-	 * Grab the BUGROM space that we hardwired in pmap_bootstrap
-	 */
-	bugromva = BUGROM_START;
-
-#if defined(UVM)
-	uvm_map(kernel_map, (vaddr_t *)&bugromva, BUGROM_SIZE,
-		NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
-						     UVM_PROT_NONE,
-						     UVM_INH_NONE,
-						     UVM_ADV_NORMAL, 0));
-#else
-	vm_map_find(kernel_map, vm_object_allocate(BUGROM_SIZE), 0,
-		    (vm_offset_t *)&bugromva, BUGROM_SIZE, TRUE);
-#endif
-	if (bugromva != BUGROM_START) {
-		printf("bugromva %x: BUGROM not free\n", bugromva);
-		panic("bad bugromva");
-	}
 	/* 
 	 * Grab machine dependant memory spaces
 	 */
@@ -554,6 +536,26 @@ cpu_startup()
 #endif 
 
 #if defined(MVME187) || defined(MVME197)
+		/*
+		 * Grab the BUGROM space that we hardwired in pmap_bootstrap
+		 */
+		bugromva = BUGROM_START;
+
+#if defined(UVM)
+		uvm_map(kernel_map, (vaddr_t *)&bugromva, BUGROM_SIZE,
+			NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+							     UVM_PROT_NONE,
+							     UVM_INH_NONE,
+							     UVM_ADV_NORMAL, 0));
+#else
+		vm_map_find(kernel_map, vm_object_allocate(BUGROM_SIZE), 0,
+			    (vm_offset_t *)&bugromva, BUGROM_SIZE, TRUE);
+#endif
+		if (bugromva != BUGROM_START) {
+			printf("bugromva %x: BUGROM not free\n", bugromva);
+			panic("bad bugromva");
+		}
+		
 		/*
 		 * Grab the SRAM space that we hardwired in pmap_bootstrap
 		 */
@@ -1578,15 +1580,13 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		return;
 	}
 
-	/* We want to service all interrupts marked in the IST register  */
-	/* They are all valid because the mask would have prevented them */
-	/* from being generated otherwise.  We will service them in order of       */
-	/* priority. */
+	/* 
+	 * We want to service all interrupts marked in the IST register
+	 * They are all valid because the mask would have prevented them
+	 * from being generated otherwise.  We will service them in order of
+	 * priority. 
+	 */
 	do {
-		/*
-		printf("interrupt: mask = 0x%08x spl = %d imr = 0x%x\n", ISR_GET_CURRENT_MASK(cpu),
-				  old_spl, *int_mask_reg[cpu]);
-		*/
 		level = safe_level(cur_mask, old_spl);
 
 		if (old_spl >= level) {
@@ -1635,6 +1635,10 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 				printf("unknown onboard interrupt: mask = 0x%b\n", 1 << intbit, IST_STRING);
 				panic("m188_ext_int");
 			}
+			
+			
+			#define M88K_OBIO1_IRQ	8
+
 		} else if (HW_FAILURE_MASK & (1 << intbit)) {
 			vec = obio_vec[intbit];
 			if (vec == 0) {
@@ -1665,9 +1669,13 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			      vec, level, ivec[level]);
 		}
 
-		if ((intr = intr_handlers[vec]) == 0)
+		if ((intr = intr_handlers[vec]) == 0){
+			/* increment intr counter */
+			intrcnt[M88K_SPUR_IRQ]++; 
 			printf("Spurious interrupt: level = %d vec = 0x%x, intbit = %d mask = 0x%b\n",
 			       level, vec, intbit, 1 << intbit, IST_STRING);
+
+		}
 		/*
 		 * Walk through all interrupt handlers in the chain for the
 		 * given vector, calling each handler in turn, till some handler
@@ -1678,8 +1686,11 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 				ret = (*intr->ih_fn)(intr->ih_arg, (void *)eframe);
 			else
 				ret = (*intr->ih_fn)(intr->ih_arg);
-			if (ret)
+			if (ret){
+				/* increment intr counter */
+				intrcnt[level]++; 
 				break;
+			}
 		}
 		if (ret == 0) {
 			printf("Unclaimed interrupt: level = %d vec = 0x%x, intbit = %d mask = 0x%b\n",
@@ -1785,6 +1796,8 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	enable_interrupt();
 
 	if ((intr = intr_handlers[vec]) == 0) {
+		/* increment intr counter */
+		intrcnt[M88K_SPUR_IRQ]++; 
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	}
@@ -1804,8 +1817,11 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 			ret = (*intr->ih_fn)(intr->ih_arg, (void *)eframe);
 		else
 			ret = (*intr->ih_fn)(intr->ih_arg);
-		if (ret)
+		if (ret){
+			/* increment intr counter */
+			intrcnt[level]++; 
 			break;
+		}
 	}
 
 	if (ret == 0) {
@@ -2312,7 +2328,6 @@ mvme_bootstrap(void)
 #else 
 	vm_set_page_size();
 #endif 
-
 	first_addr = m88k_round_page(first_addr);
 
 	if (!no_symbols) boothowto |= RB_KDB;
