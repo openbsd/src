@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.30 1998/04/03 11:27:58 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.31 1998/04/30 23:34:12 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.30 1998/04/03 11:27:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.31 1998/04/30 23:34:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,9 +155,9 @@ int interval = 1;		/* interval between packets */
 /* timing */
 int timing;			/* flag to do timing */
 int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
-quad_t tmin = 999999999;	/* minimum round trip time in microsec */
-quad_t tmax = 0;		/* maximum round trip time in microsec */
-quad_t tsum = 0;		/* sum of all times in microsec, for doing average */
+quad_t tmin = 999999999;	/* minimum round trip time in millisec */
+quad_t tmax = 0;		/* maximum round trip time in millisec */
+quad_t tsum = 0;		/* sum of all times in millisec, for doing average */
 
 #ifdef SIGINFO
 int reset_kerninfo;
@@ -523,7 +523,7 @@ catcher()
 		alarm((u_int)interval);
 	else {
 		if (nreceived) {
-			waittime = 2 * tmax / 1000;
+			waittime = 2 * tmax / 1000000;
 			if (!waittime)
 				waittime = 1;
 		} else
@@ -873,16 +873,17 @@ summary(header)
 	(void)printf("%ld packets received, ", nreceived);
 	if (nrepeats)
 		(void)printf("+%ld duplicates, ", nrepeats);
-	if (ntransmitted)
+	if (ntransmitted) {
 		if (nreceived > ntransmitted)
 			(void)printf("-- somebody's printing up packets!");
 		else
 			(void)printf("%d%% packet loss",
 			    (int) (((ntransmitted - nreceived) * 100) /
 			    ntransmitted));
+	}
 	(void)putchar('\n');
 	if (nreceived && timing) {
-		/* Only display average to microseconds */
+		/* Only display average to milliseconds */
 		i = tsum / (nreceived + nrepeats);
 		(void)printf("round-trip min/avg/max = %d.%03d/%d.%03d/%d.%03d ms\n",
 		    (int)(tmin / 1000), (int)(tmin % 1000),
