@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.8 1999/08/05 00:10:31 niklas Exp $     */
+/*      $OpenBSD: pciide.c,v 1.9 1999/09/01 04:32:14 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -615,21 +615,22 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	*ctlsizep = PCIIDE_COMPAT_CTL_SIZE;
 
 	wdc_cp->cmd_iot = pa->pa_iot;
+	wdc_cp->ctl_iot = pa->pa_iot;
+
 	if (bus_space_map(wdc_cp->cmd_iot, PCIIDE_COMPAT_CMD_BASE(compatchan),
 	    PCIIDE_COMPAT_CMD_SIZE, 0, &wdc_cp->cmd_ioh) != 0) {
 		printf("%s: couldn't map %s cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		rv = 0;
+		return (0);
 	}
 
-	wdc_cp->ctl_iot = pa->pa_iot;
 	if (bus_space_map(wdc_cp->ctl_iot, PCIIDE_COMPAT_CTL_BASE(compatchan),
 	    PCIIDE_COMPAT_CTL_SIZE, 0, &wdc_cp->ctl_ioh) != 0) {
 		printf("%s: couldn't map %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh,
 		    PCIIDE_COMPAT_CMD_SIZE);
-		rv = 0;
+		return (0);
 	}
 
 	return (rv);
