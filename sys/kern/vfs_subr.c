@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.107 2004/12/31 12:13:53 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.108 2004/12/31 15:28:40 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
 #define	bufinsvn(bp, dp)	LIST_INSERT_HEAD(dp, bp, b_vnbufs)
 #define	bufremvn(bp) {							\
 	LIST_REMOVE(bp, b_vnbufs);					\
-	(bp)->b_vnbufs.le_next = NOLIST;				\
+	LIST_NEXT(bp, b_vnbufs) = NOLIST;				\
 }
 
 struct freelst vnode_hold_list;	/* list of vnodes referencing buffers */
@@ -2033,7 +2033,7 @@ loop:
 			break;
 
 		for (bp = blist; bp; bp = nbp) {
-			nbp = bp->b_vnbufs.le_next;
+			nbp = LIST_NEXT(bp, b_vnbufs);
 			if (flags & V_SAVEMETA && bp->b_lblkno < 0)
 				continue;
 			if (bp->b_flags & B_BUSY) {
@@ -2157,7 +2157,7 @@ brelvp(bp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	if (bp->b_vnbufs.le_next != NOLIST)
+	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 	if ((vp->v_bioflag & VBIOONSYNCLIST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
@@ -2237,8 +2237,9 @@ reassignbuf(bp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	if (bp->b_vnbufs.le_next != NOLIST)
+	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
+
 	/*
 	 * If dirty, put on list of dirty buffers;
 	 * otherwise insert onto list of clean buffers.
