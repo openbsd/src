@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.7 2000/04/26 21:25:53 jakob Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.8 2002/07/09 17:03:00 provos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/optimize.c,v 1.7 2000/04/26 21:25:53 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/optimize.c,v 1.8 2002/07/09 17:03:00 provos Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -1811,17 +1811,24 @@ opt_init(root)
 	unMarkAll();
 	n = count_blocks(root);
 	blocks = (struct block **)malloc(n * sizeof(*blocks));
+	if (blocks == NULL)
+		bpf_error("malloc");
+	
 	unMarkAll();
 	n_blocks = 0;
 	number_blks_r(root);
 
 	n_edges = 2 * n_blocks;
 	edges = (struct edge **)malloc(n_edges * sizeof(*edges));
+	if (edges == NULL)
+		bpf_error("malloc");
 
 	/*
 	 * The number of levels is bounded by the number of nodes.
 	 */
 	levels = (struct block **)malloc(n_blocks * sizeof(*levels));
+	if (levels == NULL)
+		bpf_error("malloc");
 
 	edgewords = n_edges / (8 * sizeof(bpf_u_int32)) + 1;
 	nodewords = n_blocks / (8 * sizeof(bpf_u_int32)) + 1;
@@ -1829,6 +1836,9 @@ opt_init(root)
 	/* XXX */
 	space = (bpf_u_int32 *)malloc(2 * n_blocks * nodewords * sizeof(*space)
 				 + n_edges * edgewords * sizeof(*space));
+	if (space == NULL)
+		bpf_error("malloc");
+	
 	p = space;
 	all_dom_sets = p;
 	for (i = 0; i < n; ++i) {
@@ -1866,6 +1876,8 @@ opt_init(root)
 	maxval = 3 * max_stmts;
 	vmap = (struct vmapinfo *)malloc(maxval * sizeof(*vmap));
 	vnode_base = (struct valnode *)malloc(maxval * sizeof(*vmap));
+	if (vmap == NULL || vnode_base == NULL)
+		bpf_error("malloc");
 }
 
 /*
@@ -2062,6 +2074,9 @@ icode_to_fcode(root, lenp)
 	    n = *lenp = count_stmts(root);
     
 	    fp = (struct bpf_insn *)malloc(sizeof(*fp) * n);
+	    if (fp == NULL)
+		    bpf_error("malloc");
+
 	    memset((char *)fp, 0, sizeof(*fp) * n);
 	    fstart = fp;
 	    ftail = fp + n;

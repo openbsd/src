@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.16 2002/03/23 01:33:16 frantzen Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.17 2002/07/09 17:03:00 provos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.16 2002/03/23 01:33:16 frantzen Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.17 2002/07/09 17:03:00 provos Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -179,6 +179,9 @@ newchunk(n)
 			bpf_error("out of memory");
 		size = CHUNK0SIZE << k;
 		cp->m = (void *)malloc(size);
+		if (cp->m == NULL)
+			bpf_error("out of memory");
+		
 		memset((char *)cp->m, 0, size);
 		cp->n_left = size;
 		if (n > size)
