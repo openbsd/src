@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.31 2003/08/21 13:11:35 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.32 2003/09/19 17:23:27 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -5288,9 +5288,9 @@ static void standalone_main(int argc, char **argv)
 		is_chrooted = 1;
 		setproctitle("parent [chroot %s]", ap_server_root);
 
-		if (setgroups(1, &ap_group_id) || setegid(ap_group_id) ||
-		    setgid(ap_group_id) || seteuid(ap_user_id) || 
-		    setuid(ap_user_id)) {
+		if (initgroups(ap_user_name, ap_group_id) ||
+		    setegid(ap_group_id) || setgid(ap_group_id) ||
+		    seteuid(ap_user_id) || setuid(ap_user_id)) {
 			ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 			    "can't drop priviliges!");
 			exit(1);
