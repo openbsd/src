@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 1999/09/03 18:01:58 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 1999/09/07 03:42:48 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -99,6 +99,10 @@
 #include <sparc/dev/power.h>
 #include "power.h"
 #include "scf.h"
+#include "tctrl.h"
+#if NTCTRL > 0
+#include <sparc/dev/tctrlvar.h>
+#endif
 #endif
 
 #include "auxreg.h"
@@ -829,11 +833,17 @@ boot(howto)
 		doshutdownhooks();
 #if defined(SUN4M)
 		if (howto & RB_POWERDOWN) {
-#if NPOWER > 0
+#if NPOWER > 0 || NTCTRL >0
 			printf("attempting to power down...\n");
+#endif
+#if NPOWER > 0
 			powerdown();
-#else
-			printf("WARNING: power not configured!\n");
+#endif
+#if NTCTRL > 0
+			tadpole_powerdown();
+#endif
+#if NPOWER > 0 || NTCTRL >0
+			printf("WARNING: powerdown failed!\n");
 #endif
 		}
 #endif
