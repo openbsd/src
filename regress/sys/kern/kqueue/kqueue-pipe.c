@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pipe.c,v 1.2 2002/01/07 00:11:07 provos Exp $	*/
+/*	$OpenBSD: kqueue-pipe.c,v 1.3 2002/02/27 17:11:51 art Exp $	*/
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <fcntl.h>
 
 int
-main(int argc, char **argv)
+do_pipe(void)
 {
         int kq;
         int n;
@@ -46,19 +46,19 @@ main(int argc, char **argv)
         char buf[8000];
 
         if (pipe(fd) == -1)
-                exit(1);
+                return (1);
         if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1)
-                exit(1);
+                return (1);
 
 	if ((kq = kqueue()) == -1)
-                exit(1);
+                return (1);
 
         ev.ident = fd[1];
         ev.filter = EVFILT_WRITE;
         ev.flags = EV_ADD | EV_ENABLE;
         n = kevent(kq, &ev, 1, NULL, 0, NULL);
         if (n == -1)
-                exit(1);
+                return (1);
         
         while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
                 ;
@@ -67,7 +67,7 @@ main(int argc, char **argv)
         ts.tv_nsec = 0;
         n = kevent(kq, NULL, 0, &ev, 1, &ts);
         if (n != 0)
-                exit(1);
+                return (1);
 
 	read(fd[0], buf, sizeof(buf));
 
@@ -75,7 +75,7 @@ main(int argc, char **argv)
         ts.tv_nsec = 0;
         n = kevent(kq, NULL, 0, &ev, 1, &ts);
         if (n == -1 || n == 0)
-                exit(1);
+                return (1);
 
-        exit(0);
+        return (0);
 }
