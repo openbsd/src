@@ -81,3 +81,10 @@ subdirectory of the OpenBSD 2.3 distribution tree, and are as follows:
 		manual pages.
 		[ 947K gzipped, 3.5M uncompressed ]
 
+	xbase23 This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.
+
+	xfont23 This set includes all of the X fonts.
+
+	xserv23 This set includes all of the X servers.
+

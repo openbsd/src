@@ -9,8 +9,6 @@ out as follows:
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
-		X11/		The X window system for OpenBSD/amiga 2.3
-
 		bsd		A generic OpenBSD kernel used both for
 				miniroot installation and as the first
 				"real" kernel your OpenBSD installation
@@ -100,4 +98,11 @@ and are as follows:
 		including groff, all related programs, and their
 		manual pages.
 		[ 945K gzipped, 3.5M uncompressed ]
+
+	xbase23 This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.
+
+	xfont23 This set includes all of the X fonts.
+
+	xserv23 This set includes all of the X servers.
 

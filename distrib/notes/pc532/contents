@@ -10,8 +10,6 @@ the files as follows:
 	MD5			usable for verification of the correctness
 				of downloaded files.
 
-	X11/			The X window system for OpenBSD/pc532 2.3
-
 	floppy23.fs		The pc532 boot and installation floppy;
 				see below.
 
@@ -81,6 +79,12 @@ and are as follows:
 		manual pages.
 		[ 0.8M gzipped ]
 
+	xbase23 This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.
+
+	xfont23 This set includes all of the X fonts.
+
+	xserv23 This set includes all of the X servers.
 
 The initial installation process on a pc532 without OpenBSD/pc532
 is supported by the following files:

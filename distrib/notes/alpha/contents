@@ -9,9 +9,6 @@ out as follows:
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
-		X11/		The X window system for OpenBSD/alpha 2.3
-
-
 		floppy23.fs	The alpha boot and installation
 				floppy; see below.
 
@@ -92,4 +89,11 @@ and are as follows:
 		including groff, all related programs, and their
 		manual pages.
 		[ 1.7M gzipped, 5.6M uncompressed ]
+
+	xbase23 This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.
+
+	xfont23 This set includes all of the X fonts.
+
+	xserv23 This set includes all of the X servers.
 

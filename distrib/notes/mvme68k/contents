@@ -73,3 +73,10 @@ and are as follows:
 		manual pages.
 		[ 946K gzipped, 3.5M uncompressed ]
 
+	xbase23 This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.
+
+	xfont23 This set includes all of the X fonts.
+
+	xserv23 This set includes all of the X servers.
+

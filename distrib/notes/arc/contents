@@ -9,8 +9,6 @@ out as follows:
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
-		X11/		The X window system for OpenBSD/arc 2.3
-
 		*.gz		ARC binary distribution sets;
 				see below.
 
@@ -82,4 +80,11 @@ and are as follows:
 		including groff, all related programs, and their
 		manual pages.
 		[ 958K gzipped, 4.0M uncompressed ]
+
+	xbase23 This set includes the base X distribution.  This includes
+		programs, headers, libraries, configuration files.
+
+	xfont23 This set includes all of the X fonts.
+
+	xserv23 This set includes all of the X servers.
 
