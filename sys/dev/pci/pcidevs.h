@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.434 2001/08/23 16:16:43 csapuntz Exp 
+ *		OpenBSD: pcidevs,v 1.435 2001/08/26 18:15:28 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1781,6 +1781,15 @@
 /* Sun */
 #define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
 #define	PCI_PRODUCT_SUN_HME	0x1001		/* HME */
+#define	PCI_PRODUCT_SUN_EBUSIII	0x1100		/* PCIO Ebus2 (US III) */
+#define	PCI_PRODUCT_SUN_ERINETWORK	0x1101		/* ERI Ethernet */
+#define	PCI_PRODUCT_SUN_FIREWIRE	0x1102		/* FireWire */
+#define	PCI_PRODUCT_SUN_USB	0x1103		/* USB */
+#define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI-PCI */
+#define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* Psycho PCI */
+#define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
+#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
+#define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
 
 /* Sundance products */
 #define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */

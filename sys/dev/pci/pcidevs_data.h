@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.434 2001/08/23 16:16:43 csapuntz Exp 
+ *		OpenBSD: pcidevs,v 1.435 2001/08/26 18:15:28 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3701,6 +3701,42 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HME,
 	    "HME",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII,
+	    "PCIO Ebus2 (US III)",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK,
+	    "ERI Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_FIREWIRE,
+	    "FireWire",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_USB,
+	    "USB",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
+	    "Simba PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO,
+	    "Psycho PCI",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,
+	    "microSPARC IIep PCI",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
+	    "UltraSPARC IIi PCI",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe,
+	    "UltraSPARC IIe PCI",
 	},
 	{
 	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201,
