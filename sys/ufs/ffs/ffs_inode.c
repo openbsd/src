@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.9 1997/11/06 05:59:18 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.10 1998/11/29 03:47:15 art Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -203,10 +203,6 @@ ffs_truncate(v)
 		oip->i_ffs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, &ts, &ts, 1));
-	}
-	if (oip->i_ffs_size == length) {
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 0));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
