@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.18 2004/01/02 21:37:48 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.19 2004/01/07 10:36:45 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1273,7 +1273,7 @@ is not specified, display the line number of the last line in the file.
 Shift lines right.
 .Pp
 .It Xo
-.Cm ab Ns Op Cm brev
+.Cm ab Ns Op Cm breviate
 .Ar lhs rhs
 .Xc
 .Nm vi
@@ -1320,14 +1320,13 @@ Change the current working directory.
 .Pp
 .It Xo
 .Op Ar range
-.Cm co Ns Op Cm py Ns
-.Op Cm !\&
+.Cm co Ns Op Cm py
 .Ar line
 .Op Ar flags
 .Xc
 .It Xo
 .Op Ar range
-.Cm t Ns Op Cm !\&
+.Cm t
 .Ar line
 .Op Ar flags
 .Xc
@@ -1409,7 +1408,9 @@ Foreground the specified screen.
 .Op Ar commands
 .Xc
 Apply commands to lines matching
-.Pq or not matching
+.Pq Sq global
+or not matching
+.Pq Sq v
 a pattern.
 .Pp
 .It Cm he Ns Op Cm lp
@@ -1627,7 +1628,8 @@ character is usually
 Edit the file containing the specified tag.
 .Pp
 .It Xo
-.Cm tagn Ns Op Cm ext Ns
+.Op Cm Tt Ns
+.Cm agn Ns Op Cm ext Ns
 .Op Cm !\&
 .Xc
 Edit the file containing the next context for the current tag.
@@ -1640,7 +1642,8 @@ Edit the file containing the next context for the current tag.
 Pop to the specified tag in the tags stack.
 .Pp
 .It Xo
-.Cm tagp Ns Op Cm rev Ns
+.Op Cm Tt Ns
+.Cm agp Ns Op Cm rev Ns
 .Op Cm !\&
 .Xc
 Edit the file containing the previous context for the current tag.
@@ -1652,7 +1655,7 @@ Edit the file containing the previous context for the current tag.
 Pop to the least recent tag on the tags stack, clearing the stack.
 .Pp
 .It Xo
-.Cm una Ns Op Cm bbrev
+.Cm una Ns Op Cm bbreviate
 .Ar lhs
 .Xc
 .Nm vi
