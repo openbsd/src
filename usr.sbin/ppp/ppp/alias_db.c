@@ -115,7 +115,7 @@
 
     See HISTORY file for additional revisions.
 
-    $OpenBSD: alias_db.c,v 1.16 2000/11/02 00:53:47 brian Exp $
+    $OpenBSD: alias_db.c,v 1.17 2001/03/25 12:33:04 brian Exp $
 */
 
 
@@ -2634,12 +2634,6 @@ do {                                                    \
 } /*lint -save -e717 */ while(0) /*lint -restore */
 #define fw_tstfield(field, num) ((field)[(num) - fireWallBaseNum])
 
-void
-PacketAliasSetFWBase(unsigned int base, unsigned int num) {
-    fireWallBaseNum = base;
-    fireWallNumNums = num;
-}
-
 static void
 InitPunchFW(void) {
     fireWallField = malloc(fireWallNumNums);
@@ -2784,3 +2778,11 @@ ClearAllFWHoles(void) {
     memset(fireWallField, 0, fireWallNumNums);
 }
 #endif
+
+void
+PacketAliasSetFWBase(unsigned int base, unsigned int num) {
+#ifndef NO_FW_PUNCH
+    fireWallBaseNum = base;
+    fireWallNumNums = num;
+#endif
+}
