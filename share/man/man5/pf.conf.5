@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.232 2003/05/10 22:38:04 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.233 2003/05/10 23:27:07 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -968,8 +968,7 @@ can be overridden by specifying a message as a code or number.
 .It Ar return
 This causes a TCP RST to be returned for
 .Xr tcp 4
-packets, an ICMP UNREACHABLE for UDP packets,
-and silently drops all other packets.
+packets and an ICMP UNREACHABLE for UDP and other packets.
 .El
 .It Ar pass
 The packet is passed.
