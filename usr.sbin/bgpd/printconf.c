@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.31 2004/10/19 12:02:50 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.32 2004/10/19 14:53:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "bgpd.h"
@@ -27,12 +28,15 @@ void		 print_op(enum comp_ops);
 void		 print_set(struct filter_set *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
-void		 print_peer(struct peer_config *, struct bgpd_config *);
+void		 print_peer(struct peer_config *, struct bgpd_config *,
+		    const char *);
 const char	*print_auth_alg(u_int8_t);
 const char	*print_enc_alg(u_int8_t);
 void		 print_rule(struct peer *, struct filter_rule *);
 const char *	 mrt_type(enum mrt_type);
-void		 print_mrt(u_int32_t, u_int32_t, const char *);
+void		 print_mrt(u_int32_t, u_int32_t, const char *, const char *);
+void		 print_groups(struct bgpd_config *, struct peer *);
+int		 peer_compare(const void *, const void *);
 
 void
 print_op(enum comp_ops op)
@@ -132,19 +136,10 @@ print_network(struct network_config *n)
 }
 
 void
-print_peer(struct peer_config *p, struct bgpd_config *conf)
+print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 {
-	const char	*tab	= "\t";
-	const char	*nada	= "";
-	const char	*c;
 	char		*method;
 	struct in_addr	 ina;
-
-	if (p->group[0]) {
-		printf("group \"%s\" {\n", p->group);
-		c = tab;
-	} else
-		c = nada;
 
 	if ((p->remote_addr.af == AF_INET && p->remote_masklen != 32) ||
 	    (p->remote_addr.af == AF_INET6 && p->remote_masklen != 128))
@@ -228,11 +223,9 @@ print_peer(struct peer_config *p, struct bgpd_config *conf)
 	if (p->attrset.flags)
 		printf("\n");
 
-	print_mrt(p->id, p->groupid, c == nada ? "\t" : "\t\t");
+	print_mrt(p->id, p->groupid, c, "\t");
 
 	printf("%s}\n", c);
-	if (p->group[0])
-		printf("}\n");
 }
 
 const char *
@@ -372,7 +365,7 @@ mrt_type(enum mrt_type t)
 struct mrt_head	*xmrt_l = NULL;
 
 void
-print_mrt(u_int32_t pid, u_int32_t gid, const char *prep)
+print_mrt(u_int32_t pid, u_int32_t gid, const char *prep, const char *prep2)
 {
 	struct mrt	*m;
 
@@ -383,10 +376,10 @@ print_mrt(u_int32_t pid, u_int32_t gid, const char *prep)
 		if ((gid != 0 && m->group_id == gid) ||
 		    (m->peer_id == pid && m->group_id == gid)) {
 			if (MRT2MC(m)->ReopenTimerInterval == 0)
-				printf("%sdump %s %s\n", prep,
+				printf("%s%sdump %s %s\n", prep, prep2,
 				    mrt_type(m->type), MRT2MC(m)->name);
 			else
-				printf("%sdump %s %s %d\n", prep,
+				printf("%s%sdump %s %s %d\n", prep, prep2,
 				    mrt_type(m->type),
 				    MRT2MC(m)->name,
 				    MRT2MC(m)->ReopenTimerInterval);
@@ -394,23 +387,79 @@ print_mrt(u_int32_t pid, u_int32_t gid, const char *prep)
 }
 
 void
+print_groups(struct bgpd_config *conf, struct peer *peer_l)
+{
+	struct peer_config	**peerlist;
+	struct peer		 *p;
+	u_int			  peer_cnt, i;
+	u_int32_t		  prev_groupid;
+	const char		 *tab	= "\t";
+	const char		 *nada	= "";
+	const char		 *c;
+
+	peer_cnt = 0;
+	for (p = peer_l; p != NULL; p = p->next)
+		peer_cnt++;
+
+	if ((peerlist = calloc(peer_cnt, sizeof(struct peer_config *))) == NULL)
+		fatal("print_groups calloc");
+
+	i = 0;
+	for (p = peer_l; p != NULL; p = p->next)
+		peerlist[i++] = &p->conf;
+
+	qsort(peerlist, peer_cnt, sizeof(struct peer_config *), peer_compare);
+
+	prev_groupid = 0;
+	for (i = 0; i < peer_cnt; i++) {
+		if (peerlist[i]->groupid) {
+			c = tab;
+			if (peerlist[i]->groupid != prev_groupid) {
+				if (prev_groupid)
+					printf("}\n\n");
+				printf("group \"%s\" {\n", peerlist[i]->group);
+				prev_groupid = peerlist[i]->groupid;
+			}
+		} else
+			c = nada;
+
+		print_peer(peerlist[i], conf, c);
+	}
+
+	if (prev_groupid)
+		printf("}\n\n");
+
+	free(peerlist);
+}
+
+int
+peer_compare(const void *aa, const void *bb)
+{
+	const struct peer_config * const *a;
+	const struct peer_config * const *b;
+
+	a = aa;
+	b = bb;
+
+	return ((*a)->groupid - (*b)->groupid);
+}
+
+void
 print_config(struct bgpd_config *conf, struct network_head *net_l,
     struct peer *peer_l, struct filter_head *rules_l, struct mrt_head *mrt_l)
 {
-	struct peer		*p;
 	struct filter_rule	*r;
 	struct network		*n;
 
 	xmrt_l = mrt_l;
 	print_mainconf(conf);
 	printf("\n");
-	print_mrt(0, 0, "");
+	print_mrt(0, 0, "", "");
 	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net);
 	printf("\n");
-	for (p = peer_l; p != NULL; p = p->next)
-		print_peer(&p->conf, conf);
+	print_groups(conf, peer_l);
 	printf("\n");
 	TAILQ_FOREACH(r, rules_l, entry)
 		print_rule(peer_l, r);
