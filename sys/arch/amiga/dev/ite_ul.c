@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.1 1995/08/18 16:15:48 chopps Exp $	*/
+/*	$NetBSD: ite_ul.c,v 1.2 1995/12/27 08:09:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
@@ -226,7 +226,6 @@ void ulowell_cursor(struct ite_softc *ip, int flag)
 {
 	struct gspregs *ba;
 	u_int16_t cmd[7];
-	int pos;
 
 	ba = (struct gspregs *)ip->grf->g_regkva;
 
@@ -375,7 +374,6 @@ void ulowell_deinit(struct ite_softc *ip)
 void ulowell_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
 	struct gspregs *ba;
-	register u_int8_t attr;
 	u_int16_t cmd[8];
 	
 	ba = (struct gspregs *)ip->grf->g_regkva;
@@ -416,8 +414,6 @@ void ulowell_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 void ulowell_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	struct gspregs *ba;
-
-	register int height, dy, i;
 	u_int16_t cmd[7];
 
 	ba = (struct gspregs *)ip->grf->g_regkva;
