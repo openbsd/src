@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.33 2004/12/05 01:38:35 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.34 2004/12/05 01:51:20 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1289,7 +1289,6 @@ USB_ATTACH(atu)
 	sc->atu_encrypt = ATU_WEP_OFF;
 	sc->atu_wepkeylen = ATU_WEP_104BITS;
 	sc->atu_wepkey = 0;
-	sc->atu_mgmt_flags = 0;
 
 	bzero(sc->atu_bssid, ETHER_ADDR_LEN);
 	sc->atu_ssidlen = strlen(ATU_DEFAULT_SSID);
@@ -1301,7 +1300,6 @@ USB_ATTACH(atu)
 
 	/* Initialise transfer lists */
 	SLIST_INIT(&sc->atu_cdata.atu_tx_free);
-	SLIST_INIT(&sc->atu_cdata.atu_mgmt_free);
 
 	ic->ic_softc = sc;
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -1941,13 +1939,6 @@ atu_init(struct ifnet *ifp)
 		printf("%s: rx list init failed\n", USBDEVNAME(sc->atu_dev));
 	}
 
-	/* Init mgmt ring */
-	if (atu_xfer_list_init(sc, cd->atu_mgmt_chain,
-	    ATU_MGMT_LIST_CNT, 0, ATU_MGMT_BUFSZ, &cd->atu_mgmt_free)) {
-		DPRINTF(("%s: rx list init failed\n",
-		    USBDEVNAME(sc->atu_dev)));
-	}
-
 	/* Load the multicast filter. */
 	/*atu_setmulti(sc); */
 
@@ -2002,8 +1993,6 @@ atu_init(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_PROMISC)
 		sc->atu_rxfilt |= ATU_RXFILT_PROMISC;
 	*/
-
-	sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -2285,14 +2274,6 @@ atu_watchdog(struct ifnet *ifp)
 			atu_txeof(c->atu_xfer, c, stat);
 		}
 	}
-	for (cnt = 0; cnt < ATU_MGMT_LIST_CNT; cnt++) {
-		c = &sc->atu_cdata.atu_mgmt_chain[cnt];
-		if (c->atu_in_xfer) {
-			usbd_get_xfer_status(c->atu_xfer, NULL, NULL, NULL,
-			    &stat);
-			atu_txeof(c->atu_xfer, c, stat);
-		}
-	}
 
 	if (ifp->if_snd.ifq_head != NULL)
 		atu_start(ifp);
@@ -2347,7 +2328,6 @@ atu_stop(struct ifnet *ifp, int disable)
 	cd = &sc->atu_cdata;
 	atu_xfer_list_free(sc, cd->atu_rx_chain, ATU_RX_LIST_CNT);
 	atu_xfer_list_free(sc, cd->atu_tx_chain, ATU_TX_LIST_CNT);
-	atu_xfer_list_free(sc, cd->atu_mgmt_chain, ATU_MGMT_LIST_CNT);
 
 	/* Let's be nice and turn off the radio before we leave */
 	atu_switch_radio(sc, 0);

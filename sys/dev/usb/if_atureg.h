@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.13 2004/12/05 00:16:14 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.14 2004/12/05 01:51:20 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.13 2004/12/05 00:16:14 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.14 2004/12/05 01:51:20 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -86,9 +86,6 @@
  * (+/- 24% increase)
  */
 #define ATU_TX_LIST_CNT	8
-
-/* number of simultaniously MGMT TX transfers (always 1, don't change) */
-#define ATU_MGMT_LIST_CNT	1
 
 /*
  * Normally, when a packet arrives at the driver (with a call to atu_start)
@@ -170,7 +167,6 @@
 /* BE CAREFULL! should add ATU_TX_PADDING */
 #define ATU_TX_BUFSZ		(ATU_TX_HDRLEN + \
 				 sizeof(struct ieee80211_frame_addr4) + 2312)
-#define ATU_MGMT_BUFSZ	(ATU_TX_HDRLEN + 300)
 
 #define ATU_MIN_FRAMELEN	60
 
@@ -241,12 +237,10 @@ struct atu_chain {
 struct atu_cdata {
 	struct atu_chain	atu_tx_chain[ATU_TX_LIST_CNT];
 	struct atu_chain	atu_rx_chain[ATU_RX_LIST_CNT];
-	struct atu_chain	atu_mgmt_chain[ATU_MGMT_LIST_CNT];
 
 	SLIST_HEAD(atu_list_head, atu_chain)	atu_rx_free;
 	struct atu_list_head	atu_tx_free;
-	struct atu_list_head	atu_mgmt_free;
-		
+
 	u_int8_t		atu_tx_inuse;
 	u_int8_t		atu_tx_last_idx;	
 };
@@ -254,34 +248,6 @@ struct atu_cdata {
 
 #define MAX_SSID_LEN		32
 #define ATU_AVG_TIME		20
-
-
-
-enum atu_mgmt_state {
-	STATE_NONE = 0,
-	STATE_LISTENING,
-	STATE_JOINING,
-	
-	STATE_AUTHENTICATING,           /* infra mode */
-	STATE_ASSOCIATING,
-	
-	STATE_CREATING_IBSS,            /* adhoc mode */
-	
-	STATE_HAPPY_NETWORKING,
-	STATE_GIVEN_UP
-};
-
-#ifdef ATU_DEBUG  
-u_int8_t	*atu_mgmt_statename[] = {"NONE", "LISTENING", "JOINING",
-    "AUTHENTICATING", "ASSOCIATING", "CREATING IBSS", "HAPPY NETWORKING :)",
-    "GIVEN UP"};
-#endif /* ATU_DEBUG */
-
-struct atu_mgmt {
-	enum atu_mgmt_state	state;
-	int			retry;
-};
-
 
 
 struct atu_softc {
@@ -336,19 +302,6 @@ struct atu_softc {
 	int			atu_wepkey;
 	int			atu_wepkeylen;
 	u_int8_t		atu_wepkeys[4][13];
-
-	struct proc		*atu_mgmt_thread;
-	struct atu_mgmt		atu_mgmt_vars;
-	u_int16_t		atu_mgmt_flags;
-#define ATU_TASK_RUNNING	0x01
-#define ATU_CHANGED_SETTINGS	0x02
-#define ATU_SEARCHING		0x04
-#define ATU_FOUND_BSSID		0x08
-#define ATU_AUTH_OK		0x10
-#define ATU_RE_AUTH		0x20
-#define ATU_ASSOC_OK		0x40
-#define ATU_RE_ASSOC		0x80
-#define ATU_NETWORK_OK		0x100
 };
 
 
