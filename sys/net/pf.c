@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.324 2003/02/27 13:35:57 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.325 2003/03/02 12:00:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4229,6 +4229,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	struct pf_state	*s = NULL;
 	struct pf_pdesc	 pd;
 	int		 off;
+	int		 pqid = 0;
 
 	if (!pf_status.running ||
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
@@ -4293,6 +4294,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			goto done;
 		}
 		pd.p_len = pd.tot_len - off - (th.th_off << 2);
+		if ((th.th_flags & TH_ACK) && pd.p_len == 0)
+			pqid = 1;
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
@@ -4402,7 +4405,7 @@ done:
 		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
 		if (mtag != NULL) {
 			atag = (struct altq_tag *)(mtag + 1);
-			if (pd.tos == IPTOS_LOWDELAY)
+			if (pqid || pd.tos == IPTOS_LOWDELAY)
 				atag->qid = r->pqid;
 			else
 				atag->qid = r->qid;
