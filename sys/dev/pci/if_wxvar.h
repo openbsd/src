@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_wxvar.h,v 1.4 2001/01/09 02:23:12 mjacob Exp $	*/
+/*	$OpenBSD: if_wxvar.h,v 1.5 2001/02/03 06:25:21 mickey Exp $	*/
+
 /*                  
  * Copyright (c) 1999, Traakan Software
  * All rights reserved.
@@ -243,6 +244,7 @@ struct wxmdvar {
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -284,6 +286,7 @@ struct wxmdvar {
 	pci_chipset_tag_t	pci_pc;
 	pcitag_t		pci_tag;
 	u_int32_t		cmdw;
+	struct timeout		tmo;	/* handle for timeouts */
 	bus_space_tag_t		st;		/* bus space tag */
 	bus_space_handle_t	sh;		/* bus space handle */
 	struct ifmedia 		ifm;
@@ -296,6 +299,7 @@ struct wxmdvar {
 #define	wx_cmdw		w.cmdw
 #define	wx_media	w.ifm
 #define	wx_next		w.next
+#define	wx_tmo		w.tmo
 
 #define	wx_if		w.arpcom.ac_if
 #define	wx_name		w.dev.dv_xname
@@ -305,9 +309,9 @@ struct wxmdvar {
 #define	WXFREE(ptr)			free(ptr, M_DEVBUF)
 #define	SOFTC_IFP(ifp)			ifp->if_softc
 #define	WX_BPFTAP_ARG(ifp)		(ifp)->if_bpf
-#define	TIMEOUT(sc, func, arg, time)	timeout(func, arg, time)
-#define	VTIMEOUT(sc, func, arg, time)	timeout(func, arg, time)
-#define	UNTIMEOUT(f, arg, sc)		untimeout(f, arg)
+#define	TIMEOUT(sc, func, arg, time)	VTIMEOUT(sc, func, arg, time)
+#define	VTIMEOUT(sc, func, arg, time)	{timeout_set(&(sc)->wx_tmo, func, arg); timeout_add(&(sc)->wx_tmo, time);}
+#define	UNTIMEOUT(f, arg, sc)		timeout_del(&(sc)->wx_tmo)
 #define	INLINE				inline
 #define	WX_LOCK(wx)	if (wx->w.locked++ == 0) wx->w.spl = splimp()
 #define	WX_UNLOCK(wx)	if (wx->w.locked) {				\
