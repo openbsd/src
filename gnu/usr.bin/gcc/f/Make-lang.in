@@ -128,7 +128,7 @@ g77-cross: f/g77.c version.o $(LIBDEPS)
 
 # g77 documentation.
 $(build_infodir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi
-	$(MAKEINFO) -I$(srcdir)/f $(srcdir)/f/g77.texi \
+	$(MAKEINFO) -P$(srcdir)/f $(srcdir)/f/g77.texi \
 	   -o $(build_infodir)/f/g77.info
 
 # XXX OpenBSD What to do with dvi builds...?
