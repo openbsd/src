@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.h,v 1.3 1998/11/17 11:10:17 niklas Exp $	*/
-/*	$EOM: math_group.h,v 1.4 1998/07/18 22:08:58 provos Exp $	*/
+/*	$OpenBSD: math_group.h,v 1.4 1999/03/24 14:59:52 niklas Exp $	*/
+/*	$EOM: math_group.h,v 1.5 1999/03/06 12:40:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -34,7 +34,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#ifndef _MATH_GROUP_H
+#ifndef _MATH_GROUP_H_
 #define _MATH_GROUP_H_
 
 enum groups {
