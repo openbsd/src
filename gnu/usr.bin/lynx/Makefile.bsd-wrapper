@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2000/04/30 21:45:01 maja Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2000/06/28 18:53:46 deraadt Exp $
 
 MAN=	lynx.1
-COPTS+=	-DUSE_SSL
 CLEANFILES=	lynx.1
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 LDADD=	-lssl -lcrypto
-GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} -DUSE_SSL ${COPTS}"
 HTMLDIR=	/usr/share/doc/html
 HELPFILES=	keystrokes/alt_edit_help.html keystrokes/bookmark_help.html \
 		keystrokes/cookie_help.html keystrokes/dired_help.html \
