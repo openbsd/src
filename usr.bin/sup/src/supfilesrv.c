@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.11 1997/09/16 11:01:23 deraadt Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.12 1997/10/11 23:34:21 beck Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -28,12 +28,13 @@
 /*
  * supfilesrv -- SUP File Server
  *
- * Usage:  supfilesrv [-l] [-P] [-N] [-R] [-S]
+ * Usage:  supfilesrv [-l] [-P] [-N] [-R] [-S] [-O]
  *	-l	"live" -- don't fork daemon
  *	-P	"debug ports" -- use debugging network ports
  *	-N	"debug network" -- print debugging messages for network i/o
  *	-R	"RCS mode" -- if file is an rcs file, use co to get contents
  *	-S	"Operate silently" -- Only print error messages
+ *      -O      "One Connection" -- Reject servicing multiple connections
  *
  **********************************************************************
  * HISTORY
@@ -235,6 +236,7 @@ int progpid = -1;			/* and process id */
 jmp_buf sjbuf;				/* jump location for network errors */
 TREELIST *listTL;			/* list of trees to upgrade */
 
+char *oneconnect = NULL;	        /* -O flag */
 int silent;				/* -S flag */
 int live;				/* -l flag */
 int dbgportsq;				/* -P flag */
@@ -319,9 +321,22 @@ char **argv;
 
 	init (argc,argv);		/* process arguments */
 
-#ifdef HAS_DAEMON
 	if (!live)			/* if not debugging, turn into daemon */
+#ifdef HAS_DAEMON
 		daemon(0, 0);
+#else
+	{
+	  int r;
+	  r=fork();
+	  if (r>0) {
+	    exit(0);
+	  }
+	  else if (r < 0) {
+	    perror("fork:");
+	    exit(-1);
+	  }
+	  setsid();
+	}
 #endif
 
 	logopen ("supfile");
@@ -438,6 +453,12 @@ char **argv;
 				quit (1,"Missing arg to -C\n");
 			argv++;
 			maxchildren = atoi(argv[0]);
+			break;
+		case 'O':
+			if (--argc < 1)
+				quit (1,"Missing arg to -O\n");
+			argv++;
+			oneconnect = argv[0];
 			break;
 		case 'H':
 			if (--argc < 3)
@@ -858,6 +879,10 @@ srvsetup ()
 		lockfd = x;
 	}
 #endif
+	if (oneconnect != NULL
+	    && (lock_host_file(oneconnect) < 0)) {
+	  goaway("I'm still working on a previous request from your host.");
+	}
 	setupack = FSETUPOK;
 	x = msgsetupack ();
 	if (x != SCMOK)  goaway ("Error sending setup reply to client");
@@ -1621,8 +1646,10 @@ int fileuid,filegid;
 		logerr ("setegid: %%m");
 	if (setgid (pwd->pw_gid) < 0)
 		logerr ("setgid: %%m");
+#ifndef NO_SETLOGIN
 	if (setlogin (pwd->pw_name) < 0)
 		logerr ("setlogin: %%m");
+#endif
 	if (seteuid (pwd->pw_uid) < 0)
 		logerr ("seteuid: %%m");
 	if (setuid (pwd->pw_uid) < 0)
