@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.16 2002/04/29 06:26:50 pvalchev Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.17 2003/08/07 00:32:12 deraadt Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -44,20 +44,16 @@
  * pbox, and final permutations are inverted (this has been brought to the
  * attention of the author).  A list of errata for this book has been
  * posted to the sci.crypt newsgroup by the author and is available for FTP.
- *
- * NOTE:
- * This file has a static version of des_setkey() so that crypt.o exports
- * only the crypt() interface. This is required to make binaries linked
- * against crypt.o exportable or re-exportable from the USA.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.16 2002/04/29 06:26:50 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.17 2003/08/07 00:32:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pwd.h>
+#include <unistd.h>
 #include <string.h>
 
 #ifdef DEBUG
@@ -189,8 +185,7 @@ static u_char	ascii64[] =
 /*	  0123456789012345678901234567890123456789012345678901234567890123 */
 
 static __inline int
-ascii_to_bin(ch)
-	char ch;
+ascii_to_bin(char ch)
 {
 	if (ch > 'z')
 		return(0);
@@ -208,7 +203,7 @@ ascii_to_bin(ch)
 }
 
 static void
-des_init()
+des_init(void)
 {
 	int	i, j, b, k, inbit, obit;
 	u_int32_t	*p, *il, *ir, *fl, *fr;
@@ -338,8 +333,7 @@ des_init()
 }
 
 static void
-setup_salt(salt)
-	int32_t salt;
+setup_salt(int32_t salt)
 {
 	u_int32_t	obit, saltbit;
 	int	i;
@@ -359,9 +353,8 @@ setup_salt(salt)
 	}
 }
 
-static int
-des_setkey(key)
-	const char *key;
+int
+des_setkey(const char *key)
 {
 	u_int32_t k0, k1, rawkey0, rawkey1;
 	int	shifts, round;
@@ -441,9 +434,8 @@ des_setkey(key)
 }
 
 static int
-do_des(l_in, r_in, l_out, r_out, count)
-	u_int32_t l_in, r_in, *l_out, *r_out;
-	int count;
+do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
+    int count)
 {
 	/*
 	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
@@ -558,12 +550,8 @@ do_des(l_in, r_in, l_out, r_out, count)
 	return(0);
 }
 
-static int
-des_cipher(in, out, salt, count)
-	const char *in;
-	char *out;
-	int32_t salt;
-	int count;
+int
+des_cipher(const char *in, char *out, int32_t salt, int count)
 {
 	u_int32_t l_out, r_out, rawl, rawr;
 	u_int32_t x[2];
@@ -586,9 +574,7 @@ des_cipher(in, out, salt, count)
 }
 
 char *
-crypt(key, setting)
-	const char *key;
-	const char *setting;
+crypt(const char *key, const char *setting)
 {
 	int		i;
 	u_int32_t	count, salt, l, r0, r1, keybuf[2];
@@ -683,6 +669,7 @@ crypt(key, setting)
 		p = output + 2;
 	}
 	setup_salt(salt);
+
 	/*
 	 * Do it.
 	 */
@@ -710,4 +697,47 @@ crypt(key, setting)
 	*p = 0;
 
 	return((char *)output);
+}
+
+int
+setkey(const char *key)
+{
+	int	i, j;
+	u_int32_t packed_keys[2];
+	u_char	*p;
+
+	p = (u_char *) packed_keys;
+
+	for (i = 0; i < 8; i++) {
+		p[i] = 0;
+		for (j = 0; j < 8; j++)
+			if (*key++ & 1)
+				p[i] |= bits8[j];
+	}
+	return(des_setkey(p));
+}
+
+int
+encrypt(char *block, int flag)
+{
+	u_int32_t io[2];
+	u_char	*p;
+	int	i, j, retval;
+
+	if (!des_initialised)
+		des_init();
+
+	setup_salt(0);
+	p = (u_char *)block;
+	for (i = 0; i < 2; i++) {
+		io[i] = 0L;
+		for (j = 0; j < 32; j++)
+			if (*p++ & 1)
+				io[i] |= bits32[j];
+	}
+	retval = do_des(io[0], io[1], io, io + 1, flag ? -1 : 1);
+	for (i = 0; i < 2; i++)
+		for (j = 0; j < 32; j++)
+			block[(i << 5) | j] = (io[i] & bits32[j]) ? 1 : 0;
+	return(retval);
 }
