@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.13 2003/07/28 16:13:53 millert Exp $
+.\"	$OpenBSD: patch.1,v 1.14 2003/07/28 18:34:36 otto Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -51,14 +51,14 @@ The extension used for making backup files may also be specified in the
 .Ev SIMPLE_BACKUP_SUFFIX
 environment variable, which is overridden by the options above.
 .Pp
-If the backup file already exists,
+If the backup file is linked to the original file,
 .Nm
 creates a new backup file name by changing the first lowercase letter
 in the last component of the file's name into uppercase.
 If there are no more lowercase letters in the name,
 it removes the first character from the name.
 It repeats this process until it comes up with a
-backup file that does not already exist.
+backup file that does not already exist or is not linked to the original file.
 .Pp
 You may also specify where you want the output to go with the
 .Fl o
