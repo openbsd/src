@@ -8,13 +8,13 @@
 #if defined(APIWARN)
 #APP
 	.section .gnu.warning.strcpy
-	.ascii "warning: strcpy() is almost always misused, consider using strlcpy()"
+	.ascii "warning: strcpy() is almost always misused, please use strlcpy()"
 #NO_APP
 #endif
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strcpy.S,v 1.6 2005/03/25 21:43:37 kettenis Exp $"
+	.asciz "$OpenBSD: strcpy.S,v 1.7 2005/03/25 22:22:30 kettenis Exp $"
 #endif
 
 /*

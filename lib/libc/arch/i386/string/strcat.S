@@ -8,13 +8,13 @@
 #if defined(APIWARN)
 #APP
 	.section .gnu.warning.strcat
-	.ascii "warning: strcat() is almost always misused, consider using strlcat()"
+	.ascii "warning: strcat() is almost always misused, please use strlcat()"
 #NO_APP
 #endif
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strcat.S,v 1.6 2005/03/25 21:43:37 kettenis Exp $"
+	.asciz "$OpenBSD: strcat.S,v 1.7 2005/03/25 22:22:30 kettenis Exp $"
 #endif
 
 /*
