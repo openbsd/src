@@ -1,5 +1,5 @@
 # -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.2 1996/06/03 23:07:28 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.3 1996/06/10 11:23:16 niklas Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -277,8 +277,8 @@ PATCH_DIST_STRIP?=	-p0
 PATCH_ARGS?=	-d ${WRKSRC} -E ${PATCH_STRIP}
 PATCH_DIST_ARGS?=	-d ${WRKSRC} -E ${PATCH_DIST_STRIP}
 .else
-PATCH_ARGS?=	-d ${WRKSRC} -N -s -E ${PATCH_STRIP}
-PATCH_DIST_ARGS?=	-d ${WRKSRC} -N -s -E ${PATCH_DIST_STRIP}
+PATCH_ARGS?=	-d ${WRKSRC} --forward --quiet -E ${PATCH_STRIP}
+PATCH_DIST_ARGS?=	-d ${WRKSRC} --forward --quiet -E ${PATCH_DIST_STRIP}
 .endif
 .if defined(BATCH)
 PATCH_ARGS+=		--batch
