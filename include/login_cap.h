@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.10 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.11 2004/08/03 21:00:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -65,6 +65,7 @@
 #define	BI_VALUE	"value"			/* set local variable */
 #define	BI_EXPIRED	"reject expired"	/* account expired */
 #define	BI_PWEXPIRED	"reject pwexpired"	/* password expired */
+#define	BI_FDPASS	"fd"			/* child is passing an fd */
 
 /*
  * bits which can be returned by authenticate()/auth_scan()
