@@ -1,0 +1,78 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/09/21 05:55:35 etheisen Exp $
+
+LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
+
+#
+# less config
+#
+PREFIX=		/usr
+DATADIR=	$(PREFIX)/share/misc
+MAN=		less.1 lesskey.1
+MLINKS=		less.1 more.1 less.1 page.1
+CLEANFILES=	config.cache config.log $(MAN)
+
+#
+# Wrapped flags
+#
+WCFLAGS=	CFLAGS="$(CFLAGS)"
+WLDFLAGS=	LDFLAGS="$(LDSTATIC)"
+
+all: config.status gnu_build
+
+.FORCE: .IGNORE
+
+config: .FORCE
+	-rm -f config.cache
+	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
+
+config.status:
+	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
+
+gnu_build:
+	$(MAKE) $(WCFLAGS) $(WLDFLAGS) datadir=$(DATADIR)
+
+install: gnu_install maninstall _SUBDIRUSE
+.if defined(LINKS) && !empty(LINKS)
+	@set ${LINKS}; \
+	while test $$# -ge 2; do \
+		l=${DESTDIR}$$1; \
+		shift; \
+		t=${DESTDIR}$$1; \
+		shift; \
+		echo $$t -\> $$l; \
+		rm -f $$t; \
+		ln $$l $$t; \
+	done; true
+.endif
+
+gnu_install:
+	$(MAKE) $(WCFLAGS) $(WLDFLAGS) datadir=$(DATADIR) \
+		INSTALL_PROGRAM="install $(COPY) $(STRIP) -o $(BINOWN) -g $(BINGRP) -m $(BINMODE)" \
+		INSTALL_DATA="install $(COPY) -o ${BINOWN} -g ${BINGRP} -m 444" \
+		INSTALL_MAN= INSTALLDIRS= install
+
+clean cleandir:
+	rm -f $(CLEANFILES)
+	-@if [ -e Makefile ]; then $(MAKE) distclean; fi
+
+#
+# Fix less manpage suffix 
+#
+.SUFFIXES: .nro .1 .2 .3 .4 .5 .6 .7 .8 .9
+
+.nro.1 .nro.2 .nro.3 .nro.4 .nro.5 .nro.6 .nro.7 .nro.8 .nro.9:
+	-@ln -sf $(.IMPSRC) $(.TARGET)
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <../Makefile.inc>
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>
