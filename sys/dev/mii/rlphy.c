@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.9 2004/09/20 06:05:27 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.10 2004/09/23 15:32:59 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -69,6 +69,12 @@ rlphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
+	/* Test for RealTek 8201L PHY */
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_REALTEK &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201L) {
+		return(10);
+	}
+
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
 	    MII_MODEL(ma->mii_id2) != 0)
 		return (0);
@@ -92,7 +98,11 @@ rlphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": RTL internal phy\n");
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201L) {
+		printf(": %s, rev. %d\n", MII_STR_REALTEK_RTL8201L,
+		    MII_REV(ma->mii_id2));
+	} else
+		printf(": RTL internal phy\n");
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
