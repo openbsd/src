@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.73 2003/03/31 20:52:06 millert Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.74 2003/04/02 20:09:26 millert Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -704,7 +704,17 @@ ah_input_cb(void *op)
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	mtag = (struct m_tag *) tc->tc_ptr;
+
 	m = (struct mbuf *) crp->crp_buf;
+	if (m == NULL) {
+		/* Shouldn't happen... */
+		FREE(tc, M_XDATA);
+		crypto_freereq(crp);
+		ahstat.ahs_crypto++;
+		DPRINTF(("ah_input_cb(): bogus returned buffer from "
+		    "crypto\n"));
+		return (EINVAL);
+	}
 
 	s = spltdb();
 
@@ -736,16 +746,6 @@ ah_input_cb(void *op)
 	} else {
 		crypto_freereq(crp); /* No longer needed. */
 		crp = NULL;
-	}
-
-	/* Shouldn't happen... */
-	if (m == NULL) {
-		FREE(tc, M_XDATA);
-		ahstat.ahs_crypto++;
-		DPRINTF(("ah_input_cb(): bogus returned buffer from "
-		    "crypto\n"));
-		error = EINVAL;
-		goto baddone;
 	}
 
 	if (!(tdb->tdb_flags & TDBF_NOREPLAY))
@@ -969,7 +969,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ahstat.ahs_wrap++;
-		return NULL;
+		return EINVAL;
 	}
 
 	if (!(tdb->tdb_flags & TDBF_NOREPLAY))
@@ -1227,7 +1227,17 @@ ah_output_cb(void *op)
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	ptr = (caddr_t) (tc + 1);
+
 	m = (struct mbuf *) crp->crp_buf;
+	if (m == NULL) {
+		/* Shouldn't happen... */
+		FREE(tc, M_XDATA);
+		crypto_freereq(crp);
+		ahstat.ahs_crypto++;
+		DPRINTF(("ah_output_cb(): bogus returned buffer from "
+		    "crypto\n"));
+		return (EINVAL);
+	}
 
 	s = spltdb();
 
@@ -1253,16 +1263,6 @@ ah_output_cb(void *op)
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_output_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
-		goto baddone;
-	}
-
-	/* Shouldn't happen... */
-	if (m == NULL) {
-		FREE(tc, M_XDATA);
-		ahstat.ahs_crypto++;
-		DPRINTF(("ah_output_cb(): bogus returned buffer from "
-		    "crypto\n"));
-		error = EINVAL;
 		goto baddone;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.13 2003/03/31 20:52:06 millert Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.14 2003/04/02 20:09:26 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -226,7 +226,16 @@ ipcomp_input_cb(op)
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
+
 	m = (struct mbuf *) crp->crp_buf;
+	if (m == NULL) {
+		/* Shouldn't happen... */
+		FREE(tc, M_XDATA);
+		crypto_freereq(crp);
+		ipcompstat.ipcomps_crypto++;
+		DPRINTF(("ipcomp_input_cb(): bogus returned buffer from crypto\n"));
+		return (EINVAL);
+	}
 
 	s = spltdb();
 
@@ -250,9 +259,8 @@ ipcomp_input_cb(op)
 		FREE(tc, M_XDATA);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
-		splx(s);
-		m_freem(m);
-		return ENXIO;
+		error = ENXIO;
+		goto baddone;
 	}
 	/* Notify on soft expiration */
 	if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
@@ -279,34 +287,25 @@ ipcomp_input_cb(op)
 	}
 	FREE(tc, M_XDATA);
 
-	/* Shouldn't happen... */
-	if (m == NULL) {
-		ipcompstat.ipcomps_crypto++;
-		DPRINTF(("ipcomp_input_cb(): bogus returned buffer from crypto\n"));
-		error = EINVAL;
-		goto baddone;
-	}
-	/* Release the crypto descriptors */
-	crypto_freereq(crp);
-
 	/* Length of data after processing */
 	clen = crp->crp_olen;
 
 	/* In case it's not done already, adjust the size of the mbuf chain */
 	m->m_pkthdr.len = clen + hlen + skip;
 
-	if ((m->m_len < skip + hlen) && (m = m_pullup(m, skip + hlen)) == 0)
+	if ((m->m_len < skip + hlen) && (m = m_pullup(m, skip + hlen)) == 0) {
+		error = ENOBUFS;
 		goto baddone;
+	}
 
 	/* Find the beginning of the IPCOMP header */
 	m1 = m_getptr(m, skip, &roff);
 	if (m1 == NULL) {
 		ipcompstat.ipcomps_hdrops++;
-		splx(s);
 		DPRINTF(("ipcomp_input_cb(): bad mbuf chain, IPCA %s/%08x\n",
 		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto baddone;
 	}
 	/* Keep the next protocol field */
 	addr = (caddr_t) mtod(m, struct ip *) + skip;
@@ -349,6 +348,9 @@ ipcomp_input_cb(op)
 		m->m_pkthdr.len -= hlen;
 	}
 
+	/* Release the crypto descriptors */
+	crypto_freereq(crp);
+
 	/* Restore the Next Protocol field */
 	m_copyback(m, protoff, sizeof(u_int8_t), (u_int8_t *) & nproto);
 
@@ -362,6 +364,7 @@ baddone:
 
 	if (m)
 		m_freem(m);
+
 	crypto_freereq(crp);
 
 	return error;
@@ -627,9 +630,19 @@ ipcomp_output_cb(cp)
 #endif
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
-	m = (struct mbuf *) crp->crp_buf;
 	skip = tc->tc_skip;
 	rlen = crp->crp_ilen - skip;
+
+	m = (struct mbuf *) crp->crp_buf;
+	if (m == NULL) {
+		/* Shouldn't happen... */
+		FREE(tc, M_XDATA);
+		crypto_freereq(crp);
+		ipcompstat.ipcomps_crypto++;
+		DPRINTF(("ipcomp_output_cb(): bogus returned buffer from "
+		    "crypto\n"));
+		return (EINVAL);
+	}
 
 	s = spltdb();
 
@@ -638,6 +651,7 @@ ipcomp_output_cb(cp)
 		FREE(tc, M_XDATA);
 		ipcompstat.ipcomps_notdb++;
 		DPRINTF(("ipcomp_output_cb(): TDB expired while in crypto\n"));
+		error = EPERM;
 		goto baddone;
 	}
 
@@ -658,15 +672,6 @@ ipcomp_output_cb(cp)
 		goto baddone;
 	}
 	FREE(tc, M_XDATA);
-
-	/* Shouldn't happen... */
-	if (m == NULL) {
-		ipcompstat.ipcomps_crypto++;
-		DPRINTF(("ipcomp_output_cb(): bogus returned buffer from "
-		    "crypto\n"));
-		error = EINVAL;
-		goto baddone;
-	}
 
 	/* Check sizes. */
 	if (rlen < crp->crp_olen) {
@@ -715,6 +720,7 @@ ipcomp_output_cb(cp)
 
 baddone:
 	splx(s);
+
 	if (m)
 		m_freem(m);
 

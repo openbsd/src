@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.81 2003/03/31 20:52:06 millert Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.82 2003/04/02 20:09:26 millert Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -471,7 +471,16 @@ esp_input_cb(void *op)
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	mtag = (struct m_tag *) tc->tc_ptr;
+
 	m = (struct mbuf *) crp->crp_buf;
+	if (m == NULL) {
+		/* Shouldn't happen... */
+		FREE(tc, M_XDATA);
+		crypto_freereq(crp);
+		espstat.esps_crypto++;
+		DPRINTF(("esp_input_cb(): bogus returned buffer from crypto\n"));
+		return (EINVAL);
+	}
 
 	s = spltdb();
 
@@ -502,15 +511,6 @@ esp_input_cb(void *op)
 		goto baddone;
 	}
 
-	/* Shouldn't happen... */
-	if (m == NULL) {
-		FREE(tc, M_XDATA);
-		espstat.esps_crypto++;
-		DPRINTF(("esp_input_cb(): bogus returned buffer from crypto\n"));
-		error = EINVAL;
-		goto baddone;
-	}
-
 	/* If authentication was performed, check now. */
 	if (esph != NULL) {
 		/*
@@ -537,7 +537,6 @@ esp_input_cb(void *op)
 		/* Remove trailing authenticator */
 		m_adj(m, -(esph->authsize));
 	}
-
 	FREE(tc, M_XDATA);
 
 	/* Replay window checking, if appropriate */
@@ -976,7 +975,18 @@ esp_output_cb(void *op)
 	int error, s;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
+
 	m = (struct mbuf *) crp->crp_buf;
+	if (m == NULL) {
+		/* Shouldn't happen... */
+		FREE(tc, M_XDATA);
+		crypto_freereq(crp);
+		espstat.esps_crypto++;
+		DPRINTF(("esp_output_cb(): bogus returned buffer from "
+		    "crypto\n"));
+		return (EINVAL);
+	}
+
 
 	s = spltdb();
 
@@ -1004,17 +1014,8 @@ esp_output_cb(void *op)
 		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
-	} else
-		FREE(tc, M_XDATA);
-
-	/* Shouldn't happen... */
-	if (m == NULL) {
-		espstat.esps_crypto++;
-		DPRINTF(("esp_output_cb(): bogus returned buffer from "
-		    "crypto\n"));
-		error = EINVAL;
-		goto baddone;
 	}
+	FREE(tc, M_XDATA);
 
 	/* Release crypto descriptors. */
 	crypto_freereq(crp);
