@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.2 2000/06/03 13:14:39 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.3 2000/06/12 19:50:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -90,40 +90,21 @@ struct ubsec_pktctx {
 #define	UBS_PKTCTX_AUTH_SHA1	0x00002000	/* use hmac-sha1 */
 
 struct ubsec_pktbuf {
-	u_int32_t	pb_addr;		/* address of buffer start */
-	u_int32_t	pb_next;		/* pointer to next pktbuf */
-	u_int32_t	pb_len;
+	volatile u_int32_t	pb_addr;	/* address of buffer start */
+	volatile u_int32_t	pb_next;	/* pointer to next pktbuf */
+	volatile u_int32_t	pb_len;		/* packet length */
 };
 #define	UBS_PKTBUF_LEN		0x0000ffff	/* length mask */
 
 struct ubsec_mcr {
-	u_int32_t		mcr_flags;	/* flags/packet count */
-
-	u_int32_t		mcr_cmdctxp;	/* command ctx pointer */
+	volatile u_int16_t	mcr_pkts;	/* #pkts in this mcr */
+	volatile u_int16_t	mcr_flags;	/* mcr flags (below) */
+	volatile u_int32_t	mcr_cmdctxp;	/* command ctx pointer */
 	struct ubsec_pktbuf	mcr_ipktbuf;	/* input chain header */
+	volatile u_int16_t	mcr_reserved;
+	volatile u_int16_t	mcr_pktlen;
 	struct ubsec_pktbuf	mcr_opktbuf;	/* output chain header */
 };
-#define	UBS_MCR_PACKETS		0x0000ffff	/* packets in this mcr */
-#define	UBS_MCR_DONE		0x00010000	/* mcr has been processed */
-#define	UBS_MCR_ERROR		0x00020000	/* error in processing */
-#define	UBS_MCR_ERRORCODE	0xff000000	/* error type */
-
-struct ubsec_q {
-	SIMPLEQ_ENTRY(ubsec_q)		q_next;
-	struct ubsec_softc		*q_sc;
-	struct cryptop			*q_crp;
-	struct ubsec_mcr		q_mcr;
-	struct ubsec_pktctx		q_ctx;
-
-	struct mbuf *		      	q_src_m;
-	long				q_src_packp[MAX_SCATTER];
-	int				q_src_packl[MAX_SCATTER];
-	int				q_src_npa, q_src_l;
-	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
-
-	struct mbuf *			q_dst_m;
-	long				q_dst_packp[MAX_SCATTER];
-	int				q_dst_packl[MAX_SCATTER];
-	int				q_dst_npa, q_dst_l;
-	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-};
+#define	UBS_MCR_DONE		0x0001		/* mcr has been processed */
+#define	UBS_MCR_ERROR		0x0002		/* error in processing */
+#define	UBS_MCR_ERRORCODE	0xff00		/* error type */

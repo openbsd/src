@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.2 2000/06/03 13:14:39 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.3 2000/06/12 19:50:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -39,4 +39,24 @@ struct ubsec_softc {
 	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue */
 	int			sc_nqueue;	/* count enqueued */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip */
+};
+
+struct ubsec_q {
+	SIMPLEQ_ENTRY(ubsec_q)		q_next;
+	struct cryptop			*q_crp;
+	struct ubsec_mcr		q_mcr;
+	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
+	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
+	struct ubsec_pktctx		q_ctx;
+
+	struct ubsec_softc		*q_sc;
+	struct mbuf 		      	*q_src_m, *q_dst_m;
+
+	long				q_src_packp[MAX_SCATTER];
+	int				q_src_packl[MAX_SCATTER];
+	int				q_src_npa, q_src_l;
+
+	long				q_dst_packp[MAX_SCATTER];
+	int				q_dst_packl[MAX_SCATTER];
+	int				q_dst_npa, q_dst_l;
 };

@@ -1,7 +1,8 @@
-/*	$OpenBSD: ubsec.c,v 1.6 2000/06/10 05:09:37 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.7 2000/06/12 19:50:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 2000 Theo de Raadt (deraadt@openbsd.org)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,7 +79,7 @@ int	ubsec_newsession __P((u_int32_t *, struct cryptoini *));
 int	ubsec_freesession __P((u_int64_t));
 int	ubsec_process __P((struct cryptop *));
 void	ubsec_callback __P((struct ubsec_softc *, struct ubsec_q *, u_int8_t *));
-int	ubsec_crypto __P((struct ubsec_softc *, struct ubsec_q *q));
+int	ubsec_feed __P((struct ubsec_softc *));
 
 #define	READ_REG(sc,r) \
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
@@ -99,6 +100,9 @@ ubsec_probe(parent, match, aux)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)
+		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)
 		return (1);
 	return (0);
 }
@@ -121,8 +125,10 @@ ubsec_attach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->sc_qchip);
 	sc->sc_intrmask = BS_CTRL_MCR1INT | BS_CTRL_DMAERR;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) {
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)) {
 		sc->sc_intrmask |= BS_CTRL_MCR2INT;
 		sc->sc_5601 = 1;
 	}
@@ -185,8 +191,9 @@ ubsec_intr(arg)
 	void *arg;
 {
 	struct ubsec_softc *sc = arg;
-	u_int32_t stat;
+	volatile u_int32_t stat, a;
 	struct ubsec_q *q;
+	int npkts = 0;
 
 	stat = READ_REG(sc, BS_STAT);
 
@@ -194,58 +201,56 @@ ubsec_intr(arg)
 	if (stat == 0)
 		return (0);
 
+	WRITE_REG(sc, BS_STAT, stat);		/* IACK */
+
 	if (stat & BS_STAT_MCR1_DONE) {
-		q = SIMPLEQ_FIRST(&sc->sc_qchip);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
-		if (q) {
-			/* XXX must generate macbuf ... */
+		while (!SIMPLEQ_EMPTY(&sc->sc_qchip)) {
+			q = SIMPLEQ_FIRST(&sc->sc_qchip);
+			if ((q->q_mcr.mcr_flags & UBS_MCR_DONE) == 0)
+				break;
+			npkts++;
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
+#ifdef UBSEC_DEBUG
+			printf("intr: callback q %08x flags %04x\n", q,
+			    q->q_mcr.mcr_flags);
+#endif
 			ubsec_callback(sc, q, NULL);
 		}
-	}
-
-#if 0
-	if (stat & BS_STAT_MCR2_DONE) {
-		...
-	}
+#ifdef UBSEC_DEBUG
+		if (npkts > 1)
+			printf("intr: %d pkts\n", npkts);
 #endif
+	}
 
 	if (stat & BS_STAT_DMAERR) {
-		printf("%s: dmaerr\n", sc->sc_dv.dv_xname);
+		a = READ_REG(sc, BS_ERR);
+		printf("%s: dmaerr %s@%08x\n", sc->sc_dv.dv_xname,
+		       (a & BS_ERR_READ) ? "read" : "write",
+		       a & ~BS_ERR_READ);
 	}
 
-	/* if MCR is non-full, put a new command in it */
-	if ((stat & BS_STAT_MCR1_FULL) == 0) {
-		if (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
-			q = SIMPLEQ_FIRST(&sc->sc_queue);
-			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
-			--sc->sc_nqueue;
-			SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
-			WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_mcr));
-		}
-	}
-
-	WRITE_REG(sc, BS_STAT, stat);
+	ubsec_feed(sc);
 	return (1);
 }
 
 int
-ubsec_crypto(sc, q)
+ubsec_feed(sc)
 	struct ubsec_softc *sc;
-	struct ubsec_q *q;
 {
-	int s;
-	u_int32_t stat;
+	struct ubsec_q *q;
 
-	s = splnet();
-	stat = READ_REG(sc, BS_STAT);
-	if ((stat & BS_STAT_MCR1_FULL) == 0) {
+	while (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
+		if (READ_REG(sc, BS_STAT) & BS_STAT_MCR1_FULL)
+			break;
+		q = SIMPLEQ_FIRST(&sc->sc_queue);
 		WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_mcr));
+#ifdef UBSEC_DEBUG
+		printf("feed: q->chip %08x %08x\n", q, (u_int32_t)vtophys(&q->q_mcr));
+#endif
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+		--sc->sc_nqueue;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
-	} else {
-		SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
-		sc->sc_nqueue++;
 	}
-	splx(s);
 	return (0);
 }
 
@@ -314,7 +319,7 @@ ubsec_process(crp)
 	struct cryptop *crp;
 {
 	struct ubsec_q *q;
-	int card, err, i, j;
+	int card, err, i, j, s;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 	int encoffset = 0, macoffset = 0, sskip, dskip;
@@ -339,7 +344,8 @@ ubsec_process(crp)
 	}
 	bzero(q, sizeof(struct ubsec_q));
 
-	q->q_mcr.mcr_flags = 1 & UBS_MCR_PACKETS;
+	q->q_mcr.mcr_pkts = 1;
+	q->q_mcr.mcr_flags = 0;
 	q->q_mcr.mcr_cmdctxp = vtophys(&q->q_ctx);
 	q->q_sc = sc;
 	q->q_crp = crp;
@@ -468,12 +474,18 @@ ubsec_process(crp)
 		struct mbuf *m, *top, **mp;
 
 		totlen = q->q_dst_l = q->q_src_l;
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (q->q_src_m->m_flags & M_PKTHDR) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			M_COPY_PKTHDR(m, q->q_src_m);
+			len = MHLEN;
+		} else {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			len = MLEN;
+		}
 		if (m == NULL) {
 			err = ENOMEM;
 			goto errout;
 		}
-		len = MHLEN;
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
@@ -510,10 +522,18 @@ ubsec_process(crp)
 	q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa, q->q_dst_packp,
 	    q->q_dst_packl, MAX_SCATTER, NULL);
 
-	j = 0;
-	for (i = 0; i < q->q_src_npa; i++) {
+	q->q_mcr.mcr_pktlen = q->q_dst_l - sskip;
+
+#ifdef UBSEC_DEBUG
+	printf("src skip: %d\n", sskip);
+#endif
+	for (i = j = 0; i < q->q_src_npa; i++) {
 		struct ubsec_pktbuf *pb;
 
+#ifdef UBSEC_DEBUG
+		printf("  src[%d->%d]: %d@%x\n", i, j,
+		    q->q_src_packl[i], q->q_src_packp[i]);
+#endif
 		if (sskip) {
 			if (sskip >= q->q_src_packl[i]) {
 				sskip -= q->q_src_packl[i];
@@ -529,6 +549,9 @@ ubsec_process(crp)
 		else
 			pb = &q->q_srcpkt[j - 1];
 
+#ifdef UBSEC_DEBUG
+		printf("  pb v %08x p %08x\n", pb, vtophys(pb));
+#endif
 		pb->pb_addr = q->q_src_packp[i];
 		pb->pb_len = q->q_src_packl[i];
 
@@ -538,11 +561,29 @@ ubsec_process(crp)
 			pb->pb_next = vtophys(&q->q_srcpkt[j]);
 		j++;
 	}
+#ifdef UBSEC_DEBUG
+	printf("  buf[%x]: %d@%x -> %x\n", vtophys(&q->q_mcr),
+	    q->q_mcr.mcr_ipktbuf.pb_len,
+	    q->q_mcr.mcr_ipktbuf.pb_addr,
+	    q->q_mcr.mcr_ipktbuf.pb_next);
+	for (i = 0; i < j - 1; i++) {
+		printf("  buf[%x]: %d@%x -> %x\n", vtophys(&q->q_srcpkt[i]),
+		    q->q_srcpkt[i].pb_len,
+		    q->q_srcpkt[i].pb_addr,
+		    q->q_srcpkt[i].pb_next);
+	}
+#endif
 
-	j = 0;
-	for (i = 0; i < q->q_dst_npa; i++) {
+#ifdef UBSEC_DEBUG
+	printf("dst skip: %d\n", dskip);
+#endif
+	for (i = j = 0; i < q->q_dst_npa; i++) {
 		struct ubsec_pktbuf *pb;
 
+#ifdef UBSEC_DEBUG
+		printf("  dst[%d->%d]: %d@%x\n", i, j,
+		    q->q_dst_packl[i], q->q_dst_packp[i]);
+#endif
 		if (dskip) {
 			if (dskip >= q->q_dst_packl[i]) {
 				dskip -= q->q_dst_packl[i];
@@ -558,6 +599,9 @@ ubsec_process(crp)
 		else
 			pb = &q->q_dstpkt[j - 1];
 
+#ifdef UBSEC_DEBUG
+		printf("  pb v %08x p %08x\n", pb, vtophys(pb));
+#endif
 		pb->pb_addr = q->q_dst_packp[i];
 		pb->pb_len = q->q_dst_packl[i];
 
@@ -567,9 +611,26 @@ ubsec_process(crp)
 			pb->pb_next = vtophys(&q->q_dstpkt[j]);
 		j++;
 	}
+#ifdef UBSEC_DEBUG
+	printf("  buf[%d, %x]: %d@%x -> %x\n", 0,
+	    vtophys(&q->q_mcr),
+	    q->q_mcr.mcr_opktbuf.pb_len,
+	    q->q_mcr.mcr_opktbuf.pb_addr,
+	    q->q_mcr.mcr_opktbuf.pb_next);
+	for (i = 0; i < j - 1; i++) {
+		printf("  buf[%d, %x]: %d@%x -> %x\n", i+1,
+		    vtophys(&q->q_dstpkt[i]),
+		    q->q_dstpkt[i].pb_len,
+		    q->q_dstpkt[i].pb_addr,
+		    q->q_dstpkt[i].pb_next);
+	}
+#endif
 
-	/* queues it, or sends it to the chip */
-	ubsec_crypto(sc, q);
+	s = splnet();
+	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
+	sc->sc_nqueue++;
+	ubsec_feed(sc);
+	splx(s);
 	return (0);
 
 errout:
@@ -598,6 +659,7 @@ ubsec_callback(sc, q, macbuf)
 	}
 
 	if (macbuf != NULL) {
+		printf("copying macbuf\n");
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 			if (crd->crd_alg != CRYPTO_MD5_HMAC96 &&
 			    crd->crd_alg != CRYPTO_SHA1_HMAC96)
