@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.17 1998/12/19 19:07:33 millert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.18 1998/12/31 23:49:45 millert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -83,7 +83,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-CFLAGS+=	${COPTS} ${PIPE}
+CFLAGS+=	${COPTS}
 
 .if !defined(PICFLAG) && (${MACHINE_ARCH} != "mips")
 PICFLAG=-fpic

@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.17 1998/09/15 21:36:24 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.18 1998/12/31 23:49:46 millert Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -31,7 +31,7 @@ COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
-CFLAGS?=	-O2 ${DEBUG}
+CFLAGS?=	-O2 ${PIPE} ${DEBUG}
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
