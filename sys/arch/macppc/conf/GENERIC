@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2002/11/08 19:00:37 mickey Exp $g
+#	$OpenBSD: GENERIC,v 1.36 2002/11/21 16:53:27 jason Exp $g
 #
 # PPC GENERIC config file
 #
@@ -84,7 +84,10 @@ bmtphy*		at mii? phy ?			# Broadcom 10/100 PHYs
 eephy*		at mii? phy ?			# Marvell 88E1000 Gigabit PHYs
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
-hifn*		at pci? dev ? function ?	# Hifn7751
+# crypto
+lofn*		at pci? dev ? function ?	# Hifn6500
+hifn*		at pci? dev ? function ?	# Hifn7751/7811/7951
+ubsec*		at pci? dev ? function ?	# Broadcom 58xx
 
 macintr0	at macobio?			# old interrupt controller
 openpic0	at macobio?			# openpic interrupt controller
