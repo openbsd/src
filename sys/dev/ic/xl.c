@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.46 2002/11/25 16:07:08 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.47 2002/12/02 22:04:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -551,6 +551,7 @@ int xl_read_eeprom(sc, dest, off, cnt, swap)
 	int			err = 0, i;
 	u_int16_t		word = 0, *ptr;
 #define EEPROM_5BIT_OFFSET(A) ((((A) << 2) & 0x7F00) | ((A) & 0x003F))
+#define EEPROM_8BIT_OFFSET(A) ((A) & 0x003F)
 	/* WARNING! DANGER!
 	 * It's easy to accidentally overwrite the rom content!
 	 * Note: the 3c575 uses 8bit EEPROM offsets.
@@ -565,7 +566,8 @@ int xl_read_eeprom(sc, dest, off, cnt, swap)
 
 	for (i = 0; i < cnt; i++) {
 		if (sc->xl_flags & XL_FLAG_8BITROM)
-			CSR_WRITE_2(sc, XL_W0_EE_CMD, (2<<8) | (off + i ));
+			CSR_WRITE_2(sc, XL_W0_EE_CMD,
+			    XL_EE_8BIT_READ | EEPROM_8BIT_OFFSET(off + i));
 		else
 			CSR_WRITE_2(sc, XL_W0_EE_CMD,
 			    XL_EE_READ | EEPROM_5BIT_OFFSET(off + i));
@@ -762,6 +764,7 @@ void xl_setmode(sc, media)
 	struct xl_softc *sc;
 	int media;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int32_t icfg;
 	u_int16_t mediastat;
 
@@ -772,6 +775,7 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
 		if (IFM_SUBTYPE(media) == IFM_10_T) {
+			ifp->if_baudrate = IF_Mbps(10);
 			sc->xl_xcvr = XL_XCVR_10BT;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_10BT << XL_ICFG_CONNECTOR_BITS);
@@ -783,6 +787,7 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & XL_MEDIAOPT_BFX) {
 		if (IFM_SUBTYPE(media) == IFM_100_FX) {
+			ifp->if_baudrate = IF_Mbps(100);
 			sc->xl_xcvr = XL_XCVR_100BFX;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
@@ -793,6 +798,7 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
 		if (IFM_SUBTYPE(media) == IFM_10_5) {
+			ifp->if_baudrate = IF_Mbps(10);
 			sc->xl_xcvr = XL_XCVR_AUI;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_AUI << XL_ICFG_CONNECTOR_BITS);
@@ -801,6 +807,7 @@ void xl_setmode(sc, media)
 			mediastat |= ~XL_MEDIASTAT_SQEENB;
 		}
 		if (IFM_SUBTYPE(media) == IFM_10_FL) {
+			ifp->if_baudrate = IF_Mbps(10);
 			sc->xl_xcvr = XL_XCVR_AUI;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_AUI << XL_ICFG_CONNECTOR_BITS);
@@ -812,6 +819,7 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
 		if (IFM_SUBTYPE(media) == IFM_10_2) {
+			ifp->if_baudrate = IF_Mbps(10);
 			sc->xl_xcvr = XL_XCVR_COAX;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_COAX << XL_ICFG_CONNECTOR_BITS);
@@ -1701,7 +1709,7 @@ reload:
 			}
 		}
 		m_copydata(m_head, 0, m_head->m_pkthdr.len,	
-					mtod(m_new, caddr_t));
+		    mtod(m_new, caddr_t));
 		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
 		m_freem(m_head);
 		m_head = m_new;
@@ -2705,7 +2713,8 @@ xl_attach(sc)
 
 	if (sc->xl_flags & XL_FLAG_INVERT_MII_PWR) {
 		XL_SEL_WIN(2);
-		CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
+		CSR_WRITE_2(sc, XL_W2_RESET_OPTIONS, XL_RESETOPT_INVMIIPWR |
+		    CSR_READ_2(sc, XL_W2_RESET_OPTIONS));
 	}
 
 	DELAY(100000);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.14 2002/06/16 21:11:41 aaron Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.15 2002/12/02 22:04:39 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -35,6 +35,7 @@
  */
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
+#define XL_EE_8BIT_READ	0x0200	/* read, 8 bit address */
 #define XL_EE_WRITE	0x0040	/* write, 5 bit address */
 #define XL_EE_ERASE	0x00c0	/* erase, 5 bit address */
 #define XL_EE_EWEN	0x0030	/* erase, no data needed */
@@ -249,7 +250,7 @@
 #define XL_RESETOPT_TESTPDTPDR	0x0800
 #define XL_RESETOPT_TEST100TX	0x1000
 #define XL_RESETOPT_TEST100RX	0x2000
-
+#define	XL_RESETOPT_INVMIIPWR	0x4000		/* some 3c905Bs only */
 /*
  * Window 3 (fifo management)
  */
