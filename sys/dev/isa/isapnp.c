@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.17 1998/01/20 18:40:31 niklas Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.18 1998/06/02 18:23:33 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -598,7 +598,7 @@ isapnp_submatch(parent, match, aux)
 			 * ISA probe...
 			 */
 			if (isapnp_config(ipa->ia_iot, ipa->ia_memt, ipa)) {
-				printf ("%s: error in region allocation\n",
+				printf("%s: error in region allocation\n",
 				    cf->cf_driver->cd_name);
 				return (0);
 			}
