@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.142 2000/06/18 22:58:42 todd Exp $
+#	$OpenBSD: rc,v 1.143 2000/07/02 21:24:00 espie Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -439,6 +439,8 @@ if [ "X${sendmail_flags}" != X"NO" -a -s /etc/mail/sendmail.cf ]; then
 fi
 
 if [ "X${httpd_flags}" != X"NO"  ]; then
+	# Clean up left-over httpd locks
+	rm -f /var/www/logs/{ssl_mutex,httpd.lock,accept.lock}.*
 	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
 fi
 
