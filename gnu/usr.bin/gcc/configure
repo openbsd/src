@@ -1806,7 +1806,7 @@ for machine in $canon_build $canon_host $canon_target; do
 		fixincludes=Makefile.in
 		prefix=$native_prefix
 		;;
-	mips-r4kle-openbsd* | mips-arc-openbsd*)  # MIPS R4k running OpenBSD
+	mips64el-*-openbsd*)  		    # MIPS R4k running OpenBSD
 		tm_file=mips/openbsd-le.h
 		xm_file=mips/xm-openbsd.h
 		xmake_file=x-openbsd
@@ -1814,7 +1814,7 @@ for machine in $canon_build $canon_host $canon_target; do
 		fixincludes=Makefile.in
 		prefix=$native_prefix
 		;;
-	mips-r4kbe-openbsd*)  # MIPS R4k running OpenBSD
+	mips64-*-openbsd*)	    # MIPS R4k big-endian running OpenBSD
 		tm_file=mips/openbsd-be.h
 		xm_file=mips/xm-openbsd.h
 		xmake_file=x-openbsd
@@ -2156,7 +2156,7 @@ for machine in $canon_build $canon_host $canon_target; do
 		fixincludes=Makefile.in
 		xmake_file=x-netbsd
 		;;
-	ns32k-pc532-openbsd*)
+	ns32k-*-openbsd*)
 		tm_file=ns32k/openbsd.h
 		xm_file=ns32k/xm-openbsd.h
 		tmake_file=t-libc-ok
