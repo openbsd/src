@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.7 2001/02/05 00:02:32 deraadt Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.8 2001/02/06 05:22:02 provos Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -216,50 +216,55 @@ parse_getput_flags(const char **cpp, int *pflag)
 int
 get_pathname(const char **cpp, char **path)
 {
-	const char *quot, *cp = *cpp;
+	const char *cp = *cpp, *end;
+	char quot;
 	int i;
 
 	cp += strspn(cp, WHITESPACE);
 	if (!*cp) {
 		*cpp = cp;
 		*path = NULL;
-		return(0);
+
+		return (0);
 	}
 
 	/* Check for quoted filenames */
 	if (*cp == '\"' || *cp == '\'') {
-		quot = cp++;
-		for(i = 0; cp[i] && cp[i] != *quot; i++)
-			;
-		if (!cp[i]) {
+		quot = *cp++;
+		
+		end = strchr(cp, quot);
+		if (end == NULL) {
 			error("Unterminated quote");
-			*path = NULL;
-			return(-1);
+			goto fail;
 		}
-		if (i == 0) {
+
+		if (cp == end) {
 			error("Empty quotes");
-			*path = NULL;
-			return(-1);
+			goto fail;
 		}
-		*path = xmalloc(i + 1);
-		memcpy(*path, cp, i);
-		(*path)[i] = '\0';
-		cp += i + 1;
-		*cpp = cp + strspn(cp, WHITESPACE);
-		return(0);
+
+		*cpp = end + 1 + strspn(end + 1, WHITESPACE);
+	} else {
+		/* Read to end of filename */
+		end = strpbrk(cp, WHITESPACE);
+		if (end == NULL)
+			end = strchr(cp, '\0');
+
+		*cpp = end + strspn(end, WHITESPACE);
 	}
 
-	/* Read to end of filename */
-	for(i = 0; cp[i] && cp[i] != ' '; i++)
-		;
+	i = end - cp;
 
 	*path = xmalloc(i + 1);
 	memcpy(*path, cp, i);
 	(*path)[i] = '\0';
-	cp += i;
-	*cpp = cp + strspn(cp, WHITESPACE);
 
 	return(0);
+
+ fail:
+	*path = NULL;
+
+	return (-1);
 }
 
 int
@@ -428,7 +433,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 int
 parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 {
-	char *path1, *path2;
+	char *path1, *path2, *tmp;
 	int pflag, cmdnum;
 	unsigned long n_arg;
 	Attrib a, *aa;
@@ -471,8 +476,11 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_CHDIR:
 		path1 = make_absolute(path1, *pwd);
-		xfree(*pwd);
-		*pwd = do_realpath(in, out, path1);
+		tmp = do_realpath(in, out, path1);
+		if (tmp) {
+			xfree(*pwd);
+			*pwd = tmp;
+		}
 		break;
 	case I_LS:
 		path1 = make_absolute(path1, *pwd);
