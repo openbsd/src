@@ -11,5 +11,6 @@ isakmp_num.c
 isakmpd
 isakmpd.cat8
 isakmpd.conf.cat5
+isakmpd.policy.cat5
 isakmpd.core
 obj
