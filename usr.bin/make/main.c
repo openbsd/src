@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.51 2001/05/31 13:38:48 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.52 2001/06/03 16:33:48 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -586,6 +586,8 @@ main(argc, argv)
 	Lst_Init(create);
 	Lst_Init(&makefiles);
 	Lst_Init(&varstoprint);
+	Lst_Init(&targs);
+
 	beSilent = false;		/* Print commands as executed */
 	ignoreErrors = false;		/* Pay attention to non-zero returns */
 	noExecute = false;		/* Execute all commands */
@@ -743,7 +745,6 @@ main(argc, argv)
 	    /* Have now read the entire graph and need to make a list of targets
 	     * to create. If none was given on the command line, we consult the
 	     * parsing module to find the main target(s) to create.  */
-	    Lst_Init(&targs);
 	    if (Lst_IsEmpty(create))
 		Parse_MainName(&targs);
 	    else
@@ -769,10 +770,12 @@ main(argc, argv)
 	    }
 	}
 
+#ifdef CLEANUP
 	Lst_Destroy(&targs, NOFREE);
 	Lst_Destroy(&varstoprint, NOFREE);
 	Lst_Destroy(&makefiles, NOFREE);
 	Lst_Destroy(create, (SimpleProc)free);
+#endif
 
 	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
