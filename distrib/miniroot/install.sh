@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.123 2002/11/28 03:06:30 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.124 2002/11/28 04:50:45 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -315,8 +315,10 @@ fi
 
 mount_fs "-o async"
 
-ask_until "\nEnter system hostname (short form, e.g. 'foo'):"
-HOSTNAME=$resp
+# Use existing hostname, if any, as the default. Discard any
+# domain information supplied.
+ask_until "\nSystem hostname? (short form, e.g. 'foo')" "$(hostname -s)"
+HOSTNAME=${resp%%.*}
 FQDN=my.domain
 hostname $HOSTNAME.$FQDN
 
