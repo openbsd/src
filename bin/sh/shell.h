@@ -41,7 +41,6 @@
 /*
  * The follow should be set to reflect the type of system you have:
  *	JOBS -> 1 if you have Berkeley job control, 0 otherwise.
- *	SYMLINKS -> 1 if your system includes symbolic links, 0 otherwise.
  *	SHORTNAMES -> 1 if your linker cannot handle long names.
  *	define BSD if you are running 4.2 BSD or later.
  *	define SYSV if you are running under System V.
@@ -54,7 +53,6 @@
 
 
 #define JOBS 1
-#define SYMLINKS 1
 #ifndef BSD
 #define BSD 1
 #endif
