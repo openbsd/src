@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.23 2003/08/21 13:11:35 henning Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.24 2004/01/13 16:32:53 otto Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -3223,6 +3223,7 @@ int ap_create_etag_state(pool *pconf)
     }
 
     close (fd);
+    return (0);
 }
 
 int ap_read_etag_state(pool *pconf)
@@ -3271,6 +3272,7 @@ int ap_read_etag_state(pool *pconf)
           "could not properly close %s", filename);
         exit(-1);
     }
+    return (0);
 }
 
 API_EXPORT(void) ap_init_etag(pool *pconf)
