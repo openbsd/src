@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.38 2001/06/29 22:59:40 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.39 2001/07/01 05:42:05 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ udp_decode_ids (struct transport *t)
 		   sizeof ((struct udp_transport *)t)->dst,
 		   iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0)
     {
-      log_error ("udp_decode_ids: getnameinfo () failed");
+      log_print ("udp_decode_ids: getnameinfo () failed");
       strcpy (iddst, "<error>");
     }
 #else

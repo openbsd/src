@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2001/06/29 22:59:41 angelos Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2001/07/01 05:42:05 angelos Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -304,6 +304,8 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
       *address = malloc (strlen (buf) + 1);
       if (*address == NULL)
 	return -1;
+      strcpy (*address, buf);
+      return 0;
     }
   else
     switch (sa->sa_family)
@@ -377,7 +379,6 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 	strcpy (buf, "<error>");
       }
 	
-  strcpy (*address, buf);
   return 0;
 }
 
