@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.c,v 1.10 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: advlib.c,v 1.11 2004/01/10 00:13:36 brad Exp $	*/
 /*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -66,6 +66,8 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
