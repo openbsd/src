@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.52 1998/11/25 01:08:35 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.53 1998/11/27 10:51:54 form Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1779,7 +1779,7 @@ plist: install
 	  for f in `${MAKE} package-depends|sort -u`; do ${ECHO} "@pkgdep $$f"; done; \
 	  for f in `find ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
 	   ff=`${ECHO} $$f | ${SED} -e 's|^${PREFIX}/||'`; \
-	   if [ -d $$f ]; then dirs="$$ff $$dirs"; \
+	   if [ -d $$f -a ! -h $$f ]; then dirs="$$ff $$dirs"; \
 	   else \
 	    ${ECHO} $$ff; \
 	    if ${ECHO} $$f | ${GREP} -E -q -e '[^/]+\.so\.[0-9]+\.[0-9]+$$'; then \
