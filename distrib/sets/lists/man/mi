@@ -15,6 +15,10 @@
 ./usr/share/info/cvs.info-6
 ./usr/share/info/cvs.info-7
 ./usr/share/info/cvs.info-8
+./usr/share/info/gmp.info
+./usr/share/info/gmp.info-1
+./usr/share/info/gmp.info-2
+./usr/share/info/gmp.info-3
 ./usr/share/info/cvsclient.info
 ./usr/share/info/dir
 ./usr/share/info/g77.info
@@ -851,3 +855,6 @@
 ./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat3/pw_file.0
 ./usr/share/man/cat2/getpgid.0
+./usr/share/man/cat8/kprop.0
+./usr/share/man/cat8/kpropd.0
+./usr/share/man/cat8/safe_finger.0

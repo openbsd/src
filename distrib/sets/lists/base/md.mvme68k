@@ -282,6 +282,8 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/curses.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/db.ph
+./usr/lib/perl5/m68k-openbsd/5.003/des.ph
+./usr/lib/perl5/m68k-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/dirent.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/disktab.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/dlfcn.ph

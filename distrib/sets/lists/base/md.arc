@@ -12,9 +12,9 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.1/2.7.2.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.1/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.16.1
+./usr/lib/libc.so.16.4
 ./usr/lib/libcurses.so.3.1
-./usr/lib/libdes.so.5.0
+./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.0.0
 ./usr/lib/libkadm.so.4.0
@@ -91,6 +91,8 @@
 ./usr/lib/perl5/mips-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/mips-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/mips-openbsd/5.003/curses.ph
+./usr/lib/perl5/mips-openbsd/5.003/des.ph
+./usr/lib/perl5/mips-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/db.ph
 ./usr/lib/perl5/mips-openbsd/5.003/dirent.ph
 ./usr/lib/perl5/mips-openbsd/5.003/disktab.ph

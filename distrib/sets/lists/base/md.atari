@@ -3,9 +3,9 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.16.0
+./usr/lib/libc.so.16.4
 ./usr/lib/libcurses.so.3.1
-./usr/lib/libdes.so.5.0
+./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.0.0
 ./usr/lib/libg++.so.27.1

@@ -53,6 +53,7 @@
 ./usr/include/ddb/db_var.h
 ./usr/include/ddb/db_variables.h
 ./usr/include/ddb/db_watch.h
+./usr/include/des.h
 ./usr/include/dev/atapi
 ./usr/include/dev/atapi/atapi.h
 ./usr/include/dev/atapi/atapilink.h
@@ -164,6 +165,8 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
+./usr/include/dev/pci/if_fxpreg.h
+./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/pcmcia.h
 ./usr/include/dev/pcmcia/pcmcia_ioctl.h
@@ -202,6 +205,7 @@
 ./usr/include/frame.h
 ./usr/include/fstab.h
 ./usr/include/fts.h
+./usr/include/gmp.h
 ./usr/include/g++/ACG.h
 ./usr/include/g++/AllocRing.h
 ./usr/include/g++/Binomial.h
@@ -531,7 +535,6 @@
 ./usr/include/iso646.h
 ./usr/include/kerberosIV/acl.h
 ./usr/include/kerberosIV/com_err.h
-./usr/include/kerberosIV/des.h
 ./usr/include/kerberosIV/kadm.h
 ./usr/include/kerberosIV/kadm_err.h
 ./usr/include/kerberosIV/kafs.h
@@ -723,6 +726,7 @@
 ./usr/include/rpc/rpc.h
 ./usr/include/rpc/rpc_msg.h
 ./usr/include/rpc/svc.h
+./usr/include/rpc/rpc_des.h
 ./usr/include/rpc/svc_auth.h
 ./usr/include/rpc/types.h
 ./usr/include/rpc/xdr.h
@@ -950,6 +954,7 @@
 ./usr/lib/crt0.o
 ./usr/lib/gcc-lib
 ./usr/lib/gcrt0.o
+./usr/lib/libgmp.a
 ./usr/lib/libacl.a
 ./usr/lib/libacl_p.a
 ./usr/lib/libc.a
@@ -1413,7 +1418,8 @@
 ./usr/share/man/cat3/des_read_2password.0
 ./usr/share/man/cat3/des_read_password.0
 ./usr/share/man/cat3/des_read_pw_string.0
-./usr/share/man/cat3/des_set_key_schedule.0
+./usr/share/man/cat3/des_set_key.0
+./usr/share/man/cat3/inet_net.0
 ./usr/share/man/cat3/des_set_odd_parity.0
 ./usr/share/man/cat3/des_setkey.0
 ./usr/share/man/cat3/des_string_to_2key.0
