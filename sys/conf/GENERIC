@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 1997/07/01 23:13:16 provos Exp $
+#	$OpenBSD: GENERIC,v 1.24 1997/09/02 04:04:12 downsj Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -21,8 +21,7 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-option		COMPAT_09	# NetBSD 0.9,
+option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,
 option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
