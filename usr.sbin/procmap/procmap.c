@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.2 2004/02/16 08:57:58 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.3 2004/02/17 20:13:53 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -878,8 +878,10 @@ load_name_cache(kvm_t *kd)
 
 	_KDEREF(kd, nchash_addr, &nchash, sizeof(nchash));
 	nchashtbl = malloc(sizeof(nchashtbl) * (int)nchash);
+	if (nchashtbl == NULL)
+		err(1, "load_name_cache");
 	_KDEREF(kd, nchashtbl_addr, nchashtbl,
-		sizeof(nchashtbl) * (int)nchash);
+	    sizeof(nchashtbl) * (int)nchash);
 
 	ncpp = &_ncpp;
 
@@ -919,14 +921,15 @@ cache_enter(struct namecache *ncp)
 		       ncp->nc_dvpid, ncp->nc_vpid);
 
 	ce = malloc(sizeof(struct cache_entry));
+	if (ce == NULL)
+		err(1, "cache_enter");
 	
 	ce->ce_vp = ncp->nc_vp;
 	ce->ce_pvp = ncp->nc_dvp;
 	ce->ce_cid = ncp->nc_vpid;
 	ce->ce_pcid = ncp->nc_dvpid;
 	ce->ce_nlen = ncp->nc_nlen;
-	strncpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
-	ce->ce_name[MIN(ce->ce_nlen, sizeof(ce->ce_name) - 1)] = '\0';
+	strlcpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
 
 	LIST_INSERT_HEAD(&lcache, ce, ce_next);
 }
