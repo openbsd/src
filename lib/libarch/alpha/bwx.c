@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.3 2002/08/24 17:21:44 matthieu Exp $ */
+/* $OpenBSD: bwx.c,v 1.4 2003/10/06 22:29:45 miod Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -182,30 +182,31 @@ static void *
 bwx_map_memory(u_int32_t address, u_int32_t size)
 {
 	struct bwx_mem_handle *h;
+	size_t sz = (size_t)size << 5;
 
 	h = malloc(sizeof(struct bwx_mem_handle));
 	if (h == NULL) return NULL;
 	bwx_open_mem();
-	h->virt1 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
+	h->virt1 = mmap(0, sz, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    mem_fd, bwx_mem_base + BWX_EV56_INT1 + address);
 	if (h->virt1 == MAP_FAILED) {
 		bwx_close_mem();
 		free(h);
 		return NULL;
 	}
-	h->virt2 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
+	h->virt2 = mmap(0, sz, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    mem_fd, bwx_mem_base + BWX_EV56_INT2 + address);
 	if (h->virt2 == MAP_FAILED) {
-		munmap(h->virt1, size);
+		munmap(h->virt1, sz);
 		bwx_close_mem();
 		free(h);
 		return NULL;
 	}
-	h->virt4 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
+	h->virt4 = mmap(0, sz, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    mem_fd, bwx_mem_base + BWX_EV56_INT4 + address);
 	if (h->virt4 == MAP_FAILED) {
-		munmap(h->virt1, size);
-		munmap(h->virt2, size);
+		munmap(h->virt1, sz);
+		munmap(h->virt2, sz);
 		bwx_close_mem();
 		free(h);
 		return NULL;
@@ -218,10 +219,11 @@ static void
 bwx_unmap_memory(void *handle, u_int32_t size)
 {
 	struct bwx_mem_handle *h = handle;
+	size_t sz = (size_t)size << 5;
 
-	munmap(h->virt1, size);
-	munmap(h->virt2, size);
-	munmap(h->virt4, size);
+	munmap(h->virt1, sz);
+	munmap(h->virt2, sz);
+	munmap(h->virt4, sz);
 	free(h);
 }
 
