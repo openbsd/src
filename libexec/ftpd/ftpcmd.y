@@ -359,6 +359,9 @@ cmd
 					help(sitetab, (char *) 0);
 			} else
 				help(cmdtab, $3);
+
+		        if ($3 != NULL)
+		        	free ($3);
 		}
 	| NOOP CRLF
 		{
@@ -395,6 +398,9 @@ cmd
 	| SITE SP HELP SP STRING CRLF
 		{
 			help(sitetab, $5);
+
+			if ($5 != NULL)
+				free ($5);
 		}
 	| SITE SP UMASK check_login CRLF
 		{
