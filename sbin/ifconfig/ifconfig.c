@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.130 2005/01/20 17:47:38 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.131 2005/02/15 19:45:22 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.130 2005/01/20 17:47:38 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.131 2005/02/15 19:45:22 reyk Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,7 @@ void	setifnwid(const char *, int);
 void	setifbssid(const char *, int);
 void	setifnwkey(const char *, int);
 void	setifchan(const char *, int);
+void	setiftxpower(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifpowersavesleep(const char *, int);
 void	setifnetmask(const char *, int);
@@ -330,6 +331,8 @@ const struct	cmd {
 	{ "pppoeac",	NEXTARG,	0,		setpppoe_ac },
 	{ "-pppoeac",	1,		0,		setpppoe_ac },
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
+	{ "txpower",	NEXTARG,	0,		setiftxpower },
+	{ "-txpower",	1,		0,		setiftxpower },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
@@ -1290,6 +1293,31 @@ setifchan(const char *val, int d)
 		warn("SIOCS80211CHANNEL");
 }
 
+#ifndef SMALL
+void
+setiftxpower(const char *val, int d)
+{
+	const char *errmsg = NULL;
+	struct ieee80211_txpower txpower;
+	int dbm;
+
+	strlcpy(txpower.i_name, name, sizeof(txpower.i_name));
+
+	if (d == 1) {
+		txpower.i_mode = IEEE80211_TXPOWER_MODE_AUTO;
+	} else {
+		dbm = strtonum(val, SHRT_MIN, SHRT_MAX, &errmsg);
+		if (errmsg)
+			errx(1, "txpower %sdBm: %s", val, errmsg);
+		txpower.i_val = (int16_t)dbm;
+		txpower.i_mode = IEEE80211_TXPOWER_MODE_FIXED;
+	}
+
+	if (ioctl(s, SIOCS80211TXPOWER, (caddr_t)&txpower) == -1)
+		warn("SIOCS80211TXPOWER");
+}
+#endif
+
 /* ARGSUSED */
 void
 setifpowersave(const char *val, int d)
@@ -1331,12 +1359,13 @@ setifpowersavesleep(const char *val, int d)
 void
 ieee80211_status(void)
 {
-	int len, i, nwkey_verbose, inwid, inwkey, ichan, ipwr, ibssid;
+	int len, i, nwkey_verbose, inwid, inwkey, ichan, ipwr, ibssid, itxpower;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey nwkey;
 	struct ieee80211_power power;
 	struct ieee80211chanreq channel;
 	struct ieee80211_bssid bssid;
+	struct ieee80211_txpower txpower;
 	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 	struct ether_addr ea;
@@ -1363,9 +1392,13 @@ ieee80211_status(void)
 	strlcpy(bssid.i_name, name, sizeof(bssid.i_name));
 	ibssid = ioctl(s, SIOCG80211BSSID, &bssid);
 
+	memset(&txpower, 0, sizeof(txpower));
+	strlcpy(txpower.i_name, name, sizeof(txpower.i_name));
+	itxpower = ioctl(s, SIOCG80211TXPOWER, &txpower);
+
 	/* check if any ieee80211 option is active */
 	if (inwid == 0 || inwkey == 0 || ipwr == 0 ||
-	    ichan == 0 || ibssid == 0)
+	    ichan == 0 || ibssid == 0 || itxpower == 0)
 		fputs("\tieee80211: ", stdout);
 	else
 		return;
@@ -1452,6 +1485,11 @@ ieee80211_status(void)
 
 	if (ipwr == 0 && power.i_enabled)
 		printf("powersave on (%dms sleep) ", power.i_maxsleep);
+
+	if (itxpower == 0)
+		printf("%ddBm %s", txpower.i_val, 
+		    txpower.i_mode == IEEE80211_TXPOWER_MODE_AUTO ? 
+		    "(auto) " : "");
 
 	putchar('\n');
 }
@@ -3303,8 +3341,8 @@ usage(int value)
 	    "\t[media type] [[-]mediaopt opts] [mode mode] [instance minst]\n"
 	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
 	    "\t[nwid id] [nwkey key] [nwkey persist[:key]] [-nwkey]\n"
-	    "\t[bssid bssid] [-bssid] [chan n] [-chan]\n"
-	    "\t[[-]powersave] [powersavesleep duration]\n"
+	    "\t[bssid bssid] [-bssid] [chan n] [-chan] [txpower dBm]\n"
+	    "\t[-txpower] [[-]powersave] [powersavesleep duration]\n"
 #ifdef INET6
 	    "\t[[-]anycast] [eui64] [pltime n] [vltime n] [[-]tentative]\n"
 #endif
