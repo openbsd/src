@@ -1,9 +1,14 @@
+#	$NetBSD$
+
+# mvme88k-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}
+maxpartitions 8
+
 maxusers 2 8 64
 
 device 	mainbus at root {}
 file	arch/m88k/dev/mb.c
-
-# this should be removed after bringup
 
 device	bugtty at mainbus: tty
 file	arch/m88k/dev/bugtty.c bugtty needs-count
