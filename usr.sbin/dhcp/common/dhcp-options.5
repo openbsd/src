@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.9 2003/06/25 09:27:57 jmc Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.10 2004/04/03 20:22:35 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -130,7 +130,6 @@ These options may be followed either by a string, enclosed in quotes, or by
 a series of octets, expressed as two-digit hexadecimal numbers separated
 by colons.
 For example:
-.Pp
 .Bd -literal -offset indent
 option option-133 "my-option-133-text";
 option option-129 1:54:c9:2b:47;
@@ -439,7 +438,6 @@ are configurable to be configured as described in RFC 1001/1002.
 The value is specified as a single octet which identifies the client type.
 .Pp
 Possible node types are:
-.Pp
 .Bl -tag -width Ds
 .It 1
 B-node: Broadcast - no WINS

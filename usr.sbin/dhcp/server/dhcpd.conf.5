@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.10 2003/06/25 09:27:57 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.11 2004/04/03 20:22:35 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -265,7 +265,6 @@ name supplied to these hosts:
 Also, given the domain they're in, these are probably test machines.
 If we wanted to test the DHCP leasing mechanism, we might set the
 lease timeout somewhat shorter than the default:
-.Pp
 .Bd -literal -offset indent
 max-lease-time 120;
 default-lease-time 120;
@@ -300,7 +299,6 @@ These terminals come in a variety of models, and you want to specify the
 boot files for each model.
 One way to do this would be to have host declarations for each server
 and group them by model:
-.Pp
 .Bd -literal -offset indent
 group {
   filename "Xncd19r";
@@ -332,7 +330,6 @@ group {
 The
 .Ic shared-network
 statement
-.Pp
 .Bd -unfilled -offset indent
 .Ic shared-network Ar name No {
 .Pf \ \&\ \& Op Ar parameters
@@ -368,7 +365,6 @@ name, enclosed in quotes.
 The
 .Ic subnet
 statement
-.Pp
 .Bd -unfilled -offset indent
 .Ic subnet Ar subnet-number Ic netmask Ar netmask No {
 .Pf \ \&\ \& Op Ar parameters
@@ -433,7 +429,6 @@ can be omitted.
 The
 .Ic host
 statement
-.Pp
 .Bd -unfilled -offset indent
 .Ic host Ar hostname No {
 .Pf \ \&\ \& Op Ar parameters
@@ -497,7 +492,6 @@ the BOOTP protocol.
 The
 .Ic group
 statement
-.Pp
 .Bd -unfilled -offset indent
 .Ic group No {
 .Pf \ \&\ \& Op Ar parameters
@@ -522,7 +516,6 @@ to various sorts of requests.
 The
 .Ar unknown-clients
 keyword
-.Pp
 .Bd -literal -offset indent
 allow unknown-clients;
 deny unknown-clients;
@@ -538,7 +531,6 @@ Dynamic address assignment to unknown clients is allowed by default.
 The
 .Ar bootp
 keyword
-.Pp
 .Bd -literal -offset indent
 allow bootp;
 deny bootp;
@@ -554,7 +546,6 @@ Bootp queries are allowed by default.
 The
 .Ar booting
 keyword
-.Pp
 .Bd -literal -offset indent
 allow booting;
 deny booting;
@@ -783,7 +774,6 @@ parameter is true in a given scope, then for every host declaration within
 that scope, the name provided for the host declaration will be supplied to
 the client as its hostname.
 So, for example,
-.Pp
 .Bd -literal -offset indent
 group {
   use-host-decl-names on;
@@ -796,7 +786,6 @@ group {
 .Ed
 .Pp
 is equivalent to
-.Pp
 .Bd -literal -offset indent
  host joe {
 hardware ethernet 08:00:2b:4c:29:32;
