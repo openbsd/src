@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.27 2000/04/15 11:45:57 aaron Exp $
+.\"	$OpenBSD: init.8,v 1.28 2000/08/20 18:42:39 millert Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -221,6 +221,21 @@ If, at bootstrap time, the
 .Nm
 process cannot be located, the system will panic with the message
 .Dq panic: "init died (signal %d, exit %d) .
+.Sh RESOURCES
+When
+.Nm
+spawns a process it sets the process priority, umask, and resource
+limits based on
+.Pa /etc/login.conf .
+When starting the
+.Xr rc 8
+files, the login class
+.Dq daemon
+is used.  When starting a window system or
+.Xr getty 8 ,
+the login class
+.Dq default
+is used.  No resource changes are made when entering single user mode.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "getty repeating too quickly on port %s, sleeping"
@@ -262,6 +277,7 @@ script run at shutdown time
 .Xr login 1 ,
 .Xr sh 1 ,
 .Xr fbtab 5 ,
+.Xr login.conf 5 ,
 .Xr ttys 5 ,
 .Xr securelevel 7 ,
 .Xr crash 8 ,

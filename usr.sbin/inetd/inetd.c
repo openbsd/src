@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.67 2000/08/03 11:33:37 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.68 2000/08/20 18:42:42 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.67 2000/08/03 11:33:37 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.68 2000/08/20 18:42:42 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -163,6 +163,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.67 2000/08/03 11:33:37 itojun Exp $
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <login_cap.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpcsvc/nfs_prot.h>
@@ -560,19 +561,21 @@ main(argc, argv, envp)
 					/* a user running private inetd */
 					if (uid != pwd->pw_uid)
 						_exit(1);
-				} else if (pwd->pw_uid) {
-					if (setlogin(sep->se_user) < 0)
-						syslog(LOG_ERR,
-						    "%s: setlogin: %m",
-						    sep->se_service);
-					if (sep->se_group)
+				} else {
+					tmpint = LOGIN_SETALL &
+					    ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
+					if (sep->se_group) {
 						pwd->pw_gid = grp->gr_gid;
-					(void) setgid((gid_t)pwd->pw_gid);
-					initgroups(pwd->pw_name, pwd->pw_gid);
-					(void) setuid((uid_t)pwd->pw_uid);
-				} else if (sep->se_group) {
-					(void) setgid(grp->gr_gid);
-					(void) setgroups(1, &grp->gr_gid);
+						tmpint |= LOGIN_SETGROUP;
+					}
+					if (pwd->pw_uid)
+						tmpint |= LOGIN_SETLOGIN;
+					if (setusercontext(0, pwd, pwd->pw_uid,
+					    tmpint) < 0)
+						syslog(LOG_ERR,
+						    "%s/%s: setusercontext: %m",
+						    sep->se_service,
+						    sep->se_proto);
 				}
 				if (debug)
 					fprintf(stderr, "%d execl %s\n",
@@ -585,13 +588,6 @@ main(argc, argv, envp)
 				close(ctrl);
 				dup2(0, 1);
 				dup2(0, 2);
-#ifdef RLIMIT_NOFILE
-				if (rlim_ofile.rlim_cur != rlim_ofile_cur) {
-					if (setrlimit(RLIMIT_NOFILE,
-					    &rlim_ofile) < 0)
-						syslog(LOG_ERR,"setrlimit: %m");
-				}
-#endif
 				closelog();
 				for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
 					(void)close(tmpint);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: skeyaudit.c,v 1.8 1998/06/21 22:14:02 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.9 2000/08/20 18:42:40 millert Exp $	*/
 
 /*
- * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/wait.h>
+
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -38,14 +42,10 @@
 #include <unistd.h>
 #include <skey.h>
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/wait.h>
-
 extern char *__progname;
 
-void notify __P((char *, uid_t, gid_t, int, int));
-FILE *runsendmail __P((char *, uid_t, gid_t, int *));
+void notify __P((struct passwd *, int, int));
+FILE *runsendmail __P((struct passwd *, int *));
 void usage __P((void));
 
 int
@@ -97,7 +97,7 @@ main(argc, argv)
 				continue;
 			if (left >= limit)
 				continue;
-			notify(key.logname, pw->pw_uid, pw->pw_gid, left, iflag);
+			notify(pw, left, iflag);
 		}
 		if (ch == -1)
 			errx(-1, "cannot open %s", _PATH_SKEYKEYS);
@@ -125,17 +125,15 @@ main(argc, argv)
 		(void)fclose(key.keyfile);
 
 		if (!errs && left < limit)
-			notify(name, pw->pw_uid, pw->pw_gid, left, iflag);
+			notify(pw, left, iflag);
 	}
 		
 	exit(errs);
 }
 
 void
-notify(user, uid, gid, seq, interactive)
-	char *user;
-	uid_t uid;
-	gid_t gid;
+notify(pw, seq, interactive)
+	struct passwd *pw;
 	int seq;
 	int interactive;
 {
@@ -150,11 +148,11 @@ notify(user, uid, gid, seq, interactive)
 	if (interactive)
 		out = stdout;
 	else
-		out = runsendmail(user, uid, gid, &pid);
+		out = runsendmail(pw, &pid);
 
 	if (!interactive)
 		(void)fprintf(out,
-		    "To: %s\nSubject: IMPORTANT action required\n", user);
+		   "To: %s\nSubject: IMPORTANT action required\n", pw->pw_name);
 
 	(void)fprintf(out,
 "\nYou are nearing the end of your current S/Key sequence for account\n\
@@ -162,7 +160,7 @@ notify(user, uid, gid, seq, interactive)
 Your S/key sequence number is now %d.  When it reaches zero\n\
 you will no longer be able to use S/Key to login into the system.\n\n\
 Type \"skeyinit -s\" to reinitialize your sequence number.\n\n",
-user, hostname, seq);
+pw->pw_name, hostname, seq);
 
 	(void)fclose(out);
 	if (!interactive)
@@ -170,10 +168,8 @@ user, hostname, seq);
 }
 
 FILE *
-runsendmail(user, uid, gid, pidp)
-	char *user;
-	uid_t uid;
-	gid_t gid;
+runsendmail(pw, pidp)
+	struct passwd *pw;
 	int *pidp;
 {
 	FILE *fp;
@@ -193,12 +189,10 @@ runsendmail(user, uid, gid, pidp)
 		(void)close(pfd[0]);
 
 		/* Run sendmail as target user not root */
-		initgroups(user, gid);
-		setegid(gid);
-		setgid(gid);
-		setlogin(user);
-		seteuid(uid);
-		setuid(uid);
+		if (setusercontext(NULL, pw, pw->pw_uid, LOGIN_SETALL) != 0) {
+			warn("cannot set user context");
+			_exit(127);
+		}
 
 		execl(_PATH_SENDMAIL, "sendmail", "-t", NULL);
 		warn("cannot run \"%s -t\"", _PATH_SENDMAIL);

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getty.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: getty.8,v 1.5 1999/07/09 13:35:50 aaron Exp $
+.\"	$Id: getty.8,v 1.6 2000/08/20 18:42:38 millert Exp $
 .\"
 .Dd June 4, 1993
 .Dt GETTY 8
@@ -96,6 +96,14 @@ program
 can be set to timeout after some interval,
 which will cause dial up lines to hang up
 if the login name is not entered reasonably quickly.
+.Sh RESOURCES
+.Nm
+is started by
+.Xr init 8 ,
+with a process priority, umask, and resource limits based on the
+.Dq default
+entry in
+.Pa /etc/login.conf .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ttyxx: No such device or address."
@@ -119,6 +127,7 @@ does not exist.
 .Xr ioctl 2 ,
 .Xr tty 4 ,
 .Xr gettytab 5 ,
+.Xr login.conf 5 ,
 .Xr ttys 5 ,
 .Xr init 8
 .Sh HISTORY

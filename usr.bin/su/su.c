@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.32 2000/06/30 16:00:21 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.33 2000/08/20 18:42:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.32 2000/06/30 16:00:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.33 2000/08/20 18:42:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.32 2000/06/30 16:00:21 millert Exp $";
 #include <err.h>
 #include <errno.h>
 #include <grp.h>
+#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -70,14 +71,14 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.32 2000/06/30 16:00:21 millert Exp $";
 
 int kerberos __P((char *username, char *user, int uid));
 
-#define	ARGSTR	"-Kflm"
+#define	ARGSTR	"-Kc:flm"
 
 int use_kerberos = 1;
 char krbtkfile[MAXPATHLEN];
 char lrealm[REALM_SZ];
 int ksettkfile(char *);
 #else
-#define	ARGSTR	"-flm"
+#define	ARGSTR	"-c:flm"
 #endif
 
 char   *ontty __P((void));
@@ -93,11 +94,14 @@ main(argc, argv)
 	register char *p, **g;
 	struct group *gr;
 	uid_t ruid;
+	login_cap_t *lc;
 	int asme, ch, asthem, fastlogin, prio;
-	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell = NULL, *avshell, *username, **np;
+	enum { UNSET, YES, NO } iscsh;
+	char *user, *shell, *avshell, *username, *class, **np;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
+	iscsh = UNSET;
+	shell = class = NULL;
 	asme = asthem = fastlogin = 0;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch((char)ch) {
@@ -106,6 +110,9 @@ main(argc, argv)
 			use_kerberos = 0;
 			break;
 #endif
+		case 'c':
+			class = optarg;
+			break;
 		case 'f':
 			fastlogin = 1;
 			break;
@@ -162,6 +169,15 @@ main(argc, argv)
 		errx(1, "unknown login %s", user);
 	if ((user = strdup(pwd->pw_name)) == NULL)
 		err(1, "can't allocate memory");
+
+	/* If the user specified a login class and we are root, use it */
+	if (ruid && class)
+		errx(1, "only the superuser may specify a login class");
+	if (class)
+		pwd->pw_class = class;
+	if ((lc = login_getclass(pwd->pw_class)) == NULL)
+		errx(1, "no such login class: %s",
+		    class ? class : LOGIN_DEFCLASS);
 
 #if KERBEROS
 	if (ksettkfile(user))
@@ -230,33 +246,27 @@ badlogin:
 	if (iscsh == UNSET)
 		iscsh = strcmp(avshell, "csh") ? NO : YES;
 
-	/* set permissions */
-	if (setegid(pwd->pw_gid) < 0)
-		err(1, "setegid");
-	if (setgid(pwd->pw_gid) < 0)
-		err(1, "setgid");
-	if (initgroups(user, pwd->pw_gid))
-		err(1, "initgroups failed");
-	if (seteuid(pwd->pw_uid) < 0)
-		err(1, "seteuid");
-	if (setuid(pwd->pw_uid) < 0)
-		err(1, "setuid");
-
 	if (!asme) {
 		if (asthem) {
 			p = getenv("TERM");
 			if ((environ = calloc(1, sizeof (char *))) == NULL)
 				errx(1, "calloc");
-			(void)setenv("PATH", _PATH_DEFPATH, 1);
+			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
+				err(1, "unable to set user context");
 			if (p)
 				(void)setenv("TERM", p, 1);
 
 			seteuid(pwd->pw_uid);
 			setegid(pwd->pw_gid);
 			if (chdir(pwd->pw_dir) < 0)
-				errx(1, "no directory");
+				err(1, "%s", pwd->pw_dir);
 			seteuid(0);
 			setegid(0);	/* XXX use a saved gid instead? */
+		} else if (pwd->pw_uid == 0) {
+			/* XXX - this seems questionable to me */
+			if (setusercontext(lc,
+			    pwd, pwd->pw_uid, LOGIN_SETPATH|LOGIN_SETUMASK))
+				err(1, "unable to set user context");
 		}
 		if (asthem || pwd->pw_uid) {
 			(void)setenv("LOGNAME", pwd->pw_name, 1);
@@ -298,6 +308,10 @@ badlogin:
 		    username, user, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
+	if (setusercontext(lc, pwd, pwd->pw_uid,
+	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
+		err(1, "unable to set user context");
 
 	execv(shell, np);
 	err(1, "%s", shell);

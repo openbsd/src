@@ -17,7 +17,7 @@
 
 /* config.h - configurables for Vixie Cron
  *
- * $Id: config.h,v 1.4 1999/08/29 08:51:55 millert Exp $
+ * $Id: config.h,v 1.5 2000/08/20 18:42:42 millert Exp $
  */
 
 #if !defined(_PATH_SENDMAIL)
@@ -87,3 +87,6 @@
 			 * places.
 			 */
 #define SYSLOG	 			/*-*/
+
+			/* if your OS supports a BSD-style login.conf file */
+#define LOGIN_CAP	 		/*-*/

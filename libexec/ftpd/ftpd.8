@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.33 2000/08/17 17:08:02 brad Exp $
+.\"	$OpenBSD: ftpd.8,v 1.34 2000/08/20 18:42:37 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -62,8 +62,12 @@ service specification; see
 Available options:
 .Bl -tag -width Ds
 .It Fl A
-Permit only anonymous ftp connections or accounts listed in
-.Pa /etc/ftpchroot .
+Permit only anonymous ftp connections, accounts listed in
+.Pa /etc/ftpchroot
+or users in a login class with the
+.Dq ftp-chroot
+variable set (see
+.Xr login.conf 5 ) .
 Other connection attempts are refused.
 .It Fl d
 Debugging information is written to the syslog using LOG_FTP.
@@ -416,6 +420,19 @@ only used for anonymous downloads.  Unused fields exist only for compatility
 with other
 .Nm ftpd
 implementations.
+.Sh LOGIN.CONF VARIABLES
+The
+.Nm
+daemon uses the following ftp specific parameters:
+.Bl -tag -width ftp-chroot
+.It Pa ftp-chroot
+A boolean value.
+If set, users in this class will be automatically chrooted to login
+directory for the user.
+.It Pa ftp-dir
+A path to a directory.
+This value overrides the login directory for the users of this class.
+.El
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact
 .It Pa /etc/ftpusers

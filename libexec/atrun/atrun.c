@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.8 1999/08/06 20:41:05 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.9 2000/08/20 18:42:37 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -48,6 +48,7 @@
 #include <utmp.h>
 
 #include <paths.h>
+#include <login_cap.h>
 
 /* Local headers */
 
@@ -67,7 +68,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.8 1999/08/06 20:41:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.9 2000/08/20 18:42:37 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -295,22 +296,13 @@ run_file(filename, uid, gid)
 		if (queue > 'b')
 		    nice(queue - 'b');
 
-		if (initgroups(pentry->pw_name, pentry->pw_gid) < 0)
-			perr("Cannot init group list");
-
-		if (setegid(pentry->pw_gid) < 0 || setgid(pentry->pw_gid) < 0)
-			perr("Cannot change primary group");
-
-		if (setlogin(pentry->pw_name) < 0)
-			perr("Cannot set login name");
-
-		if (seteuid(uid) < 0 || setuid(uid) < 0)
-			perr("Cannot set user id");
+		if (setusercontext(0, pentry, pentry->pw_uid, LOGIN_SETALL) < 0)
+			perr("Cannot set user context");
 
 		if (chdir(pentry->pw_dir) < 0)
 			chdir("/");
 
-		if (execle("/bin/sh", "sh", (char *)NULL, nenvp) != 0)
+		if (execle(_PATH_BSHELL, "sh", NULL, nenvp) != 0)
 			perr("Exec failed for /bin/sh");
 
 		PRIV_END
@@ -340,17 +332,8 @@ run_file(filename, uid, gid)
 
 		PRIV_START
 
-		if (initgroups(pentry->pw_name, pentry->pw_gid))
-			perr("Cannot init group list");
-
-		if (setegid(gid) < 0 || setgid(gid) < 0)
-			perr("Cannot change primary group");
-
-		if (setlogin(pentry->pw_name) < 0)
-			perr("Cannot set login name");
-
-		if (seteuid(uid) < 0 || setuid(uid) < 0)
-			perr("Cannot set user id");
+		if (setusercontext(0, pentry, pentry->pw_uid, LOGIN_SETALL) < 0)
+			perr("Cannot set user context");
 
 		if (chdir(pentry->pw_dir))
 			chdir("/");

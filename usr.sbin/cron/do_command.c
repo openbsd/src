@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.7 2000/06/03 15:36:38 millert Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.8 2000/08/20 18:42:42 millert Exp $";
 #endif
 
 
@@ -27,6 +27,9 @@ static char rcsid[] = "$Id: do_command.c,v 1.7 2000/06/03 15:36:38 millert Exp $
 #endif
 #if defined(SYSLOG)
 # include <syslog.h>
+#endif
+#if defined(LOGIN_CAP)
+# include <login_cap.h>
 #endif
 
 
@@ -221,12 +224,44 @@ child_process(e, u)
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
 		 */
+# ifdef LOGIN_CAP
+		{
+			struct passwd *pwd;
+			char *ep, *np;
+
+			/* XXX - should just pass in a login_cap_t * */
+			pwd = getpwuid(e->uid);
+			if (pwd == NULL) {
+				fprintf(stderr, "getpwuid: couldn't get entry for %d\n", e->uid);
+				_exit(ERROR_EXIT);
+			}
+			if (setusercontext(0, pwd, e->uid, LOGIN_SETALL) < 0) {
+				fprintf(stderr, "setusercontext failed for %d\n", e->uid);
+				_exit(ERROR_EXIT);
+			}
+			/* If no PATH specified in crontab file but
+			 * we just added on via login.conf, add it to
+			 * the crontab environment.
+			 */
+			if (env_get("PATH", e->envp) == NULL &&
+			    (ep = getenv("PATH"))) {
+				np = malloc(strlen(ep) + 6);
+				if (np) {
+				    strcpy(np, "PATH=");
+				    strcat(np, ep);
+				    e->envp = env_set(e->envp, np);
+				}
+			}
+		}
+		
+# else
 		setgid(e->gid);
-# if defined(BSD)
+#  if defined(BSD)
 		initgroups(env_get("LOGNAME", e->envp), e->gid);
-# endif
+#  endif
 		setlogin(usernm);
 		setuid(e->uid);		/* we aren't root after this... */
+# endif
 		chdir(env_get("HOME", e->envp));
 
 		/* exec the command.

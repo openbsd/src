@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.31 2000/03/09 14:59:12 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.32 2000/08/20 18:42:38 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,7 @@ static char *rcsid = "$Id: rshd.c,v 1.31 2000/03/09 14:59:12 deraadt Exp $";
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -72,11 +73,13 @@ static char *rcsid = "$Id: rshd.c,v 1.31 2000/03/09 14:59:12 deraadt Exp $";
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <login_cap.h>
 
 int	keepalive = 1;
 int	check_all;
 int	log_success;		/* If TRUE, log all successful accesses */
 int	sent_null;
+login_cap_t *lc;
 
 void	 doit __P((struct sockaddr *));
 void	 error __P((const char *, ...));
@@ -194,14 +197,8 @@ main(argc, argv)
 	return 0;
 }
 
-char	username[20] = "USER=";
-char	logname[23] = "LOGNAME=";
-char	homedir[64] = "HOME=";
-char	shell[64] = "SHELL=";
-char	path[100] = "PATH=";
-char	*envinit[] =
-	    {homedir, shell, path, logname, username, 0};
-char	**environ;
+char	*envinit[1] = { 0 };
+extern char **environ;
 
 void
 doit(fromp)
@@ -485,6 +482,15 @@ doit(fromp)
 			errorstr = "Permission denied.\n";
 		goto fail;
 	}
+	lc = login_getclass(pwd->pw_class);
+	if (lc == NULL) {
+		syslog(LOG_INFO|LOG_AUTH,
+		    "%s@%s as %s: unknown class. cmd='%.80s'",
+		    remuser, hostname, locuser, cmdbuf);
+		if (errorstr == NULL)
+			errorstr = "Login incorrect.\n";
+		goto fail;
+	}
 
 	setegid(pwd->pw_gid);
 	seteuid(pwd->pw_uid);
@@ -693,7 +699,7 @@ fail:
 			    FD_ISSET(pv[0], &readfrom));
 			exit(0);
 		}
-		setpgrp(0, getpid());
+		setsid();
 		(void) close(s);
 		(void) close(pv[0]);
 #ifdef CRYPT
@@ -709,24 +715,19 @@ fail:
 #endif
 		dup2(pv[1], 2);
 		close(pv[1]);
-	}
+	} else
+		setsid();
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
-#if	BSD > 43
-	if (setlogin(pwd->pw_name) < 0)
-		syslog(LOG_ERR, "setlogin() failed: %m");
-#endif
-	(void) setegid((gid_t)pwd->pw_gid);
-	(void) setgid((gid_t)pwd->pw_gid);
-	initgroups(pwd->pw_name, pwd->pw_gid);
-	(void) seteuid((uid_t)pwd->pw_uid);
-	(void) setuid((uid_t)pwd->pw_uid);
+
 	environ = envinit;
-	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
-	strcat(path, _PATH_DEFPATH);
-	strncat(shell, pwd->pw_shell, sizeof(shell)-7);
-	strncat(logname, pwd->pw_name, sizeof(logname)-9);
-	strncat(username, pwd->pw_name, sizeof(username)-6);
+	setenv("HOME", pwd->pw_dir, 1);
+	setenv("SHELL", pwd->pw_shell, 1);
+	setenv("USER", pwd->pw_name, 1);
+	setenv("LOGNAME", pwd->pw_name, 1);
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
+		errx(1, "cannot set user context");
+
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;

@@ -5,6 +5,7 @@ BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
 MAN=	sshd.8
+CFLAGS+=-DHAVE_LOGIN_CAP
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	pty.c log-server.c login.c servconf.c serverloop.c \

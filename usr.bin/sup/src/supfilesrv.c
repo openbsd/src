@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.17 2000/02/01 03:23:40 deraadt Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.18 2000/08/20 18:42:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -184,6 +184,10 @@
 #ifdef __SVR4
 # include <sys/mkdev.h>
 # include <sys/statvfs.h>
+#endif
+
+#ifdef HAS_LOGIN_CAP
+# include <login_cap.h>
 #endif
 
 #include "supcdefs.h"
@@ -1641,6 +1645,10 @@ int fileuid,filegid;
 	if (setuid ((uid_t)pwd->pw_uid) < 0)
 		logerr ("setuid: %%m");
 #else   /* CMUCS */
+#ifdef HAS_LOGIN_CAP
+	if (setusercontext(NULL, pwd, pwd->pw_uid, LOGIN_SETALL) < 0)
+		return("Error setting user context");
+#else
 	if (initgroups (pwd->pw_name,pwd->pw_gid) < 0)
 		return("Error setting group list");
 	if (setegid (pwd->pw_gid) < 0)
@@ -1655,6 +1663,7 @@ int fileuid,filegid;
 		logerr ("seteuid: %%m");
 	if (setuid (pwd->pw_uid) < 0)
 		logerr ("setuid: %%m");
+#endif	/* HAS_LOGIN_CAP */
 #endif	/* CMUCS */
 	return (NULL);
 }

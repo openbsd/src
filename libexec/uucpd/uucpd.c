@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.15 2000/02/01 03:23:23 deraadt Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.16 2000/08/20 18:42:38 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -66,6 +66,7 @@ static char rcsid[] = "$Id: uucpd.c,v 1.15 2000/02/01 03:23:23 deraadt Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <login_cap.h>
 #include "pathnames.h"
 
 void doit __P((struct sockaddr_in *));
@@ -210,12 +211,10 @@ struct sockaddr_in *sinp;
 	(void) snprintf(Username, sizeof(Username), "USER=%s", user);
 	(void) snprintf(Loginname, sizeof(Loginname), "LOGNAME=%s", user);
 	dologin(pw, sinp);
-	setlogin(user);
-	setegid(pw->pw_gid);
-	setgid(pw->pw_gid);
-	initgroups(pw->pw_name, pw->pw_gid);
-	seteuid(pw->pw_uid);
-	setuid(pw->pw_uid);
+	if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) != 0) {
+		perror("unable to set user context");
+		return;
+	}
 	chdir(pw->pw_dir);
 	execl(_PATH_UUCICO, "uucico", (char *)0);
 	perror("uucico server: execl");

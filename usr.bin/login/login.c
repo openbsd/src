@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.29 2000/07/17 16:43:14 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.30 2000/08/20 18:42:39 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.29 2000/07/17 16:43:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.30 2000/08/20 18:42:39 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -63,6 +63,7 @@ static char rcsid[] = "$OpenBSD: login.c,v 1.29 2000/07/17 16:43:14 millert Exp 
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <login_cap.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -106,20 +107,22 @@ extern void log_failedlogin __P((uid_t, char *, char *, char *));
 /*
  * This bounds the time given to login.  Not a define so it can
  * be patched on machines where it's too small.
+ * XXX - should be a login.conf variable!
  */
-u_int	timeout = 300;
+u_int		timeout = 300;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
-int	notickets = 1;
-char	*instance;
-char	*krbtkfile_env;
-int	authok;
+int		notickets = 1;
+char		*instance;
+char		*krbtkfile_env;
+int		authok;
 #endif
 
-struct	passwd *pwd;
-int	failures;
-char	term[64], *hostname, *tty;
-char	*username = NULL, *rusername = NULL;
+struct	passwd	*pwd;
+login_cap_t	*lc = NULL;
+int		failures;
+char		term[64], *hostname, *tty;
+char		*username = NULL, *rusername = NULL;
 
 int
 main(argc, argv)
@@ -133,7 +136,7 @@ main(argc, argv)
 	struct utmp utmp;
 	int ask, ch, cnt, fflag, hflag, pflag, uflag, quietlog, rootlogin, rval;
 	uid_t uid;
-	char *domain, *p, *salt, *ttyn;
+	char *domain, *p, *salt, *ttyn, *shell;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
 
@@ -270,6 +273,9 @@ main(argc, argv)
 			salt = pwd->pw_passwd;
 		else
 			salt = "xx";
+		lc = login_getclass(pwd ? pwd->pw_class : LOGIN_DEFCLASS);
+		if (!lc)
+		    err(1, "unable to get login class");
 
 		/*
 		 * If we have a valid account name, and it doesn't have a
@@ -394,14 +400,26 @@ main(argc, argv)
 
 	if (chdir(pwd->pw_dir) < 0) {
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
+		if (login_getcapbool(lc, "requirehome", 0))
+			exit(1);
 		if (chdir("/"))
 			exit(0);
 		pwd->pw_dir = "/";
 		(void)printf("Logging in with home = \"/\".\n");
 	}
 
+	shell = login_getcapstr(lc, "shell", pwd->pw_shell, pwd->pw_shell);
+	if (*shell == '\0')
+		shell = _PATH_BSHELL;
+	else if (strlen(shell) >= MAXPATHLEN) {
+		syslog(LOG_ERR, "shell path too long: %s", shell);
+		warnx("invalid shell");
+		sleepexit(1);
+	}
+
 	quietlog = ((strcmp(pwd->pw_shell, "/sbin/nologin") == 0) ||
-			(access(_PATH_HUSHLOGIN, F_OK) == 0));
+	    login_getcapbool(lc, "hushlogin", 0) ||
+	    (access(_PATH_HUSHLOGIN, F_OK) == 0));
 
 	seteuid(0);
 	setegid(0);	/* XXX use a saved gid instead? */
@@ -412,8 +430,9 @@ main(argc, argv)
 		if (tp.tv_sec >= pwd->pw_change) {
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
-		} else if (pwd->pw_change - tp.tv_sec <
-		    2 * DAYSPERWEEK * SECSPERDAY && !quietlog)
+		} else if (!quietlog && pwd->pw_change - tp.tv_sec <
+		    login_getcaptime(lc, "password-warn", 
+		    2 * DAYSPERWEEK * SECSPERDAY, 2 * DAYSPERWEEK * SECSPERDAY))
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
 	}
@@ -421,8 +440,9 @@ main(argc, argv)
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
-		} else if (pwd->pw_expire - tp.tv_sec <
-		    2 * DAYSPERWEEK * SECSPERDAY && !quietlog)
+		} else if (!quietlog &&pwd->pw_expire - tp.tv_sec <
+		    login_getcaptime(lc, "expire-warn", 
+		    2 * DAYSPERWEEK * SECSPERDAY, 2 * DAYSPERWEEK * SECSPERDAY))
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
 	}
@@ -450,13 +470,6 @@ main(argc, argv)
 	if (krbtkfile_env)
 	    dofork();
 #endif
-	(void)setegid(pwd->pw_gid);
-	(void)setgid(pwd->pw_gid);
-
-	initgroups(username, pwd->pw_gid);
-
-	if (*pwd->pw_shell == '\0')
-		pwd->pw_shell = _PATH_BSHELL;
 
 	/* Destroy environment unless user has requested its preservation. */
 	if (!pflag) {
@@ -474,14 +487,14 @@ main(argc, argv)
 		}
 		*cpp2 = 0;
 	}
+	/* Note: setusercontext(3) will set PATH */
 	(void)setenv("HOME", pwd->pw_dir, 1);
-	(void)setenv("SHELL", pwd->pw_shell, 1);
+	(void)setenv("SHELL", shell, 1);
 	if (term[0] == '\0')
 		(void)strlcpy(term, stypeof(tty), sizeof(term));
 	(void)setenv("TERM", term, 0);
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
 	(void)setenv("USER", pwd->pw_name, 1);
-	(void)setenv("PATH", _PATH_DEFPATH, 0);
 	if (hostname)
 		(void)setenv("REMOTEHOST", hostname, 1);
 	if (rusername)
@@ -494,7 +507,6 @@ main(argc, argv)
 	if (krbtkfile_env)
 		(void)setenv("KRB5CCNAME", krbtkfile_env, 1);
 #endif
-
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0) {
 		if (hostname)
@@ -531,25 +543,21 @@ main(argc, argv)
 	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
-	(void)strlcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
-	    p + 1 : pwd->pw_shell, sizeof tbuf - 1);
-
-	if (setlogin(pwd->pw_name) < 0)
-		syslog(LOG_ERR, "setlogin() failure: %m");
+	(void)strlcpy(tbuf + 1, (p = strrchr(shell, '/')) ?
+	    p + 1 : shell, sizeof tbuf - 1);
 
 	/* Discard permissions last so can't get killed and drop core. */
-	if (rootlogin)
-		(void) setuid(0);
-	else {
-		(void) seteuid(pwd->pw_uid);
-		(void) setuid(pwd->pw_uid);
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL)) {
+		warn("unable to set user context");
+		exit(1);
 	}
+
 #ifdef KERBEROS
 	kgettokens(pwd->pw_dir);
 #endif
 
-	execlp(pwd->pw_shell, tbuf, 0);
-	err(1, "%s", pwd->pw_shell);
+	execlp(shell, tbuf, 0);
+	err(1, "%s", shell);
 }
 
 int
@@ -646,8 +654,11 @@ motd()
 	int fd, nchars;
 	sig_t oldint;
 	char tbuf[8192];
+	char *motd;
 
-	if ((fd = open(_PATH_MOTDFILE, O_RDONLY, 0)) < 0)
+	motd = login_getcapstr(lc, "welcome", _PATH_MOTDFILE, _PATH_MOTDFILE);
+
+	if ((fd = open(motd, O_RDONLY, 0)) < 0)
 		return;
 	oldint = signal(SIGINT, sigint);
 	if (setjmp(motdinterrupt) == 0)
@@ -678,12 +689,17 @@ void
 checknologin()
 {
 	int fd, nchars;
+	char *nologin;
 	char tbuf[8192];
 
-	if ((fd = open(_PATH_NOLOGIN, O_RDONLY, 0)) >= 0) {
-		while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
-			(void)write(fileno(stdout), tbuf, nchars);
-		sleepexit(0);
+	if (!login_getcapbool(lc, "ignorenologin", 0)) {
+		nologin = login_getcapstr(lc, "nologin", _PATH_NOLOGIN,
+		    _PATH_NOLOGIN);
+		if ((fd = open(nologin, O_RDONLY, 0)) >= 0) {
+			while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
+				(void)write(fileno(stdout), tbuf, nchars);
+			sleepexit(0);
+		}
 	}
 }
 
@@ -756,7 +772,8 @@ stypeof(ttyid)
 {
 	struct ttyent *t;
 
-	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : UNKNOWN);
+	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type :
+	    login_getcapstr(lc, "term", UNKNOWN, UNKNOWN));
 }
 
 void
@@ -773,6 +790,5 @@ sighup(signum)
 {
 	if (username)
 		badlogin(username);
-
-	exit(W_EXITCODE(0, signum));
+	exit(0);
 }

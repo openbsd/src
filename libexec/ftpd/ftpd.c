@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.77 2000/07/05 22:15:10 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.78 2000/08/20 18:42:37 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <fcntl.h>
 #include <glob.h>
 #include <limits.h>
+#include <login_cap.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <setjmp.h>
@@ -189,6 +190,7 @@ char	*guestpw;
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
+static  login_cap_t *lc;
 
 #if defined(TCPWRAPPERS)
 int	allow_severity = LOG_INFO;
@@ -673,6 +675,7 @@ sgetpwnam(name)
 		free(save.pw_name);
 		memset(save.pw_passwd, 0, strlen(save.pw_passwd));
 		free(save.pw_passwd);
+		free(save.pw_class);
 		free(save.pw_gecos);
 		free(save.pw_dir);
 		free(save.pw_shell);
@@ -680,6 +683,7 @@ sgetpwnam(name)
 	save = *p;
 	save.pw_name = sgetsave(p->pw_name);
 	save.pw_passwd = sgetsave(p->pw_passwd);
+	save.pw_class = sgetsave(p->pw_class);
 	save.pw_gecos = sgetsave(p->pw_gecos);
 	save.pw_dir = sgetsave(p->pw_dir);
 	save.pw_shell = sgetsave(p->pw_shell);
@@ -707,6 +711,11 @@ user(name)
 {
 	char *cp, *shell;
 
+	if (lc) {
+		login_close(lc);
+		lc = NULL;
+	}
+
 	if (logged_in) {
 		if (guest) {
 			reply(530, "Can't change user from guest login.");
@@ -726,6 +735,7 @@ user(name)
 		else if ((pw = sgetpwnam("ftp")) != NULL) {
 			guest = 1;
 			askpasswd = 1;
+			lc = login_getclass(pw->pw_class);
 			reply(331,
 			    "Guest login ok, type your name as password.");
 		} else
@@ -757,6 +767,7 @@ user(name)
 			pw = (struct passwd *) NULL;
 			return;
 		}
+		lc = login_getclass(pw->pw_class);
 	}
 	if (logging) {
 		strncpy(curname, name, sizeof(curname)-1);
@@ -827,6 +838,8 @@ end_login()
 			logout(utmp.ut_line);
 	}
 	pw = NULL;
+	setusercontext(NULL, getpwuid(0), (uid_t)0,
+	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES|LOGIN_SETUMASK);
 	logged_in = 0;
 	guest = 0;
 	dochroot = 0;
@@ -839,7 +852,7 @@ pass(passwd)
 	int rval;
 	FILE *fp;
 	static char homedir[MAXPATHLEN];
-	char rootdir[MAXPATHLEN];
+	char *dir, rootdir[MAXPATHLEN];
 	sigset_t allsigs;
 
 	if (logged_in || askpasswd == 0) {
@@ -909,7 +922,9 @@ skip:
 		reply(550, "Can't set gid.");
 		return;
 	}
-	(void) initgroups(pw->pw_name, pw->pw_gid);
+	(void) umask(defumask);		/* may be overridden by login.conf */
+	setusercontext(lc, pw, (uid_t)0,
+	    LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES|LOGIN_SETUMASK);
 
 	/* open wtmp before chroot */
 	ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
@@ -931,7 +946,12 @@ skip:
 
 	logged_in = 1;
 
-	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
+	dochroot = login_getcapbool(lc, "ftp-chroot", 0) ||
+	    checkuser(_PATH_FTPCHROOT, pw->pw_name);
+	if ((dir = login_getcapstr(lc, "ftp-dir", NULL, NULL))) {
+		free(pw->pw_dir);
+		pw->pw_dir = sgetsave(dir);
+	}
 	if (guest || dochroot) {
 		if (multihome && guest) {
 			struct stat ts;
@@ -978,7 +998,7 @@ skip:
 		goto bad;
 	}
 	sigfillset(&allsigs);
-	sigprocmask(SIG_UNBLOCK,&allsigs,NULL);
+	sigprocmask(SIG_UNBLOCK, &allsigs, NULL);
 
 	/*
 	 * Set home directory so that use of ~ (tilde) works correctly.
@@ -1005,7 +1025,7 @@ skip:
 		if (ident != NULL)
 			free(ident);
 		ident = strdup(passwd);
-		if (ident == (char *)NULL)
+		if (ident == NULL)
 			fatal("Ran out of memory.");
 		reply(230, "Guest login ok, access restrictions apply.");
 #ifdef HASSETPROCTITLE
@@ -1029,10 +1049,13 @@ skip:
 			syslog(LOG_INFO, "FTP LOGIN FROM %s as %s",
 			    remotehost, pw->pw_name);
 	}
-	(void) umask(defumask);
+	login_close(lc);
+	lc = NULL;
 	return;
 bad:
 	/* Forget all about it... */
+	login_close(lc);
+	lc = NULL;
 	end_login();
 }
 

@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.60 2000/08/19 18:48:11 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.61 2000/08/20 18:42:40 millert Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -480,6 +480,7 @@ main(int ac, char **av)
 	pwcopy.pw_passwd = xstrdup(pw->pw_passwd);
 	pwcopy.pw_uid = pw->pw_uid;
 	pwcopy.pw_gid = pw->pw_gid;
+	pwcopy.pw_class = xstrdup(pw->pw_class);
 	pwcopy.pw_dir = xstrdup(pw->pw_dir);
 	pwcopy.pw_shell = xstrdup(pw->pw_shell);
 	pw = &pwcopy;

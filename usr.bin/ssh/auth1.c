@@ -4,7 +4,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.2 2000/04/29 18:11:52 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.3 2000/08/20 18:42:40 millert Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -429,6 +429,7 @@ do_authentication()
 	pwcopy.pw_passwd = xstrdup(pw->pw_passwd);
 	pwcopy.pw_uid = pw->pw_uid;
 	pwcopy.pw_gid = pw->pw_gid;
+	pwcopy.pw_class = xstrdup(pw->pw_class);
 	pwcopy.pw_dir = xstrdup(pw->pw_dir);
 	pwcopy.pw_shell = xstrdup(pw->pw_shell);
 	pw = &pwcopy;

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.12 1999/08/17 09:13:13 millert Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.13 2000/08/20 18:42:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ static char rcsid[] = "$Id: rexecd.c,v 1.12 1999/08/17 09:13:13 millert Exp $";
 #include <string.h>
 #include <syslog.h>
 #include <paths.h>
+#include <login_cap.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -64,13 +65,10 @@ static char rcsid[] = "$Id: rexecd.c,v 1.12 1999/08/17 09:13:13 millert Exp $";
 /*VARARGS1*/
 void error __P(());
 
-char	username[20] = "USER=";
-char	homedir[sizeof("HOME=")+MAXPATHLEN] = "HOME=";
-char	shell[sizeof("SHELL=")+MAXPATHLEN] = "SHELL=";
-char	path[sizeof("PATH=") + sizeof(_PATH_DEFPATH)] = "PATH=";
-char	*envinit[] = { homedir, shell, path, username, NULL };
-char	**environ;
 char	*remote;
+char	*envinit[1];
+extern char **environ;
+login_cap_t *lc;
 
 struct	sockaddr_in asin = { AF_INET };
 
@@ -158,6 +156,11 @@ doit(f, fromp)
 	pwd = getpwnam(user);
 	if (pwd == NULL) {
 		error("Permission denied.\n");
+		exit(1);
+	}
+	lc = login_getclass(pwd->pw_class);
+	if (lc == NULL) {
+		error("Login class incorrect.\n");
 		exit(1);
 	}
 	endpwent();
@@ -255,21 +258,15 @@ doit(f, fromp)
 		pwd->pw_shell = _PATH_BSHELL;
 	if (f > 2)
 		(void) close(f);
-	if (setlogin(pwd->pw_name) == -1 ||
-	    setegid((gid_t)pwd->pw_gid) == -1 ||
-	    setgid((gid_t)pwd->pw_gid) == -1 ||
-	    initgroups(pwd->pw_name, pwd->pw_gid) == -1 ||
-	    seteuid((uid_t)pwd->pw_uid) == -1 ||
-	    setuid((uid_t)pwd->pw_uid) == -1) {
-		error("failed to setup.\n");
-		exit(1);
-	}
-		
-	(void)strcat(path, _PATH_DEFPATH);
+
 	environ = envinit;
-	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
-	strncat(shell, pwd->pw_shell, sizeof(shell)-7);
-	strncat(username, pwd->pw_name, sizeof(username)-6);
+	setenv("HOME", pwd->pw_dir, 1);
+	setenv("SHELL", pwd->pw_shell, 1);
+	setenv("LOGNAME", pwd->pw_name, 1);
+	setenv("USER", pwd->pw_name, 1);
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
+		err(1, "unable to set user context");
+
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;

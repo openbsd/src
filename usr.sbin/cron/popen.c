@@ -24,12 +24,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.5 1999/08/30 10:45:37 millert Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.6 2000/08/20 18:42:42 millert Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 
 #include "cron.h"
 #include <signal.h>
+#if defined(LOGIN_CAP)
+# include <login_cap.h>
+#endif
 
 
 #define MAX_ARGS 100
@@ -122,13 +125,27 @@ cron_popen(program, type, e)
 			(void)close(pdes[1]);
 		}
 		if (e) {
+#if defined(LOGIN_CAP)
+			struct passwd *pwd;
+
+			pwd = getpwuid(e->uid);
+			if (pwd == NULL) {
+				fprintf(stderr, "getpwuid: couldn't get entry for %d\n", e->uid);
+				_exit(ERROR_EXIT);
+			}
+			if (setusercontext(0, pwd, e->uid, LOGIN_SETALL) < 0) {
+				fprintf(stderr, "setusercontext failed for %d\n", e->uid);
+				_exit(ERROR_EXIT);
+			}
+#else
 			setgid(e->gid);
-#if defined(BSD)
+# if defined(BSD)
 			initgroups(env_get("LOGNAME", e->envp), e->gid);
-#endif
+# endif
 			setlogin(env_get("LOGNAME", e->envp));
 			setuid(e->uid);
 			chdir(env_get("HOME", e->envp));
+#endif
 		}
 #if WANT_GLOBBING
 		execvp(gargv[0], gargv);
