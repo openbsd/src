@@ -1,8 +1,8 @@
-/*	$OpenBSD: param.h,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: param.h,v 1.2 2004/08/10 18:51:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -42,7 +42,7 @@
 #define MACHINE_ARCH	"mips64"
 #define _MACHINE_ARCH	mips64
 
-#define MID_MACHINE	0	/* None but has to be defined */
+#define MID_MACHINE	MID_MIPS64	/* None but has to be defined */
 
 #include <mips64/param.h>
 
