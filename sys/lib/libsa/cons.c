@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.5 1997/07/17 23:26:07 mickey Exp $	*/
+/*	$OpenBSD: cons.c,v 1.6 1997/08/04 20:31:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,14 +32,18 @@
  *
  */
 
+#include <sys/types.h>
+#include <dev/cons.h>
 #include "stand.h"
 
 static const struct consw *console = &consw[0];
+int consdev;
 
 int
 cons_probe()
 {
 	int i, f = 0;
+	consdev = CN_NORMAL;
 	for (i = 0; i < ncons; i++) {
 		if ((consw[i].cn_probe)() != 0) {
 			if (f == 0)
