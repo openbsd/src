@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.10 1997/06/17 20:34:43 kstailey Exp $	*/
+/*	$OpenBSD: arch.c,v 1.11 1997/10/13 14:47:14 pefo Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.10 1997/06/17 20:34:43 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.11 1997/10/13 14:47:14 pefo Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,8 @@ static void ArchFree __P((ClientData));
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
 #if defined(__svr4__) || defined(__SVR4) || \
-    (defined(__OpenBSD__) && defined(__mips))
+    (defined(__OpenBSD__) && defined(__mips)) || \
+    (defined(__OpenBSD__) && defined(__powerpc))
 #define SVR4ARCHIVES
 static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
 #endif
