@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 1998/03/16 03:07:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 1998/09/07 00:47:12 niklas Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
 
 SUBDIR=
@@ -22,14 +22,14 @@ SUBDIR+=afslog
 .endif
 
 build:
-	(cd ${.CURDIR}/include && ${MAKE} includes)
+	(cd ${.CURDIR}/include && ${SUDO} ${MAKE} includes)
 	${MAKE} cleandir
-	${MAKE} includes
-	(cd ${.CURDIR}/acl && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/krb && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/kadm && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/kafs && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/kdb && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	${SUDO} ${MAKE} includes
+	(cd ${.CURDIR}/acl && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
+	(cd ${.CURDIR}/krb && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
+	(cd ${.CURDIR}/kadm && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
+	(cd ${.CURDIR}/kafs && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
+	(cd ${.CURDIR}/kdb && ${MAKE} depend && ${MAKE} && ${SUDO} ${MAKE} install)
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
