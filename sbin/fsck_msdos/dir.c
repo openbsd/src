@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.5 1996/09/18 06:59:03 mickey Exp $	*/
+/*	$OpenBSD: dir.c,v 1.6 1997/02/28 08:36:11 millert Exp $	*/
 /*	$NetBSD: dir.c,v 1.1.4.1 1996/05/31 18:41:38 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.5 1996/09/18 06:59:03 mickey Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.6 1997/02/28 08:36:11 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -167,7 +167,7 @@ fullpath(dir)
 			break;
 		memcpy(cp, np, nl);
 		*--cp = '/';
-	} while (dir = dir->parent);
+	} while ((dir = dir->parent));
 	if (dir != NULL && dir->parent != NULL)
 		*--cp = '?';
 	return cp;
@@ -238,7 +238,7 @@ finishDosDirSection()
 	}
 	pendingDirectories = 0;
 	for (d = rootDir; d; d = nd) {
-		if (nd = d->child) {
+		if ((nd = d->child)) {
 			d->child = 0;
 			continue;
 		}
@@ -498,7 +498,7 @@ readDosDirSection(f, boot, fat, dir)
 					vallfn = p;
 					valcl = cl;
 				} else if (shortSum != p[13]
-					   || lidx != *p & LRNOMASK) {
+					   || lidx != (*p & LRNOMASK)) {
 					if (!invlfn) {
 						invlfn = vallfn;
 						invcl = valcl;

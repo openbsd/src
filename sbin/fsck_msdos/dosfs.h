@@ -1,5 +1,5 @@
-/*	$OpenBSD: dosfs.h,v 1.3 1996/06/23 14:30:42 deraadt Exp $	*/
-/*	$NetBSD: dosfs.h,v 1.1.4.1 1996/05/31 18:41:42 jtc Exp $	*/
+/*	$OpenBSD: dosfs.h,v 1.4 1997/02/28 08:36:11 millert Exp $	*/
+/*	$NetBSD: dosfs.h,v 1.4 1997/01/03 14:32:48 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -73,6 +73,7 @@ struct bootblock {
 	/* Now some statistics: */
 	u_int	NumFiles;		/* # of plain files */
 	u_int	NumFree;		/* # of free clusters */
+	u_int	NumBad;			/* # of bad clusters */
 };
 
 struct fatEntry {

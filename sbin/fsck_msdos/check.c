@@ -1,5 +1,5 @@
-/*	$OpenBSD: check.c,v 1.3 1996/06/23 14:30:41 deraadt Exp $	*/
-/*	$NetBSD: check.c,v 1.1.4.1 1996/05/31 18:41:33 jtc Exp $	*/
+/*	$OpenBSD: check.c,v 1.4 1997/02/28 08:36:10 millert Exp $	*/
+/*	$NetBSD: check.c,v 1.6 1997/01/03 14:32:48 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.3 1996/06/23 14:30:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.4 1997/02/28 08:36:10 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -154,9 +154,15 @@ checkfilesys(fname)
 	free(fat);
 	close(dosfs);
 
-	pwarn("%d files, %d free (%d clusters)\n",
-	      boot.NumFiles, boot.NumFree * boot.ClusterSize / 1024,
-	      boot.NumFree);
+	if (boot.NumBad)
+		pwarn("%d files, %d free (%d clusters), %d bad (%d clusters)\n",
+		      boot.NumFiles,
+		      boot.NumFree * boot.ClusterSize / 1024, boot.NumFree,
+		      boot.NumBad * boot.ClusterSize / 1024, boot.NumBad);
+	else
+		pwarn("%d files, %d free (%d clusters)\n",
+		      boot.NumFiles,
+		      boot.NumFree * boot.ClusterSize / 1024, boot.NumFree);
 	if (mod & (FSFATAL | FSERROR))
 		return 8;
 	if (mod) {
