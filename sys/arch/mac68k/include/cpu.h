@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2001/05/08 17:30:40 aaron Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2001/08/20 19:49:03 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -304,8 +304,6 @@ u_int	get_mapping __P((void));
 /* locore.s */
 void	m68881_restore __P((struct fpframe *));
 void	m68881_save __P((struct fpframe *));
-u_int   getsfc __P((void));
-u_int   getdfc __P((void));
 void	TBIA __P((void));
 void	TBIAS __P((void));
 void	TBIS __P((vm_offset_t));
