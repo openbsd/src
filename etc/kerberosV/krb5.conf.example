@@ -1,0 +1,74 @@
+# $OpenBSD: krb5.conf.example,v 1.1 2001/09/20 22:17:01 hin Exp $
+#
+# Example Kerberos 5 configuration file. You need to change the defaults
+# in this file to match your environment.
+#
+# See krb5.conf(5) and the heimdal infopage for more information.
+#
+# Normally, the realm should be your DNS domain name with uppercase
+# letters. In this example file, we've written the realm as MY.REALM
+# and the domain as my.domain to make it clear what we refer to.
+
+[libdefaults]
+	# Set the realm of this host here
+        default_realm = MY.REALM
+
+	# Maximum allowed time difference between KDC and this host
+	clockskew = 300
+
+	# Use DNS to convert Kerberos 4 host instances
+	v4_instance_resolve = yes
+
+	# Get Kerberos 4 tickets in kauth, login et al.
+	krb4_get_tickets = yes
+
+
+[realms]
+	HIN.NU = {
+		# Specify KDC here
+		kdc = kerberos.my.domain
+
+		# If you use Kerberos 4 compatibility, you probably want this.
+		v4_name_convert = {
+			host = {
+				rcmd = host
+				ftp = ftp
+				pop = pop
+			}
+		}
+
+		# Use this/these DNS domains when trying to convert
+		# Kerberos 4 principals
+		default_domain = my.domain
+		v4_domains = my.domain
+	}
+
+	# Example of a "foreign" realm
+	OTHER.REALM = {
+		kdc = kerberos.other.domain
+		default_domain = other.domain
+		v4_domains = other.domain
+	}
+
+# This sections describes how to figure out a realm given a DNS name
+[domain_realm]
+	.my.domain = MY.REALM
+
+
+[kadmin]
+	# This is the trickiest part of a Kerberos installation. See the
+	# heimdal infopage for more information about encryption types.
+
+	# For a k5 only realm, this will be fine
+#	default_keys = v5
+
+	# For a k5 realm with k4 compatibilty, you probably want this
+#	default_keys = v5 v4
+
+	# For a k5 realm with k4 nodes and AFS, this should work.
+	# Remember to set your cell name here - used for salting the password
+#	default_keys = v5 v4 des:afs3-salt:hin.nu
+
+[logging]
+	# The KDC logs by default, but i like to have a kadmin log as well.
+	kadmind = FILE:/var/heimdal/kadmind.log
