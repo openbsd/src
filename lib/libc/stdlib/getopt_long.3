@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.3 2002/12/05 21:02:19 millert Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.4 2002/12/10 21:51:38 millert Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -241,6 +241,27 @@ arguments to option '\e1'.
 honors POSIXLY_CORRECT and stops at the first non-option.
 .El
 .It Li o
+handling of - within the option string (not the first character).
+.Bl -tag -width "OpenBSD"
+.It Li GNU
+treats a
+.Ql -
+on the command line as a non-argument.
+.It Li OpenBSD
+a
+.Ql -
+within the option string matches a
+.Ql -
+(single dash) on the command line.
+This functionality is provided for backward compatibility with
+programs, such as
+.Xr su 1 ,
+that use
+.Ql -
+as an option flag.
+This practice is wrong, and should not be used in any current development.
+.El
+.It Li o
 handling of :: in options string in presence of POSIXLY_CORRECT:
 .Bl -tag -width "OpenBSD"
 .It Li Both
@@ -280,10 +301,9 @@ handling of -W with W; in option string in getopt (not getopt_long):
 .It Li GNU
 causes a segfault.
 .It Li OpenBSD
-returns \-1, with optind pointing past the argument of -W
-(as if `-W arg' were `--arg', and thus '--' had been found).
-.\" How should we treat W; in the option string when called via
-.\" getopt?  Ignore the ';' or treat it as a ':'? Issue a warning?
+no special handling is done;
+.Dq W;
+is interpreted as two separate options, neither of which take an argument.
 .El
 .It Li o
 setting of optarg for long options without an argument that are
