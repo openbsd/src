@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.230 2003/12/05 00:52:16 deraadt Exp $
+#	$OpenBSD: rc,v 1.231 2003/12/29 23:16:45 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -383,10 +383,6 @@ if [ $? -eq 0 ]; then
 	rm -f $T
 fi
 
-if [ -x /usr/libexec/vi.recover ]; then
-	echo 'preserving editor files';	/usr/libexec/vi.recover
-fi
-
 if [ -f /var/account/acct ]; then
 	echo 'turning on accounting';	accton /var/account/acct
 fi
@@ -400,6 +396,10 @@ if [ -f /sbin/ldconfig ]; then
 		shlib_dirs="/usr/X11R6/lib $shlib_dirs"
 	fi
 	ldconfig $shlib_dirs
+fi
+
+if [ -x /usr/libexec/vi.recover ]; then
+	echo 'preserving editor files';	/usr/libexec/vi.recover
 fi
 
 if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
