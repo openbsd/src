@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.9 2004/03/17 10:18:38 jmc Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.10 2004/03/22 00:11:01 mickey Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -82,7 +82,7 @@ and is the
 .Xr boot 8
 program in
 .Ox .
-On all versions of the PDC except for the 712 models the
+On all versions of the PDC except for the 712 and 725 models the
 .Dq boot
 command (see below) will be followed by the question:
 .Dq Interact with IPL (Y, N, or Cancel)?>
@@ -91,7 +91,7 @@ where a positive answer will invoke an interactive prompt in the
 program later and negative will thus suppress it.
 A cancellation will abort the boot process.
 .Pp
-On the 712 models firmware an additional
+On the 712 and 725 models firmware an additional
 .Dq isl
 argument should be given to the
 .Dq boot
