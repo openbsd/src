@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.27 2002/03/14 01:27:06 millert Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.28 2002/05/24 08:39:15 art Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -416,6 +416,8 @@ cluster_callback(bp)
 	long bsize;
 	caddr_t cp;
 	int error = 0;
+
+	splassert(IPL_BIO);
 
 	/*
 	 * Must propagate errors to all the components.
