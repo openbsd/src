@@ -9,7 +9,6 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/machine
 ./usr/include/mvmeppc
 ./usr/include/mvmeppc/ansi.h
 ./usr/include/mvmeppc/asm.h

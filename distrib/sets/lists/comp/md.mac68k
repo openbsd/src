@@ -88,7 +88,6 @@
 ./usr/include/mac68k/viareg.h
 ./usr/include/mac68k/vmparam.h
 ./usr/include/mac68k/z8530var.h
-./usr/include/machine
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1obj

@@ -368,6 +368,7 @@
 ./usr/include/dev/mii/tlphyvar.h
 ./usr/include/dev/mii/tqphyreg.h
 ./usr/include/dev/mii/txphyreg.h
+./usr/include/dev/mii/urlphyreg.h
 ./usr/include/dev/mii/xmphyreg.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw
@@ -607,6 +608,7 @@
 ./usr/include/dev/usb/if_auereg.h
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
+./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h

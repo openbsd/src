@@ -63,7 +63,6 @@
 ./usr/include/i386/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/machine
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.1/2.95.3/cc1obj

@@ -5,7 +5,6 @@
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
 ./usr/include/link.h
-./usr/include/machine
 ./usr/include/vax
 ./usr/include/vax/ansi.h
 ./usr/include/vax/aout_machdep.h

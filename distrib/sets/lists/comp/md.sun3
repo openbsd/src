@@ -42,7 +42,6 @@
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
-./usr/include/machine
 ./usr/include/sun3
 ./usr/include/sun3/ansi.h
 ./usr/include/sun3/asm.h

@@ -10,7 +10,6 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/machine
 ./usr/include/sparc64
 ./usr/include/sparc64/ansi.h
 ./usr/include/sparc64/asm.h

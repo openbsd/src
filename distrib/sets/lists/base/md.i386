@@ -763,6 +763,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/tlphyvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/tqphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/txphyreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/urlphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ofw
@@ -1002,6 +1003,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/if_kuereg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ohcireg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uaudioreg.ph

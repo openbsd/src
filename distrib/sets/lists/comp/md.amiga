@@ -82,7 +82,6 @@
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
-./usr/include/machine
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1obj

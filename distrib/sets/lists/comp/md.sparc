@@ -6,7 +6,6 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/machine
 ./usr/include/sparc
 ./usr/include/sparc/ansi.h
 ./usr/include/sparc/asm.h
