@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.228 2000/03/22 03:42:13 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.229 2000/03/24 18:44:24 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2967,10 +2967,46 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ISP1080",
 	},
 	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240,
+	    0,
+	    "QLogic",
+	    "ISP1240",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1280,
+	    0,
+	    "QLogic",
+	    "ISP1280",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP12160,
+	    0,
+	    "QLogic",
+	    "ISP12160",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP10160,
+	    0,
+	    "QLogic",
+	    "ISP12160",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100,
 	    0,
 	    "QLogic",
 	    "ISP2100",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2200,
+	    0,
+	    "QLogic",
+	    "ISP2200",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2300,
+	    0,
+	    "QLogic",
+	    "ISP2300",
 	},
 	{
 	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8500,
