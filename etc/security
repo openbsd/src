@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.4 1996/07/07 09:35:26 deraadt Exp $
+#	$OpenBSD: security,v 1.5 1996/07/12 00:06:50 deraadt Exp $
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
@@ -367,8 +367,8 @@ if [ -f /etc/exports ]; then
     fi
 fi
 
-# Display any changes in setuid files and devices.
-pending="\nChecking setuid files and devices:\n"
+# Display any changes in setuid/setgid files and devices.
+pending="\nChecking setuid/setgid files and devices:\n"
 (find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 		-o -fstype procfs \) -a -prune -o \
 	-type f -a \( -perm -u+s -o -perm -g+s \) -print -o \
