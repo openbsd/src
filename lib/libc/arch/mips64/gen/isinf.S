@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: isinf.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
+	.asciz "$OpenBSD: isinf.S,v 1.3 2004/10/02 12:34:53 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 #define DEXP_INF	0x7ff
@@ -47,20 +47,17 @@
  */
 LEAF(isnan, 0)
 	.set	noreorder
-	mfc1	v1, $f13		# get MSW of x
-	mfc1	t3, $f12		# get LSW of x
-	sll	t1, v1, 1		# get x exponent
-	srl	t1, t1, 32 - 11
-	bne	t1, DEXP_INF, 2f	# is it a finite number?
-	sll	t2, v1, 32 - 20		# get x fraction
-	bne	t3, zero, 1f		# is it a NAN?
+	dmfc1	t3, $f12		# get x
+	dsll	t1, t3, 1		# get x exponent
+	dsrl	t1, t1, 64 - 11
+	bne	t1, DEXP_INF, 1f	# is it a finite number?
+	sll	t2, t3, 64 - 52		# get x fraction
+	beq	t2, zero, 1f		# its infinity
 	nop
-	beq	t2, zero, 2f		# its infinity
-	nop
-1:
+
 	j	ra
 	li	v0, 1			# x is a NAN
-2:
+1:
 	j	ra
 	move	v0, zero		# x is NOT a NAN
 END(isnan)
@@ -73,14 +70,11 @@ END(isnan)
  */
 LEAF(isinf, 0)
 	.set	noreorder
-	mfc1	v1, $f13		# get MSW of x
-	mfc1	t3, $f12		# get LSW of x
-	sll	t1, v1, 1		# get x exponent
-	srl	t1, t1, 32 - 11
+	dmfc1	t3, $f12		# get LSW of x
+	dsll	t1, t3, 1		# get x exponent
+	dsrl	t1, t1, 64 - 11
 	bne	t1, DEXP_INF, 1f	# is it a finite number?
-	sll	t2, v1, 32 - 20		# get x fraction
-	bne	t3, zero, 1f		# is it a NAN?
-	nop
+	sll	t2, t3, 64 - 52		# get x fraction
 	bne	t2, zero, 1f		# is it a NAN?
 	nop
 	j	ra
