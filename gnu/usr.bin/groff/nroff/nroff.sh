@@ -24,7 +24,7 @@ do
 		echo "$prog: option $1 requires an argument" >&2
 		exit 1
 		;;
-	-i|-[mrno]*)
+	-i|-S|-[mrno]*)
 		opts="$opts $1";
 		;;
 
@@ -58,4 +58,4 @@ done
 
 # This shell script is intended for use with man, so warnings are
 # probably not wanted.  Also load nroff-style character definitions.
-exec groff -Wall -mtty-char $T $opts ${1+"$@"}
+exec groff -S -Wall -mtty-char $T $opts ${1+"$@"}
