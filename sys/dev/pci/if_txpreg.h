@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.6 2001/04/08 21:47:45 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.7 2001/04/09 03:15:47 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -255,18 +255,41 @@ struct txp_rx_desc {
 };
 
 struct txp_cmd_desc {
-	u_int8_t		cmd_desctype:3,
-				cmd_rsvd:3,
-				cmd_respond:1,
-				cmd_rsvd1:1;
-
-	u_int8_t		cmd_num;
-	u_int16_t		cmd_id;
-	u_int16_t		cmd_seq;
-	u_int16_t		cmd_par1;
-	u_int32_t		cmd_par2;
-	u_int32_t		cmd_par3;
+	volatile u_int8_t	cmd_flags;
+	volatile u_int8_t	cmd_numdesc;
+	volatile u_int16_t	cmd_id;
+	volatile u_int16_t	cmd_seq;
+	volatile u_int16_t	cmd_par1;
+	volatile u_int32_t	cmd_par2;
+	volatile u_int32_t	cmd_par3;
 };
+#define	CMD_FLAGS_TYPE_M	0x07		/* type mask */
+#define	CMD_FLAGS_TYPE_FRAG	0x01		/* type: fragment */
+#define	CMD_FLAGS_TYPE_DATA	0x02		/* type: data frame */
+#define	CMD_FLAGS_TYPE_CMD	0x03		/* type: command frame */
+#define	CMD_FLAGS_TYPE_OPT	0x04		/* type: options */
+#define	CMD_FLAGS_TYPE_RX	0x05		/* type: command */
+#define	CMD_FLAGS_TYPE_RESP	0x06		/* type: response */
+#define	CMD_FLAGS_RESP		0x40		/* response requested */
+#define	CMD_FLAGS_VALID		0x80		/* valid descriptor */
+
+struct txp_rsp_desc {
+	volatile u_int8_t	rsp_flags;
+	volatile u_int8_t	rsp_numdesc;
+	volatile u_int16_t	rsp_id;
+	volatile u_int16_t	rsp_seq;
+	volatile u_int16_t	rsp_par1;
+	volatile u_int32_t	rsp_par2;
+	volatile u_int32_t	rsp_par3;
+};
+#define	RSP_FLAGS_TYPE_M	0x07		/* type mask */
+#define	RSP_FLAGS_TYPE_FRAG	0x01		/* type: fragment */
+#define	RSP_FLAGS_TYPE_DATA	0x02		/* type: data frame */
+#define	RSP_FLAGS_TYPE_CMD	0x03		/* type: command frame */
+#define	RSP_FLAGS_TYPE_OPT	0x04		/* type: options */
+#define	RSP_FLAGS_TYPE_RX	0x05		/* type: command */
+#define	RSP_FLAGS_TYPE_RESP	0x06		/* type: response */
+#define	RSP_FLAGS_ERROR		0x40		/* response error */
 
 struct txp_frag_desc {
 	u_int8_t		frag_desctype:3,
@@ -320,26 +343,12 @@ struct txp_tcpseg_desc {
 	u_int32_t		tcpseg_lss;
 };
 
-struct txp_resp_desc {
-	u_int8_t		resp_desctype:3,
-				resp_rsvd1:3,
-				resp_error:1,
-				resp_resv2:1;
-
-	u_int8_t		resp_num;
-	u_int16_t		resp_cmd;
-	u_int16_t		resp_seq;
-	u_int16_t		resp_par1;
-	u_int32_t		resp_par2;
-	u_int32_t		resp_par3;
-};
-
 /*
  * boot record (pointers to rings)
  */
 struct txp_boot_record {
-	volatile u_int32_t	br_hostring_lo;		/* host ring pointer */
-	volatile u_int32_t	br_hostring_hi;
+	volatile u_int32_t	br_hostvar_lo;		/* host ring pointer */
+	volatile u_int32_t	br_hostvar_hi;
 	volatile u_int32_t	br_txlopri_lo;		/* tx low pri ring */
 	volatile u_int32_t	br_txlopri_hi;
 	volatile u_int32_t	br_txlopri_siz;
@@ -366,20 +375,20 @@ struct txp_boot_record {
 };
 
 /*
- * host ring structure (shared with typhoon)
+ * hostvar structure (shared with typhoon)
  */
-struct txp_hostring {
-	volatile u_int32_t	hr_rx_hi_read_idx;	/* host->arm */
-	volatile u_int32_t	hr_rx_lo_read_idx;	/* host->arm */
-	volatile u_int32_t	hr_rx_buf_write_idx;	/* host->arm */
-	volatile u_int32_t	hr_resp_read_idx;	/* host->arm */
-	volatile u_int32_t	hr_tx_lo_desc_read_idx;	/* arm->host */
-	volatile u_int32_t	hr_tx_hi_desc_read_idx;	/* arm->host */
-	volatile u_int32_t	hr_rx_lo_write_idx;	/* arm->host */
-	volatile u_int32_t	hr_rx_buf_read_idx;	/* arm->host */
-	volatile u_int32_t	hr_cmd_read_idx;	/* arm->host */
-	volatile u_int32_t	hr_resp_write_idx;	/* arm->host */
-	volatile u_int32_t	hr_rx_hi_write_idx;	/* arm->host */
+struct txp_hostvar {
+	volatile u_int32_t	hv_rx_hi_read_idx;	/* host->arm */
+	volatile u_int32_t	hv_rx_lo_read_idx;	/* host->arm */
+	volatile u_int32_t	hv_rx_buf_write_idx;	/* host->arm */
+	volatile u_int32_t	hv_resp_read_idx;	/* host->arm */
+	volatile u_int32_t	hv_tx_lo_desc_read_idx;	/* arm->host */
+	volatile u_int32_t	hv_tx_hi_desc_read_idx;	/* arm->host */
+	volatile u_int32_t	hv_rx_lo_write_idx;	/* arm->host */
+	volatile u_int32_t	hv_rx_buf_read_idx;	/* arm->host */
+	volatile u_int32_t	hv_cmd_read_idx;	/* arm->host */
+	volatile u_int32_t	hv_resp_write_idx;	/* arm->host */
+	volatile u_int32_t	hv_rx_hi_write_idx;	/* arm->host */
 };
 
 /*
@@ -397,7 +406,7 @@ struct txp_hostring {
 #define	TX_ENTRIES			128
 #define	RX_ENTRIES			128
 #define	CMD_ENTRIES			32
-#define	RESP_ENTRIES			32
+#define	RSP_ENTRIES			32
 
 struct txp_dma_alloc {
 	caddr_t			dma_vaddr;
@@ -408,18 +417,34 @@ struct txp_dma_alloc {
 	int			dma_nseg;
 };
 
+struct txp_cmd_ring {
+	struct txp_cmd_desc	*base;
+	u_int32_t		lastwrite;
+	u_int32_t		size;
+};
+
+struct txp_rsp_ring {
+	struct txp_rsp_desc	*base;
+	u_int32_t		lastwrite;
+	u_int32_t		size;
+};
+
 struct txp_softc {
 	struct device		sc_dev;
-	void *			sc_ih;
+	struct arpcom		sc_arpcom;
+	struct txp_hostvar	*sc_hostvar;
+	struct txp_boot_record	*sc_boot;
 	bus_space_handle_t	sc_bh;
 	bus_space_tag_t		sc_bt;
 	bus_dma_tag_t		sc_dmat;
-	struct arpcom		sc_arpcom;
+	struct txp_cmd_ring	sc_cmdring;
+	struct txp_rsp_ring	sc_rspring;
+	void *			sc_ih;
 	struct timeout		sc_tick_tmo;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
 	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;
 	struct txp_dma_alloc	sc_txhiring_dma, sc_txloring_dma;
-	struct txp_dma_alloc	sc_cmdring_dma, sc_respring_dma;
+	struct txp_dma_alloc	sc_cmdring_dma, sc_rspring_dma;
 };
 
 struct txp_fw_file_header {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.5 2001/04/08 21:47:45 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.6 2001/04/09 03:15:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -104,6 +104,12 @@ int txp_alloc_rings __P((struct txp_softc *));
 void txp_dma_free __P((struct txp_softc *, struct txp_dma_alloc *));
 int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *));
 
+int txp_cmd_desc_numfree __P((struct txp_softc *));
+int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
+    u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int));
+int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t,
+    struct txp_rsp_desc **));
+
 int
 txp_probe(parent, match, aux)
 	struct device *parent;
@@ -138,6 +144,8 @@ txp_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_size_t iosize;
 	u_int32_t command;
+	u_int16_t p1;
+	u_int32_t p2;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -188,7 +196,18 @@ txp_attach(parent, self, aux)
 	if (txp_alloc_rings(sc))
 		return;
 
-	printf("\n");
+	if (txp_command(sc, TXP_CMD_STATION_ADDRESS_READ, 0, 0, 0,
+	    &p1, &p2, NULL, 1))
+		return;
+
+	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
+	sc->sc_arpcom.ac_enaddr[1] = ((u_int8_t *)&p1)[0];
+	sc->sc_arpcom.ac_enaddr[2] = ((u_int8_t *)&p2)[3];
+	sc->sc_arpcom.ac_enaddr[3] = ((u_int8_t *)&p2)[2];
+	sc->sc_arpcom.ac_enaddr[4] = ((u_int8_t *)&p2)[1];
+	sc->sc_arpcom.ac_enaddr[5] = ((u_int8_t *)&p2)[0];
+
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -488,15 +507,17 @@ txp_alloc_rings(sc)
 	}
 	boot = (struct txp_boot_record *)sc->sc_boot_dma.dma_vaddr;
 	bzero(boot, sizeof(*boot));
+	sc->sc_boot = boot;
 
-	/* host ring */
-	if (txp_dma_malloc(sc, sizeof(struct txp_hostring), &sc->sc_host_dma)) {
+	/* host variables */
+	if (txp_dma_malloc(sc, sizeof(struct txp_hostvar), &sc->sc_host_dma)) {
 		printf(": can't allocate host ring\n");
 		goto bail_boot;
 	}
 	bzero(sc->sc_host_dma.dma_vaddr, sc->sc_host_dma.dma_siz);
-	boot->br_hostring_lo = sc->sc_host_dma.dma_paddr & 0xffffffff;
-	boot->br_hostring_hi = sc->sc_host_dma.dma_paddr >> 32;
+	boot->br_hostvar_lo = sc->sc_host_dma.dma_paddr & 0xffffffff;
+	boot->br_hostvar_hi = sc->sc_host_dma.dma_paddr >> 32;
+	sc->sc_hostvar = (struct txp_hostvar *)sc->sc_host_dma.dma_vaddr;
 
 	/* high priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
@@ -552,22 +573,28 @@ txp_alloc_rings(sc)
 	boot->br_cmd_lo = sc->sc_cmdring_dma.dma_paddr & 0xffffffff;
 	boot->br_cmd_hi = sc->sc_cmdring_dma.dma_paddr >> 32;
 	boot->br_cmd_siz = CMD_ENTRIES * sizeof(struct txp_cmd_desc);
+	sc->sc_cmdring.base = (struct txp_cmd_desc *)sc->sc_cmdring_dma.dma_vaddr;
+	sc->sc_cmdring.size = CMD_ENTRIES * sizeof(struct txp_cmd_desc);
+	sc->sc_cmdring.lastwrite = 0;
 
 	/* response ring */
-	if (txp_dma_malloc(sc, sizeof(struct txp_resp_desc) * RESP_ENTRIES,
-	    &sc->sc_respring_dma)) {
+	if (txp_dma_malloc(sc, sizeof(struct txp_rsp_desc) * RSP_ENTRIES,
+	    &sc->sc_rspring_dma)) {
 		printf(": can't allocate response ring\n");
 		goto bail_cmdring;
 	}
-	bzero(sc->sc_respring_dma.dma_vaddr, sc->sc_respring_dma.dma_siz);
-	boot->br_resp_lo = sc->sc_respring_dma.dma_paddr & 0xffffffff;
-	boot->br_resp_hi = sc->sc_respring_dma.dma_paddr >> 32;
-	boot->br_resp_siz = CMD_ENTRIES * sizeof(struct txp_resp_desc);
+	bzero(sc->sc_rspring_dma.dma_vaddr, sc->sc_rspring_dma.dma_siz);
+	boot->br_resp_lo = sc->sc_rspring_dma.dma_paddr & 0xffffffff;
+	boot->br_resp_hi = sc->sc_rspring_dma.dma_paddr >> 32;
+	boot->br_resp_siz = CMD_ENTRIES * sizeof(struct txp_rsp_desc);
+	sc->sc_rspring.base = (struct txp_rsp_desc *)sc->sc_rspring_dma.dma_vaddr;
+	sc->sc_rspring.size = RSP_ENTRIES * sizeof(struct txp_rsp_desc);
+	sc->sc_rspring.lastwrite = 0;
 
 	/* zero dma */
 	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma)) {
 		printf(": can't allocate response ring\n");
-		goto bail_respring;
+		goto bail_rspring;
 	}
 	bzero(sc->sc_zero_dma.dma_vaddr, sc->sc_zero_dma.dma_siz);
 	boot->br_zero_lo = sc->sc_zero_dma.dma_paddr & 0xffffffff;
@@ -610,8 +637,8 @@ txp_alloc_rings(sc)
 
 bail:
 	txp_dma_free(sc, &sc->sc_zero_dma);
-bail_respring:
-	txp_dma_free(sc, &sc->sc_respring_dma);
+bail_rspring:
+	txp_dma_free(sc, &sc->sc_rspring_dma);
 bail_cmdring:
 	txp_dma_free(sc, &sc->sc_cmdring_dma);
 bail_rxloring:
@@ -781,6 +808,149 @@ txp_start(ifp)
 		/* XXX enqueue and send the packet */
 		m_freem(m);
 	}
+}
+
+/*
+ * XXX this needs to have a callback mechanism
+ */
+int
+txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
+	struct txp_softc *sc;
+	u_int16_t id, in1, *out1;
+	u_int32_t in2, in3, *out2, *out3;
+	int wait;
+{
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	struct txp_cmd_desc *cmd;
+	struct txp_rsp_desc *rsp = NULL;
+	u_int32_t idx, i;
+
+	if (txp_cmd_desc_numfree(sc) == 0) {
+		printf(": no free cmd descriptors\n");
+		return (-1);
+	}
+
+	idx = sc->sc_cmdring.lastwrite;
+	cmd = (struct txp_cmd_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
+	bzero(cmd, sizeof(*cmd));
+
+	cmd->cmd_numdesc = 0;
+	cmd->cmd_seq = 0x11;
+	cmd->cmd_id = id;
+	cmd->cmd_par1 = in1;
+	cmd->cmd_par2 = in2;
+	cmd->cmd_par3 = in3;
+	cmd->cmd_flags = CMD_FLAGS_TYPE_CMD |
+	    (wait ? CMD_FLAGS_RESP : 0) | CMD_FLAGS_VALID;
+
+	idx += sizeof(struct txp_cmd_desc);
+	if (idx == sc->sc_cmdring.size)
+		idx = 0;
+	sc->sc_cmdring.lastwrite = idx;
+
+	WRITE_REG(sc, TXP_H2A_2, sc->sc_cmdring.lastwrite);
+
+	if (!wait)
+		return (0);
+
+	for (i = 0; i < 10000; i++) {
+		idx = hv->hv_resp_read_idx;
+		if (idx != hv->hv_resp_write_idx) {
+			rsp = NULL;
+			if (txp_response(sc, idx, cmd->cmd_id, &rsp))
+				return (-1);
+			if (rsp != NULL)
+				break;
+		}
+		DELAY(50);
+	}
+	if (i == 1000 || rsp == NULL) {
+		printf(": command failed\n");
+		return (-1);
+	}
+
+	if (out1 != NULL)
+		*out1 = rsp->rsp_par1;
+	if (out2 != NULL)
+		*out2 = rsp->rsp_par2;
+	if (out3 != NULL)
+		*out3 = rsp->rsp_par3;
+
+	return (0);
+}
+
+int
+txp_response(sc, ridx, id, rspp)
+	struct txp_softc *sc;
+	u_int32_t ridx;
+	u_int16_t id;
+	struct txp_rsp_desc **rspp;
+{
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	struct txp_rsp_desc *rsp;
+
+again:
+	while (ridx != hv->hv_resp_write_idx) {
+		rsp = (struct txp_rsp_desc *)(((u_int8_t *)sc->sc_rspring.base) + ridx);
+
+		if (id == rsp->rsp_id) {
+			*rspp = rsp;
+			return (0);
+		}
+
+		if (rsp->rsp_flags & RSP_FLAGS_ERROR) {
+			printf(": response error!\n");
+			/* XXX fixup */
+			ridx = hv->hv_resp_read_idx;
+			continue;
+		}
+
+		switch (rsp->rsp_id) {
+		case TXP_CMD_CYCLE_STATISTICS:
+			printf(": stats\n");
+			break;
+		case TXP_CMD_MEDIA_STATUS_READ:
+			printf(": mediastatus\n");
+			break;
+		case TXP_CMD_HELLO_RESPONSE:
+			printf(": hello\n");
+			break;
+		default:
+			printf(": unknown id(0x%x)\n", rsp->rsp_id);
+			/* XXX fixup */
+			ridx = hv->hv_resp_read_idx;
+			goto again;
+		}
+
+		hv->hv_resp_read_idx = ridx;
+	}
+
+	return (0);
+}
+
+int
+txp_cmd_desc_numfree(sc)
+	struct txp_softc *sc;
+{
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	struct txp_boot_record *br = sc->sc_boot;
+	u_int32_t widx, ridx, nfree;
+
+	widx = sc->sc_cmdring.lastwrite;
+	ridx = hv->hv_cmd_read_idx;
+
+	if (widx == ridx) {
+		/* Ring is completely free */
+		nfree = br->br_cmd_siz - sizeof(struct txp_cmd_desc);
+	} else {
+		if (widx > ridx)
+			nfree = br->br_cmd_siz -
+			    (widx - ridx + sizeof(struct txp_cmd_desc));
+		else
+			nfree = ridx - widx - sizeof(struct txp_cmd_desc);
+	}
+
+	return (nfree / sizeof(struct txp_cmd_desc));
 }
 
 void
