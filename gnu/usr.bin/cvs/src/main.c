@@ -537,7 +537,7 @@ error 0 %s: no such user\n", user);
 	    }
 	    (void) strcat (path, "/");
 	    (void) strcat (path, CVSROOTADM_HISTORY);
-	    if (isfile (path) && access (path, R_OK | W_OK))
+	    if (readonlyfs == 0 && isfile (path) && access (path, R_OK | W_OK))
 	    {
 		save_errno = errno;
 		error (0, 0,
