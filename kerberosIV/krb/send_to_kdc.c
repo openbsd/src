@@ -1,4 +1,4 @@
-/*	$OpenBSD: send_to_kdc.c,v 1.6 1997/12/12 05:30:32 art Exp $	*/
+/*	$OpenBSD: send_to_kdc.c,v 1.7 1997/12/14 21:41:07 art Exp $	*/
 /* $KTH: send_to_kdc.c,v 1.47 1997/11/07 17:31:38 bg Exp $ */
 
 /* 
@@ -206,8 +206,9 @@ static int tcp_send(int s, struct sockaddr_in* adr, KTEXT pkt)
 
 static int udptcp_recv(void *buf, size_t len, KTEXT rpkt)
 {
-    memcpy(rpkt->dat, buf, len);
-    rpkt->length = len;
+    int pktlen=MIN(len, MAX_KTXT_LEN - 1);
+    memcpy(rpkt->dat, buf, pktlen);
+    rpkt->length = pktlen;
     return 0;
 }
 
@@ -303,9 +304,11 @@ static int http_send(int s, struct sockaddr_in* adr, KTEXT pkt)
 static int http_recv(void *buf, size_t len, KTEXT rpkt)
 {
     char *p;
+    int pktlen;
     char *tmp = malloc(len + 1);
     if (tmp == NULL)
 	return -1;
+
     memcpy(tmp, buf, len);
     tmp[len] = 0;
     p = strstr(tmp, "\r\n\r\n");
@@ -314,14 +317,18 @@ static int http_recv(void *buf, size_t len, KTEXT rpkt)
 	tmp = NULL;
 	return -1;
     }
+
     p += 4;
-    if (p >= tmp+len){
+    if (p >= tmp+len) {
 	free(tmp);
 	tmp = NULL;
 	return -1;
     }
-    memcpy(rpkt->dat, p, (tmp + len) - p);
-    rpkt->length = (tmp + len) - p;
+    pktlen = MIN((tmp + len) - p, MAX_KTXT_LEN - 1);
+    memcpy(rpkt->dat, p, pktlen);
+
+    rpkt->dat[pktlen] = '\0';
+    rpkt->length = pktlen;
     free(tmp);
     tmp = NULL;
     return 0;
