@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.9 2002/06/07 01:51:54 ho Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.10 2002/06/07 04:47:06 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -389,7 +389,7 @@ void
 import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
     struct sadb_address *ssrc, struct sadb_address *ssrcmask,
     struct sadb_address *ddst, struct sadb_address *ddstmask,
-    struct sadb_protocol *sab)
+    struct sadb_protocol *sab, struct sadb_protocol *ftype)
 {
 	u_int8_t transproto = 0;
 	union sockaddr_union *src = (union sockaddr_union *)(ssrc + 1);
@@ -431,7 +431,7 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 #ifdef INET
 	case AF_INET:
 		flow->sen_type = SENT_IP4;
-		flow->sen_direction = sab->sadb_protocol_direction;
+		flow->sen_direction = ftype->sadb_protocol_direction;
 		flow->sen_ip_src = src->sin.sin_addr;
 		flow->sen_ip_dst = dst->sin.sin_addr;
 		flow->sen_proto = transproto;
@@ -452,7 +452,7 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 #ifdef INET6
 	case AF_INET6:
 		flow->sen_type = SENT_IP6;
-		flow->sen_ip6_direction = sab->sadb_protocol_direction;
+		flow->sen_ip6_direction = ftype->sadb_protocol_direction;
 		flow->sen_ip6_src = src->sin6.sin6_addr;
 		flow->sen_ip6_dst = dst->sin6.sin6_addr;
 		flow->sen_ip6_proto = transproto;

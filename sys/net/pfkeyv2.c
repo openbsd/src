@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.82 2002/05/31 01:42:17 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.83 2002/06/07 04:47:06 ho Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -921,11 +921,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    /* Either all or none of the flow must be included */
 	    if ((headers[SADB_X_EXT_SRC_FLOW] ||
 		headers[SADB_X_EXT_PROTOCOL] ||
+		headers[SADB_X_EXT_FLOW_TYPE] ||
 		headers[SADB_X_EXT_DST_FLOW] ||
 		headers[SADB_X_EXT_SRC_MASK] ||
 		headers[SADB_X_EXT_DST_MASK]) &&
 		!(headers[SADB_X_EXT_SRC_FLOW] &&
 		headers[SADB_X_EXT_PROTOCOL] &&
+		headers[SADB_X_EXT_FLOW_TYPE] &&
 		headers[SADB_X_EXT_DST_FLOW] &&
 		headers[SADB_X_EXT_SRC_MASK] &&
 		headers[SADB_X_EXT_DST_MASK]))
@@ -1000,7 +1002,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
 		    headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
 		    headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
-		    headers[SADB_X_EXT_PROTOCOL]);
+		    headers[SADB_X_EXT_PROTOCOL],
+		    headers[SADB_X_EXT_FLOW_TYPE]);
 
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
@@ -1061,11 +1064,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    /* Either all or none of the flow must be included */
 	    if ((headers[SADB_X_EXT_SRC_FLOW] ||
 		headers[SADB_X_EXT_PROTOCOL] ||
+		headers[SADB_X_EXT_FLOW_TYPE] ||
 		headers[SADB_X_EXT_DST_FLOW] ||
 		headers[SADB_X_EXT_SRC_MASK] ||
 		headers[SADB_X_EXT_DST_MASK]) &&
 		!(headers[SADB_X_EXT_SRC_FLOW] &&
 		headers[SADB_X_EXT_PROTOCOL] &&
+		headers[SADB_X_EXT_FLOW_TYPE] &&
 		headers[SADB_X_EXT_DST_FLOW] &&
 		headers[SADB_X_EXT_SRC_MASK] &&
 		headers[SADB_X_EXT_DST_MASK]))
@@ -1146,7 +1151,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
 		    headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
 		    headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
-		    headers[SADB_X_EXT_PROTOCOL]);
+		    headers[SADB_X_EXT_PROTOCOL],
+		    headers[SADB_X_EXT_FLOW_TYPE]);
 
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
@@ -1463,7 +1469,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    import_flow(&encapdst, &encapnetmask,
 		headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
 		headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
-		headers[SADB_X_EXT_PROTOCOL]);
+		headers[SADB_X_EXT_PROTOCOL], headers[SADB_X_EXT_FLOW_TYPE]);
 
 	    /* Determine whether the exact same SPD entry already exists. */
 	    bzero(&encapgw, sizeof(struct sockaddr_encap));
