@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.4 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.5 2002/09/09 20:25:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -57,6 +57,16 @@ struct cs_volume {
 	u_int8_t	right;
 };
 
+struct cs_channel {
+	void		(*cs_intr)(void *);	/* interrupt handler */
+	void		*cs_arg;		/* interrupt arg */
+	struct cs_dma	*cs_curdma;		/* current dma block */
+	u_int32_t	cs_cnt;			/* current block count */
+	u_int32_t	cs_blksz;		/* current block size */
+	u_int32_t	cs_segsz;		/* current segment size */
+	int		cs_locked;		/* channel locked? */
+};
+
 struct cs4231_softc {
 	struct	device sc_dev;		/* base device */
 	struct	sbusdev sc_sd;		/* sbus device */
@@ -67,16 +77,14 @@ struct cs4231_softc {
 	struct	evcnt sc_intrcnt;	/* statistics */
 	int	sc_burst;		/* XXX: DMA burst size in effect */
 	int	sc_open;		/* already open? */
-	int	sc_locked;		/* locked? */
 
-	void	(*sc_rintr)(void *);	/* input completion intr handler */
-	void *	sc_rarg;		/* arg for sc_rintr() */
-	void	(*sc_pintr)(void *);	/* output completion intr handler */
-	void *	sc_parg;		/* arg for sc_pintr() */
+	struct cs_channel sc_playback, sc_capture;
 
 	char		sc_mute[9];	/* which devs are muted */
 	u_int8_t	sc_out_port;	/* output port */
+	u_int8_t	sc_in_port;	/* input port */
 	struct	cs_volume sc_volume[9];	/* software volume */
+	struct	cs_volume sc_adc;	/* adc volume */
 
 	int sc_format_bits;
 	int sc_speed_bits;
@@ -84,9 +92,5 @@ struct cs4231_softc {
 	int sc_need_commit;
 	int sc_channels;
 	u_int sc_last_format;
-	u_int32_t	sc_blksz;
-	u_int32_t	sc_playcnt;
-	u_int32_t	sc_playsegsz;
 	struct cs_dma	*sc_dmas;	/* dma list */
-	struct cs_dma	*sc_nowplaying;
 };

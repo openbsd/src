@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.12 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.13 2002/09/09 20:25:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -95,6 +95,7 @@
 #define	CSPORT_SPEAKER		6
 #define	CSPORT_LINEOUT		7
 #define	CSPORT_HEADPHONE	8
+#define	CSPORT_MICROPHONE	9
 
 #define MIC_IN_PORT	0
 #define LINE_IN_PORT	1
@@ -111,7 +112,13 @@
 
 #define	CS_PC_LINEMUTE	XCTL0_ENABLE
 #define	CS_PC_HDPHMUTE	XCTL1_ENABLE
-#define	CS_AFS_PI	0x10
+#define	CS_AFS_TI	0x40		/* timer interrupt */
+#define	CS_AFS_CI	0x20		/* capture interrupt */
+#define	CS_AFS_PI	0x10		/* playback interrupt */
+#define	CS_AFS_CU	0x08		/* capture underrun */
+#define	CS_AFS_CO	0x04		/* capture overrun */
+#define	CS_AFS_PO	0x02		/* playback overrun */
+#define	CS_AFS_PU	0x01		/* playback underrun */
 
 #define CS_WRITE(sc,r,v)	\
     bus_space_write_1((sc)->sc_bustag, (sc)->sc_regs, (r) << 2, (v))
@@ -271,6 +278,7 @@ cs4231_attach(parent, self, aux)
 
 	/* Default to speaker, unmuted, reasonable volume */
 	sc->sc_out_port = CSPORT_SPEAKER;
+	sc->sc_in_port = CSPORT_MICROPHONE;
 	sc->sc_mute[CSPORT_SPEAKER] = 1;
 	sc->sc_mute[CSPORT_MONITOR] = 1;
 	sc->sc_volume[CSPORT_SPEAKER].left = 192;
@@ -359,10 +367,8 @@ cs4231_set_speed(sc, argp)
 		}
 	}
 
-	if (selected == -1) {
-		printf("%s: can't find speed\n", sc->sc_dev.dv_xname);
+	if (selected == -1)
 		selected = 3;
-	}
 
 	sc->sc_speed_bits = speed_table[selected].bits;
 	sc->sc_need_commit = 1;
@@ -385,11 +391,14 @@ cs4231_open(addr, flags)
 	if (sc->sc_open)
 		return (EBUSY);
 	sc->sc_open = 1;
-	sc->sc_locked = 0;
-	sc->sc_rintr = 0;
-	sc->sc_rarg = 0;
-	sc->sc_pintr = 0;
-	sc->sc_parg = 0;
+
+	sc->sc_capture.cs_intr = NULL;
+	sc->sc_capture.cs_arg = NULL;
+	sc->sc_capture.cs_locked = 0;
+
+	sc->sc_playback.cs_intr = NULL;
+	sc->sc_playback.cs_arg = NULL;
+	sc->sc_playback.cs_locked = 0;
 
 	APC_WRITE(sc, APC_CSR, APC_CSR_RESET);
 	DELAY(10);
@@ -463,6 +472,31 @@ cs4231_setup_output(sc)
 	cs4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, rm);
 	cs4231_write(sc, SP_PIN_CONTROL, pc);
 	cs4231_write(sc, CS_MONO_IO_CONTROL, mi);
+
+	/* XXX doesn't really belong here... */
+	switch (sc->sc_in_port) {
+	case CSPORT_LINEIN:
+		pc = LINE_INPUT;
+		break;
+	case CSPORT_AUX1:
+		pc = AUX_INPUT;
+		break;
+	case CSPORT_DAC:
+		pc = MIXED_DAC_INPUT;
+		break;
+	case CSPORT_MICROPHONE:
+	default:
+		pc = MIC_INPUT;
+		break;
+	}
+	lm = cs4231_read(sc, SP_LEFT_INPUT_CONTROL);
+	rm = cs4231_read(sc, SP_RIGHT_INPUT_CONTROL);
+	lm &= ~(MIXED_DAC_INPUT | ATTEN_22_5);
+	rm &= ~(MIXED_DAC_INPUT | ATTEN_22_5);
+	lm |= pc | (sc->sc_adc.left >> 4);
+	rm |= pc | (sc->sc_adc.right >> 4);
+	cs4231_write(sc, SP_LEFT_INPUT_CONTROL, lm);
+	cs4231_write(sc, SP_RIGHT_INPUT_CONTROL, rm);
 }
 
 void
@@ -553,60 +587,61 @@ cs4231_set_params(addr, setmode, usemode, p, r)
 	struct audio_params *p, *r;
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
-	int err, bits, enc;
-	void (*pswcode)(void *, u_char *, int cnt);
-	void (*rswcode)(void *, u_char *, int cnt);
-
-	enc = p->encoding;
-	pswcode = rswcode = 0;
-	switch (enc) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			enc = AUDIO_ENCODING_ULINEAR_LE;
-			pswcode = rswcode = change_sign8;
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 16) {
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = rswcode = change_sign16;
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 16) {
-			enc = AUDIO_ENCODING_SLINEAR_BE;
-			pswcode = rswcode = change_sign16;
-		}
-		break;
-	}
+	int err, bits, enc = p->encoding;
+	void (*pswcode)(void *, u_char *, int cnt) = NULL;
+	void (*rswcode)(void *, u_char *, int cnt) = NULL;
 
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
+		if (p->precision != 8)
+			return (EINVAL);
 		bits = FMT_ULAW >> 5;
 		break;
 	case AUDIO_ENCODING_ALAW:
+		if (p->precision != 8)
+			return (EINVAL);
 		bits = FMT_ALAW >> 5;
 		break;
-	case AUDIO_ENCODING_ADPCM:
-		bits = FMT_ADPCM >> 5;
-		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 16)
-			bits = FMT_TWOS_COMP >> 5;
-		else
+		if (p->precision != 16)
 			return (EINVAL);
+		bits = FMT_TWOS_COMP >> 5;
+		break;
+	case AUDIO_ENCODING_ULINEAR:
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = FMT_PCM8 >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16)
-			bits = FMT_TWOS_COMP_BE >> 5;
-		else
+		if (p->precision != 16)
 			return (EINVAL);
+		bits = FMT_TWOS_COMP_BE >> 5;
+		break;
+	case AUDIO_ENCODING_SLINEAR:
+		/* emulate with ulinear8 conversion */
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = FMT_PCM8 >> 5;
+		pswcode = rswcode = change_sign8;
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 8)
-			bits = FMT_PCM8 >> 5;
-		else
+		/* emulate with slinear_le16 conversion */
+		if (p->precision != 16)
 			return (EINVAL);
+		bits = FMT_TWOS_COMP >> 5;
+		pswcode = rswcode = change_sign16;
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		/* emulate with slinear_be16 conversion */
+		if (p->precision != 16)
+			return (EINVAL);
+		bits = FMT_TWOS_COMP_BE >> 5;
+		pswcode = rswcode = change_sign16;
+		break;
+	case AUDIO_ENCODING_ADPCM:
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = FMT_ADPCM >> 5;
 		break;
 	default:
 		return (EINVAL);
@@ -712,12 +747,13 @@ cs4231_halt_output(addr)
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 
+	/* XXX Kills some capture bits */
 	APC_WRITE(sc, APC_CSR, APC_READ(sc, APC_CSR) &
 	    ~(APC_CSR_EI | APC_CSR_GIE | APC_CSR_PIE |
 	      APC_CSR_EIE | APC_CSR_PDMA_GO | APC_CSR_PMIE));
 	cs4231_write(sc, SP_INTERFACE_CONFIG,
 	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~PLAYBACK_ENABLE));
-	sc->sc_locked = 0;
+	sc->sc_playback.cs_locked = 0;
 	return (0);
 }
 
@@ -727,10 +763,11 @@ cs4231_halt_input(addr)
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 
+	/* XXX Kills some playback bits */
 	APC_WRITE(sc, APC_CSR, APC_CSR_CAPTURE_PAUSE);
 	cs4231_write(sc, SP_INTERFACE_CONFIG,
 	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~CAPTURE_ENABLE));
-	sc->sc_locked = 0;
+	sc->sc_capture.cs_locked = 0;
 	return (0);
 }
 
@@ -853,6 +890,8 @@ cs4231_set_port(addr, cp)
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
 		if (cp->un.ord != CSPORT_LINEOUT &&
 		    cp->un.ord != CSPORT_SPEAKER &&
 		    cp->un.ord != CSPORT_HEADPHONE)
@@ -901,10 +940,32 @@ cs4231_set_port(addr, cp)
 	case CSAUDIO_REC_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
+		if (cp->un.value.num_channels == 1) {
+			sc->sc_adc.left =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+			sc->sc_adc.right =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		} else if (cp->un.value.num_channels == 2) {
+			sc->sc_adc.left =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+			sc->sc_adc.right =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+		} else
+			break;
+		cs4231_setup_output(sc);
+		error = 0;
 		break;
 	case CSAUDIO_RECORD_SOURCE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
+		if (cp->un.ord == CSPORT_MICROPHONE ||
+		    cp->un.ord == CSPORT_LINEIN ||
+		    cp->un.ord == CSPORT_AUX1 ||
+		    cp->un.ord == CSPORT_DAC) {
+			sc->sc_in_port  = cp->un.ord;
+			error = 0;
+			cs4231_setup_output(sc);
+		}
 		break;
 	}
 
@@ -1053,28 +1114,28 @@ cs4231_get_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    AUDIO_MIN_GAIN;
+			    sc->sc_adc.left;
 		} else if (cp->un.value.num_channels == 2) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    AUDIO_MIN_GAIN;
+			    sc->sc_adc.left;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    AUDIO_MIN_GAIN;
+			    sc->sc_adc.right;
 		} else
 			break;
 		error = 0;
 		break;
 	case CSAUDIO_RECORD_SOURCE:
-		if (cp->type != AUDIO_MIXER_ENUM) break;
-		cp->un.ord = MIC_IN_PORT;
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
+		cp->un.ord = sc->sc_in_port;
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT:
-		if (cp->type != AUDIO_MIXER_ENUM) break;
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
 		cp->un.ord = sc->sc_out_port;
 		error = 0;
 		break;
-	default:
-		printf("Invalid kind!\n");
 	}
 	return (error);
 }
@@ -1201,15 +1262,15 @@ cs4231_query_devinfo(addr, dip)
 		dip->prev = CSAUDIO_REC_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNsource);
-		dip->un.e.num_mem = 3;
-		strcpy(dip->un.e.member[0].label.name, AudioNcd);
-		dip->un.e.member[0].ord = DAC_IN_PORT;
-		strcpy(dip->un.e.member[1].label.name, AudioNmicrophone);
-		dip->un.e.member[1].ord = MIC_IN_PORT;
-		strcpy(dip->un.e.member[2].label.name, AudioNdac);
-		dip->un.e.member[2].ord = AUX1_IN_PORT;
-		strcpy(dip->un.e.member[3].label.name, AudioNline);
-		dip->un.e.member[3].ord = LINE_IN_PORT;
+		dip->un.e.num_mem = 4;
+		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		dip->un.e.member[0].ord = CSPORT_MICROPHONE;
+		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		dip->un.e.member[1].ord = CSPORT_LINEIN;
+		strcpy(dip->un.e.member[2].label.name, AudioNcd);
+		dip->un.e.member[2].ord = CSPORT_AUX1;
+		strcpy(dip->un.e.member[3].label.name, AudioNdac);
+		dip->un.e.member[3].ord = CSPORT_DAC;
 		break;
 	case CSAUDIO_OUTPUT:
 		dip->type = AUDIO_MIXER_ENUM;
@@ -1310,6 +1371,10 @@ cs4231_intr(v)
 				cs4231_write(sc, SP_LOWER_BASE_COUNT, 0xff);
 				cs4231_write(sc, SP_UPPER_BASE_COUNT, 0xff);
 			}
+			if (reg & CS_AFS_CI) {
+				cs4231_write(sc, CS_LOWER_REC_CNT, 0xff);
+				cs4231_write(sc, CS_UPPER_REC_CNT, 0xff);
+			}
 			CS_WRITE(sc, AD1848_STATUS, 0);
 		}
 		r = 1;
@@ -1320,36 +1385,61 @@ cs4231_intr(v)
 		r = 1;
 
 	if ((csr & APC_CSR_PMIE) && (csr & APC_CSR_PMI)) {
+		struct cs_channel *chan = &sc->sc_playback;
 		u_long nextaddr, togo;
 
-		p = sc->sc_nowplaying;
-		togo = sc->sc_playsegsz - sc->sc_playcnt;
+		p = chan->cs_curdma;
+		togo = chan->cs_segsz - chan->cs_cnt;
 		if (togo == 0) {
 			nextaddr = (u_int32_t)p->dmamap->dm_segs[0].ds_addr;
-			sc->sc_playcnt = togo = sc->sc_blksz;
+			chan->cs_cnt = togo = chan->cs_blksz;
 		} else {
-			nextaddr = APC_READ(sc, APC_PNVA) + sc->sc_blksz;
-			if (togo > sc->sc_blksz)
-				togo = sc->sc_blksz;
-			sc->sc_playcnt += togo;
+			nextaddr = APC_READ(sc, APC_PNVA) + chan->cs_blksz;
+			if (togo > chan->cs_blksz)
+				togo = chan->cs_blksz;
+			chan->cs_cnt += togo;
 		}
 
 		APC_WRITE(sc, APC_PNVA, nextaddr);
 		APC_WRITE(sc, APC_PNC, togo);
 
-		if (sc->sc_pintr != NULL)
-			(*sc->sc_pintr)(sc->sc_parg);
+		if (chan->cs_intr != NULL)
+			(*chan->cs_intr)(chan->cs_arg);
 		r = 1;
 	}
 
-#if 0
-	if (csr & APC_CSR_CI) {
-		if (sc->sc_rintr != NULL) {
-			r = 1;
-			(*sc->sc_rintr)(sc->sc_rarg);
+	if ((csr & APC_CSR_CIE) && (csr & APC_CSR_CI)) {
+		if (csr & APC_CSR_CD) {
+			struct cs_channel *chan = &sc->sc_capture;
+			u_long nextaddr, togo;
+
+			p = chan->cs_curdma;
+			togo = chan->cs_segsz - chan->cs_cnt;
+			if (togo == 0) {
+				nextaddr =
+				    (u_int32_t)p->dmamap->dm_segs[0].ds_addr;
+				chan->cs_cnt = togo = chan->cs_blksz;
+			} else {
+				nextaddr = APC_READ(sc, APC_CNVA) +
+				    chan->cs_blksz;
+				if (togo > chan->cs_blksz)
+					togo = chan->cs_blksz;
+				chan->cs_cnt += togo;
+			}
+
+			APC_WRITE(sc, APC_CNVA, nextaddr);
+			APC_WRITE(sc, APC_CNC, togo);
+
+			if (chan->cs_intr != NULL)
+				(*chan->cs_intr)(chan->cs_arg);
 		}
+		r = 1;
 	}
-#endif
+
+	if ((csr & APC_CSR_CMIE) && (csr & APC_CSR_CMI)) {
+		/* capture empty */
+		r = 1;
+	}
 
 	return (r);
 }
@@ -1436,19 +1526,20 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct cs4231_softc *sc = addr;
+	struct cs_channel *chan = &sc->sc_playback;
 	struct cs_dma *p;
 	u_int32_t csr;
-	vaddr_t n;
+	u_long n;
 
-	if (sc->sc_locked != 0) {
+	if (chan->cs_locked != 0) {
 		printf("%s: trigger_output: already running\n",
 		    sc->sc_dev.dv_xname);
 		return (EINVAL);
 	}
 
-	sc->sc_locked = 1;
-	sc->sc_pintr = intr;
-	sc->sc_parg = arg;
+	chan->cs_locked = 1;
+	chan->cs_intr = intr;
+	chan->cs_arg = arg;
 
 	for (p = sc->sc_dmas; p->addr != start; p = p->next)
 		/*EMPTY*/;
@@ -1464,14 +1555,14 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	 * Do only `blksize' at a time, so audio_pint() is kept
 	 * synchronous with us...
 	 */
-	sc->sc_blksz = blksize;
-	sc->sc_nowplaying = p;
-	sc->sc_playsegsz = n;
+	chan->cs_blksz = blksize;
+	chan->cs_curdma = p;
+	chan->cs_segsz = n;
 
-	if (n > sc->sc_blksz)
-		n = sc->sc_blksz;
+	if (n > chan->cs_blksz)
+		n = chan->cs_blksz;
 
-	sc->sc_playcnt = n;
+	chan->cs_cnt = n;
 
 	csr = APC_READ(sc, APC_CSR);
 
@@ -1500,7 +1591,78 @@ cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *arg;
 	struct audio_params *param;
 {
-	return (ENXIO);
+	struct cs4231_softc *sc = addr;
+	struct cs_channel *chan = &sc->sc_capture;
+	struct cs_dma *p;
+	u_int32_t csr;
+	u_long n;
+
+	if (chan->cs_locked != 0) {
+		printf("%s: trigger_input: already running\n",
+		    sc->sc_dev.dv_xname);
+		return (EINVAL);
+	}
+	chan->cs_locked = 1;
+	chan->cs_intr = intr;
+	chan->cs_arg = arg;
+
+	for (p = sc->sc_dmas; p->addr != start; p = p->next)
+		/*EMPTY*/;
+	if (p == NULL) {
+		printf("%s: trigger_input: bad addr: %x\n",
+		    sc->sc_dev.dv_xname, start);
+		return (EINVAL);
+	}
+
+	n = (char *)end - (char *)start;
+
+	/*
+	 * Do only `blksize' at a time, so audio_cint() is kept
+	 * synchronous with us...
+	 */
+	chan->cs_blksz = blksize;
+	chan->cs_curdma = p;
+	chan->cs_segsz = n;
+
+	if (n > chan->cs_blksz)
+		n = chan->cs_blksz;
+	chan->cs_cnt = n;
+
+	APC_WRITE(sc, APC_CNVA, p->dmamap->dm_segs[0].ds_addr);
+	APC_WRITE(sc, APC_CNC, (u_long)n);
+
+	csr = APC_READ(sc, APC_CSR);
+	if ((csr & APC_CSR_CDMA_GO) == 0 || (csr & APC_CSR_CPAUSE) != 0) {
+		csr &= APC_CSR_CPAUSE;
+		csr |= APC_CSR_GIE | APC_CSR_CMIE | APC_CSR_CIE | APC_CSR_EI |
+		    APC_CSR_CDMA_GO;
+		APC_WRITE(sc, APC_CSR, csr);
+		cs4231_write(sc, CS_LOWER_REC_CNT, 0xff);
+		cs4231_write(sc, CS_UPPER_REC_CNT, 0xff);
+		cs4231_write(sc, SP_INTERFACE_CONFIG,
+		    cs4231_read(sc, SP_INTERFACE_CONFIG) | CAPTURE_ENABLE);
+	}
+
+	if (APC_READ(sc, APC_CSR) & APC_CSR_CD) {
+		u_long nextaddr, togo;
+
+		p = chan->cs_curdma;
+		togo = chan->cs_segsz - chan->cs_cnt;
+		if (togo == 0) {
+			nextaddr = (u_int32_t)p->dmamap->dm_segs[0].ds_addr;
+			chan->cs_cnt = togo = chan->cs_blksz;
+		} else {
+			nextaddr = APC_READ(sc, APC_CNVA) + chan->cs_blksz;
+			if (togo > chan->cs_blksz)
+				togo = chan->cs_blksz;
+			chan->cs_cnt += togo;
+		}
+
+		APC_WRITE(sc, APC_CNVA, nextaddr);
+		APC_WRITE(sc, APC_CNC, togo);
+	}
+
+	return (0);
 }
 
 #endif /* NAUDIO > 0 */
