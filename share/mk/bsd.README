@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.13 1997/02/09 16:41:50 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.14 1997/04/18 03:49:48 millert Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -353,7 +353,7 @@ the variable SUBDIRS.
 
 The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
 <bsd.lib.mk>.  It contains overrides that are used when building
-the NetBSD source tree.  For instance, if "PARALLEL" is defined by
+the OpenBSD source tree.  For instance, if "PARALLEL" is defined by
 the program/library Makefile, it includes a set of rules for lex and
 yacc that allow multiple lex and yacc targets to be built in parallel.
 
