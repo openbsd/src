@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.38 2003/10/31 20:20:45 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.39 2004/06/14 18:26:33 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.38 2003/10/31 20:20:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.39 2004/06/14 18:26:33 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -624,13 +624,13 @@ locate_hunk(LINENUM fuzz)
 	LINENUM	max_neg_offset = first_guess - last_frozen_line - 1 + pch_context();
 
 	if (pat_lines == 0) {		/* null range matches always */
-		if (verbose && (diff_type == CONTEXT_DIFF
+		if (verbose && fuzz == 0 && (diff_type == CONTEXT_DIFF
 		    || diff_type == NEW_CONTEXT_DIFF
 		    || diff_type == UNI_DIFF)) {
 			say("Empty context always matches.\n");
-			say("Detection of previously applied patch not possible.\n");
 		}
-		return first_guess;
+		if (fuzz == 0)
+			return (input_lines == 0 ? first_guess : 0);
 	}
 	if (max_neg_offset >= first_guess)	/* do not try lines < 0 */
 		max_neg_offset = first_guess - 1;
