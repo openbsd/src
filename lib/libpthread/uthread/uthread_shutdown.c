@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_shutdown.c,v 1.3 1999/11/25 07:01:44 d Exp $	*/
+/*	$OpenBSD: uthread_shutdown.c,v 1.4 2003/02/14 02:34:16 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,19 +46,19 @@ shutdown(int fd, int how)
 
 	switch (how) {
 	case 0:
-			if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
+		if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
 			ret = _thread_sys_shutdown(fd, how);
 			_FD_UNLOCK(fd, FD_READ);
 		}
 		break;
 	case 1:
-			if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
+		if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
 			ret = _thread_sys_shutdown(fd, how);
 			_FD_UNLOCK(fd, FD_WRITE);
 		}
 		break;
 	case 2:
-			if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
+		if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 			ret = _thread_sys_shutdown(fd, how);
 			_FD_UNLOCK(fd, FD_RDWR);
 		}
