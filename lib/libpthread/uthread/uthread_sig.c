@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.19 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.20 2003/04/30 17:54:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -64,6 +64,7 @@ void
 _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 {
 	struct pthread	*curthread = _get_curthread();
+	int	dispatch;
 	char	c;
 
 	if (sig == _SCHED_SIGNAL) {
@@ -131,7 +132,10 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 			_thread_sys_write(_thread_kern_pipe[1], &c, 1);
 			_sigq_check_reqd = 1;
 		} else {
-			if (_thread_sig_handle(sig, scp))
+			_queue_signals = 1;
+			dispatch = _thread_sig_handle(sig, scp);
+			_queue_signals = 0;
+			if (dispatch)
 				_dispatch_signals(scp);
 		}
 	}
@@ -160,7 +164,7 @@ _thread_clear_pending(int sig, pthread_t thread)
 
 /*
  * Process the given signal.   Returns 1 if the signal may be dispatched,
- * otherwise 0.
+ * otherwise 0.   Signals MUST be defered when this function is called.
  */
 int
 _thread_sig_handle(int sig, struct sigcontext * scp)
