@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.7 1997/08/24 08:07:20 downsj Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.8 2001/01/31 22:32:30 deraadt Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.7 1997/08/24 08:07:20 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.8 2001/01/31 22:32:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ main(argc, argv)
 #endif /* MAPSECURITY */
 
 	if ((fscanf(gfp, "%d\n", &gnentries)) != 1)
-		errx(1, "nentries not found%s", gmapfile, not);
+		errx(1, "%s: nentries not found%s", gmapfile, not);
 	if (gnentries > GMAPFILEENTRIES)
 		errx(1,
 		    "maximum number of entries is %d%s", GMAPFILEENTRIES, not);
