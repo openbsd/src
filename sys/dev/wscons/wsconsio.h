@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.33 2005/01/14 22:39:33 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.34 2005/01/17 04:19:40 drahn Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -281,6 +281,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_RBOX	45	/* HP Renaissance */
 #define		WSDISPLAY_TYPE_HYPERION	46	/* HP Hyperion */
 #define		WSDISPLAY_TYPE_TOPCAT	47	/* HP Topcat */
+#define		WSDISPLAY_TYPE_PXALCD	48	/* PXALCD (Zaurus) */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
