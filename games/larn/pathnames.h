@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1998/09/15 05:12:33 pjanzen Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1998/10/01 05:31:38 pjanzen Exp $	*/
 /* $NetBSD: pathnames.h,v 1.7 1997/10/18 20:03:41 christos Exp $	 */
 
 /*-
@@ -41,3 +41,5 @@
 #define	_PATH_HELP		"/usr/share/games/larn/larn.help"
 #define	_PATH_LEVELS		"/usr/share/games/larn/larnmaze"
 #define	_PATH_PLAYERIDS		"/var/games/larn/playerids"
+
+#define	_PATH_MAIL		"/usr/bin/mail"

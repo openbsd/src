@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1998/09/15 05:12:30 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.8 1998/10/01 05:31:38 pjanzen Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -37,7 +37,7 @@
 #	cause player id's from the file ".playerids" to be used instead.
 #	(.playerids is created upon demand).  Only one entry per id # is
 #	allowed in each scoreboard (winning & non-winning).
-#  VT100
+# VT100
 #	Compile for using vt100 family of terminals.  Omission of this
 #	define will cause larn to use termcap, but it will be MUCH slower
 #	due to an extra layer of output interpretation.  Also, only VT100
@@ -52,6 +52,8 @@
 #	used to delay for effect when casting missile type spells.
 # NOLOG
 #	Turn off logging.
+# NOSPAM
+#	Don't send e-mail to players once they've won.
 
 PROG=	larn
 MAN=	larn.6

@@ -1,12 +1,13 @@
-/*	$OpenBSD: main.c,v 1.8 1998/09/15 05:12:32 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1998/10/01 05:31:38 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $	*/
 
 /* main.c		 */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/09/15 05:12:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/10/01 05:31:38 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <pwd.h>
@@ -79,11 +80,11 @@ main(argc, argv)
 		/* can we get it from /etc/passwd? */
 		if ((pwe = getpwuid(getuid())) != NULL)
 			ptr = pwe->pw_name;
+#ifdef NOSPAM
 		else if ((ptr = getenv("LOGNAME")) == 0)
-			if ((ptr = getenv("USER")) == 0) {
-		noone:		write(2, "Can't find your logname.  Who Are You?\n", 39);
-				exit(1);
-			}
+			if ((ptr = getenv("USER")) == 0)
+#endif
+		noone:		errx(1, "can't find your logname.  Who Are You?");
 	}
 	if (ptr == 0)
 		goto noone;
