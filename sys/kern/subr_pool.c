@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.8 2001/06/24 16:00:47 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.9 2001/06/24 17:06:14 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
  */
 #define __predict_false(X) ((X) != 0)
 #define __predict_true(X) ((X) != 0)
-#define splvm splimp
 #define SIMPLELOCK_INITIALIZER { SLOCK_UNLOCKED }
 #ifdef LOCKDEBUG
 #define simple_lock_freecheck(a, s) do { /* nothing */ } while (0)
