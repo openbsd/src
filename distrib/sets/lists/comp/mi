@@ -347,6 +347,7 @@
 ./usr/include/dev/pci/if_stereg.h
 ./usr/include/dev/pci/if_tireg.h
 ./usr/include/dev/pci/if_tlreg.h
+./usr/include/dev/pci/if_txpreg.h
 ./usr/include/dev/pci/if_txvar.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_wbreg.h
