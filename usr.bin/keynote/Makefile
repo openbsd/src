@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 1999/05/31 18:30:46 angelos Exp $
+# $OpenBSD: Makefile,v 1.5 1999/05/31 20:08:52 angelos Exp $
 
 PROG=	keynote
 
@@ -20,10 +20,10 @@ KEYNOTE_SRC= ${.CURDIR}/../../${KEYNOTEDIST}
 SRCS=	keynote-sign.c keynote-keygen.c keynote-sigver.c keynote-verify.c \
 	keynote-main.c z.tab.c lex.kv.c
 
-z.tab.c: keynote-ver.y
+z.tab.c: keynote-ver.y keynote.h header.h
 	$(YACC.y) $(YACCFLAGS2) ${KEYNOTE_SRC}/keynote-ver.y
 
-lex.kv.c: keynote-ver.l
+lex.kv.c: keynote-ver.l keynote.h header.h
 	$(LEX.l) $(LEXFLAGS2) ${KEYNOTE_SRC}/keynote-ver.l
 
 .PATH:	${KEYNOTE_SRC}
