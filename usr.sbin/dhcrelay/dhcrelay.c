@@ -68,6 +68,7 @@ main(int argc, char *argv[])
 	extern char		*__progname;
 	struct servent		*ent;
 	struct server_list	*sp = NULL;
+	struct passwd		*pw;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -162,6 +163,18 @@ main(int argc, char *argv[])
 	bootp_packet_handler = relay;
 	if (!no_daemon)
 		daemon(0, 0);
+
+	if ((pw = getpwnam("_dhcp")) == NULL)
+		error("getpwnam: %m");
+	if (chroot("/var/empty") == -1)
+		error("chroot: %m");
+	if (chdir("/") == -1)
+		error("chdir(\"/\"): %m");
+	if (setgroups(1, &pw->pw_gid) ||
+	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
+	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
+		error("can't drop privileges: %m");
+	endpwent();
 
 	dispatch();
 	/* not reached */
