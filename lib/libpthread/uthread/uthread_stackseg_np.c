@@ -1,19 +1,17 @@
-/* $OpenBSD: uthread_stackseg_np.c,v 1.1 2004/01/15 22:22:12 marc Exp $ */
+/* $OpenBSD: uthread_stackseg_np.c,v 1.2 2004/01/16 20:46:20 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
-#include <uvm/uvm_pmap.h>
-#include <machine/pmap.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
 
 #include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
 #include <unistd.h>
+
+#include <uvm/uvm_extern.h>
 
 #include "pthread_private.h"
 
