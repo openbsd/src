@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: lock.h,v 1.2 2004/12/30 23:31:02 drahn Exp $	*/
 /*	$NetBSD: lock.h,v 1.3 2002/10/07 23:19:49 bjh21 Exp $	*/
 
 /*-
@@ -48,6 +48,11 @@
 
 #ifndef _ARM_LOCK_H_
 #define	_ARM_LOCK_H_
+
+typedef __volatile int          __cpu_simple_lock_t;
+
+#define __SIMPLELOCK_LOCKED     1
+#define __SIMPLELOCK_UNLOCKED   0
 
 static __inline int
 __swp(int __val, __volatile int *__ptr)
