@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ip.h,v 1.6 2000/07/07 14:47:54 brian Exp $
+ * $OpenBSD: ip.h,v 1.7 2000/07/11 22:13:03 brian Exp $
  *
  */
 
@@ -28,7 +28,7 @@ struct bundle;
 
 extern int ip_PushPacket(struct link *, struct bundle *);
 extern int PacketCheck(struct bundle *, unsigned char *, int, struct filter *,
-                       const char *);
+                       const char *, unsigned *secs);
 extern void ip_Enqueue(struct ipcp *, int, char *, int);
 extern struct mbuf *ip_Input(struct bundle *, struct link *, struct mbuf *);
 extern void ip_DeleteQueue(struct ipcp *);

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.h,v 1.16 2000/07/07 14:47:54 brian Exp $
+ *	$OpenBSD: bundle.h,v 1.17 2000/07/11 22:13:02 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -158,7 +158,7 @@ extern void bundle_LinkClosed(struct bundle *, struct datalink *);
 
 extern int bundle_ShowLinks(struct cmdargs const *);
 extern int bundle_ShowStatus(struct cmdargs const *);
-extern void bundle_StartIdleTimer(struct bundle *);
+extern void bundle_StartIdleTimer(struct bundle *, unsigned secs);
 extern void bundle_SetIdleTimer(struct bundle *, int, int);
 extern void bundle_StopIdleTimer(struct bundle *);
 extern int bundle_IsDead(struct bundle *);

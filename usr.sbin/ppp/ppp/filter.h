@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: filter.h,v 1.10 2000/03/19 10:33:33 brian Exp $
+ * $OpenBSD: filter.h,v 1.11 2000/07/11 22:13:03 brian Exp $
  *
  *	TODO:
  */
@@ -75,6 +75,7 @@ struct filterent {
   struct in_range f_dst;	/* Destination address and mask */
   u_short f_srcport;		/* Source port, compared with f_srcop */
   u_short f_dstport;		/* Destination port, compared with f_dstop */
+  unsigned timeout;		/* Keep alive value for passed packet */
 };
 
 #define	MAXFILTERS	40	/* in each filter set */

@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$OpenBSD: nat_cmd.c,v 1.13 2000/07/07 14:47:54 brian Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.14 2000/07/11 22:13:03 brian Exp $
  */
 
 #include <sys/param.h>
@@ -423,7 +423,7 @@ nat_LayerPull(struct bundle *bundle, struct link *l, struct mbuf *bp,
     case PKT_ALIAS_IGNORED:
       if (log_IsKept(LogTCPIP)) {
         log_Printf(LogTCPIP, "NAT engine ignored data:\n");
-        PacketCheck(bundle, MBUF_CTOP(bp), bp->m_len, NULL, NULL);
+        PacketCheck(bundle, MBUF_CTOP(bp), bp->m_len, NULL, NULL, NULL);
       }
       break;
 
