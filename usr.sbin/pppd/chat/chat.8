@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" $OpenBSD: chat.8,v 1.6 1999/02/24 08:41:06 deraadt Exp $
+.\" $OpenBSD: chat.8,v 1.7 1999/03/01 06:09:51 aaron Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
@@ -129,7 +129,7 @@ ogin: ppp ssword: hello2u2
 .LP
 In other words, expect ....ogin:, send ppp, expect ...ssword:, send hello2u2.
 .LP
-In actual practice, simple scripts are rare. At the vary least, you
+In actual practice, simple scripts are rare. At the very least, you
 should include sub-expect sequences should the original string not be
 received. For example, consider the following script:
 .IP
@@ -191,7 +191,7 @@ terminal), standard error will normally be redirected to the file
 .LP
 \fBSAY\fR strings must be enclosed in single or double quotes. If
 carriage return and line feed are needed in the string to be output,
-you must explicitely add them to your string.
+you must explicitly add them to your string.
 .LP
 The SAY strings could be used to give progress messages in sections of
 the script where you want to have 'ECHO OFF' but still let the user
