@@ -1,4 +1,4 @@
-/*    $OpenBSD: ip_fil.c,v 1.17 1998/03/04 23:20:41 dgregor Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.18 1998/05/18 21:10:46 provos Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.17 1998/03/04 23:20:41 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.18 1998/05/18 21:10:46 provos Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -900,7 +900,7 @@ struct tcpiphdr *ti;
 	/*
 	 * extra 0 in case of multicast
 	 */
-	err = ip_output(m, (struct mbuf *)0, 0, 0, 0);
+	err = ip_output(m, (struct mbuf *)0, 0, 0, 0, NULL);
 # endif
 	return err;
 }

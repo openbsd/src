@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.10 1997/07/24 00:31:14 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.11 1998/05/18 21:11:04 provos Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -55,6 +55,10 @@
 #include <netinet/ip_mroute.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
+
+#ifdef IPSEC
+extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+#endif
 
 #include <machine/stdarg.h>
 
@@ -208,7 +212,7 @@ rip_output(m, va_alist)
 		ipstat.ips_rawout++;
 	}
 	return (ip_output(m, inp->inp_options, &inp->inp_route, flags,
-	    inp->inp_moptions));
+	    inp->inp_moptions, inp));
 }
 
 /*
@@ -412,6 +416,9 @@ rip_usrreq(so, req, m, nam, control)
 			}
 			dst = mtod(nam, struct sockaddr_in *)->sin_addr.s_addr;
 		}
+#ifdef IPSEC
+		if (!(error = check_ipsec_policy(inp, dst)))
+#endif
 		error = rip_output(m, so, dst);
 		m = NULL;
 		break;

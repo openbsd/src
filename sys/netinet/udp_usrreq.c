@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.14 1998/01/24 18:21:39 mickey Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.15 1998/05/18 21:11:12 provos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -62,6 +62,10 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+
+#ifdef IPSEC
+extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+#endif
 
 #include <machine/stdarg.h>
 
@@ -501,7 +505,7 @@ udp_output(m, va_alist)
 	udpstat.udps_opackets++;
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions);
+	    inp->inp_moptions, inp);
 
 bail:
 	if (addr) {
@@ -611,6 +615,11 @@ udp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_SEND:
+#ifdef IPSEC
+		error = check_ipsec_policy(inp,0);
+		if (error)
+			return (error);
+#endif
 		return (udp_output(m, inp, addr, control));
 
 	case PRU_ABORT:

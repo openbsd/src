@@ -1,28 +1,33 @@
-
-/*	$OpenBSD: ip_ipsp.c,v 1.25 1998/05/17 16:52:56 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.26 1998/05/18 21:10:57 provos Exp $	*/
 
 /*
- * The author of this code is John Ioannidis, ji@tla.org,
- * 	(except when noted otherwise).
+ * The authors of this code are John Ioannidis (ji@tla.org),
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written for BSD/OS in Athens, Greece, in November 1995.
+ * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
+ * in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis, kermit@forthnet.gr.
+ * by Angelos D. Keromytis.
  *
- * Additional transforms and features in 1997 by Angelos D. Keromytis and
- * Niels Provos.
+ * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
+ * and Niels Provos.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
  * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software.
+ * modification of this software. 
+ * You may use this code under the GNU public license if you so wish. Please
+ * contribute changes back to the authors under this freer than GPL license
+ * so that we may further the use of strong encryption without limitations to
+ * all.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTY. IN PARTICULAR, NEITHER AUTHOR MAKES ANY
+ * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
@@ -43,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -65,13 +71,19 @@
 #include <dev/rndvar.h>
 #include <sys/syslog.h>
 
-int	tdb_init __P((struct tdb *, struct mbuf *));
-int	ipsp_kern __P((int, char **, int));
+int		tdb_init __P((struct tdb *, struct mbuf *));
+int		ipsp_kern __P((int, char **, int));
+u_int8_t       	get_sa_require  __P((struct inpcb *));
+int		check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+extern void	encap_sendnotify __P((int, struct tdb *, void *));
+
+extern int	ipsec_auth_default_level;
+extern int	ipsec_esp_trans_default_level;
+extern int	ipsec_esp_network_default_level;
 
 int encdebug = 0;
 u_int32_t kernfs_epoch = 0;
 
-extern void encap_sendnotify(int, struct tdb *);
 
 /*
  * This is the proper place to define the various encapsulation transforms.
@@ -101,6 +113,161 @@ struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];
 
 unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */ 
 
+/*
+ * Check which transformationes are required
+ */
+
+u_int8_t
+get_sa_require(struct inpcb *inp)
+{
+	u_int8_t sareq = 0;
+       
+	if (inp != NULL) {
+		sareq |= inp->inp_seclevel[SL_AUTH] >= IPSEC_LEVEL_USE ? 
+			NOTIFY_SATYPE_AUTH : 0;
+		sareq |= inp->inp_seclevel[SL_ESP_TRANS] >= IPSEC_LEVEL_USE ?
+			NOTIFY_SATYPE_CONF : 0;
+		sareq |= inp->inp_seclevel[SL_ESP_NETWORK] >= IPSEC_LEVEL_USE ?
+			NOTIFY_SATYPE_TUNNEL : 0;
+	} else {
+		sareq |= ipsec_auth_default_level >= IPSEC_LEVEL_USE ? 
+			NOTIFY_SATYPE_AUTH : 0;
+		sareq |= ipsec_esp_trans_default_level >= IPSEC_LEVEL_USE ? 
+			NOTIFY_SATYPE_CONF : 0;
+		sareq |= ipsec_esp_network_default_level >= IPSEC_LEVEL_USE ? 
+			NOTIFY_SATYPE_TUNNEL : 0;
+	}
+
+	return (sareq);
+}
+
+/*
+ * Check the socket policy and request a new SA with a key management
+ * daemon. Sometime the inp does not contain the destination address
+ * in that case use dst.
+ */
+
+int
+check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
+{
+	struct socket *so;
+	struct route_enc re0, *re = &re0;
+	struct sockaddr_encap *dst; 
+	struct tdb tmptdb;
+	u_int8_t sa_require, sa_have;
+	int error, i;
+
+	if (inp == NULL || ((so=inp->inp_socket) == 0))
+		return (EINVAL);
+
+	/* If IPSEC is not required just use what we got */
+	if (!(sa_require = inp->inp_secrequire))
+		return 0;
+
+	bzero((caddr_t) re, sizeof(*re));
+	dst = (struct sockaddr_encap *) &re->re_dst;
+	dst->sen_family = AF_ENCAP;
+	dst->sen_len = SENT_IP4_LEN;
+	dst->sen_type = SENT_IP4;
+	dst->sen_ip_src = inp->inp_laddr;
+	dst->sen_ip_dst.s_addr = inp->inp_faddr.s_addr ? 
+		inp->inp_faddr.s_addr : daddr;
+	dst->sen_proto = so->so_proto->pr_protocol;
+	switch (dst->sen_proto) {
+	case IPPROTO_UDP:
+	case IPPROTO_TCP:
+		dst->sen_sport = inp->inp_lport;
+		dst->sen_dport = inp->inp_fport;
+		break;
+	default:
+		dst->sen_sport = 0;
+		dst->sen_dport = 0;
+	}
+
+	/* Try to find a flow */
+	rtalloc((struct route *) re);
+
+	if (re->re_rt != NULL) {
+		struct tdb *tdb;
+		struct sockaddr_encap *gw;
+		
+		gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
+	     
+		if (gw->sen_type == SENT_IPSP) {
+			tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, 
+						    gw->sen_ipsp_dst,
+						    gw->sen_ipsp_sproto);
+
+			SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
+		} else 
+			sa_have = 0;
+
+		RTFREE(re->re_rt);
+
+		/* Check if our requirements are met */
+		if (!(sa_require & ~sa_have))
+			return 0;
+	} else
+		sa_have = 0;
+
+	error = i = 0;
+
+	inp->inp_secresult = SR_WAIT;
+
+	/* If necessary try to notify keymanagement three times */
+	while (i < 3) {
+#ifdef ENCDEBUG
+	        if (encdebug)
+		        printf("ipsec: send SA request (%d), remote ip: %0x, SA type: %d\n",
+			       i+1, dst->sen_ip_dst, sa_require);
+#endif /* ENCDEBUG */
+
+		/* Send notify */
+		bzero((caddr_t) &tmptdb, sizeof(tmptdb));
+		tmptdb.tdb_src = dst->sen_ip_src;
+		tmptdb.tdb_dst = dst->sen_ip_dst;
+		/*
+		 * When we already have an insufficient SA, we need to
+		 * establish a new SA which combines the required
+		 * attributes and the already existant. This can go
+		 * once we can do socket specific keying.
+		 */
+		tmptdb.tdb_satype = sa_require | sa_have;
+		encap_sendnotify(NOTIFY_REQUEST_SA, &tmptdb, inp); 
+	 
+		/* 
+		 * Wait for the keymanagement daemon to establich a new SA,
+		 * even on error check again, perhaps some other process
+		 * already established the necessary SA.
+		 */
+		error = tsleep((caddr_t)inp, PSOCK|PCATCH, "ipsecnotify", 30*hz);
+
+#ifdef ENCDEBUG
+		if (encdebug)
+		        printf("check_ipsec: sleep %d\n", error);
+#endif /* ENCDEBUG */
+
+		if (error && error != EWOULDBLOCK)
+			break;
+		/* 
+		 * A Key Management daemon returned an apropriate SA back
+		 * to the kernel, the kernel noted that state in the waiting
+		 * socket.
+		 */
+		if (inp->inp_secresult == SR_SUCCESS)
+			return (0);
+		/*
+		 * Key Management returned a permanent failure, we do not
+		 * need to retry again. XXX - when more than one key
+		 * management daemon is available we can not do that.
+		 */
+		if (inp->inp_secresult == SR_FAILED)
+			break;
+		i++;
+	}
+
+	return (error ? error : EWOULDBLOCK);
+}
 
 /*
  * Reserve an SPI; the SA is not valid yet though. Zero is reserved as
@@ -267,7 +434,7 @@ handle_expirations(void *arg)
 	{
 	  if (tdb->tdb_soft_timeout <= time.tv_sec)
 	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
 	      tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 	  }
 	  else
@@ -275,7 +442,7 @@ handle_expirations(void *arg)
 	      if (tdb->tdb_first_use + tdb->tdb_soft_first_use <=
 		  time.tv_sec)
 	      {
-		  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+		  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
 		  tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 	      }
 	}
@@ -285,7 +452,7 @@ handle_expirations(void *arg)
 	{
 	  if (tdb->tdb_exp_timeout <= time.tv_sec)
 	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 	      tdb_delete(tdb, 0);
 	  }
 	  else
@@ -293,7 +460,7 @@ handle_expirations(void *arg)
 	      if (tdb->tdb_first_use + tdb->tdb_exp_first_use <=
 		  time.tv_sec)
 	      {
-		  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+		  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 		  tdb_delete(tdb, 0);
 	      }
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.7 1997/09/28 23:09:58 deraadt Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.8 1998/05/18 21:11:00 provos Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1714,7 +1714,7 @@ tbf_send_packet(vifp,m)
     if (vifp->v_flags & VIFF_TUNNEL) {
 	/* If tunnel options */
 	ip_output(m, (struct mbuf *)0, &vifp->v_route,
-		  IP_FORWARDING, NULL);
+		  IP_FORWARDING, NULL, NULL);
     } else {
 	/* if physical interface option, extract the options and then send */
 	struct ip *ip = mtod(m, struct ip *);
@@ -1727,7 +1727,7 @@ tbf_send_packet(vifp,m)
 #endif
 
 	error = ip_output(m, (struct mbuf *)0, (struct route *)0,
-			  IP_FORWARDING|IP_MULTICASTOPTS, &imo);
+			  IP_FORWARDING|IP_MULTICASTOPTS, &imo, NULL);
 	if (mrtdebug & DEBUG_XMIT)
 	    log(LOG_DEBUG, "phyint_send on vif %d err %d\n", vifp-viftable, error);
     }

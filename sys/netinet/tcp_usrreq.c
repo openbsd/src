@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.20 1998/02/28 03:39:58 angelos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.21 1998/05/18 21:11:09 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -68,6 +68,10 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <dev/rndvar.h>
+
+#ifdef IPSEC
+extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+#endif
 
 /*
  * TCP protocol interface to socket abstraction.
@@ -288,6 +292,11 @@ tcp_usrreq(so, req, m, nam, control)
 	 * marker if URG set.  Possibly send more data.
 	 */
 	case PRU_SEND:
+#ifdef IPSEC
+		error = check_ipsec_policy(inp, 0);
+		if (error)
+			break;
+#endif
 		sbappend(&so->so_snd, m);
 		error = tcp_output(tp);
 		break;

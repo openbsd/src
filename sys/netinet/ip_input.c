@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.30 1998/02/14 18:50:36 mickey Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.31 1998/05/18 21:10:49 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -95,9 +95,9 @@ int	ip_directedbcast = IPDIRECTEDBCAST;
 int	ipprintfs = 0;
 #endif
 
-u_char  ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
-u_char  ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
-u_char  ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
+int	ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
+int	ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
+int	ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 
 /* from in_pcb.c */
 extern int ipport_firstauto;
@@ -1217,7 +1217,8 @@ ip_forward(m, srcrt)
 	}
 
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
-	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
+	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 
+			  0, NULL);
 	if (error)
 		ipstat.ips_cantforward++;
 	else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.9 1998/02/03 19:06:30 deraadt Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.10 1998/05/18 21:11:06 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ send:
 	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
 #if BSD >= 43
 	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
-	    so->so_options & SO_DONTROUTE, 0);
+	    so->so_options & SO_DONTROUTE, 0, tp->t_inpcb);
 #else
 	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route, 
 	    so->so_options & SO_DONTROUTE);

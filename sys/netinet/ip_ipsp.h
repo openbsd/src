@@ -1,27 +1,33 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.18 1998/03/18 10:51:38 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.19 1998/05/18 21:10:59 provos Exp $	*/
 
 /*
- * The author of this code is John Ioannidis, ji@tla.org,
- * 	(except when noted otherwise).
+ * The authors of this code are John Ioannidis (ji@tla.org),
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written for BSD/OS in Athens, Greece, in November 1995.
+ * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
+ * in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis, kermit@forthnet.gr.
+ * by Angelos D. Keromytis.
  *
- * Additional transforms and features in 1997 by Angelos D. Keromytis and
- * Niels Provos.
+ * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
+ * and Niels Provos.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
  * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software.
+ * modification of this software. 
+ * You may use this code under the GNU public license if you so wish. Please
+ * contribute changes back to the authors under this freer than GPL license
+ * so that we may further the use of strong encryption without limitations to
+ * all.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTY. IN PARTICULAR, NEITHER AUTHOR MAKES ANY
+ * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
@@ -185,6 +191,26 @@ struct tdb *tdbh[TDB_HASHMOD];
 struct expiration *explist;
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 u_int32_t notify_msgids;
+
+/* Check if a given tdb has encryption, authentication and/or tunneling */
+#define TDB_ATTRIB(x) (((x)->tdb_confname != NULL ? NOTIFY_SATYPE_CONF : 0)| \
+		       ((x)->tdb_authname != NULL ? NOTIFY_SATYPE_AUTH : 0)| \
+		       ((x)->tdb_confname != NULL && \
+			((x)->tdb_flags & TDBF_TUNNELING) ? NOTIFY_SATYPE_TUNNEL : 0))
+
+/* Traverse spi chain and get attributes */
+
+#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) {\
+	struct tdb *tmptdb = (TDBP); \
+	(have) = 0; \
+	\
+	while (tmptdb && tmptdb->tdb_xform) { \
+	        if (tmptdb == NULL || tmptdb->tdb_flags & TDBF_INVALID) \
+	                break; \
+                (have) |= TDB_ATTRIB(tmptdb); \
+                tmptdb = tmptdb->TDB_DIR; \
+        } \
+}
 
 /* TDB management routines */
 extern u_int32_t reserve_spi(u_int32_t, struct in_addr, u_int8_t, int *);

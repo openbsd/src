@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.23 1998/02/14 18:50:35 mickey Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.24 1998/05/18 21:10:27 provos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -59,11 +59,18 @@
 #include <netinet/ip_var.h>
 #include <dev/rndvar.h>
 
+#ifdef IPSEC
+#include <net/encap.h>
+#include <netinet/ip_ipsp.h>
+
+extern int	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+#endif
+
 struct	in_addr zeroin_addr;
 
-extern u_char ipsec_auth_default_level;
-extern u_char ipsec_esp_trans_default_level;
-extern u_char ipsec_esp_network_default_level;
+extern int ipsec_auth_default_level;
+extern int ipsec_esp_trans_default_level;
+extern int ipsec_esp_network_default_level;
 
 /*
  * These configure the range of local port addresses assigned to
@@ -418,7 +425,11 @@ in_pcbconnect(v, nam)
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbrehash(inp);
+#ifdef IPSEC
+	return (check_ipsec_policy(inp, 0));
+#else
 	return (0);
+#endif
 }
 
 void

@@ -1,27 +1,33 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.18 1998/05/05 08:54:48 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.19 1998/05/18 21:10:43 provos Exp $	*/
 
 /*
- * The author of this code is John Ioannidis, ji@tla.org,
- * 	(except when noted otherwise).
+ * The authors of this code are John Ioannidis (ji@tla.org),
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written for BSD/OS in Athens, Greece, in November 1995.
+ * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
+ * in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis, kermit@forthnet.gr.
+ * by Angelos D. Keromytis.
  *
- * Additional transforms and features in 1997 by Angelos D. Keromytis and
- * Niels Provos.
+ * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
+ * and Niels Provos.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
  * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software.
+ * modification of this software. 
+ * You may use this code under the GNU public license if you so wish. Please
+ * contribute changes back to the authors under this freer than GPL license
+ * so that we may further the use of strong encryption without limitations to
+ * all.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTY. IN PARTICULAR, NEITHER AUTHOR MAKES ANY
+ * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
@@ -65,7 +71,7 @@
 #include <netinet/ip_ah.h>
 #include <sys/syslog.h>
 
-extern void encap_sendnotify(int, struct tdb *);
+extern void encap_sendnotify(int, struct tdb *, void *);
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 extern void des_set_key(caddr_t, caddr_t);
@@ -869,14 +875,14 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     {
       if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
       {
-	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
 	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
       }
       else
 	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
 	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
 	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
 	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
 	  }
     }
@@ -885,14 +891,14 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     {
       if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
       {
-	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 	  tdb_delete(tdb, 0);
       }
       else
 	if (tdb->tdb_flags & TDBF_BYTES)
 	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
 	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 	      tdb_delete(tdb, 0);
 	  }
     }
@@ -1192,14 +1198,14 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
       if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
       {
-	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
 	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
       }
       else
 	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
 	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
 	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
 	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
 	  }
     }
@@ -1208,14 +1214,14 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
       if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
       {
-	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 	  tdb_delete(tdb, 0);
       }
       else
 	if (tdb->tdb_flags & TDBF_BYTES)
 	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
 	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
 	      tdb_delete(tdb, 0);
 	  }
     }

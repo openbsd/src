@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.26 1998/03/18 10:16:31 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.27 1998/05/18 21:11:02 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -68,6 +69,9 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <sys/syslog.h>
+
+extern u_int8_t get_sa_require  __P((struct inpcb *));
+
 #endif
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
@@ -75,6 +79,12 @@ static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 #if defined(IPFILTER) || defined(IPFILTER_LKM)
 int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
+#endif
+
+#ifdef IPSEC
+extern int ipsec_auth_default_level;
+extern int ipsec_esp_trans_default_level;
+extern int ipsec_esp_network_default_level;
 #endif
 
 /*
@@ -110,6 +120,7 @@ ip_output(m0, va_alist)
 	struct udphdr *udp;
 	struct tcphdr *tcp;
 	struct expiration *exp;
+	struct inpcb *inp;
 #endif
 
 	va_start(ap, m0);
@@ -117,6 +128,9 @@ ip_output(m0, va_alist)
 	ro = va_arg(ap, struct route *);
 	flags = va_arg(ap, int);
 	imo = va_arg(ap, struct ip_moptions *);
+#ifdef IPSEC
+	inp = va_arg(ap, struct inpcb *);
+#endif
 	va_end(ap);
 
 
@@ -147,13 +161,20 @@ ip_output(m0, va_alist)
 	/*
 	 * Check if the packet needs encapsulation
 	 */
-	if (!(flags & IP_ENCAPSULATED)) {
-		struct route_enc {
-			struct	rtentry *re_rt;
-			struct	sockaddr_encap re_dst;
-		} re0, *re = &re0;
+	if (!(flags & IP_ENCAPSULATED) && 
+	    (inp == NULL || 
+	     (inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
+	      inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
+	      inp->inp_seclevel[SL_ESP_NETWORK] != IPSEC_LEVEL_BYPASS))) {
+		struct route_enc re0, *re = &re0;
 		struct sockaddr_encap *dst, *gw;
 		struct tdb *tdb;
+		u_int8_t sa_require, sa_have = 0;
+
+		if (inp == NULL)
+			sa_require = get_sa_require(inp);
+		else
+			sa_require = inp->inp_secrequire;
 
 		bzero((caddr_t) re, sizeof(*re));
 		dst = (struct sockaddr_encap *) &re->re_dst;
@@ -233,6 +254,15 @@ ip_output(m0, va_alist)
 		 */
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst,
 		    gw->sen_ipsp_sproto);
+
+		/*
+		 * Now we check if this tdb has all the transforms which
+		 * are requried by the socket or our default policy.
+		 */
+		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
+
+		if (sa_require & ~sa_have)
+			goto no_encap;
 
 #ifdef ENCDEBUG
 		if (encdebug && (tdb == NULL))
@@ -396,12 +426,17 @@ expbail:
 		NTOHS(ip->ip_len);
 		NTOHS(ip->ip_off);
 		return ip_output(m, NULL, NULL,
-		    IP_ENCAPSULATED | IP_RAWOUTPUT, NULL);
+		    IP_ENCAPSULATED | IP_RAWOUTPUT, NULL, NULL);
 
 no_encap:
 		/* This is for possible future use, don't move or delete */
 		if (re->re_rt)
 			RTFREE(re->re_rt);
+		/* We did no IPSec encapsulation but the socket required it */
+		if (sa_require) {
+			error = EHOSTUNREACH;
+			goto done;
+		}
 	}
 #endif /* IPSEC */
 
@@ -795,6 +830,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	register struct inpcb *inp = sotoinpcb(so);
 	register struct mbuf *m = *mp;
 	register int optval = 0;
+	struct proc *p = curproc; /* XXX */
 	int error = 0;
 
 	if (level != IPPROTO_IP) {
@@ -898,24 +934,48 @@ ip_ctloutput(op, so, level, optname, mp)
 #ifndef IPSEC
 			error = EINVAL;
 #else
-			if (m == 0 || m->m_len != sizeof(u_char)) {
+			if (m == 0 || m->m_len != sizeof(int)) {
 				error = EINVAL;
 				break;
 			}
 			optval = *mtod(m, u_char *);
+
+			if (optval < IPSEC_LEVEL_BYPASS || 
+			    optval > IPSEC_LEVEL_UNIQUE) {
+				error = EINVAL;
+				break;
+			}
+				
 			switch (optname) {
 			case IP_AUTH_LEVEL:
+			        if (optval < ipsec_auth_default_level &&
+				    suser(p->p_ucred, &p->p_acflag)) {
+					error = EACCES;
+					break;
+				}
 				inp->inp_seclevel[SL_AUTH] = optval;
 				break;
 
 			case IP_ESP_TRANS_LEVEL:
+			        if (optval < ipsec_esp_trans_default_level &&
+				    suser(p->p_ucred, &p->p_acflag)) {
+					error = EACCES;
+					break;
+				}
 				inp->inp_seclevel[SL_ESP_TRANS] = optval;
 				break;
 
 			case IP_ESP_NETWORK_LEVEL:
+			        if (optval < ipsec_esp_network_default_level &&
+				    suser(p->p_ucred, &p->p_acflag)) {
+					error = EACCES;
+					break;
+				}
 				inp->inp_seclevel[SL_ESP_NETWORK] = optval;
 				break;
 			}
+			if (!error)
+				inp->inp_secrequire = get_sa_require(inp);
 #endif
 			break;
 

@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_auth.c,v 1.2 1998/02/17 01:39:01 dgregor Exp $       */
+/*       $OpenBSD: ip_auth.c,v 1.3 1998/05/18 21:10:36 provos Exp $       */
 /*
  * Copyright (C) 1997 by Darren Reed & Guido van Rooij.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ip_auth.c,v 1.2 1998/02/17 01:39:01 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_auth.c,v 1.3 1998/05/18 21:10:36 provos Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -361,7 +361,7 @@ fr_authioctlloop:
 #  if SOLARIS
 			error = fr_qout(fr_auth[i].fra_q, m);
 #  else /* SOLARIS */
-			error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
+			error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 #  endif /* SOLARIS */
 			if (error)
 				fr_authstats.fas_sendfail++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.12 1998/02/11 03:58:31 deraadt Exp $	*/
+/*	$OpenBSD: in.h,v 1.13 1998/05/18 21:10:26 provos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ struct ip_opts {
 #define IPSEC_LEVEL_USE         0x02    /* Send secure, accept any */
 #define IPSEC_LEVEL_REQUIRE     0x03    /* Require secure inbound, also use */
 #define IPSEC_LEVEL_UNIQUE      0x04    /* Use outbound SA that is unique */
-#define IPSEC_LEVEL_DEFAULT     IPSEC_LEVEL_NONE
+#define IPSEC_LEVEL_DEFAULT     IPSEC_LEVEL_AVAIL
 
 #define IPSEC_AUTH_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 #define IPSEC_ESP_TRANS_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
