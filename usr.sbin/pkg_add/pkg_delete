@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.34 2004/08/06 10:23:45 espie Exp $
+# $OpenBSD: pkg_delete,v 1.35 2004/08/06 12:21:11 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -355,9 +355,11 @@ sub manpages_unindex
 {
 	my ($plist, $destdir) = @_;
 	return unless defined $plist->{state}->{mandirs};
+	require OpenBSD::Makewhatis;
+
 	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
-		system("/usr/libexec/makewhatis", "-u", $destdir.$k,
-		map { $destdir.$_ } @$v);
+		my @l = map { $destdir.$_ } @$v;
+		OpenBSD::Makewhatis::remove($destdir.$k, \@l);
 	}
 }
 

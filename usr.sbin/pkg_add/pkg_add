@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.44 2004/08/06 11:36:25 espie Exp $
+# $OpenBSD: pkg_add,v 1.45 2004/08/06 12:21:11 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -517,9 +517,11 @@ sub manpages_index
 {
 	my ($plist, $destdir) = @_;
 	return unless defined $plist->{state}->{mandirs};
+	require OpenBSD::Makewhatis;
+
 	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
-		system("/usr/libexec/makewhatis", "-d", $destdir.$k,
-		map { $destdir.$_ } @$v);
+		my @l = map { $destdir.$_ } @$v;
+		OpenBSD::Makewhatis::merge($destdir.$k, \@l);
 	}
 }
 
