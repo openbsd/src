@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.19 1997/09/16 17:47:03 flipk Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.20 1997/10/30 23:49:28 niklas Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -507,6 +507,7 @@ ep_vortex_probemedia(sc)
 		: ep_vortex_media[default_media].epm_name;
 	printf(" default %s%s\n",
 	       medium_name,  (autoselect)? ", autoselect" : "" );
+	sc->sc_media = ep_vortex_media[default_media].epm_ifdata;
 
 #ifdef notyet	
 	/*
@@ -577,7 +578,7 @@ epinit(sc)
 	for (i = 0; i < 31; i++)
 		bus_space_read_1(iot, ioh, EP_W1_TX_STATUS);
 
-	/* Set threshhold for for Tx-space avaiable interrupt. */
+	/* Set threshold for for Tx-space available interrupt. */
 	bus_space_write_2(iot, ioh, EP_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->txashift));
 
@@ -599,7 +600,7 @@ epinit(sc)
 #ifdef __NetBSD__
 	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
 #else
-	epsetmedia(sc, 0);	/* XXX */
+	epsetmedia(sc, sc->sc_media);
 #endif
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_ENABLE);
@@ -676,7 +677,6 @@ epsetmedia(sc, medium)
 
 #ifndef __NetBSD__
 	/* XXX what media?  */
-	medium = 0;
 	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & EPC_BNC))
 		medium = EPMEDIA_10BASE_2;
 	else if (ifp->if_flags & IFF_LINK0)
@@ -699,7 +699,7 @@ epsetmedia(sc, medium)
 
 	case EPMEDIA_10BASE_2:
 		bus_space_write_2(iot, ioh, EP_COMMAND, START_TRANSCEIVER);
-		DELAY(1000);	/* 50ms not enmough? */
+		DELAY(1000);	/* 50ms not enough? */
 		break;
 
 	/* XXX following only for new-generation cards */
