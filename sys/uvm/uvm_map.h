@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.30 2005/02/19 17:58:03 henning Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.31 2005/03/01 01:28:39 henning Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -245,11 +245,17 @@ struct vm_map {
 
 /* XXX: number of kernel maps and entries to statically allocate */
 
+#if defined(__i386__) || defined(__amd64__) || defined (__sparc64__)
+#define _MAX_KMAPENT	2000
+#else
+#define _MAX_KMAPENT	1000
+#endif
+
 #if !defined(MAX_KMAPENT)
-#if (50 + (2 * NPROC) > 2000)
+#if (50 + (2 * NPROC) > _MAX_KMAPENT)
 #define MAX_KMAPENT (50 + (2 * NPROC))
 #else
-#define	MAX_KMAPENT	2000  /* XXXCDC: no crash */
+#define	MAX_KMAPENT	_MAX_KMAPENT  /* XXXCDC: no crash */
 #endif
 #endif	/* !defined MAX_KMAPENT */
 
