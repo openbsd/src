@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.36 2001/05/11 06:36:59 angelos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.37 2001/05/14 07:11:35 angelos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -157,7 +157,8 @@ struct ctlname {
 #define KERN_NCHSTATS		41	/* struct: vfs cache statistics */
 #define KERN_FORKSTAT		42	/* struct: fork statistics */
 #define KERN_NSELCOLL		43	/* int: select(2) collisions */
-#define	KERN_MAXID		44	/* number of valid kern ids */
+#define KERN_TTY		44	/* node: tty information */
+#define	KERN_MAXID		45	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -204,6 +205,7 @@ struct ctlname {
 	{ "nchstats", CTLTYPE_STRUCT }, \
 	{ "forkstat", CTLTYPE_STRUCT }, \
 	{ "nselcoll", CTLTYPE_INT }, \
+	{ "tty", CTLTYPE_NODE }, \
 }
 
 /*
@@ -285,7 +287,8 @@ struct kinfo_proc {
 #define	HW_PAGESIZE	 7		/* int: software page size */
 #define	HW_DISKNAMES	 8		/* strings: disk drive names */
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
-#define	HW_MAXID	10		/* number of valid hw ids */
+#define	HW_DISKCOUNT	10		/* int: number of disks */
+#define	HW_MAXID	11		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -296,8 +299,9 @@ struct kinfo_proc {
 	{ "physmem", CTLTYPE_INT }, \
 	{ "usermem", CTLTYPE_INT }, \
 	{ "pagesize", CTLTYPE_INT }, \
-	{ "disknames", CTLTYPE_STRUCT }, \
+	{ "disknames", CTLTYPE_STRING }, \
 	{ "diskstats", CTLTYPE_STRUCT }, \
+	{ "diskcount", CTLTYPE_INT }, \
 }
 
 /*
