@@ -51,6 +51,7 @@ char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <poll.h>
 #include <netdb.h>
 #include <assert.h>
 #include <unistd.h>
@@ -108,7 +109,7 @@ unsigned char vm_cmu[4] = VM_CMU;
 unsigned char vm_rfc1048[4] = VM_RFC1048;
 short secs;						/* How long client has waited */
 
-char *get_errmsg();
+char *get_errmsg(void);
 extern void bootp_print();
 
 /*
@@ -131,6 +132,7 @@ main(argc, argv)
 	int s;				/* Socket file descriptor */
 	int n, tolen, recvcnt;
 	socklen_t fromlen;
+	struct pollfd pfd[1];
 	int use_hwa = 0;
 	int32 vend_magic;
 	int32 xid;
@@ -366,16 +368,12 @@ main(argc, argv)
 	recvcnt = 0;
 	bp->bp_secs = secs = 0;
 	send_request(s);
+	pfd[0].fd = s;
+	pfd[0].events = POLLIN;
 	while (1) {
-		struct timeval tv;
-		int readfds;
-
-		tv.tv_sec = WAITSECS;
-		tv.tv_usec = 0L;
-		readfds = (1 << s);
-		n = select(s + 1, (fd_set *) & readfds, NULL, NULL, &tv);
+		n = poll(pfd, 1, WAITSECS * 1000);
 		if (n < 0) {
-			perror("select");
+			perror("poll");
 			break;
 		}
 		if (n == 0) {
