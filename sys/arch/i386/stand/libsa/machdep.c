@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 1997/08/22 20:13:44 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1997/08/31 07:54:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -75,15 +75,15 @@ int bootdev;
 static __inline u_int
 apm_check()
 {
-	u_int detail;
-	u_int8_t f;
+	register u_int detail;
+	register u_int8_t f;
 	__asm __volatile(DOINT(0x15) "\n\t"
-			 "setc %b0\n\t"
+			 "setc %b1\n\t"
+			 "movzwl %%ax, %0\n\t"
 			 "shll $16, %%ecx\n\t"
-			 "movzwl %%ax, %1\n\t"
-			 "orl %%ecx, %1"
-			 : "=d" (f), "=a" (detail)
-			 : "1" (APM_INSTCHECK), "b" (PMDV_APMBIOS)
+			 "orl %%ecx, %0"
+			 : "=a" (detail), "=b" (f)
+			 : "0" (APM_INSTCHECK), "1" (PMDV_APMBIOS)
 			 : "%ecx", "cc");
 	if (f || BIOS_regs.biosr_bx != 0x504d /* "PM" */ ) {
 #ifdef DEBUG
@@ -100,7 +100,7 @@ apm_disconnect() {
 	__asm __volatile(DOINT(0x15) "\n\t"
 			 "setc %b0"
 			 : "=a" (rv)
-			 : "a" (APM_DISCONNECTANY), "b" (PMDV_APMBIOS)
+			 : "0" (APM_DISCONNECTANY), "b" (PMDV_APMBIOS)
 			 : "%ecx", "%edx", "cc");
 	return (rv & 0xff)? rv >> 8 : 0;
 }
@@ -110,16 +110,16 @@ apm_connect()
 {
 	register u_int16_t f;
 	__asm __volatile (DOINT(0x15) "\n\t"
-			  "setc %b0\n\t"
-			  "movb %%ah, %h0\n\t"
-			  "movzwl %%ax, %%eax\n\tshll $4, %1\n\t"
+			  "setc %b1\n\t"
+			  "movb %%ah, %h1\n\t"
+			  "movzwl %%ax, %%eax\n\tshll $4, %0\n\t"
 			  "movzwl %%cx, %%ecx\n\tshll $4, %2\n\t"
 			  "movzwl %%dx, %%edx\n\tshll $4, %3\n\t"
-			  : "=b" (f),
-			    "=a" (BIOS_vars.apm_code32_base),
+			  : "=a" (BIOS_vars.apm_code32_base),
+			    "=b" (f),
 			    "=c" (BIOS_vars.apm_code16_base),
 			    "=d" (BIOS_vars.apm_data_base)
-			  : "a" (APM_PROT32CONNECT), "b" (PMDV_APMBIOS)
+			  : "0" (APM_PROT32CONNECT), "1" (PMDV_APMBIOS)
 			  : "cc");
 	BIOS_vars.apm_entry    = BIOS_regs.biosr_bx;
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.7 1997/08/12 23:39:58 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.8 1997/08/31 07:54:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -89,7 +89,7 @@ bios_time_date(int f, register u_int8_t *b)
 		       "movb %%dh, 2(%1)\n\t"
 		       "movb %%dl, 3(%1)\n\t"
 		       : "=a" (f)
-		       : "p" (b), "0" (f) : "%ecx", "%edx", "cc");
+		       : "0" (f), "p" (b) : "%ecx", "%edx", "cc");
 	if (f & 0xff)
 		return -1;
 	else {
