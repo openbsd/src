@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.2 2001/08/19 13:43:09 deraadt Exp $ */ 
+/*	$OpenBSD: util.c,v 1.3 2001/08/28 19:35:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -65,30 +65,30 @@ void
 debuglog(int debug_level, const char *fmt, ...)
 {
 	va_list ap;
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 
 	if (Debug_Level >= debug_level)
 		vsyslog(LOG_DEBUG, fmt, ap);
 }
 
 int
-get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,	
+get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
     struct sockaddr_in *client_sa_ptr)
 {
-	struct pf_natlook natlook, *natlookp;
+	struct pf_natlook natlook;
 	char *client;
 	int slen, fd;
 
 	slen = sizeof(*real_server_sa_ptr);
 	if (getsockname(connected_fd, (struct sockaddr *)real_server_sa_ptr,
 	    &slen) != 0) {
-		syslog(LOG_ERR,"getsockname failed (%m)");
+		syslog(LOG_ERR, "getsockname failed (%m)");
 		return(-1);
 	}
 	slen = sizeof(*client_sa_ptr);
 	if (getpeername(connected_fd, (struct sockaddr *)client_sa_ptr,
 	    &slen) != 0) {
-		syslog(LOG_ERR,"getpeername failed (%m)");
+		syslog(LOG_ERR, "getpeername failed (%m)");
 		return(-1);
 	}
 
@@ -119,8 +119,7 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 		exit(EX_UNAVAILABLE);
 	}
 
-	natlookp = &natlook;
-	if (ioctl(fd, DIOCNATLOOK, natlookp) == -1) {
+	if (ioctl(fd, DIOCNATLOOK, &natlook) == -1) {
 		syslog(LOG_INFO,
 		    "pf nat lookup failed (%m), connection from %s:%hu",
 		    client, ntohs(client_sa_ptr->sin_port));
@@ -134,8 +133,8 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
 	 * destination sockaddr_in for the proxy to deal with.
 	 */
 	memset((void *)real_server_sa_ptr, 0, sizeof(struct sockaddr_in));
-	real_server_sa_ptr->sin_port = natlookp->rdport;
-	real_server_sa_ptr->sin_addr.s_addr = natlookp->rdaddr;
+	real_server_sa_ptr->sin_port = natlook.rdport;
+	real_server_sa_ptr->sin_addr.s_addr = natlook.rdaddr;
 	real_server_sa_ptr->sin_len = sizeof(struct sockaddr_in);
 	real_server_sa_ptr->sin_family = AF_INET;
 	return(0);
@@ -169,7 +168,7 @@ xfer_data(const char *what_read,int from_fd, int to_fd, struct in_addr from,
 		flags = MSG_OOB;	/* Yes - at the OOB mark */
 
 snarf:
-	rlen = recv(from_fd,tbuf,sizeof(tbuf), flags);
+	rlen = recv(from_fd, tbuf, sizeof(tbuf), flags);
 	if (rlen == -1 && flags == MSG_OOB && errno == EINVAL) {
 		/* OOB didn't work */
 		flags = 0;
@@ -182,7 +181,7 @@ snarf:
 		if (errno == EAGAIN || errno == EINTR)
 			goto snarf;
 		xerrno = errno;
-		syslog(LOG_ERR,"(xfer_data:%s) - failed (%m) with flags 0%o",
+		syslog(LOG_ERR, "(xfer_data:%s) - failed (%m) with flags 0%o",
 		    what_read, flags);
 		errno = xerrno;
 		return(-1);
@@ -196,17 +195,17 @@ snarf:
 			wlen = send(to_fd, &tbuf[offset], rlen - offset,
 			    flags);
 			if (wlen == 0) {
-				debuglog(3,"zero length write");
+				debuglog(3, "zero length write");
 				goto fling;
 			} else if (wlen == -1) {
 				if (errno == EAGAIN || errno == EINTR)
 					goto fling;
 				xerrno = errno;
-				syslog(LOG_INFO,"write failed (%m)");
+				syslog(LOG_INFO, "write failed (%m)");
 				errno = xerrno;
 				return(-1);
 			} else {
-				debuglog(3,"wrote %d bytes to socket\n",wlen);
+				debuglog(3, "wrote %d bytes to socket\n",wlen);
 				offset += wlen;
 			}
 		}

@@ -1,4 +1,5 @@
-/* $OpenBSD: util.h,v 1.1 2001/08/19 04:11:12 beck Exp $ */
+/*	$OpenBSD: util.h,v 1.2 2001/08/28 19:35:04 deraadt Exp $ */
+
 /*
  * Copyright (c) 1996-2001
  *	Obtuse Systems Corporation.  All rights reserved.
@@ -60,7 +61,7 @@ extern int get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
 extern int get_backchannel_socket(int type, int min_port, int max_port,
     int start_port, int direction, struct sockaddr_in *sap);
 
-extern int xfer_data(const char *what_read, int from_fd, int to_fd, 
+extern int xfer_data(const char *what_read, int from_fd, int to_fd,
     struct in_addr from, struct in_addr to);
 
 extern char *ProgName;

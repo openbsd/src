@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.12 2001/08/22 05:28:16 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.13 2001/08/28 19:35:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -27,7 +27,7 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 /*
@@ -143,8 +143,6 @@ char OurName[NI_MAXHOST];
 
 char *User, *Group;
 
-char *argstr = "D:g:m:M:t:u:AnVwr";
-
 extern int Debug_Level;
 extern int Use_Rdns;
 extern char *__progname;
@@ -166,16 +164,16 @@ usage()
 {
 	syslog(LOG_NOTICE,
 	    "usage: %s [-ArVw] [-t timeout] [-D debuglevel] %s",
-	    __progname, "[-m min_port] [-M max_port ]\n");
+	    __progname, "[-m min_port] [-M max_port]\n");
 	exit(EX_USAGE);
 }
 
 
-static void 
+static void
 close_client_data()
 {
-	if (client_data_socket >= 0) { 
-		shutdown(client_data_socket,2);
+	if (client_data_socket >= 0) {
+		shutdown(client_data_socket, 2);
 		close(client_data_socket);
 		client_data_socket = -1;
 	}
@@ -184,9 +182,9 @@ close_client_data()
 
 static void
 close_server_data()
-{ 
+{
 	if (server_data_socket >= 0)  {
-		shutdown(server_data_socket,2);
+		shutdown(server_data_socket, 2);
 		close(server_data_socket);
 		server_data_socket = -1;
 	}
@@ -197,9 +195,9 @@ static void
 drop_privs()
 {
 	struct passwd *pw;
-	struct group *gr; 	
-	int uid = 0;
-	int gid = 0;
+	struct group *gr;
+	uid_t uid = 0;
+	gid_t gid = 0;
 
 	if (User != NULL) {
 		pw = getpwnam(User);
@@ -218,8 +216,7 @@ drop_privs()
 			exit(EX_USAGE);
 		}
 		gid = gr->gr_gid;
-	} 
-	
+	}
 
 	if (gid != 0 && (setegid(gid) == -1 || setgid(gid) == -1)) {
 		syslog(LOG_ERR, "can't drop group privs (%m)");
@@ -232,19 +229,14 @@ drop_privs()
 	}
 }
 
-
-	
-
 /*
  * Check a connection against the tcpwrapper, log if we're going to
  * reject it, returns: 0 -> reject, 1 -> accept. We add in hostnames
  * if we are set to do reverse DNS, otherwise no.
  */
-
 static int
 check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 {
-
 	char cname[NI_MAXHOST];
 	char sname[NI_MAXHOST];
 	struct request_info request;
@@ -267,7 +259,7 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 			sizeof(cname), NULL, 0, NI_NAMEREQD);
 		if (i == -1)
 			strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
-		
+
 		i = getnameinfo(
 			(struct sockaddr *)&server_sin->sin_addr,
 			sizeof(&server_sin->sin_addr), sname,
@@ -300,14 +292,13 @@ wallclock_time()
 {
 	struct timeval tv;
 
-	gettimeofday(&tv,NULL);
+	gettimeofday(&tv, NULL);
 	return(tv.tv_sec + tv.tv_usec / 1e6);
 }
 
 /*
  * Show the stats for this data transfer
  */
-
 void
 show_xfer_stats()
 {
@@ -415,7 +406,6 @@ log_control_command (char *cmd, int client)
 int
 new_dataconn(int server)
 {
-
 	/*
 	 * Close existing data conn.
 	 */
@@ -466,7 +456,7 @@ new_dataconn(int server)
 
 
 
-static void 
+static void
 connect_pasv_backchannel()
 {
 	struct sockaddr_in listen_sa;
@@ -512,7 +502,7 @@ connect_pasv_backchannel()
 
 
 
-static void 
+static void
 connect_port_backchannel()
 {
 	struct sockaddr_in listen_sa;
@@ -539,16 +529,13 @@ connect_port_backchannel()
 	server_listen_socket = -1;
 
 	if (getuid() != 0)  {
-
-		/* 
+		/*
 		 * We're not running as root, so we get a backchannel
-		 * socket bound in our designated range, instead of 
+		 * socket bound in our designated range, instead of
 		 * getting one bound to port 20 - This is deliberately
 		 * not RFC compliant.
 		 */
-	  
-		bzero(&listen_sa.sin_addr,
-		     sizeof(struct in_addr));
+		bzero(&listen_sa.sin_addr, sizeof(struct in_addr));
 		client_data_socket =  get_backchannel_socket(SOCK_STREAM,
 		    min_port, max_port, -1, 1, &listen_sa);
 		if (client_data_socket < 0) {
@@ -560,15 +547,13 @@ connect_port_backchannel()
 
 		/*
 		 * We're root, get our backchannel socket bound to port
-		 * 20 here, so we're fully RFC compliant.  
+		 * 20 here, so we're fully RFC compliant.
 		 */
-	
 		client_data_socket = socket(AF_INET, SOCK_STREAM, 0);
 
 		salen = 1;
 		listen_sa.sin_family = AF_INET;
-		bzero(&listen_sa.sin_addr,
-		     sizeof(struct in_addr));
+		bzero(&listen_sa.sin_addr, sizeof(struct in_addr));
 		listen_sa.sin_port = htons(20);
 
 		if (setsockopt(client_data_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -583,7 +568,7 @@ connect_port_backchannel()
 			exit(EX_OSERR);
 		}
 	}
-	
+
 	if (connect(client_data_socket, (struct sockaddr *) &client_listen_sa,
 	    sizeof(client_listen_sa)) != 0) {
 		syslog(LOG_INFO, "can't connect data connection (%m)");
@@ -599,7 +584,7 @@ connect_port_backchannel()
 void
 do_client_cmd(struct csiob *client, struct csiob *server)
 {
-	int i,j,rv;
+	int i, j, rv;
 	char tbuf[100];
 	char *sendbuf = NULL;
 
@@ -645,7 +630,7 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 		} else
 			sendbuf = client->line_buffer;
 	} else if ((strncasecmp((char *)client->line_buffer, "eprt ",
- 	    strlen("eprt ")) == 0)) {
+	    strlen("eprt ")) == 0)) {
 
 		/* Watch out for EPRT commands */
 		char *line = NULL,  *q, *p, *result[3], delim;
@@ -702,7 +687,7 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 
 		debuglog(1, "we want server to use %s:%u\n",
 		    inet_ntoa(server->sa.sin_addr),
-		    ntohs(server_listen_sa.sin_port));	
+		    ntohs(server_listen_sa.sin_port));
 
 		snprintf(tbuf, sizeof(tbuf), "EPRT |%d|%s|%u|\r\n", 1,
 		    inet_ntoa(server->sa.sin_addr),
@@ -741,7 +726,7 @@ out:
 					j += rv;
 			} while (j >= 0 && j < i);
 		}
-	} else if (!NatMode && (strncasecmp((char *)client->line_buffer, 
+	} else if (!NatMode && (strncasecmp((char *)client->line_buffer,
 	    "epsv", strlen("epsv")) == 0)) {
 
 		/*
@@ -786,17 +771,17 @@ out:
 		i = sscanf(tailptr, "%u,%u,%u,%u,%u,%u", &values[0],
 		    &values[1], &values[2], &values[3], &values[4],
 		    &values[5]);
-		if (i != 6) { 
-			syslog(LOG_INFO, "malformed PORT command (%s)", 
+		if (i != 6) {
+			syslog(LOG_INFO, "malformed PORT command (%s)",
 			    client->line_buffer);
 			exit(EX_DATAERR);
 		}
 
-		for (i=0; i<6; i++)
+		for (i = 0; i<6; i++)
 			if (values[i] > 255) {
-				syslog(LOG_INFO, 
+				syslog(LOG_INFO,
 				    "malformed PORT command (%s)",
-				     client->line_buffer);
+				    client->line_buffer);
 				exit(EX_DATAERR);
 			}
 
@@ -820,7 +805,7 @@ out:
 
 		debuglog(1, "we want server to use %s:%u\n",
 		    inet_ntoa(server->sa.sin_addr),
-		    ntohs(server_listen_sa.sin_port));	
+		    ntohs(server_listen_sa.sin_port));
 
 		snprintf(tbuf, sizeof(tbuf), "PORT %u,%u,%u,%u,%u,%u\r\n",
 			 ((u_char *)&server->sa.sin_addr.s_addr)[0],
@@ -892,7 +877,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		debuglog(1, "Got a PASV reply\n");
 		debuglog(1, "{%s}\n", (char *)server->line_buffer);
 
-		tailptr = strchr((char *)server->line_buffer,'(');
+		tailptr = strchr((char *)server->line_buffer, '(');
 		if (tailptr == NULL) {
 			syslog(LOG_NOTICE, "malformed 227 reply");
 			exit(EX_DATAERR);
@@ -905,15 +890,15 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		i = sscanf(tailptr, "(%u,%u,%u,%u,%u,%u)", &values[0],
 		    &values[1], &values[2], &values[3], &values[4],
 		    &values[5]);
-		if (i != 6) { 
-			syslog(LOG_INFO, "malformed PASV reply (%s)", 
+		if (i != 6) {
+			syslog(LOG_INFO, "malformed PASV reply (%s)",
 			    client->line_buffer);
 			exit(EX_DATAERR);
 		}
-		for (i=0; i<6; i++)
+		for (i = 0; i<6; i++)
 			if (values[i] > 255) {
 				syslog(LOG_INFO, "malformed PASV reply(%s)",
-				     client->line_buffer);
+				    client->line_buffer);
 				exit(EX_DATAERR);
 			}
 
@@ -965,14 +950,13 @@ int
 main(int argc, char **argv)
 {
 	struct csiob client_iob, server_iob;
-	struct timeval tv;
-	long timeout_seconds = 0;
 	struct sigaction new_sa, old_sa;
 	int sval, ch, salen, flags, i;
-	int use_tcpwrapper = 0;
-	int one = 1;
+	int use_tcpwrapper = 0, one = 1;
+	long timeout_seconds = 0;
+	struct timeval tv;
 
-	while ((ch = getopt(argc, argv, argstr)) != -1) {
+	while ((ch = getopt(argc, argv, "D:g:m:M:t:u:AnVwr")) != -1) {
 		char *p;
 		switch (ch) {
 		case 'A':
@@ -1049,9 +1033,7 @@ main(int argc, char **argv)
 	 * RFC compliant. This shouldn't cause problems for all but
 	 * the stupidest ftp clients and the stupidest packet filters.
 	 */
-	
 	drop_privs();
-
 
 	/*
 	 * We check_host after get_proxy_env so that checks are done
@@ -1088,14 +1070,14 @@ main(int argc, char **argv)
 
 	client_iob.fd = 0;
 
-	/*  Check to see if we have a timeout defined, if so,
+	/*
+	 * Check to see if we have a timeout defined, if so,
 	 * set a timeout for this select call to that value, so
 	 * we may time out if don't see any data in timeout
 	 * seconds.
 	 */
 	tv.tv_sec = timeout_seconds;
 	tv.tv_usec = 0;
-	timeout_seconds=tv.tv_sec;
 
 	debuglog(1, "client is %s:%u\n", ClientName,
 	    ntohs(client_iob.sa.sin_port));
@@ -1174,7 +1156,7 @@ main(int argc, char **argv)
 	while (client_iob.alive || server_iob.alive) {
 		int maxfd = 0;
 		fd_set *fdsp;
-		
+
 		if (client_iob.fd > maxfd)
 			maxfd = client_iob.fd;
 		if (client_listen_socket > maxfd)
@@ -1187,12 +1169,12 @@ main(int argc, char **argv)
 			maxfd = server_listen_socket;
 		if (server_data_socket > maxfd)
 			maxfd = server_data_socket;
-		
+
 		debuglog(3, "client is %s, server is %s\n",
 		    client_iob.alive ? "alive" : "dead",
 		    server_iob.alive ? "alive" : "dead");
 
-		fdsp = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS), 
+		fdsp = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS),
 		    sizeof(fd_mask));
 		if (fdsp == NULL) {
 			syslog(LOG_NOTICE, "Insufficient memory");
@@ -1239,19 +1221,19 @@ main(int argc, char **argv)
 				 * for any passing mourners.
 				 */
 				syslog(LOG_INFO,
-				   "timeout, no data for %ld seconds",
-				   timeout_seconds);
+				    "timeout, no data for %ld seconds",
+				    timeout_seconds);
 				exit(EX_OK);
 			}
 			if (sval == -1) {
 				if (errno == EINTR || errno == EAGAIN)
 					goto doselect;
 				syslog(LOG_NOTICE,
-				     "select failed (%m) - exiting");
+				    "select failed (%m) - exiting");
 				exit(EX_OSERR);
 			}
 			if (client_data_socket >= 0 &&
-			    FD_ISSET(client_data_socket,fdsp)) {
+			    FD_ISSET(client_data_socket, fdsp)) {
 				int rval;
 
 				debuglog(3, "xfer client to server\n");
@@ -1268,7 +1250,7 @@ main(int argc, char **argv)
 					client_data_bytes += rval;
 			}
 			if (server_data_socket >= 0 &&
-			    FD_ISSET(server_data_socket,fdsp)) {
+			    FD_ISSET(server_data_socket, fdsp)) {
 				int rval;
 
 				debuglog(3, "xfer server to client\n");
@@ -1285,19 +1267,19 @@ main(int argc, char **argv)
 					server_data_bytes += rval;
 			}
 			if (server_listen_socket >= 0 &&
-			    FD_ISSET(server_listen_socket,fdsp)) {
+			    FD_ISSET(server_listen_socket, fdsp)) {
 				connect_port_backchannel();
 			}
 			if (client_listen_socket >= 0 &&
-			    FD_ISSET(client_listen_socket,fdsp)) {
+			    FD_ISSET(client_listen_socket, fdsp)) {
 				connect_pasv_backchannel();
 			}
 			if (client_iob.alive &&
-			    FD_ISSET(client_iob.fd,fdsp)) {
+			    FD_ISSET(client_iob.fd, fdsp)) {
 				client_iob.data_available = 1;
 			}
 			if (server_iob.alive &&
-			    FD_ISSET(server_iob.fd,fdsp)) {
+			    FD_ISSET(server_iob.fd, fdsp)) {
 				server_iob.data_available = 1;
 			}
 		}
@@ -1309,12 +1291,11 @@ main(int argc, char **argv)
 			client_iob.alive = 0;
 		}
 		if (server_iob.got_eof) {
-			shutdown(client_iob.fd,1);
-			shutdown(server_iob.fd,0);
+			shutdown(client_iob.fd, 1);
+			shutdown(server_iob.fd, 0);
 			server_iob.got_eof = 0;
 			server_iob.alive = 0;
-                }
-
+		}
 	}
 	exit(EX_OK);
 }

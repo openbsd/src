@@ -33,11 +33,6 @@
  *  @(#)ftpcmd.y    5.24 (Berkeley) 2/25/91
  */
 
-/*
- * RCS information:
- * $Id: getline.c,v 1.2 2001/08/19 13:43:09 deraadt Exp $
- */
-
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -268,7 +263,7 @@ telnet_getline(register struct csiob *iobp, struct csiob *telnet_passthrough)
 		/* +1 is for the newline */
 		clen = (ix+1) - iobp->next_byte;
 		memcpy(iobp->line_buffer, &iobp->io_buffer[iobp->next_byte],
-		   clen);
+		    clen);
 		iobp->next_byte += clen;
 		iobp->line_buffer[clen] = '\0';
 		
