@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext_srvtab.c,v 1.4 1997/12/17 09:59:44 art Exp $	*/
+/*	$OpenBSD: ext_srvtab.c,v 1.5 1998/08/12 23:09:05 art Exp $	*/
 /*      $KTH: ext_srvtab.c,v 1.13 1997/05/02 14:27:33 assar Exp $       */
 
 /*-
@@ -48,8 +48,10 @@ StampOutSecrets(void)
 static void
 FWrite(void *p, int size, int n, FILE *f)
 {
-    if (fwrite(p, size, n, f) != n) 
+    if (fwrite(p, size, n, f) != n) {
+        StampOutSecrets();
 	errx(1, "Error writing output file.  Terminating.\n");
+    }
 }
 
 int
@@ -61,8 +63,8 @@ main(int argc, char **argv)
     int arg;
     Principal princs[40];
     int more; 
-    int prompt = TRUE;
-    register int n, i;
+    int prompt = KDB_GET_PROMPT;
+    int n, i;
     
     memset(realm, 0, sizeof(realm));
 
@@ -108,17 +110,18 @@ main(int argc, char **argv)
     /* For each arg, search for instances of arg, and produce */
     /* srvtab file */
     if (!realm[0])
-	if (krb_get_lrealm(realm, 1) != KSUCCESS)
-	    errx (1, "couldn't get local realm");
-
+      if (krb_get_lrealm(realm, 1) != KSUCCESS) {
+	  StampOutSecrets();
+	  errx (1, "couldn't get local realm");
+      }
     umask(077);
-    
+
     for (arg = 1; arg < argc; arg++) {
 	if (argv[arg][0] == '-')
 	    continue;
 	snprintf(fname, sizeof(fname), "%s-new-srvtab", argv[arg]);
 	if ((fout = fopen(fname, "w")) == NULL) {
-	    fprintf(stderr, "Couldn't create file '%s'.\n", fname);
+	    warn("Couldn't create file '%s'.", fname);
 	    fopen_errs++;
 	    continue;
 	}
@@ -132,7 +135,7 @@ main(int argc, char **argv)
 		   1, fout);
 	    FWrite(realm, strlen(realm) + 1, 1, fout);
 	    FWrite(&princs[i].key_version,
-		   sizeof(princs[i].key_version), 1, fout);
+		sizeof(princs[i].key_version), 1, fout);
 	    copy_to_key(&princs[i].key_low, &princs[i].key_high, session_key);
 	    kdb_encrypt_key (&session_key, &session_key, 
 			     &master_key, master_key_schedule, DES_DECRYPT);
@@ -140,8 +143,6 @@ main(int argc, char **argv)
 	}
 	fclose(fout);
     }
-
-    exit(fopen_errs);		/* 0 errors if successful */
+    StampOutSecrets();
+    return fopen_errs;		/* 0 errors if successful */
 }
-
-
