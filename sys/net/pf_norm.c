@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.15 2001/11/06 11:48:29 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.16 2001/12/03 22:25:06 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -560,7 +560,8 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 {
 	struct pf_rule *r, *rm = NULL;
 	struct tcphdr *th = pd->hdr.tcp;
-	int rewrite = 0, reason;
+	int rewrite = 0;
+	u_short reason;
 	u_int8_t flags, af = pd->af;
 
 	r = TAILQ_FIRST(pf_rules_active);
