@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.23 2003/03/12 20:12:36 deraadt Exp $
+.\"	$OpenBSD: atactl.8,v 1.24 2003/06/03 13:16:07 jmc Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ command.
 .Em WARNING
 .br
 Be very careful while playing with these commands.
-Loss of the user and master passwords for the device will result 
+Loss of the user and master passwords for the device will result
 in an inaccessible device.
 .Pp
 .It Li smartenable
@@ -418,7 +418,7 @@ command.
 Enables the write cache on the specified device (if supported).
 This may increase performance, however data still in the device's cache at
 powerdown
-.Em may be lost.
+.Em may be lost .
 The
 .Xr wd 4
 driver performs a cache flush automatically before shutdown.
@@ -427,7 +427,6 @@ driver performs a cache flush automatically before shutdown.
 Extracts the records about issued ATA commands from the log buffer.
 The log buffer is cleared after extraction.
 .El
-.Pp
 .Sh EXAMPLES
 .Li # atactl /dev/wd0c identify
 .Pp
@@ -469,13 +468,6 @@ so even though disabling a feature works, enabling might not.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4
-.Sh AUTHORS
-The
-.Nm
-command was written by Ken Hornstein.
-It was based heavily on the scsictl command written by Jason R. Thorpe.
-Support for acoustic management, advanced power management, power-up in
-standby, read look-ahead and SMART was added by Wouter Slegers.
 .Sh HISTORY
 The
 .Nm
@@ -484,6 +476,13 @@ command first appeared in
 Support for acoustic management, advanced power management, power-up in
 standby, read look-ahead and SMART was added in
 .Ox 2.9 .
+.Sh AUTHORS
+The
+.Nm
+command was written by Ken Hornstein.
+It was based heavily on the scsictl command written by Jason R. Thorpe.
+Support for acoustic management, advanced power management, power-up in
+standby, read look-ahead and SMART was added by Wouter Slegers.
 .Sh BUGS
 The output from the
 .Li identify

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_umap.8,v 1.18 2003/06/02 20:06:16 millert Exp $
+.\"	$OpenBSD: mount_umap.8,v 1.19 2003/06/03 13:16:08 jmc Exp $
 .\"	$NetBSD: mount_umap.8,v 1.4 1996/03/05 02:36:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -120,10 +120,6 @@ will refuse to map the subtree if the ownership or permissions on
 these files are improper.
 It will also balk if the count of mappings
 in the first line of the map files is not correct.
-.Pp
-.Sh BUGS
-It is not meant for production use.
-The implementation is not very sophisticated.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr mount 8 ,
@@ -133,3 +129,6 @@ The
 .Nm
 utility first appeared in
 .Bx 4.4 .
+.Sh BUGS
+It is not meant for production use.
+The implementation is not very sophisticated.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: savecore.8,v 1.13 2003/06/02 20:06:17 millert Exp $
+.\"	$OpenBSD: savecore.8,v 1.14 2003/06/03 13:16:09 jmc Exp $
 .\"	$NetBSD: savecore.8,v 1.11 1995/06/27 22:40:46 briggs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -120,8 +120,6 @@ is meant to be called near the end of the initialization file
 .It Pa /bsd
 current kernel
 .El
-.Sh BUGS
-The minfree code does not consider the effect of compression.
 .Sh SEE ALSO
 .Xr compress 1 ,
 .Xr syslogd 8
@@ -130,3 +128,5 @@ The
 .Nm
 command appeared in
 .Bx 4.1 .
+.Sh BUGS
+The minfree code does not consider the effect of compression.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iopctl.8,v 1.4 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: iopctl.8,v 1.5 2003/06/03 13:16:08 jmc Exp $
 .\"	$NetBSD: iopctl.8,v 1.4 2001/03/20 13:07:51 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,14 @@ control device for IOP unit
 .Xr ioprbs 4 ,
 .Xr iopsp 4 ,
 .Xr sd 4
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.6 ,
+.Ox
+support was added in
+.Ox 3.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -99,11 +107,3 @@ and ported to
 .Ox
 by
 .An Michael Shalayeff Aq mickey@openbsd.org .
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Nx 1.6 ,
-.Ox
-support was added in
-.Ox 3.0 .

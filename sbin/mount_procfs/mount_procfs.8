@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.20 2003/06/02 20:06:16 millert Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.21 2003/06/03 13:16:08 jmc Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -138,14 +138,14 @@ Allows read and write access to the process's register set.
 This file contains a binary data structure
 .Dv "struct regs"
 defined in
-.Pa <machine/reg.h> .
+.Aq Pa machine/reg.h .
 .Pa regs
 can only be written when the process is stopped.
 .It Pa fpregs
 The floating point registers as defined by
 .Dv "struct fpregs"
 in
-.Pa <machine/reg.h> .
+.Aq Pa machine/reg.h .
 .Pa fpregs
 is only implemented on machines which have distinct general
 purpose and floating point register sets.

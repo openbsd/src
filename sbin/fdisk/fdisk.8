@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.40 2003/06/03 01:13:19 weingart Exp $
+.\"	$OpenBSD: fdisk.8,v 1.41 2003/06/03 13:16:08 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -168,7 +168,7 @@ Note that this option will overwrite the NT disk signature, if present.
 .Pp
 The
 .Fl e
-flag is used to modify a partition table using an 
+flag is used to modify a partition table using an
 interactive edit mode of the
 .Nm
 program.
@@ -220,7 +220,8 @@ or in sector offsets and sizes.
 Change the partition
 identifier of the given partition table entry.
 This command is particularly useful for reassigning
-an existing partition to OpenBSD.
+an existing partition to
+.Ox .
 .It Em flag
 Make the given partition table entry bootable.
 Only one entry can be marked bootable.

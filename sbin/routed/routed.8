@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.35 2003/06/02 20:06:17 millert Exp $
+.\"	$OpenBSD: routed.8,v 1.36 2003/06/03 13:16:09 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -307,7 +307,7 @@ with the
 or
 .Dv SIGUSR2
 signals or with the
-.Xr rtquery
+.Xr rtquery 8
 command.
 .It Fl F Ar net[/mask][,metric]
 Minimize routes in transmissions via interfaces with addresses that match
@@ -321,7 +321,6 @@ If
 .Em metric
 is absent, a value of 14 is assumed to limit
 the spread of the "fake" default route.
-
 This is a dangerous feature that when used carelessly can cause routing
 loops.
 Notice also that more than one interface can match the specified network
@@ -449,7 +448,7 @@ or
 or
 .Xr named 8
 must have been started before
-.Nm routed Ns .)
+.Nm routed . )
 .Pp
 .Ar mask
 is an optional number between 1 and 32 indicating the netmask associated
@@ -521,7 +520,6 @@ transmitted, and any received RIP packets will be ignored).
 If no interfaces are allowed to process RIP packets,
 .Nm
 acts purely as a router discovery daemon.
-
 Note that turning off RIP without explicitly turning on router
 discovery advertisements with
 .Cm rdisc_adv
@@ -594,11 +592,11 @@ for distant gateways
 .%R XSIS 028112
 .%Q Xerox System Integration Standard
 .Re
-.Sh BUGS
-It does not always detect unidirectional failures in network interfaces
-(e.g., when the output side fails).
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+It does not always detect unidirectional failures in network interfaces
+(e.g., when the output side fails).

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.14 2003/05/20 12:59:01 jmc Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.15 2003/06/03 13:16:09 jmc Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,20 @@ Use the
 .Xr kbd 8
 utility to determine which keyboard encodings are available for your
 country.
+.Sh FILES
+.Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
+.It Pa /dev/wskbd0
+keyboard control device
+.It Pa /dev/wsmouse0
+mouse control device
+.It Pa /dev/ttyC0
+display control device
+.It Pa /usr/include/dev/wscons/wsconsio.h
+keyboard/mouse/display definitions
+.It Pa /etc/wsconsctl.conf
+a list of parameters that get set at system startup time from
+.Xr rc 8
+.El
 .Sh EXAMPLES
 .Li # wsconsctl -w keyboard.encoding=uk
 .Pp
@@ -171,20 +185,6 @@ Sets the bell pitch to be 1200.
 .Li # wsconsctl -w keyboard.bell.pitch+=200
 .Pp
 Adds 200 to the current pitch of the bell.
-.Sh FILES
-.Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
-.It Pa /dev/wskbd0
-keyboard control device
-.It Pa /dev/wsmouse0
-mouse control device
-.It Pa /dev/ttyC0
-display control device
-.It Pa /usr/include/dev/wscons/wsconsio.h
-keyboard/mouse/display definitions
-.It Pa /etc/wsconsctl.conf
-a list of parameters that get set at system startup time from
-.Xr rc 8
-.El
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,

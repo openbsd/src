@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_msdos.8,v 1.19 2003/02/07 07:45:13 jmc Exp $
+.\"	$OpenBSD: newfs_msdos.8,v 1.20 2003/06/03 13:16:08 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -168,13 +168,13 @@ Create a file system, using default parameters, on /dev/rwd0i.
 Create a standard 1.44M file system, with volume label "foo", on
 /dev/rfd0c.
 .Dl newfs_msdos -f 1440 -L foo fd0c
+.Sh DIAGNOSTICS
+Exit status is 0 on success and 1 on error.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
 .Xr newfs 8
-.Sh DIAGNOSTICS
-Exit status is 0 on success and 1 on error.
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.22 2003/04/30 11:58:49 jmc Exp $
+.\"	$OpenBSD: scsi.8,v 1.23 2003/06/03 13:16:09 jmc Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -242,6 +242,28 @@ to indicate that
 .Ar count
 bytes of data input should be written to the standard output.
 .El
+.Sh ENVIRONMENT
+The
+.Ev SU_DEBUG_OUTPUT
+variable can be set to a file to send debugging
+output to that file.
+.Pp
+The
+.Ev SU_DEBUG_LEVEL
+variable can be set to a non-zero integer to increase
+the level of debugging.
+Currently this is an on or off thing; it should
+perhaps use the ioctl to set the debug level in the kernel and then set
+it back to zero at program exit.
+.Pp
+The
+.Ev SU_DEBUG_TRUNCATE
+variable can be set to an integer to limit the
+amount of data phase output sent to the debugging file.
+.Pp
+The
+.Ev EDITOR
+variable determines the editor to use for the mode editor.
 .Sh EXAMPLES
 To verify that the device type for the disk
 .Pa /dev/rsd0c
@@ -266,31 +288,14 @@ drive (set AWRE and ARRE to 1 to enable bad block remapping):
 .Bd -literal -offset
 # scsi -f /dev/rsd2c -m 1 -e -P 3
 .Ed
-.Sh ENVIRONMENT
-The
-.Ev SU_DEBUG_OUTPUT
-variable can be set to a file to send debugging
-output to that file.
-.Pp
-The
-.Ev SU_DEBUG_LEVEL
-variable can be set to a non-zero integer to increase
-the level of debugging.
-Currently this is an on or off thing; it should
-perhaps use the ioctl to set the debug level in the kernel and then set
-it back to zero at program exit.
-.Pp
-The
-.Ev SU_DEBUG_TRUNCATE
-variable can be set to an integer to limit the
-amount of data phase output sent to the debugging file.
-.Pp
-The
-.Ev EDITOR
-variable determines the editor to use for the mode editor.
 .Sh SEE ALSO
 .Xr scsi 3 ,
 .Xr scsi 4
+.Sh HISTORY
+The
+.Nm
+command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
+and user SCSI commands.
 .Sh BUGS
 Some devices respond to an inquiry for all LUNS.
 This will cause them
@@ -298,8 +303,3 @@ to come on line to 8 times during reprobe to different logical units.
 "scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can write to
 .Pa /dev/rsd0c
 to format the disk drive.
-.Sh HISTORY
-The
-.Nm
-command appeared in 386BSD 0.1.2.4/FreeBSD to support the new reprobe
-and user SCSI commands.

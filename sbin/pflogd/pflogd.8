@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.21 2003/03/11 07:10:04 david Exp $
+.\"	$OpenBSD: pflogd.8,v 1.22 2003/06/03 13:16:08 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -102,6 +102,14 @@ Other file parsers may desire a higher snaplen.
 Selects which packets will be dumped, using the regular language of
 .Xr tcpdump 8 .
 .El
+.Sh FILES
+.Bl -tag -width /var/run/pflogd.pid -compact
+.It Pa /var/run/pflogd.pid
+Process ID of the currently running
+.Nm pflogd .
+.It Pa /var/log/pflog
+Default log file.
+.El
 .Sh EXAMPLES
 Log specific tcp packets to a different log file with a large snaplen
 (useful with a log-all rule to dump complete sessions)
@@ -155,14 +163,6 @@ the wi0 interface:
 .Bd -literal -offset indent
 # tcpdump -n -e -ttt -i pflog0 inbound and action block and on wi0
 .Ed
-.Sh FILES
-.Bl -tag -width /var/run/pflogd.pid -compact
-.It Pa /var/run/pflogd.pid
-Process ID of the currently running
-.Nm pflogd .
-.It Pa /var/log/pflog
-Default log file.
-.El
 .Sh SEE ALSO
 .Xr pcap 3 ,
 .Xr pf 4 ,
@@ -170,10 +170,10 @@ Default log file.
 .Xr pf.conf 5 ,
 .Xr newsyslog 8 ,
 .Xr tcpdump 8
-.Sh AUTHORS
-Can Erkin Acar
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Ox 3.0 .
+.Sh AUTHORS
+Can Erkin Acar

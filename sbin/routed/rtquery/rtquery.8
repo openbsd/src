@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtquery.8,v 1.15 2003/06/02 20:06:17 millert Exp $
+.\"	$OpenBSD: rtquery.8,v 1.16 2003/06/03 13:16:09 jmc Exp $
 .\"
 .\" Copyright (c) 1982, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" 
+.\"
 .Dd June 1, 1996
 .Dt RTQUERY 8
 .Os
@@ -44,7 +44,7 @@
 is used to query a network routing daemon,
 .Xr routed 8
 or
-.Xr gated 8 ,
+.Xr gated ,
 for its routing table by sending a
 .Cm request
 or
@@ -66,7 +66,7 @@ uses the
 .Cm poll
 command, an
 undocumented extension to the RIP protocol supported by
-.Xr gated 8 .
+.Xr gated .
 When querying gated, the
 .Cm poll
 command is preferred over the
@@ -95,9 +95,9 @@ option displays only the numeric network and host numbers.
 Uses the
 .Cm poll
 command to request full routing information from
-.Xr gated 8 .
+.Xr gated .
 This is an undocumented extension RIP protocol supported only by
-.Xr gated 8 .
+.Xr gated .
 .It Fl 1
 Query using RIP version 1 instead of RIP version 2.
 .It Fl w Ar timeout

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.79 2003/05/17 17:26:40 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.80 2003/06/03 13:16:08 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -692,6 +692,17 @@ Currently this can be:
 [user@foo.bar.org]
 .El
 .El
+.Sh FILES
+.Bl -tag -width /etc/isakmpd/isakmpd.conf
+.It Pa /etc/isakmpd/isakmpd.conf
+The default
+.Nm isakmpd
+configuration file.
+.It Pa /usr/share/ipsec/isakmpd/
+A directory containing some sample
+.Nm isakmpd
+configuration files.
+.El
 .Sh EXAMPLES
 An example of a configuration file:
 .Pp
@@ -1044,17 +1055,6 @@ LIFE_DURATION=		3600,1800:7200
 LIFE_TYPE=		KILOBYTES
 LIFE_DURATION=		1000,768:1536
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/isakmpd/isakmpd.conf
-.It Pa /etc/isakmpd/isakmpd.conf
-The default
-.Nm isakmpd
-configuration file.
-.It Pa /usr/share/ipsec/isakmpd/
-A directory containing some sample
-.Nm isakmpd
-configuration files.
-.El
 .Sh SEE ALSO
 .Xr keynote 1 ,
 .Xr ipsec 4 ,

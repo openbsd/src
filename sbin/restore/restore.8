@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.24 2003/06/02 20:06:16 millert Exp $
+.\"	$OpenBSD: restore.8,v 1.25 2003/06/03 13:16:09 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -322,6 +322,38 @@ preceded by its file type.
 Do not ask the user whether to abort the restore in the event of an error.
 Always try to skip over the bad block(s) and continue.
 .El
+.Sh ENVIRONMENT
+If the following environment variable exists it will be utilized by
+.Nm restore :
+.Pp
+.Bl -tag -width "TMPDIR"
+.It Ev TMPDIR
+The directory given in
+.Ev TMPDIR
+will be used
+instead of
+.Pa /tmp
+to store temporary files.
+Refer to
+.Xr environ 7
+for more information.
+.It Ev TAPE
+Default tape device to use instead of
+.Pa /dev/rst0 .
+.El
+.Sh FILES
+.Bl -tag -width "./restoresymtable" -compact
+.It Pa /dev/rst0
+the default tape drive
+.It Pa /dev/rst*
+raw SCSI tape interface
+.It Pa /tmp/rstdir*
+file containing directories on the tape
+.It Pa /tmp/rstmode*
+owner, mode, and time stamps for directories
+.It Pa \&./restoresymtable
+information passed between incremental restores
+.El
 .Sh DIAGNOSTICS
 Complains if it gets a read error.
 If
@@ -392,44 +424,17 @@ After a dump read error,
 may have to resynchronize itself.
 This message lists the number of blocks that were skipped over.
 .El
-.Sh ENVIRONMENT
-If the following environment variable exists it will be utilized by
-.Nm restore :
-.Pp
-.Bl -tag -width "TMPDIR"
-.It Ev TMPDIR
-The directory given in
-.Ev TMPDIR
-will be used
-instead of
-.Pa /tmp
-to store temporary files.
-Refer to
-.Xr environ 7
-for more information.
-.It Ev TAPE
-Default tape device to use instead of
-.Pa /dev/rst0 .
-.El
-.Sh FILES
-.Bl -tag -width "./restoresymtable" -compact
-.It Pa /dev/rst0
-the default tape drive
-.It Pa /dev/rst*
-raw SCSI tape interface
-.It Pa /tmp/rstdir*
-file containing directories on the tape
-.It Pa /tmp/rstmode*
-owner, mode, and time stamps for directories
-.It Pa \&./restoresymtable
-information passed between incremental restores
-.El
 .Sh SEE ALSO
 .Xr environ 7 ,
 .Xr dump 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
 .Xr rmt 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 .Nm
 can get confused when doing incremental restores from
@@ -465,8 +470,3 @@ be the same across different processes.
 In all other cases, the files are unique because it is possible to
 have two different dumps started at the same time, and separate
 operations shouldn't conflict with each other.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.2 .

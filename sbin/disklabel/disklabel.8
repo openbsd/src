@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.51 2003/06/02 20:06:14 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.52 2003/06/03 13:16:08 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -218,7 +218,7 @@ Allow writing of the pack label area on the selected disk.
 .Pp
 The first form of the command (read) is used to examine the label on
 the named disk drive (e.g., sd0 or
-.Pa /dev/rsd0c Ns ).
+.Pa /dev/rsd0c ) .
 It will display all of the parameters associated with the drive
 and its partition layout.
 Unless the
@@ -509,6 +509,12 @@ with the
 .Fl e
 flag and paste any entries you want from the default label into the real
 one.
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /etc/disktab
+.It Pa /usr/mdec/ Ns Em xx Ns boot
+.It Pa /usr/mdec/boot Ns Em xx
+.El
 .Sh EXAMPLES
 .Li # disklabel sd0
 .Pp
@@ -562,16 +568,6 @@ and installed both in-core and
 on-disk.
 The bootstrap code comes from the file
 .Pa /usr/mdec/newboot .
-.Sh FILES
-.Bl -tag -width Pa -compact
-.It Pa /etc/disktab
-.It Pa /usr/mdec/ Ns Em xx Ns boot
-.It Pa /usr/mdec/boot Ns Em xx
-.El
-.Sh SEE ALSO
-.Xr disklabel 5 ,
-.Xr disktab 5 ,
-.Xr scan_ffs 8
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while
@@ -611,6 +607,10 @@ or
 .Dv FS_BOOT ,
 .Nm
 will not install bootstrap code that overlaps it.
+.Sh SEE ALSO
+.Xr disklabel 5 ,
+.Xr disktab 5 ,
+.Xr scan_ffs 8
 .Sh NOTES
 On i386 machines,
 .Xr installboot 8

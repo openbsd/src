@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.30 2003/03/06 20:29:24 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.31 2003/06/03 13:16:08 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -495,6 +495,17 @@ Set to the UTC date/time, in YYYYMMDDHHmmSS format.
 .It LocalTimeOfDay
 Set to the local date/time, in YYYYMMDDHHmmSS format.
 .El
+.Sh FILES
+.Bl -tag -width /etc/isakmpd/isakmpd.policy
+.It Pa /etc/isakmpd/isakmpd.policy
+The default
+.Nm isakmpd
+policy configuration file.
+.It Pa /usr/share/ipsec/isakmpd/policy
+A sample
+.Nm isakmpd
+policy configuration file.
+.El
 .Sh EXAMPLES
 .Bd -literal
     Authorizer: "POLICY"
@@ -614,21 +625,10 @@ Signature: "sig-x509-sha1-base64:ql+vrUxv14DcBOQHR2jsbXayq6T\\
             mkdudZ0wjgeTLMI2NI4GibMMsToakOKMex/0q4cpdpln3DKcQ\\
             IcjzRv4khDws69FT3QfELjcpShvbLrXmh1Z00OFmxjyqDw="
 .Ed
-.Sh BUGS
-A more sane way of expressing IPv6 address ranges is needed.
-.Sh FILES
-.Bl -tag -width /etc/isakmpd/isakmpd.policy
-.It Pa /etc/isakmpd/isakmpd.policy
-The default
-.Nm isakmpd
-policy configuration file.
-.It Pa /usr/share/ipsec/isakmpd/policy
-A sample
-.Nm isakmpd
-policy configuration file.
-.El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr keynote 4 ,
 .Xr keynote 5 ,
 .Xr isakmpd 8
+.Sh BUGS
+A more sane way of expressing IPv6 address ranges is needed.
