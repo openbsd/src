@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.11 2001/06/22 14:35:42 deraadt Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.12 2001/11/11 21:38:17 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -316,10 +316,16 @@ struct scsi_mode_header_big {
 /*
  * Status Byte
  */
-#define	SCSI_OK		0x00
-#define	SCSI_CHECK	0x02
-#define	SCSI_BUSY	0x08	
-#define SCSI_INTERM	0x10
-#define SCSI_QUEUE_FULL	0x28
+#define SCSI_OK			0x00
+#define SCSI_CHECK		0x02
+#define SCSI_COND_MET		0x04
+#define SCSI_BUSY		0x08	
+#define SCSI_INTERM		0x10
+#define SCSI_INTERM_COND_MET	0x14
+#define SCSI_RESV_CONFLICT	0x18
+#define SCSI_TERMINATED		0x22
+#define SCSI_QUEUE_FULL		0x28	/* Old (Pre SCSI-3) name */
+#define SCSI_TASKSET_FULL	0x28	/* New (SCSI-3)     name */
+#define SCSI_ACA_ACTIVE		0x30
 
 #endif /* _SCSI_SCSI_ALL_H */
