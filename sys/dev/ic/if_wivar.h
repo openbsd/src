@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.14 2002/06/15 18:49:04 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.15 2002/06/21 06:48:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,13 +68,15 @@ struct wi_softc	{
 	u_int16_t		wi_supprates;
 	u_int16_t		wi_diversity;
 
+	u_int8_t		wi_txbuf[1596];
+	u_int8_t		wi_scanbuf[1596];
+
+	u_int8_t		wi_scanbuf_len;
+
 	struct ieee80211_nwid	wi_node_name;
 	struct ieee80211_nwid	wi_net_name;
 	struct ieee80211_nwid	wi_ibss_name;
 
-	u_int8_t		wi_txbuf[1596];
-	u_int8_t		wi_scanbuf[1596];
-	u_int8_t		wi_scanbuf_len;
 	int			wi_use_wep;
 	int			wi_tx_key;
 	struct wi_ltv_keys	wi_keys;
