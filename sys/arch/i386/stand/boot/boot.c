@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 1997/07/18 00:52:08 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.11 1997/07/21 15:36:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -65,8 +65,8 @@ boot(bootdev)
 	cmd.cwd[0] = '/'; cmd.cwd[1] = '\0';
 	cmd.addr = (void *)0x100000;
 	cmd.timeout = 5;
-
 	devboot(bootdev, cmd.bootdev);
+
 	f = read_conf(&cmd);
 	while (1) {
 		if (f <= 0) /* no boot.conf, or no boot cmd in there */
@@ -93,7 +93,7 @@ boot(bootdev)
 int
 main()
 {
-	boot();
+	boot(0);
 	return 0;
 }
 #endif
