@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.19 2002/12/10 23:33:08 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.20 2002/12/25 20:56:59 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -523,7 +523,7 @@ hdgetinfo(dev, rs, lp, spoofonly)
 	/*
 	 * Now try to read the disklabel
 	 */
-	errstring = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL,
+	errstring = readdisklabel(HDLABELDEV(dev), hdstrategy, lp, NULL,
 	    spoofonly);
 	if (errstring) {
 		printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
@@ -547,7 +547,7 @@ hdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = hdunit(dev);
+	int unit = HDUNIT(dev);
 	struct hd_softc *rs;
 	int error, mask, part;
 
@@ -576,7 +576,7 @@ hdopen(dev, flags, mode, p)
 			return(error);
 	}
 
-	part = hdpart(dev);
+	part = HDPART(dev);
 	mask = 1 << part;
 
 	/* Check that the partition exists. */
@@ -606,12 +606,12 @@ hdclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = hdunit(dev);
+	int unit = HDUNIT(dev);
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
 	struct disk *dk = &rs->sc_dkdev;
 	int mask, s;
 
-	mask = 1 << hdpart(dev);
+	mask = 1 << HDPART(dev);
 	if (mode == S_IFCHR)
 		dk->dk_copenmask &= ~mask;
 	else
@@ -642,7 +642,7 @@ void
 hdstrategy(bp)
 	struct buf *bp;
 {
-	int unit = hdunit(bp->b_dev);
+	int unit = HDUNIT(bp->b_dev);
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
 	struct buf *dp = &rs->sc_tab;
 	struct partition *pinfo;
@@ -658,12 +658,12 @@ hdstrategy(bp)
 #endif
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
-	pinfo = &rs->sc_dkdev.dk_label->d_partitions[hdpart(bp->b_dev)];
+	pinfo = &rs->sc_dkdev.dk_label->d_partitions[HDPART(bp->b_dev)];
 
 	/* Don't perform partition translation on RAW_PART. */
-	offset = (hdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
+	offset = (HDPART(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
 
-	if (hdpart(bp->b_dev) != RAW_PART) {
+	if (HDPART(bp->b_dev) != RAW_PART) {
 		/*
 		 * XXX This block of code belongs in
 		 * XXX bounds_check_with_label()
@@ -774,7 +774,7 @@ again:
 		printf("hdstart(%s): bp %p, %c\n", rs->sc_dev.dv_xname, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
-	part = hdpart(bp->b_dev);
+	part = HDPART(bp->b_dev);
 	rs->sc_flags |= HDF_SEEK;
 	rs->sc_ioc.c_unit = C_SUNIT(rs->sc_punit);
 	rs->sc_ioc.c_volume = C_SVOL(0);
@@ -1034,7 +1034,7 @@ hderror(unit)
 	 * we just use b_blkno.
  	 */
 	bp = rs->sc_tab.b_actf;
-	pbn = rs->sc_dkdev.dk_label->d_partitions[hdpart(bp->b_dev)].p_offset;
+	pbn = rs->sc_dkdev.dk_label->d_partitions[HDPART(bp->b_dev)].p_offset;
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {
 		hwbn = HDBTOS(pbn + bp->b_blkno);
@@ -1050,7 +1050,7 @@ hderror(unit)
 	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
-	    'a'+hdpart(bp->b_dev), pbn);
+	    'a'+HDPART(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation (unless debugging).
@@ -1119,7 +1119,7 @@ hdioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = hdunit(dev);
+	int unit = HDUNIT(dev);
 	struct hd_softc *sc = hd_cd.cd_devs[unit];
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
@@ -1136,7 +1136,7 @@ hdioctl(dev, cmd, data, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = lp;
 		((struct partinfo *)data)->part =
-			&lp->d_partitions[hdpart(dev)];
+			&lp->d_partitions[HDPART(dev)];
 		return (0);
 
 	case DIOCWLABEL:
@@ -1167,7 +1167,7 @@ hdioctl(dev, cmd, data, flag, p)
 			return (error);
 		flags = sc->sc_flags;
 		sc->sc_flags = HDF_ALIVE | HDF_WLABEL;
-		error = writedisklabel(hdlabdev(dev), hdstrategy, lp,
+		error = writedisklabel(HDLABELDEV(dev), hdstrategy, lp,
 				       (struct cpu_disklabel *)0);
 		sc->sc_flags = flags;
 		return (error);
@@ -1179,7 +1179,7 @@ int
 hdsize(dev)
 	dev_t dev;
 {
-	int unit = hdunit(dev);
+	int unit = HDUNIT(dev);
 	struct hd_softc *rs;
 	int psize, didopen = 0;
 
@@ -1198,7 +1198,7 @@ hdsize(dev)
 			return(-1);
 		didopen = 1;
 	}
-	psize = rs->sc_dkdev.dk_label->d_partitions[hdpart(dev)].p_size *
+	psize = rs->sc_dkdev.dk_label->d_partitions[HDPART(dev)].p_size *
 	    (rs->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 	if (didopen)
 		(void) hdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
@@ -1255,8 +1255,8 @@ hddump(dev, blkno, va, size)
 	hddoingadump = 1;
 
 	/* Decompose unit and partition. */
-	unit = hdunit(dev);
-	part = hdpart(dev);
+	unit = HDUNIT(dev);
+	part = HDPART(dev);
 
 	/* Make sure dump device is ok. */
 	if (unit >= hd_cd.cd_ndevs ||
