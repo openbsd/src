@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.20 2004/03/12 10:10:42 hshoexer Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.21 2004/04/06 08:57:20 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.20 2004/03/12 10:10:42 hshoexer Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.21 2004/04/06 08:57:20 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ struct rtentry;
 struct isakmp_header {
 	u_int8_t	init_cookie[8];
 	u_int8_t	resp_cookie[8];
-	u_int8_t	nextpayload;
+	u_int8_t	next_payload;
 	u_int8_t	version;
 	u_int8_t	exgtype;
 	u_int8_t	flags;
@@ -71,6 +71,17 @@ struct notification_payload {
   	u_int8_t	spi_size;
   	u_int16_t	type;
 	u_int8_t	data[0];
+};
+
+struct delete_payload {
+	u_int8_t	next_payload;
+	u_int8_t	reserved;
+	u_int16_t	payload_length;
+	u_int32_t	doi;
+	u_int8_t	proto;
+	u_int8_t	spi_size;
+	u_int16_t	nspis;
+	u_int8_t	spi[0];
 };
 
 static void ike_pl_print(u_int8_t, u_int8_t *, u_int8_t);
@@ -118,7 +129,7 @@ ike_print (const u_int8_t *cp, u_int length)
 {
 	struct isakmp_header *ih;
 	const u_int8_t *ep;
-	u_int8_t *payload, nextpayload;
+	u_int8_t *payload, next_payload;
 	int encrypted;
 	static const char *exgtypes[] = IKE_EXCHANGE_TYPES_INITIALIZER;
 
@@ -172,7 +183,7 @@ ike_print (const u_int8_t *cp, u_int length)
 	}
 
 	payload = ih->payloads;
-	nextpayload = ih->nextpayload;
+	next_payload = ih->next_payload;
 
 	/* if encrypted, then open special file for encryption keys */
 	if (encrypted) {
@@ -182,7 +193,7 @@ ike_print (const u_int8_t *cp, u_int length)
 
 	/* if verbose, print payload data */
 	if (vflag)
-		ike_pl_print(nextpayload, payload, ISAKMP_DOI);
+		ike_pl_print(next_payload, payload, ISAKMP_DOI);
 
 	return;
 
@@ -440,6 +451,47 @@ ipsec_id_print (u_int8_t *buf, int len, u_int8_t doi)
 }
 
 void
+ike_pl_delete_print (u_int8_t *buf, int len)
+{
+  	struct delete_payload *dp = (struct delete_payload *)buf;
+	u_int16_t s;
+	u_int8_t *data;
+
+	if (len < sizeof (struct delete_payload)) {
+		printf(" [|payload]");
+		return;
+	}
+
+	dp->doi   = ntohl(dp->doi);
+	dp->nspis = ntohs(dp->nspis);
+
+	if (dp->doi != ISAKMP_DOI && dp->doi != IPSEC_DOI) {
+		printf(" (unknown DOI)");
+		return;
+	}
+
+	printf(" DOI: %u(%s) proto: %s nspis: %u", dp->doi,
+	    dp->doi == ISAKMP_DOI ? "ISAKMP" : "IPSEC",
+	    dp->proto < (sizeof ike / sizeof ike[0]) ? ike[dp->proto] :
+	    "(unknown)", dp->nspis);
+
+	if ((dp->spi + dp->nspis * dp->spi_size) > (buf + len)) {
+		printf(" [|payload]");
+		return;
+	}
+
+	for (s = 0; s < dp->nspis; s++) {
+		data = dp->spi + s * dp->spi_size;
+		if (dp->spi_size == 16)
+			printf("\n\t%scookie: %s", ike_tab_offset(),
+			    ike_get_cookie(&data[0], &data[8]));
+		else
+			printf("\n\t%sSPI: 0x%08x", ike_tab_offset(),
+			    data[0]<<24 | data[1]<<16 | data[2]<<8 | data[3]);
+	}
+}
+
+void
 ike_pl_notification_print (u_int8_t *buf, int len)
 {
   	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
@@ -448,7 +500,7 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 	u_int8_t *attr;
 
 	if (len < sizeof (struct notification_payload)) {
-		printf(" (|len)");
+		printf(" [|payload]");
 		return;
 	}
 
@@ -677,7 +729,10 @@ ike_pl_print (u_int8_t type, u_int8_t *buf, u_int8_t doi)
 	case PAYLOAD_HASH:
 	case PAYLOAD_SIG:
 	case PAYLOAD_NONCE:
+		break;
+
 	case PAYLOAD_DELETE:
+		ike_pl_delete_print(buf, this_len);
 		break;
 
 	case PAYLOAD_NOTIFICATION:
