@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.14 2002/03/05 08:56:55 niklas Exp $	*/
+/*	$OpenBSD: patch.c,v 1.15 2002/07/04 04:22:48 deraadt Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.14 2002/03/05 08:56:55 niklas Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.15 2002/07/04 04:22:48 deraadt Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -105,6 +105,8 @@ char **argv;
       tmpname_len = strlen (tmpdir) + 20;
 
       TMPOUTNAME = (char *) malloc (tmpname_len);
+      if (TMPOUTNAME == NULL)
+	fatal1("cannot allocate memory");
       strcpy (TMPOUTNAME, tmpdir);
       strcat (TMPOUTNAME, "/patchoXXXXXX");
       if ((i = mkstemp(TMPOUTNAME)) < 0)
@@ -112,6 +114,8 @@ char **argv;
       Close(i);
 
       TMPINNAME = (char *) malloc (tmpname_len);
+      if (TMPINNAME == NULL)
+	fatal1("cannot allocate memory");
       strcpy (TMPINNAME, tmpdir);
       strcat (TMPINNAME, "/patchiXXXXXX");
       if ((i = mkstemp(TMPINNAME)) < 0)
@@ -119,6 +123,8 @@ char **argv;
       Close(i);
 
       TMPREJNAME = (char *) malloc (tmpname_len);
+      if (TMPREJNAME == NULL)
+	fatal1("cannot allocate memory");
       strcpy (TMPREJNAME, tmpdir);
       strcat (TMPREJNAME, "/patchrXXXXXX");
       if ((i = mkstemp(TMPREJNAME)) < 0)
@@ -126,6 +132,8 @@ char **argv;
       Close(i);
 
       TMPPATNAME = (char *) malloc (tmpname_len);
+      if (TMPPATNAME == NULL)
+	fatal1("cannot allocate memory");
       strcpy (TMPPATNAME, tmpdir);
       strcat (TMPPATNAME, "/patchpXXXXXX");
       if ((i = mkstemp(TMPPATNAME)) < 0)
