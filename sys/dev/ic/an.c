@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.19 2001/07/08 23:38:05 fgsch Exp $	*/
+/*	$OpenBSD: an.c,v 1.20 2001/09/29 21:54:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/an/if_an.c,v 1.2 2000/01/16 06:41:49 wpaul Exp $
+ * $FreeBSD: src/sys/dev/an/if_an.c,v 1.21 2001/09/10 02:05:09 brooks Exp $
  */
 
 /*
@@ -162,6 +162,8 @@ void an_setdef		__P((struct an_softc *, struct an_req *));
 void an_cache_store	__P((struct an_softc *, struct ether_header *,
 					struct mbuf *, unsigned short));
 #endif
+int an_media_change	__P((struct ifnet *));
+void an_media_status	__P((struct ifnet *, struct ifmediareq *));
 
 static __inline void
 an_swap16(u_int16_t *p, int cnt)
@@ -254,6 +256,31 @@ an_attach(sc)
 #ifdef ANCACHE
 	sc->an_sigitems = sc->an_nextitem = 0;
 #endif
+
+	ifmedia_init(&sc->an_ifmedia, 0, an_media_change, an_media_status);
+#define	ADD(m, c)	ifmedia_add(&sc->an_ifmedia, (m), (c), NULL)
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
+	if (sc->an_caps.an_rates[2] == AN_RATE_5_5MBPS) {
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
+	}
+	if (sc->an_caps.an_rates[3] == AN_RATE_11MBPS) {
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
+	}
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
+#undef ADD
+	ifmedia_set(&sc->an_ifmedia, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+	    0, 0));
 
 	/*
 	 * Call MI attach routines.
@@ -583,7 +610,7 @@ an_read_record(sc, ltv)
 	u_int16_t	*ptr, len;
 	int		i;
 
-	if (ltv->an_len == 0 || ltv->an_type == 0)
+	if (ltv->an_len < 4 || ltv->an_type == 0)
 		return(EINVAL);
 
 	/* Tell the NIC to enter record read mode. */
@@ -1016,6 +1043,10 @@ an_ioctl(ifp, command, data)
 		}
 		sc->an_if_flags = ifp->if_flags;
 		error = 0;
+		break;
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->an_ifmedia, command);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1493,3 +1524,86 @@ an_cache_store (sc, eh, m, rx_quality)
 	sc->an_sigcache[cache_slot].signal = rx_quality;
 }
 #endif
+
+int
+an_media_change(ifp)
+	struct ifnet		*ifp;
+{
+	struct an_softc *sc = ifp->if_softc;
+	int otype = sc->an_config.an_opmode;
+	int orate = sc->an_tx_rate;
+
+	if ((sc->an_ifmedia.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC) != 0)
+		sc->an_config.an_opmode = AN_OPMODE_IBSS_ADHOC;
+	else
+		sc->an_config.an_opmode = AN_OPMODE_INFRASTRUCTURE_STATION;
+
+	switch (IFM_SUBTYPE(sc->an_ifmedia.ifm_cur->ifm_media)) {
+	case IFM_IEEE80211_DS1:
+		sc->an_tx_rate = AN_RATE_1MBPS;
+		break;
+	case IFM_IEEE80211_DS2:
+		sc->an_tx_rate = AN_RATE_2MBPS;
+		break;
+	case IFM_IEEE80211_DS5:
+		sc->an_tx_rate = AN_RATE_5_5MBPS;
+		break;
+	case IFM_IEEE80211_DS11:
+		sc->an_tx_rate = AN_RATE_11MBPS;
+		break;
+	case IFM_AUTO:
+		sc->an_tx_rate = 0;
+		break;
+	}
+
+	if (otype != sc->an_config.an_opmode ||
+	    orate != sc->an_tx_rate)
+		an_init(sc);
+
+	return(0);
+}
+
+void
+an_media_status(ifp, imr)
+	struct ifnet		*ifp;
+	struct ifmediareq	*imr;
+{
+	struct an_ltv_status	status;
+	struct an_softc		*sc = ifp->if_softc;
+
+	status.an_len = sizeof(status);
+	status.an_type = AN_RID_STATUS;
+	if (an_read_record(sc, (struct an_ltv_gen *)&status)) {
+		/* If the status read fails, just lie. */
+		imr->ifm_active = sc->an_ifmedia.ifm_cur->ifm_media;
+		imr->ifm_status = IFM_AVALID|IFM_ACTIVE;
+	}
+
+	if (sc->an_tx_rate == 0) {
+		imr->ifm_active = IFM_IEEE80211|IFM_AUTO;
+		if (sc->an_config.an_opmode == AN_OPMODE_IBSS_ADHOC)
+			imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		switch (status.an_current_tx_rate) {
+		case AN_RATE_1MBPS:
+			imr->ifm_active |= IFM_IEEE80211_DS1;
+			break;
+		case AN_RATE_2MBPS:
+			imr->ifm_active |= IFM_IEEE80211_DS2;
+			break;
+		case AN_RATE_5_5MBPS:
+			imr->ifm_active |= IFM_IEEE80211_DS5;
+			break;
+		case AN_RATE_11MBPS:
+			imr->ifm_active |= IFM_IEEE80211_DS11;
+			break;
+		}
+	} else {
+		imr->ifm_active = sc->an_ifmedia.ifm_cur->ifm_media;
+	}
+
+	imr->ifm_status = IFM_AVALID;
+	if (sc->an_config.an_opmode == AN_OPMODE_IBSS_ADHOC)
+		imr->ifm_status |= IFM_ACTIVE;
+	else if (status.an_opmode & AN_STATUS_OPMODE_ASSOCIATED)
+		imr->ifm_status |= IFM_ACTIVE;
+}

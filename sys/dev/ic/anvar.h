@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.4 2001/06/25 21:11:17 mickey Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.5 2001/09/29 21:54:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -645,6 +645,7 @@ struct an_tx_ring_data {
 struct an_softc	{
 	struct device	sc_dev;
 	struct arpcom	arpcom;
+	struct ifmedia	an_ifmedia;
 	void		*sc_ih;
 
 	bus_space_tag_t		an_btag;

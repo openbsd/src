@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.7 2001/06/25 21:11:17 mickey Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.8 2001/09/29 21:54:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/an/if_anreg.h,v 1.1 2000/01/14 20:40:56 wpaul Exp $
+ * $FreeBSD: src/sys/dev/an/if_anreg.h,v 1.9 2001/07/27 16:05:21 brooks Exp $
  */
 
 #pragma pack(1)
@@ -96,6 +96,7 @@
 #define AN_CMD_HOST_SLEEP	0x0005
 #define AN_CMD_MAGIC_PKT	0x0006
 #define AN_CMD_READCFG		0x0008
+#define	AN_CMD_SET_MODE		0x0009
 #define AN_CMD_ALLOC_MEM	0x000A	/* allocate NIC memory */
 #define AN_CMD_TX		0x000B	/* transmit */
 #define AN_CMD_DEALLOC_MEM	0x000C
@@ -444,6 +445,9 @@ struct an_snap_hdr {
 #define AN_TXCNTL_MACPORT	0x00FF
 #define AN_TXCNTL_STRUCTTYPE	0xFF00
 
+#define AN_RID_WEP_TEMP	        0xFF15
+#define AN_RID_WEP_PERM	        0xFF16
+
 /*
  * SNAP (sub-network access protocol) constants for transmission
  * of IP datagrams over IEEE 802 networks, taken from RFC1042.
@@ -456,5 +460,7 @@ struct an_snap_hdr {
 #define AN_SNAP_WORD0		(AN_SNAP_K1 | (AN_SNAP_K1 << 8))
 #define AN_SNAP_WORD1		(AN_SNAP_K2 | (AN_SNAP_CONTROL << 8))
 #define AN_SNAPHDR_LEN		0x6
+
+
 
 #pragma pack()
