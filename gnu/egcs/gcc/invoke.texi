@@ -93,7 +93,7 @@ in the following sections.
 @item C Language Options
 @xref{C Dialect Options,,Options Controlling C Dialect}.
 @smallexample
--ansi -flang-isoc9x -fallow-single-precision  -fcond-mismatch  -fno-asm
+-ansi -fstd  -fallow-single-precision  -fcond-mismatch  -fno-asm
 -fno-builtin  -ffreestanding  -fhosted  -fsigned-bitfields  -fsigned-char
 -funsigned-bitfields  -funsigned-char  -fwritable-strings
 -traditional  -traditional-cpp  -trigraphs
@@ -667,14 +667,37 @@ programs that might use these names for other things.
 The functions @code{alloca}, @code{abort}, @code{exit}, and
 @code{_exit} are not builtin functions when @samp{-ansi} is used.
 
-@item -flang-isoc9x
-Enable support for features found in the C9X standard.  In particular,
-enable support for the C9X @code{restrict} keyword.  
+@item -fstd=
+Determine the language standard.  A value for this option must be provided;
+possible values are 
 
-Even when this option is not specified, you can still use some C9X
-features in so far as they do not conflict with previous C standards.
-For example, you may use @code{__restrict__} even when -flang-isoc9x
-is not specified. 
+@itemize @minus
+@item iso9899:1990
+Same as -ansi
+
+@item iso9899:199409
+ISO C as modified in amend. 1
+
+@item iso9899:199x
+ISO C 9x
+
+@item c89
+same as -std=iso9899:1990
+
+@item c9x
+same as -std=iso9899:199x
+
+@item gnu89
+default, iso9899:1990 + gnu extensions
+
+@item gnu9x
+iso9899:199x + gnu extensions
+@end itemize
+
+Even when this option is not specified, you can still use some of the
+features of newer standards in so far as they do not conflict with
+previous C standards.  For example, you may use @code{__restrict__} even
+when -fstd=c9x is not specified.
 
 @item -fno-asm
 Do not recognize @code{asm}, @code{inline} or @code{typeof} as a
@@ -1163,7 +1186,7 @@ anachronism.  Therefore, by default it is invalid to assign to
 type @samp{X *}.  However, for backwards compatibility, you can make it
 valid with @samp{-fthis-is-variable}.
 
-@item -fvtable-thunks
+@item -fvtable-thunks=@var{thunks-version}
 Use @samp{thunks} to implement the virtual function dispatch table
 (@samp{vtable}).  The traditional (cfront-style) approach to
 implementing vtables was to store a pointer to the function and two
@@ -1171,13 +1194,27 @@ offsets for adjusting the @samp{this} pointer at the call site.  Newer
 implementations store a single pointer to a @samp{thunk} function which
 does any necessary adjustment and then calls the target function.
 
+The original implementation of thunks (version 1) had a bug regarding
+virtual base classes; this bug is fixed with version 2 of the thunks
+implementation. With setting the version to 2, compatibility to the
+version 1 thunks is provided, at the cost of extra machine code. Version
+3 does not include this compatibility.
+
 This option also enables a heuristic for controlling emission of
 vtables; if a class has any non-inline virtual functions, the vtable
 will be emitted in the translation unit containing the first one of
 those.
 
 Like all options that change the ABI, all C++ code, @emph{including
-libgcc.a} must be built with the same setting of this option.
+libgcc.a} must be built with the same setting of this option. Since
+version 1 and version 2 are also incompatible (for classes with virtual
+bases defining virtual functions), all code must also be compiled with
+the same version.
+
+On some targets (e.g. Linux/GNU), version 2 thunks are the default. On these
+targets, no option or -fvtable-thunks will produce version 2 thunks. On
+all other targets, not giving the option will use the traditional
+implementation, and -fvtable-thunks will produce version 2 thunks.
 
 @item -nostdinc++
 Do not search for header files in the standard directories specific to
