@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1996/09/25 11:20:13 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 1996/09/26 21:08:53 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -150,9 +150,13 @@ readdisklabel(dev, strat, lp, osdep)
 			lp->d_partitions[0].p_offset = dp->dp_start;
 			lp->d_partitions[RAW_PART].p_size = dp->dp_size;
 			lp->d_partitions[RAW_PART].p_offset = dp->dp_start;
-			lp->d_ntracks = dp->dp_ehd + 1;
-			lp->d_nsectors = DPSECT(dp->dp_esect);
-			lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+			if (lp->d_ntracks == 0)
+				lp->d_ntracks = dp->dp_ehd + 1;
+			if (lp->d_nsectors == 0)
+				lp->d_nsectors = DPSECT(dp->dp_esect);
+			if (lp->d_secpercyl == 0)
+				lp->d_secpercyl = lp->d_ntracks *
+				    lp->d_nsectors;
 		}
 	}
 	
