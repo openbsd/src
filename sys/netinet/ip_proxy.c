@@ -1,3 +1,4 @@
+/*       $OpenBSD: ip_proxy.c,v 1.2 1998/02/17 01:39:06 dgregor Exp $       */
 /*
  * Copyright (C) 1997 by Darren Reed.
  *
@@ -6,7 +7,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ip_proxy.c,v 1.1 1998/01/26 04:10:45 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_proxy.c,v 1.2 1998/02/17 01:39:06 dgregor Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)

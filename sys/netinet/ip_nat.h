@@ -1,3 +1,4 @@
+/*       $OpenBSD: ip_nat.h,v 1.9 1998/02/17 01:39:05 dgregor Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -6,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.8 1998/01/26 04:10:44 dgregor Exp $
+ * $Id: ip_nat.h,v 1.9 1998/02/17 01:39:05 dgregor Exp $
  */
 
 #ifndef	__IP_NAT_H__

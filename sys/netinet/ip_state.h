@@ -1,3 +1,4 @@
+/*       $OpenBSD: ip_state.h,v 1.7 1998/02/17 01:39:08 dgregor Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -6,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id: ip_state.h,v 1.6 1998/01/26 04:10:46 dgregor Exp $
+ * $Id: ip_state.h,v 1.7 1998/02/17 01:39:08 dgregor Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__

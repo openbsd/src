@@ -1,3 +1,4 @@
+/*       $OpenBSD: ip_frag.c,v 1.9 1998/02/17 01:39:03 dgregor Exp $       */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.8 1998/01/26 04:10:41 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.9 1998/02/17 01:39:03 dgregor Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)

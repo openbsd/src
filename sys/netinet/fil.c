@@ -1,3 +1,4 @@
+/*       $OpenBSD: fil.c,v 1.12 1998/02/17 01:39:01 dgregor Exp $       */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fil.c,v 1.11 1998/01/26 04:10:37 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: fil.c,v 1.12 1998/02/17 01:39:01 dgregor Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -1073,7 +1074,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $Id: fil.c,v 1.11 1998/01/26 04:10:37 dgregor Exp $
+ * $Id: fil.c,v 1.12 1998/02/17 01:39:01 dgregor Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
