@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.17 1999/12/09 20:20:56 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.18 1999/12/20 05:42:03 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -359,7 +359,8 @@ case insensitive.
 .It addr
 The source address, source network mask, destination address and destination
 network mask against which packets need to match to use the specified
-Security Association.
+Security Association. All addresses must be of the same address family
+(IPv4 or IPv6).
 .It transport
 The protocol number which packets need to match to use the specified
 Security Association. By default the protocol number is not used for
