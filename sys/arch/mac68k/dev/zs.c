@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.19 2004/12/09 00:50:11 martin Exp $	*/
+/*	$OpenBSD: zs.c,v 1.20 2004/12/26 22:34:53 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ dev_t	mac68k_zsdev;
 /* Mac stuff */
 volatile unsigned char *sccA = 0;
 int	nzsc_attached = 0;	/* needed as long as we have spurious
-				 * interupt problems.
+				 * interrupt problems.
 				 */
 
 static struct zschan	*zs_get_chan_addr(int zsc_unit, int channel);
@@ -300,7 +300,7 @@ zsc_attach(parent, self, aux)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		if (channel == 0) /* Double check interupts are off */
+		if (channel == 0) /* Double check interrupts are off */
 			zs_write_reg(cs, 9, 0);
 
 		bcopy(zs_init_reg, cs->cs_creg, 16);
@@ -930,8 +930,8 @@ zscnsetup()
 	 */
 
 	/*
-	 * As zs_loadchannelregs doesn't touch reg 9 (interupt control),
-	 * we won't accidentally turn on interupts below
+	 * As zs_loadchannelregs doesn't touch reg 9 (interrupt control),
+	 * we won't accidentally turn on interrupts below
 	 */
 	s = splhigh();
 	zs_loadchannelregs(cs);
