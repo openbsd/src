@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.34 2000/02/21 17:09:01 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.35 2000/02/21 17:46:16 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -26,7 +26,7 @@
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * OR SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
@@ -332,7 +332,7 @@ apm_resume(sc, regs)
 	/* flush the event queue */
 	sc->event_count = 0;
 
-	/* they say that some machines may require reinititalizing the clock */
+	/* they say that some machines may require reinitializing the clock */
 	initrtclock();
 
 	inittodr(time.tv_sec);
