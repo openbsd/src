@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.58 2002/05/08 19:24:42 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.59 2002/06/11 08:19:17 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -978,10 +978,10 @@ out:
  *		postsig(signum);
  */
 int
-issignal(p)
-	register struct proc *p;
+issignal(struct proc *p)
 {
-	register int signum, mask, prop;
+	int signum, mask, prop;
+	int s;
 
 	for (;;) {
 		mask = p->p_siglist & ~p->p_sigmask;
@@ -1007,6 +1007,7 @@ issignal(p)
 			 */
 			p->p_xstat = signum;
 
+			s = splstatclock();	/* protect mi_switch */
 			if (p->p_flag & P_FSTRACE) {
 #ifdef	PROCFS
 				/* procfs debugging */
@@ -1022,6 +1023,7 @@ issignal(p)
 				proc_stop(p);
 				mi_switch();
 			}
+			splx(s);
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1081,7 +1083,9 @@ issignal(p)
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
 				proc_stop(p);
+				s = splstatclock();
 				mi_switch();
+				splx(s);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
