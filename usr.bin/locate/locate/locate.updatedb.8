@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.updatedb.8,v 1.3 1997/01/04 01:36:01 millert Exp $
+.\"	$OpenBSD: locate.updatedb.8,v 1.4 1998/08/12 07:27:09 deraadt Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -38,11 +38,11 @@
 .Nd update locate database
 .Sh SYNOPSIS
 .Nm /usr/libexec/locate.updatedb
-.Op Fl --tmpdir=dir
-.Op Fl --fcodes=dbfile
-.Op Fl --searchpaths='dir1 dir2...'
-.Op Fl --prunepaths='dir1 dir2...'
-.Op Fl --filesystems='type1 type2...'
+.Op Fl -tmpdir=dir
+.Op Fl -fcodes=dbfile
+.Op Fl -searchpaths='dir1 dir2...'
+.Op Fl -prunepaths='dir1 dir2...'
+.Op Fl -filesystems='type1 type2...'
 .Sh DESCRIPTION
 .Nm Locate.updatedb
 updates the database used by
@@ -55,19 +55,19 @@ The contents of the newly built database can be controlled by the
 .Pa /etc/locate.rc
 file as well as the command line arguments.
 .Sh OPTIONS
-.Bl -tag -width --filesystems
+.Bl -tag -width -filesystems
 The available options are as follows:
-.It Fl --tmpdir
+.It Fl -tmpdir
 Sets the directory temporary files are stored in.
-.It Fl --fcodes
+.It Fl -fcodes
 Use the named file as the find codes database.  If the file
 name ``-'' is given, the database will be sent to standard output.
-.It Fl --searchpaths
+.It Fl -searchpaths
 Sets the list of directories to be put in the database.
-.It Fl --prunepaths
+.It Fl -prunepaths
 Sets the list of parent directories that should not be go in
 the database.
-.It Fl --filesystems
+.It Fl -filesystems
 A list of filesystem types to be traversed by
 .Xr find 1 .
 .Sh FILES
@@ -78,7 +78,8 @@ the default database
 the configuration file
 .El
 .Sh SEE ALSO
-.Xr locate 1
+.Xr locate 1 ,
+.Xr find 1 
 .Rs
 .%A Woods, James A.
 .%D 1983
