@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.2 2001/08/18 21:30:00 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.3 2001/08/19 05:32:03 art Exp $	*/
 /*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
 
 /*-
@@ -169,6 +169,10 @@ void	sbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sbus_ca = {
 	sizeof(struct sbus_softc), sbus_match, sbus_attach
+};
+
+struct cfdriver sbus_cd = {
+	NULL, "sbus", DV_IFNET
 };
 
 extern struct cfdriver sbus_cd;
