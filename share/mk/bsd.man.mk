@@ -1,9 +1,9 @@
-#	$OpenBSD: bsd.man.mk,v 1.16 1999/05/02 20:55:55 millert Exp $
+#	$OpenBSD: bsd.man.mk,v 1.17 1999/11/27 04:31:12 millert Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
-NROFF?=		nroff
+NROFF?=		nroff -Tascii
 TBL?=		tbl
 
 .if !target(.MAIN)
