@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.27 2000/05/02 14:36:37 niklas Exp $
-#	$EOM: Makefile,v 1.71 2000/05/02 10:31:01 niklas Exp $
+#	$OpenBSD: Makefile,v 1.28 2000/10/07 06:57:16 niklas Exp $
+#	$EOM: Makefile,v 1.77 2000/10/06 22:37:58 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -80,7 +80,10 @@ CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
 # Different debugging & profiling suggestions
 
 # Include symbolic debugging info
-#DEBUG=		-g
+#DEBUG=		-g	# OpenBSD
+#DEBUG_FLAGS=	-g	# FreeBSD
+#CFLAGS+=	-g	# NetBSD and others
+#STRIPFLAG=		# NETBSD
 
 # Do execution time profiles
 #CFLAGS+=	-pg
