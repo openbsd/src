@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.5 1997/06/26 06:27:27 denny Exp $
+.\"	$Id: inetd.8,v 1.6 1997/11/14 03:46:00 deraadt Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm inetd
 .Op Fl d
+.Op Fl R Ar rate
 .Op Ar configuration file
 .Sh DESCRIPTION
 .Nm Inetd
@@ -65,6 +66,9 @@ The option available for
 .Bl -tag -width Ds
 .It Fl d
 Turns on debugging.
+.It Fl R Ar rate
+Specify the maximum number of times a service can be invoked
+in one minute; the default is 256.
 .El
 .Pp
 Upon execution,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.41 1997/11/14 03:40:02 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.42 1997/11/14 03:46:00 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.41 1997/11/14 03:40:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.42 1997/11/14 03:46:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -167,7 +167,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.41 1997/11/14 03:40:02 deraadt Exp 
 #include <rpc/pmap_clnt.h>
 #include "pathnames.h"
 
-#define	TOOMANY		160		/* don't start more than TOOMANY */
+#define	TOOMANY		256		/* don't start more than TOOMANY */
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
 
@@ -183,6 +183,7 @@ void	goaway __P((int));
 int	debug = 0;
 int	nsock, maxsock;
 fd_set	allsock;
+int	toomany = TOOMANY;
 int	options;
 int	timingout;
 struct	servent *sp;
@@ -314,15 +315,30 @@ main(argc, argv, envp)
 	progname = strrchr(argv[0], '/');
 	progname = progname ? progname + 1 : argv[0];
 
-	while ((ch = getopt(argc, argv, "d")) != -1)
+	while ((ch = getopt(argc, argv, "dR:")) != -1)
 		switch(ch) {
 		case 'd':
 			debug = 1;
 			options |= SO_DEBUG;
 			break;
 		case '?':
+		case 'R': {	/* invocation rate */
+			char *p;
+			int val;
+
+			val = strtoul(optarg, &p, 0);
+			if (val >= 1 && p == NULL) {
+				toomany = val;
+				break;
+			}
+			syslog(LOG_ERR,
+		            "-R %s: bad value for service invocation rate",
+			    optarg);
+			break;
+		}
 		default:
-			fprintf(stderr, "usage: %s [-d] [conf]", progname);
+			fprintf(stderr, "usage: %s [-R rate] [-d] [conf]",
+			    progname);
 			exit(1);
 		}
 	argc -= optind;
@@ -1195,7 +1211,7 @@ more:
 			*s++ = '\0';
 			sep->se_max = atoi(s);
 		} else
-			sep->se_max = TOOMANY;
+			sep->se_max = toomany;
 	}
 	sep->se_wait = strcmp(arg, "wait") == 0;
 	sep->se_user = newstr(skip(&cp));
