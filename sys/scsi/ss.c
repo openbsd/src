@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.34 1997/08/02 21:35:32 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.35 1998/02/22 00:49:13 niklas Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -777,13 +777,13 @@ ss_set_window(ss, sio)
 	 * Both SS_Q_MONO_THRESHOLD and SS_Q_THRESHOLD should not be set at
 	 * the same time.
 	 */
-	if (ss->quirkdata->quirks & SS_Q_MONO_THRESHOLD)
+	if (ss->quirkdata->quirks & SS_Q_MONO_THRESHOLD) {
 		if (sio->scan_image_mode == SIM_BINARY_MONOCHROME ||
 		    sio->scan_image_mode == SIM_DITHERED_MONOCHROME)
 			window_data.threshold = ss->quirkdata->threshold;
 		else
 			window_data.threshold = sio->scan_brightness;
-	else if (ss->quirkdata->quirks & SS_Q_THRESHOLD)
+	} else if (ss->quirkdata->quirks & SS_Q_THRESHOLD)
 		window_data.threshold = ss->quirkdata->threshold;
 	else
 		window_data.threshold = sio->scan_brightness;
