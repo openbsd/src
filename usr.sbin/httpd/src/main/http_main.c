@@ -5153,7 +5153,7 @@ static void standalone_main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    if(chroot(ap_server_root) < 0) {
+	    if (chroot(ap_server_root) < 0) {
 		ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 		    "unable to chroot into %s!", ap_server_root);
 		exit(1);
@@ -5164,9 +5164,9 @@ static void standalone_main(int argc, char **argv)
 	    is_chrooted = 1;
 	    setproctitle("parent [chroot %s]", ap_server_root);
 
-	    if ( setgroups(1, &ap_group_id) || setegid(ap_group_id) ||
+	    if (setgroups(1, &ap_group_id) || setegid(ap_group_id) ||
 		setgid(ap_group_id) || seteuid(ap_user_id) || 
-		setuid(ap_user_id) ) {
+		setuid(ap_user_id)) {
 		    ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 			"can't drop priviliges!");
 		    exit(1);
