@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.11 2001/07/05 12:36:59 ho Exp $	*/
+/*	$OpenBSD: util.h,v 1.12 2001/08/22 08:50:40 niklas Exp $	*/
 /*	$EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ extern unsigned long seed;
 struct message;
 struct sockaddr;
 
+extern int check_file_secrecy (char *, off_t *);
 extern u_int16_t decode_16 (u_int8_t *);
 extern u_int32_t decode_32 (u_int8_t *);
 extern u_int64_t decode_64 (u_int8_t *);
@@ -63,13 +64,12 @@ extern void encode_128 (u_int8_t *, u_int8_t *);
 #endif
 extern u_int8_t *getrandom (u_int8_t *, size_t);
 extern int hex2raw (char *, u_int8_t *, size_t);
-extern int sockaddr2text (struct sockaddr *, char **, int);
-extern void util_ntoa (char **, int, u_int8_t *);
-extern int text2sockaddr (char *, char *, struct sockaddr **);
-extern int sockaddr_len (struct sockaddr *);
-extern u_int8_t *sockaddr_data (struct sockaddr *);
-extern int zero_test (const u_int8_t *, size_t);
 extern int ones_test (const u_int8_t *, size_t);
-extern int check_file_secrecy (char *, off_t *);
+extern int sockaddr2text (struct sockaddr *, char **, int);
+extern u_int8_t *sockaddr_data (struct sockaddr *);
+extern int sockaddr_len (struct sockaddr *);
+extern int text2sockaddr (char *, char *, struct sockaddr **);
+extern void util_ntoa (char **, int, u_int8_t *);
+extern int zero_test (const u_int8_t *, size_t);
 
 #endif /* _UTIL_H_ */
