@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.32 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.33 2001/11/26 01:37:16 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.32 2001/11/19 19:02:14 mpech Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.33 2001/11/26 01:37:16 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -962,13 +962,14 @@ socktrans(sock, i)
 			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_laddr6) ? "*" :
 			    xaddrbuf,
 			    ntohs(inpcb.inp_lport));
-			if (inpcb.inp_fport)
+			if (inpcb.inp_fport) {
 				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
 				    inet6_addrstr(&inpcb.inp_faddr6));
 				printf(" <-> %s:%d",
 				    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6) ? "*" :
 				    xaddrbuf,
 				    ntohs(inpcb.inp_fport));
+			}
 		} else if (so.so_pcb)
 			printf(" %p", so.so_pcb);
 		break;
