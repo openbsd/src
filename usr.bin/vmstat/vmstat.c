@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.30 1999/06/23 19:25:56 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.31 1999/06/24 12:36:17 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -449,7 +449,11 @@ dovmstat(interval, reps)
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
 			break;
+#ifdef UVM
 		ouvmexp = uvmexp;
+#else
+		osum = sum;
+#endif
 		uptime = interval;
 		/*
 		 * We round upward to avoid losing low-frequency events
