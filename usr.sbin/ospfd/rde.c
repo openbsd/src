@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.10 2005/03/14 18:21:29 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.11 2005/04/06 09:27:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -427,7 +427,18 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (rde_nbr_loading(nbr->area))
 				break;
 
-			lsa_del(nbr, &lsa_hdr);
+			v = lsa_find(nbr->area, lsa_hdr.type, lsa_hdr.ls_id,
+				    lsa_hdr.adv_rtr);
+			if (v == NULL)
+				db_hdr = NULL;
+			else
+				db_hdr = &v->lsa->hdr;
+
+			/*
+			 * only delete LSA if the one in the db is not newer
+			 */
+			if (lsa_newer(db_hdr, &lsa_hdr) <= 0)
+				lsa_del(nbr, &lsa_hdr);
 			break;
 		case IMSG_CTL_SHOW_DATABASE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE &&
