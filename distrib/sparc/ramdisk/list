@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.9 1998/12/20 23:36:43 millert Exp $
+#	$OpenBSD: list,v 1.10 1998/12/21 03:31:50 millert Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -25,7 +25,7 @@ COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 SPECIAL	rm -f usr/mdec/binstall usr/mdec/installboot
 
 # and a few useful bits of the termcap file (512K and still growing 8-)
-SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' -e '/^pc3|/,/:[ 	]*$/p' -e '/^pcvt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
+SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' -e '/^pc3|/,/:[ 	]*$/p' -e '/^pcvt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
