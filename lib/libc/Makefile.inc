@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1998/11/20 11:18:28 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2000/01/06 08:47:07 d Exp $
 #
 # This file contains make rules that are shared by libc and libc_r.
 #
@@ -44,6 +44,7 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${LIBCSRCDIR}/stdlib/Makefile.inc"
 .include "${LIBCSRCDIR}/string/Makefile.inc"
 .include "${LIBCSRCDIR}/termios/Makefile.inc"
+.include "${LIBCSRCDIR}/thread/Makefile.inc"
 .include "${LIBCSRCDIR}/time/Makefile.inc"
 .include "${LIBCSRCDIR}/sys/Makefile.inc"
 .if (${YP} == "yes")
