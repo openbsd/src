@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.31 2001/11/09 03:32:23 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.32 2001/11/10 18:42:31 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.52 2000/11/27 04:36:40 nisimura Exp $	*/
 
 /*
@@ -246,7 +246,10 @@ struct vm_map;
 struct vmspace;
 struct pmap;
 struct vnode;
+struct pool;
 struct simplelock;
+
+extern struct pool *uvm_aiobuf_pool;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -549,8 +552,14 @@ void			uvm_page_physload __P((paddr_t, paddr_t,
 					       paddr_t, paddr_t, int));
 void			uvm_setpagesize __P((void));
 
+/* uvm_pager.c */
+void			uvm_aio_biodone1 __P((struct buf *));
+void			uvm_aio_biodone __P((struct buf *));
+void			uvm_aio_aiodone __P((struct buf *));
+
 /* uvm_pdaemon.c */
 void			uvm_pageout __P((void *));
+void			uvm_aiodone_daemon __P((void *));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,

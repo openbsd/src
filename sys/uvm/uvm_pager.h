@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.h,v 1.13 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_pager.h,v 1.18 2000/11/24 22:41:39 chs Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.14 2001/11/10 18:42:31 art Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
  *
@@ -83,21 +83,6 @@
  */
 
 /*
- * async pager i/o descriptor structure
- */
-
-TAILQ_HEAD(uvm_aiohead, uvm_aiodesc);
-
-struct uvm_aiodesc {
-	void (*aiodone) __P((struct uvm_aiodesc *));
-						/* aio done function */
-	vaddr_t kva;			/* KVA of mapped page(s) */
-	int npages;				/* # of pages in I/O req */
-	void *pd_ptr;				/* pager-dependent pointer */
-	TAILQ_ENTRY(uvm_aiodesc) aioq;		/* linked list of aio's */
-};
-
-/*
  * pager ops
  */
 
@@ -133,22 +118,22 @@ struct uvm_pagerops {
 /* pager flags [mostly for flush] */
 
 #define PGO_CLEANIT	0x001	/* write dirty pages to backing store */
-#define PGO_SYNCIO	0x002	/* if PGO_CLEAN: use sync I/O? */
-/*
- * obviously if neither PGO_INVALIDATE or PGO_FREE are set then the pages
- * stay where they are.
- */
+#define PGO_SYNCIO	0x002	/* if PGO_CLEANIT: use sync I/O? */
 #define PGO_DEACTIVATE	0x004	/* deactivate flushed pages */
 #define PGO_FREE	0x008	/* free flushed pages */
+/* if PGO_FREE is not set then the pages stay where they are. */
 
 #define PGO_ALLPAGES	0x010	/* flush whole object/get all pages */
 #define PGO_DOACTCLUST	0x020	/* flag to mk_pcluster to include active */
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_PDFREECLUST	0x080	/* daemon's free cluster flag [uvm_pager_put] */
 #define PGO_REALLOCSWAP	0x100	/* reallocate swap area [pager_dropcluster] */
+#define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */
+#define PGO_WEAK	0x400	/* "weak" put, for nfs */
+#define PGO_PASTEOF	0x800	/* allow allocation of pages past EOF */
 
 /* page we are not interested in getting */
-#define PGO_DONTCARE ((struct vm_page *) -1)	/* [get only] */
+#define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */
 
 #ifdef _KERNEL
 
@@ -176,12 +161,12 @@ int		uvm_pager_put __P((struct uvm_object *, struct vm_page *,
 
 PAGER_INLINE struct vm_page *uvm_pageratop __P((vaddr_t));
 
-vaddr_t	uvm_pagermapin __P((struct vm_page **, int, 
-				    struct uvm_aiodesc **, int));
+vaddr_t		uvm_pagermapin __P((struct vm_page **, int, int));
 void		uvm_pagermapout __P((vaddr_t, int));
 struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
 				       voff_t, voff_t));
+int		uvm_errno2vmerror __P((int));
 
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
@@ -215,7 +200,9 @@ struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
  * is changed to do physically-addressed i/o.
  */
 
+#ifndef PAGER_MAP_SIZE
 #define PAGER_MAP_SIZE       (16 * 1024 * 1024)
+#endif
 
 #endif /* _KERNEL */
 

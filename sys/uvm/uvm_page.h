@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.h,v 1.11 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_page.h,v 1.17 2000/10/03 20:50:49 mrg Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.12 2001/11/10 18:42:31 art Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.18 2000/11/27 08:40:05 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -119,27 +119,27 @@
 #include <uvm/uvm_pglist.h>
 
 struct vm_page {
-  TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
-					 * queue or free list (P) */
-  TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
-  TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
+	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
+						 * queue or free list (P) */
+	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
+	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-  struct vm_anon	*uanon;		/* anon (O,P) */
-  struct uvm_object	*uobject;	/* object (O,P) */
-  voff_t		offset;		/* offset into object (O,P) */
+	struct vm_anon		*uanon;		/* anon (O,P) */
+	struct uvm_object	*uobject;	/* object (O,P) */
+	voff_t			offset;		/* offset into object (O,P) */
 
-  u_short		flags;		/* object flags [O] */
-  u_short		version;	/* version count [O] */
-  u_short		wire_count;	/* wired down map refs [P] */
-  u_short 		pqflags;	/* page queue flags [P] */
-  u_int			loan_count;	/* number of active loans
-					 * to read: [O or P]
-					 * to modify: [O _and_ P] */
-  paddr_t		phys_addr;	/* physical address of page */
+	u_short			flags;		/* object flags [O] */
+	u_short			version;	/* version count [O] */
+	u_short			wire_count;	/* wired down map refs [P] */
+	u_short			pqflags;	/* page queue flags [P] */
+	u_int			loan_count;	/* number of active loans
+						 * to read: [O or P]
+						 * to modify: [O _and_ P] */
+	paddr_t			phys_addr;	/* physical address of page */
 #if defined(UVM_PAGE_TRKOWN)
-  /* debugging fields to track page ownership */
-  pid_t			owner;		/* proc that set PG_BUSY */
-  char			*owner_tag;	/* why it was set busy */
+	/* debugging fields to track page ownership */
+	pid_t			owner;		/* proc that set PG_BUSY */
+	char			*owner_tag;	/* why it was set busy */
 #endif
 };
 
@@ -158,25 +158,23 @@ struct vm_page {
  * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
  * is only set when the page is on no queues, and is cleared when the page
  * is placed on the free list.
- *
- * possible deadwood: PG_FAULTING, PQ_LAUNDRY
  */
+
+#define	PG_BUSY		0x0001		/* page is locked */
+#define	PG_WANTED	0x0002		/* someone is waiting for page */
+#define	PG_TABLED	0x0004		/* page is in VP table  */
 #define	PG_CLEAN	0x0008		/* page has not been modified */
-#define	PG_BUSY		0x0010		/* page is in transit  */
-#define	PG_WANTED	0x0020		/* someone is waiting for page */
-#define	PG_TABLED	0x0040		/* page is in VP table  */
-#define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_FAKE		0x0200		/* page is placeholder for pagein */
-#define	PG_FILLED	0x0400		/* client flag to set when filled */
-#define	PG_DIRTY	0x0800		/* client flag to set when dirty */
-#define PG_RELEASED	0x1000		/* page released while paging */
-#define	PG_FAULTING	0x2000		/* page is being faulted in */
-#define PG_CLEANCHK	0x4000		/* clean bit has been checked */
+#define PG_CLEANCHK	0x0010		/* clean bit has been checked */
+#define PG_RELEASED	0x0020		/* page released while paging */
+#define	PG_FAKE		0x0040		/* page is not yet initialized */
+#define PG_RDONLY	0x0080		/* page must be mapped read-only */
+#define PG_ZERO		0x0100		/* page is pre-zero'd */
+
+#define PG_PAGER1	0x1000		/* pager-specific flag */
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_INACTIVE	0x0002		/* page is in inactive list */
 #define PQ_ACTIVE	0x0004		/* page is in active list */
-#define PQ_LAUNDRY	0x0008		/* page is being cleaned now */
 #define PQ_ANON		0x0010		/* page is part of an anon, rather
 					   than an uvm_object */
 #define PQ_AOBJ		0x0020		/* page is part of an anonymous
@@ -239,12 +237,9 @@ extern boolean_t vm_page_zero_enable;
  *		ordered, in LRU-like fashion.
  */
 
-extern
-struct pglist	vm_page_queue_free;	/* memory free queue */
-extern
-struct pglist	vm_page_queue_active;	/* active memory queue */
-extern
-struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
+extern struct pglist	vm_page_queue_free;	/* memory free queue */
+extern struct pglist	vm_page_queue_active;	/* active memory queue */
+extern struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
 /*
  * physical memory config is stored in vm_physmem.
@@ -285,9 +280,8 @@ vaddr_t uvm_pageboot_alloc __P((vsize_t));
 PAGE_INLINE void uvm_pagecopy __P((struct vm_page *, struct vm_page *));
 PAGE_INLINE void uvm_pagedeactivate __P((struct vm_page *));
 void uvm_pagefree __P((struct vm_page *));
+void uvm_page_unbusy __P((struct vm_page **, int));
 PAGE_INLINE struct vm_page *uvm_pagelookup __P((struct uvm_object *, voff_t));
-void uvm_pageremove __P((struct vm_page *));
-/* uvm_pagerename: not needed */
 PAGE_INLINE void uvm_pageunwire __P((struct vm_page *));
 PAGE_INLINE void uvm_pagewait __P((struct vm_page *, int));
 PAGE_INLINE void uvm_pagewake __P((struct vm_page *));

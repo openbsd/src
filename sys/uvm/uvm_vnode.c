@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.23 2001/11/07 02:55:51 art Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.24 2001/11/10 18:42:32 art Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1609,7 +1609,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	mapinflags = (rw == UIO_READ) ?
 	    UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
 
-	kva = uvm_pagermapin(pps, npages, NULL, mapinflags);
+	kva = uvm_pagermapin(pps, npages, mapinflags);
 	if (kva == 0 && waitf == M_NOWAIT) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
 		UVMHIST_LOG(maphist,"<- mapin failed (try again)",0,0,0,0);
@@ -1626,7 +1626,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	simple_unlock(&uvn->u_obj.vmobjlock);
 	/* NOTE: object now unlocked */
 	if (kva == 0)
-		kva = uvm_pagermapin(pps, npages, NULL,
+		kva = uvm_pagermapin(pps, npages,
 		    mapinflags | UVMPAGER_MAPIN_WAITOK);
 
 	/*
