@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.66 1999/02/21 00:01:30 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.67 1999/02/21 00:50:28 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,20 +28,20 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.66 1999/02/21 00:01:30 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.67 1999/02/21 00:50:28 espie Exp $$
 .if defined(NEED_VERSION)
-VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
+_VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
-VERSION=${VERSION_REVISION:C/\..*//}
-REVISION=${VERSION_REVISION:C/.*\.//}
+_VERSION=${_VERSION_REVISION:C/\..*//}
+_REVISION=${_VERSION_REVISION:C/.*\.//}
 
-VERSION_NEEDED=${NEED_VERSION:C/\..*//}
-REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
+_VERSION_NEEDED=${NEED_VERSION:C/\..*//}
+_REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 
 .BEGIN:
-	@if [ ${VERSION_NEEDED} -gt ${VERSION} -o \
-			${VERSION_NEEDED} -eq ${VERSION} -a \
-				${REVISION_NEEDED} -gt ${REVISION} ]; \
+	@if [ ${_VERSION_NEEDED} -gt ${_VERSION} -o \
+			${_VERSION_NEEDED} -eq ${_VERSION} -a \
+				${_REVISION_NEEDED} -gt ${_REVISION} ]; \
 	then \
 		${ECHO} "Need version ${NEED_VERSION} of bsd.port.mk"; \
 		${FALSE}; \
