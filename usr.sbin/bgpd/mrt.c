@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.17 2004/01/06 10:51:14 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.18 2004/01/06 21:48:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,7 @@ static int	mrt_open(struct mrt *);
 		u_char		t = (b);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			logit(LOG_ERR, "mrt_dump1: buf_add error");	\
+			buf_free(buf);					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -58,6 +59,7 @@ static int	mrt_open(struct mrt *);
 		t = htons((s));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			logit(LOG_ERR, "mrt_dump2: buf_add error");	\
+			buf_free(buf);					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -68,6 +70,7 @@ static int	mrt_open(struct mrt *);
 		t = htonl((l));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			logit(LOG_ERR, "mrt_dump3: buf_add error");	\
+			buf_free(buf);					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -77,6 +80,7 @@ static int	mrt_open(struct mrt *);
 		u_int32_t	t = (l);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			logit(LOG_ERR, "mrt_dump4: buf_add error");	\
+			buf_free(buf);					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -102,6 +106,7 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
 	}
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
 		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -128,11 +133,13 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
 
 	if (buf_add(buf, pkg, pkglen) == -1) {
 		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		buf_free(buf);
 		return (-1);
 	}
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
 		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_close error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -159,6 +166,7 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 	}
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
 		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_add error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -180,6 +188,7 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
 		logit(LOG_ERR, "mrt_dump_bgp_msg: buf_close error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -210,6 +219,7 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 	}
 	if (buf_add(buf, &hdr, sizeof(hdr)) == -1) {
 		logit(LOG_ERR, "mrt_dump_entry: buf_add error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -230,16 +240,19 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL) {
 		logit(LOG_ERR, "mrt_dump_entry: buf_reserve error");
+		buf_free(buf);
 		return (-1);
 	}
 
 	if (attr_dump(bptr, attr_len, &p->aspath->flags) == -1) {
 		logit(LOG_ERR, "mrt_dump_entry: attr_dump error");
+		buf_free(buf);
 		return (-1);
 	}
 
 	if ((n = buf_close(mrt->msgbuf, buf)) < 0) {
 		logit(LOG_ERR, "mrt_dump_entry: buf_close error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -650,7 +663,7 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 			LIST_INSERT_HEAD(xconf, xm, list);
 		} else {
 			/* MERGE */
-			if (strlcpy(xm->name, m->name, sizeof(xm->name)) >
+			if (strlcpy(xm->name, m->name, sizeof(xm->name)) >=
 			    sizeof(xm->name))
 				fatalx("mrt_mergeconfig: strlcpy");
 			xm->ReopenTimerInterval = m->ReopenTimerInterval;
