@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.c,v 1.3 1997/10/25 06:58:48 mickey Exp $	*/
+/*	$OpenBSD: bootarg.c,v 1.4 1998/04/18 07:40:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,7 +35,7 @@
 #include <lib/libsa/stand.h>
 #include <stand/boot/bootarg.h>
 
-static bootarg_t *list = NULL;
+bootarg_t *bootarg_list;
 
 void
 addbootarg(t, l, p)
@@ -48,8 +48,8 @@ addbootarg(t, l, p)
 	q->ba_type = t;
 	q->ba_size = sizeof(*q) + l - sizeof(q->ba_arg);
 	bcopy(p, q->ba_arg, l);
-	q->ba_next = list;
-	list = q;
+	q->ba_next = bootarg_list;
+	bootarg_list = q;
 }
 
 void
@@ -63,7 +63,7 @@ makebootargs(v, lenp)
 
 	/* get total size */
 	l = sizeof(*p);
-	for (p = list; p != NULL; p = p->ba_next)
+	for (p = bootarg_list; p != NULL; p = p->ba_next)
 		l += p->ba_size;
 	if (*lenp < l) {
 #ifdef DEBUG
@@ -73,7 +73,8 @@ makebootargs(v, lenp)
 	}
 	*lenp = l;
 	/* copy them out */
-	for (p = list, q = v; p != NULL && ((q + p->ba_size) - (u_char*)v) < l;
+	for (p = bootarg_list, q = v;
+	     p != NULL && ((q + p->ba_size) - (u_char*)v) < l;
 	     q += p->ba_size, p = p->ba_next) {
 #ifdef DEBUG
 		printf("%d,%d ", p->ba_type, p->ba_size);

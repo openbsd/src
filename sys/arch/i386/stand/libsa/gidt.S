@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.20 1998/02/25 12:28:24 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.21 1998/04/18 07:39:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -53,11 +53,8 @@
 #ifdef GIDT_DEBUG
 #define	gidt_debug0		; \
 	movl	$0xb8000, %eax	; \
-	movl	$0x47314730, (%eax)		; \
-	movw	$S16DATA, %ax
+	movl	$0x47314730, (%eax)
 #define	gidt_debug1		; \
-	movl	%ax, %ds	; \
-	movl	%ax, %es	; \
 	data32			; \
 	movl	$(0xb8000 - LINKADDR), %eax	; \
 	data32			; \
@@ -89,11 +86,14 @@
 #define prot2real						\
 	gidt_debug0;						\
 								\
+	movl	$S16DATA, %ax;					\
 	/* ljmp	$S16TEXT, $1f */;				\
 	.byte	0xea;		/* Change to 16bit mode */	\
 	.long	1f - LINKADDR;					\
 	.word	S16TEXT;					\
 1:								\
+	movl	%ax, %ds;					\
+	movl	%ax, %es;					\
 	gidt_debug1;						\
 								\
 	movl	%cr0, %eax;	/* disable pmmm */		\
@@ -106,6 +106,7 @@
 	.word	1f;						\
 	.word	(LINKADDR >> 4);				\
 1:								\
+	data32;							\
 	xorl	%eax, %eax;	/* setup: %ds, %es, %ss */	\
 	movl	%ax, %ds;					\
 	movl	%ax, %es;					\
@@ -147,16 +148,16 @@
 	.globl	_C_LABEL(BIOS_regs)
 
 	.text
-	.globl	pmm_init
-	.globl	__rtt
+	.globl	_ASM_LABEL(pmm_init)
+	.globl	_C_LABEL(_rtt)
 
-__rtt:
+ENTRY(_rtt)
 #ifdef GIDT_DEBUG
 	movl	$0xb8000, %ebx
 	movl	$0x4f514f51, (%ebx)
 #endif
 	movw	$0x1234, %ax
-	movw	%ax, 0x472	# warm boot
+	movw	%ax, 0x472	/* warm boot */
 
 	/* Try to use the KBD to reboot system */
 	movb	$0xfe, %al
@@ -183,20 +184,21 @@ __rtt:
 	int $0x8
 
 	/* Again... */
-	movl	$0, %esp	# segment violation
+	movl	$0, %esp	/* segment violation */
 	ret
 
+	.align	3, 0x90
 pmm_init:
 	/* reload new gdt */
 	lgdt	Gdtr
-	ljmp	$8, $1f
+	ljmp	$S32TEXT, $1f
 1:	
-	movw	$S32DATA, %ax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
+	movl	$S32DATA, %eax
+	movl	%eax, %ds
+	movl	%eax, %ss
+	movl	%eax, %es
+	movl	%eax, %fs
+	movl	%eax, %gs
 
 	/* load idtr for interrupts */
 	lidt	Idtr
@@ -233,12 +235,15 @@ Idtr:	.word	. - idt - 1
 	.long	idt
 	.word	0
 
+	.align	3
 Idtr_real:	.word	1023
 		.long	0
 		.word	0
 
+	.align	3
 Idtr_reset:	.long	0, 0
 
+	.align	3
 gdt:
 		/* 0x00 : null */
 	.space	8
@@ -338,7 +343,8 @@ IEMUENT(44); IEMUENT(45); IEMUENT(46); IEMUENT(47)
  * Return:	%eax, %edx, %ecx, %eflags (as returned from BIOS)
  *
  */
-.globl EMUh
+	.globl	EMUh
+	.align	3, 0x90
 EMUh:
 	/* save %eax */
 	movl	%eax, 3f

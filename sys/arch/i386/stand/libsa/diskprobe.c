@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.14 1998/02/24 22:06:50 weingart Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.15 1998/04/18 07:39:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -52,11 +52,12 @@
 static int disksum __P((int));
 
 /* List of disk devices we found/probed */
-static struct disklist_lh disklist;
+struct disklist_lh disklist;
 
 /* Pointer to boot device */
 struct diskinfo *bootdev_dip;
 
+extern int debug;
 
 /* Probe for all BIOS floppies */
 static void
@@ -72,7 +73,8 @@ floppyprobe()
 
 		if(bios_getdiskinfo(i, &dip->bios_info)) {
 #ifdef BIOS_DEBUG
-			printf(" <!fd%u>", i);
+			if (debug)
+				printf(" <!fd%u>", i);
 #endif
 			free(dip, 0);
 			break;
@@ -108,7 +110,8 @@ hardprobe()
 
 		if(bios_getdiskinfo(i, &dip->bios_info)) {
 #ifdef BIOS_DEBUG
-			printf(" <!hd%u>", i&0x7f);
+			if (debug)
+				printf(" <!hd%u>", i&0x7f);
 #endif
 			free(dip, 0);
 			break;
@@ -155,6 +158,7 @@ hardprobe()
 
 
 /* Probe for all BIOS supported disks */
+u_int32_t bios_cksumlen;
 void
 diskprobe()
 {
@@ -163,7 +167,6 @@ diskprobe()
 
 	/* These get passed to kernel */
 	bios_diskinfo_t *bios_diskinfo;
-	static u_int32_t bios_cksumlen;
 
 	/* Init stuff */
 	printf("disk:");
@@ -172,7 +175,8 @@ diskprobe()
 	/* Do probes */
 	floppyprobe();
 #ifdef BIOS_DEBUG
-	printf(";");
+	if (debug)
+		printf(";");
 #endif
 	hardprobe();
 
@@ -256,7 +260,7 @@ bios_dklookup(dev)
  * Use the adler32() function from libz,
  * as it is quick, small, and available.
  */
-static int
+int
 disksum(blk)
 	int blk;
 {

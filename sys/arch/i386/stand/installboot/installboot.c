@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.29 1998/04/02 10:50:31 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.30 1998/04/18 07:39:38 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -444,8 +444,6 @@ loadblocknums(boot, devfd, dl)
 	ndb = howmany(ip->di_size, fs->fs_bsize);
 	if (ndb <= 0)
 		errx(1, "No blocks to load");
-	if (ndb > maxblocknum)
-		errx(1, "Too many blocks");
 	if (verbose)
 		fprintf(stderr, "Will load %d blocks of size %d each.\n",
 			ndb, fs->fs_bsize);
@@ -465,9 +463,12 @@ loadblocknums(boot, devfd, dl)
 	 */
 	ap = ip->di_db;
 	bt = block_table_p;
-	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--)
+	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		bt += record_block(bt, pl->p_offset + fsbtodb(fs, *ap),
 					    fs->fs_bsize / 512, dl);
+		if ((bt - block_table_p) / 4 > maxblocknum)
+			errx(1, "Too many blocks");
+	}
 	if (ndb != 0) {
 
 		/*
@@ -478,9 +479,12 @@ loadblocknums(boot, devfd, dl)
 		devread(devfd, buf, pl->p_offset + blk, fs->fs_bsize,
 			"indirect block");
 		ap = (daddr_t *)buf;
-		for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--)
+		for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 			bt += record_block(bt, pl->p_offset + fsbtodb(fs, *ap),
 					   fs->fs_bsize / 512, dl);
+			if ((bt - block_table_p) / 4 > maxblocknum)
+				errx(1, "Too many blocks");
+		}
 	}
 
 	/* write out remaining piece */
@@ -488,6 +492,8 @@ loadblocknums(boot, devfd, dl)
 	/* and again */
 	bt += record_block(bt, 0, 0, dl);
 	*block_count_p = (bt - block_table_p) / 4;
+	if (*block_count_p > maxblocknum)
+		errx(1, "Too many blocks");
 
 	if (verbose)
 		fprintf(stderr, "%s: %d entries total\n",

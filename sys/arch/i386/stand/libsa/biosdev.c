@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.50 1998/02/24 22:06:46 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.51 1998/04/18 07:39:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -93,7 +93,8 @@ bios_getdiskinfo(dev, pdi)
 	biosdreset(dev);
 
 #ifdef BIOS_DEBUG
-	printf("getinfo: try #8, %x,%p\n", dev, pdi);
+	if (debug)
+		printf("getinfo: try #8, %x,%p\n", dev, pdi);
 #endif
 	__asm __volatile (DOINT(0x13) "\n\t"
 			  "setc %b0; movzbl %h1, %1\n\t"
@@ -105,9 +106,11 @@ bios_getdiskinfo(dev, pdi)
 			  : "0" (0x0800), "1" (dev) : "cc");
 
 #ifdef BIOS_DEBUG
-	printf("getinfo: got #8\n");
-	printf("disk 0x%x: %d,%d,%d\n", dev, pdi->bios_cylinders,
-		pdi->bios_heads, pdi->bios_sectors);
+	if (debug) {
+		printf("getinfo: got #8\n");
+		printf("disk 0x%x: %d,%d,%d\n", dev, pdi->bios_cylinders,
+			pdi->bios_heads, pdi->bios_sectors);
+	}
 #endif
 	if (rv & 0xff)
 		return(1);
@@ -264,7 +267,9 @@ biosd_io(rw, dev, cyl, head, sect, nsect, buf)
 
 		default:	/* All other errors */
 #ifdef BIOS_DEBUG
-			printf("\nBIOS error 0x%x (%s)\n", error, biosdisk_err(error));
+			if (debug)
+				printf("\nBIOS error 0x%x (%s)\n",
+					error, biosdisk_err(error));
 #endif
 			biosdreset(dev);
 			break;
@@ -455,11 +460,7 @@ biosopen(struct open_file *f, ...)
 	return 0;
 }
 
-static const char *
-biosdisk_err(error)
-	u_int error;
-{
-	static const u_char errs[] = 
+const u_char bidos_errs[] = 
 /* ignored	"\x00" "successful completion\0" */
 		"\x01" "invalid function/parameter\0"
 		"\x02" "address mark not found\0"
@@ -494,7 +495,12 @@ biosdisk_err(error)
 		"\xE0" "status register error\0"
 		"\xFF" "sense operation failed\0"
 		"\x00" "\0";
-	register const u_char *p = errs;
+
+static const char *
+biosdisk_err(error)
+	u_int error;
+{
+	register const u_char *p = bidos_errs;
 
 	while (*p && *p != error)
 		while(*p++);
@@ -502,28 +508,28 @@ biosdisk_err(error)
 	return ++p;
 }
 
+const struct biosdisk_errors {
+	u_char error;
+	u_char errno;
+} tab[] = {
+	{ 0x01, EINVAL },
+	{ 0x03, EROFS },
+	{ 0x08, EINVAL },
+	{ 0x09, EINVAL },
+	{ 0x0A, EBSE },
+	{ 0x0B, EBSE },
+	{ 0x0C, ENXIO },
+	{ 0x0D, EINVAL },
+	{ 0x10, EECC },
+	{ 0x20, EHER },	
+	{ 0x31, ENXIO },
+	{ 0x32, ENXIO },
+	{ 0x00, EIO }
+};
 static int
 biosdisk_errno(error)
 	u_int error;
 {
-	static const struct biosdisk_errors {
-		u_char error;
-		u_char errno;
-	} tab[] = {
-		{ 0x01, EINVAL },
-		{ 0x03, EROFS },
-		{ 0x08, EINVAL },
-		{ 0x09, EINVAL },
-		{ 0x0A, EBSE },
-		{ 0x0B, EBSE },
-		{ 0x0C, ENXIO },
-		{ 0x0D, EINVAL },
-		{ 0x10, EECC },
-		{ 0x20, EHER },	
-		{ 0x31, ENXIO },
-		{ 0x32, ENXIO },
-		{ 0x00, EIO }
-	};
 	register const struct biosdisk_errors *p;
 
 	if (!error)

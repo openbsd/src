@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.36 1998/02/24 22:16:03 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.37 1998/04/18 07:40:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -63,7 +63,7 @@ static int Xmachine __P((void));
 extern const struct cmd_table MACHINE_CMD[];
 #endif
 
-static const struct cmd_table cmd_set[] = {
+const struct cmd_table cmd_set[] = {
 	{"addr",   CMDT_VAR, Xaddr},
 	{"howto",  CMDT_VAR, Xhowto},
 #ifdef DEBUG	
@@ -75,7 +75,7 @@ static const struct cmd_table cmd_set[] = {
 	{NULL,0}
 };
 
-static const struct cmd_table cmd_table[] = {
+const struct cmd_table cmd_table[] = {
 	{"#",      CMDT_CMD, Xnop},  /* XXX must be first */
 	{"boot",   CMDT_CMD, Xboot},
 	{"echo",   CMDT_CMD, Xecho},
@@ -101,7 +101,7 @@ static char *whatcmd
 static int docmd __P((void));
 static char *qualify __P((char *));
 
-static char cmd_buf[133];
+char cmd_buf[133];
 
 int
 getcmd()
@@ -525,14 +525,14 @@ ls(name, sb)
 }
 #undef lsrwx
 
+int doboot = 1;
+
 static int
 Xnop()
 {
-	static int doboot = 1;
-
 	if (doboot) {
 		doboot = 0;
-		return(Xboot());
+		return (Xboot());
 	}
 
 	return 0;

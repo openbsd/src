@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.13 1997/10/24 22:21:15 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.14 1998/04/18 07:39:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -42,6 +42,7 @@
 #include <i386/isa/nvram.h>
 #include <dev/cons.h>
 #include <lib/libsa/stand.h>
+#include "debug.h"
 
 int comspeed __P((dev_t, int));
 
@@ -67,6 +68,11 @@ void
 pc_probe(cn)
 	struct consdev *cn;
 {
+	cn->cn_pri = CN_INTERNAL;
+	cn->cn_dev = makedev(12, 0);
+	printf("pc%d detected\n", minor(cn->cn_dev));
+
+#if 0
 	outb(IO_RTC, NVRAM_EQUIPMENT);
 	if ((inb(IO_RTC+1) & PRESENT_MASK) == PRESENT_MASK) {
 		cn->cn_pri = CN_INTERNAL;
@@ -74,6 +80,7 @@ pc_probe(cn)
 		cn->cn_dev = makedev(12, 0);
 		printf("pc%d detected\n", minor(cn->cn_dev));
 	}
+#endif
 }
 
 void
@@ -109,7 +116,7 @@ pc_putc(dev, c)
 	    "%ecx", "%edx", "cc" );
 }
 
-static const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 
 void
 com_probe(cn)
@@ -162,12 +169,12 @@ com_getc(dev)
 }
 
 /* call with sp == 0 to query the current speed */
+int com_speed = 9600;  /* default speed is 9600 baud */
 int
 comspeed(dev, sp)
 	dev_t dev;
 	int sp;
 {
-	static int com_speed = 9600;  /* default speed is 9600 baud */
 	int i, newsp;
         int err;
 
@@ -223,3 +230,4 @@ com_putc(dev, c)
 	__asm __volatile(DOINT(0x14) : "=a" (rv) :
 	    "d" (minor(dev)), "0" (c | 0x100) : "%ecx", "cc" );
 }
+

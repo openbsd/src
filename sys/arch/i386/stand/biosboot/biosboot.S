@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.26 1998/04/13 00:37:41 deraadt Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.27 1998/04/18 07:39:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -39,7 +39,7 @@
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
-#define	BLKCNT	14	/* Max without colliding with the partition table */
+#define	BLKCNT	12	/* Max without colliding with the partition table */
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
@@ -54,7 +54,7 @@
 
 /* Clobbers %esi - maybe more */
 #define	puts(s)			\
-	data32;				\
+	data32;			\
 	movl	$s, %esi;	\
 	.byte	0xe8;		\
 	.word	Lmessage - . - 2
@@ -132,7 +132,7 @@ load_msg:
 	popl	%dx
 #endif
 
-#ifdef DEBUG
+#ifdef BDEBUG
 	putc('R')
 #endif
 
@@ -156,6 +156,7 @@ load_msg:
 
 1:
 	pushl	%cx
+	putc('.')		/* show progress indicator */
 	cld
 	lodsl	/* word */	/* cylinder/sector */
 	movl	%ax, %cx
@@ -173,10 +174,10 @@ load_msg:
 2:	.asciz	"\r\nRead error\r\n"
 
 3:	/* read next block */
-	putc('.')		/* show progress indicator */
 
 	popl	%ax
-	movzbl	%al, %ax
+	data32
+	movzbl	%al, %eax
 	shll	$9, %ax		/* 512 bytes sectors */
 	addl	%ax, %bx
 	popl	%cx
@@ -206,7 +207,7 @@ halt:
 	 * is supposed to go.  Screw it, just assume that the image
 	 * is sane.
 	 */
-#ifdef DEBUG
+#ifdef BDEBUG
 	putc('P')
 #endif
 
@@ -236,7 +237,7 @@ halt:
 	 * 32bit mode
 	 * set up %ds, %ss, %es, etc
 	 */
-	movw	$0x10, %eax
+	movl	$0x10, %eax
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
@@ -244,7 +245,7 @@ halt:
 	movl	%ax, %gs
 	movl	$BOOTSTACK, %esp
 
-#ifdef	DEBUG
+#ifdef	BDEBUG
 	movl	$0xb8004, %ebx
 	movl	$0x074f0747, (%ebx)
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smpprobe.c,v 1.1 1998/02/24 22:07:46 weingart Exp $	*/
+/*	$OpenBSD: smpprobe.c,v 1.2 1998/04/18 07:39:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,9 +36,11 @@
 #include <machine/biosvar.h>
 #include "libsa.h"
 
+extern int debug;
+
 extern u_int cnvmem, extmem;
-#define MP_FLOAT_SIG 0x5F504D5F		/* _MP_ */
-#define MP_CONF_SIG 0x504D4350		/* PCMP */
+#define	MP_FLOAT_SIG	0x5F504D5F	/* _MP_ */
+#define	MP_CONF_SIG	0x504D4350	/* PCMP */
 
 typedef struct _mp_float {
 	u_int32_t signature;
@@ -55,18 +57,16 @@ mp_checksum(ptr, len)
 	u_int8_t *ptr;
 	int len;
 {
-	int i, sum = 0;
+	register int i, sum = 0;
 
 #ifdef DEBUG
 	printf("Checksum %p for %d\n", ptr, len);
 #endif
 
-	for(i = 0; i < len; i++){
+	for (i = 0; i < len; i++)
 		sum += *(ptr + i);
-	}
-	sum &= 0xFF;
 
-	return(!sum);
+	return (!(sum & 0xff));
 }
 
 
@@ -79,7 +79,8 @@ mp_probefloat(ptr, len)
 	int i;
 
 #ifdef DEBUG
-	printf("Checking %p for %d\n", ptr, len);
+	if (debug)
+		printf("Checking %p for %d\n", ptr, len);
 #endif
 	for(i = 0; i < 1024; i++){
 		mp_float_t *tmp = (mp_float_t*)(ptr + i);
@@ -91,62 +92,51 @@ mp_probefloat(ptr, len)
 		}
 		if((tmp->signature == MP_FLOAT_SIG) &&
 			mp_checksum(tmp, tmp->length*16)){
-
 #ifdef DEBUG
-			printf("Found valid MP signature at: %p\n", ptr);
+			if (debug)
+				printf("Found valid MP signature at: %p\n", ptr);
 #endif
 			mpp = tmp;
 			break;
 		}
 	}
 
-	return(mpp);
+	return (mpp);
 }
 
 
 void
 smpprobe()
 {
-	u_int32_t *ptr;
-	u_int16_t *seg;
 	mp_float_t *mp = NULL;
 
 	/* Check EBDA */
-	seg = (void *)((0x40 * 16) + 0x0E);		/* 40:0E */
-	ptr = (void *)((*seg) * 16);			/* Segment => Linear */
-	mp = mp_probefloat(ptr, 1024);
-
-	/* Check BIOS ROM 0xE0000 - 0xFFFFF */
-	ptr = (void *)(0xE0000);
-	mp = mp_probefloat(ptr, 0x1FFFF);
-	if(mp) goto end;
-
-	/* Check last 1K of base RAM */
-	ptr = (void *)(cnvmem * 1024);
-	mp = mp_probefloat(ptr, 1024);
-	if(mp) goto end;
-
-	/* Check last 1K of extended RAM */
-	ptr = (void *)(extmem * 1024 - 1024);		/* XXX */
-	mp = mp_probefloat(ptr, 1024);
-	if(mp) goto end;
-
-	/* No valid MP signature found */
+	if (!(mp = mp_probefloat((void *)((*((u_int32_t*)0x4e)) * 16), 1024)) &&
+		/* Check BIOS ROM 0xE0000 - 0xFFFFF */
+	    !(mp = mp_probefloat((void *)(0xE0000), 0x1FFFF)) &&
+		/* Check last 1K of base RAM */
+	    !(mp = mp_probefloat((void *)(cnvmem * 1024), 1024)) &&
+		/* Check last 1K of extended RAM XXX */
+	    !(mp = mp_probefloat((void *)(extmem * 1024 - 1024), 1024))) {
+		/* No valid MP signature found */
 #if DEBUG
-	printf("No valid MP signature found.\n");
+		if (debug)
+			printf("No valid MP signature found.\n");
 #endif
-	return;
+		return;
+	}
 
 	/* Valid MP signature found */
-end:
 	printf(" smp");
 #if DEBUG
-	printf("Floating Structure:\n");
-	printf("\tSignature: %x\n", mp->signature);
-	printf("\tConfig at: %x\n", mp->conf_addr);
-	printf("\tLength: %d\n", mp->length);
-	printf("\tRev: 1.%d\n", mp->spec_rev);
-	printf("\tFeature: %x %x %x %x %x\n",
+	if (debug)
+		printf("Floating Structure:\n"
+		"\tSignature: %x\n"
+		"\tConfig at: %x\n"
+		"\tLength: %d\n"
+		"\tRev: 1.%d\n"
+		"\tFeature: %x %x %x %x %x\n",
+		mp->signature, mp->conf_addr, mp->length, mp->spec_rev,
 		mp->feature[0], mp->feature[1], mp->feature[2],
 		mp->feature[3], mp->feature[4]);
 #endif

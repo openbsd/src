@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.10 1997/10/12 21:04:23 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.11 1998/04/18 07:39:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -55,16 +55,16 @@ bcdtoint(c)
 /*
  * Quick compute of time in seconds since the Epoch
  */
+const u_short monthcount[] = {
+	0, 0, 31, 59, 90, 120, 151, 181,
+	212, 243, 273, 304, 334, 365
+};
 static __inline time_t
 compute(year, month, day, hour, min, sec)
 	int year;
 	u_int8_t month, day, hour, min, sec;
 {
 	/* Number of days per month */
-	static const u_short monthcount[] = {
-		0, 0, 31, 59, 90, 120, 151, 181,
-		212, 243, 273, 304, 334, 365
-	};
 	register time_t tt;
 
 	/* Compute days */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.4 1998/02/24 22:06:44 weingart Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.5 1998/04/18 07:39:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -62,6 +62,8 @@
 #include <machine/biosvar.h>
 #include "debug.h"
 
+extern int debug;
+
 static __inline u_int
 apm_check()
 {
@@ -77,8 +79,9 @@ apm_check()
 			 : "%ecx", "cc");
 	if (f || BIOS_regs.biosr_bx != 0x504d /* "PM" */ ) {
 #ifdef DEBUG
-		printf("apm_check: %x, %x, %x\n",
-		       f, BIOS_regs.biosr_bx, detail);
+		if (debug)
+			printf("apm_check: %x, %x, %x\n",
+			    f, BIOS_regs.biosr_bx, detail);
 #endif
 		return 0;
 	} else
@@ -136,11 +139,14 @@ apmprobe()
 		if (apm_connect(&ai) != 0)
 			printf(": connect error\n");
 #ifdef DEBUG
-		printf(": %x text=%x/%x[%x] data=%x[%x] @ %x",
-		       ai.apm_detail, ai.apm_code32_base,
-		       ai.apm_code16_base, ai.apm_code_len,
-		       ai.apm_data_base, ai.apm_data_len,
-		       ai.apm_entry);
+		if (debug)
+			printf(": %x text=%x/%x[%x] data=%x[%x] @ %x",
+			       ai.apm_detail, ai.apm_code32_base,
+			       ai.apm_code16_base, ai.apm_code_len,
+			       ai.apm_data_base, ai.apm_data_len,
+			       ai.apm_entry);
+		else
+			printf(" apm");
 #else
 		printf(" apm");
 #endif

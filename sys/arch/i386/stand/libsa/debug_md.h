@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_md.h,v 1.3 1997/04/09 08:39:34 mickey Exp $	*/
+/*	$OpenBSD: debug_md.h,v 1.4 1998/04/18 07:39:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -33,15 +33,17 @@
  */
 
 #define	REG_NAMES	\
-	"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", \
-	"eip", "eflags", "cs", "ss", "ds", "es", "fs", "gs"
+	"eax", "ecx", "edx", "ebx", "esp", \
+	"ebp", "esi", "edi", "eip", "eflags", \
+	"cs",  "ss",  "ds",  "es",  "fs", \
+	"gs"
 #define REG_VALUES(r)	\
 	&(r).r_eax, &(r).r_ecx, &(r).r_edx, &(r).r_ebx, &(r).r_esp, \
 	&(r).r_ebp, &(r).r_esi, &(r).r_edi, &(r).r_eip, &(r).r_eflags, \
 	&(r).r_cs , &(r).r_ss,  &(r).r_ds,  &(r).r_es,  &(r).r_fs, \
 	&(r).r_gs
 #define TRAP_NAMES	\
-	"privileged instruction", "breakpoint trap", "arithmetic trap", \
+	"invalid opcode fault", "breakpoint trap", "arithmetic trap", \
 	"asynchronous system trap", "protection fault", "trace trap", \
 	"page fault", "alignment fault", "integer divide fault", \
 	"non-maskable interrupt", "overflow trap", "bounds check fault", \

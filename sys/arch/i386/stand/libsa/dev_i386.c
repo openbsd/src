@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.19 1997/08/22 00:38:35 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.20 1998/04/18 07:39:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -115,34 +115,34 @@ devboot(bootdev, p)
 	*p = '\0';
 }
 
+int pch_pos = 0;
+
 void
 putchar(c)
-	register int c;
+	int c;
 {
-	static int pos = 0;
-
 	switch(c) {
 	case '\177':	/* DEL erases */
 		cnputc('\b');
 		cnputc(' ');
 	case '\b':
 		cnputc('\b');
-		if (pos)
-			pos--;
+		if (pch_pos)
+			pch_pos--;
 		break;
 	case '\t':
 		do
 			cnputc(' ');
-		while(++pos % 8);
+		while(++pch_pos % 8);
 		break;
 	case '\n':
 	case '\r':
 		cnputc(c);
-		pos=0;
+		pch_pos=0;
 		break;
 	default:
 		cnputc(c);
-		pos++;
+		pch_pos++;
 		break;
 	}
 }
@@ -163,15 +163,14 @@ getchar()
 	return(c);
 }
 
+char ttyname_buf[8];
 char *
 ttyname(fd)
 	int fd;
 {
-	static char buf[8];
-
-	sprintf(buf, "%s%d", cdevs[major(cn_tab->cn_dev)],
+	sprintf(ttyname_buf, "%s%d", cdevs[major(cn_tab->cn_dev)],
 	    minor(cn_tab->cn_dev));
-	return (buf);
+	return (ttyname_buf);
 }
 
 dev_t
