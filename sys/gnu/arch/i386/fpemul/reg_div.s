@@ -1,5 +1,5 @@
 	.file	"reg_div.S"
-/*	$OpenBSD: reg_div.s,v 1.3 2003/04/17 03:45:30 drahn Exp $	*/
+/*	$OpenBSD: reg_div.s,v 1.4 2003/07/03 04:09:07 drahn Exp $	*/
 /*
  *  reg_div.S
  *
@@ -153,7 +153,7 @@ L_arg2_NaN:
 L_zero_zero:
 L_inf_inf:
 	pushl	%edi			/* Destination */
-	call	_C_LABEL(arith)_invalid		/* 0/0 or Infinity/Infinity */
+	call	_C_LABEL(arith_invalid)		/* 0/0 or Infinity/Infinity */
 	jmp	LDiv_exit
 
 L_no_NaN_arg:
