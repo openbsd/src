@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.4 1997/01/17 07:12:41 millert Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.5 1998/07/24 20:50:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.4 1997/01/17 07:12:41 millert Exp $
+ * $Id: fastfind.c,v 1.5 1998/07/24 20:50:24 deraadt Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -155,7 +155,7 @@ fastfind
 	/* init bigram table */
 #ifdef FF_MMAP
 	if (len < (2*NBG)) {
-		(void)fprintf(stderr, "database to small: %s\n", database);
+		(void)fprintf(stderr, "database too small: %s\n", database);
 		exit(1);
 	}
 	
