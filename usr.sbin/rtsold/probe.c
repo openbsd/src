@@ -1,5 +1,5 @@
-/*	$OpenBSD: probe.c,v 1.8 2002/06/10 19:57:35 espie Exp $	*/
-/*	$KAME: probe.c,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
+/*	$OpenBSD: probe.c,v 1.9 2002/10/26 20:23:20 itojun Exp $	*/
+/*	$KAME: probe.c,v 1.16 2002/06/10 20:00:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -109,7 +109,7 @@ defrouter_probe(struct ifinfo *ifinfo)
 		return;
 	}
 	memset(&dr, 0, sizeof(dr));
-	strcpy(dr.ifname, "lo0"); /* dummy interface */
+	strlcpy(dr.ifname, "lo0", sizeof dr.ifname); /* dummy interface */
 	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
 		warnmsg(LOG_ERR, __func__, "ioctl(SIOCGDRLST_IN6): %s",
 		    strerror(errno));
