@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 2001/10/03 19:07:58 drahn Exp $
+#	$OpenBSD: Makefile,v 1.8 2005/01/19 02:02:34 uwe Exp $
 
 
-.if (${MACHINE} == "i386") || (${MACHINE} == "macppc")
+.if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
+    (${MACHINE} == "zaurus")
 SRCS=	apm.c apmsubr.c
 
 .PATH:	${.CURDIR}/../apmd

@@ -62,6 +62,7 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
 # Special purpose devices:
+#	apm	Power management device
 #	audio*	Audio devices
 #	hotplug	devices hot plugging
 #	bktr*	Video frame grabbers
@@ -319,6 +320,11 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+apm*)
+	M apm	c 34 0 644
+	M apmctl	c 34 8 644
+	;;
+
 uscanner*)
 	M uscanner$U c 69 $U 660
 	;;
@@ -468,8 +474,8 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
 	R local wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 crypto pf systrace wd0
-	R wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
+	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

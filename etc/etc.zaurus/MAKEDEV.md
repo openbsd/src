@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.2 2005/01/18 16:32:19 drahn Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.3 2005/01/19 02:02:34 uwe Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -65,6 +65,7 @@ _DEV(urio, 67)
 _DEV(usb, 64)
 _DEV(uscan, 69)
 _TITLE(spec)
+_DEV(apm, 34)
 _DEV(au, 36)
 _DEV(hotplug, 37)
 _DEV(bktr, 75)
@@ -91,7 +92,7 @@ _std(1, 2, 8, 3, 6)
 	M reload	c 2 20 640 kmem
 	;;
 dnl
-dnl *** cats specific targets
+dnl *** zaurus specific targets
 dnl
 target(all, ses, 0)dnl
 target(all, ch, 0)dnl

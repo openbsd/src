@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.11 2005/01/16 18:13:10 deraadt Exp $
+#	$OpenBSD: files.zaurus,v 1.12 2005/01/19 02:02:34 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -32,6 +32,11 @@ file arch/zaurus/zaurus/zaurus_lcd.c		lcd_pxaip
 device zkbd: wskbddev
 attach zkbd at pxaip
 file arch/zaurus/dev/zaurus_kbd.c		zkbd
+
+# Onboard peripheral and GPIO controller
+device scoop
+attach scoop at pxaip with scoop_pxaip
+file arch/zaurus/dev/zaurus_scoop.c		scoop
 
 #
 # Machine-independent ATA drivers
