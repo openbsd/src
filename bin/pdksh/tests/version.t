@@ -4,5 +4,5 @@ description:
 stdin:
 	echo $KSH_VERSION
 expected-stdout:
-	@(#)PD KSH v5.2.8 96/08/19
+	@(#)PD KSH v5.2.9 96/09/30
 ---

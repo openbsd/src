@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.3 1996/08/25 12:38:00 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.4 1996/10/01 02:05:34 downsj Exp $	*/
 
 /*
  * execute command tree
@@ -521,7 +521,7 @@ comexec(t, tp, ap, flags)
 				fcflags |= FC_DEFPATH;
 			}
 			ap += builtin_opt.optind;
-			/* POSIX says special builtins loose their status
+			/* POSIX says special builtins lose their status
 			 * if accessed using command.
 			 */
 			keepasn_ok = 0;

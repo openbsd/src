@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.3 1996/08/25 12:37:55 downsj Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.4 1996/10/01 02:05:32 downsj Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -394,13 +394,17 @@ c_print(wp)
 		for (s = Xstring(xs, xp); len > 0; ) {
 			n = write(fd, s, len);
 			if (n < 0) {
+#ifdef KSH
 				if (flags & PO_COPROC)
 					restore_pipe(opipe);
+#endif /* KSH */
 				if (errno == EINTR) {
 					/* allow user to ^C out */
 					intrcheck();
+#ifdef KSH
 					if (flags & PO_COPROC)
 						opipe = block_pipe();
+#endif /* KSH */
 					continue;
 				}
 #ifdef KSH
@@ -985,6 +989,7 @@ c_unalias(wp)
 	return rv;
 }
 
+#ifdef KSH
 int
 c_let(wp)
 	char **wp;
@@ -1003,6 +1008,7 @@ c_let(wp)
 				rv = val == 0;
 	return rv;
 }
+#endif /* KSH */
 
 int
 c_jobs(wp)
@@ -1370,7 +1376,9 @@ const struct builtin kshbuiltins [] = {
 	{"+getopts", c_getopts},
 	{"+jobs", c_jobs},
 	{"+kill", c_kill},
+#ifdef KSH
 	{"let", c_let},
+#endif /* KSH */
 	{"print", c_print},
 	{"pwd", c_pwd},
  	{"*=readonly", c_typeset},

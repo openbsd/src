@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.2 1996/08/19 20:08:40 downsj Exp $
+$OpenBSD: CONTRIBUTORS,v 1.3 1996/10/01 02:05:25 downsj Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -95,3 +95,9 @@ Other contributors:
     * Arnon Kanfi (<arnon@gilly.datatools.com>): fix for prompt.
     * Marc Olzheim (<marcolz@stack.urc.tue.nl>): patches to ifdef KSH the
       mail check code and aliases.
+    * Lars Hecking (<lhecking@nmrc.ucc.ie>): fixes so shell compiles as sh
+      again.
+    * Bill Kish (<kish@browncow.com>): added prompt delimiter hack for
+      hidden characters (eg, escape codes).
+    * Andrew S. Townley (<atownley@informix.com>): fixes for NeXT machines:
+      get a controlling if one needed, use correct profile.

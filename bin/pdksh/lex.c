@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.2 1996/08/19 20:08:55 downsj Exp $	*/
+/*	$OpenBSD: lex.c,v 1.3 1996/10/01 02:05:42 downsj Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -54,11 +54,14 @@ yylex(cf)
 
 	if (cf&ONEWORD)
 		istate = SWORD;
+#ifdef KSH
 	else if (cf&LETEXPR) {
 		*wp++ = OQUOTE;	 /* enclose arguments in (double) quotes */
 		istate = SDPAREN;	
 		ndparen = 0;
-	} else {		/* normal lexing */
+	}
+#endif /* KSH */
+	else {		/* normal lexing */
 		istate = (cf & HEREDELIM) ? SHEREDELIM : SBASE;
 		while ((c = getsc()) == ' ' || c == '\t')
 			;
@@ -411,6 +414,7 @@ yylex(cf)
 		  case SWORD:	/* ONEWORD */
 			goto Subst;
 
+#ifdef KSH
 		  case SDPAREN:	/* LETEXPR: (( ... )) */
 			/*(*/
 			if (c == ')') {
@@ -430,6 +434,7 @@ yylex(cf)
 				 */
 				++ndparen;
 			goto Sbase2;
+#endif /* KSH */
 
 		  case SHEREDELIM:	/* <<,<<- delimiter */
 			/* XXX chuck this state (and the next) - use
@@ -561,10 +566,12 @@ Done:
 			return c;
 
 		  case '(':  /*)*/
+#ifdef KSH
 			if ((c2 = getsc()) == '(') /*)*/
 				c = MDPAREN;
 			else
 				ungetsc(c2);
+#endif /* KSH */
 			return c;
 		  /*(*/
 		  case ')':
@@ -574,7 +581,11 @@ Done:
 
 	*wp++ = EOS;		/* terminate word */
 	yylval.cp = Xclose(ws, wp);
-	if (state == SWORD || state == SDPAREN)	/* ONEWORD? */
+	if (state == SWORD
+#ifdef KSH
+		|| state == SDPAREN
+#endif /* KSH */
+		)	/* ONEWORD? */
 		return LWORD;
 	ungetsc(c);		/* unget terminator */
 
@@ -1056,12 +1067,8 @@ pprompt(cp, ntruncate)
 			shf_putc(c, shl_out);
 	}
 #endif /* 0 */
-	if (ntruncate)
-		shellf("%.*s", ntruncate, cp);
-	else {
-		shf_puts(cp, shl_out);
-		shf_flush(shl_out);
-	}
+	shf_puts(cp + ntruncate, shl_out);
+	shf_flush(shl_out);
 }
 
 /* Read the variable part of a ${...} expression (ie, up to but not including

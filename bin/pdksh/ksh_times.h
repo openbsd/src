@@ -1,4 +1,10 @@
-/*	$OpenBSD: ksh_times.h,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: ksh_times.h,v 1.2 1996/10/01 02:05:41 downsj Exp $	*/
+
+#ifndef KSH_TIMES_H
+# define KSH_TIMES_H
+
+/* Needed for clock_t on some systems (ie, NeXT in non-posix mode) */
+#include "ksh_time.h"
 
 #include <sys/times.h>
 
@@ -11,3 +17,4 @@ extern clock_t	ksh_times ARGS((struct tms *));
 #ifdef HAVE_TIMES
 extern clock_t	times ARGS((struct tms *));
 #endif /* HAVE_TIMES */
+#endif /* KSH_TIMES_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.2 1996/08/19 20:08:47 downsj Exp $	*/
+/*	$OpenBSD: edit.c,v 1.3 1996/10/01 02:05:33 downsj Exp $	*/
 
 /*
  * Command line editing - common code
@@ -52,6 +52,7 @@ x_init()
 	if (setsig(&sigtraps[SIGWINCH], x_sigwinch, SS_RESTORE_ORIG|SS_SHTRAP))
 		sigtraps[SIGWINCH].flags |= TF_SHELL_USES;
 # endif /* SIGWINCH */
+	got_sigwinch = 1; /* force initial check */
 	check_sigwinch();
 #endif /* TIOCGWINSZ */
 
@@ -308,7 +309,6 @@ x_mode(onoff)
  * RETURN VALUE:
  *      length
  */
- 
 int
 promptlen(cp, spp)
     const char  *cp;
@@ -316,37 +316,35 @@ promptlen(cp, spp)
 {
     int count = 0;
     const char *sp = cp;
+    char delimiter = 0;
+    int indelimit = 0;
 
-    while (*cp) {
-	if (*cp == '\n' || *cp == '\r') {
+    /* Undocumented AT&T ksh feature:
+     * If the second char in the prompt string is \r then the first char
+     * is taken to be a non-printing delimiter and any chars between two
+     * instances of the delimiter are not considered to be part of the
+     * prompt length
+     */
+    if (*cp && cp[1] == '\r') {
+	delimiter = *cp;
+	cp += 2;
+    }
+
+    for (; *cp; cp++) {
+	if (indelimit && *cp != delimiter)
+	    ;
+	else if (*cp == '\n' || *cp == '\r') {
 	    count = 0;
-	    cp++;
-	    sp = cp;
+	    sp = cp + 1;
 	} else if (*cp == '\t') {
 	    count = (count | 7) + 1;
-	    cp++;
 	} else if (*cp == '\b') {
 	    if (count > 0)
 		count--;
-	    cp++;
-	}
-#if 1
+	} else if (*cp == delimiter)
+	    indelimit = !indelimit;
 	else
-	  cp++, count++;
-#else
-	else if (*cp++ != '!')
-	  count++;
-	else if (*cp == '!') {
-	    cp++;
 	    count++;
-	} else {
-	    register int i = source->line + 1;
-
-	    do
-		count++;
-	    while ((i /= 10) > 0);
-	}
-#endif /* 1 */
     }
     if (spp)
 	*spp = sp;
@@ -822,6 +820,7 @@ add_glob(str, slen)
 {
 	char *toglob;
 	char *s;
+	bool_t saw_slash = FALSE;
 
 	if (slen < 0)
 		return (char *) 0;
@@ -831,8 +830,9 @@ add_glob(str, slen)
 
 	/*
 	 * If the pathname contains a wildcard (an unquoted '*',
-	 * '?', or '[') or parameter expansion ('$'), then it is globbed
-	 * based on that value (i.e., without the appended '*').
+	 * '?', or '[') or parameter expansion ('$'), or a ~username
+	 * with no trailing slash, then it is globbed based on that
+	 * value (i.e., without the appended '*').
 	 */
 	for (s = toglob; *s; s++) {
 		if (*s == '\\' && s[1])
@@ -840,8 +840,10 @@ add_glob(str, slen)
 		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$'
 			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
 			break;
+		else if (ISDIRSEP(*s))
+			saw_slash = TRUE;
 	}
-	if (!*s) {
+	if (!*s && (*toglob != '~' || saw_slash)) {
 		toglob[slen] = '*';
 		toglob[slen + 1] = '\0';
 	}

@@ -49,7 +49,7 @@ name: xxx-exec-environment-1
 description:
 	Check to see if exec sets it's environment correctly
 stdin:
-	FOO=bar exec printenv
+	FOO=bar exec env
 expected-stdout-pattern:
 	/(^|.*\n)FOO=bar\n/
 ---
@@ -59,8 +59,8 @@ description:
 	Check to make sure exec doesn't change environment if a program
 	isn't exec-ed
 stdin:
-	printenv > bar1
-	FOO=bar exec; printenv > bar2
+	env > bar1
+	FOO=bar exec; env > bar2
 	cmp -s bar1 bar2
 ---
 

@@ -1,6 +1,6 @@
-$OpenBSD: README,v 1.2 1996/08/19 20:08:44 downsj Exp $
+$OpenBSD: README,v 1.3 1996/10/01 02:05:31 downsj Exp $
 
-Last updated August '96 for pdksh-5.2.8.
+Last updated September '96 for pdksh-5.2.9.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
 	 http://www.cs.mun.ca/~michael/pdksh/ for new versions/patches)
 
@@ -57,6 +57,7 @@ Compiling/Installing:
 	make check	# optional
 	make install	# will install /usr/local/bin/ksh
 			#  and /usr/local/man/man1/ksh.1
+	[add path-to-installed-pdksh to /etc/shells]
 
   The more detailed description:
     * run "configure --help | your-favorite-pager" and look at the
@@ -106,19 +107,43 @@ Compiling/Installing:
 	* On Linux (red hat distribution), check that /dev/tty has mode 0666
 	  (not mode 0644).  If it has the wrong permissions, ksh will print
 	  warnings about not being able to do job control.
+	* on NeXT machines (3.2, probably other releases), the siglist.out file
+	  won't be generated correctly if you try to use the system's compiler
+	  (it has a broken cc -E and strange header files).  There are two
+	  ways to make it work:
+	    1) if you have gcc, use it (for everything).  Alternatively,
+	       force configure to use it for CPP, i.e., use
+		  CPP="gcc -E" configure ...
+	    2) Force configure to use some extra CPPFLAGS, using
+		  CPPFLAGS="XXX" configure ...
+	       where XXX is obtained from running "cc -v YYY.c" on some
+	       C file.  Look at the options passed to cpp (there are lots
+	       of them...) and replace the XXX above with them.
+	  Make sure you do a "make distclean" (or "rm config.cache") if
+	  you re-run configure with a difference CPP or CPPFLAGS.
+	  Also note that if you are building multiple arch binaries, you
+	  will have to specify both CC and CPP.
     * run make: everything should compile and link without problems.
-    * run make check: this fires up a perl script that checks for some
-      known and some fixed bugs.  The script prints pass/fail for tests
-      it expected to pass/fail, and PASS/FAIL for tests it expected to
-      fail/pass.
+    * run make check: this fires up a perl script that checks for some known
+      and some fixed bugs.  The script prints pass/fail for tests it expected
+      to pass/fail, and PASS/FAIL for tests it expected to fail/pass.  If you
+      don't have perl, or if your perl doesn't work (most common problem is
+      the .ph header files are missing or broken), you can run
+	  misc/Bugs path-to-pdksh-executable
+      instead.
     * run make install: this installs ksh (in /usr/local/bin/ksh by default,
       or where ever you told configure to put things).
+    * add path-to-installed-pdksh to /etc/shells if it's not already there.
+      This is only needed if you intend to use pdksh as a login shell (things
+      like ftp won't allow users to connect in if their shell isn't in this
+      file).
 
 The following is a list of machines that pdksh is reported to work on:
-    -/PC Linux 1.x
+    -/PC Linux 1.x,2.x
     -/PC NetBSD 0.9a
     -/PC BSDI 1.1
     -/PC FreeBSD 2.0, 2.1
+    -/PC OpenBSD
     -/PC Interactive/Sunsoft 3.0.1 and 4.1 (note that problems have been
 	    reported with isc3.2 - see the BUG-REPORTS file)
     -/PC OS/2
@@ -126,12 +151,12 @@ The following is a list of machines that pdksh is reported to work on:
     Dec/alpha OSF/1 v2.x, v3.x
     Dec/alpha NetBSD 1.1B
     Dec/pmax Ultrix 4.2
-    Dec/vax Ultrix 2.2
-    Dec/vax 4.3BSD+NFS (MtXinu)
+    Dec/vax Ultrix 2.2 (not tested recently :-))
+    Dec/vax 4.3BSD+NFS (MtXinu) (not tested recently :-))
     HP/pa HP-UX 9.01
     IBM/RS/6000 AIX 3.2.5
     MIPS/m120 RISC/os 5.0 (bsd43 environ)
-    NeXT NeXTStep 3.2(?)
+    NeXT NeXTStep 3.2
     Sun/sun4 SunOS 4.1.3, 4.1.4
     Sun/sun4 Solaris 2.x
     Sun/sun386i SunOS 4.0.2
@@ -155,9 +180,9 @@ If you are reporting a bug (with or without a fix), please include
 	* and a description of how to repeat the bug (a small shell
 	  script that demonstrates the bug is best).
 as well as the following, if relevant (if you aren't sure, include them)
-	* what options you are using (both options.h options and set -o options)
+	* what options you are using (both configure options and set -o options)
 	* the output of configure, with the verbose flag
-	  (eg, ./configure --verbose)
+	  (eg, make distclean; ./configure --verbose)
 	* the contents of config.log (this is created by the configure script)
 	* if you are using gcc (the GNU C compiler), which version it is.
 

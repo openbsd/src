@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.2 1996/08/19 20:08:59 downsj Exp $	*/
+/*	$OpenBSD: syn.c,v 1.3 1996/10/01 02:05:50 downsj Exp $	*/
 
 /*
  * shell parser (C version)
@@ -284,6 +284,7 @@ get_command(cf)
 		t = nested(TBRACE, '{', '}');
 		break;
 
+#ifdef KSH
 	  case MDPAREN:
 	  {
 		static const char let_cmd[] = { CHAR, 'l', CHAR, 'e',
@@ -296,6 +297,7 @@ get_command(cf)
 		XPput(args, yylval.cp);
 		break;
 	  }
+#endif /* KSH */
 
 #ifdef KSH
 	  case DBRACKET: /* [[ .. ]] */
@@ -658,8 +660,8 @@ const	struct tokeninfo {
 	{ "&&",		LOGAND,	FALSE },
 	{ "||",		LOGOR,	FALSE },
 	{ ";;",		BREAK,	FALSE },
-	{ "((",		MDPAREN, FALSE },
 #ifdef KSH
+	{ "((",		MDPAREN, FALSE },
 	{ "|&",		COPROC,	FALSE },
 #endif /* KSH */
 	/* and some special cases... */

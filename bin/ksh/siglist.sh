@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: siglist.sh,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $
+#	$OpenBSD: siglist.sh,v 1.2 1996/10/01 02:05:48 downsj Exp $
 
 #
 # Script to generate a sorted, complete list of signals, suitable
@@ -25,16 +25,18 @@ CPP="${1-cc -E}"
 #endif/') > $in
 $CPP $in  > $out
 sed -n 's/{ QwErTy/{/p' < $out | awk '{print NR, $0}' | sort +2n +0n |
-	sed 's/^[0-9]* //' |
-	awk 'BEGIN { last=0; nsigs=0; }
-	    {
-		    n = $2;
-		    if (n > 0 && n != last) {
-			    while (++last < n) {
-				    printf "\t{ %d , (char *) 0, `Signal %d` } ,\n", last, last;
-			    }
-			    print;
+    sed 's/^[0-9]* //' |
+    awk 'BEGIN { last=0; nsigs=0; }
+	{
+	    if ($2 ~ /^[0-9][0-9]*$/ && $3 == ",") {
+		n = $2;
+		if (n > 0 && n != last) {
+		    while (++last < n) {
+			printf "\t{ %d , (char *) 0, `Signal %d` } ,\n", last, last;
 		    }
-	    }' |
-	tr '`' '"' | grep -v '"DUMMY"'
+		    print;
+		}
+	    }
+	}' |
+    tr '`' '"' | grep -v '"DUMMY"'
 ecode=0

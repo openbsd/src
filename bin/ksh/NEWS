@@ -1,4 +1,23 @@
-$OpenBSD: NEWS,v 1.2 1996/08/19 20:08:42 downsj Exp $
+$OpenBSD: NEWS,v 1.3 1996/10/01 02:05:28 downsj Exp $
+
+Version 5.2.9
+
+* bug fixes
+    * config: using LDSTATIC no longer generates config error.
+    * config: can compile as sh again (--enable-shell=sh).
+    * config: should compile on machines with broken "gcc -g"
+    * config: fixed test for broken S_IFIFO.
+    * config: fixed test for getwd() routine.
+    * config: better NeXT support (signal list generated correctly, clock_t
+      type detected, enable job contorl in rlogin sessions)
+    * parsing: assignments containing brackets ([]) not treated as commands.
+    * editing: terminal column width determined correctly on startup.
+    * vi: long prompts truncated (more or less) correctly.
+    * file completion: files of the form ~user (no /'s) expanded correctly.
+
+* at&t ksh method for delimiting hidden characters in prompt added (i.e.,
+  start prompt with non-printing char and \r, use char to delimit esc codes).
+
 
 Version 5.2.8
 
@@ -9,11 +28,11 @@ Version 5.2.8
     * redirections before subshells handled correctly.
     * COLUMNS/LINES are no longer exported when they are automatically set.
     * mail checks and PS1/PS4 expansions removed if compiled as sh.
-    * subcommands in PS1 no longer genereate bogus warning messages.
+    * subcommands in PS1 no longer generate bogus warning messages.
     * environment variables not longer messed up on 16-bit machines.
     * unset: now returns non-zero if variable/function isn't set.
     * select: only prints menu first time, if REPLY is null or on blank line.
-    * check for `cannot execute' imporved, error message says why.
+    * check for `cannot execute' improved, error message says why.
     * typeset: now reports variables with attributes but now value.
     * vi/emacs file completion: does directory listing on zero length names.
     * arithmetic: non-numeric parameters expanded recursively.

@@ -1,4 +1,77 @@
-$OpenBSD: ChangeLog,v 1.2 1996/08/19 20:08:41 downsj Exp $
+$OpenBSD: ChangeLog,v 1.3 1996/10/01 02:05:26 downsj Exp $
+
+Mon Sep 30 17:14:41 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* made pdksh-5.2.9 distribution
+
+Mon Sep 30 12:52:21 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* lex.c(pprompt): fixed usage of ntruncate.
+
+Thu Sep 19 17:43:33 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* sh.h(KSH_SYSTEM_PROFILE): new define.
+	* main.c(main): use KSH_SYSTEM_PROFILE.
+
+	* aclocal.m4(KSH_OS_TYPE): added case for NEXT.
+
+Thu Sep 19 15:39:54 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* tty.c(tty_init): added hack for NeXT's rlogin's missing controlling
+	  tty.
+
+Mon Sep 16 11:18:10 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* edit.c(add_glob): don't append a * to a ~username.
+	 
+	* edit.c(x_init): set got_sigwinch before calling check_sigwinch().
+
+Wed Sep 11 14:38:38 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_ksh.c(c_let): ifdef'd KSH.
+	* lex.h(SDPAREN),lex.c: ifdef'd KSH all uses of SDPAREN.
+	* lex.h(MDPAREN),syn.c: ifdef'd KSH all uses of MDPAREN.
+
+Mon Sep  9 16:18:03 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* aclocal.m4(AC_PROG_CC): replaced autoconf's version with
+	  modified version.
+
+	* configure.in(clock_t): check in sys/time.h as well.
+	* ksh_times.h: include ksh_time.h.
+	* ksh_time.h,ksh_times.h: added ifndef KSH_TIME_H/KSH_TIMES_H.
+
+Fri Sep  6 13:20:24 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* edit.c(promptlen): X\r hack for delimiting hidden characters
+	  in prompt.
+	  (Based on fix from Bill Kish)
+
+Tue Sep  3 11:03:26 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* Makefile.in: removed options.h from HDRS (also removed file).
+
+Thu Aug 29 10:04:01 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* aclocal.m4(KSH_MEMMOVE): added return 0 to end of main().
+
+Fri Aug 23 14:23:50 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* aclocal.m4,ksh_stat.h: changed S_IFFIFO to S_IFIFO.
+
+Fri Aug 23 09:58:09 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* var.c(skip_wdvarname): don't check for array if first char
+	  isn't [.
+
+Thu Aug 22 12:51:25 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* jobs.c: added ifdef KSH around Coproc_id/j->coproc_id usagae.
+	* c_ksh.c(c_read): added ifdef KSH around opipe.
+
+Tue Aug 20 09:41:32 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* configure.in: fixed quoting of sed LDSTATIC expression.
 
 Mon Aug 19 14:26:08 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

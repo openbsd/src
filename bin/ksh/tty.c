@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.1.1.1 1996/08/14 06:19:12 downsj Exp $	*/
+/*	$OpenBSD: tty.c,v 1.2 1996/10/01 02:05:51 downsj Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -114,11 +114,30 @@ tty_init(init_ttystate)
 	/* SCO can't job control on /dev/tty, so don't try... */
 #if !defined(__SCO__)
 	if ((tfd = open("/dev/tty", O_RDWR, 0)) < 0) {
+#ifdef __NeXT
+		/* rlogin on NeXT boxes does not set up the controlling tty,
+		 * so force it to be done here...
+		 */
+		{
+			extern char *ttyname ARGS((int));
+			char *s = ttyname(isatty(2) ? 2 : 0);
+			int fd;
+
+			if (s && (fd = open(s, O_RDWR, 0)) >= 0) {
+				close(fd);
+				tfd = open("/dev/tty", O_RDWR, 0);
+			}
+		}
+#endif /* __NeXT */
+
 /* X11R5 xterm on mips doesn't set controlling tty properly - temporary hack */
 # if !defined(__mips) || !(defined(_SYSTYPE_BSD43) || defined(__SYSTYPE_BSD43))
-		tty_devtty = 0;
-		warningf(FALSE, "No controlling tty (open /dev/tty: %s)",
-			strerror(errno));
+		if (tfd < 0) {
+			tty_devtty = 0;
+			warningf(FALSE,
+				"No controlling tty (open /dev/tty: %s)",
+				strerror(errno));
+		}
 # endif /* __mips  */
 	}
 #else /* !__SCO__ */

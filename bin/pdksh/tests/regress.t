@@ -663,3 +663,22 @@ expected-stdout:
 	OPTARG=x, OPTIND=3, optc=?.
 	done
 ---
+
+name: regression-45
+description:
+	Parameter assignments with [] recognized correctly
+stdin:
+	FOO=*[12]
+	BAR=abc[
+	MORE=[abc]
+	JUNK=a[bc
+	echo "<$FOO>"
+	echo "<$BAR>"
+	echo "<$MORE>"
+	echo "<$JUNK>"
+expected-stdout:
+	<*[12]>
+	<abc[>
+	<[abc]>
+	<a[bc>
+---

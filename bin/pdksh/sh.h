@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.2 1996/08/19 20:08:58 downsj Exp $	*/
+/*	$OpenBSD: sh.h,v 1.3 1996/10/01 02:05:47 downsj Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -682,6 +682,14 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 #define OBRACE	'{'
 #define CBRACE	'}'
 
+/* Determine the location of the system (common) profile */
+#ifndef KSH_SYSTEM_PROFILE
+# ifdef __NeXT
+#  define KSH_SYSTEM_PROFILE "/etc/profile.std"
+# else /* __NeXT */
+#  define KSH_SYSTEM_PROFILE "/etc/profile"
+# endif /* __NeXT */
+#endif /* KSH_SYSTEM_PROFILE */
 
 #include "shf.h"
 #include "table.h"
