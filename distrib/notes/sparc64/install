@@ -40,7 +40,7 @@ This will cause the kernel contained in the floppy to be booted.
 
 Booting From CD-ROM installation media:
 
-	ok boot cdrom OSREV/MACHINE/bsd.rd
+	ok boot cdrom
 
 If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
