@@ -1,4 +1,5 @@
-/*	$NetBSD: namei.h,v 1.10 1995/04/15 08:12:35 cgd Exp $	*/
+/*	$OpenBSD: namei.h,v 1.2 1996/03/03 12:12:05 niklas Exp $	*/
+/*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -175,7 +176,14 @@ u_long	nextvnodeid;
 int	namei __P((struct nameidata *ndp));
 int	lookup __P((struct nameidata *ndp));
 int	relookup __P((struct vnode *dvp, struct vnode **vpp,
-	    struct componentname *cnp));
+		      struct componentname *cnp));
+void cache_purge __P((struct vnode *));
+int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
+void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
+void nchinit __P((void));
+struct mount;
+void cache_purgevfs __P((struct mount *));
+
 #endif
 
 /*

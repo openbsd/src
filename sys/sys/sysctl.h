@@ -1,4 +1,5 @@
-/*	$NetBSD: sysctl.h,v 1.9 1995/08/04 18:36:08 thorpej Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.2 1996/03/03 12:12:22 niklas Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.11 1996/02/09 18:25:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -331,7 +332,37 @@ int sysctl_rdint __P((void *, size_t *, void *, int));
 int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
+int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
+int sysctl_file __P((char *, size_t *));
+int sysctl_doproc __P((int *, u_int, char *, size_t *));
+struct radix_node;
+struct walkarg;
+int sysctl_dumpentry __P((struct radix_node *, void *));
+int sysctl_iflist __P((int, struct walkarg *));
+int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
+int sysctl_clockrate __P((char *, size_t *));
+int sysctl_rdstring __P((void *, size_t *, void *, char *));
+int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
+int sysctl_vnode __P((char *, size_t *));
+
 void fill_eproc __P((struct proc *, struct eproc *));
+
+int kern_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		     struct proc *));
+int hw_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		   struct proc *));
+#ifdef DEBUG
+int debug_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		      struct proc *));
+#endif
+int vm_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		   struct proc *));
+int fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		   struct proc *));
+int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
+int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

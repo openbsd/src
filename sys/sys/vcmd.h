@@ -1,3 +1,4 @@
+/*	$OpenBSD: vcmd.h,v 1.2 1996/03/03 12:12:45 niklas Exp $	*/
 /*	$NetBSD: vcmd.h,v 1.6 1994/06/29 06:46:14 cgd Exp $	*/
 
 /*-

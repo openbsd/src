@@ -1,4 +1,5 @@
-/*	$NetBSD: exec.h,v 1.58 1995/11/28 08:16:47 thorpej Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 1996/03/03 12:11:40 niklas Exp $	*/
+/*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -167,6 +168,7 @@ void	*copyargs		__P((struct exec_package *, struct ps_strings *,
 				     void *, void *));
 void	setregs			__P((struct proc *, struct exec_package *,
 				     u_long, register_t *));
+int	check_exec		__P((struct proc *, struct exec_package *));
 
 #ifdef DEBUG
 void	new_vmcmd __P((struct exec_vmcmd_set *evsp,

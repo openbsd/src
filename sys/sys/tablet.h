@@ -1,4 +1,5 @@
-/*	$NetBSD: tablet.h,v 1.8 1995/04/22 12:55:10 cgd Exp $	*/
+/*	$OpenBSD: tablet.h,v 1.2 1996/03/03 12:12:25 niklas Exp $	*/
+/*	$NetBSD: tablet.h,v 1.10 1996/02/09 18:25:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1993
@@ -50,7 +51,7 @@
  * in-proximity bit is simulated where the tablet does not directly provide
  * the information.
  */
-struct	tbpos {
+struct	hitpos {
 	int32_t	xpos, ypos;	/* raw x-y coordinates */
 	int16_t	status;		/* buttons/pen down */
 #define	TBINPROX	0100000		/* pen in proximity of tablet */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mtio.h,v 1.2 1996/03/03 12:12:04 niklas Exp $	*/
 /*	$NetBSD: mtio.h,v 1.12 1995/03/29 22:10:07 briggs Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: lockf.h,v 1.2 1996/03/03 12:11:57 niklas Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*

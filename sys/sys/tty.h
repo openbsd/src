@@ -1,4 +1,5 @@
-/*	$NetBSD: tty.h,v 1.28 1995/03/26 20:24:57 jtc Exp $	*/
+/*	$OpenBSD: tty.h,v 1.2 1996/03/03 12:12:32 niklas Exp $	*/
+/*	$NetBSD: tty.h,v 1.29 1996/02/09 18:25:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -241,4 +242,20 @@ int	 ttywflush __P((struct tty *tp));
 struct tty *ttymalloc __P((void));
 void	 ttyfree __P((struct tty *));
 u_char	*firstc           __P((struct clist *clp, int *c));
+
+int	cttyopen __P((dev_t, int, int, struct proc *));
+int	cttyread __P((dev_t, struct uio *, int));
+int	cttywrite __P((dev_t, struct uio *, int));
+int	cttyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	cttyselect __P((dev_t, int, struct proc *));
+
+int	clalloc __P((struct clist *, int, int));
+void	clfree __P((struct clist *));
+
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_FREEBSD)
+# define COMPAT_OLDTTY
+int 	ttcompat __P((struct tty *, u_long, caddr_t, int, struct proc *));
+#endif
+
 #endif

@@ -1,3 +1,4 @@
+/*	$OpenBSD: acct.h,v 1.2 1996/03/03 12:11:20 niklas Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-

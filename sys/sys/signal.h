@@ -1,4 +1,5 @@
-/*	$NetBSD: signal.h,v 1.20 1996/01/04 22:23:23 jtc Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 1996/03/03 12:12:18 niklas Exp $	*/
+/*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -96,7 +97,7 @@
 #define SIGUSR1 30	/* user defined signal 1 */
 #define SIGUSR2 31	/* user defined signal 2 */
 
-#if defined(_ANSI_SOURCE) || defined(__cplusplus)
+#if defined(_ANSI_SOURCE) || defined(__cplusplus) || defined(_KERNEL)
 /*
  * Language spec sez we must list exactly one parameter, even though we
  * actually supply three.  Ugh!
@@ -117,7 +118,12 @@ typedef unsigned int sigset_t;
  * Signal vector "template" used in sigaction call.
  */
 struct	sigaction {
-	void	(*sa_handler)();	/* signal handler */
+	void	(*sa_handler)		/* signal handler */
+#ifdef _KERNEL
+			    __P((int));
+#else
+			    __P(());
+#endif
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
@@ -163,7 +169,12 @@ struct	sigaltstack {
  * Signal vector "template" used in sigvec call.
  */
 struct	sigvec {
-	void	(*sv_handler)();	/* signal handler */
+	void	(*sv_handler)		/* signal handler */
+#ifdef _KERNEL
+			    __P((int));
+#else
+			    __P(());
+#endif
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ttycom.h,v 1.2 1996/03/03 12:12:34 niklas Exp $	*/
 /*	$NetBSD: ttycom.h,v 1.3 1994/06/29 06:45:55 cgd Exp $	*/
 
 /*-

@@ -1,4 +1,5 @@
-/*	$NetBSD: syslog.h,v 1.9 1995/03/26 20:24:51 jtc Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.2 1996/03/03 12:12:24 niklas Exp $	*/
+/*	$NetBSD: syslog.h,v 1.10 1996/02/09 18:25:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -191,5 +192,6 @@ __END_DECLS
 void	logpri __P((int));
 void	log __P((int, const char *, ...));
 void	addlog __P((const char *, ...));
+void	logwakeup __P((void));
 
 #endif /* !_KERNEL */

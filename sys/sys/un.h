@@ -1,4 +1,5 @@
-/*	$NetBSD: un.h,v 1.10 1995/03/26 20:25:02 jtc Exp $	*/
+/*	$OpenBSD: un.h,v 1.2 1996/03/03 12:12:39 niklas Exp $	*/
+/*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,14 +47,13 @@ struct	sockaddr_un {
 
 #ifdef _KERNEL
 struct unpcb;
+struct socket;
 
-int	uipc_usrreq __P((struct socket *so, int req, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *control));
 int	unp_attach __P((struct socket *so));
 int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct proc *p));
 int	unp_connect __P((struct socket *so, struct mbuf *nam, struct proc *p));
 int	unp_connect2 __P((struct socket *so, struct socket *so2));
-int	unp_detach __P((struct unpcb *unp));
+void	unp_detach __P((struct unpcb *unp));
 void	unp_discard __P((struct file *fp));
 void	unp_disconnect __P((struct unpcb *unp));
 void	unp_drop __P((struct unpcb *unp, int errno));
@@ -61,6 +61,9 @@ void	unp_gc __P((void));
 void	unp_mark __P((struct file *fp));
 void	unp_scan __P((struct mbuf *m0, void (*op) __P((struct file *))));
 void	unp_shutdown __P((struct unpcb *unp));
+int 	unp_externalize __P((struct mbuf *));
+int	unp_internalize __P((struct mbuf *, struct proc *));
+void 	unp_dispose __P((struct mbuf *));
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */

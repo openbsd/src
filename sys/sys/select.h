@@ -1,3 +1,4 @@
+/*	$OpenBSD: select.h,v 1.2 1996/03/03 12:12:16 niklas Exp $	*/
 /*	$NetBSD: select.h,v 1.10 1995/03/26 20:24:38 jtc Exp $	*/
 
 /*-

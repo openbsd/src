@@ -1,3 +1,4 @@
+/*	$OpenBSD: disk.h,v 1.3 1996/03/03 12:11:33 niklas Exp $	*/
 /*	$NetBSD: disk.h,v 1.9 1996/01/07 22:04:07 thorpej Exp $	*/
 
 /*

@@ -1,4 +1,5 @@
-/*	$NetBSD: sem.h,v 1.7 1995/03/26 20:24:40 jtc Exp $	*/
+/*	$OpenBSD: sem.h,v 1.2 1996/03/03 12:12:17 niklas Exp $	*/
+/*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -172,6 +173,9 @@ int semget __P((key_t, int, int));
 int semop __P((int, struct sembuf *, u_int));
 int semconfig __P((int));
 __END_DECLS
+#else
+void seminit __P((void));
+void semexit __P((struct proc *));
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */

@@ -1,4 +1,5 @@
-/*	$NetBSD: shm.h,v 1.18 1995/03/26 20:24:41 jtc Exp $	*/
+/*	$OpenBSD: shm.h,v 1.2 1996/03/03 12:12:18 niklas Exp $	*/
+/*	$NetBSD: shm.h,v 1.19 1996/02/09 18:25:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -75,6 +76,10 @@ struct shminfo {
 };
 struct shminfo shminfo;
 struct shmid_ds *shmsegs;
+
+void shminit __P((void));  
+void shmfork __P((struct proc *, struct proc *));
+void shmexit __P((struct proc *));
 
 #else /* !_KERNEL */
 

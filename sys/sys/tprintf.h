@@ -1,3 +1,4 @@
+/*	$OpenBSD: tprintf.h,v 1.2 1996/03/03 12:12:30 niklas Exp $	*/
 /*	$NetBSD: tprintf.h,v 1.6 1994/06/29 06:45:49 cgd Exp $	*/
 
 /*-

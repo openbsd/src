@@ -1,3 +1,4 @@
+/*	$OpenBSD: timeb.h,v 1.2 1996/03/03 12:12:27 niklas Exp $	*/
 /*	$NetBSD: timeb.h,v 1.10 1995/06/05 19:39:35 pk Exp $	*/
 
 /*-

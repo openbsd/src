@@ -1,3 +1,4 @@
+/*	$OpenBSD: scsiio.h,v 1.2 1996/03/03 12:12:15 niklas Exp $	*/
 /*	$NetBSD: scsiio.h,v 1.3 1994/06/29 06:45:09 cgd Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_

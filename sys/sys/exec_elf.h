@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec_elf.h,v 1.3 1996/03/03 12:11:42 niklas Exp $	*/
 /*	$NetBSD: exec_elf.h,v 1.2 1996/01/16 23:19:43 fvdl Exp $	*/
 
 /*

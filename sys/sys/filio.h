@@ -1,3 +1,4 @@
+/*	$OpenBSD: filio.h,v 1.2 1996/03/03 12:11:47 niklas Exp $	*/
 /*	$NetBSD: filio.h,v 1.5 1994/06/29 06:44:14 cgd Exp $	*/
 
 /*-

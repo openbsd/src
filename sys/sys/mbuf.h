@@ -1,4 +1,5 @@
-/*	$NetBSD: mbuf.h,v 1.17 1995/08/16 01:04:06 mycroft Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.2 1996/03/03 12:12:00 niklas Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -84,7 +85,8 @@ struct	pkthdr {
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
-	void	(*ext_free)();		/* free routine if not the usual */
+	void	(*ext_free)		/* free routine if not the usual */
+		    __P((caddr_t, u_int));
 	u_int	ext_size;		/* size of buffer, for ext_free */
 };
 
@@ -359,6 +361,7 @@ int	max_hdr;			/* largest link+protocol header */
 int	max_datalen;			/* MHLEN - max_hdr */
 extern	int mbtypes[];			/* XXX */
 
+void	mbinit __P((void));
 struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
 struct	mbuf *m_free __P((struct mbuf *));
 struct	mbuf *m_get __P((int, int));
@@ -373,6 +376,11 @@ void	m_adj __P((struct mbuf *, int));
 int	m_clalloc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 void	m_freem __P((struct mbuf *));
+void	m_reclaim __P((void));
+void	m_copydata __P((struct mbuf *, int, int, caddr_t));
+void	m_cat __P((struct mbuf *, struct mbuf *));
+struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
+			   void (*) __P((const void *, void *, size_t))));
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */

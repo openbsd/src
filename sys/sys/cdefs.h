@@ -1,3 +1,4 @@
+/*	$OpenBSD: cdefs.h,v 1.2 1996/03/03 12:11:23 niklas Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.15 1995/01/19 01:54:52 jtc Exp $	*/
 
 /*

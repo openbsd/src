@@ -1,3 +1,4 @@
+/*	$OpenBSD: cdio.h,v 1.4 1996/03/03 12:11:24 niklas Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_

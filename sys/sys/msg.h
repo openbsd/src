@@ -1,4 +1,5 @@
-/*	$NetBSD: msg.h,v 1.8 1995/07/11 18:16:20 jtc Exp $	*/
+/*	$OpenBSD: msg.h,v 1.2 1996/03/03 12:12:02 niklas Exp $	*/
+/*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -155,6 +156,8 @@ int msgget __P((key_t, int));
 int msgsnd __P((int, void *, size_t, int));
 int msgrcv __P((int, void *, size_t, long, int));
 __END_DECLS
+#else
+void msginit __P((void));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

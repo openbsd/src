@@ -1,4 +1,5 @@
-/*	$NetBSD: proc.h,v 1.41 1995/08/13 09:04:43 mycroft Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 1996/03/03 12:12:07 niklas Exp $	*/
+/*	$NetBSD: proc.h,v 1.42 1996/02/09 18:25:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -311,5 +312,10 @@ void	swapin __P((struct proc *));
 int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
+void	exit1 __P((struct proc *, int));
+int	fork1 __P((struct proc *, int, int, register_t *));
+void	kmeminit __P((void));
+void	rqinit __P((void));
+int	groupmember __P((gid_t, struct ucred *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

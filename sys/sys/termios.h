@@ -1,3 +1,4 @@
+/*	$OpenBSD: termios.h,v 1.2 1996/03/03 12:12:26 niklas Exp $	*/
 /*	$NetBSD: termios.h,v 1.13 1995/04/22 13:03:10 cgd Exp $	*/
 
 /*

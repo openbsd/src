@@ -1,3 +1,4 @@
+/*	$OpenBSD: wait.h,v 1.3 1996/03/03 12:12:49 niklas Exp $	*/
 /*	$NetBSD: wait.h,v 1.10 1995/10/19 08:14:18 jtc Exp $	*/
 
 /*

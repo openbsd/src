@@ -1,3 +1,4 @@
+/*	$OpenBSD: kernel.h,v 1.3 1996/03/03 12:11:53 niklas Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-

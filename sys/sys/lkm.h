@@ -1,4 +1,5 @@
-/*	$NetBSD: lkm.h,v 1.11 1995/03/26 20:24:19 jtc Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.2 1996/03/03 12:11:55 niklas Exp $	*/
+/*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -186,7 +187,7 @@ struct lkm_table {
 	int	depcnt;		/* dependency count (INIT) */
 	int	id;		/* identifier (INIT) */
 
-	int	(*entry)();	/* entry function */
+	int	(*entry) __P((struct lkm_table *, int, int));/* entry function */
 	union lkm_generic	private;	/* module private data */
 };
 

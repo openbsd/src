@@ -1,3 +1,4 @@
+/*	$OpenBSD: unistd.h,v 1.2 1996/03/03 12:12:40 niklas Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
