@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.36 2000/02/01 16:58:05 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.37 2000/02/02 16:51:06 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.31 2000/02/01 16:57:17 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.32 2000/02/02 16:50:29 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -321,6 +321,7 @@
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
+#define	PCMCIA_VENDOR_MELCO	-1	/* Melco Inc */
 #define	PCMCIA_VENDOR_EDIMAX	-1	/* Edimax */
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
 #define	PCMCIA_VENDOR_SHUTTLE	-1	/* Shuttle */
@@ -377,6 +378,8 @@
 #define	PCMCIA_PRODUCT_EPSON_EEN10B	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_EXP_EXPMULTIMEDIA	{ "EXP   ", "PnPIDE", "F1", NULL }
 #define	PCMCIA_PRODUCT_EXP_EXPMULTIMEDIA	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_MELCO_WLI_PCM	{ "AMD", "Am79C930", NULL, NULL }
+#define	PCMCIA_PRODUCT_MELCO_WLI_PCM	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_PROXIM_RL2_7200	{ "PROXIM", "LAN CARD", "RANGELAN2", NULL }
 #define	PCMCIA_PRODUCT_PROXIM_RL2_7200	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_PROXIM_RL2_7400	{ "PROXIM", "LAN PC CARD", "RANGELAN2", NULL }
