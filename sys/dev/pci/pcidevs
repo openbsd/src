@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.55 1998/05/30 06:55:46 deraadt Exp $
+$OpenBSD: pcidevs,v 1.56 1998/06/02 09:33:58 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -573,6 +573,9 @@ product ADP 2944U		0x8478	AHA-2944 Ultra
 
 /* Alliance products */
 product	ALLIANCE AT24		0x6424	AT24
+
+/* Apple products */
+product APPLE BANDIT		0x0001	PCI Controller
 
 /* AMD products */
 product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE Ethernet
