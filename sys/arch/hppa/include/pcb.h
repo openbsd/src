@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.8 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.9 2004/06/08 22:00:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -37,6 +37,7 @@ struct pcb {
 	u_int pcb_onfault;		/* SW copy fault handler */
 	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
 	vaddr_t pcb_uva;		/* KVA for U-area */
+	u_int pcb_ksp;			/* kernel sp for ctxsw */
 };
 
 struct md_coredump {

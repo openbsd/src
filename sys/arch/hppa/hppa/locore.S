@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.132 2004/05/25 22:14:02 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.133 2004/06/08 22:00:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2708,40 +2708,55 @@ EXIT(remrunqueue)
 ENTRY(cpu_switch,128)
 	ldil	L%cpl, t1
 	ldw	R%cpl(t1), ret0
-	stw	ret0, HPPA_FRAME_SL(sp)
+	copy	r3, r1
 	stw	rp, HPPA_FRAME_CRP(sp)
+	copy	sp, r3
+	stw	ret0, HPPA_FRAME_SL(sp)
+	stwm	r1, HPPA_FRAME_SIZE+20*4(sp)
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
 	 */
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), arg2
+	b	switch_search
 	stw	r0, R%curproc(t1)
 	/* remain on the old (curproc)'s stack until we have a better choice */
 
+cpu_idle
+	copy	r0, arg0
+	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SPLLOWER
+	.import uvm, data
+	ldil	L%(uvm + PAGE_IDLE_ZERO), t3
+	ldw	R%(uvm + PAGE_IDLE_ZERO)(t3), t4
+	sub,<>	r0, t4, r0
+	b	cpu_loop
+
+	stw	arg2, 4(r3)
+	ldil	L%uvm_pageidlezero, t1
+	ldo	R%uvm_pageidlezero(t1), t2
+	.call
+	ble	0(sr0, t2)
+	copy	r31, rp
+
+	ldw	HPPA_FRAME_SL(r3), ret0
+	ldw	4(r3), arg2
+
+cpu_loop
+	ldil	L%cpl, arg0
+	stw	ret0, R%cpl(arg0)
+
+switch_search
 	/*
 	 * t1:   &whichqs
 	 * arg2: old curproc
 	 *
 	 */
-
-switch_search
 	ldil	L%whichqs, t1
 	ldw	R%whichqs(t1), t3
-	comb,<>	r0, t3, gotprocs
-	nop
-
+	comb,=,n r0, t3, cpu_idle
 	copy	r0, arg0
-	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SPLLOWER
 
-	/* XXX do idle work here */
-	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
-
-	ldil	L%cpl, arg0
-	b	switch_search
-	stw	ret0, R%cpl(arg0)
-
-gotprocs
 	ldi	0, t4
 getbit
 	mtsar	t4
@@ -2797,9 +2812,8 @@ link_ok
 	 * the new process' kernel stack must be reasonable.
 	 */
 	comb,=,n arg1, arg2, kstack_ok
-	ldw     P_MD_REGS(arg1), t1
 	ldw     P_ADDR(arg1), arg0
-	ldw     TF_R30(t1), t1
+	ldw	U_PCB+PCB_KSP(arg0), t1
 	ldo     NBPG(arg0), arg0
 	comb,>>,n arg0, t1, switch_error
 	copy    arg1, t2
@@ -2821,30 +2835,27 @@ kstack_ok
 	 *
 	 * arg2: old proc
 	 */
-	ldw	P_MD_REGS(arg2), t1
-	ldw	TF_R30(t1), t3
-	copy	sp, t2
-	stw,ma	r3, HPPA_FRAME_SIZE+20*4(sp)
-	stw	sp, TF_R30(t1)
-	stw	t2, HPPA_FRAME_PSP(sp)
-	stw	t3, HPPA_FRAME_ARG(0)(sp)	/* real user's stack */
-	fdc	r0(t1)
+	ldw	P_ADDR(arg2), t1
 	/* save callee-save registers */
-	stw	r4,   1*4(t2)
-	stw	r5,   2*4(t2)
-	stw	r6,   3*4(t2)
-	stw	r7,   4*4(t2)
-	stw	r8,   5*4(t2)
-	stw	r9,   6*4(t2)
-	stw	r10,  7*4(t2)
-	stw	r11,  8*4(t2)
-	stw	r12,  9*4(t2)
-	stw	r13, 10*4(t2)
-	stw	r14, 11*4(t2)
-	stw	r15, 12*4(t2)
-	stw	r16, 13*4(t2)
-	stw	r17, 14*4(t2)
-	stw	r18, 15*4(t2)
+	stw	r4,   1*4(r3)
+	stw	sp, U_PCB+PCB_KSP(t1)
+	stw	r5,   2*4(r3)
+	stw	r6,   3*4(r3)
+	stw	r7,   4*4(r3)
+	stw	r8,   5*4(r3)
+	stw	r9,   6*4(r3)
+	stw	r10,  7*4(r3)
+	stw	r11,  8*4(r3)
+	stw	r12,  9*4(r3)
+	stw	r13, 10*4(r3)
+	stw	r14, 11*4(r3)
+	stw	r15, 12*4(r3)
+	stw	r16, 13*4(r3)
+	stw	r17, 14*4(r3)
+	stw	r18, 15*4(r3)
+	fdc	r0(t1)
+	stw	r0, HPPA_FRAME_ARG(1)(sp)	/* say no trampoline */
+	sync
 
 	/* don't need old curproc (arg2) starting from here */
 switch_exited
@@ -2853,44 +2864,46 @@ switch_exited
 	 *
 	 * arg1: new proc
 	 */
-	mtctl	r0, ccr			/* disable FPU */
+	ldw	P_ADDR(arg1), t2
 	ldw	P_MD_REGS(arg1), t1
+	ldw	U_PCB+PCB_KSP(t2), sp
+	mtctl	r0, ccr			/* disable FPU */
 	ldw	TF_CR30(t1), t2
-	ldw	TF_R30(t1), sp
 	ldw	TF_CR9(t1), t3
 	mtctl	t2, cr30
 	mtctl	t3, pidr2
-	ldw	HPPA_FRAME_PSP(sp), t2
-	ldw	HPPA_FRAME_ARG(0)(sp), t3
+	ldo	-(HPPA_FRAME_SIZE+20*4)(sp), r3
+	ldw	HPPA_FRAME_ARG(0)(sp), arg0
 	ldw	HPPA_FRAME_ARG(1)(sp), t4 /* in case we're on trampoline */
-	ldw	HPPA_FRAME_ARG(2)(sp), arg0
-	ldw	HPPA_FRAME_SL(t2), ret0
-	ldw	HPPA_FRAME_CRP(t2), rp
-	ldw	 0*4(t2), r3
-	ldw	 1*4(t2), r4
-	ldw	 2*4(t2), r5
-	ldw	 3*4(t2), r6
-	ldw	 4*4(t2), r7
-	ldw	 5*4(t2), r8
-	ldw	 6*4(t2), r9
-	ldw	 7*4(t2), r10
-	ldw	 8*4(t2), r11
-	ldw	 9*4(t2), r12
-	ldw	10*4(t2), r13
-	ldw	11*4(t2), r14
-	ldw	12*4(t2), r15
-	ldw	13*4(t2), r16
-	ldw	14*4(t2), r17
-	ldw	15*4(t2), r18
-	stw	t3, TF_R30(t1)
-	copy	t2, sp
+	sub,=	r0, t4, r0
+	b	switch_gonnajump
+	ldw	 1*4(r3), r4
+	ldw	 2*4(r3), r5
+	ldw	 3*4(r3), r6
+	ldw	 4*4(r3), r7
+	ldw	 5*4(r3), r8
+	ldw	 6*4(r3), r9
+	ldw	 7*4(r3), r10
+	ldw	 8*4(r3), r11
+	ldw	 9*4(r3), r12
+	ldw	10*4(r3), r13
+	ldw	11*4(r3), r14
+	ldw	12*4(r3), r15
+	ldw	13*4(r3), r16
+	ldw	14*4(r3), r17
+	ldw	15*4(r3), r18
+switch_gonnajump
+	ldw	HPPA_FRAME_SL(r3), ret0
 	ldil	L%cpl, t1
 	stw	ret0, R%cpl(t1)
+	sync
 
 switch_return
 	ldil	L%curproc, t1
-	bv	0(rp)
 	stw	arg1, R%curproc(t1)
+	ldw	HPPA_FRAME_CRP(r3), rp
+	bv	0(rp)
+	ldwm	-(HPPA_FRAME_SIZE+20*4)(sp), r3
 EXIT(cpu_switch)
 
 ENTRY(switch_trampoline,0)

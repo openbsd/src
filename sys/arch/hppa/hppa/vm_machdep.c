@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.53 2004/04/21 23:09:30 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.54 2004/06/08 22:00:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -206,18 +206,18 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * Build a stack frame for the cpu_switch & co.
+	 * Build stack frames for the cpu_switch & co.
 	 */
 	osp = sp + HPPA_FRAME_SIZE;
-	sp += 2*HPPA_FRAME_SIZE + 20*4; /* std frame + calee-save registers */
-	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
-	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
-	*(register_t*)(osp) = (sp - HPPA_FRAME_SIZE);
-	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
+	*(register_t*)(osp - HPPA_FRAME_SIZE) = 0;
 	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
 	*(register_t*)(osp + HPPA_FRAME_SL) = 0;	/* cpl */
-	tf->tf_sp = sp;
+	*(register_t*)(osp) = (osp - HPPA_FRAME_SIZE);
+
+	sp = osp + HPPA_FRAME_SIZE + 20*4; /* frame + calee-save registers */
+	*HPPA_FRAME_CARG(0, sp) = (register_t)arg;
+	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
+	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
 }
 

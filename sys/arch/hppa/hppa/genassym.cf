@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.24 2003/07/15 18:15:41 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.25 2004/06/08 22:00:25 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -148,9 +148,13 @@ member	pcb_fpregs
 member	pcb_onfault
 member	pcb_space
 member	pcb_uva
+member	pcb_ksp
 
 struct	user
 member	u_pcb
+
+struct	uvm
+member	page_idle_zero
 
 # system calls
 export	SYSCALLGATE
