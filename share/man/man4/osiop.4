@@ -1,4 +1,4 @@
-.\"	$OpenBSD: osiop.4,v 1.2 2003/05/15 11:28:50 jmc Exp $
+.\"	$OpenBSD: osiop.4,v 1.3 2003/06/19 20:29:51 deraadt Exp $
 .\"	$NetBSD: osiop.4,v 1.2 2001/09/22 01:44:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -32,9 +32,9 @@
 .Nm osiop
 .Nd Symbios/NCR 53C710 SCSI driver
 .Sh SYNOPSIS
-.Ss hppa
-.Cd "osiop0	at gsc? irq 9"
-.Cd "osiop1	at gsc? irq 3"
+.Cd "# hppa"
+.Cd "osiop0 at gsc? irq 9"
+.Cd "osiop1 at gsc? irq 3"
 .Pp
 .Cd "scsibus* at osiop?"
 .Sh DESCRIPTION

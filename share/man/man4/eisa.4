@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eisa.4,v 1.8 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: eisa.4,v 1.9 2003/06/19 20:29:51 deraadt Exp $
 .\"	$NetBSD: eisa.4,v 1.10 2001/09/11 22:52:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -74,14 +74,14 @@ includes machine-independent
 drivers, sorted by device type
 and driver name:
 .Ss Disk and tape controllers
-.Bl -tag -width pcdisplay -offset indent
+.Bl -tag -width 12n -offset ind -compact
 .It Xr cac 4
 Compaq array controllers.
 .It Xr dpt 4
 DPT SmartCache/SmartRAID controllers.
 .El
 .Ss SCSI interfaces
-.Bl -tag -width pcdisplay -offset indent
+.Bl -tag -width 12n -offset ind -compact
 .It Xr ahb 4
 Adaptec 174x
 .Tn SCSI
@@ -100,7 +100,7 @@ Ultrastor 24f
 interfaces.
 .El
 .Ss Network interfaces
-.Bl -tag -width pcdisplay -offset indent
+.Bl -tag -width 12n -offset ind -compact
 .It Xr ep 4
 3Com 3c579 and 3c592 10Mbit
 .Tn Ethernet ,

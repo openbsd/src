@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.28 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: isapnp.4,v 1.29 2003/06/19 20:29:51 deraadt Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -51,7 +51,7 @@ devices on an ISA bus.
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Ss Disk controllers
-.Bl -tag -width speakerxx -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr aha 4
 Adaptec AHA-154x SCSI controller card.
 .It Xr aic 4
@@ -60,14 +60,14 @@ Adaptec AHA-1520B SCSI controller card.
 IDE controllers (typically found on sound cards).
 .El
 .Ss Serial and parallel interfaces
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr com 4 , Xr pccom 4
 8250/16450/16550/16650/16850-compatible ISA PnP serial cards and internal
 modems.
 Winmodems are not supported.
 .El
 .Ss Network interfaces
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr an 4
 Aironet 4500/4800 IEEE 802.11DS wireless interfaces.
 .It Xr ef 4
@@ -82,7 +82,7 @@ NE2000-compatible Ethernet interfaces.
 SMC EtherEZ Ethernet interfaces.
 .El
 .Ss Sound
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr ess 4
 ESS Technology AudioDrive 1788-, 1888-, 1887-, and 888-based sound cards.
 .It Xr gus 4
@@ -97,7 +97,7 @@ Windows Sound System cards.
 Yamaha OPL3-SA3 sound cards.
 .El
 .Ss Miscellaneous devices
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr joy 4
 Joystick driver.
 .It Xr pcic 4

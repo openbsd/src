@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.19 2003/06/19 08:49:25 deraadt Exp $
+.\"	$OpenBSD: sbus.4,v 1.20 2003/06/19 20:29:51 deraadt Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,6 +94,11 @@ board.
 .Dq Happy Meal
 .Tn Ethernet
 interfaces.
+.It Xr lebuffer 4 , Xr ledma 4
+.Tn Lance
+7990 series
+.Tn Ethernet
+DMA interfaces.
 .It Xr le 4
 .Tn Lance
 7990 series
@@ -145,6 +150,8 @@ Accelerated 24-bit color frame buffer.
 Aurora Technologies pio1 parallel port card.
 .It Xr asio 4
 Aurora Technologies pio2 serial port card.
+.It Xr bpp 4
+Parallel port.
 .It Xr magma 4
 Magma LC series Serial/Parallel Interface cards.
 .It Xr spif 4
@@ -152,6 +159,8 @@ Sun Serial/Parallel Interface card.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr auxio 4
+What is an auxio Jason?
 .It Xr uperf 4
 Performance counters on the host bridge.
 .It Xr presto 4
@@ -163,7 +172,9 @@ Prestoserve battery-backed memory.
 .Xr asio 4 ,
 .Xr audioamd 4 ,
 .Xr audiocs 4 ,
+.Xr auxio 4 ,
 .Xr be 4 ,
+.Xr bpp 4 ,
 .Xr bwtwo 4 ,
 .Xr cgfourteen 4 ,
 .Xr cgsix 4 ,
@@ -174,6 +185,8 @@ Prestoserve battery-backed memory.
 .Xr intro 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
+.Xr lebuffer 4 ,
+.Xr ledma 4 ,
 .Xr magma 4 ,
 .Xr mgx 4 ,
 .Xr pnozz 4 ,

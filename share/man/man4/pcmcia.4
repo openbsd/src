@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.31 2003/05/05 13:51:58 jmc Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.32 2003/06/19 20:29:51 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,17 +69,17 @@ devices.
 The following devices are supported, sorted by function
 and driver name:
 .Ss Miscellaneous
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr gpr 4
 GemPlus GPR400 smartcard reader.
 .El
 .Ss Serial interfaces and modems
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr com 4 , Xr pccom 4
 8250/16450/16550-compatible PCMCIA serial cards and modems.
 .El
 .Ss Network interfaces
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr an 4
 Aironet Communications 4500/4800 IEEE 802.11DS wireless controller.
 .It Xr awi 4
@@ -102,12 +102,12 @@ WaveLAN/IEEE, PRISM-II and Spectrum24 IEEE 802.11DS cards.
 Xircom 16bit Ethernet cards.
 .El
 .Ss SCSI controllers
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr aic 4
 Adaptec APA-14[56]0 and NewMedia BusToaster SCSI controller cards.
 .El
 .Ss IDE controllers
-.Bl -tag -width speaker -offset ind -compact
+.Bl -tag -width 12n -offset ind -compact
 .It Xr wdc 4
 Devices which implement an ATA/IDE interface, such as mini disk drives,
 CDROMs.
