@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.11 1999/06/04 01:30:10 aaron Exp $
+.\"	$OpenBSD: fts.3,v 1.12 1999/06/05 03:44:53 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,22 +92,22 @@ The first is
 .Dv FTS ,
 the structure that represents the file hierarchy itself.
 The second is
-.Em FTSENT ,
+.Li FTSENT ,
 the structure that represents a file in the file
 hierarchy.
 Normally, an
-.Em FTSENT
+.Li FTSENT
 structure is returned for every file in the file
 hierarchy.
 In this manual page,
 .Dq file
 and
-.Dq Em FTSENT No structure
+.Dq Li FTSENT No structure
 are generally
 interchangeable.
 .Pp
 The
-.Em FTSENT
+.Li FTSENT
 structure contains at least the following fields, which are
 described in greater detail below:
 .Bd -literal
@@ -133,7 +133,7 @@ These fields are defined as follows:
 .Bl -tag -width "fts_namelen"
 .It Fa fts_info
 One of the following flags describing the returned
-.Em FTSENT
+.Li FTSENT
 structure and
 the file it represents.
 With the exception of directories without errors
@@ -149,11 +149,11 @@ A directory that causes a cycle in the tree.
 (The
 .Fa fts_cycle
 field of the
-.Em FTSENT
+.Li FTSENT
 structure will be filled in as well.)
 .It Dv FTS_DEFAULT
 Any
-.Em FTSENT
+.Li FTSENT
 structure that represents a file type not explicitly described
 by one of the other
 .Fa fts_info
@@ -175,7 +175,7 @@ which was not specified as a file name to
 .It Dv FTS_DP
 A directory being visited in post-order.
 The contents of the
-.Em FTSENT
+.Li FTSENT
 structure will be unchanged from when
 it was returned in pre-order, i.e., with the
 .Fa fts_info
@@ -232,15 +232,15 @@ The length of the string referenced by
 The depth of the traversal, numbered from \-1 to N, where this file
 was found.
 The
-.Em FTSENT
+.Li FTSENT
 structure representing the parent of the starting point (or root)
 of the traversal is numbered \-1, and the
-.Em FTSENT
+.Li FTSENT
 structure for the root
 itself is numbered 0.
 .It Fa fts_errno
 Upon return of an
-.Em FTSENT
+.Li FTSENT
 structure from the
 .Fn fts_children
 or
@@ -275,7 +275,7 @@ It is initialized to
 .Dv NULL .
 .It Fa fts_parent
 A pointer to the
-.Em FTSENT
+.Li FTSENT
 structure referencing the file in the hierarchy
 immediately above the current file, i.e., the directory of which this
 file is a member.
@@ -304,9 +304,9 @@ of a hard link between two directories, or a symbolic link pointing to a
 directory, the
 .Fa fts_cycle
 field of the structure will point to the
-.Em FTSENT
+.Li FTSENT
 structure in the hierarchy that references the same file as the current
-.Em FTSENT
+.Li FTSENT
 structure.
 Otherwise, the contents of the
 .Fa fts_cycle
@@ -328,10 +328,10 @@ fields are guaranteed to be null terminated
 for the file most recently returned by
 .Fn fts_read .
 To use these fields to reference any files represented by other
-.Em FTSENT
+.Li FTSENT
 structures will require that the path buffer be modified using the
 information contained in that
-.Em FTSENT
+.Li FTSENT
 structure's
 .Fa fts_pathlen
 field.
@@ -357,7 +357,7 @@ must be specified.
 The
 .Fa options
 are selected by
-.Em OR Ns 'ing
+.Tn OR Ns 'ing
 the following values:
 .Bl -tag -width "FTS_PHYSICAL"
 .It Dv FTS_COMFOLLOW
@@ -369,11 +369,11 @@ is also specified.
 This option causes the
 .Nm
 routines to return
-.Em FTSENT
+.Li FTSENT
 structures for the targets of symbolic links
 instead of the symbolic links themselves.
 If this option is set, the only symbolic links for which
-.Em FTSENT
+.Li FTSENT
 structures
 are returned to the application are those referencing non-existent files.
 Either
@@ -403,7 +403,7 @@ pathnames were provided as arguments to
 .Fn fts_open .
 .It Dv FTS_NOSTAT
 By default, returned
-.Em FTSENT
+.Li FTSENT
 structures reference file characteristic information (the
 .Fa statp
 field) for each file visited.
@@ -421,11 +421,11 @@ field undefined.
 This option causes the
 .Nm
 routines to return
-.Em FTSENT
+.Li FTSENT
 structures for symbolic links themselves instead
 of the target files they point to.
 If this option is set,
-.Em FTSENT
+.Li FTSENT
 structures for all symbolic links in the
 hierarchy are returned to the application.
 Either
@@ -447,7 +447,7 @@ encountered in the file hierarchy are ignored.
 This option causes the
 .Nm
 routines to return
-.Em FTSENT
+.Li FTSENT
 structures for them.
 .It Dv FTS_XDEV
 This option prevents
@@ -469,7 +469,7 @@ specifies a user-defined function which may be used to order the traversal
 of the hierarchy.
 It
 takes two pointers to pointers to
-.Em FTSENT
+.Li FTSENT
 structures as arguments and
 should return a negative value, zero, or a positive value to indicate
 if the file referenced by its first argument comes before, in any order
@@ -480,7 +480,7 @@ The
 and
 .Fa fts_pathlen
 fields of the
-.Em FTSENT
+.Li FTSENT
 structures may
 .Em never
 be used in this comparison.
@@ -505,7 +505,7 @@ everything else.
 The
 .Fn fts_read
 function returns a pointer to an
-.Em FTSENT
+.Li FTSENT
 structure describing a file in
 the hierarchy.
 Directories (that are readable and do not cause cycles) are visited at
@@ -530,14 +530,14 @@ and sets
 .Va errno
 appropriately.
 If an error related to a returned file occurs, a pointer to an
-.Em FTSENT
+.Li FTSENT
 structure is returned, and
 .Va errno
 may or may not have been set (see
 .Fa fts_info ) .
 .Pp
 The
-.Em FTSENT
+.Li FTSENT
 structures returned by
 .Fn fts_read
 may be overwritten after a call to
@@ -548,7 +548,7 @@ on the same file hierarchy stream unless they represent a file of type
 directory, in which case they will not be overwritten until after a call to
 .Fn fts_read
 after the
-.Em FTSENT
+.Li FTSENT
 structure has been returned by the function
 .Fn fts_read
 in post-order.
@@ -556,17 +556,17 @@ in post-order.
 The
 .Fn fts_children
 function returns a pointer to an
-.Em FTSENT
+.Li FTSENT
 structure describing the first entry in a null-terminated
 linked list of
 the files in the directory represented by the
-.Em FTSENT
+.Li FTSENT
 structure most recently returned by
 .Fn fts_read .
 The list is linked through the
 .Fa fts_link
 field of the
-.Em FTSENT
+.Li FTSENT
 structure, and is ordered by the user-specified comparison function, if any.
 Repeated calls to
 .Fn fts_children
@@ -581,7 +581,7 @@ will return a pointer to the files in the logical directory specified to
 i.e., the arguments specified to
 .Fn fts_open .
 Otherwise, if the
-.Em FTSENT
+.Li FTSENT
 structure most recently returned by
 .Fn fts_read
 is not a directory being visited in pre-order,
@@ -601,7 +601,7 @@ and sets
 appropriately.
 .Pp
 The
-.Em FTSENT
+.Li FTSENT
 structures returned by
 .Fn fts_children
 may be overwritten after a call to

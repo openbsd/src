@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.10 1999/06/04 01:30:11 aaron Exp $
+.\"	$OpenBSD: glob.3,v 1.11 1999/06/05 03:44:53 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@ matching used by the shell.
 The include file
 .Aq Pa glob.h
 defines the structure type
-.Em glob_t ,
+.Li glob_t ,
 which contains at least the following fields:
 .Bd -literal
 typedef struct {
@@ -110,7 +110,7 @@ is used to modify the behavior of
 The value of
 .Fa flags
 is the bitwise inclusive
-.Em OR
+.Tn OR
 of any of the following
 values defined in
 .Aq Pa glob.h :

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.3,v 1.7 1999/06/04 01:30:11 aaron Exp $
+.\"	$OpenBSD: uname.3,v 1.8 1999/06/05 03:44:54 aaron Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,21 +49,21 @@ the current system into the structure referenced by
 .Fa name .
 .Pp
 The
-.Em utsname
+.Li utsname
 structure is defined in the
 .Aq Pa sys/utsname.h
 header file, and contains the following members:
 .Pp
 .Bl -tag -width nodenameXXXX -offset indent -compact
-.It sysname
+.It Fa sysname
 Name of the operating system implementation.
-.It nodename
+.It Fa nodename
 Network name of this machine.
-.It release
+.It Fa release
 Release level of the operating system.
-.It version
+.It Fa version
 Version level of the operating system.
-.It machine
+.It Fa machine
 Machine hardware platform.
 .El
 .Sh RETURN VALUES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lockf.3,v 1.7 1999/06/03 10:03:22 aaron Exp $
+.\"	$OpenBSD: lockf.3,v 1.8 1999/06/05 03:44:54 aaron Exp $
 .\"	$NetBSD: lockf.3,v 1.1 1997/12/20 20:23:17 kleink Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ An
 .Dv F_ULOCK
 request in which size is non-zero and the offset of the last byte of
 the requested section is the maximum value for an object of type
-.Em off_t ,
+.Li off_t ,
 when the process has an existing lock in which size is 0 and
 which includes the last byte of the requested section, will be treated
 as a request to unlock from the start of the requested section with a

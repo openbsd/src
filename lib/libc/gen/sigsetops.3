@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsetops.3,v 1.4 1999/06/03 10:03:23 aaron Exp $
+.\"	$OpenBSD: sigsetops.3,v 1.5 1999/06/05 03:44:54 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,13 +55,13 @@
 .Fn sigismember "sigset_t *set" "int signo"
 .Sh DESCRIPTION
 These functions manipulate signal sets stored in a
-.Em sigset_t .
+.Li sigset_t .
 Either
 .Fn sigemptyset
 or
 .Fn sigfillset
 must be called for every object of type
-.Em sigset_t
+.Li sigset_t
 before any other use of the object.
 .Fn sigemptyset 
 and
