@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 1999/08/07 17:42:48 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2000/03/28 22:42:03 deraadt Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -27,6 +27,7 @@ MLINKS+=fopen.3 fdopen.3 fopen.3 freopen.3
 MLINKS+=fputs.3 puts.3
 MLINKS+=fread.3 fwrite.3
 MLINKS+=fseek.3 fgetpos.3 fseek.3 fsetpos.3 fseek.3 ftell.3 fseek.3 rewind.3
+MLINKS+=fseek.3 fseeko.3 fseek.3 ftello.3
 MLINKS+=funopen.3 fropen.3 funopen.3 fwopen.3
 MLINKS+=getc.3 fgetc.3 getc.3 getchar.3 getc.3 getw.3
 MLINKS+=mktemp.3 mkstemp.3
