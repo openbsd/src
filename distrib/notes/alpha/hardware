@@ -30,6 +30,10 @@ Supported hardware:
                Floppy drive.
                ISA devices that require DMA operation.
     Digital Personal Workstation (Miata)
+	Some of these machines are known not to function properly (random
+	hangs or crashes).  At the moment, there is no known method to
+	detect which machines will run stably and which will not, apart
+	from trying to install OpenBSD on them.
           Supported devices:
                Built-in serial and parallel ports.
                Built-in DEC21043 ethernet.
@@ -43,6 +47,10 @@ Supported hardware:
                ISA devices that require DMA operation.
     EB164 based machines (including PC164, 164SX, 164LX, but NOT the
        164UX)
+	Some of these machines are known not to function properly (random
+	hangs or crashes).  At the moment, there is no known method to
+	detect which machines will run stably and which will not, apart
+	from trying to install OpenBSD on them.
           Supported devices:
                Built-in serial and parallel ports.
                Built-in PCIIDE controller, when present.
