@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.6 2001/12/06 22:52:10 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.7 2001/12/12 04:46:42 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -243,12 +243,14 @@ void
 import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 {
 	struct timeval tv;
+	int s;
 
 	if (!sadb_lifetime)
 		return;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
+	s = splhigh();
+	tv = time;
+	splx(s);
 
 	switch (type) {
 	case PFKEYV2_LIFETIME_HARD:
@@ -267,7 +269,7 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_exp_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_TIMER;
-			tv.tv_sec = tdb->tdb_exp_timeout;
+			tv.tv_sec += tdb->tdb_exp_timeout;
 			timeout_add(&tdb->tdb_timer_tmo,
 			    hzto(&tv));
 		} else
@@ -296,7 +298,7 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_soft_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_SOFT_TIMER;
-			tv.tv_sec = tdb->tdb_soft_timeout;
+			tv.tv_sec += tdb->tdb_soft_timeout;
 			timeout_add(&tdb->tdb_stimer_tmo,
 			    hzto(&tv));
 		} else
