@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.37 2001/06/08 03:53:46 angelos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.38 2001/06/23 03:10:21 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1100,6 +1100,16 @@ send:
 out:
 		if (error == ENOBUFS) {
 			tcp_quench(tp->t_inpcb, 0);
+			return (0);
+		}
+		if (error == EMSGSIZE) {
+			/*
+			 * ip_output() will have already fixed the route
+			 * for us.  tcp_mtudisc() will, as its last action,
+			 * initiate retransmission, so it is important to
+			 * not do so here.
+			 */
+			tcp_mtudisc(tp->t_inpcb, 0);
 			return (0);
 		}
 		if ((error == EHOSTUNREACH || error == ENETDOWN)

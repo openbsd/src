@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.105 2001/06/23 02:27:10 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.106 2001/06/23 03:10:21 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -621,6 +621,18 @@ sendit:
 	 */
 	if (ip->ip_off & IP_DF) {
 		error = EMSGSIZE;
+		/*
+		 * This case can happen if the user changed the MTU
+		 * of an interface after enabling IP on it.  Because
+		 * most netifs don't keep track of routes pointing to
+		 * them, there is no way for one to update all its
+		 * routes when the MTU is changed.
+		 */
+		if ((ro->ro_rt->rt_flags & (RTF_UP | RTF_HOST))
+		    && !(ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU)
+		    && (ro->ro_rt->rt_rmx.rmx_mtu > ifp->if_mtu)) {
+			ro->ro_rt->rt_rmx.rmx_mtu = ifp->if_mtu;
+		}
 		ipstat.ips_cantfrag++;
 		goto bad;
 	}
