@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.16 2000/11/09 17:23:38 art Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.17 2001/02/23 14:52:51 csapuntz Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -906,8 +906,8 @@ nfssvc_iod(p)
 		     * up to, but not including nfs_strategy().
 		     */
 		    if (nbp) {
-			nbp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
-			reassignbuf(nbp, nbp->b_vp);
+			nbp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
+			buf_undirty(bp);
 			nbp->b_vp->v_numoutput++;
 		    }
 		    splx(s);

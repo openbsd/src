@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.27 2001/02/09 22:26:05 mickey Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.28 2001/02/23 14:52:51 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2762,11 +2762,11 @@ again:
 			    brelse(bp);
 			else {
 			    s = splbio();
+			    buf_undirty(bp);
 			    vp->v_numoutput++;
 			    bp->b_flags |= B_ASYNC;
-			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
+			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
 			    bp->b_dirtyoff = bp->b_dirtyend = 0;
-			    reassignbuf(bp, vp);
 			    splx(s);
 			    biodone(bp);
 			}
@@ -3049,16 +3049,14 @@ nfs_writebp(bp, force)
 	    bp, bp->b_vp, bp->b_validoff, bp->b_validend, bp->b_dirtyoff,
 	    bp->b_dirtyend);
 #endif
-	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
+	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
 
 	s = splbio();
-	if (oldflags & B_ASYNC) {
-		if (oldflags & B_DELWRI) {
-			reassignbuf(bp, bp->b_vp);
-		} else if (p) {
-			++p->p_stats->p_ru.ru_oublock;
-		}
-	}
+	buf_undirty(bp);
+
+	if ((oldflags & B_ASYNC) && !(oldflags & B_DELWRI) && p)
+		++p->p_stats->p_ru.ru_oublock;
+
 	bp->b_vp->v_numoutput++;
 	splx(s);
 
@@ -3088,11 +3086,7 @@ nfs_writebp(bp, force)
 
 	if( (oldflags & B_ASYNC) == 0) {
 		int rtval = biowait(bp);
-		if (oldflags & B_DELWRI) {
-		        s = splbio();
-			reassignbuf(bp, bp->b_vp);
-			splx(s);
-		} else if (p) {
+		if (!(oldflags & B_DELWRI) && p) {
 			++p->p_stats->p_ru.ru_oublock;
 		}
 		brelse(bp);

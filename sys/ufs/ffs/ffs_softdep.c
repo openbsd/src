@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.12 2001/02/21 23:24:31 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.13 2001/02/23 14:52:51 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -3231,7 +3231,7 @@ softdep_disk_write_complete(bp)
 			WORKLIST_INSERT(&reattach, wk);
 			if ((bp->b_flags & B_DELWRI) == 0)
 				stat_indir_blk_ptrs++;
-			bdirty(bp);
+			buf_dirty(bp);
 			continue;
 
 		default:
@@ -3390,7 +3390,7 @@ handle_written_inodeblock(inodedep, bp)
 		inodedep->id_savedino = NULL;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_inode_bitmap++;
-		bdirty(bp);
+		buf_dirty(bp);
 		return (1);
 	}
 	/*
@@ -3439,7 +3439,7 @@ handle_written_inodeblock(inodedep, bp)
 	 * its correct form.
 	 */
 	if (hadchanges)
-		bdirty(bp);
+		buf_dirty(bp);
 	/*
 	 * Process any allocdirects that completed during the update.
 	 */
@@ -3624,7 +3624,7 @@ handle_written_filepage(pagedep, bp)
 	if (chgs) {
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_dir_entry++;
-		bdirty(bp);
+		buf_dirty(bp);
 	}
 	/*
 	 * If no dependencies remain, the pagedep will be freed.

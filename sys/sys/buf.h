@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.17 2001/02/23 14:42:37 csapuntz Exp $	*/
+/*	$OpenBSD: buf.h,v 1.18 2001/02/23 14:52:49 csapuntz Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -204,7 +204,8 @@ int	breadn __P((struct vnode *, daddr_t, int, daddr_t *, int *, int,
 void	brelse __P((struct buf *));
 void	bremfree __P((struct buf *));
 void	bufinit __P((void));
-void	bdirty __P((struct buf *));
+void	buf_dirty __P((struct buf *));
+void    buf_undirty __P((struct buf *));
 int	bwrite __P((struct buf *));
 struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
 struct buf *geteblk __P((int));

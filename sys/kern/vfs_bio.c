@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.29 2001/02/21 23:24:30 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.30 2001/02/23 14:52:50 csapuntz Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -107,6 +107,9 @@ static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
 int count_lock_queue __P((void));
 
+
+int lodirtybufs, hidirtybufs, numdirtybufs;
+
 void
 bremfree(bp)
 	struct buf *bp;
@@ -164,6 +167,12 @@ bufinit()
 		binsheadfree(bp, dp);
 		binshash(bp, &invalhash);
 	}
+
+	hidirtybufs = nbuf / 4 + 20;
+	numdirtybufs = 0;
+
+	lodirtybufs = hidirtybufs / 2;
+
 }
 
 static __inline struct buf *
@@ -327,9 +336,10 @@ bwrite(bp)
 	 * to do this now, because if we don't, the vnode may not
 	 * be properly notified that its I/O has completed.
 	 */
-	if (wasdelayed)
+	if (wasdelayed) {
+		--numdirtybufs;
 		reassignbuf(bp, bp->b_vp);
-	else
+	} else
 		curproc->p_stats->p_ru.ru_oublock++;
 	
 
@@ -384,6 +394,7 @@ bdwrite(bp)
 		SET(bp->b_flags, B_DELWRI);
 		s = splbio();
 		reassignbuf(bp, bp->b_vp);
+		++numdirtybufs;
 		splx(s);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 	}
@@ -413,20 +424,31 @@ bawrite(bp)
 	VOP_BWRITE(bp);
 }
 
+/*
+ * Must be called at splbio()
+ */
 void
-bdirty(bp)
+buf_dirty(bp)
 	struct buf *bp;
 {
-	struct proc *p = curproc;       /* XXX */
-	int s;
-
 	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
 		SET(bp->b_flags, B_DELWRI);
-		s = splbio();
 		reassignbuf(bp, bp->b_vp);
-		splx(s);
-		if (p)
-			p->p_stats->p_ru.ru_oublock++;
+		++numdirtybufs;
+	}
+}
+
+/*
+ * Must be called at splbio()
+ */
+void
+buf_undirty(bp)
+	struct buf *bp;
+{
+	if (ISSET(bp->b_flags, B_DELWRI)) {
+		CLR(bp->b_flags, B_DELWRI);
+		reassignbuf(bp, bp->b_vp);
+		--numdirtybufs;
 	}
 }
 
@@ -478,7 +500,11 @@ brelse(bp)
 		if (LIST_FIRST(&bp->b_dep) != NULL)
 			buf_deallocate(bp);
 
-		CLR(bp->b_flags, B_DELWRI);
+		if (ISSET(bp->b_flags, B_DELWRI)) {
+			--numdirtybufs;
+			CLR(bp->b_flags, B_DELWRI);
+		}
+
 		if (bp->b_vp) {
 			reassignbuf(bp, bp->b_vp);
 			brelvp(bp);

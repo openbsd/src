@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.17 2001/02/23 14:42:38 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.18 2001/02/23 14:52:50 csapuntz Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -746,10 +746,8 @@ nfs_asyncio(bp, cred)
 	 * is currently doing a write for this file and will pick up the
 	 * delayed writes before going back to sleep.
 	 */
-	bp->b_flags |= B_DELWRI;
-
 	s = splbio();
-	reassignbuf(bp, bp->b_vp);
+	buf_dirty(bp);
 	splx(s);
 	biodone(bp);
 	return (0);
@@ -909,20 +907,12 @@ nfs_doio(bp, cr, p)
 	     * B_DELWRI and B_NEEDCOMMIT flags.
 	     */
 	    if (error == EINTR || (!error && (bp->b_flags & B_NEEDCOMMIT))) {
-		bp->b_flags |= B_DELWRI;
-
-		/*
-		 * Since for the B_ASYNC case, nfs_bwrite() has reassigned the
-		 * buffer to the clean list, we have to reassign it back to the
-		 * dirty one. Ugh.
-		 */
-		if (bp->b_flags & B_ASYNC) {
 		    s = splbio();
-		    reassignbuf(bp, vp);
+		    buf_dirty(bp);
 		    splx(s);
-		}
-		else if (error)
-		    bp->b_flags |= B_EINTR;
+
+		    if (!(bp->b_flags & B_ASYNC) && error)
+			    bp->b_flags |= B_EINTR;
 	    } else {
 		if (error) {
 		    bp->b_flags |= B_ERROR;

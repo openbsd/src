@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.8 1999/01/11 05:12:39 millert Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.9 2001/02/23 14:52:52 csapuntz Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -907,8 +907,9 @@ lfs_writeseg(fs, sp)
 				--locked_queue_count;
 			if (bp->b_flags & B_DELWRI)
 				TAILQ_REMOVE(&bdirties, bp, b_synclist);
-			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
+			bp->b_flags &= ~(B_ERROR | B_READ |
 			     B_LOCKED | B_GATHERED);
+			buf_undirty(bp);
 			if (bp->b_flags & B_CALL) {
 				/* if B_CALL, it was created with newbuf */
 				brelvp(bp);
@@ -918,7 +919,6 @@ lfs_writeseg(fs, sp)
 			} else {
 				bremfree(bp);
 				bp->b_flags |= B_DONE;
-				reassignbuf(bp, bp->b_vp);
 				brelse(bp);
 			}
 		}
@@ -982,9 +982,13 @@ lfs_writesuper(fs)
 	/* XXX Toggle between first two superblocks; for now just write first */
 	bp->b_dev = i_dev;
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
-	if (bp->b_flags & B_DELWRI)
+	if (bp->b_flags & B_DELWRI) {
+		panic ("lfs_writesuper: buffer should never be delayed */
+#if 0
 		TAILQ_REMOVE(&bdirties, bp, b_synclist);
-	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
+#endif
+	}
+	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ);
 	bp->b_iodone = lfs_supercallback;
 	vop_strategy_a.a_desc = VDESC(vop_strategy);
 	vop_strategy_a.a_bp = bp;
