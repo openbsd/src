@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.20 2001/02/23 14:52:50 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.21 2001/02/27 14:55:34 csapuntz Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -700,6 +700,17 @@ redo:
 			panic("Clustered write to wrong blocks");
 		}
 
+		/*
+		 * We might as well AGE the buffer here; it's either empty, or
+		 * contains data that we couldn't get rid of (but wanted to).
+		 */
+		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR);
+		tbp->b_flags |= (B_ASYNC | B_AGE);
+		s = splbio();
+		buf_undirty(tbp);
+		++tbp->b_vp->v_numoutput;
+		splx(s);
+
 		if (LIST_FIRST(&tbp->b_dep) != NULL)
 			buf_start(tbp);
 
@@ -708,17 +719,6 @@ redo:
 		bp->b_bufsize += size;
 
 		tbp->b_bufsize -= size;
-
-		s = splbio();
-		buf_undirty(bp);
-		/*
-		 * We might as well AGE the buffer here; it's either empty, or
-		 * contains data that we couldn't get rid of (but wanted to).
-		 */
-		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR);
-		tbp->b_flags |= (B_ASYNC | B_AGE);
-		++tbp->b_vp->v_numoutput;
-		splx(s);
 		b_save->bs_children[i] = tbp;
 
 		cp += size;
