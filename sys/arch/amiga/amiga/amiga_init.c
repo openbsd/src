@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.16 1998/04/04 17:13:17 niklas Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.17 2000/05/27 19:45:17 art Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -77,9 +77,7 @@ extern char *esym;
 extern u_long aga_enable;
 #endif
 
-#ifdef MACHINE_NONCONTIG
 extern u_long noncontig_enable;
-#endif
 
 /*
  * some addresses used in locore
@@ -229,10 +227,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	if (flags & 1)
 		RELOC(aga_enable, u_long) |= 1;
 #endif
-#ifdef MACHINE_NONCONTIG
 	if (flags & (3 << 1))
 		RELOC(noncontig_enable, u_long) = (flags >> 1) & 3;
-#endif
+
 	RELOC(scsi_nosync, u_long) = inh_sync;
 
 	/*
