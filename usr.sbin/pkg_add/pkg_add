@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.144 2004/12/16 11:19:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.145 2004/12/16 11:38:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -83,6 +83,18 @@ sub can_install($$$)
 	my %conflicts = map {($_,1)} @conflicts;
 	@conflicts = keys %conflicts;
 
+	if (defined $conflicts{$pkgname}) {
+		if ($state->{forced}->{installed}) {
+			# deal with replacing later, not an error.
+			if (!$state->{replace}) {
+				return undef;
+			}
+		} else {
+			print "Can't install $pkgname because it's already installed\n";
+			$errors++;
+			return undef;
+		}
+	}
 	if (!$state->{replace} || @conflicts >= 2) {
 		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
 		$errors++;
