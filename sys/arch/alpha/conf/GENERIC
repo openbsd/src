@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.71 2001/04/14 17:51:41 art Exp $
+#	$OpenBSD: GENERIC,v 1.72 2001/04/14 18:42:43 mjacob Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -180,6 +180,7 @@ tga*	at pci? dev ? function ?	# DEC ZLXp-E[123] graphics
 
 # Media Independent Interface (mii) drivers
 # UNTESTED: some of the following PHY's are untested.
+eephy*	at mii? phy ?			# Marvell PHYs for Intel GigE
 exphy*	at mii? phy ?			# 3Com internal PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
