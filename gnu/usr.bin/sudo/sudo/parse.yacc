@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: parse.yacc,v 1.2 1996/11/11 00:27:26 millert Exp $";
+static char rcsid[] = "$Id: parse.yacc,v 1.3 1996/11/11 15:34:40 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -509,7 +509,7 @@ useraliases	:	useralias
 		;
 
 useralias	:	ALIAS { push; }	'=' userlist {
-			    if (!add_alias($1, USER))
+			    if (user_matches == TRUE && !add_alias($1, USER))
 				YYERROR;
 			    pop;
 			    (void) free($1);
