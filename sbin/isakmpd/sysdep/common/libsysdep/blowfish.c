@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.2 2002/02/19 19:39:38 millert Exp $ */
+/* $OpenBSD: blowfish.c,v 1.3 2003/03/14 14:49:08 ho Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -502,7 +502,7 @@ Blowfish_expandstate(blf_ctx *c, const u_int8_t *data, u_int16_t databytes,
 void
 blf_key(blf_ctx *c, const u_int8_t *k, u_int16_t len)
 {
-	/* Initalize S-boxes and subkeys with Pi */
+	/* Initialize S-boxes and subkeys with Pi */
 	Blowfish_initstate(c);
 
 	/* Transform S-boxes and subkeys with key */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.c,v 1.18 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: transport.c,v 1.19 2003/03/14 14:49:08 ho Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ transport_map (void (*func) (struct transport *))
 }
 
 /*
- * Build up a file desciptor set FDS with all transport descriptors we want
+ * Build up a file descriptor set FDS with all transport descriptors we want
  * to read from.  Return the number of file descriptors select(2) needs to
  * check in order to cover the ones we setup in here.
  */
@@ -188,7 +188,7 @@ transport_fd_set (fd_set *fds)
 }
 
 /*
- * Build up a file desciptor set FDS with all the descriptors belonging to
+ * Build up a file descriptor set FDS with all the descriptors belonging to
  * transport where messages are queued for transmittal.  Return the number
  * of file descriptors select(2) needs to check in order to cover the ones
  * we setup in here.

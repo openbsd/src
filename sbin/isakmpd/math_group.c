@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.c,v 1.16 2002/06/12 18:34:42 ho Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.17 2003/03/14 14:49:08 ho Exp $	*/
 /*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ struct group groups[] = {
 };
 
 /*
- * Initalize the group structure for later use,
+ * Initialize the group structure for later use,
  * this is done by converting the values given in the describtion
  * and converting them to their native representation.
  */
@@ -407,12 +407,12 @@ group_init (void)
     switch (groups[i].type)
       {
 #ifdef USE_EC
-      case EC2N:		/* Initalize an Elliptic Curve over GF(2**n) */
+      case EC2N:		/* Initialize an Elliptic Curve over GF(2**n) */
 	ec2n_init (&groups[i]);
 	break;
 #endif
 
-      case MODP:		/* Initalize an over GF(p) */
+      case MODP:		/* Initialize an over GF(p) */
 	modp_init (&groups[i]);
 	break;
 	
@@ -831,7 +831,7 @@ ec2n_setrandom (struct group *group, ec2np_ptr x)
 
 /*
  * This is an attempt at operation abstraction. It can happen
- * that we need to initalize the y variable for the operation
+ * that we need to initialize the y variable for the operation
  * to proceed correctly. When this is the case operation has
  * to supply the variable 'a' with the chunks of the Y cooridnate
  * set to zero.

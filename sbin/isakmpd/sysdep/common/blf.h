@@ -1,4 +1,4 @@
-/* $OpenBSD: blf.h,v 1.3 2002/02/17 19:42:28 millert Exp $ */
+/* $OpenBSD: blf.h,v 1.4 2003/03/14 14:49:08 ho Exp $ */
 /*
  * Blowfish - a fast block cipher designed by Bruce Schneier
  *
@@ -35,7 +35,7 @@
 #define _BLF_H_
 
 /* Schneier states the maximum key length to be 56 bytes.
- * The way how the subkeys are initalized by the key up
+ * The way how the subkeys are initialized by the key up
  * to (N+2)*4 i.e. 72 bytes are utilized.
  * Warning: For normal blowfish encryption only 56 bytes
  * of the key affect all cipherbits.
