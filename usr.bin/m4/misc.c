@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2000/01/13 17:35:10 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2000/01/15 14:26:00 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.16 2000/01/13 17:35:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.17 2000/01/15 14:26:00 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,11 +66,11 @@ static size_t strsize = STRSPMAX;
 static size_t bufsize = BUFSIZE;
 static int low_sp = 0;
 
-pbent *buf;			/* push-back buffer	       */
-pbent *bufbase;			/* the base for current ilevel */
-pbent *bbase[MAXINP];		/* the base for each ilevel    */
-pbent *bp; 			/* first available character   */
-static pbent *endpbb;			/* end of push-back buffer     */
+char *buf;			/* push-back buffer	       */
+char *bufbase;			/* the base for current ilevel */
+char *bbase[MAXINP];		/* the base for each ilevel    */
+char *bp; 			/* first available character   */
+static char *endpbb;			/* end of push-back buffer     */
 
 
 static void enlarge_bufspace __P((void));
@@ -96,8 +96,10 @@ indx(s1, s2)
  */
 void
 putback(c)
-	pbent c;
+	int c;
 {
+	if (c == EOF)
+		return;
 	if (bp >= endpbb)
 		enlarge_bufspace();
 	*bp++ = c;
@@ -149,7 +151,7 @@ initspaces()
 	strspace = xalloc(strsize+1);
 	ep = strspace;
 	endest = strspace+strsize;
-	buf = (pbent *)xalloc(bufsize * sizeof(pbent));
+	buf = (char *)xalloc(bufsize);
 	bufbase = buf;
 	bp = buf;
 	endpbb = buf + bufsize;
@@ -162,8 +164,8 @@ initspaces()
  * duplicate it transparently, and to reclaim the correct
  * space when the stack is unwound.
  */
-static
-void enlarge_strspace()
+static void 
+enlarge_strspace()
 {
 	char *newstrspace;
 
@@ -182,14 +184,14 @@ void enlarge_strspace()
 	endest = strspace + strsize;
 }
 
-static
-void enlarge_bufspace()
+static void 
+enlarge_bufspace()
 {
-	pbent *newbuf;
+	char *newbuf;
 	int i;
 
 	bufsize *= 2;
-	newbuf = realloc(buf, bufsize*sizeof(pbent));
+	newbuf = realloc(buf, bufsize);
 	if (!newbuf)
 		errx(1, "too many characters pushed back");
 	for (i = 0; i < MAXINP; i++)
@@ -299,7 +301,9 @@ int
 obtain_char(f)
 	struct input_file *f;
 {
-	if (f->c == '\n')
+	if (f->c == EOF)
+		return EOF;
+	else if (f->c == '\n')
 		f->lineno++;
 
 	f->c = fgetc(f->file);
@@ -324,6 +328,7 @@ release_input(f)
 {
 	if (f->file != stdin)
 	    fclose(f->file);
+	f->c = EOF;
 	/*
 	 * XXX can't free filename, as there might still be 
 	 * error information pointing to it.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 2000/01/12 17:49:53 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 2000/01/15 14:26:00 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -89,10 +89,10 @@ extern int fp; 			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */
 extern int sp;			/* current m4 stack pointer */
-extern pbent *bp;		/* first available character */
-extern pbent *buf;		/* push-back buffer */
-extern pbent *bufbase;		/* buffer base for this ilevel */
-extern pbent *bbase[];		/* buffer base per ilevel */
+extern char *bp;		/* first available character */
+extern char *buf;		/* push-back buffer */
+extern char *bufbase;		/* buffer base for this ilevel */
+extern char *bbase[];		/* buffer base per ilevel */
 extern char ecommt[MAXCCHARS+1];/* end character for comment */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[MAXCCHARS+1];/* left quote character (`) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.12 2000/01/12 17:49:53 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.13 2000/01/15 14:26:00 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -144,8 +144,6 @@ typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
 	char 	*sstr;		/* string entry */
 } stae;
-
-typedef short pbent;		/* pushback entry; needs to hold chars + EOF */
 
 struct input_file {
 	FILE 		*file;

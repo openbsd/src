@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2000/01/13 17:35:09 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2000/01/15 14:26:00 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.27 2000/01/13 17:35:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.28 2000/01/15 14:26:00 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,6 @@ main(argc,argv)
 	if (*m4wraps) { 		/* anything for rundown ??   */
 		ilevel = 0;		/* in case m4wrap includes.. */
 		bufbase = bp = buf;	/* use the entire buffer   */
-		putback(EOF);		/* eof is a must !!	     */
 		pbstr(m4wraps); 	/* user-defined wrapup act   */
 		macro();		/* last will and testament   */
 	}
@@ -257,8 +256,7 @@ do_look_ahead(t, token)
 	for (i = 1; *++token; i++) {
 		t = gpbc();
 		if (t == EOF || t != *token) {
-			if (t != EOF)
-				putback(t);
+			putback(t);
 			while (--i)
 				putback(*--token);
 			return 0;
