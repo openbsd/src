@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.44 2005/03/13 00:17:19 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.45 2005/03/14 15:22:27 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -64,15 +64,11 @@ The options are as follows:
 .It Fl d
 Causes
 .Nm
-to perform a depth-first traversal, i.e., directories
-are visited in post-order and all entries in a directory will be acted
-on before the directory itself.
+to visit directories in post-order
+i.e. all entries in a directory will be acted on before the directory itself.
 By default,
 .Nm
-visits directories in pre-order, i.e., before their contents.
-Note, the default is
-.Em not
-a breadth-first traversal.
+visits directories in pre-order i.e. before their contents.
 .It Fl f Ar path
 Specifies a file hierarchy for
 .Nm
