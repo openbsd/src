@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.4 1996/07/30 02:01:16 downsj Exp $	*/
+/*	$OpenBSD: popen.c,v 1.5 1996/10/15 08:24:06 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -102,9 +102,10 @@ ftpd_popen(program, type)
 		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
 
 		memset(&gl, 0, sizeof(gl));
-		if (glob(argv[argc], flags, NULL, &gl))
-			gargv[gargc++] = strdup(argv[argc]);
-		else
+		if (glob(argv[argc], flags, NULL, &gl)) {
+			if (gargc < 1000)
+				gargv[gargc++] = strdup(argv[argc]);
+		} else
 			for (pop = gl.gl_pathv; *pop && gargc < 1000; pop++)
 				gargv[gargc++] = strdup(*pop);
 		globfree(&gl);
