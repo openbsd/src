@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.8 2002/11/02 19:17:41 fgsch Exp $
+@c	$Id: amdref.texinfo,v 1.9 2002/11/25 18:04:10 pvalchev Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -1993,7 +1993,7 @@ may be on a remote filesystem to which @i{Amd} does not have write
 permission.
 
 When an attempt to unmount a @samp{host} filesystem mount fails, @i{Amd}
-remounts any filesystems which had succesfully been unmounted.  To do
+remounts any filesystems which had successfully been unmounted.  To do
 this @i{Amd} queries the mount daemon again and obtains a fresh copy of
 the export list.  @i{Amd} then tries to mount any exported filesystems
 which are not currently mounted.
@@ -2293,7 +2293,7 @@ amd /homes hesiod.homes -cache:=inc
 @end example
 
 will cause @samp{/homes} to be automounted using the @dfn{Hesiod} name
-server with local incremental caching of all succesfully resolved names.
+server with local incremental caching of all successfully resolved names.
 
 All cached data is forgotten whenever @i{Amd} receives a @samp{SIGHUP}
 signal and, if cache @samp{all} mode was selected, the cache will be

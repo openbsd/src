@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.8 2002/08/05 07:24:26 pvalchev Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.9 2002/11/25 18:04:10 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -515,7 +515,7 @@ afs_umounted(am_node *mp)
  * and can then determine whether the mount was successful or not.  If
  * not, it updates the data structure and tries again until there are no
  * more ways to try the mount, or some other permanent error occurs.
- * In the mean time no RPC reply is sent, even after the mount is succesful.
+ * In the mean time no RPC reply is sent, even after the mount is successful.
  * We rely on the RPC retry mechanism to resend the lookup request which
  * can then be handled.
  */

@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)opts.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: opts.c,v 1.5 2002/08/05 07:24:26 pvalchev Exp $";
+static char *rcsid = "$Id: opts.c,v 1.6 2002/11/25 18:04:10 pvalchev Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -590,7 +590,7 @@ static char expand_error[] = "No space to expand \"%s\"";
 				}
 			}
 			/*
-			 * Check that the search was succesful
+			 * Check that the search was successful
 			 */
 			if (!op->name) {
 				/*
