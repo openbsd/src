@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2004/03/11 08:53:54 xsa Exp $
 OpenBSDInstallPrelude
 
 The installation can be broken down into four basic steps:
@@ -103,7 +103,7 @@ Booting the system:
 Double-click on the BSD/Mac68k Booter icon to start the application.  Check
 that the options in the Booting dialog look sane--especially the SCSI ID.
 If not, correct them to your preference.  You will have to change the kernel
-name to "/bsd".  When you are satisfied with your choices, try booting
+name to "bsd".  When you are satisfied with your choices, try booting
 OpenBSD.
 
 If you wish to save your preferences, choose the "Save Preferences"
