@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.9 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.10 2003/09/02 16:58:11 tedu Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -211,6 +211,7 @@ awi_wep_getnwkey(sc, nwkey)
 	suerr = suser(curproc, 0);
 #else
 	suerr = suser(curproc->p_ucred, &curproc->p_acflag);
+#endif
 #endif
 	error = 0;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
