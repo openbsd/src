@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.18 1999/09/10 20:47:13 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.19 1999/09/18 15:43:33 kstailey Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -276,6 +276,10 @@ typedef struct {
 #define ELF32_ST_BIND(x)	((x) >> 4)
 #define ELF32_ST_TYPE(x)	(((unsigned int) x) & 0xf)
 #define ELF32_ST_INFO(b,t)	(((b) << 4) + ((t) & 0xf))
+
+#define ELF64_ST_BIND(x)	((x) >> 4)
+#define ELF64_ST_TYPE(x)	(((unsigned int) x) & 0xf)
+#define ELF64_ST_INFO(b,t)	(((b) << 4) + ((t) & 0xf))
 
 /* Symbol Binding - ELF32_ST_BIND - st_info */
 #define STB_LOCAL	0		/* Local symbol */
