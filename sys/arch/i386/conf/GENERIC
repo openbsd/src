@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.106 1999/03/11 22:00:17 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.107 1999/03/31 18:33:26 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -203,12 +203,12 @@ wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 inphy*	at mii? phy ?				# Intel 82555 PHYs
 #icsphy*	at mii? phy ?			# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
-#nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 #mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
-#ukphy*	at mii? phy ?				# "unknown" PHYs
+ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# sound port driver
