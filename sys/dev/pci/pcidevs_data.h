@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.41 1998/03/28 18:30:25 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.42 1998/03/28 18:36:41 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -978,7 +978,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC,
 	    0,
 	    "Intel",
-	    "82434LX/NX (Mercury/Neptune) PCI, Cache, and DRAM Controller",
+	    "82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82092AA,
@@ -1038,13 +1038,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371MX,
 	    0,
 	    "Intel",
-	    "82371 (Triton MX) PCI-ISA Bridge and IDE Controller",
+	    "82371 (Triton MX) PCI-ISA and IDE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX,
 	    0,
 	    "Intel",
-	    "82437 (Triton MX) PCI, Cache, and DRAM Controller",
+	    "82437 (Triton MX) PCI/CACHECOMP/DRAM Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX,
@@ -1227,7 +1227,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA Millennium II 2164W",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM_II_AGP,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM_IIAGP,
 	    0,
 	    "Matrox",
 	    "MGA Millennium II 2164WA-B AGP",

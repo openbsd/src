@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.41 1998/03/28 18:30:25 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.42 1998/03/28 18:36:41 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -701,7 +701,7 @@
 #define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (FasterNet) */
 #define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
-/* product DEC ???	0x0010	??? VME Interface */
+/* product DEC ???		0x0010	??? VME Interface */
 #define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (Tulip Pass 3) */
 #define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (OPPO) */
 #define	PCI_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/3 */
@@ -768,7 +768,7 @@
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX (Saturn) Cache and DRAM controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378IB PCI-ISA Bridge (System I/O) */
 #define	PCI_PRODUCT_INTEL_82426EX	0x0486		/* 82426EX PCI-to-ISA Bridge (PCIB) */
-#define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI, Cache, and DRAM Controller */
+#define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
 #define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 LAN Controller */
@@ -778,8 +778,8 @@
 #define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX (Triton) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82371	0x122e		/* 82371FB (Triton) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82438	0x1230		/* 82438 (Triton) IDE controller */
-#define	PCI_PRODUCT_INTEL_82371MX	0x1234		/* 82371 (Triton MX) PCI-ISA Bridge and IDE Controller */
-#define	PCI_PRODUCT_INTEL_82437MX	0x1235		/* 82437 (Triton MX) PCI, Cache, and DRAM Controller */
+#define	PCI_PRODUCT_INTEL_82371MX	0x1234		/* 82371 (Triton MX) PCI-ISA and IDE */
+#define	PCI_PRODUCT_INTEL_82437MX	0x1235		/* 82437 (Triton MX) PCI/CACHECOMP/DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82441FX	0x1237		/* 82441FX PCI and Memory Controller (PMC) */
 #define	PCI_PRODUCT_INTEL_82380AB	0x123c		/* 82380AB Mobile PCI-to-ISA Bridge (MISA) */
 #define	PCI_PRODUCT_INTEL_82380FB	0x124b		/* 82380FB Mobile PCI-to-PCI Bridge (MPCI2) */
@@ -822,7 +822,7 @@
 #define	PCI_PRODUCT_MATROX_MILLENIUM	0x0519		/* MGA Millenium 2064W (Storm) */
 #define	PCI_PRODUCT_MATROX_MYSTIQUE_220	0x051A		/* MGA 1064SG 220MHz */
 #define	PCI_PRODUCT_MATROX_MILLENNIUM_II	0x051B		/* MGA Millennium II 2164W */
-#define	PCI_PRODUCT_MATROX_MILLENNIUM_II_AGP	0x051F		/* MGA Millennium II 2164WA-B AGP */
+#define	PCI_PRODUCT_MATROX_MILLENNIUM_IIAGP	0x051F		/* MGA Millennium II 2164WA-B AGP */
 #define	PCI_PRODUCT_MATROX_MYSTIQUE	0x102B		/* MGA 1064SG */
 
 /* Mylex products */
