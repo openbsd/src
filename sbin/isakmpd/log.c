@@ -1,9 +1,9 @@
-/*	$OpenBSD: log.c,v 1.20 2001/07/10 10:46:29 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.21 2001/07/10 10:47:37 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
