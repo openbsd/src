@@ -1,2 +1,0 @@
-# $NetBSD: rd.disktab,v 1.2 1995/10/13 16:38:29 gwr Exp $
-# The ramdisk has no need for disktab (yet)

@@ -1,9 +1,0 @@
-#!/bin/sh
-# $NetBSD: Showsyms,v 1.2 1995/10/13 16:51:31 gwr Exp $
-# Small helper to print out symbols in a useful order.
-
-nm -n rd_bin.syms |grep -i ' a '
-nm -n rd_bin.syms |grep -i ' t '
-nm -n rd_bin.syms |grep -i ' d '
-nm -n rd_bin.syms |grep -i ' b '
-nm -p rd_bin.syms |grep -i ' c '

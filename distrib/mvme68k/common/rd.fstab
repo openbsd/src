@@ -1,2 +1,0 @@
-# $NetBSD: rd.fstab,v 1.2 1995/10/13 16:38:31 gwr Exp $
-/dev/rd0 / ufs rw 1 1
