@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.19 2000/06/17 14:38:18 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.20 2000/06/17 14:40:29 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -236,12 +236,12 @@ typedef struct GNode {
 #define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
 
 /*
- * The TARG_ constants are used when calling the Targ_FindNode and
- * Targ_FindList functions in targ.c. They simply tell the functions what to
- * do if the desired node(s) is (are) not found. If the TARG_CREATE constant
- * is given, a new, empty node will be created for the target, placed in the
- * table of all targets and its address returned. If TARG_NOCREATE is given,
- * a NULL pointer will be returned.
+ * The TARG_ constants are used when calling the Targ_FindNode function in 
+ * targ.c. They simply tell the function what to do if the desired node(s) 
+ * is (are) not found. 
+ * If the TARG_CREATE constant is given, a new, empty node will be created 
+ * for the target, placed in the table of all targets and its address returned. 
+ * If TARG_NOCREATE is given, a NULL pointer will be returned.
  */
 #define TARG_CREATE	0x01	  /* create node if not found */
 #define TARG_NOCREATE	0x00	  /* don't create it */

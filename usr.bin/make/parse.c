@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.43 2000/06/17 14:38:18 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.44 2000/06/17 14:40:29 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.43 2000/06/17 14:38:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.44 2000/06/17 14:40:29 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2649,31 +2649,25 @@ Parse_End()
  *	Return a Lst of the main target to create for main()'s sake. If
  *	no such target exists, we Punt with an obnoxious error message.
  *
- * Results:
- *	A Lst of the single node to create.
- *
  * Side Effects:
- *	None.
+ *	Add the node to create to the list.
  *
  *-----------------------------------------------------------------------
  */
-Lst
-Parse_MainName()
-{
+void
+Parse_MainName(listmain)
     Lst           listmain;	/* result list */
+{
 
-    listmain = Lst_New();
-
-    if (mainNode == NULL) {
+    if (mainNode == NULL)
 	Punt ("no target to make.");
     	/*NOTREACHED*/
-    } else if (mainNode->type & OP_DOUBLEDEP) {
+    else if (mainNode->type & OP_DOUBLEDEP) {
 	Lst_AtEnd(listmain, mainNode);
 	Lst_Concat(listmain, &mainNode->cohorts, LST_CONCNEW);
     }
     else
 	Lst_AtEnd(listmain, mainNode);
-    return (listmain);
 }
 
 unsigned long

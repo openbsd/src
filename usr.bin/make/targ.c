@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.19 2000/06/17 14:38:20 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.20 2000/06/17 14:40:30 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.19 2000/06/17 14:38:20 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.20 2000/06/17 14:40:30 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,10 +68,7 @@ static char *rcsid = "$OpenBSD: targ.c,v 1.19 2000/06/17 14:38:20 espie Exp $";
  *	    	  	    	flags are right (TARG_CREATE)
  *
  *	Targ_FindList	    	Given a list of names, find nodes for all
- *	    	  	    	of them. If a name doesn't exist and the
- *	    	  	    	TARG_NOCREATE flag was given, an error message
- *	    	  	    	is printed. Else, if a name doesn't exist,
- *	    	  	    	its node is created.
+ *	    	  	    	of them, creating nodes if needed.
  *
  *	Targ_Ignore	    	Return TRUE if errors should be ignored when
  *	    	  	    	creating the given target.
@@ -289,51 +286,35 @@ Targ_FindNode (name, flags)
  * Targ_FindList --
  *	Make a complete list of GNodes from the given list of names
  *
- * Results:
- *	A complete list of graph nodes corresponding to all instances of all
- *	the names in names.
- *
  * Side Effects:
- *	If flags is TARG_CREATE, nodes will be created for all names in
- *	names which do not yet have graph nodes. If flags is TARG_NOCREATE,
- *	an error message will be printed for each name which can't be found.
+ *	Nodes will be created for all names which do not yet have graph
+ *	nodes.
+ *
+ *	A complete list of graph nodes corresponding to all instances of
+ *	all names is added to nodes.
  * -----------------------------------------------------------------------
  */
-Lst
-Targ_FindList(names, flags)
-    Lst        	   names;	/* list of names to find */
-    int            flags;	/* flags used if no node is found for a given
-				 * name */
+void
+Targ_FindList(nodes, names)
+    Lst		nodes;		/* result list */
+    Lst		names;		/* list of names to find */
 {
-    Lst            nodes;	/* result list */
-    register LstNode  ln;		/* name list element */
-    register GNode *gn;		/* node in tLn */
-    char    	  *name;
+    LstNode  	ln;		/* name list element */
+    GNode	*gn;		/* node in tLn */
+    char	*name;
 
-    nodes = Lst_New();
-
-    if (Lst_Open (names) == FAILURE) {
-	return (nodes);
-    }
-    while ((ln = Lst_Next (names)) != NULL) {
+    for (ln = Lst_First(names); ln != NULL; ln = Lst_Succ(ln)) {
 	name = (char *)Lst_Datum(ln);
-	gn = Targ_FindNode (name, flags);
-	if (gn != NULL) {
-	    /*
-	     * Note: Lst_AtEnd must come before the Lst_Concat so the nodes
-	     * are added to the list in the order in which they were
-	     * encountered in the makefile.
-	     */
-	    Lst_AtEnd(nodes, gn);
-	    if (gn->type & OP_DOUBLEDEP) {
-		Lst_Concat(nodes, &gn->cohorts, LST_CONCNEW);
-	    }
-	} else if (flags == TARG_NOCREATE) {
-	    Error ("\"%s\" -- target unknown.", name);
-	}
+	gn = Targ_FindNode(name, TARG_CREATE);
+	/*
+	 * Note: Lst_AtEnd must come before the Lst_Concat so the nodes
+	 * are added to the list in the order in which they were
+	 * encountered in the makefile.
+	 */
+	Lst_AtEnd(nodes, gn);
+	if (gn->type & OP_DOUBLEDEP)
+	    Lst_Concat(nodes, &gn->cohorts, LST_CONCNEW);
     }
-    Lst_Close (names);
-    return (nodes);
 }
 
 /*-

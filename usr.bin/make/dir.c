@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.20 2000/06/17 14:38:14 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.21 2000/06/17 14:40:27 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.20 2000/06/17 14:38:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.21 2000/06/17 14:40:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -588,20 +588,15 @@ Dir_Expand (word, path, expansions)
 		}
 	    }
 	    if (*cp == '{') {
-		/*
-		 * This one will be fun.
-		 */
+		/* This one will be fun.  */
 		DirExpandCurly(word, cp, path, expansions);
 		return;
 	    } else if (*cp != '\0') {
-		/*
-		 * Back up to the start of the component
-		 */
+		/* Back up to the start of the component.  */
 		char  *dirpath;
 
-		while (cp > word && *cp != '/') {
+		while (cp > word && *cp != '/')
 		    cp--;
-		}
 		if (cp != word) {
 		    char sc;
 		    /*
@@ -619,36 +614,28 @@ Dir_Expand (word, path, expansions)
 		     * looking for Etc, it won't be found. Ah well.
 		     * Probably not important.
 		     */
-		    if (dirpath != (char *)NULL) {
+		    if (dirpath != NULL) {
+		    	LIST temp;
+
 			char *dp = &dirpath[strlen(dirpath) - 1];
 			if (*dp == '/')
 			    *dp = '\0';
-			path = Lst_New();
-			Dir_AddDir(path, dirpath);
-			DirExpandInt(cp+1, path, expansions);
-			Lst_Delete(path, NOFREE);
+			Lst_Init(&temp);
+			Dir_AddDir(&temp, dirpath);
+			DirExpandInt(cp+1, &temp, expansions);
+			Lst_Destroy(&temp, NOFREE);
 		    }
-		} else {
-		    /*
-		     * Start the search from the local directory
-		     */
+		} else
+		    /* Start the search from the local directory.  */
 		    DirExpandInt(word, path, expansions);
-		}
-	    } else {
-		/*
-		 * Return the file -- this should never happen.
-		 */
+	    } else
+		/* Return the file -- this should never happen.  */
 		DirExpandInt(word, path, expansions);
-	    }
 	} else {
-	    /*
-	     * First the files in dot
-	     */
+	    /* First the files in dot.  */
 	    DirMatchFiles(word, dot, expansions);
 
-	    /*
-	     * Then the files in every other directory on the path.
-	     */
+	    /* Then the files in every other directory on the path.  */
 	    DirExpandInt(word, path, expansions);
 	}
     }

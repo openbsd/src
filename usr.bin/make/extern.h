@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2000/06/17 14:40:28 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ void Parse_File __P((char *, FILE *));
 void Parse_Init __P((void));
 void Parse_End __P((void));
 void Parse_FromString __P((char *, unsigned long));
-Lst Parse_MainName __P((void));
+void Parse_MainName __P((Lst));
 unsigned long Parse_Getlineno __P((void));
 const char *Parse_Getfilename __P((void));
 
@@ -131,7 +131,7 @@ void Targ_Init __P((void));
 void Targ_End __P((void));
 GNode *Targ_NewGN __P((char *));
 GNode *Targ_FindNode __P((char *, int));
-Lst Targ_FindList __P((Lst, int));
+void Targ_FindList __P((Lst, Lst));
 Boolean Targ_Ignore __P((GNode *));
 Boolean Targ_Silent __P((GNode *));
 Boolean Targ_Precious __P((GNode *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2000/06/17 14:38:18 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2000/06/17 14:40:29 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.33 2000/06/17 14:38:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.34 2000/06/17 14:40:29 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -468,7 +468,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	Lst targs;	/* target nodes to create -- passed to Make_Init */
+	LIST targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
 	char *p, *path, *pathp, *pwd;
@@ -718,6 +718,9 @@ main(argc, argv)
 		ln = Lst_Find(&sysMkPath, ReadMakefile, NULL);
 		if (ln != NULL)
 			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
+#ifdef CLEANUP
+		Lst_Destroy(&sysMkPath, (SimpleProc)free);
+#endif
 	}
 
 	if (!Lst_IsEmpty(&makefiles)) {
@@ -802,10 +805,11 @@ main(argc, argv)
 	 * to create. If none was given on the command line, we consult the
 	 * parsing module to find the main target(s) to create.
 	 */
-	if (Lst_IsEmpty(&create))
-		targs = Parse_MainName();
+	Lst_Init(&targs);
+	if (!Lst_IsEmpty(&create))
+		Targ_FindList(&targs, &create);
 	else
-		targs = Targ_FindList(&create, TARG_CREATE);
+		Parse_MainName(&targs);
 
 	if (!compatMake && !printVars) {
 		/*
@@ -822,16 +826,16 @@ main(argc, argv)
 		}
 
 		/* Traverse the graph, checking on all the targets */
-		outOfDate = Make_Run(targs);
+		outOfDate = Make_Run(&targs);
 	} else if (!printVars) {
 		/*
 		 * Compat_Init will take care of creating all the targets as
 		 * well as initializing the module.
 		 */
-		Compat_Run(targs);
+		Compat_Run(&targs);
 	}
 
-	Lst_Delete(targs, NOFREE);
+	Lst_Destroy(&targs, NOFREE);
 	Lst_Destroy(&variables, NOFREE);
 	Lst_Destroy(&makefiles, NOFREE);
 	Lst_Destroy(&create, (SimpleProc)free);
