@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.35 2005/01/01 05:17:32 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.36 2005/01/15 18:44:28 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3453,8 +3453,21 @@ em_enable_intr(struct em_softc* sc)
 void
 em_disable_intr(struct em_softc *sc)
 {
-	E1000_WRITE_REG(&sc->hw, IMC, 
-			(0xffffffff & ~E1000_IMC_RXSEQ));
+	/*
+	 * The first version of 82542 had an errata where when link
+	 * was forced it would stay up even if the cable was disconnected
+	 * Sequence errors were used to detect the disconnect and then
+	 * the driver would unforce the link.  This code is in the ISR.
+	 * For this to work correctly the Sequence error interrupt had
+	 * to be enabled all the time.
+	 */
+
+	if (sc->hw.mac_type == em_82542_rev2_0)
+	    E1000_WRITE_REG(&sc->hw, IMC,
+	        (0xffffffff & ~E1000_IMC_RXSEQ));
+	else
+	    E1000_WRITE_REG(&sc->hw, IMC,
+	        0xffffffff);
 	return;
 }
 
