@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.7 1996/06/25 15:57:20 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.8 1996/07/02 10:43:56 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1627,9 +1627,11 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				return (1);
 			}
 			if (opt_flags & OP_ALLDIRS) {
+#if 0
 				syslog(LOG_ERR, "Could not remount %s: %m",
 					dirp);
 				return (1);
+#endif
 			}
 			/* back up over the last component */
 			while (*cp == '/' && cp > dirp)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.2 1996/03/21 00:16:10 niklas Exp $
+.\"	$OpenBSD: exports.5,v 1.3 1996/07/02 10:43:55 deraadt Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -79,7 +79,8 @@ flag;
 this form allows the host(s) to mount at any point within the filesystem,
 including regular files if the
 .Fl r
-option is used on mountd.
+option is used on mountd
+(see BUGS below).
 The pathnames must not have any symbolic links in them and should not have
 any "." or ".." components.
 Mount points for a filesystem may appear on multiple lines each with
@@ -255,3 +256,24 @@ filesystem be specified on adjacent lines going down the tree.
 You cannot specify a hostname that is also the name of a netgroup.
 Specifying the full domain specification for a hostname can normally
 circumvent the problem.
+.Pp
+Regarding
+.Fl alldirs ,
+because NFS mount filehandles are filesystem wide the
+.Fl alldirs
+option applies to exports of the entire filesystem -- even mountpoints
+that are higher up elsewhere in the directory hierarchy.
+Hence if the server has a filesystem
+.Sy /export
+and you wished to export the sub-directory
+.Bd -literal -offset indent
+/export/root/client -alldirs client.foo.com
+.Ed
+.Pp
+you must realize that this also allows mounts to be requested
+against other locations in the
+.Sy /export
+filesystem; thus the host client.foo.com is also permitted to
+mount the directory
+.Sy /export/root/client2
+if it exists.
