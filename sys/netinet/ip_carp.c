@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.37 2004/03/10 21:36:47 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.38 2004/03/18 20:46:16 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1070,7 +1070,6 @@ carp_master_down(void *v)
 void
 carp_setrun(struct carp_softc *sc, sa_family_t af)
 {
-	struct ifaddr *ifa;
 	struct timeval tv;
 
 	if (sc->sc_ac.ac_if.if_flags & IFF_UP &&
@@ -1095,24 +1094,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 		} else {
 			carp_set_state(sc, BACKUP);
 			carp_setroute(sc, RTM_DELETE);
-#ifdef INET
-			TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist,
-			    ifa_list) {
-				if (ifa->ifa_addr->sa_family == AF_INET) {
-					carp_setrun(sc, AF_INET);
-					break;
-				}
-			}
-#endif /* INET */
-#ifdef INET6
-			TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist,
-			    ifa_list) {
-				if (ifa->ifa_addr->sa_family == AF_INET6) {
-					carp_setrun(sc, AF_INET6);
-					break;
-				}
-			}
-#endif /* INET6 */
+			carp_setrun(sc, 0);
 		}
 		break;
 	case BACKUP:
@@ -1131,9 +1113,9 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 			break;
 #endif /* INET6 */
 		default:
-			if (timeout_pending(&sc->sc_md_tmo))
+			if (sc->sc_naddrs)
 				timeout_add(&sc->sc_md_tmo, tvtohz(&tv));
-			if (timeout_pending(&sc->sc_md6_tmo))
+			if (sc->sc_naddrs6)
 				timeout_add(&sc->sc_md6_tmo, tvtohz(&tv));
 			break;
 		}
@@ -1578,6 +1560,21 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		if ((error = copyin(ifr->ifr_data, &carpr, sizeof carpr)))
 			break;
 		error = 1;
+		if (sc->sc_state != INIT && carpr.carpr_state != sc->sc_state) {
+			switch (carpr.carpr_state) {
+			case BACKUP:
+				timeout_del(&sc->sc_ad_tmo);
+				carp_set_state(sc, BACKUP);
+				carp_setrun(sc, 0);
+				carp_setroute(sc, RTM_DELETE);
+				break;
+			case MASTER:
+				carp_master_down(sc);
+				break;
+			default:
+				break;
+			}
+		}
 		if (carpr.carpr_vhid > 0) {
 			if (carpr.carpr_vhid > 255) {
 				error = EINVAL;
