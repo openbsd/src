@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.227 2000/03/21 22:01:06 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.228 2000/03/22 03:42:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -375,6 +375,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7810",
 	},
 	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940AU_CN,
+	    0,
+	    "Adaptec",
+	    "AHA-2940AU/CN",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
 	    0,
 	    "Adaptec",
@@ -492,25 +498,61 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
 	    0,
 	    "Adaptec(2)",
-	    "AHA-2940U2",
+	    "AHA-2940U2 Ultra2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7890,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890,
 	    0,
 	    "Adaptec(2)",
-	    "AIC-7890/1",
+	    "AIC-7890/1 Ultra2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3940U2,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892,
 	    0,
 	    "Adaptec(2)",
-	    "AHA-3940U2",
+	    "AIC-7892 Ultra160",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7896,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_29160,
 	    0,
 	    "Adaptec(2)",
-	    "AIC-7896/7",
+	    "AHA-29160 Ultra160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_19160B,
+	    0,
+	    "Adaptec(2)",
+	    "AHA-19160B Ultra160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B,
+	    0,
+	    "Adaptec(2)",
+	    "AHA-3950U2B Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2D,
+	    0,
+	    "Adaptec(2)",
+	    "AHA-3950U2D Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7896,
+	    0,
+	    "Adaptec(2)",
+	    "AIC-7896/7 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899,
+	    0,
+	    "Adaptec(2)",
+	    "AIC-7899 Ultra160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3960D,
+	    0,
+	    "Adaptec(2)",
+	    "AHA-3960D Ultra160",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
