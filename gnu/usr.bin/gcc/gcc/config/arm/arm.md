@@ -3948,7 +3948,13 @@
 	(match_operand:DI 1 "general_operand" ""))]
   "TARGET_EITHER"
   "
-  if (TARGET_THUMB)
+  if (TARGET_ARM)
+    {
+      /* Everything except mem = const or mem = mem can be done easily */
+      if (GET_CODE (operands[0]) == MEM)
+        operands[1] = force_reg (DImode, operands[1]);
+    }
+  else /* TARGET_THUMB.... */
     {
       if (!no_new_pseudos)
         {

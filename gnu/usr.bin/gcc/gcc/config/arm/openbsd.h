@@ -1,4 +1,4 @@
-/* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
+/* Definitions of target machine for GNU compiler, OpenBSD/arm ELF version.
    Copyright (C) 2002 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
@@ -45,7 +45,17 @@ Boston, MA 02111-1307, USA.  */
 
 /* Default it to use ATPCS with soft-VFP.  */
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (ARM_FLAG_APCS_32 | ARM_FLAG_SOFT_FLOAT | ARM_FLAG_APCS_FRAME)
+/* Default it to use ATPCS with soft-VFP.  */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT			\
+  (ARM_FLAG_APCS_32			\
+   | ARM_FLAG_SOFT_FLOAT		\
+   | ARM_FLAG_APCS_FRAME		\
+   | ARM_FLAG_ATPCS			\
+   | ARM_FLAG_VFP			\
+   | ARM_FLAG_MMU_TRAPS			\
+   | TARGET_ENDIAN_DEFAULT)
+
 
 #define TARGET_OS_CPP_BUILTINS()	\
   do					\
@@ -115,7 +125,7 @@ Boston, MA 02111-1307, USA.  */
 /* We don't have any limit on the length as out debugger is GDB.  */
 #undef DBX_CONTIN_LENGTH
 
-/* NetBSD does its profiling differently to the Acorn compiler. We
+/* OpenBSD and NetBSD do their profiling differently to the Acorn compiler. We
    don't need a word following the mcount call; and to skip it
    requires either an assembly stub or use of fomit-frame-pointer when
    compiling the profiling functions.  Since we break Acorn CC
@@ -134,7 +144,7 @@ Boston, MA 02111-1307, USA.  */
 #undef TYPE_OPERAND_FMT
 #define TYPE_OPERAND_FMT "%%%s"
 
-/* NetBSD uses the old PCC style aggregate returning conventions. */
+/* OpenBSD and NetBSD use the old PCC style aggregate returning conventions. */
 #undef DEFAULT_PCC_STRUCT_RETURN
 #define DEFAULT_PCC_STRUCT_RETURN 1
 
@@ -144,12 +154,12 @@ Boston, MA 02111-1307, USA.  */
 #undef RETURN_IN_MEMORY
 
 
-/* VERY BIG NOTE: Change of structure alignment for NetBSD/arm.
+/* VERY BIG NOTE: Change of structure alignment for OpenBSD|NetBSD/arm.
    There are consequences you should be aware of...
 
    Normally GCC/arm uses a structure alignment of 32 for compatibility
    with armcc.  This means that structures are padded to a word
-   boundary.  However this causes problems with bugged NetBSD kernel
+   boundary.  However this causes problems with bugged OpenBSD|NetBSD kernel
    code (possibly userland code as well - I have not checked every
    binary).  The nature of this bugged code is to rely on sizeof()
    returning the correct size of various structures rounded to the
@@ -157,7 +167,7 @@ Boston, MA 02111-1307, USA.  */
    is another).  This code breaks when the structure alignment is 32
    as sizeof() will report a word=rounded size.  By changing the
    structure alignment to 8. GCC will conform to what is expected by
-   NetBSD.
+   OpenBSD|NetBSD.
    
    This has several side effects that should be considered.
    1. Structures will only be aligned to the size of the largest member.
@@ -173,7 +183,7 @@ Boston, MA 02111-1307, USA.  */
       short strings.
 
    This modification is not encouraged but with the present state of the
-   NetBSD source tree it is currently the only solution that meets the
+   OpenBSD|NetBSD source tree it is currently the only solution that meets the
    requirements.  */
 
 #undef DEFAULT_STRUCTURE_SIZE_BOUNDARY
