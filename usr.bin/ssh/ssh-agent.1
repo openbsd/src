@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 23 20:10:43 1995 ylo
 .\"
-.\" $Id: ssh-agent.1,v 1.2 1999/09/26 22:30:06 deraadt Exp $
+.\" $Id: ssh-agent.1,v 1.3 1999/10/02 13:10:26 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH-AGENT 1
@@ -101,8 +101,20 @@ owner.  The sockets should get automatically removed when the agent
 exits.
 .Sh AUTHOR
 Tatu Ylonen <ylo@cs.hut.fi>
+.Pp
+This version of
+.Nm
+is a derivative of the original 1.2.12 release, but with bugs removed and
+newer features re-added.   Rapidly after the 1.2.12 release, newer versions
+bore successively more restrictive licenses.  In this version, all components
+of a restrictive nature (ie. patents) have been directly removed from the
+source code; any licensed or patented components are chosen from external
+libraries.  The libraries described in
+.Xr ssl 8
+are required for proper operation.
 .Sh SEE ALSO
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-keygen 1 ,
-.Xr sshd 8
+.Xr sshd 8 ,
+.Xr ssl 8

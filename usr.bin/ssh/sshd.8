@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.4 1999/10/01 22:23:48 deraadt Exp $
+.\" $Id: sshd.8,v 1.5 1999/10/02 13:10:26 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -59,11 +59,9 @@ random number using both the host key and the server key, and sends
 the encrypted number to the server.  Both sides then start to use this
 random number as a session key which is used to encrypt all further
 communications in the session.  The rest of the session is encrypted
-using a conventional cipher.  Currently, 
-Blowfish, IDEA, DES, and 3DES.
-3DES
-is used by default.  The client selects the encryption algorithm to use
-from those offered by the server.
+using a conventional cipher, currently Blowfish and 3DES, with 3DES
+being is used by default.  The client selects the encryption algorithm
+to use from those offered by the server.
 .Pp
 Next, the server and the client enter an authentication dialog.  The
 client tries to authenticate itself using
@@ -663,22 +661,6 @@ Like
 This can be used to specify
 machine-specific login-time initializations globally.  This file
 should be writable only by root, and should be world-readable.
-.Sh INSTALLATION
-.Nm 
-is normally run as root.  If it is not run as root, it can
-only log in as the user it is running as, and password authentication
-may not work if the system uses shadow passwords.  An alternative
-host key file must also be used.
-.Pp
-.Nm 
-is normally started from 
-.Pa /etc/rc
-or equivalent at system boot.
-.Pp
-Considerable work has been put to making
-.Nm
-secure.  However, if you find a security problem, please report it
-immediately to <ssh-bugs@cs.hut.fi>.
 .Sh AUTHOR
 Tatu Ylonen <ylo@cs.hut.fi>
 .Pp
@@ -686,12 +668,23 @@ Information about new releases, mailing lists, and other related
 issues can be found from the SSH WWW home page:
 .Pp
 .Dl http://www.cs.hut.fi/ssh.
+.Pp
+This version of
+.Nm
+is a derivative of the original 1.2.12 release, but with bugs removed and
+newer features re-added.   Rapidly after the 1.2.12 release, newer versions
+bore successively more restrictive licenses.  In this version, all components
+of a restrictive nature (ie. patents) have been directly removed from the
+source code; any licensed or patented components are chosen from external
+libraries.  The libraries described in
+.Xr ssl 8
+are required for proper operation.
 .Sh SEE ALSO
-.Xr make-ssh-known-hosts 1 ,
 .Xr rlogin 1 ,
 .Xr rsh 1 ,
 .Xr scp 1 ,
 .Xr ssh 1 ,
-.Xr ssh-add x 1 ,
+.Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
-.Xr ssh-keygen 1
+.Xr ssh-keygen 1 ,
+.Xr ssl 8
