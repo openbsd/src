@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.10 1997/11/10 05:49:17 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.11 1998/02/24 04:29:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.10 1997/11/10 05:49:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.11 1998/02/24 04:29:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$OpenBSD: yppush.c,v 1.10 1997/11/10 05:49:17 deraadt Exp
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <netdb.h>
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 
