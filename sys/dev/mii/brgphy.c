@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.19 2004/12/12 22:41:31 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.20 2005/01/24 02:27:12 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -491,14 +491,14 @@ static const struct bcm_dspcode bcm5704_dspcode[] = {
 };
 
 static const struct bcm_dspcode bcm5750_dspcode[] = {
-	{ 0x18,				0x0c00 },
-	{ 0x17,				0x000a },
-	{ 0x15,				0x310b },
-	{ 0x17,				0x201f },
-	{ 0x15,				0x9506 },
-	{ 0x17,				0x401f },
-	{ 0x15,				0x14e2 },
-	{ 0x18,				0x0400 },
+	{ BRGPHY_MII_AUXCTL,		0x0c00 },
+	{ BRGPHY_MII_DSP_ADDR_REG,	0x000a },
+	{ BRGPHY_MII_DSP_RW_PORT,	0x310b },
+	{ BRGPHY_MII_DSP_ADDR_REG,	0x201f },
+	{ BRGPHY_MII_DSP_RW_PORT,	0x9506 },
+	{ BRGPHY_MII_DSP_ADDR_REG,	0x401f },
+	{ BRGPHY_MII_DSP_RW_PORT,	0x14e2 },
+	{ BRGPHY_MII_AUXCTL,		0x0400 },
 	{ 0,				0 },
 };
 
