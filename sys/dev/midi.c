@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.11 2004/09/21 06:03:15 brad Exp $	*/
+/*	$OpenBSD: midi.c,v 1.12 2004/09/22 22:17:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -254,10 +254,9 @@ midi_out_do(struct midi_softc *sc)
 	}
 	
 	if (!(sc->props & MIDI_PROP_OUT_INTR)) {
-		if (i < max) {
-			if (MIDIBUF_ISEMPTY(mb))
-				midi_out_stop(sc);
-		} else
+		if (MIDIBUF_ISEMPTY(mb))
+			midi_out_stop(sc);
+		else
 			timeout_add(&sc->timeo, sc->wait);
 	}
 }
