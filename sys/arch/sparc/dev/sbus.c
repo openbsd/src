@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.7 1998/12/14 17:51:35 deraadt Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.8 1999/04/18 03:24:25 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -59,6 +59,8 @@
 
 #include <sparc/dev/sbusreg.h>
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/xboxreg.h>
+#include <sparc/dev/xboxvar.h>
 #include <sparc/dev/dmareg.h>
 
 int sbus_print __P((void *, const char *));
@@ -111,6 +113,18 @@ sbus_match(parent, vcf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
+	if (ca->ca_bustype == BUS_XBOX) {
+		struct xbox_softc *xsc = (struct xbox_softc *)parent;
+
+		/* Prevent multiple attachments */
+		if (xsc->sc_attached == 0) {
+			xsc->sc_attached = 1;
+			return (1);
+		}
+
+		return (0);
+	}
+
 	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
 }
 
@@ -135,7 +149,7 @@ sbus_attach(parent, self, aux)
 	 * XXX there is only one Sbus, for now -- do not know how to
 	 * address children on others
 	 */
-	if (sc->sc_dev.dv_unit > 0) {
+	if (sc->sc_dev.dv_unit > 0 && ca->ca_bustype != BUS_XBOX) {
 		printf(" unsupported\n");
 		return;
 	}
@@ -154,19 +168,29 @@ sbus_attach(parent, self, aux)
 	sc->sc_burst = getpropint(node, "burst-sizes", 0);
 	sc->sc_burst = sc->sc_burst & ~SBUS_BURST_64;
 
-	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
-		oca.ca_ra.ra_bp = ra->ra_bp + 1;
-	else
-		oca.ca_ra.ra_bp = NULL;
+	if (ca->ca_bustype == BUS_XBOX) {
+		struct xbox_softc *xsc = (struct xbox_softc *)parent;
 
-	rlen = getproplen(node, "ranges");
-	if (rlen > 0) {
-		sc->sc_nrange = rlen / sizeof(struct rom_range);
-		sc->sc_range =
-			(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
-		if (sc->sc_range == 0)
-			panic("sbus: PROM ranges too large: %d", rlen);
-		(void)getprop(node, "ranges", sc->sc_range, rlen);
+		/* Parent has already done the leg work */
+		sc->sc_nrange = xsc->sc_nrange;
+		sc->sc_range = xsc->sc_range;
+		xsc->sc_attached = 2;
+	}
+	else {
+		if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
+			oca.ca_ra.ra_bp = ra->ra_bp + 1;
+		else
+			oca.ca_ra.ra_bp = NULL;
+
+		rlen = getproplen(node, "ranges");
+		if (rlen > 0) {
+			sc->sc_nrange = rlen / sizeof(struct rom_range);
+			sc->sc_range =
+				(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
+			if (sc->sc_range == 0)
+				panic("sbus: PROM ranges too large: %d", rlen);
+			(void)getprop(node, "ranges", sc->sc_range, rlen);
+		}
 	}
 
 	/*

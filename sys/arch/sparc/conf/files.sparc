@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.28 1999/03/17 05:34:14 mjacob Exp $
+#	$OpenBSD: files.sparc,v 1.29 1999/04/18 03:24:23 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -72,8 +72,9 @@ attach fd at fdc
 file	arch/sparc/dev/fd.c			fdc | fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
+device xbox {}
 device sbus { slot = -1, offset = -1 }
-attach sbus at mainbus, iommu
+attach sbus at mainbus, iommu, sbus, xbox
 file	arch/sparc/dev/sbus.c			sbus
 
 #
@@ -299,3 +300,6 @@ file	arch/sparc/dev/spif.c		spif | stty | sbpp needs-flag
 device bpp {}
 attach bpp at sbus
 file    arch/sparc/dev/bpp.c          bpp needs-flag
+
+attach xbox at sbus
+file	arch/sparc/dev/xbox.c		xbox

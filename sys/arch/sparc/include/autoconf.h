@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 1997/08/08 08:26:03 downsj Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.6 1999/04/18 03:24:27 jason Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -108,6 +108,7 @@ struct confargs {
 #define BUS_VME16	2
 #define BUS_VME32	3
 #define BUS_SBUS	4
+#define BUS_XBOX	5
 
 /*
  * mapiodev maps an I/O device to a virtual address, returning the address.

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 1999/03/17 18:45:08 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.41 1999/04/18 03:24:22 jason Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -107,6 +107,10 @@ sbpp*	at spif?
 
 bpp*	at sbus? slot ? offset ?			# parallel port 
 
+# SUNW,xbox SBus Expansion Subsystem
+xbox*	at sbus? slot ? offset ?			# SBus Expansion box
+sbus*	at xbox?
+
 #
 # Note the flags on the esp entries below, that work around
 # deficiencies in the current driver:
@@ -171,7 +175,7 @@ nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 # Quad-ethernet glue device, and sub-devices
-qec*	at sbus0 slot ? offset ?
+qec*	at sbus? slot ? offset ?
 qe*	at qec?
 be*	at qec?
 
