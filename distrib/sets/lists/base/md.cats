@@ -655,6 +655,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arpa/tftp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/assert.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/bfd.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/bfdlink.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/bm.ph
