@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.10 2004/08/24 12:59:51 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.11 2004/08/30 13:10:32 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -153,7 +153,7 @@ struct fuse_rom_byte {
 	u_int32_t l;
 };
 #define FUSE_ROM_BYTES        (FUSE_ROM_SPACE / sizeof(struct fuse_rom_byte))
-static char fuse_rom_data[FUSE_ROM_BYTES];
+char fuse_rom_data[FUSE_ROM_BYTES];
 
 #define NNVSYM		8
 #define NVSYMLEN	16
@@ -1797,21 +1797,26 @@ get_fuse_rom_data(void)
 void
 get_nvram_data(void)
 {
-	int i;
+	int i, j;
 	u_int8_t *page;
-	char *data;
+	char buf[NVSYMLEN], *data;
 
 	if (machtype == LUNA_88K) {
-#if 0
-		/* this is not tested... */
-		int i;
-		struct nvram_byte *p = (struct nvram_byte *)NVRAM_ADDR;
+		data = (char *)(NVRAM_ADDR + 0x80);
 
-		for (i = 0; i < NVRAM_BYTES; i++) {
-			nvram_data[i] = p->data;
-			p++;
+		for (i = 0; i < NNVSYM; i++) {
+			for (j = 0; j < NVSYMLEN; j++) {
+				buf[j] = *data;
+				data += 4;
+			}
+			strlcpy(nvram[i].symbol, buf, sizeof(nvram[i].symbol));
+
+			for (j = 0; j < NVVALLEN; j++) {
+				buf[j] = *data;
+				data += 4;
+			}
+			strlcpy(nvram[i].value, buf, sizeof(nvram[i].value));
 		}
-#endif
 	} else if (machtype == LUNA_88K2) {
 		page = (u_int8_t *)(NVRAM_ADDR_88K2 + 0x20);
 
