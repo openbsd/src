@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 1996/12/10 08:26:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/01/03 21:40:48 millert Exp $
 #	$NetBSD: Makefile,v 1.8 1995/03/07 21:12:04 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	mtree
 #CFLAGS+=-DDEBUG

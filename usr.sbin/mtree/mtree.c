@@ -1,5 +1,5 @@
-/*	$OpenBSD: mtree.c,v 1.3 1996/12/10 08:26:09 deraadt Exp $	*/
-/*	$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.4 1997/01/03 21:40:50 millert Exp $	*/
+/*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.3 1996/12/10 08:26:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.4 1997/01/03 21:40:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: mtree.c,v 1.3 1996/12/10 08:26:09 deraadt Exp $
 extern u_int32_t crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, iflag, nflag, rflag, sflag, uflag, Uflag;
+int cflag, dflag, eflag, iflag, nflag, rflag, sflag, tflag, uflag, Uflag;
 u_short keys;
 char fullpath[MAXPATHLEN];
 
@@ -79,7 +79,7 @@ main(argc, argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:iK:k:np:rs:Uux")) != EOF)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:np:rs:tUux")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -122,6 +122,9 @@ main(argc, argv)
 			crc_total = ~strtol(optarg, &p, 0);
 			if (*p)
 				err("illegal seed value -- %s", optarg);
+		case 't':
+			tflag = 1;
+			break;
 		case 'U':
 			Uflag = 1;
 			uflag = 1;
@@ -162,6 +165,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: mtree [-cdeinrUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
+"usage: mtree [-cdeinrtUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }

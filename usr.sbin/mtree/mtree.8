@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.4 1996/12/20 18:13:42 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.5 1997/01/03 21:40:50 millert Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -103,6 +103,9 @@ of the files for which the keyword
 .Cm cksum
 was specified.
 The checksum is seeded with the specified value.
+.It Fl t
+If a file's timestamp is different from the specification,
+``touch'' it to match the specification (and list as modified).
 .It Fl U
 Modify the owner, group, and permissions of existing files to match
 the specification and create any missing directories.
@@ -111,10 +114,10 @@ to be created.
 Exit with a status of 0 on success, 1 if any error occurred,
 a mismatch is not considered an error if it was corrected.
 .It Fl u
-Same as
+Same as the
 .Fl U
-except a status of 2 is returned if the file hierarchy did not match
-the specification.
+option except a status of 2 is returned if the file hierarchy
+did not match the specification.
 .It Fl x
 Don't descend below mount points in the file hierarchy.
 .El
