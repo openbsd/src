@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.89 1998/09/19 02:31:51 todd Exp $
+#	$OpenBSD: rc,v 1.90 1998/10/12 03:02:57 art Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -218,6 +218,13 @@ mount -a -t nfs
 # to the crash directory if core dumps are to be saved.
 if [ -d /var/crash ]; then
 	savecore /var/crash
+fi
+
+if [ "X${afs}" = X"YES" -a -c ${afs_device} -a -d ${afs_mount_point} ]; then
+	echo -n 'mounting afs:'
+	mount -t afs ${afs_device} ${afs_mount_point}
+	/usr/libexec/afsd ${afsd_flags} -d ${afs_device}
+	echo ' done.'
 fi
 
 if [ "X${check_quotas}" = X"YES" ]; then
@@ -464,3 +471,4 @@ if [ "X${xdm_flags}" != X"NO" ]; then
 fi
 
 exit 0
+
