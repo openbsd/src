@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.10 2002/05/02 22:56:06 miod Exp $ */
+/* $OpenBSD: tcasic.c,v 1.11 2002/05/02 23:45:44 miod Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -163,6 +163,8 @@ tcasicprint(aux, pnp)
 	return (UNCONF);
 }
 
+#ifdef notyet
+
 #include "wsdisplay.h"
 
 #if NWSDISPLAY > 0
@@ -241,3 +243,5 @@ tc_fb_cnattach(tcaddr)
 	return (0);
 }
 #endif /* if NWSDISPLAY > 0 */
+
+#endif
