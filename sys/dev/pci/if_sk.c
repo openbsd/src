@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.11 2001/03/25 06:30:58 csapuntz Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.12 2001/03/29 16:02:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -43,8 +43,10 @@
  *	The SysKonnect GEnesis manual, http://www.syskonnect.com
  *
  * Note: XaQti has been aquired by Vitesse, and Vitesse does not have the
- * XMAC II datasheet online. I have put my copy at www.freebsd.org as a
- * convience to others until Vitesse corrects this problem.
+ * XMAC II datasheet online. I have put my copy at people.freebsd.org as a
+ * convience to others until Vitesse corrects this problem:
+ *
+ * http://people.freebsd.org/~wpaul/SysKonnect/xmacii_datasheet_rev_c_9-29.pdf
  *
  * Written by Bill Paul <wpaul@ee.columbia.edu>
  * Department of Electrical Engineering
@@ -1513,7 +1515,8 @@ sk_intr_bcom(sc_if)
 		if (!(lstat & BRGPHY_AUXSTS_LINK) && sc_if->sk_link) {
 			mii_mediachg(mii);
 			/* Turn off the link LED. */
-			SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
+			SK_IF_WRITE_1(sc_if, 0,
+			    SK_LINKLED1_CTL, SK_LINKLED_OFF);
 			sc_if->sk_link = 0;
 		} else if (status & BRGPHY_ISR_LNK_CHG) {
 			sk_miibus_writereg((struct device *)sc_if,
@@ -1524,6 +1527,7 @@ sk_intr_bcom(sc_if)
 			SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL,
 			    SK_LINKLED_ON|SK_LINKLED_LINKSYNC_OFF|
 			    SK_LINKLED_BLINK_OFF);
+			mii_pollstat(mii);
 		} else {
 			mii_tick(mii);
 			timeout_add(&sc_if->sk_tick_ch, hz);
@@ -1908,6 +1912,7 @@ void sk_init(xsc)
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_RX_START);
 
 	/* Enable XMACs TX and RX state machines */
+	SK_XM_CLRBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_IGNPAUSE);
 	SK_XM_SETBIT_2(sc_if, XM_MMUCMD, XM_MMUCMD_TX_ENB|XM_MMUCMD_RX_ENB);
 
 	ifp->if_flags |= IFF_RUNNING;
