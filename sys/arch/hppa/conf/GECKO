@@ -1,13 +1,13 @@
-#	$OpenBSD: GECKO,v 1.11 2001/12/02 05:32:36 mickey Exp $
+#	$OpenBSD: GECKO,v 1.12 2002/02/11 21:32:12 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
-# neverseen devices: X.21 m-proto adapter, IEEE488
+# neverseen devices: ISDN, X.21 m-proto adapter, IEEE488
 
 include	"arch/hppa/conf/std.hppa"
 include	"conf/GENERIC"
 
-maxusers	16
+maxusers	32
 
 option		HP7100LC_CPU
 option		HP7300LC_CPU
@@ -19,7 +19,7 @@ option		HP7300LC_CPU
 config	bsd swap generic
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter (LSI ???)
-lasi1	at mainbus0 offset 0x500000 irq ?	# LASI host adapter in the GIO
+lasi1	at mainbus0 offset 0x500000 irq 27	# LASI host adapter in the GIO
 #wax0	at mainbus0 irq 27?	# WAX ASIC in the GIO slot
 sti0	at mainbus0 		# onboard HCRX-8 graphics
 sti1	at mainbus0 		# GIO slot HCRX-8 graphics A2263-65538
@@ -29,10 +29,10 @@ gsc0	at lasi0
 gsc1	at lasi1
 #gsc2	at wax0
 com0	at gsc0 irq 5		# serial port
-com1	at gsc1	irq ? # 6	# serial port on A2263-6653[56]
+com1	at gsc1	irq 5		# serial port on A2263-6653[56]
 lpt0	at gsc0	irq 7		# both com0 and lpt0 are on LASI
 ie0	at gsc0	irq 8		# 82C596 ether
-ie1	at gsc1	irq ? # 10	# 82C596 ether on A2263-66536
+ie1	at gsc1	irq 7		# 82C596 ether on A2263-66536
 #tms0	at gsc2 irq ?		# TMS380C26 TR/9000 A2263-66531
 siop0	at gsc0	irq 9		# NCR 53C710
 scsibus0 at siop?
