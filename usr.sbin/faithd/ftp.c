@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.10 2002/09/08 01:20:15 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.11 2003/08/19 22:23:51 itojun Exp $	*/
 /*	$KAME: ftp.c,v 1.20 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ ftp_activeconn()
 		exit_failure("descriptor too big");
 	FD_SET(wport4, &set);
 	timeout.tv_sec = 120;
-	timeout.tv_usec = -1;
+	timeout.tv_usec = 0;
 	n = sizeof(data4);
 	if (select(wport4 + 1, &set, NULL, NULL, &timeout) == 0
 	 || (port4 = accept(wport4, (struct sockaddr *)&data4, &n)) < 0) {
