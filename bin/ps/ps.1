@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.36 2002/12/19 21:29:46 mickey Exp $
+.\"	$OpenBSD: ps.1,v 1.37 2003/03/06 19:45:24 jmc Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -226,7 +226,7 @@ when children stop
 .It Dv "P_FSTRACE" Ta No "0x0010000	tracing via file system"
 .It Dv "P_SSTEP" Ta No "0x0020000	process needs single-step fixup"
 .It Dv "P_SUGIDEXEC" Ta No "0x0040000	last
-.Xr exec 2
+.Xr exec 3
 was set[ug]id
 .It Dv "P_NOCLDWAIT" Ta No "0x0080000	let pid 1 wait for my children"
 .It Dv "P_NOZOMBIE" Ta No "0x0100000	pid 1 waits for me indead of dad"

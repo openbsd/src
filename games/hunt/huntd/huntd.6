@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.14 2002/11/10 17:28:29 fgsch Exp $
+.\"	$OpenBSD: huntd.6,v 1.15 2003/03/06 19:45:24 jmc Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -94,12 +94,12 @@ hears the request, it sends back the port number for the
 .Nm hunt
 process to connect to.
 .Pp
-Regardless of how
-.Nm
-is started, it always checks incoming connections with
-.Xr host_access 5 ,
-using a service name of
-.Sq huntd .
+.\" Regardless of how
+.\" .Nm
+.\" is started, it always checks incoming connections with
+.\" .Xr host_access 5 ,
+.\" using a service name of
+.\" .Sq huntd .
 .Ss "CONFIGURATION"
 When
 .Nm
@@ -157,7 +157,7 @@ errors to stderr
 .Pq default 1
 .It Va syslog
 errors to
-.Xr syslog 8
+.Xr syslogd 8
 .Pq default 0
 .It Va scoredecay
 nr deaths before nr kills begins to decay
