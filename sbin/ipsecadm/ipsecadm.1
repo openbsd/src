@@ -1,0 +1,313 @@
+.\" $OpenBSD: ipsecadm.1,v 1.1 1998/11/14 23:37:20 deraadt Exp $
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd August 26, 1997
+.Dt IPSECADM 1
+.Os
+.Sh NAME
+.Nm ipsecadm
+.Nd interface to setup IPSec
+.Sh SYNOPSIS
+.Nm ipsecadm
+.Op command
+.Ar modifiers ...
+.Sh DESCRIPTION
+The
+.Nm ipsecadm
+utility allows sets up security associations in the kernel
+to be used with
+.Xr ipsec 4 .
+It can be used to specify the encryption and authentication
+algorithms and key material for the network layer security
+provided by IPSec.
+The possible commands are:
+.Bl -tag -width new_esp
+.It new esp
+Setup a Security Parameters Index (SPI) which uses the new esp transforms.
+Encryption and authentication algorithms can be applied.
+This is the default mode.
+Allowed
+modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl tunnel ,
+.Fl enc ,
+.Fl auth ,
+.Fl iv ,
+.Fl newpadding ,
+.Fl authkey ,
+and
+.Fl key .
+.It old esp
+Setup a SPI which uses the old esp transforms. Only
+encryption algorithms can be applied. Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl tunnel ,
+.Fl enc ,
+.Fl iv
+and
+.Fl key .
+.It new ah
+Setup a SPI which uses the new ah transforms. Authentication
+will be done with HMAC using the specified hash algorithm. Allowed modifiers
+are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl tunnel ,
+.Fl auth ,
+and
+.Fl key .
+.It old ah
+Setup a SPI which uses the old ah transforms. Simple keyed
+hashes will be used for authentication. Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+.Fl tunnel ,
+.Fl auth ,
+and
+.Fl key .
+.It ip4
+Setup an SPI which uses the IP-in-IP encapsulation protocol. This mode
+offers no security services by itself, but can be used to route other
+(experimental or otherwise) protocols over an IP network. The SPI value
+is not used for anything other than referencing the information, and
+does not appear on the wire. Unlike other setups, like new esp, there
+is no necessary setup in the receiving side. Allowed modifiers are:
+.Fl dst ,
+.Fl src ,
+.Fl spi ,
+and
+.Fl tunnel .
+.It delspi
+The specified Security Association (SA) will be deleted. An SA consists of
+the destination address, SPI and security protocol. Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto .
+and
+.Fl chain .
+.It group
+Group two SA's together. Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto ,
+.Fl dst2 ,
+.Fl spi2 ,
+and
+.Fl proto2 .
+.It flow
+Create a flow determining which packets are routed via which Security
+Association. Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto ,
+.Fl addr ,
+.Fl transport ,
+.Fl sport ,
+.Fl dport ,
+.FL local ,
+.Fl delete .
+The
+.Xr netstat 1
+command shows the existing flows.
+.El
+.Pp
+If no command is given
+.Xr ipsecadm 1
+defaults to new esp mode.
+.Pp
+The modifiers have the following meanings:
+.Bl -tag -width newpadding -offset indent
+.It src
+The source IP address for the SPI. This is necessary for incoming
+SAs to avoid source address spoofing between mutually
+suspicious hosts that have established SAs with us. For outgoing SAs, this
+field is used if the SA is for packets that originate from this host, and 
+its purpose is to slightly speedup packet processing. If this field is
+zero (0.0.0.0), no spoofing check will be done for incoming SAs, and an
+extra routing lookup may be necessary for certain classes of packets that
+originate from the local machine and make use of the SA. The value in this
+field is not used when processing outgoing packets in
+.Xr vpn 8
+mode (encrypting/authenticating other hosts' packets).
+.It dst
+The destination IP address for the SPI.
+.It spi
+The unique Security Parameter Index (SPI).
+.It tunnel
+The source and destination IP addresses for the external IP header.
+.It newpadding
+For new ESP, specify new style self-describing padding should be used.
+.It enc
+The encryption algorithm to be used with the SPI. Possible values
+are:
+.Nm des
+and
+.Nm 3des
+for both old and new esp.
+Notice that hardware crackers for DES can be (and have been) built for
+US$250,000. Use DES for encryption of critical information at your risk.
+We suggest using of 3DES instead. The DES support is kept for interoperability
+(with old implementations) purposes only.
+Blowfish encryption
+.Nm blf
+and
+.Nm cast
+can only be used with new esp.
+.It auth
+The authentication algorithm to be used with the SPI. Possible values
+are:
+.Nm md5
+and
+.Nm sha1
+for both old and new ah and also new esp. Also
+.Nm rmd160
+for both new ah and esp.
+.It key
+The secret symmetric key used for encryption and authentication. The size
+for
+.Nm des
+and
+.Nm 3des
+is fixed to 8 and 24 respectivly. For other ciphers like
+.Nm cast
+or
+.Nm blf
+the key length can be variable. The
+.Nm key
+should be given in hexadecimal digits.
+.It authkey
+The secret key material used for authentication
+if additional authentication in new esp mode is required. For
+old or new ah the key material for authentication is passed with the
+.Nm key
+option. The
+.Nm key
+should be given in hexadecimal digits.
+.It iv
+The initialization vector used for encryption. In old esp mode you need
+to specify it as either four or eight byte long value. In new esp mode
+the transforms can either use an eight byte iv or will derive one
+when none is specified with
+.Xr ipsecadm 1 .
+The
+.Nm iv
+should be given in hexadecimal digits.
+.It proto
+The security protocol needed by
+.Nm delspi ,
+.Nm flow
+or
+.Nm group
+to uniquely specify the SA.
+The default value is 50 which means
+.Nm IPPROTO_ESP .
+Other accepted values are 51
+.Nm ( IPPROTO_AH ),
+and 4
+.Nm ( IPPROTO_IP ) .
+One can also specify the symbolic names "esp", "ah", and "ip4",
+case insensitive.
+.It chain
+Delete the whole SPI chain, otherwise delete only the SPI given.
+.It dst2
+The second IP destination address used by
+.Nm group .
+.It spi2
+The second SPI used by
+.Nm group .
+.It proto2
+The second security protocol used by
+.Nm group .
+It defaults to
+.Nm IPPROTO_AH .
+Other accepted values are 50
+.Nm ( IPPROTO_ESP ),
+and 4
+.Nm ( IPPROTO_IP ) .
+One can also specify the symbolic names "esp", "ah", and "ip4",
+case insensitive.
+.It addr
+The source address, source network mask, destination address and destination
+network mask against which packets need to match to use the specified
+Security Association.
+.It transport
+The protocol number which packets need to match to use the specified
+Security Association. By default the protocol number is not used for
+matching. Instead of a number, a valid protocol name that appears in
+.Xr protocols 5
+can be used.
+.It sport
+The source port which packets have to match for the flow.
+By default the source port is not used for matching.
+Instead of a number, a valid service name that appears in
+.Xr services 5
+can be used.
+.It dport
+The destination port which packets have to match for the flow.
+By default the source port is not used for matching.
+Instead of a number, a valid service name that appears in
+.Xr services 5
+can be used.
+.It local
+The
+.Nm flow
+command also creates a flow which matches local packets. This is aquivalent
+to using a source address of 0.0.0.0 and a source network mask of
+255.255.255.0.
+.It delete
+Instead of creating a flow, an existing flow is deleted.
+.El
+.Sh EXAMPLE
+Setup a SPI which uses new esp with 3des encryption and HMAC-SHA1
+authentication:
+.Bd -literal
+ipsecadm -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
+-key 638063806380638063806380638063806380638063806380 -authp 1234123412341234
+.Ed
+.Pp
+Setup a SPI for authentication with old ah only:
+.Bd -literal
+ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
+-key 12341234deadbeef
+.Ed
+.Sh SEE ALSO
+.Xr services 5 ,
+.Xr protocols 5 ,
+.Xr netstat 1 ,
+.Xr ipsec 4 ,
+.Xr vpn 8 ,
+.Xr photurisd 8 .

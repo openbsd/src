@@ -1,0 +1,281 @@
+.\" $OpenBSD: photurisd.8,v 1.1 1998/11/14 23:37:27 deraadt Exp $
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd July 18, 1997
+.Dt PHOTURISD 8
+.Os
+.Sh NAME
+.Nm photurisd
+.Nd IPSec key management daemon
+.Sh SYNOPSIS
+.Nm photurisd
+.Op Fl cvi
+.Op Fl d Ar directory
+.Op Fl p Ar port
+.Sh DESCRIPTION
+The
+.Nm photuris
+daemon establishes security associations for encrypted
+and/or authenticated network traffic. 
+.Pp
+The daemon listens to a named pipe 
+.Pa photuris.pipe
+for user requests and on a
+.Nm PF_ENCAP
+socket for kernel requests.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+The
+.Fl c
+option is used to force a primality check of the bootstrapped moduli.
+.It Fl v
+The 
+.Fl v
+options is used to start
+.Xr photurisd 8
+in VPN (Virtual Private Network) mode, see
+.Xr vpn 8 .
+.It Fl i
+The
+.Fl i
+option can be used to ignore the 
+.Pa photuris.startup
+file. Otherwise the exchanges in that file will be initiated
+on startup.
+.It Fl d
+The
+.Fl d
+option specifies the directory in which
+.Nm photurisd
+looks for its startup files. The default is
+.Pa /etc/photuris/ .
+.It Fl p
+The
+.Fl p
+option specifies the local port the daemon shall bind to.
+.El
+.Pp
+The file
+.Pa photuris.conf
+contains the moduli for the DH exchange and the actual exchange
+schemes used to establish a shared secret. The following keywords are 
+understood:
+.Bl -tag -width exchange -offset indent
+.It modulus
+This keyword is followed by the numeric generator and modulus. Those two
+values describe the group in which exchange values for the 
+.Nm Diffie-Hellmann
+key exchange are generated. The modulus needs to be a 
+.Nm safe prime .
+.It exchange
+The 
+.Nm exchange
+keyword is used to specify the supported exchange schemes. The scheme is 
+followed by either zero or the number of bits of the modulus to be used
+with this scheme.
+If zero is specified the given scheme acts as modifier to the base 
+scheme. The base scheme is
+.Nm DH_G_2_MD5
+(generator of two and MD5 identification). Extended schemes are
+.Nm DH_G_2_DES_MD5
+and
+.Nm DH_G_2_3DES_SHA1 .
+An exchange can only be configured if an apropriate modulus has be given
+before.
+.It config
+This is used to configure the LifeTimes of SPIs and exchanges. The configurable
+values are:
+.Nm exchange_max_retries ,
+.Nm exchange_retransmit_timeout ,
+.Nm exchange_timeout ,
+.Nm exchange_lifetime 
+and
+.Nm spi_lifetime .
+They are followed by an integer.
+.El
+.Pp
+The file
+.Pa attributes.conf
+contains the attributes, i.e. different choices of encryption
+and authenication, offered to the other peer. If a line starts with an ip
+address and a space separated netmask the following attributes are only
+offered to hosts lying in that net range. Only one attribute per line
+is allowed. An attribute can either be an already defined tag or
+an new definition of an attribute. In that case the line is followed by a 
+comma separated list:
+.Nm attribute name ,
+.Nm Photuris id ,
+.Nm type of attribute
+and
+.Nm key length .
+The name is only used as reference. A list of possible Photuris ids can
+be found in
+.Pa /usr/share/ipsec/attributes.conf .
+The attribute type is one of the following:
+.Nm enc ,
+.Nm ident ,
+.Nm auth
+or
+.Nm ident|auth .
+The key length is so far only used by the encryption attributes and
+specifies the number of keying bytes the daemon has to generate.
+Predefined attributes are:
+.Bl -tag -width AT_ESP_ATTRIB -offset indent
+.It AT_AH_ATTRIB
+Starts the list of authentication attributes.
+.It AT_ESP_ATTRIB
+Starts the list of encryption attributes.
+.El
+.Pp
+The file
+.Pa secrets.conf
+contains the party preconfigured symmetric secrets for the
+identity exchange. 
+.Bl -tag -width identity_pair_local -offset indent
+.It identity local
+Defines the identity the local daemon will assume and the according
+password. Both name and secret are braced by quotation marks and follow
+the 
+.Nm identity local
+directive.
+.It identity remote
+Defines the parties the daemon can communicate with and their secrets.
+Both name and secret are braced by quotation marks and follow the
+.Nm identity remote
+directive. The name and secret are the same as the identity local
+on the remote site.
+.It identity pair local
+If the identity of the remote site is already known,
+.Nm identity pair local
+enables the daemon to assume an identity and secret based on
+the remote identity. The directive is followed by the
+remote identity, a new local identity and an according secret.
+In that way the secrets are not shared with all other parties.
+.El
+.Pp
+Once DNSSEC or other public key infrastructures are available, those will
+be supported also.
+.Pp
+Finally the file
+.Pa photuris.startup
+contains parameters for exchanges which are created during
+startup.
+.Pp
+The keywords 
+.Nm dst ,
+.Nm port ,
+.Nm options ,
+.Nm tsrc ,
+.Nm tdst ,
+.Nm exchange_lifetime ,
+.Nm spi_lifetime
+and
+.Nm user
+are understood in the 
+.Pa photuris.startup
+file. The values are as follows:
+.Bl -tag -width exchange_lifetime -offset indent
+.It dst
+The destination IP address with which the exchange is to be established.
+.It port
+The port number of the destination
+.Nm photuris
+daemon.
+.It options
+The options to be used in the exchange. Possible values are
+.Nm enc
+and
+.Nm auth .
+.It tsrc
+If both
+.Nm tsrc
+and
+.Nm tdst
+(see below) are specified, a tunnel (IP over IP) is setup.  The
+.Nm tsrc
+option is a network address with netmask used for matching the source
+IP address of a packet.  When both the source and the destination
+addresses match their respective options the packet will be routed into the
+tunnel.
+.It tdst
+If both
+.Nm tsrc
+(see above) and
+.Nm tdst
+are specified, a tunnel (IP over IP) is setup.  The
+.Nm tdst
+option is a network address with netmask used for matching the destination
+IP address of a packet.  When both the source and the destination
+addresses match their respective options the packet will be routed into the
+tunnel.
+.It exchange_lifetime
+Determines the lifetime of the exchange. After an exchange expires
+no new SPIs are created, which means the transport or tunnel is torn down
+as soon as the current SPI times out (see
+.Nm spi_lifetime
+below).  The default value is gotten from the
+.Nm exchange_lifetime
+parameter given in
+.Pa photuris.conf .
+If it is not given there the default is 1800 seconds.
+.It spi_lifetime
+Determines the lifetime of each created SPI in the exchange.
+.It user
+The user name for whom the keying shall be done. Preconfigured
+secrets are taken from the users secret file.
+.El
+.Pp
+Exchanges are separated by newlines.
+.Pp
+.Sh EXAMPLE
+A sample
+.Pa photuris.startup
+entry:
+.Pp
+.Bd -literal
+dst=134.100.106.2 port=468 options=auth
+tsrc=134.100.104.0/255.255.255.255
+tdst=134.100.106.0/255.255.255.255
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr startkey 1 ,
+.Xr ipsec 4 ,
+.Xr vpn 8 .
+.Sh HISTORY
+The photuris keymanagement protocol is described in the internet draft
+.Nm draft-simpson-photuris 
+by the authors Phil Karn and William Allen Simpson.
+This implementation was done 1997 by Niels Provos and appeared in 
+.Ox 2.1 .
+
