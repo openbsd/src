@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.23 2002/07/30 16:27:21 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.24 2002/07/30 23:14:44 itojun Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -94,7 +94,7 @@ The full path name of the corresponding binary has to be specified
 as
 .Ar command .
 .El
-.Sh POLICY
+.Ss POLICY
 The policy is specified via the following grammar:
 .Bd -literal -offset AAA
 filter = expression "then" action errorcode
@@ -206,13 +206,13 @@ user specified policies
 .El
 .Sh SEE ALSO
 .Xr systrace 4
+.Sh AUTHORS
+The
+.Nm
+utility has been developed by Niels Provos.
 .Sh BUGS
 Applications that use clone()-like system calls to share the complete
 address space between processes may be able to replace system call
 arguments after they have been evaluated by
 .Nm
 and escape policy enforcement.
-.Sh AUTHORS
-The
-.Nm
-utility has been developed by Niels Provos.
