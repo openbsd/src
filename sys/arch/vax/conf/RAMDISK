@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2001/02/24 10:31:59 hugh Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2001/04/09 00:53:53 hugh Exp $
 
 machine 	vax			# machine type
 
@@ -50,18 +50,18 @@ option		BOOT_CONFIG	# boot-time kernel config
 config		bsd	root on rd0a swap on rd0b	# and sd0b
 
 # WS console uses VT100 terminal emulation
-option 		WSEMUL_VT100
-option 		WSDISPLAY_DEFAULTSCREENS=8
+option		WSEMUL_VT100
+option		WSDISPLAY_DEFAULTSCREENS=8
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
-option 		COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
-option 		COMPAT_12
-#option 	COMPAT_13
-#option 	COMPAT_14
-#option 	COMPAT_ULTRIX
+#option		COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
+option		COMPAT_12
+#option		COMPAT_13
+#option		COMPAT_14
+#option		COMPAT_ULTRIX
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
 
