@@ -1,4 +1,4 @@
-# $OpenBSD: australasia,v 1.15 2003/01/07 17:36:06 millert Exp $
+# $OpenBSD: australasia,v 1.16 2003/03/11 04:43:54 david Exp $
 # @(#)australasia	7.67
 # This file also includes Pacific islands.
 
@@ -1213,7 +1213,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # Shanks says the transition was on 1968-10-01; go with Mundell.
 
 # From Eric Ulevik (1999-05-03):
-# Tonga's director of tourism, who is also secretary of the National Millenium
+# Tonga's director of tourism, who is also secretary of the National Millennium
 # Committee, has a plan to get Tonga back in front.
 # He has proposed a one-off move to tropical daylight saving for Tonga from
 # October to March, which has won approval in principle from the Tongan
