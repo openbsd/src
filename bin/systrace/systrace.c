@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.27 2002/07/16 01:22:48 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.28 2002/07/17 04:50:19 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -186,9 +186,10 @@ trans_cb(int fd, pid_t pid, int policynr,
 	if (policy->flags & POLICY_DETACHED) {
 		if (intercept_detach(fd, pid) == -1)
 			err(1, "intercept_detach");
+		return (action);
 	} else if (action == ICPOLICY_KILL) {
 		kill(pid, SIGKILL);
-		action = ICPOLICY_NEVER;
+		return (ICPOLICY_NEVER);
 	}
  replace:
 	if (action < ICPOLICY_NEVER) {
