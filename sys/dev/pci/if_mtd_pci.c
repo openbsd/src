@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.3 2003/08/19 04:52:26 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.4 2003/08/19 11:57:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin
@@ -78,7 +78,6 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
-	u_int32_t command;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -88,13 +87,13 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mem space\n");
 		return;
 	}
-#else	/* !MTD_USE_MEMIO */
+#else	/* MTD_USE_IO */
 	if (pci_mapreg_map(pa, MTD_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->bus_tag, &sc->bus_handle, NULL, &iosize, 0)) {
 		printf(": can't map io space\n");
 		return;
 	}
-#endif	/* MTD_USE_MEMIO */
+#endif	/* MTD_USE_IO */
 
 	/*
 	 * Allocate our interrupt.
