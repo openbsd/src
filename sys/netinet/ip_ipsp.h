@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.77 2001/02/12 06:57:19 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.78 2001/02/28 04:16:57 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -160,6 +160,7 @@ struct ipsec_acquire
     u_int32_t                  ipa_seq;
     struct sockaddr_encap      ipa_info;
     struct sockaddr_encap      ipa_mask;
+    struct mbuf               *ipa_packet;
     TAILQ_ENTRY(ipsec_acquire) ipa_next;
 };
 
@@ -571,14 +572,18 @@ extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
                                    struct tdb *, struct inpcb *);
 extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
 extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
-			   union sockaddr_union *, struct sockaddr_encap *);
+			   union sockaddr_union *, struct sockaddr_encap *,
+			   struct mbuf *);
 extern struct ipsec_policy *ipsec_add_policy(struct sockaddr_encap *,
 					     struct sockaddr_encap *,
 					     union sockaddr_union *, int, int);
 extern int ipsp_match_policy(struct tdb *, struct ipsec_policy *,
 			     struct mbuf *, int);
-extern void ipsp_acquire_expirations(void *);
 extern int ipsec_delete_policy(struct ipsec_policy *);
+extern void ipsp_acquire_expirations(void *);
+extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
 extern struct ipsec_acquire *ipsec_get_acquire(u_int32_t);
+extern void ipsp_delete_acquire(struct ipsec_acquire *);
+extern void ipsp_clear_acquire(struct tdb *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

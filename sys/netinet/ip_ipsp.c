@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.105 2000/12/28 21:34:03 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.106 2001/02/28 04:16:57 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -321,10 +321,6 @@ gettdbbyaddr(union sockaddr_union *dst, u_int8_t proto, struct mbuf *m, int af)
 	  if ((tdbp->tdb_srcid == NULL) && (tdbp->tdb_dstid == NULL))
 	    break;
 
-	  /* Not sure how to deal with half-set IDs...just skip the SA */
-	  if ((tdbp->tdb_srcid == NULL) || (tdbp->tdb_dstid == NULL))
-	    continue;
-
 	  /* We only grok addresses */
 	  if (((tdbp->tdb_srcid_type != SADB_IDENTTYPE_PREFIX) &&
 	       (tdbp->tdb_dstid_type != SADB_IDENTTYPE_CONNECTION)) ||
@@ -369,10 +365,6 @@ gettdbbysrc(union sockaddr_union *src, u_int8_t proto, struct mbuf *m, int af)
 	   */
 	  if ((tdbp->tdb_srcid == NULL) && (tdbp->tdb_dstid == NULL))
 	    break;
-
-	  /* Not sure how to deal with half-set IDs...just skip the SA */
-	  if ((tdbp->tdb_srcid == NULL) || (tdbp->tdb_dstid == NULL))
-	    continue;
 
 	  /* We only grok addresses */
 	  if (((tdbp->tdb_srcid_type != SADB_IDENTTYPE_PREFIX) &&
@@ -937,6 +929,7 @@ int
 tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 {
     struct xformsw *xsp;
+    int err;
 
     /* Record establishment time */
     tdbp->tdb_established = time.tv_sec;
@@ -949,7 +942,14 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 
     for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
       if (xsp->xf_type == alg)
-	return (*(xsp->xf_init))(tdbp, xsp, ii);
+      {
+	  err = (*(xsp->xf_init))(tdbp, xsp, ii);
+
+	  /* Clear possible pending acquires */
+	  ipsp_clear_acquire(tdbp);
+
+	  return err;
+      }
 
     DPRINTF(("tdb_init(): no alg %d for spi %08x, addr %s, proto %d\n", 
 	     alg, ntohl(tdbp->tdb_spi), ipsp_address(tdbp->tdb_dst),
