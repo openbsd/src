@@ -1,5 +1,5 @@
-/*	$OpenBSD: ppbreg.h,v 1.1 1996/04/18 23:48:09 niklas Exp $	*/
-/*	$NetBSD: ppbreg.h,v 1.2 1996/03/14 02:35:35 cgd Exp $	*/
+/*	$OpenBSD: ppbreg.h,v 1.2 2001/11/14 21:04:46 mickey Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.3 2001/07/06 18:07:16 mcr Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -51,7 +51,7 @@
 #define	PPB_REG_PREFBASE_HI32	0x28		/* Pref Mem base high bits */
 #define	PPB_REG_PREFLIM_HI32	0x2c		/* Pref Mem lim high bits */
 #define	PPB_REG_IO_HI		0x30		/* I/O base+lim high bits */
-#define	PPB_REG_BRIDGECONTROL	PCI_INTERRUPT_REG /* bridge control register */
+#define	PPB_REG_BRIDGECONTROL	0x3c		/* bridge control register */
 
 /*
  * Macros to extract the contents of the "Bus Info" register.
@@ -71,3 +71,41 @@
  */
 #define	PPB_INTERRUPT_SWIZZLE(pin, device)				\
 	    ((((pin) + (device) - 1) % 4) + 1)
+
+/*
+ * secondary bus I/O base and limits
+ */
+#define PPB_IOBASE_SHIFT   0
+#define PPB_IOLIMIT_SHIFT  8
+#define PPB_IO_MASK   0xf000
+#define PPB_IO_MIN    4096
+
+/*
+ * secondary bus memory base and limits
+ */
+#define PPB_MEMBASE_SHIFT  0
+#define PPB_MEMLIMIT_SHIFT 16
+#define PPB_MEM_MASK   0xfff00000
+#define PPB_MEM_SHIFT  16
+#define PPB_MEM_MIN    0x00100000
+
+/* 
+ * bridge control register (see table 3.9 of ppb rev. 1.1)
+ *
+ * Note these are in the *upper* 16 bits if the Bridge Control
+ * Register (the bottom 16 are Interrupt Line and Interrupt Pin).
+ */
+#define	PPB_BC_BITBASE			   16
+
+#define PPB_BC_PARITYERRORRESPONSE_ENABLE  (1U << (0 + PPB_BC_BITBASE))
+#define PPB_BC_SERR_ENABLE                 (1U << (1 + PPB_BC_BITBASE))
+#define PPB_BC_ISA_ENABLE                  (1U << (2 + PPB_BC_BITBASE))
+#define PPB_BC_VGA_ENABLE                  (1U << (3 + PPB_BC_BITBASE))
+#define PPB_BC_MASTER_ABORT_MODE           (1U << (5 + PPB_BC_BITBASE))
+#define PPB_BC_SECONDARY_RESET             (1U << (6 + PPB_BC_BITBASE))
+#define	PPB_BC_FAST_B2B_ENABLE		   (1U << (7 + PPB_BC_BITBASE))
+	/* PCI 2.2 */
+#define	PPB_BC_PRIMARY_DISCARD_TIMEOUT	   (1U << (8 + PPB_BC_BITBASE))
+#define	PPB_BC_SECONDARY_DISCARD_TIMEOUT   (1U << (9 + PPB_BC_BITBASE))
+#define	PPB_BC_DISCARD_TIMER_STATUS	   (1U << (10 + PPB_BC_BITBASE))
+#define	PPB_BC_DISCARD_TIMER_SERR_ENABLE   (1U << (11 + PPB_BC_BITBASE))
