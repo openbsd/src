@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-set RELEASE=20
+set RELEASE=21
 
 if (! $?RELEASEDIR) then
 	echo RELEASEDIR must be set

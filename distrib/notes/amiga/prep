@@ -90,7 +90,7 @@ Transferring the miniroot filesystem:
 	disk.
 
 	Once the hard disk has been prepared for OpenBSD, the appropriate
-	miniroot filesystem (inst-20.fs for a new install or upgr-20.fs
+	miniroot filesystem (inst-21.fs for a new install or upgr-21.fs
 	for an upgrade) is transferred to the swap partition configured
 	during the hard disk prep (or the existing swap parition in
 	the case of an upgrade).  The xstreamtodev utility provided in
@@ -103,9 +103,9 @@ Transferring the miniroot filesystem:
 	single-user state processes are not using the swap partition.
 
 	On AmigaDOS, the command:
-		xstreamtodev --input=inst-20.fs --rdb-name=<swap partition>
+		xstreamtodev --input=inst-21.fs --rdb-name=<swap partition>
 	where <swap partition> is the name you gave to the OpenBSD
-	partition to be used for swapping.  Use upgr-20.fs if you
+	partition to be used for swapping.  Use upgr-21.fs if you
 	are going to do an upgrade of an existing OpenBSD system.  If
 	xstreamtodev is unable to determine the SCSI driver device
 	name or the unit number of the specified partition, you may
@@ -116,7 +116,7 @@ Transferring the miniroot filesystem:
 	in single user state on the current OpenBSD system, or use the
 	"shutdown now" command to shutdown to single-uyser state.  Then
 	copy the miniroot using dd:
-		dd if=upgr-20.fs of=/dev/rsd0b
+		dd if=upgr-21.fs of=/dev/rsd0b
 	where /dev/rsd0b should be the device path of the swap partition
 	your system is configured to use.  Once the file is copied,
 	reboot back to AmigaDOS to boot the upgrade kernel.  NOTE:  the

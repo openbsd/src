@@ -129,11 +129,11 @@ begin again from scratch.
 		to extract.  For example, to extract the base
 		distribution, use the command:
 
-			Extract base20
+			Extract base21
 
 		and to extract the games distribution:
 
-			Extract game20
+			Extract game21
 
 		If the distribution sets are in different directories,
 		you will need to cd to each directory in turn, runing
@@ -176,11 +176,11 @@ begin again from scratch.
 		wish to extract.  For example, to extract the base
 		distribution, use the command:
 
-			Extract base20
+			Extract base21
 
 		and to extract the games distribution:
 
-			Extract game20
+			Extract game21
 
 		After the extraction is complete, go to the location
 		of the next set you want to extract, "Set_tmp_dir"
@@ -196,10 +196,10 @@ begin again from scratch.
 			rm set_name.??
 
 		For example, if you wish to remove the distribution
-		files for the game09 set, after the "Extract game09"
+		files for the game21 set, after the "Extract game21"
 		command has completed, issue the command:
 
-			rm game20.??
+			rm game21.??
 
 		Once you have extracted all sets and are at the "#" prompt
 		again, proceed to the section "Configuring Your System,"

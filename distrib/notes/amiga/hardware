@@ -1,7 +1,7 @@
-OpenBSD/amiga 2.0 runs on any amiga that has a 68020, 68030 or 68040 CPU
-with some form of FPU and MMU.  The minimal configuration requires
-4M of RAM and about 75M of disk space.  To install the entire system
-requires much more disk space, and to run X or compile the system,
+OpenBSD/amiga 2.1 runs on any amiga that has a 68020, 68030, 68040 or
+68060 CPU with some form of FPU and MMU.  The minimal configuration
+requires 4M of RAM and about 75M of disk space.  To install the entire
+system requires much more disk space, and to run X or compile the system,
 more RAM is recommended.  (4M of RAM will actually allow you to
 compile, however it won't be speedy.  X really isn't usable on a
 4M system.)
@@ -24,7 +24,7 @@ larger, as your system will be doing much more swapping.
 
 Supported devices include:
 	A4000/A1200 IDE controller.
-	ISA IDE & ATAPI (but with limitations) with a supported ISA bridge.
+	ISA IDE & ATAPI with a supported ISA bridge.
 	SCSI host adapters:
 		33c93 based boards: A2091, A3000 and GVP series II.
 		53c80 based boards: 12 Gauge, IVS and Wordsync/Bytesync.

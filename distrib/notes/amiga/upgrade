@@ -1,15 +1,13 @@
-The upgrade to OpenBSD 2.0 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 2.0 sources, and
+The upgrade to OpenBSD 2.1 is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the 2.1 sources, and
 it would be very difficult to even compile a set of instructions that
-allowed them to do so.  Because of the various changes to the system,
-the largest being the 64-bit file size support and shared libraries,
-it is impractical to upgrade by recompiling from the sources and
+allowed them to do so.
 installing.
 
 To do the upgrade, you must have the OpenBSD kernel on AmigaDOS and
-you must transfer the upgrade filesystem upgr-20.fs onto the swap
+you must transfer the upgrade filesystem upgr-21.fs onto the swap
 partition of the OpenBSD hard disk.  You must also have at least the
-"base20" binary distribution set available, so that you can upgrade
+"base21" binary distribution set available, so that you can upgrade
 with it, using one of the upgrade methods described above.  Finally,
 you must have sufficient disk space available to install the new
 binaries.  Since the old binaries are being overwritten in place,
@@ -29,7 +27,7 @@ To upgrade your system, follow the following instructions:
 	partition used by OpenBSD for swapping, as described in the
 	"Preparing your System for OpenBSD Installation" section above.
 
-	Now boot up OpenBSD using the 2.0 kernel using the loadbsd
+	Now boot up OpenBSD using the 2.1 kernel using the loadbsd
 	command:
 
 		loadbsd -b bsd
@@ -54,21 +52,6 @@ To upgrade your system, follow the following instructions:
 	However, if you hit it at an inopportune moment, your system
 	may be left in an inconsistent (and possibly unusable) state.
 
-	You will be asked if you wish to upgrade your file systems to
-	the new file system format.  If you do, reply affirmatively.
-	If you don't have your file systems upgraded now, you should
-	probably do it manually after the install process is complete,
-	by using "fsck -c 2". Read the fsck(8) manual page for more
-	details.
-
-	The upgrade program will then check your root file system,
-	and, if you approved, will upgrade it to the new file system
-	format.  It will then mount your root file system on /mnt.
-
-	If your file systems are being upgraded, the upgrade script
-	will copy the new fsck(8) program to your hard disk and
-	upgrade your remaining file systems.
-
 	The upgrade program will then mount all of your file systems
 	under /mnt.  (In other words, your root partition will be
 	mounted on /mnt, your /usr partition on /mnt/usr, etc.)
@@ -85,13 +68,13 @@ To upgrade your system, follow the following instructions:
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base20" distribution set.  Once you
+	directory containing the "base21" distribution set.  Once you
 	are there, run the "Set_tmp_dir" command, and hit return at
 	the prompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
-	Run the command "Extract base20" to upgrade the base
+	Run the command "Extract base21" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -113,32 +96,27 @@ To upgrade your system, follow the following instructions:
 	You will probably also want to copy the release "bsd" kernel
 	image to your root at some point.
 	
-Your system has now been upgraded to OpenBSD 2.0.
+Your system has now been upgraded to OpenBSD 2.1.
 
-After a new kernel has been copied to your hard disk, your
-	machine is a complete OpenBSD 2.0 system.  However, that
+	After a new kernel has been copied to your hard disk, your
+	machine is a complete OpenBSD 2.1 system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
 
-	First, if you did not upgrade your file systems to the new
-	file system format during the upgrade process, you may want to
-	do so now, with "fsck -c 2".  If you are unsure about the
-	process, it's suggested that you read the fsck(8) manual page.
-
-	Second, you will probably want to get the etc20 distribution,
+	First, you will probably want to get the etc20 distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
 	in the new versions into yours.
 
-	Third, you will probably want to update the set of device
+	Second, you will probably want to update the set of device
 	nodes you have in /dev.  If you've changed the contents of
 	/dev by hand, you will need to be careful about this, but if
 	not, you can just cd into /dev, and run the command "sh
 	MAKEDEV all".
 
-	Fourth, you must deal with certain changes in the formats of
+	Third, you must deal with certain changes in the formats of
 	some of the configuration files.  The most notable change is
 	that the "options" given to many of the file systems in
 	/etc/fstab or by hand have changed, and some of the file
