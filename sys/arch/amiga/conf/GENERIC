@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 1998/10/04 23:26:38 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.26 1999/01/20 17:57:07 niklas Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -216,6 +216,15 @@ isa*	at cross?
 
 #isapnp0	at isa?
 
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
+
+option		PCMCIAVERBOSE
+
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
@@ -232,10 +241,15 @@ com*	at rtfps? slave ?
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
 # cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
+com*	at pcmcia? function ?		# PCMCIA modems/serial ports
 
 lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
+
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
+aic*	at pcmcia? function ?		# PCMCIA based aic SCSI controllers
+scsibus* at aic?
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
@@ -250,6 +264,12 @@ ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
 ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 #ne*	at isapnp?				# NE[12]000 PnP ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet
+#ep*	at isapnp?				# 3C509 PnP ethernet
+ep*	at isa? port ? irq ?			# 3C509 ethernet
+ne*	at pcmcia? function ?			# PCMCIA based NE2000 ethernet
+ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
+sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 
 fd*	at fdc0 unit ?
 

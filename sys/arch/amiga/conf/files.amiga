@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.30 1999/01/19 10:09:26 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.31 1999/01/20 17:57:07 niklas Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -327,7 +327,6 @@ file	arch/amiga/isa/cross.c		cross needs-flag
 
 # XXX Dummy busses needed for some multi-homed devices specified in files.isa
 define	pci { }
-define	pcmcia {}
 
 include	"../../../dev/isa/files.isa"
 file	arch/amiga/isa/isa_machdep.c	isabus
@@ -378,3 +377,27 @@ major	{rd = 16}
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# PCIC pcmcia contoller
+# XXX this needs to be done very late, so it's done here.  This feels
+# like a kludge, but it might be for the best.
+
+device	pcic {[controller = -1], [socket = -1]}
+file	dev/ic/i82365.c			pcic
+
+# PCIC pcmcia controller on ISA bus.
+attach	pcic at isa with pcic_isa
+file	dev/isa/i82365_isa.c		pcic_isa
+
+# PCIC pcmcia controller on PnP board
+#attach	pcic at isapnp with pcic_isapnp
+#file	dev/isa/i82365_isapnp.c	pcic_isapnp
+
+# Code common to ISA and ISAPnP attachments
+file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent PCMCIA drivers
+#
+include "dev/pcmcia/files.pcmcia"
