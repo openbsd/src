@@ -309,7 +309,8 @@ char *ssl_compat_directive(server_rec *s, pool *p, const char *oline)
      * Extract directive name
      */
     cp = (char *)oline;
-    for (i = 0; *cp != ' ' && *cp != '\t' && *cp != NUL && i < 1024; )
+    for (i = 0; *cp != ' ' && *cp != '\t' && *cp != NUL &&
+		i < sizeof(caCmd) - 1; )
         caCmd[i++] = *cp++;
     caCmd[i] = NUL;
     cpArgs = cp;
