@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.7 1999/07/02 20:11:52 aaron Exp $
+.\"	$OpenBSD: disk.9,v 1.8 1999/09/02 17:28:06 espie Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -56,10 +56,12 @@
 .Ft struct disk *
 .Fn disk_find "char *"
 .Sh DESCRIPTION
-The OpenBSD generic disk framework is designed to provide flexible,
+The 
+.Ox
+generic disk framework is designed to provide flexible,
 scalable, and consistent handling of disk state and metrics information.
 The fundamental component of this framework is the
-.Nm disk
+.Nm 
 structure, which is defined as follows:
 .Bd -literal
 struct disk {
@@ -320,37 +322,41 @@ particular disk.  For this function, the
 .Fn disk_resetstat
 routine is provided.
 .Sh CODE REFERENCES
-This section describes places within the OpenBSD source tree where actual
-code implementing or utilizing the disk framework can be found.  All
-pathnames are relative to
-.Nm /usr/src .
-.Pp
 The disk framework itself is implemented within the file
-.Nm sys/kern/subr_disk.c .
+.Pa sys/kern/subr_disk.c .
 Data structures and function prototypes for the framework are located in
-.Nm sys/sys/disk.h .
+.Pa sys/sys/disk.h .
 .Pp
-The OpenBSD machine-independent SCSI disk and CD-ROM drivers utilize the
+The 
+.Ox
+machine-independent SCSI disk and CD-ROM drivers utilize the
 disk framework.  They are located in
-.Nm sys/scsi/sd.c
+.Pa sys/scsi/sd.c
 and
-.Nm sys/scsi/cd.c .
+.Pa sys/scsi/cd.c .
 .Pp
-The OpenBSD
+The
+.Ox
 .Nm ccd
 and
 .Nm vnd
 drivers utilize the detachment capability of the framework.
 They are located in
-.Nm sys/dev/ccd.c
+.Pa sys/dev/ccd.c
 and
-.Nm sys/dev/vnd.c .
+.Pa sys/dev/vnd.c .
 .Sh AUTHOR
-The OpenBSD generic disk framework was architected and implemented within NetBSD
+The 
+.Ox
+generic disk framework was architected and implemented within 
+.Nx
 by Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Sh SEE ALSO
 .Xr ccd 4 ,
 .Xr vnd 4 ,
 .Xr spl 9 .
 .Sh HISTORY
-The OpenBSD generic disk framework first appeared in NetBSD at version 1.1A.
+The 
+.Ox
+generic disk framework first appeared in 
+.Nx at version 1.1A.

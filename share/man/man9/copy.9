@@ -1,3 +1,4 @@
+.\"	$OpenBSD: copy.9,v 1.5 1999/09/02 17:28:06 espie Exp $
 .\"	$NetBSD: copy.9,v 1.2 1996/01/09 03:23:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
@@ -65,47 +66,47 @@ routines provide the following functionality:
 .Bl -tag -width "copyoutstr()"
 .It Fn copyin
 Copies
-.Pa len
+.Fa len
 bytes of data from the user-space address
-.Pa uaddr
+.Fa uaddr
 to the kernel-space address
-.Pa kaddr .
+.Fa kaddr .
 .It Fn copyout
 Copies
-.Pa len
+.Fa len
 bytes of data from the kernel-space address
-.Pa kaddr
+.Fa kaddr
 to the user-space address
-.Pa uaddr .
+.Fa uaddr .
 .It Fn copystr
 Copies a NULL-terminated string, at most
-.Pa len
+.Fa len
 bytes long, from kernel-space address
-.Pa kfaddr
+.Fa kfaddr
 to kernel-space address
-.Pa kdaddr .
+.Fa kdaddr .
 The number of bytes actually copied, including the terminating
 NULL, is returned in
-.Pa *done .
+.Fa *done .
 .It Fn copyinstr
 Copies a NULL-terminated string, at most
-.Pa len
+.Fa len
 bytes long, from user-space address
-.Pa uaddr
+.Fa uaddr
 to kernel-space address
-.Pa kaddr .
+.Fa kaddr .
 The number of bytes actually copied, including the terminating
 NULL, is returned in
-.Pa *done .
+.Fa *done .
 .It Fn copyoutstr
 Copies a NULL-terminated string, at most
 bytes long, from kernel-space address
-.Pa kaddr
+.Fa kaddr
 to user-space address
-.Pa uaddr .
+.Fa uaddr .
 The number of bytes actually copied, including the terminating
 NULL, is returned in
-.Pa *done .
+.Fa *done .
 .El
 .Sh RETURN VALUES
 The
@@ -117,7 +118,7 @@ In addition, the
 and
 .Fn copyoutstr
 funtions return ENAMETOOLONG if the string is longer than
-.Pa len
+.Fa len
 bytes.
 .Sh SEE ALSO
 .Xr fetch 9 ,
