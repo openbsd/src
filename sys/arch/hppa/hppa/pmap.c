@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.100 2003/02/26 22:32:42 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.101 2003/04/23 20:21:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -97,10 +97,10 @@ int		pmap_hptsize = 256;	/* patchable */
 
 struct pmap	kernel_pmap_store;
 int		hppa_sid_max = HPPA_SID_MAX;
-boolean_t	pmap_initialized = FALSE;
 struct pool	pmap_pmap_pool;
 struct pool	pmap_pv_pool;
 struct simplelock pvalloc_lock;
+int 		pmap_initialized;
 
 u_int	hppa_prot[8];
 
@@ -113,14 +113,11 @@ u_int	hppa_prot[8];
 struct vm_page *
 pmap_pagealloc(struct uvm_object *obj, voff_t off)
 {
-	struct vm_page *pg = uvm_pagealloc(obj, off, NULL,
-	    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+	struct vm_page *pg;
 
-	if (!pg) {
-		/* wait and pageout */
-
-		return (NULL);
-	}
+	if ((pg = uvm_pagealloc(obj, off, NULL,
+	    UVM_PGA_USERESERVE | UVM_PGA_ZERO)) == NULL)
+		printf("pmap_pagealloc fail\n");
 
 	return (pg);
 }
@@ -262,9 +259,6 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	if (!pde)
 		panic("pmap_pte_set: zero pde");
 
-	if (pte && pmap_initialized && pte < physical_end &&
-	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
-		panic("pmap_pte_set: invalid pte 0x%x", pte);
 	if ((paddr_t)pde & PGOFSET)
 		panic("pmap_pte_set, unaligned pde %p", pde);
 #endif
@@ -531,8 +525,7 @@ pmap_bootstrap(vstart)
 	    pmap_sid2pid(HPPA_SID_KERNEL) |
 	    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0)
 		panic("pmap_bootstrap: cannot block map kernel text");
-	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
-	    physmem = atop(t);
+	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count = atop(t);
 
 	if (&__rodata_end < &__data_start) {
 		physical_steal = (vaddr_t)&__rodata_end;
@@ -554,7 +547,7 @@ pmap_bootstrap(vstart)
 	/* map the pdes */
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {
 
-		/* last pde is for the start of kernel virtual */
+		/* last four pdes are for the kernel virtual */
 		if (npdes == 3)
 			va = SYSCALLGATE;
 		/* now map the pde for the physmem */
@@ -563,6 +556,8 @@ pmap_bootstrap(vstart)
 		pmap_pde_set(kpm, va, addr);
 		kpm->pm_stats.resident_count++; /* count PTP as resident */
 	}
+
+	physmem = atop(addr);
 
 	/* TODO optimize/inline the kenter */
 	for (va = 0; va < ptoa(totalphysmem); va += PAGE_SIZE) {
@@ -592,7 +587,7 @@ pmap_init()
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
 	    &pool_allocator_nointr);
 
-	pmap_initialized = TRUE;
+	pmap_initialized = 1;
 
 	/*
 	 * map SysCall gateways page once for everybody
@@ -770,7 +765,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 
 
-	if (pmap_initialized) {
+	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pa)))) {
 		if (!pve && !(pve = pmap_pv_alloc())) {
 			if (flags & PMAP_CANFAIL) {
 				simple_unlock(&pmap->pm_obj.vmobjlock);
@@ -778,7 +773,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 			}
 			panic("pmap_enter: no pv entries available");
 		}
-		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pa));
 		pmap_pv_enter(pg, pve, pmap, va, ptp);
 	} else if (pve)
 		pmap_pv_free(pve);
@@ -806,6 +800,7 @@ pmap_remove(pmap, sva, eva)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pde, pte;
+	struct vm_page *pg;
 	vaddr_t pdemask;
 	int batch;
 
@@ -839,10 +834,9 @@ pmap_remove(pmap, sva, eva)
 			if (!batch)
 				pmap_pte_set(pde, sva, 0);
 
-			if (pmap_initialized) {
-				struct vm_page *pg;
+			if (pmap_initialized &&
+			    (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
 
-				pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 				simple_lock(&pg->mdpage.pvh_lock);
 				pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 				if ((pve = pmap_pv_remove(pg, pmap, sva)))
@@ -923,7 +917,8 @@ pmap_page_remove(pg)
 		return;
 
 	simple_lock(&pg->mdpage.pvh_lock);
-	for (pve = pg->mdpage.pvh_list; pve; ) {
+	for (pve = pg->mdpage.pvh_list; pve;
+	     pve = (ppve = pve)->pv_next, pmap_pv_free(ppve)) {
 		struct pmap *pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
 		pt_entry_t *pde, pte;
@@ -941,10 +936,6 @@ pmap_page_remove(pg)
 
 		pmap_pte_set(pde, va, 0);
 		simple_unlock(&pmap->pm_obj.vmobjlock);
-
-		ppve = pve;
-		pve = pve->pv_next;
-		pmap_pv_free(ppve);
 	}
 	pg->mdpage.pvh_list = NULL;
 	simple_unlock(&pg->mdpage.pvh_lock);
@@ -1158,10 +1149,10 @@ pmap_kenter_pa(va, pa, prot)
 
 #ifdef PMAPDEBUG
 	{
-		if (pmap_initialized) {
-			struct vm_page *pg;
+		struct vm_page *pg;
 
-			pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
+		if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
+
 			simple_lock(&pg->mdpage.pvh_lock);
 			if (pmap_check_alias(pg->mdpage.pvh_list, va, pte))
 				Debugger();
@@ -1183,6 +1174,7 @@ pmap_kremove(va, size)
 	struct pv_entry *pve;
 	vaddr_t eva, pdemask;
 	pt_entry_t *pde, pte;
+	struct vm_page *pg;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 	    ("pmap_kremove(%x, %x)\n", va, size));
@@ -1212,10 +1204,8 @@ pmap_kremove(va, size)
 
 		pmap_pte_flush(pmap_kernel(), va, pte);
 		pmap_pte_set(pde, va, 0);
-		if (pmap_initialized) {
-			struct vm_page *pg;
+		if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
 
-			pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 			simple_lock(&pg->mdpage.pvh_lock);
 			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 			/* just in case we have enter/kenter mismatch */
