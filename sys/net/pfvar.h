@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.162 2003/07/04 10:39:31 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.163 2003/07/19 13:08:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -292,7 +292,7 @@ struct pf_rule_addr {
 };
 
 struct pf_pooladdr {
-	struct pf_rule_addr		 addr;
+	struct pf_addr_wrap		 addr;
 	TAILQ_ENTRY(pf_pooladdr)	 entries;
 	char				 ifname[IFNAMSIZ];
 	struct ifnet			*ifp;

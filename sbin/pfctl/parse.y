@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.402 2003/07/18 06:30:06 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.403 2003/07/19 13:08:58 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2823,7 +2823,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 				pa = calloc(1, sizeof(struct pf_pooladdr));
 				if (pa == NULL)
 					err(1, "binat: calloc");
-				pa->addr.addr = $12->host->addr;
+				pa->addr = $12->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
 				    pa, entries);
@@ -3107,7 +3107,7 @@ nat_consistent(struct pf_rule *r)
 	}
 	if (!r->af) {
 		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-			if (pa->addr.addr.type == PF_ADDR_DYNIFTL) {
+			if (pa->addr.type == PF_ADDR_DYNIFTL) {
 				yyerror("dynamic addresses require "
 				    "address family (inet/inet6)");
 				problems++;
@@ -3156,7 +3156,7 @@ rdr_consistent(struct pf_rule *r)
 			problems++;
 		} else {
 			TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-				if (pa->addr.addr.type == PF_ADDR_DYNIFTL) {
+				if (pa->addr.type == PF_ADDR_DYNIFTL) {
 					yyerror("dynamic addresses require "
 					    "address family (inet/inet6)");
 					problems++;
@@ -3752,7 +3752,7 @@ expand_rule(struct pf_rule *r,
 			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL)
 				err(1, "expand_rule: calloc");
-			pa->addr.addr = h->addr;
+			pa->addr = h->addr;
 			if (h->ifname != NULL) {
 				if (strlcpy(pa->ifname, h->ifname,
 				    sizeof(pa->ifname)) >=

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.377 2003/07/12 09:36:23 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.378 2003/07/19 13:08:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1558,14 +1558,14 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr)
 {
 	unsigned char		 hash[16];
-	struct pf_addr		*raddr = &rpool->cur->addr.addr.v.a.addr;
-	struct pf_addr		*rmask = &rpool->cur->addr.addr.v.a.mask;
+	struct pf_addr		*raddr = &rpool->cur->addr.v.a.addr;
+	struct pf_addr		*rmask = &rpool->cur->addr.v.a.mask;
 
-	if (rpool->cur->addr.addr.type == PF_ADDR_NOROUTE ||
-	    rpool->cur->addr.addr.type == PF_ADDR_TABLE)
+	if (rpool->cur->addr.type == PF_ADDR_NOROUTE ||
+	    rpool->cur->addr.type == PF_ADDR_TABLE)
 		return (1);
-	if (rpool->cur->addr.addr.type == PF_ADDR_DYNIFTL &&
-	    rpool->cur->addr.addr.p.dyn->undefined)
+	if (rpool->cur->addr.type == PF_ADDR_DYNIFTL &&
+	    rpool->cur->addr.p.dyn->undefined)
 		return (1);
 
 	switch (rpool->opts & PF_POOL_TYPEMASK) {
@@ -1615,17 +1615,17 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)&hash, af);
 		break;
 	case PF_POOL_ROUNDROBIN:
-		if (pf_match_addr(0, &rpool->cur->addr.addr.v.a.addr,
-		    &rpool->cur->addr.addr.v.a.mask, &rpool->counter, af)) {
+		if (pf_match_addr(0, &rpool->cur->addr.v.a.addr,
+		    &rpool->cur->addr.v.a.mask, &rpool->counter, af)) {
 			PF_ACPY(naddr, &rpool->counter, af);
 			PF_AINC(&rpool->counter, af);
 		} else {
 			if ((rpool->cur =
 			    TAILQ_NEXT(rpool->cur, entries)) == NULL)
 				rpool->cur = TAILQ_FIRST(&rpool->list);
-			PF_ACPY(naddr, &rpool->cur->addr.addr.v.a.addr, af);
+			PF_ACPY(naddr, &rpool->cur->addr.v.a.addr, af);
 			PF_ACPY(&rpool->counter,
-			    &rpool->cur->addr.addr.v.a.addr, af);
+			    &rpool->cur->addr.v.a.addr, af);
 			PF_AINC(&rpool->counter, af);
 		}
 		break;
@@ -1738,11 +1738,12 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[rs_num].active.ptr);
 	while (r && rm == NULL) {
 		struct pf_rule_addr	*src = NULL, *dst = NULL;
+		struct pf_addr_wrap	*xdst = NULL;
 
 		if (r->action == PF_BINAT && direction == PF_IN) {
 			src = &r->dst;
 			if (r->rpool.cur != NULL)
-				dst = &r->rpool.cur->addr;
+				xdst = &r->rpool.cur->addr;
 		} else {
 			src = &r->src;
 			dst = &r->dst;
@@ -1767,13 +1768,13 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			    PF_SKIP_DST_PORT].ptr;
 		else if (dst != NULL &&
 		    PF_MISMATCHAW(&dst->addr, daddr, af, dst->not))
-			r = dst == &r->dst ? r->skip[PF_SKIP_DST_ADDR].ptr :
-			    TAILQ_NEXT(r, entries);
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
+		else if (xdst != NULL && PF_MISMATCHAW(xdst, daddr, af, 0))
+			r = TAILQ_NEXT(r, entries);
 		else if (dst != NULL && dst->port_op &&
 		    !pf_match_port(dst->port_op, dst->port[0],
 		    dst->port[1], dport))
-			r = dst == &r->dst ? r->skip[PF_SKIP_DST_PORT].ptr :
-			    TAILQ_NEXT(r, entries);
+			r = r->skip[PF_SKIP_DST_PORT].ptr;
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchor == NULL)
@@ -1834,14 +1835,14 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 		case PF_BINAT:
 			switch (direction) {
 			case PF_OUT:
-				if (r->rpool.cur->addr.addr.type ==
+				if (r->rpool.cur->addr.type ==
 				    PF_ADDR_DYNIFTL &&
-				    r->rpool.cur->addr.addr.p.dyn->undefined)
+				    r->rpool.cur->addr.p.dyn->undefined)
 					return (NULL);
 				else
 					PF_POOLMASK(naddr,
-					    &r->rpool.cur->addr.addr.v.a.addr,
-					    &r->rpool.cur->addr.addr.v.a.mask,
+					    &r->rpool.cur->addr.v.a.addr,
+					    &r->rpool.cur->addr.v.a.mask,
 					    saddr, af);
 				break;
 			case PF_IN:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.169 2003/07/15 17:12:38 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.170 2003/07/19 13:08:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -398,14 +398,14 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		case PF_NAT:
 		case PF_RDR:
 		case PF_BINAT:
-			print_addr(&pooladdr->addr.addr, af, 0);
+			print_addr(&pooladdr->addr, af, 0);
 			break;
 		case PF_PASS:
-			if (PF_AZERO(&pooladdr->addr.addr.v.a.addr, af))
+			if (PF_AZERO(&pooladdr->addr.v.a.addr, af))
 				printf("%s", pooladdr->ifname);
 			else {
 				printf("(%s ", pooladdr->ifname);
-				print_addr(&pooladdr->addr.addr, af, 0);
+				print_addr(&pooladdr->addr, af, 0);
 				printf(")");
 			}
 			break;
