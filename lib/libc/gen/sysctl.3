@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.131 2004/02/10 20:23:49 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.132 2004/02/10 20:56:19 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -843,8 +843,8 @@ privileges may change the value.
 .It Dv KERN_TTY_TKNOUT No "	int64_t	no"
 .It Dv KERN_TTY_TKRAWCC No "	int64_t	no"
 .It Dv KERN_TTY_INFO No "	struct itty	no"
-.It Dv KERN_TTY_MAXPYTS No "	integer	yes"
-.It Dv KERN_TTY_NPYTS No "	integer	yes"
+.It Dv KERN_TTY_MAXPTYS No "	integer	yes"
+.It Dv KERN_TTY_NPTYS No "	integer	no"
 .El
 .Pp
 The variables are as follows:
