@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.22 2000/01/08 09:45:15 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.23 2000/03/14 19:00:32 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.22 2000/01/08 09:45:15 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.23 2000/03/14 19:00:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -407,11 +407,13 @@ SuffRemove(l, s)
     Suff *s;
 {
     SuffUnRef((ClientData) l, (ClientData) s);
+#if 0
     if (s->refCount == 0) {
 	SuffUnRef ((ClientData) sufflist, (ClientData) s);
 	SuffFree((ClientData) s);
 	s = NULL;
     }
+#endif
     return (s);
 }
 
