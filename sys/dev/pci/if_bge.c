@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.25 2004/04/12 06:56:42 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.26 2004/05/25 04:59:10 mcbride Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -289,7 +289,7 @@ bge_vpd_readbyte(sc, addr)
 			break;
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == BGE_TIMEOUT * 10) {
 		printf("%s: VPD read timed out\n", sc->bge_dev.dv_xname);
 		return(0);
 	}
@@ -397,7 +397,7 @@ bge_eeprom_getbyte(sc, addr, dest)
 			break;
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == BGE_TIMEOUT * 10) {
 		printf("%s: eeprom read timed out\n", sc->bge_dev.dv_xname);
 		return(0);
 	}
