@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.10 2002/08/08 18:27:57 art Exp $	*/
+/*	$OpenBSD: process.c,v 1.11 2003/05/30 18:03:01 miod Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -53,7 +53,7 @@ process_load(struct pstate *ps)
 	if (access(*ps->ps_argv, R_OK|X_OK) < 0) {
 		fprintf(stderr, "%s: %s.\n", *ps->ps_argv,
 		    strerror(errno));
-		return (0);
+		return (1);
 	}
 
 	if (stat(ps->ps_argv[0], &(ps->exec_stat)) < 0)
@@ -200,7 +200,9 @@ cmd_process_run(int argc, char **argv, void *arg)
 	if (ps->ps_state == NONE) {
 		reg main_addr;
 
-		process_load(ps);
+		if (process_load(ps) != 0)
+			return (0);
+
 		if (sym_lookup(ps, "main", &main_addr))
 			warnx("no main");
 		else if (bkpt_add_cb(ps, main_addr, process_bkpt_main, NULL))
