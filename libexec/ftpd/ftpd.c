@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.115 2002/01/23 16:31:18 mpech Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.116 2002/01/23 17:03:21 mpech Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.115 2002/01/23 16:31:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.116 2002/01/23 17:03:21 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -2862,8 +2862,10 @@ copy_dir(dir, pw)
 		newdir = strdup(pw->pw_dir);
 	} else {
 		dirsiz = strlen(cp) + strlen(pw->pw_dir) + 1;
-		if ((newdir = malloc(dirsiz)) == NULL)
+		if ((newdir = malloc(dirsiz)) == NULL) {
+			free(user);		
 			return (NULL);
+		}
 		strcpy(newdir, pw->pw_dir);
 		strcat(newdir, cp);
 	}
