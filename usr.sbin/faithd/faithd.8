@@ -1,3 +1,5 @@
+.\"	$OpenBSD: faithd.8,v 1.2 1999/12/20 16:32:53 itojun Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
 .\" 
@@ -25,11 +27,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: faithd.8,v 1.1.1.1 1999/12/20 16:07:42 itojun Exp $
+.\"	KAME Id: faithd.8,v 1.1.1.1 1999/12/20 16:07:42 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt FAITHD 8
-.Os KAME
+.Os
 .Sh NAME
 .Nm faithd
 .Nd FAITH IPv6/v4 translator daemon
@@ -199,21 +201,21 @@ as either of the following:
 If you would like to provide local telnet service via
 .Xr telnetd 8
 on
-.Pa /usr/local/v6/libexec/telnetd ,
+.Pa /usr/libexec/telnetd ,
 user the following command line:
 .Bd -literal -offset
-# faithd telnet /usr/local/v6/libexec/telnetd telnetd
+# faithd telnet /usr/libexec/telnetd telnetd
 .Ed
 .Pp
 If you would like to pass extra arguments to the local daemon:
 .Bd -literal -offset
-# faithd ftpd /usr/local/v6/libexec/ftpd ftpd -l
+# faithd ftpd /usr/libexec/ftpd ftpd -l
 .Ed
 .Pp
 Here are some other examples:
 .Bd -literal -offset
-# faithd login /usr/local/v6/libexec/rlogin rlogind
-# faithd shell /usr/local/v6/libexec/rshd rshd
+# faithd login /usr/libexec/rlogin rlogind
+# faithd shell /usr/libexec/rshd rshd
 # faithd sshd
 .Ed
 .\"

@@ -1,3 +1,5 @@
+/*	$OpenBSD: faithd.h,v 1.2 1999/12/20 16:32:53 itojun Exp $	*/
+
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
@@ -41,7 +43,7 @@ extern void exit_success __P((const char *fmt, ...));
 extern void exit_failure __P((const char *fmt, ...));
 
 #define DEFAULT_PORT_NAME	"telnet"
-#define DEFAULT_PATH	"/usr/local/v6/libexec/telnetd"
+#define DEFAULT_PATH	"/usr/libexec/telnetd"
 #define DEFAULT_NAME	"telnetd"
 
 #define FTP_PORT	21
