@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.13 1997/02/28 02:18:56 angelos Exp $	*/
+/*	$OpenBSD: socket.h,v 1.14 1997/02/28 03:10:02 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -77,33 +77,6 @@
 #define SO_RCVTIMEO	0x1006		/* receive timeout */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
-#define SO_IPSEC_AUTH_LEVEL           0x1009  /* Authentication used */
-#define SO_IPSEC_ESP_TRANS_LEVEL      0x100a  /* Transport encryption */
-#define SO_IPSEC_ESP_NETWORK_LEVEL    0x100b  /* Full-packet encryption */
-
-/*
- * Just for compatibility with the draft
- */
-
-#define IPSEC_AUTH_LEVEL            SO_IPSEC_AUTH_LEVEL
-#define IPSEC_ESP_TRANS_LEVEL       SO_IPSEC_ESP_TRANS_LEVEL
-#define IPSEC_ESP_NETWORK_LEVEL     SO_IPSEC_ESP_NETWORK_LEVEL
-
-/*
- * Security levels
- */
-
-#define IPSEC_LEVEL_BYPASS	0x00	/* Bypass policy altogether */
-#define IPSEC_LEVEL_NONE	0x00	/* Send clear, accept any */
-#define IPSEC_LEVEL_AVAIL	0x01	/* Send secure if SA available */
-#define IPSEC_LEVEL_USE		0x02	/* Send secure, accept any */
-#define IPSEC_LEVEL_REQUIRE	0x03	/* Require secure inbound, also use */
-#define IPSEC_LEVEL_UNIQUE	0x04	/* Use outbound SA that is unique */
-#define IPSEC_LEVEL_DEFAULT	IPSEC_LEVEL_NONE
-
-#define IPSEC_AUTH_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
-#define IPSEC_ESP_TRANS_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
-#define IPSEC_ESP_NETWORK_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 
 /*
  * Structure used for manipulating linger option.
