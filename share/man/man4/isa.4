@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.23 2003/05/05 08:32:31 jmc Exp $
+.\"	$OpenBSD: isa.4,v 1.24 2003/06/19 06:21:55 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -232,6 +232,10 @@ SoundForte RadioLink SF16-FMR2 FM radio devices.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcic -offset ind
+.It Xr it 4
+ITE IT8705F, IT8712F and SiS SiS950 hardware monitors.
+.It Xr lm 4
+National Semiconductor LM78, LM79 and compatible hardware monitors.
 .It Xr pcic 4
 .Tn ISA
 PCMCIA controllers.
@@ -268,8 +272,10 @@ These are listed in
 .Xr ie 4 ,
 .Xr intro 4 ,
 .Xr isapnp 4 ,
+.Xr it 4 ,
 .Xr lc 4 ,
 .Xr le 4 ,
+.Xr lm 4 ,
 .Xr lpt 4 ,
 .Xr mcd 4 ,
 .Xr ne 4 ,
