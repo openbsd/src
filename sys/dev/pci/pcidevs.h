@@ -1153,6 +1153,7 @@
 
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */
+#define	PCI_PRODUCT_NS_DP83815_0x0020	DP83815		/* 10/100 */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* NEC */

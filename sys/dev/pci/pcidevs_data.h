@@ -2595,6 +2595,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DP83810 10/100",
 	},
 	{
+	    PCI_VENDOR_NS_DP83815, PCI_PRODUCT_NS_DP83815_0x0020,
+	    0,
+	    "",
+	    "10/100",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
 	    0,
 	    "National Semiconductor",
