@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.254 2003/12/18 23:46:19 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.255 2003/12/19 19:03:34 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1627,7 +1627,10 @@ intel686_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-	extern int cpu_feature, cpu_ecxfeature, cpuid_level;
+	extern int cpu_feature, cpuid_level;
+#ifndef SMALL_KERNEL
+	extern int cpu_ecxfeature;
+#endif
 	u_quad_t msr119;
 
 	/*
