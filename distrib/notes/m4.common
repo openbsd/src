@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.7 1999/09/23 08:18:41 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.8 1999/10/10 22:55:56 deraadt Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -466,11 +466,12 @@ dnl
 define({:-OpenBSDCongratulations-:},
 {:-Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
-There is no initial password, but if you're using the machine in a
-networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.  You should have
-got a mail from the install program we recommend you to read.  This you
-can do by running
+You should create yourself an account and protect it and the "root" account 
+with good passwords.  You should have got a mail from the install program we 
+recommend you to read, it contains answers to basic questions you might
+have about OpenBSD (like setting up your system, installing packages, getting
+more information about OpenBSD, sending in your dmesg output and more).
+This you can do by running
 
 	mail
 
