@@ -1,7 +1,7 @@
-/*	$OpenBSD: endian.h,v 1.3 1999/05/10 16:02:08 espie Exp $	*/
+/*	$OpenBSD: endian.h,v 1.4 2000/02/02 22:08:55 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,25 +35,39 @@
 
 #ifdef __GNUC__
 
-#define	__swap32md(x) ({						\
-	register u_int32_t __swap32md_x, __swap32md_t;			\
-									\
-	__asm ("shd %2,%2,8,%0 ! dep %0,15,8,%0 ! shd %%r0,%2,16,%1 !"	\
-	       "extru %2,7,8,%0 ! dep %1,23,8,%0"			\
-	       : "=r" (__swap32md_x), "=r" (__swap32md_t) : "r" (x));	\
-	__swap32md_x;							\
+#define	__swap32md(x) ({			\
+	register u_int32_t __swap32md_x;	\
+						\
+	__asm  ("extru	%1, 7,8,%%r19\n\t"	\
+		"shd	%1,%1,8,%0\n\t"		\
+		"dep	%0,15,8,%0\n\t"		\
+		"dep	%%r19,31,8,%0"		\
+		: "=&r" (__swap32md_x)		\
+		: "r" (x) : "r19");		\
+	__swap32md_x;				\
 })
 
-#define	__swap16md(x) ({						\
-	register u_int16_t __swap16md_x = (x);				\
-									\
-	__asm ("shd %0,%0,24,%0 ! extru %0,15,8,%0 ! dep %%r0,15,16,%0"	\
-	       : "=r" (__swap16md_x));					\
-	__swap16md_x;							\
+#if 1
+/*
+ * Use generic C version because w/ asm inline below
+ * gcc inserts extra "extru r,31,16,r" to convert
+ * to 16 bit entity, which produces overhead we don't need.
+ * Besides, gcc does swap16 same way by itself.
+ */
+#define	__swap16md(x)	__swap16gen(x)
+#else
+#define	__swap16md(x) ({			\
+	register u_int16_t __swap16md_x;	\
+						\
+	__asm  ("extru	%1,23,8,%0\n\t"		\
+		"dep	%1,23,8,%0"		\
+	       : "=&r" (__swap16md_x) : "r" (x));\
+	__swap16md_x;				\
 })
+#endif
 
 /* Tell sys/endian.h we have MD variants of the swap macros.  */
-/* #define MD_SWAP */
+#define MD_SWAP
 
 #endif /* __GNUC__ */
 
