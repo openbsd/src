@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.3 2000/06/23 16:12:35 aaron Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.4 2001/04/06 18:02:58 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -86,6 +86,7 @@ an_pcmcia_match(parent, match, aux)
 		switch (pa->product) {
 		case PCMCIA_PRODUCT_AIRONET_PC4500:
 		case PCMCIA_PRODUCT_AIRONET_PC4800:
+		case PCMCIA_PRODUCT_AIRONET_350:
 			return 1;
 		}
 	}
