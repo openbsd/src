@@ -819,6 +819,8 @@ audio_calc_blksize(sc)
 		bs = AU_RING_SIZE;
 
 	bs &= ~1;		/* make it even, in case of stereo  */
+	if (bs == 0)
+		bs = 2;
 	return(bs);
 }
 
