@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.27 1998/09/11 22:45:53 millert Exp $
+#	$OpenBSD: install.sh,v 1.28 1998/09/15 21:48:27 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -339,6 +339,12 @@ case "$resp" in
 			getresp "$FQDN"
 		done
 		FQDN=$resp
+
+		echo ""
+		echo "If you have any devices being configured by a DHCP server"
+		echo "it is recommended that you do not enter a default route or"
+		echo "any name servers."
+		echo ""
 
 		configurenetwork
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.82 1998/09/14 15:16:01 millert Exp $
+#	$OpenBSD: install.sub,v 1.83 1998/09/15 21:48:27 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -69,7 +69,7 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=23
+VERSION=24
 VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
@@ -368,6 +368,8 @@ __getanotherdisk_1
 	getresp ""
 	if [ "X${resp}" = "X" ]; then
 		DISK=done
+	elif [ "X${resp}" = "Xdone" ]; then
+		DISK=done
 	elif isin $resp $_DKDEVS ; then
 		DISK="$resp"
 	else
@@ -456,9 +458,13 @@ addifconfig() {
 	# $5 - (optional) interface link-layer directives
 
 	# Create a hostname.* file for the interface.
-	echo "inet $2 $4 NONE $5" > /tmp/hostname.$1
-
-	addhostent $3 $2
+	if [ "$3" = "dhcp" ]; then
+		echo "dhcp" > /tmp/hostname.$1
+		addhostent 127.0.0.1 $2
+	else
+		echo "inet $2 $4 NONE $5" > /tmp/hostname.$1
+		addhostent $3 $2
+	fi
 }
 
 configurenetwork() {
@@ -548,7 +554,7 @@ configure_ifs() {
 	# Get IP address
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "IP address? [$_interface_ip] "
+		echo -n "IP address (or 'dhcp') ? [$_interface_ip] "
 		getresp "$_interface_ip"
 		_interface_ip=$resp
 	done
@@ -563,15 +569,17 @@ configure_ifs() {
 	done
 
 	# Get netmask
-	resp=""
-	if [ "X${_interface_mask}" = X"" ]; then
-		_interface_mask=255.255.255.0
+	if [ "$_interface_ip" != "dhcp" ]; then
+		resp=""
+		if [ "X${_interface_mask}" = X"" ]; then
+			_interface_mask=255.255.255.0
+		fi
+		while [ "X${resp}" = X"" ]; do
+			echo -n "Netmask ? [$_interface_mask] "
+			getresp "$_interface_mask"
+			_interface_mask=$resp
+		done
 	fi
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Netmask ? [$_interface_mask] "
-		getresp "$_interface_mask"
-		_interface_mask=$resp
-	done
 
 	if [ -n "`ifconfig -m ${_interface_name} | sed -n '/media/p'`" ]; then
 		echo "Your use of the network interface may require non-default"
@@ -598,16 +606,27 @@ configure_ifs() {
 	# succeeds, add it to the permanent
 	# network configuration info.
 	if [ $_up != "UP" ]; then
-		ifconfig ${_interface_name} down
-		if ifconfig ${_interface_name} inet \
-		    ${_interface_ip} \
-		    netmask ${_interface_mask} ${_interface_extra} up ; then
-			addifconfig \
-			    ${_interface_name} \
-			    ${_interface_symname} \
+		if [ "$_interface_ip" = "dhcp" ]; then
+			if dhclient ${_interface_name} ; then
+				echo "DHCP configuration of $_interface_name successful."
+				addifconfig \
+					${_interface_name} \
+					${_interface_symname} \
+					${_interface_ip}
+				return 0
+			fi
+		else
+			ifconfig ${_interface_name} down
+			if ifconfig ${_interface_name} inet \
 			    ${_interface_ip} \
-			    ${_interface_mask} "${_interface_extra}"
-			return 0
+			    netmask ${_interface_mask} ${_interface_extra} up ; then
+				addifconfig \
+				    ${_interface_name} \
+				    ${_interface_symname} \
+				    ${_interface_ip} \
+				    ${_interface_mask} "${_interface_extra}"
+				return 0
+			fi
 		fi
 	else
 		echo "Interface ${_interface_name} is already active."
