@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.21 1998/08/06 19:35:00 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.22 1998/08/19 22:26:57 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2073,7 +2073,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			if (v3) {
 				nfsm_dissect(tl, u_int32_t *,
 				    3 * NFSX_UNSIGNED);
-				fxdr_hyper(tl, &fileno);
+				fileno = fxdr_hyper(tl);
 				len = fxdr_unsigned(int, *(tl + 2));
 			} else {
 				nfsm_dissect(tl, u_int32_t *,
@@ -2253,7 +2253,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		/* loop thru the dir entries, doctoring them to 4bsd form */
 		while (more_dirs && bigenough) {
 			nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-			fxdr_hyper(tl, &fileno);
+			fileno = fxdr_hyper(tl);
 			len = fxdr_unsigned(int, *(tl + 2));
 			if (len <= 0 || len > NFS_MAXNAMLEN) {
 				error = EBADRPC;

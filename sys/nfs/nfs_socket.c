@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.12 1997/07/28 19:54:17 deraadt Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.13 1998/08/19 22:26:53 csapuntz Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1064,7 +1064,7 @@ tryagain:
 				cachable = fxdr_unsigned(int, *tl++);
 				reqtime += fxdr_unsigned(int, *tl++);
 				if (reqtime > time.tv_sec) {
-				    fxdr_hyper(tl, &frev);
+				    frev = fxdr_hyper(tl);
 				    nqnfs_clientlease(nmp, np, nqlflag,
 					cachable, reqtime, frev);
 				}

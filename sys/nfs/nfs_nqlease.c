@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.12 1997/11/06 05:59:01 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.13 1998/08/19 22:26:51 csapuntz Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -851,7 +851,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
 	if (reqtime > time.tv_sec) {
-		fxdr_hyper(tl, &frev);
+		frev = fxdr_hyper(tl);
 		nqnfs_clientlease(nmp, np, rwflag, cachable, reqtime, frev);
 		nfsm_loadattr(vp, (struct vattr *)0);
 	} else

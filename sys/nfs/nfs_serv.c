@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.15 1998/02/22 01:21:31 niklas Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.16 1998/08/19 22:26:52 csapuntz Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &off);
+		off = fxdr_hyper(tl);
 	} else {
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		off = (off_t)fxdr_unsigned(u_int32_t, *tl);
@@ -721,7 +721,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &off);
+		off = fxdr_hyper(tl);
 		tl += 3;
 		stable = fxdr_unsigned(int, *tl++);
 	} else {
@@ -916,7 +916,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	    nfsm_srvmtofh(&nfsd->nd_fh);
 	    if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &nfsd->nd_off);
+		nfsd->nd_off = fxdr_hyper(tl);
 		tl += 3;
 		nfsd->nd_stable = fxdr_unsigned(int, *tl++);
 	    } else {
@@ -2394,9 +2394,9 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-		fxdr_hyper(tl, &toff);
+		toff = fxdr_hyper(tl);
 		tl += 2;
-		fxdr_hyper(tl, &verf);
+		verf = fxdr_hyper(tl);
 		tl += 2;
 	} else {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2656,9 +2656,9 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED);
-	fxdr_hyper(tl, &toff);
+	toff = fxdr_hyper(tl);
 	tl += 2;
-	fxdr_hyper(tl, &verf);
+	verf = fxdr_hyper(tl);
 	tl += 2;
 	siz = fxdr_unsigned(int, *tl++);
 	cnt = fxdr_unsigned(int, *tl);
@@ -2952,7 +2952,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	 * XXX At this time VOP_FSYNC() does not accept offset and byte
 	 * count parameters, so these arguments are useless (someday maybe).
 	 */
-	fxdr_hyper(tl, &off);
+	off = fxdr_hyper(tl);
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,

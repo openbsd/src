@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.22 1997/11/06 05:59:03 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.23 1998/08/19 22:26:55 csapuntz Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1277,9 +1277,9 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
-		fxdr_hyper(&fp->fa3_size, &vap->va_size);
+		vap->va_size = fxdr_hyper(&fp->fa3_size);
 		vap->va_blocksize = NFS_FABLKSIZE;
-		fxdr_hyper(&fp->fa3_used, &vap->va_bytes);
+		vap->va_bytes = fxdr_hyper(&fp->fa3_used);
 		vap->va_fileid = fxdr_unsigned(int32_t,
 		    fp->fa3_fileid.nfsuquad[1]);
 		fxdr_nfsv3time(&fp->fa3_atime, &vap->va_atime);
