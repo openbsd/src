@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.24 2002/02/17 19:58:32 millert Exp $
+.\"	$OpenBSD: style.9,v 1.25 2002/04/01 18:41:27 deraadt Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -388,11 +388,9 @@ Do YOU understand the following?
 	k = !(l & FLAGS);
 .Ed
 .Pp
-Exits should be 0 on success, or according to the predefined
-values in
-.Xr sysexits 3 .
+Exits should be 0 on success, or non-zero for errors.
 .Bd -literal -offset 0i
-	exit(EX_OK);	/*
+	exit(0);	/*
 			 * Avoid obvious comments such as
 			 * "Exit 0 on success."
 			 */
@@ -627,8 +625,7 @@ or lclint from the ports tree) and produce minimal warnings.
 .Sh SEE ALSO
 .Xr indent 1 ,
 .Xr err 3 ,
-.Xr queue 3 ,
-.Xr sysexits 3 ,
+.Xr queue 3
 .Xr warn 3
 .Sh HISTORY
 This man page is largely based on the src/admin/style/style file from
