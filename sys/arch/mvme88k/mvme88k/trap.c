@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.59 2003/12/19 22:30:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.60 2003/12/23 00:40:02 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1151,14 +1151,11 @@ error_fatal(struct m88100_saved_state *frame)
 void
 m88100_syscall(register_t code, struct m88100_saved_state *tf)
 {
-	register int i, nsys, *ap, nap;
-	register struct sysent *callp;
-	register struct proc *p;
+	int i, nsys, nap;
+	struct sysent *callp;
+	struct proc *p;
 	int error;
-	struct args {
-		int i[8];
-	} args;
-	int rval[2];
+	register_t args[11], rval[2], *ap;
 	u_quad_t sticks;
 #ifdef DIAGNOSTIC
 	extern struct pcb *curpcb;
@@ -1190,7 +1187,7 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 	 * arguments are at their natural alignments.
 	 */
 	ap = &tf->r[2];
-	nap = 6;
+	nap = 11; /* r2-r12 */
 
 	switch (code) {
 	case SYS_syscall:
@@ -1212,29 +1209,30 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 	else {
 		callp += code;
 		i = callp->sy_argsize / sizeof(register_t);
-		if (i > 8)
+		if (i > nap)
 			panic("syscall nargs");
 		/*
 		 * just copy them; syscall stub made sure all the
 		 * args are moved from user stack to registers.
 		 */
-		bcopy((caddr_t)ap, (caddr_t)args.i, i * sizeof(register_t));
+		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
 	}
+
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args.i);
+	scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args.i);
+		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 	rval[0] = 0;
 	rval[1] = 0;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, &args, rval);
+		error = systrace_redirect(code, p, args, rval);
 	else
 #endif
-		error = (*callp->sy_call)(p, &args, rval);
+		error = (*callp->sy_call)(p, args, rval);
 	/*
 	 * system call will look like:
 	 *	 ld r10, r31, 32; r10,r11,r12 might be garbage.
@@ -1324,14 +1322,11 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 void
 m88110_syscall(register_t code, struct m88100_saved_state *tf)
 {
-	register int i, nsys, *ap, nap;
-	register struct sysent *callp;
-	register struct proc *p;
+	int i, nsys, nap;
+	struct sysent *callp;
+	struct proc *p;
 	int error;
-	struct args {
-		int i[8];
-	} args;
-	int rval[2];
+	register_t args[11], rval[2], *ap;
 	u_quad_t sticks;
 #ifdef DIAGNOSTIC
 	extern struct pcb *curpcb;
@@ -1363,7 +1358,7 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 	 * arguments are at their natural alignments.
 	 */
 	ap = &tf->r[2];
-	nap = 6;
+	nap = 11;	/* r2-r12 */
 
 	switch (code) {
 	case SYS_syscall:
@@ -1388,29 +1383,29 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 	else {
 		callp += code;
 		i = callp->sy_argsize / sizeof(register_t);
-		if (i > 8)
+		if (i > nap)
 			panic("syscall nargs");
 		/*
 		 * just copy them; syscall stub made sure all the
 		 * args are moved from user stack to registers.
 		 */
-		bcopy((caddr_t)ap, (caddr_t)args.i, i * sizeof(register_t));
+		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args.i);
+	scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args.i);
+		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 	rval[0] = 0;
 	rval[1] = 0;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, &args, rval);
+		error = systrace_redirect(code, p, args, rval);
 	else
 #endif
-		error = (*callp->sy_call)(p, &args, rval);
+		error = (*callp->sy_call)(p, args, rval);
 	/*
 	 * system call will look like:
 	 *	 ld r10, r31, 32; r10,r11,r12 might be garbage.
