@@ -88,14 +88,14 @@ Every binary file begins with an
 structure:
 .Bd -literal -offset indent
 struct exec {
-	unsigned long	a_midmag;
-	unsigned long	a_text;
-	unsigned long	a_data;
-	unsigned long	a_bss;
-	unsigned long	a_syms;
-	unsigned long	a_entry;
-	unsigned long	a_trsize;
-	unsigned long	a_drsize;
+	u_int32_t	a_midmag;
+	u_int32_t	a_text;
+	u_int32_t	a_data;
+	u_int32_t	a_bss;
+	u_int32_t	a_syms;
+	u_int32_t	a_entry;
+	u_int32_t	a_trsize;
+	u_int32_t	a_drsize;
 };
 .Ed
 .Pp
@@ -424,7 +424,7 @@ the value may be arbitrary.
 .El
 .Pp
 The string table consists of an
-.Em unsigned long
+.Em u_int32_t
 length followed by null-terminated symbol strings.
 The length represents the size of the entire table in bytes,
 so its minimum value (or the offset of the first string)
