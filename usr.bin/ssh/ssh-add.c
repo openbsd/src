@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.25 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.26 2001/01/20 21:33:42 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -98,6 +98,8 @@ ssh_askpass(char *askpass, char *msg)
 	int p[2], status;
 	char buf[1024];
 
+	if (fflush(stdout) != 0)
+		error("ssh_askpass: fflush: %s", strerror(errno));
 	if (askpass == NULL)
 		fatal("internal error: askpass undefined");
 	if (pipe(p) < 0)
