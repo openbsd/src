@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.19 1997/06/30 07:03:06 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.20 1997/06/30 07:04:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -969,13 +969,8 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-#ifndef NEWVM
 	    "usage: vmstat [-fimst] [-c count] [-M core] \
 [-N system] [-w wait] [disks]\n");
-#else
-	    "usage: vmstat [-ims] [-c count] [-M core] \
-[-N system] [-w wait] [disks]\n");
-#endif
 	exit(1);
 }
 
