@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strerror.3,v 1.6 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: strerror.3,v 1.7 2004/05/03 14:37:59 millert Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRERROR 3
@@ -46,30 +46,58 @@
 .Sh DESCRIPTION
 The
 .Fn strerror
-function returns a pointer to the language-dependent error message
-string affiliated with the specified error number
-.Fa errnum .
-The returned string contains a maximum of
+and
+.Fn strerror_r
+functions map the error number
+.Fa errnum
+to a language-dependent error message string.
+.Pp
+.Fn strerror
+returns a string containing a maximum of
 .Dv NL_TEXTMAX
 characters, including the trailing NUL.
-.Pp
-The array pointed to is not to be modified by the program, but may be
-overwritten by subsequent calls to
+This string is not to be modified by the calling program,
+but may be overwritten by subsequent calls to
 .Fn strerror .
 .Pp
 .Fn strerror_r
 is a thread safe version of
 .Fn strerror
-that places the error message in the given buffer
+that places the error message in the specified buffer
 .Fa strerrbuf .
-If the error message is larger then
-.Fa buflen
-the message will be truncated to fit within buflen and
-.Er ERANGE
-is returned.
+.Sh RETURN VALUES
+.Fn strerror
+returns a pointer to the error message string.
+If an error occurs, the error code is stored in
+.Va errno .
+.Pp
 .Fn strerror_r
 returns zero upon successful completion.
-An error number is returned, otherwise.
+If an error occurs, the error code is stored in
+.Va errno
+and the error code is returned.
+.Sh ERRORS
+.Fn strerror
+and
+.Fn strerror_r
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa errnum
+is not a valid error number.
+The returned error string will consist of an error message that includes
+.Fa errnum .
+.El
+.Pp
+.Fn strerror_r
+may fail if:
+.Bl -tag -width Er
+.It Bq Er ERANGE
+The error message is larger then
+.Fa buflen
+characters.
+The message will be truncated to fit.
+.El
 .Sh SEE ALSO
 .Xr intro 2 ,
 .Xr perror 3 ,
