@@ -448,6 +448,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph

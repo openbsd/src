@@ -1600,6 +1600,8 @@
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/powerpc
 ./usr/share/man/cat8/powerpc/fdisk.0
+./usr/share/man/cat8/powerpc/wsconscfg.0
+./usr/share/man/cat8/powerpc/wsconsctl.0
 ./usr/share/man/cat8/ppp.0
 ./usr/share/man/cat8/pppctl.0
 ./usr/share/man/cat8/pppd.0

@@ -468,6 +468,7 @@
 ./usr/include/dev/usb/ucomvar.h
 ./usr/include/dev/usb/uhcireg.h
 ./usr/include/dev/usb/uhcivar.h
+./usr/include/dev/usb/ukbdvar.h
 ./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h
 ./usr/include/dev/usb/usb_mem.h

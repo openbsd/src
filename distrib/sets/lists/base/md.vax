@@ -29,6 +29,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgavar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/tcfs
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/tcfs/tcfs.ph

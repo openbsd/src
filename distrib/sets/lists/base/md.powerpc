@@ -796,6 +796,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ucomvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uhcivar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb_mem.ph
