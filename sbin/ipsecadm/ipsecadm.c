@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.74 2004/01/27 22:46:55 itojun Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.75 2004/05/09 03:21:35 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -122,7 +122,7 @@ extern void ipsecadm_monitor(void);
 extern void ipsecadm_show(u_int8_t);
 int	addrparse(const char *, struct sockaddr *, struct sockaddr *);
 void	xf_set(struct iovec *, int, int);
-int	x2i(char *);
+int	x2i(u_char *);
 int	isvalid(char *, int, int);
 void	usage(void);
 
@@ -242,7 +242,7 @@ xf_set(struct iovec *iov, int cnt, int len)
 }
 
 int
-x2i(char *s)
+x2i(u_char *s)
 {
 	char ss[3];
 
@@ -561,11 +561,11 @@ main(int argc, char *argv[])
 		if (!strcmp(argv[i] + 1, "key") && keyp == NULL &&
 		    (i + 1 < argc)) {
 			if (mode & (AH_NEW | AH_OLD | TCPMD5)) {
-				authp = argv[++i];
-				alen = strlen(authp) / 2;
+				authp = (u_char *)argv[++i];
+				alen = strlen((char *)authp) / 2;
 			} else {
-				keyp = argv[++i];
-				klen = strlen(keyp) / 2;
+				keyp = (u_char *)argv[++i];
+				klen = strlen((char *)keyp) / 2;
 			}
 			continue;
 		}
@@ -581,12 +581,13 @@ main(int argc, char *argv[])
 			}
 			if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0)) {
 				fprintf(stderr,
-				    "%s: file %s is too %s (must be between 1 and %d bytes).\nb",
+				    "%s: file %s is too %s "
+				    "(must be between 1 and %d bytes).\nb",
 				    argv[0], argv[i],
 				    sb.st_size ? "large" : "small", KEYSIZE_LIMIT);
 				exit(1);
 			}
-			pptr = malloc(sb.st_size);
+			pptr = malloc((int)sb.st_size);
 			if (pptr == NULL) {
 				perror("malloc()");
 				exit(1);
@@ -596,7 +597,7 @@ main(int argc, char *argv[])
 				perror("open()");
 				exit(1);
 			}
-			if (read(fd, pptr, sb.st_size) < sb.st_size) {
+			if (read(fd, pptr, (size_t)sb.st_size) < sb.st_size) {
 				perror("read()");
 				exit(1);
 			}
@@ -628,12 +629,13 @@ main(int argc, char *argv[])
 			}
 			if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0)) {
 				fprintf(stderr,
-				    "%s: file %s is too %s (must be between 1 and %d bytes).\n",
+				    "%s: file %s is too %s "
+				    "(must be between 1 and %d bytes).\n",
 				    argv[0], argv[i],
 				    sb.st_size ? "large" : "small", KEYSIZE_LIMIT);
 				exit(1);
 			}
-			authp = malloc(sb.st_size);
+			authp = malloc((int)sb.st_size);
 			if (authp == NULL) {
 				perror("malloc()");
 				exit(1);
@@ -643,7 +645,7 @@ main(int argc, char *argv[])
 				perror("open()");
 				exit(1);
 			}
-			if (read(fd, authp, sb.st_size) < sb.st_size) {
+			if (read(fd, authp, (int)sb.st_size) < sb.st_size) {
 				perror("read()");
 				exit(1);
 			}
@@ -660,8 +662,8 @@ main(int argc, char *argv[])
 				    argv[0], argv[i]);
 				exit(1);
 			}
-			authp = argv[++i];
-			alen = strlen(authp) / 2;
+			authp = (u_char *)argv[++i];
+			alen = strlen((char *)authp) / 2;
 			continue;
 		}
 		if (!strcmp(argv[i] + 1, "iv") && (i + 1 < argc)) {
@@ -1011,8 +1013,8 @@ main(int argc, char *argv[])
 				fprintf(stderr, "%s: malloc failed\n", argv[0]);
 				exit(1);
 			}
-			strlcpy(srcid, argv[i + 1], len);
-			sid1.sadb_ident_len += ROUNDUP(strlen(srcid) + 1) /
+			strlcpy((char *)srcid, argv[i + 1], len);
+			sid1.sadb_ident_len += ROUNDUP(strlen((char *)srcid) + 1) /
 			    sizeof(u_int64_t);
 			i++;
 			continue;
@@ -1031,8 +1033,8 @@ main(int argc, char *argv[])
 				fprintf(stderr, "%s: malloc failed\n", argv[0]);
 				exit(1);
 			}
-			strlcpy(dstid, argv[i + 1], len);
-			sid2.sadb_ident_len += ROUNDUP(strlen(dstid) + 1) /
+			strlcpy((char *)dstid, argv[i + 1], len);
+			sid2.sadb_ident_len += ROUNDUP(strlen((char *)dstid) + 1) /
 			    sizeof(u_int64_t);
 			i++;
 			continue;
@@ -1523,7 +1525,7 @@ argfail:
 			iov[cnt++].iov_len = sizeof(sid1);
 			/* SRC identity */
 			iov[cnt].iov_base = srcid;
-			iov[cnt++].iov_len = ROUNDUP(strlen(srcid) + 1);
+			iov[cnt++].iov_len = ROUNDUP(strlen((char *)srcid) + 1);
 			smsg.sadb_msg_len += sid1.sadb_ident_len;
 		}
 		if (dstid) {
@@ -1531,7 +1533,7 @@ argfail:
 			iov[cnt++].iov_len = sizeof(sid2);
 			/* DST identity */
 			iov[cnt].iov_base = dstid;
-			iov[cnt++].iov_len = ROUNDUP(strlen(dstid) + 1);
+			iov[cnt++].iov_len = ROUNDUP(strlen((char *)dstid) + 1);
 			smsg.sadb_msg_len += sid2.sadb_ident_len;
 		}
 		if (sad1.sadb_address_exttype) {
@@ -1773,7 +1775,7 @@ argfail:
 				iov[cnt++].iov_len = sizeof(sid1);
 				/* SRC identity */
 				iov[cnt].iov_base = srcid;
-				iov[cnt++].iov_len = ROUNDUP(strlen(srcid) + 1);
+				iov[cnt++].iov_len = ROUNDUP(strlen((char *)srcid) + 1);
 				smsg.sadb_msg_len += sid1.sadb_ident_len;
 			}
 			if ((dstid) &&
@@ -1782,7 +1784,7 @@ argfail:
 				iov[cnt++].iov_len = sizeof(sid2);
 				/* DST identity */
 				iov[cnt].iov_base = dstid;
-				iov[cnt++].iov_len = ROUNDUP(strlen(dstid) + 1);
+				iov[cnt++].iov_len = ROUNDUP(strlen((char *)dstid) + 1);
 				smsg.sadb_msg_len += sid2.sadb_ident_len;
 			}
 			break;

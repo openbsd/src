@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopctl.c,v 1.5 2003/11/16 21:06:14 avsm Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.6 2004/05/09 03:21:13 deraadt Exp $	*/
 /*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ const char	*class2str(int);
 void	getparam(int, int, void *, int);
 int	main(int, char *[]);
 int	show(const char *, const char *, ...);
-void	i2ostrvis(const char *, int, char *, int);
+void	i2ostrvis(const void *, int, void *, int);
 void	usage(void);
 
 void	reconfig(char **);
@@ -418,8 +418,10 @@ showtidmap(char **argv)
 }
 
 void
-i2ostrvis(const char *src, int slen, char *dst, int dlen)
+i2ostrvis(const void *srcv, int slen, void *dstv, int dlen)
 {
+	const char *src = srcv;
+	char *dst = dstv;
 	int hc, lc, i, nit;
 
 	dlen--;
