@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.23 2005/01/23 18:49:19 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.24 2005/03/13 19:10:49 cloder Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.23 2005/01/23 18:49:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.24 2005/03/13 19:10:49 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ struct slave {
 				/* after EOT) */
 	int inode;		/* inode that we are currently dealing with */
 	int fd;			/* FD for this slave */
-	int pid;		/* PID for this slave */
+	pid_t pid;		/* PID for this slave */
 	int sent;		/* 1 == we've sent this slave requests */
 	int firstrec;		/* record number of this block */
 	char (*tblock)[TP_BSIZE]; /* buffer for data blocks */
@@ -117,7 +117,7 @@ char	(*nextblock)[TP_BSIZE];
 static time_t tstart_volume;	/* time of volume start */
 static int tapea_volume;	/* value of spcl.c_tapea at volume start */
 
-int master;		/* pid of master, for sending error signals */
+pid_t master;		/* pid of master, for sending error signals */
 int tenths;		/* length of tape used per block written */
 static volatile sig_atomic_t caught;	/* have we caught the signal to proceed? */
 
@@ -548,10 +548,10 @@ rollforward(void)
 void
 startnewtape(int top)
 {
-	int	parentpid;
-	int	childpid;
+	pid_t	parentpid;
+	pid_t	childpid;
 	int	status;
-	int	waitingpid;
+	pid_t	waitingpid;
 	char	*p;
 #ifdef sunos
 	void	(*interrupt_save)();
