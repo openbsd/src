@@ -2260,12 +2260,14 @@
 ./usr/share/sendmail/feature/bitdomain.m4
 ./usr/share/sendmail/feature/blacklist_recipients.m4
 ./usr/share/sendmail/feature/compat_check.m4
+./usr/share/sendmail/feature/conncontrol.m4
 ./usr/share/sendmail/feature/delay_checks.m4
 ./usr/share/sendmail/feature/dnsbl.m4
 ./usr/share/sendmail/feature/domaintable.m4
 ./usr/share/sendmail/feature/enhdnsbl.m4
 ./usr/share/sendmail/feature/generics_entire_domain.m4
 ./usr/share/sendmail/feature/genericstable.m4
+./usr/share/sendmail/feature/greet_pause.m4
 ./usr/share/sendmail/feature/ldap_routing.m4
 ./usr/share/sendmail/feature/limited_masquerade.m4
 ./usr/share/sendmail/feature/local_lmtp.m4
@@ -2277,9 +2279,9 @@
 ./usr/share/sendmail/feature/masquerade_entire_domain.m4
 ./usr/share/sendmail/feature/masquerade_envelope.m4
 ./usr/share/sendmail/feature/msp.m4
+./usr/share/sendmail/feature/mtamark.m4
 ./usr/share/sendmail/feature/no_default_msa.m4
 ./usr/share/sendmail/feature/nocanonify.m4
-./usr/share/sendmail/feature/nodns.m4
 ./usr/share/sendmail/feature/notsticky.m4
 ./usr/share/sendmail/feature/nouucp.m4
 ./usr/share/sendmail/feature/nullclient.m4
@@ -2287,6 +2289,7 @@
 ./usr/share/sendmail/feature/preserve_luser_host.m4
 ./usr/share/sendmail/feature/promiscuous_relay.m4
 ./usr/share/sendmail/feature/queuegroup.m4
+./usr/share/sendmail/feature/ratecontrol.m4
 ./usr/share/sendmail/feature/redirect.m4
 ./usr/share/sendmail/feature/relay_based_on_MX.m4
 ./usr/share/sendmail/feature/relay_entire_domain.m4
@@ -2295,6 +2298,7 @@
 ./usr/share/sendmail/feature/relay_mail_from.m4
 ./usr/share/sendmail/feature/smrsh.m4
 ./usr/share/sendmail/feature/stickyhost.m4
+./usr/share/sendmail/feature/use_client_ptr.m4
 ./usr/share/sendmail/feature/use_ct_file.m4
 ./usr/share/sendmail/feature/use_cw_file.m4
 ./usr/share/sendmail/feature/uucpdomain.m4
@@ -2368,6 +2372,9 @@
 ./usr/share/sendmail/ostype/sunos4.1.m4
 ./usr/share/sendmail/ostype/svr4.m4
 ./usr/share/sendmail/ostype/ultrix4.m4
+./usr/share/sendmail/ostype/unicos.m4
+./usr/share/sendmail/ostype/unicosmk.m4
+./usr/share/sendmail/ostype/unicosmp.m4
 ./usr/share/sendmail/ostype/unixware7.m4
 ./usr/share/sendmail/ostype/unknown.m4
 ./usr/share/sendmail/ostype/uxpds.m4
