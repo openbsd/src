@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.3 2005/01/03 16:49:56 miod Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.8 2003/07/15 00:24:41 lukem Exp $	*/
 
 /* 
@@ -39,24 +39,6 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
-
-
-void
-db_show_panic_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	int s;
-	
-	s = splhigh();
-
-	db_printf("Panic string: %s\n", panicstr);
-
-	(void)splx(s);
-}
-
 
 void
 db_show_frame_cmd(addr, have_addr, count, modif)

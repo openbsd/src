@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.3 2005/01/03 16:49:56 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ void db_machine_init (void);
 #define DB_ELFSIZE 32
 #define DB_NO_AOUT
 
-void db_show_panic_cmd	(db_expr_t, int, db_expr_t, char *);
 void db_show_frame_cmd	(db_expr_t, int, db_expr_t, char *);
 
 #endif	/* _ARM_DB_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.38 2004/06/25 08:41:19 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.39 2005/01/03 16:49:56 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -353,6 +353,19 @@ db_page_print_cmd(addr, have_addr, count, modif)
 	uvm_page_printit((struct vm_page *) addr, full, db_printf);
 }
 
+void
+db_show_panic_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	if (panicstr)
+		db_printf("%s\n", panicstr);
+	else
+		db_printf("the kernel did not panic\n");	/* yet */
+}
+
 /*ARGSUSED*/
 void
 db_extent_print_cmd(addr, have_addr, count, modif)
@@ -418,6 +431,7 @@ struct db_command db_show_cmds[] = {
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
+	{ "panic",	db_show_panic_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
 	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },

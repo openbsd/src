@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.36 2004/02/01 12:23:47 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.37 2005/01/03 16:49:54 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -676,6 +676,12 @@ If the
 .Cm /f
 modifier is specified the complete page is printed.
 .\" --------------------
+.It Xo
+.Ic show panic
+.Xc
+Prints the
+.Li panic string.
+.\" -------------------- 
 .It Xo
 .Ic show pool
 .Op Cm /clp
