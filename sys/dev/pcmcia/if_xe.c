@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.5 1999/08/08 01:17:23 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.6 1999/08/08 21:44:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -306,6 +306,8 @@ xe_pcmcia_attach(parent, self, aux)
 	sc->sc_bsh = psc->sc_pcioh.ioh;
 	sc->sc_offset = 0;
 
+	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, 16);
+
 #if 0
 	if (pcmcia_mem_alloc(pf, 16, &psc->sc_pcmh)) {
 		printf(": pcmcia memory allocation failed\n");
@@ -322,8 +324,6 @@ xe_pcmcia_attach(parent, self, aux)
 	sc->sc_bst = psc->sc_pcmh.memt;
 	sc->sc_bsh = psc->sc_pcmh.memh;
 #endif
-
-	printf(" port 0x%lx/%d", psc->sc_pcmh.addr, 16);
 
 	/* Figure out what card we are. */
 	sc->sc_flags = xe_pcmcia_interpret_manfid(parent);
@@ -384,6 +384,7 @@ xe_pcmcia_attach(parent, self, aux)
 	ifp->if_ioctl = xe_ioctl;
 	ifp->if_start = xe_start;
 	ifp->if_watchdog = xe_watchdog;
+	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 
 	/* Establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc);
