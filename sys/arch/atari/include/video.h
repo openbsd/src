@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.3 1995/11/30 00:58:07 jtc Exp $	*/
+/*	$NetBSD: video.h,v 1.4 1996/01/02 20:59:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -68,8 +68,8 @@ struct video {
     volatile	u_short vd_v_dis_end;	/* Falcon vertical display end      */
     volatile	u_short vd_v_ss;	/* Falcon vertical SS               */
     volatile	char    vd_fill4[17];
-    volatile	u_short vd_unknown;	/* Falcon, purpose unknown          */
     volatile	u_short vd_fal_ctrl;	/* Falcon video control		    */
+    volatile	u_short vd_fal_mode;	/* Falcon video mode	            */
     volatile	char    vd_fill5[315];
     volatile	u_short vd_tt_rgb[256];	/* RGB for simultaneous TT colors   */
     volatile	char	vd_fill6[4608];
