@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.131 2004/03/10 14:45:25 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.132 2004/03/10 14:54:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -353,8 +353,11 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			nfds -= control_dispatch_msg(&pfd[j], j);
 	}
 
-	for (p = peers; p != NULL; p = p->next)
+	while ((p = peers) != NULL) {
+		peers = p->next;
 		bgp_fsm(p, EVNT_STOP);
+		free(p);
+	}
 
 	msgbuf_write(&ibuf_rde.w);
 	msgbuf_clear(&ibuf_rde.w);
