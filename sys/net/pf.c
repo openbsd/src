@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.431 2004/03/22 04:54:17 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.432 2004/03/25 03:03:49 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4366,7 +4366,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			/* Demodulate sequence number */
 			seq = ntohl(th.th_seq) - src->seqdiff;
 			if (src->seqdiff)
-				pf_change_a(&th.th_seq, &th.th_sum,
+				pf_change_a(&th.th_seq, icmpsum,
 				    htonl(seq), 0);
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
@@ -4387,7 +4387,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (STATE_TRANSLATE(*state)) {
 				if (direction == PF_IN) {
 					pf_change_icmp(pd2.src, &th.th_sport,
-					    saddr, &(*state)->lan.addr,
+					    daddr, &(*state)->lan.addr,
 					    (*state)->lan.port, NULL,
 					    pd2.ip_sum, icmpsum,
 					    pd->ip_sum, 0, pd2.af);
