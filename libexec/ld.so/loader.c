@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.26 2002/03/17 00:22:04 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.27 2002/03/17 19:02:30 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -106,12 +106,10 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	Elf_Phdr	*phdp;
 	char		*us = "";
 	elf_object_t	*dynobj;
-	struct elf_object  *exe_obj;	/* Pointer to executable object */
-	struct elf_object  *dyn_obj;	/* Pointer to executable object */
-	struct r_debug * debug_map;
-#ifdef __mips__
-	struct r_debug	   **map_link;	/* Where to put pointer for gdb */
-#endif /* __mips__ */
+	struct elf_object *exe_obj;	/* Pointer to executable object */
+	struct elf_object *dyn_obj;	/* Pointer to executable object */
+	struct r_debug *debug_map;
+	struct r_debug **map_link;	/* Where to put pointer for gdb */
 
 	/*
 	 *  Get paths to various things we are going to use.
@@ -230,31 +228,20 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	/*
 	 * Finally make something to help gdb when poking around in the code.
 	 */
-#if defined(__powerpc__) || defined(__alpha__) || defined(__sparc64__)
-	debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
-	debug_map->r_version = 1;
-	debug_map->r_map = (struct link_map *)_dl_objects;
-	debug_map->r_brk = (Elf_Addr)_dl_debug_state;
-	debug_map->r_state = RT_CONSISTENT;
-	debug_map->r_ldbase = loff;
-	_dl_debug_map = debug_map;
-
-	/* Picks up the first object, the executable itself */
-	dynobj = _dl_objects;
-
-	for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
+#ifdef __mips__
+	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP - DT_LOPROC + DT_NUM]);
+#else
+	for (dynp = exe_obj->load_dyn; dynp->d_tag; dynp++) {
 		if (dynp->d_tag == DT_DEBUG) {
-			dynp->d_un.d_ptr = (Elf_Addr) debug_map;
+			map_link = (struct r_debug **)&dynp->d_un.d_ptr;
 			break;
 		}
 	}
 	if (dynp->d_tag != DT_DEBUG) {
-		_dl_printf("failed to mark DTDEBUG\n");
+		map_link = NULL;
+		DL_DEB(("failed to mark DTDEBUG\n"));
 	}
 #endif
-
-#ifdef __mips__
-	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP - DT_LOPROC + DT_NUM]);
 	if (map_link) {
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
 		debug_map->r_version = 1;
@@ -265,7 +252,6 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 		_dl_debug_map = debug_map;
 		*map_link = _dl_debug_map;
 	}
-#endif
 
 	_dl_debug_state();
 
