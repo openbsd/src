@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.28 1998/01/05 06:45:50 art Exp $	*/
+/*	$OpenBSD: editor.c,v 1.29 1998/01/11 18:21:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.28 1998/01/05 06:45:50 art Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.29 1998/01/11 18:21:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1362,15 +1362,18 @@ edit_parms(lp, freep)
 	/* disk type */
 	for (;;) {
 		p = getstring(lp, "disk type",
-		    "What kind of disk is this?  Usually SCSI, ST506, or "
-		    "floppy (use ST506 for IDE).", dktypenames[lp->d_type]);
+		    "What kind of disk is this?  Usually SCSI, ESDI, ST506, or "
+		    "floppy (use ESDI for IDE).", dktypenames[lp->d_type]);
 		if (p == NULL) {
 			fputs("Command aborted\n", stderr);
 			return;
 		}
-		for (ui = 1; ui < DKMAXTYPES && strcasecmp(p, dktypenames[ui]);
-		    ui++)
-			;
+		if (strcasecmp(p, "IDE") == 0)
+			ui = DTYPE_ESDI;
+		else
+			for (ui = 1; ui < DKMAXTYPES &&
+			    strcasecmp(p, dktypenames[ui]); ui++)
+				;
 		if (ui < DKMAXTYPES) {
 			break;
 		} else {
