@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.2 2002/06/09 00:01:05 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.3 2002/06/11 11:04:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -46,6 +46,8 @@
 #define	SCZ_CE_AFSR			0x10040
 #define	SCZ_CE_AFAR			0x10048
 
+#define	SCZ_PCI_IMAP_BASE		0x1000
+#define	SCZ_PCI_ICLR_BASE		0x1400
 #define	SCZ_PCI_AFSR			0x2010
 #define	SCZ_PCI_AFAR			0x2018
 
@@ -82,6 +84,15 @@
 #define	SCZ_CEAFSR_MTAGSYND		0x00000000000f0000UL
 #define	SCZ_CEAFSR_MTAG			0x000000000000e000UL
 #define	SCZ_CEAFSR_ECCSYND		0x00000000000001ffUL
+
+#define	SCZ_PBM_A_REGS			(0x600000UL - 0x400000UL)
+#define	SCZ_PBM_B_REGS			(0x700000UL - 0x400000UL)
+
+#define	SCZ_UE_INO			0x30	/* uncorrectable error */
+#define	SCZ_CE_INO			0x31	/* correctable ecc error */
+#define	SCZ_PCIERR_A_INO		0x32	/* PCI A bus error */
+#define	SCZ_PCIERR_B_INO		0x33	/* PCI B bus error */
+#define	SCZ_SERR_INO			0x34	/* safari interface error */
 
 struct schizo_range {
 	u_int32_t	cspace;
