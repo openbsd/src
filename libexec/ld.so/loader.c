@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.43 2002/07/27 15:40:44 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.44 2002/08/09 14:35:43 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -507,10 +507,7 @@ _dl_rtld(elf_object_t *object)
 	 */
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
-	if (_dl_bindnow || object->dyn.bind_now)	/* XXX Perhaps more checking ? */
-		_dl_md_reloc_got(object, 0);
-	else
-		_dl_md_reloc_got(object, 1);
+	_dl_md_reloc_got(object, !(_dl_bindnow || object->dyn.bind_now));
 	object->status |= STAT_RELOC_DONE;
 }
 
