@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.33 2003/05/30 00:15:36 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.34 2003/06/02 12:22:32 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -417,17 +417,19 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		psycho_set_intr(sc, 15, psycho_bus_a,
 		    psycho_psychoreg_vaddr(sc, pciaerr_int_map),
 		    psycho_psychoreg_vaddr(sc, pciaerr_clr_int));
-		psycho_set_intr(sc, 15, psycho_bus_b,
-		    psycho_psychoreg_vaddr(sc, pciberr_int_map),
-		    psycho_psychoreg_vaddr(sc, pciberr_clr_int));
 #if 0
 		psycho_set_intr(sc, 15, psycho_powerfail,
 		    psycho_psychoreg_vaddr(sc, power_int_map),
 		    psycho_psychoreg_vaddr(sc, power_clr_int));
 #endif
-		psycho_set_intr(sc, 1, psycho_wakeup,
-		    psycho_psychoreg_vaddr(sc, pwrmgt_int_map),
-		    psycho_psychoreg_vaddr(sc, pwrmgt_clr_int));
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
+			psycho_set_intr(sc, 15, psycho_bus_b,
+			    psycho_psychoreg_vaddr(sc, pciberr_int_map),
+			    psycho_psychoreg_vaddr(sc, pciberr_clr_int));
+			psycho_set_intr(sc, 1, psycho_wakeup,
+			    psycho_psychoreg_vaddr(sc, pwrmgt_int_map),
+			    psycho_psychoreg_vaddr(sc, pwrmgt_clr_int));
+		}
 
 		/*
 		 * Apparently a number of machines with psycho and psycho+
