@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.5 1997/03/02 09:46:45 tholo Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.6 1997/03/04 05:44:49 tholo Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.5 1997/03/02 09:46:45 tholo Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.6 1997/03/04 05:44:49 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -500,7 +500,7 @@ node_creat(arcn)
 	if (pmode)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
-	if (arcn->type == PAX_DIR) {
+	if (arcn->type == PAX_DIR && strcmp(NM_CPIO, argv0) != 0) {
 		/*
 		 * Dirs must be processed again at end of extract to set times
 		 * and modes to agree with those stored in the archive. However
