@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.23 1999/11/19 16:04:17 markus Exp $");
+RCSID("$Id: servconf.c,v 1.24 1999/11/19 20:03:35 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -238,7 +238,7 @@ void read_server_config(ServerOptions *options, const char *filename)
   FILE *f;
   char line[1024];
   char *cp, **charptr;
-  int linenum, *intptr, i, value;
+  int linenum, *intptr, value;
   int bad_options = 0;
   ServerOpCodes opcode;
 
