@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: sparc64.c,v 1.3 2002/03/17 18:39:33 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -33,10 +33,12 @@
 static const char *md_reg_names[] = {
 	"%pc", "%npc", /* %y */
 	"%o0", "%o1", "%o2", "%o3", "%o4", "%o5", "%o6", "%o7",
+	"%i0", "%i1", "%i2", "%i3", "%i4", "%i5", "%i6", "%i7",
 	"%g0", "%g1", "%g2", "%g3", "%g4", "%g5", "%g6", "%g7",
+	"%l0", "%l1", "%l2", "%l3", "%l4", "%l5", "%l6", "%l7",
 };
 
-struct md_def md_def = { md_reg_names, 18, 0 };
+struct md_def md_def = { md_reg_names, 34, 0 };
 
 void
 md_def_init(void)
@@ -113,9 +115,11 @@ md_getregs(struct pstate *ps, reg *regs)
 	regs[1] = r.r_npc;
 	for (i = 0; i < 8; i++) {
 		regs[2 + i] = r.r_out[i];
+		regs[10 + i] = r.r_in[i];
+		regs[18 + i] = r.r_global[i];
+		regs[26 + i] = r.r_local[i];
 	}
 	for (i = 0; i < 8; i++) {
-		regs[10 + i] = r.r_global[i];
 	}
 
 	return 0;
