@@ -1,5 +1,5 @@
-#	$OpenBSD: kadm_err.et,v 1.4 1998/02/18 11:53:44 art Exp $
-#	$KTH: kadm_err.et,v 1.4 1996/06/12 08:01:34 bg Exp $
+#	$OpenBSD: kadm_err.et,v 1.5 1998/05/15 06:22:17 art Exp $
+#	$KTH: kadm_err.et,v 1.5 1998/01/16 23:11:27 joda Exp $
 
 #-
 # Copyright (C) 1988 by the Massachusetts Institute of Technology
@@ -24,7 +24,7 @@
 
 # KADM_SUCCESS, as all success codes should be, is zero
 
-ec KADM_RCSID,		"$Header: /home/cvs/src/kerberosIV/kadm/Attic/kadm_err.et,v 1.4 1998/02/18 11:53:44 art Exp $"
+ec KADM_RCSID,		"$OpenBSD: kadm_err.et,v 1.5 1998/05/15 06:22:17 art Exp $"
 # /* Building and unbuilding the packet errors */
 ec KADM_NO_REALM,	"Cannot fetch local realm"
 ec KADM_NO_CRED,	"Unable to fetch credentials"
@@ -68,4 +68,9 @@ ec KADM_PW_MISMATCH,    "Cleartext password and DES key did not match"
 
 ec KADM_NOT_SERV_PRINC, "Invalid principal for change srvtab request"
 ec KADM_IMMUTABLE,	"Attempt to delete immutable principal"
+# password quality basically stolen from OV libkadm5
+ec KADM_PASS_Q_NULL,	"Null passwords are not allowed"
+ec KADM_PASS_Q_TOOSHORT,"Password is too short"
+ec KADM_PASS_Q_CLASS,	"Too few character classes in password"
+ec KADM_PASS_Q_DICT,	"Password is in the password dictionary"
 end
