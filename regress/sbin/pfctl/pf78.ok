@@ -1,0 +1,1 @@
+pass in inet from 10.0.0.1 to <regress> label "10.0.0.1:<regress>" 
