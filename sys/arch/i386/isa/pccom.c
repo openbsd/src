@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.7 1996/11/28 23:37:41 niklas Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.8 1996/11/30 11:54:32 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
@@ -567,7 +567,7 @@ comprobe(parent, match, aux)
 	if (iobase == comconsaddr && !comconsattached)
 		goto out;
 
-	if (needioh && bus_space_map(iot, iobase, COM_NPORTS, &ioh)) {
+	if (needioh && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 		rv = 0;
 		goto out;
 	}
@@ -624,7 +624,7 @@ comattach(parent, self, aux)
 		iobase = ia->ia_iobase;
 		iot = ia->ia_iot;
 	        if (iobase != comconsaddr) {
-	                if (bus_space_map(iot, iobase, COM_NPORTS, &ioh))
+	                if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 				panic("comattach: io mapping failed");
 		} else
 	                ioh = comconsioh;
@@ -672,7 +672,7 @@ comattach(parent, self, aux)
 		bus_space_handle_t hayespioh;
 
 #define	HAYESP_NPORTS	8			/* XXX XXX XXX ??? ??? ??? */
-		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, &hayespioh))
+		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, 0, &hayespioh))
 			continue;
 		if (comprobeHAYESP(hayespioh, sc)) {
 			sc->sc_hayespbase = *hayespp;
@@ -1675,7 +1675,7 @@ comcnprobe(cp)
 	bus_space_handle_t ioh;
 	int found;
 
-	if (bus_space_map(iot, CONADDR, COM_NPORTS, &ioh)) {
+	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
@@ -1709,7 +1709,7 @@ comcninit(cp)
 	XXX NEEDS TO BE FIXED XXX
 	comconsiot = ???;
 #endif
-	if (bus_space_map(comconsiot, CONADDR, COM_NPORTS, &comconsioh))
+	if (bus_space_map(comconsiot, CONADDR, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
 
 	cominit(comconsiot, comconsioh, comdefaultrate);
