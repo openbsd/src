@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.95 2004/06/09 14:02:44 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.96 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1157,7 +1157,8 @@ exchange_dump_real(char *header, struct exchange *exchange, int class,
 	    exchange->doi->id, exchange->type, exchange->step));
 	LOG_DBG((class, level, "%s: icookie %08x%08x rcookie %08x%08x", header,
 	    decode_32(exchange->cookies), decode_32(exchange->cookies + 4),
-	    decode_32(exchange->cookies + 8), decode_32(exchange->cookies + 12)));
+	    decode_32(exchange->cookies + 8),
+	    decode_32(exchange->cookies + 12)));
 
 	/* Include phase 2 SA list for this exchange */
 	if (exchange->phase == 2) {

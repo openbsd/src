@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.93 2004/06/10 12:54:53 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.94 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -94,7 +94,8 @@ static int      addr_cmp(const void *, const void *);
 static int      ipsec_add_contact(struct message *);
 static int      ipsec_contacted(struct message *);
 #ifdef USE_DEBUG
-static int      ipsec_debug_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
+static int      ipsec_debug_attribute(u_int16_t, u_int8_t *, u_int16_t,
+    void *);
 #endif
 static void     ipsec_delete_spi(struct sa *, struct proto *, int);
 static int16_t *ipsec_exchange_script(u_int8_t);
@@ -105,7 +106,7 @@ static void     ipsec_free_sa_data(void *);
 static struct keystate *ipsec_get_keystate(struct message *);
 static u_int8_t *ipsec_get_spi(size_t *, u_int8_t, struct message *);
 static int	ipsec_handle_leftover_payload(struct message *, u_int8_t,
-		    struct payload *);
+    struct payload *);
 static int      ipsec_informational_post_hook(struct message *);
 static int      ipsec_informational_pre_hook(struct message *);
 static int      ipsec_initiator(struct message *);
@@ -116,10 +117,10 @@ static int      ipsec_set_network(u_int8_t *, u_int8_t *, struct ipsec_sa *);
 static size_t   ipsec_situation_size(void);
 static u_int8_t ipsec_spi_size(u_int8_t);
 static int      ipsec_validate_attribute(u_int16_t, u_int8_t *, u_int16_t,
-		    void *);
+    void *);
 static int      ipsec_validate_exchange(u_int8_t);
 static int	ipsec_validate_id_information(u_int8_t, u_int8_t *, u_int8_t *,
-		    size_t, struct exchange *);
+    size_t, struct exchange *);
 static int      ipsec_validate_key_information(u_int8_t *, size_t);
 static int      ipsec_validate_notification(u_int16_t);
 static int      ipsec_validate_proto(u_int8_t);
@@ -333,8 +334,10 @@ ipsec_finalize_exchange(struct message *msg)
 					 */
 					if (ipsec_set_network(ie->id_ci,
 					    ie->id_cr, isa)) {
-						log_print("ipsec_finalize_exchange: "
-						    "ipsec_set_network failed");
+						log_print(
+						    "ipsec_finalize_exchange: "
+						    "ipsec_set_network "
+						    "failed");
 						return;
 					}
 				} else {
@@ -344,8 +347,10 @@ ipsec_finalize_exchange(struct message *msg)
 					 */
 					if (ipsec_set_network(ie->id_cr,
 					    ie->id_ci, isa)) {
-						log_print("ipsec_finalize_exchange: "
-						    "ipsec_set_network failed");
+						log_print(
+						    "ipsec_finalize_exchange: "
+						    "ipsec_set_network "
+						    "failed");
 						return;
 					}
 				}
@@ -506,7 +511,8 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		break;
 	}
 
-	memcpy(&isa->sport, src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+	memcpy(&isa->sport, 
+	    src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	    IPSEC_ID_PORT_LEN);
 
 	/* Set destination address.  */
@@ -576,7 +582,8 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 
 	memcpy(&isa->tproto, dst_id + ISAKMP_ID_DOI_DATA_OFF +
 	    IPSEC_ID_PROTO_OFF, IPSEC_ID_PROTO_LEN);
-	memcpy(&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
+	memcpy(&isa->dport,
+	    dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	    IPSEC_ID_PORT_LEN);
 	return 0;
 
@@ -1624,8 +1631,8 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			 * disappear too.
 		         */
 			msg->transport->vtbl->get_dst(msg->transport, &dst);
-			while ((sa = sa_lookup_by_peer(dst, sysdep_sa_len(dst)))
-			    != 0) {
+			while ((sa = sa_lookup_by_peer(dst,
+			    sysdep_sa_len(dst))) != 0) {
 				/*
 				 * Don't delete the current SA -- we received
 				 * the notification over it, so it's obviously
@@ -2134,8 +2141,9 @@ ipsec_add_contact(struct message *msg)
 		cnt = contact_limit ? 2 * contact_limit : 64;
 		new_contacts = realloc(contacts, cnt * sizeof contacts[0]);
 		if (!new_contacts) {
-			log_error("ipsec_add_contact: realloc (%p, %lu) failed",
-			    contacts, cnt * (unsigned long) sizeof contacts[0]);
+			log_error("ipsec_add_contact: "
+			    "realloc (%p, %lu) failed", contacts,
+			    cnt * (unsigned long) sizeof contacts[0]);
 			return -1;
 		}
 		contact_limit = cnt;
@@ -2303,8 +2311,8 @@ ipsec_id_size(char *section, u_int8_t *id)
 	case IPSEC_ID_DER_ASN1_GN:
 		data = conf_get_str(section, "Name");
 		if (!data) {
-			log_print("ipsec_id_size: section %s has no \"Name\" tag",
-			    section);
+			log_print("ipsec_id_size: "
+			    "section %s has no \"Name\" tag", section);
 			return -1;
 		}
 		return strlen(data);

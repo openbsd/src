@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.72 2004/06/09 14:02:44 ho Exp $	 */
+/* $OpenBSD: udp.c,v 1.73 2004/06/14 09:55:42 ho Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -455,7 +455,8 @@ udp_create(char *name)
 
 	addr_str = conf_get_str(name, "Address");
 	if (!addr_str) {
-		log_print("udp_create: no address configured for \"%s\"", name);
+		log_print("udp_create: no address configured for \"%s\"",
+		    name);
 		return 0;
 	}
 	if (text2sockaddr(addr_str, port_str, &dst)) {

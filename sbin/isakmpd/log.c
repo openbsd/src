@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.44 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: log.c,v 1.45 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -96,7 +96,8 @@ static char    *pcaplog_file = NULL;
 static FILE    *packet_log;
 static u_int8_t *packet_buf = NULL;
 
-static int      udp_cksum(struct packhdr *, const struct udphdr *, u_int16_t *);
+static int      udp_cksum(struct packhdr *, const struct udphdr *,
+    u_int16_t *);
 static u_int16_t in_cksum(const u_int16_t *, int);
 #endif				/* USE_DEBUG */
 
@@ -182,7 +183,7 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 {
 	char		buffer[LOG_SIZE], nbuf[LOG_SIZE + 32];
 	static const char fallback_msg[] =
-	    "write to log file failed (errno %d), redirecting output to syslog";
+	    "write to log file failed (errno %d), redirecting to syslog";
 	int		len;
 	struct tm      *tm;
 	struct timeval  now;
@@ -318,12 +319,14 @@ log_debug_toggle(void)
 	static int	log_level_copy[LOG_ENDCLASS], toggle = 0;
 
 	if (!toggle) {
-		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: debug levels cleared"));
+		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: "
+		    "debug levels cleared"));
 		memcpy(&log_level_copy, &log_level, sizeof log_level);
 		memset(&log_level, 0, sizeof log_level);
 	} else {
 		memcpy(&log_level, &log_level_copy, sizeof log_level);
-		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: debug levels restored"));
+		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: "
+		    "debug levels restored"));
 	}
 	toggle = !toggle;
 }
@@ -443,8 +446,8 @@ log_packet_init(char *newname)
 		    pcaplog_file, mode);
 		return;
 	}
-	log_print("log_packet_init: starting IKE packet capture to file \"%s\"",
-	    pcaplog_file);
+	log_print("log_packet_init: "
+	    "starting IKE packet capture to file \"%s\"", pcaplog_file);
 
 	/* If this is a new file, we need to write a PCAP header to it.  */
 	if (*mode == 'w') {

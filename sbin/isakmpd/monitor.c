@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.21 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.22 2004/06/14 09:55:41 ho Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -554,7 +554,8 @@ monitor_loop(int debugging)
 
 			if (sigchlded) {
 				do {
-					pid = waitpid(m_state.pid, &n, WNOHANG);
+					pid = waitpid(m_state.pid, &n,
+					    WNOHANG);
 				}
 				while (pid == -1 && errno == EINTR);
 
@@ -589,42 +590,58 @@ monitor_loop(int debugging)
 						break;
 
 					case MONITOR_GET_SOCKET:
-						LOG_DBG((LOG_MISC, 80, "%s: MONITOR_GET_SOCKET", __func__));
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_GET_SOCKET",
+						    __func__));
 						m_priv_test_state(STATE_INIT);
 						m_priv_getsocket(m_state.s);
 						break;
 
 					case MONITOR_SETSOCKOPT:
-						LOG_DBG((LOG_MISC, 80, "%s: MONITOR_SETSOCKOPT", __func__));
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_SETSOCKOPT",
+						    __func__));
 						m_priv_test_state(STATE_INIT);
 						m_priv_setsockopt(m_state.s);
 						break;
 
 					case MONITOR_BIND:
-						LOG_DBG((LOG_MISC, 80, "%s: MONITOR_BIND", __func__));
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_BIND",
+						    __func__));
 						m_priv_test_state(STATE_INIT);
 						m_priv_bind(m_state.s);
 						break;
 
 					case MONITOR_MKFIFO:
-						LOG_DBG((LOG_MISC, 80, "%s: MONITOR_MKFIFO", __func__));
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_MKFIFO",
+						    __func__));
 						m_priv_test_state(STATE_INIT);
 						m_priv_mkfifo(m_state.s);
 						break;
 
 					case MONITOR_INIT_DONE:
-						LOG_DBG((LOG_MISC, 80, "%s: MONITOR_INIT_DONE", __func__));
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_INIT_DONE",
+						    __func__));
 						m_priv_test_state(STATE_INIT);
-						m_priv_increase_state(STATE_RUNNING);
+						m_priv_increase_state(
+						    STATE_RUNNING);
 						break;
 
 					case MONITOR_SHUTDOWN:
-						LOG_DBG((LOG_MISC, 80, "%s: MONITOR_SHUTDOWN", __func__));
-						m_priv_increase_state(STATE_QUIT);
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_SHUTDOWN",
+						    __func__));
+						m_priv_increase_state(
+						    STATE_QUIT);
 						break;
 
 					default:
-						log_print("monitor_loop: got unknown code %d", msgcode);
+						log_print("monitor_loop: "
+						    "got unknown code %d",
+						    msgcode);
 					}
 			}
 	}
@@ -1020,7 +1037,8 @@ m_priv_check_sockopt(int level, int name)
 		break;
 
 	default:
-		log_print("m_priv_check_sockopt: Illegal option name %d", name);
+		log_print("m_priv_check_sockopt: Illegal option name %d",
+		    name);
 		return 1;
 	}
 

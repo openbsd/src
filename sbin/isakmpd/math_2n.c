@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.15 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.16 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -86,7 +86,8 @@ b2n_random(b2n_ptr n, u_int32_t bits)
 
 	/* Get the number of significant bits right */
 	if (bits & CHUNK_MASK) {
-		CHUNK_TYPE m = (((1 << ((bits & CHUNK_MASK) - 1)) - 1) << 1) | 1;
+		CHUNK_TYPE m =
+		    (((1 << ((bits & CHUNK_MASK) - 1)) - 1) << 1) | 1;
 		n->limp[n->chunks - 1] &= m;
 	}
 	n->dirty = 1;
@@ -216,8 +217,9 @@ b2n_set_str(b2n_ptr n, char *str)
 
 	for (w = 0, i = 0; i < chunks; i++) {
 		tmp = 0;
-		for (j = (i == 0 ? ((len - 1) % CHUNK_BYTES) + 1 : CHUNK_BYTES);
-		    j > 0; j--) {
+		for (j = (i == 0 ?
+		    ((len - 1) % CHUNK_BYTES) + 1 : CHUNK_BYTES);
+		     j > 0; j--) {
 			tmp <<= 8;
 			tmp |= (hex2int(str[w]) << 4) | hex2int(str[w + 1]);
 			w += 2;
@@ -416,8 +418,8 @@ b2n_lshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 	maj = s >> CHUNK_SHIFTS;
 	min = s & CHUNK_MASK;
 
-	add = (!(bits & CHUNK_MASK) || ((bits & CHUNK_MASK) + min) > CHUNK_MASK)
-	    ? 1 : 0;
+	add = (!(bits & CHUNK_MASK) ||
+	    ((bits & CHUNK_MASK) + min) > CHUNK_MASK) ? 1 : 0;
 	chunks = n->chunks;
 	if (b2n_resize(d, chunks + maj + add))
 		return -1;
@@ -473,7 +475,8 @@ b2n_rshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 	} else
 		tmp = n;
 
-	memmove(d->limp, tmp->limp + maj + (min ? 1 : 0), CHUNK_BYTES * newsize);
+	memmove(d->limp, tmp->limp + maj + (min ? 1 : 0),
+	    CHUNK_BYTES * newsize);
 	if (b2n_resize(d, newsize))
 		return -1;
 
@@ -546,7 +549,8 @@ b2n_square(b2n_ptr d, b2n_ptr n)
 	maj = (maj + CHUNK_MASK) >> CHUNK_SHIFTS;
 
 	b2n_init(t);
-	if (b2n_resize(t, 2 * maj + ((CHUNK_MASK + 2 * min) >> CHUNK_SHIFTS))) {
+	if (b2n_resize(t,
+	    2 * maj + ((CHUNK_MASK + 2 * min) >> CHUNK_SHIFTS))) {
 		b2n_clear(t);
 		return -1;
 	}
@@ -1035,7 +1039,8 @@ b2n_nadd(b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 	}
 
 	if (i < a->chunks)
-		memcpy(d->limp + i, a->limp + i, CHUNK_BYTES * (a->chunks - i));
+		memcpy(d->limp + i, a->limp + i,
+		    CHUNK_BYTES * (a->chunks - i));
 
 	d->dirty = 1;
 	B2N_SWAP(d0, d);
@@ -1070,7 +1075,8 @@ b2n_nsub(b2n_ptr d0, b2n_ptr a, b2n_ptr b)
 	}
 
 	if (i < a->chunks)
-		memcpy(d->limp + i, a->limp + i, CHUNK_BYTES * (a->chunks - i));
+		memcpy(d->limp + i, a->limp + i,
+		    CHUNK_BYTES * (a->chunks - i));
 
 	d->dirty = 1;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.25 2004/06/09 14:02:44 ho Exp $	 */
+/* $OpenBSD: transport.c,v 1.26 2004/06/14 09:55:42 ho Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -216,7 +216,8 @@ transport_handle_messages(fd_set * fds)
 	struct transport *t;
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
-		if ((t->flags & TRANSPORT_LISTEN) && (*t->vtbl->fd_isset) (t, fds))
+		if ((t->flags & TRANSPORT_LISTEN) &&
+		    (*t->vtbl->fd_isset) (t, fds))
 			(*t->vtbl->handle_message) (t);
 }
 
@@ -264,87 +265,102 @@ transport_send_messages(fd_set * fds)
 			exchange->in_transit = 0;
 
 			/*
-			 * We disregard the potential error message here, hoping that the
-			 * retransmit will go better.
+			 * We disregard the potential error message here,
+			 * hoping that the retransmit will go better.
 			 * XXX Consider a retry/fatal error discriminator.
 		         */
 			t->vtbl->send_message(msg);
 			msg->xmits++;
 
 			/*
-			 * This piece of code has been proven to be quite delicate.
-			 * Think twice for before altering.  Here's an outline:
+			 * This piece of code has been proven to be quite
+			 * delicate. Think twice for before altering.  Here's
+			 * an outline: If this message is not the one which
+			 * finishes an exchange, check if we have reached the
+			 * number of retransmit before queuing it up for
+			 * another.
 		         *
-			 * If this message is not the one which finishes an exchange,
-			 * check if we have reached the number of retransmit before
-			 * queuing it up for another.
+			 * If it is a finishing message we still may have to
+			 * keep it around for an on-demand retransmit when
+			 * seeing a duplicate of our peer's previous message.
 		         *
-			 * If it is a finishing message we still may have to keep it
-			 * around for an on-demand retransmit when seeing a duplicate
-			 * of our peer's previous message.
-		         *
-			 * If we have no previous message from our peer, we need not
-			 * to keep the message around.
+			 * If we have no previous message from our peer, we
+			 * need not to keep the message around.
 		         */
 			if ((msg->flags & MSG_LAST) == 0) {
-				if (msg->xmits > conf_get_num("General", "retransmits",
-						      RETRANSMIT_DEFAULT)) {
-					log_print("transport_send_messages: giving up on "
-					     "message %p, exchange %s", msg,
-						  exchange->name ? exchange->name : "<unnamed>");
+				if (msg->xmits > conf_get_num("General",
+				    "retransmits", RETRANSMIT_DEFAULT)) {
+					log_print("transport_send_messages: "
+					    "giving up on message %p, "
+					    "exchange %s", msg,
+					    exchange->name ? exchange->name :
+					    "<unnamed>");
 					/* Be more verbose here.  */
 					if (exchange->phase == 1) {
-						log_print("transport_send_messages: either this "
-							  "message did not reach the other peer");
+						log_print(
+						    "transport_send_messages: "
+						    "either this message did "
+						    "not reach the other "
+						    "peer");
 						if (exchange->initiator)
-							log_print("transport_send_messages: or the response"
-								  "message did not reach us back");
+							log_print("transport_send_messages: "
+							    "or the response"
+							    "message did not "
+							    "reach us back");
 						else
-							log_print("transport_send_messages: or this is "
-								  "an attempted IKE scan");
+							log_print("transport_send_messages: "
+							    "or this is an "
+							    "attempted IKE "
+							    "scan");
 					}
 					exchange->last_sent = 0;
 				} else {
 					gettimeofday(&expiration, 0);
 
 					/*
-					 * XXX Calculate from round trip timings and a backoff func.
+					 * XXX Calculate from round trip
+					 * timings and a backoff func.
 				         */
 					expiry = msg->xmits * 2 + 5;
 					expiration.tv_sec += expiry;
 					LOG_DBG((LOG_TRANSPORT, 30,
-						 "transport_send_messages: message %p "
-						 "scheduled for retransmission %d in %d secs",
-						 msg, msg->xmits, expiry));
+					    "transport_send_messages: "
+					    "message %p scheduled for "
+					    "retransmission %d in %d secs",
+					    msg, msg->xmits, expiry));
 					if (msg->retrans)
 						timer_remove_event(msg->retrans);
 					msg->retrans
-						= timer_add_event("message_send_expire",
-								  (void (*) (void *)) message_send_expire,
-							  msg, &expiration);
+					    = timer_add_event("message_send_expire",
+						(void (*) (void *)) message_send_expire,
+						msg, &expiration);
 					/*
 					 * If we cannot retransmit, we
 					 * cannot...
 					 */
-					exchange->last_sent = msg->retrans ? msg : 0;
+					exchange->last_sent =
+					    msg->retrans ? msg : 0;
 				}
 			} else
-				exchange->last_sent = exchange->last_received ? msg : 0;
+				exchange->last_sent =
+				    exchange->last_received ? msg : 0;
 
 			/*
-			 * If this message is not referred to for later retransmission
-			 * it will be ok for us to drop it after the post-send function.
-			 * But as the post-send function may remove the exchange, we need
-			 * to remember this fact here.
+			 * If this message is not referred to for later
+			 * retransmission it will be ok for us to drop it
+			 * after the post-send function. But as the post-send
+			 * function may remove the exchange, we need to
+			 * remember this fact here.
 		         */
 			ok_to_drop_message = exchange->last_sent == 0;
 
 			/*
-			 * If this is not a retransmit call post-send functions that allows
-			 * parallel work to be done while the network and peer does their
-			 * share of the job.  Note that a post-send function may take
-			 * away the exchange we belong to, but only if no retransmits
-			 * are possible.
+			 * If this is not a retransmit call post-send
+			 * functions that allows parallel work to be done
+			 * while the network and peer does their share of the
+			 * job.  Note that a post-send function may take away
+			 * the exchange we belong to, but only if no
+			 * retransmits are possible.
 		         */
 			if (msg->xmits == 1)
 				message_post_send(msg);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.49 2004/06/10 12:54:53 hshoexer Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.50 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -978,7 +978,8 @@ ike_phase_1_recv_ID(struct message *msg)
 	memcpy(*id, payload->p + ISAKMP_GEN_SZ, *id_len);
 	snprintf(header, sizeof header, "ike_phase_1_recv_ID: %s",
 	    constant_name(ipsec_id_cst, GET_ISAKMP_ID_TYPE(payload->p)));
-	LOG_DBG_BUF((LOG_NEGOTIATION, 40, header, payload->p + ISAKMP_ID_DATA_OFF,
+	LOG_DBG_BUF((LOG_NEGOTIATION, 40, header,
+	    payload->p + ISAKMP_ID_DATA_OFF,
 	    *id_len + ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF));
 	payload->flags |= PL_MARK;
 	return 0;

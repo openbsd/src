@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.21 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: crypto.c,v 1.22 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -58,35 +58,40 @@ void            aes_decrypt(struct keystate *, u_int8_t *, u_int16_t);
 struct crypto_xf transforms[] = {
 #ifdef USE_DES
 	{
-		DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8, BLOCKSIZE, 0,
+		DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8,
+		BLOCKSIZE, 0,
 		des1_init,
 		des1_encrypt, des1_decrypt
 	},
 #endif
 #ifdef USE_TRIPLEDES
 	{
-		TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24, BLOCKSIZE, 0,
+		TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24,
+		BLOCKSIZE, 0,
 		des3_init,
 		des3_encrypt, des3_decrypt
 	},
 #endif
 #ifdef USE_BLOWFISH
 	{
-		BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56, BLOCKSIZE, 0,
+		BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56,
+		BLOCKSIZE, 0,
 		blf_init,
 		blf_encrypt, blf_decrypt
 	},
 #endif
 #ifdef USE_CAST
 	{
-		CAST_CBC, "CAST (CBC-Mode)", 12, 16, BLOCKSIZE, 0,
+		CAST_CBC, "CAST (CBC-Mode)", 12, 16,
+		BLOCKSIZE, 0,
 		cast_init,
 		cast1_encrypt, cast1_decrypt
 	},
 #endif
 #ifdef USE_AES
 	{
-		AES_CBC, "AES (CBC-Mode)", 16, 32, AES_BLOCK_SIZE, 0,
+		AES_CBC, "AES (CBC-Mode)", 16, 32,
+		AES_BLOCK_SIZE, 0,
 		aes_init,
 		aes_encrypt, aes_decrypt
 	},
@@ -116,13 +121,15 @@ des1_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 void
 des1_encrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
 {
-	des_cbc_encrypt(DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_ENCRYPT);
+	des_cbc_encrypt(DC d, DC d, len, ks->ks_des[0], DC ks->riv,
+	    DES_ENCRYPT);
 }
 
 void
 des1_decrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
 {
-	des_cbc_encrypt(DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_DECRYPT);
+	des_cbc_encrypt(DC d, DC d, len, ks->ks_des[0], DC ks->riv,
+	    DES_DECRYPT);
 }
 
 #ifdef USE_TRIPLEDES

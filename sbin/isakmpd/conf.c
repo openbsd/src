@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.68 2004/06/09 14:02:44 ho Exp $	 */
+/* $OpenBSD: conf.c,v 1.69 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -238,7 +238,7 @@ conf_parse_line(int trans, char *line, size_t sz)
 			free(section);
 		if (i == sz) {
 			log_print("conf_parse_line: %d:"
-			    "non-matched ']', ignoring until next section", ln);
+			    "unmatched ']', ignoring until next section", ln);
 			section = 0;
 			return;
 		}
@@ -299,7 +299,7 @@ conf_parse(int trans, char *buf, size_t sz)
 		cp++;
 	}
 	if (cp != line)
-		log_print("conf_parse: last line non-terminated, ignored.");
+		log_print("conf_parse: last line unterminated, ignored.");
 }
 
 /*
@@ -356,7 +356,8 @@ conf_find_trans_xf(int phase, char *xf)
 		    (phase == 2 && strcmp("Suites", node->tag) == 0)) {
 			p = node->value;
 			while ((p = strstr(p, xf)) != NULL)
-				if (*(p + strlen(p)) && *(p + strlen(p)) != ',')
+				if (*(p + strlen(p)) &&
+				    *(p + strlen(p)) != ',')
 					p += strlen(p);
 				else
 					return 1;
@@ -574,8 +575,8 @@ conf_reinit(void)
 
 		fd = monitor_open(conf_path, O_RDONLY, 0);
 		if (fd == -1) {
-			log_error("conf_reinit: open (\"%s\", O_RDONLY) failed",
-			    conf_path);
+			log_error("conf_reinit: "
+			    "open (\"%s\", O_RDONLY) failed", conf_path);
 			return;
 		}
 		new_conf_addr = malloc(sz);
@@ -1074,14 +1075,16 @@ conf_report(void)
 						snprintf(dnode->s, len, "[%s]",
 						    current_section);
 						dnode->next = (struct dumper *)
-						    calloc(1, sizeof(struct dumper));
+						    calloc(1, 
+							sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
 							goto mem_fail;
 
 						dnode->s = "";
 						dnode->next = (struct dumper *)
-						    calloc(1, sizeof(struct dumper));
+						    calloc(1, 
+							sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
 							goto mem_fail;

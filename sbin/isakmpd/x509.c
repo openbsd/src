@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.90 2004/06/02 16:19:16 hshoexer Exp $	 */
+/* $OpenBSD: x509.c,v 1.91 2004/06/14 09:55:42 ho Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -169,7 +169,8 @@ x509_generate_kn(int id, X509 *cert)
 		    != X509_LU_X509) {
 			X509_STORE_CTX_cleanup(&csc);
 			LOG_DBG((LOG_POLICY, 30,
-			    "x509_generate_kn: no certificate found for issuer"));
+			    "x509_generate_kn: no certificate found for "
+			    "issuer"));
 			return 0;
 		}
 	}
@@ -223,7 +224,8 @@ x509_generate_kn(int id, X509 *cert)
 		return 0;
 	}
 	if (((tm = X509_get_notBefore(cert)) == NULL) ||
-	    (tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME)) {
+	    (tm->type != V_ASN1_UTCTIME &&
+		tm->type != V_ASN1_GENERALIZEDTIME)) {
 		tt = time(0);
 		strftime(before, 14, "%Y%m%d%H%M%S", localtime(&tt));
 		timecomp = "LocalTimeOfDay";
@@ -327,7 +329,8 @@ x509_generate_kn(int id, X509 *cert)
 
 	tm = X509_get_notAfter(cert);
 	if (tm == NULL &&
-	    (tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME)) {
+	    (tm->type != V_ASN1_UTCTIME &&
+		tm->type != V_ASN1_GENERALIZEDTIME)) {
 		tt = time(0);
 		strftime(after, 14, "%Y%m%d%H%M%S", localtime(&tt));
 		timecomp2 = "LocalTimeOfDay";
@@ -356,7 +359,8 @@ x509_generate_kn(int id, X509 *cert)
 			if ((tm->length < 10) || (tm->length > 13)) {
 				LOG_DBG((LOG_POLICY, 30,
 				    "x509_generate_kn: invalid length of "
-				    "NotValidAfter time field (%d)", tm->length));
+				    "NotValidAfter time field (%d)",
+				    tm->length));
 				free(ikey);
 				free(skey);
 				free(buf);
@@ -382,9 +386,11 @@ x509_generate_kn(int id, X509 *cert)
 			}
 			/* Stupid UTC tricks.  */
 			if (tm->data[0] < '5')
-				snprintf(after, sizeof after, "20%s", tm->data);
+				snprintf(after, sizeof after, "20%s",
+				    tm->data);
 			else
-				snprintf(after, sizeof after, "19%s", tm->data);
+				snprintf(after, sizeof after, "19%s",
+				    tm->data);
 		} else {	/* V_ASN1_GENERICTIME */
 			if ((tm->length < 12) || (tm->length > 15)) {
 				LOG_DBG((LOG_POLICY, 30,
@@ -443,12 +449,14 @@ x509_generate_kn(int id, X509 *cert)
 
 	if (!X509_NAME_oneline(issuer, isname, 256)) {
 		LOG_DBG((LOG_POLICY, 50,
-		    "x509_generate_kn: X509_NAME_oneline (issuer, ...) failed"));
+		    "x509_generate_kn: "
+		    "X509_NAME_oneline (issuer, ...) failed"));
 		return 0;
 	}
 	if (!X509_NAME_oneline(subject, subname, 256)) {
 		LOG_DBG((LOG_POLICY, 50,
-		    "x509_generate_kn: X509_NAME_oneline (subject, ...) failed"));
+		    "x509_generate_kn: "
+		    "X509_NAME_oneline (subject, ...) failed"));
 		return 0;
 	}
 	buf_len = strlen(fmt2) + strlen(isname) + strlen(subname) + 56;
@@ -514,7 +522,8 @@ x509_hash_init(void)
 	x509_tab = malloc((bucket_mask + 1) * sizeof(struct x509_list));
 	if (!x509_tab)
 		log_fatal("x509_hash_init: malloc (%lu) failed",
-		    (bucket_mask + 1) * (unsigned long)sizeof(struct x509_list));
+		    (bucket_mask + 1) * 
+		    (unsigned long)sizeof(struct x509_list));
 	for (i = 0; i <= bucket_mask; i++) {
 		LIST_INIT(&x509_tab[i]);
 	}
@@ -558,7 +567,8 @@ x509_hash_find(u_int8_t *id, size_t len)
 		return cert->cert;
 	}
 
-	LOG_DBG((LOG_CRYPTO, 70, "x509_hash_find: no certificate matched query"));
+	LOG_DBG((LOG_CRYPTO, 70, 
+	    "x509_hash_find: no certificate matched query"));
 	return 0;
 }
 
@@ -681,8 +691,8 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 		}
 		if (hash)
 			if (!x509_hash_enter(cert))
-				log_print("x509_read_from_dir: x509_hash_enter "
-				    "(%s) failed",
+				log_print("x509_read_from_dir: "
+				    "x509_hash_enter (%s) failed",
 				    file->d_name);
 	}
 
@@ -872,8 +882,8 @@ x509_cert_validate(void *scert)
 	int             res, err;
 
 	/*
-	 * Validate the peer certificate by checking with the CA certificates we
-	 * trust.
+	 * Validate the peer certificate by checking with the CA certificates
+	 * we trust.
          */
 	X509_STORE_CTX_init(&csc, x509_cas, cert, NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
@@ -1092,8 +1102,8 @@ x509_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 	X509		*scert;
 
 	if (aca)
-		LOG_DBG((LOG_CRYPTO, 60,
-		    "x509_cert_obtain: acceptable certificate authorities here"));
+		LOG_DBG((LOG_CRYPTO, 60, "x509_cert_obtain: "
+		    "acceptable certificate authorities here"));
 
 	/* We need our ID to find a certificate.  */
 	if (!id) {
@@ -1128,7 +1138,8 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 	subjectaltname = X509_get_ext(scert, extpos);
 
 	if (!subjectaltname || !subjectaltname->value ||
-	    !subjectaltname->value->data || subjectaltname->value->length < 4) {
+	    !subjectaltname->value->data ||
+	    subjectaltname->value->length < 4) {
 		log_print("x509_cert_subjectaltname: invalid "
 		    "subjectaltname extension");
 		return 0;
@@ -1365,7 +1376,8 @@ x509_from_printable(char *cert)
 	foo = x509_cert_get(buf, plen);
 	free(buf);
 	if (!foo)
-		log_print("x509_from_printable: could not retrieve certificate");
+		log_print("x509_from_printable: "
+		    "could not retrieve certificate");
 	return foo;
 }
 

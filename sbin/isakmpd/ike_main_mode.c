@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_main_mode.c,v 1.14 2004/05/23 18:17:55 hshoexer Exp $	 */
+/* $OpenBSD: ike_main_mode.c,v 1.15 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	 */
 
 /*
@@ -103,8 +103,8 @@ responder_send_KE_NONCE(struct message *msg)
 		return -1;
 
 	/*
-	 * Calculate DH values & key material in parallel with the message going
-	 * on a roundtrip over the wire.
+	 * Calculate DH values & key material in parallel with the message
+	 * going on a roundtrip over the wire.
          */
 	message_register_post_send(msg,
 	    (void (*)(struct message *))ike_phase_1_post_exchange_KE_NONCE);

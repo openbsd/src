@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_doi.c,v 1.20 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: isakmp_doi.c,v 1.21 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	 */
 
 /*
@@ -50,7 +50,8 @@
 #include "util.h"
 
 #ifdef USE_DEBUG
-static int      isakmp_debug_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
+static int      isakmp_debug_attribute(u_int16_t, u_int8_t *, u_int16_t,
+    void *);
 #endif
 static void     isakmp_finalize_exchange(struct message *);
 static struct keystate *isakmp_get_keystate(struct message *);
@@ -60,10 +61,10 @@ static void     isakmp_setup_situation(u_int8_t *);
 static size_t   isakmp_situation_size(void);
 static u_int8_t isakmp_spi_size(u_int8_t);
 static int	isakmp_validate_attribute(u_int16_t, u_int8_t *, u_int16_t,
-		    void *);
+    void *);
 static int      isakmp_validate_exchange(u_int8_t);
-static int	isakmp_validate_id_information(u_int8_t, u_int8_t *, u_int8_t *,
-		    size_t, struct exchange *);
+static int	isakmp_validate_id_information(u_int8_t, u_int8_t *,
+    u_int8_t *, size_t, struct exchange *);
 static int      isakmp_validate_key_information(u_int8_t *, size_t);
 static int      isakmp_validate_notification(u_int16_t);
 static int      isakmp_validate_proto(u_int8_t);
@@ -231,8 +232,8 @@ isakmp_responder(struct message *msg)
 	case ISAKMP_EXCH_INFO:
 		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
 		    p = TAILQ_NEXT(p, link)) {
-			LOG_DBG((LOG_EXCHANGE, 10,
-			    "isakmp_responder: got NOTIFY of type %s, ignoring",
+			LOG_DBG((LOG_EXCHANGE, 10, "isakmp_responder: "
+			    "got NOTIFY of type %s, ignoring",
 			    constant_name(isakmp_notify_cst,
 			    GET_ISAKMP_NOTIFY_MSG_TYPE(p->p))));
 			p->flags |= PL_MARK;

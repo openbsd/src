@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.40 2004/05/24 14:54:50 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.41 2004/06/14 09:55:42 ho Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -375,7 +375,8 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 			 * XXX In the algorithm below there are some magic
 			 * numbers we probably could give explaining names.
 			 */
-			addrlen = sizeof "0000:0000:0000:0000:0000:0000:0000:0000";
+			addrlen =
+			    sizeof "0000:0000:0000:0000:0000:0000:0000:0000";
 			*address = malloc(addrlen);
 			if (!*address)
 				return -1;
@@ -386,7 +387,8 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 				    ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2*i],
 				    ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2*i + 1]);
 				j += 4;
-				(*address)[j] = (j < (addrlen - 1)) ? ':' : '\0';
+				(*address)[j] =
+				    (j < (addrlen - 1)) ? ':' : '\0';
 				j++;
 			}
 			break;

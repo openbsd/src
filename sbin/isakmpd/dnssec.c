@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.19 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.20 2004/06/14 09:55:41 ho Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -126,7 +126,7 @@ dns_get_key(int type, struct message *msg, int *keylen)
 	case IPSEC_ID_FQDN:
 		if ((id_len + 1) >= sizeof name)
 			return 0;
-		/* ID is not NULL-terminated. Add trailing dot and terminate. */
+		/* ID is not NULL-terminated. Add trailing dot and NULL.  */
 		memcpy(name, id + ISAKMP_ID_DATA_OFF, id_len);
 		*(name + id_len) = '.';
 		*(name + id_len + 1) = '\0';
@@ -176,7 +176,8 @@ dns_get_key(int type, struct message *msg, int *keylen)
 
 	/* We don't accept unvalidated data. */
 	if (!(rr->rri_flags & RRSET_VALIDATED)) {
-		LOG_DBG((LOG_MISC, 10, "dns_get_key: got unvalidated response"));
+		LOG_DBG((LOG_MISC, 10, "dns_get_key: "
+		    "got unvalidated response"));
 		freerrset(rr);
 		return 0;
 	}
@@ -210,7 +211,8 @@ dns_get_key(int type, struct message *msg, int *keylen)
 		}
 		key_rr.datalen = rr->rri_rdatas[i].rdi_length - 4;
 		if (key_rr.datalen <= 0) {
-			LOG_DBG((LOG_MISC, 50, "dns_get_key: ignored bad key"));
+			LOG_DBG((LOG_MISC, 50, "dns_get_key: "
+			    "ignored bad key"));
 			key_rr.datalen = 0;
 			continue;
 		}
@@ -247,7 +249,8 @@ dns_RSA_dns_to_x509(u_int8_t *key, int keylen, RSA **rsa_key)
 	}
 	rsa = RSA_new();
 	if (rsa == NULL) {
-		log_error("dns_RSA_dns_to_x509: failed to allocate new RSA struct");
+		log_error("dns_RSA_dns_to_x509: "
+		    "failed to allocate new RSA struct");
 		return -1;
 	}
 	e_len = *key;

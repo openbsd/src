@@ -1,4 +1,4 @@
-/* $OpenBSD: timer.c,v 1.13 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: timer.c,v 1.14 2004/06/14 09:55:42 ho Exp $	 */
 /* $EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	 */
 
 /*
@@ -72,7 +72,8 @@ timer_handle_expirations(void)
 	for (n = TAILQ_FIRST(&events); n && timercmp(&now, &n->expiration, >=);
 	    n = TAILQ_FIRST(&events)) {
 		LOG_DBG((LOG_TIMER, 10,
-		    "timer_handle_expirations: event %s(%p)", n->name, n->arg));
+		    "timer_handle_expirations: event %s(%p)", n->name,
+		    n->arg));
 		TAILQ_REMOVE(&events, n, link);
 		(*n->func)(n->arg);
 		free(n);

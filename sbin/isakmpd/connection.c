@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.28 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: connection.c,v 1.29 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -148,7 +148,8 @@ connection_checker(void *vconn)
 	struct connection *conn = vconn;
 
 	gettimeofday(&now, 0);
-	now.tv_sec += conf_get_num("General", "check-interval", CHECK_INTERVAL);
+	now.tv_sec += conf_get_num("General", "check-interval",
+	    CHECK_INTERVAL);
 	conn->ev = timer_add_event("connection_checker",
 	    connection_checker, conn, &now);
 	if (!conn->ev)
@@ -225,8 +226,8 @@ connection_passive_lookup_by_ids(u_int8_t *id1, u_int8_t *id2)
 		    (compare_ids(id1, conn->remote_id, conn->remote_sz) == 0 &&
 		    compare_ids(id2, conn->local_id, conn->local_sz) == 0)) {
 			LOG_DBG((LOG_MISC, 60,
-			    "connection_passive_lookup_by_ids: returned \"%s\"",
-			    conn->name));
+			    "connection_passive_lookup_by_ids: "
+			    "returned \"%s\"", conn->name));
 			return conn->name;
 		}
 	}

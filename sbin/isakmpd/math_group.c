@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.22 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: math_group.c,v 1.23 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -429,7 +429,7 @@ group_init(void)
 	for (i = sizeof(groups) / sizeof(groups[0]) - 1; i >= 0; i--)
 		switch (groups[i].type) {
 #ifdef USE_EC
-		case EC2N:	/* Initialize an Elliptic Curve over GF(2**n) */
+		case EC2N:  /* Initialize an Elliptic Curve over GF(2**n) */
 			ec2n_init(&groups[i]);
 			break;
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.63 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.64 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -154,7 +154,8 @@ parse_args(int argc, char *argv[])
 		case 'D':
 			if (sscanf(optarg, "%d=%d", &cls, &level) != 2) {
 				if (sscanf(optarg, "A=%d", &level) == 1) {
-					for (cls = 0; cls < LOG_ENDCLASS; cls++)
+					for (cls = 0; cls < LOG_ENDCLASS;
+					     cls++)
 						log_debug_cmd(cls, level);
 				} else
 					log_print("parse_args: -D argument "
@@ -402,7 +403,7 @@ main(int argc, char *argv[])
 
 #if defined (USE_PRIVSEP)
 	if (monitor_init()) {
-		/* The parent, with privileges enters infinite monitor loop.  */
+		/* The parent, with privileges enters infinite monitor loop. */
 		monitor_loop(debug);
 		exit(0);	/* Never reached.  */
 	}
@@ -494,7 +495,7 @@ main(int argc, char *argv[])
 			if (app_socket + 1 > n)
 				n = app_socket + 1;
 		}
-		/* Setup the descriptors that have pending messages to send.  */
+		/* Setup the descriptors that have pending messages to send. */
 		memset(wfds, 0, mask_size);
 		m = transport_pending_wfd_set(wfds);
 		if (m > n)

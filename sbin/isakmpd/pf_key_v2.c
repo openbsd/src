@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.141 2004/06/09 14:02:44 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.142 2004/06/14 09:55:41 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -288,18 +288,19 @@ pf_key_v2_read(u_int32_t seq)
 
 	while (1) {
 		/*
-		 * If this is a read of a reply we should actually expect the reply to
-		 * get lost as PF_KEY is an unreliable service per the specs.
-		 * Currently we do this by setting a short timeout, and if it is not
-		 * readable in that time, we fail the read.
+		 * If this is a read of a reply we should actually expect the
+		 * reply to get lost as PF_KEY is an unreliable service per
+		 * the specs. Currently we do this by setting a short timeout,
+		 * and if it is not readable in that time, we fail the read.
 	         */
 		if (seq) {
 			fds = calloc(howmany(pf_key_v2_socket + 1, NFDBITS),
 			    sizeof(fd_mask));
 			if (!fds) {
-				log_error("pf_key_v2_read: calloc (%lu, %lu) failed",
+				log_error("pf_key_v2_read: "
+				    "calloc (%lu, %lu) failed",
 				    (unsigned long) howmany(pf_key_v2_socket + 1,
-				    NFDBITS),
+					NFDBITS),
 				    (unsigned long) sizeof(fd_mask));
 				goto cleanup;
 			}
@@ -309,13 +310,14 @@ pf_key_v2_read(u_int32_t seq)
 			n = select(pf_key_v2_socket + 1, fds, 0, 0, &tv);
 			free(fds);
 			if (n == -1) {
-				log_error("pf_key_v2_read: select (%d, fds, 0, "
-				    "0, &tv) failed",
+				log_error("pf_key_v2_read: "
+				    "select (%d, fds, 0, 0, &tv) failed",
 				    pf_key_v2_socket + 1);
 				goto cleanup;
 			}
 			if (!n) {
-				log_print("pf_key_v2_read: no reply from PF_KEY");
+				log_print("pf_key_v2_read: "
+				    "no reply from PF_KEY");
 				goto cleanup;
 			}
 		}
@@ -362,11 +364,10 @@ pf_key_v2_read(u_int32_t seq)
 				buf = 0;
 				continue;
 			} else {
-				LOG_DBG((LOG_SYSDEP, 90,
-				    "pf_key_v2_read:"
-				    "bad version (%d) or PID (%d, mine is %ld), ignored",
-				    msg->sadb_msg_version, msg->sadb_msg_pid,
-				    (long) getpid()));
+				LOG_DBG((LOG_SYSDEP, 90, "pf_key_v2_read:"
+				    "bad version (%d) or PID (%d, mine is "
+				    "%ld), ignored", msg->sadb_msg_version,
+				    msg->sadb_msg_pid, (long) getpid()));
 				goto cleanup;
 			}
 		}
@@ -448,8 +449,8 @@ pf_key_v2_write(struct pf_key_v2_msg *pmsg)
 
 	for (i = 0; i < cnt; i++) {
 		snprintf(header, sizeof header, "pf_key_v2_write: iov[%d]", i);
-		LOG_DBG_BUF((LOG_SYSDEP, 80, header, (u_int8_t *) iov[i].iov_base,
-		    iov[i].iov_len));
+		LOG_DBG_BUF((LOG_SYSDEP, 80, header,
+		    (u_int8_t *) iov[i].iov_base, iov[i].iov_len));
 	}
 
 	n = writev(pf_key_v2_socket, iov, cnt);
@@ -459,8 +460,9 @@ pf_key_v2_write(struct pf_key_v2_msg *pmsg)
 		goto cleanup;
 	}
 	if ((size_t) n != len) {
-		log_error("pf_key_v2_write: writev (%d, ...) returned prematurely "
-		    "(%lu)", pf_key_v2_socket, (unsigned long) n);
+		log_error("pf_key_v2_write: "
+		    "writev (%d, ...) returned prematurely (%lu)",
+		    pf_key_v2_socket, (unsigned long) n);
 		goto cleanup;
 	}
 	free(iov);
@@ -653,7 +655,8 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 #endif
 
 	/* Setup the ADDRESS extensions.  */
-	len = sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(src));
+	len = 
+	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(src));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -678,7 +681,8 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		goto cleanup;
 	addr = 0;
 
-	len = sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
+	len =
+	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -748,7 +752,8 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		memcpy(spi, &sa->sadb_sa_spi, *sz);
 
 #ifdef KAME
-	if (!pf_key_v2_register_sa_seq(spi, *sz, proto, dst, sysdep_sa_len(dst),
+	if (!pf_key_v2_register_sa_seq(spi, *sz, proto, dst,
+	    sysdep_sa_len(dst),
 	    ((struct sadb_msg *) (TAILQ_FIRST(ret)->seg))->sadb_msg_seq))
 		goto cleanup;
 #endif
@@ -890,9 +895,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 #endif
 
 		default:
-			LOG_DBG((LOG_SYSDEP, 50,
-			    "pf_key_v2_set_spi: unknown encryption algorithm %d",
-			    proto->id));
+			LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_set_spi: "
+			    "unknown encryption algorithm %d", proto->id));
 			return -1;
 		}
 
@@ -948,8 +952,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		case IPSEC_AUTH_DES_MAC:
 		case IPSEC_AUTH_KPDK:
 			/* XXX We should be supporting KPDK */
-			LOG_DBG((LOG_SYSDEP, 50,
-			    "pf_key_v2_set_spi: unknown authentication algorithm %d",
+			LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_set_spi: "
+			    "unknown authentication algorithm %d",
 			    iproto->auth));
 			return -1;
 
@@ -1014,9 +1018,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 #endif
 
 		default:
-			LOG_DBG((LOG_SYSDEP, 50,
-			    "pf_key_v2_set_spi: unknown authentication algorithm %d",
-			    proto->id));
+			LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_set_spi: "
+			    "unknown authentication algorithm %d", proto->id));
 			goto cleanup;
 		}
 		break;
@@ -1129,8 +1132,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		life->sadb_lifetime_allocations = 0;
 		life->sadb_lifetime_bytes = sa->kilobytes * 1024;
 		/*
-		 * XXX I am not sure which one is best in security respect.  Maybe the
-		 * RFCs actually mandate what a lifetime really is.
+		 * XXX I am not sure which one is best in security respect.
+		 * Maybe the RFCs actually mandate what a lifetime really is.
 	         */
 #if 0
 		life->sadb_lifetime_addtime = 0;
@@ -1156,8 +1159,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		life->sadb_lifetime_allocations = 0;
 		life->sadb_lifetime_bytes = sa->kilobytes * 1024 * 9 / 10;
 		/*
-		 * XXX I am not sure which one is best in security respect.  Maybe the
-		 * RFCs actually mandate what a lifetime really is.
+		 * XXX I am not sure which one is best in security respect.
+		 * Maybe the RFCs actually mandate what a lifetime really is.
 	         */
 #if 0
 		life->sadb_lifetime_addtime = 0;
@@ -1275,7 +1278,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 			key->sadb_key_reserved = 0;
 			memcpy(key + 1,
 			    iproto->keymat[incoming] +
-			    (proto->proto == IPSEC_PROTO_IPSEC_ESP ? keylen : 0),
+			    (proto->proto ==
+				IPSEC_PROTO_IPSEC_ESP ? keylen : 0),
 			    hashlen);
 			if (pf_key_v2_msg_add(update, (struct sadb_ext *) key,
 			    PF_KEY_V2_NODE_MALLOCED) == -1)
@@ -1306,7 +1310,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		if (!pp)
 			goto nosid;
 
-		sid = calloc(PF_KEY_V2_ROUND(len + 1) + sizeof *sid, sizeof(u_int8_t));
+		sid = calloc(PF_KEY_V2_ROUND(len + 1) + sizeof *sid,
+		    sizeof(u_int8_t));
 		if (!sid) {
 			free(pp);
 			goto cleanup;
@@ -1339,7 +1344,8 @@ nosid:
 		if (!pp)
 			goto nodid;
 
-		sid = calloc(PF_KEY_V2_ROUND(len + 1) + sizeof *sid, sizeof(u_int8_t));
+		sid = calloc(PF_KEY_V2_ROUND(len + 1) + sizeof *sid,
+		    sizeof(u_int8_t));
 		if (!sid) {
 			free(pp);
 			goto cleanup;
@@ -1371,9 +1377,9 @@ nodid:
 #ifdef SADB_X_CREDTYPE_NONE
 	/*
 	 * Send received credentials to the kernel. We don't bother with
-	 * our credentials, since the process either knows them (if it specified
-	 * them with setsockopt()), or has no business looking at them (e.g.,
-	 * system wide certs).
+	 * our credentials, since the process either knows them (if it
+	 * specified them with setsockopt()), or has no business looking at
+	 * them (e.g., system wide certs).
          */
 	if (isakmp_sa->recv_cert) {
 		switch (isakmp_sa->recv_certtype) {
@@ -1389,9 +1395,11 @@ nodid:
 			if (!cred)
 				goto cleanup;
 
-			cred->sadb_x_cred_len = ((sizeof *cred) / PF_KEY_V2_CHUNK) +
+			cred->sadb_x_cred_len =
+			    ((sizeof *cred) / PF_KEY_V2_CHUNK) +
 			    PF_KEY_V2_ROUND(len) / PF_KEY_V2_CHUNK;
-			cred->sadb_x_cred_exttype = SADB_X_EXT_REMOTE_CREDENTIALS;
+			cred->sadb_x_cred_exttype =
+			    SADB_X_EXT_REMOTE_CREDENTIALS;
 			cred->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
 			memcpy(cred + 1, isakmp_sa->recv_cert, len);
 
@@ -1408,7 +1416,7 @@ nodid:
 				u_int32_t       datalen;
 				struct cert_handler *handler;
 
-				/* We do it this way to avoid weird includes. */
+				/* We do it this way to avoid weird includes.*/
 				handler = cert_get(ISAKMP_CERTENC_X509_SIG);
 				if (!handler)
 					break;
@@ -1418,8 +1426,9 @@ nodid:
 					break;
 
 				len = datalen;
-				cred = calloc(PF_KEY_V2_ROUND(len) + sizeof *cred,
-				    sizeof(u_int8_t));
+				cred =
+				    calloc(PF_KEY_V2_ROUND(len) + sizeof *cred,
+					sizeof(u_int8_t));
 				if (!cred) {
 					free(data);
 					goto cleanup;
@@ -1433,7 +1442,8 @@ nodid:
 				memcpy(cred + 1, data, len);
 				free(data);
 
-				if (pf_key_v2_msg_add(update, (struct sadb_ext *) cred,
+				if (pf_key_v2_msg_add(update,
+				    (struct sadb_ext *) cred,
 				    PF_KEY_V2_NODE_MALLOCED) == -1)
 					goto cleanup;
 			}
@@ -1452,13 +1462,13 @@ nodid:
 		u_int8_t       *data;
 
 		/*
-		 * If it's a private key, we shouldn't pass it to the kernel for
-		 * processes to see; successful authentication of Phase 1 implies
-		 * that the process already knew the passphrase. On the other hand,
-		 * we don't want to reveal to processes any system-wide passphrases
-		 * used for authentication with remote systems. Same reason we don't
-		 * send up the key (private or passphrase) we used to authenticate
-		 * with the peer.
+		 * If it's a private key, we shouldn't pass it to the kernel
+		 * for processes to see; successful authentication of Phase 1
+		 * implies that the process already knew the passphrase. On
+		 * the other hand, we don't want to reveal to processes any
+		 * system-wide passphrases used for authentication with remote
+		 * systems. Same reason we don't send up the key (private or
+		 * passphrase) we used to authenticate with the peer.
 	         */
 		if (isakmp_sa->recv_keytype == ISAKMP_KEY_PASSPHRASE)
 			goto doneauth;
@@ -1468,7 +1478,8 @@ nodid:
 		if (!data)
 			goto cleanup;
 
-		cred = calloc(PF_KEY_V2_ROUND(len) + sizeof *cred, sizeof(u_int8_t));
+		cred = calloc(PF_KEY_V2_ROUND(len) + sizeof *cred,
+		    sizeof(u_int8_t));
 		if (!cred) {
 			free(data);
 			goto cleanup;
@@ -1485,7 +1496,8 @@ nodid:
 			break;
 
 		default:
-			log_print("pf_key_v2_set_spi: unknown received key type %d",
+			log_print("pf_key_v2_set_spi: "
+			    "unknown received key type %d",
 			    isakmp_sa->recv_keytype);
 			free(cred);
 			goto cleanup;
@@ -1514,7 +1526,8 @@ doneauth:
 	tprotocol.sadb_protocol_len = sizeof tprotocol / PF_KEY_V2_CHUNK;
 	tprotocol.sadb_protocol_proto = isa->tproto;
 
-	if (pf_key_v2_msg_add(update, (struct sadb_ext *) & tprotocol, 0) == -1)
+	if (pf_key_v2_msg_add(update, (struct sadb_ext *) & tprotocol,
+	    0) == -1)
 		goto cleanup;
 
 	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(isa->src_net));
@@ -1579,17 +1592,17 @@ doneauth:
 	if (sockaddr2text(dst, &addr_str, 0))
 		addr_str = 0;
 
-	LOG_DBG((LOG_SYSDEP, 10, "pf_key_v2_set_spi: satype %d dst %s SPI 0x%x",
-	    msg.sadb_msg_satype, addr_str ? addr_str : "unknown",
-	    ntohl(ssa.sadb_sa_spi)));
+	LOG_DBG((LOG_SYSDEP, 10, "pf_key_v2_set_spi: "
+	    "satype %d dst %s SPI 0x%x", msg.sadb_msg_satype,
+	    addr_str ? addr_str : "unknown", ntohl(ssa.sadb_sa_spi)));
 
 	if (addr_str)
 		free(addr_str);
 #endif				/* USE_DEBUG */
 
 	/*
-	 * Although PF_KEY knows about expirations, it is unreliable per the specs
-	 * thus we need to do them inside isakmpd as well.
+	 * Although PF_KEY knows about expirations, it is unreliable per the
+	 * specs thus we need to do them inside isakmpd as well.
          */
 	if (sa->seconds)
 		if (sa_setup_expirations(sa))
@@ -1605,9 +1618,9 @@ doneauth:
 	ret = 0;
 
 	/*
-	 * If we are doing an addition into an SADB shared with our peer, errors
-	 * here are to be expected as the peer will already have created the SA,
-	 * and can thus be ignored.
+	 * If we are doing an addition into an SADB shared with our peer,
+	 * errors here are to be expected as the peer will already have
+	 * created the SA, and can thus be ignored.
          */
 	if (err && !(msg.sadb_msg_type == SADB_ADD &&
 	    conf_get_str("General", "Shared-SADB"))) {
@@ -1715,40 +1728,42 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	if (!delete) {
 		/* Setup the source ID, if provided. */
 		if (srcid) {
-			sid = calloc(PF_KEY_V2_ROUND(srcid_len + 1) + sizeof *sid,
-				     sizeof(u_int8_t));
+			sid = calloc(
+			    PF_KEY_V2_ROUND(srcid_len + 1) + sizeof *sid,
+			    sizeof(u_int8_t));
 			if (!sid)
 				goto cleanup;
 
 			sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
-				+ PF_KEY_V2_ROUND(srcid_len + 1) / PF_KEY_V2_CHUNK;
+			    + PF_KEY_V2_ROUND(srcid_len + 1) / PF_KEY_V2_CHUNK;
 			sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
 			sid->sadb_ident_type = srcid_type;
 
 			memcpy(sid + 1, srcid, srcid_len);
 
 			if (pf_key_v2_msg_add(flow, (struct sadb_ext *) sid,
-					      PF_KEY_V2_NODE_MALLOCED) == -1)
+			    PF_KEY_V2_NODE_MALLOCED) == -1)
 				goto cleanup;
 
 			sid = 0;
 		}
 		/* Setup the destination ID, if provided. */
 		if (dstid) {
-			sid = calloc(PF_KEY_V2_ROUND(dstid_len + 1) + sizeof *sid,
-				     sizeof(u_int8_t));
+			sid = calloc(
+			    PF_KEY_V2_ROUND(dstid_len + 1) + sizeof *sid,
+			    sizeof(u_int8_t));
 			if (!sid)
 				goto cleanup;
 
 			sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
-				+ PF_KEY_V2_ROUND(dstid_len + 1) / PF_KEY_V2_CHUNK;
+			    + PF_KEY_V2_ROUND(dstid_len + 1) / PF_KEY_V2_CHUNK;
 			sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
 			sid->sadb_ident_type = dstid_type;
 
 			memcpy(sid + 1, dstid, dstid_len);
 
 			if (pf_key_v2_msg_add(flow, (struct sadb_ext *) sid,
-					      PF_KEY_V2_NODE_MALLOCED) == -1)
+			    PF_KEY_V2_NODE_MALLOCED) == -1)
 				goto cleanup;
 
 			sid = 0;
@@ -1758,10 +1773,10 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	bzero(&flowtype, sizeof flowtype);
 	flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
 	flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
-	flowtype.sadb_protocol_direction
-		= ingress ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
-	flowtype.sadb_protocol_proto
-		= ingress ? SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE;
+	flowtype.sadb_protocol_direction =
+	    ingress ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
+	flowtype.sadb_protocol_proto =
+	    ingress ? SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE;
 
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) & flowtype, 0) == -1)
 		goto cleanup;
@@ -1910,8 +1925,8 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 			LOG_DBG((LOG_SYSDEP, 10, "pf_key_v2_flow: %sFLOW: %s",
 				 delete ? "DEL" : "ADD", strerror(err)));
 		else
-			log_print("pf_key_v2_flow: %sFLOW: %s", delete ? "DEL" : "ADD",
-				  strerror(err));
+			log_print("pf_key_v2_flow: %sFLOW: %s",
+			    delete ? "DEL" : "ADD", strerror(err));
 		goto cleanup;
 	}
 	pf_key_v2_msg_free(ret);
@@ -1990,8 +2005,8 @@ cleanup:
 		break;
 	case AF_INET6:
 		ip6_sa = (struct sockaddr_in6 *) lmask;
-		addr->sadb_address_prefixlen
-			= pf_key_v2_mask6_to_bits(&ip6_sa->sin6_addr.s6_addr[0]);
+		addr->sadb_address_prefixlen =
+			pf_key_v2_mask6_to_bits(&ip6_sa->sin6_addr.s6_addr[0]);
 		break;
 	}
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
@@ -2024,8 +2039,8 @@ cleanup:
 		break;
 	case AF_INET6:
 		ip6_sa = (struct sockaddr_in6 *) rmask;
-		addr->sadb_address_prefixlen
-			= pf_key_v2_mask6_to_bits(&ip6_sa->sin6_addr.s6_addr[0]);
+		addr->sadb_address_prefixlen =
+			pf_key_v2_mask6_to_bits(&ip6_sa->sin6_addr.s6_addr[0]);
 		break;
 	}
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) addr,
@@ -2038,7 +2053,8 @@ cleanup:
 		2 * PF_KEY_V2_ROUND(sysdep_sa_len(src));
 	policy_buf = (u_int8_t *) calloc(1, len);
 	if (!policy_buf) {
-		log_error("pf_key_v2_flow: calloc %lu failed", (unsigned long) len);
+		log_error("pf_key_v2_flow: calloc %lu failed",
+		    (unsigned long) len);
 		goto cleanup;
 	}
 	policy = (struct sadb_x_policy *) policy_buf;
@@ -2071,7 +2087,7 @@ cleanup:
 	else
 		ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 #else
-	ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;	/* XXX */
+	ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL; /* XXX */
 #endif
 	ipsecrequest->sadb_x_ipsecrequest_level
 		= ingress ? IPSEC_LEVEL_USE : IPSEC_LEVEL_REQUIRE;
@@ -2082,10 +2098,12 @@ cleanup:
 	pf_key_v2_setup_sockaddr(saddr, src, 0, 0, 0);
 	switch (src->sa_family) {
 	case AF_INET:
-		saddr = (struct sockaddr *) ((struct sockaddr_in *) saddr + 1);
+		saddr =
+		    (struct sockaddr *) ((struct sockaddr_in *) saddr + 1);
 		break;
 	case AF_INET6:
-		saddr = (struct sockaddr *) ((struct sockaddr_in6 *) saddr + 1);
+		saddr =
+		    (struct sockaddr *) ((struct sockaddr_in6 *) saddr + 1);
 		break;
 	}
 	pf_key_v2_setup_sockaddr(saddr, dst, 0, 0, 0);
@@ -2124,10 +2142,11 @@ cleanup:
 		goto cleanup;
 	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (!delete && err == EEXIST) {
-		LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_flow: SPDADD returns EEXIST"));
+		LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_flow: "
+		    "SPDADD returns EEXIST"));
 	} else if (err) {
-		log_print("pf_key_v2_flow: SPD%s: %s", delete ? "DELETE" : "ADD",
-			  strerror(err));
+		log_print("pf_key_v2_flow: SPD%s: %s", 
+		    delete ? "DELETE" : "ADD", strerror(err));
 		goto cleanup;
 	}
 	pf_key_v2_msg_free(ret);
@@ -2198,19 +2217,22 @@ pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
 		if (!res)
 			return 0;
 		*idtype = SADB_IDENTTYPE_PREFIX;
-		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv4 address %s", res));
+		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: "
+		    "IPv4 address %s", res));
 		return res;
 
 	case IPSEC_ID_IPV6_ADDR:	/* XXX CONNECTION ? */
-		if (inet_ntop(AF_INET6, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
-			      addrbuf, ADDRESS_MAX) == NULL)
+		if (inet_ntop(AF_INET6,
+		    id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		    addrbuf, ADDRESS_MAX) == NULL)
 			return 0;
 		*reslen = strlen(addrbuf) + 4;
 		strlcat(addrbuf, "/128", ADDRESS_MAX + 5);
 		res = (u_int8_t *) strdup(addrbuf);
 		if (!res)
 			return 0;
-		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv6 address %s", res));
+		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: "
+		    "IPv6 address %s", res));
 		*idtype = SADB_IDENTTYPE_PREFIX;
 		return res;
 
@@ -2218,30 +2240,33 @@ pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
 		addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
 		if (inet_ntop(AF_INET, addr, addrbuf, ADDRESS_MAX) == NULL)
 			return 0;
-		snprintf(addrbuf + strlen(addrbuf), ADDRESS_MAX - strlen(addrbuf),
-			 "/%d", pf_key_v2_mask_to_bits((u_int32_t)
-						       * (addr +
-						  sizeof(struct in_addr))));
+		snprintf(addrbuf + strlen(addrbuf),
+		    ADDRESS_MAX - strlen(addrbuf),
+		    "/%d", pf_key_v2_mask_to_bits((u_int32_t)
+			* (addr + sizeof(struct in_addr))));
 		*reslen = strlen(addrbuf);
 		res = (u_int8_t *) strdup(addrbuf);
 		if (!res)
 			return 0;
 		*idtype = SADB_IDENTTYPE_PREFIX;
-		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv4 subnet %s", res));
+		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: "
+		    "IPv4 subnet %s", res));
 		return res;
 
 	case IPSEC_ID_IPV6_ADDR_SUBNET:	/* XXX PREFIX */
 		addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
 		if (inet_ntop(AF_INET6, addr, addrbuf, ADDRESS_MAX) == NULL)
 			return 0;
-		snprintf(addrbuf + strlen(addrbuf), ADDRESS_MAX - strlen(addrbuf),
-			 "/%d", pf_key_v2_mask6_to_bits(addr +
-						  sizeof(struct in6_addr)));
+		snprintf(addrbuf + strlen(addrbuf),
+		    ADDRESS_MAX - strlen(addrbuf), "/%d",
+		    pf_key_v2_mask6_to_bits(addr +
+			sizeof(struct in6_addr)));
 		*reslen = strlen(addrbuf);
 		res = (u_int8_t *) strdup(addrbuf);
 		if (!res)
 			return 0;
-		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv6 subnet %s", res));
+		LOG_DBG((LOG_SYSDEP, 40, "pf_key_v2_convert_id: "
+		    "IPv6 subnet %s", res));
 		*idtype = SADB_IDENTTYPE_PREFIX;
 		return res;
 
@@ -2280,19 +2305,19 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 #if defined (SADB_X_EXT_FLOW_TYPE)
 	if (isakmp_sa->id_i) {
 		if (isakmp_sa->initiator)
-			sid = pf_key_v2_convert_id(isakmp_sa->id_i, isakmp_sa->id_i_len,
-						   &sidlen, &sidtype);
+			sid = pf_key_v2_convert_id(isakmp_sa->id_i,
+			    isakmp_sa->id_i_len, &sidlen, &sidtype);
 		else
-			did = pf_key_v2_convert_id(isakmp_sa->id_i, isakmp_sa->id_i_len,
-						   &didlen, &didtype);
+			did = pf_key_v2_convert_id(isakmp_sa->id_i,
+			    isakmp_sa->id_i_len, &didlen, &didtype);
 	}
 	if (isakmp_sa->id_r) {
 		if (isakmp_sa->initiator)
-			did = pf_key_v2_convert_id(isakmp_sa->id_r, isakmp_sa->id_r_len,
-						   &didlen, &didtype);
+			did = pf_key_v2_convert_id(isakmp_sa->id_r,
+			    isakmp_sa->id_r_len, &didlen, &didtype);
 		else
-			sid = pf_key_v2_convert_id(isakmp_sa->id_r, isakmp_sa->id_r_len,
-						   &sidlen, &sidtype);
+			sid = pf_key_v2_convert_id(isakmp_sa->id_r,
+			    isakmp_sa->id_r_len, &sidlen, &sidtype);
 	}
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
@@ -2310,18 +2335,20 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 	case AF_INET:
 		((struct sockaddr_in *) hostmask)->sin_family = AF_INET;
 #ifndef USE_OLD_SOCKADDR
-		((struct sockaddr_in *) hostmask)->sin_len = sizeof(struct in_addr);
+		((struct sockaddr_in *) hostmask)->sin_len =
+		    sizeof(struct in_addr);
 #endif
-		memset(&((struct sockaddr_in *) hostmask)->sin_addr.s_addr, 0xff,
-		       sizeof(struct in_addr));
+		memset(&((struct sockaddr_in *) hostmask)->sin_addr.s_addr,
+		    0xff, sizeof(struct in_addr));
 		break;
 	case AF_INET6:
 		((struct sockaddr_in6 *) hostmask)->sin6_family = AF_INET6;
 #ifndef USE_OLD_SOCKADDR
-		((struct sockaddr_in6 *) hostmask)->sin6_len = sizeof(struct in6_addr);
+		((struct sockaddr_in6 *) hostmask)->sin6_len =
+		    sizeof(struct in6_addr);
 #endif
-		memset(&((struct sockaddr_in6 *) hostmask)->sin6_addr.s6_addr, 0xff,
-		       sizeof(struct in6_addr));
+		memset(&((struct sockaddr_in6 *) hostmask)->sin6_addr.s6_addr,
+		    0xff, sizeof(struct in6_addr));
 		break;
 	}
 
@@ -2477,48 +2504,51 @@ pf_key_v2_disable_sa(struct sa *sa, int incoming)
 	sa->transport->vtbl->get_src(sa->transport, &src);
 
 	if (!incoming)
-		return pf_key_v2_flow(isa->src_net, isa->src_mask, isa->dst_net,
-			 isa->dst_mask, isa->tproto, isa->sport, isa->dport,
-				proto->spi[0], proto->proto, src, dst, 1, 0,
-				      0, 0, 0, 0, 0, 0, proto->data);
+		return pf_key_v2_flow(isa->src_net, isa->src_mask,
+		    isa->dst_net, isa->dst_mask, isa->tproto, isa->sport,
+		    isa->dport, proto->spi[0], proto->proto, src, dst, 1, 0,
+		    0, 0, 0, 0, 0, 0, proto->data);
 	else {
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 		/* Set hostmask to '-1'. */
 		switch (dst->sa_family) {
 		case AF_INET:
-			((struct sockaddr_in *) hostmask)->sin_family = AF_INET;
+			((struct sockaddr_in *) hostmask)->sin_family =
+			    AF_INET;
 #ifndef USE_OLD_SOCKADDR
-			((struct sockaddr_in *) hostmask)->sin_len = sizeof(struct in_addr);
+			((struct sockaddr_in *) hostmask)->sin_len =
+			    sizeof(struct in_addr);
 #endif
-			memset(&((struct sockaddr_in *) hostmask)->sin_addr.s_addr, 0xff,
-			       sizeof(struct in_addr));
+			memset(&((struct sockaddr_in *) hostmask)->sin_addr.s_addr,
+			    0xff, sizeof(struct in_addr));
 			break;
 		case AF_INET6:
-			((struct sockaddr_in6 *) hostmask)->sin6_family = AF_INET6;
+			((struct sockaddr_in6 *) hostmask)->sin6_family =
+			    AF_INET6;
 #ifndef USE_OLD_SOCKADDR
 			((struct sockaddr_in6 *) hostmask)->sin6_len =
-				sizeof(struct in6_addr);
+			    sizeof(struct in6_addr);
 #endif
-			memset(&((struct sockaddr_in6 *) hostmask)->sin6_addr.s6_addr, 0xff,
-			       sizeof(struct in6_addr));
+			memset(&((struct sockaddr_in6 *) hostmask)->sin6_addr.s6_addr,
+			    0xff, sizeof(struct in6_addr));
 			break;
 		}
 
 		/* Ingress flow --- SA bundles */
 		while (TAILQ_NEXT(proto, link)) {
-			error = pf_key_v2_flow(dst, hostmask, src, hostmask, 0, 0, 0,
-				      proto->spi[1], proto->proto, src, dst,
-				       1, 1, 0, 0, 0, 0, 0, 0, proto->data);
+			error = pf_key_v2_flow(dst, hostmask, src, hostmask,
+			    0, 0, 0, proto->spi[1], proto->proto, src, dst,
+			    1, 1, 0, 0, 0, 0, 0, 0, proto->data);
 			if (error)
 				return error;
 			proto = TAILQ_NEXT(proto, link);
 		}
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
-		return pf_key_v2_flow(isa->dst_net, isa->dst_mask, isa->src_net,
-				      isa->src_mask, isa->tproto, isa->dport,
-				    isa->sport, proto->spi[1], proto->proto,
-			     src, dst, 1, 1, 0, 0, 0, 0, 0, 0, proto->data);
+		return pf_key_v2_flow(isa->dst_net, isa->dst_mask,
+		    isa->src_net, isa->src_mask, isa->tproto, isa->dport,
+		    isa->sport, proto->spi[1], proto->proto, src, dst, 1, 1,
+		    0, 0, 0, 0, 0, 0, proto->data);
 	}
 }
 
@@ -2572,7 +2602,8 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 		break;
 #endif
 	default:
-		log_print("pf_key_v2_delete_spi: invalid proto %d", proto->proto);
+		log_print("pf_key_v2_delete_spi: invalid proto %d",
+		    proto->proto);
 		goto cleanup;
 	}
 	msg.sadb_msg_seq = 0;
@@ -2719,8 +2750,8 @@ pf_key_v2_connection_check(char *conn)
 		    "pf_key_v2_connection_check: SA for %s missing", conn));
 		exchange_establish(conn, pf_key_v2_stayalive, conn);
 	} else
-		LOG_DBG((LOG_SYSDEP, 70, "pf_key_v2_connection_check: SA for %s exists",
-			 conn));
+		LOG_DBG((LOG_SYSDEP, 70, "pf_key_v2_connection_check: "
+		    "SA for %s exists", conn));
 }
 
 /* Handle a PF_KEY lifetime expiration message PMSG.  */
@@ -2745,7 +2776,8 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	ssa = ext->seg;
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_ADDRESS_DST);
 	if (!ext) {
-		log_print("pf_key_v2_expire: no destination address extension found");
+		log_print("pf_key_v2_expire: "
+		    "no destination address extension found");
 		return;
 	}
 	dst = ext->seg;
@@ -2761,7 +2793,8 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 
 	lifenode = pf_key_v2_find_ext(pmsg, SADB_EXT_LIFETIME_CURRENT);
 	if (!lifenode) {
-		log_print("pf_key_v2_expire: no current lifetime extension found");
+		log_print("pf_key_v2_expire: "
+		    "no current lifetime extension found");
 		return;
 	}
 	lifecurrent = lifenode->seg;
@@ -2771,10 +2804,11 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	if (sockaddr2text(dstaddr, &dst_str, 0))
 		dst_str = 0;
 
-	LOG_DBG((LOG_SYSDEP, 20, "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
-	      life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
-		 : "HARD", dst_str ? dst_str : "<unknown>",
-		 ntohl(ssa->sadb_sa_spi), msg->sadb_msg_satype));
+	LOG_DBG((LOG_SYSDEP, 20, "pf_key_v2_expire: "
+	    "%s dst %s SPI %x sproto %d",
+	    life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
+	    : "HARD", dst_str ? dst_str : "<unknown>",
+	    ntohl(ssa->sadb_sa_spi), msg->sadb_msg_satype));
 
 	if (dst_str)
 		free(dst_str);
@@ -2791,16 +2825,19 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
          */
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
-		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, IPSEC_PROTO_IPSEC_ESP);
+		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, 
+		    IPSEC_PROTO_IPSEC_ESP);
 		break;
 
 	case SADB_SATYPE_AH:
-		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, IPSEC_PROTO_IPSEC_AH);
+		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, 
+		    IPSEC_PROTO_IPSEC_AH);
 		break;
 
 #ifdef SADB_X_SATYPE_IPCOMP
 	case SADB_X_SATYPE_IPCOMP:
-		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi, IPSEC_PROTO_IPCOMP);
+		sa = ipsec_sa_lookup(dstaddr, ssa->sadb_sa_spi,
+		    IPSEC_PROTO_IPCOMP);
 		break;
 #endif
 
@@ -2820,7 +2857,8 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	 * Also, ignore SAs that were not dynamically established, or that
 	 * did not see any use.
          */
-	if (!(sa->flags & SA_FLAG_REPLACED) && (sa->flags & SA_FLAG_ONDEMAND) &&
+	if (!(sa->flags & SA_FLAG_REPLACED) &&
+	    (sa->flags & SA_FLAG_ONDEMAND) &&
 	    lifecurrent->sadb_lifetime_bytes)
 		exchange_establish(sa->name, 0, 0);
 
@@ -2876,7 +2914,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_ADDRESS_DST);
 	if (!ext) {
-		log_print("pf_key_v2_acquire: no destination address specified");
+		log_print("pf_key_v2_acquire: "
+		    "no destination address specified");
 		return;
 	}
 	dst = ext->seg;
@@ -2926,7 +2965,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	ext = pf_key_v2_find_ext(ret, SADB_X_EXT_DST_FLOW);
 	if (!ext) {
-		log_print("pf_key_v2_acquire: no destination flow extension found");
+		log_print("pf_key_v2_acquire: "
+		    "no destination flow extension found");
 		goto fail;
 	}
 	dflow = (struct sockaddr *) (((struct sadb_address *) ext->seg) + 1);
@@ -2939,7 +2979,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	ext = pf_key_v2_find_ext(ret, SADB_X_EXT_DST_MASK);
 	if (!ext) {
-		log_print("pf_key_v2_acquire: no destination mask extension found");
+		log_print("pf_key_v2_acquire: "
+		    "no destination mask extension found");
 		goto fail;
 	}
 	dmask = (struct sockaddr *) (((struct sadb_address *) ext->seg) + 1);
@@ -2977,74 +3018,84 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	switch (sflow->sa_family) {
 	case AF_INET:
-		if (inet_ntop(AF_INET, &((struct sockaddr_in *) sflow)->sin_addr, ssflow,
-			      ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET,
+		    &((struct sockaddr_in *) sflow)->sin_addr, ssflow,
+		    ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
 		sport = ((struct sockaddr_in *) sflow)->sin_port;
-		if (inet_ntop(AF_INET, &((struct sockaddr_in *) dflow)->sin_addr, sdflow,
-			      ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET,
+		    &((struct sockaddr_in *) dflow)->sin_addr, sdflow,
+		    ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
 		dport = ((struct sockaddr_in *) dflow)->sin_port;
-		if (inet_ntop(AF_INET, &((struct sockaddr_in *) smask)->sin_addr, ssmask,
-			      ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET,
+		    &((struct sockaddr_in *) smask)->sin_addr, ssmask,
+		    ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
-		if (inet_ntop(AF_INET, &((struct sockaddr_in *) dmask)->sin_addr, sdmask,
-			      ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET,
+		    &((struct sockaddr_in *) dmask)->sin_addr, sdmask,
+		    ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
-		if (((struct sockaddr_in *) smask)->sin_addr.s_addr == INADDR_BROADCAST) {
+		if (((struct sockaddr_in *) smask)->sin_addr.s_addr ==
+		    INADDR_BROADCAST) {
 			shostflag = 1;
 			sidtype = "IPV4_ADDR";
 		}
-		if (((struct sockaddr_in *) dmask)->sin_addr.s_addr == INADDR_BROADCAST) {
+		if (((struct sockaddr_in *) dmask)->sin_addr.s_addr ==
+		    INADDR_BROADCAST) {
 			dhostflag = 1;
 			didtype = "IPV4_ADDR";
 		}
 		break;
 
 	case AF_INET6:
-		if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *) sflow)->sin6_addr,
-			      ssflow, ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET6,
+		    &((struct sockaddr_in6 *) sflow)->sin6_addr,
+		    ssflow, ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
 		sport = ((struct sockaddr_in6 *) sflow)->sin6_port;
-		if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *) dflow)->sin6_addr,
-			      sdflow, ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET6,
+		    &((struct sockaddr_in6 *) dflow)->sin6_addr,
+		    sdflow, ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
 		dport = ((struct sockaddr_in6 *) dflow)->sin6_port;
-		if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *) smask)->sin6_addr,
-			      ssmask, ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET6,
+		    &((struct sockaddr_in6 *) smask)->sin6_addr,
+		    ssmask, ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
-		if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *) dmask)->sin6_addr,
-			      sdmask, ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET6,
+		    &((struct sockaddr_in6 *) dmask)->sin6_addr,
+		    sdmask, ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
 		sidtype = didtype = "IPV6_ADDR_SUBNET";
-		if (IN6_IS_ADDR_FULL(&((struct sockaddr_in6 *) smask)->sin6_addr)) {
+		if (IN6_IS_ADDR_FULL(&((struct sockaddr_in6 *)smask)->sin6_addr)) {
 			shostflag = 1;
 			sidtype = "IPV6_ADDR";
 		}
-		if (IN6_IS_ADDR_FULL(&((struct sockaddr_in6 *) dmask)->sin6_addr)) {
+		if (IN6_IS_ADDR_FULL(&((struct sockaddr_in6 *)dmask)->sin6_addr)) {
 			dhostflag = 1;
 			didtype = "IPV6_ADDR";
 		}
 		break;
 	}
 
-	dstaddr = (struct sockaddr *) (dst + 1);
+	dstaddr = (struct sockaddr *)(dst + 1);
 	bzero(dstbuf, sizeof dstbuf);
 	bzero(srcbuf, sizeof srcbuf);
 
@@ -3054,30 +3105,35 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		 * it?
 		 */
 		if (dhostflag == 0) {
-			log_print("pf_key_v2_acquire: Cannot determine precise destination");
+			log_print("pf_key_v2_acquire: "
+			    "Cannot determine precise destination");
 			goto fail;
 		}
 		dstaddr = dflow;
 	}
 	switch (dstaddr->sa_family) {
 	case AF_INET:
-		if (inet_ntop(AF_INET, &((struct sockaddr_in *) dstaddr)->sin_addr,
-			      dstbuf, ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET,
+		    &((struct sockaddr_in *) dstaddr)->sin_addr,
+		    dstbuf, ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
-		LOG_DBG((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d", dstbuf,
-			 msg->sadb_msg_satype));
+		LOG_DBG((LOG_SYSDEP, 20,
+		    "pf_key_v2_acquire: dst=%s sproto %d", dstbuf,
+		    msg->sadb_msg_satype));
 		break;
 
 	case AF_INET6:
-		if (inet_ntop(AF_INET6, &((struct sockaddr_in6 *) dstaddr)->sin6_addr,
-			      dstbuf, ADDRESS_MAX) == NULL) {
+		if (inet_ntop(AF_INET6,
+		    &((struct sockaddr_in6 *) dstaddr)->sin6_addr,
+		    dstbuf, ADDRESS_MAX) == NULL) {
 			log_print("pf_key_v2_acquire: inet_ntop failed");
 			goto fail;
 		}
-		LOG_DBG((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d", dstbuf,
-			 msg->sadb_msg_satype));
+		LOG_DBG((LOG_SYSDEP, 20,
+		    "pf_key_v2_acquire: dst=%s sproto %d", dstbuf,
+		    msg->sadb_msg_satype));
 		break;
 	}
 
@@ -3086,27 +3142,30 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 		switch (srcaddr->sa_family) {
 		case AF_INET:
-			if (inet_ntop(AF_INET, &((struct sockaddr_in *) srcaddr)->sin_addr,
-				      srcbuf, ADDRESS_MAX) == NULL) {
-				log_print("pf_key_v2_acquire: inet_ntop failed");
+			if (inet_ntop(AF_INET,
+			    &((struct sockaddr_in *) srcaddr)->sin_addr,
+			    srcbuf, ADDRESS_MAX) == NULL) {
+				log_print("pf_key_v2_acquire: "
+				    "inet_ntop failed");
 				goto fail;
 			}
 			break;
 
 		case AF_INET6:
 			if (inet_ntop(AF_INET6,
-				      &((struct sockaddr_in6 *) srcaddr)->sin6_addr, srcbuf,
-				      ADDRESS_MAX) == NULL) {
-				log_print("pf_key_v2_acquire: inet_ntop failed");
+			    &((struct sockaddr_in6 *)srcaddr)->sin6_addr,
+			    srcbuf, ADDRESS_MAX) == NULL) {
+				log_print("pf_key_v2_acquire: "
+				    "inet_ntop failed");
 				goto fail;
 			}
 			break;
 
 		default:
 			/*
-			 * The kernel will pass an all '0' EXT_ADDRESS_SRC if it wasn't
-			 * specified for the flow. In that case, do NOT specify the srcaddr
-			 * in the Peer- name below
+			 * The kernel will pass an all '0' EXT_ADDRESS_SRC if
+			 * it wasn't specified for the flow. In that case, do
+			 * NOT specify the srcaddr in the Peer-name below
 		         */
 			srcbuf[0] = 0;
 			srcaddr = NULL;
@@ -3118,7 +3177,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		slen = (srcident->sadb_ident_len * sizeof(u_int64_t))
 			- sizeof(struct sadb_ident);
 		if (((unsigned char *) (srcident + 1))[slen - 1] != '\0') {
-			log_print("pf_key_v2_acquire: source identity not NUL-terminated");
+			log_print("pf_key_v2_acquire: "
+			    "source identity not NUL-terminated");
 			goto fail;
 		}
 		/* Check for valid type. */
@@ -3139,7 +3199,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 			srcid = memchr(srcident + 1, '/', slen);
 			if (!srcid) {
-				log_print("pf_key_v2_acquire: badly formatted PREFIX identity");
+				log_print("pf_key_v2_acquire: "
+				    "badly formatted PREFIX identity");
 				goto fail;
 			}
 			masklen = atoi(srcid + 1);
@@ -3147,9 +3208,10 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			/* XXX We only support host addresses. */
 			if ((afamily == AF_INET6 && masklen != 128)
 			    || (afamily == AF_INET && masklen != 32)) {
-				log_print("pf_key_v2_acquire: non-host address specified in "
-					  "source identity (mask length %d), ignoring request",
-					  masklen);
+				log_print("pf_key_v2_acquire: "
+				    "non-host address specified in source "
+				    "identity (mask length %d), ignoring "
+				    "request", masklen);
 				goto fail;
 			}
 			/*
@@ -3157,23 +3219,27 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * then dup.
 			 */
 			*srcid = '\0';
-			slen = strlen((char *) (srcident + 1)) + sizeof "ID:Address/";
+			slen = strlen((char *) (srcident + 1)) +
+			    sizeof "ID:Address/";
 			srcid = malloc(slen);
 			if (!srcid) {
-				log_error("pf_key_v2_acquire: malloc (%d) failed", slen);
+				log_error("pf_key_v2_acquire: "
+				    "malloc (%d) failed", slen);
 				goto fail;
 			}
-			snprintf(srcid, slen, "ID:Address/%s", (char *) (srcident + 1));
+			snprintf(srcid, slen, "ID:Address/%s",
+			    (char *) (srcident + 1));
 
 			/* Set the section if it doesn't already exist. */
 			af = conf_begin();
 			if (!conf_get_str(srcid, "ID-type")) {
 				if (conf_set(af, srcid, "ID-type",
-					     afamily == AF_INET ? "IPV4_ADDR" : "IPV6_ADDR",
-					     1, 0)
-				|| conf_set(af, srcid, "Refcount", "1", 1, 0)
-				    || conf_set(af, srcid, "Address", (char *) (srcident + 1),
-						1, 0)) {
+				    afamily == AF_INET ? "IPV4_ADDR" :
+				    "IPV6_ADDR", 1, 0)
+				    || conf_set(af, srcid, "Refcount", "1", 1,
+					0)
+				    || conf_set(af, srcid, "Address",
+					(char *) (srcident + 1), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
@@ -3190,28 +3256,40 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				prefstring = "USER_FQDN";
 
 				/*
-				 * Check whether there is a string following the header;
-				 * if no, that there is a user ID (and acquire the login
-				 * name). If there is both a string and a user ID, check
-				 * that they match.
+				 * Check whether there is a string following
+				 * the header; if no, that there is a user ID
+				 * (and acquire the login name). If there is
+				 * both a string and a user ID, check that
+				 * they match.
 			         */
-				if ((slen == 0) && (srcident->sadb_ident_id == 0)) {
-					log_print("pf_key_v2_acquire: no user FQDN or ID provided");
+				if ((slen == 0) &&
+				    (srcident->sadb_ident_id == 0)) {
+					log_print("pf_key_v2_acquire: "
+					    "no user FQDN or ID provided");
 					goto fail;
 				}
 				if (srcident->sadb_ident_id) {
-					pwd = getpwuid(srcident->sadb_ident_id);
+					pwd = 
+					    getpwuid(srcident->sadb_ident_id);
 					if (!pwd) {
-						log_error("pf_key_v2_acquire: could not acquire "
-							  "username from provided ID %llu",
-						   srcident->sadb_ident_id);
+						log_error("pf_key_v2_acquire: "
+						    "could not acquire "
+						    "username from provided "
+						    "ID %llu",
+						    srcident->sadb_ident_id);
 						goto fail;
 					}
 					if (slen != 0)
-						if (strcmp(pwd->pw_name, (char *) (srcident + 1)) != 0) {
-							log_print("pf_key_v2_acquire: provided user name and "
-								  "ID do not match (%s != %s)",
-								  (char *) (srcident + 1), pwd->pw_name);
+						if (strcmp(pwd->pw_name,
+						    (char *) (srcident + 1))
+						    != 0) {
+							log_print("pf_key_v2_acquire: "
+							    "provided user "
+							    "name and ID do "
+							    "not match (%s != "
+							    "%s)",
+							    (char *) (srcident + 1),
+							    pwd->pw_name);
 							/*
 							 * String has
 							 * precedence, per
@@ -3220,16 +3298,18 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						}
 				}
 			}
-			buflen = (slen ? slen : strlen(pwd->pw_name)) + strlen(prefstring)
-				+ sizeof "ID:/";
+			buflen = (slen ? slen : strlen(pwd->pw_name)) +
+			    strlen(prefstring) + sizeof "ID:/";
 			srcid = malloc(buflen);
 			if (!srcid) {
-				log_error("pf_key_v2_acquire: malloc (%d) failed", buflen);
+				log_error("pf_key_v2_acquire: "
+				    "malloc (%d) failed", buflen);
 				goto fail;
 			}
 			snprintf(srcid, buflen, "ID:%s/", prefstring);
 			if (slen != 0)
-				strlcat(srcid, (char *) (srcident + 1), buflen);
+				strlcat(srcid,
+				    (char *) (srcident + 1), buflen);
 			else
 				strlcat(srcid, pwd->pw_name, buflen);
 			pwd = 0;
@@ -3237,11 +3317,13 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			/* Set the section if it doesn't already exist. */
 			af = conf_begin();
 			if (!conf_get_str(srcid, "ID-type")) {
-				if (conf_set(af, srcid, "ID-type", prefstring, 1, 0)
-				|| conf_set(af, srcid, "Refcount", "1", 1, 0)
+				if (conf_set(af, srcid, "ID-type", prefstring,
+				    1, 0)
+				    || conf_set(af, srcid, "Refcount", "1", 1,
+					0)
 				    || conf_set(af, srcid, "Name",
-						srcid + sizeof "ID:/" - 1 + strlen(prefstring),
-						1, 0)) {
+					srcid + sizeof "ID:/" - 1 + 
+					strlen(prefstring), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
@@ -3258,7 +3340,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		}
 
 		LOG_DBG((LOG_SYSDEP, 50,
-		 "pf_key_v2_acquire: constructed source ID \"%s\"", srcid));
+		    "pf_key_v2_acquire: constructed source ID \"%s\"", srcid));
 		prefstring = 0;
 	}
 	/* Insert destination ID. */
@@ -3284,7 +3366,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 			dstid = memchr(dstident + 1, '/', slen);
 			if (!dstid) {
-				log_print("pf_key_v2_acquire: badly formatted PREFIX identity");
+				log_print("pf_key_v2_acquire: "
+				    "badly formatted PREFIX identity");
 				goto fail;
 			}
 			masklen = atoi(dstid + 1);
@@ -3292,10 +3375,10 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			/* XXX We only support host addresses. */
 			if ((afamily == AF_INET6 && masklen != 128)
 			    || (afamily == AF_INET && masklen != 32)) {
-				log_print("pf_key_v2_acquire: non-host address specified in "
-					  "destination identity (mask length %d), ignoring "
-					  "request",
-					  masklen);
+				log_print("pf_key_v2_acquire: "
+				    "non-host address specified in "
+				    "destination identity (mask length %d), "
+				    "ignoring request", masklen);
 				goto fail;
 			}
 			/*
@@ -3303,23 +3386,27 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * then dup.
 			 */
 			*dstid = '\0';
-			slen = strlen((char *) (dstident + 1)) + sizeof "ID:Address/";
+			slen = strlen((char *) (dstident + 1)) +
+			    sizeof "ID:Address/";
 			dstid = malloc(slen);
 			if (!dstid) {
-				log_error("pf_key_v2_acquire: malloc (%d) failed", slen);
+				log_error("pf_key_v2_acquire: "
+				    "malloc (%d) failed", slen);
 				goto fail;
 			}
-			snprintf(dstid, slen, "ID:Address/%s", (char *) (dstident + 1));
+			snprintf(dstid, slen, "ID:Address/%s",
+			    (char *) (dstident + 1));
 
 			/* Set the section if it doesn't already exist. */
 			af = conf_begin();
 			if (!conf_get_str(dstid, "ID-type")) {
 				if (conf_set(af, dstid, "ID-type",
-					     afamily == AF_INET ? "IPV4_ADDR" : "IPV6_ADDR",
-					     1, 0)
-				|| conf_set(af, dstid, "Refcount", "1", 1, 0)
-				    || conf_set(af, dstid, "Address", (char *) (dstident + 1),
-						1, 0)) {
+				    afamily == AF_INET ? "IPV4_ADDR" :
+				    "IPV6_ADDR", 1, 0)
+				    || conf_set(af, dstid, "Refcount", "1", 1,
+					0)
+				    || conf_set(af, dstid, "Address",
+					(char *) (dstident + 1), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
@@ -3337,28 +3424,39 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				prefstring = "USER_FQDN";
 
 				/*
-				 * Check whether there is a string following the header;
-				 * if no, that there is a user ID (and acquire the login
-				 * name). If there is both a string and a user ID, check
-				 * that they match.
+				 * Check whether there is a string following
+				 * the header; if no, that there is a user ID
+				 * (and acquire the login name). If there is
+				 * both a string and a user ID, check that
+				 * they match.
 			         */
-				if (slen == 0 && dstident->sadb_ident_id == 0) {
-					log_print("pf_key_v2_acquire: no user FQDN or ID provided");
+				if (slen == 0 &&
+				    dstident->sadb_ident_id == 0) {
+					log_print("pf_key_v2_acquire: "
+					    "no user FQDN or ID provided");
 					goto fail;
 				}
 				if (dstident->sadb_ident_id) {
 					pwd = getpwuid(dstident->sadb_ident_id);
 					if (!pwd) {
-						log_error("pf_key_v2_acquire: could not acquire "
-							  "username from provided ID %llu",
-						   dstident->sadb_ident_id);
+						log_error("pf_key_v2_acquire: "
+						    "could not acquire "
+						    "username from provided "
+						    "ID %llu",
+						    dstident->sadb_ident_id);
 						goto fail;
 					}
 					if (slen != 0)
-						if (strcmp(pwd->pw_name, (char *) (dstident + 1)) != 0) {
-							log_print("pf_key_v2_acquire: provided user name and "
-								  "ID do not match (%s != %s)",
-								  (char *) (dstident + 1), pwd->pw_name);
+						if (strcmp(pwd->pw_name,
+						    (char *) (dstident + 1))
+						    != 0) {
+							log_print("pf_key_v2_acquire: "
+							    "provided user "
+							    "name and ID do "
+							    "not match (%s != "
+							    "%s)",
+							    (char *) (dstident + 1),
+							    pwd->pw_name);
 							/*
 							 * String has
 							 * precedence, per RF
@@ -3367,16 +3465,18 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						}
 				}
 			}
-			buflen = (slen ? slen : strlen(pwd->pw_name)) + strlen(prefstring)
-				+ sizeof "ID:/";
+			buflen = (slen ? slen : strlen(pwd->pw_name)) +
+			    strlen(prefstring) + sizeof "ID:/";
 			dstid = malloc(buflen);
 			if (!dstid) {
-				log_error("pf_key_v2_acquire: malloc (%d) failed", buflen);
+				log_error("pf_key_v2_acquire: "
+				    "malloc (%d) failed", buflen);
 				goto fail;
 			}
 			snprintf(dstid, buflen, "ID:%s/", prefstring);
 			if (slen != 0)
-				strlcat(dstid, (char *) (dstident + 1), buflen);
+				strlcat(dstid, (char *) (dstident + 1),
+				    buflen);
 			else
 				strlcat(dstid, pwd->pw_name, buflen);
 			pwd = 0;
@@ -3384,11 +3484,13 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			/* Set the section if it doesn't already exist. */
 			af = conf_begin();
 			if (!conf_get_str(dstid, "ID-type")) {
-				if (conf_set(af, dstid, "ID-type", prefstring, 1, 0)
-				|| conf_set(af, dstid, "Refcount", "1", 1, 0)
+				if (conf_set(af, dstid, "ID-type", prefstring,
+				    1, 0)
+				    || conf_set(af, dstid, "Refcount", "1", 1,
+					0)
 				    || conf_set(af, dstid, "Name",
-						dstid + sizeof "ID:/" - 1 + strlen(prefstring),
-						1, 0)) {
+					dstid + sizeof "ID:/" - 1 +
+					strlen(prefstring), 1, 0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
@@ -3398,15 +3500,15 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			break;
 
 		default:
-			LOG_DBG((LOG_SYSDEP, 20,
-			"pf_key_v2_acquire: invalid destination ID type %d",
-				 dstident->sadb_ident_type));
+			LOG_DBG((LOG_SYSDEP, 20, "pf_key_v2_acquire: "
+			    "invalid destination ID type %d",
+			    dstident->sadb_ident_type));
 			goto fail;
 		}
 
 		LOG_DBG((LOG_SYSDEP, 50,
-		     "pf_key_v2_acquire: constructed destination ID \"%s\"",
-			 dstid));
+		    "pf_key_v2_acquire: constructed destination ID \"%s\"",
+		    dstid));
 	}
 	/* Now we've placed the necessary IDs in the configuration space. */
 
@@ -3414,7 +3516,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	for (;; connection_seq++) {
 		snprintf(conn, connlen, "Connection-%u", connection_seq);
 		snprintf(configname, sizeof configname, "Config-Phase2-%u",
-			 connection_seq);
+		    connection_seq);
 
 		/* Does it exist ? */
 		if (!conf_get_str(conn, "Phase")
@@ -3438,7 +3540,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * - Remote-ID (if provided)
 	 * - Local-address (if provided)
 	 * - Address
-	 * - Configuration (if an entry "ISAKMP-configuration-dstaddr(/srcaddr)"
+	 * - Configuration (if an entry ISAKMP-configuration-dstaddr(/srcaddr)
 	 *                  exists -- otherwise use the defaults)
          */
 
@@ -3514,7 +3616,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				goto fail;
 			}
 			if (sport) {
-				snprintf(tmbuf, sizeof sport * 3 + 1, "%u", ntohs(sport));
+				snprintf(tmbuf, sizeof sport * 3 + 1, "%u",
+				    ntohs(sport));
 				if (conf_set(af, lname, "Port", tmbuf, 0, 0)) {
 					conf_end(af, 0);
 					goto fail;
@@ -3526,7 +3629,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 	/* Set Remote-ID section. */
 	snprintf(dname, sizeof dname, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask,
-		 tproto, dport);
+	    tproto, dport);
 	if (conf_set(af, conn, "Remote-ID", dname, 0, 0)) {
 		conf_end(af, 0);
 		goto fail;
@@ -3538,14 +3641,14 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		}
 		if (dhostflag) {
 			if (conf_set(af, dname, "ID-type", didtype, 0, 0)
-			  || conf_set(af, dname, "Address", sdflow, 0, 0)) {
+			    || conf_set(af, dname, "Address", sdflow, 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
 		} else {
 			if (conf_set(af, dname, "ID-type", didtype, 0, 0)
 			    || conf_set(af, dname, "Network", sdflow, 0, 0)
-			  || conf_set(af, dname, "Netmask", sdmask, 0, 0)) {
+			    || conf_set(af, dname, "Netmask", sdmask, 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
@@ -3558,7 +3661,8 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 				goto fail;
 			}
 			if (dport) {
-				snprintf(tmbuf, sizeof dport * 3 + 1, "%u", ntohs(dport));
+				snprintf(tmbuf, sizeof dport * 3 + 1, "%u",
+				    ntohs(dport));
 				if (conf_set(af, dname, "Port", tmbuf, 0, 0)) {
 					conf_end(af, 0);
 					goto fail;
@@ -3586,13 +3690,13 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	}
 	if (conf_get_str("General", "Default-phase-2-suites")) {
 		if (conf_set(af, configname, "Suites",
-		 conf_get_str("General", "Default-phase-2-suites"), 0, 0)) {
+		    conf_get_str("General", "Default-phase-2-suites"), 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
 		}
 	} else {
 		if (conf_set(af, configname, "Suites",
-			     "QM-ESP-3DES-SHA-PFS-SUITE", 0, 0)) {
+		    "QM-ESP-3DES-SHA-PFS-SUITE", 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
 		}
@@ -3606,11 +3710,13 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			conf_end(af, 0);
 			goto fail;
 		}
-		if (srcaddr && conf_set(af, peer, "Local-address", srcbuf, 0, 0)) {
+		if (srcaddr && conf_set(af, peer, "Local-address", srcbuf, 0,
+		    0)) {
 			conf_end(af, 0);
 			goto fail;
 		}
-		snprintf(confname, sizeof confname, "ISAKMP-Configuration-%s", peer);
+		snprintf(confname, sizeof confname, "ISAKMP-Configuration-%s",
+		    peer);
 		if (conf_set(af, peer, "Configuration", confname, 0, 0)) {
 			conf_end(af, 0);
 			goto fail;
@@ -3626,29 +3732,34 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			cred->sadb_x_cred_len *= PF_KEY_V2_CHUNK;
 
 			if (cred->sadb_x_cred_len <= sizeof *cred) {
-				log_print("pf_key_v2_acquire: zero-length credentials, "
-					  "aborting SA acquisition");
+				log_print("pf_key_v2_acquire: "
+				    "zero-length credentials, aborting SA "
+				    "acquisition");
 				conf_end(af, 0);
 				goto fail;
 			}
 			switch (cred->sadb_x_cred_type) {
 			case SADB_X_CREDTYPE_X509:
-				snprintf(num, sizeof num, "%d", ISAKMP_CERTENC_X509_SIG);
+				snprintf(num, sizeof num, "%d",
+				    ISAKMP_CERTENC_X509_SIG);
 				handler = cert_get(ISAKMP_CERTENC_X509_SIG);
 				break;
 			case SADB_X_CREDTYPE_KEYNOTE:
-				snprintf(num, sizeof num, "%d", ISAKMP_CERTENC_KEYNOTE);
+				snprintf(num, sizeof num, "%d",
+				    ISAKMP_CERTENC_KEYNOTE);
 				handler = cert_get(ISAKMP_CERTENC_KEYNOTE);
 				break;
 			default:
-				log_print("pf_key_v2_acquire: unknown credential type %d",
-					  cred->sadb_x_cred_type);
+				log_print("pf_key_v2_acquire: "
+				    "unknown credential type %d",
+				    cred->sadb_x_cred_type);
 				conf_end(af, 0);
 				goto fail;
 			}
 
 			if (!handler) {
-				log_print("pf_key_v2_acquire: cert_get (%s) failed", num);
+				log_print("pf_key_v2_acquire: "
+				    "cert_get (%s) failed", num);
 				conf_end(af, 0);
 				goto fail;
 			}
@@ -3659,13 +3770,14 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			}
 			/* Get the certificate. */
 			cert = handler->cert_get((u_int8_t *) (cred + 1),
-				      cred->sadb_x_cred_len - sizeof *cred);
+			    cred->sadb_x_cred_len - sizeof *cred);
 
 			/* Now convert to printable format. */
 			certprint = handler->cert_printable(cert);
 			handler->cert_free(cert);
 			if (!certprint
-			    || conf_set(af, peer, "Credentials", certprint, 0, 0)) {
+			    || conf_set(af, peer, "Credentials", certprint, 0,
+				0)) {
 				if (certprint)
 					free(certprint);
 				conf_end(af, 0);
@@ -3690,29 +3802,36 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 				switch (sauth->sadb_x_cred_type) {
 				case SADB_X_AUTHTYPE_PASSPHRASE:
-					if (conf_set(af, confname, "Transforms", "3DES-SHA", 0, 0)) {
+					if (conf_set(af, confname,
+					    "Transforms", "3DES-SHA", 0, 0)) {
 						conf_end(af, 0);
 						goto fail;
 					}
-					if (sauth->sadb_x_cred_len <= sizeof *sauth) {
-						log_print("pf_key_v2_acquire: zero-length passphrase, "
-						 "aborting SA acquisition");
+					if (sauth->sadb_x_cred_len <=
+					    sizeof *sauth) {
+						log_print("pf_key_v2_acquire: "
+						    "zero-length passphrase, "
+						    "aborting SA acquisition");
 						conf_end(af, 0);
 						goto fail;
 					}
-					authm = malloc(sauth->sadb_x_cred_len - sizeof *sauth + 1);
+					authm = malloc(sauth->sadb_x_cred_len -
+					    sizeof *sauth + 1);
 					if (!authm) {
-						log_error("pf_key_v2_acquire: malloc (%lu) failed",
+						log_error("pf_key_v2_acquire: "
+						    "malloc (%lu) failed",
 						    sauth->sadb_x_cred_len -
-							  (unsigned long) sizeof *sauth + 1);
+						    (unsigned long) sizeof *sauth + 1);
 						conf_end(af, 0);
 						goto fail;
 					}
 					memcpy(authm, sauth + 1,
-					       sauth->sadb_x_cred_len - sizeof *sauth + 1);
+					    sauth->sadb_x_cred_len - 
+					    sizeof *sauth + 1);
 
 					/* Set the passphrase in the peer. */
-					if (conf_set(af, peer, "Authentication", authm, 0, 0)) {
+					if (conf_set(af, peer,
+					    "Authentication", authm, 0, 0)) {
 						free(authm);
 						conf_end(af, 0);
 						goto fail;
@@ -3721,38 +3840,47 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 					break;
 
 				case SADB_X_AUTHTYPE_RSA:
-					if (conf_set(af, confname, "Transforms", "3DES-SHA-RSA_SIG",
-						     0, 0)) {
+					if (conf_set(af, confname,
+					    "Transforms", "3DES-SHA-RSA_SIG",
+					    0, 0)) {
 						conf_end(af, 0);
 						goto fail;
 					}
-					if (sauth->sadb_x_cred_len <= sizeof *sauth) {
-						log_print("pf_key_v2_acquire: zero-length RSA key, "
-						 "aborting SA acquisition");
+					if (sauth->sadb_x_cred_len <=
+					    sizeof *sauth) {
+						log_print("pf_key_v2_acquire: "
+						    "zero-length RSA key, "
+						    "aborting SA acquisition");
 						conf_end(af, 0);
 						goto fail;
 					}
 					authm = key_printable(ISAKMP_KEY_RSA,
-						     ISAKMP_KEYTYPE_PRIVATE,
-						     (u_int8_t *) sauth + 1,
-						      sauth->sadb_x_cred_len
-							   - sizeof *sauth);
+					    ISAKMP_KEYTYPE_PRIVATE,
+					    (u_int8_t *) sauth + 1,
+					    sauth->sadb_x_cred_len -
+					    sizeof *sauth);
 					if (!authm) {
-						log_print("pf_key_v2_acquire: failed to convert "
-							  "private key to printable format (size %lu)",
+						log_print("pf_key_v2_acquire: "
+						    "failed to convert "
+						    "private key to printable "
+						    "format (size %lu)",
 						    sauth->sadb_x_cred_len -
-							  (unsigned long) sizeof *sauth);
+						    (unsigned long) sizeof *sauth);
 						conf_end(af, 0);
 						goto fail;
 					}
 					/*
-					 * Set the key in the peer. We don't use "Authentication"
-					 * to avoid potential conflicts with file-based
-					 * configurations that use public key authentication
-					 * but still specify an "Authentication" tag (typically
-					 * as a remnant of passphrase-based testing).
+					 * Set the key in the peer. We don't 
+					 * use "Authentication" to avoid
+					 * potential conflicts with file-based
+					 * configurations that use public key
+					 * authentication but still specify
+					 * an "Authentication" tag (typically
+					 * as a remnant of passphrase-based
+					 * testing).
 				         */
-					if (conf_set(af, peer, "PKAuthentication", authm, 0, 0)) {
+					if (conf_set(af, peer,
+					    "PKAuthentication", authm, 0, 0)) {
 						free(authm);
 						conf_end(af, 0);
 						goto fail;
@@ -3761,27 +3889,31 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 					break;
 
 				default:
-					log_print("pf_key_v2_acquire: unknown authentication "
-						  "material type %d received from kernel",
-						  sauth->sadb_x_cred_type);
+					log_print("pf_key_v2_acquire: "
+					    "unknown authentication "
+					    "material type %d received from "
+					    "kernel", sauth->sadb_x_cred_type);
 					conf_end(af, 0);
 					goto fail;
 				}
 			} else	/* Fall through */
 #endif				/* SADB_X_EXT_LOCAL_AUTH */
 			{
-				xform = conf_get_str("Default-phase-1-configuration",
-						     "Transforms");
+				xform = conf_get_str(
+				    "Default-phase-1-configuration",
+				    "Transforms");
 				if (conf_set(af, confname, "Transforms",
-				xform ? xform : "3DES-SHA-RSA_SIG", 0, 0)) {
+				    xform ? xform : "3DES-SHA-RSA_SIG", 0,
+				    0)) {
 					conf_end(af, 0);
 					goto fail;
 				}
 			}
 
-			if (conf_set(af, confname, "Exchange_Type", "ID_PROT", 0, 0)
+			if (conf_set(af, confname, "Exchange_Type", "ID_PROT",
+			    0, 0)
 			    || conf_set(af, confname, "DOI", "IPSEC", 0, 0)
-			 || conf_set(af, confname, "Refcount", "1", 0, 0)) {
+			    || conf_set(af, confname, "Refcount", "1", 0, 0)) {
 				conf_end(af, 0);
 				goto fail;
 			}
@@ -3833,7 +3965,7 @@ static void
 pf_key_v2_notify(struct pf_key_v2_msg *msg)
 {
 	switch (((struct sadb_msg *) TAILQ_FIRST(msg)->seg)->sadb_msg_type) {
-		case SADB_EXPIRE:
+	case SADB_EXPIRE:
 		pf_key_v2_expire(msg);
 		break;
 
@@ -3843,7 +3975,7 @@ pf_key_v2_notify(struct pf_key_v2_msg *msg)
 
 	default:
 		log_print("pf_key_v2_notify: unexpected message type (%d)",
-		((struct sadb_msg *) TAILQ_FIRST(msg)->seg)->sadb_msg_type);
+		    ((struct sadb_msg *)TAILQ_FIRST(msg)->seg)->sadb_msg_type);
 	}
 	pf_key_v2_msg_free(msg);
 }
@@ -3856,9 +3988,9 @@ pf_key_v2_handler(int fd)
 	int             n;
 
 	/*
-	 * As synchronous read/writes to the socket can have taken place between
-	 * the select(2) call of the main loop and this handler, we need to recheck
-	 * the readability.
+	 * As synchronous read/writes to the socket can have taken place
+	 * between the select(2) call of the main loop and this handler, we 
+	 * need to recheck the readability.
          */
 	if (ioctl(pf_key_v2_socket, FIONREAD, &n) == -1) {
 		log_error("pf_key_v2_handler: ioctl (%d, FIONREAD, &n) failed",
@@ -3910,7 +4042,8 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 		break;
 #endif
 	default:
-		log_print("pf_key_v2_group_spis: invalid proto %d", proto1->proto);
+		log_print("pf_key_v2_group_spis: invalid proto %d",
+		    proto1->proto);
 		goto cleanup;
 	}
 	msg.sadb_msg_seq = 0;
@@ -3921,7 +4054,8 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	/* Setup the SA extensions.  */
 	sa1.sadb_sa_exttype = SADB_EXT_SA;
 	sa1.sadb_sa_len = sizeof sa1 / PF_KEY_V2_CHUNK;
-	memcpy(&sa1.sadb_sa_spi, proto1->spi[incoming], sizeof sa1.sadb_sa_spi);
+	memcpy(&sa1.sadb_sa_spi, proto1->spi[incoming],
+	    sizeof sa1.sadb_sa_spi);
 	sa1.sadb_sa_replay = 0;
 	sa1.sadb_sa_state = 0;
 	sa1.sadb_sa_auth = 0;
@@ -3933,7 +4067,8 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 #ifndef KAME
 	sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
 	sa2.sadb_sa_len = sizeof sa2 / PF_KEY_V2_CHUNK;
-	memcpy(&sa2.sadb_sa_spi, proto2->spi[incoming], sizeof sa2.sadb_sa_spi);
+	memcpy(&sa2.sadb_sa_spi, proto2->spi[incoming],
+	    sizeof sa2.sadb_sa_spi);
 	sa2.sadb_sa_replay = 0;
 	sa2.sadb_sa_state = 0;
 	sa2.sadb_sa_auth = 0;
@@ -3971,7 +4106,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	memcpy(addr + 1, saddr, sysdep_sa_len(saddr));
 	((struct sockaddr_in *) (addr + 1))->sin_port = 0;
 	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -3988,7 +4123,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	memcpy(addr + 1, saddr, sysdep_sa_len(saddr));
 	((struct sockaddr_in *) (addr + 1))->sin_port = 0;
 	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) addr,
-			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
 	addr = 0;
 
@@ -4008,11 +4143,13 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 		break;
 #endif
 	default:
-		log_print("pf_key_v2_group_spis: invalid proto %d", proto2->proto);
+		log_print("pf_key_v2_group_spis: invalid proto %d",
+		    proto2->proto);
 		goto cleanup;
 	}
 	protocol.sadb_protocol_reserved2 = 0;
-	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) & protocol, 0) == -1)
+	if (pf_key_v2_msg_add(grpspis, 
+	    (struct sadb_ext *) & protocol, 0) == -1)
 		goto cleanup;
 
 	ret = pf_key_v2_call(grpspis);

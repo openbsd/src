@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.73 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: policy.c,v 1.74 2004/06/14 09:55:42 ho Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -145,26 +145,26 @@ policy_callback(char *name)
 	static char     esp_life_kbytes[PMAX], esp_life_seconds[PMAX];
 	static char     comp_life_kbytes[PMAX];
 	static char    *ah_ecn, *esp_ecn, *comp_ecn;
-	static char     comp_life_seconds[PMAX], *ah_encapsulation, *esp_encapsulation;
-	static char    *comp_encapsulation, ah_key_length[PMAX], esp_key_length[PMAX];
-	static char     ah_key_rounds[PMAX], esp_key_rounds[PMAX], comp_dict_size[PMAX];
-	static char     comp_private_alg[PMAX], *remote_filter_type, *local_filter_type;
+	static char     comp_life_seconds[PMAX], *ah_encapsulation;
+	static char    *esp_encapsulation, *comp_encapsulation;
+	static char     ah_key_length[PMAX], esp_key_length[PMAX];
+	static char     ah_key_rounds[PMAX], esp_key_rounds[PMAX];
+	static char	comp_dict_size[PMAX], comp_private_alg[PMAX];
+	static char    *remote_filter_type, *local_filter_type;
 	static char     remote_filter_addr_upper[NI_MAXHOST];
 	static char     remote_filter_addr_lower[NI_MAXHOST];
 	static char     local_filter_addr_upper[NI_MAXHOST];
 	static char     local_filter_addr_lower[NI_MAXHOST];
-	static char     ah_group_desc[PMAX], esp_group_desc[PMAX], comp_group_desc[PMAX];
-	static char     remote_ike_address[NI_MAXHOST];
+	static char     ah_group_desc[PMAX], esp_group_desc[PMAX];
+	static char	comp_group_desc[PMAX], remote_ike_address[NI_MAXHOST];
 	static char     local_ike_address[NI_MAXHOST];
-	static char    *remote_id_type, remote_id_addr_upper[NI_MAXHOST],
-	               *phase_1;
-	static char     remote_id_addr_lower[NI_MAXHOST];
+	static char    *remote_id_type, remote_id_addr_upper[NI_MAXHOST];
+	static char    *phase_1, remote_id_addr_lower[NI_MAXHOST];
 	static char    *remote_id_proto, remote_id_port[PMAX];
 	static char     remote_filter_port[PMAX], local_filter_port[PMAX];
-	static char    *remote_filter_proto, *local_filter_proto, *pfs,
-	               *initiator;
-	static char     remote_filter_proto_num[3], local_filter_proto_num[3];
-	static char     remote_id_proto_num[3];
+	static char    *remote_filter_proto, *local_filter_proto, *pfs;
+	static char    *initiator, remote_filter_proto_num[3];
+	static char	local_filter_proto_num[3], remote_id_proto_num[3];
 	static char     phase1_group[PMAX];
 
 	/* Allocated.  */
@@ -179,9 +179,11 @@ policy_callback(char *name)
 		ah_hash_alg = ah_auth_alg = phase_1 = "";
 		esp_auth_alg = esp_enc_alg = comp_alg = ah_encapsulation = "";
 		ah_ecn = esp_ecn = comp_ecn = "no";
-		esp_encapsulation = comp_encapsulation = remote_filter_type = "";
+		esp_encapsulation = comp_encapsulation = "";
+		remote_filter_type = "";
 		local_filter_type = remote_id_type = initiator = "";
-		remote_filter_proto = local_filter_proto = remote_id_proto = "";
+		remote_filter_proto = local_filter_proto = "";
+		remote_id_proto = "";
 
 		if (remote_filter != 0) {
 			free(remote_filter);
@@ -646,7 +648,8 @@ policy_callback(char *name)
 			}
 		}
 
-		policy_sa->transport->vtbl->get_src(policy_sa->transport, &sin);
+		policy_sa->transport->vtbl->get_src(policy_sa->transport,
+		    &sin);
 		if (sockaddr2text(sin, &addr, 1)) {
 			log_error("policy_callback: sockaddr2text failed");
 			goto bad;
@@ -654,7 +657,8 @@ policy_callback(char *name)
 		strlcpy(local_ike_address, addr, sizeof local_ike_address);
 		free(addr);
 
-		policy_sa->transport->vtbl->get_dst(policy_sa->transport, &sin);
+		policy_sa->transport->vtbl->get_dst(policy_sa->transport,
+		    &sin);
 		if (sockaddr2text(sin, &addr, 1)) {
 			log_error("policy_callback: sockaddr2text failed");
 			goto bad;
@@ -684,14 +688,16 @@ policy_callback(char *name)
 		case IPSEC_ID_IPV4_ADDR:
 			remote_id_type = "IPv4 address";
 
-			net = decode_32(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
+			net = decode_32(id + ISAKMP_ID_DATA_OFF -
+			    ISAKMP_GEN_SZ);
 			my_inet_ntop4(&net, remote_id_addr_upper,
 				      sizeof remote_id_addr_upper - 1, 1);
 			my_inet_ntop4(&net, remote_id_addr_lower,
 				      sizeof remote_id_addr_lower - 1, 1);
 			remote_id = strdup(remote_id_addr_upper);
 			if (!remote_id) {
-				log_error("policy_callback: strdup (\"%s\") failed",
+				log_error("policy_callback: "
+				    "strdup (\"%s\") failed",
 				    remote_id_addr_upper);
 				goto bad;
 			}
@@ -700,18 +706,21 @@ policy_callback(char *name)
 		case IPSEC_ID_IPV4_RANGE:
 			remote_id_type = "IPv4 range";
 
-			net = decode_32(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
+			net = decode_32(id + ISAKMP_ID_DATA_OFF -
+			    ISAKMP_GEN_SZ);
 			my_inet_ntop4(&net, remote_id_addr_lower,
 			    sizeof remote_id_addr_lower - 1, 1);
-			net = decode_32(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 4);
+			net = decode_32(id + ISAKMP_ID_DATA_OFF -
+			    ISAKMP_GEN_SZ + 4);
 			my_inet_ntop4(&net, remote_id_addr_upper,
 			    sizeof remote_id_addr_upper - 1, 1);
 			len = strlen(remote_id_addr_upper) +
 			    strlen(remote_id_addr_lower) + 2;
 			remote_id = calloc(len, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%d, %lu) failed",
-				    len, (unsigned long)sizeof(char));
+				log_error("policy_callback: "
+				    "calloc (%d, %lu) failed", len,
+				    (unsigned long)sizeof(char));
 				goto bad;
 			}
 			strlcpy(remote_id, remote_id_addr_lower, len);
@@ -722,8 +731,10 @@ policy_callback(char *name)
 		case IPSEC_ID_IPV4_ADDR_SUBNET:
 			remote_id_type = "IPv4 subnet";
 
-			net = decode_32(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
-			subnet = decode_32(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 4);
+			net = decode_32(id + ISAKMP_ID_DATA_OFF -
+			    ISAKMP_GEN_SZ);
+			subnet = decode_32(id + ISAKMP_ID_DATA_OFF -
+			    ISAKMP_GEN_SZ + 4);
 			net &= subnet;
 			my_inet_ntop4(&net, remote_id_addr_lower,
 			    sizeof remote_id_addr_lower - 1, 1);
@@ -734,8 +745,9 @@ policy_callback(char *name)
 				 strlen(remote_id_addr_lower) + 2;
 			remote_id = calloc(len, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%d, %lu) failed",
-				    len, (unsigned long)sizeof(char));
+				log_error("policy_callback: "
+				    "calloc (%d, %lu) failed", len,
+				    (unsigned long)sizeof(char));
 				goto bad;
 			}
 			strlcpy(remote_id, remote_id_addr_lower, len);
@@ -751,7 +763,8 @@ policy_callback(char *name)
 			    sizeof remote_id_addr_lower);
 			remote_id = strdup(remote_id_addr_upper);
 			if (!remote_id) {
-				log_error("policy_callback: strdup (\"%s\") failed",
+				log_error("policy_callback: "
+				    "strdup (\"%s\") failed",
 				    remote_id_addr_upper);
 				goto bad;
 			}
@@ -764,16 +777,17 @@ policy_callback(char *name)
 			    remote_id_addr_lower,
 			    sizeof remote_id_addr_lower - 1);
 
-			my_inet_ntop6(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 16,
-			    remote_id_addr_upper,
+			my_inet_ntop6(id + ISAKMP_ID_DATA_OFF -
+			    ISAKMP_GEN_SZ + 16, remote_id_addr_upper,
 			    sizeof remote_id_addr_upper - 1);
 
 			len = strlen(remote_id_addr_upper) +
 			    strlen(remote_id_addr_lower) + 2;
 			remote_id = calloc(len, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%d, %lu) failed",
-				    len, (unsigned long)sizeof(char));
+				log_error("policy_callback: "
+				    "calloc (%d, %lu) failed", len,
+				    (unsigned long)sizeof(char));
 				goto bad;
 			}
 			strlcpy(remote_id, remote_id_addr_lower, len);
@@ -789,27 +803,30 @@ policy_callback(char *name)
 
 			bcopy(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, &net,
 			    sizeof(net));
-			bcopy(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 16, &mask,
-			    sizeof(mask));
+			bcopy(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 16,
+			    &mask, sizeof(mask));
 
 			for (i = 0; i < 16; i++)
 				net.s6_addr[i] &= mask.s6_addr[i];
 
-			my_inet_ntop6((unsigned char *)&net, remote_id_addr_lower,
+			my_inet_ntop6((unsigned char *)&net,
+			    remote_id_addr_lower,
 			    sizeof remote_id_addr_lower - 1);
 
 			for (i = 0; i < 16; i++)
 				net.s6_addr[i] |= ~mask.s6_addr[i];
 
-			my_inet_ntop6((unsigned char *)&net, remote_id_addr_upper,
+			my_inet_ntop6((unsigned char *)&net,
+			    remote_id_addr_upper,
 			    sizeof remote_id_addr_upper - 1);
 
 			len = strlen(remote_id_addr_upper) +
 			    strlen(remote_id_addr_lower) + 2;
 			remote_id = calloc(len, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%d, %lu) failed",
-				    len, (unsigned long)sizeof(char));
+				log_error("policy_callback: "
+				    "calloc (%d, %lu) failed", len,
+				    (unsigned long)sizeof(char));
 				goto bad;
 			}
 			strlcpy(remote_id, remote_id_addr_lower, len);
@@ -823,13 +840,15 @@ policy_callback(char *name)
 			remote_id = calloc(id_sz - ISAKMP_ID_DATA_OFF +
 			    ISAKMP_GEN_SZ + 1, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%lu, %lu) failed",
+				log_error("policy_callback: "
+				    "calloc (%lu, %lu) failed",
 				    (unsigned long)id_sz - ISAKMP_ID_DATA_OFF +
 				    ISAKMP_GEN_SZ + 1,
 				    (unsigned long)sizeof(char));
 				goto bad;
 			}
-			memcpy(remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+			memcpy(remote_id,
+			    id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 			    id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 			break;
 
@@ -838,13 +857,15 @@ policy_callback(char *name)
 			remote_id = calloc(id_sz - ISAKMP_ID_DATA_OFF +
 			    ISAKMP_GEN_SZ + 1, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%lu, %lu) failed",
+				log_error("policy_callback: "
+				    "calloc (%lu, %lu) failed",
 				    (unsigned long)id_sz - ISAKMP_ID_DATA_OFF +
 				    ISAKMP_GEN_SZ + 1,
 				    (unsigned long)sizeof(char));
 				goto bad;
 			}
-			memcpy(remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+			memcpy(remote_id,
+			    id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 			    id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
 			break;
 
@@ -870,26 +891,31 @@ policy_callback(char *name)
 			remote_id = calloc(2 * (id_sz - ISAKMP_ID_DATA_OFF +
 			    ISAKMP_GEN_SZ) + 1, sizeof(char));
 			if (!remote_id) {
-				log_error("policy_callback: calloc (%lu, %lu) failed",
+				log_error("policy_callback: "
+				    "calloc (%lu, %lu) failed",
 				    2 * ((unsigned long)id_sz -
-				    ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) + 1,
+					ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) + 1,
 				    (unsigned long)sizeof(char));
 				goto bad;
 			}
 			/* Does it contain any non-printable characters ? */
-			for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ; i++)
+			for (i = 0;
+			     i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
+			     i++)
 				if (!isprint(*(id + ISAKMP_ID_DATA_OFF -
 				    ISAKMP_GEN_SZ + i)))
 					break;
 			if (i >= id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) {
 				memcpy(remote_id, id + ISAKMP_ID_DATA_OFF -
 				    ISAKMP_GEN_SZ,
-				    id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
+				    id_sz - ISAKMP_ID_DATA_OFF +
+				    ISAKMP_GEN_SZ);
 				break;
 			}
 			/* Non-printable characters, convert to hex */
 			for (i = 0;
-			    i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ; i++) {
+			    i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
+			     i++) {
 				remote_id[2 * i] = hextab[*(id +
 				    ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ) >> 4];
 				remote_id[2 * i + 1] = hextab[*(id +
@@ -898,7 +924,8 @@ policy_callback(char *name)
 			break;
 
 		default:
-			log_print("policy_callback: unknown remote ID type %u", id[0]);
+			log_print("policy_callback: "
+			    "unknown remote ID type %u", id[0]);
 			goto bad;
 		}
 
@@ -918,7 +945,8 @@ policy_callback(char *name)
 #endif
 
 		default:
-			snprintf(remote_id_proto_num, sizeof remote_id_proto_num, "%d",
+			snprintf(remote_id_proto_num,
+			    sizeof remote_id_proto_num, "%d",
 			    id[1]);
 			remote_id_proto = remote_id_proto_num;
 			break;
@@ -952,7 +980,8 @@ policy_callback(char *name)
 				    sizeof remote_filter_addr_upper - 1, 1);
 				my_inet_ntop4(&net, remote_filter_addr_lower,
 				    sizeof remote_filter_addr_lower - 1, 1);
-				remote_filter = strdup(remote_filter_addr_upper);
+				remote_filter =
+				    strdup(remote_filter_addr_upper);
 				if (!remote_filter) {
 					log_error("policy_callback: strdup "
 					    "(\"%s\") failed",
@@ -967,7 +996,8 @@ policy_callback(char *name)
 				net = decode_32(idremote + ISAKMP_ID_DATA_OFF);
 				my_inet_ntop4(&net, remote_filter_addr_lower,
 				    sizeof remote_filter_addr_lower - 1, 1);
-				net = decode_32(idremote + ISAKMP_ID_DATA_OFF + 4);
+				net = decode_32(idremote + ISAKMP_ID_DATA_OFF +
+				    4);
 				my_inet_ntop4(&net, remote_filter_addr_upper,
 				    sizeof remote_filter_addr_upper - 1, 1);
 				len = strlen(remote_filter_addr_upper) +
@@ -979,16 +1009,19 @@ policy_callback(char *name)
 					    (unsigned long)sizeof(char));
 					goto bad;
 				}
-				strlcpy(remote_filter, remote_filter_addr_lower, len);
+				strlcpy(remote_filter,
+				    remote_filter_addr_lower, len);
 				strlcat(remote_filter, "-", len);
-				strlcat(remote_filter, remote_filter_addr_upper, len);
+				strlcat(remote_filter,
+				    remote_filter_addr_upper, len);
 				break;
 
 			case IPSEC_ID_IPV4_ADDR_SUBNET:
 				remote_filter_type = "IPv4 subnet";
 
 				net = decode_32(idremote + ISAKMP_ID_DATA_OFF);
-				subnet = decode_32(idremote + ISAKMP_ID_DATA_OFF + 4);
+				subnet = decode_32(idremote +
+				    ISAKMP_ID_DATA_OFF + 4);
 				net &= subnet;
 				my_inet_ntop4(&net, remote_filter_addr_lower,
 				    sizeof remote_filter_addr_lower - 1, 1);
@@ -1004,9 +1037,11 @@ policy_callback(char *name)
 					    (unsigned long)sizeof(char));
 					goto bad;
 				}
-				strlcpy(remote_filter, remote_filter_addr_lower, len);
+				strlcpy(remote_filter,
+				    remote_filter_addr_lower, len);
 				strlcat(remote_filter, "-", len);
-				strlcat(remote_filter, remote_filter_addr_upper, len);
+				strlcat(remote_filter,
+				    remote_filter_addr_upper, len);
 				break;
 
 			case IPSEC_ID_IPV6_ADDR:
@@ -1017,7 +1052,8 @@ policy_callback(char *name)
 				strlcpy(remote_filter_addr_lower,
 				    remote_filter_addr_upper,
 				    sizeof remote_filter_addr_lower);
-				remote_filter = strdup(remote_filter_addr_upper);
+				remote_filter =
+				    strdup(remote_filter_addr_upper);
 				if (!remote_filter) {
 					log_error("policy_callback: strdup "
 					    "(\"%s\") failed",
@@ -1033,8 +1069,8 @@ policy_callback(char *name)
 				    remote_filter_addr_lower,
 				    sizeof remote_filter_addr_lower - 1);
 
-				my_inet_ntop6(idremote + ISAKMP_ID_DATA_OFF + 16,
-				    remote_filter_addr_upper,
+				my_inet_ntop6(idremote + ISAKMP_ID_DATA_OFF +
+				    16, remote_filter_addr_upper,
 				    sizeof remote_filter_addr_upper - 1);
 
 				len = strlen(remote_filter_addr_upper) +
@@ -1046,9 +1082,11 @@ policy_callback(char *name)
 					    (unsigned long)sizeof(char));
 					goto bad;
 				}
-				strlcpy(remote_filter, remote_filter_addr_lower, len);
+				strlcpy(remote_filter,
+				    remote_filter_addr_lower, len);
 				strlcat(remote_filter, "-", len);
-				strlcat(remote_filter, remote_filter_addr_upper, len);
+				strlcat(remote_filter,
+				    remote_filter_addr_upper, len);
 				break;
 
 			case IPSEC_ID_IPV6_ADDR_SUBNET:
@@ -1057,69 +1095,92 @@ policy_callback(char *name)
 
 					remote_filter_type = "IPv6 subnet";
 
-					bcopy(idremote + ISAKMP_ID_DATA_OFF, &net, sizeof(net));
-					bcopy(idremote + ISAKMP_ID_DATA_OFF + 16, &mask, sizeof(mask));
+					bcopy(idremote + ISAKMP_ID_DATA_OFF,
+					    &net, sizeof(net));
+					bcopy(idremote + ISAKMP_ID_DATA_OFF +
+					    16, &mask, sizeof(mask));
 
 					for (i = 0; i < 16; i++)
-						net.s6_addr[i] &= mask.s6_addr[i];
+						net.s6_addr[i] &=
+						    mask.s6_addr[i];
 
-					my_inet_ntop6((unsigned char *)&net, remote_filter_addr_lower,
+					my_inet_ntop6((unsigned char *)&net,
+					    remote_filter_addr_lower,
 					sizeof remote_filter_addr_lower - 1);
 
 					for (i = 0; i < 16; i++)
-						net.s6_addr[i] |= ~mask.s6_addr[i];
+						net.s6_addr[i] |=
+						    ~mask.s6_addr[i];
 
-					my_inet_ntop6((unsigned char *)&net, remote_filter_addr_upper,
+					my_inet_ntop6((unsigned char *)&net,
+					    remote_filter_addr_upper,
 					sizeof remote_filter_addr_upper - 1);
 
 					len = strlen(remote_filter_addr_upper)
 						+ strlen(remote_filter_addr_lower) + 2;
-					remote_filter = calloc(len, sizeof(char));
+					remote_filter = calloc(len,
+					    sizeof(char));
 					if (!remote_filter) {
-						log_error("policy_callback: calloc (%d, %lu) failed", len,
-							  (unsigned long)sizeof(char));
+						log_error("policy_callback: "
+						    "calloc (%d, %lu) failed",
+						    len,
+						    (unsigned long)sizeof(char));
 						goto bad;
 					}
-					strlcpy(remote_filter, remote_filter_addr_lower, len);
+					strlcpy(remote_filter,
+					    remote_filter_addr_lower, len);
 					strlcat(remote_filter, "-", len);
-					strlcat(remote_filter, remote_filter_addr_upper, len);
+					strlcat(remote_filter,
+					    remote_filter_addr_upper, len);
 					break;
 				}
 
 			case IPSEC_ID_FQDN:
 				remote_filter_type = "FQDN";
-				remote_filter = malloc(idremotesz - ISAKMP_ID_DATA_OFF + 1);
+				remote_filter = malloc(idremotesz -
+				    ISAKMP_ID_DATA_OFF + 1);
 				if (!remote_filter) {
-					log_error("policy_callback: malloc (%lu) failed",
-						  (unsigned long)idremotesz - ISAKMP_ID_DATA_OFF + 1);
+					log_error("policy_callback: "
+					    "malloc (%lu) failed",
+					    (unsigned long)idremotesz -
+					    ISAKMP_ID_DATA_OFF + 1);
 					goto bad;
 				}
-				memcpy(remote_filter, idremote + ISAKMP_ID_DATA_OFF,
-				       idremotesz - ISAKMP_ID_DATA_OFF);
-				remote_filter[idremotesz - ISAKMP_ID_DATA_OFF] = '\0';
+				memcpy(remote_filter,
+				    idremote + ISAKMP_ID_DATA_OFF,
+				    idremotesz - ISAKMP_ID_DATA_OFF);
+				remote_filter[idremotesz - ISAKMP_ID_DATA_OFF]
+				    = '\0';
 				break;
 
 			case IPSEC_ID_USER_FQDN:
 				remote_filter_type = "User FQDN";
-				remote_filter = malloc(idremotesz - ISAKMP_ID_DATA_OFF + 1);
+				remote_filter = malloc(idremotesz - 
+				    ISAKMP_ID_DATA_OFF + 1);
 				if (!remote_filter) {
-					log_error("policy_callback: malloc (%lu) failed",
-						  (unsigned long)idremotesz - ISAKMP_ID_DATA_OFF + 1);
+					log_error("policy_callback: "
+					    "malloc (%lu) failed",
+					    (unsigned long)idremotesz -
+					    ISAKMP_ID_DATA_OFF + 1);
 					goto bad;
 				}
-				memcpy(remote_filter, idremote + ISAKMP_ID_DATA_OFF,
-				       idremotesz - ISAKMP_ID_DATA_OFF);
-				remote_filter[idremotesz - ISAKMP_ID_DATA_OFF] = '\0';
+				memcpy(remote_filter,
+				    idremote + ISAKMP_ID_DATA_OFF,
+				    idremotesz - ISAKMP_ID_DATA_OFF);
+				remote_filter[idremotesz - ISAKMP_ID_DATA_OFF]
+				    = '\0';
 				break;
 
 			case IPSEC_ID_DER_ASN1_DN:
 				remote_filter_type = "ASN1 DN";
 
-				remote_filter = x509_DN_string(idremote + ISAKMP_ID_DATA_OFF,
-					   idremotesz - ISAKMP_ID_DATA_OFF);
+				remote_filter = x509_DN_string(idremote +
+				    ISAKMP_ID_DATA_OFF,
+				    idremotesz - ISAKMP_ID_DATA_OFF);
 				if (!remote_filter) {
 					LOG_DBG((LOG_POLICY, 50,
-						 "policy_callback: failed to decode name"));
+					    "policy_callback: "
+					    "failed to decode name"));
 					goto bad;
 				}
 				break;
@@ -1132,38 +1193,49 @@ policy_callback(char *name)
 			case IPSEC_ID_KEY_ID:
 				remote_filter_type = "Key ID";
 				remote_filter
-					= calloc(2 * (idremotesz - ISAKMP_ID_DATA_OFF) + 1,
-						 sizeof(char));
+					= calloc(2 * (idremotesz - 
+					    ISAKMP_ID_DATA_OFF) + 1,
+					    sizeof(char));
 				if (!remote_filter) {
-					log_error("policy_callback: calloc (%lu, %lu) failed",
-						  2 * ((unsigned long)idremotesz - ISAKMP_ID_DATA_OFF) + 1,
-					      (unsigned long)sizeof(char));
+					log_error("policy_callback: "
+					    "calloc (%lu, %lu) failed",
+					    2 * ((unsigned long)idremotesz - 
+						ISAKMP_ID_DATA_OFF) + 1,
+					    (unsigned long)sizeof(char));
 					goto bad;
 				}
 				/*
 				 * Does it contain any non-printable
 				 * characters ?
 				 */
-				for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
-					if (!isprint(*(idremote + ISAKMP_ID_DATA_OFF + i)))
+				for (i = 0;
+				     i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
+					if (!isprint(*(idremote +
+					    ISAKMP_ID_DATA_OFF + i)))
 						break;
 				if (i >= idremotesz - ISAKMP_ID_DATA_OFF) {
-					memcpy(remote_filter, idremote + ISAKMP_ID_DATA_OFF,
-					   idremotesz - ISAKMP_ID_DATA_OFF);
+					memcpy(remote_filter,
+					    idremote + ISAKMP_ID_DATA_OFF,
+					    idremotesz - ISAKMP_ID_DATA_OFF);
 					break;
 				}
 				/* Non-printable characters, convert to hex */
-				for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++) {
+				for (i = 0;
+				     i < idremotesz - ISAKMP_ID_DATA_OFF;
+				     i++) {
 					remote_filter[2 * i]
-						= hextab[*(idremote + ISAKMP_ID_DATA_OFF) >> 4];
+					    = hextab[*(idremote +
+						ISAKMP_ID_DATA_OFF) >> 4];
 					remote_filter[2 * i + 1]
-						= hextab[*(idremote + ISAKMP_ID_DATA_OFF) & 0xF];
+					    = hextab[*(idremote +
+						ISAKMP_ID_DATA_OFF) & 0xF];
 				}
 				break;
 
 			default:
-				log_print("policy_callback: unknown Remote ID type %u",
-					  GET_ISAKMP_ID_TYPE(idremote));
+				log_print("policy_callback: "
+				    "unknown Remote ID type %u",
+				    GET_ISAKMP_ID_TYPE(idremote));
 				goto bad;
 			}
 
@@ -1184,14 +1256,14 @@ policy_callback(char *name)
 
 			default:
 				snprintf(remote_filter_proto_num,
-				       sizeof remote_filter_proto_num, "%d",
-					 idremote[ISAKMP_GEN_SZ + 1]);
+				    sizeof remote_filter_proto_num, "%d",
+				    idremote[ISAKMP_GEN_SZ + 1]);
 				remote_filter_proto = remote_filter_proto_num;
 				break;
 			}
 
-			snprintf(remote_filter_port, sizeof remote_filter_port, "%u",
-				 decode_16(idremote + ISAKMP_GEN_SZ + 2));
+			snprintf(remote_filter_port, sizeof remote_filter_port,
+			    "%u", decode_16(idremote + ISAKMP_GEN_SZ + 2));
 		} else {
 			policy_sa->transport->vtbl->get_dst(policy_sa->transport, &sin);
 			switch (sin->sa_family) {
@@ -1202,12 +1274,14 @@ policy_callback(char *name)
 				remote_filter_type = "IPv6 address";
 				break;
 			default:
-				log_print("policy_callback: unsupported protocol family %d",
-					  sin->sa_family);
+				log_print("policy_callback: "
+				    "unsupported protocol family %d",
+				    sin->sa_family);
 				goto bad;
 			}
 			if (sockaddr2text(sin, &addr, 1)) {
-				log_error("policy_callback: sockaddr2text failed");
+				log_error("policy_callback: "
+				    "sockaddr2text failed");
 				goto bad;
 			}
 			memcpy(remote_filter_addr_upper, addr,
@@ -1217,8 +1291,9 @@ policy_callback(char *name)
 			free(addr);
 			remote_filter = strdup(remote_filter_addr_upper);
 			if (!remote_filter) {
-				log_error("policy_callback: strdup (\"%s\") failed",
-					  remote_filter_addr_upper);
+				log_error("policy_callback: "
+				    "strdup (\"%s\") failed",
+				    remote_filter_addr_upper);
 				goto bad;
 			}
 		}
@@ -1235,8 +1310,9 @@ policy_callback(char *name)
 				     sizeof local_filter_addr_upper - 1, 1);
 				local_filter = strdup(local_filter_addr_upper);
 				if (!local_filter) {
-					log_error("policy_callback: strdup (\"%s\") failed",
-						  local_filter_addr_upper);
+					log_error("policy_callback: "
+					    "strdup (\"%s\") failed",
+					    local_filter_addr_upper);
 					goto bad;
 				}
 				break;
@@ -1247,27 +1323,32 @@ policy_callback(char *name)
 				net = decode_32(idlocal + ISAKMP_ID_DATA_OFF);
 				my_inet_ntop4(&net, local_filter_addr_lower,
 				     sizeof local_filter_addr_lower - 1, 1);
-				net = decode_32(idlocal + ISAKMP_ID_DATA_OFF + 4);
+				net = decode_32(idlocal + ISAKMP_ID_DATA_OFF +
+				    4);
 				my_inet_ntop4(&net, local_filter_addr_upper,
 				     sizeof local_filter_addr_upper - 1, 1);
 				len = strlen(local_filter_addr_upper)
 					+ strlen(local_filter_addr_lower) + 2;
 				local_filter = calloc(len, sizeof(char));
 				if (!local_filter) {
-					log_error("policy_callback: calloc (%d, %lu) failed", len,
-					      (unsigned long)sizeof(char));
+					log_error("policy_callback: "
+					    "calloc (%d, %lu) failed", len,
+					    (unsigned long)sizeof(char));
 					goto bad;
 				}
-				strlcpy(local_filter, local_filter_addr_lower, len);
+				strlcpy(local_filter, local_filter_addr_lower,
+				    len);
 				strlcat(local_filter, "-", len);
-				strlcat(local_filter, local_filter_addr_upper, len);
+				strlcat(local_filter, local_filter_addr_upper,
+				    len);
 				break;
 
 			case IPSEC_ID_IPV4_ADDR_SUBNET:
 				local_filter_type = "IPv4 subnet";
 
 				net = decode_32(idlocal + ISAKMP_ID_DATA_OFF);
-				subnet = decode_32(idlocal + ISAKMP_ID_DATA_OFF + 4);
+				subnet = decode_32(idlocal +
+				    ISAKMP_ID_DATA_OFF + 4);
 				net &= subnet;
 				my_inet_ntop4(&net, local_filter_addr_lower,
 				     sizeof local_filter_addr_lower - 1, 1);
@@ -1278,13 +1359,16 @@ policy_callback(char *name)
 					+ strlen(local_filter_addr_lower) + 2;
 				local_filter = calloc(len, sizeof(char));
 				if (!local_filter) {
-					log_error("policy_callback: calloc (%d, %lu) failed", len,
-					      (unsigned long)sizeof(char));
+					log_error("policy_callback: "
+					    "calloc (%d, %lu) failed", len,
+					    (unsigned long)sizeof(char));
 					goto bad;
 				}
-				strlcpy(local_filter, local_filter_addr_lower, len);
+				strlcpy(local_filter, local_filter_addr_lower,
+				    len);
 				strlcat(local_filter, "-", len);
-				strlcat(local_filter, local_filter_addr_upper, len);
+				strlcat(local_filter, local_filter_addr_upper,
+				    len);
 				break;
 
 			case IPSEC_ID_IPV6_ADDR:
@@ -1292,12 +1376,14 @@ policy_callback(char *name)
 				my_inet_ntop6(idlocal + ISAKMP_ID_DATA_OFF,
 					      local_filter_addr_upper,
 					sizeof local_filter_addr_upper - 1);
-				strlcpy(local_filter_addr_lower, local_filter_addr_upper,
-					sizeof local_filter_addr_lower);
+				strlcpy(local_filter_addr_lower,
+				    local_filter_addr_upper,
+				    sizeof local_filter_addr_lower);
 				local_filter = strdup(local_filter_addr_upper);
 				if (!local_filter) {
-					log_error("policy_callback: strdup (\"%s\") failed",
-						  local_filter_addr_upper);
+					log_error("policy_callback: "
+					    "strdup (\"%s\") failed",
+					    local_filter_addr_upper);
 					goto bad;
 				}
 				break;
@@ -1309,21 +1395,24 @@ policy_callback(char *name)
 					      local_filter_addr_lower,
 					sizeof local_filter_addr_lower - 1);
 
-				my_inet_ntop6(idlocal + ISAKMP_ID_DATA_OFF + 16,
-					      local_filter_addr_upper,
-					sizeof local_filter_addr_upper - 1);
+				my_inet_ntop6(idlocal + ISAKMP_ID_DATA_OFF +
+				    16, local_filter_addr_upper,
+				    sizeof local_filter_addr_upper - 1);
 
 				len = strlen(local_filter_addr_upper)
 					+ strlen(local_filter_addr_lower) + 2;
 				local_filter = calloc(len, sizeof(char));
 				if (!local_filter) {
-					log_error("policy_callback: calloc (%d, %lu) failed", len,
-					      (unsigned long)sizeof(char));
+					log_error("policy_callback: "
+					    "calloc (%d, %lu) failed", len,
+					    (unsigned long)sizeof(char));
 					goto bad;
 				}
-				strlcpy(local_filter, local_filter_addr_lower, len);
+				strlcpy(local_filter, local_filter_addr_lower,
+				    len);
 				strlcat(local_filter, "-", len);
-				strlcat(local_filter, local_filter_addr_upper, len);
+				strlcat(local_filter, local_filter_addr_upper,
+				    len);
 				break;
 
 			case IPSEC_ID_IPV6_ADDR_SUBNET:
@@ -1332,69 +1421,94 @@ policy_callback(char *name)
 
 					local_filter_type = "IPv6 subnet";
 
-					bcopy(idlocal + ISAKMP_ID_DATA_OFF, &net, sizeof(net));
-					bcopy(idlocal + ISAKMP_ID_DATA_OFF + 16, &mask, sizeof(mask));
+					bcopy(idlocal + ISAKMP_ID_DATA_OFF,
+					    &net, sizeof(net));
+					bcopy(idlocal + ISAKMP_ID_DATA_OFF +
+					    16, &mask, sizeof(mask));
 
 					for (i = 0; i < 16; i++)
-						net.s6_addr[i] &= mask.s6_addr[i];
+						net.s6_addr[i] &=
+						    mask.s6_addr[i];
 
-					my_inet_ntop6((unsigned char *)&net, local_filter_addr_lower,
+					my_inet_ntop6((unsigned char *)&net,
+					    local_filter_addr_lower,
 					sizeof local_filter_addr_lower - 1);
 
 					for (i = 0; i < 16; i++)
-						net.s6_addr[i] |= ~mask.s6_addr[i];
+						net.s6_addr[i] |=
+						    ~mask.s6_addr[i];
 
-					my_inet_ntop6((unsigned char *)&net, local_filter_addr_upper,
-					sizeof local_filter_addr_upper - 1);
+					my_inet_ntop6((unsigned char *)&net,
+					    local_filter_addr_upper,
+					    sizeof local_filter_addr_upper -
+					    1);
 
 					len = strlen(local_filter_addr_upper)
-						+ strlen(local_filter_addr_lower) + 2;
-					local_filter = calloc(len, sizeof(char));
+					    + strlen(local_filter_addr_lower)
+					    + 2;
+					local_filter = calloc(len,
+					    sizeof(char));
 					if (!local_filter) {
-						log_error("policy_callback: calloc (%d, %lu) failed", len,
-							  (unsigned long)sizeof(char));
+						log_error("policy_callback: "
+						    "calloc (%d, %lu) failed",
+						    len,
+						    (unsigned long)sizeof(char));
 						goto bad;
 					}
-					strlcpy(local_filter, local_filter_addr_lower, len);
+					strlcpy(local_filter,
+					    local_filter_addr_lower, len);
 					strlcat(local_filter, "-", len);
-					strlcat(local_filter, local_filter_addr_upper, len);
+					strlcat(local_filter,
+					    local_filter_addr_upper, len);
 					break;
 				}
 
 			case IPSEC_ID_FQDN:
 				local_filter_type = "FQDN";
-				local_filter = malloc(idlocalsz - ISAKMP_ID_DATA_OFF + 1);
+				local_filter = malloc(idlocalsz - 
+				    ISAKMP_ID_DATA_OFF + 1);
 				if (!local_filter) {
-					log_error("policy_callback: malloc (%lu) failed",
-						  (unsigned long)idlocalsz - ISAKMP_ID_DATA_OFF + 1);
+					log_error("policy_callback: "
+					    "malloc (%lu) failed",
+					    (unsigned long)idlocalsz -
+					    ISAKMP_ID_DATA_OFF + 1);
 					goto bad;
 				}
-				memcpy(local_filter, idlocal + ISAKMP_ID_DATA_OFF,
-				       idlocalsz - ISAKMP_ID_DATA_OFF);
-				local_filter[idlocalsz - ISAKMP_ID_DATA_OFF] = '\0';
+				memcpy(local_filter,
+				    idlocal + ISAKMP_ID_DATA_OFF,
+				    idlocalsz - ISAKMP_ID_DATA_OFF);
+				local_filter[idlocalsz - ISAKMP_ID_DATA_OFF]
+				    = '\0';
 				break;
 
 			case IPSEC_ID_USER_FQDN:
 				local_filter_type = "User FQDN";
-				local_filter = malloc(idlocalsz - ISAKMP_ID_DATA_OFF + 1);
+				local_filter = malloc(idlocalsz -
+				    ISAKMP_ID_DATA_OFF + 1);
 				if (!local_filter) {
-					log_error("policy_callback: malloc (%lu) failed",
-						  (unsigned long)idlocalsz - ISAKMP_ID_DATA_OFF + 1);
+					log_error("policy_callback: "
+					    "malloc (%lu) failed",
+					    (unsigned long)idlocalsz -
+					    ISAKMP_ID_DATA_OFF + 1);
 					goto bad;
 				}
-				memcpy(local_filter, idlocal + ISAKMP_ID_DATA_OFF,
-				       idlocalsz - ISAKMP_ID_DATA_OFF);
-				local_filter[idlocalsz - ISAKMP_ID_DATA_OFF] = '\0';
+				memcpy(local_filter,
+				    idlocal + ISAKMP_ID_DATA_OFF,
+				    idlocalsz - ISAKMP_ID_DATA_OFF);
+				local_filter[idlocalsz - ISAKMP_ID_DATA_OFF]
+				    = '\0';
 				break;
 
 			case IPSEC_ID_DER_ASN1_DN:
 				local_filter_type = "ASN1 DN";
 
-				local_filter = x509_DN_string(idlocal + ISAKMP_ID_DATA_OFF,
-					    idlocalsz - ISAKMP_ID_DATA_OFF);
+				local_filter = x509_DN_string(idlocal +
+				    ISAKMP_ID_DATA_OFF,
+				    idlocalsz - ISAKMP_ID_DATA_OFF);
 				if (!local_filter) {
 					LOG_DBG((LOG_POLICY, 50,
-						 "policy_callback: failed to decode name"));
+					    "policy_callback: failed to decode"
+					    " name"));
 					goto bad;
 				}
 				break;
@@ -1406,38 +1520,48 @@ policy_callback(char *name)
 
 			case IPSEC_ID_KEY_ID:
 				local_filter_type = "Key ID";
-				local_filter = calloc(2 * (idlocalsz - ISAKMP_ID_DATA_OFF) + 1,
-						      sizeof(char));
+				local_filter = calloc(2 * (idlocalsz -
+				    ISAKMP_ID_DATA_OFF) + 1,
+				    sizeof(char));
 				if (!local_filter) {
-					log_error("policy_callback: calloc (%lu, %lu) failed",
-						  2 * ((unsigned long)idlocalsz - ISAKMP_ID_DATA_OFF) + 1,
-					      (unsigned long)sizeof(char));
+					log_error("policy_callback: "
+					    "calloc (%lu, %lu) failed",
+					    2 * ((unsigned long)idlocalsz -
+						ISAKMP_ID_DATA_OFF) + 1,
+					    (unsigned long)sizeof(char));
 					goto bad;
 				}
 				/*
 				 * Does it contain any non-printable
 				 * characters ?
 				 */
-				for (i = 0; i < idlocalsz - ISAKMP_ID_DATA_OFF; i++)
-					if (!isprint(*(idlocal + ISAKMP_ID_DATA_OFF + i)))
+				for (i = 0; 
+				     i < idlocalsz - ISAKMP_ID_DATA_OFF; i++)
+					if (!isprint(*(idlocal +
+					    ISAKMP_ID_DATA_OFF + i)))
 						break;
 				if (i >= idlocalsz - ISAKMP_ID_DATA_OFF) {
-					memcpy(local_filter, idlocal + ISAKMP_ID_DATA_OFF,
+					memcpy(local_filter, idlocal +
+					    ISAKMP_ID_DATA_OFF,
 					    idlocalsz - ISAKMP_ID_DATA_OFF);
 					break;
 				}
 				/* Non-printable characters, convert to hex */
-				for (i = 0; i < idlocalsz - ISAKMP_ID_DATA_OFF; i++) {
+				for (i = 0;
+				     i < idlocalsz - ISAKMP_ID_DATA_OFF; i++) {
 					local_filter[2 * i]
-						= hextab[*(idlocal + ISAKMP_ID_DATA_OFF) >> 4];
+					    = hextab[*(idlocal +
+						ISAKMP_ID_DATA_OFF) >> 4];
 					local_filter[2 * i + 1]
-						= hextab[*(idlocal + ISAKMP_ID_DATA_OFF) & 0xF];
+					    = hextab[*(idlocal +
+						ISAKMP_ID_DATA_OFF) & 0xF];
 				}
 				break;
 
 			default:
-				log_print("policy_callback: unknown Local ID type %u",
-					  GET_ISAKMP_ID_TYPE(idlocal));
+				log_print("policy_callback: "
+				    "unknown Local ID type %u",
+				    GET_ISAKMP_ID_TYPE(idlocal));
 				goto bad;
 			}
 
@@ -1457,17 +1581,18 @@ policy_callback(char *name)
 #endif
 
 			default:
-				snprintf(local_filter_proto_num, sizeof local_filter_proto_num,
-					 "%d", idlocal[ISAKMP_GEN_SZ + 1]);
+				snprintf(local_filter_proto_num,
+				    sizeof local_filter_proto_num,
+				    "%d", idlocal[ISAKMP_GEN_SZ + 1]);
 				local_filter_proto = local_filter_proto_num;
 				break;
 			}
 
-			snprintf(local_filter_port, sizeof local_filter_port, "%u",
-				 decode_16(idlocal + ISAKMP_GEN_SZ + 2));
+			snprintf(local_filter_port, sizeof local_filter_port,
+			    "%u", decode_16(idlocal + ISAKMP_GEN_SZ + 2));
 		} else {
 			policy_sa->transport->vtbl->get_src(policy_sa->transport,
-						(struct sockaddr **)&sin);
+			    (struct sockaddr **)&sin);
 			switch (sin->sa_family) {
 			case AF_INET:
 				local_filter_type = "IPv4 address";
@@ -1476,29 +1601,33 @@ policy_callback(char *name)
 				local_filter_type = "IPv6 address";
 				break;
 			default:
-				log_print("policy_callback: unsupported protocol family %d",
-					  sin->sa_family);
+				log_print("policy_callback: "
+				    "unsupported protocol family %d",
+				    sin->sa_family);
 				goto bad;
 			}
 
 			if (sockaddr2text(sin, &addr, 1)) {
-				log_error("policy_callback: sockaddr2text failed");
+				log_error("policy_callback: "
+				    "sockaddr2text failed");
 				goto bad;
 			}
 			memcpy(local_filter_addr_upper, addr,
-			       sizeof local_filter_addr_upper);
+			    sizeof local_filter_addr_upper);
 			memcpy(local_filter_addr_lower, addr,
-			       sizeof local_filter_addr_lower);
+			    sizeof local_filter_addr_lower);
 			free(addr);
 			local_filter = strdup(local_filter_addr_upper);
 			if (!local_filter) {
-				log_error("policy_callback: strdup (\"%s\") failed",
-					  local_filter_addr_upper);
+				log_error("policy_callback: "
+				    "strdup (\"%s\") failed",
+				    local_filter_addr_upper);
 				goto bad;
 			}
 		}
 
-		LOG_DBG((LOG_POLICY, 80, "Policy context (action attributes):"));
+		LOG_DBG((LOG_POLICY, 80,
+		    "Policy context (action attributes):"));
 		LOG_DBG((LOG_POLICY, 80, "esp_present == %s", esp_present));
 		LOG_DBG((LOG_POLICY, 80, "ah_present == %s", ah_present));
 		LOG_DBG((LOG_POLICY, 80, "comp_present == %s", comp_present));
@@ -1507,73 +1636,96 @@ policy_callback(char *name)
 		LOG_DBG((LOG_POLICY, 80, "comp_alg == %s", comp_alg));
 		LOG_DBG((LOG_POLICY, 80, "ah_auth_alg == %s", ah_auth_alg));
 		LOG_DBG((LOG_POLICY, 80, "esp_auth_alg == %s", esp_auth_alg));
-		LOG_DBG((LOG_POLICY, 80, "ah_life_seconds == %s", ah_life_seconds));
-		LOG_DBG((LOG_POLICY, 80, "ah_life_kbytes == %s", ah_life_kbytes));
-		LOG_DBG((LOG_POLICY, 80, "esp_life_seconds == %s", esp_life_seconds));
-		LOG_DBG((LOG_POLICY, 80, "esp_life_kbytes == %s", esp_life_kbytes));
-		LOG_DBG((LOG_POLICY, 80, "comp_life_seconds == %s", comp_life_seconds));
-		LOG_DBG((LOG_POLICY, 80, "comp_life_kbytes == %s", comp_life_kbytes));
-		LOG_DBG((LOG_POLICY, 80, "ah_encapsulation == %s", ah_encapsulation));
-		LOG_DBG((LOG_POLICY, 80, "esp_encapsulation == %s", esp_encapsulation));
+		LOG_DBG((LOG_POLICY, 80, "ah_life_seconds == %s",
+		    ah_life_seconds));
+		LOG_DBG((LOG_POLICY, 80, "ah_life_kbytes == %s",
+		    ah_life_kbytes));
+		LOG_DBG((LOG_POLICY, 80, "esp_life_seconds == %s",
+		    esp_life_seconds));
+		LOG_DBG((LOG_POLICY, 80, "esp_life_kbytes == %s",
+		    esp_life_kbytes));
+		LOG_DBG((LOG_POLICY, 80, "comp_life_seconds == %s",
+		    comp_life_seconds));
+		LOG_DBG((LOG_POLICY, 80, "comp_life_kbytes == %s",
+		    comp_life_kbytes));
+		LOG_DBG((LOG_POLICY, 80, "ah_encapsulation == %s",
+		    ah_encapsulation));
+		LOG_DBG((LOG_POLICY, 80, "esp_encapsulation == %s",
+		    esp_encapsulation));
 		LOG_DBG((LOG_POLICY, 80, "comp_encapsulation == %s",
-			 comp_encapsulation));
-		LOG_DBG((LOG_POLICY, 80, "comp_dict_size == %s", comp_dict_size));
-		LOG_DBG((LOG_POLICY, 80, "comp_private_alg == %s", comp_private_alg));
-		LOG_DBG((LOG_POLICY, 80, "ah_key_length == %s", ah_key_length));
-		LOG_DBG((LOG_POLICY, 80, "ah_key_rounds == %s", ah_key_rounds));
-		LOG_DBG((LOG_POLICY, 80, "esp_key_length == %s", esp_key_length));
-		LOG_DBG((LOG_POLICY, 80, "esp_key_rounds == %s", esp_key_rounds));
-		LOG_DBG((LOG_POLICY, 80, "ah_group_desc == %s", ah_group_desc));
-		LOG_DBG((LOG_POLICY, 80, "esp_group_desc == %s", esp_group_desc));
-		LOG_DBG((LOG_POLICY, 80, "comp_group_desc == %s", comp_group_desc));
+		    comp_encapsulation));
+		LOG_DBG((LOG_POLICY, 80, "comp_dict_size == %s",
+		    comp_dict_size));
+		LOG_DBG((LOG_POLICY, 80, "comp_private_alg == %s",
+		    comp_private_alg));
+		LOG_DBG((LOG_POLICY, 80, "ah_key_length == %s",
+		    ah_key_length));
+		LOG_DBG((LOG_POLICY, 80, "ah_key_rounds == %s",
+		    ah_key_rounds));
+		LOG_DBG((LOG_POLICY, 80, "esp_key_length == %s",
+		    esp_key_length));
+		LOG_DBG((LOG_POLICY, 80, "esp_key_rounds == %s",
+		    esp_key_rounds));
+		LOG_DBG((LOG_POLICY, 80, "ah_group_desc == %s",
+		    ah_group_desc));
+		LOG_DBG((LOG_POLICY, 80, "esp_group_desc == %s",
+		    esp_group_desc));
+		LOG_DBG((LOG_POLICY, 80, "comp_group_desc == %s",
+		    comp_group_desc));
 		LOG_DBG((LOG_POLICY, 80, "ah_ecn == %s", ah_ecn));
 		LOG_DBG((LOG_POLICY, 80, "esp_ecn == %s", esp_ecn));
 		LOG_DBG((LOG_POLICY, 80, "comp_ecn == %s", comp_ecn));
 		LOG_DBG((LOG_POLICY, 80, "remote_filter_type == %s",
-			 remote_filter_type));
+		    remote_filter_type));
 		LOG_DBG((LOG_POLICY, 80, "remote_filter_addr_upper == %s",
-			 remote_filter_addr_upper));
+		    remote_filter_addr_upper));
 		LOG_DBG((LOG_POLICY, 80, "remote_filter_addr_lower == %s",
-			 remote_filter_addr_lower));
+		    remote_filter_addr_lower));
 		LOG_DBG((LOG_POLICY, 80, "remote_filter == %s",
-			 (remote_filter ? remote_filter : "")));
+		    (remote_filter ? remote_filter : "")));
 		LOG_DBG((LOG_POLICY, 80, "remote_filter_port == %s",
-			 remote_filter_port));
+		    remote_filter_port));
 		LOG_DBG((LOG_POLICY, 80, "remote_filter_proto == %s",
-			 remote_filter_proto));
-		LOG_DBG((LOG_POLICY, 80, "local_filter_type == %s", local_filter_type));
+		    remote_filter_proto));
+		LOG_DBG((LOG_POLICY, 80, "local_filter_type == %s",
+		    local_filter_type));
 		LOG_DBG((LOG_POLICY, 80, "local_filter_addr_upper == %s",
-			 local_filter_addr_upper));
+		    local_filter_addr_upper));
 		LOG_DBG((LOG_POLICY, 80, "local_filter_addr_lower == %s",
-			 local_filter_addr_lower));
+		    local_filter_addr_lower));
 		LOG_DBG((LOG_POLICY, 80, "local_filter == %s",
-			 (local_filter ? local_filter : "")));
-		LOG_DBG((LOG_POLICY, 80, "local_filter_port == %s", local_filter_port));
+		    (local_filter ? local_filter : "")));
+		LOG_DBG((LOG_POLICY, 80, "local_filter_port == %s",
+		    local_filter_port));
 		LOG_DBG((LOG_POLICY, 80, "local_filter_proto == %s",
-			 local_filter_proto));
-		LOG_DBG((LOG_POLICY, 80, "remote_id_type == %s", remote_id_type));
+		    local_filter_proto));
+		LOG_DBG((LOG_POLICY, 80, "remote_id_type == %s",
+		    remote_id_type));
 		LOG_DBG((LOG_POLICY, 80, "remote_id_addr_upper == %s",
-			 remote_id_addr_upper));
+		    remote_id_addr_upper));
 		LOG_DBG((LOG_POLICY, 80, "remote_id_addr_lower == %s",
-			 remote_id_addr_lower));
+		    remote_id_addr_lower));
 		LOG_DBG((LOG_POLICY, 80, "remote_id == %s",
-			 (remote_id ? remote_id : "")));
-		LOG_DBG((LOG_POLICY, 80, "remote_id_port == %s", remote_id_port));
-		LOG_DBG((LOG_POLICY, 80, "remote_id_proto == %s", remote_id_proto));
+		    (remote_id ? remote_id : "")));
+		LOG_DBG((LOG_POLICY, 80, "remote_id_port == %s",
+		    remote_id_port));
+		LOG_DBG((LOG_POLICY, 80, "remote_id_proto == %s",
+		    remote_id_proto));
 		LOG_DBG((LOG_POLICY, 80, "remote_negotiation_address == %s",
-			 remote_ike_address));
+		    remote_ike_address));
 		LOG_DBG((LOG_POLICY, 80, "local_negotiation_address == %s",
-			 local_ike_address));
+		    local_ike_address));
 		LOG_DBG((LOG_POLICY, 80, "pfs == %s", pfs));
 		LOG_DBG((LOG_POLICY, 80, "initiator == %s", initiator));
-		LOG_DBG((LOG_POLICY, 80, "phase1_group_desc == %s", phase1_group));
+		LOG_DBG((LOG_POLICY, 80, "phase1_group_desc == %s",
+		    phase1_group));
 
 		/* Unset dirty now.  */
 		dirty = 0;
 	}
 	if (strcmp(name, "phase_1") == 0)
 		return phase_1;
-
+	
 	if (strcmp(name, "GMTTimeOfDay") == 0) {
 		tt = time((time_t)NULL);
 		strftime(mytimeofday, 14, "%Y%m%d%H%M%S", gmtime(&tt));
@@ -1777,7 +1929,8 @@ policy_init(void)
 	/* Open policy file.  */
 	fd = monitor_open(policy_file, O_RDONLY, 0);
 	if (fd == -1)
-		log_fatal("policy_init: open (\"%s\", O_RDONLY) failed", policy_file);
+		log_fatal("policy_init: open (\"%s\", O_RDONLY) failed",
+		    policy_file);
 
 	/* Check file modes and collect file size */
 	if (check_file_secrecy_fd(fd, policy_file, &sz)) {
@@ -1994,7 +2147,8 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 	case IPSEC_ID_USER_FQDN: {
 			file = calloc(len + id_len, sizeof(char));
 			if (file == NULL) {
-				log_error("keynote_cert_obtain: failed to allocate %lu bytes",
+				log_error("keynote_cert_obtain: "
+				    "failed to allocate %lu bytes",
 				    (unsigned long)len + id_len);
 				return 0;
 			}
@@ -2011,15 +2165,15 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
 	fd = monitor_open(file, O_RDONLY, 0);
 	if (fd < 0) {
-		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to open \"%s\"",
-		    file));
+		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: "
+		    "failed to open \"%s\"", file));
 		free(file);
 		return 0;
 	}
 
 	if (fstat(fd, &sb) < 0) {
-		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to stat \"%s\"",
-		    file));
+		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: "
+		    "failed to stat \"%s\"", file));
 		free(file);
 		close(fd);
 		return 0;
@@ -2035,8 +2189,9 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 	}
 
 	if (read(fd, *cert, size) != (int)size) {
-		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to read %lu "
-		    "bytes from \"%s\"", (unsigned long)size, file));
+		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: "
+		    "failed to read %lu bytes from \"%s\"",
+		    (unsigned long)size, file));
 		free(file);
 		close(fd);
 		return 0;
@@ -2065,13 +2220,14 @@ keynote_cert_get_key(void *scert, void *keyp)
 
 	foo = kn_read_asserts((char *)scert, strlen((char *)scert), &num);
 	if (foo == NULL || num == 0) {
-		log_print("keynote_cert_get_key: failed to decompose credentials");
+		log_print("keynote_cert_get_key: "
+		    "failed to decompose credentials");
 		return 0;
 	}
 	kid = kn_init();
 	if (kid == -1) {
-		log_print("keynote_cert_get_key: failed to initialize new policy "
-		    "session");
+		log_print("keynote_cert_get_key: "
+		    "failed to initialize new policy session");
 		while (num--)
 			free(foo[num]);
 		free(foo);

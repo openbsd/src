@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.16 2004/05/23 18:17:55 hshoexer Exp $	 */
+/* $OpenBSD: hash.c,v 1.17 2004/06/14 09:55:41 ho Exp $	 */
 /* $EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	 */
 
 /*
@@ -84,7 +84,8 @@ hash_get(enum hashes hashtype)
 {
 	size_t	i;
 
-	LOG_DBG((LOG_CRYPTO, 60, "hash_get: requested algorithm %d", hashtype));
+	LOG_DBG((LOG_CRYPTO, 60, "hash_get: requested algorithm %d",
+	    hashtype));
 
 	for (i = 0; i < sizeof hashes / sizeof hashes[0]; i++)
 		if (hashtype == hashes[i].type)
