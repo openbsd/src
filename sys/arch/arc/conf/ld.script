@@ -2,46 +2,18 @@ OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips",
 	      "elf32-littlemips")
 OUTPUT_ARCH(mips)
 ENTRY(_start)
-SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/local/lib); SEARCH_DIR(/usr/mips-arc-openbsd1.2/lib);
-/* Do we need any of these for elf?
-   __DYNAMIC = 0;    */
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   . = 0x80100000 + SIZEOF_HEADERS;
-  .interp     : { *(.interp) 	}
-  .reginfo       : { *(.reginfo) }
-  .dynamic       : { *(.dynamic) }
-  .dynstr        : { *(.dynstr)		}
-  .dynsym        : { *(.dynsym)		}
-  .hash          : { *(.hash)		}
-  .rel.text      : { *(.rel.text)		}
-  .rela.text     : { *(.rela.text) 	}
-  .rel.data      : { *(.rel.data)		}
-  .rela.data     : { *(.rela.data) 	}
-  .rel.rodata    : { *(.rel.rodata) 	}
-  .rela.rodata   : { *(.rela.rodata) 	}
-  .rel.got       : { *(.rel.got)		}
-  .rela.got      : { *(.rela.got)		}
-  .rel.ctors     : { *(.rel.ctors)	}
-  .rela.ctors    : { *(.rela.ctors)	}
-  .rel.dtors     : { *(.rel.dtors)	}
-  .rela.dtors    : { *(.rela.dtors)	}
-  .rel.init      : { *(.rel.init)	}
-  .rela.init     : { *(.rela.init)	}
-  .rel.fini      : { *(.rel.fini)	}
-  .rela.fini     : { *(.rela.fini)	}
-  .rel.bss       : { *(.rel.bss)		}
-  .rela.bss      : { *(.rela.bss)		}
-  .rel.plt       : { *(.rel.plt)		}
-  .rela.plt      : { *(.rela.plt)		}
-  .rodata    : { *(.rodata)  }
-  .rodata1   : { *(.rodata1) }
-  .init          : { *(.init)	} =0
   .text      :
   {
     _ftext = . ;
     *(.text)
+    *(.rodata)
+    *(.rodata1)
+    *(.reginfo)
+    *(.init)
     *(.stub)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
@@ -49,21 +21,6 @@ SECTIONS
   _etext = .;
   PROVIDE (etext = .);
   .fini      : { *(.fini)    } =0
-  /* Adjust the address for the data segment.  We want to adjust up to
-     the same address within the page on the next page up.  It would
-     be more correct to do this:
-       . = .;
-     The current expression does not correctly handle the case of a
-     text segment ending precisely at the end of a page; it causes the
-     data segment to skip a page.  The above expression does not have
-     this problem, but it will currently (2/95) cause BFD to allocate
-     a single segment, combining both text and data, for this case.
-     This will prevent the text segment from being shared among
-     multiple executions of the program; I think that is more
-     important than losing a page of the virtual address space (note
-     that no actual memory is lost; the page which is skipped can not
-     be referenced).  */
-  . = ALIGN(4096) ;
   .data    :
   {
     _fdata = . ;
