@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.116 2003/02/24 20:54:15 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.117 2003/03/06 11:49:20 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -521,6 +521,10 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  serverworks_chip_map,
 	},
 	{ PCI_PRODUCT_RCC_CSB5_IDE,
+	  0,
+	  serverworks_chip_map,
+	},
+	{ PCI_PRODUCT_RCC_CSB6_IDE,
 	  0,
 	  serverworks_chip_map,
 	},
@@ -4735,6 +4739,9 @@ serverworks_chip_map(sc, pa)
 			sc->sc_wdcdev.UDMA_cap = 4;
 		else
 			sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+	case PCI_PRODUCT_RCC_CSB6_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	}
 
