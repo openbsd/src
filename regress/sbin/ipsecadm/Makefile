@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2004/05/23 16:04:18 markus Exp $
+# $OpenBSD: Makefile,v 1.2 2004/05/31 13:03:59 sturm Exp $
 
 SRC=192.0.2.0
 DST=192.0.2.1
@@ -10,6 +10,7 @@ IPCOMP_ENABLE!=	sysctl -n net.inet.ipcomp.enable
 ESP_ENABLE!=	sysctl -n net.inet.esp.enable
 AH_ENABLE!=	sysctl -n net.inet.ah.enable
 
+.ifmake !obj && !clean && !cleandir && !depend && !regress
 .INTERRUPT:
 	-@${SUDO} sysctl -q net.inet.ipcomp.enable=${IPCOMP_ENABLE}
 	-@${SUDO} sysctl -q net.inet.esp.enable=${ESP_ENABLE}
@@ -19,6 +20,7 @@ AH_ENABLE!=	sysctl -n net.inet.ah.enable
 	-@${SUDO} sysctl -q net.inet.ipcomp.enable=${IPCOMP_ENABLE}
 	-@${SUDO} sysctl -q net.inet.esp.enable=${ESP_ENABLE}
 	-@${SUDO} sysctl -q net.inet.ah.enable=${AH_ENABLE}
+.endif
 
 ipcomp:
 	@${SUDO} sysctl -q net.inet.ipcomp.enable=1
