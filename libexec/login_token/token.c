@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.7 2002/06/28 01:14:37 deraadt Exp $	*/
+/*	$OpenBSD: token.c,v 1.8 2002/07/16 12:38:40 jufi Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -274,7 +274,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	des_fixup_key_parity(&secret.cb);
 
 	/*
-	 * Check if the db record already exists.  If no
+	 * Check if the db record already exists.  If there's no
 	 * force-init flag and it exists, go away. Else,
 	 * create the user's db record and put to the db.
 	 */
