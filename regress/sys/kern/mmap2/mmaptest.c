@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmaptest.c,v 1.4 2002/09/11 23:41:23 mickey Exp $	*/
+/*	$OpenBSD: mmaptest.c,v 1.5 2002/09/12 04:09:31 mickey Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org>, 2001 Public Domain
  */
@@ -41,7 +41,8 @@ main()
 
 	/* map two pages, then map the first page over the second */
 
-	v1 = mmap(NULL, 2 * page_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	v1 = mmap(NULL, 2 * page_size, PROT_READ|PROT_WRITE,
+	    MAP_SHARED, fd, 0);
 	if (v1 == MAP_FAILED)
 		err(1, "mmap 1");
 
@@ -55,10 +56,10 @@ main()
 	memcpy(v1, MAGIC, sizeof(MAGIC));
 
 	if (memcmp(v2, MAGIC, sizeof(MAGIC)) != 0)
-		errx(1, "comparsion 1 failed");
+		errx(1, "comparison 1 failed");
 
 	if (memcmp(v1, v2, sizeof(MAGIC)) != 0)
-		errx(1, "comparsion 2 failed");
+		errx(1, "comparison 2 failed");
 
 	if (munmap(v1, 2 * page_size) < 0)
 		errx(1, "munmap");
