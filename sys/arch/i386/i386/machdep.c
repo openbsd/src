@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.247 2003/10/29 19:47:59 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.248 2003/10/29 20:03:54 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1104,6 +1104,14 @@ struct viac3_session {
 };
 
 struct viac3_softc {
+	/* operand stuff, must be 128 bit aligned */
+	u_int32_t		op_cw[4];
+	u_int8_t		op_iv[16];
+	u_int8_t		op_key[32];
+	void			*op_buf;
+	u_int32_t		pad[2];
+
+	/* normal softc stuff */
 	int32_t			sc_cid;
 	int			sc_nsessions;
 	struct viac3_session	*sc_sessions;
@@ -1125,14 +1133,6 @@ struct viac3_softc {
 #define	C3_CRYPT_CWLO_KEY128		0x0000000a	/* 128bit, 10 rds */
 #define	C3_CRYPT_CWLO_KEY192		0x0000040c	/* 192bit, 12 rds */
 #define	C3_CRYPT_CWLO_KEY256		0x0000080e	/* 256bit, 15 rds */
-
-struct viac3_crypto_op {
-	u_int32_t		op_cw[4];
-	u_int8_t		op_iv[16];
-	u_int8_t		op_key[32];
-	void			*op_buf;
-	u_int32_t		pad[2];
-};
 
 static struct viac3_softc *vc3_sc;
 int viac3_crypto_present;
@@ -1245,7 +1245,6 @@ int
 viac3_crypto_process(struct cryptop *crp)
 {
 	struct viac3_softc *sc = vc3_sc;
-	struct viac3_crypto_op *op = NULL;
 	int sesn, err = 0;
 	struct cryptodesc *crd;
 	struct viac3_session *ses;
@@ -1268,83 +1267,77 @@ viac3_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 
-	op = (struct viac3_crypto_op *)malloc(sizeof(*op), M_DEVBUF, M_NOWAIT);
-	if (op == NULL) {
-		err = ENOMEM;
-		goto out;
-	}
-
-	bcopy(crd->crd_key, op->op_key, crd->crd_klen / 8);
+	bcopy(crd->crd_key, sc->op_key, crd->crd_klen / 8);
 
 	if ((crd->crd_len % 16) != 0) {
 		err = EINVAL;
 		goto out;
 	}
 
-	op->op_buf = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
-	if (op->op_buf == NULL) {
+	sc->op_buf = (char *)malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
+	if (sc->op_buf == NULL) {
 		err = ENOMEM;
 		goto out;
 	}
 
-	op->op_cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_HW |
+	sc->op_cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_HW |
 	    C3_CRYPT_CWLO_NORMAL | C3_CRYPT_CWLO_KEY128;
-	op->op_cw[1] = op->op_cw[2] = op->op_cw[3] = 0;
+	sc->op_cw[1] = sc->op_cw[2] = sc->op_cw[3] = 0;
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
-		op->op_cw[0] |= C3_CRYPT_CWLO_ENCRYPT;
+		sc->op_cw[0] |= C3_CRYPT_CWLO_ENCRYPT;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			bcopy(crd->crd_iv, op->op_iv, 16);
+			bcopy(crd->crd_iv, sc->op_iv, 16);
 		else
-			bcopy(ses->ses_iv, op->op_iv, 16);
+			bcopy(ses->ses_iv, sc->op_iv, 16);
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, 16, op->op_iv);
+				    crd->crd_inject, 16, sc->op_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
-				    crd->crd_inject, 16, op->op_iv);
+				    crd->crd_inject, 16, sc->op_iv);
 			else
-				bcopy(op->op_iv,
+				bcopy(sc->op_iv,
 				    crp->crp_buf + crd->crd_inject, 16);
 		}
 	} else {
-		op->op_cw[0] |= C3_CRYPT_CWLO_DECRYPT;
+		sc->op_cw[0] |= C3_CRYPT_CWLO_DECRYPT;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			bcopy(crd->crd_iv, op->op_iv, 16);
+			bcopy(crd->crd_iv, sc->op_iv, 16);
 		else {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, 16, op->op_iv);
+				    crd->crd_inject, 16, sc->op_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_inject, 16, op->op_iv);
+				    crd->crd_inject, 16, sc->op_iv);
 			else
 				bcopy(crp->crp_buf + crd->crd_inject,
-				    op->op_iv, 16);
+				    sc->op_iv, 16);
 		}
 	}
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copydata((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_buf);
+		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copydata((struct uio *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_buf);
+		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else
-		bcopy(crp->crp_buf + crd->crd_skip, op->op_buf, crd->crd_len);
+		bcopy(crp->crp_buf + crd->crd_skip, sc->op_buf, crd->crd_len);
 
-	viac3_crypto(&op->op_cw, op->op_buf, op->op_buf, op->op_key,
-	    crd->crd_len / 16, op->op_iv, VIAC3_CRYPTOP_CBC);
+	viac3_crypto(&sc->op_cw, sc->op_buf, sc->op_buf, sc->op_key,
+	    crd->crd_len / 16, sc->op_iv, VIAC3_CRYPTOP_CBC);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copyback((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_buf);
+		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copyback((struct uio *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, op->op_buf);
+		    crd->crd_skip, crd->crd_len, sc->op_buf);
 	else
-		bcopy(op->op_buf, crp->crp_buf + crd->crd_skip, crd->crd_len);
+		bcopy(sc->op_buf, crp->crp_buf + crd->crd_skip, crd->crd_len);
 
 	/* copy out last block for use as next session IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
@@ -1353,17 +1346,16 @@ viac3_crypto_process(struct cryptop *crp)
 			    crd->crd_skip + crd->crd_len - 16, 16, ses->ses_iv);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copydata((struct uio *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - 16, 16, op->op_iv);
+			    crd->crd_skip + crd->crd_len - 16, 16, sc->op_iv);
 		else
 			bcopy(crp->crp_buf + crd->crd_skip + crd->crd_len - 16,
-			    op->op_iv, 16);
+			    sc->op_iv, 16);
 	}
 
 out:
-	if (op != NULL) {
-		if (op->op_buf != NULL)
-			free(op->op_buf, M_DEVBUF);
-		free(op, M_DEVBUF);
+	if (sc->op_buf != NULL) {
+		free(sc->op_buf, M_DEVBUF);
+		sc->op_buf = NULL;
 	}
 	crp->crp_etype = err;
 	crypto_done(crp);
