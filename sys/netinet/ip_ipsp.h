@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.29 1999/04/11 19:41:39 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.30 1999/05/11 22:57:17 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -57,7 +57,6 @@ union sockaddr_union
     struct sockaddr     sa;
     struct sockaddr_in  sin;
     struct sockaddr_in6 sin6;
-    char  __maxsize[128];
 };
 
 /* HMAC key sizes */
