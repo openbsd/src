@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.9 2004/07/05 09:27:05 espie Exp $
+# $OpenBSD: pkg_create,v 1.10 2004/07/05 19:43:05 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -82,27 +82,35 @@ sub archive_cmd
 
 sub compute_checksum
 {
-	my ($self, $base) = @_;
+	my ($self, $base, $stash) = @_;
 	my $fname = $self->fullname();
 	if (-l "$base/$fname") {
-		return if $base eq '/' or $base eq '';
 		my $value = readlink "$base/$fname";
+		$self->make_symlink($value);
+		return if $base eq '/' or $base eq '';
 		if ($value =~ m/^\Q$base/) {
 			print STDERR "Error in package: symlink $base/$fname refers to $value\n";
 			$main::errors++;
 		}
 	} else {
-		$self->{md5} = OpenBSD::md5::fromfile("$base/$fname");
-		$self->{size} = (stat "$base/$fname")[7];
+		my ($dev, $ino, $size) = (stat "$base/$fname")[0,1,7];
+		if (defined $stash->{"$dev/$ino"}) {
+			$self->make_hardlink($stash->{"$dev/$ino"});
+		} else {
+			$stash->{"$dev/$ino"} = $fname;
+			$self->{md5} = OpenBSD::md5::fromfile("$base/$fname");
+			$self->{size} = $size;
+		}
 	}
 }
 
 sub makesum
 {
 	my ($self, $base) = @_;
+	my $stash = {};
 	for my $item (@{$self->{items}}) {
 		if ($item->IsFile()) {
-			compute_checksum($item, $base);
+			compute_checksum($item, $base, $stash);
 		}
 	}
 }
@@ -190,8 +198,10 @@ if (defined $opt_p) {
 	die "Prefix required";
 }
 
-if ($ARGV[0] =~ m|([^/]+)(?:\.tgz)?$|) {
-	OpenBSD::PackingElement::Name->add($plist, $1);
+if ($ARGV[0] =~ m|([^/]+)$|) {
+	my $pkgname = $1;
+	$pkgname =~ s/\.tgz$//;
+	OpenBSD::PackingElement::Name->add($plist, $pkgname);
 } 
 
 if (defined $opt_P) {
