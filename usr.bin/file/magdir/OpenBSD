@@ -1,4 +1,4 @@
-#	$OpenBSD: OpenBSD,v 1.11 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: OpenBSD,v 1.12 2004/08/10 19:32:49 deraadt Exp $
 
 #------------------------------------------------------------------------------
 # OpenBSD:  file(1) magic for OpenBSD objects
@@ -221,26 +221,26 @@
 0	belong&0377777777	046400507	OpenBSD/hppa core
 >12	string			>\0		from '%s'
 
-# OpenBSD/mips
-0	belong&0377777777	043400413	OpenBSD/mips demand paged
+# OpenBSD/mips64
+0	belong&0377777777	047400413	OpenBSD/mips64 demand paged
 >0	byte			&0x80		
 >>20	belong			<8192		shared library
 >>20	belong			=8192		dynamically linked executable
 >>20	belong			>8192		dynamically linked executable
 >0	byte			^0x80		executable
 >16	belong			>0		not stripped
-0	belong&0377777777	043400410	OpenBSD/mips pure
+0	belong&0377777777	047400410	OpenBSD/mips64 pure
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80		executable
 >16	belong			>0		not stripped
-0	belong&0377777777	043400407	OpenBSD/mips
+0	belong&0377777777	047400407	OpenBSD/mips64
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
 >>0	byte			&0x40		position independent
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
-0	belong&0377777777	043400507	OpenBSD/mips core
+0	belong&0377777777	047400507	OpenBSD/mips64 core
 >12	string			>\0		from '%s'
 
 0	belong&0377777777	043600413	OpenBSD/arm demand paged
