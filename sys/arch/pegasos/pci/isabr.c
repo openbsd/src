@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabr.c,v 1.1 2003/10/31 03:54:33 drahn Exp $	*/
+/*	$OpenBSD: isabr.c,v 1.2 2003/11/18 01:25:58 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -194,8 +194,6 @@ isabrattach(struct device *parent, struct device *self, void *aux)
 	intr_establish_func = isabr_intr_establish;
 	intr_disestablish_func = isabr_intr_disestablish;
 	install_extint(isabr_iointr);
-
-	printf("off 0x48 %x\n", pci_conf_read(pa->pa_pc, pa->pa_tag, 0x48));
 
 	pending_int_f = isa_do_pending_int;
 
