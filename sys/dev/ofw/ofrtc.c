@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofrtc.c,v 1.5 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: ofrtc.c,v 1.6 2004/11/29 12:50:05 jsg Exp $	*/
 /*	$NetBSD: ofrtc.c,v 1.3 1996/10/13 01:38:14 christos Exp $	*/
 
 /*
@@ -55,9 +55,7 @@ struct cfdriver ofrtc_cd = {
 };
 
 static int
-ofrtcprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ofrtcprobe(struct device *parent, void *match, void *aux)
 {
 	struct ofprobe *ofp = aux;
 	char type[8];
@@ -78,9 +76,7 @@ typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
 extern clock_read_t *clock_read;
 
 static void
-ofrtcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofrtcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofrtc_softc *of = (void *)self;
 	struct ofprobe *ofp = aux;
@@ -99,10 +95,7 @@ ofrtcattach(parent, self, aux)
 }
 
 int
-ofrtcopen(dev, flags, fmt)
-	dev_t dev;
-	int flags;
-	int fmt;
+ofrtcopen(dev_t dev, int flags, int fmt)
 {
 	struct ofrtc_softc *of;
 	int unit = minor(dev);
@@ -134,26 +127,20 @@ ofrtcopen(dev, flags, fmt)
 }
 
 int
-ofrtcclose(dev, flags, fmt)
-	dev_t dev;
-	int flags;
-	int fmt;
+ofrtcclose(dev_t dev, int flags, int fmt)
 {
 	return 0;
 }
 
 static void
-twodigit(bp, i)
-	char *bp;
-	int i;
+twodigit(char *bp, int i)
 {
 	*bp++ = i / 10 + '0';
 	*bp = i % 10 + '0';
 }
 
 static int
-twodigits(bp)
-	char *bp;
+twodigits(char *bp)
 {
 	int i;
 	
@@ -162,10 +149,7 @@ twodigits(bp)
 }
 
 int
-ofrtcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofrtcread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	int date[6];
@@ -197,10 +181,7 @@ ofrtcread(dev, uio, flag)
 }
 
 int
-ofrtcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofrtcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	char buf[14];

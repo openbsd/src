@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofnet.c,v 1.8 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: ofnet.c,v 1.9 2004/11/29 12:50:05 jsg Exp $	*/
 /*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
 
 /*
@@ -94,9 +94,7 @@ static int ofnioctl(struct ifnet *, u_long, caddr_t);
 static void ofnwatchdog(struct ifnet *);
 
 static int
-ofnprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ofnprobe(struct device *parent, void *match, void *aux)
 {
 	struct ofprobe *ofp = aux;
 	char type[32];
@@ -117,9 +115,7 @@ ofnprobe(parent, match, aux)
 }
 
 static void
-ofnattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofnattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofn_softc *of = (void *)self;
 	struct ifnet *ifp = &of->sc_arpcom.ac_if;
@@ -173,8 +169,7 @@ printf("\nethernet dev: path %s\n", path);
 }
 
 static void
-ofnread(of)
-	struct ofn_softc *of;
+ofnread(struct ofn_softc *of)
 {
 	struct ifnet *ifp = &of->sc_arpcom.ac_if;
 	struct mbuf *m, **mp, *head;
@@ -246,16 +241,14 @@ ofnread(of)
 }
 
 static void
-ofntimer(of)
-	struct ofn_softc *of;
+ofntimer(struct ofn_softc *of)
 {
 	ofnread(of);
 	timeout_add(&of->sc_tmo, 1);
 }
 
 static void
-ofninit(of)
-	struct ofn_softc *of;
+ofninit(struct ofn_softc *of)
 {
 	struct ifnet *ifp = &of->sc_arpcom.ac_if;
 
@@ -270,16 +263,14 @@ ofninit(of)
 }
 
 static void
-ofnstop(of)
-	struct ofn_softc *of;
+ofnstop(struct ofn_softc *of)
 {
 	timeout_del(&of->sc_tmo);
 	of->sc_arpcom.ac_if.if_flags &= ~IFF_RUNNING;
 }
 
 static void
-ofnstart(ifp)
-	struct ifnet *ifp;
+ofnstart(struct ifnet *ifp)
 {
 	struct ofn_softc *of = ifp->if_softc;
 	struct mbuf *m, *m0;
@@ -328,10 +319,7 @@ ofnstart(ifp)
 }
 
 static int
-ofnioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+ofnioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ofn_softc *of = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -374,8 +362,7 @@ ofnioctl(ifp, cmd, data)
 }
 
 static void
-ofnwatchdog(ifp)
-	struct ifnet *ifp;
+ofnwatchdog(struct ifnet *ifp)
 {
 	struct ofn_softc *of = ifp->if_softc;
 	
@@ -388,8 +375,7 @@ ofnwatchdog(ifp)
 #if NIPKDB_OFN > 0
 /* has not been updated to use dmabuf */
 static void
-ipkdbofstart(kip)
-	struct ipkdb_if *kip;
+ipkdbofstart(struct ipkdb_if *kip)
 {
 	int unit = kip->unit - 1;
 	
@@ -398,16 +384,12 @@ ipkdbofstart(kip)
 }
 
 static void
-ipkdbofleave(kip)
-	struct ipkdb_if *kip;
+ipkdbofleave(struct ipkdb_if *kip)
 {
 }
 
 static int
-ipkdbofrcv(kip, buf, poll)
-	struct ipkdb_if *kip;
-	u_char *buf;
-	int poll;
+ipkdbofrcv(struct ipkdb_if *kip, u_char *buf, int poll)
 {
 	int l;
 	
@@ -420,17 +402,13 @@ ipkdbofrcv(kip, buf, poll)
 }
 
 static void
-ipkdbofsend(kip, buf, l)
-	struct ipkdb_if *kip;
-	u_char *buf;
-	int l;
+ipkdbofsend(struct ipkdb_if *kip, u_char *buf, int l)
 {
 	OF_write(kip->port, buf, l);
 }
 
 static int
-ipkdbprobe(match, aux)
-	void *match, *aux;
+ipkdbprobe(void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct ipkdb_if *kip = aux;

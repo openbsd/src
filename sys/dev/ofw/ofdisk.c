@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.8 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.9 2004/11/29 12:50:05 jsg Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -70,9 +70,7 @@ void ofdstrategy(struct buf *);
 struct dkdriver ofdkdriver = { ofdstrategy };
 
 static int
-ofdprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ofdprobe(struct device *parent, void *match, void *aux)
 {
 	struct ofprobe *ofp = aux;
 	char type[8];
@@ -87,9 +85,7 @@ ofdprobe(parent, match, aux)
 }
 
 static void
-ofdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofd_softc *of = (void *)self;
 	struct ofprobe *ofp = aux;
@@ -107,11 +103,7 @@ ofdattach(parent, self, aux)
 }
 
 int
-ofdopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+ofdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = DISKUNIT(dev);
 	struct ofd_softc *of;
@@ -194,11 +186,7 @@ ofdopen(dev, flags, fmt, p)
 }
 
 int
-ofdclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
+ofdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 
@@ -227,8 +215,7 @@ ofdclose(dev, flags, fmt, p)
 }
 
 void
-ofdstrategy(bp)
-	struct buf *bp;
+ofdstrategy(struct buf *bp)
 {
 	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	struct partition *p;
@@ -280,8 +267,7 @@ done:
 }
 
 static void
-ofminphys(bp)
-	struct buf *bp;
+ofminphys(struct buf *bp)
 {
 	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	
@@ -290,28 +276,19 @@ ofminphys(bp)
 }
 
 int
-ofdread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+ofdread(dev_t dev, struct uio *uio)
 {
 	return physio(ofdstrategy, NULL, dev, B_READ, ofminphys, uio);
 }
 
 int
-ofdwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+ofdwrite(dev_t dev, struct uio *uio)
 {
 	return physio(ofdstrategy, NULL, dev, B_WRITE, ofminphys, uio);
 }
 
 int
-ofdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ofdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 	int error;
@@ -349,18 +326,13 @@ ofdioctl(dev, cmd, data, flag, p)
 }
 
 int
-ofddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+ofddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return EINVAL;
 }
 
 int
-ofdsize(dev)
-	dev_t dev;
+ofdsize(dev_t dev)
 {
 	struct ofd_softc *of;
 	int part;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.13 2003/10/31 04:08:10 drahn Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.14 2004/11/29 12:50:05 jsg Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -68,9 +68,7 @@ struct cfdriver ofroot_cd = {
 };
 
 static int
-ofbprint(aux, name)
-	void *aux;
-	const char *name;
+ofbprint(void *aux, const char *name)
 {
 	struct ofprobe *ofp = aux;
 	char child[64];
@@ -95,9 +93,7 @@ ofbprint(aux, name)
 }
 
 int
-ofrprobe(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+ofrprobe(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	
@@ -107,9 +103,7 @@ ofrprobe(parent, cf, aux)
 	return 1; 
 }
 void
-ofrattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+ofrattach(struct device *parent, struct device *dev, void *aux)
 {
 	int child;
 	char name[64];
@@ -156,9 +150,7 @@ ofrattach(parent, dev, aux)
 	}
 }
 int
-ofbprobe(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+ofbprobe(struct device *parent, void *cf, void *aux)
 {
 	struct ofprobe *ofp = aux;
 	
@@ -168,9 +160,7 @@ ofbprobe(parent, cf, aux)
 }
 
 void
-ofbattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+ofbattach(struct device *parent, struct device *dev, void *aux)
 {
 	int child;
 	char name[20];
@@ -222,8 +212,7 @@ ofbattach(parent, dev, aux)
  * Name matching routine for OpenFirmware
  */
 int
-ofnmmatch(cp1, cp2)
-	char *cp1, *cp2;
+ofnmmatch(char *cp1, char *cp2)
 {
 	int i;
 	
