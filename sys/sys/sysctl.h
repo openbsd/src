@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.54 2002/06/09 05:46:15 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.55 2002/06/09 09:51:31 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
+#include <sys/resource.h>
 #endif
 
 #include <sys/resourcevar.h>	/* XXX */
