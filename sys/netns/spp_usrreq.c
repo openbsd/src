@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.12 2002/03/15 18:19:53 millert Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.13 2002/03/26 19:12:56 niklas Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -848,7 +848,6 @@ spp_output(struct mbuf *m0, ...)
 			if (m0->m_len < sizeof (*sh)) {
 				if((m0 = m_pullup(m0, sizeof(*sh))) == NULL) {
 					(void) m_free(m);
-					m_freem(m0);
 					return (EINVAL);
 				}
 				m->m_next = m0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.14 2002/03/15 18:19:53 millert Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.15 2002/03/26 19:12:56 niklas Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -484,7 +484,8 @@ eoninput(struct mbuf *m, ...)
 			}
 #endif
 			eonifp->if_ierrors++;
-			m_freem(m);
+			if (m != 0)
+				m_freem(m);
 			return;
 		}
 	}
