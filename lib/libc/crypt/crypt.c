@@ -50,7 +50,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.7 1997/02/13 16:58:44 provos Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.8 1997/03/27 23:26:28 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -621,7 +621,7 @@ crypt(key, setting)
 	 * and padding with zeros.
 	 */
 	q = (u_char *) keybuf;
-	while (q - (u_char *) keybuf - 8) {
+	while ((q - (u_char *) keybuf) <= sizeof(keybuf)) {
 		if (*q++ = *key << 1)
 			key++;
 	}
@@ -650,7 +650,8 @@ crypt(key, setting)
 			 * And XOR with the next 8 characters of the key.
 			 */
 			q = (u_char *) keybuf;
-			while (q - (u_char *) keybuf - 8 && *key)
+			while (((q - (u_char *) keybuf) <= sizeof(keybuf)) &&
+					*key)
 				*q++ ^= *key++ << 1;
 
 			if (des_setkey((u_char *) keybuf))
