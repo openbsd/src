@@ -1,10 +1,24 @@
-#	$OpenBSD: bsd.README,v 1.16 1998/07/15 22:18:05 espie Exp $
+#	$OpenBSD: bsd.README,v 1.17 1998/11/22 17:45:09 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
 source tree.  The files are installed in /usr/share/mk, and are, by
 convention, named with the suffix ".mk".
+
+bsd.dep.mk		- handle Makefile dependencies
+bsd.doc.mk		- building troff system documents
+bsd.lib.mk		- support for building libraries
+bsd.lkm.mk		- building loadable kernel modules
+bsd.man.mk		- installing manual pages and their links
+bsd.nls.mk		- National Language Support
+bsd.obj.mk		- creating 'obj' directories and cleaning up
+bsd.own.mk		- define common variables
+bsd.port.mk		- building ports
+bsd.port.subdir.mk	- targets for building subdirectories for ports
+bsd.prog.mk		- building programs from source files
+bsd.sys.mk		- building bsd from the source tree
+bsd.subdir.mk		- targets for building subdirectories
 
 Note, this file is not intended to replace reading through the .mk
 files for anything tricky.
