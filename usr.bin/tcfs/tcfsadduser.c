@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsadduser.c,v 1.5 2000/06/19 23:06:25 aaron Exp $	*/
+/*	$OpenBSD: tcfsadduser.c,v 1.6 2000/06/20 06:45:16 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -48,7 +48,7 @@ adduser_main(int argn, char *argv[])
 			have_user = 1;
 			break;
 		case 'h':
-			show_usage(adduser_usage, argv[0]);
+			printf(adduser_usage, argv[0]);
 			exit(OK);
 			break;
 		case 'v':
