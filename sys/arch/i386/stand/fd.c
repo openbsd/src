@@ -41,10 +41,10 @@
 /****************************************************************************/
 /*                        standalone fd driver                               */
 /****************************************************************************/
-#include "param.h"
-#include "disklabel.h"
-#include "i386/isa/fdreg.h"
-#include "i386/isa/isa.h"
+#include <sys/param.h>
+#include <sys/disklabel.h>
+#include <dev/isa/isareg.h>
+#include <i386/isa/fdreg.h>
 #include "saio.h"
 
 #define NUMRETRY 10

@@ -51,7 +51,7 @@
 /*
  * Interface to driver to obtain a block off the disk drive.
  */
-#include "param.h"
+#include <sys/param.h>
 #include "saio.h"
 
 
@@ -61,8 +61,9 @@ struct iob iobuf;
 bread(bdev, off, addr, sz)
 	char *addr;
 {
-
-/*printf("bread %d %d %x %d\n", bdev, off, addr, sz);*/
+#ifdef	DEBUG
+	printf("bread %d %d %x %d\n", bdev, off, addr, sz);
+#endif
 	iobuf.i_dev = 0;
 	iobuf.i_adapt = 0;
 	iobuf.i_ctlr = 0;

@@ -49,12 +49,12 @@ static char sccsid[] = "@(#)boot.c	7.3 (Berkeley) 5/4/91";
 static char rcsid[] = "$NetBSD: boot.c,v 1.6 1994/10/27 04:21:49 cgd Exp $";
 #endif /* not lint */
 
-#include "param.h"
-#include "reboot.h"
+#include <sys/param.h>
+#include <sys/reboot.h>
 #include <a.out.h>
 #include "saio.h"
-#include "disklabel.h"
-#include "dinode.h"
+#include <sys/disklabel.h>
+#include <ufs/ufs/dinode.h>
 
 /*
  * Boot program, loaded by boot block from remaing 7.5K of boot area.
@@ -70,13 +70,20 @@ int	retry = 0;
 extern struct disklabel disklabel;
 extern	int bootdev, cyloffset;
 static unsigned char *biosparams = (char *) 0x9ff00; /* XXX */
+/* XXX fake environ */
+char	**environ = NULL;
+
+#ifndef HZ
+#define HZ 100
+#endif
+int	hz = HZ;
 
 /*
  * Boot program... loads /boot out of filesystem indicated by arguements.
  * We assume an autoboot unless we detect a misconfiguration.
  */
 
-main(dev, unit, off)
+boot(dev, unit, off)
 {
 	register struct disklabel *lp;
 	register int io;
@@ -85,10 +92,15 @@ main(dev, unit, off)
 	extern int scsisn; /* XXX */
 
 
+	/* init system clock */
+	startrtclock();
+
 	/* are we a disk, if so look at disklabel and do things */
 	lp = &disklabel;
+#if 0
 	if (lp->d_type == DTYPE_SCSI)		/* XXX */
 		off = htonl(scsisn);		/* XXX */
+#endif
 
 /*printf("cyl %x %x hd %x sect %x ", biosparams[0], biosparams[1], biosparams[2], biosparams[0xe]);
 	printf("dev %x unit %x off %d\n", dev, unit, off);*/
@@ -160,7 +172,7 @@ copyunix(io, howto, cyloff)
 /*printf("mode %o ", fil.di_mode);*/
 	i = iread(&fil, 0,  (char *)&x, sizeof x);
 	off = sizeof x;
-	if (i != sizeof x || x.a_magic != 0413) {
+	if (i != sizeof x || N_GETMAGIC(x) != ZMAGIC) {
 		printf("Not an executable format");
 		return;
 	}
@@ -184,7 +196,7 @@ copyunix(io, howto, cyloff)
 
 	addr += x.a_data;
 
-	if (addr + x.a_bss > (unsigned) &fil) {
+	if ((void *)(addr + x.a_bss) > (void *)&fil) {
 		printf("Warning: bss overlaps bootstrap");
 		x.a_bss = (unsigned)addr - (unsigned)&fil;
 	}

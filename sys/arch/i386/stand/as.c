@@ -8,9 +8,9 @@
  * Pace Willisson        pace@blitz.com       April 8, 1992
  */
 
-#include "param.h"
-#include "disklabel.h"
-#include "i386/isa/asreg.h"
+#include <sys/param.h>
+#include <sys/disklabel.h>
+#include <dev/isa/ahareg.h>
 #include "saio.h"
 
 #ifdef ASDEBUG

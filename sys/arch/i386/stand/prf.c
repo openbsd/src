@@ -38,7 +38,7 @@
  *	@(#)prf.c	7.4 (Berkeley) 5/4/91
  */
 
-#include "types.h"
+#include <sys/types.h>
 
 putchar(c)
 char c;

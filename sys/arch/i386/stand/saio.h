@@ -60,7 +60,7 @@ struct iob {
 	int i_unit;
 	int i_cc;
 	int i_bn;
-	int i_ma;
+	char *i_ma;
 	int i_boff;
 	int i_flgs;
 #define	F_WRITE	0x1

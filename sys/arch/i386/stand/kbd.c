@@ -248,7 +248,7 @@ kbdreset()
 	inb(0x60);
 }
 
-#ifdef notdef;
+#ifdef notdef
 u_char getchar() {
 	u_char c;
 

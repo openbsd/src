@@ -35,10 +35,10 @@
  *	@(#)ufs_bmap.c	7.13 (Berkeley) 5/8/91
  */
 
-#include "param.h"
-#include "dinode.h"
-#include "fs.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+#include <errno.h>
 
 /*
  * Bmap converts a the logical block number of a file

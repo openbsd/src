@@ -47,7 +47,7 @@
 
 	.globl	_end
 	.globl	_edata
-	.globl	_main
+	.globl	_boot
 	.globl	__rtt
 	.globl	_exit
 	.globl	_bootdev
@@ -59,8 +59,8 @@
 	.globl	_disklabel
 _disklabel:
 	.space 512
-	.globl _scsisn
-	.set _scsisn, RELOC+0x60
+	#.set _scsisn, RELOC+0x60
+	#.globl _scsisn
 #endif
 
 	.globl	entry
@@ -74,7 +74,7 @@ _disklabel:
 	#movl	$entry-RELOC,%esi	# from beginning of ram
 	movl	$0,%esi
 	#movl	$entry,%edi		# to relocated area
-	movl	$ RELOC,%edi		# to relocated area
+	movl	RELOC,%edi		# to relocated area
 	# movl	$_edata-RELOC,%ecx	# this much
 	movl	$64*1024,%ecx
 	cld
@@ -91,7 +91,7 @@ start:
 
 #ifdef REL
 	leal	4(%esp),%eax	/* ignore old pc */
-	movl	$ RELOC-3*4,%ebx
+	movl	RELOC-3*4,%ebx
 	/* copy boot parameters */
 	pushl	$3*4
 	pushl	%ebx
@@ -102,7 +102,7 @@ start:
 	/* save old stack state */
 	movl	%esp,savearea
 	movl	%ebp,savearea+4
-	movl	$ RELOC-0x2400,%esp
+	movl	RELOC-0x2400,%esp
 #endif
 
 	/* clear memory as needed */
@@ -141,7 +141,7 @@ start:
 
 	call	_kbdreset	/* resets keyboard and gatea20 brain damage */
 	movl	%esi,%esp
-	call	_main
+	call	_boot
 	jmp	1f
 
 	.data

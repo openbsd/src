@@ -51,8 +51,10 @@
  *
  *	No attempt is made to handle disk errors.
  */
-#include "i386/isa/isa.h"
-#include "i386/isa/wdreg.h"
+
+#include <dev/isa/isareg.h>
+#include <dev/isa/wdreg.h>
+
 #define	NOP	inb $0x84,%al
 #define BIOSRELOC	0x7c00
 #define start		RELOC+0x400
@@ -177,7 +179,7 @@ readblk:
 	movl	$ IO_WD1+wd_status,%edx
 	NOP
 	inb	%dx,%al
-	testb	$ WDCS_BUSY,%al
+	testb	$ WDCS_BSY,%al
 	jnz readblk
 	testb	$ WDCS_DRQ,%al
 	jz readblk

@@ -40,11 +40,11 @@
 
 /*  device driver for winchester disk  */
 
-#include "param.h"
-#include "dkbad.h"
-#include "disklabel.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/wdreg.h"
+#include <sys/param.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/wdreg.h>
 #include "saio.h"
 
 #define SMALL
@@ -145,7 +145,7 @@ wdstrategy(io,func)
 #endif
 	sector += io->i_boff;
 
-	address = io->i_ma;
+	address = (char *)io->i_ma;
         while (iosize > 0) {
                 if (wdio(func, unit, sector, address))
                         return(-1);
@@ -190,7 +190,7 @@ wdio(func, unit, blknm, addr)
 	 * See if the current block is in the bad block list.
 	 */
 	if (blknm > BBSIZE/DEV_BSIZE)	/* should be BBSIZE */
-	    for (bt_ptr = dkbad[unit].bt_bad; bt_ptr->bt_cyl != -1; bt_ptr++) {
+	    for (bt_ptr = dkbad[unit].bt_bad; bt_ptr->bt_cyl != 0xffff; bt_ptr++) {
 		if (bt_ptr->bt_cyl > cylin)
 			/* Sorted list, and we passed our cylinder. quit. */
 			break;
@@ -235,10 +235,10 @@ retry:
 
 	/* Set up the SDH register (select drive).     */
 	outb(wdc+wd_sdh, WDSD_IBM | (unit<<4) | (head & 0xf));
-	while ((inb(wdc+wd_status) & WDCS_READY) == 0) ;
+	while ((inb(wdc+wd_status) & WDCS_DRDY) == 0) ;
 
 	outb(wdc+wd_command, opcode);
-	while (opcode == WDCC_READ && (inb(wdc+wd_status) & WDCS_BUSY))
+	while (opcode == WDCC_READ && (inb(wdc+wd_status) & WDCS_BSY))
 		;
 	/* Did we get an error?         */
 	if (opcode == WDCC_READ && (inb(wdc+wd_status) & WDCS_ERR))
@@ -254,7 +254,7 @@ retry:
 	/* Check data request (should be done).         */
 	if (inb(wdc+wd_status) & WDCS_DRQ) goto error;
 
-	while (opcode == WDCC_WRITE && (inb(wdc+wd_status) & WDCS_BUSY)) ;
+	while (opcode == WDCC_WRITE && (inb(wdc+wd_status) & WDCS_BSY)) ;
 
 	if (inb(wdc+wd_status) & WDCS_ERR) goto error;
 
@@ -297,19 +297,20 @@ wdinit(io)
 #endif
 
 	/* reset controller */
-	outb(wdc+wd_ctlr,6);
+	outb(wdc+wd_ctlr, WDCTL_RST|WDCTL_IDS);
 	DELAY(1000);
-	outb(wdc+wd_ctlr,2);
+	outb(wdc+wd_ctlr, WDCTL_IDS);
 	DELAY(1000);
-	while(inb(wdc+wd_status) & WDCS_BUSY);		/* 06 Sep 92*/
-	outb(wdc+wd_ctlr,8);
+	while(inb(wdc+wd_status) & WDCS_BSY);		/* 06 Sep 92*/
+	outb(wdc+wd_ctlr, WDCTL_4BIT);
 
 	/* set SDH, step rate, do restore to recalibrate drive */
 tryagainrecal:
 	outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
 	wdwait();
-	outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
+	/* outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
 	wdwait();
+	*/
 	if ((i = inb(wdc+wd_status)) & WDCS_ERR) {
 		printf("wd%d: recal status %b error %b\n",
 			unit, i, WDCS_BITS, inb(wdc+wd_error), WDERR_BITS);
@@ -331,7 +332,7 @@ tryagainrecal:
 	outb(wdc+wd_cyl_lo, 1224);
 	outb(wdc+wd_cyl_hi, 1224/256);
 	outb(wdc+wd_command, 0x91);
-	while (inb(wdc+wd_status) & WDCS_BUSY) ;
+	while (inb(wdc+wd_status) & WDCS_BSY) ;
 
 	errcnt = 0;
 retry:
@@ -394,7 +395,7 @@ retry:
 	outb(wdc+wd_sdh, WDSD_IBM | (unit << 4) + dd->d_ntracks-1);
 	outb(wdc+wd_seccnt, dd->d_nsectors);
 	outb(wdc+wd_command, 0x91);
-	while (inb(wdc+wd_status) & WDCS_BUSY) ;
+	while (inb(wdc+wd_status) & WDCS_BSY) ;
 
 	dkbad[unit].bt_bad[0].bt_cyl = -1;
 
@@ -425,9 +426,9 @@ wdwait()
 	register wdc = wdcport;
 	register i = 0;
 	
-	while (inb(wdc+wd_status) & WDCS_BUSY)
+	while (inb(wdc+wd_status) & WDCS_BSY)
 		;
-	while ((inb(wdc+wd_status) & WDCS_READY) == 0)
+	while ((inb(wdc+wd_status) & WDCS_DRDY) == 0)
 		if (i++ > 100000)
 			return(-1);
 	return(0);

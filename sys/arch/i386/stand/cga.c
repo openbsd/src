@@ -38,7 +38,7 @@
  *	@(#)cga.c	5.3 (Berkeley) 4/28/91
  */
 
-#include "param.h"
+#include <sys/param.h>
 
 #define	COL		80
 #define	ROW		25

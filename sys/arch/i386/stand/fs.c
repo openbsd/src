@@ -50,10 +50,10 @@
  * Routines to sift through a BSD fast filesystem. -wfj
  */
 
-#include "param.h"
-#include "fs.h"
-#include "dir.h"
-#include "dinode.h"
+#include <sys/param.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ufs/dinode.h>
 #include "saio.h"
 
 int bdev;
@@ -101,8 +101,8 @@ ilookup(dip, s) struct dinode *dip; char *s; {
 fetchi(i, dip) struct dinode *dip; {
 
 /*printf("fetchi %d %x\n", i, dip);*/
-	bread(bdev, fsbtodb(fs, itod(fs, i)), abuf, fs->fs_bsize);
-	bcopy (abuf + itoo(fs,i) * sizeof(struct dinode),
+	bread(bdev, fsbtodb(fs, ino_to_fsba(fs, i)), abuf, fs->fs_bsize);
+	bcopy (abuf + ino_to_fsbo(fs,i) * sizeof(struct dinode),
 		dip, sizeof(struct dinode));
 	/*printf("mode %o link %d uid %d gid %d size %d [ ",
 	dip->di_mode, dip->di_nlink, dip->di_uid, dip->di_gid, dip->di_size);

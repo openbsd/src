@@ -32,9 +32,9 @@
  * as the master boot block.
  */
 
-#include "param.h"
-#include "disklabel.h"
-#include "i386/isa/asreg.h"
+#include <sys/param.h>
+#include <sys/disklabel.h>
+#include <dev/isa/ahareg.h>
 
 /* RELOC should be defined with a -D flag to cc */
 
