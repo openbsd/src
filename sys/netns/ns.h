@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.h,v 1.2 1996/03/04 08:20:23 niklas Exp $	*/
+/*	$OpenBSD: ns.h,v 1.3 1998/05/11 06:06:01 deraadt Exp $	*/
 /*	$NetBSD: ns.h,v 1.8 1996/02/13 22:13:51 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #define NSPORT_RE	3		/* Router Error */
 
 /*
- * Ports < NSPORT_RESERVED are reserved for priveleged
+ * Ports < NSPORT_RESERVED are reserved for privileged
  * processes (e.g. root).
  */
 #define NSPORT_RESERVED		3000
