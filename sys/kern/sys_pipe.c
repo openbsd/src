@@ -1,3 +1,5 @@
+/*	$OpenBSD: sys_pipe.c,v 1.5 1997/02/24 14:19:58 niklas Exp $	*/
+
 /*
  * Copyright (c) 1996 John S. Dyson
  * All rights reserved.
@@ -15,8 +17,6 @@
  *    John S. Dyson.
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
- *
- * $Id: sys_pipe.c,v 1.4 1996/10/12 14:34:42 niklas Exp $
  */
 
 #ifndef OLD_PIPE

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tty_pty.c,v 1.5 1997/02/24 14:20:00 niklas Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec_subr.c,v 1.4 1997/02/24 14:19:56 niklas Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: vfs_init.c,v 1.4 1997/02/24 14:20:02 niklas Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-#	@(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
+#	$OpenBSD: Make.tags.inc,v 1.5 1997/02/24 14:19:55 niklas Exp $
 
 # Common files for "make tags".
 # Included by the Makefile for each architecture.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: kern_subr.c,v 1.4 1997/02/24 14:19:56 niklas Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*

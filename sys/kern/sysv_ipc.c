@@ -1,3 +1,4 @@
+/*	$OpenBSD: sysv_ipc.c,v 1.2 1997/02/24 14:20:00 niklas Exp $	*/
 /*	$NetBSD: sysv_ipc.c,v 1.10 1995/06/03 05:53:28 mycroft Exp $	*/
 
 /*
