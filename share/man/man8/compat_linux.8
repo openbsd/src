@@ -1,3 +1,4 @@
+.\"	$OpenBSD: compat_linux.8,v 1.13 2000/12/22 16:54:37 avsm Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -330,7 +331,7 @@ are done.
 .Ss Programs using SVGAlib
 SVGAlib binaries require some extra care. The pcvt virtual console driver
 has to be in the kernel for them to work, and you will also have to create
-some symbloic links in the /emul/linux/dev directory, namely:
+some symbolic links in the /emul/linux/dev directory, namely:
 .Pp
 .nf
 /emul/linux/dev/console -> /dev/tty
