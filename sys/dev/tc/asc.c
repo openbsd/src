@@ -1240,7 +1240,7 @@ abort:
 #if 0
 	panic("asc_intr");
 #else
-	boot(4, NULL); /* XXX */
+	boot(4); /* XXX */
 #endif
 }
 
@@ -2057,7 +2057,7 @@ asc_timeout(arg)
 #if 0
 	panic("asc_timeout");
 #else
-	boot(4, NULL); /* XXX */
+	boot(4); /* XXX */
 #endif
 }
 

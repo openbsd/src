@@ -26,7 +26,7 @@
 #include <pmax/dev/ascreg.h>	/* XXX */
 #include <dev/tc/ascvar.h>
 
-#include <mips/locore.h> /* XXX XXX bus.h needs cache-consistency*/
+#include <machine/locore.h> /* XXX XXX bus.h needs cache-consistency*/
 
 /*XXX*/
 #include <pmax/pmax/asic.h>		/* XXX ioasic register defs? */
