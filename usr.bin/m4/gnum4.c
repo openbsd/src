@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.2 1999/09/14 08:35:16 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.3 1999/11/17 15:34:13 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -52,9 +52,13 @@ struct path_entry {
 	struct path_entry *next;
 } *first, *last;
 
+static struct path_entry *new_path_entry __P((const char *));
+static void ensure_m4path __P((void));
+static FILE *dopath __P((const char *));
+
 static struct path_entry *
 new_path_entry(dirname)
-	char *dirname;
+	const char *dirname;
 {
 	struct path_entry *n;
 
@@ -110,7 +114,8 @@ ensure_m4path()
 
 static
 FILE *
-dopath(const char *filename)
+dopath(filename)
+	const char *filename;
 {
 	char path[MAXPATHLEN];
 	struct path_entry *pe;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 1999/09/14 08:35:16 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 1999/11/17 15:34:13 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.17 1999/09/14 08:35:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.18 1999/11/17 15:34:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,8 +138,12 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 extern int optind;
 extern char *optarg;
 
-void macro();
-void initkwds();
+static void macro __P((void));
+static void initkwds __P((void));
+static ndptr inspect __P((char *));
+static int do_look_ahead __P((int, const char *));
+
+int main __P((int, char *[]));
 
 int
 main(argc,argv)
@@ -225,8 +229,6 @@ main(argc,argv)
 	return 0;
 }
 
-ndptr inspect();
-
 /*
  * Look ahead (at most MAXCCHARS characters) for `token'.
  * (on input `t == token[0]')
@@ -234,10 +236,10 @@ ndptr inspect();
  * Returns 1 if `token' present; copied to output.
  *         0 if `token' not found; all characters pushed back
  */
-int
+static int
 do_look_ahead(t, token)
 	int	t;
-	char	*token;
+	const char	*token;
 {
 	int i;
 
@@ -262,7 +264,7 @@ do_look_ahead(t, token)
 /*
  * macro - the work horse..
  */
-void
+static void
 macro()
 {
 	char token[MAXTOK], chars[2];
@@ -397,9 +399,9 @@ macro()
 					errx(1, "internal stack overflow");
 
 				if (CALTYP == MACRTYPE)
-					expand((char **) mstack+fp+1, sp-fp);
+					expand((const char **) mstack+fp+1, sp-fp);
 				else
-					eval((char **) mstack+fp+1, sp-fp, CALTYP);
+					eval((const char **) mstack+fp+1, sp-fp, CALTYP);
 
 				ep = PREVEP;	/* flush strspace */
 				sp = PREVSP;	/* previous sp..  */
@@ -430,7 +432,7 @@ macro()
  * consider only those starting with _ or A-Za-z. This is a
  * combo with lookup to speed things up.
  */
-ndptr
+static ndptr
 inspect(tp) 
 	char *tp;
 {
@@ -461,7 +463,7 @@ inspect(tp)
  * keyword strings, since we simply use the static pointers
  * within keywrds block.
  */
-void
+static void
 initkwds()
 {
 	size_t i;

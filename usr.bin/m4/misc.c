@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 1999/11/17 14:51:05 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 1999/11/17 15:34:13 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.13 1999/11/17 14:51:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.14 1999/11/17 15:34:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,8 @@ pbent *bp; 			/* first available character   */
 static pbent *endpbb;			/* end of push-back buffer     */
 
 
-static void enlarge_bufspace();
-static void enlarge_strspace();
+static void enlarge_bufspace __P((void));
+static void enlarge_strspace __P((void));
 /*
  * find the index of second str in the first str.
  */
@@ -110,7 +110,7 @@ putback(c)
  */
 void
 pbstr(s)
-	char *s;
+	const char *s;
 {
 	size_t n;
 
@@ -205,7 +205,7 @@ void enlarge_bufspace()
  */
 void
 chrsave(c)
-	char c;
+	int c;
 {
 	if (ep >= endest) 
 		enlarge_strspace();
@@ -269,7 +269,7 @@ killdiv()
 
 char *
 xalloc(n)
-	unsigned long n;
+	size_t n;
 {
 	char *p = malloc(n);
 

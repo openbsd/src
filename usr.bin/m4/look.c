@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.4 1999/09/14 08:35:16 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.5 1999/11/17 15:34:13 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,9 +55,11 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #include "stdd.h"
 #include "extern.h"
 
+static void freent __P((ndptr));
+
 int
 hash(name)
-	char *name;
+	const char *name;
 {
 	unsigned long h = 0;
 	while (*name)
@@ -70,7 +72,7 @@ hash(name)
  */
 ndptr 
 lookup(name)
-	char *name;
+	const char *name;
 {
 	ndptr p;
 
@@ -86,7 +88,7 @@ lookup(name)
  */
 ndptr 
 addent(name)
-	char *name;
+	const char *name;
 {
 	int h;
 	ndptr p;
@@ -116,7 +118,7 @@ freent(p)
  */
 void
 remhash(name, all)
-	char *name;
+	const char *name;
 	int all;
 {
 	int h;

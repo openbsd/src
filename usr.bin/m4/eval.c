@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.19 1999/11/17 14:57:21 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.20 1999/11/17 15:34:13 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.19 1999/11/17 14:57:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.20 1999/11/17 15:34:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,18 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.19 1999/11/17 14:57:21 espie Exp $";
 #include "extern.h"
 #include "pathnames.h"
 
+static void	dodefn __P((const char *));
+static void	dopushdef __P((const char *, const char *));
+static void	dodump __P((const char *[], int));
+static void	doifelse __P((const char *[], int));
+static int	doincl __P((const char *));
+static int	dopaste __P((const char *));
+static void	dochq __P((const char *[], int));
+static void	dochc __P((const char *[], int));
+static void	dodiv __P((int));
+static void	doundiv __P((const char *[], int));
+static void	dosub __P((const char *[], int));
+static void	map __P((char *, const char *, const char *, const char *));
 /*
  * eval - evaluate built-in macros.
  *	  argc - number of elements in argv.
@@ -86,7 +98,7 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.19 1999/11/17 14:57:21 espie Exp $";
 
 void
 eval(argv, argc, td)
-	char *argv[];
+	const char *argv[];
 	int argc;
 	int td;
 {
@@ -299,12 +311,16 @@ eval(argv, argc, td)
 	 */
 		if (argc > 2) {
 			int fd;
+			char *temp;
+
+			temp = xstrdup(argv[2]);
 			
-			fd = mkstemp(argv[2]);
+			fd = mkstemp(temp);
 			if (fd == -1)
 				err(1, "couldn't make temp file %s", argv[2]);
 			close(fd);
-			pbstr(argv[2]);
+			pbstr(temp);
+			free(temp);
 		}
 		break;
 
@@ -391,11 +407,11 @@ char *dumpfmt = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
  */
 void
 expand(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
-	char *t;
-	char *p;
+	const char *t;
+	const char *p;
 	int n;
 	int argno;
 
@@ -462,8 +478,8 @@ expand(argv, argc)
  */
 void
 dodefine(name, defn)
-	char *name;
-	char *defn;
+	const char *name;
+	const char *defn;
 {
 	ndptr p;
 
@@ -486,9 +502,9 @@ dodefine(name, defn)
  * dodefn - push back a quoted definition of
  *      the given name.
  */
-void
+static void
 dodefn(name)
-	char *name;
+	const char *name;
 {
 	ndptr p;
 
@@ -506,10 +522,10 @@ dodefn(name)
  *      hash bucket, it hides a previous definition from
  *      lookup.
  */
-void
+static void
 dopushdef(name, defn)
-	char *name;
-	char *defn;
+	const char *name;
+	const char *defn;
 {
 	ndptr p;
 
@@ -530,9 +546,9 @@ dopushdef(name, defn)
  *      table to stderr. If nothing is specified, the entire
  *      hash table is dumped.
  */
-void
+static void
 dodump(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
 	int n;
@@ -554,9 +570,9 @@ dodump(argv, argc)
 /*
  * doifelse - select one of two alternatives - loop.
  */
-void
+static void
 doifelse(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
 	cycle {
@@ -576,9 +592,9 @@ doifelse(argv, argc)
 /*
  * doinclude - include a given file.
  */
-int
+static int
 doincl(ifile)
-	char *ifile;
+	const char *ifile;
 {
 	if (ilevel + 1 == MAXINP)
 		errx(1, "too many include files.");
@@ -595,9 +611,9 @@ doincl(ifile)
  * dopaste - include a given file without any
  *           macro processing.
  */
-int
+static int
 dopaste(pfile)
-	char *pfile;
+	const char *pfile;
 {
 	FILE *pf;
 	int c;
@@ -615,9 +631,9 @@ dopaste(pfile)
 /*
  * dochq - change quote characters
  */
-void
+static void
 dochq(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
 	if (argc > 2) {
@@ -641,9 +657,9 @@ dochq(argv, argc)
 /*
  * dochc - change comment characters
  */
-void
+static void
 dochc(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
 	if (argc > 2) {
@@ -665,7 +681,7 @@ dochc(argv, argc)
 /*
  * dodivert - divert the output to a temporary file
  */
-void
+static void
 dodiv(n)
 	int n;
 {
@@ -690,9 +706,9 @@ dodiv(n)
  * doundivert - undivert a specified output, or all
  *              other outputs, in numerical order.
  */
-void
+static void
 doundiv(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
 	int ind;
@@ -715,12 +731,12 @@ doundiv(argv, argc)
 /*
  * dosub - select substring
  */
-void
+static void
 dosub(argv, argc)
-	char *argv[];
+	const char *argv[];
 	int argc;
 {
-	char *ap, *fc, *k;
+	const char *ap, *fc, *k;
 	int nc;
 
 	if (argc < 5)
@@ -767,14 +783,14 @@ dosub(argv, argc)
  * about 5 times faster than any algorithm that makes multiple passes over
  * destination string.
  */
-void
+static void
 map(dest, src, from, to)
 	char *dest;
-	char *src;
-	char *from;
-	char *to;
+	const char *src;
+	const char *from;
+	const char *to;
 {
-	char *tmp;
+	const char *tmp;
 	unsigned char sch, dch;
 	static unsigned char mapvec[256] = {
 	    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,

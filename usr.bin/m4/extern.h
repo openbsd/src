@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 1999/09/14 08:35:16 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 1999/11/17 15:34:13 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -39,39 +39,38 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-char	*xalloc __P((unsigned long));
-int	expr __P((char *));
-ndptr	addent __P((char *));
-void	chrsave __P((int));
-void	dochc __P((char *[], int));
-void	dochq __P((char *[], int));
-void	dodefine __P((char *, char *));
-void	dodefn __P((char *));
-void	dodiv __P((int));
-void	dodump __P((char *[], int));
-void	doifelse __P((char *[], int));
-int	doincl __P((char *));
-int	dopaste __P((char *));
-void	dopushdef __P((char *, char *));
-void	dosub __P((char *[], int));
-void	doundiv __P((char *[], int));
-void	eval __P((char *[], int, int));
-void	expand __P((char *[], int));
-void	getdiv __P((int));
-char	*xstrdup __P((const char *));
-int	hash __P((char *));
-ptrdiff_t	indx __P((const char *, const char *));
-void	killdiv __P((void));
-ndptr	lookup __P((char *));
-void	map __P((char *, char *, char *, char *));
-void	onintr __P((int));
-void	pbnum __P((int));
-void	pbstr __P((char *));
-void	putback __P((int));
-void	remhash __P((char *, int));
-void	usage __P((void));
-void initspaces __P((void));
-char *compute_prevep __P((void));
+/* eval.c */
+extern void	eval __P((const char *[], int, int));
+extern void	expand __P((const char *[], int));
+extern void	dodefine __P((const char *, const char *));
+
+/* expr.c */
+extern int	expr __P((const char *));
+
+/* gnum4.c */
+extern void 	addtoincludepath __P((const char *dirname));
+extern FILE 	*fopen_trypath __P((const char *filename));
+
+/* look.c */
+extern ndptr	addent __P((const char *));
+extern int	hash __P((const char *));
+extern ndptr	lookup __P((const char *));
+extern void	remhash __P((const char *, int));
+
+/* misc.c */
+extern void	chrsave __P((int));
+extern char 	*compute_prevep __P((void));
+extern void	getdiv __P((int));
+extern ptrdiff_t indx __P((const char *, const char *));
+extern void 	initspaces __P((void));
+extern void	killdiv __P((void));
+extern void	onintr __P((int));
+extern void	pbnum __P((int));
+extern void	pbstr __P((const char *));
+extern void	putback __P((int));
+extern char	*xalloc __P((size_t));
+extern char	*xstrdup __P((const char *));
+extern void	usage __P((void));
 
 extern ndptr hashtab[];		/* hash table for macros etc. */
 extern stae mstack[];		/* stack of m4 machine */
@@ -94,6 +93,3 @@ extern char *null;		/* as it says.. just a null. */
 extern char rquote[];		/* right quote character (') */
 extern char scommt[];		/* start character for comment */
 
-/* gnum4.c */
-extern FILE *fopen_trypath __P((const char *filename));
-extern void addtoincludepath __P((const char *dirname));
