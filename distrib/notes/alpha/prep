@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.17 2002/06/30 16:36:55 miod Exp $
+dnl	$OpenBSD: prep,v 1.18 2002/10/07 20:49:05 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -54,7 +54,10 @@ Using the SRM console:
 			Most users will want to set this to "boot".
 	bootdef_dev	Default boot device (or list of devices).
 	boot_file	Name of the kernel to boot.  If this variable is
-			empty, "bsd" will be loaded.
+			empty, "bsd" will be loaded.  Note that this
+			variable does not exist in all versions of the SRM
+			console, in which case you need to always specify a
+			kernel filename if it differs from "bsd".
 	boot_osflags	Flags to pass to the kernel.
 			IMPORTANT! For multiuser boot, this needs to be
 			set to "a".
@@ -65,7 +68,9 @@ Using the SRM console:
     prompt, with the -fi (to override boot_file) and -fl (to override
     boot_osflags) options. For example,
 	boot -fi bsd -fl ac dka0
-    will boot the "bsd" kernel with the "ac" flags on dka0.
+    will boot the "bsd" kernel with the "ac" flags on dka0. However, some
+    versions of the SRM console (mainly on DEC 3000 series) will only let
+    you specify uppercase filenames.
 
 
 SRM console boot device restrictions:
