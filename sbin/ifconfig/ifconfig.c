@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.127 2004/12/29 19:32:34 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.128 2005/01/18 21:43:54 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.127 2004/12/29 19:32:34 claudio Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.128 2005/01/18 21:43:54 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -1640,6 +1640,12 @@ setmediainst(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+/*
+ * Note: 
+ * bits:       0   1   2   3   4   5   ....   24   25   ...   30   31
+ * T1 mode:   N/A ch1 ch2 ch3 ch4 ch5        ch24  N/A        N/A  N/A
+ * E1 mode:   ts0 ts1 ts2 ts3 ts4 ts5        ts24  ts25       ts30 ts31
+ */
 #ifndef SMALL
 /* ARGSUSED */
 void
@@ -1674,6 +1680,7 @@ settimeslot(const char *val, int d)
 		}
 		if (ts_flag)
 			ts_map |= get_ts_map(ts_flag, ts_start, ts);
+
 	}
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&ts_map;
@@ -1692,11 +1699,11 @@ get_ts_map(int ts_flag, int ts_start, int ts_stop)
 		return 0;
 	if (ts_flag & RANGE_CHANNEL) { /* Range of channels */
 		for (i = ts_start; i <= ts_stop; i++) {
-			mask = 1 << (i - 1);
+			mask = 1 << i;
 			map |=mask;
 		}
 	} else { /* Single channel */
-		mask = 1 << (ts_stop - 1);
+		mask = 1 << ts_stop;
 		map |= mask;
 	}
 	return map;
