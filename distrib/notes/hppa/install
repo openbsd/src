@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2003/03/25 19:57:20 miod Exp $
+dnl	$OpenBSD: install,v 1.5 2004/01/20 17:48:37 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -126,7 +126,7 @@ OpenBSDCDROMInstall
 
 OpenBSDNFSInstall
 
-OpenBSDDISKInstall({:-"hdN" or -:},{:-only -:})
+OpenBSDDISKInstall(,{:-only -:})
 
 OpenBSDCommonFS
 
