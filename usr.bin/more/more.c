@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.3 1996/10/14 03:45:46 etheisen Exp $	*/
+/*	$OpenBSD: more.c,v 1.4 1996/10/14 03:54:59 etheisen Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -714,7 +714,12 @@ char *filename;
 	}
 	if (clreol)
 	    cleareol ();
-	pr("--More--");
+	/* XXX - evil global vars */
+	if(fnames[fnum] != NULL) {
+                promptlen += prtf ("%s ", fnames[fnum]);
+        }
+        else
+                pr("--More--");
 	if (filename != NULL) {
 	    promptlen += prtf ("(Next file: %s)", filename);
 	}
