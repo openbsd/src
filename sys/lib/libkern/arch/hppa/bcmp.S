@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.S,v 1.1 1998/06/24 18:02:18 mickey Exp $	*/
+/*	$OpenBSD: bcmp.S,v 1.2 1999/05/09 18:49:10 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -77,8 +77,9 @@ $bcmp_loop
 	nop
 
 $bcmp_exit
-	bv	0(r2)
+	bv	0(rp)
 	sub	t1,t2,ret0
 
 EXIT(bcmp)
 
+	.end
