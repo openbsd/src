@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.36 2005/01/07 10:11:31 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.37 2005/02/21 10:56:22 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -351,32 +351,33 @@ Protocol mismatch.
 220 host.example.com IMS SMTP Receiver Version 0.84 Ready
 .Ed
 .Sh EXAMPLES
-Open a TCP connection to port 42 of hostname, using port 31337 as
+Open a TCP connection to port 42 of host.example.com, using port 31337 as
 the source port, with a timeout of 5 seconds:
 .Pp
-.Dl $ nc -p 31337 -w 5 hostname 42
+.Dl $ nc -p 31337 -w 5 host.example.com 42
 .Pp
-Open a UDP connection to port 53 of hostname:
+Open a UDP connection to port 53 of host.example.com:
 .Pp
-.Dl $ nc -u hostname 53
+.Dl $ nc -u host.example.com 53
 .Pp
-Open a TCP connection to port 42 of example.host using 10.1.2.3 as the
+Open a TCP connection to port 42 of host.example.com using 10.1.2.3 as the
 IP for the local end of the connection:
 .Pp
-.Dl $ nc -s 10.1.2.3 example.host 42
+.Dl $ nc -s 10.1.2.3 host.example.com 42
 .Pp
-Send UDP packets to ports 20-30 of example.host, and report which ones
+Send UDP packets to ports 20-30 of host.example.com, and report which ones
 responded with an ICMP packet after three seconds:
 .Pp
-.Dl $ nc -uvz -w 3 hostname 20-30
+.Dl $ nc -uvz -w 3 host.example.com 20-30
 .Pp
 Create and listen on a Unix Domain Socket:
 .Pp
 .Dl $ nc -lU /var/tmp/dsocket
 .Pp
-Connect to port 42 of hostname via an HTTP proxy at 10.2.3.4, port 8080:
+Connect to port 42 of host.example.com via an HTTP proxy at 10.2.3.4,
+port 8080:
 .Pp
-.Dl $ nc -x10.2.3.4:8080 -Xconnect hostname 42
+.Dl $ nc -x10.2.3.4:8080 -Xconnect host.example.com 42
 .Sh SEE ALSO
 .Xr cat 1
 .Sh AUTHORS
