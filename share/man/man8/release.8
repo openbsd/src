@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.5 2000/07/11 17:04:27 aaron Exp $
+.\"	$OpenBSD: release.8,v 1.6 2000/07/12 23:18:16 marc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -311,19 +311,37 @@ the build process is:
 .It
 .Li "test -d X11BLD && mv X11BLD X11BLD- && rm -rf X11BLD- &"
 .It
-.Li "mkdir -p /usr2/X11"
+.Li "mkdir -p X11BLD"
 .It
-.Li "cd X11BLD && lndir X11SRC && nice make build"
+.Li "cd X11BLD && lndir X11SRC && nice DESTDIR=/ make build"
 .El
 .Pp
-Once the build is done you've a new
-.Va X11R6 ...
-almost.
-The install phase of the build does
+.Sy Note :
+.Pa SuperProbe ,
+built and installed above, requires the
+.Pa tcl/tk
+libraries.   They must be installed to do a proper build.
+.Pp
+The above method mimics a
+.Ic "make build"
+in the
+.Pa /usr/src
+directory.
+.Pa X11R6
+is created and installed in
+.Pa
+/usr/X11R6 .
+However, the install phase of the build does
 .Em not
 overwrite
 .Pa /var/X11/xdm .
-That directory must be installed by hand.
+That directory must be installed by hand.   Or you can
+.Ic "cd /var/X11 && mv xdm xdm-"
+before the build and copy any local configuration from
+.Pa xdm-
+to
+.Pa xdm
+after the build.
 .Ss "6. Make and validate the X11 release"
 .Pp
 .Va X11R6
