@@ -274,3 +274,10 @@ mmmmap(dev, off, prot)
 
 	return (-1);
 }
+
+int
+mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+{
+	return (EOPNOTSUPP);
+}
+
