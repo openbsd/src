@@ -418,7 +418,11 @@ main(int argc, char *argv[])
 
 	if (ready == 0) {
 	    /* wakeup for timeout: take status */
-	    power_status(ctl_fd, 0, 0);
+	    powerbak = power_status(ctl_fd, 0, 0);
+	    if (powerstatus != powerbak) {
+		powerstatus = powerbak;
+		powerchange = 1;
+	    }
 	}
 	if (FD_ISSET(ctl_fd, selfdsp)) {
 	    suspends = standbys = resumes = 0;
@@ -444,6 +448,8 @@ main(int argc, char *argv[])
 		case APM_NORMAL_RESUME:
 		case APM_CRIT_RESUME:
 		case APM_SYS_STANDBY_RESUME:
+		    powerstatus = power_status(ctl_fd, 0, 0);
+		    powerchange = 1;
 		    resumes++;
 		    break;
 		case APM_POWER_CHANGE:
@@ -467,7 +473,8 @@ main(int argc, char *argv[])
 	    } else if (resumes) {
 		resume(ctl_fd);
 		syslog(LOG_NOTICE, "system resumed from APM sleep");
-	    } else if (powerchange) {
+	    }
+	    if (powerchange) {
 		if (powerstatus)
 		    powerup(ctl_fd);
 		else
