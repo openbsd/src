@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.43 2004/12/12 08:45:36 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.44 2004/12/13 07:37:54 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1639,13 +1639,13 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	h = (struct atu_rx_hdr *)c->atu_buf;
 	len = h->length - 4; /* XXX magic number */
 
-	wh = mtod(m, struct ieee80211_frame *);
-	ni = ieee80211_find_rxnode(ic, wh);
-
 	m = c->atu_mbuf;
 	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = len;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	ni = ieee80211_find_rxnode(ic, wh);
 
 	ifp->if_ipackets++;
 
