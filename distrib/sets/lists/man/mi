@@ -285,7 +285,16 @@
 ./usr/share/man/cat1/hpftodit.0
 ./usr/share/man/cat1/htdigest.0
 ./usr/share/man/cat1/htpasswd.0
+./usr/share/man/cat1/i386/cursor.0
 ./usr/share/man/cat1/i386/fdformat.0
+./usr/share/man/cat1/i386/fed.0
+./usr/share/man/cat1/i386/fontedit.0
+./usr/share/man/cat1/i386/kcon.0
+./usr/share/man/cat1/i386/loadfont.0
+./usr/share/man/cat1/i386/pctr.0
+./usr/share/man/cat1/i386/scon.0
+./usr/share/man/cat1/i386/vt220keys.0
+./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
@@ -317,8 +326,6 @@
 ./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
 ./usr/share/man/cat1/lastcomm.0
-./usr/share/man/cat1/ld.so.0
-./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/leave.0
 ./usr/share/man/cat1/less.0
 ./usr/share/man/cat1/lesskey.0
@@ -516,7 +523,6 @@
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
-./usr/share/man/cat1/rtld.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
 ./usr/share/man/cat1/rusers.0
@@ -960,6 +966,7 @@
 ./usr/share/man/cat4/i386/mtrr.0
 ./usr/share/man/cat4/i386/npx.0
 ./usr/share/man/cat4/i386/pctr.0
+./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/psm.0
 ./usr/share/man/cat4/i386/pss.0
@@ -969,6 +976,7 @@
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
+./usr/share/man/cat4/i386/vt.0
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
@@ -1198,6 +1206,7 @@
 ./usr/share/man/cat5/hosts.equiv.0
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
+./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/info.0
 ./usr/share/man/cat5/inode.0
@@ -1380,8 +1389,13 @@
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/bad144.0
+./usr/share/man/cat8/i386/biosboot.0
+./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/boot.com.0
+./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/fdisk.0
+./usr/share/man/cat8/i386/installboot.0
+./usr/share/man/cat8/i386/ispcvt.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/wicontrol.0
@@ -1413,7 +1427,6 @@
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/kvm_mkdb.0
-./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/locate.updatedb.0
 ./usr/share/man/cat8/logresolve.0
 ./usr/share/man/cat8/lpc.0
@@ -1562,6 +1575,7 @@
 ./usr/share/man/cat8/smtpfwdd.0
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/eeprom.0
+./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/makedev.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
@@ -1647,3 +1661,6 @@
 ./usr/share/man/cat9/tick.0
 ./usr/share/man/cat9/tickadj.0
 ./usr/share/man/cat9/writedisklabel.0
+./usr/share/man/cat8/mvme68k/installboot.0
+./usr/share/man/cat8/sun3/installboot.0
+./usr/share/man/cat8/sun3/eeprom.0
