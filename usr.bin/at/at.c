@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.33 2003/02/17 21:47:19 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.34 2003/02/18 02:25:39 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.33 2003/02/17 21:47:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.34 2003/02/18 02:25:39 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -845,7 +845,7 @@ poke_daemon() {
 	strlcpy(sun.sun_path, CRONDIR "/" SPOOL_DIR "/" CRONSOCK,
 	    sizeof(sun.sun_path));
 	sun.sun_family = AF_UNIX;
-	sun.sun_len = strlen(sun.sun_path);
+	sun.sun_len = SUN_LEN(&sun);
 	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
 	    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
 		poke = RELOAD_AT;

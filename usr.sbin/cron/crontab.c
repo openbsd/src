@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.37 2003/02/17 18:40:11 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.38 2003/02/18 02:25:39 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.37 2003/02/17 18:40:11 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.38 2003/02/18 02:25:39 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -654,7 +654,7 @@ poke_daemon() {
 	if (glue_strings(sun.sun_path, sizeof sun.sun_path, SPOOL_DIR,
 	    CRONSOCK, '/')) {
 		sun.sun_family = AF_UNIX;
-		sun.sun_len = strlen(sun.sun_path);
+		sun.sun_len = SUN_LEN(&sun);
 		if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
 		    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
 			poke = RELOAD_CRON;
