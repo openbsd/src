@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.21 2002/12/01 19:54:32 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.22 2002/12/01 19:56:38 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -470,7 +470,7 @@ pf_compare_pooladdrs(struct pf_pooladdr *a, struct pf_pooladdr *b,
 void
 pf_mv_pool(struct pf_palist *poola, struct pf_palist *poolb)
 {
-	struct pf_pooladdr *mv_pool_pa; 
+	struct pf_pooladdr *mv_pool_pa;
 
 	while ((mv_pool_pa = TAILQ_FIRST(poola)) != NULL) {
 		TAILQ_REMOVE(poola, mv_pool_pa, entries);
@@ -494,14 +494,14 @@ pf_empty_pool(struct pf_palist *poola)
 }
 
 void
-pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule) 
+pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 {
 	pf_dynaddr_remove(&rule->src.addr);
 	pf_dynaddr_remove(&rule->dst.addr);
 	pf_empty_pool(&rule->rt_pool.list);
 	if (rulequeue != NULL)
 		TAILQ_REMOVE(rulequeue, rule, entries);
-	pool_put(&pf_rule_pl, rule); 
+	pool_put(&pf_rule_pl, rule);
 }
 
 void
@@ -512,7 +512,7 @@ pf_rm_nat(struct pf_natqueue *natqueue, struct pf_nat *nat)
 	pf_empty_pool(&nat->rpool.list);
 	if (natqueue != NULL)
 		TAILQ_REMOVE(natqueue, nat, entries);
-	pool_put(&pf_nat_pl, nat); 
+	pool_put(&pf_nat_pl, nat);
 }
 
 void

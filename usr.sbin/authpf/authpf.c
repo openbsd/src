@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.29 2002/11/23 07:54:45 mcbride Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.31 2002/12/01 20:01:35 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -175,8 +175,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "path to pidfile too long");
 		goto die;
 	}
-		
-	
+
 	/*
 	 * If someone else is already using this ip, then this person
 	 * wants to switch users - so kill the old process and exit
@@ -208,8 +207,8 @@ main(int argc, char *argv[])
 		if (flock(fileno(pidfp), LOCK_EX|LOCK_NB) == 0)
 			break;
 		save_errno = errno;
-		
-		/* Mark our pid, and username to our file. */   
+
+		/* Mark our pid, and username to our file. */
 
 		rewind(pidfp);
 		/* 31 == MAXLOGNAME - 1 */
@@ -785,6 +784,11 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 	}
 	if (pfctl_add_pool(pf, &r->rt_pool, r->af))
 		return (1);
+	if (Delete_Rules) {
+		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+			err(1, "DIOCBEGINADDRS");
+	}
+	pcr.pool_ticket = pf->paddr.ticket;
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCCHANGERULE, &pcr))
 			syslog(LOG_INFO, "DIOCCHANGERULE %m");
@@ -811,6 +815,11 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 	}
 	if (pfctl_add_pool(pf, &n->rpool, n->af))
 		return (1);
+	if (Delete_Rules) {
+		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+			err(1, "DIOCBEGINADDRS");
+	}
+	pcr.pool_ticket = pf->paddr.ticket;
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCCHANGENAT, &pcr))
 			syslog(LOG_INFO, "DIOCCHANGENAT %m");
@@ -836,6 +845,11 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 	}
 	if (pfctl_add_pool(pf, &r->rpool, r->af))
 		return (1);
+	if (Delete_Rules) {
+		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+			err(1, "DIOCBEGINADDRS");
+	}
+	pcr.pool_ticket = pf->paddr.ticket;
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCCHANGERDR, &pcr))
 			syslog(LOG_INFO, "DIOCCHANGERDR %m");
