@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.16 2000/03/12 06:46:31 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.17 2000/03/22 03:48:30 itojun Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -352,6 +352,14 @@ in_control(so, cmd, data, ifp)
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
+#if 0
+		/*
+		 * the code chokes if we are to assign multiple addresses with
+		 * the same address prefix (rtinit() will return EEXIST, which
+		 * is not fatal actually).  we will get memory leak if we
+		 * don't do it.
+		 * -> we may want to hide EEXIST from rtinit().
+		 */
   undo:
 		if (error && newifaddr){
 			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
@@ -360,6 +368,7 @@ in_control(so, cmd, data, ifp)
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in_interfaces--;
 		}
+#endif
 		return error;
 
 	case SIOCSIFNETMASK:
@@ -394,8 +403,10 @@ in_control(so, cmd, data, ifp)
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+#if 0
 			if (error)
 				goto undo;
+#endif
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))

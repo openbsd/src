@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6.c,v 1.16 2000/03/12 06:16:58 itojun Exp $	*/
-/*	$KAME: in6.c,v 1.55 2000/02/25 00:32:23 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.17 2000/03/22 03:48:30 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.63 2000/03/21 05:18:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -628,6 +628,14 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCSIFADDR_IN6:
 		error = in6_ifinit(ifp, ia, &ifr->ifr_addr, 1);
+#if 0
+		/*
+		 * the code chokes if we are to assign multiple addresses with
+		 * the same address prefix (rtinit() will return EEXIST, which
+		 * is not fatal actually).  we will get memory leak if we
+		 * don't do it.
+		 * -> we may want to hide EEXIST from rtinit().
+		 */
   undo:
 		if (error && newifaddr) {
 			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
@@ -648,6 +656,7 @@ in6_control(so, cmd, data, ifp, p)
 			}
 			IFAFREE(&ia->ia_ifa);
 		}
+#endif
 		return error;
 
 #ifdef COMPAT_IN6IFIOCTL		/* XXX should be unused */
@@ -730,8 +739,10 @@ in6_control(so, cmd, data, ifp, p)
 		}
 		if (hostIsNew || prefixIsNew) {
 			error = in6_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+#if 0
 			if (error)
 				goto undo;
+#endif
 		}
 		if (hostIsNew && (ifp->if_flags & IFF_MULTICAST)) {
 			int error_local = 0;
