@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.781 2004/10/20 22:25:53 deraadt Exp $
+$OpenBSD: pcidevs,v 1.782 2004/10/22 05:23:24 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2091,6 +2091,7 @@ product REALTEK RT8129		0x8129	8129
 product REALTEK RT8138		0x8138	8138
 product REALTEK RT8139		0x8139	8139
 product REALTEK RT8169		0x8169	8169
+product REALTEK RT8180		0x8180	8180
 
 /* RICOH products */
 product RICOH RF5C465		0x0465	5C465 CardBus
