@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2000/10/18 21:00:32 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2001/02/13 16:05:34 art Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -65,8 +65,6 @@
 #elif defined(amiga) && !defined(DISKLABEL_AMIGA)
 #define DISKLABEL_AMIGA
 #endif
-
-#define	b_cylin	b_resid
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
 void	swapdisklabel __P((struct disklabel *d));
@@ -164,7 +162,7 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 		return (NULL);
 
 	bp->b_blkno = sec;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -374,7 +372,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			bp->b_blkno = part_blkno;
 			bp->b_bcount = lp->d_secsize;
 			bp->b_flags = B_BUSY | B_READ;
-			bp->b_cylin = part_blkno / lp->d_secpercyl;
+			bp->b_cylinder = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
 		     
 			/* if successful, wander through dos partition table */
@@ -525,7 +523,7 @@ donot:
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -710,7 +708,7 @@ writedisklabel(dev, strat, lp, osdep)
 		labeloffset = LABELOFFSET;
 		endian = BYTE_ORDER;
 		bp->b_blkno = partoff + LABELSECTOR;
-		bp->b_cylin = cyl;
+		bp->b_cylinder = cyl;
 		bp->b_bcount = lp->d_secsize;
 	}
 
@@ -789,7 +787,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return (1);
 
