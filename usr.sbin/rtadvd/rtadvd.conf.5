@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.9 2000/07/06 10:14:48 itojun Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.10 2000/07/06 12:11:06 itojun Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.6 2000/05/26 10:54:58 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,26 +205,6 @@ If this capability exists,
 will not attach source link-layer address option to
 router advertisement packets.
 .El
-.Pp
-The following item controls ICMPV6 home agent information option,
-which was defined with mobile IPv6 support.
-It will be attached to router advertisement header just like other options do.
-.Bl -tag -width indent
-.It Cm \&hapref
-(num) Specifies home agent preference.
-If set to non-zero,
-.Cm \&hatime
-must be present as well.
-.It Cm \&hatime
-(num) Specifies home agent lifetime.
-.El
-.Pp
-When mobile IPv6 support is turned on for
-.Xr rtadvd 8 ,
-advertisement interval option will be attached to router advertisement
-packet, by configuring
-.Cm \&maxinterval
-explicitly.
 .Pp
 You can also refer one line from another by using
 .Cm tc
