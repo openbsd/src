@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.3 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.4 2005/02/09 22:58:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -62,6 +62,7 @@ int		 rde_imsg_compose_ospfe(int, u_int32_t, pid_t, void *,
 u_int32_t	 rde_router_id(void);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
+struct rde_nbr	*rde_nbr_self(struct area *);
 
 /* rde_lsdb.c */
 void		 lsa_init(struct lsa_tree *);

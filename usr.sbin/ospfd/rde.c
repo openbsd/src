@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.4 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.5 2005/02/09 22:58:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -556,5 +556,19 @@ rde_nbr_loading(struct area *area)
 			return (1);
 	}
 	return (0);
+}
+
+struct rde_nbr *
+rde_nbr_self(struct area *area)
+{
+	struct rde_nbr		*nbr;
+
+	LIST_FOREACH(nbr, &area->nbr_list, entry)
+		if (nbr->self)
+			return (nbr);
+
+	/* this may not happen */
+	fatalx("rde_nbr_self: area without self");
+	return (NULL);
 }
 

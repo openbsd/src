@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.8 2005/02/09 20:44:37 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.9 2005/02/09 22:58:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -309,9 +309,10 @@ self:
 		 * the dummy LSA will be reflooded via the default timeout
 		 * handler.
 		 */
-		lsa_add(nbr, dummy);
+		lsa_add(rde_nbr_self(nbr->area), dummy);
 		return (1);
 	}
+
 	/*
 	 * LSA is still originated, just reflood it. But we need to create
 	 * a new instance by setting the LSA sequence number equal to the
@@ -346,7 +347,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	/* timeout handling either MAX_AGE or LS_REFRESH_TIME */
 	timerclear(&tv);
 
-	if (nbr->self)
+	if (nbr->self && ntohs(new->lsa->hdr.age) == DEFAULT_AGE)
 		tv.tv_sec = LS_REFRESH_TIME;
 	else
 		tv.tv_sec = MAX_AGE - ntohs(new->lsa->hdr.age);
@@ -464,9 +465,9 @@ lsa_timeout(int fd, short event, void *bula)
 
 	lsa_age(v);
 
-	log_debug("lsa_timeout: REFLOOD");
+	log_debug("lsa_timeout: REFLOOD age %d", ntohs(v->lsa->hdr.age));
 
-	if (v->nbr->self && v->lsa->hdr.age != htons(MAX_AGE))
+	if (v->nbr->self && ntohs(v->lsa->hdr.age) < MAX_AGE)
 		lsa_refresh(v);
 
 	rde_imsg_compose_ospfe(IMSG_LS_FLOOD, v->nbr->peerid, 0,
