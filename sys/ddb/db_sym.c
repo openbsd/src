@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.19 1997/05/29 03:28:44 mickey Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.20 1997/07/06 23:09:25 niklas Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -363,13 +363,15 @@ db_printsym(off, strategy)
 			if (d)
 				db_printf("+%#r", d);
 			if (strategy == DB_STGY_PROC) {
-				if (db_line_at_pc(cursym, &filename, &linenum, off))
-					db_printf(" [%s:%d]", filename, linenum);
+				if (db_line_at_pc(cursym, &filename, &linenum,
+				    off))
+					db_printf(" [%s:%d]", filename,
+				    linenum);
 			}
 			return;
 		}
 	}
-	db_printf("%#n", off);
+	db_printf("%#ln", off);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.5 1996/08/04 01:27:45 niklas Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.6 1997/07/06 23:09:24 niklas Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char	db_examine_format[TOK_STRING_SIZE] = "x";
 
 /*
  * Examine (print) data.  Syntax is:
- *		x/[bhl][cdiorsuxz]*
+ *		x/[bhlq][cdiorsuxz]*
  * For example, the command:
  *  	x/bxxxx
  * should print:
@@ -72,8 +72,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 
 void
 db_examine(addr, fmt, count)
-	register
-	    db_addr_t	addr;
+	db_addr_t	addr;
 	char *		fmt;	/* format string */
 	int		count;	/* repeat count */
 {
@@ -107,38 +106,42 @@ db_examine(addr, fmt, count)
 				size = 4;
 				width = 12;
 				break;
+			case 'q':	/* quad-word */
+				size = 8;
+				width = 20;
+				break;
 			case 'a':	/* address */
-				db_printf("= 0x%lx\n", addr);
+				db_printf("= 0x%lx\n", (long)addr);
 				break;
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*r", width, value);
+				db_printf("%-*lr", width, (long)value);
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
-				db_printf("%-*x", width, value);
+				db_printf("%-*lx", width, (long)value);
 				break;
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*z", width, value);
+				db_printf("%-*lz", width, (long)value);
 				break;
 			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*d", width, value);
+				db_printf("%-*ld", width, (long)value);
 				break;
 			case 'u':	/* unsigned decimal */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
-				db_printf("%-*u", width, value);
+				db_printf("%-*lu", width, (long)value);
 				break;
 			case 'o':	/* unsigned octal */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
-				db_printf("%-*o", width, value);
+				db_printf("%-*lo", width, value);
 				break;
 			case 'c':	/* character */
 				value = db_get_value(addr, 1, FALSE);
@@ -199,22 +202,22 @@ db_print_cmd(addr, have_addr, count, modif)
 		db_printsym((db_addr_t)addr, DB_STGY_ANY);
 		break;
 	case 'r':
-		db_printf("%11r", addr);
+		db_printf("%*r", sizeof(db_expr_t) * 2 * 6 / 5, addr);
 		break;
 	case 'x':
-		db_printf("%8x", addr);
+		db_printf("%*x", sizeof(db_expr_t) * 2, addr);
 		break;
 	case 'z':
-		db_printf("%8z", addr);
+		db_printf("%*z", sizeof(db_expr_t) * 2, addr);
 		break;
 	case 'd':
-		db_printf("%11d", addr);
+		db_printf("%*d", sizeof(db_expr_t) * 2 * 6 / 5, addr);
 		break;
 	case 'u':
-		db_printf("%11u", addr);
+		db_printf("%*u", sizeof(db_expr_t) * 2 * 6 / 5, addr);
 		break;
 	case 'o':
-		db_printf("%16o", addr);
+		db_printf("%*o", sizeof(db_expr_t) * 2 * 4 / 3, addr);
 		break;
 	case 'c':
 		value = addr & 0xFF;

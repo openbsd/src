@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.c,v 1.5 1996/04/21 22:18:53 deraadt Exp $	*/
+/*	$OpenBSD: db_access.c,v 1.6 1997/07/06 23:09:23 niklas Exp $	*/
 /*	$NetBSD: db_access.c,v 1.8 1994/10/09 08:37:35 mycroft Exp $	*/
 
 /* 
@@ -42,28 +42,20 @@
  * Access unaligned data items on aligned (longword)
  * boundaries.
  */
-
-int db_extend[] = {	/* table for sign-extending */
-	0,
-	(int)0xFFFFFF80,
-	(int)0xFFFF8000,
-	(int)0xFF800000,
-	(int)0x80000000
-};
-
 db_expr_t
 db_get_value(addr, size, is_signed)
 	db_addr_t addr;
-	register size_t size;
+	size_t size;
 	boolean_t is_signed;
 {
-	char data[sizeof(int)];
-	register db_expr_t value;
-	register int i;
+	char data[sizeof(db_expr_t)];
+	db_expr_t value, extend;
+	int i;
 
 	db_read_bytes(addr, size, data);
 
 	value = 0;
+	extend = (~(db_expr_t)0) << (size * 8 - 1);
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = size - 1; i >= 0; i--)
 #else /* BYTE_ORDER == BIG_ENDIAN */
@@ -71,8 +63,8 @@ db_get_value(addr, size, is_signed)
 #endif /* BYTE_ORDER */
 		value = (value << 8) + (data[i] & 0xFF);
 	    
-	if (size < 4 && is_signed && (value & db_extend[size]) != 0)
-		value |= db_extend[size];
+	if (size < sizeof(db_expr_t) && is_signed && (value & extend))
+		value |= extend;
 	return (value);
 }
 
@@ -82,7 +74,7 @@ db_put_value(addr, size, value)
 	register size_t size;
 	register db_expr_t value;
 {
-	char data[sizeof(int)];
+	char data[sizeof(db_expr_t)];
 	register int i;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
