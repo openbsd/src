@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.2 1998/08/29 01:22:36 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.3 1999/02/17 20:40:32 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -21,6 +21,9 @@
  * improvements that they make and grant CSL redistribution rights.
  *
  * 	Utah $Hdr: trap.h 1.6 94/12/16$
+ *
+ * 	Utah $Hdr: break.h 1.10 94/12/14$
+ *	Author: Bob Wheeler, University of Utah CSL
  */
 
 #ifndef _MACHINE_TRAP_H_
@@ -66,5 +69,35 @@
 #define	T_KS_OVFL	31	/* SW: kernel stack overflow */
 
 #define	T_USER		0x20	/* user-mode flag or'ed with type */
+
+/*  Values for break instructions */
+
+/* values for the im5 field of the break instruction */
+#define	HPPA_BREAK_KERNEL	0
+#define	HPPA_BREAK_MAYDEBUG	31	/* Reserved for Mayfly debugger. */
+
+/* values for the im13 field of the break instruction */
+#define	HPPA_BREAK_PDC_DUMP  		2
+#define	HPPA_BREAK_KERNTRACE		3
+#define	HPPA_BREAK_MACH_DEBUGGER	4
+#define	HPPA_BREAK_KGDB			5
+#define	HPPA_BREAK_KERNPRINT		6
+#define	HPPA_BREAK_IVA			7
+#define	HPPA_BREAK_PDC_IODC_CALL	8
+#define	HPPA_BREAK_GDB			8	/* Standard GDB breakpoint.  */
+
+/*
+ * Tear apart a break instruction to find its type.
+ */
+#define	break5(x)	((x) & 0x1F)
+#define	break13(x)	(((x) >> 13) & 0x1FFF)
+
+/*
+ * Trace debugging.
+ */
+#define	HPPA_TRACE_OFF	0
+#define	HPPA_TRACE_JUMP      -1
+#define	HPPA_TRACE_SUSPEND   -2
+#define	HPPA_TRACE_RESUME    -3
 
 #endif /* _MACHINE_TRAP_H_ */
