@@ -1,5 +1,5 @@
-/*	$OpenBSD: bireg.h,v 1.2 1997/05/29 00:04:16 niklas Exp $	*/
-/*	$NetBSD: bireg.h,v 1.1 1996/07/19 14:26:53 ragge Exp $	*/
+/*	$OpenBSD: bireg.h,v 1.3 2000/04/28 03:42:39 bjc Exp $	*/
+/*	$NetBSD: bireg.h,v 1.6 1999/08/04 19:12:22 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -45,7 +45,9 @@
 /*
  * BI node addresses
  */
-#define	BI_BASE(bi)	(0x20000000 + (bi) * 0x2000000)
+#define	NODESIZE	0x2000	/* Size of one BI node */
+#define	BI_NODE(node)	(NODESIZE * (node))
+#define	BI_BASE(bi,nod)	((0x20000000 + (bi) * 0x2000000) + BI_NODE(nod))
 #define	MAXNBI		16	/* Spec says there can be 16 anyway */
 #define	NNODEBI		16	/* 16 nodes per BI */
 
@@ -55,6 +57,8 @@
  * These are followed with interface-specific registers.
  *
  * NB: This structure does NOT include the four GPRs (not anymore!)
+ *
+ * 990712: The structs not used anymore due to conversion to bus.h.
  */
 struct biiregs {
 	u_short	bi_dtype;	/* device type */
@@ -98,22 +102,43 @@ struct bi_cpu {
 	u_long	bi_rxcd;	/* receive console data register */
 };
 
+#define	BIREG_DTYPE		0x00
+#define	BIREG_VAXBICSR		0x04
+#define	BIREG_BER		0x08
+#define	BIREG_EINTRCSR		0x0c
+#define	BIREG_INTRDES		0x10
+#define	BIREG_IPINTRMSK		0x14
+#define	BIREG_FIPSDES		0x18
+#define	BIREG_IPINTRSRC		0x1c
+#define	BIREG_SADR		0x20
+#define	BIREG_EADR		0x24
+#define	BIREG_BCICSR		0x28
+#define	BIREG_WSTAT		0x2c
+#define	BIREG_FIPSCMD		0x30
+#define	BIREG_UINTRCSR		0x40
+
 /* device types */
 #define	BIDT_MS820	0x0001	/* MS820 memory board */
-#define	BIDT_DRB32	0x0101	/* DRB32 Supercomputer gateway */
+#define	BIDT_DRB32	0x0101	/* DRB32 (MFA) Supercomputer gateway */
 #define	BIDT_DWBUA	0x0102	/* DWBUA Unibus adapter */
-#define	BIDT_KLESI	0x0103	/* KLESI-B adapter */
+#define	BIDT_KLESI	0x0103	/* KLESI-B (DWBLA) adapter */
+#define	BIDT_HSB70	0x4104	/* HSB70 */
 #define	BIDT_KA820	0x0105	/* KA820 cpu */
-#define	BIDT_DB88	0x0106	/* DB88 adapter */
+#define	BIDT_DB88	0x0106	/* DB88 (NBI) adapter */
+#define	BIDT_DWMBA	0x2107	/* XMI-BI (XBI) adapter */
+#define	BIDT_DWMBB	0x0107	/* XMI-BI (XBI) adapter */
 #define	BIDT_CIBCA	0x0108	/* Computer Interconnect adapter */
-#define	BIDT_DMB32	0x0109	/* DMB32 adapter */
+#define	BIDT_DMB32	0x0109	/* DMB32 (COMB) adapter */
+#define	BIDT_BAA	0x010a	/* BAA */
 #define	BIDT_CIBCI	0x010b	/* Computer Interconnect adapter (old) */
-#define	BIDT_KA800	0x010c	/* KA800 slave processor */
-#define	BIDT_KDB50	0x010e	/* KDB50 disk controller */
-#define	BIDT_DWMBA	0x2107	/* XMI - BI adapter */
+#define	BIDT_DEBNT	0x410b	/* (AIE_TK70) Ethernet+TK50/TBK70  */
+#define	BIDT_KA800	0x010c	/* KA800 (ACP) slave processor */
 #define	BIDT_KFBTA	0x410d	/* RD/RX disk controller */
-#define	BIDT_DEBNK	0x410e	/* BI Ethernet (Lance) + TK50 */
-#define	BIDT_DEBNA	0x410f	/* BI Ethernet (Lance) adapter */
+#define	BIDT_KDB50	0x010e	/* KDB50 (BDA) disk controller */
+#define	BIDT_DEBNK	0x410e	/* (AIE_TK) BI Ethernet (Lance) + TK50 */
+#define	BIDT_DEBNA	0x410f	/* (AIE) BI Ethernet (Lance) adapter */
+#define	BIDT_DEBNI	0x0118	/* (XNA) BI Ethernet adapter */
+
 
 /* bits in bi_csr */
 #define	BICSR_IREV(x)	((u_char)((x) >> 24))	/* VAXBI interface rev */
@@ -218,7 +243,7 @@ struct bi_cpu {
 #define	BIW_GPR1	0x20000000	/* gpr 1 was written */
 #define	BIW_GPR0	0x10000000	/* gpr 0 was written */
 
-/* bits in force-bit ipintr/stop command register 8/
+/* bits in force-bit ipintr/stop command register */
 #define	BIFIPSC_CMDMASK	0x0000f000	/* command */
 #define	BIFIPSC_MIDEN	0x00000800	/* master ID enable */
 
