@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2004/09/20 10:31:16 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.5 2004/09/20 10:33:20 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,6 +47,8 @@
  */
 #define	IMASK_EXTERNAL		/* XXX move this to config */
 
+/* This define controls wether splraise is inlined or not */
+// #define INLINE_SPLRAISE
 
 
 /* Interrupt priority `levels'; not mutually exclusive. */
