@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.22 2000/06/19 03:00:51 jason Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.23 2001/03/13 05:09:51 mickey Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,8 @@ int bpf_bufsize = BPF_BUFSIZE;
  *  bpf_dtab holds the descriptors, indexed by minor device #
  */
 struct bpf_if	*bpf_iflist;
-struct bpf_d	bpf_dtab[NBPFILTER];
+struct bpf_d	*bpf_dtab;
+int nbpfilter;
 
 int	bpf_allocbufs __P((struct bpf_d *));
 void	bpf_freed __P((struct bpf_d *));
@@ -286,11 +287,16 @@ bpfilterattach(n)
 {
 	int i;
 
+	bpf_dtab = malloc(n * sizeof(*bpf_dtab), M_DEVBUF, M_NOWAIT);
+	if (!bpf_dtab)
+		return;
+	nbpfilter = n;
+	bzero(bpf_dtab, n * sizeof(*bpf_dtab));
 	/*
 	 * Mark all the descriptors free if this hasn't been done.
 	 */
 	if (!D_ISFREE(&bpf_dtab[0]))
-		for (i = 0; i < NBPFILTER; ++i)
+		for (i = 0; i < nbpfilter; ++i)
 			D_MARKFREE(&bpf_dtab[i]);
 }
 
@@ -308,7 +314,7 @@ bpfopen(dev, flag, mode, p)
 {
 	register struct bpf_d *d;
 
-	if (minor(dev) >= NBPFILTER)
+	if (minor(dev) >= nbpfilter)
 		return (ENXIO);
 	/*
 	 * Each minor can be opened by only one process.  If the requested
@@ -1238,7 +1244,7 @@ bpfdetach(ifp)
 				 * Locate the minor number and nuke the vnode
 				 * for any open instance.
 				 */
-				for (mn = 0; mn < NBPFILTER; mn++)
+				for (mn = 0; mn < nbpfilter; mn++)
 					if (&bpf_dtab[mn] == bd) {
 						vdevgone(maj, mn, mn, VCHR);
 						break;
