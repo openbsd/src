@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.7 2005/02/18 20:01:35 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.8 2005/02/18 20:04:40 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -67,12 +67,10 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define RAL_DEBUG
-
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	if (ral_debug > 0) printf x
 #define DPRINTFN(n, x)	if (ral_debug >= (n)) printf x
-int ral_debug = 14;
+int ral_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
