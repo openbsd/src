@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1999/12/25 06:02:10 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2002/08/08 05:57:26 mickey Exp $
 
 KMINCLUDES=	arch/hppa/DEFS.h arch/hppa/SYS.h prefix.h
-KMSRCS=	bcmp.S bzero.S bcopy.m4 ffs.S
+KMSRCS=	bcopy.m4 ffs.S
 
 SRCS+=	memmove.S
 CLEANFILES+=	memmove.S cerror.S
