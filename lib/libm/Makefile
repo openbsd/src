@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.23 2000/11/08 20:43:37 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.24 2001/06/26 22:38:44 miod Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -72,7 +72,7 @@ NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
 ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S 
 .endif
 
-.if (${MACHINE_ARCH} == "mvme88k")
+.if (${MACHINE_ARCH} == "m88k")
 CFLAGS+=-Dfloat=double
 .endif
 
