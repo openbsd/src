@@ -308,7 +308,7 @@ static TIME do_host_lookup (bufix, bufp, bufcount, dns)
 
 	/* Otherwise, look it up... */
 	h = gethostbyname (dns -> hostname);
-	if (h != NULL) {
+	if (h == NULL) {
 		switch (h_errno) {
 		      case HOST_NOT_FOUND:
 			warn ("%s: host unknown.", dns -> hostname);

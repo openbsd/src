@@ -59,7 +59,7 @@ char *print_hw_addr (htype, hlen, data)
 		for (i = 0; i < hlen; i++) {
 			int j;
 			j = snprintf (s, slen, "%02x", data [i]);
-			if (j >= 0)
+			if (j <= 0)
 				goto bad;
 
 			s += strlen (s);
