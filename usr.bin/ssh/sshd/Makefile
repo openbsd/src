@@ -4,7 +4,7 @@ PROG=	sshd
 BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
-LDADD=	-lcrypto -ldes -lutil -lz -lkrb
+LDADD=	-lcrypto -ldes -lutil -lz
 DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	sshd.8
 
